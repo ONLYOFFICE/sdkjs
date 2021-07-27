@@ -257,6 +257,22 @@ function GetDefaultMods(r, g, b, pos, editor_id)
 	var g_oUserColorScheme = [];
 	var elem;
 	elem = new CAscColorScheme();
+	elem.name = 'New Office';
+	elem.putColor(new CColor(0, 0, 0));
+	elem.putColor(new CColor(0xFF, 0xFF, 0xFF));
+	elem.putColor(new CColor(0x44, 0x54, 0x6A));
+	elem.putColor(new CColor(0xE7, 0xE6, 0xE6));
+	elem.putColor(new CColor(0x5B, 0x9B, 0xD5));
+	elem.putColor(new CColor(0xED, 0x7D, 0x31));
+	elem.putColor(new CColor(0xA5, 0xA5, 0xA5));
+	elem.putColor(new CColor(0xFF, 0xC0, 0x00));
+	elem.putColor(new CColor(0x44, 0x72, 0xC4));
+	elem.putColor(new CColor(0x70, 0xAD, 0x47));
+	elem.putColor(new CColor(0x05, 0x63, 0xC1));
+	elem.putColor(new CColor(0x95, 0x4F, 0x72));
+	g_oUserColorScheme.push(elem);
+
+	elem = new CAscColorScheme();
 	elem.name = 'Office';
 	elem.putColor(new CColor(0, 0, 0));
 	elem.putColor(new CColor(255, 255, 255));
@@ -679,19 +695,19 @@ var g_sWordPlaceholderImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMg
 	window['AscCommon'].g_oLegendBinaries = window['AscCommon']['g_oLegendBinaries'] || {};
 	window['AscCommon']['g_oLegendBinaries'] = window['AscCommon'].g_oLegendBinaries;
 
-	window['AscCommon'].g_oCatBinaries = window['AscCommon'].g_oCatBinaries || {};
+	window['AscCommon'].g_oCatBinaries = window['AscCommon']['g_oCatBinaries'] || {};
 	window['AscCommon']['g_oCatBinaries'] = window['AscCommon'].g_oCatBinaries;
 
-	window['AscCommon'].g_oValBinaries = window['AscCommon'].g_oValBinaries || {};
+	window['AscCommon'].g_oValBinaries = window['AscCommon']['g_oValBinaries'] || {};
 	window['AscCommon']['g_oValBinaries'] = window['AscCommon'].g_oValBinaries;
 
-	window['AscCommon'].g_oBarParams = window['AscCommon'].g_oBarParams || {};
+	window['AscCommon'].g_oBarParams = window['AscCommon']['g_oBarParams'] || {};
 	window['AscCommon']['g_oBarParams'] = window['AscCommon'].g_oBarParams;
 
-	window['AscCommon'].g_oView3dBinaries = window['AscCommon'].g_oView3dBinaries || {};
+	window['AscCommon'].g_oView3dBinaries = window['AscCommon']['g_oView3dBinaries'] || {};
 	window['AscCommon']['g_oView3dBinaries'] = window['AscCommon'].g_oView3dBinaries;
 
-	window['AscCommon'].g_oChartStylesIdMap = window['AscCommon'].g_oChartStylesIdMap || {};
+	window['AscCommon'].g_oChartStylesIdMap = window['AscCommon']['g_oChartStylesIdMap'] || {};
 	window['AscCommon']['g_oChartStylesIdMap'] = window['AscCommon'].g_oChartStylesIdMap;
 
 	function fGetAttributeString(attribute) {

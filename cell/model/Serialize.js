@@ -519,6 +519,7 @@
         ShowFirstColumn:3,
         ShowLastColumn:4
     };
+    
     /** @enum */
     var c_oSer_TableColumns =
     {
@@ -528,7 +529,15 @@
         TotalsRowLabel:3,
         TotalsRowFunction:4,
         TotalsRowFormula:5,
-        CalculatedColumnFormula:6
+        CalculatedColumnFormula:6,
+		DataCellStyle: 7,
+		HeaderRowCellStyle: 8,
+		HeaderRowDxfId: 9,
+		Id: 10,
+		QueryTableFieldId: 11,
+		TotalsRowCellStyle: 12,
+		TotalsRowDxfId: 13,
+		UniqueName: 14
     };
     /** @enum */
     var c_oSer_SortState =
@@ -613,6 +622,64 @@
         Top:2,
         Val:3
     };
+	var c_oSer_QueryTable =
+    {
+		AdjustColumnWidth: 0,
+		ApplyAlignmentFormats: 1,
+		ApplyBorderFormats: 2,
+		ApplyFontFormats: 3,
+		ApplyNumberFormats: 4,
+		ApplyPatternFormats: 5,
+		ApplyWidthHeightFormats: 6,
+		BackgroundRefresh: 7,
+		AutoFormatId: 8,
+		ConnectionId: 9,
+		DisableEdit: 10,
+		DisableRefresh: 11,
+		FillFormulas: 12,
+		FirstBackgroundRefresh: 13,
+		GrowShrinkType: 14,
+		Headers: 15,
+		Intermediate: 16,
+		Name: 17,
+		PreserveFormatting: 18,
+		RefreshOnLoad: 19,
+		RemoveDataOnSave: 20,
+		RowNumbers: 21,
+		QueryTableRefresh: 22
+    };
+	var c_oSer_QueryTableRefresh =
+    {
+        NextId: 0,
+        MinimumVersion: 1,
+        FieldIdWrapped: 2,
+        HeadersInLastRefresh: 3,
+        PreserveSortFilterLayout: 4,
+        UnboundColumnsLeft: 5,
+        UnboundColumnsRight: 6,
+        QueryTableFields: 7,
+        QueryTableDeletedFields: 8,
+        SortState: 9
+    };
+
+	var c_oSer_QueryTableField =
+    {
+        QueryTableField: 0,
+        Id: 1,
+        TableColumnId: 2,
+        Name: 3,
+        RowNumbers: 4,
+        FillFormulas: 5,
+        DataBound: 6,
+        Clipped: 7
+    };
+
+	var c_oSer_QueryTableDeletedField =
+    {
+        QueryTableDeletedField: 0,
+        Name: 1
+    };
+	
     /** @enum */
     var c_oSer_Dxf =
     {
@@ -1591,6 +1658,12 @@
                 this.bs.WriteItem(c_oSer_TablePart.TableStyleInfo, function(){oThis.WriteTableStyleInfo(table.TableStyleInfo);});
 			if(null != table.altText || null != table.altTextSummary)
 				this.bs.WriteItem(c_oSer_TablePart.AltTextTable, function(){oThis.WriteAltTextTable(table);});
+
+			if(null != table.QueryTable)
+				this.bs.WriteItem(c_oSer_TablePart.QueryTable, function(){oThis.WriteQueryTable(table.QueryTable);});
+
+			if(null != table.tableType)
+				this.bs.WriteItem(c_oSer_TablePart.TableType, function(){oThis.memory.WriteULong(elem.tableType);});
         };
 		this.WriteAltTextTable = function(table)
 		{
@@ -1905,6 +1978,17 @@
                 this.memory.WriteByte(c_oSer_TableColumns.CalculatedColumnFormula);
                 this.memory.WriteString2(tableColumn.CalculatedColumnFormula);
             }
+			if(null != tableColumn.uniqueName)
+			{
+				this.memory.WriteByte(c_oSer_TableColumns.UniqueName);
+				this.memory.WriteString2(tableColumn.uniqueName);
+			}
+			if(null != tableColumn.queryTableFieldId)
+			{
+				this.bs.WriteItem(c_oSer_TableColumns.QueryTableFieldId, function () {
+					oThis.memory.WriteLong(tableColumn.queryTableFieldId);
+				});
+			}
         };
         this.WriteTableStyleInfo = function(tableStyleInfo)
         {
@@ -1938,7 +2022,239 @@
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 this.memory.WriteBool(tableStyleInfo.ShowLastColumn);
             }
-        }
+        };
+		this.WriteQueryTable = function(queryTable)
+		{
+			var oThis = this;
+
+			if (null != queryTable.connectionId) {
+				this.bs.WriteItem(c_oSer_QueryTable.ConnectionId, function () {
+					oThis.memory.WriteLong(queryTable.connectionId);
+				});
+			}
+			if (null != queryTable.name) {
+				this.bs.WriteItem(c_oSer_QueryTable.Name, function () {
+					oThis.memory.WriteString3(queryTable.name);
+				});
+			}
+			if (null != queryTable.autoFormatId) {
+				this.bs.WriteItem(c_oSer_QueryTable.AutoFormatId, function () {
+					oThis.memory.WriteLong(queryTable.autoFormatId);
+				});
+			}
+			if (null != queryTable.growShrinkType) {
+				this.bs.WriteItem(c_oSer_QueryTable.GrowShrinkType, function () {
+					oThis.memory.WriteString2(queryTable.growShrinkType);
+				});
+			}
+			if (null != queryTable.adjustColumnWidth) {
+				this.bs.WriteItem(c_oSer_QueryTable.AdjustColumnWidth, function () {
+					oThis.memory.WriteBool(queryTable.adjustColumnWidth);
+				});
+			}
+			if (null != queryTable.applyAlignmentFormats) {
+				this.bs.WriteItem(c_oSer_QueryTable.ApplyAlignmentFormats, function () {
+					oThis.memory.WriteBool(queryTable.applyAlignmentFormats);
+				});
+			}
+			if (null != queryTable.applyBorderFormats) {
+				this.bs.WriteItem(c_oSer_QueryTable.ApplyBorderFormats, function () {
+					oThis.memory.WriteBool(queryTable.applyBorderFormats);
+				});
+			}
+			if (null != queryTable.applyFontFormats) {
+				this.bs.WriteItem(c_oSer_QueryTable.ApplyFontFormats, function () {
+					oThis.memory.WriteBool(queryTable.applyFontFormats);
+				});
+			}
+			if (null != queryTable.applyNumberFormats) {
+				this.bs.WriteItem(c_oSer_QueryTable.ApplyNumberFormats, function () {
+					oThis.memory.WriteBool(queryTable.applyNumberFormats);
+				});
+			}
+			if (null != queryTable.applyPatternFormats) {
+				this.bs.WriteItem(c_oSer_QueryTable.ApplyPatternFormats, function () {
+					oThis.memory.WriteBool(queryTable.applyPatternFormats);
+				});
+			}
+			if (null != queryTable.applyWidthHeightFormats) {
+				this.bs.WriteItem(c_oSer_QueryTable.ApplyWidthHeightFormats, function () {
+					oThis.memory.WriteBool(queryTable.applyWidthHeightFormats);
+				});
+			}
+			if (null != queryTable.backgroundRefresh) {
+				this.bs.WriteItem(c_oSer_QueryTable.BackgroundRefresh, function () {
+					oThis.memory.WriteBool(queryTable.backgroundRefresh);
+				});
+			}
+			if (null != queryTable.disableEdit) {
+				this.bs.WriteItem(c_oSer_QueryTable.DisableEdit, function () {
+					oThis.memory.WriteBool(queryTable.disableEdit);
+				});
+			}
+			if (null != queryTable.disableRefresh) {
+				this.bs.WriteItem(c_oSer_QueryTable.DisableRefresh, function () {
+					oThis.memory.WriteBool(queryTable.disableRefresh);
+				});
+			}
+			if (null != queryTable.fillFormulas) {
+				this.bs.WriteItem(c_oSer_QueryTable.FillFormulas, function () {
+					oThis.memory.WriteBool(queryTable.fillFormulas);
+				});
+			}
+			if (null != queryTable.firstBackgroundRefresh) {
+				this.bs.WriteItem(c_oSer_QueryTable.FirstBackgroundRefresh, function () {
+					oThis.memory.WriteBool(queryTable.firstBackgroundRefresh);
+				});
+			}
+			if (null != queryTable.headers) {
+				this.bs.WriteItem(c_oSer_QueryTable.Headers, function () {
+					oThis.memory.WriteBool(queryTable.headers);
+				});
+			}
+			if (null != queryTable.preserveFormatting) {
+				this.bs.WriteItem(c_oSer_QueryTable.PreserveFormatting, function () {
+					oThis.memory.WriteBool(queryTable.preserveFormatting);
+				});
+			}
+			if (null != queryTable.refreshOnLoad) {
+				this.bs.WriteItem(c_oSer_QueryTable.RefreshOnLoad, function () {
+					oThis.memory.WriteBool(queryTable.refreshOnLoad);
+				});
+			}
+			if (null != queryTable.removeDataOnSave) {
+				this.bs.WriteItem(c_oSer_QueryTable.RemoveDataOnSave, function () {
+					oThis.memory.WriteBool(queryTable.removeDataOnSave);
+				});
+			}
+			if (null != queryTable.rowNumbers) {
+				this.bs.WriteItem(c_oSer_QueryTable.RowNumbers, function () {
+					oThis.memory.WriteBool(queryTable.rowNumbers);
+				});
+			}
+			if (null != queryTable.queryTableRefresh) {
+				this.bs.WriteItem(c_oSer_QueryTable.QueryTableRefresh, function () {
+					oThis.WriteQueryTableRefresh(queryTable.queryTableRefresh);
+				});
+			}
+		};
+		this.WriteQueryTableRefresh = function(queryTableRefresh)
+		{
+			var oThis = this;
+			if (null != queryTableRefresh.nextId) {
+				this.bs.WriteItem(c_oSer_QueryTableRefresh.NextId, function () {
+					oThis.memory.WriteLong(queryTableRefresh.nextId);
+				});
+			}
+			if (null != queryTableRefresh.minimumVersion) {
+				this.bs.WriteItem(c_oSer_QueryTableRefresh.MinimumVersion, function () {
+					oThis.memory.WriteLong(queryTableRefresh.minimumVersion);
+				});
+			}
+			if (null != queryTableRefresh.unboundColumnsLeft) {
+				this.bs.WriteItem(c_oSer_QueryTableRefresh.UnboundColumnsLeft, function () {
+					oThis.memory.WriteLong(queryTableRefresh.unboundColumnsLeft);
+				});
+			}
+			if (null != queryTableRefresh.unboundColumnsRight) {
+				this.bs.WriteItem(c_oSer_QueryTableRefresh.UnboundColumnsRight, function () {
+					oThis.memory.WriteLong(queryTableRefresh.unboundColumnsRight);
+				});
+			}
+			if (null != queryTableRefresh.fieldIdWrapped) {
+				this.bs.WriteItem(c_oSer_QueryTableRefresh.FieldIdWrapped, function () {
+					oThis.memory.WriteBool(queryTableRefresh.feldIdWrapped);
+				});
+			}
+			if (null != queryTableRefresh.headersInLastRefresh) {
+				this.bs.WriteItem(c_oSer_QueryTableRefresh.HeadersInLastRefresh, function () {
+					oThis.memory.WriteBool(queryTableRefresh.headersInLastRefresh);
+				});
+			}
+			if (null != queryTableRefresh.preserveSortFilterLayout) {
+				this.bs.WriteItem(c_oSer_QueryTableRefresh.PreserveSortFilterLayout, function () {
+					oThis.memory.WriteBool(queryTableRefresh.preserveSortFilterLayout);
+				});
+			}
+
+			if (null != queryTableRefresh.sortState) {
+				this.bs.WriteItem(c_oSer_QueryTableRefresh.SortState, function () {
+					oThis.WriteSortState(queryTableRefresh.sortState);
+				});
+			}
+			if (null != queryTableRefresh.queryTableFields) {
+				this.bs.WriteItem(c_oSer_QueryTableRefresh.QueryTableFields, function () {
+					oThis.WriteQueryTableFields(queryTableRefresh.queryTableFields);
+				});
+			}
+			if (null != queryTableRefresh.queryTableDeletedFields) {
+				this.bs.WriteItem(c_oSer_QueryTableRefresh.QueryTableDeletedFields, function () {
+					oThis.WriteQueryTableDeletedFields(queryTableRefresh.queryTableDeletedFields);
+				});
+			}
+		};
+		this.WriteQueryTableFields = function (queryTableFields) {
+			var oThis = this;
+			for (var i = 0, length = queryTableFields.length; i < length; ++i) {
+				this.bs.WriteItem(c_oSer_QueryTableField.QueryTableField, function () {
+					oThis.WriteQueryTableField(queryTableFields[i]);
+				});
+			}
+		};
+		this.WriteQueryTableField = function (queryTableField) {
+
+			var oThis = this;
+			if (null != queryTableField.name) {
+				this.bs.WriteItem(c_oSer_QueryTableField.Name, function () {
+					oThis.memory.WriteString3(queryTableField.name);
+				});
+			}
+			if (null != queryTableField.id) {
+				this.bs.WriteItem(c_oSer_QueryTableField.Id, function () {
+					oThis.memory.WriteLong(queryTableField.id);
+				});
+			}
+			if (null != queryTableField.tableColumnId) {
+				this.bs.WriteItem(c_oSer_QueryTableField.TableColumnId, function () {
+					oThis.memory.WriteLong(queryTableField.tableColumnId);
+				});
+			}
+			if (null != queryTableField.rowNumbers) {
+				this.bs.WriteItem(c_oSer_QueryTableField.RowNumbers, function () {
+					oThis.memory.WriteBool(queryTableField.rowNumbers);
+				});
+			}
+			if (null != queryTableField.fillFormulas) {
+				this.bs.WriteItem(c_oSer_QueryTableField.FillFormulas, function () {
+					oThis.memory.WriteBool(queryTableField.fillFormulas);
+				});
+			}
+			if (null != queryTableField.dataBound) {
+				this.bs.WriteItem(c_oSer_QueryTableField.DataBound, function () {
+					oThis.memory.WriteBool(queryTableField.dataBound);
+				});
+			}
+			if (null != queryTableField.clipped) {
+				this.bs.WriteItem(c_oSer_QueryTableField.Clipped, function () {
+					oThis.memory.WriteBool(queryTableField.clipped);
+				});
+			}
+		};
+		this.WriteQueryTableDeletedFields = function (queryTableDeletedFields) {
+			var oThis = this;
+			for (var i = 0, length = queryTableDeletedFields.length; i < length; ++i) {
+				this.bs.WriteItem(c_oSer_QueryTableDeletedField.QueryTableDeletedField, function () {
+					oThis.WriteQueryTableDeletedField(queryTableDeletedFields[i]);
+				});
+			}
+		};
+		this.WriteQueryTableDeletedField = function (queryTableDeletedField) {
+			var oThis = this;
+			if (null != queryTableDeletedField.name) {
+				this.memory.WriteByte(c_oSer_QueryTableDeletedField.Name);
+				this.memory.WriteString2(queryTableDeletedField.name);
+			}
+		};
     }
     /** @constructor */
 	function BinarySharedStringsTableWriter(memory, wb, oSharedStrings, bsw)
@@ -2868,6 +3184,13 @@
 				this.bs.WriteItem(c_oSerWorkbookTypes.ExternalReferences, function() {oThis.WriteExternalReferences();});
 			}
 			if (!this.isCopyPaste) {
+                if (this.wb.oApi.vbaMacros) {
+                    this.bs.WriteItem(c_oSerWorkbookTypes.VbaProject, function() {
+                        oThis.memory.WriteByte(0);
+                        oThis.memory.WriteULong(oThis.wb.oApi.vbaMacros.length);
+                        oThis.memory.WriteBuffer(oThis.wb.oApi.vbaMacros, 0, oThis.wb.oApi.vbaMacros.length);
+                    });
+                }
 				var macros = this.wb.oApi.macros.GetData();
 				if (macros) {
 					this.bs.WriteItem(c_oSerWorkbookTypes.JsaProject, function() {oThis.memory.WriteXmlString(macros);});
@@ -3747,6 +4070,8 @@
 				this.bs.WriteItem(c_oSer_SheetView.Selection, function(){oThis.WriteSheetViewSelection(ws.selectionRange);});
             if (null !== oSheetView.showZeros && !oThis.isCopyPaste)
                 this.bs.WriteItem(c_oSer_SheetView.ShowZeros, function(){oThis.memory.WriteBool(oSheetView.showZeros);});
+            if (null !== oSheetView.topLeftCell && !oThis.isCopyPaste)
+                this.bs.WriteItem(c_oSer_SheetView.TopLeftCell, function(){oThis.memory.WriteString3(oSheetView.topLeftCell.getName());});
         };
         this.WriteSheetViewPane = function (oPane) {
             var oThis = this;
@@ -5380,6 +5705,16 @@
             {
                 this.oReadResult.tableIds[this.stream.GetULongLE()] = oTable;
             }
+			else if ( c_oSer_TablePart.QueryTable == type )
+			{
+				oTable.QueryTable = new AscCommonExcel.QueryTable();
+				res = this.bcr.Read1(length, function(t,l){
+					return oThis.ReadQueryTable(t, l, oTable.QueryTable);
+				});
+			}
+			else if (c_oSer_TablePart.TableType == type) {
+				oTable.tableType = this.stream.GetULongLE();
+            }
             else
                 res = c_oSerConstants.ReadUnknown;
             return res;
@@ -5496,7 +5831,7 @@
 				return oThis.ReadFilterColumn(t,l, oFilterColumn);
 			});
 			return oFilterColumn;
-		}
+		};
         this.ReadFilters = function(type, length, oFilters)
         {
             var res = c_oSerConstants.ReadOk;
@@ -5686,7 +6021,7 @@
 				return oThis.ReadSortConditionContent(t,l, oSortCondition);
 			});
 			return oSortCondition;
-		}
+		};
         this.ReadSortState = function(type, length, oSortState)
         {
             var res = c_oSerConstants.ReadOk;
@@ -5730,6 +6065,12 @@
 			{
 				oTableColumn.CalculatedColumnFormula = this.stream.GetString2LE(length);
 			}*/
+            else if ( c_oSer_TableColumns.QueryTableFieldId == type ) {
+				oTableColumn.queryTableFieldId = this.stream.GetULongLE();
+			}
+			else if ( c_oSer_TableColumns.UniqueName == type ) {
+				oTableColumn.uniqueName = this.stream.GetString2LE(length);
+			}
             else
                 res = c_oSerConstants.ReadUnknown;
             return res;
@@ -5767,6 +6108,249 @@
                 res = c_oSerConstants.ReadUnknown;
             return res;
         };
+		this.ReadQueryTable = function(type, length, oQueryTable)
+		{
+			var oThis = this;
+		    var res = c_oSerConstants.ReadOk;
+			if(c_oSer_QueryTable.ConnectionId == type)
+			{
+				oQueryTable.connectionId = this.stream.GetULongLE();
+			}
+			else if(c_oSer_QueryTable.Name == type)
+			{
+				oQueryTable.name = this.stream.GetString2LE(length);
+			}
+			else if(c_oSer_QueryTable.AutoFormatId == type)
+			{
+				oQueryTable.autoFormatId = this.stream.GetULongLE();
+			}
+			else if(c_oSer_QueryTable.GrowShrinkType == type)
+			{
+				oQueryTable.growShrinkType = this.stream.GetString2LE();
+			}
+			else if(c_oSer_QueryTable.AdjustColumnWidth == type)
+			{
+				oQueryTable.adjustColumnWidth = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTable.ApplyAlignmentFormats == type)
+			{
+				oQueryTable.applyAlignmentFormats = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTable.ApplyBorderFormats == type)
+			{
+				oQueryTable.applyBorderFormats = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTable.ApplyFontFormats == type)
+			{
+				oQueryTable.applyFontFormats = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTable.ApplyNumberFormats == type)
+			{
+				oQueryTable.applyNumberFormats = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTable.ApplyPatternFormats == type)
+			{
+				oQueryTable.ApplyPatternFormats = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTable.ApplyWidthHeightFormats == type)
+			{
+				oQueryTable.applyWidthHeightFormats = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTable.BackgroundRefresh == type)
+			{
+				oQueryTable.backgroundRefresh = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTable.DisableEdit == type)
+			{
+				oQueryTable.disableEdit = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTable.DisableRefresh == type)
+			{
+				oQueryTable.disableRefresh = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTable.FillFormulas == type)
+			{
+				oQueryTable.fillFormulas = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTable.FirstBackgroundRefresh == type)
+			{
+				oQueryTable.firstBackgroundRefresh = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTable.Headers == type)
+			{
+				oQueryTable.headers = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTable.Intermediate == type)
+			{
+				oQueryTable.intermediate = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTable.PreserveFormatting == type)
+			{
+				oQueryTable.preserveFormatting = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTable.RefreshOnLoad == type)
+			{
+				oQueryTable.refreshOnLoad = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTable.RemoveDataOnSave == type)
+			{
+				oQueryTable.removeDataOnSave = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTable.RowNumbers == type)
+			{
+				oQueryTable.rowNumbers = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTable.QueryTableRefresh == type)
+			{
+				oQueryTable.queryTableRefresh = new AscCommonExcel.QueryTableRefresh();
+				res = this.bcr.Read1(length, function(t,l){
+					return oThis.ReadQueryTableRefresh(t,l, oQueryTable.queryTableRefresh);
+				});
+			}
+			else
+				res = c_oSerConstants.ReadUnknown;
+
+			return res;
+		};
+
+		this.ReadQueryTableRefresh = function(type, length, queryTableRefresh)
+		{
+			var oThis = this;
+			var res = c_oSerConstants.ReadOk;
+			if(c_oSer_QueryTableRefresh.NextId == type)
+			{
+				queryTableRefresh.nextId = this.stream.GetULongLE();
+			}
+			else if(c_oSer_QueryTableRefresh.MinimumVersion == type)
+			{
+				queryTableRefresh.minimumVersion = this.stream.GetULongLE();
+			}
+			else if(c_oSer_QueryTableRefresh.UnboundColumnsLeft == type)
+			{
+				queryTableRefresh.unboundColumnsLeft = this.stream.GetULongLE();
+			}
+			else if(c_oSer_QueryTableRefresh.UnboundColumnsRight == type)
+			{
+				queryTableRefresh.unboundColumnsRight = this.stream.GetULongLE();
+			}
+			else if(c_oSer_QueryTableRefresh.FieldIdWrapped == type)
+			{
+				queryTableRefresh.fieldIdWrapped = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTableRefresh.HeadersInLastRefresh == type)
+			{
+				queryTableRefresh.headersInLastRefresh = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTableRefresh.PreserveSortFilterLayout == type)
+			{
+				queryTableRefresh.preserveSortFilterLayout = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTableRefresh.SortState == type)
+			{
+				queryTableRefresh.sortState = new AscCommonExcel.SortState();
+				res = this.bcr.Read1(length, function(t, l) {
+					return oThis.ReadSortState(t, l, queryTableRefresh.sortState);
+				});
+			}
+			else if(c_oSer_QueryTableRefresh.QueryTableFields == type)
+			{
+				res = this.bcr.Read1(length, function (t, l) {
+					return oThis.ReadQueryTableFields(t, l, queryTableRefresh);
+				});
+			}
+			else if(c_oSer_QueryTableRefresh.QueryTableDeletedFields == type)
+			{
+				res = this.bcr.Read1(length, function (t, l) {
+					return oThis.ReadQueryTableDeletedFields(t, l, queryTableRefresh);
+				});
+			}
+			else
+				res = c_oSerConstants.ReadUnknown;
+
+			return res;
+		};
+		this.ReadQueryTableFields = function (type, length, queryTableRefresh) {
+			var oThis = this;
+			var res = c_oSerConstants.ReadOk;
+			if (c_oSer_QueryTableField.QueryTableField === type) {
+				var queryTableField = new AscCommonExcel.QueryTableField(true);
+				res = this.bcr.Read1(length, function (t, l) {
+					return oThis.ReadQueryTableField(t, l, queryTableField);
+				});
+				if (null == queryTableRefresh.queryTableFields) {
+					queryTableRefresh.queryTableFields = [];
+				}
+				queryTableRefresh.queryTableFields.push(queryTableField);
+			} else
+				res = c_oSerConstants.ReadUnknown;
+			return res;
+		};
+		this.ReadQueryTableField = function(type, length, queryTableField)
+		{
+			var res = c_oSerConstants.ReadOk;
+			if(c_oSer_QueryTableField.Name == type)
+			{
+				queryTableField.name = this.stream.GetString2LE(length);
+			}
+			else if(c_oSer_QueryTableField.Id == type)
+			{
+				queryTableField.id = this.stream.GetULongLE(length);
+			}
+			else if(c_oSer_QueryTableField.TableColumnId == type)
+			{
+				queryTableField.tableColumnId = this.stream.GetULongLE(length);
+			}
+			else if(c_oSer_QueryTableField.RowNumbers == type)
+			{
+				queryTableField.rowNumbers = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTableField.FillFormulas == type)
+			{
+				queryTableField.fillFormulas = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTableField.DataBound == type)
+			{
+				queryTableField.dataBound = this.stream.GetBool();
+			}
+			else if(c_oSer_QueryTableField.Clipped == type)
+			{
+				queryTableField.clipped = this.stream.GetBool();
+			}
+			else
+				res = c_oSerConstants.ReadUnknown;
+
+			return res;
+		};
+		this.ReadQueryTableDeletedFields = function(type, length, queryTableRefresh)
+		{
+			var oThis = this;
+			var res = c_oSerConstants.ReadOk;
+			if(c_oSer_QueryTableDeletedField.QueryTableDeletedField == type)
+			{
+				var queryTableDeletedField = new AscCommonExcel.QueryTableDeletedField();
+				res = this.bcr.Read1(length, function (t, l) {
+					return oThis.ReadQueryTableDeletedField(t, l, queryTableDeletedField);
+				});
+				if (null == queryTableRefresh.queryTableDeletedFields) {
+					queryTableRefresh.queryTableDeletedFields = [];
+				}
+				queryTableRefresh.queryTableDeletedFields.push(queryTableDeletedField);
+			}
+			else
+				res = c_oSerConstants.ReadUnknown;
+			return res;
+		};
+		this.ReadQueryTableDeletedField = function(type, length, pQueryTableDeletedField)
+		{
+			var res = c_oSerConstants.ReadOk;
+			if(c_oSer_QueryTableDeletedField.Name == type)
+			{
+				pQueryTableDeletedField.name = this.stream.GetString2LE(length);
+			}
+			else
+				res = c_oSerConstants.ReadUnknown;
+			return res;
+		};
     }
     /** @constructor */
     function Binary_SharedStringTableReader(stream, wb, aSharedStrings)
@@ -6773,7 +7357,7 @@
 				return oThis.ReadDxf(t, l, dxf);
 			});
 			return dxf;
-		}
+		};
         this.ReadTableStyles = function(type, length, oTableStyles, oCustomStyles)
         {
             var res = c_oSerConstants.ReadOk;
@@ -6915,6 +7499,12 @@
 					return oThis.ReadExternalReferences(t,l);
 				});
 			}
+            else if (c_oSerWorkbookTypes.VbaProject == type)
+            {
+                this.stream.Skip2(1);//type
+                var _len = this.stream.GetULong();
+                this.oReadResult.vbaMacros = this.stream.GetBuffer(_len);
+            }
 			else if (c_oSerWorkbookTypes.JsaProject == type)
 			{
 				this.oReadResult.macros = AscCommon.GetStringUtf8(this.stream, length);
@@ -7325,7 +7915,7 @@
                 var DrawingDocument = oNewWorksheet.getDrawingDocument();
 				//TODO при copy/paste в word из excel необходимо подменить DrawingDocument из word - пересмотреть правку!
 				if(typeof editor != "undefined" && editor && editor.WordControl && editor.WordControl.m_oLogicDocument && editor.WordControl.m_oLogicDocument.DrawingDocument) {
-                    this.wb.DrawingDocument = editor.WordControl.m_oLogicDocument.DrawingDocument;
+                   this.wb.DrawingDocument = editor.WordControl.m_oLogicDocument.DrawingDocument;
                 }
 
 				
@@ -8838,7 +9428,10 @@
 			} else if (c_oSer_SheetView.TabSelected === type) {
 				this.stream.GetBool();
 			} else if (c_oSer_SheetView.TopLeftCell === type) {
-				this.stream.GetString2LE(length);
+                var _topLeftCell = AscCommonExcel.g_oRangeCache.getAscRange(this.stream.GetString2LE(length));
+                if (_topLeftCell) {
+                    oSheetView.topLeftCell = new Asc.Range(_topLeftCell.c1, _topLeftCell.r1, _topLeftCell.c1, _topLeftCell.r1);
+                }
 			} else if (c_oSer_SheetView.View === type) {
 				this.stream.GetUChar();
 			} else if (c_oSer_SheetView.WindowProtection === type) {
@@ -9372,7 +9965,6 @@
             else if ( c_oSer_OtherType.Theme === type )
             {
                 this.wb.theme = pptx_content_loader.ReadTheme(this, this.stream);
-                res = c_oSerConstants.ReadUnknown;
             }
             else
                 res = c_oSerConstants.ReadUnknown;
@@ -9514,6 +10106,7 @@
 			sheetData: [],
 			stylesTableReader: null,
 			pivotCacheDefinitions: {},
+			vbaMacros: null,
 			macros: null,
             slicerCaches: {},
 			tableIds: {},
@@ -9911,7 +10504,10 @@
 				AscCommonExcel.c_DateCorrectConst = AscCommon.bDate1904?AscCommonExcel.c_Date1904Const:AscCommonExcel.c_Date1900Const;
 			}
 			if (this.oReadResult.macros) {
-				wb.oApi.macros.SetData(this.oReadResult.macros);
+                wb.oApi.macros.SetData(this.oReadResult.macros);
+            }
+			if (this.oReadResult.vbaMacros) {
+				wb.oApi.vbaMacros = this.oReadResult.vbaMacros;
 			}
             wb.checkCorrectTables();
 		}
@@ -10670,6 +11266,7 @@
     prot['dataBar'] = prot.dataBar;
     prot['duplicateValues'] = prot.duplicateValues;
     prot['expression'] = prot.expression;
+    prot['iconSet'] = prot.iconSet;
     prot['notContainsBlanks'] = prot.notContainsBlanks;
     prot['notContainsErrors'] = prot.notContainsErrors;
     prot['notContainsText'] = prot.notContainsText;

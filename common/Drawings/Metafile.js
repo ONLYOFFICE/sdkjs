@@ -3303,10 +3303,11 @@
 		}
 		this.IsIdentity2 = function(m)
 		{
-			if (m.sx == 1.0 &&
-				m.shx == 0.0 &&
-				m.shy == 0.0 &&
-				m.sy == 1.0)
+			var eps = 0.00001;
+			if (Math.abs(m.sx - 1.0) < eps &&
+				Math.abs(m.shx) < eps &&
+				Math.abs(m.shy) < eps &&
+				Math.abs(m.sy - 1.0) < eps)
 			{
 				return true;
 			}

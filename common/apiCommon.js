@@ -3137,6 +3137,7 @@
 		this.canFill = true;
 		this.canChangeArrows = false;
 		this.bFromChart = false;
+		this.bFromGroup = false;
 		this.bFromImage = false;
 		this.Locked = false;
 		this.w = null;
@@ -3190,11 +3191,20 @@
 			return this.canChangeArrows;
 		}, asc_setCanChangeArrows: function (v) {
 			this.canChangeArrows = v;
-		}, asc_getFromChart: function () {
+		},
+		asc_getFromChart: function () {
 			return this.bFromChart;
-		}, asc_setFromChart: function (v) {
+		},
+		asc_setFromChart: function (v) {
 			this.bFromChart = v;
-		}, asc_getLocked: function () {
+		},
+		asc_getFromGroup: function () {
+			return this.bFromGroup;
+		},
+		asc_setFromGroup: function (v) {
+			this.bFromGroup = v;
+		},
+		asc_getLocked: function () {
 			return this.Locked;
 		}, asc_setLocked: function (v) {
 			this.Locked = v;
@@ -6030,6 +6040,8 @@
 	prot["set_CanChangeArrows"] = prot["asc_setCanChangeArrows"] = prot.asc_setCanChangeArrows;
 	prot["get_FromChart"] = prot["asc_getFromChart"] = prot.asc_getFromChart;
 	prot["set_FromChart"] = prot["asc_setFromChart"] = prot.asc_setFromChart;
+	prot["get_FromGroup"] = prot["asc_getFromGroup"] = prot.asc_getFromGroup;
+	prot["set_FromGroup"] = prot["asc_setFromGroup"] = prot.asc_setFromGroup;
 	prot["get_Locked"] = prot["asc_getLocked"] = prot.asc_getLocked;
 	prot["set_Locked"] = prot["asc_setLocked"] = prot.asc_setLocked;
 	prot["get_Width"] = prot["asc_getWidth"] = prot.asc_getWidth;

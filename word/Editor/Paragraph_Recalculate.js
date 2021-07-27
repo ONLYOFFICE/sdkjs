@@ -1904,12 +1904,20 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
                     }
                     case AscCommon.align_Right:
                     {
-                        X = Math.max(Range.X + RangeWidth - Range.W, Range.X);
+						X = Range.X + RangeWidth - Range.W;
+
+                    	if (this.IsUseXLimit())
+                        	X = Math.max(X, Range.X);
+
                         break;
                     }
                     case AscCommon.align_Center:
                     {
-                        X = Math.max(Range.X + (RangeWidth - Range.W) / 2, Range.X);
+                        X = Range.X + (RangeWidth - Range.W) / 2;
+
+						if (this.IsUseXLimit())
+							X = Math.max(X, Range.X);
+
                         break;
                     }
                     case AscCommon.align_Justify:

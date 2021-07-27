@@ -1476,6 +1476,20 @@
 	 * @typedef {("None" | "Double" | "Hair" | "DashDotDot" | "DashDot" | "Dotted" | "Dashed" | "Thin" | "MediumDashDotDot" | "SlantDashDot" | "MediumDashDot" | "MediumDashed" | "Medium" | "Thick")} LineStyle
 	 */
 
+	//TODO xlManual param
+	/**
+	 * @typedef {("xlAscending" | "xlDescending")}  SortOrder
+	 * */
+
+	//TODO xlGuess param
+	/**
+	 * @typedef {("xlNo" | "xlYes")} SortHeader
+	 * */
+
+	/**
+	 * @typedef {("xlSortColumns" | "xlSortRows")} SortOrientation
+	 * */
+
 	/**
 	 * Get the type of this class.
 	 * @memberof ApiRange
@@ -1662,28 +1676,46 @@
 	 * @param {string} RefStyle - The reference style.
 	 * @param {bool} External - Defines if the range is in the current file or not.
 	 * @param {range} RelativeTo - The range which the current range is relative to.
-	 * @returns {string | null} - returns null if range does not consist of one cell. 
+	 * @returns {string | null} - returns address of range as string. 
 	 */
-	ApiRange.prototype.GetAddress = function (RowAbs, ColAbs, RefStyle, External, RelativeTo) {
-		if (this.range.isOneCell()) {
-			var range = this.range.bbox;
-			var ws = this.range.worksheet;
-			if (RefStyle == 'xlA1') {
-				(ColAbs && RowAbs) ? range.setAbs(1, 1, 1, 1) : (ColAbs) ? range.setAbs(0, 1, 0, 1) : (RowAbs) ? range.setAbs(1, 0, 1, 0) : range.setAbs(0, 0, 0, 0);
+	 ApiRange.prototype.GetAddress = function (RowAbs, ColAbs, RefStyle, External, RelativeTo) {
+		var range = this.range.bbox;
+		var isOneCell = this.range.isOneCell();
+		var ws = this.range.worksheet;
+		var value = ""
+		var row1 = range.r1 + ( (RowAbs || RefStyle != "xlR1C1") ? 1 : 0),
+			col1 = range.c1 + ( (ColAbs || RefStyle != "xlR1C1") ? 1 : 0),
+			row2 = range.r2 + ( (RowAbs || RefStyle != "xlR1C1") ? 1 : 0),
+			col2 = range.c2 + ( (ColAbs || RefStyle != "xlR1C1") ? 1 : 0);
+		if (RefStyle == 'xlR1C1') {
+			if (RowAbs) {
+				row1 = "R" + row1;
+				row2 = isOneCell ? "" : ":R" + row2;
+			} else {
+				var tmpR = (RelativeTo instanceof ApiRange) ? RelativeTo.range.bbox.r1 : 0;
+				row1 = "R" + ((row1 - tmpR) !== 0 ? "[" + (row1 - tmpR) + "]" : "");
+				row2 = isOneCell ? "" : ":R" + ((row2 - tmpR) !== 0 ? "[" + (row2 - tmpR) + "]" : "");
 			}
-			// } else if (!RelativeTo) { 
-			// 	name[1] = (ColAbs) ? 'R' + (range[1] + 1) : 'R[' + range[1] + ']';
-			// 	name[2] = (ColAbs) ? 'C' + (range[0] + 1) : 'C[' + range[0] + ']';
-			// } else {
-			// 	var relRange = [RelativeTo.range.bbox.c1, RelativeTo.range.bbox.c1];
-			// 	name[1] = (ColAbs) ? 'R' + (range[1] + 1) : 'R[' + (range[1] - relRange[1]) + ']'; 
-			// 	name[2] = (ColAbs) ? 'C' + (range[0] + 1) : 'C[' + (range[0] - relRange[0]) + ']';
-			// }
-			return (External) ? '[' + ws.workbook.oApi.DocInfo.Title + ']' + AscCommon.parserHelp.get3DRef(ws.sName, range.getName()) : range.getName();
+
+			if (ColAbs) {
+				col1 = "C" + col1;
+				col2 = isOneCell ? "" : "C" + col2;
+			} else {
+				var tmpC = (RelativeTo instanceof ApiRange) ? RelativeTo.range.bbox.c1 : 0;
+				col1 = "C" + ((col1 - tmpC) !== 0 ? "[" + (col1 - tmpC) + "]" : "");
+				col2 = isOneCell ? "" : "C" + ((col2 - tmpC) !== 0 ? "[" + (col2 - tmpC) + "]" : "");
+			}
+			value = row1 + col1 + row2 + col2;
 		} else {
-			return null;
+			// xlA1 - default
+			row1 = (RowAbs ? "$" : "") + row1;
+			col1 = (ColAbs ? "$" : "") + AscCommon.g_oCellAddressUtils.colnumToColstr(col1);
+			row2 = isOneCell ? "" : ( (RowAbs ? "$" : "") + row2);
+			col2 = isOneCell ? "" : ( (ColAbs ? ":$" : ":") + AscCommon.g_oCellAddressUtils.colnumToColstr(col2) );
+			value = col1 + row1 + col2 + row2;
 		}
-	};
+		return (External) ? '[' + ws.workbook.oApi.DocInfo.Title + ']' + AscCommon.parserHelp.get3DRef(ws.sName, value) : value;
+};
 
 	/**
 	 * Get rows or columns count.
@@ -2477,6 +2509,99 @@
 			return this.SetOrientation();
 		}
 	});
+
+	/**
+	 * Add a comment to the range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange | String} key1 - first sort field
+	 * @param {SortOrder} sSortOrder1 - determines the sort order for the values specified in Key1
+	 * @param {ApiRange | String} key2 - second sort field
+	 * @param {SortOrder} sSortOrder2 - determines the sort order for the values specified in Key2
+	 * @param {ApiRange | String} key3 - third sort field
+	 * @param {SortOrder} sSortOrder3 - determines the sort order for the values specified in Key3
+	 * @param {SortHeader} sHeader - specifies whether the first row contains header information
+	 * @param {SortOrientation} sOrientation - specifies if the sort should be by row (default) or column
+	 */
+
+	ApiRange.prototype.SetSort = function (key1, sSortOrder1, key2, /*Type,*/ sSortOrder2, key3, sSortOrder3, sHeader, /*OrderCustom, MatchCase,*/ sOrientation/*, SortMethod, DataOption1, DataOption2, DataOption3*/) {
+		var ws = this.range.worksheet;
+		var sortSettings = new Asc.CSortProperties(ws);
+		var range = this.range.bbox;
+
+		var aMerged = ws.mergeManager.get(range);
+		if (aMerged.outer.length > 0 || (aMerged.inner.length > 0 && null == window['AscCommonExcel']._isSameSizeMerged(range, aMerged.inner, true))) {
+			return;
+		}
+
+		sortSettings.hasHeaders = sHeader === "xlYes";
+		var columnSort = sortSettings.columnSort = sOrientation !== "xlSortRows";
+
+		var getSortLevel = function(_key, _order) {
+			var index = null;
+			if (_key instanceof ApiRange) {
+				index = columnSort ? _key.range.bbox.c1 - range.c1 : _key.range.bbox.r1 - range.r1;
+			} else if (typeof _key === "string") {
+				//named range
+				var _defName = ws.workbook.getDefinesNames(_key);
+				if (_defName) {
+					var defNameRef;
+					AscCommonExcel.executeInR1C1Mode(false, function () {
+						defNameRef = AscCommonExcel.getRangeByRef(_defName.ref, ws, true, true)
+					});
+					if (defNameRef && defNameRef[0] && defNameRef[0].worksheet) {
+						if (range.contains(defNameRef[0].bbox.c1, defNameRef[0].bbox.r1)) {
+							if (defNameRef[0].worksheet.Id === ws.Id) {
+								index = columnSort ? defNameRef[0].bbox.c1 - range.c1 : defNameRef[0].bbox.r1 - range.r1;
+							}
+						} else {
+							//error
+							return false;
+						}
+					}
+				}
+			}
+
+			if (null === index) {
+				return null;
+			}
+
+			var level = new Asc.CSortPropertiesLevel();
+			level.index = index;
+			level.descending = _order === "xlDescending" ? Asc.c_oAscSortOptions.Descending : Asc.c_oAscSortOptions.Ascending;
+			sortSettings.levels.push(level);
+		};
+
+		sortSettings.levels = [];
+		if (key1 && false === getSortLevel(key1, sSortOrder1)) {
+			return;
+		}
+		if (key2 && false === getSortLevel(key2, sSortOrder2)) {
+			return;
+		}
+		if (key3 && false === getSortLevel(key3, sSortOrder3)) {
+			return;
+		}
+
+		var oWorksheet = Asc['editor'].wb.getWorksheet();
+		var tables = ws.autoFilters.getTablesIntersectionRange(range);
+		var obj;
+		if(tables && tables.length) {
+			obj = tables[0];
+		} else if(ws.AutoFilter && ws.AutoFilter.Ref && ws.AutoFilter.Ref.intersection(range)) {
+			obj = ws.AutoFilter;
+		}
+		ws.setCustomSort(sortSettings, obj, null, oWorksheet && oWorksheet.cellCommentator, range);
+	};
+
+	/*Object.defineProperty(ApiRange.prototype, "Sort", {
+		set: function (obj) {
+			return this.SetSort(obj.Key1, obj.Order1, obj.Key2, obj.Type, obj.Order2, obj.Key3, obj.Order3, obj.Header,
+				obj.OrderCustom, obj.MatchCase, obj.Orientation, obj.SortMethod, obj.DataOption1, obj.DataOption2,
+				obj.DataOption3);
+		}
+	});*/
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDrawing
@@ -3211,6 +3336,7 @@
 	ApiRange.prototype["Select"] = ApiRange.prototype.Select;
 	ApiRange.prototype["SetOrientation"] = ApiRange.prototype.SetOrientation;
 	ApiRange.prototype["GetOrientation"] = ApiRange.prototype.GetOrientation;
+	ApiRange.prototype["SetSort"] = ApiRange.prototype.SetSort;
 
 
 	ApiDrawing.prototype["GetClassType"]               =  ApiDrawing.prototype.GetClassType;

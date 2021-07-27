@@ -64,6 +64,8 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 	this.DrawingType = drawing_Inline;
 	this.GraphicObj  = GraphicObj;
 
+	this.Form = false; // Флаг, означающий, является ли данная автофигура контейнером для специальной формой
+
 	this.X      = 0;
 	this.Y      = 0;
 	this.Width  = 0;
@@ -1006,9 +1008,14 @@ ParaDrawing.prototype.CheckWH = function()
 	var oldExtH = this.Extent.H;
 	if (this.GraphicObj.spPr && this.GraphicObj.spPr.xfrm
 		&& AscFormat.isRealNumber(this.GraphicObj.spPr.xfrm.extX)
-		&& AscFormat.isRealNumber(this.GraphicObj.spPr.xfrm.extY)){
+		&& AscFormat.isRealNumber(this.GraphicObj.spPr.xfrm.extY))
+	{
 		this.Extent.W = this.GraphicObj.spPr.xfrm.extX;
 		this.Extent.H = this.GraphicObj.spPr.xfrm.extY;
+	}
+	if(this.GraphicObj.getObjectType() === AscDFH.historyitem_type_Shape)
+	{
+		this.GraphicObj.handleUpdateExtents();
 	}
 	this.GraphicObj.recalculate();
 	this.Extent.W = oldExtW;
@@ -1282,6 +1289,8 @@ ParaDrawing.prototype.Copy = function(oPr)
 	c.docPr.setFromOther(this.docPr);
 	if (this.ParaMath)
 		c.Set_ParaMath(this.ParaMath.Copy());
+
+	c.SetForm(this.Form);
 	return c;
 };
 ParaDrawing.prototype.IsEqual = function(oElement)
@@ -1499,12 +1508,15 @@ ParaDrawing.prototype.selectionIsEmpty = function()
 ParaDrawing.prototype.recalculateDocContent = function()
 {
 };
-ParaDrawing.prototype.Shift = function(Dx, Dy)
+ParaDrawing.prototype.Shift = function(Dx, Dy, nPageAbs)
 {
-	this.ShiftX = Dx;
-	this.ShiftY = Dy;
-	this.X = this.OrigX + Dx;
-	this.Y = this.OrigY + Dy;
+	if (undefined !== nPageAbs)
+		this.PageNum = nPageAbs;
+
+	this.ShiftX += Dx;
+	this.ShiftY += Dy;
+	this.X = this.OrigX + this.ShiftX;
+	this.Y = this.OrigY + this.ShiftY;
 
 	this.updatePosition3(this.PageNum, this.X, this.Y);
 };
@@ -1653,6 +1665,19 @@ ParaDrawing.prototype.Is_Inline = function()
 ParaDrawing.prototype.IsInline = function()
 {
 	return this.Is_Inline();
+};
+ParaDrawing.prototype.IsForm = function()
+{
+	return this.Form;
+};
+ParaDrawing.prototype.SetForm = function(isForm)
+{
+	History.Add(new CChangesParaDrawingForm(this, this.DrawingType, isForm));
+	this.Form = isForm;
+}
+ParaDrawing.prototype.GetInnerForm = function()
+{
+	return this.GraphicObj ? this.GraphicObj.getInnerForm() : null;
 };
 ParaDrawing.prototype.Use_TextWrap = function()
 {
@@ -2812,6 +2837,7 @@ ParaDrawing.prototype.copy = function()
 	c.Set_AllowOverlap(this.AllowOverlap);
 	c.Set_WrappingType(this.wrappingType);
 	c.Set_BehindDoc(this.behindDoc);
+	c.SetForm(this.Form);
 	var EE = this.EffectExtent;
 	c.setEffectExtent(EE.L, EE.T, EE.R, EE.B);
 	return c;

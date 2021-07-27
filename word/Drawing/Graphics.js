@@ -46,6 +46,23 @@ var AscBrowser = AscCommon.AscBrowser;
 var CMatrixL = AscCommon.CMatrixL;
 var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
 
+AscCommon.darkModeEdge = 10;
+AscCommon.darkModeCheckColor = function(r, g, b)
+{
+    return (r < AscCommon.darkModeEdge && g < AscCommon.darkModeEdge && b < AscCommon.darkModeEdge) ? true : false;
+};
+AscCommon.darkModeCheckColor2 = function(r, g, b)
+{
+    if (r < AscCommon.darkModeEdge && g < AscCommon.darkModeEdge && b < AscCommon.darkModeEdge) return true;
+    var max = 255 - AscCommon.darkModeEdge;
+	if (r > max && g > max && b > max) return true;
+	return false;
+};
+AscCommon.darkModeCorrectColor = function(r, g, b)
+{
+    return AscCommon.darkModeCheckColor(r, g, b) ? { R : 255 - r, G: 255 - g, B : 255 - b } : { R : r, G : g, B : b };
+};
+
 function CGraphics()
 {
     this.m_oContext     = null;
@@ -116,6 +133,10 @@ function CGraphics()
     this.dash_no_smart = null;
 
     this.textAlpha = undefined;
+
+    this.endGlobalAlphaColor = null;
+    this.isDarkMode = false;
+    this.isShapeDraw = false;
 }
 
 CGraphics.prototype =
@@ -195,7 +216,13 @@ CGraphics.prototype =
             this.m_oContext.setTransform(1,0,0,1,0,0);
         }
 
-        this.b_color1(255, 255, 255, 140);
+        var oldDarkMode = this.isDarkMode;
+        this.isDarkMode = false;
+        if (!this.endGlobalAlphaColor)
+            this.b_color1(255, 255, 255, 140);
+        else
+            this.b_color1(this.endGlobalAlphaColor[0], this.endGlobalAlphaColor[1], this.endGlobalAlphaColor[2], 140);
+		this.isDarkMode = oldDarkMode;
 
         this.m_oContext.fillRect(0, 0, this.m_lWidthPix, this.m_lHeightPix);
         this.m_oContext.beginPath();
@@ -206,12 +233,39 @@ CGraphics.prototype =
                 this.m_oFullTransform.sy,this.m_oFullTransform.tx,this.m_oFullTransform.ty);
         }
     },
-    darkModeOverride : function(r,g,b,a)
+
+    darkModeOverride : function()
     {
-        this.p_color_old = this.p_color; this.p_color = function(r,g,b,a) { (r<10 && g<10 && b<10) ? this.p_color_old(255-r,255-g,255-b,a) : this.p_color_old(r,g,b,a); };
-		this.b_color1_old = this.b_color1; this.b_color1 = function(r,g,b,a) { (r<10 && g<10 && b<10) ? this.b_color1_old(255-r,255-g,255-b,a) : this.b_color1_old(r,g,b,a); };
-		this.b_color2_old = this.b_color2; this.b_color2 = function(r,g,b,a) { (r<10 && g<10 && b<10) ? this.b_color2_old(255-r,255-g,255-b,a) : this.b_color2_old(r,g,b,a); };
+        this.isDarkMode = true;
+        function _darkColor(_this, _func) {
+            return function(r, g, b, a) {
+                if (_this.isDarkMode && !this.isShapeDraw && AscCommon.darkModeCheckColor(r, g, b))
+                    _func.call(_this, 255 - r, 255 - g, 255 - b, a);
+                else
+                    _func.call(_this, r, g, b, a);
+            };
+        }
+
+        this.p_color_old = this.p_color; this.p_color = _darkColor(this, this.p_color_old);
+		this.b_color1_old = this.b_color1; this.b_color1 = _darkColor(this, this.b_color1_old);
+		this.b_color2_old = this.b_color2; this.b_color2 = _darkColor(this, this.b_color2_old);
     },
+	darkModeOverride2 : function()
+	{
+		this.isDarkMode = true;
+		function _darkColor(_this, _func) {
+			return function(r, g, b, a) {
+				if (_this.isDarkMode && !this.isShapeDraw && AscCommon.darkModeCheckColor2(r, g, b))
+					_func.call(_this, 255 - r, 255 - g, 255 - b, a);
+				else
+					_func.call(_this, r, g, b, a);
+			};
+		}
+
+		this.p_color_old = this.p_color; this.p_color = _darkColor(this, this.p_color_old);
+		this.b_color1_old = this.b_color1; this.b_color1 = _darkColor(this, this.b_color1_old);
+		this.b_color2_old = this.b_color2; this.b_color2 = _darkColor(this, this.b_color2_old);
+	},
     // pen methods
     p_color : function(r,g,b,a)
     {
@@ -2760,6 +2814,7 @@ CGraphics.prototype =
 
     CheckUseFonts2 : function(_transform)
     {
+        this.isShapeDraw = true;
         if (!global_MatrixTransformer.IsIdentity2(_transform))
         {
             if (!AscCommon.g_fontManager2)
@@ -2779,6 +2834,7 @@ CGraphics.prototype =
 
     UncheckUseFonts2 : function()
     {
+		this.isShapeDraw = false;
         this.IsUseFonts2 = false;
     },
 

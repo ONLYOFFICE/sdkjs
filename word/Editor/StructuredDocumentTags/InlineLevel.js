@@ -205,6 +205,9 @@ CInlineLevelSdt.prototype.private_CopyPrTo = function(oContentControl)
 
 	if (undefined !== this.Pr.TextForm)
 		oContentControl.SetTextFormPr(this.Pr.TextForm);
+
+	if (undefined !== this.Pr.PictureFormPr)
+		oContentControl.SetPictureFormPr(this.Pr.PictureFormPr);
 };
 CInlineLevelSdt.prototype.GetSelectedContent = function(oSelectedContent)
 {
@@ -530,9 +533,9 @@ CInlineLevelSdt.prototype.Remove = function(nDirection, bOnAddText)
 
 	return bResult;
 };
-CInlineLevelSdt.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange)
+CInlineLevelSdt.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 {
-	CParagraphContentWithParagraphLikeContent.prototype.Shift_Range.call(this, Dx, Dy, _CurLine, _CurRange);
+	CParagraphContentWithParagraphLikeContent.prototype.Shift_Range.call(this, Dx, Dy, _CurLine, _CurRange, _CurPage);
 
 	var CurLine = _CurLine - this.StartLine;
 	var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
@@ -663,6 +666,27 @@ CInlineLevelSdt.prototype.GetBoundingPolygonAnchorPoint = function()
 
 	return {X : nR, Y : (nT + nB) / 2, Page : nPageAbs, Transform : this.Get_ParentTextTransform()};
 };
+CInlineLevelSdt.prototype.IsFixedForm = function()
+{
+	if (!this.IsForm() || !this.Paragraph)
+		return false;
+
+	var oShape = this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null;
+	return (oShape && oShape.isForm());
+};
+CInlineLevelSdt.prototype.GetFixedFormBounds = function()
+{
+	if (!this.Paragraph)
+		return {X : 0, Y : 0, W : 0, H : 0, Page : 0};
+
+	var oShape = this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null;
+	if (oShape && oShape.isForm())
+	{
+		return oShape.getFormRelRect();
+	}
+
+	return {X : 0, Y : 0, W : 0, H : 0, Page : 0};
+};
 CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCurPage)
 {
 	if (!this.Paragraph && this.Paragraph.LogicDocument)
@@ -674,6 +698,15 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCu
 		return;
 
 	var oDrawingDocument = oLogicDocument.GetDrawingDocument();
+
+	var oShape = this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null;
+	if (this.IsForm() && oShape && oShape.isForm())
+	{
+		var oPolygon = new AscCommon.CPolygon();
+		oPolygon.fill([[oShape.getFormRelRect()]]);
+		oDrawingDocument.OnDrawContentControl(this, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In, oPolygon.GetPaths(0));
+		return;
+	}
 
 	if (Asc.c_oAscSdtAppearance.Hidden === this.GetAppearance() || this.Paragraph.LogicDocument.IsForceHideContentControlTrack())
 	{
@@ -1232,6 +1265,9 @@ CInlineLevelSdt.prototype.SetContentControlPr = function(oPr)
 	}
 
 	oPr.SetToContentControl(this);
+
+	if (this.IsForm())
+		this.GetLogicDocument().CheckFormAutoFit(this);
 };
 CInlineLevelSdt.prototype.GetContentControlPr = function()
 {
@@ -1245,6 +1281,9 @@ CInlineLevelSdt.prototype.GetContentControlPr = function()
  */
 CInlineLevelSdt.prototype.CanBeDeleted = function()
 {
+	if (this.IsFixedForm())
+		return false;
+
 	return (undefined === this.Pr.Lock || c_oAscSdtLockType.Unlocked === this.Pr.Lock || c_oAscSdtLockType.ContentLocked === this.Pr.Lock);
 };
 /**
@@ -1589,6 +1628,35 @@ CInlineLevelSdt.prototype.SelectPicture = function()
 
 	this.GetParagraph().GetParent().Select_DrawingObject(arrDrawings[0].GetId());
 	return true;
+};
+/**
+ * Проверяем, является ли данный класс специальной формой для картинок
+ * @returns {boolean}
+ */
+CInlineLevelSdt.prototype.IsPictureForm = function()
+{
+	return (this.IsForm() && this.IsPicture() && undefined !== this.Pr.PictureFormPr);
+};
+/**
+ * Выставляем настройк для формы с картинкой
+ * @param oPr {CSdtPictureFormPr}
+ */
+CInlineLevelSdt.prototype.SetPictureFormPr = function(oPr)
+{
+	if (undefined === this.Pr.PictureFormPr || !this.Pr.PictureFormPr.IsEqual(oPr))
+	{
+		var _oPr = oPr ? oPr.Copy() : undefined;
+		History.Add(new CChangesSdtPrPictureFormPr(this, this.Pr.PictureFormPr, _oPr));
+		this.Pr.PictureFormPr = _oPr;
+	}
+};
+/**
+ * Получаем настройки для картиночной формы
+ * @returns {?CSdtPictureFormPr}
+ */
+CInlineLevelSdt.prototype.GetPictureFormPr = function()
+{
+	return this.Pr.PictureFormPr;
 };
 /**
  * Проверяем является ли данный контейнер специальным для поля со списком
@@ -2096,11 +2164,22 @@ CInlineLevelSdt.prototype.CheckHitInContentControlByXY = function(X, Y, nPageAbs
 		_Y = oTransform.TransformPointY(X, Y);
 	}
 
-	for (var sKey in this.Bounds)
+	if (this.IsFixedForm())
 	{
-		var oBound = this.Bounds[sKey];
-		if (oParagraph.GetAbsolutePage(oBound.PageInternal) === nPageAbs && oBound.X <= _X && _X <= oBound.X + oBound.W && oBound.Y <= _Y && _Y <= oBound.Y + oBound.H)
+		var oShape  = oParagraph.Parent.Is_DrawingShape(true);
+		var oBounds = oShape.getFormRelRect();
+
+		if (oBounds.Page === nPageAbs && oBounds.X <= _X && _X <= oBounds.X + oBounds.W && oBounds.Y <= _Y && _Y <= oBounds.Y + oBounds.H)
 			return true;
+	}
+	else
+	{
+		for (var sKey in this.Bounds)
+		{
+			var oBounds = this.Bounds[sKey];
+			if (oParagraph.GetAbsolutePage(oBounds.PageInternal) === nPageAbs && oBounds.X <= _X && _X <= oBounds.X + oBounds.W && oBounds.Y <= _Y && _Y <= oBounds.Y + oBounds.H)
+				return true;
+		}
 	}
 
 	return false;
@@ -2214,19 +2293,17 @@ CInlineLevelSdt.prototype.IntersectWithRect = function(X, Y, W, H, nPageAbs)
 {
 	var arrRects = [];
 
-	var oParagraph = this.GetParagraph();
-	if (!oParagraph)
-		return [];
-
-	for (var sKey in this.Bounds)
+	if (this.IsFixedForm())
 	{
-		var oBound = this.Bounds[sKey];
-		if (oParagraph.GetAbsolutePage(oBound.PageInternal) === nPageAbs)
+		var oShape  = this.Paragraph.Parent.Is_DrawingShape(true);
+		var oBounds = oShape.getFormRelRect();
+
+		if (nPageAbs === oBounds.Page)
 		{
-			var nLeft   = Math.max(X, oBound.X);
-			var nRight  = Math.min(X + W, oBound.X + oBound.W);
-			var nTop    = Math.max(Y, oBound.Y);
-			var nBottom = Math.min(Y + H, oBound.Y + oBound.H);
+			var nLeft   = Math.max(X, oBounds.X);
+			var nRight  = Math.min(X + W, oBounds.X + oBounds.W);
+			var nTop    = Math.max(Y, oBounds.Y);
+			var nBottom = Math.min(Y + H, oBounds.Y + oBounds.H);
 
 			if (nLeft < nRight && nTop < nBottom)
 			{
@@ -2236,6 +2313,34 @@ CInlineLevelSdt.prototype.IntersectWithRect = function(X, Y, W, H, nPageAbs)
 					W : nRight - nLeft,
 					H : nBottom - nTop
 				});
+			}
+		}
+	}
+	else
+	{
+		var oParagraph = this.GetParagraph();
+		if (!oParagraph)
+			return [];
+
+		for (var sKey in this.Bounds)
+		{
+			var oBound = this.Bounds[sKey];
+			if (oParagraph.GetAbsolutePage(oBound.PageInternal) === nPageAbs)
+			{
+				var nLeft   = Math.max(X, oBound.X);
+				var nRight  = Math.min(X + W, oBound.X + oBound.W);
+				var nTop    = Math.max(Y, oBound.Y);
+				var nBottom = Math.min(Y + H, oBound.Y + oBound.H);
+
+				if (nLeft < nRight && nTop < nBottom)
+				{
+					arrRects.push({
+						X : nLeft,
+						Y : nTop,
+						W : nRight - nLeft,
+						H : nBottom - nTop
+					});
+				}
 			}
 		}
 	}
@@ -2271,6 +2376,514 @@ CInlineLevelSdt.prototype.IsSelectedToEnd = function()
 		return true;
 
 	return CParagraphContentWithParagraphLikeContent.prototype.IsSelectedToEnd.apply(this, arguments);
+};
+CInlineLevelSdt.prototype.IsFormFilled = function()
+{
+	if (!this.IsForm())
+		return true;
+
+	if (this.IsPlaceHolder())
+		return false;
+
+	if (this.IsTextForm())
+	{
+		var sText = this.GetSelectedText(true);
+		var oTextFormPr = this.GetTextFormPr();
+
+		if (oTextFormPr.IsComb())
+		{
+			var nMaxLen = oTextFormPr.GetMaxCharacters();
+			return (nMaxLen === sText.length);
+		}
+		else
+		{
+			return (sText !== "");
+		}
+	}
+	else if (this.IsComboBox())
+	{
+		var sText = this.GetSelectedText(true);
+		return (sText !== "");
+	}
+	else if (this.IsDropDownList())
+	{
+		var sText = this.GetSelectedText(true);
+
+		var oListPr = this.GetDropDownListPr();
+		for (var nIndex = 0, nCount = oListPr.GetItemsCount(); nIndex < nCount; ++nIndex)
+		{
+			if (sText === oListPr.GetItemDisplayText(nIndex))
+				return true;
+		}
+
+		return false;
+	}
+	else if (this.IsPicture())
+	{
+		// Мы уже проверили, что тут не Placeholder, значит форма заполнена
+		return true;
+	}
+	else if (this.IsCheckBox() && !this.IsRadioButton())
+	{
+		return this.GetCheckBoxPr().GetChecked();
+	}
+	else if (this.IsCheckBox() && this.IsRadioButton())
+	{
+		var oLogicDocument = this.GetLogicDocument();
+		if (!oLogicDocument)
+			return false;
+
+		var arrRadioGroup = oLogicDocument.GetSpecialRadioButtons(this.GetCheckBoxPr().GetGroupKey());
+		for (var nIndex = 0, nCount = arrRadioGroup.length; nIndex < nCount; ++nIndex)
+		{
+			var oRadioForm = arrRadioGroup[nIndex];
+			if (oRadioForm.GetCheckBoxPr().GetChecked())
+				return true;
+		}
+
+		return false;
+	}
+
+	return false;
+}
+CInlineLevelSdt.prototype.ConvertFormToFixed = function()
+{
+	var oParagraph        = this.GetParagraph();
+	var oParent           = this.GetParent();
+	var oParentDocContent = oParagraph.GetParent();
+	var oLogicDocument    = oParagraph ? oParagraph.GetLogicDocument() : null;
+	var nPosInParent      = this.GetPosInParent(oParent);
+
+	if (!oParagraph
+		|| !oParent
+		|| !oParentDocContent
+		|| !oLogicDocument
+		|| -1 === nPosInParent
+		|| oParagraph.IsInFixedForm())
+		return null;
+
+	var oShape = new AscFormat.CShape();
+	oShape.setWordShape(true);
+	oShape.setBDeleted(false);
+
+	var nW = 50;
+	var nH = 50;
+
+	for (var Key in this.Bounds)
+	{
+		if (this.Bounds[Key].W > 0.001 && this.Bounds[Key].H > 0.001)
+		{
+			nW = this.Bounds[Key].W + 0.5;
+			nH = this.Bounds[Key].H + 0.1;
+			break;
+		}
+	}
+
+	var oSpPr = new AscFormat.CSpPr();
+	var oXfrm = new AscFormat.CXfrm();
+	oXfrm.setOffX(0);
+	oXfrm.setOffY(0);
+	oXfrm.setExtX(nW);
+	oXfrm.setExtY(nH);
+	oSpPr.setXfrm(oXfrm);
+	oXfrm.setParent(oSpPr);
+
+	oSpPr.setFill(AscFormat.CreateNoFillUniFill());
+	oSpPr.setLn(AscFormat.CreateNoFillLine());
+	oSpPr.setGeometry(AscFormat.CreateGeometry("rect"));
+	oSpPr.setParent(oShape);
+	oShape.setSpPr(oSpPr);
+
+	oShape.createTextBoxContent();
+	var oContent = oShape.getDocContent();
+
+	var oInnerParagraph = oContent.GetElement(0);
+	if (!oInnerParagraph)
+		return this;
+
+	oInnerParagraph.MoveCursorToStartPos();
+	oInnerParagraph.Add(this);
+	oInnerParagraph.SetParagraphAlign(this.IsCheckBox() ? AscCommon.align_Center : AscCommon.align_Left);
+	oInnerParagraph.SetParagraphSpacing({Before : 0, After : 0, Line : 1, LineRule : AscCommon.linerule_Auto});
+
+	var oBodyPr = oShape.getBodyPr().createDuplicate();
+
+	oBodyPr.spcFirstLastPara = false;
+	oBodyPr.vertOverflow     = AscFormat.nOTOwerflow;
+	oBodyPr.horzOverflow     = AscFormat.nOTOwerflow;
+	oBodyPr.vert             = AscFormat.nVertTThorz;
+
+	oBodyPr.rot         = 0;
+	oBodyPr.lIns        = 0.0;
+	oBodyPr.tIns        = 0.0;
+	oBodyPr.rIns        = 0.0;
+	oBodyPr.bIns        = 0.0;
+	oBodyPr.numCol      = 1;
+	oBodyPr.spcCol      = 0;
+	oBodyPr.rtlCol      = 0;
+	oBodyPr.fromWordArt = false;
+	oBodyPr.anchor      = 1;
+	oBodyPr.anchorCtr   = false;
+	oBodyPr.forceAA     = false;
+	oBodyPr.compatLnSpc = true;
+	oBodyPr.prstTxWarp  = null;
+
+	oShape.setBodyPr(oBodyPr);
+
+	var oParaDrawing = new ParaDrawing(oShape.spPr.xfrm.extX, oShape.spPr.xfrm.extY, oShape, oLogicDocument.GetDrawingDocument(), oParentDocContent, null);
+	oShape.setParent(oParaDrawing);
+	oParaDrawing.Set_DrawingType(drawing_Inline);
+	oParaDrawing.SetForm(true);
+
+	var oRun = new ParaRun(oParagraph, false);
+	oRun.AddToContent(0, oParaDrawing);
+
+	if (this.Content.length > 0 && this.Content[0] instanceof ParaRun)
+	{
+		var oInnerRun = this.Content[0];
+		var oTextPr   = oInnerRun.Get_CompiledPr(false);
+
+		g_oTextMeasurer.SetTextPr(oTextPr, oParagraph.GetTheme());
+		g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+
+		var nTextDescent = Math.abs(g_oTextMeasurer.GetDescender());
+
+		oRun.Set_Position(oTextPr.Position - nTextDescent);
+		oInnerRun.Recalc_CompiledPr(true);
+	}
+
+	oParent.RemoveFromContent(nPosInParent, 1, true);
+	oParent.AddToContent(nPosInParent, oRun, true);
+
+	return oParaDrawing;
+};
+CInlineLevelSdt.prototype.ConvertFormToInline = function()
+{
+	var oParagraph   = this.GetParagraph();
+	var oParent      = this.GetParent();
+	var nPosInParent = this.GetPosInParent(oParent);
+	if (!oParagraph || !oParent || !oParagraph.IsInFixedForm() || -1 === nPosInParent || this.IsPicture())
+		return false;
+
+	var oShape = oParagraph.Parent.Is_DrawingShape(true);
+	if (!oShape || !oShape.parent)
+		return false;
+
+	var oParaDrawing = oShape.parent;
+	var oRun = oParaDrawing.GetRun();
+	if (!oRun)
+		return false;
+
+	var oRunParent = oRun.GetParent();
+	var nInRunParentPos = oRun.GetPosInParent(oRunParent);
+	if (!oRunParent || -1 === nInRunParentPos)
+		return false;
+
+	if (1 === oRun.GetElementsCount())
+	{
+		oParent.RemoveFromContent(nPosInParent, 1, true);
+		oRunParent.RemoveFromContent(nInRunParentPos, 1, true);
+		oRunParent.AddToContent(nInRunParentPos, this, true);
+	}
+	else
+	{
+		var nInRunPos = -1;
+		for (var nPos = 0, nRunLen = oRun.GetElementsCount(); nPos < nRunLen; ++nPos)
+		{
+			if (oRun.GetElement() === oParaDrawing)
+			{
+				nInRunPos = nPos;
+				break;
+			}
+		}
+
+		if (-1 === nInRunPos)
+			return false;
+
+		oParent.RemoveFromContent(nPosInParent, 1, true);
+		oRun.RemoveFromContent(nInRunPos, 1);
+		oRunParent.AddToContent(nInRunParentPos, this, true);
+	}
+
+	return true;
+};
+CInlineLevelSdt.prototype.IsMultiLineForm = function()
+{
+	var oTextFormPr = this.GetTextFormPr();
+	if (oTextFormPr)
+		return oTextFormPr.GetMultiLine();
+
+	return true;
+};
+CInlineLevelSdt.prototype.OnChangeFixedFormTrack = function(nW, nH)
+{
+	if (!this.IsForm())
+		return;
+
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph || !oParagraph.Parent)
+		return;
+
+	var oShape = oParagraph.Parent.Is_DrawingShape(true);
+	if (!oShape)
+		return;
+
+	if (this.IsCheckBox())
+	{
+		var oRun = this.Content[0];
+
+		var oTextPr = oRun.Get_CompiledPr(false);
+
+		g_oTextMeasurer.SetTextPr(oTextPr, oParagraph.GetTheme());
+		g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+
+		var nTextHeight = g_oTextMeasurer.GetHeight();
+
+		var nKoef = 1.2 * Math.min(nW, nH * 0.8) / nTextHeight;
+
+		var nFontSize    = oTextPr.FontSize;
+		var nNewFontSize = nFontSize * nKoef;
+		oRun.Set_FontSize(nNewFontSize);
+	}
+	else if (this.IsPicture())
+	{
+		this.private_UpdatePictureFormLayout(nW, nH);
+	}
+};
+CInlineLevelSdt.prototype.IsAutoFitContent = function()
+{
+	if (!this.IsForm())
+		return false;
+
+	var oTextPr = this.GetTextFormPr();
+	if (oTextPr)
+		return oTextPr.GetAutoFit();
+
+	var oComboPr = this.GetComboBoxPr();
+	if (oComboPr)
+		return oComboPr.GetAutoFit();
+
+	return false;
+};
+CInlineLevelSdt.prototype.ProcessAutoFitContent = function(isFastRecalc)
+{
+	if (this.IsMultiLineForm() && isFastRecalc)
+		return;
+
+	var oParagraph = this.GetParagraph();
+	var oRun       = this.GetElement(0);
+	var oTextPr    = this.Get_CompiledTextPr();
+	var oShape     = oParagraph.Parent ? oParagraph.Parent.Is_DrawingShape(true) : null;
+	if (!oShape || !oShape.isForm())
+		return;
+
+	var oShapeBounds = oShape.getFormRelRect();
+
+	g_oTextMeasurer.SetTextPr(oTextPr, oParagraph.GetTheme());
+	g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+
+	var nTextHeight = g_oTextMeasurer.GetHeight();
+	var nMaxWidth   = oParagraph.RecalculateMinMaxContentWidth(false).Max;
+	var nFontSize   = oTextPr.FontSize;
+
+	if (nMaxWidth < 0.001 || nTextHeight < 0.001 || oShapeBounds.W < 0.001 || oShapeBounds.H < 0.001)
+		return;
+
+	var nNewFontSize = nFontSize;
+
+	History.TurnOff();
+	if (this.IsMultiLineForm())
+	{
+		var nFontStep = 0.1;
+
+		if (nMaxWidth > oShapeBounds.W)
+		{
+			oParagraph.Recalculate_Page(0);
+			var oContentBounds = oParagraph.GetContentBounds(0);
+			if (oContentBounds.Bottom - oContentBounds.Top > oShapeBounds.H)
+			{
+				nNewFontSize = AscCommon.CorrectFontSize(nFontSize, true);
+				while (nNewFontSize > 1)
+				{
+					oRun.Set_FontSize(nNewFontSize);
+					oParagraph.Recalculate_Page(0);
+
+					oContentBounds = oParagraph.GetContentBounds(0);
+					if (oContentBounds.Bottom - oContentBounds.Top < oShapeBounds.H)
+						break;
+
+					nNewFontSize -= nFontStep;
+				}
+			}
+			else
+			{
+				var nMaxFontSize = this.Pr.TextPr.FontSize;
+				if (!nMaxFontSize)
+					nMaxFontSize = 12;
+
+				//nNewFontSize = AscCommon.CorrectFontSize(nFontSize, true);
+				while (nNewFontSize <= nMaxFontSize)
+				{
+					oRun.Set_FontSize(nNewFontSize);
+					oParagraph.Recalculate_Page(0);
+
+					var oContentBounds = oParagraph.GetContentBounds(0);
+					if (oContentBounds.Bottom - oContentBounds.Top > oShapeBounds.H)
+					{
+						nNewFontSize -= nFontStep;
+						oRun.Set_FontSize(nNewFontSize);
+						break;
+					}
+
+					nNewFontSize += nFontStep;
+				}
+
+				nNewFontSize = Math.min(nNewFontSize, nMaxFontSize);
+			}
+		}
+
+		oParagraph.Recalculate_Page(0);
+		oShape.recalcContent();
+		oShape.recalculateText();
+		// Восстанавливаем старое значение, чтобы в историю все правильно записалось
+		oRun.Set_FontSize(nFontSize);
+	}
+	else
+	{
+		nNewFontSize = Math.min(nFontSize * oShapeBounds.H / nTextHeight * 0.9, 100, nFontSize * oShapeBounds.W / nMaxWidth);
+
+		if (!isFastRecalc)
+		{
+			oRun.Set_FontSize(nNewFontSize);
+			oParagraph.Recalculate_Page(0);
+			oShape.recalcContent();
+			oShape.recalculateText();
+			// Восстанавливаем старое значение, чтобы в историю все правильно записалось
+			oRun.Set_FontSize(nFontSize);
+		}
+		else if (AscCommon.align_Left !== oParagraph.GetParagraphAlign())
+		{
+			oRun.Set_FontSize(nNewFontSize);
+			oParagraph.private_RecalculateFastRange(0, 0);
+			// Восстанавливаем старое значение, чтобы в историю все правильно записалось
+			oRun.Set_FontSize(nFontSize);
+		}
+	}
+	nNewFontSize = ((nNewFontSize * 100) | 0) / 100;
+	History.TurnOn();
+
+	if (Math.abs(nNewFontSize - nFontSize) > 0.001)
+		oRun.Set_FontSize(nNewFontSize);
+};
+CInlineLevelSdt.prototype.UpdatePictureFormLayout = function()
+{
+	var oBounds = this.GetFixedFormBounds();
+	this.private_UpdatePictureFormLayout(oBounds.W, oBounds.H);
+};
+CInlineLevelSdt.prototype.private_UpdatePictureFormLayout = function(nW, nH)
+{
+	var arrDrawings = this.GetAllDrawingObjects();
+	if (1 !== arrDrawings.length || nW < 0.001 || nH < 0.001)
+		return;
+
+	var oDrawing = arrDrawings[0];
+	var oShape   = oDrawing.GraphicObj;
+
+	if (this.IsPlaceHolder() || !oDrawing.IsPicture())
+	{
+		oShape.spPr.xfrm.setExtX(nW);
+		oShape.spPr.xfrm.setExtY(nH);
+	}
+	else
+	{
+		var oLogicDocument = this.GetLogicDocument();
+		if (!oLogicDocument || !oLogicDocument.GetDrawingObjects() || !oLogicDocument.GetApi())
+			return;
+
+		var oDrawingProps = oLogicDocument.GetDrawingObjects().getDrawingPropsFromArray([oDrawing.GraphicObj]);
+		if (!oDrawingProps || !oDrawingProps.imageProps)
+			return;
+
+		var oProps = new Asc.asc_CImgProperty();
+		oProps.ImageUrl = oDrawingProps.imageProps.ImageUrl;
+
+		var oOriginSize = oProps.asc_getOriginSize(oLogicDocument.GetApi());
+		if (!oOriginSize.asc_getIsCorrect())
+			return;
+
+		var nOriginW = oOriginSize.asc_getImageWidth();
+		var nOriginH = oOriginSize.asc_getImageHeight();
+
+		var oPictureFormPr = this.GetPictureFormPr();
+		if (!oPictureFormPr || nOriginW < 0.001 || nOriginH < 0.001)
+			return;
+
+		var nScaleFlag = oPictureFormPr.GetScaleFlag();
+		
+		var nDstW, nDstH, isCrop = false;
+
+		// TODO: RespectBorders
+
+		if (Asc.c_oAscPictureFormScaleFlag.Never === nScaleFlag
+			|| (Asc.c_oAscPictureFormScaleFlag.Smaller === nScaleFlag && (nOriginH > nH || nOriginW > nW))
+			|| (Asc.c_oAscPictureFormScaleFlag.Bigger === nScaleFlag && nH > nOriginH && nW > nOriginW))
+		{
+			nDstW  = nOriginW;
+			nDstH  = nOriginH;
+			isCrop = true;
+		}
+		else if (oPictureFormPr.IsConstantProportions())
+		{
+			var nCoef = Math.min(nW / nOriginW, nH / nOriginH);
+			nDstW     = nOriginW * nCoef;
+			nDstH     = nOriginH * nCoef;
+			isCrop    = true;
+		}
+		
+		if (isCrop)
+		{
+			var nSpaceX = nW - nDstW;
+			var nSpaceY = nH - nDstH;
+
+			var nPadL = oPictureFormPr.GetShiftX() * nSpaceX;
+			var nPadT = oPictureFormPr.GetShiftY() * nSpaceY;
+
+			var oSrcRect = new AscFormat.CSrcRect();
+			oSrcRect.setLTRB(
+				100 * -nPadL / nDstW,
+				100 * -nPadT / nDstH,
+				100 * (1 + (nSpaceX - nPadL) / nDstW),
+				100 * (1 + (nSpaceY - nPadT) / nDstH)
+			);
+			oShape.setSrcRect(oSrcRect);
+		}
+		else
+		{
+			var oSrcRect = new AscFormat.CSrcRect();
+			oSrcRect.setLTRB(0, 0, 100, 100);
+			oShape.setSrcRect(oSrcRect)
+		}
+
+
+		oShape.spPr.xfrm.setExtX(nW);
+		oShape.spPr.xfrm.setExtY(nH);
+	}
+
+	oDrawing.SetSizeRelH({RelativeFrom : AscCommon.c_oAscSizeRelFromH.sizerelfromhPage, Percent : 0});
+	oDrawing.SetSizeRelV({RelativeFrom : AscCommon.c_oAscSizeRelFromV.sizerelfromvPage, Percent : 0});
+	oDrawing.CheckWH();
+};
+CInlineLevelSdt.prototype.GetFixedFormWrapperShape = function()
+{
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph || !oParagraph.Parent)
+		return null;
+
+	var oShape = oParagraph.Parent.Is_DrawingShape(true);
+	if (!oShape || !oShape.isForm())
+		return null;
+
+	return oShape;
 };
 
 //--------------------------------------------------------export--------------------------------------------------------

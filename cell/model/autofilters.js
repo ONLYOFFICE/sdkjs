@@ -3184,7 +3184,7 @@
 					oHistoryObject.type = redoObject.type;
 					oHistoryObject.cellId = redoObject.cellId;
 					oHistoryObject.autoFiltersObject = redoObject.autoFiltersObject;
-					oHistoryObject.addFormatTableOptionsObj = redoObject.addFormatTableOptionsObj
+					oHistoryObject.addFormatTableOptionsObj = redoObject.addFormatTableOptionsObj;
 					oHistoryObject.moveFrom = redoObject.arnFrom;
 					oHistoryObject.moveTo = redoObject.arnTo;
 					oHistoryObject.bWithoutFilter = bWithoutFilter ? bWithoutFilter : false;

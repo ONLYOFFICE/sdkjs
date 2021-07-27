@@ -3959,9 +3959,9 @@ StyleManager.prototype =
 			}
 		}
 	};
-	SheetMergedStyles.prototype.setConditionalStyle = function(id, ranges, formula) {
+	SheetMergedStyles.prototype.setConditionalStyle = function(rule, ranges, formula) {
 		this.stylesConditionalIterator = null;
-		this.stylesConditional[id] = {ranges: ranges, formula: formula};
+		this.stylesConditional[rule.Get_Id()] = {ranges: ranges, formula: formula, rule: rule};
 	};
 	SheetMergedStyles.prototype.clearConditionalStyle = function(multiplyRange) {
 		this.stylesConditionalIterator = null;
@@ -3982,11 +3982,16 @@ StyleManager.prototype =
 		}
 		if (!this.stylesConditionalIterator) {
 			this.stylesConditionalIterator = new AscCommon.RangeTopBottomIterator();
+			//todo lose stylesConditional sorting
 			this.stylesConditionalIterator.init(Object.values(this.stylesConditional), function(elem) {
 				return elem.ranges;
 			});
 		}
 		var rules = this.stylesConditionalIterator.get(row, col);
+		//todo sort inside RangeTopBottomIterator ?
+		rules.sort(function(v1, v2) {
+			return v2.rule.priority - v1.rule.priority;
+		});
 		for (var i = 0; i < rules.length; ++i) {
 			var xf = rules[i].formula(row, col);
 			if (xf) {
@@ -5862,6 +5867,7 @@ function RangeDataManagerElem(bbox, data)
 		return unionRange.isSingleRange() ? unionRange : result;
 	};
 	sparklineGroup.prototype.setSparklinesFromRange = function (dataRange, locationRange, addToHistory) {
+		var t = this;
 		var isVertLocationRange = locationRange.c1 === locationRange.c2;
 		var count = !isVertLocationRange ? locationRange.c2 - locationRange.c1 + 1 :
 			locationRange.r2 - locationRange.r1 + 1;
@@ -5876,7 +5882,10 @@ function RangeDataManagerElem(bbox, data)
 			var _r2 = isVertDataRange ? dataRange.r1 + i : dataRange.r2;
 			var _c1 = !isVertDataRange ? dataRange.c1 + i: dataRange.c1;
 			var _c2 = !isVertDataRange ? dataRange.c1 + i: dataRange.c2;
-			var f = (dataRange.sheet ? dataRange.sheet : this.worksheet.sName) + "!" + new Asc.Range(_c1, _r1, _c2, _r2).getName();
+			var f;
+			AscCommonExcel.executeInR1C1Mode(false, function () {
+				f = (dataRange.sheet ? dataRange.sheet : t.worksheet.sName) + "!" + new Asc.Range(_c1, _r1, _c2, _r2).getName();
+			});
 			sL.setF(f);
 
 			var _col = !isVertLocationRange ? locationRange.c1 + i : locationRange.c1;
@@ -6314,6 +6323,9 @@ function RangeDataManagerElem(bbox, data)
 		this.TableColumns = null;
 		this.TableStyleInfo = null;
 
+		this.QueryTable = null;
+		this.tableType = null;
+		
 		this.altText = null;
 		this.altTextSummary = null;
 
@@ -6348,6 +6360,12 @@ function RangeDataManagerElem(bbox, data)
 				res.result.push(this.result[i].clone());
 			}
 		}
+
+		if (this.QueryTable) {
+			res.QueryTable = this.QueryTable.clone();
+		}
+		res.tableType = this.tableType;
+
 		res.DisplayName = this.DisplayName;
 
 		res.altText = this.altText;
@@ -6522,6 +6540,12 @@ function RangeDataManagerElem(bbox, data)
 			var deleted = this.TableColumns.splice(startCol, diff);
 			this.removeDependencies(deleted);
 
+			if (this.QueryTable) {
+				this.cleanQueryTables();
+				//this.QueryTable.deleteTableColumns(deleted);
+				//this.QueryTable.syncIndexes(this.TableColumns);
+			}
+
 			//todo undo
 			var deletedMap = {};
 			for (var i = 0; i < deleted.length; ++i) {
@@ -6563,6 +6587,11 @@ function RangeDataManagerElem(bbox, data)
 
 		this.TableColumns = newTableColumns;
 
+		if (this.QueryTable) {
+			this.cleanQueryTables();
+			//this.QueryTable.syncIndexes(this.TableColumns);
+		}
+
 		/*if(this.SortState && this.SortState.SortConditions && this.SortState.SortConditions[0])
 		 {
 		 var SortConditions = this.SortState.SortConditions[0];
@@ -6588,6 +6617,10 @@ function RangeDataManagerElem(bbox, data)
 		newTableColumns[newTableColumns.length - 1].Name = autoFilters._generateColumnName2(newTableColumns);
 
 		this.TableColumns = newTableColumns;
+		if (this.QueryTable) {
+			this.cleanQueryTables();
+			//this.QueryTable.syncIndexes(this.TableColumns);
+		}
 		this.buildDependencies();
 	};
 
@@ -6864,6 +6897,21 @@ function RangeDataManagerElem(bbox, data)
 					}
 				}
 			}
+		}
+	};
+	TablePart.prototype.cleanQueryTables = function () {
+		//удаляю инфомарцию об queryTables после удаления/добавления колонки таблицы
+		//связано это с тем, что необходимо следить за всеми полями из queryTables + синхронизировать их с tableColumns,
+		//+ есть нюанс - id колонок таблиц сейчас записывается в x2t по порядку в массиве. queryTables связаны с id таблиц
+		//необходимо перейти на генерацию id в js и следить за id
+		//+ записывать в историю, обрабатывать undo/redo
+		//поля, которые попадают в список удаленных, необходимо при undo вовращать с прежними индексами и айдишниками
+		//TODO в следующих версиях необходимо реализовать данный функционал в полном объеме
+		this.QueryTable = null;
+		this.tableType = null;
+		for(var i = 0; i < this.TableColumns.length; i++) {
+			this.TableColumns[i].queryTableFieldId = null;
+			this.TableColumns[i].uniqueName = null;
 		}
 	};
 
@@ -7540,7 +7588,7 @@ function RangeDataManagerElem(bbox, data)
 		this.CalculatedColumnFormula = null;
 
 		//формируется на сохранения
-		//this.queryTableFieldId = null;
+		this.queryTableFieldId = null;
 		this.uniqueName = null;
 
 		//queryTableField
@@ -7598,6 +7646,9 @@ function RangeDataManagerElem(bbox, data)
 		res.fillFormulas = this.fillFormulas;
 		res.queryName = this.queryName;
 		res.rowNumbers = this.rowNumbers;
+
+		res.queryTableFieldId = this.queryTableFieldId;
+		res.uniqueName = this.uniqueName;
 
 		return res;
 	};
@@ -9937,6 +9988,219 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 	this.dateTimeGrouping = oDateGroupItem.DateTimeGrouping;
 };
 
+/** @constructor */
+function QueryTable() {
+	this.queryTableRefresh = null;
+
+	this.adjustColumnWidth = null;
+	this.applyAlignmentFormats = null;
+	this.applyBorderFormats = null;
+	this.applyFontFormats = null;
+	this.applyNumberFormats = null;
+	this.applyPatternFormats = null;
+	this.applyWidthHeightFormats = null;
+	this.autoFormatId = null;
+	this.backgroundRefresh = null;
+
+	this.connectionId = null;
+	this.disableEdit = null;
+	this.disableRefresh = null;
+	this.fillFormulas = null;
+	this.firstBackgroundRefresh = null;
+	this.growShrinkType = null;
+	this.headers = null;
+	this.intermediate = null;
+	this.name = null;
+	this.preserveFormatting = null;
+	this.refreshOnLoad = null;
+	this.removeDataOnSave = null;
+	this.rowNumbers = null;
+}
+QueryTable.prototype.clone = function() {
+	var res = new QueryTable();
+
+	res.queryTableRefresh = this.queryTableRefresh ? this.queryTableRefresh : null;
+
+	res.adjustColumnWidth = this.adjustColumnWidth;
+	res.applyAlignmentFormats = this.applyAlignmentFormats;
+	res.applyBorderFormats = this.applyBorderFormats;
+	res.applyFontFormats = this.applyFontFormats;
+	res.applyNumberFormats = this.applyNumberFormats;
+	res.applyPatternFormats = this.applyPatternFormats;
+	res.applyWidthHeightFormats = this.applyWidthHeightFormats;
+	res.autoFormatId = this.autoFormatId;
+	res.backgroundRefresh = this.backgroundRefresh;
+
+	res.connectionId = this.connectionId;
+	res.disableEdit = this.disableEdit;
+	res.disableRefresh = this.disableRefresh;
+	res.fillFormulas = this.fillFormulas;
+	res.firstBackgroundRefresh = this.firstBackgroundRefresh;
+	res.growShrinkType = this.growShrinkType;
+	res.headers = this.headers;
+	res.intermediate = this.intermediate;
+	res.name = this.name;
+	res.preserveFormatting = this.preserveFormatting;
+	res.refreshOnLoad = this.refreshOnLoad;
+	res.removeDataOnSave = this.removeDataOnSave;
+	res.rowNumbers = this.rowNumbers;
+
+	return res;
+};
+
+QueryTable.prototype.deleteTableColumns = function(deletedTableColumns) {
+	if (!deletedTableColumns) {
+		return;
+	}
+
+	if (this.queryTableRefresh) {
+		this.queryTableRefresh.deleteTableColumns(deletedTableColumns);
+	}
+};
+QueryTable.prototype.syncIndexes = function(tableColumns) {
+	//при удалении приходится меняться tableColumnId, поскольку id  у колонок таблиц у нас формируются на сохранение
+	//а соотсетствие именно по id tableColumn
+
+	if (this.queryTableRefresh) {
+		this.queryTableRefresh.syncIndexes(tableColumns);
+	}
+};
+
+
+
+/** @constructor */
+function QueryTableRefresh() {
+	this.queryTableDeletedFields = null;
+	this.queryTableFields = null;
+	this.sortState = null;
+
+	this.fieldIdWrapped = null;
+	this.headersInLastRefr = null;
+	this.minimumVersion = null;
+	this.nextId = null;
+	this.preserveSortFilterLayout = null;
+	this.unboundColumnsLeft = null;
+	this.unboundColumnsRight = null;
+}
+QueryTableRefresh.prototype.clone = function() {
+	var res = new QueryTableRefresh();
+
+	res.queryTableDeletedFields = this.queryTableDeletedFields ? this.queryTableDeletedFields.clone() : null;
+	res.queryTableFields = this.queryTableFields ? this.queryTableFields.clone() : null;
+	res.sortState = this.sortState ? this.sortState.clone() : null;
+
+	res.fieldIdWrapped = this.fieldIdWrapped;
+	res.headersInLastRefr = this.headersInLastRefr;
+	res.minimumVersion = this.minimumVersion;
+	res.nextId = this.nextId;
+	res.preserveSortFilterLayout = this.preserveSortFilterLayout;
+	res.unboundColumnsLeft = this.unboundColumnsLeft;
+	res.unboundColumnsRight = this.unboundColumnsRight;
+
+	return res;
+};
+QueryTableRefresh.prototype.deleteTableColumns = function(deletedTableColumns) {
+	if (!deletedTableColumns) {
+		return;
+	}
+
+	if (this.queryTableFields) {
+		for (var i = 0; i < deletedTableColumns.length; i++) {
+			for (var j = 0; j < this.queryTableFields.length; j++) {
+				if (deletedTableColumns[i].queryTableFieldId === this.queryTableFields[j].tableColumnId) {
+					var deletedField = this.queryTableFields.splice(j, 1);
+					this.addDeletedField(deletedField[0]);
+				}
+			}
+		}
+	}
+};
+QueryTableRefresh.prototype.addDeletedField = function(deletedField) {
+	if (!this.queryTableDeletedFields) {
+		this.queryTableDeletedFields = [];
+	}
+	var newDeletedField = new QueryTableDeletedField();
+	newDeletedField.name = deletedField.name;
+	this.queryTableDeletedFields.push(newDeletedField);
+};
+QueryTableRefresh.prototype.syncIndexes = function(tableColumns) {
+	//при удалении приходится меняться tableColumnId, поскольку id  у колонок таблиц у нас формируются на сохранение
+	//а соотсетствие именно по id tableColumn
+
+	if (this.queryTableFields) {
+		for (var i = 0; i < tableColumns.length; i++) {
+			for (var j = 0; j < this.queryTableFields.length; j++) {
+				if (tableColumns[i].queryTableFieldId === this.queryTableFields[j].tableColumnId) {
+					this.queryTableFields[j].tableColumnId = i + 1;
+				}
+			}
+		}
+	}
+};
+QueryTableRefresh.prototype.syncIndexes2 = function(tableColumns) {
+	//при удалении приходится меняться tableColumnId, поскольку id  у колонок таблиц у нас формируются на сохранение
+	//а соотсетствие именно по id tableColumn
+
+	if (this.queryTableFields) {
+		var i;
+		var changeQueryTableFieldId = [];
+		for (var j = 0; j < this.queryTableFields.length; j++) {
+			for (i = 0; i < tableColumns.length; i++) {
+				if (tableColumns[i].queryTableFieldId === this.queryTableFields[j].tableColumnId) {
+					this.queryTableFields[j].tableColumnId = i + 1;
+					this.queryTableFields[j].id = i + 1;
+					changeQueryTableFieldId[i] =  i + 1;
+					break;
+				}
+			}
+		}
+		for (i = 0; i < changeQueryTableFieldId.length; i++) {
+			tableColumns[i].queryTableFieldId = changeQueryTableFieldId[i];
+			if (null !== tableColumns[i].uniqueName) {
+				tableColumns[i].uniqueName = changeQueryTableFieldId[i];
+			}
+		}
+	}
+
+};
+
+
+/** @constructor */
+function QueryTableField() {
+	this.name = null;
+	this.id = null;
+	this.tableColumnId = null;
+
+	this.rowNumbers = null;
+	this.fillFormulas = null;
+	this.dataBound = null;
+	this.clipped = null;
+}
+QueryTableField.prototype.clone = function() {
+	var res = new QueryTableField();
+
+	res.name = this.name;
+	res.id = this.id;
+	res.tableColumnId = this.tableColumnId;
+	res.rowNumbers = this.rowNumbers;
+	res.fillFormulas = this.fillFormulas;
+	res.dataBound = this.dataBound;
+	res.clipped = this.clipped;
+
+	return res;
+};
+
+/** @constructor */
+function QueryTableDeletedField() {
+	this.name = null;
+}
+QueryTableField.prototype.clone = function() {
+	var res = new QueryTableDeletedField();
+	res.name = this.name;
+	return res;
+};
+
+
 	if (typeof Map === 'undefined') {
 		(function() {
 			var Map = function() {
@@ -11276,7 +11540,7 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 	prot["asc_setFontItalic"] = prot.asc_setFontItalic;
 	prot["asc_setFontUnderline"] = prot.asc_setFontUnderline;
 	prot["asc_setFontStrikeout"] = prot.asc_setFontStrikeout;
-	prot["asc_getFontSubscript"] = prot.asc_setFontSubscript;
+	prot["asc_setFontSubscript"] = prot.asc_setFontSubscript;
 	prot["asc_setFontSuperscript"] = prot.asc_setFontSuperscript;
 	prot["asc_setBorder"] = prot.asc_setBorder;
 	prot["asc_setNumFormatInfo"] = prot.asc_setNumFormatInfo;
@@ -11362,7 +11626,12 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 	window['AscCommonExcel'].DateGroupItem = DateGroupItem;
 	window['AscCommonExcel'].SortCondition = SortCondition;
 	window['AscCommonExcel'].AutoFilterDateElem = AutoFilterDateElem;
+	window['AscCommonExcel'].QueryTable = QueryTable;
+	window['AscCommonExcel'].QueryTableRefresh = QueryTableRefresh;
+	window['AscCommonExcel'].QueryTableField = QueryTableField;
+	window['AscCommonExcel'].QueryTableDeletedField = QueryTableDeletedField;
 	window['AscCommonExcel'].c_oAscPatternType = c_oAscPatternType;
+
 
 	window["Asc"]["CustomFilters"]			= window["Asc"].CustomFilters = CustomFilters;
 	prot									= CustomFilters.prototype;

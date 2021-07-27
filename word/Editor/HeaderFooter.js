@@ -67,14 +67,15 @@ function CHeaderFooter(Parent, LogicDocument, DrawingDocument, Type)
 
     this.Type = Type;
 
-    this.RecalcInfo =
-    {
-        CurPage       : -1, // Текущий выставленный номер страницы
-        RecalcObj     : {}, // Постраничные объекты пересчета данного колонтитула
-        NeedRecalc    : {}, // Объект с ключом - номером страницы, нужно ли пересчитывать данную страницу
-        PageNumInfo   : {}, // Объект с ключом - номером страницы, значением - информация о нумерации
-        SectPr        : {}  // Объект с ключом - номером страницы и полем - ссылкой на секцию
-    };
+	this.RecalcInfo = {
+		CurPage       : -1, // Текущий выставленный номер страницы
+		RecalcObj     : {}, // Постраничные объекты пересчета данного колонтитула
+		NeedRecalc    : {}, // Объект с ключом - номером страницы, нужно ли пересчитывать данную страницу
+		PageNumInfo   : {}, // Объект с ключом - номером страницы, значением - информация о нумерации
+		SectPr        : {}, // Объект с ключом - номером страницы и полем - ссылкой на секцию
+		LastPage      : -1, // Номер страницы, которая была пересчитана последней
+		RequestedPage : -1  // Страница, которую хотели сделать текущей, но не смогли, т.к. она была не пересчитана
+	};
 
 	this.PageCountElements = [];
 
@@ -112,6 +113,12 @@ CHeaderFooter.prototype =
 
     Set_Page : function(Page_abs)
     {
+    	if (Page_abs > this.RecalcInfo.LastPage)
+		{
+			this.RecalcInfo.RequestedPage = Page_abs;
+			return;
+		}
+
         if (Page_abs !== this.RecalcInfo.CurPage && undefined !== this.LogicDocument.Pages[Page_abs])
         {
             // Возможна ситуация, когда у нас колонтитул был рассчитан для заданной страницы, но на ней сейчас данный
@@ -180,6 +187,7 @@ CHeaderFooter.prototype =
         this.RecalcInfo.PageNumInfo[Page_abs] = this.LogicDocument.Get_SectionPageNumInfo(Page_abs);
         this.RecalcInfo.SectPr[Page_abs]      = SectPr;
 		this.RecalcInfo.NeedRecalc[Page_abs]  = false;
+		this.RecalcInfo.LastPage              = Page_abs;
         
         // Если у нас до этого был какой-то пересчет, тогда сравним его с текущим.
         // 1. Сравним границы: у верхнего колонтитула смотрим на изменение нижней границы, а нижнего - верхней
@@ -243,18 +251,26 @@ CHeaderFooter.prototype =
         
         // Ежели текущая страница не задана, тогда выставляем ту, которая оказалась пересчитанной первой. В противном
         // случае, выставляем рассчет страницы, которая была до этого.
-        if ( -1 === this.RecalcInfo.CurPage || false === this.LogicDocument.Get_SectionPageNumInfo(this.RecalcInfo.CurPage).Compare( this.RecalcInfo.PageNumInfo[this.RecalcInfo.CurPage] ) )
-        {
-            this.RecalcInfo.CurPage = Page_abs;
-            
-            if ( docpostype_HdrFtr === this.LogicDocument.GetDocPosType() )
-            {
-                // Обновляем интерфейс, чтобы обновить настройки колонтитула, т.к. мы могли попасть в новую секцию
-                this.LogicDocument.Document_UpdateSelectionState();
-                this.LogicDocument.Document_UpdateInterfaceState();
-            }
-        }
-        else            
+		if (-1 === this.RecalcInfo.CurPage
+			|| false === this.LogicDocument.Get_SectionPageNumInfo(this.RecalcInfo.CurPage).Compare(this.RecalcInfo.PageNumInfo[this.RecalcInfo.CurPage])
+			|| (-1 !== this.RecalcInfo.RequestedPage && this.RecalcInfo.RequestedPage === Page_abs))
+		{
+			this.RecalcInfo.CurPage = Page_abs;
+
+			if (docpostype_HdrFtr === this.LogicDocument.GetDocPosType())
+			{
+				// Обновляем интерфейс, чтобы обновить настройки колонтитула, т.к. мы могли попасть в новую секцию
+				this.LogicDocument.UpdateSelection();
+				this.LogicDocument.UpdateInterface();
+
+				if (-1 !== this.RecalcInfo.RequestedPage && this.RecalcInfo.RequestedPage === Page_abs)
+				{
+					this.LogicDocument.NeedUpdateTarget = true;
+					this.RecalcInfo.RequestedPage       = -1;
+				}
+			}
+		}
+        else
         {
             var RecalcObj = this.RecalcInfo.RecalcObj[this.RecalcInfo.CurPage];
             this.Content.LoadRecalculateObject( RecalcObj );
@@ -1147,10 +1163,12 @@ CHeaderFooter.prototype =
     Refresh_RecalcData2 : function()
     {
         // Сохраняем пересчитаные страницы в старый пересчет, а текущий обнуляем
-        this.RecalcInfo.PageNumInfo = {};
-        this.RecalcInfo.SectPr      = {};
-        this.RecalcInfo.CurPage     = -1;
-		this.RecalcInfo.NeedRecalc  = {};
+        this.RecalcInfo.PageNumInfo   = {};
+        this.RecalcInfo.SectPr        = {};
+        this.RecalcInfo.CurPage       = -1;
+		this.RecalcInfo.NeedRecalc    = {};
+		this.RecalcInfo.LastPage      = -1;
+		this.RecalcInfo.RequestedPage = -1;
         
         History.RecalcData_Add( { Type : AscDFH.historyitem_recalctype_HdrFtr, Data : this } );
     },

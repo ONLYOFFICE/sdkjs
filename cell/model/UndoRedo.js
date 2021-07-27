@@ -441,6 +441,8 @@ function (window, undefined) {
 		this.CFDataInner = 151;
 		this.ColorScale = 152;
 		this.CFormulaCF = 153;
+		this.DataBar = 154;
+		this.IconSet = 155;
 
 		this.Create = function (nType) {
 			switch (nType) {
@@ -631,6 +633,10 @@ function (window, undefined) {
 					return new AscCommonExcel.CColorScale();
 				case this.CFormulaCF:
 					return new AscCommonExcel.CFormulaCF();
+				case this.DataBar:
+					return new AscCommonExcel.CDataBar();
+				case this.IconSet:
+					return new AscCommonExcel.CIconSet();
 			}
 			return null;
 		};
@@ -3174,6 +3180,11 @@ function (window, undefined) {
 			}
 		} else if (AscCH.historyitem_Worksheet_SetShowZeros === Type) {
 			ws.setShowZeros(bUndo ? Data.from : Data.to);
+		} else if (AscCH.historyitem_Worksheet_SetTopLeftCell === Type) {
+			//накатываем только при открытии
+			if (!bUndo && this.wb.bCollaborativeChanges) {
+				ws.setTopLeftCell(Data.to ? new Asc.Range(Data.to.c1, Data.to.r1, Data.to.c2, Data.to.r2) : null);
+			}
 		}
 	};
 	UndoRedoWoorksheet.prototype.forwardTransformationIsAffect = function (Type) {

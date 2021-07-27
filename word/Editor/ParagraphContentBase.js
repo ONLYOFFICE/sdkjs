@@ -379,7 +379,7 @@ CParagraphContentBase.prototype.RecalculateMinMaxContentWidth = function(MinMax)
 CParagraphContentBase.prototype.Get_Range_VisibleWidth = function(RangeW, _CurLine, _CurRange)
 {
 };
-CParagraphContentBase.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange)
+CParagraphContentBase.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 {
 };
 //----------------------------------------------------------------------------------------------------------------------
@@ -1049,7 +1049,7 @@ CParagraphContentWithContentBase.prototype.CanSplit = function()
 {
 	return true;
 };
-CParagraphContentWithContentBase.prototype.PreDelete = function()
+CParagraphContentWithContentBase.prototype.PreDelete = function(isDeep)
 {
 };
 CParagraphContentWithContentBase.prototype.private_UpdateDocumentOutline = function()
@@ -2218,7 +2218,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Get_PosInParent = function(P
 };
 CParagraphContentWithParagraphLikeContent.prototype.Correct_Content = function()
 {
-    if (this.Content.length < 0)
+    if (this.Content.length <= 0)
         this.Add_ToContent(0, new ParaRun(this.GetParagraph(), false));
 };
 CParagraphContentWithParagraphLikeContent.prototype.CorrectContent = function()
@@ -2575,7 +2575,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Get_Range_VisibleWidth = fun
         this.Content[CurPos].Get_Range_VisibleWidth(RangeW, _CurLine, _CurRange);
     }
 };
-CParagraphContentWithParagraphLikeContent.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange)
+CParagraphContentWithParagraphLikeContent.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 {
     var CurLine = _CurLine - this.StartLine;
     var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
@@ -2585,7 +2585,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Shift_Range = function(Dx, D
 
     for ( var CurPos = StartPos; CurPos <= EndPos; CurPos++ )
     {
-        this.Content[CurPos].Shift_Range(Dx, Dy, _CurLine, _CurRange);
+        this.Content[CurPos].Shift_Range(Dx, Dy, _CurLine, _CurRange, _CurPage);
     }
 };
 //----------------------------------------------------------------------------------------------------------------------
@@ -4228,7 +4228,7 @@ CParagraphContentWithParagraphLikeContent.prototype.PreDelete = function()
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 	{
 		if (this.Content[nIndex] && this.Content[nIndex].PreDelete)
-			this.Content[nIndex].PreDelete();
+			this.Content[nIndex].PreDelete(true);
 	}
 
 	this.RemoveSelection();

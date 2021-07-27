@@ -29,9 +29,8 @@
  * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
  */
-
+QUnit.config.autostart = false;
 $(function() {
-	QUnit.config.autostart = false;
 
 	// Tests completed in 3980 milliseconds.
 	// 3322 assertions of 3355 passed, 33 failed.
@@ -417,8 +416,8 @@ $(function() {
 		});
 		return res;
 	}
-	function checkReportValues(pivot, values, standard, message) {
-		deepEqual(values, standard, message);
+	function checkReportValues(assert, pivot, values, standard, message) {
+		assert.deepEqual(values, standard, message);
 
 		var isEmptyPivot = !(pivot.asc_getRowFields() || pivot.asc_getColumnFields() || pivot.asc_getDataFields() || pivot.asc_getPageFields());
 		var styleError = "";
@@ -442,11 +441,44 @@ $(function() {
 				}
 			}
 		});
-		strictEqual(styleError, "", message + "_styleError");
-		strictEqual(dataError, "", message + "_dataError");
+		assert.strictEqual(styleError, "", message + "_styleError");
+		assert.strictEqual(dataError, "", message + "_dataError");
 	}
 
 	var memory = new AscCommon.CMemory();
+	function Utf8ArrayToStr(array) {
+		var out, i, len, c;
+		var char2, char3;
+
+		out = "";
+		len = array.length;
+		i = 0;
+		while(i < len) {
+			c = array[i++];
+			switch(c >> 4)
+			{
+				case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+				// 0xxxxxxx
+				out += String.fromCharCode(c);
+				break;
+				case 12: case 13:
+				// 110x xxxx   10xx xxxx
+				char2 = array[i++];
+				out += String.fromCharCode(((c & 0x1F) << 6) | (char2 & 0x3F));
+				break;
+				case 14:
+					// 1110 xxxx  10xx xxxx  10xx xxxx
+					char2 = array[i++];
+					char3 = array[i++];
+					out += String.fromCharCode(((c & 0x0F) << 12) |
+						((char2 & 0x3F) << 6) |
+						((char3 & 0x3F) << 0));
+					break;
+			}
+		}
+
+		return out;
+	}
 	function getXml(pivot, addCacheDefinition){
 		memory.Seek(0);
 		pivot.toXml(memory);
@@ -459,10 +491,15 @@ $(function() {
 		{
 			buffer[i] = memory.data[i];
 		}
-		return new TextDecoder("utf-8").decode(buffer);
+		if(typeof TextDecoder !== "undefined") {
+			return new TextDecoder("utf-8").decode(buffer);
+		} else {
+			return Utf8ArrayToStr(buffer);
+		}
+
 	}
 
-	function checkHistoryOperation(pivot, standards, message, action) {
+	function checkHistoryOperation(assert, pivot, standards, message, action) {
 		var wb = pivot.GetWS().workbook;
 		var undoValues = getReportValues(pivot);
 		var xmlUndo = getXml(pivot, false);
@@ -474,19 +511,19 @@ $(function() {
 		action();
 		AscCommon.History.EndTransaction();
 		pivot = wb.getPivotTableById(pivot.Get_Id());
-		checkReportValues(pivot, getReportValues(pivot), standards, message);
+		checkReportValues(assert, pivot, getReportValues(pivot), standards, message);
 		var xmlDo = getXml(pivot, true);
 		var changes = wb.SerializeHistory();
 
 		AscCommon.History.Undo();
 		pivot = wb.getPivotTableById(pivot.Get_Id());
-		checkReportValues(pivot, getReportValues(pivot), undoValues, message + "_undo");
-		strictEqual(getXml(pivot, false), xmlUndo, message + "_undo_xml");
+		checkReportValues(assert, pivot, getReportValues(pivot), undoValues, message + "_undo");
+		assert.strictEqual(getXml(pivot, false), xmlUndo, message + "_undo_xml");
 
 		AscCommon.History.Redo();
 		pivot = wb.getPivotTableById(pivot.Get_Id());
-		checkReportValues(pivot, getReportValues(pivot), standards, message + "_redo");
-		strictEqual(getXml(pivot, true), xmlDo, message + "_redo_xml");
+		checkReportValues(assert, pivot, getReportValues(pivot), standards, message + "_redo");
+		assert.strictEqual(getXml(pivot, true), xmlDo, message + "_redo_xml");
 
 		AscCommon.History.Undo();
 		ws.deletePivotTable(pivot.Get_Id());
@@ -494,8 +531,8 @@ $(function() {
 		ws.insertPivotTable(pivot, false, false);
 		wb.DeserializeHistory(changes);
 		pivot = wb.getPivotTableById(pivot.Get_Id());
-		checkReportValues(pivot, getReportValues(pivot), standards, message + "_changes");
-		strictEqual(getXml(pivot, true), xmlDo, message + "_changes_xml");
+		checkReportValues(assert, pivot, getReportValues(pivot), standards, message + "_changes");
+		assert.strictEqual(getXml(pivot, true), xmlDo, message + "_changes_xml");
 		return pivot;
 	}
 
@@ -4090,28 +4127,28 @@ $(function() {
 	}
 
 	function testValidations() {
-		test("Test: Validations ", function() {
-			strictEqual(Asc.CT_pivotTableDefinition.prototype.isValidDataRef(dataRef), true, "Validations");
+		QUnit.test("Test: Validations ", function(assert ) {
+			assert.strictEqual(Asc.CT_pivotTableDefinition.prototype.isValidDataRef(dataRef), true, "Validations");
 		});
 	}
 
 	function testCreate(prefix, init) {
-		test("Test: Layout " + prefix, function() {
+		QUnit.test("Test: Layout " + prefix, function(assert ) {
 			var pivot = init();
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 
 			AscCommon.History.Clear();
-			checkReportValues(pivot, getReportValues(pivot), standards[prefix + "_0data"], "0data");
+			checkReportValues(assert, pivot, getReportValues(pivot), standards[prefix + "_0data"], "0data");
 
-			pivot = checkHistoryOperation(pivot, standards[prefix + "_1data"], "1data", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards[prefix + "_1data"], "1data", function(){
 				pivot.asc_addDataField(api, 5);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards[prefix + "_2data_col"], "2data_col", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards[prefix + "_2data_col"], "2data_col", function(){
 				pivot.asc_addDataField(api, 6);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards[prefix + "_2data_row"], "2data_row", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards[prefix + "_2data_row"], "2data_row", function(){
 				pivot.asc_moveToRowField(api, Asc.st_VALUES);
 			});
 
@@ -4194,7 +4231,7 @@ $(function() {
 	}
 
 	function testLayoutValues(layout) {
-		test("Test: Layout Values " + layout, function() {
+		QUnit.test("Test: Layout Values " + layout, function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			setPivotLayout(pivot, layout);
@@ -4206,25 +4243,25 @@ $(function() {
 			pivot.asc_addDataField(api, 6);
 
 			AscCommon.History.Clear();
-			checkReportValues(pivot, getReportValues(pivot), standards[layout + "_2row_2col_2data_col"], "col3");
+			checkReportValues(assert, pivot, getReportValues(pivot), standards[layout + "_2row_2col_2data_col"], "col3");
 
-			pivot = checkHistoryOperation(pivot, standards[layout + "_2row_2col_2data_col2"], "col2", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards[layout + "_2row_2col_2data_col2"], "col2", function(){
 				pivot.asc_moveColField(api, 2, 1);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards[layout + "_2row_2col_2data_col1"], "col1", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards[layout + "_2row_2col_2data_col1"], "col1", function(){
 				pivot.asc_moveColField(api, 1, 0);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards[layout + "_2row_2col_2data_row"], "row3", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards[layout + "_2row_2col_2data_row"], "row3", function(){
 				pivot.asc_moveToRowField(api, Asc.st_VALUES);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards[layout + "_2row_2col_2data_row2"], "row2", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards[layout + "_2row_2col_2data_row2"], "row2", function(){
 				pivot.asc_moveRowField(api, 2, 1);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards[layout + "_2row_2col_2data_row1"], "row1", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards[layout + "_2row_2col_2data_row1"], "row1", function(){
 				pivot.asc_moveRowField(api, 1, 0);
 			});
 
@@ -4233,7 +4270,7 @@ $(function() {
 	}
 
 	function testLayoutSubtotal(layout) {
-		test("Test: Subtotal " + layout, function() {
+		QUnit.test("Test: Subtotal " + layout, function(assert ) {
 			var props;
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
@@ -4247,20 +4284,20 @@ $(function() {
 			pivot.asc_addRowField(api, 4);
 
 			AscCommon.History.Clear();
-			pivot = checkHistoryOperation(pivot, standards["subtotal_" + layout + "_none"], "none", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["subtotal_" + layout + "_none"], "none", function(){
 				props = new Asc.CT_pivotTableDefinition();
 				props.asc_setDefaultSubtotal(false);
 				pivot.asc_set(api, props);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["subtotal_" + layout + "_bottom"], "bottom", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["subtotal_" + layout + "_bottom"], "bottom", function(){
 				props = new Asc.CT_pivotTableDefinition();
 				props.asc_setDefaultSubtotal(true);
 				props.asc_setSubtotalTop(false);
 				pivot.asc_set(api, props);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["subtotal_" + layout + "_top"], "top", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["subtotal_" + layout + "_top"], "top", function(){
 				props = new Asc.CT_pivotTableDefinition();
 				props.asc_setDefaultSubtotal(true);
 				props.asc_setSubtotalTop(true);
@@ -4272,7 +4309,7 @@ $(function() {
 	}
 
 	function testPivotInsertBlankRow() {
-		test("Test: InsertBlankRow", function() {
+		QUnit.test("Test: InsertBlankRow", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.checkPivotFieldItems(0);
@@ -4285,19 +4322,19 @@ $(function() {
 			pivot.asc_set(api, props);
 
 			AscCommon.History.Clear();
-			pivot = checkHistoryOperation(pivot, standards["insertBlankRow_1row"], "1row", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["insertBlankRow_1row"], "1row", function(){
 				pivot.asc_addRowField(api, 0);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["insertBlankRow_2row"], "2row", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["insertBlankRow_2row"], "2row", function(){
 				pivot.asc_moveToRowField(api, Asc.st_VALUES);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["insertBlankRow_3row"], "3row", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["insertBlankRow_3row"], "3row", function(){
 				pivot.asc_addRowField(api, 1);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["insertBlankRow_4row"], "4row", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["insertBlankRow_4row"], "4row", function(){
 				pivot.asc_addRowField(api, 2);
 			});
 
@@ -4306,34 +4343,34 @@ $(function() {
 	}
 
 	function testPivotPageFilterLayout() {
-		test("Test: PageFilter layout", function() {
+		QUnit.test.skip("Test: PageFilter layout", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 
 			AscCommon.History.Clear();
-			pivot = checkHistoryOperation(pivot, standards["filter_downThenOver1"], "downThenOver1", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["filter_downThenOver1"], "downThenOver1", function(){
 				pivot.asc_addPageField(api, 0);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["filter_downThenOver3"], "downThenOver3", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["filter_downThenOver3"], "downThenOver3", function(){
 				pivot.asc_addPageField(api, 1);
 				pivot.asc_addPageField(api, 2);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["filter_downThenOver3_2wrap"], "downThenOver3_2wrap", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["filter_downThenOver3_2wrap"], "downThenOver3_2wrap", function(){
 				var props = new Asc.CT_pivotTableDefinition();
 				props.asc_setPageWrap(2);
 				pivot.asc_set(api, props);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["filter_downThenOver7_2wrap"], "downThenOver7_2wrap", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["filter_downThenOver7_2wrap"], "downThenOver7_2wrap", function(){
 				pivot.asc_addPageField(api, 3);
 				pivot.asc_addPageField(api, 4);
 				pivot.asc_addPageField(api, 5);
 				pivot.asc_addPageField(api, 6);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["filter_overThenDown7_2wrap"], "overThenDown7_2wrap", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["filter_overThenDown7_2wrap"], "overThenDown7_2wrap", function(){
 				var props = new Asc.CT_pivotTableDefinition();
 				props.asc_setPageOverThenDown(true);
 				pivot.asc_set(api, props);
@@ -4344,7 +4381,7 @@ $(function() {
 	}
 
 	function testFieldProperty() {
-		test("Test: Field Property", function() {
+		QUnit.test("Test: Field Property", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.asc_addRowField(api, 0);
@@ -4356,7 +4393,7 @@ $(function() {
 			pivot.asc_addRowField(api, 2);
 
 			AscCommon.History.Clear();
-			pivot = checkHistoryOperation(pivot, standards["field0"], "field0", function() {
+			pivot = checkHistoryOperation(assert, pivot, standards["field0"], "field0", function() {
 				var pivotField = pivot.asc_getPivotFields()[0];
 				var props = new Asc.CT_PivotField();
 				props.asc_setCompact(false);
@@ -4366,7 +4403,7 @@ $(function() {
 				pivotField.asc_set(api, pivot, 0, props);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["field4"], "field4", function() {
+			pivot = checkHistoryOperation(assert, pivot, standards["field4"], "field4", function() {
 				var pivotField = pivot.asc_getPivotFields()[4];
 				var props = new Asc.CT_PivotField();
 				props.asc_setName("UnitsCustom");
@@ -4381,7 +4418,7 @@ $(function() {
 	}
 
 	function testFieldSubtotal() {
-		test("Test: Field Subtotal", function() {
+		QUnit.test("Test: Field Subtotal", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.asc_addRowField(api, 0);
@@ -4391,21 +4428,21 @@ $(function() {
 
 			AscCommon.History.Clear();
 
-			pivot = checkHistoryOperation(pivot, standards["fieldSubtotalNone"], "fieldSubtotalNone", function() {
+			pivot = checkHistoryOperation(assert, pivot, standards["fieldSubtotalNone"], "fieldSubtotalNone", function() {
 				var pivotField = pivot.asc_getPivotFields()[0];
 				var props = new Asc.CT_PivotField();
 				props.asc_setDefaultSubtotal(false);
 				pivotField.asc_set(api, pivot, 0, props);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["fieldSubtotalAuto"], "fieldSubtotalAuto", function() {
+			pivot = checkHistoryOperation(assert, pivot, standards["fieldSubtotalAuto"], "fieldSubtotalAuto", function() {
 				var pivotField = pivot.asc_getPivotFields()[0];
 				var props = new Asc.CT_PivotField();
 				props.asc_setDefaultSubtotal(true);
 				pivotField.asc_set(api, pivot, 0, props);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["fieldSubtotalCustom"], "fieldSubtotalCustom", function() {
+			pivot = checkHistoryOperation(assert, pivot, standards["fieldSubtotalCustom"], "fieldSubtotalCustom", function() {
 				var pivotField = pivot.asc_getPivotFields()[0];
 				var props = new Asc.CT_PivotField();
 				props.asc_setDefaultSubtotal(true);
@@ -4413,7 +4450,7 @@ $(function() {
 				pivotField.asc_set(api, pivot, 0, props);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["fieldSubtotalAll"], "fieldSubtotalAll", function() {
+			pivot = checkHistoryOperation(assert, pivot, standards["fieldSubtotalAll"], "fieldSubtotalAll", function() {
 				var pivotField = pivot.asc_getPivotFields()[0];
 				var props = new Asc.CT_PivotField();
 				props.asc_setDefaultSubtotal(true);
@@ -4429,14 +4466,14 @@ $(function() {
 	}
 
 	function testDataValues() {
-		test("Test: data values", function() {
+		QUnit.test.skip("Test: data values", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.asc_addRowField(api, 0);
 			pivot.asc_addRowField(api, 1);
 
 			AscCommon.History.Clear();
-			pivot = checkHistoryOperation(pivot, standards["data_values1"], "values1", function() {
+			pivot = checkHistoryOperation(assert, pivot, standards["data_values1"], "values1", function() {
 				var i;
 				var types = [Asc.c_oAscDataConsolidateFunction.Count, Asc.c_oAscDataConsolidateFunction.CountNums, Asc.c_oAscDataConsolidateFunction.Min,
 					Asc.c_oAscDataConsolidateFunction.Max, Asc.c_oAscDataConsolidateFunction.Sum, Asc.c_oAscDataConsolidateFunction.Average,
@@ -4455,37 +4492,37 @@ $(function() {
 				}
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["data_values2"], "values2", function() {
+			pivot = checkHistoryOperation(assert, pivot, standards["data_values2"], "values2", function() {
 				var props = new Asc.CT_pivotTableDefinition();
 				props.asc_setDataRef(dataRef2);
 				pivot.asc_set(api, props);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["data_values3"], "values3", function() {
+			pivot = checkHistoryOperation(assert, pivot, standards["data_values3"], "values3", function() {
 				var props = new Asc.CT_pivotTableDefinition();
 				props.asc_setDataRef(dataRef3);
 				pivot.asc_set(api, props);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["data_values4"], "values4", function() {
+			pivot = checkHistoryOperation(assert, pivot, standards["data_values4"], "values4", function() {
 				var props = new Asc.CT_pivotTableDefinition();
 				props.asc_setDataRef(dataRef4);
 				pivot.asc_set(api, props);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["data_values5"], "values5", function() {
+			pivot = checkHistoryOperation(assert, pivot, standards["data_values5"], "values5", function() {
 				var props = new Asc.CT_pivotTableDefinition();
 				props.asc_setDataRef(dataRef5);
 				pivot.asc_set(api, props);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["data_values6"], "values6", function() {
+			pivot = checkHistoryOperation(assert, pivot, standards["data_values6"], "values6", function() {
 				var props = new Asc.CT_pivotTableDefinition();
 				props.asc_setDataRef(dataRef6);
 				pivot.asc_set(api, props);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["data_values7"], "values7", function() {
+			pivot = checkHistoryOperation(assert, pivot, standards["data_values7"], "values7", function() {
 				var props = new Asc.CT_pivotTableDefinition();
 				props.asc_setDataRef(dataRef7);
 				pivot.asc_set(api, props);
@@ -4496,7 +4533,7 @@ $(function() {
 	}
 
 	function testHeaderRename() {
-		test("Test: header rename", function() {
+		QUnit.test("Test: header rename", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRefHeader, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.checkPivotFieldItems(0);
@@ -4515,7 +4552,7 @@ $(function() {
 			pivot.checkPivotFieldItems(13);
 
 			AscCommon.History.Clear();
-			pivot = checkHistoryOperation(pivot, standards["headerRename"], "header rename", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["headerRename"], "header rename", function(){
 				pivot.asc_addPageField(api, 0);
 				pivot.asc_addPageField(api, 1);
 				pivot.asc_addPageField(api, 2);
@@ -4540,7 +4577,7 @@ $(function() {
 	}
 
 	function testPivotManipulationField() {
-		test("Test: Field Manipulation", function() {
+		QUnit.test.skip("Test: Field Manipulation", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.checkPivotFieldItems(0);
@@ -4552,7 +4589,7 @@ $(function() {
 			pivot.checkPivotFieldItems(6);
 
 			AscCommon.History.Clear();
-			pivot = checkHistoryOperation(pivot, standards["addField"], "addField", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["addField"], "addField", function(){
 				pivot.asc_addField(api, 0);
 				pivot.asc_addField(api, 1);
 				pivot.asc_addField(api, 2);
@@ -4565,7 +4602,7 @@ $(function() {
 				pivot.asc_addDataField(api, 2);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["moveDataField"], "moveDataField", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["moveDataField"], "moveDataField", function(){
 				pivot.asc_addDataField(api, 5);
 				pivot.asc_moveToPageField(api, 5, 2);
 				pivot.asc_moveToColField(api, 0, 3);
@@ -4573,14 +4610,14 @@ $(function() {
 				pivot.asc_moveToDataField(api, 4, 0);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["moveToField"], "moveToField", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["moveToField"], "moveToField", function(){
 				pivot.asc_moveToPageField(api, 2);
 				pivot.asc_moveToColField(api, 5);
 				pivot.asc_moveToDataField(api, 0);
 				pivot.asc_moveToRowField(api, 4, 5);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["compact_0row_0col_0data"], "removeField", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["compact_0row_0col_0data"], "removeField", function(){
 				pivot.asc_removeField(api, 0);
 				pivot.asc_removeField(api, 1);
 				pivot.asc_removeField(api, 2);
@@ -4590,7 +4627,7 @@ $(function() {
 				pivot.asc_removeField(api, 6);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["moveField"], "moveField", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["moveField"], "moveField", function(){
 				pivot.asc_addRowField(api, 0);
 				pivot.asc_addRowField(api, 1);
 				pivot.asc_addPageField(api, 2);
@@ -4610,7 +4647,7 @@ $(function() {
 				pivot.asc_moveDataField(api, 1, 3);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["removeDataField"], "removeDataField", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["removeDataField"], "removeDataField", function(){
 				pivot.asc_removeNoDataField(api, 0);
 				pivot.asc_removeDataField(api, 5, 0);
 				pivot.asc_removeField(api, 6);
@@ -4621,7 +4658,7 @@ $(function() {
 	}
 
 	function testPivotManipulationValues() {
-		test("Test: manipulation values", function() {
+		QUnit.test("Test: manipulation values", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.asc_addRowField(api, 0);
@@ -4631,13 +4668,13 @@ $(function() {
 
 
 			AscCommon.History.Clear();
-			pivot = checkHistoryOperation(pivot, standards["dataOnCols"], "dataOnCols1", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["dataOnCols"], "dataOnCols1", function(){
 				pivot.asc_addDataField(api, 6);
 				pivot.asc_removeDataField(api, 6, 1);
 				pivot.asc_addDataField(api, 6);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["dataOnRows"], "dataOnRows2", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["dataOnRows"], "dataOnRows2", function(){
 				pivot.asc_moveToPageField(api, Asc.st_VALUES);
 				pivot.asc_moveToColField(api, Asc.st_VALUES);
 				pivot.asc_moveToDataField(api, Asc.st_VALUES);
@@ -4646,18 +4683,18 @@ $(function() {
 				pivot.asc_addDataField(api, 6);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["dataPosition"], "dataPosition3", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["dataPosition"], "dataPosition3", function(){
 				pivot.asc_moveRowField(api, 3, 2);
 				pivot.asc_removeDataField(api, 6, 1);
 				pivot.asc_addDataField(api, 6);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["dataPosition"], "dataPosition22", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["dataPosition"], "dataPosition22", function(){
 				pivot.asc_removeDataField(api, 6, 1);
 				pivot.asc_addDataField(api, 6);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["dataPosition"], "dataPosition4", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["dataPosition"], "dataPosition4", function(){
 				pivot.asc_removeField(api, 0);
 				pivot.asc_removeField(api, 1);
 				pivot.asc_removeField(api, 2);
@@ -4668,12 +4705,12 @@ $(function() {
 				pivot.asc_addDataField(api, 6);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["dataOnRows"], "dataOnRows5", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["dataOnRows"], "dataOnRows5", function(){
 				pivot.asc_moveToColField(api, Asc.st_VALUES);
 				pivot.asc_moveToRowField(api, Asc.st_VALUES);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["dataOnRows"], "dataOnRows6", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["dataOnRows"], "dataOnRows6", function(){
 				pivot.asc_moveRowField(api, 3, 2);
 				pivot.asc_removeField(api, 2);
 				pivot.asc_removeDataField(api, 6, 1);
@@ -4683,7 +4720,7 @@ $(function() {
 				pivot.asc_addDataField(api, 6);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["dataOnRows"], "dataOnRows6", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["dataOnRows"], "dataOnRows6", function(){
 				pivot.asc_moveRowField(api, 3, 2);
 				pivot.asc_removeField(api, 2);
 				pivot.asc_removeDataField(api, 6, 1);
@@ -4693,7 +4730,7 @@ $(function() {
 				pivot.asc_addDataField(api, 6);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["dataOnRowsValues"], "dataOnRowsValues", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["dataOnRowsValues"], "dataOnRowsValues", function(){
 				pivot.asc_removeNoDataField(api, Asc.st_VALUES);
 			});
 
@@ -4702,7 +4739,7 @@ $(function() {
 	}
 
 	function testDataRefresh() {
-		test("Test: data refresh", function() {
+		QUnit.test.skip("Test: data refresh", function(assert ) {
 			var pivotField, props;
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
@@ -4741,19 +4778,19 @@ $(function() {
 
 
 			AscCommon.History.Clear();
-			pivot = checkHistoryOperation(pivot, standards["refreshFieldSettings"], "refreshFieldSettings", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["refreshFieldSettings"], "refreshFieldSettings", function(){
 				var props = new Asc.CT_pivotTableDefinition();
 				props.asc_setDataRef(dataRefFieldSettings);
 				pivot.asc_set(api, props);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["refreshRecords"], "refreshRecords", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["refreshRecords"], "refreshRecords", function(){
 				var props = new Asc.CT_pivotTableDefinition();
 				props.asc_setDataRef(dataRefRecords);
 				pivot.asc_set(api, props);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["refreshStructure"], "refreshStructure", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["refreshStructure"], "refreshStructure", function(){
 				var props = new Asc.CT_pivotTableDefinition();
 				props.asc_setDataRef(dataRefStructure);
 				pivot.asc_set(api, props);
@@ -4764,20 +4801,20 @@ $(function() {
 	}
 
 	function testDataSource() {
-		test("Test: data source", function() {
+		QUnit.test.skip("Test: data source", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRefTable, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.checkPivotFieldItems(0);
 			pivot.checkPivotFieldItems(2);
 
 			AscCommon.History.Clear();
-			pivot = checkHistoryOperation(pivot, standards["compact_1row_1col_1data"], "table", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["compact_1row_1col_1data"], "table", function(){
 				pivot.asc_addRowField(api, 0);
 				pivot.asc_addColField(api, 2);
 				pivot.asc_addDataField(api, 5);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["compact_0row_1col_1data"], "table columns", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["compact_0row_1col_1data"], "table columns", function(){
 				var props = new Asc.CT_pivotTableDefinition();
 				props.asc_setDataRef(dataRefTableColumn);
 				pivot.asc_set(api, props);
@@ -4788,7 +4825,7 @@ $(function() {
 				pivot.asc_addDataField(api, 4);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["compact_1row_1col_1data"], "def name", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["compact_1row_1col_1data"], "def name", function(){
 				var props = new Asc.CT_pivotTableDefinition();
 				props.asc_setDataRef(dataRefDefName);
 				pivot.asc_set(api, props);
@@ -4800,7 +4837,7 @@ $(function() {
 				pivot.asc_addDataField(api, 5);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["compact_1row_1col_1data"], "def name local", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["compact_1row_1col_1data"], "def name local", function(){
 				var props = new Asc.CT_pivotTableDefinition();
 				props.asc_setDataRef(dataRefDefNameLocal);
 				pivot.asc_set(api, props);
@@ -4818,7 +4855,7 @@ $(function() {
 	}
 
 	function testFiltersValueFilter() {
-		test("Test: filters value filter", function() {
+		QUnit.test("Test: filters value filter", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRefFilters, ws, reportRange);
 			setPivotLayout(pivot, 'tabular');
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
@@ -4851,14 +4888,14 @@ $(function() {
 			};
 
 			AscCommon.History.Clear();
-			pivot = checkHistoryOperation(pivot, standards["valueFilterOrder1"], "order1", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["valueFilterOrder1"], "order1", function(){
 				pivot.filterByFieldIndex(api, getNewFilter(1), 4, true);
 				pivot.filterByFieldIndex(api, getNewFilter(2), 3, true);
 				pivot.filterByFieldIndex(api, getNewFilter(18), 0, true);
 				pivot.filterByFieldIndex(api, getNewFilter(20), 1, true);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["valueFilterOrder2"], "order2", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["valueFilterOrder2"], "order2", function(){
 				pivot.asc_removeFilters(api);
 
 				pivot.filterByFieldIndex(api, getNewFilter(20), 1, true);
@@ -4872,7 +4909,7 @@ $(function() {
 	}
 
 	function testFiltersValueFilterBug46141() {
-		test("Test: value filter bug 46141", function() {
+		QUnit.test.skip("Test: value filter bug 46141", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			setPivotLayout(pivot, 'tabular');
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
@@ -4904,11 +4941,11 @@ $(function() {
 			};
 
 			AscCommon.History.Clear();
-			pivot = checkHistoryOperation(pivot, standards["bug-46141-row"], "rows", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["bug-46141-row"], "rows", function(){
 				pivot.filterByFieldIndex(api, getNewFilter(13.5), 2, true);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["bug-46141-col"], "cols", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["bug-46141-col"], "cols", function(){
 				pivot.asc_moveToColField(api, 0);
 				pivot.asc_moveToColField(api, 1);
 				pivot.asc_moveToColField(api, 2);
@@ -4920,7 +4957,7 @@ $(function() {
 
 
 	function testFiltersTop10() {
-		test("Test: filters top10", function() {
+		QUnit.test("Test: filters top10", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			setPivotLayout(pivot, 'tabular');
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
@@ -4952,7 +4989,7 @@ $(function() {
 			};
 
 			AscCommon.History.Clear();
-			pivot = checkHistoryOperation(pivot, standards["top10"], "top10", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["top10"], "top10", function(){
 				pivot.filterByFieldIndex(api, getNewFilter(true, false, 1, false, 1), 4, true);
 				pivot.filterByFieldIndex(api, getNewFilter(false, true, 2, false, 2), 2, true);
 				pivot.filterByFieldIndex(api, getNewFilter(true, false, 12, true, 1), 0, true);
@@ -4963,7 +5000,7 @@ $(function() {
 	}
 
 	function testFiltersLabel() {
-		test("Test: filters label", function() {
+		QUnit.test.skip("Test: filters label", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			setPivotLayout(pivot, 'tabular');
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
@@ -5004,7 +5041,7 @@ $(function() {
 			};
 
 			AscCommon.History.Clear();
-			pivot = checkHistoryOperation(pivot, standards["label1"], "label1", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["label1"], "label1", function(){
 				pivot.filterByFieldIndex(api, getNewFilter(Asc.c_oAscCustomAutoFilter.isGreaterThan, 10.6), 6, true);
 				pivot.filterByFieldIndex(api, getNewFilter(Asc.c_oAscCustomAutoFilter.contains, 3), 5, true);
 				pivot.filterByFieldIndex(api, getNewFilter(Asc.c_oAscCustomAutoFilter.doesNotEqual, 11), 4, true);
@@ -5015,7 +5052,7 @@ $(function() {
 	}
 
 	function testFiltersReIndex() {
-		test("Test: filters reIndex", function() {
+		QUnit.test("Test: filters reIndex", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			setPivotLayout(pivot, 'tabular');
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
@@ -5052,22 +5089,22 @@ $(function() {
 
 			AscCommon.History.Clear();
 
-			pivot = checkHistoryOperation(pivot, standards["reIndexStart"], "reIndexStart", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["reIndexStart"], "reIndexStart", function(){
 				pivot.filterByFieldIndex(api, getNewFilter("40", 1), 2, true);
 				pivot.filterByFieldIndex(api, getNewFilter("46", 4), 0, true);
 				pivot.sortByFieldIndex(api, 4, Asc.c_oAscSortOptions.Descending, 1);
 				pivot.sortByFieldIndex(api, 1, Asc.c_oAscSortOptions.Ascending, 2);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["reIndexMove"], "reIndexMove", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["reIndexMove"], "reIndexMove", function(){
 				pivot.asc_moveDataField(api, 3, 0);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["reIndexDelete"], "reIndexDelete", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["reIndexDelete"], "reIndexDelete", function(){
 				pivot.asc_removeField(api, 6);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["reIndexAdd"], "reIndexAdd", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["reIndexAdd"], "reIndexAdd", function(){
 				pivot.asc_addDataField(api, 6, 1);
 			});
 
@@ -5076,7 +5113,7 @@ $(function() {
 	}
 
 	function testNumFormat() {
-		test("Test: num format", function() {
+		QUnit.test("Test: num format", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRefNumFormat, ws, reportRange);
 			setPivotLayout(pivot, 'tabular');
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
@@ -5104,7 +5141,7 @@ $(function() {
 			};
 
 			AscCommon.History.Clear();
-			pivot = checkHistoryOperation(pivot, standards["numFormat"], "numFormat", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["numFormat"], "numFormat", function(){
 				pivot.filterByFieldIndex(api, getNewFilter(2, 0), 2, true);
 			});
 
@@ -5113,7 +5150,7 @@ $(function() {
 	}
 
 	function testPivotMisc() {
-		test("Test: misc", function() {
+		QUnit.test("Test: misc", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRef1Row, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.pivotTableDefinitionX14 = new Asc.CT_pivotTableDefinitionX14();
@@ -5122,7 +5159,7 @@ $(function() {
 			pivot.checkPivotFieldItems(2);
 
 			AscCommon.History.Clear();
-			pivot = checkHistoryOperation(pivot, standards["compact_0row_0col_0data"], "misc", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["compact_0row_0col_0data"], "misc", function(){
 				var props = new Asc.CT_pivotTableDefinition();
 				props.asc_setName("new<&>pivot name");
 				props.asc_setTitle("Title");
@@ -5130,7 +5167,7 @@ $(function() {
 				pivot.asc_set(api, props);
 			});
 
-			pivot = checkHistoryOperation(pivot, standards["longHeader"], "longHeader", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards["longHeader"], "longHeader", function(){
 				pivot.asc_addRowField(api, 0);
 				pivot.asc_addColField(api, 1);
 				pivot.asc_addColField(api, 2);
@@ -5154,7 +5191,7 @@ $(function() {
 		});
 	}
 
-	module("Pivot");
+	QUnit.module("Pivot");
 
 	function startTests() {
 		QUnit.start();

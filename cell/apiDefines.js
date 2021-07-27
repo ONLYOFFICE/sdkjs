@@ -501,6 +501,12 @@ var c_oAscPopUpSelectorType = {
     firstCol: 2
   };
 
+  var ETableType = {
+	  queryTable: 0,
+	  worksheet: 1,
+	  xml: 2
+  };
+
   //----------------------------------------------------------export----------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
   window['AscCommonExcel'].c_oAscDrawDepOptions = c_oAscDrawDepOptions;

@@ -155,6 +155,10 @@
 		return false;
 	};
 
+	RegExp.escape = function ( text ) {
+		return text.replace( /[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&" );
+	};
+
 	if (typeof require === 'function' && !window['XRegExp'])
 	{
 		window['XRegExp'] = require('xregexp');
@@ -4103,6 +4107,16 @@
 		return sResult;
 	}
 
+	/**
+	 * Корректируем значение размера шрифта к допустимому
+	 * @param {number} nFontSize
+	 * @param {boolean} isCeil
+	 */
+	function CorrectFontSize(nFontSize, isCeil)
+	{
+		return isCeil ? Math.ceil(nFontSize * 2) / 2 : Math.floor(nFontSize * 2) / 2;
+	}
+
 	var c_oAscSpaces = [];
 	c_oAscSpaces[0x000A] = 1;
 	c_oAscSpaces[0x0020] = 1;
@@ -5909,6 +5923,236 @@
 		return this.MathSelectPolygons[nIndex];
 	};
 
+	function CDrawingCollaborativeTargetBase()
+	{
+		this.Id      = "";
+		this.ShortId = "";
+
+		this.X    = 0;
+		this.Y    = 0;
+		this.Size = 0;
+
+		this.Color     = null;
+		this.Transform = null;
+
+		this.HtmlElement  = null;
+		this.HtmlElementX = 0;
+		this.HtmlElementY = 0;
+
+		this.Style = "";
+		this.HtmlParent = null;
+	}
+	CDrawingCollaborativeTargetBase.prototype.CreateElement = function()
+	{
+		this.HtmlElement = document.createElement('canvas');
+		this.HtmlElement.style.cssText = "pointer-events: none;position:absolute;padding:0;margin:0;-webkit-user-select:none;width:1px;height:1px;display:block;z-index:3;";
+		this.HtmlElement.width = 1;
+		this.HtmlElement.height = 1;
+
+		this.Color = AscCommon.getUserColorById(this.ShortId, null, true);
+		this.Style = "rgb(" + this.Color.r + "," + this.Color.g + "," + this.Color.b + ")";
+	};
+	CDrawingCollaborativeTargetBase.prototype.GetZoom = function()
+	{
+		return 1.0;
+	};
+	CDrawingCollaborativeTargetBase.prototype.CheckStyleDisplay = function()
+	{
+	};
+	CDrawingCollaborativeTargetBase.prototype.ConvertCoords = function(x, y)
+	{
+		return {
+			X: (x * this.GetZoom() * g_dKoef_mm_to_pix ) >> 0,
+			Y: (y * this.GetZoom() * g_dKoef_mm_to_pix ) >> 0
+		};
+	};
+	CDrawingCollaborativeTargetBase.prototype.GetMobileTouchManager = function()
+	{
+		return null;
+	};
+	CDrawingCollaborativeTargetBase.prototype.UseStylePosition = function()
+	{
+		return (!this.GetMobileTouchManager() && !AscCommon.AscBrowser.isSafariMacOs) || !AscCommon.AscBrowser.isWebkit;
+	};
+	CDrawingCollaborativeTargetBase.prototype.GetParentElement = function()
+	{
+		return null;
+	};
+	CDrawingCollaborativeTargetBase.prototype.CalculateSizeAndPos = function()
+	{
+		var _newW = 2;
+		var _newH = (this.Size * this.GetZoom() * g_dKoef_mm_to_pix) >> 0;
+
+		var _oldW = this.HtmlElement.width;
+		var _oldH = this.HtmlElement.height;
+
+		if (null != this.Transform && !AscCommon.global_MatrixTransformer.IsIdentity2(this.Transform))
+		{
+			var _x1 = this.Transform.TransformPointX(this.X, this.Y);
+			var _y1 = this.Transform.TransformPointY(this.X, this.Y);
+
+			var _x2 = this.Transform.TransformPointX(this.X, this.Y + this.Size);
+			var _y2 = this.Transform.TransformPointY(this.X, this.Y + this.Size);
+
+			var pos1 = this.ConvertCoords(_x1, _y1);
+			var pos2 = this.ConvertCoords(_x2, _y2);
+
+			_newW = (Math.abs(pos1.X - pos2.X) >> 0) + 1;
+			_newH = (Math.abs(pos1.Y - pos2.Y) >> 0) + 1;
+
+			if (2 > _newW)
+				_newW = 2;
+			if (2 > _newH)
+				_newH = 2;
+
+			if (_oldW == _newW && _oldH == _newH)
+			{
+				if (_newW != 2 && _newH != 2)
+				{
+					// просто очищаем
+					this.HtmlElement.width = _newW;
+				}
+			}
+			else
+			{
+				this.HtmlElement.style.width = _newW + "px";
+				this.HtmlElement.style.height = _newH + "px";
+
+				this.HtmlElement.width = _newW;
+				this.HtmlElement.height = _newH;
+			}
+			var ctx = this.HtmlElement.getContext('2d');
+
+			if (_newW == 2 || _newH == 2)
+			{
+				ctx.fillStyle = this.Style;
+				ctx.fillRect(0, 0, _newW, _newH);
+			}
+			else
+			{
+				ctx.beginPath();
+				ctx.strokeStyle = this.Style;
+				ctx.lineWidth = 2;
+
+				if (((pos1.X - pos2.X) * (pos1.Y - pos2.Y)) >= 0)
+				{
+					ctx.moveTo(0, 0);
+					ctx.lineTo(_newW, _newH);
+				}
+				else
+				{
+					ctx.moveTo(0, _newH);
+					ctx.lineTo(_newW, 0);
+				}
+
+				ctx.stroke();
+			}
+
+			this.HtmlElementX = Math.min(pos1.X, pos2.X) >> 0;
+			this.HtmlElementY = Math.min(pos1.Y, pos2.Y) >> 0;
+			if (this.UseStylePosition())
+			{
+				this.HtmlElement.style.left = this.HtmlElementX + "px";
+				this.HtmlElement.style.top = this.HtmlElementY + "px";
+			}
+			else
+			{
+				this.HtmlElement.style.left = "0px";
+				this.HtmlElement.style.top = "0px";
+				this.HtmlElement.style["webkitTransform"] = "matrix(1, 0, 0, 1, " + this.HtmlElementX + "," + this.HtmlElementY + ")";
+			}
+		}
+		else
+		{
+			if (_oldW == _newW && _oldH == _newH)
+			{
+				// просто очищаем
+				this.HtmlElement.width = _newW;
+			}
+			else
+			{
+				this.HtmlElement.style.width = _newW + "px";
+				this.HtmlElement.style.height = _newH + "px";
+
+				this.HtmlElement.width = _newW;
+				this.HtmlElement.height = _newH;
+			}
+
+			var ctx = this.HtmlElement.getContext('2d');
+
+			ctx.fillStyle = this.Style;
+			ctx.fillRect(0, 0, _newW, _newH);
+
+			var pos;
+			if (null != this.Transform)
+			{
+				pos = this.ConvertCoords(this.Transform.tx + this.X, this.Transform.ty + this.Y);
+			}
+			else
+			{
+				pos = this.ConvertCoords(this.X, this.Y);
+			}
+
+			this.HtmlElementX = pos.X >> 0;
+			this.HtmlElementY = pos.Y >> 0;
+
+			if (this.UseStylePosition())
+			{
+				this.HtmlElement.style.left = this.HtmlElementX + "px";
+				this.HtmlElement.style.top = this.HtmlElementY + "px";
+			}
+			else
+			{
+				this.HtmlElement.style.left = "0px";
+				this.HtmlElement.style.top = "0px";
+				this.HtmlElement.style["webkitTransform"] = "matrix(1, 0, 0, 1, " + this.HtmlElementX + "," + this.HtmlElementY + ")";
+			}
+		}
+	};
+	CDrawingCollaborativeTargetBase.prototype.CheckPosition = function()
+	{
+	};
+	CDrawingCollaborativeTargetBase.prototype.CheckNeedDraw = function()
+	{
+		return true;
+	};
+	CDrawingCollaborativeTargetBase.prototype.Remove = function()
+	{
+		if(this.HtmlParent)
+		{
+			this.HtmlParent.removeChild(this.HtmlElement);
+			this.HtmlParent = null;
+		}
+	};
+	CDrawingCollaborativeTargetBase.prototype.Update = function()
+	{
+		// 1) создаем новый элемент, если еще его не было
+		if (this.HtmlElement == null)
+		{
+			this.CreateElement();
+		}
+
+		if(!this.CheckNeedDraw())
+		{
+			return;
+		}
+		// 2) определяем размер
+		this.CalculateSizeAndPos();
+
+		if (AscCommon.CollaborativeEditing)
+			AscCommon.CollaborativeEditing.Update_ForeignCursorLabelPosition(this.Id, this.HtmlElementX, this.HtmlElementY, this.Color);
+
+		// 3) добавить, если нужно
+		var oParentElement = this.GetParentElement();
+		if(oParentElement && oParentElement !== this.HtmlParent)
+		{
+			oParentElement.appendChild(this.HtmlElement);
+			this.HtmlParent = oParentElement;
+		}
+		this.CheckStyleDisplay();
+	};
+
+
 	//------------------------------------------------------------fill polyfill--------------------------------------------
 	if (!Array.prototype.findIndex) {
 		Object.defineProperty(Array.prototype, 'findIndex', {
@@ -6588,6 +6832,7 @@
 	window["AscCommon"].LatinNumberingToInt = LatinNumberingToInt;
 	window["AscCommon"].IntToNumberFormat = IntToNumberFormat;
 	window["AscCommon"].IsSpace = IsSpace;
+	window["AscCommon"].CorrectFontSize = CorrectFontSize;
 
 	window["AscCommon"].loadSdk = loadSdk;
     window["AscCommon"].loadScript = loadScript;
@@ -6601,6 +6846,7 @@
 	window["AscCommon"].isEastAsianScript = isEastAsianScript;
 	window["AscCommon"].CMathTrack = CMathTrack;
 	window["AscCommon"].CPolygon = CPolygon;
+	window['AscCommon'].CDrawingCollaborativeTargetBase = CDrawingCollaborativeTargetBase;
 
 	window["AscCommon"].JSZipWrapper = JSZipWrapper;
 	window["AscCommon"].g_oDocumentUrls = g_oDocumentUrls;

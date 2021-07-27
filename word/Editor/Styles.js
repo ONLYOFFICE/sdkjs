@@ -10649,6 +10649,14 @@ CTableMeasurement.prototype.GetValue = function()
 	return this.W;
 };
 /**
+ * Выставляем значение ширины
+ * @param nValue {number}
+ */
+CTableMeasurement.prototype.SetValue = function(nValue)
+{
+	this.W = nValue;
+};
+/**
  * Расчитываем ширину с учетом заданного типа
  * @param {number} nFullWidth - ширина родительского элемента для расчета значения процентах
  */
@@ -10660,7 +10668,7 @@ CTableMeasurement.prototype.GetCalculatedValue = function(nFullWidth)
 		return this.W * nFullWidth / 100;
 
 	return 0;
-}
+};
 CTableMeasurement.prototype.ReadFromBinary = function(oReader)
 {
 	// Double : W

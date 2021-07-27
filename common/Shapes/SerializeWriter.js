@@ -1195,6 +1195,11 @@ function CBinaryFileWriter()
                 this.EndRecord();
             }
         }
+        if (presentation.Api.vbaMacros) {
+            this.StartRecord(8);
+            this.WriteBuffer(presentation.Api.vbaMacros, 0, presentation.Api.vbaMacros.length);
+            this.EndRecord();
+        }
 		var macros = presentation.Api.macros.GetData();
 		if (macros) {
 			this.StartRecord(9);
@@ -3612,6 +3617,7 @@ function CBinaryFileWriter()
             oThis.WriteUChar(g_nodeAttributeStart);
             oThis._WriteBool2(0, shape.attrUseBgFill);
             oThis._WriteString2(1, shape.macro);
+            oThis._WriteString2(2, shape.modelId);
             oThis.WriteUChar(g_nodeAttributeEnd);
         }
 
@@ -4579,6 +4585,7 @@ function CBinaryFileWriter()
 		oThis._WriteBool1(2, cNvPr.isHidden);
 		oThis._WriteString2(3, cNvPr.title);
 		oThis._WriteString2(4, cNvPr.descr);
+		oThis._WriteBool2(5, cNvPr.form);
         oThis.WriteUChar(g_nodeAttributeEnd);
         oThis.WriteRecord2(0, cNvPr.hlinkClick, oThis.Write_Hyperlink2);
         oThis.WriteRecord2(1, cNvPr.hlinkHover, oThis.Write_Hyperlink2);
@@ -5592,6 +5599,7 @@ function CBinaryFileWriter()
                 _writer.WriteUChar(g_nodeAttributeStart);
                 _writer._WriteBool2(0, shape.attrUseBgFill);
                 _writer._WriteString2(1, shape.macro);
+                _writer._WriteString2(2, shape.modelId);
                 _writer.WriteUChar(g_nodeAttributeEnd);
             }
 

@@ -180,6 +180,7 @@
 
 		this.disableAutostartMacros = false;
 		this.macros = null;
+		this.vbaMacros = null;
 
         this.openFileCryptBinary = null;
 
@@ -1059,6 +1060,11 @@
 			t.sendEvent('asc_onCoAuthoringChatReceiveMessage', e, clear);
 		};
 		this.CoAuthoringApi.onServerVersion = function (buildVersion, buildNumber) {
+			if (t.isRestrictionView()) {
+				t.sync_EndAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.Disconnect);
+				t.asc_removeRestriction(Asc.c_oAscRestrictionType.View);
+			}
+
 			t.sendEvent('asc_onServerVersion', buildVersion, buildNumber);
 		};
 		this.CoAuthoringApi.onAuthParticipantsChanged = function(users, userId)
@@ -1247,10 +1253,17 @@
 				t.asyncServerIdEndLoaded();
 			}
 			if (null != opt_closeCode) {
+				if (t.isRestrictionView()) {
+					t.sync_EndAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.Disconnect);
+					t.asc_removeRestriction(Asc.c_oAscRestrictionType.View);
+				}
 				var error = AscCommon.getDisconnectErrorCode(t.isDocumentLoadComplete, opt_closeCode);
 				var level = t.isDocumentLoadComplete ? Asc.c_oAscError.Level.NoCritical : Asc.c_oAscError.Level.Critical;
 				t.setViewModeDisconnect(AscCommon.getEnableDownloadByCloseCode(opt_closeCode));
 				t.sendEvent('asc_onError', error, level);
+			} else if (!t.isRestrictionView()) {
+				t.sync_StartAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.Disconnect);
+				t.asc_addRestriction(Asc.c_oAscRestrictionType.View);
 			}
 		};
 		this.CoAuthoringApi.onDocumentOpen = function (inputWrap) {

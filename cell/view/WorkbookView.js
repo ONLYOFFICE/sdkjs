@@ -452,7 +452,7 @@
 				  var ws = self.getWorksheet();
 				  if (ws) {
 				  	var selectionRanges = ws.getSelectedRanges();
-				  	if (selectionRanges.length === 1 && selectionRanges[0].bbox && selectionRanges[0].bbox.isOneCell()) {
+				  	if (selectionRanges && selectionRanges.length === 1 && selectionRanges[0].bbox && selectionRanges[0].bbox.isOneCell()) {
 						  return ws.getActiveCell(0, 0, false)
 					  }
 				  }
@@ -861,6 +861,9 @@
     });
     this.model.handlers.add("drawWS", function() {
       self.drawWS.apply(self, arguments);
+    });
+    this.model.handlers.add("scrollToTopLeftCell", function() {
+      self.scrollToTopLeftCell.apply(self, arguments);
     });
     this.model.handlers.add("showDrawingObjects", function() {
       self.onShowDrawingObjects.apply(self, arguments);
@@ -2222,66 +2225,61 @@
 		return this.getCellEditMode() ? this.cellEditor.close(!cancel) : true;
 	};
 
-  WorkbookView.prototype.restoreFocus = function() {
-    if (window["NATIVE_EDITOR_ENJINE"]) {
-      return;
-    }
-
-    if (this.cellEditor.hasFocus) {
-      this.cellEditor.restoreFocus();
-    }
-  };
-
-  WorkbookView.prototype._onUpdateCellEditor = function(text, cursorPosition, fPos, fName) {
-    if (this.skipHelpSelector) {
-      return;
-    }
-    // ToDo для ускорения можно завести объект, куда класть результаты поиска по формулам и второй раз не искать.
-    var i, arrResult = [], defNamesList, defName, defNameStr;
-    if (fName) {
-		fName = fName.toUpperCase();
-      for (i = 0; i < this.formulasList.length; ++i) {
-        if (0 === this.formulasList[i].indexOf(fName)) {
-          arrResult.push(new AscCommonExcel.asc_CCompleteMenu(this.formulasList[i], c_oAscPopUpSelectorType.Func));
-        }
-      }
-      defNamesList = this.getDefinedNames(Asc.c_oAscGetDefinedNamesList.WorksheetWorkbook);
-		fName = fName.toLowerCase();
-      for (i = 0; i < defNamesList.length; ++i) {
-
-	  /*defName = defNamesList[i];
-	  if (0 === defName.Name.toLowerCase().indexOf(fName)) {
-		  arrResult.push(new AscCommonExcel.asc_CCompleteMenu(defName.Name, !defName.isTable ? c_oAscPopUpSelectorType.Range : c_oAscPopUpSelectorType.Table));*/
-
-      	defName = defNamesList[i];
-        defNameStr = defName.Name.toLowerCase();
-        if(null !== defName.LocalSheetId && defNameStr === "print_area") {
-			defNameStr = AscCommon.translateManager.getValue("Print_Area");
+	WorkbookView.prototype.restoreFocus = function () {
+		if (window["NATIVE_EDITOR_ENJINE"]) {
+			return;
 		}
 
-        if (0 === defNameStr.toLowerCase().indexOf(fName)) {
-          var _type = c_oAscPopUpSelectorType.Range;
-          if (defName.type === Asc.c_oAscDefNameType.slicer) {
-              _type = c_oAscPopUpSelectorType.Slicer;
-          } else if (defName.type === Asc.c_oAscDefNameType.table) {
-              _type = c_oAscPopUpSelectorType.Table;
-          }
-          arrResult.push(new AscCommonExcel.asc_CCompleteMenu(defNameStr, _type));
-        }
-      }
-    }
-    if (0 < arrResult.length) {
-      this.handlers.trigger('asc_onFormulaCompleteMenu', arrResult, this.cellEditor.calculateOffset(fPos));
+		if (this.cellEditor.hasFocus) {
+			this.cellEditor.restoreFocus();
+		}
+	};
 
-      this.lastFPos = fPos;
-      this.lastFNameLength = fName.length;
-    } else {
-      this.handlers.trigger('asc_onFormulaCompleteMenu', null);
+	WorkbookView.prototype._onUpdateCellEditor = function (text, cursorPosition, fPos, fName) {
+		if (this.skipHelpSelector) {
+			return;
+		}
+		// ToDo для ускорения можно завести объект, куда класть результаты поиска по формулам и второй раз не искать.
+		var i, arrResult = [], defNamesList, defName, defNameStr;
+		if (fName) {
+			fName = fName.toUpperCase();
+			for (i = 0; i < this.formulasList.length; ++i) {
+				if (0 === this.formulasList[i].indexOf(fName)) {
+					arrResult.push(new AscCommonExcel.asc_CCompleteMenu(this.formulasList[i], c_oAscPopUpSelectorType.Func));
+				}
+			}
+			defNamesList = this.getDefinedNames(Asc.c_oAscGetDefinedNamesList.WorksheetWorkbook);
+			fName = fName.toLowerCase();
+			for (i = 0; i < defNamesList.length; ++i) {
+				defName = defNamesList[i];
+				defNameStr = defName.Name;
+				if (null !== defName.LocalSheetId && defNameStr.toLowerCase() === "print_area") {
+					defNameStr = AscCommon.translateManager.getValue("Print_Area");
+				}
 
-      this.lastFPos = -1;
-      this.lastFNameLength = 0;
-    }
-  };
+				if (0 === defNameStr.toLowerCase().indexOf(fName)) {
+					var _type = c_oAscPopUpSelectorType.Range;
+					if (defName.type === Asc.c_oAscDefNameType.slicer) {
+						_type = c_oAscPopUpSelectorType.Slicer;
+					} else if (defName.type === Asc.c_oAscDefNameType.table) {
+						_type = c_oAscPopUpSelectorType.Table;
+					}
+					arrResult.push(new AscCommonExcel.asc_CCompleteMenu(defNameStr, _type));
+				}
+			}
+		}
+		if (0 < arrResult.length) {
+			this.handlers.trigger('asc_onFormulaCompleteMenu', arrResult, this.cellEditor.calculateOffset(fPos));
+
+			this.lastFPos = fPos;
+			this.lastFNameLength = fName.length;
+		} else {
+			this.handlers.trigger('asc_onFormulaCompleteMenu', null);
+
+			this.lastFPos = -1;
+			this.lastFNameLength = 0;
+		}
+	};
 
     // Вставка формулы в редактор
     WorkbookView.prototype.insertInCellEditor = function (name, type, autoComplete) {
@@ -2967,6 +2965,9 @@
 
   WorkbookView.prototype.drawWS = function() {
     this.getWorksheet().draw();
+  };
+  WorkbookView.prototype.scrollToTopLeftCell = function() {
+    this.getWorksheet().scrollToTopLeftCell();
   };
   WorkbookView.prototype.onShowDrawingObjects = function() {
       var oWSView = this.getWorksheet();
@@ -3842,6 +3843,23 @@
 		this.defaults.worksheetView.updateStyle();
 	};
 
+	WorkbookView.prototype.executeWithCurrentTopLeftCell = function (runFunction) {
+		var i, oWS;
+		var aTrueTopLeftCell = [];
+		for(i = 0; i < this.wsViews.length; i++) {
+			oWS = this.wsViews[i];
+			aTrueTopLeftCell.push(oWS.model.getTopLeftCell());
+			oWS.model.setTopLeftCell(oWS.getCurrentTopLeftCell());
+		}
+		runFunction();
+		for(i = 0; i < this.wsViews.length; i++) {
+			oWS = this.wsViews[i];
+			oWS.model.setTopLeftCell(aTrueTopLeftCell[i]);
+		}
+	};
+	WorkbookView.prototype.convertEquationToMath = function (oEquation, isAll) {
+		this.model.convertEquationToMath(oEquation, isAll);
+	};
 	WorkbookView.prototype.removeHandlersList = function () {
 		var eventList = ["changeSheetViewSettings", "cleanCellCache", "changeWorksheetUpdate", "showWorksheet",
 			"setSelection", "getSelectionState", "setSelectionState", "drawWS", "showDrawingObjects", "setCanUndo",

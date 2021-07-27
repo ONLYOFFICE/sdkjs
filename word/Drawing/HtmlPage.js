@@ -3388,7 +3388,7 @@ function CEditorPage(api)
 
 				if (!AscCommon.AscBrowser.isCustomScaling())
 				{
-					this.m_oDrawingDocument.m_arrPages[i].Draw(context, drawPage.left, drawPage.top, drawPage.right - drawPage.left, drawPage.bottom - drawPage.top);
+					this.m_oDrawingDocument.m_arrPages[i].Draw(context, drawPage.left, drawPage.top, drawPage.right - drawPage.left, drawPage.bottom - drawPage.top, this.m_oApi);
 				}
 				else
 				{
@@ -3396,7 +3396,7 @@ function CEditorPage(api)
 					var __y = (drawPage.top * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 					var __w = ((drawPage.right * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - __x;
 					var __h = ((drawPage.bottom * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - __y;
-					this.m_oDrawingDocument.m_arrPages[i].Draw(context, __x, __y, __w, __h);
+					this.m_oDrawingDocument.m_arrPages[i].Draw(context, __x, __y, __w, __h, this.m_oApi);
 				}
 			}
 		}
@@ -3433,7 +3433,7 @@ function CEditorPage(api)
 					this.m_oDrawingDocument.StartRenderingPage(i);
 				}
 
-				this.m_oDrawingDocument.m_arrPages[i].Draw(context, __x, __y, __w, __h);
+				this.m_oDrawingDocument.m_arrPages[i].Draw(context, __x, __y, __w, __h, this.m_oApi);
 				//this.m_oBoundsController.CheckRect(__x, __y, __w, __h);
 			}
 		}

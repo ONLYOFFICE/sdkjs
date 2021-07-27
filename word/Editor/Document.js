@@ -123,6 +123,13 @@ var keydownresult_PreventAll      = 0xFFFF;
 
 var MEASUREMENT_MAX_MM_VALUE = 1000; // Маскимальное значение в мм, используемое в документе (MS Word) - 55,87 см, или 558,7 мм.
 
+var document_recalcresult_FastFlag = 0x1000;
+
+var document_recalcresult_NoRecal       = 0x0000;
+var document_recalcresult_FastRange     = 0x0001 | document_recalcresult_FastFlag;
+var document_recalcresult_FastParagraph = 0x0002 | document_recalcresult_FastFlag;
+var document_recalcresult_LongRecalc    = 0x00FF;
+
 function CDocumentColumnProps()
 {
     this.W     = 0;
@@ -1178,10 +1185,15 @@ function CDocumentPage()
     this.Pos    = 0;
     this.EndPos = 0;
 
-    this.X      = 0;
-    this.Y      = 0;
-    this.XLimit = 0;
-    this.YLimit = 0;
+	this.X      = 0;
+	this.Y      = 0;
+	this.XLimit = 0;
+	this.YLimit = 0;
+
+	this.OriginX      = 0; // Начальные значения X, Y без учета использования функции Shift
+	this.OriginY      = 0; // Используется, например, при расчете позиции автофигуры внутри ячейки таблицы,
+	this.OriginXLimit = 0; // которая имеет вертикальное выравнивание по центру или по низу
+	this.OriginTLimit = 0;
 
     this.Sections = [];
 
@@ -1195,10 +1207,15 @@ function CDocumentPage()
 
 CDocumentPage.prototype.Update_Limits = function(Limits)
 {
-    this.X      = Limits.X;
-    this.XLimit = Limits.XLimit;
-    this.Y      = Limits.Y;
-    this.YLimit = Limits.YLimit;
+	this.X      = Limits.X;
+	this.XLimit = Limits.XLimit;
+	this.Y      = Limits.Y;
+	this.YLimit = Limits.YLimit;
+
+	this.OriginX      = Limits.X;
+	this.OriginY      = Limits.Y;
+	this.OriginXLimit = Limits.XLimit;
+	this.OriginYLimit = Limits.YLimit;
 };
 CDocumentPage.prototype.Shift = function(Dx, Dy)
 {
@@ -2270,11 +2287,11 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.TrackRevisions = null; // Локальный флаг рецензирования, который перекрывает флаг Settings.TrackRevisions, если сам не null
 	this.TrackRevisionsManager = new CTrackRevisionsManager(this);
 
+	this.Settings = new CDocumentSettings();
+
 	this.Content[0] = new Paragraph(DrawingDocument, this);
     this.Content[0].Set_DocumentNext(null);
     this.Content[0].Set_DocumentPrev(null);
-
-    this.Settings = new CDocumentSettings();
 
     this.CurPos  =
     {
@@ -3094,6 +3111,9 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 
 	if (this.Action.Additional.FormChange)
 		this.private_FinalizeFormChange();
+
+	if (this.Action.Additional.RadioRequired)
+		this.private_FinalizeRadioRequired();
 	//------------------------------------------------------------------------------------------------------------------
 
 	var isAllPointsEmpty = true;
@@ -3121,13 +3141,24 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	{
 		if (this.Action.Recalculate)
 		{
-			this.private_Recalculate();
+			var nRecalcResult = this.private_Recalculate();
+
+			if (this.Action.Additional.FormAutoFit)
+				this.private_FinalizeFormAutoFit(nRecalcResult & document_recalcresult_FastFlag);
+
 		}
 		else if (undefined !== this.Action.Redraw.Start && undefined !== this.Action.Redraw.End)
 		{
 			this.private_Redraw(this.Action.Redraw.Start, this.Action.Redraw.End);
 		}
 	}
+
+	if (this.IsFillingFormMode())
+		this.Api.sync_OnAllRequiredFormsFilled(this.IsAllRequiredSpecialFormsFilled());
+
+	var oCurrentParagraph = this.GetCurrentParagraph(false, false)
+	if (oCurrentParagraph && oCurrentParagraph.IsInFixedForm())
+		oCurrentParagraph.GetParent().CheckFormViewWindow();
 
 	if (this.Action.UpdateInterface)
 		this.private_UpdateInterface();
@@ -3330,6 +3361,28 @@ CDocument.prototype.private_FinalizeFormChange = function()
 
 	delete this.Action.Additional.FormChangeStart;
 };
+CDocument.prototype.private_FinalizeFormAutoFit = function(isFastRecalc)
+{
+	for (var nIndex = 0, nCount = this.Action.Additional.FormAutoFit.length; nIndex < nCount; ++nIndex)
+	{
+		this.Action.Additional.FormAutoFit[nIndex].ProcessAutoFitContent(isFastRecalc);
+	}
+};
+CDocument.prototype.private_FinalizeRadioRequired = function()
+{
+	for (var sGroupKey in this.Action.Additional.RadioRequired)
+	{
+		var isRequired = this.Action.Additional.RadioRequired[sGroupKey];
+
+		var arrRadioGroup = this.GetSpecialRadioButtons(sGroupKey);
+		for (var nIndex = 0, nCount = arrRadioGroup.length; nIndex < nCount; ++nIndex)
+		{
+			var oRadioButton = arrRadioGroup[nIndex];
+			if (oRadioButton.IsFormRequired() !== isRequired)
+				oRadioButton.SetFormRequired(isRequired);
+		}
+	}
+};
 /**
  * Данная функция предназначена для отключения пересчета. Это может быть полезно, т.к. редактор всегда запускает
  * пересчет после каждого действия.
@@ -3416,7 +3469,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 	{
 		this.RecalcInfo.Set_NeedRecalculateFromStart(false);
 		this.RecalculateFromStart();
-		return;
+		return document_recalcresult_NoRecal;
 	}
 
 	this.DocumentOutline.Update();
@@ -3424,7 +3477,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
     this.StartTime = new Date().getTime();
 
     if (true !== this.Is_OnRecalculate())
-        return;
+        return document_recalcresult_NoRecal;
 
     // Останавливаем поиск
     if (false != this.SearchEngine.ClearOnRecalc)
@@ -3454,10 +3507,10 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
     	var arrChanges = this.History.GetNonRecalculatedChanges();
 
     	if (this.private_RecalculateFastRunRange(arrChanges))
-			return;
+			return document_recalcresult_FastRange;
 
     	if (this.private_RecalculateFastParagraph(arrChanges))
-    		return;
+    		return document_recalcresult_FastParagraph;
     }
 
 	// // Recalculation LOG
@@ -3612,7 +3665,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 		{
 			this.DrawingDocument.ClearCachePages();
 			this.DrawingDocument.FirePaint();
-			return;
+			return document_recalcresult_LongRecalc;
 		}
 		else if (ChangeIndex >= this.Content.length)
 		{
@@ -3673,7 +3726,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 			{
 				// // Recalculation LOG
 				// console.log("No need to recalc");
-				return;
+				return document_recalcresult_LongRecalc;
 			}
 
 			clearTimeout(this.FullRecalc.Id);
@@ -3724,6 +3777,8 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 	{
 		this.Recalculate_Page();
 	}
+
+    return document_recalcresult_LongRecalc;
 };
 /**
  * Запускаем пересчет документа.
@@ -5964,6 +6019,9 @@ CDocument.prototype.AddNewParagraph = function(bRecalculate, bForceAdd)
  */
 CDocument.prototype.Extend_ToPos = function(X, Y)
 {
+	if (!this.CanPerformAction())
+		return;
+
     var LastPara  = this.GetLastParagraph();
     var LastPara2 = LastPara;
 
@@ -6483,7 +6541,7 @@ CDocument.prototype.MoveCursorToStartPos = function(AddToSelect)
 };
 CDocument.prototype.MoveCursorToEndPos = function(AddToSelect)
 {
-	this.ResetWordSelectionм();
+	this.ResetWordSelection();
 	this.private_UpdateTargetForCollaboration();
 
 	this.Controller.MoveCursorToEndPos(AddToSelect);
@@ -9027,6 +9085,8 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 				LastClass       = oInlineLeveLSdt.GetElement(0);
 				nInLastClassPos = 0;
 			}
+
+			LastClass.State.ContentPos = nInLastClassPos;
 
 			var nInRunStartPos = LastClass.State.ContentPos;
 			LastClass.AddText(SelectedContent.GetText({ParaEndToSpace : false}), nInLastClassPos);
@@ -12161,7 +12221,16 @@ CDocument.prototype.private_UpdateTracks = function(bSelection, bEmptySelection)
 	}
 	else
 	{
-		this.DrawingDocument.OnDrawContentControl(null, AscCommon.ContentControlTrack.In);
+		var oForm = null, oMajorParaDrawing;
+		if (docpostype_DrawingObjects === this.GetDocPosType()
+			&& (oMajorParaDrawing = this.DrawingObjects.getMajorParaDrawing())
+			&& this.DrawingObjects.getTargetDocContent())
+			oForm = oMajorParaDrawing.GetInnerForm();
+
+		if (oForm)
+			oForm.DrawContentControlsTrack(false);
+		else
+			this.DrawingDocument.OnDrawContentControl(null, AscCommon.ContentControlTrack.In);
 	}
 
 	if (this.private_SetCurrentSpecialForm(oCurrentForm))
@@ -12325,6 +12394,9 @@ CDocument.prototype.GetWatermarkProps = function()
 
 CDocument.prototype.SetWatermarkProps = function(oProps)
 {
+	if (!this.CanPerformAction())
+		return;
+
     this.StartAction(AscDFH.historydescription_Document_AddWatermark);
     var SectionPageInfo = this.Get_SectionPageNumInfo(this.CurPage);
     var bFirst = SectionPageInfo.bFirst;
@@ -12579,6 +12651,9 @@ CDocument.prototype.Document_Undo = function(Options)
 			this.Document_UpdateRulersState();
 		}
 	}
+
+	if (this.IsFillingFormMode())
+		this.Api.sync_OnAllRequiredFormsFilled(this.IsAllRequiredSpecialFormsFilled());
 };
 CDocument.prototype.Document_Redo = function()
 {
@@ -12604,6 +12679,9 @@ CDocument.prototype.Document_Redo = function()
 		this.Document_UpdateInterfaceState();
 		this.Document_UpdateRulersState();
 	}
+
+	if (this.IsFillingFormMode())
+		this.Api.sync_OnAllRequiredFormsFilled(this.IsAllRequiredSpecialFormsFilled());
 };
 CDocument.prototype.GetSelectionState = function()
 {
@@ -12746,7 +12824,7 @@ CDocument.prototype.Refresh_RecalcData2 = function(nIndex, nPageRel)
 CDocument.prototype.AddHyperlink = function(HyperProps)
 {
 	// Проверку, возможно ли добавить гиперссылку, должны были вызвать до этой функции
-	if (null != HyperProps.Text && "" != HyperProps.Text && true === this.IsSelectionUse())
+	if (HyperProps.Text && "" !== HyperProps.Text && true === this.IsSelectionUse() && this.GetSelectedText() !== HyperProps.Text)
 	{
 		// Корректировка в данном случае пройдет при добавлении гиперссылки.
 		var SelectionInfo = this.GetSelectedElementsInfo();
@@ -12936,12 +13014,21 @@ CDocument.prototype.IsCursorInHyperlink = function(bCheckEnd)
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для работы с совместным редактирования
 //----------------------------------------------------------------------------------------------------------------------
+/**
+ * Проверяем можно ли выполнять действия
+ *
+ * Данная функция вызывается в основной функции проверки лока совместного редактирования, но есть действия, которые
+ * не требуют проверки лока совместки, в таких случая перед выполнением действия надо вызывать эту проверку
+ * @param [isIgnoreCanEditFlag=false]
+ * @returns {boolean}
+ */
+CDocument.prototype.CanPerformAction = function(isIgnoreCanEditFlag)
+{
+	return !((!this.CanEdit() && true !== isIgnoreCanEditFlag) || (true === this.CollaborativeEditing.Get_GlobalLock()));
+};
 CDocument.prototype.Document_Is_SelectionLocked = function(CheckType, AdditionalData, DontLockInFastMode, isIgnoreCanEditFlag)
 {
-	if (!this.CanEdit() && true !== isIgnoreCanEditFlag)
-		return true;
-
-	if (true === this.CollaborativeEditing.Get_GlobalLock())
+	if (!this.CanPerformAction(isIgnoreCanEditFlag))
 		return true;
 
 	this.CollaborativeEditing.OnStart_CheckLock();
@@ -14645,6 +14732,33 @@ CDocument.prototype.End_SilentMode = function(bUpdate)
 	this.TurnOn_Recalculate(bUpdate);
 	this.TurnOn_RecalculateCurPos(bUpdate);
 	this.TurnOn_InterfaceEvents(bUpdate);
+};
+/**
+ * Стартуем режим, в котором новые классы не регистрируются в истории, а также отключается рецензирование
+ * Возвращается текущее состояние редактора
+ * @returns {object}
+ */
+CDocument.prototype.StartNoHistoryMode = function()
+{
+	var oState = {};
+
+	oState.LocalTrackRevisions = this.GetLocalTrackRevisions();
+
+	this.History.TurnOff();
+	this.TableId.TurnOff();
+	this.SetLocalTrackRevisions(false);
+
+	return oState;
+};
+/**
+ * Останавливаем режим "без истории"
+ * @param oState
+ */
+CDocument.prototype.EndNoHistoryMode = function(oState)
+{
+	this.History.TurnOn();
+	this.TableId.TurnOn();
+	this.SetLocalTrackRevisions(oState.LocalTrackRevisions);
 };
 /**
  * Начинаем селект с текущей точки. Если селект уже есть, тогда ничего не делаем.
@@ -18045,7 +18159,7 @@ CDocument.prototype.ConvertFootnoteType = function(isCurrent, isFootnotes, isEnd
 
 	if (false === this.Document_Is_SelectionLocked(changestype_None, { Type : changestype_2_ElementsArray_and_Type, Elements : arrParagraphs, CheckType : changestype_Paragraph_Content }, true))
 	{
-		this.StartAction(AscDFH.history);
+		this.StartAction(AscDFH.historydescription_Document_ConvertFootnoteType);
 
 		for (var nIndex = 0, nCount = arrFootnotes.length; nIndex < nCount; ++nIndex)
 		{
@@ -21573,7 +21687,7 @@ CDocument.prototype.GetAllContentControls = function()
 CDocument.prototype.RemoveContentControl = function(Id)
 {
 	var oContentControl = this.TableId.Get_ById(Id);
-	if (!oContentControl)
+	if (!oContentControl || !oContentControl.GetContentControlType)
 		return;
 
 	if (c_oAscSdtLevelType.Block === oContentControl.GetContentControlType() && oContentControl.Parent)
@@ -21611,6 +21725,9 @@ CDocument.prototype.RemoveContentControl = function(Id)
 };
 CDocument.prototype.RemoveContentControlWrapper = function(Id)
 {
+	if (!this.CanPerformAction())
+		return;
+
 	var oContentControl = this.TableId.Get_ById(Id);
 	if (!oContentControl)
 		return;
@@ -21630,7 +21747,7 @@ CDocument.prototype.RemoveContentControlWrapper = function(Id)
 };
 CDocument.prototype.GetContentControl = function(Id)
 {
-	if (undefined === Id)
+	if (undefined === Id || null === Id)
 	{
 		var oInfo          = this.GetSelectedElementsInfo({SkipTOC : true});
 		var oInlineControl = oInfo.GetInlineLevelSdt();
@@ -23585,6 +23702,8 @@ CDocument.prototype.ParseTableFormulaInstrLine = function(sInstrLine)
 
 CDocument.prototype.AddCaption = function(oPr)
 {
+	if (!this.CanPerformAction())
+		return;
 
     this.StartAction(AscDFH.historydescription_Document_AddCaption);
     var NewParagraph;
@@ -23990,7 +24109,17 @@ CDocument.prototype.CheckTrackMoveInSelection = function()
 
 	return null;
 };
+/**
+ * Сообщаем, что в конце действия нужно будет проверить размер содержимого формы
+ * @param {CSdtBase} oForm
+ */
+CDocument.prototype.CheckFormAutoFit = function(oForm)
+{
+	if (!this.Action.Additional.FormAutoFit)
+		this.Action.Additional.FormAutoFit = [];
 
+	this.Action.Additional.FormAutoFit.push(oForm);
+};
 /**
  * Функция для рисования таблицы с помощью мыши
  */
@@ -24002,7 +24131,16 @@ CDocument.prototype.DrawTable = function()
 	if (!this.DrawTableMode.Table)
 	{
 		if (!this.DrawTableMode.Draw || Math.abs(this.DrawTableMode.StartX - this.DrawTableMode.EndX) < 1 || Math.abs(this.DrawTableMode.StartY - this.DrawTableMode.EndY) < 1)
+		{
+			if (this.DrawTableMode.StartX === this.DrawTableMode.EndX && this.DrawTableMode.StartY === this.DrawTableMode.EndY)
+			{
+				this.DrawTableMode.Draw && editor.sync_TableDrawModeCallback(false);
+				this.DrawTableMode.Erase && editor.sync_TableEraseModeCallback(false);
+				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
+			}
+
 			return;
+		}
 
 		var oSelectionState = this.GetSelectionState();
 
@@ -24045,7 +24183,13 @@ CDocument.prototype.DrawTable = function()
 		var oTable = this.DrawTableMode.Table;
 
 		this.StartAction(AscDFH.historydescription_Document_DrawTable);
-		oTable.DrawTableCells(this.DrawTableMode.StartX, this.DrawTableMode.StartY, this.DrawTableMode.EndX, this.DrawTableMode.EndY, this.DrawTableMode.TablePageStart, this.DrawTableMode.TablePageEnd, isDraw);
+		var bKeepDrawMode = oTable.DrawTableCells(this.DrawTableMode.StartX, this.DrawTableMode.StartY, this.DrawTableMode.EndX, this.DrawTableMode.EndY, this.DrawTableMode.TablePageStart, this.DrawTableMode.TablePageEnd, isDraw);
+
+		if (bKeepDrawMode === false)
+		{
+			isDraw  = false;
+			isErase = false;
+		}
 
 		if (oTable.GetRowsCount() <= 0 && oTable.GetParent())
 		{
@@ -24081,6 +24225,7 @@ CDocument.prototype.DrawTable = function()
 			this.Api.SetTableDrawMode(true);
 		else if (isErase)
 			this.Api.SetTableEraseMode(true);
+		this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
 	}
 };
 /**
@@ -24510,6 +24655,21 @@ CDocument.prototype.OnChangeForm = function(sKey, oForm, oPr)
 	this.Action.Additional.FormChange[sKey] = {Form : oForm, Pr : oPr};
 };
 /**
+ * Сохраняем изменение, что радиогруппа должна иметь заданный статус Required
+ * @param {string} sGroupKey
+ * @param {boolean} isRequired
+ */
+CDocument.prototype.OnChangeRadioRequired = function(sGroupKey, isRequired)
+{
+	if (!this.Action.Start)
+		return;
+	
+	if (!this.Action.Additional.RadioRequired)
+		this.Action.Additional.RadioRequired = {};
+
+	this.Action.Additional.RadioRequired[sGroupKey] = isRequired;
+};
+/**
  * Очищаем все специальные формы до плейсхолдеров
  */
 CDocument.prototype.ClearAllSpecialForms = function()
@@ -24602,6 +24762,82 @@ CDocument.prototype.GetSpecialFormsByKey = function(sKey)
 	}
 
 	return arrForms;
+};
+/**
+ * Получаем массив всех специальных радио кнопок
+ * @param sGroupKey
+ * @returns {[]}
+ */
+CDocument.prototype.GetSpecialRadioButtons = function(sGroupKey)
+{
+	var arrForms = [];
+	for (var sId in this.SpecialForms)
+	{
+		var oForm = this.SpecialForms[sId];
+		if (oForm.IsRadioButton() && oForm.Is_UseInDocument() && sGroupKey === oForm.GetCheckBoxPr().GetGroupKey())
+			arrForms.push(oForm);
+	}
+
+	return arrForms;
+};
+/**
+ * Все ли обязательные поля заполнены
+ * @returns {boolean}
+ */
+CDocument.prototype.IsAllRequiredSpecialFormsFilled = function()
+{
+	for (var sId in this.SpecialForms)
+	{
+		var oForm = this.SpecialForms[sId];
+		if (oForm.Is_UseInDocument() && oForm.IsFormRequired() && !oForm.IsFormFilled())
+			return false;
+	}
+
+	return true;
+};
+/**
+ * Конвертируем
+ * @param sId
+ * @param isToFixed
+ * @returns {boolean}
+ */
+CDocument.prototype.ConvertFormFixedType = function(sId, isToFixed)
+{
+	var oForm = this.GetContentControl(sId);
+	if (!oForm || !oForm.IsForm())
+		return false;
+
+	var isLocked   = false;
+	var oParagraph = oForm.GetParagraph();
+	if (oParagraph)
+	{
+		isLocked = this.IsSelectionLocked(AscCommon.changestype_None, {
+			Type      : AscCommon.changestype_2_ElementsArray_and_Type,
+			Elements  : [oParagraph],
+			CheckType : AscCommon.changestype_Paragraph_Properties
+		}, false, false);
+	}
+
+	if (!isLocked)
+	{
+		this.StartAction(AscDFH.historydescription_Document_ConvertFormFixedType);
+
+		if (isToFixed)
+			oForm.ConvertFormToFixed();
+		else
+			oForm.ConvertFormToInline();
+
+		oForm.MoveCursorToContentControl(false);
+
+		this.Recalculate();
+		this.UpdateInterface();
+		this.UpdateSelection();
+		this.FinalizeAction();
+
+		return true;
+	}
+
+	return false;
 };
 /**
  *  Функция, которая используется для отрисовки символа конца секции

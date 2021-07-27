@@ -59,6 +59,7 @@ AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Text]             = CChangesSdtPr
 AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Temporary]        = CChangesSdtPrTemporary;
 AscDFH.changesFactory[AscDFH.historyitem_SdtPr_TextForm]         = CChangesSdtPrTextForm;
 AscDFH.changesFactory[AscDFH.historyitem_SdtPr_FormPr]           = CChangesSdtPrFormPr;
+AscDFH.changesFactory[AscDFH.historyitem_SdtPr_PictureFormPr]    = CChangesSdtPrPictureFormPr;
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
 //----------------------------------------------------------------------------------------------------------------------
@@ -130,7 +131,9 @@ AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_TextForm] = [
 AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_FormPr] = [
 	AscDFH.historyitem_SdtPr_FormPr
 ];
-
+AscDFH.changesRelationMap[AscDFH.historyitem_SdtPr_PictureFormPr] = [
+	AscDFH.historyitem_SdtPr_PictureFormPr
+];
 //----------------------------------------------------------------------------------------------------------------------
 
 /**
@@ -679,4 +682,23 @@ CChangesSdtPrFormPr.prototype.private_SetValue = function(Value)
 CChangesSdtPrFormPr.prototype.private_CreateObject = function()
 {
 	return new CSdtFormPr();
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseObjectProperty}
+ */
+function CChangesSdtPrPictureFormPr(Class, Old, New)
+{
+	AscDFH.CChangesBaseObjectProperty.call(this, Class, Old, New);
+}
+CChangesSdtPrPictureFormPr.prototype = Object.create(AscDFH.CChangesBaseObjectProperty.prototype);
+CChangesSdtPrPictureFormPr.prototype.constructor = CChangesSdtPrPictureFormPr;
+CChangesSdtPrPictureFormPr.prototype.Type = AscDFH.historyitem_SdtPr_PictureFormPr;
+CChangesSdtPrPictureFormPr.prototype.private_SetValue = function(Value)
+{
+	this.Class.Pr.PictureFormPr = Value;
+};
+CChangesSdtPrPictureFormPr.prototype.private_CreateObject = function()
+{
+	return new CSdtPictureFormPr();
 };

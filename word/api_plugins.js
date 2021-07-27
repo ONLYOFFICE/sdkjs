@@ -241,7 +241,7 @@
 		if (!prop)
 			return null;
 
-		if (oLogicDocument && prop.CC)
+		if (oLogicDocument && prop.CC && contentFormat)
 		{
 			oState = oLogicDocument.SaveDocumentState();
 			prop.CC.SelectContentControl();
@@ -271,7 +271,7 @@
 			prop["content"] = copy_data.data;
 		}
 
-		if (oState)
+		if (oState && contentFormat)
 		{
 			oLogicDocument.LoadDocumentState(oState);
 			oLogicDocument.UpdateSelection();

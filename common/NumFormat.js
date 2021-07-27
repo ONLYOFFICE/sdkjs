@@ -2462,8 +2462,14 @@ NumFormat.prototype =
             }
             else if(numFormat_Hour == item.type)
             {
-                for(var j = 0; j < item.val; ++j)
-                    res += hour;
+				if (item.bElapsed) {
+					res += "[";
+				}
+				for(var j = 0; j < item.val; ++j)
+					res += hour;
+				if (item.bElapsed) {
+					res += "]";
+				}
             }
             else if(numFormat_Minute == item.type)
             {

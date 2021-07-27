@@ -1119,9 +1119,9 @@ CBlockLevelSdt.prototype.IsCell = function(isReturnCell)
 {
 	return this.Parent.IsTableCellContent(isReturnCell);
 };
-CBlockLevelSdt.prototype.Is_DrawingShape = function()
+CBlockLevelSdt.prototype.Is_DrawingShape = function(bRetShape)
 {
-	return this.Parent.Is_DrawingShape();
+	return this.Parent.Is_DrawingShape(bRetShape);
 };
 CBlockLevelSdt.prototype.Get_Numbering = function()
 {
@@ -1596,6 +1596,14 @@ CBlockLevelSdt.prototype.GetLastElement = function()
 		return null;
 
 	return this.Content.GetElement(nCount - 1);
+};
+CBlockLevelSdt.prototype.GetElement = function(nIndex)
+{
+	return this.Content.GetElement(nIndex);
+};
+CBlockLevelSdt.prototype.GetElementsCount = function()
+{
+	return this.Content.GetElementsCount();
 };
 CBlockLevelSdt.prototype.GetLastParagraph = function()
 {

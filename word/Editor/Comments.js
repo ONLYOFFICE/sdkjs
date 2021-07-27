@@ -986,7 +986,7 @@ ParaComment.prototype.LoadRecalculateObject = function(RecalcObj, Parent)
 ParaComment.prototype.PrepareRecalculateObject = function()
 {
 };
-ParaComment.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange)
+ParaComment.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 {
 	var DocumentComments = editor.WordControl.m_oLogicDocument.Comments;
 	var Comment          = DocumentComments.Get_ById(this.CommentId);

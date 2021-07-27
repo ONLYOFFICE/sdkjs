@@ -1129,7 +1129,10 @@ var editor;
           oAdditionalData["delimiterChar"] = options.advancedOptions.asc_getDelimiterChar();
         }
       }
-      dataContainer.data = oBinaryFileWriter.Write(oAdditionalData["nobase64"]);
+      //перед записью подменяю topLeftCell на тот, который видим
+        this.wb.executeWithCurrentTopLeftCell(function () {
+          dataContainer.data = oBinaryFileWriter.Write(oAdditionalData["nobase64"]);
+        });
     }
 
     if (window.isCloudCryptoDownloadAs) {
@@ -2112,6 +2115,12 @@ var editor;
 
 	spreadsheet_api.prototype._onSaveCallbackInner = function () {
 		var t = this;
+
+		var ws = this.wb.getWorksheet();
+		if (ws) {
+			ws.updateTopLeftCell();
+		}
+
 		AscCommon.CollaborativeEditing.Clear_CollaborativeMarks();
 		// Принимаем чужие изменения
 		this.collaborativeEditing.applyChanges();
@@ -3536,7 +3545,7 @@ var editor;
     }
     if(fReplaceCallback) {
 
-      if (window["AscDesktopEditor"]) {
+      if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
         var firstUrl = window["AscDesktopEditor"]["LocalFileGetImageUrl"](sImageUrl);
         firstUrl = g_oDocumentUrls.getImageUrl(firstUrl);
         fReplaceCallback(firstUrl);
@@ -5622,6 +5631,23 @@ var editor;
 	}
   	this.wb.undo({All : true});
   };
+  spreadsheet_api.prototype.asc_ConvertEquationToMath = function(oEquation, isAll)
+  {
+      // TODO: Вообще здесь нужно запрашивать шрифты, которые использовались в старой формуле,
+      //      но пока это только 1 шрифт "Cambria Math".
+      var oWorkbook = this.wb;
+      var loader   = AscCommon.g_font_loader;
+      var fontinfo = AscFonts.g_fontApplication.GetFontInfo("Cambria Math");
+      var isasync  = loader.LoadFont(fontinfo, function()
+      {
+          oWorkbook.convertEquationToMath(oEquation, isAll);
+      }, this);
+
+      if (false === isasync)
+      {
+          oWorkbook.convertEquationToMath(oEquation, isAll);
+      }
+  };
 
   /*
    * Export
@@ -6088,4 +6114,7 @@ var editor;
   prot["asc_setSkin"] = prot.asc_setSkin;
 
   prot["asc_getEscapeSheetName"] = prot.asc_getEscapeSheetName;
+
+
+  prot["asc_ConvertEquationToMath"] = prot.asc_ConvertEquationToMath;
 })(window);

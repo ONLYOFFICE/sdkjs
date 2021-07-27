@@ -62,6 +62,8 @@ function CDocumentContentElementBase(oParent)
 	this.PageNum      = 0;
 	this.ColumnNum    = 0;
 	this.ColumnsCount = 0;
+	this.UseXLimit    = true;
+	this.UseYLimit    = true;
 }
 
 CDocumentContentElementBase.prototype.Get_Type = function()
@@ -169,6 +171,22 @@ CDocumentContentElementBase.prototype.Reset = function(X, Y, XLimit, YLimit, Pag
 	this.PageNum      = PageAbs;
 	this.ColumnNum    = ColumnAbs ? ColumnAbs : 0;
 	this.ColumnsCount = ColumnsCount ? ColumnsCount : 1;
+};
+CDocumentContentElementBase.prototype.SetUseXLimit = function(isUse)
+{
+	this.UseXLimit = isUse;
+};
+CDocumentContentElementBase.prototype.IsUseXLimit = function()
+{
+	return this.UseXLimit;
+};
+CDocumentContentElementBase.prototype.SetUseYLimit = function(isUse)
+{
+	this.UseYLimit = isUse;
+};
+CDocumentContentElementBase.prototype.IsUseYLimit = function()
+{
+	return this.UseYLimit;
 };
 CDocumentContentElementBase.prototype.Recalculate_Page = function(CurPage)
 {

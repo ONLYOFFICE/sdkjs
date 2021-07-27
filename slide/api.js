@@ -2493,7 +2493,6 @@ background-repeat: no-repeat;\
 		{
 			History.Create_NewPoint(AscDFH.historydescription_Presentation_ParagraphAdd);
 			this.WordControl.m_oLogicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({FontSize : Math.min(size, 300)}), false);
-			this.WordControl.m_oLogicDocument.CheckResetShapesAutoFit(true);
 			// для мобильной версии это важно
 			if (this.isMobileVersion)
 				this.UpdateInterfaceState();
@@ -2879,7 +2878,7 @@ background-repeat: no-repeat;\
 			else
 			{
 
-				if (window["AscDesktopEditor"])
+				if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]())
 				{
 					image_url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](sImageUrl);
 					image_url = g_oDocumentUrls.getImageUrl(image_url);
@@ -3070,7 +3069,7 @@ background-repeat: no-repeat;\
                 }
                 else
                 {
-                    if (window["AscDesktopEditor"])
+                    if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]())
                     {
                         image_url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](sImageUrl);
                         image_url = g_oDocumentUrls.getImageUrl(image_url);
@@ -4312,7 +4311,7 @@ background-repeat: no-repeat;\
 			}
 			else
 			{
-				if (window["AscDesktopEditor"])
+				if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]())
                 {
                     this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
                     var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](sImageUrl);
@@ -5660,7 +5659,7 @@ background-repeat: no-repeat;\
 					if (0 == indSlide)
 					{
 						var slideNum         = parseInt(Url.substring(mask.length));
-						Data.Hyperlink.Value = "Slide" + slideNum;
+						Data.Hyperlink.Value = "Slide " + (slideNum + 1);
 					}
 				}
 			}
@@ -7346,6 +7345,28 @@ background-repeat: no-repeat;\
 
         return oLogicDocument.GetAddedTextOnKeyDown(e);
     };
+	asc_docs_api.prototype.sync_OnConvertEquationToMath = function(oEquation)
+	{
+		this.sendEvent("asc_onConvertEquationToMath", oEquation);
+	};
+	asc_docs_api.prototype.asc_ConvertEquationToMath = function(oEquation, isAll)
+	{
+		var oLogicDocument = this.WordControl.m_oLogicDocument;
+
+		// TODO: Вообще здесь нужно запрашивать шрифты, которые использовались в старой формуле,
+		//      но пока это только 1 шрифт "Cambria Math".
+		var loader   = AscCommon.g_font_loader;
+		var fontinfo = AscFonts.g_fontApplication.GetFontInfo("Cambria Math");
+		var isasync  = loader.LoadFont(fontinfo, function()
+		{
+			oLogicDocument.ConvertEquationToMath(oEquation, isAll);
+		}, this);
+
+		if (false === isasync)
+		{
+			oLogicDocument.ConvertEquationToMath(oEquation, isAll);
+		}
+	};
 
     //test
 	window["asc_docs_api"]                                 = asc_docs_api;
@@ -8226,6 +8247,9 @@ background-repeat: no-repeat;\
 	// password
 	asc_docs_api.prototype["asc_setCurrentPassword"] 				= asc_docs_api.prototype.asc_setCurrentPassword;
 	asc_docs_api.prototype["asc_resetPassword"] 					= asc_docs_api.prototype.asc_resetPassword;
+
+	asc_docs_api.prototype["sync_OnConvertEquationToMath"] 		    = asc_docs_api.prototype.sync_OnConvertEquationToMath;
+	asc_docs_api.prototype["asc_ConvertEquationToMath"] 		    = asc_docs_api.prototype.asc_ConvertEquationToMath;
 
 
 	window['Asc']['asc_CCommentData'] = window['Asc'].asc_CCommentData = asc_CCommentData;

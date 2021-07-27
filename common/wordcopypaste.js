@@ -2305,6 +2305,11 @@ PasteProcessor.prototype =
 				if (oDocument.Footnotes && oDocument.Footnotes.CurFootnote)
 					oDocument = oDocument.Footnotes.CurFootnote
 			}
+			else if (nDocPosType === docpostype_Endnotes)
+			{
+				if (oDocument.Endnotes && oDocument.Endnotes.CurEndnote)
+					oDocument = oDocument.Endnotes.CurEndnote
+			}
 
 			// Отдельно обрабатываем случай, когда курсор находится внутри таблицы
 			var Item = oDocument.Content[oDocument.CurPos.ContentPos];
@@ -5117,7 +5122,8 @@ PasteProcessor.prototype =
                 oCurParagraph.Internal_Content_Add(0, oCurRun);
 				for (var oIterator = text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
 					if (bAddParagraph) {
-                        oContent.Internal_Content_Add(oContent.Content.length, new Paragraph(oContent.DrawingDocument, oContent, oContent.bPresentation === true));
+                        oCurParagraph = new Paragraph(oContent.DrawingDocument, oContent, oContent.bPresentation === true);
+                        oContent.Internal_Content_Add(oContent.Content.length, oCurParagraph);
                         oCurRun = new ParaRun(oCurParagraph, false);
                         oCurParagraph.Internal_Content_Add(0, oCurRun);
 						bAddParagraph = false;

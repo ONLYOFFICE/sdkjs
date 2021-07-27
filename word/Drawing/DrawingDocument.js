@@ -993,8 +993,15 @@ function CCacheManager()
 		// затем нужно сбросить ссылку в ноль (_cache_image = null) <- это обязательно !!!!!!!
 	}
 
-	this.Lock = function (_w, _h)
+	this.Lock = function (_w, _h, _drDocument)
 	{
+		var backgroundColor = "#FFFFFF";
+		if (_drDocument)
+		{
+			var backColor = _drDocument.m_oWordControl.m_oApi.getPageBackgroundColor();
+            backgroundColor = "#" + backColor[0].toString(16) + backColor[1].toString(16) + backColor[2].toString(16);
+        }
+
 		for (var i = 0; i < this.arrayCount; ++i)
 		{
 			if (this.arrayImages[i].image_locked)
@@ -1005,10 +1012,9 @@ function CCacheManager()
 			{
 				this.arrayImages[i].image_locked = 1;
 				this.arrayImages[i].image_unusedCount = 0;
-
 				this.arrayImages[i].image.ctx.globalAlpha = 1.0;
 				this.arrayImages[i].image.ctx.setTransform(1, 0, 0, 1, 0, 0);
-				this.arrayImages[i].image.ctx.fillStyle = "#ffffff";
+				this.arrayImages[i].image.ctx.fillStyle = backgroundColor;
 				this.arrayImages[i].image.ctx.fillRect(0, 0, _w, _h);
 				return this.arrayImages[i];
 			}
@@ -1025,7 +1031,7 @@ function CCacheManager()
 		this.arrayImages[index].image.ctx = this.arrayImages[index].image.getContext('2d');
 		this.arrayImages[index].image.ctx.globalAlpha = 1.0;
 		this.arrayImages[index].image.ctx.setTransform(1, 0, 0, 1, 0, 0);
-		this.arrayImages[index].image.ctx.fillStyle = "#ffffff";
+		this.arrayImages[index].image.ctx.fillStyle = backgroundColor;
 		this.arrayImages[index].image.ctx.fillRect(0, 0, _w, _h);
 		this.arrayImages[index].image_locked = 1;
 		this.arrayImages[index].image_unusedCount = 0;
@@ -1085,51 +1091,45 @@ function CPage()
 	this.selectionArray = [];
 	this.drawingPage = new CDrawingPage();
 
-	this.Draw = function (context, xDst, yDst, wDst, hDst, contextW, contextH)
+	this.Draw = function (context, xDst, yDst, wDst, hDst, api)
 	{
+		var strokeColor = undefined;
+        if (!g_page_outline_inner)
+            strokeColor = GlobalSkin.PageOutline;
+
 		if (null != this.drawingPage.cachedImage)
 		{
-			if (!g_page_outline_inner)
-			{
-				context.strokeStyle = GlobalSkin.PageOutline;
-				context.lineWidth = 1;
-
-				// ctx.strokeRect(x - 0.5, y - 0.5, w + 1, h + 1);
-				context.beginPath();
-				context.moveTo(xDst - 0.5, yDst - 0.5);
-				context.lineTo(xDst + wDst + 0.5, yDst - 0.5);
-				context.lineTo(xDst + wDst + 0.5, yDst + hDst + 0.5);
-				context.lineTo(xDst - 0.5, yDst + hDst + 0.5);
-				context.closePath();
-				context.stroke();
-				context.beginPath();
-			}
-
 			// потом посмотреть на кусочную отрисовку
 			context.drawImage(this.drawingPage.cachedImage.image, xDst, yDst, wDst, hDst);
 		}
 		else
 		{
-			context.fillStyle = "#ffffff";
-
-			if (!g_page_outline_inner)
+			if (!api.isDarkMode)
+				context.fillStyle = "#FFFFFF";
+			else
 			{
-				context.strokeStyle = GlobalSkin.PageOutline;
-				context.lineWidth = 1;
-
-				// ctx.strokeRect(x - 0.5, y - 0.5, w + 1, h + 1);
-				context.beginPath();
-				context.moveTo(xDst - 0.5, yDst - 0.5);
-				context.lineTo(xDst + wDst + 0.5, yDst - 0.5);
-				context.lineTo(xDst + wDst + 0.5, yDst + hDst + 0.5);
-				context.lineTo(xDst - 0.5, yDst + hDst + 0.5);
-				context.closePath();
-				context.stroke();
-				context.beginPath();
+                var backColor = api.getPageBackgroundColor();
+                context.fillStyle = "#" + backColor[0].toString(16) + backColor[1].toString(16) + backColor[2].toString(16);
 			}
 
+			strokeColor = GlobalSkin.PageOutline;
 			context.fillRect(xDst, yDst, wDst, hDst);
 		}
+
+		if (api && api.isDarkMode)
+		{
+			strokeColor = "#FFFFFF";
+		}
+
+        if (strokeColor)
+        {
+            var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+            context.lineWidth = Math.round(rPR);
+            context.strokeStyle = strokeColor;
+            context.beginPath();
+            context.strokeRect(xDst - 0.5 * rPR, yDst - 0.5 * rPR, wDst + rPR, hDst + rPR);
+            context.beginPath();
+        }
 	};
 
 	this.DrawSelection = function (overlay, xDst, yDst, wDst, hDst, TextMatrix)
@@ -1862,209 +1862,37 @@ function CPage()
 	}
 }
 
-function CDrawingCollaborativeTarget()
+function CDrawingCollaborativeTarget(DrawingDocument)
 {
-	this.Id = "";
-	this.ShortId = "";
-
-	this.X = 0;
-	this.Y = 0;
-	this.Size = 0;
+	AscCommon.CDrawingCollaborativeTargetBase.call(this);
+	this.DrawingDocument = DrawingDocument;
 	this.Page = -1;
-
-	this.Color = null;
-	this.Transform = null;
-
-	this.HtmlElement = null;
-	this.HtmlElementX = 0;
-	this.HtmlElementY = 0;
-
-	this.Color = null;
-
-	this.Style = "";
-	this.IsInsertToDOM = false;
 }
-CDrawingCollaborativeTarget.prototype =
+CDrawingCollaborativeTarget.prototype = Object.create(AscCommon.CDrawingCollaborativeTargetBase.prototype);
+CDrawingCollaborativeTarget.prototype.GetZoom = function()
 {
-	CheckPosition: function (_drawing_doc, _x, _y, _size, _page, _transform)
-	{
-		// 1) создаем новый элемент, если еще его не было
-		var bIsHtmlElementCreate = false;
-		if (this.HtmlElement == null)
-		{
-			bIsHtmlElementCreate = true;
-			this.HtmlElement = document.createElement('canvas');
-			this.HtmlElement.style.cssText = "pointer-events: none;position:absolute;padding:0;margin:0;-webkit-user-select:none;width:1px;height:1px;display:block;z-index:3;";
-			this.HtmlElement.width = 1;
-			this.HtmlElement.height = 1;
-
-			this.Color = AscCommon.getUserColorById(this.ShortId, null, true);
-			this.Style = "rgb(" + this.Color.r + "," + this.Color.g + "," + this.Color.b + ")";
-		}
-
-		// 2) определяем размер
-		this.Transform = _transform;
-		this.Size = _size;
-
-		var _old_x = this.X;
-		var _old_y = this.Y;
-		var _old_page = this.Page;
-
-		this.X = _x;
-		this.Y = _y;
-		this.Page = _page;
-
-		var _oldW = this.HtmlElement.width;
-		var _oldH = this.HtmlElement.height;
-
-		var _newW = 2;
-		var _newH = (this.Size * _drawing_doc.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100) >> 0;
-
-		if (null != this.Transform && !global_MatrixTransformer.IsIdentity2(this.Transform))
-		{
-			var _x1 = this.Transform.TransformPointX(_x, _y);
-			var _y1 = this.Transform.TransformPointY(_x, _y);
-
-			var _x2 = this.Transform.TransformPointX(_x, _y + this.Size);
-			var _y2 = this.Transform.TransformPointY(_x, _y + this.Size);
-
-			var pos1 = _drawing_doc.ConvertCoordsToCursor2(_x1, _y1, this.Page);
-			var pos2 = _drawing_doc.ConvertCoordsToCursor2(_x2, _y2, this.Page);
-
-			_newW = (Math.abs(pos1.X - pos2.X) >> 0) + 1;
-			_newH = (Math.abs(pos1.Y - pos2.Y) >> 0) + 1;
-
-			if (2 > _newW)
-				_newW = 2;
-			if (2 > _newH)
-				_newH = 2;
-
-			if (_oldW == _newW && _oldH == _newH)
-			{
-				if (_newW != 2 && _newH != 2)
-				{
-					// просто очищаем
-					this.HtmlElement.width = _newW;
-				}
-			}
-			else
-			{
-				this.HtmlElement.style.width = _newW + "px";
-				this.HtmlElement.style.height = _newH + "px";
-
-				this.HtmlElement.width = _newW;
-				this.HtmlElement.height = _newH;
-			}
-			var ctx = this.HtmlElement.getContext('2d');
-
-			if (_newW == 2 || _newH == 2)
-			{
-				ctx.fillStyle = this.Style;
-				ctx.fillRect(0, 0, _newW, _newH);
-			}
-			else
-			{
-				ctx.beginPath();
-				ctx.strokeStyle = this.Style;
-				ctx.lineWidth = 2;
-
-				if (((pos1.X - pos2.X) * (pos1.Y - pos2.Y)) >= 0)
-				{
-					ctx.moveTo(0, 0);
-					ctx.lineTo(_newW, _newH);
-				}
-				else
-				{
-					ctx.moveTo(0, _newH);
-					ctx.lineTo(_newW, 0);
-				}
-
-				ctx.stroke();
-			}
-
-			this.HtmlElementX = Math.min(pos1.X, pos2.X) >> 0;
-			this.HtmlElementY = Math.min(pos1.Y, pos2.Y) >> 0;
-			if ((!_drawing_doc.m_oWordControl.MobileTouchManager && !AscCommon.AscBrowser.isSafariMacOs) || !AscCommon.AscBrowser.isWebkit)
-			{
-				this.HtmlElement.style.left = this.HtmlElementX + "px";
-				this.HtmlElement.style.top = this.HtmlElementY + "px";
-			}
-			else
-			{
-				this.HtmlElement.style.left = "0px";
-				this.HtmlElement.style.top = "0px";
-				this.HtmlElement.style["webkitTransform"] = "matrix(1, 0, 0, 1, " + this.HtmlElementX + "," + this.HtmlElementY + ")";
-			}
-		}
-		else
-		{
-			if (_oldW == _newW && _oldH == _newH)
-			{
-				// просто очищаем
-				this.HtmlElement.width = _newW;
-			}
-			else
-			{
-				this.HtmlElement.style.width = _newW + "px";
-				this.HtmlElement.style.height = _newH + "px";
-
-				this.HtmlElement.width = _newW;
-				this.HtmlElement.height = _newH;
-			}
-
-			var ctx = this.HtmlElement.getContext('2d');
-
-			ctx.fillStyle = this.Style;
-			ctx.fillRect(0, 0, _newW, _newH);
-
-			if (null != this.Transform)
-			{
-				_x += this.Transform.tx;
-				_y += this.Transform.ty;
-			}
-
-			var pos = _drawing_doc.ConvertCoordsToCursor2(_x, _y, this.Page);
-
-			this.HtmlElementX = pos.X >> 0;
-			this.HtmlElementY = pos.Y >> 0;
-
-			if ((!_drawing_doc.m_oWordControl.MobileTouchManager && !AscCommon.AscBrowser.isSafariMacOs) || !AscCommon.AscBrowser.isWebkit)
-			{
-				this.HtmlElement.style.left = this.HtmlElementX + "px";
-				this.HtmlElement.style.top = this.HtmlElementY + "px";
-			}
-			else
-			{
-				this.HtmlElement.style.left = "0px";
-				this.HtmlElement.style.top = "0px";
-				this.HtmlElement.style["webkitTransform"] = "matrix(1, 0, 0, 1, " + this.HtmlElementX + "," + this.HtmlElementY + ")";
-			}
-		}
-
-		if (AscCommon.CollaborativeEditing)
-			AscCommon.CollaborativeEditing.Update_ForeignCursorLabelPosition(this.Id, this.HtmlElementX, this.HtmlElementY, this.Color);
-
-		// 3) добавить, если нужно
-		if (bIsHtmlElementCreate)
-		{
-			_drawing_doc.m_oWordControl.m_oMainView.HtmlElement.appendChild(this.HtmlElement);
-			this.IsInsertToDOM = true;
-		}
-	},
-
-	Remove: function (_drawing_doc)
-	{
-		if (this.IsInsertToDOM)
-		{
-			_drawing_doc.m_oWordControl.m_oMainView.HtmlElement.removeChild(this.HtmlElement);
-			this.IsInsertToDOM = false;
-		}
-	},
-
-	Update: function (_drawing_doc)
-	{
-		this.CheckPosition(_drawing_doc, this.X, this.Y, this.Size, this.Page, this.Transform);
-	}
+	return this.DrawingDocument.m_oWordControl.m_nZoomValue / 100;
+};
+CDrawingCollaborativeTarget.prototype.ConvertCoords = function(x, y)
+{
+	return this.DrawingDocument.ConvertCoordsToCursor2(x, y, this.Page);
+};
+CDrawingCollaborativeTarget.prototype.GetMobileTouchManager = function()
+{
+	return this.DrawingDocument.m_oWordControl.MobileTouchManager;
+};
+CDrawingCollaborativeTarget.prototype.GetParentElement = function()
+{
+	return this.DrawingDocument.m_oWordControl.m_oMainView.HtmlElement;
+};
+CDrawingCollaborativeTarget.prototype.CheckPosition = function(_x, _y, _size, _page, _transform)
+{
+	this.Transform = _transform;
+	this.Size = _size;
+	this.X = _x;
+	this.Y = _y;
+	this.Page = _page;
+	this.Update();
 };
 
 function CDrawingDocument()
@@ -2622,7 +2450,7 @@ function CDrawingDocument()
 		h = _check[1];
 
 		page.drawingPage.UnLock(this.m_oCacheManager);
-		page.drawingPage.cachedImage = this.m_oCacheManager.Lock(w, h);
+		page.drawingPage.cachedImage = this.m_oCacheManager.Lock(w, h, this);
 
 		//var StartTime = new Date().getTime();
 
@@ -2630,8 +2458,12 @@ function CDrawingDocument()
 		var g = new AscCommon.CGraphics();
 		g.init(page.drawingPage.cachedImage.image.ctx, w, h, page.width_mm, page.height_mm);
 		g.m_oFontManager = AscCommon.g_fontManager;
+		g.endGlobalAlphaColor = this.m_oWordControl.m_oApi.getPageBackgroundColor();
 
 		g.transform(1, 0, 0, 1, 0, 0);
+
+		if (this.m_oWordControl.m_oApi.isDarkMode)
+            g.darkModeOverride2();
 
 		if (null == this.m_oDocumentRenderer)
 			this.m_oLogicDocument.DrawPage(pageIndex, g);
@@ -3293,7 +3125,13 @@ function CDrawingDocument()
 
 	this.GetTargetStyle = function ()
 	{
-		return "rgb(" + this.TargetCursorColor.R + "," + this.TargetCursorColor.G + "," + this.TargetCursorColor.B + ")";
+		var color = this.TargetCursorColor;
+
+		if (!this.m_oWordControl.m_oApi.isDarkMode || !AscCommon.darkModeCheckColor(color.R, color.G, color.B))
+			return "rgb(" + color.R + "," + color.G + "," + color.B + ")";
+
+		var newColor = AscCommon.darkModeCorrectColor(color.R, color.G, color.B);
+        return "rgb(" + newColor.R + "," + newColor.G + "," + newColor.B + ")";
 	};
 
 	this.SetTargetColor = function (r, g, b)
@@ -6787,12 +6625,7 @@ function CDrawingDocument()
 		if (!api || !oLogicDocument)
 			return;
 
-		var oHistory = oLogicDocument.GetHistory();
-		oHistory.TurnOff();
-		var isLocalTrackRevisions = oLogicDocument.GetLocalTrackRevisions();
-		oLogicDocument.SetLocalTrackRevisions(false);
-
-        var oldViewMode = api.isViewMode;
+		var oldViewMode = api.isViewMode;
         var oldMarks = api.ShowParaMarks;
 
         api.isViewMode = true;
@@ -6879,8 +6712,6 @@ function CDrawingDocument()
         ctx.restore();
         ctx.restore();
 
-		oHistory.TurnOn();
-		oLogicDocument.SetLocalTrackRevisions(isLocalTrackRevisions);
         api.isViewMode = oldViewMode;
         api.ShowParaMarks = oldMarks;
     };
@@ -7006,6 +6837,10 @@ function CDrawingDocument()
             editor.sendEvent("asc_onPreviewLevelChange", level);
         });
 
+        var oDocState = null;
+        if (this.m_oLogicDocument)
+        	oDocState = this.m_oLogicDocument.StartNoHistoryMode();
+
         if (!is_multi_level)
         {
             var offsetBase = 10;
@@ -7108,6 +6943,9 @@ function CDrawingDocument()
                 this.privateGetParagraphByString(props.Lvl[i], level, 1, textYs[i].x, textYs[i].y, line_distance, ctx, width_px, height_px);
             }
         }
+
+        if (oDocState)
+        	this.m_oLogicDocument.EndNoHistoryMode(oDocState);
 	};
 
 	this.SetDrawImagePreviewBulletChangeListLevel = function(id, props, isNoCheckFonts)
@@ -7176,6 +7014,10 @@ function CDrawingDocument()
         var text_base_offset_x = offset + ((3.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
         var text_base_offset_dist = ( (props.IsOnes ? 2.25 : 3.25) * AscCommon.g_dKoef_mm_to_pix) >> 0;
 
+		var oDocState = null;
+		if (this.m_oLogicDocument)
+			oDocState = this.m_oLogicDocument.StartNoHistoryMode();
+
         for (var k = 0; k < 9; k++) 
         {
 			// чтобы убрать отступ у i
@@ -7217,6 +7059,9 @@ function CDrawingDocument()
 
             this.privateGetParagraphByString(props.Lvl[k], k, 1, textYs.x, textYs.y, (height_px >> 1), ctx, width_px, height_px);
         }
+
+        if (oDocState)
+        	this.m_oLogicDocument.EndNoHistoryMode(oDocState);
     };
 
 	this.SetDrawImagePreviewBulletForMenu = function(id, type, props, isNoCheckFonts)
@@ -7434,6 +7279,11 @@ function CDrawingDocument()
             return;
         }
 		var elNone = document.getElementById(id[0]);
+
+		var oDocState = null;
+		if (this.m_oLogicDocument)
+			oDocState = this.m_oLogicDocument.StartNoHistoryMode();
+
 		if (elNone)
 		{
 			var width_px = elNone.clientWidth;
@@ -7454,6 +7304,9 @@ function CDrawingDocument()
 			canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
 
 			var ctx = canvas.getContext("2d");
+			ctx.fillStyle = "#FFFFFF";
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			ctx.beginPath();
 			var line_distance = (height_px == 80) ? (height_px / 5 - 1) : ((height_px >> 2) + ((text.length > 6) ? 0 : 2));
 			var par = new Paragraph(this, this.m_oWordControl.m_oLogicDocument);
 			par.MoveCursorToStartPos();
@@ -7506,6 +7359,9 @@ function CDrawingDocument()
 			canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
 
 			var ctx = canvas.getContext("2d");
+			ctx.fillStyle = "#FFFFFF";
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			ctx.beginPath();
 			var rPR = AscCommon.AscBrowser.retinaPixelRatio;
 			
 			if (!type)
@@ -7528,6 +7384,9 @@ function CDrawingDocument()
 				canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
 
 				var ctx = canvas.getContext("2d");
+				ctx.fillStyle = "#FFFFFF";
+				ctx.fillRect(0, 0, canvas.width, canvas.height);
+				ctx.beginPath();
 				var line_distance = (height_px >> 1) - 2;
 				// TODo: подумать над тем как рассчитать сдвиг влево, эти значения подобраны эксперементально
 				var xShift;
@@ -7599,8 +7458,10 @@ function CDrawingDocument()
 						text_base_offset_x += text_base_offset_dist;
 				}
 			}
-
 		}
+
+		if (this.m_oLogicDocument)
+			this.m_oLogicDocument.EndNoHistoryMode(oDocState);
 	};
 
 	this.StartTableStylesCheck = function ()
@@ -8550,14 +8411,14 @@ function CDrawingDocument()
 		{
 			if (_id == this.CollaborativeTargets[i].Id)
 			{
-				this.CollaborativeTargets[i].CheckPosition(this, _x, _y, _size, _page, _transform);
+				this.CollaborativeTargets[i].CheckPosition(_x, _y, _size, _page, _transform);
 				return;
 			}
 		}
-		var _target = new CDrawingCollaborativeTarget();
+		var _target = new CDrawingCollaborativeTarget(this);
 		_target.Id = _id;
 		_target.ShortId = _shortId;
-		_target.CheckPosition(this, _x, _y, _size, _page, _transform);
+		_target.CheckPosition(_x, _y, _size, _page, _transform);
 		this.CollaborativeTargets[this.CollaborativeTargets.length] = _target;
 	};
 	this.Collaborative_RemoveTarget = function (_id)

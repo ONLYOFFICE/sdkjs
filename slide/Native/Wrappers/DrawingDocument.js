@@ -1346,14 +1346,14 @@ CDrawingDocument.prototype.Collaborative_UpdateTarget = function (_id, _shortId,
   		{
   			if (_id == this.CollaborativeTargets[i].Id)
   			{
-  				this.CollaborativeTargets[i].CheckPosition(this, _x, _y, _size, _page, _transform);
+  				this.CollaborativeTargets[i].CheckPosition(_x, _y, _size, _page, _transform);
   				return;
   			}
   		}
-  		var _target = new CDrawingCollaborativeTarget();
+  		var _target = new CDrawingCollaborativeTarget(this);
   		_target.Id = _id;
   		_target.ShortId = _shortId;
-  		_target.CheckPosition(this, _x, _y, _size, _page, _transform);
+  		_target.CheckPosition(_x, _y, _size, _page, _transform);
   		this.CollaborativeTargets[this.CollaborativeTargets.length] = _target;
       };
       CDrawingDocument.prototype.Collaborative_RemoveTarget = function (_id)
@@ -1720,53 +1720,26 @@ function CSlideDrawer()
 	};
 }
 
-function CDrawingCollaborativeTarget()
+function CDrawingCollaborativeTarget(DrawingDocument)
 {
-	this.Id = "";
-	this.ShortId = "";
-
-	this.X = 0;
-	this.Y = 0;
-	this.Size = 0;
-	this.Page = -1;
-
-	this.Color = null;
-	this.Transform = null;
-
-	this.HtmlElement = null;
-	this.HtmlElementX = 0;
-	this.HtmlElementY = 0;
-
-	this.Color = null;
-
-	this.Style = "";
+    AscCommon.CDrawingCollaborativeTargetBase.call(this);
+    this.Page = -1;
+    this.DrawingDocument = DrawingDocument;
 }
-CDrawingCollaborativeTarget.prototype =
+CDrawingCollaborativeTarget.prototype = Object.create(AscCommon.CDrawingCollaborativeTargetBase.prototype);
+CDrawingCollaborativeTarget.prototype.CheckPosition = function (_x, _y, _size, _page, _transform)
 {
-	CheckPosition: function (_drawing_doc, _x, _y, _size, _page, _transform)
-	{
-		 // 2) определяем размер
-		 this.Transform = _transform;
-		 this.Size = _size;
-
-		 var _old_x = this.X;
-		 var _old_y = this.Y;
-		 var _old_page = this.Page;
-
-		 this.X = _x;
-		 this.Y = _y;
-		 this.Page = _page;
-	},
-
-	Remove: function (_drawing_doc)
-	{
-
-  },
-
-	Update: function (_drawing_doc)
-	{
-
-  }
+    this.Transform = _transform;
+    this.Size = _size;
+    this.X = _x;
+    this.Y = _y;
+    this.Page = _page;
+};
+CDrawingCollaborativeTarget.prototype.Remove = function ()
+{
+};
+CDrawingCollaborativeTarget.prototype.Update = function ()
+{
 };
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};

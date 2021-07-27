@@ -3616,6 +3616,43 @@ $( function () {
 		ok( oParser.parse(), formulaStr );
 		strictEqual( oParser.calculate().getValue(), "#NUM!", formulaStr );
 
+		formulaStr = 'NETWORKDAYS.INTL(DATE(1901,1,1),DATE(2006,2,1),"0000000",{"1/2/2006","1/16/2006"})';
+		oParser = new parserFormula( formulaStr, "A2", ws );
+		ok( oParser.parse(), formulaStr );
+		strictEqual( oParser.calculate().getValue(), 38381, formulaStr );
+
+		formulaStr = 'NETWORKDAYS.INTL(DATE(1901,1,1),DATE(2006,2,1),17,{"1/2/2006","1/16/2006"})';
+		oParser = new parserFormula( formulaStr, "A2", ws );
+		ok( oParser.parse(), formulaStr );
+		strictEqual( oParser.calculate().getValue(), 32898, formulaStr );
+
+		formulaStr = 'NETWORKDAYS.INTL(100.123,10003.556,11)';
+		oParser = new parserFormula( formulaStr, "A2", ws );
+		ok( oParser.parse(), formulaStr );
+		strictEqual( oParser.calculate().getValue(), 8490, formulaStr );
+
+		formulaStr = 'NETWORKDAYS.INTL(100.123,10003.556,1)';
+		oParser = new parserFormula( formulaStr, "A2", ws );
+		ok( oParser.parse(), formulaStr );
+		strictEqual( oParser.calculate().getValue(), 7075, formulaStr );
+
+		formulaStr = 'NETWORKDAYS.INTL(100.123,10003.556,2)';
+		oParser = new parserFormula( formulaStr, "A2", ws );
+		ok( oParser.parse(), formulaStr );
+		strictEqual( oParser.calculate().getValue(), 7075, formulaStr );
+
+		//TODO посмотреть почему неверно считается
+		//проблема повторяется с новым и со старым вариантом реализации NETWORKDAYS.INTL
+
+		/*formulaStr = 'NETWORKDAYS.INTL(100.123,10003.556,5)';
+		oParser = new parserFormula( formulaStr, "A2", ws );
+		ok( oParser.parse(), formulaStr );
+		strictEqual( oParser.calculate().getValue(), 7074, formulaStr );
+
+		formulaStr = 'NETWORKDAYS.INTL(100.123,10003.556,5,{123,1000})';
+		oParser = new parserFormula( formulaStr, "A2", ws );
+		ok( oParser.parse(), formulaStr );
+		strictEqual( oParser.calculate().getValue(), 7073, formulaStr );*/
 	} );
 
 	test( "Test: \"N\"", function () {

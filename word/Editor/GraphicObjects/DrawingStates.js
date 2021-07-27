@@ -610,6 +610,7 @@ MoveInlineObject.prototype =
 					this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_CopyAndMoveInlineObject);
 					var new_para_drawing = new ParaDrawing(this.majorObject.parent.Extent.W, this.majorObject.parent.Extent.H, null, this.drawingObjects.drawingDocument, null, null);
 					var drawing = this.majorObject.copy(undefined);
+					new_para_drawing.SetForm(this.majorObject.parent.IsForm());
 
 					var oRunPr = this.majorObject.parent && this.majorObject.parent.GetRun() ? this.majorObject.parent.GetRun().GetDirectTextPr() : null;
 					if(drawing.copyComments)
@@ -1023,6 +1024,29 @@ function PreMoveState(drawingObjects,  startX, startY, shift, ctrl, majorObject,
     this.ctrl = ctrl;
     this.majorObjectIsSelected = majorObjectIsSelected;
     this.bInside = bInside;
+    this.startPageIndex = null;
+    if(majorObject.parent)
+    {
+        this.startPageIndex = majorObject.parent.pageIndex;
+    }
+    else
+    {
+        if(majorObject.group)
+        {
+            var oCurGroup = majorObject.group;
+            while (oCurGroup.group)
+            {
+                oCurGroup = oCurGroup.group;
+            }
+            if(oCurGroup)
+            {
+                if(oCurGroup.parent)
+                {
+                    this.startPageIndex = oCurGroup.parent.pageIndex;
+                }
+            }
+        }
+    }
 }
 
 PreMoveState.prototype =
@@ -1044,7 +1068,7 @@ PreMoveState.prototype =
             this.onMouseUp(e, x, y, pageIndex);
             return;
         }
-        if(Math.abs(this.startX - x) > MOVE_DELTA || Math.abs(this.startY - y) > MOVE_DELTA || pageIndex !== this.majorObject.parent.pageIndex)
+        if(Math.abs(this.startX - x) > MOVE_DELTA || Math.abs(this.startY - y) > MOVE_DELTA || pageIndex !== this.startPageIndex)
         {
             this.drawingObjects.swapTrackObjects();
             this.drawingObjects.changeCurrentState(new MoveState(this.drawingObjects, this.majorObject, this.startX, this.startY));
@@ -1317,7 +1341,11 @@ function PreMoveInGroupState(drawingObjects, group, startX, startY, ShiftKey, Ct
     this.CtrlKey  = CtrlKey;
     this.majorObject = majorObject;
     this.majorObjectIsSelected = majorObjectIsSelected;
-
+    this.startPageIndex = null;
+    if(this.group && this.group.parent)
+    {
+        this.startPageIndex = this.group.parent.pageIndex;
+    }
 
 }
 
@@ -1340,7 +1368,7 @@ PreMoveInGroupState.prototype =
             this.onMouseUp(e, x, y, pageIndex);
             return;
         }
-        if(Math.abs(this.startX - x) > MOVE_DELTA || Math.abs(this.startY - y) > MOVE_DELTA || pageIndex !== this.group.parent.pageIndex)
+        if(Math.abs(this.startX - x) > MOVE_DELTA || Math.abs(this.startY - y) > MOVE_DELTA || pageIndex !== this.startPageIndex)
         {
             this.drawingObjects.swapTrackObjects();
             this.drawingObjects.changeCurrentState(new MoveInGroupState(this.drawingObjects, this.majorObject, this.group, this.startX, this.startY));
@@ -1372,6 +1400,11 @@ function MoveInGroupState(drawingObjects, majorObject, group, startX, startY)
     this.startX = startX;
     this.startY = startY;
     this.bSamePos = true;
+    this.startPageIndex = null;
+    if(this.group && this.group.parent)
+    {
+        this.startPageIndex = this.group.parent.pageIndex;
+    }
 }
 
 MoveInGroupState.prototype =
@@ -1438,7 +1471,7 @@ MoveInGroupState.prototype =
             else
             {
                 this.group.parent.CheckWH();
-                this.group.parent.Set_XY(this.group.posX + posX, this.group.posY + posY, parent_paragraph, this.group.parent.pageIndex, false);
+                this.group.parent.Set_XY(this.group.posX + posX, this.group.posY + posY, parent_paragraph, this.startPageIndex, false);
             }
             this.drawingObjects.document.Recalculate();
 			this.drawingObjects.document.FinalizeAction();

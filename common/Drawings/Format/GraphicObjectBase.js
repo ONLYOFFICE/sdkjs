@@ -46,6 +46,7 @@
 
     AscDFH.changesFactory[AscDFH.historyitem_ShapeSetMacro]   = AscDFH.CChangesDrawingsString;
     AscDFH.changesFactory[AscDFH.historyitem_ShapeSetTextLink]   = AscDFH.CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_ShapeSetModelId]   = AscDFH.CChangesDrawingsString;
 
 
 
@@ -132,6 +133,9 @@
     };
     drawingsChangesMap[AscDFH.historyitem_ShapeSetTextLink]         = function(oClass, value){
         oClass.textLink = value;
+    };
+    drawingsChangesMap[AscDFH.historyitem_ShapeSetModelId]         = function(oClass, value){
+        oClass.modelId = value;
     };
 
     AscDFH.drawingsConstructorsMap[AscDFH.historyitem_AutoShapes_SetDrawingBasePos] = CDrawingBaseCoordsWritable;
@@ -397,6 +401,7 @@
         this.locks = 0;
         this.macro = null;
         this.textLink = null;
+        this.modelId = null;
 
         /*Calculated fields*/
         this.posX = null;
@@ -573,6 +578,11 @@
         History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ShapeSetMacro, this.macro, sMacroName));
         this.macro = sMacroName;
     };
+    CGraphicObjectBase.prototype.setModelId = function(sModelId)
+    {
+        History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ShapeSetModelId, this.modelId, sModelId));
+        this.modelId = sModelId;
+    };
     CGraphicObjectBase.prototype.assignMacro = function(sGuid)
     {
         this.setMacro(AscFormat.MACRO_PREFIX + sGuid);
@@ -723,6 +733,16 @@
     };
 
     CGraphicObjectBase.prototype.getAllFonts = function(mapUrl){
+    };
+    CGraphicObjectBase.prototype.collectEquations3 = function(aEquations) {
+        if(Array.isArray(this.spTree)) {
+            for(var nSp = 0; nSp < this.spTree.length; ++nSp) {
+                this.spTree[nSp].collectEquations3(aEquations);
+            }
+        }
+        if(this.m_oMathObject) {
+            aEquations.push(this);
+        }
     };
 
     CGraphicObjectBase.prototype.getOuterShdw = function(){
@@ -1531,7 +1551,7 @@
         if(!this.group && !bNotes)
         {
             var oLock;
-            if(this.parent instanceof ParaDrawing)
+            if(this.parent instanceof AscCommonWord.ParaDrawing)
             {
                 oLock = this.parent.Lock;
             }
@@ -1894,6 +1914,54 @@
         }
     };
 
+    CGraphicObjectBase.prototype.ResetParametersWithResize = function(bNoResetRelSize)
+    {
+        var oParaDrawing = AscFormat.getParaDrawing(this);
+        if(oParaDrawing && !(bNoResetRelSize === true))
+        {
+            if(oParaDrawing.SizeRelH)
+            {
+                oParaDrawing.SetSizeRelH(undefined);
+            }
+            if(oParaDrawing.SizeRelV)
+            {
+                oParaDrawing.SetSizeRelV(undefined);
+            }
+        }
+        if(this instanceof AscFormat.CShape) {
+            var oPropsToSet = null;
+            if (this.bWordShape) {
+                if (!this.textBoxContent)
+                    return;
+                if (this.bodyPr) {
+                    oPropsToSet = this.bodyPr.createDuplicate();
+                } else {
+                    oPropsToSet = new AscFormat.CBodyPr();
+                }
+            } else {
+                if (!this.txBody)
+                    return;
+                if (this.txBody.bodyPr) {
+                    oPropsToSet = this.txBody.bodyPr.createDuplicate();
+                } else {
+                    oPropsToSet = new AscFormat.CBodyPr();
+                }
+            }
+            var oBodyPr = this.getBodyPr();
+            if (oBodyPr.wrap === AscFormat.nTWTNone) {
+                oPropsToSet.wrap = AscFormat.nTWTSquare;
+            }
+            if (this.bWordShape) {
+                this.setBodyPr(oPropsToSet);
+            } else {
+                this.txBody.setBodyPr(oPropsToSet);
+                if (this.checkExtentsByDocContent) {
+                    this.checkExtentsByDocContent(true, true);
+                }
+            }
+        }
+    }
+
     CGraphicObjectBase.prototype.createPlaceholderControl = function()
     {
         var phType = this.getPhType();
@@ -2123,7 +2191,13 @@
     CGraphicObjectBase.prototype.getCanvasContext = function() {
         return AscFormat.CShape.prototype.getCanvasContext.call(this);
     };
-    
+	CGraphicObjectBase.prototype.isForm = function() {
+		return (this.parent && this.parent.IsForm && this.parent.IsForm());
+	}
+	CGraphicObjectBase.prototype.getInnerForm = function() {
+		return null;
+	}
+
     function CRelSizeAnchor() {
         CBaseObject.call(this);
         this.fromX = null;
