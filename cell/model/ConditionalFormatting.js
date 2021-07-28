@@ -1007,7 +1007,7 @@
 	CConditionalFormattingRule.prototype.asc_setType = function (val) {
 		this.type = val;
 		this._cleanAfterChangeType();
-		var formula = this.getFormulaByType();
+		var formula = this.getFormulaByType(this.text);
 		if (formula) {
 			this.aRuleElements = [];
 			this.aRuleElements[0] = new CFormulaCF();
@@ -1072,7 +1072,7 @@
 	CConditionalFormattingRule.prototype.getFormulaByType = function (val) {
 		var t = this;
 		var _generateTimePeriodFunction = function () {
-			switch (this.timePeriod) {
+			switch (t.timePeriod) {
 				case AscCommonExcel.ST_TimePeriod.yesterday:
 					res = "FLOOR(" + firstCellInRange + ",1)" + "=TODAY()-1";
 					break;
@@ -1130,7 +1130,7 @@
 			switch (this.type) {
 				case Asc.ECfType.notContainsText:
 					if (val !== null && val !== undefined) {
-						res = "LEFT(" + firstCellInRange + ",LEN(" + val + "=" + val;
+						res = "ISERROR(SEARCH(" + val + "," + firstCellInRange + "))";
 					}
 					break;
 				case Asc.ECfType.containsText:
@@ -1140,12 +1140,12 @@
 					break;
 				case Asc.ECfType.endsWith:
 					if (val !== null && val !== undefined) {
-						res = "RIGHT(" + firstCellInRange + ",LEN(" + val + "=" + val;
+						res = "RIGHT(" + firstCellInRange + ",LEN(" + val + "))" + "=" + val;
 					}
 					break;
 				case Asc.ECfType.beginsWith:
 					if (val !== null && val !== undefined) {
-						res = "ISERROR(SEARCH(" + val + "," + firstCellInRange + "))";
+						res = "LEFT(" + firstCellInRange + ",LEN(" + val + "))" + "=" + val;
 					}
 					break;
 				case Asc.ECfType.notContainsErrors:
