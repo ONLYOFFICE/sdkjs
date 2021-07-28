@@ -10326,6 +10326,14 @@ CDocumentShd.prototype.Read_FromBinary = function(Reader)
 		this.Color = new CDocumentColor(0, 0, 0, false);
 	}
 };
+CDocumentShd.prototype.WriteToBinary = function(oWriter)
+{
+	return this.Write_ToBinary(oWriter);
+};
+CDocumentShd.prototype.ReadFromBinary = function(oReader)
+{
+	return this.Read_FromBinary(oReader);
+};
 
 function CDocumentBorder()
 {
