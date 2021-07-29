@@ -1032,28 +1032,34 @@ var c_oSerSdt = {
 	CheckboxCheckedVal: 41,
 	CheckboxUncheckedFont: 42,
 	CheckboxUncheckedVal: 43,
-	FormPr: 44,
-	FormPrKey: 45,
-	FormPrLabel: 46,
-	FormPrHelpText: 47,
-	FormPrRequired: 48,
+
+	FormPr         : 44,
+	FormPrKey      : 45,
+	FormPrLabel    : 46,
+	FormPrHelpText : 47,
+	FormPrRequired : 48,
+
+	TextFormPr              : 50,
+	TextFormPrComb          : 51,
+	TextFormPrCombWidth     : 52,
+	TextFormPrCombSym       : 53,
+	TextFormPrCombFont      : 54,
+	TextFormPrMaxCharacters : 55,
+	TextFormPrCombBorder    : 56,
+	TextFormPrAutoFit       : 57,
+	TextFormPrMultiLine     : 58,
+
 	CheckboxGroupKey: 59,
-	TextFormPr: 50,
-	TextFormPrComb: 51,
-	TextFormPrCombWidth: 52,
-	TextFormPrCombSym: 53,
-	TextFormPrCombFont: 54,
-	TextFormPrMaxCharacters: 55,
-	TextFormPrCombBorder: 56,
-	TextFormPrAutoFit : 57,
-	TextFormPrMultiLine : 58,
 
 	PictureFormPr                : 60,
 	PictureFormPrScaleFlag       : 61,
 	PictureFormPrLockProportions : 62,
 	PictureFormPrRespectBorders  : 63,
 	PictureFormPrShiftX          : 64,
-	PictureFormPrShiftY          : 65
+	PictureFormPrShiftY          : 65,
+
+	FormPrBorder : 70,
+	FormPrShd    : 71
 };
 var c_oSerFFData = {
 	CalcOnExit: 0,
@@ -6631,6 +6637,12 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		}
 		if (null != val.Required) {
 			oThis.bs.WriteItem(c_oSerSdt.FormPrRequired, function (){oThis.memory.WriteBool(val.Required);});
+		}
+		if (val.Border) {
+			oThis.bs.WriteItem(c_oSerSdt.FormPrBorder, function(){oThis.bs.WriteBorder(val.Border)});
+		}
+		if (val.Shd) {
+			oThis.bs.WriteShd(c_oSerSdt.FormPrShd, function(){oThis.bs.WriteShd(val.Shd)});
 		}
 	};
 	this.WriteSdtTextFormPr = function (val)
@@ -13097,6 +13109,16 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			val.HelpText = this.stream.GetString2LE(length);
 		} else if (c_oSerSdt.FormPrRequired === type) {
 			val.Required = this.stream.GetBool();
+		} else if (c_oSerSdt.FormPrBorder === type) {
+			var oNewBorber = new CDocumentBorder();
+			res = this.bcr.Read2(length, function (t, l) {
+				return oThis.bpPrr.ReadBorder(t, l, oNewBorber);
+			});
+			if (null != oNewBorber.Value)
+				val.Border = oThis.bpPrr.NormalizeBorder(oNewBorber);
+		} else if (c_oSerSdt.FormPrShd === type) {
+			val.Shd = new CDocumentShd();
+			ReadDocumentShd(length, this.bcr, val.Shd);
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
