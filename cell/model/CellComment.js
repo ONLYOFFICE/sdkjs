@@ -1025,6 +1025,10 @@ CCellCommentator.prototype.removeComment = function(id, bNoEvent, bNoAscLock, bN
 	if (null === comment)
 		return;
 
+	if (!AscCommon.UserInfoParser.canViewComment(comment.sUserName)) {
+		return;
+	}
+
 	var onRemoveCommentCallback = function (isSuccess) {
 		if (false === isSuccess)
 			return;
@@ -1127,6 +1131,10 @@ CCellCommentator.prototype._addComment = function (oComment, bChange, bIsNotUpda
 
 	CCellCommentator.prototype._removeComment = function (comment, bNoEvent, isDraw) {
 		if (!comment) {
+			return;
+		}
+
+		if (!AscCommon.UserInfoParser.canViewComment(comment.sUserName)) {
 			return;
 		}
 
