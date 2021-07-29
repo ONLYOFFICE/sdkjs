@@ -13954,7 +13954,7 @@
 							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
 							return;
 						}
-						if (t.cellCommentator.isContainsOtherComments(arn)) {
+						if (t.cellCommentator.isContainsOtherComments(lockRange)) {
 							return;
 						}
 
@@ -13994,7 +13994,7 @@
 							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
 							return;
 						}
-						if (t.cellCommentator.isContainsOtherComments(arn)) {
+						if (t.cellCommentator.isContainsOtherComments(lockRange)) {
 							return;
 						}
 
