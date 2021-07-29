@@ -2575,7 +2575,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 
 	this.SpecialForms            = {}; // Список специальных форм в документе
 	this.CurrentForm             = null;
-	this.HighlightRequiredFields = true;  // Выделяем ли обязательные поля
+	this.HighlightRequiredFields = false;  // Выделяем ли обязательные поля
 	this.RequiredFieldsBorder    = new CDocumentBorder();
 	this.RequiredFieldsBorder.SetSimpleColor(255, 0, 0);
 
