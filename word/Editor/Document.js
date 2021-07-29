@@ -25250,6 +25250,8 @@ CDocument.prototype.ConvertTextToTable = function(oProps)
 				var IsInCC = false; // флаг, который указывает будет ли таблица внутри CC
 				var Start  = Math.min(this.Selection.StartPos, this.Selection.EndPos);
 				var End    = Math.max(this.Selection.StartPos, this.Selection.EndPos);
+				var Before = [];
+				var After  = [];
 				
 				for (var i = Start + 1; i < End && !IsInCC; i++)
 				{
@@ -25259,7 +25261,7 @@ CDocument.prototype.ConvertTextToTable = function(oProps)
 
 				if (this.Content[End].GetType() === type_BlockLevelSdt)
 				{
-					if (this.Content[End].IsSelectedAll() && !this.Content[End].GetAllTables().length)
+					if (this.Content[End].IsSelectedAll())
 					{
 						IsInCC = true;
 					}
@@ -25269,27 +25271,34 @@ CDocument.prototype.ConvertTextToTable = function(oProps)
 					}
 
 					if (this.Content[End].GetAllTables().length)
-						this.Content[End].RemoveContentControlWrapper();
+					{
+						for (var j = 0; j < this.Content[End].Content.Content.length; j++)
+							After.push(this.Content[End].Content.Content[j].Copy());
+					}
 				}
 
 				if (this.Content[Start].GetType() === type_BlockLevelSdt)
 				{
-					var tables = this.Content[Start].GetAllTables();
-					if (this.Content[Start].IsSelectedAll() && !tables.length)
+					
+					if (this.Content[Start].IsSelectedAll())
 					{
 						IsInCC = true;
 					}
 					else
 					{
-						this.Content[Start].Content.private_Remove(-1, false, false, tables.pop().Selection.Use);
-						var cout = this.Content[Start].Content.Content.length;
-						this.Content[Start].RemoveContentControlWrapper();
-						this.SelectRange(Start + cout, this.Selection.EndPos);
+						var tables = this.Content[Start].GetAllTables();
+						var flag = tables.length && tables.pop().Selection.Use;
+						this.Content[Start].Content.private_Remove(-1, false, false, flag);
+						for (var j = 0; j < this.Content[Start].Content.Content.length; j++)
+							Before.push(this.Content[Start].Content.Content[j].Copy());
 					}
 				}
 
-				this.RemoveBeforePaste();
-				oParagraph = this.GetCurrentParagraph();
+				var s = Before.length || this.Content[Start].IsSelectedAll() ? Start: Start + 1;
+				var count = End - s + (After.length || Before.length || this.Content[End].IsSelectedAll() ? 1 : 0);
+				this.RemoveFromContent(s, count);
+				oParagraph = new Paragraph(this.DrawingDocument, this);
+				this.AddToContent(s, oParagraph);
 				var oAnchorPos = oParagraph.GetCurrentAnchorPosition();
 				if (oAnchorPos && this.Can_InsertContent(oSelectedContent, oAnchorPos))
 				{
@@ -25300,11 +25309,33 @@ CDocument.prototype.ConvertTextToTable = function(oProps)
 						oBlockControl.Content.ClearContent(false);
 						oBlockControl.Content.AddToContent(0, oSelectedContent.Elements[0].Element);
 						oSelectedContent.Reset();
+						for (var i = 0; i < Before.length; i++)
+							oSelectedContent.Add(new CSelectedElement(Before[i], true));
+
 						oSelectedContent.Add(new CSelectedElement(oBlockControl, true));
+
+						for (var i = 0; i < After.length; i++)
+							oSelectedContent.Add(new CSelectedElement(After[i], true));
+					}
+					else
+					{
+						if (Before.length)
+						{
+							var tmp = oSelectedContent.Elements[0];
+							oSelectedContent.Reset();
+
+							for (var i = 0; i < Before.length; i++)
+								oSelectedContent.Add(new CSelectedElement(Before[i], true));
+
+							oSelectedContent.Add(tmp);
+						}
+
+						for (var i = 0; i < After.length; i++)
+							oSelectedContent.Add(new CSelectedElement(After[i], true));
 					}
 					oParagraph.Parent.InsertContent(oSelectedContent, oAnchorPos);
-					if (oParagraph.IsEmpty() && oParagraph.IsUseInDocument())
-						this.RemoveFromContent(oParagraph.GetIndex(), 1, true);
+					this.RemoveFromContent(oParagraph.GetIndex(), 1, true);
+					this.SelectRange(Start + Before.length, Start + Before.length);
 					// this.MoveCursorRight(false, false, false);
 				}
 			}
