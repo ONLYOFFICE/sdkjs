@@ -25364,13 +25364,17 @@ CDocument.prototype.ConvertTextToTable = function(oProps)
 				{
 					var oElement = oTable.CurCell.Content;
 					var start = Math.min(oElement.Selection.StartPos, oElement.Selection.EndPos);
-					this.RemoveBeforePaste();
-					if (!oElement.Content[start].IsEmpty())
+					if (!oElement.Content[start].IsSelectedAll())
 						start++;
+
+					this.RemoveBeforePaste();
 
 					oElement.Internal_Content_Add(start, oSelectedContent.Elements[0].Element, false);
 					oElement.Selection.StartPos = oElement.Selection.EndPos = start;
-					oElement.SetSelectionUse(true);			
+					oElement.SetSelectionUse(true);
+					oTable.SetSelectionUse(true);
+					this.Selection.StartPos = this.Selection.EndPos = oTable.GetIndex();
+					this.Selection.Use = true;
 				}
 			}
 		}
