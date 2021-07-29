@@ -2351,6 +2351,7 @@
 		this.Separator		= null;
 		this.Document		= CDocument;
 		this.Selected		= oSelectedContent;
+		this.IsFTCC         = false; // flag indicating whether it will be CC or not
 	}
 	CAscTextToTableProperties.prototype.get_Size = function()
 	{
@@ -2414,27 +2415,61 @@
 		var Cells         = 0;
 		var Elements      = this.Selected.Elements;
 		var Cols          = bFixed ? this.Cols : 0;
-		
-		for (var i = 0; i < Elements.length; i++)
+		var types         = { 1 : 1, 2 : 1, 52 : 1, 53 : 1, 55 : 1};
+
+		function parseParagraph (Paragraph)
 		{
-			var oElement = Elements[i].Element;
-			if (oElement.IsParagraph() && SeparatorType !== 1)
+			Cells++;
+
+			for (var j = 0; j < Paragraph.Content.length; j++)
 			{
-				Cells++;
-				
-				for (var j = 0; j < oElement.Content.length; j++)
+				var oSecondEl = Paragraph.Content[j];
+				if (oSecondEl.Type === para_Run)
 				{
-					var oSecondEl = oElement.Content[j];
-					if (oSecondEl.Type === para_Run)
+					for (var k = 0; k < oSecondEl.Content.length; k++)
 					{
-						for (var k = 0; k < oSecondEl.Content.length; k++)
+						var oThirdEl = oSecondEl.Content[k];
+						if (oThirdEl.Type === para_End)
+							continue;
+
+						if ( (SeparatorType === 2 && oThirdEl.Type === para_Tab) || (types[oThirdEl.Type] && oThirdEl.Value === Separator) )
 						{
+							if (Cols)
+							{
+								if (Cells < Cols)
+								{
+									Cells++;
+								}
+								else
+								{
+									if (oCollsCount < Cells)
+										oCollsCount = Cells;
+									
+									oRowsCount++;
+									Cells = 1;
+								}
+							}
+							else
+							{
+								Cells++;
+							}
+						}
+					}
+				}
+				else if ( (oSecondEl.Type === para_Math || oSecondEl.Type === para_InlineLevelSdt) && SeparatorType !== 1)
+				{
+					var Content = oSecondEl.Type === para_Math ? oSecondEl.Root.Content : oSecondEl.Content;
+					for (var k = 0; k < Content.length; k++)
+					{
+						var oThirdEl = Content[k];
+						if (oThirdEl.Type !== para_Math_Run && oThirdEl.Type !== para_Run)
+							continue;
 
-							var oThirdEl = oSecondEl.Content[k];
-							if (oThirdEl.Type === para_End)
-								continue;
-
-							if ( (SeparatorType === 2 && oThirdEl.Type === para_Tab) || ((oThirdEl.Type === para_Text || oThirdEl.Type === para_Space) && oThirdEl.Value === Separator) )
+						for (var p = 0; p < oThirdEl.Content.length; p++)
+						{
+							var oFourthEl = oThirdEl.Content[p];
+							var value = oFourthEl.value || oFourthEl.Value;
+							if ( (SeparatorType === 2 && oFourthEl.Type === para_Tab) || (types[oFourthEl.Type] && value === Separator) )
 							{
 								if (Cols)
 								{
@@ -2458,45 +2493,43 @@
 							}
 						}
 					}
-					else if (oSecondEl.Type === para_Math && SeparatorType === 3)
-					{
-						for (var k = 0; k < oSecondEl.Root.Content.length; k++)
-						{
-							var oThirdEl = oSecondEl.Root.Content[k];
-							if (oThirdEl.Type !== para_Math_Run)
-								continue;
+				}
+			}
+		};
+		
+		for (var i = 0; i < Elements.length; i++)
+		{
+			var oElement = Elements[i].Element;
+			if (oElement.IsParagraph() && SeparatorType !== 1)
+			{
+				parseParagraph(oElement);
+			}
+			else if (oElement.GetType() === type_BlockLevelSdt)
+			{
+				for (var k = 0; k < oElement.Content.Content.length; k++)
+				{
+					if (oElement.Content.Content[k].IsTable())
+						continue;
 
-							for (var p = 0; p < oThirdEl.Content.length; p++)
-							{
-								var oFourthEl = oThirdEl.Content[p];
-								if (((oFourthEl.Type === para_Math_Text || oFourthEl.Type === para_Math_Ampersand || oFourthEl.Type === para_Math_BreakOperator) && oFourthEl.value === Separator) )
-								{
-									if (Cols)
-									{
-										if (Cells < Cols)
-										{
-											Cells++;
-										}
-										else
-										{
-											if (oCollsCount < Cells)
-												oCollsCount = Cells;
-											
-											oRowsCount++;
-											Cells = 1;
-										}
-									}
-									else
-									{
-										Cells++;
-									}
-								}
-							}
+					if (SeparatorType === 1)
+					{
+							oRowsCount++;
+					}
+					else
+					{
+						parseParagraph(oElement.Content.Content[k]);
+						if (Cells)
+						{
+							if (oCollsCount < Cells)
+							oCollsCount = Cells;
+	
+							oRowsCount++;
+							Cells = 0;
 						}
 					}
 				}
 			}
-			else
+			else if (!oElement.IsTable() || i === Elements.length - 1)
 			{
 				if (Cols)
 				{
@@ -2521,7 +2554,7 @@
 
 			if (Cells)
 			{
-				if ( SeparatorType == 1 && Cells < Cols && (i !== Elements.length -1) )
+				if ( SeparatorType == 1 && (Cells < Cols && (i !== Elements.length -1) ) )
 				{
 					continue;
 				}
@@ -2531,7 +2564,7 @@
 						oCollsCount = Cells;
 
 					oRowsCount++;
-					Cells = 0
+					Cells = 0;
 				}
 			}
 		}
