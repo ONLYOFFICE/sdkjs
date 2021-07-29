@@ -15729,7 +15729,10 @@
 							var ranges = oRule.ranges;
 							for (var n = 0; n < ranges.length; n++) {
 								var _newRange = new Asc.Range(i + ranges[n].c1 - from.c1, j + ranges[n].r1 - from.r1, i + ranges[n].c2 - from.c1, j + ranges[n].r2 - from.r1);
-								if (to.containsRange(_newRange)) {
+								if (!to.containsRange(_newRange)) {
+									_newRange = to.intersection(_newRange);
+								}
+								if (_newRange) {
 									if (!newRules[k]) {
 										newRules[k] = [];
 									}
@@ -15747,7 +15750,12 @@
 								fromRule = fromRule.data;
 								var toRule = fromRule.clone();
 								//toRule.id = fromRule.id;
-								toRule.ranges = newRules[i];
+								if (bIsPromote) {
+									toRule.id = fromRule.id;
+									toRule.ranges = fromRule.ranges.concat(newRules[i]);
+								} else {
+									toRule.ranges = newRules[i];
+								}
 								wsTo.setCFRule(toRule);
 							}
 						}
