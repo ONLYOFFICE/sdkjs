@@ -8985,7 +8985,7 @@
         }
 
         cell_info.comment = this.cellCommentator.getComment(c1, r1, false);
-        if (cell_info.comment && AscCommon.UserInfoParser.canViewComment(cell_info.comment.sUserName)) {
+        if (cell_info.comment && !AscCommon.UserInfoParser.canViewComment(cell_info.comment.sUserName)) {
 			cell_info.comment = undefined;
 		}
 		cell_info.merge = range.isOneCell() ? Asc.c_oAscMergeOptions.Disabled :
