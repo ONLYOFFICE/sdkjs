@@ -6328,16 +6328,20 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
     var aUnderline  = PDSL.Underline;
     var aSpelling   = PDSL.Spelling;
     var aDUnderline = PDSL.DUnderline;
-    var aCombForms  = PDSL.CombForms;
+    var aFormBorder = PDSL.FormBorder;
 
     var oForm       = this.GetParentForm();
-    var oCombBorder = null;
+    var oFormBorder = null;
+    var nCombMax    = -1;
     if (oForm)
 	{
 		if (oForm.IsFormRequired() && PDSL.GetLogicDocument().IsHighlightRequiredFields())
-			oCombBorder = PDSL.GetLogicDocument().GetRequiredFieldsBorder();
-		else if (oForm.IsTextForm() && this.GetTextForm().IsComb() && this.GetTextForm().GetCombBorder())
-			oCombBorder = this.GetTextForm().GetCombBorder();
+			oFormBorder = PDSL.GetLogicDocument().GetRequiredFieldsBorder();
+		else if (oForm.GetFormPr().GetBorder())
+			oFormBorder = oForm.GetFormPr().GetBorder();
+
+		if (oForm.IsTextForm() && oForm.GetTextFormPr().IsComb())
+			nCombMax = oForm.GetTextFormPr().GetMaxCharacters();
 	}
 
     var CurTextPr = this.Get_CompiledPr( false );
@@ -6472,23 +6476,23 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
 		if (SpellData[Pos])
 			nSpellingErrorsCounter += SpellData[Pos];
 
-		if (oCombBorder && ItemWidthVisible > 0.001)
+		if (oFormBorder && ItemWidthVisible > 0.001)
 		{
-			var nCombBorderW     = oCombBorder.GetWidth();
-			var oCombBorderColor = oCombBorder.GetColor();
+			var nFormBorderW     = oFormBorder.GetWidth();
+			var oFormBorderColor = oFormBorder.GetColor();
 
 			if (Item.RGapCount)
 			{
 				var nGapEnd = X + ItemWidthVisible;
-				aCombForms.Add(Y, Y, X, nGapEnd - Item.RGapCount * Item.RGapShift, nCombBorderW, oCombBorderColor.r, oCombBorderColor.g, oCombBorderColor.b);
+				aFormBorder.Add(Y, Y, X, nGapEnd - Item.RGapCount * Item.RGapShift, nFormBorderW, oFormBorderColor.r, oFormBorderColor.g, oFormBorderColor.b, {Comb : nCombMax});
 				for (var nGapIndex = 0; nGapIndex < Item.RGapCount; ++nGapIndex)
 				{
-					aCombForms.Add(Y, Y, nGapEnd - (Item.RGapCount - nGapIndex) * Item.RGapShift, nGapEnd - (Item.RGapCount - nGapIndex - 1) * Item.RGapShift, nCombBorderW, oCombBorderColor.r, oCombBorderColor.g, oCombBorderColor.b);
+					aFormBorder.Add(Y, Y, nGapEnd - (Item.RGapCount - nGapIndex) * Item.RGapShift, nGapEnd - (Item.RGapCount - nGapIndex - 1) * Item.RGapShift, nFormBorderW, oFormBorderColor.r, oFormBorderColor.g, oFormBorderColor.b, {Comb : nCombMax});
 				}
 			}
 			else
 			{
-				aCombForms.Add(Y, Y, X, X + ItemWidthVisible, nCombBorderW, oCombBorderColor.r, oCombBorderColor.g, oCombBorderColor.b);
+				aFormBorder.Add(Y, Y, X, X + ItemWidthVisible, nFormBorderW, oFormBorderColor.r, oFormBorderColor.g, oFormBorderColor.b, {Comb : nCombMax});
 			}
 		}
 

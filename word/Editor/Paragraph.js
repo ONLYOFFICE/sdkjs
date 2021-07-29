@@ -2895,7 +2895,7 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 		var aRunReview  = PDSL.RunReview;
 		var aCollChange = PDSL.CollChange;
 		var aDUnderline = PDSL.DUnderline;
-		var aCombForms  = PDSL.CombForms;
+		var aFormBorder = PDSL.FormBorder;
 
 		// Рисуем зачеркивание
 		var Element = aStrikeout.Get_Next();
@@ -3006,7 +3006,7 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
             }
 		}
 
-		Element = aCombForms.Get_Next(true);
+		Element = aFormBorder.Get_Next(true);
 		if (Element)
 		{
 			if (this.IsInFixedForm())
@@ -3018,36 +3018,22 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 					pGraphics.SetIntegerGrid(true);
 				}
 
-				var oForm       = this.GetInnerForm();
-				var oBounds     = oForm.GetFixedFormBounds();
-				var oTextFormPr = oForm.GetTextFormPr();
-				var nCombMax    = 1;
-				if (oForm.IsFormRequired() && this.GetLogicDocument().IsHighlightRequiredFields())
+				var oForm   = this.GetInnerForm();
+				var oBounds = oForm.GetFixedFormBounds();
+				var nFormX0 = oBounds.X + 0.001;
+				var nFormX1 = oBounds.X + oBounds.W - 0.001;
+				var nFormY0 = oBounds.Y + 0.001;
+				var nFormY1 = oBounds.Y + oBounds.H - 0.001;
+
+				pGraphics.p_color(Element.r, Element.g, Element.b, 255);
+				pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Bottom, nFormY0, nFormX0, nFormX1, Element.w, -Element.w / 2, Element.w / 2);
+				pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Top, nFormY1, nFormX0, nFormX1, Element.w, -Element.w / 2, Element.w / 2);
+				pGraphics.drawVerLine(c_oAscLineDrawingRule.Left, nFormX0, nFormY0, nFormY1, Element.w);
+				pGraphics.drawVerLine(c_oAscLineDrawingRule.Right, nFormX1, nFormY0, nFormY1, Element.w);
+
+				if (Element.Additional && -1 !== Element.Additional.Comb)
 				{
-					var nFormX0 = oBounds.X + 0.001;
-					var nFormX1 = oBounds.X + oBounds.W - 0.001;
-					var nFormY0 = oBounds.Y + 0.001;
-					var nFormY1 = oBounds.Y + oBounds.H - 0.001;
-
-					pGraphics.p_color(Element.r, Element.g, Element.b, 255);
-					pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Bottom, nFormY0, nFormX0, nFormX1, Element.w, -Element.w / 2, Element.w / 2);
-					pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Top, nFormY1, nFormX0, nFormX1, Element.w, -Element.w / 2, Element.w / 2);
-					pGraphics.drawVerLine(c_oAscLineDrawingRule.Left, nFormX0, nFormY0, nFormY1, Element.w);
-					pGraphics.drawVerLine(c_oAscLineDrawingRule.Right, nFormX1, nFormY0, nFormY1, Element.w);
-				}
-				else if (oTextFormPr && oTextFormPr.IsComb() && (nCombMax = oTextFormPr.GetMaxCharacters()) > 0)
-				{
-					var nFormX0 = oBounds.X + 0.001;
-					var nFormX1 = oBounds.X + oBounds.W - 0.001;
-					var nFormY0 = oBounds.Y + 0.001;
-					var nFormY1 = oBounds.Y + oBounds.H - 0.001;
-
-					pGraphics.p_color(Element.r, Element.g, Element.b, 255);
-					pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Bottom, nFormY0, nFormX0, nFormX1, Element.w, -Element.w / 2, Element.w / 2);
-					pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Top, nFormY1, nFormX0, nFormX1, Element.w, -Element.w / 2, Element.w / 2);
-					pGraphics.drawVerLine(c_oAscLineDrawingRule.Left, nFormX0, nFormY0, nFormY1, Element.w);
-					pGraphics.drawVerLine(c_oAscLineDrawingRule.Right, nFormX1, nFormY0, nFormY1, Element.w);
-
+					var nCombMax = Element.Additional.Comb;
 					var nInterStep = oBounds.W / nCombMax;
 					var nInterX    = nFormX0;
 					for (var nInterIndex = 0, nIntersCount = nCombMax - 1; nInterIndex < nIntersCount; ++nInterIndex)
@@ -3062,7 +3048,6 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 			}
 			else
 			{
-				var oForm = this.GetInnerForm();
 				while (Element)
 				{
 					var nFormY0 = Page.Y + Line.Y - Line.Metrics.Ascent;
@@ -3074,7 +3059,7 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 					pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, Element.x0, nFormY0, nFormY1, Element.w);
 					pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, Element.x1, nFormY0, nFormY1, Element.w);
 
-					if (!oForm || !oForm.IsFormRequired() || !this.GetLogicDocument().IsHighlightRequiredFields())
+					if (Element.Additional && -1 !== Element.Additional.Comb)
 					{
 						for (var nInterIndex = 0, nIntersCount = Element.Intermediate.length; nInterIndex < nIntersCount; ++nInterIndex)
 						{
@@ -3082,7 +3067,7 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 						}
 					}
 
-					Element = aCombForms.Get_Next(true);
+					Element = aFormBorder.Get_Next(true);
 				}
 			}
 		}
@@ -16888,6 +16873,10 @@ CParaDrawingRangeLines.prototype =
 			{
 				return (PrevEl.Additional.HyperlinkCF === Element.Additional.HyperlinkCF);
 			}
+			else if (undefined !== PrevEl.Additional.Comb)
+			{
+				return (PrevEl.Additional.Comb === Element.Additional.Comb);
+			}
 
 			return false;
 		}
@@ -17620,7 +17609,7 @@ function CParagraphDrawStateLines()
     this.RunReview  = new CParaDrawingRangeLines();
     this.CollChange = new CParaDrawingRangeLines();
     this.DUnderline = new CParaDrawingRangeLines();
-    this.CombForms  = new CParaDrawingRangeLines();
+    this.FormBorder = new CParaDrawingRangeLines();
 
     this.Page  = 0;
     this.Line  = 0;
@@ -17664,7 +17653,7 @@ CParagraphDrawStateLines.prototype =
 		this.RunReview.Clear();
 		this.CollChange.Clear();
 		this.DUnderline.Clear();
-		this.CombForms.Clear();
+		this.FormBorder.Clear();
     },
 
     Reset_Range : function(Range, X, Spaces)
