@@ -9853,6 +9853,24 @@ background-repeat: no-repeat;\
 
 		oLogicDocument.ConvertFormFixedType(sId, isFixed);
 	};
+	asc_docs_api.prototype.asc_IsHighlightRequiredFields = function()
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return false;
+
+		return oLogicDocument.IsHighlightRequiredFields();
+	};
+	asc_docs_api.prototype.asc_SetHighlightRequiredFields = function(isHighlight)
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return;
+
+		oLogicDocument.SetHighlightRequiredFields(isHighlight);
+		oLogicDocument.DrawingDocument.ClearCachePages();
+		oLogicDocument.DrawingDocument.FirePaint();
+	}
 
 	asc_docs_api.prototype.asc_UncheckContentControlButtons = function()
 	{
