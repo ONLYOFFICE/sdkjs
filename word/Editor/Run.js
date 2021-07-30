@@ -2120,6 +2120,7 @@ ParaRun.prototype.GetSimpleChangesRange = function(arrChanges, nStart, nEnd)
 	var _nStart = undefined !== nStart ? nStart : 0;
 	var _nEnd   = undefined !== nEnd ? nEnd : arrChanges.length - 1;
 
+	var nChangeCount = 0;
 	for (var nIndex = _nStart; nIndex <= _nEnd; ++nIndex)
 	{
 		var oChange = arrChanges[nIndex];
@@ -2134,7 +2135,13 @@ ParaRun.prototype.GetSimpleChangesRange = function(arrChanges, nStart, nEnd)
 		if (AscDFH.historyitem_ParaRun_AddItem !== nType && AscDFH.historyitem_ParaRun_RemoveItem !== nType)
 			return null;
 
-		for (var nItemIndex = 0, nItemsCount = oChange.GetItemsCount(); nItemIndex < nItemsCount; ++nItemIndex)
+		var nItemsCount = oChange.GetItemsCount();
+		if (AscDFH.historyitem_ParaRun_AddItem === nType)
+			nChangeCount += nItemsCount;
+		else
+			nChangeCount -= nItemsCount;
+
+		for (var nItemIndex = 0; nItemIndex < nItemsCount; ++nItemIndex)
 		{
 			var oItem = oChange.GetItem(nItemIndex);
 
@@ -2169,6 +2176,11 @@ ParaRun.prototype.GetSimpleChangesRange = function(arrChanges, nStart, nEnd)
 				return null;
 		}
 	}
+
+	// Если после изменений Run стал пустым, или, наоборот, он был пустым, а стал не пустым, тогда
+	// мы не можем быть уверены, что высота строки не изменилась
+	if (0 === this.Content.length || 0 === this.Content.length - nChangeCount)
+		return null;
 
 	return oParaPos;
 };
