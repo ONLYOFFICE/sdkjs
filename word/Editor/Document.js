@@ -25612,26 +25612,27 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 	{
 		// если хоть одна строка выделена не до конца, то преобразуем всю таблицу (можно проверять только последнюю в выделении строку, а не все)
 		// если выделено несколько строк, но до конца или от самого начала, то только эти строки
-		var oSelectetRows = oTable.GetSelectedRowsRange();
-		oSelectetRows.IsSelectionToEnd = oTable.IsSelectionToEnd();
+		var oSelectedRows = oTable.GetSelectedRowsRange();
+		oSelectedRows.IsSelectionToEnd = oTable.IsSelectionToEnd();
 		var oLastCell;
-		if (oSelectetRows.Start === oSelectetRows.End)
+		if (oSelectedRows.Start === oSelectedRows.End)
 			oLastCell = Math.max(oTable.Selection.StartPos.Pos.Cell, oTable.Selection.EndPos.Pos.Cell);
 		else
-			oLastCell = (oTable.Selection.StartPos.Pos.Row === oSelectetRows.End) ? oTable.Selection.StartPos.Pos.Cell : oTable.Selection.EndPos.Pos.Cell;
+			oLastCell = (oTable.Selection.StartPos.Pos.Row === oSelectedRows.End) ? oTable.Selection.StartPos.Pos.Cell : oTable.Selection.EndPos.Pos.Cell;
 
 		var oSelectionArr = oTable.GetSelectionArray();
-		var isConverAll = oTable.IsSelectedAll() || (oTable.Content.length === 1 && oTable.Content[0].GetCellsCount() === 1) || (!oSelectionArr[0].Row && !oSelectionArr[0].Cell && oSelectetRows.IsSelectionToEnd) || ((oTable.GetRow(oSelectetRows.End).GetCellsCount() - 1) !== oLastCell);
+		var isConvertAll = oTable.IsSelectedAll() || (oTable.Content.length === 1 && oTable.Content[0].GetCellsCount() === 1) || (!oSelectionArr[0].Row && !oSelectionArr[0].Cell && oSelectedRows.IsSelectionToEnd) || ((oTable.GetRow(oSelectedRows.End).GetCellsCount() - 1) !== oLastCell);
 
+		var CTable = oTable.Copy();
 		var ArrNewContent = [];
-		if (isConverAll)
+		if (isConvertAll)
 		{
-			oSelectetRows.Start = 0;
-			oSelectetRows.End = oTable.GetRowsCount() - 1;
+			oSelectedRows.Start = 0;
+			oSelectedRows.End = CTable.GetRowsCount() - 1;
 		}
-		for (var i = oSelectetRows.Start; i <= oSelectetRows.End; i++)
+		for (var i = oSelectedRows.Start; i <= oSelectedRows.End; i++)
 		{
-			var oRow = oTable.GetRow(i);
+			var oRow = CTable.GetRow(i);
 			var oNewParagraph = new Paragraph(this.DrawingDocument, this);
 			ArrNewContent.push(oNewParagraph);
 			var bAdd = true;
@@ -25703,24 +25704,24 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 			}
 		}
 
-		if (!isConverAll)
+		if (!isConvertAll)
 		{
-			for (var i = oSelectetRows.End; i >= oSelectetRows.Start; i--)
+			for (var i = oSelectedRows.End; i >= oSelectedRows.Start; i--)
 			{
-				oTable.RemoveTableRow(i);
+				CTable.RemoveTableRow(i);
 			}
-			if (!oSelectetRows.IsSelectionToEnd && oSelectetRows.Start) {
-				var oNewTable = oTable.Split(); 
+			if (!oSelectedRows.IsSelectionToEnd && oSelectedRows.Start) {
+				var oNewTable = CTable.Split(); 
 				ArrNewContent.push(oNewTable);
-				ArrNewContent.unshift(oTable);
+				ArrNewContent.unshift(CTable);
 			}
-			if (oSelectetRows.IsSelectionToEnd)
+			if (oSelectedRows.IsSelectionToEnd)
 			{
-				ArrNewContent.unshift(oTable);
+				ArrNewContent.unshift(CTable);
 			}
-			else if (!oSelectetRows.Start)
+			else if (!oSelectedRows.Start)
 			{
-				ArrNewContent.push(oTable);
+				ArrNewContent.push(CTable);
 			}
 		}
 
