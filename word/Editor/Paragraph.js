@@ -4199,7 +4199,6 @@ Paragraph.prototype.Add = function(Item)
 				else
 				{
 					var CurParaPos = this.Get_ParaContentPos(false, false);
-					var CurPos     = CurParaPos.Get(0);
 
 					// Сначала посмотрим на элемент слева и справа(текущий)
 					var SearchLPos = new CParagraphSearchPos();
@@ -4211,9 +4210,9 @@ Paragraph.prototype.Add = function(Item)
 					// 1. Если мы находимся в конце параграфа, тогда применяем заданную настройку к знаку параграфа
 					//    и добавляем пустой ран с заданными настройками.
 					// 2. Если мы находимся в середине слова (справа и слева текстовый элемент, причем оба не
-					// пунктуация), тогда меняем настройки для данного слова. 3. Во всех остальных случаях вставляем
-					// пустой ран с заданными настройкми и переносим курсор в этот ран, чтобы при последующем наборе
-					// текст отрисовывался с нужными настройками.
+					//    пунктуация), тогда меняем настройки для данного слова.
+					// 3. Во всех остальных случаях вставляем пустой ран с заданными настройкми и переносим курсор
+					//    в этот ран, чтобы при последующем наборе текст отрисовывался с нужными настройками.
 
 					if (null === RItem || para_End === RItem.Type)
 					{
@@ -4225,6 +4224,15 @@ Paragraph.prototype.Add = function(Item)
 					}
 					else if (null !== RItem && null !== LItem && para_Text === RItem.Type && para_Text === LItem.Type && false === RItem.IsPunctuation() && false === LItem.IsPunctuation())
 					{
+						var oLogicDocument = this.LogicDocument;
+						var oDocPos        = null;
+
+						if (oLogicDocument)
+						{
+							oDocPos = oLogicDocument.GetContentPosition(false);
+							oLogicDocument.TrackDocumentPositions([oDocPos]);
+						}
+
 						var SearchSPos = new CParagraphSearchPos();
 						var SearchEPos = new CParagraphSearchPos();
 
@@ -4243,6 +4251,13 @@ Paragraph.prototype.Add = function(Item)
 
 						// Убираем селект
 						this.RemoveSelection();
+
+						if (oDocPos)
+						{
+							oLogicDocument.RefreshDocumentPositions([oDocPos]);
+							oLogicDocument.SetContentPosition(oDocPos, 0, 0);
+						}
+
 					}
 					else
 					{
