@@ -244,7 +244,7 @@ CGraphicObjects.prototype =
                 var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
 
                 var oShape = null;
-                if (isDrawHandles && (oShape = AscCommon.g_oTableId.Get_ById(ret.objectId)) && oShape.isForm() && oShape.getInnerForm().IsFormLocked())
+                if (isDrawHandles && (oShape = AscCommon.g_oTableId.Get_ById(ret.objectId)) && oShape.isForm() && oShape.getInnerForm() && oShape.getInnerForm().IsFormLocked())
                 	isDrawHandles = false;
 
                 if(isDrawHandles === false)

@@ -180,7 +180,7 @@ function hitToHandles(x, y, object)
     var oApi = Asc.editor || editor;
     var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
 
-    if (isDrawHandles && object && object.isForm && object.isForm() && object.getInnerForm().IsFormLocked())
+    if (isDrawHandles && object && object.isForm && object.isForm() && object.getInnerForm() && object.getInnerForm().IsFormLocked())
     	isDrawHandles = false;
 
     if(isDrawHandles === false)
@@ -5737,7 +5737,7 @@ CShape.prototype.hitToAdjustment = function (x, y) {
     var oApi = Asc.editor || editor;
     var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
 
-    if (isDrawHandles && this.isForm() && this.getInnerForm().IsFormLocked())
+    if (isDrawHandles && this.isForm() && this.getInnerForm() && this.getInnerForm().IsFormLocked())
     	isDrawHandles = false;
 
     if(isDrawHandles === false)
