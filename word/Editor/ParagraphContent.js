@@ -593,7 +593,8 @@ ParaText.prototype.GetAutoCorrectFlags = function()
 		|| 63 === this.Value)
 		return AUTOCORRECT_FLAGS_ALL;
 
-	if (this.IsPunctuation() || this.Is_Number())
+	// слэш и обратный слэш - исключения, на них мы не должны стартовать атозамену первой буквы предложения
+	if ((this.IsPunctuation() || this.Is_Number()) && 92 !== this.Value && 47 !== this.Value)
 		return AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE;
 };
 ParaText.prototype.IsDiacriticalSymbol = function()

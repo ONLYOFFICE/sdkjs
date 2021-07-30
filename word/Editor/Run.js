@@ -12596,7 +12596,7 @@ ParaRun.prototype.private_ProcessSmartQuotesAutoCorrect = function(oDocument, oP
 	return true;
 };
 /**
- * Производим автозамену для умных кавычек
+ * Производим автозамену замены двух дефисов длинным тире
  * @param oDocument {CDocument}
  * @param oParagraph {Paragraph}
  * @param oContentPos {CParagraphContentPos}
@@ -12604,7 +12604,7 @@ ParaRun.prototype.private_ProcessSmartQuotesAutoCorrect = function(oDocument, oP
  * @param nLang {number}
  * @returns {boolean}
  */
-ParaRun.prototype.private_ProcessHyphenWithDashAutoCorrect = function(oDocument, oParagraph, oContentPos, nPos, nLangnLang)
+ParaRun.prototype.private_ProcessHyphenWithDashAutoCorrect = function(oDocument, oParagraph, oContentPos, nPos, nLang)
 {
 	if (!oDocument.IsAutoCorrectHyphensWithDash())
 		return false;
@@ -12632,7 +12632,7 @@ ParaRun.prototype.private_ProcessHyphenWithDashAutoCorrect = function(oDocument,
 		oParagraph.Remove(1);
 		oParagraph.RemoveSelection();
 
-		// TODO:
+		// Надо корректировать ContentPos, потому что мы производили удаление
 		for (var nTempPos = 0, nCount = this.Content.length; nTempPos < nCount; ++nTempPos)
 		{
 			if (this.Content[nTempPos] === oDash)
