@@ -954,7 +954,7 @@
         Writer.WriteBool(this.bReverse === true);
     };
     CChangesSparklinesRemoveData.prototype.ReadFromBinary = function(Reader){
-        var bIsObject = Reader.GetLong();
+        var bIsObject = Reader.GetBool();
         if(bIsObject){
             this.sparkline = new AscCommonExcel.sparkline();
             var col = Reader.GetLong();
