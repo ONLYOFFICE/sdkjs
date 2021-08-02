@@ -13632,30 +13632,17 @@ CDocument.prototype.GetAllComments = function(isMine, isCurrent)
 	{
 		if (true === this.Comments.Is_Use())
 		{
-			var arrComments = [];
-			if (this.IsSelectionUse())
-			{
-				var oSelectionBounds = this.GetSelectionBounds();
-				if (oSelectionBounds)
-				{
-					var oBounds;
-					if (-1 === oSelectionBounds.Direction)
-						oBounds = oSelectionBounds.Start;
-					else
-						oBounds = oSelectionBounds.End;
+			var arrParagraphs = this.GetSelectedParagraphs();
+			var oComments     = {};
 
-					arrComments = this.Comments.GetByRect(this.CurPage, oBounds.X, oBounds.Y, oBounds.W, oBounds.H);
-				}
-			}
-			else
+			for (var nParaIndex = 0, nParasCount = arrParagraphs.length; nParaIndex < nParasCount; ++nParaIndex)
 			{
-				var oCurPosXY = this.GetCursorRealPosition();
-				arrComments   = this.Comments.GetByXY(this.CurPage, oCurPosXY.X, oCurPosXY.Y);
+				arrParagraphs[nParaIndex].GetCurrentComments(oComments);
 			}
 
-			for (var nCommentIndex = 0, nCommentsCount = arrComments.length; nCommentIndex < nCommentsCount; ++nCommentIndex)
+			for (var sCommentId in oComments)
 			{
-				var oComment = arrComments[nCommentIndex];
+				var oComment = this.Comments.Get_ById(sCommentId);
 				if (oComment && (!isMine || oComment.IsCurrentUser()))
 					arrCommentsId.push(oComment.GetId());
 			}

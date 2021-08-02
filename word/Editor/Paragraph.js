@@ -13121,17 +13121,35 @@ Paragraph.prototype.MoveCursorToCommentMark = function(sId)
 		var oItem = this.Content[nPos];
 		if (para_Comment === oItem.Type && sId === oItem.CommentId)
 		{
-			nPos--;
-			while (nPos >= 0)
+			if (oItem.IsCommentStart())
 			{
-				if (this.Content[nPos].IsCursorPlaceable())
+				nPos++;
+				while (nPos < this.Content.length)
 				{
-					this.Content[nPos].SetThisElementCurrent();
-					this.Content[nPos].MoveCursorToEndPos();
-					return;
-				}
+					if (this.Content[nPos].IsCursorPlaceable())
+					{
+						this.Content[nPos].SetThisElementCurrent();
+						this.Content[nPos].MoveCursorToStartPos();
+						return;
+					}
 
+					nPos++;
+				}
+			}
+			else
+			{
 				nPos--;
+				while (nPos >= 0)
+				{
+					if (this.Content[nPos].IsCursorPlaceable())
+					{
+						this.Content[nPos].SetThisElementCurrent();
+						this.Content[nPos].MoveCursorToEndPos();
+						return;
+					}
+
+					nPos--;
+				}
 			}
 
 			break;
@@ -13140,6 +13158,76 @@ Paragraph.prototype.MoveCursorToCommentMark = function(sId)
 
 	this.MoveCursorToStartPos();
 	this.Document_SetThisElementCurrent(false);
+};
+Paragraph.prototype.GetCurrentComments = function(oComments)
+{
+	if (!oComments)
+		oComments = {};
+
+	var oInfo = this.GetEndInfoByPage(-1);
+	var arrCurComments = oInfo ? oInfo.GetComments() : [];
+
+	if (this.IsSelectionUse())
+	{
+		var nStartPos = this.Selection.StartPos;
+		var nEndPos   = this.Selection.EndPos;
+
+		if (nStartPos > nEndPos)
+		{
+			var nTemp = nStartPos;
+			nStartPos = nEndPos;
+			nEndPos   = nTemp;
+		}
+
+		for (var nCommentIndex = 0, nCommentsCount = arrCurComments.length; nCommentIndex < nCommentsCount; ++nCommentIndex)
+		{
+			oComments[arrCurComments[nCommentIndex]] = 1;
+		}
+
+		for (var nPos = 0, nLastPos = Math.min(this.Content.length - 1, nStartPos); nPos < nLastPos; ++nPos)
+		{
+			var oElement = this.Content[nPos];
+			if (para_Comment === oElement.Type)
+			{
+				if (oElement.IsCommentStart())
+					oComments[oElement.GetCommentId()] = 1;
+				else
+					delete oComments[oElement.GetCommentId()];
+			}
+		}
+
+		for (var nPos = nStartPos, nLastPos = Math.min(this.Content.length - 1, nEndPos); nPos < nLastPos; ++nPos)
+		{
+			var oElement = this.Content[nPos];
+			if (para_Comment === oElement.Type)
+			{
+				oComments[oElement.GetCommentId()] = 1;
+			}
+		}
+	}
+	else
+	{
+		for (var nCommentIndex = 0, nCommentsCount = arrCurComments.length; nCommentIndex < nCommentsCount; ++nCommentIndex)
+		{
+			oComments[arrCurComments[nCommentIndex]] = 1;
+		}
+
+		for (var nPos = 0, nLastPos = Math.min(this.Content.length - 1, this.CurPos.ContentPos); nPos < nLastPos; ++nPos)
+		{
+			var oElement = this.Content[nPos];
+			if (para_Comment === oElement.Type)
+			{
+				if (oElement.IsCommentStart())
+					oComments[oElement.GetCommentId()] = 1;
+				else
+					delete oComments[oElement.GetCommentId()];
+			}
+		}
+
+
+	}
+
+	return oComments;
 };
 Paragraph.prototype.ReplaceMisspelledWord = function(Word, oElement)
 {
@@ -16744,6 +16832,10 @@ CParagraphPageEndInfo.prototype.GetComplexFields = function()
 		arrComplexFields[nIndex] = this.ComplexFields[nIndex].Copy();
 	}
 	return arrComplexFields;
+};
+CParagraphPageEndInfo.prototype.GetComments = function()
+{
+	return this.Comments;
 };
 
 function CParaPos(Range, Line, Page, Pos)
