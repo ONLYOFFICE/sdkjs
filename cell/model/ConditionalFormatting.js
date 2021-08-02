@@ -1208,9 +1208,8 @@
 		this.text = val;
 	};
 	CConditionalFormattingRule.prototype.asc_setValue1 = function (val) {
-		if (!this.aRuleElements) {
-			this.aRuleElements = [];
-		}
+		//чищу всегда, поскольку от интерфейса всегда заново выставляются оба значения
+		this.aRuleElements = [];
 		val = this.correctFromInterface(val);
 
 		this.aRuleElements[0] = new CFormulaCF();
