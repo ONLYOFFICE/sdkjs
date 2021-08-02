@@ -1395,9 +1395,6 @@ Paragraph.prototype.CheckNotInlineObject = function(nMathPos, nDirection)
 };
 Paragraph.prototype.RecalculateEndInfo = function()
 {
-	if (this.m_oPRSW.IsFastRecalculate())
-		return;
-
 	var oLogicDocument = this.GetLogicDocument();
 	if (oLogicDocument && oLogicDocument.GetRecalcId && this.EndInfoRecalcId === oLogicDocument.GetRecalcId())
 		return;
@@ -16830,6 +16827,25 @@ CParagraphPageEndInfo.prototype.GetComments = function()
 {
 	return this.Comments;
 };
+CParagraphPageEndInfo.prototype.IsEqual = function(oEndInfo)
+{
+	if (this.Comments.length !== oEndInfo.Comments.length || this.ComplexFields.length !== oEndInfo.ComplexFields.length)
+		return false;
+
+	for (var nIndex = 0, nCount = this.Comments.length; nIndex < nCount; ++nIndex)
+	{
+		if (this.Comments[nIndex] !== oEndInfo.Comments[nIndex])
+			return false;
+	}
+
+	for (var nIndex = 0, nCount = this.ComplexFields.length; nIndex < nCount; ++nIndex)
+	{
+		if (!this.ComplexFields[nIndex].IsEqual(oEndInfo.ComplexFields[nIndex]))
+			return false;
+	}
+
+	return true;
+};
 
 function CParaPos(Range, Line, Page, Pos)
 {
@@ -17235,6 +17251,13 @@ CComplexFieldStatePos.prototype.SetFieldCode = function(isFieldCode)
 CComplexFieldStatePos.prototype.IsFieldCode = function()
 {
 	return this.FieldCode;
+};
+CComplexFieldStatePos.prototype.IsEqual = function(oState)
+{
+	return (this.FieldCode === oState.FieldCode
+		&& this.ComplexField
+		&& oState.ComplexField
+		&& this.ComplexField.GetBeginChar() === oState.ComplexField.GetBeginChar());
 };
 
 function CParagraphComplexFieldsInfo()
