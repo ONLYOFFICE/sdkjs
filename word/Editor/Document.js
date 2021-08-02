@@ -25631,6 +25631,7 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 		for (var i = oSelectetRows.Start; i <= oSelectetRows.End; i++)
 		{
 			var oRow = oTable.GetRow(i);
+			var Tabs = oProps.type == 2 ? new CParaTabs() : null;
 			var oNewParagraph = new Paragraph(this.DrawingDocument, this);
 			ArrNewContent.push(oNewParagraph);
 			var bAdd = true;
@@ -25654,6 +25655,7 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 								isNewPar = true;
 							}
 							oNewParagraph.Concat(oElement, true);
+							oNewParagraph.SetParagraphAlign(1);
 							break;
 						case type_Table:
 							var oNestedContent = (oProps.nested) ? this.private_ConvertTableToText(oElement, oProps) : [oElement];
@@ -25684,6 +25686,8 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 						case 2:
 							// TODO: подумать над тем, что водр меняет размеры этой табуляции (может нам тоже надо)
 							oText = new ParaTab();
+							var pos = (oCell.Metrics.X_cell_end >> 0) + 2;
+							Tabs.Add(new CParaTab(tab_Left, pos, Asc.c_oAscTabLeader.None));
 							break;
 						case 1:
 							oNewParagraph = new Paragraph(this.DrawingDocument, this);
@@ -25698,6 +25702,10 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 						oRun.Add(oText);
 						oNewParagraph.Internal_Content_Add((oNewParagraph.Content.length - 1 > 0 ? oNewParagraph.Content.length - 1 : oNewParagraph.Content.length), oRun);
 					}
+				}
+				else if (oProps.type == 2)
+				{
+					oNewParagraph.SetParagraphTabs(Tabs);
 				}
 			}
 		}
