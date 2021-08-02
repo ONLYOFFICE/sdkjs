@@ -9544,24 +9544,17 @@ Paragraph.prototype.Get_CompiledPr = function()
 		PrevEl = PrevEl.GetLastElement();
 	}
 
-	if (PrevEl)
+	if (PrevEl && PrevEl.IsParagraph())
 	{
-		if (PrevEl.IsParagraph())
+		var oPrevPr = PrevEl.Get_CompiledPr2(false).ParaPr;
+		if (true === this.private_CompareBorderSettings(oPrevPr, Pr.ParaPr) && undefined === PrevEl.Get_SectionPr() && true !== Pr.ParaPr.PageBreakBefore)
 		{
-			var oPrevPr = PrevEl.Get_CompiledPr2(false).ParaPr;
-			if (true === this.private_CompareBorderSettings(oPrevPr, Pr.ParaPr) && undefined === PrevEl.Get_SectionPr() && true !== Pr.ParaPr.PageBreakBefore)
-			{
-				Pr.ParaPr.Brd.First   = false;
-				Pr.ParaPr.Brd.Between = oPrevPr.Brd.Between.Copy();
-			}
-			else
-			{
-				Pr.ParaPr.Brd.First = true;
-			}
+			Pr.ParaPr.Brd.First   = false;
+			Pr.ParaPr.Brd.Between = oPrevPr.Brd.Between.Copy();
 		}
 		else
 		{
-			PrevEl = PrevEl.GetLastParagraph();
+			Pr.ParaPr.Brd.First = true;
 		}
 	}
 
