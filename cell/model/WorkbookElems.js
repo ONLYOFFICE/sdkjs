@@ -2849,7 +2849,7 @@ var g_oBorderProperties = {
                 break;
         }
     };
-	CellXfs.prototype.Write_ToBinary2 = function (writer) {
+	/*CellXfs.prototype.Write_ToBinary2 = function (writer) {
 		var t = this;
 		var oBinaryStylesTableWriter = new AscCommonExcel.BinaryStylesTableWriter(writer);
 		oBinaryStylesTableWriter.bs.WriteItem(0, function(){oBinaryStylesTableWriter.WriteDxf(t);});
@@ -2866,7 +2866,7 @@ var g_oBorderProperties = {
 			return bsr.ReadDxf(t, l, oThis);
 		});
 		return this;
-	};
+	};*/
     CellXfs.prototype.getBorder = function () {
         return this.border;
     };

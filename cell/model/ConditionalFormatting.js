@@ -1743,7 +1743,7 @@
 			if (null != _color.Read_FromBinary2) {
 				_color.Read_FromBinary2(reader);
 			} else if (null != _color.Read_FromBinary2AndReplace) {
-				_color = elem.Read_FromBinary2AndReplace(reader);
+				_color = _color.Read_FromBinary2AndReplace(reader);
 			}
 			return _color;
 		};
