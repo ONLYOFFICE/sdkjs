@@ -4611,16 +4611,19 @@
 						}
 
 						tmp = sum / nc;
-						/*if (oRule.hasStdDev()) {
-						 sum = 0;
-						 for (cell = 0; cell < values.length; ++cell) {
-						 value = values[cell];
-						 if (null !== value.v) {
-						 sum += (value.v - tmp) * (value.v - tmp);
-						 }
-						 }
-						 sum = Math.sqrt(sum / (nc - 1));
-						 }*/
+
+						var stdDev;
+						if (oRule.hasStdDev()) {
+							var sum2 = 0;
+							for (cell = 0; cell < values.length; ++cell) {
+								value = values[cell];
+								if (null !== value.v) {
+									sum2 += (value.v - tmp) * (value.v - tmp);
+								}
+							}
+							stdDev = Math.sqrt(sum2 / (nc - 1));
+						}
+
 						compareFunction = (function(rule, average, stdDev) {
 							return function(row, col) {
 								var val;
@@ -4629,7 +4632,7 @@
 								});
 								return (null !== val && rule.getAverage(val, average, stdDev)) ? rule.dxf : null;
 							};
-						})(oRule, tmp, sum);
+						})(oRule, tmp, stdDev);
 					} else {
 						if (!oRule.dxf) {
 							continue;

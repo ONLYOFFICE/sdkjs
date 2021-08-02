@@ -702,9 +702,9 @@
 	};
 	CConditionalFormattingRule.prototype.getAverage = function (val, average, stdDev) {
 		var res = false;
-		/*if (this.stdDev) {
-		 average += (this.aboveAverage ? 1 : -1) * this.stdDev + stdDev;
-		 }*/
+		if (this.stdDev && stdDev) {
+			average += ((this.aboveAverage ? 1 : -1) * this.stdDev) * stdDev;
+		}
 		if (this.aboveAverage) {
 			res = val > average;
 		} else {
