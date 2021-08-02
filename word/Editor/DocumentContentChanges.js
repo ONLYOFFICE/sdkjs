@@ -305,6 +305,12 @@ CChangesDocumentContentRemoveItem.prototype.Load = function(Color)
 
 		oDocument.private_ReindexContent(Pos);
 	}
+	if (oDocument.Pages.length)
+	{
+		oDocument.Pages[oDocument.CurPage].EndPos = oDocument.Content.length - 1;
+		if (oDocument.CurPage)
+			oDocument.Pages[oDocument.CurPage - 1].EndPos = oDocument.Content.length - 1;
+	}
 };
 CChangesDocumentContentRemoveItem.prototype.IsRelated = function(oChanges)
 {
