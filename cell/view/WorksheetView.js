@@ -17813,7 +17813,58 @@
 			History.Create_NewPoint();
 			History.StartTransaction();
 
+			var tablePart = t.model.autoFilters._getFilterByDisplayName(tableName);
+			var oldRange = tablePart && tablePart.Ref.clone();
+			var oldRangeWithoutHeader = tablePart && tablePart.getRangeWithoutHeaderFooter();
 			t.model.autoFilters.changeTableRange(tableName, range);
+			var newRange = tablePart.Ref;
+
+			//расширяем условное форматирование
+			//если тело колоки заполнено УФ, тогда расширяем его диапазон на ячейки ниже
+			//ms ещё изменяет УФ при уменьшении ф/т, что мне кажется может мешать работе, пока не реализую
+			if (tablePart && newRange.containsRange(oldRange)) {
+				var aRules = t.model.aConditionalFormattingRules;
+				if (aRules && aRules.length) {
+
+					for (var j = 0; j < aRules.length; j++) {
+						var oRule = aRules[j];
+						var ranges = oRule && oRule.ranges;
+						if (ranges) {
+							var isChange = false;
+							var newRanges = [];
+
+							for (var k = 0, length3 = ranges.length; k < length3; k++) {
+								if (ranges[k].isEqual(oldRange) || ranges[k].isEqual(oldRangeWithoutHeader)) {
+									newRanges.push(new Asc.Range(ranges[k].c1, ranges[k].r1, ranges[k].c2, newRange.r2));
+									isChange = true;
+								} else {
+									var isPush = false;
+									for (var i = 0; i < tablePart.TableColumns.length; i++) {
+										var rangeColumnWithoutHeader = tablePart.getColumnRange(i, true, null, oldRange);
+										var rangeColumn = tablePart.getColumnRange(i, null, null, oldRange);
+										if (ranges[k].isEqual(rangeColumnWithoutHeader) || ranges[k].isEqual(rangeColumn)) {
+											newRanges.push(new Asc.Range(ranges[k].c1, ranges[k].r1, ranges[k].c2, newRange.r2));
+											isChange = true;
+											isPush = true;
+											break;
+										}
+									}
+									if (!isPush) {
+										newRanges.push(ranges[k].clone());
+									}
+								}
+							}
+
+							if (isChange) {
+								var toRule = oRule.clone();
+								toRule.ranges = newRanges;
+								toRule.id = oRule.id;
+								t.model.setCFRule(toRule);
+							}
+						}
+					}
+				}
+			}
 
 			History.EndTransaction();
 			if (!doNotUpdate) {

@@ -6775,6 +6775,19 @@ function RangeDataManagerElem(bbox, data)
 		return Asc.Range(this.Ref.c1, startRow, this.Ref.c2, endRow);
 	};
 
+	TablePart.prototype.getColumnRange = function (index, withoutHeader, withoutFooter, opt_range) {
+		var tableRange = opt_range ? opt_range : this.Ref;
+		var startRow = tableRange.r1;
+		if (withoutHeader && this.isHeaderRow()) {
+			startRow++;
+		}
+		var endRow = tableRange.r2;
+		if (withoutFooter && this.isTotalsRow()) {
+			endRow--;
+		}
+		return Asc.Range(tableRange.c1 + index, startRow, tableRange.c1 + index, endRow);
+	};
+
 	TablePart.prototype.checkTotalRowFormula = function (ws) {
 		for (var i = 0; i < this.TableColumns.length; i++) {
 			this.TableColumns[i].checkTotalRowFormula(ws, this);
