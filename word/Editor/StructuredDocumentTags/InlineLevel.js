@@ -698,22 +698,7 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCu
 		return;
 
 	var oDrawingDocument = oLogicDocument.GetDrawingDocument();
-
-	var oShape = this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null;
-	if (this.IsForm() && oShape && oShape.isForm())
-	{
-		var oPolygon = new AscCommon.CPolygon();
-		oPolygon.fill([[oShape.getFormRelRect()]]);
-		oDrawingDocument.OnDrawContentControl(this, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In, oPolygon.GetPaths(0));
-		return;
-	}
-
-	if (Asc.c_oAscSdtAppearance.Hidden === this.GetAppearance() || this.Paragraph.LogicDocument.IsForceHideContentControlTrack())
-	{
-		oDrawingDocument.OnDrawContentControl(null, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In);
-		return;
-	}
-
+	
 	if (undefined !== X && undefined !== Y && undefined !== nCurPage)
 	{
 		var isHit = false;
@@ -742,6 +727,21 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCu
 			oMMData.Text  = sHelpText;
 			oLogicDocument.GetApi().sync_MouseMoveCallback(oMMData);
 		}
+	}
+
+	var oShape = this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null;
+	if (this.IsForm() && oShape && oShape.isForm())
+	{
+		var oPolygon = new AscCommon.CPolygon();
+		oPolygon.fill([[oShape.getFormRelRect()]]);
+		oDrawingDocument.OnDrawContentControl(this, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In, oPolygon.GetPaths(0));
+		return;
+	}
+
+	if (Asc.c_oAscSdtAppearance.Hidden === this.GetAppearance() || this.Paragraph.LogicDocument.IsForceHideContentControlTrack())
+	{
+		oDrawingDocument.OnDrawContentControl(null, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In);
+		return;
 	}
 
 	oDrawingDocument.OnDrawContentControl(this, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In, this.GetBoundingPolygon());
