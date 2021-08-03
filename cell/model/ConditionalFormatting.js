@@ -1563,7 +1563,7 @@
 	};
 	CDataBar.prototype.applyPreset = function (styleIndex) {
 		var _generateRgbColor = function (_color) {
-			if (!_color) {
+			if (_color === undefined || _color === null) {
 				return null;
 			}
 
@@ -1572,18 +1572,18 @@
 
 		var presetStyles = conditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.dataBar][styleIndex];
 
-		this.AxisColor = _generateRgbColor(presetStyles[0] ? presetStyles[0] : null);
+		this.AxisColor = _generateRgbColor(presetStyles[0]);
 		this.AxisPosition = 0;
-		this.BorderColor = _generateRgbColor(presetStyles[1] ? presetStyles[1] : null);
-		this.Color = _generateRgbColor(presetStyles[2] ? presetStyles[2] : null);
+		this.BorderColor = _generateRgbColor(presetStyles[1]);
+		this.Color = _generateRgbColor(presetStyles[2]);
 		this.Direction = 0;
 		this.Gradient = presetStyles[3];
 		this.MaxLength = 100;
 		this.MinLength = 0;
 		this.NegativeBarBorderColorSameAsPositive = false;
 		this.NegativeBarColorSameAsPositive = false;
-		this.NegativeBorderColor = _generateRgbColor(presetStyles[4] ? presetStyles[4] : null);
-		this.NegativeColor = _generateRgbColor(presetStyles[5] ? presetStyles[5] : null);
+		this.NegativeBorderColor = _generateRgbColor(presetStyles[4]);
+		this.NegativeColor = _generateRgbColor(presetStyles[5]);
 		this.ShowValue = true;
 
 		var formatValueObject1 = new CConditionalFormatValueObject();
