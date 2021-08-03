@@ -25620,7 +25620,7 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 		else
 			oLastCell = (oTable.Selection.StartPos.Pos.Row === oSelectetRows.End) ? oTable.Selection.StartPos.Pos.Cell : oTable.Selection.EndPos.Pos.Cell;
 		var oSelectionArr = oTable.GetSelectionArray();
-		var isConverAll = oTable.IsSelectedAll() || (oTable.Content.length === 1 && oTable.Content[0].GetCellsCount() === 1) || (!oSelectionArr[0].Row && !oSelectionArr[0].Cell && oSelectetRows.IsSelectionToEnd) || ((oTable.GetRow(oSelectetRows.End).GetCellsCount() - 1) !== oLastCell);
+		var isConverAll = oTable.IsSelectedAll() || !oTable.Selection.Use || (oTable.Content.length === 1 && oTable.Content[0].GetCellsCount() === 1) || (!oSelectionArr[0].Row && !oSelectionArr[0].Cell && oSelectetRows.IsSelectionToEnd) || ((oTable.GetRow(oSelectetRows.End).GetCellsCount() - 1) !== oLastCell);
 
 		var ArrNewContent = [];
 		if (isConverAll)
