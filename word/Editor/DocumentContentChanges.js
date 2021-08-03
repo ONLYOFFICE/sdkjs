@@ -308,7 +308,7 @@ CChangesDocumentContentRemoveItem.prototype.Load = function(Color)
 	if (oDocument.Pages.length)
 	{
 		oDocument.Pages[oDocument.CurPage].EndPos = oDocument.Content.length - 1;
-		if (oDocument.CurPage)
+		if (oDocument.CurPage && oDocument.Pages[oDocument.CurPage - 1].EndPos > oDocument.Pages[oDocument.CurPage].EndPos)
 			oDocument.Pages[oDocument.CurPage - 1].EndPos = oDocument.Content.length - 1;
 	}
 };
