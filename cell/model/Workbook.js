@@ -4621,7 +4621,7 @@
 									sum2 += (value.v - tmp) * (value.v - tmp);
 								}
 							}
-							stdDev = Math.sqrt(sum2 / (nc - 1));
+							stdDev = Math.sqrt(sum2 / nc);
 						}
 
 						compareFunction = (function(rule, average, stdDev) {
