@@ -3915,7 +3915,17 @@ PasteProcessor.prototype =
 	//from WORD to WORD
 	_pasteBinaryFromWordToWord: function (base64FromWord, bIsOnlyFromBinary) {
 		var oThis = this;
+		var glossaryDoc = this.oDocument.GetGlossaryDocument();
+		var map = {};
+		for (var i in glossaryDoc.DocParts) {
+			map[i] = 1;
+		}
 		var aContent = this.ReadFromBinary(base64FromWord);
+		for (var i in glossaryDoc.DocParts) {
+			if (!map[i]) {
+				glossaryDoc.DocParts[i].Copy();
+			}
+		}
 
 		if (null === aContent) {
 			return null;
