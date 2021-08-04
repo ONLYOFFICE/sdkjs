@@ -25554,16 +25554,29 @@ CDocument.prototype.ConvertTableToText = function(oProps)
 	}))
 	{
 		this.StartAction(AscDFH.historydescription_Document_ConvertTableToText);
+		var FramePr = null;
 		var ArrNewContent = this.private_ConvertTableToText(oTable, oProps);
 		var oNewContent = new CSelectedContent();
 		var oSkipStart = 0, oSkipEnd = 1;
 		var bEnd = false;
+
+		if (!oTable.IsInline())
+		{
+			FramePr = new CFramePr();
+			FramePr.HAnchor = Asc.c_oAscHAnchor.Page;
+			FramePr.VAnchor = Asc.c_oAscVAnchor.Page;
+			FramePr.X = oTable.PositionH.Value;
+			FramePr.Y = oTable.PositionV.Value;
+		}
+
 		for (var i = 0; i < ArrNewContent.length; i++)
 		{
 			oNewContent.Add(new CSelectedElement(ArrNewContent[i], true));
 			if (ArrNewContent[i].IsParagraph())
 			{
 				bEnd = true;
+				if (FramePr)
+					ArrNewContent[i].Set_FramePr2(FramePr);
 			}
 			else
 			{
@@ -25573,6 +25586,7 @@ CDocument.prototype.ConvertTableToText = function(oProps)
 					oSkipStart++;
 			}
 		}
+		
 		var oParent = oTable.GetParent();
 		if (oNewContent && oParent)
 		{
@@ -25710,9 +25724,21 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 				TableC.RemoveTableRow(i);
 			}
 			if (!oSelectetRows.IsSelectionToEnd && oSelectetRows.Start) {
-				var oNewTable = TableC.Split(); 
+				var oNewTable = TableC.Split();
 				ArrNewContent.push(oNewTable);
 				ArrNewContent.unshift(TableC);
+				oNewTable.PositionH.Align = false;
+				oNewTable.PositionH.Value = TableC.PositionH.Value;
+				oNewTable.PositionV.Align = false;
+				// так делает ворд
+				oNewTable.PositionV.Value = TableC.PositionV.Value;
+				
+				// чтобы таблицы шли одна за другой в плотную
+				// var ind = oSelectetRows.Start ? oSelectetRows.Start - 1 : oSelectetRows.Start;
+				// oNewTable.PositionV.Value = TableC.TableRowsBottom[ind][0];
+				
+				// чтобы нижняя часть таблицы осталась на том же месте
+				// oNewTable.PositionV.Value = TableC.TableRowsBottom[oSelectetRows.End][0];
 			}
 			if (oSelectetRows.IsSelectionToEnd)
 			{
