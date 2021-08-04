@@ -2785,6 +2785,10 @@ CDocumentContent.prototype.Extend_ToPos                       = function(X, Y)
 	if (!this.LogicDocument || !this.LogicDocument.CanPerformAction || !this.LogicDocument.CanPerformAction())
 		return;
 
+	// В сносках нельзя делать ExtendToPos, смотри замечание в CFootnotesController.prototype.EndSelection
+	if (this.IsFootnote())
+		return;
+
 	if (this.IsBlockLevelSdtContent())
 	{
 		var oParent = this.Parent.GetParent();

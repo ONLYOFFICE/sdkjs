@@ -983,7 +983,10 @@ CFootnotesController.prototype.EndSelection = function(X, Y, PageAbs, MouseEvent
 			this.Selection.Footnotes[sFootnoteId].RemoveSelection();
 	}
 
-	// Новый селект
+	// ВАЖНО: На Selection_SetEnd и Selection_SetStart не должно происходить никаких действий
+	//        вызывающих пересчет, как например, ExtendToPos, потому что может быть рассинхрон
+	//        предыдущего вызова oResult = this.private_GetFootnoteByXY(X, Y, PageAbs)
+	//        и нового положения сносок на странице
 	if (this.Selection.Start.Footnote !== this.Selection.End.Footnote)
 	{
 		if (this.Selection.Start.Page > this.Selection.End.Page
@@ -1158,6 +1161,7 @@ CFootnotesController.prototype.private_GetFootnoteOnPageByXY = function(X, Y, nP
 	var oPage   = this.Pages[nPageAbs];
 	var oColumn = null;
 	var nColumnIndex = 0;
+
 	for (var nColumnsCount = oPage.Columns.length; nColumnIndex < nColumnsCount; ++nColumnIndex)
 	{
 		if (nColumnIndex < nColumnsCount - 1)
@@ -1219,6 +1223,7 @@ CFootnotesController.prototype.private_GetFootnoteOnPageByXY = function(X, Y, nP
 		var oBounds           = oFootnote.Get_PageBounds(nElementPageIndex);
 
 		if (oBounds.Top <= Y || 0 === nIndex)
+		{
 			return {
 				Footnote          : oFootnote,
 				Index             : nIndex,
@@ -1226,6 +1231,7 @@ CFootnotesController.prototype.private_GetFootnoteOnPageByXY = function(X, Y, nP
 				Column            : nColumnIndex,
 				FootnotePageIndex : nElementPageIndex
 			};
+		}
 	}
 
 	return null;
