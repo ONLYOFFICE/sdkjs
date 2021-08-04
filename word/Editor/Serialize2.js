@@ -13100,6 +13100,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		return res;
 	};
 	this.ReadSdtFormPr = function(type, length, val) {
+		var oThis = this;
 		var res = c_oSerConstants.ReadOk;
 		if (c_oSerSdt.FormPrKey === type) {
 			val.Key = this.stream.GetString2LE(length);

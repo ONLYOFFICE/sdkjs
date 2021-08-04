@@ -2342,7 +2342,11 @@ function CBinaryFileWriter()
     this.WriteBodyPr = function(bodyPr)
     {
         if (undefined === bodyPr || null == bodyPr)
-            return;
+		{
+			oThis.WriteUChar(g_nodeAttributeStart);
+			oThis.WriteUChar(g_nodeAttributeEnd);
+			return;
+		}
 
         oThis.WriteUChar(g_nodeAttributeStart);
         oThis._WriteInt2(0, bodyPr.flatTx);
