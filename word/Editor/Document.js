@@ -25628,13 +25628,40 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 		// если выделено несколько строк, но до конца или от самого начала, то только эти строки
 		var oSelectetRows = oTable.GetSelectedRowsRange();
 		oSelectetRows.IsSelectionToEnd = oTable.IsSelectionToEnd();
-		var oLastCell;
-		if (oSelectetRows.Start === oSelectetRows.End)
-			oLastCell = Math.max(oTable.Selection.StartPos.Pos.Cell, oTable.Selection.EndPos.Pos.Cell);
-		else
-			oLastCell = (oTable.Selection.StartPos.Pos.Row === oSelectetRows.End) ? oTable.Selection.StartPos.Pos.Cell : oTable.Selection.EndPos.Pos.Cell;
 		var oSelectionArr = oTable.GetSelectionArray();
-		var isConverAll = oTable.IsSelectedAll() || (!oSelectionArr[0].Row && !oSelectionArr[0].Cell && oSelectetRows.IsSelectionToEnd) || ((oTable.GetRow(oSelectetRows.End).GetCellsCount() - 1) !== oLastCell);
+		var isConverAll = oTable.IsSelectedAll() || !oTable.Selection.Use || (!oSelectionArr[0].Row && !oSelectionArr[0].Cell && oSelectetRows.IsSelectionToEnd);
+		if (!isConverAll)
+		{
+			var oFirstCell;
+			var	oLastCell;
+			if (oSelectetRows.Start === oSelectetRows.End)
+			{
+				if (oTable.Selection.StartPos.Pos.Cell === oTable.Selection.EndPos.Pos.Cell)
+				{
+					isConverAll = true;
+				}
+				else
+				{
+					oLastCell = Math.max(oTable.Selection.StartPos.Pos.Cell, oTable.Selection.EndPos.Pos.Cell);
+					oFirstCell = Math.min(oTable.Selection.StartPos.Pos.Cell, oTable.Selection.EndPos.Pos.Cell);
+				}
+	
+			}
+			else
+			{
+				// надо посомотреть первую или последнюю строку, выделены ли они целиком или нет
+				for (var i = 0; i < oSelectionArr.length; i++)
+				{
+					if (oSelectionArr[i].Row == oSelectetRows.End)
+					{
+						oFirstCell = oSelectionArr[i].Cell;
+						break;
+					}
+				}
+				oLastCell = oSelectionArr[oSelectionArr.length - 1].Cell;
+			}
+			isConverAll = ( !oFirstCell && oLastCell === (oTable.GetRow(oSelectetRows.End).GetCellsCount() - 1) ) ? false : true;
+		}
 
 		var TableC = oTable.Copy();
 		var ArrNewContent = [];
