@@ -1592,7 +1592,7 @@
 	 * Returns a Range object that represents the end in the specified direction in the specified range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {Direction} direction - The direction of end in the specified range. *  
+	 * @param {Direction} direction - The direction of end in the specified range. *
 	 * @returns {ApiRange}
 	 */
 	 ApiRange.prototype.End = function (direction) {
@@ -1626,7 +1626,7 @@
 	};
 
 	/**
-	 * Return a Range object that represents all the cells in the specified range.
+	 * Returns a Range object that represents all the cells in the specified range or a specified cell.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {number} row - The row number or the cell number (if only row is defined)
@@ -2479,10 +2479,10 @@
 
 	/**
 	 * Sets an angle to the current cell range.
-	* @memberof ApiRange
-	* @typeofeditors ["CSE"]
-	* @param {Angle} angle - Specifies the range angle.
-	*/
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {Angle} angle - Specifies the range angle.
+	 */
 	ApiRange.prototype.SetOrientation = function(angle) {
         switch(angle) {
 			case 'xlDownward':
