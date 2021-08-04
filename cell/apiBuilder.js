@@ -85,6 +85,7 @@
 	 * @property {number} Row - Returns the row number for the selected cell.
 	 * @property {number} Col - Returns the column number for the selected cell.
 	 * @property {ApiRange} Rows - Returns the ApiRange object that represents the rows of the specified range.
+	 * @property {ApiRange} Cols - Returns the ApiRange object that represents the columns of the specified range.
 	 * @property {number} Count - Returns the rows or columns count.
 	 * @property {string} Value - Returns the value from the first cell of the specified range or sets it to this cell.
 	 * @property {string} Formula - Returns the formula from the first cell of the specified range or sets it to this cell.
@@ -109,6 +110,7 @@
 	 * @property {ApiWorksheet} Worksheet - Returns the ApiWorksheet object that represents the worksheet containing the specified range.
 	 * @property {ApiName} DefName - Returns the ApiName object.
 	 * @property {ApiComment | null} Comments - Returns the ApiComment collection that represents all the comments from the specified worksheet.
+	 * @property {'xlDownward' | 'xlHorizontal' | 'xlUpward' | 'xlVertical'} Orientation - Sets an angle to the current cell range.
 	 */
 	function ApiRange(range) {
 		this.range = range;
@@ -739,8 +741,8 @@
 	 * Return an ApiRange that represents all the cells on the worksheet (not just the cells that are currently in use).
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {number} row - The number of the row or the number of cell (if only row defined)
-	 * @param {number} col - The number of col
+	 * @param {number} row - The row number or the cell number (if only row is defined)
+	 * @param {number} col - The column number
 	 * @returns {ApiRange}
 	 */
 	ApiWorksheet.prototype.GetCells = function (row, col) {
@@ -1477,6 +1479,16 @@
 	 */
 
 	/**
+	 * Specifies the range angle.
+	 * @typedef {("xlDownward" | "xlHorizontal" | "xlUpward" | "xlVertical")} Angle
+	 */
+
+	/**
+	 * Specifies the direction of end in the specified range.
+	 * @typedef {("xlUp" | "xlDown" | "xlToRight" | "xlToLeft")} Direction
+	 */
+
+	/**
 	 * Get the type of this class.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
@@ -1554,10 +1566,10 @@
 	});
 
 	/**
-	 * Returns a Range object that represents all the cells in the specified range or specified cell.
+	 * Returns a Range object that represents all the cells on the columns range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {number} nCol - The number of the col. * 
+	 * @param {number} nCol - The column number. * 
 	 * @returns {ApiRange}
 	 */
 	 ApiRange.prototype.GetCols = function (nCol) {
@@ -1580,7 +1592,7 @@
 	 * Returns a Range object that represents the end in the specified direction in the specified range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {string} direction - The direction of end in the specified range. * 
+	 * @param {Direction} direction - The direction of end in the specified range. *  
 	 * @returns {ApiRange}
 	 */
 	 ApiRange.prototype.End = function (direction) {
@@ -1614,11 +1626,11 @@
 	};
 
 	/**
-	 * Returns a Range object that represents the cols in the specified range.
+	 * Return a Range object that represents all the cells in the specified range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {number} row - The number of the row or the number of cell (if only row defined)
-	 * @param {number} col - The number of col
+	 * @param {number} row - The row number or the cell number (if only row is defined)
+	 * @param {number} col - The column number
 	 * @returns {ApiRange}
 	 */
 	 ApiRange.prototype.GetCells = function (row, col) {
@@ -2456,19 +2468,21 @@
 	};
 
 	/**
-	 * returns getAngle
+	 * Returns the range angle.
 	 * @memberof ApiRange
-	 * @return {getAngle}
+	 * @typeofeditors ["CSE"]
+	 * @return {Angle}
 	 */
 	ApiRange.prototype.GetOrientation = function() {
 	  return this.range.getAngle();
 	};
 
 	/**
-	 * Sets the angle for the range
-	 * @memberof ApiRange
-	 * @param {angle}
-	 */
+	 * Sets an angle to the current cell range.
+	* @memberof ApiRange
+	* @typeofeditors ["CSE"]
+	* @param {Angle} angle - Specifies the range angle.
+	*/
 	ApiRange.prototype.SetOrientation = function(angle) {
         switch(angle) {
 			case 'xlDownward':
