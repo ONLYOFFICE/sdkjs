@@ -25626,19 +25626,19 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 	{
 		// если хоть одна строка выделена не до конца, то преобразуем всю таблицу (можно проверять только последнюю в выделении строку, а не все)
 		// если выделено несколько строк, но до конца или от самого начала, то только эти строки
-		var oSelectetRows = oTable.GetSelectedRowsRange();
-		oSelectetRows.IsSelectionToEnd = oTable.IsSelectionToEnd();
+		var oSelectedRows = oTable.GetSelectedRowsRange();
+		oSelectedRows.IsSelectionToEnd = oTable.IsSelectionToEnd();
 		var oSelectionArr = oTable.GetSelectionArray();
-		var isConverAll = oTable.IsSelectedAll() || !oTable.Selection.Use || (!oSelectionArr[0].Row && !oSelectionArr[0].Cell && oSelectetRows.IsSelectionToEnd);
-		if (!isConverAll)
+		var isConvertAll = oTable.IsSelectedAll() || !oTable.Selection.Use || (!oSelectionArr[0].Row && !oSelectionArr[0].Cell && oSelectedRows.IsSelectionToEnd);
+		if (!isConvertAll)
 		{
 			var oFirstCell;
 			var	oLastCell;
-			if (oSelectetRows.Start === oSelectetRows.End)
+			if (oSelectedRows.Start === oSelectedRows.End)
 			{
 				if (oTable.Selection.StartPos.Pos.Cell === oTable.Selection.EndPos.Pos.Cell)
 				{
-					isConverAll = true;
+					isConvertAll = true;
 				}
 				else
 				{
@@ -25652,7 +25652,7 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 				// надо посомотреть первую или последнюю строку, выделены ли они целиком или нет
 				for (var i = 0; i < oSelectionArr.length; i++)
 				{
-					if (oSelectionArr[i].Row == oSelectetRows.End)
+					if (oSelectionArr[i].Row == oSelectedRows.End)
 					{
 						oFirstCell = oSelectionArr[i].Cell;
 						break;
@@ -25660,17 +25660,17 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 				}
 				oLastCell = oSelectionArr[oSelectionArr.length - 1].Cell;
 			}
-			isConverAll = ( !oFirstCell && oLastCell === (oTable.GetRow(oSelectetRows.End).GetCellsCount() - 1) ) ? false : true;
+			isConvertAll = ( !oFirstCell && oLastCell === (oTable.GetRow(oSelectedRows.End).GetCellsCount() - 1) ) ? false : true;
 		}
 
 		var TableC = oTable.Copy();
 		var ArrNewContent = [];
-		if (isConverAll)
+		if (isConvertAll)
 		{
-			oSelectetRows.Start = 0;
-			oSelectetRows.End = TableC.GetRowsCount() - 1;
+			oSelectedRows.Start = 0;
+			oSelectedRows.End = TableC.GetRowsCount() - 1;
 		}
-		for (var i = oSelectetRows.Start; i <= oSelectetRows.End; i++)
+		for (var i = oSelectedRows.Start; i <= oSelectedRows.End; i++)
 		{
 			var oRow = TableC.GetRow(i);
 			var Tabs = oProps.type == 2 ? new CParaTabs() : null;
@@ -25751,13 +25751,13 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 			}
 		}
 
-		if (!isConverAll)
+		if (!isConvertAll)
 		{
-			for (var i = oSelectetRows.End; i >= oSelectetRows.Start; i--)
+			for (var i = oSelectedRows.End; i >= oSelectedRows.Start; i--)
 			{
 				TableC.RemoveTableRow(i);
 			}
-			if (!oSelectetRows.IsSelectionToEnd && oSelectetRows.Start) {
+			if (!oSelectedRows.IsSelectionToEnd && oSelectedRows.Start) {
 				var oNewTable = TableC.Split();
 				ArrNewContent.push(oNewTable);
 				ArrNewContent.unshift(TableC);
@@ -25768,17 +25768,17 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 				oNewTable.PositionV.Value = TableC.PositionV.Value;
 				
 				// чтобы таблицы шли одна за другой в плотную
-				// var ind = oSelectetRows.Start ? oSelectetRows.Start - 1 : oSelectetRows.Start;
+				// var ind = oSelectedRows.Start ? oSelectedRows.Start - 1 : oSelectedRows.Start;
 				// oNewTable.PositionV.Value = TableC.TableRowsBottom[ind][0];
 				
 				// чтобы нижняя часть таблицы осталась на том же месте
-				// oNewTable.PositionV.Value = TableC.TableRowsBottom[oSelectetRows.End][0];
+				// oNewTable.PositionV.Value = TableC.TableRowsBottom[oSelectedRows.End][0];
 			}
-			if (oSelectetRows.IsSelectionToEnd)
+			if (oSelectedRows.IsSelectionToEnd)
 			{
 				ArrNewContent.unshift(TableC);
 			}
-			else if (!oSelectetRows.Start)
+			else if (!oSelectedRows.Start)
 			{
 				ArrNewContent.push(TableC);
 			}
