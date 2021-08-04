@@ -441,7 +441,11 @@
 		for (var i = 0; i < this.ranges.length; i++) {
 			var newRange = this.ranges[i].clone();
 			if (newRange.forShift(range, offset)) {
-				isChange = true;
+				if (ws.autoFilters.isAddTotalRow && newRange.containsRange(this.ranges[i])) {
+					newRange = this.ranges[i].clone();
+				} else {
+					isChange = true;
+				}
 			}
 			newRanges.push(newRange);
 		}
