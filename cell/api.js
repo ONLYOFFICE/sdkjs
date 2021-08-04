@@ -537,6 +537,7 @@ var editor;
 								cp['data'] = data;
 								callback(new AscCommon.asc_CAdvancedOptions(cp));
 							}
+							_api.endInsertDocumentUrls();
 						});
 					}
 				}, endCallback: function (_api) {
