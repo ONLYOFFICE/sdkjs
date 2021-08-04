@@ -25608,7 +25608,7 @@ CDocument.prototype.ConvertTableToText = function(oProps)
 					oParent.SelectRange(nIndex + oSkipStart, nIndex + ArrNewContent.length - oSkipEnd);
 				else if (oParent.Selection)
 				{
-					oParent.Selection.StartPos = nIndex + oSkipEnd;
+					oParent.Selection.StartPos = nIndex + oSkipStart;
 					oParent.Selection.EndPos = nIndex + ArrNewContent.length - oSkipEnd;
 				}
 				// this.MoveCursorRight(false, false, false);
