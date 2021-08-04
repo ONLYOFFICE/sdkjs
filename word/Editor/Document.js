@@ -25622,15 +25622,16 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 		var oSelectionArr = oTable.GetSelectionArray();
 		var isConverAll = oTable.IsSelectedAll() || (!oSelectionArr[0].Row && !oSelectionArr[0].Cell && oSelectetRows.IsSelectionToEnd) || ((oTable.GetRow(oSelectetRows.End).GetCellsCount() - 1) !== oLastCell);
 
+		var TableC = oTable.Copy();
 		var ArrNewContent = [];
 		if (isConverAll)
 		{
 			oSelectetRows.Start = 0;
-			oSelectetRows.End = oTable.GetRowsCount() - 1;
+			oSelectetRows.End = TableC.GetRowsCount() - 1;
 		}
 		for (var i = oSelectetRows.Start; i <= oSelectetRows.End; i++)
 		{
-			var oRow = oTable.GetRow(i);
+			var oRow = TableC.GetRow(i);
 			var oNewParagraph = new Paragraph(this.DrawingDocument, this);
 			ArrNewContent.push(oNewParagraph);
 			var bAdd = true;
@@ -25706,20 +25707,20 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 		{
 			for (var i = oSelectetRows.End; i >= oSelectetRows.Start; i--)
 			{
-				oTable.RemoveTableRow(i);
+				TableC.RemoveTableRow(i);
 			}
 			if (!oSelectetRows.IsSelectionToEnd && oSelectetRows.Start) {
-				var oNewTable = oTable.Split(); 
+				var oNewTable = TableC.Split(); 
 				ArrNewContent.push(oNewTable);
-				ArrNewContent.unshift(oTable);
+				ArrNewContent.unshift(TableC);
 			}
 			if (oSelectetRows.IsSelectionToEnd)
 			{
-				ArrNewContent.unshift(oTable);
+				ArrNewContent.unshift(TableC);
 			}
 			else if (!oSelectetRows.Start)
 			{
-				ArrNewContent.push(oTable);
+				ArrNewContent.push(TableC);
 			}
 		}
 
