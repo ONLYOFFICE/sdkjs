@@ -5006,7 +5006,7 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
 					{
 						// ColumnStartX и ParaTop считаются по тексту, смотри баг #50253
 						var nPageStartLine = Para.Pages[_CurPage].StartLine;
-						var nParaTop       = Para.Pages[_CurPage].Y + Para.Lines[nPageStartLine].Y - Para.Lines[nPageStartLine].Metrics.Ascent;
+						var nParaTop       = Para.Pages[_CurPage].Y + Para.Lines[nPageStartLine].Top;
 						var nLineTop       = Para.Pages[CurPage].Y + Para.Lines[CurLine].Y - Para.Lines[CurLine].Metrics.Ascent;
 						var _nColumnStartX = ColumnStartX;
 
