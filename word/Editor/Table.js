@@ -6073,15 +6073,11 @@ CTable.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySelection, bOnTe
 			var Cell     = this.Content[Pos.Row].Get_Cell(Pos.Cell);
 			this.CurCell = Cell;
 
-			// Я пока закоментировал, потому что нужно сохранять селект для вставки контента во все заселекченные ячейки.
-			// Я не знаю, нужно ли оно в каких-то ещё случаях, кроме как при вставке
+			this.Selection.Use   = false;
+			this.Selection.Start = false;
 
-			
-			// this.Selection.Use   = false;
-			// this.Selection.Start = false;
-
-			// this.Selection.StartPos.Pos = {Row : Cell.Row.Index, Cell : Cell.Index};
-			// this.Selection.EndPos.Pos   = {Row : Cell.Row.Index, Cell : Cell.Index};
+			this.Selection.StartPos.Pos = {Row : Cell.Row.Index, Cell : Cell.Index};
+			this.Selection.EndPos.Pos   = {Row : Cell.Row.Index, Cell : Cell.Index};
 
 			if (Cells_array[0].Row - 1 >= 0)
 				this.Internal_RecalculateFrom(Cells_array[0].Row - 1, 0, true, true);
