@@ -8171,14 +8171,19 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 		}
 	}
 
-	var oTheme = this.Paragraph.Get_Theme();
+	var oTheme    = this.Paragraph.Get_Theme();
+	var oColorMap = this.Paragraph.Get_ColorMap()
 
-	if (TextPr.TextFill)
-		TextPr.TextFill.check(oTheme, this.Paragraph.Get_ColorMap());
-	else if (TextPr.Unifill)
-		TextPr.Unifill.check(oTheme, this.Paragraph.Get_ColorMap());
+	if (oTheme && oColorMap)
+	{
+		if (TextPr.TextFill)
+			TextPr.TextFill.check(oTheme, oColorMap);
+		else if (TextPr.Unifill)
+			TextPr.Unifill.check(oTheme, oColorMap);
 
-	TextPr.ReplaceThemeFonts(oTheme.themeElements.fontScheme);
+		TextPr.ReplaceThemeFonts(oTheme.themeElements.fontScheme);
+	}
+
 	TextPr.CheckFontScale();
 
 	// Для совместимости со старыми версиями запишем FontFamily

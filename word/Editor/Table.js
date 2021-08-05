@@ -263,10 +263,16 @@ CTable.prototype.GetType = function()
 //----------------------------------------------------------------------------------------------------------------------
 CTable.prototype.Get_Theme = function()
 {
+	if (!this.Parent)
+		return null;
+
 	return this.Parent.Get_Theme();
 };
 CTable.prototype.Get_ColorMap = function()
 {
+	if (!this.Parent)
+		return null;
+
 	return this.Parent.Get_ColorMap();
 };
 CTable.prototype.Get_Props = function()
@@ -2519,7 +2525,8 @@ CTable.prototype.GetTableOffsetCorrection = function()
 {
 	var X = 0;
 
-	if (true === this.Parent.IsTableCellContent()
+	if (!this.Parent
+		|| true === this.Parent.IsTableCellContent()
 		|| this.bPresentation
 		|| !this.LogicDocument
 		|| !this.LogicDocument.GetCompatibilityMode
@@ -2563,7 +2570,8 @@ CTable.prototype.GetRightTableOffsetCorrection = function()
 {
 	var X = 0;
 
-	if (true === this.Parent.IsTableCellContent()
+	if (!this.Parent
+		|| true === this.Parent.IsTableCellContent()
 		|| this.bPresentation
 		|| !this.LogicDocument
 		|| !this.LogicDocument.GetCompatibilityMode
@@ -6050,8 +6058,6 @@ CTable.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySelection, bOnTe
 			this.Selection.EndPos.Pos   = {Row : Cell.Row.Index, Cell : Cell.Index};
 
 			this.Document_SetThisElementCurrent(true);
-
-			editor.WordControl.m_oLogicDocument.Recalculate();
 		}
 		else
 		{
@@ -6078,13 +6084,6 @@ CTable.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySelection, bOnTe
 
 			this.Selection.StartPos.Pos = {Row : Cell.Row.Index, Cell : Cell.Index};
 			this.Selection.EndPos.Pos   = {Row : Cell.Row.Index, Cell : Cell.Index};
-
-			if (Cells_array[0].Row - 1 >= 0)
-				this.Internal_RecalculateFrom(Cells_array[0].Row - 1, 0, true, true);
-			else
-			{
-				this.Internal_Recalculate_1();
-			}
 		}
 	}
 	else
