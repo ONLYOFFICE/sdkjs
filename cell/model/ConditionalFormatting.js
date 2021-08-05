@@ -387,7 +387,7 @@
 		if (!compareElements(this.aRuleElements, val.aRuleElements)) {
 			if (addToHistory) {
 				History.Add(AscCommonExcel.g_oUndoRedoCF, AscCH.historyitem_CFRule_SetRuleElements,
-					ws.getId(), null, new AscCommonExcel.UndoRedoData_CF(this.id, this.aRuleElements, val.aRuleElements));
+					ws.getId(), this.getUnionRange(), new AscCommonExcel.UndoRedoData_CF(this.id, this.aRuleElements, val.aRuleElements));
 			}
 
 			this.aRuleElements = val.aRuleElements;
@@ -397,7 +397,7 @@
 			var elem = val.dxf ? val.dxf.clone() : null;
 			if (addToHistory) {
 				History.Add(AscCommonExcel.g_oUndoRedoCF, AscCH.historyitem_CFRule_SetDxf,
-					ws.getId(), null, new AscCommonExcel.UndoRedoData_CF(this.id, this.dxf, elem));
+					ws.getId(), this.getUnionRange(), new AscCommonExcel.UndoRedoData_CF(this.id, this.dxf, elem));
 			}
 
 			this.dxf = elem;
