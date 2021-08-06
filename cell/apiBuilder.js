@@ -1538,10 +1538,10 @@
 	};
 
 	/**
-	 * Return a Range object that represents the rows in the specified range.
+	 * Return a Range object that represents the rows in the specified range. If the specified row is outside the Range object, a new Range will be returned that represents the cells between the columns of the original range in the specified row.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {number} nRow - The row number.
+	 * @param {number} nRow - The row number (starts counting from 1, the 0 value returns an error).
 	 * @returns {ApiRange}
 	 */
 	ApiRange.prototype.GetRows = function (nRow) {
