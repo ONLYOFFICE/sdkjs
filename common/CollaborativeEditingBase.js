@@ -80,7 +80,13 @@ CCollaborativeChanges.prototype.Apply_Data = function()
 		oChange.ReadFromBinary(Reader);
 
 		if (true === CollaborativeEditing.private_AddOverallChange(oChange))
+		{
 			oChange.Load(this.m_oColor);
+
+			if (oChange.GetClass() && oChange.GetClass().SetIsRecalculated && oChange.IsNeedRecalculate())
+				oChange.GetClass().SetIsRecalculated(false);
+
+		}
 
 		return true;
 	}
@@ -1060,7 +1066,11 @@ CCollaborativeEditingBase.prototype.UpdateDocumentPositionsByState = function(Do
                 mapDrawings[oClass.parent.Get_Id()] = oClass.parent;
             }
             arrReverseChanges[nIndex].Load();
-            this.m_aAllChanges.push(arrReverseChanges[nIndex]);
+
+			if (oClass && oClass.SetIsRecalculated && (!arrReverseChanges[nIndex] || arrReverseChanges[nIndex].IsNeedRecalculate()))
+				oClass.SetIsRecalculated(false);
+
+			this.m_aAllChanges.push(arrReverseChanges[nIndex]);
         }
 
         // Может так случиться, что в каких-то классах DocumentContent удалились все элементы, либо
