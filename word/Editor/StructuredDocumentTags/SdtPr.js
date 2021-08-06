@@ -520,7 +520,16 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		oContentControl.ApplyDatePickerPr(this.DateTimePr);
 
 	if (undefined !== this.TextFormPr && oContentControl.IsInlineLevel())
+	{
+		var isCombChanged = (!oContentControl.Pr.TextForm || this.TextFormPr.Comb !== oContentControl.Pr.TextForm.Comb);
+		if (oContentControl.IsFixedForm() && isCombChanged)
+			oContentControl.UpdateFixedFormCombWidthByFormSize(this.TextFormPr);
+
 		oContentControl.SetTextFormPr(this.TextFormPr);
+
+		if (oContentControl.IsFixedForm() && !isCombChanged)
+			oContentControl.UpdateFixedFormSizeByCombWidth();
+	}
 
 	if (undefined !== this.PlaceholderText)
 		oContentControl.SetPlaceholderText(this.PlaceholderText);

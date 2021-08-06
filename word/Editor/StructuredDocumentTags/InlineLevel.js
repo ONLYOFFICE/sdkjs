@@ -2656,6 +2656,17 @@ CInlineLevelSdt.prototype.OnChangeFixedFormTrack = function(nW, nH)
 	{
 		this.private_UpdatePictureFormLayout(nW, nH);
 	}
+	else if (this.IsTextForm())
+	{
+		var oTextFormPr = this.GetTextFormPr();
+		var nMax = oTextFormPr.GetMaxCharacters();
+		if (oTextFormPr.IsComb() && nMax > 0)
+		{
+			var oNewTextFormPr = oTextFormPr.Copy();
+			oNewTextFormPr.SetWidth(AscCommon.MMToTwips(nW / nMax));
+			this.SetTextFormPr(oNewTextFormPr);
+		}
+	}
 };
 CInlineLevelSdt.prototype.IsAutoFitContent = function()
 {
@@ -2891,6 +2902,45 @@ CInlineLevelSdt.prototype.GetFixedFormWrapperShape = function()
 		return null;
 
 	return oShape;
+};
+CInlineLevelSdt.prototype.UpdateFixedFormSizeByCombWidth = function()
+{
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph || !oParagraph.Parent)
+		return;
+
+	var oShape = oParagraph.Parent.Is_DrawingShape(true);
+	if (!oShape || !oShape.parent || !oShape.spPr || !oShape.spPr.xfrm)
+		return;
+
+	var oTextFormPr = this.GetTextFormPr();
+	if (!oTextFormPr || !oTextFormPr.IsComb() || oTextFormPr.GetMaxCharacters() <= 0 || oTextFormPr.GetWidth() <= 0)
+		return;
+
+	var oDrawing = oShape.parent;
+
+	oShape.spPr.xfrm.setExtX(AscCommon.TwipsToMM(oTextFormPr.GetWidth()) * oTextFormPr.GetMaxCharacters());
+	oDrawing.CheckWH();
+};
+CInlineLevelSdt.prototype.UpdateFixedFormCombWidthByFormSize = function(oTextFormPr)
+{
+	if (!oTextFormPr || !oTextFormPr.IsComb() || oTextFormPr.GetMaxCharacters() <= 0)
+		return;
+
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph || !oParagraph.Parent)
+		return;
+
+	var oShape = oParagraph.Parent.Is_DrawingShape(true);
+	if (!oShape || !oShape.parent || !oShape.spPr || !oShape.spPr.xfrm)
+		return;
+
+
+	var nW = oShape.spPr.xfrm.extX;
+	if (nW < 0.001)
+		return;
+
+	oTextFormPr.SetWidth(AscCommon.MMToTwips(nW / oTextFormPr.GetMaxCharacters()));
 };
 
 //--------------------------------------------------------export--------------------------------------------------------
