@@ -71,6 +71,10 @@
     return bUpdate;
   };
   asc_CVersionHistory.prototype.applyChanges = function(editor) {
+    //in case of errors in longAction locks, this.changes can be null
+    if (!this.changes) {
+      return;
+    }
     var color;
     this.newChangeId = (null == this.newChangeId) ? (this.changes.length - 1) : this.newChangeId;
     for (var i = this.currentChangeId + 1; i <= this.newChangeId && i < this.changes.length; ++i) {

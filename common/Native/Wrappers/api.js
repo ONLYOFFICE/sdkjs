@@ -5997,6 +5997,7 @@ function NativeOpenFile3(_params, documentInfo)
                                   asc_WriteColorSchemes(schemes, stream);
                                   window["native"]["OnCallMenuEvent"](2404, stream); // ASC_SPREADSHEETS_EVENT_TYPE_COLOR_SCHEMES
                                   });
+        _api.asc_registerCallback("asc_onSendThemeColors", onApiSendThemeColors);
 
         _api.asc_registerCallback("asc_onFocusObject", onFocusObject);
         _api.asc_registerCallback('asc_onStartAction', onApiLongActionBegin);
@@ -6079,6 +6080,7 @@ function NativeOpenFile3(_params, documentInfo)
 
             if (null != _api.WordControl.m_oLogicDocument)
             {
+                _api.WordControl.m_oDrawingDocument.CheckGuiControlColors();
                 _api.sendColorThemes(_api.WordControl.m_oLogicDocument.theme);
             }
 
@@ -6716,6 +6718,16 @@ function contentControllListAToJSON(obj) {
 
 // Common
 
+function getHexColor(r, g, b) {
+    r = r.toString(16);
+    g = g.toString(16);
+    b = b.toString(16);
+    if (r.length == 1) r = '0' + r;
+    if (g.length == 1) g = '0' + g;
+    if (b.length == 1) b = '0' + b;
+    return r + g + b;
+}
+
 function onFocusObject(SelectedObjects) {
     var settings = [];
     var isChart = false;
@@ -6787,6 +6799,20 @@ function onApiError(id, level, errData) {
         "errData" : JSON.prune(errData, 4),
     };
     postDataAsJSONString(info, 26104); // ASC_MENU_EVENT_TYPE_API_ERROR
+}
+
+function onApiSendThemeColors(theme_colors, standart_colors) {
+    var colors = {
+        "themeColors": theme_colors.map(function(color) {
+            return getHexColor(color.get_r(), color.get_g(), color.get_b());
+        })
+    }
+    if (standart_colors != null) {
+        colors["standartColors"] = standart_colors.map(function(color) {
+            return getHexColor(color.get_r(), color.get_g(), color.get_b());
+        });
+    }
+    postDataAsJSONString(colors, 2417); // ASC_MENU_EVENT_TYPE_THEMECOLORS
 }
 
 // Others
@@ -6925,6 +6951,7 @@ Asc['asc_docs_api'].prototype.openDocument = function(file)
         
         if (null != _api.WordControl.m_oLogicDocument)
         {
+            _api.WordControl.m_oDrawingDocument.CheckGuiControlColors();
             _api.sendColorThemes(_api.WordControl.m_oLogicDocument.theme);
         }
   
@@ -6953,7 +6980,8 @@ Asc['asc_docs_api'].prototype.openDocument = function(file)
 
     if (null != _api.WordControl.m_oLogicDocument)
     {
-         _api.sendColorThemes(_api.WordControl.m_oLogicDocument.theme);
+        _api.WordControl.m_oDrawingDocument.CheckGuiControlColors();
+        _api.sendColorThemes(_api.WordControl.m_oLogicDocument.theme);
     }
 
     window["native"]["onEndLoadingFile"]();

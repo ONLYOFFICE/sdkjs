@@ -171,6 +171,15 @@ var PARATEXT_FLAGS_NON_CAPITALS           = PARATEXT_FLAGS_MASK ^ PARATEXT_FLAGS
 
 var TEXTWIDTH_DIVIDER = 16384;
 
+var AUTOCORRECT_FLAGS_NONE                  = 0x00000000;
+var AUTOCORRECT_FLAGS_ALL                   = 0xFFFFFFFF;
+var AUTOCORRECT_FLAGS_FRENCH_PUNCTUATION    = 0x00000001;
+var AUTOCORRECT_FLAGS_SMART_QUOTES          = 0x00000002;
+var AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH      = 0x00000004;
+var AUTOCORRECT_FLAGS_HYPERLINK             = 0x00000008;
+var AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE = 0x00000010;
+var AUTOCORRECT_FLAGS_NUMBERING             = 0x00000020;
+
 /**
  * Базовый класс для элементов, лежащих внутри рана.
  * @constructor
@@ -258,12 +267,12 @@ CRunElementBase.prototype.CanBeAtEndOfLine = function()
 	return true;
 };
 /**
- * Проверять ли автозамену на вводе данного элемента
+ * Какие мы можем выполнять автозамены на вводе данного элемента
  * @returns {boolean}
  */
-CRunElementBase.prototype.CanStartAutoCorrect = function()
+CRunElementBase.prototype.GetAutoCorrectFlags = function()
 {
-	return false;
+	return AUTOCORRECT_FLAGS_NONE;
 };
 /**
  * Является ли данный элемент символом пунктуации
@@ -566,7 +575,7 @@ ParaText.prototype.CanBeAtEndOfLine = function()
 
 	return (!(AscCommon.g_aPunctuation[this.Value] & AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_END));
 };
-ParaText.prototype.CanStartAutoCorrect = function()
+ParaText.prototype.GetAutoCorrectFlags = function()
 {
 	// 33 !
 	// 34 "
@@ -575,14 +584,18 @@ ParaText.prototype.CanStartAutoCorrect = function()
 	// 58 :
 	// 59 ;
 	// 63 ?
+	if (33 === this.Value
+		|| 34 === this.Value
+		|| 39 === this.Value
+		|| 45 === this.Value
+		|| 58 === this.Value
+		|| 59 === this.Value
+		|| 63 === this.Value)
+		return AUTOCORRECT_FLAGS_ALL;
 
-	return (33 === this.Value
-	|| 34 === this.Value
-	|| 39 === this.Value
-	|| 45 === this.Value
-	|| 58 === this.Value
-	|| 59 === this.Value
-	|| 63 === this.Value);
+	// слэш и обратный слэш - исключения, на них мы не должны стартовать атозамену первой буквы предложения
+	if ((this.IsPunctuation() || this.Is_Number()) && 92 !== this.Value && 47 !== this.Value)
+		return AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE;
 };
 ParaText.prototype.IsDiacriticalSymbol = function()
 {
@@ -808,9 +821,9 @@ ParaSpace.prototype.Read_FromBinary = function(Reader)
 {
 	this.Value = Reader.GetLong();
 };
-ParaSpace.prototype.CanStartAutoCorrect = function()
+ParaSpace.prototype.GetAutoCorrectFlags = function()
 {
-	return true;
+	return AUTOCORRECT_FLAGS_ALL;
 };
 ParaSpace.prototype.SetCondensedWidth = function(nKoef)
 {

@@ -5783,7 +5783,7 @@
 
 			return Asc.c_oAscError.ID.No;
 		} else {
-			return error;
+			this.model.workbook.handlers.trigger("asc_onError", error, c_oAscError.Level.NoCritical);
 		}
 	};
 
@@ -8984,7 +8984,12 @@
             cell_info.hyperlink = null;
         }
 
-        cell_info.comment = this.cellCommentator.getComment(c1, r1, false);
+        //можно было бы просто возвратить от фукнции getComment undefined, но в билдере уже используется данная функция
+		//и резуьтат документирован. оставляю так.
+        cell_info.comment = this.cellCommentator.getComment(c1, r1, false, true);
+        if (cell_info.comment && !AscCommon.UserInfoParser.canViewComment(cell_info.comment.sUserName)) {
+			cell_info.comment = undefined;
+		}
 		cell_info.merge = range.isOneCell() ? Asc.c_oAscMergeOptions.Disabled :
 			null !== range.hasMerged() ? Asc.c_oAscMergeOptions.Merge : Asc.c_oAscMergeOptions.None;
 
@@ -13883,6 +13888,10 @@
 							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
 							return;
 						}
+						if (t.cellCommentator.isContainsOtherComments(arn)) {
+							return;
+						}
+
 						this._isLockedCells(lockRange, null, onChangeWorksheetCallback);
 						break;
 					case c_oAscDeleteOptions.DeleteCellsAndShiftTop:
@@ -13922,6 +13931,9 @@
 							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
 							return;
 						}
+						if (t.cellCommentator.isContainsOtherComments(arn)) {
+							return;
+						}
 
 						this._isLockedCells(lockRange, null, onChangeWorksheetCallback);
 						break;
@@ -13940,6 +13952,9 @@
 						}
 						if (!this.model.checkShiftArrayFormulas(lockRange, new AscCommon.CellBase(0, -count))) {
 							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
+							return;
+						}
+						if (t.cellCommentator.isContainsOtherComments(lockRange)) {
 							return;
 						}
 
@@ -13977,6 +13992,9 @@
 						}
 						if (!this.model.checkShiftArrayFormulas(lockRange, new AscCommon.CellBase(-count, 0))) {
 							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
+							return;
+						}
+						if (t.cellCommentator.isContainsOtherComments(lockRange)) {
 							return;
 						}
 
@@ -17795,7 +17813,58 @@
 			History.Create_NewPoint();
 			History.StartTransaction();
 
+			var tablePart = t.model.autoFilters._getFilterByDisplayName(tableName);
+			var oldRange = tablePart && tablePart.Ref.clone();
+			var oldRangeWithoutHeader = tablePart && tablePart.getRangeWithoutHeaderFooter();
 			t.model.autoFilters.changeTableRange(tableName, range);
+			var newRange = tablePart.Ref;
+
+			//расширяем условное форматирование
+			//если тело колоки заполнено УФ, тогда расширяем его диапазон на ячейки ниже
+			//ms ещё изменяет УФ при уменьшении ф/т, что мне кажется может мешать работе, пока не реализую
+			if (tablePart && newRange.containsRange(oldRange)) {
+				var aRules = t.model.aConditionalFormattingRules;
+				if (aRules && aRules.length) {
+
+					for (var j = 0; j < aRules.length; j++) {
+						var oRule = aRules[j];
+						var ranges = oRule && oRule.ranges;
+						if (ranges) {
+							var isChange = false;
+							var newRanges = [];
+
+							for (var k = 0, length3 = ranges.length; k < length3; k++) {
+								if (ranges[k].isEqual(oldRange) || ranges[k].isEqual(oldRangeWithoutHeader)) {
+									newRanges.push(new Asc.Range(ranges[k].c1, ranges[k].r1, ranges[k].c2, newRange.r2));
+									isChange = true;
+								} else {
+									var isPush = false;
+									for (var i = 0; i < tablePart.TableColumns.length; i++) {
+										var rangeColumnWithoutHeader = tablePart.getColumnRange(i, true, null, oldRange);
+										var rangeColumn = tablePart.getColumnRange(i, null, null, oldRange);
+										if (ranges[k].isEqual(rangeColumnWithoutHeader) || ranges[k].isEqual(rangeColumn)) {
+											newRanges.push(new Asc.Range(ranges[k].c1, ranges[k].r1, ranges[k].c2, newRange.r2));
+											isChange = true;
+											isPush = true;
+											break;
+										}
+									}
+									if (!isPush) {
+										newRanges.push(ranges[k].clone());
+									}
+								}
+							}
+
+							if (isChange) {
+								var toRule = oRule.clone();
+								toRule.ranges = newRanges;
+								toRule.id = oRule.id;
+								t.model.setCFRule(toRule);
+							}
+						}
+					}
+				}
+			}
 
 			History.EndTransaction();
 			if (!doNotUpdate) {

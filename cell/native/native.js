@@ -3304,6 +3304,7 @@ function OfflineEditor () {
             	t.asc_WriteAllWorksheets(true);
             	t.asc_WriteCurrentCell();
             
+                _api.asc_CheckGuiControlColors();
             	_api.sendColorThemes(_api.wbModel.theme);
             	_api.asc_ApplyColorScheme(false);
             	_api._applyFirstLoadChanges();
@@ -3518,6 +3519,8 @@ function OfflineEditor () {
                                   stream["WriteString2"](JSON.stringify(options));
                                   window["native"]["OnCallMenuEvent"](22000, stream); // ASC_MENU_EVENT_TYPE_ADVANCED_OPTIONS
                                   });
+                                  
+        _api.asc_registerCallback("asc_onSendThemeColors", onApiSendThemeColors);
 
         // Comments
 
@@ -6449,6 +6452,16 @@ window["native"]["offline_apply_event"] = function(type,params) {
 
 // Common
 
+function getHexColor(r, g, b) {
+    r = r.toString(16);
+    g = g.toString(16);
+    b = b.toString(16);
+    if (r.length == 1) r = '0' + r;
+    if (g.length == 1) g = '0' + g;
+    if (b.length == 1) b = '0' + b;
+    return r + g + b;
+}
+
 function postDataAsJSONString(data, eventId) {
     var stream = global_memory_stream_menu;
     stream["ClearNoAttack"]();
@@ -6648,6 +6661,19 @@ function onDocumentPlaceChanged() {
     postDataAsJSONString(null, 23012); // ASC_MENU_EVENT_TYPE_DOCUMENT_PLACE_CHANGED
 }
 
+function onApiSendThemeColors(theme_colors, standart_colors) {
+    var colors = {
+        "themeColors": theme_colors.map(function(color) {
+            return getHexColor(color.get_r(), color.get_g(), color.get_b());
+        })
+    }
+    if (standart_colors != null) {
+        colors["standartColors"] = standart_colors.map(function(color) {
+            return getHexColor(color.get_r(), color.get_g(), color.get_b());
+        });
+    }
+    postDataAsJSONString(colors, 2417); // ASC_MENU_EVENT_TYPE_THEMECOLORS
+}
 window["Asc"]["spreadsheet_api"].prototype.asc_setDocumentPassword = function(password)
 {
     var v = {

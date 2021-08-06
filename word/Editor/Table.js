@@ -263,10 +263,16 @@ CTable.prototype.GetType = function()
 //----------------------------------------------------------------------------------------------------------------------
 CTable.prototype.Get_Theme = function()
 {
+	if (!this.Parent)
+		return null;
+
 	return this.Parent.Get_Theme();
 };
 CTable.prototype.Get_ColorMap = function()
 {
+	if (!this.Parent)
+		return null;
+
 	return this.Parent.Get_ColorMap();
 };
 CTable.prototype.Get_Props = function()
@@ -2519,7 +2525,8 @@ CTable.prototype.GetTableOffsetCorrection = function()
 {
 	var X = 0;
 
-	if (true === this.Parent.IsTableCellContent()
+	if (!this.Parent
+		|| true === this.Parent.IsTableCellContent()
 		|| this.bPresentation
 		|| !this.LogicDocument
 		|| !this.LogicDocument.GetCompatibilityMode
@@ -2563,7 +2570,8 @@ CTable.prototype.GetRightTableOffsetCorrection = function()
 {
 	var X = 0;
 
-	if (true === this.Parent.IsTableCellContent()
+	if (!this.Parent
+		|| true === this.Parent.IsTableCellContent()
 		|| this.bPresentation
 		|| !this.LogicDocument
 		|| !this.LogicDocument.GetCompatibilityMode
@@ -3241,13 +3249,13 @@ CTable.prototype.FindNextFillingForm = function(isNext, isCurrent, isStart)
 			nStartRow  = nCurRow;
 			nStartCell = nCurCell;
 
-			nEndRow  = isNext ? this.Content.length - 1 : 0;
-			nEndCell = isNext ? this.Content[nEndRow].Get_CellsCount() - 1 : 0;
+			nEndRow  = isNext ? this.GetRowsCount() - 1 : 0;
+			nEndCell = isNext ? this.GetRow(nEndRow).GetCellsCount() - 1 : 0;
 		}
 		else
 		{
-			nStartRow  = isNext ? 0 : this.Content.length - 1;
-			nStartCell = isNext ? 0 : this.Content[nStartRow].Get_CellsCount() - 1;
+			nStartRow  = isNext ? 0 : this.GetRowsCount() - 1;
+			nStartCell = isNext ? 0 : this.GetRow(nStartRow).GetCellsCount() - 1;
 
 			nEndRow  = nCurRow;
 			nEndCell = nCurCell;
@@ -3259,13 +3267,13 @@ CTable.prototype.FindNextFillingForm = function(isNext, isCurrent, isStart)
 		{
 			nStartRow  = 0;
 			nStartCell = 0;
-			nEndRow    = this.Content.length - 1;
-			nEndCell   = this.Content[nEndRow].Get_CellsCount() - 1;
+			nEndRow    = this.GetRowsCount() - 1;
+			nEndCell   = this.GetRow(nEndRow).GetCellsCount() - 1;
 		}
 		else
 		{
-			nStartRow  = this.Content.length - 1;
-			nStartCell = this.Content[nEndRow].Get_CellsCount() - 1;
+			nStartRow  = this.GetRowsCount() - 1;
+			nStartCell = this.GetRow(nStartRow).GetCellsCount() - 1;
 			nEndRow    = 0;
 			nEndCell   = 0;
 		}
@@ -3276,11 +3284,11 @@ CTable.prototype.FindNextFillingForm = function(isNext, isCurrent, isStart)
 		for (var nRowIndex = nStartRow; nRowIndex <= nEndRow; ++nRowIndex)
 		{
 			var _nStartCell = nRowIndex === nStartRow ? nStartCell : 0;
-			var _nEndCell   = nRowIndex === nEndRow ? nEndCell : this.Content[nRowIndex].Get_CellsCount() - 1;
+			var _nEndCell   = nRowIndex === nEndRow ? nEndCell : this.GetRow(nRowIndex).GetCellsCount() - 1;
 			for (var nCellIndex = _nStartCell; nCellIndex <= _nEndCell; ++nCellIndex)
 			{
-				var oCell = this.Content[nRowIndex].Get_Cell(nCellIndex);
-				var oRes  = oCell.Content.FindNextFillingForm(true, isCurrent && nCellIndex === nCurCell && nRowIndex === nCurRow ? true : false, isStart);
+				var oCell = this.GetRow(nRowIndex).GetCell(nCellIndex);
+				var oRes  = oCell.GetContent().FindNextFillingForm(true, isCurrent && nCellIndex === nCurCell && nRowIndex === nCurRow ? true : false, isStart);
 				if (oRes)
 					return oRes;
 			}
@@ -3290,12 +3298,12 @@ CTable.prototype.FindNextFillingForm = function(isNext, isCurrent, isStart)
 	{
 		for (var nRowIndex = nStartRow; nRowIndex >= nEndRow; --nRowIndex)
 		{
-			var _nStartCell = nRowIndex === nStartRow ? nStartCell : this.Content[nRowIndex].Get_CellsCount() - 1;
+			var _nStartCell = nRowIndex === nStartRow ? nStartCell : this.GetRow(nRowIndex).GetCellsCount() - 1;
 			var _nEndCell   = nRowIndex === nEndRow ? nEndCell : 0;
 			for (var nCellIndex = _nStartCell; nCellIndex >= _nEndCell; --nCellIndex)
 			{
-				var oCell = this.Content[nRowIndex].Get_Cell(nCellIndex);
-				var oRes  = oCell.Content.FindNextFillingForm(false, isCurrent && nCellIndex === nCurCell && nRowIndex === nCurRow ? true : false, isStart);
+				var oCell = this.GetRow(nRowIndex).GetCell(nCellIndex);
+				var oRes  = oCell.GetContent().FindNextFillingForm(false, isCurrent && nCellIndex === nCurCell && nRowIndex === nCurRow ? true : false, isStart);
 				if (oRes)
 					return oRes;
 			}
@@ -6050,8 +6058,6 @@ CTable.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySelection, bOnTe
 			this.Selection.EndPos.Pos   = {Row : Cell.Row.Index, Cell : Cell.Index};
 
 			this.Document_SetThisElementCurrent(true);
-
-			editor.WordControl.m_oLogicDocument.Recalculate();
 		}
 		else
 		{
@@ -6073,22 +6079,11 @@ CTable.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySelection, bOnTe
 			var Cell     = this.Content[Pos.Row].Get_Cell(Pos.Cell);
 			this.CurCell = Cell;
 
-			// Я пока закоментировал, потому что нужно сохранять селект для вставки контента во все заселекченные ячейки.
-			// Я не знаю, нужно ли оно в каких-то ещё случаях, кроме как при вставке
+			this.Selection.Use   = false;
+			this.Selection.Start = false;
 
-			
-			// this.Selection.Use   = false;
-			// this.Selection.Start = false;
-
-			// this.Selection.StartPos.Pos = {Row : Cell.Row.Index, Cell : Cell.Index};
-			// this.Selection.EndPos.Pos   = {Row : Cell.Row.Index, Cell : Cell.Index};
-
-			if (Cells_array[0].Row - 1 >= 0)
-				this.Internal_RecalculateFrom(Cells_array[0].Row - 1, 0, true, true);
-			else
-			{
-				this.Internal_Recalculate_1();
-			}
+			this.Selection.StartPos.Pos = {Row : Cell.Row.Index, Cell : Cell.Index};
+			this.Selection.EndPos.Pos   = {Row : Cell.Row.Index, Cell : Cell.Index};
 		}
 	}
 	else

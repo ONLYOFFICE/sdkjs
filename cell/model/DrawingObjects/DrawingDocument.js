@@ -1632,6 +1632,9 @@ function CDrawingDocument()
             canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
 
             var ctx = canvas.getContext("2d");
+			ctx.fillStyle = "#FFFFFF";
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			ctx.beginPath();
             var rPR = AscCommon.AscBrowser.retinaPixelRatio;
             
             if (!type)
@@ -1654,6 +1657,9 @@ function CDrawingDocument()
                 canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
 
                 var ctx = canvas.getContext("2d");
+				ctx.fillStyle = "#FFFFFF";
+				ctx.fillRect(0, 0, canvas.width, canvas.height);
+				ctx.beginPath();
                 var line_distance = (height_px >> 1) - 2;
                 // TODo: подумать над тем как рассчитать сдвиг влево, эти значения подобраны эксперементально
                 var xShift;
@@ -1722,7 +1728,6 @@ function CDrawingDocument()
                     y += (line_w + line_distance);
                 }
             }
-
         }
     };
 }

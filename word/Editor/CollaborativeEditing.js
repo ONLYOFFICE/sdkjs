@@ -232,58 +232,107 @@ CWordCollaborativeEditing.prototype.Check_MergeData = function()
     var LogicDocument = editor.WordControl.m_oLogicDocument;
     LogicDocument.Comments.Check_MergeData();
 };
-CWordCollaborativeEditing.prototype.OnEnd_CheckLock = function(DontLockInFastMode)
+CWordCollaborativeEditing.prototype.OnEnd_CheckLock = function(isDontLockInFastMode, fCallback)
 {
-    var aIds = [];
+	// Если задан fCallback, тогда действие нужно выполнять именно на нём, поэотому возвращаемое значение true
 
-    var Count = this.m_aCheckLocks.length;
-    for (var Index = 0; Index < Count; Index++)
-    {
-        var oItem = this.m_aCheckLocks[Index];
+	var aIds = [];
+	for (var nIndex = 0, nCount = this.m_aCheckLocks.length; nIndex < nCount; ++nIndex)
+	{
+		var oItem = this.m_aCheckLocks[nIndex];
 
-        if (true === oItem) // сравниваем по значению и типу обязательно
-            return true;
-        else if (false !== oItem)
-            aIds.push(oItem);
-    }
-
-    if (true === DontLockInFastMode && true === this.Is_Fast())
-        return false;
-
-    if (aIds.length > 0)
-    {
-        // Отправляем запрос на сервер со списком Id
-        editor.CoAuthoringApi.askLock(aIds, this.OnCallback_AskLock);
-
-        // Ставим глобальный лок, только во время совместного редактирования
-        if (-1 === this.m_nUseType)
+		if (true === oItem) // сравниваем по значению и типу обязательно
 		{
+			if (fCallback)
+				fCallback(true);
+
+			return true;
+		}
+		else if (false !== oItem)
+		{
+			aIds.push(oItem);
+		}
+	}
+
+	if (true === isDontLockInFastMode && true === this.Is_Fast())
+	{
+		if (fCallback)
+		{
+			fCallback(false);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	if (fCallback)
+	{
+		if (aIds.length > 0)
+		{
+			var oThis = this;
+			editor.CoAuthoringApi.askLock(aIds, function(result)
+			{
+				oThis.Set_GlobalLock(false);
+
+				if (result["lock"])
+				{
+					oThis.private_LockByMe();
+					fCallback(false);
+				}
+				else if (result["error"])
+				{
+					fCallback(true);
+				}
+			});
+
 			this.Set_GlobalLock(true);
 		}
-        else
-        {
-            // Пробегаемся по массиву и проставляем, что залочено нами
-            var Count = this.m_aCheckLocks.length;
-            for (var Index = 0; Index < Count; Index++)
-            {
-                var oItem = this.m_aCheckLocks[Index];
+		else
+		{
+			fCallback(false);
+		}
 
-                if (true !== oItem && false !== oItem) // сравниваем по значению и типу обязательно
-                {
-                    var Class = AscCommon.g_oTableId.Get_ById(oItem);
-                    if (null != Class)
-                    {
-                        Class.Lock.Set_Type(AscCommon.locktype_Mine, false);
-                        this.Add_Unlock2(Class);
-                    }
-                }
-            }
+		return true;
+	}
+	else
+	{
+		if (aIds.length > 0)
+		{
+			// Отправляем запрос на сервер со списком Id
+			editor.CoAuthoringApi.askLock(aIds, this.OnCallback_AskLock);
 
-            this.m_aCheckLocks.length = 0;
-        }
-    }
+			// Ставим глобальный лок, только во время совместного редактирования
+			if (-1 === this.m_nUseType)
+			{
+				this.Set_GlobalLock(true);
+			}
+			else
+			{
+				this.private_LockByMe();
+				this.m_aCheckLocks.length = 0;
+			}
+		}
 
-    return false;
+		return false;
+	}
+};
+CWordCollaborativeEditing.prototype.private_LockByMe = function()
+{
+	for (var nIndex = 0, nCount = this.m_aCheckLocks.length; nIndex < nCount; ++nIndex)
+	{
+		var oItem = this.m_aCheckLocks[nIndex];
+		if (true !== oItem && false !== oItem) // сравниваем по значению и типу обязательно
+		{
+			var oClass = AscCommon.g_oTableId.Get_ById(oItem);
+			if (oClass)
+			{
+				oClass.Lock.Set_Type(AscCommon.locktype_Mine);
+				this.Add_Unlock2(oClass);
+			}
+		}
+	}
 };
 CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
 {
@@ -302,24 +351,8 @@ CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
 
         if (result["lock"])
         {
-            // Пробегаемся по массиву и проставляем, что залочено нами
-
-            var Count = oThis.m_aCheckLocks.length;
-            for (var Index = 0; Index < Count; Index++)
-            {
-                var oItem = oThis.m_aCheckLocks[Index];
-
-                if (true !== oItem && false !== oItem) // сравниваем по значению и типу обязательно
-                {
-                    var Class = AscCommon.g_oTableId.Get_ById(oItem);
-                    if (null != Class)
-                    {
-                        Class.Lock.Set_Type(AscCommon.locktype_Mine);
-                        oThis.Add_Unlock2(Class);
-                    }
-                }
-            }
-        }
+        	oThis.private_LockByMe();
+		}
         else if (result["error"])
         {
             // Если у нас началось редактирование диаграммы, а вернулось, что ее редактировать нельзя,

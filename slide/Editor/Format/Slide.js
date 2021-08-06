@@ -415,69 +415,61 @@ Slide.prototype =
         var _glyph;
         var body_count = 0;
         var last_body;
+        var oNvObjPr;
         for(_shape_index = 0; _shape_index < _sp_tree.length; ++_shape_index)
         {
             _glyph = _sp_tree[_shape_index];
             if(_glyph.isPlaceholder())
             {
-                if(_glyph instanceof AscFormat.CShape)
+                oNvObjPr = _glyph.getUniNvProps();
+                if(oNvObjPr)
                 {
-                    _index = _glyph.nvSpPr.nvPr.ph.idx;
-                    _type = _glyph.nvSpPr.nvPr.ph.type;
-                }
-                if(_glyph instanceof AscFormat.CImageShape)
-                {
-                    _index = _glyph.nvPicPr.nvPr.ph.idx;
-                    _type = _glyph.nvPicPr.nvPr.ph.type;
-                }
-                if(_glyph instanceof  AscFormat.CGroupShape)
-                {
-                    _index = _glyph.nvGrpSpPr.nvPr.ph.idx;
-                    _type = _glyph.nvGrpSpPr.nvPr.ph.type;
-                }
-                if(_type == null)
-                {
-                    _final_type = AscFormat.phType_body;
-                }
-                else
-                {
-                    if(_type == AscFormat.phType_ctrTitle)
+                    _index = oNvObjPr.nvPr.ph.idx;
+                    _type = oNvObjPr.nvPr.ph.type;
+                    if(_type == null)
                     {
-                        _final_type = AscFormat.phType_title;
+                        _final_type = AscFormat.phType_body;
                     }
                     else
                     {
-                        _final_type = _type;
+                        if(_type == AscFormat.phType_ctrTitle)
+                        {
+                            _final_type = AscFormat.phType_title;
+                        }
+                        else
+                        {
+                            _final_type = _type;
+                        }
                     }
-                }
 
-                if(_index == null)
-                {
-                    _final_index = 0;
-                }
-                else
-                {
-                    _final_index = _index;
-                }
+                    if(_index == null)
+                    {
+                        _final_index = 0;
+                    }
+                    else
+                    {
+                        _final_index = _index;
+                    }
 
-                if(_input_reduced_type == _final_type && _input_reduced_index == _final_index)
-                {
-                    if(info){
-                        info.bBadMatch = !(_type === type && _index === idx);
+                    if(_input_reduced_type == _final_type && _input_reduced_index == _final_index)
+                    {
+                        if(info){
+                            info.bBadMatch = !(_type === type && _index === idx);
+                        }
+                        return _glyph;
                     }
-                    return _glyph;
-                }
-                if(_input_reduced_type == AscFormat.phType_title && _input_reduced_type == _final_type)
-                {
-                    if(info){
-                        info.bBadMatch = !(_type === type && _index === idx);
+                    if(_input_reduced_type == AscFormat.phType_title && _input_reduced_type == _final_type)
+                    {
+                        if(info){
+                            info.bBadMatch = !(_type === type && _index === idx);
+                        }
+                        return _glyph;
                     }
-                    return _glyph;
-                }
-                if(AscFormat.phType_body === _type)
-                {
-                    ++body_count;
-                    last_body = _glyph;
+                    if(AscFormat.phType_body === _type)
+                    {
+                        ++body_count;
+                        last_body = _glyph;
+                    }
                 }
             }
         }
@@ -490,25 +482,17 @@ Slide.prototype =
                 _glyph = _sp_tree[_shape_index];
                 if(_glyph.isPlaceholder())
                 {
-                    if(_glyph instanceof AscFormat.CShape)
+                    oNvObjPr = _glyph.getUniNvProps();
+                    if(oNvObjPr)
                     {
-                        _type = _glyph.nvSpPr.nvPr.ph.type;
-                    }
-                    if(_glyph instanceof AscFormat.CImageShape)
-                    {
-                        _type = _glyph.nvPicPr.nvPr.ph.type;
-                    }
-                    if(_glyph instanceof  AscFormat.CGroupShape)
-                    {
-                        _type = _glyph.nvGrpSpPr.nvPr.ph.type;
-                    }
-
-                    if(_input_reduced_type == _type)
-                    {
-                        if(info){
-                            info.bBadMatch = !(_type === type && _index === idx);
+                        _type = oNvObjPr.nvPr.ph.type;
+                        if(_input_reduced_type == _type)
+                        {
+                            if(info){
+                                info.bBadMatch = !(_type === type && _index === idx);
+                            }
+                            return _glyph;
                         }
-                        return _glyph;
                     }
                 }
             }

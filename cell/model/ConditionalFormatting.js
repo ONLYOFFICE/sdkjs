@@ -387,7 +387,7 @@
 		if (!compareElements(this.aRuleElements, val.aRuleElements)) {
 			if (addToHistory) {
 				History.Add(AscCommonExcel.g_oUndoRedoCF, AscCH.historyitem_CFRule_SetRuleElements,
-					ws.getId(), null, new AscCommonExcel.UndoRedoData_CF(this.id, this.aRuleElements, val.aRuleElements));
+					ws.getId(), this.getUnionRange(), new AscCommonExcel.UndoRedoData_CF(this.id, this.aRuleElements, val.aRuleElements));
 			}
 
 			this.aRuleElements = val.aRuleElements;
@@ -397,7 +397,7 @@
 			var elem = val.dxf ? val.dxf.clone() : null;
 			if (addToHistory) {
 				History.Add(AscCommonExcel.g_oUndoRedoCF, AscCH.historyitem_CFRule_SetDxf,
-					ws.getId(), null, new AscCommonExcel.UndoRedoData_CF(this.id, this.dxf, elem));
+					ws.getId(), this.getUnionRange(), new AscCommonExcel.UndoRedoData_CF(this.id, this.dxf, elem));
 			}
 
 			this.dxf = elem;
@@ -441,7 +441,11 @@
 		for (var i = 0; i < this.ranges.length; i++) {
 			var newRange = this.ranges[i].clone();
 			if (newRange.forShift(range, offset)) {
-				isChange = true;
+				if (ws.autoFilters.isAddTotalRow && newRange.containsRange(this.ranges[i])) {
+					newRange = this.ranges[i].clone();
+				} else {
+					isChange = true;
+				}
 			}
 			newRanges.push(newRange);
 		}
@@ -702,9 +706,9 @@
 	};
 	CConditionalFormattingRule.prototype.getAverage = function (val, average, stdDev) {
 		var res = false;
-		/*if (this.stdDev) {
-		 average += (this.aboveAverage ? 1 : -1) * this.stdDev + stdDev;
-		 }*/
+		if (this.stdDev && stdDev) {
+			average += ((this.aboveAverage ? 1 : -1) * this.stdDev) * stdDev;
+		}
 		if (this.aboveAverage) {
 			res = val > average;
 		} else {
@@ -777,10 +781,11 @@
 	CConditionalFormattingRule.prototype.getIndexRule = function (values, ws, value) {
 		var valueCFVO;
 		var aCFVOs = this._getCFVOs();
+		var bReverse = this.aRuleElements && this.aRuleElements[0] && this.aRuleElements[0].Reverse;
 		for (var i = aCFVOs.length - 1; i >= 0; --i) {
 			valueCFVO = this._getValue(values, aCFVOs[i], ws);
 			if (value > valueCFVO || (aCFVOs[i].Gte && value === valueCFVO)) {
-				return i;
+				return bReverse ? aCFVOs.length - 1 - i : i;
 			}
 		}
 		return 0;
@@ -1006,7 +1011,7 @@
 	CConditionalFormattingRule.prototype.asc_setType = function (val) {
 		this.type = val;
 		this._cleanAfterChangeType();
-		var formula = this.getFormulaByType();
+		var formula = this.getFormulaByType(this.text);
 		if (formula) {
 			this.aRuleElements = [];
 			this.aRuleElements[0] = new CFormulaCF();
@@ -1071,7 +1076,7 @@
 	CConditionalFormattingRule.prototype.getFormulaByType = function (val) {
 		var t = this;
 		var _generateTimePeriodFunction = function () {
-			switch (this.timePeriod) {
+			switch (t.timePeriod) {
 				case AscCommonExcel.ST_TimePeriod.yesterday:
 					res = "FLOOR(" + firstCellInRange + ",1)" + "=TODAY()-1";
 					break;
@@ -1106,8 +1111,21 @@
 		};
 
 		var res = null;
+		var range;
+		if (val !== null && val !== undefined) {
+			val = this._addQuotes(val);
+		}
 		if (this.ranges && this.ranges[0]) {
-			var firstCellInRange = new Asc.Range(this.ranges[0].c1, this.ranges[0].r1, this.ranges[0].c1, this.ranges[0].r1);
+			range = this.ranges[0];
+		} else {
+			var api_sheet = Asc['editor'];
+			var wb = api_sheet.wbModel;
+			var sheet = wb.getActiveWs();
+			range = sheet && sheet.selectionRange && sheet.selectionRange.ranges && sheet.selectionRange.ranges[0];
+		}
+
+		if (range) {
+			var firstCellInRange = new Asc.Range(range.c1, range.r1, range.c1, range.r1);
 
 			AscCommonExcel.executeInR1C1Mode(false, function () {
 				firstCellInRange = firstCellInRange.getName();
@@ -1115,16 +1133,24 @@
 
 			switch (this.type) {
 				case Asc.ECfType.notContainsText:
-					res = "LEFT(" + firstCellInRange + ",LEN(" + val + "=" + val;
+					if (val !== null && val !== undefined) {
+						res = "ISERROR(SEARCH(" + val + "," + firstCellInRange + "))";
+					}
 					break;
 				case Asc.ECfType.containsText:
-					res = "NOT(ISERROR(SEARCH(" + val + "," + firstCellInRange + ")))";
+					if (val !== null && val !== undefined) {
+						res = "NOT(ISERROR(SEARCH(" + val + "," + firstCellInRange + ")))";
+					}
 					break;
 				case Asc.ECfType.endsWith:
-					res = "RIGHT(" + firstCellInRange + ",LEN(" + val + "=" + val;
+					if (val !== null && val !== undefined) {
+						res = "RIGHT(" + firstCellInRange + ",LEN(" + val + "))" + "=" + val;
+					}
 					break;
 				case Asc.ECfType.beginsWith:
-					res = "ISERROR(SEARCH(" + val + "," + firstCellInRange + "))";
+					if (val !== null && val !== undefined) {
+						res = "LEFT(" + firstCellInRange + ",LEN(" + val + "))" + "=" + val;
+					}
 					break;
 				case Asc.ECfType.notContainsErrors:
 					res = "NOT(ISERROR(" + firstCellInRange + "))";
@@ -1186,9 +1212,8 @@
 		this.text = val;
 	};
 	CConditionalFormattingRule.prototype.asc_setValue1 = function (val) {
-		if (!this.aRuleElements) {
-			this.aRuleElements = [];
-		}
+		//чищу всегда, поскольку от интерфейса всегда заново выставляются оба значения
+		this.aRuleElements = [];
 		val = this.correctFromInterface(val);
 
 		this.aRuleElements[0] = new CFormulaCF();
@@ -1207,17 +1232,6 @@
 
 	CConditionalFormattingRule.prototype.correctFromInterface = function (val) {
 		var t = this;
-
-		var addQuotes = function (_val) {
-			var _res;
-			if (_val[0] === '"') {
-				_res = _val.replace(/\"/g, "\"\"");
-				_res = "\"" + _res + "\"";
-			} else {
-				_res = "\"" + _val + "\"";
-			}
-			return _res;
-		};
 
 		var isNumeric = !isNaN(parseFloat(val)) && isFinite(val);
 		if (!isNumeric) {
@@ -1238,11 +1252,22 @@
 			}
 
 			if (!isFormula) {
-				val = addQuotes(val);
+				val = this._addQuotes(val);
 			}
 		}
 
 		return val;
+	};
+
+	CConditionalFormattingRule.prototype._addQuotes = function (val) {
+		var _res;
+		if (val[0] === '"') {
+			_res = val.replace(/\"/g, "\"\"");
+			_res = "\"" + _res + "\"";
+		} else {
+			_res = "\"" + val + "\"";
+		}
+		return _res;
 	};
 
 	CConditionalFormattingRule.prototype.asc_setColorScaleOrDataBarOrIconSetRule = function (val) {
@@ -1510,7 +1535,7 @@
 			if (!_color1 && !_color2) {
 				return true;
 			}
-			if (_color1 && _color2 && _color2.isEqual(_color2)) {
+			if (_color1 && _color2 && _color1.isEqual(_color2)) {
 				return true;
 			}
 			return false;
@@ -1542,7 +1567,7 @@
 	};
 	CDataBar.prototype.applyPreset = function (styleIndex) {
 		var _generateRgbColor = function (_color) {
-			if (!_color) {
+			if (_color === undefined || _color === null) {
 				return null;
 			}
 
@@ -1551,18 +1576,18 @@
 
 		var presetStyles = conditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.dataBar][styleIndex];
 
-		this.AxisColor = _generateRgbColor(presetStyles[0] ? presetStyles[0] : null);
+		this.AxisColor = _generateRgbColor(presetStyles[0]);
 		this.AxisPosition = 0;
-		this.BorderColor = _generateRgbColor(presetStyles[1] ? presetStyles[1] : null);
-		this.Color = _generateRgbColor(presetStyles[2] ? presetStyles[2] : null);
+		this.BorderColor = _generateRgbColor(presetStyles[1]);
+		this.Color = _generateRgbColor(presetStyles[2]);
 		this.Direction = 0;
 		this.Gradient = presetStyles[3];
 		this.MaxLength = 100;
 		this.MinLength = 0;
 		this.NegativeBarBorderColorSameAsPositive = false;
 		this.NegativeBarColorSameAsPositive = false;
-		this.NegativeBorderColor = _generateRgbColor(presetStyles[4] ? presetStyles[4] : null);
-		this.NegativeColor = _generateRgbColor(presetStyles[5] ? presetStyles[5] : null);
+		this.NegativeBorderColor = _generateRgbColor(presetStyles[4]);
+		this.NegativeColor = _generateRgbColor(presetStyles[5]);
 		this.ShowValue = true;
 
 		var formatValueObject1 = new CConditionalFormatValueObject();
@@ -1722,7 +1747,7 @@
 			if (null != _color.Read_FromBinary2) {
 				_color.Read_FromBinary2(reader);
 			} else if (null != _color.Read_FromBinary2AndReplace) {
-				_color = elem.Read_FromBinary2AndReplace(reader);
+				_color = _color.Read_FromBinary2AndReplace(reader);
 			}
 			return _color;
 		};
@@ -2191,7 +2216,7 @@
 		this.Type = val;
 	};
 	CConditionalFormatValueObject.prototype.asc_setVal = function (val) {
-		this.Val = val;
+		this.Val = (val !== undefined && val !== null) ? val + "" : val;
 	};
 	CConditionalFormatValueObject.prototype.isEqual = function (elem) {
 		if (this.Gte === elem.Gte && this.Type === elem.Type && this.Val === elem.Val && this.Type === elem.Type) {

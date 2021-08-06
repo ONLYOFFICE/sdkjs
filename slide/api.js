@@ -7468,6 +7468,15 @@ background-repeat: no-repeat;\
 			AscCommon.CollaborativeEditing.Check_MergeData();
 
 			AscCommon.CollaborativeEditing.OnEnd_ReadForeignChanges();
+
+			if (window["NATIVE_EDITOR_ENJINE"] === true && window["native"]["AddImageInChanges"])
+			{
+				var _new_images     = AscCommon.CollaborativeEditing.m_aNewImages;
+				var _new_images_len = _new_images.length;
+
+				for (var nImage = 0; nImage < _new_images_len; nImage++)
+					window["native"]["AddImageInChanges"](_new_images[nImage]);
+			}
 		}
 
 		g_oIdCounter.Set_Load(false);

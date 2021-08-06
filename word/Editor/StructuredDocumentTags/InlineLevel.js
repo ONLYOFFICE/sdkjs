@@ -533,9 +533,9 @@ CInlineLevelSdt.prototype.Remove = function(nDirection, bOnAddText)
 
 	return bResult;
 };
-CInlineLevelSdt.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange)
+CInlineLevelSdt.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 {
-	CParagraphContentWithParagraphLikeContent.prototype.Shift_Range.call(this, Dx, Dy, _CurLine, _CurRange);
+	CParagraphContentWithParagraphLikeContent.prototype.Shift_Range.call(this, Dx, Dy, _CurLine, _CurRange, _CurPage);
 
 	var CurLine = _CurLine - this.StartLine;
 	var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
@@ -698,22 +698,7 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCu
 		return;
 
 	var oDrawingDocument = oLogicDocument.GetDrawingDocument();
-
-	var oShape = this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null;
-	if (this.IsForm() && oShape && oShape.isForm())
-	{
-		var oPolygon = new AscCommon.CPolygon();
-		oPolygon.fill([[oShape.getFormRelRect()]]);
-		oDrawingDocument.OnDrawContentControl(this, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In, oPolygon.GetPaths(0));
-		return;
-	}
-
-	if (Asc.c_oAscSdtAppearance.Hidden === this.GetAppearance() || this.Paragraph.LogicDocument.IsForceHideContentControlTrack())
-	{
-		oDrawingDocument.OnDrawContentControl(null, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In);
-		return;
-	}
-
+	
 	if (undefined !== X && undefined !== Y && undefined !== nCurPage)
 	{
 		var isHit = false;
@@ -742,6 +727,21 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCu
 			oMMData.Text  = sHelpText;
 			oLogicDocument.GetApi().sync_MouseMoveCallback(oMMData);
 		}
+	}
+
+	var oShape = this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null;
+	if (this.IsForm() && oShape && oShape.isForm())
+	{
+		var oPolygon = new AscCommon.CPolygon();
+		oPolygon.fill([[oShape.getFormRelRect()]]);
+		oDrawingDocument.OnDrawContentControl(this, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In, oPolygon.GetPaths(0));
+		return;
+	}
+
+	if (Asc.c_oAscSdtAppearance.Hidden === this.GetAppearance() || this.Paragraph.LogicDocument.IsForceHideContentControlTrack())
+	{
+		oDrawingDocument.OnDrawContentControl(null, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In);
+		return;
 	}
 
 	oDrawingDocument.OnDrawContentControl(this, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In, this.GetBoundingPolygon());
@@ -1296,6 +1296,14 @@ CInlineLevelSdt.prototype.CanBeEdited = function()
 		return false;
 
 	return (undefined === this.Pr.Lock || c_oAscSdtLockType.Unlocked === this.Pr.Lock || c_oAscSdtLockType.SdtLocked === this.Pr.Lock);
+};
+/**
+ * Проверяем, залочена ли данная форма
+ * @returns {boolean}
+ */
+CInlineLevelSdt.prototype.IsFormLocked = function()
+{
+	return !(undefined === this.Pr.Lock || c_oAscSdtLockType.Unlocked === this.Pr.Lock || c_oAscSdtLockType.ContentLocked === this.Pr.Lock);
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Функции совместного редактирования
@@ -2547,7 +2555,6 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function()
 		g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
 
 		var nTextDescent = Math.abs(g_oTextMeasurer.GetDescender());
-
 		oRun.Set_Position(oTextPr.Position - nTextDescent);
 		oInnerRun.Recalc_CompiledPr(true);
 	}
@@ -2648,6 +2655,17 @@ CInlineLevelSdt.prototype.OnChangeFixedFormTrack = function(nW, nH)
 	else if (this.IsPicture())
 	{
 		this.private_UpdatePictureFormLayout(nW, nH);
+	}
+	else if (this.IsTextForm())
+	{
+		var oTextFormPr = this.GetTextFormPr();
+		var nMax = oTextFormPr.GetMaxCharacters();
+		if (oTextFormPr.IsComb() && nMax > 0)
+		{
+			var oNewTextFormPr = oTextFormPr.Copy();
+			oNewTextFormPr.SetWidth(AscCommon.MMToTwips(nW / nMax));
+			this.SetTextFormPr(oNewTextFormPr);
+		}
 	}
 };
 CInlineLevelSdt.prototype.IsAutoFitContent = function()
@@ -2884,6 +2902,45 @@ CInlineLevelSdt.prototype.GetFixedFormWrapperShape = function()
 		return null;
 
 	return oShape;
+};
+CInlineLevelSdt.prototype.UpdateFixedFormSizeByCombWidth = function()
+{
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph || !oParagraph.Parent)
+		return;
+
+	var oShape = oParagraph.Parent.Is_DrawingShape(true);
+	if (!oShape || !oShape.parent || !oShape.spPr || !oShape.spPr.xfrm)
+		return;
+
+	var oTextFormPr = this.GetTextFormPr();
+	if (!oTextFormPr || !oTextFormPr.IsComb() || oTextFormPr.GetMaxCharacters() <= 0 || oTextFormPr.GetWidth() <= 0)
+		return;
+
+	var oDrawing = oShape.parent;
+
+	oShape.spPr.xfrm.setExtX(AscCommon.TwipsToMM(oTextFormPr.GetWidth()) * oTextFormPr.GetMaxCharacters());
+	oDrawing.CheckWH();
+};
+CInlineLevelSdt.prototype.UpdateFixedFormCombWidthByFormSize = function(oTextFormPr)
+{
+	if (!oTextFormPr || !oTextFormPr.IsComb() || oTextFormPr.GetMaxCharacters() <= 0)
+		return;
+
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph || !oParagraph.Parent)
+		return;
+
+	var oShape = oParagraph.Parent.Is_DrawingShape(true);
+	if (!oShape || !oShape.parent || !oShape.spPr || !oShape.spPr.xfrm)
+		return;
+
+
+	var nW = oShape.spPr.xfrm.extX;
+	if (nW < 0.001)
+		return;
+
+	oTextFormPr.SetWidth(AscCommon.MMToTwips(nW / oTextFormPr.GetMaxCharacters()));
 };
 
 //--------------------------------------------------------export--------------------------------------------------------

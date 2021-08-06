@@ -542,6 +542,14 @@
 
         this._LoadImages = function()
         {
+			for (var i = 0; i < this.images_loading.length; i++)
+            {
+				var _id = this.images_loading[i];
+				if (this.map_image_index[_id] && (this.map_image_index[_id].Status === ImageLoadStatus.Complete))
+                {
+                    this.images_loading.splice(i, 1);
+                }
+            }
 			var _count_images = this.images_loading.length;
 
             if (0 == _count_images)

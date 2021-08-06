@@ -1395,9 +1395,6 @@ Paragraph.prototype.CheckNotInlineObject = function(nMathPos, nDirection)
 };
 Paragraph.prototype.RecalculateEndInfo = function()
 {
-	if (this.m_oPRSW.IsFastRecalculate())
-		return;
-
 	var oLogicDocument = this.GetLogicDocument();
 	if (oLogicDocument && oLogicDocument.GetRecalcId && this.EndInfoRecalcId === oLogicDocument.GetRecalcId())
 		return;
@@ -1424,7 +1421,7 @@ Paragraph.prototype.GetEndInfoByPage = function(CurPage)
 {
 	// Здесь может приходить отрицательное значение
 	if (CurPage < 0)
-		return this.Parent.GetPrevElementEndInfo(this);
+		return this.Parent ? this.Parent.GetPrevElementEndInfo(this) : null;
 	else
 		return this.Pages[CurPage].EndInfo.Copy();
 };
@@ -2895,7 +2892,7 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 		var aRunReview  = PDSL.RunReview;
 		var aCollChange = PDSL.CollChange;
 		var aDUnderline = PDSL.DUnderline;
-		var aCombForms  = PDSL.CombForms;
+		var aFormBorder = PDSL.FormBorder;
 
 		// Рисуем зачеркивание
 		var Element = aStrikeout.Get_Next();
@@ -3006,7 +3003,7 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
             }
 		}
 
-		Element = aCombForms.Get_Next(true);
+		Element = aFormBorder.Get_Next(true);
 		if (Element)
 		{
 			if (this.IsInFixedForm())
@@ -3018,23 +3015,22 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 					pGraphics.SetIntegerGrid(true);
 				}
 
-				var oForm       = this.GetInnerForm();
-				var oBounds     = oForm.GetFixedFormBounds();
-				var oTextFormPr = oForm.GetTextFormPr();
-				var nCombMax    = 1;
-				if (oTextFormPr && oTextFormPr.IsComb() && (nCombMax = oTextFormPr.GetMaxCharacters()) > 0)
+				var oForm   = this.GetInnerForm();
+				var oBounds = oForm.GetFixedFormBounds();
+				var nFormX0 = oBounds.X + 0.001;
+				var nFormX1 = oBounds.X + oBounds.W - 0.001;
+				var nFormY0 = oBounds.Y + 0.001;
+				var nFormY1 = oBounds.Y + oBounds.H - 0.001;
+
+				pGraphics.p_color(Element.r, Element.g, Element.b, 255);
+				pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Bottom, nFormY0, nFormX0, nFormX1, Element.w, -Element.w / 2, Element.w / 2);
+				pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Top, nFormY1, nFormX0, nFormX1, Element.w, -Element.w / 2, Element.w / 2);
+				pGraphics.drawVerLine(c_oAscLineDrawingRule.Left, nFormX0, nFormY0, nFormY1, Element.w);
+				pGraphics.drawVerLine(c_oAscLineDrawingRule.Right, nFormX1, nFormY0, nFormY1, Element.w);
+
+				if (Element.Additional && -1 !== Element.Additional.Comb)
 				{
-					var nFormX0 = oBounds.X + 0.001;
-					var nFormX1 = oBounds.X + oBounds.W - 0.001;
-					var nFormY0 = oBounds.Y + 0.001;
-					var nFormY1 = oBounds.Y + oBounds.H - 0.001;
-
-					pGraphics.p_color(Element.r, Element.g, Element.b, 255);
-					pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Bottom, nFormY0, nFormX0, nFormX1, Element.w, -Element.w / 2, Element.w / 2);
-					pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Top, nFormY1, nFormX0, nFormX1, Element.w, -Element.w / 2, Element.w / 2);
-					pGraphics.drawVerLine(c_oAscLineDrawingRule.Left, nFormX0, nFormY0, nFormY1, Element.w);
-					pGraphics.drawVerLine(c_oAscLineDrawingRule.Right, nFormX1, nFormY0, nFormY1, Element.w);
-
+					var nCombMax = Element.Additional.Comb;
 					var nInterStep = oBounds.W / nCombMax;
 					var nInterX    = nFormX0;
 					for (var nInterIndex = 0, nIntersCount = nCombMax - 1; nInterIndex < nIntersCount; ++nInterIndex)
@@ -3060,12 +3056,15 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 					pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, Element.x0, nFormY0, nFormY1, Element.w);
 					pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, Element.x1, nFormY0, nFormY1, Element.w);
 
-					for (var nInterIndex = 0, nIntersCount = Element.Intermediate.length; nInterIndex < nIntersCount; ++nInterIndex)
+					if (Element.Additional && -1 !== Element.Additional.Comb)
 					{
-						pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, Element.Intermediate[nInterIndex], nFormY0, nFormY1, Element.w);
+						for (var nInterIndex = 0, nIntersCount = Element.Intermediate.length; nInterIndex < nIntersCount; ++nInterIndex)
+						{
+							pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, Element.Intermediate[nInterIndex], nFormY0, nFormY1, Element.w);
+						}
 					}
 
-					Element = aCombForms.Get_Next(true);
+					Element = aFormBorder.Get_Next(true);
 				}
 			}
 		}
@@ -3462,12 +3461,12 @@ Paragraph.prototype.ReDraw = function()
 {
 	this.Parent.OnContentReDraw(this.Get_AbsolutePage(0), this.Get_AbsolutePage(this.Pages.length - 1));
 };
-Paragraph.prototype.Shift = function(PageIndex, Dx, Dy)
+Paragraph.prototype.Shift = function(CurPage, Dx, Dy)
 {
 	if (!this.IsRecalculated())
 		return;
 
-	if (0 === PageIndex)
+	if (0 === CurPage)
 	{
 		this.X += Dx;
 		this.Y += Dy;
@@ -3478,10 +3477,10 @@ Paragraph.prototype.Shift = function(PageIndex, Dx, Dy)
 		this.X_ColumnEnd += Dx;
 	}
 
-	this.Pages[PageIndex].Shift(Dx, Dy);
+	this.Pages[CurPage].Shift(Dx, Dy);
 
-	var StartLine = this.Pages[PageIndex].StartLine;
-	var EndLine   = this.Pages[PageIndex].EndLine;
+	var StartLine = this.Pages[CurPage].StartLine;
+	var EndLine   = this.Pages[CurPage].EndLine;
 
 	for (var CurLine = StartLine; CurLine <= EndLine; CurLine++)
 		this.Lines[CurLine].Shift(Dx, Dy);
@@ -3501,7 +3500,7 @@ Paragraph.prototype.Shift = function(PageIndex, Dx, Dy)
 			for (var Pos = StartPos; Pos <= EndPos; Pos++)
 			{
 				var Item = this.Content[Pos];
-				Item.Shift_Range(Dx, Dy, CurLine, CurRange);
+				Item.Shift_Range(Dx, Dy, CurLine, CurRange, CurPage);
 			}
 		}
 	}
@@ -4197,7 +4196,6 @@ Paragraph.prototype.Add = function(Item)
 				else
 				{
 					var CurParaPos = this.Get_ParaContentPos(false, false);
-					var CurPos     = CurParaPos.Get(0);
 
 					// Сначала посмотрим на элемент слева и справа(текущий)
 					var SearchLPos = new CParagraphSearchPos();
@@ -4209,9 +4207,9 @@ Paragraph.prototype.Add = function(Item)
 					// 1. Если мы находимся в конце параграфа, тогда применяем заданную настройку к знаку параграфа
 					//    и добавляем пустой ран с заданными настройками.
 					// 2. Если мы находимся в середине слова (справа и слева текстовый элемент, причем оба не
-					// пунктуация), тогда меняем настройки для данного слова. 3. Во всех остальных случаях вставляем
-					// пустой ран с заданными настройкми и переносим курсор в этот ран, чтобы при последующем наборе
-					// текст отрисовывался с нужными настройками.
+					//    пунктуация), тогда меняем настройки для данного слова.
+					// 3. Во всех остальных случаях вставляем пустой ран с заданными настройкми и переносим курсор
+					//    в этот ран, чтобы при последующем наборе текст отрисовывался с нужными настройками.
 
 					if (null === RItem || para_End === RItem.Type)
 					{
@@ -4223,6 +4221,15 @@ Paragraph.prototype.Add = function(Item)
 					}
 					else if (null !== RItem && null !== LItem && para_Text === RItem.Type && para_Text === LItem.Type && false === RItem.IsPunctuation() && false === LItem.IsPunctuation())
 					{
+						var oLogicDocument = this.LogicDocument;
+						var oDocPos        = null;
+
+						if (oLogicDocument)
+						{
+							oDocPos = oLogicDocument.GetContentPosition(false);
+							oLogicDocument.TrackDocumentPositions([oDocPos]);
+						}
+
 						var SearchSPos = new CParagraphSearchPos();
 						var SearchEPos = new CParagraphSearchPos();
 
@@ -4241,6 +4248,13 @@ Paragraph.prototype.Add = function(Item)
 
 						// Убираем селект
 						this.RemoveSelection();
+
+						if (oDocPos)
+						{
+							oLogicDocument.RefreshDocumentPositions([oDocPos]);
+							oLogicDocument.SetContentPosition(oDocPos, 0, 0);
+						}
+
 					}
 					else
 					{
@@ -7549,7 +7563,15 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 {
 	var PagesCount = this.Pages.length;
 
-	if (this.bFromDocument && this.LogicDocument && true === this.LogicDocument.CanEdit() && null === this.Parent.IsHdrFtr(true) && null == this.Get_DocumentNext() && CurPage >= PagesCount - 1 && Y > this.Pages[PagesCount - 1].Bounds.Bottom && MouseEvent.ClickCount >= 2)
+	// В сносках нельзя делать ExtendToPos, смотри замечание в CFootnotesController.prototype.EndSelection
+	if (this.bFromDocument && this.LogicDocument
+		&& true === this.LogicDocument.CanEdit()
+		&& null === this.Parent.IsHdrFtr(true)
+		&& !this.Parent.IsFootnote()
+		&& null == this.Get_DocumentNext()
+		&& CurPage >= PagesCount - 1
+		&& Y > this.Pages[PagesCount - 1].Bounds.Bottom
+		&& MouseEvent.ClickCount >= 2)
 		return this.Parent.Extend_ToPos(X, Y);
 
 	// Обновляем позицию курсора
@@ -7568,7 +7590,7 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 	if (true === SearchPosXY.End || true === this.Is_Empty())
 	{
 		var LastRange = this.Lines[this.Lines.length - 1].Ranges[this.Lines[this.Lines.length - 1].Ranges.length - 1];
-		if (CurPage >= PagesCount - 1 && X > LastRange.W && MouseEvent.ClickCount >= 2 && Y <= this.Pages[PagesCount - 1].Bounds.Bottom)
+		if (!this.Parent.IsFootnote() && CurPage >= PagesCount - 1 && X > LastRange.W && MouseEvent.ClickCount >= 2 && Y <= this.Pages[PagesCount - 1].Bounds.Bottom)
 		{
 			if (this.bFromDocument && false === this.LogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_None, {
 					Type      : AscCommon.changestype_2_Element_and_Type,
@@ -9527,24 +9549,17 @@ Paragraph.prototype.Get_CompiledPr = function()
 		PrevEl = PrevEl.GetLastElement();
 	}
 
-	if (PrevEl)
+	if (PrevEl && PrevEl.IsParagraph())
 	{
-		if (PrevEl.IsParagraph())
+		var oPrevPr = PrevEl.Get_CompiledPr2(false).ParaPr;
+		if (true === this.private_CompareBorderSettings(oPrevPr, Pr.ParaPr) && undefined === PrevEl.Get_SectionPr() && true !== Pr.ParaPr.PageBreakBefore)
 		{
-			var oPrevPr = PrevEl.Get_CompiledPr2(false).ParaPr;
-			if (true === this.private_CompareBorderSettings(oPrevPr, Pr.ParaPr) && undefined === PrevEl.Get_SectionPr() && true !== Pr.ParaPr.PageBreakBefore)
-			{
-				Pr.ParaPr.Brd.First   = false;
-				Pr.ParaPr.Brd.Between = oPrevPr.Brd.Between.Copy();
-			}
-			else
-			{
-				Pr.ParaPr.Brd.First = true;
-			}
+			Pr.ParaPr.Brd.First   = false;
+			Pr.ParaPr.Brd.Between = oPrevPr.Brd.Between.Copy();
 		}
 		else
 		{
-			PrevEl = PrevEl.GetLastParagraph();
+			Pr.ParaPr.Brd.First = true;
 		}
 	}
 
@@ -13104,17 +13119,35 @@ Paragraph.prototype.MoveCursorToCommentMark = function(sId)
 		var oItem = this.Content[nPos];
 		if (para_Comment === oItem.Type && sId === oItem.CommentId)
 		{
-			nPos--;
-			while (nPos >= 0)
+			if (oItem.IsCommentStart())
 			{
-				if (this.Content[nPos].IsCursorPlaceable())
+				nPos++;
+				while (nPos < this.Content.length)
 				{
-					this.Content[nPos].SetThisElementCurrent();
-					this.Content[nPos].MoveCursorToEndPos();
-					return;
-				}
+					if (this.Content[nPos].IsCursorPlaceable())
+					{
+						this.Content[nPos].SetThisElementCurrent();
+						this.Content[nPos].MoveCursorToStartPos();
+						return;
+					}
 
+					nPos++;
+				}
+			}
+			else
+			{
 				nPos--;
+				while (nPos >= 0)
+				{
+					if (this.Content[nPos].IsCursorPlaceable())
+					{
+						this.Content[nPos].SetThisElementCurrent();
+						this.Content[nPos].MoveCursorToEndPos();
+						return;
+					}
+
+					nPos--;
+				}
 			}
 
 			break;
@@ -13123,6 +13156,76 @@ Paragraph.prototype.MoveCursorToCommentMark = function(sId)
 
 	this.MoveCursorToStartPos();
 	this.Document_SetThisElementCurrent(false);
+};
+Paragraph.prototype.GetCurrentComments = function(oComments)
+{
+	if (!oComments)
+		oComments = {};
+
+	var oInfo = this.GetEndInfoByPage(-1);
+	var arrCurComments = oInfo ? oInfo.GetComments() : [];
+
+	if (this.IsSelectionUse())
+	{
+		var nStartPos = this.Selection.StartPos;
+		var nEndPos   = this.Selection.EndPos;
+
+		if (nStartPos > nEndPos)
+		{
+			var nTemp = nStartPos;
+			nStartPos = nEndPos;
+			nEndPos   = nTemp;
+		}
+
+		for (var nCommentIndex = 0, nCommentsCount = arrCurComments.length; nCommentIndex < nCommentsCount; ++nCommentIndex)
+		{
+			oComments[arrCurComments[nCommentIndex]] = 1;
+		}
+
+		for (var nPos = 0, nLastPos = Math.min(this.Content.length - 1, nStartPos); nPos < nLastPos; ++nPos)
+		{
+			var oElement = this.Content[nPos];
+			if (para_Comment === oElement.Type)
+			{
+				if (oElement.IsCommentStart())
+					oComments[oElement.GetCommentId()] = 1;
+				else
+					delete oComments[oElement.GetCommentId()];
+			}
+		}
+
+		for (var nPos = nStartPos, nLastPos = Math.min(this.Content.length - 1, nEndPos); nPos < nLastPos; ++nPos)
+		{
+			var oElement = this.Content[nPos];
+			if (para_Comment === oElement.Type)
+			{
+				oComments[oElement.GetCommentId()] = 1;
+			}
+		}
+	}
+	else
+	{
+		for (var nCommentIndex = 0, nCommentsCount = arrCurComments.length; nCommentIndex < nCommentsCount; ++nCommentIndex)
+		{
+			oComments[arrCurComments[nCommentIndex]] = 1;
+		}
+
+		for (var nPos = 0, nLastPos = Math.min(this.Content.length - 1, this.CurPos.ContentPos); nPos < nLastPos; ++nPos)
+		{
+			var oElement = this.Content[nPos];
+			if (para_Comment === oElement.Type)
+			{
+				if (oElement.IsCommentStart())
+					oComments[oElement.GetCommentId()] = 1;
+				else
+					delete oComments[oElement.GetCommentId()];
+			}
+		}
+
+
+	}
+
+	return oComments;
 };
 Paragraph.prototype.ReplaceMisspelledWord = function(Word, oElement)
 {
@@ -16728,6 +16831,29 @@ CParagraphPageEndInfo.prototype.GetComplexFields = function()
 	}
 	return arrComplexFields;
 };
+CParagraphPageEndInfo.prototype.GetComments = function()
+{
+	return this.Comments;
+};
+CParagraphPageEndInfo.prototype.IsEqual = function(oEndInfo)
+{
+	if (this.Comments.length !== oEndInfo.Comments.length || this.ComplexFields.length !== oEndInfo.ComplexFields.length)
+		return false;
+
+	for (var nIndex = 0, nCount = this.Comments.length; nIndex < nCount; ++nIndex)
+	{
+		if (this.Comments[nIndex] !== oEndInfo.Comments[nIndex])
+			return false;
+	}
+
+	for (var nIndex = 0, nCount = this.ComplexFields.length; nIndex < nCount; ++nIndex)
+	{
+		if (!this.ComplexFields[nIndex].IsEqual(oEndInfo.ComplexFields[nIndex]))
+			return false;
+	}
+
+	return true;
+};
 
 function CParaPos(Range, Line, Page, Pos)
 {
@@ -16870,6 +16996,10 @@ CParaDrawingRangeLines.prototype =
 			else if (undefined !== PrevEl.Additional.HyperlinkCF)
 			{
 				return (PrevEl.Additional.HyperlinkCF === Element.Additional.HyperlinkCF);
+			}
+			else if (undefined !== PrevEl.Additional.Comb)
+			{
+				return (PrevEl.Additional.Comb === Element.Additional.Comb);
 			}
 
 			return false;
@@ -17129,6 +17259,13 @@ CComplexFieldStatePos.prototype.SetFieldCode = function(isFieldCode)
 CComplexFieldStatePos.prototype.IsFieldCode = function()
 {
 	return this.FieldCode;
+};
+CComplexFieldStatePos.prototype.IsEqual = function(oState)
+{
+	return (this.FieldCode === oState.FieldCode
+		&& this.ComplexField
+		&& oState.ComplexField
+		&& this.ComplexField.GetBeginChar() === oState.ComplexField.GetBeginChar());
 };
 
 function CParagraphComplexFieldsInfo()
@@ -17603,7 +17740,7 @@ function CParagraphDrawStateLines()
     this.RunReview  = new CParaDrawingRangeLines();
     this.CollChange = new CParaDrawingRangeLines();
     this.DUnderline = new CParaDrawingRangeLines();
-    this.CombForms  = new CParaDrawingRangeLines();
+    this.FormBorder = new CParaDrawingRangeLines();
 
     this.Page  = 0;
     this.Line  = 0;
@@ -17647,7 +17784,7 @@ CParagraphDrawStateLines.prototype =
 		this.RunReview.Clear();
 		this.CollChange.Clear();
 		this.DUnderline.Clear();
-		this.CombForms.Clear();
+		this.FormBorder.Clear();
     },
 
     Reset_Range : function(Range, X, Spaces)
@@ -17680,6 +17817,10 @@ CParagraphDrawStateLines.prototype.GetSpellingErrorsCounter = function()
 	}
 
 	return nCounter;
+};
+CParagraphDrawStateLines.prototype.GetLogicDocument = function()
+{
+	return this.Paragraph.GetLogicDocument();
 };
 
 var g_oPDSH = new CParagraphDrawStateHighlights();

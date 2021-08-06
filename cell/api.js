@@ -537,6 +537,7 @@ var editor;
 								cp['data'] = data;
 								callback(new AscCommon.asc_CAdvancedOptions(cp));
 							}
+							_api.endInsertDocumentUrls();
 						});
 					}
 				}, endCallback: function (_api) {
@@ -656,7 +657,9 @@ var editor;
 					this.wb.model.nActive = ws.model.index;
 					ws.draw();
 				} else {
+					ws.cleanSelection();
 					ws.model.selectionRange = selectionRange;
+					ws._drawSelection();
 				}
 			}
 		}
@@ -3183,9 +3186,7 @@ var editor;
     spreadsheet_api.prototype.asc_assignMacrosToCurrentDrawing = function(sName) {
         var ws = this.wb.getWorksheet();
         var sGuid = this.asc_getMacrosGuidByName(sName);
-        if(typeof sGuid === "string" && sGuid.length > 0) {
-            return ws.objectRender.assignMacrosToCurrentDrawing(sGuid);
-        }
+        return ws.objectRender.assignMacrosToCurrentDrawing(sGuid);
     };
     spreadsheet_api.prototype.asc_setSelectedDrawingObjectLayer = function(layerType) {
         var ws = this.wb.getWorksheet();
@@ -4688,6 +4689,15 @@ var editor;
     }
     if (isFull) {
       this._onUpdateAfterApplyChanges();
+
+      if (window["NATIVE_EDITOR_ENJINE"] === true && window["native"]["AddImageInChanges"] && window["NATIVE_EDITOR_ENJINE_NEW_IMAGES"])
+      {
+        var _new_images     = window["NATIVE_EDITOR_ENJINE_NEW_IMAGES"];
+        var _new_images_len = _new_images.length;
+
+        for (var nImage = 0; nImage < _new_images_len; nImage++)
+          window["native"]["AddImageInChanges"](_new_images[nImage]);
+      }
     }
   };
 

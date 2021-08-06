@@ -1871,6 +1871,9 @@
 			this.DocInfo.put_Url(this.VersionHistory.url);
 			this.documentUrlChanges = this.VersionHistory.urlChanges;
 			this.asc_setDocInfo(this.DocInfo);
+
+			AscCommon.g_oIdCounter.DETECT_BUG_VERSION_HISTORY = true;
+
 			this.asc_LoadDocument(this.VersionHistory);
 		} else if (this.VersionHistory.currentChangeId < newObj.currentChangeId) {
 			// Нужно только добавить некоторые изменения

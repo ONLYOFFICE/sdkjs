@@ -2573,8 +2573,11 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 		isFastCollaboration : false
 	};
 
-	this.SpecialForms = {}; // Список специальных форм в документе
-	this.CurrentForm  = null;
+	this.SpecialForms            = {}; // Список специальных форм в документе
+	this.CurrentForm             = null;
+	this.HighlightRequiredFields = false;  // Выделяем ли обязательные поля
+	this.RequiredFieldsBorder    = new CDocumentBorder();
+	this.RequiredFieldsBorder.SetSimpleColor(255, 0, 0);
 
 	this.LastBulletList   = undefined; // Последний примененный маркированный список
 	this.LastNumberedList = undefined; // Последний примененный нумерованный список
@@ -5434,15 +5437,32 @@ CDocument.prototype.private_RecalculateHdrFtrPageCountUpdate = function()
 		{
 			this.DrawingDocument.OnRecalculatePage(nPageAbs, this.Pages[nPageAbs]);
 
-			if (nPageAbs < this.HdrFtrRecalc.PageIndex + 5)
+			if (window["NATIVE_EDITOR_ENJINE_SYNC_RECALC"] === true)
 			{
+				if (nPageAbs >= this.HdrFtrRecalc.PageIndex + 5 && window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
+				{
+					//if (window["native"]["WC_CheckSuspendRecalculate"]())
+					//    return;1
+
+					this.HdrFtrRecalc.PageIndex = nPageAbs + 1;
+					this.HdrFtrRecalc.Id        = setTimeout(Document_Recalculate_HdrFtrPageCount, 20);
+					return;
+				}
+
 				nPageAbs++;
 			}
 			else
 			{
-				this.HdrFtrRecalc.PageIndex = nPageAbs + 1;
-				this.HdrFtrRecalc.Id        = setTimeout(Document_Recalculate_HdrFtrPageCount, 20);
-				return;
+				if (nPageAbs < this.HdrFtrRecalc.PageIndex + 5)
+				{
+					nPageAbs++;
+				}
+				else
+				{
+					this.HdrFtrRecalc.PageIndex = nPageAbs + 1;
+					this.HdrFtrRecalc.Id        = setTimeout(Document_Recalculate_HdrFtrPageCount, 20);
+					return;
+				}
 			}
 		}
 		else
@@ -9016,7 +9036,10 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 	var LastClass   = ParaNearPos.Classes[ParaNearPos.Classes.length - 1];
 
 	this.private_CheckSelectedContentBeforePaste(SelectedContent, NearPos);
-
+    for (var nIndex = 0, nCount = SelectedContent.DrawingObjects.length; nIndex < nCount; ++nIndex)
+    {
+        SelectedContent.DrawingObjects[nIndex].Set_Parent(Para);
+    }
 	if (para_Math_Run === LastClass.Type)
 	{
 		var MathRun        = LastClass;
@@ -9075,7 +9098,7 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 		}
 		else if (LastClass.GetParentForm())
 		{
-			var nInLastClassPos = ParaNearPos.NearPos.ContentPos.Data[ParaNearPos.Classes.length - 1]
+			var nInLastClassPos = ParaNearPos.NearPos.ContentPos.Data[ParaNearPos.Classes.length - 1];
 
 			var isPlaceHolder  = LastClass.GetParentForm().IsPlaceHolder();
 			if (isPlaceHolder && LastClass.GetParent() instanceof CInlineLevelSdt)
@@ -10934,10 +10957,8 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 	{
 		if (true === this.Comments.Is_Use())
 		{
-			var Type = ( docpostype_HdrFtr === this.CurPos.Type ? AscCommon.comment_type_HdrFtr : AscCommon.comment_type_Common );
-
 			// Проверяем не попали ли мы в комментарий
-			var arrComments = this.Comments.Get_ByXY(PageIndex, X, Y, Type);
+			var arrComments = this.Comments.GetByXY(PageIndex, X, Y);
 
 			var CommentsX     = null;
 			var CommentsY     = null;
@@ -13026,10 +13047,15 @@ CDocument.prototype.CanPerformAction = function(isIgnoreCanEditFlag)
 {
 	return !((!this.CanEdit() && true !== isIgnoreCanEditFlag) || (true === this.CollaborativeEditing.Get_GlobalLock()));
 };
-CDocument.prototype.Document_Is_SelectionLocked = function(CheckType, AdditionalData, DontLockInFastMode, isIgnoreCanEditFlag)
+CDocument.prototype.Document_Is_SelectionLocked = function(CheckType, AdditionalData, DontLockInFastMode, isIgnoreCanEditFlag, fCallback)
 {
 	if (!this.CanPerformAction(isIgnoreCanEditFlag))
+	{
+		if (fCallback)
+			fCallback(true);
+
 		return true;
+	}
 
 	this.CollaborativeEditing.OnStart_CheckLock();
 
@@ -13050,16 +13076,15 @@ CDocument.prototype.Document_Is_SelectionLocked = function(CheckType, Additional
 		}
 	}
 
-	var bResult = this.CollaborativeEditing.OnEnd_CheckLock(DontLockInFastMode);
+	var isLocked = this.CollaborativeEditing.OnEnd_CheckLock(DontLockInFastMode, fCallback);
 
-	if (true === bResult)
+	if (true === isLocked && !fCallback)
 	{
-		this.Document_UpdateSelectionState();
-		this.Document_UpdateInterfaceState();
-		//this.Document_UpdateRulersState();
+		this.UpdateSelection();
+		this.UpdateInterface();
 	}
 
-	return bResult;
+	return isLocked;
 };
 CDocument.prototype.private_IsSelectionLockedAdditional = function(oAdditionalData)
 {
@@ -13112,9 +13137,9 @@ CDocument.prototype.private_IsSelectionLockedAdditional = function(oAdditionalDa
 		}
 	}
 };
-CDocument.prototype.IsSelectionLocked = function(nCheckType, oAdditionalData, isDontLockInFastMode, isIgnoreCanEditFlag)
+CDocument.prototype.IsSelectionLocked = function(nCheckType, oAdditionalData, isDontLockInFastMode, isIgnoreCanEditFlag, fCallback)
 {
-	return this.Document_Is_SelectionLocked(nCheckType, oAdditionalData, isDontLockInFastMode, isIgnoreCanEditFlag);
+	return this.Document_Is_SelectionLocked(nCheckType, oAdditionalData, isDontLockInFastMode, isIgnoreCanEditFlag, fCallback);
 };
 CDocument.prototype.CheckSelectionLockedByFormKey = function(nCheckType, sKey, oSkipParagraph)
 {
@@ -13607,12 +13632,17 @@ CDocument.prototype.GetAllComments = function(isMine, isCurrent)
 	{
 		if (true === this.Comments.Is_Use())
 		{
-			var oCurPosXY   = this.GetCursorRealPosition();
-			var arrComments = this.Comments.Get_ByXY(this.CurPage, oCurPosXY.X, oCurPosXY.Y, docpostype_HdrFtr === this.GetDocPosType() ? AscCommon.comment_type_HdrFtr : AscCommon.comment_type_Common);
+			var arrParagraphs = this.GetSelectedParagraphs();
+			var oComments     = {};
 
-			for (var nCommentIndex = 0, nCommentsCount = arrComments.length; nCommentIndex < nCommentsCount; ++nCommentIndex)
+			for (var nParaIndex = 0, nParasCount = arrParagraphs.length; nParaIndex < nParasCount; ++nParaIndex)
 			{
-				var oComment = arrComments[nCommentIndex];
+				arrParagraphs[nParaIndex].GetCurrentComments(oComments);
+			}
+
+			for (var sCommentId in oComments)
+			{
+				var oComment = this.Comments.Get_ById(sCommentId);
 				if (oComment && (!isMine || oComment.IsCurrentUser()))
 					arrCommentsId.push(oComment.GetId());
 			}
@@ -14732,6 +14762,33 @@ CDocument.prototype.End_SilentMode = function(bUpdate)
 	this.TurnOn_Recalculate(bUpdate);
 	this.TurnOn_RecalculateCurPos(bUpdate);
 	this.TurnOn_InterfaceEvents(bUpdate);
+};
+/**
+ * Стартуем режим, в котором новые классы не регистрируются в истории, а также отключается рецензирование
+ * Возвращается текущее состояние редактора
+ * @returns {object}
+ */
+CDocument.prototype.StartNoHistoryMode = function()
+{
+	var oState = {};
+
+	oState.LocalTrackRevisions = this.GetLocalTrackRevisions();
+
+	this.History.TurnOff();
+	this.TableId.TurnOff();
+	this.SetLocalTrackRevisions(false);
+
+	return oState;
+};
+/**
+ * Останавливаем режим "без истории"
+ * @param oState
+ */
+CDocument.prototype.EndNoHistoryMode = function(oState)
+{
+	this.History.TurnOn();
+	this.TableId.TurnOn();
+	this.SetLocalTrackRevisions(oState.LocalTrackRevisions);
 };
 /**
  * Начинаем селект с текущей точки. Если селект уже есть, тогда ничего не делаем.
@@ -24800,6 +24857,7 @@ CDocument.prototype.ConvertFormFixedType = function(sId, isToFixed)
 		else
 			oForm.ConvertFormToInline();
 
+		this.RemoveSelection();
 		oForm.MoveCursorToContentControl(false);
 
 		this.Recalculate();
@@ -24811,6 +24869,30 @@ CDocument.prototype.ConvertFormFixedType = function(sId, isToFixed)
 	}
 
 	return false;
+};
+/**
+ * Подсвечиваем ли обязательные поля
+ * @returns {boolean}
+ */
+CDocument.prototype.IsHighlightRequiredFields = function()
+{
+	return this.HighlightRequiredFields;
+};
+/**
+ * Выставляем нужно ли подсвечивать обязательные поля
+ * @param {boolean} isHighlight
+ */
+CDocument.prototype.SetHighlightRequiredFields = function(isHighlight)
+{
+	this.HighlightRequiredFields = isHighlight;
+};
+/**
+ * Получаем границу подсветки для обязательных полей
+ * @returns {CDocumentBorder}
+ */
+CDocument.prototype.GetRequiredFieldsBorder = function()
+{
+	return this.RequiredFieldsBorder;
 };
 /**
  *  Функция, которая используется для отрисовки символа конца секции

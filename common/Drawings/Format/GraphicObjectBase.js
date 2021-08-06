@@ -568,6 +568,21 @@
         AscCommon.History.Add( new AscDFH.CChangesDrawingsLong(this, AscDFH.historyitem_AutoShapes_SetLocks, this.locks, nLocks));
         this.locks = nLocks;
     };
+    CGraphicObjectBase.prototype.readMacro = function(oStream)
+    {
+        var nLength = oStream.GetULong();//length
+        var nType = oStream.GetUChar();//attr type - 0
+        this.setMacro(oStream.GetString2());
+    };
+    CGraphicObjectBase.prototype.writeMacro = function(oWriter)
+    {
+        if(typeof this.macro === "string" && this.macro.length > 0)
+        {
+            oWriter.StartRecord(0xA1);
+            oWriter._WriteString1(0, this.macro);
+            oWriter.EndRecord();
+        }
+    };
     CGraphicObjectBase.prototype.setMacro = function(sMacroName)
     {
         History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ShapeSetMacro, this.macro, sMacroName));
@@ -575,7 +590,12 @@
     };
     CGraphicObjectBase.prototype.assignMacro = function(sGuid)
     {
-        this.setMacro(AscFormat.MACRO_PREFIX + sGuid);
+        if(typeof sGuid === "string" && sGuid.length > 0) {
+            this.setMacro(AscFormat.MACRO_PREFIX + sGuid);
+        }
+        else {
+            this.setMacro(null);
+        }
     };
     CGraphicObjectBase.prototype.setTextLink = function(sLink)
     {

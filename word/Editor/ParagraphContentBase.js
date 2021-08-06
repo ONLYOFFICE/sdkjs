@@ -379,7 +379,7 @@ CParagraphContentBase.prototype.RecalculateMinMaxContentWidth = function(MinMax)
 CParagraphContentBase.prototype.Get_Range_VisibleWidth = function(RangeW, _CurLine, _CurRange)
 {
 };
-CParagraphContentBase.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange)
+CParagraphContentBase.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 {
 };
 //----------------------------------------------------------------------------------------------------------------------
@@ -2575,7 +2575,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Get_Range_VisibleWidth = fun
         this.Content[CurPos].Get_Range_VisibleWidth(RangeW, _CurLine, _CurRange);
     }
 };
-CParagraphContentWithParagraphLikeContent.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange)
+CParagraphContentWithParagraphLikeContent.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 {
     var CurLine = _CurLine - this.StartLine;
     var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
@@ -2585,7 +2585,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Shift_Range = function(Dx, D
 
     for ( var CurPos = StartPos; CurPos <= EndPos; CurPos++ )
     {
-        this.Content[CurPos].Shift_Range(Dx, Dy, _CurLine, _CurRange);
+        this.Content[CurPos].Shift_Range(Dx, Dy, _CurLine, _CurRange, _CurPage);
     }
 };
 //----------------------------------------------------------------------------------------------------------------------

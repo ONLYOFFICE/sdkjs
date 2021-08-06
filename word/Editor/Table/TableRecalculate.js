@@ -408,7 +408,7 @@ CTable.prototype.private_RecalculateGrid = function()
 		this.RecalcInfo.TableGrid = false;
 	}
 
-	var TopTable = this.Parent.IsInTable(true);
+	var TopTable = this.Parent ? this.Parent.IsInTable(true) : null;
 	if ((null === TopTable && tbllayout_AutoFit === TablePr.TableLayout) || (null != TopTable && tbllayout_AutoFit === TopTable.Get_CompiledPr(false).TablePr.TableLayout))
 	{
 		//---------------------------------------------------------------------------
@@ -454,20 +454,27 @@ CTable.prototype.private_RecalculateGrid = function()
 
 		var oPageFields;
 
-		// Случай, когда таблица лежит внутри CBlockLevelSdt
-		if (this.Parent instanceof CDocumentContent && this.LogicDocument && this.Parent.IsBlockLevelSdtContent() && this.Parent.GetTopDocumentContent() === this.LogicDocument && !this.Parent.IsTableCellContent())
+		if (!this.Parent)
 		{
-			var nTopIndex = -1;
-			var arrPos    = this.GetDocumentPositionFromObject();
-			if (arrPos.length > 0)
-				nTopIndex = arrPos[0].Position;
-
-			if (-1 !== nTopIndex)
-				oPageFields = this.LogicDocument.Get_ColumnFields(nTopIndex, this.Get_AbsoluteColumn(this.PageNum), this.GetAbsolutePage(this.PageNum));
+			oPageFields = {X : 0, Y : 0, XLimit : 0, YLimit : 0};
 		}
+		else
+		{
+			// Случай, когда таблица лежит внутри CBlockLevelSdt
+			if (this.Parent instanceof CDocumentContent && this.LogicDocument && this.Parent.IsBlockLevelSdtContent() && this.Parent.GetTopDocumentContent() === this.LogicDocument && !this.Parent.IsTableCellContent())
+			{
+				var nTopIndex = -1;
+				var arrPos    = this.GetDocumentPositionFromObject();
+				if (arrPos.length > 0)
+					nTopIndex = arrPos[0].Position;
 
-		if (!oPageFields)
-			oPageFields = this.Parent.Get_ColumnFields ? this.Parent.Get_ColumnFields(this.Get_Index(), this.Get_AbsoluteColumn(this.PageNum), this.GetAbsolutePage(this.PageNum)) : this.Parent.Get_PageFields(this.private_GetRelativePageIndex(this.PageNum));
+				if (-1 !== nTopIndex)
+					oPageFields = this.LogicDocument.Get_ColumnFields(nTopIndex, this.Get_AbsoluteColumn(this.PageNum), this.GetAbsolutePage(this.PageNum));
+			}
+
+			if (!oPageFields)
+				oPageFields = this.Parent.Get_ColumnFields ? this.Parent.Get_ColumnFields(this.Get_Index(), this.Get_AbsoluteColumn(this.PageNum), this.GetAbsolutePage(this.PageNum)) : this.Parent.Get_PageFields(this.private_GetRelativePageIndex(this.PageNum));
+		}
 
 		var oFramePr = this.GetFramePr();
 		if (oFramePr && undefined !== oFramePr.GetW())
@@ -1636,7 +1643,7 @@ CTable.prototype.private_RecalculateHeader = function()
 {
     // Если у нас таблица внутри таблицы, тогда в ней заголовочных строк не должно быть,
     // потому что так делает Word.
-    if ( true === this.Parent.IsTableCellContent() )
+    if (!this.Parent || true === this.Parent.IsTableCellContent())
     {
         this.HeaderInfo.Count = 0;
         return;

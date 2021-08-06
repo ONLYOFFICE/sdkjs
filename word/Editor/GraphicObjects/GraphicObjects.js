@@ -242,6 +242,11 @@ CGraphicObjects.prototype =
             {
                 var oApi = Asc.editor || editor;
                 var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+
+                var oShape = null;
+                if (isDrawHandles && (oShape = AscCommon.g_oTableId.Get_ById(ret.objectId)) && oShape.isForm() && oShape.getInnerForm() && oShape.getInnerForm().IsFormLocked())
+                	isDrawHandles = false;
+
                 if(isDrawHandles === false)
                 {
                     this.drawingDocument.SetCursorType("default");
@@ -4289,8 +4294,11 @@ CGraphicObjects.prototype.Document_Is_SelectionLocked = function(CheckType)
 };
 CGraphicObjects.prototype.documentIsSelectionLocked = function(CheckType)
 {
+	var oDocContent = this.getTargetDocContent();
+
     var oDrawing, i;
     var bDelete = (AscCommon.changestype_Delete === CheckType || AscCommon.changestype_Remove === CheckType);
+
     if(AscCommon.changestype_Drawing_Props === CheckType
         || AscCommon.changestype_Image_Properties === CheckType
         || AscCommon.changestype_Delete === CheckType
@@ -4305,7 +4313,7 @@ CGraphicObjects.prototype.documentIsSelectionLocked = function(CheckType)
         for(i = 0; i < this.selectedObjects.length; ++i)
         {
             oDrawing = this.selectedObjects[i].parent;
-            if(bDelete)
+            if(bDelete && !oDocContent)
             {
                 oDrawing.CheckDeletingLock();
             }
@@ -4313,7 +4321,6 @@ CGraphicObjects.prototype.documentIsSelectionLocked = function(CheckType)
         }
     }
 
-    var oDocContent = this.getTargetDocContent();
     if (oDocContent)
         oDocContent.Document_Is_SelectionLocked(CheckType);
 };

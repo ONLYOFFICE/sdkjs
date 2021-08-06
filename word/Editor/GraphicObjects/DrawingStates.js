@@ -470,7 +470,7 @@ PreMoveInlineObject.prototype =
 
     onMouseMove: function(e, x, y, pageIndex)
     {
-        if(!e.IsLocked)
+        if(!e.IsLocked || (this.majorObject && this.majorObject.isForm() && this.majorObject.getInnerForm() && this.majorObject.getInnerForm().IsFormLocked()))
         {
             this.onMouseUp(e, x, y, pageIndex);
             return;
@@ -510,7 +510,7 @@ MoveInlineObject.prototype =
 
     onMouseMove: function(e, x, y, pageIndex)
     {
-        if(!e.IsLocked)
+    	if (!e.IsLocked)
         {
             this.onMouseUp(e, x, y, pageIndex);
             return;
@@ -569,6 +569,12 @@ MoveInlineObject.prototype =
 
 					oDrawing.setParent(arrParaDrawings[0]);
 					arrParaDrawings[0].Set_GraphicObject(oDrawing);
+
+					var sKey = oDstPictureCC.GetFormKey();
+					if (arrParaDrawings[0].IsPicture() && sKey &&  oDstPictureCC.GetLogicDocument())
+					{
+						oDstPictureCC.GetLogicDocument().OnChangeForm(sKey, oDstPictureCC, arrParaDrawings[0].GraphicObj.getImageUrl());
+					}
 
 					this.drawingObjects.resetSelection();
 					this.drawingObjects.selectObject(oDrawing, pageIndex);
@@ -1063,7 +1069,7 @@ PreMoveState.prototype =
 
     onMouseMove: function(e, x, y, pageIndex)
     {
-        if(!e.IsLocked)
+        if(!e.IsLocked || (this.majorObject && this.majorObject.isForm() && this.majorObject.getInnerForm() && this.majorObject.getInnerForm().IsFormLocked()))
         {
             this.onMouseUp(e, x, y, pageIndex);
             return;

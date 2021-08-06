@@ -1767,6 +1767,7 @@ function CEditorPage(api)
 			AscCommon.check_MouseUpEvent(e);
 			oWordControl.MouseHandObject.Active = false;
 			oWordControl.m_oDrawingDocument.SetCursorType("grab");
+			oWordControl.m_bIsMouseLock = false;
 			return;
 		}
 

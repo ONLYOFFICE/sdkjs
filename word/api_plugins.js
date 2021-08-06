@@ -241,7 +241,7 @@
 		if (!prop)
 			return null;
 
-		if (oLogicDocument && prop.CC)
+		if (oLogicDocument && prop.CC && contentFormat)
 		{
 			oState = oLogicDocument.SaveDocumentState();
 			prop.CC.SelectContentControl();
@@ -271,7 +271,7 @@
 			prop["content"] = copy_data.data;
 		}
 
-		if (oState)
+		if (oState && contentFormat)
 		{
 			oLogicDocument.LoadDocumentState(oState);
 			oLogicDocument.UpdateSelection();
@@ -517,6 +517,35 @@
 	window["asc_docs_api"].prototype["pluginMethod_MoveToComment"] = function(sId)
 	{
 		this.asc_selectComment(sId);
+	};
+	/**
+	 * Set the display mode for track changes
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias SetDisplayModeInReview
+	 * @param {"final" | "original" | "edit"} [sMode="edit"]
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_SetDisplayModeInReview"] = function(sMode)
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return;
+
+		var isViewModeInReview = oLogicDocument.IsViewModeInReview();
+		if (!sMode || "edit" === sMode)
+		{
+			if (isViewModeInReview)
+			{
+				oLogicDocument.EndViewModeInReview();
+				this.sendEvent("asc_onEndViewModeInReview");
+			}
+		}
+		else if ("final" === sMode || "original" === sMode)
+		{
+			var isFinal = "final" === sMode;
+			oLogicDocument.BeginViewModeInReview(isFinal);
+			this.sendEvent("asc_onBeginViewModeInReview", isFinal);
+		}
 	};
 
 })(window);

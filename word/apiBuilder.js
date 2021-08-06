@@ -11955,7 +11955,8 @@
 						var nPosToAdd   = nPosToDel
 						var nCharsToDel = Math.min(oChange.deleteCount, oInfo.StringCount);
 						
-						if ((nPosToDel >= oInfo.Run.Content.length && nCharsToDel !== 0) || (nCharsToDel === 0 && oChange.deleteCount !== 0))
+						if ((nPosToDel >= oInfo.Run.Content.length && nCharsToDel !== 0) || (nCharsToDel === 0 && oChange.deleteCount !== 0)
+							|| nPosToAdd > oInfo.Run.Content.length)
 							continue;
 
 						for (var nChar = 0; nChar < nCharsToDel; nChar++)
@@ -12838,12 +12839,7 @@
 			oShd.Value = Asc.c_oAscShdClear;
 
 		oShd.Color.Set(r, g, b, isAuto);
-		oShd.Fill = {
-			r: r,
-			g: g,
-			b: b,
-			Auto: isAuto
-		}
+		oShd.Fill = new CDocumentColor(r, g, b, isAuto);
 		return oShd;
 	}
 

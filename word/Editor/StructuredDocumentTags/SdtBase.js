@@ -138,6 +138,9 @@ CSdtBase.prototype.SetContentControlText = function(isText)
  */
 CSdtBase.prototype.IsContentControlText = function()
 {
+	// Временно отключаем запись этого флага, т.к. мы пока его не обрабатываем в редакторе вообще
+	// и можем создать некорректный файл для других редакторов. См. баг #51589
+	return false;
 	return this.Pr.Text;
 };
 /**

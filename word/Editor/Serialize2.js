@@ -1032,28 +1032,34 @@ var c_oSerSdt = {
 	CheckboxCheckedVal: 41,
 	CheckboxUncheckedFont: 42,
 	CheckboxUncheckedVal: 43,
-	FormPr: 44,
-	FormPrKey: 45,
-	FormPrLabel: 46,
-	FormPrHelpText: 47,
-	FormPrRequired: 48,
+
+	FormPr         : 44,
+	FormPrKey      : 45,
+	FormPrLabel    : 46,
+	FormPrHelpText : 47,
+	FormPrRequired : 48,
+
+	TextFormPr              : 50,
+	TextFormPrComb          : 51,
+	TextFormPrCombWidth     : 52,
+	TextFormPrCombSym       : 53,
+	TextFormPrCombFont      : 54,
+	TextFormPrMaxCharacters : 55,
+	TextFormPrCombBorder    : 56,
+	TextFormPrAutoFit       : 57,
+	TextFormPrMultiLine     : 58,
+
 	CheckboxGroupKey: 59,
-	TextFormPr: 50,
-	TextFormPrComb: 51,
-	TextFormPrCombWidth: 52,
-	TextFormPrCombSym: 53,
-	TextFormPrCombFont: 54,
-	TextFormPrMaxCharacters: 55,
-	TextFormPrCombBorder: 56,
-	TextFormPrAutoFit : 57,
-	TextFormPrMultiLine : 58,
 
 	PictureFormPr                : 60,
 	PictureFormPrScaleFlag       : 61,
 	PictureFormPrLockProportions : 62,
 	PictureFormPrRespectBorders  : 63,
 	PictureFormPrShiftX          : 64,
-	PictureFormPrShiftY          : 65
+	PictureFormPrShiftY          : 65,
+
+	FormPrBorder : 70,
+	FormPrShd    : 71
 };
 var c_oSerFFData = {
 	CalcOnExit: 0,
@@ -6632,6 +6638,12 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		if (null != val.Required) {
 			oThis.bs.WriteItem(c_oSerSdt.FormPrRequired, function (){oThis.memory.WriteBool(val.Required);});
 		}
+		if (val.Border) {
+			oThis.bs.WriteItem(c_oSerSdt.FormPrBorder, function(){oThis.bs.WriteBorder(val.Border)});
+		}
+		if (val.Shd) {
+			oThis.bs.WriteShd(c_oSerSdt.FormPrShd, function(){oThis.bs.WriteShd(val.Shd)});
+		}
 	};
 	this.WriteSdtTextFormPr = function (val)
 	{
@@ -6678,10 +6690,10 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 			oThis.bs.WriteItem(c_oSerSdt.PictureFormPrRespectBorders, function (){oThis.memory.WriteBool(val.Borders);});
 		}
 		if (null != val.ShiftX) {
-			oThis.bs.WriteItem(c_oSerSdt.PictureFormPrShiftX, function (){oThis.memory.WriteDouble(val.ShiftX);});
+			oThis.bs.WriteItem(c_oSerSdt.PictureFormPrShiftX, function (){oThis.memory.WriteDouble2(val.ShiftX);});
 		}
 		if (null != val.ShiftY) {
-			oThis.bs.WriteItem(c_oSerSdt.PictureFormPrShiftY, function (){oThis.memory.WriteDouble(val.ShiftY);});
+			oThis.bs.WriteItem(c_oSerSdt.PictureFormPrShiftY, function (){oThis.memory.WriteDouble2(val.ShiftY);});
 		}
 	};
 };
@@ -8061,12 +8073,21 @@ function BinaryFileReader(doc, openParams)
 				}
 			}
 		}
-		//посылаем событие о добавлении комментариев
-		var allComments = this.Document.Comments.GetAllComments();
-		for(var i in allComments)
+
+		var bSendComments = true;
+		if(this.openParams && this.openParams.noSendComments)
 		{
-			var oNewComment = allComments[i];
-			this.Document.DrawingDocument.m_oWordControl.m_oApi.sync_AddComment( oNewComment.Id, oNewComment.Data );
+			bSendComments = false;
+		}
+		if(bSendComments)
+		{
+			//посылаем событие о добавлении комментариев
+			var allComments = this.Document.Comments.GetAllComments();
+			for(var i in allComments)
+			{
+				var oNewComment = allComments[i];
+				this.Document.DrawingDocument.m_oWordControl.m_oApi.sync_AddComment( oNewComment.Id, oNewComment.Data );
+			}
 		}
 		//remove bookmarks without end
 		for(var bookmarkIndex in this.oReadResult.bookmarksStarted)
@@ -13079,6 +13100,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		return res;
 	};
 	this.ReadSdtFormPr = function(type, length, val) {
+		var oThis = this;
 		var res = c_oSerConstants.ReadOk;
 		if (c_oSerSdt.FormPrKey === type) {
 			val.Key = this.stream.GetString2LE(length);
@@ -13088,6 +13110,16 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			val.HelpText = this.stream.GetString2LE(length);
 		} else if (c_oSerSdt.FormPrRequired === type) {
 			val.Required = this.stream.GetBool();
+		} else if (c_oSerSdt.FormPrBorder === type) {
+			var oNewBorber = new CDocumentBorder();
+			res = this.bcr.Read2(length, function (t, l) {
+				return oThis.bpPrr.ReadBorder(t, l, oNewBorber);
+			});
+			if (null != oNewBorber.Value)
+				val.Border = oThis.bpPrr.NormalizeBorder(oNewBorber);
+		} else if (c_oSerSdt.FormPrShd === type) {
+			val.Shd = new CDocumentShd();
+			ReadDocumentShd(length, this.bcr, val.Shd);
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
@@ -13141,9 +13173,9 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		} else if (c_oSerSdt.PictureFormPrRespectBorders === type) {
 			val.Borders = this.stream.GetBool();
 		} else if (c_oSerSdt.PictureFormPrShiftX === type) {
-			val.ShiftX = this.stream.GetDouble();
+			val.ShiftX = this.stream.GetDoubleLE();
 		} else if (c_oSerSdt.PictureFormPrShiftY === type) {
-			val.ShiftY = this.stream.GetDouble();
+			val.ShiftY = this.stream.GetDoubleLE();
 		} else {
 			res = c_oSerConstants.ReadUnknown;
 		}
@@ -15972,7 +16004,6 @@ function Binary_OtherTableReader(doc, oReadResult, stream)
 		else if ( c_oSerOtherTableTypes.DocxTheme === type )
         {
 		    this.Document.theme = pptx_content_loader.ReadTheme(this, this.stream);
-		    res = c_oSerConstants.ReadUnknown;
 		}
         else
             res = c_oSerConstants.ReadUnknown;

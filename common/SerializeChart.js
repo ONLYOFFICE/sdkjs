@@ -5896,7 +5896,6 @@ BinaryChartReader.prototype.ReadCT_ChartSpace = function (type, length, val, cur
         var theme = AscCommon.pptx_content_loader.ReadTheme(this, this.stream);
         if (null != theme)
             val.setThemeOverride(theme);
-        res = c_oSerConstants.ReadUnknown;
     }
     else if(c_oserct_chartspaceXLSX === type) {
         //todo

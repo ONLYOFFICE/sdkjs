@@ -10326,6 +10326,14 @@ CDocumentShd.prototype.Read_FromBinary = function(Reader)
 		this.Color = new CDocumentColor(0, 0, 0, false);
 	}
 };
+CDocumentShd.prototype.WriteToBinary = function(oWriter)
+{
+	return this.Write_ToBinary(oWriter);
+};
+CDocumentShd.prototype.ReadFromBinary = function(oReader)
+{
+	return this.Read_FromBinary(oReader);
+};
 
 function CDocumentBorder()
 {
@@ -10551,6 +10559,12 @@ CDocumentBorder.prototype.GetWidth = function()
 		return 0;
 
 	return this.Size;
+};
+CDocumentBorder.prototype.SetSimpleColor = function(r, g, b)
+{
+	this.Color   = new CDocumentColor(r, g, b);
+	this.Unifill = undefined;
+	this.LineRef = undefined;
 };
 CDocumentBorder.prototype.GetColor = function(oParagraph)
 {

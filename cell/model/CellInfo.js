@@ -240,6 +240,9 @@
 		return this.hyperlink;
 	};
 	asc_CCellInfo.prototype.asc_getComments = function () {
+		if (this.comment === undefined) {
+			return null;
+		}
 		return this.comment ? [this.comment] : [];
 	};
 	asc_CCellInfo.prototype.asc_getLocked = function () {

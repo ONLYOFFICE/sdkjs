@@ -607,6 +607,7 @@
 						bError = true;
 					}
 					bEndLoadFile = true;
+					AscCommon.g_oIdCounter.DETECT_BUG_VERSION_HISTORY = false;
 					onEndOpen();
 				}, "arraybuffer");
 		}
@@ -677,6 +678,7 @@
             }
  
             bEndLoadFile = true;
+			AscCommon.g_oIdCounter.DETECT_BUG_VERSION_HISTORY = false;
             onEndOpen();
 		}
 	}
@@ -3306,10 +3308,15 @@
 		this.m_bRead = false;
 		this.m_nIdCounterLoad = 0; // Счетчик Id для загрузки
 		this.m_nIdCounterEdit = 0; // Счетчик Id для работы
+
+		this.DETECT_BUG_VERSION_HISTORY = false;
 	}
 
 	CIdCounter.prototype.Get_NewId = function ()
 	{
+		if (this.DETECT_BUG_VERSION_HISTORY) {
+			console.log(new Error().stack);
+		}
 		if (true === this.m_bLoad || null === this.m_sUserId)
 		{
 			this.m_nIdCounterLoad++;
