@@ -25603,6 +25603,9 @@ CDocument.prototype.ConvertTableToText = function(oProps)
 			{
 				oParagraph.Check_NearestPos(oAnchorPos);
 				oParent.InsertContent(oNewContent, oAnchorPos);
+				if (oNewContent.Elements[oNewContent.Elements.length - 1].Element.IsTable() && !oTable.IsInline())
+					oNewContent.Elements[oNewContent.Elements.length - 1].Element.Internal_UpdateFlowPosition(oTable.PositionH.Value, oTable.PositionV.Value);
+
 				oParent.RemoveFromContent(oParagraph.GetIndex(), 1, true);
 				if (oParent.SelectRange)
 					oParent.SelectRange(nIndex + oSkipStart, nIndex + ArrNewContent.length - oSkipEnd);
@@ -25761,18 +25764,6 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 				var oNewTable = TableC.Split();
 				ArrNewContent.push(oNewTable);
 				ArrNewContent.unshift(TableC);
-				oNewTable.PositionH.Align = false;
-				oNewTable.PositionH.Value = TableC.PositionH.Value;
-				oNewTable.PositionV.Align = false;
-				// так делает ворд
-				oNewTable.PositionV.Value = TableC.PositionV.Value;
-				
-				// чтобы таблицы шли одна за другой в плотную
-				// var ind = oSelectedRows.Start ? oSelectedRows.Start - 1 : oSelectedRows.Start;
-				// oNewTable.PositionV.Value = TableC.TableRowsBottom[ind][0];
-				
-				// чтобы нижняя часть таблицы осталась на том же месте
-				// oNewTable.PositionV.Value = TableC.TableRowsBottom[oSelectedRows.End][0];
 			}
 			if (oSelectedRows.IsSelectionToEnd)
 			{
