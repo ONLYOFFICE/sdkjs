@@ -546,6 +546,7 @@ var editor;
 
 			var _options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.TXT);
 			_options.isNaturalDownload = true;
+			_options.isGetTextFromUrl = true;
 			this.asc_DownloadAs(_options);
 		}
 	};
