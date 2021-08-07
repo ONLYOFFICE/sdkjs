@@ -9718,7 +9718,7 @@
 			oRule.setOffset(offset, range, this, true);
 		}
 	};
-	Worksheet.prototype.moveConditionalFormatting = function (oBBoxFrom, oBBoxTo, copyRange, offset, wsTo, wsFrom) {
+	Worksheet.prototype.moveConditionalFormatting = function (oBBoxFrom, oBBoxTo, copyRange, offset, wsTo, wsFrom, bTransposeTo) {
 		var t = this;
 		if (!wsTo) {
 			wsTo = this;
@@ -9746,6 +9746,9 @@
 						if (!copyRange) {
 							constantPart = oBBoxFrom.difference(ruleRanges[i]);
 							_constantRanges = _constantRanges.concat(constantPart);
+						}
+						if (bTransposeTo) {
+							movePart = movePart.transpose(oBBoxFrom.c1, oBBoxFrom.r1);
 						}
 						movePart.setOffset(offset);
 						_moveRanges.push(movePart);

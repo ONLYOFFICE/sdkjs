@@ -1044,6 +1044,18 @@
 		Range.prototype.getHeight = function() {
 			return this.r2 - this.r1 + 1;
 		};
+		Range.prototype.transpose = function(startCol, startRow) {
+			if (startCol === undefined) {
+				startCol = this.c1;
+			}
+			if (startRow === undefined) {
+				startRow = this.r1;
+			}
+			var row0 = this.c1 - startCol + startRow;
+			var col0 = this.r1 - startRow + startCol;
+
+			return new Range(col0, row0,  col0 + (this.r2 - this.r1), row0 + (this.c2 - this.c1));
+		};
 
 		/**
 		 *

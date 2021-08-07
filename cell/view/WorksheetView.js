@@ -11595,7 +11595,7 @@
 		//conditional formatting
 		if (specialPasteProps.format && fromBinary) {
 			var offsetAll = new AscCommon.CellBase(arnToRange.r1 - refInsertBinary.r1, arnToRange.c1 - refInsertBinary.c1);
-			t.model.moveConditionalFormatting(refInsertBinary, arnToRange, true, offsetAll, this.model, val);
+			t.model.moveConditionalFormatting(refInsertBinary, arnToRange, true, offsetAll, this.model, val, specialPasteProps.transpose);
 		}
 
 		//sparklines
