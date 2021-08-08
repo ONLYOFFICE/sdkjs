@@ -470,7 +470,7 @@
 						_newRanges = [];
 						//добавляем сдвинутую часть диапазона
 						_newRanges.push(intersection);
-						_offset = new AscCommon.CellBase(0, offset.col ? diff : -diff, 0);
+						_offset = new AscCommon.CellBase(0, offset.col > 0 ? diff : -diff, 0);
 						otherPart = _newRanges[0].difference(_range);
 						_newRanges[0].setOffset(_offset);
 						//исключаем сдвинутую часть из диапазона
