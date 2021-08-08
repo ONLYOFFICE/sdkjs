@@ -1674,7 +1674,7 @@
 		}
 		if (null != this.BorderColor) {
 			writer.WriteBool(true);
-			writer.WriteLong(this.Color.getType());
+			writer.WriteLong(this.BorderColor.getType());
 			this.BorderColor.Write_ToBinary2(writer);
 		} else {
 			writer.WriteBool(false);
@@ -1751,6 +1751,7 @@
 			}
 			return _color;
 		};
+
 		if (reader.GetBool()) {
 			this.Color = readColor();
 		}
