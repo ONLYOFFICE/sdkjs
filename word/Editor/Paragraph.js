@@ -4602,6 +4602,15 @@ Paragraph.prototype.IncDec_FontSize = function(bIncrease)
 			}
 			else if (null !== RItem && null !== LItem && para_Text === RItem.Type && para_Text === LItem.Type && false === RItem.IsPunctuation() && false === LItem.IsPunctuation())
 			{
+				var oLogicDocument = this.LogicDocument;
+				var oDocPos        = null;
+
+				if (oLogicDocument)
+				{
+					oDocPos = oLogicDocument.GetContentPosition(false);
+					oLogicDocument.TrackDocumentPositions([oDocPos]);
+				}
+
 				var SearchSPos = new CParagraphSearchPos();
 				var SearchEPos = new CParagraphSearchPos();
 
@@ -4620,6 +4629,12 @@ Paragraph.prototype.IncDec_FontSize = function(bIncrease)
 
 				// Убираем селект
 				this.RemoveSelection();
+
+				if (oDocPos)
+				{
+					oLogicDocument.RefreshDocumentPositions([oDocPos]);
+					oLogicDocument.SetContentPosition(oDocPos, 0, 0);
+				}
 			}
 			else
 			{
