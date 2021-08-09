@@ -2408,25 +2408,28 @@
 					stack[0].type === AscCommonExcel.cElementType.cellsRange3D)) {
 					return asc_error.NotSingleReferenceCannotUsed;
 				}
-				for (var i = 0; i < stack.length; i++) {
-					if (stack[i]) {
-						//допускаются только абсолютные ссылки
-						if (stack[i].type === AscCommonExcel.cElementType.cellsRange ||
-							stack[i].type === AscCommonExcel.cElementType.cellsRange3D ||
-							stack[i].type === AscCommonExcel.cElementType.cell ||
-							stack[i].type === AscCommonExcel.cElementType.cell3D) {
-							//ссылки должны быть только абсолютные
-							var _range = stack[i].getRange();
-							if (_range.bbox) {
-								_range = _range.bbox;
-							}
-							var isAbsRow1 = _range.isAbsRow(_range.refType1);
-							var isAbsCol1 = _range.isAbsCol(_range.refType1);
-							var isAbsRow2 = _range.isAbsRow(_range.refType2);
-							var isAbsCol2 = _range.isAbsCol(_range.refType2);
 
-							if (!isAbsRow1 || !isAbsCol1 || !isAbsRow2 || !isAbsCol2) {
-								return asc_error.CannotUseRelativeReference;
+				if (type === Asc.ECfType.colorScale || type === Asc.ECfType.dataBar || type === Asc.ECfType.iconSet) {
+					for (var i = 0; i < stack.length; i++) {
+						if (stack[i]) {
+							//допускаются только абсолютные ссылки
+							if (stack[i].type === AscCommonExcel.cElementType.cellsRange ||
+								stack[i].type === AscCommonExcel.cElementType.cellsRange3D ||
+								stack[i].type === AscCommonExcel.cElementType.cell ||
+								stack[i].type === AscCommonExcel.cElementType.cell3D) {
+								//ссылки должны быть только абсолютные
+								var _range = stack[i].getRange();
+								if (_range.bbox) {
+									_range = _range.bbox;
+								}
+								var isAbsRow1 = _range.isAbsRow(_range.refType1);
+								var isAbsCol1 = _range.isAbsCol(_range.refType1);
+								var isAbsRow2 = _range.isAbsRow(_range.refType2);
+								var isAbsCol2 = _range.isAbsCol(_range.refType2);
+
+								if (!isAbsRow1 || !isAbsCol1 || !isAbsRow2 || !isAbsCol2) {
+									return asc_error.CannotUseRelativeReference;
+								}
 							}
 						}
 					}
