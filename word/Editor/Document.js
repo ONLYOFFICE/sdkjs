@@ -9092,6 +9092,12 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 				this.DrawingObjects.resetSelection();
 				this.RemoveSelection();
 				oDstPictureCC.SelectContentControl();
+
+				var sKey = oDstPictureCC.GetFormKey();
+				if (arrParaDrawings[0].IsPicture() && sKey)
+				{
+					this.OnChangeForm(sKey, oDstPictureCC, arrParaDrawings[0].GraphicObj.getImageUrl());
+				}
 			}
 
 			return;

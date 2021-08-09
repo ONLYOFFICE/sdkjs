@@ -4609,8 +4609,15 @@ CDocumentContent.prototype.InsertContent = function(SelectedContent, NearPos)
 				{
 					this.LogicDocument.RemoveSelection();
 					oDstPictureCC.SelectContentControl();
+
+					var sKey = oDstPictureCC.GetFormKey();
+					if (arrParaDrawings[0].IsPicture() && sKey)
+					{
+						this.LogicDocument.OnChangeForm(sKey, oDstPictureCC, arrParaDrawings[0].GraphicObj.getImageUrl());
+					}
 				}
 			}
+
 
 			return;
 		}
