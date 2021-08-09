@@ -243,9 +243,30 @@ CGraphicObjects.prototype =
                 var oApi = Asc.editor || editor;
                 var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
 
-                var oShape = null;
-                if (isDrawHandles && (oShape = AscCommon.g_oTableId.Get_ById(ret.objectId)) && oShape.isForm() && oShape.getInnerForm() && oShape.getInnerForm().IsFormLocked())
-                	isDrawHandles = false;
+                var oShape     = null;
+                var oInnerForm = null;
+                if ((oShape = AscCommon.g_oTableId.Get_ById(ret.objectId)) && oShape.isForm() && (oInnerForm = oShape.getInnerForm()))
+				{
+					if (isDrawHandles && oInnerForm.IsFormLocked())
+						isDrawHandles = false;
+
+					// Данная ситуация обрабатывается отдельно, т.к. картиночная форма находится внутри другой
+					// автофигуры и мы специально не даем заходить во внутреннюю, поэтому дополнительно здесь
+					// обрабатываем попадание в ContentControl
+					var oPara;
+					if (oInnerForm.IsPictureForm() && oInnerForm.IsFixedForm() && (oPara = oInnerForm.GetParagraph()))
+					{
+						var X = x, Y = y;
+						var oTransform = oPara.Get_ParentTextInvertTransform();
+						if (oTransform)
+						{
+							X = oTransform.TransformPointX(x, y);
+							Y = oTransform.TransformPointY(x, y);
+						}
+
+						oInnerForm.DrawContentControlsTrack(true, X, Y, 0);
+					}
+				}
 
                 if(isDrawHandles === false)
                 {
