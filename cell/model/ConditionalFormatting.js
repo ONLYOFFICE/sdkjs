@@ -509,6 +509,9 @@
 		}
 		if (isChange) {
 			this.setLocation(newRanges, ws, addToHistory);
+			if (ws) {
+				ws.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange(newRanges))
+			}
 		}
 	};
 
