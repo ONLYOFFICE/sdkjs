@@ -1275,7 +1275,7 @@
 	CConditionalFormattingRule.prototype.asc_setValue1 = function (val) {
 		//чищу всегда, поскольку от интерфейса всегда заново выставляются оба значения
 		this.aRuleElements = [];
-		val = this.correctFromInterface(val);
+		val = correctFromInterface(val);
 
 		this.aRuleElements[0] = new CFormulaCF();
 		this.aRuleElements[0].Text = val;
@@ -1285,50 +1285,10 @@
 			this.aRuleElements = [];
 		}
 
-		val = this.correctFromInterface(val);
+		val = correctFromInterface(val);
 
 		this.aRuleElements[1] = new CFormulaCF();
 		this.aRuleElements[1].Text = val;
-	};
-
-	CConditionalFormattingRule.prototype.correctFromInterface = function (val) {
-		var t = this;
-
-		var isNumeric = !isNaN(parseFloat(val)) && isFinite(val);
-		if (!isNumeric) {
-			var isDate;
-			var isFormula;
-
-			if (val[0] === "=") {
-				val = val.slice(1);
-				isFormula = true;
-			} else {
-				isDate = AscCommon.g_oFormatParser.parseDate(val, AscCommon.g_oDefaultCultureInfo);
-			}
-
-			//храним число
-			if (isDate) {
-				val = isDate.value;
-				return val;
-			}
-
-			if (!isFormula) {
-				val = this._addQuotes(val);
-			}
-		}
-
-		return val;
-	};
-
-	CConditionalFormattingRule.prototype._addQuotes = function (val) {
-		var _res;
-		if (val[0] === '"') {
-			_res = val.replace(/\"/g, "\"\"");
-			_res = "\"" + _res + "\"";
-		} else {
-			_res = "\"" + val + "\"";
-		}
-		return _res;
 	};
 
 	CConditionalFormattingRule.prototype.asc_setColorScaleOrDataBarOrIconSetRule = function (val) {
@@ -2272,7 +2232,7 @@
 		return this.Type;
 	};
 	CConditionalFormatValueObject.prototype.asc_getVal = function () {
-		return this.Val;
+		return !isNumeric(this.Val) ? "=" + this.Val : this.Val;
 	};
 	CConditionalFormatValueObject.prototype.asc_setGte = function (val) {
 		this.Gte = val;
@@ -2281,6 +2241,7 @@
 		this.Type = val;
 	};
 	CConditionalFormatValueObject.prototype.asc_setVal = function (val) {
+		val = correctFromInterface(val);
 		this.Val = (val !== undefined && val !== null) ? val + "" : val;
 	};
 	CConditionalFormatValueObject.prototype.isEqual = function (elem) {
@@ -2461,9 +2422,6 @@
 			return _formulaParsed;
 		};
 
-		var isNumeric = function (_val) {
-			return !isNaN(parseFloat(_val)) && isFinite(_val);
-		};
 
 		var _checkValue = function(_val, _type, _isNumeric) {
 			var fParser, _error;
@@ -2608,6 +2566,48 @@
 			}
 		}
 	}
+
+	function correctFromInterface(val) {
+		var _isNumeric = isNumeric(val);
+		if (!_isNumeric) {
+			var isDate;
+			var isFormula;
+
+			if (val[0] === "=") {
+				val = val.slice(1);
+				isFormula = true;
+			} else {
+				isDate = AscCommon.g_oFormatParser.parseDate(val, AscCommon.g_oDefaultCultureInfo);
+			}
+
+			//храним число
+			if (isDate) {
+				val = isDate.value;
+				return val;
+			}
+
+			if (!isFormula) {
+				val = addQuotes(val);
+			}
+		}
+
+		return val;
+	}
+
+	function addQuotes (val) {
+		var _res;
+		if (val[0] === '"') {
+			_res = val.replace(/\"/g, "\"\"");
+			_res = "\"" + _res + "\"";
+		} else {
+			_res = "\"" + val + "\"";
+		}
+		return _res;
+	}
+
+	var isNumeric = function (_val) {
+		return !isNaN(parseFloat(_val)) && isFinite(_val);
+	};
 
 	var cDefIconSize = 16;
 	var cDefIconFont = 11;
