@@ -25477,14 +25477,15 @@ CDocument.prototype.PreConvertTextToTable = function(oProps)
 		oProps = new Asc.CAscTextToTableProperties(this, this.GetSelectedContent());
 		var separator = {tab : true, comma : true};
 		var Elements = oProps.Selected.Elements;
-		function parseParagraph (Paragraph) {
+		var parseParagraph = function(oPara)
+		{
 			if (separator.tab || separator.comma)
 			{
 				var hasTab = false;
 				var hasComma = false;
-				for (var j = 0; j < Paragraph.Content.length && (!hasTab || !hasComma); j++)
+				for (var j = 0; j < oPara.Content.length && (!hasTab || !hasComma); j++)
 				{
-					var oInsideEl = Paragraph.Content[j];
+					var oInsideEl = oPara.Content[j];
 					if (oInsideEl.Type === para_Run)
 					{
 						for (var k = 0; k < oInsideEl.Content.length; k++)
