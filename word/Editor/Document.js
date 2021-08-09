@@ -25477,14 +25477,15 @@ CDocument.prototype.PreConvertTextToTable = function(oProps)
 		oProps = new Asc.CAscTextToTableProperties(this, this.GetSelectedContent());
 		var separator = {tab : true, comma : true};
 		var Elements = oProps.Selected.Elements;
-		function parseParagraph (Paragraph) {
+		var parseParagraph = function(oPara)
+		{
 			if (separator.tab || separator.comma)
 			{
 				var hasTab = false;
 				var hasComma = false;
-				for (var j = 0; j < Paragraph.Content.length && (!hasTab || !hasComma); j++)
+				for (var j = 0; j < oPara.Content.length && (!hasTab || !hasComma); j++)
 				{
-					var oInsideEl = Paragraph.Content[j];
+					var oInsideEl = oPara.Content[j];
 					if (oInsideEl.Type === para_Run)
 					{
 						for (var k = 0; k < oInsideEl.Content.length; k++)
@@ -25569,15 +25570,15 @@ CDocument.prototype.private_PreConvertTextToTable = function(oProps, oSelectedCo
 	var types         = { 1 : 1, 2 : 1, 52 : 1, 53 : 1, 55 : 1};
 	var bEmptyRow     = true;
 	
-	function parseParagraph (oParagraph, Document)
+	var parseParagraph = function(oPara, oDoc)
 	{
-		var oNewParagraph = new Paragraph(Document.DrawingDocument, Document);
+		var oNewParagraph = new Paragraph(oDoc.DrawingDocument, oDoc);
 		oArrCells.unshift([oNewParagraph]);
 		bEmptyRow = false;
 
-		for (var j = oParagraph.Content.length - 1; j >= 0; j--)
+		for (var j = oPara.Content.length - 1; j >= 0; j--)
 		{
-			var oSecondEl = oParagraph.Content[j];
+			var oSecondEl = oPara.Content[j];
 			if (oSecondEl.Type === para_Run)
 			{
 				for (var k = oSecondEl.Content.length - 1; k >= 0; k--)
@@ -25591,7 +25592,7 @@ CDocument.prototype.private_PreConvertTextToTable = function(oProps, oSelectedCo
 						var oNewRun = oSecondEl.Split2(k);
 						oNewRun.Remove_FromContent(0, 1);
 						oNewParagraph.AddToContent(0, oNewRun);
-						oNewParagraph = new Paragraph(Document.DrawingDocument, Document);
+						oNewParagraph = new Paragraph(oDoc.DrawingDocument, oDoc);
 						oArrCells.unshift([oNewParagraph]);
 						bEmptyRow = false;
 					}
@@ -25624,7 +25625,7 @@ CDocument.prototype.private_PreConvertTextToTable = function(oProps, oSelectedCo
 							oMath.Root.Correct_Content();
 							oNewParagraph.AddToContent(0, oMath);
 							oMath = new ParaMath();
-							oNewParagraph = new Paragraph(Document.DrawingDocument, Document);
+							oNewParagraph = new Paragraph(oDoc.DrawingDocument, oDoc);
 							oArrCells.unshift([oNewParagraph]);
 							bEmptyRow = false;
 						}
@@ -25674,7 +25675,7 @@ CDocument.prototype.private_PreConvertTextToTable = function(oProps, oSelectedCo
 								var oNewRun = oThirdEl.Split2(p);
 								oNewRun.Remove_FromContent(0, 1);
 								oNewParagraph.AddToContent(0, oNewRun);
-								oNewParagraph = new Paragraph(Document.DrawingDocument, Document);
+								oNewParagraph = new Paragraph(oDoc.DrawingDocument, oDoc);
 								oArrCells.unshift([oNewParagraph]);
 							}
 

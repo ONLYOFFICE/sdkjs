@@ -2417,13 +2417,13 @@
 		var Cols          = bFixed ? this.Cols : 0;
 		var types         = { 1 : 1, 2 : 1, 52 : 1, 53 : 1, 55 : 1};
 
-		function parseParagraph (Paragraph)
+		var parseParagraph = function(oPara)
 		{
 			Cells++;
 
-			for (var j = 0; j < Paragraph.Content.length; j++)
+			for (var j = 0; j < oPara.Content.length; j++)
 			{
-				var oSecondEl = Paragraph.Content[j];
+				var oSecondEl = oPara.Content[j];
 				if (oSecondEl.Type === para_Run)
 				{
 					for (var k = 0; k < oSecondEl.Content.length; k++)
