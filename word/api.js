@@ -7595,6 +7595,11 @@ background-repeat: no-repeat;\
 			this.isApplyChangesOnOpen = false;
 			this._openDocumentEndCallback();
 		}
+		if (this.isApplyChangesOnVersionHistory)
+		{
+			this.isApplyChangesOnVersionHistory = false;
+			this._openVersionHistoryEndCallback();
+		}
 	};
 
 	asc_docs_api.prototype.initEvents2MobileAdvances = function()

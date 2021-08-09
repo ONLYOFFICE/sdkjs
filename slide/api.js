@@ -586,6 +586,7 @@
 		this.bNoSendComments = false;
 
 		this.isApplyChangesOnOpen        = false;
+		this.isApplyChangesOnVersionHistory = false;
 
         this.IsSpellCheckCurrentWord = false;
 
@@ -5444,6 +5445,11 @@ background-repeat: no-repeat;\
 		{
 			this.isApplyChangesOnOpen = false;
 			this._openDocumentEndCallback();
+		}
+		if (this.isApplyChangesOnVersionHistory)
+		{
+			this.isApplyChangesOnVersionHistory = false;
+			this._openVersionHistoryEndCallback();
 		}
 
 		this.WordControl.SlideDrawer.CheckRecalculateSlide();

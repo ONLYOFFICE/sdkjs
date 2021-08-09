@@ -1754,6 +1754,11 @@ var editor;
       this.wb.drawWorksheet();
       History.TurnOn();
     }
+    if (this.isApplyChangesOnVersionHistory)
+    {
+      this.isApplyChangesOnVersionHistory = false;
+      this._openVersionHistoryEndCallback();
+    }
   };
 
   spreadsheet_api.prototype._onCleanSelection = function() {
