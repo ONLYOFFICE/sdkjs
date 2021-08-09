@@ -3310,6 +3310,7 @@ CDocument.prototype.private_FinalizeFormChange = function()
 		{
 			if (oPr)
 			{
+				var isPlaceHolder = oForm.IsPlaceHolder();
 				for (var sId in this.SpecialForms)
 				{
 					var oTempForm = this.SpecialForms[sId];
@@ -3325,6 +3326,8 @@ CDocument.prototype.private_FinalizeFormChange = function()
 							if (oPicture)
 								oPicture.setBlipFill(AscFormat.CreateBlipFillRasterImageId(oPr));
 						}
+						oTempForm.SetShowingPlcHdr(isPlaceHolder);
+						oTempForm.UpdatePictureFormLayout();
 					}
 				}
 			}
@@ -9088,6 +9091,9 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 			{
 				oSrcPicture.setParent(arrParaDrawings[0]);
 				arrParaDrawings[0].Set_GraphicObject(oSrcPicture);
+
+				if (oDstPictureCC.IsPictureForm())
+					oDstPictureCC.UpdatePictureFormLayout();
 
 				this.DrawingObjects.resetSelection();
 				this.RemoveSelection();

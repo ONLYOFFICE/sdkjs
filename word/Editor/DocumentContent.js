@@ -4605,6 +4605,9 @@ CDocumentContent.prototype.InsertContent = function(SelectedContent, NearPos)
 				oSrcPicture.setParent(arrParaDrawings[0]);
 				arrParaDrawings[0].Set_GraphicObject(oSrcPicture);
 
+				if (oDstPictureCC.IsPictureForm())
+					oDstPictureCC.UpdatePictureFormLayout();
+
 				if (this.LogicDocument)
 				{
 					this.LogicDocument.RemoveSelection();

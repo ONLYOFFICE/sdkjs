@@ -570,8 +570,11 @@ MoveInlineObject.prototype =
 					oDrawing.setParent(arrParaDrawings[0]);
 					arrParaDrawings[0].Set_GraphicObject(oDrawing);
 
+					if (oDstPictureCC.IsPictureForm())
+						oDstPictureCC.UpdatePictureFormLayout();
+
 					var sKey = oDstPictureCC.GetFormKey();
-					if (arrParaDrawings[0].IsPicture() && sKey &&  oDstPictureCC.GetLogicDocument())
+					if (arrParaDrawings[0].IsPicture() && sKey && oDstPictureCC.GetLogicDocument())
 					{
 						oDstPictureCC.GetLogicDocument().OnChangeForm(sKey, oDstPictureCC, arrParaDrawings[0].GraphicObj.getImageUrl());
 					}
