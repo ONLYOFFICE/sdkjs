@@ -1206,6 +1206,9 @@ CCellCommentator.prototype.mergeComments = function (range) {
 	var i, length, deleteComments = [], oComment, r1 = range.r1, c1 = range.c1, mergeComment = null;
 	for (i = 0, length = aComments.length; i < length; ++i) {
 		oComment = aComments[i];
+		if (!AscCommon.UserInfoParser.canViewComment(oComment.sUserName)) {
+			continue;
+		}
 		if (range.contains(oComment.nCol, oComment.nRow)) {
 			if (null === mergeComment)
 				mergeComment = oComment;
