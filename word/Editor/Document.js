@@ -21977,7 +21977,7 @@ CDocument.prototype.BeginViewModeInReview = function(nMode)
 	this.CollaborativeEditing.Set_Fast(false);
 
 	this.History.SaveRedoPoints();
-	if (isResult)
+	if (this.ViewModeInReview.mode === Asc.c_oAscDisplayModeInReview.Final)
 		this.AcceptAllRevisionChanges(true, false);
 	else
 		this.RejectAllRevisionChanges(true, false);
