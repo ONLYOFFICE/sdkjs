@@ -269,6 +269,14 @@ var c_oAscDocumentRefenceToType = {
 	NoteNumber         : 8,
 	NoteNumberFormatted : 9
 };
+
+var c_oAscDisplayModeInReview = {
+	Edit     : 0,
+	Final    : 1,
+	Original : 2,
+	Simple   : 3
+};
+
 //------------------------------------------------------------export---------------------------------------------------
 var prot;
 window['Asc'] = window['Asc'] || {};
@@ -438,3 +446,10 @@ prot['OnlyLabelAndNumber'] = prot.OnlyLabelAndNumber;
 prot['OnlyCaptionText']    = prot.OnlyCaptionText;
 prot['NoteNumber']         = prot.NoteNumber;
 prot['NoteNumberFormatted'] = prot.NoteNumberFormatted;
+
+prot = window['Asc']['c_oAscDisplayModeInReview'] = window['Asc'].c_oAscDisplayModeInReview = c_oAscDisplayModeInReview;
+prot['Edit']     = prot.Edit;
+prot['Final']    = prot.Final;
+prot['Original'] = prot.Original;
+prot['Simple']   = prot.Simple;
+

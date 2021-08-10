@@ -523,7 +523,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias SetDisplayModeInReview
-	 * @param {"final" | "original" | "edit"} [sMode="edit"]
+	 * @param {"final" | "original" | "edit" | "simple"} [sMode="edit"]
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_SetDisplayModeInReview"] = function(sMode)
 	{
@@ -531,21 +531,14 @@
 		if (!oLogicDocument)
 			return;
 
-		var isViewModeInReview = oLogicDocument.IsViewModeInReview();
-		if (!sMode || "edit" === sMode)
-		{
-			if (isViewModeInReview)
-			{
-				oLogicDocument.EndViewModeInReview();
-				this.sendEvent("asc_onEndViewModeInReview");
-			}
-		}
-		else if ("final" === sMode || "original" === sMode)
-		{
-			var isFinal = "final" === sMode;
-			oLogicDocument.BeginViewModeInReview(isFinal);
-			this.sendEvent("asc_onBeginViewModeInReview", isFinal);
-		}
+		if ("final" === sMode)
+			oLogicDocument.SetDisplayModeInReview(Asc.c_oAscDisplayModeInReview.Final, true);
+		else if ("original")
+			oLogicDocument.SetDisplayModeInReview(Asc.c_oAscDisplayModeInReview.Original, true);
+		else if ("simple")
+			oLogicDocument.SetDisplayModeInReview(Asc.c_oAscDisplayModeInReview.Simple, true);
+		else
+			oLogicDocument.SetDisplayModeInReview(Asc.c_oAscDisplayModeInReview.Edit, true);
 	};
 
 })(window);

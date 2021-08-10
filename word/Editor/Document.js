@@ -2569,8 +2569,8 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.CheckContentControlsLock = true;
 
 	this.ViewModeInReview = {
-		mode                : 0,     // -1 - исходный, 0 - со всеми изменениями, 1 - результат
-		isFastCollaboration : false
+		mode                : Asc.c_oAscDisplayModeInReview.Edit,
+		isFastCollaboration : false,
 	};
 
 	this.SpecialForms            = {}; // Список специальных форм в документе
@@ -21966,12 +21966,12 @@ CDocument.prototype.OnEndLoadScript = function()
 		arrParagraphs[nIndex].Recalc_RunsCompiledPr();
 	}
 };
-CDocument.prototype.BeginViewModeInReview = function(isResult)
+CDocument.prototype.BeginViewModeInReview = function(nMode, isSendEvent)
 {
-	if (0 !== this.ViewModeInReview.mode)
+	if (this.IsViewModeInReview())
 		this.EndViewModeInReview();
 
-	this.ViewModeInReview.mode = isResult ? 1 : -1;
+	this.ViewModeInReview.mode = undefined !== nMode ? nMode : Asc.c_oAscDisplayModeInReview.Final;
 
 	this.ViewModeInReview.isFastCollaboration = this.CollaborativeEditing.Is_Fast();
 	this.CollaborativeEditing.Set_Fast(false);
@@ -21983,11 +21983,17 @@ CDocument.prototype.BeginViewModeInReview = function(isResult)
 		this.RejectAllRevisionChanges(true, false);
 
 	this.CollaborativeEditing.Set_GlobalLock(true);
+
+	if (isSendEvent)
+		this.sendEvent("asc_onBeginViewModeInReview", this.ViewModeInReview.mode === Asc.c_oAscDisplayModeInReview.Final);
 };
-CDocument.prototype.EndViewModeInReview = function()
+CDocument.prototype.EndViewModeInReview = function(nMode, isSendEvent)
 {
-	if (0 === this.ViewModeInReview.mode)
+	if (!this.IsViewModeInReview())
+	{
+		this.ViewModeInReview.mode = undefined !== nMode ? nMode : Asc.c_oAscDisplayModeInReview.Edit;
 		return;
+	}
 
 	this.CollaborativeEditing.Set_GlobalLock(false);
 
@@ -21998,7 +22004,34 @@ CDocument.prototype.EndViewModeInReview = function()
 	if (this.ViewModeInReview.isFastCollaboration)
 		this.CollaborativeEditing.Set_Fast(true);
 
-	this.ViewModeInReview.mode = 0;
+	this.ViewModeInReview.mode = undefined !== nMode ? nMode : Asc.c_oAscDisplayModeInReview.Edit;
+
+	if (isSendEvent)
+		this.sendEvent("asc_onEndViewModeInReview");
+};
+CDocument.prototype.IsViewModeInReview = function()
+{
+	return (Asc.c_oAscDisplayModeInReview.Final === this.ViewModeInReview.mode
+		|| Asc.c_oAscDisplayModeInReview.Original === this.ViewModeInReview.mode);
+};
+CDocument.prototype.SetDisplayModeInReview = function(nMode, isSendEvent)
+{
+	// У нас есть два режима редактирования Edit, Simple и два режима просмотра Final, Original
+	if (this.ViewModeInReview.mode === nMode)
+		return;
+
+	if (Asc.c_oAscDisplayModeInReview.Edit === nMode || Asc.c_oAscDisplayModeInReview.Simple === nMode)
+	{
+		this.EndViewModeInReview(nMode, isSendEvent);
+	}
+	else
+	{
+		this.BeginViewModeInReview(nMode, isSendEvent);
+	}
+};
+CDocument.prototype.GetDisplayModeInReview = function()
+{
+	return this.ViewModeInReview.mode;
 };
 CDocument.prototype.StartCollaborationEditing = function()
 {
@@ -22007,10 +22040,6 @@ CDocument.prototype.StartCollaborationEditing = function()
 		this.DrawingDocument.Start_CollaborationEditing();
 		this.EndViewModeInReview();
 	}
-};
-CDocument.prototype.IsViewModeInReview = function()
-{
-	return 0 !== this.ViewModeInReview.mode ? true : false;
 };
 CDocument.prototype.AddField = function(nType, oPr)
 {

@@ -9902,12 +9902,27 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.asc_BeginViewModeInReview = function(isFinal)
 	{
-		this.WordControl.m_oLogicDocument.BeginViewModeInReview(isFinal);
+		this.asc_SetDisplayModeInReview(isFinal ? Asc.c_oAscDisplayModeInReview.Final : Asc.c_oAscDisplayModeInReview.Original);
 	};
 	asc_docs_api.prototype.asc_EndViewModeInReview = function()
 	{
-		this.WordControl.m_oLogicDocument.EndViewModeInReview();
+		this.asc_SetDisplayModeInReview(Asc.c_oAscDisplayModeInReview.Edit);
 	};
+	asc_docs_api.prototype.asc_SetDisplayModeInReview = function(nMode)
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (oLogicDocument)
+			oLogicDocument.SetDisplayModeInReview(nMode);
+	};
+	asc_docs_api.prototype.asc_GetDisplayModeInReview = function()
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (oLogicDocument)
+			return oLogicDocument.GetDisplayModeInReview();
+
+		return Asc.c_oAscDisplayModeInReview.Edit;
+	};
+
 
 	asc_docs_api.prototype.asc_ShowDocumentOutline = function()
 	{
@@ -12008,6 +12023,8 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype['asc_BeginViewModeInReview']                 = asc_docs_api.prototype.asc_BeginViewModeInReview;
 	asc_docs_api.prototype['asc_EndViewModeInReview']                   = asc_docs_api.prototype.asc_EndViewModeInReview;
+	asc_docs_api.prototype['asc_SetDisplayModeInReview']                = asc_docs_api.prototype.asc_SetDisplayModeInReview;
+	asc_docs_api.prototype['asc_GetDisplayModeInReview']                = asc_docs_api.prototype.asc_GetDisplayModeInReview;
 
 	asc_docs_api.prototype['asc_ShowDocumentOutline']                   = asc_docs_api.prototype.asc_ShowDocumentOutline;
 	asc_docs_api.prototype['asc_HideDocumentOutline']                   = asc_docs_api.prototype.asc_HideDocumentOutline;
