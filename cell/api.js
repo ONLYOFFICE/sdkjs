@@ -621,6 +621,12 @@ var editor;
 			specialPasteHelper.specialPasteProps.property = Asc.c_oSpecialPasteProps.useTextImport;
 			specialPasteHelper.specialPasteProps.asc_setAdvancedOptions(options);
 
+			//remove last empty string
+			if (opt_text && opt_text.length > 1 && opt_text[opt_text.length - 1] &&
+				opt_text[opt_text.length - 1].length === 1 && opt_text[opt_text.length - 1][0] === "") {
+				opt_text.splice(opt_text.length - 1, 1);
+			}
+
 			var selectionRange;
 			var activeSheet = null;
 			if (opt_activeRange) {
