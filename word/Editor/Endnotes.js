@@ -244,7 +244,7 @@ CEndnotesController.prototype.IsEmptyPage = function(nPageAbs)
 {
 	var oPage = this.Pages[nPageAbs];
 	if (!oPage)
-		return false;
+		return true;
 
 	for (var nIndex = 0, nCount = oPage.Sections.length; nIndex < nCount; ++nIndex)
 	{
