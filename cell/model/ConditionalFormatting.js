@@ -1174,7 +1174,7 @@
 		var res = null;
 		var range;
 		if (val !== null && val !== undefined) {
-			val = this._addQuotes(val);
+			val = addQuotes(val);
 		}
 		if (this.ranges && this.ranges[0]) {
 			range = this.ranges[0];
