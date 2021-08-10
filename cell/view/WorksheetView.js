@@ -4076,8 +4076,14 @@
 		} else {
 			ctx.AddClipRect(x1, y1, w, h);
 			if (this._getCellCF(aRules, c, row, col, Asc.ECfType.iconSet) /*&& AscCommon.align_Left === ct.cellHA*/) {
-				textX +=
-					AscCommon.AscBrowser.convertToRetinaValue(getCFIconSize(font.getSize()) * this.getZoom(), true);
+				var iconSize = AscCommon.AscBrowser.convertToRetinaValue(getCFIconSize(font.getSize()) * this.getZoom(), true);
+				//TODO оставляю отступ 0, пересмотреть!
+				var indentIcon = 0;
+				if (AscCommon.align_Left === ct.cellHA) {
+					textX += iconSize;
+				} else if ((iconSize + textW + indentIcon) > w) {
+					textX += iconSize;
+				}
 			}
 			var pivotButtons = this.model.getPivotTableButtons(new Asc.Range(col, row, col, row));
 			if (pivotButtons && pivotButtons[0] && pivotButtons[0].idPivotCollapse &&
