@@ -12109,13 +12109,13 @@ CDocument.prototype.private_UpdateInterface = function(bSaveCurRevisionChange)
 	// Удаляем весь список
 	this.Api.sync_BeginCatchSelectedElements();
 
-	this.TrackRevisionsManager.BeginCollectChanges(bSaveCurRevisionChange);
+	this.TrackRevisionsManager.BeginCollectChanges(bSaveCurRevisionChange && !this.IsSimpleMarkupInReview());
 
 	// Уберем из интерфейса записи о том где мы находимся (параграф, таблица, картинка или колонтитул)
 	this.Api.ClearPropObjCallback();
 
 	this.Controller.UpdateInterfaceState();
-	this.TrackRevisionsManager.EndCollectChanges(this.Api);
+	this.TrackRevisionsManager.EndCollectChanges(this);
 
 	// Сообщаем, что список составлен
 	this.Api.sync_EndCatchSelectedElements();
@@ -22008,6 +22008,10 @@ CDocument.prototype.IsViewModeInReview = function()
 	return (Asc.c_oAscDisplayModeInReview.Final === this.ViewModeInReview.mode
 		|| Asc.c_oAscDisplayModeInReview.Original === this.ViewModeInReview.mode);
 };
+CDocument.prototype.IsSimpleMarkupInReview = function()
+{
+	return (this.ViewModeInReview.mode === Asc.c_oAscDisplayModeInReview.Simple);
+};
 CDocument.prototype.SetDisplayModeInReview = function(nMode, isSendEvent)
 {
 	// У нас есть два режима редактирования Edit, Simple и два режима просмотра Final, Original
@@ -22025,6 +22029,8 @@ CDocument.prototype.SetDisplayModeInReview = function(nMode, isSendEvent)
 	{
 		this.BeginViewModeInReview(nMode);
 	}
+
+	this.UpdateInterface();
 };
 CDocument.prototype.GetDisplayModeInReview = function()
 {
@@ -27203,10 +27209,21 @@ CTrackRevisionsManager.prototype.BeginCollectChanges = function(bSaveCurrentChan
 		}
 	}
 };
-CTrackRevisionsManager.prototype.EndCollectChanges = function(oEditor)
+CTrackRevisionsManager.prototype.EndCollectChanges = function(oDocument)
 {
-    if (true === this.private_HaveParasToCheck())
-        return;
+	if (true === this.private_HaveParasToCheck())
+		return;
+
+	var oEditor = oDocument.GetApi();
+	if (oDocument.IsSimpleMarkupInReview())
+	{
+		this.VisibleChanges = [];
+		this.CurChange      = null;
+
+		oEditor.sync_BeginCatchRevisionsChanges();
+		oEditor.sync_EndCatchRevisionsChanges();
+		return;
+	}
 
     if (null !== this.CurChange)
         this.VisibleChanges = [this.CurChange];
