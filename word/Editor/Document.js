@@ -21966,7 +21966,7 @@ CDocument.prototype.OnEndLoadScript = function()
 		arrParagraphs[nIndex].Recalc_RunsCompiledPr();
 	}
 };
-CDocument.prototype.BeginViewModeInReview = function(nMode, isSendEvent)
+CDocument.prototype.BeginViewModeInReview = function(nMode)
 {
 	if (this.IsViewModeInReview())
 		this.EndViewModeInReview();
@@ -21983,11 +21983,8 @@ CDocument.prototype.BeginViewModeInReview = function(nMode, isSendEvent)
 		this.RejectAllRevisionChanges(true, false);
 
 	this.CollaborativeEditing.Set_GlobalLock(true);
-
-	if (isSendEvent)
-		this.sendEvent("asc_onBeginViewModeInReview", this.ViewModeInReview.mode === Asc.c_oAscDisplayModeInReview.Final);
 };
-CDocument.prototype.EndViewModeInReview = function(nMode, isSendEvent)
+CDocument.prototype.EndViewModeInReview = function(nMode)
 {
 	if (!this.IsViewModeInReview())
 	{
@@ -22005,9 +22002,6 @@ CDocument.prototype.EndViewModeInReview = function(nMode, isSendEvent)
 		this.CollaborativeEditing.Set_Fast(true);
 
 	this.ViewModeInReview.mode = undefined !== nMode ? nMode : Asc.c_oAscDisplayModeInReview.Edit;
-
-	if (isSendEvent)
-		this.sendEvent("asc_onEndViewModeInReview");
 };
 CDocument.prototype.IsViewModeInReview = function()
 {
@@ -22020,13 +22014,16 @@ CDocument.prototype.SetDisplayModeInReview = function(nMode, isSendEvent)
 	if (this.ViewModeInReview.mode === nMode)
 		return;
 
+	if (isSendEvent)
+		this.sendEvent("asc_onChangeDisplayModeInReview", nMode);
+
 	if (Asc.c_oAscDisplayModeInReview.Edit === nMode || Asc.c_oAscDisplayModeInReview.Simple === nMode)
 	{
-		this.EndViewModeInReview(nMode, isSendEvent);
+		this.EndViewModeInReview(nMode);
 	}
 	else
 	{
-		this.BeginViewModeInReview(nMode, isSendEvent);
+		this.BeginViewModeInReview(nMode);
 	}
 };
 CDocument.prototype.GetDisplayModeInReview = function()
