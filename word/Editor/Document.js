@@ -25267,11 +25267,11 @@ CDocument.prototype.ConvertTextToTable = function(oProps)
 				
 				for (var i = Start + 1; i < End && !IsInCC; i++)
 				{
-					if (this.Content[i].GetType() === type_BlockLevelSdt)
+					if (this.Content[i].GetType() === AscCommonWord.type_BlockLevelSdt)
 						IsInCC = true;
 				}
 
-				if (this.Content[End].GetType() === type_BlockLevelSdt)
+				if (this.Content[End].GetType() === AscCommonWord.type_BlockLevelSdt)
 				{
 					if (this.Content[End].IsSelectedAll())
 					{
@@ -25289,7 +25289,7 @@ CDocument.prototype.ConvertTextToTable = function(oProps)
 					}
 				}
 
-				if (this.Content[Start].GetType() === type_BlockLevelSdt)
+				if (this.Content[Start].GetType() === AscCommonWord.type_BlockLevelSdt)
 				{
 					
 					if (this.Content[Start].IsSelectedAll())
@@ -25540,7 +25540,7 @@ CDocument.prototype.PreConvertTextToTable = function(oProps)
 		{
 			var oEl = Elements[i].Element;
 
-			if (oEl.GetType() === type_BlockLevelSdt)
+			if (oEl.GetType() === AscCommonWord.type_BlockLevelSdt)
 			{
 				for (var k = 0; k < oEl.Content.Content.length; k++)
 				{
@@ -25723,7 +25723,7 @@ CDocument.prototype.private_PreConvertTextToTable = function(oProps, oSelectedCo
 			if (!parseParagraph(oElement, this))
 				return;
 		}
-		else if (oElement.GetType() === type_BlockLevelSdt && ! oElement.IsForm())
+		else if (oElement.GetType() === AscCommonWord.type_BlockLevelSdt && ! oElement.IsForm())
 		{
 			if (oElement.IsPlaceHolder())
 			{

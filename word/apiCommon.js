@@ -2504,7 +2504,7 @@
 			{
 				parseParagraph(oElement);
 			}
-			else if (oElement.GetType() === type_BlockLevelSdt)
+			else if (oElement.GetType() === AscCommonWord.type_BlockLevelSdt)
 			{
 				for (var k = 0; k < oElement.Content.Content.length; k++)
 				{
