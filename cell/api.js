@@ -648,10 +648,10 @@ var editor;
 				if (range) {
 					if (activeSheet) {
 						selectionRange = activeSheet.selectionRange.clone();
-						activeSheet.selectionRange.ranges = [range];
+						activeSheet.selectionRange.ranges = [range.clone()];
 					} else {
 						selectionRange = ws.model.selectionRange.clone();
-						ws.model.selectionRange.ranges = [range];
+						ws.model.selectionRange.ranges = [range.clone()];
 					}
 				}
 			}
