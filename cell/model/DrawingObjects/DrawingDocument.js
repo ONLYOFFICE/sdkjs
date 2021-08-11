@@ -1632,70 +1632,49 @@ function CDrawingDocument()
             canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
 
             var ctx = canvas.getContext("2d");
-			ctx.fillStyle = "#FFFFFF";
-			ctx.fillRect(0, 0, canvas.width, canvas.height);
-			ctx.beginPath();
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
             var rPR = AscCommon.AscBrowser.retinaPixelRatio;
             
             if (!type)
             {
-                var width_px = parent.clientWidth;
-                var height_px = parent.clientHeight;
-
-                var canvas = parent.firstChild;
-                if (!canvas)
-                {
-                    canvas = document.createElement('canvas');
-                    canvas.style.cssText = "padding:0;margin:0;user-select:none;";
-                    canvas.style.width = width_px + "px";
-                    canvas.style.height = height_px + "px";
-                    if (width_px > 0 && height_px > 0)
-                        parent.appendChild(canvas);
-                }
-
-                canvas.width = AscCommon.AscBrowser.convertToRetinaValue(width_px, true);
-                canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
-
-                var ctx = canvas.getContext("2d");
-				ctx.fillStyle = "#FFFFFF";
-				ctx.fillRect(0, 0, canvas.width, canvas.height);
-				ctx.beginPath();
-                var line_distance = (height_px >> 1) - 2;
-                // TODo: подумать над тем как рассчитать сдвиг влево, эти значения подобраны эксперементально
+                var line_distance = height_px - 4;
+                // TODO: подумать над тем как рассчитать сдвиг влево, эти значения подобраны эксперементально
                 var xShift;
                 var yShift;
                 switch (i) {
                     case 0:
-                        xShift = 4;
-                        yShift = 5;
+                        xShift = 8;
+                        yShift = 9;
                         break;
                     case 1:
-                        xShift = 5;
-                        yShift = 4;
+                        xShift = 10;
+                        yShift = 7;
                         break;
                     case 2:
-                        xShift = 4;
-                        yShift = 7;
+                        xShift = 8;
+                        yShift = 12;
                         break;
                     case 3:
-                        xShift = 8;
-                        yShift = 7;
+                        xShift = 15;
+                        yShift = 12;
                         break;
                     case 4:
-                        xShift = 6;
-                        yShift = 6;
+                        xShift = 14;
+                        yShift = 12;
                         break;
                     case 5:
-                        xShift = 7;
-                        yShift = 7;
+                        xShift = 14;
+                        yShift = 15;
                         break;
                     case 6:
-                        xShift = 6;
-                        yShift = 5;
+                        xShift = 13;
+                        yShift = 9;
                         break;
                     case 7:
-                        xShift = 5;
-                        yShift = 5;
+                        xShift = 10;
+                        yShift = 8;
                         break;
                 } 
                 var x = (width_px >> 1 ) - xShift;
