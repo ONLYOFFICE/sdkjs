@@ -11550,6 +11550,9 @@ Paragraph.prototype.private_GetReviewChangeForHover = function(X, Y, CurPage, oC
 	if (this.Pages.length <= CurPage)
 		return null;
 
+	if (!this.LogicDocument || this.LogicDocument.IsSimpleMarkupInReview())
+		return null;
+
 	var arrChanges = this.private_GetReviewChangesByContentPos(oContentPos);
 	var oChange    = null;
 
