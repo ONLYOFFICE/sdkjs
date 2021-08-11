@@ -22019,7 +22019,7 @@ CDocument.prototype.SetDisplayModeInReview = function(nMode, isSendEvent)
 		return;
 
 	if (isSendEvent)
-		this.sendEvent("asc_onChangeDisplayModeInReview", nMode);
+		this.Api.sendEvent("asc_onChangeDisplayModeInReview", nMode);
 
 	if (Asc.c_oAscDisplayModeInReview.Edit === nMode || Asc.c_oAscDisplayModeInReview.Simple === nMode)
 	{

@@ -905,7 +905,8 @@
 		Hyperlink    : 1,
 		LockedObject : 2,
 		Footnote     : 3,
-		Form         : 4
+		Form         : 4,
+		Review       : 5
 	};
 
 	// selection type
@@ -2788,6 +2789,7 @@
 	prot['LockedObject'] = prot.LockedObject;
 	prot['Footnote']     = prot.Footnote;
 	prot['Form']         = prot.Form;
+	prot['Review']       = prot.Review;
 
 	window['Asc']['c_oAscMaxTooltipLength'] = window['Asc'].c_oAscMaxTooltipLength = c_oAscMaxTooltipLength;
 	window['Asc']['c_oAscMaxCellOrCommentLength'] = window['Asc'].c_oAscMaxCellOrCommentLength = c_oAscMaxCellOrCommentLength;

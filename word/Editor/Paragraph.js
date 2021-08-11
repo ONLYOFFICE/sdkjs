@@ -8639,6 +8639,11 @@ Paragraph.prototype.GetSelectedContent = function(oSelectedContent)
 		oSelectedContent.Add(new CSelectedElement(oPara, isAllSelected));
 	}
 };
+Paragraph.prototype.CheckHitInParaEnd = function(X, Y, CurPage)
+{
+	var oContentPos = this.Get_ParaContentPosByXY(X, Y, CurPage, false, true).InTextPos;
+	return (oContentPos.Get(0) === (this.Content.length - 1));
+};
 /**
  * Задаем сохраненное значение нумерации для данного параграфа (используется при печати выделенного фрагмента)
  * @param arrNumInfo
@@ -11252,10 +11257,12 @@ Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 
 	// TODO: Поиск гиперссылок и сносок нужно переделать через работу с SelectedElementsInfo
 	var oInfo = new CSelectedElementsInfo();
-	this.GetElementsInfoByXY(oInfo, X, Y, CurPage);
+
+	var oContentPos = this.Get_ParaContentPosByXY(X, Y, CurPage, false, false).Pos;
+	this.GetSelectedElementsInfo(oInfo, oContentPos, 0);
 
 	var bPageRefLink = false;
-	var arrComplexFields = this.GetComplexFieldsByXY(X, Y, CurPage);
+	var arrComplexFields = this.GetComplexFieldsByPos(oContentPos);
 	for (var nIndex = 0, nCount = arrComplexFields.length; nIndex < nCount; ++nIndex)
 	{
 		var oComplexField = arrComplexFields[nIndex];
@@ -11278,7 +11285,8 @@ Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 		isCheckBox = oContentControl.IsCheckBox() && oContentControl.CheckHitInContentControlByXY(X, Y, this.GetAbsolutePage(CurPage), false);
 	}
 
-	var Footnote  = this.CheckFootnote(X, Y, CurPage);
+	var Footnote      = this.CheckFootnote(X, Y, CurPage);
+	var oReviewChange = null;
 
 	if (isInText && null != oHyperlink && (Y <= this.Pages[CurPage].Bounds.Bottom && Y >= this.Pages[CurPage].Bounds.Top))
 	{
@@ -11292,6 +11300,11 @@ Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 		MMData.Type   = Asc.c_oAscMouseMoveDataTypes.Footnote;
 		MMData.Text   = Footnote.GetHint();
 		MMData.Number = Footnote.GetNumber();
+	}
+	else if ((oReviewChange = this.private_GetReviewChangeForHover(X, Y, CurPage, oContentPos, isInText)))
+	{
+		MMData.Type         = Asc.c_oAscMouseMoveDataTypes.Review;
+		MMData.ReviewChange = oReviewChange;
 	}
 	else
 	{
@@ -11503,6 +11516,76 @@ Paragraph.prototype.Document_UpdateInterfaceState = function()
 			}
 		}
 	}
+};
+Paragraph.prototype.private_GetReviewChangesByContentPos = function(oContentPos)
+{
+	var arrResultChanges = [];
+	if (!this.LogicDocument || !oContentPos)
+		return;
+
+	var oTrackManager = this.LogicDocument.GetTrackRevisionsManager();
+
+	var arrChanges = oTrackManager.GetElementChanges(this.GetId());
+	if (arrChanges.length > 0)
+	{
+		for (var nChangeIndex = 0, nChangesCount = arrChanges.length; nChangeIndex < nChangesCount; ++nChangeIndex)
+		{
+			var oChange     = arrChanges[nChangeIndex];
+			var nChangeType = oChange.get_Type();
+			if ((c_oAscRevisionsChangeType.TextAdd !== nChangeType
+				&& c_oAscRevisionsChangeType.TextRem !== nChangeType
+				&& c_oAscRevisionsChangeType.TextPr !== nChangeType)
+				|| (oContentPos.Compare(oChange.get_StartPos()) >= 0
+					&& oContentPos.Compare(oChange.get_EndPos()) <= 0))
+			{
+				arrResultChanges.push(oChange);
+			}
+		}
+	}
+
+	return arrResultChanges;
+};
+Paragraph.prototype.private_GetReviewChangeForHover = function(X, Y, CurPage, oContentPos, isInText)
+{
+	if (this.Pages.length <= CurPage)
+		return null;
+
+	var arrChanges = this.private_GetReviewChangesByContentPos(oContentPos);
+	var oChange    = null;
+
+	for (var nIndex = 0, nChangesCount = arrChanges.length; nIndex < nChangesCount; ++nIndex)
+	{
+		var oCurChange = arrChanges[nIndex];
+		var nType      = oCurChange.get_Type();
+		if (isInText && (Asc.c_oAscRevisionsChangeType.ParaAdd === nType || Asc.c_oAscRevisionsChangeType.ParaRem === nType))
+		{
+			if (this.CheckHitInParaEnd(X, Y, CurPage))
+				return oCurChange;
+		}
+		else if (Asc.c_oAscRevisionsChangeType.ParaPr === nType)
+		{
+			var oPr   = this.Get_CompiledPr2(false);
+			var X_min = -3 + Math.min(this.Pages[CurPage].X, this.Pages[CurPage].X + oPr.ParaPr.Ind.Left, this.Pages[CurPage].X + oPr.ParaPr.Ind.Left + oPr.ParaPr.Ind.FirstLine);
+			var Y_top = this.Pages[CurPage].Bounds.Top;
+			var Y_bot = this.Pages[CurPage].Bounds.Bottom;
+
+			if (Math.abs(X - X_min) < 2 && Y > Y_top - 2 && Y < Y_bot + 2)
+				return oCurChange;
+		}
+		else if (isInText && Asc.c_oAscRevisionsChangeType.TextPr === nType)
+		{
+			oChange = oCurChange;
+			break;
+		}
+		else if (isInText && (Asc.c_oAscRevisionsChangeType.TextAdd === nType || Asc.c_oAscRevisionsChangeType.TextRem === nType))
+		{
+			if (!oChange)
+				oChange = oCurChange;
+		}
+
+	}
+
+	return oChange;
 };
 /**
  * Функция, которую нужно вызвать перед удалением данного элемента

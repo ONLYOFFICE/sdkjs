@@ -533,9 +533,9 @@
 
 		if ("final" === sMode)
 			oLogicDocument.SetDisplayModeInReview(Asc.c_oAscDisplayModeInReview.Final, true);
-		else if ("original")
+		else if ("original" === sMode)
 			oLogicDocument.SetDisplayModeInReview(Asc.c_oAscDisplayModeInReview.Original, true);
-		else if ("simple")
+		else if ("simple" === sMode)
 			oLogicDocument.SetDisplayModeInReview(Asc.c_oAscDisplayModeInReview.Simple, true);
 		else
 			oLogicDocument.SetDisplayModeInReview(Asc.c_oAscDisplayModeInReview.Edit, true);

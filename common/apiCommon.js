@@ -4267,6 +4267,11 @@
 					this.Number = 1;
 					break;
 				}
+				case c_oAscMouseMoveDataTypes.Review:
+				{
+					this.ReviewChange = obj && obj.ReviewChange ? obj.ReviewChange : null;
+					break;
+				}
 			}
 		}
 		else
@@ -4309,6 +4314,10 @@
 	CMouseMoveData.prototype.get_FormHelpText = function()
 	{
 		return this.Text;
+	};
+	CMouseMoveData.prototype.get_ReviewChange = function()
+	{
+		return this.ReviewChange;
 	};
 
 
@@ -6323,6 +6332,7 @@
 	prot["get_FootnoteText"] =  prot.get_FootnoteText;
 	prot["get_FootnoteNumber"] = prot.get_FootnoteNumber;
 	prot["get_FormHelpText"] = prot.get_FormHelpText;
+	prot["get_ReviewChange"] = prot.get_ReviewChange;
 
 	window["Asc"]["asc_CUserInfo"] = window["Asc"].asc_CUserInfo = asc_CUserInfo;
 	prot = asc_CUserInfo.prototype;
