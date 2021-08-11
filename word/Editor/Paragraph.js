@@ -11550,8 +11550,19 @@ Paragraph.prototype.private_GetReviewChangeForHover = function(X, Y, CurPage, oC
 	if (this.Pages.length <= CurPage)
 		return null;
 
-	if (!this.LogicDocument || this.LogicDocument.IsSimpleMarkupInReview())
+	var oLogicDocument = this.LogicDocument;
+	if (!oLogicDocument || oLogicDocument.IsSimpleMarkupInReview())
 		return null;
+
+	var oTrackManager = oLogicDocument.GetTrackRevisionsManager();
+	var oCurChange    = oTrackManager.GetCurrentChange();
+	if (oCurChange
+		&& this === oTrackManager.GetCurrentChangeElement()
+		&& oContentPos.Compare(oCurChange.get_StartPos()) >= 0
+		&& oContentPos.Compare(oCurChange.get_EndPos()) <= 0)
+	{
+		return oCurChange;
+	}
 
 	var arrChanges = this.private_GetReviewChangesByContentPos(oContentPos);
 	var oChange    = null;
