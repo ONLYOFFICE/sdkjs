@@ -779,7 +779,7 @@ CTableCell.prototype =
             _Y = Transform.TransformPointY(X, Y);
         }
 
-        this.Content.UpdateCursorType(_X, _Y, CurPage);
+        return this.Content.UpdateCursorType(_X, _Y, CurPage);
     },
 
 	Content_DrawSelectionOnPage : function(CurPage)

@@ -3550,9 +3550,9 @@ CTable.prototype.UpdateCursorType = function(X, Y, CurPage)
 		}
 	}
 
-	var Cell_Pos = this.private_GetCellByXY(X, Y, CurPage);
-	var Cell     = this.Content[Cell_Pos.Row].Get_Cell(Cell_Pos.Cell);
-	Cell.Content_UpdateCursorType(X, Y, CurPage - Cell.Content.Get_StartPage_Relative());
+	var oCellPos = this.private_GetCellByXY(X, Y, CurPage);
+	var oCell    = this.GetRow(oCellPos.Row).GetCell(oCellPos.Cell);
+	oCell.Content_UpdateCursorType(X, Y, CurPage - oCell.Content.Get_StartPage_Relative());
 };
 CTable.prototype.StartTrackTable = function()
 {

@@ -11556,7 +11556,8 @@ Paragraph.prototype.private_GetReviewChangeForHover = function(X, Y, CurPage, oC
 
 	var oTrackManager = oLogicDocument.GetTrackRevisionsManager();
 	var oCurChange    = oTrackManager.GetCurrentChange();
-	if (oCurChange
+	if (isInText
+		&& oCurChange
 		&& this === oTrackManager.GetCurrentChangeElement()
 		&& oContentPos.Compare(oCurChange.get_StartPos()) >= 0
 		&& oContentPos.Compare(oCurChange.get_EndPos()) <= 0)
