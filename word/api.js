@@ -11425,6 +11425,52 @@ background-repeat: no-repeat;\
 		return true;
 	};
 
+	asc_docs_api.prototype.asc_GetSelectionBounds = function()
+	{
+		var oLogicDocument   = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return [[0,0], [0,0], [0,0], [0,0]];
+
+		var oDrawingDocument = oLogicDocument.GetDrawingDocument();
+		if (!oDrawingDocument)
+			return [[0,0], [0,0], [0,0], [0,0]];
+
+		var oSelectBounds = oLogicDocument.GetSelectionBounds();
+		if (!oSelectBounds || !oSelectBounds.Start || !oSelectBounds.End)
+			return [[0,0], [0,0], [0,0], [0,0]];
+
+		var x0 = oSelectBounds.Start.X;
+		var y0 = oSelectBounds.Start.Y;
+		var x1 = oSelectBounds.Start.X;
+		var y1 = oSelectBounds.Start.Y + oSelectBounds.Start.H;
+		var x2 = oSelectBounds.End.X + oSelectBounds.End.W;
+		var y2 = oSelectBounds.End.Y
+		var x3 = oSelectBounds.End.X + oSelectBounds.End.W;
+		var y3 = oSelectBounds.End.Y + oSelectBounds.End.H;
+
+		var oCurrentParagraph = oLogicDocument.GetCurrentParagraph();
+
+		var oMatrix = oCurrentParagraph ? oCurrentParagraph.Get_ParentTextTransform() : null;
+		if (oMatrix && !global_MatrixTransformer.IsIdentity(oMatrix))
+		{
+			x0 = oMatrix.TransformPointX(oSelectBounds.Start.X, oSelectBounds.Start.Y);
+			y0 = oMatrix.TransformPointY(oSelectBounds.Start.X, oSelectBounds.Start.Y);
+			x1 = oMatrix.TransformPointX(oSelectBounds.Start.X, oSelectBounds.Start.Y + oSelectBounds.Start.H);
+			y1 = oMatrix.TransformPointY(oSelectBounds.Start.X, oSelectBounds.Start.Y + oSelectBounds.Start.H);
+			x2 = oMatrix.TransformPointX(oSelectBounds.End.X + oSelectBounds.End.W, oSelectBounds.End.Y);
+			y2 = oMatrix.TransformPointY(oSelectBounds.End.X + oSelectBounds.End.W, oSelectBounds.End.Y);
+			x3 = oMatrix.TransformPointX(oSelectBounds.End.X + oSelectBounds.End.W, oSelectBounds.End.Y + oSelectBounds.End.H);
+			y3 = oMatrix.TransformPointY(oSelectBounds.End.X + oSelectBounds.End.W, oSelectBounds.End.Y + oSelectBounds.End.H);
+		}
+
+		var oPos0 = oDrawingDocument.ConvertCoordsToCursorWR(x0, y0, oSelectBounds.Start.Page, undefined, false);
+		var oPos1 = oDrawingDocument.ConvertCoordsToCursorWR(x1, y1, oSelectBounds.Start.Page, undefined, false);
+		var oPos2 = oDrawingDocument.ConvertCoordsToCursorWR(x2, y2, oSelectBounds.End.Page, undefined, false);
+		var oPos3 = oDrawingDocument.ConvertCoordsToCursorWR(x3, y3, oSelectBounds.End.Page, undefined, false);
+
+		return [[oPos0.X, oPos0.Y], [oPos1.X, oPos1.Y], [oPos2.X, oPos2.Y], [oPos3.X, oPos3.Y]];
+	};
+
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};
 	CAscSection.prototype['get_PageWidth']                              = CAscSection.prototype.get_PageWidth;
@@ -12095,6 +12141,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_PreConvertTextToTable']                 = asc_docs_api.prototype.asc_PreConvertTextToTable;
 	asc_docs_api.prototype['asc_ConvertTextToTable']                    = asc_docs_api.prototype.asc_ConvertTextToTable;
 	asc_docs_api.prototype['asc_ConvertTableToText']                    = asc_docs_api.prototype.asc_ConvertTableToText;
+
+	asc_docs_api.prototype['asc_GetSelectionBounds']                    = asc_docs_api.prototype.asc_GetSelectionBounds;
 
 
 	// mobile
