@@ -3740,7 +3740,7 @@
 		var isReverse = AscCommonExcel.EDataBarDirection.rightToLeft === oRuleElement.Direction;
 		var isMiddle = (AscCommonExcel.EDataBarAxisPosition.middle === oRuleElement.AxisPosition) ||
 			(AscCommonExcel.EDataBarAxisPosition.automatic === oRuleElement.AxisPosition && 0 > min && 0 < max);
-		if (isMiddle) {
+		/*if (isMiddle) {
 			if (isPositive) {
 				min = Math.max(0, min);
 			} else {
@@ -3759,24 +3759,29 @@
 			cellValue = min;
 		} else if (cellValue > max) {
 			cellValue = max;
-		}
+		}*/
 
 		var minLength = Math.floor(width * oRuleElement.MinLength / 100);
 		var maxLength = Math.floor(width * oRuleElement.MaxLength / 100);
-		var k = max - min;
-		k = k ? ((maxLength - minLength) / k) : 0;
-		var dataBarLength = minLength + (cellValue - min) * k;
+		var k = Math.abs(max) + Math.abs(min);
+		//k = k ? ((maxLength - minLength) / k) : 0;
+		var dataBarLength = ((maxLength - minLength) / k) * Math.abs(cellValue);
+		var middleX = x + ((maxLength - minLength) / k) * Math.abs(min);
 
 		color = (isPositive || oRuleElement.NegativeBarColorSameAsPositive) ? oRuleElement.Color : oRuleElement.NegativeColor;
 		if (0 !== dataBarLength && color) {
 			if (isMiddle) {
 				if (oRuleElement.AxisColor) {
 					ctx.setLineWidth(1).setLineDash([3, 1]).setStrokeStyle(oRuleElement.AxisColor);
-					ctx.beginPath().lineVer(x - 1 + Asc.floor(width / 2), top - 1, top - 1 + height - 1).stroke();
+					ctx.beginPath().lineVer(middleX, top - 1, top - 1 + height - 1).stroke();
 				}
 
-				dataBarLength = Asc.floor(dataBarLength / 2);
-				x += Asc.floor(width / 2) * (isReverse ? -1 : 1);
+				if (isPositive) {
+					x  = middleX;
+				}
+
+				//dataBarLength = Asc.floor(dataBarLength / 2);
+				//x += Asc.floor(width / 2) * (isReverse ? -1 : 1);
 			}
 
 			if (isReverse) {
