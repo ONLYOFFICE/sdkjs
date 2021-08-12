@@ -2415,24 +2415,23 @@
 		var Cells         = 0;
 		var Elements      = this.Selected.Elements;
 		var Cols          = bFixed ? this.Cols : 0;
-		var types         = { 1 : 1, 2 : 1, 52 : 1, 53 : 1, 55 : 1};
+		var types         = { 1 : 1, 2 : 1, 52 : 1, 53 : 1, 55 : 1, Run : 39, Math : 38, Tab : 21, InlineStd: 68, MathRun : 49};
 
 		var parseParagraph = function(oPara)
 		{
 			Cells++;
 
-			for (var j = 0; j < oPara.Content.length; j++)
+			// функция, чтобы не проверять на paraEnd
+			for (var j = 0; j <= oPara.GetElementsCount(); j++)
 			{
 				var oSecondEl = oPara.Content[j];
-				if (oSecondEl.Type === para_Run)
+				if (oSecondEl.GetType() === types.Run)
 				{
 					for (var k = 0; k < oSecondEl.Content.length; k++)
 					{
 						var oThirdEl = oSecondEl.Content[k];
-						if (oThirdEl.Type === para_End)
-							continue;
 
-						if ( (SeparatorType === 2 && oThirdEl.Type === para_Tab) || (types[oThirdEl.Type] && oThirdEl.Value === Separator) )
+						if ( (SeparatorType === 2 && oThirdEl.GetType() === types.Tab) || (types[oThirdEl.GetType()] && oThirdEl.Value === Separator) )
 						{
 							if (Cols)
 							{
@@ -2456,20 +2455,20 @@
 						}
 					}
 				}
-				else if ( (oSecondEl.Type === para_Math || oSecondEl.Type === para_InlineLevelSdt) && SeparatorType !== 1)
+				else if ( (oSecondEl.GetType() === types.Math || oSecondEl.GetType() === types.InlineStd) && SeparatorType !== 1)
 				{
-					var Content = oSecondEl.Type === para_Math ? oSecondEl.Root.Content : oSecondEl.Content;
+					var Content = oSecondEl.GetType() === types.Math  ? oSecondEl.Root.Content : oSecondEl.Content;
 					for (var k = 0; k < Content.length; k++)
 					{
 						var oThirdEl = Content[k];
-						if (oThirdEl.Type !== para_Math_Run && oThirdEl.Type !== para_Run)
+						if (oThirdEl.GetType() !== types.MathRun && oThirdEl.GetType() !== types.Run)
 							continue;
 
 						for (var p = 0; p < oThirdEl.Content.length; p++)
 						{
 							var oFourthEl = oThirdEl.Content[p];
 							var value = oFourthEl.value || oFourthEl.Value;
-							if ( (SeparatorType === 2 && oFourthEl.Type === para_Tab) || (types[oFourthEl.Type] && value === Separator) )
+							if ( (SeparatorType === 2 && oFourthEl.Type === types.Tab) || (types[oFourthEl.Type] && value === Separator) )
 							{
 								if (Cols)
 								{

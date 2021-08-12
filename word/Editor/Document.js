@@ -25495,27 +25495,27 @@ CDocument.prototype.PreConvertTextToTable = function(oProps)
 			{
 				var hasTab = false;
 				var hasComma = false;
-				for (var j = 0; j < oPara.Content.length && (!hasTab || !hasComma); j++)
+				for (var j = 0; j <= oPara.GetElementsCount() && (!hasTab || !hasComma); j++)
 				{
 					var oInsideEl = oPara.Content[j];
-					if (oInsideEl.Type === para_Run)
+					if (oInsideEl.GetType() === para_Run)
 					{
 						for (var k = 0; k < oInsideEl.Content.length; k++)
 						{
-							if (oInsideEl.Content[k].Type === para_Tab)
+							if (oInsideEl.Content[k].GetType() === para_Tab)
 								hasTab = true;
 
 							if (oInsideEl.Content[k].Value === 0x3B)
 								hasComma = true;
 						}
 					}
-					else if (oInsideEl.Type === para_Math || oInsideEl.Type === para_InlineLevelSdt)
+					else if (oInsideEl.GetType() === para_Math || oInsideEl.Type === para_InlineLevelSdt)
 					{
-						var Content = oInsideEl.Type === para_Math ? oInsideEl.Root.Content : oInsideEl.Content;
+						var Content = oInsideEl.GetType() === para_Math ? oInsideEl.Root.Content : oInsideEl.Content;
 						for (var k = 0; k < Content.length; k++)
 						{
 							var oThirdEl = Content[k];
-							if (oThirdEl.Type !== para_Math_Run && oThirdEl.Type !== para_Run)
+							if (oThirdEl.GetType() !== para_Math_Run && oThirdEl.GetType() !== para_Run)
 								continue;
 							
 							for (var p = 0; p < oThirdEl.Content.length; p++)
@@ -25588,18 +25588,16 @@ CDocument.prototype.private_PreConvertTextToTable = function(oProps, oSelectedCo
 		oArrCells.unshift([oNewParagraph]);
 		bEmptyRow = false;
 
-		for (var j = oPara.Content.length - 1; j >= 0; j--)
+		for (var j = oPara.GetElementsCount(); j >= 0; j--)
 		{
 			var oSecondEl = oPara.Content[j];
-			if (oSecondEl.Type === para_Run)
+			if (oSecondEl.GetType() === para_Run)
 			{
 				for (var k = oSecondEl.Content.length - 1; k >= 0; k--)
 				{
 					var oThirdEl = oSecondEl.Content[k];
-					if (oThirdEl.Type === para_End)
-						continue;
 
-					if ( (SeparatorType === 2 && oThirdEl.Type === para_Tab) || (types[oThirdEl.Type] && oThirdEl.Value === Separator) )
+					if ( (SeparatorType === 2 && oThirdEl.GetType() === para_Tab) || (types[oThirdEl.GetType()] && oThirdEl.Value === Separator) )
 					{
 						var oNewRun = oSecondEl.Split2(k);
 						oNewRun.Remove_FromContent(0, 1);
@@ -25613,13 +25611,13 @@ CDocument.prototype.private_PreConvertTextToTable = function(oProps, oSelectedCo
 						oNewParagraph.AddToContent(0, oSecondEl);
 				}
 			}
-			else if (oSecondEl.Type === para_Math && SeparatorType ===3)
+			else if (oSecondEl.GetType() === para_Math && SeparatorType ===3)
 			{
 				var oMath = new ParaMath();
 				for (var k = oSecondEl.Root.Content.length -1; k >= 0; k--)
 				{
 					var oThirdEl = oSecondEl.Root.Content[k];
-					if (oThirdEl.Type !== para_Math_Run)
+					if (oThirdEl.GetType() !== para_Math_Run)
 					{
 						oMath.Root.AddToContent(0, oThirdEl);
 						oSecondEl.Root.Remove_FromContent(k, 1);
@@ -25656,7 +25654,7 @@ CDocument.prototype.private_PreConvertTextToTable = function(oProps, oSelectedCo
 					}
 				}
 			}
-			else if (oSecondEl.Type === para_InlineLevelSdt && SeparatorType !== 1 && !oSecondEl.IsForm())
+			else if (oSecondEl.GetType() === para_InlineLevelSdt && SeparatorType !== 1 && !oSecondEl.IsForm())
 			{
 				if (oSecondEl.IsPlaceHolder())
 				{
@@ -25723,7 +25721,7 @@ CDocument.prototype.private_PreConvertTextToTable = function(oProps, oSelectedCo
 			if (!parseParagraph(oElement, this))
 				return;
 		}
-		else if (oElement.IsBlockLevelSdt && ! oElement.IsForm())
+		else if (oElement.IsBlockLevelSdt() && !oElement.IsForm())
 		{
 			if (oElement.IsPlaceHolder())
 			{
