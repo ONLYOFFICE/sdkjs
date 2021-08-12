@@ -1222,11 +1222,8 @@ CCellCommentator.prototype.mergeComments = function (range) {
 		}
 	}
 
-	if (containsNotCanViewComment) {
-		if (mergeComment) {
-			deleteComments.push(mergeComment);
-			mergeComment = null;
-		}
+	if (containsNotCanViewComment && mergeComment) {
+		mergeComment = null;
 	}
 
 	if (mergeComment && (mergeComment.nCol !== c1 || mergeComment.nRow !== r1)) {
