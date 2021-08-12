@@ -3553,6 +3553,31 @@ CTable.prototype.UpdateCursorType = function(X, Y, CurPage)
 	var oCellPos = this.private_GetCellByXY(X, Y, CurPage);
 	var oCell    = this.GetRow(oCellPos.Row).GetCell(oCellPos.Cell);
 	oCell.Content_UpdateCursorType(X, Y, CurPage - oCell.Content.Get_StartPage_Relative());
+
+	var oLogicDocument = this.GetLogicDocument();
+	if (oLogicDocument && oLogicDocument.GetApi && !oLogicDocument.IsSimpleMarkupInReview() && this.IsCellSelection())
+	{
+		var oTrackManager = oLogicDocument.GetTrackRevisionsManager();
+		var oCurChange    = oTrackManager.GetCurrentChange();
+		if (oCurChange && this === oTrackManager.GetCurrentChangeElement())
+		{
+			var arrSelection = this.GetSelectionArray();
+			for (var nIndex = 0, nCount = arrSelection.length; nIndex < nCount; ++nIndex)
+			{
+				if (arrSelection[nIndex].Cell === oCellPos.Cell && arrSelection[nIndex].Row === oCellPos.Row)
+				{
+					var oMMData          = new AscCommon.CMouseMoveData();
+					var oCoords          = this.DrawingDocument.ConvertCoordsToCursorWR(X, Y, this.GetAbsolutePage(CurPage), this.Get_ParentTextTransform());
+					oMMData.X_abs        = oCoords.X;
+					oMMData.Y_abs        = oCoords.Y;
+					oMMData.Type         = Asc.c_oAscMouseMoveDataTypes.Review;
+					oMMData.ReviewChange = oCurChange;
+					oLogicDocument.GetApi().sync_MouseMoveCallback(oMMData);
+					break;
+				}
+			}
+		}
+	}
 };
 CTable.prototype.StartTrackTable = function()
 {
