@@ -3740,7 +3740,7 @@
 		var isReverse = AscCommonExcel.EDataBarDirection.rightToLeft === oRuleElement.Direction;
 		var isMiddle = (AscCommonExcel.EDataBarAxisPosition.middle === oRuleElement.AxisPosition) ||
 			(AscCommonExcel.EDataBarAxisPosition.automatic === oRuleElement.AxisPosition && 0 > min && 0 < max);
-		/*if (isMiddle) {
+		if (isMiddle) {
 			if (isPositive) {
 				min = Math.max(0, min);
 			} else {
@@ -3759,29 +3759,37 @@
 			cellValue = min;
 		} else if (cellValue > max) {
 			cellValue = max;
-		}*/
+		}
 
+		var axisLineWidth = oRuleElement.AxisColor ? 1 : 0;
 		var minLength = Math.floor(width * oRuleElement.MinLength / 100);
 		var maxLength = Math.floor(width * oRuleElement.MaxLength / 100);
-		var k = Math.abs(max) + Math.abs(min);
-		//k = k ? ((maxLength - minLength) / k) : 0;
-		var dataBarLength = ((maxLength - minLength) / k) * Math.abs(cellValue);
-		var middleX = x + ((maxLength - minLength) / k) * Math.abs(min);
+		var k = oRule.getMax(values, this.model) - oRule.getMin(values, this.model);
+		var middleX = ((maxLength - minLength) / k) * (AscCommonExcel.EDataBarDirection.rightToLeft === oRuleElement.Direction ? Math.abs(oRule.getMax(values, this.model)) : Math.abs(oRule.getMin(values, this.model)));
+		k = k ? ((maxLength - minLength) / k) : 0;
+		var dataBarLength = minLength + (Math.abs(cellValue) * k) - axisLineWidth;
 
 		color = (isPositive || oRuleElement.NegativeBarColorSameAsPositive) ? oRuleElement.Color : oRuleElement.NegativeColor;
 		if (0 !== dataBarLength && color) {
 			if (isMiddle) {
 				if (oRuleElement.AxisColor) {
 					ctx.setLineWidth(1).setLineDash([3, 1]).setStrokeStyle(oRuleElement.AxisColor);
-					ctx.beginPath().lineVer(middleX, top - 1, top - 1 + height - 1).stroke();
+					ctx.beginPath().lineVer(x + middleX, top - 1, top - 1 + height - 1).stroke();
 				}
 
-				if (isPositive) {
-					x  = middleX;
+				if (AscCommonExcel.EDataBarDirection.rightToLeft === oRuleElement.Direction) {
+					if (isPositive) {
+						x -= width - middleX;
+					} else {
+						x += middleX + axisLineWidth;
+					}
+				} else {
+					if (isPositive) {
+						x += middleX + axisLineWidth;
+					} else {
+						x -= width - middleX;
+					}
 				}
-
-				//dataBarLength = Asc.floor(dataBarLength / 2);
-				//x += Asc.floor(width / 2) * (isReverse ? -1 : 1);
 			}
 
 			if (isReverse) {
