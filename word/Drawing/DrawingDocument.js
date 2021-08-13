@@ -7528,7 +7528,8 @@ function CDrawingDocument()
 			
 			if (!type)
 			{
-				var line_distance = 32;
+				var line_distance = 32, x = 0, y = 0;
+
 				var text = "";
 				for (var k = 0; k < props[i].Text.length; k++)
 				{
@@ -7547,25 +7548,39 @@ function CDrawingDocument()
 							break;
 					}
 				}
-				var par = new Paragraph(this, this.m_oWordControl.m_oLogicDocument);
-				par.MoveCursorToStartPos();
 
-				par.Pr = new CParaPr();
 				var textPr = props[i].TextPr.Copy();
 				textPr.FontSize = textPr.FontSizeCS = ((2 * line_distance * 72 / 96) >> 0) / 2;
 
-				var parRun = new ParaRun(par);
-				parRun.Set_Pr(textPr);
-				parRun.AddText(text);
-				par.AddToContent(0, parRun);
+				if (1 === text.length)
+				{
+					g_oTextMeasurer.SetTextPr(textPr);
+					g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
+					var oInfo = g_oTextMeasurer.Measure2Code(text.charCodeAt(0));
 
-				par.Reset(0, 0, 1000, 1000, 0, 0, 1);
-				par.Recalculate_Page(0);
+					x = (width_px >> 1) - Math.round((oInfo.WidthG / 2 + oInfo.rasterOffsetX) * AscCommon.g_dKoef_mm_to_pix);
+					y = (width_px >> 1) + Math.round((oInfo.Height / 2 + (oInfo.Ascent - oInfo.Height + oInfo.rasterOffsetY)) * AscCommon.g_dKoef_mm_to_pix);
+				}
+				else
+				{
+					var par = new Paragraph(this, this.m_oWordControl.m_oLogicDocument);
+					par.MoveCursorToStartPos();
 
-				var parW = par.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
-				var x = (width_px >> 1) - Math.round(parW / 2);
-				// в office 19 на такой же высоте
-				var y = par.Lines[0].Y * AscCommon.g_dKoef_mm_to_pix;
+					par.Pr = new CParaPr();
+					var parRun = new ParaRun(par);
+					parRun.Set_Pr(textPr);
+					parRun.AddText(text);
+					par.AddToContent(0, parRun);
+
+					par.Reset(0, 0, 1000, 1000, 0, 0, 1);
+					par.Recalculate_Page(0);
+
+					var parW = par.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
+					x = (width_px >> 1) - Math.round(parW / 2);
+					// в office 19 на такой же высоте
+					y = par.Lines[0].Y * AscCommon.g_dKoef_mm_to_pix;
+				}
+
 				// для размеров окна 38 на 38
 				this.privateGetParagraphByString(props[i], 0, 0, x, y, line_distance, ctx, width_px, height_px);
 			}
