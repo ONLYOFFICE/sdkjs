@@ -7626,8 +7626,8 @@ background-repeat: no-repeat;\
         this.ShowParaMarks                    = false;
         _renderer.IsNoDrawingEmptyPlaceholder = true;
 
-        var pxW = 85; if (params && params.length && params[0]) pxW = params[0];
-        var pxH = 38; if (params && params.length && params[1]) pxH = params[1];
+        var pxW = AscCommon.GlobalSkin.THEMES_THUMBNAIL_WIDTH; if (params && params.length && params[0]) pxW = params[0];
+        var pxH = AscCommon.GlobalSkin.THEMES_THUMBNAIL_HEIGHT; if (params && params.length && params[1]) pxH = params[1];
         var mmW = pxW * AscCommon.g_dKoef_pix_to_mm;
         var mmH = pxH * AscCommon.g_dKoef_pix_to_mm;
 

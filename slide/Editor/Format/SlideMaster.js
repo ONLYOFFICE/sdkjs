@@ -676,8 +676,6 @@ function CMasterThumbnailDrawer()
             }
         }
 
-        var koefScale = Math.max(w_px / 85, h_px / 38);
-
         var dKoefPixToMM = this.HeightMM / h_px;
         var _back_fill = null;
         var RGBA = {R:0, G:0, B:0, A:255};
@@ -832,6 +830,25 @@ function CMasterThumbnailDrawer()
     };
 
     this.Draw = function(g, _master, use_background, use_master_shapes) {
+
+        var _params = [
+            0, 0, // w/h - not used
+            6,  // color_w
+            3,  // color_h,
+            4,  // color_x
+            31, // color_y
+            1,  // color_delta,
+            8,  // text_x
+            11, // text_y (from bottom)
+            18  // font_size
+        ];
+        for (var i = 0; i < _params.length; i++)
+        {
+            _params[i] = AscCommon.AscBrowser.convertToRetinaValue(_params[i], true);
+        }
+
+        return this.Draw2(g, _master, use_background, use_master_shapes, _params);
+
         var w_px = this.WidthPx;
         var h_px = this.HeightPx;
         var dKoefPixToMM = this.HeightMM / h_px;
@@ -1030,17 +1047,9 @@ function CMasterThumbnailDrawer()
         {
             return "";
         }
-        var h_px = 38;
-        var w_px = 85;//(this.WidthMM * h_px / this.HeightMM) >> 0;
 
-        // пока не будем генерить для ретины
-        /*
-        if (this.IsRetina)
-        {
-            w_px <<= 1;
-            h_px <<= 1;
-        }
-        */
+        var h_px = AscCommon.AscBrowser.convertToRetinaValue(AscCommon.GlobalSkin.STYLE_THUMBNAIL_HEIGHT, true);
+        var w_px = AscCommon.AscBrowser.convertToRetinaValue(AscCommon.GlobalSkin.STYLE_THUMBNAIL_WIDTH, true);
 
         this.WidthPx  = w_px;
         this.HeightPx = h_px;
