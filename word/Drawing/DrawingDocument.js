@@ -7566,7 +7566,6 @@ function CDrawingDocument()
 				var x = (width_px >> 1) - Math.round(parW / 2);
 				// в office 19 на такой же высоте
 				var y = par.Lines[0].Y * AscCommon.g_dKoef_mm_to_pix;
-				console.log(y);
 				// для размеров окна 38 на 38
 				this.privateGetParagraphByString(props[i], 0, 0, x, y, line_distance, ctx, width_px, height_px);
 			}
