@@ -8721,6 +8721,9 @@
 				var color = ReadColorSpreadsheet2(this.bcr, length);
 				if (color) {
 					oDataBar.AxisColor = color;
+				} else {
+					//TODO наличие оси определяется по наличию AxisColor при отрисовке. других маркеров нет. пересмотреть!
+					oDataBar.AxisColor = new AscCommonExcel.RgbColor(0);
 				}
 			} else if (c_oSer_ConditionalFormattingDataBar.NegativeBorderColor === type) {
 				var color = ReadColorSpreadsheet2(this.bcr, length);
