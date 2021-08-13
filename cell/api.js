@@ -120,7 +120,7 @@ var editor;
 
 	  // Styles sizes
       this.styleThumbnailWidth = 112;
-	  this.styleThumbnailHeight = 38;
+	  this.styleThumbnailHeight = 40;
 
     this.formulasList = null;	// Список всех формул
 
