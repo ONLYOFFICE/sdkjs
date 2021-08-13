@@ -1632,74 +1632,54 @@ function CDrawingDocument()
             canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
 
             var ctx = canvas.getContext("2d");
-			ctx.fillStyle = "#FFFFFF";
-			ctx.fillRect(0, 0, canvas.width, canvas.height);
-			ctx.beginPath();
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
             var rPR = AscCommon.AscBrowser.retinaPixelRatio;
             
             if (!type)
             {
-                var width_px = parent.clientWidth;
-                var height_px = parent.clientHeight;
-
-                var canvas = parent.firstChild;
-                if (!canvas)
+                var line_distance = 32;
+                var text = "";
+                for (var k = 0; k < props[i].Text.length; k++)
                 {
-                    canvas = document.createElement('canvas');
-                    canvas.style.cssText = "padding:0;margin:0;user-select:none;";
-                    canvas.style.width = width_px + "px";
-                    canvas.style.height = height_px + "px";
-                    if (width_px > 0 && height_px > 0)
-                        parent.appendChild(canvas);
+                    switch (props[i].Text[k].Type)
+                    {
+                        case Asc.c_oAscNumberingLvlTextType.Text:
+                            text += props[i].Text[k].Value;
+                            break;
+                        case Asc.c_oAscNumberingLvlTextType.Num:
+                            var correctNum = 1;
+                            if (levelNum === props[i].Text[k].Value)
+                                correctNum = counterCurrent;
+
+                            text += AscCommon.IntToNumberFormat(correctNum, props[i].Format);
+                            break;
+                        default:
+                            break;
+                   }
                 }
+                var shape = new AscFormat.CShape();
+                shape.setTxBody(AscFormat.CreateTextBodyFromString("", this, shape));
+                var par = shape.txBody.content.Content[0];
+                par.MoveCursorToStartPos();
 
-                canvas.width = AscCommon.AscBrowser.convertToRetinaValue(width_px, true);
-                canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
+                par.Pr = new CParaPr();
+                var textPr = props[i].TextPr.Copy();
+                textPr.FontSize = textPr.FontSizeCS = ((2 * line_distance * 72 / 96) >> 0) / 2;
 
-                var ctx = canvas.getContext("2d");
-				ctx.fillStyle = "#FFFFFF";
-				ctx.fillRect(0, 0, canvas.width, canvas.height);
-				ctx.beginPath();
-                var line_distance = (height_px >> 1) - 2;
-                // TODo: подумать над тем как рассчитать сдвиг влево, эти значения подобраны эксперементально
-                var xShift;
-                var yShift;
-                switch (i) {
-                    case 0:
-                        xShift = 4;
-                        yShift = 5;
-                        break;
-                    case 1:
-                        xShift = 5;
-                        yShift = 4;
-                        break;
-                    case 2:
-                        xShift = 4;
-                        yShift = 7;
-                        break;
-                    case 3:
-                        xShift = 8;
-                        yShift = 7;
-                        break;
-                    case 4:
-                        xShift = 6;
-                        yShift = 6;
-                        break;
-                    case 5:
-                        xShift = 7;
-                        yShift = 7;
-                        break;
-                    case 6:
-                        xShift = 6;
-                        yShift = 5;
-                        break;
-                    case 7:
-                        xShift = 5;
-                        yShift = 5;
-                        break;
-                } 
-                var x = (width_px >> 1 ) - xShift;
-                var y = (height_px >> 1) + yShift;
+                var parRun = new ParaRun(par);
+                parRun.Set_Pr(textPr);
+                parRun.AddText(text);
+                par.AddToContent(0, parRun);
+
+                par.Reset(0, 0, 1000, 1000, 0, 0, 1);
+                par.Recalculate_Page(0);
+
+                var parW = par.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
+                var x = (width_px >> 1) - Math.round(parW / 2);
+                // в office 19 на такой же высоте
+                var y = par.Lines[0].Y * AscCommon.g_dKoef_mm_to_pix;
                 // для размеров окна 38 на 38
                 this.privateGetParagraphByString(props[i], 0, 0, x, y, line_distance, ctx, width_px, height_px, spApi);
             }
