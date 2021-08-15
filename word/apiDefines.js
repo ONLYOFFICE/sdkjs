@@ -122,8 +122,8 @@ var c_oAscAlignShapeType = {
 	ALIGN_MIDDLE : 5
 };
 
-var TABLE_STYLE_WIDTH_PIX  = 70;
-var TABLE_STYLE_HEIGHT_PIX = 50;
+var TABLE_STYLE_WIDTH_PIX  = 72;
+var TABLE_STYLE_HEIGHT_PIX = 52;
 
 
 

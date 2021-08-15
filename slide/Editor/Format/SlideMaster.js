@@ -831,6 +831,7 @@ function CMasterThumbnailDrawer()
 
     this.Draw = function(g, _master, use_background, use_master_shapes) {
 
+        /*
         var _params = [
             0, 0, // w/h - not used
             6,  // color_w
@@ -840,14 +841,18 @@ function CMasterThumbnailDrawer()
             1,  // color_delta,
             8,  // text_x
             11, // text_y (from bottom)
-            18  // font_size
+            18 // font_size
         ];
+        _params[9] *= ((this.HeightMM / this.HeightPx) * (96 / 25.4));
+
+
         for (var i = 0; i < _params.length; i++)
         {
             _params[i] = AscCommon.AscBrowser.convertToRetinaValue(_params[i], true);
         }
 
         return this.Draw2(g, _master, use_background, use_master_shapes, _params);
+        */
 
         var w_px = this.WidthPx;
         var h_px = this.HeightPx;
@@ -934,13 +939,19 @@ function CMasterThumbnailDrawer()
         var _color_y = 31;
         var _color_delta = 1;
         if (!window["NATIVE_EDITOR_ENJINE"]) {
+          _color_w = AscCommon.AscBrowser.convertToRetinaValue(_color_w, true);
+          _color_h = AscCommon.AscBrowser.convertToRetinaValue(_color_h, true);
+          _color_x = AscCommon.AscBrowser.convertToRetinaValue(_color_x, true);
+          _color_y = AscCommon.AscBrowser.convertToRetinaValue(_color_y, true);
+          _color_delta = AscCommon.AscBrowser.convertToRetinaValue(_color_delta, true);
+
           g.p_color(255, 255, 255, 255);
           g.init(g.m_oContext, w_px, h_px, w_px, h_px);
           g.CalculateFullTransform();
           g.m_bIntegerGrid = true;
           g.b_color1(255, 255, 255, 255);
           g._s();
-          g.rect(_color_x - _color_delta, _color_y - _color_delta, _color_w * 6 + 7 * _color_delta, 5);
+          g.rect(_color_x - _color_delta, _color_y - _color_delta, _color_w * 6 + 7 * _color_delta, _color_h + 2 * _color_delta);
           g.df();
           g._s();
           var _color = new AscFormat.CSchemeColor;
@@ -1017,10 +1028,11 @@ function CMasterThumbnailDrawer()
             par.Reset(0, 0, 1000, 1000, 0, 0, 1);
             par.Recalculate_Page(0);
             if (!window["NATIVE_EDITOR_ENJINE"]) {
-                g.init(g.m_oContext, w_px, h_px, w_px * AscCommon.g_dKoef_pix_to_mm, h_px * AscCommon.g_dKoef_pix_to_mm);
+                var koefFont = AscCommon.g_dKoef_pix_to_mm / AscCommon.AscBrowser.retinaPixelRatio;
+                g.init(g.m_oContext, w_px, h_px, w_px * koefFont, h_px * koefFont);
                 g.CalculateFullTransform();
-                _text_x = 8 * AscCommon.g_dKoef_pix_to_mm;
-                _text_y = (h_px - 11) * AscCommon.g_dKoef_pix_to_mm;
+                _text_x = AscCommon.AscBrowser.retinaPixelRatio * 8 * koefFont;
+                _text_y = (h_px - 11 * AscCommon.AscBrowser.retinaPixelRatio) * koefFont;
                 par.Lines[0].Ranges[0].XVisible = _text_x;
                 par.Lines[0].Y = _text_y;
                 var old_marks = _api.ShowParaMarks;
@@ -1048,8 +1060,8 @@ function CMasterThumbnailDrawer()
             return "";
         }
 
-        var h_px = AscCommon.AscBrowser.convertToRetinaValue(AscCommon.GlobalSkin.STYLE_THUMBNAIL_HEIGHT, true);
-        var w_px = AscCommon.AscBrowser.convertToRetinaValue(AscCommon.GlobalSkin.STYLE_THUMBNAIL_WIDTH, true);
+        var w_px = AscCommon.AscBrowser.convertToRetinaValue(AscCommon.GlobalSkin.THEMES_THUMBNAIL_WIDTH, true);
+        var h_px = AscCommon.AscBrowser.convertToRetinaValue(AscCommon.GlobalSkin.THEMES_THUMBNAIL_HEIGHT, true);
 
         this.WidthPx  = w_px;
         this.HeightPx = h_px;
