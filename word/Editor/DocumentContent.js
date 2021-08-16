@@ -4602,6 +4602,7 @@ CDocumentContent.prototype.InsertContent = function(SelectedContent, NearPos)
 			var arrParaDrawings = oDstPictureCC.GetAllDrawingObjects();
 			if (arrParaDrawings.length > 0 && oSrcPicture)
 			{
+				oDstPictureCC.SetShowingPlcHdr(false);
 				oSrcPicture.setParent(arrParaDrawings[0]);
 				arrParaDrawings[0].Set_GraphicObject(oSrcPicture);
 
