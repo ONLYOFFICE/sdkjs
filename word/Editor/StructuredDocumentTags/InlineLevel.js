@@ -2036,10 +2036,21 @@ CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
 	{
 		var bSelectedOnlyThis = false;
 
+		if ((AscCommon.changestype_Remove === CheckType
+			|| AscCommon.changestype_Delete === CheckType)
+			&& oLogicDocument
+			&& oLogicDocument.IsCheckContentControlsLock()
+			&& ((this.IsPlaceHolder() && oLogicDocument.IsFillingFormMode())
+				|| (!this.CanBeEdited() && (oLogicDocument.IsFillingFormMode() || this.IsFixedForm()))))
+		{
+			return AscCommon.CollaborativeEditing.Add_CheckLock(true);
+		}
+
 		// Если действие происходит на удалении (del/backspace), тогда мы должны проверить, что это не PlaceHolder
-		// и что выделен только данный элемент.
+		// и что элемент может быть отредактирован и что выделен только данный элемент. (для тех случаев, когда
+		// элемент можно привести к PlaceHolder через удаление)
 		// Если это происходит на добавлении текста, тогда проверяем, что выделен только данный элемент
-		if (!this.IsPlaceHolder() || (AscCommon.changestype_Remove !== CheckType && AscCommon.changestype_Delete !== CheckType))
+		if ((!this.IsPlaceHolder() && this.CanBeEdited()) || (AscCommon.changestype_Remove !== CheckType && AscCommon.changestype_Delete !== CheckType))
 		{
 			var oInfo = this.Paragraph.LogicDocument.GetSelectedElementsInfo();
 			bSelectedOnlyThis = (oInfo.GetInlineLevelSdt() === this);

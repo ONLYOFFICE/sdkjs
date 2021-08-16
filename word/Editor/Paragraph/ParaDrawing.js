@@ -3010,6 +3010,17 @@ ParaDrawing.prototype.Document_Is_SelectionLocked = function(CheckType)
 
 ParaDrawing.prototype.CheckDeletingLock = function()
 {
+	if (this.LogicDocument
+		&& this.LogicDocument.IsDocumentEditor()
+		&& (!this.LogicDocument.CanEdit() || this.LogicDocument.IsFillingFormMode()))
+	{
+		return AscCommon.CollaborativeEditing.Add_CheckLock(true);
+	}
+
+	var oForm = this.GetInnerForm();
+	if (oForm)
+		oForm.SkipSpecialContentControlLock(true);
+
 	var arrDocContents = this.GetAllDocContents();
 	for (var nIndex = 0, nCount = arrDocContents.length; nIndex < nCount; ++nIndex)
 	{
@@ -3017,6 +3028,9 @@ ParaDrawing.prototype.CheckDeletingLock = function()
 		arrDocContents[nIndex].Document_Is_SelectionLocked(AscCommon.changestype_Remove);
 		arrDocContents[nIndex].SetApplyToAll(false);
 	}
+
+	if (oForm)
+		oForm.SkipSpecialContentControlLock(false);
 };
 ParaDrawing.prototype.GetAllFields = function(isUseSelection, arrFields)
 {
