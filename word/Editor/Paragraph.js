@@ -11551,7 +11551,7 @@ Paragraph.prototype.private_GetReviewChangeForHover = function(X, Y, CurPage, oC
 		return null;
 
 	var oLogicDocument = this.LogicDocument;
-	if (!oLogicDocument || oLogicDocument.IsSimpleMarkupInReview())
+	if (!oLogicDocument || !oLogicDocument.IsDocumentEditor() || oLogicDocument.IsSimpleMarkupInReview())
 		return null;
 
 	var oTrackManager = oLogicDocument.GetTrackRevisionsManager();

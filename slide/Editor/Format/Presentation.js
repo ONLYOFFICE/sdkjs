@@ -2914,6 +2914,18 @@ CPresentation.prototype.constructor = CPresentation;
 CPresentation.prototype.GetApi = function() {
     return this.Api;
 };
+CPresentation.prototype.IsDocumentEditor = function()
+{
+	return false;
+};
+CPresentation.prototype.IsPresentationEditor = function()
+{
+	return true;
+};
+CPresentation.prototype.IsSpreadSheetEditor = function()
+{
+	return false;
+};
 CPresentation.prototype.GetWidthMM = function () {
     return this.GetWidthEMU() / g_dKoef_mm_to_emu;
 };

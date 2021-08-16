@@ -2614,6 +2614,18 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 CDocument.prototype = Object.create(CDocumentContentBase.prototype);
 CDocument.prototype.constructor = CDocument;
 
+CDocument.prototype.IsDocumentEditor = function()
+{
+	return true;
+};
+CDocument.prototype.IsPresentationEditor = function()
+{
+	return false;
+};
+CDocument.prototype.IsSpreadSheetEditor = function()
+{
+	return false;
+};
 CDocument.prototype.Init                           = function()
 {
 
