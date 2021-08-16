@@ -2036,11 +2036,13 @@ CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
 	{
 		var bSelectedOnlyThis = false;
 
+		// Если действие происходит на удалении (del/backspace), тогда мы должны проверить, что это не PlaceHolder
+		// и что выделен только данный элемент.
 		// Если это происходит на добавлении текста, тогда проверяем, что выделен только данный элемент
-		if (AscCommon.changestype_Remove !== CheckType && AscCommon.changestype_Delete !== CheckType)
+		if (!this.IsPlaceHolder() || (AscCommon.changestype_Remove !== CheckType && AscCommon.changestype_Delete !== CheckType))
 		{
 			var oInfo = this.Paragraph.LogicDocument.GetSelectedElementsInfo();
-			bSelectedOnlyThis = oInfo.GetInlineLevelSdt() === this ? true : false;
+			bSelectedOnlyThis = (oInfo.GetInlineLevelSdt() === this);
 		}
 
 		if (c_oAscSdtLockType.SdtContentLocked === nContentControlLock
