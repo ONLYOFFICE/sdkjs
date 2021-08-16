@@ -3154,6 +3154,9 @@ function CEditorPage(api)
 			this.m_oNotesApi.OnResize();
 
 		this.FullRulersUpdate();
+
+		if (AscCommon.g_imageControlsStorage)
+			AscCommon.g_imageControlsStorage.resize();
 	};
 
 	this.FullRulersUpdate = function()

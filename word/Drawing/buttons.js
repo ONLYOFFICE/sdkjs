@@ -42,6 +42,7 @@
 	{
 		this.controls = [];
 		this.updateIndex = 0;
+		this.isNeedUpdate = false;
 	}
 	// регистрируем
 	StorageBaseImageCtrl.prototype.register = function(image)
@@ -53,6 +54,10 @@
 	{
 		this.updateIndex++;
 	};
+	StorageBaseImageCtrl.prototype.needUpdate = function()
+	{
+		this.isNeedUpdate = true;
+	};
 	// картинка загрузилась - нужно проверить, надо ли перерисовать оверлей
 	StorageBaseImageCtrl.prototype.updateOverlay = function()
 	{
@@ -61,6 +66,20 @@
 		this.updateIndex--;
 		if (this.updateIndex < 0)
 			this.updateIndex = 0;
+
+		if (this.updateIndex != 0)
+		{
+			// обновится, когда все загрузятся
+			return;
+		}
+
+		if (!this.isNeedUpdate)
+		{
+			// не было запроса на отрисовку, пока грузили
+			return;
+		}
+
+		this.isNeedUpdate = false;
 
 		var wordControl = window.editor ? window.editor.WordControl : undefined;
 		if (wordControl)
@@ -171,13 +190,13 @@
 		var index = this.getIndex();
 		if (!this.images[index])
 		{
-			AscCommon.g_imageControlsStorage.updateLater();
+			AscCommon.g_imageControlsStorage.needUpdate();
 			this._loadIndex(index);
 			return null;
 		}
-		if (this.images[index].asc_complete)
+		if (!this.images[index].asc_complete)
 		{
-			AscCommon.g_imageControlsStorage.updateLater();
+			AscCommon.g_imageControlsStorage.needUpdate();
 			return null;
 		}
 		return this.images[index];
@@ -187,13 +206,13 @@
 		var index = this.getIndex();
 		if (!this.images_active[index])
 		{
-			AscCommon.g_imageControlsStorage.updateLater();
+			AscCommon.g_imageControlsStorage.needUpdate();
 			this._loadActiveIndex(index);
 			return null;
 		}
-		if (this.images_active[index].asc_complete)
+		if (!this.images_active[index].asc_complete)
 		{
-			AscCommon.g_imageControlsStorage.updateLater();
+			AscCommon.g_imageControlsStorage.needUpdate();
 			return null;
 		}
 		return this.images_active[index];
@@ -208,7 +227,8 @@
 		if (!this.images[index])
 		{
 			var img = new Image();
-			img.onload = function() { this.asc_complete = true; };
+			AscCommon.g_imageControlsStorage.updateLater();
+			img.onload = function() { this.asc_complete = true; AscCommon.g_imageControlsStorage.updateOverlay(); };
 			img.src = this.baseUrl + "/" + this.url + this.getAddon(this.support[index]) + ".png";
 			AscCommon.backoffOnErrorImg(img);
 			this.images[index] = img;
@@ -219,10 +239,11 @@
 		if (undefined === index)
 			index = this.getIndex();
 
-		if (!this.images[index])
+		if (!this.images_active[index])
 		{
 			var img = new Image();
-			img.onload = function() { this.asc_complete = true; };
+			AscCommon.g_imageControlsStorage.updateLater();
+			img.onload = function() { this.asc_complete = true; AscCommon.g_imageControlsStorage.updateOverlay(); };
 			img.src = this.baseUrl + "/" + this.url + "_active" + this.getAddon(this.support[index]) + ".png";
 			AscCommon.backoffOnErrorImg(img);
 			this.images_active[index] = img;
