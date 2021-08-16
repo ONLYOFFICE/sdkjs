@@ -3273,7 +3273,7 @@
 		}
 		else
 		{
-			styleThumbnailHeight = window["IS_NATIVE_EDITOR"] ? 48 : 46;
+			styleThumbnailHeight = window["IS_NATIVE_EDITOR"] ? 48 : 44;
 			row = 5;
 			defaultStyles = wb.TableStyles.DefaultStyles;
 			tableStyleInfo = new AscCommonExcel.TableStyleInfo();
