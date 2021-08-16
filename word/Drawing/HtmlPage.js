@@ -2836,6 +2836,9 @@ function CEditorPage(api)
 
 		if (this.MobileTouchManager)
 			this.MobileTouchManager.Resize_After();
+
+		if (AscCommon.g_imageControlsStorage)
+			AscCommon.g_imageControlsStorage.resize();
 	};
 
 	this.checkNeedRules     = function()
