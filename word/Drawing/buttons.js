@@ -3520,8 +3520,8 @@
 						_x4 = (drPage.left + koefX * (this.bounds.x + this.bounds.w + object.OffsetX)) * rPR;
 						_y4 = (drPage.top + koefY * (this.bounds.y + this.bounds.h + object.OffsetY)) * rPR;
 
-						var imageW = rPR >= 2 ? 40 : 20;
-						var imageH = rPR >= 2 ? 40 : 20;
+						var imageW = AscCommon.AscBrowser.convertToRetinaValue(20, true);
+						var imageH = AscCommon.AscBrowser.convertToRetinaValue(20, true);
 						var xPos = (_x1 + _x4 - imageW) >> 1;
 						var yPos = (_y1 + _y4 - imageH) >> 1;
 
