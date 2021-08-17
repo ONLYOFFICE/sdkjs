@@ -94,7 +94,7 @@
 	}
 
 	CDataFormula.prototype._init = function (ws, locale, doNotBuildDependencies) {
-		if (this._formula || !this.text) {
+		if (this._formula || this.text == null ) {
 			return;
 		}
 		var t = this;
