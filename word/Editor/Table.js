@@ -3555,7 +3555,7 @@ CTable.prototype.UpdateCursorType = function(X, Y, CurPage)
 	oCell.Content_UpdateCursorType(X, Y, CurPage - oCell.Content.Get_StartPage_Relative());
 
 	var oLogicDocument = this.GetLogicDocument();
-	if (oLogicDocument && oLogicDocument.GetApi && !oLogicDocument.IsSimpleMarkupInReview() && this.IsCellSelection())
+	if (oLogicDocument && oLogicDocument.GetApi && oLogicDocument.IsDocumentEditor() && !oLogicDocument.IsSimpleMarkupInReview() && this.IsCellSelection())
 	{
 		var oTrackManager = oLogicDocument.GetTrackRevisionsManager();
 		var oCurChange    = oTrackManager.GetCurrentChange();
