@@ -2955,6 +2955,16 @@ CInlineLevelSdt.prototype.UpdateFixedFormCombWidthByFormSize = function(oTextFor
 
 	oTextFormPr.SetWidth(AscCommon.MMToTwips(nW / oTextFormPr.GetMaxCharacters()));
 };
+CInlineLevelSdt.prototype.IsFormExceedsBounds = function()
+{
+	var oParagraph  = this.GetParagraph();
+	var oFormBounds = this.GetFixedFormBounds();
+	if (oFormBounds.W <= 0.001 || oFormBounds.H <= 0.001 || !oParagraph || !oParagraph.IsRecalculated())
+		return false;
+
+	var oParaBounds = oParagraph.GetContentBounds(0);
+	return (oParaBounds.Right - oParaBounds.Left > oFormBounds.W || oParaBounds.Bottom - oParaBounds.Top > oFormBounds.H);
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
