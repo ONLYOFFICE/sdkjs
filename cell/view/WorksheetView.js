@@ -117,9 +117,9 @@
     var kCurDefault = "default";
     var kCurCorner = "pointer";
     var kCurColSelect = "select-table-column";
-    var kCurColResize = "col-resize";
+    var kCurColResize = "move-border-horizontally";
     var kCurRowSelect = "select-table-row";
-    var kCurRowResize = "row-resize";
+    var kCurRowResize = "move-border-vertically";
     // Курсор для автозаполнения
     var kCurFillHandle = "crosshair";
     // Курсор для гиперссылки
@@ -134,6 +134,8 @@
     var kCurFormatPainterExcel = "se-formatpainter";
     AscCommon.g_oHtmlCursor.register(AscCommonExcel.kCurCells, "plus", "6 6", "cell");
 	AscCommon.g_oHtmlCursor.register(kCurFormatPainterExcel, "plus_copy", "6 12", "pointer");
+	AscCommon.g_oHtmlCursor.register("move-border-vertically", "move_border_vertically", "5 10", "default");
+	AscCommon.g_oHtmlCursor.register("move-border-horizontally", "move_border_horizontally", "5 10", "default");
 
     var kNewLine = "\n";
 
