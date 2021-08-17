@@ -1230,6 +1230,9 @@
 	};
 
 	CDataValidations.prototype.change = function (ws, from, to, addToHistory) {
+		if (!to || !to.ranges || !to.ranges.length) {
+			return;
+		}
 		to.Id = from.Id;
 		for (var i = 0; i < this.elems.length; i++) {
 			if (this.elems[i].Id === to.Id) {
