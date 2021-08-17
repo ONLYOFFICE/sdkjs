@@ -2181,6 +2181,13 @@
 		Never   : 3,
 	};
 
+	var c_oAscDisplayModeInReview = {
+		Edit     : 0,
+		Final    : 1,
+		Original : 2,
+		Simple   : 3
+	};
+
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
 	window['Asc']                          = window['Asc'] || {};
@@ -3297,5 +3304,11 @@
 	prot['Bigger']  = prot.Bigger;
 	prot['Smaller'] = prot.Smaller;
 	prot['Never']   = prot.Never;
+
+	prot = window['Asc']['c_oAscDisplayModeInReview'] = window['Asc'].c_oAscDisplayModeInReview = c_oAscDisplayModeInReview;
+	prot['Edit']     = prot.Edit;
+	prot['Final']    = prot.Final;
+	prot['Original'] = prot.Original;
+	prot['Simple']   = prot.Simple;
 
 })(window);
