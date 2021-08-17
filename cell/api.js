@@ -2008,6 +2008,17 @@ var editor;
 		this.wb = new AscCommonExcel.WorkbookView(this.wbModel, this.controller, this.handlers, this.HtmlElement,
 			this.topLineEditorElement, this, this.collaborativeEditing, this.fontRenderingMode);
 
+		if (this.isCopyOutEnabled && this.topLineEditorElement) {
+			if (this.isCopyOutEnabled() === false) {
+				this.topLineEditorElement.oncopy = function () {
+					return false;
+				};
+				this.topLineEditorElement.oncut = function () {
+					return false;
+				};
+			}
+		}
+
 		if (this.isMobileVersion) {
 			this.wb.defaults.worksheetView.halfSelection = true;
 			this.wb.defaults.worksheetView.activeCellBorderColor = new CColor(79, 158, 79);
