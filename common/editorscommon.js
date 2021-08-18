@@ -424,27 +424,13 @@
 
 		this.register = function(type, name, target, default_css_value)
 		{
-			if (AscBrowser.isIE || AscBrowser.isIeEdge)
-			{
-				this.map[type] = ("url(../../../../sdkjs/common/Images/cursors/" + name + ".cur), " + default_css_value);
-                this.mapRetina[type] = ("url(../../../../sdkjs/common/Images/cursors/" + name + "_2x.cur), " + default_css_value);
-			}
-			else if (window.opera)
+			if (window.opera)
 			{
 				this.map[type] = default_css_value;
 			}
 			else
 			{
-				if (!AscCommon.AscBrowser.isChrome && !AscCommon.AscBrowser.isSafari)
-				{
-                    this.map[type] = "url('../../../../sdkjs/common/Images/cursors/" + name + ".svg') " + target +
-                        ", url('../../../../sdkjs/common/Images/cursors/" + name + ".png') " + target + ", " + default_css_value;
-                }
-                else
-				{
-                    this.map[type] = "-webkit-image-set(url(../../../../sdkjs/common/Images/cursors/" + name + ".png) 1x," +
-                        " url(../../../../sdkjs/common/Images/cursors/" + name + "_2x.png) 2x) " + target + ", " + default_css_value;
-				}
+				this.map[type] = ("url(../../../../sdkjs/common/Images/cursors/" + name + ".cur), " + default_css_value);
 			}
 		};
 	}
