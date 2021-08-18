@@ -7605,7 +7605,9 @@
 				res = this.bcr.Read2(length, function(t, l) {
 					return oThis.ReadDataValidation(t, l, dataValidation);
 				});
-				dataValidations.elems.push(dataValidation);
+				if (dataValidation && dataValidation.ranges) {
+					dataValidations.elems.push(dataValidation);
+				}
 			} else
 				res = c_oSerConstants.ReadUnknown;
 			return res;
