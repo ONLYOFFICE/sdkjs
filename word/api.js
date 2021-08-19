@@ -9183,7 +9183,7 @@ background-repeat: no-repeat;\
 		if (oAnchor.Transform)
 		{
 			nX = oAnchor.Transform.TransformPointX(oAnchor.X, oAnchor.Y);
-			nY = oAnchor.Transform.TransformPointY(oAnchor.X, oAnchor,Y);
+			nY = oAnchor.Transform.TransformPointY(oAnchor.X, oAnchor.Y);
 		}
 
 		var oRealCoords = oLogicDocument.GetDrawingDocument().ConvertCoordsToCursorWR(nX, nY, oAnchor.Page);
