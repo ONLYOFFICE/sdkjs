@@ -775,13 +775,24 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
         if (type_Table === Element.GetType() && true != Element.Is_Inline())
         {
             bFlow = true;
+
             if (true === oRecalcInfo.Can_RecalcObject())
             {
-                Element.Set_DocumentIndex(Index);
-                Element.Reset(X, Y, XLimit, YLimit, PageIndex, 0, 1);
-                var TempRecalcResult = Element.Recalculate_Page(0);
+				var ElementPageIndex = 0;
+				if ((0 === Index && 0 === PageIndex) || Index !== StartIndex)
+				{
+					Element.Set_DocumentIndex(Index);
+					Element.Reset(X, Y, XLimit, YLimit, PageIndex, 0, 1);
+					ElementPageIndex = 0;
+				}
+				else
+				{
+					ElementPageIndex = PageIndex - Element.PageNum;
+				}
 
-				oRecalcInfo.Set_FlowObject(Element, 0, TempRecalcResult, -1, {
+                var TempRecalcResult = Element.Recalculate_Page(ElementPageIndex);
+
+				oRecalcInfo.Set_FlowObject(Element, ElementPageIndex, TempRecalcResult, -1, {
                     X      : X,
                     Y      : Y,
                     XLimit : XLimit,
