@@ -11451,7 +11451,7 @@ background-repeat: no-repeat;\
 		var oCurrentParagraph = oLogicDocument.GetCurrentParagraph();
 
 		var oMatrix = oCurrentParagraph ? oCurrentParagraph.Get_ParentTextTransform() : null;
-		if (oMatrix && !global_MatrixTransformer.IsIdentity(oMatrix))
+		if (oMatrix && !AscCommon.global_MatrixTransformer.IsIdentity(oMatrix))
 		{
 			x0 = oMatrix.TransformPointX(oSelectBounds.Start.X, oSelectBounds.Start.Y);
 			y0 = oMatrix.TransformPointY(oSelectBounds.Start.X, oSelectBounds.Start.Y);
