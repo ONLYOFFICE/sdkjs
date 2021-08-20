@@ -2689,6 +2689,13 @@ CDocumentContent.prototype.AddNewParagraph = function(bForceAdd)
 				{
 					if (true === Item.IsCursorAtEnd())
 					{
+						if (!Item.Lock.Is_Locked())
+						{
+							var oParaEndRun = Item.GetParaEndRun();
+							if (oParaEndRun)
+								oParaEndRun.ProcessAutoCorrectOnParaEnd();
+						}
+
 						var StyleId = Item.Style_Get();
 						var NextId  = undefined;
 
@@ -9020,7 +9027,7 @@ CDocumentContent.prototype.Document_Is_SelectionLocked = function(CheckType)
 					{
 						var CurElement = this.Content[this.CurPos.ContentPos];
 
-						if ( AscCommon.changestype_Document_Content_Add === CheckType && type_Paragraph === CurElement.GetType() && true === CurElement.IsCursorAtEnd() )
+						if (AscCommon.changestype_Document_Content_Add === CheckType && CurElement.IsParagraph() && CurElement.IsCursorAtEnd() && CurElement.Lock.Is_Locked())
 							AscCommon.CollaborativeEditing.Add_CheckLock(false);
 						else
 							this.Content[this.CurPos.ContentPos].Document_Is_SelectionLocked(CheckType);

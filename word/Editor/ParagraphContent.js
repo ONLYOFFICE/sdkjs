@@ -1133,6 +1133,11 @@ ParaEnd.prototype.Write_ToBinary = function(Writer)
 ParaEnd.prototype.Read_FromBinary = function(Reader)
 {
 };
+ParaEnd.prototype.GetAutoCorrectFlags = function()
+{
+	return (AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE
+		| AUTOCORRECT_FLAGS_HYPERLINK);
+};
 
 /**
  * Класс представляющий разрыв строки/колонки/страницы
@@ -1424,6 +1429,11 @@ ParaNewLine.prototype.IsColumnBreak = function()
 ParaNewLine.prototype.IsLineBreak = function()
 {
 	return (break_Line === this.BreakType);
+};
+ParaNewLine.prototype.GetAutoCorrectFlags = function()
+{
+	return (AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE
+		| AUTOCORRECT_FLAGS_HYPERLINK);
 };
 
 

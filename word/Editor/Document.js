@@ -13315,7 +13315,7 @@ CDocument.prototype.controller_IsSelectionLocked = function(CheckType)
 			{
 				var CurElement = this.Content[this.CurPos.ContentPos];
 
-				if (AscCommon.changestype_Document_Content_Add === CheckType && type_Paragraph === CurElement.GetType() && true === CurElement.IsCursorAtEnd())
+				if (AscCommon.changestype_Document_Content_Add === CheckType && CurElement.IsParagraph() && CurElement.IsCursorAtEnd() && CurElement.Lock.Is_Locked())
 					AscCommon.CollaborativeEditing.Add_CheckLock(false);
 				else
 					this.Content[this.CurPos.ContentPos].Document_Is_SelectionLocked(CheckType);
@@ -18343,7 +18343,8 @@ CDocument.prototype.controller_AddNewParagraph = function(bRecalculate, bForceAd
 	//    Если при этом у нового параграфа стиль будет такой же как и у старого,
 	//    в том числе если стиля нет у обоих, тогда копируем еще все прямые настройки.
 	//    (Т.е. если стили разные, а у исходный параграф был параграфом со списком, тогда
-	//    новый параграф будет без списка).
+	//    новый параграф будет без списка). Кроме этого у предыдущего параграфа пытаемся
+	//    выполнить автозамены
 	if (type_Paragraph === Item.GetType())
 	{
 		// Если текущий параграф пустой и с нумерацией, тогда удаляем нумерацию и отступы левый и первой строки
@@ -18374,6 +18375,13 @@ CDocument.prototype.controller_AddNewParagraph = function(bRecalculate, bForceAd
 			{
 				if (true === Item.IsCursorAtEnd())
 				{
+					if (!Item.Lock.Is_Locked())
+					{
+						var oParaEndRun = Item.GetParaEndRun();
+						if (oParaEndRun)
+							oParaEndRun.ProcessAutoCorrectOnParaEnd();
+					}
+
 					var StyleId = Item.Style_Get();
 					var NextId  = undefined;
 
