@@ -4221,12 +4221,14 @@ Paragraph.prototype.Add = function(Item)
 					}
 					else if (null !== RItem && null !== LItem && para_Text === RItem.Type && para_Text === LItem.Type && false === RItem.IsPunctuation() && false === LItem.IsPunctuation())
 					{
-						var oLogicDocument = this.LogicDocument;
+						var oLogicDocument = this.GetLogicDocument();
+						var oParent        = this.GetParent();
+						var oDocContent    = oParent ? oParent.GetTopDocumentContent() : null;
 						var oDocPos        = null;
 
 						if (oLogicDocument)
 						{
-							oDocPos = oLogicDocument.GetContentPosition(false);
+							oDocPos = oDocContent.GetContentPosition(false);
 							oLogicDocument.TrackDocumentPositions([oDocPos]);
 						}
 
@@ -4252,7 +4254,7 @@ Paragraph.prototype.Add = function(Item)
 						if (oDocPos)
 						{
 							oLogicDocument.RefreshDocumentPositions([oDocPos]);
-							oLogicDocument.SetContentPosition(oDocPos, 0, 0);
+							oDocContent.SetContentPosition(oDocPos, 0, 0);
 						}
 
 					}
@@ -4602,12 +4604,14 @@ Paragraph.prototype.IncDec_FontSize = function(bIncrease)
 			}
 			else if (null !== RItem && null !== LItem && para_Text === RItem.Type && para_Text === LItem.Type && false === RItem.IsPunctuation() && false === LItem.IsPunctuation())
 			{
-				var oLogicDocument = this.LogicDocument;
+				var oLogicDocument = this.GetLogicDocument();
+				var oParent        = this.GetParent();
+				var oDocContent    = oParent ? oParent.GetTopDocumentContent() : null;
 				var oDocPos        = null;
 
 				if (oLogicDocument)
 				{
-					oDocPos = oLogicDocument.GetContentPosition(false);
+					oDocPos = oDocContent.GetContentPosition(false);
 					oLogicDocument.TrackDocumentPositions([oDocPos]);
 				}
 
@@ -4633,7 +4637,7 @@ Paragraph.prototype.IncDec_FontSize = function(bIncrease)
 				if (oDocPos)
 				{
 					oLogicDocument.RefreshDocumentPositions([oDocPos]);
-					oLogicDocument.SetContentPosition(oDocPos, 0, 0);
+					oDocContent.SetContentPosition(oDocPos, 0, 0);
 				}
 			}
 			else
