@@ -22083,7 +22083,9 @@ CDocument.prototype.StartCollaborationEditing = function()
 	if (this.DrawingDocument)
 	{
 		this.DrawingDocument.Start_CollaborationEditing();
-		this.EndViewModeInReview();
+
+		if (this.IsViewModeInReview())
+			this.SetDisplayModeInReview(Asc.c_oAscDisplayModeInReview.Edit, true);
 	}
 };
 CDocument.prototype.AddField = function(nType, oPr)
