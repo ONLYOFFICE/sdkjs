@@ -3047,8 +3047,17 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 			{
 				while (Element)
 				{
-					var nFormY0 = Page.Y + Line.Y - Line.Metrics.Ascent;
-					var nFormY1 = Page.Y + Line.Y + Line.Metrics.Descent;
+					var nFormY0, nFormY1;
+					if (undefined !== Element.Additional.Y)
+					{
+						nFormY0 = Element.Additional.Y;
+						nFormY1 = Element.Additional.Y + Element.Additional.H;
+					}
+					else
+					{
+						nFormY0 = Page.Y + Line.Y - Line.Metrics.Ascent;
+						nFormY1 = Page.Y + Line.Y + Line.Metrics.Descent;
+					}
 
 					pGraphics.p_color(Element.r, Element.g, Element.b, 255);
 					pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Bottom, nFormY0, Element.x0, Element.x1, Element.w, -Element.w / 2, Element.w / 2);
@@ -17167,7 +17176,7 @@ CParaDrawingRangeLines.prototype =
 			}
 			else if (undefined !== PrevEl.Additional.Comb)
 			{
-				return (PrevEl.Additional.Comb === Element.Additional.Comb);
+				return (PrevEl.Additional.Comb === Element.Additional.Comb && Math.abs(PrevEl.Additional.Y - Element.Additional.Y) < 0.001 && Math.abs(PrevEl.Additional.H - Element.Additional.H) < 0.001);
 			}
 
 			return false;
