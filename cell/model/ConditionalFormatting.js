@@ -1091,6 +1091,12 @@
 				this.text = null;
 				this.rank = null;
 				break;
+			case Asc.ECfType.colorScale:
+				this.dxf = null;
+				break;
+		}
+		if (this.type !== Asc.ECfType.top10) {
+			this.rank = null;
 		}
 	};
 	CConditionalFormattingRule.prototype.asc_setDxf = function (val) {
