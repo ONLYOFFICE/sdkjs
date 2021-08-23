@@ -4230,16 +4230,8 @@ Paragraph.prototype.Add = function(Item)
 					}
 					else if (null !== RItem && null !== LItem && para_Text === RItem.Type && para_Text === LItem.Type && false === RItem.IsPunctuation() && false === LItem.IsPunctuation())
 					{
-						var oLogicDocument = this.GetLogicDocument();
-						var oParent        = this.GetParent();
-						var oDocContent    = oParent ? oParent.GetTopDocumentContent() : null;
-						var oDocPos        = null;
-
-						if (oLogicDocument)
-						{
-							oDocPos = oDocContent.GetContentPosition(false);
-							oLogicDocument.TrackDocumentPositions([oDocPos]);
-						}
+						var arrParaPos = [this.GetContentPosition(false)];
+						this.TrackContentPositions(arrParaPos);
 
 						var SearchSPos = new CParagraphSearchPos();
 						var SearchEPos = new CParagraphSearchPos();
@@ -4260,12 +4252,8 @@ Paragraph.prototype.Add = function(Item)
 						// Убираем селект
 						this.RemoveSelection();
 
-						if (oDocPos)
-						{
-							oLogicDocument.RefreshDocumentPositions([oDocPos]);
-							oDocContent.SetContentPosition(oDocPos, 0, 0);
-						}
-
+						this.RefreshContentPositions(arrParaPos);
+						this.SetContentPosition(arrParaPos[0], 0, 0);
 					}
 					else
 					{
@@ -4613,16 +4601,8 @@ Paragraph.prototype.IncDec_FontSize = function(bIncrease)
 			}
 			else if (null !== RItem && null !== LItem && para_Text === RItem.Type && para_Text === LItem.Type && false === RItem.IsPunctuation() && false === LItem.IsPunctuation())
 			{
-				var oLogicDocument = this.GetLogicDocument();
-				var oParent        = this.GetParent();
-				var oDocContent    = oParent ? oParent.GetTopDocumentContent() : null;
-				var oDocPos        = null;
-
-				if (oLogicDocument)
-				{
-					oDocPos = oDocContent.GetContentPosition(false);
-					oLogicDocument.TrackDocumentPositions([oDocPos]);
-				}
+				var arrParaPos = [this.GetContentPosition(false)];
+				this.TrackContentPositions(arrParaPos);
 
 				var SearchSPos = new CParagraphSearchPos();
 				var SearchEPos = new CParagraphSearchPos();
@@ -4643,11 +4623,8 @@ Paragraph.prototype.IncDec_FontSize = function(bIncrease)
 				// Убираем селект
 				this.RemoveSelection();
 
-				if (oDocPos)
-				{
-					oLogicDocument.RefreshDocumentPositions([oDocPos]);
-					oDocContent.SetContentPosition(oDocPos, 0, 0);
-				}
+				this.RefreshContentPositions(arrParaPos);
+				this.SetContentPosition(arrParaPos[0], 0, 0);
 			}
 			else
 			{
@@ -14477,6 +14454,9 @@ Paragraph.prototype.SetContentSelection = function(StartDocPos, EndDocPos, Depth
 };
 Paragraph.prototype.SetContentPosition = function(DocPos, Depth, Flag)
 {
+	if (!DocPos)
+		return;
+
     if (0 === Flag && (!DocPos[Depth] || this !== DocPos[Depth].Class))
         return;
 
@@ -16673,6 +16653,45 @@ Paragraph.prototype.LoadSelectionState = function(oState)
 	this.CurPos.RealX      = oState.CurPos.RealX;
 	this.CurPos.RealY      = oState.CurPos.RealY;
 	this.CurPos.PagesPos   = oState.CurPos.PagesPos;
+};
+/**
+ * Данная функция начинает отслеживать массив заданных позиций внутри параграфа
+ * @param {Array} arrContentPositions
+ */
+Paragraph.prototype.TrackContentPositions = function(arrContentPositions)
+{
+	var oLogicDocument = this.GetLogicDocument();
+	if (oLogicDocument)
+		oLogicDocument.TrackDocumentPositions(arrContentPositions);
+};
+/**
+ * Обновляем позицию
+ * @param {Array} arrContentPositions
+ */
+Paragraph.prototype.RefreshContentPositions = function(arrContentPositions)
+{
+	var oLogicDocument = this.GetLogicDocument();
+	if (oLogicDocument)
+	{
+		oLogicDocument.RefreshDocumentPositions(arrContentPositions);
+		for (var nIndex = 0, nCount = arrContentPositions.length; nIndex < nCount; ++nIndex)
+		{
+			var isFind = false;
+			var oPosition = arrContentPositions[nIndex];
+			for (var nPos = 0, nLen = oPosition.length; nPos < nLen; ++nPos)
+			{
+				if (oPosition[nPos].Class === this)
+				{
+					arrContentPositions[nIndex] = oPosition.slice(nPos);
+					isFind = true;
+					break;
+				}
+			}
+
+			if (!isFind)
+				arrContentPositions[nIndex] = null;
+		}
+	}
 };
 Paragraph.prototype.UpdateLineNumbersInfo = function()
 {
