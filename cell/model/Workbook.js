@@ -9784,7 +9784,7 @@
 	};
 
 	Worksheet.prototype.clearConditionalFormattingRulesByRanges = function (ranges, exceptionRange) {
-		for (var i = 0, l = this.aConditionalFormattingRules.length; i < l; ++i) {
+		for (var i = 0; i < this.aConditionalFormattingRules.length; ++i) {
 			var isExcept = exceptionRange && this.aConditionalFormattingRules[i].getIntersections(exceptionRange);
 			if (!isExcept && this.tryClearCFRule(this.aConditionalFormattingRules[i], ranges)) {
 				i--;
