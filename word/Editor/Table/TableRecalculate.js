@@ -1883,6 +1883,23 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
     var Y = StartPos.Y;
     var TableHeight = 0;
 
+	var arrRanges = this.Parent.CheckRange(Page.X, Page.Y, Page.XLimit, Page.Y + 0.001, Page.Y, Page.Y + 0.001, Page.X, Page.XLimit, CurPage);
+	if (arrRanges.length > 0)
+	{
+		for (var nRangeIndex = 0, nRangesCount = arrRanges.length; nRangeIndex < nRangesCount; ++nRangeIndex)
+		{
+			if (Y < arrRanges[nRangeIndex].Y1)
+			{
+				var nShiftY = arrRanges[nRangeIndex].Y1 - Y;
+
+				Y      = arrRanges[nRangeIndex].Y1 + 0.001;
+				Page.Y = Y;
+
+				Page.Bounds.Top += nShiftY;
+			}
+		}
+	}
+
     var TableBorders = this.Get_Borders();
 
     var nHeaderMaxTopBorder = -1;
