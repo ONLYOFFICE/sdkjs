@@ -1076,6 +1076,16 @@ function CEditorPage(api)
             AscCommon.addMouseEvent(this.m_oBody.HtmlElement, "up", this.onBodyMouseUp);
 		}
 
+		// в мобильной версии - при транзишне - не обновляется позиция/размер
+		if (this.m_oApi.isMobileVersion)
+		{
+			var _t = this;
+			document.addEventListener && document.addEventListener("transitionend", function() {
+				if (_t.Y === 0)
+					_t.OnResize();
+			}, false);
+		}
+
 		this.initEvents2MobileAdvances();
 
 		this.Thumbnails.initEvents();
