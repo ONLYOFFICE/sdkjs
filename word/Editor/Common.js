@@ -115,6 +115,9 @@ CTextToTableEngine.prototype.AddItem = function()
 	if (this.IsParagraphSeparator())
 		return;
 
+	if (0 === this.CurCols)
+		this.Rows++;
+
 	if (this.MaxCols)
 	{
 		if (this.CurCols < this.MaxCols)
@@ -127,7 +130,7 @@ CTextToTableEngine.prototype.AddItem = function()
 				this.Cols = this.CurCols;
 
 			this.Rows++;
-			this.CurCols = 0;
+			this.CurCols = 1;
 		}
 	}
 	else
@@ -187,7 +190,6 @@ CTextToTableEngine.prototype.OnEndParagraph = function(oParagraph)
 				if (this.Cols < this.CurCols)
 					this.Cols = this.CurCols;
 
-				this.Rows++;
 				this.CurCols = 0;
 			}
 		}
