@@ -1499,6 +1499,7 @@
 				this.SpellCheckApi = {};
 				this.SpellCheckApi.log = false;
 				this.SpellCheckApi.worker = new CSpellchecker({
+					api: this,
 					enginePath: "../../../../sdkjs/common/spell/spell",
 					dictionariesPath: "./../../../../dictionaries"
 				});

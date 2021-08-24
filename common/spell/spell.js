@@ -34,6 +34,7 @@
 
 function CSpellchecker(settings)
 {
+	this.api = settings.api;
 	this.useWasm = false;
 	var webAsmObj = window["WebAssembly"];
 	if (typeof webAsmObj === "object")
@@ -156,6 +157,21 @@ function CSpellchecker(settings)
 		else
 		{
 			this.worker = new Worker(worker_src);
+
+			/*
+			// TODO:
+			var _t = this;
+			this.worker.onerror = function(e) {
+				AscCommon.stopEvent(e);
+				if (_t.useWasm)
+				{
+					_t.useWasm = false;
+					_t.restart();
+					_t.api.restartSpellChecker();
+				}
+			};
+			*/
+
 			this._start(this.worker);
 		}
 	};

@@ -128,6 +128,7 @@ CColumnsMarkup.prototype.CreateDuplicate = function ()
 
 function CTableOutlineDr()
 {
+	this.mover = null;
 	this.mover_size = 13;
 
 	this.TableOutline = null;
@@ -946,6 +947,68 @@ function CTableOutlineDr()
 			this.TrackTablePos = 0;
 		}
 	}
+
+	this.checkMover = function()
+	{
+		if (this.mover && Math.abs(this.mover.scale - AscCommon.AscBrowser.retinaPixelRatio) < 0.001)
+			return;
+
+		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+		var rectSize = Math.round(12 * rPR);
+		var halfRSize = Math.round(rectSize / 2);
+		var indent = 0.5 * Math.round(rPR);
+
+		var lineW = Math.round(rPR);
+		var size = rectSize + lineW;
+		if(0 !== (rectSize & 1))
+			size += 1;
+
+		this.mover = document.createElement("canvas");
+		this.mover.scale = AscCommon.AscBrowser.retinaPixelRatio;
+		this.mover.width = size;
+		this.mover.height = size;
+		var ctx = this.mover.getContext("2d");
+		ctx.fillStyle = "#FFFFFF";
+		ctx.fillRect(0, 0, size, size);
+
+		var tmpImage = document.createElement("canvas");
+		// размеры - в drawArrow
+		tmpImage.width = Math.round(13 * rPR);
+		tmpImage.height = Math.round(13 * rPR);
+		var tmpContext = tmpImage.getContext("2d");
+
+		AscCommon.COverlay.prototype.drawArrow(tmpContext, 0,  -Math.round(3 * rPR), 3 * Math.round( rPR), {r: 68, g: 68, b: 68});
+		// top
+		ctx.drawImage(tmpImage, 0, 0);
+		//bottom
+		tmpContext.translate(Math.round(rectSize / 2), Math.round(rectSize / 2));
+		tmpContext.rotate(Math.PI);
+		tmpContext.translate(-Math.round(rectSize / 2), -Math.round(rectSize / 2));
+		tmpContext.drawImage(tmpImage, -Math.round(rPR), -Math.round(rPR));
+		ctx.drawImage(tmpImage, 0, 0);
+		tmpContext.setTransform(1,0,0,1,0,0);
+		//draw left and right arrow
+		tmpContext.translate(Math.round(rectSize / 2), Math.round(rectSize / 2));
+		tmpContext.rotate(Math.PI / 2);
+		tmpContext.translate(-Math.round(rectSize / 2), -Math.round(rectSize / 2));
+		tmpContext.drawImage(tmpImage, 0, -Math.round(rPR));
+		ctx.drawImage(tmpImage, 0, 0);
+
+		ctx.lineWidth = lineW;
+		ctx.strokeStyle = "rgb(140, 140, 140)";
+
+		if (0 !== (rectSize & 1)) {
+			rectSize += 1;
+		}
+		ctx.strokeRect(0.5 * lineW, 0.5 * lineW, rectSize, rectSize);
+
+		ctx.strokeStyle = "rgb(68, 68, 68)";
+		ctx.moveTo(halfRSize - Math.round(Math.round(6 * rPR) / 2) + indent, halfRSize + indent);
+		ctx.lineTo(halfRSize + Math.round(Math.round(6 * rPR) / 2) + indent, halfRSize + 0.5 * Math.round(rPR));
+		ctx.moveTo(halfRSize + indent, halfRSize - Math.round(Math.round(6 * rPR) / 2) + indent);
+		ctx.lineTo(halfRSize + indent, halfRSize + Math.round(Math.round(6 * rPR) / 2) + indent);
+		ctx.stroke();
+	};
 }
 
 function CCacheImage()
@@ -1683,51 +1746,8 @@ function CPage()
 				if ((_y + _h) > overlay.max_y)
 					overlay.max_y = _y + _h;
 
-				var ctx = overlay.m_oContext,
-				    rectSize = Math.round(12 * rPR),
-					halfRSize = Math.round(rectSize / 2),
-					indent = 0.5 * Math.round(rPR),
-					canvasVert = document.createElement('canvas'),
-					contextVert = canvasVert.getContext('2d'),
-					canvasHor = document.createElement('canvas'),
-					contextHor = canvasHor.getContext('2d');
-
-				ctx.beginPath();
-
-                //draw top arrow
-				overlay.drawArrow(contextVert, 0,  -Math.round(3 * rPR), 3 * Math.round( rPR), {r: 68, g: 68, b: 68});
-				ctx.drawImage(canvasVert, _x, _y);
-
-				//draw bottom arrow
-				contextVert.translate(Math.round(rectSize / 2), Math.round(rectSize / 2));
-				contextVert.rotate(Math.PI);
-				contextVert.translate(-Math.round(rectSize / 2), -Math.round(rectSize / 2));
-				contextVert.drawImage(canvasVert, -Math.round(rPR), -Math.round(rPR));
-				ctx.drawImage(canvasVert, _x, _y);
-
-				// //draw left and right arrow
-				contextHor.translate(Math.round(rectSize / 2), Math.round(rectSize / 2));
-				contextHor.rotate(Math.PI / 2);
-				contextHor.translate(-Math.round(rectSize / 2), -Math.round(rectSize / 2));
-				contextHor.drawImage(canvasVert, 0, -Math.round(rPR));
-				ctx.drawImage(canvasHor, _x, _y);
-
-				ctx.lineWidth = Math.round(rPR);
-				ctx.strokeStyle = "rgb(140, 140, 140)";
-
-				//draw rect
-				if(0 !== (rectSize & 1)) {
-					rectSize +=1;
-				}
-				ctx.strokeRect(0.5 * ctx.lineWidth + _x, 0.5 * ctx.lineWidth + _y, rectSize, rectSize);
-
-				//draw cross element
-				ctx.strokeStyle = "rgb(68, 68, 68)";
-				ctx.moveTo(_x + halfRSize - Math.round(Math.round(6 * rPR) / 2) + indent, _y + halfRSize + indent);
-				ctx.lineTo(_x + halfRSize + Math.round(Math.round(6 * rPR) / 2) + indent, _y + halfRSize + 0.5 * Math.round(rPR));
-				ctx.moveTo(_x + halfRSize + indent, _y + halfRSize - Math.round(Math.round(6 * rPR) / 2) + indent);
-				ctx.lineTo(_x + halfRSize + indent, _y + halfRSize + Math.round(Math.round(6 * rPR) / 2) + indent);
-				ctx.stroke();
+				table_outline_dr.checkMover();
+				overlay.m_oContext.drawImage(table_outline_dr.mover, _x, _y);
 			}
 			else
 			{
@@ -1807,9 +1827,8 @@ function CPage()
 				overlay.CheckPoint(_ft.TransformPointX(_x + _w, _y + _h), _ft.TransformPointY(_x + _w, _y + _h));
 				overlay.CheckPoint(_ft.TransformPointX(_x, _y + _h), _ft.TransformPointY(_x, _y + _h));
 
-				var tmp_image = AscCommon.AscBrowser.isCustomScalingAbove2() ? table_outline_dr.image2 : table_outline_dr.image;
-				if (tmp_image.asc_complete)
-					overlay.m_oContext.drawImage(tmp_image, _x, _y, _w, _h);
+				table_outline_dr.checkMover();
+				overlay.m_oContext.drawImage(table_outline_dr.mover, _x, _y, _w, _h);
 
 				overlay.SetBaseTransform();
 			}

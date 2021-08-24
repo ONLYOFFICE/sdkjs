@@ -3015,6 +3015,24 @@ function CEditorPage(api)
 
 			ctx.globalAlpha = 1.0;
 
+			// drawShapes (+ track)
+			if (this.m_oLogicDocument.DrawingObjects)
+			{
+				for (var indP = drDoc.m_lDrawingFirst; indP <= drDoc.m_lDrawingEnd; indP++)
+				{
+					this.m_oDrawingDocument.AutoShapesTrack.PageIndex = indP;
+					this.m_oLogicDocument.DrawingObjects.drawSelect(indP);
+				}
+
+				if (this.m_oLogicDocument.DrawingObjects.needUpdateOverlay())
+				{
+					overlay.Show();
+					this.m_oDrawingDocument.AutoShapesTrack.PageIndex = -1;
+					this.m_oLogicDocument.DrawingObjects.drawOnOverlay(this.m_oDrawingDocument.AutoShapesTrack);
+					this.m_oDrawingDocument.AutoShapesTrack.CorrectOverlayBounds();
+				}
+			}
+
 			var _table_outline = drDoc.TableOutlineDr.TableOutline;
 			if (_table_outline != null && !this.MobileTouchManager)
 			{
@@ -3039,24 +3057,6 @@ function CEditorPage(api)
 			}
 
             drDoc.contentControls && drDoc.contentControls.DrawContentControlsTrack(overlay);
-
-			// drawShapes (+ track)
-			if (this.m_oLogicDocument.DrawingObjects)
-			{
-				for (var indP = drDoc.m_lDrawingFirst; indP <= drDoc.m_lDrawingEnd; indP++)
-				{
-					this.m_oDrawingDocument.AutoShapesTrack.PageIndex = indP;
-					this.m_oLogicDocument.DrawingObjects.drawSelect(indP);
-				}
-
-				if (this.m_oLogicDocument.DrawingObjects.needUpdateOverlay())
-				{
-					overlay.Show();
-					this.m_oDrawingDocument.AutoShapesTrack.PageIndex = -1;
-					this.m_oLogicDocument.DrawingObjects.drawOnOverlay(this.m_oDrawingDocument.AutoShapesTrack);
-					this.m_oDrawingDocument.AutoShapesTrack.CorrectOverlayBounds();
-				}
-			}
 
             if (drDoc.placeholders.objects.length > 0)
             {
