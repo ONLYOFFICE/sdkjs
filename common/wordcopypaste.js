@@ -2445,7 +2445,7 @@ PasteProcessor.prototype =
 
 			var nPrevRow      = -1;
 			var nElementIndex = -1;
-			for (var nIndex = 0, k = 0, nCount = arrSelectedCells.length; nIndex < nCount; ++nIndex)
+			for (var nIndex = 0, nCount = arrSelectedCells.length; nIndex < nCount; ++nIndex)
 			{
 				var oPos  = arrSelectedCells[nIndex];
 				var oRow  = oTable.GetRow(oPos.Row);
@@ -2458,7 +2458,9 @@ PasteProcessor.prototype =
 					continue;
 
 				var oCellContent = oCell.GetContent();
-				var oPara        = oCellContent.GetElement(0);
+				oCellContent.ClearContent(true);
+
+				var oPara = oCellContent.GetElement(0);
 				if (!oPara || !oPara.IsParagraph())
 					continue;
 
