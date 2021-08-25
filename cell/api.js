@@ -1272,7 +1272,7 @@ var editor;
 
   spreadsheet_api.prototype._loadFonts = function(fonts, callback) {
     if (window["NATIVE_EDITOR_ENJINE"]) {
-      return callback();
+      return callback.call(this);
     }
     this.asyncMethodCallback = callback;
     var arrLoadFonts = [];
