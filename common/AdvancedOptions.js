@@ -83,6 +83,8 @@
 			this.delimiter = delimiter;
 			this.delimiterChar = delimiterChar;
 
+			this.textQualifier = null;
+
 			this.numberDecimalSeparator = null;
 			this.numberGroupSeparator = null;
 		}
@@ -116,6 +118,9 @@
 
 			return arr;
 		};
+		asc_CTextOptions.prototype.asc_setTextQualifier = function(v){this.textQualifier = v;};
+		asc_CTextOptions.prototype.asc_getTextQualifier = function(){return this.textQualifier;};
+
 
 		/** @constructor */
 		function asc_CDRMAdvancedOptions(password){
