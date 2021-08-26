@@ -3215,23 +3215,14 @@ var editor;
     return ret;
   };
 
-  spreadsheet_api.prototype.asc_addImageDrawingObject = function (imageUrl, imgProp, token) {
+  spreadsheet_api.prototype.asc_addImageDrawingObject = function (urls, imgProp, token) {
 
     var t = this;
     var ws = t.wb.getWorksheet();
     if (ws.model.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
       return false;
     }
-
-    AscCommon.sendImgUrls(this, [imageUrl], function(data) {
-
-      if (data && data[0] && data[0].url !== "error")
-      {
-        ws.objectRender.addImageDrawingObject([data[0].url], null);
-      }
-
-    }, true, false, token);
-
+    this.AddImageUrl(urls, imgProp, token, null);
   };
 
 

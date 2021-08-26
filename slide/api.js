@@ -4102,7 +4102,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype._addImageUrl = function(urls, obj)
 	{
 		if(obj && (obj.isImageChangeUrl || obj.isShapeImageChangeUrl || obj.isSlideImageChangeUrl || obj.isTextArtChangeUrl)){
-            this.AddImageUrl(urls[0], undefined, undefined, obj);
+            this.AddImageUrlAction(urls[0], undefined, obj);
 		}
 		else{
 			if(this.ImageLoader){
@@ -4118,23 +4118,6 @@ background-repeat: no-repeat;\
                     oApi.WordControl.m_oLogicDocument.addImages(aImages, obj);
                 }, []);
 			}
-		}
-	};
-	asc_docs_api.prototype.AddImageUrl  = function(url, imgProp, token, obj)
-	{
-		if (g_oDocumentUrls.getLocal(url))
-		{
-			this.AddImageUrlAction(url, obj);
-		}
-		else
-		{
-            var t = this;
-            AscCommon.sendImgUrls(this, [url], function(data) {
-
-                if (data && data[0] && data[0].url !== "error")
-                    t.AddImageUrlAction(data[0].url, obj);
-
-            }, false, undefined, token);
 		}
 	};
 
@@ -4207,7 +4190,7 @@ background-repeat: no-repeat;\
 		}
 	};
 
-	asc_docs_api.prototype.AddImageUrlAction = function(url, obj)
+	asc_docs_api.prototype.AddImageUrlAction = function(url, imgProp, obj)
 	{
 		var _image = this.ImageLoader.LoadImage(url, 1);
 		if (null != _image)

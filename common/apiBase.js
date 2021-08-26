@@ -1734,6 +1734,36 @@
 		return this.textArtPreviewManager.getWordArtPreviews();
 	};
 	// Add image
+	baseEditorsApi.prototype.AddImageUrl       = function(urls, imgProp, token, obj)
+	{
+		if (this.isLongAction()) {
+			return;
+		}
+		var t = this;
+		var toSendUrls = [];
+		var toSendIndex = [];
+		for (var i = 0; i < urls.length; ++i) {
+			if (!AscCommon.g_oDocumentUrls.getLocal(urls[i])) {
+				toSendIndex.push(i);
+				toSendUrls.push(urls[i]);
+			}
+		}
+		var callback = function(urls) {
+			t._addImageUrl(urls, obj);
+		};
+		if (toSendUrls.length > 0) {
+			AscCommon.sendImgUrls(this, toSendUrls, function(data) {
+				if (data) {
+					data.forEach(function(currentValue, index) {
+						urls[toSendIndex[index]] = currentValue.url;
+					});
+					callback.call(t, urls);
+				}
+			}, false, undefined, token);
+		} else {
+			callback.call(this, urls);
+		}
+	};
 	baseEditorsApi.prototype._addImageUrl                        = function()
 	{
 	};

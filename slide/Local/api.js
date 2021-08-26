@@ -207,8 +207,11 @@ Asc['asc_docs_api'].prototype.asc_DownloadAs = function(options)
 
 Asc['asc_docs_api'].prototype.AddImageUrl = function(url, imgProp, token, obj)
 {
-	var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](url);
-	this.AddImageUrlAction(AscCommon.g_oDocumentUrls.getImageUrl(_url), obj);
+	var _urls = urls.map(function(currentValue) {
+		var localUrl = window["AscDesktopEditor"]["LocalFileGetImageUrl"](currentValue);
+		return AscCommon.g_oDocumentUrls.getImageUrl(localUrl);
+	});
+	this._addImageUrl(_urls, imgProp, obj);
 };
 Asc['asc_docs_api'].prototype.AddImage = Asc['asc_docs_api'].prototype.asc_addImage = function(obj)
 {
@@ -220,7 +223,7 @@ Asc['asc_docs_api'].prototype.AddImage = Asc['asc_docs_api'].prototype.asc_addIm
 			return;
 
 		var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](file);
-		editor.AddImageUrlAction(AscCommon.g_oDocumentUrls.getImageUrl(_url), obj);
+		editor.AddImageUrlAction(AscCommon.g_oDocumentUrls.getImageUrl(_url), undefined, obj);
 	});
 };
 Asc['asc_docs_api'].prototype.asc_isOffline = function()
