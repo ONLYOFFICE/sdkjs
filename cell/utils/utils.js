@@ -2168,18 +2168,8 @@
 					var geometry = new AscFormat.CreateGeometry("rect");
 					geometry.Recalculate(rect._width, rect._height, true);
 					var oUniFill = AscCommonExcel.convertFillToUnifill(fill);
-					if (ctx instanceof AscCommonExcel.CPdfPrinter) {
-						graphics.SaveGrState();
-						var _baseTransform;
-						if (!ctx.Transform) {
-							_baseTransform = new AscCommon.CMatrix();
-						} else {
-							_baseTransform = ctx.Transform;
-						}
-						graphics.SetBaseTransform(_baseTransform);
-					}
 
-					graphics.save();
+					graphics.SaveGrState();
 					var oMatrix = new AscCommon.CMatrix();
 					oMatrix.tx = rect._x;
 					oMatrix.ty = rect._y;
@@ -2189,12 +2179,8 @@
 
 					shapeDrawer.fromShape2(new AscFormat.CColorObj(null, oUniFill, geometry), graphics, geometry);
 					shapeDrawer.draw(geometry);
-					graphics.restore();
+					graphics.RestoreGrState();
 
-					if (ctx instanceof AscCommonExcel.CPdfPrinter) {
-						graphics.SetBaseTransform(null);
-						graphics.RestoreGrState();
-					}
 				}, this, []
 			);
 		}

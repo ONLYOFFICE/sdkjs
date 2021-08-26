@@ -3868,12 +3868,7 @@
 
 				var oUniFill = new AscFormat.builder_CreateBlipFill(img, "stretch");
 
-				if (ctx instanceof AscCommonExcel.CPdfPrinter) {
-					graphics.SaveGrState();
-					graphics.SetBaseTransform(ctx.Transform || new AscCommon.CMatrix());
-				}
-
-				graphics.save();
+				graphics.SaveGrState();
 				var oMatrix = new AscCommon.CMatrix();
 				oMatrix.tx = rect._x;
 				oMatrix.ty = rect._y;
@@ -3883,12 +3878,8 @@
 
 				shapeDrawer.fromShape2(new AscFormat.CColorObj(null, oUniFill, geometry), graphics, geometry);
 				shapeDrawer.draw(geometry);
-				graphics.restore();
+				graphics.RestoreGrState();
 
-				if (ctx instanceof AscCommonExcel.CPdfPrinter) {
-					graphics.SetBaseTransform(null);
-					graphics.RestoreGrState();
-				}
 			}, this, [img, rect, iconSize * dScale * this.getZoom()]
 		);
 	};
@@ -16505,12 +16496,7 @@
 
 					var oUniFill = new AscFormat.builder_CreateBlipFill(img, "stretch");
 
-					if (ctx instanceof AscCommonExcel.CPdfPrinter) {
-						graphics.SaveGrState();
-						graphics.SetBaseTransform(ctx.Transform || new AscCommon.CMatrix());
-					}
-
-					graphics.save();
+					graphics.SaveGrState();
 					var oMatrix = new AscCommon.CMatrix();
 					oMatrix.tx = rect._x;
 					oMatrix.ty = rect._y;
@@ -16520,12 +16506,8 @@
 
 					shapeDrawer.fromShape2(new AscFormat.CColorObj(null, oUniFill, geometry), graphics, geometry);
 					shapeDrawer.draw(geometry);
-					graphics.restore();
+					graphics.RestoreGrState();
 
-					if (ctx instanceof AscCommonExcel.CPdfPrinter) {
-						graphics.SetBaseTransform(null);
-						graphics.RestoreGrState();
-					}
 				}, this, [img, rect, iconSize * dScale * this.getZoom()]
 			);
 		}
