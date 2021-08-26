@@ -159,12 +159,12 @@ StartAddNewShape.prototype =
                     return;
                 }
             }
-            var callback = function(bLock){
+            var callback = function(bLock, isClickMouseEvent){
 
                 if(bLock)
                 {
                     History.Create_NewPoint(AscDFH.historydescription_CommonStatesAddNewShape);
-                    var shape = track.getShape(false, oThis.drawingObjects.getDrawingDocument(), oThis.drawingObjects.drawingObjects);
+                    var shape = track.getShape(false, oThis.drawingObjects.getDrawingDocument(), oThis.drawingObjects.drawingObjects, isClickMouseEvent);
 
                     if(!(oThis.drawingObjects.drawingObjects && oThis.drawingObjects.drawingObjects.cSld))
                     {
@@ -206,7 +206,7 @@ StartAddNewShape.prototype =
             }
             else
             {
-                callback(true);
+                callback(true, e.ClickCount);
             }
         }
         this.drawingObjects.clearTrackObjects();
@@ -369,6 +369,12 @@ NullState.prototype =
                     this.drawingObjects.changeCurrentState(new TrackSelectionRect(this.drawingObjects));
                 }
 
+            }
+            var oAnimPlayer = this.drawingObjects.getAnimationPlayer && this.drawingObjects.getAnimationPlayer();
+            if(oAnimPlayer) {
+                if(oAnimPlayer.onClick()) {
+                    return true;
+                }
             }
         }
         else

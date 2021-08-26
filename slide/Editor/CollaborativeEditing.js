@@ -40,23 +40,31 @@
 function CCollaborativeEditing()
 {
 	AscCommon.CCollaborativeEditingBase.call(this);
-
-    this.m_oLogicDocument     = null;
-    this.m_aDocumentPositions = new AscCommon.CDocumentPositionsManager();
-    this.m_aForeignCursorsPos = new AscCommon.CDocumentPositionsManager();
-    this.m_aForeignCursors    = {};
     this.PosExtChangesX = [];
     this.PosExtChangesY = [];
     this.ScaleX = null;
     this.ScaleY = null;
-
-    this.m_aForeignCursorsXY     = {};
-    this.m_aForeignCursorsToShow = {};
 }
 
 CCollaborativeEditing.prototype = Object.create(AscCommon.CCollaborativeEditingBase.prototype);
 CCollaborativeEditing.prototype.constructor = CCollaborativeEditing;
 
+CCollaborativeEditing.prototype.GetEditorApi = function()
+{
+    if(this.m_oLogicDocument)
+    {
+        return this.m_oLogicDocument.GetApi();
+    }
+    return null;
+};
+CCollaborativeEditing.prototype.GetDrawingDocument = function()
+{
+    if(this.m_oLogicDocument)
+    {
+        return this.m_oLogicDocument.GetDrawingDocument();
+    }
+    return null;
+};
 CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalInfo, IsUpdateInterface, isAfterAskSave)
 {
     // Пересчитываем позиции
@@ -255,20 +263,6 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
 
     // editor.WordControl.m_oLogicDocument.DrawingDocument.ClearCachePages();
     //    editor.WordControl.m_oLogicDocument.DrawingDocument.FirePaint();
-};
-
-AscCommon.CCollaborativeEditingBase.prototype.Refresh_ForeignCursors = function()
-{
-    for (var UserId in this.m_aCursorsToUpdate)
-    {
-        var CursorInfo = this.m_aCursorsToUpdate[UserId];
-        editor.WordControl.m_oLogicDocument.Update_ForeignCursor(CursorInfo, UserId, false, this.m_aCursorsToUpdateShortId[UserId]);
-
-        if (this.Add_ForeignCursorToShow)
-            this.Add_ForeignCursorToShow(UserId);
-    }
-    this.m_aCursorsToUpdate = {};
-    this.m_aCursorsToUpdateShortId = {};
 };
 
 CCollaborativeEditing.prototype.Release_Locks = function()
@@ -632,133 +626,14 @@ CCollaborativeEditing.prototype.Update_ForeignCursorPosition = function(UserId, 
     }
 };
 
-CCollaborativeEditing.prototype.Check_ForeignCursorsLabels = function(X, Y, PageIndex){
-
-    var DrawingDocument = editor.WordControl.m_oDrawingDocument;
-    var Px7 = DrawingDocument.GetMMPerDot(7);
-    var Px3 = DrawingDocument.GetMMPerDot(3);
-
-    for (var UserId in this.m_aForeignCursorsXY){
-        var Cursor = this.m_aForeignCursorsXY[UserId];
-        if (true === Cursor.Transform && Cursor.PageIndex === PageIndex && Cursor.X0 - Px3 < X && X < Cursor.X1 + Px3 && Cursor.Y0 - Px3 < Y && Y < Cursor.Y1 + Px3){
-            this.Show_ForeignCursorLabel(UserId);
-        }
-    }
-};
-CCollaborativeEditing.prototype.Show_ForeignCursorLabel = function(UserId)
-{
-
-    var Api = editor;
-    var DrawingDocument = editor.WordControl.m_oDrawingDocument;
-
-    if (!this.m_aForeignCursorsXY[UserId])
-        return;
-
-    var Cursor = this.m_aForeignCursorsXY[UserId];
-    if (Cursor.ShowId)
-        clearTimeout(Cursor.ShowId);
-
-    Cursor.ShowId = setTimeout(function()
-    {
-        Cursor.ShowId = null;
-        Api.sync_HideForeignCursorLabel(UserId);
-    }, AscCommon.FOREIGN_CURSOR_LABEL_HIDETIME);
-
-    var UserShortId = this.m_aForeignCursorsId[UserId] ? this.m_aForeignCursorsId[UserId] : UserId;
-    var Color  = AscCommon.getUserColorById(UserShortId, null, true);
-    var Coords = DrawingDocument.Collaborative_GetTargetPosition(UserId);
-    if (!Color || !Coords)
-        return;
-
-    this.Update_ForeignCursorLabelPosition(UserId, Coords.X, Coords.Y, Color);
-};
-CCollaborativeEditing.prototype.Add_ForeignCursorToShow = function(UserId)
-{
-    this.m_aForeignCursorsToShow[UserId] = true;
-};
-CCollaborativeEditing.prototype.Remove_ForeignCursorToShow = function(UserId)
-{
-    delete this.m_aForeignCursorsToShow[UserId];
-};
-CCollaborativeEditing.prototype.Add_ForeignCursorXY = function(UserId, X, Y, PageIndex, H, Paragraph, isRemoveLabel)
-{
-    var Cursor;
-    if (!this.m_aForeignCursorsXY[UserId])
-    {
-        Cursor = {X: X, Y: Y, H: H, PageIndex: PageIndex, Transform: false, ShowId: null};
-        this.m_aForeignCursorsXY[UserId] = Cursor;
-    }
-    else
-    {
-        Cursor = this.m_aForeignCursorsXY[UserId];
-        if (Cursor.ShowId)
-        {
-            if (true === isRemoveLabel)
-            {
-                clearTimeout(Cursor.ShowId);
-                Cursor.ShowId = null;
-                editor.sync_HideForeignCursorLabel(UserId);
-            }
-        }
-        else
-        {
-            Cursor.ShowId = null;
-        }
-
-        Cursor.X         = X;
-        Cursor.Y         = Y;
-        Cursor.PageIndex = PageIndex;
-        Cursor.H         = H;
-    }
-
-    var Transform = Paragraph.Get_ParentTextTransform();
-    if (Transform)
-    {
-        Cursor.Transform = true;
-        var X0 = Transform.TransformPointX(Cursor.X, Cursor.Y);
-        var Y0 = Transform.TransformPointY(Cursor.X, Cursor.Y);
-        var X1 = Transform.TransformPointX(Cursor.X, Cursor.Y + Cursor.H);
-        var Y1 = Transform.TransformPointY(Cursor.X, Cursor.Y + Cursor.H);
-
-        Cursor.X0 = Math.min(X0, X1);
-        Cursor.Y0 = Math.min(Y0, Y1);
-        Cursor.X1 = Math.max(X0, X1);
-        Cursor.Y1 = Math.max(Y0, Y1);
-    }
-    else
-    {
-        Cursor.Transform = false;
-    }
-
-};
-CCollaborativeEditing.prototype.Remove_ForeignCursorXY = function(UserId)
-{
-    if (this.m_aForeignCursorsXY[UserId])
-    {
-        if (this.m_aForeignCursorsXY[UserId].ShowId)
-        {
-            editor.sync_HideForeignCursorLabel(UserId);
-            clearTimeout(this.m_aForeignCursorsXY[UserId].ShowId);
-        }
-
-        delete this.m_aForeignCursorsXY[UserId];
-    }
-};
-CCollaborativeEditing.prototype.Update_ForeignCursorLabelPosition = function(UserId, X, Y, Color)
-{
-
-    var Cursor = this.m_aForeignCursorsXY[UserId];
-    if (!Cursor || !Cursor.ShowId)
-        return;
-
-    editor.sync_ShowForeignCursorLabel(UserId, X, Y, Color);
-};
-
-
 CCollaborativeEditing.prototype.private_RecalculateDocument = function(arrChanges){
     this.m_oLogicDocument.Recalculate(AscCommon.History.Get_RecalcData(null, arrChanges));
 };
 
+CCollaborativeEditing.prototype.private_UpdateForeignCursor = function(CursorInfo, UserId, Show, UserShortId)
+{
+    this.m_oLogicDocument.Update_ForeignCursor(CursorInfo, UserId, Show, UserShortId);
+};
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};

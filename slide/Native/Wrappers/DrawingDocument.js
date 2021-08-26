@@ -742,10 +742,136 @@ CDrawingDocument.prototype.UpdateThumbnailsAttack = function()
 
 CDrawingDocument.prototype.CheckGuiControlColors = function(bIsAttack)
 {
+    var _slide  = null;
+    var _layout = null;
+    var _master = null;
+
+    // потом реализовать проверку на то, что нужно ли посылать
+    if (-1 != this.SlideCurrent)
+    {
+        _slide  = this.m_oWordControl.m_oLogicDocument.Slides[this.SlideCurrent];
+        if(!_slide){
+            return;
+        }
+        if( this.m_oWordControl.m_oLogicDocument.FocusOnNotes){
+            if(!_slide.notes){
+                return;
+            }
+            _master = _slide.notes.Master;
+        }
+        else{
+            _layout = _slide.Layout;
+            _master = _layout.Master;
+        }
+    }
+    else if ((0 < this.m_oWordControl.m_oLogicDocument.slideMasters.length) &&
+        (0 < this.m_oWordControl.m_oLogicDocument.slideMasters[0].sldLayoutLst.length))
+    {
+        _layout = this.m_oWordControl.m_oLogicDocument.slideMasters[0].sldLayoutLst[0];
+        _master = this.m_oWordControl.m_oLogicDocument.slideMasters[0];
+    }
+    else
+    {
+        return;
+    }
+
+    var arr_colors = new Array(10);
+
+    var _theme             = _master.Theme;
+    var rgba               = {R : 0, G : 0, B : 0, A : 255};
+    // bg1,tx1,bg2,tx2,accent1 - accent6
+    var array_colors_types = [6, 15, 7, 16, 0, 1, 2, 3, 4, 5];
+    var _count             = array_colors_types.length;
+
+    var color   = new AscFormat.CUniColor();
+    color.color = new AscFormat.CSchemeColor();
+    for (var i = 0; i < _count; ++i)
+    {
+        color.color.id = array_colors_types[i];
+        color.Calculate(_theme, _slide, _layout, _master, rgba);
+
+        var _rgba     = color.RGBA;
+        arr_colors[i] = new AscCommon.CColor(_rgba.R, _rgba.G, _rgba.B);
+    }
+
+    // теперь проверим
+    var bIsSend = false;
+    if (this.GuiControlColorsMap != null)
+    {
+        for (var i = 0; i < _count; ++i)
+        {
+            var _color1 = this.GuiControlColorsMap[i];
+            var _color2 = arr_colors[i];
+
+            if ((_color1.r != _color2.r) || (_color1.g != _color2.g) || (_color1.b != _color2.b))
+            {
+                bIsSend = true;
+                break;
+            }
+        }
+    }
+    else
+    {
+        this.GuiControlColorsMap = new Array(_count);
+        bIsSend                  = true;
+    }
+
+    if (bIsSend || (bIsAttack === true))
+    {
+        for (var i = 0; i < _count; ++i)
+        {
+            this.GuiControlColorsMap[i] = arr_colors[i];
+        }
+
+        this.SendControlColors(bIsAttack);
+    }
 };
 
 CDrawingDocument.prototype.SendControlColors = function(bIsAttack)
 {
+    var standart_colors = null;
+    if (!this.IsSendStandartColors || (bIsAttack === true))
+    {
+        var standartColors = AscCommon.g_oStandartColors;
+        var _c_s           = standartColors.length;
+        standart_colors    = new Array(_c_s);
+
+        for (var i = 0; i < _c_s; ++i)
+        {
+            standart_colors[i] = new AscCommon.CColor(standartColors[i].R, standartColors[i].G, standartColors[i].B);
+        }
+
+        this.IsSendStandartColors = true;
+    }
+
+    var _count = this.GuiControlColorsMap.length;
+
+    var _ret_array = new Array(_count * 6);
+    var _cur_index = 0;
+
+    for (var i = 0; i < _count; ++i)
+    {
+        var _color_src = this.GuiControlColorsMap[i];
+
+        _ret_array[_cur_index] = new AscCommon.CColor(_color_src.r, _color_src.g, _color_src.b);
+        _cur_index++;
+
+        // теперь с модификаторами
+        var _count_mods = 5;
+        for (var j = 0; j < _count_mods; ++j)
+        {
+            var dst_mods  = new AscFormat.CColorModifiers();
+            dst_mods.Mods = AscCommon.GetDefaultMods(_color_src.r, _color_src.g, _color_src.b, j + 1, 0);
+
+            var _rgba = {R : _color_src.r, G : _color_src.g, B : _color_src.b, A : 255};
+            dst_mods.Apply(_rgba);
+
+            _ret_array[_cur_index] = new AscCommon.CColor(_rgba.R, _rgba.G, _rgba.B);
+            _cur_index++;
+        }
+    }
+
+    this.m_oWordControl.m_oApi.sync_SendThemeColors(_ret_array, standart_colors);
 };
 
 CDrawingDocument.prototype.DrawImageTextureFillShape = function(url)
@@ -1346,14 +1472,14 @@ CDrawingDocument.prototype.Collaborative_UpdateTarget = function (_id, _shortId,
   		{
   			if (_id == this.CollaborativeTargets[i].Id)
   			{
-  				this.CollaborativeTargets[i].CheckPosition(this, _x, _y, _size, _page, _transform);
+  				this.CollaborativeTargets[i].CheckPosition(_x, _y, _size, _page, _transform);
   				return;
   			}
   		}
-  		var _target = new CDrawingCollaborativeTarget();
+  		var _target = new CDrawingCollaborativeTarget(this);
   		_target.Id = _id;
   		_target.ShortId = _shortId;
-  		_target.CheckPosition(this, _x, _y, _size, _page, _transform);
+  		_target.CheckPosition(_x, _y, _size, _page, _transform);
   		this.CollaborativeTargets[this.CollaborativeTargets.length] = _target;
       };
       CDrawingDocument.prototype.Collaborative_RemoveTarget = function (_id)
@@ -1720,53 +1846,26 @@ function CSlideDrawer()
 	};
 }
 
-function CDrawingCollaborativeTarget()
+function CDrawingCollaborativeTarget(DrawingDocument)
 {
-	this.Id = "";
-	this.ShortId = "";
-
-	this.X = 0;
-	this.Y = 0;
-	this.Size = 0;
-	this.Page = -1;
-
-	this.Color = null;
-	this.Transform = null;
-
-	this.HtmlElement = null;
-	this.HtmlElementX = 0;
-	this.HtmlElementY = 0;
-
-	this.Color = null;
-
-	this.Style = "";
+    AscCommon.CDrawingCollaborativeTargetBase.call(this);
+    this.Page = -1;
+    this.DrawingDocument = DrawingDocument;
 }
-CDrawingCollaborativeTarget.prototype =
+CDrawingCollaborativeTarget.prototype = Object.create(AscCommon.CDrawingCollaborativeTargetBase.prototype);
+CDrawingCollaborativeTarget.prototype.CheckPosition = function (_x, _y, _size, _page, _transform)
 {
-	CheckPosition: function (_drawing_doc, _x, _y, _size, _page, _transform)
-	{
-		 // 2) определяем размер
-		 this.Transform = _transform;
-		 this.Size = _size;
-
-		 var _old_x = this.X;
-		 var _old_y = this.Y;
-		 var _old_page = this.Page;
-
-		 this.X = _x;
-		 this.Y = _y;
-		 this.Page = _page;
-	},
-
-	Remove: function (_drawing_doc)
-	{
-
-  },
-
-	Update: function (_drawing_doc)
-	{
-
-  }
+    this.Transform = _transform;
+    this.Size = _size;
+    this.X = _x;
+    this.Y = _y;
+    this.Page = _page;
+};
+CDrawingCollaborativeTarget.prototype.Remove = function ()
+{
+};
+CDrawingCollaborativeTarget.prototype.Update = function ()
+{
 };
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};

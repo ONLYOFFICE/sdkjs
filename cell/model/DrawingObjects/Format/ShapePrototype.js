@@ -478,6 +478,7 @@ CShape.prototype.addToDrawingObjects =  function(pos, type)
     {
         this.setSignature(this.signatureLine);
     }
+    this.checkClientData();
     var oApi = Asc.editor;
     if(oApi && this.signatureLine)
     {

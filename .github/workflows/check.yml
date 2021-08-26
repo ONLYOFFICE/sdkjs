@@ -25,6 +25,8 @@ jobs:
           npm install --prefix build
           grunt --gruntfile build/Gruntfile.js develop
           node-qunit-phantomjs cell/.unit-tests/FormulaTests.html
+          node-qunit-phantomjs --timeout 15 cell/.unit-tests/PivotTests.html
+          node-qunit-phantomjs cell/.unit-tests/CopyPasteTests.html
   builder-tests:
     runs-on: ubuntu-latest
     steps:

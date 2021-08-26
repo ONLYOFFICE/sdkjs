@@ -5896,7 +5896,6 @@ BinaryChartReader.prototype.ReadCT_ChartSpace = function (type, length, val, cur
         var theme = AscCommon.pptx_content_loader.ReadTheme(this, this.stream);
         if (null != theme)
             val.setThemeOverride(theme);
-        res = c_oSerConstants.ReadUnknown;
     }
     else if(c_oserct_chartspaceXLSX === type) {
         //todo
@@ -7848,6 +7847,7 @@ BinaryChartReader.prototype.ReadCT_DispUnitsLbl = function (type, length, val) {
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_Tx(t, l, oNewVal);
         });
+        oNewVal.setChart(this.curChart);
         val.setTx(oNewVal);
     }
     else if (c_oserct_dispunitslblSPPR === type) {
@@ -8749,6 +8749,7 @@ BinaryChartReader.prototype.ReadCT_DLbl = function (type, length, val) {
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_Tx(t, l, oNewVal);
         });
+        oNewVal.setChart(this.curChart);
         val.setTx(oNewVal);
     }
     else if (c_oserct_dlblTXPR === type) {
@@ -8933,6 +8934,7 @@ BinaryChartReader.prototype.ReadCT_TrendlineLbl = function (type, length, val) {
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_Tx(t, l, oNewVal);
         });
+        oNewVal.setChart(this.curChart);
         val.setTx(oNewVal);
     }
     else if (c_oserct_trendlinelblNUMFMT === type) {

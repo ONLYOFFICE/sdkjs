@@ -445,18 +445,7 @@ function CFontFileLoader(id)
         {
             if (this.status != 200)
             {
-                oThis.LoadingCounter++;
-                if (oThis.LoadingCounter < oThis.GetMaxLoadingCount())
-                {
-                    //console.log("font loaded: one more attemption");
-                    oThis.Status = -1;
-                    return;
-                }
-
-                oThis.Status = 2; // aka loading...
-                var _editor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
-                _editor.sendEvent("asc_onError", Asc.c_oAscError.ID.CoAuthoringDisconnect, Asc.c_oAscError.Level.Critical);
-                return;
+                return this.onerror();
             }
 
             oThis.Status = 0;
@@ -503,6 +492,21 @@ function CFontFileLoader(id)
             var _count_decode = Math.min(32, _stream.size);
             for (var i = 0; i < _count_decode; ++i)
                 _data[i] ^= guidOdttf[i % 16];
+        };
+        xhr.onerror = function()
+        {
+            oThis.LoadingCounter++;
+            if (oThis.LoadingCounter < oThis.GetMaxLoadingCount())
+            {
+                //console.log("font loaded: one more attemption");
+                oThis.Status = -1;
+                return;
+            }
+
+            oThis.Status = 2; // aka loading...
+            var _editor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
+            _editor.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingFontError, Asc.c_oAscError.Level.Critical);
+            return;
         };
 
         xhr.send(null);

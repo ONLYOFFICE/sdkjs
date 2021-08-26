@@ -555,6 +555,8 @@ CShapeDrawer.prototype =
         if (this.bIsNoStrokeAttack && this.bIsNoFillAttack)
             return;
 
+        this.Graphics.isShapeDraw = true;
+
         var bIsPatt = false;
         if (this.UniFill != null && this.UniFill.fill != null &&
             ((this.UniFill.fill.type == c_oAscFill.FILL_TYPE_PATT) || (this.UniFill.fill.type == c_oAscFill.FILL_TYPE_GRAD)))
@@ -608,6 +610,7 @@ CShapeDrawer.prototype =
         }
 
         this.Graphics.p_dash(null);
+		this.Graphics.isShapeDraw = false;
     },
 
     p_width : function(w)

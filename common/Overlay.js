@@ -148,10 +148,7 @@ COverlay.prototype =
 
     SetBaseTransform : function()
     {
-        // if (AscCommon.AscBrowser.isCustomScaling())
-        //     this.m_oContext.setTransform(AscCommon.AscBrowser.retinaPixelRatio, 0, 0, AscCommon.AscBrowser.retinaPixelRatio, 0, 0);
-        // else
-            this.m_oContext.setTransform(1, 0, 0, 1, 0, 0);
+        this.m_oContext.setTransform(1, 0, 0, 1, 0, 0);
     },
 
     Show : function()

@@ -256,6 +256,9 @@ var utils = (function () {
 	};
 
 	me.click = function (e) {
+		// отключаем клики
+		return;
+
 		var target = e.target,
 			ev;
 
@@ -324,6 +327,11 @@ function IScroll (el, options) {
 		this.options[i] = options[i];
 	}
 
+	// на последних ios - может не приходить pointedown/up при быстрых кликах.
+	// они посылают вместо них просто сообщение onclick
+	if (AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.iosVersion >= 13)
+		this.options.click = true;
+
 	// Normalize options
 	this.translateZ = this.options.HWCompositing && utils.hasPerspective ? ' translateZ(0)' : '';
 
@@ -380,6 +388,13 @@ function IScroll (el, options) {
 	this.enable();
 
 	this.isDown = false;
+	this.isDownBeforeClick = false;
+	this.isUpBeforeClick = false;
+
+	this.isUseLongTapTimer = !!this.options.useLongTap;
+	this.longTapActionEvent = null;
+	this.longTapInterval = 500;
+	this.longTapIntervalTimer = -1;
 }
 
 IScroll.prototype = {
@@ -1634,7 +1649,7 @@ IScroll.prototype = {
 			if ( that.isAnimating ) {
 				rAF(step);
 			}
-			
+
 			// !!!
 			that._execEvent('scroll');
 		}
@@ -1650,7 +1665,9 @@ IScroll.prototype = {
 			case 'MSPointerDown':
 			case 'mousedown':
 				this.isDown = true;
+				this.isDownBeforeClick = true;
 				this.eventsElement ? this.manager.mainOnTouchStart(e) : this._start(e);
+				this.enableLongTapAction(e);
 				break;
 			case 'touchmove':
 			case 'pointermove':
@@ -1660,6 +1677,7 @@ IScroll.prototype = {
 				{
 					this.eventsElement ? this.manager.mainOnTouchMove(e) : (e);
 				}
+				this.disableLongTapAction();
 				break;
 			case 'touchend':
 			case 'pointerup':
@@ -1673,7 +1691,9 @@ IScroll.prototype = {
 				{
 					this.eventsElement ? this.manager.mainOnTouchEnd(e) : this._end(e);
 				}
+				this.isUpBeforeClick = true;
 				this.isDown = false;
+				this.disableLongTapAction();
 				break;
 			case 'orientationchange':
 			case 'resize':
@@ -1698,9 +1718,62 @@ IScroll.prototype = {
 					e.preventDefault();
 					e.stopPropagation();
 				}
+
+				this.disableLongTapAction();
+
+				if (!this.isDownBeforeClick && !this.isUpBeforeClick && this.eventsElement)
+				{
+					this.manager.mainOnTouchStart(e);
+					this.manager.mainOnTouchEnd(e);
+				}
+
+				this.isDownBeforeClick = false;
+				this.isUpBeforeClick = false;
+
 				break;
 		}
+	},
+
+	enableLongTapAction : function(e) {
+		if (!this.isUseLongTapTimer)
+			return;
+		this.disableLongTapAction();
+
+		var _e = e.touches ? e.touches[0] : e;
+		this.longTapActionEvent = {
+			type : e.type,
+			pageX : _e.pageX,
+			pageY : _e.pageY,
+			clientX : _e.clientX,
+			clientY : _e.clientY,
+
+			altKey : _e.altKey,
+			shiftKey : _e.shiftKey,
+			ctrlKey : _e.ctrlKey,
+			metaKey : _e.metaKey,
+
+			srcElement : _e.srcElement,
+			target : _e.target
+		};
+		var _t = this;
+		this.longTapIntervalTimer = setTimeout(function(){
+			_t.doLongTapAction(_t.longTapActionEvent);
+		}, this.longTapInterval);
+	},
+	disableLongTapAction : function() {
+		if (-1 !== this.longTapIntervalTimer) {
+			clearInterval(this.longTapIntervalTimer);
+			this.longTapIntervalTimer = -1;
+		}
+	},
+	doLongTapAction : function(e) {
+		// double click emulate
+		this.manager.mainOnTouchStart(e);
+		this.manager.mainOnTouchEnd(e);
+		this.manager.mainOnTouchStart(e);
+		this.manager.mainOnTouchEnd(e);
 	}
+
 };
 function createDefaultScrollbar (direction, interactive, type) {
 	var scrollbar = document.createElement('div'),

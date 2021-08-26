@@ -247,6 +247,7 @@
 			"common": []
 		},
 		"mobile": [
+			"common/Charts/ChartStyles.js",
 			"common/Native/Wrappers/TextMeasurerWrapper.js",
 			"common/Native/Wrappers/DrawingStream.js",
 			"common/Native/Wrappers/ShapeDrawer.js",

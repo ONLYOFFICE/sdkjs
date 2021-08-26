@@ -75,10 +75,11 @@ Paragraph.prototype.Recalculate_FastWholeParagraph = function()
     if (1 === this.Lines.length && true !== this.Is_Inline())
         return [];
 
-    this.SetIsRecalculated(true);
+	this.SetIsRecalculated(true);
 
     // Здесь мы отдельно обрабатываем случаи быстрого пересчета параграфов, которые были разбиты на 1-2
     // страницы. Если параграф был разбит более чем на 2 страницы, то такое ускорение уже не имеет смысла.
+	// В обеих ситуациях нужно проверить, что EndInfo остался прежним, иначе требуется пересчет
     if (1 === this.Pages.length)
     {
         // Если параграф был разбит на 1 страницу изначально, тогда мы проверяем, чтобы он после пересчета
@@ -89,12 +90,16 @@ Paragraph.prototype.Recalculate_FastWholeParagraph = function()
 
 		this.m_oPRSW.SetFast(true);
 
+		var oEndInfo             = this.GetEndInfo().Copy();
         var OldBounds            = this.Pages[0].Bounds;
         var isPageBreakLastLine1 = this.Lines[this.Lines.length - 1].Info & paralineinfo_BreakPage;
         var isPageBreakLastLine2 = this.Lines[this.Lines.length - 1].Info & paralineinfo_BreakRealPage;
         var FastRecalcResult     = this.Recalculate_Page(0, true);
 
 		this.m_oPRSW.SetFast(false);
+
+		if (!this.GetEndInfo().IsEqual(oEndInfo))
+			return [];
 
         if (FastRecalcResult & recalcresult_NextElement
             && 1 === this.Pages.length
@@ -109,6 +114,8 @@ Paragraph.prototype.Recalculate_FastWholeParagraph = function()
     }
     else if (2 === this.Pages.length)
     {
+		var oEndInfo = this.GetEndInfo().Copy();
+
         // Если параграф был разбит на 2 страницы изначально, тогда мы проверяем, чтобы он после пересчета
         // был также разбит на 2 страницы, кроме этого проверяем изменились ли границы параграфа на каждой странице,
         // а во время пересчета смотрим изменяeтся ли положение flow-объектов, привязанных к данному параграфу.
@@ -171,6 +178,9 @@ Paragraph.prototype.Recalculate_FastWholeParagraph = function()
             if ((OldLinesCount_1 <= 2 || LinesCount_1 <= 2) && OldLinesCount_1 !== LinesCount_1)
                 return [];
         }
+
+		if (!this.GetEndInfo().IsEqual(oEndInfo))
+			return [];
 
         //console.log("Recalc Fast WholeParagraph 2 pages");
 
@@ -1904,12 +1914,20 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
                     }
                     case AscCommon.align_Right:
                     {
-                        X = Math.max(Range.X + RangeWidth - Range.W, Range.X);
+						X = Range.X + RangeWidth - Range.W;
+
+                    	if (this.IsUseXLimit())
+                        	X = Math.max(X, Range.X);
+
                         break;
                     }
                     case AscCommon.align_Center:
                     {
-                        X = Math.max(Range.X + (RangeWidth - Range.W) / 2, Range.X);
+                        X = Range.X + (RangeWidth - Range.W) / 2;
+
+						if (this.IsUseXLimit())
+							X = Math.max(X, Range.X);
+
                         break;
                     }
                     case AscCommon.align_Justify:

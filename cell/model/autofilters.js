@@ -462,6 +462,11 @@
 			this.applyCollaborativeChangedRowsArr = [];
 
 			this.m_oColor = new AscCommon.CColor(120, 120, 120);
+
+			//при добавлении строки итогов не нужно чтобы на ней распространялось, допустим, УФ
+			//добавляю флаг, чтобы не протаскивать через несколько функций
+			this.isAddTotalRow = null;
+
 			return this;
 		}
 
@@ -2773,6 +2778,10 @@
 				var worksheet = this.worksheet;
 				var isSetValue = false;
 				var isSetType = false;
+				var t = this;
+
+				var bUndoChanges = worksheet.workbook.bUndoChanges;
+				var bRedoChanges = worksheet.workbook.bRedoChanges;
 
 				var tablePart = this._getFilterByDisplayName(tableName);
 
@@ -2783,7 +2792,7 @@
 				History.Create_NewPoint();
 				History.StartTransaction();
 
-				var bAddHistoryPoint = true, clearRange;
+				var bAddHistoryPoint = true, clearRange, _range;
 				var undoData = val !== undefined ? !val : undefined;
 
 				switch (optionType) {
@@ -2808,7 +2817,13 @@
 						{
 							if (!this._isPartTablePartsUnderRange(tablePart.Ref) && !worksheet.checkShiftPivotTable(tablePart.Ref, new AscCommon.CellBase(1, 0))) {
 								AscFormat.ExecuteNoHistory(function () {
-									worksheet.getRange3(tablePart.Ref.r2, tablePart.Ref.c1, tablePart.Ref.r2, tablePart.Ref.c2).deleteCellsShiftUp();
+									t.isAddTotalRow = true;
+									_range = worksheet.getRange3(tablePart.Ref.r2, tablePart.Ref.c1, tablePart.Ref.r2, tablePart.Ref.c2);
+									_range.deleteCellsShiftUp();
+									if ((bUndoChanges || bRedoChanges)) {
+										worksheet.updateConditionalFormattingOffset(_range.bbox, new AscCommon.CellBase(-1, 0));
+									}
+									t.isAddTotalRow = null;
 								}, this, []);
 							} else {
 								clearRange = new AscCommonExcel.Range(worksheet, tablePart.Ref.r2, tablePart.Ref.c1, tablePart.Ref.r2, tablePart.Ref.c2);
@@ -2832,7 +2847,13 @@
 								}
 							} else {
 								AscFormat.ExecuteNoHistory(function () {
-									worksheet.getRange3(tablePart.Ref.r2 + 1, tablePart.Ref.c1, tablePart.Ref.r2 + 1, tablePart.Ref.c2).addCellsShiftBottom();
+									t.isAddTotalRow = true;
+									_range = worksheet.getRange3(tablePart.Ref.r2 + 1, tablePart.Ref.c1, tablePart.Ref.r2 + 1, tablePart.Ref.c2);
+									_range.addCellsShiftBottom();
+									if ((bUndoChanges || bRedoChanges)) {
+										worksheet.updateConditionalFormattingOffset(_range.bbox, new AscCommon.CellBase(1, 0));
+									}
+									t.isAddTotalRow = null;
 								}, this, []);
 
 								isSetValue = true;
@@ -3184,7 +3205,7 @@
 					oHistoryObject.type = redoObject.type;
 					oHistoryObject.cellId = redoObject.cellId;
 					oHistoryObject.autoFiltersObject = redoObject.autoFiltersObject;
-					oHistoryObject.addFormatTableOptionsObj = redoObject.addFormatTableOptionsObj
+					oHistoryObject.addFormatTableOptionsObj = redoObject.addFormatTableOptionsObj;
 					oHistoryObject.moveFrom = redoObject.arnFrom;
 					oHistoryObject.moveTo = redoObject.arnTo;
 					oHistoryObject.bWithoutFilter = bWithoutFilter ? bWithoutFilter : false;

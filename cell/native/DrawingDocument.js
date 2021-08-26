@@ -2150,7 +2150,7 @@ function CDrawingDocument()
         if (page != _table.PageNum)
             return false;
 
-        var _dist = this.TableOutlineDr.image.width * g_dKoef_pix_to_mm;
+        var _dist = this.TableOutlineDr.mover_size * g_dKoef_pix_to_mm;
         _dist *= (100 / this.m_oWordControl.m_nZoomValue);
 
         var _x = _table.X;
@@ -3628,6 +3628,20 @@ function CDrawingDocument()
     };
 
     this.OnSelectEnd = function()
+    {
+    };
+
+    // collaborative targets
+    this.Collaborative_UpdateTarget      = function(_id, _shortId, _x, _y, _size, _page, _transform, is_from_paint)
+    {
+    };
+    this.Collaborative_RemoveTarget      = function(_id)
+    {
+    };
+    this.Collaborative_TargetsUpdate     = function(bIsChangePosition)
+    {
+    };
+    this.Collaborative_GetTargetPosition = function(UserId)
     {
     };
 

@@ -241,7 +241,7 @@
 		if (!prop)
 			return null;
 
-		if (oLogicDocument && prop.CC)
+		if (oLogicDocument && prop.CC && contentFormat)
 		{
 			oState = oLogicDocument.SaveDocumentState();
 			prop.CC.SelectContentControl();
@@ -271,7 +271,7 @@
 			prop["content"] = copy_data.data;
 		}
 
-		if (oState)
+		if (oState && contentFormat)
 		{
 			oLogicDocument.LoadDocumentState(oState);
 			oLogicDocument.UpdateSelection();
@@ -320,14 +320,18 @@
      * @memberof Api
      * @typeofeditors ["CDE"]
      * @alias GetSelectedText
+     * @param {boolean} numbering is an option that includes numbering in the return value
+     * @return {string} selected text
+	 * @example
+     * window.Asc.plugin.executeMethod("GetSelectedText", [true])
      */
-    window["asc_docs_api"].prototype["pluginMethod_GetSelectedText"] = function()
+    window["asc_docs_api"].prototype["pluginMethod_GetSelectedText"] = function(numbering)
     {
         var oLogicDocument = this.private_GetLogicDocument();
         if (!oLogicDocument)
             return;
 
-        return oLogicDocument.GetSelectedText(false, {NewLine : true, NewLineParagraph : true});
+        return oLogicDocument.GetSelectedText(false, {NewLine : true, NewLineParagraph : true, Numbering: numbering});
     };
     /**
      * Remove selection in document
@@ -517,6 +521,29 @@
 	window["asc_docs_api"].prototype["pluginMethod_MoveToComment"] = function(sId)
 	{
 		this.asc_selectComment(sId);
+		this.asc_showComment(sId);
+	};
+	/**
+	 * Set the display mode for track changes
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias SetDisplayModeInReview
+	 * @param {"final" | "original" | "edit" | "simple"} [sMode="edit"]
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_SetDisplayModeInReview"] = function(sMode)
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return;
+
+		if ("final" === sMode)
+			oLogicDocument.SetDisplayModeInReview(Asc.c_oAscDisplayModeInReview.Final, true);
+		else if ("original" === sMode)
+			oLogicDocument.SetDisplayModeInReview(Asc.c_oAscDisplayModeInReview.Original, true);
+		else if ("simple" === sMode)
+			oLogicDocument.SetDisplayModeInReview(Asc.c_oAscDisplayModeInReview.Simple, true);
+		else
+			oLogicDocument.SetDisplayModeInReview(Asc.c_oAscDisplayModeInReview.Edit, true);
 	};
 
 })(window);

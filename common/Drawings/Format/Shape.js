@@ -62,7 +62,7 @@ var c_oAscFill = Asc.c_oAscFill;
 
 function CheckObjectLine(obj)
 {
-    return (obj instanceof CShape && obj.spPr && obj.spPr.geometry && AscFormat.CheckLinePreset(obj.spPr.geometry.preset));
+    return (obj instanceof CShape && obj.spPr && obj.spPr.geometry && AscFormat.CheckLinePresetForParagraphAdd(obj.spPr.geometry.preset));
 }
 
 
@@ -179,10 +179,15 @@ function hitToHandles(x, y, object)
 {
     var oApi = Asc.editor || editor;
     var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+
+    if (isDrawHandles && object && object.isForm && object.isForm() && object.getInnerForm() && object.getInnerForm().IsFormLocked())
+    	isDrawHandles = false;
+
     if(isDrawHandles === false)
     {
         return -1;
     }
+
     if(object.cropObject)
     {
         return hitToCropHandles(x, y, object);
@@ -1268,7 +1273,7 @@ CShape.prototype.createTextBoxContent = function () {
 CShape.prototype.paragraphAdd = function (paraItem, bRecalculate) {
     var content_to_add = this.getDocContent();
     if (!content_to_add) {
-        if(!AscFormat.CheckLinePresetForParagraphAdd(this.getPresetGeom())) {
+        if(this.canEditText()) {
             if (this.bWordShape) {
                 this.createTextBoxContent();
             }
@@ -1288,7 +1293,7 @@ CShape.prototype.applyTextFunction = function (docContentFunction, tableFunction
     var content_to_add = this.getDocContent();
     if (!content_to_add)
     {
-        if(!AscFormat.CheckLinePresetForParagraphAdd(this.getPresetGeom())) {
+        if(this.canEditText()) {
 
             if (this.bWordShape)
             {
@@ -1304,6 +1309,9 @@ CShape.prototype.applyTextFunction = function (docContentFunction, tableFunction
     }
     if (content_to_add)
     {
+    	if (this.isForm() && !content_to_add.IsCursorInSpecialForm())
+    		return;
+
         docContentFunction.apply(content_to_add, args);
     }
     if(!editor || !editor.noCreatePoint || editor.exucuteHistory)
@@ -1351,6 +1359,7 @@ CShape.prototype.getBodyPr = function () {
         }
     }, this, []);
 };
+
 
 CShape.prototype.GetRevisionsChangeElement = function(SearchEngine){
     var oContent = this.getDocContent();
@@ -1797,7 +1806,7 @@ CShape.prototype.getPhIndex = function () {
 CShape.prototype.setVerticalAlign = function (align) {
     var content_to_add = this.getDocContent();
     if (!content_to_add) {
-        if(!AscFormat.CheckLinePresetForParagraphAdd(this.getPresetGeom())) {
+        if(this.canEditText()) {
             if (this.bWordShape) {
                 this.createTextBoxContent();
             }
@@ -1823,7 +1832,7 @@ CShape.prototype.setVerticalAlign = function (align) {
 CShape.prototype.setVert = function (vert) {
     var content_to_add = this.getDocContent();
     if (!content_to_add) {
-        if(!AscFormat.CheckLinePresetForParagraphAdd(this.getPresetGeom())) {
+        if(this.canEditText()) {
             if (this.bWordShape) {
                 this.createTextBoxContent();
             }
@@ -1938,6 +1947,9 @@ CShape.prototype.recalculateTransformText = function () {
 
     var oBodyPr = this.getBodyPr();
     this.clipRect = this.checkTransformTextMatrix(this.localTransformText, oContent, oBodyPr, false);
+    if(this.isForm && this.isForm()) {
+        this.clipRect = {x: -0.2, y: -0.2, w: this.extX + 0.4, h: this.extY + 0.4};
+    }
     this.transformText = this.localTransformText.CreateDublicate();
     this.invertTransformText = global_MatrixTransformer.Invert(this.transformText);
 
@@ -2322,6 +2334,46 @@ CShape.prototype.getTextRect = function () {
         t: 0,
         r: this.extX,
         b: this.extY
+    };
+};
+CShape.prototype.getFormRelRect = function () {
+    var oSpTransform = this.transform;
+    var oInvTextTransform = this.invertTransformText;
+
+    var aX = [0, this.extX];
+    var aY = [0, this.extY];
+    var fX0, fY0;
+
+    if (!oSpTransform || !oInvTextTransform) {
+		return {
+			X    : 0,
+			Y    : 0,
+			W    : this.extX,
+			H    : this.extY,
+			Page : this.parent.PageNum
+		};
+	}
+
+	var aRelX = [], aRelY = [];
+	for(var nX = 0; nX < aX.length; ++nX) {
+		fX0 = aX[nX];
+		for(var nY = 0; nY < aY.length; ++nY) {
+			fY0 = aY[nY];
+			var fX = oSpTransform.TransformPointX(fX0, fY0);
+			var fY = oSpTransform.TransformPointY(fX0, fY0);
+			var fRelX = oInvTextTransform.TransformPointX(fX, fY);
+			var fRelY = oInvTextTransform.TransformPointY(fX, fY);
+			aRelX.push(fRelX);
+			aRelY.push(fRelY);
+		}
+	}
+
+    return {
+        X    : Math.min.apply(Math, aRelX),
+        Y    : Math.min.apply(Math, aRelY),
+        W    : this.extX,
+        H    : this.extY,
+        Page : this.parent.PageNum
     };
 };
 
@@ -2726,14 +2778,21 @@ CShape.prototype.checkTransformTextMatrix = function (oMatrix, oContent, oBodyPr
         
         if(this.bWordShape)
         {
-            var DiffLeft = 0.8;
-            var DiffRight = 1.6;
+            var DiffLeft = 0.01;
+            var DiffRight = 0.01;
+            var DiffLeft2, DiffRight2;
             var aContent = oContent.Content;
             for(var i = 0; i < aContent.length; ++i)
             {
-                if(aContent[i].GetType && type_Paragraph === aContent[i].GetType())
+                var oElement = aContent[i];
+                if(!oElement.GetType)
                 {
-                    var oCompiledParaPr = aContent[i].CompiledPr && aContent[i].CompiledPr.Pr && aContent[i].CompiledPr.Pr.ParaPr;
+                    continue;
+                }
+                var nElementType = oElement.GetType();
+                if(nElementType === AscCommonWord.type_Paragraph)
+                {
+                    var oCompiledParaPr = oElement.CompiledPr && oElement.CompiledPr.Pr && oElement.CompiledPr.Pr.ParaPr;
                     if(oCompiledParaPr)
                     {
                         var oBorders = oCompiledParaPr.Brd;
@@ -2741,7 +2800,7 @@ CShape.prototype.checkTransformTextMatrix = function (oMatrix, oContent, oBodyPr
                         {
                             if(oBorders.Left  && AscFormat.isRealNumber(oBorders.Left.Space) && AscFormat.isRealNumber(oBorders.Left.Size) && oBorders.Left.Size > 0.0)
                             {
-                                var DiffLeft2 = oBorders.Left.Space + oBorders.Left.Size + 1.0;
+                                DiffLeft2 = oBorders.Left.Space + oBorders.Left.Size;
                                 if(DiffLeft2 > DiffLeft)
                                 {
                                     DiffLeft = DiffLeft2;
@@ -2749,7 +2808,7 @@ CShape.prototype.checkTransformTextMatrix = function (oMatrix, oContent, oBodyPr
                             }
                             if(oBorders.Right && AscFormat.isRealNumber(oBorders.Right.Space) && AscFormat.isRealNumber(oBorders.Right.Size) && oBorders.Right.Size > 0.0)
                             {
-                                var DiffRight2 = oBorders.Right.Space + oBorders.Right.Size + 1.0;
+                                DiffRight2 = oBorders.Right.Space + oBorders.Right.Size;
                                 if(oCompiledParaPr.Ind && AscFormat.isRealNumber(oCompiledParaPr.Ind.Right))
                                 {
                                     DiffRight2 -= oCompiledParaPr.Ind.Right;
@@ -2762,10 +2821,27 @@ CShape.prototype.checkTransformTextMatrix = function (oMatrix, oContent, oBodyPr
                         }
                     }
                 }
+                else if(nElementType === AscCommonWord.type_Table)
+                {
+                    DiffLeft2 = -oElement.GetTableOffsetCorrection();
+                    if(DiffLeft2 > DiffLeft)
+                    {
+                        DiffLeft = DiffLeft2;
+                    }
+                    DiffRight2 = oElement.GetRightTableOffsetCorrection();
+                    if(DiffRight2 > DiffRight)
+                    {
+                        DiffRight = DiffRight2;
+                    }
+                }
+                else if(nElementType === AscCommonWord.type_BlockLevelSdt)
+                {
+
+                }
             }
 
 
-            var clipW = oRect.r - oRect.l + DiffLeft + DiffRight - l_ins - r_ins;
+            var clipW = oRect.r - oRect.l + DiffLeft + DiffRight;
             if(clipW <= 0)
             {
                 clipW = 0.01;
@@ -2775,7 +2851,7 @@ CShape.prototype.checkTransformTextMatrix = function (oMatrix, oContent, oBodyPr
             {
                 clipH = 0.01;
             }
-            oClipRect = {x: oRect.l + l_ins - DiffLeft, y: oRect.t - Diff + t_ins, w: clipW, h: clipH};
+            oClipRect = {x: oRect.l - DiffLeft, y: oRect.t - Diff + t_ins, w: clipW, h: clipH};
         }
         else
         {
@@ -2846,6 +2922,12 @@ CShape.prototype.fillObject = function(copy, oPr){
     if(this.textLink !== null) {
         copy.setTextLink(this.textLink);
     }
+    if(this.clientData) {
+        copy.setClientData(this.clientData.createDuplicate());
+    }
+    if(this.fLocksText !== null) {
+        copy.setFLocksText(this.fLocksText);
+    }
     copy.setWordShape(this.bWordShape);
     copy.setBDeleted(this.bDeleted);
     copy.setLocks(this.locks);
@@ -2858,6 +2940,9 @@ CShape.prototype.copy = function (oPr) {
     var copy = new CShape();
     this.fillObject(copy, oPr);
     return copy;
+};
+CShape.prototype.getProtectionLockText = function () {
+    return this.fLocksText !== false;
 };
 
 CShape.prototype.Get_Styles = function (level) {
@@ -4175,8 +4260,15 @@ CShape.prototype.recalculateDocContent = function(oDocContent, oBodyPr)
         while ( recalcresult2_End !== RecalcResult  )
             RecalcResult = oDocContent.Recalculate_Page( CurPage++, true );*/
 
-        oDocContent.RecalculateContent(oRet.w, oRet.h, nStartPage);
+		var oContentW = oRet.w;
 
+		var oForm = null;
+		if (this.isForm() && (oForm = this.getInnerForm()) && !oForm.IsMultiLineForm())
+			oDocContent.SetUseXLimit(false);
+		else
+			oDocContent.SetUseXLimit(true);
+
+        oDocContent.RecalculateContent(oContentW, oRet.h, nStartPage);
         oRet.contentH = oDocContent.GetSummaryHeight();
 
         if(this.bWordShape)
@@ -4406,6 +4498,10 @@ CShape.prototype.checkExtentsByDocContent = function(bForce, bNeedRecalc)
             }
             else
             {
+            	var oForm;
+            	if (this.isForm() && (oForm = this.getInnerForm()) && oForm.IsAutoFitContent() && oForm.GetLogicDocument() && oForm.GetLogicDocument().CheckFormAutoFit)
+					oForm.GetLogicDocument().CheckFormAutoFit(oForm);
+
                 if(bForce)
                 {
                     this.recalculateContentWitCompiledPr();
@@ -4836,6 +4932,10 @@ CShape.prototype.draw = function (graphics, transform, transformText, pageIndex)
         if(!oUR.isIntersectOther(this.bounds)) {
             return;
         }
+    }
+    if(graphics.animationDrawer) {
+        graphics.animationDrawer.drawObject(this, graphics);
+        return;
     }
 
     var _transform = transform ? transform : this.transform;
@@ -5650,6 +5750,10 @@ CShape.prototype.hitToAdjustment = function (x, y) {
 
     var oApi = Asc.editor || editor;
     var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+
+    if (isDrawHandles && this.isForm() && this.getInnerForm() && this.getInnerForm().IsFormLocked())
+    	isDrawHandles = false;
+
     if(isDrawHandles === false)
     {
         return { hit: false, adjPolarFlag: null, adjNum: null, warp: false };
@@ -6390,6 +6494,10 @@ CShape.prototype.getColumnNumber = function(){
             }
         }
     };
+    CShape.prototype.getInnerForm = function() {
+		return this.textBoxContent ? this.textBoxContent.GetInnerForm() : null;
+	}
+
 function CreateBinaryReader(szSrc, offset, srcLen)
 {
     var nWritten = 0;
@@ -6491,7 +6599,7 @@ function getParaDrawing(oDrawing)
     {
         oCurDrawing = oCurDrawing.group;
     }
-    if(oCurDrawing.parent instanceof ParaDrawing)
+    if(oCurDrawing.parent instanceof AscCommonWord.ParaDrawing)
     {
         return oCurDrawing.parent;
     }

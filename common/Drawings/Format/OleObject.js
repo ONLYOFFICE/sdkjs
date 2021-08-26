@@ -58,6 +58,7 @@ function (window, undefined) {
         AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetPixSizes] = AscDFH.CChangesDrawingsObjectNoId;
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetObjectFile] = AscDFH.CChangesDrawingsString;
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetOleType] = AscDFH.CChangesDrawingsLong;
+		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetMathObject] = AscDFH.CChangesDrawingsObject;
 
 
         AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ChartStyleEntryDefRPr] = AscCommonWord.CTextPr;
@@ -104,6 +105,7 @@ function (window, undefined) {
         AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ImageShapeSetPixSizes] = COleSize;
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetObjectFile] = function(oClass, value){oClass.m_sObjectFile = value;};
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetOleType] = function(oClass, value){oClass.m_nOleType = value;};
+		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetMathObject] = function(oClass, value){oClass.m_oMathObject = value;};
 
     function COleObject()
     {
@@ -117,10 +119,11 @@ function (window, undefined) {
         this.m_sObjectFile = null;//ole object name in OOX
         this.m_nOleType = null;
         this.m_aBinaryData = null;
+        this.m_oMathObject = null;
     }
 
-		COleObject.prototype = Object.create(AscFormat.CImageShape.prototype);
-		COleObject.prototype.constructor = COleObject;
+    COleObject.prototype = Object.create(AscFormat.CImageShape.prototype);
+    COleObject.prototype.constructor = COleObject;
 
     COleObject.prototype.getObjectType = function()
     {
@@ -156,6 +159,11 @@ function (window, undefined) {
     {
         AscCommon.History.Add(new CChangesOleObjectBinary(this, this.m_aBinaryData, aBinaryData, false));
         this.m_aBinaryData = aBinaryData;
+    };
+    COleObject.prototype.setMathObject = function(oMath)
+    {
+        AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetMathObject, this.m_oMathObject, oMath));
+        this.m_oMathObject = oMath;
     };
 
     COleObject.prototype.canRotate = function () {
@@ -198,6 +206,9 @@ function (window, undefined) {
         if(this.textLink !== null) {
             copy.setTextLink(this.textLink);
         }
+        if(this.m_oMathObject !== null) {
+            copy.setMathObject(this.m_oMathObject.Copy());
+        }
         copy.cachedImage = this.getBase64Img();
         copy.cachedPixH = this.cachedPixH;
         copy.cachedPixW = this.cachedPixW;
@@ -215,16 +226,129 @@ function (window, undefined) {
         AscFormat.CImageShape.prototype.handleUpdateExtents.call(this, []);
     };
     COleObject.prototype.checkTypeCorrect = function(){
-        if(!this.m_sData){
+        var bCorrectData = false;
+        if(this.m_sData) {
+            bCorrectData = true;
+        }
+        else if(this.m_sObjectFile) {
+            bCorrectData = true;
+        }
+        if(!bCorrectData){
             return false;
         }
-        if(!this.m_sApplicationId){
-            return false;
-        }
-        if(this.m_nPixHeight === null || this.m_nPixHeight === null){
+        if(this.m_sApplicationId === null){
             return false;
         }
         return true;
+    };
+    COleObject.prototype.replaceToMath = function () {
+        if(!this.m_oMathObject) {
+            return null;
+        }
+        if(!this.getDrawingObjectsController) {
+            return null;
+        }
+        var oController = this.getDrawingObjectsController();
+        if(!oController) {
+            if(this.worksheet) {
+                if(Asc && Asc.editor && Asc.editor.wb && Asc.editor.wbModel) {
+                    Asc.editor.wb.getWorksheet(Asc.editor.wbModel.getWorksheetIndexByName(this.worksheet.getName()));
+                    oController = this.getDrawingObjectsController();
+                    if(!oController) {
+                        return null;
+                    }
+                }
+                else {
+                    return null;
+                }
+            }
+            else {
+                return null;
+            }
+        }
+        var oShape = new AscFormat.CShape();
+        oShape.setBDeleted(false);
+        if(this.worksheet)
+            oShape.setWorksheet(this.worksheet);
+        if(this.parent) {
+            oShape.setParent(this.parent);
+        }
+        if(this.group) {
+            oShape.setGroup(this.group);
+        }
+        var oSpPr = new AscFormat.CSpPr();
+        var oXfrm = new AscFormat.CXfrm();
+        oXfrm.setOffX(0);
+        oXfrm.setOffY(0);
+        oXfrm.setExtX(1828800/36000);
+        oXfrm.setExtY(1828800/36000);
+        oSpPr.setXfrm(oXfrm);
+        oXfrm.setParent(oSpPr);
+        oSpPr.setFill(AscFormat.CreateNoFillUniFill());
+        oSpPr.setLn(AscFormat.CreateNoFillLine());
+        oSpPr.setGeometry(AscFormat.CreateGeometry("rect"));
+        oShape.setSpPr(oSpPr);
+        oSpPr.setParent(oShape);
+        oShape.createTextBody();
+        var oContent = oShape.getDocContent();
+        this.m_oMathObject.Correct_AfterConvertFromEquation();
+        var oParagraph = oContent.Content[0];
+        oParagraph.AddToContent(1, this.m_oMathObject);
+        oParagraph.Correct_Content();
+        oParagraph.SetParagraphAlign(AscCommon.align_Center);
+        var oBodyPr = oShape.getBodyPr().createDuplicate();
+        oBodyPr.rot = 0;
+        oBodyPr.spcFirstLastPara = false;
+        oBodyPr.vertOverflow = AscFormat.nOTOwerflow;
+        oBodyPr.horzOverflow = AscFormat.nOTOwerflow;
+        oBodyPr.vert = AscFormat.nVertTThorz;
+        oBodyPr.wrap = AscFormat.nTWTNone;
+        oBodyPr.lIns = 2.54;
+        oBodyPr.tIns = 1.27;
+        oBodyPr.rIns = 2.54;
+        oBodyPr.bIns = 1.27;
+        oBodyPr.numCol = 1;
+        oBodyPr.spcCol = 0;
+        oBodyPr.rtlCol = 0;
+        oBodyPr.fromWordArt = false;
+        oBodyPr.anchor = 1;
+        oBodyPr.anchorCtr = false;
+        oBodyPr.forceAA = false;
+        oBodyPr.compatLnSpc = true;
+        oBodyPr.prstTxWarp = AscFormat.ExecuteNoHistory(function(){return AscFormat.CreatePrstTxWarpGeometry("textNoShape");}, this, []);
+        oBodyPr.textFit = new AscFormat.CTextFit();
+        oBodyPr.textFit.type = AscFormat.text_fit_Auto;
+        oShape.txBody.setBodyPr(oBodyPr);
+        var nPos;
+        if(this.group) {
+            nPos = this.group.getPosInSpTree(this.Id);
+            if(null !== nPos && nPos > -1) {
+                this.group.removeFromSpTreeByPos(nPos);
+                this.group.addToSpTree(nPos, oShape);
+            }
+        }
+        else {
+            nPos = this.deleteDrawingBase();
+            if(null !== nPos && nPos > -1) {
+                oShape.addToDrawingObjects(nPos);
+            }
+        }
+        oShape.checkExtentsByDocContent(true, false);
+        var fXc = this.x + this.extX / 2;
+        var fYc = this.y + this.extY / 2;
+        oShape.spPr.xfrm.setOffX(fXc - oShape.extX / 2);
+        oShape.spPr.xfrm.setOffY(fYc - oShape.extY / 2);
+        oShape.spPr.xfrm.setRot(this.rot);
+        oShape.checkDrawingBaseCoords();
+        if(this.group) {
+            this.group.updateCoordinatesAfterInternalResize();
+        }
+        if(this.selected) {
+            var nSelectStartPage = this.selectStartPage;
+            this.deselect(oController);
+            oShape.select(oController, nSelectStartPage)
+        }
+        return oShape;
     };
         window['AscFormat'] = window['AscFormat'] || {};
         window['AscFormat'].COleObject = COleObject;

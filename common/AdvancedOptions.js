@@ -50,6 +50,8 @@
 			this.oDocumentMailMerge = null;
 			this.oMailMergeSendData = null;
 			this.callback = null;
+			
+			this.isGetTextFromUrl = null;
 		}
 
 		asc_CDownloadOptions.prototype.asc_setFileType = function (fileType) {this.fileType = fileType;};

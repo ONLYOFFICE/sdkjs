@@ -2328,84 +2328,48 @@
 
 	/**
 	* Класс для настроек конвертации текста в таблицу
-	* @param CDocument
+	* oSelectedContent {CSelectedContent}
 	* @constructor
 	*/
-	function CAscTextToTableProperties(CDocument)
+	function CAscTextToTableProperties(oSelectedContent)
 	{
-		/* Separator types:
-			1 - ParaEnd
-			2 - Tab
-			3 - Other symbol
-		*/
-		/* Autofit types:
-			1 - Fixed column width
-			2 - Autofit to content
-			3 - Autofit to window
-		*/
 		this.Rows			= 0;
 		this.Cols			= 0;
-		this.ArrRows		= [];
-		this.Default		= {ArrRows : [], rows : 0, cols : 0};
-		this.AutoFitType	= 1;
+		this.AutoFitType	= Asc.c_oAscTextToTableAutoFitType.Fixed;
 		this.FitValue		= -1;
-		this.SeparatorType	= 1;
+		this.SeparatorType	= Asc.c_oAscTextToTableSeparator.Paragraph;
 		this.Separator		= null;
-		this.Document		= CDocument;
+		this.Selected		= oSelectedContent;
 	}
 	CAscTextToTableProperties.prototype.get_Size = function()
 	{
 		return [this.Rows, this.Cols];
 	};
-	CAscTextToTableProperties.prototype.put_ColsCount = function(count, needRecal, isDefault)
+	CAscTextToTableProperties.prototype.put_ColsCount = function(nCols)
 	{
-		var colscount = (count > 1) ? count : 1;
-		if (needRecal)
-		{
-			this.private_recalculate(colscount);
-			return this.get_Size();
-		}
-		else
-			this.Cols = colscount;
-
-		if (isDefault)
-			this.Default.cols = colscount;
+		this.Cols = (nCols > 1) ? nCols : 1;
+		this.CalculateTableSize(true);
+		return this.get_Size();
 	};
-	CAscTextToTableProperties.prototype.get_Rows = function()
+	CAscTextToTableProperties.prototype.get_ColsCount = function()
 	{
-		return this.ArrRows;
+		return this.Cols;
 	};
-	CAscTextToTableProperties.prototype.put_RowsCount = function(count)
+	CAscTextToTableProperties.prototype.put_RowsCount = function(nRows)
 	{
-		this.Rows = (count > 1) ? count : 1;
+		this.Rows = (nRows > 1) ? nRows : 1;
 	};
-	CAscTextToTableProperties.prototype.put_Rows = function(newRows, isDefault)
+	CAscTextToTableProperties.prototype.get_RowsCount = function()
 	{
-		this.ArrRows = newRows.map(function (item) {
-			return item.slice();
-		});
-		if (isDefault)
-			this.put_DefaultRows(newRows);
-	};
-	CAscTextToTableProperties.prototype.get_DefaultRows = function()
-	{
-		return this.Default.ArrRows;
-	};
-	CAscTextToTableProperties.prototype.put_DefaultRows = function(newRows)
-	{
-		this.Default.ArrRows = newRows;
-		// newRows.map(function (item) {
-		// 	return [...item]
-		// });
-		this.Default.rows = newRows.length;
+		return this.Rows;
 	};
 	CAscTextToTableProperties.prototype.get_AutoFitType = function()
 	{
 		return this.AutoFitType;
 	};
-	CAscTextToTableProperties.prototype.put_AutoFitType = function(type)
+	CAscTextToTableProperties.prototype.put_AutoFitType = function(nAutoFitType)
 	{
-		this.AutoFitType = (type > 0 && type <= 3) ? type : 1;
+		this.AutoFitType = nAutoFitType;
 	};
 	CAscTextToTableProperties.prototype.get_Fit = function()
 	{
@@ -2419,111 +2383,45 @@
 	{
 		return this.SeparatorType;
 	};
-	CAscTextToTableProperties.prototype.put_SeparatorType = function(type, needRecal)
+	CAscTextToTableProperties.prototype.put_SeparatorType = function(nSeparatorType)
 	{
-		this.SeparatorType = (type > 0 && type <= 3) ? type : 1;
-		if (needRecal)
-		{
-			this.private_recalculate();
-			return this.get_Size();
-		}
+		this.SeparatorType = nSeparatorType;
+		this.CalculateTableSize();
+		return this.get_Size();
 	};
 	CAscTextToTableProperties.prototype.get_Separator = function()
 	{
 		return this.Separator;
 	};
-	CAscTextToTableProperties.prototype.put_Separator = function(val, needRecal)
+	CAscTextToTableProperties.prototype.put_Separator = function(nCharCode)
 	{
-		this.Separator = val;
-		return this.put_SeparatorType(3, needRecal);
+		this.Separator = nCharCode;
+		return this.put_SeparatorType(Asc.c_oAscTextToTableSeparator.Symbol);
 	};
-	CAscTextToTableProperties.prototype.private_recalculate = function(count)
+	CAscTextToTableProperties.prototype.CalculateTableSize = function(isColsFixed)
 	{
-		this.put_Rows(this.get_DefaultRows(), false);
-		// size надо тоже сделать ещё дефолтный вариант, для восставноления
-		// и обновлять его надо тоже при каждом пересчете
-		var size =
+		var nMaxCols = isColsFixed ? this.Cols : 0;
+		var oEngine  = new AscCommonWord.CTextToTableEngine();
+		oEngine.SetCalculateTableSizeMode(this.SeparatorType, this.Separator, nMaxCols);
+		for (var nIndex = 0, nCount = this.Selected.Elements.length; nIndex < nCount; ++nIndex)
 		{
-			rows : this.Default.rows,
-			cols : this.Default.cols
-		};
-		if (count)
-		{
-			if (size.cols < count){
-				if (this.get_SeparatorType() == 1)
-				{
-					// если в плюс и сепаратор абзац (то мы просто заполняем все ячейки по порядку абзацами до конца строки)
-					var newArrRows = [];
-					var newArrCells = [];
-					var tmpArr = [];
-					for (var i = 0; i < size.rows; i++)
-					{
-						tmpArr = tmpArr.concat(this.ArrRows[i]);
-					}
-					var end = Math.max(tmpArr.length, count);
-					for (var i = 0; i < end; i ++)
-					{
-						if (newArrCells.length >= count)
-						{
-							newArrRows.push(newArrCells);
-							newArrCells = [];
-						}
-						newArrCells.push((tmpArr[i]) ? tmpArr[i] : new Paragraph(this.Document.DrawingDocument, this.Document));
-					}
-
-					if (newArrCells.length)
-						newArrRows.push(newArrCells);
-
-					this.put_Rows(newArrRows, false);
-				}
-				else
-				{
-					// если в плюс и сепаратор не абзац, то создаём просто пустые ячейки
-					for (var i = 0; i < size.rows; i++)
-					{
-						for (var j = 0; j < (count - size.cols); j++)
-						{
-							var oNewParagraph = new Paragraph(this.Document.DrawingDocument, this.Document);
-							this.ArrRows[i].push(oNewParagraph);
-						}
-					}
-				}
-			}
-			else if (size.cols > count)
-			{
-				var remCount = size.cols - count;
-				if (remCount > 0)
-				{
-					var newArrRows = [];
-					for (var i = 0; i < size.rows; i++)
-					{
-						while (this.ArrRows[i].length > count)
-							newArrRows.push(this.ArrRows[i].splice(0, count));
-						
-						newArrRows.push(this.ArrRows[i]);
-					}
-					this.put_Rows(newArrRows, false);
-				}
-			}
-
-			this.put_ColsCount(count);
-			this.put_RowsCount(this.ArrRows.length);
+			var oElement = this.Selected.Elements[nIndex].Element;
+			oElement.CalculateTextToTable(oEngine);
 		}
-		else
-		{
-			this.Document.PreConvertTextToTable(this);
-			this.put_DefaultRows(this.ArrRows);
-		}
+
+		var nCols = isColsFixed ? nMaxCols : oEngine.Cols;
+		var nRows = oEngine.Rows;
+
+		this.Cols = (nCols > 1) ? nCols : 1;
+		this.Rows = (nRows > 1) ? nRows : 1;
 	};
 
 	window['Asc']['CAscTextToTableProperties']				 = window['Asc'].CAscTextToTableProperties = CAscTextToTableProperties;
 	CAscTextToTableProperties.prototype['get_Size']			 = CAscTextToTableProperties.prototype.get_Size;
-	CAscTextToTableProperties.prototype['get_Rows']			 = CAscTextToTableProperties.prototype.get_Rows;
 	CAscTextToTableProperties.prototype['put_RowsCount']	 = CAscTextToTableProperties.prototype.put_RowsCount;
+	CAscTextToTableProperties.prototype['get_RowsCount']	 = CAscTextToTableProperties.prototype.get_RowsCount;
 	CAscTextToTableProperties.prototype['put_ColsCount']	 = CAscTextToTableProperties.prototype.put_ColsCount;
-	CAscTextToTableProperties.prototype['put_Rows'] 		 = CAscTextToTableProperties.prototype.put_Rows;
-	CAscTextToTableProperties.prototype['get_DefaultRows'] 	 = CAscTextToTableProperties.prototype.get_DefaultRows;
-	CAscTextToTableProperties.prototype['put_DefaultRows'] 	 = CAscTextToTableProperties.prototype.put_DefaultRows;
+	CAscTextToTableProperties.prototype['get_ColsCount']	 = CAscTextToTableProperties.prototype.get_ColsCount;
 	CAscTextToTableProperties.prototype['get_AutoFitType']	 = CAscTextToTableProperties.prototype.get_AutoFitType;
 	CAscTextToTableProperties.prototype['put_AutoFitType'] 	 = CAscTextToTableProperties.prototype.put_AutoFitType;
 	CAscTextToTableProperties.prototype['get_Fit']			 = CAscTextToTableProperties.prototype.get_Fit;

@@ -719,6 +719,7 @@ function (window, undefined) {
 
 		function parseReference() {
 			if ((ref = parserHelp.is3DRef.call(o, o.Formula, o.pCurrPos, true))[0]) {
+				var _tableTMP;
 				var wsFrom = _getWorksheetByName(ref[1]);
 				var wsTo = (null !== ref[2]) ? _getWorksheetByName(ref[2]) : wsFrom;
 				if (!(wsFrom && wsTo)) {
@@ -741,6 +742,14 @@ function (window, undefined) {
 				found_operand = new cRef(o.real_str ? o.real_str.toUpperCase() : o.operand_str.toUpperCase(), ws);
 			} else if (parserHelp.isName.call(o, o.Formula, o.pCurrPos)) {
 				found_operand = new cName(o.operand_str, ws);
+			} else if (_tableTMP = parserHelp.isTable.call(o, o.Formula, o.pCurrPos)) {
+				found_operand = AscCommonExcel.cStrucTable.prototype.createFromVal(_tableTMP, wb, ws);
+
+				if (found_operand.type === cElementType.error) {
+					found_operand = null;
+				} else {
+					found_operand = found_operand.toRef ? found_operand.toRef() : null;
+				}
 			}
 		}
 
@@ -1302,6 +1311,7 @@ function (window, undefined) {
 			//TODO возможно стоит на вход функции Calculate в случае применения как формулы массива сразу передавать преобразованный range в array
 			if(!this.bArrayFormula) {
 				arg0 = arg0.cross(arguments[1]);
+				return arg0;
 			} else {
 				arg0 = arg0.getMatrix();
 			}

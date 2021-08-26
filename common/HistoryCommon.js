@@ -1219,6 +1219,9 @@
 			case AscDFH.historydescription_Document_ResolveAllComments:
 				sString = "Document_ResolveAllComments";
 				break;
+			case AscDFH.historydescription_Document_ConvertFormFixedType:
+				sString = "Document_ConvertFormFixedType";
+				break;
 		}
 		return sString;
 	}
@@ -1648,6 +1651,7 @@
 	window['AscDFH'].historyitem_Drawing_LayoutInCell      = window['AscDFH'].historyitem_type_Drawing | 17;
 	window['AscDFH'].historyitem_Drawing_SetSizeRelH       = window['AscDFH'].historyitem_type_Drawing | 18;
 	window['AscDFH'].historyitem_Drawing_SetSizeRelV       = window['AscDFH'].historyitem_type_Drawing | 19;
+	window['AscDFH'].historyitem_Drawing_Form              = window['AscDFH'].historyitem_type_Drawing | 20;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CTable
 	//------------------------------------------------------------------------------------------------------------------
@@ -2023,6 +2027,7 @@
 	window['AscDFH'].historyitem_SdtPr_Temporary        = window['AscDFH'].historyitem_type_SdtPr | 20;
 	window['AscDFH'].historyitem_SdtPr_TextForm         = window['AscDFH'].historyitem_type_SdtPr | 21;
 	window['AscDFH'].historyitem_SdtPr_FormPr           = window['AscDFH'].historyitem_type_SdtPr | 22;
+	window['AscDFH'].historyitem_SdtPr_PictureFormPr    = window['AscDFH'].historyitem_type_SdtPr | 23;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CSdtPr
 	//------------------------------------------------------------------------------------------------------------------
@@ -2692,6 +2697,9 @@
 	window['AscDFH'].historyitem_ShapeSetSignature      = window['AscDFH'].historyitem_type_Shape | 11;
 	window['AscDFH'].historyitem_ShapeSetMacro          = window['AscDFH'].historyitem_type_Shape | 12;
 	window['AscDFH'].historyitem_ShapeSetTextLink       = window['AscDFH'].historyitem_type_Shape | 13;
+	window['AscDFH'].historyitem_ShapeSetModelId        = window['AscDFH'].historyitem_type_Shape | 14;
+	window['AscDFH'].historyitem_ShapeSetFLocksText     = window['AscDFH'].historyitem_type_Shape | 15;
+	window['AscDFH'].historyitem_ShapeSetClientData     = window['AscDFH'].historyitem_type_Shape | 16;
 
 	window['AscDFH'].historyitem_DispUnitsSetBuiltInUnit  = window['AscDFH'].historyitem_type_DispUnits | 1;
 	window['AscDFH'].historyitem_DispUnitsSetCustUnit     = window['AscDFH'].historyitem_type_DispUnits | 2;
@@ -2717,6 +2725,7 @@
 	window['AscDFH'].historyitem_ImageShapeSetObjectFile	= window['AscDFH'].historyitem_type_ImageShape | 10;
 	window['AscDFH'].historyitem_ImageShapeSetOleType   	= window['AscDFH'].historyitem_type_ImageShape | 11;
 	window['AscDFH'].historyitem_ImageShapeSetBinaryData   	= window['AscDFH'].historyitem_type_ImageShape | 12;
+	window['AscDFH'].historyitem_ImageShapeSetMathObject   	= window['AscDFH'].historyitem_type_ImageShape | 13;
 
 	window['AscDFH'].historyitem_GeometrySetParent      = window['AscDFH'].historyitem_type_Geometry | 1;
 	window['AscDFH'].historyitem_GeometryAddAdj         = window['AscDFH'].historyitem_type_Geometry | 2;
@@ -3673,7 +3682,8 @@
 	window['AscDFH'].historydescription_Document_AutoCorrectFirstLetterOfSentence   = 0x0188;
 	window['AscDFH'].historydescription_Document_ConvertTextToTable                 = 0x0189;
 	window['AscDFH'].historydescription_Document_ConvertTableToText                 = 0x018a;
-	window['AscDFH'].historydescription_Document_ResolveAllComments                 = 0x0189;
+	window['AscDFH'].historydescription_Document_ResolveAllComments                 = 0x018b;
+	window['AscDFH'].historydescription_Document_ConvertFormFixedType               = 0x018c;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//

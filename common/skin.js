@@ -76,7 +76,7 @@ var EditorSkins = {
 
 		/* word */
 		STYLE_THUMBNAIL_WIDTH     : 104,
-		STYLE_THUMBNAIL_HEIGHT    : 38,
+		STYLE_THUMBNAIL_HEIGHT    : 40,
 
 		isNeedInvertOnActive      : false,
 		ContentControlsBack    : "#F1F1F1",
@@ -107,8 +107,9 @@ var EditorSkins = {
 		ThumbnailsLockColor             : "#D34F4F",
 		BackgroundColorNotes            : "#F0F0F0",
 
-		THEMES_THUMBNAIL_WIDTH          : 85,
-		THEMES_THUMBNAIL_HEIGHT         : 38,
+		THEMES_THUMBNAIL_WIDTH          : 88,
+		THEMES_THUMBNAIL_HEIGHT         : 40,
+		THEMES_LAYOUT_THUMBNAIL_HEIGHT  : 68,
 
 		BorderSplitterColor             : "#CBCBCB",
 		SupportNotes                    : true,
@@ -191,7 +192,8 @@ var EditorSkins = {
 
 		/* word */
 		STYLE_THUMBNAIL_WIDTH       : 104,
-		STYLE_THUMBNAIL_HEIGHT      : 38,
+		STYLE_THUMBNAIL_HEIGHT      : 40,
+		THEMES_LAYOUT_THUMBNAIL_HEIGHT : 68,
 
 		isNeedInvertOnActive        : false,
 		ContentControlsBack         : "#F1F1F1",
@@ -222,8 +224,8 @@ var EditorSkins = {
 		ThumbnailsLockColor             : "#D34F4F",
 		BackgroundColorNotes            : "#666666",
 
-		THEMES_THUMBNAIL_WIDTH  : 85,
-		THEMES_THUMBNAIL_HEIGHT : 38,
+		THEMES_THUMBNAIL_WIDTH  : 88,
+		THEMES_THUMBNAIL_HEIGHT : 40,
 
 		BorderSplitterColor                   : "#CBCBCB",
 		SupportNotes                          : true,

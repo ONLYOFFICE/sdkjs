@@ -1656,6 +1656,21 @@ ParaMath.prototype.Get_Layout = function(DrawingLayout, UseContentPos, ContentPo
         DrawingLayout.X += this.Width;
 };
 
+ParaMath.prototype.GetNextRunElements = function(oRunElements, isUseContentPos, nDepth)
+{
+	if (oRunElements.IsSkipMath())
+		return;
+
+	this.Root.GetNextRunElements(oRunElements, isUseContentPos, nDepth);
+};
+ParaMath.prototype.GetPrevRunElements = function(oRunElements, isUseContentPos, nDepth)
+{
+	if (oRunElements.IsSkipMath())
+		return;
+
+	this.Root.GetPrevRunElements(oRunElements, isUseContentPos, nDepth);
+};
+
 ParaMath.prototype.CollectDocumentStatistics = function(ParaStats)
 {
     // TODO: ParaMath.CollectDocumentStatistics
@@ -2491,9 +2506,9 @@ ParaMath.prototype.Is_BrkBinBefore = function()
 
     return this.Is_Inline() ? false : MathSettings.Get_BrkBin() == BREAK_BEFORE;
 };
-ParaMath.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange)
+ParaMath.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 {
-    this.Root.Shift_Range(Dx, Dy, _CurLine, _CurRange);
+    this.Root.Shift_Range(Dx, Dy, _CurLine, _CurRange, _CurPage);
 };
 //-----------------------------------------------------------------------------------
 // Функция для работы с формулой
@@ -3283,6 +3298,14 @@ ParaMath.prototype.Split = function (ContentPos, Depth)
 
     return NewParaMath;
 };
+ParaMath.prototype.SplitNoDuplicate = function(oContentPos, nDepth, oNewParagraph)
+{
+	var oNewElement = this.Split(oContentPos, nDepth);
+	if (!oNewElement)
+		return;
+
+	oNewParagraph.AddToContent(oNewParagraph.Content.length, oNewElement, false);
+};
 
 /**
  * Пытаемся выполнить автозамену в формуле.
@@ -3466,6 +3489,10 @@ ParaMath.prototype.IsParentEquationPlaceholder = function()
 	}
 
 	return false;
+};
+ParaMath.prototype.CalculateTextToTable = function(oEngine)
+{
+	this.Root.CalculateTextToTable(oEngine);
 };
 
 function MatGetKoeffArgSize(FontSize, ArgSize)

@@ -100,6 +100,10 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Worksheet_CFRuleDelete = 53;
 
 	window['AscCH'].historyitem_Worksheet_SetShowZeros = 54;
+	window['AscCH'].historyitem_Worksheet_SetTopLeftCell = 55;
+
+	window['AscCH'].historyitem_Worksheet_AddProtectedRange = 56;
+	window['AscCH'].historyitem_Worksheet_DelProtectedRange = 57;
 
 	window['AscCH'].historyitem_RowCol_Fontname = 1;
 	window['AscCH'].historyitem_RowCol_Fontsize = 2;
@@ -121,6 +125,9 @@ function (window, undefined) {
 	window['AscCH'].historyitem_RowCol_SetCellStyle = 19;
 	window['AscCH'].historyitem_RowCol_Num = 20;
 	window['AscCH'].historyitem_RowCol_Indent = 21;
+	window['AscCH'].historyitem_RowCol_ApplyProtection = 22;
+	window['AscCH'].historyitem_RowCol_Locked = 23;
+	window['AscCH'].historyitem_RowCol_HiddenFormulas = 24;
 
 	window['AscCH'].historyitem_Cell_Fontname = 1;
 	window['AscCH'].historyitem_Cell_Fontsize = 2;
@@ -148,6 +155,9 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Cell_SetPivotButton = 25;
 	window['AscCH'].historyitem_Cell_RemoveSharedFormula = 26;
 	window['AscCH'].historyitem_Cell_Indent = 27;
+	window['AscCH'].historyitem_Cell_SetApplyProtection = 28;
+	window['AscCH'].historyitem_Cell_SetHidden = 29;
+	window['AscCH'].historyitem_Cell_SetLocked = 30;
 
 	window['AscCH'].historyitem_Comment_Add = 1;
 	window['AscCH'].historyitem_Comment_Remove = 2;
@@ -299,6 +309,42 @@ function (window, undefined) {
 	window['AscCH'].historyitem_CFRule_SetRuleElements = 16;
 	window['AscCH'].historyitem_CFRule_SetDxf = 17;
 	window['AscCH'].historyitem_CFRule_SetRanges = 18;
+
+	window['AscCH'].historyitem_Protected_SetSqref = 1;
+	window['AscCH'].historyitem_Protected_SetName = 2;
+	window['AscCH'].historyitem_Protected_SetAlgorithmName = 3;
+	window['AscCH'].historyitem_Protected_SetHashValue = 4;
+	window['AscCH'].historyitem_Protected_SetSaltValue = 5;
+	window['AscCH'].historyitem_Protected_SetSpinCount = 6;
+
+	window['AscCH'].historyitem_Protected_SetSheet = 7;
+	window['AscCH'].historyitem_Protected_SetObjects = 8;
+	window['AscCH'].historyitem_Protected_SetScenarios = 9;
+	window['AscCH'].historyitem_Protected_SetFormatCells = 10;
+	window['AscCH'].historyitem_Protected_SetFormatColumns = 11;
+	window['AscCH'].historyitem_Protected_SetFormatRows = 12;
+	window['AscCH'].historyitem_Protected_SetInsertColumns = 13;
+	window['AscCH'].historyitem_Protected_SetInsertRows = 14;
+	window['AscCH'].historyitem_Protected_SetInsertHyperlinks = 15;
+	window['AscCH'].historyitem_Protected_SetDeleteColumns = 16;
+	window['AscCH'].historyitem_Protected_SetDeleteRows = 17;
+	window['AscCH'].historyitem_Protected_SetSelectLockedCells = 18;
+	window['AscCH'].historyitem_Protected_SetSort = 19;
+	window['AscCH'].historyitem_Protected_SetAutoFilter = 20;
+	window['AscCH'].historyitem_Protected_SetPivotTables = 21;
+	window['AscCH'].historyitem_Protected_SetSelectUnlockedCells = 22;
+
+	window['AscCH'].historyitem_Protected_SetLockStructure = 23;
+	window['AscCH'].historyitem_Protected_SetLockWindows = 24;
+	window['AscCH'].historyitem_Protected_SetLockRevision = 25;
+	window['AscCH'].historyitem_Protected_SetRevisionsAlgorithmName = 26;
+	window['AscCH'].historyitem_Protected_SetRevisionsHashValue = 27;
+	window['AscCH'].historyitem_Protected_SetRevisionsSaltValue = 28;
+	window['AscCH'].historyitem_Protected_SetRevisionsSpinCount = 29;
+	window['AscCH'].historyitem_Protected_SetWorkbookAlgorithmName = 30;
+	window['AscCH'].historyitem_Protected_SetWorkbookHashValue = 31;
+	window['AscCH'].historyitem_Protected_SetWorkbookSaltValue = 32;
+	window['AscCH'].historyitem_Protected_SetWorkbookSpinCount = 33;
 
 
 function CHistory()
@@ -966,6 +1012,10 @@ CHistory.prototype.Add = function(Class, Type, sheetid, range, Data, LocalChange
 			var ContentChanges = new AscCommon.CContentChangesElement(bAdd == true ? AscCommon.contentchanges_Add : AscCommon.contentchanges_Remove, Class.Pos, Count, Class);
 			Class.Class.Add_ContentChanges(ContentChanges);
 			AscCommon.CollaborativeEditing.Add_NewDC(Class.Class);
+			if (true === bAdd)
+				AscCommon.CollaborativeEditing.Update_DocumentPositionsOnAdd(Class.Class, Class.Pos);
+			else
+				AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(Class.Class, Class.Pos, Count);
 		}
 	}
 };

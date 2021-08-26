@@ -546,53 +546,25 @@ function CTableOutlineDr()
     }
 }
 
-function CDrawingCollaborativeTarget()
+function CDrawingCollaborativeTarget(DrawingDocument)
 {
-	this.Id = "";
-	this.ShortId = "";
-
-	this.X = 0;
-	this.Y = 0;
-	this.Size = 0;
-	this.Page = -1;
-
-	this.Color = null;
-	this.Transform = null;
-
-	this.HtmlElement = null;
-	this.HtmlElementX = 0;
-	this.HtmlElementY = 0;
-
-	this.Color = null;
-
-	this.Style = "";
+    AscCommon.CDrawingCollaborativeTargetBase.call(this);
+    this.DrawingDocument = DrawingDocument;
 }
-CDrawingCollaborativeTarget.prototype =
+CDrawingCollaborativeTarget.prototype = Object.create(AscCommon.CDrawingCollaborativeTargetBase.prototype);
+CDrawingCollaborativeTarget.prototype.CheckPosition = function (_x, _y, _size, _page, _transform)
 {
-	CheckPosition: function (_drawing_doc, _x, _y, _size, _page, _transform)
-	{
-		 // 2) определяем размер
-		 this.Transform = _transform;
-		 this.Size = _size;
-
-		 var _old_x = this.X;
-		 var _old_y = this.Y;
-		 var _old_page = this.Page;
-
-		 this.X = _x;
-		 this.Y = _y;
-		 this.Page = _page;
-	},
-
-	Remove: function (_drawing_doc)
-	{
-
-  },
-
-	Update: function (_drawing_doc)
-	{
-
-  }
+     this.Transform = _transform;
+     this.Size = _size;
+     this.X = _x;
+     this.Y = _y;
+     this.Page = _page;
+};
+CDrawingCollaborativeTarget.prototype.Remove = function ()
+{
+};
+CDrawingCollaborativeTarget.prototype.Update = function ()
+{
 };
 
 function CDrawingDocument()
@@ -2317,11 +2289,113 @@ CDrawingDocument.prototype =
 
     CheckGuiControlColors : function ()
     {
+        // потом реализовать проверку на то, что нужно ли посылать
+        var _theme = this.m_oWordControl.m_oLogicDocument.theme;
+        var _clrMap = this.m_oWordControl.m_oLogicDocument.clrSchemeMap.color_map;
 
+        var arr_colors = new Array(10);
+        var rgba = {R: 0, G: 0, B: 0, A: 255};
+        // bg1,tx1,bg2,tx2,accent1 - accent6
+        var array_colors_types = [6, 15, 7, 16, 0, 1, 2, 3, 4, 5];
+        var _count = array_colors_types.length;
+
+        var color = new AscFormat.CUniColor();
+        color.color = new AscFormat.CSchemeColor();
+        for (var i = 0; i < _count; ++i)
+        {
+            color.color.id = array_colors_types[i];
+            color.Calculate(_theme, _clrMap, rgba);
+
+            var _rgba = color.RGBA;
+            arr_colors[i] = new CColor(_rgba.R, _rgba.G, _rgba.B);
+        }
+
+        // теперь проверим
+        var bIsSend = false;
+        if (this.GuiControlColorsMap != null)
+        {
+            for (var i = 0; i < _count; ++i)
+            {
+                var _color1 = this.GuiControlColorsMap[i];
+                var _color2 = arr_colors[i];
+
+                if ((_color1.r != _color2.r) || (_color1.g != _color2.g) || (_color1.b != _color2.b))
+                {
+                    bIsSend = true;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            this.GuiControlColorsMap = new Array(_count);
+            bIsSend = true;
+        }
+
+        if (bIsSend)
+        {
+            for (var i = 0; i < _count; ++i)
+            {
+                this.GuiControlColorsMap[i] = arr_colors[i];
+            }
+
+            this.SendControlColors();
+        }
     },
+
     SendControlColors : function()
     {
+        var standart_colors = null;
+        if (!this.IsSendStandartColors) {
+            var standartColors = AscCommon.g_oStandartColors;
+            var _c_s = standartColors.length;
+            standart_colors = new Array(_c_s);
+
+            for (var i = 0; i < _c_s; ++i) {
+                standart_colors[i] = new CColor(standartColors[i].R, standartColors[i].G, standartColors[i].B);
+            }
+
+            this.IsSendStandartColors = true;
+        }
+
+        var _count = this.GuiControlColorsMap.length;
+
+        var _ret_array = new Array(_count * 6);
+        var _cur_index = 0;
+
+        for (var i = 0; i < _count; ++i) {
+            var _color_src = this.GuiControlColorsMap[i];
+
+            _ret_array[_cur_index] = new CColor(_color_src.r, _color_src.g, _color_src.b);
+            _cur_index++;
+
+            // теперь с модификаторами
+            var _count_mods = 5;
+            for (var j = 0; j < _count_mods; ++j) {
+                var dst_mods = new AscFormat.CColorModifiers();
+                dst_mods.Mods = AscCommon.GetDefaultMods(_color_src.r, _color_src.g, _color_src.b, j + 1, 1);
+
+                var _rgba = { R: _color_src.r, G: _color_src.g, B: _color_src.b, A: 255 };
+                dst_mods.Apply(_rgba);
+
+                _ret_array[_cur_index] = new CColor(_rgba.R, _rgba.G, _rgba.B);
+                _cur_index++;
+            }
+        }
+
+        this.m_oWordControl.m_oApi.sync_SendThemeColors(_ret_array, standart_colors);
+
+        // regenerate styles
+        if (null == this.m_oWordControl.m_oApi._gui_styles) {
+            if (window["NATIVE_EDITOR_ENJINE"] === true) {
+                if (!this.m_oWordControl.m_oApi.asc_checkNeedCallback("asc_onInitEditorStyles"))
+                    return;
+            }
+            var StylesPainter = new CStylesPainter();
+            StylesPainter.GenerateStyles(this.m_oWordControl.m_oApi, this.m_oWordControl.m_oLogicDocument.Get_Styles().Style);
+        }
     },
+
     DrawImageTextureFillShape : function()
     {
     },
@@ -2905,14 +2979,14 @@ CDrawingDocument.prototype =
   		{
   			if (_id == this.CollaborativeTargets[i].Id)
   			{
-  				this.CollaborativeTargets[i].CheckPosition(this, _x, _y, _size, _page, _transform);
+  				this.CollaborativeTargets[i].CheckPosition(_x, _y, _size, _page, _transform);
   				return;
   			}
   		}
-  		var _target = new CDrawingCollaborativeTarget();
+  		var _target = new CDrawingCollaborativeTarget(this);
   		_target.Id = _id;
   		_target.ShortId = _shortId;
-  		_target.CheckPosition(this, _x, _y, _size, _page, _transform);
+  		_target.CheckPosition(_x, _y, _size, _page, _transform);
   		this.CollaborativeTargets[this.CollaborativeTargets.length] = _target;
   	},
   	Collaborative_RemoveTarget : function (_id)

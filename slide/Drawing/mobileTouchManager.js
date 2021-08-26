@@ -373,7 +373,8 @@
 			scroller_id : this.iScrollElement,
 			bounce : false,
 			eventsElement : this.eventsElement,
-			click : false
+			click : false,
+			useLongTap : true
 		});
 
 		this.delegate.Init();
@@ -1074,12 +1075,12 @@
 	};
 	CMobileDelegateThumbnails.prototype.GetScrollerSize = function()
 	{
-		return { W : 1, H : this.Thumbnails.ScrollerHeight };
+		return { W : 1, H : AscCommon.AscBrowser.convertToRetinaValue(this.Thumbnails.ScrollerHeight) };
 	};
 	CMobileDelegateThumbnails.prototype.ScrollTo = function(_scroll)
 	{
 		if (this.HtmlPage.m_oScrollThumbApi)
-			this.HtmlPage.m_oScrollThumbApi.scrollToY(-_scroll.y);
+			this.HtmlPage.m_oScrollThumbApi.scrollToY(-_scroll.y * AscCommon.AscBrowser.retinaPixelRatio);
 	};
 	CMobileDelegateThumbnails.prototype.ScrollEnd = function(_scroll)
 	{
@@ -1119,7 +1120,7 @@
 		var _ret = { X : 0, Y : 0, Mode : AscCommon.MobileTouchContextMenuType.Slide };
 		if (ConvertedPos)
 		{
-			_ret.X = ConvertedPos.X;
+			_ret.X = ConvertedPos.X + (ConvertedPos.W >> 1);
 			_ret.Y = ConvertedPos.Y;
 		}
 
@@ -1143,6 +1144,11 @@
 	CMobileTouchManagerThumbnails.prototype.Init = function(_api)
 	{
 		this.Api = _api;
+
+		this.Api.HtmlElement.style.touchAction = "none";
+		this.Api.HtmlElement.style.userSelect = "none";
+		this.Api.HtmlElement.style.webkitUserSelect = "none";
+
 		this.iScrollElement = "scroller_id_thumbnails";
 
 		// создаем делегата. инициализация его - ПОСЛЕ создания iScroll

@@ -56,6 +56,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Drawing_SetParaMath]       = CChangesPa
 AscDFH.changesFactory[AscDFH.historyitem_Drawing_LayoutInCell]      = CChangesParaDrawingLayoutInCell;
 AscDFH.changesFactory[AscDFH.historyitem_Drawing_SetSizeRelH]       = CChangesParaDrawingSizeRelH;
 AscDFH.changesFactory[AscDFH.historyitem_Drawing_SetSizeRelV]       = CChangesParaDrawingSizeRelV;
+AscDFH.changesFactory[AscDFH.historyitem_Drawing_Form]              = CChangesParaDrawingForm;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
@@ -79,6 +80,7 @@ AscDFH.changesRelationMap[AscDFH.historyitem_Drawing_SetParaMath]       = [AscDF
 AscDFH.changesRelationMap[AscDFH.historyitem_Drawing_LayoutInCell]      = [AscDFH.historyitem_Drawing_LayoutInCell];
 AscDFH.changesRelationMap[AscDFH.historyitem_Drawing_SetSizeRelH]       = [AscDFH.historyitem_Drawing_SetSizeRelH];
 AscDFH.changesRelationMap[AscDFH.historyitem_Drawing_SetSizeRelV]       = [AscDFH.historyitem_Drawing_SetSizeRelV];
+AscDFH.changesRelationMap[AscDFH.historyitem_Drawing_Form]              = [AscDFH.historyitem_Drawing_Form];
 //----------------------------------------------------------------------------------------------------------------------
 
 /**
@@ -943,4 +945,19 @@ CChangesParaDrawingSizeRelV.prototype.ReadFromBinary = function(Reader)
 		this.Old.RelativeFrom = Reader.GetLong();
 		this.Old.Percent      = Reader.GetDouble();
 	}
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolValue}
+ */
+function CChangesParaDrawingForm(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolValue.call(this, Class, Old, New, Color);
+}
+CChangesParaDrawingForm.prototype = Object.create(AscDFH.CChangesBaseBoolValue.prototype);
+CChangesParaDrawingForm.prototype.constructor = CChangesParaDrawingForm;
+CChangesParaDrawingForm.prototype.Type = AscDFH.historyitem_Drawing_Form;
+CChangesParaDrawingForm.prototype.private_SetValue = function(Value)
+{
+	this.Class.Form = Value;
 };

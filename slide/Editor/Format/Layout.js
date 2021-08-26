@@ -1120,7 +1120,7 @@ function CLayoutThumbnailDrawer()
     {
         _layout.recalculate2();
 
-        var h_px = 68;
+        var h_px = AscCommon.GlobalSkin.THEMES_LAYOUT_THUMBNAIL_HEIGHT;
         var w_px = (this.WidthMM * h_px / this.HeightMM) >> 0;
         w_px = (w_px >> 2) << 2;
 

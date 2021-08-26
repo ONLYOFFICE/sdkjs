@@ -111,7 +111,7 @@ $(function () {
 		return new window["Asc"].Range(c1, r1, c2, r2);
 	};
 
-	test("Test: \"simple tests\"", function () {
+	QUnit.test("Test: \"simple tests\"", function (assert) {
 
 		ws.getRange2("A1").setValue("-4");
 
@@ -121,19 +121,19 @@ $(function () {
 		ws.selectionRange.ranges = [getRange(0, 1, 0, 1)];
 		AscCommonExcel.g_clipboardExcel.pasteData(wsView, AscCommon.c_oAscClipboardDataFormat.Internal, base64);
 
-		strictEqual(ws.getRange2("A2").getValue(), ws.getRange2("A1").getValue());
+		assert.strictEqual(ws.getRange2("A2").getValue(), ws.getRange2("A1").getValue());
 
 		ws.selectionRange.ranges = [getRange(0, 5, 0, 5), getRange(1, 5, 1, 8)];
 		AscCommonExcel.g_clipboardExcel.pasteData(wsView, AscCommon.c_oAscClipboardDataFormat.Internal, base64);
 
-		strictEqual(ws.getRange2("A6").getValue(), "-4");
-		strictEqual(ws.getRange2("B6").getValue(), "-4");
-		strictEqual(ws.getRange2("B7").getValue(), "-4");
-		strictEqual(ws.getRange2("B8").getValue(), "-4");
-		strictEqual(ws.getRange2("B9").getValue(), "-4");
+		assert.strictEqual(ws.getRange2("A6").getValue(), "-4");
+		assert.strictEqual(ws.getRange2("B6").getValue(), "-4");
+		assert.strictEqual(ws.getRange2("B7").getValue(), "-4");
+		assert.strictEqual(ws.getRange2("B8").getValue(), "-4");
+		assert.strictEqual(ws.getRange2("B9").getValue(), "-4");
 	});
 
-	test("Test: \"formula tests\"", function () {
+	QUnit.test("Test: \"formula tests\"", function (assert) {
 		var val = "=SIN(1)";
 
 		ws.getRange2("A1").setValue(val);
@@ -144,16 +144,16 @@ $(function () {
 		ws.selectionRange.ranges = [getRange(0, 1, 0, 1)];
 		AscCommonExcel.g_clipboardExcel.pasteData(wsView, AscCommon.c_oAscClipboardDataFormat.Internal, base64);
 
-		strictEqual(ws.getRange2("A2").getValueForEdit(), ws.getRange2("A1").getValueForEdit());
+		assert.strictEqual(ws.getRange2("A2").getValueForEdit(), ws.getRange2("A1").getValueForEdit());
 
 		ws.selectionRange.ranges = [getRange(0, 5, 0, 5), getRange(1, 5, 1, 8)];
 		AscCommonExcel.g_clipboardExcel.pasteData(wsView, AscCommon.c_oAscClipboardDataFormat.Internal, base64);
 
-		strictEqual(ws.getRange2("A6").getValueForEdit(), val);
-		strictEqual(ws.getRange2("B6").getValueForEdit(), val);
-		strictEqual(ws.getRange2("B7").getValueForEdit(), val);
-		strictEqual(ws.getRange2("B8").getValueForEdit(), val);
-		strictEqual(ws.getRange2("B9").getValueForEdit(), val);
+		assert.strictEqual(ws.getRange2("A6").getValueForEdit(), val);
+		assert.strictEqual(ws.getRange2("B6").getValueForEdit(), val);
+		assert.strictEqual(ws.getRange2("B7").getValueForEdit(), val);
+		assert.strictEqual(ws.getRange2("B8").getValueForEdit(), val);
+		assert.strictEqual(ws.getRange2("B9").getValueForEdit(), val);
 
 
 		var val1 = "=SIN(A2)";
@@ -168,24 +168,24 @@ $(function () {
 		ws.selectionRange.ranges = [getRange(2, 1, 2, 6), getRange(3, 5, 3, 8), getRange(4, 5, 4, 7)];
 		AscCommonExcel.g_clipboardExcel.pasteData(wsView, AscCommon.c_oAscClipboardDataFormat.Internal, base64);
 
-		strictEqual(ws.getRange2("C2").getValueForEdit(), "=SIN(C3)");
-		strictEqual(ws.getRange2("C3").getValueForEdit(), "=SIN(C4)");
-		strictEqual(ws.getRange2("C4").getValueForEdit(), "=SIN(C5)");
-		strictEqual(ws.getRange2("C5").getValueForEdit(), "=SIN(C6)");
-		strictEqual(ws.getRange2("C6").getValueForEdit(), "=SIN(C7)");
-		strictEqual(ws.getRange2("C7").getValueForEdit(), "=SIN(C8)");
+		assert.strictEqual(ws.getRange2("C2").getValueForEdit(), "=SIN(C3)");
+		assert.strictEqual(ws.getRange2("C3").getValueForEdit(), "=SIN(C4)");
+		assert.strictEqual(ws.getRange2("C4").getValueForEdit(), "=SIN(C5)");
+		assert.strictEqual(ws.getRange2("C5").getValueForEdit(), "=SIN(C6)");
+		assert.strictEqual(ws.getRange2("C6").getValueForEdit(), "=SIN(C7)");
+		assert.strictEqual(ws.getRange2("C7").getValueForEdit(), "=SIN(C8)");
 
-		strictEqual(ws.getRange2("D6").getValueForEdit(), "=SIN(D7)");
-		strictEqual(ws.getRange2("D7").getValueForEdit(), "=SIN(D8)");
-		strictEqual(ws.getRange2("D8").getValueForEdit(), "=SIN(D9)");
-		strictEqual(ws.getRange2("D9").getValueForEdit(), "=SIN(D10)");
+		assert.strictEqual(ws.getRange2("D6").getValueForEdit(), "=SIN(D7)");
+		assert.strictEqual(ws.getRange2("D7").getValueForEdit(), "=SIN(D8)");
+		assert.strictEqual(ws.getRange2("D8").getValueForEdit(), "=SIN(D9)");
+		assert.strictEqual(ws.getRange2("D9").getValueForEdit(), "=SIN(D10)");
 
-		strictEqual(ws.getRange2("E6").getValueForEdit(), "=SIN(E7)");
-		strictEqual(ws.getRange2("E7").getValueForEdit(), "=SIN(E8)");
-		strictEqual(ws.getRange2("E8").getValueForEdit(), "");
+		assert.strictEqual(ws.getRange2("E6").getValueForEdit(), "=SIN(E7)");
+		assert.strictEqual(ws.getRange2("E7").getValueForEdit(), "=SIN(E8)");
+		assert.strictEqual(ws.getRange2("E8").getValueForEdit(), "");
 	});
 
-	test("Test: \"comment tests\"", function () {
+	QUnit.test("Test: \"comment tests\"", function (assert) {
 
 		ws.getRange2("E10").setValue("-4");
 		var comment = new  window["Asc"].asc_CCommentData(null);
@@ -209,28 +209,28 @@ $(function () {
 		ws.selectionRange.ranges = [getRange(0, 1, 0, 1)];
 		AscCommonExcel.g_clipboardExcel.pasteData(wsView, AscCommon.c_oAscClipboardDataFormat.Internal, base64);
 
-		strictEqual(ws.getRange2("A2").getValue(), ws.getRange2("E10").getValue());
-		strictEqual(wsView.cellCommentator.getComment(4,9).nCol, 4);
+		assert.strictEqual(ws.getRange2("A2").getValue(), ws.getRange2("E10").getValue());
+		assert.strictEqual(wsView.cellCommentator.getComment(4,9).nCol, 4);
 
 		ws.selectionRange.ranges = [getRange(0, 5, 0, 5), getRange(1, 5, 1, 8)];
 		AscCommonExcel.g_clipboardExcel.pasteData(wsView, AscCommon.c_oAscClipboardDataFormat.Internal, base64);
 
-		strictEqual(ws.getRange2("A6").getValue(), "-4");
-		strictEqual(ws.getRange2("B6").getValue(), "-4");
-		strictEqual(ws.getRange2("B7").getValue(), "-4");
-		strictEqual(ws.getRange2("B8").getValue(), "-4");
-		strictEqual(ws.getRange2("B9").getValue(), "-4");
+		assert.strictEqual(ws.getRange2("A6").getValue(), "-4");
+		assert.strictEqual(ws.getRange2("B6").getValue(), "-4");
+		assert.strictEqual(ws.getRange2("B7").getValue(), "-4");
+		assert.strictEqual(ws.getRange2("B8").getValue(), "-4");
+		assert.strictEqual(ws.getRange2("B9").getValue(), "-4");
 
-		strictEqual(wsView.cellCommentator.getComment(0,5).nRow, 5);
-		strictEqual(wsView.cellCommentator.getComment(1,5).nRow, 5);
-		strictEqual(wsView.cellCommentator.getComment(1,6).nRow, 6);
-		strictEqual(wsView.cellCommentator.getComment(1,7).nRow, 7);
-		strictEqual(wsView.cellCommentator.getComment(1,8).nRow, 8);
+		assert.strictEqual(wsView.cellCommentator.getComment(0,5).nRow, 5);
+		assert.strictEqual(wsView.cellCommentator.getComment(1,5).nRow, 5);
+		assert.strictEqual(wsView.cellCommentator.getComment(1,6).nRow, 6);
+		assert.strictEqual(wsView.cellCommentator.getComment(1,7).nRow, 7);
+		assert.strictEqual(wsView.cellCommentator.getComment(1,8).nRow, 8);
 
-		strictEqual(wsView.cellCommentator.getComment(1,9), null);
+		assert.strictEqual(wsView.cellCommentator.getComment(1,9), null);
 	});
 
-	test("Test: \"tables\"", function () {
+	QUnit.test("Test: \"tables\"", function (assert) {
 		ws.autoFilters.addAutoFilter("TableStyleMedium2", getRange(3, 5, 3, 8));
 
 		ws.selectionRange.ranges = [getRange(3, 5, 3, 9)];
@@ -239,18 +239,18 @@ $(function () {
 		ws.selectionRange.ranges = [getRange(4, 10, 4, 10)];
 		AscCommonExcel.g_clipboardExcel.pasteData(wsView, AscCommon.c_oAscClipboardDataFormat.Internal, base64);
 
-		strictEqual(ws.TableParts[ws.TableParts.length - 1].Ref.r1, 10);
-		strictEqual(ws.TableParts[ws.TableParts.length - 1].Ref.c1, 4);
+		assert.strictEqual(ws.TableParts[ws.TableParts.length - 1].Ref.r1, 10);
+		assert.strictEqual(ws.TableParts[ws.TableParts.length - 1].Ref.c1, 4);
 
 		ws.selectionRange.ranges = [getRange(5, 10, 5, 10), getRange(6, 10, 6, 10)];
 		AscCommonExcel.g_clipboardExcel.pasteData(wsView, AscCommon.c_oAscClipboardDataFormat.Internal, base64);
 
-		strictEqual(ws.TableParts[ws.TableParts.length - 2].Ref.r1, 10);
-		strictEqual(ws.TableParts[ws.TableParts.length - 2].Ref.c1, 5);
+		assert.strictEqual(ws.TableParts[ws.TableParts.length - 2].Ref.r1, 10);
+		assert.strictEqual(ws.TableParts[ws.TableParts.length - 2].Ref.c1, 5);
 
-		strictEqual(ws.TableParts[ws.TableParts.length - 1].Ref.r1, 10);
-		strictEqual(ws.TableParts[ws.TableParts.length - 1].Ref.c1, 6)
+		assert.strictEqual(ws.TableParts[ws.TableParts.length - 1].Ref.r1, 10);
+		assert.strictEqual(ws.TableParts[ws.TableParts.length - 1].Ref.c1, 6)
 	});
 
-	module("CopyPaste");
+	QUnit.module("CopyPaste");
 });

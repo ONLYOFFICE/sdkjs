@@ -40,20 +40,27 @@
 function CWordCollaborativeEditing()
 {
 	AscCommon.CCollaborativeEditingBase.call(this);
-
-    this.m_oLogicDocument        = null;
-    this.m_aDocumentPositions    = new AscCommon.CDocumentPositionsManager();
-    this.m_aForeignCursorsPos    = new AscCommon.CDocumentPositionsManager();
-    this.m_aForeignCursors       = {};
-    this.m_aForeignCursorsXY     = {};
-    this.m_aForeignCursorsToShow = {};
-
     this.m_aSkipContentControlsOnCheckEditingLock = {};
 }
 
 CWordCollaborativeEditing.prototype = Object.create(AscCommon.CCollaborativeEditingBase.prototype);
 CWordCollaborativeEditing.prototype.constructor = CWordCollaborativeEditing;
-
+CWordCollaborativeEditing.prototype.GetEditorApi = function()
+{
+    if(this.m_oLogicDocument)
+    {
+        return this.m_oLogicDocument.GetApi();
+    }
+    return null;
+};
+CWordCollaborativeEditing.prototype.GetDrawingDocument = function()
+{
+    if(this.m_oLogicDocument)
+    {
+        return this.m_oLogicDocument.GetDrawingDocument();
+    }
+    return null;
+};
 CWordCollaborativeEditing.prototype.Clear = function()
 {
 	AscCommon.CCollaborativeEditingBase.prototype.Clear.apply(this, arguments);
@@ -224,6 +231,7 @@ CWordCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
 
 	this.m_oLogicDocument.ResumeRecalculate();
 	this.m_oLogicDocument.RecalculateByChanges(this.m_aAllChanges, this.m_nRecalcIndexStart, this.m_nRecalcIndexEnd, false, nPageIndex);
+	this.m_oLogicDocument.UpdateTracks();
 
     editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ApplyChanges);
 };
@@ -232,58 +240,107 @@ CWordCollaborativeEditing.prototype.Check_MergeData = function()
     var LogicDocument = editor.WordControl.m_oLogicDocument;
     LogicDocument.Comments.Check_MergeData();
 };
-CWordCollaborativeEditing.prototype.OnEnd_CheckLock = function(DontLockInFastMode)
+CWordCollaborativeEditing.prototype.OnEnd_CheckLock = function(isDontLockInFastMode, fCallback)
 {
-    var aIds = [];
+	// Если задан fCallback, тогда действие нужно выполнять именно на нём, поэотому возвращаемое значение true
 
-    var Count = this.m_aCheckLocks.length;
-    for (var Index = 0; Index < Count; Index++)
-    {
-        var oItem = this.m_aCheckLocks[Index];
+	var aIds = [];
+	for (var nIndex = 0, nCount = this.m_aCheckLocks.length; nIndex < nCount; ++nIndex)
+	{
+		var oItem = this.m_aCheckLocks[nIndex];
 
-        if (true === oItem) // сравниваем по значению и типу обязательно
-            return true;
-        else if (false !== oItem)
-            aIds.push(oItem);
-    }
-
-    if (true === DontLockInFastMode && true === this.Is_Fast())
-        return false;
-
-    if (aIds.length > 0)
-    {
-        // Отправляем запрос на сервер со списком Id
-        editor.CoAuthoringApi.askLock(aIds, this.OnCallback_AskLock);
-
-        // Ставим глобальный лок, только во время совместного редактирования
-        if (-1 === this.m_nUseType)
+		if (true === oItem) // сравниваем по значению и типу обязательно
 		{
+			if (fCallback)
+				fCallback(true);
+
+			return true;
+		}
+		else if (false !== oItem)
+		{
+			aIds.push(oItem);
+		}
+	}
+
+	if (true === isDontLockInFastMode && true === this.Is_Fast())
+	{
+		if (fCallback)
+		{
+			fCallback(false);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	if (fCallback)
+	{
+		if (aIds.length > 0)
+		{
+			var oThis = this;
+			editor.CoAuthoringApi.askLock(aIds, function(result)
+			{
+				oThis.Set_GlobalLock(false);
+
+				if (result["lock"])
+				{
+					oThis.private_LockByMe();
+					fCallback(false);
+				}
+				else if (result["error"])
+				{
+					fCallback(true);
+				}
+			});
+
 			this.Set_GlobalLock(true);
 		}
-        else
-        {
-            // Пробегаемся по массиву и проставляем, что залочено нами
-            var Count = this.m_aCheckLocks.length;
-            for (var Index = 0; Index < Count; Index++)
-            {
-                var oItem = this.m_aCheckLocks[Index];
+		else
+		{
+			fCallback(false);
+		}
 
-                if (true !== oItem && false !== oItem) // сравниваем по значению и типу обязательно
-                {
-                    var Class = AscCommon.g_oTableId.Get_ById(oItem);
-                    if (null != Class)
-                    {
-                        Class.Lock.Set_Type(AscCommon.locktype_Mine, false);
-                        this.Add_Unlock2(Class);
-                    }
-                }
-            }
+		return true;
+	}
+	else
+	{
+		if (aIds.length > 0)
+		{
+			// Отправляем запрос на сервер со списком Id
+			editor.CoAuthoringApi.askLock(aIds, this.OnCallback_AskLock);
 
-            this.m_aCheckLocks.length = 0;
-        }
-    }
+			// Ставим глобальный лок, только во время совместного редактирования
+			if (-1 === this.m_nUseType)
+			{
+				this.Set_GlobalLock(true);
+			}
+			else
+			{
+				this.private_LockByMe();
+				this.m_aCheckLocks.length = 0;
+			}
+		}
 
-    return false;
+		return false;
+	}
+};
+CWordCollaborativeEditing.prototype.private_LockByMe = function()
+{
+	for (var nIndex = 0, nCount = this.m_aCheckLocks.length; nIndex < nCount; ++nIndex)
+	{
+		var oItem = this.m_aCheckLocks[nIndex];
+		if (true !== oItem && false !== oItem) // сравниваем по значению и типу обязательно
+		{
+			var oClass = AscCommon.g_oTableId.Get_ById(oItem);
+			if (oClass)
+			{
+				oClass.Lock.Set_Type(AscCommon.locktype_Mine);
+				this.Add_Unlock2(oClass);
+			}
+		}
+	}
 };
 CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
 {
@@ -302,24 +359,8 @@ CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
 
         if (result["lock"])
         {
-            // Пробегаемся по массиву и проставляем, что залочено нами
-
-            var Count = oThis.m_aCheckLocks.length;
-            for (var Index = 0; Index < Count; Index++)
-            {
-                var oItem = oThis.m_aCheckLocks[Index];
-
-                if (true !== oItem && false !== oItem) // сравниваем по значению и типу обязательно
-                {
-                    var Class = AscCommon.g_oTableId.Get_ById(oItem);
-                    if (null != Class)
-                    {
-                        Class.Lock.Set_Type(AscCommon.locktype_Mine);
-                        oThis.Add_Unlock2(Class);
-                    }
-                }
-            }
-        }
+        	oThis.private_LockByMe();
+		}
         else if (result["error"])
         {
             // Если у нас началось редактирование диаграммы, а вернулось, что ее редактировать нельзя,
@@ -367,66 +408,13 @@ CWordCollaborativeEditing.prototype.End_CollaborationEditing = function()
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для работы с сохраненными позициями документа.
 //----------------------------------------------------------------------------------------------------------------------
-CWordCollaborativeEditing.prototype.Clear_DocumentPositions = function()
-{
-    this.m_aDocumentPositions.Clear_DocumentPositions();
-};
-CWordCollaborativeEditing.prototype.Add_DocumentPosition = function(DocumentPos)
-{
-    this.m_aDocumentPositions.Add_DocumentPosition(DocumentPos);
-};
-CWordCollaborativeEditing.prototype.Add_ForeignCursor = function(UserId, DocumentPos, UserShortId)
-{
-    this.m_aForeignCursorsPos.Remove_DocumentPosition(this.m_aCursorsToUpdate[UserId]);
-    this.m_aForeignCursors[UserId] = DocumentPos;
-    this.m_aForeignCursorsPos.Add_DocumentPosition(DocumentPos);
-    this.m_aForeignCursorsId[UserId] = UserShortId;
-};
 CWordCollaborativeEditing.prototype.Remove_ForeignCursor = function(UserId)
 {
-    this.m_aForeignCursorsPos.Remove_DocumentPosition(this.m_aCursorsToUpdate[UserId]);
-    delete this.m_aForeignCursors[UserId];
-
+    AscCommon.CCollaborativeEditingBase.prototype.Remove_ForeignCursor.call(this, UserId);
     var DrawingDocument = this.m_oLogicDocument.DrawingDocument;
     DrawingDocument.Collaborative_RemoveTarget(UserId);
     this.Remove_ForeignCursorXY(UserId);
     this.Remove_ForeignCursorToShow(UserId);
-};
-CWordCollaborativeEditing.prototype.Remove_AllForeignCursors = function()
-{
-    for (var UserId in this.m_aForeignCursors)
-    {
-        this.Remove_ForeignCursor(UserId);
-    }
-};
-CWordCollaborativeEditing.prototype.RemoveMyCursorFromOthers = function()
-{
-	// Удаляем свой курсор у других пользователей
-	this.m_oLogicDocument.Api.CoAuthoringApi.sendCursor("");
-};
-CWordCollaborativeEditing.prototype.Update_DocumentPositionsOnAdd = function(Class, Pos)
-{
-    this.m_aDocumentPositions.Update_DocumentPositionsOnAdd(Class, Pos);
-    this.m_aForeignCursorsPos.Update_DocumentPositionsOnAdd(Class, Pos);
-};
-CWordCollaborativeEditing.prototype.Update_DocumentPositionsOnRemove = function(Class, Pos, Count)
-{
-    this.m_aDocumentPositions.Update_DocumentPositionsOnRemove(Class, Pos, Count);
-    this.m_aForeignCursorsPos.Update_DocumentPositionsOnRemove(Class, Pos, Count);
-};
-CWordCollaborativeEditing.prototype.OnStart_SplitRun = function(SplitRun, SplitPos)
-{
-    this.m_aDocumentPositions.OnStart_SplitRun(SplitRun, SplitPos);
-    this.m_aForeignCursorsPos.OnStart_SplitRun(SplitRun, SplitPos);
-};
-CWordCollaborativeEditing.prototype.OnEnd_SplitRun = function(NewRun)
-{
-    this.m_aDocumentPositions.OnEnd_SplitRun(NewRun);
-    this.m_aForeignCursorsPos.OnEnd_SplitRun(NewRun);
-};
-CWordCollaborativeEditing.prototype.Update_DocumentPosition = function(DocPos)
-{
-    this.m_aDocumentPositions.Update_DocumentPosition(DocPos);
 };
 CWordCollaborativeEditing.prototype.Update_ForeignCursorsPositions = function()
 {
@@ -487,140 +475,6 @@ CWordCollaborativeEditing.prototype.Update_ForeignCursorPosition = function(User
         this.Remove_ForeignCursorToShow(UserId);
     }
 };
-CWordCollaborativeEditing.prototype.Check_ForeignCursorsLabels = function(X, Y, PageIndex)
-{
-    if (!this.m_oLogicDocument)
-        return;
-
-    var DrawingDocument = this.m_oLogicDocument.Get_DrawingDocument();
-    var Px7 = DrawingDocument.GetMMPerDot(7);
-    var Px3 = DrawingDocument.GetMMPerDot(3);
-
-    for (var UserId in this.m_aForeignCursorsXY)
-    {
-        var Cursor = this.m_aForeignCursorsXY[UserId];
-        if ((true === Cursor.Transform && Cursor.PageIndex === PageIndex && Cursor.X0 - Px3 < X && X < Cursor.X1 + Px3 && Cursor.Y0 - Px3 < Y && Y < Cursor.Y1 + Px3)
-            || (Math.abs(X - Cursor.X) < Px7 && Cursor.Y - Px3 < Y && Y < Cursor.Y + Cursor.H + Px3 && Cursor.PageIndex === PageIndex))
-        {
-                this.Show_ForeignCursorLabel(UserId);
-        }
-    }
-};
-CWordCollaborativeEditing.prototype.Show_ForeignCursorLabel = function(UserId)
-{
-    if (!this.m_oLogicDocument)
-        return;
-
-    var Api = this.m_oLogicDocument.Get_Api();
-    var DrawingDocument = this.m_oLogicDocument.Get_DrawingDocument();
-
-    if (!this.m_aForeignCursorsXY[UserId])
-        return;
-
-    var Cursor = this.m_aForeignCursorsXY[UserId];
-    if (Cursor.ShowId)
-        clearTimeout(Cursor.ShowId);
-
-    Cursor.ShowId = setTimeout(function()
-    {
-        Cursor.ShowId = null;
-        Api.sync_HideForeignCursorLabel(UserId);
-    }, AscCommon.FOREIGN_CURSOR_LABEL_HIDETIME);
-
-    var UserShortId = this.m_aForeignCursorsId[UserId] ? this.m_aForeignCursorsId[UserId] : UserId;
-    var Color  = AscCommon.getUserColorById(UserShortId, null, true);
-    var Coords = DrawingDocument.Collaborative_GetTargetPosition(UserId);
-    if (!Color || !Coords)
-        return;
-
-    this.Update_ForeignCursorLabelPosition(UserId, Coords.X, Coords.Y, Color);
-};
-CWordCollaborativeEditing.prototype.Add_ForeignCursorToShow = function(UserId)
-{
-    this.m_aForeignCursorsToShow[UserId] = true;
-};
-CWordCollaborativeEditing.prototype.Remove_ForeignCursorToShow = function(UserId)
-{
-    delete this.m_aForeignCursorsToShow[UserId];
-};
-CWordCollaborativeEditing.prototype.Add_ForeignCursorXY = function(UserId, X, Y, PageIndex, H, Paragraph, isRemoveLabel)
-{
-    var Cursor;
-    if (!this.m_aForeignCursorsXY[UserId])
-    {
-        Cursor = {X: X, Y: Y, H: H, PageIndex: PageIndex, Transform: false, ShowId: null};
-        this.m_aForeignCursorsXY[UserId] = Cursor;
-    }
-    else
-    {
-        Cursor = this.m_aForeignCursorsXY[UserId];
-        if (Cursor.ShowId)
-        {
-            if (true === isRemoveLabel)
-            {
-                var Api = this.m_oLogicDocument.Get_Api();
-                clearTimeout(Cursor.ShowId);
-                Cursor.ShowId = null;
-                Api.sync_HideForeignCursorLabel(UserId);
-            }
-        }
-        else
-        {
-            Cursor.ShowId = null;
-        }
-
-        Cursor.X         = X;
-        Cursor.Y         = Y;
-        Cursor.PageIndex = PageIndex;
-        Cursor.H         = H;
-    }
-
-    var Transform = Paragraph.Get_ParentTextTransform();
-    if (Transform)
-    {
-        Cursor.Transform = true;
-        var X0 = Transform.TransformPointX(Cursor.X, Cursor.Y);
-        var Y0 = Transform.TransformPointY(Cursor.X, Cursor.Y);
-        var X1 = Transform.TransformPointX(Cursor.X, Cursor.Y + Cursor.H);
-        var Y1 = Transform.TransformPointY(Cursor.X, Cursor.Y + Cursor.H);
-
-        Cursor.X0 = Math.min(X0, X1);
-        Cursor.Y0 = Math.min(Y0, Y1);
-        Cursor.X1 = Math.max(X0, X1);
-        Cursor.Y1 = Math.max(Y0, Y1);
-    }
-    else
-    {
-        Cursor.Transform = false;
-    }
-
-};
-CWordCollaborativeEditing.prototype.Remove_ForeignCursorXY = function(UserId)
-{
-    if (this.m_aForeignCursorsXY[UserId])
-    {
-        if (this.m_aForeignCursorsXY[UserId].ShowId)
-        {
-            var Api = this.m_oLogicDocument.Get_Api();
-            Api.sync_HideForeignCursorLabel(UserId);
-            clearTimeout(this.m_aForeignCursorsXY[UserId].ShowId);
-        }
-
-        delete this.m_aForeignCursorsXY[UserId];
-    }
-};
-CWordCollaborativeEditing.prototype.Update_ForeignCursorLabelPosition = function(UserId, X, Y, Color)
-{
-    if (!this.m_oLogicDocument)
-        return;
-
-    var Cursor = this.m_aForeignCursorsXY[UserId];
-    if (!Cursor || !Cursor.ShowId)
-        return;
-
-    var Api = this.m_oLogicDocument.Get_Api();
-    Api.sync_ShowForeignCursorLabel(UserId, X, Y, Color);
-};
 CWordCollaborativeEditing.prototype.OnEnd_ReadForeignChanges = function()
 {
 	AscCommon.CCollaborativeEditingBase.prototype.OnEnd_ReadForeignChanges.apply(this, arguments);
@@ -640,6 +494,10 @@ CWordCollaborativeEditing.prototype.OnEnd_ReadForeignChanges = function()
 CWordCollaborativeEditing.prototype.private_RecalculateDocument = function(arrChanges)
 {
 	this.m_oLogicDocument.RecalculateByChanges(arrChanges);
+};
+CWordCollaborativeEditing.prototype.private_UpdateForeignCursor = function(CursorInfo, UserId, Show, UserShortId)
+{
+    this.m_oLogicDocument.Update_ForeignCursor(CursorInfo, UserId, Show, UserShortId);
 };
 
 //--------------------------------------------------------export----------------------------------------------------

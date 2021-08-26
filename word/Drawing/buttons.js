@@ -35,29 +35,107 @@
 (function(window, undefined){
 
 	var AscCommon = window['AscCommon'];
+
+	// класс для регистрации кнопок, для загрузки только нужных
+	// для текущего devicePixelRatio
+	function StorageBaseImageCtrl()
+	{
+		this.controls = [];
+		this.updateIndex = 0;
+		this.isNeedUpdate = false;
+	}
+	// регистрируем
+	StorageBaseImageCtrl.prototype.register = function(image)
+	{
+		this.controls.push(image);
+	};
+	// картинка не готова, но запрошена. значит после загрузки - нужно перерисоваться
+	StorageBaseImageCtrl.prototype.updateLater = function()
+	{
+		this.updateIndex++;
+	};
+	StorageBaseImageCtrl.prototype.needUpdate = function()
+	{
+		this.isNeedUpdate = true;
+	};
+	// картинка загрузилась - нужно проверить, надо ли перерисовать оверлей
+	StorageBaseImageCtrl.prototype.updateOverlay = function()
+	{
+		if (this.updateIndex == 0)
+			return;
+		this.updateIndex--;
+		if (this.updateIndex < 0)
+			this.updateIndex = 0;
+
+		if (this.updateIndex != 0)
+		{
+			// обновится, когда все загрузятся
+			return;
+		}
+
+		if (!this.isNeedUpdate)
+		{
+			// не было запроса на отрисовку, пока грузили
+			return;
+		}
+
+		this.isNeedUpdate = false;
+
+		var wordControl = window.editor ? window.editor.WordControl : undefined;
+		if (wordControl)
+		{
+			wordControl.ShowOverlay();
+			wordControl.StartUpdateOverlay();
+			wordControl.OnUpdateOverlay();
+			wordControl.EndUpdateOverlay();
+		}
+	};
+	StorageBaseImageCtrl.prototype.resize = function()
+	{
+		for (var i = 0, len = this.controls.length; i < len; i++)
+		{
+			this.controls[i]._loadIndex(undefined);
+			if (this.controls[i].images_active.length > 0)
+				this.controls[i]._loadActiveIndex(undefined);
+		}
+	}
+	AscCommon.g_imageControlsStorage = new StorageBaseImageCtrl();
+
 	function BaseImageCtrl()
 	{
+		// регистрируем
+		AscCommon.g_imageControlsStorage.register(this);
+
 		this.images = [];
 		this.images_active = [];
-		this.support = [1, 1.5, 2];
+		this.url = "";
 		this.baseUrl = "";
 	}
 
+	// поддерживаемые devicePixelRatio
+	BaseImageCtrl.prototype.support = [1, 1.25, 1.5, 1.75, 2];
+
+	// на старте - грузим сразу ВСЕ размеры (не используем этот режим)
+	BaseImageCtrl.prototype.isLoadAllSizes = false;
+
+	// дописка к урлу (@..x)
 	BaseImageCtrl.prototype.getAddon = function(val)
 	{
-		val = (val * 10) >> 0;
-		if (10 === val)
+		val = (val * 100) >> 0;
+		if (100 === val)
 			return "";
 
-		var val1 = (val / 10) >> 0;
-		var val2 = val - (10 * val1);
+		while (0 === (val % 10))
+			val = (val / 10) >> 0;
 
-		if (0 === val2)
-			return "@" + val1 + "x";
+		if (val < 10)
+			return "@" + val + "x";
 
-		return "@" + val1 + "." + val2 + "x";
+		var str = "" + val;
+		return "@" + str.substring(0, 1) + "." + str.substr(1) + "x";
 	};
 
+	// индекс картинки под текущий devicePixelRatio
 	BaseImageCtrl.prototype.getIndex = function()
 	{
 		var scale = AscCommon.AscBrowser.retinaPixelRatio;
@@ -77,38 +155,99 @@
 		return index;
 	};
 
+	// стартовые загрузки
 	BaseImageCtrl.prototype.load = function(type, url)
 	{
+		this.url = url;
+		if (!this.isLoadAllSizes)
+		{
+			this._loadIndex();
+			return;
+		}
 		for (var i = 0, len = this.support.length; i < len; i++)
 		{
-			var img = new Image();
-			img.onload = function() { this.asc_complete = true; };
-			img.src = this.baseUrl + "/" + url + this.getAddon(this.support[i]) + ".png";
-			AscCommon.backoffOnErrorImg(img);
-			this.images.push(img);
+			this._loadIndex(i);
 		}
 	};
-	BaseImageCtrl.prototype.loadActive = function(url)
+	BaseImageCtrl.prototype.loadActive = function()
 	{
+		if (!this.isLoadAllSizes)
+		{
+			this._loadActiveIndex();
+			return;
+		}
 		for (var i = 0, len = this.support.length; i < len; i++)
 		{
-			var img = new Image();
-			img.onload = function() { this.asc_complete = true; };
-			img.src = this.baseUrl + "/" + url + "_active" + this.getAddon(this.support[i]) + ".png";
-			AscCommon.backoffOnErrorImg(img);
-			this.images_active.push(img);
+			this._loadActiveIndex(i);
 		}
 	};
+
+	// берем картинку. если ее нет - то грузим, если не готова - то просто после загрузки - обновляем оверлей
 	BaseImageCtrl.prototype.get = function(isActive)
 	{
 		if (isActive) return this.getActive();
+
 		var index = this.getIndex();
-		return this.images[index].asc_complete ? this.images[index] : null;
+		if (!this.images[index])
+		{
+			AscCommon.g_imageControlsStorage.needUpdate();
+			this._loadIndex(index);
+			return null;
+		}
+		if (!this.images[index].asc_complete)
+		{
+			AscCommon.g_imageControlsStorage.needUpdate();
+			return null;
+		}
+		return this.images[index];
 	};
 	BaseImageCtrl.prototype.getActive = function()
 	{
 		var index = this.getIndex();
-		return this.images_active[index].asc_complete ? this.images_active[index] : null;
+		if (!this.images_active[index])
+		{
+			AscCommon.g_imageControlsStorage.needUpdate();
+			this._loadActiveIndex(index);
+			return null;
+		}
+		if (!this.images_active[index].asc_complete)
+		{
+			AscCommon.g_imageControlsStorage.needUpdate();
+			return null;
+		}
+		return this.images_active[index];
+	};
+
+	// загрузка картинки по индексу. если индекса нет - то текущий
+	BaseImageCtrl.prototype._loadIndex = function(index)
+	{
+		if (undefined === index)
+			index = this.getIndex();
+
+		if (!this.images[index])
+		{
+			var img = new Image();
+			AscCommon.g_imageControlsStorage.updateLater();
+			img.onload = function() { this.asc_complete = true; AscCommon.g_imageControlsStorage.updateOverlay(); };
+			img.src = this.baseUrl + "/" + this.url + this.getAddon(this.support[index]) + ".png";
+			AscCommon.backoffOnErrorImg(img);
+			this.images[index] = img;
+		}
+	};
+	BaseImageCtrl.prototype._loadActiveIndex = function(index)
+	{
+		if (undefined === index)
+			index = this.getIndex();
+
+		if (!this.images_active[index])
+		{
+			var img = new Image();
+			AscCommon.g_imageControlsStorage.updateLater();
+			img.onload = function() { this.asc_complete = true; AscCommon.g_imageControlsStorage.updateOverlay(); };
+			img.src = this.baseUrl + "/" + this.url + "_active" + this.getAddon(this.support[index]) + ".png";
+			AscCommon.backoffOnErrorImg(img);
+			this.images_active[index] = img;
+		}
 	};
 
 	AscCommon.BaseImageCtrl = BaseImageCtrl;
@@ -170,7 +309,7 @@
 		{
 			this.images[type] = new PI();
 			this.images[type].load(type, url);
-			support_active && this.images[type].loadActive(url);
+			support_active && this.images[type].loadActive();
 		};
 		this.get = function(type)
 		{
@@ -706,7 +845,7 @@
 		{
 			var image = new CCI();
 			image.load(type, url);
-			image.loadActive(url);
+			image.loadActive();
 			this.images[type] = image;
 		};
 
@@ -724,8 +863,9 @@
 			this.images[AscCommon.CCButtonType.Combo] = imageCC;
 			imageCC.type = AscCommon.CCButtonType.Combo;
 
-			var sizes = [20, 30, 40];
-			for (var i = 0; i < 6; i++)
+			var sizes = [20, 25, 30, 35, 40];
+			var sizes_count = 2 * sizes.length;
+			for (var i = 0; i < sizes_count; i++)
 			{
 				var index = i >> 1;
 				var isActive = (0x01 === (0x01 & i));
@@ -788,6 +928,7 @@
 		this.isForm = this.base.IsForm();
 		this.formInfo = null;
 		this.state = state;
+		this.isFixedForm = this.base.IsFixedForm();
 
 		this.geom = geom;
 		this.rects = undefined;
@@ -843,7 +984,7 @@
 
 	CContentControlTrack.prototype.IsUseMoveRect = function()
 	{
-		if (this.IsNoButtons || this.IsFillFormsMode)
+		if (this.IsNoButtons || this.IsFillFormsMode || this.isFixedForm)
 			return false;
 		return true;
 	};
@@ -885,6 +1026,17 @@
 
 		return false;
 	};
+	CContentControlTrack.prototype.fillText = function(ctx, text, x, y, maxWidth)
+	{
+		if (AscCommon.AscBrowser.isMozilla)
+			ctx.fillText(text, x, y, maxWidth);
+		else
+			ctx.fillText(text, x, y);
+	};
+	CContentControlTrack.prototype.CalculateNameRectNatural = function()
+	{
+		return this.parent.measure(this.Name);
+	};
 	CContentControlTrack.prototype.CalculateNameRect = function(koefX, koefY)
 	{
 		if (this.Name == "")
@@ -918,7 +1070,7 @@
 	// расчет области для переноса
 	CContentControlTrack.prototype.CalculateMoveRect = function(koefX, koefY, isCheckTrack)
 	{
-		if (this.IsNoUseButtons() || this.IsFillFormsMode)
+		if (this.IsNoUseButtons() || this.IsFillFormsMode || this.isFixedForm)
 		{
 			if (true !== isCheckTrack)
 				return null;
@@ -1274,19 +1426,13 @@
 		{
 			if (!this.measures[text])
 			{
-				this.measures[text] = [0, 0];
-
 				var ctx = this.document.CanvasHitContext;
 				ctx.font = "11px Helvetica, Arial, sans-serif";
 
-				this.measures[text][0] = ctx.measureText(text).width;
-
-				ctx.setTransform(2, 0, 0, 2, 0, 0);
-				this.measures[text][1] = ctx.measureText(text).width;
-				ctx.setTransform(1, 0, 0, 1, 0, 0);
+				this.measures[text] = ctx.measureText(text).width;
 			}
 
-			return this.measures[text][AscCommon.AscBrowser.isCustomScalingAbove2() ? 1 : 0];
+			return this.measures[text];
 		};
 
 		// сохранение текущих в последние
@@ -1707,7 +1853,7 @@
 
 									ctx.fillStyle = (_object.ActiveButtonIndex == -1) ? AscCommon.GlobalSkin.ContentControlsTextActive : AscCommon.GlobalSkin.ContentControlsText;
 									ctx.font = Math.round(11 * rPR) + "px Helvetica, Arial, sans-serif";
-									ctx.fillText(_object.Name, xText + Math.round(3 * rPR), _y + Math.round(20 * rPR) - Math.round(6 * rPR));
+									_object.fillText(ctx, _object.Name, xText + Math.round(3 * rPR), _y + Math.round(20 * rPR) - Math.round(6 * rPR), _object.CalculateNameRectNatural() * rPR);
 
 									if (_object.IsNameAdvanced() && !_object.IsNoUseButtons())
 									{
@@ -1929,7 +2075,7 @@
 
 									ctx.fillStyle = (_object.ActiveButtonIndex == -1) ? AscCommon.GlobalSkin.ContentControlsTextActive : AscCommon.GlobalSkin.ContentControlsText;
 									ctx.font = this.getFont(_koefY);
-									ctx.fillText(_object.Name, xText + 3 / _koefX, _y + (20 - 6) / _koefY);
+									_object.fillText(ctx, _object.Name, xText + 3 / _koefX, _y + (20 - 6) / _koefY, _object.CalculateNameRectNatural() / _koefX);
 
 									if (_object.IsNameAdvanced() && !_object.IsNoUseButtons())
 									{
@@ -2795,6 +2941,11 @@
 			this.isUseMoveRect = false;
 		}
 
+		if (object.isFixedForm)
+		{
+			this.isUseMoveRect = false;
+		}
+
 		if (object.state === AscCommon.ContentControlTrack.In)
 		{
 			this.isActive = true;
@@ -3374,8 +3525,8 @@
 						_x4 = (drPage.left + koefX * (this.bounds.x + this.bounds.w + object.OffsetX)) * rPR;
 						_y4 = (drPage.top + koefY * (this.bounds.y + this.bounds.h + object.OffsetY)) * rPR;
 
-						var imageW = rPR >= 2 ? 40 : 20;
-						var imageH = rPR >= 2 ? 40 : 20;
+						var imageW = AscCommon.AscBrowser.convertToRetinaValue(20, true);
+						var imageH = AscCommon.AscBrowser.convertToRetinaValue(20, true);
 						var xPos = (_x1 + _x4 - imageW) >> 1;
 						var yPos = (_y1 + _y4 - imageH) >> 1;
 

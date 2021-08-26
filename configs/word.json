@@ -190,6 +190,7 @@
 			"word/Editor/EndnotesChanges.js",
 		    "word/Editor/GlossaryDocument.js",
 		    "word/Editor/GlossaryDocumentChanges.js",
+			"word/Editor/DocumentProtection.js",
 
 			"word/Drawing/Graphics.js",
 			"word/Drawing/ShapeDrawer.js",
@@ -242,6 +243,7 @@
 			"common": []
 		},
 		"mobile": [
+			"common/Charts/ChartStyles.js",
 			"common/Native/Wrappers/HtmlPage.js",
 			"common/Native/Wrappers/TextMeasurerWrapper.js",
 			"common/Native/Wrappers/DrawingStream.js",

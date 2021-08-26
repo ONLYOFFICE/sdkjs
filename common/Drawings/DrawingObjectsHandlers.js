@@ -327,7 +327,7 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
             }
             case AscDFH.historyitem_type_GraphicFrame:
             {
-                ret = !drawingObjectsController.isSlideShow() && handleFloatTable(drawing, drawingObjectsController, e, x, y, group, pageIndex);
+                ret = handleFloatTable(drawing, drawingObjectsController, e, x, y, group, pageIndex);
                 break;
             }
         }
@@ -447,6 +447,14 @@ function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pag
             var sMediaFile = drawing.getMediaFileName();
             if(!sMediaFile)
             {
+                var oAnimPlayer = drawingObjectsController.getAnimationPlayer();
+                if(oAnimPlayer)
+                {
+                    if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE && oAnimPlayer.onSpClick(drawing))
+                    {
+                        return true;
+                    }
+                }
                 return false;
             }
         }
@@ -456,6 +464,11 @@ function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pag
     {
         if(bWord/* && (!drawing.txWarpStruct || drawingObjectsController.curState.startTargetTextObject === drawing || drawing.haveSelectedDrawingInContent && drawing.haveSelectedDrawingInContent())*/)
         {
+            if(drawing.getObjectType() === AscDFH.historyitem_type_Shape &&
+                drawing.isForm() && drawing.getInnerForm() && drawing.getInnerForm().IsPicture())
+            {
+                return drawingObjectsController.handleMoveHit(drawing, e, x, y, group, false, pageIndex, bWord);
+            }
             var all_drawings = drawing.getDocContent().GetAllDrawingObjects();
             var drawings2 = [];
             for(var i = 0; i < all_drawings.length; ++i)
@@ -468,9 +481,19 @@ function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pag
         }
         if(drawingObjectsController.isSlideShow())
         {
-            if(!AscFormat.fCheckObjectHyperlink(drawing,x, y))
+            if(AscFormat.fCheckObjectHyperlink(drawing,x, y))
             {
-                return false;
+                return true;
+            }
+            if(drawing.hitInInnerArea(x, y))
+            {
+                var oAnimPlayer = drawingObjectsController.getAnimationPlayer();
+                if(oAnimPlayer)
+                {
+                    if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE && oAnimPlayer.onSpClick(drawing)) {
+                        return true;
+                    }
+                }
             }
         }
         var oTextObject = AscFormat.getTargetTextObject(drawingObjectsController);
@@ -1841,6 +1864,11 @@ function handleInlineShapeImage(drawing, drawingObjectsController, e, x, y, page
     {
         if(drawing.bWordShape /*&& (!drawing.txWarpStruct || drawingObjectsController.curState.startTargetTextObject === drawing || drawing.haveSelectedDrawingInContent && drawing.haveSelectedDrawingInContent())*/)
         {
+            if(drawing.getObjectType() === AscDFH.historyitem_type_Shape &&
+                drawing.isForm() && drawing.getInnerForm() && drawing.getInnerForm().IsPicture())
+            {
+                return handleInlineHitNoText(drawing, drawingObjectsController, e, x, y, pageIndex, false);
+            }
             var all_drawings = drawing.getDocContent().GetAllDrawingObjects();
             var drawings2 = [];
             for(var i = 0; i < all_drawings.length; ++i)
@@ -1889,7 +1917,7 @@ function handleInlineHitNoText(drawing, drawingObjects, e, x, y, pageIndex, bInS
                 else if (drawing.signatureLine && drawingObjects.handleSignatureDblClick){
                     drawingObjects.handleSignatureDblClick(drawing.signatureLine.id, drawing.extX, drawing.extY);
                 }
-                else if (2 === e.ClickCount && drawing.parent instanceof ParaDrawing && drawing.parent.IsMathEquation())
+                else if (2 === e.ClickCount && drawing.parent instanceof AscCommonWord.ParaDrawing && drawing.parent.IsMathEquation())
                 {
                     drawingObjects.handleMathDrawingDoubleClick(drawing.parent, e, x, y, pageIndex);
                 }
@@ -2025,6 +2053,20 @@ function handleMouseUpPreMoveState(drawingObjects, e, x, y, pageIndex, bWord)
 
 function handleFloatTable(drawing, drawingObjectsController, e, x, y, group, pageIndex)
 {
+    if(drawingObjectsController.isSlideShow())
+    {
+        if(drawing.hitInInnerArea(x, y))
+        {
+            var oAnimPlayer = drawingObjectsController.getAnimationPlayer();
+            if(oAnimPlayer)
+            {
+                if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE && oAnimPlayer.onSpClick(drawing)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
     if(drawing.hitInBoundingRect(x, y))
     {
         return drawingObjectsController.handleMoveHit(drawing, e, x, y, group, false, pageIndex, false);

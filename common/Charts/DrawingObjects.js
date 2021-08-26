@@ -784,6 +784,8 @@ CSparklineView.prototype.initFromSparkline = function(oSparkline, oSparklineGrou
             oSerie.spPr.setLn(oLn);
             if(oSparklineGroup.markers && oSparklineGroup.colorMarkers)
             {
+                chart_space.chart.plotArea.charts[0].setMarker(true);
+                chart_space.recalcInfo.recalculateReferences = false;
                 oSerie.marker = CreateSparklineMarker(CreateUniFillFromExcelColor(oSparklineGroup.colorMarkers), bForPreview);
             }
 
@@ -854,8 +856,6 @@ CSparklineView.prototype.initFromSparkline = function(oSparkline, oSparklineGrou
         {
             if(fCallbackSeries)
             {
-
-
                 if(oSparklineGroup.negative && oSparklineGroup.colorNegative)
                 {
                     for(i = 0; i < aSeriesPoints.length; ++i)
@@ -2182,6 +2182,7 @@ GraphicOption.prototype.union = function(oGraphicOption) {
                 }
         _this.OnUpdateOverlay();
         _this.controller.updateSelectionState(true);
+        AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
     };
 
     _this.updateRange = function(oRange) {
@@ -2196,6 +2197,7 @@ GraphicOption.prototype.union = function(oGraphicOption) {
         }
         _this.OnUpdateOverlay();
         _this.controller.updateSelectionState(true);
+        AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
     };
 
     _this.print = function(oOptions) {
@@ -3946,8 +3948,15 @@ GraphicOption.prototype.union = function(oGraphicOption) {
         _this.lastX = x;
         _this.lastY = y;
         var offsets = _this.drawingArea.getOffsets(x, y, true);
-        if ( offsets )
-            _this.controller.onMouseMove( e, pxToMm(x - offsets.x), pxToMm(y - offsets.y) );
+        if ( offsets ) {
+
+            var fX = pxToMm(x - offsets.x);
+            var fY = pxToMm(y - offsets.y);
+            _this.controller.onMouseMove( e, fX, fY );
+            if(worksheet && worksheet.model) {
+                AscCommon.CollaborativeEditing.Check_ForeignCursorsLabels(fX, fY, worksheet.model.Id);
+            }
+        }
     };
 
     _this.graphicObjectMouseUp = function(e, x, y) {
@@ -3957,8 +3966,6 @@ GraphicOption.prototype.union = function(oGraphicOption) {
     };
 
     _this.isPointInDrawingObjects3 = function(x, y, page, bSelected, bText) {
-
-
         var offsets = _this.drawingArea.getOffsets(x, y, true);
         if ( offsets )
             return _this.controller.isPointInDrawingObjects3(pxToMm(x - offsets.x), pxToMm(y - offsets.y), page, bSelected, bText );
@@ -4404,7 +4411,19 @@ GraphicOption.prototype.union = function(oGraphicOption) {
 		}
 		return coords;
 	};
-
+    DrawingObjects.prototype.getDocumentPositionBinary = function() {
+        if(this.controller) {
+            var oPosition = this.controller.getDocumentPositionForCollaborative();
+            if(!oPosition) {
+                return "";
+            }
+            //console.log("POSITION: " + oPosition.Position);
+            var oWriter = new AscCommon.CMemory(true);
+            oWriter.CheckSize(50);
+            return AscCommon.CollaborativeEditing.GetDocumentPositionBinary(oWriter, oPosition);
+        }
+        return "";
+    };
 function ClickCounter() {
     this.x = 0;
     this.y = 0;

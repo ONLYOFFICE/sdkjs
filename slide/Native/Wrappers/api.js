@@ -2046,6 +2046,12 @@ function asc_menu_ReadShapePr(_params, _cursor)
             case 6:
             {
                 _settings.InsertPageNum = _params[_cursor.pos++];
+                break;
+            }
+            case 7:
+            {
+                _settings.bFromGroup = _params[_cursor.pos++];
+                break;
             }
             case 255:
             default:
@@ -2086,6 +2092,12 @@ function asc_menu_WriteShapePr(_type, _shapePr, _stream) {
     {
         _stream["WriteByte"](5);
         _stream["WriteBool"](_shapePr.bFromChart);
+    }
+    //6 - InsertPageNum
+    if (_shapePr.bFromGroup !== undefined && _shapePr.bFromGroup !== null)
+    {
+        _stream["WriteByte"](7);
+        _stream["WriteBool"](_shapePr.bFromGroup);
     }
 
     _stream["WriteByte"](255);
@@ -2625,6 +2637,8 @@ function NativeOpenFileP(_params, documentInfo){
         window["native"]["OnCallMenuEvent"](2404, stream); // ASC_SPREADSHEETS_EVENT_TYPE_COLOR_SCHEMES
     });
 
+    _api.asc_registerCallback("asc_onSendThemeColors", onApiSendThemeColors);
+
     _api.asc_registerCallback("asc_onUpdateThemeIndex", function(nIndex) {
         var stream = global_memory_stream_menu;
         stream["ClearNoAttack"]();
@@ -2706,8 +2720,8 @@ function NativeOpenFileP(_params, documentInfo){
 	    _presentation.CurPage = Math.min(0, _presentation.Slides.length - 1);
         _presentation.Document_UpdateInterfaceState();
         _presentation.DrawingDocument.CheckThemes();
+        _presentation.DrawingDocument.CheckGuiControlColors();
         _api.WordControl.CheckLayouts();
-
         initSpellCheckApi();
 
         if (!_api.bNoSendComments) {
@@ -2730,6 +2744,16 @@ function NativeOpenFileP(_params, documentInfo){
 }
 
 // Common
+
+function getHexColor(r, g, b) {
+    r = r.toString(16);
+    g = g.toString(16);
+    b = b.toString(16);
+    if (r.length == 1) r = '0' + r;
+    if (g.length == 1) g = '0' + g;
+    if (b.length == 1) b = '0' + b;
+    return r + g + b;
+}
 
 function postDataAsJSONString(data, eventId) {
     var stream = global_memory_stream_menu;
@@ -2924,6 +2948,20 @@ function onApiUpdateCommentPosition(uids, posX, posY, leftX) {
 
 function onDocumentPlaceChanged() {
     postDataAsJSONString(null, 23012); // ASC_MENU_EVENT_TYPE_DOCUMENT_PLACE_CHANGED
+}
+
+function onApiSendThemeColors(theme_colors, standart_colors) {
+    var colors = {
+        "themeColors": theme_colors.map(function(color) {
+            return getHexColor(color.get_r(), color.get_g(), color.get_b());
+        })
+    }
+    if (standart_colors != null) {
+        colors["standartColors"] = standart_colors.map(function(color) {
+            return getHexColor(color.get_r(), color.get_g(), color.get_b());
+        });
+    }
+    postDataAsJSONString(colors, 2417); // ASC_MENU_EVENT_TYPE_THEMECOLORS
 }
 Asc['asc_docs_api'].prototype.UpdateTextPr = function(TextPr)
 {
@@ -3197,6 +3235,10 @@ Asc['asc_docs_api'].prototype.openDocument = function(file)
     //     _api.sendColorThemes(oTheme);
     // }
 
+    if (null != this.WordControl.m_oLogicDocument)
+    {
+        this.WordControl.m_oDrawingDocument.CheckGuiControlColors();
+    }
     window["native"]["onEndLoadingFile"](_result);
     this.asc_nativeCalculateFile();
 

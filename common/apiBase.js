@@ -72,6 +72,7 @@
 		this.documentUserId      = undefined;
 		this.documentUrl         = "null";
 		this.documentUrlChanges  = null;
+		this.documentTokenChanges  = null;
 		this.documentCallbackUrl = undefined;		// Ссылка для отправления информации о документе
 		this.documentFormat      = "null";
 		this.documentTitle       = "null";
@@ -180,6 +181,7 @@
 
 		this.disableAutostartMacros = false;
 		this.macros = null;
+		this.vbaMacros = null;
 
         this.openFileCryptBinary = null;
 
@@ -510,7 +512,8 @@
 	};
 	baseEditorsApi.prototype.sync_StartAction                = function(type, id)
 	{
-		this.sendEvent('asc_onStartAction', type, id);
+		if (type !== c_oAscAsyncActionType.Empty)
+			this.sendEvent('asc_onStartAction', type, id);
 		//console.log("asc_onStartAction: type = " + type + " id = " + id);
 
 		if (c_oAscAsyncActionType.BlockInteraction === type)
@@ -520,7 +523,8 @@
 	};
 	baseEditorsApi.prototype.sync_EndAction                  = function(type, id)
 	{
-		this.sendEvent('asc_onEndAction', type, id);
+		if (type !== c_oAscAsyncActionType.Empty)
+			this.sendEvent('asc_onEndAction', type, id);
 		//console.log("asc_onEndAction: type = " + type + " id = " + id);
 
 		if (c_oAscAsyncActionType.BlockInteraction === type)
@@ -716,16 +720,21 @@
 	baseEditorsApi.prototype._openDocumentEndCallback            = function()
 	{
 	};
+	baseEditorsApi.prototype._openVersionHistoryEndCallback            = function()
+	{
+		this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.Open);
+	};
 	baseEditorsApi.prototype._openOnClient                       = function()
 	{
 	};
 	baseEditorsApi.prototype._onOpenCommand                      = function(data)
 	{
 		var t = this;
-		AscCommon.openFileCommand(data, this.documentUrlChanges, AscCommon.c_oSerFormat.Signature, function(error, result)
+		AscCommon.openFileCommand(this.documentId, data, this.documentUrlChanges, this.documentTokenChanges, AscCommon.c_oSerFormat.Signature, function(error, result)
 		{
 			if (error || (!result.bSerFormat && !Asc.c_rUneditableTypes.test(t.DocInfo && t.DocInfo.get_Format())))
 			{
+				t.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.Open);
 				var err = error ? c_oAscError.ID.Unknown : c_oAscError.ID.ConvertationOpenError;
 				t.sendEvent("asc_onError",  err, c_oAscError.Level.Critical);
 				return;
@@ -805,13 +814,11 @@
             window["AscDesktopEditor"]["onDocumentContentReady"]();
 	};
 	// Save
-	baseEditorsApi.prototype.processSavedFile                    = function(url, downloadType)
+	baseEditorsApi.prototype.processSavedFile                    = function(url, downloadType, filetype)
 	{
 		if (AscCommon.DownloadType.None !== downloadType)
 		{
-			this.sendEvent(downloadType, url, function(hasError)
-			{
-			});
+			this.sendEvent(downloadType, url, filetype);
 		}
 		else
 		{
@@ -1059,6 +1066,11 @@
 			t.sendEvent('asc_onCoAuthoringChatReceiveMessage', e, clear);
 		};
 		this.CoAuthoringApi.onServerVersion = function (buildVersion, buildNumber) {
+			if (t.isRestrictionView()) {
+				t.sync_EndAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.Disconnect);
+				t.asc_removeRestriction(Asc.c_oAscRestrictionType.View);
+			}
+
 			t.sendEvent('asc_onServerVersion', buildVersion, buildNumber);
 		};
 		this.CoAuthoringApi.onAuthParticipantsChanged = function(users, userId)
@@ -1247,10 +1259,17 @@
 				t.asyncServerIdEndLoaded();
 			}
 			if (null != opt_closeCode) {
+				if (t.isRestrictionView()) {
+					t.sync_EndAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.Disconnect);
+					t.asc_removeRestriction(Asc.c_oAscRestrictionType.View);
+				}
 				var error = AscCommon.getDisconnectErrorCode(t.isDocumentLoadComplete, opt_closeCode);
 				var level = t.isDocumentLoadComplete ? Asc.c_oAscError.Level.NoCritical : Asc.c_oAscError.Level.Critical;
 				t.setViewModeDisconnect(AscCommon.getEnableDownloadByCloseCode(opt_closeCode));
 				t.sendEvent('asc_onError', error, level);
+			} else if (!t.isRestrictionView()) {
+				t.sync_StartAction(Asc.c_oAscAsyncActionType.Information, Asc.c_oAscAsyncAction.Disconnect);
+				t.asc_addRestriction(Asc.c_oAscRestrictionType.View);
 			}
 		};
 		this.CoAuthoringApi.onDocumentOpen = function (inputWrap) {
@@ -1414,8 +1433,16 @@
 
             window["asc_nativeOnSpellCheck"] = function(response) {
                 var _editor = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
-                if (_editor.SpellCheckApi)
-                    _editor.SpellCheckApi.onSpellCheck(response);
+                if (_editor.SpellCheckApi) {
+                	// поверяем на сообщение о полной очистке очереди задач для текущего
+                	if ("clear" === response) {
+						_editor.SpellCheckApi.isRestart = false;
+						return;
+					}
+					if (_editor.SpellCheckApi.isRestart === true)
+						return;
+					_editor.SpellCheckApi.onSpellCheck(response);
+				}
             };
 
 			this.SpellCheckApi.spellCheck = function (spellData) {
@@ -1423,6 +1450,11 @@
 			};
 			this.SpellCheckApi.disconnect = function () {
 			};
+			this.SpellCheckApi.restart = function() {
+				this.isRestart = true;
+				window["AscDesktopEditor"]["SpellCheck"]("clear");
+			};
+
 			if (window["AscDesktopEditor"]["IsLocalFile"] && !window["AscDesktopEditor"]["IsLocalFile"]())
 			{
 				this.sendEvent('asc_onSpellCheckInit', [
@@ -1479,6 +1511,7 @@
 				this.SpellCheckApi = {};
 				this.SpellCheckApi.log = false;
 				this.SpellCheckApi.worker = new CSpellchecker({
+					api: this,
 					enginePath: "../../../../sdkjs/common/spell/spell",
 					dictionariesPath: "./../../../../dictionaries"
 				});
@@ -1502,6 +1535,9 @@
 				};
 				this.SpellCheckApi.disconnect = function ()
 				{
+				};
+				this.SpellCheckApi.restart = function() {
+					this.worker.restart();
 				};
 
 				this.sendEvent('asc_onSpellCheckInit', this.SpellCheckApi.worker.getLanguages());
@@ -1552,6 +1588,9 @@
 	};
 	baseEditorsApi.prototype.downloadAs                         = function (actionType, options)
 	{
+		if (this.isLongAction()) {
+			return;
+		}
 		var isCloudCrypto = !!(window["AscDesktopEditor"] && (0 < window["AscDesktopEditor"]["CryptoMode"]));
 		if (isCloudCrypto)
 		{
@@ -1589,6 +1628,33 @@
 			oAdditionalData["withoutPassword"] = true;
 			oAdditionalData["inline"] = 1;
 		}
+		if (Asc.c_oAscFileType.JPG === options.fileType || Asc.c_oAscFileType.TIFF === options.fileType
+			|| Asc.c_oAscFileType.TGA === options.fileType || Asc.c_oAscFileType.GIF === options.fileType
+			|| Asc.c_oAscFileType.PNG === options.fileType || Asc.c_oAscFileType.EMF === options.fileType
+			|| Asc.c_oAscFileType.WMF === options.fileType || Asc.c_oAscFileType.BMP === options.fileType
+			|| Asc.c_oAscFileType.CR2 === options.fileType || Asc.c_oAscFileType.PCX === options.fileType
+			|| Asc.c_oAscFileType.RAS === options.fileType || Asc.c_oAscFileType.PSD === options.fileType
+			|| Asc.c_oAscFileType.ICO === options.fileType) {
+			oAdditionalData["thumbnail"] = {
+				"aspect": 2,
+				"first": false
+			}
+			switch (options.fileType) {
+				case Asc.c_oAscFileType.PNG:
+					oAdditionalData["thumbnail"]["format"] = 4;
+					break;
+				case Asc.c_oAscFileType.GIF:
+					oAdditionalData["thumbnail"]["format"] = 2;
+					break;
+				case Asc.c_oAscFileType.BMP:
+					oAdditionalData["thumbnail"]["format"] = 1;
+					break;
+				default:
+					oAdditionalData["thumbnail"]["format"] = 3;
+					break;
+			}
+			oAdditionalData["title"] = AscCommon.changeFileExtention(this.documentTitle, "zip", Asc.c_nMaxDownloadTitleLen);
+		}
 
 		if (this._downloadAs(actionType, options, oAdditionalData, dataContainer))
 		{
@@ -1611,13 +1677,13 @@
 						if (url)
 						{
 							error = c_oAscError.ID.No;
-							t.processSavedFile(url, downloadType);
+							t.processSavedFile(url, downloadType, input["filetype"]);
 						}
 					}
 					else
 					{
 						error = AscCommon.mapAscServerErrorToAscError(parseInt(input["data"]),
-							AscCommon.c_oAscAdvancedOptionsAction.Save);
+							(options && options.isGetTextFromUrl) ? AscCommon.c_oAscAdvancedOptionsAction.Open : AscCommon.c_oAscAdvancedOptionsAction.Save);
 					}
 				}
 				if (c_oAscError.ID.No !== error)
@@ -1856,6 +1922,9 @@
 			this.asc_coAuthoringDisconnect();
 		}
 
+		if (this.SpellCheckApi && this.SpellCheckApi.restart /* старый спеллчек (серверный - не поддеживает этот метод */)
+			this.SpellCheckApi.restart();
+
 		var bUpdate = true;
 		if (null === this.VersionHistory) {
 			this.VersionHistory = new window["Asc"].asc_CVersionHistory(newObj);
@@ -1869,12 +1938,16 @@
 			this.DocInfo.put_Id(this.VersionHistory.docId);
 			this.DocInfo.put_Url(this.VersionHistory.url);
 			this.documentUrlChanges = this.VersionHistory.urlChanges;
+			this.documentTokenChanges = this.VersionHistory.token;
 			this.asc_setDocInfo(this.DocInfo);
 			this.asc_LoadDocument(this.VersionHistory);
 		} else if (this.VersionHistory.currentChangeId < newObj.currentChangeId) {
+			var oApi = Asc.editor || editor;
+			this.isApplyChangesOnVersionHistory = true;
+			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.Open);
 			// Нужно только добавить некоторые изменения
 			AscCommon.CollaborativeEditing.Clear_CollaborativeMarks();
-			editor.VersionHistory.applyChanges(editor);
+			oApi.VersionHistory.applyChanges(oApi);
 			AscCommon.CollaborativeEditing.Apply_Changes();
 		}
 	};

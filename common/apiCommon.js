@@ -3137,6 +3137,7 @@
 		this.canFill = true;
 		this.canChangeArrows = false;
 		this.bFromChart = false;
+		this.bFromGroup = false;
 		this.bFromImage = false;
 		this.Locked = false;
 		this.w = null;
@@ -3162,6 +3163,10 @@
 		this.flipVInvert = null;
 		this.shadow = undefined;
 		this.anchor = null;
+
+		this.protectionLockText = null;
+		this.protectionLocked = null;
+		this.protectionPrint = null;
 	}
 
 	asc_CShapeProperty.prototype = {
@@ -3190,11 +3195,20 @@
 			return this.canChangeArrows;
 		}, asc_setCanChangeArrows: function (v) {
 			this.canChangeArrows = v;
-		}, asc_getFromChart: function () {
+		},
+		asc_getFromChart: function () {
 			return this.bFromChart;
-		}, asc_setFromChart: function (v) {
+		},
+		asc_setFromChart: function (v) {
 			this.bFromChart = v;
-		}, asc_getLocked: function () {
+		},
+		asc_getFromGroup: function () {
+			return this.bFromGroup;
+		},
+		asc_setFromGroup: function (v) {
+			this.bFromGroup = v;
+		},
+		asc_getLocked: function () {
 			return this.Locked;
 		}, asc_setLocked: function (v) {
 			this.Locked = v;
@@ -3339,6 +3353,25 @@
 
 		asc_putAnchor: function(v){
 			this.anchor = v;
+		},
+		asc_getProtectionLockText: function(){
+			return this.protectionLockText;
+		},
+		asc_putProtectionLockText: function(v){
+			this.protectionLockText = v;
+		},
+		asc_getProtectionLocked: function(){
+			return this.protectionLocked;
+		},
+
+		asc_putProtectionLocked: function(v){
+			this.protectionLocked = v;
+		},
+		asc_getProtectionPrint: function(){
+			return this.protectionPrint;
+		},
+		asc_putProtectionPrint: function(v){
+			this.protectionPrint = v;
 		}
 	};
 
@@ -3560,6 +3593,10 @@
 			this.resetCrop =  obj.resetCrop != undefined ? obj.resetCrop : undefined;
 			this.anchor =  obj.anchor != undefined ? obj.anchor : undefined;
 
+			this.protectionLockText = obj.protectionLockText;
+			this.protectionLocked = obj.protectionLocked;
+			this.protectionPrint = obj.protectionPrint;
+
 		} else {
 			this.CanBeFlow = true;
 			this.Width = undefined;
@@ -3612,6 +3649,10 @@
 			this.flipV = undefined;
 			this.resetCrop = undefined;
 			this.anchor = undefined;
+
+			this.protectionLockText = undefined;
+			this.protectionLocked = undefined;
+			this.protectionPrint = undefined;
 		}
 	}
 
@@ -3927,6 +3968,25 @@
 
 		asc_putAnchor: function(v){
 			this.anchor = v;
+		},
+		asc_getProtectionLockText: function(){
+			return this.protectionLockText;
+		},
+		asc_putProtectionLockText: function(v){
+			this.protectionLockText = v;
+		},
+		asc_getProtectionLocked: function(){
+			return this.protectionLocked;
+		},
+
+		asc_putProtectionLocked: function(v){
+			this.protectionLocked = v;
+		},
+		asc_getProtectionPrint: function(){
+			return this.protectionPrint;
+		},
+		asc_putProtectionPrint: function(v){
+			this.protectionPrint = v;
 		}
 	};
 
@@ -4257,6 +4317,11 @@
 					this.Number = 1;
 					break;
 				}
+				case c_oAscMouseMoveDataTypes.Review:
+				{
+					this.ReviewChange = obj && obj.ReviewChange ? obj.ReviewChange : null;
+					break;
+				}
 			}
 		}
 		else
@@ -4299,6 +4364,10 @@
 	CMouseMoveData.prototype.get_FormHelpText = function()
 	{
 		return this.Text;
+	};
+	CMouseMoveData.prototype.get_ReviewChange = function()
+	{
+		return this.ReviewChange;
 	};
 
 
@@ -6030,6 +6099,8 @@
 	prot["set_CanChangeArrows"] = prot["asc_setCanChangeArrows"] = prot.asc_setCanChangeArrows;
 	prot["get_FromChart"] = prot["asc_getFromChart"] = prot.asc_getFromChart;
 	prot["set_FromChart"] = prot["asc_setFromChart"] = prot.asc_setFromChart;
+	prot["get_FromGroup"] = prot["asc_getFromGroup"] = prot.asc_getFromGroup;
+	prot["set_FromGroup"] = prot["asc_setFromGroup"] = prot.asc_setFromGroup;
 	prot["get_Locked"] = prot["asc_getLocked"] = prot.asc_getLocked;
 	prot["set_Locked"] = prot["asc_setLocked"] = prot.asc_setLocked;
 	prot["get_Width"] = prot["asc_getWidth"] = prot.asc_getWidth;
@@ -6076,6 +6147,13 @@
 	prot["get_Shadow"] = prot.get_Shadow = prot["get_shadow"] = prot.get_shadow = prot["asc_getShadow"] = prot.asc_getShadow;
 	prot["put_Anchor"] = prot.put_Anchor = prot["asc_putAnchor"] = prot.asc_putAnchor;
 	prot["get_Anchor"] = prot.get_Anchor = prot["asc_getAnchor"] = prot.asc_getAnchor;
+	prot["get_ProtectionLockText"] = prot["asc_getProtectionLockText"] = prot.asc_getProtectionLockText;
+	prot["put_ProtectionLockText"] = prot["asc_putProtectionLockText"] = prot.asc_putProtectionLockText;
+	prot["get_ProtectionLocked"] = prot["asc_getProtectionLocked"] = prot.asc_getProtectionLocked;
+	prot["put_ProtectionLocked"] = prot["asc_putProtectionLocked"] = prot.asc_putProtectionLocked;
+	prot["get_ProtectionPrint"] = prot["asc_getProtectionPrint"] = prot.asc_getProtectionPrint;
+	prot["put_ProtectionPrint"] = prot["asc_putProtectionPrint"] = prot.asc_putProtectionPrint;
+
 
 	window["Asc"]["asc_TextArtProperties"] = window["Asc"].asc_TextArtProperties = asc_TextArtProperties;
 	prot = asc_TextArtProperties.prototype;
@@ -6213,6 +6291,12 @@
 
 	prot["put_Anchor"] = prot.put_Anchor = prot["asc_putAnchor"] = prot.asc_putAnchor;
 	prot["get_Anchor"] = prot.get_Anchor = prot["asc_getAnchor"] = prot.asc_getAnchor;
+	prot["get_ProtectionLockText"] = prot["asc_getProtectionLockText"] = prot.asc_getProtectionLockText;
+	prot["put_ProtectionLockText"] = prot["asc_putProtectionLockText"] = prot.asc_putProtectionLockText;
+	prot["get_ProtectionLocked"] = prot["asc_getProtectionLocked"] = prot.asc_getProtectionLocked;
+	prot["put_ProtectionLocked"] = prot["asc_putProtectionLocked"] = prot.asc_putProtectionLocked;
+	prot["get_ProtectionPrint"] = prot["asc_getProtectionPrint"] = prot.asc_getProtectionPrint;
+	prot["put_ProtectionPrint"] = prot["asc_putProtectionPrint"] = prot.asc_putProtectionPrint;
 
 
 
@@ -6311,6 +6395,7 @@
 	prot["get_FootnoteText"] =  prot.get_FootnoteText;
 	prot["get_FootnoteNumber"] = prot.get_FootnoteNumber;
 	prot["get_FormHelpText"] = prot.get_FormHelpText;
+	prot["get_ReviewChange"] = prot.get_ReviewChange;
 
 	window["Asc"]["asc_CUserInfo"] = window["Asc"].asc_CUserInfo = asc_CUserInfo;
 	prot = asc_CUserInfo.prototype;

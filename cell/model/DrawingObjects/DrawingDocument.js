@@ -43,16 +43,85 @@ var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
     var g_dKoef_mm_to_pix = AscCommon.g_dKoef_mm_to_pix;
 
 
-function CDrawingPage()
-{
-    this.left   = 0;
-    this.top    = 0;
-    this.right  = 0;
-    this.bottom = 0;
 
-    this.cachedImage = null;
-}
+    function CDrawingCollaborativeTarget(DrawingDocument)
+    {
+        AscCommon.CDrawingCollaborativeTargetBase.call(this);
+        this.SheetId = null;
+        this.DrawingDocument = DrawingDocument;
+    }
+    CDrawingCollaborativeTarget.prototype = Object.create(AscCommon.CDrawingCollaborativeTargetBase.prototype);
 
+    CDrawingCollaborativeTarget.prototype.GetZoom = function()
+    {
+        return Asc.editor.wb.getZoom();
+    };
+    CDrawingCollaborativeTarget.prototype.ConvertCoords = function(x, y)
+    {
+        var oTrack = this.DrawingDocument.AutoShapesTrack;
+        if(!oTrack)
+        {
+            return {X: 0, Y: 0};
+        }
+        var oGraphics = oTrack.Graphics;
+        if(!oGraphics)
+        {
+            return {X: 0, Y: 0};
+        }
+        var oTransform = oGraphics.m_oCoordTransform;
+        var _offX = 0;
+        var _offY = 0;
+        var dKoef = this.DrawingDocument.drawingObjects.convertMetric(1, 3, 0);
+        if (oTransform)
+        {
+            _offX = oTransform.tx;
+            _offY = oTransform.ty;
+        }
+        var _X = AscCommon.AscBrowser.convertToRetinaValue(_offX + dKoef * x, false);
+        var _Y = AscCommon.AscBrowser.convertToRetinaValue(_offY + dKoef * y, false);
+        return { X : _X, Y : _Y};
+    };
+    CDrawingCollaborativeTarget.prototype.GetMobileTouchManager = function()
+    {
+        return Asc.editor.wb.MobileTouchManager;
+    };
+    CDrawingCollaborativeTarget.prototype.GetParentElement = function()
+    {
+        return Asc.editor.HtmlElement;
+    };
+    CDrawingCollaborativeTarget.prototype.CheckPosition = function(_x, _y, _size, sheetId, _transform)
+    {
+        this.Transform = _transform;
+        this.Size = _size;
+        this.X = _x;
+        this.Y = _y;
+        this.SheetId = sheetId;
+        this.Update();
+    };
+    CDrawingCollaborativeTarget.prototype.CheckStyleDisplay = function()
+    {
+    };
+    CDrawingCollaborativeTarget.prototype.CheckNeedDraw = function()
+    {
+        var bShow = false;
+        var oWorksheetView = Asc.editor.wb.getWorksheet();
+        if(oWorksheetView)
+        {
+            var oModel = oWorksheetView.model;
+            if(oModel)
+            {
+                if(oModel.Id === this.SheetId)
+                {
+                    bShow = true;
+                }
+            }
+        }
+        if(!bShow)
+        {
+            this.HtmlElement.style.display = "none";
+        }
+        return bShow;
+    };
 
 function CDrawingDocument()
 {
@@ -82,12 +151,13 @@ function CDrawingDocument()
     this.m_lTargetPage = -1;
     this.m_dTargetSize = 1;
 
-    this.NeedScrollToTarget = true;
-    this.NeedScrollToTargetFlag = false;
 
     this.TargetHtmlElement = null;
     this.TargetHtmlElementLeft = 0;
     this.TargetHtmlElementTop = 0;
+
+    this.CollaborativeTargets = [];
+    this.CollaborativeTargetsUpdateTasks = [];
 
     this.m_bIsBreakRecalculate = false;
 
@@ -518,7 +588,7 @@ function CDrawingDocument()
     this.SetTargetSize = function(size)
     {
         this.m_dTargetSize = size;
-        //this.TargetHtmlElement.style.height = Number(this.m_dTargetSize * this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100) + "px";
+        //this.TargetHtmlElement.style.height = Number(this.m_dTargetSize * this.m_oWordControl.m_nZoomValue * AscCommon.g_dKoef_mm_to_pix / 100) + "px";
         //this.TargetHtmlElement.style.width = "2px";
     };
 
@@ -831,7 +901,7 @@ function CDrawingDocument()
 
     this.GetDotsPerMM = function(value)
     {
-        return value * Asc.editor.wb.getZoom() * g_dKoef_mm_to_pix;
+        return value * Asc.editor.wb.getZoom() * AscCommon.g_dKoef_mm_to_pix;
     };
 
     this.GetMMPerDot = function(value)
@@ -1252,6 +1322,7 @@ function CDrawingDocument()
             var _textPr = new CTextPr();
             _textPr.FontFamily = { Name : "Arial", Index : -1 };
 			_textPr.FontSize = (AscCommon.AscBrowser.convertToRetinaValue(11 << 1, true) >> 0) * 0.5;
+            _textPr.RFonts.SetAll("Arial");
 
             _textPr.Strikeout  = this.GuiLastTextProps.Strikeout;
 
@@ -1291,13 +1362,13 @@ function CDrawingDocument()
             ctx.fillStyle = "#FFFFFF";
             ctx.fillRect(0, 0, _wPx, _hPx);
 
-            var _pxBoundsW = par.Lines[0].Ranges[0].W * g_dKoef_mm_to_pix;//(_bounds.Right - _bounds.Left) * g_dKoef_mm_to_pix;
-            var _pxBoundsH = (_bounds.Bottom - _bounds.Top) * g_dKoef_mm_to_pix;
+            var _pxBoundsW = par.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;//(_bounds.Right - _bounds.Left) * AscCommon.g_dKoef_mm_to_pix;
+            var _pxBoundsH = (_bounds.Bottom - _bounds.Top) * AscCommon.g_dKoef_mm_to_pix;
 
             if (this.GuiLastTextProps.Position !== undefined && this.GuiLastTextProps.Position != null && this.GuiLastTextProps.Position != 0)
             {
                 // TODO: нужна высота без учета Position
-                // _pxBoundsH -= (this.GuiLastTextProps.Position * g_dKoef_mm_to_pix);
+                // _pxBoundsH -= (this.GuiLastTextProps.Position * AscCommon.g_dKoef_mm_to_pix);
             }
 
             if (_pxBoundsH < _hPx && _pxBoundsW < _wPx)
@@ -1320,7 +1391,7 @@ function CDrawingDocument()
                 ctx.beginPath();
             }
 
-            var _yOffset = (((_hPx + _pxBoundsH) / 2) - baseLineOffset * g_dKoef_mm_to_pix) >> 0;
+            var _yOffset = (((_hPx + _pxBoundsH) / 2) - baseLineOffset * AscCommon.g_dKoef_mm_to_pix) >> 0;
             var _xOffset = ((_wPx - _pxBoundsW) / 2) >> 0;
 
             var graphics = new AscCommon.CGraphics();
@@ -1347,6 +1418,74 @@ function CDrawingDocument()
 
     this.OnSelectEnd = function()
     {
+    };
+
+    // collaborative targets
+    this.Collaborative_UpdateTarget      = function(_id, _shortId, _x, _y, _size, sheetId, _transform, is_from_paint)
+    {
+        //if (is_from_paint !== true)
+        //{
+        //    this.CollaborativeTargetsUpdateTasks.push([_id, _shortId, _x, _y, _size, sheetId, _transform]);
+        //    return;
+        //}
+
+        for (var i = 0; i < this.CollaborativeTargets.length; i++)
+        {
+            if (_id == this.CollaborativeTargets[i].Id)
+            {
+                this.CollaborativeTargets[i].CheckPosition(_x, _y, _size, sheetId, _transform);
+                return;
+            }
+        }
+        var _target     = new CDrawingCollaborativeTarget(this);
+        _target.Id      = _id;
+        _target.ShortId = _shortId;
+        _target.SheetId = sheetId;
+        _target.CheckPosition(_x, _y, _size, sheetId, _transform);
+        this.CollaborativeTargets[this.CollaborativeTargets.length] = _target;
+    };
+    this.Collaborative_RemoveTarget      = function(_id)
+    {
+        var i = 0;
+        for (i = 0; i < this.CollaborativeTargets.length; i++)
+        {
+            if (_id == this.CollaborativeTargets[i].Id)
+            {
+                this.CollaborativeTargets[i].Remove(this);
+                this.CollaborativeTargets.splice(i, 1);
+                i--;
+            }
+        }
+
+        for (i = 0; i < this.CollaborativeTargetsUpdateTasks.length; i++)
+        {
+            var _tmp = this.CollaborativeTargetsUpdateTasks[i];
+            if (_tmp[0] == _id)
+            {
+                this.CollaborativeTargetsUpdateTasks.splice(i, 1);
+                i--;
+            }
+        }
+    };
+    this.Collaborative_TargetsUpdate     = function(bIsChangePosition)
+    {
+        if (bIsChangePosition)
+        {
+            for (var i = 0; i < this.CollaborativeTargets.length; i++)
+            {
+                this.CollaborativeTargets[i].Update();
+            }
+        }
+    };
+    this.Collaborative_GetTargetPosition = function(UserId)
+    {
+        for (var i = 0; i < this.CollaborativeTargets.length; i++)
+        {
+            if (UserId == this.CollaborativeTargets[i].Id)
+                return {X : this.CollaborativeTargets[i].HtmlElementX, Y : this.CollaborativeTargets[i].HtmlElementY};
+        }
+
+        return null;
     };
 
     this.privateGetParagraphByString = function(level, levelNum, counterCurrent, x, y, lineHeight, ctx, w, h, spApi)
@@ -1399,7 +1538,7 @@ function CDrawingDocument()
         var parW = par.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
         var parH = (bounds.Bottom - bounds.Top) * AscCommon.g_dKoef_mm_to_pix;
 
-        var yOffset = y - ((baseLineOffset * g_dKoef_mm_to_pix) >> 0);
+        var yOffset = y - ((baseLineOffset * AscCommon.g_dKoef_mm_to_pix) >> 0);
         var xOffset = x;
         switch (level.Align)
         {
@@ -1599,11 +1738,11 @@ function CDrawingDocument()
                 return this.SetDrawImagePreviewBulletForMenu(id, type, spApi, props, true);
             }
 
-            spApi.asyncMethodCallback = function()
-            {
+            var loader = new AscCommon.CGlobalFontLoader();
+            loader.put_Api(spApi);
+            loader.LoadDocumentFonts2(fonts, Asc.c_oAscAsyncActionType.Information, function(){
                 this.wbModel.DrawingDocument.SetDrawImagePreviewBulletForMenu(id, type, spApi, props, true);
-            };
-            AscCommon.g_font_loader.LoadDocumentFonts2(fonts);
+            });
             return;
         }
 
@@ -1632,70 +1771,71 @@ function CDrawingDocument()
             canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
 
             var ctx = canvas.getContext("2d");
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
             var rPR = AscCommon.AscBrowser.retinaPixelRatio;
             
             if (!type)
             {
-                var width_px = parent.clientWidth;
-                var height_px = parent.clientHeight;
-
-                var canvas = parent.firstChild;
-                if (!canvas)
+                var line_distance = 32, x = 0, y = 0;
+                var text = "";
+                for (var k = 0; k < props[i].Text.length; k++)
                 {
-                    canvas = document.createElement('canvas');
-                    canvas.style.cssText = "padding:0;margin:0;user-select:none;";
-                    canvas.style.width = width_px + "px";
-                    canvas.style.height = height_px + "px";
-                    if (width_px > 0 && height_px > 0)
-                        parent.appendChild(canvas);
+                    switch (props[i].Text[k].Type)
+                    {
+                        case Asc.c_oAscNumberingLvlTextType.Text:
+                            text += props[i].Text[k].Value;
+                            break;
+                        case Asc.c_oAscNumberingLvlTextType.Num:
+                            var correctNum = 1;
+                            if (levelNum === props[i].Text[k].Value)
+                                correctNum = counterCurrent;
+
+                            text += AscCommon.IntToNumberFormat(correctNum, props[i].Format);
+                            break;
+                        default:
+                            break;
+                   }
                 }
 
-                canvas.width = AscCommon.AscBrowser.convertToRetinaValue(width_px, true);
-                canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
+				var textPr      = props[i].TextPr.Copy();
+				textPr.FontSize = textPr.FontSizeCS = ((2 * line_distance * 72 / 96) >> 0) / 2;
 
-                var ctx = canvas.getContext("2d");
-                var line_distance = (height_px >> 1) - 2;
-                // TODo: подумать над тем как рассчитать сдвиг влево, эти значения подобраны эксперементально
-                var xShift;
-                var yShift;
-                switch (i) {
-                    case 0:
-                        xShift = 4;
-                        yShift = 5;
-                        break;
-                    case 1:
-                        xShift = 5;
-                        yShift = 4;
-                        break;
-                    case 2:
-                        xShift = 4;
-                        yShift = 7;
-                        break;
-                    case 3:
-                        xShift = 8;
-                        yShift = 7;
-                        break;
-                    case 4:
-                        xShift = 6;
-                        yShift = 6;
-                        break;
-                    case 5:
-                        xShift = 7;
-                        yShift = 7;
-                        break;
-                    case 6:
-                        xShift = 6;
-                        yShift = 5;
-                        break;
-                    case 7:
-                        xShift = 5;
-                        yShift = 5;
-                        break;
-                } 
-                var x = (width_px >> 1 ) - xShift;
-                var y = (height_px >> 1) + yShift;
-                // для размеров окна 38 на 38
-                this.privateGetParagraphByString(props[i], 0, 0, x, y, line_distance, ctx, width_px, height_px, spApi);
+				if (1 === text.length)
+				{
+					g_oTextMeasurer.SetTextPr(textPr);
+					g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
+					var oInfo = g_oTextMeasurer.Measure2Code(text.charCodeAt(0));
+
+					x = (width_px >> 1) - Math.round((oInfo.WidthG / 2 + oInfo.rasterOffsetX) * AscCommon.g_dKoef_mm_to_pix);
+					y = (width_px >> 1) + Math.round((oInfo.Height / 2 + (oInfo.Ascent - oInfo.Height + oInfo.rasterOffsetY)) * AscCommon.g_dKoef_mm_to_pix);
+				}
+				else
+				{
+					var shape = new AscFormat.CShape();
+					shape.setTxBody(AscFormat.CreateTextBodyFromString("", this, shape));
+					var par = shape.txBody.content.Content[0];
+					par.MoveCursorToStartPos();
+
+					par.Pr = new CParaPr();
+
+					var parRun = new ParaRun(par);
+					parRun.Set_Pr(textPr);
+					parRun.AddText(text);
+					par.AddToContent(0, parRun);
+
+					par.Reset(0, 0, 1000, 1000, 0, 0, 1);
+					par.Recalculate_Page(0);
+
+					var parW = par.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
+
+					x = (width_px >> 1) - Math.round(parW / 2);
+					// в office 19 на такой же высоте
+					y = par.Lines[0].Y * AscCommon.g_dKoef_mm_to_pix;
+				}
+				// для размеров окна 38 на 38
+				this.privateGetParagraphByString(props[i], 0, 0, x, y, line_distance, ctx, width_px, height_px, spApi);
             }
             else
             {
@@ -1722,9 +1862,19 @@ function CDrawingDocument()
                     y += (line_w + line_distance);
                 }
             }
-
         }
     };
+	this.CloseFile = function ()
+	{
+		this.ClearCachePages();
+		this.FirePaint();
+		this.m_arrPages.splice(0, this.m_arrPages.length);
+		this.m_lPagesCount = 0;
+
+		this.m_lDrawingFirst = -1;
+		this.m_lDrawingEnd = -1;
+		this.m_lCurrentPage = -1;
+	};
 }
 
 // заглушка

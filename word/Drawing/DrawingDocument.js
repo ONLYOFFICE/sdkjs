@@ -128,15 +128,8 @@ CColumnsMarkup.prototype.CreateDuplicate = function ()
 
 function CTableOutlineDr()
 {
-	this.image = new Image();
-	this.image.src = "../../../../sdkjs/common/Images/table_move.png";
-	this.image.onload = function() { this.asc_complete = true; };
-	AscCommon.backoffOnErrorImg(this.image);
-
-	this.image2 = new Image();
-	this.image2.src = "../../../../sdkjs/common/Images/table_move_2x.png";
-	this.image2.onload = function() { this.asc_complete = true; };
-	AscCommon.backoffOnErrorImg(this.image2);
+	this.mover = null;
+	this.mover_size = 13;
 
 	this.TableOutline = null;
 	this.Counter = 0;
@@ -954,6 +947,68 @@ function CTableOutlineDr()
 			this.TrackTablePos = 0;
 		}
 	}
+
+	this.checkMover = function()
+	{
+		if (this.mover && Math.abs(this.mover.scale - AscCommon.AscBrowser.retinaPixelRatio) < 0.001)
+			return;
+
+		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+		var rectSize = Math.round(12 * rPR);
+		var halfRSize = Math.round(rectSize / 2);
+		var indent = 0.5 * Math.round(rPR);
+
+		var lineW = Math.round(rPR);
+		var size = rectSize + lineW;
+		if(0 !== (rectSize & 1))
+			size += 1;
+
+		this.mover = document.createElement("canvas");
+		this.mover.scale = AscCommon.AscBrowser.retinaPixelRatio;
+		this.mover.width = size;
+		this.mover.height = size;
+		var ctx = this.mover.getContext("2d");
+		ctx.fillStyle = "#FFFFFF";
+		ctx.fillRect(0, 0, size, size);
+
+		var tmpImage = document.createElement("canvas");
+		// размеры - в drawArrow
+		tmpImage.width = Math.round(13 * rPR);
+		tmpImage.height = Math.round(13 * rPR);
+		var tmpContext = tmpImage.getContext("2d");
+
+		AscCommon.COverlay.prototype.drawArrow(tmpContext, 0,  -Math.round(3 * rPR), 3 * Math.round( rPR), {r: 68, g: 68, b: 68});
+		// top
+		ctx.drawImage(tmpImage, 0, 0);
+		//bottom
+		tmpContext.translate(Math.round(rectSize / 2), Math.round(rectSize / 2));
+		tmpContext.rotate(Math.PI);
+		tmpContext.translate(-Math.round(rectSize / 2), -Math.round(rectSize / 2));
+		tmpContext.drawImage(tmpImage, -Math.round(rPR), -Math.round(rPR));
+		ctx.drawImage(tmpImage, 0, 0);
+		tmpContext.setTransform(1,0,0,1,0,0);
+		//draw left and right arrow
+		tmpContext.translate(Math.round(rectSize / 2), Math.round(rectSize / 2));
+		tmpContext.rotate(Math.PI / 2);
+		tmpContext.translate(-Math.round(rectSize / 2), -Math.round(rectSize / 2));
+		tmpContext.drawImage(tmpImage, 0, -Math.round(rPR));
+		ctx.drawImage(tmpImage, 0, 0);
+
+		ctx.lineWidth = lineW;
+		ctx.strokeStyle = "rgb(140, 140, 140)";
+
+		if (0 !== (rectSize & 1)) {
+			rectSize += 1;
+		}
+		ctx.strokeRect(0.5 * lineW, 0.5 * lineW, rectSize, rectSize);
+
+		ctx.strokeStyle = "rgb(68, 68, 68)";
+		ctx.moveTo(halfRSize - Math.round(Math.round(6 * rPR) / 2) + indent, halfRSize + indent);
+		ctx.lineTo(halfRSize + Math.round(Math.round(6 * rPR) / 2) + indent, halfRSize + 0.5 * Math.round(rPR));
+		ctx.moveTo(halfRSize + indent, halfRSize - Math.round(Math.round(6 * rPR) / 2) + indent);
+		ctx.lineTo(halfRSize + indent, halfRSize + Math.round(Math.round(6 * rPR) / 2) + indent);
+		ctx.stroke();
+	};
 }
 
 function CCacheImage()
@@ -993,8 +1048,15 @@ function CCacheManager()
 		// затем нужно сбросить ссылку в ноль (_cache_image = null) <- это обязательно !!!!!!!
 	}
 
-	this.Lock = function (_w, _h)
+	this.Lock = function (_w, _h, _drDocument)
 	{
+		var backgroundColor = "#FFFFFF";
+		if (_drDocument)
+		{
+			var backColor = _drDocument.m_oWordControl.m_oApi.getPageBackgroundColor();
+            backgroundColor = "#" + backColor[0].toString(16) + backColor[1].toString(16) + backColor[2].toString(16);
+        }
+
 		for (var i = 0; i < this.arrayCount; ++i)
 		{
 			if (this.arrayImages[i].image_locked)
@@ -1005,10 +1067,9 @@ function CCacheManager()
 			{
 				this.arrayImages[i].image_locked = 1;
 				this.arrayImages[i].image_unusedCount = 0;
-
 				this.arrayImages[i].image.ctx.globalAlpha = 1.0;
 				this.arrayImages[i].image.ctx.setTransform(1, 0, 0, 1, 0, 0);
-				this.arrayImages[i].image.ctx.fillStyle = "#ffffff";
+				this.arrayImages[i].image.ctx.fillStyle = backgroundColor;
 				this.arrayImages[i].image.ctx.fillRect(0, 0, _w, _h);
 				return this.arrayImages[i];
 			}
@@ -1025,7 +1086,7 @@ function CCacheManager()
 		this.arrayImages[index].image.ctx = this.arrayImages[index].image.getContext('2d');
 		this.arrayImages[index].image.ctx.globalAlpha = 1.0;
 		this.arrayImages[index].image.ctx.setTransform(1, 0, 0, 1, 0, 0);
-		this.arrayImages[index].image.ctx.fillStyle = "#ffffff";
+		this.arrayImages[index].image.ctx.fillStyle = backgroundColor;
 		this.arrayImages[index].image.ctx.fillRect(0, 0, _w, _h);
 		this.arrayImages[index].image_locked = 1;
 		this.arrayImages[index].image_unusedCount = 0;
@@ -1085,51 +1146,45 @@ function CPage()
 	this.selectionArray = [];
 	this.drawingPage = new CDrawingPage();
 
-	this.Draw = function (context, xDst, yDst, wDst, hDst, contextW, contextH)
+	this.Draw = function (context, xDst, yDst, wDst, hDst, api)
 	{
+		var strokeColor = undefined;
+        if (!g_page_outline_inner)
+            strokeColor = GlobalSkin.PageOutline;
+
 		if (null != this.drawingPage.cachedImage)
 		{
-			if (!g_page_outline_inner)
-			{
-				context.strokeStyle = GlobalSkin.PageOutline;
-				context.lineWidth = 1;
-
-				// ctx.strokeRect(x - 0.5, y - 0.5, w + 1, h + 1);
-				context.beginPath();
-				context.moveTo(xDst - 0.5, yDst - 0.5);
-				context.lineTo(xDst + wDst + 0.5, yDst - 0.5);
-				context.lineTo(xDst + wDst + 0.5, yDst + hDst + 0.5);
-				context.lineTo(xDst - 0.5, yDst + hDst + 0.5);
-				context.closePath();
-				context.stroke();
-				context.beginPath();
-			}
-
 			// потом посмотреть на кусочную отрисовку
 			context.drawImage(this.drawingPage.cachedImage.image, xDst, yDst, wDst, hDst);
 		}
 		else
 		{
-			context.fillStyle = "#ffffff";
-
-			if (!g_page_outline_inner)
+			if (!api.isDarkMode)
+				context.fillStyle = "#FFFFFF";
+			else
 			{
-				context.strokeStyle = GlobalSkin.PageOutline;
-				context.lineWidth = 1;
-
-				// ctx.strokeRect(x - 0.5, y - 0.5, w + 1, h + 1);
-				context.beginPath();
-				context.moveTo(xDst - 0.5, yDst - 0.5);
-				context.lineTo(xDst + wDst + 0.5, yDst - 0.5);
-				context.lineTo(xDst + wDst + 0.5, yDst + hDst + 0.5);
-				context.lineTo(xDst - 0.5, yDst + hDst + 0.5);
-				context.closePath();
-				context.stroke();
-				context.beginPath();
+                var backColor = api.getPageBackgroundColor();
+                context.fillStyle = "#" + backColor[0].toString(16) + backColor[1].toString(16) + backColor[2].toString(16);
 			}
 
+			strokeColor = GlobalSkin.PageOutline;
 			context.fillRect(xDst, yDst, wDst, hDst);
 		}
+
+		if (api && api.isDarkMode)
+		{
+			strokeColor = api.getPageStrokeColor();
+		}
+
+        if (strokeColor)
+        {
+            var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+            context.lineWidth = Math.round(rPR);
+            context.strokeStyle = strokeColor;
+            context.beginPath();
+            context.strokeRect(xDst - 0.5 * rPR, yDst - 0.5 * rPR, wDst + rPR, hDst + rPR);
+            context.beginPath();
+        }
 	};
 
 	this.DrawSelection = function (overlay, xDst, yDst, wDst, hDst, TextMatrix)
@@ -1356,6 +1411,7 @@ function CPage()
 	{
 		var dKoefX = wDst / this.width_mm;
 		var dKoefY = hDst / this.height_mm;
+		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
 
 		var ctx = overlay.m_oContext;
 		for (var i = 0; i < _searching.length; i++)
@@ -1370,11 +1426,11 @@ function CPage()
 				{
 					if (undefined === place.Ex)
 					{
-						var _x = ((xDst + dKoefX * place.X) >> 0) - 0.5;
-						var _y = ((yDst + dKoefY * place.Y) >> 0) - 0.5;
+						var _x = (rPR * (xDst + dKoefX * place.X)) >> 0;
+						var _y = (rPR * (yDst + dKoefY * place.Y)) >> 0;
 
-						var _w = ((dKoefX * place.W) >> 0) + 1;
-						var _h = ((dKoefY * place.H) >> 0) + 1;
+						var _w = (rPR * (dKoefX * place.W)) >> 0;
+						var _h = (rPR * (dKoefY * place.H)) >> 0;
 
 						if (_x < overlay.min_x)
 							overlay.min_x = _x;
@@ -1390,23 +1446,23 @@ function CPage()
 					}
 					else
 					{
-						var _x1 = (xDst + dKoefX * place.X) >> 0;
-						var _y1 = (yDst + dKoefY * place.Y) >> 0;
+						var _x1 = (rPR * (xDst + dKoefX * place.X)) >> 0;
+						var _y1 = (rPR * (yDst + dKoefY * place.Y)) >> 0;
 
 						var x2 = place.X + place.W * place.Ex;
 						var y2 = place.Y + place.W * place.Ey;
-						var _x2 = (xDst + dKoefX * x2) >> 0;
-						var _y2 = (yDst + dKoefY * y2) >> 0;
+						var _x2 = (rPR * (xDst + dKoefX * x2)) >> 0;
+						var _y2 = (rPR * (yDst + dKoefY * y2)) >> 0;
 
 						var x3 = x2 - place.H * place.Ey;
 						var y3 = y2 + place.H * place.Ex;
-						var _x3 = (xDst + dKoefX * x3) >> 0;
-						var _y3 = (yDst + dKoefY * y3) >> 0;
+						var _x3 = (rPR * (xDst + dKoefX * x3)) >> 0;
+						var _y3 = (rPR * (yDst + dKoefY * y3)) >> 0;
 
 						var x4 = place.X - place.H * place.Ey;
 						var y4 = place.Y + place.H * place.Ex;
-						var _x4 = (xDst + dKoefX * x4) >> 0;
-						var _y4 = (yDst + dKoefY * y4) >> 0;
+						var _x4 = (rPR * (xDst + dKoefX * x4)) >> 0;
+						var _y4 = (rPR * (yDst + dKoefY * y4)) >> 0;
 
 						overlay.CheckPoint(_x1, _y1);
 						overlay.CheckPoint(_x2, _y2);
@@ -1560,6 +1616,7 @@ function CPage()
 	{
 		var dKoefX = wDst / this.width_mm;
 		var dKoefY = hDst / this.height_mm;
+		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
 
 		var len = places.length;
 
@@ -1572,11 +1629,11 @@ function CPage()
 			var place = places[i];
 			if (undefined === place.Ex)
 			{
-				var _x = ((xDst + dKoefX * place.X) >> 0) - 0.5;
-				var _y = ((yDst + dKoefY * place.Y) >> 0) - 0.5;
+				var _x = (rPR * (xDst + dKoefX * place.X)) >> 0;
+				var _y = (rPR * (yDst + dKoefY * place.Y)) >> 0;
 
-				var _w = ((dKoefX * place.W) >> 0) + 1;
-				var _h = ((dKoefY * place.H) >> 0) + 1;
+				var _w = (rPR * (dKoefX * place.W)) >> 0;
+				var _h = (rPR * (dKoefY * place.H)) >> 0;
 
 				if (_x < overlay.min_x)
 					overlay.min_x = _x;
@@ -1592,23 +1649,23 @@ function CPage()
 			}
 			else
 			{
-				var _x1 = (xDst + dKoefX * place.X) >> 0;
-				var _y1 = (yDst + dKoefY * place.Y) >> 0;
+				var _x1 = (rPR * (xDst + dKoefX * place.X)) >> 0;
+				var _y1 = (rPR * (yDst + dKoefY * place.Y)) >> 0;
 
 				var x2 = place.X + place.W * place.Ex;
 				var y2 = place.Y + place.W * place.Ey;
-				var _x2 = (xDst + dKoefX * x2) >> 0;
-				var _y2 = (yDst + dKoefY * y2) >> 0;
+				var _x2 = (rPR * (xDst + dKoefX * x2)) >> 0;
+				var _y2 = (rPR * (yDst + dKoefY * y2)) >> 0;
 
 				var x3 = x2 - place.H * place.Ey;
 				var y3 = y2 + place.H * place.Ex;
-				var _x3 = (xDst + dKoefX * x3) >> 0;
-				var _y3 = (yDst + dKoefY * y3) >> 0;
+				var _x3 = (rPR * (xDst + dKoefX * x3)) >> 0;
+				var _y3 = (rPR * (yDst + dKoefY * y3)) >> 0;
 
 				var x4 = place.X - place.H * place.Ey;
 				var y4 = place.Y + place.H * place.Ex;
-				var _x4 = (xDst + dKoefX * x4) >> 0;
-				var _y4 = (yDst + dKoefY * y4) >> 0;
+				var _x4 = (rPR * (xDst + dKoefX * x4)) >> 0;
+				var _y4 = (rPR * (yDst + dKoefY * y4)) >> 0;
 
 				overlay.CheckPoint(_x1, _y1);
 				overlay.CheckPoint(_x2, _y2);
@@ -1689,51 +1746,8 @@ function CPage()
 				if ((_y + _h) > overlay.max_y)
 					overlay.max_y = _y + _h;
 
-				var ctx = overlay.m_oContext,
-				    rectSize = Math.round(12 * rPR),
-					halfRSize = Math.round(rectSize / 2),
-					indent = 0.5 * Math.round(rPR),
-					canvasVert = document.createElement('canvas'),
-					contextVert = canvasVert.getContext('2d'),
-					canvasHor = document.createElement('canvas'),
-					contextHor = canvasHor.getContext('2d');
-
-				ctx.beginPath();
-
-                //draw top arrow
-				overlay.drawArrow(contextVert, 0,  -Math.round(3 * rPR), 3 * Math.round( rPR), {r: 68, g: 68, b: 68});
-				ctx.drawImage(canvasVert, _x, _y);
-
-				//draw bottom arrow
-				contextVert.translate(Math.round(rectSize / 2), Math.round(rectSize / 2));
-				contextVert.rotate(Math.PI);
-				contextVert.translate(-Math.round(rectSize / 2), -Math.round(rectSize / 2));
-				contextVert.drawImage(canvasVert, -Math.round(rPR), -Math.round(rPR));
-				ctx.drawImage(canvasVert, _x, _y);
-
-				// //draw left and right arrow
-				contextHor.translate(Math.round(rectSize / 2), Math.round(rectSize / 2));
-				contextHor.rotate(Math.PI / 2);
-				contextHor.translate(-Math.round(rectSize / 2), -Math.round(rectSize / 2));
-				contextHor.drawImage(canvasVert, 0, -Math.round(rPR));
-				ctx.drawImage(canvasHor, _x, _y);
-
-				ctx.lineWidth = Math.round(rPR);
-				ctx.strokeStyle = "rgb(140, 140, 140)";
-
-				//draw rect
-				if(0 !== (rectSize & 1)) {
-					rectSize +=1;
-				}
-				ctx.strokeRect(0.5 * ctx.lineWidth + _x, 0.5 * ctx.lineWidth + _y, rectSize, rectSize);
-
-				//draw cross element
-				ctx.strokeStyle = "rgb(68, 68, 68)";
-				ctx.moveTo(_x + halfRSize - Math.round(Math.round(6 * rPR) / 2) + indent, _y + halfRSize + indent);
-				ctx.lineTo(_x + halfRSize + Math.round(Math.round(6 * rPR) / 2) + indent, _y + halfRSize + 0.5 * Math.round(rPR));
-				ctx.moveTo(_x + halfRSize + indent, _y + halfRSize - Math.round(Math.round(6 * rPR) / 2) + indent);
-				ctx.lineTo(_x + halfRSize + indent, _y + halfRSize + Math.round(Math.round(6 * rPR) / 2) + indent);
-				ctx.stroke();
+				table_outline_dr.checkMover();
+				overlay.m_oContext.drawImage(table_outline_dr.mover, _x, _y);
 			}
 			else
 			{
@@ -1813,9 +1827,8 @@ function CPage()
 				overlay.CheckPoint(_ft.TransformPointX(_x + _w, _y + _h), _ft.TransformPointY(_x + _w, _y + _h));
 				overlay.CheckPoint(_ft.TransformPointX(_x, _y + _h), _ft.TransformPointY(_x, _y + _h));
 
-				var tmp_image = AscCommon.AscBrowser.isCustomScalingAbove2() ? table_outline_dr.image2 : table_outline_dr.image;
-				if (tmp_image.asc_complete)
-					overlay.m_oContext.drawImage(tmp_image, _x, _y, _w, _h);
+				table_outline_dr.checkMover();
+				overlay.m_oContext.drawImage(table_outline_dr.mover, _x, _y, _w, _h);
 
 				overlay.SetBaseTransform();
 			}
@@ -1862,209 +1875,37 @@ function CPage()
 	}
 }
 
-function CDrawingCollaborativeTarget()
+function CDrawingCollaborativeTarget(DrawingDocument)
 {
-	this.Id = "";
-	this.ShortId = "";
-
-	this.X = 0;
-	this.Y = 0;
-	this.Size = 0;
+	AscCommon.CDrawingCollaborativeTargetBase.call(this);
+	this.DrawingDocument = DrawingDocument;
 	this.Page = -1;
-
-	this.Color = null;
-	this.Transform = null;
-
-	this.HtmlElement = null;
-	this.HtmlElementX = 0;
-	this.HtmlElementY = 0;
-
-	this.Color = null;
-
-	this.Style = "";
-	this.IsInsertToDOM = false;
 }
-CDrawingCollaborativeTarget.prototype =
+CDrawingCollaborativeTarget.prototype = Object.create(AscCommon.CDrawingCollaborativeTargetBase.prototype);
+CDrawingCollaborativeTarget.prototype.GetZoom = function()
 {
-	CheckPosition: function (_drawing_doc, _x, _y, _size, _page, _transform)
-	{
-		// 1) создаем новый элемент, если еще его не было
-		var bIsHtmlElementCreate = false;
-		if (this.HtmlElement == null)
-		{
-			bIsHtmlElementCreate = true;
-			this.HtmlElement = document.createElement('canvas');
-			this.HtmlElement.style.cssText = "pointer-events: none;position:absolute;padding:0;margin:0;-webkit-user-select:none;width:1px;height:1px;display:block;z-index:3;";
-			this.HtmlElement.width = 1;
-			this.HtmlElement.height = 1;
-
-			this.Color = AscCommon.getUserColorById(this.ShortId, null, true);
-			this.Style = "rgb(" + this.Color.r + "," + this.Color.g + "," + this.Color.b + ")";
-		}
-
-		// 2) определяем размер
-		this.Transform = _transform;
-		this.Size = _size;
-
-		var _old_x = this.X;
-		var _old_y = this.Y;
-		var _old_page = this.Page;
-
-		this.X = _x;
-		this.Y = _y;
-		this.Page = _page;
-
-		var _oldW = this.HtmlElement.width;
-		var _oldH = this.HtmlElement.height;
-
-		var _newW = 2;
-		var _newH = (this.Size * _drawing_doc.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100) >> 0;
-
-		if (null != this.Transform && !global_MatrixTransformer.IsIdentity2(this.Transform))
-		{
-			var _x1 = this.Transform.TransformPointX(_x, _y);
-			var _y1 = this.Transform.TransformPointY(_x, _y);
-
-			var _x2 = this.Transform.TransformPointX(_x, _y + this.Size);
-			var _y2 = this.Transform.TransformPointY(_x, _y + this.Size);
-
-			var pos1 = _drawing_doc.ConvertCoordsToCursor2(_x1, _y1, this.Page);
-			var pos2 = _drawing_doc.ConvertCoordsToCursor2(_x2, _y2, this.Page);
-
-			_newW = (Math.abs(pos1.X - pos2.X) >> 0) + 1;
-			_newH = (Math.abs(pos1.Y - pos2.Y) >> 0) + 1;
-
-			if (2 > _newW)
-				_newW = 2;
-			if (2 > _newH)
-				_newH = 2;
-
-			if (_oldW == _newW && _oldH == _newH)
-			{
-				if (_newW != 2 && _newH != 2)
-				{
-					// просто очищаем
-					this.HtmlElement.width = _newW;
-				}
-			}
-			else
-			{
-				this.HtmlElement.style.width = _newW + "px";
-				this.HtmlElement.style.height = _newH + "px";
-
-				this.HtmlElement.width = _newW;
-				this.HtmlElement.height = _newH;
-			}
-			var ctx = this.HtmlElement.getContext('2d');
-
-			if (_newW == 2 || _newH == 2)
-			{
-				ctx.fillStyle = this.Style;
-				ctx.fillRect(0, 0, _newW, _newH);
-			}
-			else
-			{
-				ctx.beginPath();
-				ctx.strokeStyle = this.Style;
-				ctx.lineWidth = 2;
-
-				if (((pos1.X - pos2.X) * (pos1.Y - pos2.Y)) >= 0)
-				{
-					ctx.moveTo(0, 0);
-					ctx.lineTo(_newW, _newH);
-				}
-				else
-				{
-					ctx.moveTo(0, _newH);
-					ctx.lineTo(_newW, 0);
-				}
-
-				ctx.stroke();
-			}
-
-			this.HtmlElementX = Math.min(pos1.X, pos2.X) >> 0;
-			this.HtmlElementY = Math.min(pos1.Y, pos2.Y) >> 0;
-			if ((!_drawing_doc.m_oWordControl.MobileTouchManager && !AscCommon.AscBrowser.isSafariMacOs) || !AscCommon.AscBrowser.isWebkit)
-			{
-				this.HtmlElement.style.left = this.HtmlElementX + "px";
-				this.HtmlElement.style.top = this.HtmlElementY + "px";
-			}
-			else
-			{
-				this.HtmlElement.style.left = "0px";
-				this.HtmlElement.style.top = "0px";
-				this.HtmlElement.style["webkitTransform"] = "matrix(1, 0, 0, 1, " + this.HtmlElementX + "," + this.HtmlElementY + ")";
-			}
-		}
-		else
-		{
-			if (_oldW == _newW && _oldH == _newH)
-			{
-				// просто очищаем
-				this.HtmlElement.width = _newW;
-			}
-			else
-			{
-				this.HtmlElement.style.width = _newW + "px";
-				this.HtmlElement.style.height = _newH + "px";
-
-				this.HtmlElement.width = _newW;
-				this.HtmlElement.height = _newH;
-			}
-
-			var ctx = this.HtmlElement.getContext('2d');
-
-			ctx.fillStyle = this.Style;
-			ctx.fillRect(0, 0, _newW, _newH);
-
-			if (null != this.Transform)
-			{
-				_x += this.Transform.tx;
-				_y += this.Transform.ty;
-			}
-
-			var pos = _drawing_doc.ConvertCoordsToCursor2(_x, _y, this.Page);
-
-			this.HtmlElementX = pos.X >> 0;
-			this.HtmlElementY = pos.Y >> 0;
-
-			if ((!_drawing_doc.m_oWordControl.MobileTouchManager && !AscCommon.AscBrowser.isSafariMacOs) || !AscCommon.AscBrowser.isWebkit)
-			{
-				this.HtmlElement.style.left = this.HtmlElementX + "px";
-				this.HtmlElement.style.top = this.HtmlElementY + "px";
-			}
-			else
-			{
-				this.HtmlElement.style.left = "0px";
-				this.HtmlElement.style.top = "0px";
-				this.HtmlElement.style["webkitTransform"] = "matrix(1, 0, 0, 1, " + this.HtmlElementX + "," + this.HtmlElementY + ")";
-			}
-		}
-
-		if (AscCommon.CollaborativeEditing)
-			AscCommon.CollaborativeEditing.Update_ForeignCursorLabelPosition(this.Id, this.HtmlElementX, this.HtmlElementY, this.Color);
-
-		// 3) добавить, если нужно
-		if (bIsHtmlElementCreate)
-		{
-			_drawing_doc.m_oWordControl.m_oMainView.HtmlElement.appendChild(this.HtmlElement);
-			this.IsInsertToDOM = true;
-		}
-	},
-
-	Remove: function (_drawing_doc)
-	{
-		if (this.IsInsertToDOM)
-		{
-			_drawing_doc.m_oWordControl.m_oMainView.HtmlElement.removeChild(this.HtmlElement);
-			this.IsInsertToDOM = false;
-		}
-	},
-
-	Update: function (_drawing_doc)
-	{
-		this.CheckPosition(_drawing_doc, this.X, this.Y, this.Size, this.Page, this.Transform);
-	}
+	return this.DrawingDocument.m_oWordControl.m_nZoomValue / 100;
+};
+CDrawingCollaborativeTarget.prototype.ConvertCoords = function(x, y)
+{
+	return this.DrawingDocument.ConvertCoordsToCursor2(x, y, this.Page);
+};
+CDrawingCollaborativeTarget.prototype.GetMobileTouchManager = function()
+{
+	return this.DrawingDocument.m_oWordControl.MobileTouchManager;
+};
+CDrawingCollaborativeTarget.prototype.GetParentElement = function()
+{
+	return this.DrawingDocument.m_oWordControl.m_oMainView.HtmlElement;
+};
+CDrawingCollaborativeTarget.prototype.CheckPosition = function(_x, _y, _size, _page, _transform)
+{
+	this.Transform = _transform;
+	this.Size = _size;
+	this.X = _x;
+	this.Y = _y;
+	this.Page = _page;
+	this.Update();
 };
 
 function CDrawingDocument()
@@ -2622,7 +2463,7 @@ function CDrawingDocument()
 		h = _check[1];
 
 		page.drawingPage.UnLock(this.m_oCacheManager);
-		page.drawingPage.cachedImage = this.m_oCacheManager.Lock(w, h);
+		page.drawingPage.cachedImage = this.m_oCacheManager.Lock(w, h, this);
 
 		//var StartTime = new Date().getTime();
 
@@ -2630,8 +2471,12 @@ function CDrawingDocument()
 		var g = new AscCommon.CGraphics();
 		g.init(page.drawingPage.cachedImage.image.ctx, w, h, page.width_mm, page.height_mm);
 		g.m_oFontManager = AscCommon.g_fontManager;
+		g.endGlobalAlphaColor = this.m_oWordControl.m_oApi.getPageBackgroundColor();
 
 		g.transform(1, 0, 0, 1, 0, 0);
+
+		if (this.m_oWordControl.m_oApi.isDarkMode)
+            g.darkModeOverride3();
 
 		if (null == this.m_oDocumentRenderer)
 			this.m_oLogicDocument.DrawPage(pageIndex, g);
@@ -3091,7 +2936,7 @@ function CDrawingDocument()
 		if (page != _table.PageNum)
 			return false;
 
-		var _dist = this.TableOutlineDr.image.width * g_dKoef_pix_to_mm;
+		var _dist = this.TableOutlineDr.mover_size * g_dKoef_pix_to_mm;
 		_dist *= (100 / this.m_oWordControl.m_nZoomValue);
 
 		var _x = _table.X;
@@ -3293,7 +3138,13 @@ function CDrawingDocument()
 
 	this.GetTargetStyle = function ()
 	{
-		return "rgb(" + this.TargetCursorColor.R + "," + this.TargetCursorColor.G + "," + this.TargetCursorColor.B + ")";
+		var color = this.TargetCursorColor;
+
+		if (!this.m_oWordControl.m_oApi.isDarkMode)
+			return "rgb(" + color.R + "," + color.G + "," + color.B + ")";
+
+		var newColor = AscCommon.darkModeCorrectColor(color.R, color.G, color.B);
+        return "rgb(" + newColor.R + "," + newColor.G + "," + newColor.B + ")";
 	};
 
 	this.SetTargetColor = function (r, g, b)
@@ -5736,6 +5587,7 @@ function CDrawingDocument()
 		var _textPr = new CTextPr();
 		_textPr.FontFamily = {Name: "Arial", Index: -1};
 		_textPr.FontSize = (AscCommon.AscBrowser.convertToRetinaValue(11 << 1, true) >> 0) * 0.5;
+		_textPr.RFonts.SetAll("Arial");
 
 		_textPr.Strikeout = this.GuiLastTextProps.Strikeout;
 
@@ -6787,12 +6639,7 @@ function CDrawingDocument()
 		if (!api || !oLogicDocument)
 			return;
 
-		var oHistory = oLogicDocument.GetHistory();
-		oHistory.TurnOff();
-		var isLocalTrackRevisions = oLogicDocument.GetLocalTrackRevisions();
-		oLogicDocument.SetLocalTrackRevisions(false);
-
-        var oldViewMode = api.isViewMode;
+		var oldViewMode = api.isViewMode;
         var oldMarks = api.ShowParaMarks;
 
         api.isViewMode = true;
@@ -6879,8 +6726,6 @@ function CDrawingDocument()
         ctx.restore();
         ctx.restore();
 
-		oHistory.TurnOn();
-		oLogicDocument.SetLocalTrackRevisions(isLocalTrackRevisions);
         api.isViewMode = oldViewMode;
         api.ShowParaMarks = oldMarks;
     };
@@ -7006,6 +6851,10 @@ function CDrawingDocument()
             editor.sendEvent("asc_onPreviewLevelChange", level);
         });
 
+        var oDocState = null;
+        if (this.m_oLogicDocument)
+        	oDocState = this.m_oLogicDocument.StartNoHistoryMode();
+
         if (!is_multi_level)
         {
             var offsetBase = 10;
@@ -7108,6 +6957,9 @@ function CDrawingDocument()
                 this.privateGetParagraphByString(props.Lvl[i], level, 1, textYs[i].x, textYs[i].y, line_distance, ctx, width_px, height_px);
             }
         }
+
+        if (oDocState)
+        	this.m_oLogicDocument.EndNoHistoryMode(oDocState);
 	};
 
 	this.SetDrawImagePreviewBulletChangeListLevel = function(id, props, isNoCheckFonts)
@@ -7176,6 +7028,10 @@ function CDrawingDocument()
         var text_base_offset_x = offset + ((3.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
         var text_base_offset_dist = ( (props.IsOnes ? 2.25 : 3.25) * AscCommon.g_dKoef_mm_to_pix) >> 0;
 
+		var oDocState = null;
+		if (this.m_oLogicDocument)
+			oDocState = this.m_oLogicDocument.StartNoHistoryMode();
+
         for (var k = 0; k < 9; k++) 
         {
 			// чтобы убрать отступ у i
@@ -7217,6 +7073,9 @@ function CDrawingDocument()
 
             this.privateGetParagraphByString(props.Lvl[k], k, 1, textYs.x, textYs.y, (height_px >> 1), ctx, width_px, height_px);
         }
+
+        if (oDocState)
+        	this.m_oLogicDocument.EndNoHistoryMode(oDocState);
     };
 
 	this.SetDrawImagePreviewBulletForMenu = function(id, type, props, isNoCheckFonts)
@@ -7348,10 +7207,10 @@ function CDrawingDocument()
 		
 		if (!isNoCheckFonts)
 		{
-            // check need load fonts
-            var fontsDict = {};
-            for (var i = 0, count = props.length; i < count; i++)
-            {
+			// check need load fonts
+			var fontsDict = {};
+			for (var i = 0, count = props.length; i < count; i++)
+			{
 				if (type == 2)
 				{
 					for (var k = 0; k < props[i].length; k++)
@@ -7412,28 +7271,33 @@ function CDrawingDocument()
 						if (curLvl.TextPr.RFonts.CS) fontsDict[curLvl.TextPr.RFonts.CS.Name] = true;
 					}
 				}
-            }
+			}
 
-            var fonts = [];
-            for (var familyName in fontsDict)
-            {
-                fonts.push(new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(familyName), 0, "", 0, null));
-            }
-            AscFonts.FontPickerByCharacter.extendFonts(fonts);
-
-            if (false === AscCommon.g_font_loader.CheckFontsNeedLoading(fonts))
-            {
-                return this.SetDrawImagePreviewBulletForMenu(id, type, props, true);
-            }
-
-            this.m_oWordControl.m_oApi.asyncMethodCallback = function()
+			var fonts = [];
+			for (var familyName in fontsDict)
 			{
-                this.WordControl.m_oDrawingDocument.SetDrawImagePreviewBulletForMenu(id, type, props, true);
-            };
-            AscCommon.g_font_loader.LoadDocumentFonts2(fonts);
-            return;
-        }
+				fonts.push(new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(familyName), 0, "", 0, null));
+			}
+			AscFonts.FontPickerByCharacter.extendFonts(fonts);
+
+			if (false === AscCommon.g_font_loader.CheckFontsNeedLoading(fonts))
+			{
+				return this.SetDrawImagePreviewBulletForMenu(id, type, props, true);
+			}
+
+			var loader = new AscCommon.CGlobalFontLoader();
+			loader.put_Api(this.m_oWordControl.m_oApi);
+			loader.LoadDocumentFonts2(fonts, Asc.c_oAscAsyncActionType.Information, function(){
+				this.WordControl.m_oDrawingDocument.SetDrawImagePreviewBulletForMenu(id, type, props, true);
+			});
+			return;
+ 		}
 		var elNone = document.getElementById(id[0]);
+
+		var oDocState = null;
+		if (this.m_oLogicDocument)
+			oDocState = this.m_oLogicDocument.StartNoHistoryMode();
+
 		if (elNone)
 		{
 			var width_px = elNone.clientWidth;
@@ -7454,6 +7318,9 @@ function CDrawingDocument()
 			canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
 
 			var ctx = canvas.getContext("2d");
+			ctx.fillStyle = "#FFFFFF";
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			ctx.beginPath();
 			var line_distance = (height_px == 80) ? (height_px / 5 - 1) : ((height_px >> 2) + ((text.length > 6) ? 0 : 2));
 			var par = new Paragraph(this, this.m_oWordControl.m_oLogicDocument);
 			par.MoveCursorToStartPos();
@@ -7506,68 +7373,66 @@ function CDrawingDocument()
 			canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
 
 			var ctx = canvas.getContext("2d");
+			ctx.fillStyle = "#FFFFFF";
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			ctx.beginPath();
 			var rPR = AscCommon.AscBrowser.retinaPixelRatio;
 			
 			if (!type)
 			{
-				var width_px = parent.clientWidth;
-				var height_px = parent.clientHeight;
+				var line_distance = 32, x = 0, y = 0;
 
-				var canvas = parent.firstChild;
-				if (!canvas)
+				var text = "";
+				for (var k = 0; k < props[i].Text.length; k++)
 				{
-					canvas = document.createElement('canvas');
-					canvas.style.cssText = "padding:0;margin:0;user-select:none;";
-					canvas.style.width = width_px + "px";
-					canvas.style.height = height_px + "px";
-					if (width_px > 0 && height_px > 0)
-						parent.appendChild(canvas);
+					switch (props[i].Text[k].Type)
+					{
+						case Asc.c_oAscNumberingLvlTextType.Text:
+							text += props[i].Text[k].Value;
+							break;
+						case Asc.c_oAscNumberingLvlTextType.Num:
+							var correctNum = 1;
+							if (levelNum === props[i].Text[k].Value)
+								correctNum = counterCurrent;
+							text += AscCommon.IntToNumberFormat(correctNum, props[i].Format);
+							break;
+						default:
+							break;
+					}
 				}
 
-				canvas.width = AscCommon.AscBrowser.convertToRetinaValue(width_px, true);
-				canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
+				var textPr = props[i].TextPr.Copy();
+				textPr.FontSize = textPr.FontSizeCS = ((2 * line_distance * 72 / 96) >> 0) / 2;
 
-				var ctx = canvas.getContext("2d");
-				var line_distance = (height_px >> 1) - 2;
-				// TODo: подумать над тем как рассчитать сдвиг влево, эти значения подобраны эксперементально
-				var xShift;
-				var yShift;
-                switch (i) {
-                    case 1:
-                        xShift = 3;
-                        yShift = 5;
-                        break;
-                    case 2:
-                        xShift = 5;
-                        yShift = 4;
-                        break;
-                    case 3:
-                        xShift = 4;
-                        yShift = 7;
-                        break;
-                    case 4:
-                        xShift = 8;
-                        yShift = 7;
-                        break;
-                    case 5:
-                        xShift = 6;
-                        yShift = 6;
-                        break;
-                    case 6:
-                        xShift = 7;
-                        yShift = 7;
-                        break;
-                    case 7:
-                        xShift = 6;
-                        yShift = 5;
-                        break;
-                    case 8:
-                        xShift = 5;
-                        yShift = 5;
-                        break;
-                } 
-                var x = (width_px >> 1 ) - xShift;
-                var y = (height_px >> 1) + yShift;
+				if (1 === text.length)
+				{
+					g_oTextMeasurer.SetTextPr(textPr);
+					g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
+					var oInfo = g_oTextMeasurer.Measure2Code(text.charCodeAt(0));
+
+					x = (width_px >> 1) - Math.round((oInfo.WidthG / 2 + oInfo.rasterOffsetX) * AscCommon.g_dKoef_mm_to_pix);
+					y = (width_px >> 1) + Math.round((oInfo.Height / 2 + (oInfo.Ascent - oInfo.Height + oInfo.rasterOffsetY)) * AscCommon.g_dKoef_mm_to_pix);
+				}
+				else
+				{
+					var par = new Paragraph(this, this.m_oWordControl.m_oLogicDocument);
+					par.MoveCursorToStartPos();
+
+					par.Pr = new CParaPr();
+					var parRun = new ParaRun(par);
+					parRun.Set_Pr(textPr);
+					parRun.AddText(text);
+					par.AddToContent(0, parRun);
+
+					par.Reset(0, 0, 1000, 1000, 0, 0, 1);
+					par.Recalculate_Page(0);
+
+					var parW = par.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
+					x = (width_px >> 1) - Math.round(parW / 2);
+					// в office 19 на такой же высоте
+					y = par.Lines[0].Y * AscCommon.g_dKoef_mm_to_pix;
+				}
+
 				// для размеров окна 38 на 38
 				this.privateGetParagraphByString(props[i], 0, 0, x, y, line_distance, ctx, width_px, height_px);
 			}
@@ -7599,8 +7464,10 @@ function CDrawingDocument()
 						text_base_offset_x += text_base_offset_dist;
 				}
 			}
-
 		}
+
+		if (this.m_oLogicDocument)
+			this.m_oLogicDocument.EndNoHistoryMode(oDocState);
 	};
 
 	this.StartTableStylesCheck = function ()
@@ -8550,14 +8417,14 @@ function CDrawingDocument()
 		{
 			if (_id == this.CollaborativeTargets[i].Id)
 			{
-				this.CollaborativeTargets[i].CheckPosition(this, _x, _y, _size, _page, _transform);
+				this.CollaborativeTargets[i].CheckPosition(_x, _y, _size, _page, _transform);
 				return;
 			}
 		}
-		var _target = new CDrawingCollaborativeTarget();
+		var _target = new CDrawingCollaborativeTarget(this);
 		_target.Id = _id;
 		_target.ShortId = _shortId;
-		_target.CheckPosition(this, _x, _y, _size, _page, _transform);
+		_target.CheckPosition(_x, _y, _size, _page, _transform);
 		this.CollaborativeTargets[this.CollaborativeTargets.length] = _target;
 	};
 	this.Collaborative_RemoveTarget = function (_id)

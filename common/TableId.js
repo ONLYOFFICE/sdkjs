@@ -323,7 +323,6 @@
 			this.m_oFactoryClass[AscDFH.historyitem_type_SndTgt]              = AscFormat.CSndTgt;
 			this.m_oFactoryClass[AscDFH.historyitem_type_SpTgt]               = AscFormat.CSpTgt;
 			this.m_oFactoryClass[AscDFH.historyitem_type_IterateData]         = AscFormat.CIterateData;
-			this.m_oFactoryClass[AscDFH.historyitem_type_Tm]                  = AscFormat.CTm;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Tav]                 = AscFormat.CTav;
 			this.m_oFactoryClass[AscDFH.historyitem_type_AnimVariant]         = AscFormat.CAnimVariant;
 			this.m_oFactoryClass[AscDFH.historyitem_type_AnimClr]             = AscFormat.CAnimClr;

@@ -639,8 +639,18 @@ function CEditorPage(api)
 			var styleContent = ".block_elem_no_select { -khtml-user-select: none; user-select: none; -moz-user-select: none; -webkit-user-select: none; }";
 			styleContent += ".back_image_buttons { position:absolute; left: 0px; top: 0px; background-image: url('" + _images_url + "buttons.png') }";
 
+			styleContent += "@media (-webkit-min-device-pixel-ratio: 1.25) and (-webkit-max-device-pixel-ratio: 1.4),\
+            						(min-resolution: 1.25dppx) and (max-resolution: 1.4dppx), \
+									(min-resolution: 120dpi) and (max-resolution: 143dpi) {\n\
+				.back_image_buttons { position:absolute; left: 0px; top: 0px; background-image: url('" + _images_url + "buttons@1.25x.png');background-size: 40px 120px; }\
+			}";
 			styleContent += "@media all and (-webkit-min-device-pixel-ratio : 1.5),all and (-o-min-device-pixel-ratio: 3/2),all and (min--moz-device-pixel-ratio: 1.5),all and (min-device-pixel-ratio: 1.5) {\n\
 				.back_image_buttons { position:absolute; left: 0px; top: 0px; background-image: url('" + _images_url + "buttons@1.5x.png');background-size: 40px 120px; }\
+			}";
+			styleContent += "@media (-webkit-min-device-pixel-ratio: 1.75) and (-webkit-max-device-pixel-ratio: 1.9),\
+            						(min-resolution: 1.75dppx) and (max-resolution: 1.9dppx),\
+                					(min-resolution: 168dpi) and (max-resolution: 191dpi) {\n\
+				.back_image_buttons { position:absolute; left: 0px; top: 0px; background-image: url('" + _images_url + "buttons@1.75x.png');background-size: 40px 120px; }\
 			}";
 			styleContent += "@media all and (-webkit-min-device-pixel-ratio : 2),all and (-o-min-device-pixel-ratio: 2),all and (min--moz-device-pixel-ratio: 2),all and (min-device-pixel-ratio: 2) {\n\
 				.back_image_buttons { position:absolute; left: 0px; top: 0px; background-image: url('" + _images_url + "buttons@2x.png');background-size: 40px 120px; }\
@@ -1064,6 +1074,16 @@ function CEditorPage(api)
             AscCommon.addMouseEvent(this.m_oBody.HtmlElement, "down", this.onBodyMouseDown);
             AscCommon.addMouseEvent(this.m_oBody.HtmlElement, "move", this.onBodyMouseMove);
             AscCommon.addMouseEvent(this.m_oBody.HtmlElement, "up", this.onBodyMouseUp);
+		}
+
+		// в мобильной версии - при транзишне - не обновляется позиция/размер
+		if (this.m_oApi.isMobileVersion)
+		{
+			var _t = this;
+			document.addEventListener && document.addEventListener("transitionend", function() {
+				if (_t.Y === 0)
+					_t.OnResize();
+			}, false);
 		}
 
 		this.initEvents2MobileAdvances();
@@ -3154,6 +3174,9 @@ function CEditorPage(api)
 			this.m_oNotesApi.OnResize();
 
 		this.FullRulersUpdate();
+
+		if (AscCommon.g_imageControlsStorage)
+			AscCommon.g_imageControlsStorage.resize();
 	};
 
 	this.FullRulersUpdate = function()
@@ -4247,7 +4270,7 @@ function CEditorPage(api)
 			//return;
 		}
 
-		if (this.DemonstrationManager.Mode && !isReporterUpdateSlide)
+		if (this.DemonstrationManager.Mode && !isReporterUpdateSlide && !isFromZoom)
 		{
             return this.m_oApi.DemonstrationGoToSlide(lPageNum);
 		}

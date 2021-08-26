@@ -1013,6 +1013,7 @@ var GLOBAL_PATH_COUNT = 0;
         dlbl.txPr = oTxPr;
         dlbl.idx = idx;
         dlbl.tx = new AscFormat.CChartText();
+        dlbl.tx.setChart(oChart);
         dlbl.tx.rich = AscFormat.CreateTextBodyFromString(sText, oDrawingDocument, dlbl);
         var content = dlbl.tx.rich.content;
         content.SetApplyToAll(true);
@@ -2690,16 +2691,25 @@ var GLOBAL_PATH_COUNT = 0;
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ChartSpace_SetNvGrFrProps, this.nvGraphicFramePr, pr));
         this.nvGraphicFramePr = pr;
     };
+
     CChartSpace.prototype.changeLine = function(line) {
         var stroke;
-
+        var getPenForCorrect = function(oPen) {
+            if(oPen) {
+                if(oPen.createDuplicate) {
+                    return oPen.createDuplicate();
+                }
+                return oPen;
+            }
+            return null;
+        };
         var oChart = AscCommon.g_oTableId.Get_ById(this.selection.chart);
         if(this.selection.plotArea) {
             if(!this.chart.plotArea.spPr) {
                 this.chart.plotArea.setSpPr(new AscFormat.CSpPr());
                 this.chart.plotArea.spPr.setParent(this.chart.plotArea);
             }
-            stroke = AscFormat.CorrectUniStroke(line, this.chart.plotArea.pen);
+            stroke = AscFormat.CorrectUniStroke(line, getPenForCorrect(this.chart.plotArea.pen));
             if(stroke.Fill) {
                 stroke.Fill.convertToPPTXMods();
             }
@@ -2725,7 +2735,7 @@ var GLOBAL_PATH_COUNT = 0;
                         oDlbls.setSpPr(new AscFormat.CSpPr());
                         oDlbls.spPr.setParent(oDlbls);
                     }
-                    stroke = AscFormat.CorrectUniStroke(line, oDlbls.spPr.ln ? oDlbls.spPr.ln.createDuplicate() : null, this.getEditorType());
+                    stroke = AscFormat.CorrectUniStroke(line, getPenForCorrect(oDlbls.spPr.ln), this.getEditorType());
                     if(stroke.Fill) {
                         stroke.Fill.convertToPPTXMods();
                     }
@@ -2749,7 +2759,7 @@ var GLOBAL_PATH_COUNT = 0;
                             dLbl.setSpPr(new AscFormat.CSpPr());
                             dLbl.spPr.setParent(dLbl);
                         }
-                        stroke = AscFormat.CorrectUniStroke(line, dLbl.spPr.ln ? dLbl.spPr.ln.createDuplicate() : null, this.getEditorType());
+                        stroke = AscFormat.CorrectUniStroke(line, getPenForCorrect(dLbl.spPr.ln), this.getEditorType());
                         if(stroke.Fill) {
                             stroke.Fill.convertToPPTXMods();
                         }
@@ -2763,7 +2773,7 @@ var GLOBAL_PATH_COUNT = 0;
                 this.selection.axisLbls.setSpPr(new AscFormat.CSpPr());
                 this.selection.axisLbls.spPr.setParent(this.selection.axisLbls);
             }
-            stroke = AscFormat.CorrectUniStroke(line, this.selection.axisLbls.spPr.ln ? this.selection.axisLbls.spPr.ln.createDuplicate() : null, this.getEditorType());
+            stroke = AscFormat.CorrectUniStroke(line, getPenForCorrect(this.selection.axisLbls.spPr.ln), this.getEditorType());
             if(stroke.Fill) {
                 stroke.Fill.convertToPPTXMods();
             }
@@ -2774,7 +2784,7 @@ var GLOBAL_PATH_COUNT = 0;
                 this.chart.legend.setSpPr(new AscFormat.CSpPr());
                 this.chart.legend.spPr.setParent(this.chart.legend);
             }
-            stroke = AscFormat.CorrectUniStroke(line, this.chart.legend.pen);
+            stroke = AscFormat.CorrectUniStroke(line, getPenForCorrect(this.chart.legend.pen));
             if(stroke.Fill) {
                 stroke.Fill.convertToPPTXMods();
             }
@@ -2785,7 +2795,7 @@ var GLOBAL_PATH_COUNT = 0;
                 this.selection.title.setSpPr(new AscFormat.CSpPr());
                 this.selection.title.spPr.setParent(this.selection.title);
             }
-            stroke = AscFormat.CorrectUniStroke(line, this.selection.title.pen);
+            stroke = AscFormat.CorrectUniStroke(line, getPenForCorrect(this.selection.title.pen));
             if(stroke.Fill) {
                 stroke.Fill.convertToPPTXMods();
             }
@@ -2829,7 +2839,7 @@ var GLOBAL_PATH_COUNT = 0;
                                         oDataPoint.marker.setSpPr(new AscFormat.CSpPr());
                                         oDataPoint.marker.spPr.setParent(oDataPoint.marker);
                                     }
-                                    stroke = AscFormat.CorrectUniStroke(line, pt.compiledMarker.pen);
+                                    stroke = AscFormat.CorrectUniStroke(line, getPenForCorrect(pt.compiledMarker.pen));
                                     if(stroke.Fill) {
                                         stroke.Fill.convertToPPTXMods();
                                     }
@@ -2841,7 +2851,7 @@ var GLOBAL_PATH_COUNT = 0;
                                     oDataPoint.setSpPr(new AscFormat.CSpPr());
                                     oDataPoint.spPr.setParent(oDataPoint);
                                 }
-                                stroke = AscFormat.CorrectUniStroke(line, pt.pen);
+                                stroke = AscFormat.CorrectUniStroke(line, getPenForCorrect(pt.pen));
                                 if(stroke.Fill) {
                                     stroke.Fill.convertToPPTXMods();
                                 }
@@ -2861,7 +2871,7 @@ var GLOBAL_PATH_COUNT = 0;
                                 oSeries.marker.setSpPr(new AscFormat.CSpPr());
                                 oSeries.marker.spPr.setParent(oSeries.marker);
                             }
-                            stroke = AscFormat.CorrectUniStroke(line, oSeries.compiledSeriesMarker.pen);
+                            stroke = AscFormat.CorrectUniStroke(line, getPenForCorrect(oSeries.compiledSeriesMarker.pen));
                             if(stroke.Fill) {
                                 stroke.Fill.convertToPPTXMods();
                             }
@@ -2882,7 +2892,7 @@ var GLOBAL_PATH_COUNT = 0;
                             oSeries.setSpPr(new AscFormat.CSpPr());
                             oSeries.spPr.setParent(oSeries);
                         }
-                        stroke = AscFormat.CorrectUniStroke(line, oSeries.compiledSeriesPen);
+                        stroke = AscFormat.CorrectUniStroke(line, getPenForCorrect(oSeries.compiledSeriesPen));
                         if(stroke.Fill) {
                             stroke.Fill.convertToPPTXMods();
                         }
@@ -2900,7 +2910,7 @@ var GLOBAL_PATH_COUNT = 0;
         }
         else if(AscCommon.isRealObject(this.selection.hiLowLines)) {
             if(oChart) {
-                stroke = AscFormat.CorrectUniStroke(line, oChart.calculatedHiLowLines);
+                stroke = AscFormat.CorrectUniStroke(line, getPenForCorrect(oChart.calculatedHiLowLines));
                 if(stroke.Fill) {
                     stroke.Fill.convertToPPTXMods();
                 }
@@ -2913,7 +2923,7 @@ var GLOBAL_PATH_COUNT = 0;
                     oChart.upDownBars.setUpBars(new AscFormat.CSpPr());
                     oChart.upDownBars.upBars.setParent(oChart.upDownBars);
                 }
-                stroke = AscFormat.CorrectUniStroke(line, oChart.upDownBars.upBarsPen);
+                stroke = AscFormat.CorrectUniStroke(line, getPenForCorrect(oChart.upDownBars.upBarsPen));
                 if(stroke.Fill) {
                     stroke.Fill.convertToPPTXMods();
                 }
@@ -2926,7 +2936,7 @@ var GLOBAL_PATH_COUNT = 0;
                     oChart.upDownBars.setDownBars(new AscFormat.CSpPr());
                     oChart.upDownBars.downBars.setParent(oChart.upDownBars);
                 }
-                stroke = AscFormat.CorrectUniStroke(line, oChart.upDownBars.downBarsPen);
+                stroke = AscFormat.CorrectUniStroke(line, getPenForCorrect(oChart.upDownBars.downBarsPen));
                 if(stroke.Fill) {
                     stroke.Fill.convertToPPTXMods();
                 }
@@ -2940,7 +2950,7 @@ var GLOBAL_PATH_COUNT = 0;
                     this.selection.axis.setMajorGridlines(new AscFormat.CSpPr());
                     this.selection.axis.majorGridlines.setParent(this.selection.axis);
                 }
-                stroke = AscFormat.CorrectUniStroke(line, this.selection.axis.majorGridlines.ln ? this.selection.axis.majorGridlines.ln.createDuplicate() : null, this.getEditorType());
+                stroke = AscFormat.CorrectUniStroke(line, getPenForCorrect(this.selection.axis.majorGridlines.ln), this.getEditorType());
                 if(stroke.Fill) {
                     stroke.Fill.convertToPPTXMods();
                 }
@@ -2951,7 +2961,7 @@ var GLOBAL_PATH_COUNT = 0;
                     this.selection.axis.setMinorGridlines(new AscFormat.CSpPr());
                     this.selection.axis.minorGridlines.setParent(this.selection.axis);
                 }
-                stroke = AscFormat.CorrectUniStroke(line, this.selection.axis.minorGridlines.ln ? this.selection.axis.minorGridlines.ln.createDuplicate() : null, this.getEditorType());
+                stroke = AscFormat.CorrectUniStroke(line, getPenForCorrect(this.selection.axis.minorGridlines.ln), this.getEditorType());
                 if(stroke.Fill) {
                     stroke.Fill.convertToPPTXMods();
                 }
@@ -2962,7 +2972,7 @@ var GLOBAL_PATH_COUNT = 0;
             if(this.recalcInfo.recalculatePenBrush) {
                 this.recalculatePenBrush();
             }
-            var stroke = AscFormat.CorrectUniStroke(line, this.pen);
+            stroke = AscFormat.CorrectUniStroke(line, getPenForCorrect(this.pen));
             if(stroke.Fill) {
                 stroke.Fill.convertToPPTXMods();
             }
@@ -3110,23 +3120,16 @@ var GLOBAL_PATH_COUNT = 0;
                     ser.setDLbls(oDlbls);
                 }
                 if(!AscFormat.isRealNumber(this.selection.dataLbl)) {
-                    oDlbls.setDelete(true);
+                    oDlbls.setDeleteValue(true);
                 }
                 else {
                     var pts = ser.getNumPts();
                     var pt = pts[this.selection.dataLbl];
                     if(pt) {
-                        var dLbl = ser.dLbls && ser.dLbls.findDLblByIdx(pt.idx);
-                        if(!dLbl) {
-                            dLbl = new AscFormat.CDLbl();
-                            dLbl.setIdx(pt.idx);
-                            if(ser.dLbls.txPr) {
-                                dLbl.merge(ser.dLbls);
-                            }
-                            ser.dLbls.addDLbl(dLbl);
-
-                        }
+                        var dLbl = new AscFormat.CDLbl();
+                        dLbl.setIdx(pt.idx);
                         dLbl.setDelete(true);
+                        ser.dLbls.addDLbl(dLbl);
                     }
                 }
             }
@@ -4977,6 +4980,7 @@ var GLOBAL_PATH_COUNT = 0;
                         dlbl.spPr = y_ax.spPr;
                         dlbl.txPr = y_ax.txPr;
                         dlbl.tx = new AscFormat.CChartText();
+                        dlbl.tx.setChart(this);
                         dlbl.tx.rich = AscFormat.CreateTextBodyFromString(arr_strings[i], this.getDrawingDocument(), dlbl);
                         if(i > 0) {
                             dlbl.lastStyleObject = y_ax.labels.aLabels[0].lastStyleObject;
@@ -5025,6 +5029,7 @@ var GLOBAL_PATH_COUNT = 0;
                         dlbl.spPr = x_ax.spPr;
                         dlbl.txPr = x_ax.txPr;
                         dlbl.tx = new AscFormat.CChartText();
+                        dlbl.tx.setChart(this);
                         dlbl.tx.rich = AscFormat.CreateTextBodyFromString(string_pts[i].val.replace(oNonSpaceRegExp, ' '), this.getDrawingDocument(), dlbl);
                         if(x_ax.labels.aLabels[0]) {
                             dlbl.lastStyleObject = x_ax.labels.aLabels[0].lastStyleObject;
@@ -6142,6 +6147,7 @@ var GLOBAL_PATH_COUNT = 0;
                         dlbl.spPr = val_ax.spPr;
                         dlbl.txPr = val_ax.txPr;
                         dlbl.tx = new AscFormat.CChartText();
+                        dlbl.tx.setChart(this);
                         dlbl.tx.rich = AscFormat.CreateTextBodyFromString(arr_strings[i], this.getDrawingDocument(), dlbl);
                         var t = dlbl.tx.rich.recalculateByMaxWord();
                         if(!lastStyleObject) {
@@ -6711,6 +6717,7 @@ var GLOBAL_PATH_COUNT = 0;
                                 dlbl.spPr = cat_ax.spPr;
                                 dlbl.txPr = cat_ax.txPr;
                                 dlbl.tx = new AscFormat.CChartText();
+                                dlbl.tx.setChart(this);
                                 dlbl.tx.rich = AscFormat.CreateTextBodyFromString(string_pts[i].val.replace(oNonSpaceRegExp, ' '), this.getDrawingDocument(), dlbl);
                                 //dlbl.recalculate();
 
@@ -6983,6 +6990,7 @@ var GLOBAL_PATH_COUNT = 0;
                                     dlbl.spPr = val_ax.spPr;
                                     dlbl.txPr = val_ax.txPr;
                                     dlbl.tx = new AscFormat.CChartText();
+                                    dlbl.tx.setChart(this);
                                     dlbl.tx.rich = AscFormat.CreateTextBodyFromString(arr_series_labels_str[i], this.getDrawingDocument(), dlbl);
                                     var t = dlbl.tx.rich.recalculateByMaxWord();
                                     if(!lastStyleObject) {
@@ -7676,6 +7684,7 @@ var GLOBAL_PATH_COUNT = 0;
                         dlbl.spPr = val_ax.spPr;
                         dlbl.txPr = val_ax.txPr;
                         dlbl.tx = new AscFormat.CChartText();
+                        dlbl.tx.setChart(this);
                         dlbl.tx.rich = AscFormat.CreateTextBodyFromString(arr_strings[i], this.getDrawingDocument(), dlbl);
                         dlbl.txBody = dlbl.tx.rich;
                         if(val_ax.labels.aLabels[0]) {
@@ -8065,6 +8074,7 @@ var GLOBAL_PATH_COUNT = 0;
                                 dlbl.spPr = cat_ax.spPr;
                                 dlbl.txPr = cat_ax.txPr;
                                 dlbl.tx = new AscFormat.CChartText();
+                                dlbl.tx.setChart(this);
                                 dlbl.tx.rich = AscFormat.CreateTextBodyFromString(string_pts[i].val.replace(oNonSpaceRegExp, ' '), this.getDrawingDocument(), dlbl);
                                 if(cat_ax.labels.aLabels[0]) {
                                     dlbl.lastStyleObject = cat_ax.labels.aLabels[0].lastStyleObject;
@@ -8762,8 +8772,15 @@ var GLOBAL_PATH_COUNT = 0;
         else {
             if(oMarker) {
                 oMarker.localX = fX;
+                var fMarkerWidth = oMarker.spPr.geometry.gdLst['w'];
                 oMarker.localY = fYFirstLineMiddle - oMarker.spPr.geometry.gdLst['h'] / 2.0;
-                oEntry.localX = oMarker.localX + oMarker.spPr.geometry.gdLst['w'] + fDistance;
+                oEntry.localX = fX + fMarkerWidth + fDistance;
+                if(this.chartStyle && this.chartStyle.isSpecialStyle()) {
+                    var fSpecialSize = oFirstLine.Bottom - oFirstLine.Top;
+                    oMarker.spPr.geometry.Recalculate(fSpecialSize, fSpecialSize);
+                    oMarker.localX = fX + (fMarkerWidth - fSpecialSize) / 2.0;
+                    oMarker.localY = fYFirstLineMiddle - fSpecialSize / 2.0;
+                }
             }
             else {
                 oEntry.localX = fX + fDistance;
@@ -9211,22 +9228,6 @@ var GLOBAL_PATH_COUNT = 0;
                         for(i = 0; i < cut_index && i < calc_entryes.length; ++i) {
                             calc_entry = calc_entryes[i];
                             this.layoutLegendEntry(calc_entry, distance_to_text, summ_h, distance_to_text);
-                            // if(calc_entry.calcMarkerUnion.marker)
-                            // {
-                            //     calc_entry.calcMarkerUnion.marker.localX = distance_to_text + line_marker_width/2 - calc_entry.calcMarkerUnion.marker.extX/2;
-                            //     calc_entry.calcMarkerUnion.marker.localY = summ_h + (calc_entry.txBody.content.Content[0].Lines[0].Bottom - calc_entry.txBody.content.Content[0].Lines[0].Top)/2 - marker_size/2;
-                            //     calc_entry.localX = calc_entry.calcMarkerUnion.marker.localX + line_marker_width + distance_to_text;
-                            // }
-                            //
-                            // if(calc_entry.calcMarkerUnion.lineMarker)
-                            // {
-                            //     calc_entry.calcMarkerUnion.lineMarker.localX = distance_to_text;
-                            //     calc_entry.calcMarkerUnion.lineMarker.localY = summ_h + (calc_entry.txBody.content.Content[0].Lines[0].Bottom - calc_entry.txBody.content.Content[0].Lines[0].Top)/2;// - calc_entry.calcMarkerUnion.lineMarker.penWidth/2;
-                            //     calc_entry.localX = calc_entry.calcMarkerUnion.lineMarker.localX + line_marker_width + distance_to_text;
-                            // }
-                            // calc_entry.localY = summ_h;
-
-
                             summ_h += arr_heights[i];
                         }
                         legend.setPosition(0, 0);
@@ -9322,13 +9323,6 @@ var GLOBAL_PATH_COUNT = 0;
                             for(i = 0; i < cut_index && i < calc_entryes.length; ++i) {
                                 calc_entry = calc_entryes[i];
                                 this.layoutLegendEntry(calc_entry, distance_to_text, summ_h, distance_to_text);
-                                // if(calc_entry.calcMarkerUnion.marker)
-                                // {
-                                //     calc_entry.calcMarkerUnion.marker.localX = distance_to_text;
-                                //     calc_entry.calcMarkerUnion.marker.localY = summ_h + (calc_entry.txBody.content.Content[0].Lines[0].Bottom - calc_entry.txBody.content.Content[0].Lines[0].Top)/2 - marker_size/2;
-                                // }
-                                // calc_entry.localX = 2*distance_to_text + marker_size;
-                                // calc_entry.localY = summ_h;
                                 summ_h += arr_heights[i];
                             }
                         }
@@ -9337,13 +9331,6 @@ var GLOBAL_PATH_COUNT = 0;
                             for(i = calc_entryes.length - 1; i > -1; --i) {
                                 calc_entry = calc_entryes[i];
                                 this.layoutLegendEntry(calc_entry, distance_to_text, summ_h, distance_to_text);
-                                // if(calc_entry.calcMarkerUnion.marker)
-                                // {
-                                //     calc_entry.calcMarkerUnion.marker.localX = distance_to_text;
-                                //     calc_entry.calcMarkerUnion.marker.localY = summ_h + (calc_entry.txBody.content.Content[0].Lines[0].Bottom - calc_entry.txBody.content.Content[0].Lines[0].Top)/2 - marker_size/2;
-                                // }
-                                // calc_entry.localX = 2*distance_to_text + marker_size;
-                                // calc_entry.localY = summ_h;
                                 summ_h += arr_heights[i];
                             }
                         }
@@ -9481,37 +9468,7 @@ var GLOBAL_PATH_COUNT = 0;
                             for(j = 0; j < nColsCount && (i * nColsCount + j) < calc_entryes.length; ++j) {
                                 var nEntryIndex = i * nColsCount + j;
                                 oCurEntry = calc_entryes[nEntryIndex];
-                                // oUnionMarker = oCurEntry.calcMarkerUnion;
-                                // oLineMarker = oUnionMarker.lineMarker;
-                                // oMarker = oUnionMarker.marker;
-                                // if(oLineMarker){
-                                //     oLineMarker.localX = fCurPosX + distance_to_text;
-                                //     if(oLineMarker.pen){
-                                //         if(AscFormat.isRealNumber(oLineMarker.pen.w)){
-                                //             fPenWidth = oLineMarker.pen.w/36000.0;
-                                //         }
-                                //         else{
-                                //             fPenWidth = 12700.0/36000.0;
-                                //         }
-                                //     }
-                                //     else{
-                                //         fPenWidth = 0.0;
-                                //     }
-                                //     oLineMarker.localY = Math.max(0.0, fCurPosY + Math.max.apply(Math, aHeights)/2.0 - fPenWidth/2.0);
-                                //     if(oMarker){
-                                //         oMarker.localX = oLineMarker.localX + line_marker_width/2.0 - marker_size/2.0;
-                                //         oMarker.localY = Math.max(0.0, fCurPosY + Math.max.apply(Math, aHeights)/2.0 - marker_size/2.0);
-                                //     }
-                                // }
-                                // else{
-                                //     if(oMarker){
-                                //         oMarker.localX = fCurPosX + distance_to_text;
-                                //         oMarker.localY = Math.max(0.0, fCurPosY + Math.max.apply(Math, aHeights)/2.0  - marker_size/2.0);
-                                //     }
-                                // }
                                 this.layoutLegendEntry(oCurEntry, fCurPosX + distance_to_text, Math.max(0, fCurPosY + Math.max.apply(Math, aHeights) / 2.0 - aHeights[nEntryIndex] / 2.0), distance_to_text);
-                                // oCurEntry.localX = fCurPosX + distance_to_text + fMarkerWidth + distance_to_text;
-                                // oCurEntry.localY = Math.max(0, fCurPosY + Math.max.apply(Math, aHeights)/2.0 - aHeights[nEntryIndex]/2.0);
                                 fCurPosX += (fMaxEntryWidth + fDistanceBetweenLabels);
                             }
                             fCurPosY += (Math.max.apply(Math, aHeights) + fVertDistanceBetweenLabels);
@@ -11663,6 +11620,10 @@ var GLOBAL_PATH_COUNT = 0;
                 return;
             }
         }
+        if(graphics.animationDrawer) {
+            graphics.animationDrawer.drawObject(this, graphics);
+            return;
+        }
         var oldShowParaMarks;
         if(editor) {
             oldShowParaMarks = editor.ShowParaMarks;
@@ -12132,8 +12093,8 @@ var GLOBAL_PATH_COUNT = 0;
     CChartSpace.prototype.getTxPrFormStyleEntry = function(oStyleEntry, aColors, nIdx) {
         return AscFormat.CBaseChartObject.prototype.getTxPrFormStyleEntry.call(this, oStyleEntry, aColors, nIdx);
     };
-    CChartSpace.prototype.applyStyleEntry = function(oStyleEntry, aColors, nIdx) {
-        AscFormat.CBaseChartObject.prototype.applyStyleEntry.call(this, oStyleEntry, aColors, nIdx);
+    CChartSpace.prototype.applyStyleEntry = function(oStyleEntry, aColors, nIdx, bReset) {
+        AscFormat.CBaseChartObject.prototype.applyStyleEntry.call(this, oStyleEntry, aColors, nIdx, bReset);
     };
     CChartSpace.prototype.resetFormatting = function() {
         AscFormat.CBaseChartObject.prototype.resetFormatting.call(this);
@@ -12142,7 +12103,7 @@ var GLOBAL_PATH_COUNT = 0;
         AscFormat.CBaseChartObject.prototype.resetOwnFormatting.call(this);
     };
     CChartSpace.prototype.applyChartStyle = function(oChartStyle, oColors, oAdditionalData, bReset) {
-        this.applyStyleEntry(oChartStyle.chartArea, oColors.generateColors(1), 0);
+        this.applyStyleEntry(oChartStyle.chartArea, oColors.generateColors(1), 0, bReset);
         this.chart.applyChartStyle(oChartStyle, oColors, oAdditionalData, bReset);
     };
     CChartSpace.prototype.resetToChartStyle = function() {

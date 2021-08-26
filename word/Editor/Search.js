@@ -292,7 +292,7 @@ CDocumentSearch.prototype.GetPrefix = function(nIndex)
 //----------------------------------------------------------------------------------------------------------------------
 CDocument.prototype.Search = function(sStr, oProps, bDraw)
 {
-	//var StartTime = new Date().getTime();
+	//var StartTime = new Date().getTime() ;
 
 	if (this.SearchEngine.Compare(sStr, oProps))
 		return this.SearchEngine;

@@ -208,7 +208,10 @@
 
 			var _style = ("left:-" + (this.HtmlAreaWidth >> 1) + "px;top:" + (-this.HtmlAreaOffset) + "px;");
 			_style += ("background:transparent;border:none;position:absolute;text-shadow:0 0 0 #000;outline:none;color:transparent;width:" + this.HtmlAreaWidth + "px;height:50px;");
-			_style += "overflow:hidden;padding:0px;margin:0px;font-family:arial;font-size:10pt;resize:none;font-weight:normal;box-sizing:content-box;-moz-box-sizing:content-box;-webkit-box-sizing:content-box;";
+			_style += "overflow:hidden;padding:0px;margin:0px;font-family:arial;resize:none;font-weight:normal;box-sizing:content-box;-moz-box-sizing:content-box;-webkit-box-sizing:content-box;";
+			_style += "touch-action: none;-webkit-touch-callout: none;color:transparent;caret-color:transparent;";
+			_style += AscCommon.AscBrowser.isAppleDevices ? "font-size:0px;" : "font-size:8px;"
+
 			this.HtmlArea.setAttribute("style", _style);
 			this.HtmlArea.setAttribute("spellcheck", false);
 
@@ -378,7 +381,6 @@
                 _elem2.style.bottom = "0px";
                 _elem2.style.width = "100%";
                 _elem2.style.height = "100%";
-                _elem2.style.fontSize = "8px";
 
                 if (AscCommon.AscBrowser.isIE)
 				{
@@ -1403,6 +1405,12 @@
 			}
 
             this.Api.Replace_CompositeText(_value);
+
+			if (window.g_asc_plugins)
+			{
+				this.keyPressInput = String.fromCodePoint.apply(this, _value);
+				window.g_asc_plugins.onPluginEvent("onInputHelperInput", {"text": this.keyPressInput});
+			}
 
 			this.LastReplaceText = _value.slice();
 			this.IsLastReplaceFlag = true;

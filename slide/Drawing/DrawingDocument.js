@@ -673,231 +673,80 @@ function CDrawingPage()
 	this.cachedImage = null;
 }
 
-function CDrawingCollaborativeTarget()
+function CDrawingCollaborativeTarget(DrawingDocument)
 {
-	this.Id      = "";
-	this.ShortId = "";
-
-	this.X    = 0;
-	this.Y    = 0;
-	this.Size = 0;
+	AscCommon.CDrawingCollaborativeTargetBase.call(this);
 	this.Page = -1;
-
-	this.Color     = null;
-	this.Transform = null;
-
-	this.HtmlElement  = null;
-	this.HtmlElementX = 0;
-	this.HtmlElementY = 0;
-
-	this.Style = "";
-	this.HtmlParentId = -1; // 0 - main, 1 - notes
-	this.HtmlParent = null;
+	this.DrawingDocument = DrawingDocument;
 }
-CDrawingCollaborativeTarget.prototype =
+CDrawingCollaborativeTarget.prototype = Object.create(AscCommon.CDrawingCollaborativeTargetBase.prototype);
+
+CDrawingCollaborativeTarget.prototype.IsFocusOnNotes = function() {
+	return this.DrawingDocument.m_oWordControl.m_oLogicDocument.IsFocusOnNotes();
+};
+CDrawingCollaborativeTarget.prototype.GetZoom = function()
 {
-	CheckPosition : function(_drawing_doc, _x, _y, _size, _page, _transform)
+	if(this.IsFocusOnNotes())
 	{
-		// 1) создаем новый элемент, если еще его не было
-		var bIsHtmlElementCreate = false;
-		if (this.HtmlElement == null)
-		{
-			bIsHtmlElementCreate           = true;
-			this.HtmlElement               = document.createElement('canvas');
-			this.HtmlElement.style.cssText = "pointer-events: none;position:absolute;padding:0;margin:0;-webkit-user-select:none;width:1px;height:1px;display:none;z-index:9;";
-			this.HtmlElement.width         = 1;
-			this.HtmlElement.height        = 1;
-
-			this.Color = AscCommon.getUserColorById(this.ShortId, null, true);
-			this.Style = "rgb(" + this.Color.r + "," + this.Color.g + "," + this.Color.b + ")";
-		}
-
-		// 2) определяем размер
-		this.Transform = _transform;
-		this.Size      = _size;
-
-		var _old_x    = this.X;
-		var _old_y    = this.Y;
-		var _old_page = this.Page;
-
-		this.X    = _x;
-		this.Y    = _y;
-		this.Page = _page;
-
-		if (this.Page != _drawing_doc.SlideCurrent)
-		{
-			this.HtmlElement.style.display = "none";
-			return;
-		}
-
-		var _oldW = this.HtmlElement.width;
-		var _oldH = this.HtmlElement.height;
-
-		var isNotes = _drawing_doc.m_oWordControl.m_oLogicDocument.IsFocusOnNotes();
-
-		var _newW = 2;
-		var _newH = (this.Size * _drawing_doc.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100) >> 0;
-		if (isNotes)
-			_newH = (this.Size * g_dKoef_mm_to_pix) >> 0;
-
-		if (null != this.Transform && !global_MatrixTransformer.IsIdentity2(this.Transform))
-		{
-			var _x1 = this.Transform.TransformPointX(_x, _y);
-			var _y1 = this.Transform.TransformPointY(_x, _y);
-
-			var _x2 = this.Transform.TransformPointX(_x, _y + this.Size);
-			var _y2 = this.Transform.TransformPointY(_x, _y + this.Size);
-
-			var pos1 = _drawing_doc.ConvertCoordsToCursor(_x1, _y1);
-			var pos2 = _drawing_doc.ConvertCoordsToCursor(_x2, _y2);
-
-			_newW = (Math.abs(pos1.X - pos2.X) >> 0) + 1;
-			_newH = (Math.abs(pos1.Y - pos2.Y) >> 0) + 1;
-
-			if (2 > _newW)
-				_newW = 2;
-			if (2 > _newH)
-				_newH = 2;
-
-			if (_oldW == _newW && _oldH == _newH)
-			{
-				if (_newW != 2 && _newH != 2)
-				{
-					// просто очищаем
-					this.HtmlElement.width = _newW;
-				}
-			}
-			else
-			{
-				this.HtmlElement.style.width  = _newW + "px";
-				this.HtmlElement.style.height = _newH + "px";
-
-				this.HtmlElement.width  = _newW;
-				this.HtmlElement.height = _newH;
-			}
-			var ctx = this.HtmlElement.getContext('2d');
-
-			if (_newW == 2 || _newH == 2)
-			{
-				ctx.fillStyle = this.Style;
-				ctx.fillRect(0, 0, _newW, _newH);
-			}
-			else
-			{
-				ctx.beginPath();
-				ctx.strokeStyle = this.Style;
-				ctx.lineWidth   = 2;
-
-				if (((pos1.X - pos2.X) * (pos1.Y - pos2.Y)) >= 0)
-				{
-					ctx.moveTo(0, 0);
-					ctx.lineTo(_newW, _newH);
-				}
-				else
-				{
-					ctx.moveTo(0, _newH);
-					ctx.lineTo(_newW, 0);
-				}
-
-				ctx.stroke();
-			}
-
-			this.HtmlElementX           = Math.min(pos1.X, pos2.X) >> 0;
-			this.HtmlElementY           = Math.min(pos1.Y, pos2.Y) >> 0;
-			this.HtmlElement.style.left = this.HtmlElementX + "px";
-			this.HtmlElement.style.top  = this.HtmlElementY + "px";
-		}
-		else
-		{
-			if (_oldW == _newW && _oldH == _newH)
-			{
-				// просто очищаем
-				this.HtmlElement.width = _newW;
-			}
-			else
-			{
-				this.HtmlElement.style.width  = _newW + "px";
-				this.HtmlElement.style.height = _newH + "px";
-
-				this.HtmlElement.width  = _newW;
-				this.HtmlElement.height = _newH;
-			}
-
-			var ctx = this.HtmlElement.getContext('2d');
-
-			ctx.fillStyle = this.Style;
-			ctx.fillRect(0, 0, _newW, _newH);
-
-			if (null != this.Transform)
-			{
-				_x += this.Transform.tx;
-				_y += this.Transform.ty;
-			}
-
-			var pos = null;
-			if (!isNotes)
-			{
-				pos = _drawing_doc.ConvertCoordsToCursor(_x, _y);
-			}
-			else
-			{
-				var _offsetX = _drawing_doc.m_oWordControl.m_oNotesApi.OffsetX;
-				pos = { X : (AscCommon.AscBrowser.convertToRetinaValue(_offsetX) + _x * g_dKoef_mm_to_pix), Y : (_y * g_dKoef_mm_to_pix - _drawing_doc.m_oWordControl.m_oNotesApi.Scroll) };
-			}
-
-			this.HtmlElementX           = pos.X >> 0;
-			this.HtmlElementY           = pos.Y >> 0;
-			this.HtmlElement.style.left = this.HtmlElementX + "px";
-			this.HtmlElement.style.top  = this.HtmlElementY + "px";
-		}
-
-
-		if (AscCommon.CollaborativeEditing)
-			AscCommon.CollaborativeEditing.Update_ForeignCursorLabelPosition(this.Id, this.HtmlElementX, this.HtmlElementY, this.Color);
-
-		// 3) добавить, если нужно
-		var HtmlParentIdNew = isNotes ? 1 : 0;
-		if (this.HtmlParent && (HtmlParentIdNew != this.HtmlParentId))
-		{
-			this.HtmlParent.removeChild(this.HtmlElement);
-			this.HtmlParent = null;
-			this.HtmlParentId = -1;
-		}
-
-		if (bIsHtmlElementCreate || (-1 == this.HtmlParentId))
-		{
-			this.HtmlParent = (0 == HtmlParentIdNew) ? _drawing_doc.m_oWordControl.m_oMainView.HtmlElement : _drawing_doc.m_oWordControl.m_oNotesContainer.HtmlElement;
-			this.HtmlParentId = HtmlParentIdNew;
-			this.HtmlParent.appendChild(this.HtmlElement);
-		}
-
-		if (_drawing_doc.m_oWordControl.m_oApi.isReporterMode)
-		{
-			this.HtmlElement.style.display = "none";
-			return;
-		}
-
-		if (this.HtmlElement.style.display != "block")
-		{
-			this.HtmlElement.style.display = "block";
-		}
-	},
-
-	Remove : function(_drawing_doc)
-	{
-		if (this.HtmlParent)
-		{
-			//_drawing_doc.m_oWordControl.m_oMainView.HtmlElement.removeChild(this.HtmlElement);
-			this.HtmlParent.removeChild(this.HtmlElement);
-			this.HtmlParent = null;
-			this.HtmlParentId = -1;
-		}
-	},
-
-	Update : function(_drawing_doc)
-	{
-		this.CheckPosition(_drawing_doc, this.X, this.Y, this.Size, this.Page, this.Transform);
+		return 1.0;
 	}
+	return this.DrawingDocument.m_oWordControl.m_nZoomValue / 100;
+};
+CDrawingCollaborativeTarget.prototype.ConvertCoords = function(x, y)
+{
+	if (this.IsFocusOnNotes())
+	{
+		var oNotesApi = this.DrawingDocument.m_oWordControl.m_oNotesApi;
+		var _offsetX = oNotesApi.OffsetX;
+		return { X : (AscCommon.AscBrowser.convertToRetinaValue(_offsetX) + x * g_dKoef_mm_to_pix), Y : (y * g_dKoef_mm_to_pix - oNotesApi.Scroll) };
+	}
+	return this.DrawingDocument.ConvertCoordsToCursor(x, y);
+};
+CDrawingCollaborativeTarget.prototype.GetMobileTouchManager = function()
+{
+	return this.DrawingDocument.m_oWordControl.MobileTouchManager;
+};
+CDrawingCollaborativeTarget.prototype.GetParentElement = function()
+{
+	if(this.IsFocusOnNotes())
+	{
+		return this.DrawingDocument.m_oWordControl.m_oNotesContainer.HtmlElement;
+	}
+	return this.DrawingDocument.m_oWordControl.m_oMainView.HtmlElement;
+};
+CDrawingCollaborativeTarget.prototype.CheckPosition = function(_x, _y, _size, _page, _transform)
+{
+	this.Transform = _transform;
+	this.Size = _size;
+	this.X = _x;
+	this.Y = _y;
+	this.Page = _page;
+	this.Update();
+};
+CDrawingCollaborativeTarget.prototype.CheckStyleDisplay = function()
+{
+	if (this.DrawingDocument.m_oWordControl.m_oApi.isReporterMode)
+	{
+		this.HtmlElement.style.display = "none";
+		return;
+	}
+	if (this.HtmlElement.style.display != "block")
+	{
+		this.HtmlElement.style.display = "block";
+	}
+	if (this.HtmlElement.style.zIndex != 7)
+	{
+		this.HtmlElement.style.zIndex = 7;
+	}
+};
+CDrawingCollaborativeTarget.prototype.CheckNeedDraw = function()
+{
+	if (this.Page != this.DrawingDocument.SlideCurrent)
+	{
+		this.HtmlElement.style.display = "none";
+		return false;
+	}
+	return true;
 };
 
 function CDrawingDocument()
@@ -1443,6 +1292,7 @@ function CDrawingDocument()
 			var _textPr        = new CTextPr();
 			_textPr.FontFamily = {Name : "Arial", Index : -1};
 			_textPr.FontSize = (AscCommon.AscBrowser.convertToRetinaValue(11 << 1, true) >> 0) * 0.5;
+			_textPr.RFonts.SetAll("Arial");
 
 			_textPr.Strikeout = this.GuiLastTextProps.Strikeout;
 
@@ -1742,7 +1592,7 @@ function CDrawingDocument()
 		if (page != _table.PageNum)
 			return false;
 
-		var _dist = this.TableOutlineDr.image.width * g_dKoef_pix_to_mm;
+		var _dist = this.TableOutlineDr.mover_size * g_dKoef_pix_to_mm;
 		_dist *= (100 / this.m_oWordControl.m_nZoomValue);
 
 		var _x = _table.X;
@@ -3417,14 +3267,14 @@ function CDrawingDocument()
 		{
 			if (_id == this.CollaborativeTargets[i].Id)
 			{
-				this.CollaborativeTargets[i].CheckPosition(this, _x, _y, _size, _page, _transform);
+				this.CollaborativeTargets[i].CheckPosition(_x, _y, _size, _page, _transform);
 				return;
 			}
 		}
-		var _target     = new CDrawingCollaborativeTarget();
+		var _target     = new CDrawingCollaborativeTarget(this);
 		_target.Id      = _id;
 		_target.ShortId = _shortId;
-		_target.CheckPosition(this, _x, _y, _size, _page, _transform);
+		_target.CheckPosition(_x, _y, _size, _page, _transform);
 		this.CollaborativeTargets[this.CollaborativeTargets.length] = _target;
 	};
 	this.Collaborative_RemoveTarget      = function(_id)
@@ -3847,10 +3697,10 @@ function CDrawingDocument()
 		
 		if (!isNoCheckFonts)
 		{
-            // check need load fonts
-            var fontsDict = {};
-            for (var i = 0, count = props.length; i < count; i++)
-            {
+			// check need load fonts
+			var fontsDict = {};
+			for (var i = 0, count = props.length; i < count; i++)
+			{
 				var curLvl = props[i];				
 				var text = "";
 				for (var j = 0; j < curLvl.Text.length; j++)
@@ -3876,28 +3726,29 @@ function CDrawingDocument()
 					if (curLvl.TextPr.RFonts.HAnsi) fontsDict[curLvl.TextPr.RFonts.HAnsi.Name] = true;
 					if (curLvl.TextPr.RFonts.CS) fontsDict[curLvl.TextPr.RFonts.CS.Name] = true;
 				}
-            }
+			}
 
-            var fonts = [];
-            for (var familyName in fontsDict)
-            {
-                fonts.push(new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(familyName), 0, "", 0, null));
-            }
-            AscFonts.FontPickerByCharacter.extendFonts(fonts);
-
-            if (false === AscCommon.g_font_loader.CheckFontsNeedLoading(fonts))
-            {
-                return this.SetDrawImagePreviewBulletForMenu(id, type, props, true);
-            }
-
-            this.m_oWordControl.m_oApi.asyncMethodCallback = function()
+			var fonts = [];
+			for (var familyName in fontsDict)
 			{
-                this.WordControl.m_oDrawingDocument.SetDrawImagePreviewBulletForMenu(id, type, props, true);
-            };
-            AscCommon.g_font_loader.LoadDocumentFonts2(fonts);
-            return;
-        }
+				fonts.push(new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(familyName), 0, "", 0, null));
+			}
+			AscFonts.FontPickerByCharacter.extendFonts(fonts);
+
+			if (false === AscCommon.g_font_loader.CheckFontsNeedLoading(fonts))
+			{
+				return this.SetDrawImagePreviewBulletForMenu(id, type, props, true);
+			}
+
+			var loader = new AscCommon.CGlobalFontLoader();
+			loader.put_Api(this.m_oWordControl.m_oApi);
+			loader.LoadDocumentFonts2(fonts, Asc.c_oAscAsyncActionType.Information, function(){
+				this.WordControl.m_oDrawingDocument.SetDrawImagePreviewBulletForMenu(id, type, props, true);
+			});
+			return;
+		}
 		var elNone = document.getElementById(id[0]);
+		History.TurnOff();
 		if (elNone)
 		{
 			var width_px = elNone.clientWidth;
@@ -3918,6 +3769,9 @@ function CDrawingDocument()
 			canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
 
 			var ctx = canvas.getContext("2d");
+			ctx.fillStyle = "#FFFFFF";
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			ctx.beginPath();
 			var line_distance = (height_px == 80) ? (height_px / 5 - 1) : ((height_px >> 2) + ((text.length > 6) ? 1 : 2));
 
 			var oNewShape = new AscFormat.CShape();
@@ -3973,68 +3827,72 @@ function CDrawingDocument()
 			canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
 
 			var ctx = canvas.getContext("2d");
+			ctx.fillStyle = "#FFFFFF";
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			ctx.beginPath();
 			var rPR = AscCommon.AscBrowser.retinaPixelRatio;
 			
 			if (!type)
 			{
-				var width_px = parent.clientWidth;
-				var height_px = parent.clientHeight;
+				var line_distance = 32, x = 0, y = 0;
 
-				var canvas = parent.firstChild;
-				if (!canvas)
+				var text = "";
+				for (var k = 0; k < props[i].Text.length; k++)
 				{
-					canvas = document.createElement('canvas');
-					canvas.style.cssText = "padding:0;margin:0;user-select:none;";
-					canvas.style.width = width_px + "px";
-					canvas.style.height = height_px + "px";
-                    if (width_px > 0 && height_px > 0)
-						parent.appendChild(canvas);
+					switch (props[i].Text[k].Type)
+					{
+						case Asc.c_oAscNumberingLvlTextType.Text:
+							text += props[i].Text[k].Value;
+							break;
+						case Asc.c_oAscNumberingLvlTextType.Num:
+							var correctNum = 1;
+							if (levelNum === props[i].Text[k].Value)
+								correctNum = counterCurrent;
+							text += AscCommon.IntToNumberFormat(correctNum, props[i].Format);
+							break;
+						default:
+							break;
+					}
 				}
 
-				canvas.width = AscCommon.AscBrowser.convertToRetinaValue(width_px, true);
-				canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
+				var textPr = props[i].TextPr.Copy();
+				textPr.FontSize = textPr.FontSizeCS = ((2 * line_distance * 72 / 96) >> 0) / 2;
 
-				var ctx = canvas.getContext("2d");
-				var line_distance = (height_px >> 1) - 2;
-				// TODo: подумать над тем как рассчитать сдвиг влево, эти значения подобраны эксперементально
-				var xShift;
-				var yShift;
-                switch (i) {
-                    case 1:
-                        xShift = 4;
-                        yShift = 5;
-                        break;
-                    case 2:
-                        xShift = 5;
-                        yShift = 4;
-                        break;
-                    case 3:
-                        xShift = 4;
-                        yShift = 7;
-                        break;
-                    case 4:
-                        xShift = 8;
-                        yShift = 7;
-                        break;
-                    case 5:
-                        xShift = 6;
-                        yShift = 6;
-                        break;
-                    case 6:
-                        xShift = 7;
-                        yShift = 7;
-                        break;
-                    case 7:
-                        xShift = 6;
-                        yShift = 5;
-                        break;
-                    case 8:
-                        xShift = 5;
-                        yShift = 5;
-                        break;
-                } 
-                var x = (width_px >> 1 ) - xShift;
-                var y = (height_px >> 1) + yShift;
+				if (1 === text.length)
+				{
+					g_oTextMeasurer.SetTextPr(textPr);
+					g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
+					var oInfo = g_oTextMeasurer.Measure2Code(text.charCodeAt(0));
+
+					x = (width_px >> 1) - Math.round((oInfo.WidthG / 2 + oInfo.rasterOffsetX) * AscCommon.g_dKoef_mm_to_pix);
+					y = (width_px >> 1) + Math.round((oInfo.Height / 2 + (oInfo.Ascent - oInfo.Height + oInfo.rasterOffsetY)) * AscCommon.g_dKoef_mm_to_pix);
+				}
+				else
+				{
+					var oNewShape = new AscFormat.CShape();
+					oNewShape.createTextBody();
+					var par = oNewShape.txBody.content.GetAllParagraphs()[0];
+					par.MoveCursorToStartPos();
+					par.MoveCursorToStartPos();
+
+					par.Pr = new CParaPr();
+					var textPr = props[i].TextPr.Copy();
+					textPr.FontSize = textPr.FontSizeCS = ((2 * line_distance * 72 / 96) >> 0) / 2;
+
+					var parRun = new ParaRun(par);
+					parRun.Set_Pr(textPr);
+					parRun.AddText(text);
+					par.AddToContent(0, parRun);
+
+					par.Reset(0, 0, 1000, 1000, 0, 0, 1);
+					par.Recalculate_Page(0);
+
+					var parW = par.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
+					var x = (width_px >> 1) - Math.round(parW / 2);
+					// в office 19 на такой же высоте
+					var y = par.Lines[0].Y * AscCommon.g_dKoef_mm_to_pix;
+				}
+
 				// для размеров окна 38 на 38
 				this.privateGetParagraphByString(props[i], 0, 0, x, y, line_distance, ctx, width_px, height_px);
 			}
@@ -4063,8 +3921,8 @@ function CDrawingDocument()
 					y += (line_w + line_distance);
 				}
 			}
-
 		}
+		History.TurnOn();
 	};
 }
 
@@ -4210,10 +4068,10 @@ function CThumbnailsManager()
 
 		var drawRect = this.m_arrPages[pageIndex];
 		var _ret     = {
-			X : this.m_oWordControl.X + drawRect.left,
-			Y : this.m_oWordControl.X + drawRect.top,
-			W : drawRect.right - drawRect.left + 1,
-			H : drawRect.bottom - drawRect.top + 1
+			X : AscCommon.AscBrowser.convertToRetinaValue(drawRect.left),
+			Y : AscCommon.AscBrowser.convertToRetinaValue(drawRect.top),
+			W : AscCommon.AscBrowser.convertToRetinaValue(drawRect.right - drawRect.left),
+			H : AscCommon.AscBrowser.convertToRetinaValue(drawRect.bottom - drawRect.top)
 		};
 		return _ret;
 	};
@@ -5048,7 +4906,8 @@ function CThumbnailsManager()
 				}
 				else
 				{
-					word_control.m_oThumbnails_scroll.HtmlElement.style.display = "block";
+					if (!word_control.m_oApi.isMobileVersion)
+						word_control.m_oThumbnails_scroll.HtmlElement.style.display = "block";
 				}
 
 				word_control.m_oThumbnailsContainer.Resize(__w, __h, word_control);
@@ -6465,9 +6324,6 @@ function CNotesDrawer(page)
 		{
 			g.darkModeOverride();
 		}
-
-		if (AscCommon.AscBrowser.isCustomScalingAbove2())
-			g.IsRetina = true;
 
 		g.SaveGrState();
 

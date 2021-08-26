@@ -311,7 +311,7 @@ ParaComment.prototype =
     {
     },
 
-    Shift_Range : function(Dx, Dy, _CurLine, _CurRange)
+    Shift_Range : function(Dx, Dy, _CurLine, _CurRange, _CurPage)
     {
     },
 //-----------------------------------------------------------------------------------

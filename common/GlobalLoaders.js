@@ -73,6 +73,9 @@
 
         this.IsLoadDocumentFonts2 = false;
 
+        this.check_loaded_timer_id = -1;
+        this.endLoadingCallback = null;
+
         this.put_Api = function(_api)
         {
             this.Api = _api;
@@ -257,8 +260,14 @@
             return false;
         };
 
-        this.LoadDocumentFonts2 = function(_fonts)
+        this.LoadDocumentFonts2 = function(_fonts, _blockType, _callback)
         {
+            if (this.isWorking())
+                return;
+
+            this.endLoadingCallback = (undefined !== _callback) ? _callback : null;
+
+            this.BlockOperationType = _blockType;
             // сначала заполняем массив this.fonts_loading объекстами fontinfo
             for (var i in _fonts)
             {
@@ -266,7 +275,7 @@
             }
 
             if (null == this.ThemeLoader)
-                this.Api.asyncFontsDocumentStartLoaded();
+                this.Api.asyncFontsDocumentStartLoaded(this.BlockOperationType);
             else
                 this.ThemeLoader.asyncFontsStartLoaded();
 
@@ -279,10 +288,17 @@
         {
             if (0 == this.fonts_loading.length)
             {
-                if (null == this.ThemeLoader)
-                    this.Api.asyncFontsDocumentEndLoaded();
+                if (null != this.endLoadingCallback)
+                {
+                    this.endLoadingCallback.call(this.Api);
+                    this.endLoadingCallback = null;
+                }
+                else if (null == this.ThemeLoader)
+                    this.Api.asyncFontsDocumentEndLoaded(this.BlockOperationType);
                 else
                     this.ThemeLoader.asyncFontsEndLoaded();
+
+                this.BlockOperationType = undefined;
 
                 if (this.bIsLoadDocumentFirst === true)
                 {
@@ -305,8 +321,7 @@
 
             if (IsNeed)
             {
-                setTimeout(oThis._check_loaded, 50);
-                //setTimeout(__global_check_load_fonts, 50);
+                this.check_loaded_timer_id = setTimeout(oThis._check_loaded, 50);
             }
             else
             {
@@ -322,10 +337,14 @@
             }
         };
 
+        this.isWorking = function()
+        {
+            return (this.check_loaded_timer_id !== -1) ? true : false;
+        };
+
         this._check_loaded = function()
         {
-            var IsNeed = false;
-
+            oThis.check_loaded_timer_id = -1;
             if (0 == oThis.fonts_loading.length)
             {
                 // значит асинхронно удалилось
@@ -337,7 +356,7 @@
             var IsNeed = current.CheckFontLoadStyles(oThis);
             if (true === IsNeed)
             {
-                setTimeout(oThis._check_loaded, 50);
+                oThis.check_loaded_timer_id = setTimeout(oThis._check_loaded, 50);
             }
             else
             {
@@ -495,8 +514,23 @@
             }
         };
         
-        this.LoadDocumentImages = function(_images)
+        this.LoadDocumentImages = function(_images, isCheckExists)
         {
+            if (isCheckExists)
+            {
+                for (var i = _images.length - 1; i >= 0; i--)
+                {
+                    var _id = AscCommon.getFullImageSrc2(_images[i]);
+                    if (this.map_image_index[_id] && (this.map_image_index[_id].Status === ImageLoadStatus.Complete))
+                    {
+                        _images.splice(i, 1);
+                    }
+                }
+
+                if (0 === _images.length)
+                    return;
+            }
+
             // сначала заполним массив
             if (this.ThemeLoader == null)
                 this.Api.asyncImagesDocumentStartLoaded();
@@ -542,6 +576,14 @@
 
         this._LoadImages = function()
         {
+			for (var i = 0; i < this.images_loading.length; i++)
+            {
+				var _id = this.images_loading[i];
+				if (this.map_image_index[_id] && (this.map_image_index[_id].Status === ImageLoadStatus.Complete))
+                {
+                    this.images_loading.splice(i, 1);
+                }
+            }
 			var _count_images = this.images_loading.length;
 
             if (0 == _count_images)
@@ -754,6 +796,7 @@
 
     //---------------------------------------------------------export---------------------------------------------------
     window['AscCommon'] = window['AscCommon'] || {};
+    window['AscCommon'].CGlobalFontLoader = CGlobalFontLoader;
     window['AscCommon'].g_font_loader = new CGlobalFontLoader();
     window['AscCommon'].g_image_loader = new CGlobalImageLoader();
     window['AscCommon'].g_flow_anchor = g_flow_anchor;

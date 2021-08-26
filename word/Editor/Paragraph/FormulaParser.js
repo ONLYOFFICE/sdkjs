@@ -1331,7 +1331,7 @@
         CFunctionNode.call(this, parseQueue);
     }
     CSUMFunctionNode.prototype = Object.create(CFunctionNode.prototype);
-    CSUMFunctionNode.prototype.minArgumentsCount = 2;
+    CSUMFunctionNode.prototype.minArgumentsCount = 1;
     CSUMFunctionNode.prototype.maxArgumentsCount = +Infinity;
     CSUMFunctionNode.prototype.listSupport = function () {
         return true;
@@ -2088,6 +2088,9 @@
                                 return;
                             }
                         }
+                    } else if (oLastFunction instanceof CSUMFunctionNode && oLastFunction.operands.length === 1 && oLastFunction.operands[0] instanceof CNumberNode) {
+                      this.setError(ERROR_TYPE_SYNTAX_ERROR, this.getErrorString(nStartPos, this.pos));
+                      return;
                     }
                     oLastFunction.argumentsCount = oLastFunction.operands.length;
                     oToken = aStack.pop();

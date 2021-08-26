@@ -47,7 +47,8 @@ function (window, undefined) {
 var c_oAscConfirm = {
   ConfirmReplaceRange: 0,
   ConfirmPutMergeRange: 1,
-  ConfirmReplaceFormulaInTable: 2
+  ConfirmReplaceFormulaInTable: 2,
+  ConfirmChangeProtectRange: 3
 };
 
 var c_oAscMergeOptions = {
@@ -135,7 +136,8 @@ var c_oAscMouseMoveType = {
   ResizeColumn: 4,
   ResizeRow: 5,
   Filter: 6,
-  Tooltip: 7
+  Tooltip: 7,
+  ForeignSelect: 8
 };
 
 var c_oAscMouseMoveLockedObjectType = {
@@ -495,12 +497,50 @@ var c_oAscPopUpSelectorType = {
     icons: 3,
     format: 4
   };
+  
+  var c_oAscSheetProtectType = {
+    objects: 1,
+    scenarios: 2,
+    formatCells: 3,
+    formatColumns: 4,
+    formatRows: 5,
+    insertColumns: 6,
+    insertRows: 7,
+    insertHyperlinks: 8,
+    deleteColumns: 9,
+    deleteRows: 10,
+    selectLockedCells: 11,
+    sort: 12,
+    autoFilter: 13,
+    pivotTables: 14,
+    selectUnlockedCells: 15
+  };
 
   var c_oAscFrozenPaneAddType = {
     firstRow: 1,
     firstCol: 2
   };
 
+  var ETableType = {
+	  queryTable: 0,
+	  worksheet: 1,
+	  xml: 2
+  };
+
+	var c_oAscWorkbookProtectType = {
+		lockStructure: 0,
+		lockWindows: 1,
+		lockRevisions: 2
+	};
+
+	var c_oAscSelectionSortExpand = {
+		expandAndNotShowMessage: 0,
+		notExpandAndNotShowMessage: 1,
+		showExpandMessage: 2,
+		showLockMessage: 3
+	};
+
+  
   //----------------------------------------------------------export----------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
   window['AscCommonExcel'].c_oAscDrawDepOptions = c_oAscDrawDepOptions;
@@ -549,6 +589,8 @@ var c_oAscPopUpSelectorType = {
   prot = c_oAscConfirm;
   prot['ConfirmReplaceRange'] = prot.ConfirmReplaceRange;
   prot['ConfirmPutMergeRange'] = prot.ConfirmPutMergeRange;
+  prot['ConfirmChangeProtectRange'] = prot.ConfirmChangeProtectRange;
+
   prot['ConfirmReplaceFormulaInTable'] = prot.ConfirmReplaceFormulaInTable;
   window['Asc']['c_oAscMergeOptions'] = window['Asc'].c_oAscMergeOptions = c_oAscMergeOptions;
   prot = c_oAscMergeOptions;
@@ -611,6 +653,7 @@ var c_oAscPopUpSelectorType = {
   prot['ResizeRow'] = prot.ResizeRow;
   prot['Filter'] = prot.Filter;
   prot['Tooltip'] = prot.Tooltip;
+  prot['ForeignSelect'] = prot.ForeignSelect;
   window['Asc']['c_oAscMouseMoveLockedObjectType'] = window['Asc'].c_oAscMouseMoveLockedObjectType = c_oAscMouseMoveLockedObjectType;
   prot = c_oAscMouseMoveLockedObjectType;
   prot['None'] = prot.None;
@@ -803,13 +846,42 @@ var c_oAscPopUpSelectorType = {
   prot['colorScale'] = prot.colorScale;
   prot['icons'] = prot.icons;
   prot['format'] = prot.format;
+  
+  window['Asc']['c_oAscSheetProtectType'] = window['Asc'].c_oAscSheetProtectType = c_oAscSheetProtectType;
+  prot = c_oAscSheetProtectType;
+  prot['objects'] = prot.objects;
+  prot['scenarios'] = prot.scenarios;
+  prot['formatCells'] = prot.formatCells;
+  prot['formatColumns'] = prot.formatColumns;
+  prot['formatRows'] = prot.formatRows;
+  prot['insertColumns'] = prot.insertColumns;
+  prot['insertRows'] = prot.insertRows;
+  prot['insertHyperlinks'] = prot.insertHyperlinks;
+  prot['deleteColumns'] = prot.deleteColumns;
+  prot['deleteRows'] = prot.deleteRows;
+  prot['deleteRows'] = prot.deleteRows;
+  prot['selectLockedCells'] = prot.selectLockedCells;
+  prot['sort'] = prot.sort;
+  prot['autoFilter'] = prot.autoFilter;
+  prot['pivotTables'] = prot.pivotTables;
+  prot['selectUnlockedCells'] = prot.selectUnlockedCells;
 
   window['Asc']['c_oAscFrozenPaneAddType'] = window['Asc'].c_oAscFrozenPaneAddType = c_oAscFrozenPaneAddType;
   prot = c_oAscFrozenPaneAddType;
   prot['firstRow'] = prot.firstRow;
   prot['firstCol'] = prot.firstCol;
+  window['Asc']['c_oAscWorkbookProtectType'] = window['Asc'].c_oAscWorkbookProtectType = c_oAscWorkbookProtectType;
+  prot = c_oAscWorkbookProtectType;
+  prot['lockStructure'] = prot.lockStructure;
+  prot['lockWindows'] = prot.lockWindows;
+  prot['lockRevisions'] = prot.lockRevisions;
 
-
+  window['Asc']['c_oAscSelectionSortExpand'] = window['Asc'].c_oAscSelectionSortExpand = c_oAscSelectionSortExpand;
+  prot = c_oAscSelectionSortExpand;
+  prot['expandAndNotShowMessage'] = prot.expandAndNotShowMessage;
+  prot['notExpandAndNotShowMessage'] = prot.notExpandAndNotShowMessage;
+  prot['showExpandMessage'] = prot.showExpandMessage;
+  prot['showLockMessage'] = prot.showLockMessage;
 
 
 })(window);

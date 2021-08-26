@@ -252,9 +252,9 @@ ParaField.prototype.Remove = function(nDirection, bOnAddText)
 		this.SetValue(sDefaultText);
 	}
 };
-ParaField.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange)
+ParaField.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 {
-	CParagraphContentWithParagraphLikeContent.prototype.Shift_Range.call(this, Dx, Dy, _CurLine, _CurRange);
+	CParagraphContentWithParagraphLikeContent.prototype.Shift_Range.call(this, Dx, Dy, _CurLine, _CurRange, _CurPage);
 
 	var CurLine = _CurLine - this.StartLine;
 	var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );

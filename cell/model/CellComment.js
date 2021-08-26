@@ -921,6 +921,10 @@ CCellCommentator.prototype.findComment = function(id) {
 };
 
 CCellCommentator.prototype.addComment = function(comment, bIsNotUpdate) {
+	if (this.model.getSheetProtection && this.model.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
+		return;
+	}
+
 	var t = this;
 	var oComment = comment;
 	var bChange = false;
@@ -934,10 +938,9 @@ CCellCommentator.prototype.addComment = function(comment, bIsNotUpdate) {
 			oComment.asc_putRow(activeCell.row);
 		}
 
-		var existComment = this.getComment(oComment.nCol, oComment.nRow, false);
+		var existComment = this.getComment(oComment.nCol, oComment.nRow, false, true);
 		if (existComment) {
-			oComment = existComment;
-			bChange = true;
+			return;
 		}
 	}
 
@@ -958,6 +961,10 @@ CCellCommentator.prototype.changeComment = function(id, oComment, bChangeCoords,
 	var comment = this.findComment(id);
 	if (null === comment)
 		return;
+
+	if (this.model.getSheetProtection && this.model.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
+		return;
+	}
 
 	var onChangeCommentCallback = function (isSuccess) {
 		if (false === isSuccess)
@@ -1021,6 +1028,14 @@ CCellCommentator.prototype.removeComment = function(id, bNoEvent, bNoAscLock, bN
 	if (null === comment)
 		return;
 
+	if (this.model.getSheetProtection && this.model.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
+		return;
+	}
+
+	if (!AscCommon.UserInfoParser.canViewComment(comment.sUserName)) {
+		return;
+	}
+
 	var onRemoveCommentCallback = function (isSuccess) {
 		if (false === isSuccess)
 			return;
@@ -1036,7 +1051,7 @@ CCellCommentator.prototype.removeComment = function(id, bNoEvent, bNoAscLock, bN
 
 // Extra functions
 
-	CCellCommentator.prototype.getComment = function (col, row, excludeHidden) {
+	CCellCommentator.prototype.getComment = function (col, row, excludeHidden, notCheckCanView) {
 		// Array of root items
 		var comment = null;
 		var _col = col, _row = row, mergedRange = null;
@@ -1068,7 +1083,9 @@ CCellCommentator.prototype.removeComment = function(id, bNoEvent, bNoAscLock, bN
 					}
 				}
 				if (comment) {
-					return ((excludeHidden && this._checkHidden(comment)) || !AscCommon.UserInfoParser.canViewComment(comment.sUserName)) ? null : comment;
+					var _isHidden = excludeHidden && this._checkHidden(comment);
+					var _canView = notCheckCanView || (!notCheckCanView && AscCommon.UserInfoParser.canViewComment(comment.sUserName));
+					return (_isHidden || !_canView) ? null : comment;
 				}
 			}
 		}
@@ -1121,6 +1138,10 @@ CCellCommentator.prototype._addComment = function (oComment, bChange, bIsNotUpda
 
 	CCellCommentator.prototype._removeComment = function (comment, bNoEvent, isDraw) {
 		if (!comment) {
+			return;
+		}
+
+		if (!AscCommon.UserInfoParser.canViewComment(comment.sUserName)) {
 			return;
 		}
 
@@ -1190,8 +1211,13 @@ CCellCommentator.prototype.isMissComments = function (range) {
 CCellCommentator.prototype.mergeComments = function (range) {
 	var aComments = this.model.aComments;
 	var i, length, deleteComments = [], oComment, r1 = range.r1, c1 = range.c1, mergeComment = null;
+	var containsNotCanViewComment;
 	for (i = 0, length = aComments.length; i < length; ++i) {
 		oComment = aComments[i];
+		if (!AscCommon.UserInfoParser.canViewComment(oComment.sUserName)) {
+			containsNotCanViewComment = true;
+			continue;
+		}
 		if (range.contains(oComment.nCol, oComment.nRow)) {
 			if (null === mergeComment)
 				mergeComment = oComment;
@@ -1201,6 +1227,10 @@ CCellCommentator.prototype.mergeComments = function (range) {
 			} else
 				deleteComments.push(oComment);
 		}
+	}
+
+	if (containsNotCanViewComment && mergeComment) {
+		mergeComment = null;
 	}
 
 	if (mergeComment && (mergeComment.nCol !== c1 || mergeComment.nRow !== r1)) {
@@ -1365,6 +1395,16 @@ CCellCommentator.prototype.Redo = function(type, data) {
 	};
 	CCellCommentator.prototype.showSolved = function () {
 		return this.model.workbook.handlers.trigger('showSolved');
+	};
+	CCellCommentator.prototype.isContainsOtherComments = function (range) {
+		var aComments = this.model.aComments;
+		for (var i = 0; i < aComments.length; ++i) {
+			var comment = aComments[i];
+			if (range.contains(comment.nCol, comment.nRow) && !AscCommon.UserInfoParser.canViewComment(comment.sUserName)) {
+				return true;
+			}
+		}
+		return false;
 	};
 
 	//----------------------------------------------------------export----------------------------------------------------

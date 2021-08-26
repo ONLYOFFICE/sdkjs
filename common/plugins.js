@@ -1047,7 +1047,7 @@
 						var _script = "(function(){ var Api = window.g_asc_plugins.api;\n" + value + "\n})();";
 						eval(_script);
 					}
-					else if (pluginData.getAttribute("resize") || window.g_asc_plugins.api.asc_canPaste())
+					else if (!window.g_asc_plugins.api.isLongAction() && (pluginData.getAttribute("resize") || window.g_asc_plugins.api.asc_canPaste()))
 					{
 						window.g_asc_plugins.api._beforeEvalCommand();
 

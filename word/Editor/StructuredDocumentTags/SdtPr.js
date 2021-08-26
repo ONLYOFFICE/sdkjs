@@ -70,7 +70,8 @@ function CSdtPr()
 	this.Text      = false;
 	this.Temporary = false;
 
-	this.FormPr = undefined;
+	this.FormPr        = undefined;
+	this.PictureFormPr = undefined;
 }
 
 CSdtPr.prototype.Copy = function()
@@ -101,6 +102,9 @@ CSdtPr.prototype.Copy = function()
 
 	if (this.TextForm)
 		oPr.TextForm = this.TextForm.Copy();
+
+	if (this.PictureFormPr)
+		oPr.PictureFormPr = this.PictureFormPr.Copy();
 
 	oPr.TextPr = this.TextPr.Copy();
 
@@ -247,6 +251,12 @@ CSdtPr.prototype.Write_ToBinary = function(Writer)
 		Flags |= 1048576;
 	}
 
+	if (undefined !== this.PictureFormPr)
+	{
+		this.PictureFormPr.WriteToBinary(Writer);
+		Flags |= 2097152;
+	}
+
 	var EndPos = Writer.GetCurPosition();
 	Writer.Seek(StartPos);
 	Writer.WriteLong(Flags);
@@ -339,6 +349,12 @@ CSdtPr.prototype.Read_FromBinary = function(Reader)
 		this.TextForm = new CSdtTextFormPr();
 		this.TextForm.ReadFromBinary(oReader);
 	}
+
+	if (Flags & 2097152)
+	{
+		this.PictureFormPr = new CSdtPictureFormPr();
+		this.PictureFormPr.ReadFromBinary(oReader);
+	}
 };
 CSdtPr.prototype.IsBuiltInDocPart = function()
 {
@@ -374,11 +390,12 @@ function CContentControlPr(nType)
 	this.Appearance = Asc.c_oAscSdtAppearance.Frame;
 	this.Color      = undefined;
 
-	this.CheckBoxPr = undefined;
-	this.ComboBoxPr = undefined;
-	this.DropDownPr = undefined;
-	this.DateTimePr = undefined;
-	this.TextFormPr = undefined;
+	this.CheckBoxPr    = undefined;
+	this.ComboBoxPr    = undefined;
+	this.DropDownPr    = undefined;
+	this.DateTimePr    = undefined;
+	this.TextFormPr    = undefined;
+	this.PictureFormPr = undefined;
 
 	this.PlaceholderText = undefined;
 
@@ -435,16 +452,30 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 		this.DateTimePr = oContentControl.GetDatePickerPr().Copy();
 	else if (oContentControl.IsTextForm())
 		this.TextFormPr = oContentControl.GetTextFormPr().Copy();
+	else if (oContentControl.IsPictureForm())
+		this.PictureFormPr = oContentControl.GetPictureFormPr().Copy();
 
 	this.PlaceholderText = oContentControl.GetPlaceholderText();
 
 	if (oContentControl.IsForm())
+	{
 		this.FormPr = oContentControl.GetFormPr().Copy();
+		this.FormPr.SetFixed(oContentControl.IsFixedForm());
+	}
 };
 CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 {
 	if (!oContentControl)
 		return;
+
+	if (undefined !== this.FormPr
+		&& oContentControl.IsRadioButton()
+		&& oContentControl.IsFormRequired() !== this.FormPr.GetRequired()
+		&& oContentControl.GetLogicDocument())
+	{
+		oContentControl.GetLogicDocument().OnChangeRadioRequired(oContentControl.GetRadioButtonGroupKey(), this.FormPr.GetRequired());
+	}
+
 
 	if (undefined !== this.Tag)
 		oContentControl.SetTag(this.Tag);
@@ -489,13 +520,28 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		oContentControl.ApplyDatePickerPr(this.DateTimePr);
 
 	if (undefined !== this.TextFormPr && oContentControl.IsInlineLevel())
+	{
+		var isCombChanged = (!oContentControl.Pr.TextForm || this.TextFormPr.Comb !== oContentControl.Pr.TextForm.Comb);
+		if (oContentControl.IsFixedForm() && isCombChanged)
+			oContentControl.UpdateFixedFormCombWidthByFormSize(this.TextFormPr);
+
 		oContentControl.SetTextFormPr(this.TextFormPr);
+
+		if (oContentControl.IsFixedForm() && !isCombChanged)
+			oContentControl.UpdateFixedFormSizeByCombWidth();
+	}
 
 	if (undefined !== this.PlaceholderText)
 		oContentControl.SetPlaceholderText(this.PlaceholderText);
 
 	if (undefined !== this.FormPr)
 		oContentControl.SetFormPr(this.FormPr);
+
+	if (undefined !== this.PictureFormPr && oContentControl.IsInlineLevel())
+	{
+		oContentControl.SetPictureFormPr(this.PictureFormPr);
+		oContentControl.UpdatePictureFormLayout();
+	}
 };
 CContentControlPr.prototype.GetId = function()
 {
@@ -641,6 +687,14 @@ CContentControlPr.prototype.GetFormPr = function()
 CContentControlPr.prototype.SetFormPr = function(oPr)
 {
 	this.FormPr = oPr;
+};
+CContentControlPr.prototype.SetPictureFormPr = function(oPr)
+{
+	this.PictureFormPr = oPr;
+};
+CContentControlPr.prototype.GetPictureFormPr = function()
+{
+	return this.PictureFormPr;
 };
 
 /**
@@ -910,6 +964,7 @@ function CSdtComboBoxPr()
 {
 	this.ListItems = [];
 	this.LastValue = -1;
+	this.AutoFit   = false;
 }
 CSdtComboBoxPr.prototype.Copy = function()
 {
@@ -922,6 +977,8 @@ CSdtComboBoxPr.prototype.Copy = function()
 	{
 		oList.ListItems.push(this.ListItems[nIndex].Copy());
 	}
+
+	oList.AutoFit = this.AutoFit;
 
 	return oList;
 };
@@ -976,6 +1033,7 @@ CSdtComboBoxPr.prototype.WriteToBinary = function(oWriter)
 	{
 		this.ListItems[nIndex].WriteToBinary(oWriter);
 	}
+	oWriter.WriteBool(this.AutoFit);
 };
 CSdtComboBoxPr.prototype.ReadFromBinary = function(oReader)
 {
@@ -988,6 +1046,7 @@ CSdtComboBoxPr.prototype.ReadFromBinary = function(oReader)
 		oItem.ReadFromBinary(oReader);
 		this.ListItems.push(oItem);
 	}
+	this.AutoFit = oReader.GetBool();
 };
 CSdtComboBoxPr.prototype.Write_ToBinary = function(oWriter)
 {
@@ -1024,6 +1083,14 @@ CSdtComboBoxPr.prototype.FindByText = function(sValue)
 	}
 
 	return -1;
+};
+CSdtComboBoxPr.prototype.GetAutoFit = function()
+{
+	return this.AutoFit;
+};
+CSdtComboBoxPr.prototype.SetAutoFit = function(isAutoFit)
+{
+	this.AutoFit = isAutoFit;
 };
 
 /**
@@ -1162,6 +1229,8 @@ function CSdtTextFormPr(nMax, isComb, nWidth, nSymbol, sFont, oCombBorder)
 	this.CombPlaceholderSymbol = nSymbol;
 	this.CombPlaceholderFont   = sFont;
 	this.CombBorder            = undefined !== oCombBorder ? oCombBorder.Copy() : undefined;
+	this.MultiLine             = true;
+	this.AutoFit               = false;
 }
 CSdtTextFormPr.prototype.Copy = function()
 {
@@ -1173,6 +1242,8 @@ CSdtTextFormPr.prototype.Copy = function()
 	oText.CombPlaceholderSymbol = this.CombPlaceholderSymbol;
 	oText.CombPlaceholderFont   = this.CombPlaceholderFont;
 	oText.CombBorder            = this.CombBorder ? this.CombBorder.Copy() : undefined;
+	oText.MultiLine             = this.MultiLine;
+	oText.AutoFit               = this.AutoFit;
 
 	return oText;
 };
@@ -1184,6 +1255,8 @@ CSdtTextFormPr.prototype.IsEqual = function(oOther)
 		&& this.CombPlaceholderSymbol === oOther.CombPlaceholderSymbol
 		&& this.CombPlaceholderFont === oOther.CombPlaceholderFont
 		&& ((!this.CombBorder && !oOther) || (this.CombBorder && this.CombBorder.IsEqual(oOther)))
+		&& this.MultiLine === oOther.MultiLine
+		&& this.AutoFit === oOther.AutoFit
 	);
 };
 CSdtTextFormPr.prototype.WriteToBinary = function(oWriter)
@@ -1221,6 +1294,9 @@ CSdtTextFormPr.prototype.WriteToBinary = function(oWriter)
 	{
 		oWriter.WriteBool(false);
 	}
+
+	oWriter.WriteBool(this.MultiLine);
+	oWriter.WriteBool(this.AutoFit);
 };
 CSdtTextFormPr.prototype.ReadFromBinary = function(oReader)
 {
@@ -1239,6 +1315,9 @@ CSdtTextFormPr.prototype.ReadFromBinary = function(oReader)
 		this.CombBorder = new CDocumentBorder();
 		this.CombBorder.ReadFromBinary(oReader);
 	}
+
+	this.MultiLine = oReader.GetBool();
+	this.AutoFit   = oReader.GetBool();
 };
 CSdtTextFormPr.prototype.Write_ToBinary = function(oWriter)
 {
@@ -1315,6 +1394,22 @@ CSdtTextFormPr.prototype.IsComb = function()
 {
 	return !!(this.Comb && undefined !== this.MaxCharacters && this.MaxCharacters <= 1000);
 };
+CSdtTextFormPr.prototype.GetMultiLine = function()
+{
+	return (this.MultiLine && !this.IsComb());
+};
+CSdtTextFormPr.prototype.SetMultiLine = function(isMultiLine)
+{
+	this.MultiLine = isMultiLine;
+};
+CSdtTextFormPr.prototype.GetAutoFit = function()
+{
+	return this.AutoFit;
+};
+CSdtTextFormPr.prototype.SetAutoFit = function(isAutoFit)
+{
+	this.AutoFit = isAutoFit;
+};
 
 function CSdtFormPr(sKey, sLabel, sHelpText, isRequired)
 {
@@ -1322,6 +1417,9 @@ function CSdtFormPr(sKey, sLabel, sHelpText, isRequired)
 	this.Label    = sLabel;
 	this.HelpText = sHelpText;
 	this.Required = isRequired;
+	this.Fixed    = false;
+	this.Border   = undefined;
+	this.Shd      = undefined;
 }
 CSdtFormPr.prototype.Copy = function()
 {
@@ -1332,11 +1430,22 @@ CSdtFormPr.prototype.Copy = function()
 	oFormPr.HelpText = this.HelpText;
 	oFormPr.Required = this.Required;
 
+	if (this.Border)
+		oFormPr.Border = this.Border.Copy();
+
+	if (this.Shd)
+		oFormPr.Shd = this.Shd.Copy();
+
 	return oFormPr;
 };
 CSdtFormPr.prototype.IsEqual = function(oOther)
 {
-	return (this.Key === oOther.Key && this.Label === oOther.Label && this.HelpText === oOther.HelpText && this.Required === oOther.Required);
+	return (this.Key === oOther.Key
+		&& this.Label === oOther.Label
+		&& this.HelpText === oOther.HelpText
+		&& this.Required === oOther.Required
+		&& IsEqualStyleObjects(this.Border, oOther.Border)
+		&& IsEqualStyleObjects(this.Shd, oOther.Shd));
 };
 CSdtFormPr.prototype.WriteToBinary = function(oWriter)
 {
@@ -1368,6 +1477,18 @@ CSdtFormPr.prototype.WriteToBinary = function(oWriter)
 		nFlags |= 8;
 	}
 
+	if (undefined !== this.Border)
+	{
+		this.Border.WriteToBinary(oWriter);
+		nFlags |= 16;
+	}
+
+	if (undefined !== this.Shd)
+	{
+		this.Shd.WriteToBinary(oWriter)
+		nFlags |= 32;
+	}
+
 	var nEndPos = oWriter.GetCurPosition();
 	oWriter.Seek(nStartPos);
 	oWriter.WriteLong(nFlags);
@@ -1388,6 +1509,18 @@ CSdtFormPr.prototype.ReadFromBinary = function(oReader)
 
 	if (nFlags & 8)
 		this.Required = oReader.GetBool();
+
+	if (nFlags & 16)
+	{
+		this.Border = new CDocumentBorder();
+		this.Border.ReadFromBinary(oReader);
+	}
+
+	if (nFlags & 32)
+	{
+		this.Shd = new CDocumentShd();
+		this.Shd.ReadFromBinary(oReader);
+	}
 };
 CSdtFormPr.prototype.Write_ToBinary = function(oWriter)
 {
@@ -1429,7 +1562,149 @@ CSdtFormPr.prototype.SetRequired = function(isRequired)
 {
 	this.Required = isRequired;
 };
+CSdtFormPr.prototype.GetFixed = function()
+{
+	return this.Fixed;
+};
+CSdtFormPr.prototype.SetFixed = function(isFixed)
+{
+	this.Fixed = isFixed;
+};
+CSdtFormPr.prototype.GetBorder = function()
+{
+	return this.Border;
+};
+CSdtFormPr.prototype.GetAscBorder = function()
+{
+	if (!this.Border)
+		return undefined;
 
+	return (new Asc.asc_CTextBorder(this.Border));
+};
+CSdtFormPr.prototype.SetAscBorder = function(oAscBorder)
+{
+	if (!oAscBorder)
+	{
+		this.Border = undefined;
+	}
+	else
+	{
+		this.Border = new CDocumentBorder();
+		this.Border.Set_FromObject(oAscBorder);
+	}
+};
+CSdtFormPr.prototype.SetShd = function()
+{
+	return this.Shd;
+};
+CSdtFormPr.prototype.GetAscShd = function()
+{
+	if (!this.Shd)
+		return undefined;
+
+	return (new Asc.asc_CParagraphShd(this.Shd));
+};
+CSdtFormPr.prototype.SetAscShd = function(oAscShd)
+{
+	if (!oAscShd)
+	{
+		this.Shd = undefined;
+	}
+	else
+	{
+		this.Shd = new CDocumentShd();
+		this.Shd.Set_FromObject(oAscShd);
+	}
+};
+
+function CSdtPictureFormPr()
+{
+	this.ScaleFlag   = Asc.c_oAscPictureFormScaleFlag.Always;
+	this.Proportions = true;
+	this.Borders     = false;
+	this.ShiftX      = 0.5; // 0..1
+	this.ShiftY      = 0.5; // 0..1
+}
+CSdtPictureFormPr.prototype.Copy = function()
+{
+	var oFormPr = new CSdtPictureFormPr();
+
+	oFormPr.ScaleFlag   = this.ScaleFlag;
+	oFormPr.Proportions = this.Proportions;
+	oFormPr.Borders     = this.Borders;
+	oFormPr.ShiftX      = this.ShiftX;
+	oFormPr.ShiftY      = this.ShiftY;
+
+	return oFormPr;
+};
+CSdtPictureFormPr.prototype.IsEqual = function(oOther)
+{
+	return (this.ScaleFlag === oOther.ScaleFlag && this.Proportions === oOther.Proportions && this.Borders === oOther.Borders && Math.abs(this.ShiftX - oOther.ShiftX) < 0.001 && Math.abs(this.ShiftY - oOther.ShiftY) < 0.001);
+};
+CSdtPictureFormPr.prototype.WriteToBinary = function(oWriter)
+{
+	oWriter.WriteLong(this.ScaleFlag);
+	oWriter.WriteBool(this.Proportions);
+	oWriter.WriteBool(this.Borders);
+	oWriter.WriteDouble(this.ShiftX);
+	oWriter.WriteDouble(this.ShiftY);
+};
+CSdtPictureFormPr.prototype.ReadFromBinary = function(oReader)
+{
+	this.ScaleFlag   = oReader.GetLong();
+	this.Proportions = oReader.GetBool();
+	this.Borders     = oReader.GetBool();
+	this.ShiftX      = oReader.GetDouble();
+	this.ShiftY      = oReader.GetDouble();
+};
+CSdtPictureFormPr.prototype.Write_ToBinary = function(oWriter)
+{
+	this.WriteToBinary(oWriter);
+};
+CSdtPictureFormPr.prototype.Read_FromBinary = function(oReader)
+{
+	this.ReadFromBinary(oReader);
+};
+CSdtPictureFormPr.prototype.GetScaleFlag = function()
+{
+	return this.ScaleFlag;
+};
+CSdtPictureFormPr.prototype.SetScaleFlag = function(nFlag)
+{
+	this.ScaleFlag = nFlag;
+};
+CSdtPictureFormPr.prototype.IsConstantProportions = function()
+{
+	return this.Proportions;
+};
+CSdtPictureFormPr.prototype.SetConstantProportions = function(isConstant)
+{
+	this.Proportions = isConstant;
+};
+CSdtPictureFormPr.prototype.IsRespectBorders = function()
+{
+	return this.Borders;
+};
+CSdtPictureFormPr.prototype.SetRespectBorders = function(isRespect)
+{
+	this.Borders = isRespect;
+};
+CSdtPictureFormPr.prototype.SetShiftX = function(nX)
+{
+	this.ShiftX = nX;
+};
+CSdtPictureFormPr.prototype.GetShiftX = function()
+{
+	return this.ShiftX;
+};
+CSdtPictureFormPr.prototype.SetShiftY = function(nY)
+{
+	this.ShiftY = nY;
+};
+CSdtPictureFormPr.prototype.GetShiftY = function()
+{
+	return this.ShiftY;
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord']        = window['AscCommonWord'] || {};
@@ -1469,6 +1744,8 @@ CContentControlPr.prototype['get_PlaceholderText']    = CContentControlPr.protot
 CContentControlPr.prototype['put_PlaceholderText']    = CContentControlPr.prototype.SetPlaceholderText;
 CContentControlPr.prototype['get_FormPr']             = CContentControlPr.prototype.GetFormPr;
 CContentControlPr.prototype['put_FormPr']             = CContentControlPr.prototype.SetFormPr;
+CContentControlPr.prototype['get_PictureFormPr']      = CContentControlPr.prototype.GetPictureFormPr;
+CContentControlPr.prototype['put_PictureFormPr']      = CContentControlPr.prototype.SetPictureFormPr;
 
 window['AscCommon'].CSdtCheckBoxPr    = CSdtCheckBoxPr;
 window['AscCommon']['CSdtCheckBoxPr'] = CSdtCheckBoxPr;
@@ -1495,6 +1772,8 @@ CSdtComboBoxPr.prototype['get_TextByValue']     = CSdtComboBoxPr.prototype.GetTe
 CSdtComboBoxPr.prototype['get_ItemsCount']      = CSdtComboBoxPr.prototype.GetItemsCount;
 CSdtComboBoxPr.prototype['get_ItemDisplayText'] = CSdtComboBoxPr.prototype.GetItemDisplayText;
 CSdtComboBoxPr.prototype['get_ItemValue']       = CSdtComboBoxPr.prototype.GetItemValue;
+CSdtComboBoxPr.prototype['put_AutoFit']         = CSdtComboBoxPr.prototype.GetAutoFit;
+CSdtComboBoxPr.prototype['put_AutoFit']         = CSdtComboBoxPr.prototype.SetAutoFit;
 
 window['AscCommon'].CSdtDatePickerPr    = CSdtDatePickerPr;
 window['AscCommon']['CSdtDatePickerPr'] = CSdtDatePickerPr;
@@ -1521,6 +1800,11 @@ CSdtFormPr.prototype['get_HelpText'] = CSdtFormPr.prototype.GetHelpText;
 CSdtFormPr.prototype['put_HelpText'] = CSdtFormPr.prototype.SetHelpText;
 CSdtFormPr.prototype['get_Required'] = CSdtFormPr.prototype.GetRequired;
 CSdtFormPr.prototype['put_Required'] = CSdtFormPr.prototype.SetRequired;
+CSdtFormPr.prototype['get_Fixed']    = CSdtFormPr.prototype.GetFixed;
+CSdtFormPr.prototype['get_Border']   = CSdtFormPr.prototype.GetAscBorder;
+CSdtFormPr.prototype['put_Border']   = CSdtFormPr.prototype.SetAscBorder;
+CSdtFormPr.prototype['get_Shd']      = CSdtFormPr.prototype.GetAscShd;
+CSdtFormPr.prototype['put_Shd']      = CSdtFormPr.prototype.SetAscShd;
 
 window['AscCommon'].CSdtTextFormPr    = CSdtTextFormPr;
 window['AscCommon']['CSdtTextFormPr'] = CSdtTextFormPr;
@@ -1537,3 +1821,21 @@ CSdtTextFormPr.prototype['get_PlaceHolderFont']   = CSdtTextFormPr.prototype.Get
 CSdtTextFormPr.prototype['put_PlaceHolderFont']   = CSdtTextFormPr.prototype.SetPlaceHolderFont;
 CSdtTextFormPr.prototype['get_CombBorder']        = CSdtTextFormPr.prototype.GetAscCombBorder;
 CSdtTextFormPr.prototype['put_CombBorder']        = CSdtTextFormPr.prototype.SetAscCombBorder;
+CSdtTextFormPr.prototype['get_MultiLine']         = CSdtTextFormPr.prototype.GetMultiLine;
+CSdtTextFormPr.prototype['put_MultiLine']         = CSdtTextFormPr.prototype.SetMultiLine;
+CSdtTextFormPr.prototype['get_AutoFit']           = CSdtTextFormPr.prototype.GetAutoFit;
+CSdtTextFormPr.prototype['put_AutoFit']           = CSdtTextFormPr.prototype.SetAutoFit;
+
+window['AscCommon'].CSdtPictureFormPr    = CSdtPictureFormPr;
+window['AscCommon']['CSdtPictureFormPr'] = CSdtPictureFormPr;
+
+CSdtPictureFormPr.prototype['get_ScaleFlag']           = CSdtPictureFormPr.prototype.GetScaleFlag;
+CSdtPictureFormPr.prototype['put_ScaleFlag']           = CSdtPictureFormPr.prototype.SetScaleFlag;
+CSdtPictureFormPr.prototype['get_ConstantProportions'] = CSdtPictureFormPr.prototype.IsConstantProportions;
+CSdtPictureFormPr.prototype['put_ConstantProportions'] = CSdtPictureFormPr.prototype.SetConstantProportions;
+CSdtPictureFormPr.prototype['get_RespectBorders']      = CSdtPictureFormPr.prototype.IsRespectBorders;
+CSdtPictureFormPr.prototype['put_RespectBorders']      = CSdtPictureFormPr.prototype.SetRespectBorders;
+CSdtPictureFormPr.prototype['put_ShiftX']              = CSdtPictureFormPr.prototype.SetShiftX;
+CSdtPictureFormPr.prototype['get_ShiftX']              = CSdtPictureFormPr.prototype.GetShiftX;
+CSdtPictureFormPr.prototype['put_ShiftY']              = CSdtPictureFormPr.prototype.SetShiftY;
+CSdtPictureFormPr.prototype['get_ShiftY']              = CSdtPictureFormPr.prototype.GetShiftY;

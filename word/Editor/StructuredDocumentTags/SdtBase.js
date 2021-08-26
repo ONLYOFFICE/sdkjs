@@ -138,6 +138,9 @@ CSdtBase.prototype.SetContentControlText = function(isText)
  */
 CSdtBase.prototype.IsContentControlText = function()
 {
+	// Временно отключаем запись этого флага, т.к. мы пока его не обрабатываем в редакторе вообще
+	// и можем создать некорректный файл для других редакторов. См. баг #51589
+	return false;
 	return this.Pr.Text;
 };
 /**
@@ -246,6 +249,34 @@ CSdtBase.prototype.GetFormPr = function()
 CSdtBase.prototype.IsForm = function()
 {
 	return (undefined !== this.Pr.FormPr);
+};
+/**
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsFixedForm = function()
+{
+	return false;
+};
+/**
+ * returns {boolean}
+ */
+CSdtBase.prototype.IsFormRequired = function()
+{
+	return (this.Pr.FormPr ? this.Pr.FormPr.GetRequired() : false);
+};
+/**
+ * Устанавливаем флаг Required
+ * @param {boolean} isRequired
+ */
+CSdtBase.prototype.SetFormRequired = function(isRequired)
+{
+	var oFormPr = this.GetFormPr();
+	if (oFormPr && isRequired !== oFormPr.GetRequired())
+	{
+		var oNewPr = oFormPr.Copy();
+		oNewPr.SetRequired(isRequired);
+		this.SetFormPr(oNewPr);
+	}
 };
 /**
  * Получаем ключ для специальной формы, если он задан
@@ -384,4 +415,48 @@ CSdtBase.prototype.ClearContentControlExt = function()
 	{
 		this.ReplaceContentWithPlaceHolder();
 	}
+};
+/**
+ * Проверяем правильно ли заполнена форма
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsFormFilled = function()
+{
+	return true;
+}
+/**
+ * Оборачиваем форму в графический контейнер
+ * @returns {?ParaDrawing}
+ */
+CSdtBase.prototype.ConvertFormToFixed = function()
+{
+	return null;
+};
+/**
+ * Уладаляем графичейский контейнер у формы
+ * @returns {?CSdtBase}
+ */
+CSdtBase.prototype.ConvertFormToInline = function()
+{
+	return this;
+};
+/**
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsMultiLineForm = function()
+{
+	return true;
+};
+/**
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsPictureForm = function()
+{
+	return false;
+};
+/**
+ * Функция обновления картиночной формы
+ */
+CSdtBase.prototype.UpdatePictureFormLayout = function()
+{
 };

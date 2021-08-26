@@ -843,10 +843,12 @@ CGraphicFrame.prototype.draw = function(graphics)
             graphics._e();
             return;
         }
+        if(graphics.animationDrawer) {
+            graphics.animationDrawer.drawObject(this, graphics);
+            return;
+        }
         if(this.graphicObject)
         {
-
-
             graphics.SaveGrState();
             graphics.transform3(this.transform);
             graphics.SetIntegerGrid(true);

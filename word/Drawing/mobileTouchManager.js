@@ -70,7 +70,8 @@
 			scroller_id : this.iScrollElement,
 			bounce : false,
 			eventsElement : this.eventsElement,
-			click : false
+			click : false,
+			useLongTap : true
 		});
 
 		this.delegate.Init();

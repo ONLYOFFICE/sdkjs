@@ -1849,6 +1849,8 @@ CFieldInstructionParser.prototype.private_ReadTOC = function()
 
 	this.Result = new CFieldInstructionTOC();
 	var arrArguments;
+
+	var isOutline = false, isStyles = false;
 	while (this.private_ReadNext())
 	{
 		if (this.private_IsSwitch())
@@ -1885,12 +1887,17 @@ CFieldInstructionParser.prototype.private_ReadTOC = function()
 				{
 					this.Result.SetHeadingRange(1, 9);
 				}
+
+				isOutline = true;
 			}
 			else if ('t' === sType)
 			{
 				arrArguments = this.private_ReadArguments();
 				if (arrArguments.length > 0)
+				{
 					this.Result.SetStylesArrayRaw(arrArguments[0]);
+					isStyles = true;
+				}
 			}
 			else if ('n' === sType)
 			{
@@ -1951,6 +1958,8 @@ CFieldInstructionParser.prototype.private_ReadTOC = function()
 		}
 	}
 
+	if (!isOutline && !isStyles)
+		this.Result.SetHeadingRange(1, 9);
 };
 CFieldInstructionParser.prototype.private_ReadASK = function()
 {

@@ -78,6 +78,8 @@
 
 			this.m_bFast = false;
 
+			this.m_aForeignCursorsData = {};
+
 			this.init();
 
 			return this;
@@ -381,6 +383,7 @@
 				this.handlers.trigger("updateAllSheetViewLock");
 
 				this.handlers.trigger("unlockCF");
+				this.handlers.trigger("unlockProtectedRange");
 
 				if (0 === this.m_nUseType)
 					this.m_nUseType = 1;
@@ -933,6 +936,52 @@
 			}
 			this.onEndCheckLock(callbackEx);
 			return bRet;
+		};
+		CCollaborativeEditing.prototype.Add_ForeignCursor = function(UserId, DocumentPos, UserShortId)
+		{
+			var isEqual = function (val1, val2) {
+				var res = false;
+				if (val1.isEdit === val2.isEdit && val1.sheetId === val2.sheetId) {
+					if (val1.ranges.length === val2.ranges.length) {
+						res = true;
+						for (var i = 0; i < val1.ranges.length; i++) {
+							if (!val1.ranges[i].isEqual(val2.ranges[i])) {
+								res = false;
+								break;
+							}
+						}
+					}
+				}
+				return res;
+			};
+
+			if (this.m_aForeignCursorsData[UserId] && isEqual(this.m_aForeignCursorsData[UserId], DocumentPos)) {
+				return false;
+			}
+
+			if (DocumentPos) {
+				DocumentPos.shortId = UserShortId;
+			}
+			this.m_aForeignCursorsData[UserId] = DocumentPos;
+
+			return true;
+		};
+		CCollaborativeEditing.prototype.Remove_ForeignCursor = function(UserId){
+			delete this.m_aForeignCursorsData[UserId];
+		};
+		CCollaborativeEditing.prototype.getForeignSelectIntersection = function(col, row){
+			var res = null;
+			for (var i in this.m_aForeignCursorsData) {
+				if (this.m_aForeignCursorsData[i]) {
+					for (var j = 0; j < this.m_aForeignCursorsData[i].ranges.length; j++) {
+						if (this.m_aForeignCursorsData[i].ranges[j].contains(col, row)) {
+							res = this.m_aForeignCursorsData[i];
+							res.userId = i;
+						}
+					}
+				}
+			}
+			return res;
 		};
 
 		/**

@@ -1044,6 +1044,18 @@
 		Range.prototype.getHeight = function() {
 			return this.r2 - this.r1 + 1;
 		};
+		Range.prototype.transpose = function(startCol, startRow) {
+			if (startCol === undefined) {
+				startCol = this.c1;
+			}
+			if (startRow === undefined) {
+				startRow = this.r1;
+			}
+			var row0 = this.c1 - startCol + startRow;
+			var col0 = this.r1 - startRow + startCol;
+
+			return new Range(col0, row0,  col0 + (this.r2 - this.r1), row0 + (this.c2 - this.c1));
+		};
 
 		/**
 		 *
@@ -1400,6 +1412,22 @@
 		SelectionRange.prototype.Select = function () {
 			this.worksheet.selectionRange = this.clone();
 			this.worksheet.workbook.handlers.trigger('updateSelection');
+		};
+		SelectionRange.prototype.isContainsOnlyFullRowOrCol = function (byCol) {
+			var res = true;
+			for (var i = 0; i < this.ranges.length; ++i) {
+				var range = this.ranges[i];
+				var type = range.getType();
+				if (byCol && c_oAscSelectionType.RangeCol !== type) {
+					res = false;
+					break;
+				}
+				if (!byCol && c_oAscSelectionType.RangeRow !== type) {
+					res = false;
+					break;
+				}
+			}
+			return res;
 		};
 
     /**
@@ -2355,8 +2383,8 @@
 			if (!canvas) {
 				return;
 			}
-			var w = canvas.clientWidth;
-			var h = canvas.clientHeight;
+			var w = canvas.width;
+			var h = canvas.height;
 
 			var ctx = new Asc.DrawingContext({canvas: canvas, units: 0/*px*/, fmgrGraphics: wb.fmgrGraphics, font: wb.m_oFont});
 			var graphics = getGraphics(ctx);
@@ -2376,8 +2404,8 @@
 			if (!canvas) {
 				return;
 			}
-			var w = canvas.clientWidth;
-			var h = canvas.clientHeight;
+			var w = canvas.width;
+			var h = canvas.height;
 
 			var ctx = new Asc.DrawingContext({canvas: canvas, units: 0/*px*/, fmgrGraphics: wb.fmgrGraphics, font: wb.m_oFont});
 			var graphics = getGraphics(ctx);
@@ -2439,23 +2467,32 @@
 			var shapeDrawer = new AscCommon.CShapeDrawer();
 			shapeDrawer.Graphics = graphics;
 
-			for (var i = 0; i < iconImgs.length; i++) {
-				var img = iconImgs[i];
 
-				var geometry = new AscFormat.CreateGeometry("rect");
-				geometry.Recalculate(5, 5, true);
+			AscFormat.ExecuteNoHistory(
+				function () {
+					for (var i = 0; i < iconImgs.length; i++) {
+						var img = iconImgs[i];
 
-				var oUniFill = new AscFormat.builder_CreateBlipFill(img, "stretch");
-				graphics.save();
-				var oMatrix = new AscCommon.CMatrix();
-				oMatrix.tx = i*5;
-				oMatrix.ty = 0;
-				graphics.transform3(oMatrix);
+						if (!img) {
+							continue;
+						}
 
-				shapeDrawer.fromShape2(new AscFormat.CColorObj(null, oUniFill, geometry), graphics, geometry);
-				shapeDrawer.draw(geometry);
-				graphics.restore();
-			}
+						var geometry = new AscFormat.CreateGeometry("rect");
+						geometry.Recalculate(5, 5, true);
+
+						var oUniFill = new AscFormat.builder_CreateBlipFill(img, "stretch");
+						graphics.save();
+						var oMatrix = new AscCommon.CMatrix();
+						oMatrix.tx = i*5;
+						oMatrix.ty = 0;
+						graphics.transform3(oMatrix);
+
+						shapeDrawer.fromShape2(new AscFormat.CColorObj(null, oUniFill, geometry), graphics, geometry);
+						shapeDrawer.draw(geometry);
+						graphics.restore();
+					}
+				}, this, []
+			);
 		}
 
 		//-----------------------------------------------------------------
@@ -2486,6 +2523,8 @@
 				
 				//Tooltip
 				this.tooltip = obj.tooltip;
+
+				this.color = obj.color;
 			}
 
 			return this;
@@ -2503,7 +2542,8 @@
 			asc_getSizeCCOrPt: function () { return this.sizeCCOrPt; },
 			asc_getSizePx: function () { return this.sizePx; },
 			asc_getFilter: function () { return this.filter; },
-			asc_getTooltip: function () { return this.tooltip; }
+			asc_getTooltip: function () { return this.tooltip; },
+			asc_getColor: function () { return this.color; }
 		};
 
 		// Гиперссылка
@@ -2658,6 +2698,8 @@
 
 			this.showZeros = null;
 
+			this.topLeftCell = null;
+
 			return this;
 		}
 
@@ -2672,6 +2714,7 @@
 					result.pane = this.pane.clone();
 				}
 				result.showZeros = this.showZeros;
+				result.topLeftCell = this.topLeftCell;
 				return result;
 			},
 			isEqual: function (settings) {
@@ -3368,6 +3411,7 @@
 		prot["asc_getSizePx"] = prot.asc_getSizePx;
 		prot["asc_getFilter"] = prot.asc_getFilter;
 		prot["asc_getTooltip"] = prot.asc_getTooltip;
+		prot["asc_getColor"] = prot.asc_getColor;
 
 		window["Asc"]["asc_CHyperlink"] = window["Asc"].asc_CHyperlink = asc_CHyperlink;
 		prot = asc_CHyperlink.prototype;

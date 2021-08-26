@@ -481,128 +481,11 @@ var g_nFormulaStringMaxLength = 255;
 
 
 
-Math.sinh = function ( arg ) {
-    return (this.pow( this.E, arg ) - this.pow( this.E, -arg )) / 2;
-};
-
-Math.cosh = function ( arg ) {
-    return (this.pow( this.E, arg ) + this.pow( this.E, -arg )) / 2;
-};
-
-Math.tanh = Math.tanh || function(x) {
-	if (x === Infinity) {
-		return 1;
-	} else if (x === -Infinity) {
-		return -1;
-	} else {
-		var y = Math.exp(2 * x);
-		if (y === Infinity) {
-			return 1;
-		} else if (y === -Infinity) {
-			return -1;
-		}
-		return (y - 1) / (y + 1);
-	}
-};
-
-Math.asinh = function ( arg ) {
-    return this.log( arg + this.sqrt( arg * arg + 1 ) );
-};
-
-Math.acosh = function ( arg ) {
-    return this.log( arg + this.sqrt( arg + 1 ) * this.sqrt( arg - 1 ) );
-};
-
-Math.atanh = function ( arg ) {
-    return 0.5 * this.log( (1 + arg) / (1 - arg) );
-};
-
-Math.fact = function ( n ) {
-    var res = 1;
-    n = this.floor( n );
-    if ( n < 0 ) {
-        return NaN;
-  } else if (n > 170) {
-        return Infinity;
-    }
-    while ( n !== 0 ) {
-        res *= n--;
-    }
-    return res;
-};
-
-Math.doubleFact = function ( n ) {
-    var res = 1;
-    n = this.floor( n );
-    if ( n < 0 ) {
-        return NaN;
-  } else if (n > 170) {
-        return Infinity;
-    }
-//    n = Math.floor((n+1)/2);
-    while ( n > 0 ) {
-        res *= n;
-        n -= 2;
-    }
-    return res;
-};
-
-Math.factor = function ( n ) {
-    var res = 1;
-    n = this.floor( n );
-    while ( n !== 0 ) {
-        res = res * n--;
-    }
-    return res;
-};
-
-Math.ln = Math.log;
-
-Math.log10 = function ( x ) {
-    return this.log( x ) / this.log( 10 );
-};
-
-Math.log1p = Math.log1p || function(x) {
-	return Math.log(1 + x);
-};
-
-Math.expm1 = Math.expm1 || function(x) {
-	return Math.exp(x) - 1;
-};
-
 Math.fmod = function ( a, b ) {
-    return Number( (a - (this.floor( a / b ) * b)).toPrecision( cExcelSignificantDigits ) );
+	return Number( (a - (this.floor( a / b ) * b)).toPrecision( cExcelSignificantDigits ) );
 };
 
-Math.binomCoeff = function ( n, k ) {
-    return this.fact( n ) / (this.fact( k ) * this.fact( n - k ));
-};
 
-Math.permut = function ( n, k ) {
-    return this.floor( this.fact( n ) / this.fact( n - k ) + 0.5 );
-};
-
-Math.approxEqual = function ( a, b ) {
-    if ( a === b ) {
-        return true;
-    }
-    return this.abs( a - b ) < 1e-15;
-};
-
-if (typeof Math.sign != 'function') {
-	Math['sign'] = Math.sign = function (n) {
-		return n == 0 ? 0 : n < 0 ? -1 : 1;
-	};
-}
-
-Math.trunc = Math.trunc || function(v) {
-	v = +v;
-	return (v - v % 1)   ||   (!isFinite(v) || v === 0 ? v : v < 0 ? -0 : 0);
-};
-
-RegExp.escape = function ( text ) {
-    return text.replace( /[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&" );
-};
 
 parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator);
 
@@ -7478,8 +7361,8 @@ function parserFormula( formula, parent, _ws ) {
 				}
 			} else if (cElementType.operator === ref.type && ref.name === ":" && this.outStack[i - 1] &&
 				this.outStack[i - 2] &&
-				((cElementType.cell === this.outStack[i - 1].type || cElementType.cell === this.outStack[i - 2].type) ||
-				(cElementType.cell3D === this.outStack[i - 1].type ||
+				((cElementType.cell === this.outStack[i - 1].type && cElementType.cell === this.outStack[i - 2].type) ||
+				(cElementType.cell3D === this.outStack[i - 1].type &&
 				cElementType.cell3D === this.outStack[i - 2].type)) && this.outStack[i - 1].isValid() &&
 				this.outStack[i - 2].isValid()) {
 				var _wsId = this.outStack[i - 1].getWsId();
@@ -8362,6 +8245,7 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].cUndefined = cUndefined;
 	window['AscCommonExcel'].cBaseFunction = cBaseFunction;
 	window['AscCommonExcel'].cUnknownFunction = cUnknownFunction;
+	window['AscCommonExcel'].cStrucTable = cStrucTable;
 
 	window['AscCommonExcel'].checkTypeCell = checkTypeCell;
 	window['AscCommonExcel'].cFormulaFunctionGroup = cFormulaFunctionGroup;

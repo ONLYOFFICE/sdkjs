@@ -2099,6 +2099,8 @@
 		// формул лист и книгу(на которые ссылаемся) - например у элементов cStrucTable
 		//временно добавляю новый вставляемый лист, чтобы не передавать параметры через большое количество функций
 		this.addingWorksheet = null;
+
+		this.workbookProtection = null;
 	}
 	Workbook.prototype.init=function(tableCustomFunc, tableIds, sheetIds, bNoBuildDep, bSnapshot){
 		if(this.nActive < 0)
@@ -3644,6 +3646,38 @@
 			}
 		});
 	};
+	Workbook.prototype.convertEquationToMath = function (oEquation, isAll) {
+		var aId = [];
+		var aEquations = [];
+		if(isAll) {
+			this.handleDrawings(function(oDrawing) {
+				oDrawing.collectEquations3(aEquations);
+			});
+
+		}
+		else {
+			aEquations.push(oEquation);
+		}
+		if(aEquations.length > 0) {
+			var nEquation;
+			var oObjectForCheck;
+			for(nEquation = 0; nEquation < aEquations.length; ++nEquation) {
+				oObjectForCheck = (aEquations[nEquation].getMainGroup() || aEquations[nEquation]);
+				aId.push(oObjectForCheck.Get_Id());
+			}
+			this.checkObjectsLock(aId, function(bNoLock) {
+				if(bNoLock) {
+					AscCommon.History.Create_NewPoint(0);
+					for(nEquation = 0; nEquation < aEquations.length; ++nEquation) {
+						aEquations[nEquation].replaceToMath();
+					}
+					if(Asc.editor && Asc.editor.wb) {
+						Asc.editor.wb.recalculateDrawingObjects(null, false);
+					}
+				}
+			});
+		}
+	};
 
 	Workbook.prototype.cleanCollaborativeFilterObj = function () {
 		if (!Asc.CT_NamedSheetView.prototype.asc_getName) {
@@ -3692,7 +3726,17 @@
 				}
 				break;
 			case Asc.c_oAscSelectionForCFType.pivot:
-				// ToDo
+				sheet = this.getActiveWs();
+				var _activeCell = sheet.selectionRange.activeCell;
+				var _pivot = sheet.getPivotTable(_activeCell.col, _activeCell.row);
+				if (_pivot) {
+					range = _pivot.location && _pivot.location.ref;
+				}
+
+				if (!range) {
+					sheet = null;
+				}
+
 				break;
 		}
 		if (sheet) {
@@ -3736,6 +3780,35 @@
 			}
 		}
 		return rules;
+	};
+
+	Workbook.prototype.setProtectedWorkbook = function (props, addToHistory) {
+		if (!this.workbookProtection) {
+			this.workbookProtection = new window["Asc"].CWorkbookProtection();
+		}
+		this.workbookProtection.set(props, addToHistory, this);
+		return true;
+	};
+
+	Workbook.prototype.getWorkbookProtection = function (type) {
+		var res = false;
+
+		if (this.workbookProtection) {
+			switch (type) {
+				case Asc.c_oAscWorkbookProtectType.lockWindows:
+					res = this.workbookProtection.asc_getLockWindows();
+					break;
+				case Asc.c_oAscWorkbookProtectType.lockRevisions:
+					res = this.workbookProtection.asc_getLockRevision();
+					break;
+				case Asc.c_oAscWorkbookProtectType.lockStructure:
+				default:
+					res = this.workbookProtection.asc_getLockStructure();
+					break;
+			}
+		}
+
+		return res;
 	};
 
 //-------------------------------------------------------------------------------------------------
@@ -4020,6 +4093,10 @@
 		this.aNamedSheetViews = [];
 		this.activeNamedSheetViewId = null;
 		this.defaultViewHiddenRows = null;
+
+		//по умолчанию null, создаю объект для отладки
+		this.sheetProtection = null;
+		this.aProtectedRanges = [];
 	}
 
 	Worksheet.prototype.getCompiledStyle = function (row, col, opt_cell, opt_styleComponents) {
@@ -4601,16 +4678,19 @@
 						}
 
 						tmp = sum / nc;
-						/*if (oRule.hasStdDev()) {
-						 sum = 0;
-						 for (cell = 0; cell < values.length; ++cell) {
-						 value = values[cell];
-						 if (null !== value.v) {
-						 sum += (value.v - tmp) * (value.v - tmp);
-						 }
-						 }
-						 sum = Math.sqrt(sum / (nc - 1));
-						 }*/
+
+						var stdDev;
+						if (oRule.hasStdDev()) {
+							var sum2 = 0;
+							for (cell = 0; cell < values.length; ++cell) {
+								value = values[cell];
+								if (null !== value.v) {
+									sum2 += (value.v - tmp) * (value.v - tmp);
+								}
+							}
+							stdDev = Math.sqrt(sum2 / nc);
+						}
+
 						compareFunction = (function(rule, average, stdDev) {
 							return function(row, col) {
 								var val;
@@ -4619,7 +4699,7 @@
 								});
 								return (null !== val && rule.getAverage(val, average, stdDev)) ? rule.dxf : null;
 							};
-						})(oRule, tmp, sum);
+						})(oRule, tmp, stdDev);
 					} else {
 						if (!oRule.dxf) {
 							continue;
@@ -5088,6 +5168,7 @@
 			this.updateSortStateOffset(oActualRange, offset);
 			this.updateSparklineGroupOffset(oActualRange, offset);
 			this.updateConditionalFormattingOffset(oActualRange, offset);
+			this.updateProtectedRangeOffset(oActualRange, offset);
 			History.LocalChange = false;
 		}
 
@@ -5183,6 +5264,7 @@
 			this.updateSortStateOffset(oActualRange, offset);
 			this.updateSparklineGroupOffset(oActualRange, offset);
 			this.updateConditionalFormattingOffset(oActualRange, offset);
+			this.updateProtectedRangeOffset(oActualRange, offset);
 			History.LocalChange = false;
 		}
 
@@ -5259,6 +5341,7 @@
 			this.updateSortStateOffset(oActualRange, offset);
 			this.updateSparklineGroupOffset(oActualRange, offset);
 			this.updateConditionalFormattingOffset(oActualRange, offset);
+			this.updateProtectedRangeOffset(oActualRange, offset);
 			History.LocalChange = false;
 		}
 
@@ -5332,6 +5415,7 @@
 			this.updateSortStateOffset(oActualRange, offset);
 			this.updateSparklineGroupOffset(oActualRange, offset);
 			this.updateConditionalFormattingOffset(oActualRange, offset);
+			this.updateProtectedRangeOffset(oActualRange, offset);
 			History.LocalChange = false;
 		}
 
@@ -6608,6 +6692,7 @@
 		this._moveDataValidation(oBBoxFrom, oBBoxTo, copyRange, offset, wsTo);
 		this.moveConditionalFormatting(oBBoxFrom, oBBoxTo, copyRange, offset, wsTo);
 		this.moveSparklineGroup(oBBoxFrom, oBBoxTo, copyRange, offset, wsTo);
+		this.moveProtectedRange(oBBoxFrom, oBBoxTo, copyRange, offset, wsTo);
 
 
 		if(true == this.workbook.bUndoChanges || true == this.workbook.bRedoChanges) {
@@ -6638,6 +6723,7 @@
 			this.updateSortStateOffset(oBBox, offset);
 			this.updateSparklineGroupOffset(oBBox, offset);
 			this.updateConditionalFormattingOffset(oBBox, offset);
+			this.updateProtectedRangeOffset(oBBox, offset);
 			History.LocalChange = false;
 		}
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
@@ -6679,6 +6765,7 @@
 			this.updateSortStateOffset(oBBox, offset);
 			this.updateSparklineGroupOffset(oBBox, offset);
 			this.updateConditionalFormattingOffset(oBBox, offset);
+			this.updateProtectedRangeOffset(oBBox, offset);
 			History.LocalChange = false;
 		}
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
@@ -6716,6 +6803,7 @@
 			this.updateSortStateOffset(oBBox, offset);
 			this.updateSparklineGroupOffset(oBBox, offset);
 			this.updateConditionalFormattingOffset(oBBox, offset);
+			this.updateProtectedRangeOffset(oBBox, offset);
 			History.LocalChange = false;
 		}
 		if (false == this.workbook.bUndoChanges && false == this.workbook.bRedoChanges) {
@@ -6785,6 +6873,7 @@
 			this.updateSortStateOffset(oBBox, offset);
 			this.updateSparklineGroupOffset(oBBox, offset);
 			this.updateConditionalFormattingOffset(oBBox, offset);
+			this.updateProtectedRangeOffset(oBBox, offset);
 			History.LocalChange = false;
 		}
 
@@ -7225,6 +7314,26 @@
 				}
 			});
 		}
+	};
+	Worksheet.prototype.getSparkLinesMaxColRow = function() {
+		var sparkLinesGroup = this.aSparklineGroups;
+		var r = -1, c = -1;
+
+		if (sparkLinesGroup) {
+			sparkLinesGroup.forEach(function (item) {
+				if (item.arrSparklines) {
+					for (var j = 0; j < item.arrSparklines.length; ++j) {
+						var range = item.arrSparklines[j].sqRef;
+						if (range) {
+							r = Math.max(r, range.r2);
+							c = Math.max(c, range.c2);
+						}
+					}
+				}
+			});
+		}
+
+		return new AscCommon.CellBase(r, c);
 	};
 	Worksheet.prototype.getCwf = function() {
 		var cwf = {};
@@ -9564,6 +9673,22 @@
 		if (!from) {
 			return;
 		}
+
+		var updateRange;
+		if (from) {
+			updateRange = from.ranges;
+		}
+		if (to) {
+			if (updateRange) {
+				updateRange = updateRange.concat(to.ranges);
+			} else {
+				updateRange = to.ranges;
+			}
+		}
+		if (updateRange) {
+			this.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange(updateRange));
+		}
+
 		from.set(to, addToHistory, this);
 	};
 
@@ -9582,7 +9707,7 @@
 		this.aConditionalFormattingRules.push(val);
 		this.cleanConditionalFormattingRangeIterator();
 		if (addToHistory) {
-			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_CFRuleAdd, this.getId(), val.getUnionRange(), new AscCommonExcel.UndoRedoData_CF(val.id, null, val));
+			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_CFRuleAdd, this.getId(), val.getUnionRange(), new AscCommonExcel.UndoRedoData_CF(val.id, null, val.clone ? val.clone() : val));
 		}
 	};
 
@@ -9591,6 +9716,7 @@
 			return;
 		}
 
+		var isDel = false;
 		if (ranges) {
 			var _newRanges = [];
 
@@ -9613,7 +9739,8 @@
 			}
 
 			if (!_newRanges.length) {
-				this.deleteCFRule(rule.id, true)
+				this.deleteCFRule(rule.id, true);
+				isDel = true;
 			} else {
 				var newRule = rule.clone();
 				newRule.ranges = _newRanges;
@@ -9621,7 +9748,10 @@
 			}
 		} else {
 			this.deleteCFRule(rule.id, true);
+			isDel = true;
 		}
+
+		return isDel;
 	};
 
 	Worksheet.prototype.deleteCFRule = function (id, addToHistory) {
@@ -9632,6 +9762,9 @@
 			if (addToHistory) {
 				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_CFRuleDelete, this.getId(), oRule.val.getUnionRange(),
 					new AscCommonExcel.UndoRedoData_CF(id, oRule.val));
+			}
+			if (oRule.ranges) {
+				this.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange(oRule.ranges));
 			}
 		}
 	};
@@ -9663,14 +9796,14 @@
 			oRule.setOffset(offset, range, this, true);
 		}
 	};
-	Worksheet.prototype.moveConditionalFormatting = function (oBBoxFrom, oBBoxTo, copyRange, offset, wsTo, wsFrom) {
+	Worksheet.prototype.moveConditionalFormatting = function (oBBoxFrom, oBBoxTo, copyRange, offset, wsTo, wsFrom, bTransposeTo) {
 		var t = this;
 		if (!wsTo) {
 			wsTo = this;
 		}
 		if (false === this.workbook.bUndoChanges && false === this.workbook.bRedoChanges) {
 			//чистим ту область, куда переносим
-			wsTo.clearConditionalFormattingRulesByRanges([oBBoxTo]);
+			wsTo.clearConditionalFormattingRulesByRanges([oBBoxTo], oBBoxFrom);
 
 			if (!wsFrom) {
 				wsFrom = this;
@@ -9691,6 +9824,9 @@
 						if (!copyRange) {
 							constantPart = oBBoxFrom.difference(ruleRanges[i]);
 							_constantRanges = _constantRanges.concat(constantPart);
+						}
+						if (bTransposeTo) {
+							movePart = movePart.transpose(oBBoxFrom.c1, oBBoxFrom.r1);
 						}
 						movePart.setOffset(offset);
 						_moveRanges.push(movePart);
@@ -9725,16 +9861,20 @@
 		}
 	};
 
-	Worksheet.prototype.clearConditionalFormattingRulesByRanges = function (ranges) {
-		var t = this;
-		this.forEachConditionalFormattingRules(function (_rule) {
-			t.tryClearCFRule(_rule, ranges);
-		});
+	Worksheet.prototype.clearConditionalFormattingRulesByRanges = function (ranges, exceptionRange) {
+		for (var i = 0; i < this.aConditionalFormattingRules.length; ++i) {
+			var isExcept = exceptionRange && this.aConditionalFormattingRules[i].getIntersections(exceptionRange);
+			if (!isExcept && this.tryClearCFRule(this.aConditionalFormattingRules[i], ranges)) {
+				i--;
+			}
+		}
 	};
 
 	Worksheet.prototype.forEachConditionalFormattingRules = function (callback) {
 		for (var i = 0, l = this.aConditionalFormattingRules.length; i < l; ++i) {
-			callback(this.aConditionalFormattingRules[i], i);
+			if (callback(this.aConditionalFormattingRules[i], i)) {
+				break;
+			}
 		}
 	};
 	Worksheet.prototype.cleanConditionalFormattingRangeIterator = function() {
@@ -9751,6 +9891,672 @@
 			});
 		}
 		return this.conditionalFormattingRangeIterator;
+	};
+	Worksheet.prototype.updateTopLeftCell = function(range) {
+		this.setTopLeftCell(this.generateTopLeftCellFromRange(range), true);
+	};
+	Worksheet.prototype.generateTopLeftCellFromRange = function(range) {
+		if (!range) {
+			return null;
+		}
+
+		var newVal;
+		if (range.c1 === 0 && range.r1 === 0) {
+			newVal = null;
+		} else {
+			newVal = new Asc.Range(0, 0, 0, 0);
+			newVal.c1 = range.c1;
+			newVal.r1 = range.r1;
+			newVal.c2 = range.c1;
+			newVal.r2 = range.r1;
+		}
+
+		return newVal;
+	};
+	Worksheet.prototype.setTopLeftCell = function(val, addToHistory) {
+		var view = this.sheetViews[0];
+		
+		if (!view) {
+			return;
+		}
+		
+		if (val !== view.topLeftCell || (val && view.topLeftCell && !val.isEqual(view.topLeftCell))) {
+			var oldValue = view.topLeftCell ? view.topLeftCell.clone() : null;
+			view.topLeftCell = val;
+			if (addToHistory) {
+				History.Create_NewPoint();
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_SetTopLeftCell,
+					this.getId(), null, new UndoRedoData_FromTo(new UndoRedoData_BBox(oldValue), new UndoRedoData_BBox(val)));
+			}
+		}
+	};
+
+	Worksheet.prototype.getTopLeftCell = function() {
+		var view = this.sheetViews && this.sheetViews[0];
+		return view && view.topLeftCell;
+	};
+
+	Worksheet.prototype.setCustomSort = function(props, obj, doNotSortRange, cellCommentator, opt_range) {
+		//формируем sortState из настроек
+		var t = this;
+		var selection = opt_range ? opt_range : this.selectionRange.getLast();
+		var sortState = new AscCommonExcel.SortState();
+
+		//? activeRange
+		sortState.Ref = new Asc.Range(selection.c1, selection.r1, selection.c2, selection.r2);
+
+		History.Create_NewPoint();
+		History.StartTransaction();
+
+		var columnSort = props.columnSort;
+		sortState.ColumnSort = !columnSort;
+		sortState.CaseSensitive = props.caseSensitive;
+		for(var i = 0; i < props.levels.length; i++) {
+			var sortCondition = new AscCommonExcel.SortCondition();
+			var level = props.levels[i];
+			var r1 = columnSort ? selection.r1 : level.index + selection.r1;
+			var c1 = columnSort ? selection.c1 + level.index : selection.c1;
+			var r2 = columnSort ? selection.r2 : level.index + selection.r1;
+			var c2  = columnSort ? selection.c1 + level.index : selection.c2;
+			sortCondition.Ref = new Asc.Range(c1, r1, c2, r2);
+			sortCondition.ConditionSortBy = null;
+			sortCondition.ConditionDescending = Asc.c_oAscSortOptions.Descending === level.descending;
+
+			var conditionSortBy = level.sortBy;
+			var sortColor = null, newDxf, isRgbColor;
+			switch (conditionSortBy) {
+				case Asc.c_oAscSortOptions.ByColorFill: {
+					sortCondition.ConditionSortBy = Asc.ESortBy.sortbyCellColor;
+					sortColor = level.color;
+					isRgbColor = sortColor && sortColor.getType && sortColor.getType() === AscCommonExcel.UndoRedoDataTypes.RgbColor;
+					sortColor = sortColor && !isRgbColor ? new AscCommonExcel.RgbColor((sortColor.asc_getR() << 16) + (sortColor.asc_getG() << 8) + sortColor.asc_getB()) : null;
+
+					newDxf = new AscCommonExcel.CellXfs();
+					newDxf.fill = new AscCommonExcel.Fill();
+					newDxf.fill.fromColor(sortColor);
+
+					break;
+				}
+				case Asc.c_oAscSortOptions.ByColorFont: {
+					sortCondition.ConditionSortBy = Asc.ESortBy.sortbyFontColor;
+					sortColor = level.color;
+					isRgbColor = sortColor && sortColor.getType && sortColor.getType() === AscCommonExcel.UndoRedoDataTypes.RgbColor;
+					sortColor = sortColor && !isRgbColor ? new AscCommonExcel.RgbColor((sortColor.asc_getR() << 16) + (sortColor.asc_getG() << 8) + sortColor.asc_getB()) : null;
+
+					newDxf = new AscCommonExcel.CellXfs();
+					newDxf.font = new AscCommonExcel.Font();
+					newDxf.font.setColor(sortColor);
+
+					break;
+				}
+				case Asc.c_oAscSortOptions.ByIcon: {
+					sortCondition.ConditionSortBy = Asc.ESortBy.sortbyIcon;
+					break;
+				}
+				default: {
+					sortCondition.ConditionSortBy = Asc.ESortBy.sortbyValue;
+					break;
+				}
+			}
+
+			if(newDxf) {
+				sortCondition.dxf = AscCommonExcel.g_StyleCache.addXf(newDxf);
+			}
+
+
+			if(!sortState.SortConditions) {
+				sortState.SortConditions = [];
+			}
+
+			sortState.SortConditions.push(sortCondition);
+		}
+
+		if(obj) {
+			History.Add(AscCommonExcel.g_oUndoRedoSortState, AscCH.historyitem_SortState_Add, t.getId(), null,
+				new AscCommonExcel.UndoRedoData_SortState(obj.sortState ? obj.sortState.clone() : null, sortState ? sortState.clone() : null, true, obj.DisplayName));
+
+			obj.SortState = sortState;
+		} else {
+			History.Add(AscCommonExcel.g_oUndoRedoSortState, AscCH.historyitem_SortState_Add, t.getId(), null,
+				new AscCommonExcel.UndoRedoData_SortState(t.sortState ? t.sortState.clone() : null, sortState ? sortState.clone() : null));
+
+			sortState._hasHeaders = props.hasHeaders;
+			t.sortState = sortState;
+		}
+
+		if(!doNotSortRange) {
+			var range = t.getRange3(selection.r1, selection.c1, selection.r2, selection.c2);
+			var oSort = t._doSort(range, null, null, null, null, !columnSort, sortState);
+			if (cellCommentator) {
+				cellCommentator.sortComments(oSort);
+			}
+		}
+
+		History.EndTransaction();
+	};
+
+	Worksheet.prototype._doSort = function (range, nOption, nStartRowCol, sortColor, opt_guessHeader, opt_by_row, opt_custom_sort) {
+		var res;
+
+		var bordersArr = [];
+		range._foreachNoEmpty(function(cell, row, col) {
+			var style = cell ? cell.getStyle() : null;
+			if(style && style.border) {
+				if(!bordersArr[row]) {
+					bordersArr[row] = [];
+				}
+				bordersArr[row][col] = style.border;
+				cell.setBorder(null);
+			}
+		});
+		res = range.sort(nOption, nStartRowCol, sortColor, opt_guessHeader, opt_by_row, opt_custom_sort);
+		for(var i = 0; i < bordersArr.length; i++) {
+			if(bordersArr[i]) {
+				for(var j = 0; j < bordersArr[i].length; j++) {
+					if(bordersArr[i][j]) {
+						var curBorder = bordersArr[i][j];
+						this._getCell(i, j, function(cell) {
+							cell.setBorder(curBorder);
+						});
+
+					}
+				}
+			}
+		}
+
+		return res;
+	};
+
+	Worksheet.prototype.getIntersectionRules = function (range) {
+		var t = this;
+		var res = [];
+		this.forEachConditionalFormattingRules(function (_rule) {
+			var changedRanges = _rule.getIntersections(range);
+			if (changedRanges) {
+				res.push({ranges: changedRanges, id: _rule.id});
+			}
+		});
+		return res.length ? res : null;
+	};
+
+	Worksheet.prototype.getRuleById = function (id) {
+		var t = this;
+		var res = null;
+		this.forEachConditionalFormattingRules(function (_rule, index) {
+			if (_rule.id === id) {
+				res = {data: _rule, index: index};
+				return true;
+			}
+		});
+		return res;
+	};
+
+
+	Worksheet.prototype.setProtectedSheet = function (props, addToHistory) {
+		if (!this.sheetProtection) {
+			this.sheetProtection = new window["Asc"].CSheetProtection();
+		}
+		this.sheetProtection.set(props, addToHistory, this);
+		return true;
+	};
+
+	Worksheet.prototype.getSheetProtection = function (type) {
+		var res = false;
+
+		if (this.sheetProtection && this.sheetProtection.getSheet()) {
+			//если тип не определен возвращаем защищен лист или нет
+			res = true;
+			switch (type) {
+				case Asc.c_oAscSheetProtectType.objects:
+					res = this.sheetProtection.getObjects();
+					break;
+				case Asc.c_oAscSheetProtectType.scenarios:
+					res = this.sheetProtection.getScenarios();
+					break;
+				case Asc.c_oAscSheetProtectType.formatCells:
+					res = this.sheetProtection.getFormatCells();
+					break;
+				case Asc.c_oAscSheetProtectType.formatColumns:
+					res = this.sheetProtection.getFormatColumns();
+					break;
+				case Asc.c_oAscSheetProtectType.formatRows:
+					res = this.sheetProtection.getFormatRows();
+					break;
+				case Asc.c_oAscSheetProtectType.insertColumns:
+					res = this.sheetProtection.getInsertColumns();
+					break;
+				case Asc.c_oAscSheetProtectType.insertRows:
+					res = this.sheetProtection.getInsertRows();
+					break;
+				case Asc.c_oAscSheetProtectType.insertHyperlinks:
+					res = this.sheetProtection.getInsertHyperlinks();
+					break;
+				case Asc.c_oAscSheetProtectType.deleteColumns:
+					res = this.sheetProtection.getDeleteColumns();
+					break;
+				case Asc.c_oAscSheetProtectType.deleteRows:
+					res = this.sheetProtection.getDeleteRows();
+					break;
+				case Asc.c_oAscSheetProtectType.selectLockedCells:
+					res = this.sheetProtection.getSelectLockedCells();
+					break;
+				case Asc.c_oAscSheetProtectType.sort:
+					res = this.sheetProtection.getSort();
+					break;
+				case Asc.c_oAscSheetProtectType.autoFilter:
+					res = this.sheetProtection.getAutoFilter();
+					break;
+				case Asc.c_oAscSheetProtectType.pivotTables:
+					res = this.sheetProtection.getPivotTables();
+					break;
+				case Asc.c_oAscSheetProtectType.selectUnlockedCells:
+					res = this.sheetProtection.getSelectUnlockedCells();
+					break;
+			}
+		}
+
+		return res;
+	};
+
+	Worksheet.prototype.getLockedCell = function (c, r) {
+		var cellTo =  this.getCell3(r, c);
+		if (cellTo) {
+			var cellxfs = cellTo.getXfs(false);
+			return cellxfs && cellxfs.asc_getLocked();
+		}
+	};
+
+	Worksheet.prototype.getUnlockedCellInRange = function (range) {
+		if (!range) {
+			range = new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxRow0);
+		}
+		var res = null;
+		this.getRange3(range.r1, range.c1, range.r2, range.c2)._foreachNoEmpty(function(cell) {
+			if (cell) {
+				var cellxfs = cell.xfs;
+				if (cellxfs && !cellxfs.asc_getLocked()) {
+					res = cell;
+					return true;
+				}
+			}
+		});
+		return res;
+	};
+
+	Worksheet.prototype.protectedRangesContains = function (c, r) {
+		var res = [];
+		if (this.aProtectedRanges && this.aProtectedRanges.length) {
+			for (var i = 0; i < this.aProtectedRanges.length; i++) {
+				if (this.aProtectedRanges[i].contains(c, r)) {
+					res.push(this.aProtectedRanges[i]);
+				}
+			}
+		}
+		return res.length ? res : null;
+	};
+
+	Worksheet.prototype.protectedRangesContainsRanges = function (ranges) {
+		for (var i = 0; i < ranges.length; i++) {
+			if (!this.protectedRangesContainsRange(ranges[i])) {
+				return false;
+			}
+		}
+		return true;
+	};
+
+	Worksheet.prototype.protectedRangesContainsRange = function (range, ignoreWithoutPassword) {
+		var res = [];
+		if (this.aProtectedRanges && this.aProtectedRanges.length) {
+			for (var i = 0; i < this.aProtectedRanges.length; i++) {
+				if (this.aProtectedRanges[i].containsRange(range)) {
+					var isPassword = this.aProtectedRanges[i].asc_isPassword();
+					if (!ignoreWithoutPassword || (ignoreWithoutPassword && this.aProtectedRanges[i].asc_isPassword() && !this.aProtectedRanges[i].isUserEnteredPassword)) {
+						res.push(this.aProtectedRanges[i]);
+					}
+				}
+			}
+		}
+		return res.length ? res : null;
+	};
+
+	Worksheet.prototype.checkProtectedRangesPassword = function (val, data) {
+		var res = false;
+		if (this.aProtectedRanges && this.aProtectedRanges.length) {
+			for (var i = 0; i < this.aProtectedRanges.length; i++) {
+				if (this.aProtectedRanges[i].asc_isPassword() && this.aProtectedRanges[i].contains(data.c1, data.r1) && this.aProtectedRanges[i].asc_checkPassword(val)) {
+					res = true;
+					break;
+				}
+			}
+		}
+		return res;
+	};
+
+	Worksheet.prototype.checkProtectedRangeName = function (name) {
+		var res = c_oAscDefinedNameReason.OK;
+		if (!AscCommon.rx_defName.test(name.toLowerCase()) || name.length > g_nDefNameMaxLength) {
+			return c_oAscDefinedNameReason.WrongName;
+		}
+
+		var pR = this.getProtectedRangeByName(name);
+		if (pR) {
+			res = c_oAscDefinedNameReason.Existed;
+		}
+		return res;
+	};
+
+	Worksheet.prototype.isIntersectLockedRanges = function (ranges) {
+		for (var i = 0; i < ranges.length; i++) {
+			if (this.isLockedRange(ranges[i])) {
+				return true;
+			}
+		}
+		return false;
+	};
+
+	Worksheet.prototype.isLockedRange = function (range) {
+		var res = true;
+		this.getRange3(range.r1, range.c1, range.r2, range.c2)._foreach2(function(cell){
+			if (!cell) {
+				res = true;
+				return true;
+			}
+			var cellxfs = cell.xfs;
+			var isLocked = cellxfs && cellxfs.asc_getLocked();
+			if (isLocked === null || isLocked === true) {
+				res = true;
+				return true;
+			} else {
+				res = false;
+			}
+		});
+		return res;
+	};
+
+	Worksheet.prototype.getLockedRanges = function (range) {
+		var res = [range.clone()];
+		this.getRange3(range.r1, range.c1, range.r2, range.c2)._foreachNoEmpty(function(cell){
+			if (!cell) {
+				return;
+			}
+			var cellxfs = cell && cell.xfs;
+			var isLocked = cellxfs && cellxfs.asc_getLocked();
+			if (isLocked === false) {
+				//исключаем ячейку из общего диапазона
+				var _range = new Asc.Range(cell.nCol, cell.nRow, cell.nCol, cell.nRow);
+				var newRange = [];
+				for (var i = 0; i < res.length; i++) {
+					var _difference = _range.difference(res[i]);
+					if (_difference && _difference.length) {
+						newRange = newRange.concat(_difference);
+					}
+				}
+				res = newRange;
+			}
+		});
+		return res;
+	};
+
+
+	Worksheet.prototype.getProtectedRanges = function (needClone) {
+		var protectedRanges = this.aProtectedRanges;
+		var res = null;
+		if (needClone && protectedRanges && protectedRanges.length) {
+			res = [];
+			for (var i = 0; i < protectedRanges.length; i++) {
+				var id = protectedRanges[i].Id;
+				var cloneRange = protectedRanges[i].clone();
+				cloneRange.Id = id;
+				res.push(cloneRange);
+			}
+		}
+		return !res ? protectedRanges : res;
+	};
+
+	Worksheet.prototype.setProtectedRange = function (val) {
+		if (!val) {
+			return;
+		}
+		var pR = this.getProtectedRangeById(val.Id);
+		if (pR) {
+			this.changeProtectedRange(pR.val, val, true);
+		} else {
+			this.addProtectedRange(val, true);
+		}
+	};
+
+	Worksheet.prototype.getProtectedRangeById = function (id) {
+		if (this.aProtectedRanges) {
+			for (var i = 0; i < this.aProtectedRanges.length; i++) {
+				if (this.aProtectedRanges[i].Id === id) {
+					return {val: this.aProtectedRanges[i], index: i};
+				}
+			}
+		}
+		return null;
+	};
+
+	Worksheet.prototype.getProtectedRangeByRange = function (range) {
+		if (this.aProtectedRanges) {
+			for (var i = 0; i < this.aProtectedRanges.length; i++) {
+				if (this.aProtectedRanges[i].intersection(range)) {
+					return {val: this.aProtectedRanges[i], index: i};
+				}
+			}
+		}
+		return null;
+	};
+
+	Worksheet.prototype.getProtectedRangeByName = function (name) {
+		if (this.aProtectedRanges) {
+			for (var i = 0; i < this.aProtectedRanges.length; i++) {
+				if (this.aProtectedRanges[i].name === name) {
+					return {val: this.aProtectedRanges[i], index: i};
+				}
+			}
+		}
+		return null;
+	};
+
+	Worksheet.prototype.changeProtectedRange = function (from, to, addToHistory) {
+		if (!from) {
+			return;
+		}
+		from.set(to, addToHistory, this);
+	};
+
+	Worksheet.prototype.addProtectedRange = function (val, addToHistory) {
+		if (!val) {
+			return;
+		}
+
+		this.aProtectedRanges.push(val);
+		if (addToHistory) {
+			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_AddProtectedRange,
+				this.getId(), /*val.getUnionRange()*/null,
+				new AscCommonExcel.UndoRedoData_ProtectedRange(val.Id, null, val));
+		}
+	};
+
+	Worksheet.prototype.deleteProtectedRange = function (id, addToHistory) {
+		var protectedRange = this.getProtectedRangeById(id);
+		if (protectedRange) {
+			this.aProtectedRanges.splice(protectedRange.index, 1);
+			if (addToHistory) {
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_DelProtectedRange,
+					this.getId(), /*oRule.val.getUnionRange()*/null,
+					new AscCommonExcel.UndoRedoData_ProtectedRange(id, protectedRange.val));
+			}
+		}
+	};
+
+	Worksheet.prototype.updateProtectedRangeOffset = function (range, offset) {
+		if (offset.row < 0 || offset.col < 0) {
+			for (var i = 0; i < this.aProtectedRanges.length; ++i) {
+				if (this.aProtectedRanges[i].containsIntoRange(range)) {
+					this.deleteProtectedRange(this.aProtectedRanges[i].Id, true);
+				}
+			}
+		}
+		this.setProtectedRangeOffset(range, offset);
+	};
+
+	Worksheet.prototype.setProtectedRangeOffset = function (range, offset) {
+		var protectedRange;
+		for (var i = 0; i < this.aProtectedRanges.length; ++i) {
+			protectedRange = this.aProtectedRanges[i];
+			protectedRange.setOffset(offset, range, this, true);
+		}
+	};
+
+	Worksheet.prototype.moveProtectedRange = function (oBBoxFrom, oBBoxTo, copyRange, offset, wsTo, wsFrom, bTransposeTo) {
+		var t = this;
+		if (!wsTo) {
+			wsTo = this;
+		}
+		if (false === this.workbook.bUndoChanges && false === this.workbook.bRedoChanges) {
+			//чистим ту область, куда переносим
+			if (wsTo.aProtectedRanges && wsTo.aProtectedRanges.length) {
+				wsTo.aProtectedRanges.forEach(function (_protectedRange) {
+					t.tryClearProtectedRange(_protectedRange, [oBBoxTo]);
+				});
+			}
+
+			if (!wsFrom) {
+				wsFrom = this;
+			}
+
+			if (wsFrom.aProtectedRanges && wsFrom.aProtectedRanges.length) {
+				wsFrom.aProtectedRanges.forEach(function (pR) {
+					//если клонируем - то добавляем новый диапазон со смещенным диапазоном пересечения
+					//если нет + если в пределах одного листа - меняем диапазона у текущего правила
+					//если на другой лист - меняем диапазон у текущего + создаём новый со смещенным диапазоном пересечения
+
+					var isChanged = null;
+					var _protectedSqref = pR.sqref;
+					var constantPart, movePart;
+					var _moveRanges = [];
+					var _constantRanges = [];
+					for (var i = 0; i < _protectedSqref.length; i++) {
+						movePart = _protectedSqref[i].intersection(oBBoxFrom);
+						if (movePart) {
+							if (!copyRange) {
+								constantPart = oBBoxFrom.difference(_protectedSqref[i]);
+								_constantRanges = _constantRanges.concat(constantPart);
+							}
+
+							if (bTransposeTo) {
+								movePart = movePart.transpose(oBBoxFrom.c1, oBBoxFrom.r1);
+							}
+
+							movePart.setOffset(offset);
+							_moveRanges.push(movePart);
+							isChanged = true;
+						} else if (!copyRange) {
+							_constantRanges.push(_protectedSqref[i]);
+						}
+					}
+					if (isChanged) {
+						//в случае клонирования фрагмента - создаём новый
+						var _newPr;
+						if (copyRange) {
+							if (wsFrom === wsTo) {
+								pR.setSqref(pR.sqref.concat(_moveRanges), t, true);
+							} else {
+								_newPr = pR.clone();
+								_newPr.sqref = _moveRanges;
+								_newPr.generateNewName(wsTo.aProtectedRanges);
+								wsTo.addProtectedRange(_newPr, true);
+							}
+						} else {
+							if (t !== wsTo) {
+								if (_moveRanges.length) {
+									_newPr = pR.clone();
+									_newPr.sqref = _moveRanges;
+									wsTo.addProtectedRange(_newPr, true);
+								}
+								if (_constantRanges.length) {
+									pR.setSqref(_constantRanges, t, true);
+								}
+							} else {
+								pR.setSqref(_constantRanges.concat(_moveRanges), t, true);
+							}
+						}
+					}
+				});
+			}
+		}
+	};
+
+	Worksheet.prototype.tryClearProtectedRange = function (protectedRange, ranges) {
+		if (!protectedRange) {
+			return;
+		}
+
+		if (ranges) {
+			var _newRanges = [];
+
+			var protectedSqref = protectedRange.sqref;
+			for (var i = 0; i < protectedSqref.length; i++) {
+
+				var tempRanges = [];
+				for (var j = 0; j < ranges.length; j++) {
+					if (tempRanges.length) {
+						var tempRanges2 = [];
+						for (var k = 0; k < tempRanges.length; k++) {
+							tempRanges2 = tempRanges2.concat(ranges[j].intersection(tempRanges[k]) ? ranges[j].difference(tempRanges[k]) : tempRanges[k]);
+						}
+						tempRanges = tempRanges2;
+					} else {
+						tempRanges = ranges[j].intersection(protectedSqref[i]) ? ranges[j].difference(protectedSqref[i]) : protectedSqref[i];
+					}
+				}
+				_newRanges = _newRanges.concat(tempRanges);
+			}
+
+			if (!_newRanges.length) {
+				this.deleteProtectedRange(protectedRange.Id, true)
+			} else {
+				var newProtectedRange = protectedRange.clone();
+				newProtectedRange.sqref = _newRanges;
+				this.changeProtectedRange(protectedRange, newProtectedRange, true);
+			}
+		} else {
+			this.deleteProtectedRange(protectedRange.Id, true);
+		}
+	};
+
+	Worksheet.prototype.getProtectedRangesByActiveCell = function () {
+		var activeCell = this.selectionRange.activeCell;
+		var res = [];
+		for (var i = 0; i < this.aProtectedRanges.length; i++) {
+			if (this.aProtectedRanges[i].contains(activeCell.col, activeCell.row)) {
+				res.push(this.aProtectedRanges[i]);
+			}
+		}
+		return res.length ? res : null;
+	};
+
+	Worksheet.prototype.getProtectedRangesByActiveRange = function () {
+		var res = [];
+		var activeRanges = this.selectionRange.ranges;
+
+		if (this.aProtectedRanges) {
+			for (var i = 0; i < this.aProtectedRanges.length; i++) {
+				for (var j = 0; j < activeRanges.length; j++) {
+					if (this.aProtectedRanges[i].intersection(activeRanges[j])) {
+						res.push(this.aProtectedRanges[i]);
+					}
+				}
+			}
+		}
+
+		return res.length ? res : null;
+	};
+
+	Worksheet.prototype.isLockedActiveCell = function () {
+		var activeCell = this.selectionRange.activeCell;
+		return this.getLockedCell(activeCell.col, activeCell.row);
 	};
 
 //-------------------------------------------------------------------------------------------------
@@ -10142,7 +10948,7 @@
 		}
 
 		//todo не должны удаляться ссылки, если сделать merge ее части.
-		if (this.isNullTextString()) {
+		if (this.isNullTextString() && !this.isFormula()) {
 			var cell = this.ws.getCell3(this.nRow, this.nCol);
 			cell.removeHyperlink();
 		}
@@ -10194,7 +11000,16 @@
 								return this.setValueGetParsed("=" + newFP.getFormula(), callback, isCopyPaste, byRef);
 							default :
 							{
-								wb.handlers.trigger("asc_onError", parseResult.error, c_oAscError.Level.NoCritical);
+								var _pasteHelper = window['AscCommon'].g_specialPasteHelper;
+								var isPaste = _pasteHelper && _pasteHelper.pasteStart;
+								if (isPaste) {
+									if (!_pasteHelper._formulaError) {
+										_pasteHelper._formulaError = true;
+										wb.handlers.trigger("asc_onError", parseResult.error, c_oAscError.Level.NoCritical);
+									}
+								} else {
+									wb.handlers.trigger("asc_onError", parseResult.error, c_oAscError.Level.NoCritical);
+								}
 								if (callback) {
 									callback(false);
 								}
@@ -10219,9 +11034,10 @@
 		if(History.Is_On())
 			DataOld = this.getValueData();
 		//[{text:"",format:TextFormat},{}...]
+		var xfTableAndCond = this.getCompiledStyleCustom(true, false, true);
 		this.setFormulaInternal(null);
 		this.cleanText();
-		this._setValue2(array);
+		this._setValue2(array, undefined, xfTableAndCond);
 		this.ws.workbook.dependencyFormulas.addToChangedCell(this);
 		this.ws.workbook.sortDependency();
 		var DataNew = null;
@@ -10542,6 +11358,21 @@
 		if(History.Is_On() && oRes.oldVal != oRes.newVal)
 			History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_SetQuotePrefix, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow, this.nCol, oRes.oldVal, oRes.newVal));
 	};
+	Cell.prototype.setApplyProtection=function(val){
+		var oRes = this.ws.workbook.oStyleManager.setApplyProtection(this, val);
+		if(History.Is_On() && oRes.oldVal != oRes.newVal)
+			History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_SetApplyProtection, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow, this.nCol, oRes.oldVal, oRes.newVal));
+	};
+	Cell.prototype.setLocked=function(val){
+		var oRes = this.ws.workbook.oStyleManager.setLocked(this, val);
+		if(History.Is_On() && oRes.oldVal != oRes.newVal)
+			History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_SetLocked, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow, this.nCol, oRes.oldVal, oRes.newVal));
+	};
+	Cell.prototype.setHiddenFormulas=function(val){
+		var oRes = this.ws.workbook.oStyleManager.setHiddenFormulas(this, val);
+		if(History.Is_On() && oRes.oldVal != oRes.newVal)
+			History.Add(AscCommonExcel.g_oUndoRedoCell, AscCH.historyitem_Cell_SetHidden, this.ws.getId(), new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new UndoRedoData_CellSimpleData(this.nRow, this.nCol, oRes.oldVal, oRes.newVal));
+	};
 	Cell.prototype.setPivotButton=function(val){
 		var oRes = this.ws.workbook.oStyleManager.setPivotButton(this, val);
 		if(History.Is_On() && oRes.oldVal != oRes.newVal)
@@ -10575,6 +11406,10 @@
 		// if (CellValueType.Error == this.getType()) {
 		// 	return this._getValueTypeError(textValueForEdit);
 		// }
+		if (this.isFormula() && this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden()) {
+			return "";
+		}
+
 		var res = AscCommonExcel.getStringFromMultiText(this.getValueForEdit2());
 		return this.formulaParsed && this.formulaParsed.ref && checkFormulaArray ? "{" + res + "}" : res;
 	};
@@ -10587,10 +11422,12 @@
 		var oValueArray = null;
 		var xfs = this.getCompiledStyle();
 		if (this.isFormula()) {
-			this.processFormula(function(parsed) {
-				// ToDo если будет притормаживать, то завести переменную и не рассчитывать каждый раз!
-				oValueText = "=" + parsed.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
-			});
+			if (!(this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden())) {
+				this.processFormula(function(parsed) {
+					// ToDo если будет притормаживать, то завести переменную и не рассчитывать каждый раз!
+					oValueText = "=" + parsed.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
+				});
+			}
 		} else {
 			if(null != this.text || null != this.number)
 			{
@@ -10861,6 +11698,9 @@
 		if(null != xfs && null != xfs.font)
 			return xfs.font;
 		return g_oDefaultFormat.Font;
+	};
+	Cell.prototype.getCellFont = function() {
+		return (this.xfs && this.xfs.font) || g_oDefaultFormat.Font;
 	};
 	Cell.prototype.getFillColor = function () {
 		return this.getFill().bg();
@@ -11236,7 +12076,7 @@
 			}
 		}
 	}
-	Cell.prototype._setValue2 = function(aVal, ignoreHyperlink)
+	Cell.prototype._setValue2 = function(aVal, ignoreHyperlink, xfTableAndCond)
 	{
 		var sSimpleText = "";
 		for(var i = 0, length = aVal.length; i < length; ++i)
@@ -11265,6 +12105,7 @@
 					}
 					this.multiText.push(oNewElem);
 				}
+				this._subtractFontFromMultiText(xfTableAndCond && xfTableAndCond.font);
 				this._minimizeMultiText(true);
 			}
 			//обрабатываем QuotePrefix
@@ -11422,11 +12263,24 @@
 		}
 		return cErrorLocal["nil"];
 	};
+	Cell.prototype._subtractFontFromMultiText = function(font) {
+		if (!font) {
+			return;
+		}
+		var cellFont = this.getCellFont();
+		for (var i = 0; i < this.multiText.length; i++) {
+			var elem = this.multiText[i];
+			if (null != elem.format) {
+				elem.format = elem.format.clone();
+				elem.format.subtractEqual(font, cellFont);
+			}
+		}
+	};
 	Cell.prototype._minimizeMultiText = function(bSetCellFont) {
 		var bRes = false;
 		if(null != this.multiText && this.multiText.length > 0)
 		{
-			var cellFont = this.getFont();
+			var cellFont = this.getCellFont();
 			var oIntersectFont = null;
 			for (var i = 0, length = this.multiText.length; i < length; i++) {
 				var elem = this.multiText[i];
@@ -13126,6 +13980,66 @@
 			col.setIndent(val);
 		}, function (cell) {
 			cell.setIndent(val);
+		});
+	};
+	Range.prototype.setApplyProtection = function (val) {
+		History.Create_NewPoint();
+		this.createCellOnRowColCross();
+		var fSetProperty = this._setProperty;
+		var nRangeType = this._getRangeType();
+		if (c_oRangeType.All == nRangeType) {
+			this.worksheet.getAllCol().setApplyProtection(val);
+			fSetProperty = this._setPropertyNoEmpty;
+		}
+		fSetProperty.call(this, function (row) {
+			if (c_oRangeType.All == nRangeType && null == row.xfs) {
+				return;
+			}
+			row.setApplyProtection(val);
+		}, function (col) {
+			col.setApplyProtection(val);
+		}, function (cell) {
+			cell.setApplyProtection(val);
+		});
+	};
+	Range.prototype.setLocked = function (val) {
+		History.Create_NewPoint();
+		this.createCellOnRowColCross();
+		var fSetProperty = this._setProperty;
+		var nRangeType = this._getRangeType();
+		if (c_oRangeType.All == nRangeType) {
+			this.worksheet.getAllCol().setLocked(val);
+			fSetProperty = this._setPropertyNoEmpty;
+		}
+		fSetProperty.call(this, function (row) {
+			if (c_oRangeType.All == nRangeType && null == row.xfs) {
+				return;
+			}
+			row.setLocked(val);
+		}, function (col) {
+			col.setLocked(val);
+		}, function (cell) {
+			cell.setLocked(val);
+		});
+	};
+	Range.prototype.setHiddenFormulas = function (val) {
+		History.Create_NewPoint();
+		this.createCellOnRowColCross();
+		var fSetProperty = this._setProperty;
+		var nRangeType = this._getRangeType();
+		if (c_oRangeType.All == nRangeType) {
+			this.worksheet.getAllCol().setHiddenFormulas(val);
+			fSetProperty = this._setPropertyNoEmpty;
+		}
+		fSetProperty.call(this, function (row) {
+			if (c_oRangeType.All == nRangeType && null == row.xfs) {
+				return;
+			}
+			row.setHiddenFormulas(val);
+		}, function (col) {
+			col.setHiddenFormulas(val);
+		}, function (cell) {
+			cell.setHiddenFormulas(val);
 		});
 	};
 	Range.prototype.setType=function(type){
@@ -15640,6 +16554,57 @@
 								if (_arrSparklines) {
 									wsFrom.aSparklineGroups[k].setSparklines(_arrSparklines, true, true);
 								}
+							}
+						}
+					}
+				}
+			}
+
+			var aRules;
+			if (wsTo.aConditionalFormattingRules && wsTo.aConditionalFormattingRules.length) {
+				wsTo.clearConditionalFormattingRulesByRanges([to])
+			}
+			if (wsFrom.aConditionalFormattingRules && wsFrom.aConditionalFormattingRules.length) {
+				aRules = wsFrom.getIntersectionRules(from);
+			}
+			if(aRules && aRules.length > 0) {
+				//TODO сделать объединение диапазонов! (допустим, при копировании стиля на несколько ячеек)
+				var newRules = [];
+				for (var i = to.c1; i <= to.c2; i += nDx) {
+					for (var j = to.r1; j <= to.r2; j += nDy) {
+						for(var k = 0, length3 = aRules.length; k < length3; k++){
+							var oRule = aRules[k];
+							var ranges = oRule.ranges;
+							for (var n = 0; n < ranges.length; n++) {
+								var _newRange = new Asc.Range(i + ranges[n].c1 - from.c1, j + ranges[n].r1 - from.r1, i + ranges[n].c2 - from.c1, j + ranges[n].r2 - from.r1);
+								if (!to.containsRange(_newRange)) {
+									_newRange = to.intersection(_newRange);
+								}
+								if (_newRange) {
+									if (!newRules[k]) {
+										newRules[k] = [];
+									}
+									newRules[k].push(_newRange);
+								}
+							}
+						}
+					}
+				}
+				if (newRules && newRules.length) {
+					for (var i = 0; i < newRules.length; i++) {
+						if (newRules[i] && newRules[i].length) {
+							var fromRule = wsFrom.getRuleById(aRules[i].id);
+							if (fromRule) {
+								fromRule = fromRule.data;
+								var toRule = fromRule.clone();
+								//toRule.id = fromRule.id;
+								if (bIsPromote) {
+									toRule.id = fromRule.id;
+									toRule.ranges = fromRule.ranges.concat(newRules[i]);
+								} else {
+									toRule.ranges = newRules[i];
+								}
+								wsTo.setCFRule(toRule);
 							}
 						}
 					}

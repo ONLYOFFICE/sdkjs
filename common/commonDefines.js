@@ -40,7 +40,7 @@
 {
 	var g_cCharDelimiter      = String.fromCharCode(5);
 	var g_cGeneralFormat      = 'General';
-	var FONT_THUMBNAIL_HEIGHT = (7 * 96.0 / 25.4) >> 0;
+	var FONT_THUMBNAIL_HEIGHT = 28;
 	var c_oAscMaxColumnWidth  = 255;
 	var c_oAscMaxRowHeight    = 409.5;
 	var c_nMaxConversionTime  = 900000;//depends on config
@@ -99,7 +99,22 @@
 		POTX : 0x0087,
 		POTM : 0x0088,
 		FODP : 0x0089,
-		OTP  : 0x008a
+		OTP  : 0x008a,
+
+		//image
+		JPG  : 0x0401,
+		TIFF : 0x0402,
+		TGA  : 0x0403,
+		GIF  : 0x0404,
+		PNG  : 0x0405,
+		EMF  : 0x0406,
+		WMF  : 0x0407,
+		BMP  : 0x0408,
+		CR2  : 0x0409,
+		PCX  : 0x040a,
+		RAS  : 0x040b,
+		PSD  : 0x040c,
+		ICO  : 0x040d
 	};
 
 	var c_oAscError = {
@@ -138,6 +153,7 @@
 			AccessDeny            : -23,
 			LoadingScriptError    : -24,
 			EditingError          :	-25,
+			LoadingFontError      : -26,
 
 			SplitCellMaxRows     : -30,
 			SplitCellMaxCols     : -31,
@@ -279,7 +295,12 @@
 			ErrorTop10Between: 1010,
 
 			SingleColumnOrRowError: 1020,
-			LocationOrDataRangeError: 1021
+			LocationOrDataRangeError: 1021,
+
+			ChangeOnProtectedSheet: 1030,
+			PasswordIsNotCorrect: 1031,
+			DeleteColumnContainsLockedCell: 1032,
+			DeleteRowContainsLockedCell: 1033
 		}
 	};
 
@@ -304,7 +325,8 @@
 		ForceSaveButton   : 16,
 		ForceSaveTimeout  : 17,
 		Waiting	: 18,
-		Submit : 19
+		Submit : 19,
+		Disconnect :20
 	};
 
 	var c_oAscAdvancedOptionsID = {
@@ -338,7 +360,8 @@
 
 	var c_oAscAsyncActionType = {
 		Information      : 0,
-		BlockInteraction : 1
+		BlockInteraction : 1,
+		Empty            : 2
 	};
 
 	var DownloadType = {
@@ -376,8 +399,8 @@
 
 	var c_oAscDrawingLayerType = {
 		BringToFront : 0,
-		SendToBack   : 1,
-		BringForward : 2,
+		BringForward : 1,
+		SendToBack   : 2,
 		SendBackward : 3
 	};
 
@@ -905,7 +928,8 @@
 		Hyperlink    : 1,
 		LockedObject : 2,
 		Footnote     : 3,
-		Form         : 4
+		Form         : 4,
+		Review       : 5
 	};
 
 	// selection type
@@ -2173,6 +2197,20 @@
 			SzWidescreen: 16
 	};
 
+	var c_oAscPictureFormScaleFlag = {
+		Always  : 0,
+		Bigger  : 1,
+		Smaller : 2,
+		Never   : 3,
+	};
+
+	var c_oAscDisplayModeInReview = {
+		Edit     : 0,
+		Final    : 1,
+		Original : 2,
+		Simple   : 3
+	};
+
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
 	window['Asc']                          = window['Asc'] || {};
@@ -2265,6 +2303,7 @@
 	prot['AccessDeny']                       = prot.AccessDeny;
 	prot['LoadingScriptError']               = prot.LoadingScriptError;
 	prot['EditingError']                     = prot.EditingError;
+	prot['LoadingFontError']                 = prot.LoadingFontError;
 	prot['SplitCellMaxRows']                 = prot.SplitCellMaxRows;
 	prot['SplitCellMaxCols']                 = prot.SplitCellMaxCols;
 	prot['SplitCellRowsDivider']             = prot.SplitCellRowsDivider;
@@ -2365,6 +2404,10 @@
 	prot['ErrorTop10Between']                = prot.ErrorTop10Between;
 	prot['SingleColumnOrRowError']           = prot.SingleColumnOrRowError;
 	prot['LocationOrDataRangeError']         = prot.LocationOrDataRangeError;
+	prot['ChangeOnProtectedSheet']           = prot.ChangeOnProtectedSheet;
+	prot['PasswordIsNotCorrect']             = prot.PasswordIsNotCorrect;
+	prot['DeleteColumnContainsLockedCell']   = prot.DeleteColumnContainsLockedCell;
+	prot['DeleteRowContainsLockedCell']      = prot.DeleteRowContainsLockedCell;
 
 
 	window['Asc']['c_oAscAsyncAction']       = window['Asc'].c_oAscAsyncAction = c_oAscAsyncAction;
@@ -2388,6 +2431,7 @@
 	prot['ForceSaveTimeout']                 = prot.ForceSaveTimeout;
 	prot['Waiting']                          = prot.Waiting;
 	prot['Submit']                           = prot.Submit;
+	prot['Disconnect']                       = prot.Disconnect;
 	window['Asc']['c_oAscAdvancedOptionsID'] = window['Asc'].c_oAscAdvancedOptionsID = c_oAscAdvancedOptionsID;
 	prot                                         = c_oAscAdvancedOptionsID;
 	prot['CSV']                                  = prot.CSV;
@@ -2781,6 +2825,7 @@
 	prot['LockedObject'] = prot.LockedObject;
 	prot['Footnote']     = prot.Footnote;
 	prot['Form']         = prot.Form;
+	prot['Review']       = prot.Review;
 
 	window['Asc']['c_oAscMaxTooltipLength'] = window['Asc'].c_oAscMaxTooltipLength = c_oAscMaxTooltipLength;
 	window['Asc']['c_oAscMaxCellOrCommentLength'] = window['Asc'].c_oAscMaxCellOrCommentLength = c_oAscMaxCellOrCommentLength;
@@ -2935,7 +2980,6 @@
 	prot["cellanchorAbsolute"] = prot.cellanchorAbsolute;
 	prot["cellanchorOneCell"] = prot.cellanchorOneCell;
 	prot["cellanchorTwoCell"] = prot.cellanchorTwoCell;
-
 
     window['AscCommon']                             = window['AscCommon'] || {};
 	window["AscCommon"].g_cCharDelimiter            = g_cCharDelimiter;
@@ -3283,5 +3327,17 @@
 	prot['SzScreen16x9'] = prot.SzScreen16x9;
 	prot['SzScreen4x3'] = prot.SzScreen4x3;
 	prot['SzWidescreen'] = prot.SzWidescreen;
+
+	prot = window['Asc']['c_oAscPictureFormScaleFlag'] = window['Asc'].c_oAscPictureFormScaleFlag = c_oAscPictureFormScaleFlag;
+	prot['Always']  = prot.Always;
+	prot['Bigger']  = prot.Bigger;
+	prot['Smaller'] = prot.Smaller;
+	prot['Never']   = prot.Never;
+
+	prot = window['Asc']['c_oAscDisplayModeInReview'] = window['Asc'].c_oAscDisplayModeInReview = c_oAscDisplayModeInReview;
+	prot['Edit']     = prot.Edit;
+	prot['Final']    = prot.Final;
+	prot['Original'] = prot.Original;
+	prot['Simple']   = prot.Simple;
 
 })(window);

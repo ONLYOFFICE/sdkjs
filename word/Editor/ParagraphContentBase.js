@@ -214,6 +214,10 @@ CParagraphContentBase.prototype.Split = function()
 {
 	return new ParaRun();
 };
+CParagraphContentBase.prototype.SplitNoDuplicate = function(oContentPos, nDepth, oNewParagraph)
+{
+
+};
 CParagraphContentBase.prototype.Get_Text = function(Text)
 {
 };
@@ -379,7 +383,7 @@ CParagraphContentBase.prototype.RecalculateMinMaxContentWidth = function(MinMax)
 CParagraphContentBase.prototype.Get_Range_VisibleWidth = function(RangeW, _CurLine, _CurRange)
 {
 };
-CParagraphContentBase.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange)
+CParagraphContentBase.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 {
 };
 //----------------------------------------------------------------------------------------------------------------------
@@ -875,6 +879,11 @@ CParagraphContentBase.prototype.SetThisElementCurrentInParagraph = function()
 
 	this.Paragraph.Set_ParaContentPos(oContentPos, true, -1, -1, false);
 };
+/**
+ * Подсчитываем на сколько элементов разбивается данный элемент с заданным сепаратором
+ * @param oEngine {CTextToTableEngine}
+ */
+CParagraphContentBase.prototype.CalculateTextToTable = function(oEngine){};
 
 /**
  * Это базовый класс для элементов содержимого(контент) параграфа, у которых есть свое содержимое.
@@ -1049,7 +1058,7 @@ CParagraphContentWithContentBase.prototype.CanSplit = function()
 {
 	return true;
 };
-CParagraphContentWithContentBase.prototype.PreDelete = function()
+CParagraphContentWithContentBase.prototype.PreDelete = function(isDeep)
 {
 };
 CParagraphContentWithContentBase.prototype.private_UpdateDocumentOutline = function()
@@ -2149,6 +2158,22 @@ CParagraphContentWithParagraphLikeContent.prototype.Split = function(ContentPos,
 
     return Element;
 };
+CParagraphContentWithParagraphLikeContent.prototype.SplitNoDuplicate = function(oContentPos, nDepth, oNewParagraph)
+{
+	if (this.IsSolid())
+		return;
+
+	var nCurPos = oContentPos.Get(nDepth);
+
+	this.Content[nCurPos].SplitNoDuplicate(oContentPos, nDepth + 1, oNewParagraph);
+
+	var arrNewContent = this.Content.slice(nCurPos + 1);
+	this.RemoveFromContent(nCurPos + 1, this.Content.length - nCurPos - 1, false);
+
+	var nNewPos = oNewParagraph.Content.length;
+	for (var nPos = 0, nCount = arrNewContent.length; nPos < nCount; ++nPos)
+		oNewParagraph.AddToContent(nNewPos + nPos, arrNewContent[nPos], false);
+};
 CParagraphContentWithParagraphLikeContent.prototype.Get_Text = function(Text)
 {
     var ContentLen = this.Content.length;
@@ -2218,7 +2243,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Get_PosInParent = function(P
 };
 CParagraphContentWithParagraphLikeContent.prototype.Correct_Content = function()
 {
-    if (this.Content.length < 0)
+    if (this.Content.length <= 0)
         this.Add_ToContent(0, new ParaRun(this.GetParagraph(), false));
 };
 CParagraphContentWithParagraphLikeContent.prototype.CorrectContent = function()
@@ -2575,7 +2600,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Get_Range_VisibleWidth = fun
         this.Content[CurPos].Get_Range_VisibleWidth(RangeW, _CurLine, _CurRange);
     }
 };
-CParagraphContentWithParagraphLikeContent.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange)
+CParagraphContentWithParagraphLikeContent.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 {
     var CurLine = _CurLine - this.StartLine;
     var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
@@ -2585,7 +2610,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Shift_Range = function(Dx, D
 
     for ( var CurPos = StartPos; CurPos <= EndPos; CurPos++ )
     {
-        this.Content[CurPos].Shift_Range(Dx, Dy, _CurLine, _CurRange);
+        this.Content[CurPos].Shift_Range(Dx, Dy, _CurLine, _CurRange, _CurPage);
     }
 };
 //----------------------------------------------------------------------------------------------------------------------
@@ -4228,7 +4253,7 @@ CParagraphContentWithParagraphLikeContent.prototype.PreDelete = function()
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 	{
 		if (this.Content[nIndex] && this.Content[nIndex].PreDelete)
-			this.Content[nIndex].PreDelete();
+			this.Content[nIndex].PreDelete(true);
 	}
 
 	this.RemoveSelection();
@@ -4458,6 +4483,16 @@ CParagraphContentWithParagraphLikeContent.prototype.SetIsRecalculated = function
 {
 	if (!isRecalculated && this.GetParagraph())
 		this.GetParagraph().SetIsRecalculated(false);
+};
+CParagraphContentWithParagraphLikeContent.prototype.CalculateTextToTable = function(oEngine)
+{
+	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+	{
+		if (this.Content[nIndex].IsSolid())
+			continue;
+
+		this.Content[nIndex].CalculateTextToTable(oEngine);
+	}
 };
 
 //----------------------------------------------------------------------------------------------------------------------
