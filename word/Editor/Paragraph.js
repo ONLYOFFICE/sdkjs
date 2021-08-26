@@ -7568,8 +7568,11 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 {
 	var PagesCount = this.Pages.length;
 
+	var isFixedForm = this.IsInFixedForm();
+
 	// В сносках нельзя делать ExtendToPos, смотри замечание в CFootnotesController.prototype.EndSelection
-	if (this.bFromDocument && this.LogicDocument
+	if (!isFixedForm
+		&& this.bFromDocument && this.LogicDocument
 		&& true === this.LogicDocument.CanEdit()
 		&& null === this.Parent.IsHdrFtr(true)
 		&& !this.Parent.IsFootnote()
@@ -7595,7 +7598,7 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 	if (true === SearchPosXY.End || true === this.Is_Empty())
 	{
 		var LastRange = this.Lines[this.Lines.length - 1].Ranges[this.Lines[this.Lines.length - 1].Ranges.length - 1];
-		if (!this.Parent.IsFootnote() && CurPage >= PagesCount - 1 && X > LastRange.W && MouseEvent.ClickCount >= 2 && Y <= this.Pages[PagesCount - 1].Bounds.Bottom)
+		if (!isFixedForm && !this.Parent.IsFootnote() && CurPage >= PagesCount - 1 && X > LastRange.W && MouseEvent.ClickCount >= 2 && Y <= this.Pages[PagesCount - 1].Bounds.Bottom)
 		{
 			if (this.bFromDocument && false === this.LogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_None, {
 					Type      : AscCommon.changestype_2_Element_and_Type,
