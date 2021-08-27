@@ -18352,6 +18352,8 @@ CDocument.prototype.controller_AddNewParagraph = function(bRecalculate, bForceAd
 	//    выполнить автозамены
 	if (type_Paragraph === Item.GetType())
 	{
+		var isCheckAutoCorrect = false;
+
 		// Если текущий параграф пустой и с нумерацией, тогда удаляем нумерацию и отступы левый и первой строки
 		if (true !== bForceAdd && undefined != Item.GetNumPr() && true === Item.IsEmpty({SkipNewLine : true}) && true === Item.IsCursorAtBegin())
 		{
@@ -18381,11 +18383,7 @@ CDocument.prototype.controller_AddNewParagraph = function(bRecalculate, bForceAd
 				if (true === Item.IsCursorAtEnd())
 				{
 					if (!Item.Lock.Is_Locked())
-					{
-						var oParaEndRun = Item.GetParaEndRun();
-						if (oParaEndRun)
-							oParaEndRun.ProcessAutoCorrectOnParaEnd();
-					}
+						isCheckAutoCorrect = true;
 
 					var StyleId = Item.Style_Get();
 					var NextId  = undefined;
@@ -18453,6 +18451,17 @@ CDocument.prototype.controller_AddNewParagraph = function(bRecalculate, bForceAd
 				Item.SetReviewType(reviewtype_Common);
 			}
             NewParagraph.CheckSignatureLinesOnAdd();
+		}
+
+		if (isCheckAutoCorrect)
+		{
+			var nContentPos = this.CurPos.ContentPos;
+
+			var oParaEndRun = Item.GetParaEndRun();
+			if (oParaEndRun)
+				oParaEndRun.ProcessAutoCorrectOnParaEnd();
+
+			this.CurPos.ContentPos = nContentPos;
 		}
 	}
 	else if (type_Table === Item.GetType() || type_BlockLevelSdt === Item.GetType())
