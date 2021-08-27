@@ -7142,19 +7142,21 @@
 					}
 
 					//необходимо ещё сдвинуть _f
-					if ((offset.row < 0 || offset.col < 0) && _elem && range.containsRange(_elem._f)) {
+					if ((offset.row < 0 || offset.col < 0) && _elem && _elem._f && range.containsRange(_elem._f)) {
 						_elem.f = null;
 						_elem._f = null;
 					} else {
 						_isChange = false;
-						if (range.isIntersectForShift(cloneElem._f, offset)) {
-							_isChange = cloneElem._f.forShift(range, offset);
-						}
-						if (_isChange) {
-							isChange = true;
-							AscCommonExcel.executeInR1C1Mode(false, function () {
-								cloneElem.f = cloneElem._f.getName();
-							});
+						if (cloneElem._f) {
+							if (range.isIntersectForShift(cloneElem._f, offset)) {
+								_isChange = cloneElem._f.forShift(range, offset);
+							}
+							if (_isChange) {
+								isChange = true;
+								AscCommonExcel.executeInR1C1Mode(false, function () {
+									cloneElem.f = cloneElem._f.getName();
+								});
+							}
 						}
 					}
 
@@ -7207,7 +7209,7 @@
 						}
 
 						//необходимо ещё сдвинуть _f
-						if (_elem && oBBoxFrom.containsRange(_elem._f)) {
+						if (_elem && _elem._f && oBBoxFrom.containsRange(_elem._f) && cloneElem._f) {
 							cloneElem._f.setOffset(offset);
 							if (wsTo.sName !== cloneElem._f.sheet) {
 								cloneElem._f.setSheet(wsTo.sName);
