@@ -5925,8 +5925,10 @@ function RangeDataManagerElem(bbox, data)
 				cloneElem.sqRef.setOffset(offset);
 				if (to.containsRange(cloneElem.sqRef)) {
 					newArr.push(this.arrSparklines[i]);
-					cloneElem._f.setOffset(offset);
-					cloneElem.f = cloneElem._f.getName();
+					if (cloneElem._f) {
+						cloneElem._f.setOffset(offset);
+						cloneElem.f = cloneElem._f.getName();
+					}
 					needAdd = true;
 				}
 
