@@ -2158,11 +2158,15 @@
 				ctx.setFillStyle(solid).fillRect(rect._x, rect._y, rect._width, rect._height);
 				return;
 			}
-			var dScale = Asc.getCvtRatio(0, 3, ctx.getPPIX());
-			rect._x *= dScale;
-			rect._y *= dScale;
-			rect._width *= dScale;
-			rect._height *= dScale;
+			
+			var vector_koef = AscCommonExcel.vector_koef / ctx.getZoom();
+			if (AscCommon.AscBrowser.isCustomScaling()) {
+				vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
+			}
+			rect._x *= vector_koef;
+			rect._y *= vector_koef;
+			rect._width *= vector_koef;
+			rect._height *= vector_koef;
 			AscFormat.ExecuteNoHistory(
 				function () {
 					var geometry = new AscFormat.CreateGeometry("rect");
