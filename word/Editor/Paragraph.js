@@ -16733,7 +16733,7 @@ Paragraph.prototype.UpdateLineNumbersInfo = function()
 };
 Paragraph.prototype.GetLineNumbersInfo = function(isNewPage)
 {
-	if (!this.LineNumbersInfo && this.Pages.length <= 0 || this.Lines.length <= 0)
+	if (!this.LineNumbersInfo || this.Pages.length <= 0 || this.Lines.length <= 0)
 		return -1;
 
 	if (isNewPage && this.Pages.length > 1)
