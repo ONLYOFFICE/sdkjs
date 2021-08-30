@@ -120,6 +120,9 @@
 		};
 		asc_CTextOptions.prototype.asc_setTextQualifier = function(v){this.textQualifier = v;};
 		asc_CTextOptions.prototype.asc_getTextQualifier = function(){return this.textQualifier;};
+		asc_CTextOptions.prototype.asc_getTextQualifierArr = function () {
+			return ["\"", "'", null];
+		};
 
 
 		/** @constructor */
@@ -206,6 +209,8 @@
 		prot["asc_setCodePage"] = prot.asc_setCodePage;
 		prot["asc_setNumberDecimalSeparator"] = prot.asc_setNumberDecimalSeparator;
 		prot["asc_setNumberGroupSeparator"] = prot.asc_setNumberGroupSeparator;
+		prot["asc_setTextQualifier"] = prot.asc_setTextQualifier;
+		prot["asc_getTextQualifier"] = prot.asc_getTextQualifier;
 		
 		window["Asc"].asc_CDRMAdvancedOptions = window["Asc"]["asc_CDRMAdvancedOptions"] = asc_CDRMAdvancedOptions;
 		prot = asc_CDRMAdvancedOptions.prototype;
