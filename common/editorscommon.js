@@ -6441,7 +6441,6 @@
 		}
 
 		var textQualifier = options.asc_getTextQualifier();
-		textQualifier = '"';
 		var matrix = [];
 		//var rows = text.match(/[^\r\n]+/g);
 		var rows = text.split(/\r?\n/);
