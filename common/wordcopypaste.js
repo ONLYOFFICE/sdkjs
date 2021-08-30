@@ -3202,7 +3202,7 @@ PasteProcessor.prototype =
 
 	_checkNumberingText: function(paragraph, oNumInfo, oNumPr)
 	{
-		if (oNumPr)
+		if (oNumPr && oNumInfo)
 		{
 			var oNum = this.oLogicDocument.GetNumbering().GetNum(oNumPr.NumId);
 			if (oNum)
