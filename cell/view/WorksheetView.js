@@ -3171,10 +3171,16 @@
                 }
             }
         }
-
-        var activeNamedSheetView = this.model.getActiveNamedSheetViewId() !== null;
+	
+		//TODO во время печати едиственный флаг usePrintScale выставляется в true, использую здесь именно его
+		//в дальнейшем необходимо его изменить/переименовать
+		var isPrint = this.usePrintScale;
+		var activeNamedSheetView = !isPrint && this.model.getActiveNamedSheetViewId() !== null;
         var ctx = drawingCtx || this.drawingCtx;
         var st = this.settings.header.style[style];
+		var backgroundColor = isPrint ? this.settings.header.printBackground : (activeNamedSheetView ? st.backgroundDark : st.background);
+		var borderColor = isPrint ? this.settings.header.printBorder : st.border;
+		var color = isPrint ? this.settings.header.printColor : (activeNamedSheetView ? st.colorDark : st.color);
         var x2 = x + w;
         var y2 = y + h;
         var x2WithoutBorder = x2 - gridlineSize;
@@ -3182,11 +3188,11 @@
         // background только для видимых
         if (!isZeroHeader) {
             // draw background
-            ctx.setFillStyle(activeNamedSheetView ? st.backgroundDark : st.background)
+            ctx.setFillStyle(backgroundColor)
               .fillRect(x, y, w, h);
         }
         // draw border
-        ctx.setStrokeStyle(st.border)
+        ctx.setStrokeStyle(borderColor)
           .setLineWidth(1)
           .beginPath();
         if (style !== kHeaderDefault && !isColHeader && !window["IS_NATIVE_EDITOR"]) {
@@ -3223,7 +3229,7 @@
         var textY = this._calcTextVertPos(y, h, bl, tm, Asc.c_oAscVAlign.Bottom);
 
 		ctx.AddClipRect(x, y, w, h);
-		ctx.setFillStyle(activeNamedSheetView ? st.colorDark : st.color).fillText(text, textX, textY + Asc.round(tm.baseline * this.getZoom()), undefined, sr.charWidths);
+		ctx.setFillStyle(color).fillText(text, textX, textY + Asc.round(tm.baseline * this.getZoom()), undefined, sr.charWidths);
 		ctx.RemoveClipRect();
     };
 

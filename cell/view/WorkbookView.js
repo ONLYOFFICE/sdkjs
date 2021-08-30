@@ -117,7 +117,10 @@
 			style: this._generateStyle(),
 			cornerColor: new CColor(193, 193, 193),
 			groupDataBorder: this.getCColor(AscCommon.GlobalSkin.GroupDataBorder),
-			editorBorder: this.getCColor(AscCommon.GlobalSkin.EditorBorder)
+			editorBorder: this.getCColor(AscCommon.GlobalSkin.EditorBorder),
+			printBackground: new CColor(238, 238, 238),
+			printBorder: new CColor(216, 216, 216),
+			printColor: new CColor(0, 0, 0)
 		};
 		this.cells = {
 			defaultState: {
