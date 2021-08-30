@@ -5484,7 +5484,7 @@
 
 		this.buttons = (_object["buttons"] != null) ? _object["buttons"] : this.buttons;
 
-		this.events = (_object["events"] != null) ? this.set_Events(_object["events"]) : this.events;
+		if (_object["events"] != null) this.set_Events(_object["events"]);
 
 		this.size = (_object["size"] != null) ? _object["size"] : this.size;
 		this.initOnSelectionChanged = (_object["initOnSelectionChanged"] != null) ? _object["initOnSelectionChanged"] : this.initOnSelectionChanged;
