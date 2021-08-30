@@ -6459,10 +6459,14 @@
 				var _text = "";
 				var startQualifier = false;
 				for (var j = 0; j < row.length; j++) {
-					if (row[j] === textQualifier) {
+					if (!startQualifier && row[j] === textQualifier && row[j - 1] && row[j - 1] === delimiterChar) {
+						startQualifier = !startQualifier;
+						continue;
+					} else if (startQualifier && row[j] === textQualifier) {
 						startQualifier = !startQualifier;
 						continue;
 					}
+					
 					if (!startQualifier && row[j] === delimiterChar) {
 						if (!matrix[i]) {
 							matrix[i] = [];
@@ -6472,6 +6476,9 @@
 					} else {
 						_text += row[j];
 						if (j === row.length - 1) {
+							if (!matrix[i]) {
+								matrix[i] = [];
+							}
 							matrix[i].push(_text);
 						}
 					}
