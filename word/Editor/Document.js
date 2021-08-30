@@ -25553,12 +25553,13 @@ CDocument.prototype.ConvertTableToText = function(oProps)
 				if (FramePr)
 					ArrNewContent[i].Set_FramePr2(FramePr);
 			}
-			else
+			else if (!bEnd)
 			{
-				if (bEnd)
-					oSkipEnd++;
-				else
-					oSkipStart++;
+				oSkipStart++;
+			}
+			else if (i == ArrNewContent.length - 1)
+			{
+				oSkipEnd++;
 			}
 		}
 		
@@ -25681,9 +25682,6 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 							var oNestedContent = (oProps.nested) ? this.private_ConvertTableToText(oElement, oProps) : [oElement];
 							if (j == 0 && ArrNewContent[ArrNewContent.length-1].IsEmpty() && bAdd)
 								ArrNewContent.pop();
-							
-							if (k)
-								ArrNewContent[ArrNewContent.length - 1].Concat(oNestedContent.shift(), true);
 
 							ArrNewContent = ArrNewContent.concat(oNestedContent);
 							isNewPar = true;
