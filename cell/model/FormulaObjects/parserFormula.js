@@ -8092,29 +8092,11 @@ function parserFormula( formula, parent, _ws ) {
 		return false;
 	}
 
-	function convertAreaToArray1(area){
-		var retArr = new cArray(), _arg0;
-		if(area instanceof cArea3D) {
-			area = area.getMatrixAllRange()[0];
-		} else {
-			area = area.getMatrix();
-		}
-
-		for ( var iRow = 0; iRow < area.length; iRow++, iRow < area.length ? retArr.addRow() : true ) {
-			for ( var iCol = 0; iCol < area[iRow].length; iCol++ ) {
-				_arg0 = area[iRow][iCol];
-				retArr.addElement(_arg0);
-			}
-		}
-
-		return retArr;
-	}
-
 	function convertAreaToArray(area){
 		var retArr = new cArray(), _arg0;
 		var dimension = area.getDimensions();
 		var ws;
-		if(area instanceof cArea3D) {
+		if(cElementType.cellsRange3D === area.type) {
 			ws = area.wsFrom;
 			area = area.getMatrixNoEmpty()[0];
 		} else {
