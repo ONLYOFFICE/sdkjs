@@ -2997,7 +2997,7 @@ var editor;
         }
 	};
 
-	spreadsheet_api.prototype.asc_setAutoCorrectHyperlinks = function (value) {
+	spreadsheet_api.prototype.asc_SetAutoCorrectHyperlinks = function (value) {
 		window['AscCommonExcel'].g_AutoCorrectHyperlinks = value;
 	};
 
@@ -6269,7 +6269,7 @@ var editor;
   prot["asc_setIncludeNewRowColTable"] = prot.asc_setIncludeNewRowColTable;
 
   prot["asc_setShowZeroCellValues"] = prot.asc_setShowZeroCellValues;
-  prot["asc_setAutoCorrectHyperlinks"] = prot.asc_setAutoCorrectHyperlinks;
+  prot["asc_SetAutoCorrectHyperlinks"] = prot.asc_SetAutoCorrectHyperlinks;
 
 
   // Spreadsheet interface
