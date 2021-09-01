@@ -2839,8 +2839,8 @@ function CDemonstrationManager(htmlpage)
         this.Mode = true;
         this.Canvas = document.createElement('canvas');
         this.Canvas.setAttribute("style", "position:absolute;margin:0;padding:0;left:0px;top:0px;width:100%;height:100%;zIndex:2;background-color:#000000;");
-        this.Canvas.width = _width;
-        this.Canvas.height = _height;
+        this.Canvas.width = AscCommon.AscBrowser.convertToRetinaValue(_width, true);
+        this.Canvas.height = AscCommon.AscBrowser.convertToRetinaValue(_height, true);
 
         this.SlideNum = start_slide_num;
 
@@ -3524,13 +3524,13 @@ function CDemonstrationManager(htmlpage)
         {
             AscCommon.check_MouseDownEvent(e, false);
 
-            var _w = transition.Rect.w;
-            var _h = transition.Rect.h;
+            var _w = AscCommon.AscBrowser.convertToRetinaValue(transition.Rect.w);
+            var _h = AscCommon.AscBrowser.convertToRetinaValue(transition.Rect.h);
             var _w_mm = oThis.HtmlPage.m_oLogicDocument.GetWidthMM();
             var _h_mm = oThis.HtmlPage.m_oLogicDocument.GetHeightMM();
 
-            var _x = global_mouseEvent.X - transition.Rect.x;
-            var _y = global_mouseEvent.Y - transition.Rect.y;
+            var _x = AscCommon.global_mouseEvent.X - AscCommon.AscBrowser.convertToRetinaValue(transition.Rect.x);
+            var _y = AscCommon.global_mouseEvent.Y - AscCommon.AscBrowser.convertToRetinaValue(transition.Rect.y);
 
             if (oThis.HtmlPage.m_oApi.isReporterMode)
             {
@@ -3547,11 +3547,11 @@ function CDemonstrationManager(htmlpage)
 
     this.CheckMouseDown = function(x, y, page)
     {
-        var ret = oThis.HtmlPage.m_oLogicDocument.OnMouseDown(global_mouseEvent, x, y, page);
+        var ret = oThis.HtmlPage.m_oLogicDocument.OnMouseDown(AscCommon.global_mouseEvent, x, y, page);
         if (ret == keydownresult_PreventAll)
         {
             // mouse up will not sended!!!
-            oThis.HtmlPage.m_oLogicDocument.OnMouseUp(global_mouseEvent, x, y, page);
+            oThis.HtmlPage.m_oLogicDocument.OnMouseUp(AscCommon.global_mouseEvent, x, y, page);
             return true;
         }
         return false;
@@ -3619,7 +3619,7 @@ function CDemonstrationManager(htmlpage)
         {
             var documentMI = oThis.documentMouseInfo(e);
             if (documentMI)
-                oThis.HtmlPage.m_oLogicDocument.OnMouseMove(global_mouseEvent, documentMI.x, documentMI.y, documentMI.page);
+                oThis.HtmlPage.m_oLogicDocument.OnMouseMove(AscCommon.global_mouseEvent, documentMI.x, documentMI.y, documentMI.page);
         }
 
 		if (!oThis.HtmlPage.reporterPointer)
@@ -3690,7 +3690,7 @@ function CDemonstrationManager(htmlpage)
         var documentMI = oThis.documentMouseInfo(e);
         if (documentMI)
         {
-            var ret = oThis.HtmlPage.m_oLogicDocument.OnMouseUp(global_mouseEvent, documentMI.x, documentMI.y, documentMI.page);
+            var ret = oThis.HtmlPage.m_oLogicDocument.OnMouseUp(AscCommon.global_mouseEvent, documentMI.x, documentMI.y, documentMI.page);
             if (ret == keydownresult_PreventAll)
                 return;
         }
@@ -3803,8 +3803,8 @@ function CDemonstrationManager(htmlpage)
         this.DivWidth = _width;
         this.DivHeight = _height;
 
-        this.Canvas.width = _width;
-        this.Canvas.height = _height;
+        this.Canvas.width = AscCommon.AscBrowser.convertToRetinaValue(_width, true);
+        this.Canvas.height = AscCommon.AscBrowser.convertToRetinaValue(_height, true);
 
         this.Transition.CalculateRectDemonstration();
 
