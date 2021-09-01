@@ -12326,6 +12326,39 @@ ParaRun.prototype.private_GetSuitableNumberedLvlForAutoCorrect = function(sText)
 
 	return null;
 };
+ParaRun.prototype.ChangeUnicodeText = function(ListForUnicode, fFlagForUnicode)
+{
+	var nStartPos = 0;
+	var nEndPos   = -1;
+
+	if (this.Selection.Use)
+	{
+		nStartPos = this.Selection.StartPos;
+		nEndPos   = this.Selection.EndPos;
+		if (nStartPos > nEndPos)
+		{
+			var nTemp = nStartPos;
+			nStartPos = nEndPos;
+			nEndPos   = nTemp;
+		}
+	}
+
+	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
+	{
+		var oItem = this.Content[nPos];
+		if (para_Text === oItem.Type)
+		{
+			if (nPos >= nStartPos && nPos < nEndPos)
+			{
+				ListForUnicode[fFlagForUnicode] = {
+					oRun: this,
+					currentPos: nPos
+				};
+				fFlagForUnicode++;
+			}
+		}
+	}
+};
 ParaRun.prototype.private_GetSuitablePrBulletForAutoCorrect = function (sText)
 {
 	if ('*' === sText)

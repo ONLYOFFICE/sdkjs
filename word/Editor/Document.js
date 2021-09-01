@@ -10558,6 +10558,46 @@ CDocument.prototype.OnKeyDown = function(e)
 				bRetValue = keydownresult_PreventAll;
 			}
 		}
+		else if (e.KeyCode === 88) // X
+		{
+			if (true === e.AltKey) // Alt + X
+			{
+				var arrParagraphs = this.GetSelectedParagraphs();
+				if (arrParagraphs.length === 1)
+				{
+					var oParagraph = arrParagraphs[0];
+					var ListForUnicode = [];
+					var fFlagForUnicode = 0;
+					oParagraph.CheckRunContent(function(oRun)
+					{
+						oRun.ChangeUnicodeText(ListForUnicode, fFlagForUnicode);
+					});
+					var texting = this.GetSelectedText();
+					var textAfterChange = "";
+					if (ListForUnicode.length <= 6 && ListForUnicode.length === texting.length)
+					{
+						if (ListForUnicode.length === 6 && texting[0] === '0' && texting[1] === '0')
+						{
+							texting = texting.replace("0", "");
+							texting = texting.replace("0", "");
+						}
+						else if (ListForUnicode.length === 5 && texting[0] === '0')
+						{
+							texting = texting.replace("0", "");
+						}
+						if (texting.length === 4)
+						{
+							textAfterChange = this.HexToDec(texting);
+						}
+						else if (texting.length === 1)
+						{
+							textAfterChange = this.DecToHex(texting[0].charCodeAt(0));
+							
+						}
+					}
+				}
+			}
+		}
 		else if ((e.KeyCode === 93 && !e.MacCmdKey) || (/*в Opera такой код*/AscCommon.AscBrowser.isOpera && (57351 === e.KeyCode)) ||
 			(e.KeyCode === 121 && true === e.ShiftKey)) // // Shift + F10 - контекстное меню
 		{
@@ -10619,6 +10659,35 @@ CDocument.prototype.OnKeyDown = function(e)
         this.Document_UpdateSelectionState();
 
     return bRetValue;
+};
+CDocument.prototype.HexToDec = function(el)
+{
+	var number = 0;
+	var hexStr = '0123456789ABCDEF';
+	var flag = 0;
+	for (var i = 3; i >= 0; i--)
+	{
+		number += Math.pow(16, i)  * hexStr.indexOf(el[flag]);
+		flag++;
+	}
+	return number;
+};
+CDocument.prototype.DecToHex = function(number)
+{
+	var end = "";
+	var hexStr = '0123456789ABCDEF';
+	while (number >= 16)
+	{
+		var percent = number % 16;
+		end += hexStr[percent.toString()];
+		number = Math.floor(number / 16);
+	}
+	end += hexStr[number.toString()];
+	while (end.length < 4)
+	{
+		end += "0";
+	}
+	return end.split("").reverse().join("");
 };
 CDocument.prototype.private_AddSymbolByShortcut = function(nCode)
 {
