@@ -4150,6 +4150,10 @@ function (window, undefined) {
 					cfRule.asc_setOperator(value);
 					break;
 				}
+				case AscCH.historyitem_CFRule_SetPercent: {
+					cfRule.asc_setPercent(value);
+					break;
+				}
 				case AscCH.historyitem_CFRule_SetPriority: {
 					cfRule.asc_setPriority(value);
 					break;
