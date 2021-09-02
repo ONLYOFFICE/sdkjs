@@ -12326,7 +12326,7 @@ ParaRun.prototype.private_GetSuitableNumberedLvlForAutoCorrect = function(sText)
 
 	return null;
 };
-ParaRun.prototype.ChangeUnicodeText = function(ListForUnicode, fFlagForUnicode)
+ParaRun.prototype.ChangeUnicodeText = function(ListForUnicode, fFlagForUnicode, TextToUnicode, textAfterChange)
 {
 	var nStartPos = 0;
 	var nEndPos   = -1;
@@ -12342,22 +12342,65 @@ ParaRun.prototype.ChangeUnicodeText = function(ListForUnicode, fFlagForUnicode)
 			nEndPos   = nTemp;
 		}
 	}
-
-	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
-	{
-		var oItem = this.Content[nPos];
-		if (para_Text === oItem.Type)
-		{
-			if (nPos >= nStartPos && nPos < nEndPos)
-			{
-				ListForUnicode[fFlagForUnicode] = {
-					oRun: this,
-					currentPos: nPos
-				};
-				fFlagForUnicode++;
-			}
-		}
-	}
+    if (TextToUnicode === undefined)
+    {
+        for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
+        {
+            var oItem = this.Content[nPos];
+            if (nPos >= nStartPos && nPos < nEndPos)
+            {
+                ListForUnicode[fFlagForUnicode] = {
+                    oRun: this,
+                    currentPos: nPos,
+                    value: (oItem.Value !== undefined) ? oItem.Value : undefined
+                };
+                fFlagForUnicode++;
+            }
+        }
+    }
+    else if (TextToUnicode === true)
+    {
+        for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
+        {
+            var oItem = this.Content[nPos];
+            if (para_Text === oItem.Type || para_Space === oItem.Type)
+            {
+                if (nPos >= nStartPos && nPos < nEndPos)
+                {
+                    this.RemoveFromContent(nPos, 1, true);
+                    this.AddToContent(nPos, new ParaText(textAfterChange.charCodeAt(0)));
+                    this.AddToContent(nPos + 1, new ParaText(textAfterChange.charCodeAt(1)));
+                    this.AddToContent(nPos + 2, new ParaText(textAfterChange.charCodeAt(2)));
+                    this.AddToContent(nPos + 3, new ParaText(textAfterChange.charCodeAt(3)));
+                    this.Selection.StartPos = nPos;
+                    this.Selection.EndPos = nPos + 4;
+                }
+            }
+        }
+    }
+    else if (TextToUnicode === false)
+    {
+        var countOfWords = nEndPos - nStartPos;
+        for (var nPos = 0; nPos < this.Content.length; ++nPos)
+        {
+            var oItem = this.Content[nPos];
+            if (para_Text === oItem.Type)
+            {
+                if (nPos >= nStartPos && nPos < nEndPos && countOfWords !== 0)
+                {
+                    this.RemoveFromContent(nPos, countOfWords, true);
+                    ListForUnicode.splice(0, countOfWords);
+                    if (ListForUnicode.length === 0)
+                    {
+                        this.AddToContent(nPos, new ParaText(textAfterChange));
+                        this.Selection.StartPos = nPos;
+                        this.Selection.EndPos = nPos + 1;
+                    }
+                    countOfWords = 0;
+                }
+            }
+        }
+    }
 };
 ParaRun.prototype.private_GetSuitablePrBulletForAutoCorrect = function (sText)
 {

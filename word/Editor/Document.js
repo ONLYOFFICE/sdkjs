@@ -10558,42 +10558,91 @@ CDocument.prototype.OnKeyDown = function(e)
 				bRetValue = keydownresult_PreventAll;
 			}
 		}
-		else if (e.KeyCode === 88) // X
+		else if (e.KeyCode === 88 && true === e.AltKey) // Alt + X
 		{
-			if (true === e.AltKey) // Alt + X
+			var arrParagraphs = this.GetSelectedParagraphs();
+			if (arrParagraphs.length === 1)
 			{
-				var arrParagraphs = this.GetSelectedParagraphs();
-				if (arrParagraphs.length === 1)
+				var oParagraph = arrParagraphs[0];
+				var ListForUnicode = [];
+				var fFlagForUnicode = 0;
+				oParagraph.CheckRunContent(function(oRun)
 				{
-					var oParagraph = arrParagraphs[0];
-					var ListForUnicode = [];
-					var fFlagForUnicode = 0;
-					oParagraph.CheckRunContent(function(oRun)
+					oRun.ChangeUnicodeText(ListForUnicode, fFlagForUnicode);
+				});
+				for (var nPos = 0; nPos < ListForUnicode.length; nPos++)
+				{
+					if (ListForUnicode[nPos].value === undefined || ListForUnicode.length > 6 )
 					{
-						oRun.ChangeUnicodeText(ListForUnicode, fFlagForUnicode);
-					});
-					var texting = this.GetSelectedText();
-					var textAfterChange = "";
-					if (ListForUnicode.length <= 6 && ListForUnicode.length === texting.length)
+						ListForUnicode.splice(0, ListForUnicode.length);
+					}
+					if (ListForUnicode.length > 1 && !((ListForUnicode[nPos].value <= 70 && ListForUnicode[nPos].value >= 65) 
+						|| (ListForUnicode[nPos].value <= 57 && ListForUnicode[nPos].value >= 48)))
 					{
-						if (ListForUnicode.length === 6 && texting[0] === '0' && texting[1] === '0')
+						ListForUnicode.splice(0, ListForUnicode.length);
+					}
+				}
+				var texting = this.GetSelectedText();
+				var textAfterChange = "";
+				if (ListForUnicode.length <= 6 && ListForUnicode.length === texting.length)
+				{
+					if (ListForUnicode.length === 6 && texting[0] === '0' && texting[1] === '0')
+					{
+						texting = texting.replace("0", "");
+						texting = texting.replace("0", "");
+						ListForUnicode.splice(0, 2);
+					}
+					else if (ListForUnicode.length === 5 && texting[0] === '0')
+					{
+						texting = texting.replace("0", "");
+						ListForUnicode.splice(0, 1);
+					}
+					if (ListForUnicode.length === 2 || ListForUnicode.length === 3)
+					{
+						if (ListForUnicode.length === 3 && texting.length === 3) 
+							texting = "0" + texting;
+						else if (ListForUnicode.length === 2  && texting.length === 2)
+							texting = "00" + texting;	
+					}
+					if (texting.length === 4)
+					{
+						textAfterChange = this.HexToDec(texting);
+						if (textAfterChange > 31)
 						{
-							texting = texting.replace("0", "");
-							texting = texting.replace("0", "");
+							var TextToUnicode = false;
+							this.StartAction(AscDFH.historydescription_Document_AddLetter);
+							oParagraph.CheckRunContent(function(oRun)
+							{
+								oRun.ChangeUnicodeText(ListForUnicode, fFlagForUnicode, TextToUnicode, textAfterChange);
+							});
+							this.UpdateSelection();
+							this.Recalculate();
+							this.UpdateInterface();
+							this.UpdateRulers();
+							this.UpdateTracks();
+
+							this.FinalizeAction();
 						}
-						else if (ListForUnicode.length === 5 && texting[0] === '0')
+					}
+					else if (texting.length === 1)
+					{
+						//this.Selection.Use = true;
+						//this.Set_SelectionContentPos(SearchSPos.Pos, SearchEPos.Pos);
+						textAfterChange = this.DecToHex(texting[0].charCodeAt(0));
+						var TextToUnicode = true;
+						this.StartAction(AscDFH.historydescription_Document_AddLetter);
+
+						oParagraph.CheckRunContent(function(oRun)
 						{
-							texting = texting.replace("0", "");
-						}
-						if (texting.length === 4)
-						{
-							textAfterChange = this.HexToDec(texting);
-						}
-						else if (texting.length === 1)
-						{
-							textAfterChange = this.DecToHex(texting[0].charCodeAt(0));
-							
-						}
+							oRun.ChangeUnicodeText(ListForUnicode, fFlagForUnicode, TextToUnicode, textAfterChange);
+						});
+						this.UpdateSelection();
+						this.Recalculate();
+						this.UpdateInterface();
+						this.UpdateRulers();
+						this.UpdateTracks();
+
+						this.FinalizeAction();
 					}
 				}
 			}
