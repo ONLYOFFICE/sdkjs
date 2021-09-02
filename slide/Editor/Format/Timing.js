@@ -2291,51 +2291,81 @@
             return;
         }
         var val = null;
+        var sFmla = null;
         var fRelTime = this.getRelativeTime(nElapsedTime);
         var nValueType = this.getValueType();
         var oVarMap;
+        var oFirstTav;
+        var oSecondTav;
+        var oTav;
         if(this.tavLst) {
             var aTav = this.tavLst.list;
-            var aTavPct = [];
-            for(var nTav = 0; nTav < aTav.length; ++nTav) {
-                aTavPct.push(aTav[nTav].getTime());
-                if(nTav > 0 && fRelTime <= aTavPct[nTav]) {
-                    break;
+            if(aTav.length > 0) {
+                var nTav = -1;
+                if(fRelTime >= aTav[aTav.length - 1].getTime()) {
+                    nTav = aTav.length - 1;
                 }
-            }
-            var oFirstTav;
-            var oSecondTav;
-            if(nTav < aTav.length) {
-                oFirstTav = aTav[nTav - 1];
-                oSecondTav = aTav[nTav];
-                if(this.getCalcMode() === CALCMODE_DISCRETE) {
-                    val = oFirstTav.val.getVal();
+                else if(fRelTime <= aTav[0].getTime()) {
+                    nTav = 0;
+                    sFmla = aTav[0].fmla;
                 }
-                else {
-                    var fTimeInsideInterval = (fRelTime - aTavPct[nTav - 1]) / (aTavPct[nTav] - aTavPct[nTav - 1]);
-                    val = this.calculateBetweenTwoVals(oFirstTav.val, oSecondTav.val, fTimeInsideInterval);
-                }
-            }
-            else {
-
-                if(this.getCalcMode() === CALCMODE_DISCRETE) {
-                    oFirstTav = aTav[nTav - 1];
-                    if(oFirstTav) {
-                        val = oFirstTav.val.getVal();
-                    }
-                }
-            }
-            if(val !== null) {
-                if(oFirstTav.fmla) {
-                    oVarMap = this.getVarMapForFmla();
-                    oVarMap["$"] = val;
-                    var fFmlaResult = this.getFormulaResult(oFirstTav.fmla, oVarMap);
-                    if(fFmlaResult !== null) {
-                        oAttributes[oFirstAttribute.text] = fFmlaResult;
+                if(nTav > -1) {
+                    oTav = aTav[nTav];
+                    val = this.calculateBetweenTwoVals(oTav.val, oTav.val, 0);
+                    if(aTav[nTav - 1]) {
+                        sFmla = aTav[nTav - 1].fmla;
                     }
                 }
                 else {
-                    oAttributes[oFirstAttribute.text] = val;
+                    for(nTav = 1; nTav < aTav.length; ++nTav) {
+                        if(fRelTime >= aTav[nTav - 1].getTime() && fRelTime <= aTav[nTav].getTime()) {
+                            break;
+                        }
+                    }
+                    if(nTav < aTav.length) {
+                        var nCalcMode = this.getCalcMode();
+                        if(nCalcMode === CALCMODE_DISCRETE) {
+                            if(AscFormat.fApproxEqual(fRelTime, aTav[nTav].getTime())) {
+                                oTav = aTav[nTav];
+                            }
+                            else {
+                                oTav = aTav[nTav - 1];
+                            }
+                            val = this.calculateBetweenTwoVals(oTav.val, oTav.val, 0);
+                            if(aTav[nTav - 1]) {
+                                sFmla = aTav[nTav - 1].fmla;
+                            }
+                        }
+                        else {
+                            if(AscFormat.fApproxEqual(fRelTime, aTav[nTav].getTime())) {
+                                oTav = aTav[nTav];
+                                val = this.calculateBetweenTwoVals(oTav.val, oTav.val, 0);
+                                if(aTav[nTav - 1]) {
+                                    sFmla = aTav[nTav - 1].fmla;
+                                }
+                            }
+                            else {
+                                oFirstTav = aTav[nTav - 1];
+                                oSecondTav = aTav[nTav];
+                                sFmla = oFirstTav.fmla;
+                                var fTimeInsideInterval = (fRelTime - aTav[nTav - 1].getTime()) / (aTav[nTav].getTime() - aTav[nTav - 1].getTime());
+                                val = this.calculateBetweenTwoVals(oFirstTav.val, oSecondTav.val, fTimeInsideInterval);
+                            }
+                        }
+                    }
+                }
+                if(val !== null) {
+                    if(sFmla) {
+                        oVarMap = this.getVarMapForFmla();
+                        oVarMap["$"] = val;
+                        var fFmlaResult = this.getFormulaResult(sFmla, oVarMap);
+                        if(fFmlaResult !== null) {
+                            oAttributes[oFirstAttribute.text] = fFmlaResult;
+                        }
+                    }
+                    else {
+                        oAttributes[oFirstAttribute.text] = val;
+                    }
                 }
             }
         }
@@ -2436,9 +2466,12 @@
             fVal1 = oVal1.intVal;
         }
         if(oVal1.isStr()) {
+            var sStrVal1 = oVal1.getVal();
+            if(sStrVal1 === "hidden" || sStrVal1 === "visible") {
+                return sStrVal1;
+            }
             oVarMap = this.getVarMapForFmla();
             oVarMap["$"] = fRelTime;
-            var sStrVal1 = oVal1.getVal();
             fVal1 = this.getFormulaResult(sStrVal1, oVarMap);
         }
         if(!AscFormat.isRealNumber(fVal1)) {
@@ -3800,7 +3833,7 @@
     };
     CTav.prototype.getTime = function() {
         if(this.tm === null) {
-            return 0;
+            return 1.0;
         }
         if(this.tm.indexOf("%") === this.tm.length - 1) {
             return this.parsePercentage(this.tm);
