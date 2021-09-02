@@ -10606,11 +10606,39 @@ CDocument.prototype.OnKeyDown = function(e)
 					}
 					if (texting.length === 4)
 					{
-						textAfterChange = this.HexToDec(texting);
-						if (textAfterChange > 31)
+						textAfterChange = parseInt(texting, 16);
+						if (!isNaN(textAfterChange) && textAfterChange > 31)
 						{
-							var TextToUnicode = false;
+							if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, false))
+							{
+								var TextToUnicode = false;
+								this.StartAction(AscDFH.historydescription_Document_AddLetter);
+								oParagraph.CheckRunContent(function(oRun)
+								{
+									oRun.ChangeUnicodeText(ListForUnicode, fFlagForUnicode, TextToUnicode, textAfterChange);
+								});
+								this.UpdateSelection();
+								this.Recalculate();
+								this.UpdateInterface();
+								this.UpdateRulers();
+								this.UpdateTracks();
+
+								this.FinalizeAction();
+							}
+						}
+					}
+					else if (texting.length === 1)
+					{
+						if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, false))
+						{
+							textAfterChange = AscCommon.IntToHex(texting[0].charCodeAt(0));
+
+							if (textAfterChange.length < 4)
+								textAfterChange = "00" + textAfterChange;
+
+							var TextToUnicode = true;
 							this.StartAction(AscDFH.historydescription_Document_AddLetter);
+
 							oParagraph.CheckRunContent(function(oRun)
 							{
 								oRun.ChangeUnicodeText(ListForUnicode, fFlagForUnicode, TextToUnicode, textAfterChange);
@@ -10623,26 +10651,6 @@ CDocument.prototype.OnKeyDown = function(e)
 
 							this.FinalizeAction();
 						}
-					}
-					else if (texting.length === 1)
-					{
-						//this.Selection.Use = true;
-						//this.Set_SelectionContentPos(SearchSPos.Pos, SearchEPos.Pos);
-						textAfterChange = this.DecToHex(texting[0].charCodeAt(0));
-						var TextToUnicode = true;
-						this.StartAction(AscDFH.historydescription_Document_AddLetter);
-
-						oParagraph.CheckRunContent(function(oRun)
-						{
-							oRun.ChangeUnicodeText(ListForUnicode, fFlagForUnicode, TextToUnicode, textAfterChange);
-						});
-						this.UpdateSelection();
-						this.Recalculate();
-						this.UpdateInterface();
-						this.UpdateRulers();
-						this.UpdateTracks();
-
-						this.FinalizeAction();
 					}
 				}
 			}
@@ -10708,35 +10716,6 @@ CDocument.prototype.OnKeyDown = function(e)
         this.Document_UpdateSelectionState();
 
     return bRetValue;
-};
-CDocument.prototype.HexToDec = function(el)
-{
-	var number = 0;
-	var hexStr = '0123456789ABCDEF';
-	var flag = 0;
-	for (var i = 3; i >= 0; i--)
-	{
-		number += Math.pow(16, i)  * hexStr.indexOf(el[flag]);
-		flag++;
-	}
-	return number;
-};
-CDocument.prototype.DecToHex = function(number)
-{
-	var end = "";
-	var hexStr = '0123456789ABCDEF';
-	while (number >= 16)
-	{
-		var percent = number % 16;
-		end += hexStr[percent.toString()];
-		number = Math.floor(number / 16);
-	}
-	end += hexStr[number.toString()];
-	while (end.length < 4)
-	{
-		end += "0";
-	}
-	return end.split("").reverse().join("");
 };
 CDocument.prototype.private_AddSymbolByShortcut = function(nCode)
 {
