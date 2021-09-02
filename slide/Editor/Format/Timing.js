@@ -2290,7 +2290,7 @@
         if(!(typeof sAnimAttrName === "string") || sAnimAttrName.length === 0) {
             return;
         }
-        var val;
+        var val = null;
         var fRelTime = this.getRelativeTime(nElapsedTime);
         var nValueType = this.getValueType();
         var oVarMap;
@@ -2303,9 +2303,11 @@
                     break;
                 }
             }
+            var oFirstTav;
+            var oSecondTav;
             if(nTav < aTav.length) {
-                var oFirstTav = aTav[nTav - 1];
-                var oSecondTav = aTav[nTav];
+                oFirstTav = aTav[nTav - 1];
+                oSecondTav = aTav[nTav];
                 if(this.getCalcMode() === CALCMODE_DISCRETE) {
                     val = oFirstTav.val.getVal();
                 }
@@ -2313,18 +2315,27 @@
                     var fTimeInsideInterval = (fRelTime - aTavPct[nTav - 1]) / (aTavPct[nTav] - aTavPct[nTav - 1]);
                     val = this.calculateBetweenTwoVals(oFirstTav.val, oSecondTav.val, fTimeInsideInterval);
                 }
-                if(val !== null) {
-                    if(oFirstTav.fmla) {
-                        oVarMap = this.getVarMapForFmla();
-                        oVarMap["$"] = val;
-                        var fFmlaResult = this.getFormulaResult(oFirstTav.fmla, oVarMap);
-                        if(fFmlaResult !== null) {
-                            oAttributes[oFirstAttribute.text] = fFmlaResult;
-                        }
+            }
+            else {
+
+                if(this.getCalcMode() === CALCMODE_DISCRETE) {
+                    oFirstTav = aTav[nTav - 1];
+                    if(oFirstTav) {
+                        val = oFirstTav.val.getVal();
                     }
-                    else {
-                        oAttributes[oFirstAttribute.text] = val;
+                }
+            }
+            if(val !== null) {
+                if(oFirstTav.fmla) {
+                    oVarMap = this.getVarMapForFmla();
+                    oVarMap["$"] = val;
+                    var fFmlaResult = this.getFormulaResult(oFirstTav.fmla, oVarMap);
+                    if(fFmlaResult !== null) {
+                        oAttributes[oFirstAttribute.text] = fFmlaResult;
                     }
+                }
+                else {
+                    oAttributes[oFirstAttribute.text] = val;
                 }
             }
         }
@@ -7869,6 +7880,12 @@
         if(this.cachedAttributes) {
             return this.cachedAttributes;
         }
+        this.animations.sort(function(oAnim1, oAnim2){
+            if(AscFormat.isRealNumber(oAnim1.startTick) && AscFormat.isRealNumber(oAnim2.startTick)) {
+                return oAnim1.startTick - oAnim2.startTick;
+            }
+            return 0;
+        });
         var oAttributes = {};
         for(var nAnim = 0; nAnim < this.animations.length; ++nAnim) {
             this.animations[nAnim].calculateAttributes(this.elapsedTime, oAttributes);
@@ -8014,6 +8031,11 @@
             }
             if(AscFormat.isRealNumber(val)) {
                 if(!AscFormat.fApproxEqual(val, otherVal)) {
+                    return false;
+                }
+            }
+            else if(typeof val === "string") {
+                if(val !== otherVal) {
                     return false;
                 }
             }
