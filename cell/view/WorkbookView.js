@@ -2311,6 +2311,10 @@
 						_type = c_oAscPopUpSelectorType.Table;
 					}
 					arrResult.push(new AscCommonExcel.asc_CCompleteMenu(defNameStr, _type));
+				} else if (defName.type === Asc.c_oAscDefNameType.table && 0 === fName.indexOf(defNameStr.toLowerCase())) {
+					if (fName.indexOf("[")) {
+						
+					}
 				}
 			}
 		}
