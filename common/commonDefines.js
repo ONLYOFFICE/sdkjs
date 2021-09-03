@@ -2268,6 +2268,21 @@
 	prot['POTM']                 = prot.POTM;
 	prot['FODP']                 = prot.FODP;
 	prot['OTP']                  = prot.OTP;
+
+	prot['JPG']                  = prot.JPG;
+	prot['TIFF']                 = prot.TIFF;
+	prot['TGA']                  = prot.TGA;
+	prot['GIF']                  = prot.GIF;
+	prot['PNG']                  = prot.PNG;
+	prot['EMF']                  = prot.EMF;
+	prot['WMF']                  = prot.WMF;
+	prot['BMP']                  = prot.BMP;
+	prot['CR2']                  = prot.CR2;
+	prot['PCX']                  = prot.PCX;
+	prot['RAS']                  = prot.RAS;
+	prot['PSD']                  = prot.PSD;
+	prot['ICO']                  = prot.ICO;
+
 	window['Asc']['c_oAscError'] = window['Asc'].c_oAscError = c_oAscError;
 	prot                                     = c_oAscError;
 	prot['Level']                            = prot.Level;
