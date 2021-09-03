@@ -2286,7 +2286,7 @@
 			return;
 		}
 		// ToDo для ускорения можно завести объект, куда класть результаты поиска по формулам и второй раз не искать.
-		var i, arrResult = [], defNamesList, defName, defNameStr, _lastFNameLength;
+		var i, arrResult = [], defNamesList, defName, defNameStr, _lastFNameLength, _type;
 		if (fName) {
 			fName = fName.toUpperCase();
 			for (i = 0; i < this.formulasList.length; ++i) {
@@ -2304,7 +2304,7 @@
 				}
 
 				if (0 === defNameStr.toLowerCase().indexOf(fName)) {
-					var _type = c_oAscPopUpSelectorType.Range;
+					_type = c_oAscPopUpSelectorType.Range;
 					if (defName.type === Asc.c_oAscDefNameType.slicer) {
 						_type = c_oAscPopUpSelectorType.Slicer;
 					} else if (defName.type === Asc.c_oAscDefNameType.table) {
@@ -2327,8 +2327,9 @@
 										var _str, j;
 										for (j = 0; j < table.TableColumns.length; j++) {
 											_str = table.TableColumns[j].Name;
+											_type = c_oAscPopUpSelectorType.TableColumnName;
 											if (tableNameParse[1] === "" || 0 === _str.toLowerCase().indexOf(tableNameParse[1])) {
-												arrResult.push(new AscCommonExcel.asc_CCompleteMenu(_str, c_oAscPopUpSelectorType.TableColumn));
+												arrResult.push(new AscCommonExcel.asc_CCompleteMenu(_str, _type));
 											}
 										}
 										
@@ -2337,11 +2338,13 @@
 												_str = AscCommon.cStrucTableLocalColumns[j];
 												if (j === "tr") {
 													_str = "@";
+													_type = c_oAscPopUpSelectorType.TableThisRow;
 												} else {
 													_str = "#" + _str;
+													_type = c_oAscPopUpSelectorType.TableContent;
 												}
 												if (tableNameParse[1] === "" || 0 === _str.toLocaleLowerCase().indexOf(tableNameParse[1])) {
-													arrResult.push(new AscCommonExcel.asc_CCompleteMenu(_str, c_oAscPopUpSelectorType.TableColumn));
+													arrResult.push(new AscCommonExcel.asc_CCompleteMenu(_str, _type));
 												}
 											}
 										}
