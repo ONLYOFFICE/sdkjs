@@ -2553,8 +2553,12 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 		AutomaticNumberedLists : true,
 		FrenchPunctuation      : true,
 		FirstLetterOfSentences : true,
-		Hyperlinks             : true
+		Hyperlinks             : true,
+		FirstLetterExceptions  : {},
+		FirstLetterExcMaxLen   : 0,
 	};
+
+    this.private_InitDefaultFirstLetterAutoCorrectExceptions();
 
     // Контролируем изменения интерфейса
     this.ChangedStyles      = []; // Объект с Id стилями, которые были изменены/удалены/добавлены
@@ -23529,6 +23533,137 @@ CDocument.prototype.SetAutoCorrectHyperlinks = function(isCorrect)
 CDocument.prototype.IsAutoCorrectHyperlinks = function()
 {
 	return this.AutoCorrectSettings.Hyperlinks;
+};
+/**
+ * Получаем массив исключений для автозамены первой буквы предложения
+ * @returns {Array.string}
+ */
+CDocument.prototype.GetFirstLetterAutoCorrectExceptions = function()
+{
+	var arrResult = [];
+	for (var nChar in this.AutoCorrectSettings.FirstLetterExceptions)
+	{
+		arrResult = arrResult.concat(this.AutoCorrectSettings.FirstLetterExceptions[nChar]);
+	}
+
+	return arrResult;
+};
+/**
+ * Задаем массив исключений для автозамены первой буквы предложения
+ * @returns {Array.string}
+ */
+CDocument.prototype.SetFirstLetterAutoCorrectExceptions = function(arrExceptions)
+{
+	this.AutoCorrectSettings.FirstLetterExceptions = {};
+
+	var nMaxLen = 0;
+	for (var nIndex = 0, nCount = arrExceptions.length; nIndex < nCount; ++nIndex)
+	{
+		if (!arrExceptions[nIndex].length)
+			continue;
+
+		if (arrExceptions[nIndex].length > nMaxLen)
+			nMaxLen = arrExceptions[nIndex].length;
+
+		var nChar = arrExceptions[nIndex].charAt(0);
+
+		if (!this.AutoCorrectSettings.FirstLetterExceptions[nChar])
+			this.AutoCorrectSettings.FirstLetterExceptions[nChar] = [];
+
+		this.AutoCorrectSettings.FirstLetterExceptions[nChar].push(arrExceptions[nIndex]);
+	}
+
+	this.AutoCorrectSettings.FirstLetterExcMaxLen = nMaxLen;
+};
+/**
+ * Проверяем слово, попадает ли оно в список исключений
+ * @param sWord
+ * @returns {boolean}
+ */
+CDocument.prototype.CheckFirstLetterAutoCorrectException = function(sWord)
+{
+	var _sWord = sWord.toLowerCase();
+
+	var nChar = _sWord.charAt(0);
+	if (!this.AutoCorrectSettings.FirstLetterExceptions[nChar])
+		return false;
+
+	var arrExceptions = this.AutoCorrectSettings.FirstLetterExceptions[nChar];
+	for (var nIndex = 0, nCount = arrExceptions.length; nIndex < nCount; ++nIndex)
+	{
+		if (_sWord === arrExceptions[nIndex])
+			return true;
+	}
+
+	return false;
+};
+CDocument.prototype.GetFirstLetterAutoCorrectExceptionsMaxLen = function()
+{
+	return this.AutoCorrectSettings.FirstLetterExcMaxLen;
+};
+CDocument.prototype.private_InitDefaultFirstLetterAutoCorrectExceptions = function()
+{
+	// Init default for Latin and Cyrillic
+	this.SetFirstLetterAutoCorrectExceptions([
+		"a", "abbr", "abs", "acct", "addn", "adj", "advt", "al", "alt", "amt", "anon", "approx", "appt", "apr", "apt", "assn", "assoc", "asst", "attn", "attrib", "aug", "aux", "ave", "avg",
+		"b", "bal", "bldg", "blvd", "bot", "bro", "bros",
+		"c", "ca", "calc", "cc", "cert", "certif", "cf", "cit", "cm", "co", "comp", "conf", "confed", "const", "cont", "contrib", "coop", "corp", "ct",
+		"d", "dbl", "dec", "decl", "def", "defn", "dept", "deriv", "diag", "diff", "div", "dm", "dr", "dup", "dupl",
+		"e", "encl", "eq", "eqn", "equip", "equiv", "esp", "esq", "est", "etc", "excl", "ext",
+		"f", "feb", "ff", "fig", "freq", "fri", "ft", "fwd",
+		"g", "gal", "gen", "gov", "govt",
+		"h", "hdqrs", "hgt", "hist", "hosp", "hq", "hr", "hrs", "ht", "hwy",
+		"i", "ib", "ibid", "illus", "in", "inc", "incl", "incr", "int", "intl", "irreg", "ital",
+		"j", "jan", "jct", "jr", "jul", "jun",
+		"k", "kg", "km", "kmh",
+		"l", "lang", "lb", "lbs", "lg", "lit", "ln", "lt",
+		"m", "mar", "masc", "max", "mfg", "mg", "mgmt", "mgr", "mgt", "mhz", "mi", "min", "misc", "mkt", "mktg", "ml", "mm", "mngr", "mon", "mph", "mr", "mrs", "msec", "msg", "mt", "mtg", "mtn", "mun",
+		"n", "na", "name", "nat", "natl", "ne", "neg", "ng", "no", "norm", "nos", "nov", "num", "nw",
+		"o", "obj", "occas", "oct", "op", "opt", "ord", "org", "orig", "oz",
+		"p", "pa", "pg", "pkg", "pl", "pls", "pos", "pp", "ppt", "pred", "pref", "prepd", "prev", "priv", "prof", "proj", "pseud", "psi", "pt", "publ",
+		"q", "qlty", "qt", "qty",
+		"r", "rd", "re", "rec", "ref", "reg", "rel", "rep", "req", "reqd", "resp", "rev",
+		"s", "sat", "sci", "se", "sec", "sect", "sep", "sept", "seq", "sig", "soln", "soph", "spec", "specif", "sq", "sr", "st", "sta", "stat", "std", "subj", "subst", "sun", "supvr", "sw",
+		"t", "tbs", "tbsp", "tech", "tel", "temp", "thur", "thurs", "tkt", "tot", "transf", "transl", "tsp", "tues",
+		"u", "univ", "util",
+		"v", "var", "veg", "vert", "viz", "vol", "vs",
+		"w", "wed", "wk", "wkly", "wt",
+		"x",
+		"y", "yd", "yr",
+		"z",
+
+		"а",
+		"б",
+		"вв",
+		"гг", "гл",
+		"д", "др",
+		"е", "ед",
+		"ё",
+		"ж",
+		"з",
+		"и",
+		"й",
+		"к", "кв", "кл", "коп", "куб",
+		"лл",
+		"м", "мл", "млн", "млрд",
+		"н", "наб", "нач",
+		"о", "обл", "обр", "ок",
+		"п", "пер", "пл", "пос", "пр",
+		"руб",
+		"сб", "св", "см", "соч", "ср", "ст", "стр",
+		"тт", "тыс",
+		"у",
+		"ф",
+		"х",
+		"ц",
+		"ш", "шт",
+		"щ",
+		"ъ",
+		"ы",
+		"ь",
+		"э", "экз",
+		"ю"]
+	);
 };
 /**
  * Получаем идентификатор текущего пользователя
