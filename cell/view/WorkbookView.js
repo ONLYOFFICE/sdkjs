@@ -2324,9 +2324,25 @@
 									//ищем совпадения по названию столбцов
 									var table = this.model.getTableByName(defNameStr);
 									if (table) {
-										for (var j = 0; j < table.TableColumns.length; j++) {
-											if (tableNameParse[1] === "" || 0 === table.TableColumns[j].Name.toLowerCase().indexOf(tableNameParse[1])) {
-												arrResult.push(new AscCommonExcel.asc_CCompleteMenu(table.TableColumns[j].Name, c_oAscPopUpSelectorType.TableColumn));
+										var _str, j;
+										for (j = 0; j < table.TableColumns.length; j++) {
+											_str = table.TableColumns[j].Name;
+											if (tableNameParse[1] === "" || 0 === _str.toLowerCase().indexOf(tableNameParse[1])) {
+												arrResult.push(new AscCommonExcel.asc_CCompleteMenu(_str, c_oAscPopUpSelectorType.TableColumn));
+											}
+										}
+										
+										if (AscCommon.cStrucTableLocalColumns) {
+											for (j in AscCommon.cStrucTableLocalColumns) {
+												_str = AscCommon.cStrucTableLocalColumns[j];
+												if (j === "tr") {
+													_str = "@" + _str;
+												} else {
+													_str = "#" + _str;
+												}
+												if (tableNameParse[1] === "" || 0 === _str.toLocaleLowerCase().indexOf(tableNameParse[1])) {
+													arrResult.push(new AscCommonExcel.asc_CCompleteMenu(_str, c_oAscPopUpSelectorType.TableColumn));
+												}
 											}
 										}
 										fPos += defNameStr.length + 1;
