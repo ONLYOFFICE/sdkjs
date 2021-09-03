@@ -2336,7 +2336,7 @@
 											for (j in AscCommon.cStrucTableLocalColumns) {
 												_str = AscCommon.cStrucTableLocalColumns[j];
 												if (j === "tr") {
-													_str = "@" + _str;
+													_str = "@";
 												} else {
 													_str = "#" + _str;
 												}

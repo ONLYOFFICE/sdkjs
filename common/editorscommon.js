@@ -1296,7 +1296,7 @@
 
 	function build_rx_table(local)
 	{
-		cStrucTableLocalColumns = ( local ? local : {
+		window["AscCommon"].cStrucTableLocalColumns = cStrucTableLocalColumns = ( local ? local : {
 			"h":  "Headers",
 			"d":  "Data",
 			"a":  "All",
@@ -7068,7 +7068,6 @@
 	window["AscCommon"].CCustomShortcutActionSymbol = window["AscCommon"]["CCustomShortcutActionSymbol"] = CCustomShortcutActionSymbol;
 	window['AscCommon'].g_oCRC32  = g_oCRC32;
 	window["AscCommon"].RangeTopBottomIterator = RangeTopBottomIterator;
-	window["AscCommon"].cStrucTableLocalColumns = cStrucTableLocalColumns;
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)
