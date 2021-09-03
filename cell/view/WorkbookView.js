@@ -2286,7 +2286,7 @@
 			return;
 		}
 		// ToDo для ускорения можно завести объект, куда класть результаты поиска по формулам и второй раз не искать.
-		var i, arrResult = [], defNamesList, defName, defNameStr;
+		var i, arrResult = [], defNamesList, defName, defNameStr, _lastFNameLength;
 		if (fName) {
 			fName = fName.toUpperCase();
 			for (i = 0; i < this.formulasList.length; ++i) {
@@ -2312,8 +2312,29 @@
 					}
 					arrResult.push(new AscCommonExcel.asc_CCompleteMenu(defNameStr, _type));
 				} else if (defName.type === Asc.c_oAscDefNameType.table && 0 === fName.indexOf(defNameStr.toLowerCase())) {
-					if (fName.indexOf("[")) {
-						
+					if (-1 !== fName.indexOf("[")) {
+						var tableNameParse = fName.split("[");
+						if (tableNameParse[0] && 0 === defNameStr.toLowerCase().indexOf(tableNameParse[0])) {
+							if (tableNameParse[1] === "#") {
+							
+							} else {
+								if (tableNameParse[1] === "@") {
+								
+								} else {
+									//ищем совпадения по названию столбцов
+									var table = this.model.getTableByName(defNameStr);
+									if (table) {
+										for (var j = 0; j < table.TableColumns.length; j++) {
+											if (tableNameParse[1] === "" || 0 === table.TableColumns[j].Name.toLowerCase().indexOf(tableNameParse[1])) {
+												arrResult.push(new AscCommonExcel.asc_CCompleteMenu(table.TableColumns[j].Name, c_oAscPopUpSelectorType.TableColumn));
+											}
+										}
+										fPos += defNameStr.length + 1;
+										_lastFNameLength = tableNameParse[1].length;
+									}
+								}
+							}
+						}
 					}
 				}
 			}
@@ -2322,7 +2343,7 @@
 			this.handlers.trigger('asc_onFormulaCompleteMenu', arrResult, this.cellEditor.calculateOffset(fPos));
 
 			this.lastFPos = fPos;
-			this.lastFNameLength = fName.length;
+			this.lastFNameLength = _lastFNameLength !== undefined ? _lastFNameLength : fName.length;
 		} else {
 			this.handlers.trigger('asc_onFormulaCompleteMenu', null);
 
