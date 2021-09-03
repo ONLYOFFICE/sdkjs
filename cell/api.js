@@ -5612,6 +5612,13 @@ var editor;
 	}
   	this.wb.undo({All : true});
   };
+	
+  spreadsheet_api.prototype.asc_restartCheckSpelling = function()
+  {
+  	if (this.wb /*&& !this.spellcheckState.lockSpell*/) {
+		this._spellCheckRestart();
+  	}
+  };
 
   /*
    * Export
