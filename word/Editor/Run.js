@@ -12828,6 +12828,7 @@ ParaRun.prototype.private_ProcessCapitalizeFirstLetterOfSentencesAutoCorrect = f
 			oNextContentPos = arrContentPos[arrContentPos.length - 1];
 
 		var oRunElements = new CParagraphRunElements(oNextContentPos, 1, null, true);
+		oRunElements.SetSaveContentPositions(true);
 		oParagraph.GetPrevRunElements(oRunElements);
 
 		// TODO: Надо проверить окончание предложения со скобками, возможно надо проверять два последних символа
@@ -12836,6 +12837,31 @@ ParaRun.prototype.private_ProcessCapitalizeFirstLetterOfSentencesAutoCorrect = f
 			&& !oRunElements.Elements[0].IsExclamationMark()
 			&& !oRunElements.Elements[0].IsQuestionMark())
 			return false;
+
+		// Проверяем исключения
+		if (1 === oRunElements.Elements.length)
+		{
+			var nExceptionMaxLen = oDocument.GetFirstLetterAutoCorrectExceptionsMaxLen() + 1;
+			var oDotContentPos   = oRunElements.GetContentPositions()[0];
+			oRunElements         = new CParagraphRunElements(oDotContentPos, nExceptionMaxLen, null, false);
+			oParagraph.GetPrevRunElements(oRunElements);
+
+			arrElements         = oRunElements.GetElements();
+			var sCheckException = "";
+			for (var nIndex = 0, nCount = arrElements.length; nIndex < nCount; ++nIndex)
+			{
+				var oElement = arrElements[nIndex];
+
+				// TODO: Заменить на (!oElement.IsLetter())
+				if (para_Text !== oElement.Type || oElement.Is_Number() || oElement.IsPunctuation())
+					break;
+
+				sCheckException = String.fromCharCode(oElement.Value) + sCheckException;
+			}
+
+			if (oDocument.CheckFirstLetterAutoCorrectException(sCheckException))
+				return false;
+		}
 	}
 
 	// Если мы дошли до этого момента, значит можно производить автозамену
