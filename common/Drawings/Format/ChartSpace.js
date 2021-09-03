@@ -872,10 +872,17 @@ var GLOBAL_PATH_COUNT = 0;
         var oTransform, oContent, oLabel, fMinY = fYStart, fMaxY = fYStart + fInterval * (this.aLabels.length - 1), fY, i;
         var fMaxContentWidth = 0.0, oSize;
         var fLabelHeight = 0.0;
+        var oCompiledPr = null;
         for(i = 0; i < this.aLabels.length; ++i) {
             oLabel = this.aLabels[i];
             if(oLabel) {
+                if(oCompiledPr) {
+                    oLabel.tx.rich.content.Content[0].CompiledPr = oCompiledPr;
+                }
                 oSize = oLabel.tx.rich.getContentOneStringSizes();
+                if(!oCompiledPr) {
+                    oCompiledPr = oLabel.tx.rich.content.Content[0].CompiledPr;
+                }
                 fLabelHeight = oSize.h;
                 break;
             }
@@ -902,7 +909,13 @@ var GLOBAL_PATH_COUNT = 0;
                 oContent.SetApplyToAll(true);
                 oContent.SetParagraphAlign(AscCommon.align_Left);
                 oContent.SetApplyToAll(false);
+                if(oCompiledPr) {
+                    oLabel.tx.rich.content.Content[0].CompiledPr = oCompiledPr;
+                }
                 oSize = oLabel.tx.rich.getContentOneStringSizes();
+                if(!oCompiledPr) {
+                    oCompiledPr = oLabel.tx.rich.content.Content[0].CompiledPr;
+                }
                 if(oSize.w + fDistance_ > fMaxBlockWidth) {
                     break;
                 }
@@ -929,7 +942,7 @@ var GLOBAL_PATH_COUNT = 0;
             }
             fCurY += fInterval;
         }
-
+        oCompiledPr = null;
         if(i < this.aLabels.length) {
             var fMaxMinWidth = this.checkMaxMinWidth();
             fMaxContentWidth = 0.0;
@@ -949,6 +962,13 @@ var GLOBAL_PATH_COUNT = 0;
                     }
                     if(fContentWidth > fMaxContentWidth) {
                         fMaxContentWidth = fContentWidth;
+                    }
+                    if(oCompiledPr) {
+                        oContent.Content[0].CompiledPr = oCompiledPr;
+                    }
+                    oSize = oLabel.tx.rich.getContentOneStringSizes();
+                    if(!oCompiledPr) {
+                        oCompiledPr = oContent.Content[0].CompiledPr;
                     }
                     oContent.Reset(0, 0, fContentWidth, 20000);//выставляем большую ширину чтобы текст расчитался в одну строку.
                     oContent.Recalculate_Page(0, true);

@@ -184,7 +184,7 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
     g_oTableId.Add( this, this.Id );
-    if(bFromPresentation === true)
+    if(bFromPresentation === true && History.Is_On())
     {
         this.Save_StartState();
     }
