@@ -2915,6 +2915,10 @@ CPresentation.prototype.constructor = CPresentation;
 CPresentation.prototype.GetApi = function() {
     return this.Api;
 };
+CPresentation.prototype.GetHistory = function()
+{
+    return this.History;
+};
 CPresentation.prototype.IsDocumentEditor = function()
 {
 	return false;
