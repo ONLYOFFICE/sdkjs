@@ -1283,7 +1283,34 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 
 		return arrChanges;
 	};
+	/**
+	 * Проверяем перед автозаменой, что действие совершается во время набора
+	 * @param oLastElement - последний элемент, добавленный перед автозаменой
+	 * @returns {boolean}
+	 */
+	CHistory.prototype.CheckAsYouTypeAutoCorrect = function(oLastElement)
+	{
+		// Текущая точка - точка, на которой происходит автозамена. Смотрим на предыдущую и проверяем, если там
+		// происходил ли набор текста в позиции oRun->nInRunPos-1
 
+		if (this.Index <= 0)
+			return false;
+
+		var oPoint      = this.Points[this.Index - 1];
+		var nItemsCount = oPoint.Items.length;
+		if ((AscDFH.historydescription_Document_AddLetter === oPoint.Description || AscDFH.historydescription_Document_AddLetterUnion === oPoint.Description)
+			&& nItemsCount > 0)
+		{
+			var oChange = oPoint.Items[nItemsCount - 1].Data;
+			if (!oChange || !oChange.IsContentChange())
+				return false;
+
+			var nChangeItemsCount = oChange.GetItemsCount();
+			return (nChangeItemsCount > 0 && AscDFH.historyitem_ParaRun_AddItem === oChange.GetType() && oChange.GetItem(nChangeItemsCount - 1) === oLastElement);
+		}
+
+		return false;
+	};
 
 	//----------------------------------------------------------export--------------------------------------------------
 	window['AscCommon']          = window['AscCommon'] || {};
