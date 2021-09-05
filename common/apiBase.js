@@ -505,6 +505,8 @@
 	baseEditorsApi.prototype.sync_InitEditorFonts            = function(gui_fonts)
 	{
 		if (!this.isViewMode) {
+			// корректируем имена для текущего языка интерфейса
+			AscFonts.g_fontApplication && AscFonts.g_fontApplication.CheckNamesForInterface(this.asc_getLocale());
 			this.sendEvent("asc_onInitEditorFonts", gui_fonts);
 		}
 	};

@@ -2381,7 +2381,8 @@
 
 	asc_CTextFontFamily.prototype = {
 		asc_getName: function () {
-			return this.Name;
+			var _name = AscFonts.g_fontApplication ? AscFonts.g_fontApplication.NameToInterface[this.Name] : null;
+			return _name ? _name : this.Name;
 		}, asc_getIndex: function () {
 			return this.Index;
 		},

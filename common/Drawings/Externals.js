@@ -1381,7 +1381,11 @@ function CFont(name, id, type, thumbnail, style)
         this.NeedStyles = fontstyle_mask_regular | fontstyle_mask_italic | fontstyle_mask_bold | fontstyle_mask_bolditalic;
 }
 CFont.prototype.asc_getFontId = function() { return this.id; };
-CFont.prototype.asc_getFontName = function() { return this.name; };
+CFont.prototype.asc_getFontName = function()
+{
+    var _name = AscFonts.g_fontApplication ? AscFonts.g_fontApplication.NameToInterface[this.name] : null;
+    return _name ? _name : this.name;
+};
 CFont.prototype.asc_getFontThumbnail = function() { return this.thumbnail; };
 CFont.prototype.asc_getFontType = function() { return this.type; };
 
