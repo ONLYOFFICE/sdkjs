@@ -761,7 +761,7 @@ Slide.prototype =
     {
         this.checkDrawingUniNvPr(item);
         var _pos = (AscFormat.isRealNumber(pos) && pos > -1 && pos <= this.cSld.spTree.length) ? pos : this.cSld.spTree.length;
-       History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_SlideAddToSpTree, _pos, [item], true));
+       History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_SlideAddToSpTree, _pos, [item], true, true));
         this.cSld.spTree.splice(_pos, 0, item);
         item.setParent2(this);
         if(this.collaborativeMarks) {

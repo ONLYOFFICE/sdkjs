@@ -517,8 +517,9 @@
     };
 
 
-    function CChangesDrawingsContentPresentation(Class, Type, Pos, Items, isAdd){
+    function CChangesDrawingsContentPresentation(Class, Type, Pos, Items, isAdd, Color){
 		CChangesDrawingsContent.call(this, Class, Type, Pos, Items, isAdd);
+        this.Color = Color === true ? true : false;
     }
 
 	CChangesDrawingsContentPresentation.prototype = Object.create(CChangesDrawingsContent.prototype);
@@ -546,7 +547,7 @@
                 aContent.splice(Pos, 0, Element);
 
                 if(this.Class.collaborativeMarks) {
-                    if (Color) {
+                    if (true === this.Color && null !== Color) {
                         this.Class.collaborativeMarks.Update_OnAdd(Pos);
                         this.Class.collaborativeMarks.Add(Pos, Pos + 1, Color);
                         AscCommon.CollaborativeEditing.Add_ChangedClass(this.Class);
