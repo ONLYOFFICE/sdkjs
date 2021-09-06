@@ -8918,7 +8918,7 @@
         return d;
     };
 
-    WorksheetView.prototype._calcRangeOffset = function (range) {
+    WorksheetView.prototype._calcRangeOffset = function (range, diffRange) {
         var vr = this.visibleRange;
         var ar = range || this._getSelection().getLast();
         if (this.getFormulaEditMode()) {
@@ -8936,6 +8936,23 @@
         var incX = ar.c1 < vr.c1 && isMC ? arn.c1 - vr.c1 : ar.c2 < vr.c1 ? ar.c2 - vr.c1 : 0;
         var incY = ar.r1 < vr.r1 && isMC ? arn.r1 - vr.r1 : ar.r2 < vr.r1 ? ar.r2 - vr.r1 : 0;
         var type = ar.getType();
+
+        if (diffRange) {
+            if (diffRange.c1 < 0 && ar.c1 < vr.c1) {
+                incX = arn.c1 - vr.c1;
+                adjustRight = false;
+            }
+
+            if (diffRange.r1 < 0 && ar.r1 < vr.r1) {
+                incY = arn.r1 - vr.r1;
+                adjustBottom = false;
+            }
+
+            if(diffRange.c1 === 0 && diffRange.c2 === 0 && diffRange.r1 === 0 && diffRange.r2 === 0) {
+                adjustRight = false;
+                adjustBottom = false;
+            }
+        }
 
         var offsetFrozen = this.getFrozenPaneOffset();
 
@@ -9763,6 +9780,7 @@
 
 		var newRange = isCoord ? this._calcSelectionEndPointByXY(x, y, keepType) :
 			this._calcSelectionEndPointByOffset(x, y);
+		var diffRange = {c1: newRange.c1 - ar.c1, c2: newRange.c2 - ar.c2, r1: newRange.r1 - ar.r1, r2: newRange.r2 - ar.r2};
         var isEqual = newRange.isEqual(ar);
         if (!isEqual || isChangeSelectionShape) {
 
@@ -9795,7 +9813,7 @@
 
         this.model.workbook.handlers.trigger("asc_onHideComment");
 
-        return isCoord ? this._calcActiveRangeOffsetIsCoord(x, y) : this._calcRangeOffset();
+        return isCoord ? this._calcActiveRangeOffsetIsCoord(x, y) : this._calcRangeOffset(undefined, diffRange);
     };
 
     // Окончание выделения
