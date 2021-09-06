@@ -1280,17 +1280,19 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 	/**
 	 * Проверяем перед автозаменой, что действие совершается во время набора
 	 * @param oLastElement - последний элемент, добавленный перед автозаменой
+	 * @param nHistoryActions - количество точек предществующих автозамене
 	 * @returns {boolean}
 	 */
-	CHistory.prototype.CheckAsYouTypeAutoCorrect = function(oLastElement)
+	CHistory.prototype.CheckAsYouTypeAutoCorrect = function(oLastElement, nHistoryActions)
 	{
-		// Текущая точка - точка, на которой происходит автозамена. Смотрим на предыдущую и проверяем, если там
-		// происходил ли набор текста в позиции oRun->nInRunPos-1
+		// В nHistoryActions задано количество точек, которые предществовали автозамене, т.е.
+		// выполнялись действия, которые и вызывали автозамену в итоге. Нам надо проверить предыдущую точку до заданных
+		// Если в там происходило добавление заданного элемента, значит у нас был набор текста
 
-		if (this.Index <= 0)
+		if (this.Index < nHistoryActions)
 			return false;
 
-		var oPoint      = this.Points[this.Index - 1];
+		var oPoint      = this.Points[this.Index - nHistoryActions];
 		var nItemsCount = oPoint.Items.length;
 		if ((AscDFH.historydescription_Document_AddLetter === oPoint.Description || AscDFH.historydescription_Document_AddLetterUnion === oPoint.Description)
 			&& nItemsCount > 0)
