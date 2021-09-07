@@ -10588,24 +10588,6 @@ CDocument.prototype.OnKeyDown = function(e)
 				var textAfterChange = "";
 				if (ListForUnicode.length <= 6 && ListForUnicode.length !== 0)
 				{
-					if (ListForUnicode.length === 6 && ListForUnicode[0].value === 48 && ListForUnicode[1].value === 48)
-					{
-						texting = texting.replace("0", "");
-						texting = texting.replace("0", "");
-						ListForUnicode.splice(0, 2);
-					}
-					else if (ListForUnicode.length === 5 && ListForUnicode[0].value === 48)
-					{
-						texting = texting.replace("0", "");
-						ListForUnicode.splice(0, 1);
-					}
-					if (ListForUnicode.length === 2 || ListForUnicode.length === 3)
-					{
-						if (ListForUnicode.length === 3 && texting.length === 3) 
-							texting = "0" + texting;
-						else if (ListForUnicode.length === 2  && texting.length === 2)
-							texting = "00" + texting;	
-					}
 					if (ListForUnicode.length !== 1 && ListForUnicode.length <= 6)
 					{
 						textAfterChange = parseInt(texting, 16);
