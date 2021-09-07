@@ -1290,9 +1290,22 @@ Slide.prototype =
                 {
                     var oBounds = oSp.bounds;
                     graphics.transform3(oIdentityMtx);
-                    graphics.b_color1(oCollColor.r, oCollColor.g, oCollColor.b, 127);
-                    graphics.rect(oBounds.l - fDist, oBounds.t - fDist, oBounds.r - oBounds.l + 2*fDist, oBounds.b - oBounds.t + 2*fDist);
-                    graphics.df();
+                    if(graphics.put_GlobalAlpha)
+                    {
+                        graphics.put_GlobalAlpha(true, 0.5);
+                    }
+                    var dX = oBounds.l - fDist;
+                    var dY = oBounds.t - fDist;
+                    var dW = oBounds.r - oBounds.l + 2*fDist;
+                    var dH = oBounds.b - oBounds.t + 2*fDist;
+                    graphics.drawCollaborativeChanges(dX, dY, dW, dH, oCollColor);
+                    if(graphics.put_GlobalAlpha)
+                    {
+                        graphics.put_GlobalAlpha(false, 1);
+                    }
+                    //graphics.b_color1(oCollColor.r, oCollColor.g, oCollColor.b, 127);
+                    //graphics.rect(oBounds.l - fDist, oBounds.t - fDist, oBounds.r - oBounds.l + 2*fDist, oBounds.b - oBounds.t + 2*fDist);
+                    //graphics.df();
                 }
             }
             oSp.draw(graphics);
