@@ -6986,6 +6986,7 @@ function parserFormula( formula, parent, _ws ) {
 	parserFormula.prototype.canShiftShared = function(bHor) {
 		if (this.shared && this.shared.isOneDimension() && !(bHor ^ this.shared.isHor())) {
 			//cut off formulas with absolute reference. it is shifted unexpectedly
+			//todo transform base formula
 			var elem;
 			var bboxElem;
 			for (var i = 0; i < this.outStack.length; i++) {
@@ -6994,10 +6995,16 @@ function parserFormula( formula, parent, _ws ) {
 				if (elem.type === cElementType.cell || elem.type === cElementType.cellsRange ||
 					elem.type === cElementType.cell3D) {
 					if (elem.isValid()) {
+						if (elem.getWS() !== this.getWs()) {
+							return false;
+						}
 						bboxElem = elem.getRange().getBBox0();
 					}
 				} else if (elem.type === cElementType.cellsRange3D) {
 					if (elem.isValid()) {
+						if (!(elem.isSingleSheet() && this.getWs() === elem.wsFrom)) {
+							return false;
+						}
 						bboxElem = elem.getBBox0();
 					}
 				}
