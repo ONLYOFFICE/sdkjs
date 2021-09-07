@@ -12326,7 +12326,7 @@ ParaRun.prototype.private_GetSuitableNumberedLvlForAutoCorrect = function(sText)
 
 	return null;
 };
-ParaRun.prototype.ChangeUnicodeText = function(ListForUnicode, fFlagForUnicode, TextToUnicode, textAfterChange)
+ParaRun.prototype.ChangeUnicodeText = function(ListForUnicode, TextToUnicode, textAfterChange)
 {
 	var nStartPos = 0;
 	var nEndPos   = -1;
@@ -12349,12 +12349,12 @@ ParaRun.prototype.ChangeUnicodeText = function(ListForUnicode, fFlagForUnicode, 
             var oItem = this.Content[nPos];
             if (nPos >= nStartPos && nPos < nEndPos)
             {
-                ListForUnicode[fFlagForUnicode] = {
+                ListForUnicode[this.Paragraph.fFlagForUnicode] = {
                     oRun: this,
                     currentPos: nPos,
                     value: (oItem.Value !== undefined) ? oItem.Value : undefined
                 };
-                fFlagForUnicode++;
+                this.Paragraph.fFlagForUnicode++;
             }
         }
     }
@@ -12368,12 +12368,12 @@ ParaRun.prototype.ChangeUnicodeText = function(ListForUnicode, fFlagForUnicode, 
                 if (nPos >= nStartPos && nPos < nEndPos)
                 {
                     this.RemoveFromContent(nPos, 1, true);
-                    this.AddToContent(nPos, new ParaText(textAfterChange.charCodeAt(0)));
-                    this.AddToContent(nPos + 1, new ParaText(textAfterChange.charCodeAt(1)));
-                    this.AddToContent(nPos + 2, new ParaText(textAfterChange.charCodeAt(2)));
-                    this.AddToContent(nPos + 3, new ParaText(textAfterChange.charCodeAt(3)));
+                    for (var i = 0; i < textAfterChange.length; i++)
+                    {
+                        this.AddToContent(nPos + i, new ParaText(textAfterChange.charCodeAt(i)));
+                    }
                     this.Selection.StartPos = nPos;
-                    this.Selection.EndPos = nPos + 4;
+                    this.Selection.EndPos = nPos + textAfterChange.length;
                 }
             }
         }

@@ -10565,11 +10565,12 @@ CDocument.prototype.OnKeyDown = function(e)
 			{
 				var oParagraph = arrParagraphs[0];
 				var ListForUnicode = [];
-				var fFlagForUnicode = 0;
+				oParagraph.fFlagForUnicode = 0;
 				oParagraph.CheckRunContent(function(oRun)
 				{
-					oRun.ChangeUnicodeText(ListForUnicode, fFlagForUnicode);
+					oRun.ChangeUnicodeText(ListForUnicode);
 				});
+				delete oParagraph.fFlagForUnicode;
 				for (var nPos = 0; nPos < ListForUnicode.length; nPos++)
 				{
 					if (ListForUnicode[nPos].value === undefined || ListForUnicode.length > 6 )
@@ -10577,22 +10578,23 @@ CDocument.prototype.OnKeyDown = function(e)
 						ListForUnicode.splice(0, ListForUnicode.length);
 					}
 					if (ListForUnicode.length > 1 && !((ListForUnicode[nPos].value <= 70 && ListForUnicode[nPos].value >= 65) 
-						|| (ListForUnicode[nPos].value <= 57 && ListForUnicode[nPos].value >= 48)))
+						|| (ListForUnicode[nPos].value <= 57 && ListForUnicode[nPos].value >= 48)
+						|| (ListForUnicode[nPos].value <= 102 && ListForUnicode[nPos].value >= 97)))
 					{
 						ListForUnicode.splice(0, ListForUnicode.length);
 					}
 				}
 				var texting = this.GetSelectedText();
 				var textAfterChange = "";
-				if (ListForUnicode.length <= 6 && ListForUnicode.length === texting.length)
+				if (ListForUnicode.length <= 6 && ListForUnicode.length !== 0)
 				{
-					if (ListForUnicode.length === 6 && texting[0] === '0' && texting[1] === '0')
+					if (ListForUnicode.length === 6 && ListForUnicode[0].value === 48 && ListForUnicode[1].value === 48)
 					{
 						texting = texting.replace("0", "");
 						texting = texting.replace("0", "");
 						ListForUnicode.splice(0, 2);
 					}
-					else if (ListForUnicode.length === 5 && texting[0] === '0')
+					else if (ListForUnicode.length === 5 && ListForUnicode[0].value === 48)
 					{
 						texting = texting.replace("0", "");
 						ListForUnicode.splice(0, 1);
@@ -10604,10 +10606,10 @@ CDocument.prototype.OnKeyDown = function(e)
 						else if (ListForUnicode.length === 2  && texting.length === 2)
 							texting = "00" + texting;	
 					}
-					if (texting.length === 4)
+					if (ListForUnicode.length !== 1 && ListForUnicode.length <= 6)
 					{
 						textAfterChange = parseInt(texting, 16);
-						if (!isNaN(textAfterChange) && textAfterChange > 31)
+						if (!isNaN(textAfterChange) && textAfterChange > 31 && textAfterChange < 1114112)
 						{
 							if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, false))
 							{
@@ -10615,7 +10617,7 @@ CDocument.prototype.OnKeyDown = function(e)
 								this.StartAction(AscDFH.historydescription_Document_AddLetter);
 								oParagraph.CheckRunContent(function(oRun)
 								{
-									oRun.ChangeUnicodeText(ListForUnicode, fFlagForUnicode, TextToUnicode, textAfterChange);
+									oRun.ChangeUnicodeText(ListForUnicode, TextToUnicode, textAfterChange);
 								});
 								this.UpdateSelection();
 								this.Recalculate();
@@ -10627,21 +10629,25 @@ CDocument.prototype.OnKeyDown = function(e)
 							}
 						}
 					}
-					else if (texting.length === 1)
+					else if (ListForUnicode.length === 1)
 					{
 						if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, false))
 						{
-							textAfterChange = AscCommon.IntToHex(texting[0].charCodeAt(0));
-
+							textAfterChange = AscCommon.IntToHex(ListForUnicode[0].value).toUpperCase();
 							if (textAfterChange.length < 4)
-								textAfterChange = "00" + textAfterChange;
+							{
+								if (textAfterChange.length === 2)
+									textAfterChange = "00" + textAfterChange;
+								else if (textAfterChange.length === 3)
+									textAfterChange = "0" + textAfterChange;
+							}
 
 							var TextToUnicode = true;
 							this.StartAction(AscDFH.historydescription_Document_AddLetter);
 
 							oParagraph.CheckRunContent(function(oRun)
 							{
-								oRun.ChangeUnicodeText(ListForUnicode, fFlagForUnicode, TextToUnicode, textAfterChange);
+								oRun.ChangeUnicodeText(ListForUnicode, TextToUnicode, textAfterChange);
 							});
 							this.UpdateSelection();
 							this.Recalculate();
