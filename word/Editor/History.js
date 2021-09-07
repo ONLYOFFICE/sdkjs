@@ -1294,7 +1294,9 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 
 		var oPoint      = this.Points[this.Index - nHistoryActions];
 		var nItemsCount = oPoint.Items.length;
-		if ((AscDFH.historydescription_Document_AddLetter === oPoint.Description || AscDFH.historydescription_Document_AddLetterUnion === oPoint.Description)
+		if ((AscDFH.historydescription_Document_AddLetter === oPoint.Description
+			|| AscDFH.historydescription_Document_AddLetterUnion === oPoint.Description
+			|| AscDFH.historydescription_Presentation_ParagraphAdd === oPoint.Description)
 			&& nItemsCount > 0)
 		{
 			var oChange = oPoint.Items[nItemsCount - 1].Data;

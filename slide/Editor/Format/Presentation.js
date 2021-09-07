@@ -2905,7 +2905,8 @@ function CPresentation(DrawingDocument) {
         AutomaticNumberedLists : true,
         FrenchPunctuation      : true,
 		FirstLetterOfSentences : true,
-		Hyperlinks             : true
+        FirstLetterOfCells     : true,
+        Hyperlinks             : true
     };
 }
 
@@ -11073,6 +11074,22 @@ CPresentation.prototype.SetAutoCorrectHyperlinks = function(isCorrect)
 CPresentation.prototype.IsAutoCorrectHyperlinks = function()
 {
 	return this.AutoCorrectSettings.Hyperlinks;
+};
+/**
+ * Выставляем настройку атозамены для первого символа в ячейке таблицы
+ * @param {boolean} isCorrect
+ */
+CPresentation.prototype.SetAutoCorrectFirstLetterOfCells = function(isCorrect)
+{
+    this.AutoCorrectSettings.FirstLetterOfCells = isCorrect;
+}
+/**
+ * Запрашиваем настройку атозамены для первого символа ячейки таблицы
+ * @return {boolean}
+ */
+CPresentation.prototype.IsAutoCorrectFirstLetterOfCells = function()
+{
+    return this.AutoCorrectSettings.FirstLetterOfCells;
 };
 CPresentation.prototype.StopAnimation = function()
 {

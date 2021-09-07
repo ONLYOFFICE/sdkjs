@@ -12909,8 +12909,7 @@ ParaRun.prototype.private_ProcessCapitalizeFirstLetterOfSentencesAutoCorrect = f
 	if (!oDocument.IsAutoCorrectFirstLetterOfSentences())
 		return false;
 
-	if (oDocument.IsDocumentEditor()
-		&& oRunElementsBefore.IsEnd()
+	if (oRunElementsBefore.IsEnd()
 		&& oParagraph.IsTableCellContent()
 		&& !oDocument.IsAutoCorrectFirstLetterOfCells())
 	{
