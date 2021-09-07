@@ -12899,6 +12899,14 @@ ParaRun.prototype.private_ProcessCapitalizeFirstLetterOfSentencesAutoCorrect = f
 	if (!oDocument.IsAutoCorrectFirstLetterOfSentences())
 		return false;
 
+	if (oDocument.IsDocumentEditor()
+		&& oRunElementsBefore.IsEnd()
+		&& oParagraph.IsTableCellContent()
+		&& !oDocument.IsAutoCorrectFirstLetterOfCells())
+	{
+		return false;
+	}
+
 	if ("www" === sText || "http" === sText || "https" === sText)
 		return;
 

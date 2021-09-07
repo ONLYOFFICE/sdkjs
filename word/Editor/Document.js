@@ -2553,6 +2553,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 		AutomaticNumberedLists : true,
 		FrenchPunctuation      : true,
 		FirstLetterOfSentences : true,
+		FirstLetterOfCells     : true,
 		Hyperlinks             : true,
 		FirstLetterExceptions  : {},
 		FirstLetterExcMaxLen   : 0,
@@ -23503,7 +23504,7 @@ CDocument.prototype.IsAutoCorrectFrenchPunctuation = function()
 	return this.AutoCorrectSettings.FrenchPunctuation;
 };
 /**
- * Выставляем настройку атозамены для первового символа предложения
+ * Выставляем настройку атозамены для первого символа предложения
  * @param {boolean} isCorrect
  */
 CDocument.prototype.SetAutoCorrectFirstLetterOfSentences = function(isCorrect)
@@ -23511,12 +23512,28 @@ CDocument.prototype.SetAutoCorrectFirstLetterOfSentences = function(isCorrect)
 	this.AutoCorrectSettings.FirstLetterOfSentences = isCorrect;
 };
 /**
- * Запрашиваем настройку атозамены для первового символа предложения
+ * Запрашиваем настройку атозамены для первого символа предложения
  * @return {boolean}
  */
 CDocument.prototype.IsAutoCorrectFirstLetterOfSentences = function()
 {
 	return this.AutoCorrectSettings.FirstLetterOfSentences;
+};
+/**
+ * Выставляем настройку атозамены для первого символа в ячейке таблицы
+ * @param {boolean} isCorrect
+ */
+CDocument.prototype.SetAutoCorrectFirstLetterOfCells = function(isCorrect)
+{
+	this.AutoCorrectSettings.FirstLetterOfCells = isCorrect;
+}
+/**
+ * Запрашиваем настройку атозамены для первого символа ячейки таблицы
+ * @return {boolean}
+ */
+CDocument.prototype.IsAutoCorrectFirstLetterOfCells = function()
+{
+	return this.AutoCorrectSettings.FirstLetterOfCells;
 };
 /**
  * Выставляем настройку атозамены для гиперссылок
