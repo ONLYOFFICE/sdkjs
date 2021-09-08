@@ -2128,7 +2128,18 @@
 			else if (oForm.IsPicture())
 			{
 				this.Memory.WriteLong(4);
-				// TODO: Параметры для картиночной формы
+
+				var oPicturePr = oForm.GetPictureFormPr();
+
+				if (oPicturePr.IsConstantProportions())
+					nFlag |= (1 << 20);
+
+				if (oPicturePr.IsRespectBorders())
+					nFlag |= (1 << 21);
+
+				nFlag |= ((oPicturePr.GetScaleFlag() & 0xF) << 24);
+				this.Memory.WriteLong(oPicturePr.GetShiftX() * 1000);
+				this.Memory.WriteLong(oPicturePr.GetShiftY() * 1000);
 			}
 			else
 			{
