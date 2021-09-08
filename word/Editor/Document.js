@@ -10565,12 +10565,12 @@ CDocument.prototype.OnKeyDown = function(e)
 			{
 				var oParagraph = arrParagraphs[0];
 				var ListForUnicode = [];
-				oParagraph.fFlagForUnicode = 0;
+				var fFlagForUnicode = [0];
+				var textForUnicode = [""];
 				oParagraph.CheckRunContent(function(oRun)
 				{
-					oRun.ChangeUnicodeText(ListForUnicode);
+					oRun.ChangeUnicodeText(ListForUnicode, textForUnicode, fFlagForUnicode);
 				});
-				delete oParagraph.fFlagForUnicode;
 				for (var nPos = 0; nPos < ListForUnicode.length; nPos++)
 				{
 					if (ListForUnicode[nPos].value === undefined || ListForUnicode.length > 6 )
@@ -10584,17 +10584,18 @@ CDocument.prototype.OnKeyDown = function(e)
 						ListForUnicode.splice(0, ListForUnicode.length);
 					}
 				}
-				var texting = this.GetSelectedText();
 				var textAfterChange = "";
 				if (ListForUnicode.length <= 6 && ListForUnicode.length !== 0)
 				{
 					if (ListForUnicode.length !== 1 && ListForUnicode.length <= 6)
 					{
-						textAfterChange = parseInt(texting, 16);
-						if (!isNaN(textAfterChange) && textAfterChange > 0x1F && textAfterChange < 0x110000)
+						textAfterChange = parseInt(textForUnicode[0], 16);
+						if (!isNaN(textAfterChange) && textAfterChange > 0x1F && textAfterChange < 0x110000 && !(textAfterChange >= 0xD800 && textAfterChange <= 0xDFFF))
 						{
 							if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, false))
 							{
+								this.StartAction(AscDFH.historydescription_Document_AddLetter);
+
 								for (var i = ListForUnicode.length - 1; i >= 0; i--)
 								{
 									ListForUnicode[i].oRun.RemoveFromContent(ListForUnicode[i].currentPos, 1, true);
