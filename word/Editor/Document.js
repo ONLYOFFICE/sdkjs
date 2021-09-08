@@ -10599,7 +10599,10 @@ CDocument.prototype.OnKeyDown = function(e)
 								{
 									ListForUnicode[i].oRun.RemoveFromContent(ListForUnicode[i].currentPos, 1, true);
 								}
-								ListForUnicode[0].oRun.AddToContent(ListForUnicode[0].currentPos, new ParaText(textAfterChange));
+								if (AscCommon.IsSpace(textAfterChange))
+									ListForUnicode[0].oRun.AddToContent(ListForUnicode[0].currentPos, new ParaSpace(textAfterChange));
+								else
+									ListForUnicode[0].oRun.AddToContent(ListForUnicode[0].currentPos, new ParaText(textAfterChange));
 								ListForUnicode[0].oRun.Selection.StartPos = ListForUnicode[0].currentPos;
 								ListForUnicode[0].oRun.Selection.EndPos = ListForUnicode[0].currentPos + 1;
 
