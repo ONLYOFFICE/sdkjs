@@ -2002,7 +2002,7 @@
 				nFlag |= (1 << 3);
 
 			// 7-ой и 8-ой биты зарезервированы для бордера
-			var oBorder = oForm.GetBorder();
+			var oBorder = oFormPr.GetBorder();
 			if (oBorder && !oBorder.IsNone())
 			{
 				nFlag |= (1 << 6);

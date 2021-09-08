@@ -1604,16 +1604,35 @@ CSdtFormPr.prototype.GetAscShd = function()
 
 	return (new Asc.asc_CParagraphShd(this.Shd));
 };
-CSdtFormPr.prototype.SetAscShd = function(oAscShd)
+CSdtFormPr.prototype.SetAscShd = function(isShd, oAscColor)
 {
-	if (!oAscShd)
+	if (!isShd || !oAscColor)
 	{
 		this.Shd = undefined;
 	}
 	else
 	{
+		var oUnifill        = new AscFormat.CUniFill();
+		oUnifill.fill       = new AscFormat.CSolidFill();
+		oUnifill.fill.color = AscFormat.CorrectUniColor(oAscColor, oUnifill.fill.color, 1);
+
 		this.Shd = new CDocumentShd();
-		this.Shd.Set_FromObject(oAscShd);
+		this.Shd.Set_FromObject({
+			Value: Asc.c_oAscShd.Clear,
+			Color: {
+				r: oAscColor.asc_getR(),
+				g: oAscColor.asc_getG(),
+				b: oAscColor.asc_getB(),
+				Auto: false
+			},
+			Fill: {
+				r: oAscColor.asc_getR(),
+				g: oAscColor.asc_getG(),
+				b: oAscColor.asc_getB(),
+				Auto: false
+			},
+			Unifill: oUnifill
+		});
 	}
 };
 

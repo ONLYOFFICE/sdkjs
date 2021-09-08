@@ -2194,7 +2194,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 			//----------------------------------------------------------------------------------------------------------
 			if (SdtHighlightColor || FormsHighlight)
 			{
-				var oSdtBounds, oInlineSdt, isForm;
+				var oSdtBounds, oInlineSdt, isForm, oFormShd;
 				var nPrevColorState = 0;
 
 				for (var nSdtIndex = 0, nSdtCount = PDSH.InlineSdt.length; nSdtIndex < nSdtCount; ++nSdtIndex)
@@ -2202,8 +2202,32 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 					oInlineSdt = PDSH.InlineSdt[nSdtIndex];
 					isForm     = oInlineSdt.IsForm();
 					oSdtBounds = PDSH.InlineSdt[nSdtIndex].GetRangeBounds(CurLine, CurRange);
+					oFormShd   = isForm ? oInlineSdt.GetFormPr().GetShd() : null;
 
-					if (isForm && FormsHighlight && !oInlineSdt.IsCurrent())
+					if (oFormShd && !oFormShd.IsNil())
+					{
+						var oFormShdColor = oFormShd.GetSimpleColor(this.GetTheme(), this.GetColorMap());
+						if (oInlineSdt.IsCurrent())
+						{
+							if (3 !== nPrevColorState)
+							{
+								pGraphics.b_color1(oFormShdColor.r, oFormShdColor.g, oFormShdColor.b, 255);
+								nPrevColorState = 3;
+							}
+						}
+						else
+						{
+							if (4 !== nPrevColorState)
+							{
+								pGraphics.b_color1(oFormShdColor.r * (201 / 255) | 0, oFormShdColor.g * (225 / 255) | 0, oFormShdColor.b, 255);
+								nPrevColorState = 4;
+							}
+						}
+
+						if (oInlineSdt.IsFixedForm())
+							oSdtBounds = oInlineSdt.GetFixedFormBounds();
+					}
+					else if (isForm && FormsHighlight && !oInlineSdt.IsCurrent())
 					{
 						if (1 !== nPrevColorState)
 						{
@@ -2213,7 +2237,6 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 
 						if (oInlineSdt.IsFixedForm())
 							oSdtBounds = oInlineSdt.GetFixedFormBounds();
-
 					}
 					else if (!isForm && SdtHighlightColor)
 					{
