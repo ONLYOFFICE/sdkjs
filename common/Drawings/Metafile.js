@@ -2002,7 +2002,7 @@
 				nFlag |= (1 << 3);
 
 			// 7-ой и 8-ой биты зарезервированы для бордера
-			var oBorder = oForm.GetTextFormPr() ? oForm.GetTextFormPr().CombBorder : null;
+			var oBorder = oForm.GetBorder();
 			if (oBorder && !oBorder.IsNone())
 			{
 				nFlag |= (1 << 6);
@@ -2016,6 +2016,18 @@
 				this.Memory.WriteByte(0x255);
 			}
 
+			var oShd = oFormPr.GetShd();
+			if (oShd && !oShd.IsNil())
+			{
+				nFlag |= (1 << 9);
+
+				var oParagraph = oForm.GetParagraph();
+				var oColor     = oShd.GetSimpleColor(oParagraph.GetTheme(), oParagraph.GetColorMap());
+				this.Memory.WriteByte(oColor.r);
+				this.Memory.WriteByte(oColor.g);
+				this.Memory.WriteByte(oColor.b);
+				this.Memory.WriteByte(0x255);
+			}
 
 			// 0 - Unknown
 			// 1 - Text

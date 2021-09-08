@@ -1593,7 +1593,7 @@ CSdtFormPr.prototype.SetAscBorder = function(oAscBorder)
 		this.Border.Set_FromObject(oAscBorder);
 	}
 };
-CSdtFormPr.prototype.SetShd = function()
+CSdtFormPr.prototype.GetShd = function()
 {
 	return this.Shd;
 };
