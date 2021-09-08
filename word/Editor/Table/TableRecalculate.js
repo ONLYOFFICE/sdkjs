@@ -1885,7 +1885,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 
     if (this.LogicDocument && this.LogicDocument.IsDocumentEditor())
 	{
-		var arrRanges = this.Parent.CheckRange(Page.X, Page.Y, Page.XLimit, Page.Y + 0.001, Page.Y, Page.Y + 0.001, Page.X, Page.XLimit, CurPage);
+		var arrRanges = this.Parent.CheckRange(Page.X, Page.Y, Page.XLimit, Page.Y + 0.001, Page.Y, Page.Y + 0.001, Page.X, Page.XLimit, this.private_GetRelativePageIndex(CurPage));
 		if (arrRanges.length > 0)
 		{
 			for (var nRangeIndex = 0, nRangesCount = arrRanges.length; nRangeIndex < nRangesCount; ++nRangeIndex)
