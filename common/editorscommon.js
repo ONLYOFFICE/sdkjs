@@ -4296,8 +4296,12 @@
 	 */
 	function IntToHex(nValue)
 	{
-		//var sRes = nValue.toString(16);
-		return nValue.toString(16); //(sRes.length & 1) ? "0" + sRes : sRes;
+		var sRes = nValue.toString(16);
+		if (sRes.length === 2)
+			sRes = "00" + sRes;
+		else if (sRes.length === 3)
+			sRes = "0" + sRes;
+		return sRes;
 	}
 
 	function private_IsAbbreviation(sWord) {

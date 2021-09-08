@@ -10577,9 +10577,9 @@ CDocument.prototype.OnKeyDown = function(e)
 					{
 						ListForUnicode.splice(0, ListForUnicode.length);
 					}
-					if (ListForUnicode.length > 1 && !((ListForUnicode[nPos].value <= 70 && ListForUnicode[nPos].value >= 65) 
-						|| (ListForUnicode[nPos].value <= 57 && ListForUnicode[nPos].value >= 48)
-						|| (ListForUnicode[nPos].value <= 102 && ListForUnicode[nPos].value >= 97)))
+					if (ListForUnicode.length > 1 && !((ListForUnicode[nPos].value <= 0x46 && ListForUnicode[nPos].value >= 0x41) 
+						|| (ListForUnicode[nPos].value <= 0x39 && ListForUnicode[nPos].value >= 0x30)
+						|| (ListForUnicode[nPos].value <= 0x66 && ListForUnicode[nPos].value >= 0x61)))
 					{
 						ListForUnicode.splice(0, ListForUnicode.length);
 					}
@@ -10591,16 +10591,18 @@ CDocument.prototype.OnKeyDown = function(e)
 					if (ListForUnicode.length !== 1 && ListForUnicode.length <= 6)
 					{
 						textAfterChange = parseInt(texting, 16);
-						if (!isNaN(textAfterChange) && textAfterChange > 31 && textAfterChange < 1114112)
+						if (!isNaN(textAfterChange) && textAfterChange > 0x1F && textAfterChange < 0x110000)
 						{
 							if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, false))
 							{
-								var TextToUnicode = false;
-								this.StartAction(AscDFH.historydescription_Document_AddLetter);
-								oParagraph.CheckRunContent(function(oRun)
+								for (var i = ListForUnicode.length - 1; i >= 0; i--)
 								{
-									oRun.ChangeUnicodeText(ListForUnicode, TextToUnicode, textAfterChange);
-								});
+									ListForUnicode[i].oRun.RemoveFromContent(ListForUnicode[i].currentPos, 1, true);
+								}
+								ListForUnicode[0].oRun.AddToContent(ListForUnicode[0].currentPos, new ParaText(textAfterChange));
+								ListForUnicode[0].oRun.Selection.StartPos = ListForUnicode[0].currentPos;
+								ListForUnicode[0].oRun.Selection.EndPos = ListForUnicode[0].currentPos + 1;
+
 								this.UpdateSelection();
 								this.Recalculate();
 								this.UpdateInterface();
@@ -10623,14 +10625,19 @@ CDocument.prototype.OnKeyDown = function(e)
 								else if (textAfterChange.length === 3)
 									textAfterChange = "0" + textAfterChange;
 							}
+							var CurrentRun = ListForUnicode[0].oRun;
+							var CurrentNPos = ListForUnicode[0].currentPos;
 
-							var TextToUnicode = true;
 							this.StartAction(AscDFH.historydescription_Document_AddLetter);
 
-							oParagraph.CheckRunContent(function(oRun)
+							CurrentRun.RemoveFromContent(CurrentNPos, 1, true);
+							for (var i = 0; i < textAfterChange.length; i++)
 							{
-								oRun.ChangeUnicodeText(ListForUnicode, TextToUnicode, textAfterChange);
-							});
+								CurrentRun.AddToContent(CurrentNPos + i, new ParaText(textAfterChange.charCodeAt(i)));
+							}
+							CurrentRun.Selection.StartPos = CurrentNPos;
+                			CurrentRun.Selection.EndPos = CurrentNPos + textAfterChange.length;
+
 							this.UpdateSelection();
 							this.Recalculate();
 							this.UpdateInterface();
