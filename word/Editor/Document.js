@@ -10618,13 +10618,7 @@ CDocument.prototype.OnKeyDown = function(e)
 						if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, false))
 						{
 							textAfterChange = AscCommon.IntToHex(ListForUnicode[0].value).toUpperCase();
-							if (textAfterChange.length < 4)
-							{
-								if (textAfterChange.length === 2)
-									textAfterChange = "00" + textAfterChange;
-								else if (textAfterChange.length === 3)
-									textAfterChange = "0" + textAfterChange;
-							}
+
 							var CurrentRun = ListForUnicode[0].oRun;
 							var CurrentNPos = ListForUnicode[0].currentPos;
 
