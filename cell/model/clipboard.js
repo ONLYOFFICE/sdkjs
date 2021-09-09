@@ -554,7 +554,16 @@
 					}
 
 					// ToDo multiselect ?
-					var selectionRange = activeRange ? activeRange : wsModel.selectionRange.getLast();
+					var selectionRange;
+					if (activeRange) {
+						selectionRange = activeRange;
+					} else {
+						if (1 !== wsModel.selectionRange.ranges.length) {
+							selectionRange = new AscCommonExcel.MultiplyRange(wsModel.selectionRange.ranges).getUnionRange();
+						} else {
+							selectionRange = wsModel.selectionRange.getLast();
+						}
+					}
 					var maxRowCol = this._getRangeMaxRowCol(wsModel, selectionRange);
 					if (null !== maxRowCol) {
 						if (maxRowCol.col < selectionRange.c1) {
