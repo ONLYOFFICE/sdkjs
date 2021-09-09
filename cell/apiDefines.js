@@ -382,12 +382,11 @@ var c_oAscPopUpSelectorType = {
   Slicer: 4,
   TotalRowFunc: 5,
   TableColumnName: 6,
-  TableContent: 7,
-  TableThisRow: 8,
-  TableAll: 9,
-  TableData: 10,
-  TableHeaders: 11,
-  TableTotals: 12
+  TableThisRow: 7,
+  TableAll: 8,
+  TableData: 9,
+  TableHeaders: 10,
+  TableTotals: 11
 };
   /** @enum */
   var c_oSerFormat = {
@@ -754,7 +753,6 @@ var c_oAscPopUpSelectorType = {
   prot['Slicer'] = prot.Slicer;
   prot['TotalRowFunc'] = prot.TotalRowFunc;
   prot['TableColumnName'] = prot.TableColumnName;
-  prot['TableContent'] = prot.TableContent;
   prot['TableThisRow'] = prot.TableThisRow;
   prot['TableAll'] = prot.TableAll;
   prot['TableData'] = prot.TableData;

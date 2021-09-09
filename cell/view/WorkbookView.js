@@ -2336,12 +2336,21 @@
 										if (AscCommon.cStrucTableLocalColumns) {
 											for (j in AscCommon.cStrucTableLocalColumns) {
 												_str = AscCommon.cStrucTableLocalColumns[j];
-												if (j === "tr") {
+												if (_str === "Headers") {
+													_str = "#" + _str;
+													_type = c_oAscPopUpSelectorType.TableHeaders;
+												} else if (_str ===  "Data") {
+													_str = "#" + _str;
+													_type = c_oAscPopUpSelectorType.TableData;
+												} else if (_str === "All") {
+													_str = "#" + _str;
+													_type = c_oAscPopUpSelectorType.TableAll;
+												} else if (_str === "This Row") {
 													_str = "@";
 													_type = c_oAscPopUpSelectorType.TableThisRow;
-												} else {
+												} else if (_str === "Totals") {
 													_str = "#" + _str;
-													_type = c_oAscPopUpSelectorType.TableContent;
+													_type = c_oAscPopUpSelectorType.TableTotals;
 												}
 												if (tableNameParse[1] === "" || 0 === _str.toLocaleLowerCase().indexOf(tableNameParse[1])) {
 													arrResult.push(new AscCommonExcel.asc_CCompleteMenu(_str, _type));
