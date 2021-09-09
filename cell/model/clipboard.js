@@ -330,7 +330,7 @@
 				}
 			} else {
 				//если мультиселект, то запрещаем копирование
-				if (1 !== ws.model.selectionRange.ranges.length) {
+				if (!this.copyProcessor.canCopy(ws)) {
 					var selectedDrawings = ws.objectRender.getSelectedGraphicObjects();
 					if (0 === selectedDrawings.length) {
 						ws.handlers.trigger("onErrorEvent", Asc.c_oAscError.ID.CopyMultiselectAreaError,
@@ -340,9 +340,16 @@
 				}
 
 				//ignore hidden rows
-				var activeRange = ws.getSelectedRange();
-				var selectionRange = ws.model.selectionRange.getLast();
 				var activeCell = ws.model.selectionRange.activeCell.clone();
+				var activeRange, selectionRange;
+				if (1 !== ws.model.selectionRange.ranges.length) {
+					selectionRange = new AscCommonExcel.MultiplyRange(ws.model.selectionRange.ranges).getUnionRange();
+					activeRange = ws.model.getRange3(selectionRange.r1, selectionRange.c1, selectionRange.r2, selectionRange.c2);
+				} else {
+					activeRange = ws.getSelectedRange();
+					selectionRange = ws.model.selectionRange.getLast();
+				}
+
 
 				//TODO игнорировать нужно и формулы и скрытые строчки в случае, если селект их задевает + стандартные условия в bIsExcludeHiddenRows
 				if (ws.model.autoFilters.bIsExcludeHiddenRows(selectionRange, activeCell, true)) {
@@ -767,6 +774,28 @@
 				return {sBase64: sBase64, drawingUrls: drawingUrls};
 			},
 
+			canCopy: function (ws) {
+				var res = true;
+				if (1 !== ws.model.selectionRange.ranges.length) {
+					var firstRange = ws.model.selectionRange.ranges[0];
+					var byCol = null;
+					for (var i = 1; i < ws.model.selectionRange.ranges.length; i++) {
+						var nextRange = ws.model.selectionRange.ranges[i];
+						if (byCol === null && firstRange.r1 === nextRange.r1 && firstRange.r2 === nextRange.r2) {
+							byCol = false;
+						} else if (byCol === null && firstRange.c1 === nextRange.c1 && firstRange.c2 === nextRange.c2) {
+							byCol = true;
+						} else if ((byCol && firstRange.c1 === nextRange.c1 && firstRange.c2 === nextRange.c2) || (byCol === false && firstRange.r1 === nextRange.r1 && firstRange.r2 === nextRange.r2)) {
+							continue;
+						} else {
+							res = false;
+							break;
+						}
+					}
+				}
+				return res;
+			},
+
 			//TODO пересмотреть функцию
 			_generateHtml: function (range, worksheet, isIntoShape, sBase64) {
 				var isSelectedImages = this._getSelectedDrawingIndex(worksheet);
@@ -801,20 +830,11 @@
 
 					return container.innerHTML;
 				} else {
-					//for old generate html
-					/*htmlObj = this._generateHtmlDoc(range, worksheet);
-					container = doc.createElement("DIV");
-					container.appendChild(htmlObj);
-					if (sBase64 && container.children[0]) {
-						container.children[0].setAttribute("class", sBase64);
-					}
-					return container.innerHTML;*/
-
 					return this._generateHtmlDocStr(range, worksheet, sBase64);
 				}
 			},
 
-			_generateHtmlImg: function(isSelectedImages, worksheet) {
+			_generateHtmlImg: function (isSelectedImages, worksheet) {
 				if (window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor) {
 					return false;
 				}
@@ -871,7 +891,7 @@
 				return res;
 			},
 
-			_generateHtmlDoc: function(range, worksheet) {
+			_generateHtmlDoc: function (range, worksheet) {
 				function skipMerged() {
 					var m = merged.filter(function (e) {
 						return row >= e.r1 && row <= e.r2 && col >= e.c1 && col <= e.c2
@@ -979,7 +999,7 @@
 							style += "width:" + worksheet.getColumnWidth(col, 1/*pt*/) + "pt" + ";";
 						}
 
-						if(cell.getType() !== null) {
+						if (cell.getType() !== null) {
 							var align = cell.getAlign();
 							if (!align.getWrap()) {
 								style += "white-space:" + "nowrap" + ";";
