@@ -1471,7 +1471,7 @@
 	};
 
 	CDataValidations.prototype._containRanges = function (_ranges1, _ranges2) {
-		//проверка на то, что диапазон первого range входит в дипапазон второго
+		//проверка на то, что диапазон второго range входит в дипапазон первого
 		if (_ranges1 && _ranges2 && _ranges1.length && _ranges2.length) {
 			for (var j = 0; j < _ranges1.length; j++) {
 				var _contains = false;
@@ -1495,7 +1495,7 @@
 	CDataValidations.prototype.clear = function (ws, ranges, addToHistory) {
 		for (var i = 0; i < this.elems.length; i++) {
 			var isEmptyRanges = !this.elems[i].ranges || !this.elems[i].ranges.length;
-			if (isEmptyRanges || this._containRanges(this.elems[i].ranges, ranges)) {
+			if (isEmptyRanges || this._containRanges(ranges, this.elems[i].ranges)) {
 				if (this.delete(ws, this.elems[i].Id, addToHistory)) {
 					i--;
 				}
