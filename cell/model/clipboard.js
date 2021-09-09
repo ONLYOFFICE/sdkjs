@@ -1684,6 +1684,63 @@
 					pptx_content_loader.Start_UseFullUrl();
 					pptx_content_loader.Reader.ClearConnectedObjects();
 					oBinaryFileReader.Read(base64, tempWorkbook);
+
+					//вставка мультиселекта
+					//TODO если вставляем мультиселект в мультиселект - нужно выдать ошибку
+					if (tempWorkbook.aWorksheets[0].selectionRange.ranges.length > 1) {
+						//поскольку вставка должна быть только с равным количество строк/столбцов
+						//и между диапазонами должны быть только стоки/столбцу, то -> удаляем лишние строки/столбцы
+						var pastedWorksheet = tempWorkbook.aWorksheets[0];
+						var _ranges = pastedWorksheet.selectionRange.ranges;
+						var byCol = null;
+						var minVal, maxVal;
+						for (var i = 0; i < _ranges.length; i++) {
+							if (i === 0) {
+								if (_ranges[i].r1 === _ranges[i+1].r1 && _ranges[i].r2 === _ranges[i+1].r2) {
+									byCol = false;
+								} else if (_ranges[i].c1 === _ranges[i+1].c1 && _ranges[i].c2 === _ranges[i+1].c2) {
+									byCol = true;
+								}
+
+								if (byCol && (minVal === undefined || _ranges[i].c1 < minVal)) {
+									minVal = _ranges[i].c1;
+								}
+								if (!byCol && (minVal === undefined || _ranges[i].r1 < minVal)) {
+									minVal = _ranges[i].c1;
+								}
+
+								if (byCol && (maxVal === undefined || _ranges[i].r2 > maxVal)) {
+									minVal = _ranges[i].r2;
+								}
+								if (!byCol && (maxVal === undefined || _ranges[i].r2 > maxVal)) {
+									minVal = _ranges[i].r2;
+								}
+							}
+						}
+
+						_ranges.sort(function sortArr(a, b) {
+							if (byCol) {
+								a.c1 > b.c1 ? -1 : 1;
+							} else {
+								a.r1 > b.r1 ? -1 : 1;
+							}
+						});
+
+
+						for (var i = 1; i < _ranges.length; i++) {
+							if (byCol) {
+								if (_ranges[i - 1].r2 + 1 !== _ranges[i].r1) {
+									pastedWorksheet.removeRows(_ranges[i - 1].r2 + 1, _ranges[i].r1 - 1);
+								}
+							} else {
+								if (_ranges[i - 1].c2 + 1 !== _ranges[i].c1) {
+									pastedWorksheet.removeCols(_ranges[i - 1].c2 + 1, _ranges[i].c1 - 1);
+								}
+							}
+						}
+
+					}
+
 					t.activeRange = oBinaryFileReader.copyPasteObj.activeRange;
 					aPastedImages = pptx_content_loader.End_UseFullUrl();
 					pptx_content_loader.Reader.AssignConnectedObjects();
