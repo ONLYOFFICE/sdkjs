@@ -786,6 +786,9 @@
 			canCopy: function (ws) {
 				var res = true;
 				if (1 !== ws.model.selectionRange.ranges.length) {
+					if (AscCommon.g_clipboardBase.bCut) {
+						return false;
+					}
 					var firstRange = ws.model.selectionRange.ranges[0];
 					var byCol = null;
 					for (var i = 1; i < ws.model.selectionRange.ranges.length; i++) {
@@ -1693,29 +1696,12 @@
 						var pastedWorksheet = tempWorkbook.aWorksheets[0];
 						var _ranges = pastedWorksheet.selectionRange.ranges;
 						var byCol = null;
-						var minVal, maxVal;
-						for (var i = 0; i < _ranges.length; i++) {
-							if (i === 0) {
-								if (_ranges[i].r1 === _ranges[i+1].r1 && _ranges[i].r2 === _ranges[i+1].r2) {
-									byCol = false;
-								} else if (_ranges[i].c1 === _ranges[i+1].c1 && _ranges[i].c2 === _ranges[i+1].c2) {
-									byCol = true;
-								}
-
-								if (byCol && (minVal === undefined || _ranges[i].c1 < minVal)) {
-									minVal = _ranges[i].c1;
-								}
-								if (!byCol && (minVal === undefined || _ranges[i].r1 < minVal)) {
-									minVal = _ranges[i].c1;
-								}
-
-								if (byCol && (maxVal === undefined || _ranges[i].r2 > maxVal)) {
-									minVal = _ranges[i].r2;
-								}
-								if (!byCol && (maxVal === undefined || _ranges[i].r2 > maxVal)) {
-									minVal = _ranges[i].r2;
-								}
-							}
+						
+						
+						if (_ranges[0].r1 === _ranges[1].r1 && _ranges[0].r2 === _ranges[1].r2) {
+							byCol = false;
+						} else if (_ranges[0].c1 === _ranges[1].c1 && _ranges[0].c2 === _ranges[1].c2) {
+							byCol = true;
 						}
 
 						_ranges.sort(function sortArr(a, b) {
@@ -1725,23 +1711,38 @@
 								a.r1 > b.r1 ? -1 : 1;
 							}
 						});
-
-
+						
+						
+						var diff = 0;
 						for (var i = 1; i < _ranges.length; i++) {
 							if (byCol) {
 								if (_ranges[i - 1].r2 + 1 !== _ranges[i].r1) {
-									pastedWorksheet.removeRows(_ranges[i - 1].r2 + 1, _ranges[i].r1 - 1);
+									pastedWorksheet.removeRows(_ranges[i - 1].r2 + 1 - diff, _ranges[i].r1 - 1 - diff);
+									diff += _ranges[i].r1 - _ranges[i - 1].r2 - 1;
 								}
 							} else {
 								if (_ranges[i - 1].c2 + 1 !== _ranges[i].c1) {
-									pastedWorksheet.removeCols(_ranges[i - 1].c2 + 1, _ranges[i].c1 - 1);
+									pastedWorksheet.removeCols(_ranges[i - 1].c2 + 1 - diff, _ranges[i].c1 - 1 - diff);
+									diff += _ranges[i].c1 - _ranges[i - 1].c2 - 1;
 								}
 							}
 						}
-
+						
+						if (diff !== 0) {
+							AscCommonExcel.executeInR1C1Mode(false, function () {
+								var pasteRange = AscCommonExcel.g_oRangeCache.getAscRange(oBinaryFileReader.copyPasteObj.activeRange);
+								if (byCol) {
+									pasteRange.r2 -= diff;
+								} else {
+									pasteRange.c2 -= diff;
+								}
+								oBinaryFileReader.copyPasteObj.activeRange = pasteRange.getName();
+							});
+						}
 					}
 
 					t.activeRange = oBinaryFileReader.copyPasteObj.activeRange;
+					
 					aPastedImages = pptx_content_loader.End_UseFullUrl();
 					pptx_content_loader.Reader.AssignConnectedObjects();
 				}, this, []);
