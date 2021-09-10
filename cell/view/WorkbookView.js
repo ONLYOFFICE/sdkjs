@@ -2336,19 +2336,19 @@
 										if (AscCommon.cStrucTableLocalColumns) {
 											for (j in AscCommon.cStrucTableLocalColumns) {
 												_str = AscCommon.cStrucTableLocalColumns[j];
-												if (_str === "Headers") {
+												if (j === "h") {
 													_str = "#" + _str;
 													_type = c_oAscPopUpSelectorType.TableHeaders;
-												} else if (_str ===  "Data") {
+												} else if (j === "d") {
 													_str = "#" + _str;
 													_type = c_oAscPopUpSelectorType.TableData;
-												} else if (_str === "All") {
+												} else if (j === "a") {
 													_str = "#" + _str;
 													_type = c_oAscPopUpSelectorType.TableAll;
-												} else if (_str === "This Row") {
+												} else if (j === "tr") {
 													_str = "@";
 													_type = c_oAscPopUpSelectorType.TableThisRow;
-												} else if (_str === "Totals") {
+												} else if (j === "t") {
 													_str = "#" + _str;
 													_type = c_oAscPopUpSelectorType.TableTotals;
 												}
