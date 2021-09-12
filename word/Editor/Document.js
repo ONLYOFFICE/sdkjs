@@ -877,6 +877,9 @@ function CDocumentRecalculateState()
     this.StartPage    = 0;
 	this.Endnotes     = false;
 
+	this.TimerStartTime = 0;
+	this.TimerStartPage = 0;
+
 	this.StartPagesCount   = 2;     // количество страниц, которые мы обсчитываем в первый раз без таймеров
     this.ResetStartElement = false;
     this.MainStartPos      = -1;
@@ -895,6 +898,7 @@ function CDocumentRecalculateHdrFtrPageCountState()
 function Document_Recalculate_Page()
 {
     var LogicDocument = editor.WordControl.m_oLogicDocument;
+	LogicDocument.FullRecalc.TimerStartTime = (new Date()).getTime();
     LogicDocument.Recalculate_Page();
 }
 
@@ -2601,8 +2605,6 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 
 	this.Controller = this.LogicDocumentController;
 
-    this.StartTime = 0;
-
     // Кэш для некоторых запросов, которые могут за раз делаться несколько раз
     this.AllParagraphsList = null;
     this.AllFootnotesList  = null; // TODO: Переделать
@@ -3498,8 +3500,6 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 
 	this.DocumentOutline.Update();
 
-    this.StartTime = new Date().getTime();
-
     if (true !== this.Is_OnRecalculate())
         return document_recalcresult_NoRecal;
 
@@ -3779,8 +3779,12 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
     this.FullRecalc.ResetStartElement = this.private_RecalculateIsNewSection(StartPage, StartIndex);
     this.FullRecalc.Endnotes          = this.Endnotes.IsContinueRecalculateFromPrevPage(StartPage);
     this.FullRecalc.StartPagesCount   = undefined !== nNoTimerPageIndex ? Math.min(100, Math.max(nNoTimerPageIndex - StartPage, 2)) : 2;
+	this.FullRecalc.StartTime         = (new Date()).getTime();
+	this.FullRecalc.TimerStartTime    = this.FullRecalc.Time;
+	this.FullRecalc.TimerStartPage    = StartPage;
 
-    // Если у нас произошли какие-либо изменения с основной частью документа, тогда начинаем его пересчитывать сразу,
+
+	// Если у нас произошли какие-либо изменения с основной частью документа, тогда начинаем его пересчитывать сразу,
     // а если изменения касались только секций, тогда пересчитываем основную часть документа только с того места, где
     // остановился предыдущий пересчет, либо с того места, где изменения секций приводят к пересчету документа.
     if (true === MainChange)
@@ -4014,6 +4018,8 @@ CDocument.prototype.Recalculate_Page = function()
     var bStart       = this.FullRecalc.Start;        // флаг, который говорит о том, рассчитываем мы эту страницу первый раз или нет (за один общий пересчет)
     var StartIndex   = this.FullRecalc.StartIndex;
 
+    //var nStartTime = (new Date()).getTime();
+
     if (0 === SectionIndex && 0 === ColumnIndex && true === bStart)
     {
         var OldPage = ( undefined !== this.Pages[PageIndex] ? this.Pages[PageIndex] : null );
@@ -4094,14 +4100,15 @@ CDocument.prototype.Recalculate_Page = function()
 				{
 					if (window["NATIVE_EDITOR_ENJINE_SYNC_RECALC"] === true)
 					{
-						if (PageIndex + 1 > this.FullRecalc.StartPage + 2)
+						if (this.private_IsStartTimeoutOnRecalc(PageIndex))
 						{
 							if (window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
 							{
 								//if (window["native"]["WC_CheckSuspendRecalculate"]())
 								//    return;
 
-								this.FullRecalc.Id = setTimeout(Document_Recalculate_Page, 10);
+								this.FullRecalc.Id             = setTimeout(Document_Recalculate_Page, 10);
+								this.FullRecalc.TimerStartPage = PageIndex + 1;
 								return;
 							}
 						}
@@ -4110,9 +4117,13 @@ CDocument.prototype.Recalculate_Page = function()
 						return;
 					}
 
-					if (PageIndex + 1 > this.FullRecalc.StartPage + 2)
+
+					if (this.private_IsStartTimeoutOnRecalc(PageIndex))
 					{
-						this.FullRecalc.Id = setTimeout(Document_Recalculate_Page, 20);
+						// console.log("Page " + _PageIndex);
+						// console.log("Pages delta " + (PageIndex + 1 - this.FullRecalc.TimerStartPage));
+						this.FullRecalc.Id             = setTimeout(Document_Recalculate_Page, 20);
+						this.FullRecalc.TimerStartPage = PageIndex + 1;
 					}
 					else
 					{
@@ -4163,6 +4174,8 @@ CDocument.prototype.Recalculate_Page = function()
 	}
 
     this.Recalculate_PageColumn();
+
+	//console.log("PageIndex " + PageIndex + " " + ((new Date()).getTime() - nStartTime)/ 1000);
 };
 /**
  * Пересчитываем следующую колоноку.
@@ -4766,8 +4779,6 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
         Page.EndPos        = Count - 1;
         PageSection.EndPos = Count - 1;
         PageColumn.EndPos  = Count - 1;
-
-        //console.log("LastRecalc: " + ((new Date().getTime() - this.StartTime) / 1000));
     }
 
     if (Index >= Count || _PageIndex > PageIndex || _ColumnIndex > ColumnIndex)
@@ -4795,6 +4806,9 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 		}
 		else
 		{
+
+			console.log("Recalc time : " + (((new Date()).getTime() - this.FullRecalc.StartTime) / 1000));
+
 			this.FullRecalc.Id           = null;
 			this.FullRecalc.MainStartPos = -1;
 
@@ -4849,25 +4863,29 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 		{
             if (window["NATIVE_EDITOR_ENJINE_SYNC_RECALC"] === true)
             {
-                if (PageIndex > this.FullRecalc.StartPage + this.FullRecalc.StartPagesCount)
+				if (this.private_IsStartTimeoutOnRecalc(_PageIndex))
                 {
                     if (window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
-                    {
-                        //if (window["native"]["WC_CheckSuspendRecalculate"]())
-                        //    return;
+					{
+						//if (window["native"]["WC_CheckSuspendRecalculate"]())
+						//    return;
 
-                        this.FullRecalc.Id = setTimeout(Document_Recalculate_Page, 10);
-                        return;
-                    }
+						this.FullRecalc.Id             = setTimeout(Document_Recalculate_Page, 10);
+						this.FullRecalc.TimerStartPage = _PageIndex;
+						return;
+					}
                 }
 
                 this.Recalculate_Page();
                 return;
             }
 
-			if (_PageIndex > this.FullRecalc.StartPage + this.FullRecalc.StartPagesCount)
+			if (this.private_IsStartTimeoutOnRecalc(_PageIndex))
 			{
-				this.FullRecalc.Id = setTimeout(Document_Recalculate_Page, 20);
+				// console.log("Page " + _PageIndex);
+				// console.log("Pages delta " + (_PageIndex - this.FullRecalc.TimerStartPage));
+				this.FullRecalc.Id             = setTimeout(Document_Recalculate_Page, 20);
+				this.FullRecalc.TimerStartPage = _PageIndex;
 			}
 			else
 			{
@@ -4879,6 +4897,15 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 			this.FullRecalc.Continue = true;
 		}
     }
+};
+CDocument.prototype.private_IsStartTimeoutOnRecalc = function(nPageAbs)
+{
+	// // Старый вариант
+	// return (nPageAbs > this.FullRecalc.StartPage + this.FullRecalc.StartPagesCount);
+
+	return (nPageAbs > this.FullRecalc.StartPage + this.FullRecalc.StartPagesCount
+		&& ((new Date()).getTime() - this.FullRecalc.TimerStartTime > 20
+			|| nPageAbs > this.FullRecalc.TimerStartPage + 50));
 };
 CDocument.prototype.private_RecalculateIsNewSection = function(nPageAbs, nContentIndex)
 {
