@@ -898,7 +898,7 @@ function CDocumentRecalculateHdrFtrPageCountState()
 function Document_Recalculate_Page()
 {
     var LogicDocument = editor.WordControl.m_oLogicDocument;
-	LogicDocument.FullRecalc.TimerStartTime = (new Date()).getTime();
+	LogicDocument.FullRecalc.TimerStartTime = performance.now();
     LogicDocument.Recalculate_Page();
 }
 
@@ -3779,8 +3779,8 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
     this.FullRecalc.ResetStartElement = this.private_RecalculateIsNewSection(StartPage, StartIndex);
     this.FullRecalc.Endnotes          = this.Endnotes.IsContinueRecalculateFromPrevPage(StartPage);
     this.FullRecalc.StartPagesCount   = undefined !== nNoTimerPageIndex ? Math.min(100, Math.max(nNoTimerPageIndex - StartPage, 2)) : 2;
-	this.FullRecalc.StartTime         = (new Date()).getTime();
-	this.FullRecalc.TimerStartTime    = this.FullRecalc.Time;
+	this.FullRecalc.StartTime         = performance.now();
+	this.FullRecalc.TimerStartTime    = this.FullRecalc.StartTime;
 	this.FullRecalc.TimerStartPage    = StartPage;
 
 
@@ -4807,7 +4807,7 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 		else
 		{
 
-			console.log("Recalc time : " + (((new Date()).getTime() - this.FullRecalc.StartTime) / 1000));
+			console.log("Recalc time : " + ((performance.now() - this.FullRecalc.StartTime) / 1000));
 
 			this.FullRecalc.Id           = null;
 			this.FullRecalc.MainStartPos = -1;
@@ -4900,12 +4900,20 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 };
 CDocument.prototype.private_IsStartTimeoutOnRecalc = function(nPageAbs)
 {
-	// // Старый вариант
-	// return (nPageAbs > this.FullRecalc.StartPage + this.FullRecalc.StartPagesCount);
+	// // // Старый вариант
+	// var nRes = (nPageAbs > this.FullRecalc.StartPage + this.FullRecalc.StartPagesCount);
 
-	return (nPageAbs > this.FullRecalc.StartPage + this.FullRecalc.StartPagesCount
-		&& ((new Date()).getTime() - this.FullRecalc.TimerStartTime > 20
+	var nRes = (nPageAbs > this.FullRecalc.StartPage + this.FullRecalc.StartPagesCount
+		&& (performance.now() - this.FullRecalc.TimerStartTime > 10
 			|| nPageAbs > this.FullRecalc.TimerStartPage + 50));
+
+	// if (nRes)
+	// {
+	// 	console.log("Page        " + nPageAbs);
+	// 	console.log("Pages Delta " + (nPageAbs - this.FullRecalc.TimerStartPage));
+	// }
+
+	return nRes;
 };
 CDocument.prototype.private_RecalculateIsNewSection = function(nPageAbs, nContentIndex)
 {
