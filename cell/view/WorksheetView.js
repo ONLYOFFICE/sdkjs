@@ -5962,7 +5962,8 @@
      */
     WorksheetView.prototype._calcCellsTextMetrics = function (r1, r2) {
         var t = this;
-		this.model.getRange3(r1, 0, r2, this.cols.length - 1)._foreachNoEmpty(function(cell, row, col) {
+		var c2 = this.cols.length === 0 ? this.model.getColsCount() - 1 : this.cols.length - 1;
+		this.model.getRange3(r1, 0, r2, c2)._foreachNoEmpty(function(cell, row, col) {
 			t._addCellTextToCache(col, row);
 		}, null, true);
         this.isChanged = false;
