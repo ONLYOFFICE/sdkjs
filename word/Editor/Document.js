@@ -16862,12 +16862,10 @@ CDocument.prototype.GetLocalTrackRevisions = function()
  */
 CDocument.prototype.SetGlobalTrackRevisions = function(isTrack, isUpdateInterface)
 {
-	if (isTrack !== this.Settings.TrackRevisions && !this.IsSelectionLocked(AscCommon.changestype_Document_Settings))
+	if (isTrack !== this.Settings.TrackRevisions)
 	{
-		this.StartAction(AscDFH.historydescription_Document_SetTrackRevisions);
 		this.History.Add(new CChangesDocumentSettingsTrackRevisions(this, this.Settings.TrackRevisions, isTrack, this.GetUserId()));
 		this.Settings.TrackRevisions = isTrack;
-		this.FinalizeAction();
 	}
 
 	if (true === isUpdateInterface)

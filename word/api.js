@@ -8598,7 +8598,12 @@ background-repeat: no-repeat;\
 		if (!oLogicDocument)
 			return;
 
-		return oLogicDocument.SetGlobalTrackRevisions(bTrack, true);
+		if (!oLogicDocument.IsSelectionLocked(AscCommon.changestype_Document_Settings))
+		{
+			oLogicDocument.StartAction(AscDFH.historydescription_Document_SetTrackRevisions);
+			oLogicDocument.SetGlobalTrackRevisions(bTrack, true);
+			oLogicDocument.FinalizeAction();
+		}
 	};
 	asc_docs_api.prototype.asc_GetGlobalTrackRevisions         = function()
 	{
