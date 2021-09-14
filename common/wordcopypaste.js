@@ -2274,6 +2274,8 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
 	this.startMsoAnnotation = undefined;
 	this.needAddCommentStart;
 	this.needAddCommentEnd;
+	
+	this.msoHeadStyles;
 
 	this.rtfImages;
 }
@@ -5025,6 +5027,10 @@ PasteProcessor.prototype =
 		};
 
 		this.oRootNode = node;
+
+		if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Word) {
+			this.msoHeadStyles = this._findMsoHeadStyle(node.parentElement);
+		}
 
 		if (PasteElementsId.g_bIsDocumentCopyPaste) {
 			this.bIsPlainText = this._CheckIsPlainText(node);
