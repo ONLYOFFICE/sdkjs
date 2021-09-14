@@ -1885,7 +1885,23 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 
     if (this.LogicDocument && this.LogicDocument.IsDocumentEditor())
 	{
-		var arrRanges = this.Parent.CheckRange(Page.X, Page.Y, Page.XLimit, Page.Y + 0.001, Page.Y, Page.Y + 0.001, Page.X, Page.XLimit, this.private_GetRelativePageIndex(CurPage));
+		var nTableX_min = -1;
+		var nTableX_max = -1;
+
+		for (var nCurRow = 0, nRowsCount = this.GetRowsCount(); nCurRow < nRowsCount; ++nCurRow)
+		{
+			var oRow = this.GetRow(nCurRow);
+			if (-1 === nTableX_min || oRow.Metrics.X_min < nTableX_min)
+				nTableX_min = oRow.Metrics.X_min;
+
+			if (-1 === nTableX_max || oRow.Metrics.X_max > nTableX_max)
+				nTableX_max = oRow.Metrics.X_max;
+		}
+
+		nTableX_min += Page.X;
+		nTableX_max += Page.X;
+
+		var arrRanges = this.Parent.CheckRange(nTableX_min, Page.Y, nTableX_max, Page.Y + 0.001, Page.Y, Page.Y + 0.001, nTableX_min, nTableX_max, this.private_GetRelativePageIndex(CurPage));
 		if (arrRanges.length > 0)
 		{
 			for (var nRangeIndex = 0, nRangesCount = arrRanges.length; nRangeIndex < nRangesCount; ++nRangeIndex)
