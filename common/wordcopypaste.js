@@ -5053,7 +5053,7 @@ PasteProcessor.prototype =
 
 		if (onlyBinary) {
 			if (typeof onlyBinary === "object") {
-				var prefix = String.fromCharCode(onlyBinary[0], onlyBinary[1], onlyBinary[2], onlyBinary[3])
+				var prefix = String.fromCharCode(onlyBinary[0], onlyBinary[1], onlyBinary[2], onlyBinary[3]);
 
 				if ("PPTY" === prefix) {
 					base64FromPresentation = onlyBinary;
@@ -6504,7 +6504,7 @@ PasteProcessor.prototype =
 		}
 
 		var _applyTextAlign = function () {
-			var text_align = t._getStyle(node, computedStyle, "text-align")
+			var text_align = t._getStyle(node, computedStyle, "text-align");
 			if (text_align) {
 				//Может приходить -webkit-right
 				var Jc = null;
@@ -6804,11 +6804,16 @@ PasteProcessor.prototype =
 					var level = 0;
 					var listId = null;
 					var startIndex;
+					var listName;
 					if (-1 !== (startIndex = pNoHtmlPr['mso-list'].indexOf("level"))) {
 						level = parseInt(pNoHtmlPr['mso-list'].substr(startIndex + 5, 1)) - 1;
 					}
 					if (-1 !== (startIndex = pNoHtmlPr['mso-list'].indexOf("lfo"))) {
 						listId = pNoHtmlPr['mso-list'].substr(startIndex, 4);
+					}
+					if (0 === pNoHtmlPr['mso-list'].indexOf("l")) {
+						listName = pNoHtmlPr['mso-list'].split(" ");
+						listName = (listName && listName[0]) ? listName[0] : null;
 					}
 
 					var NumId = null;
@@ -6822,6 +6827,9 @@ PasteProcessor.prototype =
 					if (!msoListIgnoreSymbol) {
 						msoListIgnoreSymbol = "ol" === node.parentElement.nodeName.toLowerCase() ? "1." : ".";
 					}
+
+
+					this._findListFromMsoHeadStyle(listName);
 
 					var listObj = this._getTypeMsoListSymbol(msoListIgnoreSymbol, (null === NumId));
 					var num = listObj.type;
@@ -7396,6 +7404,88 @@ PasteProcessor.prototype =
 		}
 
 		return {type: resType, startPos: startPos};
+	},
+	_findMsoHeadStyle: function (html) {
+		var res;
+		var headTag = html && html.getElementsByTagName( "head" );
+
+		if (headTag && headTag[0]) {
+			for (var i = 0; i < headTag[0].children.length; ++i) {
+				if ("style" === headTag[0].children[i].nodeName.toLowerCase()) {
+					if (!res) {
+						res = [];
+					}
+					res.push(headTag[0].children[i].innerText);
+				}
+			}
+		}
+
+		return res;
+	},
+	_findListFromMsoHeadStyle: function (name) {
+		var res = null;
+		if (this.msoHeadStyles) {
+			var _pushStr = function (key, val) {
+				if (val === null || key === null) {
+					return;
+				}
+				var pushI;
+				if (addToNewObj) {
+					pushI = res ? res.length : 0;
+					addToNewObj = false;
+				} else {
+					pushI = res ? res.length - 1 : 0;
+				}
+
+				if (!res) {
+					res = [];
+				}
+				if (!res[pushI]) {
+					res[pushI] = {};
+				}
+
+				res[pushI][key] = val;
+			};
+			var addToNewObj;
+			for (var i = 0; i < this.msoHeadStyles.length; i++) {
+				var pos = this.msoHeadStyles[i].indexOf("@list " + name);
+				if (pos !== -1) {
+					var startObjStr = null;
+					var startKeyStr = null;
+					var startValStr = null;
+					for (var j = pos; j < this.msoHeadStyles[i].length; j++) {
+						var sym = this.msoHeadStyles[i][j];
+						if (sym === "\n" || sym === "\t") {
+							continue;
+						}
+						if (!startObjStr) {
+							if (sym === "{") {
+								startObjStr = true;
+								addToNewObj = true;
+							}
+							startKeyStr = "";
+							startValStr = null;
+						} else {
+							if (sym === "}") {
+								_pushStr(startKeyStr, startValStr);
+								startObjStr = null;
+							} else if (sym === ":") {
+								startValStr = "";
+							} else if (sym === ";") {
+								_pushStr(startKeyStr, startValStr);
+								startValStr = null;
+								startKeyStr = "";
+							} else if (startValStr !== null) {
+								startValStr += sym;
+							} else if (startKeyStr !== null) {
+								startKeyStr += sym;
+							}
+						}
+					}
+				}
+			}
+		}
+		return res;
 	},
 	_AddNextPrevToContent: function (oDoc) {
 		var prev = null;
