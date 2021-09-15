@@ -18362,29 +18362,25 @@ CRunRecalculateObject.prototype =
         Obj.Load_MathInfo(this.MathInfo);
     },
 
-    Save_RunContent : function(Run, Copy)
-    {
-        var ContentLen = Run.Content.length;
-        for ( var Index = 0, Index2 = 0; Index < ContentLen; Index++ )
-        {
-            var Item = Run.Content[Index];
+	SaveRunContent : function(oRun, isCopy)
+	{
+		for (var nIndex = 0, nIndex2 = 0, nCount = oRun.Content.length; nIndex < nCount; ++nIndex)
+		{
+			var oItem = oRun.Content[nIndex];
+			if (oItem.IsNeedSaveRecalculateObject())
+				this.Content[nIndex2++] = oItem.SaveRecalculateObject(isCopy);
+		}
+	},
 
-			if (para_PageNum === Item.Type || para_Drawing === Item.Type || para_FieldChar === Item.Type || para_Separator === Item.Type || para_ContinuationSeparator === Item.Type)
-				this.Content[Index2++] = Item.SaveRecalculateObject(Copy);
-        }
-    },
-
-    Load_RunContent : function(Run)
-    {
-        var Count = Run.Content.length;
-        for ( var Index = 0, Index2 = 0; Index < Count; Index++ )
-        {
-            var Item = Run.Content[Index];
-
-			if (para_PageNum === Item.Type || para_Drawing === Item.Type || para_FieldChar === Item.Type || para_Separator === Item.Type || para_ContinuationSeparator === Item.Type)
-				Item.LoadRecalculateObject(this.Content[Index2++]);
-        }
-    },
+	LoadRunContent : function(oRun)
+	{
+		for (var nIndex = 0, nIndex2 = 0, nCount = oRun.Content.length; nIndex < nCount; ++nIndex)
+		{
+			var oItem = oRun.Content[nIndex];
+			if (oItem.IsNeedSaveRecalculateObject())
+				oItem.LoadRecalculateObject(this.Content[nIndex2++]);
+		}
+	},
 
     Get_DrawingFlowPos : function(FlowPos)
     {

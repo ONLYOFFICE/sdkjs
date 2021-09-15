@@ -217,6 +217,10 @@ ParaFieldChar.prototype.IsNumValue = function()
 {
 	return (this.IsSeparate() && null !== this.NumValue ? true : false);
 };
+ParaFieldChar.prototype.IsNeedSaveRecalculateObject = function()
+{
+	return true;
+};
 ParaFieldChar.prototype.SaveRecalculateObject = function(Copy)
 {
 	return new CPageNumRecalculateObject(this.Type, this.Widths, this.String, this.Width, Copy);

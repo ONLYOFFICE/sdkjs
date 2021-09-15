@@ -3205,12 +3205,12 @@ CEmptyRunRecalculateObject.prototype =
 
     },
 
-    Save_RunContent : function(Run, Copy)
+    SaveRunContent : function(Run, Copy)
     {
 
     },
 
-    Load_RunContent : function(Run)
+    LoadRunContent : function(Run)
     {
 
     },

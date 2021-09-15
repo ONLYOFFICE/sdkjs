@@ -1193,6 +1193,10 @@ ParaDrawing.prototype.Measure = function()
 		}
 	}
 };
+ParaDrawing.prototype.IsNeedSaveRecalculateObject = function()
+{
+	return true;
+};
 ParaDrawing.prototype.SaveRecalculateObject = function(Copy)
 {
 	var DrawingObj = {};
