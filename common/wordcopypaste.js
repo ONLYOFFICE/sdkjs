@@ -7423,10 +7423,30 @@ PasteProcessor.prototype =
 
 			var correctText = function (_str) {
 				var res = "";
-				var isStartSpecSym;
+				var isStartSpecSym = null;
 				for (var i = 0; i < _str.length; i++) {
-					if (_str[i] === "\\") {
-						isStartSpecSym = true;
+					if (_str[i] === "\\" && null === isStartSpecSym) {
+						isStartSpecSym = "";
+						continue;
+					}
+					if (_str[i] === '"') {
+						continue;
+					}
+					if (isStartSpecSym !== null) {
+						if (window['AscCommon'].isNumber(_str[i])) {
+							if (isStartSpecSym.length + 1 === 4) {
+								isStartSpecSym += _str[i];
+								res += String.fromCharCode("0x" + isStartSpecSym);
+								isStartSpecSym = null;
+							} else {
+								isStartSpecSym += _str[i];
+							}
+						} else {
+							res += _str[i];
+							isStartSpecSym = null;
+						}
+					} else {
+						res += _str[i];
 					}
 				}
 				return res;
