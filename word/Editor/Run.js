@@ -12919,10 +12919,6 @@ ParaRun.prototype.private_ProcessCapitalizeFirstLetterOfSentencesAutoCorrect = f
 	if (arrElements.length <= 0)
 		return false;
 
-	var oHistory = oDocument.GetHistory();
-	if (oHistory.CheckAsYouTypeAutoCorrect && !oHistory.CheckAsYouTypeAutoCorrect(arrElements[0]))
-		return false;
-
 	for (var nIndex = 0, nCount = arrElements.length; nIndex < nCount; ++nIndex)
 	{
 		if (para_Text !== arrElements[nIndex].Type)

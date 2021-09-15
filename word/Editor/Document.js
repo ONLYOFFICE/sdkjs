@@ -26641,8 +26641,8 @@ CTrackRevisionsManager.prototype.CheckElement = function(oElement)
  */
 CTrackRevisionsManager.prototype.AddChange = function(sId, oChange)
 {
-	this.private_CheckChangeObject(sId);
-    this.Changes[sId].push(oChange);
+	if (this.private_CheckChangeObject(sId))
+    	this.Changes[sId].push(oChange);
 };
 /**
  * Получаем массив изменений заданного элемента
@@ -27493,7 +27493,7 @@ CTrackRevisionsManager.prototype.private_CheckChangeObject = function(sId)
 {
 	var oElement = AscCommon.g_oTableId.Get_ById(sId);
 	if (!oElement)
-		return;
+		return false;
 
 	if (!this.Changes[sId])
 		this.Changes[sId] = [];
@@ -27528,7 +27528,7 @@ CTrackRevisionsManager.prototype.private_CheckChangeObject = function(sId)
 		nAddPosition = this.ChangesOutline.length;
 
 	if (nAddPosition === nDeletePosition || (-1 !== nAddPosition && -1 !== nDeletePosition && nDeletePosition === nAddPosition - 1))
-		return;
+		return true;
 
 	if (-1 !== nDeletePosition)
 	{
@@ -27539,6 +27539,8 @@ CTrackRevisionsManager.prototype.private_CheckChangeObject = function(sId)
 	}
 
 	this.ChangesOutline.splice(nAddPosition, 0, oElement);
+
+	return true;
 };
 CTrackRevisionsManager.prototype.private_CompareDocumentPositions = function(oDocPos1, oDocPos2)
 {
