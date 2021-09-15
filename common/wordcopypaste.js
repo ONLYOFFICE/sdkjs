@@ -7417,62 +7417,56 @@ PasteProcessor.prototype =
 
 		return {type: resType, startPos: startPos};
 	},
-	_tryGenerateNumberingFromMsoStyle: function (objNumbering) {
+	_tryGenerateNumberingFromMsoStyle: function (aNumbering) {
 		// Создаем нумерацию
-		var oNum = this.oLogicDocument.GetNumbering().CreateNum();
-		NumId = oNum.GetId();
+		if (aNumbering && aNumbering[1]) {
 
-		if (Asc.c_oAscNumberingFormat.Bullet === num) {
-			oNum.CreateDefault(c_oAscMultiLevelNumbering.Bullet);
-			var LvlText = String.fromCharCode(0x00B7);
-			var NumTextPr = new CTextPr();
-			NumTextPr.RFonts.SetAll("Symbol", -1);
+			var correctText = function (_str) {
+				var res = "";
+				var isStartSpecSym;
+				for (var i = 0; i < _str.length; i++) {
+					if (_str[i] === "\\") {
+						isStartSpecSym = true;
+					}
+				}
+				return res;
+			};
 
-			switch (type) {
-				case "disc": {
-					NumTextPr.RFonts.SetAll("Symbol", -1);
-					LvlText = String.fromCharCode(0x00B7);
-					break;
-				}
-				case "circle": {
-					NumTextPr.RFonts.SetAll("Courier New", -1);
-					LvlText = "o";
-					break;
-				}
-				case "square": {
-					NumTextPr.RFonts.SetAll("Wingdings", -1);
-					LvlText = String.fromCharCode(0x00A7);
-					break;
-				}
+			var sType = aNumbering[1]["mso-level-number-format"];
+
+			var nType = Asc.c_oAscNumberingFormat.None;
+			if ("none" === sType) {
+				nType = Asc.c_oAscNumberingFormat.None;
+			} else if ("bullet" === sType) {
+				nType = Asc.c_oAscNumberingFormat.Bullet;
+			} else if ("decimal" === sType) {
+				nType = Asc.c_oAscNumberingFormat.Decimal;
+			} else if ("roman-lower" === sType) {
+				nType = Asc.c_oAscNumberingFormat.LowerRoman;
+			} else if ("roman-upper" === sType) {
+				nType = Asc.c_oAscNumberingFormat.UpperRoman;
+			} else if ("letter-lower" === sType) {
+				nType = Asc.c_oAscNumberingFormat.LowerLetter;
+			} else if ("letter-upper" === sType) {
+				nType = Asc.c_oAscNumberingFormat.UpperLetter;
+			} else if ("decimal-zero" === sType) {
+				nType = Asc.c_oAscNumberingFormat.DecimalZero;
 			}
-		} else {
-			oNum.CreateDefault(c_oAscMultiLevelNumbering.Numbered);
-		}
 
-		switch (num) {
-			case Asc.c_oAscNumberingFormat.Bullet     :
-				oNum.SetLvlByType(level, c_oAscNumberingLevel.Bullet, LvlText, NumTextPr);
-				break;
-			case Asc.c_oAscNumberingFormat.Decimal    :
-				oNum.SetLvlByType(level, c_oAscNumberingLevel.DecimalDot_Left);
-				break;
-			case Asc.c_oAscNumberingFormat.LowerRoman :
-				oNum.SetLvlByType(level, c_oAscNumberingLevel.LowerRomanDot_Right);
-				break;
-			case Asc.c_oAscNumberingFormat.UpperRoman :
-				oNum.SetLvlByType(level, c_oAscNumberingLevel.UpperRomanDot_Right);
-				break;
-			case Asc.c_oAscNumberingFormat.LowerLetter:
-				oNum.SetLvlByType(level, c_oAscNumberingLevel.LowerLetterDot_Left);
-				break;
-			case Asc.c_oAscNumberingFormat.UpperLetter:
-				oNum.SetLvlByType(level, c_oAscNumberingLevel.UpperLetterDot_Left);
-				break;
-		}
+			var sAlign = aNumbering[1]["mso-level-number-position"];
+			var nAlign = align_Left;
+			if ("left" === sAlign) {
+				nAlign = align_Left;
+			} else if ("right" === sAlign) {
+				nAlign = align_Right;
+			} else if ("center" === sAlign) {
+				nAlign = align_Center;
+			}
 
-		//проставляем начальную позицию
-		if (null !== startPos) {
-			oNum.SetLvlStart(level, startPos);
+			var sTextFormatString = aNumbering[1]["mso-level-text"];
+			var oNum = this.oLogicDocument.GetNumbering().CreateNum();
+			oNum.SetLvlByFormat(0, nType, correctText(sTextFormatString), nAlign);
+			return oNum;
 		}
 	},
 	_findMsoHeadStyle: function (html) {
