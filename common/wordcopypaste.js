@@ -2274,8 +2274,9 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
 	this.startMsoAnnotation = undefined;
 	this.needAddCommentStart;
 	this.needAddCommentEnd;
-	
-	this.msoHeadStyles;
+
+	this.aMsoHeadStylesStr;
+	this.oMsoHeadStylesListMap = [];
 
 	this.rtfImages;
 }
@@ -5029,7 +5030,7 @@ PasteProcessor.prototype =
 		this.oRootNode = node;
 
 		if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Word) {
-			this.msoHeadStyles = this._findMsoHeadStyle(node.parentElement);
+			this.aMsoHeadStylesStr = this._findMsoHeadStyle(node.parentElement);
 		}
 
 		if (PasteElementsId.g_bIsDocumentCopyPaste) {
@@ -6834,8 +6835,9 @@ PasteProcessor.prototype =
 						msoListIgnoreSymbol = "ol" === node.parentElement.nodeName.toLowerCase() ? "1." : ".";
 					}
 
-
-					this._findListFromMsoHeadStyle(listName);
+					if (!this.oMsoHeadStylesListMap[listName]) {
+						this.oMsoHeadStylesListMap[listName] = this._findListFromMsoHeadStyle(listName);
+					}
 
 					var listObj = this._getTypeMsoListSymbol(msoListIgnoreSymbol, (null === NumId));
 					var num = listObj.type;
@@ -7429,46 +7431,79 @@ PasteProcessor.prototype =
 		return res;
 	},
 	_findListFromMsoHeadStyle: function (name) {
+
+		//первый элемент массива - общая инфомарция о списках, остальные - инфомарция об уровнях по порядку
+		/*@list l0
+		{mso-list-id:1405642429;
+			mso-list-type:hybrid;
+			mso-list-template-ids:1269742048 682115302 67698713 67698715 67698703 67698713 67698715 67698703 67698713 67698715;}
+		@list l0:level1
+		{mso-level-number-format:roman-lower;
+			mso-level-text:1iii2%1eeiiiFFF;
+			mso-level-tab-stop:none;
+			mso-level-number-position:left;
+			text-indent:-.25in;}
+		@list l0:level2
+		{mso-level-number-format:alpha-lower;
+			mso-level-tab-stop:none;
+			mso-level-number-position:left;
+			text-indent:-.25in;}*/
+
 		var res = null;
-		if (this.msoHeadStyles) {
+		var fullName = "@list " + name;
+		if (this.aMsoHeadStylesStr) {
+			var _generateIndexByPrefix = function (_str) {
+				if (0 === _str.indexOf(fullName)) {
+					_index = 0;
+					var _fullStr = fullName + ":level" ;
+					if (-1 !== _str.indexOf(_fullStr)) {
+						var level = _str.split(_fullStr);
+						if (level && level[1]) {
+							_index = parseInt(level[1]);
+							if (isNaN(_index)) {
+								_index = undefined;
+							}
+						}
+					}
+				} else {
+					_index = undefined;
+				}
+			};
+
 			var _pushStr = function (key, val) {
-				if (val === null || key === null) {
+				if (val === null || key === null || _index === undefined) {
 					return;
 				}
-				var pushI;
-				if (addToNewObj) {
-					pushI = res ? res.length : 0;
-					addToNewObj = false;
-				} else {
-					pushI = res ? res.length - 1 : 0;
-				}
-
 				if (!res) {
 					res = [];
 				}
-				if (!res[pushI]) {
-					res[pushI] = {};
+				if (!res[_index]) {
+					res[_index] = {};
 				}
 
-				res[pushI][key] = val;
+				res[_index][key] = val;
 			};
-			var addToNewObj;
-			for (var i = 0; i < this.msoHeadStyles.length; i++) {
-				var pos = this.msoHeadStyles[i].indexOf("@list " + name);
+			var _index, prefix = "";
+			for (var i = 0; i < this.aMsoHeadStylesStr.length; i++) {
+				var pos = this.aMsoHeadStylesStr[i].indexOf("@list " + name);
 				if (pos !== -1) {
 					var startObjStr = null;
 					var startKeyStr = null;
 					var startValStr = null;
-					for (var j = pos; j < this.msoHeadStyles[i].length; j++) {
-						var sym = this.msoHeadStyles[i][j];
+					for (var j = pos; j < this.aMsoHeadStylesStr[i].length; j++) {
+						var sym = this.aMsoHeadStylesStr[i][j];
 						if (sym === "\n" || sym === "\t") {
 							continue;
 						}
 						if (!startObjStr) {
 							if (sym === "{") {
 								startObjStr = true;
-								addToNewObj = true;
+								_generateIndexByPrefix(prefix);
+								prefix = "";
+							} else {
+								prefix += sym;
 							}
+
 							startKeyStr = "";
 							startValStr = null;
 						} else {
