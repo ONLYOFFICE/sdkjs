@@ -308,3 +308,9 @@ var console = {
 	timeEnd: function (param) {}
 };
 
+var performance = window.performance = (function(){
+	var basePerformanceOffset = Date.now();
+	return {
+		now : function() { return Date.now() - basePerformanceOffset; }
+	};
+})();
