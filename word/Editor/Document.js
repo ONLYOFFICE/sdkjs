@@ -25673,10 +25673,9 @@ CDocument.prototype.ConvertTableToText = function(oProps)
 	{
 		this.StartAction(AscDFH.historydescription_Document_ConvertTableToText);
 		var FramePr = null;
-		var ArrNewContent = this.private_ConvertTableToText(oTable, oProps);
+		var NewContent = this.private_ConvertTableToText(oTable, oProps);
 		var oNewContent = new CSelectedContent();
-		var oSkipStart = 0, oSkipEnd = 1;
-		var bEnd = false;
+		var oSkipStart = NewContent.before ? 1 : 0;
 
 		if (!oTable.IsInline())
 		{
@@ -25687,24 +25686,30 @@ CDocument.prototype.ConvertTableToText = function(oProps)
 			FramePr.Y = oTable.PositionV.Value;
 		}
 
-		for (var i = 0; i < ArrNewContent.length; i++)
+		if (NewContent.before)
+			oNewContent.Add(new CSelectedElement(NewContent.before, true));
+
+		for (var i = 0; i < NewContent.content.length; i++)
 		{
-			oNewContent.Add(new CSelectedElement(ArrNewContent[i], true));
-			if (ArrNewContent[i].IsParagraph())
+			oNewContent.Add(new CSelectedElement(NewContent.content[i], true));
+			if (FramePr)
 			{
-				bEnd = true;
-				if (FramePr)
-					ArrNewContent[i].Set_FramePr2(FramePr);
-			}
-			else if (!bEnd)
-			{
-				oSkipStart++;
-			}
-			else if (i == ArrNewContent.length - 1)
-			{
-				oSkipEnd++;
+				if (NewContent.content[i].IsParagraph())
+				{
+					NewContent.content[i].Set_FramePr2(FramePr);
+				}
+				else if (NewContent.content[i].IsTable() || NewContent.content[i].IsBlockLevelSdt())
+				{
+					var ArrParagraphs = NewContent.content[i].GetAllParagraphs();
+					ArrParagraphs.forEach(function(item) {
+						item.Set_FramePr2(FramePr);
+					});
+				}
 			}
 		}
+
+		if (NewContent.after)
+			oNewContent.Add(new CSelectedElement(NewContent.after, true));
 		
 		var oParent = oTable.GetParent();
 		if (oNewContent && oParent)
@@ -25727,11 +25732,11 @@ CDocument.prototype.ConvertTableToText = function(oProps)
 
 				oParent.RemoveFromContent(oParagraph.GetIndex(), 1, true);
 				if (oParent.SelectRange)
-					oParent.SelectRange(nIndex + oSkipStart, nIndex + ArrNewContent.length - oSkipEnd);
+					oParent.SelectRange(nIndex + oSkipStart, nIndex + NewContent.content.length + oSkipStart - 1);
 				else if (oParent.Selection)
 				{
 					oParent.Selection.StartPos = nIndex + oSkipStart;
-					oParent.Selection.EndPos = nIndex + ArrNewContent.length - oSkipEnd;
+					oParent.Selection.EndPos = nIndex + NewContent.content.length + oSkipStart - 1;
 				}
 				// this.MoveCursorRight(false, false, false);
 			}
@@ -25786,7 +25791,7 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 		}
 
 		var TableC = oTable.Copy();
-		var ArrNewContent = [];
+		var NewContent = {before: null, content: [], after: null};
 		if (isConvertAll)
 		{
 			oSelectedRows.Start = 0;
@@ -25797,7 +25802,7 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 			var oRow = TableC.GetRow(i);
 			var Tabs = oProps.type == 2 ? new CParaTabs() : null;
 			var oNewParagraph = new Paragraph(this.DrawingDocument, this);
-			ArrNewContent.push(oNewParagraph);
+			NewContent.content.push(oNewParagraph);
 			var bAdd = true;
 			for (var k = 0; k < oRow.GetCellsCount(); k++)
 			{
@@ -25812,7 +25817,7 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 							if (isNewPar)
 							{
 								oNewParagraph = new Paragraph(this.DrawingDocument, this);
-								ArrNewContent.push(oNewParagraph);
+								NewContent.content.push(oNewParagraph);
 							}
 							else
 							{
@@ -25823,17 +25828,17 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 							break;
 						case type_Table:
 							var oNestedContent = (oProps.nested) ? this.private_ConvertTableToText(oElement, oProps) : [oElement];
-							if (j == 0 && ArrNewContent[ArrNewContent.length-1].IsEmpty() && bAdd)
-								ArrNewContent.pop();
+							if (j == 0 && NewContent.content[NewContent.content.length-1].IsEmpty() && bAdd)
+								NewContent.content.pop();
 
-							ArrNewContent = ArrNewContent.concat(oNestedContent);
+							NewContent.content = NewContent.content.concat(oNestedContent.content);
 							isNewPar = true;
 							break;
 						default:
-							ArrNewContent.push(oElement);
+							NewContent.content.push(oElement);
 							isNewPar = true;
-							if (j == 0 && ArrNewContent[ArrNewContent.length-1].IsEmpty() && bAdd)
-								ArrNewContent.pop();
+							if (j == 0 && NewContent.content[NewContent.content.length-1].IsEmpty() && bAdd)
+								NewContent.content.pop();
 							break;
 					}
 					bAdd = false;
@@ -25851,7 +25856,7 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 							break;
 						case 1:
 							oNewParagraph = new Paragraph(this.DrawingDocument, this);
-							ArrNewContent.push(oNewParagraph);
+							NewContent.content.push(oNewParagraph);
 							break;
 						default:
 							oText = new ParaText(oProps.separator);
@@ -25878,27 +25883,27 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 			}
 			if (!oSelectedRows.IsSelectionToEnd && oSelectedRows.Start) {
 				var oNewTable = TableC.Split();
-				ArrNewContent.push(oNewTable);
-				ArrNewContent.unshift(TableC);
+				NewContent.after = oNewTable;
+				NewContent.before = TableC;
 			}
 			if (oSelectedRows.IsSelectionToEnd)
 			{
-				ArrNewContent.unshift(TableC);
+				NewContent.before = TableC;
 			}
 			else if (!oSelectedRows.Start)
 			{
-				ArrNewContent.push(TableC);
+				NewContent.after = TableC;
 			}
 		}
 
-		for (var i = 0; i < ArrNewContent.length; i++)
+		for (var i = 0; i < NewContent.content.length; i++)
 		{
-			if (ArrNewContent[i].IsParagraph())
-				ArrNewContent[i].CorrectContent();
+			if (NewContent.content[i].IsParagraph())
+				NewContent.content[i].CorrectContent();
 		}
 	
 	}
-	return ArrNewContent;
+	return NewContent;
 };
 
 function CDocumentSelectionState()
