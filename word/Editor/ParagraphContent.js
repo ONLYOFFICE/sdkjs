@@ -1765,6 +1765,10 @@ ParaTab.prototype.LoadRecalculateObject = function(RecalcObj)
 ParaTab.prototype.PrepareRecalculateObject = function()
 {
 };
+ParaTab.prototype.GetAutoCorrectFlags = function()
+{
+	return AUTOCORRECT_FLAGS_ALL;
+};
 
 /**
  * Класс представляющий элемент номер страницы
