@@ -6835,7 +6835,7 @@ PasteProcessor.prototype =
 						msoListIgnoreSymbol = "ol" === node.parentElement.nodeName.toLowerCase() ? "1." : ".";
 					}
 
-					if (this.pasteInExcel !== true && !this.oMsoHeadStylesListMap[listId]) {
+					if (null == NumId && this.pasteInExcel !== true && !this.oMsoHeadStylesListMap[listId]) {
 						this.oMsoHeadStylesListMap[listId] = this._findListFromMsoHeadStyle(listName);
 						var _msoNum = this._tryGenerateNumberingFromMsoStyle(this.oMsoHeadStylesListMap[listId]);
 						if (_msoNum) {
@@ -7570,10 +7570,16 @@ PasteProcessor.prototype =
 					}
 				}
 				//res.GetAbstractNum().Lvl[i-1].ParaPr
-				var newParaPr = new CParaPr();
 				var marginLeft = getPropValue("margin-left", msoLinkStyles, curNumbering);
+				var firstLine = getPropValue("text-indent", msoLinkStyles, curNumbering);
 				if (marginLeft !== null) {
-					newParaPr.Ind.Left = marginLeft;
+					var newParaPr = new CParaPr();
+					if (marginLeft !== null) {
+						newParaPr.Ind.Left = marginLeft;
+					}
+					if (firstLine !== null) {
+						newParaPr.Ind.FirstLine = firstLine;
+					}
 					res.SetParaPr(i-1, newParaPr);
 				}
 			}
@@ -8433,6 +8439,9 @@ PasteProcessor.prototype =
 			oPasteProcessor.oImages = this.oImages;
 			oPasteProcessor.oDocument = cell.Content;
 			oPasteProcessor.bIgnoreNoBlockText = true;
+			oPasteProcessor.aMsoHeadStylesStr = this.aMsoHeadStylesStr;
+			oPasteProcessor.oMsoHeadStylesListMap = this.oMsoHeadStylesListMap;
+			oPasteProcessor.msoListMap = this.msoListMap;
 			oPasteProcessor.dMaxWidth = this._CalcMaxWidthByCell(cell);
 			if (true === bUseScaleKoef) {
 				oPasteProcessor.bUseScaleKoef = bUseScaleKoef;
