@@ -7426,6 +7426,14 @@ PasteProcessor.prototype =
 			mso-level-number-position:left;
 			margin-left:.3in;
 			text-indent:-.3in;}*/
+		//лежит в таком виде:
+		/*{mso-style-name:"Р—Р°РіРѕР»РѕРІРѕРє 1";
+			mso-style-unhide:no;
+			margin-top:0in;
+			margin-right:0in;
+			margin-bottom:8.0pt;
+			margin-left:.3in;
+			text-indent:-.3in;.....*/
 
 		// Создаем нумерацию
 		var res = null;
@@ -7504,6 +7512,8 @@ PasteProcessor.prototype =
 					nAlign = align_Center;
 				}
 
+				var styleLink = curNumbering["mso-level-style-link"];
+				var msoLinkStyles = this._findMsoStyleFromMsoHeadStyle(styleLink);
 				var sTextFormatString = curNumbering["mso-level-text"];
 				if (nType === Asc.c_oAscNumberingFormat.Bullet) {
 					var LvlText = String.fromCharCode(0x00B7);
@@ -7663,6 +7673,54 @@ PasteProcessor.prototype =
 						}
 					}
 				}
+			}
+		}
+		return res;
+	},
+	_findMsoStyleFromMsoHeadStyle: function (name) {
+
+		var res = null;
+		if (this.aMsoHeadStylesStr) {
+
+			var _pushStr = function (key, val) {
+				if (val === null || key === null) {
+					return;
+				}
+				if (!res) {
+					res = [];
+				}
+				res[key] = val;
+			};
+
+			var searchStr = "mso-style-name:" + name;
+			for (var i = 0; i < this.aMsoHeadStylesStr.length; i++) {
+				var startPos = this.aMsoHeadStylesStr[i].indexOf(searchStr);
+
+				if (startPos !== -1) {
+					var startKeyStr = "";
+					var startValStr = null;
+					for (var j = startPos; j < this.aMsoHeadStylesStr[i].length; j++) {
+						var sym = this.aMsoHeadStylesStr[i][j];
+						if (sym === "\n" || sym === "\t") {
+							continue;
+						}
+						if (sym === "}") {
+							_pushStr(startKeyStr, startValStr);
+							break;
+						} else if (sym === ":") {
+							startValStr = "";
+						} else if (sym === ";") {
+							_pushStr(startKeyStr, startValStr);
+							startValStr = null;
+							startKeyStr = "";
+						} else if (startValStr !== null) {
+							startValStr += sym;
+						} else if (startKeyStr !== null) {
+							startKeyStr += sym;
+						}
+					}
+				}
+
 			}
 		}
 		return res;
