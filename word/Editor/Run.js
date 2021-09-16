@@ -12184,6 +12184,13 @@ ParaRun.prototype.private_GetSuitableBulletedLvlForAutoCorrect = function(sText)
 		oNumberingLvl.SetByType(c_oAscNumberingLevel.Bullet, 0, String.fromCharCode(0x2013), oTextPr);
 		return oNumberingLvl;
 	}
+	else if ('>' === sText)
+	{
+		var oTextPr = new CTextPr();
+		oTextPr.RFonts.SetAll("Wingdings");
+		oNumberingLvl.SetByType(c_oAscNumberingLevel.Bullet, 0, String.fromCharCode(0x00D8), oTextPr);
+		return oNumberingLvl;
+	}
 
 	return null;
 };
