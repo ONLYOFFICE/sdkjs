@@ -7476,6 +7476,17 @@ PasteProcessor.prototype =
 				return res;
 			};
 
+			var getPropValue = function (val, oStyleLink, oStyle) {
+				var res = oStyleLink && oStyleLink[val];
+				if (!res) {
+					res = oStyle && oStyle[val];
+				}
+				if (res) {
+					res = AscCommon.valueToMmType(res);
+				}
+				return res ? res.val : null;
+			};
+
 			res = this.oLogicDocument.GetNumbering().CreateNum();
 			for (var i = 1; i < aNumbering.length; i++) {
 				var curNumbering = aNumbering[i];
@@ -7557,6 +7568,13 @@ PasteProcessor.prototype =
 								break;
 						}
 					}
+				}
+				//res.GetAbstractNum().Lvl[i-1].ParaPr
+				var newParaPr = new CParaPr();
+				var marginLeft = getPropValue("margin-left", msoLinkStyles, curNumbering);
+				if (marginLeft !== null) {
+					newParaPr.Ind.Left = marginLeft;
+					res.SetParaPr(i-1, newParaPr);
 				}
 			}
 		}
