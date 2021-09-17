@@ -8065,7 +8065,7 @@ PasteProcessor.prototype =
 	},
 
 	_ExecuteBlockLevelStd : function (node, pPr) {
-		var blockLevelSdt = new CBlockLevelSdt(this.oLogicDocument, this.oLogicDocument);
+		var blockLevelSdt = new CBlockLevelSdt(this.oLogicDocument, this.oDocument);
 
 		//content
 		var oPasteProcessor = new PasteProcessor(this.api, false, false, true);
@@ -8077,11 +8077,6 @@ PasteProcessor.prototype =
 		oPasteProcessor.aMsoHeadStylesStr = this.aMsoHeadStylesStr;
 		oPasteProcessor.oMsoHeadStylesListMap = this.oMsoHeadStylesListMap;
 		oPasteProcessor.msoListMap = this.msoListMap;
-		//oPasteProcessor.dMaxWidth = this._CalcMaxWidthByCell(cell);
-		/*if (true === bUseScaleKoef) {
-			oPasteProcessor.bUseScaleKoef = bUseScaleKoef;
-			oPasteProcessor.dScaleKoef = dScaleKoef;
-		}*/
 		oPasteProcessor._Execute(node, {}, true, true, false);
 		oPasteProcessor._PrepareContent();
 		oPasteProcessor._AddNextPrevToContent(blockLevelSdt.Content);
@@ -8101,6 +8096,9 @@ PasteProcessor.prototype =
 			} else {
 				blockLevelSdt.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], false);
 			}
+		}
+		if (oPasteProcessor.aContent.length) {
+			//blockLevelSdt.Content.Internal_Content_Remove(0, 1);
 		}
 
 		this.aContent.push(blockLevelSdt);
