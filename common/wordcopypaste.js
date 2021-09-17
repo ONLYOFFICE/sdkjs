@@ -8187,7 +8187,7 @@ PasteProcessor.prototype =
 				var tempWhiteSpacing = oThis._getStyle(node.parentNode, computedStyle, "white-space");
 				whiteSpacing = "pre" === tempWhiteSpacing || "pre-wrap" === tempWhiteSpacing;
 
-/				/TODO заглушка! разобрать все ситуации(в тч и те, когда браузер добавляет при вставке лишние), когда пробельные символы нужно/не нужно сохранять
+				//TODO заглушка! разобрать все ситуации(в тч и те, когда браузер добавляет при вставке лишние), когда пробельные символы нужно/не нужно сохранять
 				if (!whiteSpacing && node.parentNode.nodeName && "span" === node.parentNode.nodeName.toLowerCase()) {
 					if (value === " ") {
 						whiteSpacing = true;
