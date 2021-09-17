@@ -7531,13 +7531,13 @@ PasteProcessor.prototype =
 					var NumTextPr = new CTextPr();
 
 					var fontFamily = curNumbering["font-family"];
-					if (-1 !== fontFamily.indexOf("Symbol")) {
+					if (fontFamily && -1 !== fontFamily.indexOf("Symbol")) {
 						NumTextPr.RFonts.SetAll("Symbol", -1);
 						LvlText = sTextFormatString ? sTextFormatString : String.fromCharCode(0x00B7);
-					} else if (-1 !== fontFamily.indexOf("Courier New")) {
+					} else if (fontFamily && -1 !== fontFamily.indexOf("Courier New")) {
 						NumTextPr.RFonts.SetAll("Courier New", -1);
 						LvlText = sTextFormatString ? sTextFormatString : "o";
-					} else if (-1 !== fontFamily.indexOf("Wingdings")) {
+					} else if (fontFamily && -1 !== fontFamily.indexOf("Wingdings")) {
 						NumTextPr.RFonts.SetAll("Wingdings", -1);
 						LvlText = sTextFormatString ? sTextFormatString : String.fromCharCode(0x00A7);
 					} else {
