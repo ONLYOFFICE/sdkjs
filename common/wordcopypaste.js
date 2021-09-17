@@ -6541,7 +6541,8 @@ PasteProcessor.prototype =
 		//Heading
 		//Ранее применялся весь заголовок - Para.Style_Add(oDocument.Styles.Get_Default_Heading(pNoHtmlPr.hLevel));
 		if (null != pNoHtmlPr.hLevel && oDocument.Styles) {
-			Para.SetOutlineLvl(pNoHtmlPr.hLevel);
+			//Para.SetOutlineLvl(pNoHtmlPr.hLevel);
+			Para.Style_Add(oDocument.Styles.Get_Default_Heading(pNoHtmlPr.hLevel));
 		}
 
 		var pPr = Para.Pr;
@@ -8077,7 +8078,7 @@ PasteProcessor.prototype =
 		oPasteProcessor.aMsoHeadStylesStr = this.aMsoHeadStylesStr;
 		oPasteProcessor.oMsoHeadStylesListMap = this.oMsoHeadStylesListMap;
 		oPasteProcessor.msoListMap = this.msoListMap;
-		oPasteProcessor._Execute(node, {}, true, true, false);
+		oPasteProcessor._Execute(node, pPr, true, true, false);
 		oPasteProcessor._PrepareContent();
 		oPasteProcessor._AddNextPrevToContent(blockLevelSdt.Content);
 		/*if (0 === oPasteProcessor.aContent.length) {
