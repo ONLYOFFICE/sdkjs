@@ -6352,7 +6352,7 @@ PasteProcessor.prototype =
 	},
 	_IsBlockElem: function (name) {
 		if ("p" === name || "div" === name || "ul" === name || "ol" === name || "li" === name || "table" === name || "tbody" === name || "tr" === name || "td" === name || "th" === name ||
-			"h1" === name || "h2" === name || "h3" === name || "h4" === name || "h5" === name || "h6" === name || "center" === name || "dd" === name || "dt" === name)
+			"h1" === name || "h2" === name || "h3" === name || "h4" === name || "h5" === name || "h6" === name || "center" === name || "dd" === name || "dt" === name || "w:sdt" === name)
 			return true;
 		return false;
 	},
@@ -8064,6 +8064,48 @@ PasteProcessor.prototype =
 		}
 	},
 
+	_ExecuteBlockLevelStd : function (node, pPr) {
+		var blockLevelSdt = new CBlockLevelSdt(this.oLogicDocument, this.oLogicDocument);
+
+		//content
+		var oPasteProcessor = new PasteProcessor(this.api, false, false, true);
+		oPasteProcessor.msoComments = this.msoComments;
+		oPasteProcessor.oFonts = this.oFonts;
+		oPasteProcessor.oImages = this.oImages;
+		oPasteProcessor.oDocument = blockLevelSdt.Content;
+		oPasteProcessor.bIgnoreNoBlockText = true;
+		oPasteProcessor.aMsoHeadStylesStr = this.aMsoHeadStylesStr;
+		oPasteProcessor.oMsoHeadStylesListMap = this.oMsoHeadStylesListMap;
+		oPasteProcessor.msoListMap = this.msoListMap;
+		//oPasteProcessor.dMaxWidth = this._CalcMaxWidthByCell(cell);
+		/*if (true === bUseScaleKoef) {
+			oPasteProcessor.bUseScaleKoef = bUseScaleKoef;
+			oPasteProcessor.dScaleKoef = dScaleKoef;
+		}*/
+		oPasteProcessor._Execute(node, {}, true, true, false);
+		oPasteProcessor._PrepareContent();
+		oPasteProcessor._AddNextPrevToContent(blockLevelSdt.Content);
+		/*if (0 === oPasteProcessor.aContent.length) {
+			var oDocContent = cell.Content;
+			var oNewPar = new Paragraph(oDocContent.DrawingDocument, oDocContent);
+			//выставляем единичные настройки - важно для копирования из таблиц и других мест где встречаются пустые ячейки
+			var oNewSpacing = new CParaSpacing();
+			oNewSpacing.Set_FromObject({After: 0, Before: 0, Line: Asc.linerule_Auto});
+			oNewPar.Set_Spacing(oNewSpacing);
+			oPasteProcessor.aContent.push(oNewPar);
+		}*/
+		//добавляем новый параграфы
+		for (var i = 0, length = oPasteProcessor.aContent.length; i < length; ++i) {
+			if (i === length - 1) {
+				blockLevelSdt.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], true);
+			} else {
+				blockLevelSdt.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], false);
+			}
+		}
+
+		this.aContent.push(blockLevelSdt);
+	},
+
 	_ExecuteBorder: function (computedStyle, node, type, type2, bAddIfNull, setUnifill) {
 		var res = null;
 		var style = this._getStyle(node, computedStyle, "border-" + type + "-style");
@@ -9202,6 +9244,12 @@ PasteProcessor.prototype =
 						return false;
 					}
 				}
+			}
+
+			if ("w:sdt" === sNodeName && this.pasteInExcel !== true && this.pasteInPresentationShape !== true) {
+				//CBlockLevelSdt
+				this._ExecuteBlockLevelStd(node, pPr);
+				return bAddParagraph;
 			}
 
 			//STYLE
