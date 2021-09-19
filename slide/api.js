@@ -4264,7 +4264,7 @@ background-repeat: no-repeat;\
 			if (!g_oDocumentUrls.getImageLocal(ImagePr.ImageUrl))
 			{
 				sImageUrl = ImagePr.ImageUrl;
-				sToken = ImagePr.Token;
+				sToken = obj.Token;
 			}
 
 			var oApi           = this;
