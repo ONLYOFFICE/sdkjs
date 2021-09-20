@@ -8162,15 +8162,7 @@ PasteProcessor.prototype =
 		oPasteProcessor._Execute(node, pPr, true, true, false);
 		oPasteProcessor._PrepareContent();
 		oPasteProcessor._AddNextPrevToContent(blockLevelSdt.Content);
-		/*if (0 === oPasteProcessor.aContent.length) {
-			var oDocContent = cell.Content;
-			var oNewPar = new Paragraph(oDocContent.DrawingDocument, oDocContent);
-			//выставляем единичные настройки - важно для копирования из таблиц и других мест где встречаются пустые ячейки
-			var oNewSpacing = new CParaSpacing();
-			oNewSpacing.Set_FromObject({After: 0, Before: 0, Line: Asc.linerule_Auto});
-			oNewPar.Set_Spacing(oNewSpacing);
-			oPasteProcessor.aContent.push(oNewPar);
-		}*/
+
 		//добавляем новый параграфы
 		for (var i = 0, length = oPasteProcessor.aContent.length; i < length; ++i) {
 			if (i === length - 1) {
@@ -8178,9 +8170,6 @@ PasteProcessor.prototype =
 			} else {
 				blockLevelSdt.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], false);
 			}
-		}
-		if (oPasteProcessor.aContent.length) {
-			//blockLevelSdt.Content.Internal_Content_Remove(0, 1);
 		}
 
 		this.aContent.push(blockLevelSdt);
@@ -8981,7 +8970,8 @@ PasteProcessor.prototype =
 					"left" === node.style.pageBreakBefore || "right" === node.style.pageBreakBefore;
 				if ("br" == sNodeName || bPageBreakBefore) {
 
-					if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Word && pPr.msoWordSection && "section-break" === pPr["mso-break-type"]) {
+					//TODO пока комментирую добавление колонок
+					/*if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Word && pPr.msoWordSection && "section-break" === pPr["mso-break-type"]) {
 						//section break
 						oThis._Add_NewParagraph();
 						var oSectPr = new CSectionPr(oThis.oLogicDocument);
@@ -9015,7 +9005,7 @@ PasteProcessor.prototype =
 						oSectPr.Set_Type(c_oAscSectionBreakType.Continuous);
 						oThis.oCurPar.Set_SectionPr(oSectPr, true);
 						pPr.msoWordSection = null;
-					} else if (bPageBreakBefore) {
+					} else */if (bPageBreakBefore) {
 						bAddParagraph = oThis._Decide_AddParagraph(node.parentNode, pPr, bAddParagraph);
 						bAddParagraph = true;
 						oThis._Commit_Br(0, node, pPr);
@@ -9433,11 +9423,12 @@ PasteProcessor.prototype =
 
 			parseChildNodes();
 
-			if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Word) {
+			//TODO пока не используется, поскольку есть проблемы при вставке колонок
+			/*if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Word) {
 				if (child.className && -1 !== child.className.indexOf("WordSection")) {
 					pPr.msoWordSection = child.className;
 				}
-			}
+			}*/
 
 			if (i === length - 1) {
 				oThis._commitCommentEnd();
