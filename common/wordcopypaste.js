@@ -6757,15 +6757,6 @@ PasteProcessor.prototype =
 			}
 		}
 
-		if (pNoHtmlPr["msoWordSection"]) {
-			var oSectPr = new CSectionPr(this.oLogicDocument);
-			//oSectPr.Copy(oStartSectPr, false);
-			var columnsProps = new CDocumentColumnsProps();
-			columnsProps.Num = 3;
-			oSectPr.SetColumnProps(columnsProps);
-			//Para.Set_SectionPr(oSectPr, true);
-		}
-
 		//*****num*****
 		if (PasteElementsId.g_bIsDocumentCopyPaste) {
 			if (true === pNoHtmlPr.bNum) {
@@ -6846,7 +6837,7 @@ PasteProcessor.prototype =
 					}
 
 					if (null == NumId && this.pasteInExcel !== true && !this.oMsoHeadStylesListMap[listId]) {
-						this.oMsoHeadStylesListMap[listId] = this._findListFromMsoHeadStyle(listName);
+						this.oMsoHeadStylesListMap[listId] = this._findElemFromMsoHeadStyle("@list", listName);
 						var _msoNum = this._tryGenerateNumberingFromMsoStyle(this.oMsoHeadStylesListMap[listId]);
 						if (_msoNum) {
 							NumId = _msoNum.GetId();
@@ -7613,8 +7604,7 @@ PasteProcessor.prototype =
 
 		return res;
 	},
-	_findListFromMsoHeadStyle: function (name) {
-
+	_findElemFromMsoHeadStyle: function (prefixName, name) {
 		//первый элемент массива - общая инфомарция о списках, остальные - инфомарция об уровнях по порядку
 		/*@list l0
 		{mso-list-id:1405642429;
@@ -7633,7 +7623,7 @@ PasteProcessor.prototype =
 			text-indent:-.25in;}*/
 
 		var res = null;
-		var fullName = "@list " + name;
+		var fullName = prefixName +" " + name;
 		if (this.aMsoHeadStylesStr) {
 			var _generateIndexByPrefix = function (_str) {
 				if (0 === _str.indexOf(fullName)) {
@@ -7668,7 +7658,7 @@ PasteProcessor.prototype =
 			};
 			var _index, prefix = "";
 			for (var i = 0; i < this.aMsoHeadStylesStr.length; i++) {
-				var pos = this.aMsoHeadStylesStr[i].indexOf("@list " + name);
+				var pos = this.aMsoHeadStylesStr[i].indexOf(prefixName +" " + name);
 				if (pos !== -1) {
 					var startObjStr = null;
 					var startKeyStr = null;
@@ -8990,7 +8980,42 @@ PasteProcessor.prototype =
 				var bPageBreakBefore = "always" === node.style.pageBreakBefore ||
 					"left" === node.style.pageBreakBefore || "right" === node.style.pageBreakBefore;
 				if ("br" == sNodeName || bPageBreakBefore) {
-					if (bPageBreakBefore) {
+
+					if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Word && pPr.msoWordSection && "section-break" === pPr["mso-break-type"]) {
+						//section break
+						oThis._Add_NewParagraph();
+						var oSectPr = new CSectionPr(oThis.oLogicDocument);
+						var msoWordSection = oThis._findElemFromMsoHeadStyle("@page", pPr.msoWordSection);
+						if (msoWordSection && msoWordSection[0]) {
+							var sMsoColumns = msoWordSection[0]["mso-columns"];
+							if (sMsoColumns) {
+								var msoColumns = sMsoColumns.split(" ");
+								oSectPr.Set_Columns_Num(msoColumns[0]);
+								if (msoColumns[2]) {
+									oSectPr.Set_Columns_Space(AscCommon.valueToMmType(msoColumns[2]).val);
+								}
+							}
+							var sMargins = msoWordSection[0]["margin"];
+							if (sMargins) {
+								var margins = sMargins.split(" ");
+								var _l = margins[0] && AscCommon.valueToMmType(margins[0]);
+								var _t = margins[1] && AscCommon.valueToMmType(margins[1]);
+								var _r = margins[2] && AscCommon.valueToMmType(margins[2]);
+								var _b = margins[3] && AscCommon.valueToMmType(margins[3]);
+								oSectPr.SetPageMargins(_l ? _l.val : undefined, _t ? _t.val : undefined, _r ? _r.val : undefined, _b ? _b.val : undefined);
+							}
+							var sPageSize = msoWordSection[0]["size"];
+							if (sPageSize) {
+								var pageSize = sPageSize.split(" ");
+								var _w = pageSize[0] && AscCommon.valueToMmType(pageSize[0]);
+								var _h = pageSize[1] && AscCommon.valueToMmType(pageSize[1]);
+								//oSectPr.SetPageSize(_w ? _w.val : undefined, _h ? _h.val : undefined);
+							}
+						}
+						oSectPr.Set_Type(c_oAscSectionBreakType.Continuous);
+						oThis.oCurPar.Set_SectionPr(oSectPr, true);
+						pPr.msoWordSection = null;
+					} else if (bPageBreakBefore) {
 						bAddParagraph = oThis._Decide_AddParagraph(node.parentNode, pPr, bAddParagraph);
 						bAddParagraph = true;
 						oThis._Commit_Br(0, node, pPr);
@@ -8999,20 +9024,6 @@ PasteProcessor.prototype =
 						bAddParagraph = oThis._Decide_AddParagraph(node.parentNode, pPr, bAddParagraph);
 						oThis._Commit_Br(0, node, pPr);
 						oThis._AddToParagraph(new ParaNewLine(break_Line));
-					} else if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Word && pPr.msoWordSection && "section-break" === pPr["mso-break-type"]) {
-						//section break
-
-						oThis._Add_NewParagraph();
-
-						var oSectPr = new CSectionPr(oThis.oLogicDocument);
-						var msoWordSection = oThis._findSectionFromMsoStyles(pPr.msoWordSection);
-						//oSectPr.Copy(oStartSectPr, false);
-						var columnsProps = new CDocumentColumnsProps();
-						columnsProps.Num = 1;
-						oSectPr.SetColumnProps(columnsProps);
-						//oSectPr.Set_Type(c_oAscSectionBreakType.Continuous);
-						oThis.oCurPar.Set_SectionPr(oSectPr, true);
-						pPr.msoWordSection = null;
 					} else {
 						bAddParagraph = oThis._Decide_AddParagraph(node.parentNode, pPr, bAddParagraph, false);
 						oThis.nBrCount++;//oThis._AddToParagraph( new ParaNewLine( break_Line ) );
@@ -9425,16 +9436,6 @@ PasteProcessor.prototype =
 			if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Word) {
 				if (child.className && -1 !== child.className.indexOf("WordSection")) {
 					pPr.msoWordSection = child.className;
-
-					this._Add_NewParagraph();
-
-					var oSectPr = new CSectionPr(this.oLogicDocument);
-					//oSectPr.Copy(oStartSectPr, false);
-					var columnsProps = new CDocumentColumnsProps();
-					columnsProps.Num = 1;
-					oSectPr.SetColumnProps(columnsProps);
-					oSectPr.Set_Type(c_oAscSectionBreakType.Continuous);
-					//this.oCurPar.Set_SectionPr(oSectPr, true);
 				}
 			}
 
