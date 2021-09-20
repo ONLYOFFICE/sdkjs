@@ -7759,6 +7759,88 @@ PasteProcessor.prototype =
 		}
 		return res;
 	},
+	_findSectionFromMsoStyles: function (name) {
+		var res = null;
+		var fullName = "@page " + name;
+
+		if (this.aMsoHeadStylesStr) {
+			var _generateIndexByPrefix = function (_str) {
+				if (0 === _str.indexOf(fullName)) {
+					_index = 0;
+					var _fullStr = fullName + ":level" ;
+					if (-1 !== _str.indexOf(_fullStr)) {
+						var level = _str.split(_fullStr);
+						if (level && level[1]) {
+							_index = parseInt(level[1]);
+							if (isNaN(_index)) {
+								_index = undefined;
+							}
+						}
+					}
+				} else {
+					_index = undefined;
+				}
+			};
+
+			var _pushStr = function (key, val) {
+				if (val === null || key === null || _index === undefined) {
+					return;
+				}
+				if (!res) {
+					res = [];
+				}
+				if (!res[_index]) {
+					res[_index] = {};
+				}
+
+				res[_index][key] = val;
+			};
+			var _index, prefix = "";
+			for (var i = 0; i < this.aMsoHeadStylesStr.length; i++) {
+				var pos = this.aMsoHeadStylesStr[i].indexOf(fullName);
+				if (pos !== -1) {
+					var startObjStr = null;
+					var startKeyStr = null;
+					var startValStr = null;
+					for (var j = pos; j < this.aMsoHeadStylesStr[i].length; j++) {
+						var sym = this.aMsoHeadStylesStr[i][j];
+						if (sym === "\n" || sym === "\t") {
+							continue;
+						}
+						if (!startObjStr) {
+							if (sym === "{") {
+								startObjStr = true;
+								_generateIndexByPrefix(prefix);
+								prefix = "";
+							} else {
+								prefix += sym;
+							}
+
+							startKeyStr = "";
+							startValStr = null;
+						} else {
+							if (sym === "}") {
+								_pushStr(startKeyStr, startValStr);
+								startObjStr = null;
+							} else if (sym === ":") {
+								startValStr = "";
+							} else if (sym === ";") {
+								_pushStr(startKeyStr, startValStr);
+								startValStr = null;
+								startKeyStr = "";
+							} else if (startValStr !== null) {
+								startValStr += sym;
+							} else if (startKeyStr !== null) {
+								startKeyStr += sym;
+							}
+						}
+					}
+				}
+			}
+		}
+		return res;
+	},
+
 	_AddNextPrevToContent: function (oDoc) {
 		var prev = null;
 		for (var i = 0, length = this.aContent.length; i < length; ++i) {
@@ -8917,6 +8999,20 @@ PasteProcessor.prototype =
 						bAddParagraph = oThis._Decide_AddParagraph(node.parentNode, pPr, bAddParagraph);
 						oThis._Commit_Br(0, node, pPr);
 						oThis._AddToParagraph(new ParaNewLine(break_Line));
+					} else if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Word && pPr.msoWordSection && "section-break" === pPr["mso-break-type"]) {
+						//section break
+
+						oThis._Add_NewParagraph();
+
+						var oSectPr = new CSectionPr(oThis.oLogicDocument);
+						var msoWordSection = oThis._findSectionFromMsoStyles(pPr.msoWordSection);
+						//oSectPr.Copy(oStartSectPr, false);
+						var columnsProps = new CDocumentColumnsProps();
+						columnsProps.Num = 1;
+						oSectPr.SetColumnProps(columnsProps);
+						//oSectPr.Set_Type(c_oAscSectionBreakType.Continuous);
+						oThis.oCurPar.Set_SectionPr(oSectPr, true);
+						pPr.msoWordSection = null;
 					} else {
 						bAddParagraph = oThis._Decide_AddParagraph(node.parentNode, pPr, bAddParagraph, false);
 						oThis.nBrCount++;//oThis._AddToParagraph( new ParaNewLine( break_Line ) );
@@ -9338,7 +9434,7 @@ PasteProcessor.prototype =
 					columnsProps.Num = 1;
 					oSectPr.SetColumnProps(columnsProps);
 					oSectPr.Set_Type(c_oAscSectionBreakType.Continuous);
-					this.oCurPar.Set_SectionPr(oSectPr, true);
+					//this.oCurPar.Set_SectionPr(oSectPr, true);
 				}
 			}
 
