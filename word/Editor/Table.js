@@ -3027,6 +3027,27 @@ CTable.prototype.Reset = function(X, Y, XLimit, YLimit, PageNum, ColumnNum, Colu
 	// текущей секции
 	if (!this.IsInline() && ColumnNum > 0 && undefined !== SectionY)
 		this.Y = SectionY;
+
+	var _X      = this.X;
+	var _XLimit = this.XLimit;
+	if (this.LogicDocument && this.LogicDocument.IsDocumentEditor() && this.IsInline())
+	{
+		var arrRanges = this.Parent.CheckRange(_X, this.Y, _XLimit, this.Y + 0.001, this.Y, this.Y + 0.001, _X, _XLimit, this.private_GetRelativePageIndex(0));
+		if (arrRanges.length > 0)
+		{
+			for (var nRangeIndex = 0, nRangesCount = arrRanges.length; nRangeIndex < nRangesCount; ++nRangeIndex)
+			{
+				if (arrRanges[nRangeIndex].X0 < this.X + 3.2 && arrRanges[nRangeIndex].X1 > _X)
+					_X = arrRanges[nRangeIndex].X1 + 0.001;
+
+				if (arrRanges[nRangeIndex].X1 > this.XLimit - 3.2 && arrRanges[nRangeIndex].X0 < _XLimit)
+					_XLimit = arrRanges[nRangeIndex].X0 - 0.001;
+			}
+		}
+	}
+
+	this.X      = _X;
+	this.XLimit = _XLimit;
 };
 CTable.prototype.Recalculate = function()
 {
