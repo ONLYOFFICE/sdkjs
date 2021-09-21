@@ -13744,6 +13744,27 @@
 		} else {
 			var visibleRange = this.getVisibleRange();
 			var intersectionVisibleRange = visibleRange.intersection(range);
+			if (!intersectionVisibleRange && this.topLeftFrozenCell) {
+				var cFrozen = this.topLeftFrozenCell.getCol0();
+				var rFrozen = this.topLeftFrozenCell.getRow0();
+				cFrozen -= 1;
+				rFrozen -= 1;
+
+				var frozenRange;
+				if (0 <= cFrozen && 0 <= rFrozen) {
+					frozenRange = new asc_Range(0, 0, cFrozen, rFrozen);
+					intersectionVisibleRange = frozenRange.intersection(range);
+				}
+				if (!intersectionVisibleRange && 0 <= cFrozen) {
+					frozenRange = new asc_Range(0, this.visibleRange.r1, cFrozen, this.visibleRange.r2);
+					intersectionVisibleRange = frozenRange.intersection(range);
+
+				}
+				if (!intersectionVisibleRange && 0 <= rFrozen) {
+					frozenRange = new asc_Range(this.visibleRange.c1, 0, this.visibleRange.c2, rFrozen);
+					intersectionVisibleRange = frozenRange.intersection(range);
+				}
+			}
 
 			if (intersectionVisibleRange) {
 				cellCoord = [];
