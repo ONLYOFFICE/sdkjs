@@ -8731,7 +8731,7 @@ PasteProcessor.prototype =
 						}
 					}
 				}
-			} else if (pPr["mso-list"] && !bPresentation) {
+			} else if (pPr["mso-list"] && !bPresentation && "none" !== pPr['mso-list']) {
 				if ("p" === sNodeName) {
 					pPr.bNum = true;
 				}
