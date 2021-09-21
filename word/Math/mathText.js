@@ -65,8 +65,14 @@ CMathSize.prototype.Set = function(size)
     this.ascent = size.ascent;
 };
 
+/**
+ * @extends {CRunElementBase}
+ * @constructor
+ */
 function CMathBaseText()
 {
+    CRunElementBase.call(this);
+
     this.Type           = null;
     this.bJDraw         = false;
     this.value          = null;
@@ -87,6 +93,8 @@ function CMathBaseText()
     this.GapLeft        = 0;
     this.GapRight       = 0;
 }
+CMathBaseText.prototype = Object.create(CRunElementBase.prototype);
+CMathBaseText.prototype.constructor = CMathBaseText;
 CMathBaseText.prototype.Get_Width = function() // работаем через функцию, т.к. поля  GapLeft и GapRight могут измениться из-за изменения переноса, а пересчет (Measure) в этом случае не прийдет
 {
     var Width = this.size.width;
