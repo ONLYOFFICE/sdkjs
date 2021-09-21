@@ -174,7 +174,10 @@ native_context2d.prototype =
 		return _data;
 	},
 	getImageData: function (sx, sy, sw, sh) {},
-	putImageData: function (image_data, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight) {}
+	putImageData: function (image_data, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight) {},
+
+	setFillStyle: function() {},
+	setStrokeStyle: function() {}
 };
 
 function native_canvas()
