@@ -2285,6 +2285,33 @@
 		if (this.skipHelpSelector) {
 			return;
 		}
+
+		var _getInnerTable = function (_sFullTable, tableName) {
+			var _bracketCount = 0;
+			var res = null;
+			for (var j = tableName.length; j < _sFullTable.length; j++) {
+				if (_sFullTable[j] === "[") {
+					_bracketCount++;
+					if (!res) {
+						res = "";
+					}
+				} else if (_sFullTable[j] === "]") {
+					_bracketCount--;
+					res = null;
+				} else {
+					if (_bracketCount > 0) {
+						if (!res) {
+							res = "";
+						}
+						res += _sFullTable[j];
+					} else {
+						res = null;
+					}
+				}
+			}
+			return res;
+		};
+
 		// ToDo для ускорения можно завести объект, куда класть результаты поиска по формулам и второй раз не искать.
 		var i, arrResult = [], defNamesList, defName, defNameStr, _lastFNameLength, _type;
 		if (fName) {
@@ -2315,51 +2342,46 @@
 					if (-1 !== fName.indexOf("[")) {
 						var tableNameParse = fName.split("[");
 						if (tableNameParse[0] && 0 === defNameStr.toLowerCase().indexOf(tableNameParse[0])) {
-							if (tableNameParse[1] === "#") {
-							
-							} else {
-								if (tableNameParse[1] === "@") {
-								
-								} else {
-									//ищем совпадения по названию столбцов
-									var table = this.model.getTableByName(defNameStr);
-									if (table) {
-										var _str, j;
-										for (j = 0; j < table.TableColumns.length; j++) {
-											_str = table.TableColumns[j].Name;
-											_type = c_oAscPopUpSelectorType.TableColumnName;
-											if (tableNameParse[1] === "" || 0 === _str.toLowerCase().indexOf(tableNameParse[1])) {
+							//ищем совпадения по названию столбцов
+							var table = this.model.getTableByName(defNameStr);
+							if (table) {
+								var sTableInner = _getInnerTable(fName, defNameStr.toLowerCase());
+								if (null !== sTableInner) {
+									var _str, j;
+									for (j = 0; j < table.TableColumns.length; j++) {
+										_str = table.TableColumns[j].Name;
+										_type = c_oAscPopUpSelectorType.TableColumnName;
+										if (sTableInner === "" || 0 === _str.toLowerCase().indexOf(sTableInner)) {
+											arrResult.push(new AscCommonExcel.asc_CCompleteMenu(_str, _type));
+										}
+									}
+
+									if (AscCommon.cStrucTableLocalColumns) {
+										for (j in AscCommon.cStrucTableLocalColumns) {
+											_str = AscCommon.cStrucTableLocalColumns[j];
+											if (j === "h") {
+												_str = "#" + _str;
+												_type = c_oAscPopUpSelectorType.TableHeaders;
+											} else if (j === "d") {
+												_str = "#" + _str;
+												_type = c_oAscPopUpSelectorType.TableData;
+											} else if (j === "a") {
+												_str = "#" + _str;
+												_type = c_oAscPopUpSelectorType.TableAll;
+											} else if (j === "tr") {
+												_str = "@";
+												_type = c_oAscPopUpSelectorType.TableThisRow;
+											} else if (j === "t") {
+												_str = "#" + _str;
+												_type = c_oAscPopUpSelectorType.TableTotals;
+											}
+											if (sTableInner === "" || (0 === _str.toLocaleLowerCase().indexOf(sTableInner) && _type !== c_oAscPopUpSelectorType.TableThisRow)) {
 												arrResult.push(new AscCommonExcel.asc_CCompleteMenu(_str, _type));
 											}
 										}
-										
-										if (AscCommon.cStrucTableLocalColumns) {
-											for (j in AscCommon.cStrucTableLocalColumns) {
-												_str = AscCommon.cStrucTableLocalColumns[j];
-												if (j === "h") {
-													_str = "#" + _str;
-													_type = c_oAscPopUpSelectorType.TableHeaders;
-												} else if (j === "d") {
-													_str = "#" + _str;
-													_type = c_oAscPopUpSelectorType.TableData;
-												} else if (j === "a") {
-													_str = "#" + _str;
-													_type = c_oAscPopUpSelectorType.TableAll;
-												} else if (j === "tr") {
-													_str = "@";
-													_type = c_oAscPopUpSelectorType.TableThisRow;
-												} else if (j === "t") {
-													_str = "#" + _str;
-													_type = c_oAscPopUpSelectorType.TableTotals;
-												}
-												if (tableNameParse[1] === "" || 0 === _str.toLocaleLowerCase().indexOf(tableNameParse[1])) {
-													arrResult.push(new AscCommonExcel.asc_CCompleteMenu(_str, _type));
-												}
-											}
-										}
-										fPos += defNameStr.length + 1;
-										_lastFNameLength = tableNameParse[1].length;
 									}
+									fPos += defNameStr.length + 1;
+									_lastFNameLength = sTableInner.length;
 								}
 							}
 						}
