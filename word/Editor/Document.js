@@ -25827,7 +25827,7 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 							oNewParagraph.SetParagraphAlign(1);
 							break;
 						case type_Table:
-							var oNestedContent = (oProps.nested) ? this.private_ConvertTableToText(oElement, oProps) : [oElement];
+							var oNestedContent = (oProps.nested) ? this.private_ConvertTableToText(oElement, oProps) : {content:[oElement]};
 							if (j == 0 && NewContent.content[NewContent.content.length-1].IsEmpty() && bAdd)
 								NewContent.content.pop();
 
