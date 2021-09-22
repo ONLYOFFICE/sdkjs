@@ -110,8 +110,8 @@ function native_context2d(parent)
 
 	this.globalAlpha = 0;
 	this.globalCompositeOperation = "";
-	this.fillStyle = "";
-	this.strokeStyle = "";
+	this.fillStyle = "#000000";
+	this.strokeStyle = "#000000";
 
 	this.lineWidth = 0;
 	this.lineCap = 0;
@@ -174,10 +174,7 @@ native_context2d.prototype =
 		return _data;
 	},
 	getImageData: function (sx, sy, sw, sh) {},
-	putImageData: function (image_data, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight) {},
-
-	setFillStyle: function() {},
-	setStrokeStyle: function() {}
+	putImageData: function (image_data, dx, dy, dirtyX, dirtyY, dirtyWidth, dirtyHeight) {}
 };
 
 function native_canvas()
