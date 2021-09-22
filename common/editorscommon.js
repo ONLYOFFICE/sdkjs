@@ -1896,8 +1896,7 @@
 			responseType: "arraybuffer",
 			headers: {
 				'Authorization': 'Bearer ' + token,
-				'x-url': url,
-				'x-url-path-in-token': urlPathInToken
+				'x-url': url
 			},
 			success: function(resp) {
 				fSuccess(resp.response);
