@@ -224,6 +224,7 @@
                 this.AddLoadFonts("Wingdings", 0x0F);
                 this.AddLoadFonts("Courier New", 0x0F);
                 this.AddLoadFonts("Times New Roman", 0x0F);
+                this.AddLoadFonts("Open Sans", 0x0F);
             }
 
             this.Api.asyncFontsDocumentStartLoaded();
