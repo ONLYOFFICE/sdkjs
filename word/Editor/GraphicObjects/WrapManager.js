@@ -809,37 +809,44 @@ CWrapManager.prototype =
         var arr_intervals = [];
 
         var index;
+        var oParaDrawing;
         if(docContent == null)
         {
 
             var aDrawings = this.graphicPage.behindDocObjects;
             for(var index = 0; index < aDrawings.length; ++index)
             {
-                var oParaDrawing = aDrawings[index].parent;
-                if(oParaDrawing.IsLayoutInCell())
+                oParaDrawing = aDrawings[index].parent;
+                if(oParaDrawing)
                 {
-                    var oTableCell = oParaDrawing.DocumentContent.IsTableCellContent(true);
-                    if(oTableCell !== docContent)
+                    if(oParaDrawing.IsLayoutInCell())
                     {
-                        continue;
+                        var oTableCell = oParaDrawing.DocumentContent.IsTableCellContent(true);
+                        if(oTableCell !== docContent)
+                        {
+                            continue;
+                        }
                     }
+                    aDrawings[index].getArrayWrapIntervals(x0,y0, x1, y1, Y0sp, Y1Ssp, LeftField, RightField,  arr_intervals, bMathWrap);
                 }
-                aDrawings[index].getArrayWrapIntervals(x0,y0, x1, y1, Y0sp, Y1Ssp, LeftField, RightField,  arr_intervals, bMathWrap);
             }
 
             aDrawings = this.graphicPage.beforeTextObjects;
             for(var index = 0; index < aDrawings.length; ++index)
             {
-                var oParaDrawing = aDrawings[index].parent;
-                if(oParaDrawing.IsLayoutInCell())
+                oParaDrawing = aDrawings[index].parent;
+                if(oParaDrawing)
                 {
-                    var oTableCell = oParaDrawing.DocumentContent.IsTableCellContent(true);
-                    if(oTableCell !== docContent)
+                    if(oParaDrawing.IsLayoutInCell())
                     {
-                        continue;
+                        var oTableCell = oParaDrawing.DocumentContent.IsTableCellContent(true);
+                        if(oTableCell !== docContent)
+                        {
+                            continue;
+                        }
                     }
+                    aDrawings[index].getArrayWrapIntervals(x0,y0, x1, y1, Y0sp, Y1Ssp, LeftField, RightField,  arr_intervals, bMathWrap);
                 }
-                aDrawings[index].getArrayWrapIntervals(x0,y0, x1, y1, Y0sp, Y1Ssp, LeftField, RightField,  arr_intervals, bMathWrap);
             }
             var arrFlowTables = this.graphicPage.flowTables;
             for(index = 0; index < arrFlowTables.length; ++index)
@@ -855,7 +862,7 @@ CWrapManager.prototype =
                 var aDrawings = this.graphicPage.behindDocObjects;
                 for(index = 0; index < aDrawings.length; ++index)
                 {
-                    var oParaDrawing = aDrawings[index].parent;
+                    oParaDrawing = aDrawings[index].parent;
                     if(oParaDrawing)
                     {
 
@@ -880,7 +887,7 @@ CWrapManager.prototype =
                 aDrawings = this.graphicPage.beforeTextObjects;
                 for(index = 0; index < aDrawings.length; ++index)
                 {
-                    var oParaDrawing = aDrawings[index].parent;
+                    oParaDrawing = aDrawings[index].parent;
                     if(oParaDrawing)
                     {
 
