@@ -3583,9 +3583,11 @@
 				} else {
 					for(var i = 0; i < text.length; i++) {
 						colCounter = 0;
-						for(var j = 0; j < text[i].length; j++) {
-							_parseText(text[i][j], true);
-							colCounter++;
+						if (text[i]) {
+							for(var j = 0; j < text[i].length; j++) {
+								_parseText(text[i][j], true);
+								colCounter++;
+							}
 						}
 						rowCounter++;
 					}

@@ -12548,14 +12548,16 @@
 		for (var autoR = 0; autoR < maxARow; ++autoR) {
 			for (var autoC = 0; autoC < maxACol; ++autoC) {
 				for (var r = 0; r < rMax; ++r) {
-					for (var c = 0; c < pasteContent.content[r].length; ++c) {
-						if (undefined !== pasteContent.content[r][c]) {
-							var pasteIntoRow = r + autoR * plRow + arn.r1;
-							var pasteIntoCol = c + autoC * plCol + arn.c1;
+					if (pasteContent.content[r]) {
+						for (var c = 0; c < pasteContent.content[r].length; ++c) {
+							if (undefined !== pasteContent.content[r][c]) {
+								var pasteIntoRow = r + autoR * plRow + arn.r1;
+								var pasteIntoCol = c + autoC * plCol + arn.c1;
 
-							var currentObj = pasteContent.content[r][c];
+								var currentObj = pasteContent.content[r][c];
 
-							putInsertedCellIntoRange(pasteIntoRow, pasteIntoCol, currentObj);
+								putInsertedCellIntoRange(pasteIntoRow, pasteIntoCol, currentObj);
+							}
 						}
 					}
 				}
