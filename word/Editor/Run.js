@@ -12326,7 +12326,7 @@ ParaRun.prototype.private_GetSuitableNumberedLvlForAutoCorrect = function(sText)
 
 	return null;
 };
-ParaRun.prototype.ChangeUnicodeText = function(ListForUnicode, sText, fFlagForUnicode)
+ParaRun.prototype.ChangeUnicodeText = function(ListForUnicode, sText, fFlagForUnicode, countOfRuns)
 {
 	var nStartPos = 0;
 	var nEndPos   = -1;
@@ -12334,6 +12334,7 @@ ParaRun.prototype.ChangeUnicodeText = function(ListForUnicode, sText, fFlagForUn
 	if (this.Selection.Use)
 	{
         sText[0] += this.GetSelectedText(false);
+        countOfRuns[0]++;
 		nStartPos = this.Selection.StartPos;
 		nEndPos   = this.Selection.EndPos;
 		if (nStartPos > nEndPos)
@@ -12351,7 +12352,8 @@ ParaRun.prototype.ChangeUnicodeText = function(ListForUnicode, sText, fFlagForUn
 			ListForUnicode[fFlagForUnicode[0]] = {
 				oRun: this,
 				currentPos: nPos,
-				value: (oItem.Value !== undefined) ? oItem.Value : undefined
+				value: (oItem.Value !== undefined) ? oItem.Value : undefined, 
+                orunNumber: countOfRuns[0]
 			};
 			fFlagForUnicode[0]++;
 		}

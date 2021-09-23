@@ -10567,10 +10567,24 @@ CDocument.prototype.OnKeyDown = function(e)
 				var ListForUnicode = [];
 				var fFlagForUnicode = [0];
 				var textForUnicode = [""];
+				var countOfRuns = [0];
+
 				oParagraph.CheckRunContent(function(oRun)
 				{
-					oRun.ChangeUnicodeText(ListForUnicode, textForUnicode, fFlagForUnicode);
+					oRun.ChangeUnicodeText(ListForUnicode, textForUnicode, fFlagForUnicode, countOfRuns);
 				});
+				if (textForUnicode[0] === "" && ListForUnicode.length === 0)
+				{
+					textForUnicode[0] = this.GetSelectedText();
+					fFlagForUnicode[0] = -1;
+					for (var nPos = 0; nPos < textForUnicode[0].length; nPos++)
+					{
+						ListForUnicode[nPos] = 
+						{
+							value: textForUnicode[0][nPos].charCodeAt(0)
+						};
+					}
+				}
 				for (var nPos = 0; nPos < ListForUnicode.length; nPos++)
 				{
 					if (ListForUnicode[nPos].value === undefined || ListForUnicode.length > 6 )
@@ -10584,6 +10598,7 @@ CDocument.prototype.OnKeyDown = function(e)
 						ListForUnicode.splice(0, ListForUnicode.length);
 					}
 				}
+				
 				var textAfterChange = "";
 				if (ListForUnicode.length <= 6 && ListForUnicode.length !== 0)
 				{
@@ -10594,19 +10609,44 @@ CDocument.prototype.OnKeyDown = function(e)
 						{
 							if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, false))
 							{
-								this.StartAction(AscDFH.historydescription_Document_AddLetter);
-
-								for (var i = ListForUnicode.length - 1; i >= 0; i--)
+								this.StartAction(AscDFH.historydescription_Document_AddLetter);					
+								if (oParagraph.LogicDocument.IsTrackRevisions())
 								{
-									ListForUnicode[i].oRun.RemoveFromContent(ListForUnicode[i].currentPos, 1, true);
-								}
-								if (AscCommon.IsSpace(textAfterChange))
-									ListForUnicode[0].oRun.AddToContent(ListForUnicode[0].currentPos, new ParaSpace(textAfterChange));
-								else
-									ListForUnicode[0].oRun.AddToContent(ListForUnicode[0].currentPos, new ParaText(textAfterChange));
-								ListForUnicode[0].oRun.Selection.StartPos = ListForUnicode[0].currentPos;
-								ListForUnicode[0].oRun.Selection.EndPos = ListForUnicode[0].currentPos + 1;
+									if (AscCommon.IsSpace(textAfterChange))
+										oParagraph.Add(new ParaSpace(textAfterChange));
+									else
+										oParagraph.Add(new ParaText(textAfterChange));
 
+									oParagraph.Remove(1);
+								}
+								else
+								{
+									if (fFlagForUnicode[0] === -1)
+									{
+										if (AscCommon.IsSpace(textAfterChange))
+											oParagraph.Add(new ParaSpace(textAfterChange));
+										else
+											oParagraph.Add(new ParaText(textAfterChange));
+
+										oParagraph.Remove(1);
+									}
+									else
+									{
+										for (var i = ListForUnicode.length - 1; i >= 0; i--)
+										{
+											if (i === ListForUnicode.length - 1 || ListForUnicode[i].orunNumber !== ListForUnicode[i + 1].orunNumber)
+												ListForUnicode[i].oRun.Remove();
+										}
+										if (AscCommon.IsSpace(textAfterChange))
+											ListForUnicode[0].oRun.Add(new ParaSpace(textAfterChange));
+										else
+											ListForUnicode[0].oRun.Add(new ParaText(textAfterChange));
+										
+										ListForUnicode[0].oRun.Selection.Use = true;
+										ListForUnicode[0].oRun.Selection.StartPos = ListForUnicode[0].currentPos;
+										ListForUnicode[0].oRun.Selection.EndPos = ListForUnicode[0].currentPos + 1;
+									}
+								}
 								this.UpdateSelection();
 								this.Recalculate();
 								this.UpdateInterface();
@@ -10623,18 +10663,38 @@ CDocument.prototype.OnKeyDown = function(e)
 						{
 							textAfterChange = AscCommon.IntToHex(ListForUnicode[0].value).toUpperCase();
 
-							var CurrentRun = ListForUnicode[0].oRun;
-							var CurrentNPos = ListForUnicode[0].currentPos;
-
 							this.StartAction(AscDFH.historydescription_Document_AddLetter);
 
-							CurrentRun.RemoveFromContent(CurrentNPos, 1, true);
-							for (var i = 0; i < textAfterChange.length; i++)
+							if (oParagraph.LogicDocument.IsTrackRevisions())
 							{
-								CurrentRun.AddToContent(CurrentNPos + i, new ParaText(textAfterChange.charCodeAt(i)));
+								for (var i = 0; i < textAfterChange.length; i++)
+								{
+									oParagraph.Add(new ParaText(textAfterChange.charCodeAt(i)));
+								}
+								oParagraph.Remove(1);
 							}
-							CurrentRun.Selection.StartPos = CurrentNPos;
-                			CurrentRun.Selection.EndPos = CurrentNPos + textAfterChange.length;
+							else
+							{
+								if (fFlagForUnicode[0] === -1)
+								{
+									oParagraph.Remove(1);
+									for (var i = 0; i < textAfterChange.length; i++)
+									{
+										oParagraph.Add(new ParaText(textAfterChange.charCodeAt(i)));
+									}	
+								}
+								else
+								{
+									ListForUnicode[0].oRun.Remove();
+									for (var i = 0; i < textAfterChange.length; i++)
+									{
+										ListForUnicode[0].oRun.Add(new ParaText(textAfterChange.charCodeAt(i)));
+									}
+									ListForUnicode[0].oRun.Selection.Use = true;
+									ListForUnicode[0].oRun.Selection.StartPos = ListForUnicode[0].currentPos;
+									ListForUnicode[0].oRun.Selection.EndPos = ListForUnicode[0].currentPos + textAfterChange.length;
+								}
+							}
 
 							this.UpdateSelection();
 							this.Recalculate();
