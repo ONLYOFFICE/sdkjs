@@ -10568,7 +10568,10 @@ CDocument.prototype.OnKeyDown = function(e)
 				var fFlagForUnicode = [0];
 				var textForUnicode = [""];
 				var countOfRuns = [0];
-
+				//var oSelectedContent = new CSelectedContent();
+				//var el1 = this.GetSelectedContent();
+				//oParagraph.SelectCurrentWord();
+				//oParagraph.GetSelectedContent(oSelectedContent);
 				oParagraph.CheckRunContent(function(oRun)
 				{
 					oRun.ChangeUnicodeText(ListForUnicode, textForUnicode, fFlagForUnicode, countOfRuns);
@@ -10623,12 +10626,11 @@ CDocument.prototype.OnKeyDown = function(e)
 								{
 									if (fFlagForUnicode[0] === -1)
 									{
+										oParagraph.Remove(1);
 										if (AscCommon.IsSpace(textAfterChange))
 											oParagraph.Add(new ParaSpace(textAfterChange));
 										else
 											oParagraph.Add(new ParaText(textAfterChange));
-
-										oParagraph.Remove(1);
 									}
 									else
 									{
@@ -10690,6 +10692,7 @@ CDocument.prototype.OnKeyDown = function(e)
 									{
 										ListForUnicode[0].oRun.Add(new ParaText(textAfterChange.charCodeAt(i)));
 									}
+									
 									ListForUnicode[0].oRun.Selection.Use = true;
 									ListForUnicode[0].oRun.Selection.StartPos = ListForUnicode[0].currentPos;
 									ListForUnicode[0].oRun.Selection.EndPos = ListForUnicode[0].currentPos + textAfterChange.length;
