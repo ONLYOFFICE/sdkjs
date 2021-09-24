@@ -1029,9 +1029,8 @@
 		var _x = this._mift.transformPointX(x, y);
 		var _y = this._mift.transformPointY(x, y);
 
-		var length = text.length;
-		for (var i = 0; i < length; ++i) {
-			code = text.charCodeAt(i);
+		for (var oIterator = text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
+			code = oIterator.value();
 			// Replace Non-breaking space(0xA0) with White-space(0x20)
 			code = 0xA0 === code ? 0x20 : code;
 			if (window["IS_NATIVE_EDITOR"]) {
