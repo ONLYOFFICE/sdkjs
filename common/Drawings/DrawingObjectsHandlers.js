@@ -57,6 +57,7 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
     }
     var selected_objects = group ? group.selectedObjects : drawingObjectsController.getSelectedObjects();
     var oCropSelection = drawingObjectsController.selection.cropSelection ? drawingObjectsController.selection.cropSelection : null;
+    var oGeometryEditSelection = drawingObjectsController.selection.geometrySelection ? drawingObjectsController.selection.geometrySelection : null;
     var tx, ty, t, hit_to_handles;
     var ret = null;
     var drawing = null;
@@ -166,7 +167,7 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
                 ty = y;
             }
             
-            if(selected_objects[0].canChangeAdjustments())
+            if(selected_objects[0].canChangeAdjustments() && !oGeometryEditSelection)
             {
                 var hit_to_adj = selected_objects[0].hitToAdjustment(tx, ty);
                 if(hit_to_adj.hit)
@@ -206,7 +207,7 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
             if(!ret)
             {
                 hit_to_handles = selected_objects[i].hitToHandles(tx, ty);
-                if(hit_to_handles > -1)
+                if(hit_to_handles > -1 && !oGeometryEditSelection)
                 {
 
                     if(window["IS_NATIVE_EDITOR"] && e.ClickCount > 1)
@@ -220,6 +221,15 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
                     drawing = selected_objects[i];
                     break;
                 }
+            }
+        }
+    }
+
+    if(!ret) {
+        if(oGeometryEditSelection) {
+            ret = oGeometryEditSelection.handle(drawingObjectsController, e, x, y);
+            if(ret) {
+                return ret;
             }
         }
     }
@@ -247,7 +257,7 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
             if(!ret)
             {
 
-                if(selected_objects[i].hitInBoundingRect(tx, ty))
+                if(selected_objects[i].hitInBoundingRect(tx, ty) && !oGeometryEditSelection)
                 {
                     if(window["IS_NATIVE_EDITOR"])
                     {

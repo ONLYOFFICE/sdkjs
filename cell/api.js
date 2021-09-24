@@ -1278,7 +1278,7 @@ var editor;
 
   spreadsheet_api.prototype._loadFonts = function(fonts, callback) {
     if (window["NATIVE_EDITOR_ENJINE"]) {
-      return callback();
+      return callback.call(this);
     }
     this.asyncMethodCallback = callback;
     var arrLoadFonts = [];
@@ -2152,7 +2152,8 @@ var editor;
 				ws = ranges.worksheet;
             }
         } else {
-			ws = this.wbModel.getWorksheetByName(sheet);
+        	//при переходе к диапазону внутри документа, игнорируется регистр у имени листа -> Sheet1===SHEEt1
+			ws = this.wbModel.getWorksheetByName(sheet, true);
         }
 		if (!ws) {
 			this.handlers.trigger("asc_onHyperlinkClick", null);
@@ -2997,7 +2998,7 @@ var editor;
         }
 	};
 
-	spreadsheet_api.prototype.asc_setAutoCorrectHyperlinks = function (value) {
+	spreadsheet_api.prototype.asc_SetAutoCorrectHyperlinks = function (value) {
 		window['AscCommonExcel'].g_AutoCorrectHyperlinks = value;
 	};
 
@@ -3530,6 +3531,20 @@ var editor;
     this.handlers.trigger("asc_onEndAddShape");
   };
 
+    spreadsheet_api.prototype.asc_canEditGeometry = function () {
+        var ws = this.wb.getWorksheet();
+        if(ws && ws.objectRender && ws.objectRender.controller) {
+            return ws.objectRender.controller.canEditGeometry();
+        }
+        return false;
+    };
+
+    spreadsheet_api.prototype.asc_editPointsGeometry = function() {
+        var ws = this.wb.getWorksheet();
+        if(ws && ws.objectRender && ws.objectRender.controller) {
+            ws.objectRender.controller.startEditGeometry();
+        }
+    };
 
     spreadsheet_api.prototype.asc_addShapeOnSheet = function(sPreset) {
         if(this.wb){
@@ -4834,14 +4849,24 @@ var editor;
 			this.lastSaveTime = new Date();
 			return;
 		}
-		var saveGap = this.collaborativeEditing.getFast() ? this.autoSaveGapRealTime :
-			(this.collaborativeEditing.getCollaborativeEditing() ? this.autoSaveGapSlow : this.autoSaveGapFast);
-		var gap = new Date() - this.lastSaveTime - saveGap;
-		if (0 <= gap) {
-			this.asc_Save(true);
-		}
-        if (AscCommon.CollaborativeEditing.Is_Fast() /*&& !AscCommon.CollaborativeEditing.Is_SingleUser()*/) {
-            this.wb.sendCursor();
+
+        var _bIsWaitScheme = false;
+        var _curTime =  new Date();
+        if((this.collaborativeEditing.Is_SingleUser() || !this.collaborativeEditing.getFast()) && History.Points[History.Index]) {
+            if ((_curTime - History.Points[History.Index].Time) < this.intervalWaitAutoSave) {
+                _bIsWaitScheme = true;
+            }
+        }
+        if(!_bIsWaitScheme) {
+            var saveGap = this.collaborativeEditing.getFast() ? this.autoSaveGapRealTime :
+                (this.collaborativeEditing.getCollaborativeEditing() ? this.autoSaveGapSlow : this.autoSaveGapFast);
+            var gap = _curTime - this.lastSaveTime - saveGap;
+            if (0 <= gap) {
+                this.asc_Save(true);
+            }
+            if (AscCommon.CollaborativeEditing.Is_Fast() /*&& !AscCommon.CollaborativeEditing.Is_SingleUser()*/) {
+                this.wb.sendCursor();
+            }
         }
 	};
 
@@ -6269,7 +6294,7 @@ var editor;
   prot["asc_setIncludeNewRowColTable"] = prot.asc_setIncludeNewRowColTable;
 
   prot["asc_setShowZeroCellValues"] = prot.asc_setShowZeroCellValues;
-  prot["asc_setAutoCorrectHyperlinks"] = prot.asc_setAutoCorrectHyperlinks;
+  prot["asc_SetAutoCorrectHyperlinks"] = prot.asc_SetAutoCorrectHyperlinks;
 
 
   // Spreadsheet interface
@@ -6391,6 +6416,8 @@ var editor;
   prot["asc_startAddShape"] = prot.asc_startAddShape;
   prot["asc_endAddShape"] = prot.asc_endAddShape;
   prot["asc_addShapeOnSheet"] = prot.asc_addShapeOnSheet;
+  prot["asc_canEditGeometry"] = prot.asc_canEditGeometry;
+  prot["asc_editPointsGeometry"] = prot.asc_editPointsGeometry;
   prot["asc_isAddAutoshape"] = prot.asc_isAddAutoshape;
   prot["asc_canAddShapeHyperlink"] = prot.asc_canAddShapeHyperlink;
   prot["asc_canGroupGraphicsObjects"] = prot.asc_canGroupGraphicsObjects;

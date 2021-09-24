@@ -1277,7 +1277,38 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 
 		return arrChanges;
 	};
+	/**
+	 * Проверяем перед автозаменой, что действие совершается во время набора
+	 * @param oLastElement - последний элемент, добавленный перед автозаменой
+	 * @param nHistoryActions - количество точек предществующих автозамене
+	 * @returns {boolean}
+	 */
+	CHistory.prototype.CheckAsYouTypeAutoCorrect = function(oLastElement, nHistoryActions)
+	{
+		// В nHistoryActions задано количество точек, которые предществовали автозамене, т.е.
+		// выполнялись действия, которые и вызывали автозамену в итоге. Нам надо проверить предыдущую точку до заданных
+		// Если в там происходило добавление заданного элемента, значит у нас был набор текста
 
+		if (this.Index < nHistoryActions)
+			return false;
+
+		var oPoint      = this.Points[this.Index - nHistoryActions];
+		var nItemsCount = oPoint.Items.length;
+		if ((AscDFH.historydescription_Document_AddLetter === oPoint.Description
+			|| AscDFH.historydescription_Document_AddLetterUnion === oPoint.Description
+			|| AscDFH.historydescription_Presentation_ParagraphAdd === oPoint.Description)
+			&& nItemsCount > 0)
+		{
+			var oChange = oPoint.Items[nItemsCount - 1].Data;
+			if (!oChange || !oChange.IsContentChange())
+				return false;
+
+			var nChangeItemsCount = oChange.GetItemsCount();
+			return (nChangeItemsCount > 0 && AscDFH.historyitem_ParaRun_AddItem === oChange.GetType() && oChange.GetItem(nChangeItemsCount - 1) === oLastElement);
+		}
+
+		return false;
+	};
 
 	//----------------------------------------------------------export--------------------------------------------------
 	window['AscCommon']          = window['AscCommon'] || {};

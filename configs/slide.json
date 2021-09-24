@@ -81,6 +81,7 @@
 			"common/Drawings/TrackObjects/PolyLine.js",
 			"common/Drawings/TrackObjects/ResizeTracks.js",
 			"common/Drawings/TrackObjects/RotateTracks.js",
+			"common/Drawings/TrackObjects/GeometryEditTrack.js",
 			"common/Drawings/TrackObjects/Spline.js",
 			"common/Drawings/TrackObjects/ConnectorTrack.js",
 			"common/Drawings/DrawingObjectsHandlers.js",

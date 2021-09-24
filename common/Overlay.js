@@ -2784,6 +2784,145 @@ CAutoshapeTrack.prototype =
         ctx.beginPath();
     },
 
+    DrawGeomEditPoint: function(matrix, gmEditPoint) {
+        var overlay = this.m_oOverlay;
+        var ctx = overlay.m_oContext;
+
+        //todo: remove duplicate code
+        this.CurrentPageInfo = overlay.m_oHtmlPage.GetDrawingPageInfo(this.PageIndex);
+        var drPage = this.CurrentPageInfo.drawingPage;
+        var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+        var xDst = drPage.left;
+        var yDst = drPage.top;
+        var wDst = drPage.right - drPage.left;
+        var hDst = drPage.bottom - drPage.top;
+        if (!overlay.IsCellEditor) {
+            xDst *= rPR;
+            yDst *= rPR;
+            wDst *= rPR;
+            hDst *= rPR;
+        }
+        var dKoefX = wDst / this.CurrentPageInfo.width_mm;
+        var dKoefY = hDst / this.CurrentPageInfo.height_mm;
+        //
+
+
+        var firstGuide, secondGuide;
+        if (gmEditPoint.g1X !== undefined && gmEditPoint.g1Y !== undefined) {
+            firstGuide = true;
+        }
+        if (gmEditPoint.g2X !== undefined && gmEditPoint.g2Y !== undefined) {
+            secondGuide = true;
+        }
+        var curPointX = (xDst + dKoefX * (matrix.TransformPointX(gmEditPoint.X, gmEditPoint.Y))) >> 0;
+        var curPointY = (yDst + dKoefY * (matrix.TransformPointY(gmEditPoint.X, gmEditPoint.Y))) >> 0;
+
+        var commandPointX1 = (xDst + dKoefX * (matrix.TransformPointX(gmEditPoint.g1X, gmEditPoint.g1Y))) >> 0;
+        var commandPointY1 = (yDst + dKoefY * (matrix.TransformPointY(gmEditPoint.g1X, gmEditPoint.g1Y))) >> 0;
+        var commandPointX2 = (xDst + dKoefX * (matrix.TransformPointX(gmEditPoint.g2X, gmEditPoint.g2Y))) >> 0;
+        var commandPointY2 = (yDst + dKoefY * (matrix.TransformPointY(gmEditPoint.g2X, gmEditPoint.g2Y))) >> 0;
+
+        ctx.strokeStyle = "#1873c0";
+
+        if (firstGuide) {
+            ctx.beginPath();
+            ctx.moveTo(curPointX, curPointY);
+            ctx.lineTo(commandPointX1, commandPointY1);
+            ctx.stroke();
+        }
+        if (secondGuide) {
+            ctx.beginPath();
+            ctx.moveTo(curPointX, curPointY);
+            ctx.lineTo(commandPointX2, commandPointY2);
+            ctx.stroke();
+        }
+
+        ctx.closePath();
+        ctx.beginPath();
+        ctx.fillStyle = "#ffffff";
+        ctx.strokeStyle = "#000000";
+
+        var SCALE_TRACK_RECT_SIZE = Math.round(TRACK_RECT_SIZE * rPR);
+        if (firstGuide)
+            overlay.AddRect2(commandPointX1, commandPointY1, SCALE_TRACK_RECT_SIZE);
+
+        if (secondGuide)
+            overlay.AddRect2(commandPointX2, commandPointY2, SCALE_TRACK_RECT_SIZE);
+
+        ctx.stroke();
+        ctx.fill();
+    },
+
+    DrawGeometryEdit: function (matrix, pathLst, gmEditList, gmEditPoint) {
+        var overlay = this.m_oOverlay;
+        overlay.Clear();
+        var ctx = overlay.m_oContext;
+        ctx.lineWidth = Math.round(rPR);
+
+        //todo: remove duplicate code
+        this.CurrentPageInfo = overlay.m_oHtmlPage.GetDrawingPageInfo(this.PageIndex);
+        var drPage = this.CurrentPageInfo.drawingPage;
+        var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+        var xDst = drPage.left;
+        var yDst = drPage.top;
+        var wDst = drPage.right - drPage.left;
+        var hDst = drPage.bottom - drPage.top;
+        if (!overlay.IsCellEditor) {
+            xDst *= rPR;
+            yDst *= rPR;
+            wDst *= rPR;
+            hDst *= rPR;
+        }
+        var dKoefX = wDst / this.CurrentPageInfo.width_mm;
+        var dKoefY = hDst / this.CurrentPageInfo.height_mm;
+        //
+
+        ctx.lineWidth = Math.round(rPR);
+
+        //red outline
+        overlay.m_oContext.strokeStyle = '#ff0000';
+        var t = this;
+        for (var i = 0; i < pathLst.length; i++) {
+            pathLst[i].ArrPathCommand.forEach(function (elem) {
+                if (elem.id === 0) {
+                    var pointX = (xDst + dKoefX * (matrix.TransformPointX(elem.X, elem.Y))) >> 0;
+                    var pointY = (yDst + dKoefY * (matrix.TransformPointY(elem.X, elem.Y))) >> 0;
+                    ctx.moveTo(pointX + 0.5, pointY + 0.5);
+                } else if (elem.id === 4)
+                var pointX0 = (xDst + dKoefX * (matrix.TransformPointX(elem.X0, elem.Y0))) >> 0;
+                var pointY0 = (yDst + dKoefY * (matrix.TransformPointY(elem.X0, elem.Y0))) >> 0;
+                var pointX1 = (xDst + dKoefX * (matrix.TransformPointX(elem.X1, elem.Y1))) >> 0;
+                var pointY1 = (yDst + dKoefY * (matrix.TransformPointY(elem.X1, elem.Y1))) >> 0;
+                var pointX2 = (xDst + dKoefX * (matrix.TransformPointX(elem.X2, elem.Y2))) >> 0;
+                var pointY2 = (yDst + dKoefY * (matrix.TransformPointY(elem.X2, elem.Y2))) >> 0;
+                ctx.bezierCurveTo(pointX0 + 0.5, pointY0 + 0.5, pointX1 + 0.5, pointY1 + 0.5, pointX2 + 0.5, pointY2 + 0.5);
+            })
+        }
+        ctx.stroke();
+        ctx.closePath();
+
+        ctx.beginPath();
+
+        if (gmEditPoint) {
+            this.DrawGeomEditPoint(matrix, gmEditPoint);
+        }
+
+        ctx.closePath();
+        ctx.beginPath();
+        ctx.strokeStyle = "#ffffff";
+        ctx.fillStyle = "#000000";
+
+        var SCALE_TRACK_RECT_SIZE = Math.round(TRACK_RECT_SIZE * rPR);
+        for (var i = 0; i < gmEditList.length; i++) {
+
+            var gmEditPointX = (xDst + dKoefX * (matrix.TransformPointX(gmEditList[i].X, gmEditList[i].Y))) >> 0;
+            var gmEditPointY = (yDst + dKoefY * (matrix.TransformPointY(gmEditList[i].X, gmEditList[i].Y))) >> 0;
+            overlay.AddRect2(gmEditPointX, gmEditPointY, SCALE_TRACK_RECT_SIZE);
+        }
+        ctx.stroke();
+        ctx.fill();
+    },
+
     DrawEditWrapPointsPolygon : function(points, matrix)
     {
         var _len = points.length;
@@ -3123,24 +3262,7 @@ CAutoshapeTrack.prototype =
         this.m_oContext.drawImage(AscCommon.g_comment_image, _offset[0], _offset[1], _offset[2], _offset[3], __x, __y, rPR * _offset[2], rPR * _offset[3]);
 
         ctx.globalAlpha = _oldAlpha;
-    },
-
-    DrawFrozenPaneBorderHor: function(y, left, right)
-    {
-        this.m_oOverlay.SetBaseTransform();
-        autoShapeTrack.p_color(0xAA, 0xAA, 0xAA);
-        var nW = BORDER_WIDTH;
-        if(AscCommon.AscBrowser.isRetina) {
-            nW = AscCommon.AscBrowser.convertToRetinaValue(nW, true);
-        }
-        autoShapeTrack.Graphics.SetIntegerGrid(true);
-        autoShapeTrack.p_width(nW);
-        autoShapeTrack._s();
-        autoShapeTrack._m(left, y);
-        autoShapeTrack._l(right, y);
-        autoShapeTrack.ds();
-        autoShapeTrack.Graphics.SetIntegerGrid(false);
-    } 
+    }
 };
 
 	function DrawTextByCenter() // this!

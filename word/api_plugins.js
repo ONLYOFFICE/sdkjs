@@ -320,18 +320,38 @@
      * @memberof Api
      * @typeofeditors ["CDE"]
      * @alias GetSelectedText
-     * @param {boolean} numbering is an option that includes numbering in the return value
+     * @param {object} prop
      * @return {string} selected text
-	 * @example
-     * window.Asc.plugin.executeMethod("GetSelectedText", [true])
+     * @example
+     * window.Asc.plugin.executeMethod("GetSelectedText", [{NewLine:true, NewLineParagraph:true, Numbering:true}])
      */
-    window["asc_docs_api"].prototype["pluginMethod_GetSelectedText"] = function(numbering)
+    window["asc_docs_api"].prototype["pluginMethod_GetSelectedText"] = function(prop)
     {
         var oLogicDocument = this.private_GetLogicDocument();
         if (!oLogicDocument)
             return;
 
-        return oLogicDocument.GetSelectedText(false, {NewLine : true, NewLineParagraph : true, Numbering: numbering});
+        var properties;
+        if (typeof prop === "object")
+        {
+            properties =
+            {
+                NewLine : (prop.hasOwnProperty("NewLine")) ? prop.NewLine : true,
+                NewLineParagraph : (prop.hasOwnProperty("NewLineParagraph")) ? prop.NewLineParagraph : true,
+                Numbering : (prop.hasOwnProperty("Numbering")) ? prop.Numbering : true
+            }
+        }
+        else
+        {
+            properties = 
+            {
+                NewLine : true,
+                NewLineParagraph : true,
+                Numbering : true
+            }
+        }
+
+        return oLogicDocument.GetSelectedText(false, properties);
     };
     /**
      * Remove selection in document

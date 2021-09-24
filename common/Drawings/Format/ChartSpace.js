@@ -872,10 +872,17 @@ var GLOBAL_PATH_COUNT = 0;
         var oTransform, oContent, oLabel, fMinY = fYStart, fMaxY = fYStart + fInterval * (this.aLabels.length - 1), fY, i;
         var fMaxContentWidth = 0.0, oSize;
         var fLabelHeight = 0.0;
+        var oCompiledPr = null;
         for(i = 0; i < this.aLabels.length; ++i) {
             oLabel = this.aLabels[i];
             if(oLabel) {
+                if(oCompiledPr) {
+                    oLabel.tx.rich.content.Content[0].CompiledPr = oCompiledPr;
+                }
                 oSize = oLabel.tx.rich.getContentOneStringSizes();
+                if(!oCompiledPr) {
+                    oCompiledPr = oLabel.tx.rich.content.Content[0].CompiledPr;
+                }
                 fLabelHeight = oSize.h;
                 break;
             }
@@ -902,7 +909,13 @@ var GLOBAL_PATH_COUNT = 0;
                 oContent.SetApplyToAll(true);
                 oContent.SetParagraphAlign(AscCommon.align_Left);
                 oContent.SetApplyToAll(false);
+                if(oCompiledPr) {
+                    oLabel.tx.rich.content.Content[0].CompiledPr = oCompiledPr;
+                }
                 oSize = oLabel.tx.rich.getContentOneStringSizes();
+                if(!oCompiledPr) {
+                    oCompiledPr = oLabel.tx.rich.content.Content[0].CompiledPr;
+                }
                 if(oSize.w + fDistance_ > fMaxBlockWidth) {
                     break;
                 }
@@ -929,7 +942,7 @@ var GLOBAL_PATH_COUNT = 0;
             }
             fCurY += fInterval;
         }
-
+        oCompiledPr = null;
         if(i < this.aLabels.length) {
             var fMaxMinWidth = this.checkMaxMinWidth();
             fMaxContentWidth = 0.0;
@@ -949,6 +962,13 @@ var GLOBAL_PATH_COUNT = 0;
                     }
                     if(fContentWidth > fMaxContentWidth) {
                         fMaxContentWidth = fContentWidth;
+                    }
+                    if(oCompiledPr) {
+                        oContent.Content[0].CompiledPr = oCompiledPr;
+                    }
+                    oSize = oLabel.tx.rich.getContentOneStringSizes();
+                    if(!oCompiledPr) {
+                        oCompiledPr = oContent.Content[0].CompiledPr;
                     }
                     oContent.Reset(0, 0, fContentWidth, 20000);//выставляем большую ширину чтобы текст расчитался в одну строку.
                     oContent.Recalculate_Page(0, true);
@@ -8987,9 +9007,13 @@ var GLOBAL_PATH_COUNT = 0;
                 this.legendLength = 0;
                 if(ser) {
                     var pts = ser.getNumPts(), pt;
-                    var cat_str_lit;
+                    var oLitForLegend;
                     if(ser && ser.cat) {
-                        cat_str_lit = ser.cat.getStringPointsLit();
+                        oLitForLegend = ser.cat.getLit();
+                    }
+                    var oLitFormat = null, oPtFormat = null;
+                    if(oLitForLegend && typeof oLitForLegend.formatCode === "string" && oLitForLegend.formatCode.length > 0) {
+                        oLitFormat = oNumFormatCache.get(oLitForLegend.formatCode);
                     }
                     this.legendLength = pts.length;
 
@@ -9008,11 +9032,29 @@ var GLOBAL_PATH_COUNT = 0;
                         else {
                             pt = pts[i];
                         }
-                        var str_pt = cat_str_lit ? cat_str_lit.getPtByIndex(i) : null;
-                        if(str_pt)
-                            arr_str_labels.push(str_pt.val);
-                        else
+                        var str_pt = oLitForLegend ? oLitForLegend.getPtByIndex(i) : null;
+                        if(str_pt) {
+                            var sPt;
+                            if(typeof str_pt.formatCode === "string" && str_pt.formatCode.length > 0) {
+                                oPtFormat = oNumFormatCache.get(str_pt.formatCode);
+                                if(oPtFormat) {
+                                    sPt = oPtFormat.formatToChart(str_pt.val);
+                                }
+                                else {
+                                    sPt = str_pt.val + "";
+                                }
+                            }
+                            else if(oLitFormat) {
+                                sPt = oLitFormat.formatToChart(str_pt.val);
+                            }
+                            else {
+                                sPt = str_pt.val + "";
+                            }
+                            arr_str_labels.push(sPt);
+                        }
+                        else {
                             arr_str_labels.push((pt ? (pt.idx + 1) : "") + "");
+                        }
 
                         calc_entry = new AscFormat.CalcLegendEntry(legend, this, i);
                         calc_entry.txBody = AscFormat.CreateTextBodyFromString(arr_str_labels[arr_str_labels.length - 1], this.getDrawingDocument(), calc_entry);

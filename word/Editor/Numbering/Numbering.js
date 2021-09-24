@@ -312,10 +312,11 @@ CNumbering.prototype.GetAllFontNames = function(arrAllFonts)
  * @param sNumId {string}
  * @param nLvl {number} 0..8
  * @param oNumInfo
+ * @param bWithoutLastLvlText {?boolean}
  * @returns {string}
  */
-CNumbering.prototype.GetText = function(sNumId, nLvl, oNumInfo, bWithoutLvlText)
+CNumbering.prototype.GetText = function(sNumId, nLvl, oNumInfo, bWithoutLastLvlText)
 {
 	var oNum = this.GetNum(sNumId);
-	return oNum.GetText(nLvl, oNumInfo, bWithoutLvlText);
+	return oNum.GetText(nLvl, oNumInfo, bWithoutLastLvlText);
 };

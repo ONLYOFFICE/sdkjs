@@ -2174,28 +2174,22 @@
 				ctx.setFillStyle(solid).fillRect(rect._x, rect._y, rect._width, rect._height);
 				return;
 			}
-			var dScale = Asc.getCvtRatio(0, 3, ctx.getPPIX());
-			rect._x *= dScale;
-			rect._y *= dScale;
-			rect._width *= dScale;
-			rect._height *= dScale;
+			
+			var vector_koef = AscCommonExcel.vector_koef / ctx.getZoom();
+			if (AscCommon.AscBrowser.isCustomScaling()) {
+				vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
+			}
+			rect._x *= vector_koef;
+			rect._y *= vector_koef;
+			rect._width *= vector_koef;
+			rect._height *= vector_koef;
 			AscFormat.ExecuteNoHistory(
 				function () {
 					var geometry = new AscFormat.CreateGeometry("rect");
 					geometry.Recalculate(rect._width, rect._height, true);
 					var oUniFill = AscCommonExcel.convertFillToUnifill(fill);
-					if (ctx instanceof AscCommonExcel.CPdfPrinter) {
-						graphics.SaveGrState();
-						var _baseTransform;
-						if (!ctx.Transform) {
-							_baseTransform = new AscCommon.CMatrix();
-						} else {
-							_baseTransform = ctx.Transform;
-						}
-						graphics.SetBaseTransform(_baseTransform);
-					}
 
-					graphics.save();
+					graphics.SaveGrState();
 					var oMatrix = new AscCommon.CMatrix();
 					oMatrix.tx = rect._x;
 					oMatrix.ty = rect._y;
@@ -2205,12 +2199,8 @@
 
 					shapeDrawer.fromShape2(new AscFormat.CColorObj(null, oUniFill, geometry), graphics, geometry);
 					shapeDrawer.draw(geometry);
-					graphics.restore();
+					graphics.RestoreGrState();
 
-					if (ctx instanceof AscCommonExcel.CPdfPrinter) {
-						graphics.SetBaseTransform(null);
-						graphics.RestoreGrState();
-					}
 				}, this, []
 			);
 		}

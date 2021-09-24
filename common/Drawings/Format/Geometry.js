@@ -805,7 +805,6 @@ function Geometry()
 
     this.ahPolarLstInfo = [];
     this.ahPolarLst     = [];
-
     this.pathLst        = [];
     this.preset = null;
     this.rectS = null;
@@ -1248,7 +1247,7 @@ Geometry.prototype=
             return;
         }
         for (var i=0, n=this.pathLst.length; i<n;++i)
-            this.pathLst[i].draw(shape_drawer);
+            this.pathLst[i].draw(shape_drawer, i);
     },
 
     drawSmart: function(shape_drawer)
@@ -1260,7 +1259,7 @@ Geometry.prototype=
     check_bounds: function(checker)
     {
         for(var i=0, n=this.pathLst.length; i<n;++i)
-            this.pathLst[i].check_bounds(checker);
+            this.pathLst[i].check_bounds(checker, this);
     },
 
     drawAdjustments: function(drawingDocument, transform, bTextWarp)
@@ -1308,14 +1307,14 @@ Geometry.prototype=
         return false;
     },
 
-    hitInPath: function(canvasContext, x, y)
+    hitInPath: function(canvasContext, x, y, oAddingPoint)
     {
         var _path_list = this.pathLst;
         var _path_count = _path_list.length;
         var _path_index;
         for(_path_index = 0; _path_index < _path_count; ++_path_index)
         {
-            if(_path_list[_path_index].hitInPath(canvasContext, x, y) === true)
+            if(_path_list[_path_index].hitInPath(canvasContext, x, y, oAddingPoint, _path_index) === true)
                 return true;
         }
         return false;

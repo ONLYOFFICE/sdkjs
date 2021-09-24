@@ -4955,7 +4955,7 @@ CShape.prototype.draw = function (graphics, transform, transformText, pageIndex)
             graphics._e();
         }
         else {
-            geometry.check_bounds(graphics);
+            geometry.check_bounds(graphics, this);
         }
 
         if (this.txBody) {
@@ -5760,7 +5760,7 @@ CShape.prototype.hitToAdjustment = function (x, y) {
     }
     var invert_transform;
     var t_x, t_y, ret;
-    var _calcGeoem = this.calcGeometry || (this.spPr && this.spPr.geometry);
+    var _calcGeom = this.calcGeometry || (this.spPr && this.spPr.geometry);
     var _dist;
 	if (global_mouseEvent && global_mouseEvent.AscHitToHandlesEpsilon) {
         _dist = global_mouseEvent.AscHitToHandlesEpsilon;
@@ -5768,7 +5768,7 @@ CShape.prototype.hitToAdjustment = function (x, y) {
     else{
         _dist = this.convertPixToMM(global_mouseEvent.KoefPixToMM * AscCommon.TRACK_CIRCLE_RADIUS);
     }
-    if (_calcGeoem)
+    if (_calcGeom)
     {
         invert_transform = this.getInvertTransform();
         if(!invert_transform)
@@ -5777,12 +5777,12 @@ CShape.prototype.hitToAdjustment = function (x, y) {
         }
         t_x = invert_transform.TransformPointX(x, y);
         t_y = invert_transform.TransformPointY(x, y);
-        ret = _calcGeoem.hitToAdj(t_x, t_y, _dist);
+        ret = _calcGeom.hitToAdj(t_x, t_y, _dist);
         if(ret.hit)
         {
             t_x = invert_transform.TransformPointX(x, y);
             t_y = invert_transform.TransformPointY(x, y);
-            ret = _calcGeoem.hitToAdj(t_x, t_y, this.convertPixToMM(global_mouseEvent.KoefPixToMM * AscCommon.TRACK_CIRCLE_RADIUS));
+            ret = _calcGeom.hitToAdj(t_x, t_y, this.convertPixToMM(global_mouseEvent.KoefPixToMM * AscCommon.TRACK_CIRCLE_RADIUS));
             if(ret.hit)
             {
                 ret.warp = false;

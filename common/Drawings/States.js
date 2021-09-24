@@ -2560,6 +2560,7 @@ function TrackTextState(drawingObjects, majorObject, x, y) {
     window['AscFormat'].SlicerState = SlicerState;
     window['AscFormat'].PreChangeAdjState = PreChangeAdjState;
     window['AscFormat'].PreRotateState = PreRotateState;
+    window['AscFormat'].RotateState = RotateState;
     window['AscFormat'].PreResizeState = PreResizeState;
     window['AscFormat'].PreMoveState = PreMoveState;
     window['AscFormat'].MoveState = MoveState;

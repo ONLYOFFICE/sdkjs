@@ -1,0 +1,55 @@
+#zoomPanel {
+  position: absolute;
+  display: flex;
+  
+  justify-content: center;
+  align-items: center;
+  
+  overflow: none;
+}
+
+.trackbar{
+    position: relative; display: block;
+    width: 300px;
+    height: 20px;
+
+    background: transparent;
+}
+.trackbar .track-line, .trackbar .track-selector{
+    position: absolute; display: block;
+    width: 100%; height: 6px;
+    top: calc((20px - 6px) / 2);
+
+    left: 0;
+    border-radius: 2px;
+    background: #ddd;
+}
+.trackbar .track-selector
+    { width: 0; z-index: 2; background: #aaa; }
+.trackbar .track-button{
+    --next-bg-color: hsl(0, 60%, 50%);
+
+    position: absolute; display: block;
+    width: 20px; height: 20px;
+
+    top: 0; left: 0;
+    
+    border-radius: 50%;
+    background: var(--next-bg-color);
+    z-index: 4;
+
+    cursor: pointer;
+
+    user-select: none;
+    -webkit-user-drag: none; 
+}
+.trackbar .track-percentage{
+    position: absolute;
+    display: none;
+    top: -25px;
+  
+    font-weight: 600;
+    width: 100%;
+    text-align: center;
+    color: #fff;
+}

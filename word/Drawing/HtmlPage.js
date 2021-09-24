@@ -1868,13 +1868,6 @@ function CEditorPage(api)
 			return;
 
 		var oWordControl = oThis;
-		if (oWordControl.MouseHandObject && oWordControl.MouseHandObject.Active)
-		{
-			AscCommon.check_MouseUpEvent(e);
-			oWordControl.MouseHandObject.Active = false;
-			oWordControl.m_oDrawingDocument.SetCursorType("grab");
-			return;
-		}
 
 		global_mouseEvent.Type = AscCommon.g_mouse_event_type_up;
 
@@ -1885,6 +1878,13 @@ function CEditorPage(api)
 		global_mouseEvent.UnLockMouse();
 
 		global_mouseEvent.IsPressed = false;
+
+		if (oWordControl.MouseHandObject && oWordControl.MouseHandObject.Active)
+		{
+			oWordControl.MouseHandObject.Active = false;
+			oWordControl.m_oDrawingDocument.SetCursorType("grab");
+			return;
+		}
 
 		if (-1 != oWordControl.m_oTimerScrollSelect)
 		{

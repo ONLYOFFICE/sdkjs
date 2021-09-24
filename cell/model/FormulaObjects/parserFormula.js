@@ -8094,16 +8094,26 @@ function parserFormula( formula, parent, _ws ) {
 
 	function convertAreaToArray(area){
 		var retArr = new cArray(), _arg0;
-		if(area instanceof cArea3D) {
-			area = area.getMatrixAllRange()[0];
+		var dimension = area.getDimensions();
+		var ws;
+		if(cElementType.cellsRange3D === area.type) {
+			ws = area.wsFrom;
+			area = area.getMatrixNoEmpty()[0];
 		} else {
-			area = area.getMatrix();
+			ws = area.ws;
+			area = area.getMatrixNoEmpty();
 		}
 
-		for ( var iRow = 0; iRow < area.length; iRow++, iRow < area.length ? retArr.addRow() : true ) {
-			for ( var iCol = 0; iCol < area[iRow].length; iCol++ ) {
-				_arg0 = area[iRow][iCol];
-				retArr.addElement(_arg0);
+		if (dimension) {
+			var oBBox = dimension.bbox, minC = Math.min( ws.getColDataLength(), oBBox.c2 ), minR = Math.min( ws.cellsByColRowsCount - 1, oBBox.r2 );
+			var rowCount = (minR - oBBox.r1) >= 0 ? minR - oBBox.r1 + 1 : 0;
+			var colCount = (minC - oBBox.c1) >= 0 ? minC - oBBox.c1 + 1 : 0;
+
+			for ( var iRow = 0; iRow < rowCount; iRow++, iRow < rowCount ? retArr.addRow() : true ) {
+				for ( var iCol = 0; iCol < colCount; iCol++ ) {
+					_arg0 = area[iRow] && area[iRow][iCol] ? area[iRow][iCol] : new cEmpty();
+					retArr.addElement(_arg0);
+				}
 			}
 		}
 

@@ -124,6 +124,8 @@ CGraphicObjects.prototype =
     getConnectorsForCheck: DrawingObjectsController.prototype.getConnectorsForCheck,
     getConnectorsForCheck2: DrawingObjectsController.prototype.getConnectorsForCheck2,
     checkDrawingHyperlinkAndMacro: DrawingObjectsController.prototype.checkDrawingHyperlinkAndMacro,
+    canEditGeometry: DrawingObjectsController.prototype.canEditGeometry,
+    startEditGeometry: DrawingObjectsController.prototype.startEditGeometry,
 
     checkSelectedObjectsAndCallback: function(callback, args, bNoSendProps, nHistoryPointType, aAdditionaObjects)
     {
@@ -2548,7 +2550,7 @@ CGraphicObjects.prototype =
 
     needUpdateOverlay: function()
     {
-        return this.arrTrackObjects.length > 0 || this.curState.InlinePos;
+        return (this.arrTrackObjects.length > 0) || this.curState.InlinePos;
     },
 
     changeCurrentState: function(state)
@@ -2607,6 +2609,8 @@ CGraphicObjects.prototype =
 
     canUnGroup: DrawingObjectsController.prototype.canUnGroup,
     getBoundsForGroup: DrawingObjectsController.prototype.getBoundsForGroup,
+
+
 
 
     getArrayForGrouping: function()

@@ -838,7 +838,222 @@ $( function () {
         oParser = new parserFormula( "-TRUE", "A1", ws );
         ok( oParser.parse() );
         strictEqual( oParser.calculate().getValue(), -1 );
-    } );
+
+
+		ws.getRange2( "M106" ).setValue( "1" );
+		ws.getRange2( "M107" ).setValue( "2" );
+		ws.getRange2( "M108" ).setValue( "2" );
+		ws.getRange2( "M109" ).setValue( "4" );
+		ws.getRange2( "M110" ).setValue( "5" );
+		ws.getRange2( "M111" ).setValue( "-23" );
+		ws.getRange2( "M112" ).setValue( "6" );
+		ws.getRange2( "M113" ).setValue( "5" );
+
+		ws.getRange2( "N106" ).setValue( "1" );
+		ws.getRange2( "N107" ).setValue( "" );
+		ws.getRange2( "N108" ).setValue( "" );
+		ws.getRange2( "N109" ).setValue( "3" );
+		ws.getRange2( "N110" ).setValue( "" );
+		ws.getRange2( "N111" ).setValue( "2" );
+		ws.getRange2( "N112" ).setValue( "" );
+		ws.getRange2( "N113" ).setValue( "3" );
+
+		ws.getRange2( "O106" ).setValue( "1" );
+		ws.getRange2( "O107" ).setValue( "3" );
+		ws.getRange2( "O108" ).setValue( "2" );
+		ws.getRange2( "O109" ).setValue( "12" );
+		ws.getRange2( "O110" ).setValue( "3" );
+		ws.getRange2( "O111" ).setValue( "4" );
+		ws.getRange2( "O112" ).setValue( "3" );
+		ws.getRange2( "O113" ).setValue( "2" );
+
+		ws.getRange2( "P106" ).setValue( "3" );
+		ws.getRange2( "P107" ).setValue( "4" );
+		ws.getRange2( "P108" ).setValue( "5" );
+		ws.getRange2( "P109" ).setValue( "1" );
+		ws.getRange2( "P110" ).setValue( "23" );
+		ws.getRange2( "P111" ).setValue( "4" );
+		ws.getRange2( "P112" ).setValue( "3" );
+		ws.getRange2( "P113" ).setValue( "1" );
+
+		oParser = new parserFormula( "M106:P113+M106:P113", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H113").bbox);
+		ok( oParser.parse() );
+		var array = oParser.calculate();
+		if(AscCommonExcel.cElementType.array === array.type) {
+			strictEqual( array.getElementRowCol(0,0).getValue(), 2);
+			strictEqual( array.getElementRowCol(1,0).getValue(), 4);
+			strictEqual( array.getElementRowCol(2,0).getValue(), 4);
+			strictEqual( array.getElementRowCol(3,0).getValue(), 8);
+			strictEqual( array.getElementRowCol(4,0).getValue(), 10);
+			strictEqual( array.getElementRowCol(5,0).getValue(), -46);
+			strictEqual( array.getElementRowCol(6,0).getValue(), 12);
+			strictEqual( array.getElementRowCol(7,0).getValue(), 10);
+
+			strictEqual( array.getElementRowCol(0,1).getValue(), 2);
+			strictEqual( array.getElementRowCol(1,1).getValue(), 0);
+			strictEqual( array.getElementRowCol(2,1).getValue(), 0);
+			strictEqual( array.getElementRowCol(3,1).getValue(), 6);
+			strictEqual( array.getElementRowCol(4,1).getValue(), 0);
+			strictEqual( array.getElementRowCol(5,1).getValue(), 4);
+			strictEqual( array.getElementRowCol(6,1).getValue(), 0);
+			strictEqual( array.getElementRowCol(7,1).getValue(), 6);
+
+			strictEqual( array.getElementRowCol(0,2).getValue(), 2);
+			strictEqual( array.getElementRowCol(1,2).getValue(), 6);
+			strictEqual( array.getElementRowCol(2,2).getValue(), 4);
+			strictEqual( array.getElementRowCol(3,2).getValue(), 24);
+			strictEqual( array.getElementRowCol(4,2).getValue(), 6);
+			strictEqual( array.getElementRowCol(5,2).getValue(), 8);
+			strictEqual( array.getElementRowCol(6,2).getValue(), 6);
+			strictEqual( array.getElementRowCol(7,2).getValue(), 4);
+
+			strictEqual( array.getElementRowCol(0,3).getValue(), 6);
+			strictEqual( array.getElementRowCol(1,3).getValue(), 8);
+			strictEqual( array.getElementRowCol(2,3).getValue(), 10);
+			strictEqual( array.getElementRowCol(3,3).getValue(), 2);
+			strictEqual( array.getElementRowCol(4,3).getValue(), 46);
+			strictEqual( array.getElementRowCol(5,3).getValue(), 8);
+			strictEqual( array.getElementRowCol(6,3).getValue(), 6);
+			strictEqual( array.getElementRowCol(7,3).getValue(), 2);
+
+		}
+
+		oParser = new parserFormula( "M106:P113*M106:P113", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H113").bbox);
+		ok( oParser.parse() );
+		array = oParser.calculate();
+		if(AscCommonExcel.cElementType.array === array.type) {
+			strictEqual( array.getElementRowCol(0,0).getValue(), 1);
+			strictEqual( array.getElementRowCol(1,0).getValue(), 4);
+			strictEqual( array.getElementRowCol(2,0).getValue(), 4);
+			strictEqual( array.getElementRowCol(3,0).getValue(), 16);
+			strictEqual( array.getElementRowCol(4,0).getValue(), 25);
+			strictEqual( array.getElementRowCol(5,0).getValue(), 529);
+			strictEqual( array.getElementRowCol(6,0).getValue(), 36);
+			strictEqual( array.getElementRowCol(7,0).getValue(), 25);
+
+			strictEqual( array.getElementRowCol(0,1).getValue(), 1);
+			strictEqual( array.getElementRowCol(1,1).getValue(), 0);
+			strictEqual( array.getElementRowCol(2,1).getValue(), 0);
+			strictEqual( array.getElementRowCol(3,1).getValue(), 9);
+			strictEqual( array.getElementRowCol(4,1).getValue(), 0);
+			strictEqual( array.getElementRowCol(5,1).getValue(), 4);
+			strictEqual( array.getElementRowCol(6,1).getValue(), 0);
+			strictEqual( array.getElementRowCol(7,1).getValue(), 9);
+
+			strictEqual( array.getElementRowCol(0,2).getValue(), 1);
+			strictEqual( array.getElementRowCol(1,2).getValue(), 9);
+			strictEqual( array.getElementRowCol(2,2).getValue(), 4);
+			strictEqual( array.getElementRowCol(3,2).getValue(), 144);
+			strictEqual( array.getElementRowCol(4,2).getValue(), 9);
+			strictEqual( array.getElementRowCol(5,2).getValue(), 16);
+			strictEqual( array.getElementRowCol(6,2).getValue(), 9);
+			strictEqual( array.getElementRowCol(7,2).getValue(), 4);
+
+			strictEqual( array.getElementRowCol(0,3).getValue(), 9);
+			strictEqual( array.getElementRowCol(1,3).getValue(), 16);
+			strictEqual( array.getElementRowCol(2,3).getValue(), 25);
+			strictEqual( array.getElementRowCol(3,3).getValue(), 1);
+			strictEqual( array.getElementRowCol(4,3).getValue(), 529);
+			strictEqual( array.getElementRowCol(5,3).getValue(), 16);
+			strictEqual( array.getElementRowCol(6,3).getValue(), 9);
+			strictEqual( array.getElementRowCol(7,3).getValue(), 1);
+		}
+
+		oParser = new parserFormula( "M106:P113-M106:P113", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H113").bbox);
+		ok( oParser.parse() );
+		array = oParser.calculate();
+		if(AscCommonExcel.cElementType.array === array.type) {
+			strictEqual( array.getElementRowCol(0,0).getValue(), 0);
+			strictEqual( array.getElementRowCol(1,0).getValue(), 0);
+			strictEqual( array.getElementRowCol(2,0).getValue(), 0);
+			strictEqual( array.getElementRowCol(3,0).getValue(), 0);
+			strictEqual( array.getElementRowCol(4,0).getValue(), 0);
+			strictEqual( array.getElementRowCol(5,0).getValue(), 0);
+			strictEqual( array.getElementRowCol(6,0).getValue(), 0);
+			strictEqual( array.getElementRowCol(7,0).getValue(), 0);
+		}
+
+		oParser = new parserFormula( "M106:P113=M106:P113", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H113").bbox);
+		ok( oParser.parse() );
+		array = oParser.calculate();
+		if(AscCommonExcel.cElementType.array === array.type) {
+			strictEqual( array.getElementRowCol(0,0).getValue(), "TRUE");
+			strictEqual( array.getElementRowCol(1,0).getValue(), "TRUE");
+			strictEqual( array.getElementRowCol(2,0).getValue(), "TRUE");
+			strictEqual( array.getElementRowCol(3,0).getValue(), "TRUE");
+			strictEqual( array.getElementRowCol(4,0).getValue(), "TRUE");
+			strictEqual( array.getElementRowCol(5,0).getValue(), "TRUE");
+			strictEqual( array.getElementRowCol(6,0).getValue(), "TRUE");
+			strictEqual( array.getElementRowCol(7,0).getValue(), "TRUE");
+		}
+
+		oParser = new parserFormula( "M106:P113/M106:P113", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H113").bbox);
+		ok( oParser.parse() );
+		array = oParser.calculate();
+		if(AscCommonExcel.cElementType.array === array.type) {
+			strictEqual( array.getElementRowCol(0,0).getValue(), 1);
+			strictEqual( array.getElementRowCol(1,0).getValue(), 1);
+			strictEqual( array.getElementRowCol(2,1).getValue(), "#DIV/0!");
+		}
+
+		oParser = new parserFormula( "M106:P113<>M106:P113", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H113").bbox);
+		ok( oParser.parse() );
+		array = oParser.calculate();
+		if(AscCommonExcel.cElementType.array === array.type) {
+			strictEqual( array.getElementRowCol(0,0).getValue(), "FALSE");
+			strictEqual( array.getElementRowCol(1,0).getValue(), "FALSE");
+			strictEqual( array.getElementRowCol(2,0).getValue(), "FALSE");
+		}
+
+		oParser = new parserFormula( "M106:P113>M106:P113", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H113").bbox);
+		ok( oParser.parse() );
+		array = oParser.calculate();
+		if(AscCommonExcel.cElementType.array === array.type) {
+			strictEqual( array.getElementRowCol(0,0).getValue(), "FALSE");
+			strictEqual( array.getElementRowCol(1,0).getValue(), "FALSE");
+			strictEqual( array.getElementRowCol(2,0).getValue(), "FALSE");
+		}
+
+		oParser = new parserFormula( "M106:P113<M106:P113", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H113").bbox);
+		ok( oParser.parse() );
+		array = oParser.calculate();
+		if(AscCommonExcel.cElementType.array === array.type) {
+			strictEqual( array.getElementRowCol(0,0).getValue(), "FALSE");
+			strictEqual( array.getElementRowCol(1,0).getValue(), "FALSE");
+			strictEqual( array.getElementRowCol(2,0).getValue(), "FALSE");
+		}
+
+		oParser = new parserFormula( "M106:P113>=M106:P113", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H113").bbox);
+		ok( oParser.parse() );
+		array = oParser.calculate();
+		if(AscCommonExcel.cElementType.array === array.type) {
+			strictEqual( array.getElementRowCol(0,0).getValue(), "TRUE");
+			strictEqual( array.getElementRowCol(1,0).getValue(), "TRUE");
+			strictEqual( array.getElementRowCol(2,0).getValue(), "TRUE");
+		}
+
+		oParser = new parserFormula( "SUM(M:P*M:P)", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H113").bbox);
+		ok( oParser.parse() );
+		array = oParser.calculate();
+		strictEqual( array.getValue(), 1465 );
+
+		oParser = new parserFormula( "SUM(M:P+M:P)", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H113").bbox);
+		ok( oParser.parse() );
+		array = oParser.calculate();
+		strictEqual( array.getValue(), 170 );
+
+	} );
 
 	test( "Test: \"ACOS\"", function () {
 		oParser = new parserFormula( 'ACOS(-0.5)', "A1", ws );

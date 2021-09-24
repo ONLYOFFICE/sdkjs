@@ -646,10 +646,10 @@ CNum.prototype.GetAllFontNames = function(arrAllFonts)
  * Получаем текст нумерации для заданного уровня
  * @param nLvl {number} 0..8
  * @param oNumInfo
- * @param bWithoutLvlText {?boolean}
+ * @param bWithoutLastLvlText {?boolean}
  * @returns {string}
  */
-CNum.prototype.GetText = function(nLvl, oNumInfo, bWithoutLvlText)
+CNum.prototype.GetText = function(nLvl, oNumInfo, bWithoutLastLvlText)
 {
 	var oLvl    = this.GetLvl(nLvl);
 	var arrText = oLvl.GetLvlText();
@@ -661,7 +661,7 @@ CNum.prototype.GetText = function(nLvl, oNumInfo, bWithoutLvlText)
 		{
 			case numbering_lvltext_Text:
 			{
-				if(bWithoutLvlText)
+				if(bWithoutLastLvlText && Index === arrText.length - 1)
 				{
 					break;
 				}

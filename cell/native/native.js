@@ -6758,7 +6758,7 @@ window["AscCommonExcel"].WorksheetView.prototype._drawCollaborativeElementsMeOth
             var lockInfo = this.collaborativeEditing.getLockInfo(AscCommonExcel.c_oAscLockTypeElem.Range,
                                                                  null,
                                                                  sheetId,
-                                                                 new AscCommonExcel.asc_CCollaborativeRange(arrayCells[i].c1, arrayCells[i].c2, arrayCells[i].c2, arrayCells[i].r2));
+                                                                 new AscCommonExcel.asc_CCollaborativeRange(arrayCells[i].c1, arrayCells[i].r1, arrayCells[i].c2, arrayCells[i].r2));
             var isLocked = this.collaborativeEditing.getLockIntersection(lockInfo, AscCommon.c_oAscLockTypes, AscCommon.c_oAscLockTypes.kLockTypeOther, false);
             if (false !== isLocked) {
                 userId = isLocked.UserId;

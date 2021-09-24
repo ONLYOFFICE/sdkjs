@@ -882,14 +882,16 @@
 						this.NewPr[i].sqRef.r2 = collaborativeEditing.getLockOtherRow2(nSheetId, this.NewPr[i].sqRef.r2);
 						this.NewPr[i].sqRef.c2 = collaborativeEditing.getLockOtherColumn2(nSheetId, this.NewPr[i].sqRef.c2);
 
-						this.NewPr[i]._f.r1 = collaborativeEditing.getLockOtherRow2(nSheetId, this.NewPr[i]._f.r1);
-						this.NewPr[i]._f.c1 = collaborativeEditing.getLockOtherColumn2(nSheetId, this.NewPr[i]._f.c1);
-						this.NewPr[i]._f.r2 = collaborativeEditing.getLockOtherRow2(nSheetId, this.NewPr[i]._f.r2);
-						this.NewPr[i]._f.c2 = collaborativeEditing.getLockOtherColumn2(nSheetId, this.NewPr[i]._f.c2);
+						if (this.NewPr[i]._f) {
+							this.NewPr[i]._f.r1 = collaborativeEditing.getLockOtherRow2(nSheetId, this.NewPr[i]._f.r1);
+							this.NewPr[i]._f.c1 = collaborativeEditing.getLockOtherColumn2(nSheetId, this.NewPr[i]._f.c1);
+							this.NewPr[i]._f.r2 = collaborativeEditing.getLockOtherRow2(nSheetId, this.NewPr[i]._f.r2);
+							this.NewPr[i]._f.c2 = collaborativeEditing.getLockOtherColumn2(nSheetId, this.NewPr[i]._f.c2);
 
-						AscCommonExcel.executeInR1C1Mode(false, function () {
-							t.NewPr[i].f = t.NewPr[i]._f.getName();
-						});
+							AscCommonExcel.executeInR1C1Mode(false, function () {
+								t.NewPr[i].f = t.NewPr[i]._f.getName();
+							});
+						}
 					}
 				}
 			}
@@ -910,14 +912,16 @@
                 this.NewPr[i].sqRef.r2 = collaborativeEditing.getLockMeRow2(nSheetId, this.NewPr[i].sqRef.r2);
                 this.NewPr[i].sqRef.c2 = collaborativeEditing.getLockMeColumn2(nSheetId, this.NewPr[i].sqRef.c2);
 
-                this.NewPr[i]._f.r1 = collaborativeEditing.getLockMeRow2(nSheetId, this.NewPr[i]._f.r1);
-                this.NewPr[i]._f.c1 = collaborativeEditing.getLockMeColumn2(nSheetId, this.NewPr[i]._f.c1);
-                this.NewPr[i]._f.r2 = collaborativeEditing.getLockMeRow2(nSheetId, this.NewPr[i]._f.r2);
-                this.NewPr[i]._f.c2 = collaborativeEditing.getLockMeColumn2(nSheetId, this.NewPr[i]._f.c2);
+                if (this.NewPr[i]._f) {
+                    this.NewPr[i]._f.r1 = collaborativeEditing.getLockMeRow2(nSheetId, this.NewPr[i]._f.r1);
+                    this.NewPr[i]._f.c1 = collaborativeEditing.getLockMeColumn2(nSheetId, this.NewPr[i]._f.c1);
+                    this.NewPr[i]._f.r2 = collaborativeEditing.getLockMeRow2(nSheetId, this.NewPr[i]._f.r2);
+                    this.NewPr[i]._f.c2 = collaborativeEditing.getLockMeColumn2(nSheetId, this.NewPr[i]._f.c2);
 
-                AscCommonExcel.executeInR1C1Mode(false, function () {
-                    t.NewPr[i].f = t.NewPr[i]._f.getName();
-                });
+                    AscCommonExcel.executeInR1C1Mode(false, function () {
+                        t.NewPr[i].f = t.NewPr[i]._f.getName();
+                    });
+                }
             }
         }
 	};

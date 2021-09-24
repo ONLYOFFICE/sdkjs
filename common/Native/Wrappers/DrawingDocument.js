@@ -731,7 +731,16 @@ CDrawingDocument.prototype =
     // is freeze
     IsFreezePage : function(pageIndex)
     {
-        return this.Native["DD_IsFreezePage"](pageIndex);
+        if (this.Native["DD_IsFreezePage"](pageIndex))
+            return true;
+        if (this.m_oLogicDocument)
+        {
+            if (pageIndex >= this.m_oLogicDocument.Pages.length)
+                return true;
+            else if (!this.m_oLogicDocument.CanDrawPage(pageIndex))
+                return true;
+        }
+        return false;
     },
 
     RenderPageToMemory : function(pageIndex)

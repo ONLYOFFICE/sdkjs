@@ -1214,6 +1214,13 @@ CDrawingStream.prototype =
         this.Native["PD_drawFlowAnchor"](x, y);
     },
 
+    drawMailMergeField : function(x, y, w, h)
+    {
+        this.b_color1(206, 212, 223, 204);
+        this.rect( x, y, w, h );
+        this.df();
+    },
+
     SavePen : function()
     {
         this.Native["PD_SavePen"]();

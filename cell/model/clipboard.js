@@ -329,8 +329,7 @@
 					_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Text, _data);
 				}
 			} else {
-				//если мультиселект, то запрещаем копирование
-				if (1 !== ws.model.selectionRange.ranges.length) {
+				if (!this.copyProcessor.canCopy(ws)) {
 					var selectedDrawings = ws.objectRender.getSelectedGraphicObjects();
 					if (0 === selectedDrawings.length) {
 						ws.handlers.trigger("onErrorEvent", Asc.c_oAscError.ID.CopyMultiselectAreaError,
@@ -340,9 +339,16 @@
 				}
 
 				//ignore hidden rows
-				var activeRange = ws.getSelectedRange();
-				var selectionRange = ws.model.selectionRange.getLast();
 				var activeCell = ws.model.selectionRange.activeCell.clone();
+				var activeRange, selectionRange;
+				if (1 !== ws.model.selectionRange.ranges.length) {
+					selectionRange = new AscCommonExcel.MultiplyRange(ws.model.selectionRange.ranges).getUnionRange();
+					activeRange = ws.model.getRange3(selectionRange.r1, selectionRange.c1, selectionRange.r2, selectionRange.c2);
+				} else {
+					activeRange = ws.getSelectedRange();
+					selectionRange = ws.model.selectionRange.getLast();
+				}
+
 
 				//TODO игнорировать нужно и формулы и скрытые строчки в случае, если селект их задевает + стандартные условия в bIsExcludeHiddenRows
 				if (ws.model.autoFilters.bIsExcludeHiddenRows(selectionRange, activeCell, true)) {
@@ -545,9 +551,17 @@
 							}
 						}
 					}
-
-					// ToDo multiselect ?
-					var selectionRange = activeRange ? activeRange : wsModel.selectionRange.getLast();
+					
+					var selectionRange;
+					if (activeRange) {
+						selectionRange = activeRange;
+					} else {
+						if (1 !== wsModel.selectionRange.ranges.length) {
+							selectionRange = new AscCommonExcel.MultiplyRange(wsModel.selectionRange.ranges).getUnionRange();
+						} else {
+							selectionRange = wsModel.selectionRange.getLast();
+						}
+					}
 					var maxRowCol = this._getRangeMaxRowCol(wsModel, selectionRange);
 					if (null !== maxRowCol) {
 						if (maxRowCol.col < selectionRange.c1) {
@@ -767,6 +781,31 @@
 				return {sBase64: sBase64, drawingUrls: drawingUrls};
 			},
 
+			canCopy: function (ws) {
+				var res = true;
+				if (1 !== ws.model.selectionRange.ranges.length) {
+					if (AscCommon.g_clipboardBase.bCut) {
+						return false;
+					}
+					var firstRange = ws.model.selectionRange.ranges[0];
+					var byCol = null;
+					for (var i = 1; i < ws.model.selectionRange.ranges.length; i++) {
+						var nextRange = ws.model.selectionRange.ranges[i];
+						if (byCol === null && firstRange.r1 === nextRange.r1 && firstRange.r2 === nextRange.r2) {
+							byCol = false;
+						} else if (byCol === null && firstRange.c1 === nextRange.c1 && firstRange.c2 === nextRange.c2) {
+							byCol = true;
+						} else if ((byCol && firstRange.c1 === nextRange.c1 && firstRange.c2 === nextRange.c2) || (byCol === false && firstRange.r1 === nextRange.r1 && firstRange.r2 === nextRange.r2)) {
+							continue;
+						} else {
+							res = false;
+							break;
+						}
+					}
+				}
+				return res;
+			},
+
 			//TODO пересмотреть функцию
 			_generateHtml: function (range, worksheet, isIntoShape, sBase64) {
 				var isSelectedImages = this._getSelectedDrawingIndex(worksheet);
@@ -801,20 +840,11 @@
 
 					return container.innerHTML;
 				} else {
-					//for old generate html
-					/*htmlObj = this._generateHtmlDoc(range, worksheet);
-					container = doc.createElement("DIV");
-					container.appendChild(htmlObj);
-					if (sBase64 && container.children[0]) {
-						container.children[0].setAttribute("class", sBase64);
-					}
-					return container.innerHTML;*/
-
 					return this._generateHtmlDocStr(range, worksheet, sBase64);
 				}
 			},
 
-			_generateHtmlImg: function(isSelectedImages, worksheet) {
+			_generateHtmlImg: function (isSelectedImages, worksheet) {
 				if (window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor) {
 					return false;
 				}
@@ -871,7 +901,7 @@
 				return res;
 			},
 
-			_generateHtmlDoc: function(range, worksheet) {
+			_generateHtmlDoc: function (range, worksheet) {
 				function skipMerged() {
 					var m = merged.filter(function (e) {
 						return row >= e.r1 && row <= e.r2 && col >= e.c1 && col <= e.c2
@@ -979,7 +1009,7 @@
 							style += "width:" + worksheet.getColumnWidth(col, 1/*pt*/) + "pt" + ";";
 						}
 
-						if(cell.getType() !== null) {
+						if (cell.getType() !== null) {
 							var align = cell.getAlign();
 							if (!align.getWrap()) {
 								style += "white-space:" + "nowrap" + ";";
@@ -1655,7 +1685,65 @@
 					pptx_content_loader.Start_UseFullUrl();
 					pptx_content_loader.Reader.ClearConnectedObjects();
 					oBinaryFileReader.Read(base64, tempWorkbook);
+
+					//вставка мультиселекта
+					//TODO если вставляем мультиселект в мультиселект - нужно выдать ошибку
+					if (tempWorkbook.aWorksheets[0].selectionRange.ranges.length > 1) {
+						//поскольку вставка должна быть только с равным количество строк/столбцов
+						//и между диапазонами должны быть только стоки/столбцу, то -> удаляем лишние строки/столбцы
+						var pastedWorksheet = tempWorkbook.aWorksheets[0];
+						var _ranges = pastedWorksheet.selectionRange.ranges;
+						var byCol = null;
+						
+						
+						if (_ranges[0].r1 === _ranges[1].r1 && _ranges[0].r2 === _ranges[1].r2) {
+							byCol = false;
+						} else if (_ranges[0].c1 === _ranges[1].c1 && _ranges[0].c2 === _ranges[1].c2) {
+							byCol = true;
+						}
+
+						_ranges.sort(function sortArr(a, b) {
+							if (byCol) {
+								a.c1 > b.c1 ? -1 : 1;
+							} else {
+								a.r1 > b.r1 ? -1 : 1;
+							}
+						});
+						
+						
+						var diff = 0;
+						for (var i = 1; i < _ranges.length; i++) {
+							if (byCol) {
+								if (_ranges[i - 1].r2 + 1 !== _ranges[i].r1) {
+									pastedWorksheet.removeRows(_ranges[i - 1].r2 + 1 - diff, _ranges[i].r1 - 1 - diff);
+									diff += _ranges[i].r1 - _ranges[i - 1].r2 - 1;
+								}
+							} else {
+								if (_ranges[i - 1].c2 + 1 !== _ranges[i].c1) {
+									pastedWorksheet.removeCols(_ranges[i - 1].c2 + 1 - diff, _ranges[i].c1 - 1 - diff);
+									diff += _ranges[i].c1 - _ranges[i - 1].c2 - 1;
+								}
+							}
+						}
+						
+						if (diff !== 0) {
+							AscCommonExcel.executeInR1C1Mode(false, function () {
+								var pasteRange = AscCommonExcel.g_oRangeCache.getAscRange(oBinaryFileReader.copyPasteObj.activeRange);
+								if (pasteRange) {
+									pasteRange = pasteRange.clone();
+									if (byCol) {
+										pasteRange.r2 -= diff;
+									} else {
+										pasteRange.c2 -= diff;
+									}
+									oBinaryFileReader.copyPasteObj.activeRange = pasteRange.getName();
+								}
+							});
+						}
+					}
+
 					t.activeRange = oBinaryFileReader.copyPasteObj.activeRange;
+					
 					aPastedImages = pptx_content_loader.End_UseFullUrl();
 					pptx_content_loader.Reader.AssignConnectedObjects();
 				}, this, []);
@@ -3495,9 +3583,11 @@
 				} else {
 					for(var i = 0; i < text.length; i++) {
 						colCounter = 0;
-						for(var j = 0; j < text[i].length; j++) {
-							_parseText(text[i][j], true);
-							colCounter++;
+						if (text[i]) {
+							for(var j = 0; j < text[i].length; j++) {
+								_parseText(text[i][j], true);
+								colCounter++;
+							}
 						}
 						rowCounter++;
 					}

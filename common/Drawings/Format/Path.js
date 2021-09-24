@@ -497,7 +497,6 @@ Path.prototype = {
                         y2=parseInt(cmd.Y2, 10);
                     }
 
-
                     this.ArrPathCommand[i]={id:bezier4, X0:x0*cw, Y0: y0*ch, X1:x1*cw, Y1:y1*ch, X2:x2*cw, Y2:y2*ch};
 
                     lastX=x2*cw;
@@ -732,7 +731,7 @@ Path.prototype = {
                 case arcTo:
                 {
                     bIsDrawLast = true;
-                    ArcToCurvers(shape_drawer, cmd.stX, cmd.stY, cmd.wR, cmd.hR, cmd.stAng, cmd.swAng);
+                    ArcToCurvers(shape_drawer, cmd.stX, cmd.stY, cmd.wR, cmd.hR, cmd.stAng, cmd.swAng, shape_drawer.Shape.calcGeometry);
                     break;
                 }
                 case close:
@@ -751,7 +750,7 @@ Path.prototype = {
         shape_drawer._e();
     },
 
-    check_bounds: function(checker)
+    check_bounds: function(checker, geom)
     {
         var path=this.ArrPathCommand;
         for(var j=0, l=path.length; j<l; ++j)
@@ -846,7 +845,7 @@ Path.prototype = {
         return false;
     },
 
-    hitInPath: function(canvasContext, x, y)
+    hitInPath: function(canvasContext, x, y, oAddingPoint, _path_index)
     {
         var _arr_commands = this.ArrPathCommand;
         var _commands_count = _arr_commands.length;
@@ -893,8 +892,13 @@ Path.prototype = {
                 }
                 case bezier4:
                 {
-                    if(HitInBezier4(canvasContext, x, y, _last_x, _last_y, _command.X0, _command.Y0, _command.X1, _command.Y1, _command.X2, _command.Y2))
+                    if(HitInBezier4(canvasContext, x, y, _last_x, _last_y, _command.X0, _command.Y0, _command.X1, _command.Y1, _command.X2, _command.Y2)) {
+                        if(oAddingPoint) {
+                            oAddingPoint.pathIndex = _path_index;
+                            oAddingPoint.commandIndex = _command_index;
+                        }
                         return true;
+                    }
                     _last_x=_command.X2;
                     _last_y=_command.Y2;
                     break;

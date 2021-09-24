@@ -1164,7 +1164,7 @@
 	prot["asc_setPassword"] = prot.asc_setPassword;
 	prot["asc_isPassword"] = prot.asc_isPassword;
 
-	window["Asc"].CProtectedRange = CProtectedRange;
+	window["Asc"]["CProtectedRange"] = window["Asc"].CProtectedRange = CProtectedRange;
 	prot = CProtectedRange.prototype;
 	prot["asc_getSqref"] = prot.asc_getSqref;
 	prot["asc_getName"] = prot.asc_getName;

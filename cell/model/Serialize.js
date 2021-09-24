@@ -901,8 +901,16 @@
         pptxDrawing: 9,
         Chart2: 10,
         ObjectName: 11,
-        EditAs: 12
+        EditAs: 12,
+        ClientData: 14
     };
+
+    var c_oSer_DrawingClientDataType =
+    {
+        fLocksWithSheet: 0,
+        fPrintsWithSheet: 1
+    };
+
     /** @enum */
     var c_oSer_Pane = {
         ActivePane	: 0,
@@ -4865,6 +4873,14 @@
                     break;
                 }
             }
+            var oDrawingForWriting = curDrawing || oDrawing.graphicObject;
+            if(oDrawingForWriting)
+            {
+                if(oDrawingForWriting.clientData)
+                {
+                    this.bs.WriteItem(c_oSer_DrawingType.ClientData, function(){oThis.WriteClientData(oDrawingForWriting.clientData);});
+                }
+            }
             if(curDrawing)
                 this.bs.WriteItem(c_oSer_DrawingType.pptxDrawing, function(){pptx_content_writer.WriteDrawing(oThis.memory, curDrawing, null, null, null);});
             else
@@ -4925,6 +4941,21 @@
                 this.memory.WriteByte(c_oSer_DrawingExtType.Cy);
                 this.memory.WriteByte(c_oSerPropLenType.Double);
                 this.memory.WriteDouble2(oExt.cy);
+            }
+        };
+        this.WriteClientData = function(oClientData)
+        {
+            if (oClientData.fLocksWithSheet !== null)
+            {
+                this.memory.WriteByte(c_oSer_DrawingClientDataType.fLocksWithSheet);
+                this.memory.WriteByte(c_oSerPropLenType.Byte);
+                this.memory.WriteBool(oClientData.fLocksWithSheet);
+            }
+            if (oClientData.fPrintsWithSheet !== null)
+            {
+                this.memory.WriteByte(c_oSer_DrawingClientDataType.fPrintsWithSheet);
+                this.memory.WriteByte(c_oSerPropLenType.Byte);
+                this.memory.WriteBool(oClientData.fPrintsWithSheet);
             }
         };
 		this.WriteSheetDataXLSB = function(ws)
@@ -9347,6 +9378,10 @@
                         oNewDrawing.graphicObject.spPr.xfrm.setExtX(0);
                         oNewDrawing.graphicObject.spPr.xfrm.setExtY(0);
                     }
+                    if(oNewDrawing.clientData)
+                    {
+                        oNewDrawing.graphicObject.setClientData(oNewDrawing.clientData);
+                    }
                     aDrawings.push(oNewDrawing);
                 }
             }
@@ -9420,10 +9455,18 @@
                         graphicObject.setDrawingBase(oDrawing);
                 }
             }
+            else if( c_oSer_DrawingType.ClientData == type ) {
+                var oClientData = new AscFormat.CClientData();
+                res = this.bcr.Read2Spreadsheet(length, function (t, l) {
+                    return oThis.ReadClientData(t, l, oClientData);
+                });
+                oDrawing.clientData = oClientData;
+            }
             else
                 res = c_oSerConstants.ReadUnknown;
             return res;
         };
+
         this.ReadPptxDrawing = function () {
             var graphicObject;
             var oGraphicObject = pptx_content_loader.ReadGraphicObject(this.stream, this.curWorksheet, this.curWorksheet.getDrawingDocument());
@@ -9503,6 +9546,17 @@
                 oExt.cx = this.stream.GetDoubleLE();
             else if ( c_oSer_DrawingExtType.Cy == type )
                 oExt.cy = this.stream.GetDoubleLE();
+            else
+                res = c_oSerConstants.ReadUnknown;
+            return res;
+        };
+        this.ReadClientData = function(type, length, oClientData)
+        {
+            var res = c_oSerConstants.ReadOk;
+            if ( c_oSer_DrawingClientDataType.fLocksWithSheet == type )
+                oClientData.fLocksWithSheet = this.stream.GetBool();
+            else if ( c_oSer_DrawingClientDataType.fPrintsWithSheet == type )
+                oClientData.fPrintsWithSheet = this.stream.GetBool();
             else
                 res = c_oSerConstants.ReadUnknown;
             return res;

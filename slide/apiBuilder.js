@@ -49,6 +49,62 @@
     }
 
     /**
+     * Class representing a slide master.
+     * @constructor
+     */
+    function ApiMaster(oMaster){
+        this.Master = oMaster;
+    }
+
+    /**
+     * Class representing a slide layout.
+     * @constructor
+     */
+    function ApiLayout(oLayout){
+        this.Layout = oLayout;
+    }
+
+    /**
+     * Class representing a placeholder.
+     * @constructor
+     */
+    function ApiPlaceholder(oPh){
+        this.Placeholder = oPh;
+    }
+
+    /**
+     * Class representing a presentation theme.
+     * @constructor
+     */
+    function ApiTheme(oThemeInfo){
+        this.ThemeInfo = oThemeInfo;
+    }
+    
+    /**
+     * Class representing a theme's color scheme.
+     * @constructor
+     */
+    function ApiThemeColorScheme(oClrScheme){
+        this.ColorScheme = oClrScheme;
+    }
+
+    /**
+     * Class representing a theme's format scheme.
+     * @constructor
+     */
+    function ApiThemeFormatScheme(ofmtScheme){
+        this.FormatScheme = ofmtScheme;
+    }
+
+    /**
+     * Class representing a theme's font scheme.
+     * @constructor
+     */
+    function ApiThemeFontScheme(ofontScheme){
+        this.FontScheme = ofontScheme;
+    }
+
+    /**
      * Class representing a slide.
      * @constructor
      */
@@ -95,7 +151,7 @@
         this.Chart = oChart;
     }
 	ApiChart.prototype = Object.create(ApiDrawing.prototype);
-	ApiChart.prototype.constructor = ApiChart;
+	ApiChart.prototype.constructor    = ApiChart;
 
     /**
      * Class representing a group of drawings.
@@ -281,6 +337,213 @@
     };
 
     /**
+     * Create a new slide master.
+     * @typeofeditors ["CPE"]
+     * @memberof Api
+     * @param {ApiTheme} [oTheme    = ApiPresentation.GetMaster(0).GetTheme()] - ApiTheme object.
+     * @returns {ApiMaster | null} - returns null if presentation theme doesn't exist.
+     */
+    Api.prototype.CreateMaster = function(oTheme){
+        if (!oTheme || !oTheme.GetClassType || !oTheme.GetClassType() === "theme")
+            if (editor.GetPresentation().GetMaster(0))
+                oTheme = editor.GetPresentation().GetMaster(0).GetTheme();
+        
+        if (!oTheme)
+            return null;
+
+        var oThemeCopy = oTheme.ThemeInfo.Theme.createDuplicate();
+        var oMaster = new ApiMaster(new AscCommonSlide.MasterSlide());
+        oMaster.Master.setTheme(oThemeCopy);
+
+        return oMaster;
+    };
+
+    /**
+     * Create a new slide layout and adds it to the slide master if it specified.
+     * @typeofeditors ["CPE"]
+     * @memberof Api
+     * @param {ApiMaster} [oMaster = null] - parent slide master.
+     * @returns {ApiLayout}
+     */
+    Api.prototype.CreateLayout = function(oMaster){
+        var oLayout = new ApiLayout(new AscCommonSlide.SlideLayout());
+
+        if (oMaster && oMaster.GetClassType && oMaster.GetClassType() === "master")
+            oMaster.AddLayout(undefined, oLayout);
+        
+        return oLayout;
+    };
+
+    /**
+     * Create a new placeholder.
+     * @typeofeditors ["CPE"]
+     * @memberof Api
+     * @param {string} sType - the placeholder type.
+     * @returns {ApiPlaceholder}
+     */
+    Api.prototype.CreatePlaceholder = function(sType){
+        
+        if (typeof(sType) !== "string")
+            sType = "body";
+
+        var oPh = new ApiPlaceholder(new AscFormat.Ph());
+        oPh.SetType(sType);
+
+        return oPh;
+    };
+
+    /**
+     * Create a new theme.
+     * @typeofeditors ["CPE"]
+     * @memberof Api
+     * @param {string} sName - specified theme's name.
+     * @param {ApiMaster} oMaster - slide master. Required parameter.
+     * @param {ApiThemeColorScheme} oClrScheme - color scheme. Required parameter.
+     * @param {ApiThemeFormatScheme} oFormatScheme - format scheme. Required parameter.
+     * @param {ApiThemeFontScheme} oFontScheme - font scheme. Required parameter.
+     * @returns {ApiTheme | null} 
+     */
+    Api.prototype.CreateTheme = function(sName, oMaster, oClrScheme, oFormatScheme, oFontScheme){
+        if (typeof(sName) !== "string")
+            sName = "";
+        if (oMaster.GetClassType() !== "master" || oClrScheme.GetClassType() !== "themeColorScheme" ||
+        oFormatScheme.GetClassType() !== "themeFormatScheme" || oFontScheme.GetClassType() !== "themeFontScheme")
+            return null;
+
+        var oPresentation      = editor.GetPresentation().Presentation;
+        var oThemeLoadInfo     = new AscCommonSlide.CThemeLoadInfo();
+        oThemeLoadInfo.Master  = oMaster.Master;
+        oThemeLoadInfo.Layouts = oMaster.Master.sldLayoutLst;
+        
+        var oTheme = new AscFormat.CTheme();
+        oTheme.setName(sName);
+
+        var presentation              = {};
+        presentation.ImageMap         = {};
+        presentation.Fonts            = [];
+        presentation.Masters          = [oMaster.Master];
+        presentation.DrawingDocument  = editor.WordControl.m_oDrawingDocument;
+        presentation.pres             = oPresentation;
+        presentation.Width            = oPresentation.Width;
+        presentation.Height           = oPresentation.Height;
+        presentation.defaultTextStyle = oPresentation.defaultTextStyle;
+
+        oTheme.presentation             = presentation;
+        oTheme.themeElements.clrScheme  = oClrScheme.ColorScheme;
+        oTheme.themeElements.fmtScheme  = oFormatScheme.FormatScheme;
+        oTheme.themeElements.fontScheme = oFontScheme.FontScheme;
+        oThemeLoadInfo.Theme            = oTheme;
+
+        oMaster.Master.setTheme(oTheme);
+
+        return new ApiTheme(oThemeLoadInfo);
+    };
+
+    /**
+     * Create a new theme color scheme.
+     * @typeofeditors ["CPE"]
+     * @memberof Api
+     * @param {string} sName - specified name of theme's color scheme.
+     * @param {(ApiUniColor | ApiRGBColor)[]} arrColors - This array defines a set of colors which are referred to as a color scheme.
+     * The color scheme is responsible for defining a list of twelve colors.
+     * The array should contain a sequence of colors: 2 dark, 2 light,6 primary and a color for each of a hyperlink and followed hyperlink.     
+     * @returns {?ApiThemeColorScheme} 
+     */
+    Api.prototype.CreateThemeColorScheme = function(arrColors, sName){
+        if (typeof(sName) !== "string")
+            sName = "New theme's color scheme";
+        if (!Array.isArray(arrColors) || arrColors.length !== 12)
+            return null;
+
+        var oClrScheme = new AscFormat.ClrScheme();
+        oClrScheme.setName(sName);
+
+        oClrScheme.addColor(0, arrColors[0].Unicolor);   
+        oClrScheme.addColor(2, arrColors[2].Unicolor); 
+        oClrScheme.addColor(1, arrColors[1].Unicolor);   
+        oClrScheme.addColor(3, arrColors[3].Unicolor);
+        oClrScheme.addColor(4, arrColors[4].Unicolor);
+        oClrScheme.addColor(5, arrColors[5].Unicolor);
+
+        for (var nColor = 6; nColor < 12; nColor++)
+        {
+            oClrScheme.addColor(nColor + 2, arrColors[nColor].Unicolor);   
+        }
+        
+        return new ApiThemeColorScheme(oClrScheme);
+    };
+
+    /**
+     * Create a new theme format scheme.
+     * @typeofeditors ["CPE"]
+     * @memberof Api
+     * @param {ApiFill[]} arrFill - This array contains fill styles. Should be composed of subtle, moderate and intense fills.
+     * @param {ApiFill[]} arrBgFill - This array contains the background fill styles. Should be composed of subtle, moderate and intense fills.
+     * @param {ApiStroke[]} arrLine - This array contains line styles. Should be composed of subtle, moderate and intense lines.
+     * @param {string} sName
+     * @returns {?ApiThemeFormatScheme} 
+     */
+    Api.prototype.CreateThemeFormatScheme = function(arrFill, arrBgFill, arrLine, sName){
+        
+        if (typeof(sName) !== "string")
+            sName = "New format scheme";
+
+        if (Array.isArray(arrFill) && Array.isArray(arrBgFill) && Array.isArray(arrLine) && 
+        arrFill.length === 3 && arrBgFill.length === 3 && arrLine.length === 3) 
+        {
+            var oFormatScheme = new ApiThemeFormatScheme(new AscFormat.FmtScheme());
+        
+            oFormatScheme.SetSchemeName(sName);
+            oFormatScheme.ChangeFillStyles(arrFill);
+            oFormatScheme.ChangeBgFillStyles(arrBgFill);
+            oFormatScheme.ChangeLineStyles(arrLine);
+            //oFormatScheme.ChangeEffectStyles(arrEffect);
+    
+            return oFormatScheme;
+        }
+
+        return null;
+    };
+
+    
+    /**
+     * Create a new theme font scheme.
+     * @typeofeditors ["CPE"]
+     * @memberof Api
+     * @param {string} mjLatin - Font's name. Is used to determine the major theme font applied to latit text.
+     * @param {string} mjEa - Font's name. Is used to determine the major theme font applied to east asian text.
+     * @param {string} mjCs - Font's name. Is used to determine the major theme font applied to complex script text.
+     * @param {string} mnLatin - Font's name. Is used to determine the minor theme font applied to latit text.
+     * @param {string} mnEa - Font's name. Is used to determine the minor theme font applied to east asian text.
+     * @param {string} mnCs - Font's name. Is used to determine the minor theme font applied to complex script text.
+     * @param {string} sName - name of this font scheme.
+     * @returns {ApiThemeFontScheme} 
+     */
+    Api.prototype.CreateThemeFontScheme = function(mjLatin, mjEa, mjCs, mnLatin, mnEa, mnCs, sName){
+        
+        if (typeof(sName) !== "string")
+            sName = "New format scheme";
+
+        var oFontScheme          = new AscFormat.FontScheme();
+        var oMajorFontCollection = new AscFormat.FontCollection(oFontScheme);
+        var oMinorFontCollection = new AscFormat.FontCollection(oFontScheme);
+
+        oFontScheme.setName(sName);
+        oFontScheme.setMajorFont(oMajorFontCollection);
+        oFontScheme.setMinorFont(oMinorFontCollection);
+
+        oMajorFontCollection.setLatin(mjLatin);
+        oMajorFontCollection.setEA(mjEa);
+        oMajorFontCollection.setCS(mjCs);
+
+        oMinorFontCollection.setLatin(mnLatin);
+        oMinorFontCollection.setEA(mnEa);
+        oMinorFontCollection.setCS(mnCs);
+
+        return new ApiThemeFontScheme(oFontScheme);
+    };
+    
+    /**
      * Create a new slide.
      * @typeofeditors ["CPE"]
      * @memberof Api
@@ -318,8 +581,8 @@
      * @param {ShapeType} [sType="rect"] - The shape type which specifies the preset shape geometry.
      * @param {EMU} [nWidth = 914400] - The shape width in English measure units.
 	 * @param {EMU} [nHeight = 914400] - The shape height in English measure units.
-	 * @param {ApiFill} [oFill = Api.CreateNoFill()] - The color or pattern used to fill the shape.
-	 * @param {ApiStroke} [oStroke = Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the element shadow.
+	 * @param {ApiFill} [oFill    = Api.CreateNoFill()] - The color or pattern used to fill the shape.
+	 * @param {ApiStroke} [oStroke    = Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the element shadow.
      * @returns {ApiShape}
      * */
     Api.prototype.CreateShape = function(sType, nWidth, nHeight, oFill, oStroke){
@@ -414,6 +677,108 @@
 		this.SaveAfterMacros = true;
 	};
 
+    Api.prototype.private_checkDrawingUniNvPr = function(oDrawing)
+    {
+        var nv_sp_pr;
+        var drawing = oDrawing.Drawing;
+
+        if (drawing)
+        {
+            switch (drawing.getObjectType())
+            {
+                case AscDFH.historyitem_type_ChartSpace:
+                case AscDFH.historyitem_type_GraphicFrame:
+                { 
+                    if(!drawing.nvGraphicFramePr)
+                    {
+                        nv_sp_pr = new AscFormat.UniNvPr();
+                        nv_sp_pr.cNvPr.setId(++this.maxId);
+                        drawing.setNvSpPr(nv_sp_pr);
+                    }
+                    break;
+                }
+                case AscDFH.historyitem_type_GroupShape:
+                {
+                    if(!drawing.nvGrpSpPr)
+                    {
+                        nv_sp_pr = new AscFormat.UniNvPr();
+                        nv_sp_pr.cNvPr.setId(++this.maxId);
+                        drawing.setNvSpPr(nv_sp_pr);
+                    }
+                    for(var i = 0; i < drawing.spTree.length; ++i)
+                    {
+                        this.checkDrawingUniNvPr(drawing.spTree[i]);
+                    }
+                    break;
+                }
+                case AscDFH.historyitem_type_ImageShape:
+                case AscDFH.historyitem_type_OleObject:
+                {
+                    if(!drawing.nvPicPr)
+                    {
+                        nv_sp_pr = new AscFormat.UniNvPr();
+                        nv_sp_pr.cNvPr.setId(++this.maxId);
+                        drawing.setNvSpPr(nv_sp_pr);
+                    }
+                    break;
+                }
+                case AscDFH.historyitem_type_Shape:
+                case AscDFH.historyitem_type_Cnx:
+                {
+                    if(!drawing.nvSpPr)
+                    {
+                        nv_sp_pr = new AscFormat.UniNvPr();
+                        nv_sp_pr.cNvPr.setId(++this.maxId);
+                        drawing.setNvSpPr(nv_sp_pr);
+                    }
+                    break;
+                }
+            }
+        }
+    };
+
+    /**
+	 * Checks for duplicate placeholders and sets idx.
+     * Called when a placeholder is added to a shape.
+	 * @typeofeditors ["CPE"]
+	 * @memberof Api
+     * @param {ApiSlide | ApiLayout | ApiMaster} object - object in which placeholders will be checked.
+     * @param {ApiPlaceholder}  - placeholder to be added. 
+     * @return {bool} - return false if object insupported or oPlaceholder isn't placeholder.
+	 */
+    Api.prototype.private_checkPlaceholders = function(object, oPlaceholder)
+    {
+        if (object.GetClassType() !== "slide" && object.GetClassType() !== "layout" && object.GetClassType() !== "master" )
+            return false;
+        if (!oPlaceholder || !oPlaceholder.GetClassType || oPlaceholder.GetClassType() !== "placeholder")
+            return false;
+        
+        var allDrawings          = object.GetAllDrawings();
+        var maxIndex             = 0;
+        var oTempPlaceholder     = null;
+        var noIdxPlaceholders    = [];
+
+        for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++)
+        {
+            oTempPlaceholder = allDrawings[nDrawing].GetPlaceholder();
+
+            if (oTempPlaceholder.Placeholder.type === oPlaceholder.Placeholder.type)
+            {
+                if (oTempPlaceholder.Placeholder.idx && +oTempPlaceholder.Placeholder.idx > maxIndex)
+                    maxIndex  = +oTempPlaceholder.Placeholder.idx;
+                else if (!oTempPlaceholder.Placeholder.idx)
+                    noIdxPlaceholders.push(oTempPlaceholder.Placeholder);
+            }
+        }
+    
+        for (var nPh = 0; nPh < noIdxPlaceholders.length; nPh++)
+        {
+            noIdxPlaceholders[nPh].idx = String(maxIndex + 1);
+            maxIndex++;
+        };
+
+        return true;
+    };
 
     //------------------------------------------------------------------------------------------------------------------
     //
@@ -496,6 +861,7 @@
             this.Presentation.internalChangeSizes(nWidth, nHeight);
         }
     };
+
     /**
      * Create new history point.
      */
@@ -580,8 +946,1186 @@
         }
     };
 
+    /**
+     * Gets slides count.
+     * @typeofeditors ["CPE"]
+     * @returns {number}
+     */
+    ApiPresentation.prototype.GetSlidesCount = function()
+    {
+        return this.Presentation.Slides.length;
+    };
 
+    /**
+     * Gets slide masters count.
+     * @typeofeditors ["CPE"]
+     * @returns {number}
+     */
+    ApiPresentation.prototype.GetMastersCount = function()
+    {
+        return this.Presentation.slideMasters.length;
+    };
 
+    /**
+     * Gets a slide master.
+     * @typeofeditors ["CPE"]
+     * @param {number} nPos 
+     * @returns {ApiMaster | null} - returns null if position is invalid.
+     */
+    ApiPresentation.prototype.GetMaster = function(nPos)
+    {
+        if (nPos < 0 || nPos >= this.Presentation.slideMasters.length)
+            return null;
+
+        return new ApiMaster(this.Presentation.slideMasters[nPos]);
+    };
+
+    /**
+     * Adds the slide master to presentation slide masters collection.
+     * @typeofeditors ["CPE"]
+     * @param {number} [nPos    = ApiPresentation.GetMastersCount()]
+     * @param {ApiMaster} oApiMaster
+     * @returns {bool} - return false if position is invalid or oApiMaster does'n exist.
+     */
+    ApiPresentation.prototype.AddMaster = function(nPos, oApiMaster)
+    {
+        if (oApiMaster && oApiMaster.GetClassType && oApiMaster.GetClassType() !== "master")
+        {
+            if (!nPos || nPos < 0 || nPos > this.Presentation.slideMasters.length)
+                nPos = this.Presentation.slideMasters.length;
+
+            this.Presentation.addSlideMaster(nPos, oApiMaster.Master)
+
+            return true;
+        }
+
+        return false;
+    };
+
+    /**
+     * Applies the theme to the all slides in presentation.
+     * @typeofeditors ["CPE"]
+     * @param {ApiTheme} oApiTheme
+     * @returns {bool} - returns false if param isn't theme or presentation doesn't exist.
+     * */
+    ApiPresentation.prototype.ApplyTheme = function(oApiTheme){
+       if (!this.Presentation || !oApiTheme.GetClassType || !oApiTheme.GetClassType() !== "theme")
+       {
+           this.Presentation.changeTheme(oApiTheme.ThemeInfo);
+           return true;
+       }
+
+       return false;
+    };
+
+    //------------------------------------------------------------------------------------------------------------------
+    //
+    // ApiMaster
+    //
+    //------------------------------------------------------------------------------------------------------------------
+
+    /**
+     * Get the type of this class.
+     * @typeofeditors ["CPE"]
+     * @returns {"master"}
+     */
+    ApiMaster.prototype.GetClassType = function()
+    {
+        return "master";
+    };
+
+    /**
+     * Gets a layout of specified slide master by position .
+     * @typeofeditors ["CPE"]
+     * @param {number} nPos
+     * @returns {ApiLayout | null} - returns null if position is invalid.
+     */
+    ApiMaster.prototype.GetLayout = function(nPos)
+    {
+        if (nPos < 0 | nPos > this.Master.sldLayoutLst.length)
+            return null;
+        
+        return new ApiLayout(this.Master.sldLayoutLst[nPos])
+    };
+
+    /**
+     * Adds the layout to specified slide master.
+     * @typeofeditors ["CPE"]
+     * @param {number} [nPos = ApiMaster.GetLayoutsCount()] - position to add.
+     * @param {ApiLayout} oLayout
+     * @returns {bool} - returns false if param isn't layout
+     */
+    ApiMaster.prototype.AddLayout = function(nPos, oLayout)
+    {
+        if (nPos < 0 || nPos > this.Master.sldLayoutLst.length)
+            nPos = this.Master.sldLayoutLst.length;
+
+        if (oLayout && oLayout.GetClassType && oLayout.GetClassType() === "layout")
+            this.Master.addToSldLayoutLstToPos(nPos, oLayout.Layout);
+        else 
+            return false;
+
+        return true;
+    };
+
+    /**
+     * Removes the layouts from this slide master.
+     * @typeofeditors ["CPE"]
+     * @param {number} nPos - position from which to delete
+     * @param {number} [nCount = 1] - count of elements for delete.
+     * @param {ApiLayout} oLayout
+     * @returns {bool} - return false if position is invalid.
+     */
+    ApiMaster.prototype.RemoveLayout = function(nPos, nCount)
+    {
+        if (this.Master && this.Master.sldLayoutLst.length > 0)
+        {
+            if (nPos >= 0 && nPos < this.Master.sldLayoutLst.length)
+            {
+                if (!nCount || nCount <= 0 || nCount > this.GetLayoutsCount())
+                    nCount = 1;
+
+                this.Master.removeFromSldLayoutLstByPos(nPos, nCount);
+                return true;
+            }
+        }
+        
+        return false;
+    };
+
+    /**
+     * Gets the count of layout objects.
+     * @typeofeditors ["CPE"]
+     * @returns {number}
+     */
+    ApiMaster.prototype.GetLayoutsCount = function()
+    {
+        return this.Master.sldLayoutLst.length;
+    };
+
+    /**
+     * Adds an object (image, shape or chart) to the current slide master.
+     * @typeofeditors ["CPE"]
+     * @memberof ApiSlide
+     * @param {ApiDrawing} oDrawing - The object which will be added to the current slide master.
+     * @returns {bool} - returns false if slide master doesn't exist.
+     */
+    ApiMaster.prototype.AddObject = function(oDrawing)
+    {
+        if (this.Master) 
+        {
+            oDrawing.Drawing.setParent(this.Master);
+            this.Master.shapeAdd(this.Master.cSld.spTree.length, oDrawing.Drawing);
+            editor.private_checkPlaceholders(this, oDrawing.GetPlaceholder());
+
+            return true;
+        }
+
+        return false;
+    };
+
+    /**
+     * Removes objects (image, shape or chart) from the current slide master.
+     * @typeofeditors ["CPE"]
+     * @memberof ApiMaster
+     * @param {number} nPos - position from which to delete
+     * @param {number} [nCount = 1] - count of elements for delete. 
+     * @returns {bool} - returns false if master doesn't exist or pos is invalid or master haven't objects.
+     */
+    ApiMaster.prototype.RemoveObject = function(nPos, nCount)
+    {
+        if (this.Master && this.Master.cSld.spTree.length > 0)
+        {
+            if (nPos >= 0 && nPos < this.Master.cSld.spTree.length)
+            {
+                if (!nCount || nCount <= 0 || nCount > this.Master.cSld.spTree.length)
+                    nCount = 1;
+
+                this.Master.shapeRemove(nPos, nCount);
+                return true;
+            }
+        }
+        
+        return false;
+    };
+    
+
+    /**
+     * Sets the background to the current slide master.
+     * @memberOf ApiSlide
+     * @typeofeditors ["CPE"]
+     * @param {ApiFill} oApiFill - The color or pattern used to fill the presentation slide master background.
+     * */
+    ApiMaster.prototype.SetBackground = function(oApiFill){
+        if(oApiFill && oApiFill.GetClassType && oApiFill.GetClassType() === "fill" && this.Master){
+            var bg       = new AscFormat.CBg();
+            bg.bgPr      = new AscFormat.CBgPr();
+            bg.bgPr.Fill = oApiFill.UniFill;
+            this.Master.changeBackground(bg);
+        }
+    };
+
+    /**
+     * Clears the slide master background.
+     * @typeofeditors ["CPE"]
+     * @returns {bool} - return false if slide master does'n exist.
+     * */
+    ApiMaster.prototype.ClearBackground = function(){
+        if (!this.Master)
+            return false;
+        
+        var apiNoFill = editor.CreateNoFill();
+        var bg        = new AscFormat.CBg();
+        bg.bgPr       = new AscFormat.CBgPr();
+        bg.bgPr.Fill  = apiNoFill.UniFill;
+        this.Master.changeBackground(bg);
+
+        return true;
+    };
+
+    /**
+     * Creates a copy of the specified slide master object.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiMaster | null} - returns new ApiMaster object that represents the copy of slide master. 
+     * Returns null if slide doesn't exist.
+     * */
+    ApiMaster.prototype.Copy = function(){
+        if (!this.Master)
+            return null;
+        
+        var oMasterCopy = this.Master.createDuplicate();
+        return new ApiMaster(oMasterCopy);
+    };
+
+    /**
+     * Creates a duplicate of the specified slide master object, adds the new slide master to the slide masters collection.
+     * @typeofeditors ["CPE"]
+     * @param {number} [nPos    = ApiPresentation.GetMastersCount()]
+     * @returns {ApiMaster | null} - returns new ApiMaster object that represents the copy of slide master. 
+     * Returns null if slide master doesn't exist or not in presentation.
+     * */
+    ApiMaster.prototype.Duplicate = function(nPos){
+        if (!this.Master)
+            return null;
+        
+        var oPresentation       = editor.GetPresentation().Presentation;
+        var oMasterCopy         = this.Master.createDuplicate();
+        
+        if (!nPos || nPos < 0 || nPos > oPresentation.Slides.length)
+            nPos = oPresentation.slideMasters.length;
+
+        oPresentation.addSlideMaster(nPos, oMasterCopy);
+
+        return new ApiMaster(oMasterCopy);
+    };
+
+    /**
+     * Deletes the specified object from parent if it exist.
+     * @typeofeditors ["CPE"]
+     * @returns {bool} - return false if master doesn't exist or not in presentation. 
+     * */
+    ApiMaster.prototype.Delete = function(){
+        if (this.Master && this.Master.presentation)
+        {
+            for (var nMaster = 0; nMaster < this.Master.presentation.slideMasters.length; nMaster++)
+            {
+                if (this.Master.Id === this.Master.presentation.slideMasters[nMaster].Id)
+                {
+                    this.Master.presentation.removeSlideMaster(nMaster, 1);
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    };
+
+    /**
+     * Gets the theme of slide master.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiTheme | null} - returns null if theme doesn't exist. 
+     * */
+    ApiMaster.prototype.GetTheme = function(){
+        if (this.Master && this.Master.Theme)
+        {
+            var oThemeLoadInfo     = new AscCommonSlide.CThemeLoadInfo();
+            oThemeLoadInfo.Master  = this.Master;
+            oThemeLoadInfo.Layouts = this.Master.sldLayoutLst;
+            oThemeLoadInfo.Theme   = this.Master.Theme;
+
+            return new ApiTheme(oThemeLoadInfo);
+        }
+           
+        return null;
+    };
+
+    /**
+     * Sets the theme to the slide master.
+     * Sets a copy of the theme object.
+     * @typeofeditors ["CPE"]
+     * @param {ApiTheme} oTheme
+     * @returns {bool} - return false if param isn't theme or slide master doesn't exist.
+     * */
+    ApiMaster.prototype.SetTheme = function(oTheme){
+        if (this.Master && oTheme && oTheme.GetClassType && oTheme.GetClassType() === "theme")
+        {
+            var oThemeCopy = oTheme.ThemeInfo.Theme.createDuplicate();
+            this.Master.setTheme(oThemeCopy);
+            return true;
+        }
+           
+        return false;
+    };
+    
+    /**
+     * Gets the array with all drawing objects in slide master.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiDrawing[]} 
+     * */
+    ApiMaster.prototype.GetAllDrawings = function(){
+        var apiDrawingObjects = [];
+        if (this.Master)
+        {
+            var drawingObjects = this.Master.cSld.spTree;
+            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
+                apiDrawingObjects.push(new ApiDrawing(drawingObjects[nObject]));
+        }
+           
+        return apiDrawingObjects;
+    };
+
+    /**
+     * Gets the array with all shape objects in slide master.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiShape[]} 
+     * */
+    ApiMaster.prototype.GetAllShapes = function(){
+        var apiShapes = [];
+        if (this.Master)
+        {
+            var drawingObjects = this.Master.cSld.spTree;
+            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
+            {
+                if (drawingObjects[nObject].getObjectType() === AscDFH.historyitem_type_Shape)
+                apiShapes.push(new ApiShape(drawingObjects[nObject]));
+            }
+        }
+           
+        return apiShapes;
+    };
+
+    /**
+     * Gets the array with all image objects in slide master.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiImage[]} 
+     * */
+    ApiMaster.prototype.GetAllImages = function(){
+        var apiImages = [];
+        if (this.Master)
+        {
+            var drawingObjects = this.Master.cSld.spTree;
+            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
+            {
+                if (drawingObjects[nObject].getObjectType() === AscDFH.historyitem_type_ImageShape)
+                apiImages.push(new ApiImage(drawingObjects[nObject]));
+            }
+        }
+           
+        return apiImages;
+    };
+
+    /**
+     * Gets the array with all chart objects in slide master.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiChart[]} 
+     * */
+    ApiMaster.prototype.GetAllCharts = function(){
+        var apiCharts = [];
+        if (this.Master)
+        {
+            var drawingObjects = this.Master.cSld.spTree;
+            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
+            {
+                if (drawingObjects[nObject].getObjectType() === AscDFH.historyitem_type_ChartSpace)
+                apiCharts.push(new ApiChart(drawingObjects[nObject]));
+            }
+        }
+           
+        return apiCharts;
+    };
+
+    //------------------------------------------------------------------------------------------------------------------
+    //
+    // ApiLayout
+    //
+    //------------------------------------------------------------------------------------------------------------------
+
+    /**
+     * Get the type of this class.
+     * @typeofeditors ["CPE"]
+     * @returns {"master"}
+     */
+    ApiLayout.prototype.GetClassType = function()
+    {
+        return "layout";
+    };
+
+    /**
+     * Sets the name of this layout.
+     * @typeofeditors ["CPE"]
+     * @param {string} sName
+     * @returns {bool}
+     */
+    ApiLayout.prototype.SetName = function(sName)
+    {
+        if (typeof(sName) !== "string")
+            this.Layout.setCSldName(sName);
+        else 
+            return false;
+        
+        return true;
+    };
+
+    /**
+     * Adds an object (image, shape or chart) to the current slide layout.
+     * @typeofeditors ["CPE"]
+     * @memberof ApiSlide
+     * @param {ApiDrawing} oDrawing - The object which will be added to the current slide layout.
+     * @returns {bool} - returns false if slide layout doesn't exist.
+     */
+    ApiLayout.prototype.AddObject = function(oDrawing)
+    {
+        if (this.Layout) 
+        {
+            oDrawing.Drawing.setParent(this.Layout);
+            this.Layout.shapeAdd(this.Layout.cSld.spTree.length, oDrawing.Drawing);
+            editor.private_checkPlaceholders(this, oDrawing.GetPlaceholder());
+
+            return true;
+        }
+
+        return false;
+    };
+
+    /**
+     * Removes objects (image, shape or chart) from the current slide layout.
+     * @typeofeditors ["CPE"]
+     * @memberof ApiLayout
+     * @param {number} nPos - position from which to delete
+     * @param {number} [nCount = 1] - count of elements for delete. 
+     * @returns {bool} - returns false if layout doesn't exist or pos is invalid or layout haven't objects.
+     */
+    ApiLayout.prototype.RemoveObject = function(nPos, nCount)
+    {
+        if (this.Layout && this.Layout.cSld.spTree.length > 0)
+        {
+            if (nPos >= 0 && nPos < this.Layout.cSld.spTree.length)
+            {
+                if (!nCount || nCount <= 0 || nCount > this.Layout.cSld.spTree.length)
+                    nCount = 1;
+
+                this.Layout.shapeRemove(nPos, nCount);
+                return true;
+            }
+        }
+        
+        return false;
+    };
+
+    /**
+     * Sets the background to the current slide layout.
+     * @memberOf ApiSlide
+     * @typeofeditors ["CPE"]
+     * @param {ApiFill} oApiFill - The color or pattern used to fill the presentation slide layout background.
+     * */
+    ApiLayout.prototype.SetBackground = function(oApiFill){
+        if(oApiFill && oApiFill.GetClassType && oApiFill.GetClassType() === "fill" && this.Layout){
+            var bg       = new AscFormat.CBg();
+            bg.bgPr      = new AscFormat.CBgPr();
+            bg.bgPr.Fill = oApiFill.UniFill;
+            this.Layout.changeBackground(bg);
+        }
+    };
+
+    /**
+     * Clears the slide layout background.
+     * @typeofeditors ["CPE"]
+     * @returns {bool} - return false if slide layout does'n exist.
+     * */
+    ApiLayout.prototype.ClearBackground = function(){
+        if (!this.Layout)
+            return false;
+
+        var apiNoFill = editor.CreateNoFill();
+        var bg        = new AscFormat.CBg();
+        bg.bgPr       = new AscFormat.CBgPr();
+        bg.bgPr.Fill  = apiNoFill.UniFill;
+        this.Layout.changeBackground(bg);
+
+        return true;
+    };
+
+    /**
+     * Determines whether the slide follows the slide master background.
+     * @typeofeditors ["CPE"]
+     * @returns {bool} - returns false if master is null or master haven't background.  
+     * */
+    ApiLayout.prototype.FollowMasterBackground = function(){
+        if (!this.Layout)
+            return false;
+        
+        var oMaster = this.Layout.Master;
+
+        if (oMaster && oMaster.cSld.Bg)
+        {
+            this.Layout.changeBackground(oMaster.cSld.Bg);
+            return true;
+        }
+        else 
+            return false;
+    };
+
+    /**
+     * Creates a copy of the specified slide layout object.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiLayout | null} - returns new ApiLayout object that represents the copy of slide layout. 
+     * Returns null if slide layout doesn't exist.
+     * */
+    ApiLayout.prototype.Copy = function(){
+        if (!this.Layout)
+            return null;
+        
+        var oLayoutCopy = this.Layout.createDuplicate();
+        return new ApiLayout(oLayoutCopy);
+    };
+
+    /**
+     * Deletes the specified object from parent slide master if it exist.
+     * @typeofeditors ["CPE"]
+     * @returns {bool} - return false if parent slide master does'n exist. 
+     * */
+    ApiLayout.prototype.Delete = function(){
+        if (this.Layout && this.Layout.Master)
+        {
+            for (var nLayout = 0; nLayout < this.Layout.Master.sldLayoutLst.length; nLayout++)
+            {
+                if (this.Layout.Id === this.Layout.Master.sldLayoutLst[nLayout].Id)
+                {
+                    this.Layout.Master.removeFromSldLayoutLstByPos(nLayout, 1);
+                    return true;
+                }
+            }
+        }
+            return false;
+    };
+
+    /**
+     * Creates a duplicate of the specified slide layout object, adds the new slide layout to the slide layout collection.
+     * @typeofeditors ["CPE"]
+     * @param {number} [nPos = ApiMaster.GetLayoutsCount()]
+     * @returns {ApiLayout | null} - returns new ApiLayout object that represents the copy of slide layout. 
+     * Returns null if slide layout doesn't exist or not in slide master.
+     * */
+    ApiLayout.prototype.Duplicate = function(nPos){
+        if (this.Layout && this.Layout.Master)
+        {
+            var oMaster     = this.Layout.Master;
+            var oLayoutCopy = this.Layout.createDuplicate();
+            
+            if (nPos < 0 || nPos > this.Layout.Master.sldLayoutLst.length || !nPos)
+                nPos = oMaster.sldLayoutLst.length;
+    
+            oMaster.addToSldLayoutLstToPos(nPos, oLayoutCopy);
+    
+            return new ApiLayout(oLayoutCopy);
+        }
+        return null;
+    };
+
+    /**
+     * Moves the specified object to a specific location within the same collection.
+     * @typeofeditors ["CPE"]
+     * @returns {bool} - returns false if layout or parent slide master doesn't exist or position is invalid. 
+     * */
+    ApiLayout.prototype.MoveTo = function(nPos){
+        if (!this.Layout || !this.Layout.Master)
+            return false;
+        if (nPos < 0 || nPos >= this.Layout.Master.sldLayoutLst.length)
+            return false;
+
+        for (var Index = 0; Index < this.Layout.Master.sldLayoutLst.length; Index++)
+        {
+            if (this.Layout.Id === this.Layout.Master.sldLayoutLst[Index].Id)
+            {
+                this.Layout.Master.moveLayouts([Index], nPos)
+                return true;
+            }
+        }
+    };
+
+    /**
+     * Gets the array with all drawing objects in slide layout.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiDrawing[]} 
+     * */
+    ApiLayout.prototype.GetAllDrawings = function(){
+        var apiDrawingObjects = [];
+        if (this.Layout)
+        {
+            var drawingObjects = this.Layout.cSld.spTree;
+            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
+                apiDrawingObjects.push(new ApiDrawing(drawingObjects[nObject]));
+        }
+           
+        return apiDrawingObjects;
+    };
+
+    /**
+     * Gets the array with all shape objects in slide layout.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiShape[]} 
+     * */
+    ApiLayout.prototype.GetAllShapes = function(){
+        var apiShapes = [];
+        if (this.Layout)
+        {
+            var drawingObjects = this.Layout.cSld.spTree;
+            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
+            {
+                if (drawingObjects[nObject].getObjectType() === AscDFH.historyitem_type_Shape)
+                apiShapes.push(new ApiShape(drawingObjects[nObject]));
+            }
+        }
+           
+        return apiShapes;
+    };
+
+    /**
+     * Gets the array with all image objects in slide layout.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiImage[]} 
+     * */
+    ApiLayout.prototype.GetAllImages = function(){
+        var apiImages = [];
+        if (this.Layout)
+        {
+            var drawingObjects = this.Layout.cSld.spTree;
+            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
+            {
+                if (drawingObjects[nObject].getObjectType() === AscDFH.historyitem_type_ImageShape)
+                apiImages.push(new ApiImage(drawingObjects[nObject]));
+            }
+        }
+           
+        return apiImages;
+    };
+
+    /**
+     * Gets the array with all chart objects in slide layout.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiChart[]} 
+     * */
+    ApiLayout.prototype.GetAllCharts = function(){
+        var apiCharts = [];
+        if (this.Layout)
+        {
+            var drawingObjects = this.Layout.cSld.spTree;
+            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
+            {
+                if (drawingObjects[nObject].getObjectType() === AscDFH.historyitem_type_ChartSpace)
+                apiCharts.push(new ApiChart(drawingObjects[nObject]));
+            }
+        }
+           
+        return apiCharts;
+    };
+
+    /**
+     * Gets parent slide master.
+     * @typeofeditors ["CPE"]
+     * @returns {?ApiMaster} - returns null if parent slide master doesn't exist.
+     * */
+    ApiLayout.prototype.GetMaster = function(){
+        if (this.Layout && this.Layout.Master)
+            return new ApiMaster(this.Layout.Master);
+           
+        return null;
+    };
+
+    //------------------------------------------------------------------------------------------------------------------
+    //
+    // ApiPlaceholder
+    //
+    //------------------------------------------------------------------------------------------------------------------
+
+    /**
+     * Get the type of this class.
+     * @typeofeditors ["CPE"]
+     * @returns {"placeholder"}
+     */
+    ApiPlaceholder.prototype.GetClassType = function()
+    {
+        return "placeholder";
+    };
+    /**
+     * Set the placeholder type.
+     * @typeofeditors ["CPE"]
+     * @param {string} sType - name of placeholder type.
+     * @returns {bool} - returns false if placeholder type doesn't exist.
+     */
+    ApiPlaceholder.prototype.SetType = function(sType)
+    {
+        var nType   = null;
+        switch (sType)
+        {
+            case "body":
+                nType = 0;
+                break;
+            case "chart":
+                nType = 1;
+                break;
+            case "clipArt":
+                nType = 2;
+                break;
+            case "ctrTitle":
+                nType = 3;
+                break;
+            case "diagram":
+                nType = 4;
+                break;
+            case "date":
+                nType = 5;
+                break;
+            case "footer":
+                nType = 6;
+                break;
+            case "header":
+                nType = 7;
+                break;
+            case "media":
+                nType = 8;
+                break;
+            case "object":
+                nType = 9;
+                break;
+            case "picture":
+                nType = 10;
+                break;
+            case "sldImage":
+                nType = 11;
+                break;
+            case "sldNumber":
+                nType = 12;
+                break;
+            case "subTitle":
+                nType = 13;
+                break;
+            case "table":
+                nType = 14;
+                break;
+            case "title":
+                nType = 15;
+                break;
+            default:
+                nType = 0;
+        }
+
+        this.Placeholder.setType(nType);
+    };
+
+    //------------------------------------------------------------------------------------------------------------------
+    //
+    // ApiTheme
+    //
+    //------------------------------------------------------------------------------------------------------------------
+
+    /**
+     * Get the type of this class.
+     * @typeofeditors ["CPE"]
+     * @returns {"theme"}
+     */
+    ApiTheme.prototype.GetClassType = function()
+    {
+        return "theme";
+    };
+
+    /**
+     * Get the slide master of this theme.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiMaster | null} - returns null if slide master doesn't exist.
+     */
+    ApiTheme.prototype.GetMaster = function()
+    {
+        if (this.ThemeInfo && this.ThemeInfo.Master)
+            return new ApiMaster(this.ThemeInfo.Master);
+
+        return null;
+    };
+
+    /**
+     * Sets the presentation color scheme.
+     * @typeofeditors ["CPE"]
+     * @param {ApiThemeColorScheme} oApiColorScheme
+     * @returns {bool} - return false if color scheme doesn't exist.
+     */
+    ApiTheme.prototype.SetColorScheme = function(oApiColorScheme)
+    {
+        if (oApiColorScheme && oApiColorScheme.GetClassType && oApiColorScheme.GetClassType() === "themeColorScheme")
+        {
+            this.ThemeInfo.Theme.themeElements.clrScheme = oApiColorScheme.ColorScheme;
+            return true;
+        }
+
+        return false;
+    };
+
+    /**
+     * Gets the presentation color scheme.
+     * @typeofeditors ["CPE"]
+     * @returns {?ApiThemeColorScheme}
+     */
+    ApiTheme.prototype.GetColorScheme = function()
+    {
+        if (this.ThemeInfo && this.ThemeInfo.Theme && this.ThemeInfo.Theme.themeElements)
+        {
+            return new ApiThemeColorScheme(this.ThemeInfo.Theme.themeElements.clrScheme);
+        }
+
+        return null;
+    };
+
+    /**
+     * Sets the presentation format scheme.
+     * @typeofeditors ["CPE"]
+     * @param {ApiThemeFormatScheme} oApiFormatScheme
+     * @returns {bool} - return false if format scheme doesn't exist.
+     */
+    ApiTheme.prototype.SetFormatScheme = function(oApiFormatScheme)
+    {
+        if (oApiFormatScheme && oApiFormatScheme.GetClassType && oApiFormatScheme.GetClassType() === "themeColorScheme")
+        {
+            this.ThemeInfo.Theme.themeElements.fmtScheme = oApiFormatScheme.FormatScheme;
+            return true;
+        }
+
+        return false;
+    };
+
+    /**
+     * Gets the presentation format scheme.
+     * @typeofeditors ["CPE"]
+     * @returns {?ApiThemeFormatScheme}
+     */
+    ApiTheme.prototype.GetFormatScheme = function()
+    {
+        if (this.ThemeInfo && this.ThemeInfo.Theme && this.ThemeInfo.Theme.themeElements)
+        {
+            return new ApiThemeFormatScheme(this.ThemeInfo.Theme.themeElements.fmtScheme);
+        }
+
+        return null;
+    };
+
+    /**
+     * Sets the presentation font scheme.
+     * @typeofeditors ["CPE"]
+     * @param {ApiThemeFontScheme} oApiFontScheme
+     * @returns {bool} - return false if font scheme doesn't exist.
+     */
+    ApiTheme.prototype.SetFontScheme = function(oApiFontScheme)
+    {
+        if (oApiFontScheme && oApiFontScheme.GetClassType && oApiFontScheme.GetClassType() === "themeColorScheme")
+        {
+            this.ThemeInfo.Theme.themeElements.fontScheme = oApiFontScheme.FontScheme;
+            return true;
+        }
+
+        return false;
+    };
+
+    /**
+     * Gets the presentation font scheme.
+     * @typeofeditors ["CPE"]
+     * @returns {?ApiThemeFontScheme}
+     */
+    ApiTheme.prototype.GetFontScheme = function()
+    {
+        if (this.ThemeInfo && this.ThemeInfo.Theme && this.ThemeInfo.Theme.themeElements)
+        {
+            return new ApiThemeFontScheme(this.ThemeInfo.Theme.themeElements.fontScheme);
+        }
+
+        return null;
+    };
+
+    //------------------------------------------------------------------------------------------------------------------
+    //
+    // ApiThemeColorScheme
+    //
+    //------------------------------------------------------------------------------------------------------------------
+
+    /**
+     * Gets the type of this class.
+     * @typeofeditors ["CPE"]
+     * @returns {"themeColorScheme"}
+     */
+    ApiThemeColorScheme.prototype.GetClassType = function()
+    {
+        return "themeColorScheme";
+    };
+
+    /**
+     * Sets the color scheme name.
+     * @typeofeditors ["CPE"]
+     * @param {string} sName
+     * @returns {bool}
+     */
+    ApiThemeColorScheme.prototype.SetSchemeName = function(sName)
+    {
+        if (typeof(sName) !== "string")
+            sName = "";
+
+        this.ColorScheme.setName(sName);
+    };
+
+    /**
+     * Change color in color scheme.
+     * @typeofeditors ["CPE"]
+     * @param {ApiUniColor | ApiRGBColor} oColor
+     * @returns {bool}
+     */
+    ApiThemeColorScheme.prototype.ChangeColor = function(nPos, oColor)
+    {
+        if (nPos < 0 || nPos > 12 || (oColor.GetClassType() !== "rgbColor" && oColor.GetClassType() !== "uniColor"))
+            return false;
+
+        if (nPos <= 5)
+            this.ColorScheme.addColor(nPos, oColor.Unicolor);
+        else if (nPos > 5)
+            this.ColorScheme.addColor(nPos + 2, oColor.Unicolor)
+
+        return true;
+    };
+
+    /**
+     * Creates a copy of the specified theme's color scheme.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiThemeColorScheme}
+     */
+    ApiThemeColorScheme.prototype.Copy = function()
+    {
+        return new ApiThemeColorScheme(this.ColorScheme.createDuplicate());
+    };
+
+    //------------------------------------------------------------------------------------------------------------------
+    //
+    // ApiThemeFormatScheme
+    //
+    //------------------------------------------------------------------------------------------------------------------
+
+    /**
+     * Get the type of this class.
+     * @typeofeditors ["CPE"]
+     * @returns {"formatColorScheme"}
+     */
+    ApiThemeFormatScheme.prototype.GetClassType = function()
+    {
+        return "themeFormatScheme";
+    };
+
+    /**
+     * Sets the format scheme name.
+     * @typeofeditors ["CPE"]
+     * @param {string} sName
+     * @returns {bool}
+     */
+    ApiThemeFormatScheme.prototype.SetSchemeName = function(sName)
+    {
+        if (typeof(sName) !== "string")
+            sName = "";
+
+        this.FormatScheme.setName(sName);
+    };
+
+    /**
+     * Sets the fill styles.
+     * @typeofeditors ["CPE"]
+     * @param {ApiFill[]} arrFill - the array of styles must contains 3 elements and consist of subtle, moderate and intense fills.
+     * If there are empty  or no ApiFill elements in the array, it will be filled by Api.CreateNoFill() element.
+     */
+    ApiThemeFormatScheme.prototype.ChangeFillStyles = function(arrFill)
+    {
+        if (!arrFill)
+            arrFill = [];
+
+        this.FormatScheme.fillStyleLst = [];
+
+        for (var nFill = 0; nFill < 3; nFill++)
+        {
+            if (arrFill[nFill] && arrFill[nFill].GetClassType() === "fill")
+                this.FormatScheme.addFillToStyleLst(arrFill[nFill].UniFill);
+            else 
+                this.FormatScheme.addFillToStyleLst(editor.CreateNoFill().UniFill);
+        }
+    };
+
+    /**
+     * Sets the background fill styles.
+     * @typeofeditors ["CPE"]
+     * @param {ApiFill[]} arrBgFill - the array of background fill styles must contains 3 elements and consist of subtle, moderate and intense fills.
+     * If there are empty or no ApiFill elements in the array, it will be filled by Api.CreateNoFill() element.
+     */
+    ApiThemeFormatScheme.prototype.ChangeBgFillStyles = function(arrBgFill)
+    {
+        if (!arrBgFill)
+            arrBgFill = [];
+
+        this.FormatScheme.bgFillStyleLst = [];
+
+        for (var nFill = 0; nFill < 3; nFill++)
+        {
+            if (arrBgFill[nFill] && arrBgFill[nFill].GetClassType() === "fill")
+                this.FormatScheme.addBgFillToStyleLst(arrBgFill[nFill].UniFill);
+            else 
+                this.FormatScheme.addBgFillToStyleLst(editor.CreateNoFill().UniFill);
+        }
+    };
+
+    /**
+     * Sets the line styles.
+     * @typeofeditors ["CPE"]
+     * @param {ApiStroke[]} arrLine - the array of line styles must contains 3 elements and consist of subtle, moderate and intense fills.
+     * If there are empty or no ApiStroke elements in the array, it will be filled by Api.CreateStroke(0, Api.CreateNoFill()) element.
+     */
+    ApiThemeFormatScheme.prototype.ChangeLineStyles = function(arrLine)
+    {
+        if (!arrLine)
+            arrLine = [];
+
+        this.FormatScheme.lnStyleLst = [];
+
+        for (var nLine = 0; nLine < 3; nLine++)
+        {
+            if (arrLine[nLine] && arrLine[nLine].GetClassType() === "stroke")
+                this.FormatScheme.addLnToStyleLst(arrLine[nLine].Ln);
+            else 
+                this.FormatScheme.addLnToStyleLst(editor.CreateStroke(0, editor.CreateNoFill()).Ln);
+        }
+    };
+
+    /**
+     * **Need to do**
+     * Sets the effect styles.
+     * @typeofeditors ["CPE"]
+     * @param {?[]} arrEffect - the array of line styles must contains 3 elements and consist of subtle, moderate and intense fills.
+     * If there are empty or no ApiStroke elements in the array, it will be filled by Api.CreateStroke(0, Api.CreateNoFill()) element.
+     * @returns {bool}
+     */
+    ApiThemeFormatScheme.prototype.ChangeEffectStyles = function(arrEffect)
+    {
+        // if (!arrEffect)
+            // arrEffect = [];
+
+        // this.FormatScheme.effectStyleLst = [];
+
+        // for (var nFill = 0; nFill < 3; nFill++)
+        // {
+        //     if (arrEffect[nFill] && arrEffect[nFill].GetClassType() === "stroke")
+        //         this.FormatScheme.addEffectToStyleLst(arrEffect[nFill].UniFill);
+        //     else 
+        //         this.FormatScheme.addEffectToStyleLst(editor.CreateNoFill().UniFill);
+        // }
+
+        // return true;
+    };
+
+    /**
+     * Creates a copy of the specified theme's format scheme.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiThemeFormatScheme}
+     */
+    ApiThemeFormatScheme.prototype.Copy = function()
+    {
+        return new ApiThemeFormatScheme(this.FormatScheme.createDuplicate());
+    };
+
+    //------------------------------------------------------------------------------------------------------------------
+    //
+    // ApiThemeFontScheme
+    //
+    //------------------------------------------------------------------------------------------------------------------
+
+    /**
+     * Get the type of this class.
+     * @typeofeditors ["CPE"]
+     * @returns {"fontScheme"}
+     */
+    ApiThemeFontScheme.prototype.GetClassType = function()
+    {
+        return "themeFontScheme";
+    };
+    
+    /**
+     * Sets the scheme's name.
+     * @typeofeditors ["CPE"]
+     * @param {string} sName
+     * @returns {bool} - returns false if font scheme doesn't exist.
+     */
+    ApiThemeFontScheme.prototype.SetSchemeName = function(sName)
+    {
+        if (typeof(sName) !== "string")
+            sName = "";
+
+        if (this.FontScheme)
+        {
+            this.FontScheme.setName(sName);
+            return true;
+        }
+        else 
+            return false;
+    };
+
+    /**
+     * Sets the fonts for font scheme.
+     * @typeofeditors ["CPE"]
+     * @memberof Api
+     * @param {string} mjLatin - Font's name. Is used to determine the major theme font applied to latit text.
+     * @param {string} mjEa - Font's name. Is used to determine the major theme font applied to east asian text.
+     * @param {string} mjCs - Font's name. Is used to determine the major theme font applied to complex script text.
+     * @param {string} mnLatin - Font's name. Is used to determine the minor theme font applied to latit text.
+     * @param {string} mnEa - Font's name. Is used to determine the minor theme font applied to east asian text.
+     * @param {string} mnCs - Font's name. Is used to determine the minor theme font applied to complex script text.
+     */
+    ApiThemeFontScheme.prototype.SetFonts = function(mjLatin, mjEa, mjCs, mnLatin, mnEa, mnCs){
+        
+        var oMajorFontCollection = this.FontScheme.majorFont;
+        var oMinorFontCollection = this.FontScheme.minorFont;
+
+        if (typeof(mjLatin) === "string")
+            oMajorFontCollection.setLatin(mjLatin);
+        if (typeof(mjEa) === "string")
+            oMajorFontCollection.setEA(mjEa);
+        if (typeof(mjCs) === "string")
+            oMajorFontCollection.setCS(mjCs);
+
+        if (typeof(mnLatin) === "string")
+            oMinorFontCollection.setLatin(mnLatin);
+        if (typeof(mnEa) === "string")
+            oMinorFontCollection.setEA(mnEa);
+        if (typeof(mnCs) === "string")
+            oMinorFontCollection.setCS(mnCs);
+    };
+
+    /**
+     * Creates a copy of the specified theme's font scheme.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiThemeFontScheme}
+     */
+    ApiThemeFontScheme.prototype.Copy = function()
+    {
+        return new ApiThemeFontScheme(this.FontScheme.createDuplicate());
+    };
+    
     //------------------------------------------------------------------------------------------------------------------
     //
     // ApiSlide
@@ -597,7 +2141,6 @@
     {
         return "slide";
     };
-
 
     /**
      * Remove all the objects from the current slide.
@@ -618,12 +2161,43 @@
      * @typeofeditors ["CPE"]
      * @memberof ApiSlide
      * @param {ApiDrawing} oDrawing - The object which will be added to the current presentation slide.
+     * @returns {bool} - returns false if slide doesn't exist.
      */
     ApiSlide.prototype.AddObject = function(oDrawing){
         if(this.Slide){
             oDrawing.Drawing.setParent(this.Slide);
-            this.Slide.shapeAdd(undefined, oDrawing.Drawing);
+            this.Slide.shapeAdd(this.Slide.cSld.spTree.length, oDrawing.Drawing);
+            editor.private_checkPlaceholders(this, oDrawing.GetPlaceholder());
+
+            return true;
         }
+
+        return false;
+    };
+
+    /**
+     * Removes objects (image, shape or chart) from the current slide.
+     * @typeofeditors ["CPE"]
+     * @memberof ApiSlide
+     * @param {number} nPos - position from which to delete
+     * @param {number} [nCount = 1] - count of elements for delete. 
+     * @returns {bool} - returns false if slide doesn't exist or pos is invalid or slide haven't objects.
+     */
+    ApiSlide.prototype.RemoveObject = function(nPos, nCount)
+    {
+        if (this.Slide && this.Slide.cSld.spTree.length > 0)
+        {
+            if (nPos >= 0 && nPos < this.Slide.cSld.spTree.length)
+            {
+                if (!nCount || nCount <= 0 || nCount > this.Slide.cSld.spTree.length)
+                    nCount = 1;
+
+                this.Slide.shapeRemove(nPos, nCount);
+                return true;
+            }
+        }
+        
+        return false;
     };
 
     /**
@@ -633,14 +2207,13 @@
      * @param {ApiFill} oApiFill - The color or pattern used to fill the presentation slide background.
      * */
     ApiSlide.prototype.SetBackground = function(oApiFill){
-        if(this.Slide){
+        if(oApiFill && oApiFill.GetClassType && oApiFill.GetClassType() === "fill" && this.Slide){
             var bg       = new AscFormat.CBg();
             bg.bgPr      = new AscFormat.CBgPr();
             bg.bgPr.Fill = oApiFill.UniFill;
             this.Slide.changeBackground(bg);
         }
     };
-
 
     /**
      * Get the slide width in English measure units.
@@ -666,6 +2239,423 @@
         return 0;
     };
 
+    /**
+     * Applies specified layout to the slide.
+     * @typeofeditors ["CPE"]
+     * @param {ApiLayout} oLayout
+     * @returns {bool} - returns false if slide doesn't exist.
+     * */
+    ApiSlide.prototype.ApplyLayout = function(oLayout){
+        if (!this.Slide)
+            return false;
+
+        this.RemoveAllObjects();
+        this.Slide.setLayout(oLayout.Layout);
+
+        var oPresentation = editor.GetPresentation().Presentation;
+        var layout, i, _ph_type, sp, hf, bIsSpecialPh;
+
+        layout = oLayout.Layout;
+        hf = oLayout.Layout.Master.hf;
+        this.Slide.setNotes(AscCommonSlide.CreateNotes());
+        this.Slide.notes.setNotesMaster(oPresentation.notesMasters[0]);
+        this.Slide.notes.setSlide(this.Slide);
+        for (i = 0; i < layout.cSld.spTree.length; ++i) {
+            if (layout.cSld.spTree[i].isPlaceholder()) {
+                _ph_type = layout.cSld.spTree[i].getPhType();
+                bIsSpecialPh = _ph_type === AscFormat.phType_dt || _ph_type === AscFormat.phType_ftr || _ph_type === AscFormat.phType_hdr || _ph_type === AscFormat.phType_sldNum;
+                if (!bIsSpecialPh || hf && ((_ph_type === AscFormat.phType_dt && (hf.dt !== false)) ||
+                    (_ph_type === AscFormat.phType_ftr && (hf.ftr !== false)) ||
+                    (_ph_type === AscFormat.phType_hdr && (hf.hdr !== false)) ||
+                    (_ph_type === AscFormat.phType_sldNum && (hf.sldNum !== false)))) {
+                    sp = layout.cSld.spTree[i].copy(undefined);
+                    sp.setParent(this.Slide);
+                    !bIsSpecialPh && sp.clearContent && sp.clearContent();
+                    this.Slide.addToSpTreeToPos(this.Slide.cSld.spTree.length, sp);
+                }
+            }
+        }
+        this.Slide.setSlideSize(oPresentation.Width, oPresentation.Height);
+
+        return true;
+    };
+
+    /**
+     * Deletes the specified slide from presentation.
+     * @typeofeditors ["CPE"]
+     * @returns {bool} - returns false if slide doesn't exist or not in presentation.
+     * */
+    ApiSlide.prototype.Delete = function(){
+        if (!this.Slide)
+            return false;
+        
+        var oPresentation = editor.GetPresentation().Presentation;
+        var nPosToDelete  = this.GetSlideIndex();
+
+        if (nPosToDelete > -1)
+        {
+            oPresentation.removeSlide(nPosToDelete);
+            return true;
+        }
+
+        return false;
+    };
+
+    /**
+     * Creates a copy of the specified slide object.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiSlide | null} - returns new ApiSlide object that represents the duplicate slide. 
+     * Returns null if slide doesn't exist.
+     * */
+    ApiSlide.prototype.Copy = function(){
+        if (!this.Slide)
+            return null;
+        
+        var oSlideCopy = this.Slide.createDuplicate();
+        return new ApiSlide(oSlideCopy);
+    };
+
+    /**
+     * Creates a duplicate of the specified slide object, adds the new slide to the slides collection.
+     * @typeofeditors ["CPE"]
+     * @param {number} [nPos    = ApiPresentation.GetSlidesCount()]
+     * @returns {ApiSlide | null} - returns new ApiSlide object that represents the duplicate slide. 
+     * Returns null if slide doesn't exist or not in presentation.
+     * */
+    ApiSlide.prototype.Duplicate = function(nPos){
+        if (!this.Slide)
+            return null;
+        
+        var oPresentation = editor.GetPresentation().Presentation;
+        var oSlideCopy    = this.Slide.createDuplicate();
+        
+        if (nPos < 0 || nPos > oPresentation.Slides.length || !nPos)
+            nPos = oPresentation.Slides.length;
+
+        oPresentation.insertSlide(nPos, oSlideCopy);
+
+        return new ApiSlide(oSlideCopy);
+    };
+
+    /**
+     * Moves the specified slide to a specific location within the same collection.
+     * @typeofeditors ["CPE"]
+     * @returns {bool} - returns false if slide doesn't exist or position is invalid or slide not in presentation.  
+     * */
+    ApiSlide.prototype.MoveTo = function(nPos){
+        var oPresentation = editor.GetPresentation().Presentation;
+
+        if (!this.Slide || nPos < 0 || nPos > oPresentation.Slides.length)
+            return false;
+
+        for (var Index = 0; Index < oPresentation.Slides.length; Index++)
+        {
+            if (this.Slide.Id === oPresentation.Slides[Index].Id)
+            {
+                oPresentation.moveSlides([Index], nPos)
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    /**
+     * Gets the positions of the spicified slide in a presentation.
+     * @typeofeditors ["CPE"]
+     * @returns {number} - returns -1 if slide doesn't exist or not in presentation.  
+     * */
+    ApiSlide.prototype.GetSlideIndex = function (){
+        if (!this.Slide)
+            return -1;
+        
+        var oPresentation = editor.GetPresentation().Presentation;
+
+        for (var Index = 0; Index < oPresentation.Slides.length; Index++)
+        {
+            if (this.Slide.Id === oPresentation.Slides[Index].Id)
+            {
+                return Index;
+            }
+        }
+
+        return -1;
+    };
+
+    /**
+     * Clears the slide background.
+     * @typeofeditors ["CPE"]
+     * @returns {bool} - return false if slide does'n exist.
+     * */
+    ApiSlide.prototype.ClearBackground = function(){
+        if (!this.Slide)
+            return false;
+        
+        var apiNoFill = editor.CreateNoFill();
+        var bg        = new AscFormat.CBg();
+        bg.bgPr       = new AscFormat.CBgPr();
+        bg.bgPr.Fill  = apiNoFill.UniFill;
+        this.Slide.changeBackground(bg);
+
+        return true;
+    };
+
+    /**
+     * Sets the slide background as the background of slide layout. 
+     * @typeofeditors ["CPE"]
+     * @returns {bool} - returns false if layout is null or layout haven't background or slide does'n exist. 
+     * */
+    ApiSlide.prototype.FollowLayoutBackground = function(){
+        if (!this.Slide)
+            return false;
+        
+        var Layout = this.Slide.Layout;
+
+        if (Layout && Layout.cSld.Bg)
+        {
+            this.Slide.changeBackground(Layout.cSld.Bg);
+            return true;
+        }
+        else 
+            return false;
+    };
+
+    /**
+     * Sets the slide background as the background of slide master. 
+     * @typeofeditors ["CPE"]
+     * @returns {bool} - returns false if master is null or master haven't background or slide does'n exist.  
+     * */
+    ApiSlide.prototype.FollowMasterBackground = function(){
+        if (!this.Slide)
+            return false;
+        
+        var oMaster = this.Slide.Layout.Master;
+
+        if (oMaster && oMaster.cSld.Bg)
+        {
+            this.Slide.changeBackground(oMaster.cSld.Bg);
+            return true;
+        }
+        else 
+            return false;
+    };
+
+    /**
+     * Applies a specified theme to the slide.
+     * @typeofeditors ["CPE"]
+     * @param {ApiTheme} oApiTheme
+     * @returns {bool} - returns false if master is null or master haven't background.  
+     * */
+    ApiSlide.prototype.ApplyTheme = function(oApiTheme){
+        if (!this.Slide || !oApiTheme || !oApiTheme.GetClassType ||oApiTheme.GetClassType() !== "theme")
+            return false;
+
+        var oPresentation = editor.GetPresentation().Presentation;
+        var i;
+    
+        oPresentation.clearThemeTimeouts();
+        for (i = 0; i < oPresentation.slideMasters.length; ++i) {
+            if (oPresentation.slideMasters[i] === oApiTheme.ThemeInfo.Master) {
+                break;
+            }
+        }
+        if (i === oPresentation.slideMasters.length) {
+            oPresentation.addSlideMaster(oPresentation.slideMasters.length, oApiTheme.ThemeInfo.Master);
+        }
+        var oldMaster = this.Slide && this.Slide.Layout && this.Slide.Layout.Master;
+        var _new_master = oApiTheme.ThemeInfo.Master;
+        _new_master.presentation = oPresentation;
+        oApiTheme.ThemeInfo.Master.changeSize(oPresentation.Width, oPresentation.Height);
+        var oContent, oMasterSp, oMasterContent, oSp;
+        if (oldMaster && oldMaster.hf) {
+            oApiTheme.ThemeInfo.Master.setHF(oldMaster.hf.createDuplicate());
+            if (oldMaster.hf.dt !== false) {
+                oMasterSp = oldMaster.getMatchingShape(AscFormat.phType_dt, null, false, {});
+                if (oMasterSp) {
+                    oMasterContent = oMasterSp.getDocContent && oMasterSp.getDocContent();
+                    if (oMasterContent) {
+                        oSp = oApiTheme.ThemeInfo.Master.getMatchingShape(AscFormat.phType_dt, null, false, {});
+                        if (oSp) {
+                            oContent = oSp.getDocContent && oSp.getDocContent();
+                            oContent.Copy2(oMasterContent);
+                        }
+                        for (i = 0; i < oApiTheme.ThemeInfo.Master.sldLayoutLst.length; ++i) {
+                            oSp = oApiTheme.ThemeInfo.Master.sldLayoutLst[i].getMatchingShape(AscFormat.phType_dt, null, false, {});
+                            if (oSp) {
+                                oContent = oSp.getDocContent && oSp.getDocContent();
+                                oContent.Copy2(oMasterContent);
+                            }
+                        }
+                    }
+                }
+            }
+            if (oldMaster.hf.hdr !== false) {
+                oMasterSp = oldMaster.getMatchingShape(AscFormat.phType_hdr, null, false, {});
+                if (oMasterSp) {
+                    oMasterContent = oMasterSp.getDocContent && oMasterSp.getDocContent();
+                    if (oMasterContent) {
+                        oSp = oApiTheme.ThemeInfo.Master.getMatchingShape(AscFormat.phType_hdr, null, false, {});
+                        if (oSp) {
+                            oContent = oSp.getDocContent && oSp.getDocContent();
+                            oContent.Copy2(oMasterContent);
+                        }
+                        for (i = 0; i < oApiTheme.ThemeInfo.Master.sldLayoutLst.length; ++i) {
+                            oSp = oApiTheme.ThemeInfo.Master.sldLayoutLst[i].getMatchingShape(AscFormat.phType_hdr, null, false, {});
+                            if (oSp) {
+                                oContent = oSp.getDocContent && oSp.getDocContent();
+                                oContent.Copy2(oMasterContent);
+                            }
+                        }
+                    }
+                }
+            }
+            if (oldMaster.hf.ftr !== false) {
+                oMasterSp = oldMaster.getMatchingShape(AscFormat.phType_ftr, null, false, {});
+                if (oMasterSp) {
+                    oMasterContent = oMasterSp.getDocContent && oMasterSp.getDocContent();
+                    if (oMasterContent) {
+                        oSp = oApiTheme.ThemeInfo.Master.getMatchingShape(AscFormat.phType_ftr, null, false, {});
+                        if (oSp) {
+                            oContent = oSp.getDocContent && oSp.getDocContent();
+                            oContent.Copy2(oMasterContent);
+                        }
+                        for (i = 0; i < oApiTheme.ThemeInfo.Master.sldLayoutLst.length; ++i) {
+                            oSp = oApiTheme.ThemeInfo.Master.sldLayoutLst[i].getMatchingShape(AscFormat.phType_ftr, null, false, {});
+                            if (oSp) {
+                                oContent = oSp.getDocContent && oSp.getDocContent();
+                                oContent.Copy2(oMasterContent);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        for (i = 0; i < oApiTheme.ThemeInfo.Master.sldLayoutLst.length; ++i) {
+            oApiTheme.ThemeInfo.Master.sldLayoutLst[i].changeSize(oPresentation.Width, oPresentation.Height);
+        }
+        
+        var new_layout;
+      
+        if (this.Slide.Layout.calculatedType == null) {
+            this.Slide.Layout.calculateType();
+        }
+        new_layout = _new_master.getMatchingLayout(this.Slide.Layout.type, this.Slide.Layout.matchingName, this.Slide.Layout.cSld.name, true);
+        if (!isRealObject(new_layout)) {
+            new_layout = _new_master.sldLayoutLst[0];
+        }
+        this.Slide.setLayout(new_layout);
+        this.Slide.checkNoTransformPlaceholder();
+
+        return true;
+    };
+
+    /**
+     * Gets layout of the slide.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiLayout | null} - returns null if slide or layout doesn't exist. 
+     * */
+    ApiSlide.prototype.GetLayout = function(){
+        if (this.Slide && this.Slide.Layout)
+            return new ApiLayout(this.Slide.Layout);
+           
+        return null;
+    };
+
+    /**
+     * Gets the theme of slide.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiTheme} - returns null if slide or layout or master or theme doesn't exist.
+     * */
+    ApiSlide.prototype.GetTheme = function(){
+        if (this.Slide && this.Slide.Layout && this.Slide.Layout.Master && this.Slide.Layout.Master.Theme)
+        {
+            var oThemeLoadInfo     = new AscCommonSlide.CThemeLoadInfo();
+            oThemeLoadInfo.Master  = this.Slide.Layout.Master;
+            oThemeLoadInfo.Layouts = this.Slide.Layout.Master.sldLayoutLst;
+            oThemeLoadInfo.Theme   = this.Slide.Layout.Master.Theme;
+
+            return new ApiTheme(oThemeLoadInfo);
+        }
+           
+        return null;
+    };
+
+    /**
+     * Gets the array with all drawing objects in slide.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiDrawing[]} 
+     * */
+    ApiSlide.prototype.GetAllDrawings = function(){
+        var apiDrawingObjects = [];
+        if (this.Slide)
+        {
+            var drawingObjects = this.Slide.getDrawingObjects();
+            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
+                apiDrawingObjects.push(new ApiDrawing(drawingObjects[nObject]));
+        }
+           
+        return apiDrawingObjects;
+    };
+
+    /**
+     * Gets the array with all shape objects in slide.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiShape[]} 
+     * */
+    ApiSlide.prototype.GetAllShapes = function(){
+        var apiShapes = [];
+        if (this.Slide)
+        {
+            var drawingObjects = this.Slide.getDrawingObjects();
+            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
+            {
+                if (drawingObjects[nObject].getObjectType() === AscDFH.historyitem_type_Shape)
+                apiShapes.push(new ApiShape(drawingObjects[nObject]));
+            }
+        }
+           
+        return apiShapes;
+    };
+
+    /**
+     * Gets the array with all image objects in slide.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiImage[]} 
+     * */
+    ApiSlide.prototype.GetAllImages = function(){
+        var apiImages = [];
+        if (this.Slide)
+        {
+            var drawingObjects = this.Slide.getDrawingObjects();
+            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
+            {
+                if (drawingObjects[nObject].getObjectType() === AscDFH.historyitem_type_ImageShape)
+                apiImages.push(new ApiImage(drawingObjects[nObject]));
+            }
+        }
+           
+        return apiImages;
+    };
+
+    /**
+     * Gets the array with all chart objects in slide.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiChart[]} 
+     * */
+    ApiSlide.prototype.GetAllCharts = function(){
+        var apiCharts = [];
+        if (this.Slide)
+        {
+            var drawingObjects = this.Slide.getDrawingObjects();
+            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
+            {
+                if (drawingObjects[nObject].getObjectType() === AscDFH.historyitem_type_ChartSpace)
+                apiCharts.push(new ApiChart(drawingObjects[nObject]));
+            }
+        }
+           
+        return apiCharts;
+    };
 
     //------------------------------------------------------------------------------------------------------------------
     //
@@ -713,6 +2703,204 @@
         }
     };
 
+    /**
+     * Gets the parent of drawing.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiSlide | ApiLayout | ApiMaster | null}
+     */
+    ApiDrawing.prototype.GetParent = function()
+    {
+        if (this.Drawing && this.Drawing.parent)
+        {
+            switch(this.Drawing.parent.getObjectType())
+            {
+                case AscDFH.historyitem_type_Slide:
+                    return new ApiSlide(this.Drawing.parent);
+                case AscDFH.historyitem_type_SlideLayout:
+                    return new ApiLayout(this.Drawing.parent);
+                case AscDFH.historyitem_type_SlideMaster:
+                    return new ApiMaster(this.Drawing.parent);
+            }
+        }
+
+        return null;
+    };
+    
+    /**
+     * Gets the parent slide.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiSlide | null} - return null if parent ins't slide.
+     */
+    ApiDrawing.prototype.GetParentSlide = function()
+    {
+        if (this.Drawing && this.Drawing.parent && this.Drawing.parent.getObjectType() === AscDFH.historyitem_type_Slide)
+        {
+            return new ApiSlide(this.Drawing.parent);
+        }
+
+        return null;
+    };
+
+    /**
+     * Gets the parent slide layout.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiLayout | null} - return null if parent ins't slide layout.
+     */
+    ApiDrawing.prototype.GetParentLayout = function()
+    {
+        if (this.Drawing && this.Drawing.parent && this.Drawing.parent.getObjectType() === AscDFH.historyitem_type_SlideLayout)
+        {
+            return new ApiLayout(this.Drawing.parent);
+        }
+
+        return null;
+    };
+
+    /**
+     * Gets the parent slide master.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiMaster | null} - return null if parent ins't slide master.
+     */
+    ApiDrawing.prototype.GetParentMaster = function()
+    {
+        if (this.Drawing && this.Drawing.parent && this.Drawing.parent.getObjectType() === AscDFH.historyitem_type_SlideMaster)
+        {
+            return new ApiMaster(this.Drawing.parent);
+        }
+
+        return null;
+    };
+
+    /**
+     * Creates a copy of specified drawing object.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiDrawing} - return null if drawing doesn't exist.
+     */
+    ApiDrawing.prototype.Copy = function()
+    {
+        if (this.Drawing)
+            return new ApiDrawing(this.Drawing.copy());
+
+        return null;
+    };
+
+    /**
+     * Deletes the specified drawing object from parent.
+     * @typeofeditors ["CPE"]
+     * @returns {bool} - false if drawing doesn't exist or drawing haven't parent.
+     */
+    ApiDrawing.prototype.Delete = function()
+    {
+        var oParent = this.GetParent();
+        if (this.Drawing && oParent)
+        {
+            var drawingObjects = oParent.GetAllDrawings();
+            for (var nDrawing = 0; nDrawing < drawingObjects.length; nDrawing++)
+            {
+                if (this.Drawing.Id === drawingObjects[nDrawing].Drawing.Id)
+                {
+                    oParent.RemoveObject(nDrawing, 1);
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    };
+
+    /**
+     * Sets the specified placeholder to the shape.
+     * @typeofeditors ["CPE"]
+     * @param {ApiPlaceholder} oPlaceholder - The type of the vertical alignment for the shape inner contents.
+     * @returns {bool} - returns false if param doesn't placeholder.
+     */
+    ApiDrawing.prototype.SetPlaceholder = function(oPlaceholder)
+    {
+        if (!this.Drawing || !oPlaceholder || !oPlaceholder.GetClassType || !oPlaceholder.GetClassType() === "placeholder")
+            return false;
+
+        var drawingNvPr = null;
+
+        var drawingParent       = this.GetParent();
+        var allDrawingsInParent = null;
+
+        editor.private_checkDrawingUniNvPr(this);
+
+        switch (this.Drawing.getObjectType())
+        {
+            case AscDFH.historyitem_type_ChartSpace:
+            case AscDFH.historyitem_type_GraphicFrame:
+                drawingNvPr = this.Drawing.nvGraphicFramePr.nvPr;
+                break;
+            case AscDFH.historyitem_type_GroupShape:
+                drawingNvPr = this.Drawing.nvGrpSpPr;
+                break;
+            case AscDFH.historyitem_type_ImageShape:
+            case AscDFH.historyitem_type_OleObject:
+                drawingNvPr = this.Drawing.nvPicPr.nvPr;
+                break;
+            case AscDFH.historyitem_type_Shape:
+            case AscDFH.historyitem_type_Cnx:
+                drawingNvPr = this.Drawing.nvSpPr.nvPr;
+                break;
+        }
+
+        if (!drawingNvPr)
+            return false;
+
+        drawingNvPr.setPh(oPlaceholder.Placeholder);
+        if (drawingParent)
+        {
+            allDrawingsInParent = drawingParent.GetAllDrawings();
+            for (var nDrawing = 0; nDrawing < allDrawingsInParent.length; nDrawing++)
+            {
+                if (allDrawingsInParent[nDrawing].Drawing.Id === this.Drawing.Id)
+                {
+                    editor.private_checkPlaceholders(drawingParent, oPlaceholder);
+                    break;
+                }
+            }
+        }
+
+        return true;
+    };
+
+    /**
+     * Gets the placeholder of the specified shape.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiPlaceholder | null} - returns null if placeholder doesn't exist.
+     */
+    ApiDrawing.prototype.GetPlaceholder = function()
+    {
+        var oPh = null;
+
+        if (this.Drawing)
+        {
+            editor.private_checkDrawingUniNvPr(this);
+            switch (this.Drawing.getObjectType())
+            {
+                case AscDFH.historyitem_type_ChartSpace:
+                case AscDFH.historyitem_type_GraphicFrame:
+                    oPh = this.Drawing.nvGraphicFramePr.nvPr.ph;
+                    break;
+                case AscDFH.historyitem_type_GroupShape:
+                    oPh = this.Drawing.nvGrpSpPr.ph;
+                case AscDFH.historyitem_type_ImageShape:
+                case AscDFH.historyitem_type_OleObject:
+                    oPh = this.Drawing.nvPicPr.nvPr.ph;
+                    break;
+                case AscDFH.historyitem_type_Shape:
+                case AscDFH.historyitem_type_Cnx:
+                    oPh = this.Drawing.nvSpPr.nvPr.ph;
+                    break;
+            }
+        }
+
+        if (oPh)
+            return new ApiPlaceholder(oPh);
+
+        return null;
+    };
 
     //------------------------------------------------------------------------------------------------------------------
     //
@@ -1645,97 +3833,198 @@
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Export
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    Api.prototype["GetPresentation"]                 = Api.prototype.GetPresentation;
-    Api.prototype["CreateSlide"]                     = Api.prototype.CreateSlide;
-    Api.prototype["CreateImage"]                     = Api.prototype.CreateImage;
-    Api.prototype["CreateShape"]                     = Api.prototype.CreateShape;
-    Api.prototype["CreateChart"]                     = Api.prototype.CreateChart;
-    Api.prototype["CreateGroup"]                     = Api.prototype.CreateGroup;
-    Api.prototype["CreateTable"]                     = Api.prototype.CreateTable;
-    Api.prototype["CreateParagraph"]                 = Api.prototype.CreateParagraph;
-    Api.prototype["Save"]                            = Api.prototype.Save;
+    Api.prototype["GetPresentation"]                      = Api.prototype.GetPresentation;
+    Api.prototype["CreateSlide"]                          = Api.prototype.CreateSlide;
+    Api.prototype["CreateImage"]                          = Api.prototype.CreateImage;
+    Api.prototype["CreateShape"]                          = Api.prototype.CreateShape;
+    Api.prototype["CreateChart"]                          = Api.prototype.CreateChart;
+    Api.prototype["CreateGroup"]                          = Api.prototype.CreateGroup;
+    Api.prototype["CreateTable"]                          = Api.prototype.CreateTable;
+    Api.prototype["CreateParagraph"]                      = Api.prototype.CreateParagraph;
+    Api.prototype["Save"]                                 = Api.prototype.Save;
+    Api.prototype["CreateMaster"]                         = Api.prototype.CreateMaster;
+    Api.prototype["CreateLayout"]                         = Api.prototype.CreateLayout;
+    Api.prototype["CreatePlaceholder"]                    = Api.prototype.CreatePlaceholder;
+    Api.prototype["CreateTheme"]                          = Api.prototype.CreateTheme;
+    Api.prototype["CreateThemeColorScheme"]               = Api.prototype.CreateThemeColorScheme;
+    Api.prototype["CreateThemeFormatScheme"]              = Api.prototype.CreateThemeFormatScheme;
+    Api.prototype["CreateThemeFontScheme"]                = Api.prototype.CreateThemeFontScheme;
 
-    ApiPresentation.prototype["GetClassType"]          = ApiPresentation.prototype.GetClassType;
-    ApiPresentation.prototype["GetCurSlideIndex"]      = ApiPresentation.prototype.GetCurSlideIndex;
-    ApiPresentation.prototype["GetSlideByIndex"]       = ApiPresentation.prototype.GetSlideByIndex;
-    ApiPresentation.prototype["GetCurrentSlide"]       = ApiPresentation.prototype.GetCurrentSlide;
-    ApiPresentation.prototype["AddSlide"]              = ApiPresentation.prototype.AddSlide;
-    ApiPresentation.prototype["CreateNewHistoryPoint"] = ApiPresentation.prototype.CreateNewHistoryPoint;
-    ApiPresentation.prototype["SetSizes"]              = ApiPresentation.prototype.SetSizes;
-    ApiPresentation.prototype["ReplaceCurrentImage"]   = ApiPresentation.prototype.ReplaceCurrentImage;
+    ApiPresentation.prototype["GetClassType"]             = ApiPresentation.prototype.GetClassType;
+    ApiPresentation.prototype["GetCurSlideIndex"]         = ApiPresentation.prototype.GetCurSlideIndex;
+    ApiPresentation.prototype["GetSlideByIndex"]          = ApiPresentation.prototype.GetSlideByIndex;
+    ApiPresentation.prototype["GetCurrentSlide"]          = ApiPresentation.prototype.GetCurrentSlide;
+    ApiPresentation.prototype["AddSlide"]                 = ApiPresentation.prototype.AddSlide;
+    ApiPresentation.prototype["CreateNewHistoryPoint"]    = ApiPresentation.prototype.CreateNewHistoryPoint;
+    ApiPresentation.prototype["SetSizes"]                 = ApiPresentation.prototype.SetSizes;
+    ApiPresentation.prototype["ReplaceCurrentImage"]      = ApiPresentation.prototype.ReplaceCurrentImage;
+    ApiPresentation.prototype["GetSlidesCount"]           = ApiPresentation.prototype.GetSlidesCount;
+    ApiPresentation.prototype["GetMastersCount"]          = ApiPresentation.prototype.GetMastersCount;
+    ApiPresentation.prototype["GetMaster"]                = ApiPresentation.prototype.GetMaster;
+    ApiPresentation.prototype["AddMaster"]                = ApiPresentation.prototype.AddMaster;
+    ApiPresentation.prototype["ApplyTheme"]               = ApiPresentation.prototype.ApplyTheme;
 
-    ApiSlide.prototype["GetClassType"]               = ApiSlide.prototype.GetClassType;
-    ApiSlide.prototype["RemoveAllObjects"]           = ApiSlide.prototype.RemoveAllObjects;
-    ApiSlide.prototype["AddObject"]                  = ApiSlide.prototype.AddObject;
-    ApiSlide.prototype["SetBackground"]              = ApiSlide.prototype.SetBackground;
-    ApiSlide.prototype["GetWidth"]                   = ApiSlide.prototype.GetWidth;
-    ApiSlide.prototype["GetHeight"]                  = ApiSlide.prototype.GetHeight;
+    ApiMaster.prototype["GetClassType"]                   = ApiMaster.prototype.GetClassType;
+    ApiMaster.prototype["GetLayout"]                      = ApiMaster.prototype.GetLayout;
+    ApiMaster.prototype["AddLayout"]                      = ApiMaster.prototype.AddLayout;
+    ApiMaster.prototype["RemoveLayout"]                   = ApiMaster.prototype.RemoveLayout;
+    ApiMaster.prototype["GetLayoutsCount"]                = ApiMaster.prototype.GetLayoutsCount;
+    ApiMaster.prototype["AddObject"]                      = ApiMaster.prototype.AddObject;
+    ApiMaster.prototype["RemoveObject"]                   = ApiMaster.prototype.RemoveObject;
+    ApiMaster.prototype["SetBackground"]                  = ApiMaster.prototype.SetBackground;
+    ApiMaster.prototype["ClearBackground"]                = ApiMaster.prototype.ClearBackground;
+    ApiMaster.prototype["Copy"]                           = ApiMaster.prototype.Copy;
+    ApiMaster.prototype["Duplicate"]                      = ApiMaster.prototype.Duplicate;
+    ApiMaster.prototype["Delete"]                         = ApiMaster.prototype.Delete;
+    ApiMaster.prototype["GetTheme"]                       = ApiMaster.prototype.GetTheme;
+    ApiMaster.prototype["SetTheme"]                       = ApiMaster.prototype.SetTheme;
+    ApiMaster.prototype["GetAllDrawings"]                 = ApiMaster.prototype.GetAllDrawings;
+    ApiMaster.prototype["GetAllShapes"]                   = ApiMaster.prototype.GetAllShapes;
+    ApiMaster.prototype["GetAllImages"]                   = ApiMaster.prototype.GetAllImages;
+    ApiMaster.prototype["GetAllCharts"]                   = ApiMaster.prototype.GetAllCharts;
+    
+    
+    ApiLayout.prototype["GetClassType"]                   = ApiLayout.prototype.GetClassType;
+    ApiLayout.prototype["SetName"]                        = ApiLayout.prototype.SetName;
+    ApiLayout.prototype["AddObject"]                      = ApiLayout.prototype.AddObject;
+    ApiLayout.prototype["RemoveObject"]                   = ApiLayout.prototype.RemoveObject;
+    ApiLayout.prototype["SetBackground"]                  = ApiLayout.prototype.SetBackground;
+    ApiLayout.prototype["ClearBackground"]                = ApiLayout.prototype.ClearBackground;
+    ApiLayout.prototype["FollowMasterBackground"]         = ApiLayout.prototype.FollowMasterBackground;
+    ApiLayout.prototype["Copy"]                           = ApiLayout.prototype.Copy;
+    ApiLayout.prototype["Delete"]                         = ApiLayout.prototype.Delete;
+    ApiLayout.prototype["Duplicate"]                      = ApiLayout.prototype.Duplicate;
+    ApiLayout.prototype["MoveTo"]                         = ApiLayout.prototype.MoveTo;
+    ApiLayout.prototype["GetAllDrawings"]                 = ApiLayout.prototype.GetAllDrawings;
+    ApiLayout.prototype["GetAllShapes"]                   = ApiLayout.prototype.GetAllShapes;
+    ApiLayout.prototype["GetAllImages"]                   = ApiLayout.prototype.GetAllImages;
+    ApiLayout.prototype["GetAllCharts"]                   = ApiLayout.prototype.GetAllCharts;
+    ApiLayout.prototype["GetMaster"]                      = ApiLayout.prototype.GetMaster;
 
-    ApiDrawing.prototype["GetClassType"]             =  ApiDrawing.prototype.GetClassType;
-    ApiDrawing.prototype["SetSize"]                  =  ApiDrawing.prototype.SetSize;
-    ApiDrawing.prototype["SetPosition"]              =  ApiDrawing.prototype.SetPosition;
+    ApiPlaceholder.prototype["GetClassType"]              = ApiPlaceholder.prototype.GetClassType;
+    ApiPlaceholder.prototype["SetType"]                   = ApiPlaceholder.prototype.SetType;
 
-    ApiImage.prototype["GetClassType"]               =  ApiImage.prototype.GetClassType;
+    ApiTheme.prototype["GetClassType"]                    = ApiTheme.prototype.GetClassType;
+    ApiTheme.prototype["GetMaster"]                       = ApiTheme.prototype.GetMaster;
+    ApiTheme.prototype["SetColorScheme"]                  = ApiTheme.prototype.SetColorScheme;
+    ApiTheme.prototype["GetColorScheme"]                  = ApiTheme.prototype.GetColorScheme;
+    ApiTheme.prototype["SetFormatScheme"]                 = ApiTheme.prototype.SetFormatScheme;
+    ApiTheme.prototype["GetFormatScheme"]                 = ApiTheme.prototype.GetFormatScheme;
+    ApiTheme.prototype["SetFontScheme"]                   = ApiTheme.prototype.SetFontScheme;
+    ApiTheme.prototype["GetFontScheme"]                   = ApiTheme.prototype.GetFontScheme;
 
-    ApiShape.prototype["GetClassType"]               =  ApiShape.prototype.GetClassType;
-    ApiShape.prototype["GetDocContent"]              =  ApiShape.prototype.GetDocContent;
-    ApiShape.prototype["GetContent"]                 =  ApiShape.prototype.GetContent;
-    ApiShape.prototype["SetVerticalTextAlign"]       =  ApiShape.prototype.SetVerticalTextAlign;
+    ApiThemeColorScheme.prototype["GetClassType"]         = ApiThemeColorScheme.prototype.GetClassType;
+    ApiThemeColorScheme.prototype["SetSchemeName"]        = ApiThemeColorScheme.prototype.SetSchemeName;
+    ApiThemeColorScheme.prototype["ChangeColor"]          = ApiThemeColorScheme.prototype.ChangeColor;
+    ApiThemeColorScheme.prototype["Copy"]                 = ApiThemeColorScheme.prototype.Copy;
 
-    ApiChart.prototype["GetClassType"]                 = ApiChart.prototype.GetClassType;
-    ApiChart.prototype["SetTitle"]                     = ApiChart.prototype.SetTitle;
-    ApiChart.prototype["SetHorAxisTitle"]              = ApiChart.prototype.SetHorAxisTitle;
-    ApiChart.prototype["SetVerAxisTitle"]              = ApiChart.prototype.SetVerAxisTitle;
-    ApiChart.prototype["SetVerAxisOrientation"]        = ApiChart.prototype.SetVerAxisOrientation;
-    ApiChart.prototype["SetHorAxisOrientation"]        = ApiChart.prototype.SetHorAxisOrientation;
-    ApiChart.prototype["SetLegendPos"]                 = ApiChart.prototype.SetLegendPos;
-    ApiChart.prototype["SetLegendFontSize"]            = ApiChart.prototype.SetLegendFontSize;
-    ApiChart.prototype["SetShowDataLabels"]            = ApiChart.prototype.SetShowDataLabels;
-    ApiChart.prototype["SetShowPointDataLabel"]        = ApiChart.prototype.SetShowPointDataLabel;
-    ApiChart.prototype["SetVertAxisTickLabelPosition"] = ApiChart.prototype.SetVertAxisTickLabelPosition;
-    ApiChart.prototype["SetHorAxisTickLabelPosition"]  = ApiChart.prototype.SetHorAxisTickLabelPosition;
+    ApiThemeFormatScheme.prototype["GetClassType"]        = ApiThemeFormatScheme.prototype.GetClassType;
+    ApiThemeFormatScheme.prototype["SetSchemeName"]       = ApiThemeFormatScheme.prototype.SetSchemeName;
+    ApiThemeFormatScheme.prototype["ChangeFillStyles"]    = ApiThemeFormatScheme.prototype.ChangeFillStyles;
+    ApiThemeFormatScheme.prototype["ChangeBgFillStyles"]  = ApiThemeFormatScheme.prototype.ChangeBgFillStyles;
+    ApiThemeFormatScheme.prototype["ChangeLineStyles"]    = ApiThemeFormatScheme.prototype.ChangeLineStyles;
+    ApiThemeFormatScheme.prototype["Copy"]                = ApiThemeFormatScheme.prototype.Copy;
 
-    ApiChart.prototype["SetHorAxisMajorTickMark"]      =  ApiChart.prototype.SetHorAxisMajorTickMark;
-    ApiChart.prototype["SetHorAxisMinorTickMark"]      =  ApiChart.prototype.SetHorAxisMinorTickMark;
-    ApiChart.prototype["SetVertAxisMajorTickMark"]     =  ApiChart.prototype.SetVertAxisMajorTickMark;
-    ApiChart.prototype["SetVertAxisMinorTickMark"]     =  ApiChart.prototype.SetVertAxisMinorTickMark;
-    ApiChart.prototype["SetMajorVerticalGridlines"]  =  ApiChart.prototype.SetMajorVerticalGridlines;
-    ApiChart.prototype["SetMinorVerticalGridlines"]  =  ApiChart.prototype.SetMinorVerticalGridlines;
-    ApiChart.prototype["SetMajorHorizontalGridlines"]  =  ApiChart.prototype.SetMajorHorizontalGridlines;
-    ApiChart.prototype["SetMinorHorizontalGridlines"]  =  ApiChart.prototype.SetMinorHorizontalGridlines;
-    ApiChart.prototype["SetHorAxisLablesFontSize"]  =  ApiChart.prototype.SetHorAxisLablesFontSize;
-    ApiChart.prototype["SetVertAxisLablesFontSize"]  =  ApiChart.prototype.SetVertAxisLablesFontSize;
-
-    ApiTable.prototype["GetClassType"] = ApiTable.prototype.GetClassType;
-    ApiTable.prototype["GetRow"]       = ApiTable.prototype.GetRow;
-    ApiTable.prototype["MergeCells"]   = ApiTable.prototype.MergeCells;
-    ApiTable.prototype["SetTableLook"] = ApiTable.prototype.SetTableLook;
-    ApiTable.prototype["AddRow"]       = ApiTable.prototype.AddRow;
-    ApiTable.prototype["AddColumn"]    = ApiTable.prototype.AddColumn;
-    ApiTable.prototype["RemoveRow"]    = ApiTable.prototype.RemoveRow;
-    ApiTable.prototype["RemoveColumn"] = ApiTable.prototype.RemoveColumn;
-    ApiTable.prototype["SetShd"]       = ApiTable.prototype.SetShd;
-
-    ApiTableRow.prototype["GetClassType"] = ApiTableRow.prototype.GetClassType;
-    ApiTableRow.prototype["GetCellsCount"] = ApiTableRow.prototype.GetCellsCount;
-    ApiTableRow.prototype["GetCell"] = ApiTableRow.prototype.GetCell;
-    ApiTableRow.prototype["SetHeight"] = ApiTableRow.prototype.SetHeight;
+    ApiThemeFontScheme.prototype["GetClassType"]          = ApiThemeFontScheme.prototype.GetClassType;
+    ApiThemeFontScheme.prototype["SetSchemeName"]         = ApiThemeFontScheme.prototype.SetSchemeName;
+    ApiThemeFontScheme.prototype["SetFonts"]              = ApiThemeFontScheme.prototype.SetFonts;
+    ApiThemeFontScheme.prototype["Copy"]                  = ApiThemeFontScheme.prototype.Copy;
 
 
+    ApiSlide.prototype["GetClassType"]                    = ApiSlide.prototype.GetClassType;
+    ApiSlide.prototype["RemoveAllObjects"]                = ApiSlide.prototype.RemoveAllObjects;
+    ApiSlide.prototype["AddObject"]                       = ApiSlide.prototype.AddObject;
+    ApiSlide.prototype["SetBackground"]                   = ApiSlide.prototype.SetBackground;
+    ApiSlide.prototype["GetWidth"]                        = ApiSlide.prototype.GetWidth;
+    ApiSlide.prototype["GetHeight"]                       = ApiSlide.prototype.GetHeight;
+    ApiSlide.prototype["ApplyLayout"]                     = ApiSlide.prototype.ApplyLayout;
+    ApiSlide.prototype["Delete"]                          = ApiSlide.prototype.Delete;
+    ApiSlide.prototype["Copy"]                            = ApiSlide.prototype.Copy;
+    ApiSlide.prototype["Duplicate"]                       = ApiSlide.prototype.Duplicate;
+    ApiSlide.prototype["MoveTo"]                          = ApiSlide.prototype.MoveTo;
+    ApiSlide.prototype["GetSlideIndex"]                   = ApiSlide.prototype.GetSlideIndex;
+    ApiSlide.prototype["ClearBackground"]                 = ApiSlide.prototype.ClearBackground;
+    ApiSlide.prototype["FollowLayoutBackground"]          = ApiSlide.prototype.FollowLayoutBackground;
+    ApiSlide.prototype["FollowMasterBackground"]          = ApiSlide.prototype.FollowMasterBackground;
+    ApiSlide.prototype["ApplyTheme"]                      = ApiSlide.prototype.ApplyTheme;
+    ApiSlide.prototype["GetLayout"]                       = ApiSlide.prototype.GetLayout;
+    ApiSlide.prototype["GetTheme"]                        = ApiSlide.prototype.GetTheme;
+    ApiSlide.prototype["GetAllDrawings"]                  = ApiSlide.prototype.GetAllDrawings;
+    ApiSlide.prototype["GetAllShapes"]                    = ApiSlide.prototype.GetAllShapes;
+    ApiSlide.prototype["GetAllImages"]                    = ApiSlide.prototype.GetAllImages;
+    ApiSlide.prototype["GetAllCharts"]                    = ApiSlide.prototype.GetAllCharts;
 
-    ApiTableCell.prototype["GetClassType"] = ApiTableCell.prototype.GetClassType;
-    ApiTableCell.prototype["GetContent"] = ApiTableCell.prototype.GetContent;
-    ApiTableCell.prototype["SetShd"]  = ApiTableCell.prototype.SetShd;
-    ApiTableCell.prototype["SetCellMarginBottom"] = ApiTableCell.prototype.SetCellMarginBottom;
-    ApiTableCell.prototype["SetCellMarginLeft"] = ApiTableCell.prototype.SetCellMarginLeft;
-    ApiTableCell.prototype["SetCellMarginRight"] = ApiTableCell.prototype.SetCellMarginRight;
-    ApiTableCell.prototype["SetCellMarginTop"] = ApiTableCell.prototype.SetCellMarginTop;
-    ApiTableCell.prototype["SetCellBorderBottom"] = ApiTableCell.prototype.SetCellBorderBottom;
-    ApiTableCell.prototype["SetCellBorderLeft"] = ApiTableCell.prototype.SetCellBorderLeft;
-    ApiTableCell.prototype["SetCellBorderRight"] = ApiTableCell.prototype.SetCellBorderRight;
-    ApiTableCell.prototype["SetCellBorderTop"] = ApiTableCell.prototype.SetCellBorderTop;
-    ApiTableCell.prototype["SetVerticalAlign"] = ApiTableCell.prototype.SetVerticalAlign;
-    ApiTableCell.prototype["SetTextDirection"] = ApiTableCell.prototype.SetTextDirection;
+    ApiDrawing.prototype["GetClassType"]                  = ApiDrawing.prototype.GetClassType;
+    ApiDrawing.prototype["SetSize"]                       = ApiDrawing.prototype.SetSize;
+    ApiDrawing.prototype["SetPosition"]                   = ApiDrawing.prototype.SetPosition;
+    ApiDrawing.prototype["GetParent"]                     = ApiDrawing.prototype.GetParent;
+    ApiDrawing.prototype["GetParentSlide"]                = ApiDrawing.prototype.GetParentSlide;
+    ApiDrawing.prototype["GetParentLayout"]               = ApiDrawing.prototype.GetParentLayout;
+    ApiDrawing.prototype["GetParentMaster"]               = ApiDrawing.prototype.GetParentMaster;
+    ApiDrawing.prototype["Copy"]                          = ApiDrawing.prototype.Copy;
+    ApiDrawing.prototype["Delete"]                        = ApiDrawing.prototype.Delete;
+    ApiDrawing.prototype["SetPlaceholder"]                = ApiDrawing.prototype.SetPlaceholder;
+    ApiDrawing.prototype["GetPlaceholder"]                = ApiDrawing.prototype.GetPlaceholder;
+
+    ApiImage.prototype["GetClassType"]                    = ApiImage.prototype.GetClassType;
+
+    ApiShape.prototype["GetClassType"]                    = ApiShape.prototype.GetClassType;
+    ApiShape.prototype["GetDocContent"]                   = ApiShape.prototype.GetDocContent;
+    ApiShape.prototype["GetContent"]                      = ApiShape.prototype.GetContent;
+    ApiShape.prototype["SetVerticalTextAlign"]            = ApiShape.prototype.SetVerticalTextAlign;
+    
+    ApiChart.prototype["GetClassType"]                    = ApiChart.prototype.GetClassType;
+    ApiChart.prototype["SetTitle"]                        = ApiChart.prototype.SetTitle;
+    ApiChart.prototype["SetHorAxisTitle"]                 = ApiChart.prototype.SetHorAxisTitle;
+    ApiChart.prototype["SetVerAxisTitle"]                 = ApiChart.prototype.SetVerAxisTitle;
+    ApiChart.prototype["SetVerAxisOrientation"]           = ApiChart.prototype.SetVerAxisOrientation;
+    ApiChart.prototype["SetHorAxisOrientation"]           = ApiChart.prototype.SetHorAxisOrientation;
+    ApiChart.prototype["SetLegendPos"]                    = ApiChart.prototype.SetLegendPos;
+    ApiChart.prototype["SetLegendFontSize"]               = ApiChart.prototype.SetLegendFontSize;
+    ApiChart.prototype["SetShowDataLabels"]               = ApiChart.prototype.SetShowDataLabels;
+    ApiChart.prototype["SetShowPointDataLabel"]           = ApiChart.prototype.SetShowPointDataLabel;
+    ApiChart.prototype["SetVertAxisTickLabelPosition"]    = ApiChart.prototype.SetVertAxisTickLabelPosition;
+    ApiChart.prototype["SetHorAxisTickLabelPosition"]     = ApiChart.prototype.SetHorAxisTickLabelPosition;
+
+    ApiChart.prototype["SetHorAxisMajorTickMark"]         = ApiChart.prototype.SetHorAxisMajorTickMark;
+    ApiChart.prototype["SetHorAxisMinorTickMark"]         = ApiChart.prototype.SetHorAxisMinorTickMark;
+    ApiChart.prototype["SetVertAxisMajorTickMark"]        = ApiChart.prototype.SetVertAxisMajorTickMark;
+    ApiChart.prototype["SetVertAxisMinorTickMark"]        = ApiChart.prototype.SetVertAxisMinorTickMark;
+    ApiChart.prototype["SetMajorVerticalGridlines"]       = ApiChart.prototype.SetMajorVerticalGridlines;
+    ApiChart.prototype["SetMinorVerticalGridlines"]       = ApiChart.prototype.SetMinorVerticalGridlines;
+    ApiChart.prototype["SetMajorHorizontalGridlines"]     = ApiChart.prototype.SetMajorHorizontalGridlines;
+    ApiChart.prototype["SetMinorHorizontalGridlines"]     = ApiChart.prototype.SetMinorHorizontalGridlines;
+    ApiChart.prototype["SetHorAxisLablesFontSize"]        = ApiChart.prototype.SetHorAxisLablesFontSize;
+    ApiChart.prototype["SetVertAxisLablesFontSize"]       = ApiChart.prototype.SetVertAxisLablesFontSize;
+
+    ApiTable.prototype["GetClassType"]                    = ApiTable.prototype.GetClassType;
+    ApiTable.prototype["GetRow"]                          = ApiTable.prototype.GetRow;
+    ApiTable.prototype["MergeCells"]                      = ApiTable.prototype.MergeCells;
+    ApiTable.prototype["SetTableLook"]                    = ApiTable.prototype.SetTableLook;
+    ApiTable.prototype["AddRow"]                          = ApiTable.prototype.AddRow;
+    ApiTable.prototype["AddColumn"]                       = ApiTable.prototype.AddColumn;
+    ApiTable.prototype["RemoveRow"]                       = ApiTable.prototype.RemoveRow;
+    ApiTable.prototype["RemoveColumn"]                    = ApiTable.prototype.RemoveColumn;
+    ApiTable.prototype["SetShd"]                          = ApiTable.prototype.SetShd;
+
+    ApiTableRow.prototype["GetClassType"]                 = ApiTableRow.prototype.GetClassType;
+    ApiTableRow.prototype["GetCellsCount"]                = ApiTableRow.prototype.GetCellsCount;
+    ApiTableRow.prototype["GetCell"]                      = ApiTableRow.prototype.GetCell;
+    ApiTableRow.prototype["SetHeight"]                    = ApiTableRow.prototype.SetHeight;
+
+    ApiTableCell.prototype["GetClassType"]                = ApiTableRow.prototype.GetClassType;
+    ApiTableCell.prototype["GetContent"]                  = ApiTableRow.prototype.GetContent;
+    ApiTableCell.prototype["SetShd"]                      = ApiTableRow.prototype.SetShd;
+    ApiTableCell.prototype["SetCellMarginBottom"]         = ApiTableRow.prototype.SetCellMarginBottom;
+    ApiTableCell.prototype["SetCellMarginLeft"]           = ApiTableRow.prototype.SetCellMarginLeft;
+    ApiTableCell.prototype["SetCellMarginRight"]          = ApiTableRow.prototype.SetCellMarginRight;
+    ApiTableCell.prototype["SetCellMarginTop"]            = ApiTableRow.prototype.SetCellMarginTop;
+    ApiTableCell.prototype["SetCellBorderBottom"]         = ApiTableRow.prototype.SetCellBorderBottom;
+    ApiTableCell.prototype["SetCellBorderLeft"]           = ApiTableRow.prototype.SetCellBorderLeft;
+    ApiTableCell.prototype["SetCellBorderRight"]          = ApiTableRow.prototype.SetCellBorderRight;
+    ApiTableCell.prototype["SetCellBorderTop"]            = ApiTableRow.prototype.SetCellBorderTop;
+    ApiTableCell.prototype["SetVerticalAlign"]            = ApiTableRow.prototype.SetVerticalAlign;
+    ApiTableCell.prototype["SetTextDirection"]            = ApiTableRow.prototype.SetTextDirection;
 
 
 

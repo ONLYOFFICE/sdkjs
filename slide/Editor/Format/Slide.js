@@ -105,7 +105,7 @@ AscDFH.changesFactory[AscDFH.historyitem_SlideSetClrMapOverride    ] = AscDFH.CC
 AscDFH.changesFactory[AscDFH.historyitem_PropLockerSetId           ] = AscDFH.CChangesDrawingsString    ;
 AscDFH.changesFactory[AscDFH.historyitem_SlideCommentsAddComment   ] = AscDFH.CChangesDrawingsContentComments   ;
 AscDFH.changesFactory[AscDFH.historyitem_SlideCommentsRemoveComment] = AscDFH.CChangesDrawingsContentComments   ;
-AscDFH.changesFactory[AscDFH.historyitem_SlideSetNotes      ] = AscDFH.CChangesDrawingsObject   ;
+AscDFH.changesFactory[AscDFH.historyitem_SlideSetNotes             ] = AscDFH.CChangesDrawingsObject   ;
 AscDFH.changesFactory[AscDFH.historyitem_SlideSetTiming      ] = AscDFH.CChangesDrawingsObject   ;
 
 
@@ -767,6 +767,13 @@ Slide.prototype =
         item.setParent2(this);
         if(this.collaborativeMarks) {
             this.collaborativeMarks.Update_OnAdd(_pos);
+        }
+    },
+
+    shapeRemove: function (pos, count) {
+        if(pos > -1 && pos < this.cSld.spTree.length){
+        History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideRemoveFromSpTree, pos, this.cSld.spTree.slice(pos, pos + count), false));
+        this.cSld.spTree.splice(pos, count);
         }
     },
 

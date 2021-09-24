@@ -3617,7 +3617,6 @@ function CBinaryFileWriter()
             oThis.StartRecord(1);
             oThis.WriteUChar(g_nodeAttributeStart);
             oThis._WriteBool2(0, shape.attrUseBgFill);
-            oThis._WriteString2(2, shape.modelId);
             oThis.WriteUChar(g_nodeAttributeEnd);
         }
 
@@ -3657,6 +3656,12 @@ function CBinaryFileWriter()
         oThis.WriteRecord2(3, shape.txBody, oThis.WriteTxBody);
 
         oThis.WriteRecord2(7, shape.signatureLine, oThis.WriteSignatureLine);
+        oThis.WriteRecord2(8, shape.modelId, function() {
+            oThis._WriteString1(0, shape.modelId);
+        });
+        oThis.WriteRecord2(9, shape.fLocksText, function() {
+            oThis._WriteBool1(0, shape.fLocksText);
+        });
         shape.writeMacro(oThis);
 
         if (isUseTmpFill)
@@ -5590,7 +5595,6 @@ function CBinaryFileWriter()
                 _writer.StartRecord(1);
                 _writer.WriteUChar(g_nodeAttributeStart);
                 _writer._WriteBool2(0, shape.attrUseBgFill);
-                _writer._WriteString2(2, shape.modelId);
                 _writer.WriteUChar(g_nodeAttributeEnd);
             }
 
@@ -5640,6 +5644,9 @@ function CBinaryFileWriter()
                 _writer.EndRecord();
             }
             _writer.WriteRecord2(7, shape.signatureLine, _writer.WriteSignatureLine);
+            _writer.WriteRecord2(8, shape.modelId, function() {
+                _writer._WriteString1(0, shape.modelId);
+            });
             shape.writeMacro(_writer);
             if (isUseTmpFill)
             {

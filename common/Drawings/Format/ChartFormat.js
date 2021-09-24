@@ -2227,7 +2227,13 @@
             }
         }
         oParaPr.DefaultRunPr = oTextPr;
-        var oTxPr = AscFormat.CreateTextBodyFromString("", this.getDrawingDocument(), this);
+        var oTxPr;
+        if(this.txPr && this.txPr.content && this.txPr.content.Content[0]) {
+            oTxPr = this.txPr;
+        }
+        else {
+            oTxPr = AscFormat.CreateTextBodyFromString("", this.getDrawingDocument(), this);
+        }
         if(oStyleEntry.bodyPr) {
             oTxPr.setBodyPr(oStyleEntry.bodyPr.createDuplicate())
         }

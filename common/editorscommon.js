@@ -1296,7 +1296,7 @@
 
 	function build_rx_table(local)
 	{
-		cStrucTableLocalColumns = ( local ? local : {
+		window["AscCommon"].cStrucTableLocalColumns = cStrucTableLocalColumns = ( local ? local : {
 			"h":  "Headers",
 			"d":  "Data",
 			"a":  "All",
@@ -6454,6 +6454,8 @@
 					break;
 			}
 		}
+
+		var textQualifier = options.asc_getTextQualifier();
 		var matrix = [];
 		//var rows = text.match(/[^\r\n]+/g);
 		var rows = text.split(/\r?\n/);
@@ -6467,7 +6469,37 @@
 				row = addSpace ? delimiterChar + row.trim() : row.trim();
 			}
 			//todo quotes
-			matrix.push(row.split(delimiterChar));
+			if (textQualifier) {
+				var _text = "";
+				var startQualifier = false;
+				for (var j = 0; j < row.length; j++) {
+					if (!startQualifier && row[j] === textQualifier && row[j - 1] && row[j - 1] === delimiterChar) {
+						startQualifier = !startQualifier;
+						continue;
+					} else if (startQualifier && row[j] === textQualifier) {
+						startQualifier = !startQualifier;
+						continue;
+					}
+					
+					if (!startQualifier && row[j] === delimiterChar) {
+						if (!matrix[i]) {
+							matrix[i] = [];
+						}
+						matrix[i].push(_text);
+						_text = "";
+					} else {
+						_text += row[j];
+						if (j === row.length - 1) {
+							if (!matrix[i]) {
+								matrix[i] = [];
+							}
+							matrix[i].push(_text);
+						}
+					}
+				}
+			} else {
+				matrix.push(row.split(delimiterChar));	
+			}
 		}
 		return matrix;
 	}

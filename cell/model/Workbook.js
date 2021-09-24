@@ -2214,11 +2214,17 @@
 	Workbook.prototype.getWorksheetById=function(id){
 		return this.aWorksheetsById[id];
 	};
-	Workbook.prototype.getWorksheetByName=function(name){
-		for(var i = 0; i < this.aWorksheets.length; i++)
-			if(this.aWorksheets[i].getName() == name){
+	Workbook.prototype.getWorksheetByName=function(name, ignoreCaseSensitive){
+		for(var i = 0; i < this.aWorksheets.length; i++) {
+			if (ignoreCaseSensitive) {
+				if(name && this.aWorksheets[i].getName().toLowerCase() == name.toLowerCase()){
+					return this.aWorksheets[i];
+				}
+			} else if(this.aWorksheets[i].getName() == name){
 				return this.aWorksheets[i];
 			}
+		}
+
 		return null;
 	};
 	Workbook.prototype.getWorksheetIndexByName=function(name){
@@ -7218,19 +7224,21 @@
 					}
 
 					//необходимо ещё сдвинуть _f
-					if ((offset.row < 0 || offset.col < 0) && _elem && range.containsRange(_elem._f)) {
+					if ((offset.row < 0 || offset.col < 0) && _elem && _elem._f && range.containsRange(_elem._f)) {
 						_elem.f = null;
 						_elem._f = null;
 					} else {
 						_isChange = false;
-						if (range.isIntersectForShift(cloneElem._f, offset)) {
-							_isChange = cloneElem._f.forShift(range, offset);
-						}
-						if (_isChange) {
-							isChange = true;
-							AscCommonExcel.executeInR1C1Mode(false, function () {
-								cloneElem.f = cloneElem._f.getName();
-							});
+						if (cloneElem._f) {
+							if (range.isIntersectForShift(cloneElem._f, offset)) {
+								_isChange = cloneElem._f.forShift(range, offset);
+							}
+							if (_isChange) {
+								isChange = true;
+								AscCommonExcel.executeInR1C1Mode(false, function () {
+									cloneElem.f = cloneElem._f.getName();
+								});
+							}
 						}
 					}
 
@@ -7283,7 +7291,7 @@
 						}
 
 						//необходимо ещё сдвинуть _f
-						if (_elem && oBBoxFrom.containsRange(_elem._f)) {
+						if (_elem && _elem._f && oBBoxFrom.containsRange(_elem._f) && cloneElem._f) {
 							cloneElem._f.setOffset(offset);
 							if (wsTo.sName !== cloneElem._f.sheet) {
 								cloneElem._f.setSheet(wsTo.sName);
@@ -7299,6 +7307,10 @@
 						}
 					}
 					if (isChange) {
+						if (wsTo !== wsFrom && !copyRange) {
+							wsFrom.removeSparklines(oBBoxFrom);
+						}
+
 						//если, допустим, перенесли все спарклайны на другой лист, то необходимо удалить группы здесь и добавить новую группы
 						if (aSparklines.length !== 0) {
 							val.setSparklines(aSparklines, true, true);
@@ -12186,6 +12198,7 @@
 		if(null == sText && null == aText)
 			sText = "";
 		var oNewItem, cellfont;
+		var cellSelfFont = this.xfs && this.xfs.font;
 		var xfs = this.getCompiledStyle();
 		if(null != xfs && null != xfs.font)
 			cellfont = xfs.font;
@@ -12208,8 +12221,19 @@
 					oNewItem.text = oCurtext.text;
 					var oCurFormat = new AscCommonExcel.Font();
 					if (isMultyText) {
-						if (null != oCurtext.format) {
-							oCurFormat.assign(oCurtext.format);
+						if (null != oCurtext.format && !(cellSelfFont && cellSelfFont.isEqual(oCurtext.format))) {
+							//MultyText format equals to cell font
+							if (this.xfs && !this.xfs.isNormalFont()) {
+								//cell font is not default
+								oCurFormat.assign(oCurtext.format);
+								if (cellSelfFont && cellSelfFont.c && oCurtext.format.c && oCurtext.format.c.isEqual(cellSelfFont.c)) {
+									oCurFormat.c = xfs.font.c;
+								}
+							} else {
+								//like in CellXfs.prototype.merge
+								var isTableColor = oCurtext.format.isNormalXfColor();
+								oCurFormat = xfs._mergeProperty(g_StyleCache.addFont, oCurtext.format, xfs.font, true, isTableColor);
+							}
 						} else {
 							oCurFormat.assign(cellfont);
 							oCurFormat.setSkip(false);
