@@ -504,7 +504,7 @@ CTable.prototype.private_RecalculateGrid = function()
 			oPageFields.XLimit = _XLimit;
 		}
 
-		var nMaxTableW = oPageFields.XLimit - oPageFields.X - TablePr.TableInd - this.GetTableOffsetCorrection() - this.GetRightTableOffsetCorrection();
+		var nMaxTableW = oPageFields.XLimit - oPageFields.X - TablePr.TableInd - this.GetTableOffsetCorrection() + this.GetRightTableOffsetCorrection();
 
 		// 4. Рассчитаем желаемую ширину таблицы таблицы
 		var arrMaxOverMin  = [],
