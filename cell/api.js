@@ -3808,6 +3808,15 @@ var editor;
 
           this.handlers.trigger("asc_onSpellCheckVariantsFound", null);
           this.spellcheckState.clean();
+        } else {
+          var ws = this.wb.getWorksheet();
+          if (ws) {
+            var maxC = ws.model.getColsCount() - 1;
+            var maxR = ws.model.getRowsCount() - 1;
+            if (-1 !== maxC || -1 !== maxR) {
+              this.handlers.trigger("asc_onSpellCheckVariantsFound", null);
+            }
+          }
         }
       }
     };
@@ -4025,6 +4034,10 @@ var editor;
 
     var maxC = ws.model.getColsCount() - 1;
     var maxR = ws.model.getRowsCount() - 1;
+    if (-1 === maxC || -1 === maxR) {
+      this.handlers.trigger("asc_onSpellCheckVariantsFound", new AscCommon.asc_CSpellCheckProperty());
+      return;
+    }
 
     if (!this.spellcheckState.startCell) {
       this.spellcheckState.startCell = activeCell.clone();
@@ -4037,11 +4050,6 @@ var editor;
         this.spellcheckState.startCell.col = 0;
       }
       this.spellcheckState.currentCell = this.spellcheckState.startCell.clone();
-    }
-
-    if (-1 === maxC || -1 === maxR) {
-      this.handlers.trigger("asc_onSpellCheckVariantsFound", new AscCommon.asc_CSpellCheckProperty());
-      return;
     }
 
     var startCell = this.spellcheckState.startCell;
