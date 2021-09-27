@@ -757,21 +757,20 @@
 			var i, j, fr, fmt, text, p, p_ = {}, pIndex, startCh;
 			var tw = 0, nlPos = 0, isEastAsian, hpPos = undefined, isSP_ = true, delta = 0;
 
-			function measureFragment(s) {
-				var j, ch, chc, chw, chPos, isNL, isSP, isHP, tm;
-
-				for (chPos = self.chars.length, j = 0; j < s.length; ++j, ++chPos) {
-					ch  = s.charAt(j);
-					tm = ctx.measureChar(ch, 0/*px units*/);
+			function measureFragment(frg) {
+				var j, chc, chw, chPos, isNL, isSP, isHP, tm;
+				var _tL = frg.getCharCodeLength();
+				for (chPos = self.chars.length, j = 0; j < _tL; ++j, ++chPos) {
+					chc = frg.getCharCode(j);
+					tm = ctx.measureChar(null, 0/*px units*/, chc);
 					chw = tm.width;
 
-					isNL = self.reHypNL.test(ch);
-					isSP = !isNL ? self.reHypSp.test(ch) : false;
+					isNL = null/*self.reHypNL.test(ch)*/;
+					isSP = null/*!isNL ? self.reHypSp.test(ch) : false*/;
 
 					// if 'wrap flag' is set
 					if (wrap || wrapNL || verticalText) {
-						isHP = !isSP && !isNL ? self.reHyphen.test(ch) : false;
-						chc = s.charCodeAt(j);
+						isHP = !isSP && !isNL ? null/*self.reHyphen.test(ch)*/ : false;
 						isEastAsian = AscCommon.isEastAsianScript(chc);
 						if (verticalText) {
 							// ToDo verticalText and new line or space
@@ -780,7 +779,7 @@
 							nlPos = chPos;
 							self._getCharPropAt(nlPos).nl = true;
 							self._getCharPropAt(nlPos).delta = delta;
-							ch = " ";
+							chc = 0xA0;
 							chw = 0;
 							tw = 0;
 							hpPos = undefined;
@@ -788,7 +787,7 @@
 							// move hyphenation position
 							hpPos = chPos + 1;
 						} else if (isEastAsian) {
-							if (0 !== j && !(AscCommon.g_aPunctuation[s.charCodeAt(j - 1)] &
+							if (0 !== j && !(AscCommon.g_aPunctuation[frg.getCharCode(j - 1)] &
 								AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_END_E) &&
 								!(AscCommon.g_aPunctuation[chc] & AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_BEGIN_E)) {
 								// move hyphenation position
@@ -807,7 +806,7 @@
 
 						if (isEastAsian) {
 							// move hyphenation position
-							if (j !== s.length && !(AscCommon.g_aPunctuation[s.charCodeAt(j + 1)] &
+							if (j !== _tL && !(AscCommon.g_aPunctuation[frg.getCharCode(j + 1)] &
 								AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_BEGIN_E) &&
 								!(AscCommon.g_aPunctuation[chc] & AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_END_E)) {
 								hpPos = chPos + 1;
@@ -822,7 +821,10 @@
 
 					tw += chw;
 					self.charWidths.push(chw);
-					self.chars += ch;
+					if (!self.chars) {
+						self.chars = [];
+					}
+					self.chars.push(chc);
 					isSP_ = isSP || isNL;
 					delta = tm.widthBB - tm.width;
 				}
@@ -836,7 +838,8 @@
 				fr = this.fragments[i];
 				fmt = fr.format.clone();
 				var va = fmt.getVerticalAlign();
-				text = this._filterText(fr.text, wrap || wrapNL);
+				var textLength = fr.getCharCodeLength();
+				//text = this._filterText(fr.text, wrap || wrapNL);
 
 				pIndex = this.chars.length;
 				p = this.charProps[pIndex];
@@ -868,7 +871,7 @@
 				}
 
 				if (fmt.getSkip()) {
-					this._getCharPropAt(pIndex).skip = text.length;
+					this._getCharPropAt(pIndex).skip = textLength;
 				}
 
 				if (fmt.getRepeat()) {
@@ -880,8 +883,8 @@
 					hasRepeats = true;
 				}
 
-				if (text.length < 1) {continue;}
-				measureFragment(text);
+				if (textLength < 1) {continue;}
+				measureFragment(fr);
 
 				// для italic текста прибавляем к концу строки разницу между charWidth и BBox
 				for (j = startCh; font.getItalic() && j < this.charWidths.length; ++j) {

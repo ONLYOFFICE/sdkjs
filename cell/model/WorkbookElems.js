@@ -697,6 +697,9 @@ g_oColorManager = new ColorManager();
 		if (null != val) {
 			this.set(val);
 		}
+
+		//для отрисовки ввожу дополнительный массив
+		this._charCodes = null;//[]
 	}
 
 	Fragment.prototype.clone = function () {
@@ -717,6 +720,28 @@ g_oColorManager = new ColorManager();
 			var hyperlink = hyperlinkManager.getByCell(row, col);
 			if (hyperlink && hyperlink.data.getVisited()) {
 				this.format.setColor(g_oColorManager.getThemeColor(g_nColorHyperlinkVisited, null));
+			}
+		}
+	};
+	Fragment.prototype.getCharCode = function (index) {
+		if (!this._charCodes) {
+			this.initCharCodes();
+		}
+		return this._charCodes && this._charCodes[index];
+	};
+	Fragment.prototype.getCharCodeLength = function () {
+		if (!this._charCodes) {
+			this.initCharCodes();
+		}
+		return this._charCodes ? this._charCodes.length : 0;
+	};
+	Fragment.prototype.initCharCodes = function () {
+		if (this.text) {
+			for (var oIterator = this.text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
+				if (!this._charCodes) {
+					this._charCodes = [];
+				}
+				this._charCodes.push(oIterator.value());
 			}
 		}
 	};
