@@ -141,7 +141,7 @@
 			this.flags = undefined;
 
 			/** @type String */
-			this.chars = "";
+			this.chars = [];
 
 			this.charWidths = [];
 			this.charProps = [];
@@ -444,7 +444,7 @@
 		};
 
 		StringRender.prototype._reset = function() {
-			this.chars = "";
+			this.chars = [];
 			this.charWidths = [];
 			this.charProps = [];
 			this.lines = [];
@@ -692,10 +692,10 @@
 				if (0 === charProp.total)
 					return;	// Символ уже изначально лежит в строке и в списке
 				var repeatEnd = pos + charProp.total;
-				self.chars = "" +
-					self.chars.slice(0, repeatEnd) +
-					self.chars.slice(pos, pos + 1) +
-					self.chars.slice(repeatEnd);
+				self.chars = [].concat(
+					self.chars.slice(0, repeatEnd),
+					self.chars.slice(pos, pos + 1),
+					self.chars.slice(repeatEnd));
 
 				self.charWidths = [].concat(
 					self.charWidths.slice(0, repeatEnd),
@@ -706,9 +706,9 @@
 			}
 
 			function removeRepeatChar() {
-				self.chars = "" +
-					self.chars.slice(0, pos) +
-					self.chars.slice(pos + 1);
+				self.chars = [].concat(
+					self.chars.slice(0, pos),
+					self.chars.slice(pos + 1));
 
 				self.charWidths = [].concat(
 					self.charWidths.slice(0, pos),
@@ -759,7 +759,7 @@
 
 			function measureFragment(frg) {
 				var j, chc, chw, chPos, isNL, isSP, isHP, tm;
-				var _tL = frg.getCharCodeLength();
+				var _tL = frg.getCharCodesLength();
 				for (chPos = self.chars.length, j = 0; j < _tL; ++j, ++chPos) {
 					chc = frg.getCharCode(j);
 					tm = ctx.measureChar(null, 0/*px units*/, chc);
@@ -838,7 +838,7 @@
 				fr = this.fragments[i];
 				fmt = fr.format.clone();
 				var va = fmt.getVerticalAlign();
-				var textLength = fr.getCharCodeLength();
+				var textLength = fr.getCharCodesLength();
 				//text = this._filterText(fr.text, wrap || wrapNL);
 
 				pIndex = this.chars.length;

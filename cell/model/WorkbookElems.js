@@ -347,6 +347,14 @@ function ToXml_ST_DateTimeGrouping(val) {
 	return res;
 }
 
+function getCharCodesFromText(text) {
+	var res = [];
+	for (var oIterator = text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
+		res.push(oIterator.value());
+	}
+	return res;
+}
+
 var g_oRgbColorProperties = {
 		rgb : 0
 	};
@@ -694,12 +702,12 @@ g_oColorManager = new ColorManager();
 	function Fragment(val) {
 		this.text = null;
 		this.format = null;
+		//для отрисовки ввожу дополнительный массив
+		this.charCodes = null;//[]
+
 		if (null != val) {
 			this.set(val);
 		}
-
-		//для отрисовки ввожу дополнительный массив
-		this._charCodes = null;//[]
 	}
 
 	Fragment.prototype.clone = function () {
@@ -711,6 +719,9 @@ g_oColorManager = new ColorManager();
 		}
 		if (null != oVal.format) {
 			this.format = oVal.format;
+		}
+		if (null != oVal.charCodes) {
+			this.charCodes = oVal.charCodes && oVal.charCodes.slice();
 		}
 	};
 	Fragment.prototype.checkVisitedHyperlink = function (row, col, hyperlinkManager) {
@@ -724,26 +735,38 @@ g_oColorManager = new ColorManager();
 		}
 	};
 	Fragment.prototype.getCharCode = function (index) {
-		if (!this._charCodes) {
+		if (!this.charCodes) {
 			this.initCharCodes();
 		}
-		return this._charCodes && this._charCodes[index];
+		return this.charCodes && this.charCodes[index];
 	};
-	Fragment.prototype.getCharCodeLength = function () {
-		if (!this._charCodes) {
+	Fragment.prototype.getCharCodesLength = function () {
+		if (!this.charCodes) {
 			this.initCharCodes();
 		}
-		return this._charCodes ? this._charCodes.length : 0;
+		return this.charCodes ? this.charCodes.length : 0;
 	};
 	Fragment.prototype.initCharCodes = function () {
 		if (this.text) {
-			for (var oIterator = this.text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
-				if (!this._charCodes) {
-					this._charCodes = [];
-				}
-				this._charCodes.push(oIterator.value());
-			}
+			this.charCodes = getCharCodesFromText(this.text);
+		} else {
+			this.charCodes = [];
 		}
+	};
+	Fragment.prototype.getCharCodes = function () {
+		if (!this.charCodes) {
+			this.initCharCodes();
+		}
+		return this.charCodes;
+	};
+	Fragment.prototype.setCharCodes = function (val) {
+		this.charCodes = val;
+	};
+	Fragment.prototype.getCharCode = function (index) {
+		if (!this.charCodes) {
+			this.initCharCodes();
+		}
+		return this.charCodes && this.charCodes[index];
 	};
 
 var g_oFontProperties = {
@@ -11647,6 +11670,7 @@ QueryTableField.prototype.clone = function() {
 	window['AscCommonExcel'].CorrectAscColor = CorrectAscColor;
 	window['AscCommonExcel'].Fragment = Fragment;
 	window['AscCommonExcel'].Font = Font;
+	window['AscCommonExcel'].getCharCodesFromText = getCharCodesFromText;
 	window["Asc"]["c_oAscPatternType"] = c_oAscPatternType;
 	prot = c_oAscPatternType;
 	prot["DarkDown"] = prot.DarkDown;

@@ -722,6 +722,7 @@
 	};
 
 	CellEditor.prototype._isFormula = function () {
+		//TODO пока оставляю проверку на ровно по тексту, а не по коду символов
 		var fragments = this.options.fragments;
 		return fragments && fragments.length > 0 && fragments[0].text.length > 0 && fragments[0].text.charAt(0) === "=";
 	};
@@ -1023,7 +1024,7 @@
 
 	CellEditor.prototype._haveTextInEdit = function () {
 		var fragments = this.options.fragments;
-		return fragments.length > 0 && fragments[0].text.length > 0;
+		return fragments.length > 0 && fragments[0].getCharCodesLength() > 0;
 	};
 
 	CellEditor.prototype._setEditorState = function (editorState) {
@@ -1767,15 +1768,15 @@
 			}
 
 			if (this.newTextFormat) {
-				var oNewObj = new Fragment({format: this.newTextFormat, text: str});
+				var oNewObj = new Fragment({format: this.newTextFormat, charCodes: AscCommonExcel.getCharCodesFromText(str)});
 				this._addFragments([oNewObj], pos);
 				this.newTextFormat = null;
 			} else {
 				f = this._findFragmentToInsertInto(pos);
 				if (f) {
 					l = pos - f.begin;
-					s = opt.fragments[f.index].text;
-					opt.fragments[f.index].text = s.slice(0, l) + str + s.slice(l);
+					s = opt.fragments[f.index].getCharCodes();
+					opt.fragments[f.index].setCharCodes(s.slice(0, l).concat(AscCommonExcel.getCharCodesFromText(str)).concat(s.slice(l)));
 				}
 			}
 
@@ -1848,7 +1849,7 @@
 
 		if (!t.undoMode) {
 			// save info to undo/redo
-			if (e - b < 2 && opt.fragments[first.index].text.length > 1) {
+			if (e - b < 2 && opt.fragments[first.index].getCharCodesLength() > 1) {
 				t.undoList.push({fn: t._addChars, args: [t.textRender.getChars(b, 1), b], isRange: isRange});
 			} else {
 				t.undoList.push({fn: t._addFragments, args: [t._getFragments(b, e - b), b], isRange: isRange});
@@ -1859,11 +1860,11 @@
 		if (first && last) {
 			// remove chars
 			if (first.index === last.index) {
-				l = opt.fragments[first.index].text;
-				opt.fragments[first.index].text = l.slice(0, b - first.begin) + l.slice(e - first.begin);
+				l = opt.fragments[first.index].getCharCodes();
+				opt.fragments[first.index].setCharCodes(l.slice(0, b - first.begin).concat(l.slice(e - first.begin)));
 			} else {
-				opt.fragments[first.index].text = opt.fragments[first.index].text.slice(0, b - first.begin);
-				opt.fragments[last.index].text = opt.fragments[last.index].text.slice(e - last.begin);
+				opt.fragments[first.index].setCharCodes(opt.fragments[first.index].getCharCodes().slice(0, b - first.begin));
+				opt.fragments[last.index].setCharCodes(opt.fragments[last.index].getCharCodes().slice(e - last.begin));
 				l = last.index - first.index;
 				if (l > 1) {
 					opt.fragments.splice(first.index + 1, l - 1);
@@ -1927,7 +1928,7 @@
 		}
 
 		for (i = 0, begin = 0; i < fragments.length; ++i) {
-			end = begin + fragments[i].text.length;
+			end = begin + fragments[i].getCharCodesLength();
 			if (pos >= begin && pos < end) {
 				return {index: i, begin: begin, end: end};
 			}
@@ -1942,7 +1943,7 @@
 		var opt = this.options, i, begin, end;
 
 		for ( i = 0, begin = 0; i < opt.fragments.length; ++i ) {
-			end = begin + opt.fragments[i].text.length;
+			end = begin + opt.fragments[i].getCharCodesLength();
 			if ( pos >= begin && pos <= end ) {
 				return {index: i, begin: begin, end: end};
 			}
@@ -1967,8 +1968,8 @@
 		if ( pos > f.begin && pos < f.end ) {
 			fr = fragments[f.index];
 			Array.prototype.splice.apply( fragments, [f.index, 1].concat( [new Fragment( {
-				format: fr.format.clone(), text: fr.text.slice( 0, pos - f.begin )
-			} ), new Fragment( {format: fr.format.clone(), text: fr.text.slice( pos - f.begin )} )] ) );
+				format: fr.format.clone(), charCodes: fr.getCharCodes().slice( 0, pos - f.begin )
+			} ), new Fragment( {format: fr.format.clone(), charCodes: fr.getCharCodes().slice( pos - f.begin )} )] ) );
 		}
 	};
 
@@ -1983,19 +1984,19 @@
 
 		if ( first.index === last.index ) {
 			fr = opt.fragments[first.index].clone();
-			fr.text = fr.text.slice( startPos - first.begin, endPos - first.begin + 1 );
+			fr.charCodes = fr.getCharCodes().slice( startPos - first.begin, endPos - first.begin + 1 );
 			res.push( fr );
 		}
 		else {
 			fr = opt.fragments[first.index].clone();
-			fr.text = fr.text.slice( startPos - first.begin );
+			fr.charCodes = fr.getCharCodes().slice( startPos - first.begin );
 			res.push( fr );
 			for ( i = first.index + 1; i < last.index; ++i ) {
 				fr = opt.fragments[i].clone();
 				res.push( fr );
 			}
 			fr = opt.fragments[last.index].clone();
-			fr.text = fr.text.slice( 0, endPos - last.begin + 1 );
+			fr.charCodes = fr.getCharCodes().slice( 0, endPos - last.begin + 1 );
 			res.push( fr );
 		}
 
@@ -2044,7 +2045,7 @@
 		var t = this, opt = t.options, i;
 
 		for (i = 0; i < opt.fragments.length;) {
-			if (opt.fragments[i].text.length < 1 && opt.fragments.length > 1) {
+			if (opt.fragments[i].getCharCodesLength() < 1 && opt.fragments.length > 1) {
 				opt.fragments.splice(i, 1);
 				continue;
 			}
@@ -2052,7 +2053,7 @@
 				var fr = opt.fragments[i];
 				var nextFr = opt.fragments[i + 1];
 				if (fr.format.isEqual(nextFr.format)) {
-					opt.fragments.splice(i, 2, new Fragment({format: fr.format, text: fr.text + nextFr.text}));
+					opt.fragments.splice(i, 2, new Fragment({format: fr.format, charCodes: fr.getCharCodes().concat(nextFr.getCharCodes())}));
 					continue;
 				}
 			}
