@@ -348,12 +348,12 @@ function ToXml_ST_DateTimeGrouping(val) {
 }
 
 function getCharCodesFromText(text) {
-	var res = [];
-	for (var oIterator = text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
-		res.push(oIterator.value());
-	}
-	return res;
+	return AscCommon.convertUTF16toUnicode(text);
 }
+function getTextFromCharCodes(charCodes) {
+	return AscCommon.convertUnicodeToUTF16(charCodes);
+}
+
 
 var g_oRgbColorProperties = {
 		rgb : 0
@@ -752,6 +752,9 @@ g_oColorManager = new ColorManager();
 		} else {
 			this.charCodes = [];
 		}
+	};
+	Fragment.prototype.initText = function () {
+		this.text = getTextFromCharCodes(this.charCodes);
 	};
 	Fragment.prototype.getCharCodes = function () {
 		if (!this.charCodes) {

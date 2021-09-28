@@ -1721,7 +1721,7 @@
 	};
 
 	CellEditor.prototype._addCharCodes = function (arrCharCodes) {
-		return this._addChars(this.getTextFromCharCodes(arrCharCodes));
+		return this._addChars(arrCharCodes);
 	};
 	CellEditor.prototype._addChars = function (str, pos, isRange) {
 		if (!isRange) {
@@ -1744,6 +1744,9 @@
 			this._removeChars(undefined, undefined, isRange);
 		}
 
+		if (str.trim) {
+			str = AscCommonExcel.getCharCodesFromText(str);
+		}
 		var length = str.length;
 		if (0 !== length) {
 			// limit count characters
@@ -1768,7 +1771,7 @@
 			}
 
 			if (this.newTextFormat) {
-				var oNewObj = new Fragment({format: this.newTextFormat, charCodes: AscCommonExcel.getCharCodesFromText(str)});
+				var oNewObj = new Fragment({format: this.newTextFormat, charCodes: str});
 				this._addFragments([oNewObj], pos);
 				this.newTextFormat = null;
 			} else {
@@ -1776,7 +1779,8 @@
 				if (f) {
 					l = pos - f.begin;
 					s = opt.fragments[f.index].getCharCodes();
-					opt.fragments[f.index].setCharCodes(s.slice(0, l).concat(AscCommonExcel.getCharCodesFromText(str)).concat(s.slice(l)));
+
+					opt.fragments[f.index].setCharCodes(s.slice(0, l).concat(str).concat(s.slice(l)));
 				}
 			}
 

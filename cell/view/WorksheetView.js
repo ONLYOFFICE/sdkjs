@@ -15653,6 +15653,10 @@
 						}
 					}
 
+					for (var i = 0; i < val.length; i++) {
+						val[i].initText();
+					}
+
 					var bRes = t._saveCellValueAfterEdit(c, val, flags, /*isNotHistory*/false, /*lockDraw*/false);
 					if (callback) {
 						return callback(bRes);
