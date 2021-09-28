@@ -1937,6 +1937,16 @@
 				return pv + cv.text.length;
 			}, 0) : 0;
 		}
+		function getFragmentsCharCodes(f) {
+			return f.reduce(function (pv, cv) {
+				return pv.concat(cv.charCodes);
+			}, "");
+		}
+		function getFragmentsCharCodesLength(f) {
+			return f.length > 0 ? f.reduce(function (pv, cv) {
+				return pv + cv.charCodes.length;
+			}, 0) : 0;
+		}
 
 		function executeInR1C1Mode(mode, runFunction) {
 			var oldMode = AscCommonExcel.g_R1C1Mode;
@@ -3364,6 +3374,8 @@
 		window["AscCommonExcel"].dropDecimalAutofit = dropDecimalAutofit;
 		window["AscCommonExcel"].getFragmentsText = getFragmentsText;
 		window['AscCommonExcel'].getFragmentsLength = getFragmentsLength;
+		window["AscCommonExcel"].getFragmentsCharCodes = getFragmentsCharCodes;
+		window["AscCommonExcel"].getFragmentsCharCodesLength = getFragmentsCharCodesLength;
 		window['AscCommonExcel'].executeInR1C1Mode = executeInR1C1Mode;
 		window['AscCommonExcel'].checkFilteringMode = checkFilteringMode;
 		window["Asc"].getEndValueRange = getEndValueRange;

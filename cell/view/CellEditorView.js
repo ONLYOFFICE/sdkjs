@@ -86,7 +86,8 @@
 	var kPositionLength = -12;
 
 	/** @const */
-	var kNewLine = "\n";
+	var codeNewLine = 0x0010;
+	var codeEqually = 0x3D;
 
 
 	/**
@@ -375,7 +376,7 @@
 
 		if (saveValue) {
 			// Пересчет делаем всегда для не пустой ячейки или если были изменения. http://bugzilla.onlyoffice.com/show_bug.cgi?id=34864
-			if (0 < this.undoList.length || 0 < AscCommonExcel.getFragmentsLength(this.options.fragments)) {
+			if (0 < this.undoList.length || 0 < AscCommonExcel.getFragmentsCharCodesLength(this.options.fragments)) {
 				var isFormula = this.isFormula();
 				// Делаем замену текста на автодополнение, если есть select и текст полностью совпал.
 				if (this.sAutoComplete && !isFormula) {
@@ -386,6 +387,9 @@
 					this.noUpdateMode = false;
 				}
 
+				for (var i = 0; i < opt.fragments.length; i++) {
+					opt.fragments[i].initText();
+				}
 				return opt.saveValueCallback(opt.fragments, this.textFlags, localSaveValueCallback);
 			}
 		}
@@ -724,7 +728,7 @@
 	CellEditor.prototype._isFormula = function () {
 		//TODO пока оставляю проверку на ровно по тексту, а не по коду символов
 		var fragments = this.options.fragments;
-		return fragments && fragments.length > 0 && fragments[0].text.length > 0 && fragments[0].text.charAt(0) === "=";
+		return fragments && fragments.length > 0 && fragments[0].getCharCodesLength() > 0 && fragments[0].getCharCode(0) === codeEqually;
 	};
 	CellEditor.prototype.isFormula = function () {
 		return c_oAscCellEditorState.editFormula === this.m_nEditorState;
@@ -1112,8 +1116,9 @@
 	};
 
 	CellEditor.prototype._fireUpdated = function () {
+		//TODO оставляю текст!
 		var s = AscCommonExcel.getFragmentsText(this.options.fragments);
-		var isFormula = -1 === this.beginCompositePos && s.charAt(0) === "=";
+		var isFormula = -1 === this.beginCompositePos && s.getCharCode(0) === codeEqually;
 		var fPos, fName, match, fCurrent;
 
 		if (!this.isTopLineActive || !this.skipTLUpdate || this.undoMode) {
@@ -1139,11 +1144,12 @@
 	};
 
 	CellEditor.prototype._getEditableFunction = function (parseResult, bEndCurPos) {
+		//TODO оставляю текст!
 		var findOpenFunc = [], editableFunction = null, level = -1;
 		if(!parseResult) {
 			//в этом случае запускаю парсинг формулы до текущей позиции
 			var s = AscCommonExcel.getFragmentsText(this.options.fragments);
-			var isFormula = -1 === this.beginCompositePos && s.charAt(0) === "=";
+			var isFormula = -1 === this.beginCompositePos && s.getCharCode(0) === codeEqually;
 			if(isFormula) {
 				var pos = this.cursorPos;
 				var ws = this.handlers.trigger("getActiveWS");
@@ -1667,8 +1673,8 @@
 
 	CellEditor.prototype._syncEditors = function () {
 		var t = this;
-		var s1 = AscCommonExcel.getFragmentsText(t.options.fragments);
-		var s2 = t.input.value;
+		var s1 = AscCommonExcel.getFragmentsCharCodes(t.options.fragments);
+		var s2 = AscCommonExcel.getCharCodesFromText(t.input.value);
 		var l = Math.min(s1.length, s2.length);
 		var i1 = 0, i2;
 
@@ -1785,7 +1791,7 @@
 			}
 
 			this.cursorPos = pos + str.length;
-			if (-1 !== str.indexOf(kNewLine)) {
+			if (-1 !== window["Asc"].search(s, function (val) {return val === codeNewLine})) {
 				this._wrapText();
 			}
 		}
@@ -1800,7 +1806,7 @@
 
 	CellEditor.prototype._addNewLine = function () {
 		this._wrapText();
-		this._addChars( kNewLine );
+		this._addChars( codeNewLine );
 	};
 
 	CellEditor.prototype._removeChars = function (pos, length, isRange) {
@@ -2070,7 +2076,7 @@
 
 		for (i = 0; i < fr.length; ++i) {
 			s = fr[i].text;
-			if (!wrap && -1 !== s.indexOf(kNewLine)) {
+			if (!wrap && -1 !== window["Asc"].search(s, function (val) {return val === codeNewLine})) {
 				this._wrapText();
 			}
 			fr[i].text = s;
@@ -2186,6 +2192,7 @@
 
 	CellEditor.prototype._getAutoComplete = function (str) {
 		// ToDo можно ускорить делая поиск каждый раз не в большом массиве, а в уменьшенном (по предыдущим символам)
+		//TODO оставляю текст!
 		var oLastResult = this.objAutoComplete[str];
 		if (oLastResult) {
 			return oLastResult;
@@ -2214,6 +2221,7 @@
 	};
 
 	CellEditor.prototype._checkMaxCellLength = function (length) {
+		//TODO оставляю текст!
 		var count = AscCommonExcel.getFragmentsLength(this.options.fragments) + length - Asc.c_oAscMaxCellOrCommentLength;
 		return 0 > count ? 0 : count;
 	};
@@ -2735,6 +2743,7 @@
 
 	/** @param event {jQuery.Event} */
 	CellEditor.prototype._onInputTextArea = function (event) {
+		//TODO оставляю текст!
 		var t = this;
 		if (!this.handlers.trigger("canEdit") || this.loadFonts) {
 			return true;
@@ -2771,6 +2780,7 @@
 	};
 
 	CellEditor.prototype.getTextFromCharCodes = function (arrCharCodes) {
+		//TODO оставляю текст!
 		var code, codePt, newText = '';
 		for (var i = 0; i < arrCharCodes.length; ++i) {
 			code = arrCharCodes[i];
