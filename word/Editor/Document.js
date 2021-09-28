@@ -10570,21 +10570,18 @@ CDocument.prototype.OnKeyDown = function(e)
 			{
 				var oParagraph = arrParagraphs[0];
 				var ListForUnicode = [];
-				var fFlagForUnicode = [0];
+				var IsForMathPart = [0];
 				var textForUnicode = [""];
 				var countOfRuns = [0];
-				//var oSelectedContent = new CSelectedContent();
-				//var el1 = this.GetSelectedContent();
-				//oParagraph.SelectCurrentWord();
-				//oParagraph.GetSelectedContent(oSelectedContent);
+		
 				oParagraph.CheckRunContent(function(oRun)
 				{
-					oRun.ChangeUnicodeText(ListForUnicode, textForUnicode, fFlagForUnicode, countOfRuns);
+					oRun.ChangeUnicodeText(ListForUnicode, textForUnicode, IsForMathPart, countOfRuns);
 				});
 				if (textForUnicode[0] === "" && ListForUnicode.length === 0)
 				{
 					textForUnicode[0] = this.GetSelectedText();
-					fFlagForUnicode[0] = -1;
+					IsForMathPart[0] = -1;
 					for (var nPos = 0; nPos < textForUnicode[0].length; nPos++)
 					{
 						ListForUnicode[nPos] = 
@@ -10595,13 +10592,10 @@ CDocument.prototype.OnKeyDown = function(e)
 				}
 				for (var nPos = 0; nPos < ListForUnicode.length; nPos++)
 				{
-					if (ListForUnicode[nPos].value === undefined || ListForUnicode.length > 6 )
-					{
-						ListForUnicode.splice(0, ListForUnicode.length);
-					}
-					if (ListForUnicode.length > 1 && !((ListForUnicode[nPos].value <= 0x46 && ListForUnicode[nPos].value >= 0x41) 
+					if ((ListForUnicode[nPos].value === undefined || ListForUnicode.length > 6 )
+						|| (ListForUnicode.length > 1 && !((ListForUnicode[nPos].value <= 0x46 && ListForUnicode[nPos].value >= 0x41) 
 						|| (ListForUnicode[nPos].value <= 0x39 && ListForUnicode[nPos].value >= 0x30)
-						|| (ListForUnicode[nPos].value <= 0x66 && ListForUnicode[nPos].value >= 0x61)))
+						|| (ListForUnicode[nPos].value <= 0x66 && ListForUnicode[nPos].value >= 0x61))))
 					{
 						ListForUnicode.splice(0, ListForUnicode.length);
 					}
@@ -10618,41 +10612,31 @@ CDocument.prototype.OnKeyDown = function(e)
 							if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, false))
 							{
 								this.StartAction(AscDFH.historydescription_Document_AddLetter);					
-								if (oParagraph.LogicDocument.IsTrackRevisions())
+								if (oParagraph.LogicDocument.IsTrackRevisions() || IsForMathPart[0] === -1)
 								{
+									oParagraph.Remove(1);
 									if (AscCommon.IsSpace(textAfterChange))
 										oParagraph.Add(new ParaSpace(textAfterChange));
 									else
 										oParagraph.Add(new ParaText(textAfterChange));
-
-									oParagraph.Remove(1);
+									
+									oParagraph.RemoveSelection();
 								}
 								else
 								{
-									if (fFlagForUnicode[0] === -1)
+									for (var i = ListForUnicode.length - 1; i >= 0; i--)
 									{
-										oParagraph.Remove(1);
-										if (AscCommon.IsSpace(textAfterChange))
-											oParagraph.Add(new ParaSpace(textAfterChange));
-										else
-											oParagraph.Add(new ParaText(textAfterChange));
+										if (i === ListForUnicode.length - 1 || ListForUnicode[i].orunNumber !== ListForUnicode[i + 1].orunNumber)
+											ListForUnicode[i].oRun.Remove();
 									}
+									if (AscCommon.IsSpace(textAfterChange))
+										ListForUnicode[0].oRun.Add(new ParaSpace(textAfterChange));
 									else
-									{
-										for (var i = ListForUnicode.length - 1; i >= 0; i--)
-										{
-											if (i === ListForUnicode.length - 1 || ListForUnicode[i].orunNumber !== ListForUnicode[i + 1].orunNumber)
-												ListForUnicode[i].oRun.Remove();
-										}
-										if (AscCommon.IsSpace(textAfterChange))
-											ListForUnicode[0].oRun.Add(new ParaSpace(textAfterChange));
-										else
-											ListForUnicode[0].oRun.Add(new ParaText(textAfterChange));
-										
-										ListForUnicode[0].oRun.Selection.Use = true;
-										ListForUnicode[0].oRun.Selection.StartPos = ListForUnicode[0].currentPos;
-										ListForUnicode[0].oRun.Selection.EndPos = ListForUnicode[0].currentPos + 1;
-									}
+										ListForUnicode[0].oRun.Add(new ParaText(textAfterChange));
+									
+									ListForUnicode[0].oRun.Selection.Use = true;
+									ListForUnicode[0].oRun.Selection.StartPos = ListForUnicode[0].currentPos;
+									ListForUnicode[0].oRun.Selection.EndPos = ListForUnicode[0].currentPos + 1;
 								}
 								this.UpdateSelection();
 								this.Recalculate();
@@ -10672,36 +10656,26 @@ CDocument.prototype.OnKeyDown = function(e)
 
 							this.StartAction(AscDFH.historydescription_Document_AddLetter);
 
-							if (oParagraph.LogicDocument.IsTrackRevisions())
+							if (oParagraph.LogicDocument.IsTrackRevisions() || IsForMathPart[0] === -1)
 							{
+								oParagraph.Remove(1);
 								for (var i = 0; i < textAfterChange.length; i++)
 								{
 									oParagraph.Add(new ParaText(textAfterChange.charCodeAt(i)));
 								}
-								oParagraph.Remove(1);
+								oParagraph.RemoveSelection();
 							}
 							else
 							{
-								if (fFlagForUnicode[0] === -1)
+								ListForUnicode[0].oRun.Remove();
+								for (var i = 0; i < textAfterChange.length; i++)
 								{
-									oParagraph.Remove(1);
-									for (var i = 0; i < textAfterChange.length; i++)
-									{
-										oParagraph.Add(new ParaText(textAfterChange.charCodeAt(i)));
-									}	
+									ListForUnicode[0].oRun.Add(new ParaText(textAfterChange.charCodeAt(i)));
 								}
-								else
-								{
-									ListForUnicode[0].oRun.Remove();
-									for (var i = 0; i < textAfterChange.length; i++)
-									{
-										ListForUnicode[0].oRun.Add(new ParaText(textAfterChange.charCodeAt(i)));
-									}
-									
-									ListForUnicode[0].oRun.Selection.Use = true;
-									ListForUnicode[0].oRun.Selection.StartPos = ListForUnicode[0].currentPos;
-									ListForUnicode[0].oRun.Selection.EndPos = ListForUnicode[0].currentPos + textAfterChange.length;
-								}
+								
+								ListForUnicode[0].oRun.Selection.Use = true;
+								ListForUnicode[0].oRun.Selection.StartPos = ListForUnicode[0].currentPos;
+								ListForUnicode[0].oRun.Selection.EndPos = ListForUnicode[0].currentPos + textAfterChange.length;
 							}
 
 							this.UpdateSelection();
