@@ -86,7 +86,7 @@
 	var kPositionLength = -12;
 
 	/** @const */
-	var codeNewLine = 0x0010;
+	var codeNewLine = 0x00A;
 	var codeEqually = 0x3D;
 
 
@@ -726,7 +726,6 @@
 	};
 
 	CellEditor.prototype._isFormula = function () {
-		//TODO пока оставляю проверку на ровно по тексту, а не по коду символов
 		var fragments = this.options.fragments;
 		return fragments && fragments.length > 0 && fragments[0].getCharCodesLength() > 0 && fragments[0].getCharCode(0) === codeEqually;
 	};
@@ -1118,7 +1117,7 @@
 	CellEditor.prototype._fireUpdated = function () {
 		//TODO оставляю текст!
 		var s = AscCommonExcel.getFragmentsText(this.options.fragments);
-		var isFormula = -1 === this.beginCompositePos && s.getCharCode(0) === codeEqually;
+		var isFormula = -1 === this.beginCompositePos && s.charAt(0) === "=";
 		var fPos, fName, match, fCurrent;
 
 		if (!this.isTopLineActive || !this.skipTLUpdate || this.undoMode) {
@@ -1787,6 +1786,8 @@
 					s = opt.fragments[f.index].getCharCodes();
 
 					opt.fragments[f.index].setCharCodes(s.slice(0, l).concat(str).concat(s.slice(l)));
+
+					s = opt.fragments[f.index].getCharCodes();
 				}
 			}
 
@@ -1806,7 +1807,7 @@
 
 	CellEditor.prototype._addNewLine = function () {
 		this._wrapText();
-		this._addChars( codeNewLine );
+		this._addChars( /*codeNewLine*/"\n" );
 	};
 
 	CellEditor.prototype._removeChars = function (pos, length, isRange) {
@@ -2221,8 +2222,8 @@
 	};
 
 	CellEditor.prototype._checkMaxCellLength = function (length) {
-		//TODO оставляю текст!
-		var count = AscCommonExcel.getFragmentsLength(this.options.fragments) + length - Asc.c_oAscMaxCellOrCommentLength;
+		//TODO вопрос, измерять длину текста или количество символов
+		var count = AscCommonExcel.getFragmentsCharCodesLength(this.options.fragments) + length - Asc.c_oAscMaxCellOrCommentLength;
 		return 0 > count ? 0 : count;
 	};
 

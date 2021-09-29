@@ -150,21 +150,79 @@
 
             this.fontNeedUpdate = false;
 
+
+			this.codesNL = {0xD: 1, 0xA: 1};
+
+			this.codesSpace = {
+				0xA: 1,
+				0xD: 1,
+				0x2028: 1,
+				0x2029: 1,
+				0x9: 1,
+				0xB: 1,
+				0xC: 1,
+				0x2020: 1,
+				0x2000: 1,
+				0x2001: 1,
+				0x2002: 1,
+				0x2003: 1,
+				0x2004: 1,
+				0x2005: 1,
+				0x2006: 1,
+				0x2008: 1,
+				0x2009: 1,
+				0x200A: 1,
+				0x200B: 1,
+				0x205F: 1,
+				0x3000: 1
+			};
+
+			this.codesReplaceNL = {};
+
+			this.codesHypNL = {
+				0xA: 1, 0xD: 1, 0x2028: 1, 0x2029: 1
+			};
+
+			this.codesHypSp = {
+				0x9: 1,
+				0xB: 1,
+				0xC: 1,
+				0x2020: 1,
+				0x2000: 1,
+				0x2001: 1,
+				0x2002: 1,
+				0x2003: 1,
+				0x2004: 1,
+				0x2005: 1,
+				0x2006: 1,
+				0x2008: 1,
+				0x2009: 1,
+				0x200A: 1,
+				0x200B: 1,
+				0x205F: 1,
+				0x3000: 1
+			};
+
+			this.codesHyphen = {
+				0x002D: 1, 0x00AD: 1, 0x2010: 1, 0x2012: 1, 0x2013: 1, 0x2014: 1
+			};
+
+
 			// For replacing invisible chars while rendering
 			/** @type RegExp */
 			this.reNL =  /[\r\n]/;
 			/** @type RegExp */
-			this.reSpace = /[\n\r\u2028\u2029\t\v\f\u0020\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2008\u2009\u200A\u200B\u205F\u3000]/;
+			//this.reSpace = /[\n\r\u2028\u2029\t\v\f\u0020\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2008\u2009\u200A\u200B\u205F\u3000]/;
 			/** @type RegExp */
 			this.reReplaceNL =  /\r?\n|\r/g;
 
 				// For hyphenation
 			/** @type RegExp */
-			this.reHypNL =  /[\n\r\u2028\u2029]/;
+			//this.reHypNL =  /[\n\r\u2028\u2029]/;
 			/** @type RegExp */
-			this.reHypSp =  /[\t\v\f\u0020\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2008\u2009\u200A\u200B\u205F\u3000]/;
+			//this.reHypSp =  /[\t\v\f\u0020\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2008\u2009\u200A\u200B\u205F\u3000]/;
 			/** @type RegExp */
-			this.reHyphen = /[\u002D\u00AD\u2010\u2012\u2013\u2014]/;
+			//this.reHyphen = /[\u002D\u00AD\u2010\u2012\u2013\u2014]/;
 
 			return this;
 		}
@@ -494,7 +552,7 @@
 			for (j = endPos, tw = 0, isAtEnd = true; j >= startPos; --j) {
 				if (isAtEnd) {
 					// skip space char at end of line
-					if ( (wrap) && this.reSpace.test(this.chars[j]) ) {continue;}
+					if ( (wrap) && this.codesSpace[this.chars[j]] ) {continue;}
 					isAtEnd = false;
 				}
 				tw += this.charWidths[j];
@@ -765,12 +823,12 @@
 					tm = ctx.measureChar(null, 0/*px units*/, chc);
 					chw = tm.width;
 
-					isNL = null/*self.reHypNL.test(ch)*/;
-					isSP = null/*!isNL ? self.reHypSp.test(ch) : false*/;
+					isNL = self.codesHypNL[chc];
+					isSP = !isNL ? self.codesHypSp[chc] : false;
 
 					// if 'wrap flag' is set
 					if (wrap || wrapNL || verticalText) {
-						isHP = !isSP && !isNL ? null/*self.reHyphen.test(ch)*/ : false;
+						isHP = !isSP && !isNL ? self.codesHyphen[chc] : false;
 						isEastAsian = AscCommon.isEastAsianScript(chc);
 						if (verticalText) {
 							// ToDo verticalText and new line or space
