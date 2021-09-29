@@ -1085,6 +1085,9 @@
 		this._calculateCanvasSize();
 		this._renderText();
 		if (!this.getMenuEditorMode()) {
+			for (var i = 0; i < this.options.fragments.length; i++) {
+				this.options.fragments[i].initText();
+			}
 			this.input.value = AscCommonExcel.getFragmentsText((this.options.fragments));
 		}
 		this._updateCursorPosition();
@@ -1116,6 +1119,9 @@
 
 	CellEditor.prototype._fireUpdated = function () {
 		//TODO оставляю текст!
+		for (var i = 0; i < this.options.fragments.length; i++) {
+			this.options.fragments[i].initText();
+		}
 		var s = AscCommonExcel.getFragmentsText(this.options.fragments);
 		var isFormula = -1 === this.beginCompositePos && s.charAt(0) === "=";
 		var fPos, fName, match, fCurrent;

@@ -735,13 +735,13 @@ g_oColorManager = new ColorManager();
 		}
 	};
 	Fragment.prototype.getCharCode = function (index) {
-		if (!this.charCodes) {
+		if (!this.isInitCharCodes()) {
 			this.initCharCodes();
 		}
 		return this.charCodes && this.charCodes[index];
 	};
 	Fragment.prototype.getCharCodesLength = function () {
-		if (!this.charCodes) {
+		if (!this.isInitCharCodes()) {
 			this.initCharCodes();
 		}
 		return this.charCodes ? this.charCodes.length : 0;
@@ -757,7 +757,7 @@ g_oColorManager = new ColorManager();
 		this.text = getTextFromCharCodes(this.charCodes);
 	};
 	Fragment.prototype.getCharCodes = function () {
-		if (!this.charCodes) {
+		if (!this.isInitCharCodes()) {
 			this.initCharCodes();
 		}
 		return this.charCodes;
@@ -766,10 +766,13 @@ g_oColorManager = new ColorManager();
 		this.charCodes = val;
 	};
 	Fragment.prototype.getCharCode = function (index) {
-		if (!this.charCodes) {
+		if (!this.isInitCharCodes()) {
 			this.initCharCodes();
 		}
 		return this.charCodes && this.charCodes[index];
+	};
+	Fragment.prototype.isInitCharCodes = function () {
+		return this.charCodes !== null;
 	};
 
 var g_oFontProperties = {

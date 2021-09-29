@@ -896,8 +896,15 @@
 				fr = this.fragments[i];
 				fmt = fr.format.clone();
 				var va = fmt.getVerticalAlign();
+
+				//TODO пока не убрал эту регулярку, сначала перевожу в текст, потом обратно в сиволы
+				//TODO избавиться от регулярки!
+				if (fr.isInitCharCodes()) {
+					fr.initText();
+				}
+				text = this._filterText(fr.text, wrap || wrapNL);
+				fr.initCharCodes();
 				var textLength = fr.getCharCodesLength();
-				//text = this._filterText(fr.text, wrap || wrapNL);
 
 				pIndex = this.chars.length;
 				p = this.charProps[pIndex];
