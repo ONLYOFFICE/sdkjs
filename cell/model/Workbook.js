@@ -7254,6 +7254,10 @@
 				wsFrom = this;
 			}
 
+			//TODO проверить, необходимо ли чистить?
+			//чистим ту область, куда переносим
+			//wsTo.removeSparklineGroup
+
 			wsFrom.aSparklineGroups.forEach(function (val) {
 				if (val) {
 					var aSparklines = [];
@@ -7285,7 +7289,7 @@
 						}
 
 						//необходимо ещё сдвинуть _f
-						if (_elem && _elem._f && oBBoxFrom.containsRange(_elem._f) && cloneElem._f) {
+						if (_elem && _elem._f && cloneElem._f) {
 							cloneElem._f.setOffset(offset);
 							if (wsTo.sName !== cloneElem._f.sheet) {
 								cloneElem._f.setSheet(wsTo.sName);
