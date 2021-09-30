@@ -992,7 +992,7 @@
 		if (!fragments) {
 			fragments = [];
 			var tempFragment = new AscCommonExcel.Fragment();
-			tempFragment.text = "";
+			tempFragment.setText2("");
 			tempFragment.format = new AscCommonExcel.Font();
 			fragments.push(tempFragment);
 		}
@@ -1457,7 +1457,7 @@
 				var text = asc_typeof(curProps.text) === "string" ? curProps.text : convertFieldToMenuText(curProps.text.field);
 				if(null !== text) {
 					var tempFragment = new AscCommonExcel.Fragment();
-					tempFragment.text = text;
+					tempFragment.setText2(text);
 					tempFragment.format = curProps.format;
 					res.push(tempFragment);
 				}
@@ -1776,7 +1776,7 @@
 
 	CHeaderFooterEditor.prototype._getFragments = function(text, format) {
 		var tempFragment = new AscCommonExcel.Fragment();
-		tempFragment.text = text;
+		tempFragment.setText2(text);
 		tempFragment.format = format;
 		return tempFragment;
 	};

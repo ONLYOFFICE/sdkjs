@@ -1327,8 +1327,8 @@
 						}
 					}
 
-					var text = val[i].text;
-					var isBr = val[i].text.indexOf("\n");
+					var text = val[i].getText2();
+					var isBr = val[i].getText2().indexOf("\n");
 					span.textContent = text;
 
 					f = val[i].format;
@@ -1407,7 +1407,7 @@
 						}
 					}
 
-					var text = CopyPasteCorrectString(val[i].text);
+					var text = CopyPasteCorrectString(val[i].getText2());
 					text = text.replace(/\n/g, '<br>');
 
 					f = val[i].format;
@@ -3669,8 +3669,8 @@
 							}
 						}
 
-						fragment.text = children.innerText;
-						AscFonts.FontPickerByCharacter.getFontsByString(fragment.text);
+						fragment.setText2(children.innerText);
+						AscFonts.FontPickerByCharacter.getFontsByString(fragment.getText2());
 						fragment.format = format;
 
 						res.fragments.push(fragment);

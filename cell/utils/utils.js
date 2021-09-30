@@ -1922,29 +1922,35 @@
 			var pos = s.indexOf(AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator);
 			if (-1 !== pos) {
 				f = [f[0].clone()];
-				f[0].text = s.slice(0, pos);
+				f[0].setText2(s.slice(0, pos));
 			}
 			return f;
 		}
 
 		function getFragmentsText(f) {
 			return f.reduce(function (pv, cv) {
-				return pv + cv.text;
+				if (null === cv.getText2()) {
+					cv.initText();
+				}
+				return pv + cv.getText2();
 			}, "");
 		}
 		function getFragmentsLength(f) {
 			return f.length > 0 ? f.reduce(function (pv, cv) {
-				return pv + cv.text.length;
+				if (null === cv.getText2()) {
+					cv.initText();
+				}
+				return pv + cv.getText2().length;
 			}, 0) : 0;
 		}
 		function getFragmentsCharCodes(f) {
 			return f.reduce(function (pv, cv) {
-				return pv.concat(cv.charCodes);
+				return pv.concat(cv.getCharCodes());
 			}, "");
 		}
 		function getFragmentsCharCodesLength(f) {
 			return f.length > 0 ? f.reduce(function (pv, cv) {
-				return pv + cv.charCodes.length;
+				return pv + cv.getCharCodes().length;
 			}, 0) : 0;
 		}
 
@@ -2152,7 +2158,7 @@
 
 				var fragments = [];
 				var tempFragment = new AscCommonExcel.Fragment();
-				tempFragment.text = sStyleName;
+				tempFragment.setText2(sStyleName);
 				tempFragment.format = format;
 				fragments.push(tempFragment);
 				tm = sr.measureString(fragments, cellFlags, width);

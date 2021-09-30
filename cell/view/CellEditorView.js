@@ -528,6 +528,9 @@
 	};
 
 	CellEditor.prototype.checkSymbolBeforeRange = function (char) {
+		if (!char.trim) {
+			char = AscCommonExcel.getTextFromCharCodes(char);
+		}
 		return this.rangeChars.indexOf(char) >= 0 || char === AscCommon.FormulaSeparators.functionArgumentSeparator;
 	};
 
@@ -1798,7 +1801,7 @@
 			}
 
 			this.cursorPos = pos + str.length;
-			if (-1 !== window["Asc"].search(s, function (val) {return val === codeNewLine})) {
+			if (-1 !== window["Asc"].search(str, function (val) {return val === codeNewLine})) {
 				this._wrapText();
 			}
 		}
@@ -2082,11 +2085,11 @@
 		var t = this, i, s, f, wrap = t.textFlags.wrapText || t.textFlags.wrapOnlyNL;
 
 		for (i = 0; i < fr.length; ++i) {
-			s = fr[i].text;
+			s = fr[i].getCharCodes();
 			if (!wrap && -1 !== window["Asc"].search(s, function (val) {return val === codeNewLine})) {
 				this._wrapText();
 			}
-			fr[i].text = s;
+			fr[i].setCharCodes(s);
 			f = fr[i].format;
 			if (f.getName() === "") {
 				f.setName(t.options.font.getName());

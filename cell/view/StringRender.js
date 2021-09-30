@@ -237,7 +237,7 @@
 			this.fragments = [];
 			if ( asc_typeof(fragments) === "string" ) {
 				var newFragment = new AscCommonExcel.Fragment();
-				newFragment.text = fragments;
+				newFragment.setText2(fragments);
 				newFragment.format = new AscCommonExcel.Font();
 				this.fragments.push(newFragment);
 			} else {
@@ -902,7 +902,7 @@
 				if (fr.isInitCharCodes()) {
 					fr.initText();
 				}
-				text = this._filterText(fr.text, wrap || wrapNL);
+				text = this._filterText(fr.getText2(), wrap || wrapNL);
 				fr.initCharCodes();
 				var textLength = fr.getCharCodesLength();
 

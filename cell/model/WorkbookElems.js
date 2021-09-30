@@ -700,7 +700,7 @@ g_oColorManager = new ColorManager();
 
 	/** @constructor */
 	function Fragment(val) {
-		this.text = null;
+		this.text2 = null;
 		this.format = null;
 		//для отрисовки ввожу дополнительный массив
 		this.charCodes = null;//[]
@@ -714,14 +714,14 @@ g_oColorManager = new ColorManager();
 		return new Fragment(this);
 	};
 	Fragment.prototype.set = function (oVal) {
-		if (null != oVal.text) {
-			this.text = oVal.text;
+		if (null != oVal.text2) {
+			this.setText2(oVal.text2);
 		}
 		if (null != oVal.format) {
 			this.format = oVal.format;
 		}
 		if (null != oVal.charCodes) {
-			this.charCodes = oVal.charCodes && oVal.charCodes.slice();
+			this.setCharCodes(oVal.charCodes && oVal.charCodes.slice());
 		}
 	};
 	Fragment.prototype.checkVisitedHyperlink = function (row, col, hyperlinkManager) {
@@ -747,14 +747,24 @@ g_oColorManager = new ColorManager();
 		return this.charCodes ? this.charCodes.length : 0;
 	};
 	Fragment.prototype.initCharCodes = function () {
-		if (this.text) {
-			this.charCodes = getCharCodesFromText(this.text);
+		var test2 = this.getText2();
+		if (test2) {
+			this.setCharCodes(getCharCodesFromText(test2));
 		} else {
-			this.charCodes = [];
+			this.setCharCodes(getCharCodesFromText([]));
 		}
 	};
 	Fragment.prototype.initText = function () {
-		this.text = getTextFromCharCodes(this.charCodes);
+		this.setText2(getTextFromCharCodes(this.charCodes));
+	};
+	Fragment.prototype.getCharCode = function (index) {
+		if (!this.isInitCharCodes()) {
+			this.initCharCodes();
+		}
+		return this.charCodes && this.charCodes[index];
+	};
+	Fragment.prototype.isInitCharCodes = function () {
+		return this.charCodes !== null;
 	};
 	Fragment.prototype.getCharCodes = function () {
 		if (!this.isInitCharCodes()) {
@@ -765,14 +775,11 @@ g_oColorManager = new ColorManager();
 	Fragment.prototype.setCharCodes = function (val) {
 		this.charCodes = val;
 	};
-	Fragment.prototype.getCharCode = function (index) {
-		if (!this.isInitCharCodes()) {
-			this.initCharCodes();
-		}
-		return this.charCodes && this.charCodes[index];
+	Fragment.prototype.getText2 = function () {
+		return this.text2;
 	};
-	Fragment.prototype.isInitCharCodes = function () {
-		return this.charCodes !== null;
+	Fragment.prototype.setText2 = function (val) {
+		this.text2 = val;
 	};
 
 var g_oFontProperties = {
@@ -11677,6 +11684,7 @@ QueryTableField.prototype.clone = function() {
 	window['AscCommonExcel'].Fragment = Fragment;
 	window['AscCommonExcel'].Font = Font;
 	window['AscCommonExcel'].getCharCodesFromText = getCharCodesFromText;
+	window['AscCommonExcel'].getTextFromCharCodes = getTextFromCharCodes;
 	window["Asc"]["c_oAscPatternType"] = c_oAscPatternType;
 	prot = c_oAscPatternType;
 	prot["DarkDown"] = prot.DarkDown;
