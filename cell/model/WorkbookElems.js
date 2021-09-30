@@ -749,13 +749,13 @@ g_oColorManager = new ColorManager();
 	Fragment.prototype.initCharCodes = function () {
 		var test2 = this.getText2();
 		if (test2) {
-			this.setCharCodes(getCharCodesFromText(test2));
+			this.setCharCodes(getCharCodesFromText(test2), true);
 		} else {
-			this.setCharCodes(getCharCodesFromText([]));
+			this.setCharCodes([], true);
 		}
 	};
 	Fragment.prototype.initText = function () {
-		this.setText2(getTextFromCharCodes(this.charCodes));
+		this.setText2(this.charCodes ? getTextFromCharCodes(this.charCodes) : "", true);
 	};
 	Fragment.prototype.getCharCode = function (index) {
 		if (!this.isInitCharCodes()) {
@@ -772,13 +772,24 @@ g_oColorManager = new ColorManager();
 		}
 		return this.charCodes;
 	};
-	Fragment.prototype.setCharCodes = function (val) {
+	Fragment.prototype.setCharCodes = function (val, isInit) {
+		//если выставляем charCodes, контент меняется, нужно занулять текстовое поле
+		if (!isInit) {
+			this.text2 = null;
+		}
 		this.charCodes = val;
 	};
 	Fragment.prototype.getText2 = function () {
+		if (null === this.text2) {
+			this.initText();
+		}
 		return this.text2;
 	};
-	Fragment.prototype.setText2 = function (val) {
+	Fragment.prototype.setText2 = function (val, isInit) {
+		//если выставляем текстовое поле, контент меняется, нужно занулять charCodes
+		if (!isInit) {
+			this.charCodes = null;
+		}
 		this.text2 = val;
 	};
 
@@ -5377,8 +5388,9 @@ StyleManager.prototype =
 		if (multiText) {
 			for (var i = 0, length = multiText.length; i < length; ++i) {
 				var elem = multiText[i];
-				if (null != elem.text && !(elem.format && elem.format.getSkip())) {
-					sRes += elem.text;
+				var text = elem.getText2 ? elem.getText2() : elem.text;
+				if (null != text && !(elem.format && elem.format.getSkip())) {
+					sRes += text;
 				}
 			}
 		}
