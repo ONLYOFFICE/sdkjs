@@ -60,6 +60,19 @@
 	var asc_incDecFonSize = asc.incDecFonSize;
 
 
+	function convertUnicodeToSimpleString(sUnicode)
+	{
+		var sUTF16 = "";
+		var nLength = sUnicode.length;
+		for (var nPos = 0; nPos < nLength; nPos++)
+		{
+			sUTF16 += String.fromCharCode(sUnicode[nPos]);
+		}
+
+		return sUTF16;
+	}
+
+
 	/** @const */
 	var kBeginOfLine = -1;
 	/** @const */
@@ -810,7 +823,10 @@
 	};
 
 	CellEditor.prototype._parseFormulaRanges = function () {
-		var s = AscCommonExcel.getFragmentsText(this.options.fragments);
+		//var s = AscCommonExcel.getFragmentsText(this.options.fragments);
+		var s = this.options.fragments.reduce(function (pv, cv) {
+			return pv + convertUnicodeToSimpleString(cv.getCharCodes());
+		}, "");
 		var ws = this.handlers.trigger("getActiveWS");
 
 		var bbox = this.options.bbox;
@@ -875,6 +891,7 @@
 
 	CellEditor.prototype._findRangeUnderCursor = function () {
 		var ranges, t = this, s = t.textRender.getChars(0, t.textRender.getCharsCount()), range, a;
+		s = convertUnicodeToSimpleString(s);
 		var arrFR = this.handlers.trigger("getFormulaRanges");
 
 		if (arrFR) {
@@ -1122,9 +1139,6 @@
 
 	CellEditor.prototype._fireUpdated = function () {
 		//TODO оставляю текст!
-		for (var i = 0; i < this.options.fragments.length; i++) {
-			this.options.fragments[i].initText();
-		}
 		var s = AscCommonExcel.getFragmentsText(this.options.fragments);
 		var isFormula = -1 === this.beginCompositePos && s.charAt(0) === "=";
 		var fPos, fName, match, fCurrent;
@@ -1132,6 +1146,13 @@
 		if (!this.isTopLineActive || !this.skipTLUpdate || this.undoMode) {
 			this.input.value = s;
 		}
+
+		//получаю строку без двухбайтовых символов и её отдаю регулярке
+		//позиции всех функций должны совпадать
+		//остаётся вопрос с аргументами, которые могут содержать двухбайтовые символы
+		s = this.options.fragments.reduce(function (pv, cv) {
+			return pv + convertUnicodeToSimpleString(cv.getCharCodes());
+		}, "");
 
 		if (isFormula) {
 			fPos = asc_lastidx(s, this.reNotFormula, this.cursorPos) + 1;

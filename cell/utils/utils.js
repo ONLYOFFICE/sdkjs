@@ -1953,6 +1953,14 @@
 				return pv + cv.getCharCodes().length;
 			}, 0) : 0;
 		}
+		function getFragmentsTextFromCode(f) {
+			return f.reduce(function (pv, cv) {
+				if (null === cv.getText2()) {
+					cv.initText();
+				}
+				return pv + cv.getText2();
+			}, "");
+		}
 
 		function executeInR1C1Mode(mode, runFunction) {
 			var oldMode = AscCommonExcel.g_R1C1Mode;
