@@ -2930,6 +2930,7 @@
                     case AscCommon.align_Justify :ha = 5;break;
                     case AscCommon.align_Left :ha = 6;break;
                     case AscCommon.align_Right :ha = 7;break;
+                    case AscCommon.align_CenterContinuous :ha = 8;break;
                 }
                 this.memory.WriteByte(c_oSerAligmentTypes.Horizontal);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
@@ -7504,6 +7505,7 @@
                     case 4 : oAligment.hor = null;break;
                     case 6 : oAligment.hor = AscCommon.align_Left;break;
                     case 7 : oAligment.hor = AscCommon.align_Right;break;
+                    case 8 : oAligment.hor = AscCommon.align_CenterContinuous;break;
                 }
             }
             else if ( c_oSerAligmentTypes.Indent == type )

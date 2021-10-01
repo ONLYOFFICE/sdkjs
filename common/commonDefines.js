@@ -447,6 +447,7 @@
 	var align_Center  = 2;
 	var align_Justify = 3;
 	var align_Distributed = 4;
+	var align_CenterContinuous = 5;
 
 
 	var linerule_AtLeast = 0x00;
@@ -3110,6 +3111,7 @@
 	window['AscCommon']['align_Center'] = window['AscCommon'].align_Center = align_Center;
 	window['AscCommon']['align_Justify'] = window['AscCommon'].align_Justify = align_Justify;
 	window['AscCommon']['align_Distributed'] = window['AscCommon'].align_Distributed = align_Distributed;
+	window['AscCommon']['align_CenterContinuous'] = window['AscCommon'].align_CenterContinuous = align_CenterContinuous;
 
 
 	window["AscCommon"]["c_oAscFormatPainterState"]    = c_oAscFormatPainterState;
