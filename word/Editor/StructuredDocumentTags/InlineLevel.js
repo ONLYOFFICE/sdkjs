@@ -142,14 +142,14 @@ CInlineLevelSdt.prototype.Copy = function(isUseSelection, oPr)
 
 	// ВАЖНО: настройки копируем после копирования содержимого, потому что есть специальные случаи, когда
 	//        содержимое дальше меняется в зависимости от настроек (например, для радио кнопок)
-	this.private_CopyPrTo(oContentControl);
+	this.private_CopyPrTo(oContentControl, oPr);
 
 	if (oContentControl.IsEmpty())
 		oContentControl.ReplaceContentWithPlaceHolder();
 
 	return oContentControl;
 };
-CInlineLevelSdt.prototype.private_CopyPrTo = function(oContentControl)
+CInlineLevelSdt.prototype.private_CopyPrTo = function(oContentControl, oPr)
 {
 	oContentControl.SetDefaultTextPr(this.GetDefaultTextPr());
 	oContentControl.SetLabel(this.GetLabel());
@@ -196,7 +196,7 @@ CInlineLevelSdt.prototype.private_CopyPrTo = function(oContentControl)
 		oContentControl.SetDatePickerPr(this.Pr.Date);
 
 	oContentControl.SetShowingPlcHdr(this.Pr.ShowingPlcHdr);
-	oContentControl.SetPlaceholder(this.private_CopyPlaceholder());
+	oContentControl.SetPlaceholder(this.private_CopyPlaceholder(oPr));
 	oContentControl.SetContentControlEquation(this.Pr.Equation);
 	oContentControl.SetContentControlTemporary(this.Pr.Temporary);
 

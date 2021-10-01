@@ -101,7 +101,7 @@ CBlockLevelSdt.prototype.Copy = function(Parent, DrawingDocument, oPr)
 		oNew.private_ReplaceContentWithPlaceHolder();
 
 	oNew.SetShowingPlcHdr(this.Pr.ShowingPlcHdr);
-	oNew.SetPlaceholder(this.private_CopyPlaceholder());
+	oNew.SetPlaceholder(this.private_CopyPlaceholder(oPr));
 	oNew.SetContentControlEquation(this.Pr.Equation);
 	oNew.SetContentControlTemporary(this.Pr.Temporary);
 

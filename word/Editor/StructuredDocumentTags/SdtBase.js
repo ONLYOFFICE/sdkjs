@@ -331,7 +331,7 @@ CSdtBase.prototype.IsCheckBoxChecked = function()
  * Копируем placeholder
  * @return {string}
  */
-CSdtBase.prototype.private_CopyPlaceholder = function()
+CSdtBase.prototype.private_CopyPlaceholder = function(oPr)
 {
 	var oLogicDocument = this.GetLogicDocument();
 	if (!oLogicDocument || !this.Pr.Placeholder)
@@ -348,9 +348,22 @@ CSdtBase.prototype.private_CopyPlaceholder = function()
 	}
 	else
 	{
-		var oCopyName = oGlossary.GetNewName();
-		oGlossary.AddDocPart(oDocPart.Copy(oCopyName));
-		return oCopyName;
+		var sCopyName;
+		if(oPr && oPr.Comparison && oPr.Comparison.originalDocument) 
+		{
+			var oPrGlossary = oPr.Comparison.originalDocument.GetGlossaryDocument();
+			sCopyName = oPrGlossary.GetNewName();
+			oDocPart.Glossary = oPrGlossary;
+			oGlossary.AddDocPart(oDocPart.Copy(sCopyName));
+			oDocPart.Glossary = oGlossary;
+			return sCopyName;
+		}
+		else 
+		{
+			sCopyName = oGlossary.GetNewName();
+			oGlossary.AddDocPart(oDocPart.Copy(sCopyName));
+			return sCopyName;
+		}
 	}
 };
 /**
