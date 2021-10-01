@@ -10573,7 +10573,7 @@ CDocument.prototype.OnKeyDown = function(e)
 				var IsForMathPart = [0];
 				var textForUnicode = [""];
 				var countOfRuns = [0];
-		
+
 				oParagraph.CheckRunContent(function(oRun)
 				{
 					oRun.ChangeUnicodeText(ListForUnicode, textForUnicode, IsForMathPart, countOfRuns);
@@ -10612,32 +10612,42 @@ CDocument.prototype.OnKeyDown = function(e)
 							if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, false))
 							{
 								this.StartAction(AscDFH.historydescription_Document_AddLetter);					
-								if (oParagraph.LogicDocument.IsTrackRevisions() || IsForMathPart[0] === -1)
+								if (IsForMathPart[0] === -1)
 								{
 									oParagraph.Remove(1);
+                                    if (AscCommon.IsSpace(textAfterChange))
+                                        oParagraph.Add(new ParaSpace(textAfterChange));
+                                    else
+                                        oParagraph.Add(new ParaText(textAfterChange));
+								}
+								else if (oParagraph.LogicDocument.IsTrackRevisions() && ListForUnicode[0].oRun.ReviewType === 0)
+								{
+									for (var i = ListForUnicode.length - 1; i >= 0; i--)
+									{
+										ListForUnicode[i].oRun.RemoveFromContent(ListForUnicode[i].currentPos, 1, true);
+									}
+						
 									if (AscCommon.IsSpace(textAfterChange))
 										oParagraph.Add(new ParaSpace(textAfterChange));
 									else
 										oParagraph.Add(new ParaText(textAfterChange));
-									
-									oParagraph.RemoveSelection();
 								}
 								else
 								{
 									for (var i = ListForUnicode.length - 1; i >= 0; i--)
 									{
-										if (i === ListForUnicode.length - 1 || ListForUnicode[i].orunNumber !== ListForUnicode[i + 1].orunNumber)
-											ListForUnicode[i].oRun.Remove();
+										ListForUnicode[i].oRun.RemoveFromContent(ListForUnicode[i].currentPos, 1, true);
 									}
 									if (AscCommon.IsSpace(textAfterChange))
-										ListForUnicode[0].oRun.Add(new ParaSpace(textAfterChange));
+										ListForUnicode[0].oRun.private_AddItemToRun(ListForUnicode[0].currentPos, new ParaSpace(textAfterChange));
 									else
-										ListForUnicode[0].oRun.Add(new ParaText(textAfterChange));
+										ListForUnicode[0].oRun.private_AddItemToRun(ListForUnicode[0].currentPos, new ParaText(textAfterChange));
 									
 									ListForUnicode[0].oRun.Selection.Use = true;
 									ListForUnicode[0].oRun.Selection.StartPos = ListForUnicode[0].currentPos;
 									ListForUnicode[0].oRun.Selection.EndPos = ListForUnicode[0].currentPos + 1;
 								}
+
 								this.UpdateSelection();
 								this.Recalculate();
 								this.UpdateInterface();
@@ -10656,21 +10666,28 @@ CDocument.prototype.OnKeyDown = function(e)
 
 							this.StartAction(AscDFH.historydescription_Document_AddLetter);
 
-							if (oParagraph.LogicDocument.IsTrackRevisions() || IsForMathPart[0] === -1)
+							if (IsForMathPart[0] === -1)
 							{
 								oParagraph.Remove(1);
+                                for (var i = 0; i < textAfterChange.length; i++)
+                                {
+                                    oParagraph.Add(new ParaText(textAfterChange.charCodeAt(i)));
+                                }
+							}
+							else if (oParagraph.LogicDocument.IsTrackRevisions() && ListForUnicode[0].oRun.ReviewType === 0)
+							{
+								ListForUnicode[0].oRun.RemoveFromContent(ListForUnicode[0].currentPos, 1, true);
 								for (var i = 0; i < textAfterChange.length; i++)
 								{
 									oParagraph.Add(new ParaText(textAfterChange.charCodeAt(i)));
 								}
-								oParagraph.RemoveSelection();
 							}
 							else
 							{
-								ListForUnicode[0].oRun.Remove();
+								ListForUnicode[0].oRun.RemoveFromContent(ListForUnicode[0].currentPos, 1, true);
 								for (var i = 0; i < textAfterChange.length; i++)
 								{
-									ListForUnicode[0].oRun.Add(new ParaText(textAfterChange.charCodeAt(i)));
+									ListForUnicode[0].oRun.private_AddItemToRun(ListForUnicode[0].currentPos + i, new ParaText(textAfterChange.charCodeAt(i)));
 								}
 								
 								ListForUnicode[0].oRun.Selection.Use = true;
