@@ -8486,8 +8486,9 @@
 
 		var oldResults = this.lastFindOptions && this.lastFindOptions.findResults.isNotEmpty();
 		var result = new AscCommonExcel.findResults(), tmp;
-		findRange._foreachNoEmpty(function (cell, r, c) {
-			if (!cell.isNullText() && cell.isEqual(options)) {
+		var func = options.findWhat === "" ? findRange._foreach : findRange._foreachNoEmpty;
+		func.apply(findRange, [function (cell, r, c) {
+			if (cell && cell.isEqual(options)) {
 				if (!options.scanByRows) {
 					tmp = r;
 					r = c;
@@ -8495,7 +8496,7 @@
 				}
 				result.add(r, c, cell);
 			}
-		});
+		}]);
 		this.lastFindOptions = options.clone();
 		// ToDo support multiselect
 		this.lastFindOptions.findRange = findRange.getBBox0().clone();
