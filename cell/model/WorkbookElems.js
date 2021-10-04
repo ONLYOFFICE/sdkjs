@@ -347,14 +347,6 @@ function ToXml_ST_DateTimeGrouping(val) {
 	return res;
 }
 
-function getCharCodesFromText(text) {
-	return AscCommon.convertUTF16toUnicode(text);
-}
-function getTextFromCharCodes(charCodes) {
-	return AscCommon.convertUnicodeToUTF16(charCodes);
-}
-
-
 var g_oRgbColorProperties = {
 		rgb : 0
 	};
@@ -749,13 +741,13 @@ g_oColorManager = new ColorManager();
 	Fragment.prototype.initCharCodes = function () {
 		var test2 = this.getFragmentText();
 		if (test2) {
-			this.setCharCodes(getCharCodesFromText(test2), true);
+			this.setCharCodes(AscCommon.convertUTF16toUnicode(test2), true);
 		} else {
 			this.setCharCodes([], true);
 		}
 	};
 	Fragment.prototype.initText = function () {
-		this.setFragmentText(this.charCodes ? getTextFromCharCodes(this.charCodes) : "", true);
+		this.setFragmentText(this.charCodes ? AscCommon.convertUnicodeToUTF16(this.charCodes) : "", true);
 	};
 	Fragment.prototype.getCharCode = function (index) {
 		if (!this.isInitCharCodes()) {
@@ -11727,8 +11719,6 @@ QueryTableField.prototype.clone = function() {
 	window['AscCommonExcel'].CorrectAscColor = CorrectAscColor;
 	window['AscCommonExcel'].Fragment = Fragment;
 	window['AscCommonExcel'].Font = Font;
-	window['AscCommonExcel'].getCharCodesFromText = getCharCodesFromText;
-	window['AscCommonExcel'].getTextFromCharCodes = getTextFromCharCodes;
 	window["Asc"]["c_oAscPatternType"] = c_oAscPatternType;
 	prot = c_oAscPatternType;
 	prot["DarkDown"] = prot.DarkDown;

@@ -542,7 +542,7 @@
 
 	CellEditor.prototype.checkSymbolBeforeRange = function (char) {
 		if (!char.trim) {
-			char = AscCommonExcel.getTextFromCharCodes(char);
+			char = AscCommon.convertUnicodeToUTF16(char);
 		}
 		return this.rangeChars.indexOf(char) >= 0 || char === AscCommon.FormulaSeparators.functionArgumentSeparator;
 	};
@@ -1703,7 +1703,7 @@
 	CellEditor.prototype._syncEditors = function () {
 		var t = this;
 		var s1 = AscCommonExcel.getFragmentsCharCodes(t.options.fragments);
-		var s2 = AscCommonExcel.getCharCodesFromText(t.input.value);
+		var s2 = AscCommon.convertUTF16toUnicode(t.input.value);
 		var l = Math.min(s1.length, s2.length);
 		var i1 = 0, i2;
 
@@ -1780,7 +1780,7 @@
 		}
 
 		if (str.trim) {
-			str = AscCommonExcel.getCharCodesFromText(str);
+			str = AscCommon.convertUTF16toUnicode(str);
 		}
 		var length = str.length;
 		if (0 !== length) {
