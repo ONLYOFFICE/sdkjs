@@ -2078,6 +2078,11 @@ var editor;
 			return;
         }
 
+		if (this.VersionHistory && this.controller) {
+			this.controller.vsbApi = null;
+			this.controller.hsbApi = null;
+		}
+
 		this.wb = new AscCommonExcel.WorkbookView(this.wbModel, this.controller, this.handlers, this.HtmlElement,
 			this.topLineEditorElement, this, this.collaborativeEditing, this.fontRenderingMode);
 
