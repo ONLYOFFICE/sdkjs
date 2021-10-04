@@ -1922,25 +1922,25 @@
 			var pos = s.indexOf(AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator);
 			if (-1 !== pos) {
 				f = [f[0].clone()];
-				f[0].setText2(s.slice(0, pos));
+				f[0].setFragmentText(s.slice(0, pos));
 			}
 			return f;
 		}
 
 		function getFragmentsText(f) {
 			return f.reduce(function (pv, cv) {
-				if (null === cv.getText2()) {
+				if (null === cv.getFragmentText()) {
 					cv.initText();
 				}
-				return pv + cv.getText2();
+				return pv + cv.getFragmentText();
 			}, "");
 		}
 		function getFragmentsLength(f) {
 			return f.length > 0 ? f.reduce(function (pv, cv) {
-				if (null === cv.getText2()) {
+				if (null === cv.getFragmentText()) {
 					cv.initText();
 				}
-				return pv + cv.getText2().length;
+				return pv + cv.getFragmentText().length;
 			}, 0) : 0;
 		}
 		function getFragmentsCharCodes(f) {
@@ -1955,10 +1955,10 @@
 		}
 		function getFragmentsTextFromCode(f) {
 			return f.reduce(function (pv, cv) {
-				if (null === cv.getText2()) {
+				if (null === cv.getFragmentText()) {
 					cv.initText();
 				}
-				return pv + cv.getText2();
+				return pv + cv.getFragmentText();
 			}, "");
 		}
 
@@ -2166,7 +2166,7 @@
 
 				var fragments = [];
 				var tempFragment = new AscCommonExcel.Fragment();
-				tempFragment.setText2(sStyleName);
+				tempFragment.setFragmentText(sStyleName);
 				tempFragment.format = format;
 				fragments.push(tempFragment);
 				tm = sr.measureString(fragments, cellFlags, width);

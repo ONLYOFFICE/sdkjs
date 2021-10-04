@@ -700,7 +700,7 @@ g_oColorManager = new ColorManager();
 
 	/** @constructor */
 	function Fragment(val) {
-		this.text2 = null;
+		this.text = null;
 		this.format = null;
 		//для отрисовки ввожу дополнительный массив
 		this.charCodes = null;//[]
@@ -714,8 +714,8 @@ g_oColorManager = new ColorManager();
 		return new Fragment(this);
 	};
 	Fragment.prototype.set = function (oVal) {
-		if (null != oVal.text2) {
-			this.setText2(oVal.text2);
+		if (null != oVal.text) {
+			this.setFragmentText(oVal.text);
 		}
 		if (null != oVal.format) {
 			this.format = oVal.format;
@@ -747,7 +747,7 @@ g_oColorManager = new ColorManager();
 		return this.charCodes ? this.charCodes.length : 0;
 	};
 	Fragment.prototype.initCharCodes = function () {
-		var test2 = this.getText2();
+		var test2 = this.getFragmentText();
 		if (test2) {
 			this.setCharCodes(getCharCodesFromText(test2), true);
 		} else {
@@ -755,7 +755,7 @@ g_oColorManager = new ColorManager();
 		}
 	};
 	Fragment.prototype.initText = function () {
-		this.setText2(this.charCodes ? getTextFromCharCodes(this.charCodes) : "", true);
+		this.setFragmentText(this.charCodes ? getTextFromCharCodes(this.charCodes) : "", true);
 	};
 	Fragment.prototype.getCharCode = function (index) {
 		if (!this.isInitCharCodes()) {
@@ -775,29 +775,29 @@ g_oColorManager = new ColorManager();
 	Fragment.prototype.setCharCodes = function (val, isInit) {
 		//если выставляем charCodes, контент меняется, нужно занулять текстовое поле
 		if (!isInit) {
-			this.text2 = null;
+			this.text = null;
 		}
 		this.charCodes = val;
 	};
-	Fragment.prototype.getText2 = function () {
-		if (null === this.text2) {
+	Fragment.prototype.getFragmentText = function () {
+		if (null === this.text) {
 			this.initText();
 		}
-		return this.text2;
+		return this.text;
 	};
-	Fragment.prototype.setText2 = function (val, isInit) {
+	Fragment.prototype.setFragmentText = function (val, isInit) {
 		//если выставляем текстовое поле, контент меняется, нужно занулять charCodes
 		if (!isInit) {
 			this.charCodes = null;
 		}
-		this.text2 = val;
+		this.text = val;
 	};
 	Fragment.prototype.getTextFromCodes = function () {
 		//если выставляем текстовое поле, контент меняется, нужно занулять charCodes
 		if (!isInit) {
 			this.charCodes = null;
 		}
-		this.text2 = val;
+		this.text = val;
 	};
 	Fragment.prototype.convertPositionToText = function (codePos) {
 		var diff = 0;
@@ -5419,7 +5419,7 @@ StyleManager.prototype =
 		if (multiText) {
 			for (var i = 0, length = multiText.length; i < length; ++i) {
 				var elem = multiText[i];
-				var text = elem.getText2 ? elem.getText2() : elem.text;
+				var text = elem.getFragmentText ? elem.getFragmentText() : elem.text;
 				if (null != text && !(elem.format && elem.format.getSkip())) {
 					sRes += text;
 				}
@@ -5432,7 +5432,7 @@ StyleManager.prototype =
 		if (multiText) {
 			for (var i = 0, length = multiText.length; i < length; ++i) {
 				var elem = multiText[i];
-				var text = elem.getText2 ? elem.getText2() : elem.text;
+				var text = elem.getFragmentText ? elem.getFragmentText() : elem.text;
 				if (null != text) {
 					if(elem.format && elem.format.getSkip()) {
 						sRes += " ";
