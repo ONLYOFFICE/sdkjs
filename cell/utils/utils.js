@@ -288,13 +288,13 @@
 			return cellValue;
 		}
 
-		function getFindRegExp(value, options) {
+		function getFindRegExp(value, options, checkEmptyVal) {
 			var findFlags = "g"; // Заменяем все вхождения
 			// Не чувствителен к регистру
 			if (true !== options.isMatchCase) {
 				findFlags += "i";
 			}
-			if (value === "") {
+			if (value === "" && checkEmptyVal) {
 				value = /^$/;
 			} else {
 				value = value

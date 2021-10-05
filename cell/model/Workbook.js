@@ -8486,8 +8486,15 @@
 
 		var oldResults = this.lastFindOptions && this.lastFindOptions.findResults.isNotEmpty();
 		var result = new AscCommonExcel.findResults(), tmp;
-		var func = options.findWhat === "" ? findRange._foreach : findRange._foreachNoEmpty;
+		var func = options.findWhat === "" ? findRange._foreach2 : findRange._foreachNoEmpty;
+		var emptyCell, t = this;
 		func.apply(findRange, [function (cell, r, c) {
+			if (cell === null) {
+				if (!emptyCell) {
+					emptyCell = new Cell(t);
+				}
+				cell = emptyCell;
+			}
 			if (cell && cell.isEqual(options)) {
 				if (!options.scanByRows) {
 					tmp = r;
