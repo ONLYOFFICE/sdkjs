@@ -823,7 +823,7 @@
 	};
 
 	CellEditor.prototype._parseFormulaRanges = function () {
-		//var s = AscCommonExcel.getFragmentsText(this.options.fragments);
+		//получаю строку без двухбайтовых символов
 		var s = this.options.fragments.reduce(function (pv, cv) {
 			return pv + convertUnicodeToSimpleString(cv.getCharCodes());
 		}, "");
@@ -1177,8 +1177,11 @@
 		var findOpenFunc = [], editableFunction = null, level = -1;
 		if(!parseResult) {
 			//в этом случае запускаю парсинг формулы до текущей позиции
-			var s = AscCommonExcel.getFragmentsText(this.options.fragments);
-			var isFormula = -1 === this.beginCompositePos && s.getCharCode(0) === codeEqually;
+			//получаю строку без двухбайтовых символов
+			var s = this.options.fragments.reduce(function (pv, cv) {
+				return pv + convertUnicodeToSimpleString(cv.getCharCodes());
+			}, "");
+			var isFormula = -1 === this.beginCompositePos && s.charAt(0) === "=";
 			if(isFormula) {
 				var pos = this.cursorPos;
 				var ws = this.handlers.trigger("getActiveWS");
