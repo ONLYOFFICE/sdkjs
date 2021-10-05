@@ -1050,19 +1050,19 @@
 
 				y = y1 + bl + dh;
 				if (align !== AscCommon.align_Justify || dx < 0.000001) {
-					ctx.fillText(self.chars.slice(begin, end), x1, y, undefined, self.charWidths.slice(begin, end), angle);
+					ctx.fillTextCode(self.chars.slice(begin, end), x1, y, undefined, self.charWidths.slice(begin, end), angle);
 				} else {
 					for (i = b = begin, x_ = x1; i < end; ++i) {
 						cp = self.charProps[i];
 						if (cp && cp.wrd && i > b) {
-							ctx.fillText(self.chars.slice(b, i), x_, y, undefined, self.charWidths.slice(b, i), angle);
+							ctx.fillTextCode(self.chars.slice(b, i), x_, y, undefined, self.charWidths.slice(b, i), angle);
 							x_ += self._calcCharsWidth(b, i - 1) + dx;
 							dw += dx;
 							b = i;
 						}
 					}
 					if (i > b) { // draw remainder of text
-						ctx.fillText(self.chars.slice(b, i), x_, y, undefined, self.charWidths.slice(b, i), angle);
+						ctx.fillTextCode(self.chars.slice(b, i), x_, y, undefined, self.charWidths.slice(b, i), angle);
 					}
 				}
 

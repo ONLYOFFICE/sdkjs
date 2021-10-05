@@ -1056,6 +1056,11 @@
 		return this;
 	};
 
+	DrawingContext.prototype.fillTextCode = function (text, x, y, maxWidth, charWidths, angle) {
+		return this.fillText(text, x, y, maxWidth, charWidths, angle);
+	};
+
+
 	// Path methods
 
 	DrawingContext.prototype.beginPath = function () {
