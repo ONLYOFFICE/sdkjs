@@ -2016,17 +2016,24 @@
 				this.Memory.WriteByte(0x255);
 			}
 
+			var oParagraph = oForm.GetParagraph();
+
 			var oShd = oFormPr.GetShd();
-			if (oShd && !oShd.IsNil())
+			if (oParagraph && oShd && !oShd.IsNil())
 			{
 				nFlag |= (1 << 9);
 
-				var oParagraph = oForm.GetParagraph();
-				var oColor     = oShd.GetSimpleColor(oParagraph.GetTheme(), oParagraph.GetColorMap());
+				var oColor = oShd.GetSimpleColor(oParagraph.GetTheme(), oParagraph.GetColorMap());
 				this.Memory.WriteByte(oColor.r);
 				this.Memory.WriteByte(oColor.g);
 				this.Memory.WriteByte(oColor.b);
 				this.Memory.WriteByte(0x255);
+			}
+
+			if (oParagraph && AscCommon.align_Left !== oParagraph.GetParagraphAlign())
+			{
+				nFlag |= (1 << 10);
+				this.Memory.WriteByte(oParagraph.GetParagraphAlign());
 			}
 
 			// 0 - Unknown
@@ -2056,7 +2063,7 @@
 					this.Memory.WriteString(sValue);
 				}
 
-				if (oTextFormPr.MultiLine)
+				if (oTextFormPr.MultiLine && oForm.IsFixedForm())
 					nFlag |= (1 << 23);
 
 				if (oTextFormPr.AutoFit)
@@ -2119,6 +2126,16 @@
 				if (oCheckBoxPr.GetChecked())
 					nFlag |= (1 << 20);
 
+				var nCheckedSymbol   = oCheckBoxPr.GetCheckedSymbol();
+				var nUncheckedSymbol = oCheckBoxPr.GetUncheckedSymbol();
+
+				var nType = 0x0000;
+				if (0x2611 === nCheckedSymbol && 0x2610 === nUncheckedSymbol)
+					nType = 0x0001;
+				else if (0x25C9 === nCheckedSymbol && 0x25CB === nUncheckedSymbol)
+					nType = 0x0002;
+
+				this.Memory.WriteLong(nType);
 				this.Memory.WriteLong(oCheckBoxPr.GetCheckedSymbol());
 				this.Memory.WriteString(oCheckBoxPr.GetCheckedFont());
 				this.Memory.WriteLong(oCheckBoxPr.GetUncheckedSymbol());

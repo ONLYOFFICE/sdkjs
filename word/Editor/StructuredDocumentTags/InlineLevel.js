@@ -444,7 +444,31 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 			oGraphics.b_color1(oColor.r, oColor.g, oColor.b, this.IsPlaceHolder() ? 127 : 255);
 			oGraphics.SetFontSlot(fontslot_ASCII); // Именно на этой функции записываются настройки шрифта в метафайл
 
-			oGraphics.AddFormField(X, Y, oBounds.W, oBounds.H, nTextAscent, this);
+			// TODO: Заглушка для AdobeReader
+			//       Если высота поля, меньше 1.2 * FontHeight, тогда разные вьюверы начинают по-разному себя вести, и
+			//       текст начинает скакать. Кроме того, середина по вертикали у поля совпадает со средней точкой
+			//       между BaseLine и CapHeight, поэтому меняем параметры с учетом этого момента
+			// TODO: Надо проверить. Возможно коэффициент 1.2 берется из-за того, что Ascent и WinAscent различаются
+			//       в шрифте
+
+			var nW         = oBounds.W;
+			var nH         = oBounds.H;
+			var nBaseLine  = nTextAscent;
+			var nCapHeight = g_oTextMeasurer.Measure2Code(0x0048).Ascent; // TODO: Переделать на функцию из шрифта
+
+			if (nH < nTextHeight * 1.2)
+			{
+				var nDiff = nTextHeight * 1.2 - nH;
+				Y -= nDiff / 2;
+				nH += nDiff;
+				nBaseLine += nDiff /2;
+			}
+
+			var nDiff = nH / 2 - (nBaseLine - nCapHeight / 2);
+			if (Math.abs(nDiff) > 0.001)
+				nBaseLine += nDiff;
+
+			oGraphics.AddFormField(X, Y, nW, nH, nBaseLine, this);
 		}
 	}
 	else
