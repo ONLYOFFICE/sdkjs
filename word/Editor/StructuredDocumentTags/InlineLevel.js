@@ -445,28 +445,29 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 			oGraphics.SetFontSlot(fontslot_ASCII); // Именно на этой функции записываются настройки шрифта в метафайл
 
 			// TODO: Заглушка для AdobeReader
-			//       Если высота поля, меньше 1.2 * FontHeight, тогда разные вьюверы начинают по-разному себя вести, и
-			//       текст начинает скакать. Кроме того, середина по вертикали у поля совпадает со средней точкой
-			//       между BaseLine и CapHeight, поэтому меняем параметры с учетом этого момента
-			// TODO: Надо проверить. Возможно коэффициент 1.2 берется из-за того, что Ascent и WinAscent различаются
-			//       в шрифте
+			//       Середина по вертикали у поля совпадает со средней точкой bbox, поэтому меняем сдвиги по вертикали
+			//       с учетом этого момента
 
 			var nW         = oBounds.W;
 			var nH         = oBounds.H;
 			var nBaseLine  = nTextAscent;
-			var nCapHeight = g_oTextMeasurer.Measure2Code(0x0048).Ascent; // TODO: Переделать на функцию из шрифта
-
-			if (nH < nTextHeight * 1.2)
+			if (g_oTextMeasurer.m_oManager.m_pFont && g_oTextMeasurer.m_oManager.m_pFont.m_pFaceInfo && g_oTextMeasurer.m_oLastFont)
 			{
-				var nDiff = nTextHeight * 1.2 - nH;
-				Y -= nDiff / 2;
-				nH += nDiff;
-				nBaseLine += nDiff /2;
-			}
+				var oFaceInfo = g_oTextMeasurer.m_oManager.m_pFont.m_pFaceInfo;
 
-			var nDiff = nH / 2 - (nBaseLine - nCapHeight / 2);
-			if (Math.abs(nDiff) > 0.001)
-				nBaseLine += nDiff;
+				var nKoef = g_oTextMeasurer.m_oLastFont.SetUpSize / g_oTextMeasurer.m_oManager.m_lUnits_Per_Em * g_dKoef_pt_to_mm;
+				var yMin  = oFaceInfo.header_yMin * nKoef;
+				var yMax  = oFaceInfo.header_yMax * nKoef;
+
+				var nMidPoint = ((nBaseLine - yMin) + (nBaseLine - yMax)) / 2;
+
+				var nDiff = nH / 2 - nMidPoint;
+				if (Math.abs(nDiff) > 0.001)
+				{
+					Y  -= nDiff;
+					nBaseLine += nDiff;
+				}
+			}
 
 			oGraphics.AddFormField(X, Y, nW, nH, nBaseLine, this);
 		}
