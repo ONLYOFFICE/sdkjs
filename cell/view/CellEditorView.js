@@ -60,19 +60,6 @@
 	var asc_incDecFonSize = asc.incDecFonSize;
 
 
-	function convertUnicodeToSimpleString(sUnicode)
-	{
-		var sUTF16 = "";
-		var nLength = sUnicode.length;
-		for (var nPos = 0; nPos < nLength; nPos++)
-		{
-			sUTF16 += String.fromCharCode(sUnicode[nPos]);
-		}
-
-		return sUTF16;
-	}
-
-
 	/** @const */
 	var kBeginOfLine = -1;
 	/** @const */
@@ -825,7 +812,7 @@
 	CellEditor.prototype._parseFormulaRanges = function () {
 		//получаю строку без двухбайтовых символов
 		var s = this.options.fragments.reduce(function (pv, cv) {
-			return pv + convertUnicodeToSimpleString(cv.getCharCodes());
+			return pv + AscCommonExcel.convertUnicodeToSimpleString(cv.getCharCodes());
 		}, "");
 		var ws = this.handlers.trigger("getActiveWS");
 
@@ -891,7 +878,7 @@
 
 	CellEditor.prototype._findRangeUnderCursor = function () {
 		var ranges, t = this, s = t.textRender.getChars(0, t.textRender.getCharsCount()), range, a;
-		s = convertUnicodeToSimpleString(s);
+		s = AscCommonExcel.convertUnicodeToSimpleString(s);
 		var arrFR = this.handlers.trigger("getFormulaRanges");
 
 		if (arrFR) {
@@ -1151,7 +1138,7 @@
 		//позиции всех функций должны совпадать
 		//остаётся вопрос с аргументами, которые могут содержать двухбайтовые символы
 		s = this.options.fragments.reduce(function (pv, cv) {
-			return pv + convertUnicodeToSimpleString(cv.getCharCodes());
+			return pv + AscCommonExcel.convertUnicodeToSimpleString(cv.getCharCodes());
 		}, "");
 
 		if (isFormula) {
@@ -1179,7 +1166,7 @@
 			//в этом случае запускаю парсинг формулы до текущей позиции
 			//получаю строку без двухбайтовых символов
 			var s = this.options.fragments.reduce(function (pv, cv) {
-				return pv + convertUnicodeToSimpleString(cv.getCharCodes());
+				return pv + AscCommonExcel.convertUnicodeToSimpleString(cv.getCharCodes());
 			}, "");
 			var isFormula = -1 === this.beginCompositePos && s.charAt(0) === "=";
 			if(isFormula) {

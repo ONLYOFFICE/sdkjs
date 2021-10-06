@@ -1961,6 +1961,17 @@
 				return pv + cv.getFragmentText();
 			}, "");
 		}
+		function convertUnicodeToSimpleString(sUnicode)
+		{
+			var sUTF16 = "";
+			var nLength = sUnicode.length;
+			for (var nPos = 0; nPos < nLength; nPos++)
+			{
+				sUTF16 += String.fromCharCode(sUnicode[nPos]);
+			}
+
+			return sUTF16;
+		}
 
 		function executeInR1C1Mode(mode, runFunction) {
 			var oldMode = AscCommonExcel.g_R1C1Mode;
@@ -3390,6 +3401,7 @@
 		window['AscCommonExcel'].getFragmentsLength = getFragmentsLength;
 		window["AscCommonExcel"].getFragmentsCharCodes = getFragmentsCharCodes;
 		window["AscCommonExcel"].getFragmentsCharCodesLength = getFragmentsCharCodesLength;
+		window["AscCommonExcel"].convertUnicodeToSimpleString = convertUnicodeToSimpleString;
 		window['AscCommonExcel'].executeInR1C1Mode = executeInR1C1Mode;
 		window['AscCommonExcel'].checkFilteringMode = checkFilteringMode;
 		window["Asc"].getEndValueRange = getEndValueRange;

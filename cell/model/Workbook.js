@@ -12096,7 +12096,7 @@
 	{
 		var sSimpleText = "";
 		for(var i = 0, length = aVal.length; i < length; ++i)
-			sSimpleText += aVal[i].getFragmentText();
+			sSimpleText += aVal[i].getFragmentText ? aVal[i].getFragmentText() : aVal[i].text;
 		this._setValue(sSimpleText);
 		if (!ignoreHyperlink && window['AscCommonExcel'].g_AutoCorrectHyperlinks) {
 			this._autoformatHyperlink(sSimpleText);
@@ -12114,7 +12114,7 @@
 				for(var i = 0, length = aVal.length; i < length; i++){
 					var item = aVal[i];
 					var oNewElem = new AscCommonExcel.CMultiTextElem();
-					oNewElem.text = item.getFragmentText();
+					oNewElem.text = item.getFragmentText ? item.getFragmentText() : item.text;
 					if (null != item.format) {
 						oNewElem.format = new AscCommonExcel.Font();
 						oNewElem.format.assign(item.format);

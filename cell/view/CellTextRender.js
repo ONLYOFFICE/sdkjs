@@ -102,12 +102,16 @@
 		};
 
 		CellTextRender.prototype.getPrevWord = function (pos) {
-			var i = asc_lastindexof(this.chars.slice(0, pos), this.reWordBegining);
+			//TODO регулярку не меняю, перегоняю в строку
+			var s = AscCommonExcel.convertUnicodeToSimpleString(this.chars);
+			var i = asc_lastindexof(s.slice(0, pos), this.reWordBegining);
 			return i >= 0 ? i + 1 : 0;
 		};
 
 		CellTextRender.prototype.getNextWord = function (pos) {
-			var i = this.chars.slice(pos).search(this.reWordBegining);
+			//TODO регулярку не меняю, перегоняю в строку
+			var s = AscCommonExcel.convertUnicodeToSimpleString(this.chars);
+			var i = s.slice(pos).search(this.reWordBegining);
 			return i >= 0 ? pos + (i + 1) : this.getEndOfLine(pos);
 		};
 
