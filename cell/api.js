@@ -2078,7 +2078,16 @@ var editor;
 			return;
         }
 
+		//история версий - возможно стоит грамотно чистить wbview, но не пересоздавать
 		if (this.VersionHistory && this.controller) {
+			var elem = document.getElementById("ws-v-scrollbar");
+			if (elem) {
+				elem.parentNode.removeChild(elem);
+			}
+			elem = document.getElementById("ws-h-scrollbar");
+			if (elem) {
+				elem.parentNode.removeChild(elem);
+			}
 			this.controller.vsbApi = null;
 			this.controller.hsbApi = null;
 		}
