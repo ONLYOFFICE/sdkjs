@@ -1302,15 +1302,15 @@
 		return false;
 	};
 	CellEditor.prototype._expandHeight = function () {
-		var t = this, bottomSide = this.sides.b, i = asc_search( bottomSide, function ( v ) {
+		var t = this, bottomSide = this.sides.b, i = asc_search(bottomSide, function (v) {
 			return v > t.bottom;
-		} );
-		if ( i >= 0 ) {
+		});
+		if (i >= 0) {
 			t.bottom = bottomSide[i];
 			return true;
 		}
 		var val = bottomSide[bottomSide.length - 1];
-		if ( Math.abs( t.bottom - val ) > 0.000001 ) { // bottom !== bottomSide[len-1]
+		if (Math.abs(t.bottom - val) > 0.000001) { // bottom !== bottomSide[len-1]
 			t.bottom = val;
 		}
 		return false;
