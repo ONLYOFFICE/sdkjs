@@ -1,28 +1,28 @@
 window.initTrackBars = function()
 {
-    const trackbars = document.querySelectorAll('.trackbar');
+    var trackbars = document.querySelectorAll('.trackbar');
     for (let i = 0; i < trackbars.length; i++)
     {
         let trackbar = trackbars[i];
 
-        const button = trackbar.querySelector('.track-button');
+        var button = trackbar.querySelector('.track-button');
         if (button && button instanceof HTMLElement)
         {
             let dragging = false;
             let clickOffset = 0;
 
-            button.addEventListener('mousedown', () => {
+            button.addEventListener('mousedown', function(event) {
                 const parentWidth = trackbar.offsetWidth;
                 const elementWidth = button.offsetWidth;
 
                 clickOffset = (event.pageX - button.offsetLeft - 8) - (elementWidth / 2);
                 dragging = true;
             });
-            document.body.addEventListener('mouseup', () => {
+            document.body.addEventListener('mouseup', function(event) {
                 dragging = false;
             });
 
-            document.body.addEventListener('mousemove', event => {
+            document.body.addEventListener('mousemove', function(event) {
                 if(dragging)
                 {
                     const parentWidth = trackbar.offsetWidth;
@@ -51,7 +51,7 @@ window.initTrackBars = function()
                         trackbar.onChangedValue(elementPosition  / (parentWidth - elementWidth));
                 }
             });
-            document.body.addEventListener('mouseleave', () => {dragging = false;});
+            document.body.addEventListener('mouseleave', function(event) {dragging = false;});
 
             trackbar.setPosition = function(percent) {
                 const parentWidth = trackbar.offsetWidth;

@@ -49,6 +49,12 @@
 		};
 	};
 
+	var ModuleState = {
+		None : 0,
+		Loading : 1,
+		Loaded : 2
+	};
+
 	function CHtmlPage(id)
 	{
 		this.parent = document.getElementById(id);
@@ -86,6 +92,8 @@
 
 		this.backgroundColor = "#E6E6E6";
 		this.betweenPages = 20;
+
+		this.moduleState = ModuleState.None;
 
 		this.structure = null;
 		this.currentPage = -1;
@@ -330,14 +338,83 @@
 				this.scrollY = this.scrollMaxY;
 		};
 
+		this.onLoadModule = function()
+		{
+			this.moduleState = ModuleState.Loaded;
+			if (this._fileData != null)
+			{
+				this.open(this._fileData);
+				delete this._fileData;
+			}
+		};
+
+		this.checkModule = function()
+		{
+			if (this.moduleState == ModuleState.Loaded)
+			{
+				// все загружено - ок
+				return true;
+			}
+			
+			if (this.moduleState == ModuleState.Loading)
+			{
+				// загружается
+				return false;
+			}
+
+			this.moduleState = ModuleState.Loading;
+
+			var scriptElem = document.createElement('script');
+			scriptElem.onerror = function()
+			{
+				// TODO: пробуем грузить несколько раз
+			};
+
+			var _t = this;
+			window["AscViewer"]["onLoadModule"] = function() {
+				_t.onLoadModule();
+			};
+			
+			var basePath = window["AscViewer"]["baseUrl"];
+			
+			var useWasm = false;
+			var webAsmObj = window["WebAssembly"];
+			if (typeof webAsmObj === "object")
+			{
+				if (typeof webAsmObj["Memory"] === "function")
+				{
+					if ((typeof webAsmObj["instantiateStreaming"] === "function") || (typeof webAsmObj["instantiate"] === "function"))
+						useWasm = true;
+				}
+			}
+
+			var src = basePath;
+			if (useWasm)
+				src += "drawingfile.js";
+			else
+				src += "drawingfile_ie.js";
+
+			scriptElem.setAttribute('src', src);
+			scriptElem.setAttribute('type','text/javascript');
+			document.getElementsByTagName('head')[0].appendChild(scriptElem);
+
+			return false;
+		};
+
 		this.open = function(data)
 		{
+			if (!this.checkModule())
+			{
+				this._fileData = data;
+				return;
+			}
+			
 			if (this.file)
 				this.file.close();
 
 			this.file = window["AscViewer"].createFile(data);
 			this.currentPage = -1;
-			this.structure = this.file.structure ? this.file.structure() : [];
+			this.structure = this.file.getStructure();
 
 			setTimeout(function(){
 				oThis.sendEvent("onStructure", oThis.structure);
@@ -745,7 +822,7 @@
 	}
 	CCurrentPageDetector.prototype.addPage = function(num, x, y, w, h)
 	{
-		this.pages.push({ num, x : x, y : y, w : w, h : h });
+		this.pages.push({ num : num, x : x, y : y, w : w, h : h });
 	};
 	CCurrentPageDetector.prototype.getCurrentPage = function()
 	{

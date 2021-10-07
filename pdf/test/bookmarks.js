@@ -53,7 +53,7 @@ AscInterface.updateStructure = function(structure)
     treeElem.json(jsonStructure.children);
 
     // подписываемся после
-    treeElem.on('select', (node) => {
+    treeElem.on('select', function(node) {
         window.Viewer.navigate(parseInt(node.getAttribute("nodeId")));
     });
 };

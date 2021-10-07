@@ -7673,6 +7673,20 @@ CPresentation.prototype.Get_GraphicObjectsProps = function () {
     return null;
 };
 
+CPresentation.prototype.TurnOff_InterfaceEvents = function() {
+    this.TurnOffInterfaceEvents = true;
+};
+
+CPresentation.prototype.TurnOn_InterfaceEvents = function(bUpdate) {
+    this.TurnOffInterfaceEvents = false;
+
+    if (true === bUpdate) {
+        this.Document_UpdateInterfaceState();
+        this.Document_UpdateSelectionState();
+        this.Document_UpdateRulersState();
+    }
+};
+
 // Обновляем текущее состояние (определяем где мы находимся, картинка/параграф/таблица/колонтитул)
 CPresentation.prototype.Document_UpdateInterfaceState = function () {
     if (this.TurnOffInterfaceEvents) {

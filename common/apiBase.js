@@ -2389,6 +2389,10 @@
     baseEditorsApi.prototype.endInlineDropTarget = function(e)
     {
     };
+    baseEditorsApi.prototype.isSliderDragged = function()
+    {
+		return this.noCreatePoint || this.exucuteHistory || this.exucuteHistoryEnd;
+    };
 
     baseEditorsApi.prototype["asc_insertSymbol"] = function(familyName, code, pr)
     {

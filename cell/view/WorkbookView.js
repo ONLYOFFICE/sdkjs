@@ -1034,6 +1034,9 @@
     if (this.selectionDialogMode) {
       return false;
     }
+	if(this.Api && this.Api.noCreatePoint) {
+		return false;
+	}
     var ws = this.getWorksheet();
     this.oSelectionInfo = ws.getSelectionInfo();
     this.lastSendInfoRange = ws.model.selectionRange.clone();

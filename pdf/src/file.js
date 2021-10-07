@@ -25,26 +25,38 @@
     }
 
     // interface
-    CFile.prototype.loadFromData = function(data) {};
-    CFile.prototype.load = function(arrayBuffer)
+    CFile.prototype.close = function() 
     {
-        return this.loadFromData(new Uint8Array(arrayBuffer));
+        if (this.nativeFile)
+        {
+            this.nativeFile["close"]();
+            this.nativeFile = null;
+        }
     };
-
-    CFile.prototype.getInfo = function() {};
-    CFile.prototype.getPagePixmap = function(pageIndex, width, height) {};
-    CFile.prototype.close = function() {};
-    CFile.prototype.memory = function() {};
-    CFile.prototype.free = function(pointer) {};
+    CFile.prototype.memory = function()
+    {
+        return this.nativeFile ? this.nativeFile["memory"]() : null;
+    };
+    CFile.prototype.free = function(pointer)
+    {
+        this.nativeFile && this.nativeFile["free"](pointer);
+    };
+    CFile.prototype.getStructure = function() 
+    {
+        return this.nativeFile ? this.nativeFile["getStructure"]() : [];
+    };
 
 	CFile.prototype.getPage = function(pageIndex, width, height, isNoUseCacheManager)
 	{
+        if (!this.nativeFile)
+            return null;
 		if (pageIndex < 0 || pageIndex >= this.pages.length)
 			return null;
+
 		if (!width) width = this.pages[pageIndex].W;
 		if (!height) height = this.pages[pageIndex].H;
 		var t0 = performance.now();
-		var pixels = this.getPagePixmap(pageIndex, width, height);
+		var pixels = this.nativeFile["getPagePixmap"](pageIndex, width, height);
 		if (!pixels)
 			return null;
         
@@ -380,62 +392,21 @@ void main() {\n\
     };
 
     window["AscViewer"] = window["AscViewer"] || {};
-    window["AscViewer"].IFile = CFile;
+    window["AscViewer"]["baseUrl"] = "./../src/engine/";
 
-    window["AscViewer"].createFile = function(buffer)
+    window["AscViewer"].createFile = function(data)
     {
-        var data = new Uint8Array(buffer);
-        var file = null;
-
-        var maxCheck = Math.min(100, data.length - 5);
-        var pdfCheck = [
-            "%".charCodeAt(0),
-            "P".charCodeAt(0),
-            "D".charCodeAt(0),
-            "F".charCodeAt(0),
-            "-".charCodeAt(0)
-        ];
-        var isPdf = false;
-        for (var i = 0; i < maxCheck; i++)
+        var file = new CFile();
+        file.nativeFile = new window["AscViewer"]["CDrawingFile"]();
+        if (file.nativeFile["loadFromData"](data))
         {
-            if (data[i + 0] == pdfCheck[0] &&
-                data[i + 1] == pdfCheck[1] &&
-                data[i + 2] == pdfCheck[2] &&
-                data[i + 3] == pdfCheck[3] &&
-                data[i + 4] == pdfCheck[4])
-            {
-                isPdf = true;
-                break;
-            }
+            file.pages = file.nativeFile["getPages"]();
+            file.cacheManager = new AscCommon.CCacheManager(); 
+            return file;   
         }
-
-        if (isPdf)
-        {
-            file = new window["AscViewer"].PdfFile();
-            file.type = 0;
-        }
-
-        if (data.length > 7 && !file &&
-            0x41 == data[0] && 0x54 == data[1] && 0x26 == data[2] && 0x54 == data[3] &&
-            0x46 == data[4] && 0x4f == data[5] && 0x52 == data[6] && 0x4d == data[7])
-        {
-            file = new window["AscViewer"].DjVuFile();
-        }
-
-        if (!file)
-        {
-            file = new window["AscViewer"].XpsFile();
-        }
-
-        if (!file)
-        {
-            file = new window["AscViewer"].PdfFile();
-            file.type = 1;
-        }
-
-        file.loadFromData(data);
-        file.cacheManager = new AscCommon.CCacheManager();
-        return file;
+        
+        file.close();
+        return null;
     };
 
 })(window, undefined);

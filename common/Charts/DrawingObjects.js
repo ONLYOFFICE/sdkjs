@@ -3838,84 +3838,78 @@ GraphicOption.prototype.union = function(oGraphicOption) {
         }
         else {
             objectProperties.ImageUrl = null;
+            _this.applySliderCallbacks(
+                function(){
+                    _this.controller.setGraphicObjectProps(props);
+                },
+                function() {
+                    _this.controller.setGraphicObjectPropsCallBack(props);
+                    _this.controller.startRecalculate();
+                    _this.sendGraphicObjectProps();
+                }
+            );
+        }
+    };
 
-            if(!api.noCreatePoint || api.exucuteHistory)
-            {
-                if( !api.noCreatePoint && !api.exucuteHistory && api.exucuteHistoryEnd)
-                {
-                    if(_this.nCurPointItemsLength === -1){
-                        _this.controller.setGraphicObjectProps( props );
-                    }
-                    else{
-                        _this.controller.setGraphicObjectPropsCallBack(props);
-                        _this.controller.startRecalculate();
-                        _this.sendGraphicObjectProps();
-                    }
-                    api.exucuteHistoryEnd = false;
+    _this.applySliderCallbacks = function(fStartCallback, fApplyCallback) {
+
+        var Point =  History.Points[History.Index];
+        if(!api.noCreatePoint || api.exucuteHistory) {
+            if( !api.noCreatePoint && !api.exucuteHistory && api.exucuteHistoryEnd) {
+                if(_this.nCurPointItemsLength === -1 && !(Point && Point.Items.length === 0)) {
+                    fStartCallback();
+                }
+                else{
+                    fApplyCallback();
+                }
+                api.exucuteHistoryEnd = false;
+                _this.nCurPointItemsLength = -1;
+            }
+            else {
+                fStartCallback();
+            }
+            if(api.exucuteHistory) {
+                Point =  History.Points[History.Index];
+                if(Point) {
+                    _this.nCurPointItemsLength = Point.Items.length;
+                }
+                else {
                     _this.nCurPointItemsLength = -1;
                 }
-                else
-                {
-                    _this.controller.setGraphicObjectProps( props );
+                api.exucuteHistory = false;
+            }
+            if(api.exucuteHistoryEnd) {
+                api.exucuteHistoryEnd = false;
+            }
+        }
+        else {
+            if(Point && Point.Items.length > 0) {
+                if(this.nCurPointItemsLength > -1) {
+                    var nBottomIndex = - 1;
+                    for ( var Index = Point.Items.length - 1; Index > nBottomIndex; Index-- ) {
+                        var Item = Point.Items[Index];
+                        if(!Item.Class.Read_FromBinary2)
+                            Item.Class.Undo( Item.Type, Item.Data, Item.SheetId );
+                        else
+                            Item.Class.Undo(Item.Data);
+                    }
+                    Point.Items.length = 0;
+                    _this.controller.setSelectionState(Point.SelectionState);
+                    fApplyCallback();
                 }
-                if(api.exucuteHistory)
-                {
-
+                else {
+                    fStartCallback();
                     var Point =  History.Points[History.Index];
-                    if(Point)
-                    {
+                    if(Point) {
                         _this.nCurPointItemsLength = Point.Items.length;
                     }
-                    else
-                    {
+                    else {
                         _this.nCurPointItemsLength = -1;
                     }
-                    api.exucuteHistory = false;
-                }
-                if(api.exucuteHistoryEnd)
-                {
-                    api.exucuteHistoryEnd = false;
                 }
             }
-            else
-            {
-
-                var Point =  History.Points[History.Index];
-                if(Point && Point.Items.length > 0)
-                {
-                    if(this.nCurPointItemsLength > -1){
-                        var nBottomIndex = - 1;
-                        for ( var Index = Point.Items.length - 1; Index > nBottomIndex; Index-- )
-                        {
-                            var Item = Point.Items[Index];
-                            if(!Item.Class.Read_FromBinary2)
-                                Item.Class.Undo( Item.Type, Item.Data, Item.SheetId );
-                            else
-                                Item.Class.Undo(Item.Data);
-                        }
-                        _this.controller.setSelectionState(Point.SelectionState);
-                        Point.Items.length = 0;
-
-                        _this.controller.setGraphicObjectPropsCallBack(props);
-                        _this.controller.startRecalculate();
-                    }
-                    else{
-                        _this.controller.setGraphicObjectProps( props );
-                        var Point =  History.Points[History.Index];
-                        if(Point)
-                        {
-                            _this.nCurPointItemsLength = Point.Items.length;
-                        }
-                        else
-                        {
-                            _this.nCurPointItemsLength = -1;
-                        }
-                    }
-                }
-            }
-            api.exucuteHistoryEnd = false;
         }
-
+        api.exucuteHistoryEnd = false;
     };
 
     _this.showChartSettings = function() {

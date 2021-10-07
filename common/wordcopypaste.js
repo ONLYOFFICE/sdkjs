@@ -6706,6 +6706,7 @@ PasteProcessor.prototype =
 					var Shd = new CDocumentShd();
 					Shd.Value = c_oAscShdClear;
 					Shd.Color = background_color;
+					Shd.Fill = background_color;
 					Para.Set_Shd(Shd);
 				}
 			}
@@ -8378,6 +8379,7 @@ PasteProcessor.prototype =
 			var Shd = new CDocumentShd();
 			Shd.Value = c_oAscShdClear;
 			Shd.Color = background_color;
+			Shd.Fill = background_color;
 			cell.Set_Shd(Shd);
 		}
 		var border = this._ExecuteBorder(computedStyle, node, "left", "Left", bAddIfNull);

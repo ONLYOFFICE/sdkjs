@@ -2978,12 +2978,14 @@ background-repeat: no-repeat;\
 		this.noCreatePoint  = true;
 		this.exucuteHistory = true;
 		this.incrementCounterLongAction();
+		this.WordControl.m_oLogicDocument.TurnOff_InterfaceEvents();
 	};
 	asc_docs_api.prototype.setEndPointHistory   = function()
 	{
 		this.noCreatePoint     = false;
 		this.exucuteHistoryEnd = true;
 		this.decrementCounterLongAction();
+		this.WordControl.m_oLogicDocument.TurnOn_InterfaceEvents();
 	};
 	asc_docs_api.prototype.SetSlideProps        = function(prop)
 	{

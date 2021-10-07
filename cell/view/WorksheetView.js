@@ -11781,7 +11781,22 @@
 				}
 			});
 		} else {
-			this._isLockedCells(checkRange, /*subType*/null, onSelectionCallback);
+            var oApi = Asc.editor;
+            var oWSView = this;
+            if(oApi.isSliderDragged()) {
+                this.objectRender.applySliderCallbacks(
+                    function() {
+                        oWSView._isLockedCells(checkRange, /*subType*/null, onSelectionCallback);
+                    },
+                    function() {
+                        History.StartTransaction();
+                        onSelectionCallback(true);
+                        History.EndTransaction();
+                    }
+                );
+            } else {
+                this._isLockedCells(checkRange, /*subType*/null, onSelectionCallback);
+            }
 		}
 	};
 
