@@ -451,8 +451,19 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 			var nW         = oBounds.W;
 			var nH         = oBounds.H;
 			var nBaseLine  = nTextAscent;
-			if (g_oTextMeasurer.m_oManager.m_pFont && g_oTextMeasurer.m_oManager.m_pFont.m_pFaceInfo && g_oTextMeasurer.m_oLastFont)
+
+			if ((this.IsTextForm() || this.IsDropDownList() || this.IsComboBox())
+				&& (!this.IsFixedForm() || !this.IsMultiLineForm())
+				&& g_oTextMeasurer.m_oManager.m_pFont
+				&& g_oTextMeasurer.m_oManager.m_pFont.m_pFaceInfo
+				&& g_oTextMeasurer.m_oLastFont)
 			{
+				if (oTransform)
+				{
+					var oParagraph = this.GetParagraph();
+					nBaseLine += (oTransform.TransformPointY(oParagraph.X, oParagraph.Y) - Y);
+				}
+
 				var oFaceInfo = g_oTextMeasurer.m_oManager.m_pFont.m_pFaceInfo;
 
 				var nKoef = g_oTextMeasurer.m_oLastFont.SetUpSize / g_oTextMeasurer.m_oManager.m_lUnits_Per_Em * g_dKoef_pt_to_mm;
