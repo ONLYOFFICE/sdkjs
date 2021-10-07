@@ -1301,6 +1301,7 @@
 
 		return false;
 	};
+	
 	CellEditor.prototype._expandHeight = function () {
 		var t = this, bottomSide = this.sides.b, i = asc_search(bottomSide, function (v) {
 			return v > t.bottom;
