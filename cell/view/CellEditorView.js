@@ -1301,7 +1301,7 @@
 
 		return false;
 	};
-	
+
 	CellEditor.prototype._expandHeight = function () {
 		var t = this, bottomSide = this.sides.b, i = asc_search(bottomSide, function (v) {
 			return v > t.bottom;
@@ -1324,6 +1324,7 @@
 	CellEditor.prototype._showCanvas = function () {
 		this.canvasOuterStyle.display = 'block';
 	};
+	
 	CellEditor.prototype._hideCanvas = function () {
 		this.canvasOuterStyle.display = 'none';
 	};
