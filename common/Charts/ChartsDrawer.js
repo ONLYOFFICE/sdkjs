@@ -8401,14 +8401,17 @@ drawPieChart.prototype = {
 			if (this.cChartDrawer.processor3D.view3D.getRAngAx()) {
 				this.properties3d = this.cChartDrawer.processor3D.calculatePropertiesForPieCharts();
 				
-				var checkAngel = this._recalculatePie3DPerspective();
-				
-				
-				if(checkAngel === null){
+				//var checkAngel = this._recalculatePie3DPerspective();
+
+				if (null === this._recalculatePie3DPerspective()) {
 					this._recalculatePie3D();
-				}else{
-					this._recalculatePie3DPerspective();
 				}
+				
+				// if(checkAngel === null){
+				// 	this._recalculatePie3D();
+				// }else{
+				// 	this._recalculatePie3DPerspective();
+				// }
 			
 			} else {
 				this._recalculatePie3D();
