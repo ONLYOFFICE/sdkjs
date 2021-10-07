@@ -1156,6 +1156,12 @@ var editor;
     }
   };
 
+	spreadsheet_api.prototype.getPrintPreview = function (options) {
+		var printPagesData = this.wb.calcPagesPrint(options.advancedOptions);
+		//создаём новый объект
+		
+	};
+
   spreadsheet_api.prototype.processSavedFile             = function(url, downloadType, filetype)
   {
     if (this.insertDocumentUrlsData && this.insertDocumentUrlsData.convertCallback)
