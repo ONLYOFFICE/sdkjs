@@ -8400,9 +8400,17 @@ drawPieChart.prototype = {
 		if (this.cChartDrawer.nDimensionCount === 3) {
 			if (this.cChartDrawer.processor3D.view3D.getRAngAx()) {
 				this.properties3d = this.cChartDrawer.processor3D.calculatePropertiesForPieCharts();
-				this._recalculatePie3D();
+				
+				var checkAngel = this._recalculatePie3DPerspective();
+				
+				if(checkAngel === null){
+					this._recalculatePie3D();
+				}else{
+					this._recalculatePie3DPerspective();
+				}
+			
 			} else {
-				this._recalculatePie3DPerspective();
+				this._recalculatePie3D();
 			}
 		} else {
 			this._recalculatePie();
@@ -8904,6 +8912,10 @@ drawPieChart.prototype = {
 			center3D1);
 		var angles2 = this._calculateAngles3DPerspective(center2.x, center2.y, radius21, radius22, radius3D2,
 			center3D2);
+
+		if(isNaN(angles1[0].start)){
+			return null
+		}
 
 		if (!this.paths.series) {
 			this.paths.series = [];
