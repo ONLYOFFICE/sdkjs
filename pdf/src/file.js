@@ -1,5 +1,6 @@
 (function(window, undefined) {
 
+    var supportImageDataConstructor = (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge) ? false : true;
     function CDocMetaSelection()
     {
         this.Page1 = 0;
@@ -260,9 +261,18 @@
             canvas.height = height;
         }
         
-        var mappedBuffer = new Uint8ClampedArray(this.memory().buffer, pixels, 4 * width * height);
-        var imageData = new ImageData(mappedBuffer, width, height);
         var ctx = canvas.getContext("2d");
+        var mappedBuffer = new Uint8ClampedArray(this.memory().buffer, pixels, 4 * width * height);
+        var imageData = null;
+        if (supportImageDataConstructor)
+        {
+            imageData = new ImageData(mappedBuffer, width, height);
+        }
+        else
+        {
+            imageData = ctx.createImageData(width, height);
+            imageData.data.set(mappedBuffer, 0);                    
+        }
         if (ctx)
             ctx.putImageData(imageData, 0, 0);
         return canvas;
@@ -392,7 +402,9 @@ void main() {\n\
     };
 
     window["AscViewer"] = window["AscViewer"] || {};
-    window["AscViewer"]["baseUrl"] = "./../src/engine/";
+
+    window["AscViewer"]["baseUrl"] = (typeof document !== 'undefined' && document.currentScript) ? "" : "./../src/engine/";
+    window["AscViewer"]["baseEngineUrl"] = "./../src/engine/";
 
     window["AscViewer"].createFile = function(data)
     {

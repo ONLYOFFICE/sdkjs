@@ -375,7 +375,7 @@
 				_t.onLoadModule();
 			};
 			
-			var basePath = window["AscViewer"]["baseUrl"];
+			var basePath = window["AscViewer"]["baseEngineUrl"];
 			
 			var useWasm = false;
 			var webAsmObj = window["WebAssembly"];
