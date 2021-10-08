@@ -1156,10 +1156,16 @@ var editor;
     }
   };
 
-	spreadsheet_api.prototype.getPrintPreview = function (options) {
-		var printPagesData = this.wb.calcPagesPrint(options.advancedOptions);
-		//создаём новый объект
-		
+	spreadsheet_api.prototype.asc_initPrintPreview = function (options) {
+		this.PrintPreviewPages = this.wb.calcPagesPrint(options.advancedOptions);
+		return this.PrintPreviewPages.length;
+	};
+
+	spreadsheet_api.prototype.asc_drawPrintPreview = function (index, container) {
+		var page = this.PrintPreviewPages ? this.PrintPreviewPages[index] : null;
+		if (page) {
+			this.wb.printSheets([page]);
+		}
 	};
 
   spreadsheet_api.prototype.processSavedFile             = function(url, downloadType, filetype)

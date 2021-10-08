@@ -203,6 +203,8 @@
 		this.Shortcuts = new AscCommon.CShortcuts();
 		this.initDefaultShortcuts();
 
+		this.PrintPreviewPages = null;
+
 		return this;
 	}
 
@@ -3460,6 +3462,12 @@
 		return nActionType;
 	};
 	baseEditorsApi.prototype.asc_setSkin = function(obj)
+	{
+	};
+	baseEditorsApi.prototype.asc_initPrintPreview                     = function()
+	{
+	};
+	baseEditorsApi.prototype.asc_drawPrintPreview                     = function()
 	{
 	};
 	//---------------------------------------------------------version----------------------------------------------------
