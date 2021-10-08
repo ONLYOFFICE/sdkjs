@@ -72,6 +72,11 @@
 		DOTM : 0x004d,
 		FODT : 0x004e,
 		OTT  : 0x004f,
+		DOC_FLAT  : 0x0050,
+		DOCX_FLAT  : 0x0051,
+		HTML_IN_CONTAINER  : 0x0052,
+		DOCX_PACKAGE  : 0x0054,
+		OFORM  : 0x0055,
 		DOCY : 0x1001,
 		CANVAS_WORD : 0x2001,
 		JSON : 0x0808,	// Для mail-merge
@@ -2244,6 +2249,11 @@
 	prot['DOTM']                 = prot.DOTM;
 	prot['FODT']                 = prot.FODT;
 	prot['OTT']                  = prot.OTT;
+	prot['DOC_FLAT']             = prot.DOC_FLAT;
+	prot['DOCX_FLAT']            = prot.DOCX_FLAT;
+	prot['HTML_IN_CONTAINER']    = prot.HTML_IN_CONTAINER;
+	prot['DOCX_PACKAGE']         = prot.DOCX_PACKAGE;
+	prot['OFORM']                = prot.OFORM;
 	prot['DOCY']                 = prot.DOCY;
 	prot['JSON']                 = prot.JSON;
 	prot['XLSX']                 = prot.XLSX;
