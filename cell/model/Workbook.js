@@ -8476,8 +8476,10 @@
 		var merge = this.getMergedByCell(activeCell.row, activeCell.col);
 		options.findInSelection = options.scanOnOnlySheet &&
 			!(selectionRange.isSingleRange() && (lastRange.isOneCell() || lastRange.isEqual(merge)));
+		var maxRowsCount = this.getRowsCount();
+		var maxColsCount = this.getColsCount();
 		var findRange = options.findInSelection ? this.getRange3(lastRange.r1, lastRange.c1, lastRange.r2, lastRange.c2) :
-			this.getRange3(0, 0, this.getRowsCount(), this.getColsCount());
+			this.getRange3(0, 0, maxRowsCount ? maxRowsCount - 1 : 0, maxColsCount ? maxColsCount - 1 : 0);
 
 		if (this.lastFindOptions && this.lastFindOptions.findResults && options.isEqual2(this.lastFindOptions) &&
 			findRange.getBBox0().isEqual(this.lastFindOptions.findRange)) {
