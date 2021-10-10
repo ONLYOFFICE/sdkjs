@@ -341,6 +341,8 @@
 		this.onLoadModule = function()
 		{
 			this.moduleState = ModuleState.Loaded;
+			window["AscViewer"]["InitializeFonts"]();
+
 			if (this._fileData != null)
 			{
 				this.open(this._fileData);
@@ -401,6 +403,12 @@
 			return false;
 		};
 
+		this.onUpdatePages = function(pages) 
+		{
+			// TODO: проверить, есть ли страницы на экране
+			this.paint();
+		};
+
 		this.open = function(data)
 		{
 			if (!this.checkModule())
@@ -413,6 +421,7 @@
 				this.file.close();
 
 			this.file = window["AscViewer"].createFile(data);
+			this.file.onRepaintPages = this.onUpdatePages.bind(this);
 			this.currentPage = -1;
 			this.structure = this.file.getStructure();
 
@@ -802,7 +811,15 @@
 				let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
 				let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
-				ctx.drawImage(page.Image, 0, 0, w, h, x, y, w, h);
+				if (page.Image)
+				{
+					ctx.drawImage(page.Image, 0, 0, w, h, x, y, w, h);
+				}
+				else
+				{
+					ctx.fillStyle = "#FFFFFF";
+					ctx.fillRect(x, y, w, h);
+				}
 				ctx.strokeRect(x + lineW / 2, y + lineW / 2, w - lineW, h - lineW);
 
 				oPageDetector.addPage(i, x, y, w, h);

@@ -205,7 +205,7 @@ window.onload = function()
 			is_correction);
 	};
 	///
-
+	AscFonts.g_fontApplication.Init();
 	window.Viewer = new AscCommon.CViewer("mainPanel");
 	window.Thumbnails = new AscCommon.ThumbnailsControl("panelThimbnailsNatural");
 	window.Viewer.setThumbnailsControl(window.Thumbnails);

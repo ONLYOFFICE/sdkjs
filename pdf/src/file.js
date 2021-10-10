@@ -412,6 +412,9 @@ void main() {\n\
         file.nativeFile = new window["AscViewer"]["CDrawingFile"]();
         if (file.nativeFile["loadFromData"](data))
         {
+            file.nativeFile.onRepaintPages = function(pages) {
+                file.onRepaintPages && file.onRepaintPages(pages);
+            };
             file.pages = file.nativeFile["getPages"]();
             file.cacheManager = new AscCommon.CCacheManager(); 
             return file;   
