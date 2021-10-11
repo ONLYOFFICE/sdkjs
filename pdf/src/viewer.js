@@ -438,6 +438,9 @@
 				AscCommon.addMouseEvent(this.canvas, "up", this.onMouseUp);
 		
 				this.parent.onmousewheel = this.onMouseWhell;
+				if (this.parent.addEventListener)
+					this.parent.addEventListener("DOMMouseScroll", this.onMouseWhell, false);
+				
 				this.startTimer();				
 			}
 

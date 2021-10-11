@@ -492,6 +492,9 @@ function CFontFileLoader(id)
             var _count_decode = Math.min(32, _stream.size);
             for (var i = 0; i < _count_decode; ++i)
                 _data[i] ^= guidOdttf[i % 16];
+
+            if (null != oThis.callback)
+                oThis.callback();
         };
         xhr.onerror = function()
         {

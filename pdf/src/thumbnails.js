@@ -320,6 +320,9 @@
         this.canvasOverlay.style.pointerEvents = "none";
 
         parent.onmousewheel = this.onMouseWhell.bind(this);
+        if (parent.addEventListener)
+			parent.addEventListener("DOMMouseScroll", this.onMouseWhell.bind(this), false);
+
         AscCommon.addMouseEvent(this.canvas, "down", this.onMouseDown.bind(this));
         AscCommon.addMouseEvent(this.canvas, "move", this.onMouseMove.bind(this));
         AscCommon.addMouseEvent(this.canvas, "up", this.onMouseUp.bind(this));
