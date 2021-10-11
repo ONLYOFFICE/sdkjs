@@ -6018,7 +6018,8 @@
                 }
             });
         }
-
+		
+        //todo для ретины все сдвиги необходимо сделать общими
 		//clean foreign cursors
 		if (this.collaborativeEditing.getCollaborativeEditing() && this.collaborativeEditing.getFast()) {
 			var foreignCursors = this.collaborativeEditing.m_aForeignCursorsData;
@@ -6028,9 +6029,9 @@
 						var _range = foreignCursors[n].ranges[j];
 						arnIntersection = _range.intersectionSimple(range);
 						if (arnIntersection) {
-							_x1 = t._getColLeft(arnIntersection.c1) - offsetX - 2;
+							_x1 = t._getColLeft(arnIntersection.c1) - offsetX - 3;
 							_x2 = t._getColLeft(arnIntersection.c2 + 1) - offsetX + 1 + /* Это ширина "квадрата" для автофильтра от границы ячейки */2;
-							_y1 = t._getRowTop(arnIntersection.r1) - offsetY - 2;
+							_y1 = t._getRowTop(arnIntersection.r1) - offsetY - 2 - isRetinaWidth * 1;
 							_y2 = t._getRowTop(arnIntersection.r2 + 1) - offsetY + 1 + /* Это высота "квадрата" для автофильтра от границы ячейки */2;
 
 							x1 = Math.min(x1, _x1);
