@@ -389,6 +389,22 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 
 		// Ищем первый ненулевой промежуток, если он на данной странице, тогда сохраняем его в форму
 		var oBounds = null;
+		for (var Key in this.Bounds)
+		{
+			if (this.Bounds[Key].W > 0.001 && this.Bounds[Key].H > 0.001)
+			{
+				if (this.Bounds[Key].PageInternal === PDSH.Page)
+					oBounds = this.Bounds[Key];
+
+				var CurLine = PDSH.Line - this.StartLine;
+				var CurRange = (0 === CurLine ? PDSH.Range - this.StartRange : PDSH.Range);
+
+				if ((Key | 0) !== ((CurLine << 16) & 0xFFFF0000) | (CurRange & 0x0000FFFF))
+					return;
+
+				break;
+			}
+		}
 
 		if (this.IsFixedForm())
 		{
@@ -397,25 +413,6 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 
 			if (oShapeBounds.Page === PDSH.Paragraph.GetAbsolutePage(PDSH.Page))
 				oBounds = oShapeBounds;
-		}
-		else
-		{
-			for (var Key in this.Bounds)
-			{
-				if (this.Bounds[Key].W > 0.001 && this.Bounds[Key].H > 0.001)
-				{
-					if (this.Bounds[Key].PageInternal === PDSH.Page)
-						oBounds = this.Bounds[Key];
-
-					var CurLine = PDSH.Line - this.StartLine;
-					var CurRange = (0 === CurLine ? PDSH.Range - this.StartRange : PDSH.Range);
-
-					if ((Key | 0) !== ((CurLine << 16) & 0xFFFF0000) | (CurRange & 0x0000FFFF))
-						return;
-
-					break;
-				}
-			}
 		}
 
 		var oRun = this.Content[0];
