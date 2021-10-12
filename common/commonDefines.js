@@ -77,6 +77,7 @@
 		HTML_IN_CONTAINER  : 0x0052,
 		DOCX_PACKAGE  : 0x0054,
 		OFORM  : 0x0055,
+		DOCXF  : 0x0056,
 		DOCY : 0x1001,
 		CANVAS_WORD : 0x2001,
 		JSON : 0x0808,	// Для mail-merge
@@ -2255,6 +2256,7 @@
 	prot['HTML_IN_CONTAINER']    = prot.HTML_IN_CONTAINER;
 	prot['DOCX_PACKAGE']         = prot.DOCX_PACKAGE;
 	prot['OFORM']                = prot.OFORM;
+	prot['DOCXF']                = prot.DOCXF;
 	prot['DOCY']                 = prot.DOCY;
 	prot['JSON']                 = prot.JSON;
 	prot['XLSX']                 = prot.XLSX;
