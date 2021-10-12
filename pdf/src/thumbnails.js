@@ -404,7 +404,7 @@
         if (!this.isEnabled)
             return;
 
-        if (!isViewerTask)
+        if (!isViewerTask && -1 != this.startBlock)
         {
             // смотрим, какие страницы нужно перерисовать. 
             // делаем это по одной, так как задачи вьюера важнее
@@ -474,6 +474,9 @@
         var ctx = this.canvas.getContext("2d");
         ctx.fillStyle = ThumbnailsStyle.backgroundColor;
         ctx.fillRect(0, 0, this.panelWidth, this.panelHeight);
+
+        if (-1 == this.startBlock)
+            return;
         
         ctx.font = PageStyle.font();
         ctx.textAlign = "center";
@@ -638,14 +641,17 @@
             }
         }
 
-        for (var i = this.startBlock; i < blocksCount; i++)
+        if (this.startBlock != -1)
         {
-            block = this.blocks[i];
-            if (block.top > (this.scrollY + this.panelHeight))
+            for (var i = this.startBlock; i < blocksCount; i++)
             {
-                // уже невидимый блок!
-                this.endBlock = i - 1;
-                break;
+                block = this.blocks[i];
+                if (block.top > (this.scrollY + this.panelHeight))
+                {
+                    // уже невидимый блок!
+                    this.endBlock = i - 1;
+                    break;
+                }
             }
         }
 
