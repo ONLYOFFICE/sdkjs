@@ -3893,16 +3893,20 @@
 
 	WorkbookView.prototype.executeWithCurrentTopLeftCell = function (runFunction) {
 		var i, oWS;
-		var aTrueTopLeftCell = [];
-		for(i = 0; i < this.wsViews.length; i++) {
+		var aTrueTopLeftCell = {};
+		for(i in this.wsViews) {
 			oWS = this.wsViews[i];
-			aTrueTopLeftCell.push(oWS.model.getTopLeftCell());
-			oWS.model.setTopLeftCell(oWS.getCurrentTopLeftCell());
+			if (oWS) {
+				aTrueTopLeftCell[i] = oWS.model.getTopLeftCell();
+				oWS.model.setTopLeftCell(oWS.getCurrentTopLeftCell());
+			}
 		}
 		runFunction();
-		for(i = 0; i < this.wsViews.length; i++) {
+		for(i in this.wsViews) {
 			oWS = this.wsViews[i];
-			oWS.model.setTopLeftCell(aTrueTopLeftCell[i]);
+			if (oWS) {
+				oWS.model.setTopLeftCell(aTrueTopLeftCell[i]);
+			}
 		}
 	};
 	WorkbookView.prototype.convertEquationToMath = function (oEquation, isAll) {
