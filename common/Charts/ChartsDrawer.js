@@ -4616,7 +4616,7 @@ drawBarChart.prototype = {
 						testHeight = Math.abs(yPoints[0].pos - yPoints[yPoints.length - 1].pos) * this.chartProp.pxToMM;
 					} else {
 						var endBlockPosition, startBlockPosition;
-						if (val > 0) {
+						if (val >0) {
 							endBlockPosition = this.cChartDrawer.getYPosition(axisMax, this.valAx) * this.chartProp.pxToMM;
 							startBlockPosition = prevVal ? this.cChartDrawer.getYPosition(0, this.valAx) * this.chartProp.pxToMM : nullPositionOX;
 							testHeight = startBlockPosition - endBlockPosition;
@@ -4653,9 +4653,14 @@ drawBarChart.prototype = {
 
 		var cSortFaces;
 		if (this.cChartDrawer.nDimensionCount === 3) {
+			if(this.cChartDrawer.processor3D.view3D.rotX){
+				var sortAngel = this.cChartDrawer.processor3D.view3D.rotX
+			}
+
 			if (this.subType === "stacked" || this.subType === "stackedPer") {
 				//если будут найдены проблемы при отрисовке stacked rAngAx - раскомментировать ветку
-				/*if(this.cChartDrawer.processor3D.view3D.rAngAx)
+				/*
+				if(this.cChartDrawer.processor3D.view3D.rAngAx)
 				 {
 				 var angle = this.cChartDrawer.processor3D.angleOx;
 				 this.temp.sort (function sortArr(a, b)
@@ -4683,7 +4688,8 @@ drawBarChart.prototype = {
 				 }
 				 }
 				 })
-				 }*/
+				 }
+				 */
 
 				cSortFaces = new window['AscFormat'].CSortFaces(this.cChartDrawer);
 				this.sortParallelepipeds = cSortFaces.sortParallelepipeds(this.temp);
@@ -4691,6 +4697,7 @@ drawBarChart.prototype = {
 				cSortFaces = new window['AscFormat'].CSortFaces(this.cChartDrawer);
 				this.sortParallelepipeds = cSortFaces.sortParallelepipeds(this.temp2);
 			} else {
+					
 				var getMinZ = function (arr) {
 					var zIndex = 0;
 					for (var i = 0; i < arr.length; i++) {
@@ -4700,21 +4707,42 @@ drawBarChart.prototype = {
 							zIndex = arr[i].z;
 						}
 					}
-					return zIndex;
+					return zIndex;		
 				};
-				this.sortZIndexPaths.sort(function sortArr(a, b) {
-					var minZA = getMinZ(a.facePoint);
-					var minZB = getMinZ(b.facePoint);
+					
+				var getMaxZ = function (arr) {
+					var zIndex = 0;
+					for (var i = 0; i < arr.length; i++) {
+						if (i === 0) {
+							zIndex = arr[i].z;
+						} else if (arr[i].z > zIndex) {
+							zIndex = arr[i].z;
+						}
+					}
+					return zIndex;		
+				};
+			}					
+				this.sortZIndexPaths.sort(function sortArr(a, b) {	
+				// метод сортировки в зависимости от угла
+					var ZA;
+					var ZB;
 
-					if (minZB == minZA) {
+					if(sortAngel > 20){
+						ZA = getMaxZ(a.facePoint);
+						ZB = getMaxZ(b.facePoint);
+					}else{
+						ZA = getMinZ(a.facePoint);
+						ZB = getMinZ(b.facePoint);
+					}
+
+					if (ZB == ZA) {
 						return b.y - a.y;
 					} else {
-						return minZB - minZA;
+						return ZB - ZA;
 					}
 				});
 			}
-		}
-	},
+		},
 
 	_getStartYColumnPosition: function (seriesHeight, i, j, val, yPoints) {
 		var startY, height, curVal, prevVal, endBlockPosition, startBlockPosition;
@@ -4813,7 +4841,6 @@ drawBarChart.prototype = {
 		var point66 = this.cChartDrawer._convertAndTurnPoint(x6, y6, z6, null, null, true);
 		var point77 = this.cChartDrawer._convertAndTurnPoint(x7, y7, z7, null, null, true);
 		var point88 = this.cChartDrawer._convertAndTurnPoint(x8, y8, z8, null, null, true);
-
 
 		var arrPoints = [[point1, point4, point8, point5], [point1, point2, point3, point4],
 			[point1, point2, point6, point5], [point4, point8, point7, point3], [point5, point6, point7, point8],
