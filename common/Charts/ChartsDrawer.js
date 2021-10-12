@@ -3736,6 +3736,194 @@ CChartsDrawer.prototype =
 		return res;
 	},
 
+	calculatePyramide3D : function(points, val, isNotDrawDownVerge, isNotOnlyFrontFaces)
+	{
+		var res;
+
+		var point1 = points[0];
+		var point2 = points[1];
+		var point3 = points[2];
+		var point4 = points[3];
+		var point5 = points[4];
+		var point6 = points[5];
+
+		var frontPaths = [];
+		var darkPaths = [];
+
+		var addPathToArr = function(isFront, face, index)
+		{
+			frontPaths[index] = null;
+			darkPaths[index] = null;
+
+			if(isFront)
+			{
+				frontPaths[index] = face;
+			}
+			else
+			{
+				darkPaths[index] = face;
+			}
+		};
+
+		var face;
+		//front
+		face = this._calculatePyramidePathFace(point1, point5, point4, true);
+		addPathToArr(this._isVisibleVerge3D(point5, point1, point4, val), face, 0);
+
+		//down
+		if(val === 0 && this.calcProp.type === c_oChartTypes.Bar)
+		{
+			face = this._calculatePyramidePathFace(point1, point2, point3, true, point4);
+			addPathToArr(true, face, 1);
+		}
+		else
+		{
+			face = this._calculatePyramidePathFace(point1, point2, point3, true, point4);
+			addPathToArr(this._isVisibleVerge3D(point4, point1, point2, val), face, 1);
+		}
+
+
+		//left
+		if(val === 0 && this.calcProp.type === c_oChartTypes.HBar)
+		{
+			face = this._calculatePyramidePathFace(point1, point5, point6, point2, true);
+			addPathToArr(!isNotDrawDownVerge , face, 2);
+		}
+		else
+		{
+			face = this._calculatePyramidePathFace(point1, point5, point2, true);
+			addPathToArr((!isNotDrawDownVerge && this._isVisibleVerge3D(point2, point1, point5, val)), face, 2);
+		}
+
+		//right
+		if(val === 0 && this.calcProp.type === c_oChartTypes.HBar)
+		{
+			face = this._calculatePyramidePathFace(point4, point5, point3, true);
+			addPathToArr(true, face, 3);
+		}
+		else
+		{
+			face = this._calculatePyramidePathFace(point4, point5, point3, true);
+			addPathToArr(this._isVisibleVerge3D(point4, point3, point5, val), face, 3);
+		}
+
+		//unfront
+		face = this._calculatePyramidePathFace(point2, point5, point3, true);
+		addPathToArr(this._isVisibleVerge3D(point2, point5, point3, val), face, 4);
+
+		if(!isNotOnlyFrontFaces)
+		{
+			res = frontPaths;
+		}
+		else
+		{
+			res = {frontPaths: frontPaths, darkPaths: darkPaths};
+		}
+
+		return res;
+	},
+
+	calculateCelinder: function(points, val, isNotDrawDownVerge, isNotOnlyFrontFaces)
+	{
+		var res;
+
+		var point1 = points[0];
+		var point2 = points[1];
+		var point3 = points[2];
+		var point4 = points[3];
+		var point5 = points[4];
+		var point6 = points[5];
+		var point7 = points[6];
+		var point8 = points[7];
+
+		var frontPaths = [];
+		var darkPaths = [];
+
+		var addPathToArr = function(isFront, face, index)
+		{
+			frontPaths[index] = null;
+			darkPaths[index] = null;
+
+			if(isFront)
+			{
+				frontPaths[index] = face;
+			}
+			else
+			{
+				darkPaths[index] = face;
+			}
+		};
+
+		var face;
+		//front
+		face = this._calculateCelinderPathFace(point1, point5, point8, point4, true);
+		addPathToArr(this._isVisibleVerge3D(point5, point1, point4, val), face, 0);
+
+		//down
+		if(val === 0 && this.calcProp.type === c_oChartTypes.Bar)
+		{
+			face = this._calculateCelinderPathFace(point1, point2, point3, point4, true);
+			addPathToArr(true, face, 1);
+		}
+		else
+		{
+			face = this._calculateCelinderPathFace(point1, point2, point3, point4, true);
+			addPathToArr(this._isVisibleVerge3D(point4, point1, point2, val), face, 1);
+		}
+
+
+		//left
+		if(val === 0 && this.calcProp.type === c_oChartTypes.HBar)
+		{
+			face = this._calculatePathFace(point1, point5, point6, point2, true);
+			addPathToArr(!isNotDrawDownVerge , face, 2);
+		}
+		else
+		{
+			face = this._calculateCelinderPathFace(point1, point5, point6, point2, true);
+			addPathToArr((!isNotDrawDownVerge && this._isVisibleVerge3D(point2, point1, point5, val)), face, 2);
+		}
+
+		//right
+		if(val === 0 && this.calcProp.type === c_oChartTypes.HBar)
+		{
+			face = this._calculatePathFace(point4, point8, point7, point3, true);
+			addPathToArr(true, face, 3);
+		}
+		else
+		{
+			face = this._calculateCelinderPathFace(point4, point8, point7, point3, true);
+			addPathToArr(this._isVisibleVerge3D(point8, point4, point3, val), face, 3);
+		}
+
+		//up
+		if(val === 0 && this.calcProp.type === c_oChartTypes.Bar)
+		{
+			face = this._calculatePathFace(point5, point6, point7, point8, true);
+			addPathToArr(true, face, 4);
+		}
+		else
+		{
+			face = this._calculateCelinderPathFace(point5, point6, point7, point8, true);
+			addPathToArr(this._isVisibleVerge3D(point6, point5, point8, val), face, 4);
+		}
+
+		//unfront
+		face = this._calculateCelinderPathFace(point2, point6, point7, point3, true);
+		addPathToArr(this._isVisibleVerge3D(point3, point2, point6, val), face, 5);
+
+		if(!isNotOnlyFrontFaces)
+		{
+			res = frontPaths;
+		}
+		else
+		{
+			res = {frontPaths: frontPaths, darkPaths: darkPaths};
+		}
+
+		return res;
+	},
+
 	_calculatePathFace: function(point1, point2, point3, point4, isConvertPxToMM)
 	{
 		var pxToMm = 1;
@@ -3758,7 +3946,68 @@ CChartsDrawer.prototype =
 
 		return pathId;
 	},
-	
+
+	_calculatePyramidePathFace: function(point1, point2, point3, isConvertPxToMM , point4)
+	{
+		var pxToMm = 1;
+		if(isConvertPxToMM)
+		{
+			pxToMm = this.calcProp.pxToMM;
+		} 
+
+		var pathId = this.cChartSpace.AllocPath();
+		var path  = this.cChartSpace.GetPath(pathId);
+		
+		var pathH = this.calcProp.pathH;
+		var pathW = this.calcProp.pathW;
+
+		path.moveTo(point1.x / pxToMm * pathW, point1.y / pxToMm * pathH);
+		path.lnTo(point2.x / pxToMm * pathW, point2.y / pxToMm * pathH);
+		path.lnTo(point3.x / pxToMm * pathW, point3.y / pxToMm * pathH);
+		if(point4){path.lnTo(point4.x / pxToMm * pathW, point4.y / pxToMm * pathH);}
+		path.lnTo(point1.x / pxToMm * pathW, point1.y / pxToMm * pathH);
+
+		return pathId;
+	},
+
+	_calculateCelinderPathFace: function(point1, point2, point3, point4, isConvertPxToMM)
+	{
+		var pxToMm = 1;
+		if(isConvertPxToMM)
+		{
+			pxToMm = this.calcProp.pxToMM;
+		} 
+
+		var pathId = this.cChartSpace.AllocPath();
+		var path  = this.cChartSpace.GetPath(pathId);
+		
+		var pathH = this.calcProp.pathH;
+		var pathW = this.calcProp.pathW;
+
+		console.log(cToDeg)
+
+		path.moveTo(point1.x / pxToMm * pathW, point1.y / pxToMm * pathH);
+
+		path.arcTo(point2.x / 10 / pxToMm * pathW, point2.y / 10 / pxToMm * pathH, -1 * 0 * cToDeg, -1 * Math.PI / 2* cToDeg);
+
+		path.lnTo(point3.x / pxToMm * pathW, point3.y / pxToMm * pathH);
+
+		path.arcTo(point4.x / 10 / pxToMm * pathW, point4.y / 10 / pxToMm * pathH, -1 * 0 * cToDeg, -1 * Math.PI / 2* cToDeg);
+
+		path.lnTo(point1.x / pxToMm * pathW, point1.y / pxToMm * pathH);
+
+
+	//	path.lnTo(point1.x / pxToMm * pathW, point1.y / pxToMm * pathH);
+
+		// path.moveTo(point1.x / pxToMm * pathW, point1.y / pxToMm * pathH);
+		// path.lnTo(point2.x / pxToMm * pathW, point2.y / pxToMm * pathH);
+		// path.lnTo(point3.x / pxToMm * pathW, point3.y / pxToMm * pathH);
+		// path.lnTo(point4.x / pxToMm * pathW, point4.y / pxToMm * pathH);
+		// path.lnTo(point1.x / pxToMm * pathW, point1.y / pxToMm * pathH);
+
+		return pathId;
+	},
+
 	calculatePathFacesArray: function(faceArr, isConvertPxToMM)
 	{
 		var pxToMm = 1;
@@ -3810,6 +4059,7 @@ CChartsDrawer.prototype =
 		if(this.calcProp.type === c_oChartTypes.Bar)
 		{
 			result = val > 0 && visible < 0 || val < 0 && visible > 0;
+			console.log(result)
 			if(!(this.calcProp.subType === "stacked") && !(this.calcProp.subType === "stackedPer") && this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX)
 				result = !result;
 		}
@@ -4591,7 +4841,9 @@ drawBarChart.prototype = {
 
 				//for 3d charts
 				if (this.cChartDrawer.nDimensionCount === 3) {
-					paths = this._calculateRect3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i);
+					paths = this._calculateCelinder3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i);
+
+					console.log(paths)
 
 					//расскомментируем, чтобы включить старую схему отрисовки(+ переименовать функции _DrawBars3D -> _DrawBars3D2)
 					//this.sortZIndexPaths.push({seria: i, point: idx, paths: paths.paths, x: paths.x, y: paths.y, zIndex: paths.zIndex});
@@ -4693,6 +4945,7 @@ drawBarChart.prototype = {
 			} else {
 				var getMinZ = function (arr) {
 					var zIndex = 0;
+					if(!arr){arr = []}
 					for (var i = 0; i < arr.length; i++) {
 						if (i === 0) {
 							zIndex = arr[i].z;
@@ -5260,7 +5513,6 @@ drawBarChart.prototype = {
 		var x7 = startX + individualBarWidth, y7 = startY - height, z7 = perspectiveDepth + gapDepth;
 		var x8 = startX + individualBarWidth, y8 = startY - height, z8 = 0 + gapDepth;
 
-
 		//поворот относительно осей
 		var point1 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1);
 		var point2 = this.cChartDrawer._convertAndTurnPoint(x2, y2, z2);
@@ -5271,7 +5523,6 @@ drawBarChart.prototype = {
 		var point7 = this.cChartDrawer._convertAndTurnPoint(x7, y7, z7);
 		var point8 = this.cChartDrawer._convertAndTurnPoint(x8, y8, z8);
 
-
 		//down verge of minus values don't must draw(in stacked and stackedPer)
 		var isNotDrawDownVerge;
 		/*if((this.subType == "stacked" || this.subType == "stackedPer") && val < 0 && (isValMoreZero || (!isValMoreZero && isValLessZero !== 1)))
@@ -5279,6 +5530,150 @@ drawBarChart.prototype = {
 
 		var points = [point1, point2, point3, point4, point5, point6, point7, point8];
 		var paths = this.cChartDrawer.calculateRect3D(points, val, isNotDrawDownVerge);
+
+		height = this.chartProp.heightCanvas - this.chartProp.chartGutter._top - this.chartProp.chartGutter._bottom;
+		var controlPoint1 = this.cChartDrawer._convertAndTurnPoint(x1 + individualBarWidth / 2, y1 - height / 2, z1);
+		var controlPoint2 = this.cChartDrawer._convertAndTurnPoint(x1 + individualBarWidth / 2, y1, z1 + perspectiveDepth / 2);
+		var controlPoint3 = this.cChartDrawer._convertAndTurnPoint(x1, y1 - height / 2, z1 + perspectiveDepth / 2);
+		var controlPoint4 = this.cChartDrawer._convertAndTurnPoint(x4, y4 - height / 2, z4 + perspectiveDepth / 2);
+		var controlPoint5 = this.cChartDrawer._convertAndTurnPoint(x5 + individualBarWidth / 2, y5, z5 + perspectiveDepth / 2);
+		var controlPoint6 = this.cChartDrawer._convertAndTurnPoint(x2 + individualBarWidth / 2, y2 - height / 2, z2);
+
+		//front: 0, down: 1, left: 2, right: 3, up: 4, unfront: 5
+		var facePoints = [[point1, point5, point8, point4], [point1, point2, point3, point4],
+			[point1, point2, point6, point5], [point4, point3, point7, point8], [point5, point6, point7, point8],
+			[point2, point3, point7, point6]];
+
+		var sortPaths = [controlPoint1, controlPoint2, controlPoint3, controlPoint4, controlPoint5, controlPoint6];
+
+		return {paths: paths, x: point1.x, y: point1.y, zIndex: point1.z, sortPaths: sortPaths, facePoints: facePoints};
+	},
+
+	_calculatePyramide3D: function (startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, serNum) {
+		//параметр r и глубина по OZ
+		var perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
+
+		//сдвиг по OZ в глубину
+		var gapDepth = this.chart.gapDepth != null ? this.chart.gapDepth : globalGapDepth;
+		if (this.subType === "standard") {
+			perspectiveDepth = (perspectiveDepth / (gapDepth / 100 + 1)) / this.seriesCount;
+		} else {
+			perspectiveDepth = perspectiveDepth / (gapDepth / 100 + 1);
+		}
+
+		var DiffGapDepth = perspectiveDepth * (gapDepth / 2) / 100;
+		if (this.subType === "standard") {
+			gapDepth = (perspectiveDepth + DiffGapDepth + DiffGapDepth) * serNum + DiffGapDepth;
+		} else {
+			gapDepth = DiffGapDepth;
+		}
+
+		//рассчитываем 5 точек для каждой пирамиды
+		var x1 = startX, y1 = startY, z1 = 0 + gapDepth;
+		var x2 = startX, y2 = startY, z2 = perspectiveDepth + gapDepth;
+		var x3 = startX + individualBarWidth, y3 = startY, z3 = perspectiveDepth + gapDepth;
+		var x4 = startX + individualBarWidth, y4 = startY, z4 = 0 + gapDepth;
+		var x5 = startX + individualBarWidth / 2, y5 = startY - height, z5 = gapDepth + (perspectiveDepth / 2) ;
+
+		console.log(gapDepth)
+
+		//поворот относительно осей
+		var point1 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1);
+		var point2 = this.cChartDrawer._convertAndTurnPoint(x2, y2, z2);
+		var point3 = this.cChartDrawer._convertAndTurnPoint(x3, y3, z3);
+		var point4 = this.cChartDrawer._convertAndTurnPoint(x4, y4, z4);
+		var point5 = this.cChartDrawer._convertAndTurnPoint(x5, y5, z5);
+
+		var isNotDrawDownVerge;
+
+		var points = [point1, point2, point3, point4, point5];
+		var paths = this.cChartDrawer.calculatePyramide3D(points, val, isNotDrawDownVerge);
+
+		console.log(paths)
+
+		height = this.chartProp.heightCanvas - this.chartProp.chartGutter._top - this.chartProp.chartGutter._bottom;
+		var controlPoint1 = this.cChartDrawer._convertAndTurnPoint(x1 + individualBarWidth / 2, y1 - height / 2, z1);
+		var controlPoint2 = this.cChartDrawer._convertAndTurnPoint(x1 + individualBarWidth / 2, y1, z1 + perspectiveDepth / 2);
+		var controlPoint3 = this.cChartDrawer._convertAndTurnPoint(x1, y1 - height / 2, z1 + perspectiveDepth / 2);
+		var controlPoint4 = this.cChartDrawer._convertAndTurnPoint(x4, y4 - height / 2, z4 + perspectiveDepth / 2);
+		var controlPoint5 = this.cChartDrawer._convertAndTurnPoint(x5 + individualBarWidth / 2, y5, z5 + perspectiveDepth );
+
+		var controlPoint6 = this.cChartDrawer._convertAndTurnPoint(x2 + individualBarWidth / 2, y2 - height / 2, z2);
+
+		//front: 0, down: 1, left: 2, right: 3, unfront: 4
+		var facePoints = [[point1, point5, point4], [point1, point2, point3, point4],
+			[point1, point2, point5], [point4, point3, point5],
+			[point2, point3, point4]];
+
+		var sortPaths = [controlPoint1, controlPoint2, controlPoint3, controlPoint4, controlPoint5, controlPoint6];
+
+	// 	var radiusSpec = (radius1 * radius2) / Math.sqrt(
+	// 		Math.pow(radius2, 2) * Math.pow((Math.cos(startAng)), 2) +
+	// 		Math.pow(radius1, 2) * Math.pow(Math.sin(startAng), 2));
+	// var radiusSpec2 = (radius1 * radius2) / Math.sqrt(
+	// 		Math.pow(radius2, 2) * Math.pow((Math.cos(endAng)), 2) +
+	// 		Math.pow(radius1, 2) * Math.pow(Math.sin(endAng), 2));
+
+	// var x0 = (xCenter + radiusSpec * Math.cos(startAng));
+	// var y0 = (yCenter - radiusSpec * Math.sin(startAng));
+
+	// var x1 = (xCenter + radiusSpec * Math.cos(startAng));
+	// var y1 = ((yCenter + depth) - radiusSpec * Math.sin(startAng));
+
+	// var x2 = (xCenter + radiusSpec2 * Math.cos(endAng));
+	// var y2 = (yCenter - radiusSpec2 * Math.sin(endAng));
+
+	// var x3 = (xCenter + radiusSpec2 * Math.cos(endAng));
+	// var y3 = ((yCenter + depth) - radiusSpec2 * Math.sin(endAng));
+
+		return {paths: paths, x: point1.x, y: point1.y, zIndex: point1.z, sortPaths: sortPaths, facePoints: facePoints};
+	},
+
+	_calculateCelinder3D: function (startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, serNum) {
+	//параметр r и глубина по OZ
+		var perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
+
+		//сдвиг по OZ в глубину
+		var gapDepth = this.chart.gapDepth != null ? this.chart.gapDepth : globalGapDepth;
+		if (this.subType === "standard") {
+			perspectiveDepth = (perspectiveDepth / (gapDepth / 100 + 1)) / this.seriesCount;
+		} else {
+			perspectiveDepth = perspectiveDepth / (gapDepth / 100 + 1);
+		}
+
+		var DiffGapDepth = perspectiveDepth * (gapDepth / 2) / 100;
+		if (this.subType === "standard") {
+			gapDepth = (perspectiveDepth + DiffGapDepth + DiffGapDepth) * serNum + DiffGapDepth;
+		} else {
+			gapDepth = DiffGapDepth;
+		}
+
+		//рассчитываем 8 точек для каждого столбца
+		var x1 = startX, y1 = startY, z1 = 0 + gapDepth;
+		var x2 = startX, y2 = startY, z2 = perspectiveDepth + gapDepth;
+		var x3 = startX + individualBarWidth, y3 = startY, z3 = perspectiveDepth + gapDepth;
+		var x4 = startX + individualBarWidth, y4 = startY, z4 = 0 + gapDepth;
+		var x5 = startX, y5 = startY - height, z5 = 0 + gapDepth;
+		var x6 = startX, y6 = startY - height, z6 = perspectiveDepth + gapDepth;
+		var x7 = startX + individualBarWidth, y7 = startY - height, z7 = perspectiveDepth + gapDepth;
+		var x8 = startX + individualBarWidth, y8 = startY - height, z8 = 0 + gapDepth;
+
+		//поворот относительно осей
+		var point1 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1);
+		var point2 = this.cChartDrawer._convertAndTurnPoint(x2, y2, z2);
+		var point3 = this.cChartDrawer._convertAndTurnPoint(x3, y3, z3);
+		var point4 = this.cChartDrawer._convertAndTurnPoint(x4, y4, z4);
+		var point5 = this.cChartDrawer._convertAndTurnPoint(x5, y5, z5);
+		var point6 = this.cChartDrawer._convertAndTurnPoint(x6, y6, z6);
+		var point7 = this.cChartDrawer._convertAndTurnPoint(x7, y7, z7);
+		var point8 = this.cChartDrawer._convertAndTurnPoint(x8, y8, z8);
+		//down verge of minus values don't must draw(in stacked and stackedPer)
+		var isNotDrawDownVerge;
+		/*if((this.subType == "stacked" || this.subType == "stackedPer") && val < 0 && (isValMoreZero || (!isValMoreZero && isValLessZero !== 1)))
+		 isNotDrawDownVerge = true;*/
+
+		var points = [point1, point2, point3, point4, point5, point6, point7, point8];
+		var paths = this.cChartDrawer.calculateCelinder(points, val, isNotDrawDownVerge);
 
 		height = this.chartProp.heightCanvas - this.chartProp.chartGutter._top - this.chartProp.chartGutter._bottom;
 		var controlPoint1 = this.cChartDrawer._convertAndTurnPoint(x1 + individualBarWidth / 2, y1 - height / 2, z1);
