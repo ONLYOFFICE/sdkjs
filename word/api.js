@@ -1390,12 +1390,16 @@ background-repeat: no-repeat;\
 			_t.bInit_word_control = true;
 
 			var oViewer = _t.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
-			oViewer.Thumbnails = new AscCommon.ThumbnailsControl("thumbnails-list");
-			oViewer.setThumbnailsControl(oViewer.Thumbnails);
+			var thumbnailsDivId = "thumbnails-list";
+			if (document.getElementById(thumbnailsDivId))
+			{
+				oViewer.Thumbnails = new AscCommon.ThumbnailsControl(thumbnailsDivId);
+				oViewer.setThumbnailsControl(oViewer.Thumbnails);
 
-			oViewer.Thumbnails.registerEvent("onZoomChanged", function(value){
-				_t.sendEvent("asc_onViewerThumbnailsZoomUpdate", value);
-			});
+				oViewer.Thumbnails.registerEvent("onZoomChanged", function (value) {
+					_t.sendEvent("asc_onViewerThumbnailsZoomUpdate", value);
+				});
+			}
 
 		}, 500);
 	};
