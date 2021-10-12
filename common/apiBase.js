@@ -1308,16 +1308,18 @@
 							case "ok":
 								var urls = input["data"];
 								AscCommon.g_oDocumentUrls.init(urls);
-								if (null != urls['Editor.bin']) {
+								var documentUrl = urls['Editor.bin'];
+								if (t.isUseNativeViewer && !documentUrl)
+									documentUrl = urls['origin.pdf'] || urls['origin.xps'] || urls['origin.djvu'];
+								if (null != documentUrl) {
 									if ('ok' === input["status"] || t.getViewMode()) {
-										var url = t.isUseNativeViewer ? (urls['origin.pdf'] || urls['origin.xps'] || urls['origin.djvu'] || urls['Editor.bin']) : urls['Editor.bin'];
-										t._onOpenCommand(url);
+										t._onOpenCommand(documentUrl);
 									} else {
 										t.sendEvent("asc_onDocumentUpdateVersion", function () {
 											if (t.isCoAuthoringEnable) {
 												t.asc_coAuthoringDisconnect();
 											}
-											t._onOpenCommand(urls['Editor.bin']);
+											t._onOpenCommand(documentUrl);
 										})
 									}
 								} else {
