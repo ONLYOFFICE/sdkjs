@@ -3963,6 +3963,9 @@ StyleManager.prototype =
 };
 
 	function StyleCache() {
+		this.Clear();
+	}
+	StyleCache.prototype.Clear = function() {
 		this.fonts = {count: 0, vals: {}};
 		this.fills = {count: 0, vals: {}};
 		this.borders = {count: 0, vals: {}};
@@ -3975,8 +3978,7 @@ StyleManager.prototype =
 		this.secondFill = null;
 		this.firstBorder = null;
 		this.normalXf =  new CellXfs();
-	}
-
+	};
 	StyleCache.prototype.addFont = function(newFont) {
 		return this._add(this.fonts, newFont);
 	};
