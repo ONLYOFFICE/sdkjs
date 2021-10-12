@@ -203,6 +203,8 @@
 		this.Shortcuts = new AscCommon.CShortcuts();
 		this.initDefaultShortcuts();
 
+		this.isUseNativeViewer = true;
+
 		return this;
 	}
 
@@ -687,6 +689,10 @@
 				"lcid"          : locale,
 				"nobase64"      : true
 			};
+
+			if (this.isUseNativeViewer)
+				rData["convertToOrigin"] = true;
+
 			if (versionHistory)
 			{
 				rData["serverVersion"] = versionHistory.serverVersion;
@@ -819,6 +825,10 @@
 
 		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["onDocumentContentReady"])
             window["AscDesktopEditor"]["onDocumentContentReady"]();
+
+		// теперь на старте нельзя удалить бинарник для подбора - он может пригодиться в nativeViewer
+		if (!this.disableRemoveFonts)
+			delete window["g_fonts_selection_bin"];
 	};
 	// Save
 	baseEditorsApi.prototype.processSavedFile                    = function(url, downloadType, filetype)
@@ -1300,7 +1310,8 @@
 								AscCommon.g_oDocumentUrls.init(urls);
 								if (null != urls['Editor.bin']) {
 									if ('ok' === input["status"] || t.getViewMode()) {
-										t._onOpenCommand(urls['Editor.bin']);
+										var url = t.isUseNativeViewer ? (urls['origin.pdf'] || urls['origin.xps'] || urls['origin.djvu'] || urls['Editor.bin']) : urls['Editor.bin'];
+										t._onOpenCommand(url);
 									} else {
 										t.sendEvent("asc_onDocumentUpdateVersion", function () {
 											if (t.isCoAuthoringEnable) {

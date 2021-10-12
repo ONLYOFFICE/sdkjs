@@ -1691,7 +1691,7 @@ CFontSelectList.prototype =
 		_fs.m_wsFontName = "ASCW3";
 		this.List.push(_fs);
 
-        delete window["g_fonts_selection_bin"];
+        //delete window["g_fonts_selection_bin"];
     },
 
     isEnglishChar : function(_code)

@@ -1366,6 +1366,45 @@ background-repeat: no-repeat;\
 		this.FontLoader.LoadDocumentFonts(this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Fonts, true);
 	};
 
+	asc_docs_api.prototype.OpenDocument3 = function(url, gObject)
+	{
+		this.isOnlyReaderMode = false;
+		this.DocumentType         = 1;
+		this.ServerIdWaitComplete = true;
+
+		window["AscViewer"]["baseUrl"] = (typeof document !== 'undefined' && document.currentScript) ? "" : "./../../../../sdkjs/pdf/src/engine/";
+		window["AscViewer"]["baseEngineUrl"] = "./../../../../sdkjs/pdf/src/engine/";
+
+		var _t = this;
+
+		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer = new AscCommon.CViewer(this.HtmlElementName);
+		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.registerEvent("onStructure", function(structure){
+			_t.sendEvent("asc_onViewerBookmarksUpdate", structure);
+		});
+		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.open(gObject);
+
+		// через таймер - чтобы не моргнула пустая отрисовка
+		setTimeout(function() {
+			_t.disableRemoveFonts = true;
+			_t.onDocumentContentReady();
+			_t.bInit_word_control = true;
+
+			var oViewer = _t.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
+			oViewer.Thumbnails = new AscCommon.ThumbnailsControl("thumbnails-list");
+			oViewer.setThumbnailsControl(oViewer.Thumbnails);
+
+			oViewer.Thumbnails.registerEvent("onZoomChanged", function(value){
+				_t.sendEvent("asc_onViewerThumbnailsZoomUpdate", value);
+			});
+
+		}, 500);
+	};
+	asc_docs_api.prototype["asc_setViewerThumbnailsZoom"] = function(value) {
+		if (this.WordControl.m_oDrawingDocument.m_oDocumentRenderer &&
+			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Thumbnails)
+			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Thumbnails.setZoom(value);
+	};
+
 	asc_docs_api.prototype.OpenDocument2 = function(url, gObject)
 	{
 		this.InitEditor();
@@ -7491,7 +7530,7 @@ background-repeat: no-repeat;\
 		if (file.bSerFormat)
 			this.OpenDocument2(file.url, file.data);
 		else
-			this.OpenDocument(file.url, file.data);
+			this.OpenDocument3(file.url, file.data);
 	};
 
 	asc_docs_api.prototype.asyncImageEndLoadedBackground = function(_image)

@@ -2766,6 +2766,16 @@ function CEditorPage(api)
 		this.m_oBody.Resize(this.Width * g_dKoef_pix_to_mm, this.Height * g_dKoef_pix_to_mm, this);
 		this.onButtonTabsDraw();
 
+		if (this.m_oApi.isUseNativeViewer)
+		{
+			var oViewer = this.m_oDrawingDocument.m_oDocumentRenderer;
+			if (oViewer)
+			{
+				oViewer.resize();
+				oViewer.Thumbnails && oViewer.Thumbnails.resize();
+			}
+		}
+
 		if (AscCommon.g_inputContext)
 			AscCommon.g_inputContext.onResize("id_main_view");
 
