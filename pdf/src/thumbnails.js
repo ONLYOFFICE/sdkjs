@@ -750,6 +750,9 @@
             return null;
 
         var block = (pageNum / this.countPagesInBlock) >> 0;
+        if (!this.blocks[block])
+            return null;
+
         var pageInBlock = pageNum - block * this.countPagesInBlock;
         return this.blocks[block].pages[pageInBlock];
     };

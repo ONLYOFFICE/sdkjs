@@ -1387,6 +1387,9 @@ background-repeat: no-repeat;\
 		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.registerEvent("onPagesCount", function(pagesCount){
 			_t.sendEvent("asc_onCountPages", pagesCount);
 		});
+		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.registerEvent("onZoom", function(value, type){
+			_t.sendEvent("asc_onZoomChange", (value * 100) >> 0, type);
+		});
 		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.open(gObject);
 
 		// через таймер - чтобы не моргнула пустая отрисовка

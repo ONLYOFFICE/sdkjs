@@ -55,6 +55,12 @@
 		Loaded : 2
 	};
 
+	var ZoomMode = {
+		Custom : 0,
+		Width : 1,
+		Page : 2
+	};
+
 	function CHtmlPage(id)
 	{
 		this.parent = document.getElementById(id);
@@ -70,7 +76,8 @@
 		this.scrollMaxY = 0;
 		this.scrollX = 0;
 		this.scrollMaxX = 0;
-		
+
+		this.zoomMode = ZoomMode.Custom;
 		this.zoom 	= 1;
 		
 		this.drawingPages = [];
@@ -233,8 +240,6 @@
 			settings.screenH = this.height;
 			settings.vscrollStep = 45;
 			settings.hscrollStep = 45;
-			settings.screenW = AscCommon.AscBrowser.convertToRetinaValue(settings.screenW);
-			settings.screenH = AscCommon.AscBrowser.convertToRetinaValue(settings.screenH);
 			return settings;
 		};
 
@@ -255,6 +260,13 @@
 		{
 			this.width = this.parent.offsetWidth - this.scrollWidth;
 			this.height = this.parent.offsetHeight;
+
+			if (this.zoomMode === ZoomMode.Width)
+				this.zoom = this.calculateZoomToWidth();
+			else if (this.zoomMode === ZoomMode.Page)
+				this.zoom = this.calculateZoomToHeight();
+
+			this.sendEvent("onZoom", this.zoom, this.zoomMode);
 
 			this.recalculatePlaces();
 
@@ -456,7 +468,57 @@
 		this.setZoom = function(value)
 		{
 			this.zoom = value;
+			this.zoomMode = ZoomMode.Custom;
+			this.sendEvent("onZoom", this.zoom);
 			this.resize();
+		};
+		this.setZoomMode = function(value)
+		{
+			this.zoomMode = value;
+			this.resize();
+		};
+		this.calculateZoomToWidth = function()
+		{
+			if (0 === this.file.pages.length)
+				return;
+
+			var maxWidth = 0;
+			for (let i = 0, len = this.file.pages.length; i < len; i++)
+			{
+				var pageW = (this.file.pages[i].W * 96 / this.file.pages[i].Dpi);
+				if (pageW > maxWidth)
+					maxWidth = pageW;
+			}
+
+			if (maxWidth < 1)
+				return;
+
+			return (this.width - 2 * this.betweenPages) / maxWidth;
+		};
+		this.calculateZoomToHeight = function()
+		{
+			if (0 === this.file.pages.length)
+				return;
+
+			var maxHeight = 0;
+			var maxWidth = 0;
+			for (let i = 0, len = this.file.pages.length; i < len; i++)
+			{
+				var pageW = (this.file.pages[i].W * 96 / this.file.pages[i].Dpi);
+				var pageH = (this.file.pages[i].H * 96 / this.file.pages[i].Dpi);
+				if (pageW > maxWidth)
+					maxWidth = pageW;
+				if (pageH > maxHeight)
+					maxHeight = pageH;
+			}
+
+			if (maxWidth < 1 || maxHeight < 1)
+				return;
+
+			var zoom1 = (this.width - 2 * this.betweenPages) / maxWidth;
+			var zoom2 = (this.height - 2 * this.betweenPages) / maxHeight;
+
+			return Math.min(zoom1, zoom2);
 		};
 
 		this.setMouseLockMode = function(isEnabled)
@@ -747,12 +809,12 @@
 			let lineW = AscCommon.AscBrowser.retinaPixelRatio >> 0;
 			ctx.lineWidth = lineW;
 
-			let yPos = (this.scrollY * this.zoom) >> 0;
+			let yPos = this.scrollY >> 0;
 			let yMax = yPos + this.height;
 			let xCenter = this.width >> 1;
 			if (this.documentWidth > this.width)
 			{
-				xCenter = (this.documentWidth >> 1) - (this.scrollX * this.zoom) >> 0;
+				xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
 			}
 
 			let lStartPage = -1;
@@ -899,6 +961,7 @@
 	};
 	
 	AscCommon.CViewer = CHtmlPage;
+	AscCommon.ViewerZoomMode = ZoomMode;
 	AscCommon.CCacheManager = CCacheManager;
 
 })();
