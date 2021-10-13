@@ -2770,10 +2770,7 @@ function CEditorPage(api)
 		{
 			var oViewer = this.m_oDrawingDocument.m_oDocumentRenderer;
 			if (oViewer)
-			{
 				oViewer.resize();
-				oViewer.Thumbnails && oViewer.Thumbnails.resize();
-			}
 		}
 
 		if (AscCommon.g_inputContext)

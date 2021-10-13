@@ -288,6 +288,11 @@
     {
         this._resize(isZoomUpdated);
     };
+    CDocument.prototype.setIsDrawCurrentRect = function(isDrawCurrentRect)
+    {
+        PageStyle.isDrawCurrentRect = isDrawCurrentRect;
+        this.repaint();
+    };
     CDocument.prototype.setEnabled = function(isEnabled)
     {
         this.isEnabled = isEnabled;
@@ -505,6 +510,9 @@
     {
         var element = document.getElementById(this.id);
 
+        if (0 === element.offsetWidth)
+            return;
+
         // размер панели
         this.panelWidth = element.offsetWidth;
         this.panelHeight = element.offsetHeight;
@@ -552,7 +560,9 @@
         {
             // зум "по умолчанию"
             this.zoom = this.defaultPageW / pageWidthMax;
-            this.defaultPageW = 0;
+
+            if (0 != this.panelWidth)
+                this.defaultPageW = 0;
         }
 
         // корректировка зумов

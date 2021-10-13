@@ -1414,6 +1414,16 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Thumbnails)
 			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Thumbnails.setZoom(value);
 	};
+	asc_docs_api.prototype["asc_setViewerThumbnailsUsePageRect"] = function(value) {
+		if (this.WordControl.m_oDrawingDocument.m_oDocumentRenderer &&
+			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Thumbnails)
+			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Thumbnails.setIsDrawCurrentRect(value);
+	};
+	asc_docs_api.prototype["asc_viewerThumbnailsResize"] = function() {
+		if (this.WordControl.m_oDrawingDocument.m_oDocumentRenderer &&
+			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Thumbnails)
+			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Thumbnails.resize();
+	};
 	asc_docs_api.prototype["asc_viewerNavigateTo"] = function(value) {
 		if (this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
 			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.navigate(value);
