@@ -425,6 +425,9 @@
 			this.currentPage = -1;
 			this.structure = this.file.getStructure();
 
+			this.sendEvent("onPagesCount", this.file.pages.length);
+			this.sendEvent("onCurrentPageChanged", 0);
+
 			setTimeout(function(){
 				oThis.sendEvent("onStructure", oThis.structure);
 			}, 100);
