@@ -4654,8 +4654,11 @@ drawBarChart.prototype = {
 		var cSortFaces;
 		if (this.cChartDrawer.nDimensionCount === 3) {
 			if(this.cChartDrawer.processor3D.view3D.rotX){
-				var sortAngel = this.cChartDrawer.processor3D.view3D.rotX
+				var sortAngelX = this.cChartDrawer.processor3D.view3D.rotX
+				var sortAngelY = this.cChartDrawer.processor3D.view3D.rotY
+				console.log(this.cChartDrawer.processor3D.view3D)
 			}
+			var angle = this.cChartDrawer.processor3D.angleOx;
 
 			if (this.subType === "stacked" || this.subType === "stackedPer") {
 				//если будут найдены проблемы при отрисовке stacked rAngAx - раскомментировать ветку
@@ -4698,18 +4701,6 @@ drawBarChart.prototype = {
 				this.sortParallelepipeds = cSortFaces.sortParallelepipeds(this.temp2);
 			} else {
 					
-				var getMinZ = function (arr) {
-					var zIndex = 0;
-					for (var i = 0; i < arr.length; i++) {
-						if (i === 0) {
-							zIndex = arr[i].z;
-						} else if (arr[i].z < zIndex) {
-							zIndex = arr[i].z;
-						}
-					}
-					return zIndex;		
-				};
-					
 				var getMaxZ = function (arr) {
 					var zIndex = 0;
 					for (var i = 0; i < arr.length; i++) {
@@ -4721,25 +4712,142 @@ drawBarChart.prototype = {
 					}
 					return zIndex;		
 				};
-			}					
-				this.sortZIndexPaths.sort(function sortArr(a, b) {	
-				// метод сортировки в зависимости от угла
-					var ZA;
-					var ZB;
 
-					if(sortAngel > 20){
-						ZA = getMaxZ(a.facePoint);
-						ZB = getMaxZ(b.facePoint);
-					}else{
-						ZA = getMinZ(a.facePoint);
-						ZB = getMinZ(b.facePoint);
+				var getMinZ = function (arr) {
+					var zIndex = 0;
+					for (var i = 0; i < arr.length; i++) {
+						if (i === 0) {
+							zIndex = arr[i].z;
+						} else if (arr[i].z < zIndex) {
+							zIndex = arr[i].z;
+						}
 					}
+					return zIndex;		
+				}
 
-					if (ZB == ZA) {
-						return b.y - a.y;
-					} else {
-						return ZB - ZA;
+				var getMinY = function (arr) {
+					var yIndex = 0;
+					for (var i = 0; i < arr.length; i++) {
+						if (i === 0) {
+							yIndex = arr[i].y;
+						} else if (arr[i].y > yIndex) {
+							yIndex = arr[i].y;
+						}
 					}
+					return yIndex;		
+				}
+
+				var getMinX = function (arr) {
+					var xIndex = 0;
+					for (var i = 0; i < arr.length; i++) {
+						if (i === 0) {
+							xIndex = arr[i].x;
+						} else if (arr[i].x > xIndex) {
+							xIndex = arr[i].x;
+						}
+					}
+					return xIndex;		
+				}
+
+			}
+
+			// for(var i = 0; i < this.sortZIndexPaths.length; i+=3){
+
+			// 	var arrA = this.sortZIndexPaths[i].facePoint;
+			// 	var arrB = this.sortZIndexPaths[i+1].facePoint;
+			// 	var arrC = this.sortZIndexPaths[i+2].facePoint;
+
+			// 	var minAZ = getMinZ(arrA);
+			// 	var minBZ = getMinZ(arrB);
+			// 	var minCZ = getMinZ(arrC);
+
+
+			// 	return minAZ + minBZ - minCZ;
+
+			// }	
+
+			// console.log(this.sortZIndexPaths.facePoint + "Вход")
+
+			// this.sortZIndexPaths.sort(function sortArr(a, b) {
+	
+			// 	var minZA = getMinX(a.facePoint);
+			// 	var minZB = getMinX(b.facePoint);
+
+			// 	if (minZB == minZA) {
+			// 		return b.y - a.y;
+			// 	} else {
+			// 		return minZB - minZA;
+			// 	}
+			// });
+
+			// console.log(this.sortZIndexPaths.facePoint + "Выход")
+				
+			this.sortZIndexPaths.sort(function sortArr(a, b) {	
+			 // метод сортировки в зависимости от угла
+			 	var ZA;
+			 	var ZB;
+
+				var YA;
+			 	var YB;
+
+				console.log(a.verge[0])
+			 	//if(sortAngelX > 0){
+			 	ZA = getMaxZ(a.facePoint);
+			 	ZB = getMaxZ(b.facePoint);
+
+				YA = getMinY(a.facePoint)
+				YB = getMinY(b.facePoint)
+
+		
+			if(sortAngelX < 0){
+				ZA = getMinZ(a.facePoint);
+				ZB = getMinZ(b.facePoint);
+			}
+
+			if((sortAngelY < 25) || (sortAngelY > 335)){
+			 	if (ZB == ZA) {
+			 		return b.y - a.y;
+			 	} else if(ZB > ZA) {
+			 		return ZB - ZA;
+			 	}else{
+					return ZA - ZB;
+				}
+			}else if((sortAngelY < 205) && (sortAngelY > 155)){
+
+				if (ZB == ZA) {
+					return b.y - a.y;
+				} else if(ZB < ZA) {
+					return ZB - ZA;
+				}else{
+					return ZA - ZB;
+			   }
+			}
+			else if((sortAngelY > 90) && (sortAngelY < 155)){
+				if (ZB == ZA) {
+					return b.y - a.y;
+				} else if(ZB < ZA) {
+					return ZB - ZA;
+				}else{
+					return ZA - ZB;
+			   }
+			}
+			else if((sortAngelY > 270) && (sortAngelY < 335)){
+				if (ZB == ZA) {
+					return b.y - a.y;
+				} else if(ZB > ZA) {
+					return ZB - ZA;
+				}else{
+					return ZA - ZB;
+			   }
+			}
+			else if(sortAngelY){
+				if (ZB == ZA) {
+					return 0;
+				} else{
+					return (ZB - ZA) + (YA - YB);
+				}
+			}
+		
 				});
 			}
 		},
