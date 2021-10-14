@@ -8464,6 +8464,7 @@
 			options.findWhat = options.findWhat.toLowerCase();
 		}
 
+		var findEmptyStr = options.findWhat === "";
 		if(options.isWholeWord) {
 			var length = options.findWhat.length;
 			options.findWhat = '\\b' + options.findWhat + '\\b';
@@ -8476,10 +8477,32 @@
 		var merge = this.getMergedByCell(activeCell.row, activeCell.col);
 		options.findInSelection = options.scanOnOnlySheet &&
 			!(selectionRange.isSingleRange() && (lastRange.isOneCell() || lastRange.isEqual(merge)));
+
+		var findRange;
 		var maxRowsCount = this.getRowsCount();
 		var maxColsCount = this.getColsCount();
-		var findRange = options.findInSelection ? this.getRange3(lastRange.r1, lastRange.c1, lastRange.r2, lastRange.c2) :
-			this.getRange3(0, 0, maxRowsCount ? maxRowsCount - 1 : 0, maxColsCount ? maxColsCount - 1 : 0);
+		var func;
+		if (findEmptyStr) {
+			if (maxRowsCount === 0 || maxColsCount === 0) {
+				findRange = this.getRange3(0, 0, maxRowsCount, maxColsCount);
+				func = findRange._foreachNoEmpty;
+			} else if (options.findInSelection) {
+				if (lastRange.r1 <= maxRowsCount - 1 && lastRange.c1 <= maxColsCount - 1) {
+					findRange = this.getRange3(lastRange.r1, lastRange.c1, Math.min(lastRange.r2, maxRowsCount - 1), Math.min(lastRange.c2, maxColsCount - 1));
+					func = findRange._foreach2;
+				} else {
+					findRange = this.getRange3(lastRange.r1, lastRange.c1, lastRange.r2, lastRange.c2);
+					func = findRange._foreachNoEmpty;
+				}
+			} else {
+				findRange = this.getRange3(0, 0, maxRowsCount - 1, maxColsCount - 1);
+				func = findRange._foreach2;
+			}
+		} else {
+			findRange = options.findInSelection ? this.getRange3(lastRange.r1, lastRange.c1, lastRange.r2, lastRange.c2) :
+				this.getRange3(0, 0, maxRowsCount, maxColsCount);
+			func = findRange._foreachNoEmpty;
+		}
 
 		if (this.lastFindOptions && this.lastFindOptions.findResults && options.isEqual2(this.lastFindOptions) &&
 			findRange.getBBox0().isEqual(this.lastFindOptions.findRange)) {
@@ -8488,7 +8511,6 @@
 
 		var oldResults = this.lastFindOptions && this.lastFindOptions.findResults.isNotEmpty();
 		var result = new AscCommonExcel.findResults(), tmp;
-		var func = options.findWhat === "" ? findRange._foreach2 : findRange._foreachNoEmpty;
 		var emptyCell, t = this;
 		func.apply(findRange, [function (cell, r, c) {
 			if (cell === null) {
