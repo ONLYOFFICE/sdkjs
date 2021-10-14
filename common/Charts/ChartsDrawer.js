@@ -4775,7 +4775,7 @@ drawBarChart.prototype = {
 			// }	
 
 			// console.log(this.sortZIndexPaths.facePoint + "Вход")
-			for(var i = 0; i < this.sortZIndexPaths.length; i++){
+
 			this.sortZIndexPaths[i].facePoint.sort(function sortArr(a, b) {
 	
 				var minZA = getMinZ(a);
@@ -4791,7 +4791,7 @@ drawBarChart.prototype = {
 				//return minZB + minZA;
 				
 			});
-		}
+		
 
 			// console.log(this.sortZIndexPaths.facePoint + "Выход")
 				
