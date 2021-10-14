@@ -4715,13 +4715,16 @@ drawBarChart.prototype = {
 
 				var getMinZ = function (arr) {
 					var zIndex = 0;
+					
 					for (var i = 0; i < arr.length; i++) {
 						if (i === 0) {
 							zIndex = arr[i].z;
 						} else if (arr[i].z < zIndex) {
 							zIndex = arr[i].z;
 						}
+
 					}
+
 					return zIndex;		
 				}
 
@@ -4730,7 +4733,7 @@ drawBarChart.prototype = {
 					for (var i = 0; i < arr.length; i++) {
 						if (i === 0) {
 							yIndex = arr[i].y;
-						} else if (arr[i].y > yIndex) {
+						} else if (arr[i].y < yIndex) {
 							yIndex = arr[i].y;
 						}
 					}
@@ -4742,7 +4745,7 @@ drawBarChart.prototype = {
 					for (var i = 0; i < arr.length; i++) {
 						if (i === 0) {
 							xIndex = arr[i].x;
-						} else if (arr[i].x > xIndex) {
+						} else if (arr[i].x < xIndex) {
 							xIndex = arr[i].x;
 						}
 					}
@@ -4751,104 +4754,124 @@ drawBarChart.prototype = {
 
 			}
 
-			// for(var i = 0; i < this.sortZIndexPaths.length; i+=3){
+			// for(var i = 0; i < this.sortZIndexPaths.length; i++){
 
-			// 	var arrA = this.sortZIndexPaths[i].facePoint;
-			// 	var arrB = this.sortZIndexPaths[i+1].facePoint;
-			// 	var arrC = this.sortZIndexPaths[i+2].facePoint;
+			// 	var arr = this.sortZIndexPaths[i].facePoint;
+			// 	console.log(this.sortZIndexPaths[i].zIndex)
 
-			// 	var minAZ = getMinZ(arrA);
-			// 	var minBZ = getMinZ(arrB);
-			// 	var minCZ = getMinZ(arrC);
+			// 	var minZ = getMinZ(arr)
+			// 	var minY = getMinY(arr)
+			// 	var minX = getMinX(arr)
+			// 	// var arrB = this.sortZIndexPaths[i+1].facePoint;
+			// 	// var arrC = this.sortZIndexPaths[i+2].facePoint;
+
+			// 	// var minAZ = getMinZ(arrA);
+			// 	// var minBZ = getMinZ(arrB);
+			// 	// var minCZ = getMinZ(arrC);
 
 
-			// 	return minAZ + minBZ - minCZ;
+			// 	return minZ - minY;
 
 			// }	
 
 			// console.log(this.sortZIndexPaths.facePoint + "Вход")
-
-			// this.sortZIndexPaths.sort(function sortArr(a, b) {
+			for(var i = 0; i < this.sortZIndexPaths.length; i++){
+			this.sortZIndexPaths[i].facePoint.sort(function sortArr(a, b) {
 	
-			// 	var minZA = getMinX(a.facePoint);
-			// 	var minZB = getMinX(b.facePoint);
+				var minZA = getMinZ(a);
+				var minZB = getMinZ(b);
 
-			// 	if (minZB == minZA) {
-			// 		return b.y - a.y;
-			// 	} else {
-			// 		return minZB - minZA;
-			// 	}
-			// });
+				// var maxZA = getMaxZ(a.facePoint);
+				// var maxZB = getMaxZ(b.facePoint);
+
+				// if (minZB == minZA) {
+				// 	return b.y - a.y;
+				// } else {
+				return minZB - minZA;
+				//return minZB + minZA;
+				
+			});
+		}
 
 			// console.log(this.sortZIndexPaths.facePoint + "Выход")
 				
-			this.sortZIndexPaths.sort(function sortArr(a, b) {	
-			 // метод сортировки в зависимости от угла
-			 	var ZA;
-			 	var ZB;
+			// this.sortZIndexPaths.sort(function sortArr(a, b) {	
+			//  // метод сортировки в зависимости от угла
+			//  	var ZA;
+			//  	var ZB;
 
-				var YA;
-			 	var YB;
+			// 	var YA;
+			//  	var YB;
 
-				console.log(a.verge[0])
-			 	//if(sortAngelX > 0){
-			 	ZA = getMaxZ(a.facePoint);
-			 	ZB = getMaxZ(b.facePoint);
+			// 	// console.log(a.verge[0])
+			//  	// //if(sortAngelX > 0){
+			//  	// ZA = getMaxZ(a.facePoint);
+			//  	// ZB = getMaxZ(b.facePoint);
 
-				YA = getMinY(a.facePoint)
-				YB = getMinY(b.facePoint)
+			// 	// YA = getMinY(a.facePoint)
+			// 	// YB = getMinY(b.facePoint)
+			// 	console.log(a, b)
+
+			// 	ZA = getMinZ(a.facePoint);
+			// 	ZB = getMinZ(b.facePoint);
+
+			// 	if (ZB == ZA) {
+			// 		return b.y - a.y;
+			// 	} else {
+			// 		return ZB - ZA;
+			// 	}
 
 		
-			if(sortAngelX < 0){
-				ZA = getMinZ(a.facePoint);
-				ZB = getMinZ(b.facePoint);
-			}
+			// if(sortAngelX < 0){
+			// 	ZA = getMinZ(a.facePoint);
+			// 	ZB = getMinZ(b.facePoint);
+			// }
 
-			if((sortAngelY < 25) || (sortAngelY > 335)){
-			 	if (ZB == ZA) {
-			 		return b.y - a.y;
-			 	} else if(ZB > ZA) {
-			 		return ZB - ZA;
-			 	}else{
-					return ZA - ZB;
-				}
-			}else if((sortAngelY < 205) && (sortAngelY > 155)){
+			// if((sortAngelY === undefined) ||(sortAngelY < 25) || (sortAngelY > 335)){
+			//  	if (ZB == ZA) {
+			//  		return b.y - a.y;
+			//  	} else if(ZB > ZA) {
+			//  		return ZB - ZA;
+			//  	}else{
+			// 		return ZA - ZB;
+			// 	}
+			// }else if((sortAngelY < 205) && (sortAngelY > 155)){
 
-				if (ZB == ZA) {
-					return b.y - a.y;
-				} else if(ZB < ZA) {
-					return ZB - ZA;
-				}else{
-					return ZA - ZB;
-			   }
-			}
-			else if((sortAngelY > 90) && (sortAngelY < 155)){
-				if (ZB == ZA) {
-					return b.y - a.y;
-				} else if(ZB < ZA) {
-					return ZB - ZA;
-				}else{
-					return ZA - ZB;
-			   }
-			}
-			else if((sortAngelY > 270) && (sortAngelY < 335)){
-				if (ZB == ZA) {
-					return b.y - a.y;
-				} else if(ZB > ZA) {
-					return ZB - ZA;
-				}else{
-					return ZA - ZB;
-			   }
-			}
-			else if(sortAngelY){
-				if (ZB == ZA) {
-					return 0;
-				} else{
-					return (ZB - ZA) + (YA - YB);
-				}
-			}
+			// 	if (ZB == ZA) {
+			// 		return b.y - a.y;
+			// 	} else if(ZB < ZA) {
+			// 		return ZB - ZA;
+			// 	}else{
+			// 		return ZA - ZB;
+			//    }
+			// }
+			// else if((sortAngelY > 90) && (sortAngelY < 155)){
+			// 	if (ZB == ZA) {
+			// 		return b.y - a.y;
+			// 	} else if(ZB < ZA) {
+			// 		return ZB - ZA;
+			// 	}else{
+			// 		return ZA - ZB;
+			//    }
+			// }
+			// else if((sortAngelY > 270) && (sortAngelY < 335)){
+			// 	if (ZB == ZA) {
+			// 		return b.y - a.y;
+			// 	} else if(ZB > ZA) {
+			// 		return ZB - ZA;
+			// 	}else{
+			// 		return ZA - ZB;
+			//    }
+			// }
+			// else if(sortAngelY){
+			// 	if (ZB == ZA) {
+			// 		return 0;
+			// 	} else{
+			// 		return (ZB - ZA) + (YA - YB);
+			// 	}
+			// }
 		
-				});
+			//	});
 			}
 		},
 
