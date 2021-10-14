@@ -266,6 +266,8 @@
 			else if (this.zoomMode === ZoomMode.Page)
 				this.zoom = this.calculateZoomToHeight();
 
+			var lastPosition = this.getFirstPagePosition();
+
 			this.sendEvent("onZoom", this.zoom, this.zoomMode);
 
 			this.recalculatePlaces();
@@ -348,6 +350,15 @@
 				this.scrollX = this.scrollMaxX;
 			if (this.scrollY >= this.scrollMaxY)
 				this.scrollY = this.scrollMaxY;
+
+			if (lastPosition)
+			{
+				var drawingPage = this.drawingPages[lastPosition.page];
+				var newScrollY = drawingPage.Y + lastPosition.scrollY - lastPosition.y;
+
+				if (newScrollY < this.scrollMaxY)
+					this.m_oScrollVerApi.scrollToY(newScrollY);
+			}
 		};
 
 		this.onLoadModule = function()
@@ -467,10 +478,11 @@
 
 		this.setZoom = function(value)
 		{
+			var oldZoom = this.zoom;
 			this.zoom = value;
 			this.zoomMode = ZoomMode.Custom;
 			this.sendEvent("onZoom", this.zoom);
-			this.resize();
+			this.resize(oldZoom);
 		};
 		this.setZoomMode = function(value)
 		{
@@ -519,6 +531,26 @@
 			var zoom2 = (this.height - 2 * this.betweenPages) / maxHeight;
 
 			return Math.min(zoom1, zoom2);
+		};
+
+		this.getFirstPagePosition = function()
+		{
+			let lPagesCount = this.drawingPages.length;
+			for (let i = 0; i < lPagesCount; i++)
+			{
+				let page = this.drawingPages[i];
+				if ((page.Y + page.H) > this.scrollY)
+				{
+					return {
+						page : i,
+						x : page.X,
+						y : page.Y,
+						scrollX : this.scrollX,
+						scrollY : this.scrollY
+					};
+				}
+			}
+			return null;
 		};
 
 		this.setMouseLockMode = function(isEnabled)
