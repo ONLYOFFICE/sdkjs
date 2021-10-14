@@ -1305,6 +1305,8 @@ var editor;
 		g_oTableId.Clear();
 		AscCommonExcel.g_StyleCache.Clear();
 		AscCommon.CollaborativeEditing.Clear();
+		AscCommon.g_oDocumentUrls.Clear();
+		this.openingEnd = {bin: false, xlsxStart: false, xlsx: false, data: null};
 		this.isApplyChangesOnOpenEnabled = true;
 		this.isDocumentLoadComplete = false;
 

@@ -429,10 +429,7 @@
 
 	function DocumentUrls()
 	{
-		this.urls = {};
-		this.urlsReverse = {};
-		this.documentUrl = "";
-		this.imageCount = 0;
+		this.Clear();
 	}
 
 	DocumentUrls.prototype = {
@@ -441,6 +438,13 @@
 						 {
 							 this.addUrls(urls);
 						 },
+		Clear:			function ()
+						{
+							this.urls = {};
+							this.urlsReverse = {};
+							this.documentUrl = "";
+							this.imageCount = 0;
+						},
 		getUrls:         function ()
 						 {
 							 return this.urls;
