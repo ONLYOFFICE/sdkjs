@@ -564,13 +564,13 @@
 			if (!item)
 				return;
 
-			var drawingPage = this.drawingPages[item.page];
+			var drawingPage = this.drawingPages[item["page"]];
 			if (!drawingPage)
 				return;
 
 			var posY = drawingPage.Y;
 			posY -= this.betweenPages;
-			//posY += item.Y;
+			//posY += item["Y"];
 			this.m_oScrollVerApi.scrollToY(posY);
 		};
 

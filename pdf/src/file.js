@@ -416,6 +416,15 @@ void main() {\n\
                 file.onRepaintPages && file.onRepaintPages(pages);
             };
             file.pages = file.nativeFile["getPages"]();
+
+            for (var i = 0, len = file.pages.length; i < len; i++)
+            {
+                var page = file.pages[i];
+                page.W = page["W"];
+                page.H = page["H"];
+                page.Dpi = page["Dpi"];
+            }
+
             file.cacheManager = new AscCommon.CCacheManager(); 
             return file;   
         }

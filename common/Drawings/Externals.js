@@ -597,6 +597,12 @@ CFontFileLoader.prototype.LoadFontAsync = function(basePath, _callback, isEmbed)
 	return false;
 };
 
+CFontFileLoader.prototype["LoadFontAsync"] = CFontFileLoader.prototype.LoadFontAsync;
+CFontFileLoader.prototype["GetID"] = function() { return this.Id; };
+CFontFileLoader.prototype["GetStatus"] = function() { return this.Status; };
+CFontFileLoader.prototype["GetStreamIndex"] = function() { return this.stream_index; };
+
+
 var FONT_TYPE_ADDITIONAL = 0;
 var FONT_TYPE_STANDART = 1;
 var FONT_TYPE_EMBEDDED = 2;
