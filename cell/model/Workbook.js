@@ -8465,12 +8465,20 @@
 		}
 
 		var findEmptyStr = options.findWhat === "";
-		if(options.isWholeWord) {
+		if (findEmptyStr) {
+			options.findWhat = new RegExp("^$", "g");
+		} else if(options.isWholeWord) {
 			var length = options.findWhat.length;
 			options.findWhat = '\\b' + options.findWhat + '\\b';
 			options.findWhat = new RegExp(options.findWhat, "g");
 			options.findWhat.length = length;
 		}
+		var isWholeWordTrue = null;
+		if (findEmptyStr) {
+			isWholeWordTrue = options.isWholeWord;
+			options.isWholeWord = true;
+		}
+
 		var selectionRange = options.selectionRange || this.selectionRange;
 		var lastRange = selectionRange.getLast();
 		var activeCell = selectionRange.activeCell;
@@ -8528,6 +8536,9 @@
 				result.add(r, c, cell);
 			}
 		}]);
+		if (isWholeWordTrue !== null) {
+			options.isWholeWord = isWholeWordTrue;
+		}
 		this.lastFindOptions = options.clone();
 		// ToDo support multiselect
 		this.lastFindOptions.findRange = findRange.getBBox0().clone();
