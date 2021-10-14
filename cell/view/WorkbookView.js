@@ -2253,6 +2253,26 @@
     this.handlers.trigger("asc_onZoomChanged", this.getZoom());
   };
 
+	WorkbookView.prototype.changeZoom2 = function(factor) {
+		this.buffers.main.changeZoom(factor);
+
+		if (!factor) {
+			this.wsMustDraw = true;
+			this._calcMaxDigitWidth();
+		}
+
+		var item;
+		var activeIndex = this.model.getActive();
+		for (var i in this.wsViews) {
+			item = this.wsViews[i];
+			// Меняем zoom (для не активных сменим как только сделаем его активным)
+			if (!factor) {
+				item._initWorksheetDefaultWidth();
+			}
+			item.changeZoom(/*isDraw*/i == activeIndex);
+		}
+	};
+
   WorkbookView.prototype.getEnableKeyEventsHandler = function(bIsNaturalFocus) {
     var res = this.enableKeyEvents;
     if (res && bIsNaturalFocus && this.getCellEditMode() && this.input.isFocused) {
@@ -2923,8 +2943,10 @@
   // Печать
   WorkbookView.prototype.printSheets = function(printPagesData, pdfDocRenderer) {
     //change zoom on default
+	  var trueRetinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
+	  AscCommon.AscBrowser.retinaPixelRatio = 1;
     var viewZoom = this.getZoom();
-    this.changeZoom(1);
+    this.changeZoom(null);
 
   	var pdfPrinter = new AscCommonExcel.CPdfPrinter(this.fmgrGraphics[3], this.m_oFont);
   	if (pdfDocRenderer) {
@@ -2948,7 +2970,8 @@
       }
     }
 
-    this.changeZoom(viewZoom);
+	  AscCommon.AscBrowser.retinaPixelRatio = trueRetinaPixelRatio
+    this.changeZoom(null);
 
     return pdfPrinter;
   };

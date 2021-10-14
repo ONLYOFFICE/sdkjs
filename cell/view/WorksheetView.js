@@ -1916,6 +1916,10 @@
             return;
         }
 
+		var trueRetinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
+		AscCommon.AscBrowser.retinaPixelRatio = 1;
+		this.workbook.changeZoom2(null);
+
         var vector_koef = AscCommonExcel.vector_koef / this.getZoom();
         if (AscCommon.AscBrowser.isCustomScaling()) {
 			vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
@@ -1961,13 +1965,13 @@
 		
         var t = this;
         var _getColumnWidth = function (index) {
-			var defaultWidth = t._getDefaultWidthForPrint(index);
+			/*var defaultWidth = t._getDefaultWidthForPrint(index);
 			if (defaultWidth) {
 				return defaultWidth;
-			}
+			}*/
 			return t._getColumnWidth(index);
 		};
-        
+
         if (null == pageGridLines) {
             pageGridLines = c_oAscPrintDefaultSettings.PageGridLines;
         }
@@ -2255,6 +2259,9 @@
 				}
 			}
 		}
+
+		AscCommon.AscBrowser.retinaPixelRatio = trueRetinaPixelRatio;
+		this.workbook.changeZoom(null);
     };
 
 	WorksheetView.prototype._checkPrintRange = function (range, doNotRecalc) {
