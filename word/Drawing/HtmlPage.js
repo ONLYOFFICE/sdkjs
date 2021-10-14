@@ -3245,6 +3245,12 @@ function CEditorPage(api)
 
 	this.OnCalculatePagesPlace = function()
 	{
+		if (this.m_oApi.isUseNativeViewer && this.m_oDrawingDocument.m_oDocumentRenderer)
+		{
+			// там все свое
+			return;
+		}
+
 		if (this.MobileTouchManager && !this.MobileTouchManager.IsWorkedPosition())
 			this.MobileTouchManager.ClearContextMenu();
 
