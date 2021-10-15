@@ -691,7 +691,18 @@
 			};
 
 			if (this.isUseNativeViewer)
-				rData["convertToOrigin"] = true;
+			{
+				switch (this.documentFormat)
+				{
+					case "pdf":
+					case "xps":
+					case "djvu":
+						rData["convertToOrigin"] = true;
+						break;
+					default:
+						break;
+				}
+			}
 
 			if (versionHistory)
 			{

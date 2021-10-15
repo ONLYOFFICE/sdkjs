@@ -7557,7 +7557,12 @@ background-repeat: no-repeat;\
 		if (file.bSerFormat)
 			this.OpenDocument2(file.url, file.data);
 		else
-			this.OpenDocument3(file.url, file.data);
+		{
+			if (this.isUseNativeViewer)
+				this.OpenDocument3(file.url, file.data);
+			else
+				this.OpenDocument(file.url, file.data);
+		}
 	};
 
 	asc_docs_api.prototype.asyncImageEndLoadedBackground = function(_image)
