@@ -2163,6 +2163,32 @@
 				nFlag |= ((oPicturePr.GetScaleFlag() & 0xF) << 24);
 				this.Memory.WriteLong(oPicturePr.GetShiftX() * 1000);
 				this.Memory.WriteLong(oPicturePr.GetShiftY() * 1000);
+
+				if (!oForm.IsPlaceHolder())
+				{
+					var arrDrawings = oForm.GetAllDrawingObjects();
+					if (arrDrawings.length > 0 && arrDrawings[0].IsPicture() && arrDrawings[0].GraphicObj.blipFill)
+					{
+						var isLocalUse = true;
+						if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"] && window["AscDesktopEditor"]["IsFilePrinting"])
+							isLocalUse = ((!window["AscDesktopEditor"]["IsLocalFile"]()) && window["AscDesktopEditor"]["IsFilePrinting"]()) ? false : true;
+
+						if (window["AscDesktopEditor"] && !isLocalUse)
+						{
+							if ((undefined !== window["AscDesktopEditor"]["CryptoMode"]) && (0 < window["AscDesktopEditor"]["CryptoMode"]))
+								isLocalUse = true;
+						}
+
+						var src = AscCommon.getFullImageSrc2(arrDrawings[0].GraphicObj.blipFill.RasterImageId);
+
+						var srcLocal = AscCommon.g_oDocumentUrls.getLocal(src);
+						if (srcLocal && isLocalUse)
+							src = srcLocal;
+
+						nFlag |= (1 << 22);
+						this.Memory.WriteString(src);
+					}
+				}
 			}
 			else
 			{
