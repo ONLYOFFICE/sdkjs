@@ -10642,7 +10642,7 @@ CDocument.prototype.OnKeyDown = function(e)
 								}
 								else
 								{
-									var copeReviewInfo = ListForUnicode[0].oRun.GetReviewInfo().Copy();
+									var copyReviewInfo = ListForUnicode[0].oRun.GetReviewInfo().Copy();
 									for (var i = ListForUnicode.length - 1; i >= 0; i--)
 										ListForUnicode[i].oRun.RemoveFromContent(ListForUnicode[i].currentPos, 1, true);
 									if (oSettings.IsForMathPart === -1)
@@ -10662,12 +10662,12 @@ CDocument.prototype.OnKeyDown = function(e)
 										var oItemPrev = oParagraph.Get_ClassesByPos(oPosItem);
 										oItemPrev = oItemPrev[oItemPrev.length - 1];
 										var oValue;
-										if ((oItemRun.Get_Type() === 49 || oItemRun.Get_Type() === 39) && oItemRun.Content != null && oItemRun.Content.length !== 0)
+										if (oItemPrev != null && (oItemPrev.Type === 49 || oItemPrev.Type === 39) && oItemPrev.Content != null && oItemPrev.Content.length !== 0)
 										{
 											oSettings.IsForMathPart === -1 ? oValue = oItemPrev.Content[oItemPrev.Content.length - 1].getCodeChr() : oValue = oItemPrev.Content[oItemPrev.Content.length - 1].Value;
 											if (oValue === textAfterChange
 												&& oItemPrev.ReviewType === 1 && ListForUnicode[0].oRun.ReviewType === 2
-												&& this.CompareReviewInfo(oItemPrev.ReviewInfo, copeReviewInfo))
+												&& this.CompareReviewInfo(oItemPrev.ReviewInfo, copyReviewInfo))
 												oItemPrev.RemoveFromContent(oItemPrev.Content.length - 1, 1, true);
 										}
 									}
