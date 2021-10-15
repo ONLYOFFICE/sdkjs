@@ -63,6 +63,8 @@
     };
 
     PageStyle.numberFontHeight = (function(){
+        if (window["NATIVE_EDITOR_ENJINE"])
+            return 7;
         var testCanvas = document.createElement("canvas");
         var w = 100;
         var h = 100;
