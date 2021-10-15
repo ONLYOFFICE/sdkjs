@@ -2943,8 +2943,8 @@
   // Печать
   WorkbookView.prototype.printSheets = function(printPagesData, pdfDocRenderer) {
     //change zoom on default
-	  var trueRetinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
-	  AscCommon.AscBrowser.retinaPixelRatio = 1;
+	 // var trueRetinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
+	 // AscCommon.AscBrowser.retinaPixelRatio = 1;
     var viewZoom = this.getZoom();
     this.changeZoom(null);
 
@@ -2970,7 +2970,7 @@
       }
     }
 
-	  AscCommon.AscBrowser.retinaPixelRatio = trueRetinaPixelRatio
+	  //AscCommon.AscBrowser.retinaPixelRatio = trueRetinaPixelRatio
     this.changeZoom(null);
 
     return pdfPrinter;

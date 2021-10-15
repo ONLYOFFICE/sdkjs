@@ -530,7 +530,8 @@
 
 		var defaultColWidthChars = this.model.charCountToModelColWidth(this.model.getBaseColWidth());
 		var defaultColWidthPx = this.model.modelColWidthToColWidth(defaultColWidthChars);
-		
+
+		this.maxDigitWidthForPrint = this.model.workbook.maxDigitWidth;
 		this.defaultColWidthPxForPrint = asc_ceil(defaultColWidthPx / 8) * 8;
 
 		if (needReplacePpi) {
@@ -786,10 +787,16 @@
 		return (i < this.cols.length) ? this.cols[i].width :
 			(!this.model.isDefaultWidthHidden()) * Asc.round(this.defaultColWidthPx * this.getZoom());
 	};
-	WorksheetView.prototype._getDefaultWidthForPrint = function (i) {
+	WorksheetView.prototype._getWidthForPrint = function (i) {
 		if ((i >= this.cols.length || this.cols[i].isDefaultWidth) && !this.model.isDefaultWidthHidden() && this.defaultColWidthPxForPrint) {
 			return this.defaultColWidthPxForPrint * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio;
+		} else if (i < this.cols.length && this.maxDigitWidthForPrint && this.cols[i].widthInMM) {
+			//пока забрал из wb
+			var width = this.cols[i].widthInMM;
+			width = Asc.floor(((256 * width + Asc.floor(128 / this.maxDigitWidth)) / 256) * this.maxDigitWidth);
+			return width * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio;
 		}
+
 		return null;
 	};
 
@@ -1701,6 +1708,7 @@
 
 		this.cols[i] = new CacheColumn(w);
 		this.cols[i].width = Asc.round(w * this.getZoom());
+		this.cols[i].widthInMM = column && column.width;
 		this.cols[i].isDefaultWidth = isDefaultWidth;
 		
 		this.updateColumnsStart = Math.min(i, this.updateColumnsStart);
@@ -1916,10 +1924,6 @@
             return;
         }
 
-		var trueRetinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
-		AscCommon.AscBrowser.retinaPixelRatio = 1;
-		this.workbook.changeZoom2(null);
-
         var vector_koef = AscCommonExcel.vector_koef / this.getZoom();
         if (AscCommon.AscBrowser.isCustomScaling()) {
 			vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
@@ -1965,10 +1969,10 @@
 		
         var t = this;
         var _getColumnWidth = function (index) {
-			/*var defaultWidth = t._getDefaultWidthForPrint(index);
+			var defaultWidth = t._getWidthForPrint(index);
 			if (defaultWidth) {
 				return defaultWidth;
-			}*/
+			}
 			return t._getColumnWidth(index);
 		};
 
@@ -2091,13 +2095,13 @@
 
 			newPagePrint.pageWidth = pageWidth;
 			newPagePrint.pageHeight = pageHeight;
-			newPagePrint.pageClipRectLeft = pageLeftField / vector_koef;
-			newPagePrint.pageClipRectTop = pageTopField / vector_koef;
-			newPagePrint.pageClipRectWidth = pageWidthWithFields / vector_koef;
-			newPagePrint.pageClipRectHeight = pageHeightWithFields / vector_koef;
+			newPagePrint.pageClipRectLeft = (pageLeftField / vector_koef)/AscCommon.AscBrowser.retinaPixelRatio;
+			newPagePrint.pageClipRectTop = (pageTopField / vector_koef) / AscCommon.AscBrowser.retinaPixelRatio;
+			newPagePrint.pageClipRectWidth = (pageWidthWithFields / vector_koef) / AscCommon.AscBrowser.retinaPixelRatio;
+			newPagePrint.pageClipRectHeight = (pageHeightWithFields / vector_koef) / AscCommon.AscBrowser.retinaPixelRatio;
 
-			newPagePrint.leftFieldInPx = leftFieldInPx;
-			newPagePrint.topFieldInPx = topFieldInPx;
+			newPagePrint.leftFieldInPx = leftFieldInPx / AscCommon.AscBrowser.retinaPixelRatio;
+			newPagePrint.topFieldInPx = topFieldInPx / AscCommon.AscBrowser.retinaPixelRatio;
 
 			//каждая новая страница должна начинаться с заголовков печати
 			if(range.r1 === rowIndex) {
@@ -2259,9 +2263,6 @@
 				}
 			}
 		}
-
-		AscCommon.AscBrowser.retinaPixelRatio = trueRetinaPixelRatio;
-		this.workbook.changeZoom(null);
     };
 
 	WorksheetView.prototype._checkPrintRange = function (range, doNotRecalc) {
