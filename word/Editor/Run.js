@@ -2846,6 +2846,12 @@ ParaRun.prototype.GetSelectedText = function(bAll, bClearText, oPr)
                 Str += AscCommon.encodeSurrogateChar(Item.Value);
                 break;
             }
+            case para_Math_Text:
+            case para_Math_BreakOperator:
+            {
+                Str += AscCommon.encodeSurrogateChar(Item.value);
+                break;
+            }
             case para_Space:
             case para_Tab  : Str += " "; break;
 			case para_NewLine:
@@ -12348,37 +12354,69 @@ ParaRun.prototype.private_GetSuitableNumberedLvlForAutoCorrect = function(sText)
 
 	return null;
 };
-ParaRun.prototype.ChangeUnicodeText = function(ListForUnicode, sText, fFlagForUnicode, countOfRuns)
+ParaRun.prototype.ChangeUnicodeText = function(ListForUnicode, oSettings)
 {
 	var nStartPos = 0;
 	var nEndPos   = -1;
 
 	if (this.Selection.Use)
 	{
-        sText[0] += this.GetSelectedText(false);
-        countOfRuns[0]++;
+        if (oSettings.nDirection === 1)
+            oSettings.textForUnicode += this.GetSelectedText(false);
+        else
+            oSettings.textForUnicode = this.GetSelectedText(false) + oSettings.textForUnicode;
 		nStartPos = this.Selection.StartPos;
 		nEndPos   = this.Selection.EndPos;
 		if (nStartPos > nEndPos)
 		{
-			var nTemp = nStartPos;
-			nStartPos = nEndPos;
-			nEndPos   = nTemp;
-		}   
-	}
-	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
-	{
-		var oItem = this.Content[nPos];
-		if (nPos >= nStartPos && nPos < nEndPos)
-		{
-			ListForUnicode[fFlagForUnicode[0]] = {
-				oRun: this,
-				currentPos: nPos,
-				value: (oItem.Value !== undefined) ? oItem.Value : undefined, 
-                orunNumber: countOfRuns[0]
-			};
-			fFlagForUnicode[0]++;
+            oSettings.nDirection = -1;
+            for (var nPos = nStartPos, nCount = nEndPos; nPos >= nCount; --nPos)
+            {
+                var oItem = this.Content[nPos];
+                if (nPos >= nEndPos && nPos < nStartPos)
+                {
+                    if (oItem.Type === para_Text || oItem.Type === para_Space || oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator)
+                    {
+                        ListForUnicode[oSettings.fFlagForUnicode] = {
+                            oRun: this,
+                            currentPos: nPos,
+                            value: (oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator) ? oItem.value : oItem.Value
+                        };
+                        oSettings.fFlagForUnicode++;
+                        if (oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator)
+                            oSettings.IsForMathPart = -1;
+                    }
+                    else
+                    {
+                        oSettings.bBreak = true;
+                    }
+                }
+            }
 		}
+        else
+            for (var nPos = nStartPos, nCount = nEndPos; nPos < nCount; ++nPos)
+            {
+                var oItem = this.Content[nPos];
+                if (nPos >= nStartPos && nPos < nEndPos)
+                {
+                    oSettings.nDirection = 1;
+                    if (oItem.Type === para_Text || oItem.Type === para_Space || oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator)
+                    {
+                        ListForUnicode[oSettings.fFlagForUnicode] = {
+                            oRun: this,
+                            currentPos: nPos,
+                            value: (oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator) ? oItem.value : oItem.Value
+                        };
+                        oSettings.fFlagForUnicode++;
+                        if (oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator)
+                            oSettings.IsForMathPart = -1;
+                    }
+                    else
+                    {
+                        oSettings.bBreak = true;
+                    }
+                }
+            }
 	}
 };
 ParaRun.prototype.private_GetSuitablePrBulletForAutoCorrect = function (sText)
