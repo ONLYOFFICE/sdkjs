@@ -2923,10 +2923,12 @@
   // Печать
   WorkbookView.prototype.printSheets = function(printPagesData, pdfDocRenderer) {
     //change zoom on default
-	 // var trueRetinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
-	 // AscCommon.AscBrowser.retinaPixelRatio = 1;
+	  var trueRetinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
+	  AscCommon.AscBrowser.retinaPixelRatio = 1;
     var viewZoom = this.getZoom();
     this.changeZoom(null);
+
+	  //this.changeZoom(1);
 
   	var pdfPrinter = new AscCommonExcel.CPdfPrinter(this.fmgrGraphics[3], this.m_oFont);
   	if (pdfDocRenderer) {
@@ -2950,8 +2952,10 @@
       }
     }
 
-	  //AscCommon.AscBrowser.retinaPixelRatio = trueRetinaPixelRatio
-    this.changeZoom(null);
+	  AscCommon.AscBrowser.retinaPixelRatio = trueRetinaPixelRatio
+    //this.changeZoom(null);
+
+	  this.changeZoom(viewZoom);
 
     return pdfPrinter;
   };

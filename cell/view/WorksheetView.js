@@ -538,7 +538,7 @@
 
 		var tm = this._roundTextMetrics(this.stringRender.measureString("A"));
 		var headersHeightByFont = tm.height;
-		this.DefaultRowHeightForPrint = Math.min(Asc.c_oAscMaxRowHeight, AscCommonExcel.convertPxToPt(headersHeightByFont));
+		this.defaultRowHeightForPrintPx = AscCommonExcel.convertPtToPx(Math.min(Asc.c_oAscMaxRowHeight, AscCommonExcel.convertPxToPt(headersHeightByFont)));
 
 		if (needReplacePpi) {
 			this.drawingCtx.ppiY = truePPIY;
@@ -795,20 +795,17 @@
 			(!this.model.isDefaultWidthHidden()) * Asc.round(this.defaultColWidthPx * this.getZoom());
 	};
 	WorksheetView.prototype._getWidthForPrint = function (i) {
-		if ((i >= this.cols.length || this.cols[i].isDefaultWidth) && !this.model.isDefaultWidthHidden() && this.defaultColWidthPxForPrint) {
+		if (i >= this.cols.length && !this.model.isDefaultWidthHidden() && this.defaultColWidthPxForPrint) {
 			return this.defaultColWidthPxForPrint * this.getZoom();
-		} else if (i < this.cols.length && this.maxDigitWidthForPrint && this.cols[i].widthInMM) {
-			//пока забрал из wb
-			var width = this.cols[i].widthInMM;
-			width = Asc.floor(((256 * width + Asc.floor(128 / this.maxDigitWidthForPrint)) / 256) * this.maxDigitWidthForPrint);
-			return width * this.getZoom();
+		} else if (i < this.cols.length && this.maxDigitWidthForPrint && this.cols[i].widthForPrint) {
+			return this.cols[i].widthForPrint * this.getZoom();
 		}
 
 		return null;
 	};
 	WorksheetView.prototype._getHeightForPrint = function (i) {
 		return (i < this.rows.length) ? this.rows[i].heightForPrint :
-			(!this.model.isDefaultHeightHidden()) * Asc.round(this.DefaultRowHeightForPrint * this.getZoom());
+			(!this.model.isDefaultHeightHidden()) * Asc.round(this.defaultRowHeightForPrintPx * this.getZoom());
 	};
 
 
@@ -1720,8 +1717,8 @@
 
 		this.cols[i] = new CacheColumn(w);
 		this.cols[i].width = Asc.round(w * this.getZoom());
-		this.cols[i].widthInMM = column && column.width;
-		this.cols[i].isDefaultWidth = isDefaultWidth;
+		this.cols[i].widthForPrint = isDefaultWidth ? this.defaultColWidthPxForPrint : column && Asc.floor(
+			((256 * column.width + Asc.floor(128 / this.maxDigitWidthForPrint)) / 256) * this.maxDigitWidthForPrint);
 		
 		this.updateColumnsStart = Math.min(i, this.updateColumnsStart);
 	};
@@ -1751,7 +1748,7 @@
 		r = this.rows[i] = new CacheRow();
 		r.top = y;
 		r.height = Asc.round(AscCommonExcel.convertPtToPx(hR) * this.getZoom());
-		r.heightForPrint = isDefaultHeight ? Asc.round(this.DefaultRowHeightForPrint * this.getZoom()) : Asc.round((hR / (72 / 96)) * this.getZoom());
+		r.heightForPrint = isDefaultHeight ? Asc.round(this.defaultRowHeightForPrintPx * this.getZoom()) : Asc.round((hR / (72 / 96)) * this.getZoom());
 		r.descender = this.defaultRowDescender;
 	};
 
