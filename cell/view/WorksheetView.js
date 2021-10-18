@@ -520,11 +520,13 @@
 		var defaultPpi = 96;
 		var truePPIX = this.drawingCtx.ppiX;
 		var truePPIY = this.drawingCtx.ppiY;
+		var retinaPixelRatio = AscBrowser.retinaPixelRatio;
 		var needReplacePpi = truePPIX !== defaultPpi || truePPIY !== defaultPpi;
 		
 		if (needReplacePpi) {
 			this.drawingCtx.ppiY = 96;
 			this.drawingCtx.ppiX = 96;
+			AscBrowser.retinaPixelRatio = 1;
 			this.workbook._calcMaxDigitWidth();
 		}
 
@@ -534,9 +536,14 @@
 		this.maxDigitWidthForPrint = this.model.workbook.maxDigitWidth;
 		this.defaultColWidthPxForPrint = asc_ceil(defaultColWidthPx / 8) * 8;
 
+		var tm = this._roundTextMetrics(this.stringRender.measureString("A"));
+		var headersHeightByFont = tm.height;
+		this.DefaultRowHeightForPrint = Math.min(Asc.c_oAscMaxRowHeight, AscCommonExcel.convertPxToPt(headersHeightByFont));
+
 		if (needReplacePpi) {
 			this.drawingCtx.ppiY = truePPIY;
 			this.drawingCtx.ppiX = truePPIX;
+			AscBrowser.retinaPixelRatio = retinaPixelRatio;
 			this.workbook._calcMaxDigitWidth();
 		}
 	};
@@ -799,6 +806,11 @@
 
 		return null;
 	};
+	WorksheetView.prototype._getHeightForPrint = function (i) {
+		return (i < this.rows.length) ? this.rows[i].heightForPrint :
+			(!this.model.isDefaultHeightHidden()) * Asc.round(this.DefaultRowHeightForPrint * this.getZoom());
+	};
+
 
     WorksheetView.prototype.getColumnWidth = function (index, units) {
 		var u = units >= 0 && units <= 3 ? units : 0;
@@ -1730,12 +1742,16 @@
 				}
 			}
 		});
+
+		var isDefaultHeight;
 		if (hR < 0) {
 			hR = AscCommonExcel.oDefaultMetrics.RowHeight;
+			isDefaultHeight = true;
 		}
 		r = this.rows[i] = new CacheRow();
 		r.top = y;
 		r.height = Asc.round(AscCommonExcel.convertPtToPx(hR) * this.getZoom());
+		r.heightForPrint = isDefaultHeight ? Asc.round(this.DefaultRowHeightForPrint * this.getZoom()) : Asc.round((hR / (72 / 96)) * this.getZoom());
 		r.descender = this.defaultRowDescender;
 	};
 
@@ -1976,6 +1992,14 @@
 			return t._getColumnWidth(index);
 		};
 
+		var _getRowHeight = function (index) {
+			var defaultHeight = t._getHeightForPrint(index);
+			if (defaultHeight) {
+				return defaultHeight;
+			}
+			return t._getRowHeight(index);
+		};
+
         if (null == pageGridLines) {
             pageGridLines = c_oAscPrintDefaultSettings.PageGridLines;
         }
@@ -2028,7 +2052,6 @@
 		var pageHeightWithFieldsHeadings = ((pageHeight - pageBottomField) / vector_koef - topFieldInPx);
 
 		//PRINT TITLES
-		var t = this;
 		var printTitles = this.model.workbook.getDefinesNames("Print_Titles", this.model.getId());
 		var tCol1, tCol2, tRow1, tRow2;
 		//var titleWidth = 0, titleHeight = 0;
@@ -2072,7 +2095,7 @@
 		var baseTitleHeight = 0;
 		if (tRow1 < currentRowIndex) {
 			for (j = tRow1; j < Math.min(currentRowIndex, tRow2 + 1); j++) {
-				baseTitleHeight += this._getRowHeight(j) * scale;
+				baseTitleHeight += _getRowHeight(j) * scale;
 			}
 		}
 		var baseTitleWidth = 0;
@@ -2121,7 +2144,7 @@
 			newPagePrint.titleHeight = curTitleHeight;
 
 			for (rowIndex = currentRowIndex; rowIndex <= range.r2; ++rowIndex) {
-				var currentRowHeight = this._getRowHeight(rowIndex) * scale;
+				var currentRowHeight = _getRowHeight(rowIndex) * scale;
 				if (!bFitToHeight && currentHeight + currentRowHeight + curTitleHeight > pageHeightWithFieldsHeadings && rowIndex !== currentRowIndex) {
 					// Закончили рисовать страницу
 					curTitleHeight = addedTitleHeight;
