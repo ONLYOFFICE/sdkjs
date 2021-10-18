@@ -789,12 +789,12 @@
 	};
 	WorksheetView.prototype._getWidthForPrint = function (i) {
 		if ((i >= this.cols.length || this.cols[i].isDefaultWidth) && !this.model.isDefaultWidthHidden() && this.defaultColWidthPxForPrint) {
-			return this.defaultColWidthPxForPrint * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio;
+			return this.defaultColWidthPxForPrint * this.getZoom();
 		} else if (i < this.cols.length && this.maxDigitWidthForPrint && this.cols[i].widthInMM) {
 			//пока забрал из wb
 			var width = this.cols[i].widthInMM;
-			width = Asc.floor(((256 * width + Asc.floor(128 / this.maxDigitWidth)) / 256) * this.maxDigitWidth);
-			return width * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio;
+			width = Asc.floor(((256 * width + Asc.floor(128 / this.maxDigitWidthForPrint)) / 256) * this.maxDigitWidthForPrint);
+			return width * this.getZoom();
 		}
 
 		return null;
@@ -1926,7 +1926,7 @@
 
         var vector_koef = AscCommonExcel.vector_koef / this.getZoom();
         if (AscCommon.AscBrowser.isCustomScaling()) {
-			vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
+			//vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
 		}
 
 		var isOnlyFirstPage = adjustPrint && adjustPrint.isOnlyFirstPage;
@@ -2095,13 +2095,13 @@
 
 			newPagePrint.pageWidth = pageWidth;
 			newPagePrint.pageHeight = pageHeight;
-			newPagePrint.pageClipRectLeft = (pageLeftField / vector_koef)/AscCommon.AscBrowser.retinaPixelRatio;
-			newPagePrint.pageClipRectTop = (pageTopField / vector_koef) / AscCommon.AscBrowser.retinaPixelRatio;
-			newPagePrint.pageClipRectWidth = (pageWidthWithFields / vector_koef) / AscCommon.AscBrowser.retinaPixelRatio;
-			newPagePrint.pageClipRectHeight = (pageHeightWithFields / vector_koef) / AscCommon.AscBrowser.retinaPixelRatio;
+			newPagePrint.pageClipRectLeft = pageLeftField / vector_koef;
+			newPagePrint.pageClipRectTop = pageTopField / vector_koef;
+			newPagePrint.pageClipRectWidth = pageWidthWithFields / vector_koef;
+			newPagePrint.pageClipRectHeight = pageHeightWithFields / vector_koef;
 
-			newPagePrint.leftFieldInPx = leftFieldInPx / AscCommon.AscBrowser.retinaPixelRatio;
-			newPagePrint.topFieldInPx = topFieldInPx / AscCommon.AscBrowser.retinaPixelRatio;
+			newPagePrint.leftFieldInPx = leftFieldInPx;
+			newPagePrint.topFieldInPx = topFieldInPx;
 
 			//каждая новая страница должна начинаться с заголовков печати
 			if(range.r1 === rowIndex) {
