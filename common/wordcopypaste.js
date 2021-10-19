@@ -3921,6 +3921,13 @@ PasteProcessor.prototype =
 			return null;
 		}
 
+		if (Asc.c_oSpecialPasteProps.keepTextOnly === window['AscCommon'].g_specialPasteHelper.specialPasteProps) {
+			this.oLogicDocument.RemoveBeforePaste();
+			this.oDocument = this._GetTargetDocument(this.oDocument);
+			this._pasteText(this._getTextFromContent(aContent, {NewLineParagraph: true, Numbering: false}));
+			return;
+		}
+
 		//вставляем в заголовок диаграммы, предварительно конвертируем все параграфы в презентационный формат
 		if (aContent && aContent.content && this.oDocument.bPresentation && oThis.oDocument && oThis.oDocument.Parent &&
 			oThis.oDocument.Parent.parent && oThis.oDocument.Parent.parent.parent &&
@@ -5281,6 +5288,16 @@ PasteProcessor.prototype =
 			newParagraph.Internal_Content_Add(newParagraph.Content.length - 1, newParaRun, false);
 			this.aContent.push(newParagraph);
 		}
+	},
+
+	_getTextFromContent: function (aContent, oPr) {
+		var ResultText = "";
+		for (var Index = 0; Index <= aContent.length; Index++)
+		{
+			ResultText += aContent[Index].GetSelectedText(false, oPr);
+		}
+
+		return ResultText;
 	},
 
 	_isParagraphContainsOnlyDrawing: function (par) {
