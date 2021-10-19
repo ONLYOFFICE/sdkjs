@@ -4879,7 +4879,7 @@ drawBarChart.prototype = {
 				//for 3d charts
 				if (this.cChartDrawer.nDimensionCount === 3) {
 					var shapeType = null !== this.chart.series[i].shape ? this.chart.series[i].shape : this.chart.shape;
-
+					console.log(this.chart.series)
 					switch (shapeType) {
 						case AscFormat.BAR_SHAPE_PYRAMID: {
 							paths = this._calculatePyramide3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i);
