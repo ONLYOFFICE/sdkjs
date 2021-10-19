@@ -8721,7 +8721,7 @@
 			} else if (c_oSerWorksheetProtection.SaltValue == type) {
 				sheetProtection.saltValue = this.stream.GetString2LE(length);
 			} else if (c_oSerWorksheetProtection.Password == type) {
-				sheetProtection.password = this.stream.GetString2LE();
+				sheetProtection.password = this.stream.GetString2LE(length);
 			} else if (c_oSerWorksheetProtection.AutoFilter == type) {
 				sheetProtection.autoFilter = this.stream.GetBool();
 			} else if (c_oSerWorksheetProtection.Content == type) {
