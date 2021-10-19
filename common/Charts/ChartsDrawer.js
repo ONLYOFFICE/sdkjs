@@ -4882,8 +4882,8 @@ drawBarChart.prototype = {
 
 					switch (shapeType) {
 						case AscFormat.BAR_SHAPE_PYRAMID: {
-						//	paths = this._calculatePyramide3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i);
-							paths = this._calculateRect3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i);
+							paths = this._calculatePyramide3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i);
+							//paths = this._calculateRect3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i);
 							break;
 						}
 						default: {
@@ -4930,7 +4930,8 @@ drawBarChart.prototype = {
 					switch(shapeType){
 						case AscFormat.BAR_SHAPE_PYRAMID: {
 							this.calculateClusteredPyramide(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2);
-							this.calculateClusteredPyramide(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp);		
+							this.calculateClusteredPyramide(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp);
+							break;
 						}
 						// case 2: {
 						// //	this._calculateStoragePyramide3D(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2);
