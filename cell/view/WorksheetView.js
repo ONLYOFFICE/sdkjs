@@ -22455,8 +22455,11 @@
 	};
 
 	WorksheetView.prototype.updateTopLeftCell = function () {
+		History.Create_NewPoint();
 		History.StartTransaction();
+
 		this.model.updateTopLeftCell(this.visibleRange);
+
 		History.EndTransaction();
 	};
 
