@@ -21658,6 +21658,40 @@ CDocument.prototype.MoveToFillingForm = function(isNext)
 		{
 			this.DrawingObjects.resetSelection();
 			oParaDrawing.GoTo_Text(true !== isNext, false);
+
+			// В случаях, когда у нас автофигура внутри другой автофигуры
+			var arrPassedParagraphs = [];
+			var oParagraph = this.GetCurrentParagraph();
+			oParaDrawing   = oParagraph.GetParent() ? oParagraph.GetParent().Is_DrawingShape(true) : null;
+			while (oParaDrawing)
+			{
+				var isBreak = false;
+				for (var nIndex = 0, nCount = arrPassedParagraphs.length; nIndex < nCount; ++nIndex)
+				{
+					if (arrPassedParagraphs[nIndex] === oParagraph)
+					{
+						isBreak = true;
+						break;
+					}
+				}
+
+				if (isBreak)
+					break;
+
+				arrPassedParagraphs.push(oParagraph);
+				oRes = oParaDrawing.FindNextFillingForm(isNext, true);
+				if (oRes)
+				{
+					break;
+				}
+				else
+				{
+					oParaDrawing.GoTo_Text(true !== isNext, false);
+					oParagraph   = this.GetCurrentParagraph();
+					oParaDrawing = oParagraph.GetParent() ? oParagraph.GetParent().Is_DrawingShape(true) : null;
+				}
+
+			}
 		}
 	}
 

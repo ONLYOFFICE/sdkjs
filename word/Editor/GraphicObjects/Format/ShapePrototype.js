@@ -911,9 +911,6 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex)
 			drawing_objects.selection.textSelection = this;
 		}
 
-		if (para_drawing && para_drawing.Parent instanceof Paragraph)
-			para_drawing.Parent.Document_SetThisElementCurrent(false);
-
 		var hdr_ftr = para_drawing.DocumentContent.IsHdrFtr(true);
 		if (hdr_ftr)
 		{
@@ -922,6 +919,10 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex)
 		}
 		else
 		{
+			var oDocument = drawing_objects.document;
+
+			var nOldDocPosType = oDocument.GetDocPosType();
+
 			drawing_objects.document.SetDocPosType(docpostype_DrawingObjects);
 			drawing_objects.document.Selection.Use = true;
 
@@ -931,6 +932,9 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex)
 				drawing_objects.document.Document_UpdateRulersState();
 				drawing_objects.document.Document_UpdateSelectionState();
 			}
+
+			if (docpostype_HdrFtr === nOldDocPosType && oDocument.Redraw)
+				oDocument.Redraw(-1, -1);
 		}
 	}
 };
