@@ -235,26 +235,27 @@ ParaDrawing.prototype.FindNextFillingForm = function(isNext, isCurrent)
 
 	return null;
 };
-ParaDrawing.prototype.CheckCorrect = function(){
-	if(!this.GraphicObj){
+ParaDrawing.prototype.CheckCorrect = function()
+{
+	if (!this.GraphicObj)
+	{
 		return false;
 	}
-	if(this.GraphicObj && this.GraphicObj.checkCorrect){
+	if (this.GraphicObj && this.GraphicObj.checkCorrect)
+	{
 		return this.GraphicObj.checkCorrect();
 	}
 	return true;
 };
-
-ParaDrawing.prototype.GetAllDrawingObjects = function(DrawingObjects)
+ParaDrawing.prototype.GetAllDrawingObjects = function(arrDrawingObjects)
 {
-	if (null == DrawingObjects)
-	{
-		DrawingObjects = [];
-	}
+	if (!arrDrawingObjects)
+		arrDrawingObjects = [];
+
 	if (this.GraphicObj.GetAllDrawingObjects)
-	{
-		this.GraphicObj.GetAllDrawingObjects(DrawingObjects);
-	}
+		this.GraphicObj.GetAllDrawingObjects(arrDrawingObjects);
+
+	return arrDrawingObjects;
 };
 ParaDrawing.prototype.canRotate = function()
 {
@@ -2447,6 +2448,17 @@ ParaDrawing.prototype.setPageIndex = function(newPageIndex)
 {
 	this.pageIndex = newPageIndex;
 	this.PageNum   = newPageIndex;
+
+
+	if (this.IsShape())
+	{
+		var arrDrawings = this.GetAllDrawingObjects();
+		for (var nIndex = 0, nCount = arrDrawings.length; nIndex < nCount; ++nIndex)
+		{
+			var oParaDrawing = arrDrawings[nIndex];
+			oParaDrawing.setPageIndex(newPageIndex);
+		}
+	}
 };
 ParaDrawing.prototype.Get_PageNum = function()
 {

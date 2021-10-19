@@ -1873,7 +1873,6 @@ function CGroupShape()
         }
     };
 
-
     CGroupShape.prototype.getCopyWithSourceFormatting = function(oIdMap){
         var oPr = new AscFormat.CCopyObjectProperties();
         oPr.idMap = oIdMap;

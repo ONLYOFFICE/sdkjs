@@ -1638,9 +1638,8 @@
         }
         return { kd1: 1, kd2: 1 };
     };
-    CGraphicObjectBase.prototype.GetAllContentControls = function(arrContentControls)
-    {
-    };
+    CGraphicObjectBase.prototype.GetAllContentControls = function(arrContentControls) {};
+	CGraphicObjectBase.prototype.GetAllDrawingObjects = function(arrDrawingObjects) {};
     CGraphicObjectBase.prototype.CheckContentControlEditingLock = function () {
         if(this.group){
             this.group.CheckContentControlEditingLock();
