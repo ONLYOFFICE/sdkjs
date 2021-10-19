@@ -778,7 +778,7 @@ CChartsDrawer.prototype =
 			}
 		}
 
-		return {x: x , y: y};
+	return {x: x , y: y};
 	},
 
 	_calculatePositionLegend: function (legend) {
@@ -855,9 +855,9 @@ CChartsDrawer.prototype =
 
 		//высчитываем выходящие за пределы подписи осей
 		var labelsMargin = this._calculateMarginLabels(chartSpace);
+
 		var left = labelsMargin.left, right = labelsMargin.right, top = labelsMargin.top, bottom = labelsMargin.bottom;
-
-
+		
 		var leftTextLabels = 0;
 		var rightTextLabels = 0;
 		var topTextLabels = 0;
@@ -2008,7 +2008,6 @@ CChartsDrawer.prototype =
 
 		//массив подписей
 		arrayValues = this._getArrayAxisValues(minUnit, axisMin, axisMax, step, manualMin, manualMax);
-
 		return arrayValues;
 	},
 
@@ -4879,11 +4878,9 @@ drawBarChart.prototype = {
 				//for 3d charts
 				if (this.cChartDrawer.nDimensionCount === 3) {
 					var shapeType = null !== this.chart.series[i].shape ? this.chart.series[i].shape : this.chart.shape;
-					console.log(this.chart.series)
 					switch (shapeType) {
 						case AscFormat.BAR_SHAPE_PYRAMID: {
-							paths = this._calculatePyramide3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i);
-							//paths = this._calculateRect3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i);
+							paths = this._calculatePyramide3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i);			
 							break;
 						}
 						default: {
@@ -4891,10 +4888,6 @@ drawBarChart.prototype = {
 							break;
 						}
 					}
-
-
-					//расскомментируем, чтобы включить старую схему отрисовки(+ переименовать функции _DrawBars3D -> _DrawBars3D2)
-					//this.sortZIndexPaths.push({seria: i, point: idx, paths: paths.paths, x: paths.x, y: paths.y, zIndex: paths.zIndex});
 
 					for (k = 0; k < paths.paths.length; k++) {
 						this.sortZIndexPaths.push({
@@ -4909,7 +4902,19 @@ drawBarChart.prototype = {
 						});
 					}
 
-					paths = paths.paths;
+					switch (shapeType) {
+						case AscFormat.BAR_SHAPE_PYRAMID: {
+							paths = paths.paths2;			
+							break;
+						}
+						default: {
+							paths = paths.paths;
+							break;
+						}
+					}
+	
+					//расскомментируем, чтобы включить старую схему отрисовки(+ переименовать функции _DrawBars3D -> _DrawBars3D2)
+					//this.sortZIndexPaths.push({seria: i, point: idx, paths: paths.paths, x: paths.x, y: paths.y, zIndex: paths.zIndex});
 
 					var testHeight;
 					if ((axisMax > 0 && axisMin > 0) || (axisMax < 0 && axisMin < 0)) {
@@ -5769,11 +5774,9 @@ drawBarChart.prototype = {
 			gapDepth = DiffGapDepth;
 		}
 	
-	
-		var x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, x5, y5, z5;
+		var x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, x5, y5, z5, x6, y6, z6, x7, y7, z7, x8, y8, z8;
 
-		var perspectiveDepth2 = this.cChartDrawer.processor3D.depthPerspective;
-		
+		var point1, point2, point3, point4, point5, point6, point7, point8;
 
 		x1 = startX, y1 = startY, z1 = 0 + gapDepth;
 		x2 = startX, y2 = startY, z2 = perspectiveDepth + gapDepth;
@@ -5781,13 +5784,12 @@ drawBarChart.prototype = {
 		x4 = startX + individualBarWidth, y4 = startY, z4 = 0 + gapDepth;
 		x5 = startX + individualBarWidth / 2, y5 = startY - height, z5 = gapDepth + (perspectiveDepth / 2);
 	
-	
 		//поворот относительно осей
-		var point1 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1);
-		var point2 = this.cChartDrawer._convertAndTurnPoint(x2, y2, z2);
-		var point3 = this.cChartDrawer._convertAndTurnPoint(x3, y3, z3);
-		var point4 = this.cChartDrawer._convertAndTurnPoint(x4, y4, z4);
-		var point5 = this.cChartDrawer._convertAndTurnPoint(x5, y5, z5);
+		point1 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1);
+		point2 = this.cChartDrawer._convertAndTurnPoint(x2, y2, z2);
+		point3 = this.cChartDrawer._convertAndTurnPoint(x3, y3, z3);
+		point4 = this.cChartDrawer._convertAndTurnPoint(x4, y4, z4);
+		point5 = this.cChartDrawer._convertAndTurnPoint(x5, y5, z5);
 	
 		var isNotDrawDownVerge;
 	
@@ -5795,25 +5797,45 @@ drawBarChart.prototype = {
 		
 		var paths = this.cChartDrawer.calculatePyramide3D(points, val, isNotDrawDownVerge);
 	
-		height = this.chartProp.heightCanvas - this.chartProp.chartGutter._top - this.chartProp.chartGutter._bottom;
+		var height2 = this.chartProp.heightCanvas - this.chartProp.chartGutter._top - this.chartProp.chartGutter._bottom;
 
-		var controlPoint1 = this.cChartDrawer._convertAndTurnPoint(x1 + individualBarWidth / 2, y1 - height / 2, z1);
+		var controlPoint1 = this.cChartDrawer._convertAndTurnPoint(x1 + individualBarWidth / 2, y1 - height2 / 2, z1);
 		var controlPoint2 = this.cChartDrawer._convertAndTurnPoint(x1 + individualBarWidth / 2, y1, z1 + perspectiveDepth / 2);
-		var controlPoint3 = this.cChartDrawer._convertAndTurnPoint(x1, y1 - height / 2, z1 + perspectiveDepth / 2);
-		var controlPoint4 = this.cChartDrawer._convertAndTurnPoint(x4, y4 - height / 2, z4 + perspectiveDepth / 2);
+		var controlPoint3 = this.cChartDrawer._convertAndTurnPoint(x1, y1 - height2 / 2, z1 + perspectiveDepth / 2);
+		var controlPoint4 = this.cChartDrawer._convertAndTurnPoint(x4, y4 - height2 / 2, z4 + perspectiveDepth / 2);
 		var controlPoint5 = this.cChartDrawer._convertAndTurnPoint(x5 + individualBarWidth / 2, y5, z5 + perspectiveDepth );
-	
-		var controlPoint6 = this.cChartDrawer._convertAndTurnPoint(x2 + individualBarWidth / 2, y2 - height / 2, z2);
-	
+		var controlPoint6 = this.cChartDrawer._convertAndTurnPoint(x2 + individualBarWidth / 2, y2 - height2 / 2, z2);
+
+		x1 = startX, y1 = startY, z1 = 0 + gapDepth;
+		x2 = startX, y2 = startY, z2 = perspectiveDepth + gapDepth;
+		x3 = startX + individualBarWidth, y3 = startY, z3 = perspectiveDepth + gapDepth;
+		x4 = startX + individualBarWidth, y4 = startY, z4 = 0 + gapDepth;
+		x5 = startX, y5 = startY - height, z5 = 0 + gapDepth;
+		x6 = startX, y6 = startY - height, z6 = perspectiveDepth + gapDepth;
+		x7 = startX + individualBarWidth, y7 = startY - height, z7 = perspectiveDepth + gapDepth;
+		x8 = startX + individualBarWidth, y8 = startY - height, z8 = 0 + gapDepth;
+
+		//поворот относительно осей
+		point1 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1);
+		point2 = this.cChartDrawer._convertAndTurnPoint(x2, y2, z2);
+		point3 = this.cChartDrawer._convertAndTurnPoint(x3, y3, z3);
+		point4 = this.cChartDrawer._convertAndTurnPoint(x4, y4, z4);
+		point5 = this.cChartDrawer._convertAndTurnPoint(x5, y5, z5);
+		point6 = this.cChartDrawer._convertAndTurnPoint(x6, y6, z6);
+		point7 = this.cChartDrawer._convertAndTurnPoint(x7, y7, z7);
+		point8 = this.cChartDrawer._convertAndTurnPoint(x8, y8, z8);
+
+		points = [point1, point2, point3, point4, point5, point6, point7, point8];
+		var paths2 = this.cChartDrawer.calculateRect3D(points, val, isNotDrawDownVerge);
+		
 		//front: 0, down: 1, left: 2, right: 3, unfront: 4
-		var facePoints = [[point1, point5, point4], [point1, point2, point3, point4],
-			[point1, point2, point5], [point4, point3, point5],
-			[point2, point3, point4]];
+		var facePoints = [[point1, point5, point8, point4], [point1, point2, point3, point4],
+		[point1, point2, point6, point5], [point4, point3, point7, point8], [point5, point6, point7, point8],
+		[point2, point3, point7, point6]];
 	
 		var sortPaths = [controlPoint1, controlPoint2, controlPoint3, controlPoint4, controlPoint5, controlPoint6];
 	
-		return {paths: paths, x: point1.x, y: point1.y, zIndex: point1.z, sortPaths: sortPaths, facePoints: facePoints};
-
+		return {paths: paths, paths2: paths2, x: point1.x, y: point1.y, zIndex: point1.z, sortPaths: sortPaths, facePoints: facePoints};
 	},
 
 	_calculateStoragePyramide3D: function (startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, arr) {
@@ -5884,11 +5906,6 @@ drawBarChart.prototype = {
 		var x8 = startX + individualBarWidth / 2, y8 = startY - height, z8 = perspectiveDepth / 2;
 		
 		}
-		
-
-		
-
-	
 
 		//поворот относительно осей
 		var point1 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1);
