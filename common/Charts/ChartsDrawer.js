@@ -4879,11 +4879,11 @@ drawBarChart.prototype = {
 				//for 3d charts
 				if (this.cChartDrawer.nDimensionCount === 3) {
 					var shapeType = null !== this.chart.series[i].shape ? this.chart.series[i].shape : this.chart.shape;
-					console.log(this.chart.series[i].shape)
-					console.log(AscFormat.BAR_SHAPE_PYRAMID)
+
 					switch (shapeType) {
 						case AscFormat.BAR_SHAPE_PYRAMID: {
-							paths = this._calculatePyramide3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i);
+						//	paths = this._calculatePyramide3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i);
+							paths = this._calculateRect3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i);
 							break;
 						}
 						default: {
@@ -4927,26 +4927,23 @@ drawBarChart.prototype = {
 						}
 					}
 
-					switch(type){
-						case 1: {
+					switch(shapeType){
+						case AscFormat.BAR_SHAPE_PYRAMID: {
 							this.calculateClusteredPyramide(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2);
-							this.calculateClusteredPyramide(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp);	
-							
+							this.calculateClusteredPyramide(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp);		
 						}
-						case 2: {
-							this._calculateStoragePyramide3D(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2);
-							this._calculateStoragePyramide3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp);
+						// case 2: {
+						// //	this._calculateStoragePyramide3D(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2);
+						// //	this._calculateStoragePyramide3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp);
 							
-						}
+						// }
 						default: {
 							this.calculateParallalepiped(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2);
-							this.calculateParallalepiped(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp);	
-							break;
+							this.calculateParallalepiped(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp);		
+						break;
 						}
 					}
-				
-				
-
+								
 					cubeCount++;
 				} else {
 					paths = this._calculateRect(startX, startY, individualBarWidth, height);
