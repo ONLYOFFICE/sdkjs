@@ -4797,7 +4797,7 @@ drawBarChart.prototype = {
 
 				seriesHeight[i][idx] = height;
 
-				var type = 4;
+				var type; //= 4;
 
 				//стартовая позиция колонки X
 				if (this.catAx.scaling.orientation === ORIENTATION_MIN_MAX) {
@@ -4846,6 +4846,14 @@ drawBarChart.prototype = {
 								}
 							break;
 
+							default:{
+								if (seriesCounter === 0) {
+									startX = startXPosition * this.chartProp.pxToMM + hmargin + seriesCounter * (individualBarWidth);
+								} else {
+									startX = startXPosition * this.chartProp.pxToMM + hmargin +(seriesCounter * individualBarWidth - seriesCounter * widthOverLap);
+								}
+							}
+
 						}
 
 				} else {
@@ -4871,6 +4879,8 @@ drawBarChart.prototype = {
 				//for 3d charts
 				if (this.cChartDrawer.nDimensionCount === 3) {
 					var shapeType = null !== this.chart.series[i].shape ? this.chart.series[i].shape : this.chart.shape;
+					console.log(this.chart.series[i].shape)
+					console.log(AscFormat.BAR_SHAPE_PYRAMID)
 					switch (shapeType) {
 						case AscFormat.BAR_SHAPE_PYRAMID: {
 							paths = this._calculatePyramide3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i);
@@ -4878,11 +4888,10 @@ drawBarChart.prototype = {
 						}
 						default: {
 							paths = this._calculateRect3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i);
-						//	paths = this._calculatePyramide3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i);
 							break;
 						}
 					}
-					
+
 
 					//расскомментируем, чтобы включить старую схему отрисовки(+ переименовать функции _DrawBars3D -> _DrawBars3D2)
 					//this.sortZIndexPaths.push({seria: i, point: idx, paths: paths.paths, x: paths.x, y: paths.y, zIndex: paths.zIndex});
@@ -4918,17 +4927,25 @@ drawBarChart.prototype = {
 						}
 					}
 
-					if(type === 2){
-					//	this._calculateStoragePyramide3D(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2);
-					//	this._calculateStoragePyramide3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp);
-					}else{
-					//	this.calculateParallalepiped(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2);
-					//	this.calculateParallalepiped(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp);	
+					switch(type){
+						case 1: {
+							this.calculateClusteredPyramide(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2);
+							this.calculateClusteredPyramide(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp);	
+							
+						}
+						case 2: {
+							this._calculateStoragePyramide3D(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2);
+							this._calculateStoragePyramide3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp);
+							
+						}
+						default: {
+							this.calculateParallalepiped(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2);
+							this.calculateParallalepiped(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp);	
+							break;
+						}
 					}
 				
-					this.calculateClusteredPyramide(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2);
-					this.calculateClusteredPyramide(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp);	
-					
+				
 
 					cubeCount++;
 				} else {
