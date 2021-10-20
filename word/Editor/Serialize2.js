@@ -6687,7 +6687,7 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 			oThis.bs.WriteItem(c_oSerSdt.FormPrBorder, function(){oThis.bs.WriteBorder(val.Border)});
 		}
 		if (val.Shd) {
-			oThis.bs.WriteShd(c_oSerSdt.FormPrShd, function(){oThis.bs.WriteShd(val.Shd)});
+			oThis.bs.WriteItem(c_oSerSdt.FormPrShd, function(){oThis.bs.WriteShd(val.Shd)});
 		}
 	};
 	this.WriteSdtTextFormPr = function (val)
