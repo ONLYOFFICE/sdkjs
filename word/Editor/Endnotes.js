@@ -638,6 +638,14 @@ CEndnotesController.prototype.private_UpdateSection = function(oSectPr, nSection
 
 	return this.Sections[nSectionIndex];
 };
+CEndnotesController.prototype.GetLastSectionIndexOnPage = function(nPageAbs)
+{
+	var oPage = this.Pages[nPageAbs];
+	if (oPage && oPage.Sections.length)
+		return oPage.Sections[oPage.Sections.length - 1];
+
+	return -1;
+};
 /**
  * Отрисовываем сноски на заданной странице.
  * @param {number} nPageAbs

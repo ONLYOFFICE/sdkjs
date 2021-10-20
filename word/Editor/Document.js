@@ -4232,10 +4232,27 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
     var Count = this.Content.length;
     var Index;
 
-    var isEndEndnoteRecalc = false;
+	var nEndIndex = Count;
+
+	var isEndEndnoteRecalc = false;
 	if (this.FullRecalc.Endnotes)
 	{
-		var nEndnoteRecalcResult = this.Endnotes.Recalculate(X, Y, XLimit, YLimit - this.Footnotes.GetHeight(PageIndex, ColumnIndex), PageIndex, ColumnIndex, ColumnsCount, SectPr, this.SectionsInfo.Find(SectPr), StartIndex >= Count);
+		var nEndnoteSectionIndex = 0;
+		var oEndnoteSectPr       = null;
+
+		if (PageIndex <= 0)
+		{
+			// Такого не должно быть
+			nEndnoteSectionIndex = this.SectionsInfo.Find(SectPr);
+			oEndnoteSectPr       = SectPr;
+		}
+		else
+		{
+			nEndnoteSectionIndex = this.Endnotes.GetLastSectionIndexOnPage(PageIndex - 1);
+			oEndnoteSectPr       = this.SectionsInfo.Get(nEndnoteSectionIndex).SectPr;
+		}
+
+		var nEndnoteRecalcResult = this.Endnotes.Recalculate(X, Y, XLimit, YLimit - this.Footnotes.GetHeight(PageIndex, ColumnIndex), PageIndex, ColumnIndex, ColumnsCount, oEndnoteSectPr, nEndnoteSectionIndex, StartIndex >= Count);
 		if (recalcresult2_End === nEndnoteRecalcResult)
 		{
 			PageColumn.EndPos = -1;
@@ -4283,11 +4300,11 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 				_bEndnotesContinue  = true;
 			}
 
-			StartIndex = Count; // Выставляем так, чтобы ничего не пересчитывать из основной части документа
+			nEndIndex = StartIndex; // Выставляем так, чтобы ничего не пересчитывать из основной части документа
 		}
 	}
 
-    for (Index = StartIndex; Index < Count; ++Index)
+    for (Index = StartIndex; Index < nEndIndex; ++Index)
     {
         // Пересчитываем элемент документа
         var Element = this.Content[Index];
