@@ -2923,12 +2923,17 @@
   // Печать
   WorkbookView.prototype.printSheets = function(printPagesData, pdfDocRenderer) {
     //change zoom on default
-	  var trueRetinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
-	  AscCommon.AscBrowser.retinaPixelRatio = 1;
+    var trueRetinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
+    AscCommon.AscBrowser.retinaPixelRatio = 1;
     var viewZoom = this.getZoom();
-    this.changeZoom(null);
 
-	  //this.changeZoom(1);
+	//приходится несколько раз выполнять действия, чтобы ppi выставился правильно
+	//если не делать init, то не сбросится ppi от системного зума - смотри функцию DrawingContext.prototype.changeZoom
+  	this.buffers.main._ppiInit();
+  	this.buffers.overlay._ppiInit();
+  	this.buffers.mainGraphic._ppiInit();
+  	this.buffers.overlayGraphic._ppiInit();
+  	this.changeZoom(null);
 
   	var pdfPrinter = new AscCommonExcel.CPdfPrinter(this.fmgrGraphics[3], this.m_oFont);
   	if (pdfDocRenderer) {
@@ -2952,10 +2957,12 @@
       }
     }
 
-	  AscCommon.AscBrowser.retinaPixelRatio = trueRetinaPixelRatio
-    //this.changeZoom(null);
-
-	  this.changeZoom(viewZoom);
+  	AscCommon.AscBrowser.retinaPixelRatio = trueRetinaPixelRatio
+  	this.buffers.main._ppiInit();
+  	this.buffers.overlay._ppiInit();
+  	this.buffers.mainGraphic._ppiInit();
+  	this.buffers.overlayGraphic._ppiInit();
+  	this.changeZoom(viewZoom !== 1 ? viewZoom : null);
 
     return pdfPrinter;
   };
