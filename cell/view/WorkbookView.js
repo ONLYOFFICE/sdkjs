@@ -2201,18 +2201,21 @@
     return this.drawingCtx.getZoom();
   };
 
-  WorkbookView.prototype.changeZoom = function(factor) {
+  WorkbookView.prototype.changeZoom = function(factor, notChangeCtx) {
   	if (factor === this.getZoom()) {
       return;
     }
 
-    this.buffers.main.changeZoom(factor);
-    this.buffers.overlay.changeZoom(factor);
-    this.buffers.mainGraphic.changeZoom(factor);
-    this.buffers.overlayGraphic.changeZoom(factor);
-    if (!factor) {
-    	this.cellEditor.changeZoom(factor);
-	}
+	  if (!notChangeCtx) {
+		  this.buffers.main.changeZoom(factor);
+		  this.buffers.overlay.changeZoom(factor);
+		  this.buffers.mainGraphic.changeZoom(factor);
+		  this.buffers.overlayGraphic.changeZoom(factor);
+		  if (!factor) {
+			  this.cellEditor.changeZoom(factor);
+		  }
+	  }
+
     // Нужно сбросить кэш букв
     var i, length;
     for (i = 0, length = this.fmgrGraphics.length; i < length; ++i)
@@ -2922,50 +2925,93 @@
 
   // Печать
   WorkbookView.prototype.printSheets = function(printPagesData, pdfDocRenderer) {
-    //change zoom on default
-    var trueRetinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
-    AscCommon.AscBrowser.retinaPixelRatio = 1;
-    var viewZoom = this.getZoom();
+	  var pdfPrinter;
+	  var t = this;
+	  this._executeWithoutZoom(function () {
+		  pdfPrinter = new AscCommonExcel.CPdfPrinter(t.fmgrGraphics[3], t.m_oFont);
+		  if (pdfDocRenderer) {
+			  pdfPrinter.DocumentRenderer = pdfDocRenderer;
+		  }
+		  var ws;
+		  if (0 === printPagesData.arrPages.length) {
+			  // Печать пустой страницы
+			  ws = t.getWorksheet();
+			  ws.drawForPrint(pdfPrinter, null);
+		  } else {
+			  var indexWorksheet = -1;
+			  var indexWorksheetTmp = -1;
+			  for (var i = 0; i < printPagesData.arrPages.length; ++i) {
+				  indexWorksheetTmp = printPagesData.arrPages[i].indexWorksheet;
+				  if (indexWorksheetTmp !== indexWorksheet) {
+					  ws = t.getWorksheet(indexWorksheetTmp);
+					  indexWorksheet = indexWorksheetTmp;
+				  }
+				  ws.drawForPrint(pdfPrinter, printPagesData.arrPages[i], i, printPagesData.arrPages.length);
+			  }
+		  }
+	  });
 
-	//приходится несколько раз выполнять действия, чтобы ppi выставился правильно
-	//если не делать init, то не сбросится ppi от системного зума - смотри функцию DrawingContext.prototype.changeZoom
-  	this.buffers.main._ppiInit();
-  	this.buffers.overlay._ppiInit();
-  	this.buffers.mainGraphic._ppiInit();
-  	this.buffers.overlayGraphic._ppiInit();
-  	this.changeZoom(null);
-
-  	var pdfPrinter = new AscCommonExcel.CPdfPrinter(this.fmgrGraphics[3], this.m_oFont);
-  	if (pdfDocRenderer) {
-		pdfPrinter.DocumentRenderer = pdfDocRenderer;
-	}
-    var ws;
-    if (0 === printPagesData.arrPages.length) {
-      // Печать пустой страницы
-      ws = this.getWorksheet();
-      ws.drawForPrint(pdfPrinter, null);
-    } else {
-      var indexWorksheet = -1;
-      var indexWorksheetTmp = -1;
-      for (var i = 0; i < printPagesData.arrPages.length; ++i) {
-        indexWorksheetTmp = printPagesData.arrPages[i].indexWorksheet;
-        if (indexWorksheetTmp !== indexWorksheet) {
-          ws = this.getWorksheet(indexWorksheetTmp);
-          indexWorksheet = indexWorksheetTmp;
-        }
-        ws.drawForPrint(pdfPrinter, printPagesData.arrPages[i], i, printPagesData.arrPages.length);
-      }
-    }
-
-  	AscCommon.AscBrowser.retinaPixelRatio = trueRetinaPixelRatio
-  	this.buffers.main._ppiInit();
-  	this.buffers.overlay._ppiInit();
-  	this.buffers.mainGraphic._ppiInit();
-  	this.buffers.overlayGraphic._ppiInit();
-  	this.changeZoom(viewZoom !== 1 ? viewZoom : null);
-
-    return pdfPrinter;
+	  return pdfPrinter;
   };
+
+	WorkbookView.prototype._executeWithoutZoom = function (runFunction) {
+
+		//change zoom on default
+		var trueRetinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
+		var viewZoom = this.getZoom();
+
+		//приходится несколько раз выполнять действия, чтобы ppi выставился правильно
+		//если не делать init, то не сбросится ppi от системного зума - смотри функцию DrawingContext.prototype.changeZoom
+
+		AscCommon.AscBrowser.retinaPixelRatio = 1;
+		var ppiX = this.buffers.main.ppiX;
+		var ppiY = this.buffers.main.ppiY;
+		var scaleFactor = this.buffers.main.scaleFactor;
+
+		this.buffers.main._ppiInit();
+		this.buffers.main.changeUnits(this.buffers.main.units);
+		this.buffers.main.setFont(this.buffers.main.font);
+		this.buffers.overlay._ppiInit();
+		this.buffers.overlay.changeUnits(this.buffers.overlay.units);
+		this.buffers.overlay.setFont(this.buffers.overlay.font);
+		this.buffers.mainGraphic._ppiInit();
+		this.buffers.mainGraphic.changeUnits(this.buffers.mainGraphic.units);
+		this.buffers.mainGraphic.setFont(this.buffers.mainGraphic.font);
+		this.buffers.overlayGraphic._ppiInit();
+		this.buffers.overlayGraphic.changeUnits(this.buffers.overlayGraphic.units);
+		this.buffers.overlayGraphic.setFont(this.buffers.overlayGraphic.font);
+
+		this.changeZoom(null, true);
+
+		runFunction();
+
+		AscCommon.AscBrowser.retinaPixelRatio = trueRetinaPixelRatio
+		this.buffers.main.ppiX = ppiX;
+		this.buffers.main.ppiY = ppiY;
+		this.buffers.main.scaleFactor = scaleFactor;
+		this.buffers.main.changeUnits(this.buffers.main.units);
+		this.buffers.main.setFont(this.buffers.main.font);
+
+		this.buffers.overlay.ppiX = ppiX;
+		this.buffers.overlay.ppiY = ppiY;
+		this.buffers.overlay.scaleFactor = scaleFactor;
+		this.buffers.overlay.changeUnits(this.buffers.overlay.units);
+		this.buffers.overlay.setFont(this.buffers.overlay.font);
+
+		this.buffers.mainGraphic.ppiX = ppiX;
+		this.buffers.mainGraphic.ppiY = ppiY;
+		this.buffers.mainGraphic.scaleFactor = scaleFactor;
+		this.buffers.mainGraphic.changeUnits(this.buffers.mainGraphic.units);
+		this.buffers.mainGraphic.setFont(this.buffers.mainGraphic.font);
+
+		this.buffers.overlayGraphic.ppiX = ppiX;
+		this.buffers.overlayGraphic.ppiY = ppiY;
+		this.buffers.overlayGraphic.scaleFactor = scaleFactor;
+		this.buffers.overlayGraphic.changeUnits(this.buffers.overlayGraphic.units);
+		this.buffers.overlayGraphic.setFont(this.buffers.overlayGraphic.font);
+
+		this.changeZoom(null, true);
+	};
 
   WorkbookView.prototype._calcPagesPrintSheet = function (index, printPagesData, onlySelection, adjustPrint) {
   	var ws = this.model.getWorksheet(index);
