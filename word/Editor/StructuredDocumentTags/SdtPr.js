@@ -1616,6 +1616,10 @@ CSdtFormPr.prototype.SetAscShd = function(isShd, oAscColor)
 		oUnifill.fill       = new AscFormat.CSolidFill();
 		oUnifill.fill.color = AscFormat.CorrectUniColor(oAscColor, oUnifill.fill.color, 1);
 
+		var oLogicDocument = editor.WordControl.m_oLogicDocument;
+		if (oLogicDocument && oLogicDocument.IsDocumentEditor())
+			oUnifill.check(oLogicDocument.GetTheme(), oLogicDocument.GetColorMap());
+
 		this.Shd = new CDocumentShd();
 		this.Shd.Set_FromObject({
 			Value: Asc.c_oAscShd.Clear,
