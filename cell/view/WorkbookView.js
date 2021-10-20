@@ -2955,62 +2955,26 @@
   };
 
 	WorkbookView.prototype._executeWithoutZoom = function (runFunction) {
+		//TODO есть проблемы при отрисовке(не связано с печатью). сначала меняем zoom редактора,
+		// потом системный(открываем при системном зуме != 100%)
 
 		//change zoom on default
 		var trueRetinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
+		AscCommon.AscBrowser.retinaPixelRatio = 1;
 		var viewZoom = this.getZoom();
 
 		//приходится несколько раз выполнять действия, чтобы ppi выставился правильно
 		//если не делать init, то не сбросится ppi от системного зума - смотри функцию DrawingContext.prototype.changeZoom
-
-		AscCommon.AscBrowser.retinaPixelRatio = 1;
-		var ppiX = this.buffers.main.ppiX;
-		var ppiY = this.buffers.main.ppiY;
-		var scaleFactor = this.buffers.main.scaleFactor;
-
-		this.buffers.main._ppiInit();
-		this.buffers.main.changeUnits(this.buffers.main.units);
-		this.buffers.main.setFont(this.buffers.main.font);
-		this.buffers.overlay._ppiInit();
-		this.buffers.overlay.changeUnits(this.buffers.overlay.units);
-		this.buffers.overlay.setFont(this.buffers.overlay.font);
-		this.buffers.mainGraphic._ppiInit();
-		this.buffers.mainGraphic.changeUnits(this.buffers.mainGraphic.units);
-		this.buffers.mainGraphic.setFont(this.buffers.mainGraphic.font);
-		this.buffers.overlayGraphic._ppiInit();
-		this.buffers.overlayGraphic.changeUnits(this.buffers.overlayGraphic.units);
-		this.buffers.overlayGraphic.setFont(this.buffers.overlayGraphic.font);
-
-		this.changeZoom(null, true);
+		if (viewZoom !== 1) {
+			this.changeZoom(1);
+		}
+		this.changeZoom(null);
 
 		runFunction();
 
-		AscCommon.AscBrowser.retinaPixelRatio = trueRetinaPixelRatio
-		this.buffers.main.ppiX = ppiX;
-		this.buffers.main.ppiY = ppiY;
-		this.buffers.main.scaleFactor = scaleFactor;
-		this.buffers.main.changeUnits(this.buffers.main.units);
-		this.buffers.main.setFont(this.buffers.main.font);
-
-		this.buffers.overlay.ppiX = ppiX;
-		this.buffers.overlay.ppiY = ppiY;
-		this.buffers.overlay.scaleFactor = scaleFactor;
-		this.buffers.overlay.changeUnits(this.buffers.overlay.units);
-		this.buffers.overlay.setFont(this.buffers.overlay.font);
-
-		this.buffers.mainGraphic.ppiX = ppiX;
-		this.buffers.mainGraphic.ppiY = ppiY;
-		this.buffers.mainGraphic.scaleFactor = scaleFactor;
-		this.buffers.mainGraphic.changeUnits(this.buffers.mainGraphic.units);
-		this.buffers.mainGraphic.setFont(this.buffers.mainGraphic.font);
-
-		this.buffers.overlayGraphic.ppiX = ppiX;
-		this.buffers.overlayGraphic.ppiY = ppiY;
-		this.buffers.overlayGraphic.scaleFactor = scaleFactor;
-		this.buffers.overlayGraphic.changeUnits(this.buffers.overlayGraphic.units);
-		this.buffers.overlayGraphic.setFont(this.buffers.overlayGraphic.font);
-
-		this.changeZoom(null, true);
+		AscCommon.AscBrowser.retinaPixelRatio = trueRetinaPixelRatio;
+		this.changeZoom(null);
+		this.changeZoom(viewZoom);
 	};
 
   WorkbookView.prototype._calcPagesPrintSheet = function (index, printPagesData, onlySelection, adjustPrint) {
