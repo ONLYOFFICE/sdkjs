@@ -1489,15 +1489,18 @@
 
 	//TODO xlManual param
 	/**
+	 * Specifies the sort order.
 	 * @typedef {("xlAscending" | "xlDescending")}  SortOrder
 	 * */
 
 	//TODO xlGuess param
 	/**
+	 * Specifies whether the first row of the sort range contains header information.
 	 * @typedef {("xlNo" | "xlYes")} SortHeader
 	 * */
 
 	/**
+	 * Specifies if the sort should be by row or column.
 	 * @typedef {("xlSortColumns" | "xlSortRows")} SortOrientation
 	 * */
 
@@ -2545,17 +2548,17 @@
 	});
 
 	/**
-	 * Add a comment to the range.
+	 * Sorts the cells in the given range by the parameters specified in the request.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | String} key1 - first sort field
-	 * @param {SortOrder} sSortOrder1 - determines the sort order for the values specified in Key1
-	 * @param {ApiRange | String} key2 - second sort field
-	 * @param {SortOrder} sSortOrder2 - determines the sort order for the values specified in Key2
-	 * @param {ApiRange | String} key3 - third sort field
-	 * @param {SortOrder} sSortOrder3 - determines the sort order for the values specified in Key3
-	 * @param {SortHeader} sHeader - specifies whether the first row contains header information
-	 * @param {SortOrientation} sOrientation - specifies if the sort should be by row (default) or column
+	 * @param {ApiRange | String} key1 - First sort field.
+	 * @param {SortOrder} sSortOrder1 - The sort order for the values specified in Key1.
+	 * @param {ApiRange | String} key2 - Second sort field.
+	 * @param {SortOrder} sSortOrder2 - The sort order for the values specified in Key2.
+	 * @param {ApiRange | String} key3 - Third sort field.
+	 * @param {SortOrder} sSortOrder3 - The sort order for the values specified in Key3.
+	 * @param {SortHeader} sHeader - Specifies whether the first row contains header information.
+	 * @param {SortOrientation} sOrientation - Specifies if the sort should be by row (default) or column.
 	 */
 
 	ApiRange.prototype.SetSort = function (key1, sSortOrder1, key2, /*Type,*/ sSortOrder2, key3, sSortOrder3, sHeader, /*OrderCustom, MatchCase,*/ sOrientation/*, SortMethod, DataOption1, DataOption2, DataOption3*/) {

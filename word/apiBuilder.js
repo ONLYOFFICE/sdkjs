@@ -214,8 +214,8 @@
 		this.Document = Document;
 	}
 	/**
-	 * Class represents a Markdown conversion processing.
-	 * Each Range object is determined by the position of the start and end characters
+	 * Class representing the Markdown conversion processing.
+	 * Each Range object is determined by the position of the start and end characters.
 	 * @constructor
 	 */
 	function CMarkdownConverter(oConfig)
@@ -4833,14 +4833,14 @@
 		return arrApiRanges;
 	};
 	/**
-	 * Convert document to markdown.
-	 * @memberof Api
+	 * Convert a document to Markdown.
+	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {bool} [bHtmlHeadings=false] - If you have used multiple Heading 1 headings in your Doc, set this param true to demote all heading levels to conform with the following standard: single H1 as title, H2 as top-level heading in the text body.
-	 * @param {bool} [bBase64img=false] - set this param true if you want images to be created in base64 format.
-	 * @param {bool} [bDemoteHeadings=false] - Not all Markdown renderers handle Markdown-style IDs. If that is the case for your target platform, set this param true to generate HTML headings and IDs.
-	 * @param {bool} [bRenderHTMLTags=false] - By default, angle brackets (<) will be replaced by the &lt; entity. If you really want to embed HTML tags in your Markdown, set this param true to preserve them. 
-	 * Or, if you just want to use an occasional HTML tag, you can escape the opening angle bracket like this: \<tag>text\</tag>.
+	 * @param {bool} [bHtmlHeadings=false] - Not all Markdown renderers handle Markdown-style IDs. If that is the case for your target platform, set this parameter to true to generate HTML headings and IDs.
+	 * @param {bool} [bBase64img=false] - Set this parameter to true if you want images to be created in the base64 format.
+	 * @param {bool} [bDemoteHeadings=false] - If you have used multiple Heading 1 headings in your document, set this parameter to true to demote all heading levels to conform with the following standard: single H1 as title, H2 as top-level heading in the text body.
+	 * @param {bool} [bRenderHTMLTags=false] - By default, angle brackets (<) will be replaced with the &lt; entity. If you really want to embed HTML tags in your Markdown, set this parameter to true to preserve them. 
+	 * Or, if you just want to use an occasional HTML tag, you can avoid using the opening angle bracket in the following way: \<tag>text\</tag>.
 	 * @returns {string}
 	 */
 	ApiDocument.prototype.ToMarkdown = function(bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags) 
@@ -4857,14 +4857,14 @@
 		return oMarkdown.DoMarkdown();
 	};
 	/**
-	 * Convert document to html.
-	 * @memberof Api
+	 * Convert a document to HTML.
+	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {bool} [bHtmlHeadings=false] - If you have used multiple Heading 1 headings in your Doc, set this param true to demote all heading levels to conform with the following standard: single H1 as title, H2 as top-level heading in the text body.
-	 * @param {bool} [bBase64img=false] - set this param true if you want images to be created in base64 format.
-	 * @param {bool} [bDemoteHeadings=false] - Not all Markdown renderers handle Markdown-style IDs. If that is the case for your target platform, set this param true to generate HTML headings and IDs.
-	 * @param {bool} [bRenderHTMLTags=false] - By default, angle brackets (<) will be replaced by the &lt; entity. If you really want to embed HTML tags in your Markdown, set this param true to preserve them. 
-	 * Or, if you just want to use an occasional HTML tag, you can escape the opening angle bracket like this: \<tag>text\</tag>.
+	 * @param {bool} [bHtmlHeadings=false] - Not all Markdown renderers handle Markdown-style IDs. If that is the case for your target platform, set this parameter to true to generate HTML headings and IDs.
+	 * @param {bool} [bBase64img=false] - Set this parameter to true if you want images to be created in the base64 format.
+	 * @param {bool} [bDemoteHeadings=false] - If you have used multiple Heading 1 headings in your document, set this parameter to true to demote all heading levels to conform with the following standard: single H1 as title, H2 as top-level heading in the text body.
+	 * @param {bool} [bRenderHTMLTags=false] - By default, angle brackets (<) will be replaced with the &lt; entity. If you really want to embed HTML tags in your Markdown, set this parameter to true to preserve them. 
+	 * Or, if you just want to use an occasional HTML tag, you can avoid using the opening angle bracket in the following way: \<tag>text\</tag>.
 	 * @returns {string}
 	 */
 	ApiDocument.prototype.ToHtml = function(bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags) 
@@ -6842,7 +6842,7 @@
 		oDocument.Register_Field(oField);
 	};
 	/**
-	 * Gets the next run if exist.
+	 * Returns the next run if exists.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiRun | null} - returns null if next run doesn't exist.
@@ -6860,7 +6860,7 @@
 		return null;
 	};
 	/**
-	 * Gets the previous run if exist.
+	 * Returns the previous run if exists.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiRun | null} - returns null if previous run doesn't exist.
@@ -7126,7 +7126,7 @@
 		this.Section.Set_TitlePage(private_GetBoolean(isTitlePage));
 	};
 	/**
-	 * Get the next section if exists.
+	 * Returns the next section if exists.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiSection | null} - returns null if section is last.
@@ -7154,7 +7154,7 @@
 		return null;
 	};
 	/**
-	 * Get the preious section if exists.
+	 * Returns the previous section if exists.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiSection | null} - returns null if section is first.
@@ -12952,15 +12952,15 @@
 		return true;
 	};
 	/**
-	 * Convert document to markdown or html text.
+	 * Convert a document to Markdown or HTML text.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {"markdown" | "html"} [sConvertType="markdown"] - type of converting.
-	 * @param {bool} [bHtmlHeadings=false] - If you have used multiple Heading 1 headings in your Doc, set this param true to demote all heading levels to conform with the following standard: single H1 as title, H2 as top-level heading in the text body.
-	 * @param {bool} [bBase64img=false] - set this param true if you want images to be created in base64 format.
-	 * @param {bool} [bDemoteHeadings=false] - Not all Markdown renderers handle Markdown-style IDs. If that is the case for your target platform, set this param true to generate HTML headings and IDs.
-	 * @param {bool} [bRenderHTMLTags=false] - By default, angle brackets (<) will be replaced by the &lt; entity. If you really want to embed HTML tags in your Markdown, set this param true to preserve them. 
-	 * Or, if you just want to use an occasional HTML tag, you can escape the opening angle bracket like this: \<tag>text\</tag>.
+	 * @param {"markdown" | "html"} [sConvertType="markdown"] - Conversion type.
+	 * @param {bool} [bHtmlHeadings=false] - Not all Markdown renderers handle Markdown-style IDs. If that is the case for your target platform, set this parameter to true to generate HTML headings and IDs.
+	 * @param {bool} [bBase64img=false] - Set this parameter to true if you want images to be created in the base64 format.
+	 * @param {bool} [bDemoteHeadings=false] - If you have used multiple Heading 1 headings in your document, set this parameter to true to demote all heading levels to conform with the following standard: single H1 as title, H2 as top-level heading in the text body.
+	 * @param {bool} [bRenderHTMLTags=false] - By default, angle brackets (<) will be replaced with the &lt; entity. If you really want to embed HTML tags in your Markdown, set this parameter to true to preserve them. 
+	 * Or, if you just want to use an occasional HTML tag, you can avoid using the opening angle bracket in the following way: \<tag>text\</tag>.
 	 * @returns {string}
 	 */
 	Api.prototype.ConvertDocument = function(sConvertType, bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags) 
