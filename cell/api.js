@@ -2082,6 +2082,7 @@ var editor;
         }
 
 		//история версий - возможно стоит грамотно чистить wbview, но не пересоздавать
+		var previousVersionZoom;
 		if (this.VersionHistory && this.controller) {
 			var elem = document.getElementById("ws-v-scrollbar");
 			if (elem) {
@@ -2093,6 +2094,7 @@ var editor;
 			}
 			this.controller.vsbApi = null;
 			this.controller.hsbApi = null;
+			previousVersionZoom = this.wb && this.wb.getZoom();
 		}
 
 		this.wb = new AscCommonExcel.WorkbookView(this.wbModel, this.controller, this.handlers, this.HtmlElement,
@@ -2153,6 +2155,9 @@ var editor;
 				this.VersionHistory.applyChanges(this);
 			}
 			this.sheetsChanged();
+			if (previousVersionZoom) {
+				this.asc_setZoom(previousVersionZoom);
+			}
 			this.asc_Resize();
 		}
 		//this.asc_Resize(); // Убрал, т.к. сверху приходит resize (http://bugzilla.onlyoffice.com/show_bug.cgi?id=14680)
