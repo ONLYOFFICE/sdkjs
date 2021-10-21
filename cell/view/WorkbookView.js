@@ -2201,20 +2201,18 @@
     return this.drawingCtx.getZoom();
   };
 
-  WorkbookView.prototype.changeZoom = function(factor, notChangeCtx) {
+  WorkbookView.prototype.changeZoom = function(factor) {
   	if (factor === this.getZoom()) {
       return;
     }
 
-	  if (!notChangeCtx) {
-		  this.buffers.main.changeZoom(factor);
-		  this.buffers.overlay.changeZoom(factor);
-		  this.buffers.mainGraphic.changeZoom(factor);
-		  this.buffers.overlayGraphic.changeZoom(factor);
-		  if (!factor) {
-			  this.cellEditor.changeZoom(factor);
-		  }
-	  }
+    this.buffers.main.changeZoom(factor);
+    this.buffers.overlay.changeZoom(factor);
+    this.buffers.mainGraphic.changeZoom(factor);
+    this.buffers.overlayGraphic.changeZoom(factor);
+    if (!factor) {
+      this.cellEditor.changeZoom(factor);
+    }
 
     // Нужно сбросить кэш букв
     var i, length;

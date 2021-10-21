@@ -184,12 +184,16 @@
 	function CacheColumn() {
 	    this.left = 0;
 		this.width = 0;
+
+		this._widthForPrint = null;
 	}
 
 	function CacheRow() {
 		this.top = 0;
 		this.height = 0;			// Высота с точностью до 1 px
 		this.descender = 0;
+
+		this._heightForPrint = null;
 	}
 
     function CacheElement() {
@@ -452,6 +456,9 @@
 		this._lockAddNewRule = null;
 		this._lockAddProtectedRange = null;
 
+		//добавляю константы для расчётов без зума
+		this.maxDigitWidthForPrint = null;
+		this.defaultColWidthPxForPrint = null;
 
         this._init();
 
@@ -797,14 +804,14 @@
 	WorksheetView.prototype._getWidthForPrint = function (i) {
 		if (i >= this.cols.length && !this.model.isDefaultWidthHidden() && this.defaultColWidthPxForPrint) {
 			return this.defaultColWidthPxForPrint * this.getZoom();
-		} else if (i < this.cols.length && this.maxDigitWidthForPrint && this.cols[i].widthForPrint) {
-			return this.cols[i].widthForPrint * this.getZoom();
+		} else if (i < this.cols.length && this.maxDigitWidthForPrint && this.cols[i]._widthForPrint) {
+			return this.cols[i]._widthForPrint * this.getZoom();
 		}
 
 		return null;
 	};
 	WorksheetView.prototype._getHeightForPrint = function (i) {
-		return (i < this.rows.length) ? this.rows[i].heightForPrint :
+		return (i < this.rows.length) ? this.rows[i]._heightForPrint :
 			(!this.model.isDefaultHeightHidden()) * Asc.round(this.defaultRowHeightForPrintPx * this.getZoom());
 	};
 
@@ -1717,7 +1724,7 @@
 
 		this.cols[i] = new CacheColumn(w);
 		this.cols[i].width = Asc.round(w * this.getZoom());
-		this.cols[i].widthForPrint = isDefaultWidth ? this.defaultColWidthPxForPrint : column && Asc.floor(
+		this.cols[i]._widthForPrint = isDefaultWidth ? this.defaultColWidthPxForPrint : column && Asc.floor(
 			((256 * column.width + Asc.floor(128 / this.maxDigitWidthForPrint)) / 256) * this.maxDigitWidthForPrint);
 		
 		this.updateColumnsStart = Math.min(i, this.updateColumnsStart);
@@ -1748,7 +1755,7 @@
 		r = this.rows[i] = new CacheRow();
 		r.top = y;
 		r.height = Asc.round(AscCommonExcel.convertPtToPx(hR) * this.getZoom());
-		r.heightForPrint = isDefaultHeight ? Asc.round(this.defaultRowHeightForPrintPx * this.getZoom()) : Asc.round((hR / (72 / 96)) * this.getZoom());
+		r._heightForPrint = isDefaultHeight ? Asc.round(this.defaultRowHeightForPrintPx * this.getZoom()) : Asc.round((hR / (72 / 96)) * this.getZoom());
 		r.descender = this.defaultRowDescender;
 	};
 
