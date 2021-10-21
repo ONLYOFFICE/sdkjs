@@ -2097,7 +2097,6 @@ function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPastePr
 		if(specialPasteProps === Asc.c_oSpecialPasteProps.keepTextOnly && _format !== AscCommon.c_oAscClipboardDataFormat.Text && text_data)
 		{
 			_format = AscCommon.c_oAscClipboardDataFormat.Text;
-			data1 = text_data;
 		}
 	}
 
@@ -2115,7 +2114,7 @@ function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPastePr
 		}
 		case AscCommon.c_oAscClipboardDataFormat.Text:
 		{
-			oPasteProcessor.Start(null, null, null, null, data1);
+			oPasteProcessor.Start(data1, null, null, data1, text_data);
 			break;
 		}
 	}
@@ -3535,6 +3534,16 @@ PasteProcessor.prototype =
 		//PASTE
 		var tempPresentation = !PasteElementsId.g_bIsDocumentCopyPaste && editor && editor.WordControl ? editor.WordControl.m_oLogicDocument : null;
 		var insertToPresentationWithoutSlides = tempPresentation && tempPresentation.Slides && !tempPresentation.Slides.length;
+
+		var base64FromExcel, base64FromWord, base64FromPresentation
+		if (PasteElementsId.copyPasteUseBinary) {
+			//get binary
+			var binaryObj = this._getClassBinaryFromHtml(node, fromBinary);
+			base64FromExcel = binaryObj.base64FromExcel;
+			base64FromWord = binaryObj.base64FromWord;
+			base64FromPresentation = binaryObj.base64FromPresentation;
+		}
+
 		if (text) {
 			if (insertToPresentationWithoutSlides) {
 				window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
@@ -3542,10 +3551,12 @@ PasteProcessor.prototype =
 				return;
 			}
 
-			this.oLogicDocument.RemoveBeforePaste();
-			this.oDocument = this._GetTargetDocument(this.oDocument);
-			this._pasteText(text);
-			return;
+			if (!(base64FromWord && PasteElementsId.g_bIsDocumentCopyPaste && (node || "" !== fromBinary))) {
+				this.oLogicDocument.RemoveBeforePaste();
+				this.oDocument = this._GetTargetDocument(this.oDocument);
+				this._pasteText(text);
+				return;
+			}
 		}
 
 		var bInsertFromBinary = false;
@@ -3555,13 +3566,6 @@ PasteProcessor.prototype =
 		}
 
 		if (PasteElementsId.copyPasteUseBinary) {
-			//get binary
-			var base64FromWord = null, base64FromExcel = null, base64FromPresentation;
-			var binaryObj = this._getClassBinaryFromHtml(node, fromBinary);
-			base64FromExcel = binaryObj.base64FromExcel;
-			base64FromWord = binaryObj.base64FromWord;
-			base64FromPresentation = binaryObj.base64FromPresentation;
-
 			var bTurnOffTrackRevisions = false;
 			if (PasteElementsId.g_bIsDocumentCopyPaste)//document
 			{
@@ -3924,7 +3928,7 @@ PasteProcessor.prototype =
 		if (Asc.c_oSpecialPasteProps.keepTextOnly === window['AscCommon'].g_specialPasteHelper.specialPasteProps) {
 			this.oLogicDocument.RemoveBeforePaste();
 			this.oDocument = this._GetTargetDocument(this.oDocument);
-			this._pasteText(this._getTextFromContent(aContent, {NewLineParagraph: true, Numbering: false}));
+			this._pasteText(this._getTextFromContent(aContent.content, {NewLineParagraph: true, Numbering: false}));
 			return;
 		}
 
@@ -5292,11 +5296,13 @@ PasteProcessor.prototype =
 
 	_getTextFromContent: function (aContent, oPr) {
 		var ResultText = "";
-		for (var Index = 0; Index <= aContent.length; Index++)
-		{
-			ResultText += aContent[Index].GetSelectedText(false, oPr);
+		if (aContent) {
+			for (var Index = 0; Index < aContent.length; Index++)
+			{
+				aContent[Index].ApplyToAll = true;
+				ResultText += aContent[Index].GetSelectedText(false, oPr);
+			}
 		}
-
 		return ResultText;
 	},
 
@@ -9918,7 +9924,7 @@ function addTextIntoRun(oCurRun, value, bIsAddTabBefore, dNotAddLastSpace, bIsAd
 function searchBinaryClass(node)
 {
 	var res = null;
-	if(node.children[0])
+	if(node.children && node.children[0])
 	{
 		var child = node.children[0];
 		var childClass = child ? child.getAttribute("class") : null;
