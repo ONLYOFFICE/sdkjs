@@ -11691,7 +11691,8 @@ Paragraph.prototype.Is_Inline = function()
 	if (undefined === this.Parent || (!(this.Parent instanceof CDocument) && (undefined === this.Parent.Parent || !(this.Parent.Parent instanceof CHeaderFooter))))
 		return true;
 
-	if (undefined != this.Pr.FramePr && Asc.c_oAscYAlign.Inline !== this.Pr.FramePr.YAlign)
+	var oFramePr = this.Get_FramePr();
+	if (oFramePr && !oFramePr.IsInline())
 		return false;
 
 	return true;

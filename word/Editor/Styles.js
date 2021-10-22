@@ -15743,6 +15743,21 @@ CFramePr.prototype.Merge = function(oFramePr)
 		this.YAlign = oFramePr.YAlign;
 	}
 };
+/**
+ * Является ли рамка инлайновой
+ * @returns {boolean}
+ */
+CFramePr.prototype.IsInline = function()
+{
+	return ((undefined === this.XAlign || c_oAscXAlign.Left === this.XAlign)
+		&& (undefined === this.YAlign || Asc.c_oAscYAlign.Inline === this.YAlign)
+		&& (undefined === this.HAnchor || Asc.c_oAscHAnchor.Margin === this.HAnchor)
+		&& (undefined === this.VAnchor || Asc.c_oAscVAnchor.Margin === this.VAnchor)
+		&& (undefined === this.X || 0 === AscCommon.MMToTwips(this.X))
+		&& (undefined === this.Y || 0 === AscCommon.MMToTwips(this.Y))
+		&& (undefined === this.W || 0 === AscCommon.MMToTwips(this.W))
+		&& (undefined === this.W || 0 === AscCommon.MMToTwips(this.W)));
+};
 
 function CCalculatedFrame(FramePr, L, T, W, H, L2, T2, W2, H2, PageIndex, Index, FlowCount)
 {

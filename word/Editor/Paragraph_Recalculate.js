@@ -794,8 +794,8 @@ Paragraph.prototype.private_RecalculatePageXY          = function(CurLine, CurPa
     //       сразу с рамки. Надо бы не разбивать в данной ситуации рамку на страницы, а просто новую страницу начать
     //       с нее на уровне DocumentContent.
 
-    var XStart, YStart, XLimit, YLimit;
-    if ( 0 === CurPage || ( undefined != this.Get_FramePr() && this.LogicDocument === this.Parent ) )
+    var XStart, YStart, XLimit, YLimit, oFramePr;
+	if (0 === CurPage || ((oFramePr = this.Get_FramePr()) && !oFramePr.IsInline() && this.LogicDocument === this.Parent))
     {
         XStart = this.X;
         YStart = this.Y;
