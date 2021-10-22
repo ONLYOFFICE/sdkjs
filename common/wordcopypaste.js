@@ -2373,11 +2373,7 @@ PasteProcessor.prototype =
         var oDocument = this.oDocument;
 
 		//TODO ориентируюсь при специальной вставке на SelectionState. возможно стоит пересмотреть.
-		this.curDocSelection = this.oDocument.GetSelectionState();
-		if(this.curDocSelection && this.curDocSelection[1] && this.curDocSelection[1].CurPos)
-		{
-			this.pasteIntoElem = this.oDocument.Content[this.curDocSelection[1].CurPos.ContentPos];
-		}
+		this._initSelectedElem();
 
         var nInsertLength = this.aContent.length;
         if(nInsertLength > 0)
@@ -3202,19 +3198,23 @@ PasteProcessor.prototype =
 		return obj;
 	},
 
-	_checkNumberingText: function(paragraph, oNumInfo, oNumPr)
-	{
-		if (oNumPr && oNumInfo)
-		{
+	_checkNumberingText: function (paragraph, oNumInfo, oNumPr) {
+		if (oNumPr && oNumInfo) {
 			var oNum = this.oLogicDocument.GetNumbering().GetNum(oNumPr.NumId);
-			if (oNum)
-			{
+			if (oNum) {
 				var sNumberingText = oNum.GetText(oNumPr.Lvl, oNumInfo);
 
 				var newParaRun = new ParaRun();
 				addTextIntoRun(newParaRun, sNumberingText, false, true, true);
 				paragraph.Internal_Content_Add(0, newParaRun, false);
 			}
+		}
+	},
+
+	_initSelectedElem: function () {
+		this.curDocSelection = this.oDocument.GetSelectionState();
+		if (this.curDocSelection && this.curDocSelection[1] && this.curDocSelection[1].CurPos) {
+			this.pasteIntoElem = this.oDocument.Content[this.curDocSelection[1].CurPos.ContentPos];
 		}
 	},
 
@@ -3928,7 +3928,15 @@ PasteProcessor.prototype =
 		if (Asc.c_oSpecialPasteProps.keepTextOnly === window['AscCommon'].g_specialPasteHelper.specialPasteProps) {
 			this.oLogicDocument.RemoveBeforePaste();
 			this.oDocument = this._GetTargetDocument(this.oDocument);
-			this._pasteText(this._getTextFromContent(aContent.content, {NewLineParagraph: true, Numbering: false}));
+
+			var oPr = {NewLineParagraph: true, Numbering: true};
+
+			this._initSelectedElem();
+			if (this.pasteIntoElem && this.pasteIntoElem.GetNumPr && this.pasteIntoElem.GetNumPr()) {
+				oPr.Numbering = false;
+			}
+
+			this._pasteText(this._getTextFromContent(aContent.content, oPr));
 			return;
 		}
 
@@ -5299,6 +5307,7 @@ PasteProcessor.prototype =
 		if (aContent) {
 			for (var Index = 0; Index < aContent.length; Index++)
 			{
+				aContent[Index].SelectAll();
 				aContent[Index].ApplyToAll = true;
 				ResultText += aContent[Index].GetSelectedText(false, oPr);
 			}
