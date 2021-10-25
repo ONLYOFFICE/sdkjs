@@ -7345,7 +7345,7 @@ background-repeat: no-repeat;\
                 }
 
 				//Recalculate для Document
-				Document.MoveCursorToStartPos(false);
+				Document.MoveCursorToStartOfDocument();
 
 				if (isSendOnReady)
 				{
@@ -11457,6 +11457,7 @@ background-repeat: no-repeat;\
 			oLogicDocument.UpdateCursorType(oLogicDocument.CurPos.RealX, oLogicDocument.CurPos.RealY, oLogicDocument.CurPage, new AscCommon.CMouseEventHandler());
 		}
 
+		oLogicDocument.private_CheckCursorPosInFillingFormMode();
 		oLogicDocument.UpdateSelection();
 	};
 	asc_docs_api.prototype.isShowShapeAdjustments = function()
