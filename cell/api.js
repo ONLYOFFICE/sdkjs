@@ -1189,6 +1189,18 @@ var editor;
 		}
 	};
 
+	spreadsheet_api.prototype.asc_closePrintPreview = function (options, isPrint) {
+		if (options) {
+			//сохраняем настройки
+		}
+		if (isPrint) {
+			//отправляем на печать
+			var printPages = this.PrintPreviewPages;
+
+		}
+		this.PrintPreviewPages = null;
+	};
+
   spreadsheet_api.prototype.processSavedFile             = function(url, downloadType, filetype)
   {
     if (this.insertDocumentUrlsData && this.insertDocumentUrlsData.convertCallback)
