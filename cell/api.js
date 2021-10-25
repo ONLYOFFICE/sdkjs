@@ -1156,12 +1156,33 @@ var editor;
     }
   };
 
-	spreadsheet_api.prototype.asc_initPrintPreview = function (options) {
+	spreadsheet_api.prototype.asc_initPrintPreview = function (options, containerId) {
+		var curElem = document.getElementById(containerId);
+		if (curElem) {
+			var canvasId = containerId + "-canvas"
+			var canvas = curElem.getElementById(containerId);
+			if (!canvas) {
+				canvas = document.createElement('canvas');
+				canvas.id = canvasId;
+				/*obj.canvas.width = t.parentWidth;
+				obj.canvas.height = t.parentHeight;
+				obj.canvas.style.width = AscCommon.AscBrowser.convertToRetinaValue(t.parentWidth) + "px";*/
+				curElem.appendChild(canvas);
+				this.wb.printPreviewCtx = new asc.DrawingContext({
+					canvas: canvas, units: 0/*px*/, fmgrGraphics: this.wb.fmgrGraphics, font: this.wb.m_oFont
+				});
+			}
+		}
 		this.PrintPreviewPages = this.wb.calcPagesPrint(options.advancedOptions);
 		return this.PrintPreviewPages.length;
 	};
 
-	spreadsheet_api.prototype.asc_drawPrintPreview = function (index, container) {
+	spreadsheet_api.prototype.asc_updatePrintPreview = function (options) {
+		this.PrintPreviewPages = this.wb.calcPagesPrint(options.advancedOptions);
+		return this.PrintPreviewPages.length;
+	};
+
+	spreadsheet_api.prototype.asc_drawPrintPreview = function (index) {
 		var page = this.PrintPreviewPages ? this.PrintPreviewPages[index] : null;
 		if (page) {
 			this.wb.printSheets([page]);
