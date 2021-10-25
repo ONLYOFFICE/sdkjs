@@ -1318,6 +1318,13 @@
 			if (!val) {
 				this.SpecialPasteButton_Hide();
 			}
+		},
+
+		executeWithoutHideButton: function (runFunction) {
+			var oldMode = this.showSpecialPasteButton;
+			this.showSpecialPasteButton = false;
+			runFunction();
+			this.showSpecialPasteButton = oldMode;
 		}
 	};
 

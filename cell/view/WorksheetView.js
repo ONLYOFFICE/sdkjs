@@ -22536,12 +22536,19 @@
 	};
 
 	WorksheetView.prototype.updateTopLeftCell = function () {
-		History.Create_NewPoint();
-		History.StartTransaction();
+		var t = this;
+		var callback = function () {
+			History.Create_NewPoint();
+			History.StartTransaction();
+			t.model.updateTopLeftCell(t.visibleRange);
+			History.EndTransaction();
+		};
 
-		this.model.updateTopLeftCell(this.visibleRange);
-
-		History.EndTransaction();
+		if (AscCommon.g_specialPasteHelper) {
+			AscCommon.g_specialPasteHelper.executeWithoutHideButton(callback);
+		} else {
+			callback();
+		}
 	};
 
 	WorksheetView.prototype.scrollToTopLeftCell = function () {
