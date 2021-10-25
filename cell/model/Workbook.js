@@ -9969,12 +9969,12 @@
 			return;
 		}
 		
-		if (val !== view.topLeftCell || (val && view.topLeftCell && !val.isEqual(view.topLeftCell))) {
+		if ((!val && view.topLeftCell) || (val && !view.topLeftCell) || (val && view.topLeftCell && !val.isEqual(view.topLeftCell))) {
 			var oldValue = view.topLeftCell ? view.topLeftCell.clone() : null;
 			view.topLeftCell = val;
 			if (addToHistory) {
 				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_SetTopLeftCell,
-					this.getId(), null, new UndoRedoData_FromTo(new UndoRedoData_BBox(oldValue), new UndoRedoData_BBox(val)));
+					this.getId(), null, new UndoRedoData_FromTo(oldValue ? new UndoRedoData_BBox(oldValue) : oldValue, val ? new UndoRedoData_BBox(val) : val));
 			}
 		}
 	};
