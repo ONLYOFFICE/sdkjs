@@ -1771,14 +1771,12 @@ var editor;
             }
         }
     };
-  this.CoAuthoringApi.onCursor                 = function(e)
-  {
-	  if (true === AscCommon.CollaborativeEditing.Is_Fast())
-	  {
-		  t.wb.Update_ForeignCursor(e[e.length - 1]['cursor'], e[e.length - 1]['user'], true, e[e.length - 1]['useridoriginal']);
-	  }
+    this.CoAuthoringApi.onCursor = function(e) {
+      if (AscCommon.CollaborativeEditing && true === AscCommon.CollaborativeEditing.Is_Fast() && e && e[e.length - 1]) {
+        t.wb.Update_ForeignCursor(e[e.length - 1]['cursor'], e[e.length - 1]['user'], true, e[e.length - 1]['useridoriginal']);
+      }
+    };
   };
-	  };
 
   spreadsheet_api.prototype._onSaveChanges = function(recalcIndexColumns, recalcIndexRows, isAfterAskSave) {
     if (this.isDocumentLoadComplete) {
