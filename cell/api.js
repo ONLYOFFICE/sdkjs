@@ -2206,11 +2206,6 @@ var editor;
 	spreadsheet_api.prototype._onSaveCallbackInner = function () {
 		var t = this;
 
-		var ws = this.wb.getWorksheet();
-		if (ws) {
-			ws.updateTopLeftCell();
-		}
-
 		AscCommon.CollaborativeEditing.Clear_CollaborativeMarks();
 		// Принимаем чужие изменения
 		this.collaborativeEditing.applyChanges();

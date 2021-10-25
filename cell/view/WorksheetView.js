@@ -22538,10 +22538,7 @@
 	WorksheetView.prototype.updateTopLeftCell = function () {
 		var t = this;
 		var callback = function () {
-			History.Create_NewPoint();
-			History.StartTransaction();
 			t.model.updateTopLeftCell(t.visibleRange);
-			History.EndTransaction();
 		};
 
 		if (AscCommon.g_specialPasteHelper) {

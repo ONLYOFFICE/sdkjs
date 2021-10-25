@@ -1107,6 +1107,12 @@ CHistory.prototype.StartTransaction = function()
 
 CHistory.prototype.EndTransaction = function()
 {
+	if (1 === this.Transaction && !this.Is_LastPointEmpty()) {
+		var wsView = window["Asc"]["editor"].wb && window["Asc"]["editor"].wb.getWorksheet();
+		if (wsView) {
+			wsView.updateTopLeftCell();
+		}
+	}
 	this.Transaction--;
 	if(this.Transaction < 0)
 		this.Transaction = 0;
