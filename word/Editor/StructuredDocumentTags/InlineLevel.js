@@ -2636,6 +2636,9 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function()
 	oParent.RemoveFromContent(nPosInParent, 1, true);
 	oParent.AddToContent(nPosInParent, oRun, true);
 
+	if (this.IsAutoFitContent())
+		oLogicDocument.CheckFormAutoFit(this);
+
 	return oParaDrawing;
 };
 CInlineLevelSdt.prototype.ConvertFormToInline = function()
