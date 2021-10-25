@@ -5152,6 +5152,7 @@ drawBarChart.prototype = {
 		}
 
 		//рассчитываем 8 точек для каждого столбца
+		console.log(height)
 
 		var x1 = startX, y1 = startY, z1 = 0 + gapDepth;
 		var x2 = startX, y2 = startY, z2 = perspectiveDepth + gapDepth;
@@ -5263,7 +5264,6 @@ drawBarChart.prototype = {
 			var x6 = startX + individualBarWidth / 2, y6 = startY - maxH2, z6 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
 			var x7 = startX + individualBarWidth / 2, y7 = startY - maxH2, z7 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
 			var x8 = startX + individualBarWidth / 2, y8 = startY - maxH2, z8 = 0 + gapDepth + perspectiveDepth / 2;
-			console.log(maxH2, height)
 		}else{
 			var x5 = startX + individualBarWidth / 2, y5 = startY - height, z5 = 0 + gapDepth + perspectiveDepth / 2;
 			var x6 = startX + individualBarWidth / 2, y6 = startY - height, z6 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
@@ -6208,7 +6208,7 @@ drawBarChart.prototype = {
 		}
 
 		for (var k = 0; k < paths.frontPaths.length; k++) {
-			if (null === paths.frontPaths[k] && null === paths.darkPaths[k] || val === 0) {
+			if (null === paths.frontPaths[k] && null === paths.darkPaths[k] || (val === 0 && i !== 0)) {
 				continue;
 			}
 
