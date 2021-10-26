@@ -2808,13 +2808,7 @@ var editor;
 		  return false;
 	  }
 
-	  //если выделены все - берём последний активный, если всего один - не переносим
-	  if(this.wbModel.aWorksheets.length === 1) {
-		  return null;
-	  } else if (!arrSheets || (this.wbModel.aWorksheets && this.wbModel.aWorksheets.length === arrSheets.length)) {
-		  arrSheets = [arrSheets[arrSheets.length - 1]];
-	  }
-
+	  //если выделены все - не перенесим(проверка в интерфейсе)
 	  var sheet, sBinarySheet, res = [];
       var activeIndex = this.wbModel.nActive;
 	  for (var i = 0; i < arrSheets.length; ++i) {
