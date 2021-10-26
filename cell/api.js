@@ -1001,6 +1001,25 @@ var editor;
       }
   };
 
+	spreadsheet_api.prototype.asc_SetPrintHeadings = function(val, index) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return false;
+		}
+		var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
+		var ws = this.wb.getWorksheet(sheetIndex);
+		ws.setPrintHeadings(val);
+	};
+
+	spreadsheet_api.prototype.asc_SetPrintGridlines = function(val, index) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return false;
+		}
+
+		var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
+		var ws = this.wb.getWorksheet(sheetIndex);
+		ws.setGridLines(val);
+	};
+
   spreadsheet_api.prototype.asc_changePrintTitles = function (cols, rows, index) {
 	  if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 		  return false;
@@ -1160,7 +1179,7 @@ var editor;
 		var curElem = document.getElementById(containerId);
 		if (curElem) {
 			var canvasId = containerId + "-canvas"
-			var canvas = curElem.getElementById(containerId);
+			var canvas = document.getElementById(canvasId);
 			if (!canvas) {
 				canvas = document.createElement('canvas');
 				canvas.id = canvasId;
@@ -1174,7 +1193,7 @@ var editor;
 			}
 		}
 		this.wb.PrintPreviewPages = this.wb.calcPagesPrint();
-		return this.PrintPreviewPages.arrPages.length;
+		return this.wb.PrintPreviewPages.arrPages.length;
 	};
 
 	spreadsheet_api.prototype.asc_updatePrintPreview = function (options) {
@@ -6268,6 +6287,10 @@ var editor;
   prot["asc_TextToColumns"] = prot.asc_TextToColumns;
   prot["asc_TextFromFileOrUrl"] = prot.asc_TextFromFileOrUrl;
 
+  prot["asc_initPrintPreview"] = prot.asc_initPrintPreview;
+  prot["asc_updatePrintPreview"] = prot.asc_updatePrintPreview;
+  prot["asc_drawPrintPreview"] = prot.asc_drawPrintPreview;
+  prot["asc_closePrintPreview"] = prot.asc_closePrintPreview;
 
 
   prot["asc_getDocumentName"] = prot.asc_getDocumentName;
@@ -6294,6 +6317,9 @@ var editor;
   prot["asc_changePageOrient"] = prot.asc_changePageOrient;
   prot["asc_changePrintTitles"] = prot.asc_changePrintTitles;
   prot["asc_getPrintTitlesRange"] = prot.asc_getPrintTitlesRange;
+  prot["asc_SetPrintHeadings"] = prot.asc_SetPrintHeadings;
+  prot["asc_SetPrintGridlines"] = prot.asc_SetPrintGridlines;
+
 
   prot["asc_ChangePrintArea"] = prot.asc_ChangePrintArea;
   prot["asc_CanAddPrintArea"] = prot.asc_CanAddPrintArea;

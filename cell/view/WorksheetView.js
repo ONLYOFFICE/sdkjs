@@ -18942,6 +18942,62 @@
 		return viewMode ? onChangeDocSize(true) : this._isLockedLayoutOptions(onChangeDocSize);
 	};
 
+	WorksheetView.prototype.setPrintHeadings = function (val) {
+		var pageOptions = this.model.PagePrintOptions;
+		var t = this;
+
+		var callback = function (isSuccess) {
+			if (false === isSuccess) {
+				return;
+			}
+
+			History.Create_NewPoint();
+			History.StartTransaction();
+
+			pageOptions.pageSetup.asc_setHeadings(val);
+
+			History.EndTransaction();
+
+			t.recalcPrintScale();
+			t.changeViewPrintLines(true);
+
+			if(t.viewPrintLines) {
+				t.updateSelection();
+			}
+			window["Asc"]["editor"]._onUpdateLayoutMenu(t.model.Id);
+		};
+
+		return this._isLockedLayoutOptions(callback);
+	};
+
+	WorksheetView.prototype.setGridLines = function (val) {
+		var pageOptions = this.model.PagePrintOptions;
+		var t = this;
+
+		var callback = function (isSuccess) {
+			if (false === isSuccess) {
+				return;
+			}
+
+			History.Create_NewPoint();
+			History.StartTransaction();
+
+			pageOptions.pageSetup.asc_setGridLines(val);
+
+			History.EndTransaction();
+
+			t.recalcPrintScale();
+			t.changeViewPrintLines(true);
+
+			if(t.viewPrintLines) {
+				t.updateSelection();
+			}
+			window["Asc"]["editor"]._onUpdateLayoutMenu(t.model.Id);
+		};
+
+		return this._isLockedLayoutOptions(callback);
+	};
+
 	WorksheetView.prototype.savePageOptions = function (obj, viewMode) {
 		var pageOptions = this.model.PagePrintOptions;
 
