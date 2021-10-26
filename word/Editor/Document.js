@@ -10634,11 +10634,37 @@ CDocument.prototype.OnKeyDown = function(e)
 								this.StartAction(AscDFH.historydescription_Document_AddLetter);					
 								if (oParagraph.LogicDocument.IsTrackRevisions() && ListForUnicode[0].oRun.ReviewType === 0)
 								{
-									oParagraph.Remove();
-									if (AscCommon.IsSpace(textAfterChange))
-										oParagraph.Add(new ParaSpace(textAfterChange));
+									var newDelRun = ListForUnicode[0].oRun.Copy();
+									var newAddRun = ListForUnicode[0].oRun.Copy();
+									newAddRun.ClearContent();
+									newDelRun.ClearContent();
+									for (var i = 0; i < ListForUnicode.length; i++)
+										newDelRun.private_AddItemToRun(i, ListForUnicode[i].oRun.Content[ListForUnicode[i].currentPos]);
+									
+									if (oSettings.IsForMathPart === -1)
+									{
+										var oItem = new CMathText();
+										oItem.add(textAfterChange);
+										newAddRun.private_AddItemToRun(0, oItem);
+									}
 									else
-										oParagraph.Add(new ParaText(textAfterChange));
+									{
+										newAddRun.private_AddItemToRun(0, new ParaText(textAfterChange));
+									}
+									newDelRun.SetReviewType(reviewtype_Remove, true);
+									newAddRun.SetReviewType(reviewtype_Add, true);
+									var oParent = ListForUnicode[0].oRun.Get_Parent();
+									var nMovePos = 0;
+									for (var i = ListForUnicode.length - 1; i >= 0; i--)
+										ListForUnicode[i].oRun.RemoveFromContent(ListForUnicode[i].currentPos, 1, true);
+									
+									if (ListForUnicode[ListForUnicode.length - 1].oRun === ListForUnicode[0].oRun && ListForUnicode[0].oRun.Content !== 0 && ListForUnicode[0].currentPos !== 0)
+										nMovePos = 1;
+									var oRunNew = ListForUnicode[ListForUnicode.length - 1].oRun.private_SplitRunInCurPos();
+									var oPosItem = oParagraph.Get_PosByElement(ListForUnicode[ListForUnicode.length - 1].oRun);
+									
+									oParent.Add_ToContent(oPosItem.Data[oPosItem.Depth - 1] + nMovePos, newAddRun);
+									oParent.Add_ToContent(oPosItem.Data[oPosItem.Depth - 1] + nMovePos, newDelRun);
 								}
 								else
 								{
@@ -10695,9 +10721,51 @@ CDocument.prototype.OnKeyDown = function(e)
 							this.StartAction(AscDFH.historydescription_Document_AddLetter);
 							if (oParagraph.LogicDocument.IsTrackRevisions() && ListForUnicode[0].oRun.ReviewType === 0)
 							{
-								oParagraph.Remove();
-								for (var i = 0; i < textAfterChange.length; i++)
-									oParagraph.Add(new ParaText(textAfterChange.charCodeAt(i)));
+								if (oSettings.IsForMathPart === -1)
+								{
+									var newDelRun = ListForUnicode[0].oRun.Copy();
+									var newAddRun = ListForUnicode[0].oRun.Copy();
+									newAddRun.ClearContent();
+									newDelRun.ClearContent();
+									newDelRun.private_AddItemToRun(0, ListForUnicode[0].oRun.Content[ListForUnicode[0].currentPos]);
+									for (var i = 0; i < textAfterChange.length; i++)
+									{
+										var oItem = new CMathText();
+										oItem.add(textAfterChange.charCodeAt(i));
+										newAddRun.private_AddItemToRun(i, oItem);
+									}
+									newDelRun.SetReviewType(reviewtype_Remove, true);
+									newAddRun.SetReviewType(reviewtype_Add, true);
+									var oParent = ListForUnicode[0].oRun.Get_Parent();
+									var nMovePos = ListForUnicode[0].currentPos === 0 ? 0 : 1;
+									ListForUnicode[0].oRun.RemoveFromContent(ListForUnicode[0].currentPos, 1, true);
+									var oRunNew = ListForUnicode[0].oRun.private_SplitRunInCurPos();
+									if (nMovePos === 0)
+									{
+										oParent.Add_ToContent(oParent.CurPos + nMovePos, newDelRun);
+										oParent.Add_ToContent(oParent.CurPos + nMovePos, newAddRun);
+									}
+									else
+									{
+										oParent.Add_ToContent(oParent.CurPos + nMovePos, newAddRun);
+										oParent.Add_ToContent(oParent.CurPos + nMovePos, newDelRun);
+									}
+								}
+								else
+								{
+									var newDelRun = new ParaRun;
+									var newAddRun = new ParaRun;
+									newDelRun.private_AddItemToRun(0, ListForUnicode[0].oRun.Content[ListForUnicode[0].currentPos]);
+									for (var i = 0; i < textAfterChange.length; i++)
+									{
+										newAddRun.private_AddItemToRun(i, new ParaText(textAfterChange.charCodeAt(i)));
+									}
+									newDelRun.SetReviewType(reviewtype_Remove, true);
+									newAddRun.SetReviewType(reviewtype_Add, true);
+									ListForUnicode[0].oRun.RemoveFromContent(ListForUnicode[0].currentPos, 1, true);
+									oParagraph.Add(newDelRun);
+									oParagraph.Add(newAddRun);
+								}
 							}
 							else
 							{
