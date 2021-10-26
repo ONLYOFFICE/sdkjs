@@ -4608,7 +4608,8 @@ drawBarChart.prototype = {
 							y: paths.sortPaths[k].y,
 							zIndex: paths.sortPaths[k].z,
 							facePoint: paths.facePoints[k],
-							type: paths.type[k]
+							type: paths.type[k],
+							indexNumber: paths.indexNumber
 						});
 					}
 
@@ -4656,6 +4657,8 @@ drawBarChart.prototype = {
 
 		var cSortFaces;
 		if (this.cChartDrawer.nDimensionCount === 3) {
+			var angelX = this.cChartDrawer.processor3D.view3D.rotX;
+			var angelY= this.cChartDrawer.processor3D.view3D.rotY;
 			if (this.subType === "stacked" || this.subType === "stackedPer") {
 				//если будут найдены проблемы при отрисовке stacked rAngAx - раскомментировать ветку
 				/*if(this.cChartDrawer.processor3D.view3D.rAngAx)
@@ -4694,28 +4697,33 @@ drawBarChart.prototype = {
 				cSortFaces = new window['AscFormat'].CSortFaces(this.cChartDrawer);
 				this.sortParallelepipeds = cSortFaces.sortParallelepipeds(this.temp2);
 			} else {
-				var getMinZ = function (arr, type) {
+				var getMinZ = function (arr, type, index) {
 					var zIndex = 0;	
-					if(arr){
 					for (var i = 0; i < arr.length; i++) {
 						if (i === 0) {
 							zIndex = arr[i].z;
 						} else if (arr[i].z < zIndex) {
 							zIndex = arr[i].z;
 						}
+					}
+
+					if(type === 0 && index > 0 && angelX > 0){ //&& angelX > 20 && angelY < 90 && angelY > 0){
+						zIndex += angelX * 2;
 					}	
-				}
+				
 					return zIndex;		
 				};
-				this.sortZIndexPaths.sort(function sortArr(a, b) {					
-					var minZA = getMinZ(a.facePoint);
-					var minZB = getMinZ(b.facePoint);
+				this.sortZIndexPaths.sort(function sortArr(a, b) {	
+		
+					var minZA = getMinZ(a.facePoint, a.type, a.indexNumber);
+					var minZB = getMinZ(b.facePoint, b.type, b.indexNumber);
 
 					if (minZB == minZA) {
 						return b.y - a.y;
 					} else {
 						return minZB - minZA;
 					}
+
 				});
 			}
 		}
@@ -5302,7 +5310,7 @@ drawBarChart.prototype = {
 
 		var sortPaths = [controlPoint1, controlPoint2, controlPoint3, controlPoint4, controlPoint5, controlPoint6];
 
-		return {paths: paths, x: point1.x, y: point1.y, zIndex: point2.z, sortPaths: sortPaths, facePoints: facePoints, type: type};
+		return {paths: paths, x: point1.x, y: point1.y, zIndex: point2.z, sortPaths: sortPaths, facePoints: facePoints, type: type, indexNumber: serNum};
 	}
 };
 
