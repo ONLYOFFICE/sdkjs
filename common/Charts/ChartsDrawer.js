@@ -4710,6 +4710,9 @@ drawBarChart.prototype = {
 					if(type === 0 && index > 0 && angelX > 0){ //&& angelX > 20 && angelY < 90 && angelY > 0){
 						zIndex += angelX * 2;
 					}	
+					if(type === 5 && index > 0 && angelX > 0){ //&& angelX > 20 && angelY < 90 && angelY > 0){
+						zIndex += angelX * 2;
+					}
 				
 					return zIndex;		
 				};
