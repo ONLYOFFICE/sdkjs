@@ -13007,6 +13007,7 @@
 	Api.prototype["MailMerge"]                       = Api.prototype.MailMerge;
 	Api.prototype["ReplaceTextSmart"]				 = Api.prototype.ReplaceTextSmart;
 	Api.prototype["CoAuthoringChatSendMessage"]		 = Api.prototype.CoAuthoringChatSendMessage;
+	Api.prototype["ConvertDocument"]		         = Api.prototype.ConvertDocument;
 	
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 
