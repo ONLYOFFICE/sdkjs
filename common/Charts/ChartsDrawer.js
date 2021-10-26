@@ -3806,8 +3806,6 @@ CChartsDrawer.prototype =
 		var cZ = k.x * n.y - n.x * k.y;
 		var visible = aX + bY + cZ;
 
-		return visible < 0;
-
 		var result;
 		if(this.calcProp.type === c_oChartTypes.Bar)
 		{
