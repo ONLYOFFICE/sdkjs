@@ -4696,7 +4696,9 @@ drawBarChart.prototype = {
 			} else if ("normal" === this.subType) {
 				cSortFaces = new window['AscFormat'].CSortFaces(this.cChartDrawer);
 				this.sortParallelepipeds = cSortFaces.sortParallelepipeds(this.temp2);
-			} else {
+			} else {				
+				var checkRotation = this.cChartDrawer.processor3D.view3D.rAngAx;
+				var length = this.chart.series.length - 1;
 				var getMinZ = function (arr, type, index) {
 					var zIndex = 0;	
 					for (var i = 0; i < arr.length; i++) {
@@ -4707,11 +4709,13 @@ drawBarChart.prototype = {
 						}
 					}
 
-					if(type === 0 && index > 0 && angelX > 0){ //&& angelX > 20 && angelY < 90 && angelY > 0){
-						zIndex += angelX * 2;
-					}	
-					if(type === 5 && index > 0 && angelX > 0){ //&& angelX > 20 && angelY < 90 && angelY > 0){
-						zIndex += angelX * 2;
+					if(checkRotation === false){
+						if(type === 0 && index > 0 && angelX > 0){ 
+							zIndex += angelX * 2;
+						}	
+						if(type === 5 && index < length && angelX > 0 && angelY > 90 && angelY < 270){ 
+							zIndex += angelX * 2;
+						}
 					}
 				
 					return zIndex;		
