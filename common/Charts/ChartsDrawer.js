@@ -4937,20 +4937,19 @@ drawBarChart.prototype = {
 
 					var testHeight2 = 0;
 					if(val > axisMax){
-						var excess = this.cChartDrawer.getYPosition(val - axisMax, this.valAx) * this.chartProp.pxToMM;
-						testHeight2 = testHeight + excess;
+						testHeight2 = testHeight + (testHeight - testHeight * (axisMax / val));
+						maxHeight = maxHeight + (maxHeight - maxHeight * (axisMax / val));
 					}else if(val < axisMin){
-						var value = val + -(axisMin);
-						var excess = this.cChartDrawer.getYPosition(value, this.valAx) * this.chartProp.pxToMM;//(val + -(axisMin)) * this.chartProp.pxToMM;
-						testHeight2 = testHeight - excess;
-						console.log(testHeight2)
+						testHeight2 = testHeight + (testHeight - testHeight * (axisMin / val));
+						maxHeight = maxHeight + (maxHeight - maxHeight * (axisMin / val));
 					}
+					console.log(testHeight, maxHeight)
 					
 					switch(shapeType){
 						case AscFormat.BAR_SHAPE_PYRAMID: {
 							if(this.subType === "stackedPer" || this.subType === "stacked"){
-								this._calculateStoragePyramide3D(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2, maxHeight, minHeight);
-								this._calculateStoragePyramide3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp, maxHeight, minHeight);
+								this._calculateStoragePyramide3D(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2, maxHeight, minHeight, testHeight2);
+								this._calculateStoragePyramide3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp, maxHeight, minHeight, testHeight2);
 							//	paths = paths.paths2;	
 							}else{
 								//this.calculateClusteredPyramide(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2);
@@ -4961,10 +4960,10 @@ drawBarChart.prototype = {
 							break;
 						}
 						default: {
-							this.calculateParallalepiped(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2);
-							this.calculateParallalepiped(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp);	
-							//this.calculateClusteredPyramide(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2, testHeight, testHeight2);
-							//this.calculateClusteredPyramide(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp, testHeight, testHeight2);				
+							//this.calculateParallalepiped(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2);
+							//this.calculateParallalepiped(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp);	
+							this._calculateStoragePyramide3D(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2, maxHeight, minHeight, testHeight2);
+							this._calculateStoragePyramide3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp, maxHeight, minHeight, testHeight2);
 						break;
 						}
 					}
@@ -6012,7 +6011,7 @@ drawBarChart.prototype = {
 		return {paths: paths, paths2: paths2, x: point1.x, y: point1.y, zIndex: point1.z, sortPaths: sortPaths, facePoints: facePoints};
 	},
 
-	_calculateStoragePyramide3D: function (startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, arr, maxH, minH) {
+	_calculateStoragePyramide3D: function (startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, arr, maxH, minH, maxH2) {
 		//параметр r и глубина по OZ
 		var perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
 
@@ -6034,6 +6033,7 @@ drawBarChart.prototype = {
 		var nullPositionOX = this.catAx.posY * this.chartProp.pxToMM;		
 		//получаем координаты точек полной диаграммы
 		if (this.subType === "stacked") {
+			if(maxH2){maxH = maxH2;}
 			var x1 = startX, y1 = nullPositionOX, z1 = 0 + gapDepth;
 			var x2 = startX, y2 = nullPositionOX, z2 = perspectiveDepth + gapDepth;
 			var x3 = startX + individualBarWidth, y3 = nullPositionOX, z3 = perspectiveDepth + gapDepth;
@@ -6054,6 +6054,7 @@ drawBarChart.prototype = {
 			var x7 = startX + individualBarWidth / 2, y7 = nullPositionOX - maxH, z7 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
 			var x8 = startX + individualBarWidth / 2, y8 = nullPositionOX - maxH, z8 = 0 + gapDepth + perspectiveDepth / 2;
 		}
+		console.log(height, maxH2)
 
 		
 		//необходимые координаты плоскостей
