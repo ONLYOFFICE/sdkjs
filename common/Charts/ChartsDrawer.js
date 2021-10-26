@@ -3805,7 +3805,6 @@ CChartsDrawer.prototype =
 		var bY = - (k.x * m.y - m.x * k.y);
 		var cZ = k.x * n.y - n.x * k.y;
 		var visible = aX + bY + cZ;
-
 		var result;
 		if(this.calcProp.type === c_oChartTypes.Bar)
 		{
@@ -4605,9 +4604,7 @@ drawBarChart.prototype = {
 							x: paths.sortPaths[k].x,
 							y: paths.sortPaths[k].y,
 							zIndex: paths.sortPaths[k].z,
-							facePoint: paths.facePoints[k],
-							type: paths.type[k],
-							indexNumber: paths.indexNumber
+							facePoint: paths.facePoints[k]
 						});
 					}
 
@@ -4714,21 +4711,17 @@ drawBarChart.prototype = {
 						if(type === 5 && index < length && angelX > 0 && angelY > 90 && angelY < 270){ 
 							zIndex += angelX * 2;
 						}
-					}
-				
+					}			
 					return zIndex;		
 				};
 				this.sortZIndexPaths.sort(function sortArr(a, b) {	
-		
-					var minZA = getMinZ(a.facePoint, a.type, a.indexNumber);
-					var minZB = getMinZ(b.facePoint, b.type, b.indexNumber);
-
+					var minZA = getMinZ(a.facePoint, a.verge, a.seria);
+					var minZB = getMinZ(b.facePoint, b.verge, b.seria);
 					if (minZB == minZA) {
 						return b.y - a.y;
 					} else {
 						return minZB - minZA;
 					}
-
 				});
 			}
 		}
@@ -5306,16 +5299,13 @@ drawBarChart.prototype = {
 		var controlPoint6 = this.cChartDrawer._convertAndTurnPoint(x2 + individualBarWidth / 2, y2 - height / 2, z2);
 
 		//front: 0, down: 1, left: 2, right: 3, up: 4, unfront: 5
-
 		var facePoints = [[point1, point5, point8, point4], [point1, point2, point3, point4],
 			[point1, point2, point6, point5], [point4, point3, point7, point8], [point5, point6, point7, point8],
 			[point2, point3, point7, point6]];
 
-		var type = [0, 1, 2, 3, 4, 5];
-
 		var sortPaths = [controlPoint1, controlPoint2, controlPoint3, controlPoint4, controlPoint5, controlPoint6];
 
-		return {paths: paths, x: point1.x, y: point1.y, zIndex: point2.z, sortPaths: sortPaths, facePoints: facePoints, type: type, indexNumber: serNum};
+		return {paths: paths, x: point1.x, y: point1.y, zIndex: point1.z, sortPaths: sortPaths, facePoints: facePoints};
 	}
 };
 
