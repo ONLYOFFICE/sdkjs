@@ -1173,20 +1173,17 @@ var editor;
 				});
 			}
 		}
-		this.PrintPreviewPages = this.wb.calcPagesPrint();
-		return this.PrintPreviewPages.length;
+		this.wb.PrintPreviewPages = this.wb.calcPagesPrint();
+		return this.PrintPreviewPages.arrPages.length;
 	};
 
 	spreadsheet_api.prototype.asc_updatePrintPreview = function (options) {
-		this.PrintPreviewPages = this.wb.calcPagesPrint(options.advancedOptions);
-		return this.PrintPreviewPages.length;
+		this.wb.PrintPreviewPages = this.wb.calcPagesPrint(options.advancedOptions);
+		return this.wb.PrintPreviewPages.arrPages.length;
 	};
 
 	spreadsheet_api.prototype.asc_drawPrintPreview = function (index) {
-		var page = this.PrintPreviewPages ? this.PrintPreviewPages[index] : null;
-		if (page) {
-			this.wb.printSheets([page]);
-		}
+		this.wb.printSheetPrintPreview(index);
 	};
 
 	spreadsheet_api.prototype.asc_closePrintPreview = function (isPrint) {
@@ -1196,10 +1193,10 @@ var editor;
 		}*/
 		if (isPrint) {
 			//отправляем на печать
-			var printPages = this.PrintPreviewPages;
+			var printPages = this.wb.PrintPreviewPages;
 
 		}
-		this.PrintPreviewPages = null;
+		this.wb.PrintPreviewPages = null;
 	};
 
   spreadsheet_api.prototype.processSavedFile             = function(url, downloadType, filetype)

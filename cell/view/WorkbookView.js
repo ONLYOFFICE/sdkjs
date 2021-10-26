@@ -280,6 +280,9 @@
     this.NeedUpdateTargetForCollaboration = true;
     this.LastUpdateTargetTime = 0;
 
+	this.PrintPreviewPages = null;
+	this.printPreviewCtx = null;
+
     return this;
   }
 
@@ -3031,6 +3034,29 @@
 
     return pdfPrinter;
   };
+
+	WorkbookView.prototype.printSheetPrintPreview = function(index) {
+		var page = this.PrintPreviewPages ? this.PrintPreviewPages.arrPages[index] : null;
+		//change zoom on default
+		var viewZoom = this.getZoom();
+		this.changeZoom(1);
+
+		/*var pdfPrinter = new AscCommonExcel.CPdfPrinter(this.fmgrGraphics[3], this.m_oFont);
+		if (pdfDocRenderer) {
+			pdfPrinter.DocumentRenderer = pdfDocRenderer;
+		}*/
+		var ws;
+		if (!page) {
+			// Печать пустой страницы
+			ws = this.getWorksheet();
+			ws.drawForPrint(this.printPreviewCtx, null);
+		} else {
+			ws = this.getWorksheet(page.indexWorksheet);
+			ws.drawForPrint(this.printPreviewCtx, page, index, this.PrintPreviewPages.arrPages.length);
+		}
+
+		this.changeZoom(viewZoom);
+	};
 
   WorkbookView.prototype._calcPagesPrintSheet = function (index, printPagesData, onlySelection, adjustPrint) {
   	var ws = this.model.getWorksheet(index);

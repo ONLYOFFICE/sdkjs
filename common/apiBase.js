@@ -203,8 +203,6 @@
 		this.Shortcuts = new AscCommon.CShortcuts();
 		this.initDefaultShortcuts();
 
-		this.PrintPreviewPages = null;
-
 		return this;
 	}
 
