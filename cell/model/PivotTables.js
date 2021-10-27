@@ -3857,7 +3857,7 @@ CT_pivotTableDefinition.prototype._getPivotLabelButtonsRowColLables = function (
 	for (i = 0; i < items.length; ++i) {
 		var item = items[i];
 		var r = item.getR();
-		for (j = 0; j < item.x.length && r + j < fields.length - 1; ++j) {
+		for (j = 0; j < item.x.length && r + j < fields.length; ++j) {
 			fieldIndex = fields[r + j].asc_getIndex()
 			if (Asc.c_oAscItemType.Data === item.t && AscCommonExcel.st_VALUES !== fieldIndex) {
 				if (rowFieldsOffset) {
@@ -3872,7 +3872,8 @@ CT_pivotTableDefinition.prototype._getPivotLabelButtonsRowColLables = function (
 				}
 				var fieldItemIndex = item.x[j].getV();
 				var sd = pivotFields[fieldIndex].asc_getVisible(fieldItemIndex);
-				buttons.push({isSortState: null, isSetFilter: false, row: row, col: col, idPivotCollapse: {id: this.Get_Id(), fld: fieldIndex, index: fieldItemIndex, sd: sd}
+				var hidden = r + j === fields.length - 1;
+				buttons.push({isSortState: null, isSetFilter: false, row: row, col: col, idPivotCollapse: {id: this.Get_Id(), fld: fieldIndex, index: fieldItemIndex, sd: sd, hidden: hidden}
 				});
 			}
 		}
