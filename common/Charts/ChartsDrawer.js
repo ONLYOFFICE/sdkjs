@@ -3805,8 +3805,8 @@ CChartsDrawer.prototype =
 		var bY = - (k.x * m.y - m.x * k.y);
 		var cZ = k.x * n.y - n.x * k.y;
 		var visible = aX + bY + cZ;
-		var result;
 
+		var result;
 		if(this.calcProp.type === c_oChartTypes.Bar)
 		{
 			result = val > 0 && visible < 0 || val < 0 && visible > 0;
@@ -5276,6 +5276,7 @@ drawBarChart.prototype = {
 		var x7 = startX + individualBarWidth, y7 = startY - height, z7 = perspectiveDepth + gapDepth;
 		var x8 = startX + individualBarWidth, y8 = startY - height, z8 = 0 + gapDepth;
 
+
 		//поворот относительно осей
 		var point1 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1);
 		var point2 = this.cChartDrawer._convertAndTurnPoint(x2, y2, z2);
@@ -5287,7 +5288,6 @@ drawBarChart.prototype = {
 		var point8 = this.cChartDrawer._convertAndTurnPoint(x8, y8, z8);
 
 
-		
 		//down verge of minus values don't must draw(in stacked and stackedPer)
 		var isNotDrawDownVerge;
 		/*if((this.subType == "stacked" || this.subType == "stackedPer") && val < 0 && (isValMoreZero || (!isValMoreZero && isValLessZero !== 1)))
