@@ -3806,6 +3806,7 @@ CChartsDrawer.prototype =
 		var cZ = k.x * n.y - n.x * k.y;
 		var visible = aX + bY + cZ;
 		var result;
+
 		if(this.calcProp.type === c_oChartTypes.Bar)
 		{
 			result = val > 0 && visible < 0 || val < 0 && visible > 0;
@@ -4694,7 +4695,10 @@ drawBarChart.prototype = {
 			} else {				
 				var checkRotation = this.cChartDrawer.processor3D.view3D.rAngAx;
 				var length = this.chart.series.length - 1;
-				var getMinZ = function (arr, type, index) {
+				var verges = {
+					front: 0, down: 1, left: 2, right: 3, up: 4, unfront: 5
+				  };	  
+				var getMinZ = function (arr, verge, seria) {
 					var zIndex = 0;	
 					for (var i = 0; i < arr.length; i++) {
 						if (i === 0) {
@@ -4703,12 +4707,13 @@ drawBarChart.prototype = {
 							zIndex = arr[i].z;
 						}
 					}
-
+					//проверяем возможность вращения на 360
+					//в зависимости от угла увеличиваем zIndex фронтальной грани не первой к точке наблюдения колонки
 					if(checkRotation === false){
-						if(type === 0 && index > 0 && angelX > 0){ 
+						if(verge === verges.front && seria > 0 && angelX > 0){ 
 							zIndex += angelX * 2;
 						}	
-						if(type === 5 && index < length && angelX > 0 && angelY > 90 && angelY < 270){ 
+						if(verge === verges.unfront && seria < length && angelX > 0 && angelY > 90 && angelY < 270){ 
 							zIndex += angelX * 2;
 						}
 					}			
@@ -5261,7 +5266,7 @@ drawBarChart.prototype = {
 			gapDepth = DiffGapDepth;
 		}
 
-		//рассчитываем 8 точек для каждого столбца		
+		//рассчитываем 8 точек для каждого столбца
 		var x1 = startX, y1 = startY, z1 = 0 + gapDepth;
 		var x2 = startX, y2 = startY, z2 = perspectiveDepth + gapDepth;
 		var x3 = startX + individualBarWidth, y3 = startY, z3 = perspectiveDepth + gapDepth;
@@ -5282,6 +5287,7 @@ drawBarChart.prototype = {
 		var point8 = this.cChartDrawer._convertAndTurnPoint(x8, y8, z8);
 
 
+		
 		//down verge of minus values don't must draw(in stacked and stackedPer)
 		var isNotDrawDownVerge;
 		/*if((this.subType == "stacked" || this.subType == "stackedPer") && val < 0 && (isValMoreZero || (!isValMoreZero && isValLessZero !== 1)))
