@@ -18954,7 +18954,7 @@
 			History.Create_NewPoint();
 			History.StartTransaction();
 
-			pageOptions.pageSetup.asc_setHeadings(val);
+			pageOptions.asc_setHeadings(val);
 
 			History.EndTransaction();
 
@@ -18982,7 +18982,7 @@
 			History.Create_NewPoint();
 			History.StartTransaction();
 
-			pageOptions.pageSetup.asc_setGridLines(val);
+			pageOptions.asc_setGridLines(val);
 
 			History.EndTransaction();
 
