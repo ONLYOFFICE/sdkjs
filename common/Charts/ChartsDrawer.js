@@ -4662,9 +4662,6 @@ function drawBarChart(chart, chartsDrawer) {
 	this.subType = null;
 	this.sortLength = 0;
 
-	this.maxH = 0;
-	this.minH = 0;
-
 	this.paths = {};
 	this.sortZIndexPaths = [];
 	this.summBarVal = [];
@@ -4798,6 +4795,8 @@ drawBarChart.prototype = {
 
 				var maxHeight = startYColumnPosition.maxH;
 				var minHeight = startYColumnPosition.minH;
+				var valueMax = startYColumnPosition.valueMax;
+				var valueMin = startYColumnPosition.valueMin;
 
 				seriesHeight[i][idx] = height;
 
@@ -4936,14 +4935,20 @@ drawBarChart.prototype = {
 					}
 
 					var testHeight2 = 0;
-					if(val > axisMax){
-						testHeight2 = testHeight + (testHeight - testHeight * (axisMax / val));
-						maxHeight = maxHeight + (maxHeight - maxHeight * (axisMax / val));
-					}else if(val < axisMin){
-						testHeight2 = testHeight + (testHeight - testHeight * (axisMin / val));
-						maxHeight = maxHeight + (maxHeight - maxHeight * (axisMin / val));
+
+					// if(val > axisMax){
+					// 	testHeight2 = testHeight + (testHeight - testHeight * (axisMax / val));
+					// }else if(val < axisMin){
+					// 	testHeight2 = testHeight + (testHeight - testHeight * (axisMin / val));
+					// }
+					valueMax = this.subType === "stacked" ? valueMax : val;
+					valueMin = this.subType === "stacked" ? valueMin : val;
+
+					if(valueMax > axisMax){
+						testHeight2 = testHeight + (testHeight - testHeight * (axisMax / valueMax));
+					}else if(valueMin < axisMin){
+						testHeight2 = testHeight + (testHeight - testHeight * (axisMin / valueMin));
 					}
-					console.log(testHeight, maxHeight)
 					
 					switch(shapeType){
 						case AscFormat.BAR_SHAPE_PYRAMID: {
@@ -5056,13 +5061,16 @@ drawBarChart.prototype = {
 	},
 
 	_getStartYColumnPosition: function (seriesHeight, i, j, val, yPoints, prevValue, type) {
-		var startY, height, curVal, prevVal, endBlockPosition, startBlockPosition, maxH, minH, endBlockPositionMax, endBlockPositionMin;
+		var startY, height, curVal, prevVal, endBlockPosition, startBlockPosition, maxH, minH, endBlockPositionMax, endBlockPositionMin, h, valueMax, valueMin;
 		var nullPositionOX = this.subType === "stacked" ? this.cChartDrawer.getPositionZero(this.valAx) : this.catAx.posY * this.chartProp.pxToMM;
 
 		if (this.subType === "stacked") {
 			curVal = this._getStackedValue(this.chart.series, i, j, val);
 			prevVal = this._getStackedValue(this.chart.series, i - 1, j, val);
 			var maxVal = this._getStackedValue(this.chart.series, this.chart.series.length - 1, j, val);
+			h = this._getMaxHeight2(j);
+			valueMax = h.maxH;
+			valueMin = h.minH;
 
 			endBlockPosition = this.cChartDrawer.getYPosition(curVal, this.valAx) * this.chartProp.pxToMM;
 			startBlockPosition = prevVal ? this.cChartDrawer.getYPosition(prevVal, this.valAx) * this.chartProp.pxToMM : nullPositionOX;
@@ -5080,11 +5088,11 @@ drawBarChart.prototype = {
 
 		} else if (this.subType === "stackedPer") {
 
-			var h = this._getMaxHeightHorizontal();
+			var h = this._getMaxHeight1();
 			var indexMax = h.indexMax;
 			var indexMin = h.indexMin;
-			this.minH = h.minH;
-			this.maxH = h.maxH;
+			var minH = h.minH;
+			var maxH = h.maxH;
 
 			curVal = this._getStackedValue(this.chart.series, i, j, val);
 			prevVal = this._getStackedValue(this.chart.series, i - 1, j, val);
@@ -5095,15 +5103,15 @@ drawBarChart.prototype = {
 			startBlockPosition = this.summBarVal[j] ? this.cChartDrawer.getYPosition((prevVal / this.summBarVal[j]), this.valAx) * this.chartProp.pxToMM : nullPositionOX;
 
 			if(indexMax === j){
-				endBlockPositionMax = this.cChartDrawer.getYPosition(this.maxH / this.summBarVal[j], this.valAx) * this.chartProp.pxToMM;
+				endBlockPositionMax = this.cChartDrawer.getYPosition(maxH / this.summBarVal[j], this.valAx) * this.chartProp.pxToMM;
 			}else{
-				endBlockPositionMax = this.cChartDrawer.getYPosition(this.maxH, this.valAx) * this.chartProp.pxToMM;
+				endBlockPositionMax = this.cChartDrawer.getYPosition(maxH, this.valAx) * this.chartProp.pxToMM;
 			}
 			
 			if(indexMin === j){
-				endBlockPositionMin = this.cChartDrawer.getYPosition(this.minH / this.summBarVal[j], this.valAx) * this.chartProp.pxToMM;
+				endBlockPositionMin = this.cChartDrawer.getYPosition(minH / this.summBarVal[j], this.valAx) * this.chartProp.pxToMM;
 			}else{
-				endBlockPositionMin = this.cChartDrawer.getYPosition(this.minH, this.valAx) * this.chartProp.pxToMM;
+				endBlockPositionMin = this.cChartDrawer.getYPosition(minH, this.valAx) * this.chartProp.pxToMM;
 			}
 
 			startY = startBlockPosition;
@@ -5128,7 +5136,7 @@ drawBarChart.prototype = {
 				height = nullPositionOX - this.cChartDrawer.getYPosition(val, this.valAx) * this.chartProp.pxToMM;
 			}		
 		}
-		return {startY: startY, height: height, maxH: maxH, minH: minH};
+		return {startY: startY, height: height, maxH: maxH, minH: minH, valueMax: valueMax, valueMin: valueMin};
 	},
 
 	calculateParallalepiped: function (startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, arr) {
@@ -5151,8 +5159,6 @@ drawBarChart.prototype = {
 		}
 
 		//рассчитываем 8 точек для каждого столбца
-		console.log(height)
-
 		var x1 = startX, y1 = startY, z1 = 0 + gapDepth;
 		var x2 = startX, y2 = startY, z2 = perspectiveDepth + gapDepth;
 		var x3 = startX + individualBarWidth, y3 = startY, z3 = perspectiveDepth + gapDepth;
@@ -5384,7 +5390,7 @@ drawBarChart.prototype = {
 		}
 	},
 
-	_getMaxHeightHorizontal: function(){
+	_getMaxHeight1: function(){
 		var curVal;
 		var tempMax = 0;
 		var tempMin = 0;
@@ -5398,9 +5404,9 @@ drawBarChart.prototype = {
 		var countMax = 0;
 		var countMin = 0;
 
+		//нахождение пропорционально наибольшей и наименьшей высоты для накопительных пирамид
 		for(var i = 0; i < this.ptCount; i++){	
 			this._calculateSummStacked(i);
-			console.log(this.summBarVal[i]);
 			for (var k = 0; k < this.chart.series.length; k++) {
 				idxPoint = this.cChartDrawer.getIdxPoint(this.chart.series[k], i);
 				curVal = idxPoint ? parseFloat(idxPoint.val) : 0;
@@ -5446,39 +5452,23 @@ drawBarChart.prototype = {
 		return {maxH: countMax, minH: countMin, indexMax: indexMax, indexMin: indexMin};
 	},
 	
-	_getMaxHeightVertical: function(){
-		var numCache;
-		var valueMax = 0;
-		var valueMin = 0;
-		var maxH = [];
-		var minH = [];	
-		for(var k = 0; k < this.chart.series.length; k++){
-			numCache = this.cChartDrawer.getNumCache(this.chart.series[k].val);
-			var seria = numCache.pts;	
-			for(var j = 0; j < seria.length; j++){
-				if(seria[j].val > 0){
-					valueMax += seria[j].val;
+	_getMaxHeight2: function(j){
+			var curVal;
+			var tempMax = 0;
+			var tempMin = 0;
+			var idxPoint;
+			for (var k = 0; k < this.chart.series.length; k++) {
+				idxPoint = this.cChartDrawer.getIdxPoint(this.chart.series[k], j);
+				curVal = idxPoint ? parseFloat(idxPoint.val) : 0;
+
+				if (curVal > 0) {
+					tempMax += curVal;
 				}else{
-					valueMin += seria[j].val;
+					tempMin += curVal;
 				}
 			}
-			maxH[k] = valueMax;
-			minH[k] = valueMin;	
-			valueMax = 0;
-			valueMin = 0;			
-		}
-
-		for(var i = 0; i < maxH.length; i++){
-			if(valueMax < maxH[i]){
-				valueMax = maxH[i];
-			}
-		}
-		for(var i = 0; i < minH.length; i++){
-			if(valueMin > minH[i]){
-				valueMin = minH[i];
-			}
-		}
-		return {maxH: valueMax, minH: valueMin};
+		
+		return {maxH: tempMax, minH: tempMin};
 	},
 
 	_getStackedValue: function (series, i, j, val) {
@@ -6054,7 +6044,6 @@ drawBarChart.prototype = {
 			var x7 = startX + individualBarWidth / 2, y7 = nullPositionOX - maxH, z7 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
 			var x8 = startX + individualBarWidth / 2, y8 = nullPositionOX - maxH, z8 = 0 + gapDepth + perspectiveDepth / 2;
 		}
-		console.log(height, maxH2)
 
 		
 		//необходимые координаты плоскостей
