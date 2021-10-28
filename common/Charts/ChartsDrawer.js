@@ -3758,7 +3758,7 @@ CChartsDrawer.prototype =
 
 		return pathId;
 	},
-
+	
 	calculatePathFacesArray: function(faceArr, isConvertPxToMM)
 	{
 		var pxToMm = 1;
@@ -4496,7 +4496,7 @@ drawBarChart.prototype = {
 		var nullPositionOX = this.catAx.posY * this.chartProp.pxToMM;
 
 		var height, startX, startY, val, paths, seriesHeight = [], tempValues = [], seria, startYColumnPosition, startXPosition, prevVal, idx, seriesCounter = 0;
-		var cubeCount = 0, k;		
+		var cubeCount = 0, k;
 		for (var i = 0; i < this.chart.series.length; i++) {
 			numCache = this.cChartDrawer.getNumCache(this.chart.series[i].val);
 			seria = numCache ? numCache.pts : [];
@@ -4613,7 +4613,7 @@ drawBarChart.prototype = {
 					}
 
 					paths = paths.paths;
-	
+
 					//расскомментируем, чтобы включить старую схему отрисовки(+ переименовать функции _DrawBars3D -> _DrawBars3D2)
 					//this.sortZIndexPaths.push({seria: i, point: idx, paths: paths.paths, x: paths.x, y: paths.y, zIndex: paths.zIndex});
 					
@@ -4714,10 +4714,12 @@ drawBarChart.prototype = {
 				var length = this.chart.series.length - 1;
 				var verges = {
 					front: 0, down: 1, left: 2, right: 3, up: 4, unfront: 5
-				  };	  
+				};
 				var getMinZ = function (arr, verge, seria) {
-					var zIndex = 0;	
-					if(!arr){arr = []}
+					var zIndex = 0;
+					if (!arr) {
+						arr = []
+					}
 					for (var i = 0; i < arr.length; i++) {
 						if (i === 0) {
 							zIndex = arr[i].z;
@@ -4776,7 +4778,6 @@ drawBarChart.prototype = {
 			if (this.valAx.scaling.orientation != ORIENTATION_MIN_MAX) {
 				height = -height;
 			}
-
 		} else if (this.subType === "stackedPer") {
 			var h = this._getMaxHeightStackedPer();
 			var indexMax = h.indexMax;
@@ -4810,22 +4811,20 @@ drawBarChart.prototype = {
 
 			var nullPositionOX1 = this.catAx.posY * this.chartProp.pxToMM;
 
-			maxH = nullPositionOX1 - endBlockPositionMax;		
+			maxH = nullPositionOX1 - endBlockPositionMax;
 			minH = nullPositionOX1 - endBlockPositionMin;
 		
 			if (this.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
 				height = -height;
 			}
 		} else {
-
 			startY = nullPositionOX;
-
 			if (this.valAx && this.valAx.scaling.logBase)//исключение для логарифмической шкалы
 			{
 				height = nullPositionOX - this.cChartDrawer.getYPosition(val, this.valAx) * this.chartProp.pxToMM;
 			} else {
 				height = nullPositionOX - this.cChartDrawer.getYPosition(val, this.valAx) * this.chartProp.pxToMM;
-			}	
+			}
 		}
 
 		return {startY: startY, height: height, maxH: maxH, minH: minH, valueMax: valueMax, valueMin: valueMin};
@@ -5083,7 +5082,8 @@ drawBarChart.prototype = {
 		arrPoints2 = [[point11, point44, point88, point55], [point11, point22, point33, point44],
 			[point11, point22, point66, point55], [point44, point88, point77, point33],
 			[point55, point66, point77, point88], [point66, point22, point33, point77]];
-	
+
+
 		if (!arr) {
 			arr = [];
 		}
@@ -5109,6 +5109,7 @@ drawBarChart.prototype = {
 			}
 
 			//this.sortZIndexPaths.push({seria: i, point: idx, verge: k, paths: paths[k], points: arrPoints2[k], points2: arrPoints[k], plainEquation: plainEquation});
+
 			var plainEquation = this.cChartDrawer.getPlainEquation(arrPoints2[k][0], arrPoints2[k][1], arrPoints2[k][2], arrPoints2[k][3]);
 			var plainArea = this.cChartDrawer.getAreaQuadrilateral(arrPoints[k][0], arrPoints[k][1], arrPoints[k][2], arrPoints[k][3]);
 			arr[cubeCount].faces.push({
@@ -5580,7 +5581,6 @@ drawBarChart.prototype = {
 	_calculateRect3D: function (startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, serNum, type) {
 		//параметр r и глубина по OZ
 		var perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
-		var paths2;
 		//сдвиг по OZ в глубину
 		var gapDepth = this.chart.gapDepth != null ? this.chart.gapDepth : globalGapDepth;
 		if (this.subType === "standard") {
