@@ -3045,6 +3045,7 @@
 		if (pdfDocRenderer) {
 			pdfPrinter.DocumentRenderer = pdfDocRenderer;
 		}*/
+		this.printPreviewCtx.clear();
 		var ws;
 		if (!page) {
 			// Печать пустой страницы

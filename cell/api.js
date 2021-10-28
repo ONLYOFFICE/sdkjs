@@ -1183,9 +1183,9 @@ var editor;
 			if (!canvas) {
 				canvas = document.createElement('canvas');
 				canvas.id = canvasId;
-				/*obj.canvas.width = t.parentWidth;
-				obj.canvas.height = t.parentHeight;
-				obj.canvas.style.width = AscCommon.AscBrowser.convertToRetinaValue(t.parentWidth) + "px";*/
+				canvas.width = curElem.clientWidth;
+				canvas.height = curElem.clientHeight;
+				//obj.canvas.style.width = AscCommon.AscBrowser.convertToRetinaValue(t.parentWidth) + "px";
 				curElem.appendChild(canvas);
 				this.wb.printPreviewCtx = new asc.DrawingContext({
 					canvas: canvas, units: 0/*px*/, fmgrGraphics: this.wb.fmgrGraphics, font: this.wb.m_oFont
@@ -1193,6 +1193,7 @@ var editor;
 			}
 		}
 		this.wb.PrintPreviewPages = this.wb.calcPagesPrint();
+		this.asc_drawPrintPreview(0);
 		return this.wb.PrintPreviewPages.arrPages.length;
 	};
 
