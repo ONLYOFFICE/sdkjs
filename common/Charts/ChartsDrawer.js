@@ -5053,7 +5053,7 @@ drawBarChart.prototype = {
 
 		for (var k = 0; k < paths.frontPaths.length; k++) {
 			//не отрисовываем сегмент с нулевым значением если он не в основании пирамиды
-			if(type === AscFormat.BAR_SHAPE_PYRAMID && this.subType === "stacked" ||  this.subType === "stackedPer"){
+			if(type === AscFormat.BAR_SHAPE_PYRAMID && (this.subType === "stacked" || this.subType === "stackedPer")){
 				if (null === paths.frontPaths[k] && null === paths.darkPaths[k] || val === 0 && i !== 0) {
 					continue;
 				}
@@ -5561,6 +5561,11 @@ drawBarChart.prototype = {
 		x2 = startX, y2 = startY, z2 = perspectiveDepth + gapDepth;
 		x3 = startX + individualBarWidth, y3 = startY, z3 = perspectiveDepth + gapDepth;
 		x4 = startX + individualBarWidth, y4 = startY, z4 = 0 + gapDepth;
+	
+		point1 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1);
+		point2 = this.cChartDrawer._convertAndTurnPoint(x2, y2, z2);
+		point3 = this.cChartDrawer._convertAndTurnPoint(x3, y3, z3);
+		point4 = this.cChartDrawer._convertAndTurnPoint(x4, y4, z4);
 
 		if(type === AscFormat.BAR_SHAPE_PYRAMID){
 			x5 = startX + individualBarWidth / 2, y5 = startY - height, z5 = 0 + gapDepth + perspectiveDepth / 2;
@@ -5568,10 +5573,6 @@ drawBarChart.prototype = {
 			x7 = startX + individualBarWidth / 2, y7 = startY - height, z7 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
 			x8 = startX + individualBarWidth / 2, y8 = startY - height, z8 = 0 + gapDepth + perspectiveDepth / 2;
 		
-			point1 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1);
-			point2 = this.cChartDrawer._convertAndTurnPoint(x2, y2, z2);
-			point3 = this.cChartDrawer._convertAndTurnPoint(x3, y3, z3);
-			point4 = this.cChartDrawer._convertAndTurnPoint(x4, y4, z4);
 			point5 = this.cChartDrawer._convertAndTurnPoint(x5, y5, z5);
 			point6 = this.cChartDrawer._convertAndTurnPoint(x6, y6, z6);
 			point7 = this.cChartDrawer._convertAndTurnPoint(x7, y7, z7);
@@ -5584,10 +5585,6 @@ drawBarChart.prototype = {
 			x8 = startX + individualBarWidth, y8 = startY - height, z8 = 0 + gapDepth;
 
 			//поворот относительно осей
-			point1 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1);
-			point2 = this.cChartDrawer._convertAndTurnPoint(x2, y2, z2);
-			point3 = this.cChartDrawer._convertAndTurnPoint(x3, y3, z3);
-			point4 = this.cChartDrawer._convertAndTurnPoint(x4, y4, z4);
 			point5 = this.cChartDrawer._convertAndTurnPoint(x5, y5, z5);
 			point6 = this.cChartDrawer._convertAndTurnPoint(x6, y6, z6);
 			point7 = this.cChartDrawer._convertAndTurnPoint(x7, y7, z7);
