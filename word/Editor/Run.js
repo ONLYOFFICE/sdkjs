@@ -2176,10 +2176,15 @@ ParaRun.prototype.GetSimpleChangesRange = function(arrChanges, nStart, nEnd)
 				return null;
 		}
 	}
-
+    
+    var filterParaSpaceContent = function(Content) {
+        return Content.filter(function(run) {
+            return run instanceof ParaSpace !== true
+        })
+    }
 	// Если после изменений Run стал пустым, или, наоборот, он был пустым, а стал не пустым, тогда
 	// мы не можем быть уверены, что высота строки не изменилась
-	if (0 === this.Content.length || 0 === this.Content.length - nChangeCount)
+	if (0 === filterParaSpaceContent(this.Content).length || 0 === filterParaSpaceContent(this.Content).length - nChangeCount)
 		return null;
 
 	return oParaPos;
