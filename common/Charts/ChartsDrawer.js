@@ -5053,7 +5053,7 @@ drawBarChart.prototype = {
 
 		for (var k = 0; k < paths.frontPaths.length; k++) {
 			//не отрисовываем сегмент с нулевым значением если он не в основании пирамиды
-			if(type === AscFormat.BAR_SHAPE_PYRAMID){
+			if(type === AscFormat.BAR_SHAPE_PYRAMID && this.subType === "stacked" ||  this.subType === "stackedPer"){
 				if (null === paths.frontPaths[k] && null === paths.darkPaths[k] || val === 0 && i !== 0) {
 					continue;
 				}
