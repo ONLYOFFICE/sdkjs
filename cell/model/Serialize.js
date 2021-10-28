@@ -89,7 +89,8 @@
         App: 6,
         Core: 7,
         PersonList: 8,
-        CustomProperties: 9
+        CustomProperties: 9,
+        Customs: 10
     };
     /** @enum */
     var c_oSerStylesTypes =
@@ -1140,6 +1141,13 @@
 		SHA_512: 9,
 		WHIRLPOOL: 10
 	};
+    var c_oSerCustoms = {
+        Custom: 0, 
+        ItemId: 1,
+        Uri: 2,
+        Content: 3
+    };
+
 	/** @enum */
     var EBorderStyle =
     {
