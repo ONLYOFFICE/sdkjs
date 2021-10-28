@@ -265,7 +265,11 @@ CGlossaryDocument.prototype.GetNewName = function()
  */
 CGlossaryDocument.prototype.IsDefaultDocPart = function(oDocPart)
 {
-	return (oDocPart === this.DefaultPlaceholder.Text || oDocPart === this.DefaultPlaceholder.DateTime || oDocPart === this.DefaultPlaceholder.List);
+	return (oDocPart === this.DefaultPlaceholder.Text
+		|| oDocPart === this.DefaultPlaceholder.DateTime
+		|| oDocPart === this.DefaultPlaceholder.List
+		|| oDocPart === this.DefaultPlaceholder.Equation
+		|| oDocPart === this.DefaultPlaceholder.List);
 };
 CGlossaryDocument.prototype.Refresh_RecalcData = function(Data)
 {
