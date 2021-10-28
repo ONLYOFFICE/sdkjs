@@ -2068,6 +2068,13 @@
 
 				if (oTextFormPr.AutoFit)
 					nFlag |= (1 << 24);
+
+				var sPlaceHolderText = oForm.GetPlaceholderText();
+				if (sPlaceHolderText)
+				{
+					nFlag |= (1 << 25);
+					this.Memory.WriteString(sPlaceHolderText);
+				}
 			}
 			else if (oForm.IsComboBox() || oForm.IsDropDownList())
 			{
@@ -2076,7 +2083,7 @@
 
 				var oFormPr = isComboBox ? oForm.GetComboBoxPr() : oForm.GetDropDownListPr();
 
-				if (!isComboBox)
+				if (isComboBox)
 					nFlag |= (1 << 20);
 
 				var sValue         = oForm.GetSelectedText(true);
@@ -2115,6 +2122,13 @@
 				{
 					nFlag |= (1 << 22);
 					this.Memory.WriteString(sValue);
+				}
+
+				var sPlaceHolderText = oForm.GetPlaceholderText();
+				if (sPlaceHolderText)
+				{
+					nFlag |= (1 << 23);
+					this.Memory.WriteString(sPlaceHolderText);
 				}
 			}
 			else if (oForm.IsCheckBox())
