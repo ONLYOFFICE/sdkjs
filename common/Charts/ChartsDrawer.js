@@ -4643,7 +4643,7 @@ drawBarChart.prototype = {
 						testHeight2 = testHeight + (testHeight - testHeight * (axisMin / valueMin));
 					}
 
-					//расчет clustered, stacked, stackedPer (parallelepiped and pyramide)
+					//расчет clustered, stacked, stackedPer (parallelepipeds and pyramide)
 					this.calculate3dCharts(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2, maxHeight, minHeight, testHeight2, shapeType);
 					this.calculate3dCharts(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp, maxHeight, minHeight, testHeight2, shapeType);
 
