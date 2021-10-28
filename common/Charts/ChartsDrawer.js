@@ -4633,19 +4633,19 @@ drawBarChart.prototype = {
 						}
 					}
 
-					var testHeight2 = 0;
+					var testMaxHeight = 0;
 					valueMax = this.subType === "stacked" ? valueMax : val;
 					valueMin = this.subType === "stacked" ? valueMin : val;
 
 					if(valueMax > axisMax){
-						testHeight2 = testHeight + (testHeight - testHeight * (axisMax / valueMax));
+						testMaxHeight = testHeight + (testHeight - testHeight * (axisMax / valueMax));
 					}else if(valueMin < axisMin){
-						testHeight2 = testHeight + (testHeight - testHeight * (axisMin / valueMin));
+						testMaxHeight = testHeight + (testHeight - testHeight * (axisMin / valueMin));
 					}
 
 					//расчет clustered, stacked, stackedPer (parallelepipeds and pyramide)
-					this.calculate3dCharts(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2, maxHeight, minHeight, testHeight2, shapeType);
-					this.calculate3dCharts(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp, maxHeight, minHeight, testHeight2, shapeType);
+					this.calculate3dCharts(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2, maxHeight, minHeight, testMaxHeight, shapeType);
+					this.calculate3dCharts(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp, maxHeight, minHeight, testMaxHeight, shapeType);
 
 					cubeCount++;
 				} else {
@@ -4853,48 +4853,40 @@ drawBarChart.prototype = {
 		var point1, point2, point3, point4, point5, point6, point7, point8;
 		var arrPoints, arrPoints2;
 
+		var x12 = startX, y12 = startY, z12 = 0 + gapDepth;
+		var x22 = startX, y22 = startY, z22 = perspectiveDepth + gapDepth;
+		var x32 = startX + individualBarWidth, y32 = startY, z32 = perspectiveDepth + gapDepth;
+		var x42 = startX + individualBarWidth, y42 = startY, z42 = 0 + gapDepth;
+		var x52 = startX, y52 = startY - height, z52 = 0 + gapDepth;
+		var x62 = startX, y62 = startY - height, z62 = perspectiveDepth + gapDepth;
+		var x72 = startX + individualBarWidth, y72 = startY - height, z72 = perspectiveDepth + gapDepth;
+		var x82 = startX + individualBarWidth, y82 = startY - height, z82 = 0 + gapDepth;
+
 		//расчет пирамид
 		if(type === AscFormat.BAR_SHAPE_PYRAMID){
 			if(this.subType === "stacked" || this.subType === "stackedPer"){
 				var nullPositionOX = this.catAx.posY * this.chartProp.pxToMM;	
 
 				//получаем координаты точек полной диаграммы
-				if (this.subType === "stacked") {
+				if(this.subType === "stacked" && maxH2){
 					if(maxH2){
-						maxH = maxH2;
+					  maxH = maxH2;
 					}
-					x1 = startX, y1 = nullPositionOX, z1 = 0 + gapDepth;
-					x2 = startX, y2 = nullPositionOX, z2 = perspectiveDepth + gapDepth;
-					x3 = startX + individualBarWidth, y3 = nullPositionOX, z3 = perspectiveDepth + gapDepth;
-					x4 = startX + individualBarWidth, y4 = nullPositionOX, z4 = 0 + gapDepth;
-					x5 = startX + individualBarWidth / 2, y5 = nullPositionOX - maxH, z5 = 0 + gapDepth + perspectiveDepth / 2;
-					x6 = startX + individualBarWidth / 2, y6 = nullPositionOX - maxH, z6 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
-					x7 = startX + individualBarWidth / 2, y7 = nullPositionOX - maxH, z7 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
-					x8 = startX + individualBarWidth / 2, y8 = nullPositionOX - maxH, z8 = 0 + gapDepth + perspectiveDepth / 2;
-				}
-				if (this.subType === "stackedPer") {
-					x1 = startX, y1 = nullPositionOX, z1 = 0 + gapDepth;
-					x2 = startX, y2 = nullPositionOX, z2 = perspectiveDepth + gapDepth;
-					x3 = startX + individualBarWidth, y3 = nullPositionOX, z3 = perspectiveDepth + gapDepth;
-					x4 = startX + individualBarWidth, y4 = nullPositionOX, z4 = 0 + gapDepth;
+				  }else if(this.subType === "stackedPer" && val < 0) {
 					if(val < 0){
-						maxH = minH;
-					}
-					x5 = startX + individualBarWidth / 2, y5 = nullPositionOX - maxH, z5 = 0 + gapDepth + perspectiveDepth / 2;
-					x6 = startX + individualBarWidth / 2, y6 = nullPositionOX - maxH, z6 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
-					x7 = startX + individualBarWidth / 2, y7 = nullPositionOX - maxH, z7 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
-					x8 = startX + individualBarWidth / 2, y8 = nullPositionOX - maxH, z8 = 0 + gapDepth + perspectiveDepth / 2;
+					  maxH = minH;
+					}  
 				}
+
+				x1 = startX, y1 = nullPositionOX, z1 = 0 + gapDepth;
+				x2 = startX, y2 = nullPositionOX, z2 = perspectiveDepth + gapDepth;
+				x3 = startX + individualBarWidth, y3 = nullPositionOX, z3 = perspectiveDepth + gapDepth;
+				x4 = startX + individualBarWidth, y4 = nullPositionOX, z4 = 0 + gapDepth;
+				x5 = startX + individualBarWidth / 2, y5 = nullPositionOX - maxH, z5 = 0 + gapDepth + perspectiveDepth / 2;
+				x6 = startX + individualBarWidth / 2, y6 = nullPositionOX - maxH, z6 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
+				x7 = startX + individualBarWidth / 2, y7 = nullPositionOX - maxH, z7 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
+				x8 = startX + individualBarWidth / 2, y8 = nullPositionOX - maxH, z8 = 0 + gapDepth + perspectiveDepth / 2;
 						
-				//необходимые координаты плоскостей
-				var x12 = startX, y12 = startY, z12 = 0 + gapDepth;
-				var x22 = startX, y22 = startY, z22 = perspectiveDepth + gapDepth;
-				var x32 = startX + individualBarWidth, y32 = startY, z32 = perspectiveDepth + gapDepth;
-				var x42 = startX + individualBarWidth, y42 = startY, z42 = 0 + gapDepth;
-				var x52 = startX, y52 = startY - height, z52 = 0 + gapDepth;
-				var x62 = startX, y62 = startY - height, z62 = perspectiveDepth + gapDepth;
-				var x72 = startX + individualBarWidth, y72 = startY - height, z72 = perspectiveDepth + gapDepth;
-				var x82 = startX + individualBarWidth, y82 = startY - height, z82 = 0 + gapDepth;
 		
 				//расчет верхней и нижней пересекающих плоскостей
 				var pointPlainUp1 = this.cChartDrawer._convertAndTurnPoint(x52, y52, z52);
@@ -4941,9 +4933,7 @@ drawBarChart.prototype = {
 					point6 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationUp, lineEquation4);
 					point7 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationUp, lineEquation3);
 					point8 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationUp, lineEquation2);	
-				}
-		
-				if(val === 0 && i === 0){
+				}else if(val === 0 && i === 0){
 					point1 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1);
 					point2 = this.cChartDrawer._convertAndTurnPoint(x2, y2, z2);
 					point3 = this.cChartDrawer._convertAndTurnPoint(x3, y3, z3);
@@ -4956,7 +4946,7 @@ drawBarChart.prototype = {
 				
 				var points = [point1, point2, point3, point4, point5, point6, point7, point8];
 				var paths = this.cChartDrawer.calculateRect3D(points, val, null, true);
-		
+
 				point1 = this.cChartDrawer._convertAndTurnPoint(x12, y12, z12);
 				point2 = this.cChartDrawer._convertAndTurnPoint(x22, y22, z22);
 				point3 = this.cChartDrawer._convertAndTurnPoint(x32, y32, z32);
@@ -4965,40 +4955,23 @@ drawBarChart.prototype = {
 				point6 = this.cChartDrawer._convertAndTurnPoint(x62, y62, z62);
 				point7 = this.cChartDrawer._convertAndTurnPoint(x72, y72, z72);
 				point8 = this.cChartDrawer._convertAndTurnPoint(x82, y82, z82);
-		
-				var point11 = this.cChartDrawer._convertAndTurnPoint(x12, y12, z12, null, null, true);
-				var point22 = this.cChartDrawer._convertAndTurnPoint(x22, y22, z22, null, null, true);
-				var point33 = this.cChartDrawer._convertAndTurnPoint(x32, y32, z32, null, null, true);
-				var point44 = this.cChartDrawer._convertAndTurnPoint(x42, y42, z42, null, null, true);
-				var point55 = this.cChartDrawer._convertAndTurnPoint(x52, y52, z52, null, null, true);
-				var point66 = this.cChartDrawer._convertAndTurnPoint(x62, y62, z62, null, null, true);
-				var point77 = this.cChartDrawer._convertAndTurnPoint(x72, y72, z72, null, null, true);
-				var point88 = this.cChartDrawer._convertAndTurnPoint(x82, y82, z82, null, null, true);
 
 			}else{
-				//расчет clustered pyramide
+				//расчет clustered pyramide		
 				x1 = startX, y1 = startY, z1 = 0 + gapDepth;
 				x2 = startX, y2 = startY, z2 = perspectiveDepth + gapDepth;
 				x3 = startX + individualBarWidth, y3 = startY, z3 = perspectiveDepth + gapDepth;
 				x4 = startX + individualBarWidth, y4 = startY, z4 = 0 + gapDepth;
-	
+
 				if(maxH2){
-					x5 = startX + individualBarWidth / 2, y5 = startY - maxH2, z5 = 0 + gapDepth + perspectiveDepth / 2;
-					x6 = startX + individualBarWidth / 2, y6 = startY - maxH2, z6 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
-					x7 = startX + individualBarWidth / 2, y7 = startY - maxH2, z7 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
-					x8 = startX + individualBarWidth / 2, y8 = startY - maxH2, z8 = 0 + gapDepth + perspectiveDepth / 2;
-				}else{
-					x5 = startX + individualBarWidth / 2, y5 = startY - height, z5 = 0 + gapDepth + perspectiveDepth / 2;
-					x6 = startX + individualBarWidth / 2, y6 = startY - height, z6 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
-					x7 = startX + individualBarWidth / 2, y7 = startY - height, z7 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
-					x8 = startX + individualBarWidth / 2, y8 = startY - height, z8 = 0 + gapDepth + perspectiveDepth / 2;
+					height = maxH2;
 				}
-	
-				var x52 = startX, y52 = startY - height, z52 = 0 + gapDepth;
-				var x62 = startX, y62 = startY - height, z62 = perspectiveDepth + gapDepth;
-				var x72 = startX + individualBarWidth, y72 = startY - height, z72 = perspectiveDepth + gapDepth;
-				var x82 = startX + individualBarWidth, y82 = startY - height, z82 = 0 + gapDepth;
-				
+
+				x5 = startX + individualBarWidth / 2, y5 = startY - height, z5 = 0 + gapDepth + perspectiveDepth / 2;
+				x6 = startX + individualBarWidth / 2, y6 = startY - height, z6 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
+				x7 = startX + individualBarWidth / 2, y7 = startY - height, z7 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
+				x8 = startX + individualBarWidth / 2, y8 = startY - height, z8 = 0 + gapDepth + perspectiveDepth / 2;
+					
 				var pointPlainUp1 = this.cChartDrawer._convertAndTurnPoint(x52, y52, z52);
 				var pointPlainUp2 = this.cChartDrawer._convertAndTurnPoint(x62, y62, z62);
 				var pointPlainUp3 = this.cChartDrawer._convertAndTurnPoint(x72, y72, z72);
@@ -5030,50 +5003,31 @@ drawBarChart.prototype = {
 
 				var points = [point1, point2, point3, point4, point5, point6, point7, point8];
 				var paths = this.cChartDrawer.calculateRect3D(points, val, null, true);
-
-				var point11 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1, null, null, true);
-				var point22 = this.cChartDrawer._convertAndTurnPoint(x2, y2, z2, null, null, true);
-				var point33 = this.cChartDrawer._convertAndTurnPoint(x3, y3, z3, null, null, true);
-				var point44 = this.cChartDrawer._convertAndTurnPoint(x4, y4, z4, null, null, true);
-				var point55 = this.cChartDrawer._convertAndTurnPoint(x5, y5, z5, null, null, true);
-				var point66 = this.cChartDrawer._convertAndTurnPoint(x6, y6, z6, null, null, true);
-				var point77 = this.cChartDrawer._convertAndTurnPoint(x7, y7, z7, null, null, true);
-				var point88 = this.cChartDrawer._convertAndTurnPoint(x8, y8, z8, null, null, true);	
 			}
 		}else{
 			//расчет параллелепипеда 	
-			//рассчитываем 8 точек для каждого столбца
-			x1 = startX, y1 = startY, z1 = 0 + gapDepth;
-			x2 = startX, y2 = startY, z2 = perspectiveDepth + gapDepth;
-			x3 = startX + individualBarWidth, y3 = startY, z3 = perspectiveDepth + gapDepth;
-			x4 = startX + individualBarWidth, y4 = startY, z4 = 0 + gapDepth;
-			x5 = startX, y5 = startY - height, z5 = 0 + gapDepth;
-			x6 = startX, y6 = startY - height, z6 = perspectiveDepth + gapDepth;
-			x7 = startX + individualBarWidth, y7 = startY - height, z7 = perspectiveDepth + gapDepth;
-			x8 = startX + individualBarWidth, y8 = startY - height, z8 = 0 + gapDepth;
-
 			//поворот относительно осей
-			point1 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1);
-			point2 = this.cChartDrawer._convertAndTurnPoint(x2, y2, z2);
-			point3 = this.cChartDrawer._convertAndTurnPoint(x3, y3, z3);
-			point4 = this.cChartDrawer._convertAndTurnPoint(x4, y4, z4);
-			point5 = this.cChartDrawer._convertAndTurnPoint(x5, y5, z5);
-			point6 = this.cChartDrawer._convertAndTurnPoint(x6, y6, z6);
-			point7 = this.cChartDrawer._convertAndTurnPoint(x7, y7, z7);
-			point8 = this.cChartDrawer._convertAndTurnPoint(x8, y8, z8);
+			point1 = this.cChartDrawer._convertAndTurnPoint(x12, y12, z12);
+			point2 = this.cChartDrawer._convertAndTurnPoint(x22, y22, z22);
+			point3 = this.cChartDrawer._convertAndTurnPoint(x32, y32, z32);
+			point4 = this.cChartDrawer._convertAndTurnPoint(x42, y42, z42);
+			point5 = this.cChartDrawer._convertAndTurnPoint(x52, y52, z52);
+			point6 = this.cChartDrawer._convertAndTurnPoint(x62, y62, z62);
+			point7 = this.cChartDrawer._convertAndTurnPoint(x72, y72, z72);
+			point8 = this.cChartDrawer._convertAndTurnPoint(x82, y82, z82);
 
 			var points = [point1, point2, point3, point4, point5, point6, point7, point8];
 			var paths = this.cChartDrawer.calculateRect3D(points, val, null, true);	
-
-			var point11 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1, null, null, true);
-			var point22 = this.cChartDrawer._convertAndTurnPoint(x2, y2, z2, null, null, true);
-			var point33 = this.cChartDrawer._convertAndTurnPoint(x3, y3, z3, null, null, true);
-			var point44 = this.cChartDrawer._convertAndTurnPoint(x4, y4, z4, null, null, true);
-			var point55 = this.cChartDrawer._convertAndTurnPoint(x5, y5, z5, null, null, true);
-			var point66 = this.cChartDrawer._convertAndTurnPoint(x6, y6, z6, null, null, true);
-			var point77 = this.cChartDrawer._convertAndTurnPoint(x7, y7, z7, null, null, true);
-			var point88 = this.cChartDrawer._convertAndTurnPoint(x8, y8, z8, null, null, true);	
 		}
+
+		var point11 = this.cChartDrawer._convertAndTurnPoint(x12, y12, z12, null, null, true);
+		var point22 = this.cChartDrawer._convertAndTurnPoint(x22, y22, z22, null, null, true);
+		var point33 = this.cChartDrawer._convertAndTurnPoint(x32, y32, z32, null, null, true);
+		var point44 = this.cChartDrawer._convertAndTurnPoint(x42, y42, z42, null, null, true);
+		var point55 = this.cChartDrawer._convertAndTurnPoint(x52, y52, z52, null, null, true);
+		var point66 = this.cChartDrawer._convertAndTurnPoint(x62, y62, z62, null, null, true);
+		var point77 = this.cChartDrawer._convertAndTurnPoint(x72, y72, z72, null, null, true);
+		var point88 = this.cChartDrawer._convertAndTurnPoint(x82, y82, z82, null, null, true);
 
 		arrPoints = [[point1, point4, point8, point5], [point1, point2, point3, point4],
 			[point1, point2, point6, point5], [point4, point8, point7, point3], [point5, point6, point7, point8],
@@ -5099,8 +5053,8 @@ drawBarChart.prototype = {
 
 		for (var k = 0; k < paths.frontPaths.length; k++) {
 			//не отрисовываем сегмент с нулевым значением если он не в основании пирамиды
-			if(this.subType === "stacked" || "stackedPer" && type === AscFormat.BAR_SHAPE_PYRAMID){
-				if (null === paths.frontPaths[k] && null === paths.darkPaths[k] || (val === 0 && i !== 0)) {
+			if(type === AscFormat.BAR_SHAPE_PYRAMID){
+				if (null === paths.frontPaths[k] && null === paths.darkPaths[k] || val === 0 && i !== 0) {
 					continue;
 				}
 			}
@@ -5603,11 +5557,12 @@ drawBarChart.prototype = {
 		/*if((this.subType == "stacked" || this.subType == "stackedPer") && val < 0 && (isValMoreZero || (!isValMoreZero && isValLessZero !== 1)))
 		 isNotDrawDownVerge = true;*/
 
+		x1 = startX, y1 = startY, z1 = 0 + gapDepth;
+		x2 = startX, y2 = startY, z2 = perspectiveDepth + gapDepth;
+		x3 = startX + individualBarWidth, y3 = startY, z3 = perspectiveDepth + gapDepth;
+		x4 = startX + individualBarWidth, y4 = startY, z4 = 0 + gapDepth;
+
 		if(type === AscFormat.BAR_SHAPE_PYRAMID){
-			x1 = startX, y1 = startY, z1 = 0 + gapDepth;
-			x2 = startX, y2 = startY, z2 = perspectiveDepth + gapDepth;
-			x3 = startX + individualBarWidth, y3 = startY, z3 = perspectiveDepth + gapDepth;
-			x4 = startX + individualBarWidth, y4 = startY, z4 = 0 + gapDepth;
 			x5 = startX + individualBarWidth / 2, y5 = startY - height, z5 = 0 + gapDepth + perspectiveDepth / 2;
 			x6 = startX + individualBarWidth / 2, y6 = startY - height, z6 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
 			x7 = startX + individualBarWidth / 2, y7 = startY - height, z7 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
@@ -5623,10 +5578,6 @@ drawBarChart.prototype = {
 			point8 = this.cChartDrawer._convertAndTurnPoint(x8, y8, z8);
 		}else{
 			//рассчитываем 8 точек для каждого столбца
-			x1 = startX, y1 = startY, z1 = 0 + gapDepth;
-			x2 = startX, y2 = startY, z2 = perspectiveDepth + gapDepth;
-			x3 = startX + individualBarWidth, y3 = startY, z3 = perspectiveDepth + gapDepth;
-			x4 = startX + individualBarWidth, y4 = startY, z4 = 0 + gapDepth;
 			x5 = startX, y5 = startY - height, z5 = 0 + gapDepth;
 			x6 = startX, y6 = startY - height, z6 = perspectiveDepth + gapDepth;
 			x7 = startX + individualBarWidth, y7 = startY - height, z7 = perspectiveDepth + gapDepth;
