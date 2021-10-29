@@ -3638,7 +3638,7 @@ CChartsDrawer.prototype =
 	calculateRect3D : function(points, val, isNotDrawDownVerge, isNotOnlyFrontFaces)
 	{
 		var res;
-		
+
 		var point1 = points[0];
 		var point2 = points[1];
 		var point3 = points[2];
@@ -3724,7 +3724,6 @@ CChartsDrawer.prototype =
 		face = this._calculatePathFace(point2, point6, point7, point3, true);
 		addPathToArr(this._isVisibleVerge3D(point3, point2, point6, val), face, 5);
 
-
 		if(!isNotOnlyFrontFaces)
 		{
 			res = frontPaths;
@@ -3737,7 +3736,7 @@ CChartsDrawer.prototype =
 		return res;
 	},
 
-	_calculatePathFace: function(point1, point2, point3, point4, isConvertPxToMM, type)
+	_calculatePathFace: function(point1, point2, point3, point4, isConvertPxToMM)
 	{
 		var pxToMm = 1;
 		if(isConvertPxToMM)
@@ -5547,9 +5546,6 @@ drawBarChart.prototype = {
 		}
 	},
 
-
-
-
 	_calculateRect3D: function (startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, serNum, type) {
 		//параметр r и глубина по OZ
 		var perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
@@ -5638,6 +5634,7 @@ drawBarChart.prototype = {
 		return {paths: paths, paths2: paths2, x: point1.x, y: point1.y, zIndex: point1.z, sortPaths: sortPaths, facePoints: facePoints};
 	}
 };
+
 
 /** @constructor */
 function drawLineChart(chart, chartsDrawer) {
