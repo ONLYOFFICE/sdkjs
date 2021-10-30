@@ -191,17 +191,17 @@ function CStream(data, size)
 
 function CreateDocumentData(szSrc)
 {
-    var isBase64 = false;
+	var isBase64 = false;
 	if (typeof(szSrc) == "string" || szSrc instanceof String){
 		isBase64 = true;
 	}
 
 	var stream = null;
 	if (!isBase64)
-    	return new CStream(szSrc, szSrc.length);
+		return new CStream(szSrc, szSrc.length);
 
-    var memoryData = AscCommon.Base64.decode(szSrc, true);
-    return new CStream(memoryData, memoryData.length);
+	var memoryData = AscCommon.Base64.decode(szSrc, true);
+	return new CStream(memoryData, memoryData.length);
 }
 
 function CDrawingObject(metaDoc)

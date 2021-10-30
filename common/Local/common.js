@@ -657,7 +657,7 @@ window["DesktopAfterOpen"] = function(_api)
 
 function getBinaryArray(_data, _len)
 {
-	return AscCommon.Base64.decode(_data);
+	return AscCommon.Base64.decode(_data, false, _len);
 }
 
 // encryption ----------------------------------

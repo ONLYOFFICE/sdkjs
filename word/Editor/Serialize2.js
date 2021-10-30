@@ -7516,7 +7516,7 @@ function BinaryFileReader(doc, openParams)
 			var dstLen = parseInt(dst_len);
 
 			var memoryData = AscCommon.Base64.decode(szSrc, false, dstLen, index);
-			this.stream = new AscCommon.FT_Stream2(memoryData, memoryData.length);
+			stream = new AscCommon.FT_Stream2(memoryData, memoryData.length);
 		} else {
 			stream = new AscCommon.FT_Stream2(szSrc, szSrc.length);
 			//skip header

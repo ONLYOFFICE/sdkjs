@@ -302,7 +302,7 @@ function BinaryPPTYLoader()
 
 			var dstLen = parseInt(dstLen_str);
 			var memoryData = AscCommon.Base64.decode(base64_ppty, false, dstLen, index);
-            this.stream = new AscCommon.FileStream(memoryData, memoryData.length);
+			this.stream = new AscCommon.FileStream(memoryData, memoryData.length);
 		} else {
 			this.stream = new AscCommon.FileStream();
 			this.stream.obj    = null;

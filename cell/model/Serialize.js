@@ -10749,8 +10749,8 @@
 			if (Asc.c_nVersionNoBase64 !== nVersion) {
 				var dstLen = parseInt(dst_len);
 
-                var memoryData = AscCommon.Base64.decode(szSrc, false, dstLen, index);
-                stream = new AscCommon.FT_Stream2(memoryData, memoryData.length);
+				var memoryData = AscCommon.Base64.decode(szSrc, false, dstLen, index);
+				stream = new AscCommon.FT_Stream2(memoryData, memoryData.length);
 
 			} else {
 				stream = new AscCommon.FT_Stream2(szSrc, szSrc.length);
