@@ -203,11 +203,11 @@ function CBinaryFileWriter()
     };
     this.GetBase64Memory = function()
     {
-        return AscCommon.Base64Encode(this.data,this.pos, 0);
+        return AscCommon.Base64.encode(this.data, 0, this.pos);
     };
     this.GetBase64Memory2 = function(nPos, nLen)
     {
-        return AscCommon.Base64Encode(this.data, nLen, nPos);
+        return AscCommon.Base64.encode(this.data, nPos, nLen);
     };
     this.GetData   = function(nPos, nLen)
     {

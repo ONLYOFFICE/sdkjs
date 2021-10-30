@@ -15547,7 +15547,7 @@ CDocument.prototype.Update_ForeignCursor = function(CursorInfo, UserId, Show, Us
 	}
 
 	var Changes = new AscCommon.CCollaborativeChanges();
-	var Reader  = Changes.GetStream(CursorInfo, 0, CursorInfo.length);
+	var Reader  = Changes.GetStream(CursorInfo);
 
 	var RunId    = Reader.GetString2();
 	var InRunPos = Reader.GetLong();

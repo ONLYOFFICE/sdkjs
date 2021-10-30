@@ -35,13 +35,51 @@
     }
 
     window.AscCommon["Base64"] = window.AscCommon.Base64 = {};
-    window.AscCommon.Base64.decode = window.AscCommon.Base64["decode"] = function(input, isUsePrefix)
+    window.AscCommon.Base64.decodeData = window.AscCommon.Base64["decodeData"] = function(input, input_offset, input_len, output, output_offset)
+    {
+        var isBase64 = typeof input === "string";
+        var writeIndex = (undefined === output_offset) ? 0 : output_offset;
+        var index = (undefined === input_offset) ? 0 : input_offset;
+
+        while (index < input_len)
+        {
+            var dwCurr = 0;
+            var i;
+            var nBits = 0;
+            for (i=0; i<4; i++)
+            {
+                if (index >= srcLen)
+                    break;
+                var nCh = decodeBase64Char(isBase64 ? input.charCodeAt(index) : input[index]);
+                index++;
+                if (nCh == -1)
+                {
+                    i--;
+                    continue;
+                }
+                dwCurr <<= 6;
+                dwCurr |= nCh;
+                nBits += 6;
+            }
+
+            dwCurr <<= 24-nBits;
+            for (i=0; i<(nBits>>3); i++)
+            {
+                output[writeIndex++] = ((dwCurr & 0x00ff0000) >>> 16);
+                dwCurr <<= 8;
+            }
+        }
+        return writeIndex;
+    };
+    window.AscCommon.Base64.decode = window.AscCommon.Base64["decode"] = function(input, isUsePrefix, dstlen, offset)
     {
         var srcLen = input.length;
-        var index = 0;
-        var dstLen = srcLen;
+        var index = (undefined === offset) ? 0 : offset;
+        var dstLen = (undefined === dstlen) ? srcLen : dstlen;
 
-        if (isUsePrefix)
+        var isBase64 = typeof input === "string";
+
+        if (isUsePrefix && isBase64)
         {
             // ищем длину
             dstLen = 0;
@@ -65,35 +103,7 @@
         }
 
         var dst = new Uint8Array(dstLen);
-        var writeIndex = 0;
-
-        while (index < srcLen)
-        {
-            var dwCurr = 0;
-            var i;
-            var nBits = 0;
-            for (i=0; i<4; i++)
-            {
-                if (index >= srcLen)
-                    break;
-                var nCh = decodeBase64Char(input.charCodeAt(index++));
-                if (nCh == -1)
-                {
-                    i--;
-                    continue;
-                }
-                dwCurr <<= 6;
-                dwCurr |= nCh;
-                nBits += 6;
-            }
-
-            dwCurr <<= 24-nBits;
-            for (i=0; i<(nBits>>3); i++)
-            {
-                dst[writeIndex++] = ((dwCurr & 0x00ff0000) >>> 16);
-                dwCurr <<= 8;
-            }
-        }
+        var writeIndex = window.AscCommon.Base64.decodeData(input, index, srcLen, dst, 0);
 
         if (writeIndex == dstLen)
             return dst;
@@ -101,13 +111,14 @@
         return new Uint8Array(dst.buffer, 0, writeIndex);
     };
 
-    window.AscCommon.Base64.encode = window.AscCommon.Base64["encode"] = function(input, isUsePrefix)
+    window.AscCommon.Base64.encode = window.AscCommon.Base64["encode"] = function(input, offset, length, isUsePrefix)
     {
-        var srcLen = input.length;
+        var srcLen = (undefined === length) ? input.length : length;
+        var index = (undefined === offset) ? 0 : offset;
+
         var len1 = (((srcLen / 3) >> 0) * 4);
         var len2 = (len1 / 76) >> 0;
         var len3 = 19;
-        var index = 0;
         var dstArray = [];
 
         var sTemp = "";

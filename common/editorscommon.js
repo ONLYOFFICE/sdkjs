@@ -650,7 +650,7 @@
 			ext += "+xml";
 		if (null !== ext && oZipImages && (content = oZipImages[name]))
 		{
-			return 'data:image/' + ext + ';base64,' + AscCommon.Base64Encode(content, content.length, 0);
+			return 'data:image/' + ext + ';base64,' + AscCommon.Base64.encode(content);
 		}
 		return null;
 	}

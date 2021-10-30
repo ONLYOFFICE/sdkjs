@@ -4004,7 +4004,7 @@
 		}
 
 		var Changes = new AscCommon.CCollaborativeChanges();
-		var Reader = Changes.GetStream(selectionInfo, 0, selectionInfo.length);
+		var Reader = Changes.GetStream(selectionInfo);
 
 		var sheetId = Reader.GetString2();
 		var isEdit = Reader.GetBool();

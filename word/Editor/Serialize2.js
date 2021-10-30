@@ -35,8 +35,6 @@
 // Import
 var g_memory = AscFonts.g_memory;
 var FontStyle = AscFonts.FontStyle;
-var DecodeBase64Char = AscFonts.DecodeBase64Char;
-var b64_decode = AscFonts.b64_decode;
 var g_fontApplication = AscFonts.g_fontApplication;
 
 var align_Right = AscCommon.align_Right;
@@ -7517,73 +7515,8 @@ function BinaryFileReader(doc, openParams)
 		if (Asc.c_nVersionNoBase64 !== AscCommon.CurFileVersion) {
 			var dstLen = parseInt(dst_len);
 
-			var pointer = g_memory.Alloc(dstLen);
-			stream = new AscCommon.FT_Stream2(pointer.data, dstLen);
-			stream.obj = pointer.obj;
-
-			var dstPx = stream.data;
-
-			if (window.chrome)
-			{
-				while (index < srcLen)
-				{
-					var dwCurr = 0;
-					var i;
-					var nBits = 0;
-					for (i=0; i<4; i++)
-					{
-						if (index >= srcLen)
-							break;
-						var nCh = DecodeBase64Char(isBase64 ? szSrc.charCodeAt(index++) : szSrc[index++]);
-						if (nCh == -1)
-						{
-							i--;
-							continue;
-						}
-						dwCurr <<= 6;
-						dwCurr |= nCh;
-						nBits += 6;
-					}
-
-					dwCurr <<= 24-nBits;
-					for (i=0; i<nBits/8; i++)
-					{
-						dstPx[nWritten++] = ((dwCurr & 0x00ff0000) >>> 16);
-						dwCurr <<= 8;
-					}
-				}
-			}
-			else
-			{
-				var p = b64_decode;
-				while (index < srcLen)
-				{
-					var dwCurr = 0;
-					var i;
-					var nBits = 0;
-					for (i=0; i<4; i++)
-					{
-						if (index >= srcLen)
-							break;
-						var nCh = p[isBase64 ? szSrc.charCodeAt(index++) : szSrc[index++]];
-						if (nCh == undefined)
-						{
-							i--;
-							continue;
-						}
-						dwCurr <<= 6;
-						dwCurr |= nCh;
-						nBits += 6;
-					}
-
-					dwCurr <<= 24-nBits;
-					for (i=0; i<nBits/8; i++)
-					{
-						dstPx[nWritten++] = ((dwCurr & 0x00ff0000) >>> 16);
-						dwCurr <<= 8;
-					}
-				}
-			}
+			var memoryData = AscCommon.Base64.decode(szSrc, false, dstLen, index);
+			this.stream = new AscCommon.FT_Stream2(memoryData, memoryData.length);
 		} else {
 			stream = new AscCommon.FT_Stream2(szSrc, szSrc.length);
 			//skip header

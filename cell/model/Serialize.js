@@ -36,10 +36,6 @@
       // Import
 	var openXml = AscCommon.openXml;
 
-      var g_memory = AscFonts.g_memory;
-      var DecodeBase64Char = AscFonts.DecodeBase64Char;
-      var b64_decode = AscFonts.b64_decode;
-
       var CellValueType = AscCommon.CellValueType;
       var c_oAscCellAnchorType = AscCommon.c_oAscCellAnchorType;
       var c_oAscBorderStyles = AscCommon.c_oAscBorderStyles;
@@ -10753,73 +10749,9 @@
 			if (Asc.c_nVersionNoBase64 !== nVersion) {
 				var dstLen = parseInt(dst_len);
 
-				var pointer = g_memory.Alloc(dstLen);
-				stream = new AscCommon.FT_Stream2(pointer.data, dstLen);
-				stream.obj = pointer.obj;
+                var memoryData = AscCommon.Base64.decode(szSrc, false, dstLen, index);
+                stream = new AscCommon.FT_Stream2(memoryData, memoryData.length);
 
-				var dstPx = stream.data;
-
-				if (window.chrome)
-				{
-					while (index < srcLen)
-					{
-						var dwCurr = 0;
-						var i;
-						var nBits = 0;
-						for (i=0; i<4; i++)
-						{
-							if (index >= srcLen)
-								break;
-							var nCh = DecodeBase64Char(isBase64 ? szSrc.charCodeAt(index++) : szSrc[index++]);
-							if (nCh == -1)
-							{
-								i--;
-								continue;
-							}
-							dwCurr <<= 6;
-							dwCurr |= nCh;
-							nBits += 6;
-						}
-
-						dwCurr <<= 24-nBits;
-						for (i=0; i<nBits/8; i++)
-						{
-							dstPx[nWritten++] = ((dwCurr & 0x00ff0000) >>> 16);
-							dwCurr <<= 8;
-						}
-					}
-				}
-				else
-				{
-					var p = b64_decode;
-					while (index < srcLen)
-					{
-						var dwCurr = 0;
-						var i;
-						var nBits = 0;
-						for (i=0; i<4; i++)
-						{
-							if (index >= srcLen)
-								break;
-							var nCh = p[isBase64 ? szSrc.charCodeAt(index++) : szSrc[index++]];
-							if (nCh == undefined)
-							{
-								i--;
-								continue;
-							}
-							dwCurr <<= 6;
-							dwCurr |= nCh;
-							nBits += 6;
-						}
-
-						dwCurr <<= 24-nBits;
-						for (i=0; i<nBits/8; i++)
-						{
-							dstPx[nWritten++] = ((dwCurr & 0x00ff0000) >>> 16);
-							dwCurr <<= 8;
-						}
-					}
-				}
 			} else {
 				stream = new AscCommon.FT_Stream2(szSrc, szSrc.length);
 				//skip header
@@ -10836,70 +10768,7 @@
             var dstPx = stream.data;
             var index = szSrcOffset;
 
-            if (window.chrome)
-            {
-                while (index < srcLen)
-                {
-                    var dwCurr = 0;
-                    var i;
-                    var nBits = 0;
-                    for (i=0; i<4; i++)
-                    {
-                        if (index >= srcLen)
-                            break;
-                        var nCh = DecodeBase64Char(szSrc.charCodeAt(index++));
-                        if (nCh == -1)
-                        {
-                            i--;
-                            continue;
-                        }
-                        dwCurr <<= 6;
-                        dwCurr |= nCh;
-                        nBits += 6;
-                    }
-
-                    dwCurr <<= 24-nBits;
-                    var nLen = (nBits/8) | 0;
-                    for (i=0; i<nLen; i++)
-                    {
-                        dstPx[nWritten++] = ((dwCurr & 0x00ff0000) >>> 16);
-                        dwCurr <<= 8;
-                    }
-                }
-            }
-            else
-            {
-                var p = b64_decode;
-                while (index < srcLen)
-                {
-                    var dwCurr = 0;
-                    var i;
-                    var nBits = 0;
-                    for (i=0; i<4; i++)
-                    {
-                        if (index >= srcLen)
-                            break;
-                        var nCh = p[szSrc.charCodeAt(index++)];
-                        if (nCh == undefined)
-                        {
-                            i--;
-                            continue;
-                        }
-                        dwCurr <<= 6;
-                        dwCurr |= nCh;
-                        nBits += 6;
-                    }
-
-                    dwCurr <<= 24-nBits;
-                    var nLen = (nBits/8) | 0;
-                    for (i=0; i<nLen; i++)
-                    {
-                        dstPx[nWritten++] = ((dwCurr & 0x00ff0000) >>> 16);
-                        dwCurr <<= 8;
-                    }
-                }
-            }
-            return nWritten;
+            return AscCommon.Base64.decodeData(szSrc, index, srcLen, dstPx, nWritten);
         };
         this.Read = function(data, wb)
         {

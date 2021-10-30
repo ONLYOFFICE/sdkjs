@@ -656,7 +656,7 @@ var g_sWordPlaceholderImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMg
 		/*var aData = oStream.data.slice(oStream.cur, oStream.cur + nLength);
 		var sData = "XLSY;;";
 		sData += (nLength + ";");
-		sData += AscCommon.Base64Encode(aData,aData.length, 0);
+		sData += AscCommon.Base64.encode(aData);
 		var nCRC32 = AscCommon.g_oCRC32.Calculate_ByString(sData, sData.length);
 		return {data: sData, crc32: nCRC32};*/
 		return undefined;
