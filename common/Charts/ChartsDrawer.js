@@ -4510,6 +4510,7 @@ drawBarChart.prototype = {
 			var isValMoreZero = false;
 			var isValLessZero = 0;
 
+			var shapeType = null !== this.chart.series[i].shape ? this.chart.series[i].shape : this.chart.shape;
 			for (var j = 0; j < seria.length; j++) {
 
 				//for 3d charts
@@ -4535,7 +4536,7 @@ drawBarChart.prototype = {
 
 				tempValues[i][idx] = val;
 
-				startYColumnPosition = this._getStartYColumnPosition(seriesHeight, i, idx, val, yPoints, prevVal);
+				startYColumnPosition = this._getStartYColumnPosition(seriesHeight, i, idx, val, yPoints, prevVal, shapeType);
 				startY = startYColumnPosition.startY;
 				height = startYColumnPosition.height;
 
@@ -4596,7 +4597,6 @@ drawBarChart.prototype = {
 
 				//for 3d charts
 				if (this.cChartDrawer.nDimensionCount === 3) {
-					var shapeType = null !== this.chart.series[i].shape ? this.chart.series[i].shape : this.chart.shape;
 					paths = this._calculateRect3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, shapeType);
 
 					for (k = 0; k < paths.paths.length; k++) {
@@ -4638,13 +4638,26 @@ drawBarChart.prototype = {
 					}
 
 					var testMaxHeight = 0;
-					valueMax = this.subType === "stacked" ? valueMax : val;
-					valueMin = this.subType === "stacked" ? valueMin : val;
+					if(this.subType !== "stackedPer"){
+						valueMax = this.subType === "stacked" ? valueMax : val;
+						valueMin = this.subType === "stacked" ? valueMin : val;
 
-					if(valueMax > axisMax){
-						testMaxHeight = testHeight + (testHeight - testHeight * (axisMax / valueMax));
-					}else if(valueMin < axisMin){
-						testMaxHeight = testHeight + (testHeight - testHeight * (axisMin / valueMin));
+						if(valueMax > axisMax){
+							testMaxHeight = testHeight + (testHeight - testHeight * (axisMax / valueMax));
+						}
+						if(valueMin < axisMin){
+							testMaxHeight = testHeight + (testHeight - testHeight * (axisMin / valueMin));
+						}
+					}else {
+						if(axisMax < 1 && val > 0){
+							if(maxHeight === testHeight){
+								testMaxHeight = testHeight + (testHeight - testHeight * axisMax);
+							}
+						}else if(axisMin > -1){
+							if(minHeight === testHeight){
+								testMaxHeight = testHeight + (testHeight + testHeight * axisMin);
+							}
+						}
 					}
 
 					//расчет clustered, stacked, stackedPer (parallelepipeds and pyramide)
@@ -4756,8 +4769,9 @@ drawBarChart.prototype = {
 		}
 	},
 
-	_getStartYColumnPosition: function (seriesHeight, i, j, val, yPoints, prevValue) {
+	_getStartYColumnPosition: function (seriesHeight, i, j, val, yPoints, prevValue, type) {
 		var startY, height, curVal, prevVal, endBlockPosition, startBlockPosition, maxH, minH, endBlockPositionMax, endBlockPositionMin, h, valueMax, valueMin;
+		var valueMaxPer, valueMinPer;
 		var nullPositionOX = this.subType === "stacked" ? this.cChartDrawer.getPositionZero(this.valAx) : this.catAx.posY * this.chartProp.pxToMM;
 
 		if (this.subType === "stacked") {
@@ -4783,12 +4797,7 @@ drawBarChart.prototype = {
 				height = -height;
 			}
 		} else if (this.subType === "stackedPer") {
-			var h = this._getMaxHeightStackedPer();
-			var indexMax = h.indexMax;
-			var indexMin = h.indexMin;
-			var minH = h.minH;
-			var maxH = h.maxH;
-
+			type = 4;
 			curVal = this._getStackedValue(this.chart.series, i, j, val);
 			prevVal = this._getStackedValue(this.chart.series, i - 1, j, val);
 
@@ -4797,29 +4806,38 @@ drawBarChart.prototype = {
 			endBlockPosition = this.cChartDrawer.getYPosition((curVal / this.summBarVal[j]), this.valAx) * this.chartProp.pxToMM;
 			startBlockPosition = this.summBarVal[j] ? this.cChartDrawer.getYPosition((prevVal / this.summBarVal[j]), this.valAx) * this.chartProp.pxToMM : nullPositionOX;
 
-			//пропорционально наибольшая высота для расчета усечения
-			if(indexMax === j){
-				endBlockPositionMax = this.cChartDrawer.getYPosition(maxH / this.summBarVal[j], this.valAx) * this.chartProp.pxToMM;
-			}else{
-				endBlockPositionMax = this.cChartDrawer.getYPosition(maxH, this.valAx) * this.chartProp.pxToMM;
-			}
 			
-			if(indexMin === j){
-				endBlockPositionMin = this.cChartDrawer.getYPosition(minH / this.summBarVal[j], this.valAx) * this.chartProp.pxToMM;
-			}else{
-				endBlockPositionMin = this.cChartDrawer.getYPosition(minH, this.valAx) * this.chartProp.pxToMM;
-			}
-
 			startY = startBlockPosition;
 			height = startBlockPosition - endBlockPosition;
-
-			var nullPositionOX1 = this.catAx.posY * this.chartProp.pxToMM;
-
-			maxH = nullPositionOX1 - endBlockPositionMax;
-			minH = nullPositionOX1 - endBlockPositionMin;
 		
 			if (this.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
 				height = -height;
+			}
+			//к процентным накопительным пирамидам применяется усечение по пропорционально наибольшей пирамиде
+			if(type === AscFormat.BAR_SHAPE_PYRAMID){
+				var h = this._getMaxHeightStackedPer();
+				var indexMax = h.indexMax;
+				var indexMin = h.indexMin;
+				var minH = h.minH;
+				var maxH = h.maxH;	
+
+				//по индексу определяем когда получаем наибольшую высоту для расчета усечения
+				//делится на this.summBarVal[j], чтобы получить пропорциональную величину для высоты
+				if(indexMax === j){
+					endBlockPositionMax = this.cChartDrawer.getYPosition(maxH / this.summBarVal[j], this.valAx) * this.chartProp.pxToMM;
+				}else{
+					endBlockPositionMax = this.cChartDrawer.getYPosition(maxH, this.valAx) * this.chartProp.pxToMM;
+				}
+
+				if(indexMin === j){
+					endBlockPositionMin = this.cChartDrawer.getYPosition(minH / this.summBarVal[j], this.valAx) * this.chartProp.pxToMM;
+				}else{
+					endBlockPositionMin = this.cChartDrawer.getYPosition(minH, this.valAx) * this.chartProp.pxToMM;
+				}
+				var nullPositionOX1 = this.catAx.posY * this.chartProp.pxToMM;
+
+				maxH = nullPositionOX1 - endBlockPositionMax;
+				minH = nullPositionOX1 - endBlockPositionMin;
 			}
 		} else {
 			startY = nullPositionOX;
@@ -4837,6 +4855,8 @@ drawBarChart.prototype = {
 	calculate3dCharts: function (startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, arr, maxH, minH, maxH2, type) {
 		//параметр r и глубина по OZ
 		var perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
+		//this.subType = "stackedPer";
+		type = 4;
 
 		//сдвиг по OZ в глубину
 		var gapDepth = this.chart.gapDepth != null ? this.chart.gapDepth : globalGapDepth;
@@ -4883,12 +4903,15 @@ drawBarChart.prototype = {
 				//получаем координаты точек полной диаграммы
 				if(this.subType === "stacked" && maxH2){
 					if(maxH2){
-					  maxH = maxH2;
+						maxH = maxH2;
 					}
 				  }else if(this.subType === "stackedPer" && val < 0) {
 					if(val < 0){
-					  maxH = minH;
-					}  
+						maxH = minH;
+					} 
+				}
+				if(this.subType === "stackedPer" && maxH2 !==0){
+					maxH = maxH2;
 				}
 
 				x1 = startX, y1 = nullPositionOX, z1 = 0 + gapDepth;
@@ -5122,12 +5145,10 @@ drawBarChart.prototype = {
 		var minH1 = [];
 		var maxH2 = [];
 		var minH2 = [];
-		var counterHmax = [];
-		var counterHmin = [];
 		var countMax = 0;
 		var countMin = 0;
 
-		//нахождение пропорционально наибольшей и наименьшей высоты для накопительных пирамид
+		//нахождение пропорционально наибольшей и наименьшей высоты для накопительных процентных пирамид
 		for(var i = 0; i < this.ptCount; i++){	
 			this._calculateSummStacked(i);
 			for (var k = 0; k < this.chart.series.length; k++) {
@@ -5136,26 +5157,24 @@ drawBarChart.prototype = {
 				
 				if (curVal > 0) {
 					tempMax += curVal;
-					countMax++;
 				}else{
 					tempMin += curVal;
-					countMin++;
 				}
 			}
-			counterHmax[i] = countMax;
-			counterHmin[i] = countMin;
+			//пропорциональная высота
 			maxH1[i] = tempMax / this.summBarVal[i];
 			minH1[i] = tempMin / this.summBarVal[i];
+
+			//обычная высота по значениям
 			maxH2[i] = tempMax;
 			minH2[i] = tempMin;
 			tempMax = 0;
 			tempMin = 0;
-			countMin = 0;
-			countMax = 0;
 		}
 
 		var indexMax = 0;
 		var indexMin = 0;
+		//сортировка высоты по пропорциональным положительным и отрицательным значениям
 		for(var i = 0; i < maxH1.length; i++){
 			if(tempMax < maxH1[i]){
 				tempMax = maxH1[i];
