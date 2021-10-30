@@ -1724,7 +1724,7 @@
                 });
             }
         };
-    };
+    }
 
     /** @constructor */
     function BinaryTableWriter(memory, aDxfs, isCopyPaste, tableIds)
@@ -5955,8 +5955,8 @@
                     pptx_content_writer.BinaryFileWriter.ImportFromMemory(old);
                 }});
             }
-            if (t.wb.CustomXmls && t.wb.CustomXmls.length > 0) {
-                this.WriteTable(c_oSerTableTypes.Customs, new BinaryCustomsTableWriter(this.Memory, t.wb.CustomXmls));
+            if (t.wb.customXmls && t.wb.customXmls.length > 0) {
+                this.WriteTable(c_oSerTableTypes.Customs, new BinaryCustomsTableWriter(this.Memory, t.wb.customXmls));
             }
 
             var oSharedStrings = {index: 0, strings: {}};
