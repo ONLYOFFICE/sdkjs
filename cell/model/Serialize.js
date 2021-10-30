@@ -1687,6 +1687,7 @@
         return res;
 	}
 
+    //TODO копия кода из serialize2
     function BinaryCustomsTableWriter(memory, CustomXmls)
     {
         this.memory = memory;
@@ -10652,6 +10653,7 @@
         };
     }
 
+    //TODO копия кода из serialize2
     function Binary_CustomsTableReader(stream, CustomXmls) {
         //this.Document = doc;
         //this.oReadResult = oReadResult;
@@ -11163,8 +11165,8 @@
                             break;
                         case c_oSerTableTypes.Customs:
                             this.stream.Seek2(mtiOffBits);
-                            wb.CustomXmls = [];
-                            res = (new Binary_CustomsTableReader(this.stream, wb.CustomXmls)).Read();
+                            wb.customXmls = [];
+                            res = (new Binary_CustomsTableReader(this.stream, wb.customXmls)).Read();
                             break;
                     }
                     if(c_oSerConstants.ReadOk != res)
