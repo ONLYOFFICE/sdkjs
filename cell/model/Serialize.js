@@ -5955,8 +5955,8 @@
                     pptx_content_writer.BinaryFileWriter.ImportFromMemory(old);
                 }});
             }
-            if (this.wb.CustomXmls.length > 0) {
-                this.WriteTable(c_oSerTableTypes.Customs, new BinaryCustomsTableWriter(this.Memory, this.wb.CustomXmls));
+            if (t.wb.CustomXmls && t.wb.CustomXmls.length > 0) {
+                this.WriteTable(c_oSerTableTypes.Customs, new BinaryCustomsTableWriter(this.Memory, t.wb.CustomXmls));
             }
 
             var oSharedStrings = {index: 0, strings: {}};
