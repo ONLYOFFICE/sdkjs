@@ -30,7 +30,360 @@
  *
  */
 
+﻿(function(window, undefined){
+
+    window["AscCommon"] = window.AscCommon = (window["AscCommon"] || {});
+
+    var charA = "A".charCodeAt(0);
+    var charZ = "Z".charCodeAt(0);
+    var chara = "a".charCodeAt(0);
+    var charz = "z".charCodeAt(0);
+    var char0 = "0".charCodeAt(0);
+    var char9 = "9".charCodeAt(0);
+    var charp = "+".charCodeAt(0);
+    var chars = "/".charCodeAt(0);
+    var char_break = ";".charCodeAt(0);
+
+    function decodeBase64Char(ch)
+    {
+        if (ch >= charA && ch <= charZ)
+            return ch - charA + 0;
+        if (ch >= chara && ch <= charz)
+            return ch - chara + 26;
+        if (ch >= char0 && ch <= char9)
+            return ch - char0 + 52;
+        if (ch == charp)
+            return 62;
+        if (ch == chars)
+            return 63;
+        return -1;
+    }
+
+    var stringBase64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    var arrayBase64  = [];
+    for (var index64 = 0; index64 < stringBase64.length; index64++)
+    {
+        arrayBase64.push(stringBase64.charAt(index64));
+    }
+
+    window.AscCommon["Base64"] = window.AscCommon.Base64 = {};
+
+    /**
+     * Decode input base64 data to output array
+     * @memberof AscCommon.Base64
+     * @alias decodeData
+     * @param {string|Array|TypedArray} input input data
+     * @param {number} [input_offset = undefined] offset in input data. 0 by default
+     * @param {number} [input_len = undefined] length input data (not length of needed data, this value does not depend on the offset. input.length by default
+     * @param {Array|TypedArray} output output data
+     * @param {number} [output_offset = undefined] output data offset. 0 by default
+     * @return {number} offset in output data (output_offset + count_write_bytes)
+     */
+    window.AscCommon.Base64.decodeData = window.AscCommon.Base64["decodeData"] = function(input, input_offset, input_len, output, output_offset)
+    {
+        var isBase64 = typeof input === "string";
+        if (undefined === input_len) input_len = input.length;
+        var writeIndex = (undefined === output_offset) ? 0 : output_offset;
+        var index = (undefined === input_offset) ? 0 : input_offset;
+
+        while (index < input_len)
+        {
+            var dwCurr = 0;
+            var i;
+            var nBits = 0;
+            for (i=0; i<4; i++)
+            {
+                if (index >= srcLen)
+                    break;
+                var nCh = decodeBase64Char(isBase64 ? input.charCodeAt(index) : input[index]);
+                index++;
+                if (nCh == -1)
+                {
+                    i--;
+                    continue;
+                }
+                dwCurr <<= 6;
+                dwCurr |= nCh;
+                nBits += 6;
+            }
+
+            dwCurr <<= 24-nBits;
+            for (i=0; i<(nBits>>3); i++)
+            {
+                output[writeIndex++] = ((dwCurr & 0x00ff0000) >>> 16);
+                dwCurr <<= 8;
+            }
+        }
+        return writeIndex;
+    };
+
+    /**
+     * Decode input base64 data to returned Uint8Array
+     * @memberof AscCommon.Base64
+     * @alias decode
+     * @param {string|Array|TypedArray} input input data
+     * @param {boolean} [isUsePrefix = undefined] is detect destination size by prefix. false by default
+     * @param {number} [dstlen = undefined] destination length
+     * @param {number} [offset] offset of input data
+     * @return {Uint8Array} decoded data
+     */
+    window.AscCommon.Base64.decode = window.AscCommon.Base64["decode"] = function(input, isUsePrefix, dstlen, offset)
+    {
+        var srcLen = input.length;
+        var index = (undefined === offset) ? 0 : offset;
+        var dstLen = (undefined === dstlen) ? srcLen : dstlen;
+
+        var isBase64 = typeof input === "string";
+
+        if (isUsePrefix && isBase64)
+        {
+            // ищем длину
+            dstLen = 0;
+            var maxLen = Math.max(11, srcLen); // > 4 Gb
+            while (index < maxLen)
+            {
+                var c = input.charCodeAt(index++);
+                if (c == char_break)
+                    break;
+
+                dstLen *= 10;
+                dstLen += (c - char0);
+            }
+
+            if (index == maxLen)
+            {
+                // длины нет
+                index = 0;
+                dstLen = srcLen;
+            }
+        }
+
+        var dst = new Uint8Array(dstLen);
+        var writeIndex = window.AscCommon.Base64.decodeData(input, index, srcLen, dst, 0);
+
+        if (writeIndex == dstLen)
+            return dst;
+
+        return new Uint8Array(dst.buffer, 0, writeIndex);
+    };
+
+    /**
+     * Encode input data to base64 string
+     * @memberof AscCommon.Base64
+     * @alias encode
+     * @param {Array|TypedArray} input input data
+     * @param {number} [offset = undefined] offset of input data. 0 by default
+     * @param {number} [length = undefined] length input data (last index: offset + length). input.length by default
+     * @param {boolean} [isUsePrefix = undefined] is add destination size by prefix. false by default
+     * @return {string} encoded data
+     */
+    window.AscCommon.Base64.encode = window.AscCommon.Base64["encode"] = function(input, offset, length, isUsePrefix)
+    {
+        var srcLen = (undefined === length) ? input.length : length;
+        var index = (undefined === offset) ? 0 : offset;
+
+        var len1 = (((srcLen / 3) >> 0) * 4);
+        var len2 = (len1 / 76) >> 0;
+        var len3 = 19;
+        var dstArray = [];
+
+        var sTemp = "";
+        var dwCurr = 0;
+        for (var i = 0; i <= len2; i++)
+        {
+            if (i == len2)
+                len3 = ((len1 % 76) / 4) >> 0;
+
+            for (var j = 0; j < len3; j++)
+            {
+                dwCurr = 0;
+                for (var n = 0; n < 3; n++)
+                {
+                    dwCurr |= input[index++];
+                    dwCurr <<= 8;
+                }
+
+                sTemp = "";
+                for (var k = 0; k < 4; k++)
+                {
+                    var b = (dwCurr >>> 26) & 0xFF;
+                    sTemp += arrayBase64[b];
+                    dwCurr <<= 6;
+                    dwCurr &= 0xFFFFFFFF;
+                }
+                dstArray.push(sTemp);
+            }
+        }
+        len2 = (srcLen % 3 != 0) ? (srcLen % 3 + 1) : 0;
+        if (len2)
+        {
+            dwCurr = 0;
+            for (var n = 0; n < 3; n++)
+            {
+                if (n < (srcLen % 3))
+                    dwCurr |= input[index++];
+                dwCurr <<= 8;
+            }
+
+            sTemp = "";
+            for (var k = 0; k < len2; k++)
+            {
+                var b = (dwCurr >>> 26) & 0xFF;
+                sTemp += arrayBase64[b];
+                dwCurr <<= 6;
+            }
+
+            len3 = (len2 != 0) ? 4 - len2 : 0;
+            for (var j = 0; j < len3; j++)
+            {
+                sTemp += '=';
+            }
+            dstArray.push(sTemp);
+        }
+
+        return isUsePrefix ? (("" + srcLen + ";") + dstArray.join("")) : dstArray.join("");
+    };
+
+    window.AscCommon["Hex"] = window.AscCommon.Hex = {};
+
+    /**
+     * Decode input hex data to Uint8Array
+     * @memberof AscCommon.Hex
+     * @alias decode
+     * @param {string} input input data
+     * @return {Uint8Array} decoded data
+     */
+    window.AscCommon.Hex.decode = window.AscCommon.Hex["decode"] = function(input)
+    {
+        var hexToByte = function(c) {
+            if (c >= 48 && c <= 57) return c - 48; // 0..9
+            if (c >= 97 && c <= 102) return c - 87;
+            if (c >= 65 && c <= 70) return c - 55;
+            return 0;
+        };
+
+        var len = input.length;
+        if (len & 0x01) len -= 1;
+        var result = new Uint8Array(len >> 1);
+        var resIndex = 0;
+        for (var i = 0; i < len; i += 2)
+        {
+            result[resIndex++] = hexToByte(input.charCodeAt(i)) << 4 | hexToByte(input.charCodeAt(i + 1));
+        }
+        return result;
+    };
+
+    /**
+     * Encode Uint8Array to hex string
+     * @memberof AscCommon.Hex
+     * @alias encode
+     * @param {Array|TypedArray} input input data
+     * @param {boolean} [isUpperCase = false] is use upper case
+     * @return {string} encoded data
+     */
+    window.AscCommon.Hex.encode = window.AscCommon.Hex["encode"] = function(input, isUpperCase)
+    {
+        var byteToHex = new Array(256);
+        for (var i = 0; i < 16; i++)
+            byteToHex[i] = "0" + (isUpperCase ? i.toString(16).toUpperCase() : i.toString(16));
+        for (var i = 16; i < 256; i++)
+            byteToHex[i] = isUpperCase ? i.toString(16).toUpperCase() : i.toString(16);
+
+        var result = "";
+        for (var i = 0, len = input.length; i < len; i++)
+            result += byteToHex[input[i]];
+
+        return result;
+    };
+
+
+})(self);
+
 (function(window, undefined) {
+
+	window.messageData = null;
+	window.messagePort = null;
+	function onMessageEvent(data, port)
+	{
+	    if (data.type == "hash")
+	    {
+	        window.messageData = data.value;
+	        window.messagePort = port;
+	        if (!window.engineInit)
+	        	return;
+	        checkMessage();
+	    }
+	}
+
+	window.onconnect = function(e)
+	{
+	    var port = e.ports[0];
+	    port.onmessage = function(e) {
+	        onMessageEvent(e.data, port);
+	    }    
+	};
+	window.onmessage = function(e)
+	{
+	    onMessageEvent(e.data);
+	};
+	window.engineInit = false;
+	window.onEngineInit = function()
+	{
+		window.engineInit = true;
+		if (window.messageData)
+			checkMessage();
+	};
+
+	function checkMessage()
+	{
+		var data = window.messageData;
+		var res = AscCommon.Hash.hashOffice(data.password, data.salt, data.spinCount, data.alg).base64();
+
+		var sender = window.messagePort || window;
+		sender.postMessage({ hashValue : res });
+	}
+
+	var printErr = undefined;
+    var FS = undefined;
+    var print = undefined;
+
+    var getBinaryPromise = null;
+    if (window["AscDesktopEditor"] && document.currentScript && 0 == document.currentScript.src.indexOf("file:///"))
+    {
+        // fetch not support file:/// scheme
+        window.fetch = undefined;
+
+        getBinaryPromise = function() {
+
+            var wasmPath = "ascdesktop://fonts/" + wasmBinaryFile.substr(8);
+            return new Promise(function (resolve, reject) {
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', wasmPath, true);
+                xhr.responseType = 'arraybuffer';
+
+                if (xhr.overrideMimeType)
+                    xhr.overrideMimeType('text/plain; charset=x-user-defined');
+                else
+                    xhr.setRequestHeader('Accept-Charset', 'x-user-defined');
+
+                xhr.onload = function () {
+                    if (this.status == 200) {
+                        resolve(new Uint8Array(this.response));
+                    }
+                };
+
+                xhr.send(null);
+
+            });
+        }
+    }
+    else
+    {
+        getBinaryPromise = function() {
+            return getBinaryPromise2();
+        }
+    }
     
     var ob;function pb(h){var f=0;return function(){return f<h.length?{done:!1,value:h[f++]}:{done:!0}}}function qb(h){var f="undefined"!=typeof Symbol&&Symbol.iterator&&h[Symbol.iterator];return f?f.call(h):{next:pb(h)}}var dd="undefined"!=typeof window&&window===this?this:"undefined"!=typeof global&&null!=global?global:this,Fd="function"==typeof Object.defineProperties?Object.defineProperty:function(h,f,Ka){h!=Array.prototype&&h!=Object.prototype&&(h[f]=Ka.value)};
 function Gd(h,f){if(f){var Ka=dd;h=h.split(".");for(var Za=0;Za<h.length-1;Za++){var bb=h[Za];bb in Ka||(Ka[bb]={});Ka=Ka[bb]}h=h[h.length-1];Za=Ka[h];f=f(Za);f!=Za&&null!=f&&Fd(Ka,h,{configurable:!0,writable:!0,value:f})}}
@@ -191,7 +544,7 @@ Math.imul = Math.imul || function(a, b) {
 })();
 
 
-    var Module=typeof Module!=="undefined"?Module:{};var moduleOverrides={};var key;for(key in Module){if(Module.hasOwnProperty(key)){moduleOverrides[key]=Module[key]}}var arguments_=[];var thisProgram="./this.program";var quit_=function(status,toThrow){throw toThrow};var ENVIRONMENT_IS_WEB=true;var ENVIRONMENT_IS_WORKER=false;var scriptDirectory="";function locateFile(path){if(Module["locateFile"]){return Module["locateFile"](path,scriptDirectory)}return scriptDirectory+path}var read_,readAsync,readBinary,setWindowTitle;if(ENVIRONMENT_IS_WEB||ENVIRONMENT_IS_WORKER){if(ENVIRONMENT_IS_WORKER){scriptDirectory=self.location.href}else if(typeof document!=="undefined"&&document.currentScript){scriptDirectory=document.currentScript.src}if(scriptDirectory.indexOf("blob:")!==0){scriptDirectory=scriptDirectory.substr(0,scriptDirectory.replace(/[?#].*/,"").lastIndexOf("/")+1)}else{scriptDirectory=""}{read_=function(url){try{var xhr=new XMLHttpRequest;xhr.open("GET",url,false);xhr.send(null);return xhr.responseText}catch(err){var data=tryParseAsDataURI(url);if(data){return intArrayToString(data)}throw err}};if(ENVIRONMENT_IS_WORKER){readBinary=function(url){try{var xhr=new XMLHttpRequest;xhr.open("GET",url,false);xhr.responseType="arraybuffer";xhr.send(null);return new Uint8Array(xhr.response)}catch(err){var data=tryParseAsDataURI(url);if(data){return data}throw err}}}readAsync=function(url,onload,onerror){var xhr=new XMLHttpRequest;xhr.open("GET",url,true);xhr.responseType="arraybuffer";xhr.onload=function(){if(xhr.status==200||xhr.status==0&&xhr.response){onload(xhr.response);return}var data=tryParseAsDataURI(url);if(data){onload(data.buffer);return}onerror()};xhr.onerror=onerror;xhr.send(null)}}setWindowTitle=function(title){document.title=title}}else{}var out=Module["print"]||console.log.bind(console);var err=Module["printErr"]||console.warn.bind(console);for(key in moduleOverrides){if(moduleOverrides.hasOwnProperty(key)){Module[key]=moduleOverrides[key]}}moduleOverrides=null;if(Module["arguments"])arguments_=Module["arguments"];if(Module["thisProgram"])thisProgram=Module["thisProgram"];if(Module["quit"])quit_=Module["quit"];var wasmBinary;if(Module["wasmBinary"])wasmBinary=Module["wasmBinary"];var noExitRuntime=Module["noExitRuntime"]||true;var WebAssembly={Memory:function(opts){this.buffer=new ArrayBuffer(opts["initial"]*65536)},Module:function(binary){},Instance:function(module,info){this.exports=(
+    var Module=typeof Module!=="undefined"?Module:{};var moduleOverrides={};var key;for(key in Module){if(Module.hasOwnProperty(key)){moduleOverrides[key]=Module[key]}}var arguments_=[];var thisProgram="./this.program";var quit_=function(status,toThrow){throw toThrow};var ENVIRONMENT_IS_WEB=false;var ENVIRONMENT_IS_WORKER=true;var scriptDirectory="";function locateFile(path){if(Module["locateFile"]){return Module["locateFile"](path,scriptDirectory)}return scriptDirectory+path}var read_,readAsync,readBinary,setWindowTitle;if(ENVIRONMENT_IS_WEB||ENVIRONMENT_IS_WORKER){if(ENVIRONMENT_IS_WORKER){scriptDirectory=self.location.href}else if(typeof document!=="undefined"&&document.currentScript){scriptDirectory=document.currentScript.src}if(scriptDirectory.indexOf("blob:")!==0){scriptDirectory=scriptDirectory.substr(0,scriptDirectory.replace(/[?#].*/,"").lastIndexOf("/")+1)}else{scriptDirectory=""}{read_=function(url){try{var xhr=new XMLHttpRequest;xhr.open("GET",url,false);xhr.send(null);return xhr.responseText}catch(err){var data=tryParseAsDataURI(url);if(data){return intArrayToString(data)}throw err}};if(ENVIRONMENT_IS_WORKER){readBinary=function(url){try{var xhr=new XMLHttpRequest;xhr.open("GET",url,false);xhr.responseType="arraybuffer";xhr.send(null);return new Uint8Array(xhr.response)}catch(err){var data=tryParseAsDataURI(url);if(data){return data}throw err}}}readAsync=function(url,onload,onerror){var xhr=new XMLHttpRequest;xhr.open("GET",url,true);xhr.responseType="arraybuffer";xhr.onload=function(){if(xhr.status==200||xhr.status==0&&xhr.response){onload(xhr.response);return}var data=tryParseAsDataURI(url);if(data){onload(data.buffer);return}onerror()};xhr.onerror=onerror;xhr.send(null)}}setWindowTitle=function(title){document.title=title}}else{}var out=Module["print"]||console.log.bind(console);var err=Module["printErr"]||console.warn.bind(console);for(key in moduleOverrides){if(moduleOverrides.hasOwnProperty(key)){Module[key]=moduleOverrides[key]}}moduleOverrides=null;if(Module["arguments"])arguments_=Module["arguments"];if(Module["thisProgram"])thisProgram=Module["thisProgram"];if(Module["quit"])quit_=Module["quit"];var wasmBinary;if(Module["wasmBinary"])wasmBinary=Module["wasmBinary"];var noExitRuntime=Module["noExitRuntime"]||true;var WebAssembly={Memory:function(opts){this.buffer=new ArrayBuffer(opts["initial"]*65536)},Module:function(binary){},Instance:function(module,info){this.exports=(
 // EMSCRIPTEN_START_ASM
 function instantiate(aa){function c(d){d.set=function(a,b){this[a]=b};d.get=function(a){return this[a]};return d}var e;var f=new Uint8Array(123);for(var a=25;a>=0;--a){f[48+a]=52+a;f[65+a]=a;f[97+a]=26+a}f[43]=62;f[47]=63;function l(m,n,o){var g,h,a=0,i=n,j=o.length,k=n+(j*3>>2)-(o[j-2]=="=")-(o[j-1]=="=");for(;a<j;a+=4){g=f[o.charCodeAt(a+1)];h=f[o.charCodeAt(a+2)];m[i++]=f[o.charCodeAt(a)]<<2|g>>4;if(i<k)m[i++]=g<<4|h>>2;if(i<k)m[i++]=h<<6|f[o.charCodeAt(a+3)]}}function p(q){l(e,1024,"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");l(e,10496,"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");l(e,18640,"AQAAACBMEA==")}function _($){var r=$.a;var s=r.buffer;r.grow=Y;var t=new Int8Array(s);var u=new Int16Array(s);var v=new Int32Array(s);var w=new Uint8Array(s);var x=new Uint16Array(s);var y=new Uint32Array(s);var z=new Float32Array(s);var A=new Float64Array(s);var B=Math.imul;var C=Math.fround;var D=Math.abs;var E=Math.clz32;var F=Math.min;var G=Math.max;var H=Math.floor;var I=Math.ceil;var J=Math.trunc;var K=Math.sqrt;var L=$.abort;var M=NaN;var N=Infinity;var O=$.b;var P=$.c;var Q=1068064;var R=0;
 // EMSCRIPTEN_START_FUNCS
@@ -204,7 +557,7 @@ e=w;p($);var S=c([null,ba]);function T(){return s.byteLength/65536|0}function Y(
 
 
 
-)(asmLibraryArg)},instantiate:function(binary,info){return{then:function(ok){var module=new WebAssembly.Module(binary);ok({"instance":new WebAssembly.Instance(module)})}}},RuntimeError:Error};wasmBinary=[];if(typeof WebAssembly!=="object"){abort("no native wasm support detected")}var wasmMemory;var ABORT=false;var EXITSTATUS;function assert(condition,text){if(!condition){abort("Assertion failed: "+text)}}function alignUp(x,multiple){if(x%multiple>0){x+=multiple-x%multiple}return x}var buffer,HEAP8,HEAPU8,HEAP16,HEAPU16,HEAP32,HEAPU32,HEAPF32,HEAPF64;function updateGlobalBufferAndViews(buf){buffer=buf;Module["HEAP8"]=HEAP8=new Int8Array(buf);Module["HEAP16"]=HEAP16=new Int16Array(buf);Module["HEAP32"]=HEAP32=new Int32Array(buf);Module["HEAPU8"]=HEAPU8=new Uint8Array(buf);Module["HEAPU16"]=HEAPU16=new Uint16Array(buf);Module["HEAPU32"]=HEAPU32=new Uint32Array(buf);Module["HEAPF32"]=HEAPF32=new Float32Array(buf);Module["HEAPF64"]=HEAPF64=new Float64Array(buf)}var INITIAL_MEMORY=Module["INITIAL_MEMORY"]||2097152;if(Module["wasmMemory"]){wasmMemory=Module["wasmMemory"]}else{wasmMemory=new WebAssembly.Memory({"initial":INITIAL_MEMORY/65536,"maximum":2147483648/65536})}if(wasmMemory){buffer=wasmMemory.buffer}INITIAL_MEMORY=buffer.byteLength;updateGlobalBufferAndViews(buffer);var wasmTable;var __ATPRERUN__=[];var __ATINIT__=[];var __ATPOSTRUN__=[];var runtimeInitialized=false;function preRun(){if(Module["preRun"]){if(typeof Module["preRun"]=="function")Module["preRun"]=[Module["preRun"]];while(Module["preRun"].length){addOnPreRun(Module["preRun"].shift())}}callRuntimeCallbacks(__ATPRERUN__)}function initRuntime(){runtimeInitialized=true;callRuntimeCallbacks(__ATINIT__)}function postRun(){if(Module["postRun"]){if(typeof Module["postRun"]=="function")Module["postRun"]=[Module["postRun"]];while(Module["postRun"].length){addOnPostRun(Module["postRun"].shift())}}callRuntimeCallbacks(__ATPOSTRUN__)}function addOnPreRun(cb){__ATPRERUN__.unshift(cb)}function addOnInit(cb){__ATINIT__.unshift(cb)}function addOnPostRun(cb){__ATPOSTRUN__.unshift(cb)}var runDependencies=0;var runDependencyWatcher=null;var dependenciesFulfilled=null;function addRunDependency(id){runDependencies++;if(Module["monitorRunDependencies"]){Module["monitorRunDependencies"](runDependencies)}}function removeRunDependency(id){runDependencies--;if(Module["monitorRunDependencies"]){Module["monitorRunDependencies"](runDependencies)}if(runDependencies==0){if(runDependencyWatcher!==null){clearInterval(runDependencyWatcher);runDependencyWatcher=null}if(dependenciesFulfilled){var callback=dependenciesFulfilled;dependenciesFulfilled=null;callback()}}}Module["preloadedImages"]={};Module["preloadedAudios"]={};function abort(what){{if(Module["onAbort"]){Module["onAbort"](what)}}what="Aborted("+what+")";err(what);ABORT=true;EXITSTATUS=1;what+=". Build with -s ASSERTIONS=1 for more info.";var e=new WebAssembly.RuntimeError(what);throw e}var dataURIPrefix="data:application/octet-stream;base64,";function isDataURI(filename){return filename.startsWith(dataURIPrefix)}var wasmBinaryFile;wasmBinaryFile="hash.wasm";if(!isDataURI(wasmBinaryFile)){wasmBinaryFile=locateFile(wasmBinaryFile)}function getBinary(file){try{if(file==wasmBinaryFile&&wasmBinary){return new Uint8Array(wasmBinary)}var binary=tryParseAsDataURI(file);if(binary){return binary}if(readBinary){return readBinary(file)}else{throw"both async and sync fetching of the wasm failed"}}catch(err){abort(err)}}function getBinaryPromise(){if(!wasmBinary&&(ENVIRONMENT_IS_WEB||ENVIRONMENT_IS_WORKER)){if(typeof fetch==="function"){return fetch(wasmBinaryFile,{credentials:"same-origin"}).then(function(response){if(!response["ok"]){throw"failed to load wasm binary file at '"+wasmBinaryFile+"'"}return response["arrayBuffer"]()}).catch(function(){return getBinary(wasmBinaryFile)})}}return Promise.resolve().then(function(){return getBinary(wasmBinaryFile)})}function createWasm(){var info={"a":asmLibraryArg};function receiveInstance(instance,module){var exports=instance.exports;Module["asm"]=exports;wasmTable=Module["asm"]["e"];addOnInit(Module["asm"]["d"]);removeRunDependency("wasm-instantiate")}addRunDependency("wasm-instantiate");function receiveInstantiationResult(result){receiveInstance(result["instance"])}function instantiateArrayBuffer(receiver){return getBinaryPromise().then(function(binary){return WebAssembly.instantiate(binary,info)}).then(function(instance){return instance}).then(receiver,function(reason){err("failed to asynchronously prepare wasm: "+reason);abort(reason)})}function instantiateAsync(){if(!wasmBinary&&typeof WebAssembly.instantiateStreaming==="function"&&!isDataURI(wasmBinaryFile)&&typeof fetch==="function"){return fetch(wasmBinaryFile,{credentials:"same-origin"}).then(function(response){var result=WebAssembly.instantiateStreaming(response,info);return result.then(receiveInstantiationResult,function(reason){err("wasm streaming compile failed: "+reason);err("falling back to ArrayBuffer instantiation");return instantiateArrayBuffer(receiveInstantiationResult)})})}else{return instantiateArrayBuffer(receiveInstantiationResult)}}if(Module["instantiateWasm"]){try{var exports=Module["instantiateWasm"](info,receiveInstance);return exports}catch(e){err("Module.instantiateWasm callback failed with error: "+e);return false}}instantiateAsync();return{}}function callRuntimeCallbacks(callbacks){while(callbacks.length>0){var callback=callbacks.shift();if(typeof callback=="function"){callback(Module);continue}var func=callback.func;if(typeof func==="number"){if(callback.arg===undefined){getWasmTableEntry(func)()}else{getWasmTableEntry(func)(callback.arg)}}else{func(callback.arg===undefined?null:callback.arg)}}}var wasmTableMirror=[];function getWasmTableEntry(funcPtr){var func=wasmTableMirror[funcPtr];if(!func){if(funcPtr>=wasmTableMirror.length)wasmTableMirror.length=funcPtr+1;wasmTableMirror[funcPtr]=func=wasmTable.get(funcPtr)}return func}function _emscripten_memcpy_big(dest,src,num){HEAPU8.copyWithin(dest,src,src+num)}function emscripten_realloc_buffer(size){try{wasmMemory.grow(size-buffer.byteLength+65535>>>16);updateGlobalBufferAndViews(wasmMemory.buffer);return 1}catch(e){}}function _emscripten_resize_heap(requestedSize){var oldSize=HEAPU8.length;requestedSize=requestedSize>>>0;var maxHeapSize=2147483648;if(requestedSize>maxHeapSize){return false}for(var cutDown=1;cutDown<=4;cutDown*=2){var overGrownHeapSize=oldSize*(1+.2/cutDown);overGrownHeapSize=Math.min(overGrownHeapSize,requestedSize+100663296);var newSize=Math.min(maxHeapSize,alignUp(Math.max(requestedSize,overGrownHeapSize),65536));var replacement=emscripten_realloc_buffer(newSize);if(replacement){return true}}return false}var ASSERTIONS=false;function intArrayToString(array){var ret=[];for(var i=0;i<array.length;i++){var chr=array[i];if(chr>255){if(ASSERTIONS){assert(false,"Character code "+chr+" ("+String.fromCharCode(chr)+")  at offset "+i+" not in 0x00-0xFF.")}chr&=255}ret.push(String.fromCharCode(chr))}return ret.join("")}var decodeBase64=typeof atob==="function"?atob:function(input){var keyStr="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";var output="";var chr1,chr2,chr3;var enc1,enc2,enc3,enc4;var i=0;input=input.replace(/[^A-Za-z0-9\+\/\=]/g,"");do{enc1=keyStr.indexOf(input.charAt(i++));enc2=keyStr.indexOf(input.charAt(i++));enc3=keyStr.indexOf(input.charAt(i++));enc4=keyStr.indexOf(input.charAt(i++));chr1=enc1<<2|enc2>>4;chr2=(enc2&15)<<4|enc3>>2;chr3=(enc3&3)<<6|enc4;output=output+String.fromCharCode(chr1);if(enc3!==64){output=output+String.fromCharCode(chr2)}if(enc4!==64){output=output+String.fromCharCode(chr3)}}while(i<input.length);return output};function intArrayFromBase64(s){try{var decoded=decodeBase64(s);var bytes=new Uint8Array(decoded.length);for(var i=0;i<decoded.length;++i){bytes[i]=decoded.charCodeAt(i)}return bytes}catch(_){throw new Error("Converting base64 string to bytes failed.")}}function tryParseAsDataURI(filename){if(!isDataURI(filename)){return}return intArrayFromBase64(filename.slice(dataURIPrefix.length))}var asmLibraryArg={"b":_emscripten_memcpy_big,"c":_emscripten_resize_heap,"a":wasmMemory};var asm=createWasm();var ___wasm_call_ctors=Module["___wasm_call_ctors"]=function(){return(___wasm_call_ctors=Module["___wasm_call_ctors"]=Module["asm"]["d"]).apply(null,arguments)};var _malloc=Module["_malloc"]=function(){return(_malloc=Module["_malloc"]=Module["asm"]["f"]).apply(null,arguments)};var _hash=Module["_hash"]=function(){return(_hash=Module["_hash"]=Module["asm"]["g"]).apply(null,arguments)};var _hash2=Module["_hash2"]=function(){return(_hash2=Module["_hash2"]=Module["asm"]["h"]).apply(null,arguments)};var _free=Module["_free"]=function(){return(_free=Module["_free"]=Module["asm"]["i"]).apply(null,arguments)};var calledRun;dependenciesFulfilled=function runCaller(){if(!calledRun)run();if(!calledRun)dependenciesFulfilled=runCaller};function run(args){args=args||arguments_;if(runDependencies>0){return}preRun();if(runDependencies>0){return}function doRun(){if(calledRun)return;calledRun=true;Module["calledRun"]=true;if(ABORT)return;initRuntime();if(Module["onRuntimeInitialized"])Module["onRuntimeInitialized"]();postRun()}if(Module["setStatus"]){Module["setStatus"]("Running...");setTimeout(function(){setTimeout(function(){Module["setStatus"]("")},1);doRun()},1)}else{doRun()}}Module["run"]=run;if(Module["preInit"]){if(typeof Module["preInit"]=="function")Module["preInit"]=[Module["preInit"]];while(Module["preInit"].length>0){Module["preInit"].pop()()}}run();
+)(asmLibraryArg)},instantiate:function(binary,info){return{then:function(ok){var module=new WebAssembly.Module(binary);ok({"instance":new WebAssembly.Instance(module)})}}},RuntimeError:Error};wasmBinary=[];if(typeof WebAssembly!=="object"){abort("no native wasm support detected")}var wasmMemory;var ABORT=false;var EXITSTATUS;function assert(condition,text){if(!condition){abort("Assertion failed: "+text)}}function alignUp(x,multiple){if(x%multiple>0){x+=multiple-x%multiple}return x}var buffer,HEAP8,HEAPU8,HEAP16,HEAPU16,HEAP32,HEAPU32,HEAPF32,HEAPF64;function updateGlobalBufferAndViews(buf){buffer=buf;Module["HEAP8"]=HEAP8=new Int8Array(buf);Module["HEAP16"]=HEAP16=new Int16Array(buf);Module["HEAP32"]=HEAP32=new Int32Array(buf);Module["HEAPU8"]=HEAPU8=new Uint8Array(buf);Module["HEAPU16"]=HEAPU16=new Uint16Array(buf);Module["HEAPU32"]=HEAPU32=new Uint32Array(buf);Module["HEAPF32"]=HEAPF32=new Float32Array(buf);Module["HEAPF64"]=HEAPF64=new Float64Array(buf)}var INITIAL_MEMORY=Module["INITIAL_MEMORY"]||2097152;if(Module["wasmMemory"]){wasmMemory=Module["wasmMemory"]}else{wasmMemory=new WebAssembly.Memory({"initial":INITIAL_MEMORY/65536,"maximum":2147483648/65536})}if(wasmMemory){buffer=wasmMemory.buffer}INITIAL_MEMORY=buffer.byteLength;updateGlobalBufferAndViews(buffer);var wasmTable;var __ATPRERUN__=[];var __ATINIT__=[];var __ATPOSTRUN__=[function(){self.onEngineInit();}];var runtimeInitialized=false;function preRun(){if(Module["preRun"]){if(typeof Module["preRun"]=="function")Module["preRun"]=[Module["preRun"]];while(Module["preRun"].length){addOnPreRun(Module["preRun"].shift())}}callRuntimeCallbacks(__ATPRERUN__)}function initRuntime(){runtimeInitialized=true;callRuntimeCallbacks(__ATINIT__)}function postRun(){if(Module["postRun"]){if(typeof Module["postRun"]=="function")Module["postRun"]=[Module["postRun"]];while(Module["postRun"].length){addOnPostRun(Module["postRun"].shift())}}callRuntimeCallbacks(__ATPOSTRUN__)}function addOnPreRun(cb){__ATPRERUN__.unshift(cb)}function addOnInit(cb){__ATINIT__.unshift(cb)}function addOnPostRun(cb){__ATPOSTRUN__.unshift(cb)}var runDependencies=0;var runDependencyWatcher=null;var dependenciesFulfilled=null;function addRunDependency(id){runDependencies++;if(Module["monitorRunDependencies"]){Module["monitorRunDependencies"](runDependencies)}}function removeRunDependency(id){runDependencies--;if(Module["monitorRunDependencies"]){Module["monitorRunDependencies"](runDependencies)}if(runDependencies==0){if(runDependencyWatcher!==null){clearInterval(runDependencyWatcher);runDependencyWatcher=null}if(dependenciesFulfilled){var callback=dependenciesFulfilled;dependenciesFulfilled=null;callback()}}}Module["preloadedImages"]={};Module["preloadedAudios"]={};function abort(what){{if(Module["onAbort"]){Module["onAbort"](what)}}what="Aborted("+what+")";err(what);ABORT=true;EXITSTATUS=1;what+=". Build with -s ASSERTIONS=1 for more info.";var e=new WebAssembly.RuntimeError(what);throw e}var dataURIPrefix="data:application/octet-stream;base64,";function isDataURI(filename){return filename.startsWith(dataURIPrefix)}var wasmBinaryFile;wasmBinaryFile="hash.wasm";if(!isDataURI(wasmBinaryFile)){wasmBinaryFile=locateFile(wasmBinaryFile)}function getBinary(file){try{if(file==wasmBinaryFile&&wasmBinary){return new Uint8Array(wasmBinary)}var binary=tryParseAsDataURI(file);if(binary){return binary}if(readBinary){return readBinary(file)}else{throw"both async and sync fetching of the wasm failed"}}catch(err){abort(err)}}function getBinaryPromise2(){if(!wasmBinary&&(ENVIRONMENT_IS_WEB||ENVIRONMENT_IS_WORKER)){if(typeof fetch==="function"){return fetch(wasmBinaryFile,{credentials:"same-origin"}).then(function(response){if(!response["ok"]){throw"failed to load wasm binary file at '"+wasmBinaryFile+"'"}return response["arrayBuffer"]()}).catch(function(){return getBinary(wasmBinaryFile)})}}return Promise.resolve().then(function(){return getBinary(wasmBinaryFile)})}function createWasm(){var info={"a":asmLibraryArg};function receiveInstance(instance,module){var exports=instance.exports;Module["asm"]=exports;wasmTable=Module["asm"]["e"];addOnInit(Module["asm"]["d"]);removeRunDependency("wasm-instantiate")}addRunDependency("wasm-instantiate");function receiveInstantiationResult(result){receiveInstance(result["instance"])}function instantiateArrayBuffer(receiver){return getBinaryPromise().then(function(binary){return WebAssembly.instantiate(binary,info)}).then(function(instance){return instance}).then(receiver,function(reason){err("failed to asynchronously prepare wasm: "+reason);abort(reason)})}function instantiateAsync(){if(!wasmBinary&&typeof WebAssembly.instantiateStreaming==="function"&&!isDataURI(wasmBinaryFile)&&typeof fetch==="function"){return fetch(wasmBinaryFile,{credentials:"same-origin"}).then(function(response){var result=WebAssembly.instantiateStreaming(response,info);return result.then(receiveInstantiationResult,function(reason){err("wasm streaming compile failed: "+reason);err("falling back to ArrayBuffer instantiation");return instantiateArrayBuffer(receiveInstantiationResult)})})}else{return instantiateArrayBuffer(receiveInstantiationResult)}}if(Module["instantiateWasm"]){try{var exports=Module["instantiateWasm"](info,receiveInstance);return exports}catch(e){err("Module.instantiateWasm callback failed with error: "+e);return false}}instantiateAsync();return{}}function callRuntimeCallbacks(callbacks){while(callbacks.length>0){var callback=callbacks.shift();if(typeof callback=="function"){callback(Module);continue}var func=callback.func;if(typeof func==="number"){if(callback.arg===undefined){getWasmTableEntry(func)()}else{getWasmTableEntry(func)(callback.arg)}}else{func(callback.arg===undefined?null:callback.arg)}}}var wasmTableMirror=[];function getWasmTableEntry(funcPtr){var func=wasmTableMirror[funcPtr];if(!func){if(funcPtr>=wasmTableMirror.length)wasmTableMirror.length=funcPtr+1;wasmTableMirror[funcPtr]=func=wasmTable.get(funcPtr)}return func}function _emscripten_memcpy_big(dest,src,num){HEAPU8.copyWithin(dest,src,src+num)}function emscripten_realloc_buffer(size){try{wasmMemory.grow(size-buffer.byteLength+65535>>>16);updateGlobalBufferAndViews(wasmMemory.buffer);return 1}catch(e){}}function _emscripten_resize_heap(requestedSize){var oldSize=HEAPU8.length;requestedSize=requestedSize>>>0;var maxHeapSize=2147483648;if(requestedSize>maxHeapSize){return false}for(var cutDown=1;cutDown<=4;cutDown*=2){var overGrownHeapSize=oldSize*(1+.2/cutDown);overGrownHeapSize=Math.min(overGrownHeapSize,requestedSize+100663296);var newSize=Math.min(maxHeapSize,alignUp(Math.max(requestedSize,overGrownHeapSize),65536));var replacement=emscripten_realloc_buffer(newSize);if(replacement){return true}}return false}var ASSERTIONS=false;function intArrayToString(array){var ret=[];for(var i=0;i<array.length;i++){var chr=array[i];if(chr>255){if(ASSERTIONS){assert(false,"Character code "+chr+" ("+String.fromCharCode(chr)+")  at offset "+i+" not in 0x00-0xFF.")}chr&=255}ret.push(String.fromCharCode(chr))}return ret.join("")}var decodeBase64=typeof atob==="function"?atob:function(input){var keyStr="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";var output="";var chr1,chr2,chr3;var enc1,enc2,enc3,enc4;var i=0;input=input.replace(/[^A-Za-z0-9\+\/\=]/g,"");do{enc1=keyStr.indexOf(input.charAt(i++));enc2=keyStr.indexOf(input.charAt(i++));enc3=keyStr.indexOf(input.charAt(i++));enc4=keyStr.indexOf(input.charAt(i++));chr1=enc1<<2|enc2>>4;chr2=(enc2&15)<<4|enc3>>2;chr3=(enc3&3)<<6|enc4;output=output+String.fromCharCode(chr1);if(enc3!==64){output=output+String.fromCharCode(chr2)}if(enc4!==64){output=output+String.fromCharCode(chr3)}}while(i<input.length);return output};function intArrayFromBase64(s){try{var decoded=decodeBase64(s);var bytes=new Uint8Array(decoded.length);for(var i=0;i<decoded.length;++i){bytes[i]=decoded.charCodeAt(i)}return bytes}catch(_){throw new Error("Converting base64 string to bytes failed.")}}function tryParseAsDataURI(filename){if(!isDataURI(filename)){return}return intArrayFromBase64(filename.slice(dataURIPrefix.length))}var asmLibraryArg={"b":_emscripten_memcpy_big,"c":_emscripten_resize_heap,"a":wasmMemory};var asm=createWasm();var ___wasm_call_ctors=Module["___wasm_call_ctors"]=function(){return(___wasm_call_ctors=Module["___wasm_call_ctors"]=Module["asm"]["d"]).apply(null,arguments)};var _malloc=Module["_malloc"]=function(){return(_malloc=Module["_malloc"]=Module["asm"]["f"]).apply(null,arguments)};var _hash=Module["_hash"]=function(){return(_hash=Module["_hash"]=Module["asm"]["g"]).apply(null,arguments)};var _hash2=Module["_hash2"]=function(){return(_hash2=Module["_hash2"]=Module["asm"]["h"]).apply(null,arguments)};var _free=Module["_free"]=function(){return(_free=Module["_free"]=Module["asm"]["i"]).apply(null,arguments)};var calledRun;dependenciesFulfilled=function runCaller(){if(!calledRun)run();if(!calledRun)dependenciesFulfilled=runCaller};function run(args){args=args||arguments_;if(runDependencies>0){return}preRun();if(runDependencies>0){return}function doRun(){if(calledRun)return;calledRun=true;Module["calledRun"]=true;if(ABORT)return;initRuntime();if(Module["onRuntimeInitialized"])Module["onRuntimeInitialized"]();postRun()}if(Module["setStatus"]){Module["setStatus"]("Running...");setTimeout(function(){setTimeout(function(){Module["setStatus"]("")},1);doRun()},1)}else{doRun()}}Module["run"]=run;if(Module["preInit"]){if(typeof Module["preInit"]=="function")Module["preInit"]=[Module["preInit"]];while(Module["preInit"].length>0){Module["preInit"].pop()()}}run();
 
 
     var HashAlgs = {
@@ -337,4 +690,4 @@ e=w;p($);var S=c([null,ba]);function T(){return s.byteLength/65536|0}function Y(
 		return result;
 	};
 
-})(window, undefined);
+})(self, undefined);

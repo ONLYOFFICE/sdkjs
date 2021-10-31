@@ -61,7 +61,7 @@
             var nBits = 0;
             for (i=0; i<4; i++)
             {
-                if (index >= srcLen)
+                if (index >= input_len)
                     break;
                 var nCh = decodeBase64Char(isBase64 ? input.charCodeAt(index) : input[index]);
                 index++;
@@ -265,4 +265,4 @@
     };
 
 
-})(window);
+})(window || self);

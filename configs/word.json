@@ -40,6 +40,8 @@
 			"common/libfont/manager.js",
 			"common/libfont/classification.js",
 
+			"common/stringserialize.js",
+
 			"common/Drawings/Metafile.js",
 			"common/libfont/textmeasurer.js",
 			"common/Drawings/WorkEvents.js",

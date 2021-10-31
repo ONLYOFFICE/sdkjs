@@ -50,7 +50,7 @@ var FontStyle =
 function CreateFontData2(input, len)
 {
     var memoryData = AscCommon.Base64.decode(input, false, len);
-    return AscFonts.FontStream(memoryData, memoryData.length);
+    return new AscFonts.FontStream(memoryData, memoryData.length);
 }
 
 function CreateFontData3(szSrc)
@@ -73,7 +73,7 @@ function CreateFontData3(szSrc)
 function CreateFontData4(input)
 {
     var memoryData = AscCommon.Base64.decode(input, true);
-    return AscFonts.FontStream(memoryData, memoryData.length);
+    return new AscFonts.FontStream(memoryData, memoryData.length);
 }
 
 //----------------- FONT_MAP ----------------------------------------
