@@ -1881,6 +1881,13 @@ DrawingObjectsController.prototype =
                 ty = invert_transform_text.TransformPointY(x, y);
                 if(!this.isSlideShow() && (this.document || (this.drawingObjects.cSld && !(this.noNeedUpdateCursorType === true))))
                 {
+                	if (this.document && this.document.IsDocumentEditor() && object instanceof CShape && object.isForm())
+					{
+						var oForm = object.getInnerForm();
+						if (oForm)
+						 	oForm.DrawContentControlsTrack(true, tx, ty, 0, false);
+					}
+
                     var nPageIndex = pageIndex;
                     if(this.drawingObjects.cSld && !( this.noNeedUpdateCursorType === true ) && AscFormat.isRealNumber(this.drawingObjects.num))
                     {

@@ -910,7 +910,7 @@ CBlockLevelSdt.prototype.GetBoundingPolygonAnchorPoint = function()
 
 	return {X : nR, Y : (nT + nB) / 2, Page : nPageAbs, Transform : this.Get_ParentTextTransform()};
 };
-CBlockLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCurPage)
+CBlockLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCurPage, isCheckHit)
 {
 	if (!this.IsRecalculated() || !this.LogicDocument)
 		return;
@@ -964,7 +964,7 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCur
 			}
 		}
 
-		if (!isHit)
+		if (false !== isCheckHit && !isHit)
 			return;
 
 		var sHelpText = "";

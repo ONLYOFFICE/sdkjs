@@ -748,7 +748,7 @@ CInlineLevelSdt.prototype.GetFixedFormBounds = function()
 
 	return {X : 0, Y : 0, W : 0, H : 0, Page : 0};
 };
-CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCurPage)
+CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCurPage, isCheckHit)
 {
 	if (!this.Paragraph && this.Paragraph.LogicDocument)
 		return;
@@ -774,7 +774,7 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCu
 			}
 		}
 
-		if (!isHit)
+		if (false !== isCheckHit && !isHit)
 			return;
 
 		var sHelpText = "";
