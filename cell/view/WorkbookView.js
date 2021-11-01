@@ -3039,7 +3039,8 @@
 		var page = this.PrintPreviewPages ? this.PrintPreviewPages.arrPages[index] : null;
 		//change zoom on default
 		var viewZoom = this.getZoom();
-		this.changeZoom(1);
+		//this.changeZoom(0.7);
+		//this.printPreviewCtx.changeZoom(0.7);
 
 		/*var pdfPrinter = new AscCommonExcel.CPdfPrinter(this.fmgrGraphics[3], this.m_oFont);
 		if (pdfDocRenderer) {

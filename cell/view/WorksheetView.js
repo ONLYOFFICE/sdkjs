@@ -2421,6 +2421,11 @@
 				this._calcHeaderRowHeight();
 			}
 
+			//var _transform = drawingCtx.Transform ? drawingCtx.Transform : drawingCtx._mbt;
+			//drawingCtx.setTransform(0.5,_transform.shy,_transform.shx,0.5,_transform.tx,_transform.ty)
+			//drawingCtx.setTextTransform(0.5,_transform.shy,_transform.shx,0.5,_transform.tx,_transform.ty)
+			//drawingCtx.updateTransforms();
+
 			//draw header/footer
 			this._drawHeaderFooter(drawingCtx, printPagesData, indexPrintPage, countPrintPages);
 
