@@ -46,6 +46,8 @@
 	var c_oAscAlignH         = Asc.c_oAscAlignH;
 	var c_oAscAlignV         = Asc.c_oAscAlignV;
 
+	var paragraphs_map = {};
+
 	var arrApiRanges		 = [];
 	function private_RemoveEmptyRanges()
 	{
@@ -2553,6 +2555,7 @@
 	{
 		ApiParaPr.call(this, this, Paragraph.Pr.Copy());
 		this.Paragraph = Paragraph;
+		this.CustomId  = null;
 	}
 	ApiParagraph.prototype = Object.create(ApiParaPr.prototype);
 	ApiParagraph.prototype.constructor = ApiParagraph;
@@ -6197,6 +6200,29 @@
 		this.RemoveAllElements();
 		oDocument.Register_Field(oField);
 		this.Paragraph.AddToParagraph(oField);
+	};
+	/**
+	 * Adds unique Id for paragraph.
+	 * @memberof ApiParagraph
+	 * @param {string} sId - Unique paragraph Id
+	 * @typeofeditors ["CDE"]
+	 * @returns {string | false} - returns the added id, null if the id has not been added.
+	 */
+	ApiParagraph.prototype.AddId = function(sId)
+	{
+		if (typeof(sId) !== "string" || sId === "")
+			return false;
+
+		if (paragraphs_map[sId])
+			return false;
+
+		if (this.CustomId !== null)
+			delete paragraphs_map[this.CustomId];
+
+		this.CustomId = sId;
+		paragraphs_map[sId] = this;
+
+		return sId;
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -12968,6 +12994,20 @@
 		return true;
 	};
 	/**
+	 * Gets paragraph by unique Id.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {string} sId - Unique paragraph Id. 
+	 * @returns {?ApiParagraph}
+	 */
+	Api.prototype.GetParagraphById = function(sId)
+	{
+		if (typeof(sId) !== "string" || sId === "")
+			return null;
+
+		return paragraphs_map[sId] ? paragraphs_map[sId] : null;
+	};
+	/**
 	 * Convert document to markdown or html text.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
@@ -13023,6 +13063,7 @@
 	Api.prototype["MailMerge"]                       = Api.prototype.MailMerge;
 	Api.prototype["ReplaceTextSmart"]				 = Api.prototype.ReplaceTextSmart;
 	Api.prototype["CoAuthoringChatSendMessage"]		 = Api.prototype.CoAuthoringChatSendMessage;
+	Api.prototype["GetParagraphById"]		         = Api.prototype.GetParagraphById;
 	
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 
@@ -13161,6 +13202,7 @@
 	ApiParagraph.prototype["Select"]                 = ApiParagraph.prototype.Select;
 	ApiParagraph.prototype["Search"]                 = ApiParagraph.prototype.Search;
 	ApiParagraph.prototype["WrapInMailMergeField"]   = ApiParagraph.prototype.WrapInMailMergeField;
+	ApiParagraph.prototype["AddId"]                  = ApiParagraph.prototype.AddId;
 
 
 	ApiRun.prototype["GetClassType"]                 = ApiRun.prototype.GetClassType;
