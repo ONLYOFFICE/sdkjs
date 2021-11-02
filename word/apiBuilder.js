@@ -6206,15 +6206,15 @@
 	 * @memberof ApiParagraph
 	 * @param {string} sId - Unique paragraph Id
 	 * @typeofeditors ["CDE"]
-	 * @returns {string | false} - returns the added id, null if the id has not been added.
+	 * @returns {?string} - returns the added id, retuns "" if the id has not been added.
 	 */
 	ApiParagraph.prototype.AddId = function(sId)
 	{
 		if (typeof(sId) !== "string" || sId === "")
-			return false;
+			return "";
 
 		if (paragraphs_map[sId])
-			return false;
+			return "";
 
 		if (this.CustomId !== null)
 			delete paragraphs_map[this.CustomId];
