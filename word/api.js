@@ -598,7 +598,7 @@
 								if (_api.insertDocumentUrlsData.documents.length > 0) {
 									var options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.CANVAS_WORD);
 									options.isNaturalDownload = true;
-									_api.asc_DownloadAs(options);
+									_api.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, options);
 								} else {
 									_api.endInsertDocumentUrls();
 								}
@@ -619,7 +619,7 @@
 					}};
 					var options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.CANVAS_WORD);
 					options.isNaturalDownload = true;
-					this.api.asc_DownloadAs(options);
+					this.api.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, options);
 					return;
 				}
 				else if (_current["Script"] !== undefined)
@@ -2612,11 +2612,16 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_DownloadAs     = function(options)
 	{
-		var actionType = this.mailMergeFileData ? c_oAscAsyncAction.MailMergeLoadFile : c_oAscAsyncAction.DownloadAs;
-		this.downloadAs(actionType, options);
+		if (this.isLongAction()) {
+			return;
+		}
+		this.downloadAs(c_oAscAsyncAction.DownloadAs, options);
 	};
 	asc_docs_api.prototype.asc_DownloadAsMailMerge         = function(typeFile, StartIndex, EndIndex, bIsDownload)
 	{
+		if (this.isLongAction()) {
+			return false;
+		}
 		var oDocumentMailMerge = this.WordControl.m_oLogicDocument.Get_MailMergedDocument(StartIndex, EndIndex);
 		if (null != oDocumentMailMerge)
 		{
@@ -8395,7 +8400,7 @@ background-repeat: no-repeat;\
 		var t = this;
 		if (oData) {
 			this.mailMergeFileData = oData;
-			this.asc_DownloadAs(new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.JSON));
+			this.downloadAs(Asc.c_oAscAsyncAction.MailMergeLoadFile, new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.JSON));
 		} else {
 			AscCommon.ShowSpreadsheetFileDialog(function (error, files) {
 				if (Asc.c_oAscError.ID.No !== error) {
@@ -8406,7 +8411,7 @@ background-repeat: no-repeat;\
 				var reader = new FileReader();
 				reader.onload = function () {
 					t.mailMergeFileData = {'url': undefined, 'fileType': format, 'data': new Uint8Array(reader.result)};
-					t.asc_DownloadAs(new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.JSON));
+					t.downloadAs(Asc.c_oAscAsyncAction.MailMergeLoadFile, new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.JSON));
 				};
 				reader.onerror = function () {
 					t.sendEvent("asc_onError", Asc.c_oAscError.ID.Unknown, Asc.c_oAscError.Level.NoCritical);
@@ -8516,6 +8521,9 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_sendMailMergeData           = function(oData)
 	{
+		if (this.isLongAction()) {
+			return;
+		}
 		var t = this;
 		var actionType = Asc.c_oAscAsyncAction.SendMailMerge;
 		oData.put_UserId(this.documentUserId);

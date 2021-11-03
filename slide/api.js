@@ -2141,6 +2141,9 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_DownloadAs = function(options)
 	{
+		if (this.isLongAction()) {
+			return;
+		}
 		this.downloadAs(c_oAscAsyncAction.DownloadAs, options);
 	};
 	asc_docs_api.prototype.Resize                       = function()

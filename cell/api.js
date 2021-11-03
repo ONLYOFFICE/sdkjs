@@ -388,6 +388,9 @@ var editor;
     if (!this.canSave || this.isChartEditor || c_oAscAdvancedOptionsAction.None !== this.advancedOptionsAction) {
       return;
     }
+    if (this.isLongAction()) {
+      return;
+    }
 
     this.downloadAs(c_oAscAsyncAction.DownloadAs, options);
   };
@@ -550,7 +553,7 @@ var editor;
 			var _options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.TXT);
 			_options.isNaturalDownload = true;
 			_options.isGetTextFromUrl = true;
-			this.asc_DownloadAs(_options);
+			this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, _options);
 		}
 	};
 

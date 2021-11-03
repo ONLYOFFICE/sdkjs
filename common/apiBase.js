@@ -1598,9 +1598,6 @@
 	};
 	baseEditorsApi.prototype.downloadAs                         = function (actionType, options)
 	{
-		if (this.isLongAction()) {
-			return;
-		}
 		var isCloudCrypto = !!(window["AscDesktopEditor"] && (0 < window["AscDesktopEditor"]["CryptoMode"]));
 		if (isCloudCrypto)
 		{
@@ -2003,6 +2000,9 @@
 	};
 	baseEditorsApi.prototype.asc_Print = function (options) {
 		if (window["AscDesktopEditor"] && this._printDesktop(options)) {
+			return;
+		}
+		if (this.isLongAction()) {
 			return;
 		}
 
