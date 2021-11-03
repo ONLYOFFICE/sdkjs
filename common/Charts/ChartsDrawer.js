@@ -4596,7 +4596,7 @@ drawBarChart.prototype = {
 				}
 
 				//for 3d charts
-				if (this.cChartDrawer.nDimensionCount === 3) {				
+				if (this.cChartDrawer.nDimensionCount === 3) {
 					//расскомментируем, чтобы включить старую схему отрисовки(+ переименовать функции _DrawBars3D -> _DrawBars3D2)
 					//this.sortZIndexPaths.push({seria: i, point: idx, paths: paths.paths, x: paths.x, y: paths.y, zIndex: paths.zIndex});
 					
@@ -4751,7 +4751,7 @@ drawBarChart.prototype = {
 			} else if ("normal" === this.subType) {
 				cSortFaces = new window['AscFormat'].CSortFaces(this.cChartDrawer);
 				this.sortParallelepipeds = cSortFaces.sortParallelepipeds(this.temp2);
-			} else {				
+			} else {
 				var checkRotation = this.cChartDrawer.processor3D.view3D.rAngAx;
 				var length = this.chart.series.length - 1;
 				var verges = {
@@ -4832,10 +4832,10 @@ drawBarChart.prototype = {
 			this._calculateSummStacked(j);
 			endBlockPosition = this.cChartDrawer.getYPosition((curVal / this.summBarVal[j]), this.valAx) * this.chartProp.pxToMM;
 			startBlockPosition = this.summBarVal[j] ? this.cChartDrawer.getYPosition((prevVal / this.summBarVal[j]), this.valAx) * this.chartProp.pxToMM : nullPositionOX;
-		
+
 			startY = startBlockPosition;
 			height = startBlockPosition - endBlockPosition;
-		
+
 			if (this.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
 				height = -height;
 			}
@@ -4930,7 +4930,7 @@ drawBarChart.prototype = {
 			var plainEquationDown;
 			var plainEquationUp;
 			if(this.subType === "stacked" || this.subType === "stackedPer"){
-				var nullPositionOX = this.catAx.posY * this.chartProp.pxToMM;	
+				var nullPositionOX = this.catAx.posY * this.chartProp.pxToMM;
 
 				//получаем координаты точек полной диаграммы
 				if(this.subType === "stacked" && minH){
@@ -5602,6 +5602,7 @@ drawBarChart.prototype = {
 	_calculateRect3D: function (startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, serNum, type, maxH) {
 		//параметр r и глубина по OZ
 		var perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
+
 		//сдвиг по OZ в глубину
 		var gapDepth = this.chart.gapDepth != null ? this.chart.gapDepth : globalGapDepth;
 		if (this.subType === "standard") {
