@@ -4616,15 +4616,15 @@ drawBarChart.prototype = {
 						}
 					}
 
-					var testMaxHeight;
+					var testMaxHeight = 0;
 					if(shapeType === AscFormat.BAR_SHAPE_PYRAMID){
 						switch(this.subType){
 							case "stacked":{
-								if((valueMax > axisMax) && (maxHeight === testHeight)){
-									maxHeight = testHeight + (testHeight - testHeight * (axisMax / valueMax));
+								if((valueMax > axisMax)){
+									maxHeight = maxHeight + (maxHeight - maxHeight * (axisMax / valueMax));
 								}
-								if((valueMin < axisMin) && (minHeight === testHeight)){
-									minHeight = testHeight + (testHeight - testHeight * (axisMin / valueMin));
+								if((valueMin < axisMin)){
+									minHeight = maxHeight + (maxHeight - maxHeight * (axisMin / valueMin));
 								}
 								break;
 							}
@@ -4929,20 +4929,22 @@ drawBarChart.prototype = {
 			var lineEquation1, lineEquation2, lineEquation3, lineEquation4;
 			var plainEquationDown;
 			var plainEquationUp;
-			
 			if(this.subType === "stacked" || this.subType === "stackedPer"){
 				var nullPositionOX = this.catAx.posY * this.chartProp.pxToMM;	
 
 				//получаем координаты точек полной диаграммы
-				if(this.subType === "stacked" && maxH2){
-					maxH = maxH2;
-				}else if(this.subType === "stackedPer") {
-					if(maxH2){
-						maxH = maxH2;
+				if(this.subType === "stacked" && minH){
+					if(val < 0){
+						maxH = minH;
 					}
+				}else if(this.subType === "stackedPer" && val < 0) {
 					if(val < 0){
 						maxH = minH;
 					} 
+				}else if(this.subType === "stackedPer"){
+					if(maxH2){
+						maxH = maxH2;
+					}
 				}
 
 				x1 = startX, y1 = nullPositionOX, z1 = 0 + gapDepth;
@@ -5121,7 +5123,7 @@ drawBarChart.prototype = {
 
 		for (var k = 0; k < paths.frontPaths.length; k++) {
 			//не отрисовываем сегмент с нулевым значением если он не в основании пирамиды
-			if(type === AscFormat.BAR_SHAPE_PYRAMID && (this.subType === "stacked" || this.subType === "stackedPer")){
+			if((type === AscFormat.BAR_SHAPE_PYRAMID) && (this.subType === "stacked" || this.subType === "stackedPer")){
 				if ((null === paths.frontPaths[k] && null === paths.darkPaths[k]) || (val === 0 && i !== 0)) {
 					continue;
 				}
