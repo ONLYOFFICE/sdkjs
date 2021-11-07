@@ -4533,7 +4533,7 @@ drawBarChart.prototype = {
 					}
 				}
 
-
+				//shapeType = 4; раскоментировать для теста пирамид 
 				tempValues[i][idx] = val;
 
 				startYColumnPosition = this._getStartYColumnPosition(seriesHeight, i, idx, val, yPoints, prevVal, shapeType);
@@ -4951,10 +4951,10 @@ drawBarChart.prototype = {
 				x2 = startX, y2 = nullPositionOX, z2 = perspectiveDepth + gapDepth;
 				x3 = startX + individualBarWidth, y3 = nullPositionOX, z3 = perspectiveDepth + gapDepth;
 				x4 = startX + individualBarWidth, y4 = nullPositionOX, z4 = 0 + gapDepth;
-				x5 = startX + individualBarWidth / 2, y5 = nullPositionOX - maxH, z5 = 0 + gapDepth + perspectiveDepth / 2;
-				x6 = startX + individualBarWidth / 2, y6 = nullPositionOX - maxH, z6 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
-				x7 = startX + individualBarWidth / 2, y7 = nullPositionOX - maxH, z7 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
-				x8 = startX + individualBarWidth / 2, y8 = nullPositionOX - maxH, z8 = 0 + gapDepth + perspectiveDepth / 2;
+				x5 = startX + individualBarWidth / 2, y5 = nullPositionOX - maxH - 1, z5 = 0 + gapDepth + perspectiveDepth / 2;
+				x6 = startX + individualBarWidth / 2, y6 = nullPositionOX - maxH - 1, z6 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
+				x7 = startX + individualBarWidth / 2, y7 = nullPositionOX - maxH - 1, z7 = perspectiveDepth + gapDepth - perspectiveDepth / 2;
+				x8 = startX + individualBarWidth / 2, y8 = nullPositionOX - maxH - 1, z8 = 0 + gapDepth + perspectiveDepth / 2;
 						
 		
 				//расчет верхней и нижней пересекающих плоскостей
@@ -5012,7 +5012,7 @@ drawBarChart.prototype = {
 					point7 = point3;
 					point8 = point4;
 				}
-				
+
 				points = [point1, point2, point3, point4, point5, point6, point7, point8];
 				paths = this.cChartDrawer.calculateRect3D(points, val, null, true);
 
@@ -5263,13 +5263,13 @@ drawBarChart.prototype = {
 		return result;
 	},
 
+
 	_calculateDLbl: function (chartSpace, ser, val, bLayout, serIdx) {
 		var point = this.cChartDrawer.getIdxPoint(this.chart.series[ser], val);
-		var shapeType = null !== this.chart.series[ser].shape ? this.chart.series[ser].shape : this.chart.shape;
 		if (!this.paths.series[serIdx][val] || !point || !point.compiledDlb) {
 			return;
 		}
-
+		//var shapeType = null !== this.chart.series[ser].shape ? this.chart.series[ser].shape : this.chart.shape;
 		var path = this.paths.series[serIdx][val];
 		//ToDo пересмотреть для 3d диаграмм
 		if (this.cChartDrawer.nDimensionCount === 3) {
@@ -5294,12 +5294,25 @@ drawBarChart.prototype = {
 		var oCommand0 = oPath.getCommandByIndex(0);
 		var oCommand1 = oPath.getCommandByIndex(1);
 		var oCommand2 = oPath.getCommandByIndex(2);
-
+		//var oCommand3 = oPath.getCommandByIndex(3);
+		//var oCommand4 = oPath.getCommandByIndex(4);
+		//console.log(shapeType, oCommand0, oCommand1, oCommand2, oCommand3, oCommand4)
+		
 		var x = oCommand0.X;
 		var y = oCommand0.Y;
 
 		var h = oCommand0.Y - oCommand1.Y;
 		var w = oCommand2.X - oCommand1.X;
+
+		//var x = oCommand4.X;
+		//var y = oCommand4.Y;
+		//var h = oCommand4.Y - oCommand1.Y;
+		//var w;
+		//if(shapeType === AscFormat.BAR_SHAPE_PYRAMID){
+		//	w = oCommand3.X - oCommand0.X;
+		//}else{
+		//	w = oCommand2.X - oCommand1.X;
+		//}
 
 		var pxToMm = this.chartProp.pxToMM;
 
@@ -5358,6 +5371,7 @@ drawBarChart.prototype = {
 
 		return {x: centerX, y: centerY};
 	},
+
 
 	_calculateRect: function (x, y, w, h) {
 		var pathId = this.cChartSpace.AllocPath();
