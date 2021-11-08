@@ -3037,10 +3037,41 @@
 
 	WorkbookView.prototype.printSheetPrintPreview = function(index) {
 		var page = this.PrintPreviewPages ? this.PrintPreviewPages.arrPages[index] : null;
+
+		if (page) {
+			page = page.clone();
+		}
+
+		var ppiX = AscCommon.AscBrowser.convertToRetinaValue(96,true);
+		var height = page.pageHeight * asc.getCvtRatio(3/*mm*/, 0/*px*/, ppiX);
+		var width = page.pageWidth * asc.getCvtRatio(3/*mm*/, 0/*px*/, ppiX);
+		var canvasHeight = this.printPreviewCtx.canvas.parentElement.clientHeight;
+		var canvasWidth = this.printPreviewCtx.canvas.parentElement.clientWidth;
+
+		var kF = 1;
+		if (height > canvasHeight) {
+			kF = canvasHeight / height;
+		}
+		if (width > canvasWidth * kF) {
+			kF = canvasWidth / width;
+		}
+		this.printPreviewCtx.canvas.height = height * kF;
+		this.printPreviewCtx.canvas.width = width * kF;
+		this.printPreviewCtx.canvas.style.marginLeft = canvasWidth/2 - (width * kF) / 2 + "px";
+		this.printPreviewCtx.canvas.style.marginTop = canvasHeight/2 - (height * kF) / 2 + "px";
+
+
+		page.leftFieldInPx = page.leftFieldInPx * kF;
+		page.pageClipRectHeight = page.pageClipRectHeight * kF;
+		page.pageClipRectLeft = page.pageClipRectLeft * kF;
+		page.pageClipRectTop = page.pageClipRectTop * kF;
+		page.pageClipRectWidth = page.pageClipRectWidth * kF;
+		page.topFieldInPx = page.topFieldInPx * kF;
+
 		//change zoom on default
 		var viewZoom = this.getZoom();
-		//this.changeZoom(0.7);
-		//this.printPreviewCtx.changeZoom(0.7);
+		this.changeZoom(kF);
+		this.printPreviewCtx.changeZoom(kF);
 
 		/*var pdfPrinter = new AscCommonExcel.CPdfPrinter(this.fmgrGraphics[3], this.m_oFont);
 		if (pdfDocRenderer) {

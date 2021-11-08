@@ -2638,6 +2638,37 @@
 
 			return this;
 		}
+		CPagePrint.prototype.clone = function () {
+			var res = new CPagePrint();
+			res.pageWidth = this.pageWidth;
+			res.pageHeight = this.pageHeight;
+			res.pageClipRectLeft = this.pageClipRectLeft;
+			res.pageClipRectTop = this.pageClipRectTop;
+			res.pageClipRectWidth = this.pageClipRectWidth;
+			res.pageClipRectHeight = this.pageClipRectHeight;
+
+			res.pageRange = this.pageRange ? this.pageRange.clone() : null;
+
+			res.leftFieldInPx = this.leftFieldInPx;
+			res.topFieldInPx = this.topFieldInPx;
+
+			res.pageGridLines = this.pageGridLines;
+			res.pageHeadings = this.pageHeadings;
+
+			res.indexWorksheet = this.indexWorksheet;
+
+			res.startOffset = this.startOffset;
+			res.startOffsetPx = this.startOffsetPx;
+
+			res.scale = this.scale;
+
+			res.titleRowRange = this.titleRowRange;
+			res.titleColRange = this.titleColRange;
+			res.titleWidth = this.titleWidth;
+			res.titleHeight = this.titleHeight;
+
+			return res;
+		};
 		function CPrintPagesData () {
 			this.arrPages = [];
 			this.currentIndex = 0;
