@@ -1462,8 +1462,7 @@ CComplexField.prototype.GetInstruction = function()
 };
 CComplexField.prototype.private_UpdateInstruction = function()
 {
-	if (this.InstructionLine &&
-		(!this.Instruction || !this.Instruction.CheckInstructionLine(this.InstructionLine)))
+	if ((!this.Instruction || !this.Instruction.CheckInstructionLine(this.InstructionLine)))
 	{
 		var oParser = new CFieldInstructionParser();
 		this.Instruction = oParser.GetInstructionClass(this.InstructionLine);
