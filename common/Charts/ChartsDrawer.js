@@ -5073,6 +5073,15 @@ drawBarChart.prototype = {
 
 				points = [point1, point2, point3, point4, point5, point6, point7, point8];
 				paths = this.cChartDrawer.calculateRect3D(points, val, null, true);
+				
+				point1 = this.cChartDrawer._convertAndTurnPoint(x12, y12, z12);
+				point2 = this.cChartDrawer._convertAndTurnPoint(x22, y22, z22);
+				point3 = this.cChartDrawer._convertAndTurnPoint(x32, y32, z32);
+				point4 = this.cChartDrawer._convertAndTurnPoint(x42, y42, z42);
+				point5 = this.cChartDrawer._convertAndTurnPoint(x52, y52, z52);
+				point6 = this.cChartDrawer._convertAndTurnPoint(x62, y62, z62);
+				point7 = this.cChartDrawer._convertAndTurnPoint(x72, y72, z72);
+				point8 = this.cChartDrawer._convertAndTurnPoint(x82, y82, z82);
 			}
 		}else{
 			//расчет параллелепипеда 	
@@ -5098,6 +5107,7 @@ drawBarChart.prototype = {
 		var point66 = this.cChartDrawer._convertAndTurnPoint(x62, y62, z62, null, null, true);
 		var point77 = this.cChartDrawer._convertAndTurnPoint(x72, y72, z72, null, null, true);
 		var point88 = this.cChartDrawer._convertAndTurnPoint(x82, y82, z82, null, null, true);
+		
 
 		arrPoints = [[point1, point4, point8, point5], [point1, point2, point3, point4],
 			[point1, point2, point6, point5], [point4, point8, point7, point3], [point5, point6, point7, point8],
