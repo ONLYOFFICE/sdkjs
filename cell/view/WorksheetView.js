@@ -2508,6 +2508,8 @@
 				this._calcHeaderRowHeight();
 			}
 
+			this._setDefaultFont(drawingCtx);
+
 			//draw header/footer
 			this._drawHeaderFooter(drawingCtx, printPagesData, indexPrintPage, countPrintPages);
 
