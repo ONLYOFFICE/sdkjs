@@ -4586,7 +4586,7 @@ function (window, undefined) {
 
 			switch (Type) {
 				case AscCH.historyitem_Protected_SetLockStructure: {
-					protectedWorkbook.asc_setLockStructure(value);
+					protectedWorkbook.setLockStructure(value);
 					break;
 				}
 				case AscCH.historyitem_Protected_SetLockWindows: {

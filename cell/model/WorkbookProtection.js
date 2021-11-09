@@ -53,7 +53,7 @@
 	 this.selectUnlockedCells = false;*/
 
 	function generateHashParams () {
-		return {spinCount: 100000, saltValue: "DTj3UwQpI4oqUwbvpso1Qw==", algorithmName: AscCommon.HashAlgs.SHA512};
+		return {spinCount: 100000, saltValue: "DTj3UwQpI4oqUwbvpso1Qw==", algorithmName: /*AscCommon.HashAlgs.SHA512*/"SHA-512"};
 	}
 
 	function CSheetProtection(ws) {
@@ -664,12 +664,11 @@
 		return this.workbookSaltValue;
 	};
 	CWorkbookProtection.prototype.asc_setLockStructure = function (password, callback) {
-		//workbookProtection workbookAlgorithmName="SHA-512" workbookHashValue="AHtCvi6xHcOpaEEUrFzDvWxZRQkKGU/bKUCF1G3T3cy3Ynfvl1BXDEiCkHtGehZKv5NzZ4mnXG3KuDSAGoojvw==" workbookSaltValue="DTj3UwQpI4oqUwbvpso1Qw==" workbookSpinCount="100000" lockStructure="1"
 		var t = this;
 		if (this.lockStructure) {
 			if (this.asc_isPassword()) {
-				AscCommon.calculateProtectHash(password, t.saltValue, t.spinCount, t.algorithmName, function (hash) {
-					if (hash === this.hashValue) {
+				AscCommon.calculateProtectHash(password, t.workbookSaltValue, t.workbookSpinCount, t.workbookAlgorithmName, function (hash) {
+					if (hash === t.hashValue) {
 						t.lockStructure = false;
 						t.workbookHashValue = null;
 						t.workbookSaltValue = null;
@@ -680,11 +679,11 @@
 					}
 				});
 			} else {
-				t.lockStructure = false;
+				t.setLockStructure(false);
 				callback(t);
 			}
 		} else {
-			t.lockStructure = true;
+			t.setLockStructure(true);
 			if (password) {
 				var hashParams = generateHashParams();
 				this.workbookSaltValue = hashParams.saltValue;
@@ -698,6 +697,9 @@
 				callback(t);
 			}
 		}
+	};
+	CWorkbookProtection.prototype.setLockStructure = function (val) {
+		this.lockStructure = val;
 	};
 	CWorkbookProtection.prototype.asc_setLockWindows = function (val) {
 		this.lockWindows = val;
