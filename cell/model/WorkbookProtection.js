@@ -52,6 +52,10 @@
 	 this.pivotTables = true;
 	 this.selectUnlockedCells = false;*/
 
+	function generateHashParams () {
+		return {spinCount: 100000, saltValue: "asd", algorithmName: "SHA-512"};
+	}
+
 	function CSheetProtection(ws) {
 		this.algorithmName = null;
 		this.hashValue = null;
@@ -659,9 +663,36 @@
 	CWorkbookProtection.prototype.asc_getWorkbookSpinCount = function () {
 		return this.workbookSaltValue;
 	};
-
-	CWorkbookProtection.prototype.asc_setLockStructure = function (val) {
-		this.lockStructure = val;
+	CWorkbookProtection.prototype.asc_setLockStructure = function (password, callback) {
+		//workbookProtection workbookAlgorithmName="SHA-512" workbookHashValue="AHtCvi6xHcOpaEEUrFzDvWxZRQkKGU/bKUCF1G3T3cy3Ynfvl1BXDEiCkHtGehZKv5NzZ4mnXG3KuDSAGoojvw==" workbookSaltValue="DTj3UwQpI4oqUwbvpso1Qw==" workbookSpinCount="100000" lockStructure="1"
+		var t = this;
+		if (this.lockStructure) {
+			if (this.asc_isPassword()) {
+				AscCommon.calculateProtectHash(password, t.saltValue, t.spinCount, t.algorithmName, function (hash) {
+					if (hash === this.hashValue) {
+						t.lockStructure = false;
+						t.workbookHashValue = null;
+						t.workbookSaltValue = null;
+						t.workbookSpinCount = null;
+						callback(t);
+					} else {
+						callback(null);
+					}
+				});
+			} else {
+				t.lockStructure = false;
+				callback(t);
+			}
+		} else {
+			var hashParams = generateHashParams();
+			this.workbookSaltValue = hashParams.saltValue;
+			this.workbookSpinCount = hashParams.spinCount;
+			this.workbookAlgorithmName = hashParams.algorithmName;
+			AscCommon.calculateProtectHash(password, t.workbookSaltValue, t.workbookSpinCount, t.workbookAlgorithmName, function (hash) {
+				t.workbookHashValue = hash;
+				callback(t);
+			});
+		}
 	};
 	CWorkbookProtection.prototype.asc_setLockWindows = function (val) {
 		this.lockWindows = val;
@@ -1082,8 +1113,10 @@
 	CProtectedRange.prototype.asc_getIsLock = function () {
 		return this.isLock;
 	};
-	CProtectedRange.prototype.asc_checkPassword = function (val) {
-		return true;
+	CProtectedRange.prototype.asc_checkPassword = function (val, callback) {
+		AscCommon.calculateProtectHash(val, this.saltValue, this.spinCount, this.algorithmName, function (hash) {
+			callback(hash === this.hashValue);
+		});
 	};
 	CProtectedRange.prototype.asc_getId = function () {
 		return this.Id;
