@@ -3209,7 +3209,7 @@ CChartsDrawer.prototype =
 		 var y321 = (point2.y - y0) / (y1 - y0);
 		 var z321 = (point2.z - z0) / (z1 - z0);*/
 
-		return {l: l, m: m, n: n, x1: x1, y1: y1, z1: z1};
+		return {l: l, m: m, n: n, x1: x0, y1: y0, z1: z0};
 	},
 
 	getLineEquation2d: function (point1, point2) {
@@ -3245,6 +3245,50 @@ CChartsDrawer.prototype =
 		return {x: x, y: y, z: z};
 	},
 
+	// isIntersectionPlainAndLine2: function (A, B, C, X, Y) {
+
+	// 	var createVector = function(A, B){
+	// 		var vectorX = B.x - A.x;
+	// 		var vectorY = B.y - A.y;
+	// 		var vectorZ = B.x - A.x;
+
+	// 		return {x: vectorX, y: vectorY, z: vectorZ}
+	// 	}
+
+	// 	var verctorProduct = function(A, B){
+	// 		var x = A.y * B.z - B.y * A.z;
+	// 		var y = A.z * B.x - B.z * A.x;
+	// 		var z = A.x * B.y - B.x * A.y;
+
+	// 		return {x: x, y: y, z: z}
+	// 	}
+
+	// 	var scalarProduct = function(A, B){
+	// 		return A.x * B.x + A.y * B.y + A.z * B.z;
+	// 	}
+
+	// 	var N = verctorProduct(createVector(A, B), createVector(A, C));
+	// 	var V = createVector(X, A);
+	// 	var D =  scalarProduct(N, V);
+	// 	var W = createVector(X, Y);
+	// 	var E =  scalarProduct(N, W);
+
+	// 	var x;
+	// 	var y;
+	// 	var z;
+	// 	if(E !== 0){
+	// 		x = X.x + W.x * D / E;
+	// 		y = X.y + W.y * D / E;
+	// 		z = X.z + W.z * D / E;
+	// 	}else{
+	// 		x = X.x + W.x * D
+	// 		y = X.y + W.y * D
+	// 		z = X.z + W.z * D
+	// 	}
+
+	// 	return {x: x, y: y, z: z};
+	// },
+
 	//поиск точки пересечения плоскости и прямой
 	isIntersectionPlainAndLine: function (plainEquation, lineEquation) {
 		var A = plainEquation.a;
@@ -3276,12 +3320,13 @@ CChartsDrawer.prototype =
 		 A * t * l + A * x1 + B * t * m + B * y1 + C * t * n + C * z1 + D
 
 		 A * t * l + B * t * m + C * t * n       + A * x1 + B * y1 + C * z1 + D*/
-		var param = (A * l + B * m + C * n);
+		// var param = (A * l + B * m + C * n);
 
-		if(param === 0){
-			param = 1
-		}
-		var t = -(A * x1 + B * y1 + C * z1 + D) / param;
+		// if(param === 0){
+
+		// }
+		// var t = -(A * x1 + B * y1 + C * z1 + D) / param;
+		var t = -(A * x1 + B * y1 + C * z1 + D) / (A * l + B * m + C * n);
 
 		var x = t * l + x1;
 		var y = t * m + y1;
@@ -3599,10 +3644,10 @@ CChartsDrawer.prototype =
 		var c1 = -zK;
 		var d1 = -(-y1 * yK - x1*xK - z1 * zK);
 
-		var a1 = y1 *(z2 - z3) + y2 *(z3 - z1) + y3* (z1 - z2) ;
-		var b1 = z1 *(x2 - x3) + z2 *(x3 - x1) + z3 *(x1 - x2); 
-		var c1 = x1 *(y2 - y3) + x2 *(y3 - y1) + x3 *(y1 - y2) ;
-		var d1 = -(x1 * (y2 * z3 - y3 * z2) + x2 * (y3 * z1 - y1 * z3) + x3 * (y1 * z2 - y2 * z1));
+		// var a1 = y1 *(z2 - z3) + y2 *(z3 - z1) + y3* (z1 - z2) ;
+		// var b1 = z1 *(x2 - x3) + z2 *(x3 - x1) + z3 *(x1 - x2); 
+		// var c1 = x1 *(y2 - y3) + x2 *(y3 - y1) + x3 *(y1 - y2) ;
+		// var d1 = -(x1 * (y2 * z3 - y3 * z2) + x2 * (y3 * z1 - y1 * z3) + x3 * (y1 * z2 - y2 * z1));
 
 		return {a: a1, b: b1, c: c1, d: d1};
 	},
@@ -3834,7 +3879,7 @@ CChartsDrawer.prototype =
 				result = !result;
 		}
 
-		return true//result;
+		return result;
 	},
 	
 	calculatePolygon: function(array)
@@ -4542,7 +4587,7 @@ drawBarChart.prototype = {
 					}
 				}
 
-				shapeType = 4; //раскоментировать для теста пирамид 
+				//shapeType = 4; //раскоментировать для теста пирамид 
 				tempValues[i][idx] = val;
 
 				startYColumnPosition = this._getStartYColumnPosition(seriesHeight, i, idx, val, yPoints, prevVal, shapeType);
@@ -4903,6 +4948,10 @@ drawBarChart.prototype = {
 		//параметр r и глубина по OZ
 		var perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
 
+		if(perspectiveDepth === 0){
+			perspectiveDepth = 75.00852292728688;
+		}
+		//console.log(angel)
 		//сдвиг по OZ в глубину
 		var gapDepth = this.chart.gapDepth != null ? this.chart.gapDepth : globalGapDepth;
 		if (this.subType === "standard") {
@@ -4978,7 +5027,8 @@ drawBarChart.prototype = {
 				pointPlainDown2 = this.cChartDrawer._convertAndTurnPoint(x22, y22, z22);
 				pointPlainDown3 = this.cChartDrawer._convertAndTurnPoint(x32, y32, z32);
 				pointPlainDown4 = this.cChartDrawer._convertAndTurnPoint(x42, y42, z42);
-		
+
+
 				point1 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1);
 				point2 = this.cChartDrawer._convertAndTurnPoint(x2, y2, z2);
 				point3 = this.cChartDrawer._convertAndTurnPoint(x3, y3, z3);
@@ -5013,6 +5063,7 @@ drawBarChart.prototype = {
 					point6 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationUp, lineEquation4);
 					point7 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationUp, lineEquation3);
 					point8 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationUp, lineEquation2);
+
 				}else if(val === 0 && i === 0){
 					point1 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1);
 					point2 = this.cChartDrawer._convertAndTurnPoint(x2, y2, z2);
@@ -5023,7 +5074,7 @@ drawBarChart.prototype = {
 					point7 = point3;
 					point8 = point4;
 				}
-				
+
 				points = [point1, point2, point3, point4, point5, point6, point7, point8];
 				paths = this.cChartDrawer.calculateRect3D(points, val, null, true);
 
@@ -5475,7 +5526,6 @@ drawBarChart.prototype = {
 			 }
 			 }
 			 }*/
-			 console.log(this.sortParallelepipeds)
 			for (var i = 0; i < this.sortParallelepipeds.length; i++) {
 				index = this.sortParallelepipeds[i].nextIndex;
 				faces = this.temp[index].faces;
