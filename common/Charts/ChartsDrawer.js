@@ -3267,7 +3267,7 @@ CChartsDrawer.prototype =
 		/*x = t * l + x1
 		 y = t * m + y1
 		 z = t * n + z1*/
-		 
+
 
 		/*A * x + B * y + C * z + D = 0
 
@@ -3829,7 +3829,7 @@ CChartsDrawer.prototype =
 			if(!(this.calcProp.subType === "stacked") && !(this.calcProp.subType === "stackedPer") && this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX)
 				result = !result;
 		}
-
+		
 		return result;
 	},
 	
