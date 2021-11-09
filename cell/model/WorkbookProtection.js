@@ -1085,6 +1085,9 @@
 	CProtectedRange.prototype.asc_checkPassword = function (val) {
 		return true;
 	};
+	CProtectedRange.prototype.asc_getId = function () {
+		return this.Id;
+	};
 	CProtectedRange.prototype.isUserEnteredPassword = function () {
 		return this._isEnterPassword;
 	};
@@ -1183,5 +1186,6 @@
 	prot["asc_isPassword"] = prot.asc_isPassword;
 	prot["asc_getIsLock"] = prot.asc_getIsLock;
 	prot["asc_checkPassword"] = prot.asc_checkPassword;
+	prot["asc_getId"] = prot.asc_getId;
 
 })(window);
