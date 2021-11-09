@@ -392,6 +392,47 @@
 	CSheetProtection.prototype.setSheet = function (val) {
 		this.sheet = val;
 	};
+
+	CSheetProtection.prototype.asc_setSheet = function (password, callback) {
+		//данная функция добавляет защиту листа + проверяет пароль, ответ в интерфейс, затем дёргается asc_setProtectedSheet
+		//пароль не стал переносить в asc_setProtectedSheet, чтобы все настройки из интерфейса выставлялись здесь
+		//callback - поскольку функция генерации хэша асинхронная
+		var t = this;
+		if (this.sheet) {
+			if (this.asc_isPassword()) {
+				AscCommon.calculateProtectHash(password, t.saltValue, t.spinCount, t.algorithmName, function (hash) {
+					if (hash === t.workbookHashValue) {
+						t.lockStructure = false;
+						t.workbookHashValue = null;
+						t.workbookSaltValue = null;
+						t.workbookSpinCount = null;
+						callback(t);
+					} else {
+						//error
+						callback(null);
+					}
+				});
+			} else {
+				t.setSheet(false);
+				callback(t);
+			}
+		} else {
+			t.setSheet(true);
+			if (password) {
+				var hashParams = generateHashParams();
+				this.saltValue = hashParams.saltValue;
+				this.spinCount = hashParams.spinCount;
+				this.algorithmName = hashParams.algorithmName;
+				AscCommon.calculateProtectHash(password, t.saltValue, t.spinCount, t.algorithmName, function (hash) {
+					t.workbookHashValue = hash;
+					callback(t);
+				});
+			} else {
+				callback(t);
+			}
+		}
+	};
+
 	CSheetProtection.prototype.setObjects = function (val) {
 		this.objects = val;
 	};
@@ -664,6 +705,9 @@
 		return this.workbookSaltValue;
 	};
 	CWorkbookProtection.prototype.asc_setLockStructure = function (password, callback) {
+		//данная функция добавляет защиту структуры + проверяет пароль, ответ в интерфейс, затем дёргается asc_setProtectedWorkbook
+		//пароль не стал переносить в asc_setProtectedWorkbook, чтобы все настройки из интерфейса выставлялись здесь
+		//callback - поскольку функция генерации хэша асинхронная
 		var t = this;
 		if (this.lockStructure) {
 			if (this.asc_isPassword()) {
@@ -1162,7 +1206,7 @@
 	prot["asc_getPivotTables"] = prot.getPivotTables;
 	prot["asc_getSelectUnlockedCells"] = prot.getSelectUnlockedCells;
 	prot["asc_setSpinCount"] = prot.setSpinCount;
-	prot["asc_setSheet"] = prot.setSheet;
+	prot["asc_setSheet"] = prot.asc_setSheet;
 	prot["asc_setObjects"] = prot.setObjects;
 	prot["asc_setScenarios"] = prot.setScenarios;
 	prot["asc_setFormatCells"] = prot.setFormatCells;
