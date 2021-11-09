@@ -668,13 +668,14 @@
 		if (this.lockStructure) {
 			if (this.asc_isPassword()) {
 				AscCommon.calculateProtectHash(password, t.workbookSaltValue, t.workbookSpinCount, t.workbookAlgorithmName, function (hash) {
-					if (hash === t.hashValue) {
+					if (hash === t.workbookHashValue) {
 						t.lockStructure = false;
 						t.workbookHashValue = null;
 						t.workbookSaltValue = null;
 						t.workbookSpinCount = null;
 						callback(t);
 					} else {
+						//error
 						callback(null);
 					}
 				});

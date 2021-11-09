@@ -6002,6 +6002,7 @@ var editor;
     var wsView = this.wb.getWorksheet();
     var i = this.wbModel.getActive();
     var sheetId = this.wbModel.getWorksheet(i).getId();
+
     var lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Sheet, /*subType*/null, sheetId, sheetId);
 
     var t = this;
@@ -6050,6 +6051,11 @@ var editor;
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return false;
     }
+
+	if (!props) {
+      this.handlers.trigger("asc_onChangeProtectWorkbook");
+	  return;
+	}
 
     var wb = this.wbModel;
     var sheet, i, arrLocks = [];
