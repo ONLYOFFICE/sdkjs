@@ -401,11 +401,11 @@
 		if (this.sheet) {
 			if (this.asc_isPassword()) {
 				AscCommon.calculateProtectHash(password, t.saltValue, t.spinCount, t.algorithmName, function (hash) {
-					if (hash === t.workbookHashValue) {
-						t.lockStructure = false;
-						t.workbookHashValue = null;
-						t.workbookSaltValue = null;
-						t.workbookSpinCount = null;
+					if (hash === t.hashValue) {
+						t.setSheet(false);
+						t.hashValue = null;
+						t.saltValue = null;
+						t.spinCount = null;
 						callback(t);
 					} else {
 						//error
@@ -424,7 +424,7 @@
 				this.spinCount = hashParams.spinCount;
 				this.algorithmName = hashParams.algorithmName;
 				AscCommon.calculateProtectHash(password, t.saltValue, t.spinCount, t.algorithmName, function (hash) {
-					t.workbookHashValue = hash;
+					t.hashValue = hash;
 					callback(t);
 				});
 			} else {
@@ -713,10 +713,11 @@
 			if (this.asc_isPassword()) {
 				AscCommon.calculateProtectHash(password, t.workbookSaltValue, t.workbookSpinCount, t.workbookAlgorithmName, function (hash) {
 					if (hash === t.workbookHashValue) {
-						t.lockStructure = false;
+						t.setLockStructure(false);
 						t.workbookHashValue = null;
 						t.workbookSaltValue = null;
 						t.workbookSpinCount = null;
+						t.workbookAlgorithmName = null;
 						callback(t);
 					} else {
 						//error
