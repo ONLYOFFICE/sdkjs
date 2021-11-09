@@ -53,7 +53,7 @@
 	 this.selectUnlockedCells = false;*/
 
 	function generateHashParams () {
-		return {spinCount: 100000, saltValue: "asd", algorithmName: "SHA-512"};
+		return {spinCount: 100000, saltValue: "DTj3UwQpI4oqUwbvpso1Qw==", algorithmName: AscCommon.HashAlgs.SHA512};
 	}
 
 	function CSheetProtection(ws) {
@@ -684,14 +684,19 @@
 				callback(t);
 			}
 		} else {
-			var hashParams = generateHashParams();
-			this.workbookSaltValue = hashParams.saltValue;
-			this.workbookSpinCount = hashParams.spinCount;
-			this.workbookAlgorithmName = hashParams.algorithmName;
-			AscCommon.calculateProtectHash(password, t.workbookSaltValue, t.workbookSpinCount, t.workbookAlgorithmName, function (hash) {
-				t.workbookHashValue = hash;
+			t.lockStructure = true;
+			if (password) {
+				var hashParams = generateHashParams();
+				this.workbookSaltValue = hashParams.saltValue;
+				this.workbookSpinCount = hashParams.spinCount;
+				this.workbookAlgorithmName = hashParams.algorithmName;
+				AscCommon.calculateProtectHash(password, t.workbookSaltValue, t.workbookSpinCount, t.workbookAlgorithmName, function (hash) {
+					t.workbookHashValue = hash;
+					callback(t);
+				});
+			} else {
 				callback(t);
-			});
+			}
 		}
 	};
 	CWorkbookProtection.prototype.asc_setLockWindows = function (val) {
