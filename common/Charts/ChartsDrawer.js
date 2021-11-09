@@ -3245,50 +3245,6 @@ CChartsDrawer.prototype =
 		return {x: x, y: y, z: z};
 	},
 
-	// isIntersectionPlainAndLine2: function (A, B, C, X, Y) {
-
-	// 	var createVector = function(A, B){
-	// 		var vectorX = B.x - A.x;
-	// 		var vectorY = B.y - A.y;
-	// 		var vectorZ = B.x - A.x;
-
-	// 		return {x: vectorX, y: vectorY, z: vectorZ}
-	// 	}
-
-	// 	var verctorProduct = function(A, B){
-	// 		var x = A.y * B.z - B.y * A.z;
-	// 		var y = A.z * B.x - B.z * A.x;
-	// 		var z = A.x * B.y - B.x * A.y;
-
-	// 		return {x: x, y: y, z: z}
-	// 	}
-
-	// 	var scalarProduct = function(A, B){
-	// 		return A.x * B.x + A.y * B.y + A.z * B.z;
-	// 	}
-
-	// 	var N = verctorProduct(createVector(A, B), createVector(A, C));
-	// 	var V = createVector(X, A);
-	// 	var D =  scalarProduct(N, V);
-	// 	var W = createVector(X, Y);
-	// 	var E =  scalarProduct(N, W);
-
-	// 	var x;
-	// 	var y;
-	// 	var z;
-	// 	if(E !== 0){
-	// 		x = X.x + W.x * D / E;
-	// 		y = X.y + W.y * D / E;
-	// 		z = X.z + W.z * D / E;
-	// 	}else{
-	// 		x = X.x + W.x * D
-	// 		y = X.y + W.y * D
-	// 		z = X.z + W.z * D
-	// 	}
-
-	// 	return {x: x, y: y, z: z};
-	// },
-
 	//поиск точки пересечения плоскости и прямой
 	isIntersectionPlainAndLine: function (plainEquation, lineEquation) {
 		var A = plainEquation.a;
@@ -3320,12 +3276,7 @@ CChartsDrawer.prototype =
 		 A * t * l + A * x1 + B * t * m + B * y1 + C * t * n + C * z1 + D
 
 		 A * t * l + B * t * m + C * t * n       + A * x1 + B * y1 + C * z1 + D*/
-		// var param = (A * l + B * m + C * n);
 
-		// if(param === 0){
-
-		// }
-		// var t = -(A * x1 + B * y1 + C * z1 + D) / param;
 		var t = -(A * x1 + B * y1 + C * z1 + D) / (A * l + B * m + C * n);
 
 		var x = t * l + x1;
@@ -4948,10 +4899,10 @@ drawBarChart.prototype = {
 		//параметр r и глубина по OZ
 		var perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
 
-		if(perspectiveDepth === 0){
-			perspectiveDepth = 75.00852292728688;
+		if(perspectiveDepth === 0 && type === AscFormat.BAR_SHAPE_PYRAMID){
+			perspectiveDepth = 1;
 		}
-		//console.log(angel)
+
 		//сдвиг по OZ в глубину
 		var gapDepth = this.chart.gapDepth != null ? this.chart.gapDepth : globalGapDepth;
 		if (this.subType === "standard") {
