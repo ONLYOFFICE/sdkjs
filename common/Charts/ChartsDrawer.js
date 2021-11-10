@@ -5325,7 +5325,7 @@ drawBarChart.prototype = {
 		var oCommand0 = oPath.getCommandByIndex(0);
 		var oCommand1 = oPath.getCommandByIndex(1);
 		var oCommand2 = oPath.getCommandByIndex(2);
-		
+
 		var x = oCommand0.X;
 		var y = oCommand0.Y;
 
