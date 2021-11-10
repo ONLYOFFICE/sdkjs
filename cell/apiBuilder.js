@@ -585,6 +585,13 @@
 		return resultList;
 	};
 
+	/**
+	 * Recalculates all formulas in the active workbook.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {Function} fLogger - A function which specifies the logger object for checking recalculation of formulas.
+	 * @returns {bool}
+	 */
 	Api.prototype.RecalculateAllFormulas = function(fLogger) {
 		var formulas = this.wbModel.getAllFormulas(true);
 		var _compare = function(_val1, _val2) {
