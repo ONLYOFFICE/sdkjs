@@ -4674,25 +4674,6 @@ drawBarChart.prototype = {
 								break;
 							}
 						}
-						// if(this.subType !== "stackedPer"){
-						// 	valueMax = this.subType === "stacked" ? valueMax : val;
-						// 	valueMin = this.subType === "stacked" ? valueMin : val;
-
-						// 	if((valueMax > axisMax) && (maxHeight === testHeight)){
-						// 		maxHeight = testHeight + (testHeight - testHeight * (axisMax / valueMax));
-						// 	}
-						// 	if((valueMin < axisMin) && (minHeight === testHeight)){
-						// 		minHeight = testHeight + (testHeight - testHeight * (axisMin / valueMin));
-						// 	}
-
-						// }else {
-						// 	if((valueMax > axisMax) && (maxHeight === testHeight)){
-						// 		testMaxHeight = testHeight + (testHeight - testHeight * axisMax);							
-						// 	}
-						// 	if((valueMin < axisMin) && (minHeight === testHeight)){
-						// 		testMaxHeight = testHeight + (testHeight + testHeight * axisMin);	
-						// 	}
-						// }
 					}
 					paths = this._calculateRect3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, shapeType, testMaxHeight);
 
@@ -5319,7 +5300,7 @@ drawBarChart.prototype = {
 		if (!this.paths.series[serIdx][val] || !point || !point.compiledDlb) {
 			return;
 		}
-		//var shapeType = null !== this.chart.series[ser].shape ? this.chart.series[ser].shape : this.chart.shape;
+
 		var path = this.paths.series[serIdx][val];
 		//ToDo пересмотреть для 3d диаграмм
 		if (this.cChartDrawer.nDimensionCount === 3) {
@@ -5344,25 +5325,12 @@ drawBarChart.prototype = {
 		var oCommand0 = oPath.getCommandByIndex(0);
 		var oCommand1 = oPath.getCommandByIndex(1);
 		var oCommand2 = oPath.getCommandByIndex(2);
-		//var oCommand3 = oPath.getCommandByIndex(3);
-		//var oCommand4 = oPath.getCommandByIndex(4);
-		//console.log(shapeType, oCommand0, oCommand1, oCommand2, oCommand3, oCommand4)
 		
 		var x = oCommand0.X;
 		var y = oCommand0.Y;
 
 		var h = oCommand0.Y - oCommand1.Y;
 		var w = oCommand2.X - oCommand1.X;
-
-		//var x = oCommand4.X;
-		//var y = oCommand4.Y;
-		//var h = oCommand4.Y - oCommand1.Y;
-		//var w;
-		//if(shapeType === AscFormat.BAR_SHAPE_PYRAMID){
-		//	w = oCommand3.X - oCommand0.X;
-		//}else{
-		//	w = oCommand2.X - oCommand1.X;
-		//}
 
 		var pxToMm = this.chartProp.pxToMM;
 
