@@ -28656,53 +28656,58 @@ CDocumentChangeTextCaseEngine.prototype.FlushWord = function()
 	}
 	var bFlagForCheck = false;
 	var nCaseType = this.ChangeType;
-	for (var nIndex = 0, nCount = this.WordBuffer.length; nIndex < nCount; ++nIndex)
+	if (this.SentenceSettings[0] && this.SentenceSettings[0].wordCount)
 	{
-		if (!this.WordBuffer[nIndex].Change)
-			continue;
-		bFlagForCheck = true;
-
-		var oRun      = this.WordBuffer[nIndex].Run;
-		var nInRunPos = this.WordBuffer[nIndex].Pos;
-
-		var nCharCode  = oRun.GetElement(nInRunPos).Value;
-		var nLowerCode = String.fromCharCode(nCharCode).toLowerCase().charCodeAt(0);
-		var nUpperCode = String.fromCharCode(nCharCode).toUpperCase().charCodeAt(0);
-
-		if (nLowerCode !== nCharCode || nUpperCode !== nCharCode)
+		for (var nIndex = 0, nCount = this.WordBuffer.length; nIndex < nCount; ++nIndex)
 		{
-			if (nLowerCode === nCharCode
-				&& ((Asc.c_oAscChangeTextCaseType.SentenceCase === nCaseType && (this.StartSentence && 0 === nIndex))
-					|| Asc.c_oAscChangeTextCaseType.ToggleCase === nCaseType
-					|| Asc.c_oAscChangeTextCaseType.UpperCase === nCaseType
-					|| (Asc.c_oAscChangeTextCaseType.CapitalizeWords === nCaseType && 0 === nIndex)))
+			if (!this.WordBuffer[nIndex].Change)
+				continue;
+			bFlagForCheck = true;
+
+			var oRun      = this.WordBuffer[nIndex].Run;
+			var nInRunPos = this.WordBuffer[nIndex].Pos;
+
+			var nCharCode  = oRun.GetElement(nInRunPos).Value;
+			var nLowerCode = String.fromCharCode(nCharCode).toLowerCase().charCodeAt(0);
+			var nUpperCode = String.fromCharCode(nCharCode).toUpperCase().charCodeAt(0);
+
+			if (nLowerCode !== nCharCode || nUpperCode !== nCharCode)
 			{
-				oRun.AddToContent(nInRunPos, new ParaText(nUpperCode), false);
-				oRun.RemoveFromContent(nInRunPos + 1, 1, false);
-			}
-			else if (nUpperCode === nCharCode
-				&& (Asc.c_oAscChangeTextCaseType.ToggleCase === nCaseType
-					|| Asc.c_oAscChangeTextCaseType.LowerCase === nCaseType
-					|| (Asc.c_oAscChangeTextCaseType.CapitalizeWords === nCaseType && 0 !== nIndex && bNeddToChange)
-					|| (Asc.c_oAscChangeTextCaseType.CapitalizeWords === nCaseType && this.SentenceSettings[0].allFirst === true && this.SentenceSettings[0].sentenceMistakes === true && !this.SentenceSettings[0].allUpperWithoutFirst && 0 !== nIndex)
-					|| (Asc.c_oAscChangeTextCaseType.SentenceCase === nCaseType && this.GlobalSettings === true && this.isAllinTable === false && !(this.StartSentence && 0 === nIndex))
-					|| (Asc.c_oAscChangeTextCaseType.SentenceCase === nCaseType && this.isAllinTable === true && this.SentenceSettings[0].allFirst === true && this.SentenceSettings[0].sentenceMistakes === true && !this.SentenceSettings[0].allUpperWithoutFirst && !(this.StartSentence && 0 === nIndex))
-					|| (Asc.c_oAscChangeTextCaseType.SentenceCase === nCaseType && bNeddToChange && !(this.StartSentence && 0 === nIndex))
-					))
-			{
-				oRun.AddToContent(nInRunPos, new ParaText(nLowerCode), false);
-				oRun.RemoveFromContent(nInRunPos + 1, 1, false);
+				if (nLowerCode === nCharCode
+					&& ((Asc.c_oAscChangeTextCaseType.SentenceCase === nCaseType && (this.StartSentence && 0 === nIndex))
+						|| Asc.c_oAscChangeTextCaseType.ToggleCase === nCaseType
+						|| Asc.c_oAscChangeTextCaseType.UpperCase === nCaseType
+						|| (Asc.c_oAscChangeTextCaseType.CapitalizeWords === nCaseType && 0 === nIndex)))
+				{
+					oRun.AddToContent(nInRunPos, new ParaText(nUpperCode), false);
+					oRun.RemoveFromContent(nInRunPos + 1, 1, false);
+				}
+				else if (nUpperCode === nCharCode
+					&& (Asc.c_oAscChangeTextCaseType.ToggleCase === nCaseType
+						|| Asc.c_oAscChangeTextCaseType.LowerCase === nCaseType
+						|| (Asc.c_oAscChangeTextCaseType.CapitalizeWords === nCaseType && 0 !== nIndex && bNeddToChange)
+						|| (Asc.c_oAscChangeTextCaseType.CapitalizeWords === nCaseType && this.SentenceSettings[0].allFirst === true && this.SentenceSettings[0].sentenceMistakes === true && !this.SentenceSettings[0].allUpperWithoutFirst && 0 !== nIndex)
+						|| (Asc.c_oAscChangeTextCaseType.SentenceCase === nCaseType && this.GlobalSettings === true && this.isAllinTable === false && !(this.StartSentence && 0 === nIndex))
+						|| (Asc.c_oAscChangeTextCaseType.SentenceCase === nCaseType && this.isAllinTable === true && this.SentenceSettings[0].allFirst === true && this.SentenceSettings[0].sentenceMistakes === true && !this.SentenceSettings[0].allUpperWithoutFirst && !(this.StartSentence && 0 === nIndex))
+						|| (Asc.c_oAscChangeTextCaseType.SentenceCase === nCaseType && bNeddToChange && !(this.StartSentence && 0 === nIndex))
+						))
+				{
+					oRun.AddToContent(nInRunPos, new ParaText(nLowerCode), false);
+					oRun.RemoveFromContent(nInRunPos + 1, 1, false);
+				}
 			}
 		}
 	}
-
 	if (this.WordBuffer.length > 0 && bFlagForCheck && (Asc.c_oAscChangeTextCaseType.CapitalizeWords === nCaseType || Asc.c_oAscChangeTextCaseType.SentenceCase === nCaseType))
 	{
 		this.lineWords++;
-		if (this.lineWords === this.SentenceSettings[0].wordCount)
+		if (this.SentenceSettings[0] && this.SentenceSettings[0].wordCount)
 		{
-			this.SentenceSettings.splice(0, 1);
-			this.lineWords = 0;
+			if (this.lineWords === this.SentenceSettings[0].wordCount)
+			{
+				this.SentenceSettings.splice(0, 1);
+				this.lineWords = 0;
+			}
 		}
 	}
 	if (this.WordBuffer.length > 0)
