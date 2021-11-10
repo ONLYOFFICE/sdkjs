@@ -545,7 +545,7 @@
 
 		var tm = this._roundTextMetrics(this.stringRender.measureString("A"));
 		var headersHeightByFont = tm.height;
-		this.defaultRowHeightForPrintPx = AscCommonExcel.convertPtToPx(Math.min(Asc.c_oAscMaxRowHeight, AscCommonExcel.convertPxToPt(headersHeightByFont)));
+		this.defaultRowHeightForPrintPt = Math.min(Asc.c_oAscMaxRowHeight, AscCommonExcel.convertPxToPt(headersHeightByFont));
 
 		if (needReplacePpi) {
 			this.drawingCtx.ppiY = truePPIY;
@@ -811,8 +811,14 @@
 		return null;
 	};
 	WorksheetView.prototype._getHeightForPrint = function (i) {
-		return (i < this.rows.length) ? this.rows[i]._heightForPrint :
-			(!this.model.isDefaultHeightHidden()) * Asc.round(this.defaultRowHeightForPrintPx * this.getZoom());
+		//_heightForPrint и defaultRowHeightForPrintPt всегда в пунктах, здесь перевожу в px
+		var height;
+		if (i < this.rows.length) {
+			height = this.rows[i]._heightForPrint !== null ? this.rows[i]._heightForPrint : this.defaultRowHeightForPrintPt;
+		} else {
+			height = (!this.model.isDefaultHeightHidden()) * this.defaultRowHeightForPrintPt;
+		}
+		return Asc.round((height / (72 / 96)) * this.getZoom());
 	};
 
 
@@ -1755,7 +1761,7 @@
 		r = this.rows[i] = new CacheRow();
 		r.top = y;
 		r.height = Asc.round(AscCommonExcel.convertPtToPx(hR) * this.getZoom());
-		r._heightForPrint = isDefaultHeight ? Asc.round(this.defaultRowHeightForPrintPx * this.getZoom()) : Asc.round((hR / (72 / 96)) * this.getZoom());
+		r._heightForPrint = isDefaultHeight ? null : hR;
 		r.descender = this.defaultRowDescender;
 	};
 
@@ -6732,6 +6738,7 @@
 		}
 
 		rowInfo.height = Asc.round(th * this.getZoom());
+		rowInfo._heightForPrint = this.updateRowHeightValuePx ? null : this._getRowHeightReal(cell.nRow);
 		rowInfo.descender = d;
 		return th;
 	};
@@ -6773,6 +6780,7 @@
 				var _rowHeight = Asc.round(newHeight * this.getZoom());
 				if (rowInfo) {
 					rowInfo.height = _rowHeight;
+					rowInfo._heightForPrint = AscCommonExcel.convertPxToPt(_rowHeight);
 				}
 				History.TurnOff();
 				res = newHeight;
@@ -6823,6 +6831,7 @@
 					t.updateRowHeightValuePx = t.defaultRowHeightPx;
 					row = t.rows[r];
 					row.height = Asc.round(t.defaultRowHeightPx * t.getZoom());
+					row._heightForPrint = null;
 					row.descender = t.defaultRowDescender;
 
 					cache = t._getRowCache(r);
