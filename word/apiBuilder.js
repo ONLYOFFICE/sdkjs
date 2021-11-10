@@ -14090,6 +14090,9 @@
 	Api.prototype.private_CreateApiParagraph = function(oParagraph){
 		return new ApiParagraph(oParagraph);
 	};
+	Api.prototype.private_CreateTextPr = function(oParent, oTextPr){
+		return new ApiTextPr(oParent, oTextPr);
+	};
 
 	Api.prototype.private_CreateApiDocContent = function(oDocContent){
 		return new ApiDocumentContent(oDocContent);

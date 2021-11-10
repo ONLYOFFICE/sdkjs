@@ -171,6 +171,17 @@
 
 		this.handlers = {};
 
+		this.SearchResults = {
+			IsSearch    : false,
+			Text        : "",
+			MachingCase : false,
+			Pages       : [],
+			CurrentPage : -1,
+			Current     : -1,
+			Show        : false,
+			Count       : 0
+		};
+
 		var oThis = this;
 
 		this.createComponents = function()
@@ -750,6 +761,29 @@
 
 			if (oThis.MouseHandObject)
 			{
+				if (AscCommon.global_keyboardEvent.CtrlKey)
+				{
+					var pageObject = oThis.getPageByCoords(AscCommon.global_mouseEvent.X - oThis.x, AscCommon.global_mouseEvent.Y - oThis.y);
+					if (pageObject)
+					{
+						// links
+						var pageLinks = oThis.pagesInfo.pages[pageObject.index];
+						if (pageLinks.links)
+						{
+							for (var i = 0, len = pageLinks.links.length; i < len; i++)
+							{
+								if (pageObject.x >= pageLinks.links[i]["x"] && pageObject.x <= (pageLinks.links[i]["x"] + pageLinks.links[i]["w"]) &&
+									pageObject.y >= pageLinks.links[i]["y"] && pageObject.y <= (pageLinks.links[i]["y"] + pageLinks.links[i]["h"]))
+								{
+									oThis.setCursorType("pointer");
+									console.log(pageLinks.links[i]["link"]);
+									return;
+								}
+							}
+						}
+					}
+				}
+
 				oThis.MouseHandObject.X = AscCommon.global_mouseEvent.X;
 				oThis.MouseHandObject.Y = AscCommon.global_mouseEvent.Y;
 				oThis.MouseHandObject.Active = true;
@@ -819,14 +853,12 @@
 				var pageLinks = oThis.pagesInfo.pages[pageObject.index];
 				if (pageLinks.links)
 				{
-					console.log("["+pageObject.x+","+pageObject.y+"]");
 					for (var i = 0, len = pageLinks.links.length; i < len; i++)
 					{
 						if (pageObject.x >= pageLinks.links[i]["x"] && pageObject.x <= (pageLinks.links[i]["x"] + pageLinks.links[i]["w"]) &&
 							pageObject.y >= pageLinks.links[i]["y"] && pageObject.y <= (pageLinks.links[i]["y"] + pageLinks.links[i]["h"]))
 						{
 							oThis.setCursorType("pointer");
-							//console.log(pageLinks.links[i]["link"]);
 							return;
 						}
 					}
@@ -836,6 +868,10 @@
 			if (oThis.MouseHandObject)
 			{
 				oThis.setCursorType("grab");
+			}
+			else
+			{
+				oThis.setCursorType("arrow");
 			}
 			
 			// TODO: SELECT
@@ -1093,6 +1129,151 @@
 					};
 				}
 			}
+		};
+
+		this.Copy = function(_text_format)
+		{
+			var ret = "<div>";
+			_text_format.Text = "";
+			ret += "</div>";
+			return ret;
+		};
+
+		this.findText = function(text, isMachingCase, isNext)
+		{
+			this.SearchResults.IsSearch = true;
+			if (text === this.SearchResults.Text && isMachingCase === this.SearchResults.MachingCase)
+			{
+				if (this.SearchResults.Count === 0)
+				{
+					editor.WordControl.m_oDrawingDocument.CurrentSearchNavi = null;
+					this.SearchResults.CurrentPage = -1;
+					this.SearchResults.Current = -1;
+					return;
+				}
+
+				// поиск совпал, просто делаем навигацию к нужному месту
+				if (isNext)
+				{
+					if ((this.SearchResults.Current + 1) < this.SearchResults.Pages[this.SearchResults.CurrentPage].length)
+					{
+						// результат на этой же странице
+						this.SearchResults.Current++;
+					}
+					else
+					{
+						var _pageFind = this.SearchResults.CurrentPage + 1;
+						var _bIsFound = false;
+						for (var i = _pageFind; i < this.PagesCount; i++)
+						{
+							if (0 < this.SearchResults.Pages[i].length)
+							{
+								this.SearchResults.Current = 0;
+								this.SearchResults.CurrentPage = i;
+								_bIsFound = true;
+								break;
+							}
+						}
+						if (!_bIsFound)
+						{
+							for (var i = 0; i < _pageFind; i++)
+							{
+								if (0 < this.SearchResults.Pages[i].length)
+								{
+									this.SearchResults.Current = 0;
+									this.SearchResults.CurrentPage = i;
+									_bIsFound = true;
+									break;
+								}
+							}
+						}
+					}
+				}
+				else
+				{
+					if (this.SearchResults.Current > 0)
+					{
+						// результат на этой же странице
+						this.SearchResults.Current--;
+					}
+					else
+					{
+						var _pageFind = this.SearchResults.CurrentPage - 1;
+						var _bIsFound = false;
+						for (var i = _pageFind; i >= 0; i--)
+						{
+							if (0 < this.SearchResults.Pages[i].length)
+							{
+								this.SearchResults.Current = this.SearchResults.Pages[i].length - 1;
+								this.SearchResults.CurrentPage = i;
+								_bIsFound = true;
+								break;
+							}
+						}
+						if (!_bIsFound)
+						{
+							for (var i = this.PagesCount - 1; i > _pageFind; i--)
+							{
+								if (0 < this.SearchResults.Pages[i].length)
+								{
+									this.SearchResults.Current = this.SearchResults.Pages[i].length - 1;
+									this.SearchResults.CurrentPage = i;
+									_bIsFound = true;
+									break;
+								}
+							}
+						}
+					}
+				}
+
+				editor.WordControl.m_oDrawingDocument.CurrentSearchNavi =
+					this.SearchResults.Pages[this.SearchResults.CurrentPage][this.SearchResults.Current];
+
+				editor.WordControl.ToSearchResult();
+				return;
+			}
+			// новый поиск
+			for (var i = 0; i < this.PagesCount; i++)
+			{
+				this.SearchResults.Pages[i].splice(0,  this.SearchResults.Pages[i].length);
+			}
+			this.SearchResults.Count = 0;
+
+			this.SearchResults.CurrentPage = -1;
+			this.SearchResults.Current = -1;
+
+			this.SearchResults.Text = text;
+			this.SearchResults.MachingCase = isMachingCase;
+
+			for (var i = 0; i < this.PagesCount; i++)
+			{
+				// TODO: Search
+				// this.SearchPage2(i);
+				this.SearchResults.Count += this.SearchResults.Pages[i].length;
+			}
+
+			if (this.SearchResults.Count == 0)
+			{
+				editor.WordControl.m_oDrawingDocument.CurrentSearchNavi = null;
+				editor.WordControl.OnUpdateOverlay();
+				return;
+			}
+
+			for (var i = 0; i < this.SearchResults.Pages.length; i++)
+			{
+				if (0 != this.SearchResults.Pages[i].length)
+				{
+					this.SearchResults.CurrentPage = i;
+					this.SearchResults.Current = 0;
+
+					break;
+				}
+			}
+
+			editor.WordControl.m_oDrawingDocument.CurrentSearchNavi =
+				this.SearchResults.Pages[this.SearchResults.CurrentPage][this.SearchResults.Current];
+
+			editor.WordControl.ToSearchResult();
 		};
 	}
 

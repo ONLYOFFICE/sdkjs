@@ -1017,6 +1017,44 @@
 
        return false;
     };
+    /**
+	 * Get a set of default properties for the text run in the current presentation.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiTextPr}
+	 */
+    ApiPresentation.prototype.GetDefaultTextPr = function()
+	{
+		var oStyles = this.Presentation.Get_Styles();
+		return editor.private_CreateTextPr(this, oStyles.styles.Get_DefaultTextPr().Copy());
+	};
+    /**
+	 * Remove a range of slides from presentation.
+     * Deletes all slides without parameters.
+	 * @memberof ApiPresentation
+     * @param {Number} [nStart=0] - beginning of the deletion range.
+     * @param {Number} [nCount=ApiPresentation.GetSlidesCount()] - count of slides for deletion.
+	 * @typeofeditors ["CPE"]
+	 * @returns {bool}
+	 */
+    ApiPresentation.prototype.RemoveSlides = function(nStart, nCount)
+	{
+        nStart = nStart || 0;
+        nCount = nCount || this.GetSlidesCount();
+        if (AscFormat.isRealNumber(nStart) && nStart > -1 && nStart < this.GetSlidesCount())
+        {
+            if (AscFormat.isRealNumber(nCount) && nCount > 0)
+            {
+                nCount = Math.min(nCount, this.GetSlidesCount());
+                for (var nSlide = 0; nSlide < nCount; nSlide++)
+                    this.Presentation.removeSlide(nStart);
+
+                return true;
+            }
+        }
+
+        return false;
+	};
 
     //------------------------------------------------------------------------------------------------------------------
     //
@@ -3863,6 +3901,8 @@
     ApiPresentation.prototype["GetMaster"]                = ApiPresentation.prototype.GetMaster;
     ApiPresentation.prototype["AddMaster"]                = ApiPresentation.prototype.AddMaster;
     ApiPresentation.prototype["ApplyTheme"]               = ApiPresentation.prototype.ApplyTheme;
+    ApiPresentation.prototype["GetDefaultTextPr"]         = ApiPresentation.prototype.GetDefaultTextPr;
+    ApiPresentation.prototype["RemoveSlides"]             = ApiPresentation.prototype.RemoveSlides;
 
     ApiMaster.prototype["GetClassType"]                   = ApiMaster.prototype.GetClassType;
     ApiMaster.prototype["GetLayout"]                      = ApiMaster.prototype.GetLayout;
