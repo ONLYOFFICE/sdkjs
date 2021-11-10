@@ -80,6 +80,7 @@
 		this.selectUnlockedCells = false;
 
 		this._ws = ws;
+		this.temporaryPassword = null;
 
 		return this;
 	}
@@ -394,42 +395,17 @@
 	};
 
 	CSheetProtection.prototype.asc_setSheet = function (password, callback) {
-		//данная функция добавляет защиту листа + проверяет пароль, ответ в интерфейс, затем дёргается asc_setProtectedSheet
-		//пароль не стал переносить в asc_setProtectedSheet, чтобы все настройки из интерфейса выставлялись здесь
-		//callback - поскольку функция генерации хэша асинхронная
-		var t = this;
+		//просталяю временный пароль, аспинхронная проверка пароля в asc_setProtectedSheet
+		this.setSheet(!this.sheet);
 		if (this.sheet) {
-			if (this.asc_isPassword()) {
-				AscCommon.calculateProtectHash(password, t.saltValue, t.spinCount, t.algorithmName, function (hash) {
-					if (hash === t.hashValue) {
-						t.setSheet(false);
-						t.hashValue = null;
-						t.saltValue = null;
-						t.spinCount = null;
-						callback(t);
-					} else {
-						//error
-						callback(null);
-					}
-				});
-			} else {
-				t.setSheet(false);
-				callback(t);
-			}
-		} else {
-			t.setSheet(true);
-			if (password) {
-				var hashParams = generateHashParams();
-				this.saltValue = hashParams.saltValue;
-				this.spinCount = hashParams.spinCount;
-				this.algorithmName = hashParams.algorithmName;
-				AscCommon.calculateProtectHash(password, t.saltValue, t.spinCount, t.algorithmName, function (hash) {
-					t.hashValue = hash;
-					callback(t);
-				});
-			} else {
-				callback(t);
-			}
+			var hashParams = generateHashParams();
+			this.saltValue = hashParams.saltValue;
+			this.spinCount = hashParams.spinCount;
+			this.algorithmName = hashParams.algorithmName;
+		}
+		this.temporaryPassword = password;
+		if (callback) {
+			callback(this);
 		}
 	};
 
@@ -504,6 +480,7 @@
 		this.workbookSpinCount = null;
 
 		this._wb = wb;
+		this.temporaryPassword = null;
 
 		return this;
 	}
@@ -705,43 +682,18 @@
 		return this.workbookSaltValue;
 	};
 	CWorkbookProtection.prototype.asc_setLockStructure = function (password, callback) {
-		//данная функция добавляет защиту структуры + проверяет пароль, ответ в интерфейс, затем дёргается asc_setProtectedWorkbook
-		//пароль не стал переносить в asc_setProtectedWorkbook, чтобы все настройки из интерфейса выставлялись здесь
-		//callback - поскольку функция генерации хэша асинхронная
-		var t = this;
+		//просталяю временный пароль, аспинхронная проверка пароля в asc_setProtectedWorkbook
+		this.setLockStructure(!this.lockStructure);
+
 		if (this.lockStructure) {
-			if (this.asc_isPassword()) {
-				AscCommon.calculateProtectHash(password, t.workbookSaltValue, t.workbookSpinCount, t.workbookAlgorithmName, function (hash) {
-					if (hash === t.workbookHashValue) {
-						t.setLockStructure(false);
-						t.workbookHashValue = null;
-						t.workbookSaltValue = null;
-						t.workbookSpinCount = null;
-						t.workbookAlgorithmName = null;
-						callback(t);
-					} else {
-						//error
-						callback(null);
-					}
-				});
-			} else {
-				t.setLockStructure(false);
-				callback(t);
-			}
-		} else {
-			t.setLockStructure(true);
-			if (password) {
-				var hashParams = generateHashParams();
-				this.workbookSaltValue = hashParams.saltValue;
-				this.workbookSpinCount = hashParams.spinCount;
-				this.workbookAlgorithmName = hashParams.algorithmName;
-				AscCommon.calculateProtectHash(password, t.workbookSaltValue, t.workbookSpinCount, t.workbookAlgorithmName, function (hash) {
-					t.workbookHashValue = hash;
-					callback(t);
-				});
-			} else {
-				callback(t);
-			}
+			var hashParams = generateHashParams();
+			this.workbookSaltValue = hashParams.saltValue;
+			this.workbookSpinCount = hashParams.spinCount;
+			this.workbookAlgorithmName = hashParams.algorithmName;
+		}
+		this.temporaryPassword = password;
+		if (callback) {
+			callback(this);
 		}
 	};
 	CWorkbookProtection.prototype.setLockStructure = function (val) {

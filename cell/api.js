@@ -5993,103 +5993,177 @@ var editor;
     return res;
   };
 
-  spreadsheet_api.prototype.asc_setProtectedSheet = function (props) {
-    // Проверка глобального лока
-    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
-      return false;
-    }
-
-    var wsView = this.wb.getWorksheet();
-    var i = this.wbModel.getActive();
-    var sheetId = this.wbModel.getWorksheet(i).getId();
-
-    if (!props) {
-      this.handlers.trigger("asc_onError", c_oAscError.ID.PasswordIsNotCorrect, c_oAscError.Level.NoCritical);
-	  this.handlers.trigger("asc_onChangeProtectWorksheet", i);
-      return;
-    }
-
-    var lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Sheet, /*subType*/null, sheetId, sheetId);
-
-    var t = this;
-    var callback = function (res) {
-      if (res) {
-        History.Create_NewPoint();
-        History.StartTransaction();
-        if (!t.wbModel.getWorksheet(i).setProtectedSheet(props, true)) {
-        	t.handlers.trigger("asc_onError", c_oAscError.ID.LockedWorksheetRename, c_oAscError.Level.NoCritical);
-        } else if (wsView) {
-			wsView.updateAfterChangeSheetProtection();
+	spreadsheet_api.prototype.asc_setProtectedSheet = function (props) {
+		// Проверка глобального лока
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return false;
 		}
-        t.handlers.trigger("asc_onChangeProtectWorksheet", i);
 
-        History.EndTransaction();
-      } else {
-        //t.handlers.trigger("asc_onError", c_oAscError.ID.LockedWorksheetRename, c_oAscError.Level.NoCritical);
-      }
-    };
-
-    this.collaborativeEditing.lock([lockInfo], callback);
-    return true;
-  };
-
-  spreadsheet_api.prototype.asc_getProtectedWorkbook = function () {
-    var wb = this.wbModel;
-    var res = null;
-    if (wb) {
-      if (wb.workbookProtection) {
-        res = wb.workbookProtection.clone();
-      } else {
-        res = new asc.CWorkbookProtection();
-      }
-    }
-    return res;
-  };
-
-  spreadsheet_api.prototype.asc_isProtectedWorkbook = function (type) {
-    var wb = this.wbModel;
-    return wb && wb.getWorkbookProtection(type);
-  };
-
-  spreadsheet_api.prototype.asc_setProtectedWorkbook = function (props) {
-
-    // Проверка глобального лока
-    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
-      return false;
-    }
-
-	if (!props) {
-      this.handlers.trigger("asc_onError", c_oAscError.ID.PasswordIsNotCorrect, c_oAscError.Level.NoCritical);
-      this.handlers.trigger("asc_onChangeProtectWorkbook");
-	  return;
-	}
-
-    var wb = this.wbModel;
-    var sheet, i, arrLocks = [];
-    for (i = 0; i < wb.aWorksheets.length; ++i) {
-      sheet = wb.aWorksheets[i];
-      arrLocks.push(this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Sheet, /*subType*/null, sheet.getId(), sheet.getId()));
-    }
-
-    var t = this;
-    var callback = function (res) {
-      if (res) {
-		History.Create_NewPoint();
-		History.StartTransaction();
-		if (!t.wbModel.setProtectedWorkbook(props, true)) {
-			t.handlers.trigger("asc_onError", c_oAscError.ID.LockedWorksheetRename, c_oAscError.Level.NoCritical);
+		if (!props) {
+			this.handlers.trigger("asc_onError", c_oAscError.ID.PasswordIsNotCorrect, c_oAscError.Level.NoCritical);
+			this.handlers.trigger("asc_onChangeProtectWorksheet", i);
 		}
-		t.handlers.trigger("asc_onChangeProtectWorkbook");
-		History.EndTransaction();
-      } else {
-        //t.handlers.trigger("asc_onError", c_oAscError.ID.LockedWorksheetRename, c_oAscError.Level.NoCritical);
-      }
-    };
 
-    //TODO проверить, может быть нужен глобальный лок?
-    this.collaborativeEditing.lock(arrLocks, callback);
-    return true;
-  };
+		var wsView = this.wb.getWorksheet();
+		var i = this.wbModel.getActive();
+		var sheetId = this.wbModel.getWorksheet(i).getId();
+		var lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Sheet, /*subType*/null, sheetId,
+			sheetId);
+		var t = this;
+
+		var callback = function (res) {
+			t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction);
+
+			if (res) {
+				History.Create_NewPoint();
+				History.StartTransaction();
+				if (!t.wbModel.getWorksheet(i).setProtectedSheet(props, true)) {
+					t.handlers.trigger("asc_onError", c_oAscError.ID.LockedWorksheetRename,
+						c_oAscError.Level.NoCritical);
+				} else if (wsView) {
+					wsView.updateAfterChangeSheetProtection();
+				}
+				t.handlers.trigger("asc_onChangeProtectWorksheet", i);
+
+				History.EndTransaction();
+			} else {
+				//t.handlers.trigger("asc_onError", c_oAscError.ID.LockedWorksheetRename, c_oAscError.Level.NoCritical);
+			}
+		};
+
+		var checkPassword = function (hash, doNotCheckPassword) {
+			if (doNotCheckPassword) {
+				t.collaborativeEditing.lock([lockInfo], callback);
+			} else {
+				if (props.sheet) {
+					props.hashValue = hash;
+					t.collaborativeEditing.lock([lockInfo], callback);
+				} else {
+					if (hash === props.hashValue) {
+						props.hashValue = null;
+						props.saltValue = null;
+						props.spinCount = null;
+						props.algorithmName = null;
+						t.collaborativeEditing.lock([lockInfo], callback);
+					} else {
+						//неверный пароль
+						t.handlers.trigger("asc_onError", c_oAscError.ID.PasswordIsNotCorrect,
+							c_oAscError.Level.NoCritical);
+						t.handlers.trigger("asc_onChangeProtectWorksheet", i);
+						t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction);
+					}
+				}
+				props.temporaryPassword = null;
+			}
+		};
+
+		this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction);
+		if (props && props.temporaryPassword) {
+			AscCommon.calculateProtectHash(props.temporaryPassword, props.saltValue, props.spinCount,
+				props.algorithmName, checkPassword);
+		} else {
+			checkPassword(null, true);
+		}
+
+		return true;
+	};
+
+	spreadsheet_api.prototype.asc_getProtectedWorkbook = function () {
+		var wb = this.wbModel;
+		var res = null;
+		if (wb) {
+			if (wb.workbookProtection) {
+				res = wb.workbookProtection.clone();
+			} else {
+				res = new asc.CWorkbookProtection();
+			}
+		}
+		return res;
+	};
+
+	spreadsheet_api.prototype.asc_isProtectedWorkbook = function (type) {
+		var wb = this.wbModel;
+		return wb && wb.getWorkbookProtection(type);
+	};
+
+	spreadsheet_api.prototype.asc_setProtectedWorkbook = function (props) {
+		// Проверка глобального лока
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return false;
+		}
+
+		if (!props) {
+			this.handlers.trigger("asc_onError", c_oAscError.ID.PasswordIsNotCorrect, c_oAscError.Level.NoCritical);
+			this.handlers.trigger("asc_onChangeProtectWorkbook");
+			return;
+		}
+
+		var wb = this.wbModel;
+		var sheet, i, arrLocks = [];
+		for (i = 0; i < wb.aWorksheets.length; ++i) {
+			sheet = wb.aWorksheets[i];
+			arrLocks.push(
+				this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Sheet, /*subType*/null, sheet.getId(),
+					sheet.getId()));
+		}
+
+		var t = this;
+		var callback = function (res) {
+			t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction);
+			if (res) {
+				History.Create_NewPoint();
+				History.StartTransaction();
+				if (!t.wbModel.setProtectedWorkbook(props, true)) {
+					t.handlers.trigger("asc_onError", c_oAscError.ID.LockedWorksheetRename,
+						c_oAscError.Level.NoCritical);
+				}
+				t.handlers.trigger("asc_onChangeProtectWorkbook");
+				History.EndTransaction();
+			} else {
+				//t.handlers.trigger("asc_onError", c_oAscError.ID.LockedWorksheetRename, c_oAscError.Level.NoCritical);
+			}
+		};
+
+
+		var checkPassword = function (hash, doNotCheckPassword) {
+			if (doNotCheckPassword) {
+				//TODO проверить, может быть нужен глобальный лок?
+				t.collaborativeEditing.lock(arrLocks, callback);
+			} else {
+				if (props.lockStructure) {
+					props.workbookHashValue = hash;
+					t.collaborativeEditing.lock(arrLocks, callback);
+				} else {
+					if (hash === props.workbookHashValue) {
+						props.workbookHashValue = null;
+						props.workbookSaltValue = null;
+						props.workbookSpinCount = null;
+						props.workbookAlgorithmName = null;
+						//TODO проверить, может быть нужен глобальный лок?
+						t.collaborativeEditing.lock(arrLocks, callback);
+					} else {
+						//неверный пароль
+						t.handlers.trigger("asc_onError", c_oAscError.ID.PasswordIsNotCorrect,
+							c_oAscError.Level.NoCritical);
+						t.handlers.trigger("asc_onChangeProtectWorkbook");
+						t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction);
+					}
+				}
+				props.temporaryPassword = null;
+			}
+		};
+
+		//only lockStructure
+		this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction);
+		if (props && props.temporaryPassword) {
+			AscCommon.calculateProtectHash(props.temporaryPassword, props.workbookSaltValue, props.workbookSpinCount,
+				props.workbookAlgorithmName, checkPassword);
+		} else {
+			checkPassword(null, true);
+		}
+
+		return true;
+	};
 
   spreadsheet_api.prototype.asc_setSkin = function (theme) {
     AscCommon.updateGlobalSkin(theme);
