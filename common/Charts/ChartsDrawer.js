@@ -3663,7 +3663,7 @@ CChartsDrawer.prototype =
 			point62 = points2[5];
 			point72 = points2[6];
 			point82 = points2[7];
-		}else{
+		}else if(points){
 			point12 = point1;
 			point22 = point2;
 			point32 = point3;
@@ -4559,7 +4559,7 @@ drawBarChart.prototype = {
 					}
 				}
 
-				//shapeType = 4; //раскоментировать для теста пирамид 
+			//	shapeType = 4; //раскоментировать для теста пирамид 
 				tempValues[i][idx] = val;
 
 				startYColumnPosition = this._getStartYColumnPosition(seriesHeight, i, idx, val, yPoints, prevVal, shapeType);
@@ -4942,8 +4942,10 @@ drawBarChart.prototype = {
 		var x1, x2, x3, x4, x5, x6, x7, x8, y1, y2, y3, y4, y5, y6, y7, y8, z1, z2, z3, z4, z5, z6, z7, z8;
 		var point1, point2, point3, point4, point5, point6, point7, point8;
 		var arrPoints, arrPoints2;
+		var point12, point22, point32, point42, point52, point62, point72, point82;
 
 		var points;
+		var points2;
 		var paths;
 
 		var x12 = startX, y12 = startY, z12 = 0 + gapDepth;
@@ -4970,7 +4972,7 @@ drawBarChart.prototype = {
 					if(val < 0){
 						maxH = minH;
 					}
-				}else if(this.subType === "stackedPer" && val < 0) {
+				}else if(this.subType === "stackedPer" && val < 0 && maxH2 === 0) {
 					if(val < 0){
 						maxH = minH;
 					} 
@@ -5040,23 +5042,23 @@ drawBarChart.prototype = {
 					point7 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationUp, lineEquation3);
 					point8 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationUp, lineEquation2);
 
-				//	if(val < 0)
+					//считаем точки для алгоритма сортировки видимых граней, для stacked pyramide дополнительно усекаем
 					pointPlainDown1 = this.cChartDrawer._convertAndTurnPoint(x5, y5, z5);
 					pointPlainDown2 = this.cChartDrawer._convertAndTurnPoint(x6, y6, z6);
 					pointPlainDown3 = this.cChartDrawer._convertAndTurnPoint(x7, y7, z7);
 					pointPlainDown4 = this.cChartDrawer._convertAndTurnPoint(x8, y8, z8);
 					plainEquationDown = this.cChartDrawer.getPlainEquation(pointPlainDown1, pointPlainDown2, pointPlainDown3, pointPlainDown4)
 
-					var point12 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationDown, lineEquation1);
-					var point22 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationDown, lineEquation4);
-					var point32 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationDown, lineEquation3);
-					var point42 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationDown, lineEquation2);
-					var point52 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationUp, lineEquation1);
-					var point62 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationUp, lineEquation4);
-					var point72 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationUp, lineEquation3);
-					var point82 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationUp, lineEquation2);
+					point12 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationDown, lineEquation1);
+					point22 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationDown, lineEquation4);
+					point32 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationDown, lineEquation3);
+					point42 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationDown, lineEquation2);
+					point52 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationUp, lineEquation1);
+					point62 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationUp, lineEquation4);
+					point72 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationUp, lineEquation3);
+					point82 = this.cChartDrawer.isIntersectionPlainAndLine(plainEquationUp, lineEquation2);
 
-					var points2 = [point12, point22, point32, point42, point52, point62, point72, point82]
+					points2 = [point12, point22, point32, point42, point52, point62, point72, point82]
 
 				}else if(val === 0 && i === 0){
 					point1 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1);
