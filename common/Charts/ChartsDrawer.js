@@ -5199,7 +5199,6 @@ drawBarChart.prototype = {
 				plainArea: plainArea
 			});
 		}
-		
 
 		return paths;
 	},
@@ -5315,7 +5314,6 @@ drawBarChart.prototype = {
 		return result;
 	},
 
-
 	_calculateDLbl: function (chartSpace, ser, val, bLayout, serIdx) {
 		var point = this.cChartDrawer.getIdxPoint(this.chart.series[ser], val);
 		if (!this.paths.series[serIdx][val] || !point || !point.compiledDlb) {
@@ -5424,7 +5422,6 @@ drawBarChart.prototype = {
 		return {x: centerX, y: centerY};
 	},
 
-
 	_calculateRect: function (x, y, w, h) {
 		var pathId = this.cChartSpace.AllocPath();
 		var path = this.cChartSpace.GetPath(pathId);
@@ -5522,6 +5519,7 @@ drawBarChart.prototype = {
 			 }
 			 }
 			 }*/
+
 			for (var i = 0; i < this.sortParallelepipeds.length; i++) {
 				index = this.sortParallelepipeds[i].nextIndex;
 				faces = this.temp[index].faces;
