@@ -2531,6 +2531,9 @@ var editor;
         }
       };
       if (isHidden) {
+        if (this.asc_isProtectedWorkbook()) {
+          return false;
+        }
         var sheetId = this.wbModel.getWorksheet(index).getId();
         var lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Sheet, /*subType*/null, sheetId, sheetId);
         this.collaborativeEditing.lock([lockInfo], showWorksheetCallback);
