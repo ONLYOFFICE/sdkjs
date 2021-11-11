@@ -111,6 +111,9 @@
 		};
 
 		CCollaborativeEditing.prototype.setFast = function (bFast) {
+			if (false === bFast) {
+				this.Remove_AllForeignCursors();
+			}
 			return this.m_bFast = bFast;
 		};
 		CCollaborativeEditing.prototype.getFast = function () {
@@ -968,6 +971,13 @@
 		};
 		CCollaborativeEditing.prototype.Remove_ForeignCursor = function(UserId){
 			delete this.m_aForeignCursorsData[UserId];
+		};
+		CCollaborativeEditing.prototype.Remove_AllForeignCursors = function(){
+			this.handlers.trigger("cleanSelection");
+			for (var UserId in this.m_aForeignCursorsData) {
+				this.Remove_ForeignCursor(UserId);
+			}
+			this.handlers.trigger("drawSelection");
 		};
 		CCollaborativeEditing.prototype.getForeignSelectIntersection = function(col, row){
 			var res = null;
