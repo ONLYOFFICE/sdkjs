@@ -3042,9 +3042,12 @@
 			page = page.clone();
 		}
 
+		var pageWidth = page && page.pageWidth ? page.pageWidth : AscCommon.c_oAscPrintDefaultSettings.PageWidth;
+		var pageHeight = page && page.pageHeight ? page.pageHeight : AscCommon.c_oAscPrintDefaultSettings.PageHeight;
+
 		var ppiX = AscCommon.AscBrowser.convertToRetinaValue(96,true);
-		var height = page.pageHeight * asc.getCvtRatio(3/*mm*/, 0/*px*/, ppiX);
-		var width = page.pageWidth * asc.getCvtRatio(3/*mm*/, 0/*px*/, ppiX);
+		var height = pageHeight * asc.getCvtRatio(3/*mm*/, 0/*px*/, ppiX);
+		var width = pageWidth * asc.getCvtRatio(3/*mm*/, 0/*px*/, ppiX);
 		var canvasHeight = this.printPreviewCtx.canvas.parentElement.clientHeight;
 		var canvasWidth = this.printPreviewCtx.canvas.parentElement.clientWidth;
 
@@ -3060,13 +3063,14 @@
 		this.printPreviewCtx.canvas.style.marginLeft = canvasWidth/2 - (width * kF) / 2 + "px";
 		this.printPreviewCtx.canvas.style.marginTop = canvasHeight/2 - (height * kF) / 2 + "px";
 
-
-		page.leftFieldInPx = page.leftFieldInPx * kF;
-		page.pageClipRectHeight = page.pageClipRectHeight * kF;
-		page.pageClipRectLeft = page.pageClipRectLeft * kF;
-		page.pageClipRectTop = page.pageClipRectTop * kF;
-		page.pageClipRectWidth = page.pageClipRectWidth * kF;
-		page.topFieldInPx = page.topFieldInPx * kF;
+		if (page) {
+			page.leftFieldInPx = page.leftFieldInPx * kF;
+			page.pageClipRectHeight = page.pageClipRectHeight * kF;
+			page.pageClipRectLeft = page.pageClipRectLeft * kF;
+			page.pageClipRectTop = page.pageClipRectTop * kF;
+			page.pageClipRectWidth = page.pageClipRectWidth * kF;
+			page.topFieldInPx = page.topFieldInPx * kF;
+		}
 
 		//change zoom on default
 		var viewZoom = this.getZoom();
