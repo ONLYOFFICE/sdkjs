@@ -52,8 +52,56 @@
 	 this.pivotTables = true;
 	 this.selectUnlockedCells = false;*/
 
-	function generateHashParams () {
-		return {spinCount: 100000, saltValue: "DTj3UwQpI4oqUwbvpso1Qw==", algorithmName: /*AscCommon.HashAlgs.SHA512*/"SHA-512"};
+	var c_oSerProtectedAlgorithmNameTypes = {
+		MD2: 1,
+		MD4: 2,
+		MD5: 3,
+		RIPEMD_128: 4,
+		RIPEMD_160: 5,
+		SHA_1: 6,
+		SHA_256: 7,
+		SHA_384: 8,
+		SHA_512: 9,
+		WHIRLPOOL: 10
+	};
+
+	function fromModelAlgoritmName(alg) {
+		switch (alg) {
+			case c_oSerProtectedAlgorithmNameTypes.MD2 :
+				alg = AscCommon.HashAlgs.MD2;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.MD4 :
+				alg = AscCommon.HashAlgs.MD4;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.MD5 :
+				alg = AscCommon.HashAlgs.MD5;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.RIPEMD_160 :
+				alg = AscCommon.HashAlgs.RMD160;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.SHA_1 :
+				alg = AscCommon.HashAlgs.SHA1;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.SHA_256 :
+				alg = AscCommon.HashAlgs.SHA256;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.SHA_384 :
+				alg = AscCommon.HashAlgs.SHA384;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.SHA_512 :
+				alg = AscCommon.HashAlgs.SHA512;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.WHIRLPOOL :
+				alg = AscCommon.HashAlgs.WHIRLPOOL;
+				break;
+			default:
+				alg = AscCommon.HashAlgs.SHA256;
+		}
+		return alg;
+	}
+
+	function generateHashParams() {
+		return {spinCount: 100000, saltValue: "DTj3UwQpI4oqUwbvpso1Qw==", algorithmName: c_oSerProtectedAlgorithmNameTypes.SHA_512};
 	}
 
 	function CSheetProtection(ws) {
@@ -1122,8 +1170,9 @@
 		return this.isLock;
 	};
 	CProtectedRange.prototype.asc_checkPassword = function (val, callback) {
-		AscCommon.calculateProtectHash(val, this.saltValue, this.spinCount, this.algorithmName, function (hash) {
-			callback(hash === this.hashValue);
+		var checkHash = {password: val, salt: this.saltValue, spinCount: this.spinCount, alg: fromModelAlgoritmName(this.algorithmName)};
+		AscCommon.calculateProtectHash([checkHash], function (hash) {
+			callback(hash && hash[0] === this.hashValue);
 		});
 	};
 	CProtectedRange.prototype.asc_getId = function () {
@@ -1228,5 +1277,7 @@
 	prot["asc_getIsLock"] = prot.asc_getIsLock;
 	prot["asc_checkPassword"] = prot.asc_checkPassword;
 	prot["asc_getId"] = prot.asc_getId;
+
+	window["AscCommonExcel"].fromModelAlgoritmName = fromModelAlgoritmName;
 
 })(window);

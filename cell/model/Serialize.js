@@ -1102,16 +1102,6 @@
         SecurityDescriptor: 6
 	};
 
-	//TODO в x2t следующий набор констант
-	/*	namespace c_oSerWorkbookProtection {enum c_oSerWorkbookProtection{
-     AlgorithmName = 0,
-     SpinCount = 1,
-     HashValue = 2,
-     SaltValue = 3,
-     LockStructure = 4,
-     LockWindows = 5
-     }*/
-
 	var c_oSerWorkbookProtection = {
 		WorkbookAlgorithmName: 0,
 		WorkbookSpinCount: 1,
@@ -1124,18 +1114,6 @@
 		RevisionsSaltValue: 8,
 		RevisionsSpinCount: 9,
 		LockRevision: 10
-	};
-	var c_oSerProtectedAlgorithmNameTypes = {
-		MD2: 1,
-		MD4: 2,
-		MD5: 3,
-		RIPEMD_128: 4,
-		RIPEMD_160: 5,
-		SHA_1: 6,
-		SHA_256: 7,
-		SHA_384: 8,
-		SHA_512: 9,
-		WHIRLPOOL: 10
 	};
     var c_oSerCustoms = {
         Custom: 0, 
@@ -4209,8 +4187,8 @@
 		this.WriteProtectedRange = function (oProtectedRange) {
 			if (null != oProtectedRange.algorithmName) {
 				this.memory.WriteByte(c_oSerProtectedRangeTypes.AlgorithmName);
-				this.memory.WriteByte(c_oSerPropLenType.Variable);
-				this.memory.WriteString2(oProtectedRange.algorithmName);
+				this.memory.WriteByte(c_oSerPropLenType.Byte);
+				this.memory.WriteByte(oProtectedRange.algorithmName);
 			}
 			if (null != oProtectedRange.spinCount) {
 				this.memory.WriteByte(c_oSerProtectedRangeTypes.SpinCount);
@@ -8831,7 +8809,7 @@
 		this.ReadProtectedRange = function (type, length, oProtectedRange) {
 			var res = c_oSerConstants.ReadOk;
 			if (c_oSerProtectedRangeTypes.AlgorithmName === type) {
-				oProtectedRange.algorithmName = this.stream.GetString2LE(length);
+				oProtectedRange.algorithmName = this.stream.GetUChar();
 			} else if (c_oSerProtectedRangeTypes.SpinCount === type) {
 				oProtectedRange.spinCount = this.stream.GetLong();
 			} else if (c_oSerProtectedRangeTypes.HashValue === type) {

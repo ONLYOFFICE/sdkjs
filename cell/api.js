@@ -5892,7 +5892,7 @@ var editor;
 					password: arr[i].temporaryPassword,
 					salt: arr[i].saltValue,
 					spinCount: arr[i].spinCount,
-					alg: arr[i].algorithmName
+					alg: AscCommonExcel.fromModelAlgoritmName(arr[i].algorithmName)
 				});
 			}
 		}
@@ -5956,9 +5956,9 @@ var editor;
     }
   };
 
-  spreadsheet_api.prototype.asc_checkProtectedRangesPassword = function (val, data) {
+  spreadsheet_api.prototype.asc_checkProtectedRangesPassword = function (val, data, callback) {
 	  var ws = this.wb.getWorksheet();
-	  return ws.model.checkProtectedRangesPassword(val, data);
+	  return ws.model.checkProtectedRangesPassword(val, data, callback);
   };
 
   spreadsheet_api.prototype._onCheckProtectedRangeRemoveLock = function (lockElem) {
@@ -6098,7 +6098,7 @@ var editor;
 		this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction);
 		if (props && props.temporaryPassword) {
 			var checkHash = {password: props.temporaryPassword, salt: props.saltValue, spinCount: props.spinCount,
-				alg: props.algorithmName};
+				alg: AscCommonExcel.fromModelAlgoritmName(props.algorithmName)};
 			AscCommon.calculateProtectHash([checkHash], checkPassword);
 		} else {
 			checkPassword(null, true);
@@ -6196,7 +6196,7 @@ var editor;
 		this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction);
 		if (props && props.temporaryPassword) {
 			var checkHash = {password: props.temporaryPassword, salt: props.workbookSaltValue, spinCount: props.workbookSpinCount,
-				alg: props.workbookAlgorithmName};
+				alg: AscCommonExcel.fromModelAlgoritmName(props.workbookAlgorithmName)};
 			AscCommon.calculateProtectHash([checkHash], checkPassword);
 		} else {
 			checkPassword(null, true);
