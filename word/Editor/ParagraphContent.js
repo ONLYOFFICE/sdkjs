@@ -346,6 +346,22 @@ CRunElementBase.prototype.IsNeedSaveRecalculateObject = function()
 {
 	return false;
 };
+/**
+ * Является ли данный элемент цифрой
+ * @returns {boolean}
+ */
+CRunElementBase.prototype.IsDigit = function()
+{
+	return false;
+};
+/**
+ * Преобразуем в элемент для поиска
+ * @returns {?CSearchTextItemBase}
+ */
+CRunElementBase.prototype.ToSearchElement = function(oProps)
+{
+	return null;
+};
 
 /**
  * Класс представляющий текстовый символ
@@ -711,6 +727,17 @@ ParaText.prototype.IsLetter = function()
 {
 	return (!this.IsPunctuation() && !this.Is_Number() && !this.IsNBSP());
 };
+ParaText.prototype.IsDigit = function()
+{
+	return AscCommon.IsDigit(this.Value);
+};
+ParaText.prototype.ToSearchElement = function(oProps)
+{
+	if (oProps.MatchCase)
+		return new CSearchTextItemChar(String.fromCodePoint(this.Value).toLowerCase().codePointAt(0));
+
+	return new CSearchTextItemChar(this.Value);
+};
 
 
 /**
@@ -866,7 +893,10 @@ ParaSpace.prototype.SetGaps = function(nLeftGap, nRightGap)
 ParaSpace.prototype.ResetGapBackground = ParaText.prototype.ResetGapBackground;
 ParaSpace.prototype.SetGapBackground = ParaText.prototype.SetGapBackground;
 ParaSpace.prototype.private_DrawGapsBackground = ParaText.prototype.private_DrawGapsBackground;
-
+ParaSpace.prototype.ToSearchElement = function(oProps)
+{
+	return new CSearchTextItemChar(0x20);
+};
 
 /**
  * Класс представляющий символ
@@ -1160,6 +1190,10 @@ ParaEnd.prototype.GetAutoCorrectFlags = function()
 	return (AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE
 		| AUTOCORRECT_FLAGS_HYPERLINK
 		| AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH);
+};
+ParaEnd.prototype.ToSearchElement = function(oProps)
+{
+	return new CSearchTextSpecialParaEnd();
 };
 
 /**
@@ -1457,6 +1491,15 @@ ParaNewLine.prototype.GetAutoCorrectFlags = function()
 {
 	return (AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE
 		| AUTOCORRECT_FLAGS_HYPERLINK);
+};
+ParaNewLine.prototype.ToSearchElement = function(oProps)
+{
+	if (break_Page === this.BreakType)
+		return new CSearchTextSpecialBreakPage();
+	else if (break_Column === this.BreakType)
+		return new CSearchTextSpecialColumnBreak();
+	else
+		return new CSearchTextSpecialNewLine();
 };
 
 
@@ -1768,6 +1811,10 @@ ParaTab.prototype.PrepareRecalculateObject = function()
 ParaTab.prototype.GetAutoCorrectFlags = function()
 {
 	return AUTOCORRECT_FLAGS_ALL;
+};
+ParaTab.prototype.ToSearchElement = function(oProps)
+{
+	return new CSearchTextSpecialTab();
 };
 
 /**
@@ -2260,6 +2307,10 @@ ParaFootnoteReference.prototype.GetRun = function()
 {
 	return this.Run;
 };
+ParaFootnoteReference.prototype.ToSearchElement = function(oProps)
+{
+	return new CSearchTextSpecialFootnoteMark();
+};
 
 /**
  * Класс представляющий номер сноски внутри сноски.
@@ -2664,6 +2715,11 @@ ParaEndnoteReference.prototype.UpdateNumber = function(PRS, isKeepNumber)
 		this.private_Measure();
 	}
 };
+ParaEndnoteReference.prototype.ToSearchElement = function(oProps)
+{
+	return new CSearchTextSpecialEndnoteMark();
+};
+
 
 /**
  * Класс представляющий номер сноски внутри сноски.

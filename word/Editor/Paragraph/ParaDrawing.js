@@ -3104,6 +3104,10 @@ ParaDrawing.prototype.IsComparable = function(oDrawing)
 	}
 	return this.GraphicObj.isComparable(oDrawing.GraphicObj);
 };
+ParaDrawing.prototype.ToSearchElement = function(oProps)
+{
+	return new CSearchTextSpecialGraphicObject();
+};
 /**
  * Класс, описывающий текущее положение параграфа при рассчете позиции автофигуры.
  * @constructor
