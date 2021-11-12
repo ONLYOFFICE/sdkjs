@@ -755,6 +755,7 @@
 		this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
 		this._isEnterPassword = null;
+		this.temporaryPassword = null;
 
 		return this;
 	}
@@ -1107,10 +1108,12 @@
 		this.spinCount = val;
 	};
 	CProtectedRange.prototype.asc_setPassword = function (val) {
+		var hashParams = generateHashParams();
+		this.saltValue = hashParams.saltValue;
+		this.spinCount = hashParams.spinCount;
+		this.algorithmName = hashParams.algorithmName;
 		//генерируем хэш
-		this.algorithmName = "test";
-		this.saltValue = "test";
-		this.workbookSaltValue = "test";
+		this.temporaryPassword = val;
 	};
 	CProtectedRange.prototype.asc_isPassword = function () {
 		return this.algorithmName != null;

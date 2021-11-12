@@ -5858,14 +5858,52 @@ var editor;
     }
   };
 
-  spreadsheet_api.prototype.asc_setProtectedRanges = function (arr, deleteArr) {
-    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
-      return false;
-    }
+	spreadsheet_api.prototype.asc_setProtectedRanges = function (arr, deleteArr) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return false;
+		}
 
-    var ws = this.wb.getWorksheet();
-    ws.setProtectedRanges(arr, deleteArr);
-  };
+		var ws = this.wb.getWorksheet();
+		var t = this;
+
+		var checkPassword = function (hash, doNotCheckPassword) {
+			if (doNotCheckPassword) {
+				ws.setProtectedRanges(arr, deleteArr);
+			} else {
+				var j = 0;
+				for (var i = 0; i < arr.length; i++) {
+					if (arr[i].temporaryPassword) {
+						arr[i].hashValue = hash[j];
+						arr[i].temporaryPassword = null;
+						j++;
+					}
+				}
+
+				ws.setProtectedRanges(arr, deleteArr);
+			}
+
+			t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction);
+		};
+
+		var aCheckHash = [];
+		for (var i = 0; i < arr.length; i++) {
+			if (arr[i].temporaryPassword) {
+				aCheckHash.push({
+					password: arr[i].temporaryPassword,
+					salt: arr[i].saltValue,
+					spinCount: arr[i].spinCount,
+					alg: arr[i].algorithmName
+				});
+			}
+		}
+
+		this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction);
+		if (aCheckHash.length) {
+			AscCommon.calculateProtectHash(aCheckHash, checkPassword);
+		} else {
+			checkPassword(null, true);
+		}
+	};
 
   spreadsheet_api.prototype._onUpdateProtectedRangesLock = function (lockElem) {
     var t = this;
@@ -6036,10 +6074,10 @@ var editor;
 				t.collaborativeEditing.lock([lockInfo], callback);
 			} else {
 				if (props.sheet) {
-					props.hashValue = hash;
+					props.hashValue = hash && hash[0];
 					t.collaborativeEditing.lock([lockInfo], callback);
 				} else {
-					if (hash === props.hashValue) {
+					if (hash && hash[0] === props.hashValue) {
 						props.hashValue = null;
 						props.saltValue = null;
 						props.spinCount = null;
@@ -6059,8 +6097,9 @@ var editor;
 
 		this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction);
 		if (props && props.temporaryPassword) {
-			AscCommon.calculateProtectHash(props.temporaryPassword, props.saltValue, props.spinCount,
-				props.algorithmName, checkPassword);
+			var checkHash = {password: props.temporaryPassword, salt: props.saltValue, spinCount: props.spinCount,
+				alg: props.algorithmName};
+			AscCommon.calculateProtectHash([checkHash], checkPassword);
 		} else {
 			checkPassword(null, true);
 		}
@@ -6131,10 +6170,10 @@ var editor;
 				t.collaborativeEditing.lock(arrLocks, callback);
 			} else {
 				if (props.lockStructure) {
-					props.workbookHashValue = hash;
+					props.workbookHashValue = hash && hash[0];
 					t.collaborativeEditing.lock(arrLocks, callback);
 				} else {
-					if (hash === props.workbookHashValue) {
+					if (hash && hash[0] === props.workbookHashValue) {
 						props.workbookHashValue = null;
 						props.workbookSaltValue = null;
 						props.workbookSpinCount = null;
@@ -6156,8 +6195,9 @@ var editor;
 		//only lockStructure
 		this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction);
 		if (props && props.temporaryPassword) {
-			AscCommon.calculateProtectHash(props.temporaryPassword, props.workbookSaltValue, props.workbookSpinCount,
-				props.workbookAlgorithmName, checkPassword);
+			var checkHash = {password: props.temporaryPassword, salt: props.workbookSaltValue, spinCount: props.workbookSpinCount,
+				alg: props.workbookAlgorithmName};
+			AscCommon.calculateProtectHash([checkHash], checkPassword);
 		} else {
 			checkPassword(null, true);
 		}
