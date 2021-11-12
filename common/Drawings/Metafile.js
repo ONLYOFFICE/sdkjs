@@ -749,6 +749,17 @@
 				this.data[this.pos++] = (c >>> 8) & 0xFF;
 			}
 		}
+		this.WriteStringA = function(text)
+		{
+			var count = text.length & 0xFFFF;
+			this.WriteULong(count);
+			this.CheckSize(count);
+			for (var i=0;i<count;i++)
+			{
+				var c = text.charCodeAt(i) & 0xFF;
+				this.data[this.pos++] = c;
+			}
+		};
 		this.ClearNoAttack      = function()
 		{
 			this.pos = 0;

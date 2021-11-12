@@ -1694,7 +1694,7 @@
             }
             if (null !== customXml.Content) {
                 this.bs.WriteItem(c_oSerCustoms.Content, function() {
-                    oThis.memory.WriteString3(customXml.Content);
+                    oThis.memory.WriteString3(customXml.Content);//oThis.memory.WriteStringA(customXml.Content);
                 });
             }
         };
@@ -10668,7 +10668,7 @@
             } else if (c_oSerCustoms.ItemId === type) {
                 custom.ItemId = this.stream.GetString2LE(length);
             } else if (c_oSerCustoms.Content === type) {
-                custom.Content = this.stream.GetString2LE(length);
+                custom.Content = this.stream.GetString2LE(length);//custom.Content = this.stream.GetString2A(length);
             } else
                 res = c_oSerConstants.ReadUnknown;
             return res;
