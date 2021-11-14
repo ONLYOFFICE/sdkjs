@@ -3276,8 +3276,8 @@ var editor;
   };
     // signatures
     spreadsheet_api.prototype.asc_addSignatureLine = function (oPr, Width, Height, sImgUrl) {
-      var ws = this.wb.getWorksheet();
-      if (ws.model.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
+      var ws = this.wb && this.wb.getWorksheet();
+      if (ws && ws.model && ws.model.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
         return false;
       }
 
@@ -3289,22 +3289,26 @@ var editor;
     spreadsheet_api.prototype.asc_getAllSignatures = function(){
       var ret = [];
       var aSpTree = [];
-		this.wbModel.forEach(function (ws) {
-			for (var j = 0; j < ws.Drawings.length; ++j) {
-				aSpTree.push(ws.Drawings[j].graphicObject);
-			}
-		});
+	  if (this.wbModel) {
+		  this.wbModel.forEach(function (ws) {
+			  for (var j = 0; j < ws.Drawings.length; ++j) {
+				  aSpTree.push(ws.Drawings[j].graphicObject);
+			  }
+		  });
+	  }
       AscFormat.DrawingObjectsController.prototype.getAllSignatures2(ret, aSpTree);
       return ret;
     };
     spreadsheet_api.prototype.getSignatureLineSp = function(sGuid) {
         var ret = [];
         var aSpTree = [];
-        this.wbModel.forEach(function (ws) {
-            for (var j = 0; j < ws.Drawings.length; ++j) {
-                aSpTree.push(ws.Drawings[j].graphicObject);
-            }
-        });
+		if (this.wbModel) {
+			this.wbModel.forEach(function (ws) {
+				for (var j = 0; j < ws.Drawings.length; ++j) {
+					aSpTree.push(ws.Drawings[j].graphicObject);
+				}
+			});
+		}
         AscFormat.DrawingObjectsController.prototype.getAllSignatures2(ret, aSpTree);
         for(var i = 0; i < aSpTree.length; ++i){
             if(aSpTree[i].signatureLine && aSpTree[i].signatureLine.id === sGuid){
