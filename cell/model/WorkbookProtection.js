@@ -101,7 +101,7 @@
 	}
 
 	function generateHashParams() {
-		return {spinCount: 100000, saltValue: "DTj3UwQpI4oqUwbvpso1Qw==", algorithmName: c_oSerProtectedAlgorithmNameTypes.SHA_512};
+		return {spinCount: 100000, saltValue: AscCommon.randomBytes(16).base64(), algorithmName: c_oSerProtectedAlgorithmNameTypes.SHA_512};
 	}
 
 	function CSheetProtection(ws) {
