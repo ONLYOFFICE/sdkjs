@@ -3047,6 +3047,12 @@ CPresentation.prototype.removeSection = function (pos) {
 };
 
 CPresentation.prototype.Set_DefaultLanguage = function (NewLangId) {
+    this.SetLanguage(NewLangId);
+    this.Restart_CheckSpelling();
+    this.Recalculate();
+    this.Document_UpdateInterfaceState();
+};
+CPresentation.prototype.SetLanguage = function (NewLangId) {
     var oTextStyle = this.defaultTextStyle ? this.defaultTextStyle.createDuplicate() : new AscFormat.TextListStyle();
     if (!oTextStyle.levels[9]) {
         oTextStyle.levels[9] = new CParaPr();
@@ -3056,9 +3062,6 @@ CPresentation.prototype.Set_DefaultLanguage = function (NewLangId) {
     }
     oTextStyle.levels[9].DefaultRunPr.Lang.Val = NewLangId;
     this.setDefaultTextStyle(oTextStyle);
-    this.Restart_CheckSpelling();
-    this.Recalculate();
-    this.Document_UpdateInterfaceState();
 };
 
 CPresentation.prototype.Get_DefaultLanguage = function () {

@@ -594,18 +594,7 @@
         if (nLcid === undefined)
             return false;
 
-        var oTextStyle = this.Presentation.defaultTextStyle ? this.Presentation.defaultTextStyle.createDuplicate() : new AscFormat.TextListStyle();
-        if (!oTextStyle.levels[9]) {
-            oTextStyle.levels[9] = new CParaPr();
-        }
-        if (!oTextStyle.levels[9].DefaultRunPr) {
-            oTextStyle.levels[9].DefaultRunPr = new CTextPr();
-        }
-        oTextStyle.levels[9].DefaultRunPr.Lang.Val = nLcid;
-        this.Presentation.setDefaultTextStyle(oTextStyle);
-        this.Presentation.Restart_CheckSpelling();
-        this.Presentation.Document_UpdateInterfaceState();
-
+        this.Presentation.SetLanguage(nLcid);
         return true;
     };
 
