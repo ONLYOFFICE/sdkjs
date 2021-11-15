@@ -4559,7 +4559,7 @@ drawBarChart.prototype = {
 					}
 				}
 
-				shapeType = 5; //раскоментировать для теста пирамид 
+				//shapeType = 5; //раскоментировать для теста пирамид 
 				tempValues[i][idx] = val;
 
 				startYColumnPosition = this._getStartYColumnPosition(seriesHeight, i, idx, val, yPoints, prevVal, shapeType);
@@ -4661,21 +4661,11 @@ drawBarChart.prototype = {
 								break;
 							}
 							case "stackedPer":{
-								// if((valueMax > axisMax) && (maxHeight === testHeight)){
-								// 	testMaxHeight = testHeight + (testHeight - testHeight * axisMax);						
-								// }
-								// if((valueMin < axisMin) && (minHeight === testHeight)){
-								// 	testMaxHeight = testHeight + (testHeight + testHeight * axisMin);
-								// }
 								if(valueMax > axisMax){
-									//testMaxHeight = testHeight + (testHeight - testHeight * axisMax);
-								//	testMaxHeight = maxHeight + (maxHeight - maxHeight * axisMax);
 									maxHeight = maxHeight + (maxHeight - maxHeight * axisMax);					
 								}
 								if(valueMin < axisMin){
-									//testMaxHeight = testHeight + (testHeight + testHeight * axisMin);
-									//testMaxHeight = minHeight + (minHeight - minHeight * axisMin);	
-									minHeight = minHeight + (minHeight - minHeight * axisMin);
+									minHeight = minHeight + (minHeight + minHeight * axisMin);
 								}
 								break;
 							}
@@ -4885,7 +4875,6 @@ drawBarChart.prototype = {
 				minPer = h.minPer;
 
 				//значения для проверки условия усечения
-				h = this._getMaxHeight(j);
 				valueMax = h.maxH / this.summBarVal[j];
 				valueMin = h.minH / this.summBarVal[j];
 
@@ -4902,7 +4891,7 @@ drawBarChart.prototype = {
 				}else{
 					endBlockPositionMin = this.cChartDrawer.getYPosition(minPer, this.valAx) * this.chartProp.pxToMM;
 				}
-				var nullPositionOX1 = this.catAx.posY * this.chartProp.pxToMM;
+				nullPositionOX1 = this.catAx.posY * this.chartProp.pxToMM;
 
 				maxH = nullPositionOX1 - endBlockPositionMax;
 				minH = nullPositionOX1 - endBlockPositionMin;
@@ -4917,7 +4906,7 @@ drawBarChart.prototype = {
 				height = nullPositionOX - this.cChartDrawer.getYPosition(val, this.valAx) * this.chartProp.pxToMM;
 			}
 			if(type === AscFormat.BAR_SHAPE_PYRAMIDTOMAX){
-				var h = this._getStandardMaxHeight();
+				h = this._getStandardMaxHeight();
 				maxH = nullPositionOX - this.cChartDrawer.getYPosition(h.mainMaxH, this.valAx) * this.chartProp.pxToMM;
 				minH = nullPositionOX - this.cChartDrawer.getYPosition(h.mainMinH, this.valAx) * this.chartProp.pxToMM;
 				valueMax = h.mainMaxH;
@@ -4990,17 +4979,10 @@ drawBarChart.prototype = {
 					if(val < 0){
 						maxH = minH;
 					}
-				}else if(this.subType === "stackedPer" && val < 0 && maxH2 === 0) {
+				}else if(this.subType === "stackedPer") {
 					if(val < 0){
 						maxH = minH;
 					} 
-				}else if(this.subType === "stackedPer"){
-					if(maxH2){
-						maxH = maxH2;
-					}
-				}
-				if(val < 0 && maxH2 >= 0) {
-					maxH = minH;
 				}
 
 				x1 = startX, y1 = nullPositionOX, z1 = 0 + gapDepth;
