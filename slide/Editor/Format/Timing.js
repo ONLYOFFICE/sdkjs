@@ -4064,6 +4064,14 @@
             return this.boolVal;
         }
         else if(this.clrVal !== null) {
+            if(this.parent && this.parent.getTargetObject) {
+                var oTargetObject = this.parent.getTargetObject();
+                if(oTargetObject) {
+                    var parents = oTargetObject.getParentObjects();
+                    var RGBA = {R:0, G:0, B:0, A:255};
+                    this.clrVal.Calculate(parents.theme, parents.slide, parents.layout, parents.master, RGBA);
+                }
+            }
             return this.clrVal;
         }
         else if(this.fltVal !== null) {
@@ -4158,6 +4166,10 @@
     CColorPercentage.prototype.createDuplicate = function() {
         return this.copy();
     };
+
+    var DIR_CCW = 0;
+    var DIR_CW = 1;
+
     function CAnimClr() {
         CTimeNodeBase.call(this);
         this.byRGB = null;
@@ -4327,7 +4339,15 @@
             oStartUniColor = this.from;
         }
         else {
-            var oBrush = this.getTargetObjectBrush();
+            var oBrush;
+            if(sFirstAttrName === "stroke.color") {
+                var oPen = this.getTargetObjectPen();
+                oBrush = oPen && oPen.Fill;
+            }
+            else {
+                oBrush = this.getTargetObjectBrush();
+            }
+
             if(oBrush) {
                 oStartRGBColor = oBrush.getRGBAColor();
                 oStartUniColor = AscFormat.CreateUniColorRGB(oStartRGBColor.R, oStartRGBColor.G, oStartRGBColor.B);
@@ -4337,6 +4357,7 @@
             }
         }
         var oEndUniColor = this.to || this.by;
+        var fRelTime;
         if(this.to || this.by) {
             oEndUniColor = this.to || this.by;
         }
@@ -4355,23 +4376,71 @@
                 oEndRGBColor.B = Math.min(255, Math.max(0, oStartRGBColor.B));
             }
             else if(this.byHSL) {
-                var oHSL = {};
-                var oColorModifiers = new AscFormat.CColorModifiers();
-                oColorModifiers.RGB2HSL(oStartRGBColor.R, oStartRGBColor.G, oStartRGBColor.B, oHSL);
-                var nCoeff = 360*60000;
-                oHSL.H = (((oHSL.H / 255)*nCoeff + this.byHSL.c1)/nCoeff)*255;
-                oHSL.H = Math.min(255, Math.max(0, oHSL.H));
-                oHSL.S = oHSL.S * (1 + this.byHSL.c2 / 100000);
-                oHSL.S = Math.min(255, Math.max(0, oHSL.S));
-                oHSL.L = oHSL.L * (1 + this.byHSL.c3 / 100000);
-                oHSL.L = Math.min(255, Math.max(0, oHSL.L));
-                oColorModifiers.HSL2RGB(oHSL, oEndRGBColor);
+                fRelTime = this.getRelativeTime(nElapsedTime);
+                var oStartHSL = this.toFormatHSLColor(oStartRGBColor);
+                var oResultHSL = {};
+
+                var dAlignAngle = 360*60000;
+                var dStartAng = this.alignNumber(oStartHSL.H, dAlignAngle);
+                var dEndAng = this.alignNumber(oStartHSL.H + this.byHSL.c1, dAlignAngle);
+
+                dEndAng = this.alignNumber(dEndAng - dStartAng, dAlignAngle);
+                if(this.dir === null || this.dir === DIR_CW) {
+                    oResultHSL.H = this.alignNumber(dEndAng*fRelTime + dStartAng);
+                }
+                else {
+                    oResultHSL.H = this.alignNumber(dAlignAngle - fRelTime * (dAlignAngle - dEndAng) + dStartAng, 360*60000);
+                }
+                oResultHSL.S = Math.min(100000, Math.max(-100000, oStartHSL.S + fRelTime * this.byHSL.c2));
+                oResultHSL.L = Math.min(100000, Math.max(-100000, oStartHSL.L + fRelTime * this.byHSL.c3));
+                var oResultRGB = this.toRGBAColor(oResultHSL);
+                var oResultUnicolor = AscFormat.CreateUniColorRGB(oResultRGB.R, oResultRGB.G, oResultRGB.B);
+                oResultUnicolor.Calculate(parents.theme, parents.slide, parents.layout, parents.master, RGBA);
+                oAttributes[sFirstAttrName] = oResultUnicolor;
+                return;
             }
             oEndUniColor = AscFormat.CreateUniColorRGB(oEndRGBColor.R, oEndRGBColor.G, oEndRGBColor.B);
         }
 
-        var fRelTime = this.getRelativeTime(nElapsedTime);
+        fRelTime = this.getRelativeTime(nElapsedTime);
         oAttributes[sFirstAttrName] = this.getAnimatedClr(fRelTime, oStartUniColor, oEndUniColor);
+    };
+
+    CAnimClr.prototype.toFormatHSLColor = function(oRGBA) {
+        var oHSL = {};
+        var oColorModifiers = new AscFormat.CColorModifiers();
+        oColorModifiers.RGB2HSL(oRGBA.R, oRGBA.G, oRGBA.B, oHSL);
+        oHSL.H /= 255;
+        oHSL.H *= 360*60000;
+
+        oHSL.S /= 255;
+        oHSL.S *= 200000;
+        oHSL.S -= 100000;
+
+        oHSL.L /= 255;
+        oHSL.L *= 200000;
+        oHSL.L -= 100000;
+        return oHSL;
+    };
+    CAnimClr.prototype.toRGBAColor = function(oFormatHSL) {
+        var oHSL = {};
+        oHSL.H = this.alignNumber(255 * oFormatHSL.H /(360*60000), 255);
+        oHSL.S = Math.min(255, Math.max(0, 255 * (oFormatHSL.S + 100000) / 200000));
+        oHSL.L = Math.min(255, Math.max(0, 255 * (oFormatHSL.L + 100000) / 200000));
+        var oRGBColor = {R: 255, G: 255, B:255, A: 255};
+        var oColorModifiers = new AscFormat.CColorModifiers();
+        oColorModifiers.HSL2RGB(oHSL, oRGBColor);
+        return oRGBColor;
+    };
+    CAnimClr.prototype.alignNumber = function(dVal, dMax) {
+        var dValChecked = dVal;
+        while(dValChecked < 0) {
+            dValChecked += dMax;
+        }
+        while(dValChecked >= dMax) {
+            dValChecked -= dMax;
+        }
+        return dValChecked;
     };
 
     changesFactory[AscDFH.historyitem_AnimEffectCBhvr] = CChangeObject;
