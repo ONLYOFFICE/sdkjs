@@ -2436,7 +2436,7 @@
                             fTimeInsideInterval = (fRelTime) / (oSecondTav.getTime());
                         }
                     }
-                    val = this.calculateBetweenTwoVals(oFirstTav.val, oSecondTav.val, fTimeInsideInterval);
+                    val = this.calculateBetweenTwoVals(oFirstTav.val, oSecondTav.val, fTimeInsideInterval, oAttributes);
                 }
                 else {
                     for(nTav = 1; nTav < aTav.length; ++nTav) {
@@ -2453,7 +2453,7 @@
                             else {
                                 oTav = aTav[nTav - 1];
                             }
-                            val = this.calculateBetweenTwoVals(oTav.val, oTav.val, 0);
+                            val = this.calculateBetweenTwoVals(oTav.val, oTav.val, 0, oAttributes);
                             if(aTav[nTav - 1]) {
                                 sFmla = aTav[nTav - 1].fmla;
                             }
@@ -2461,7 +2461,7 @@
                         else {
                             if(AscFormat.fApproxEqual(fRelTime, aTav[nTav].getTime())) {
                                 oTav = aTav[nTav];
-                                val = this.calculateBetweenTwoVals(oTav.val, oTav.val, 0);
+                                val = this.calculateBetweenTwoVals(oTav.val, oTav.val, 0, oAttributes);
                                 if(aTav[nTav - 1]) {
                                     sFmla = aTav[nTav - 1].fmla;
                                 }
@@ -2471,14 +2471,14 @@
                                 oSecondTav = aTav[nTav];
                                 sFmla = oFirstTav.fmla;
                                 fTimeInsideInterval = (fRelTime - aTav[nTav - 1].getTime()) / (aTav[nTav].getTime() - aTav[nTav - 1].getTime());
-                                val = this.calculateBetweenTwoVals(oFirstTav.val, oSecondTav.val, fTimeInsideInterval);
+                                val = this.calculateBetweenTwoVals(oFirstTav.val, oSecondTav.val, fTimeInsideInterval, oAttributes);
                             }
                         }
                     }
                 }
                 if(val !== null) {
                     if(sFmla) {
-                        oVarMap = this.getVarMapForFmla();
+                        oVarMap = this.getVarMapForFmla(oAttributes);
                         oVarMap["$"] = val;
                         var fFmlaResult = this.getFormulaResult(sFmla, oVarMap);
                         if(fFmlaResult !== null) {
@@ -2497,8 +2497,8 @@
             this.from === null && this.to !== null && this.by === null ||
             this.from === null && this.to === null && this.by !== null) {
                 if(nValueType === VALUE_TYPE_NUM) {
-                    oVarMap = this.getVarMapForFromTo();
-                    var fFrom, fTo, fBy;
+                    oVarMap = this.getVarMapForFmla();
+                    var fFrom = null, fTo = null, fBy = null;
                     if(this.from !== null) {
                         fFrom = this.getFormulaResult(this.from, oVarMap);
                         if(fFrom === null) {
@@ -2534,7 +2534,8 @@
                     }
                     else if(this.from === null && this.to === null && this.by !== null) {
                         if(fFrom === null && fTo === null && fBy !== null) {
-                            oAttributes[sAnimAttrName] =  this.getAnimatedVal(fRelTime, 0.0, fBy);
+                            var fStartVal = AscFormat.isRealNumber(oVarMap[sAnimAttrName]) ? oVarMap[sAnimAttrName] : 0;
+                            oAttributes[sAnimAttrName] =  this.getAnimatedVal(fRelTime, fStartVal, fStartVal + fBy);
                         }
                     }
                 }
@@ -2547,26 +2548,22 @@
             }
         }
     };
-    CAnim.prototype.getVarMapForFromTo = function() {
-        return {
-            "ppt_x": this.getOrigAttrVal("ppt_x"),
-            "ppt_y": this.getOrigAttrVal("ppt_y"),
-            "ppt_w": this.getOrigAttrVal("ppt_w"),
-            "ppt_h": this.getOrigAttrVal("ppt_h")
-        }
-    };
-    CAnim.prototype.getVarMapForFmla = function() {
+    CAnim.prototype.getVarMapForFmla = function(oAttributes) {
         return {
             "#ppt_x": this.getOrigAttrVal("ppt_x"),
             "#ppt_y": this.getOrigAttrVal("ppt_y"),
             "#ppt_w": this.getOrigAttrVal("ppt_w"),
-            "#ppt_h": this.getOrigAttrVal("ppt_h")
+            "#ppt_h": this.getOrigAttrVal("ppt_h"),
+            "ppt_x": oAttributes && AscFormat.isRealNumber(oAttributes["ppt_x"]) ? oAttributes["ppt_x"] : this.getOrigAttrVal("ppt_x"),
+            "ppt_y": oAttributes && AscFormat.isRealNumber(oAttributes["ppt_y"]) ? oAttributes["ppt_y"] : this.getOrigAttrVal("ppt_y"),
+            "ppt_w": oAttributes && AscFormat.isRealNumber(oAttributes["ppt_w"]) ? oAttributes["ppt_w"] : this.getOrigAttrVal("ppt_w"),
+            "ppt_h": oAttributes && AscFormat.isRealNumber(oAttributes["ppt_h"]) ? oAttributes["ppt_h"] : this.getOrigAttrVal("ppt_h")
         }
     };
     CAnim.prototype.getFormulaResult = function(sFormula, oVarMap) {
         return (new CFormulaParser(sFormula, oVarMap)).getResult();
     };
-    CAnim.prototype.calculateBetweenTwoVals = function(oVal1, oVal2, fRelTime) {
+    CAnim.prototype.calculateBetweenTwoVals = function(oVal1, oVal2, fRelTime, oAttributes) {
         if(!oVal1 || !oVal2) {
             return null;
         }
@@ -2592,14 +2589,9 @@
             if(sStrVal1 === "hidden" || sStrVal1 === "visible") {
                 return sStrVal1;
             }
-            oVarMap = this.getVarMapForFmla();
+            oVarMap = this.getVarMapForFmla(oAttributes);
             oVarMap["$"] = fRelTime;
             fVal1 = this.getFormulaResult(sStrVal1, oVarMap);
-            if(!AscFormat.isRealNumber(fVal1)) {
-                oVarMap = this.getVarMapForFromTo();
-                oVarMap["$"] = fRelTime;
-                fVal1 = this.getFormulaResult(sStrVal1, oVarMap);
-            }
         }
         if(!AscFormat.isRealNumber(fVal1)) {
             return null;
@@ -2612,15 +2604,10 @@
             fVal2 = oVal2.intVal;
         }
         if(oVal2.isStr()) {
-            oVarMap = this.getVarMapForFmla();
+            oVarMap = this.getVarMapForFmla(oAttributes);
             oVarMap["$"] = fRelTime;
             var sStrVal2 = oVal2.getVal();
             fVal2 = this.getFormulaResult(sStrVal2, oVarMap);
-            if(!AscFormat.isRealNumber(fVal2)) {
-                oVarMap = this.getVarMapForFromTo();
-                oVarMap["$"] = fRelTime;
-                fVal2 = this.getFormulaResult(sStrVal2, oVarMap);
-            }
         }
         if(!AscFormat.isRealNumber(fVal2)) {
             return null;
@@ -6840,15 +6827,15 @@
     };
     CAnimTexture.prototype.createBoxOut = function(fTime) {
         //console.log("EFFECT TIME " + fTime);
-        var nBoxW = this.canvas.width * (1 - fTime) + 0.5 >> 0;
-        var nBoxH = this.canvas.height * (1 - fTime) + 0.5 >> 0;
+        var nBoxW = this.canvas.width * (fTime) + 0.5 >> 0;
+        var nBoxH = this.canvas.height * (fTime) + 0.5 >> 0;
         if(nBoxW === this.canvas.width && nBoxH === this.canvas.height) {
             return this;
         }
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
-        oCtx.globalCompositeOperation = 'destination-in';
+        oCtx.globalCompositeOperation = 'destination-out';
         var nX = (this.canvas.width - nBoxW) / 2 + 0.5 >> 0;
         var nY = (this.canvas.height - nBoxH) / 2 + 0.5 >> 0;
         this.drawRect(oCtx, nX, nY, nBoxW, nBoxH);
@@ -6950,7 +6937,7 @@
         return this.createCircle(fTime, "destination-out");
     };
     CAnimTexture.prototype.createCircleOut = function(fTime) {
-        return this.createCircle(1 - fTime, "destination-in");
+        return this.createCircle(fTime, "destination-out");
     };
     CAnimTexture.prototype.createStripsUpRightDiag = function(fTime, sOperation) {
         var nWidth = this.canvas.width / STRIPS_COUNT;
@@ -6982,38 +6969,79 @@
         return this.createStripsUpRightDiag(fTime, "destination-out");
     };
     CAnimTexture.prototype.createStripsDownLeft = function(fTime) {
-        return this.createStripsUpRightDiag(1 - fTime, "destination-in");
-    };
-    CAnimTexture.prototype.createStripsUpLeftDiag = function(fTime, sOperation) {
         var nWidth = this.canvas.width / STRIPS_COUNT;
         var nHeight = this.canvas.height / STRIPS_COUNT;
-        var nCount = 2*this.canvas.width * fTime / nWidth + 0.5 >> 0;
-        if(nCount === 0) {
-            return this;
+        var nCount = 2*this.canvas.width * (1 - fTime) / nWidth + 0.5 >> 0;
+        var oTexture = this.createCopy();
+        var oCanvas = oTexture.canvas;
+        var oCtx = oCanvas.getContext('2d');
+        var nX = this.canvas.width - nWidth * nCount;
+        var nY = 0;
+        oCtx.globalCompositeOperation = "destination-out";
+        oCtx.beginPath();
+        oCtx.moveTo(nX, nY);
+        for(var nRect = 0; nRect < nCount; ++nRect) {
+            oCtx.lineTo(nX, nY + nHeight);
+            oCtx.lineTo(nX + nWidth, nY + nHeight);
+            nX += nWidth;
+            nY += nHeight;
         }
+        oCtx.lineTo(this.canvas.width, 2*this.canvas.height);
+        oCtx.lineTo(-this.canvas.width, 2*this.canvas.height);
+        oCtx.lineTo(-this.canvas.width, 0);
+        oCtx.closePath();
+        oCtx.fill();
+        return oTexture;
+    };
+    CAnimTexture.prototype.createStripsDownRight = function(fTime) {
+        var nWidth = this.canvas.width / STRIPS_COUNT;
+        var nHeight = this.canvas.height / STRIPS_COUNT;
+        var nCount = 2*this.canvas.width * (1 - fTime) / nWidth + 0.5 >> 0;
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
         var nX = nWidth * nCount;
         var nY = 0;
-        oCtx.globalCompositeOperation = sOperation;
-        oCtx.moveTo(0, 0);
-        oCtx.lineTo(nX, nY);
+        oCtx.globalCompositeOperation = "destination-out";
+        oCtx.beginPath();
+        oCtx.moveTo(nX, nY);
         for(var nRect = 0; nRect < nCount; ++nRect) {
             oCtx.lineTo(nX, nY + nHeight);
             oCtx.lineTo(nX - nWidth, nY + nHeight);
             nX -= nWidth;
             nY += nHeight;
         }
+        oCtx.lineTo(0, 2*this.canvas.height);
+        oCtx.lineTo(2*this.canvas.width, 2*this.canvas.height);
+        oCtx.lineTo(this.canvas.width, 0);
         oCtx.closePath();
         oCtx.fill();
         return oTexture;
     };
-    CAnimTexture.prototype.createStripsDownRight = function(fTime) {
-        return this.createStripsUpLeftDiag(1 - fTime, "destination-in");
-    };
     CAnimTexture.prototype.createStripsUpLeft = function(fTime) {
-        return this.createStripsUpLeftDiag(fTime, "destination-out");
+        var nWidth = this.canvas.width / STRIPS_COUNT;
+        var nHeight = this.canvas.height / STRIPS_COUNT;
+        var nCount = 2*this.canvas.width * (1 - fTime) / nWidth + 0.5 >> 0;
+        var oTexture = this.createCopy();
+        var oCanvas = oTexture.canvas;
+        var oCtx = oCanvas.getContext('2d');
+        var nX = this.canvas.width;
+        var nY = this.canvas.height - nHeight * nCount;
+        oCtx.globalCompositeOperation = "destination-out";
+        oCtx.beginPath();
+        oCtx.moveTo(nX, nY);
+        for(var nRect = 0; nRect < nCount; ++nRect) {
+            oCtx.lineTo(nX - nWidth, nY);
+            oCtx.lineTo(nX - nWidth, nY + nHeight);
+            nX -= nWidth;
+            nY += nHeight;
+        }
+        oCtx.lineTo(-this.canvas.width, this.canvas.height);
+        oCtx.lineTo(-this.canvas.width, -this.canvas.height);
+        oCtx.lineTo(this.canvas.width, -this.canvas.height);
+        oCtx.closePath();
+        oCtx.fill();
+        return oTexture;
     };
     CAnimTexture.prototype.createDiamond = function(fTime, sOperation) {
         var nMaxWidth = 2*this.canvas.width;
@@ -7045,7 +7073,7 @@
         return this.createDiamond(fTime, "destination-out");
     };
     CAnimTexture.prototype.createDiamondOut = function(fTime) {
-        return this.createDiamond(1- fTime, "destination-in");
+        return this.createDiamond(fTime, "destination-out");
     };
     CAnimTexture.prototype.getRandomRanges = function(fTime) {
         var nFilledBars = RANDOM_BARS_ARRAY.length * fTime + 0.5 >> 0;
@@ -7118,9 +7146,9 @@
         return oTexture;
     };
     CAnimTexture.prototype.createWedge = function(fTime) {
-        var fHalfAngle = Math.PI * (1 - fTime);
+        var fHalfAngle = Math.PI * fTime;
         var fAngle = 2 * fHalfAngle;
-        if(AscFormat.fApproxEqual(fAngle, 0) || AscFormat.fApproxEqual(fAngle, 2*Math.PI, 0.01)) {
+        if(AscFormat.fApproxEqual(fAngle, 0)) {
             return this;
         }
         var nRadius = Math.sqrt(this.canvas.width* this.canvas.width + this.canvas.height*this.canvas.height) / 2 + 0.5 >> 0;
@@ -7135,7 +7163,7 @@
         oCtx.beginPath();
         oCtx.moveTo(nXCenter, nYCenter);
         oCtx.lineTo(nX1, nY1);
-        oCtx.arc(nXCenter, nYCenter, nRadius, fHalfAngle - Math.PI / 2, -fHalfAngle - Math.PI / 2, false);
+        oCtx.arc(nXCenter, nYCenter, nRadius, fHalfAngle - Math.PI / 2, -fHalfAngle - Math.PI / 2, true);
         oCtx.closePath();
         oCtx.fill();
         return oTexture;
@@ -7162,21 +7190,21 @@
         if(AscFormat.fApproxEqual(fAngle, 0)) {
             return this;
         }
-        var nRadius = Math.sqrt(this.canvas.width* this.canvas.width + this.canvas.height*this.canvas.height) / 2 + 0.5 >> 0;
+        var nRadius = Math.sqrt(this.canvas.width*this.canvas.width + this.canvas.height*this.canvas.height) / 2 + 0.5 >> 0;
         var nXCenter = this.canvas.width / 2 + 0.5 >> 0;
         var nYCenter = this.canvas.height / 2 + 0.5 >> 0;
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
-        oCtx.globalCompositeOperation = 'destination-in';
+        oCtx.globalCompositeOperation = 'destination-out';
         for(var nAngle = 0; nAngle < nCount; ++nAngle) {
-            var fEndAngle = fStride * (nAngle + 1) - Math.PI / 2;
-            var nX1 = nXCenter + (nRadius * Math.cos(fEndAngle) + 0.5 >> 0);
-            var nY1 = nYCenter + (nRadius * Math.sin(fEndAngle) + 0.5 >> 0);
+            var fStartAngle = fStride * nAngle - Math.PI / 2 + fAngle;
+            var nX1 = nXCenter + (nRadius * Math.cos(fStartAngle) + 0.5 >> 0);
+            var nY1 = nYCenter + (nRadius * Math.sin(fStartAngle) + 0.5 >> 0);
             oCtx.beginPath();
             oCtx.moveTo(nXCenter, nYCenter);
             oCtx.lineTo(nX1, nY1);
-            oCtx.arc(nXCenter, nYCenter, nRadius, fEndAngle, fEndAngle - fAngle, false);
+            oCtx.arc(nXCenter, nYCenter, nRadius, fStartAngle, fStartAngle - fAngle, true);
             oCtx.closePath();
             oCtx.fill();
         }
@@ -7231,19 +7259,34 @@
         return oTexture;
     };
     CAnimTexture.prototype.createPlusOut = function(fTime) {
-        if(fTime === 1) {
+        if(fTime === 0) {
             return this;
         }
-        var nRectWidth = this.canvas.width * fTime / 2 + 0.5 >> 0;
-        var nRectHeight = this.canvas.height * fTime / 2 + 0.5 >> 0;
+        var nRectWidth = this.canvas.width * (1 - fTime) / 2 + 0.5 >> 0;
+        var nRectHeight = this.canvas.height * (1 - fTime) / 2 + 0.5 >> 0;
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
         oCtx.globalCompositeOperation = 'destination-out';
-        this.drawRect(oCtx, 0, 0, nRectWidth, nRectHeight);
-        this.drawRect(oCtx, this.canvas.width - nRectWidth, 0, nRectWidth, nRectHeight);
-        this.drawRect(oCtx, 0, this.canvas.height - nRectHeight, nRectWidth, nRectHeight);
-        this.drawRect(oCtx, this.canvas.width - nRectWidth, this.canvas.height - nRectHeight, nRectWidth, nRectHeight);
+        oCtx.moveTo(nRectWidth, 0);
+        oCtx.lineTo(this.canvas.width - nRectWidth, 0);
+        oCtx.lineTo(this.canvas.width - nRectWidth, nRectHeight);
+        oCtx.lineTo(this.canvas.width, nRectHeight);
+        oCtx.lineTo(this.canvas.width, this.canvas.height - nRectHeight);
+        oCtx.lineTo(this.canvas.width - nRectWidth, this.canvas.height - nRectHeight);
+        oCtx.lineTo(this.canvas.width - nRectWidth, this.canvas.height);
+        oCtx.lineTo(nRectWidth, this.canvas.height);
+        oCtx.lineTo(nRectWidth, this.canvas.height - nRectHeight);
+        oCtx.lineTo(0, this.canvas.height - nRectHeight);
+        oCtx.lineTo(0, nRectHeight);
+        oCtx.lineTo(nRectWidth, nRectHeight);
+        oCtx.closePath();
+        oCtx.fill();
+
+        //this.drawRect(oCtx, 0, 0, nRectWidth, nRectHeight);
+        //this.drawRect(oCtx, this.canvas.width - nRectWidth, 0, nRectWidth, nRectHeight);
+        //this.drawRect(oCtx, 0, this.canvas.height - nRectHeight, nRectWidth, nRectHeight);
+        //this.drawRect(oCtx, this.canvas.width - nRectWidth, this.canvas.height - nRectHeight, nRectWidth, nRectHeight);
         return oTexture;
     };
     CAnimTexture.prototype.createPlusIn = function(fTime) {
@@ -7302,7 +7345,7 @@
         return oTexture;
     };
     CAnimTexture.prototype.createWipeDown = function(fTime) {
-        var nHeight = this.canvas.height * (1 - fTime) + 0.5 >> 0;
+        var nHeight = this.canvas.height * fTime + 0.5 >> 0;
         if(nHeight === this.canvas.height) {
             return this;
         }
@@ -7310,7 +7353,7 @@
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
-        oCtx.globalCompositeOperation = 'destination-in';
+        oCtx.globalCompositeOperation = 'destination-out';
         this.drawRect(oCtx, 0, this.canvas.height - nHeight, nWidth, nHeight);
         return oTexture;
     };
@@ -7341,7 +7384,7 @@
         return oTexture;
     };
     CAnimTexture.prototype.createBarnInVertical = function(fTime) {
-        var nWidth = (this.canvas.width * fTime)  + 0.5 >> 0;
+        var nWidth = (this.canvas.width * (1 - fTime))  + 0.5 >> 0;
         if(nWidth === 0) {
             return this;
         }
@@ -7349,7 +7392,7 @@
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
-        oCtx.globalCompositeOperation = 'destination-out';
+        oCtx.globalCompositeOperation = 'destination-in';
         this.drawRect(oCtx, (this.canvas.width - nWidth) / 2 + 0.5 >> 0, 0, nWidth, nHeight);
         return oTexture;
     };
@@ -8107,6 +8150,7 @@
     };
     CAnimSandwich.prototype.drawObject = function(oGraphics, oDrawing, oTextureCache, oAttributesMap) {
         //this.print();
+        console.log(oAttributesMap);
         var sVisibility = oAttributesMap["style.visibility"];
         if(sVisibility === "hidden") {
             return;
