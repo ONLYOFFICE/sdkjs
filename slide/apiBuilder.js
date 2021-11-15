@@ -580,7 +580,34 @@
         }
     };
 
+    /**
+	 * Specify the languages which will be used to check spelling and grammar (if requested).
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CDE"]
+	 * @param {string} sLangId - The possible value for this parameter is a language identifier as defined by
+	 * RFC 4646/BCP 47. Example: "en-CA".
+     * @returns {bool}
+	 */
+    ApiPresentation.prototype.SetLanguage = function(sLangId)
+    {
+        var nLcid = Asc.g_oLcidNameToIdMap[sLangId];
+        if (nLcid === undefined)
+            return false;
 
+        var oTextStyle = this.Presentation.defaultTextStyle ? this.Presentation.defaultTextStyle.createDuplicate() : new AscFormat.TextListStyle();
+        if (!oTextStyle.levels[9]) {
+            oTextStyle.levels[9] = new CParaPr();
+        }
+        if (!oTextStyle.levels[9].DefaultRunPr) {
+            oTextStyle.levels[9].DefaultRunPr = new CTextPr();
+        }
+        oTextStyle.levels[9].DefaultRunPr.Lang.Val = nLcid;
+        this.Presentation.setDefaultTextStyle(oTextStyle);
+        this.Presentation.Restart_CheckSpelling();
+        this.Presentation.Document_UpdateInterfaceState();
+
+        return true;
+    };
 
     //------------------------------------------------------------------------------------------------------------------
     //
@@ -1663,6 +1690,7 @@
     ApiPresentation.prototype["CreateNewHistoryPoint"] = ApiPresentation.prototype.CreateNewHistoryPoint;
     ApiPresentation.prototype["SetSizes"]              = ApiPresentation.prototype.SetSizes;
     ApiPresentation.prototype["ReplaceCurrentImage"]   = ApiPresentation.prototype.ReplaceCurrentImage;
+    ApiPresentation.prototype["SetLanguage"]           = ApiPresentation.prototype.SetLanguage;
 
     ApiSlide.prototype["GetClassType"]               = ApiSlide.prototype.GetClassType;
     ApiSlide.prototype["RemoveAllObjects"]           = ApiSlide.prototype.RemoveAllObjects;
