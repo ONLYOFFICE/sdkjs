@@ -6463,8 +6463,8 @@ function onApiShowRevisionsChange(data) {
                         changes.push("|Change tabs|");
                     if (value.Get_NumPr() !== undefined)
                         changes.push("|Change numbering|");
-                    if (value.Get_PStyle() !== undefined) {
-                        var style = me.api.asc_GetStyleNameById(value.Get_PStyle());
+                    if (value.GetPStyle() !== undefined) {
+                        var style = me.api.asc_GetStyleNameById(value.GetPStyle());
                         if (!_.isEmpty(style)) {
                             changes.push(style)
                         }
