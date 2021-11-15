@@ -21705,6 +21705,14 @@ CDocument.prototype.IsFillingFormMode = function()
 {
 	return this.Api.isRestrictionForms();
 };
+CDocument.prototype.IsFillingOFormMode = function()
+{
+	if (!this.IsFillingFormMode())
+		return false;
+
+	var oApi = this.GetApi();
+	return !!(oApi.DocInfo &&  oApi.DocInfo.Format && (this.Api.DocInfo.Format === "oform" || this.Api.DocInfo.Format === "docxf"));
+};
 CDocument.prototype.IsInFormField = function()
 {
 	var oSelectedInfo = this.GetSelectedElementsInfo();
@@ -21712,7 +21720,7 @@ CDocument.prototype.IsInFormField = function()
 	var oInlineSdt    = oSelectedInfo.GetInlineLevelSdt();
 	var oBlockSdt     = oSelectedInfo.GetBlockLevelSdt();
 
-	return (oBlockSdt || oInlineSdt || (oField && fieldtype_FORMTEXT === oField.Get_FieldType())) ? true : false;
+	return !!(oBlockSdt || oInlineSdt || (oField && fieldtype_FORMTEXT === oField.Get_FieldType()));
 };
 CDocument.prototype.IsFormFieldEditing = function()
 {
@@ -22145,7 +22153,8 @@ CDocument.prototype.CanEdit = function()
 };
 CDocument.prototype.private_CheckCursorPosInFillingFormMode = function()
 {
-	if (this.IsFillingFormMode() && !this.IsInFormField())
+	// В oform не сдвигаемся автоматически
+	if (this.IsFillingFormMode() && !this.IsInFormField() && !this.IsFillingOFormMode())
 	{
 		this.MoveToFillingForm(true);
 		this.UpdateSelection();
