@@ -4559,7 +4559,7 @@ drawBarChart.prototype = {
 					}
 				}
 
-			//	shapeType = 5; //раскоментировать для теста пирамид 
+				shapeType = 5; //раскоментировать для теста пирамид 
 				tempValues[i][idx] = val;
 
 				startYColumnPosition = this._getStartYColumnPosition(seriesHeight, i, idx, val, yPoints, prevVal, shapeType);
@@ -4667,13 +4667,15 @@ drawBarChart.prototype = {
 								// if((valueMin < axisMin) && (minHeight === testHeight)){
 								// 	testMaxHeight = testHeight + (testHeight + testHeight * axisMin);
 								// }
-								if(valueMax > axisMax && val > 0){
+								if(valueMax > axisMax){
 									//testMaxHeight = testHeight + (testHeight - testHeight * axisMax);
-									testMaxHeight = maxHeight + (maxHeight - maxHeight * axisMax);							
+								//	testMaxHeight = maxHeight + (maxHeight - maxHeight * axisMax);
+									maxHeight = maxHeight + (maxHeight - maxHeight * axisMax);					
 								}
-								if(valueMin < axisMin && val < 0){
+								if(valueMin < axisMin){
 									//testMaxHeight = testHeight + (testHeight + testHeight * axisMin);
-									testMaxHeight = minHeight + (minHeight - minHeight * axisMin);	
+									//testMaxHeight = minHeight + (minHeight - minHeight * axisMin);	
+									minHeight = minHeight + (minHeight - minHeight * axisMin);
 								}
 								break;
 							}
@@ -4996,6 +4998,9 @@ drawBarChart.prototype = {
 					if(maxH2){
 						maxH = maxH2;
 					}
+				}
+				if(val < 0 && maxH2 >= 0) {
+					maxH = minH;
 				}
 
 				x1 = startX, y1 = nullPositionOX, z1 = 0 + gapDepth;
