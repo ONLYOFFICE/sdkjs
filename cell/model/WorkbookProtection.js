@@ -445,7 +445,7 @@
 	CSheetProtection.prototype.asc_setSheet = function (password, callback) {
 		//просталяю временный пароль, аспинхронная проверка пароля в asc_setProtectedSheet
 		this.setSheet(!this.sheet);
-		if (this.sheet) {
+		if (this.sheet && password) {
 			var hashParams = generateHashParams();
 			this.saltValue = hashParams.saltValue;
 			this.spinCount = hashParams.spinCount;
@@ -733,7 +733,7 @@
 		//просталяю временный пароль, аспинхронная проверка пароля в asc_setProtectedWorkbook
 		this.setLockStructure(!this.lockStructure);
 
-		if (this.lockStructure) {
+		if (this.lockStructure && password) {
 			var hashParams = generateHashParams();
 			this.workbookSaltValue = hashParams.saltValue;
 			this.workbookSpinCount = hashParams.spinCount;
@@ -1156,10 +1156,12 @@
 		this.spinCount = val;
 	};
 	CProtectedRange.prototype.asc_setPassword = function (val) {
-		var hashParams = generateHashParams();
-		this.saltValue = hashParams.saltValue;
-		this.spinCount = hashParams.spinCount;
-		this.algorithmName = hashParams.algorithmName;
+		if (val) {
+			var hashParams = generateHashParams();
+			this.saltValue = hashParams.saltValue;
+			this.spinCount = hashParams.spinCount;
+			this.algorithmName = hashParams.algorithmName;
+		}
 		//генерируем хэш
 		this.temporaryPassword = val;
 	};
