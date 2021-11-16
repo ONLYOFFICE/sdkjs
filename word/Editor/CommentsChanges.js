@@ -288,3 +288,10 @@ CChangesParaCommentCommentId.prototype.Load = function()
 			Comment.Set_EndId(this.Class.Paragraph.Get_Id());
 	}
 };
+CChangesParaCommentCommentId.prototype.CreateReverseChange = function()
+{
+	// Давать откатывать это действие нельзя. Поэтому мы создаем действие, которое ничего не делает,
+	// но сохраняет CommentId для удаления, потому что все комментарии, которые откатываются по этому действию,
+	// должны быть удалены
+	return new CChangesParaCommentCommentId(this.Class, this.New, this.New);
+};
