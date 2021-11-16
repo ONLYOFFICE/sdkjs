@@ -10338,6 +10338,7 @@
 				AscCommon.calculateProtectHash(aCheckHash, function (aHash) {
 					for (var i = 0; i < aHash.length; i++) {
 						if (aHash[i] === t.aProtectedRanges[i].hashValue) {
+							t.aProtectedRanges[i]._isEnterPassword = true;
 							callback && callback(true);
 							return;
 						}
