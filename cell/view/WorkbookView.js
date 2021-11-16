@@ -2201,7 +2201,7 @@
     return this.drawingCtx.getZoom();
   };
 
-  WorkbookView.prototype.changeZoom = function(factor) {
+  WorkbookView.prototype.changeZoom = function(factor, changeZoomOnPrint) {
   	if (factor === this.getZoom()) {
       return;
     }
@@ -2241,7 +2241,8 @@
       if (!factor) {
       	item._initWorksheetDefaultWidth();
 	  }
-      item.changeZoom(/*isDraw*/i == activeIndex);
+	  //changeZoomOnPrint - добавляю, поскольку при конвертации файлов есть проблемы. проверить, возможно отрисовка тоже не нужна
+      item.changeZoom(/*isDraw*/i == activeIndex, changeZoomOnPrint);
       this._reInitGraphics();
       item.objectRender.changeZoom(this.drawingCtx.scaleFactor);
       if (i == activeIndex && factor) {
@@ -2964,15 +2965,15 @@
 		//приходится несколько раз выполнять действия, чтобы ppi выставился правильно
 		//если не делать init, то не сбросится ppi от системного зума - смотри функцию DrawingContext.prototype.changeZoom
 		if (viewZoom !== 1) {
-			this.changeZoom(1);
+			this.changeZoom(1, true);
 		}
-		this.changeZoom(null);
+		this.changeZoom(null, true);
 
 		runFunction();
 
 		AscCommon.AscBrowser.retinaPixelRatio = trueRetinaPixelRatio;
-		this.changeZoom(null);
-		this.changeZoom(viewZoom);
+		this.changeZoom(null, true);
+		this.changeZoom(viewZoom, true);
 	};
 
   WorkbookView.prototype._calcPagesPrintSheet = function (index, printPagesData, onlySelection, adjustPrint) {
