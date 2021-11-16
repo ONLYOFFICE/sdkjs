@@ -2994,11 +2994,17 @@ function CDemonstrationManager(htmlpage)
         oThis.StopTransition();
         var nOldSlideNum = this.SlideNum;
 
+        oThis.SlideImages[0] = null;
+        oThis.SlideImages[1] = null;
+
+        oThis.SlideIndexes[0] = -1;
+        oThis.SlideIndexes[1] = -1;
+
         if (oThis.SlideNum == oThis.SlidesCount)
         {
             oThis.SlideNum = this.GetPrevVisibleSlide(true);
+            oThis.StartAnimation(oThis.SlideNum);
             oThis.OnPaintSlide(false);
-
             if (null != oThis.DivEndPresentation)
             {
                 oThis.DemonstrationDiv.removeChild(oThis.DivEndPresentation);
@@ -3029,6 +3035,7 @@ function CDemonstrationManager(htmlpage)
             oThis.SlideNum = this.GetPrevVisibleSlide(true);
 
 
+        oThis.StartAnimation(oThis.SlideNum);
         oThis.OnPaintSlide(false);
     };
 
