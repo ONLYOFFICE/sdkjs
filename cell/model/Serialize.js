@@ -4140,7 +4140,7 @@
 				this.memory.WriteByte(c_oSerPropLenType.Byte);
 				this.memory.WriteBool(sheetProtection.insertRows);
 			}
-			if (null != sheetProtection.objects) {
+			if (null != sheetProtection.objects && sheetProtection.sheet) {
 				this.memory.WriteByte(c_oSerWorksheetProtection.Objects);
 				this.memory.WriteByte(c_oSerPropLenType.Byte);
 				this.memory.WriteBool(sheetProtection.objects);
@@ -4150,7 +4150,9 @@
 				this.memory.WriteByte(c_oSerPropLenType.Byte);
 				this.memory.WriteBool(sheetProtection.pivotTables);
 			}
-			if (null != sheetProtection.scenarios) {
+			//scenarios - в MS может быть всталена в true если только лист защищен
+			//если выставлена в true при незазищенном листе, то после сохранения и открытия в ms обратно в false возвращается
+			if (null != sheetProtection.scenarios && sheetProtection.sheet) {
 				this.memory.WriteByte(c_oSerWorksheetProtection.Scenarios);
 				this.memory.WriteByte(c_oSerPropLenType.Byte);
 				this.memory.WriteBool(sheetProtection.scenarios);
