@@ -9311,27 +9311,32 @@ background-repeat: no-repeat;\
 			oPr.UncheckedFont = "Segoe UI Symbol";
 		}
 
-		if (oPr.CheckedSymbol)
-			AscFonts.FontPickerByCharacter.getFontBySymbol(oPr.CheckedSymbol);
+		var nCheckedSymbol   = oPr.CheckedSymbol ? oPr.CheckedSymbol : Asc.c_oAscSdtCheckBoxDefaults.CheckedSymbol;
+		var nUncheckedSymbol = oPr.UncheckedSymbol ? oPr.UncheckedSymbol : Asc.c_oAscSdtCheckBoxDefaults.UncheckedSymbol;
+		var sCheckedFont     = oPr.CheckedFont ? oPr.CheckedFont : Asc.c_oAscSdtCheckBoxDefaults.CheckedFont;
+		var sUncheckedFont   = oPr.UncheckedFont ? oPr.UncheckedFont : Asc.c_oAscSdtCheckBoxDefaults.UncheckedFont;
 
-		if (oPr.UncheckedSymbol)
-			AscFonts.FontPickerByCharacter.getFontBySymbol(oPr.UncheckedSymbol);
+		var isLoadFonts = false;
+		if (!AscCommon.IsAscFontSupport(sCheckedFont, nCheckedSymbol))
+		{
+			isLoadFonts = true;
+			AscFonts.FontPickerByCharacter.getFontBySymbol(nCheckedSymbol);
+		}
 
-		var oFonts = {};
-		if (oPr.CheckedFont)
-			oFonts[oPr.CheckedFont] = true;
+		if (!AscCommon.IsAscFontSupport(sUncheckedFont, nUncheckedSymbol))
+		{
+			isLoadFonts = true;
+			AscFonts.FontPickerByCharacter.getFontBySymbol(nUncheckedSymbol);
+		}
 
-		if (oPr.UncheckedFont)
-			oFonts[oPr.UncheckedFont] = true;
-
-		AscCommon.Check_LoadingDataBeforePrepaste(this, oFonts, {}, function()
+		function private_PeformSetCheckBoxPr()
 		{
 			var oParagraph = oContentControl.GetParagraph();
 			if (oParagraph && !oLogicDocument.IsSelectionLocked(AscCommon.changestype_None, {
-					Type      : AscCommon.changestype_2_ElementsArray_and_Type,
-					Elements  : [oParagraph],
-					CheckType : AscCommon.changestype_Paragraph_Properties
-				}))
+				Type      : AscCommon.changestype_2_ElementsArray_and_Type,
+				Elements  : [oParagraph],
+				CheckType : AscCommon.changestype_Paragraph_Properties
+			}))
 			{
 				oLogicDocument.StartAction(AscDFH.historydescription_Document_SetContentControlCheckBoxPr);
 				oContentControl.ApplyCheckBoxPr(oPr);
@@ -9339,7 +9344,20 @@ background-repeat: no-repeat;\
 				oLogicDocument.UpdateTracks();
 				oLogicDocument.FinalizeAction();
 			}
-		});
+		}
+
+		if (isLoadFonts)
+		{
+			var oFonts = {};
+			oFonts[oPr.CheckedFont]   = true;
+			oFonts[oPr.UncheckedFont] = true;
+
+			AscCommon.Check_LoadingDataBeforePrepaste(this, oFonts, {}, private_PeformSetCheckBoxPr);
+		}
+		else
+		{
+			private_PeformSetCheckBoxPr();
+		}
 	};
 	asc_docs_api.prototype.asc_SetContentControlCheckBoxChecked = function(isChecked, sId)
 	{

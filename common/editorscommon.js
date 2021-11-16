@@ -4310,6 +4310,21 @@
 		return !!(c_oAscSpaces[nUnicode]);
 	}
 
+	/**
+	 * Присутствует ли символ заданного шрифта в шрифте ASCW3
+	 * @param sFontFamily
+	 * @param nUnicode
+	 * @returns {boolean}
+	 */
+	function IsAscFontSupport(sFontFamily, nUnicode)
+	{
+		return ("Segoe UI Symbol" === sFontFamily
+			&& (0x25C9 === nUnicode
+				|| 0x25CB === nUnicode
+				|| 0x2611 === nUnicode
+				|| 0x2610 === nUnicode));
+	}
+
 	function private_IsAbbreviation(sWord) {
 		if (sWord.toUpperCase() === sWord) {
 			// Корейские символы считаются символами в верхнем регистре, но при этом мы не должны считать их аббревиатурой
@@ -7149,6 +7164,7 @@
 	window["AscCommon"].IntToNumberFormat = IntToNumberFormat;
 	window["AscCommon"].IsSpace = IsSpace;
 	window["AscCommon"].CorrectFontSize = CorrectFontSize;
+	window["AscCommon"].IsAscFontSupport = IsAscFontSupport;
 
 	window["AscCommon"].loadSdk = loadSdk;
     window["AscCommon"].loadScript = loadScript;

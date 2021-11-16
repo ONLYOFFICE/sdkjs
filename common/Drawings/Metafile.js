@@ -2074,11 +2074,19 @@
 				else if (0x25C9 === nCheckedSymbol && 0x25CB === nUncheckedSymbol)
 					nType = 0x0002;
 
+				var sCheckedFont = oCheckBoxPr.GetCheckedFont();
+				if (AscCommon.IsAscFontSupport(sCheckedFont, nCheckedSymbol))
+					sCheckedFont = "ASCW3";
+
+				var sUncheckedFont = oCheckBoxPr.GetUncheckedFont();
+				if (AscCommon.IsAscFontSupport(sUncheckedFont, nUncheckedSymbol))
+					sUncheckedFont = "ASCW3";
+
 				this.Memory.WriteLong(nType);
-				this.Memory.WriteLong(oCheckBoxPr.GetCheckedSymbol());
-				this.Memory.WriteString(oCheckBoxPr.GetCheckedFont());
-				this.Memory.WriteLong(oCheckBoxPr.GetUncheckedSymbol());
-				this.Memory.WriteString(oCheckBoxPr.GetUncheckedFont());
+				this.Memory.WriteLong(nCheckedSymbol);
+				this.Memory.WriteString(sCheckedFont);
+				this.Memory.WriteLong(nUncheckedSymbol);
+				this.Memory.WriteString(sUncheckedFont);
 
 				var sGroupName = oCheckBoxPr.GetGroupKey();
 				if (sGroupName)

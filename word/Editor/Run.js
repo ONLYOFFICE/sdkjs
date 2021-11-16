@@ -2998,6 +2998,9 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 	g_oTextMeasurer.SetTextPr(oTextPr, oTheme);
 	g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
 
+	if (this.private_IsUseAscFont(oTextPr))
+		g_oTextMeasurer.SetFont({FontFamily : {Name : "ASCW3", Index : -1}, FontSize : oTextPr.FontSize, Italic : oTextPr.Italic, Bold : oTextPr.Bold});
+
 	// Запрашиваем текущие метрики шрифта, под TextAscent мы будем понимать ascent + linegap(которые записаны в шрифте)
 	this.TextHeight  = g_oTextMeasurer.GetHeight();
 	this.TextDescent = Math.abs(g_oTextMeasurer.GetDescender());
@@ -5995,6 +5998,9 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
 
     var CurTextPr = this.Get_CompiledPr( false );
     pGraphics.SetTextPr( CurTextPr, Theme );
+
+    if (this.private_IsUseAscFont(CurTextPr))
+		pGraphics.SetFont({FontFamily : {Name : "ASCW3", Index : -1}, FontSize : CurTextPr.FontSize, Italic : CurTextPr.Italic, Bold : CurTextPr.Bold});
 
     var InfoMathText ;
     if(this.Type == para_Math_Run)
@@ -13546,6 +13552,13 @@ ParaRun.prototype.CalculateTextToTable = function(oEngine)
 			}
 		}
 	}
+};
+ParaRun.prototype.private_IsUseAscFont = function(oTextPr)
+{
+	return (1 === this.Content.length
+		&& para_Text === this.Content[0].Type
+		&& this.IsInCheckBox()
+		&& AscCommon.IsAscFontSupport(oTextPr.RFonts.Ascii.Name, this.Content[0].Value));
 };
 
 

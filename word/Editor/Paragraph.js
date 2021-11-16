@@ -17440,7 +17440,7 @@ CParagraphContentPos.prototype.GetDepth = function()
 	return this.Depth - 1;
 };
 /**
- * Получаем позицию NerestPos
+ * Получаем позицию NearestPos
  * @param oParagraph
  */
 CParagraphContentPos.prototype.ToAnchorPos = function(oParagraph)
