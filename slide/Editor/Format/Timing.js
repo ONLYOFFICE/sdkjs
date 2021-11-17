@@ -628,7 +628,7 @@
     CTimeNodeBase.prototype.setState = function(nState) {
         this.state = nState;
 
-        this.logState("SET STATE:");
+        //this.logState("SET STATE:");
     };
     CTimeNodeBase.prototype.logState = function (sPrefix) {
         var oAttr = this.getAttributesObject();
@@ -4561,9 +4561,9 @@
             return;
         }
         var fRelTime = this.getRelativeTime(nElapsedTime);
-        if(this.transition === TRANSITION_TYPE_IN) {
-            fRelTime = 1 - fRelTime;
-        }
+        // if(this.transition === TRANSITION_TYPE_IN) {
+        //     fRelTime = 1 - fRelTime;
+        // }
         if(this.progress && this.progress.isFlt()) {
             fRelTime = this.progress.getVal()
         }
@@ -4575,15 +4575,16 @@
                 aFilters.push(nFilterType);
             }
         }
-        return oAttributes["effect"] = new CEffectData(aFilters, fRelTime, this.prLst);
+        return oAttributes["effect"] = new CEffectData(aFilters, fRelTime, this.prLst, this.transition);
     };
 
 
-    function CEffectData(aFilters, fRelTime, sPrLst) {
-        this.filters = aFilters,
+    function CEffectData(aFilters, fRelTime, sPrLst, nTransition) {
+        this.filters = aFilters;
         this.data = {
             time: fRelTime,
-            prLst: sPrLst
+            prLst: sPrLst,
+            transition: nTransition
         }
     }
     CEffectData.prototype.isEqual = function(oOther) {
@@ -4599,6 +4600,9 @@
             }
         }
         if(this.data.prLst !== oOther.data.prLst) {
+            return false;
+        }
+        if(this.data.transition !== oOther.data.transition) {
             return false;
         }
         return true;
@@ -6665,161 +6669,163 @@
         }
         var aFilters = oEffect.filters;
         var oEffectData = oEffect.data;
+        var dTime = oEffectData.time;
+        var nTransition = oEffectData.transition;
         for(var nFilter = 0; nFilter < aFilters.length; ++nFilter) {
             var nFilterType = aFilters[nFilter];
             switch (nFilterType) {
                 case FILTER_TYPE_BLINDS_HORIZONTAL: {
-                    return this.createBlindsHorizontal(oEffectData.time);
+                    return this.createBlindsHorizontal(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_BLINDS_VERTICAL: {
-                    return this.createBlindsVertical(oEffectData.time);
+                    return this.createBlindsVertical(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_BOX_IN: {
-                    return this.createBoxIn(oEffectData.time);
+                    return this.createBoxIn(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_BOX_OUT: {
-                    return this.createBoxOut(oEffectData.time);
+                    return this.createBoxOut(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_CHECKERBOARD_ACROSS: {
-                    return this.createCheckerBoardAcross(oEffectData.time);
+                    return this.createCheckerBoardAcross(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_CHECKERBOARD_DOWN: {
-                    return this.createCheckerBoardDown(oEffectData.time);
+                    return this.createCheckerBoardDown(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_CIRCLE:
                 case FILTER_TYPE_CIRCLE_IN: {
-                    return this.createCircleIn(oEffectData.time);
+                    return this.createCircleIn(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_CIRCLE_OUT: {
-                    return this.createCircleOut(oEffectData.time);
+                    return this.createCircleOut(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_DIAMOND:
                 case FILTER_TYPE_DIAMOND_IN: {
-                    return this.createDiamondIn(oEffectData.time);
+                    return this.createDiamondIn(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_DIAMOND_OUT: {
-                    return this.createDiamondOut(oEffectData.time);
+                    return this.createDiamondOut(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_DISSOLVE: {
-                    return this.createDissolve(oEffectData.time);
+                    return this.createDissolve(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_FADE: {
-                    return this.createFade(oEffectData.time);
+                    return this.createFade(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_SLIDE_FROM_TOP: {
-                    return this.createSlideFromTop(oEffectData.time);
+                    return this.createSlideFromTop(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_SLIDE_FROM_BOTTOM: {
-                    return this.createSlideFromBottom(oEffectData.time);
+                    return this.createSlideFromBottom(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_SLIDE_FROM_LEFT: {
-                    return this.createSlideFromLeft(oEffectData.time);
+                    return this.createSlideFromLeft(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_SLIDE_FROM_RIGHT: {
-                    return this.createSlideFromRight(oEffectData.time);
+                    return this.createSlideFromRight(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_PLUS_IN: {
-                    return this.createPlusIn(oEffectData.time);
+                    return this.createPlusIn(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_PLUS_OUT: {
-                    return this.createPlusOut(oEffectData.time);
+                    return this.createPlusOut(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_BARN_IN_VERTICAL: {
-                    return this.createBarnInVertical(oEffectData.time);
+                    return this.createBarnInVertical(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_BARN_IN_HORIZONTAL: {
-                    return this.createBarnInHorizontal(oEffectData.time);
+                    return this.createBarnInHorizontal(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_BARN_OUT_VERTICAL: {
-                    return this.createBarnOutVertical(oEffectData.time);
+                    return this.createBarnOutVertical(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_BARN_OUT_HORIZONTAL: {
-                    return this.createBarnOutHorizontal(oEffectData.time);
+                    return this.createBarnOutHorizontal(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_RANDOM_BARS_HORIZONTAL: {
-                    return this.createRandomBarsHorizontal(oEffectData.time);
+                    return this.createRandomBarsHorizontal(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_RANDOM_BARS_VERTICAL: {
-                    return this.createRandomBarsVertical(oEffectData.time);
+                    return this.createRandomBarsVertical(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_STRIPS_DOWN_LEFT: {
-                    return this.createStripsDownLeft(oEffectData.time);
+                    return this.createStripsDownLeft(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_STRIPS_UP_LEFT: {
-                    return this.createStripsUpLeft(oEffectData.time);
+                    return this.createStripsUpLeft(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_STRIPS_DOWN_RIGHT: {
-                    return this.createStripsDownRight(oEffectData.time);
+                    return this.createStripsDownRight(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_STRIPS_UP_RIGHT: {
-                    return this.createStripsUpRight(oEffectData.time);
+                    return this.createStripsUpRight(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_SLIDE_WEDGE: {
-                    return this.createWedge(oEffectData.time);
+                    return this.createWedge(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_WHEEL_1: {
-                    return this.createWheel1(oEffectData.time);
+                    return this.createWheel1(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_WHEEL_2: {
-                    return this.createWheel2(oEffectData.time);
+                    return this.createWheel2(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_WHEEL_3: {
-                    return this.createWheel3(oEffectData.time);
+                    return this.createWheel3(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_WHEEL_4: {
-                    return this.createWheel4(oEffectData.time);
+                    return this.createWheel4(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_WHEEL_8: {
-                    return this.createWheel8(oEffectData.time);
+                    return this.createWheel8(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_WIPE_RIGHT: {
-                    return this.createWipeRight(oEffectData.time);
+                    return this.createWipeRight(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_WIPE_LEFT: {
-                    return this.createWipeLeft(oEffectData.time);
+                    return this.createWipeLeft(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_WIPE_DOWN: {
-                    return this.createWipeDown(oEffectData.time);
+                    return this.createWipeDown(dTime, nTransition);
                     break;
                 }
                 case FILTER_TYPE_WIPE_UP: {
-                    return this.createWipeUp(oEffectData.time);
+                    return this.createWipeUp(dTime, nTransition);
                     break;
                 }
             }
@@ -6854,92 +6860,116 @@
         oCtx.closePath();
         oCtx.fill();
     };
-    CAnimTexture.prototype.createBlindsHorizontal = function(fTime) {
-        //console.log("EFFECT TIME " + fTime);
+    CAnimTexture.prototype.createBlindsHorizontal = function(fTime, nTransition) {
+        var fResultTime;
+        if(nTransition === TRANSITION_TYPE_IN) {
+            fResultTime = fTime;
+        }
+        else {
+            fResultTime = 1 - fTime;
+        }
         var nRows = 6;
         var nVertStride = this.canvas.height / nRows + 0.5 >> 0;
         var nWidth = this.canvas.width;
-        var nHeight = nVertStride * fTime + 0.5 >> 0;
-        if(nHeight === 0) {
-            return this;
-        }
-        var oTexture = this.createCopy();
-        var oCanvas = oTexture.canvas;
-        var oCtx = oCanvas.getContext('2d');
-        oCtx.globalCompositeOperation = 'destination-out';
-        var nY;
-        for(var nRow = 0; nRow < nRows; ++nRow) {
-            nY = nVertStride * (nRow + 1) - nHeight;
-            this.drawRect(oCtx, 0, nY, nWidth, nHeight);
-        }
-        return oTexture;
-    };
-    CAnimTexture.prototype.createBlindsVertical = function(fTime) {
-        //console.log("EFFECT TIME " + fTime);
-        var nCols = 6;
-        var nHorStride = this.canvas.width / nCols + 0.5 >> 0;
-        var nWidth = nHorStride * fTime + 0.5 >> 0;
-        if(nWidth === 0) {
-            return this;
-        }
-        var oTexture = this.createCopy();
-        var oCanvas = oTexture.canvas;
-        var nHeight = this.canvas.height;
-        var oCtx = oCanvas.getContext('2d');
-        oCtx.globalCompositeOperation = 'destination-out';
-        var nX;
-        for(var nCol = 0; nCol < nCols; ++nCol) {
-            nX = nHorStride * (nCol + 1) - nWidth;
-            this.drawRect(oCtx, nX, 0, nWidth, nHeight);
-        }
-        return oTexture;
-    };
-    CAnimTexture.prototype.createBoxIn = function(fTime) {
-        //console.log("EFFECT TIME " + fTime);
-        var nBoxW = this.canvas.width * (1 - fTime) + 0.5 >> 0;
-        var nBoxH = this.canvas.height * (1 - fTime) + 0.5 >> 0;
-        if(nBoxW === 0 || nBoxH === 0) {
-            return this;
-        }
+        var nHeight = nVertStride * fResultTime + 0.5 >> 0;
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
         oCtx.globalCompositeOperation = 'destination-in';
-        var nX = (this.canvas.width - nBoxW) / 2 + 0.5 >> 0;
-        var nY = (this.canvas.height - nBoxH) / 2 + 0.5 >> 0;
-        this.drawRect(oCtx, nX, nY, nBoxW, nBoxH);
+        var nY;
+        oCtx.beginPath();
+        for(var nRow = 0; nRow < nRows; ++nRow) {
+            nY = nVertStride * nRow;
+            oCtx.rect(0, nY, nWidth, nHeight);
+        }
+        oCtx.closePath();
+        oCtx.fill();
         return oTexture;
     };
-    CAnimTexture.prototype.createBoxOut = function(fTime) {
-        //console.log("EFFECT TIME " + fTime);
-        var nBoxW = this.canvas.width * (fTime) + 0.5 >> 0;
-        var nBoxH = this.canvas.height * (fTime) + 0.5 >> 0;
-        if(nBoxW === this.canvas.width && nBoxH === this.canvas.height) {
-            return this;
+    CAnimTexture.prototype.createBlindsVertical = function(fTime, nTransition) {
+        var fResultTime;
+        if(nTransition === TRANSITION_TYPE_IN) {
+            fResultTime = fTime;
         }
+        else {
+            fResultTime = 1 - fTime;
+        }
+        var nCols = 6;
+        var nHorStride = this.canvas.width / nCols + 0.5 >> 0;
+        var nWidth = nHorStride * fResultTime + 0.5 >> 0;
+        var oTexture = this.createCopy();
+        var oCanvas = oTexture.canvas;
+        var nHeight = this.canvas.height;
+        var oCtx = oCanvas.getContext('2d');
+        oCtx.globalCompositeOperation = 'destination-in';
+        var nY;
+        oCtx.beginPath();
+        for(var nCol = 0; nCol < nCols; ++nCol) {
+            var nX = nHorStride * nCol;
+            oCtx.rect(nX, 0, nWidth, nHeight);
+        }
+        oCtx.closePath();
+        oCtx.fill();
+        return oTexture;
+    };
+    CAnimTexture.prototype.createBoxIn = function(fTime, nTransition) {
+        var sOperationType;
+        var fEffectTime = (1 - fTime);
+        if(nTransition === TRANSITION_TYPE_IN) {
+            sOperationType = 'destination-out';
+        }
+        else {
+            sOperationType = 'destination-in';
+        }
+        var nBoxW = this.canvas.width * fEffectTime + 0.5 >> 0;
+        var nBoxH = this.canvas.height * fEffectTime + 0.5 >> 0;
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
-        oCtx.globalCompositeOperation = 'destination-out';
+        oCtx.globalCompositeOperation = sOperationType;
         var nX = (this.canvas.width - nBoxW) / 2 + 0.5 >> 0;
         var nY = (this.canvas.height - nBoxH) / 2 + 0.5 >> 0;
         this.drawRect(oCtx, nX, nY, nBoxW, nBoxH);
         return oTexture;
     };
-    CAnimTexture.prototype.createCheckerBoardAcross = function(fTime) {
+    CAnimTexture.prototype.createBoxOut = function(fTime, nTransition) {
+        var sOperationType;
+        if(nTransition === TRANSITION_TYPE_IN) {
+            sOperationType = 'destination-in';
+        }
+        else {
+            sOperationType = 'destination-out';
+        }
+        var nBoxW = this.canvas.width * fTime + 0.5 >> 0;
+        var nBoxH = this.canvas.height * fTime + 0.5 >> 0;
+        var oTexture = this.createCopy();
+        var oCanvas = oTexture.canvas;
+        var oCtx = oCanvas.getContext('2d');
+        oCtx.globalCompositeOperation = sOperationType;
+        var nX = (this.canvas.width - nBoxW) / 2 + 0.5 >> 0;
+        var nY = (this.canvas.height - nBoxH) / 2 + 0.5 >> 0;
+        this.drawRect(oCtx, nX, nY, nBoxW, nBoxH);
+        return oTexture;
+    };
+    CAnimTexture.prototype.createCheckerBoardAcross = function(fTime, nTransition) {
         var nRows = 6;
         var nCols = nRows;
         var nHorStride = this.canvas.width / nCols + 0.5 >> 0;
         var nHalfHorStride = nHorStride / 2 + 0.5 >> 0;
         var nVertStride = this.canvas.height / nRows + 0.5 >> 0;
-        var nWidth = nHorStride * fTime + 0.5 >> 0;
-        if(nWidth === 0) {
-            return this;
+        var fResultTime;
+        if(nTransition === TRANSITION_TYPE_IN) {
+            fResultTime = (1 - fTime);
         }
+        else {
+            fResultTime = fTime;
+        }
+        var nWidth = nHorStride * fResultTime + 0.5 >> 0;
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
         oCtx.globalCompositeOperation = 'destination-out';
+        oCtx.beginPath()
         var nRow, nCol;
         var nX, nY;
         for(nRow = 0; nRow < nRows; ++nRow) {
@@ -6950,32 +6980,39 @@
                     nX -= nHalfHorStride;
                 }
                 nY = nRow * nVertStride;
-                this.drawRect(oCtx, nX, nY, nWidth, nVertStride);
+                oCtx.rect(nX, nY, nWidth, nVertStride);
             }
             if(bOdd) {
                 nX = (nCol + 1) * nHorStride - nWidth - nHalfHorStride;
                 nY = nRow * nVertStride;
-                this.drawRect(oCtx, nX, nY, nWidth, nVertStride);
+                oCtx.rect(nX, nY, nWidth, nVertStride);
             }
         }
+        oCtx.closePath();
+        oCtx.fill();
         return oTexture;
     };
-    CAnimTexture.prototype.createCheckerBoardDown = function(fTime) {
+    CAnimTexture.prototype.createCheckerBoardDown = function(fTime, nTransition) {
         var nRows = 6;
         var nCols = nRows;
         var nHorStride = this.canvas.width / nCols + 0.5 >> 0;
         var nVertStride = this.canvas.height / nRows + 0.5 >> 0;
         var nHalfVertStride = nVertStride / 2 + 0.5 >> 0;
-        var nHeight = nVertStride * fTime + 0.5 >> 0;
-        if(nHeight === 0) {
-            return this;
+        var fResultTime;
+        if(nTransition === TRANSITION_TYPE_IN) {
+            fResultTime = (1 - fTime);
         }
+        else {
+            fResultTime = fTime;
+        }
+        var nHeight = (nVertStride * fResultTime + 0.5) >> 0;
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
         oCtx.globalCompositeOperation = 'destination-out';
         var nRow, nCol;
         var nX, nY;
+        oCtx.beginPath();
         for(nCol = 0; nCol < nCols; ++nCol) {
             var bOdd = (nCol % 2) === 1;
             for(nRow = 0; nRow < nRows; ++nRow) {
@@ -6984,14 +7021,16 @@
                     nY -= nHalfVertStride;
                 }
                 nX = nCol * nHorStride;
-                this.drawRect(oCtx, nX, nY, nHorStride, nHeight);
+                oCtx.rect(nX, nY, nHorStride, nHeight);
             }
             if(bOdd) {
                 nY = (nRow + 1) * nVertStride - nHeight - nHalfVertStride;
                 nX = nCol * nHorStride;
-                this.drawRect(oCtx, nX, nY, nHorStride, nHeight);
+                oCtx.rect(nX, nY, nHorStride, nHeight);
             }
         }
+        oCtx.closePath();
+        oCtx.fill();
         return oTexture;
     };
     CAnimTexture.prototype.createCircle = function(fTime, sOperation) {
@@ -7018,11 +7057,25 @@
         oCtx.fill();
         return oTexture;
     };
-    CAnimTexture.prototype.createCircleIn = function(fTime) {
-        return this.createCircle(fTime, "destination-out");
+    CAnimTexture.prototype.createCircleIn = function(fTime, nTransition) {
+        var sOperation;
+        if(nTransition === TRANSITION_TYPE_IN) {
+            sOperation = "destination-out";
+        }
+        else {
+            sOperation = "destination-in";
+        }
+        return this.createCircle(1 - fTime, sOperation);
     };
-    CAnimTexture.prototype.createCircleOut = function(fTime) {
-        return this.createCircle(1 - fTime, "destination-in");
+    CAnimTexture.prototype.createCircleOut = function(fTime, nTransition) {
+        var sOperation;
+        if(nTransition === TRANSITION_TYPE_IN) {
+            sOperation = "destination-in";
+        }
+        else {
+            sOperation = "destination-out";
+        }
+        return this.createCircle(fTime, sOperation);
     };
     CAnimTexture.prototype.createStripsUpRightDiag = function(fTime, sOperation) {
         var nWidth = this.canvas.width / STRIPS_COUNT;
@@ -7051,13 +7104,27 @@
         oCtx.fill();
         return oTexture;
     };
-    CAnimTexture.prototype.createStripsUpRight = function(fTime) {
-        return this.createStripsUpRightDiag(fTime, "destination-out");
+    CAnimTexture.prototype.createStripsUpRight = function(fTime, nTransition) {
+        var fResTime;
+        if(nTransition === TRANSITION_TYPE_IN) {
+            fResTime = 1 - fTime;
+        }
+        else {
+            fResTime = fTime;
+        }
+        return this.createStripsUpRightDiag(fResTime, "destination-out");
     };
-    CAnimTexture.prototype.createStripsDownLeft = function(fTime) {
+    CAnimTexture.prototype.createStripsDownLeft = function(fTime, nTransition) {
         var nWidth = this.canvas.width / STRIPS_COUNT;
         var nHeight = this.canvas.height / STRIPS_COUNT;
-        var nCount = 2*this.canvas.width * (1 - fTime) / nWidth + 0.5 >> 0;
+        var fResTime;
+        if(nTransition === TRANSITION_TYPE_IN) {
+            fResTime = fTime;
+        }
+        else {
+            fResTime = 1 - fTime;
+        }
+        var nCount = 2*this.canvas.width * fResTime / nWidth + 0.5 >> 0;
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
@@ -7079,10 +7146,18 @@
         oCtx.fill();
         return oTexture;
     };
-    CAnimTexture.prototype.createStripsDownRight = function(fTime) {
+    CAnimTexture.prototype.createStripsDownRight = function(fTime, nTransition) {
         var nWidth = this.canvas.width / STRIPS_COUNT;
         var nHeight = this.canvas.height / STRIPS_COUNT;
-        var nCount = 2*this.canvas.width * (1 - fTime) / nWidth + 0.5 >> 0;
+
+        var fResTime;
+        if(nTransition === TRANSITION_TYPE_IN) {
+            fResTime = fTime;
+        }
+        else {
+            fResTime = 1 - fTime;
+        }
+        var nCount = 2*this.canvas.width * fResTime / nWidth + 0.5 >> 0;
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
@@ -7104,10 +7179,18 @@
         oCtx.fill();
         return oTexture;
     };
-    CAnimTexture.prototype.createStripsUpLeft = function(fTime) {
+    CAnimTexture.prototype.createStripsUpLeft = function(fTime, nTransition) {
         var nWidth = this.canvas.width / STRIPS_COUNT;
         var nHeight = this.canvas.height / STRIPS_COUNT;
-        var nCount = 2*this.canvas.width * (1 - fTime) / nWidth + 0.5 >> 0;
+
+        var fResTime;
+        if(nTransition === TRANSITION_TYPE_IN) {
+            fResTime = fTime;
+        }
+        else {
+            fResTime = 1 - fTime;
+        }
+        var nCount = 2*this.canvas.width * fResTime / nWidth + 0.5 >> 0;
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
@@ -7155,13 +7238,20 @@
         oCtx.fill();
         return oTexture;
     };
-    CAnimTexture.prototype.createDiamondIn = function(fTime) {
-        return this.createDiamond(fTime, "destination-out");
+    CAnimTexture.prototype.createDiamondIn = function(fTime, nTransition) {
+        var sOperation;
+        if(nTransition === TRANSITION_TYPE_IN) {
+            sOperation = "destination-out";
+        }
+        else {
+            sOperation = "destination-in";
+        }
+        return this.createDiamond(1 - fTime, sOperation);
     };
-    CAnimTexture.prototype.createDiamondOut = function(fTime) {
+    CAnimTexture.prototype.createDiamondOut = function(fTime, nTransition) {
         return this.createDiamond(1 - fTime, "destination-in");
     };
-    CAnimTexture.prototype.getRandomRanges = function(fTime) {
+    CAnimTexture.prototype.getRandomRanges = function(fTime, nTransition) {
         var nFilledBars = RANDOM_BARS_ARRAY.length * fTime + 0.5 >> 0;
         if(nFilledBars === 0) {
             return [];
@@ -7184,17 +7274,22 @@
         }
         return aFilledRanges;
     };
-    CAnimTexture.prototype.createRandomBarsHorizontal = function(fTime) {
-        var aFilledRanges = this.getRandomRanges(fTime);
-        if(aFilledRanges.length === 0) {
-            return this;
+    CAnimTexture.prototype.createRandomBarsHorizontal = function(fTime, nTransition) {
+
+        var fResTime;
+        if(nTransition === TRANSITION_TYPE_IN) {
+            fResTime = 1 - fTime;
         }
+        else {
+            fResTime = fTime;
+        }
+        var aFilledRanges = this.getRandomRanges(fResTime);
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
-        oCtx.globalCompositeOperation = 'destination-out';
         var nX, nY, nWidth, nHeight;
 
+        oCtx.globalCompositeOperation = 'destination-out';
         oCtx.beginPath();
         for(var nRange = 0; nRange < aFilledRanges.length; ++nRange) {
             var aRange = aFilledRanges[nRange];
@@ -7208,7 +7303,7 @@
         oCtx.fill();
         return oTexture;
     };
-    CAnimTexture.prototype.createRandomBarsVertical = function(fTime) {
+    CAnimTexture.prototype.createRandomBarsVertical = function(fTime, nTransition) {
         var aFilledRanges = this.getRandomRanges(fTime);
         if(aFilledRanges.length === 0) {
             return this;
@@ -7231,19 +7326,23 @@
         oCtx.fill();
         return oTexture;
     };
-    CAnimTexture.prototype.createWedge = function(fTime) {
+    CAnimTexture.prototype.createWedge = function(fTime, nTransition) {
         var fHalfAngle = Math.PI * fTime;
         var fAngle = 2 * fHalfAngle;
-        if(AscFormat.fApproxEqual(fAngle, 0)) {
-            return this;
-        }
         var nRadius = Math.sqrt(this.canvas.width* this.canvas.width + this.canvas.height*this.canvas.height) / 2 + 0.5 >> 0;
         var nXCenter = this.canvas.width / 2 + 0.5 >> 0;
         var nYCenter = this.canvas.height / 2 + 0.5 >> 0;
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
-        oCtx.globalCompositeOperation = 'destination-out';
+        var sOperation;
+        if(nTransition === TRANSITION_TYPE_IN) {
+            sOperation = 'destination-in';
+        }
+        else {
+            sOperation = "destination-out";
+        }
+        oCtx.globalCompositeOperation = sOperation;
         var nX1 = nXCenter + (nRadius * Math.cos(fHalfAngle - Math.PI / 2) + 0.5 >> 0);
         var nY1 = nYCenter + (nRadius * Math.sin(fHalfAngle - Math.PI / 2) + 0.5 >> 0);
         oCtx.beginPath();
@@ -7254,103 +7353,109 @@
         oCtx.fill();
         return oTexture;
     };
-    CAnimTexture.prototype.createWheel1 = function (fTime) {
-        return this.createWheel(fTime, 1);
+    CAnimTexture.prototype.createWheel1 = function (fTime, nTransition) {
+        return this.createWheel(fTime, 1, nTransition);
     };
-    CAnimTexture.prototype.createWheel2 = function (fTime) {
-        return this.createWheel(fTime, 2);
+    CAnimTexture.prototype.createWheel2 = function (fTime, nTransition) {
+        return this.createWheel(fTime, 2, nTransition);
     };
-    CAnimTexture.prototype.createWheel3 = function (fTime) {
-        return this.createWheel(fTime, 3);
+    CAnimTexture.prototype.createWheel3 = function (fTime, nTransition) {
+        return this.createWheel(fTime, 3, nTransition);
     };
-    CAnimTexture.prototype.createWheel4 = function (fTime) {
-        return this.createWheel(fTime, 4);
+    CAnimTexture.prototype.createWheel4 = function (fTime, nTransition) {
+        return this.createWheel(fTime, 4, nTransition);
     };
-    CAnimTexture.prototype.createWheel8 = function (fTime) {
-        return this.createWheel(fTime, 8);
+    CAnimTexture.prototype.createWheel8 = function (fTime, nTransition) {
+        return this.createWheel(fTime, 8, nTransition);
     };
-    CAnimTexture.prototype.createWheel = function(fTime, nCount) {
-        var fStride = 2 * Math.PI / nCount;
-        var fAngle = fStride * fTime;
+    CAnimTexture.prototype.createWheel = function(fTime, nCount, nTransition) {
 
-        if(AscFormat.fApproxEqual(fAngle, 0)) {
-            return this;
+        var sOperation;
+        if(nTransition === TRANSITION_TYPE_IN) {
+            if(AscFormat.fApproxEqual(fTime, 1.0)) {
+                return this;
+            }
+            sOperation = 'destination-in';
+
         }
+        else {
+            if(AscFormat.fApproxEqual(fTime, 0.0)) {
+                return this;
+            }
+            sOperation = "destination-out";
+        }
+        var fStride = 2 * Math.PI / nCount;
+        var fAngle = fStride * fTime + 0.001;
         var nRadius = Math.sqrt(this.canvas.width*this.canvas.width + this.canvas.height*this.canvas.height) / 2 + 0.5 >> 0;
         var nXCenter = this.canvas.width / 2 + 0.5 >> 0;
         var nYCenter = this.canvas.height / 2 + 0.5 >> 0;
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
-        oCtx.globalCompositeOperation = 'destination-out';
+        oCtx.globalCompositeOperation = sOperation;
+        oCtx.beginPath();
         for(var nAngle = 0; nAngle < nCount; ++nAngle) {
             var fStartAngle = fStride * nAngle - Math.PI / 2 + fAngle;
             var nX1 = nXCenter + (nRadius * Math.cos(fStartAngle) + 0.5 >> 0);
             var nY1 = nYCenter + (nRadius * Math.sin(fStartAngle) + 0.5 >> 0);
-            oCtx.beginPath();
             oCtx.moveTo(nXCenter, nYCenter);
             oCtx.lineTo(nX1, nY1);
             oCtx.arc(nXCenter, nYCenter, nRadius, fStartAngle, fStartAngle - fAngle, true);
-            oCtx.closePath();
-            oCtx.fill();
         }
+        oCtx.closePath();
+        oCtx.fill();
         return oTexture;
     };
-    CAnimTexture.prototype.createSlideFromTop = function(fTime) {
-        if(fTime === 0) {
-            return this;
-        }
+    CAnimTexture.prototype.createSlideFromTop = function(fTime, nTransition) {
         var oTexture = this.createTexture();
         var nX = 0;
-        var nY = -(this.canvas.height * fTime + 0.5 >> 0);
+        var nY = -(this.canvas.height * (1 - fTime) + 0.5 >> 0);
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
         oCtx.drawImage(this.canvas, nX, nY);
         return oTexture;
     };
-    CAnimTexture.prototype.createSlideFromBottom = function(fTime) {
-        if(fTime === 0) {
-            return this;
-        }
+    CAnimTexture.prototype.createSlideFromBottom = function(fTime, nTransition) {
         var oTexture = this.createTexture();
         var nX = 0;
-        var nY = this.canvas.height * fTime + 0.5 >> 0;
+        var nY = (this.canvas.height * (1 - fTime) + 0.5) >> 0;
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
         oCtx.drawImage(this.canvas, nX, nY);
         return oTexture;
     };
-    CAnimTexture.prototype.createSlideFromLeft = function(fTime) {
-        if(fTime === 0) {
-            return this;
-        }
+    CAnimTexture.prototype.createSlideFromLeft = function(fTime, nTransition) {
         var oTexture = this.createTexture();
-        var nX = -(this.canvas.width * fTime + 0.5 >> 0);
+        var nX = -(this.canvas.width * (1 - fTime) + 0.5 >> 0);
         var nY = 0;
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
         oCtx.drawImage(this.canvas, nX, nY);
         return oTexture;
     };
-    CAnimTexture.prototype.createSlideFromRight = function(fTime) {
-        if(fTime === 0) {
-            return this;
-        }
+    CAnimTexture.prototype.createSlideFromRight = function(fTime, nTransition) {
         var oTexture = this.createTexture();
-        var nX = this.canvas.width * fTime + 0.5 >> 0;
+        var nX = (this.canvas.width * (1 - fTime) + 0.5) >> 0;
         var nY = 0;
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
         oCtx.drawImage(this.canvas, nX, nY);
         return oTexture;
     };
-    CAnimTexture.prototype.createPlusOut = function(fTime) {
-        var nRectWidth = this.canvas.width * (fTime) / 2 + 0.5 >> 0;
-        var nRectHeight = this.canvas.height * (fTime) / 2 + 0.5 >> 0;
+    CAnimTexture.prototype.createPlusOut = function(fTime, nTransition) {
+        var nRectWidth = this.canvas.width * (1 - fTime) / 2 + 0.5 >> 0;
+        var nRectHeight = this.canvas.height * (1 - fTime) / 2 + 0.5 >> 0;
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
-        oCtx.globalCompositeOperation = 'destination-in';
+        var sOperation;
+        if(nTransition === TRANSITION_TYPE_IN) {
+            sOperation = 'destination-in';
+        }
+        else {
+            sOperation = 'destination-out';
+        }
+        oCtx.globalCompositeOperation = sOperation;
         oCtx.beginPath();
         oCtx.moveTo(nRectWidth, 0);
         oCtx.lineTo(this.canvas.width - nRectWidth, 0);
@@ -7373,16 +7478,20 @@
         //this.drawRect(oCtx, this.canvas.width - nRectWidth, this.canvas.height - nRectHeight, nRectWidth, nRectHeight);
         return oTexture;
     };
-    CAnimTexture.prototype.createPlusIn = function(fTime) {
-        if(fTime === 0) {
-            return this;
-        }
-        var nRectWidth = this.canvas.width * (1 - fTime) / 2 + 0.5 >> 0;
-        var nRectHeight = this.canvas.height * (1 - fTime) / 2 + 0.5 >> 0;
+    CAnimTexture.prototype.createPlusIn = function(fTime, nTransition) {
+        var nRectWidth = this.canvas.width * (fTime) / 2 + 0.5 >> 0;
+        var nRectHeight = this.canvas.height * (fTime) / 2 + 0.5 >> 0;
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
-        oCtx.globalCompositeOperation = 'destination-out';
+        var sOperation;
+        if(nTransition === TRANSITION_TYPE_IN) {
+            sOperation = 'destination-out';
+        }
+        else {
+            sOperation = 'destination-in';
+        }
+        oCtx.globalCompositeOperation = sOperation;
         var nPlusWidth = this.canvas.width - 2*nRectWidth;
         var nPlusHeight = this.canvas.height - 2*nRectHeight;
         oCtx.beginPath();
@@ -7402,88 +7511,138 @@
         oCtx.fill();
         return oTexture;
     };
-    CAnimTexture.prototype.createWipeLeft = function(fTime) {
-        var nWidth = this.canvas.width * (1 - fTime) + 0.5 >> 0;
+    CAnimTexture.prototype.createWipeLeft = function(fTime, nTransition) {
+        var nWidth = this.canvas.width * (fTime) + 0.5 >> 0;
         var nHeight = this.canvas.height;
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
-        oCtx.globalCompositeOperation = 'destination-in';
+        if(nTransition === TRANSITION_TYPE_IN) {
+            oCtx.globalCompositeOperation = 'destination-in';
+
+        }
+        else {
+            oCtx.globalCompositeOperation = 'destination-out';
+        }
         this.drawRect(oCtx, 0, 0, nWidth, nHeight);
         return oTexture;
     };
-    CAnimTexture.prototype.createWipeRight = function(fTime) {
-        var nWidth = this.canvas.width * (1 - fTime) + 0.5 >> 0;
+    CAnimTexture.prototype.createWipeRight = function(fTime, nTransition) {
+        var nWidth = this.canvas.width * (fTime) + 0.5 >> 0;
         var nHeight = this.canvas.height;
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
-        oCtx.globalCompositeOperation = 'destination-in';
+        if(nTransition === TRANSITION_TYPE_IN) {
+            oCtx.globalCompositeOperation = 'destination-in';
+
+        }
+        else {
+            oCtx.globalCompositeOperation = 'destination-out';
+        }
         this.drawRect(oCtx, this.canvas.width - nWidth, 0, nWidth, nHeight);
         return oTexture;
     };
-    CAnimTexture.prototype.createWipeDown = function(fTime) {
-        var nHeight = this.canvas.height * (1 - fTime) + 0.5 >> 0;
+    CAnimTexture.prototype.createWipeDown = function(fTime, nTransition) {
+        var nHeight = this.canvas.height * (fTime) + 0.5 >> 0;
         var nWidth = this.canvas.width;
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
-        oCtx.globalCompositeOperation = 'destination-in';
+        if(nTransition === TRANSITION_TYPE_IN) {
+            oCtx.globalCompositeOperation = 'destination-in';
+
+        }
+        else {
+            oCtx.globalCompositeOperation = 'destination-out';
+        }
         this.drawRect(oCtx, 0, this.canvas.height - nHeight, nWidth, nHeight);
         return oTexture;
     };
-    CAnimTexture.prototype.createWipeUp = function(fTime) {
-        var nHeight = this.canvas.height * (1 - fTime) + 0.5 >> 0;
+    CAnimTexture.prototype.createWipeUp = function(fTime, nTransition) {
+        var nHeight = this.canvas.height * fTime + 0.5 >> 0;
         var nWidth = this.canvas.width;
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
-        oCtx.globalCompositeOperation = 'destination-in';
+        if(nTransition === TRANSITION_TYPE_IN) {
+            oCtx.globalCompositeOperation = 'destination-in';
+        }
+        else {
+            oCtx.globalCompositeOperation = 'destination-out';
+        }
         this.drawRect(oCtx, 0, 0, nWidth, nHeight);
         return oTexture;
     };
-    CAnimTexture.prototype.createBarnOutVertical = function(fTime) {
+    CAnimTexture.prototype.createBarnOutVertical = function(fTime, nTransition) {
+        var nWidth = (this.canvas.width * (fTime))  + 0.5 >> 0;
+        var nHeight = this.canvas.height;
+        var oTexture = this.createCopy();
+        var oCanvas = oTexture.canvas;
+        var oCtx = oCanvas.getContext('2d');
+        if(nTransition === TRANSITION_TYPE_IN) {
+            oCtx.globalCompositeOperation = 'destination-in';
+        }
+        else {
+            oCtx.globalCompositeOperation = 'destination-out';
+        }
+        this.drawRect(oCtx, (this.canvas.width - nWidth) / 2 + 0.5 >> 0, 0, nWidth, nHeight);
+        return oTexture;
+    };
+    CAnimTexture.prototype.createBarnInVertical = function(fTime, nTransition) {
         var nWidth = (this.canvas.width * (1 - fTime))  + 0.5 >> 0;
         var nHeight = this.canvas.height;
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
-        oCtx.globalCompositeOperation = 'destination-in';
+        if(nTransition === TRANSITION_TYPE_IN) {
+            oCtx.globalCompositeOperation = 'destination-out';
+        }
+        else {
+            oCtx.globalCompositeOperation = 'destination-in';
+        }
         this.drawRect(oCtx, (this.canvas.width - nWidth) / 2 + 0.5 >> 0, 0, nWidth, nHeight);
         return oTexture;
     };
-    CAnimTexture.prototype.createBarnInVertical = function(fTime) {
-        var nWidth = (this.canvas.width * (1 - fTime))  + 0.5 >> 0;
-        var nHeight = this.canvas.height;
+    CAnimTexture.prototype.createBarnOutHorizontal = function(fTime, nTransition) {
+        var nHeight = (this.canvas.height * (fTime))  + 0.5 >> 0;
+        var nWidth = this.canvas.width;
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
-        oCtx.globalCompositeOperation = 'destination-in';
-        this.drawRect(oCtx, (this.canvas.width - nWidth) / 2 + 0.5 >> 0, 0, nWidth, nHeight);
+        if(nTransition === TRANSITION_TYPE_IN) {
+            oCtx.globalCompositeOperation = 'destination-in';
+        }
+        else {
+            oCtx.globalCompositeOperation = 'destination-out';
+        }
+        this.drawRect(oCtx, 0, (this.canvas.height - nHeight) / 2 + 0.5 >> 0, nWidth, nHeight);
         return oTexture;
     };
-    CAnimTexture.prototype.createBarnOutHorizontal = function(fTime) {
+    CAnimTexture.prototype.createBarnInHorizontal = function(fTime, nTransition) {
         var nHeight = (this.canvas.height * (1 - fTime))  + 0.5 >> 0;
         var nWidth = this.canvas.width;
         var oTexture = this.createCopy();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
-        oCtx.globalCompositeOperation = 'destination-in';
+        if(nTransition === TRANSITION_TYPE_IN) {
+            oCtx.globalCompositeOperation = 'destination-out';
+        }
+        else {
+            oCtx.globalCompositeOperation = 'destination-in';
+        }
         this.drawRect(oCtx, 0, (this.canvas.height - nHeight) / 2 + 0.5 >> 0, nWidth, nHeight);
         return oTexture;
     };
-    CAnimTexture.prototype.createBarnInHorizontal = function(fTime) {
-        var nHeight = (this.canvas.height * fTime)  + 0.5 >> 0;
-        var nWidth = this.canvas.width;
-        var oTexture = this.createCopy();
-        var oCanvas = oTexture.canvas;
-        var oCtx = oCanvas.getContext('2d');
-        oCtx.globalCompositeOperation = 'destination-out';
-        this.drawRect(oCtx, 0, (this.canvas.height - nHeight) / 2 + 0.5 >> 0, nWidth, nHeight);
-        return oTexture;
-    };
-    CAnimTexture.prototype.createDissolve = function(fTime) {
-        var nFilledBars = RANDOM_BARS_ARRAY.length * fTime + 0.5 >> 0;
+    CAnimTexture.prototype.createDissolve = function(fTime, nTransition) {
+        var fResultTime;
+        if(nTransition === TRANSITION_TYPE_IN) {
+            fResultTime = 1 - fTime;
+        }
+        else {
+            fResultTime = fTime;
+        }
+        var nFilledBars = RANDOM_BARS_ARRAY.length * fResultTime + 0.5 >> 0;
         if(nFilledBars === 0) {
             return this;
         }
@@ -7511,14 +7670,18 @@
         oCtx.fill();
         return oTexture;
     };
-    CAnimTexture.prototype.createFade = function(fTime) {
-        if(fTime === 0) {
-            return this;
-        }
+    CAnimTexture.prototype.createFade = function(fTime, nTransition) {
         var oTexture = this.createTexture();
         var oCanvas = oTexture.canvas;
         var oCtx = oCanvas.getContext('2d');
-        oCtx.globalAlpha = 1 - fTime;
+        var fResTime;
+        if(nTransition === TRANSITION_TYPE_IN) {
+            fResTime = fTime;
+        }
+        else {
+            fResTime = 1 - fTime;
+        }
+        oCtx.globalAlpha = fResTime;
         oCtx.drawImage(this.canvas, 0, 0);
         oCtx.globalAlpha = 1;
         return oTexture;
