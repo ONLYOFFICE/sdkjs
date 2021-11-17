@@ -4824,8 +4824,8 @@ drawBarChart.prototype = {
 			curVal = this._getStackedValue(this.chart.series, i, j, val);
 			prevVal = this._getStackedValue(this.chart.series, i - 1, j, val);
 
-			endBlockPosition = this.cChartDrawer.getYPosition(curVal, this.valAx, null, "rect") * this.chartProp.pxToMM;
-			startBlockPosition = prevVal ? this.cChartDrawer.getYPosition(prevVal, this.valAx, null, "rect") * this.chartProp.pxToMM : nullPositionOX;
+			endBlockPosition = this.cChartDrawer.getYPosition(curVal, this.valAx, null, true) * this.chartProp.pxToMM;
+			startBlockPosition = prevVal ? this.cChartDrawer.getYPosition(prevVal, this.valAx, null, true) * this.chartProp.pxToMM : nullPositionOX;
 
 			startY = startBlockPosition;
 			height = startBlockPosition - endBlockPosition;
@@ -4835,14 +4835,14 @@ drawBarChart.prototype = {
 				h = this._getMaxHeight(j);
 				valueMax = h.maxH;
 				valueMin = h.minH;
-				endBlockPositionMax = this.cChartDrawer.getYPosition(maxVal, this.valAx, null, "rect") * this.chartProp.pxToMM;
+				endBlockPositionMax = this.cChartDrawer.getYPosition(maxVal, this.valAx, null, true) * this.chartProp.pxToMM;
 				maxH = nullPositionOX1 - endBlockPositionMax;
 			}else if(type === AscFormat.BAR_SHAPE_PYRAMIDTOMAX){
 				h = this._getMaxHeightStacked();
 				valueMax = h.maxH;
 				valueMin = h.minH;
-				minH = nullPositionOX1 - this.cChartDrawer.getYPosition(valueMin, this.valAx, null, "rect") * this.chartProp.pxToMM;
-				maxH = nullPositionOX1 - this.cChartDrawer.getYPosition(valueMax, this.valAx, null, "rect") * this.chartProp.pxToMM;
+				minH = nullPositionOX1 - this.cChartDrawer.getYPosition(valueMin, this.valAx, null, true) * this.chartProp.pxToMM;
+				maxH = nullPositionOX1 - this.cChartDrawer.getYPosition(valueMax, this.valAx, null, true) * this.chartProp.pxToMM;
 			}
 
 			if (this.valAx.scaling.orientation != ORIENTATION_MIN_MAX) {
@@ -4854,8 +4854,8 @@ drawBarChart.prototype = {
 			prevVal = this._getStackedValue(this.chart.series, i - 1, j, val);
 
 			this._calculateSummStacked(j);
-			endBlockPosition = this.cChartDrawer.getYPosition((curVal / this.summBarVal[j]), this.valAx, null, "rect") * this.chartProp.pxToMM;
-			startBlockPosition = this.summBarVal[j] ? this.cChartDrawer.getYPosition((prevVal / this.summBarVal[j]), this.valAx, null, "rect") * this.chartProp.pxToMM : nullPositionOX;
+			endBlockPosition = this.cChartDrawer.getYPosition((curVal / this.summBarVal[j]), this.valAx, null, true) * this.chartProp.pxToMM;
+			startBlockPosition = this.summBarVal[j] ? this.cChartDrawer.getYPosition((prevVal / this.summBarVal[j]), this.valAx, null, true) * this.chartProp.pxToMM : nullPositionOX;
 
 			startY = startBlockPosition;
 			height = startBlockPosition - endBlockPosition;
