@@ -3055,7 +3055,7 @@
 		if (height > canvasHeight) {
 			kF = canvasHeight / height;
 		}
-		if (width > canvasWidth * kF) {
+		if (width * kF > canvasWidth) {
 			kF = canvasWidth / width;
 		}
 		this.printPreviewCtx.canvas.height = height * kF;
