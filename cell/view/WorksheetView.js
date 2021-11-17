@@ -2505,6 +2505,9 @@
 				//Отрисовываем панель группировки по строкам
 				//t._drawGroupData(drawingCtx, null, offsetX, offsetY);
 
+				drawingCtx.DocumentRenderer = /*new AscCommon.CDocumentRenderer()*/t.workbook.shapeCtx;
+				drawingCtx.DocumentRenderer.m_oContext = t.workbook.printPreviewCtx.canvas.getContext("2d");
+
 				var drawingPrintOptions = {
 					ctx: drawingCtx, printPagesData: printPagesData, titleWidth: titleWidth, titleHeight: titleHeight
 				};
@@ -2518,9 +2521,9 @@
 
 				drawingCtx.AddClipRect && drawingCtx.AddClipRect(clipLeftShape, clipTopShape, clipWidthShape, clipHeightShape);
 
-				drawingCtx.DocumentRenderer && drawingCtx.DocumentRenderer.SetBaseTransform(oBaseTransform);
+				//drawingCtx.DocumentRenderer && drawingCtx.DocumentRenderer.SetBaseTransform(oBaseTransform);
 				t.objectRender.print(drawingPrintOptions);
-				drawingCtx.DocumentRenderer && drawingCtx.DocumentRenderer.SetBaseTransform(oOldBaseTransform);
+				//drawingCtx.DocumentRenderer && drawingCtx.DocumentRenderer.SetBaseTransform(oOldBaseTransform);
 				t.visibleRange = tmpVisibleRange;
 
 				drawingCtx.RemoveClipRect && drawingCtx.RemoveClipRect();

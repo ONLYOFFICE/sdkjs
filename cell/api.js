@@ -1197,11 +1197,11 @@ var editor;
 					this.wb.printPreviewCtx.DocumentRenderer = pdfDocRenderer;
 				}*/
 
-				this.wb.printPreviewCtx.DocumentRenderer = new AscCommon.CDocumentRenderer();
-				if (!window['IS_NATIVE_EDITOR']) {
+
+				/*if (!window['IS_NATIVE_EDITOR']) {
 					this.wb.printPreviewCtx.DocumentRenderer.InitPicker(this.wb.fmgrGraphics[3]);
 				}
-				this.wb.printPreviewCtx.DocumentRenderer.VectorMemoryForPrint = new AscCommon.CMemory();
+				this.wb.printPreviewCtx.DocumentRenderer.VectorMemoryForPrint = new AscCommon.CMemory();*/
 			}
 		}
 		this.wb.PrintPreviewPages = this.wb.calcPagesPrint();
