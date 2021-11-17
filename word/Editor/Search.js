@@ -825,7 +825,10 @@ CDocument.prototype.ReplaceSearchElement = function(NewStr, bAll, Id, bInterface
 			this.SearchEngine.Replace(NewStr, arrReplaceId[nIndex], false);
 		}
 
-		this.SearchEngine.ClearOnRecalc = false;
+		// Если остались элементы поиска, тогда не очищаем текущий поиск
+		if (this.SearchEngine.Count)
+			this.SearchEngine.ClearOnRecalc = false;
+
 		this.Recalculate(true);
 		this.SearchEngine.ClearOnRecalc = true;
 		this.FinalizeAction();

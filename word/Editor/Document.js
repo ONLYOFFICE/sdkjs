@@ -3503,21 +3503,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
     if (true !== this.Is_OnRecalculate())
         return document_recalcresult_NoRecal;
 
-    // Останавливаем поиск
-    if (false != this.SearchEngine.ClearOnRecalc)
-    {
-        var bOldSearch = ( this.SearchEngine.Count > 0 ? true : false );
-
-        this.SearchEngine.Clear();
-
-        if (true === bOldSearch)
-        {
-            editor.sync_SearchEndCallback();
-
-            this.DrawingDocument.ClearCachePages();
-            this.DrawingDocument.FirePaint();
-        }
-    }
+    this.private_ClearSearchOnRecalculate();
 
     // Обновляем позицию курсора
     this.NeedUpdateTarget = true;
@@ -3820,6 +3806,8 @@ CDocument.prototype.RecalculateWithParams = function(oRecalcData, isForceStrictR
 };
 CDocument.prototype.RecalculateByChanges = function(arrChanges, nStartIndex, nEndIndex, isForceStrictRecalc, nNoTimerPageIndex)
 {
+	this.private_ClearSearchOnRecalculate();
+
 	// Обновляем позицию курсора
 	this.NeedUpdateTarget = true;
 
@@ -5570,6 +5558,22 @@ CDocument.prototype.private_CheckUnusedFields = function()
 
 		if (oSeparateChar)
 			oSeparateChar.SetUse(false);
+	}
+};
+CDocument.prototype.private_ClearSearchOnRecalculate = function()
+{
+	if (!this.SearchEngine.ClearOnRecalc)
+		return;
+
+	var isPrevSearch = this.SearchEngine.Count > 0;
+
+	this.SearchEngine.Clear();
+
+	if (isPrevSearch)
+	{
+		this.Api.sync_SearchEndCallback();
+		this.DrawingDocument.ClearCachePages();
+		this.DrawingDocument.FirePaint();
 	}
 };
 CDocument.prototype.IsCalculatingContinuousSectionBottomLine = function()
