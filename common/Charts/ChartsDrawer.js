@@ -2593,7 +2593,7 @@ CChartsDrawer.prototype =
 		return {framePaths: framePathsId, path: pathId};
 	},
 
-	getYPosition: function (val, axis, ignoreAxisLimits, type) {
+	getYPosition: function (val, axis, ignoreAxisLimits, isRect) {
 		var yPoints = axis.yPoints ? axis.yPoints : axis.xPoints;
 		var isOx = axis.axPos === window['AscFormat'].AX_POS_T || axis.axPos === window['AscFormat'].AX_POS_B;
 		var logBase = axis.scaling.logBase;
@@ -2611,7 +2611,7 @@ CChartsDrawer.prototype =
 			resPos = Math.abs(yPoints[1].pos - yPoints[0].pos);
 			resVal = yPoints[1].val - yPoints[0].val;
 			diffVal = Math.abs(yPoints[0].val) - Math.abs(val);
-			if (isOx || type) {
+			if (isOx || isRect) {
 				result = yPoints[0].pos - Math.abs((diffVal / resVal) * resPos);
 			} else {
 				result = yPoints[0].pos + Math.abs((diffVal / resVal) * resPos);
@@ -2644,7 +2644,7 @@ CChartsDrawer.prototype =
 				result = yPoints[yPoints.length - 1].pos;
 			}
 		} else {
-			for (var s = 0; s < yPoints.length; s++) {
+			/*for (var s = 0; s < yPoints.length; s++) {
 				if (val >= yPoints[s].val && val <= yPoints[s + 1].val) {
 					resPos = Math.abs(yPoints[s + 1].pos - yPoints[s].pos);
 					resVal = yPoints[s + 1].val - yPoints[s].val;
@@ -2670,7 +2670,7 @@ CChartsDrawer.prototype =
 					}
 					break;
 				}
-			}
+			}*/
 
 
 			var getResult = function(index) {
@@ -4881,15 +4881,15 @@ drawBarChart.prototype = {
 				//по индексу определяем когда получаем наибольшую высоту для расчета усечения
 				//делится на this.summBarVal[j], чтобы получить пропорциональную величину для высоты
 				if(indexMax === j){
-					endBlockPositionMax = this.cChartDrawer.getYPosition(maxH / this.summBarVal[j], this.valAx, null, "rect") * this.chartProp.pxToMM;
+					endBlockPositionMax = this.cChartDrawer.getYPosition(maxH / this.summBarVal[j], this.valAx, null, true) * this.chartProp.pxToMM;
 				}else{
-					endBlockPositionMax = this.cChartDrawer.getYPosition(maxPer, this.valAx, null, "rect") * this.chartProp.pxToMM;
+					endBlockPositionMax = this.cChartDrawer.getYPosition(maxPer, this.valAx, null, true) * this.chartProp.pxToMM;
 				}
 
 				if(indexMin === j){
-					endBlockPositionMin = this.cChartDrawer.getYPosition(minH / this.summBarVal[j], this.valAx, null, "rect") * this.chartProp.pxToMM;
+					endBlockPositionMin = this.cChartDrawer.getYPosition(minH / this.summBarVal[j], this.valAx, null, true) * this.chartProp.pxToMM;
 				}else{
-					endBlockPositionMin = this.cChartDrawer.getYPosition(minPer, this.valAx, null, "rect") * this.chartProp.pxToMM;
+					endBlockPositionMin = this.cChartDrawer.getYPosition(minPer, this.valAx, null, true) * this.chartProp.pxToMM;
 				}
 				nullPositionOX1 = this.catAx.posY * this.chartProp.pxToMM;
 
@@ -4901,14 +4901,14 @@ drawBarChart.prototype = {
 			startY = nullPositionOX;
 			if (this.valAx && this.valAx.scaling.logBase)//исключение для логарифмической шкалы
 			{
-				height = nullPositionOX - this.cChartDrawer.getYPosition(val, this.valAx, null, "rect") * this.chartProp.pxToMM;
+				height = nullPositionOX - this.cChartDrawer.getYPosition(val, this.valAx, null, true) * this.chartProp.pxToMM;
 			} else {
-				height = nullPositionOX - this.cChartDrawer.getYPosition(val, this.valAx, null, "rect") * this.chartProp.pxToMM;
+				height = nullPositionOX - this.cChartDrawer.getYPosition(val, this.valAx, null, true) * this.chartProp.pxToMM;
 			}
 			if(type === AscFormat.BAR_SHAPE_PYRAMIDTOMAX){
 				h = this._getStandardMaxHeight();
-				maxH = nullPositionOX - this.cChartDrawer.getYPosition(h.mainMaxH, this.valAx, null, "rect") * this.chartProp.pxToMM;
-				minH = nullPositionOX - this.cChartDrawer.getYPosition(h.mainMinH, this.valAx, null, "rect") * this.chartProp.pxToMM;
+				maxH = nullPositionOX - this.cChartDrawer.getYPosition(h.mainMaxH, this.valAx, null, true) * this.chartProp.pxToMM;
+				minH = nullPositionOX - this.cChartDrawer.getYPosition(h.mainMinH, this.valAx, null, true) * this.chartProp.pxToMM;
 				valueMax = h.mainMaxH;
 				valueMin = h.mainMinH;
 			}
