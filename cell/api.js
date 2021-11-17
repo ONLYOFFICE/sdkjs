@@ -1191,6 +1191,17 @@ var editor;
 				this.wb.printPreviewCtx = new asc.DrawingContext({
 					canvas: canvas, units: 0/*px*/, fmgrGraphics: this.wb.fmgrGraphics, font: this.wb.m_oFont
 				});
+
+				/*var pdfPrinter = new AscCommonExcel.CPdfPrinter(this.wb.fmgrGraphics[3], this.wb.m_oFont);
+				if (pdfDocRenderer) {
+					this.wb.printPreviewCtx.DocumentRenderer = pdfDocRenderer;
+				}*/
+
+				this.wb.printPreviewCtx.DocumentRenderer = new AscCommon.CDocumentRenderer();
+				if (!window['IS_NATIVE_EDITOR']) {
+					this.wb.printPreviewCtx.DocumentRenderer.InitPicker(this.wb.fmgrGraphics[3]);
+				}
+				this.wb.printPreviewCtx.DocumentRenderer.VectorMemoryForPrint = new AscCommon.CMemory();
 			}
 		}
 		this.wb.PrintPreviewPages = this.wb.calcPagesPrint();
@@ -1200,7 +1211,8 @@ var editor;
 
 	spreadsheet_api.prototype.asc_updatePrintPreview = function (options) {
 		this.wb.PrintPreviewPages = this.wb.calcPagesPrint(options.advancedOptions);
-		return this.wb.PrintPreviewPages.arrPages.length;
+		var pagesCount = this.wb.PrintPreviewPages.arrPages.length;
+		return pagesCount ? pagesCount : 1;
 	};
 
 	spreadsheet_api.prototype.asc_drawPrintPreview = function (index) {
