@@ -2597,7 +2597,7 @@ function CDrawingDocument()
 		//console.log(ret);
 		return ret;
 	};
-	this.ToRendererPart = function (noBase64)
+	this.ToRendererPart = function (noBase64, isPrint)
 	{
         var _this = this.printedDocument ? this.printedDocument.DrawingDocument : this;
 
@@ -2613,6 +2613,7 @@ function CDrawingDocument()
 			this.m_oDocRenderer = new AscCommon.CDocumentRenderer();
             this.m_oDocRenderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
 			this.m_oDocRenderer.VectorMemoryForPrint = new AscCommon.CMemory();
+			this.m_oDocRenderer.isPrintMode = isPrint ? true : false;
 			this.m_lCurrentRendererPage = 0;
 			this.m_bOldShowMarks = this.m_oWordControl.m_oApi.ShowParaMarks;
 			this.m_oWordControl.m_oApi.ShowParaMarks = false;
@@ -7560,7 +7561,12 @@ function CDrawingDocument()
 
 		if (!bIsChanged)
 			return;
+		this.m_oWordControl.m_oApi.sync_InitEditorTableStyles();
+	};
 
+	this.GetTableStylesPreviews = function(bUseDefault)
+	{
+		var logicDoc = this.m_oWordControl.m_oLogicDocument;
 		var _dst_styles = [];
 
 		var _styles = logicDoc.Styles.Get_AllTableStyles();
@@ -7568,6 +7574,23 @@ function CDrawingDocument()
 
 		if (_styles_len == 0)
 			return _dst_styles;
+
+		var tableLook;
+		if(bUseDefault)
+		{
+			var oFormatTableLook = new AscCommonWord.CTableLook();
+			oFormatTableLook.SetDefault();
+			tableLook = new Asc.CTablePropLook(oFormatTableLook);
+		}
+		else
+		{
+			tableLook = this.TableStylesLastLook;
+		}
+
+		if(!tableLook)
+		{
+			return _dst_styles;
+		}
 
 		var _x_mar = 10;
 		var _y_mar = 10;
@@ -7679,9 +7702,8 @@ function CDrawingDocument()
 
 		if (false !== isTrackRevision)
 			logicDoc.SetLocalTrackRevisions(isTrackRevision);
-
-		this.m_oWordControl.m_oApi.sync_InitEditorTableStyles(_dst_styles, AscCommon.AscBrowser.isCustomScalingAbove2());
-	}
+		return _dst_styles;
+	};
 
 	this.IsMobileVersion = function ()
 	{

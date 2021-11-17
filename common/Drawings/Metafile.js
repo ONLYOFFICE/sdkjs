@@ -2016,17 +2016,24 @@
 				this.Memory.WriteByte(0x255);
 			}
 
+			var oParagraph = oForm.GetParagraph();
+
 			var oShd = oFormPr.GetShd();
-			if (oShd && !oShd.IsNil())
+			if (oParagraph && oShd && !oShd.IsNil())
 			{
 				nFlag |= (1 << 9);
 
-				var oParagraph = oForm.GetParagraph();
-				var oColor     = oShd.GetSimpleColor(oParagraph.GetTheme(), oParagraph.GetColorMap());
+				var oColor = oShd.GetSimpleColor(oParagraph.GetTheme(), oParagraph.GetColorMap());
 				this.Memory.WriteByte(oColor.r);
 				this.Memory.WriteByte(oColor.g);
 				this.Memory.WriteByte(oColor.b);
 				this.Memory.WriteByte(0x255);
+			}
+
+			if (oParagraph && AscCommon.align_Left !== oParagraph.GetParagraphAlign())
+			{
+				nFlag |= (1 << 10);
+				this.Memory.WriteByte(oParagraph.GetParagraphAlign());
 			}
 
 			// 0 - Unknown
@@ -2056,7 +2063,7 @@
 					this.Memory.WriteString(sValue);
 				}
 
-				if (oTextFormPr.MultiLine)
+				if (oTextFormPr.MultiLine && oForm.IsFixedForm())
 					nFlag |= (1 << 23);
 
 				if (oTextFormPr.AutoFit)
@@ -2119,6 +2126,16 @@
 				if (oCheckBoxPr.GetChecked())
 					nFlag |= (1 << 20);
 
+				var nCheckedSymbol   = oCheckBoxPr.GetCheckedSymbol();
+				var nUncheckedSymbol = oCheckBoxPr.GetUncheckedSymbol();
+
+				var nType = 0x0000;
+				if (0x2611 === nCheckedSymbol && 0x2610 === nUncheckedSymbol)
+					nType = 0x0001;
+				else if (0x25C9 === nCheckedSymbol && 0x25CB === nUncheckedSymbol)
+					nType = 0x0002;
+
+				this.Memory.WriteLong(nType);
 				this.Memory.WriteLong(oCheckBoxPr.GetCheckedSymbol());
 				this.Memory.WriteString(oCheckBoxPr.GetCheckedFont());
 				this.Memory.WriteLong(oCheckBoxPr.GetUncheckedSymbol());
@@ -2146,6 +2163,32 @@
 				nFlag |= ((oPicturePr.GetScaleFlag() & 0xF) << 24);
 				this.Memory.WriteLong(oPicturePr.GetShiftX() * 1000);
 				this.Memory.WriteLong(oPicturePr.GetShiftY() * 1000);
+
+				if (!oForm.IsPlaceHolder())
+				{
+					var arrDrawings = oForm.GetAllDrawingObjects();
+					if (arrDrawings.length > 0 && arrDrawings[0].IsPicture() && arrDrawings[0].GraphicObj.blipFill)
+					{
+						var isLocalUse = true;
+						if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"] && window["AscDesktopEditor"]["IsFilePrinting"])
+							isLocalUse = ((!window["AscDesktopEditor"]["IsLocalFile"]()) && window["AscDesktopEditor"]["IsFilePrinting"]()) ? false : true;
+
+						if (window["AscDesktopEditor"] && !isLocalUse)
+						{
+							if ((undefined !== window["AscDesktopEditor"]["CryptoMode"]) && (0 < window["AscDesktopEditor"]["CryptoMode"]))
+								isLocalUse = true;
+						}
+
+						var src = AscCommon.getFullImageSrc2(arrDrawings[0].GraphicObj.blipFill.RasterImageId);
+
+						var srcLocal = AscCommon.g_oDocumentUrls.getLocal(src);
+						if (srcLocal && isLocalUse)
+							src = srcLocal;
+
+						nFlag |= (1 << 22);
+						this.Memory.WriteString(src);
+					}
+				}
 			}
 			else
 			{
@@ -2190,6 +2233,8 @@
 		this.UseOriginImageUrl = false;
 
         this.FontPicker = null;
+
+        this.isPrintMode = false;
 	}
 
 	CDocumentRenderer.prototype =
@@ -3303,6 +3348,27 @@
 			m1.sy  = m.sy;
 			m1.tx  = m.tx;
 			m1.ty  = m.ty;
+		}
+
+		this.Reflect = function (matrix, isHorizontal, isVertical) {
+			var m = new CMatrixL();
+			m.shx = 0;
+			m.sy  = 1;
+			m.tx  = 0;
+			m.ty  = 0;
+			m.sx  = 1;
+			m.shy = 0;
+			if (isHorizontal && isVertical) {
+				m.sx  = -1;
+				m.sy = -1;
+			}	else if (isHorizontal) {
+				m.sx  = -1;
+			} else if (isVertical) {
+				m.sy = -1;
+			} else {
+				return;
+			}
+			this.MultiplyAppend(matrix, m);
 		}
 
 		this.CreateDublicateM = function(matrix)

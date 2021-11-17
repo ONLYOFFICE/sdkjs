@@ -2617,6 +2617,14 @@ background-repeat: no-repeat;\
 			this.sendEvent("asc_onInitTableTemplates", styles);
 		}
 	};
+	asc_docs_api.prototype.asc_getTableStylesPreviews    = function(bUseDefault)
+	{
+		if(this.WordControl && this.WordControl.m_oDrawingDocument)
+		{
+			return this.WordControl.m_oDrawingDocument.GetTableStylesPreviews(bUseDefault);
+		}
+		return [];
+	};
 
 	/*----------------------------------------------------------------*/
 	/*functions for working with paragraph*/
@@ -5234,6 +5242,11 @@ background-repeat: no-repeat;\
 			}
 		}
 		this.onDocumentContentReady();
+
+		if(this.asc_IsStartDemonstartionOnOpen())
+		{
+			this.sendEvent("asc_onStartDemonstration");
+		}
 		this.isApplyChangesOnOpen = false;
 
 		this.WordControl.InitControl();
@@ -5259,7 +5272,10 @@ background-repeat: no-repeat;\
 		this.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.None;
 		this.goTo();
 	};
-
+	asc_docs_api.prototype.asc_IsStartDemonstartionOnOpen = function()
+	{
+		return this.documentFormat === "ppsx";
+	};
 
 	asc_docs_api.prototype.asc_AddMath = function(Type)
 	{
@@ -5586,6 +5602,62 @@ background-repeat: no-repeat;\
 		}
 		this.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
 		this.WordControl.Thumbnails.OnUpdateOverlay();
+	};
+
+	asc_docs_api.prototype.asc_moveSelectedSlidesToEnd = function()
+	{
+		if(!this.WordControl || !this.WordControl.m_oLogicDocument)
+		{
+			return;
+		}
+		this.WordControl.m_oLogicDocument.moveSelectedSlidesToEnd();
+	};
+	asc_docs_api.prototype.asc_moveSlidesNextPos = function()
+	{
+		if(!this.WordControl || !this.WordControl.m_oLogicDocument)
+		{
+			return;
+		}
+		this.WordControl.m_oLogicDocument.moveSlidesNextPos();
+	};
+	asc_docs_api.prototype.asc_moveSelectedSlidesToStart = function()
+	{
+		if(!this.WordControl || !this.WordControl.m_oLogicDocument)
+		{
+			return;
+		}
+		this.WordControl.m_oLogicDocument.moveSelectedSlidesToStart();
+	};
+	asc_docs_api.prototype.asc_moveSlidesPrevPos = function()
+	{
+		if(!this.WordControl || !this.WordControl.m_oLogicDocument)
+		{
+			return;
+		}
+		this.WordControl.m_oLogicDocument.moveSlidesPrevPos();
+	};
+
+	asc_docs_api.prototype.asc_IsSlideSelected = function(nIdx)
+	{
+		if(!this.WordControl || !this.WordControl.m_oLogicDocument)
+		{
+			return false;
+		}
+		var aSelected = this.WordControl.m_oLogicDocument.GetSelectedSlides();
+		for(var nSld = 0; nSld < aSelected.length; ++nSld) {
+			if(aSelected[nSld] === nIdx) {
+				return true;
+			}
+		}
+		return false;
+	};
+	asc_docs_api.prototype.asc_IsFirstSlideSelected = function()
+	{
+		return this.asc_IsSlideSelected(0);
+	};
+	asc_docs_api.prototype.asc_IsLastSlideSelected = function()
+	{
+		return this.asc_IsSlideSelected(this.getCountPages() - 1);
 	};
 
 	asc_docs_api.prototype.AddShape        = function(shapetype)
@@ -8128,6 +8200,13 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['DeleteSlide']                         = asc_docs_api.prototype.DeleteSlide;
 	asc_docs_api.prototype['DublicateSlide']                      = asc_docs_api.prototype.DublicateSlide;
 	asc_docs_api.prototype['SelectAllSlides']                     = asc_docs_api.prototype.SelectAllSlides;
+	asc_docs_api.prototype['asc_moveSelectedSlidesToEnd']         = asc_docs_api.prototype.asc_moveSelectedSlidesToEnd;
+	asc_docs_api.prototype['asc_moveSlidesNextPos']               = asc_docs_api.prototype.asc_moveSlidesNextPos;
+	asc_docs_api.prototype['asc_moveSelectedSlidesToStart']       = asc_docs_api.prototype.asc_moveSelectedSlidesToStart;
+	asc_docs_api.prototype['asc_moveSlidesPrevPos']               = asc_docs_api.prototype.asc_moveSlidesPrevPos;
+	asc_docs_api.prototype['asc_IsSlideSelected']                 = asc_docs_api.prototype.asc_IsSlideSelected;
+	asc_docs_api.prototype['asc_IsFirstSlideSelected']            = asc_docs_api.prototype.asc_IsFirstSlideSelected;
+	asc_docs_api.prototype['asc_IsLastSlideSelected']             = asc_docs_api.prototype.asc_IsLastSlideSelected;
 	asc_docs_api.prototype['AddShape']                            = asc_docs_api.prototype.AddShape;
 	asc_docs_api.prototype['ChangeShapeType']                     = asc_docs_api.prototype.ChangeShapeType;
 	asc_docs_api.prototype['AddText']                             = asc_docs_api.prototype.AddText;
@@ -8306,6 +8385,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype["sync_OnConvertEquationToMath"] 		    = asc_docs_api.prototype.sync_OnConvertEquationToMath;
 	asc_docs_api.prototype["asc_ConvertEquationToMath"] 		    = asc_docs_api.prototype.asc_ConvertEquationToMath;
+	asc_docs_api.prototype["asc_getTableStylesPreviews"] 		    = asc_docs_api.prototype.asc_getTableStylesPreviews;
 
 
 	window['Asc']['asc_CCommentData'] = window['Asc'].asc_CCommentData = asc_CCommentData;

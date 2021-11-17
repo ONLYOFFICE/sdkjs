@@ -158,8 +158,8 @@
 
     function CChangesDrawingsDouble2(Class, Type, OldPr, NewPr) {
         this.Type = Type;
-        var _OldPr = AscFormat.isRealNumber(OldPr) ? OldPr : undefined;
-        var _NewPr = AscFormat.isRealNumber(NewPr) ? NewPr : undefined;
+        var _OldPr = (AscFormat.isRealNumber(OldPr) || isNaN(OldPr)) ? OldPr : undefined;
+        var _NewPr = (AscFormat.isRealNumber(NewPr) || isNaN(NewPr)) ? NewPr : undefined;
 		AscDFH.CChangesBaseDoubleProperty.call(this, Class, _OldPr, _NewPr);
     }
 
@@ -351,6 +351,9 @@
     {
         if(this.Old){
             var oObject = AscCommon.g_oTableId.Get_ById(this.Old);
+            if(!oObject) {
+                return false;
+            }
             if(oObject.CheckCorrect){
                 if(!oObject.CheckCorrect()){
                     return false;
@@ -359,6 +362,21 @@
         }
         return true;
     };
+
+    function CChangesDrawingsContentBool(Class, Type, Pos, Items, isAdd) {
+        this.Type = Type;
+        AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, isAdd);
+    }
+    CChangesDrawingsContentBool.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
+    CChangesDrawingsContentBool.prototype.constructor = CChangesDrawingsContentBool;
+    window['AscDFH'].CChangesDrawingsContentBool = CChangesDrawingsContentBool;
+
+    CChangesDrawingsContentBool.prototype.private_WriteItem = function (Writer, Item) {
+        Writer.WriteBool(Item);
+    };
+    // CChangesDrawingsContentBool.prototype.private_ReadItem = function (Reader) {
+    //     return Reader.GetULong();
+    // };
 
     function CChangesDrawingsContent(Class, Type, Pos, Items, isAdd) {
         this.Type = Type;

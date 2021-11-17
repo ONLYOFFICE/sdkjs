@@ -842,6 +842,12 @@ function CEditorPage(api)
 
 	this.zoom_FitToWidth = function()
 	{
+		if (this.m_oApi.isUseNativeViewer && this.m_oDrawingDocument.m_oDocumentRenderer)
+		{
+			this.m_oDrawingDocument.m_oDocumentRenderer.setZoomMode(AscCommon.ViewerZoomMode.Width);
+			return;
+		}
+
 		var _new_value = this.calculate_zoom_FitToWidth();
 
 		this.m_nZoomType = 1;
@@ -864,6 +870,12 @@ function CEditorPage(api)
 	};
 	this.zoom_FitToPage  = function()
 	{
+		if (this.m_oApi.isUseNativeViewer && this.m_oDrawingDocument.m_oDocumentRenderer)
+		{
+			this.m_oDrawingDocument.m_oDocumentRenderer.setZoomMode(AscCommon.ViewerZoomMode.Page);
+			return;
+		}
+
 		var w = parseInt(this.m_oEditor.HtmlElement.width) * g_dKoef_pix_to_mm;
 		var h = parseInt(this.m_oEditor.HtmlElement.height) * g_dKoef_pix_to_mm;
 
@@ -901,6 +913,15 @@ function CEditorPage(api)
 	{
 		if (false === oThis.m_oApi.bInit_word_control)
 			return;
+
+		if (0 === type)
+		{
+			if (oThis.m_oApi.isUseNativeViewer && oThis.m_oDrawingDocument.m_oDocumentRenderer)
+			{
+				oThis.m_oDrawingDocument.m_oDocumentRenderer.setZoom(oThis.m_nZoomValue / 100);
+				return;
+			}
+		}
 
 		// нужно проверить режим и сбросить кеш грамотно (ie version)
 		AscCommon.g_fontManager.ClearRasterMemory();
@@ -2766,6 +2787,13 @@ function CEditorPage(api)
 		this.m_oBody.Resize(this.Width * g_dKoef_pix_to_mm, this.Height * g_dKoef_pix_to_mm, this);
 		this.onButtonTabsDraw();
 
+		if (this.m_oApi.isUseNativeViewer)
+		{
+			var oViewer = this.m_oDrawingDocument.m_oDocumentRenderer;
+			if (oViewer)
+				oViewer.resize();
+		}
+
 		if (AscCommon.g_inputContext)
 			AscCommon.g_inputContext.onResize("id_main_view");
 
@@ -3217,6 +3245,12 @@ function CEditorPage(api)
 
 	this.OnCalculatePagesPlace = function()
 	{
+		if (this.m_oApi.isUseNativeViewer && this.m_oDrawingDocument.m_oDocumentRenderer)
+		{
+			// там все свое
+			return;
+		}
+
 		if (this.MobileTouchManager && !this.MobileTouchManager.IsWorkedPosition())
 			this.MobileTouchManager.ClearContextMenu();
 

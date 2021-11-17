@@ -371,6 +371,21 @@ Paragraph.prototype.Copy2 = function(Parent)
 
 	return Para;
 };
+
+Paragraph.prototype.createDuplicateForSmartArt = function(Parent, oPr)
+{
+	var Para = new Paragraph(this.DrawingDocument, Parent, true);
+	Para.Set_Pr(this.Pr.createDuplicateForSmartArt());
+	Para.TextPr.Set_Value(this.TextPr.Value.createDuplicateForSmartArt(oPr));
+	Para.Internal_Content_Remove2(0, Para.Content.length);
+	var Count = this.Content.length;
+	for (var Index = 0; Index < Count; Index++)
+	{
+		var Item = this.Content[Index];
+		Para.Internal_Content_Add(Para.Content.length, Item.createDuplicateForSmartArt(oPr), false);
+	}
+	return Para;
+};
 /**
  * Получаем настройки прямые настройки текста для начала параграфа
  * @returns {CTextPr}

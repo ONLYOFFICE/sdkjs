@@ -39,37 +39,8 @@ var CShape = AscFormat.CShape;
 
 var G_O_DEFAULT_COLOR_MAP = AscFormat.GenerateDefaultColorMap();
 
-var pHText = [];
-pHText[0] = [];//rus         ""                                                          ;
-pHText[0][AscFormat.phType_body]  =    "Slide text";             //"Текст слайда" ;                              ;
-pHText[0][AscFormat.phType_chart]    = "Chart";         // "Диаграмма" ;                                     ;
-pHText[0][AscFormat.phType_clipArt]  = "Clip Art";// "Текст слайда" ; //(Clip Art)                   ;
-pHText[0][AscFormat.phType_ctrTitle] = "Slide title";// "Заголовок слайда" ; //(Centered Title)     ;
-pHText[0][AscFormat.phType_dgm]      = "Diagram";// "Диаграмма";// (Diagram)                        ;
-pHText[0][AscFormat.phType_dt]       = "Date and time";// "Дата и время";// (Date and Time)         ;
-pHText[0][AscFormat.phType_ftr]      = "Footer";// "Нижний колонтитул";// (Footer)                  ;
-pHText[0][AscFormat.phType_hdr]      = "Header";// "Верхний колонтитул"; //(Header)                 ;
-pHText[0][AscFormat.phType_media]    = "Media";// "Текст слайда"; //(Media)                         ;
-pHText[0][AscFormat.phType_obj]      = "Slide text";// "Текст слайда"; //(Object)                   ;
-pHText[0][AscFormat.phType_pic]      = "Picture";// "Вставка рисунка"; //(Picture)                  ;
-pHText[0][AscFormat.phType_sldImg]   = "Image";// "Вставка рисунка"; //(Slide Image)                ;
-pHText[0][AscFormat.phType_sldNum]   = "Slide number";// "Номер слайда"; //(Slide Number)           ;
-pHText[0][AscFormat.phType_subTitle] = "Slide subtitle";// "Подзаголовок слайда"; //(Subtitle)      ;
-pHText[0][AscFormat.phType_tbl]      = "Table";// "Таблица"; //(Table)                              ;
-pHText[0][AscFormat.phType_title]    = "Slide title";// "Заголовок слайда" ;  //(Title)             ;
 
-AscFormat.checkPlaceholdersText = function()
-{
-    if (AscFonts.IsCheckSymbols)
-    {
-        for (var i = pHText[0].length - 1; i >= 0; i--)
-            AscFonts.FontPickerByCharacter.getFontsByString(AscCommon.translateManager.getValue(pHText[0][i]));
-    }
-};
 
-CShape.prototype.setDrawingObjects = function(drawingObjects)
-{
-};
 CShape.prototype.Is_UseInDocument = function(drawingObjects)
 {
     if(this.group)
@@ -93,17 +64,6 @@ CShape.prototype.Is_UseInDocument = function(drawingObjects)
         }
     }
     return false;
-};
-CShape.prototype.setDrawingBase = function(drawingBase)
-{
-    this.drawingBase = drawingBase;
-    if(Array.isArray(this.spTree))
-    {
-        for(var i = 0; i < this.spTree.length; ++i)
-        {
-            this.spTree[i].setDrawingBase(drawingBase);
-        }
-    }
 };
 
 CShape.prototype.getDrawingObjectsController = function()
@@ -281,7 +241,7 @@ CShape.prototype.handleUpdateTheme = function()
 
     if(this.isPlaceholder()
         && !( this.spPr && this.spPr.xfrm &&
-        (this.getObjectType() === AscDFH.historyitem_type_GroupShape && this.spPr.xfrm.isNotNullForGroup() || this.getObjectType() !== AscDFH.historyitem_type_GroupShape && this.spPr.xfrm.isNotNull() ) ))
+        (this.isGroupObject && this.isGroupObject() && this.spPr.xfrm.isNotNullForGroup() || this.getObjectType() !== AscDFH.historyitem_type_GroupShape && this.spPr.xfrm.isNotNull() ) ))
     {
         this.recalcTransform();
         this.recalcGeometry()
@@ -599,150 +559,6 @@ CShape.prototype.recalculateContent = function()
     return null;
 };
 
-CShape.prototype.recalculateContent2 = function()
-{
-    if(this.txBody)
-    {
-        if(this.isPlaceholder())
-        {
-            if(!this.isEmptyPlaceholder())
-            {
-                return;
-            }
-            var text;
-            if(this.parent instanceof AscCommonSlide.CNotes && this.nvSpPr.nvPr.ph.type === AscFormat.phType_body){
-                text = "Click to add notes";
-            }
-            else{
-                text = typeof pHText[0][this.nvSpPr.nvPr.ph.type] === "string" && pHText[0][this.nvSpPr.nvPr.ph.type].length > 0 ?  pHText[0][this.nvSpPr.nvPr.ph.type] : pHText[0][AscFormat.phType_body];
-            }
-
-            if (!this.txBody.content2){
-                this.txBody.content2 = AscFormat.CreateDocContentFromString(AscCommon.translateManager.getValue(text), this.getDrawingDocument(), this.txBody);
-            }
-            else
-            {
-                this.txBody.content2.Recalc_AllParagraphs_CompiledPr();
-            }
-
-            var content = this.txBody.content2;
-            if(content)
-            {
-                var w, h;
-                var l_ins, t_ins, r_ins, b_ins;
-                var body_pr = this.getBodyPr();
-                if(body_pr)
-                {
-                    l_ins = AscFormat.isRealNumber(body_pr.lIns) ? body_pr.lIns : 2.54;
-                    r_ins = AscFormat.isRealNumber(body_pr.rIns) ? body_pr.rIns : 2.54;
-                    t_ins = AscFormat.isRealNumber(body_pr.tIns) ? body_pr.tIns : 1.27;
-                    b_ins = AscFormat.isRealNumber(body_pr.bIns) ? body_pr.bIns : 1.27;
-                }
-                else
-                {
-                    l_ins = 2.54;
-                    r_ins = 2.54;
-                    t_ins = 1.27;
-                    b_ins = 1.27;
-                }
-                if(this.spPr.geometry && this.spPr.geometry.rect
-                    && AscFormat.isRealNumber(this.spPr.geometry.rect.l) && AscFormat.isRealNumber(this.spPr.geometry.rect.t)
-                    && AscFormat.isRealNumber(this.spPr.geometry.rect.r) && AscFormat.isRealNumber(this.spPr.geometry.rect.r))
-                {
-                    w = this.spPr.geometry.rect.r - this.spPr.geometry.rect.l - (l_ins + r_ins);
-                    h = this.spPr.geometry.rect.b - this.spPr.geometry.rect.t - (t_ins + b_ins);
-                }
-                else
-                {
-                    w = this.extX - (l_ins + r_ins);
-                    h = this.extY - (t_ins + b_ins);
-                }
-
-                if(!body_pr.upright)
-                {
-                    if(!(body_pr.vert === AscFormat.nVertTTvert || body_pr.vert === AscFormat.nVertTTvert270 || body_pr.vert === AscFormat.nVertTTeaVert))
-                    {
-                        this.txBody.contentWidth2 = w;
-                        this.txBody.contentHeight2 = h;
-                    }
-                    else
-                    {
-                        this.txBody.contentWidth2 = h;
-                        this.txBody.contentHeight2 = w;
-                    }
-
-                }
-                else
-                {
-                    var _full_rotate = this.getFullRotate();
-                    if(AscFormat.checkNormalRotate(_full_rotate))
-                    {
-                        if(!(body_pr.vert === AscFormat.nVertTTvert || body_pr.vert === AscFormat.nVertTTvert270 || body_pr.vert === AscFormat.nVertTTeaVert))
-                        {
-
-                            this.txBody.contentWidth2 = w;
-                            this.txBody.contentHeight2 = h;
-                        }
-                        else
-                        {
-                            this.txBody.contentWidth2 = h;
-                            this.txBody.contentHeight2 = w;
-                        }
-                    }
-                    else
-                    {
-                        if(!(body_pr.vert === AscFormat.nVertTTvert || body_pr.vert === AscFormat.nVertTTvert270 || body_pr.vert === AscFormat.nVertTTeaVert))
-                        {
-
-                            this.txBody.contentWidth2 = h;
-                            this.txBody.contentHeight2 = w;
-                        }
-                        else
-                        {
-                            this.txBody.contentWidth2 = w;
-                            this.txBody.contentHeight2 = h;
-                        }
-                    }
-                }
-
-
-            }
-            this.contentWidth2 = this.txBody.contentWidth2;
-            this.contentHeight2 = this.txBody.contentHeight2;
-
-
-            var content_ = this.getDocContent();
-            if(content_ && content_.Content[0])
-            {
-                content.Content[0].Pr  = content_.Content[0].Pr.Copy();
-                if(!content.Content[0].Pr.DefaultRunPr){
-                    content.Content[0].Pr.DefaultRunPr = new AscCommonWord.CTextPr();
-                }
-                content.Content[0].Pr.DefaultRunPr.Merge(content_.Content[0].GetFirstRunPr());
-            }
-            this.bCheckAutoFitFlag = true;
-            this.tmpFontScale = undefined;
-            this.tmpLnSpcReduction = undefined;
-            content.Set_StartPage(0);
-            content.Reset(0, 0, w, 20000);
-            content.RecalculateContent(this.txBody.contentWidth2, this.txBody.contentHeight2, 0);
-            var oTextWarpContent = this.checkTextWarp(content, body_pr, this.txBody.contentWidth2, this.txBody.contentHeight2, false, true);
-            this.txWarpStructParamarks2 = oTextWarpContent.oTxWarpStructParamarks;
-            this.txWarpStruct2 = oTextWarpContent.oTxWarpStruct;
-            this.bCheckAutoFitFlag = false;
-        }
-        else
-        {
-            this.txBody.content2 = null;
-            this.txWarpStructParamarks2 = null;
-            this.txWarpStruct2 = null;
-        }
-    }
-    else{
-        this.txWarpStructParamarks2 = null;
-        this.txWarpStruct2 = null;
-    }
-};
 
 CShape.prototype.Get_ColorMap = function()
 {

@@ -2930,6 +2930,7 @@
                     case AscCommon.align_Justify :ha = 5;break;
                     case AscCommon.align_Left :ha = 6;break;
                     case AscCommon.align_Right :ha = 7;break;
+                    case AscCommon.align_CenterContinuous :ha = 8;break;
                 }
                 this.memory.WriteByte(c_oSerAligmentTypes.Horizontal);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
@@ -7504,6 +7505,7 @@
                     case 4 : oAligment.hor = null;break;
                     case 6 : oAligment.hor = AscCommon.align_Left;break;
                     case 7 : oAligment.hor = AscCommon.align_Right;break;
+                    case 8 : oAligment.hor = AscCommon.align_CenterContinuous;break;
                 }
             }
             else if ( c_oSerAligmentTypes.Indent == type )
@@ -7942,10 +7944,15 @@
             }
 			else if (c_oSerWorkbookTypes.WorkbookProtection == type && typeof Asc.CWorkbookProtection != "undefined")
 			{
-				this.oWorkbook.workbookProtection = new Asc.CWorkbookProtection(this.oWorkbook);
-				res = this.bcr.Read2Spreadsheet(length, function(t,l){
-					return oThis.ReadWorkbookProtection(t,l, oThis.oWorkbook.workbookProtection);
-				});
+                var workbookProtection = Asc.CWorkbookProtection ? new Asc.CWorkbookProtection(this.oWorkbook) : null;
+                if (workbookProtection) {
+                    this.oWorkbook.workbookProtection = workbookProtection;
+                    res = this.bcr.Read2Spreadsheet(length, function (t, l) {
+                        return oThis.ReadWorkbookProtection(t, l, oThis.oWorkbook.workbookProtection);
+                    });
+                } else {
+                    res = c_oSerConstants.ReadUnknown;
+                }
 			}
             else
                 res = c_oSerConstants.ReadUnknown;
@@ -8569,17 +8576,26 @@
                     return oThis.ReadSlicers(t, l, oWorksheet);
                 });
 			} else if (c_oSerWorksheetsTypes.NamedSheetView === type) {
-				var fileStream = this.stream.ToFileStream();
-				fileStream.GetUChar();
-				var namedSheetViews = new Asc.CT_NamedSheetViews();
-				namedSheetViews.fromStream(fileStream, this.wb);
-				oWorksheet.aNamedSheetViews = namedSheetViews.namedSheetView;
-				this.stream.FromFileStream(fileStream);
+                var namedSheetViews = Asc.CT_NamedSheetViews ? new Asc.CT_NamedSheetViews() : null;
+                if (namedSheetViews) {
+                    var fileStream = this.stream.ToFileStream();
+                    fileStream.GetUChar();
+                    namedSheetViews.fromStream(fileStream, this.wb);
+                    oWorksheet.aNamedSheetViews = namedSheetViews.namedSheetView;
+                    this.stream.FromFileStream(fileStream);
+                } else {
+                    res = c_oSerConstants.ReadUnknown;
+                }
 			} else if (c_oSerWorksheetsTypes.ProtectionSheet === type && typeof Asc.CSheetProtection != "undefined") {
-				oWorksheet.sheetProtection = new Asc.CSheetProtection(oWorksheet);
-				res = this.bcr.Read2Spreadsheet(length, function(t,l){
-					return oThis.ReadSheetProtection(t,l, oWorksheet.sheetProtection);
-				});
+				var sheetProtection = Asc.CSheetProtection ? new Asc.CSheetProtection(oWorksheet) : null;
+                if (sheetProtection) {
+                    oWorksheet.sheetProtection = sheetProtection;
+                    res = this.bcr.Read2Spreadsheet(length, function(t,l){
+                        return oThis.ReadSheetProtection(t,l, oWorksheet.sheetProtection);
+                    });
+                } else {
+                    res = c_oSerConstants.ReadUnknown;
+                }
 			} else if (c_oSerWorksheetsTypes.ProtectedRanges === type) {
 				res = this.bcr.Read1(length, function(t, l) {
 					return oThis.ReadProtectedRanges(t, l, oWorksheet.aProtectedRanges);
@@ -8705,7 +8721,7 @@
 			} else if (c_oSerWorksheetProtection.SaltValue == type) {
 				sheetProtection.saltValue = this.stream.GetString2LE(length);
 			} else if (c_oSerWorksheetProtection.Password == type) {
-				sheetProtection.password = this.stream.GetString2LE();
+				sheetProtection.password = this.stream.GetString2LE(length);
 			} else if (c_oSerWorksheetProtection.AutoFilter == type) {
 				sheetProtection.autoFilter = this.stream.GetBool();
 			} else if (c_oSerWorksheetProtection.Content == type) {
@@ -8751,11 +8767,15 @@
 			var oProtectedRange = null;
 
 			if (c_oSerWorksheetsTypes.ProtectedRange === type) {
-				oProtectedRange = new Asc.CProtectedRange();
-				res = this.bcr.Read2(length, function (t, l) {
-					return oThis.ReadProtectedRange(t, l, oProtectedRange);
-				});
-				aProtectedRanges.push(oProtectedRange);
+				oProtectedRange = Asc.CProtectedRange ? new Asc.CProtectedRange() : null;
+                if (oProtectedRange) {
+                    res = this.bcr.Read2(length, function (t, l) {
+                        return oThis.ReadProtectedRange(t, l, oProtectedRange);
+                    });
+                    aProtectedRanges.push(oProtectedRange);
+                } else {
+                    res = c_oSerConstants.ReadUnknown;
+                }
 			} else {
 				res = c_oSerConstants.ReadUnknown;
 			}

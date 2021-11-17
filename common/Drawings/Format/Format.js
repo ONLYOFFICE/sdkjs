@@ -138,7 +138,9 @@ var asc_CShapeProperty = Asc.asc_CShapeProperty;
         var oStream = pReader.stream;
         var nStart = oStream.cur;
         var nEnd = nStart + oStream.GetULong() + 4;
-        this.readAttributes(pReader);
+        if (this.readAttribute) {
+            this.readAttributes(pReader);
+        }
         this.readChildren(nEnd, pReader);
         oStream.Seek2(nEnd);
     };
@@ -165,7 +167,9 @@ var asc_CShapeProperty = Asc.asc_CShapeProperty;
         pReader.stream.SkipRecord();
     };
     CBaseFormatObject.prototype.toPPTY = function(pWriter) {
-        this.writeAttributes(pWriter);
+        if (this.privateWriteAttributes) {
+            this.writeAttributes(pWriter);
+        }
         this.writeChildren(pWriter);
     };
     CBaseFormatObject.prototype.writeAttributes = function(pWriter) {
@@ -222,45 +226,45 @@ var asc_CShapeProperty = Asc.asc_CShapeProperty;
         return true;
     };
     //Method for debug
-    //CBaseObject.prototype.compareTypes = function(oOther) {
-    //    if(!oOther || !oOther.compareTypes) {
-    //        debugger;
-    //    }
-    //    for(var sKey in oOther) {
-    //        if((oOther[sKey] === null || oOther[sKey] === undefined) &&
-    //            (this[sKey] !== null && this[sKey] !== undefined)
-    //        || (this[sKey] === null || this[sKey] === undefined) &&
-    //            (oOther[sKey] !== null && oOther[sKey] !== undefined)
-    //        || (typeof this[sKey]) !== (typeof oOther[sKey])) {
-    //            debugger;
-    //        }
-    //        if(this[sKey] !== this.parent &&  typeof this[sKey] === "object" &&  this[sKey] && this[sKey].compareTypes) {
-    //            this[sKey].compareTypes(oOther[sKey]);
-    //        }
-    //        if(Array.isArray(this[sKey])) {
-    //            if(!Array.isArray(oOther[sKey])) {
-    //                debugger;
-    //            }
-    //            else {
-    //                var a1 =  this[sKey];
-    //                var a2 = oOther[sKey];
-    //                if(a1.length !== a2.length) {
-    //                    debugger;
-    //                }
-    //                else {
-    //                    for(var i = 0; i < a1.length; ++i) {
-    //                        if(!a1[i] || !a2[i]) {
-    //                            debugger;
-    //                        }
-    //                        if(typeof a1[i] === "object" &&  a1[i] && a1[i].compareTypes) {
-    //                            a1[i].compareTypes(a2[i]);
-    //                        }
-    //                    }
-    //                }
-    //            }
-    //        }
-    //    }
-    //};
+    CBaseObject.prototype.compareTypes = function(oOther) {
+        if(!oOther || !oOther.compareTypes) {
+            debugger;
+        }
+        for(var sKey in oOther) {
+            if((oOther[sKey] === null || oOther[sKey] === undefined) &&
+                (this[sKey] !== null && this[sKey] !== undefined)
+            || (this[sKey] === null || this[sKey] === undefined) &&
+                (oOther[sKey] !== null && oOther[sKey] !== undefined)
+            || (typeof this[sKey]) !== (typeof oOther[sKey])) {
+                debugger;
+            }
+            if(this[sKey] !== this.parent && this[sKey] !== this.group &&  typeof this[sKey] === "object" &&  this[sKey] && this[sKey].compareTypes) {
+                this[sKey].compareTypes(oOther[sKey]);
+            }
+            if(Array.isArray(this[sKey])) {
+                if(!Array.isArray(oOther[sKey])) {
+                    debugger;
+                }
+                else {
+                    var a1 =  this[sKey];
+                    var a2 = oOther[sKey];
+                    if(a1.length !== a2.length) {
+                        debugger;
+                    }
+                    else {
+                        for(var i = 0; i < a1.length; ++i) {
+                            if(!a1[i] || !a2[i]) {
+                                debugger;
+                            }
+                            if(typeof a1[i] === "object" &&  a1[i] && a1[i].compareTypes) {
+                                a1[i].compareTypes(a2[i]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    };
 
     function CT_Hyperlink()
     {
@@ -2515,6 +2519,26 @@ CSrcRect.prototype =
         this.t = t;
         this.r = r;
         this.b = b;
+    },
+
+    setValueForFitBlipFill: function (shapeWidth, shapeHeight, imageWidth, imageHeight) {
+        if ((imageHeight / imageWidth) > (shapeHeight / shapeWidth)) {
+            this.l = 0;
+            this.r = 100;
+            var widthAspectRatio = imageWidth / shapeWidth;
+            var heightAspectRatio = shapeHeight / imageHeight;
+            var stretchPercentage = ((1 - widthAspectRatio * heightAspectRatio) / 2) * 100;
+            this.t = stretchPercentage;
+            this.b = 100 - stretchPercentage;
+        } else {
+            this.t = 0;
+            this.b = 100;
+            heightAspectRatio = imageHeight / shapeHeight;
+            widthAspectRatio = shapeWidth / imageWidth;
+            stretchPercentage = ((1 - heightAspectRatio * widthAspectRatio) / 2) * 100;
+            this.l = stretchPercentage;
+            this.r = 100 - stretchPercentage;
+        }
     },
 
 
@@ -5681,6 +5705,22 @@ function CompareShapeProperties(shapeProp1, shapeProp2)
     {
         _result_shape_prop.bFromChart = false;
     }
+    if(shapeProp1.bFromSmartArt || shapeProp2.bFromSmartArt)
+    {
+        _result_shape_prop.bFromSmartArt = true;
+    }
+    else
+    {
+        _result_shape_prop.bFromSmartArt = false;
+    }
+    if(shapeProp1.bFromSmartArtInternal || shapeProp2.bFromSmartArtInternal)
+    {
+        _result_shape_prop.bFromSmartArtInternal = true;
+    }
+    else
+    {
+        _result_shape_prop.bFromSmartArtInternal = false;
+    }
     if(shapeProp1.bFromGroup || shapeProp2.bFromGroup)
     {
         _result_shape_prop.bFromGroup = true;
@@ -5703,6 +5743,10 @@ function CompareShapeProperties(shapeProp1, shapeProp2)
     }
     _result_shape_prop.lockAspect = !!(shapeProp1.lockAspect && shapeProp2.lockAspect);
     _result_shape_prop.textArtProperties = CompareTextArtProperties(shapeProp1.textArtProperties, shapeProp2.textArtProperties);
+    if(shapeProp1.bFromSmartArtInternal && !shapeProp2.bFromSmartArtInternal || !shapeProp1.bFromSmartArtInternal && shapeProp2.bFromSmartArtInternal)
+    {
+        _result_shape_prop.textArtProperties = null;
+    }
     if(shapeProp1.title === shapeProp2.title){
         _result_shape_prop.title = shapeProp1.title;
     }
@@ -7886,6 +7930,14 @@ CSpPr.prototype =
         return duplicate;
     },
 
+    createDuplicateForSmartArt: function () {
+        var duplicate = new CSpPr();
+        if(this.Fill!=null)
+        {
+            duplicate.setFill(this.Fill.createDuplicate());
+        }
+        return duplicate;
+    },
     hasRGBFill: function(){
        return this.Fill && this.Fill.fill && this.Fill.fill.color
        && this.Fill.fill.color.color && this.Fill.fill.color.color.type === c_oAscColor.COLOR_TYPE_SRGB;
@@ -10215,6 +10267,33 @@ CBodyPr.prototype =
         }
         return duplicate;
     },
+    createDuplicateForSmartArt: function (oPr)
+    {
+        var duplicate = new CBodyPr();
+        duplicate.anchor         = this.anchor;
+        duplicate.vert           = this.vert;
+        duplicate.rot            = this.rot;
+        duplicate.vertOverflow   = this.vertOverflow;
+        duplicate.horzOverflow   = this.horzOverflow;
+        duplicate.upright        = this.upright;
+        duplicate.rtlCol         = this.rtlCol;
+        duplicate.fromWordArt    = this.fromWordArt;
+        duplicate.compatLnSpc    = this.compatLnSpc;
+        duplicate.forceAA        = this.forceAA;
+        if (oPr.lIns) {
+            duplicate.lIns = this.lIns;
+        }
+        if (oPr.rIns) {
+            duplicate.rIns = this.rIns;
+        }
+        if (oPr.tIns) {
+            duplicate.tIns = this.tIns;
+        }
+        if (oPr.bIns) {
+            duplicate.bIns = this.bIns;
+        }
+        return duplicate;
+    },
 
     merge: function(bodyPr)
     {
@@ -12424,6 +12503,8 @@ function CreateAscShapePropFromProp(shapeProp)
         obj.canFill = shapeProp.canFill;
     }
     obj.bFromChart = shapeProp.bFromChart;
+    obj.bFromSmartArt = shapeProp.bFromSmartArt;
+    obj.bFromSmartArtInternal = shapeProp.bFromSmartArtInternal;
     obj.bFromGroup = shapeProp.bFromGroup;
     obj.bFromImage = shapeProp.bFromImage;
     obj.w = shapeProp.w;

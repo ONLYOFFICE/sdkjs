@@ -1273,10 +1273,15 @@ Path.prototype = {
 
         arcTo: function(wR, hR, stAng, swAng)
         {
-
+            var nSign = swAng < 0 ? -1 : 1;
+            if(AscFormat.fApproxEqual(Math.abs(swAng), 21600000))
+            {
+                swAng = nSign * (21600000 - 1);
+            }
             var a1 = stAng;
             var a2 = stAng + swAng;
             var a3 = swAng;
+
 
             stAng = Math.atan2(10e-10 * Math.sin(a1 * cToRad), 10e-10 * Math.cos(a1 * cToRad)) / cToRad;
             swAng = Math.atan2(10e-10 * Math.sin(a2 * cToRad), 10e-10 * Math.cos(a2 * cToRad)) / cToRad - stAng;

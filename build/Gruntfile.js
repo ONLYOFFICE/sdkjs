@@ -441,6 +441,12 @@ module.exports = function(grunt) {
 							cwd: '../slide/themes',
 							src: '**/**',
 							dest: path.join(slide, 'themes')
+						},
+						{
+							expand: true,
+							cwd: '../pdf/',
+							src: 'src/engine/*',
+							dest: path.join(deploy, 'pdf')
 						}
 					]
 				}

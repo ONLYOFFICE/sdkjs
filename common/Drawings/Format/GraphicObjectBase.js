@@ -271,7 +271,7 @@
         this.cx           = AscFormat.readDouble(Reader);
         this.cy           = AscFormat.readDouble(Reader);
     };
-    
+
     function CClientData(fLocksWithSheet, fPrintsWithSheet) {
         this.fLocksWithSheet = fLocksWithSheet !== undefined ? fLocksWithSheet : null;
         this.fPrintsWithSheet = fPrintsWithSheet !== undefined ? fPrintsWithSheet : null;
@@ -842,13 +842,13 @@
         if(!this.canEdit()) {
             return false;
         }
-        return this.getNoUngrp() === false;
+        return (this.getObjectType() === AscDFH.historyitem_type_GroupShape || this.getObjectType() === AscDFH.historyitem_type_SmartArt && this.drawing)  && this.getNoUngrp() === false;
     };
     CGraphicObjectBase.prototype.canChangeAdjustments = function () {
         if(!this.canEdit()) {
             return false;
         }
-        return this.getNoAdjustHandles() === false;
+        return !this.isObjectInSmartArt() && this.getNoAdjustHandles() === false;
     };
     CGraphicObjectBase.prototype.Reassign_ImageUrls = function(mapUrl){
         var blip_fill;
@@ -987,9 +987,37 @@
             }, this, []);
         }
     };
+    CGraphicObjectBase.prototype.check_bounds = function(checker) {
+        checker._s();
+        checker._m(0, 0);
+        checker._l(this.extX, 0);
+        checker._l(this.extX, this.extY);
+        checker._l(0, this.extY);
+        checker._z();
+        checker._e();
+    };
     CGraphicObjectBase.prototype.handleObject = function(fCallback) {
         fCallback(this);
     };
+
+    CGraphicObjectBase.prototype.isObjectInSmartArt = function () {
+        if(this.group && this.group.isSmartArtObject()) {
+            return true;
+        }
+        return false;
+
+    };
+    CGraphicObjectBase.prototype.isGroupObject = function () {
+        var nType = this.getObjectType();
+        return nType === AscDFH.historyitem_type_GroupShape || nType === AscDFH.historyitem_type_LockedCanvas || this.isSmartArtObject();
+    };
+    CGraphicObjectBase.prototype.isSmartArtObject = function () {
+        var nType = this.getObjectType();
+        return nType === AscDFH.historyitem_type_SmartArt ||
+            nType === AscDFH.historyitem_type_SmartArtDrawing;
+    };
+
+
     CGraphicObjectBase.prototype.drawShdw = function(graphics){
         var outerShdw = this.getOuterShdw && this.getOuterShdw();
         if(this.shdwSp && outerShdw && !graphics.IsSlideBoundsCheckerType)
@@ -1042,6 +1070,23 @@
     };
     CGraphicObjectBase.prototype.handleUpdatePosition = function(){
     };
+    CGraphicObjectBase.prototype.setDrawingObjects = function(drawingObjects){
+        this.drawingObjects = drawingObjects;
+        if(Array.isArray(this.spTree)) {
+            for(var i = 0; i < this.spTree.length; ++i){
+                this.spTree[i].setDrawingObjects(drawingObjects);
+            }
+        }
+    };
+    CGraphicObjectBase.prototype.setDrawingBase = function(drawingBase){
+        this.drawingBase = drawingBase;
+        //if(Array.isArray(this.spTree)) {
+        //    for(var i = 0; i < this.spTree.length; ++i)
+        //    {
+        //        this.spTree[i].setDrawingBase(drawingBase);
+        //    }
+        //}
+    };
     CGraphicObjectBase.prototype.setDrawingBaseType = function(nType){
         if(this.drawingBase){
             History.Add(new AscDFH.CChangesDrawingsLong(this, AscDFH.historyitem_AutoShapes_SetDrawingBaseType, this.drawingBase.Type, nType));
@@ -1092,6 +1137,12 @@
         this.spPr.xfrm.setOffY(y);
         this.spPr.xfrm.setExtX(extX);
         this.spPr.xfrm.setExtY(extY);
+        if(this.isGroupObject()) {
+            this.spPr.xfrm.setChOffX(0);
+            this.spPr.xfrm.setChOffY(0);
+            this.spPr.xfrm.setChExtX(extX);
+            this.spPr.xfrm.setChExtY(extY);
+        }
         this.spPr.xfrm.setRot(rot);
         this.spPr.xfrm.setFlipH(flipH);
         this.spPr.xfrm.setFlipV(flipV);
@@ -1480,7 +1531,7 @@
     };
     CGraphicObjectBase.prototype.getMainGroup = function () {
         if(!AscCommon.isRealObject(this.group)){
-            if(this.getObjectType() === AscDFH.historyitem_type_GroupShape || this.getObjectType() === AscDFH.historyitem_type_LockedCanvas){
+            if(this.isGroupObject()){
                 return this;
             }
             return null;
@@ -1715,6 +1766,35 @@
         return false;
     };
     CGraphicObjectBase.prototype.handleAllContents = function(fCallback){
+    };
+    CGraphicObjectBase.prototype.canFill = function() {
+        return false;
+    };
+    CGraphicObjectBase.prototype.getPaddings = function() {
+        return null;
+    };
+    CGraphicObjectBase.prototype.getBodyPr = function() {
+        var oThis = this;
+        return AscFormat.ExecuteNoHistory(function(){
+            var ret = new AscFormat.CBodyPr();
+            ret.setDefault();
+            return ret;
+        }, oThis, []);
+    };
+    CGraphicObjectBase.prototype.getTextArtProperties = function() {
+        return null;
+    };
+    CGraphicObjectBase.prototype.getColumnNumber = function() {
+        return null;
+    };
+    CGraphicObjectBase.prototype.getColumnSpace = function() {
+        return null;
+    };
+    CGraphicObjectBase.prototype.getTextFitType = function() {
+        return null;
+    };
+    CGraphicObjectBase.prototype.getVertOverflowType = function() {
+        return null;
     };
     CGraphicObjectBase.prototype.canChangeArrows = function () {
         if (!this.spPr || this.spPr.geometry == null) {
@@ -1999,6 +2079,23 @@
         	aDocContents[i].CreateDuplicateComments();
         }
     };
+
+    CGraphicObjectBase.prototype.writeRecord1 = function(pWriter, nType, oChild) {
+        if(AscCommon.isRealObject(oChild)) {
+            pWriter.WriteRecord1(nType, oChild, function(oChild) {
+                oChild.toPPTY(pWriter);
+            });
+        }
+        else {
+            //TODO: throw an error
+        }
+    };
+    CGraphicObjectBase.prototype.writeRecord2 = function(pWriter, nType, oChild) {
+        if(AscCommon.isRealObject(oChild)) {
+            this.writeRecord1(pWriter, nType, oChild);
+        }
+    };
+
     CGraphicObjectBase.prototype.ResetParametersWithResize = function(bNoResetRelSize)
     {
         var oParaDrawing = AscFormat.getParaDrawing(this);
@@ -2046,8 +2143,12 @@
             }
         }
     };
-    CGraphicObjectBase.prototype.createPlaceholderControl = function()
+    CGraphicObjectBase.prototype.createPlaceholderControl = function(aControls)
     {
+        if(!this.isEmptyPlaceholder())
+        {
+            return;
+        }
         var phType = this.getPhType();
         var aButtons = [];
         var isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsSupportMedia"] && window["AscDesktopEditor"]["IsSupportMedia"]();
@@ -2159,11 +2260,15 @@
         {
             nSlideNum = this.parent.num;
         }
-        return  AscCommon.CreateDrawingPlaceholder(this.Id, aButtons, nSlideNum, { x : 0, y : 0, w : this.extX, h : this.extY }, this.transform);
+        if(aButtons.length > 0)
+        {
+            aControls.push(AscCommon.CreateDrawingPlaceholder(this.Id, aButtons, nSlideNum, { x : 0, y : 0, w : this.extX, h : this.extY }, this.transform));
+        }
     };
     CGraphicObjectBase.prototype.onSlicerUpdate = function(sName){
         return false;
     };
+
     CGraphicObjectBase.prototype.onSlicerLock = function(sName, bLock){
     };
     CGraphicObjectBase.prototype.onSlicerDelete = function(sName){
@@ -2325,6 +2430,9 @@
                         }
                     }
                 }
+                if (this.isObjectInSmartArt()) {
+                    return this.canEditTextInSmartArt();
+                }
                 return true;
             }
         }
@@ -2339,6 +2447,110 @@
             }
         }
         return true;
+    };
+
+    CGraphicObjectBase.prototype.convertFromSmartArt = function() {
+        return this;
+    };
+    CGraphicObjectBase.prototype.changeRot = function(dAngle) {
+        if(this.spPr && this.spPr.xfrm) {
+            var oXfrm = this.spPr.xfrm;
+            var originalRot = oXfrm.rot || 0;
+            var dRot = AscFormat.normalizeRotate(dAngle);
+            oXfrm.setRot(dRot);
+            if(this.isObjectInSmartArt()) {
+                var point = this.getSmartArtShapePoint();
+                if (point) {
+                    var prSet = point.getPrSet();
+                    if (prSet) {
+                        var defaultRot = originalRot;
+                        if (prSet.custAng) {
+                            var oldCustAng = prSet.custAng;
+                            if (oldCustAng > defaultRot) {
+                                defaultRot += Math.PI * 2 * Math.ceil(oldCustAng / (Math.PI * 2));
+                            }
+                            defaultRot -= oldCustAng;
+                        }
+                        if (originalRot !== dRot) {
+                            var currentAngle = dRot;
+                            if (defaultRot > currentAngle) {
+                                currentAngle += Math.PI * 2 * Math.ceil(defaultRot / (Math.PI * 2));
+                            }
+                            var newCustAng = (currentAngle - defaultRot);
+                            prSet.setCustAng(newCustAng);
+                        }
+                    }
+                }
+                this.recalculate();
+                var oBounds = this.bounds;
+                var oSmartArt = this.group.group;
+                var diffX = null, diffY = null;
+                if(oBounds.r > oSmartArt.x + oSmartArt.extX) {
+                    diffX = oSmartArt.x + oSmartArt.extX - oBounds.r;
+                }
+                if(oBounds.l < oSmartArt.x) {
+                    diffX = oSmartArt.x - oBounds.l;
+                }
+                if(oBounds.b > oSmartArt.y + oSmartArt.extY) {
+                    diffY = oSmartArt.y + oSmartArt.extY - oBounds.b;
+                }
+                if(oBounds.t < oSmartArt.y) {
+                    diffY = oSmartArt.y - oBounds.t;
+                }
+                var originalPosX = this.spPr.xfrm.offX;
+                var originalPosY = this.spPr.xfrm.offY;
+
+                if(diffX !== null) {
+                    this.spPr.xfrm.setOffX(this.spPr.xfrm.offX + diffX);
+                }
+                if(diffY !== null) {
+                    this.spPr.xfrm.setOffY(this.spPr.xfrm.offY + diffY);
+                }
+
+                var posX = this.spPr.xfrm.offX;
+                var posY = this.spPr.xfrm.offY;
+                var defaultExtX = this.extX;
+                var defaultExtY = this.extY;
+                if (prSet) {
+                    if (prSet.custScaleX) {
+                        defaultExtX /= prSet.custScaleX;
+                    }
+                    if (prSet.custScaleY) {
+                        defaultExtY /= prSet.custScaleY;
+                    }
+                    if (prSet.custLinFactNeighborX) {
+                        originalPosX -= (prSet.custLinFactNeighborX) * defaultExtX;
+                    }
+                    if (prSet.custLinFactNeighborY) {
+                        originalPosY -= (prSet.custLinFactNeighborY) * defaultExtY;
+                    }
+                    if (posX !== this.x) {
+                        prSet.setCustLinFactNeighborX(((posX - originalPosX) / defaultExtX));
+                    }
+                    if (posY !== this.y) {
+                        prSet.setCustLinFactNeighborY(((posY - originalPosY) / defaultExtY));
+                    }
+                }
+            }
+        }
+    };
+    CGraphicObjectBase.prototype.changeFlipH = function(bFlipH) {
+        if(this.spPr && this.spPr.xfrm) {
+            var oXfrm = this.spPr.xfrm;
+            oXfrm.setFlipH(bFlipH);
+            if(this.isObjectInSmartArt()) {
+                //TODO
+            }
+        }
+    };
+    CGraphicObjectBase.prototype.changeFlipV = function(bFlipV) {
+        if(this.spPr && this.spPr.xfrm) {
+            var oXfrm = this.spPr.xfrm;
+            oXfrm.setFlipH(bFlipV);
+            if(this.isObjectInSmartArt()) {
+                //TODO
+            }
+        }
     };
 
     function CRelSizeAnchor() {

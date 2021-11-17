@@ -694,6 +694,9 @@ g_oColorManager = new ColorManager();
 	function Fragment(val) {
 		this.text = null;
 		this.format = null;
+		//для отрисовки ввожу дополнительный массив
+		this.charCodes = null;//[]
+
 		if (null != val) {
 			this.set(val);
 		}
@@ -704,10 +707,13 @@ g_oColorManager = new ColorManager();
 	};
 	Fragment.prototype.set = function (oVal) {
 		if (null != oVal.text) {
-			this.text = oVal.text;
+			this.setFragmentText(oVal.text);
 		}
 		if (null != oVal.format) {
 			this.format = oVal.format;
+		}
+		if (null != oVal.charCodes) {
+			this.setCharCodes(oVal.charCodes && oVal.charCodes.slice());
 		}
 	};
 	Fragment.prototype.checkVisitedHyperlink = function (row, col, hyperlinkManager) {
@@ -720,6 +726,95 @@ g_oColorManager = new ColorManager();
 			}
 		}
 	};
+	Fragment.prototype.getCharCode = function (index) {
+		if (!this.isInitCharCodes()) {
+			this.initCharCodes();
+		}
+		return this.charCodes && this.charCodes[index];
+	};
+	Fragment.prototype.getCharCodesLength = function () {
+		if (!this.isInitCharCodes()) {
+			this.initCharCodes();
+		}
+		return this.charCodes ? this.charCodes.length : 0;
+	};
+	Fragment.prototype.initCharCodes = function () {
+		var test2 = this.getFragmentText();
+		if (test2) {
+			this.setCharCodes(AscCommon.convertUTF16toUnicode(test2), true);
+		} else {
+			this.setCharCodes([], true);
+		}
+	};
+	Fragment.prototype.initText = function () {
+		this.setFragmentText(this.charCodes ? AscCommon.convertUnicodeToUTF16(this.charCodes) : "", true);
+	};
+	Fragment.prototype.getCharCode = function (index) {
+		if (!this.isInitCharCodes()) {
+			this.initCharCodes();
+		}
+		return this.charCodes && this.charCodes[index];
+	};
+	Fragment.prototype.isInitCharCodes = function () {
+		return this.charCodes !== null;
+	};
+	Fragment.prototype.getCharCodes = function () {
+		if (!this.isInitCharCodes()) {
+			this.initCharCodes();
+		}
+		return this.charCodes;
+	};
+	Fragment.prototype.setCharCodes = function (val, isInit) {
+		//если выставляем charCodes, контент меняется, нужно занулять текстовое поле
+		if (!isInit) {
+			this.text = null;
+		}
+		this.charCodes = val;
+	};
+	Fragment.prototype.getFragmentText = function () {
+		if (null === this.text) {
+			this.initText();
+		}
+		return this.text;
+	};
+	Fragment.prototype.setFragmentText = function (val, isInit) {
+		//если выставляем текстовое поле, контент меняется, нужно занулять charCodes
+		if (!isInit) {
+			this.charCodes = null;
+		}
+		this.text = val;
+	};
+	Fragment.prototype.getTextFromCodes = function () {
+		//если выставляем текстовое поле, контент меняется, нужно занулять charCodes
+		if (!isInit) {
+			this.charCodes = null;
+		}
+		this.text = val;
+	};
+	Fragment.prototype.convertPositionToText = function (codePos) {
+		var diff = 0;
+		for (var i = 0; i < codePos; i++) {
+			if (this.charCodes[i] >= 0x10000) {
+				diff++;
+			}
+		}
+		return codePos + diff;
+	};
+	Fragment.prototype.convertPositionFromText = function (textPos) {
+		var count = 0;
+		for (var i = 0; i < textPos; i++) {
+			if (this.charCodes[i] >= 0x10000) {
+				count++;
+			} else {
+				count += 2;
+			}
+			if (count >= textPos) {
+				return i;
+			}
+		}
+		return textPos;
+	};
+
 
 var g_oFontProperties = {
 		fn: 0,
@@ -3969,6 +4064,9 @@ StyleManager.prototype =
 };
 
 	function StyleCache() {
+		this.Clear();
+	}
+	StyleCache.prototype.Clear = function() {
 		this.fonts = {count: 0, vals: {}};
 		this.fills = {count: 0, vals: {}};
 		this.borders = {count: 0, vals: {}};
@@ -3981,8 +4079,7 @@ StyleManager.prototype =
 		this.secondFill = null;
 		this.firstBorder = null;
 		this.normalXf =  new CellXfs();
-	}
-
+	};
 	StyleCache.prototype.addFont = function(newFont) {
 		return this._add(this.fonts, newFont);
 	};
@@ -5316,8 +5413,9 @@ StyleManager.prototype =
 		if (multiText) {
 			for (var i = 0, length = multiText.length; i < length; ++i) {
 				var elem = multiText[i];
-				if (null != elem.text && !(elem.format && elem.format.getSkip())) {
-					sRes += elem.text;
+				var text = elem.getFragmentText ? elem.getFragmentText() : elem.text;
+				if (null != text && !(elem.format && elem.format.getSkip())) {
+					sRes += text;
 				}
 			}
 		}
@@ -5328,11 +5426,12 @@ StyleManager.prototype =
 		if (multiText) {
 			for (var i = 0, length = multiText.length; i < length; ++i) {
 				var elem = multiText[i];
-				if (null != elem.text) {
+				var text = elem.getFragmentText ? elem.getFragmentText() : elem.text;
+				if (null != text) {
 					if(elem.format && elem.format.getSkip()) {
 						sRes += " ";
 					} else if(!(elem.format && elem.format.getRepeat())) {
-						sRes += elem.text;
+						sRes += text;
 					} else {
 						var j = 0;
 					}

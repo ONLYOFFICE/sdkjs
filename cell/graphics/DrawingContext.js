@@ -979,8 +979,8 @@
 	 * @param {Number} units  Units (0 = px, 1 = pt, 2 = in, 3 = mm)
 	 * @return {TextMetrics}  Returns the char dimension
 	 */
-	DrawingContext.prototype.measureChar = function (text, units) {
-		return this.measureText(text.charAt(0), units);
+	DrawingContext.prototype.measureChar = function (text, units, code) {
+		return this.measureText(text ? text.charAt(0) : null, units, [code]);
 	};
 
 	/**
@@ -989,12 +989,13 @@
 	 * @param {Number} units  Units (0 = px, 1 = pt, 2 = in, 3 = mm)
 	 * @return {TextMetrics}  Returns the dimension of string {width: w, height: h}
 	 */
-	DrawingContext.prototype.measureText = function (text, units) {
+	DrawingContext.prototype.measureText = function (text, units, aCodes) {
 		var code;
 		var fm = this.fmgrGraphics[3];
 		var r = getCvtRatio(0/*px*/, units >= 0 && units <= 3 ? units : this.units, this.ppiX);
-		for (var tmp, w = 0, w2 = 0, i = 0; i < text.length; ++i) {
-			code = text.charCodeAt(i);
+		var textLength = aCodes ? aCodes.length : text.length;
+		for (var tmp, w = 0, w2 = 0, i = 0; i < textLength; ++i) {
+			code = aCodes ? aCodes[i] : text.charCodeAt(i);
 			// Replace Non-breaking space(0xA0) with White-space(0x20)
 			tmp = fm.MeasureChar(0xA0 === code ? 0x20 : code);
 			w += asc_round(tmp.fAdvanceX); // ToDo скачет при wrap в ячейке и zoom
@@ -1031,7 +1032,7 @@
 
 		var length = text.length;
 		for (var i = 0; i < length; ++i) {
-			code = text.charCodeAt(i);
+			code = text.charCodeAt ? text.charCodeAt(i) : text[i];
 			// Replace Non-breaking space(0xA0) with White-space(0x20)
 			code = 0xA0 === code ? 0x20 : code;
 			if (window["IS_NATIVE_EDITOR"]) {
@@ -1054,6 +1055,11 @@
 
 		return this;
 	};
+
+	DrawingContext.prototype.fillTextCode = function (text, x, y, maxWidth, charWidths, angle) {
+		return this.fillText(text, x, y, maxWidth, charWidths, angle);
+	};
+
 
 	// Path methods
 

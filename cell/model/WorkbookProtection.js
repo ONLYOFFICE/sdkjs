@@ -58,7 +58,7 @@
 		this.saltValue = null;
 		this.spinCount = null;
 
-		this.sheet = true;
+		this.sheet = false;
 		this.objects = false;
 		this.scenarios = false;
 		this.formatCells = true;
@@ -115,7 +115,7 @@
 		this.saltValue = null;
 		this.spinCount = null;
 
-		this.sheet = true;
+		this.sheet = false;
 		this.objects = false;
 		this.scenarios = false;
 		this.formatCells = true;
@@ -139,7 +139,7 @@
 		this.saltValue = null;
 		this.spinCount = null;
 
-		this.sheet = true;
+		this.sheet = false;
 		this.objects = true;
 		this.scenarios = true;
 		this.formatCells = true;

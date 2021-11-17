@@ -8474,20 +8474,53 @@
 			options.findWhat = options.findWhat.toLowerCase();
 		}
 
-		if(options.isWholeWord) {
+		var findEmptyStr = options.findWhat === "";
+		if (findEmptyStr) {
+			options.findWhat = new RegExp("^$", "g");
+		} else if(options.isWholeWord) {
 			var length = options.findWhat.length;
 			options.findWhat = '\\b' + options.findWhat + '\\b';
 			options.findWhat = new RegExp(options.findWhat, "g");
 			options.findWhat.length = length;
 		}
+		var isWholeWordTrue = null;
+		if (findEmptyStr) {
+			isWholeWordTrue = options.isWholeWord;
+			options.isWholeWord = true;
+		}
+
 		var selectionRange = options.selectionRange || this.selectionRange;
 		var lastRange = selectionRange.getLast();
 		var activeCell = selectionRange.activeCell;
 		var merge = this.getMergedByCell(activeCell.row, activeCell.col);
 		options.findInSelection = options.scanOnOnlySheet &&
 			!(selectionRange.isSingleRange() && (lastRange.isOneCell() || lastRange.isEqual(merge)));
-		var findRange = options.findInSelection ? this.getRange3(lastRange.r1, lastRange.c1, lastRange.r2, lastRange.c2) :
-			this.getRange3(0, 0, this.getRowsCount(), this.getColsCount());
+
+		var findRange;
+		var maxRowsCount = this.getRowsCount();
+		var maxColsCount = this.getColsCount();
+		var func;
+		if (findEmptyStr) {
+			if (maxRowsCount === 0 || maxColsCount === 0) {
+				findRange = this.getRange3(0, 0, maxRowsCount, maxColsCount);
+				func = findRange._foreachNoEmpty;
+			} else if (options.findInSelection) {
+				if (lastRange.r1 <= maxRowsCount - 1 && lastRange.c1 <= maxColsCount - 1) {
+					findRange = this.getRange3(lastRange.r1, lastRange.c1, Math.min(lastRange.r2, maxRowsCount - 1), Math.min(lastRange.c2, maxColsCount - 1));
+					func = findRange._foreach2;
+				} else {
+					findRange = this.getRange3(lastRange.r1, lastRange.c1, lastRange.r2, lastRange.c2);
+					func = findRange._foreachNoEmpty;
+				}
+			} else {
+				findRange = this.getRange3(0, 0, maxRowsCount - 1, maxColsCount - 1);
+				func = findRange._foreach2;
+			}
+		} else {
+			findRange = options.findInSelection ? this.getRange3(lastRange.r1, lastRange.c1, lastRange.r2, lastRange.c2) :
+				this.getRange3(0, 0, maxRowsCount, maxColsCount);
+			func = findRange._foreachNoEmpty;
+		}
 
 		if (this.lastFindOptions && this.lastFindOptions.findResults && options.isEqual2(this.lastFindOptions) &&
 			findRange.getBBox0().isEqual(this.lastFindOptions.findRange)) {
@@ -8496,8 +8529,15 @@
 
 		var oldResults = this.lastFindOptions && this.lastFindOptions.findResults.isNotEmpty();
 		var result = new AscCommonExcel.findResults(), tmp;
-		findRange._foreachNoEmpty(function (cell, r, c) {
-			if (!cell.isNullText() && cell.isEqual(options)) {
+		var emptyCell, t = this;
+		func.apply(findRange, [function (cell, r, c) {
+			if (cell === null) {
+				if (!emptyCell) {
+					emptyCell = new Cell(t);
+				}
+				cell = emptyCell;
+			}
+			if (cell && cell.isEqual(options)) {
 				if (!options.scanByRows) {
 					tmp = r;
 					r = c;
@@ -8505,7 +8545,10 @@
 				}
 				result.add(r, c, cell);
 			}
-		});
+		}]);
+		if (isWholeWordTrue !== null) {
+			options.isWholeWord = isWholeWordTrue;
+		}
 		this.lastFindOptions = options.clone();
 		// ToDo support multiselect
 		this.lastFindOptions.findRange = findRange.getBBox0().clone();
@@ -9940,7 +9983,6 @@
 			var oldValue = view.topLeftCell ? view.topLeftCell.clone() : null;
 			view.topLeftCell = val;
 			if (addToHistory) {
-				History.Create_NewPoint();
 				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_SetTopLeftCell,
 					this.getId(), null, new UndoRedoData_FromTo(new UndoRedoData_BBox(oldValue), new UndoRedoData_BBox(val)));
 			}
@@ -12096,7 +12138,7 @@
 	{
 		var sSimpleText = "";
 		for(var i = 0, length = aVal.length; i < length; ++i)
-			sSimpleText += aVal[i].text;
+			sSimpleText += aVal[i].getFragmentText ? aVal[i].getFragmentText() : aVal[i].text;
 		this._setValue(sSimpleText);
 		if (!ignoreHyperlink && window['AscCommonExcel'].g_AutoCorrectHyperlinks) {
 			this._autoformatHyperlink(sSimpleText);
@@ -12114,7 +12156,7 @@
 				for(var i = 0, length = aVal.length; i < length; i++){
 					var item = aVal[i];
 					var oNewElem = new AscCommonExcel.CMultiTextElem();
-					oNewElem.text = item.text;
+					oNewElem.text = item.getFragmentText ? item.getFragmentText() : item.text;
 					if (null != item.format) {
 						oNewElem.format = new AscCommonExcel.Font();
 						oNewElem.format.assign(item.format);
@@ -12210,7 +12252,7 @@
 			cellfont = g_oDefaultFormat.Font;
 		if(null != sText){
 			oNewItem = new AscCommonExcel.Fragment();
-			oNewItem.text = sText;
+			oNewItem.setFragmentText(sText);
 			oNewItem.format = cellfont.clone();
 			oNewItem.checkVisitedHyperlink(this.nRow, this.nCol, this.ws.hyperlinkManager);
 			oNewItem.format.setSkip(false);
@@ -12222,7 +12264,7 @@
 				var oCurtext = aText[i];
 				if(null != oCurtext.text)
 				{
-					oNewItem.text = oCurtext.text;
+					oNewItem.setFragmentText(oCurtext.text);
 					var oCurFormat = new AscCommonExcel.Font();
 					if (isMultyText) {
 						if (null != oCurtext.format && !(cellSelfFont && cellSelfFont.isEqual(oCurtext.format))) {

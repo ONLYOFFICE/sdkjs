@@ -490,7 +490,7 @@ CSelectedContent.prototype =
             var DrawingObj = this.DrawingObjects[Pos];
             var ShapeType = DrawingObj.GraphicObj.getObjectType();
 
-            if ( AscDFH.historyitem_type_Shape === ShapeType || AscDFH.historyitem_type_GroupShape === ShapeType )
+            if ( AscDFH.historyitem_type_Shape === ShapeType || DrawingObj.GraphicObj.isGroupObject() )
             {
                 this.HaveShape = true;
                 break;
@@ -3503,21 +3503,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
     if (true !== this.Is_OnRecalculate())
         return document_recalcresult_NoRecal;
 
-    // Останавливаем поиск
-    if (false != this.SearchEngine.ClearOnRecalc)
-    {
-        var bOldSearch = ( this.SearchEngine.Count > 0 ? true : false );
-
-        this.SearchEngine.Clear();
-
-        if (true === bOldSearch)
-        {
-            editor.sync_SearchEndCallback();
-
-            this.DrawingDocument.ClearCachePages();
-            this.DrawingDocument.FirePaint();
-        }
-    }
+    this.private_ClearSearchOnRecalculate();
 
     // Обновляем позицию курсора
     this.NeedUpdateTarget = true;
@@ -3820,6 +3806,8 @@ CDocument.prototype.RecalculateWithParams = function(oRecalcData, isForceStrictR
 };
 CDocument.prototype.RecalculateByChanges = function(arrChanges, nStartIndex, nEndIndex, isForceStrictRecalc, nNoTimerPageIndex)
 {
+	this.private_ClearSearchOnRecalculate();
+
 	// Обновляем позицию курсора
 	this.NeedUpdateTarget = true;
 
@@ -5570,6 +5558,22 @@ CDocument.prototype.private_CheckUnusedFields = function()
 
 		if (oSeparateChar)
 			oSeparateChar.SetUse(false);
+	}
+};
+CDocument.prototype.private_ClearSearchOnRecalculate = function()
+{
+	if (!this.SearchEngine.ClearOnRecalc)
+		return;
+
+	var isPrevSearch = this.SearchEngine.Count > 0;
+
+	this.SearchEngine.Clear();
+
+	if (isPrevSearch)
+	{
+		this.Api.sync_SearchEndCallback();
+		this.DrawingDocument.ClearCachePages();
+		this.DrawingDocument.FirePaint();
 	}
 };
 CDocument.prototype.IsCalculatingContinuousSectionBottomLine = function()
@@ -10596,6 +10600,242 @@ CDocument.prototype.OnKeyDown = function(e)
 				bRetValue = keydownresult_PreventAll;
 			}
 		}
+		else if (e.KeyCode === 88 && true === e.AltKey) // Alt + X
+		{
+			var arrParagraphs = this.GetSelectedParagraphs();
+			if (arrParagraphs.length === 1)
+			{
+				var oParagraph = arrParagraphs[0];
+				var ListForUnicode = [];
+				var oSettings = {
+					IsForMathPart: 0,
+					textForUnicode: "",
+					fFlagForUnicode: 0,
+					bBreak: false,
+					nDirection: 0
+				};
+				var elStart = oParagraph.Get_ParaContentPos(true, true);
+				while (true)
+				{
+					var cur = oParagraph.Get_ClassesByPos(elStart);
+					var oItemRun = cur[cur.length - 1];
+					if (oItemRun === undefined || oItemRun.Selection === undefined || oItemRun === oItemParent) break;
+					if ((oItemRun.Get_Type() === 49 || oItemRun.Get_Type() === 39) && (oItemRun.Parent === oItemParent || oItemParent == null))
+					{
+						var oItemParent = oItemRun.Parent;
+						oItemRun.ChangeUnicodeText(ListForUnicode, oSettings);
+						if (ListForUnicode.length > 6) break;
+						if (oItemRun.Selection.EndPos === oItemRun.Content.length && oItemRun.Selection.Use === true && (oSettings.nDirection === 0 || oSettings.nDirection === 1))
+						{
+							oSettings.nDirection = 1;
+							elStart.Data[elStart.Depth - 2]++;
+						}
+						else if (oItemRun.Selection.EndPos === 0 && oItemRun.Selection.Use === true && (oSettings.nDirection === 0 || oSettings.nDirection === -1))
+						{
+							oSettings.nDirection = -1;
+							elStart.Data[elStart.Depth - 2]--;
+						}
+						else
+							break;
+					}
+					else
+					{
+						if (oItemRun.Selection.Use === true && oItemRun.Selection.StartPos !== oItemRun.Selection.EndPos/* && oItemRun.Parent !== oItemParent*/)
+							ListForUnicode.splice(0, ListForUnicode.length);
+						break;
+					}
+				}
+			
+				for (var nPos = 0; nPos < ListForUnicode.length; nPos++)
+				{
+					if ((ListForUnicode[nPos].value === undefined || ListForUnicode.length > 6 || oSettings.bBreak === true)
+						|| (ListForUnicode.length > 1 && !((ListForUnicode[nPos].value <= 0x46 && ListForUnicode[nPos].value >= 0x41) 
+						|| (ListForUnicode[nPos].value <= 0x39 && ListForUnicode[nPos].value >= 0x30)
+						|| (ListForUnicode[nPos].value <= 0x66 && ListForUnicode[nPos].value >= 0x61))))
+					{
+						ListForUnicode.splice(0, ListForUnicode.length);
+					}
+				}
+				if (oSettings.nDirection === -1)
+					ListForUnicode.reverse();
+				var textAfterChange = "";
+				if (ListForUnicode.length <= 6 && ListForUnicode.length !== 0)
+				{
+					if (ListForUnicode.length !== 1 && ListForUnicode.length <= 6)
+					{
+						textAfterChange = parseInt(oSettings.textForUnicode, 16);
+						if (!isNaN(textAfterChange) && textAfterChange > 0x1F && textAfterChange < 0x110000 && !(textAfterChange >= 0xD800 && textAfterChange <= 0xDFFF))
+						{
+							if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, false))
+							{
+								this.StartAction(AscDFH.historydescription_Document_AddLetter);					
+								if (oParagraph.LogicDocument.IsTrackRevisions() && ListForUnicode[0].oRun.ReviewType === 0)
+								{
+									var newDelRun = ListForUnicode[0].oRun.Copy();
+									var newAddRun = ListForUnicode[0].oRun.Copy();
+									newAddRun.ClearContent();
+									newDelRun.ClearContent();
+									for (var i = 0; i < ListForUnicode.length; i++)
+										newDelRun.private_AddItemToRun(i, ListForUnicode[i].oRun.Content[ListForUnicode[i].currentPos]);
+									
+									if (oSettings.IsForMathPart === -1)
+									{
+										var oItem = new CMathText();
+										oItem.add(textAfterChange);
+										newAddRun.private_AddItemToRun(0, oItem);
+									}
+									else
+									{
+										newAddRun.private_AddItemToRun(0, new ParaText(textAfterChange));
+									}
+									newDelRun.SetReviewType(reviewtype_Remove, true);
+									newAddRun.SetReviewType(reviewtype_Add, true);
+									var oParent = ListForUnicode[0].oRun.Get_Parent();
+									var nMovePos = 0;
+									for (var i = ListForUnicode.length - 1; i >= 0; i--)
+										ListForUnicode[i].oRun.RemoveFromContent(ListForUnicode[i].currentPos, 1, true);
+									
+									if (ListForUnicode[ListForUnicode.length - 1].oRun === ListForUnicode[0].oRun && ListForUnicode[0].oRun.Content !== 0 && ListForUnicode[0].currentPos !== 0)
+										nMovePos = 1;
+									var oRunNew = ListForUnicode[ListForUnicode.length - 1].oRun.private_SplitRunInCurPos();
+									var oPosItem = oParagraph.Get_PosByElement(ListForUnicode[ListForUnicode.length - 1].oRun);
+									
+									oParent.Add_ToContent(oPosItem.Data[oPosItem.Depth - 1] + nMovePos, newAddRun);
+									oParent.Add_ToContent(oPosItem.Data[oPosItem.Depth - 1] + nMovePos, newDelRun);
+								}
+								else
+								{
+									var copyReviewInfo = ListForUnicode[0].oRun.GetReviewInfo().Copy();
+									for (var i = ListForUnicode.length - 1; i >= 0; i--)
+										ListForUnicode[i].oRun.RemoveFromContent(ListForUnicode[i].currentPos, 1, true);
+									if (oSettings.IsForMathPart === -1)
+									{
+										var oItem = new CMathText();
+										oItem.add(textAfterChange);
+										ListForUnicode[0].oRun.private_AddItemToRun(ListForUnicode[0].currentPos, oItem);
+									}
+									else if (AscCommon.IsSpace(textAfterChange))
+										ListForUnicode[0].oRun.private_AddItemToRun(ListForUnicode[0].currentPos, new ParaSpace(textAfterChange));
+									else
+										ListForUnicode[0].oRun.private_AddItemToRun(ListForUnicode[0].currentPos, new ParaText(textAfterChange));
+									if (ListForUnicode[0].oRun.ReviewType === 2)
+									{
+										var oPosItem = oParagraph.Get_PosByElement(ListForUnicode[0].oRun);
+										oPosItem.Data[oPosItem.Depth - 1]--;
+										var oItemPrev = oParagraph.Get_ClassesByPos(oPosItem);
+										oItemPrev = oItemPrev[oItemPrev.length - 1];
+										var oValue;
+										if (oItemPrev != null && (oItemPrev.Type === 49 || oItemPrev.Type === 39) && oItemPrev.Content != null && oItemPrev.Content.length !== 0)
+										{
+											oSettings.IsForMathPart === -1 ? oValue = oItemPrev.Content[oItemPrev.Content.length - 1].getCodeChr() : oValue = oItemPrev.Content[oItemPrev.Content.length - 1].Value;
+											if (oValue === textAfterChange
+												&& oItemPrev.ReviewType === 1 && ListForUnicode[0].oRun.ReviewType === 2
+												&& this.CompareReviewInfo(oItemPrev.ReviewInfo, copyReviewInfo))
+												oItemPrev.RemoveFromContent(oItemPrev.Content.length - 1, 1, true);
+										}
+									}
+									ListForUnicode[0].oRun.Selection.Use = true;
+									ListForUnicode[0].oRun.Selection.StartPos = ListForUnicode[0].currentPos;
+									ListForUnicode[0].oRun.Selection.EndPos = ListForUnicode[0].currentPos + 1;
+								}
+
+								this.UpdateSelection();
+								this.Recalculate();
+								this.UpdateInterface();
+								this.UpdateRulers();
+								this.UpdateTracks();
+
+								this.FinalizeAction();
+							}
+						}
+					}
+					else if (ListForUnicode.length === 1)
+					{
+						if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, false))
+						{
+							textAfterChange = AscCommon.IntToHex(ListForUnicode[0].value).toUpperCase();
+
+							this.StartAction(AscDFH.historydescription_Document_AddLetter);
+							if (oParagraph.LogicDocument.IsTrackRevisions() && ListForUnicode[0].oRun.ReviewType === 0)
+							{
+								if (oSettings.IsForMathPart === -1)
+								{
+									var newDelRun = ListForUnicode[0].oRun.Copy();
+									var newAddRun = ListForUnicode[0].oRun.Copy();
+									newAddRun.ClearContent();
+									newDelRun.ClearContent();
+									newDelRun.private_AddItemToRun(0, ListForUnicode[0].oRun.Content[ListForUnicode[0].currentPos]);
+									for (var i = 0; i < textAfterChange.length; i++)
+									{
+										var oItem = new CMathText();
+										oItem.add(textAfterChange.charCodeAt(i));
+										newAddRun.private_AddItemToRun(i, oItem);
+									}
+									newDelRun.SetReviewType(reviewtype_Remove, true);
+									newAddRun.SetReviewType(reviewtype_Add, true);
+									var oParent = ListForUnicode[0].oRun.Get_Parent();
+									var nMovePos = ListForUnicode[0].currentPos === 0 ? 0 : 1;
+									ListForUnicode[0].oRun.RemoveFromContent(ListForUnicode[0].currentPos, 1, true);
+									var oRunNew = ListForUnicode[0].oRun.private_SplitRunInCurPos();
+									if (nMovePos === 0)
+									{
+										oParent.Add_ToContent(oParent.CurPos + nMovePos, newDelRun);
+										oParent.Add_ToContent(oParent.CurPos + nMovePos, newAddRun);
+									}
+									else
+									{
+										oParent.Add_ToContent(oParent.CurPos + nMovePos, newAddRun);
+										oParent.Add_ToContent(oParent.CurPos + nMovePos, newDelRun);
+									}
+								}
+								else
+								{
+									var newDelRun = new ParaRun;
+									var newAddRun = new ParaRun;
+									newDelRun.private_AddItemToRun(0, ListForUnicode[0].oRun.Content[ListForUnicode[0].currentPos]);
+									for (var i = 0; i < textAfterChange.length; i++)
+									{
+										newAddRun.private_AddItemToRun(i, new ParaText(textAfterChange.charCodeAt(i)));
+									}
+									newDelRun.SetReviewType(reviewtype_Remove, true);
+									newAddRun.SetReviewType(reviewtype_Add, true);
+									ListForUnicode[0].oRun.RemoveFromContent(ListForUnicode[0].currentPos, 1, true);
+									oParagraph.Add(newDelRun);
+									oParagraph.Add(newAddRun);
+								}
+							}
+							else
+							{
+								ListForUnicode[0].oRun.RemoveFromContent(ListForUnicode[0].currentPos, 1, true);
+								for (var i = 0; i < textAfterChange.length; i++)
+								{
+									if (oSettings.IsForMathPart === -1)
+									{
+										var oItem = new CMathText();
+										oItem.add(textAfterChange.charCodeAt(i));
+										ListForUnicode[0].oRun.private_AddItemToRun(ListForUnicode[0].currentPos + i, oItem);
+									}
+									else
+										ListForUnicode[0].oRun.private_AddItemToRun(ListForUnicode[0].currentPos + i, new ParaText(textAfterChange.charCodeAt(i)));
+								}
+								
+								ListForUnicode[0].oRun.Selection.Use = true;
+								ListForUnicode[0].oRun.Selection.StartPos = ListForUnicode[0].currentPos;
+								ListForUnicode[0].oRun.Selection.EndPos = ListForUnicode[0].currentPos + textAfterChange.length;
+							}
+
+							this.UpdateSelection();
+							this.Recalculate();
+							this.UpdateInterface();
+							this.UpdateRulers();
+							this.UpdateTracks();
+
+							this.FinalizeAction();
+						}
+					}
+				}
+			}
+		}
 		else if ((e.KeyCode === 93 && !e.MacCmdKey) || (/*в Opera такой код*/AscCommon.AscBrowser.isOpera && (57351 === e.KeyCode)) ||
 			(e.KeyCode === 121 && true === e.ShiftKey)) // // Shift + F10 - контекстное меню
 		{
@@ -10657,6 +10897,11 @@ CDocument.prototype.OnKeyDown = function(e)
         this.Document_UpdateSelectionState();
 
     return bRetValue;
+};
+CDocument.prototype.CompareReviewInfo = function(ReviewInfo1, ReviewInfo2)
+{
+	return (ReviewInfo1.UserName === ReviewInfo2.UserName && ReviewInfo1.UserId === ReviewInfo2.UserId
+		&& (ReviewInfo1.DateTime + 500 >= ReviewInfo2.DateTime && ReviewInfo1.DateTime - 500 <= ReviewInfo2.DateTime));
 };
 CDocument.prototype.private_AddSymbolByShortcut = function(nCode)
 {

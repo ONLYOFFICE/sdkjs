@@ -136,6 +136,10 @@
             var groups = _getParsedGroups(username);
             groups && (groups.length==0) && (groups = [""]);
             return _intersection(commentGroups.remove, groups);
+        },
+
+        isUserVisible: function(username) {
+            return this.canEditReview(username) || this.canViewComment(username) || this.canEditComment(username) || this.canDeleteComment(username);
         }
     }
 
@@ -152,5 +156,6 @@
     UserInfoParser['canViewComment'] = UserInfoParser.canViewComment;
     UserInfoParser['canEditComment'] = UserInfoParser.canEditComment;
     UserInfoParser['canDeleteComment'] = UserInfoParser.canDeleteComment;
+    UserInfoParser['isUserVisible'] = UserInfoParser.isUserVisible;
 
 })(window);

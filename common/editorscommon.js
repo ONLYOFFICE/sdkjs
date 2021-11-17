@@ -429,10 +429,7 @@
 
 	function DocumentUrls()
 	{
-		this.urls = {};
-		this.urlsReverse = {};
-		this.documentUrl = "";
-		this.imageCount = 0;
+		this.Clear();
 	}
 
 	DocumentUrls.prototype = {
@@ -441,6 +438,13 @@
 						 {
 							 this.addUrls(urls);
 						 },
+		Clear:			function ()
+						{
+							this.urls = {};
+							this.urlsReverse = {};
+							this.documentUrl = "";
+							this.imageCount = 0;
+						},
 		getUrls:         function ()
 						 {
 							 return this.urls;
@@ -1547,6 +1551,24 @@
 				break;
 			case c_oAscFileType.OTT:
 				return 'ott';
+				break;
+			case c_oAscFileType.DOC_FLAT:
+				return 'doc';
+				break;
+			case c_oAscFileType.DOCX_FLAT:
+				return 'docx';
+				break;
+			case c_oAscFileType.HTML_IN_CONTAINER:
+				return 'zip';
+				break;
+			case c_oAscFileType.DOCX_PACKAGE:
+				return 'xml';
+				break;
+			case c_oAscFileType.OFORM:
+				return 'oform';
+				break;
+			case c_oAscFileType.DOCXF:
+				return 'docxf';
 				break;
 			case c_oAscFileType.DOCY:
 				return 'doct';
@@ -4279,13 +4301,48 @@
 	c_oAscSpaces[0xFEFF] = 1;
 
 	/**
-	 * Проверяем является ли заданный юников пробелом
+	 * Проверяем является ли заданный юникод пробелом
 	 * @param nUnicode {number}
 	 * @returns {boolean}
 	 */
 	function IsSpace(nUnicode)
 	{
 		return !!(c_oAscSpaces[nUnicode]);
+	}
+
+	/**
+	 * Переводим числовое значение в Hex строку
+	 * @param nValue
+	 * @returns {string}
+	 */
+	function IntToHex(nValue)
+	{
+		var sRes = nValue.toString(16);
+		if (sRes.length === 2)
+			sRes = "00" + sRes;
+		else if (sRes.length === 3)
+			sRes = "0" + sRes;
+		return sRes;
+	}
+
+	/**
+	 * Проверяем является ли заданный юникод цифрой
+	 * @param nUnicode {number}
+	 * @returns {boolean}
+	 */
+	function IsDigit(nUnicode)
+	{
+		return (nUnicode >= 48 && nUnicode <= 57);
+	}
+
+	/**
+	 * Проверяем является ли заданный юникод цифрой
+	 * @param nUnicode {number}
+	 * @returns {boolean}
+	 */
+	function IsLetter(nUnicode)
+	{
+		return (String.fromCodePoint(nUnicode).search(new RegExp("^\\p{L}", 'u')) !== -1);
 	}
 
 	function private_IsAbbreviation(sWord) {
@@ -7026,6 +7083,9 @@
 	window["AscCommon"].LatinNumberingToInt = LatinNumberingToInt;
 	window["AscCommon"].IntToNumberFormat = IntToNumberFormat;
 	window["AscCommon"].IsSpace = IsSpace;
+	window["AscCommon"].IntToHex = IntToHex;
+	window["AscCommon"].IsDigit = IsDigit;
+	window["AscCommon"].IsLetter = IsLetter;
 	window["AscCommon"].CorrectFontSize = CorrectFontSize;
 
 	window["AscCommon"].loadSdk = loadSdk;

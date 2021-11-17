@@ -322,6 +322,21 @@ CPdfPrinter.prototype =
 		return this;
     },
 
+    fillTextCode : function(codes, x, y, maxWidth, charWidths)
+    {
+        var charPos = 0;
+        var _x = x * vector_koef;
+        var _y = y * vector_koef;
+        for (var i = 0; i < codes.length; i++)
+        {
+            this.DocumentRenderer.FillTextCode(_x, _y, codes[i]);
+            if (charPos < charWidths.length)
+                _x += (charWidths[charPos] * vector_koef);
+            charPos++;
+        }
+        return this;
+    },
+
     beginPath : function()
     {
         this.DocumentRenderer._s();

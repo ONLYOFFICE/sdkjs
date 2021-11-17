@@ -879,6 +879,10 @@ CParagraphContentBase.prototype.SetThisElementCurrentInParagraph = function()
 
 	this.Paragraph.Set_ParaContentPos(oContentPos, true, -1, -1, false);
 };
+CParagraphContentBase.prototype.createDuplicateForSmartArt = function(oPr)
+{
+	return this.Copy(false, oPr, false);
+};
 /**
  * Подсчитываем на сколько элементов разбивается данный элемент с заданным сепаратором
  * @param oEngine {CTextToTableEngine}

@@ -760,6 +760,9 @@ CImageShape.prototype.hit = CShape.prototype.hit;
 
 CImageShape.prototype.drawAdjustments = function(drawingDocument)
 {
+    if(!this.canChangeAdjustments()) {
+        return;
+    }
     if (this.calcGeometry) {
         this.calcGeometry.drawAdjustments(drawingDocument, this.transform, false);
     }

@@ -1965,8 +1965,8 @@ GraphicOption.prototype.union = function(oGraphicOption) {
             // Check drawing area
             drawingObject.drawingArea = _this.drawingArea;
             drawingObject.worksheet = currentSheet;
-            drawingObject.graphicObject.drawingBase = aObjects[i];
-            drawingObject.graphicObject.drawingObjects = _this;
+            drawingObject.graphicObject.setDrawingBase(drawingObject);
+            drawingObject.graphicObject.setDrawingObjects(_this);
             drawingObject.graphicObject.getAllRasterImages(aImagesSync);
         }
 

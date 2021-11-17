@@ -27,7 +27,7 @@
 			"slide/api.js",
 			"common/spell/spell.js"
 		],
-		"common": [			
+		"common": [
 			"common/downloaderfiles.js",
 			"common/NumFormat.js",
 			"common/SerializeChart.js",
@@ -66,6 +66,7 @@
 			"common/Drawings/Format/Path.js",
 			"common/Drawings/Format/Image.js",
 			"common/Drawings/Format/GroupShape.js",
+			"common/Drawings/Format/Data.js",
 			"common/Drawings/Format/ChartSpace.js",
 			"common/Drawings/Format/ChartFormat.js",
 			"common/Drawings/Format/TextBody.js",
@@ -229,7 +230,7 @@
 			"common/Drawings/Format/OleObject.js",
 			"common/Drawings/Format/DrawingContent.js",
 			"common/plugins.js",
-			
+
 			"common/Native/native_graphics.js"
 		],
 		"desktop": {

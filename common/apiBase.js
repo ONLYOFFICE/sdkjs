@@ -203,6 +203,8 @@
 		this.Shortcuts = new AscCommon.CShortcuts();
 		this.initDefaultShortcuts();
 
+		this.isUseNativeViewer = true;
+
 		return this;
 	}
 
@@ -687,6 +689,21 @@
 				"lcid"          : locale,
 				"nobase64"      : true
 			};
+
+			if (this.isUseNativeViewer)
+			{
+				switch (this.documentFormat)
+				{
+					case "pdf":
+					case "xps":
+					case "djvu":
+						rData["convertToOrigin"] = true;
+						break;
+					default:
+						break;
+				}
+			}
+
 			if (versionHistory)
 			{
 				rData["serverVersion"] = versionHistory.serverVersion;
@@ -819,6 +836,10 @@
 
 		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["onDocumentContentReady"])
             window["AscDesktopEditor"]["onDocumentContentReady"]();
+
+		// теперь на старте нельзя удалить бинарник для подбора - он может пригодиться в nativeViewer
+		if (!this.disableRemoveFonts)
+			delete window["g_fonts_selection_bin"];
 	};
 	// Save
 	baseEditorsApi.prototype.processSavedFile                    = function(url, downloadType, filetype)
@@ -1298,15 +1319,18 @@
 							case "ok":
 								var urls = input["data"];
 								AscCommon.g_oDocumentUrls.init(urls);
-								if (null != urls['Editor.bin']) {
+								var documentUrl = urls['Editor.bin'];
+								if (t.isUseNativeViewer && !documentUrl)
+									documentUrl = urls['origin.pdf'] || urls['origin.xps'] || urls['origin.djvu'];
+								if (null != documentUrl) {
 									if ('ok' === input["status"] || t.getViewMode()) {
-										t._onOpenCommand(urls['Editor.bin']);
+										t._onOpenCommand(documentUrl);
 									} else {
 										t.sendEvent("asc_onDocumentUpdateVersion", function () {
 											if (t.isCoAuthoringEnable) {
 												t.asc_coAuthoringDisconnect();
 											}
-											t._onOpenCommand(urls['Editor.bin']);
+											t._onOpenCommand(documentUrl);
 										})
 									}
 								} else {
@@ -2010,6 +2034,7 @@
 			options = new Asc.asc_CDownloadOptions();
 		}
 		options.fileType = Asc.c_oAscFileType.PDF;
+		options.isPdfPrint = true;
 		this.downloadAs(c_oAscAsyncAction.Print, options);
 	};
 	baseEditorsApi.prototype.asc_Save = function (isAutoSave, isIdle) {

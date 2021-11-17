@@ -1327,8 +1327,8 @@
 						}
 					}
 
-					var text = val[i].text;
-					var isBr = val[i].text.indexOf("\n");
+					var text = val[i].getFragmentText();
+					var isBr = val[i].getFragmentText().indexOf("\n");
 					span.textContent = text;
 
 					f = val[i].format;
@@ -1407,7 +1407,7 @@
 						}
 					}
 
-					var text = CopyPasteCorrectString(val[i].text);
+					var text = CopyPasteCorrectString(val[i].getFragmentText());
 					text = text.replace(/\n/g, '<br>');
 
 					f = val[i].format;
@@ -2414,6 +2414,7 @@
 
 						drawingObject.graphicObject.setDrawingObjects(ws.objectRender);
 						drawingObject.graphicObject.setWorksheet(ws.model);
+						drawingObject.graphicObject.convertFromSmartArt();
 						xfrm.setOffX(curCol);
 						xfrm.setOffY(curRow);
 						drawingObject.graphicObject.addToDrawingObjects();
@@ -3669,8 +3670,8 @@
 							}
 						}
 
-						fragment.text = children.innerText;
-						AscFonts.FontPickerByCharacter.getFontsByString(fragment.text);
+						fragment.setFragmentText(children.innerText);
+						AscFonts.FontPickerByCharacter.getFontsByString(fragment.getFragmentText());
 						fragment.format = format;
 
 						res.fragments.push(fragment);

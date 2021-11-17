@@ -3082,7 +3082,7 @@ ParaDrawing.prototype.IsShape = function()
  */
 ParaDrawing.prototype.IsGroup = function()
 {
-	return (this.GraphicObj.getObjectType() === AscDFH.historyitem_type_GroupShape);
+	return (this.GraphicObj.isGroupObject());
 };
 ParaDrawing.prototype.IsComparable = function(oDrawing)
 {
@@ -3103,6 +3103,10 @@ ParaDrawing.prototype.IsComparable = function(oDrawing)
 		return false;
 	}
 	return this.GraphicObj.isComparable(oDrawing.GraphicObj);
+};
+ParaDrawing.prototype.ToSearchElement = function(oProps)
+{
+	return new CSearchTextSpecialGraphicObject();
 };
 /**
  * Класс, описывающий текущее положение параграфа при рассчете позиции автофигуры.

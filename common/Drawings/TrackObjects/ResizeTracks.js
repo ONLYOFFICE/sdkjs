@@ -519,7 +519,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                 if(this.bConnector){
                     this.resizeConnector(kd1, kd2, e, x, y);
                 }
-                else if(!e.CtrlKey){
+                else if(!(e.CtrlKey || this.originalObject.isObjectInSmartArt())){
                     this.resize(kd1, kd2, e.ShiftKey);
                 }
                 else{
@@ -1155,6 +1155,50 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             if(!this.bIsTracked){
                 return;
             }
+
+            if (this.originalObject.isObjectInSmartArt()) {
+                return;
+                if (this.resizedPosX < 0) {
+                    this.resizedExtX = this.originalExtX + this.originalObject.x;
+                    this.resizedPosX = 0;
+
+                }
+                if (this.resizedPosY < 0) {
+                    this.resizedPosY = 0.000001; // TODO: fix this
+                    this.resizedExtY = this.originalExtY + this.originalObject.y;
+                }
+
+                var oSmartArt = this.originalObject.group && this.originalObject.group.group;
+                if(oSmartArt) {
+                    if (oSmartArt.x + oSmartArt.extX < this.resizedPosX + this.resizedExtX) {
+                        this.resizedExtX = oSmartArt.extX - this.resizedPosX;
+                    }
+                    if (oSmartArt.y + oSmartArt.extY < this.resizedPosY + this.resizedExtY) {
+                        this.resizedExtY = oSmartArt.extY - this.resizedPosY;
+                    }
+                }
+                var point = this.originalObject.getSmartArtShapePoint();
+                if (point) {
+                    var prSet = point.getPrSet();
+                    var defaultExtX = this.originalExtX;
+                    var defaultExtY = this.originalExtY;
+
+                    if (prSet) {
+                        if (prSet.custScaleX) {
+                            defaultExtX /= prSet.custScaleX;
+                        }
+                        if (prSet.custScaleY) {
+                            defaultExtY /= prSet.custScaleY;
+                        }
+                        if (this.resizedExtX !== this.originalExtX) {
+                            prSet.setCustScaleX((this.resizedExtX / defaultExtX));
+                        }
+                        if (this.resizedExtY !== this.originalExtY) {
+                            prSet.setCustScaleY((this.resizedExtY / defaultExtY));
+                        }
+                    }
+            }
+            }
             if(this.chartSpace)
             {
                 var oObjectToSet = this.originalObject;
@@ -1207,7 +1251,20 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                     }, this, []);
                 }
                 var xfrm = this.originalObject.spPr.xfrm;
-
+                if (this.originalObject.txXfrm) {
+                    var previousTxXfrmX = this.originalObject.txXfrm.offX;
+                    var previousTxXfrmY = this.originalObject.txXfrm.offY;
+                    var previousTxXfrmExtX = this.originalObject.txXfrm.extX;
+                    var previousTxXfrmExtY = this.originalObject.txXfrm.extY;
+                    var currentXfrmX = this.resizedPosX;
+                    var currentXfrmY = this.resizedPosY;
+                    var currentXfrmExtX = this.resizedExtX;
+                    var currentXfrmExtY = this.resizedExtY;
+                    this.originalObject.txXfrm.setOffX( currentXfrmX + (previousTxXfrmX - xfrm.offX));
+                    this.originalObject.txXfrm.setOffY( currentXfrmY + (previousTxXfrmY - xfrm.offY));
+                    this.originalObject.txXfrm.setExtX( previousTxXfrmExtX - (xfrm.extX - currentXfrmExtX));
+                    this.originalObject.txXfrm.setExtY( previousTxXfrmExtY - (xfrm.extY - currentXfrmExtY));
+                }
                 if(this.originalObject.getObjectType() !== AscDFH.historyitem_type_GraphicFrame)
                 {
                     if(!this.originalObject.isCrop)
@@ -1299,7 +1356,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                 {
                     AscFormat.ExecuteNoHistory(function(){
                         this.originalObject.recalculateGeometry();
-                    }, this, [])
+                    }, this, []);
 
                     this.originalObject.transform = this.transform;
                     this.originalObject.invertTransform = AscCommon.global_MatrixTransformer.Invert(this.transform);
@@ -1528,6 +1585,12 @@ function ResizeTrackGroup(originalObject, cardDirection, parentTrack)
 
         this.resize = function(kd1, kd2, ShiftKey)
         {
+            if (this.originalObject instanceof AscFormat.SmartArt) {
+                if (this.bAspect === false) {
+                    return;
+                }
+                ShiftKey = true;
+            }
             var _cos = this.cos;
             var _sin = this.sin;
 
@@ -2075,6 +2138,7 @@ function ResizeTrackGroup(originalObject, cardDirection, parentTrack)
                 this.x = 0;
                 this.y = 0;
             }
+
             xfrm.setOffX(this.x);
             xfrm.setOffY(this.y);
             xfrm.setExtX(this.extX);
@@ -2196,6 +2260,29 @@ function ShapeForResizeInGroup(originalObject, parentTrack)
                 this.originalObject.spPr.xfrm.setParent(this.originalObject.spPr);
             }
             var xfrm = this.originalObject.spPr.xfrm;
+            var txXfrm = this.originalObject.txXfrm;
+            if (txXfrm) {
+                var previousTxXfrmX = txXfrm.offX;
+                var previousTxXfrmY = txXfrm.offY;
+                var previousTxXfrmExtX = txXfrm.extX;
+                var previousTxXfrmExtY = txXfrm.extY;
+
+                var currentXfrmX = this.x;
+                var currentXfrmY = this.y;
+                var currentXfrmExtX = this.extX;
+                var currentXfrmExtY = this.extY;
+                var previousXfrmOffX = this.originalObject.x || 0.0001;
+                var previousXfrmOffY = this.originalObject.y || 0.0001;
+                var previousXfrmExtX = this.originalObject.extX || 0.0001;
+                var previousXfrmExtY = this.originalObject.extY || 0.0001;
+
+                txXfrm.setOffX( previousTxXfrmX * (currentXfrmX / previousXfrmOffX));
+                txXfrm.setOffY(previousTxXfrmY * (currentXfrmY / previousXfrmOffY));
+                txXfrm.setExtX( previousTxXfrmExtX * (currentXfrmExtX / previousXfrmExtX));
+                txXfrm.setExtY( previousTxXfrmExtY * (currentXfrmExtY / previousXfrmExtY));
+            }
+
+
             xfrm.setOffX(this.x);
             xfrm.setOffY(this.y);
             xfrm.setExtX(this.extX);

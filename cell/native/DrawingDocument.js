@@ -3622,6 +3622,11 @@ function CDrawingDocument()
         this.m_oWordControl.m_oApi.sync_InitEditorTableStyles(_dst_styles);
     };
 
+    this.GetTableStylesPreviews = function()
+    {
+        return [];
+    };
+
     this.IsMobileVersion = function()
     {
         return this.IsMobile;

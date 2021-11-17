@@ -366,6 +366,7 @@ var GLOBAL_PATH_COUNT = 0;
     var CChangesDrawingsString = AscDFH.CChangesDrawingsString;
     var CChangesDrawingsObject = AscDFH.CChangesDrawingsObject;
     var CChangesDrawingsObjectNoId = AscDFH.CChangesDrawingsObjectNoId;
+    var CChangesDrawingsContent = AscDFH.CChangesDrawingsContent;
 
 
     var drawingsChangesMap = window['AscDFH'].drawingsChangesMap;
@@ -388,9 +389,17 @@ var GLOBAL_PATH_COUNT = 0;
     AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetStyle] = CChangesDrawingsLong;
     AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetTxPr] = CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetGroup] = CChangesDrawingsObject;
+
+    AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_AddUserShape] = CChangesDrawingsContent;
+    AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_RemoveUserShape] = CChangesDrawingsContent;
     AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_ChartStyle] = CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_ChartColors] = CChangesDrawingsObjectNoId;
 
+
+    AscDFH.drawingContentChanges[AscDFH.historyitem_ChartSpace_RemoveUserShape] =
+        AscDFH.drawingContentChanges[AscDFH.historyitem_ChartSpace_AddUserShape] = function(oClass) {
+        return oClass.userShapes;
+    };
 
     function CheckParagraphTextPr(oParagraph, oTextPr) {
         var oParaPr = oParagraph.Pr.Copy();
@@ -13329,6 +13338,8 @@ var GLOBAL_PATH_COUNT = 0;
                 break;
             }
             case AscDFH.historyitem_type_GroupShape:
+            case AscDFH.historyitem_type_SmartArt:
+            case AscDFH.historyitem_type_Drawing:
             {
                 for(var i = 0; i < sp.spTree.length; ++i) {
                     checkBlipFillRasterImages(sp.spTree[i]);

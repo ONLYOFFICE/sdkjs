@@ -3941,13 +3941,6 @@
 			arg1 = arg1.cross(arguments[1]);
 		}
 
-		if (arg0 instanceof cError) {
-			return arg0;
-		}
-		if (arg1 instanceof cError) {
-			return arg1;
-		}
-
 		if (arg0 instanceof cRef || arg0 instanceof cRef3D) {
 			arg0 = arg0.getValue();
 			if (arg0 instanceof cError) {
@@ -3972,6 +3965,13 @@
 			}
 		} else {
 			arg1 = arg1.tocNumber();
+		}
+
+		if (arg0 instanceof cError) {
+			return arg0;
+		}
+		if (arg1 instanceof cError) {
+			return arg1;
 		}
 
 		if (arg0 instanceof cArray && arg1 instanceof cArray) {
@@ -4035,6 +4035,7 @@
 	cROUNDDOWN.prototype.argumentsType = [argType.number, argType.number];
 	cROUNDDOWN.prototype.Calculate = function (arg) {
 		function rounddownHelper(number, num_digits) {
+			num_digits = Math.sign(num_digits) * Math.floor(Math.abs(num_digits));
 			if (num_digits > AscCommonExcel.cExcelMaxExponent) {
 				if (Math.abs(number) >= 1e-100 || num_digits <= 98303) { // The values are obtained experimentally
 					return new cNumber(number);
@@ -4065,13 +4066,6 @@
 			arg1 = arg1.cross(arguments[1]);
 		}
 
-		if (arg0 instanceof cError) {
-			return arg0;
-		}
-		if (arg1 instanceof cError) {
-			return arg1;
-		}
-
 		if (arg0 instanceof cRef || arg0 instanceof cRef3D) {
 			arg0 = arg0.getValue();
 			if (arg0 instanceof cError) {
@@ -4096,6 +4090,13 @@
 			}
 		} else {
 			arg1 = arg1.tocNumber();
+		}
+
+		if (arg0 instanceof cError) {
+			return arg0;
+		}
+		if (arg1 instanceof cError) {
+			return arg1;
 		}
 
 		if (arg0 instanceof cArray && arg1 instanceof cArray) {
@@ -4158,6 +4159,7 @@
 	cROUNDUP.prototype.argumentsType = [argType.number, argType.number];
 	cROUNDUP.prototype.Calculate = function (arg) {
 		function roundupHelper(number, num_digits) {
+			num_digits = Math.sign(num_digits) * Math.floor(Math.abs(num_digits));
 			if (num_digits > AscCommonExcel.cExcelMaxExponent) {
 				if (Math.abs(number) >= 1e-100 || num_digits <= 98303) { // The values are obtained experimentally
 					return new cNumber(number);
@@ -4188,13 +4190,6 @@
 			arg1 = arg1.cross(arguments[1]);
 		}
 
-		if (arg0 instanceof cError) {
-			return arg0;
-		}
-		if (arg1 instanceof cError) {
-			return arg1;
-		}
-
 		if (arg0 instanceof cRef || arg0 instanceof cRef3D) {
 			arg0 = arg0.getValue();
 			if (arg0 instanceof cError) {
@@ -4219,6 +4214,13 @@
 			}
 		} else {
 			arg1 = arg1.tocNumber();
+		}
+
+		if (arg0 instanceof cError) {
+			return arg0;
+		}
+		if (arg1 instanceof cError) {
+			return arg1;
 		}
 
 		if (arg0 instanceof cArray && arg1 instanceof cArray) {

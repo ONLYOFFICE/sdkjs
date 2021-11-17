@@ -142,14 +142,14 @@ CInlineLevelSdt.prototype.Copy = function(isUseSelection, oPr)
 
 	// ВАЖНО: настройки копируем после копирования содержимого, потому что есть специальные случаи, когда
 	//        содержимое дальше меняется в зависимости от настроек (например, для радио кнопок)
-	this.private_CopyPrTo(oContentControl);
+	this.private_CopyPrTo(oContentControl, oPr);
 
 	if (oContentControl.IsEmpty())
 		oContentControl.ReplaceContentWithPlaceHolder();
 
 	return oContentControl;
 };
-CInlineLevelSdt.prototype.private_CopyPrTo = function(oContentControl)
+CInlineLevelSdt.prototype.private_CopyPrTo = function(oContentControl, oPr)
 {
 	oContentControl.SetDefaultTextPr(this.GetDefaultTextPr());
 	oContentControl.SetLabel(this.GetLabel());
@@ -196,7 +196,7 @@ CInlineLevelSdt.prototype.private_CopyPrTo = function(oContentControl)
 		oContentControl.SetDatePickerPr(this.Pr.Date);
 
 	oContentControl.SetShowingPlcHdr(this.Pr.ShowingPlcHdr);
-	oContentControl.SetPlaceholder(this.private_CopyPlaceholder());
+	oContentControl.SetPlaceholder(this.private_CopyPlaceholder(oPr));
 	oContentControl.SetContentControlEquation(this.Pr.Equation);
 	oContentControl.SetContentControlTemporary(this.Pr.Temporary);
 
@@ -389,6 +389,22 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 
 		// Ищем первый ненулевой промежуток, если он на данной странице, тогда сохраняем его в форму
 		var oBounds = null;
+		for (var Key in this.Bounds)
+		{
+			if (this.Bounds[Key].W > 0.001 && this.Bounds[Key].H > 0.001)
+			{
+				if (this.Bounds[Key].PageInternal === PDSH.Page)
+					oBounds = this.Bounds[Key];
+
+				var CurLine = PDSH.Line - this.StartLine;
+				var CurRange = (0 === CurLine ? PDSH.Range - this.StartRange : PDSH.Range);
+
+				if ((Key | 0) !== ((CurLine << 16) & 0xFFFF0000) | (CurRange & 0x0000FFFF))
+					return;
+
+				break;
+			}
+		}
 
 		if (this.IsFixedForm())
 		{
@@ -397,25 +413,6 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 
 			if (oShapeBounds.Page === PDSH.Paragraph.GetAbsolutePage(PDSH.Page))
 				oBounds = oShapeBounds;
-		}
-		else
-		{
-			for (var Key in this.Bounds)
-			{
-				if (this.Bounds[Key].W > 0.001 && this.Bounds[Key].H > 0.001)
-				{
-					if (this.Bounds[Key].PageInternal === PDSH.Page)
-						oBounds = this.Bounds[Key];
-
-					var CurLine = PDSH.Line - this.StartLine;
-					var CurRange = (0 === CurLine ? PDSH.Range - this.StartRange : PDSH.Range);
-
-					if ((Key | 0) !== ((CurLine << 16) & 0xFFFF0000) | (CurRange & 0x0000FFFF))
-						return;
-
-					break;
-				}
-			}
 		}
 
 		var oRun = this.Content[0];
@@ -444,7 +441,43 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 			oGraphics.b_color1(oColor.r, oColor.g, oColor.b, this.IsPlaceHolder() ? 127 : 255);
 			oGraphics.SetFontSlot(fontslot_ASCII); // Именно на этой функции записываются настройки шрифта в метафайл
 
-			oGraphics.AddFormField(X, Y, oBounds.W, oBounds.H, nTextAscent, this);
+			// TODO: Заглушка для AdobeReader
+			//       Середина по вертикали у поля совпадает со средней точкой bbox, поэтому меняем сдвиги по вертикали
+			//       с учетом этого момента
+
+			var nW         = oBounds.W;
+			var nH         = oBounds.H;
+			var nBaseLine  = nTextAscent;
+
+			if ((this.IsTextForm() || this.IsDropDownList() || this.IsComboBox())
+				&& (!this.IsFixedForm() || !this.IsMultiLineForm())
+				&& g_oTextMeasurer.m_oManager.m_pFont
+				&& g_oTextMeasurer.m_oManager.m_pFont.m_pFaceInfo
+				&& g_oTextMeasurer.m_oLastFont)
+			{
+				if (oTransform)
+				{
+					var oParagraph = this.GetParagraph();
+					nBaseLine += (oTransform.TransformPointY(oParagraph.X, oParagraph.Y) - Y);
+				}
+
+				var oFaceInfo = g_oTextMeasurer.m_oManager.m_pFont.m_pFaceInfo;
+
+				var nKoef = g_oTextMeasurer.m_oLastFont.SetUpSize / g_oTextMeasurer.m_oManager.m_lUnits_Per_Em * g_dKoef_pt_to_mm;
+				var yMin  = oFaceInfo.header_yMin * nKoef;
+				var yMax  = oFaceInfo.header_yMax * nKoef;
+
+				var nMidPoint = ((nBaseLine - yMin) + (nBaseLine - yMax)) / 2;
+
+				var nDiff = nH / 2 - nMidPoint;
+				if (Math.abs(nDiff) > 0.001)
+				{
+					Y  -= nDiff;
+					nBaseLine += nDiff;
+				}
+			}
+
+			oGraphics.AddFormField(X, Y, nW, nH, nBaseLine, this);
 		}
 	}
 	else

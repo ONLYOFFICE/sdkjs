@@ -141,7 +141,7 @@
 			this.flags = undefined;
 
 			/** @type String */
-			this.chars = "";
+			this.chars = [];
 
 			this.charWidths = [];
 			this.charProps = [];
@@ -150,21 +150,79 @@
 
             this.fontNeedUpdate = false;
 
+
+			this.codesNL = {0xD: 1, 0xA: 1};
+
+			this.codesSpace = {
+				0xA: 1,
+				0xD: 1,
+				0x2028: 1,
+				0x2029: 1,
+				0x9: 1,
+				0xB: 1,
+				0xC: 1,
+				0x2020: 1,
+				0x2000: 1,
+				0x2001: 1,
+				0x2002: 1,
+				0x2003: 1,
+				0x2004: 1,
+				0x2005: 1,
+				0x2006: 1,
+				0x2008: 1,
+				0x2009: 1,
+				0x200A: 1,
+				0x200B: 1,
+				0x205F: 1,
+				0x3000: 1
+			};
+
+			this.codesReplaceNL = {};
+
+			this.codesHypNL = {
+				0xA: 1, 0xD: 1, 0x2028: 1, 0x2029: 1
+			};
+
+			this.codesHypSp = {
+				0x9: 1,
+				0xB: 1,
+				0xC: 1,
+				0x2020: 1,
+				0x2000: 1,
+				0x2001: 1,
+				0x2002: 1,
+				0x2003: 1,
+				0x2004: 1,
+				0x2005: 1,
+				0x2006: 1,
+				0x2008: 1,
+				0x2009: 1,
+				0x200A: 1,
+				0x200B: 1,
+				0x205F: 1,
+				0x3000: 1
+			};
+
+			this.codesHyphen = {
+				0x002D: 1, 0x00AD: 1, 0x2010: 1, 0x2012: 1, 0x2013: 1, 0x2014: 1
+			};
+
+
 			// For replacing invisible chars while rendering
 			/** @type RegExp */
 			this.reNL =  /[\r\n]/;
 			/** @type RegExp */
-			this.reSpace = /[\n\r\u2028\u2029\t\v\f\u0020\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2008\u2009\u200A\u200B\u205F\u3000]/;
+			//this.reSpace = /[\n\r\u2028\u2029\t\v\f\u0020\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2008\u2009\u200A\u200B\u205F\u3000]/;
 			/** @type RegExp */
 			this.reReplaceNL =  /\r?\n|\r/g;
 
 				// For hyphenation
 			/** @type RegExp */
-			this.reHypNL =  /[\n\r\u2028\u2029]/;
+			//this.reHypNL =  /[\n\r\u2028\u2029]/;
 			/** @type RegExp */
-			this.reHypSp =  /[\t\v\f\u0020\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2008\u2009\u200A\u200B\u205F\u3000]/;
+			//this.reHypSp =  /[\t\v\f\u0020\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2008\u2009\u200A\u200B\u205F\u3000]/;
 			/** @type RegExp */
-			this.reHyphen = /[\u002D\u00AD\u2010\u2012\u2013\u2014]/;
+			//this.reHyphen = /[\u002D\u00AD\u2010\u2012\u2013\u2014]/;
 
 			return this;
 		}
@@ -179,7 +237,7 @@
 			this.fragments = [];
 			if ( asc_typeof(fragments) === "string" ) {
 				var newFragment = new AscCommonExcel.Fragment();
-				newFragment.text = fragments;
+				newFragment.setFragmentText(fragments);
 				newFragment.format = new AscCommonExcel.Font();
 				this.fragments.push(newFragment);
 			} else {
@@ -444,7 +502,7 @@
 		};
 
 		StringRender.prototype._reset = function() {
-			this.chars = "";
+			this.chars = [];
 			this.charWidths = [];
 			this.charProps = [];
 			this.lines = [];
@@ -494,7 +552,7 @@
 			for (j = endPos, tw = 0, isAtEnd = true; j >= startPos; --j) {
 				if (isAtEnd) {
 					// skip space char at end of line
-					if ( (wrap) && this.reSpace.test(this.chars[j]) ) {continue;}
+					if ( (wrap) && this.codesSpace[this.chars[j]] ) {continue;}
 					isAtEnd = false;
 				}
 				tw += this.charWidths[j];
@@ -692,10 +750,10 @@
 				if (0 === charProp.total)
 					return;	// Символ уже изначально лежит в строке и в списке
 				var repeatEnd = pos + charProp.total;
-				self.chars = "" +
-					self.chars.slice(0, repeatEnd) +
-					self.chars.slice(pos, pos + 1) +
-					self.chars.slice(repeatEnd);
+				self.chars = [].concat(
+					self.chars.slice(0, repeatEnd),
+					self.chars.slice(pos, pos + 1),
+					self.chars.slice(repeatEnd));
 
 				self.charWidths = [].concat(
 					self.charWidths.slice(0, repeatEnd),
@@ -706,9 +764,9 @@
 			}
 
 			function removeRepeatChar() {
-				self.chars = "" +
-					self.chars.slice(0, pos) +
-					self.chars.slice(pos + 1);
+				self.chars = [].concat(
+					self.chars.slice(0, pos),
+					self.chars.slice(pos + 1));
 
 				self.charWidths = [].concat(
 					self.charWidths.slice(0, pos),
@@ -757,21 +815,20 @@
 			var i, j, fr, fmt, text, p, p_ = {}, pIndex, startCh;
 			var tw = 0, nlPos = 0, isEastAsian, hpPos = undefined, isSP_ = true, delta = 0;
 
-			function measureFragment(s) {
-				var j, ch, chc, chw, chPos, isNL, isSP, isHP, tm;
-
-				for (chPos = self.chars.length, j = 0; j < s.length; ++j, ++chPos) {
-					ch  = s.charAt(j);
-					tm = ctx.measureChar(ch, 0/*px units*/);
+			function measureFragment(frg) {
+				var j, chc, chw, chPos, isNL, isSP, isHP, tm;
+				var _tL = frg.getCharCodesLength();
+				for (chPos = self.chars.length, j = 0; j < _tL; ++j, ++chPos) {
+					chc = frg.getCharCode(j);
+					tm = ctx.measureChar(null, 0/*px units*/, chc);
 					chw = tm.width;
 
-					isNL = self.reHypNL.test(ch);
-					isSP = !isNL ? self.reHypSp.test(ch) : false;
+					isNL = self.codesHypNL[chc];
+					isSP = !isNL ? self.codesHypSp[chc] : false;
 
 					// if 'wrap flag' is set
 					if (wrap || wrapNL || verticalText) {
-						isHP = !isSP && !isNL ? self.reHyphen.test(ch) : false;
-						chc = s.charCodeAt(j);
+						isHP = !isSP && !isNL ? self.codesHyphen[chc] : false;
 						isEastAsian = AscCommon.isEastAsianScript(chc);
 						if (verticalText) {
 							// ToDo verticalText and new line or space
@@ -780,7 +837,7 @@
 							nlPos = chPos;
 							self._getCharPropAt(nlPos).nl = true;
 							self._getCharPropAt(nlPos).delta = delta;
-							ch = " ";
+							chc = 0xA0;
 							chw = 0;
 							tw = 0;
 							hpPos = undefined;
@@ -788,7 +845,7 @@
 							// move hyphenation position
 							hpPos = chPos + 1;
 						} else if (isEastAsian) {
-							if (0 !== j && !(AscCommon.g_aPunctuation[s.charCodeAt(j - 1)] &
+							if (0 !== j && !(AscCommon.g_aPunctuation[frg.getCharCode(j - 1)] &
 								AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_END_E) &&
 								!(AscCommon.g_aPunctuation[chc] & AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_BEGIN_E)) {
 								// move hyphenation position
@@ -807,7 +864,7 @@
 
 						if (isEastAsian) {
 							// move hyphenation position
-							if (j !== s.length && !(AscCommon.g_aPunctuation[s.charCodeAt(j + 1)] &
+							if (j !== _tL && !(AscCommon.g_aPunctuation[frg.getCharCode(j + 1)] &
 								AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_BEGIN_E) &&
 								!(AscCommon.g_aPunctuation[chc] & AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_END_E)) {
 								hpPos = chPos + 1;
@@ -822,7 +879,10 @@
 
 					tw += chw;
 					self.charWidths.push(chw);
-					self.chars += ch;
+					if (!self.chars) {
+						self.chars = [];
+					}
+					self.chars.push(chc);
 					isSP_ = isSP || isNL;
 					delta = tm.widthBB - tm.width;
 				}
@@ -836,7 +896,15 @@
 				fr = this.fragments[i];
 				fmt = fr.format.clone();
 				var va = fmt.getVerticalAlign();
-				text = this._filterText(fr.text, wrap || wrapNL);
+
+				//TODO пока не убрал эту регулярку, сначала перевожу в текст, потом обратно в сиволы
+				//TODO избавиться от регулярки!
+				if (fr.isInitCharCodes()) {
+					fr.initText();
+				}
+				text = this._filterText(fr.getFragmentText(), wrap || wrapNL);
+				fr.initCharCodes();
+				var textLength = fr.getCharCodesLength();
 
 				pIndex = this.chars.length;
 				p = this.charProps[pIndex];
@@ -868,7 +936,7 @@
 				}
 
 				if (fmt.getSkip()) {
-					this._getCharPropAt(pIndex).skip = text.length;
+					this._getCharPropAt(pIndex).skip = textLength;
 				}
 
 				if (fmt.getRepeat()) {
@@ -880,8 +948,8 @@
 					hasRepeats = true;
 				}
 
-				if (text.length < 1) {continue;}
-				measureFragment(text);
+				if (textLength < 1) {continue;}
+				measureFragment(fr);
 
 				// для italic текста прибавляем к концу строки разницу между charWidth и BBox
 				for (j = startCh; font.getItalic() && j < this.charWidths.length; ++j) {
@@ -982,19 +1050,19 @@
 
 				y = y1 + bl + dh;
 				if (align !== AscCommon.align_Justify || dx < 0.000001) {
-					ctx.fillText(self.chars.slice(begin, end), x1, y, undefined, self.charWidths.slice(begin, end), angle);
+					ctx.fillTextCode(self.chars.slice(begin, end), x1, y, undefined, self.charWidths.slice(begin, end), angle);
 				} else {
 					for (i = b = begin, x_ = x1; i < end; ++i) {
 						cp = self.charProps[i];
 						if (cp && cp.wrd && i > b) {
-							ctx.fillText(self.chars.slice(b, i), x_, y, undefined, self.charWidths.slice(b, i), angle);
+							ctx.fillTextCode(self.chars.slice(b, i), x_, y, undefined, self.charWidths.slice(b, i), angle);
 							x_ += self._calcCharsWidth(b, i - 1) + dx;
 							dw += dx;
 							b = i;
 						}
 					}
 					if (i > b) { // draw remainder of text
-						ctx.fillText(self.chars.slice(b, i), x_, y, undefined, self.charWidths.slice(b, i), angle);
+						ctx.fillTextCode(self.chars.slice(b, i), x_, y, undefined, self.charWidths.slice(b, i), angle);
 					}
 				}
 

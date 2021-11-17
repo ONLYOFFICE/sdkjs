@@ -48,6 +48,15 @@ function checkEmptyPlaceholderContent(content)
 {
     if(!content || content.Parent && content.Parent.txWarpStruct && content.Parent.recalcInfo.warpGeometry && content.Parent.recalcInfo.warpGeometry.preset !== "textNoShape" )
         return content;
+
+    if(content && content.Is_Empty()){
+        if(content.Parent.parent.isPlaceholder && content.Parent.parent.isPlaceholder()) {
+            return content;
+        }
+        if(content.isDocumentContentInSmartArtShape && content.isDocumentContentInSmartArtShape) {
+            return content;
+        }
+    }
     return null;
 }
 
@@ -2664,4 +2673,5 @@ window['AscFormat'].TextAddState = TextAddState;
 window['AscFormat'].SplineBezierState = SplineBezierState;
 window['AscFormat'].PolyLineAddState = PolyLineAddState;
 window['AscFormat'].AddPolyLine2State = AddPolyLine2State;
+window['AscFormat'].checkEmptyPlaceholderContent = checkEmptyPlaceholderContent;
 })(window);

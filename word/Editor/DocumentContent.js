@@ -208,6 +208,39 @@ CDocumentContent.prototype.Copy3 = function(Parent)//для заголовков
 	}
 	return DC;
 };
+
+CDocumentContent.prototype.createDuplicateForSmartArt = function (oPr, arrayOfTxBody) {
+	if (!arrayOfTxBody) {
+		return;
+	}
+	var that = this;
+	var arrayOfDC = Array(arrayOfTxBody.length).fill(0).map(function (value, idx) {
+		var DC = new CDocumentContent(arrayOfTxBody[idx], that.DrawingDocument, 0, 0, 0, 0, that.Split, that.TurnOffInnerWrap, true);
+		DC.Internal_Content_RemoveAll();
+		return DC;
+	});
+
+	var Count = this.Content.length;
+	if (Count % arrayOfDC.length === 0) {
+		var amountOfParOfPer = Count / arrayOfDC.length;
+	} else {
+		amountOfParOfPer = (Count - Count % (arrayOfDC.length)) / (arrayOfDC.length);
+	}
+	for (var i = 0; i < arrayOfDC.length; i += 1) {
+		var DC = arrayOfDC[i];
+		var firstParOnThisDC = i * amountOfParOfPer;
+		var lastParOnThisDC = firstParOnThisDC + amountOfParOfPer;
+		if (i === arrayOfDC.length - 1) {
+			lastParOnThisDC = Count;
+		}
+		for (var j = firstParOnThisDC; j < lastParOnThisDC; j += 1) {
+			DC.Internal_Content_Add(DC.Content.length, this.Content[j].createDuplicateForSmartArt(DC, oPr), false);
+		}
+	}
+	arrayOfTxBody.forEach(function (txBody, idx) {
+		txBody.setContent(arrayOfDC[idx]);
+	})
+}
 /**
  * В текущем содержимом получаем все комментарии и создаем их копии. Это иногда нужно делать во время функции
  * копирования, чтобы создавать новый уникальный комментарий с новым Id. Обрабатываются ТОЛЬКО комментарии, у которых
@@ -1993,6 +2026,8 @@ CDocumentContent.prototype.Is_Empty = function()
 
 	return this.Content[0].IsEmpty({SkipPlcHldr : false});
 };
+
+
 CDocumentContent.prototype.IsEmpty = function()
 {
 	return this.Is_Empty();

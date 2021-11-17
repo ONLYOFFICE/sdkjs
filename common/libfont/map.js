@@ -1691,7 +1691,7 @@ CFontSelectList.prototype =
 		_fs.m_wsFontName = "ASCW3";
 		this.List.push(_fs);
 
-        delete window["g_fonts_selection_bin"];
+        //delete window["g_fonts_selection_bin"];
     },
 
     isEnglishChar : function(_code)
@@ -3204,4 +3204,21 @@ var g_fontApplication = new CApplicationFonts();
     window['AscFonts'].LanguagesFontSelectTypes = LanguagesFontSelectTypes;
 
     window['AscFonts'].g_fontApplication = g_fontApplication;
+
+    window['AscFonts']['pickFont'] = function(name, style) {
+        var info = AscFonts.g_fontApplication.GetFontInfo(name, style);
+        var fontId = info.GetFontID(AscCommon.g_font_loader, style);
+        return fontId.file;
+    };
+    window['AscFonts']['getFontStreams'] = function() {
+        return AscFonts.g_fonts_streams;
+    };
+    window['AscFonts']['getFontStream'] = function(index) {
+        var s = AscFonts.g_fonts_streams[index];
+        return {
+            "data" : s.data,
+            "size" : s.size
+        };
+    };
+
 })(window);

@@ -299,7 +299,8 @@
 
     // create canvas
     if (null != this.element) {
-      this.element.innerHTML = '<div id="ws-canvas-outer">\
+		if (!this.Api.VersionHistory) {
+			this.element.innerHTML = '<div id="ws-canvas-outer">\
 											<canvas id="ws-canvas"></canvas>\
 											<canvas id="ws-canvas-overlay"></canvas>\
 											<canvas id="ws-canvas-graphic"></canvas>\
@@ -307,6 +308,7 @@
 											<canvas id="id_target_cursor" class="block_elem" width="1" height="1"\
 												style="width:2px;height:13px;display:none;z-index:9;"></canvas>\
 										</div>';
+		}
 
       this.canvas = document.getElementById("ws-canvas");
       this.canvasOverlay = document.getElementById("ws-canvas-overlay");
@@ -2212,8 +2214,9 @@
     this.buffers.mainGraphic.changeZoom(factor);
     this.buffers.overlayGraphic.changeZoom(factor);
     if (!factor) {
-    	this.cellEditor.changeZoom(factor);
-	}
+      this.cellEditor.changeZoom(factor);
+    }
+
     // Нужно сбросить кэш букв
     var i, length;
     for (i = 0, length = this.fmgrGraphics.length; i < length; ++i)
@@ -2828,7 +2831,7 @@
   	if (!options.isMatchCase) {
   		options.findWhat = options.findWhat.toLowerCase();
   	}
-  	options.findRegExp = AscCommonExcel.getFindRegExp(options.findWhat, options);
+  	options.findRegExp = AscCommonExcel.getFindRegExp(options.findWhat, options, true);
 
     History.Create_NewPoint();
     History.StartTransaction();
@@ -3001,36 +3004,57 @@
 
   // Печать
   WorkbookView.prototype.printSheets = function(printPagesData, pdfDocRenderer) {
-    //change zoom on default
-    var viewZoom = this.getZoom();
-    this.changeZoom(1);
+	  var pdfPrinter;
+	  var t = this;
+	  this._executeWithoutZoom(function () {
+		  pdfPrinter = new AscCommonExcel.CPdfPrinter(t.fmgrGraphics[3], t.m_oFont);
+		  if (pdfDocRenderer) {
+			  pdfPrinter.DocumentRenderer = pdfDocRenderer;
+		  }
+		  var ws;
+		  if (0 === printPagesData.arrPages.length) {
+			  // Печать пустой страницы
+			  ws = t.getWorksheet();
+			  ws.drawForPrint(pdfPrinter, null);
+		  } else {
+			  var indexWorksheet = -1;
+			  var indexWorksheetTmp = -1;
+			  for (var i = 0; i < printPagesData.arrPages.length; ++i) {
+				  indexWorksheetTmp = printPagesData.arrPages[i].indexWorksheet;
+				  if (indexWorksheetTmp !== indexWorksheet) {
+					  ws = t.getWorksheet(indexWorksheetTmp);
+					  indexWorksheet = indexWorksheetTmp;
+				  }
+				  ws.drawForPrint(pdfPrinter, printPagesData.arrPages[i], i, printPagesData.arrPages.length);
+			  }
+		  }
+	  });
 
-  	var pdfPrinter = new AscCommonExcel.CPdfPrinter(this.fmgrGraphics[3], this.m_oFont);
-  	if (pdfDocRenderer) {
-		pdfPrinter.DocumentRenderer = pdfDocRenderer;
-	}
-    var ws;
-    if (0 === printPagesData.arrPages.length) {
-      // Печать пустой страницы
-      ws = this.getWorksheet();
-      ws.drawForPrint(pdfPrinter, null);
-    } else {
-      var indexWorksheet = -1;
-      var indexWorksheetTmp = -1;
-      for (var i = 0; i < printPagesData.arrPages.length; ++i) {
-        indexWorksheetTmp = printPagesData.arrPages[i].indexWorksheet;
-        if (indexWorksheetTmp !== indexWorksheet) {
-          ws = this.getWorksheet(indexWorksheetTmp);
-          indexWorksheet = indexWorksheetTmp;
-        }
-        ws.drawForPrint(pdfPrinter, printPagesData.arrPages[i], i, printPagesData.arrPages.length);
-      }
-    }
-
-    this.changeZoom(viewZoom);
-
-    return pdfPrinter;
+	  return pdfPrinter;
   };
+
+	WorkbookView.prototype._executeWithoutZoom = function (runFunction) {
+		//TODO есть проблемы при отрисовке(не связано с печатью). сначала меняем zoom редактора,
+		// потом системный(открываем при системном зуме != 100%)
+
+		//change zoom on default
+		var trueRetinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
+		AscCommon.AscBrowser.retinaPixelRatio = 1;
+		var viewZoom = this.getZoom();
+
+		//приходится несколько раз выполнять действия, чтобы ppi выставился правильно
+		//если не делать init, то не сбросится ppi от системного зума - смотри функцию DrawingContext.prototype.changeZoom
+		if (viewZoom !== 1) {
+			this.changeZoom(1);
+		}
+		this.changeZoom(null);
+
+		runFunction();
+
+		AscCommon.AscBrowser.retinaPixelRatio = trueRetinaPixelRatio;
+		this.changeZoom(null);
+		this.changeZoom(viewZoom);
+	};
 
   WorkbookView.prototype._calcPagesPrintSheet = function (index, printPagesData, onlySelection, adjustPrint) {
   	var ws = this.model.getWorksheet(index);
@@ -3972,16 +3996,20 @@
 
 	WorkbookView.prototype.executeWithCurrentTopLeftCell = function (runFunction) {
 		var i, oWS;
-		var aTrueTopLeftCell = [];
-		for(i = 0; i < this.wsViews.length; i++) {
+		var aTrueTopLeftCell = {};
+		for(i in this.wsViews) {
 			oWS = this.wsViews[i];
-			aTrueTopLeftCell.push(oWS.model.getTopLeftCell());
-			oWS.model.setTopLeftCell(oWS.getCurrentTopLeftCell());
+			if (oWS) {
+				aTrueTopLeftCell[i] = oWS.model.getTopLeftCell();
+				oWS.model.setTopLeftCell(oWS.getCurrentTopLeftCell());
+			}
 		}
 		runFunction();
-		for(i = 0; i < this.wsViews.length; i++) {
+		for(i in this.wsViews) {
 			oWS = this.wsViews[i];
-			oWS.model.setTopLeftCell(aTrueTopLeftCell[i]);
+			if (oWS) {
+				oWS.model.setTopLeftCell(aTrueTopLeftCell[i]);
+			}
 		}
 	};
 	WorkbookView.prototype.convertEquationToMath = function (oEquation, isAll) {
@@ -4048,14 +4076,14 @@
 		}
 		AscFormat.drawingsUpdateForeignCursor(oDrawingsController, Asc.editor.wbModel.DrawingDocument, sDrawingData, UserId, Show, UserShortId);
 
-		if (sDrawingData) {
+		var selectionInfo = aCursorInfo[1];
+		if (sDrawingData || !selectionInfo) {
 			this.getWorksheet().cleanSelection();
 			this.collaborativeEditing.Remove_ForeignCursor(UserId);
 			this.getWorksheet()._drawSelection();
 			return;
 		}
 
-		var selectionInfo = aCursorInfo[1];
 		var Changes = new AscCommon.CCollaborativeChanges();
 		var Reader = Changes.GetStream(selectionInfo, 0, selectionInfo.length);
 
@@ -4100,13 +4128,15 @@
 		this.getWorksheet()._drawSelection();
 	};
 	WorkbookView.prototype.getCursorInfo = function () {
-		var sSelectionInfo = this.getCursorInfoBinary();
+		var sSelectionInfo = "";
 		var sDrawingData = "";
 		var oWsView = this.getWorksheet();
 		if (oWsView && oWsView.isSelectOnShape) {
 			if (oWsView.objectRender) {
 				sDrawingData = oWsView.objectRender.getDocumentPositionBinary();
 			}
+		} else {
+			sSelectionInfo = this.getCursorInfoBinary();
 		}
 		return sDrawingData + "," + sSelectionInfo;
 	};

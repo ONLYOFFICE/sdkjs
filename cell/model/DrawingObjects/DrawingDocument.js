@@ -1411,6 +1411,11 @@ function CDrawingDocument()
     {
     };
 
+    this.GetTableStylesPreviews = function()
+    {
+        return [];
+    };
+
     this.IsMobileVersion = function()
     {
         return false;

@@ -1303,7 +1303,10 @@ var editor;
 		History.Clear();
 		g_oIdCounter.Clear();
 		g_oTableId.Clear();
+		AscCommonExcel.g_StyleCache.Clear();
 		AscCommon.CollaborativeEditing.Clear();
+		AscCommon.g_oDocumentUrls.Clear();
+		this.openingEnd = {bin: false, xlsxStart: false, xlsx: false, data: null};
 		this.isApplyChangesOnOpenEnabled = true;
 		this.isDocumentLoadComplete = false;
 
@@ -2078,6 +2081,22 @@ var editor;
 			return;
         }
 
+		//история версий - возможно стоит грамотно чистить wbview, но не пересоздавать
+		var previousVersionZoom;
+		if (this.VersionHistory && this.controller) {
+			var elem = document.getElementById("ws-v-scrollbar");
+			if (elem) {
+				elem.parentNode.removeChild(elem);
+			}
+			elem = document.getElementById("ws-h-scrollbar");
+			if (elem) {
+				elem.parentNode.removeChild(elem);
+			}
+			this.controller.vsbApi = null;
+			this.controller.hsbApi = null;
+			previousVersionZoom = this.wb && this.wb.getZoom();
+		}
+
 		this.wb = new AscCommonExcel.WorkbookView(this.wbModel, this.controller, this.handlers, this.HtmlElement,
 			this.topLineEditorElement, this, this.collaborativeEditing, this.fontRenderingMode);
 
@@ -2136,6 +2155,9 @@ var editor;
 				this.VersionHistory.applyChanges(this);
 			}
 			this.sheetsChanged();
+			if (previousVersionZoom) {
+				this.asc_setZoom(previousVersionZoom);
+			}
 			this.asc_Resize();
 		}
 		//this.asc_Resize(); // Убрал, т.к. сверху приходит resize (http://bugzilla.onlyoffice.com/show_bug.cgi?id=14680)

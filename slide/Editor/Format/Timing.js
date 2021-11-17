@@ -299,6 +299,26 @@
         }
         return false;
     };
+    CTimeNodeBase.prototype.createEffectTrigger = function(fExternalTrigger, oPlayer) {
+        var oAttributes = this.getAttributesObject();
+        var fTrigger = (function() {
+            var oAddtionalTrigger;
+            return function() {
+                if(!oAddtionalTrigger) {
+                    if(fExternalTrigger()) {
+                        oAddtionalTrigger = oAttributes.stCondLst.createComplexTrigger(oPlayer);
+                    }
+                }
+                if(oAddtionalTrigger) {
+                    return oAddtionalTrigger.isFired(oPlayer);
+                }
+                return false;
+            };
+        })();
+        var oTrigger = this.getDefaultTrigger(oPlayer);
+        oTrigger.addTrigger(fTrigger);
+        return oTrigger;
+    };
     CTimeNodeBase.prototype.getStartTrigger = function(oPlayer) {
         var oAttributes = this.getAttributesObject();
         if(!oAttributes || !oAttributes.stCondLst) {
@@ -313,31 +333,33 @@
                 break;
             }
             case NODE_TYPE_CLICKEFFECT: {
-                oTrigger = oAttributes.stCondLst.createComplexTrigger(oPlayer);
-                oTrigger.addTrigger(this.createExternalEventTrigger(oPlayer, oTrigger, COND_EVNT_ON_CLICK, null));
+                oTrigger = this.createEffectTrigger(this.createExternalEventTrigger(oPlayer, oTrigger, COND_EVNT_ON_CLICK, null), oPlayer);
                 break;
             }
             case NODE_TYPE_WITHEFFECT: {
-                oTrigger = oAttributes.stCondLst.createComplexTrigger(oPlayer);
-
                 oPreviousTimeNode = this;
                 while ((oPreviousTimeNode = oPreviousTimeNode.getPreviousNode()) &&
                 (oPreviousTimeNode.getNodeType() === NODE_TYPE_WITHEFFECT)) {
                 }
                 if(oPreviousTimeNode) {
-                    oTrigger.addTrigger(function() {
+                    oTrigger = this.createEffectTrigger(function() {
                         return oPreviousTimeNode.isActive() || oPreviousTimeNode.isAtEnd();
-                    });
+                    }, oPlayer);
+                }
+                else {
+                    oTrigger = oAttributes.stCondLst.createComplexTrigger(oPlayer);
                 }
                 break;
             }
             case NODE_TYPE_AFTEREFFECT: {
-                oTrigger = oAttributes.stCondLst.createComplexTrigger(oPlayer);
                 oPreviousTimeNode = this.getPreviousNode();
                 if(oPreviousTimeNode) {
-                    oTrigger.addTrigger(function() {
+                    oTrigger = this.createEffectTrigger(function() {
                         return oPreviousTimeNode.isAtEnd();
-                    });
+                    }, oPlayer);
+                }
+                else {
+                    oTrigger = oAttributes.stCondLst.createComplexTrigger(oPlayer);
                 }
                 break;
             }
@@ -385,6 +407,9 @@
         oTime.setUnresolved();
         var oDurTime = this.getDur();
         if(oDurTime.isDefinite()) {
+            if(oAttr.spd !== null) {
+                oDurTime.scale(Math.abs(oAttr.spd));
+            }
             return oDurTime;
         }
         else if(oDurTime.isIndefinite()) {
@@ -736,7 +761,12 @@
     };
     CTimeNodeBase.prototype.getRelativeTime = function(nElapsedTime) {
         var oAttr = this.getAttributesObject();
-        var bAutoRev = oAttr.autoRev;
+        var oParentTimeNode = this.getParentTimeNode();
+        var oParentAttr = null;
+        if(oParentTimeNode) {
+            oParentAttr = oParentTimeNode.getAttributesObject();
+        }
+        var bAutoRev = oAttr.autoRev || (oParentAttr && oParentAttr.autoRev);
         var sTmFilter = oAttr.tmFilter;
         var fRelTime = 0.0;
         if(this.isFrozen() || this.isFinished()) {
@@ -791,6 +821,9 @@
                     aNumPairs.push([fNum1, fNum2]);
                 }
             }
+        }
+        if(oAttr.spd !== null && oAttr.spd < 0) {
+            fRelTime = 1 - fRelTime;
         }
         return fRelTime;
     };
@@ -1088,6 +1121,10 @@
     };
     CAnimationTime.prototype.divideAssign = function (nCount) {
         this.val /= nCount;
+        return this;
+    };
+    CAnimationTime.prototype.scale = function (nPrecentage) {
+        this.val = this.val * nPrecentage / 100000;
         return this;
     };
     CAnimationTime.prototype.unaryMinus = function () {
@@ -1652,7 +1689,7 @@
             oCopy.setBldAsOne(this.bldAsOne.createDuplicate(oIdMap));
         }
         if(this.bldSub) {
-            oCopy.setBldAsOne(this.bldSub.createDuplicate(oIdMap));
+            oCopy.setBldSub(this.bldSub.createDuplicate(oIdMap));
         }
     };
     CBldGraphic.prototype.privateWriteAttributes = function(pWriter) {
@@ -1977,7 +2014,7 @@
     };
     CGraphicEl.prototype.assignConnection = function(oObjectsMap) {
         if(AscCommon.isRealObject(oObjectsMap[this.spid])){
-            this.setSpid(oObjectsMap[this.dgmId].Id);
+            this.setSpid(oObjectsMap[this.spid].Id);
         }
         else {
             if(this.parent) {
@@ -2298,6 +2335,7 @@
         var oFirstTav;
         var oSecondTav;
         var oTav;
+        var fTimeInsideInterval;
         if(this.tavLst) {
             var aTav = this.tavLst.list;
             if(aTav.length > 0) {
@@ -2311,10 +2349,20 @@
                 }
                 if(nTav > -1) {
                     oTav = aTav[nTav];
-                    val = this.calculateBetweenTwoVals(oTav.val, oTav.val, 0);
                     if(aTav[nTav - 1]) {
                         sFmla = aTav[nTav - 1].fmla;
                     }
+                    oFirstTav = oTav;
+                    oSecondTav = oTav;
+                    fTimeInsideInterval = 0;
+                    if(nTav === 0) {
+                        if(aTav[nTav + 1] && AscFormat.fApproxEqual(aTav[nTav + 1].getTime(), oTav.getTime())) {
+                            oSecondTav = aTav[nTav + 1];
+                            sFmla = oTav.fmla;
+                            fTimeInsideInterval = (fRelTime) / (oSecondTav.getTime());
+                        }
+                    }
+                    val = this.calculateBetweenTwoVals(oFirstTav.val, oSecondTav.val, fTimeInsideInterval);
                 }
                 else {
                     for(nTav = 1; nTav < aTav.length; ++nTav) {
@@ -2348,7 +2396,7 @@
                                 oFirstTav = aTav[nTav - 1];
                                 oSecondTav = aTav[nTav];
                                 sFmla = oFirstTav.fmla;
-                                var fTimeInsideInterval = (fRelTime - aTav[nTav - 1].getTime()) / (aTav[nTav].getTime() - aTav[nTav - 1].getTime());
+                                fTimeInsideInterval = (fRelTime - aTav[nTav - 1].getTime()) / (aTav[nTav].getTime() - aTav[nTav - 1].getTime());
                                 val = this.calculateBetweenTwoVals(oFirstTav.val, oSecondTav.val, fTimeInsideInterval);
                             }
                         }
@@ -2473,6 +2521,11 @@
             oVarMap = this.getVarMapForFmla();
             oVarMap["$"] = fRelTime;
             fVal1 = this.getFormulaResult(sStrVal1, oVarMap);
+            if(!AscFormat.isRealNumber(fVal1)) {
+                oVarMap = this.getVarMapForFromTo();
+                oVarMap["$"] = fRelTime;
+                fVal1 = this.getFormulaResult(sStrVal1, oVarMap);
+            }
         }
         if(!AscFormat.isRealNumber(fVal1)) {
             return null;
@@ -2489,6 +2542,11 @@
             oVarMap["$"] = fRelTime;
             var sStrVal2 = oVal2.getVal();
             fVal2 = this.getFormulaResult(sStrVal2, oVarMap);
+            if(!AscFormat.isRealNumber(fVal2)) {
+                oVarMap = this.getVarMapForFromTo();
+                oVarMap["$"] = fRelTime;
+                fVal2 = this.getFormulaResult(sStrVal2, oVarMap);
+            }
         }
         if(!AscFormat.isRealNumber(fVal2)) {
             return null;
@@ -2894,11 +2952,11 @@
         this.presetSubtype = pr;
     };
     CCTn.prototype.setRepeatCount = function(pr) {
-        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CTnRepeatCount, this.repeatCount, pr));
+        oHistory.Add(new CChangeString(this, AscDFH.historyitem_CTnRepeatCount, this.repeatCount, pr));
         this.repeatCount = pr;
     };
     CCTn.prototype.setRepeatDur = function(pr) {
-        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CTnRepeatDur, this.repeatDur, pr));
+        oHistory.Add(new CChangeString(this, AscDFH.historyitem_CTnRepeatDur, this.repeatDur, pr));
         this.repeatDur = pr;
     };
     CCTn.prototype.setRestart = function(pr) {
@@ -4239,7 +4297,8 @@
                 var oHSL = {};
                 var oColorModifiers = new AscFormat.CColorModifiers();
                 oColorModifiers.RGB2HSL(oStartRGBColor.R, oStartRGBColor.G, oStartRGBColor.B, oHSL);
-                oHSL.H = oHSL.H * (1 + this.byHSL.c1 / 100000);
+                var nCoeff = 360*60000;
+                oHSL.H = (((oHSL.H / 255)*nCoeff + this.byHSL.c1)/nCoeff)*255;
                 oHSL.H = Math.min(255, Math.max(0, oHSL.H));
                 oHSL.S = oHSL.S * (1 + this.byHSL.c2 / 100000);
                 oHSL.S = Math.min(255, Math.max(0, oHSL.S));
@@ -6463,7 +6522,7 @@
                     break;
                 }
                 case FILTER_TYPE_BLINDS_VERTICAL: {
-                    return this.createBlindsVertical(x);
+                    return this.createBlindsVertical(oEffectData.time);
                     break;
                 }
                 case FILTER_TYPE_BOX_IN: {
@@ -7398,15 +7457,16 @@
     CAnimationDrawer.prototype.drawObject = function(oDrawing, oGraphics) {
         var sDrawingId = oDrawing.Get_Id();
         var oSandwich = this.getSandwich(sDrawingId);
+        var oAttributes = oSandwich && oSandwich.getAttributesMap()
         var fScale = oGraphics.m_oCoordTransform.sx;
-        if(!oSandwich) {
-            if(!this.isDrawingHidden(sDrawingId)) {
+        if(!this.isDrawingHidden(sDrawingId) || (oAttributes && oAttributes["style.visibility"] === "visible")) {
+            if(!oSandwich) {
                 var oTexture = this.texturesCache.checkTexture(sDrawingId, fScale);
                 oTexture.draw(oGraphics);
             }
-        }
-        else {
-            oSandwich.drawObject(oGraphics, oDrawing, this.texturesCache);
+            else {
+                oSandwich.drawObject(oGraphics, oDrawing, this.texturesCache, oAttributes);
+            }
         }
     };
     CAnimationDrawer.prototype.createGraphics = function(oCanvas, oRect) {
@@ -7455,12 +7515,13 @@
         }
         return oSandwich;
     };
-    CAnimationDrawer.prototype.isDrawingHidden = function(sId) {
+    CAnimationDrawer.prototype.isDrawingHidden = function(sId, oSandwich) {
         var oAnim = this.hiddenObjects[sId];
         if(!oAnim) {
             return false;
         }
         if(!oAnim.isDrawable()) {
+
             return true;
         }
         return false;
@@ -7940,9 +8001,8 @@
         var oAttributes = this.getAttributesMap();
         //console.log(oAttributes);
     };
-    CAnimSandwich.prototype.drawObject = function(oGraphics, oDrawing, oTextureCache) {
+    CAnimSandwich.prototype.drawObject = function(oGraphics, oDrawing, oTextureCache, oAttributesMap) {
         //this.print();
-        var oAttributesMap = this.getAttributesMap();
         var sVisibility = oAttributesMap["style.visibility"];
         if(sVisibility === "hidden") {
             return;
@@ -7978,6 +8038,15 @@
                 if(oStrokeColor) {
                     if(oDrawing.pen) {
                         var oPen = oDrawing.pen.createDuplicate();
+                        var oMods;
+                        if(oPen.Fill &&
+                            oPen.Fill.fill &&
+                            oPen.Fill.fill.color &&
+                            oPen.Fill.fill.color.Mods &&
+                            oPen.Fill.fill.color.Mods.Mods.length !== 0) {
+                            oMods = oPen.Fill.fill.color.Mods;
+                            oMods.Apply(oStrokeColor.RGBA);
+                        }
                         oPen.Fill = AscFormat.CreateUniFillByUniColor(oStrokeColor);
                         oDrawing.pen = oPen;
                     }
@@ -8079,6 +8148,11 @@
             }
             else if(typeof val === "string") {
                 if(val !== otherVal) {
+                    return false;
+                }
+            }
+            else if(val instanceof AscFormat.CUniColor) {
+                if(!val.IsIdentical(otherVal)) {
                     return false;
                 }
             }

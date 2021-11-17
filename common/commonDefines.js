@@ -72,6 +72,12 @@
 		DOTM : 0x004d,
 		FODT : 0x004e,
 		OTT  : 0x004f,
+		DOC_FLAT  : 0x0050,
+		DOCX_FLAT  : 0x0051,
+		HTML_IN_CONTAINER  : 0x0052,
+		DOCX_PACKAGE  : 0x0054,
+		OFORM  : 0x0055,
+		DOCXF  : 0x0056,
 		DOCY : 0x1001,
 		CANVAS_WORD : 0x2001,
 		JSON : 0x0808,	// Для mail-merge
@@ -447,6 +453,7 @@
 	var align_Center  = 2;
 	var align_Justify = 3;
 	var align_Distributed = 4;
+	var align_CenterContinuous = 5;
 
 
 	var linerule_AtLeast = 0x00;
@@ -2244,6 +2251,12 @@
 	prot['DOTM']                 = prot.DOTM;
 	prot['FODT']                 = prot.FODT;
 	prot['OTT']                  = prot.OTT;
+	prot['DOC_FLAT']             = prot.DOC_FLAT;
+	prot['DOCX_FLAT']            = prot.DOCX_FLAT;
+	prot['HTML_IN_CONTAINER']    = prot.HTML_IN_CONTAINER;
+	prot['DOCX_PACKAGE']         = prot.DOCX_PACKAGE;
+	prot['OFORM']                = prot.OFORM;
+	prot['DOCXF']                = prot.DOCXF;
 	prot['DOCY']                 = prot.DOCY;
 	prot['JSON']                 = prot.JSON;
 	prot['XLSX']                 = prot.XLSX;
@@ -3110,6 +3123,7 @@
 	window['AscCommon']['align_Center'] = window['AscCommon'].align_Center = align_Center;
 	window['AscCommon']['align_Justify'] = window['AscCommon'].align_Justify = align_Justify;
 	window['AscCommon']['align_Distributed'] = window['AscCommon'].align_Distributed = align_Distributed;
+	window['AscCommon']['align_CenterContinuous'] = window['AscCommon'].align_CenterContinuous = align_CenterContinuous;
 
 
 	window["AscCommon"]["c_oAscFormatPainterState"]    = c_oAscFormatPainterState;

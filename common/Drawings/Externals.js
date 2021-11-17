@@ -492,6 +492,9 @@ function CFontFileLoader(id)
             var _count_decode = Math.min(32, _stream.size);
             for (var i = 0; i < _count_decode; ++i)
                 _data[i] ^= guidOdttf[i % 16];
+
+            if (null != oThis.callback)
+                oThis.callback();
         };
         xhr.onerror = function()
         {
@@ -593,6 +596,12 @@ CFontFileLoader.prototype.LoadFontAsync = function(basePath, _callback, isEmbed)
 	document.getElementsByTagName('head')[0].appendChild(scriptElem);
 	return false;
 };
+
+CFontFileLoader.prototype["LoadFontAsync"] = CFontFileLoader.prototype.LoadFontAsync;
+CFontFileLoader.prototype["GetID"] = function() { return this.Id; };
+CFontFileLoader.prototype["GetStatus"] = function() { return this.Status; };
+CFontFileLoader.prototype["GetStreamIndex"] = function() { return this.stream_index; };
+
 
 var FONT_TYPE_ADDITIONAL = 0;
 var FONT_TYPE_STANDART = 1;
