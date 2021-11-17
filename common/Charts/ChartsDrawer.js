@@ -5231,21 +5231,21 @@ drawBarChart.prototype = {
 		}
 	},
 
-	_getStandardMaxHeight(){
+	_getStandardMaxHeight: function () {
 		var curVal;
 		var idxPoint;
 		var mainMaxH = 0;
 		var mainMinH = 0;
-		for(var i = 0; i < this.ptCount; i++){	
+		for (var i = 0; i < this.ptCount; i++) {
 			this._calculateSummStacked(i);
 			for (var k = 0; k < this.chart.series.length; k++) {
 				idxPoint = this.cChartDrawer.getIdxPoint(this.chart.series[k], i);
 				curVal = idxPoint ? parseFloat(idxPoint.val) : 0;
-				
-				if(curVal > mainMaxH){
+
+				if (curVal > mainMaxH) {
 					mainMaxH = curVal;
 				}
-				if(curVal < mainMinH){
+				if (curVal < mainMinH) {
 					mainMinH = curVal;
 				}
 			}
@@ -5254,7 +5254,7 @@ drawBarChart.prototype = {
 		return {mainMaxH: mainMaxH, mainMinH: mainMinH}
 	},
 
-	_getMaxHeightStacked: function(){
+	_getMaxHeightStacked: function () {
 		var curVal;
 		var tempMax = 0;
 		var tempMin = 0;
@@ -5267,15 +5267,15 @@ drawBarChart.prototype = {
 		var countMin = 0;
 
 		//нахождение пропорционально наибольшей и наименьшей высоты для накопительных процентных пирамид
-		for(var i = 0; i < this.ptCount; i++){	
+		for (var i = 0; i < this.ptCount; i++) {
 			this._calculateSummStacked(i);
 			for (var k = 0; k < this.chart.series.length; k++) {
 				idxPoint = this.cChartDrawer.getIdxPoint(this.chart.series[k], i);
 				curVal = idxPoint ? parseFloat(idxPoint.val) : 0;
-				
+
 				if (curVal > 0) {
 					tempMax += curVal;
-				}else{
+				} else {
 					tempMin += curVal;
 				}
 			}
@@ -5293,16 +5293,16 @@ drawBarChart.prototype = {
 		var indexMax = 0;
 		var indexMin = 0;
 		//сортировка высоты по пропорциональным положительным и отрицательным значениям
-		for(var i = 0; i < maxH1.length; i++){
-			if(tempMax < maxH1[i]){
+		for (var i = 0; i < maxH1.length; i++) {
+			if (tempMax < maxH1[i]) {
 				tempMax = maxH1[i];
 				countMax = maxH2[i];
 				indexMax = i;
 			}
 		}
 
-		for(var i = 0; i < minH1.length; i++){
-			if(tempMin > minH1[i]){
+		for (var i = 0; i < minH1.length; i++) {
+			if (tempMin > minH1[i]) {
 				tempMin = minH1[i];
 				countMin = minH2[i];
 				indexMin = i;
