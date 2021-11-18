@@ -3506,6 +3506,10 @@ var editor;
   	this.wb.removeAllComments(isMine, isCurrent);
   };
 
+  spreadsheet_api.prototype.asc_GetCommentLogicPositionv = function(sId) {
+  	return -1;
+  };
+
 	spreadsheet_api.prototype.asc_ResolveAllComments = function(isMine, isCurrent, arrIds)
 	{
 		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
@@ -6550,6 +6554,7 @@ var editor;
   prot["asc_findComment"] = prot.asc_findComment;
   prot["asc_removeComment"] = prot.asc_removeComment;
   prot["asc_RemoveAllComments"] = prot.asc_RemoveAllComments;
+  prot["asc_GetCommentLogicPosition"] = prot.asc_GetCommentLogicPosition;
   prot["asc_ResolveAllComments"] = prot.asc_ResolveAllComments;
   prot["asc_showComment"] = prot.asc_showComment;
   prot["asc_selectComment"] = prot.asc_selectComment;

@@ -162,13 +162,18 @@ CChangesCommentsAdd.prototype.constructor = CChangesCommentsAdd;
 CChangesCommentsAdd.prototype.Type = AscDFH.historyitem_Comments_Add;
 CChangesCommentsAdd.prototype.Undo = function()
 {
-	var oComments = this.Class;
-	delete oComments.m_aComments[this.Id];
-	editor.sync_RemoveComment(this.Id);
+	var oComment = this.Class.m_arrCommentsById[this.Id];
+	if (oComment)
+	{
+		delete this.Class.m_arrCommentsById[this.Id];
+		this.Class.UpdateCommentPosition(oComment);
+		editor.sync_RemoveComment(this.Id);
+	}
 };
 CChangesCommentsAdd.prototype.Redo = function()
 {
-	this.Class.m_aComments[this.Id] = this.Comment;
+	this.Class.m_arrCommentsById[this.Id] = this.Comment;
+	this.Class.UpdateCommentPosition(this.Comment);
 	editor.sync_AddComment(this.Id, this.Comment.Data);
 };
 CChangesCommentsAdd.prototype.WriteToBinary = function(Writer)
@@ -212,13 +217,19 @@ CChangesCommentsRemove.prototype.constructor = CChangesCommentsRemove;
 CChangesCommentsRemove.prototype.Type = AscDFH.historyitem_Comments_Remove;
 CChangesCommentsRemove.prototype.Undo = function()
 {
-	this.Class.m_aComments[this.Id] = this.Comment;
+	this.Class.m_arrCommentsById[this.Id] = this.Comment;
+	this.Class.UpdateCommentPosition(this.Comment);
 	editor.sync_AddComment(this.Id, this.Comment.Data);
 };
 CChangesCommentsRemove.prototype.Redo = function()
 {
-	delete this.Class.m_aComments[this.Id];
-	editor.sync_RemoveComment(this.Id);
+	var oComment = this.Class.m_arrCommentsById[this.Id];
+	if (oComment)
+	{
+		delete this.Class.m_arrCommentsById[this.Id];
+		this.Class.UpdateCommentPosition(oComment);
+		editor.sync_RemoveComment(this.Id);
+	}
 };
 CChangesCommentsRemove.prototype.WriteToBinary = function(Writer)
 {

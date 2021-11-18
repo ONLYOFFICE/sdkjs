@@ -13286,6 +13286,21 @@ Paragraph.prototype.RemoveCommentMarks = function(Id)
 		}
 	}
 };
+Paragraph.prototype.GetCommentMark = function(sId, isStart)
+{
+	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
+	{
+		var oElement = this.Content[nPos];
+		if (para_Comment === oElement.Type
+			&& sId === oElement.GetCommentId()
+			&& isStart === oElement.IsCommentStart())
+		{
+			return oElement;
+		}
+	}
+
+	return null;
+};
 Paragraph.prototype.MoveCursorToCommentMark = function(sId)
 {
 	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)

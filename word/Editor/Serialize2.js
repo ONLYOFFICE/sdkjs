@@ -6775,9 +6775,9 @@ function BinaryCommentsTableWriter(memory, doc, oMapCommentId, commentUniqueGuid
     {
         var oThis = this;
 		var nIndex = 0;
-        for(var i in this.Document.Comments.m_aComments)
+        for(var i in this.Document.Comments.m_arrCommentsById)
 		{
-			var oComment = this.Document.Comments.m_aComments[i];
+			var oComment = this.Document.Comments.m_arrCommentsById[i];
 			if (this.isDocument === oComment.IsGlobalComment()) {
 				this.bs.WriteItem(c_oSer_CommentsType.Comment, function () { oThis.WriteComment(oComment.Data, oComment.Id, nIndex++); });
 			}

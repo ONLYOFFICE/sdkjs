@@ -2428,8 +2428,8 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 
     this.HighlightColor = null;
 
-    if(typeof AscCommon.CComments !== "undefined")
-        this.Comments = new AscCommon.CComments();
+	if (typeof AscCommon.CComments !== "undefined")
+		this.Comments = new AscCommon.CComments(this);
 
     this.Lock = new AscCommon.CLock();
 
@@ -2680,6 +2680,9 @@ CDocument.prototype.On_EndLoad                     = function()
     // Специальная проверка плохо заданных нумераций через стиль. Когда ссылка на нумерацию в стиле есть,
     // а обратной ссылки в нумерации на стиль - нет.
     this.Styles.Check_StyleNumberingOnLoad(this.Numbering);
+
+    // Обновляем массив позиций для комментариев
+    this.Comments.UpdateAll();
 
 	// ВАЖНО: Вызываем данную функцию после обновления секций
 	this.private_UpdateFieldsOnEndLoad();
@@ -3166,6 +3169,9 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 
 	if (this.Action.Additional.RadioRequired)
 		this.private_FinalizeRadioRequired();
+
+	if (this.Action.Additional.CommentPosition)
+		this.private_FinalizeUpdateCommentPosition();
 	//------------------------------------------------------------------------------------------------------------------
 
 	var isAllPointsEmpty = true;
@@ -3436,6 +3442,14 @@ CDocument.prototype.private_FinalizeRadioRequired = function()
 			if (oRadioButton.IsFormRequired() !== isRequired)
 				oRadioButton.SetFormRequired(isRequired);
 		}
+	}
+};
+CDocument.prototype.private_FinalizeUpdateCommentPosition = function()
+{
+	for (var sId in this.Action.Additional.CommentPosition)
+	{
+		var oComment = this.Action.Additional.CommentPosition[sId];
+		this.Comments.UpdateCommentPosition(oComment);
 	}
 };
 /**
@@ -13820,6 +13834,26 @@ CDocument.prototype.GetAllComments = function(isMine, isCurrent)
 	}
 
 	return arrCommentsId;
+};
+/**
+ * Сохраняем комментарий, у которого изменилась позиция
+ * @param {CComment} oComment
+ */
+CDocument.prototype.UpdateCommentPosition = function(oComment)
+{
+	if (AscCommon.g_oIdCounter.m_bLoad)
+		return;
+
+	if (!this.Action.Start)
+	{
+		this.Comments.UpdateCommentPosition(oComment);
+		return;
+	}
+
+	if (!this.Action.Additional.CommentPosition)
+		this.Action.Additional.CommentPosition = {};
+
+	this.Action.Additional.CommentPosition[oComment.GetId()] = oComment;
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для работы с textbox
@@ -26117,6 +26151,14 @@ CDocument.prototype.private_ConvertTableToText = function(oTable, oProps)
 	
 	}
 	return NewContent;
+};
+/**
+ * Получаем класс, управляющий комментариями
+ * @returns {?AscCommonWord.CComments}
+ */
+CDocument.prototype.GetCommentsManager = function()
+{
+	return this.Comments;
 };
 
 function CDocumentSelectionState()
