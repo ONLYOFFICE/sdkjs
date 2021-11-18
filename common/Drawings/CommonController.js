@@ -710,6 +710,9 @@ function DrawingObjectsController(drawingObjects)
     this.chartForProps = null;
 
     this.handleEventMode = HANDLE_EVENT_MODE_HANDLE;
+
+
+    this.lastCursorInfo = null;
 }
 
 function CanStartEditText(oController)
@@ -1712,19 +1715,55 @@ DrawingObjectsController.prototype =
         }
     },
 
+    checkSendCursorInfo: function()
+    {
+        var oTargetInfo = this.getDocumentPositionForCollaborative();
+        var bSend = false;
+        if(oTargetInfo)
+        {
+            if(!this.lastCursorInfo)
+            {
+                bSend = true;
+            }
+            else
+            {
+                if(this.lastCursorInfo.Class !== oTargetInfo.Class ||
+                    this.lastCursorInfo.Position !== oTargetInfo.Position)
+                {
+                    bSend = true;
+                }
+            }
+        }
+        else
+        {
+            if(this.lastCursorInfo)
+            {
+                bSend = true;
+            }
+        }
+        if(bSend)
+        {
+            this.lastCursorInfo = oTargetInfo;
+            Asc.editor.wb.updateTargetForCollaboration();
+        }
+    },
+
     recalculateCurPos: function(bUpdateX, bUpdateY)
 	{
 		var oTargetDocContent = this.getTargetDocContent(undefined, true);
-		if (oTargetDocContent) {
+		if (oTargetDocContent)
+        {
 
             var oRet = oTargetDocContent.RecalculateCurPos(bUpdateX, bUpdateY);
-            if(Asc.editor && Asc.editor.wb) {
-                Asc.editor.wb.updateTargetForCollaboration();
+            if(Asc.editor && Asc.editor.wb)
+            {
+                this.checkSendCursorInfo();
             }
             return oRet;
         }
-        if(Asc.editor && Asc.editor.wb) {
-            Asc.editor.wb.updateTargetForCollaboration();
+        if(Asc.editor && Asc.editor.wb)
+        {
+            this.checkSendCursorInfo();
         }
         return {X : 0, Y : 0, Height : 0, PageNum : 0, Internal : {Line : 0, Page : 0, Range : 0}, Transform : null};
 	},
