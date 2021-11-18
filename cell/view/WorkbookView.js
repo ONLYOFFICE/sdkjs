@@ -1739,7 +1739,7 @@
       t.Api.cleanSpelling(true);
 
       t.updateTargetForCollaboration();
-      t.sendCursor();
+      t.sendCursor(true);
 
       asc_applyFunction(callback, true);
     };
@@ -3948,9 +3948,9 @@
 		}
 	};
 
-	WorkbookView.prototype.sendCursor = function () {
+	WorkbookView.prototype.sendCursor = function (needSend) {
 		var CurTime = new Date().getTime();
-		if (true === this.NeedUpdateTargetForCollaboration && (CurTime - this.LastUpdateTargetTime > 1000))
+		if (needSend || (true === this.NeedUpdateTargetForCollaboration && (CurTime - this.LastUpdateTargetTime > 1000)))
 		{
 			this.NeedUpdateTargetForCollaboration = false;
 			var HaveChanges = History.Have_Changes(true);
