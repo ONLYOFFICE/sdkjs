@@ -7260,6 +7260,7 @@
 	};
 	Worksheet.prototype.moveSparklineGroup = function (oBBoxFrom, oBBoxTo, copyRange, offset, wsTo, wsFrom) {
 		var t = this;
+		var isMove = !wsFrom;
 		if (!wsTo) {
 			wsTo = this;
 		}
@@ -7347,14 +7348,28 @@
 									}
 								}
 							} else {
-								cloneElem._f.setOffset(offset);
-								if (wsTo.sName !== cloneElem._f.sheet) {
-									cloneElem._f.setSheet(wsTo.sName);
+								if (isMove) {
+									//если реальный перенос внутри книги, а не копирование/вставка
+									if (oBBoxFrom.containsRange(cloneElem._f)) {
+										cloneElem._f.setOffset(offset);
+										if (wsTo.sName !== cloneElem._f.sheet) {
+											cloneElem._f.setSheet(wsTo.sName);
+											AscCommonExcel.executeInR1C1Mode(false, function () {
+												cloneElem.f = cloneElem._f.getName();
+											});
+											isChange = true;
+										}
+									}
+								} else {
+									cloneElem._f.setOffset(offset);
+									if (wsTo.sName !== cloneElem._f.sheet) {
+										cloneElem._f.setSheet(wsTo.sName);
+									}
+									AscCommonExcel.executeInR1C1Mode(false, function () {
+										cloneElem.f = cloneElem._f.getName();
+									});
+									isChange = true;
 								}
-								AscCommonExcel.executeInR1C1Mode(false, function () {
-									cloneElem.f = cloneElem._f.getName();
-								});
-								isChange = true;
 							}
 						}
 
