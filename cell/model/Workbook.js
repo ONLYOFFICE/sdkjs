@@ -7354,11 +7354,11 @@
 										cloneElem._f.setOffset(offset);
 										if (wsTo.sName !== cloneElem._f.sheet) {
 											cloneElem._f.setSheet(wsTo.sName);
-											AscCommonExcel.executeInR1C1Mode(false, function () {
-												cloneElem.f = cloneElem._f.getName();
-											});
-											isChange = true;
 										}
+										AscCommonExcel.executeInR1C1Mode(false, function () {
+											cloneElem.f = cloneElem._f.getName();
+										});
+										isChange = true;
 									}
 								} else {
 									cloneElem._f.setOffset(offset);
