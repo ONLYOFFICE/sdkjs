@@ -619,6 +619,10 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 
 		return "";
 	};
+	CComment.prototype.IsQuoted = function()
+	{
+		return (this.Data && this.Data.GetQuoteText());
+	};
 	CComment.prototype.IsSolved = function()
 	{
 		if (this.Data)
@@ -1012,6 +1016,28 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 		if (!oChangedComments)
 			oChangedComments = {};
 
+		if (!oComment.IsQuoted())
+		{
+			if (oComment !== this.m_arrComments[this.m_arrComments.length - 1])
+			{
+				for (var nIndex = 0, nCount = this.m_arrComments.length; nIndex < nCount; ++nIndex)
+				{
+					if (oComment === this.m_arrComments[nIndex])
+					{
+						this.m_arrComments.splice(nIndex, 1);
+						break;
+					}
+				}
+
+				this.m_arrComments.push(oComment);
+			}
+
+			oComment.SetPosition(this.m_arrComments.length - 1);
+			oChangedComments[oComment.GetId()] = this.m_arrComments.length - 1;
+
+			return oChangedComments;
+		}
+
 		var oCommentPos = oComment.GetDocumentPosition();
 		if (!oCommentPos)
 			return oChangedComments;
@@ -1032,7 +1058,7 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 				continue;
 			}
 
-			if (!isAdded && AscCommonWord.CompareDocumentPositions(oCommentPos, oCurComment.GetDocumentPosition()) < 0)
+			if (!isAdded && (!oCurComment.IsQuoted() || AscCommonWord.CompareDocumentPositions(oCommentPos, oCurComment.GetDocumentPosition()) < 0))
 			{
 				this.m_arrComments.splice(nIndex, 0, oComment);
 				isAdded = true;
