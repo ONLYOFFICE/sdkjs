@@ -166,15 +166,17 @@ CChangesCommentsAdd.prototype.Undo = function()
 	if (oComment)
 	{
 		delete this.Class.m_arrCommentsById[this.Id];
-		this.Class.UpdateCommentPosition(oComment);
+		var oChangedComments = this.Class.UpdateCommentPosition(oComment);
 		editor.sync_RemoveComment(this.Id);
+		editor.sync_ChangeCommentLogicalPosition(oChangedComments, this.Class.GetCommentsPositionsCount());
 	}
 };
 CChangesCommentsAdd.prototype.Redo = function()
 {
 	this.Class.m_arrCommentsById[this.Id] = this.Comment;
-	this.Class.UpdateCommentPosition(this.Comment);
+	var oChangedComments = this.Class.UpdateCommentPosition(this.Comment);
 	editor.sync_AddComment(this.Id, this.Comment.Data);
+	editor.sync_ChangeCommentLogicalPosition(oChangedComments, this.Class.GetCommentsPositionsCount());
 };
 CChangesCommentsAdd.prototype.WriteToBinary = function(Writer)
 {
@@ -218,8 +220,9 @@ CChangesCommentsRemove.prototype.Type = AscDFH.historyitem_Comments_Remove;
 CChangesCommentsRemove.prototype.Undo = function()
 {
 	this.Class.m_arrCommentsById[this.Id] = this.Comment;
-	this.Class.UpdateCommentPosition(this.Comment);
+	var oChangedComments = this.Class.UpdateCommentPosition(this.Comment);
 	editor.sync_AddComment(this.Id, this.Comment.Data);
+	editor.sync_ChangeCommentLogicalPosition(oChangedComments, this.Class.GetCommentsPositionsCount());
 };
 CChangesCommentsRemove.prototype.Redo = function()
 {
@@ -227,8 +230,9 @@ CChangesCommentsRemove.prototype.Redo = function()
 	if (oComment)
 	{
 		delete this.Class.m_arrCommentsById[this.Id];
-		this.Class.UpdateCommentPosition(oComment);
+		var oChangedComments = this.Class.UpdateCommentPosition(oComment);
 		editor.sync_RemoveComment(this.Id);
+		editor.sync_ChangeCommentLogicalPosition(oChangedComments, this.Class.GetCommentsPositionsCount());
 	}
 };
 CChangesCommentsRemove.prototype.WriteToBinary = function(Writer)

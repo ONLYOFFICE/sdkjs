@@ -666,7 +666,13 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	};
 	CComment.prototype.SetPosition = function(nPos)
 	{
-		this.Position = nPos;
+		if (this.Position !== nPos)
+		{
+			this.Position = nPos;
+			return true;
+		}
+
+		return false;
 	};
 	CComment.prototype.GetPosition = function()
 	{
@@ -720,6 +726,8 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	this.m_arrComments     = [];    // Массив
 
     this.Pages = [];
+
+    this.MarksToCheck = []; // Для ситуаций, когда мы создаем сначала ParaComment и только потом Comment (например, во время открытия)
 
     this.Get_Id = function()
     {
@@ -986,19 +994,27 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 
 		return null;
 	};
-	CComments.prototype.UpdateCommentPosition = function(oComment)
+	CComments.prototype.UpdateCommentPosition = function(oComment, oChangedComments)
 	{
+		if (!oChangedComments)
+			oChangedComments = {};
+
 		var sId = oComment.GetId();
 		if (this.m_arrCommentsById[sId])
-			this.private_UpdateCommentPosition(oComment);
+			this.private_UpdateCommentPosition(oComment, oChangedComments);
 		else
-			this.private_RemoveCommentPosition(oComment);
+			this.private_RemoveCommentPosition(oComment, oChangedComments);
+
+		return oChangedComments;
 	};
-	CComments.prototype.private_UpdateCommentPosition = function(oComment)
+	CComments.prototype.private_UpdateCommentPosition = function(oComment, oChangedComments)
 	{
+		if (!oChangedComments)
+			oChangedComments = {};
+
 		var oCommentPos = oComment.GetDocumentPosition();
 		if (!oCommentPos)
-			return;
+			return oChangedComments;
 
 		var isAdded = false;
 		for (var nIndex = 0, nCount = this.m_arrComments.length; nIndex < nCount; ++nIndex)
@@ -1020,19 +1036,27 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 			{
 				this.m_arrComments.splice(nIndex, 0, oComment);
 				isAdded = true;
+				nCount++;
 			}
 
-			this.m_arrComments[nIndex].SetPosition(nIndex);
+			if (this.m_arrComments[nIndex].SetPosition(nIndex))
+				oChangedComments[this.m_arrComments[nIndex].GetId()] = nIndex;
 		}
 
 		if (!isAdded)
 		{
 			this.m_arrComments.push(oComment);
 			oComment.SetPosition(this.m_arrComments.length - 1);
+			oChangedComments[oComment.GetId()] = this.m_arrComments.length - 1;
 		}
+
+		return oChangedComments;
 	};
-	CComments.prototype.private_RemoveCommentPosition = function(oComment)
+	CComments.prototype.private_RemoveCommentPosition = function(oComment, oChangedComments)
 	{
+		if (!oChangedComments)
+			oChangedComments = {};
+
 		for (var nIndex = 0, nCount = this.m_arrComments.length; nIndex < nCount; ++nIndex)
 		{
 			var oCurComment = this.m_arrComments[nIndex];
@@ -1048,17 +1072,55 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 				continue;
 			}
 
-			this.m_arrComments[nIndex].SetPosition(nIndex);
+			if (this.m_arrComments[nIndex].SetPosition(nIndex))
+				oChangedComments[this.m_arrComments[nIndex].GetId()] = nIndex;
 		}
 
 		oComment.SetPosition(-1);
+		oChangedComments[oComment.GetId()] = -1;
 	};
 	CComments.prototype.UpdateAll = function()
 	{
+		this.CheckMarks();
+
+		var oChangedComments = {};
 		for (var sId in this.m_arrCommentsById)
 		{
-			this.private_UpdateCommentPosition(this.m_arrCommentsById[sId]);
+			this.private_UpdateCommentPosition(this.m_arrCommentsById[sId], oChangedComments);
 		}
+
+		this.LogicDocument.GetApi().sync_ChangeCommentLogicalPosition(oChangedComments, this.GetCommentsPositionsCount());
+	};
+	/**
+	 * Получаем количество комментариев, у которых есть логическая позиция в документе
+	 * @returns {number}
+	 */
+	CComments.prototype.GetCommentsPositionsCount = function()
+	{
+		return this.m_arrComments.length;
+	};
+	CComments.prototype.AddMarkToCheck = function(oMark)
+	{
+		this.MarksToCheck.push(oMark);
+	};
+	CComments.prototype.CheckMarks = function()
+	{
+		for (var nIndex = 0, nCount = this.MarksToCheck.length; nIndex < nCount; ++nIndex)
+		{
+			var oMark      = this.MarksToCheck[nIndex];
+			var sCommentId = oMark.GetCommentId();
+			var oComment   = this.Get_ById(sCommentId);
+			var oParagraph = oMark.GetParagraph();
+			if (oComment && oParagraph)
+			{
+				if (oMark.IsCommentStart())
+					oComment.Set_StartId(oParagraph.GetId());
+				else
+					oComment.Set_EndId(oParagraph.GetId());
+			}
+		}
+
+		this.MarksToCheck.length = 0;
 	};
 
 /**
@@ -1249,6 +1311,10 @@ ParaComment.prototype.SetParagraph = function(oParagraph)
 				oComment.Set_StartId(this.Paragraph.GetId());
 			else
 				oComment.Set_EndId(this.Paragraph.GetId());
+		}
+		else
+		{
+			oDocComments.AddMarkToCheck(this);
 		}
 	}
 };

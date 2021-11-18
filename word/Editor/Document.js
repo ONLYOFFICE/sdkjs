@@ -3446,11 +3446,14 @@ CDocument.prototype.private_FinalizeRadioRequired = function()
 };
 CDocument.prototype.private_FinalizeUpdateCommentPosition = function()
 {
+	var oChangedComments = {};
 	for (var sId in this.Action.Additional.CommentPosition)
 	{
 		var oComment = this.Action.Additional.CommentPosition[sId];
-		this.Comments.UpdateCommentPosition(oComment);
+		this.Comments.UpdateCommentPosition(oComment, oChangedComments);
 	}
+
+	this.Api.sync_ChangeCommentLogicalPosition(oChangedComments, this.Comments.GetCommentsPositionsCount());
 };
 /**
  * Данная функция предназначена для отключения пересчета. Это может быть полезно, т.к. редактор всегда запускает
@@ -13846,7 +13849,8 @@ CDocument.prototype.UpdateCommentPosition = function(oComment)
 
 	if (!this.Action.Start)
 	{
-		this.Comments.UpdateCommentPosition(oComment);
+		var oChangedComments = this.Comments.UpdateCommentPosition(oComment);
+		this.Api.sync_ChangeCommentLogicalPosition(oChangedComments, this.Comments.GetCommentsPositionsCount());
 		return;
 	}
 

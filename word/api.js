@@ -6804,6 +6804,20 @@ background-repeat: no-repeat;\
 
 		return oComment.GetPosition();
 	};
+	asc_docs_api.prototype.sync_ChangeCommentLogicalPosition = function(oChangedComments, nOverallCount)
+	{
+		var isChanged = false;
+		for (var sId in oChangedComments)
+		{
+			isChanged = true;
+			break;
+		}
+
+		if (!isChanged)
+			return;
+
+		this.sendEvent("asc_onChangeCommentLogicalPosition", oChangedComments, nOverallCount);
+	};
 
 	//-----------------------------------------------------------------
 	asc_docs_api.prototype.sync_LockHeaderFooters = function()
