@@ -5133,7 +5133,7 @@ CShape.prototype.draw = function (graphics, transform, transformText, pageIndex)
                 var result_page_index = AscFormat.isRealNumber(graphics.shapePageIndex) ? graphics.shapePageIndex : old_start_page;
 
                 if (graphics.CheckUseFonts2 !== undefined)
-                    graphics.CheckUseFonts2(this.transformText);
+                    graphics.CheckUseFonts2(this.transformText, this.isForm());
 
                 if (AscCommon.IsShapeToImageConverter)
                 {

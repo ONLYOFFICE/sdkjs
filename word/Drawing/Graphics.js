@@ -2842,9 +2842,9 @@ CGraphics.prototype =
         }
     },
 
-    CheckUseFonts2 : function(_transform)
+    CheckUseFonts2 : function(_transform, isForm)
     {
-        this.isShapeDraw = true;
+        this.isShapeDraw = !isForm;
         if (!global_MatrixTransformer.IsIdentity2(_transform))
         {
             if (!AscCommon.g_fontManager2)
