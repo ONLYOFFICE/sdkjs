@@ -11198,11 +11198,11 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 				}
 
 				this.AddToParagraph(ParaItem);
-				this.MoveCursorToXY(X, Y, false);
-				this.Document_UpdateSelectionState();
-
+				this.UpdateSelection();
+				this.Recalculate();
 				this.FinalizeAction();
 
+				this.MoveCursorToXY(X, Y, false);
 				this.Api.sync_MarkerFormatCallback(true);
 			}
 		}
