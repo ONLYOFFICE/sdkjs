@@ -1229,7 +1229,7 @@ function CSdtTextFormPr(nMax, isComb, nWidth, nSymbol, sFont, oCombBorder)
 	this.CombPlaceholderSymbol = nSymbol;
 	this.CombPlaceholderFont   = sFont;
 	this.CombBorder            = undefined !== oCombBorder ? oCombBorder.Copy() : undefined;
-	this.MultiLine             = true;
+	this.MultiLine             = false;
 	this.AutoFit               = false;
 }
 CSdtTextFormPr.prototype.Copy = function()

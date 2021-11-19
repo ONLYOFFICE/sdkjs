@@ -2632,6 +2632,14 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function()
 	if (this.IsAutoFitContent())
 		oLogicDocument.CheckFormAutoFit(this);
 
+	var oTextPr = this.GetTextFormPr();
+	if (oTextPr && oTextPr.GetMultiLine())
+	{
+		var oNewTextPr = oTextPr.Copy();
+		oNewTextPr.SetMultiLine(false);
+		this.SetTextFormPr(oNewTextPr);
+	}
+
 	return oParaDrawing;
 };
 CInlineLevelSdt.prototype.ConvertFormToInline = function()
@@ -2680,6 +2688,14 @@ CInlineLevelSdt.prototype.ConvertFormToInline = function()
 		oParent.RemoveFromContent(nPosInParent, 1, true);
 		oRun.RemoveFromContent(nInRunPos, 1);
 		oRunParent.AddToContent(nInRunParentPos, this, true);
+	}
+
+	var oTextPr = this.GetTextFormPr();
+	if (oTextPr && oTextPr.GetMultiLine())
+	{
+		var oNewTextPr = oTextPr.Copy();
+		oNewTextPr.SetMultiLine(false);
+		this.SetTextFormPr(oNewTextPr);
 	}
 
 	return true;
