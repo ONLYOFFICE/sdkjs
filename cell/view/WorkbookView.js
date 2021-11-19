@@ -3077,8 +3077,8 @@
 		var viewZoom = this.getZoom();
 		var activeIndex = this.model.getActive();
 		this.model.setActive(page.indexWorksheet);
-		this.changeZoom(kF);
-		this.printPreviewCtx.changeZoom(kF);
+		this.changeZoom(kF * page.scale);
+		this.printPreviewCtx.changeZoom(kF* page.scale);
 
 		/*var pdfPrinter = new AscCommonExcel.CPdfPrinter(this.fmgrGraphics[3], this.m_oFont);
 		if (pdfDocRenderer) {
