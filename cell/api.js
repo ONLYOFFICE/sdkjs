@@ -3007,8 +3007,10 @@ var editor;
 	spreadsheet_api.prototype.asc_setR1C1Mode = function (value) {
 		AscCommonExcel.g_R1C1Mode = value;
 		if (this.wbModel) {
+			var trueNeedUpdateTarget = this.wb.NeedUpdateTargetForCollaboration;
 			this._onUpdateAfterApplyChanges();
 			this.wb._onUpdateSelectionName(true);
+			this.wb.NeedUpdateTargetForCollaboration = trueNeedUpdateTarget;
         }
 	};
 
