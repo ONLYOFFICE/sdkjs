@@ -1809,7 +1809,21 @@
   };
 
   WorkbookView.prototype._onEmpty = function() {
-    this.getWorksheet().emptySelection(c_oAscCleanOptions.Text);
+	  var ws = this.getWorksheet();
+	  if (ws) {
+		  var doDelete = function (success) {
+			  if (success) {
+				  ws.emptySelection(c_oAscCleanOptions.Text);
+			  }
+		  };
+		  var selection = ws._getSelection();
+		  var ranges = selection && selection.ranges;
+		  if (!ws.objectRender.selectedGraphicObjectsExists()) {
+			  ws.checkProtectRangeOnEdit(ranges, doDelete);
+		  } else {
+			  doDelete(true);
+		  }
+	  }
   };
 
   WorkbookView.prototype._onShowNextPrevWorksheet = function(direction) {
