@@ -1186,7 +1186,7 @@ var editor;
 				canvas.width = curElem.clientWidth;
 				canvas.height = curElem.clientHeight;
 				//obj.canvas.style.width = AscCommon.AscBrowser.convertToRetinaValue(t.parentWidth) + "px";
-				canvas.style.border = "2px solid black";
+				canvas.style.border = "1px solid black";
 				curElem.appendChild(canvas);
 				this.wb.printPreviewCtx = new asc.DrawingContext({
 					canvas: canvas, units: 0/*px*/, fmgrGraphics: this.wb.fmgrGraphics, font: this.wb.m_oFont
