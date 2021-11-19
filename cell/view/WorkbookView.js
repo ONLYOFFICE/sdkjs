@@ -3075,6 +3075,8 @@
 
 		//change zoom on default
 		var viewZoom = this.getZoom();
+		var activeIndex = this.model.getActive();
+		this.model.setActive(page.indexWorksheet);
 		this.changeZoom(kF);
 		this.printPreviewCtx.changeZoom(kF);
 
@@ -3094,6 +3096,7 @@
 		}
 
 		this.changeZoom(viewZoom);
+		this.model.setActive(activeIndex);
 	};
 
   WorkbookView.prototype._calcPagesPrintSheet = function (index, printPagesData, onlySelection, adjustPrint) {
