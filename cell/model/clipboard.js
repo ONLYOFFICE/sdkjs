@@ -1677,6 +1677,13 @@
 					if(fromRange) {
 						var aRange = ws.model.selectionRange.getLast();
 						var toRange = new Asc.Range(aRange.c1, aRange.r1, aRange.c1 + (fromRange.c2 - fromRange.c1), aRange.r1 + (fromRange.r2 - fromRange.r1));
+
+						if (ws.model.getSheetProtection() && ws.model.isIntersectLockedRanges([toRange])) {
+							ws.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
+							ws.handlers.trigger("cleanCutData", true);
+							return true;
+						}
+
 						var wsTo = ws.model.Id !== wsFrom.model.Id ? ws : null;
 						wsFrom.applyCutRange(fromRange, toRange, wsTo);
 						ws.handlers.trigger("cleanCutData", true);

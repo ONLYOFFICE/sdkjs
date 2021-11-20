@@ -2498,7 +2498,16 @@
    WorkbookView.prototype.checkCopyToClipboard = function(_clipboard, _formats) {
     var t = this, ws;
     ws = t.getWorksheet();
-    g_clipboardExcel.checkCopyToClipboard(ws, _clipboard, _formats);
+	if (ws && ws.model && ws.model.getSheetProtection() && AscCommon.g_clipboardBase.bCut) {
+		var selection = ws._getSelection();
+		var selectionRanges = selection ? selection.ranges : null;
+		if (selectionRanges && ws.model.isIntersectLockedRanges(selectionRanges)) {
+			//this.handlers.trigger("onErrorEvent", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
+			return false;
+		}
+	}
+
+	g_clipboardExcel.checkCopyToClipboard(ws, _clipboard, _formats);
   };
 
   WorkbookView.prototype.pasteData = function(_format, data1, data2, text_data, doNotShowButton) {
@@ -2538,13 +2547,22 @@
 		if (this.getCellEditMode()) {
 			this.cellEditor.cutSelection();
 		} else {
-			if (this.getWorksheet().isNeedSelectionCut()) {
-				this.getWorksheet().emptySelection(c_oAscCleanOptions.All, true);
+			var ws = this.getWorksheet();
+			if (ws && ws.model && ws.model.getSheetProtection() && AscCommon.g_clipboardBase.bCut) {
+				var selection = ws._getSelection();
+				var selectionRanges = selection ? selection.ranges : null;
+				if (selectionRanges && ws.model.isIntersectLockedRanges(selectionRanges)) {
+					this.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
+					return false;
+				}
+			}
+			if (ws.isNeedSelectionCut()) {
+				ws.emptySelection(c_oAscCleanOptions.All, true);
 			} else {
 				//в данном случае не вырезаем, а записываем
-				if(false === this.getWorksheet().isMultiSelect()) {
-					this.cutIdSheet = this.getWorksheet().model.Id;
-					this.getWorksheet().cutRange = this.getWorksheet().model.selectionRange.getLast();
+				if(false === ws.isMultiSelect()) {
+					this.cutIdSheet = ws.model.Id;
+					ws.cutRange = ws.model.selectionRange.getLast();
 				}
 			}
 		}
