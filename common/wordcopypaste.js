@@ -7569,6 +7569,10 @@ PasteProcessor.prototype =
 								break;
 						}
 					}
+					var startPos = curNumbering["mso-level-start-at"];
+					if (null != startPos) {
+						res.SetLvlStart(i-1, startPos);
+					}
 				}
 				//res.GetAbstractNum().Lvl[i-1].ParaPr
 				var marginLeft = getPropValue("margin-left", msoLinkStyles, curNumbering);
