@@ -621,10 +621,15 @@
 			this.isTableCellContent = true;
 
 		var oDocument  = private_GetLogicDocument();
-		var sNumId     = oPara.Paragraph.Numbering.Internal.FinalNumId;
-		var oNumPr     = oPara.Paragraph.GetNumPr();
+		var sNumId     = null;
+		var oNumPr     = null;
+		if (!(oPara.Paragraph.Parent instanceof AscFormat.CDrawingDocContent) && oDocument instanceof AscCommonWord.CDocument)
+		{
+			sNumId           = oPara.Paragraph.Numbering.Internal.FinalNumId
+			oNumPr           = oPara.Paragraph.GetNumPr();
+			oGlobalNumbering = oDocument.GetNumbering();
+		}
 		var oCMarkdownConverter = this;
-
 
 		// если не будет нумерации, тогда проверим на заголовки (одновременно и то и другое в конвертации не применяется)
 		if (oNumPr)
