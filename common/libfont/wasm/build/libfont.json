@@ -85,8 +85,9 @@
 			"src/type1/type1.c",
 			"src/cid/type1cid.c",
 			"src/type42/type42.c",
-			"src/winfonts/winfnt.c"]
+			"src/winfonts/winfnt.c",
+			"../freetype-common/freetype.c"
+		]
 	}
-	],
-	"sources": ["freetype-common/freetype.c"]
+	]
 }
