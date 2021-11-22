@@ -258,7 +258,7 @@
 
 		if (null != this.algorithmName) {
 			w.WriteBool(true);
-			w.WriteString2(this.algorithmName);
+			w.WriteLong(this.algorithmName);
 		} else {
 			w.WriteBool(false);
 		}
@@ -305,7 +305,7 @@
 
 	CSheetProtection.prototype.Read_FromBinary2 = function(r) {
 		if (r.GetBool()) {
-			this.algorithmName = r.GetString2();
+			this.algorithmName = r.GetLong();
 		}
 		if (r.GetBool()) {
 			this.hashValue = r.GetString2();
@@ -612,7 +612,7 @@
 		 </xsd:complexType>*/
 		if (null != this.revisionsAlgorithmName) {
 			w.WriteBool(true);
-			w.WriteString2(this.revisionsAlgorithmName);
+			w.WriteLong(this.revisionsAlgorithmName);
 		} else {
 			w.WriteBool(false);
 		}
@@ -637,7 +637,7 @@
 
 		if (null != this.workbookAlgorithmName) {
 			w.WriteBool(true);
-			w.WriteString2(this.workbookAlgorithmName);
+			w.WriteLong(this.workbookAlgorithmName);
 		} else {
 			w.WriteBool(false);
 		}
@@ -673,7 +673,7 @@
 		}
 
 		if (r.GetBool()) {
-			this.revisionsAlgorithmName = r.GetString2();
+			this.revisionsAlgorithmName = r.GetLong();
 		}
 		if (r.GetBool()) {
 			this.revisionsHashValue = r.GetString2();
@@ -686,7 +686,7 @@
 		}
 
 		if (r.GetBool()) {
-			this.workbookAlgorithmName = r.GetString2();
+			this.workbookAlgorithmName = r.GetLong();
 		}
 		if (r.GetBool()) {
 			this.workbookHashValue = r.GetString2();
@@ -985,7 +985,7 @@
 
 		if (null != this.algorithmName) {
 			w.WriteBool(true);
-			w.WriteString2(this.algorithmName);
+			w.WriteLong(this.algorithmName);
 		} else {
 			w.WriteBool(false);
 		}
@@ -1028,7 +1028,7 @@
 		}
 
 		if (r.GetBool()) {
-			this.algorithmName = r.GetString2();
+			this.algorithmName = r.GetLong();
 		}
 		if (r.GetBool()) {
 			this.hashValue = r.GetString2();
