@@ -307,7 +307,7 @@
 
 		if (oDocument.Document.IsSelectionUse())
 		{
-			oSelectedContent = oDocument.Document.GetSelectedContent();
+			oSelectedContent = oDocument.Document.GetSelectedContent(false, {SaveNumberingValues: true});
 			for (var nElm = 0; nElm < oSelectedContent.Elements.length; nElm ++)
 			{
 				oTempElm = oSelectedContent.Elements[nElm].Element;
@@ -357,8 +357,6 @@
 					arrSelectedContent.push(new ApiTable(oTempElm));
 				else if (oTempElm instanceof Paragraph)
 					arrSelectedContent.push(new ApiParagraph(oTempElm));
-				else if (oTempElm instanceof ParaRun)
-					arrSelectedContent.push(new ApiRun(oTempElm));
 				else if (oTempElm instanceof ParaRun)
 					arrSelectedContent.push(new ApiRun(oTempElm));
 				else
@@ -423,7 +421,7 @@
 				if (sNumId && isBulleted)
 					sOutputText = oCMarkdownConverter.WrapInSymbol(sOutputText, '- ', 'open');
 				else
-					sOutputText = oCMarkdownConverter.WrapInSymbol(sOutputText, String(oPara.Paragraph.GetNumberingCalculatedValue()) + '. ', 'open');
+					sOutputText = oCMarkdownConverter.WrapInSymbol(sOutputText, String(oPara.Paragraph.SavedNumberingValues.NumInfo[0][0]) + '. ', 'open');
 
 				if (!oCMarkdownConverter.isTableCellContent)
 				{
@@ -624,16 +622,13 @@
 		var sNumId     = null;
 		var oNumPr     = null;
 		if (!(oPara.Paragraph.Parent instanceof AscFormat.CDrawingDocContent) && oDocument instanceof AscCommonWord.CDocument)
-		{
-			sNumId           = oPara.Paragraph.Numbering.Internal.FinalNumId
 			oNumPr           = oPara.Paragraph.GetNumPr();
-			oGlobalNumbering = oDocument.GetNumbering();
-		}
 		var oCMarkdownConverter = this;
 
 		// если не будет нумерации, тогда проверим на заголовки (одновременно и то и другое в конвертации не применяется)
 		if (oNumPr)
 		{
+			sNumId = oNumPr.NumId;
 			this.isNumbering = true;
 			this.isCodeBlock = false;
 			this.isHeading   = false;
