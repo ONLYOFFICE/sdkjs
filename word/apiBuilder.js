@@ -687,7 +687,7 @@
 		else if (this.isQuoteLine)
 			sOutputText = SetQuote(sOutputText);
 		// закрытие тега парагарфа, тег добавляем только в случае, если это не нумерованный список/заголовок/блок кода.
-		else if ((sType === 'html' || this.isTableCellContent) && !this.isNumbering && !this.isHeading && !this.isCodeBlock)
+		else if ((sType === 'html' && this.isTableCellContent) && !this.isNumbering && !this.isHeading && !this.isCodeBlock)
 			sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Paragraph, 'wholly');
 		return sOutputText + '\n';
 	};
@@ -921,7 +921,7 @@
 
 		for (var nRow = 0, nRowsCount = oTable.GetRowsCount(); nRow < nRowsCount; nRow++)
 		{
-			sOutputText += this.HandleChildElement(oTable.GetRow(nRow), 'html');
+			sOutputText += this.HandleChildElement(oTable.GetRow(nRow), this.Config.convertType);
 		}
 
 		sOutputText += '</table>\n';
@@ -933,7 +933,7 @@
 
 		for (var nCell = 0, nCellsCount = oTableRow.GetCellsCount(); nCell < nCellsCount; nCell++)
 		{
-			sOutputText += this.HandleChildElement(oTableRow.GetCell(nCell), 'html');
+			sOutputText += this.HandleChildElement(oTableRow.GetCell(nCell), this.Config.convertType);
 		}
 
 		sOutputText += '  </tr>\n';
@@ -946,7 +946,7 @@
 
 		for (var nElm = 0, nElmsCount = apiCellContent.GetElementsCount(); nElm < nElmsCount; nElm++)
 		{
-			sOutputText += this.HandleChildElement(apiCellContent.GetElement(nElm), 'html');
+			sOutputText += this.HandleChildElement(apiCellContent.GetElement(nElm), this.Config.convertType);
 		}
 
 		sOutputText += '</td>\n';
