@@ -6558,15 +6558,15 @@ background-repeat: no-repeat;\
 				CommentData.m_sOOTime = ((new Date()).getTime()).toString();
 
 			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_AddComment);
-			var Comment = this.WordControl.m_oLogicDocument.AddComment(CommentData, AscCommentData.asc_getDocumentFlag());
-			if (null != Comment)
-			{
-				this.sync_AddComment(Comment.Get_Id(), CommentData);
-			}
+			var oComment = this.WordControl.m_oLogicDocument.AddComment(CommentData, AscCommentData.asc_getDocumentFlag());
 
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 
-			return Comment.Get_Id();
+			if (oComment)
+			{
+				this.sync_AddComment(oComment.GetId(), CommentData);
+				return oComment.GetId();
+			}
 		}
 
 		return null;

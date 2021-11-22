@@ -8156,7 +8156,7 @@ Paragraph.prototype.Select_Math = function(ParaMath)
 };
 Paragraph.prototype.GetSelectionBounds = function()
 {
-	if (this.Pages.length <= 0 || this.Lines.length <= 0)
+	if (!this.IsRecalculated())
 	{
 		return {
 			Start     : {X : 0, Y : 0, W : 0, H : 0, Page : 0},
