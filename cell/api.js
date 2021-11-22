@@ -4637,7 +4637,7 @@ var editor;
 		var ws = this.wbModel.getActiveWs();
 		var activeCell = ws && ws.selectionRange && ws.selectionRange.activeCell;
 		if (activeCell) {
-			ws.model.checkProtectedRangesPassword(val, activeCell, callback);
+			ws.checkProtectedRangesPassword(val, activeCell, callback);
 		}
 	};
 
