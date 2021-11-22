@@ -6043,6 +6043,7 @@ var editor;
 		if (!props) {
 			this.handlers.trigger("asc_onError", c_oAscError.ID.PasswordIsNotCorrect, c_oAscError.Level.NoCritical);
 			this.handlers.trigger("asc_onChangeProtectWorksheet", i);
+			return;
 		}
 
 		var wsView = this.wb.getWorksheet();
