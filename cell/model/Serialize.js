@@ -4125,6 +4125,11 @@
 				this.memory.WriteByte(c_oSerPropLenType.Byte);
 				this.memory.WriteBool(sheetProtection.formatColumns);
 			}
+			if (null != sheetProtection.formatRows) {
+				this.memory.WriteByte(c_oSerWorksheetProtection.FormatRows);
+				this.memory.WriteByte(c_oSerPropLenType.Byte);
+				this.memory.WriteBool(sheetProtection.formatRows);
+			}
 			if (null != sheetProtection.insertColumns) {
 				this.memory.WriteByte(c_oSerWorksheetProtection.InsertColumns);
 				this.memory.WriteByte(c_oSerPropLenType.Byte);
