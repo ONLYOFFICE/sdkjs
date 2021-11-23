@@ -8237,6 +8237,23 @@ PasteProcessor.prototype =
 	_ExecuteBlockLevelStd : function (node, pPr) {
 		var blockLevelSdt = new CBlockLevelSdt(this.oLogicDocument, this.oDocument);
 
+		//ms в буфер записывает только lock контента
+		if (node && node.attributes) {
+			var contentLocked = node.attributes["contentlocked"];
+			if (contentLocked) {
+				blockLevelSdt.SetContentControlLock(c_oAscSdtLockType.SdtContentLocked);
+			}
+			//далее тег и титульник, цвета нет
+			var alias = node.attributes["title"];
+			if (alias && alias.value) {
+				blockLevelSdt.SetAlias(alias.value);
+			}
+			var tag = node.attributes["sdttag"];
+			if (tag && tag.value) {
+				blockLevelSdt.SetTag(tag.value);
+			}
+		}
+
 		//content
 		var oPasteProcessor = new PasteProcessor(this.api, false, false, true);
 		oPasteProcessor.msoComments = this.msoComments;
