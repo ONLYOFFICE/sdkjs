@@ -247,7 +247,7 @@ CGraphics.prototype =
         this.isDarkMode = true;
         function _darkColor(_this, _func) {
             return function(r, g, b, a) {
-                if (_this.isDarkMode && !this.isShapeDraw && AscCommon.darkModeCheckColor(r, g, b))
+                if (_this.isDarkMode && AscCommon.darkModeCheckColor(r, g, b))
                     _func.call(_this, 255 - r, 255 - g, 255 - b, a);
                 else
                     _func.call(_this, r, g, b, a);
@@ -2842,9 +2842,9 @@ CGraphics.prototype =
         }
     },
 
-    CheckUseFonts2 : function(_transform)
+    CheckUseFonts2 : function(_transform, isForm)
     {
-        this.isShapeDraw = true;
+        this.isShapeDraw = !isForm;
         if (!global_MatrixTransformer.IsIdentity2(_transform))
         {
             if (!AscCommon.g_fontManager2)

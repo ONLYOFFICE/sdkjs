@@ -123,6 +123,24 @@
         }
         return ret;
     };
+    CTextBody.prototype.createDuplicateForSmartArt = function (oPr) {
+        var arrayOfTextBody = [];
+        for (var i = 0; i < oPr.pointContentLength; i += 1) {
+            arrayOfTextBody.push(new CTextBody());
+        }
+        var that = this;
+        arrayOfTextBody.forEach(function (txBody) {
+            if(that.bodyPr)
+                txBody.setBodyPr(that.bodyPr.createDuplicateForSmartArt(oPr));
+            if(that.lstStyle)
+                txBody.setLstStyle(that.lstStyle.createDuplicate());
+        })
+        if(this.content) {
+            this.content.createDuplicateForSmartArt(oPr, arrayOfTextBody);
+        }
+        return arrayOfTextBody;
+    }
+
     CTextBody.prototype.Is_TopDocument = function() {
         return false;
     };
@@ -352,8 +370,8 @@
         var _t;
         var _body_pr = this.getBodyPr();
         var sp = this.parent;
-        if(isRealObject(sp.spPr) && isRealObject(sp.spPr.geometry) && isRealObject(sp.spPr.geometry.rect)) {
-            var _rect = sp.spPr.geometry.rect;
+        var _rect = sp.getTextRect && sp.getTextRect();
+        if(_rect) {
             _l = _rect.l + _body_pr.lIns;
             _t = _rect.t + _body_pr.tIns;
             _r = _rect.r - _body_pr.rIns;

@@ -38,8 +38,6 @@ var CChartSpace = AscFormat.CChartSpace;
 var CreateUnifillSolidFillSchemeColor = AscFormat.CreateUnifillSolidFillSchemeColor;
 
 CChartSpace.prototype.addToDrawingObjects =  CShape.prototype.addToDrawingObjects;
-CChartSpace.prototype.setDrawingObjects = CShape.prototype.setDrawingObjects;
-CChartSpace.prototype.setDrawingBase = CShape.prototype.setDrawingBase;
 CChartSpace.prototype.deleteDrawingBase = CShape.prototype.deleteDrawingBase;
 CChartSpace.prototype.getDrawingObjectsController = CShape.prototype.getDrawingObjectsController;
 CChartSpace.prototype.handleUpdateTheme = CShape.prototype.handleUpdateTheme;

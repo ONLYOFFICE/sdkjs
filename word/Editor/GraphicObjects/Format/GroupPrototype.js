@@ -204,8 +204,6 @@ CGroupShape.prototype.recalcBounds = function()
 };
 
 CGroupShape.prototype.addToDrawingObjects =  CShape.prototype.addToDrawingObjects;
-CGroupShape.prototype.setDrawingObjects = CShape.prototype.setDrawingObjects;
-CGroupShape.prototype.setDrawingBase = CShape.prototype.setDrawingBase;
 CGroupShape.prototype.deleteDrawingBase = CShape.prototype.deleteDrawingBase;
 CGroupShape.prototype.addToRecalculate = CShape.prototype.addToRecalculate;
 CGroupShape.prototype.convertPixToMM = CShape.prototype.convertPixToMM;

@@ -1327,8 +1327,8 @@
 						}
 					}
 
-					var text = val[i].text;
-					var isBr = val[i].text.indexOf("\n");
+					var text = val[i].getFragmentText();
+					var isBr = val[i].getFragmentText().indexOf("\n");
 					span.textContent = text;
 
 					f = val[i].format;
@@ -1407,7 +1407,7 @@
 						}
 					}
 
-					var text = CopyPasteCorrectString(val[i].text);
+					var text = CopyPasteCorrectString(val[i].getFragmentText());
 					text = text.replace(/\n/g, '<br>');
 
 					f = val[i].format;
@@ -1765,6 +1765,13 @@
 					if(fromRange) {
 						var aRange = ws.model.selectionRange.getLast();
 						var toRange = new Asc.Range(aRange.c1, aRange.r1, aRange.c1 + (fromRange.c2 - fromRange.c1), aRange.r1 + (fromRange.r2 - fromRange.r1));
+
+						if (ws.model.getSheetProtection() && ws.model.isIntersectLockedRanges([toRange])) {
+							ws.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
+							ws.handlers.trigger("cleanCutData", true);
+							return true;
+						}
+
 						var wsTo = ws.model.Id !== wsFrom.model.Id ? ws : null;
 						wsFrom.applyCutRange(fromRange, toRange, wsTo);
 						ws.handlers.trigger("cleanCutData", true);
@@ -2414,6 +2421,7 @@
 
 						drawingObject.graphicObject.setDrawingObjects(ws.objectRender);
 						drawingObject.graphicObject.setWorksheet(ws.model);
+						drawingObject.graphicObject.convertFromSmartArt();
 						xfrm.setOffX(curCol);
 						xfrm.setOffY(curRow);
 						drawingObject.graphicObject.addToDrawingObjects();
@@ -3669,8 +3677,8 @@
 							}
 						}
 
-						fragment.text = children.innerText;
-						AscFonts.FontPickerByCharacter.getFontsByString(fragment.text);
+						fragment.setFragmentText(children.innerText);
+						AscFonts.FontPickerByCharacter.getFontsByString(fragment.getFragmentText());
 						fragment.format = format;
 
 						res.fragments.push(fragment);

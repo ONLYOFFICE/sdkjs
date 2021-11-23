@@ -1642,6 +1642,23 @@
             }
 			return ret;
 		};
+
+		this.GetLimitsY = function()
+		{
+			var header_yMin = this.m_lDescender;
+			var header_yMax = this.m_lAscender;
+
+			if ((this.m_pFace.face_flags & 8) !== 0)
+			{
+				header_yMin = this.m_pFace.header.yMin;
+				header_yMax = this.m_pFace.header.yMax;
+			}
+
+			return {
+				min : header_yMin,
+				max : header_yMax
+			};
+		};
 	}
 
 	function CFontLoaderBySymbol()

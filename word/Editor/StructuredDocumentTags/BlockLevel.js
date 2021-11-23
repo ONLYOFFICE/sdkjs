@@ -101,7 +101,7 @@ CBlockLevelSdt.prototype.Copy = function(Parent, DrawingDocument, oPr)
 		oNew.private_ReplaceContentWithPlaceHolder();
 
 	oNew.SetShowingPlcHdr(this.Pr.ShowingPlcHdr);
-	oNew.SetPlaceholder(this.private_CopyPlaceholder());
+	oNew.SetPlaceholder(this.private_CopyPlaceholder(oPr));
 	oNew.SetContentControlEquation(this.Pr.Equation);
 	oNew.SetContentControlTemporary(this.Pr.Temporary);
 
@@ -910,7 +910,7 @@ CBlockLevelSdt.prototype.GetBoundingPolygonAnchorPoint = function()
 
 	return {X : nR, Y : (nT + nB) / 2, Page : nPageAbs, Transform : this.Get_ParentTextTransform()};
 };
-CBlockLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCurPage)
+CBlockLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCurPage, isCheckHit)
 {
 	if (!this.IsRecalculated() || !this.LogicDocument)
 		return;
@@ -964,7 +964,7 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCur
 			}
 		}
 
-		if (!isHit)
+		if (false !== isCheckHit && !isHit)
 			return;
 
 		var sHelpText = "";
@@ -1864,7 +1864,7 @@ CBlockLevelSdt.prototype.ToggleCheckBox = function(isChecked)
 		return;
 
 	var oLogicDocument = this.GetLogicDocument();
-	if (oLogicDocument || this.IsRadioButton() || this.GetFormKey())
+	if (oLogicDocument && (this.IsRadioButton() || this.GetFormKey()))
 		oLogicDocument.OnChangeForm(this.IsRadioButton() ? this.Pr.CheckBox.GroupKey : this.GetFormKey(), this);
 
 	if (undefined === isChecked && this.IsRadioButton() && true === this.Pr.CheckBox.Checked)

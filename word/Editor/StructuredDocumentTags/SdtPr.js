@@ -1229,7 +1229,7 @@ function CSdtTextFormPr(nMax, isComb, nWidth, nSymbol, sFont, oCombBorder)
 	this.CombPlaceholderSymbol = nSymbol;
 	this.CombPlaceholderFont   = sFont;
 	this.CombBorder            = undefined !== oCombBorder ? oCombBorder.Copy() : undefined;
-	this.MultiLine             = true;
+	this.MultiLine             = false;
 	this.AutoFit               = false;
 }
 CSdtTextFormPr.prototype.Copy = function()
@@ -1615,6 +1615,10 @@ CSdtFormPr.prototype.SetAscShd = function(isShd, oAscColor)
 		var oUnifill        = new AscFormat.CUniFill();
 		oUnifill.fill       = new AscFormat.CSolidFill();
 		oUnifill.fill.color = AscFormat.CorrectUniColor(oAscColor, oUnifill.fill.color, 1);
+
+		var oLogicDocument = editor.WordControl.m_oLogicDocument;
+		if (oLogicDocument && oLogicDocument.IsDocumentEditor())
+			oUnifill.check(oLogicDocument.GetTheme(), oLogicDocument.GetColorMap());
 
 		this.Shd = new CDocumentShd();
 		this.Shd.Set_FromObject({

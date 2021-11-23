@@ -946,6 +946,11 @@ CDrawingDocument.prototype.CheckTableStyles = function()
     this.isCreatedDefaultTableStyles = true;
 };
 
+CDrawingDocument.prototype.GetTableStylesPreviews = function()
+{
+    return [];
+};
+
 CDrawingDocument.prototype.CheckThemes = function(){   
 
     window["native"]["ClearCacheThemeThumbnails"]();

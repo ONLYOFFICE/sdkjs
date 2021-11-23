@@ -426,7 +426,8 @@ module.exports = function(grunt) {
 								'Native/*.js',
 								'libfont/js/fonts.*',
 								'libfont/wasm/fonts.*',
-								'spell/spell/*'
+								'spell/spell/*',
+								'hash/hash/*'
 							],
 							dest: path.join(deploy, 'common')
 						},
@@ -441,6 +442,12 @@ module.exports = function(grunt) {
 							cwd: '../slide/themes',
 							src: '**/**',
 							dest: path.join(slide, 'themes')
+						},
+						{
+							expand: true,
+							cwd: '../pdf/',
+							src: 'src/engine/*',
+							dest: path.join(deploy, 'pdf')
 						}
 					]
 				}

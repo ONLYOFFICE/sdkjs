@@ -481,7 +481,15 @@ ParaField.prototype.IsFillingForm = function()
 };
 ParaField.prototype.FindNextFillingForm = function(isNext, isCurrent, isStart)
 {
-	if (!this.IsFillingForm())
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph)
+		return null;
+
+	var oLogicDocument = oParagraph.GetLogicDocument();
+	if (!oLogicDocument)
+		return null;
+
+	if (!this.IsFillingForm() || oLogicDocument.IsFillingOFormMode())
 		return CParagraphContentWithParagraphLikeContent.prototype.FindNextFillingForm.apply(this, arguments);
 
 	if (isCurrent && true === this.IsSelectedAll())

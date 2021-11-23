@@ -113,6 +113,18 @@ CGraphicFrame.prototype.Is_DrawingShape = function(bRetShape)
         }
         return false;
 };
+CGraphicFrame.prototype.IsTableFirstRowOnNewPage = function()
+{
+    return false;
+};
+CGraphicFrame.prototype.IsBlockLevelSdtContent = function()
+{
+    return false;
+};
+CGraphicFrame.prototype.IsBlockLevelSdtFirstOnNewPage = function()
+{
+    return false;
+};
 
 CGraphicFrame.prototype.handleUpdatePosition= function()
     {

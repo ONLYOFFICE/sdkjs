@@ -120,6 +120,10 @@ var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
         {
             this.HtmlElement.style.display = "none";
         }
+        else
+        {
+            this.HtmlElement.style.display = "block";
+        }
         return bShow;
     };
 
@@ -408,138 +412,108 @@ function CDrawingDocument()
         this.TargetCursorColor.B = b;
     };
 
-    this.CheckTargetDraw = function(x, y)
+    this.CheckTargetDraw = function (x, y)
     {
         var drawingObjects = this.getDrawingObjects();
-        if(!drawingObjects) {
+        if (!drawingObjects)
             return;
-        }
-        var _oldW = this.TargetHtmlElement.width;
-        var _oldH = this.TargetHtmlElement.height;
 
         var dKoef = drawingObjects.convertMetric(1, 3, 0);
+        dKoef /= AscCommon.AscBrowser.retinaPixelRatio;
 
-        var _newW = 2;
-        var _newH = this.m_dTargetSize * dKoef;
+        var oldW = this.TargetHtmlElement.width_old;
+        var oldH = this.TargetHtmlElement.height_old;
+
+        var newW = 2;
+        var newH = (this.m_dTargetSize * dKoef) >> 0;
 
         var _offX = 0;
         var _offY = 0;
         if (this.AutoShapesTrack && this.AutoShapesTrack.Graphics && this.AutoShapesTrack.Graphics.m_oCoordTransform)
         {
-            _offX = this.AutoShapesTrack.Graphics.m_oCoordTransform.tx;
-            _offY = this.AutoShapesTrack.Graphics.m_oCoordTransform.ty;
+            _offX = this.AutoShapesTrack.Graphics.m_oCoordTransform.tx / AscCommon.AscBrowser.retinaPixelRatio;
+            _offY = this.AutoShapesTrack.Graphics.m_oCoordTransform.ty / AscCommon.AscBrowser.retinaPixelRatio;
         }
 
-        var targetPosX = 0;
-        var targetPosY = 0;
+        this.TargetHtmlElement.style.transformOrigin = "top left";
 
-        if (null != this.TextMatrix && !global_MatrixTransformer.IsIdentity2(this.TextMatrix))
+        if (oldW !== newW || oldH !== newH)
         {
-            var _x1 = this.TextMatrix.TransformPointX(x, y);
-            var _y1 = this.TextMatrix.TransformPointY(x, y);
+            var pixNewW = ((newW * AscCommon.AscBrowser.retinaPixelRatio) >> 0) / AscCommon.AscBrowser.retinaPixelRatio;
 
-            var _x2 = this.TextMatrix.TransformPointX(x, y + this.m_dTargetSize);
-            var _y2 = this.TextMatrix.TransformPointY(x, y + this.m_dTargetSize);
-
-            var pos1 = { X : _offX + dKoef * _x1, Y : _offY + dKoef * _y1 };
-            var pos2 = { X : _offX + dKoef * _x2, Y : _offY + dKoef * _y2 };
-
-            _newW = (((Math.abs(pos1.X - pos2.X) >> 0) + 1) >> 1) << 1;
-            _newH = (((Math.abs(pos1.Y - pos2.Y) >> 0) + 1) >> 1) << 1;
-
-            if (2 > _newW)
-                _newW = 2;
-            if (2 > _newH)
-                _newH = 2;
-
-            if (_oldW == _newW && _oldH == _newH)
-            {
-                // просто очищаем
-                this.TargetHtmlElement.width = _newW;
-            }
-            else
-            {
-                this.TargetHtmlElement.style.width = AscCommon.AscBrowser.convertToRetinaValue(_newW, false) + "px";
-                this.TargetHtmlElement.style.height = AscCommon.AscBrowser.convertToRetinaValue(_newH, false) + "px";
-
-                this.TargetHtmlElement.width = _newW;
-                this.TargetHtmlElement.height = _newH;
-            }
-            var ctx = this.TargetHtmlElement.getContext('2d');
-
-            if (_newW  == 2 || _newH == 2)
-            {
-                ctx.fillStyle = this.GetTargetStyle();
-                ctx.fillRect(0, 0, _newW, _newH);
-            }
-            else
-            {
-                ctx.beginPath();
-                ctx.strokeStyle = this.GetTargetStyle();
-                ctx.lineWidth = 2;
-
-                if (((pos1.X - pos2.X)*(pos1.Y - pos2.Y)) >= 0)
-                {
-                    ctx.moveTo(0, 0);
-                    ctx.lineTo(_newW, _newH);
-                }
-                else
-                {
-                    ctx.moveTo(0, _newH);
-                    ctx.lineTo(_newW, 0);
-                }
-
-                ctx.stroke();
-            }
-
-			targetPosX =  AscCommon.AscBrowser.convertToRetinaValue(Math.min(pos1.X, pos2.X), false);
-            targetPosY =  AscCommon.AscBrowser.convertToRetinaValue(Math.min(pos1.Y, pos2.Y), false);
-
-            this.TargetHtmlElementLeft = targetPosX;
-            this.TargetHtmlElementTop = targetPosY;
-            this.TargetHtmlElement.style.left = targetPosX + "px";
-            this.TargetHtmlElement.style.top = targetPosY + "px";
+            this.TargetHtmlElement.style.width = pixNewW + "px";
+            this.TargetHtmlElement.style.height = newH + "px";
+            this.TargetHtmlElement.width_old = newW;
+            this.TargetHtmlElement.height_old = newH;
+            this.TargetHtmlElement.oldColor = null;
         }
-        else
+
+        var oldColor = this.TargetHtmlElement.oldColor;
+        if (!oldColor ||
+            oldColor.R !== this.TargetCursorColor.R ||
+            oldColor.G !== this.TargetCursorColor.G ||
+            oldColor.B !== this.TargetCursorColor.B)
         {
-            if (_oldW == _newW && _oldH == _newH)
-            {
-                // просто очищаем
-                this.TargetHtmlElement.width = _newW;
-            }
-            else
-            {
-                this.TargetHtmlElement.style.width =  AscCommon.AscBrowser.convertToRetinaValue(_newW, false) + "px";
-                this.TargetHtmlElement.style.height =  AscCommon.AscBrowser.convertToRetinaValue(_newH , false) + "px";
+            this.TargetHtmlElement.style.backgroundColor = this.GetTargetStyle();
+            this.TargetHtmlElement.oldColor = { R : this.TargetCursorColor.R, G : this.TargetCursorColor.G, B : this.TargetCursorColor.B };
+        }
 
-                this.TargetHtmlElement.width = _newW;
-                this.TargetHtmlElement.height = _newH;
-            }
-
-            var ctx = this.TargetHtmlElement.getContext('2d');
-
-            ctx.fillStyle = this.GetTargetStyle();
-            ctx.fillRect(0, 0, _newW, _newH);
-
+        if (null == this.TextMatrix || global_MatrixTransformer.IsIdentity2(this.TextMatrix))
+        {
             if (null != this.TextMatrix)
             {
                 x += this.TextMatrix.tx;
                 y += this.TextMatrix.ty;
             }
 
-            var pos = { X : _offX + dKoef * x, Y : _offY + dKoef * y };
+            var pos1 = { X : _offX + x * dKoef, Y : _offY + y * dKoef };
+            pos1.X -= (newW / 2);
 
-			targetPosX =  AscCommon.AscBrowser.convertToRetinaValue(pos.X, false);
-			targetPosY =  AscCommon.AscBrowser.convertToRetinaValue(pos.Y, false);
+            this.TargetHtmlElementLeft = pos1.X >> 0;
+            this.TargetHtmlElementTop = pos1.Y >> 0;
 
-            this.TargetHtmlElementLeft = targetPosX;
-            this.TargetHtmlElementTop = targetPosY;
-			this.TargetHtmlElement.style.left = targetPosX + "px";
-			this.TargetHtmlElement.style.top = targetPosY + "px";
+            this.TargetHtmlElement.style["transform"] = "";
+            this.TargetHtmlElement.style["msTransform"] = "";
+            this.TargetHtmlElement.style["mozTransform"] = "";
+            this.TargetHtmlElement.style["webkitTransform"] = "";
+
+            if (!AscCommon.AscBrowser.isSafariMacOs || !AscCommon.AscBrowser.isWebkit)
+            {
+                this.TargetHtmlElement.style.left = this.TargetHtmlElementLeft + "px";
+                this.TargetHtmlElement.style.top = this.TargetHtmlElementTop + "px";
+            }
+            else
+            {
+                this.TargetHtmlElement.style.left = "0px";
+                this.TargetHtmlElement.style.top = "0px";
+                this.TargetHtmlElement.style["webkitTransform"] = "matrix(1, 0, 0, 1, " + oThis.TargetHtmlElementLeft + "," + oThis.TargetHtmlElementTop + ")";
+            }
+        }
+        else
+        {
+            var x1 = _offX + this.TextMatrix.TransformPointX(x, y) * dKoef;
+            var y1 = _offY + this.TextMatrix.TransformPointY(x, y) * dKoef;
+
+            var pos1 = { X : x1, Y : y1 };
+            pos1.X -= (newW / 2);
+
+            this.TargetHtmlElementLeft = pos1.X >> 0;
+            this.TargetHtmlElementTop = pos1.Y >> 0;
+
+            var transform = "matrix(" + this.TextMatrix.sx + ", " + this.TextMatrix.shy + ", " + this.TextMatrix.shx + ", " +
+                this.TextMatrix.sy + ", " + pos1.X + ", " + pos1.Y + ")";
+
+            this.TargetHtmlElement.style.left = "0px";
+            this.TargetHtmlElement.style.top = "0px";
+
+            this.TargetHtmlElement.style["transform"] = transform;
+            this.TargetHtmlElement.style["msTransform"] = transform;
+            this.TargetHtmlElement.style["mozTransform"] = transform;
+            this.TargetHtmlElement.style["webkitTransform"] = transform;
         }
 
-		if (AscCommon.g_inputContext)
-			AscCommon.g_inputContext.move(targetPosX, targetPosY);
+        if (AscCommon.g_inputContext)
+            AscCommon.g_inputContext.move(this.TargetHtmlElementLeft, this.TargetHtmlElementTop);
     };
 
     this.UpdateTargetTransform = function(matrix)
@@ -1409,6 +1383,11 @@ function CDrawingDocument()
 
     this.CheckTableStyles = function(tableLook)
     {
+    };
+
+    this.GetTableStylesPreviews = function()
+    {
+        return [];
     };
 
     this.IsMobileVersion = function()

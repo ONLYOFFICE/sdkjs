@@ -53,7 +53,7 @@
 	var c_oAscAxisType = Asc.c_oAscAxisType;
 	// ---------------------------------------------------------------------------------------------------------------
 
-	var c_oAscArrUserColors = [16757719, 7929702, 56805, 10081791, 12884479, 16751001, 6748927, 16762931, 6865407,
+	var c_oAscArrUserColors = [16757719, 56805, 10081791, 12884479, 16751001, 6748927, 16762931, 6865407,
 		15650047, 16737894, 3407768, 16759142, 10852863, 6750176, 16774656, 13926655, 13815039, 3397375, 11927347, 16752947,
 		9404671, 4980531, 16744678, 3407830, 15919360, 16731553, 52479, 13330175, 16743219, 3386367, 14221056, 16737966,
 		1896960, 65484, 10970879, 16759296, 16711680, 13496832, 62072, 49906, 16734720, 10682112, 7890687, 16731610, 65406,
@@ -3140,6 +3140,8 @@
 		this.bFromChart = false;
 		this.bFromGroup = false;
 		this.bFromImage = false;
+		this.bFromSmartArt = false;
+		this.bFromSmartArtInternal = false;
 		this.Locked = false;
 		this.w = null;
 		this.h = null;
@@ -3202,6 +3204,18 @@
 		},
 		asc_setFromChart: function (v) {
 			this.bFromChart = v;
+		},
+		asc_getFromSmartArt: function () {
+			return this.bFromSmartArt;
+		},
+		asc_setFromSmartArt: function (v) {
+			this.bFromSmartArt = v;
+		},
+		asc_getFromSmartArtInternal: function () {
+			return this.bFromSmartArtInternal;
+		},
+		asc_setFromSmartArtInternal: function (v) {
+			this.bFromSmartArtInternal = v;
 		},
 		asc_getFromGroup: function () {
 			return this.bFromGroup;
@@ -6104,6 +6118,10 @@
 	prot["set_CanChangeArrows"] = prot["asc_setCanChangeArrows"] = prot.asc_setCanChangeArrows;
 	prot["get_FromChart"] = prot["asc_getFromChart"] = prot.asc_getFromChart;
 	prot["set_FromChart"] = prot["asc_setFromChart"] = prot.asc_setFromChart;
+	prot["set_FromSmartArt"] = prot["asc_setFromSmartArt"] = prot.asc_setFromSmartArt;
+	prot["get_FromSmartArt"] = prot["asc_getFromSmartArt"] = prot.asc_getFromSmartArt;
+	prot["set_FromSmartArtInternal"] = prot["asc_setFromSmartArtInternal"] = prot.asc_setFromSmartArtInternal;
+	prot["get_FromSmartArtInternal"] = prot["asc_getFromSmartArtInternal"] = prot.asc_getFromSmartArtInternal;
 	prot["get_FromGroup"] = prot["asc_getFromGroup"] = prot.asc_getFromGroup;
 	prot["set_FromGroup"] = prot["asc_setFromGroup"] = prot.asc_setFromGroup;
 	prot["get_Locked"] = prot["asc_getLocked"] = prot.asc_getLocked;

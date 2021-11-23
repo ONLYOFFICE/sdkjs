@@ -162,14 +162,21 @@ CChangesCommentsAdd.prototype.constructor = CChangesCommentsAdd;
 CChangesCommentsAdd.prototype.Type = AscDFH.historyitem_Comments_Add;
 CChangesCommentsAdd.prototype.Undo = function()
 {
-	var oComments = this.Class;
-	delete oComments.m_aComments[this.Id];
-	editor.sync_RemoveComment(this.Id);
+	var oComment = this.Class.m_arrCommentsById[this.Id];
+	if (oComment)
+	{
+		delete this.Class.m_arrCommentsById[this.Id];
+		var oChangedComments = this.Class.UpdateCommentPosition(oComment);
+		editor.sync_RemoveComment(this.Id);
+		editor.sync_ChangeCommentLogicalPosition(oChangedComments, this.Class.GetCommentsPositionsCount());
+	}
 };
 CChangesCommentsAdd.prototype.Redo = function()
 {
-	this.Class.m_aComments[this.Id] = this.Comment;
+	this.Class.m_arrCommentsById[this.Id] = this.Comment;
+	var oChangedComments = this.Class.UpdateCommentPosition(this.Comment);
 	editor.sync_AddComment(this.Id, this.Comment.Data);
+	editor.sync_ChangeCommentLogicalPosition(oChangedComments, this.Class.GetCommentsPositionsCount());
 };
 CChangesCommentsAdd.prototype.WriteToBinary = function(Writer)
 {
@@ -212,13 +219,21 @@ CChangesCommentsRemove.prototype.constructor = CChangesCommentsRemove;
 CChangesCommentsRemove.prototype.Type = AscDFH.historyitem_Comments_Remove;
 CChangesCommentsRemove.prototype.Undo = function()
 {
-	this.Class.m_aComments[this.Id] = this.Comment;
+	this.Class.m_arrCommentsById[this.Id] = this.Comment;
+	var oChangedComments = this.Class.UpdateCommentPosition(this.Comment);
 	editor.sync_AddComment(this.Id, this.Comment.Data);
+	editor.sync_ChangeCommentLogicalPosition(oChangedComments, this.Class.GetCommentsPositionsCount());
 };
 CChangesCommentsRemove.prototype.Redo = function()
 {
-	delete this.Class.m_aComments[this.Id];
-	editor.sync_RemoveComment(this.Id);
+	var oComment = this.Class.m_arrCommentsById[this.Id];
+	if (oComment)
+	{
+		delete this.Class.m_arrCommentsById[this.Id];
+		var oChangedComments = this.Class.UpdateCommentPosition(oComment);
+		editor.sync_RemoveComment(this.Id);
+		editor.sync_ChangeCommentLogicalPosition(oChangedComments, this.Class.GetCommentsPositionsCount());
+	}
 };
 CChangesCommentsRemove.prototype.WriteToBinary = function(Writer)
 {
@@ -287,4 +302,11 @@ CChangesParaCommentCommentId.prototype.Load = function()
 		else
 			Comment.Set_EndId(this.Class.Paragraph.Get_Id());
 	}
+};
+CChangesParaCommentCommentId.prototype.CreateReverseChange = function()
+{
+	// Давать откатывать это действие нельзя. Поэтому мы создаем действие, которое ничего не делает,
+	// но сохраняет CommentId для удаления, потому что все комментарии, которые откатываются по этому действию,
+	// должны быть удалены
+	return new CChangesParaCommentCommentId(this.Class, this.New, this.New);
 };

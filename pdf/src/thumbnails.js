@@ -1,3 +1,35 @@
+/*
+ * (c) Copyright Ascensio System SIA 2010-2019
+ *
+ * This program is a free software product. You can redistribute it and/or
+ * modify it under the terms of the GNU Affero General Public License (AGPL)
+ * version 3 as published by the Free Software Foundation. In accordance with
+ * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
+ * that Ascensio System SIA expressly excludes the warranty of non-infringement
+ * of any third-party rights.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
+ * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ *
+ * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * street, Riga, Latvia, EU, LV-1050.
+ *
+ * The  interactive user interfaces in modified source and object code versions
+ * of the Program must display Appropriate Legal Notices, as required under
+ * Section 5 of the GNU AGPL version 3.
+ *
+ * Pursuant to Section 7(b) of the License you must retain the original Product
+ * logo when distributing the program. Pursuant to Section 7(e) we decline to
+ * grant you any rights under trademark law for use of our trademarks.
+ *
+ * All the Product's GUI elements, including illustrations and icon sets, as
+ * well as technical writing content are licensed under the terms of the
+ * Creative Commons Attribution-ShareAlike 4.0 International. See the License
+ * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ *
+ */
+
 (function(){
 
     // SKIN
@@ -22,8 +54,8 @@
         selectColorWidth : 3,
 
         isDrawCurrentRect : true,
-        drawCurrentColor : "#FF0000",
-        drawCurrentWidth : 1
+        drawCurrentColor : "#888888",
+        drawCurrentWidth : 2
     };
 
     var ThumbnailsStyle = {
@@ -31,6 +63,8 @@
     };
 
     PageStyle.numberFontHeight = (function(){
+        if (window["NATIVE_EDITOR_ENJINE"])
+            return 7;
         var testCanvas = document.createElement("canvas");
         var w = 100;
         var h = 100;
@@ -148,7 +182,7 @@
             if (pixR <= pixX) return;
             if (pixB <= pixY) return;
 
-            var lineW = Math.max(1, (PageStyle.drawCurrentColor * AscCommon.AscBrowser.retinaPixelRatio) >> 0);
+            var lineW = Math.max(1, (PageStyle.drawCurrentWidth * AscCommon.AscBrowser.retinaPixelRatio) >> 0);
             var offsetW = 0.5 * lineW;
 
             ctx.lineWidth = lineW;
@@ -288,6 +322,11 @@
     {
         this._resize(isZoomUpdated);
     };
+    CDocument.prototype.setIsDrawCurrentRect = function(isDrawCurrentRect)
+    {
+        PageStyle.isDrawCurrentRect = isDrawCurrentRect;
+        this.repaint();
+    };
     CDocument.prototype.setEnabled = function(isEnabled)
     {
         this.isEnabled = isEnabled;
@@ -320,6 +359,9 @@
         this.canvasOverlay.style.pointerEvents = "none";
 
         parent.onmousewheel = this.onMouseWhell.bind(this);
+        if (parent.addEventListener)
+			parent.addEventListener("DOMMouseScroll", this.onMouseWhell.bind(this), false);
+
         AscCommon.addMouseEvent(this.canvas, "down", this.onMouseDown.bind(this));
         AscCommon.addMouseEvent(this.canvas, "move", this.onMouseMove.bind(this));
         AscCommon.addMouseEvent(this.canvas, "up", this.onMouseUp.bind(this));
@@ -401,7 +443,7 @@
         if (!this.isEnabled)
             return;
 
-        if (!isViewerTask)
+        if (!isViewerTask && -1 != this.startBlock)
         {
             // смотрим, какие страницы нужно перерисовать. 
             // делаем это по одной, так как задачи вьюера важнее
@@ -471,6 +513,9 @@
         var ctx = this.canvas.getContext("2d");
         ctx.fillStyle = ThumbnailsStyle.backgroundColor;
         ctx.fillRect(0, 0, this.panelWidth, this.panelHeight);
+
+        if (-1 == this.startBlock)
+            return;
         
         ctx.font = PageStyle.font();
         ctx.textAlign = "center";
@@ -498,6 +543,9 @@
     CDocument.prototype._resize = function(isZoomUpdated)
     {
         var element = document.getElementById(this.id);
+
+        if (0 === element.offsetWidth)
+            return;
 
         // размер панели
         this.panelWidth = element.offsetWidth;
@@ -546,7 +594,9 @@
         {
             // зум "по умолчанию"
             this.zoom = this.defaultPageW / pageWidthMax;
-            this.defaultPageW = 0;
+
+            if (0 != this.panelWidth)
+                this.defaultPageW = 0;
         }
 
         // корректировка зумов
@@ -635,14 +685,17 @@
             }
         }
 
-        for (var i = this.startBlock; i < blocksCount; i++)
+        if (this.startBlock != -1)
         {
-            block = this.blocks[i];
-            if (block.top > (this.scrollY + this.panelHeight))
+            for (var i = this.startBlock; i < blocksCount; i++)
             {
-                // уже невидимый блок!
-                this.endBlock = i - 1;
-                break;
+                block = this.blocks[i];
+                if (block.top > (this.scrollY + this.panelHeight))
+                {
+                    // уже невидимый блок!
+                    this.endBlock = i - 1;
+                    break;
+                }
             }
         }
 
@@ -731,6 +784,9 @@
             return null;
 
         var block = (pageNum / this.countPagesInBlock) >> 0;
+        if (!this.blocks[block])
+            return null;
+
         var pageInBlock = pageNum - block * this.countPagesInBlock;
         return this.blocks[block].pages[pageInBlock];
     };
@@ -835,7 +891,8 @@
     };
 
     // export
-    AscCommon["ThumbnailsControl"] = CDocument;
+    AscCommon.ThumbnailsControl = CDocument;
+    AscCommon["ThumbnailsControl"] = AscCommon.ThumbnailsControl;
     var prot = AscCommon["ThumbnailsControl"].prototype;
     prot["repaint"] = prot.repaint;
     prot["setZoom"] = prot.setZoom;

@@ -753,7 +753,7 @@
 			// окна редактора и отпускания кнопки, будем отрабатывать выход из окна (только Chrome присылает эвент MouseUp даже при выходе из браузера)
 			this.showCellEditorCursor();
 
-			while (t.getCellEditMode() && !t.hasFocus || !t.enableKeyEvents || t.isSelectMode ||
+			while (t.getCellEditMode() && !t.hasFocus || !t.enableKeyEvents && event.emulated !== true || t.isSelectMode ||
 			t.isFillHandleMode || t.isMoveRangeMode || t.isMoveResizeRange) {
 				// Почему-то очень хочется обрабатывать лишние условия в нашем коде, вместо обработки наверху...
 				if (!t.enableKeyEvents && ctrlKey && (80 === event.which/* || 83 === event.which*/)) {

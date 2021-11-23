@@ -185,7 +185,7 @@ function CEditorPage(api)
 
     this.retinaScaling = AscCommon.AscBrowser.retinaPixelRatio;
 
-	this.zoom_values = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
+	this.zoom_values = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 320, 340, 360, 380, 400, 425, 450, 475, 500];
 	this.m_nZoomType = 0; // 0 - custom, 1 - fitToWodth, 2 - fitToPage
 
 	this.MobileTouchManager = null;
@@ -842,6 +842,12 @@ function CEditorPage(api)
 
 	this.zoom_FitToWidth = function()
 	{
+		if (this.m_oApi.isUseNativeViewer && this.m_oDrawingDocument.m_oDocumentRenderer)
+		{
+			this.m_oDrawingDocument.m_oDocumentRenderer.setZoomMode(AscCommon.ViewerZoomMode.Width);
+			return;
+		}
+
 		var _new_value = this.calculate_zoom_FitToWidth();
 
 		this.m_nZoomType = 1;
@@ -864,6 +870,12 @@ function CEditorPage(api)
 	};
 	this.zoom_FitToPage  = function()
 	{
+		if (this.m_oApi.isUseNativeViewer && this.m_oDrawingDocument.m_oDocumentRenderer)
+		{
+			this.m_oDrawingDocument.m_oDocumentRenderer.setZoomMode(AscCommon.ViewerZoomMode.Page);
+			return;
+		}
+
 		var w = parseInt(this.m_oEditor.HtmlElement.width) * g_dKoef_pix_to_mm;
 		var h = parseInt(this.m_oEditor.HtmlElement.height) * g_dKoef_pix_to_mm;
 
@@ -901,6 +913,15 @@ function CEditorPage(api)
 	{
 		if (false === oThis.m_oApi.bInit_word_control)
 			return;
+
+		if (0 === type)
+		{
+			if (oThis.m_oApi.isUseNativeViewer && oThis.m_oDrawingDocument.m_oDocumentRenderer)
+			{
+				oThis.m_oDrawingDocument.m_oDocumentRenderer.setZoom(oThis.m_nZoomValue / 100);
+				return;
+			}
+		}
 
 		// нужно проверить режим и сбросить кеш грамотно (ie version)
 		AscCommon.g_fontManager.ClearRasterMemory();
@@ -2401,7 +2422,7 @@ function CEditorPage(api)
 		}
 
 		AscCommon.check_KeyboardEvent(e);
-		if (oWordControl.IsFocus === false)
+		if (oWordControl.IsFocus === false && e.emulated !== true)
 		{
 			// некоторые команды нужно продолжать обрабатывать
 			if (!oWordControl.onKeyDownNoActiveControl(global_keyboardEvent))
@@ -2765,6 +2786,13 @@ function CEditorPage(api)
 		this.CheckRetinaDisplay();
 		this.m_oBody.Resize(this.Width * g_dKoef_pix_to_mm, this.Height * g_dKoef_pix_to_mm, this);
 		this.onButtonTabsDraw();
+
+		if (this.m_oApi.isUseNativeViewer)
+		{
+			var oViewer = this.m_oDrawingDocument.m_oDocumentRenderer;
+			if (oViewer)
+				oViewer.resize();
+		}
 
 		if (AscCommon.g_inputContext)
 			AscCommon.g_inputContext.onResize("id_main_view");
@@ -3217,6 +3245,12 @@ function CEditorPage(api)
 
 	this.OnCalculatePagesPlace = function()
 	{
+		if (this.m_oApi.isUseNativeViewer && this.m_oDrawingDocument.m_oDocumentRenderer)
+		{
+			// там все свое
+			return;
+		}
+
 		if (this.MobileTouchManager && !this.MobileTouchManager.IsWorkedPosition())
 			this.MobileTouchManager.ClearContextMenu();
 

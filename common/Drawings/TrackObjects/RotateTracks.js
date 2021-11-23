@@ -431,7 +431,7 @@ function RotateTrackShapeImage(originalObject)
             return;
         }
         AscFormat.CheckSpPrXfrm(this.originalObject);
-        this.originalObject.spPr.xfrm.setRot(this.angle);
+        this.originalObject.changeRot(this.angle);
     };
 
     this.getBounds = function()

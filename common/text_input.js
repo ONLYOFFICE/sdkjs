@@ -447,6 +447,7 @@
 				which : code,
 				keyCode : code,
 				code : "",
+				emulated: true,
 
 				preventDefault : function() {},
 				stopPropagation : function() {}

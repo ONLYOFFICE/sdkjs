@@ -52,6 +52,7 @@
 			this.callback = null;
 			
 			this.isGetTextFromUrl = null;
+			this.isPdfPrint = false;
 		}
 
 		asc_CDownloadOptions.prototype.asc_setFileType = function (fileType) {this.fileType = fileType;};

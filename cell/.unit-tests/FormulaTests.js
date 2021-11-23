@@ -2690,6 +2690,39 @@ $( function () {
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getValue(), -100 );
 
+		oParser = new parserFormula('ROUND("test",-2.1)', "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula('ROUND(123.431,"test")', "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula('ROUND(123.431,#NUM!)', "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula('ROUND(#NUM!,123.431)', "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula( "ROUND(-50.55,-2.1)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), -100 );
+
+		oParser = new parserFormula( "ROUND(-50.55,-2.9)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), -100 );
+
+		oParser = new parserFormula( "ROUND(-50.55,0.9)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), -51 );
+
+		oParser = new parserFormula( "ROUND(-50.55,0.1)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), -51 );
+
+
 		testArrayFormula2("ROUND", 2, 2)
 	} );
 
@@ -2739,6 +2772,55 @@ $( function () {
 		oParser = new parserFormula( "ROUNDUP(2.1123,0)", "A1", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getValue(), 3 );
+
+		oParser = new parserFormula("ROUNDUP(123.431,0.1)", "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue() - 0, 124);
+
+		oParser = new parserFormula("ROUNDUP(123.431,0.9)", "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue() - 0, 124);
+
+		oParser = new parserFormula("ROUNDUP(123.431,-0.9)", "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue() - 0, 124);
+
+		oParser = new parserFormula("ROUNDUP(123.431,-0.1)", "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue() - 0, 124);
+
+		oParser = new parserFormula("ROUNDUP(123.431,-2.1)", "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue() - 0, 200);
+
+		oParser = new parserFormula('ROUNDUP("test",-2.1)', "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula('ROUNDUP(123.431,"test")', "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula('ROUNDUP(123.431,#NUM!)', "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula('ROUNDUP(#NUM!,123.431)', "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula('ROUNDUP(123.431,-1.9)', "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue() - 0, 130);
+
+		oParser = new parserFormula( "ROUNDUP(-50.55,0.9)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), -51 );
+
+		oParser = new parserFormula( "ROUNDUP(-50.55,0.1)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), -51 );
+
 	} );
 
 
@@ -2767,6 +2849,54 @@ $( function () {
 
 		testArrayFormula2("ROUNDDOWN", 2, 2)
     } );
+
+	test( "Test: \"ROUNDDOWN\"", function () {
+		oParser = new parserFormula("ROUNDDOWN(123.431,0.1)", "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue() - 0, 123);
+
+		oParser = new parserFormula("ROUNDDOWN(123.431,0.9)", "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue() - 0, 123);
+
+		oParser = new parserFormula("ROUNDDOWN(123.431,-0.9)", "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue() - 0, 123);
+
+		oParser = new parserFormula("ROUNDDOWN(123.431,-0.1)", "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue() - 0, 123);
+
+		oParser = new parserFormula("ROUNDDOWN(123.431,-2.1)", "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue() - 0, 100);
+
+		oParser = new parserFormula('ROUNDDOWN("test",-2.1)', "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula('ROUNDDOWN(123.431,"test")', "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula('ROUNDDOWN(123.431,#NUM!)', "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula('ROUNDDOWN(#NUM!,123.431)', "A1", ws);
+		ok(oParser.parse());
+		strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula( "ROUNDDOWN(-50.55,0.9)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), -50 );
+
+		oParser = new parserFormula( "ROUNDDOWN(-50.55,0.1)", "A1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), -50 );
+	} );
+
+
 
     test( "Test: \"MROUND\"", function () {
         var multiple;//должен равняться значению второго аргумента

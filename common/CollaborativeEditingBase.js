@@ -107,99 +107,12 @@
     };
     CCollaborativeChanges.prototype.private_LoadData = function(szSrc)
     {
-        return this.GetStream(szSrc, 0, szSrc.length);
+        return this.GetStream(szSrc);
     };
-    CCollaborativeChanges.prototype.GetStream = function(szSrc, offset, srcLen)
+    CCollaborativeChanges.prototype.GetStream = function(szSrc, offset)
     {
-        var nWritten = 0;
-
-        var index   = -1 + offset;
-        var dst_len = "";
-
-        while (true)
-        {
-            index++;
-            var _c = szSrc.charCodeAt(index);
-            if (_c == ";".charCodeAt(0))
-            {
-                index++;
-                break;
-            }
-
-            dst_len += String.fromCharCode(_c);
-        }
-
-        var dstLen = parseInt(dst_len);
-
-        var pointer = AscFonts.g_memory.Alloc(dstLen);
-        var stream  = new AscCommon.FT_Stream2(pointer.data, dstLen);
-        stream.obj  = pointer.obj;
-
-        var dstPx = stream.data;
-
-        if (window.chrome)
-        {
-            while (index < srcLen)
-            {
-                var dwCurr = 0;
-                var i;
-                var nBits  = 0;
-                for (i = 0; i < 4; i++)
-                {
-                    if (index >= srcLen)
-                        break;
-                    var nCh = AscFonts.DecodeBase64Char(szSrc.charCodeAt(index++));
-                    if (nCh == -1)
-                    {
-                        i--;
-                        continue;
-                    }
-                    dwCurr <<= 6;
-                    dwCurr |= nCh;
-                    nBits += 6;
-                }
-
-                dwCurr <<= 24 - nBits;
-                for (i = 0; i < nBits / 8; i++)
-                {
-                    dstPx[nWritten++] = ((dwCurr & 0x00ff0000) >>> 16);
-                    dwCurr <<= 8;
-                }
-            }
-        }
-        else
-        {
-            var p = AscFonts.b64_decode;
-            while (index < srcLen)
-            {
-                var dwCurr = 0;
-                var i;
-                var nBits  = 0;
-                for (i = 0; i < 4; i++)
-                {
-                    if (index >= srcLen)
-                        break;
-                    var nCh = p[szSrc.charCodeAt(index++)];
-                    if (nCh == undefined)
-                    {
-                        i--;
-                        continue;
-                    }
-                    dwCurr <<= 6;
-                    dwCurr |= nCh;
-                    nBits += 6;
-                }
-
-                dwCurr <<= 24 - nBits;
-                for (i = 0; i < nBits / 8; i++)
-                {
-                    dstPx[nWritten++] = ((dwCurr & 0x00ff0000) >>> 16);
-                    dwCurr <<= 8;
-                }
-            }
-        }
-
-        return stream;
+        var memoryData = AscCommon.Base64.decode(szSrc, true, undefined, offset);
+        return new AscCommon.FT_Stream2(memoryData, memoryData.length);
     };
     CCollaborativeChanges.prototype.private_SaveData = function(Binary)
     {
@@ -1236,46 +1149,70 @@
             var bChangedLayout      = false;
             var bAddSlides          = false;
             var mapAddedSlides      = {};
-            for (var nIndex = 0, nCount = arrReverseChanges.length; nIndex < nCount; ++nIndex)
-            {
-                var oChange = arrReverseChanges[nIndex];
-                var oClass  = oChange.GetClass();
-                if (oClass instanceof AscCommonWord.CDocument || oClass instanceof AscCommonWord.CDocumentContent)
-                    mapDocumentContents[oClass.Get_Id()] = oClass;
-                else if (oClass instanceof AscCommonWord.Paragraph)
-                    mapParagraphs[oClass.Get_Id()] = oClass;
-                else if (oClass.IsParagraphContentElement && true === oClass.IsParagraphContentElement() && true === oChange.IsContentChange() && oClass.GetParagraph())
-                {
-                    mapParagraphs[oClass.GetParagraph().Get_Id()] = oClass.GetParagraph();
-                    if (oClass instanceof AscCommonWord.ParaRun)
-                        mapRuns[oClass.Get_Id()] = oClass;
-                }
-                else if (oClass instanceof AscCommonWord.ParaDrawing)
-                    mapDrawings[oClass.Get_Id()] = oClass;
-                else if (oClass instanceof AscCommonWord.ParaRun)
-                    mapRuns[oClass.Get_Id()] = oClass;
-                else if (oClass instanceof AscCommonWord.CTable)
-                    mapTables[oClass.Get_Id()] = oClass;
-                else if(oClass instanceof AscFormat.CShape || oClass instanceof AscFormat.CImageShape || oClass instanceof AscFormat.CChartSpace || oClass instanceof AscFormat.CGroupShape || oClass instanceof AscFormat.CGraphicFrame)
-                    mapGrObjects[oClass.Get_Id()] = oClass;
-                else if(typeof AscCommonSlide !== "undefined") {
-                    if (AscCommonSlide.Slide && oClass instanceof AscCommonSlide.Slide) {
-                        mapSlides[oClass.Get_Id()] = oClass;
-                    }
-                    else if(AscCommonSlide.SlideLayout && oClass instanceof AscCommonSlide.SlideLayout){
-                        mapLayouts[oClass.Get_Id()] = oClass;
-                        bChangedLayout = true;
-                    }
-                    else if(AscCommonSlide.CPresentation && oClass instanceof AscCommonSlide.CPresentation){
-                        if(oChange.Type === AscDFH.historyitem_Presentation_RemoveSlide || oChange.Type === AscDFH.historyitem_Presentation_AddSlide){
-                            bAddSlides = true;
-                            for(var i = 0; i < oChange.Items.length; ++i){
-                                mapAddedSlides[oChange.Items[i].Get_Id()] = oChange.Items[i];
-                            }
-                        }
-                    }
-                }
-            }
+            var mapCommentsToDelete = {};
+			for (var nIndex = 0, nCount = arrReverseChanges.length; nIndex < nCount; ++nIndex)
+			{
+				var oChange = arrReverseChanges[nIndex];
+				var oClass  = oChange.GetClass();
+				if (oClass instanceof AscCommonWord.CDocument || oClass instanceof AscCommonWord.CDocumentContent)
+				{
+					mapDocumentContents[oClass.Get_Id()] = oClass;
+				}
+				else if (oClass instanceof AscCommonWord.Paragraph)
+				{
+					mapParagraphs[oClass.Get_Id()] = oClass;
+				}
+				else if (oClass.IsParagraphContentElement && true === oClass.IsParagraphContentElement() && true === oChange.IsContentChange() && oClass.GetParagraph())
+				{
+					mapParagraphs[oClass.GetParagraph().Get_Id()] = oClass.GetParagraph();
+					if (oClass instanceof AscCommonWord.ParaRun)
+						mapRuns[oClass.Get_Id()] = oClass;
+				}
+				else if (oClass instanceof AscCommonWord.ParaDrawing)
+				{
+					mapDrawings[oClass.Get_Id()] = oClass;
+				}
+				else if (oClass instanceof AscCommonWord.ParaRun)
+				{
+					mapRuns[oClass.Get_Id()] = oClass;
+				}
+				else if (oClass instanceof AscCommonWord.CTable)
+				{
+					mapTables[oClass.Get_Id()] = oClass;
+				}
+				else if (oClass instanceof AscFormat.CShape
+					|| oClass instanceof AscFormat.CImageShape
+					|| oClass instanceof AscFormat.CChartSpace
+					|| oClass instanceof AscFormat.CGroupShape
+					|| oClass instanceof AscFormat.CGraphicFrame)
+				{
+					mapGrObjects[oClass.Get_Id()] = oClass;
+				}
+				else if (typeof AscCommonSlide !== "undefined" && AscCommonSlide.Slide && oClass instanceof AscCommonSlide.Slide)
+				{
+					mapSlides[oClass.Get_Id()] = oClass;
+				}
+				else if (typeof AscCommonSlide !== "undefined" && AscCommonSlide.SlideLayout && oClass instanceof AscCommonSlide.SlideLayout)
+				{
+					mapLayouts[oClass.Get_Id()] = oClass;
+					bChangedLayout              = true;
+				}
+				else if (typeof AscCommonSlide !== "undefined" && AscCommonSlide.CPresentation && oClass instanceof AscCommonSlide.CPresentation)
+				{
+					if (oChange.Type === AscDFH.historyitem_Presentation_RemoveSlide || oChange.Type === AscDFH.historyitem_Presentation_AddSlide)
+					{
+						bAddSlides = true;
+						for (var i = 0; i < oChange.Items.length; ++i)
+						{
+							mapAddedSlides[oChange.Items[i].Get_Id()] = oChange.Items[i];
+						}
+					}
+				}
+				else if (AscDFH.historyitem_ParaComment_CommentId === oChange.Type)
+				{
+					mapCommentsToDelete[oChange.New] = oClass;
+				}
+			}
 
             // Создаем точку в истории. Делаем действия через обычные функции (с отключенным пересчетом), которые пишут в
             // историю. Сохраняем список изменений в новой точке, удаляем данную точку.
@@ -1404,6 +1341,14 @@
                 oParagraph.CheckParaEnd();
                 oParagraph.Correct_Content(null, null, true);
             }
+
+            if (oLogicDocument && oLogicDocument.IsDocumentEditor())
+			{
+				for (var sCommentId in mapCommentsToDelete)
+				{
+					oLogicDocument.RemoveComment(sCommentId, false, false);
+				}
+			}
 
             var oBinaryWriter = AscCommon.History.BinaryWriter;
             var aSendingChanges = [];

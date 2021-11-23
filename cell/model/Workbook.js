@@ -2101,6 +2101,8 @@
 		this.addingWorksheet = null;
 
 		this.workbookProtection = null;
+
+		this.customXmls = null;//[]
 	}
 	Workbook.prototype.init=function(tableCustomFunc, tableIds, sheetIds, bNoBuildDep, bSnapshot){
 		if(this.nActive < 0)
@@ -4318,6 +4320,18 @@
 
 		if(wsFrom.headerFooter) {
 			this.headerFooter = wsFrom.headerFooter.clone(this);
+		}
+
+		if(wsFrom.sheetProtection) {
+			this.sheetProtection = wsFrom.sheetProtection.clone(this);
+		}
+		if(wsFrom.aProtectedRanges) {
+			for (i = 0; i < wsFrom.aProtectedRanges.length; i++) {
+				if (!this.aProtectedRanges) {
+					this.aProtectedRanges = [];
+				}
+				this.aProtectedRanges.push(wsFrom.aProtectedRanges[i].clone(this));
+			}
 		}
 
 		return renameParams;
@@ -7252,6 +7266,7 @@
 	};
 	Worksheet.prototype.moveSparklineGroup = function (oBBoxFrom, oBBoxTo, copyRange, offset, wsTo, wsFrom) {
 		var t = this;
+		var isMove = !wsFrom;
 		if (!wsTo) {
 			wsTo = this;
 		}
@@ -7296,14 +7311,72 @@
 
 						//необходимо ещё сдвинуть _f
 						if (_elem && _elem._f && cloneElem._f) {
-							cloneElem._f.setOffset(offset);
-							if (wsTo.sName !== cloneElem._f.sheet) {
-								cloneElem._f.setSheet(wsTo.sName);
+							if (wsTo === wsFrom) {
+								if (cloneElem._f.intersection(oBBoxFrom)) {
+									var _isChangeF = false;
+									var isContainsFormula = oBBoxFrom.containsRange(cloneElem._f);
+									if (isContainsFormula) {
+										cloneElem._f.setOffset(offset);
+										_isChangeF = true;
+									} else {
+
+										//при перемещении есть такой нюанс - если перемещаем последнюю ячейку формулы вниз(вверх аналогично для первой строки) + не затрагиваем весь диапазон формулы
+										//то формулу растягиваем до перемещаемой ячейки
+
+										var bColF = cloneElem._f.c1 === cloneElem._f.c2;
+										if (bColF) {
+											if (oBBoxFrom.contains(cloneElem._f.c1, cloneElem._f.r2) && !offset.col) {
+												cloneElem._f.setOffsetLast(offset);
+												_isChangeF = true;
+											} else if (oBBoxFrom.contains(cloneElem._f.c1, cloneElem._f.r1)&& !offset.col) {
+												cloneElem._f.setOffsetFirst(offset);
+												_isChangeF = true;
+											}
+										} else {
+											if (oBBoxFrom.contains(cloneElem._f.c2, cloneElem._f.r1) && !offset.row) {
+												cloneElem._f.setOffsetLast(offset);
+												_isChangeF = true;
+											} else if (oBBoxFrom.contains(cloneElem._f.c1, cloneElem._f.r1)&& !offset.row) {
+												cloneElem._f.setOffsetFirst(offset);
+												_isChangeF = true;
+											}
+										}
+									}
+
+									if (_isChangeF) {
+										if (wsTo.sName !== cloneElem._f.sheet) {
+											cloneElem._f.setSheet(wsTo.sName);
+										}
+										AscCommonExcel.executeInR1C1Mode(false, function () {
+											cloneElem.f = cloneElem._f.getName();
+										});
+										isChange = true;
+									}
+								}
+							} else {
+								if (isMove) {
+									//если реальный перенос внутри книги, а не копирование/вставка
+									if (oBBoxFrom.containsRange(cloneElem._f)) {
+										cloneElem._f.setOffset(offset);
+										if (wsTo.sName !== cloneElem._f.sheet) {
+											cloneElem._f.setSheet(wsTo.sName);
+										}
+										AscCommonExcel.executeInR1C1Mode(false, function () {
+											cloneElem.f = cloneElem._f.getName();
+										});
+										isChange = true;
+									}
+								} else {
+									cloneElem._f.setOffset(offset);
+									if (wsTo.sName !== cloneElem._f.sheet) {
+										cloneElem._f.setSheet(wsTo.sName);
+									}
+									AscCommonExcel.executeInR1C1Mode(false, function () {
+										cloneElem.f = cloneElem._f.getName();
+									});
+									isChange = true;
+								}
 							}
-							AscCommonExcel.executeInR1C1Mode(false, function () {
-								cloneElem.f = cloneElem._f.getName();
-							});
-							isChange = true;
 						}
 
 						if (!moveOnNewSheet) {
@@ -7719,6 +7792,9 @@
 				} else if (Asc.c_oAscItemType.Blank === item.t) {
 					break;
 				} else {
+					if (rowFieldsOffset) {
+						outline = outlines[r + j];
+					}
 					oCellValue = new AscCommonExcel.CCellValue();
 					oCellValue.type = AscCommon.CellValueType.String;
 					if (r + j > valuesIndex) {
@@ -8474,20 +8550,53 @@
 			options.findWhat = options.findWhat.toLowerCase();
 		}
 
-		if(options.isWholeWord) {
+		var findEmptyStr = options.findWhat === "";
+		if (findEmptyStr) {
+			options.findWhat = new RegExp("^$", "g");
+		} else if(options.isWholeWord) {
 			var length = options.findWhat.length;
 			options.findWhat = '\\b' + options.findWhat + '\\b';
 			options.findWhat = new RegExp(options.findWhat, "g");
 			options.findWhat.length = length;
 		}
+		var isWholeWordTrue = null;
+		if (findEmptyStr) {
+			isWholeWordTrue = options.isWholeWord;
+			options.isWholeWord = true;
+		}
+
 		var selectionRange = options.selectionRange || this.selectionRange;
 		var lastRange = selectionRange.getLast();
 		var activeCell = selectionRange.activeCell;
 		var merge = this.getMergedByCell(activeCell.row, activeCell.col);
 		options.findInSelection = options.scanOnOnlySheet &&
 			!(selectionRange.isSingleRange() && (lastRange.isOneCell() || lastRange.isEqual(merge)));
-		var findRange = options.findInSelection ? this.getRange3(lastRange.r1, lastRange.c1, lastRange.r2, lastRange.c2) :
-			this.getRange3(0, 0, this.getRowsCount(), this.getColsCount());
+
+		var findRange;
+		var maxRowsCount = this.getRowsCount();
+		var maxColsCount = this.getColsCount();
+		var func;
+		if (findEmptyStr) {
+			if (maxRowsCount === 0 || maxColsCount === 0) {
+				findRange = this.getRange3(0, 0, maxRowsCount, maxColsCount);
+				func = findRange._foreachNoEmpty;
+			} else if (options.findInSelection) {
+				if (lastRange.r1 <= maxRowsCount - 1 && lastRange.c1 <= maxColsCount - 1) {
+					findRange = this.getRange3(lastRange.r1, lastRange.c1, Math.min(lastRange.r2, maxRowsCount - 1), Math.min(lastRange.c2, maxColsCount - 1));
+					func = findRange._foreach2;
+				} else {
+					findRange = this.getRange3(lastRange.r1, lastRange.c1, lastRange.r2, lastRange.c2);
+					func = findRange._foreachNoEmpty;
+				}
+			} else {
+				findRange = this.getRange3(0, 0, maxRowsCount - 1, maxColsCount - 1);
+				func = findRange._foreach2;
+			}
+		} else {
+			findRange = options.findInSelection ? this.getRange3(lastRange.r1, lastRange.c1, lastRange.r2, lastRange.c2) :
+				this.getRange3(0, 0, maxRowsCount, maxColsCount);
+			func = findRange._foreachNoEmpty;
+		}
 
 		if (this.lastFindOptions && this.lastFindOptions.findResults && options.isEqual2(this.lastFindOptions) &&
 			findRange.getBBox0().isEqual(this.lastFindOptions.findRange)) {
@@ -8496,8 +8605,15 @@
 
 		var oldResults = this.lastFindOptions && this.lastFindOptions.findResults.isNotEmpty();
 		var result = new AscCommonExcel.findResults(), tmp;
-		findRange._foreachNoEmpty(function (cell, r, c) {
-			if (!cell.isNullText() && cell.isEqual(options)) {
+		var emptyCell, t = this;
+		func.apply(findRange, [function (cell, r, c) {
+			if (cell === null) {
+				if (!emptyCell) {
+					emptyCell = new Cell(t);
+				}
+				cell = emptyCell;
+			}
+			if (cell && cell.isEqual(options)) {
 				if (!options.scanByRows) {
 					tmp = r;
 					r = c;
@@ -8505,7 +8621,10 @@
 				}
 				result.add(r, c, cell);
 			}
-		});
+		}]);
+		if (isWholeWordTrue !== null) {
+			options.isWholeWord = isWholeWordTrue;
+		}
 		this.lastFindOptions = options.clone();
 		// ToDo support multiselect
 		this.lastFindOptions.findRange = findRange.getBBox0().clone();
@@ -9936,13 +10055,12 @@
 			return;
 		}
 		
-		if (val !== view.topLeftCell || (val && view.topLeftCell && !val.isEqual(view.topLeftCell))) {
+		if ((!val && view.topLeftCell) || (val && !view.topLeftCell) || (val && view.topLeftCell && !val.isEqual(view.topLeftCell))) {
 			var oldValue = view.topLeftCell ? view.topLeftCell.clone() : null;
 			view.topLeftCell = val;
 			if (addToHistory) {
-				History.Create_NewPoint();
 				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_SetTopLeftCell,
-					this.getId(), null, new UndoRedoData_FromTo(new UndoRedoData_BBox(oldValue), new UndoRedoData_BBox(val)));
+					this.getId(), null, new UndoRedoData_FromTo(oldValue ? new UndoRedoData_BBox(oldValue) : oldValue, val ? new UndoRedoData_BBox(val) : val));
 			}
 		}
 	};
@@ -10235,17 +10353,41 @@
 		return res.length ? res : null;
 	};
 
-	Worksheet.prototype.checkProtectedRangesPassword = function (val, data) {
-		var res = false;
+	Worksheet.prototype.checkProtectedRangesPassword = function (val, data, callback) {
+		//здесь првоеряем в тч при попытке ввода в ячейку
+		var t = this;
 		if (this.aProtectedRanges && this.aProtectedRanges.length) {
+			var aCheckHash = [];
 			for (var i = 0; i < this.aProtectedRanges.length; i++) {
-				if (this.aProtectedRanges[i].asc_isPassword() && this.aProtectedRanges[i].contains(data.c1, data.r1) && this.aProtectedRanges[i].asc_checkPassword(val)) {
-					res = true;
-					break;
+				if (!this.aProtectedRanges[i].asc_isPassword() || this.aProtectedRanges[i]._isEnterPassword) {
+					callback && callback(true);
+					return;
+				} else if (this.aProtectedRanges[i].asc_isPassword() && this.aProtectedRanges[i].contains(data.col, data.row)) {
+					aCheckHash.push({
+						password: val,
+						salt: this.aProtectedRanges[i].saltValue,
+						spinCount: this.aProtectedRanges[i].spinCount,
+						alg: AscCommonExcel.fromModelAlgoritmName(this.aProtectedRanges[i].algorithmName)
+					});
 				}
 			}
+			if (aCheckHash && aCheckHash.length) {
+				AscCommon.calculateProtectHash(aCheckHash, function (aHash) {
+					for (var i = 0; i < aHash.length; i++) {
+						if (aHash[i] === t.aProtectedRanges[i].hashValue) {
+							t.aProtectedRanges[i]._isEnterPassword = true;
+							callback && callback(true);
+							return;
+						}
+					}
+					callback && callback(false);
+				});
+			} else {
+				callback && callback(true);
+			}
+		} else {
+			callback && callback(true);
 		}
-		return res;
 	};
 
 	Worksheet.prototype.checkProtectedRangeName = function (name) {
@@ -12096,7 +12238,7 @@
 	{
 		var sSimpleText = "";
 		for(var i = 0, length = aVal.length; i < length; ++i)
-			sSimpleText += aVal[i].text;
+			sSimpleText += aVal[i].getFragmentText ? aVal[i].getFragmentText() : aVal[i].text;
 		this._setValue(sSimpleText);
 		if (!ignoreHyperlink && window['AscCommonExcel'].g_AutoCorrectHyperlinks) {
 			this._autoformatHyperlink(sSimpleText);
@@ -12114,7 +12256,7 @@
 				for(var i = 0, length = aVal.length; i < length; i++){
 					var item = aVal[i];
 					var oNewElem = new AscCommonExcel.CMultiTextElem();
-					oNewElem.text = item.text;
+					oNewElem.text = item.getFragmentText ? item.getFragmentText() : item.text;
 					if (null != item.format) {
 						oNewElem.format = new AscCommonExcel.Font();
 						oNewElem.format.assign(item.format);
@@ -12210,7 +12352,7 @@
 			cellfont = g_oDefaultFormat.Font;
 		if(null != sText){
 			oNewItem = new AscCommonExcel.Fragment();
-			oNewItem.text = sText;
+			oNewItem.setFragmentText(sText);
 			oNewItem.format = cellfont.clone();
 			oNewItem.checkVisitedHyperlink(this.nRow, this.nCol, this.ws.hyperlinkManager);
 			oNewItem.format.setSkip(false);
@@ -12222,7 +12364,7 @@
 				var oCurtext = aText[i];
 				if(null != oCurtext.text)
 				{
-					oNewItem.text = oCurtext.text;
+					oNewItem.setFragmentText(oCurtext.text);
 					var oCurFormat = new AscCommonExcel.Font();
 					if (isMultyText) {
 						if (null != oCurtext.format && !(cellSelfFont && cellSelfFont.isEqual(oCurtext.format))) {
@@ -14408,6 +14550,32 @@
 			}
 		});
 		return fill;
+	};
+	Range.prototype.getLocked = function () {
+		var t = this;
+		var nRow = this.bbox.r1;
+		var nCol = this.bbox.c1;
+		var isLocked = true;
+		this.worksheet._getCellNoEmpty(nRow, nCol, function (cell) {
+			var xfs = cell ? cell.getCompiledStyle() : t.worksheet.getCompiledStyle(nRow, nCol);
+			if (xfs) {
+				isLocked = xfs.getLocked();
+			}
+		});
+		return isLocked;
+	};
+	Range.prototype.getHidden = function () {
+		var t = this;
+		var nRow = this.bbox.r1;
+		var nCol = this.bbox.c1;
+		var isHidden = false;
+		this.worksheet._getCellNoEmpty(nRow, nCol, function (cell) {
+			var xfs = cell ? cell.getCompiledStyle() : t.worksheet.getCompiledStyle(nRow, nCol);
+			if (xfs) {
+				isHidden = xfs.getHidden();
+			}
+		});
+		return isHidden;
 	};
 	Range.prototype.getBorderSrc = function (opt_row, opt_col) {
 		//Возвращает как записано в файле, не проверяя бордеры соседних ячеек

@@ -315,6 +315,16 @@
             var Height     = this.m_oManager.m_lLineHeight;
 
             return Height * this.m_oLastFont.SetUpSize / UnitsPerEm * g_dKoef_pt_to_mm;
+        },
+        GetLimitsY : function()
+        {
+            var Limits = this.m_oManager.GetLimitsY();
+            var dKoef = this.m_oLastFont.SetUpSize / this.m_oManager.m_lUnits_Per_Em * g_dKoef_pt_to_mm;
+
+            Limits.min *= dKoef;
+            Limits.max *= dKoef;
+
+            return Limits;
         }
     };
     var g_oTextMeasurer = new CTextMeasurer();

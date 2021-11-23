@@ -1635,6 +1635,14 @@
             return ret;
         };
 
+		this.GetLimitsY = function()
+		{
+			return {
+				min : this.m_pFaceInfo.header_yMin,
+				max : this.m_pFaceInfo.header_yMax
+			};
+		};
+
         this.SetFace = function(face, fontManager)
 		{
 			this.m_pFace = face;

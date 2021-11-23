@@ -47,119 +47,10 @@ var FontStyle =
     FontStyleStrikeout:  8
 };
 
-var charA = "A".charCodeAt(0);
-var charZ = "Z".charCodeAt(0);
-var chara = "a".charCodeAt(0);
-var charz = "z".charCodeAt(0);
-var char0 = "0".charCodeAt(0);
-var char9 = "9".charCodeAt(0);
-var charp = "+".charCodeAt(0);
-var chars = "/".charCodeAt(0);
-
-function DecodeBase64Char(ch)
+function CreateFontData2(input, len)
 {
-    if (ch >= charA && ch <= charZ)
-        return ch - charA + 0;
-    if (ch >= chara && ch <= charz)
-        return ch - chara + 26;
-    if (ch >= char0 && ch <= char9)
-        return ch - char0 + 52;
-    if (ch == charp)
-        return 62;
-    if (ch == chars)
-        return 63;
-    return -1;
-}
-
-var b64_decode = [];
-(function(){
-    var i;
-    for (i = charA; i <= charZ; i++)
-        b64_decode[i] = i - charA + 0;
-    for (i = chara; i <= charz; i++)
-        b64_decode[i] = i - chara + 26;
-    for (i = char0; i <= char9; i++)
-        b64_decode[i] = i - char0 + 52;
-})();
-b64_decode[charp] = 62;
-b64_decode[chars] = 63;
-
-function CreateFontData2(szSrc, dstLen)
-{
-    var srcLen = szSrc.length;
-    var nWritten = 0;
-
-    if (dstLen === undefined)
-        dstLen = srcLen;
-
-    var stream = new AscFonts.FontStream(AscFonts.allocate(dstLen), dstLen);
-
-    var dstPx = stream.data;
-    var index = 0;
-
-    if (window.chrome)
-    {
-        while (index < srcLen)
-        {
-            var dwCurr = 0;
-            var i;
-            var nBits = 0;
-            for (i=0; i<4; i++)
-            {
-                if (index >= srcLen)
-                    break;
-                var nCh = DecodeBase64Char(szSrc.charCodeAt(index++));
-                if (nCh == -1)
-                {
-                    i--;
-                    continue;
-                }
-                dwCurr <<= 6;
-                dwCurr |= nCh;
-                nBits += 6;
-            }
-
-            dwCurr <<= 24-nBits;
-            for (i=0; i<nBits/8; i++)
-            {
-                dstPx[nWritten++] = ((dwCurr & 0x00ff0000) >>> 16);
-                dwCurr <<= 8;
-            }
-        }
-    }
-    else
-    {
-        var p = b64_decode;
-        while (index < srcLen)
-        {
-            var dwCurr = 0;
-            var i;
-            var nBits = 0;
-            for (i=0; i<4; i++)
-            {
-                if (index >= srcLen)
-                    break;
-                var nCh = p[szSrc.charCodeAt(index++)];
-                if (nCh == undefined)
-                {
-                    i--;
-                    continue;
-                }
-                dwCurr <<= 6;
-                dwCurr |= nCh;
-                nBits += 6;
-            }
-
-            dwCurr <<= 24-nBits;
-            for (i=0; i<nBits/8; i++)
-            {
-                dstPx[nWritten++] = ((dwCurr & 0x00ff0000) >>> 16);
-                dwCurr <<= 8;
-            }
-        }
-    }
-
-    return stream;
+    var memoryData = AscCommon.Base64.decode(input, false, len);
+    return new AscFonts.FontStream(memoryData, memoryData.length);
 }
 
 function CreateFontData3(szSrc)
@@ -179,96 +70,10 @@ function CreateFontData3(szSrc)
     return stream;
 }
 
-function CreateFontData4(szSrc)
+function CreateFontData4(input)
 {
-    var srcLen = szSrc.length;
-    var nWritten = 0;
-
-    var index = 0;
-    var dst_len = "";
-    while (true)
-    {
-        var _c = szSrc.charCodeAt(index);
-        if (_c == ";".charCodeAt(0))
-            break;
-
-        dst_len += String.fromCharCode(_c);
-        index++;
-    }
-
-    index++;
-    var dstLen = parseInt(dst_len);
-
-    if (dstLen <= 0)
-        return null;
-
-    var stream = new AscFonts.FontStream(AscFonts.allocate(dstLen), dstLen);
-
-    var dstPx = stream.data;
-
-    if (window.chrome)
-    {
-        while (index < srcLen)
-        {
-            var dwCurr = 0;
-            var i;
-            var nBits = 0;
-            for (i=0; i<4; i++)
-            {
-                if (index >= srcLen)
-                    break;
-                var nCh = DecodeBase64Char(szSrc.charCodeAt(index++));
-                if (nCh == -1)
-                {
-                    i--;
-                    continue;
-                }
-                dwCurr <<= 6;
-                dwCurr |= nCh;
-                nBits += 6;
-            }
-
-            dwCurr <<= 24-nBits;
-            for (i=0; i<nBits/8; i++)
-            {
-                dstPx[nWritten++] = ((dwCurr & 0x00ff0000) >>> 16);
-                dwCurr <<= 8;
-            }
-        }
-    }
-    else
-    {
-        var p = b64_decode;
-        while (index < srcLen)
-        {
-            var dwCurr = 0;
-            var i;
-            var nBits = 0;
-            for (i=0; i<4; i++)
-            {
-                if (index >= srcLen)
-                    break;
-                var nCh = p[szSrc.charCodeAt(index++)];
-                if (nCh == undefined)
-                {
-                    i--;
-                    continue;
-                }
-                dwCurr <<= 6;
-                dwCurr |= nCh;
-                nBits += 6;
-            }
-
-            dwCurr <<= 24-nBits;
-            for (i=0; i<nBits/8; i++)
-            {
-                dstPx[nWritten++] = ((dwCurr & 0x00ff0000) >>> 16);
-                dwCurr <<= 8;
-            }
-        }
-    }
-
-    return stream;
+    var memoryData = AscCommon.Base64.decode(input, true);
+    return new AscFonts.FontStream(memoryData, memoryData.length);
 }
 
 //----------------- FONT_MAP ----------------------------------------
@@ -866,6 +671,8 @@ function CFontSelect()
     this.m_shXHeight        = 0;
     this.m_shCapHeight      = 0;
 
+    this.m_usType = 0;
+
     this.m_names = null;
 }
 CFontSelect.prototype =
@@ -883,10 +690,20 @@ CFontSelect.prototype =
 		if (undefined === _version)
 			_version = 0;
 
+		var recordLen = 0;
+		var currentPos = fs.cur;
+
+		var bIsUseVersion = (bIsDictionary !== false) ? true : false;
+		if (!bIsUseVersion)
+		    _version = 0;
+
+		if (_version >= 2)
+		    recordLen = fs.GetLong();
+
         // name
         var _len = fs.GetLong();
 
-        if (bIsDictionary === false)
+        if (!bIsUseVersion)
             this.m_wsFontName = fs.GetString1(_len);
         else
         {
@@ -913,7 +730,7 @@ CFontSelect.prototype =
             }
 		}
 
-        if (bIsDictionary !== false)
+        if (bIsUseVersion)
         {
 			switch (_version)
 			{
@@ -954,7 +771,7 @@ CFontSelect.prototype =
         this.m_bIsFixed = (1 == fs.GetLong());
 
         var _panose_len = 10;
-        if (bIsDictionary !== false)
+        if (bIsUseVersion)
             _panose_len = fs.GetLong(); // 10
 
         for (var i = 0; i < _panose_len; i++)
@@ -980,6 +797,18 @@ CFontSelect.prototype =
         this.m_shLineGap        = FT_Common.UShort_To_Short(fs.GetUShort());
         this.m_shXHeight        = FT_Common.UShort_To_Short(fs.GetUShort());
         this.m_shCapHeight      = FT_Common.UShort_To_Short(fs.GetUShort());
+
+        if (_version >= 2)
+        {
+            this.m_usType = fs.GetUShort();
+        }
+
+        // if new versions - load addition data in this place
+
+        if (_version >= 2)
+        {
+            fs.Seek2(currentPos + recordLen);
+        }
     },
 
     GetStyle : function()
@@ -1691,7 +1520,7 @@ CFontSelectList.prototype =
 		_fs.m_wsFontName = "ASCW3";
 		this.List.push(_fs);
 
-        delete window["g_fonts_selection_bin"];
+        //delete window["g_fonts_selection_bin"];
     },
 
     isEnglishChar : function(_code)
@@ -3129,6 +2958,12 @@ function CApplicationFonts()
     this.CheckNamesForInterface = function(language)
     {
         var lang = language.toLowerCase();
+        var indexSubLang = lang.indexOf("-");
+        if (-1 == indexSubLang)
+            indexSubLang = lang.indexOf("_");
+        if (-1 != indexSubLang)
+            lang = lang.substr(0, indexSubLang);
+
         var isEA = false;
         switch (lang)
         {
@@ -3196,12 +3031,27 @@ var g_fontApplication = new CApplicationFonts();
     //------------------------------------------------------export------------------------------------------------------
     window['AscFonts'] = window['AscFonts'] || {};
     window['AscFonts'].FontStyle = FontStyle;
-    window['AscFonts'].DecodeBase64Char = DecodeBase64Char;
-    window['AscFonts'].b64_decode = b64_decode;
     window['AscFonts'].CreateFontData2 = CreateFontData2;
     window['AscFonts'].CreateFontData3 = CreateFontData3;
     window['AscFonts'].CreateFontData4 = CreateFontData4;
     window['AscFonts'].LanguagesFontSelectTypes = LanguagesFontSelectTypes;
 
     window['AscFonts'].g_fontApplication = g_fontApplication;
+
+    window['AscFonts']['pickFont'] = function(name, style) {
+        var info = AscFonts.g_fontApplication.GetFontInfo(name, style);
+        var fontId = info.GetFontID(AscCommon.g_font_loader, style);
+        return fontId.file;
+    };
+    window['AscFonts']['getFontStreams'] = function() {
+        return AscFonts.g_fonts_streams;
+    };
+    window['AscFonts']['getFontStream'] = function(index) {
+        var s = AscFonts.g_fonts_streams[index];
+        return {
+            "data" : s.data,
+            "size" : s.size
+        };
+    };
+
 })(window);

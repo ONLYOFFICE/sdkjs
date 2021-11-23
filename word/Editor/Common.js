@@ -410,3 +410,41 @@ CTextToTableEngine.prototype.GetContentControl = function()
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
+
+(function(window, undefined)
+{
+	function CompareDocumentPositions(oDocPos1, oDocPos2)
+	{
+		if (!oDocPos1 || !oDocPos2)
+			return 0;
+
+		if (oDocPos1.Class !== oDocPos2.Class)
+		{
+			// TODO: Здесь нужно доработать сравнение позиций, когда они из разных частей документа
+			if (oDocPos1.Class instanceof AscCommonWord.CDocument)
+				return -1;
+			else if (oDocPos1.Class instanceof AscCommonWord.CDocument)
+				return 1;
+			else
+				return 1;
+		}
+
+		for (var nIndex = 0, nCount = oDocPos1.length; nIndex < nCount; ++nIndex)
+		{
+			if (oDocPos2.length <= nIndex)
+				return 1;
+
+			if (oDocPos1[nIndex].Position < oDocPos2[nIndex].Position)
+				return -1;
+			else if (oDocPos1[nIndex].Position > oDocPos2[nIndex].Position)
+				return 1;
+		}
+
+		return 0;
+	}
+
+	//--------------------------------------------------------export----------------------------------------------------
+	window['AscCommonWord'] = window['AscCommonWord'] || {};
+	window['AscCommonWord'].CompareDocumentPositions = CompareDocumentPositions;
+
+})(window);

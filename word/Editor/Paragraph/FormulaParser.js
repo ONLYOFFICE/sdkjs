@@ -1331,7 +1331,7 @@
         CFunctionNode.call(this, parseQueue);
     }
     CSUMFunctionNode.prototype = Object.create(CFunctionNode.prototype);
-    CSUMFunctionNode.prototype.minArgumentsCount = 1;
+    CSUMFunctionNode.prototype.minArgumentsCount = 2;
     CSUMFunctionNode.prototype.maxArgumentsCount = +Infinity;
     CSUMFunctionNode.prototype.listSupport = function () {
         return true;
@@ -2077,8 +2077,9 @@
                         }
                         else{
                             for(var i = 0; i < oLastFunction.operands.length; ++i){
-                                if(oLastFunction.operands[i] instanceof CCellRangeNode){
-                                    if(oLastFunction.operands[i].isCellRange() || oLastFunction.operands[i].isBookmarkCellRange() || oLastFunction.operands[i].isDir()){
+                                var oOperand = oLastFunction.operands[i];
+                                if(oOperand instanceof CCellRangeNode){
+                                    if(oOperand.isCell() || oOperand.isCellRange() || oOperand.isBookmarkCellRange() || oOperand.isDir()){
                                         break;
                                     }
                                 }

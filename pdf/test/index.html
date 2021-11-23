@@ -14,6 +14,12 @@
     
     <script src="./../../common/device_scale.js"></script>
     <script src="./../../common/browser.js"></script>
+    <script src="./../../common/AllFonts.js"></script>
+    <script src="./../../common/libfont/loader.js"></script>
+    <script src="./../../common/libfont/map.js"></script>
+    <script src="./../../common/SerializeCommonWordExcel.js"></script>
+    <script src="./../../common/Drawings/Externals.js"></script>
+    <script src="./../../common/GlobalLoaders.js"></script>
     <script src="./../../common/scroll.js"></script>
     <script src="./../../common/Drawings/WorkEvents.js"></script>
 
@@ -28,10 +34,10 @@
     <div id="leftPanel" class="block_elem" style="position:absolute;left:0px;top:0px;width:200px;height:100%;background-color:#F1F1F1;">
         <button id="buttonBookmarks" class="block_elem" style="left:10px;top:10px;width:80px;height:30px;">Bookmarks</button>
         <button id="buttonThumbnails" class="block_elem" style="left:110px;top:10px;width:80px;height:30px;">Thumbnails</button>
-        <div id="panelBookmarks" class="block_elem" style="position:absolute;left:0px;top:50px;bottom:0px;right:200px;">
+        <div id="panelBookmarks" class="block_elem" style="background:#F1F1F1;position:absolute;left:0px;top:50px;bottom:0px;right:200px;z-index:1;overflow:scroll;">
             <div id="bookmarksTree"></div>
         </div>
-        <div id="panelThumbnails" class="block_elem" style="position:absolute;left:0px;top:50px;bottom:0px;right:200px;">
+        <div id="panelThumbnails" class="block_elem" style="background:#F1F1F1;position:absolute;left:0px;top:50px;bottom:0px;right:200px;z-index:2;">
             <div id="panelThimbnailsNatural" class="block_elem" style="left:0px;width:100%;top:0px;height:0px;">
             </div>
             <div id="zoomPanel" class="block_elem" style="left:0px;width:100%;top:0px;height:0px;">

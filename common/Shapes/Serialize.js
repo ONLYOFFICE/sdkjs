@@ -36,10 +36,6 @@
 
 var prot;
 // Import
-var g_memory = AscFonts.g_memory;
-var DecodeBase64Char = AscFonts.DecodeBase64Char;
-var b64_decode = AscFonts.b64_decode;
-
 var g_nodeAttributeEnd = AscCommon.g_nodeAttributeEnd;
 
 var c_oAscShdClear = Asc.c_oAscShdClear;
@@ -305,74 +301,8 @@ function BinaryPPTYLoader()
 			var dstLen_str = read_main_prop;
 
 			var dstLen = parseInt(dstLen_str);
-
-			var pointer = g_memory.Alloc(dstLen);
-			this.stream = new AscCommon.FileStream(pointer.data, dstLen);
-			this.stream.obj = pointer.obj;
-
-			var dstPx = this.stream.data;
-
-			if (window.chrome)
-			{
-				while (index < srcLen)
-				{
-					var dwCurr = 0;
-					var i;
-					var nBits = 0;
-					for (i=0; i<4; i++)
-					{
-						if (index >= srcLen)
-							break;
-						var nCh = DecodeBase64Char(isBase64 ? base64_ppty.charCodeAt(index++) : base64_ppty[index++]);
-						if (nCh == -1)
-						{
-							i--;
-							continue;
-						}
-						dwCurr <<= 6;
-						dwCurr |= nCh;
-						nBits += 6;
-					}
-
-					dwCurr <<= 24-nBits;
-					for (i=0; i<nBits/8; i++)
-					{
-						dstPx[nWritten++] = ((dwCurr & 0x00ff0000) >>> 16);
-						dwCurr <<= 8;
-					}
-				}
-			}
-			else
-			{
-				var p = b64_decode;
-				while (index < srcLen)
-				{
-					var dwCurr = 0;
-					var i;
-					var nBits = 0;
-					for (i=0; i<4; i++)
-					{
-						if (index >= srcLen)
-							break;
-						var nCh = p[isBase64 ? base64_ppty.charCodeAt(index++) : base64_ppty[index++]];
-						if (nCh == undefined)
-						{
-							i--;
-							continue;
-						}
-						dwCurr <<= 6;
-						dwCurr |= nCh;
-						nBits += 6;
-					}
-
-					dwCurr <<= 24-nBits;
-					for (i=0; i<nBits/8; i++)
-					{
-						dstPx[nWritten++] = ((dwCurr & 0x00ff0000) >>> 16);
-						dwCurr <<= 8;
-					}
-				}
-			}
+			var memoryData = AscCommon.Base64.decode(base64_ppty, false, dstLen, index);
+			this.stream = new AscCommon.FileStream(memoryData, memoryData.length);
 		} else {
 			this.stream = new AscCommon.FileStream();
 			this.stream.obj    = null;
@@ -6656,8 +6586,6 @@ function BinaryPPTYLoader()
         var s = this.stream;
 
         var shape = new AscFormat.CShape(this.TempMainObject);
-        if (null != this.TempGroupObject)
-            shape.Container = this.TempGroupObject;
 
         var _rec_start = s.cur;
         var _end_rec = _rec_start + s.GetULong() + 4;
@@ -6720,6 +6648,7 @@ function BinaryPPTYLoader()
 				case 6:
 				{
                     txXfrm = this.ReadXfrm();
+                    shape.setTxXfrm(txXfrm);
 					break;
 				}
                 case 7:
@@ -6760,45 +6689,9 @@ function BinaryPPTYLoader()
                 }
             }
         }
-        if(txXfrm && AscFormat.isRealNumber(txXfrm.rot) && shape.txBody){
-            var oCopyBodyPr;
-            var rot2 = txXfrm.rot;
-            while(rot2 < 0){
-                rot2 += 2*Math.PI;
-            }
-            var nSquare = ((2.0*rot2/Math.PI + 0.5) >> 0);
-            while (nSquare < 0){
-                nSquare += 4;
-            }
-            switch (nSquare){
-                case 0:
-                {
-                    oCopyBodyPr = shape.txBody.bodyPr ? shape.txBody.bodyPr.createDuplicate() : new AscFormat.CBodyPr();
-                    oCopyBodyPr.rot = (rot2/AscFormat.cToRad + 0.5) >> 0;
-                    shape.txBody.setBodyPr(oCopyBodyPr);
-                    break;
-                }
-                case 1:
-                {
-                    oCopyBodyPr = shape.txBody.bodyPr ? shape.txBody.bodyPr.createDuplicate() : new AscFormat.CBodyPr();
-                    oCopyBodyPr.vert = AscFormat.nVertTTvert;
-                    shape.txBody.setBodyPr(oCopyBodyPr);
-                    break;
-                }
-                case 2:
-                {
-                    oCopyBodyPr = shape.txBody.bodyPr ? shape.txBody.bodyPr.createDuplicate() : new AscFormat.CBodyPr();
-                    oCopyBodyPr.rot = (rot2/AscFormat.cToRad + 0.5) >> 0;
-                    shape.txBody.setBodyPr(oCopyBodyPr);
-                    break;
-                }
-                case 3:
-                {
-                    oCopyBodyPr = shape.txBody.bodyPr ? shape.txBody.bodyPr.createDuplicate() : new AscFormat.CBodyPr();
-                    oCopyBodyPr.vert = AscFormat.nVertTTvert270;
-                    shape.txBody.setBodyPr(oCopyBodyPr);
-                    break;
-                }
+        if(txXfrm ){
+            if(!AscFormat.SmartArt)  {
+                shape.convertFromSmartArt();
             }
         }
 
@@ -7572,6 +7465,10 @@ function BinaryPPTYLoader()
                 _xfrm.setExtX(0);
                 _xfrm.setExtY(0);
             }
+            _xfrm.setChOffX(0);
+            _xfrm.setChOffY(0);
+            _xfrm.setChExtX(0);
+            _xfrm.setChExtY(0);
             _smartArt.spPr.setXfrm(_xfrm);
             _xfrm.setParent(_smartArt.spPr);
             if(AscCommon.isRealObject(_nvGraphicFramePr) )
@@ -7582,24 +7479,35 @@ function BinaryPPTYLoader()
                     _smartArt.setLocks(_nvGraphicFramePr.locks);
                 }
             }
+            if(_smartArt.drawing)
+            {
+                var oDrawing = _smartArt.drawing;
+                oDrawing.setSpPr(new AscFormat.CSpPr());
+                oDrawing.spPr.setParent(_smartArt);
+                oDrawing.spPr.setXfrm(_xfrm.createDuplicate());
+                oDrawing.spPr.xfrm.setParent(oDrawing.spPr);
+                oDrawing.spPr.xfrm.setOffX(0);
+                oDrawing.spPr.xfrm.setOffY(0);
+            }
             return _smartArt;
         }
 
         return _graphic_frame;
     };
 
-    this.ReadSmartArt = function()
+    this.ReadSmartArt = function(CDrawing)
     {
+        var s = this.stream;
         var _smartArt;
-        if(typeof AscFormat.SmartArt !== "undefined")
+        if(typeof AscFormat.SmartArt !== "undefined" && !CDrawing)
         {
             _smartArt = new AscFormat.SmartArt();
             _smartArt.fromPPTY(this);
+            _smartArt.setBDeleted(false);
         }
         else
         {
             //read drawing part of smartArt as a group
-            var s = this.stream;
             var _rec_start = s.cur;
             var _end_rec = _rec_start + s.GetULong() + 4;
             //no attributes
@@ -7611,37 +7519,7 @@ function BinaryPPTYLoader()
                     case 0:
                     {
                         //DiagramDrawing
-                        var _rec_start2 = s.cur;
-                        var _end_rec2 = _rec_start2 + s.GetULong() + 4;
-                        while (s.cur < _end_rec2)
-                        {
-                            var _at2 = s.GetUChar();
-                            switch (_at2)
-                            {
-                                case 0:
-                                {
-                                    //_smartArt = this.ReadGroupShape();
-                                   var shapes = this.ReadGroupShapeMain();
-                                    _smartArt = new AscFormat.CGroupShape();
-                                    _smartArt.setBDeleted(false);
-                                    for(var nSp = 0; nSp < shapes.length; ++nSp)
-                                    {
-                                        var oSp = shapes[nSp];
-                                        _smartArt.addToSpTree(undefined, oSp);
-                                        oSp.setGroup(_smartArt);
-                                    }
-
-                                    _smartArt.setParent(this.TempMainObject == null ? this.ParaDrawing : null);
-                                    break;
-                                }
-                                default:
-                                {
-                                    s.SkipRecord();
-                                    break;
-                                }
-                            }
-                        }
-                        s.Seek2(_end_rec2);
+                        _smartArt = this.ReadSmartArtGroup(CDrawing);
                         break;
                     }
                     default:
@@ -7653,6 +7531,49 @@ function BinaryPPTYLoader()
             }
         }
         s.Seek2(_end_rec);
+        _smartArt.setType(_smartArt.getTypeOfSmartArt());
+        return _smartArt;
+    };
+
+    this.ReadSmartArtGroup = function(CDrawing)
+    {
+        var _smartArt;
+        var s = this.stream;
+        var _rec_start2 = s.cur;
+        var _end_rec2 = _rec_start2 + s.GetULong() + 4;
+        while (s.cur < _end_rec2)
+        {
+            var _at2 = s.GetUChar();
+            switch (_at2)
+            {
+                case 0:
+                {
+                    //_smartArt = this.ReadGroupShape();
+                    var shapes = this.ReadGroupShapeMain();
+                    if (CDrawing) {
+                        _smartArt = CDrawing;
+                    } else {
+                        _smartArt = new AscFormat.CGroupShape();
+                    }
+                    _smartArt.setBDeleted(false);
+                    for(var nSp = 0; nSp < shapes.length; ++nSp)
+                    {
+                        var oSp = shapes[nSp];
+                        _smartArt.addToSpTree(undefined, oSp);
+                        oSp.setGroup(_smartArt);
+                    }
+
+                    _smartArt.setParent(this.TempMainObject == null ? this.ParaDrawing : null);
+                    break;
+                }
+                default:
+                {
+                    s.SkipRecord();
+                    break;
+                }
+            }
+        }
+        s.Seek2(_end_rec2);
         return _smartArt;
     };
 
@@ -7903,6 +7824,7 @@ function BinaryPPTYLoader()
                             }
                             case AscDFH.historyitem_type_GraphicFrame:
                             case AscDFH.historyitem_type_ChartSpace:
+                            case AscDFH.historyitem_type_SmartArt:
                             {
                                 s.Skip2(1); // attribute start
                                 while (true)
@@ -11863,10 +11785,18 @@ CCore.prototype.Refresh_RecalcData2 = function(){
                         {
 
                             var oGrFrDrawing = oThis.Reader.ReadGrFrame();
-                            if(oGrFrDrawing && oGrFrDrawing.getObjectType() === AscDFH.historyitem_type_GroupShape) {
-                                GrObject = oGrFrDrawing.convertToWord(oThis.LogicDocument);
-                                if(paraDrawing){
-                                    GrObject.setParent(paraDrawing);
+                            if(oGrFrDrawing) {
+                                if(oGrFrDrawing.getObjectType() === AscDFH.historyitem_type_GroupShape) {
+                                    GrObject = oGrFrDrawing.convertToWord(oThis.LogicDocument);
+                                    if(paraDrawing){
+                                        GrObject.setParent(paraDrawing);
+                                    }
+                                }
+                                else if(oGrFrDrawing.getObjectType() === AscDFH.historyitem_type_SmartArt) {
+                                    GrObject = oGrFrDrawing;
+                                    if(paraDrawing){
+                                        GrObject.setParent(paraDrawing);
+                                    }
                                 }
                             }
                             break;

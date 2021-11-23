@@ -224,6 +224,16 @@
                 {
                     sWSId = oShape.worksheet.Id;
                 }
+                else
+                {
+                    if(oShape.chart)
+                    {
+                        if(oShape.chart.worksheet)
+                        {
+                            sWSId = oShape.chart.worksheet.Id;
+                        }
+                    }
+                }
             }
             DrawingDocument.Collaborative_UpdateTarget(UserId, ShortId, XY.X, XY.Y, XY.Height, sWSId, Paragraph.Get_ParentTextTransform());
             this.Add_ForeignCursorXY(UserId, XY.X, XY.Y, XY.PageNum, XY.Height, Paragraph, isRemoveLabel, sWSId);

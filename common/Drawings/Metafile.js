@@ -447,81 +447,6 @@
 		}
 	};
 
-	var g_stringBase64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	var g_arrayBase64  = [];
-	for (var index64 = 0; index64 < g_stringBase64.length; index64++)
-	{
-		g_arrayBase64.push(g_stringBase64.charAt(index64));
-	}
-
-	function Base64Encode(srcData, nSrcLen, nOffset)
-	{
-		if ("undefined" === typeof(nOffset))
-			nOffset = 0;
-
-		var nWritten = 0;
-		var nLen1    = (((nSrcLen / 3) >> 0) * 4);
-		var nLen2    = (nLen1 / 76) >> 0;
-		var nLen3    = 19;
-		var srcInd   = 0;
-		var dstStr   = [];
-
-		var _s = "";
-		for (var i = 0; i <= nLen2; i++)
-		{
-			if (i == nLen2)
-				nLen3 = ((nLen1 % 76) / 4) >> 0;
-
-			for (var j = 0; j < nLen3; j++)
-			{
-				var dwCurr = 0;
-				for (var n = 0; n < 3; n++)
-				{
-					dwCurr |= srcData[srcInd++ + nOffset];
-					dwCurr <<= 8;
-				}
-
-				_s = "";
-				for (var k = 0; k < 4; k++)
-				{
-					var b = (dwCurr >>> 26) & 0xFF;
-					_s += g_arrayBase64[b];
-					dwCurr <<= 6;
-					dwCurr &= 0xFFFFFFFF;
-				}
-				dstStr.push(_s);
-			}
-		}
-		nLen2 = (nSrcLen % 3 != 0) ? (nSrcLen % 3 + 1) : 0;
-		if (nLen2)
-		{
-			var dwCurr = 0;
-			for (var n = 0; n < 3; n++)
-			{
-				if (n < (nSrcLen % 3))
-					dwCurr |= srcData[srcInd++ + nOffset];
-				dwCurr <<= 8;
-			}
-
-			_s = "";
-			for (var k = 0; k < nLen2; k++)
-			{
-				var b = (dwCurr >>> 26) & 0xFF;
-				_s += g_arrayBase64[b];
-				dwCurr <<= 6;
-			}
-
-			nLen3 = (nLen2 != 0) ? 4 - nLen2 : 0;
-			for (var j = 0; j < nLen3; j++)
-			{
-				_s += '=';
-			}
-			dstStr.push(_s);
-		}
-
-		return dstStr.join("");
-	}
-
 	function CMemory(bIsNoInit)
 	{
 		this.Init = function()
@@ -574,11 +499,11 @@
 		}
 		this.GetBase64Memory    = function()
 		{
-			return Base64Encode(this.data, this.pos, 0);
+			return AscCommon.Base64.encode(this.data, 0, this.pos);
 		}
 		this.GetBase64Memory2   = function(nPos, nLen)
 		{
-			return Base64Encode(this.data, nLen, nPos);
+			return AscCommon.Base64.encode(this.data, nPos, nLen);
 		}
 		this.GetData   = function(nPos, nLen)
 		{
@@ -2016,17 +1941,24 @@
 				this.Memory.WriteByte(0x255);
 			}
 
+			var oParagraph = oForm.GetParagraph();
+
 			var oShd = oFormPr.GetShd();
-			if (oShd && !oShd.IsNil())
+			if (oParagraph && oShd && !oShd.IsNil())
 			{
 				nFlag |= (1 << 9);
 
-				var oParagraph = oForm.GetParagraph();
-				var oColor     = oShd.GetSimpleColor(oParagraph.GetTheme(), oParagraph.GetColorMap());
+				var oColor = oShd.GetSimpleColor(oParagraph.GetTheme(), oParagraph.GetColorMap());
 				this.Memory.WriteByte(oColor.r);
 				this.Memory.WriteByte(oColor.g);
 				this.Memory.WriteByte(oColor.b);
 				this.Memory.WriteByte(0x255);
+			}
+
+			if (oParagraph && AscCommon.align_Left !== oParagraph.GetParagraphAlign())
+			{
+				nFlag |= (1 << 10);
+				this.Memory.WriteByte(oParagraph.GetParagraphAlign());
 			}
 
 			// 0 - Unknown
@@ -2056,11 +1988,18 @@
 					this.Memory.WriteString(sValue);
 				}
 
-				if (oTextFormPr.MultiLine)
+				if (oTextFormPr.MultiLine && oForm.IsFixedForm())
 					nFlag |= (1 << 23);
 
 				if (oTextFormPr.AutoFit)
 					nFlag |= (1 << 24);
+
+				var sPlaceHolderText = oForm.GetPlaceholderText();
+				if (sPlaceHolderText)
+				{
+					nFlag |= (1 << 25);
+					this.Memory.WriteString(sPlaceHolderText);
+				}
 			}
 			else if (oForm.IsComboBox() || oForm.IsDropDownList())
 			{
@@ -2069,7 +2008,7 @@
 
 				var oFormPr = isComboBox ? oForm.GetComboBoxPr() : oForm.GetDropDownListPr();
 
-				if (!isComboBox)
+				if (isComboBox)
 					nFlag |= (1 << 20);
 
 				var sValue         = oForm.GetSelectedText(true);
@@ -2109,6 +2048,13 @@
 					nFlag |= (1 << 22);
 					this.Memory.WriteString(sValue);
 				}
+
+				var sPlaceHolderText = oForm.GetPlaceholderText();
+				if (sPlaceHolderText)
+				{
+					nFlag |= (1 << 23);
+					this.Memory.WriteString(sPlaceHolderText);
+				}
 			}
 			else if (oForm.IsCheckBox())
 			{
@@ -2119,10 +2065,28 @@
 				if (oCheckBoxPr.GetChecked())
 					nFlag |= (1 << 20);
 
-				this.Memory.WriteLong(oCheckBoxPr.GetCheckedSymbol());
-				this.Memory.WriteString(oCheckBoxPr.GetCheckedFont());
-				this.Memory.WriteLong(oCheckBoxPr.GetUncheckedSymbol());
-				this.Memory.WriteString(oCheckBoxPr.GetUncheckedFont());
+				var nCheckedSymbol   = oCheckBoxPr.GetCheckedSymbol();
+				var nUncheckedSymbol = oCheckBoxPr.GetUncheckedSymbol();
+
+				var nType = 0x0000;
+				if (0x2611 === nCheckedSymbol && 0x2610 === nUncheckedSymbol)
+					nType = 0x0001;
+				else if (0x25C9 === nCheckedSymbol && 0x25CB === nUncheckedSymbol)
+					nType = 0x0002;
+
+				var sCheckedFont = oCheckBoxPr.GetCheckedFont();
+				if (AscCommon.IsAscFontSupport(sCheckedFont, nCheckedSymbol))
+					sCheckedFont = "ASCW3";
+
+				var sUncheckedFont = oCheckBoxPr.GetUncheckedFont();
+				if (AscCommon.IsAscFontSupport(sUncheckedFont, nUncheckedSymbol))
+					sUncheckedFont = "ASCW3";
+
+				this.Memory.WriteLong(nType);
+				this.Memory.WriteLong(nCheckedSymbol);
+				this.Memory.WriteString(sCheckedFont);
+				this.Memory.WriteLong(nUncheckedSymbol);
+				this.Memory.WriteString(sUncheckedFont);
 
 				var sGroupName = oCheckBoxPr.GetGroupKey();
 				if (sGroupName)
@@ -2146,6 +2110,32 @@
 				nFlag |= ((oPicturePr.GetScaleFlag() & 0xF) << 24);
 				this.Memory.WriteLong(oPicturePr.GetShiftX() * 1000);
 				this.Memory.WriteLong(oPicturePr.GetShiftY() * 1000);
+
+				if (!oForm.IsPlaceHolder())
+				{
+					var arrDrawings = oForm.GetAllDrawingObjects();
+					if (arrDrawings.length > 0 && arrDrawings[0].IsPicture() && arrDrawings[0].GraphicObj.blipFill)
+					{
+						var isLocalUse = true;
+						if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"] && window["AscDesktopEditor"]["IsFilePrinting"])
+							isLocalUse = ((!window["AscDesktopEditor"]["IsLocalFile"]()) && window["AscDesktopEditor"]["IsFilePrinting"]()) ? false : true;
+
+						if (window["AscDesktopEditor"] && !isLocalUse)
+						{
+							if ((undefined !== window["AscDesktopEditor"]["CryptoMode"]) && (0 < window["AscDesktopEditor"]["CryptoMode"]))
+								isLocalUse = true;
+						}
+
+						var src = AscCommon.getFullImageSrc2(arrDrawings[0].GraphicObj.blipFill.RasterImageId);
+
+						var srcLocal = AscCommon.g_oDocumentUrls.getLocal(src);
+						if (srcLocal && isLocalUse)
+							src = srcLocal;
+
+						nFlag |= (1 << 22);
+						this.Memory.WriteString(src);
+					}
+				}
 			}
 			else
 			{
@@ -2190,6 +2180,8 @@
 		this.UseOriginImageUrl = false;
 
         this.FontPicker = null;
+
+        this.isPrintMode = false;
 	}
 
 	CDocumentRenderer.prototype =
@@ -3305,6 +3297,27 @@
 			m1.ty  = m.ty;
 		}
 
+		this.Reflect = function (matrix, isHorizontal, isVertical) {
+			var m = new CMatrixL();
+			m.shx = 0;
+			m.sy  = 1;
+			m.tx  = 0;
+			m.ty  = 0;
+			m.sx  = 1;
+			m.shy = 0;
+			if (isHorizontal && isVertical) {
+				m.sx  = -1;
+				m.sy = -1;
+			}	else if (isHorizontal) {
+				m.sx  = -1;
+			} else if (isVertical) {
+				m.sy = -1;
+			} else {
+				return;
+			}
+			this.MultiplyAppend(matrix, m);
+		}
+
 		this.CreateDublicateM = function(matrix)
 		{
 			var m = new CMatrixL();
@@ -3566,7 +3579,6 @@
 	window['AscCommon'].CGrRFonts                = CGrRFonts;
 	window['AscCommon'].CFontSetup               = CFontSetup;
 	window['AscCommon'].CGrState                 = CGrState;
-	window['AscCommon'].Base64Encode             = Base64Encode;
 	window['AscCommon'].CMemory                  = CMemory;
 	window['AscCommon'].CDocumentRenderer        = CDocumentRenderer;
 	window['AscCommon'].MATRIX_ORDER_PREPEND     = MATRIX_ORDER_PREPEND;

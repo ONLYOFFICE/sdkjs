@@ -496,6 +496,16 @@
             }
 
             return pFontFile;
+        },
+
+        GetLimitsY : function()
+        {
+            if (this.m_pFont)
+                return this.m_pFont.GetLimitsY();
+            return {
+                min : 0,
+                max : 0
+            };
         }
     }
 

@@ -789,7 +789,7 @@ Slide.prototype =
             switch (drawing.getObjectType())
             {
                 case AscDFH.historyitem_type_ChartSpace:
-                { 
+                {
                     if(!drawing.nvGraphicFramePr)
                     {
                         nv_sp_pr = new AscFormat.UniNvPr();
@@ -1519,14 +1519,7 @@ Slide.prototype =
         for(var i = 0; i < aSpTree.length; ++i)
         {
             var oSp = aSpTree[i];
-            if(oSp.isEmptyPlaceholder())
-            {
-                var oPlaceholder = oSp.createPlaceholderControl();
-                if(oPlaceholder.buttons.length > 0)
-                {
-                    ret.push(oPlaceholder);
-                }
-            }
+            oSp.createPlaceholderControl(ret);
         }
         return ret;
     },
@@ -1632,7 +1625,7 @@ Slide.prototype =
                 }
             }
             else{
-                if(sp.getObjectType() === AscDFH.historyitem_type_GroupShape){
+                if(sp.isGroupObject()){
                     sp.handleUpdateTheme();
                     sp.checkExtentsByDocContent();
                 }
@@ -1705,6 +1698,28 @@ Slide.prototype =
             this.animationPlayer = new AscFormat.CAnimationPlayer(this, oDemoManager);
         }
         return this.animationPlayer;
+    },
+
+    isAdvanceAfterTransition: function() {
+        var oTransition = this.transition;
+        if(!oTransition) {
+            return false;
+        }
+        if(this.presentation) {
+            var oShowPr = this.presentation.showPr;
+            if(oShowPr && oShowPr.useTimings === false) {
+                return false;
+            }
+        }
+        return oTransition.SlideAdvanceAfter === true;
+    },
+
+    getAdvanceDuration: function() {
+        var oTransition = this.transition;
+        if(!oTransition) {
+            return 0;
+        }
+        return oTransition.SlideAdvanceDuration;
     }
 };
 

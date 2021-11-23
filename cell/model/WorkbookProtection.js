@@ -52,13 +52,65 @@
 	 this.pivotTables = true;
 	 this.selectUnlockedCells = false;*/
 
+	var c_oSerProtectedAlgorithmNameTypes = {
+		MD2: 1,
+		MD4: 2,
+		MD5: 3,
+		RIPEMD_128: 4,
+		RIPEMD_160: 5,
+		SHA_1: 6,
+		SHA_256: 7,
+		SHA_384: 8,
+		SHA_512: 9,
+		WHIRLPOOL: 10
+	};
+
+	function fromModelAlgoritmName(alg) {
+		switch (alg) {
+			case c_oSerProtectedAlgorithmNameTypes.MD2 :
+				alg = AscCommon.HashAlgs.MD2;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.MD4 :
+				alg = AscCommon.HashAlgs.MD4;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.MD5 :
+				alg = AscCommon.HashAlgs.MD5;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.RIPEMD_160 :
+				alg = AscCommon.HashAlgs.RMD160;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.SHA_1 :
+				alg = AscCommon.HashAlgs.SHA1;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.SHA_256 :
+				alg = AscCommon.HashAlgs.SHA256;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.SHA_384 :
+				alg = AscCommon.HashAlgs.SHA384;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.SHA_512 :
+				alg = AscCommon.HashAlgs.SHA512;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.WHIRLPOOL :
+				alg = AscCommon.HashAlgs.WHIRLPOOL;
+				break;
+			default:
+				alg = AscCommon.HashAlgs.SHA256;
+		}
+		return alg;
+	}
+
+	function generateHashParams() {
+		return {spinCount: 100000, saltValue: AscCommon.randomBytes(16).base64(), algorithmName: c_oSerProtectedAlgorithmNameTypes.SHA_512};
+	}
+
 	function CSheetProtection(ws) {
 		this.algorithmName = null;
 		this.hashValue = null;
 		this.saltValue = null;
 		this.spinCount = null;
 
-		this.sheet = true;
+		this.sheet = false;
 		this.objects = false;
 		this.scenarios = false;
 		this.formatCells = true;
@@ -76,6 +128,7 @@
 		this.selectUnlockedCells = false;
 
 		this._ws = ws;
+		this.temporaryPassword = null;
 
 		return this;
 	}
@@ -115,7 +168,7 @@
 		this.saltValue = null;
 		this.spinCount = null;
 
-		this.sheet = true;
+		this.sheet = false;
 		this.objects = false;
 		this.scenarios = false;
 		this.formatCells = true;
@@ -139,7 +192,7 @@
 		this.saltValue = null;
 		this.spinCount = null;
 
-		this.sheet = true;
+		this.sheet = false;
 		this.objects = true;
 		this.scenarios = true;
 		this.formatCells = true;
@@ -388,6 +441,22 @@
 	CSheetProtection.prototype.setSheet = function (val) {
 		this.sheet = val;
 	};
+
+	CSheetProtection.prototype.asc_setSheet = function (password, callback) {
+		//просталяю временный пароль, аспинхронная проверка пароля в asc_setProtectedSheet
+		this.setSheet(!this.sheet);
+		if (this.sheet && password) {
+			var hashParams = generateHashParams();
+			this.saltValue = hashParams.saltValue;
+			this.spinCount = hashParams.spinCount;
+			this.algorithmName = hashParams.algorithmName;
+		}
+		this.temporaryPassword = password;
+		if (callback) {
+			callback(this);
+		}
+	};
+
 	CSheetProtection.prototype.setObjects = function (val) {
 		this.objects = val;
 	};
@@ -459,6 +528,7 @@
 		this.workbookSpinCount = null;
 
 		this._wb = wb;
+		this.temporaryPassword = null;
 
 		return this;
 	}
@@ -659,8 +729,22 @@
 	CWorkbookProtection.prototype.asc_getWorkbookSpinCount = function () {
 		return this.workbookSaltValue;
 	};
+	CWorkbookProtection.prototype.asc_setLockStructure = function (password, callback) {
+		//просталяю временный пароль, аспинхронная проверка пароля в asc_setProtectedWorkbook
+		this.setLockStructure(!this.lockStructure);
 
-	CWorkbookProtection.prototype.asc_setLockStructure = function (val) {
+		if (this.lockStructure && password) {
+			var hashParams = generateHashParams();
+			this.workbookSaltValue = hashParams.saltValue;
+			this.workbookSpinCount = hashParams.spinCount;
+			this.workbookAlgorithmName = hashParams.algorithmName;
+		}
+		this.temporaryPassword = password;
+		if (callback) {
+			callback(this);
+		}
+	};
+	CWorkbookProtection.prototype.setLockStructure = function (val) {
 		this.lockStructure = val;
 	};
 	CWorkbookProtection.prototype.asc_setLockWindows = function (val) {
@@ -719,6 +803,7 @@
 		this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
 		this._isEnterPassword = null;
+		this.temporaryPassword = null;
 
 		return this;
 	}
@@ -1071,10 +1156,14 @@
 		this.spinCount = val;
 	};
 	CProtectedRange.prototype.asc_setPassword = function (val) {
+		if (val) {
+			var hashParams = generateHashParams();
+			this.saltValue = hashParams.saltValue;
+			this.spinCount = hashParams.spinCount;
+			this.algorithmName = hashParams.algorithmName;
+		}
 		//генерируем хэш
-		this.algorithmName = "test";
-		this.saltValue = "test";
-		this.workbookSaltValue = "test";
+		this.temporaryPassword = val;
 	};
 	CProtectedRange.prototype.asc_isPassword = function () {
 		return this.algorithmName != null;
@@ -1082,8 +1171,14 @@
 	CProtectedRange.prototype.asc_getIsLock = function () {
 		return this.isLock;
 	};
-	CProtectedRange.prototype.asc_checkPassword = function (val) {
-		return true;
+	CProtectedRange.prototype.asc_checkPassword = function (val, callback) {
+		var checkHash = {password: val, salt: this.saltValue, spinCount: this.spinCount, alg: fromModelAlgoritmName(this.algorithmName)};
+		AscCommon.calculateProtectHash([checkHash], function (hash) {
+			callback(hash && hash[0] === this.hashValue);
+		});
+	};
+	CProtectedRange.prototype.asc_getId = function () {
+		return this.Id;
 	};
 	CProtectedRange.prototype.isUserEnteredPassword = function () {
 		return this._isEnterPassword;
@@ -1118,7 +1213,7 @@
 	prot["asc_getPivotTables"] = prot.getPivotTables;
 	prot["asc_getSelectUnlockedCells"] = prot.getSelectUnlockedCells;
 	prot["asc_setSpinCount"] = prot.setSpinCount;
-	prot["asc_setSheet"] = prot.setSheet;
+	prot["asc_setSheet"] = prot.asc_setSheet;
 	prot["asc_setObjects"] = prot.setObjects;
 	prot["asc_setScenarios"] = prot.setScenarios;
 	prot["asc_setFormatCells"] = prot.setFormatCells;
@@ -1183,5 +1278,8 @@
 	prot["asc_isPassword"] = prot.asc_isPassword;
 	prot["asc_getIsLock"] = prot.asc_getIsLock;
 	prot["asc_checkPassword"] = prot.asc_checkPassword;
+	prot["asc_getId"] = prot.asc_getId;
+
+	window["AscCommonExcel"].fromModelAlgoritmName = fromModelAlgoritmName;
 
 })(window);

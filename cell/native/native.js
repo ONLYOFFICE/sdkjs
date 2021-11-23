@@ -4549,6 +4549,18 @@ window["native"]["offline_keyboard_down"] = function(inputKeys) {
                 ws.objectRender.controller.updateSelectionState();
                 ws.objectRender.controller.drawingObjects.sendGraphicObjectProps();
                 
+            } else if (9 === operationCode ) {  // Select cell
+
+                if (37 === codeKey) {       // LEFT
+                    wb._onChangeSelection(false, -1, 0, false);
+                } else if (39 === codeKey) {     // RIGHT
+                    wb._onChangeSelection(false, 1, 0, false);
+                } else if (38 === codeKey) {          // UP
+                    wb._onChangeSelection(false, 0, -1, false);
+                } else if (40 === codeKey) {     // DOWN
+                    wb._onChangeSelection(false, 0, 1, false);
+                }
+
             } else {
                 
                 if (8 === codeKey || 13 === codeKey || 27 == codeKey) {
@@ -4561,19 +4573,19 @@ window["native"]["offline_keyboard_down"] = function(inputKeys) {
                     window.AscDisableTextSelection = true;
                 }
             }
-        }
-        else if (37 === codeKey)      // LEFT
+        } else if (37 === codeKey) {      // LEFT
             wb._onChangeSelection(true, -1, 0, false);
-        else if (39 === codeKey)     // RIGHT
+        } else if (39 === codeKey) {     // RIGHT
             wb._onChangeSelection(true, 1, 0, false);
-        if (38 === codeKey)          // UP
+        } else if (38 === codeKey) {          // UP
             wb._onChangeSelection(true, 0, -1, false);
-        else if (40 === codeKey)     // DOWN
+        } else if (40 === codeKey) {     // DOWN
             wb._onChangeSelection(true, 0, 1, false);
-        else if (9 === codeKey)     // TAB
+        } else if (9 === codeKey) {     // TAB
             wb._onChangeSelection(true, -1, 0, false);
-        else if (13 === codeKey)     // ENTER
+        } else if (13 === codeKey) {     // ENTER
             wb._onChangeSelection(true, 0, 1, false);
+        }
     }
 
     wb.isFormulaEditMode = isFormulaEditMode;

@@ -288,26 +288,30 @@
 			return cellValue;
 		}
 
-		function getFindRegExp(value, options) {
+		function getFindRegExp(value, options, checkEmptyVal) {
 			var findFlags = "g"; // Заменяем все вхождения
 			// Не чувствителен к регистру
 			if (true !== options.isMatchCase) {
 				findFlags += "i";
 			}
-			value = value
-				.replace(/(\\)/g, "\\\\").replace(/(\^)/g, "\\^")
-				.replace(/(\()/g, "\\(").replace(/(\))/g, "\\)")
-				.replace(/(\+)/g, "\\+").replace(/(\[)/g, "\\[")
-				.replace(/(\])/g, "\\]").replace(/(\{)/g, "\\{")
-				.replace(/(\})/g, "\\}").replace(/(\$)/g, "\\$")
-				.replace(/(\.)/g, "\\.")
-				.replace(/(~)?\*/g, function ($0, $1) {
-					return $1 ? $0 : '(.*)';
-				})
-				.replace(/(~)?\?/g, function ($0, $1) {
-					return $1 ? $0 : '.';
-				})
-				.replace(/(~\*)/g, "\\*").replace(/(~\?)/g, "\\?");
+			if (value === "" && checkEmptyVal) {
+				value = /^$/;
+			} else {
+				value = value
+					.replace(/(\\)/g, "\\\\").replace(/(\^)/g, "\\^")
+					.replace(/(\()/g, "\\(").replace(/(\))/g, "\\)")
+					.replace(/(\+)/g, "\\+").replace(/(\[)/g, "\\[")
+					.replace(/(\])/g, "\\]").replace(/(\{)/g, "\\{")
+					.replace(/(\})/g, "\\}").replace(/(\$)/g, "\\$")
+					.replace(/(\.)/g, "\\.")
+					.replace(/(~)?\*/g, function ($0, $1) {
+						return $1 ? $0 : '(.*)';
+					})
+					.replace(/(~)?\?/g, function ($0, $1) {
+						return $1 ? $0 : '.';
+					})
+					.replace(/(~\*)/g, "\\*").replace(/(~\?)/g, "\\?");
+			}
 
 			if (options.isWholeWord)
 				value = '\\b' + value + '\\b';
@@ -1922,20 +1926,55 @@
 			var pos = s.indexOf(AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator);
 			if (-1 !== pos) {
 				f = [f[0].clone()];
-				f[0].text = s.slice(0, pos);
+				f[0].setFragmentText(s.slice(0, pos));
 			}
 			return f;
 		}
 
 		function getFragmentsText(f) {
 			return f.reduce(function (pv, cv) {
-				return pv + cv.text;
+				if (null === cv.getFragmentText()) {
+					cv.initText();
+				}
+				return pv + cv.getFragmentText();
 			}, "");
 		}
 		function getFragmentsLength(f) {
 			return f.length > 0 ? f.reduce(function (pv, cv) {
-				return pv + cv.text.length;
+				if (null === cv.getFragmentText()) {
+					cv.initText();
+				}
+				return pv + cv.getFragmentText().length;
 			}, 0) : 0;
+		}
+		function getFragmentsCharCodes(f) {
+			return f.reduce(function (pv, cv) {
+				return pv.concat(cv.getCharCodes());
+			}, "");
+		}
+		function getFragmentsCharCodesLength(f) {
+			return f.length > 0 ? f.reduce(function (pv, cv) {
+				return pv + cv.getCharCodes().length;
+			}, 0) : 0;
+		}
+		function getFragmentsTextFromCode(f) {
+			return f.reduce(function (pv, cv) {
+				if (null === cv.getFragmentText()) {
+					cv.initText();
+				}
+				return pv + cv.getFragmentText();
+			}, "");
+		}
+		function convertUnicodeToSimpleString(sUnicode)
+		{
+			var sUTF16 = "";
+			var nLength = sUnicode.length;
+			for (var nPos = 0; nPos < nLength; nPos++)
+			{
+				sUTF16 += String.fromCharCode(sUnicode[nPos]);
+			}
+
+			return sUTF16;
 		}
 
 		function executeInR1C1Mode(mode, runFunction) {
@@ -2142,7 +2181,7 @@
 
 				var fragments = [];
 				var tempFragment = new AscCommonExcel.Fragment();
-				tempFragment.text = sStyleName;
+				tempFragment.setFragmentText(sStyleName);
 				tempFragment.format = format;
 				fragments.push(tempFragment);
 				tm = sr.measureString(fragments, cellFlags, width);
@@ -3395,6 +3434,9 @@
 		window["AscCommonExcel"].dropDecimalAutofit = dropDecimalAutofit;
 		window["AscCommonExcel"].getFragmentsText = getFragmentsText;
 		window['AscCommonExcel'].getFragmentsLength = getFragmentsLength;
+		window["AscCommonExcel"].getFragmentsCharCodes = getFragmentsCharCodes;
+		window["AscCommonExcel"].getFragmentsCharCodesLength = getFragmentsCharCodesLength;
+		window["AscCommonExcel"].convertUnicodeToSimpleString = convertUnicodeToSimpleString;
 		window['AscCommonExcel'].executeInR1C1Mode = executeInR1C1Mode;
 		window['AscCommonExcel'].checkFilteringMode = checkFilteringMode;
 		window["Asc"].getEndValueRange = getEndValueRange;

@@ -2570,7 +2570,7 @@ function CEditorPage(api)
 			return;
 		}
 
-		if (oWordControl.IsFocus === false)
+		if (oWordControl.IsFocus === false && e.emulated !== true)
 			return;
 
 		if (oWordControl.m_oApi.isLongAction() || oWordControl.m_bIsMouseLock === true)
@@ -2606,7 +2606,7 @@ function CEditorPage(api)
 			oWordControl.m_oDrawingDocument.TransitionSlide.End(true);
 
 		var oWordControl = oThis;
-		if (false === oWordControl.m_oApi.bInit_word_control || oWordControl.IsFocus === false || oWordControl.m_oApi.isLongAction() || oWordControl.m_bIsMouseLock === true)
+		if (false === oWordControl.m_oApi.bInit_word_control || oWordControl.IsFocus === false && e.emulated !== true || oWordControl.m_oApi.isLongAction() || oWordControl.m_bIsMouseLock === true)
 			return;
 
 		AscCommon.check_KeyboardEvent(e);

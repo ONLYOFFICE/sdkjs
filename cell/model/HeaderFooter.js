@@ -658,7 +658,7 @@
 	};
 	CHeaderFooterEditorSection.prototype.isEmptyFragments = function (val) {
 		var res = false;
-		if(val && val.length === 1 && val[0].text === "") {
+		if(val && val.length === 1 && val[0].getFragmentText() === "") {
 			res = true;
 		}
 		return res;
@@ -992,7 +992,7 @@
 		if (!fragments) {
 			fragments = [];
 			var tempFragment = new AscCommonExcel.Fragment();
-			tempFragment.text = "";
+			tempFragment.setFragmentText("");
 			tempFragment.format = new AscCommonExcel.Font();
 			fragments.push(tempFragment);
 		}
@@ -1457,7 +1457,7 @@
 				var text = asc_typeof(curProps.text) === "string" ? curProps.text : convertFieldToMenuText(curProps.text.field);
 				if(null !== text) {
 					var tempFragment = new AscCommonExcel.Fragment();
-					tempFragment.text = text;
+					tempFragment.setFragmentText(text);
 					tempFragment.format = curProps.format;
 					res.push(tempFragment);
 				}
@@ -1621,8 +1621,8 @@
 		var bToken, text, symbol, startToken, tokenText, tokenFormat;
 		for(var j = 0; j < fragments.length; j++) {
 			text = "";
-			for(var n = 0; n < fragments[j].text.length; n++) {
-				symbol = fragments[j].text[n];
+			for(var n = 0; n < fragments[j].getFragmentText().length; n++) {
+				symbol = fragments[j].getFragmentText()[n];
 				if(symbol !== "&") {
 					text += symbol;
 				}
@@ -1675,7 +1675,7 @@
 								break;
 							}
 							default: {
-								if("" !== text && j ===  fragments.length - 1 && n === fragments[j].text.length - 1) {
+								if("" !== text && j ===  fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
 									res.push({text: text, format: fragments[j].format});
 									text = "";
 								}
@@ -1688,7 +1688,7 @@
 						tokenText += symbol;
 					}
 
-					if("" !== text && j ===  fragments.length - 1 && n === fragments[j].text.length - 1) {
+					if("" !== text && j ===  fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
 						res.push({text: text, format: fragments[j].format});
 					}
 				} else if(bToken) {
@@ -1757,7 +1757,7 @@
 								break;
 							}
 							default: {
-								if("" !== text && j ===  fragments.length - 1 && n === fragments[j].text.length - 1) {
+								if("" !== text && j ===  fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
 									res.push({text: text, format: fragments[j].format});
 									text = "";
 								}
@@ -1766,7 +1766,7 @@
 						}
 						bToken = false;
 					}
-				} else if("" !== text && n === fragments[j].text.length - 1) {
+				} else if("" !== text && n === fragments[j].getFragmentText().length - 1) {
 					res.push({text: text, format: fragments[j].format});
 				}
 			}
@@ -1776,7 +1776,7 @@
 
 	CHeaderFooterEditor.prototype._getFragments = function(text, format) {
 		var tempFragment = new AscCommonExcel.Fragment();
-		tempFragment.text = text;
+		tempFragment.setFragmentText(text);
 		tempFragment.format = format;
 		return tempFragment;
 	};

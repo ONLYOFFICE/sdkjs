@@ -137,6 +137,11 @@ CHeaderFooter.prototype =
         }        
     },
 
+	GetPage : function()
+	{
+		return this.RecalcInfo.CurPage;
+	},
+
 	Is_NeedRecalculate : function(PageAbs)
 	{
 		var PageNumInfo = this.LogicDocument.Get_SectionPageNumInfo(PageAbs);
@@ -992,6 +997,9 @@ CHeaderFooter.prototype =
 
 	DrawSelectionOnPage : function(CurPage)
     {
+    	if (CurPage !== this.GetPage())
+    		return;
+
         return this.Content.DrawSelectionOnPage(0, true, true);
     },
 
@@ -2228,7 +2236,7 @@ CHeaderFooterController.prototype =
 
 	DrawSelectionOnPage : function(CurPage)
 	{
-		if (null != this.CurHdrFtr)
+		if (this.CurHdrFtr)
 			return this.CurHdrFtr.DrawSelectionOnPage(CurPage);
 	},
 

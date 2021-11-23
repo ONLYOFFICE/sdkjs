@@ -8558,7 +8558,7 @@ CMathContent.prototype.GetTextContent = function(bSelectedText) {
 						EndContentPos   = (this.Content[i].Selection.Use == true ? Math.max(this.Content[i].Selection.StartPos, this.Content[i].Selection.EndPos) : this.Content[i].CurPos.ContentPos);
 					}
 					var string = "";
-					for (var j = StartContentPos; j <= EndContentPos; j++) {
+					for (var j = StartContentPos; j < EndContentPos; j++) {
 						if (!this.Content[i].Content[j]) {
 							continue;
 						}

@@ -2444,10 +2444,39 @@ PasteProcessor.prototype =
 
 		if (oTable && !aNewContent[0].IsTable() && oTable.IsCellSelection())
 		{
-			var arrSelectedCells = oTable.GetSelectionArray();
-
+			var arrSelectedCells = oTable.GetSelectionArray(true);
 			var nPrevRow      = -1;
 			var nElementIndex = -1;
+			var nRowIndex     = -1;
+			var arrNewContent = [];
+			for (var i = aNewContent.length - 1; i >= 0; i--)
+			{
+				arrNewContent.unshift([]);
+				var oElem = aNewContent[i].Copy();
+				if (oElem.IsParagraph())
+				{
+					for (var j = oElem.Content.length - 1; j >= 0; j--)
+					{
+						var oNestedElem = oElem.Content[j];
+						if (oNestedElem.Type === para_Run && oNestedElem.Content.length)
+						{
+							for (var k = oNestedElem.Content.length - 1; k >= 0; k--)
+							{
+								var oThirdElem = oNestedElem.Content[k];
+								if (oThirdElem.Type === para_Tab)
+								{
+									var oPar = new Paragraph(oDoc.DrawingDocument);
+									arrNewContent[0].unshift(oPar);
+									var oRun = oNestedElem.Split2(k);
+									oRun.RemoveFromContent(0, 1);
+									oPar.AddToContent(0, oRun);
+								}
+							}
+						}	
+					}
+				}
+				arrNewContent[0].unshift(oElem);
+			}
 			for (var nIndex = 0, nCount = arrSelectedCells.length; nIndex < nCount; ++nIndex)
 			{
 				var oPos  = arrSelectedCells[nIndex];
@@ -2460,28 +2489,47 @@ PasteProcessor.prototype =
 				if (!oCell)
 					continue;
 
-				var oCellContent = oCell.GetContent();
-				oCellContent.ClearContent(true);
+				var isMerged = oCell.GetVMerge() === vmerge_Continue;
+				if (isMerged)
+					oCell = oTable.GetStartMergedCell(oPos.Cell, oPos.Row);
 
-				var oPara = oCellContent.GetElement(0);
+				var oCellContent = oCell.GetContent();
+				var oPara;
+				if (isMerged) {
+					oPara = new Paragraph(oDoc.DrawingDocument);
+					oCellContent.AddToContent(oCellContent.Content.length, oPara, true);
+					oPara.Document_SetThisElementCurrent(false);
+				}
+				else
+				{
+					oCellContent.ClearContent(true);
+					oPara = oCellContent.GetElement(0);
+				}
+
 				if (!oPara || !oPara.IsParagraph())
 					continue;
 
 				if (oPos.Row !== nPrevRow)
 				{
 					nPrevRow = oPos.Row;
-					nElementIndex++;
+					nRowIndex++;
+					nElementIndex = -1;
 
-					if (nElementIndex > aNewContent.length - 1)
-						nElementIndex = 0;
+					if (nRowIndex > arrNewContent.length - 1)
+						nRowIndex = 0;
 				}
 
-				if (nElementIndex < 0)
+				nElementIndex++;
+
+				if (nElementIndex > arrNewContent[nRowIndex].length - 1)
+					nElementIndex = 0;
+
+				if (nRowIndex < 0 || nElementIndex < 0)
 					break;
 
 				oSelectedContent.Reset();
 
-				var NewElem = aNewContent[nElementIndex].Copy();
+				var NewElem = arrNewContent[nRowIndex][nElementIndex].Copy();
 
 				var NearPos = oPara.GetCurrentAnchorPosition();
 				if (bIsSpecialPaste)
@@ -2508,11 +2556,11 @@ PasteProcessor.prototype =
 						{
 							if (j === 0)
 							{
-								aNewContent.splice(nElementIndex + j, 1, parseItem[j]);
+								arrNewContent.splice(nRowIndex + j, 1, parseItem[j]);
 							}
 							else
 							{
-								aNewContent.splice(nElementIndex + j, 0, parseItem[j]);
+								arrNewContent.splice(nRowIndex + j, 0, parseItem[j]);
 							}
 						}
 					}
@@ -2523,7 +2571,7 @@ PasteProcessor.prototype =
 				oSelectedElement.Element = NewElem;
 
 				var type = this._specialPasteGetElemType(NewElem);
-				if (0 === i)
+				if (0 === nIndex)
 				{
 					this.pasteTypeContent = type;
 				}
@@ -7570,6 +7618,10 @@ PasteProcessor.prototype =
 								break;
 						}
 					}
+					var startPos = curNumbering["mso-level-start-at"];
+					if (null != startPos) {
+						res.SetLvlStart(i-1, startPos);
+					}
 				}
 				//res.GetAbstractNum().Lvl[i-1].ParaPr
 				var marginLeft = getPropValue("margin-left", msoLinkStyles, curNumbering);
@@ -7584,9 +7636,175 @@ PasteProcessor.prototype =
 					}
 					res.SetParaPr(i-1, newParaPr);
 				}
+
+				//text properties
+				if (nType !== Asc.c_oAscNumberingFormat.Bullet) {
+					var rPr = this._read_rPr_mso_numbering(curNumbering, msoLinkStyles);
+					if (rPr) {
+						res.SetTextPr(i-1, rPr);
+					}
+				}
 			}
 		}
 		return res;
+	},
+	_read_rPr_mso_numbering: function (numberingProps, msoLinkStyles) {
+
+		//пример того, что должно лежать в numberingProps:
+		/*	mso-list-template-ids:-1656974294;}
+			@list l0:level1
+			{mso-level-style-link:"Heading 11";
+			mso-level-suffix:space;
+			mso-level-text:"ARTICLE %1 -";
+			mso-level-tab-stop:none;
+			mso-level-number-position:left;
+			margin-left:229.5pt;
+			text-indent:0in;
+			color:red;
+			mso-style-textfill-fill-color:red;
+			mso-style-textfill-fill-alpha:100.0%;
+			mso-ansi-font-style:italic;
+			mso-bidi-font-style:italic;
+			text-underline:#000000 single;
+			text-decoration:line-through underline;
+			vertical-align:super;*/
+
+		//пример того, что должно лежать в msoLinkStyles:
+		//ссылка mso-level-style-link:"Heading 11"
+		/*{mso-style-name:"Heading 11";
+			mso-style-update:auto;
+			mso-style-unhide:no;
+			mso-style-link:"Heading 1 Char";
+			mso-style-next:"Heading 21";
+			margin-top:12.0pt;
+			margin-right:0in;
+			margin-bottom:0in;
+			margin-left:0in;
+			text-align:center;
+			text-indent:0in;
+			mso-pagination:widow-orphan;
+			page-break-after:avoid;
+			mso-list:l0 level1 lfo1;
+			font-size:10.0pt;
+			font-family:"Arial",sans-serif;
+			mso-fareast-font-family:"Times New Roman";
+			text-transform:uppercase;
+			mso-ansi-language:EN-CA;
+			font-weight:bold;
+			mso-bidi-font-weight:normal;}*/
+
+		var getProperty = function (name) {
+			return (numberingProps && numberingProps[name]) || (msoLinkStyles && msoLinkStyles[name]);
+		};
+
+		var rPr = new CTextPr();
+
+		var font_family = getProperty("font-family");
+		font_family = font_family && font_family.split(",");
+		if (font_family && font_family[0] && "" != font_family[0]) {
+			var oFontItem = this.oFonts[font_family[0]];
+			if (null != oFontItem && null != oFontItem.Name) {
+				rPr.RFonts.Ascii = {Name: oFontItem.Name, Index: oFontItem.Index};
+				rPr.RFonts.HAnsi = {Name: oFontItem.Name, Index: oFontItem.Index};
+				rPr.RFonts.CS = {Name: oFontItem.Name, Index: oFontItem.Index};
+				rPr.RFonts.EastAsia = {Name: oFontItem.Name, Index: oFontItem.Index};
+			}
+		}
+
+		var font_size = getProperty("font-size");
+		if (font_size) {
+			font_size = CheckDefaultFontSize(font_size, this.apiEditor);
+			if (font_size) {
+				var obj = AscCommon.valueToMmType(font_size);
+				if (obj && "%" !== obj.type && "none" !== obj.type) {
+					font_size = obj.val;
+					//Если браузер не поддерживает нецелые пикселы отсекаем половинные шрифты, они появляются при вставке 8, 11, 14, 20, 26pt
+					if ("px" === obj.type && false === this.bIsDoublePx)
+						font_size = Math.round(font_size * g_dKoef_mm_to_pt);
+					else
+						font_size = Math.round(2 * font_size * g_dKoef_mm_to_pt) / 2;//половинные значения допустимы.
+
+					//TODO use constant
+					if (font_size > 300)
+						font_size = 300;
+					else if (font_size === 0)
+						font_size = 1;
+
+					rPr.FontSize = font_size;
+				}
+			}
+		}
+
+		var font_weight = getProperty("font-weight");
+		if (font_weight) {
+			if ("bold" === font_weight || "bolder" === font_weight || 400 < font_weight)
+				rPr.Bold = true;
+		}
+		var font_style = getProperty("mso-ansi-font-style");
+		if ("italic" === font_style)
+			rPr.Italic = true;
+
+		var color = getProperty("color");
+		if (color && (color = this._ParseColor(color))) {
+			if (PasteElementsId.g_bIsDocumentCopyPaste) {
+				rPr.Color = color;
+			} else {
+				if (color) {
+					rPr.Unifill = AscFormat.CreateUnfilFromRGB(color.r, color.g, color.b);
+				}
+			}
+		}
+
+		var spacing = getProperty("letter-spacing");
+		if (spacing && null != (spacing = AscCommon.valueToMm(spacing)))
+			rPr.Spacing = spacing;
+
+		//Провяем те свойства, которые не наследуется, надо смотреть родительские элементы
+		var background_color = null;
+		var underline = null;
+		var Strikeout = null;
+		var vertical_align = null;
+
+		var text_decoration = getProperty("text-decoration");
+		if (text_decoration) {
+			if (-1 !== text_decoration.indexOf("underline")) {
+				underline = true;
+			} else if (-1 !== text_decoration.indexOf("none") && node.parentElement &&
+				node.parentElement.nodeName.toLowerCase() === "a") {
+				underline = false;
+			}
+
+			if (-1 !== text_decoration.indexOf("line-through")) {
+				Strikeout = true;
+			}
+		}
+
+		background_color = getProperty("background-color");
+		if (background_color) {
+			background_color = this._ParseColor(background_color);
+		}
+
+		vertical_align = getProperty("vertical-align");
+		if (!vertical_align) {
+			vertical_align = null;
+		}
+
+		if (null != underline) {
+			rPr.Underline = underline;
+		}
+		if (null != Strikeout) {
+			rPr.Strikeout = Strikeout;
+		}
+		switch (vertical_align) {
+			case "sub":
+				rPr.VertAlign = AscCommon.vertalign_SubScript;
+				break;
+			case "super":
+				rPr.VertAlign = AscCommon.vertalign_SuperScript;
+				break;
+		}
+
+		return rPr;
 	},
 	_findMsoHeadStyle: function (html) {
 		var res;

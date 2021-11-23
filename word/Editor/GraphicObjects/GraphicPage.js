@@ -363,8 +363,15 @@ CGraphicPage.prototype =
 
     drawBehindDoc: function(graphics)
     {
+        var oGraphicObject;
         for(var _object_index = 0; _object_index < this.behindDocObjects.length; ++_object_index)
-            this.behindDocObjects[_object_index].draw(graphics);
+        {
+            oGraphicObject = this.behindDocObjects[_object_index];
+            if(oGraphicObject.isContainedInMainDoc())
+            {
+                oGraphicObject.draw(graphics);
+            }
+        }
 
         graphics.SetIntegerGrid(true);
     },
@@ -402,9 +409,15 @@ CGraphicPage.prototype =
 
     drawBeforeObjects: function(graphics)
     {
+        var oGraphicObject;
         for(var _object_index = 0; _object_index < this.beforeTextObjects.length; ++_object_index)
-            this.beforeTextObjects[_object_index].draw(graphics);
-
+        {
+            oGraphicObject = this.beforeTextObjects[_object_index];
+            if(oGraphicObject.isContainedInTopDocument())
+            {
+                oGraphicObject.draw(graphics);
+            }
+        }
         graphics.SetIntegerGrid(true);
     }
 };

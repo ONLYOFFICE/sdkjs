@@ -208,6 +208,39 @@ CDocumentContent.prototype.Copy3 = function(Parent)//для заголовков
 	}
 	return DC;
 };
+
+CDocumentContent.prototype.createDuplicateForSmartArt = function (oPr, arrayOfTxBody) {
+	if (!arrayOfTxBody) {
+		return;
+	}
+	var that = this;
+	var arrayOfDC = Array(arrayOfTxBody.length).fill(0).map(function (value, idx) {
+		var DC = new CDocumentContent(arrayOfTxBody[idx], that.DrawingDocument, 0, 0, 0, 0, that.Split, that.TurnOffInnerWrap, true);
+		DC.Internal_Content_RemoveAll();
+		return DC;
+	});
+
+	var Count = this.Content.length;
+	if (Count % arrayOfDC.length === 0) {
+		var amountOfParOfPer = Count / arrayOfDC.length;
+	} else {
+		amountOfParOfPer = (Count - Count % (arrayOfDC.length)) / (arrayOfDC.length);
+	}
+	for (var i = 0; i < arrayOfDC.length; i += 1) {
+		var DC = arrayOfDC[i];
+		var firstParOnThisDC = i * amountOfParOfPer;
+		var lastParOnThisDC = firstParOnThisDC + amountOfParOfPer;
+		if (i === arrayOfDC.length - 1) {
+			lastParOnThisDC = Count;
+		}
+		for (var j = firstParOnThisDC; j < lastParOnThisDC; j += 1) {
+			DC.Internal_Content_Add(DC.Content.length, this.Content[j].createDuplicateForSmartArt(DC, oPr), false);
+		}
+	}
+	arrayOfTxBody.forEach(function (txBody, idx) {
+		txBody.setContent(arrayOfDC[idx]);
+	})
+}
 /**
  * В текущем содержимом получаем все комментарии и создаем их копии. Это иногда нужно делать во время функции
  * копирования, чтобы создавать новый уникальный комментарий с новым Id. Обрабатываются ТОЛЬКО комментарии, у которых
@@ -907,10 +940,10 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
 
 				var FrameHRule = (undefined === FramePr.HRule ? (undefined !== Frame_YLimit ? Asc.linerule_AtLeast : Asc.linerule_Auto) : FramePr.HRule);
 
-				if (undefined === Frame_XLimit)
+				if (undefined === Frame_XLimit || 0 === AscCommon.MMToTwips(Frame_XLimit))
                     Frame_XLimit = Page_Field_R - Page_Field_L;
 
-                if (undefined === Frame_YLimit || Asc.linerule_Auto === FrameHRule)
+                if (undefined === Frame_YLimit || 0 === AscCommon.MMToTwips(Frame_YLimit) || Asc.linerule_Auto === FrameHRule)
                     Frame_YLimit = Page_H;
 
                 for (var TempIndex = Index; TempIndex < Index + FlowCount; TempIndex++)
@@ -955,7 +988,7 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
 
                 // Обработаем "авто" ширину рамки. Ширина "авто" может быть в случае, когда значение W в FramePr
                 // отсутствует, когда, у нас ровно 1 параграф, с 1 строкой.
-                if (Element.IsParagraph() && -1 === FrameW && 1 === FlowCount && 1 === Element.Lines.length && undefined === FramePr.Get_W())
+                if (Element.IsParagraph() && -1 === FrameW && 1 === FlowCount && 1 === Element.Lines.length && (undefined === FramePr.Get_W() || 0 === AscCommon.MMToTwips(FramePr.Get_W())))
                 {
                     FrameW     = Element.GetAutoWidthForDropCap();
                     var ParaPr = Element.Get_CompiledPr2(false).ParaPr;
@@ -972,7 +1005,7 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
                 }
 				else if (-1 === FrameW)
 				{
-					if (Element.IsTable() && !FramePr.Get_W())
+					if (Element.IsTable() && (!FramePr.Get_W() || 0 === AscCommon.MMToTwips(FramePr.Get_W())))
 					{
 						FrameW = nMaxGridWidth;
 					}
@@ -985,24 +1018,10 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
 				var nGapLeft  = nMaxGapLeft;
 				var nGapRight = nMaxGridWidthRightGap > FrameW ? nMaxGridWidthRightGap - FrameW : 0;
 
-				switch (FrameHRule)
-                {
-                    case Asc.linerule_Auto :
-                        break;
-                    case Asc.linerule_AtLeast :
-                    {
-                        if (FrameH < FramePr.H)
-                            FrameH = FramePr.H;
-
-                        break;
-                    }
-
-                    case Asc.linerule_Exact:
-                    {
-                        FrameH = FramePr.H;
-                        break;
-                    }
-                }
+				if (0 !== AscCommon.MMToTwips(FramePr.H) && ((Asc.linerule_AtLeast === FrameHRule && FrameH < FramePr.H) || Asc.linerule_Exact === FrameHRule))
+				{
+					FrameH = FramePr.H;
+				}
 
                 //--------------------------------------------------------------------------------------------------
                 // 2. Рассчитаем положение рамки
@@ -1014,10 +1033,10 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
 
                 // Рассчитаем положение по горизонтали
                 var FrameX = 0;
-                if (undefined != FramePr.XAlign || undefined === FramePr.X)
+                if (undefined !== FramePr.XAlign || undefined === FramePr.X)
                 {
                     var XAlign = c_oAscXAlign.Left;
-                    if (undefined != FramePr.XAlign)
+                    if (undefined !== FramePr.XAlign)
                         XAlign = FramePr.XAlign;
 
                     switch (FrameHAnchor)
@@ -1086,7 +1105,7 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
 
                 // Рассчитаем положение по вертикали
                 var FrameY = 0;
-                if (undefined != FramePr.YAlign)
+                if (undefined !== FramePr.YAlign)
                 {
                     var YAlign = FramePr.YAlign;
                     // Случай c_oAscYAlign.Inline не обрабатывается, потому что такие параграфы считаются Inline
@@ -1141,7 +1160,7 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
                 else
                 {
                     var FramePrY = 0;
-                    if (undefined != FramePr.Y)
+                    if (undefined !== FramePr.Y)
                         FramePrY = FramePr.Y;
 
                     switch (FrameVAnchor)
@@ -1153,7 +1172,13 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
                             FrameY = FramePrY + Y;
                             break;
                         case c_oAscVAnchor.Margin :
-                            FrameY = FramePrY + Page_Field_T;
+
+							// Если Y не задано, либо ровно 0, тогда MSWord считает это как привязка к тексту (баг 52903)
+							if (undefined === FramePr.Y || 0 === AscCommon.MMToTwips(FramePr.Y))
+								FrameY = Y + 0.001; // Погрешность, чтобы не сдвигалась предыдущая строка из-за обтекания
+							else
+								FrameY = FramePrY + Page_Field_T;
+
                             break;
                     }
                 }
@@ -1496,13 +1521,14 @@ CDocumentContent.prototype.Draw                           = function(nPageIndex,
 	}
 
 
-	if (this.LogicDocument)
-		this.LogicDocument.DrawingObjects.drawBeforeObjectsByContent(this.Get_AbsolutePage(CurPage), pGraphics, this);
 
     if (ClipInfo)
     {
         pGraphics.RestoreGrState();
     }
+
+	if (this.LogicDocument)
+		this.LogicDocument.DrawingObjects.drawBeforeObjectsByContent(this.Get_AbsolutePage(CurPage), pGraphics, this);
 
     if (pGraphics.End_Command)
     {
@@ -1993,6 +2019,8 @@ CDocumentContent.prototype.Is_Empty = function()
 
 	return this.Content[0].IsEmpty({SkipPlcHldr : false});
 };
+
+
 CDocumentContent.prototype.IsEmpty = function()
 {
 	return this.Is_Empty();

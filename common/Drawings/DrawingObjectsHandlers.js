@@ -331,6 +331,7 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
                 break;
             }
             case AscDFH.historyitem_type_GroupShape:
+            case AscDFH.historyitem_type_SmartArt:
             {
                 ret = handleGroup(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord);
                 break;
@@ -1986,6 +1987,7 @@ function handleInlineObjects(drawingObjectsController, drawingArr, e, x, y, page
                 break;
             }
             case AscDFH.historyitem_type_GroupShape:
+            case AscDFH.historyitem_type_SmartArt:
             {
                 ret = handleGroup(drawing, drawingObjectsController, e, x, y, null, pageIndex, bWord);
                 if(ret)
@@ -2008,6 +2010,7 @@ function handleMouseUpPreMoveState(drawingObjects, e, x, y, pageIndex, bWord)
         switch (state.majorObject.getObjectType())
         {
             case AscDFH.historyitem_type_GroupShape:
+            case AscDFH.historyitem_type_SmartArt:
             {
                 state.drawingObjects.checkChartTextSelection();
                 state.drawingObjects.resetSelection();
