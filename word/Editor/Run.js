@@ -7149,7 +7149,7 @@ ParaRun.prototype.Get_ElementByPos = function(ContentPos, Depth)
     return this;
 };
 
-ParaRun.prototype.Get_PosByDrawing = function(Id, ContentPos, Depth)
+ParaRun.prototype.GetPosByDrawing = function(Id, ContentPos, Depth)
 {
     var Count = this.Content.length;
     for ( var CurPos = 0; CurPos < Count; CurPos++ )

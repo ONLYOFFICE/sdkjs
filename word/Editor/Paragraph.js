@@ -6700,7 +6700,7 @@ Paragraph.prototype.MoveCursorToDrawing = function(Id, bBefore)
 
 		ContentPos.Update(CurPos, 0);
 
-		if (true === Element.Get_PosByDrawing(Id, ContentPos, 1))
+		if (true === Element.GetPosByDrawing(Id, ContentPos, 1))
 		{
 			bFind = true;
 			break;
@@ -13768,7 +13768,7 @@ Paragraph.prototype.StartSelectionFromCurPos = function()
  *  Возвращается объект CParagraphContentPos по заданому Id ParaDrawing, если объект
  *  не найдет, вернется null.
  */
-Paragraph.prototype.Get_PosByDrawing = function(Id)
+Paragraph.prototype.GetPosByDrawing = function(Id)
 {
     var ContentPos = new CParagraphContentPos();
 
@@ -13780,7 +13780,7 @@ Paragraph.prototype.Get_PosByDrawing = function(Id)
         var Element = this.Content[CurPos];
         ContentPos.Update(CurPos, 0);
 
-        if (true === Element.Get_PosByDrawing(Id, ContentPos, 1))
+        if (true === Element.GetPosByDrawing(Id, ContentPos, 1))
         {
             bFind = true;
             break;

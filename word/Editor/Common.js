@@ -413,17 +413,41 @@ window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 
 (function(window, undefined)
 {
-	function CompareDocumentPositions(oDocPos1, oDocPos2)
+	function private_CheckDrawingDocumentPosition(oDocPos)
 	{
-		if (!oDocPos1 || !oDocPos2)
+		if (!oDocPos || !oDocPos.length)
+			return oDocPos;
+
+		var oShape = null;
+		if (oDocPos[0].Class instanceof AscCommonWord.CDocumentContent && (oShape = oDocPos[0].Class.Is_DrawingShape(true)) && oShape.parent instanceof AscCommonWord.ParaDrawing)
+		{
+			var oDrawingDocPos = oShape.parent.GetDocumentPositionFromObject();
+			if (!oDrawingDocPos || !oDrawingDocPos.length)
+				return oDocPos;
+
+			return oDrawingDocPos.concat(oDocPos);
+		}
+
+		return oDocPos;
+	}
+	function CompareDocumentPositions(oDocPos1, oDocPos2, isCheckDrawingPos)
+	{
+		if (!oDocPos1 || !oDocPos2 || !oDocPos1.length || !oDocPos2.length)
 			return 0;
 
-		if (oDocPos1.Class !== oDocPos2.Class)
+		if (oDocPos1[0].Class !== oDocPos2[0].Class)
 		{
+			if (false !== isCheckDrawingPos)
+			{
+				oDocPos1 = private_CheckDrawingDocumentPosition(oDocPos1);
+				oDocPos2 = private_CheckDrawingDocumentPosition(oDocPos2);
+				return CompareDocumentPositions(oDocPos1, oDocPos2, false);
+			}
+
 			// TODO: Здесь нужно доработать сравнение позиций, когда они из разных частей документа
-			if (oDocPos1.Class instanceof AscCommonWord.CDocument)
+			if (oDocPos1[0].Class instanceof AscCommonWord.CDocument)
 				return -1;
-			else if (oDocPos1.Class instanceof AscCommonWord.CDocument)
+			else if (oDocPos1[0].Class instanceof AscCommonWord.CDocument)
 				return 1;
 			else
 				return 1;
