@@ -4527,6 +4527,10 @@ function (window, undefined) {
 					protectedSheet.setDeleteRows(value);
 					break;
 				}
+				case AscCH.historyitem_Protected_SetDeleteColumns: {
+					protectedSheet.setDeleteColumns(value);
+					break;
+				}
 				case AscCH.historyitem_Protected_SetSelectLockedCells: {
 					protectedSheet.setSelectLockedCells(value);
 					break;
