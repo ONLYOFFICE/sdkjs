@@ -2012,6 +2012,9 @@
 
 				if (tablePart) {
 					//change TableParts
+					if (tablePart.QueryTable) {
+						tablePart.cleanQueryTables();
+					}
 					changeFilter(tablePart);
 				}
 				return redrawTablesArr;
