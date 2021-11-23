@@ -8240,7 +8240,7 @@ PasteProcessor.prototype =
 		//ms в буфер записывает только lock контента
 		if (node && node.attributes) {
 			var contentLocked = node.attributes["contentlocked"];
-			if (contentLocked) {
+			if (contentLocked /*&& contentLocked.value === "t"*/) {
 				blockLevelSdt.SetContentControlLock(c_oAscSdtLockType.SdtContentLocked);
 			}
 			//далее тег и титульник, цвета нет
@@ -8251,6 +8251,42 @@ PasteProcessor.prototype =
 			var tag = node.attributes["sdttag"];
 			if (tag && tag.value) {
 				blockLevelSdt.SetTag(tag.value);
+			}
+
+			var getCharCode = function (text) {
+				var charCode;
+				for (var oIterator = text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
+					charCode = oIterator.value();
+				}
+				return charCode;
+			}
+
+			var checkBox = node.attributes["checkbox"];
+			if (checkBox && checkBox.value === "t") {
+				var oPr = new CSdtCheckBoxPr();
+				var checked = node.attributes["checkboxischecked"];
+				if (checked) {
+					oPr.Checked = checked.value === "t";
+				}
+				var checkedFont = node.attributes["checkboxfontchecked"];
+				if (checkedFont) {
+					oPr.CheckedFont = checkedFont.value;
+				}
+				var checkedSymbol = node.attributes["checkboxvalueunchecked"];
+				if (checkedSymbol) {
+					oPr.CheckedSymbol = getCharCode(checkedSymbol.value);
+				}
+				var uncheckedFont = node.attributes["checkboxfontunchecked"];
+				if (uncheckedFont) {
+					oPr.UncheckedFont = uncheckedFont.value;
+				}
+				var uncheckedSymbol = node.attributes["checkboxvalueunchecked"];
+				if (checkedSymbol) {
+					oPr.UncheckedSymbol = getCharCode(uncheckedSymbol.value);
+				}
+
+				//var oTextPr = this.GetDirectTextPr();
+				blockLevelSdt.ApplyCheckBoxPr(oPr);
 			}
 		}
 
