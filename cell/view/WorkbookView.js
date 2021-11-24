@@ -3099,6 +3099,7 @@
 			page = page.clone();
 		}
 
+		this.startDrawPreview = true;
 		var pageWidth = page && page.pageWidth ? page.pageWidth : AscCommon.c_oAscPrintDefaultSettings.PageWidth;
 		var pageHeight = page && page.pageHeight ? page.pageHeight : AscCommon.c_oAscPrintDefaultSettings.PageHeight;
 
@@ -3151,6 +3152,7 @@
 			ws = this.getWorksheet(page.indexWorksheet);
 			ws.drawForPrint(this.printPreviewCtx, page, index, this.PrintPreviewPages.arrPages.length);
 		}
+		this.startDrawPreview = false;
 
 		this.changeZoom(viewZoom);
 		this.model.setActive(activeIndex);

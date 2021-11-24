@@ -1731,7 +1731,7 @@
 		}
 
 		this.cols[i] = new CacheColumn(w);
-		this.cols[i].width = Asc.round(w * this.getZoom());
+		this.cols[i].width = this.workbook.startDrawPreview ? w * this.getZoom() : Asc.round(w * this.getZoom());
 		this.cols[i]._widthForPrint = isDefaultWidth ? this.defaultColWidthPxForPrint : column && Asc.floor(
 			((256 * column.width + Asc.floor(128 / this.maxDigitWidthForPrint)) / 256) * this.maxDigitWidthForPrint);
 		
@@ -1762,7 +1762,7 @@
 		}
 		r = this.rows[i] = new CacheRow();
 		r.top = y;
-		r.height = Asc.round(AscCommonExcel.convertPtToPx(hR) * this.getZoom());
+		r.height = this.workbook.startDrawPreview ? AscCommonExcel.convertPtToPx(hR) * this.getZoom() : Asc.round(AscCommonExcel.convertPtToPx(hR) * this.getZoom());
 		r._heightForPrint = isDefaultHeight ? null : hR;
 		r.descender = this.defaultRowDescender;
 	};
@@ -2055,8 +2055,8 @@
 
 		if (pageHeadings) {
 			// Рисуем заголовки, нужно чуть сдвинуться
-			leftFieldInPx += this.cellsLeft;
-			topFieldInPx += this.cellsTop;
+			leftFieldInPx += this.workbook.startDrawPreview ? this.cellsLeft * scale : this.cellsLeft;
+			topFieldInPx += this.workbook.startDrawPreview ? this.cellsTop * scale : this.cellsTop;
 		}
 
 		//TODO при сравнении резальтатов рассчета страниц в зависимости от scale - LO выдаёт похожие результаты, MS - другие. Необходимо пересмотреть!
@@ -6751,7 +6751,7 @@
 			}
 		}
 
-		rowInfo.height = Asc.round(th * this.getZoom());
+		rowInfo.height = this.workbook.startDrawPreview ? th * this.getZoom() : Asc.round(th * this.getZoom());
 		rowInfo._heightForPrint = this.updateRowHeightValuePx ? null : this._getRowHeightReal(cell.nRow);
 		rowInfo.descender = d;
 		return th;
@@ -6791,7 +6791,7 @@
                     this.updateRowHeightValuePx = newHeight;
 				}
 				//TODO правлю на хотфикс ошибку. это следствие, а не причина. нужно пересмотреть! баг 50489
-				var _rowHeight = Asc.round(newHeight * this.getZoom());
+				var _rowHeight = this.workbook.startDrawPreview ? newHeight * this.getZoom() : Asc.round(newHeight * this.getZoom());
 				if (rowInfo) {
 					rowInfo.height = _rowHeight;
 					rowInfo._heightForPrint = AscCommonExcel.convertPxToPt(_rowHeight);
@@ -6844,7 +6844,7 @@
 
 					t.updateRowHeightValuePx = t.defaultRowHeightPx;
 					row = t.rows[r];
-					row.height = Asc.round(t.defaultRowHeightPx * t.getZoom());
+					row.height = this.workbook.startDrawPreview ? t.defaultRowHeightPx * this.getZoom() : Asc.round(t.defaultRowHeightPx * this.getZoom());
 					row._heightForPrint = null;
 					row.descender = t.defaultRowDescender;
 

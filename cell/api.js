@@ -1213,7 +1213,9 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_updatePrintPreview = function (options) {
+		this.wb.startDrawPreview = true;
 		this.wb.PrintPreviewPages = this.wb.calcPagesPrint(options.advancedOptions);
+		this.wb.startDrawPreview = false;
 		var pagesCount = this.wb.PrintPreviewPages.arrPages.length;
 		return pagesCount ? pagesCount : 1;
 	};
