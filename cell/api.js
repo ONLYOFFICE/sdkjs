@@ -1224,7 +1224,7 @@ var editor;
 		this.wb.printSheetPrintPreview(index);
 		var curPage = this.wb.PrintPreviewPages && this.wb.PrintPreviewPages.arrPages[index];
 		//возвращаю инфомарцию об активном листе, который печатаем
-		return curPage && curPage.indexWorksheet;
+		this.handlers.trigger("asc_onPrintPreviewSheetChanged", curPage && curPage.indexWorksheet);
 	};
 
 	spreadsheet_api.prototype.asc_closePrintPreview = function (isPrint) {
@@ -1305,6 +1305,7 @@ var editor;
    * asc_onLockDocumentProps/asc_onUnLockDocumentProps    - эвент о том, что залочены опции layout
    * asc_onUpdateDocumentProps                            - эвент о том, что необходимо обновить данные во вкладке layout
    * asc_onLockPrintArea/asc_onUnLockPrintArea            - эвент о локе в меню опции print area во вкладке layout
+   * asc_onPrintPreviewSheetChanged                 - эвент о смене печатаемого листа при предварительной печати
    */
 
   spreadsheet_api.prototype.asc_registerCallback = function(name, callback, replaceOldCallback) {
