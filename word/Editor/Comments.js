@@ -1328,20 +1328,11 @@ ParaComment.prototype.SetParagraph = function(oParagraph)
 	var oLogicDocument = oParagraph.GetLogicDocument();
 	if (oLogicDocument)
 	{
+		// Сразу не проставляем связь ParaMark->Comment, т.к. во время копирования
+		// создаются копии ParaComment, которые ломают эту связь, т.к. для них
+		// еще не создан свой комментарий и они пока "привязаны" к старому
 		var oDocComments = oLogicDocument.Comments;
-		var oComment     = oDocComments.Get_ById(this.CommentId);
-
-		if (oComment)
-		{
-			if (this.Start)
-				oComment.Set_StartId(this.Paragraph.GetId());
-			else
-				oComment.Set_EndId(this.Paragraph.GetId());
-		}
-		else
-		{
-			oDocComments.AddMarkToCheck(this);
-		}
+		oDocComments.AddMarkToCheck(this);
 	}
 };
 //--------------------------------------------------------export----------------------------------------------------

@@ -458,9 +458,14 @@ CSelectedContent.prototype =
 			oElement.Set_DocumentNext(Pos === Count - 1 ? null : this.Elements[Pos + 1].Element);
 			oElement.ProcessComplexFields();
 
-			oElement.GetAllDrawingObjects(this.DrawingObjects);
-			oElement.GetAllComments(this.Comments);
-			oElement.GetAllMaths(this.Maths);
+			var arrParagraphs = oElement.GetAllParagraphs();
+			for (var nParaIndex = 0, nParasCount = arrParagraphs.length; nParaIndex < nParasCount; ++nParaIndex)
+			{
+				var oParagraph = arrParagraphs[nParaIndex];
+				oParagraph.GetAllDrawingObjects(this.DrawingObjects);
+				oParagraph.GetAllComments(this.Comments);
+				oParagraph.GetAllMaths(this.Maths);
+			}
 
 			if (oElement.IsParagraph() && Count > 1)
 				oElement.CorrectContent();
@@ -3158,6 +3163,8 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	}
 
 	// Дополнительная обработка-----------------------------------------------------------------------------------------
+	this.Comments.CheckMarks();
+
 	if (this.Action.Additional.TrackMove)
 		this.private_FinalizeRemoveTrackMove();
 
@@ -12838,6 +12845,7 @@ CDocument.prototype.Document_Undo = function(Options)
 
 			var arrChanges = this.History.Undo(Options);
 			this.DocumentOutline.UpdateAll(); // TODO: надо бы подумать как переделать на более легкий пересчет
+			this.Comments.UpdateAll();        // TODO: Надо переделать как на Start/Finalize
 			this.DrawingObjects.TurnOnCheckChartSelection();
 			this.RecalculateByChanges(arrChanges);
 
@@ -12867,6 +12875,7 @@ CDocument.prototype.Document_Redo = function()
 
 		var arrChanges = this.History.Redo();
 		this.DocumentOutline.UpdateAll(); // TODO: надо бы подумать как переделать на более легкий пересчет
+		this.Comments.UpdateAll();        // TODO: Надо переделать как на Start/Finalize
 		this.DrawingObjects.TurnOnCheckChartSelection();
 		this.RecalculateByChanges(arrChanges);
 

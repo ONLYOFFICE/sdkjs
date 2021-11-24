@@ -198,6 +198,20 @@ ParaDrawing.prototype = Object.create(CRunElementBase.prototype);
 ParaDrawing.prototype.constructor = ParaDrawing;
 
 ParaDrawing.prototype.Type = para_Drawing;
+ParaDrawing.prototype.SetParent = function(oParent)
+{
+	if (!oParent)
+		return;
+
+	if (oParent instanceof ParaRun)
+		this.Parent = oParent.GetParagraph();
+	else if (oParent instanceof Paragraph)
+		this.Parent = oParent;
+};
+ParaDrawing.prototype.GetParent = function()
+{
+	return this.Parent;
+};
 ParaDrawing.prototype.Get_Type = function()
 {
 	return this.Type;
@@ -3025,6 +3039,7 @@ ParaDrawing.prototype.PreDelete = function()
 	for (var nIndex = 0, nCount = arrDocContents.length; nIndex < nCount; ++nIndex)
 	{
 		arrDocContents[nIndex].PreDelete();
+		arrDocContents[nIndex].ClearContent(true);
 	}
 	var oGrObject = this.GraphicObj;
 	if(oGrObject && oGrObject.signatureLine)
