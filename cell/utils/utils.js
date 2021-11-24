@@ -2110,18 +2110,6 @@
 				}
 			}
 
-			if (oStyle.ApplyBorder) {
-				// borders
-				var oBorders = oStyle.getBorder();
-				drawBorder(AscCommon.c_oAscBorderType.Ver, oBorders.l, 0, 0, 0, height);
-				drawBorder(AscCommon.c_oAscBorderType.Hor, oBorders.b, 0, height - 1, width, height - 1);
-				drawBorder(AscCommon.c_oAscBorderType.Ver, oBorders.r, width - 1, height, width - 1, 0);
-				drawBorder(AscCommon.c_oAscBorderType.Hor, oBorders.t, width, 0, 0, 0);
-				if (isNotFirst) {
-					ctx.stroke();
-				}
-			}
-
 			// Draw text
 			var format = oStyle.getFont().clone();
 			// Для размера шрифта делаем ограничение для превью в 16pt (у Excel 18pt, но и высота превью больше 22px)
@@ -2165,6 +2153,18 @@
 				ctx.fillText(sStyleName, width_padding, textY + tm.baseline);
 			} else {
 				sr.render(ctx, width_padding, textY, tm.width, oStyle.getFontColor() || new AscCommon.CColor(0, 0, 0));
+			}
+
+			if (oStyle.ApplyBorder) {
+				// borders
+				var oBorders = oStyle.getBorder();
+				drawBorder(AscCommon.c_oAscBorderType.Ver, oBorders.l, 0, 0, 0, height);
+				drawBorder(AscCommon.c_oAscBorderType.Hor, oBorders.b, 0, height - 1, width, height - 1);
+				drawBorder(AscCommon.c_oAscBorderType.Ver, oBorders.r, width - 1, height, width - 1, 0);
+				drawBorder(AscCommon.c_oAscBorderType.Hor, oBorders.t, width, 0, 0, 0);
+				if (isNotFirst) {
+					ctx.stroke();
+				}
 			}
 		}
 		
