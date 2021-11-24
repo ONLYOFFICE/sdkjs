@@ -2516,11 +2516,6 @@
 				this._calcHeaderRowHeight();
 			}
 
-			//var _transform = drawingCtx.Transform ? drawingCtx.Transform : drawingCtx._mbt;
-			//drawingCtx.setTransform(0.5,_transform.shy,_transform.shx,0.5,_transform.tx,_transform.ty)
-			//drawingCtx.setTextTransform(0.5,_transform.shy,_transform.shx,0.5,_transform.tx,_transform.ty)
-			//drawingCtx.updateTransforms();
-
 			this._setDefaultFont(drawingCtx);
 
 			//draw header/footer
@@ -2535,7 +2530,7 @@
 				drawingCtx.AddClipRect && drawingCtx.AddClipRect(clipLeft, clipTop, clipWidth, clipHeight);
 
 				var transformMatrix;
-				var _transform = drawingCtx.Transform ? drawingCtx.Transform : drawingCtx._mbt;
+				var _transform = drawingCtx.Transform;
 				if (printScale !== 1 && _transform) {
 					var mmToPx = asc_getcvt(3/*mm*/, 0/*px*/, t._getPPIX());
 					var leftDiff = printPagesData.pageClipRectLeft * (1 - printScale);

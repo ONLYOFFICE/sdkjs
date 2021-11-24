@@ -1222,6 +1222,9 @@ var editor;
 
 	spreadsheet_api.prototype.asc_drawPrintPreview = function (index) {
 		this.wb.printSheetPrintPreview(index);
+		var curPage = this.wb.PrintPreviewPages && this.wb.PrintPreviewPages.arrPages[index];
+		//возвращаю инфомарцию об активном листе, который печатаем
+		return curPage && curPage.indexWorksheet;
 	};
 
 	spreadsheet_api.prototype.asc_closePrintPreview = function (isPrint) {
