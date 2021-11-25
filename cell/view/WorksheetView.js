@@ -6839,7 +6839,7 @@
 
 					t.updateRowHeightValuePx = t.defaultRowHeightPx;
 					row = t.rows[r];
-					row.height = this.workbook.startDrawPreview ? t.defaultRowHeightPx * this.getZoom() : Asc.round(t.defaultRowHeightPx * this.getZoom());
+					row.height = t.workbook.startDrawPreview ? t.defaultRowHeightPx * t.getZoom() : Asc.round(t.defaultRowHeightPx * t.getZoom());
 					row._heightForPrint = null;
 					row.descender = t.defaultRowDescender;
 
