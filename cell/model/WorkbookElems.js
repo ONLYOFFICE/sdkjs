@@ -11818,6 +11818,14 @@ QueryTableField.prototype.clone = function() {
 			this.wb.changeZoom(this.pageZoom * this.printZoom);
 			this.ctx.changeZoom(this.pageZoom* this.printZoom);
 		}
+		var oGraphics = new AscCommon.CGraphics();
+		var nWidth = this.ctx.getWidth(0);
+		var nHeight = this.ctx.getHeight(0);
+		var dWidth = this.ctx.getWidth(3);
+		var dHeight = this.ctx.getHeight(3);
+		oGraphics.init(this.ctx.canvas.getContext('2d'), nWidth, nHeight, dWidth, dHeight);
+		oGraphics.m_oFontManager = AscCommon.g_fontManager;
+		this.ctx.DocumentRenderer = oGraphics;
 	};
 
 

@@ -2597,9 +2597,6 @@
 				//Отрисовываем панель группировки по строкам
 				//t._drawGroupData(drawingCtx, null, offsetX, offsetY);
 
-				drawingCtx.DocumentRenderer = /*new AscCommon.CDocumentRenderer()*/t.workbook.shapeCtx;
-				drawingCtx.DocumentRenderer.m_oContext = t.workbook.printPreviewState.getCtx().canvas.getContext("2d");
-
 				var drawingPrintOptions = {
 					ctx: drawingCtx, printPagesData: printPagesData, titleWidth: titleWidth, titleHeight: titleHeight
 				};
@@ -2615,9 +2612,23 @@
 
 				drawingCtx.AddClipRect && drawingCtx.AddClipRect(clipLeftShape, clipTopShape, clipWidthShape, clipHeightShape);
 
-				//drawingCtx.DocumentRenderer && drawingCtx.DocumentRenderer.SetBaseTransform(oBaseTransform);
+                if(drawingCtx.DocumentRenderer.SetBaseTransform)
+                {
+                    drawingCtx.DocumentRenderer.SetBaseTransform(oBaseTransform);
+                }
+                else
+                {
+                    if(drawingCtx.DocumentRenderer.m_oCoordTransform)
+                    {
+                        drawingCtx.DocumentRenderer.m_oCoordTransform.tx = oBaseTransform.tx * drawingCtx.DocumentRenderer.m_oCoordTransform.sx;
+                        drawingCtx.DocumentRenderer.m_oCoordTransform.ty = oBaseTransform.ty * drawingCtx.DocumentRenderer.m_oCoordTransform.sy;
+                    }
+                }
 				t.objectRender.print(drawingPrintOptions);
-				//drawingCtx.DocumentRenderer && drawingCtx.DocumentRenderer.SetBaseTransform(oOldBaseTransform);
+                if(drawingCtx.DocumentRenderer.SetBaseTransform)
+                {
+                    drawingCtx.DocumentRenderer.SetBaseTransform(oOldBaseTransform);
+                }
 				t.visibleRange = tmpVisibleRange;
 
 				drawingCtx.RemoveClipRect && drawingCtx.RemoveClipRect();
