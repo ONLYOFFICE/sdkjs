@@ -8252,6 +8252,15 @@ PasteProcessor.prototype =
 			if (tag && tag.value) {
 				blockLevelSdt.SetTag(tag.value);
 			}
+			var temporary = node.attributes["temporary"];
+			if (temporary && temporary.value) {
+				blockLevelSdt.SetContentControlTemporary(temporary.value === "t");
+			}
+
+			var placeHolder = node.attributes["showingplchdr"];
+			if (placeHolder && placeHolder.value === "t") {
+				blockLevelSdt.SetPlaceholder(c_oAscDefaultPlaceholderName.Text);
+			}
 
 			var getCharCode = function (text) {
 				var charCode;
@@ -8261,9 +8270,23 @@ PasteProcessor.prototype =
 				return charCode;
 			}
 
+			var setListItems = function (addFunc) {
+				for (var i = 0, length = node.childNodes.length; i < length; i++) {
+					var child = node.childNodes[i];
+					if (child && "w:listitem" === child.nodeName.toLowerCase()) {
+						if (child.attributes) {
+							var listvalue = child.attributes["listvalue"] && child.attributes["listvalue"].value;
+							var datavalue = child.attributes["datavalue"] && child.attributes["datavalue"].value;
+							addFunc(listvalue, datavalue);
+						}
+					}
+				}
+			};
+
+			var oPr;
 			var checkBox = node.attributes["checkbox"];
 			if (checkBox && checkBox.value === "t") {
-				var oPr = new CSdtCheckBoxPr();
+				oPr = new CSdtCheckBoxPr();
 				var checked = node.attributes["checkboxischecked"];
 				if (checked) {
 					oPr.Checked = checked.value === "t";
@@ -8272,7 +8295,7 @@ PasteProcessor.prototype =
 				if (checkedFont) {
 					oPr.CheckedFont = checkedFont.value;
 				}
-				var checkedSymbol = node.attributes["checkboxvalueunchecked"];
+				var checkedSymbol = node.attributes["checkboxvaluechecked"];
 				if (checkedSymbol) {
 					oPr.CheckedSymbol = getCharCode(checkedSymbol.value);
 				}
@@ -8285,31 +8308,56 @@ PasteProcessor.prototype =
 					oPr.UncheckedSymbol = getCharCode(uncheckedSymbol.value);
 				}
 
-				//var oTextPr = this.GetDirectTextPr();
 				blockLevelSdt.ApplyCheckBoxPr(oPr);
+			}
+
+			var id = node.attributes["id"];
+			if (id) {
+				blockLevelSdt.Pr.Id = id;
+			}
+
+			var comboBox = node.attributes["combobox"];
+			if (comboBox && comboBox.value === "t") {
+				oPr = new CSdtComboBoxPr();
+			}
+
+			var dropdown = node.attributes["dropdown"];
+			if (dropdown && dropdown.value === "t") {
+				oPr = new CSdtComboBoxPr();
+			}
+
+			if (comboBox || dropdown) {
+				//TODO по грамотному нужно пропарсить всё содержимое и отдать все свойства
+				//пока только для listitem делаю
+				setListItems(function (sDisplay, sValue) {
+					oPr.AddItem(sDisplay, sValue);
+				});
+				blockLevelSdt.ApplyComboBoxPr(oPr);
 			}
 		}
 
 		//content
-		var oPasteProcessor = new PasteProcessor(this.api, false, false, true);
-		oPasteProcessor.msoComments = this.msoComments;
-		oPasteProcessor.oFonts = this.oFonts;
-		oPasteProcessor.oImages = this.oImages;
-		oPasteProcessor.oDocument = blockLevelSdt.Content;
-		oPasteProcessor.bIgnoreNoBlockText = true;
-		oPasteProcessor.aMsoHeadStylesStr = this.aMsoHeadStylesStr;
-		oPasteProcessor.oMsoHeadStylesListMap = this.oMsoHeadStylesListMap;
-		oPasteProcessor.msoListMap = this.msoListMap;
-		oPasteProcessor._Execute(node, pPr, true, true, false);
-		oPasteProcessor._PrepareContent();
-		oPasteProcessor._AddNextPrevToContent(blockLevelSdt.Content);
+		if (!checkBox && !comboBox && !dropdown) {
+			var oPasteProcessor = new PasteProcessor(this.api, false, false, true);
+			oPasteProcessor.msoComments = this.msoComments;
+			oPasteProcessor.oFonts = this.oFonts;
+			oPasteProcessor.oImages = this.oImages;
+			oPasteProcessor.oDocument = blockLevelSdt.Content;
+			oPasteProcessor.bIgnoreNoBlockText = true;
+			oPasteProcessor.aMsoHeadStylesStr = this.aMsoHeadStylesStr;
+			oPasteProcessor.oMsoHeadStylesListMap = this.oMsoHeadStylesListMap;
+			oPasteProcessor.msoListMap = this.msoListMap;
+			oPasteProcessor._Execute(node, pPr, true, true, false);
+			oPasteProcessor._PrepareContent();
+			oPasteProcessor._AddNextPrevToContent(blockLevelSdt.Content);
 
-		//добавляем новый параграфы
-		for (var i = 0, length = oPasteProcessor.aContent.length; i < length; ++i) {
-			if (i === length - 1) {
-				blockLevelSdt.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], true);
-			} else {
-				blockLevelSdt.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], false);
+			//добавляем новый параграфы
+			for (var i = 0, length = oPasteProcessor.aContent.length; i < length; ++i) {
+				if (i === length - 1) {
+					blockLevelSdt.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], true);
+				} else {
+					blockLevelSdt.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], false);
+				}
 			}
 		}
 
