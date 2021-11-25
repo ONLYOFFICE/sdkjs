@@ -2219,10 +2219,13 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 					oSdtBounds = PDSH.InlineSdt[nSdtIndex].GetRangeBounds(CurLine, CurRange);
 					oFormShd   = isForm ? oInlineSdt.GetFormPr().GetShd() : null;
 
+					if (pGraphics.isPrintMode && isForm && (!oFormShd || oFormShd.IsNil()))
+						continue;
+
 					if (oFormShd && !oFormShd.IsNil())
 					{
 						var oFormShdColor = oFormShd.GetSimpleColor(this.GetTheme(), this.GetColorMap());
-						if (oInlineSdt.IsCurrent())
+						if (oInlineSdt.IsCurrent() || pGraphics.isPrintMode)
 						{
 							if (3 !== nPrevColorState)
 							{

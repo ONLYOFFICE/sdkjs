@@ -6366,6 +6366,8 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
     var aDUnderline = PDSL.DUnderline;
     var aFormBorder = PDSL.FormBorder;
 
+    var isFormPlaceHolder = false;
+
     var oForm       = this.GetParentForm();
     var oFormBorder = null;
     var nCombMax    = -1;
@@ -6378,6 +6380,8 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
 
 		if (oForm.IsTextForm() && oForm.GetTextFormPr().IsComb())
 			nCombMax = oForm.GetTextFormPr().GetMaxCharacters();
+
+		isFormPlaceHolder = (oForm.IsPlaceHolder() && PDSL.Graphics.isPrintMode);
 	}
 
     var CurTextPr = this.Get_CompiledPr( false );
@@ -6533,6 +6537,10 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
 				aFormBorder.Add(Y, Y, X, X + ItemWidthVisible, nFormBorderW, oFormBorderColor.r, oFormBorderColor.g, oFormBorderColor.b, {Comb : nCombMax, Y : oFormBounds.Y, H : oFormBounds.H});
 			}
 		}
+
+		// Для плейсхолдера форм нам нужна только рамка
+		if (isFormPlaceHolder)
+			continue;
 
 		switch (ItemType)
 		{
