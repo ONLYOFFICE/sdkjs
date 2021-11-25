@@ -4493,8 +4493,8 @@ CChartsDrawer.prototype =
 
 			//расчет уравнений плоскостей
 			plainEquationDown =
-				this.getPlainEquation(pointPlainDown1, pointPlainDown2, pointPlainDown3, pointPlainDown4)
-			plainEquationUp = this.getPlainEquation(pointPlainUp1, pointPlainUp2, pointPlainUp3, pointPlainUp4)
+				this.getPlainEquation(pointPlainDown1, pointPlainDown2, pointPlainDown3, pointPlainDown4);
+			plainEquationUp = this.getPlainEquation(pointPlainUp1, pointPlainUp2, pointPlainUp3, pointPlainUp4);
 
 			//находим точки пересечения плоскостей с пирамидой для расчета усечения
 
@@ -4778,7 +4778,7 @@ CChartsDrawer.prototype =
 				}
 			}
 			return { valueMax: tempMax, valueMin: tempMin };
-		}
+		};
 
 		
 		var getStandardMaxHeight = function (ptCount, chart, cChartDrawer) {
@@ -4801,7 +4801,7 @@ CChartsDrawer.prototype =
 			}
 
 			return { mainMaxH: mainMaxH, mainMinH: mainMinH };
-		}
+		};
 
 		return {
 				heightPer: getMaxHeightStacked(ptCount, chart, cChartDrawer, subType),
