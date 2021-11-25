@@ -8262,6 +8262,13 @@ PasteProcessor.prototype =
 				blockLevelSdt.SetPlaceholder(c_oAscDefaultPlaceholderName.Text);
 			}
 
+			//TODO поддержать Picture CC
+			/*var aspicture = node.attributes["displayaspicture"];
+			if (aspicture) {
+				blockLevelSdt.SetPicturePr(aspicture.value === "t");
+			}*/
+
+
 			var getCharCode = function (text) {
 				var charCode;
 				for (var oIterator = text.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
@@ -8277,7 +8284,9 @@ PasteProcessor.prototype =
 						if (child.attributes) {
 							var listvalue = child.attributes["listvalue"] && child.attributes["listvalue"].value;
 							var datavalue = child.attributes["datavalue"] && child.attributes["datavalue"].value;
-							addFunc(listvalue, datavalue);
+							if (datavalue) {
+								addFunc(datavalue, listvalue ? listvalue : undefined);
+							}
 						}
 					}
 				}
@@ -8359,6 +8368,8 @@ PasteProcessor.prototype =
 					blockLevelSdt.Content.Internal_Content_Add(i + 1, oPasteProcessor.aContent[i], false);
 				}
 			}
+
+			blockLevelSdt.Content.Internal_Content_Remove(0, 1);
 		}
 
 		this.aContent.push(blockLevelSdt);
