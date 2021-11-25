@@ -280,7 +280,7 @@
     this.NeedUpdateTargetForCollaboration = true;
     this.LastUpdateTargetTime = 0;
 
-	this.printPreviewState = new AscCommonExcel.CPrintPreviewState();
+	this.printPreviewState = new AscCommonExcel.CPrintPreviewState(this);
 
     return this;
   }
@@ -3100,28 +3100,7 @@
 			page = page.clone();
 		}
 
-		this.startDrawPreview = true;
-		var pageWidth = page && page.pageWidth ? page.pageWidth : AscCommon.c_oAscPrintDefaultSettings.PageWidth;
-		var pageHeight = page && page.pageHeight ? page.pageHeight : AscCommon.c_oAscPrintDefaultSettings.PageHeight;
-
-		var ppiX = AscCommon.AscBrowser.convertToRetinaValue(96,true);
-		var height = Math.floor(pageHeight * asc.getCvtRatio(3/*mm*/, 0/*px*/, ppiX));
-		var width = Math.floor(pageWidth * asc.getCvtRatio(3/*mm*/, 0/*px*/, ppiX));
-		var canvasHeight = printPreviewContext.canvas.parentElement.clientHeight;
-		var canvasWidth = printPreviewContext.canvas.parentElement.clientWidth;
-
-		var kF = 1;
-		if (height > canvasHeight) {
-			kF = canvasHeight / height;
-		}
-		if (width * kF > canvasWidth) {
-			kF = canvasWidth / width;
-		}
-		printPreviewContext.canvas.height = height * kF;
-		printPreviewContext.canvas.width = width * kF;
-		printPreviewContext.canvas.style.marginLeft = canvasWidth/2 - (width * kF) / 2 + "px";
-		printPreviewContext.canvas.style.marginTop = canvasHeight/2 - (height * kF) / 2 + "px";
-
+		var kF = printPreviewState.pageZoom;
 		//TODO 1 -
 		if (page) {
 			page.leftFieldInPx = Math.floor(page.leftFieldInPx * kF)  - 1;
@@ -3131,13 +3110,6 @@
 			page.pageClipRectWidth = Math.ceil(page.pageClipRectWidth * kF) + 2;
 			page.topFieldInPx = Math.floor(page.topFieldInPx * kF) - 1;
 		}
-
-		//change zoom on default
-		var viewZoom = this.getZoom();
-		var activeIndex = this.model.getActive();
-		this.model.setActive(page.indexWorksheet);
-		this.changeZoom(kF * page.scale);
-		printPreviewContext.changeZoom(kF* page.scale);
 
 		printPreviewContext.clear();
 		var ws;
@@ -3149,10 +3121,6 @@
 			ws = this.getWorksheet(page.indexWorksheet);
 			ws.drawForPrint(printPreviewContext, page, index, printPreviewState.getPagesLength());
 		}
-		this.startDrawPreview = false;
-
-		this.changeZoom(viewZoom);
-		this.model.setActive(activeIndex);
 	};
 
   WorkbookView.prototype._calcPagesPrintSheet = function (index, printPagesData, onlySelection, adjustPrint) {

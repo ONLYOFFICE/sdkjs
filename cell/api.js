@@ -1198,6 +1198,7 @@ var editor;
 			}
 		}
 
+		this.wb.printPreviewState.init();
 		var pages = this.wb.calcPagesPrint();
 		this.wb.printPreviewState.setPages(pages);
 
@@ -1206,15 +1207,14 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_updatePrintPreview = function (options) {
-		this.wb.startDrawPreview = true;
 		var pages = this.wb.calcPagesPrint(options.advancedOptions);
 		this.wb.printPreviewState.setPages(pages);
-		this.wb.startDrawPreview = false;
 		var pagesCount = pages.arrPages.length;
 		return pagesCount ? pagesCount : 1;
 	};
 
 	spreadsheet_api.prototype.asc_drawPrintPreview = function (index) {
+		this.wb.printPreviewState.setPage(index, true);
 		this.wb.printSheetPrintPreview(index);
 		var curPage = this.wb.printPreviewState.getPage(index);
 		//возвращаю инфомарцию об активном листе, который печатаем
@@ -1231,7 +1231,7 @@ var editor;
 			var printPages = this.wb.getPages();
 
 		}
-		this.wb.printPreviewState.clean();
+		this.wb.printPreviewState.clean(true);
 	};
 
   spreadsheet_api.prototype.processSavedFile             = function(url, downloadType, filetype)

@@ -11696,15 +11696,34 @@ QueryTableField.prototype.clone = function() {
 		return this.name;
 	};
 
-	function CPrintPreviewState() {
+	function CPrintPreviewState(wb) {
 		this.ctx = null;
 		this.pages = null;
+
+		//отслеживаем активную страницу и активный лист
 		this.activePage = null;
 		this.activeSheet = null;
+
+		this.start = null;
+
+		//зум для масштабирования страницы и зум печати
+		this.pageZoom = null;
+		this.printZoom = null;
+
+		this.wb = wb;
+		//после закрытия окна предварительной печати возвращаем зум и актиный лист
+		this.realZoom = null;
+		this.realActiveSheet = null;
 
 		return this;
 	}
 
+	CPrintPreviewState.prototype.init = function () {
+		this.start = true;
+	};
+	CPrintPreviewState.prototype.isStart = function () {
+		return this.start;
+	};
 	CPrintPreviewState.prototype.setCtx = function (val) {
 		this.ctx = val;
 	};
@@ -11720,15 +11739,87 @@ QueryTableField.prototype.clone = function() {
 	CPrintPreviewState.prototype.getPage = function (index) {
 		return this.pages && this.pages.arrPages[index];
 	};
-	CPrintPreviewState.prototype.clean = function () {
-		this.ctx = null;
+	CPrintPreviewState.prototype.clean = function (revertZoom) {
+		//this.ctx = null;
 		this.pages = null;
 		this.activePage = null;
 		this.activeSheet = null;
+		this.start = null;
+
+		if (revertZoom) {
+			this.wb.model.setActive(this.realActiveSheet);
+			this.wb.changeZoom(this.realZoom);
+		}
+		this.realActiveSheet = null;
+		this.realZoom = null;
 	};
 	CPrintPreviewState.prototype.getPagesLength = function () {
 		return this.pages && this.pages.arrPages.length;
 	};
+	CPrintPreviewState.prototype.setPage = function (index, checkZoom) {
+		this.activePage = index;
+		var newIndexSheet = this.getPage(this.activePage).indexWorksheet;
+		var needUpdateActiveSheet;
+		if (newIndexSheet !== this.activeSheet) {
+			this.activeSheet = this.getPage(this.activePage).indexWorksheet;
+			needUpdateActiveSheet = true;
+		}
+		if (checkZoom) {
+			this.checkZoom(needUpdateActiveSheet);
+		}
+	};
+	CPrintPreviewState.prototype.checkZoom = function (needUpdateActiveSheet) {
+		if (null === this.realZoom) {
+			this.realZoom = this.wb.getZoom();
+		}
+		if (null === this.realActiveSheet) {
+			this.realActiveSheet = this.wb.model.getActive();
+		}
+
+		var page = this.getPage(this.activePage);
+		var pageWidth = page && page.pageWidth ? page.pageWidth : AscCommon.c_oAscPrintDefaultSettings.PageWidth;
+		var pageHeight = page && page.pageHeight ? page.pageHeight : AscCommon.c_oAscPrintDefaultSettings.PageHeight;
+
+		var ppiX = AscCommon.AscBrowser.convertToRetinaValue(96,true);
+		var height = Math.floor(pageHeight * Asc.getCvtRatio(3/*mm*/, 0/*px*/, ppiX));
+		var width = Math.floor(pageWidth * Asc.getCvtRatio(3/*mm*/, 0/*px*/, ppiX));
+		var canvasHeight = this.ctx.canvas.parentElement.clientHeight;
+		var canvasWidth = this.ctx.canvas.parentElement.clientWidth;
+
+		var kF = 1;
+		if (height > canvasHeight) {
+			kF = canvasHeight / height;
+		}
+		if (width * kF > canvasWidth) {
+			kF = canvasWidth / width;
+		}
+
+		var isChangeForZoom;
+		if (kF !== this.pageZoom) {
+			this.pageZoom = kF;
+			this.ctx.canvas.height = height * kF;
+			this.ctx.canvas.width = width * kF;
+			this.ctx.canvas.style.marginLeft = canvasWidth/2 - (width * kF) / 2 + "px";
+			this.ctx.canvas.style.marginTop = canvasHeight/2 - (height * kF) / 2 + "px";
+			isChangeForZoom = true;
+		}
+
+		if (page.scale !== this.printZoom) {
+			this.printZoom = page.scale;
+			this.pageZoom = kF;
+			isChangeForZoom = true;
+		}
+
+		if (isChangeForZoom || needUpdateActiveSheet) {
+			//change zoom on default
+			if (needUpdateActiveSheet) {
+				this.wb.model.setActive(this.activeSheet);
+			}
+			this.wb.changeZoom(this.pageZoom * this.printZoom);
+			this.ctx.changeZoom(this.pageZoom* this.printZoom);
+		}
+	};
+
 
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
