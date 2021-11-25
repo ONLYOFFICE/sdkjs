@@ -3078,8 +3078,8 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 				var nFormY1 = oBounds.Y + oBounds.H - 0.001;
 
 				pGraphics.p_color(Element.r, Element.g, Element.b, 255);
-				pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Bottom, nFormY0, nFormX0, nFormX1, Element.w, -Element.w / 2, Element.w / 2);
-				pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Top, nFormY1, nFormX0, nFormX1, Element.w, -Element.w / 2, Element.w / 2);
+				pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Top, nFormY0, nFormX0, nFormX1, Element.w, 0, 0);
+				pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Bottom, nFormY1, nFormX0, nFormX1, Element.w, 0, 0);
 				pGraphics.drawVerLine(c_oAscLineDrawingRule.Left, nFormX0, nFormY0, nFormY1, Element.w);
 				pGraphics.drawVerLine(c_oAscLineDrawingRule.Right, nFormX1, nFormY0, nFormY1, Element.w);
 
