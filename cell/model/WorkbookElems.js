@@ -11758,10 +11758,11 @@ QueryTableField.prototype.clone = function() {
 	};
 	CPrintPreviewState.prototype.setPage = function (index, checkZoom) {
 		this.activePage = index;
-		var newIndexSheet = this.getPage(this.activePage).indexWorksheet;
+		var page = this.getPage(this.activePage);
+		var newIndexSheet = page && page.indexWorksheet;
 		var needUpdateActiveSheet;
 		if (newIndexSheet !== this.activeSheet) {
-			this.activeSheet = this.getPage(this.activePage).indexWorksheet;
+			this.activeSheet = newIndexSheet;
 			needUpdateActiveSheet = true;
 		}
 		if (checkZoom) {
@@ -11780,7 +11781,7 @@ QueryTableField.prototype.clone = function() {
 		var pageWidth = page && page.pageWidth ? page.pageWidth : AscCommon.c_oAscPrintDefaultSettings.PageWidth;
 		var pageHeight = page && page.pageHeight ? page.pageHeight : AscCommon.c_oAscPrintDefaultSettings.PageHeight;
 
-		var ppiX = AscCommon.AscBrowser.convertToRetinaValue(96,true);
+		var ppiX = AscCommon.AscBrowser.convertToRetinaValue(96, true);
 		var height = Math.floor(pageHeight * Asc.getCvtRatio(3/*mm*/, 0/*px*/, ppiX));
 		var width = Math.floor(pageWidth * Asc.getCvtRatio(3/*mm*/, 0/*px*/, ppiX));
 		var canvasHeight = this.ctx.canvas.parentElement.clientHeight;
@@ -11804,8 +11805,8 @@ QueryTableField.prototype.clone = function() {
 			isChangeForZoom = true;
 		}
 
-		if (page.scale !== this.printZoom) {
-			this.printZoom = page.scale;
+		if (!page || page.scale !== this.printZoom) {
+			this.printZoom = page ? page.scale : 1;
 			this.pageZoom = kF;
 			isChangeForZoom = true;
 		}

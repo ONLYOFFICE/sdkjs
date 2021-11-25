@@ -1228,7 +1228,7 @@ var editor;
 		}*/
 		if (isPrint) {
 			//отправляем на печать
-			var printPages = this.wb.getPages();
+			var printPages = this.wb.printPreviewState.getPages();
 
 		}
 		this.wb.printPreviewState.clean(true);
