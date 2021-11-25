@@ -2890,6 +2890,12 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 	var arrRunReviewAreasColors = [];
 	var arrRunReviewAreas       = [];
 	var arrRunReviewRects       = [];
+
+	var oCurForm = null;
+	var arrFormAreasColors = [];
+	var arrFormAreas       = [];
+	var arrFormRects       = [];
+
 	for (var CurLine = StartLine; CurLine <= EndLine; CurLine++)
 	{
 		var Line  = this.Lines[CurLine];
@@ -3052,7 +3058,7 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
             }
 		}
 
-		Element = aFormBorder.Get_Next(true);
+		Element = aFormBorder.Get_NextForward();
 		if (Element)
 		{
 			if (this.IsInFixedForm())
@@ -3094,6 +3100,7 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 			}
 			else
 			{
+				var arrFormRectsLine = [];
 				while (Element)
 				{
 					var nFormY0, nFormY1;
@@ -3108,22 +3115,58 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 						nFormY1 = Page.Y + Line.Y + Line.Metrics.Descent;
 					}
 
-					pGraphics.p_color(Element.r, Element.g, Element.b, 255);
-					pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Bottom, nFormY0, Element.x0, Element.x1, Element.w, -Element.w / 2, Element.w / 2);
-					pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Top, nFormY1, Element.x0, Element.x1, Element.w, -Element.w / 2, Element.w / 2);
-					pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, Element.x0, nFormY0, nFormY1, Element.w);
-					pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, Element.x1, nFormY0, nFormY1, Element.w);
-
 					if (Element.Additional && -1 !== Element.Additional.Comb)
 					{
+						if (oCurForm)
+						{
+							if (arrFormRectsLine.length > 0 && arrFormRects)
+							{
+								arrFormRects.push(arrFormRectsLine);
+								arrFormRectsLine = [];
+							}
+							oCurForm = null;
+						}
+
+						pGraphics.p_color(Element.r, Element.g, Element.b, 255);
+						pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Bottom, nFormY0, Element.x0, Element.x1, Element.w, -Element.w / 2, Element.w / 2);
+						pGraphics.drawHorLineExt(c_oAscLineDrawingRule.Top, nFormY1, Element.x0, Element.x1, Element.w, -Element.w / 2, Element.w / 2);
+						pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, Element.x0, nFormY0, nFormY1, Element.w);
+						pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, Element.x1, nFormY0, nFormY1, Element.w);
+
 						for (var nInterIndex = 0, nIntersCount = Element.Intermediate.length; nInterIndex < nIntersCount; ++nInterIndex)
 						{
 							pGraphics.drawVerLine(c_oAscLineDrawingRule.Center, Element.Intermediate[nInterIndex], nFormY0, nFormY1, Element.w);
 						}
 					}
+					else
+					{
+						if (null === oCurForm || oCurForm !== Element.Additional.Form)
+						{
+							oCurForm = Element.Additional.Form;
 
-					Element = aFormBorder.Get_Next(true);
+							if (arrFormRectsLine.length > 0 && arrFormRects)
+							{
+								arrFormRects.push(arrFormRectsLine);
+								arrFormRectsLine = [];
+							}
+							arrFormRects = [];
+							arrFormAreas.push(arrFormRects);
+							arrFormAreasColors.push(new CDocumentColor(Element.r, Element.g, Element.b));
+						}
+
+						arrFormRectsLine.push({
+							X : Element.x0,
+							Y : nFormY0,
+							W : Element.x1 - Element.x0,
+							H : nFormY1 - nFormY0,
+							Page : 0
+						});
+					}
+					Element = aFormBorder.Get_NextForward();
 				}
+
+				if (arrFormRectsLine.length > 0)
+					arrFormRects.push(arrFormRectsLine);
 			}
 		}
 
@@ -3147,6 +3190,20 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 			{
 				var Path = PolygonPaths[PolygonIndex];
 				pGraphics.DrawPolygon(Path, 1, 0);
+			}
+		}
+
+		for (var nFormAreaIndex = 0, nFormAreasCount = arrFormAreas.length; nFormAreaIndex < nFormAreasCount; ++nFormAreaIndex)
+		{
+			var arrFormRects = arrFormAreas[nFormAreaIndex];
+			var oFormColor   = arrFormAreasColors[nFormAreaIndex];
+			var oPolygon     = new AscCommon.CPolygon();
+			oPolygon.fill(arrFormRects);
+			var arrPolygonPaths = oPolygon.GetPaths(0);
+			pGraphics.p_color(oFormColor.r, oFormColor.g, oFormColor.b, 255);
+			for (var nPolygonIndex = 0, nPolygonsCount = arrPolygonPaths.length; nPolygonIndex < nPolygonsCount; ++nPolygonIndex)
+			{
+				pGraphics.DrawPolygon(arrPolygonPaths[nPolygonIndex], 1, 0);
 			}
 		}
 	}
@@ -17274,7 +17331,10 @@ CParaDrawingRangeLines.prototype =
 			}
 			else if (undefined !== PrevEl.Additional.Comb)
 			{
-				return (PrevEl.Additional.Comb === Element.Additional.Comb && Math.abs(PrevEl.Additional.Y - Element.Additional.Y) < 0.001 && Math.abs(PrevEl.Additional.H - Element.Additional.H) < 0.001);
+				return (PrevEl.Additional.Comb === Element.Additional.Comb
+					&& Math.abs(PrevEl.Additional.Y - Element.Additional.Y) < 0.001
+					&& Math.abs(PrevEl.Additional.H - Element.Additional.H) < 0.001
+					&& PrevEl.Additional.Form === Element.Additional.Form);
 			}
 
 			return false;

@@ -6522,19 +6522,41 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
 			var oFormBorderColor = oFormBorder.GetColor();
 
 			var oFormBounds = oForm.GetRangeBounds(PDSL.Line, PDSL.Range);
+			var oFormAdditional = {
+				Form : oForm,
+				Comb : nCombMax,
+				Y    : oFormBounds.Y,
+				H    : oFormBounds.H
+			};
 
 			if (Item.RGapCount)
 			{
 				var nGapEnd = X + ItemWidthVisible;
-				aFormBorder.Add(Y, Y, X, nGapEnd - Item.RGapCount * Item.RGapShift, nFormBorderW, oFormBorderColor.r, oFormBorderColor.g, oFormBorderColor.b, {Comb : nCombMax, Y : oFormBounds.Y, H : oFormBounds.H});
+				aFormBorder.Add(Y, Y, X, nGapEnd - Item.RGapCount * Item.RGapShift,
+					nFormBorderW,
+					oFormBorderColor.r,
+					oFormBorderColor.g,
+					oFormBorderColor.b,
+					oFormAdditional);
+
 				for (var nGapIndex = 0; nGapIndex < Item.RGapCount; ++nGapIndex)
 				{
-					aFormBorder.Add(Y, Y, nGapEnd - (Item.RGapCount - nGapIndex) * Item.RGapShift, nGapEnd - (Item.RGapCount - nGapIndex - 1) * Item.RGapShift, nFormBorderW, oFormBorderColor.r, oFormBorderColor.g, oFormBorderColor.b, {Comb : nCombMax, Y : oFormBounds.Y, H : oFormBounds.H});
+					aFormBorder.Add(Y, Y, nGapEnd - (Item.RGapCount - nGapIndex) * Item.RGapShift, nGapEnd - (Item.RGapCount - nGapIndex - 1) * Item.RGapShift,
+						nFormBorderW,
+						oFormBorderColor.r,
+						oFormBorderColor.g,
+						oFormBorderColor.b,
+						oFormAdditional);
 				}
 			}
 			else
 			{
-				aFormBorder.Add(Y, Y, X, X + ItemWidthVisible, nFormBorderW, oFormBorderColor.r, oFormBorderColor.g, oFormBorderColor.b, {Comb : nCombMax, Y : oFormBounds.Y, H : oFormBounds.H});
+				aFormBorder.Add(Y, Y, X, X + ItemWidthVisible,
+					nFormBorderW,
+					oFormBorderColor.r,
+					oFormBorderColor.g,
+					oFormBorderColor.b,
+					oFormAdditional);
 			}
 		}
 
