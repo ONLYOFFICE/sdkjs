@@ -11696,7 +11696,39 @@ QueryTableField.prototype.clone = function() {
 		return this.name;
 	};
 
+	function CPrintPreviewState() {
+		this.ctx = null;
+		this.pages = null;
+		this.activePage = null;
+		this.activeSheet = null;
 
+		return this;
+	}
+
+	CPrintPreviewState.prototype.setCtx = function (val) {
+		this.ctx = val;
+	};
+	CPrintPreviewState.prototype.setPages = function (val) {
+		this.pages = val;
+	};
+	CPrintPreviewState.prototype.getCtx = function () {
+		return this.ctx;
+	};
+	CPrintPreviewState.prototype.getPages = function () {
+		return this.pages;
+	};
+	CPrintPreviewState.prototype.getPage = function (index) {
+		return this.pages && this.pages.arrPages[index];
+	};
+	CPrintPreviewState.prototype.clean = function () {
+		this.ctx = null;
+		this.pages = null;
+		this.activePage = null;
+		this.activeSheet = null;
+	};
+	CPrintPreviewState.prototype.getPagesLength = function () {
+		return this.pages && this.pages.arrPages.length;
+	};
 
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
@@ -12054,5 +12086,7 @@ QueryTableField.prototype.clone = function() {
 	prot["asc_getFormulaResult"] = prot.asc_getFormulaResult;
 	prot["asc_getFunctionResult"] = prot.asc_getFunctionResult;
 	prot["asc_getName"] = prot.asc_getName;
+
+	window["AscCommonExcel"].CPrintPreviewState = CPrintPreviewState;
 
 })(window);

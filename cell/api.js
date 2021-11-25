@@ -1191,38 +1191,32 @@ var editor;
 				//obj.canvas.style.width = AscCommon.AscBrowser.convertToRetinaValue(t.parentWidth) + "px";
 				canvas.style.border = "1px solid black";
 				curElem.appendChild(canvas);
-				this.wb.printPreviewCtx = new asc.DrawingContext({
+
+				this.wb.printPreviewState.setCtx(new asc.DrawingContext({
 					canvas: canvas, units: 0/*px*/, fmgrGraphics: this.wb.fmgrGraphics, font: this.wb.m_oFont
-				});
-
-				/*var pdfPrinter = new AscCommonExcel.CPdfPrinter(this.wb.fmgrGraphics[3], this.wb.m_oFont);
-				if (pdfDocRenderer) {
-					this.wb.printPreviewCtx.DocumentRenderer = pdfDocRenderer;
-				}*/
-
-
-				/*if (!window['IS_NATIVE_EDITOR']) {
-					this.wb.printPreviewCtx.DocumentRenderer.InitPicker(this.wb.fmgrGraphics[3]);
-				}
-				this.wb.printPreviewCtx.DocumentRenderer.VectorMemoryForPrint = new AscCommon.CMemory();*/
+				}));
 			}
 		}
-		this.wb.PrintPreviewPages = this.wb.calcPagesPrint();
+
+		var pages = this.wb.calcPagesPrint();
+		this.wb.printPreviewState.setPages(pages);
+
 		this.asc_drawPrintPreview(0);
-		return this.wb.PrintPreviewPages.arrPages.length;
+		return pages.arrPages.length;
 	};
 
 	spreadsheet_api.prototype.asc_updatePrintPreview = function (options) {
 		this.wb.startDrawPreview = true;
-		this.wb.PrintPreviewPages = this.wb.calcPagesPrint(options.advancedOptions);
+		var pages = this.wb.calcPagesPrint(options.advancedOptions);
+		this.wb.printPreviewState.setPages(pages);
 		this.wb.startDrawPreview = false;
-		var pagesCount = this.wb.PrintPreviewPages.arrPages.length;
+		var pagesCount = pages.arrPages.length;
 		return pagesCount ? pagesCount : 1;
 	};
 
 	spreadsheet_api.prototype.asc_drawPrintPreview = function (index) {
 		this.wb.printSheetPrintPreview(index);
-		var curPage = this.wb.PrintPreviewPages && this.wb.PrintPreviewPages.arrPages[index];
+		var curPage = this.wb.printPreviewState.getPage(index);
 		//возвращаю инфомарцию об активном листе, который печатаем
 		this.handlers.trigger("asc_onPrintPreviewSheetChanged", curPage && curPage.indexWorksheet);
 	};
@@ -1234,10 +1228,10 @@ var editor;
 		}*/
 		if (isPrint) {
 			//отправляем на печать
-			var printPages = this.wb.PrintPreviewPages;
+			var printPages = this.wb.getPages();
 
 		}
-		this.wb.PrintPreviewPages = null;
+		this.wb.printPreviewState.clean();
 	};
 
   spreadsheet_api.prototype.processSavedFile             = function(url, downloadType, filetype)

@@ -2598,7 +2598,7 @@
 				//t._drawGroupData(drawingCtx, null, offsetX, offsetY);
 
 				drawingCtx.DocumentRenderer = /*new AscCommon.CDocumentRenderer()*/t.workbook.shapeCtx;
-				drawingCtx.DocumentRenderer.m_oContext = t.workbook.printPreviewCtx.canvas.getContext("2d");
+				drawingCtx.DocumentRenderer.m_oContext = t.workbook.printPreviewState.getCtx().canvas.getContext("2d");
 
 				var drawingPrintOptions = {
 					ctx: drawingCtx, printPagesData: printPagesData, titleWidth: titleWidth, titleHeight: titleHeight

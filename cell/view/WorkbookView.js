@@ -280,8 +280,7 @@
     this.NeedUpdateTargetForCollaboration = true;
     this.LastUpdateTargetTime = 0;
 
-	this.PrintPreviewPages = null;
-	this.printPreviewCtx = null;
+	this.printPreviewState = new AscCommonExcel.CPrintPreviewState();
 
     return this;
   }
@@ -3093,7 +3092,9 @@
 	};
 
 	WorkbookView.prototype.printSheetPrintPreview = function(index) {
-		var page = this.PrintPreviewPages ? this.PrintPreviewPages.arrPages[index] : null;
+		var printPreviewState = this.printPreviewState;
+		var page = printPreviewState.getPage(index);
+		var printPreviewContext = printPreviewState.getCtx();
 
 		if (page) {
 			page = page.clone();
@@ -3106,8 +3107,8 @@
 		var ppiX = AscCommon.AscBrowser.convertToRetinaValue(96,true);
 		var height = Math.floor(pageHeight * asc.getCvtRatio(3/*mm*/, 0/*px*/, ppiX));
 		var width = Math.floor(pageWidth * asc.getCvtRatio(3/*mm*/, 0/*px*/, ppiX));
-		var canvasHeight = this.printPreviewCtx.canvas.parentElement.clientHeight;
-		var canvasWidth = this.printPreviewCtx.canvas.parentElement.clientWidth;
+		var canvasHeight = printPreviewContext.canvas.parentElement.clientHeight;
+		var canvasWidth = printPreviewContext.canvas.parentElement.clientWidth;
 
 		var kF = 1;
 		if (height > canvasHeight) {
@@ -3116,10 +3117,10 @@
 		if (width * kF > canvasWidth) {
 			kF = canvasWidth / width;
 		}
-		this.printPreviewCtx.canvas.height = height * kF;
-		this.printPreviewCtx.canvas.width = width * kF;
-		this.printPreviewCtx.canvas.style.marginLeft = canvasWidth/2 - (width * kF) / 2 + "px";
-		this.printPreviewCtx.canvas.style.marginTop = canvasHeight/2 - (height * kF) / 2 + "px";
+		printPreviewContext.canvas.height = height * kF;
+		printPreviewContext.canvas.width = width * kF;
+		printPreviewContext.canvas.style.marginLeft = canvasWidth/2 - (width * kF) / 2 + "px";
+		printPreviewContext.canvas.style.marginTop = canvasHeight/2 - (height * kF) / 2 + "px";
 
 		//TODO 1 -
 		if (page) {
@@ -3136,21 +3137,17 @@
 		var activeIndex = this.model.getActive();
 		this.model.setActive(page.indexWorksheet);
 		this.changeZoom(kF * page.scale);
-		this.printPreviewCtx.changeZoom(kF* page.scale);
+		printPreviewContext.changeZoom(kF* page.scale);
 
-		/*var pdfPrinter = new AscCommonExcel.CPdfPrinter(this.fmgrGraphics[3], this.m_oFont);
-		if (pdfDocRenderer) {
-			pdfPrinter.DocumentRenderer = pdfDocRenderer;
-		}*/
-		this.printPreviewCtx.clear();
+		printPreviewContext.clear();
 		var ws;
 		if (!page) {
 			// Печать пустой страницы
 			ws = this.getWorksheet();
-			ws.drawForPrint(this.printPreviewCtx, null);
+			ws.drawForPrint(printPreviewContext, null);
 		} else {
 			ws = this.getWorksheet(page.indexWorksheet);
-			ws.drawForPrint(this.printPreviewCtx, page, index, this.PrintPreviewPages.arrPages.length);
+			ws.drawForPrint(printPreviewContext, page, index, printPreviewState.getPagesLength());
 		}
 		this.startDrawPreview = false;
 
