@@ -4571,7 +4571,7 @@ CChartsDrawer.prototype =
 		if (subType === "stacked") {
 
 			if (type === AscFormat.BAR_SHAPE_PYRAMIDTOMAX) {
-				h = this.getStackedMaxHeight(ptCount, chart, null, j).heightPer;
+				h = this.getStackedMaxHeight(ptCount, chart, subType, j).heightPer;
 				valueMax = h.maxH;
 				valueMin = h.minH;
 
@@ -4641,7 +4641,7 @@ CChartsDrawer.prototype =
 			}
 
 		} else {
-			h = this.getStackedMaxHeight(ptCount, chart, true, j).heightPer;
+			h = this.getStackedMaxHeight(ptCount, chart, subType, j).heightPer;
 			valueMax = h.maxH;
 			valueMin = h.minH;
 
@@ -4708,7 +4708,7 @@ CChartsDrawer.prototype =
 						tempMin += curVal;
 					}
 
-					if (subType) {
+					if (subType === "normal") {
 						if (countMax < curVal) {
 							countMax = curVal;
 						}
@@ -4725,6 +4725,15 @@ CChartsDrawer.prototype =
 				//обычная высота по значениям
 				maxH2[i] = tempMax;
 				minH2[i] = tempMin;
+
+				if (subType === "stacked") {
+					if (countMax < tempMax) {
+						countMax = tempMax;
+					}
+					if (countMin > tempMin) {
+						countMin = tempMin;
+					}
+				}
 	
 				tempMax = 0;
 				tempMin = 0;
