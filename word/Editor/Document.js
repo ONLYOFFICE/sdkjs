@@ -17855,6 +17855,11 @@ CDocument.prototype.private_AddCompositeText = function(nCharCode)
 	var nPos = this.CompositeInput.Pos + this.CompositeInput.Length;
 	var oChar;
 
+	var oTextForm = oRun.GetTextForm();
+	var nMax = oTextForm ? oTextForm.MaxCharacters : 0;
+	if (nMax > 0 && oRun.GetElementsCount() >= nMax)
+		return;
+
 	if (para_Math_Run === oRun.Type)
 	{
 		oChar = new CMathText();
@@ -17872,7 +17877,7 @@ CDocument.prototype.private_AddCompositeText = function(nCharCode)
 	this.CompositeInput.Length++;
 
 	this.Recalculate();
-	this.Document_UpdateSelectionState();
+	this.UpdateSelection();
 };
 CDocument.prototype.private_RemoveCompositeText = function(nCount)
 {
