@@ -17876,6 +17876,10 @@ CDocument.prototype.private_AddCompositeText = function(nCharCode)
 	oRun.AddToContent(nPos, oChar, true);
 	this.CompositeInput.Length++;
 
+	var oForm = oRun.GetParentForm();
+	if (oForm && oForm.IsAutoFitContent())
+		this.CheckFormAutoFit(oForm);
+
 	this.Recalculate();
 	this.UpdateSelection();
 };
@@ -17888,8 +17892,12 @@ CDocument.prototype.private_RemoveCompositeText = function(nCount)
 	oRun.Remove_FromContent(nPos - nDelCount, nDelCount, true);
 	this.CompositeInput.Length -= nDelCount;
 
+	var oForm = oRun.GetParentForm();
+	if (oForm && oForm.IsAutoFitContent())
+		this.CheckFormAutoFit(oForm);
+
 	this.Recalculate();
-	this.Document_UpdateSelectionState();
+	this.UpdateSelection();
 };
 CDocument.prototype.Check_CompositeInputRun = function()
 {
