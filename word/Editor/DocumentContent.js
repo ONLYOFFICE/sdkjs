@@ -4669,6 +4669,12 @@ CDocumentContent.prototype.InsertContent = function(SelectedContent, NearPos)
 			LastClass.AddText(SelectedContent.GetText({ParaEndToSpace : false}), nInLastClassPos);
 			var nInRunEndPos = LastClass.State.ContentPos;
 
+			var nLastClassLen = LastClass.GetElementsCount();
+			nInRunStartPos    = Math.min(nLastClassLen, Math.min(nInRunStartPos, nInRunEndPos));
+			nInRunEndPos      = Math.min(nLastClassLen, nInRunEndPos);
+
+			// TODO: Оставляем селект, т.к. в большинстве случаев после Insert он убирается командой
+			//       MoveCursorRight. Когда это будет контролироваться в данной функции, передлать здесь
 			LastClass.SelectThisElement();
 			LastClass.Selection.Use      = true;
 			LastClass.Selection.StartPos = nInRunStartPos;
