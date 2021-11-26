@@ -405,7 +405,7 @@
 			{
 				// маркированный/нумерованный получают соответсвующие символы для markdown.
 				if (sNumId && isBulleted)
-					sOutputText = oCMarkdownConverter.WrapInSymbol(sOutputText, '- ', 'open');
+					sOutputText = oCMarkdownConverter.WrapInSymbol(sOutputText, '* ', 'open');
 				else
 					sOutputText = oCMarkdownConverter.WrapInSymbol(sOutputText, String(oPara.Paragraph.SavedNumberingValues.NumInfo[0][0]) + '. ', 'open');
 
@@ -673,7 +673,7 @@
 		else if (this.isQuoteLine)
 			sOutputText = SetQuote(sOutputText);
 		// закрытие тега парагарфа, тег добавляем только в случае, если это не нумерованный список/заголовок/блок кода.
-		else if ((sType === 'html' && this.isTableCellContent) && !this.isNumbering && !this.isHeading && !this.isCodeBlock)
+		else if ((this.Config.convertType === "html" && !this.isTableCellContent) && !this.isNumbering && !this.isHeading && !this.isCodeBlock)
 			sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Paragraph, 'wholly');
 		return sOutputText + '\n';
 	};
