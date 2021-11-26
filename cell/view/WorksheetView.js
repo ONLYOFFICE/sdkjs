@@ -2612,23 +2612,18 @@
 
 				drawingCtx.AddClipRect && drawingCtx.AddClipRect(clipLeftShape, clipTopShape, clipWidthShape, clipHeightShape);
 
-                if(drawingCtx.DocumentRenderer.SetBaseTransform)
-                {
-                    drawingCtx.DocumentRenderer.SetBaseTransform(oBaseTransform);
-                }
-                else
-                {
-                    if(drawingCtx.DocumentRenderer.m_oCoordTransform)
-                    {
-                        drawingCtx.DocumentRenderer.m_oCoordTransform.tx = oBaseTransform.tx * drawingCtx.DocumentRenderer.m_oCoordTransform.sx;
-                        drawingCtx.DocumentRenderer.m_oCoordTransform.ty = oBaseTransform.ty * drawingCtx.DocumentRenderer.m_oCoordTransform.sy;
-                    }
-                }
+				if (drawingCtx.DocumentRenderer.SetBaseTransform) {
+					drawingCtx.DocumentRenderer.SetBaseTransform(oBaseTransform);
+				} else {
+					if (drawingCtx.DocumentRenderer.m_oCoordTransform) {
+						drawingCtx.DocumentRenderer.m_oCoordTransform.tx = oBaseTransform.tx * drawingCtx.DocumentRenderer.m_oCoordTransform.sx;
+						drawingCtx.DocumentRenderer.m_oCoordTransform.ty = oBaseTransform.ty * drawingCtx.DocumentRenderer.m_oCoordTransform.sy;
+					}
+				}
 				t.objectRender.print(drawingPrintOptions);
-                if(drawingCtx.DocumentRenderer.SetBaseTransform)
-                {
-                    drawingCtx.DocumentRenderer.SetBaseTransform(oOldBaseTransform);
-                }
+				if (drawingCtx.DocumentRenderer.SetBaseTransform) {
+					drawingCtx.DocumentRenderer.SetBaseTransform(oOldBaseTransform);
+				}
 				t.visibleRange = tmpVisibleRange;
 
 				drawingCtx.RemoveClipRect && drawingCtx.RemoveClipRect();
