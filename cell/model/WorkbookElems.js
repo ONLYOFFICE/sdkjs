@@ -11781,6 +11781,7 @@ QueryTableField.prototype.clone = function() {
 		var pageWidth = page && page.pageWidth ? page.pageWidth : AscCommon.c_oAscPrintDefaultSettings.PageWidth;
 		var pageHeight = page && page.pageHeight ? page.pageHeight : AscCommon.c_oAscPrintDefaultSettings.PageHeight;
 
+		var canvasTopPadding = 24;
 		var ppiX = AscCommon.AscBrowser.convertToRetinaValue(96, true);
 		var height = Math.floor(pageHeight * Asc.getCvtRatio(3/*mm*/, 0/*px*/, ppiX));
 		var width = Math.floor(pageWidth * Asc.getCvtRatio(3/*mm*/, 0/*px*/, ppiX));
@@ -11795,6 +11796,8 @@ QueryTableField.prototype.clone = function() {
 			kF = canvasWidth / width;
 		}
 
+		kF *= (height * kF) / (height * kF + canvasTopPadding)
+
 		var isChangeForZoom;
 		var trueZoom = kF * AscCommon.AscBrowser.convertToRetinaValue(1, true);
 		if (trueZoom !== this.pageZoom) {
@@ -11806,7 +11809,7 @@ QueryTableField.prototype.clone = function() {
 			this.ctx.canvas.height = AscCommon.AscBrowser.convertToRetinaValue(_height, true);
 			this.ctx.canvas.width = AscCommon.AscBrowser.convertToRetinaValue(_width, true);
 			this.ctx.canvas.style.marginLeft = canvasWidth/2 - _width / 2 + "px";
-			this.ctx.canvas.style.marginTop = canvasHeight/2 - _height / 2 + "px";
+			this.ctx.canvas.style.marginTop = canvasHeight/2 - _height / 2 + canvasTopPadding * kF + "px";
 			isChangeForZoom = true;
 		}
 		kF = trueZoom;

@@ -1189,7 +1189,8 @@ var editor;
 				canvas.width = curElem.clientWidth;
 				canvas.height = curElem.clientHeight;
 				//obj.canvas.style.width = AscCommon.AscBrowser.convertToRetinaValue(t.parentWidth) + "px";
-				canvas.style.border = "1px solid black";
+				canvas.style.border = "1px solid";
+				canvas.style.borderColor = "#" + this.wb.defaults.worksheetView.cells.defaultState.border.get_hex();
 				curElem.appendChild(canvas);
 
 				this.wb.printPreviewState.setCtx(new asc.DrawingContext({
