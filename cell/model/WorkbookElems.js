@@ -11796,15 +11796,20 @@ QueryTableField.prototype.clone = function() {
 		}
 
 		var isChangeForZoom;
-		if (kF !== this.pageZoom) {
-			this.pageZoom = kF;
-			this.ctx.canvas.height = height * kF;
-			this.ctx.canvas.width = width * kF;
-			this.ctx.canvas.style.marginLeft = canvasWidth/2 - (width * kF) / 2 + "px";
-			this.ctx.canvas.style.marginTop = canvasHeight/2 - (height * kF) / 2 + "px";
+		var trueZoom = kF * AscCommon.AscBrowser.convertToRetinaValue(1, true);
+		if (trueZoom !== this.pageZoom) {
+			this.pageZoom = trueZoom;
+			var _height = Math.floor(height * kF);
+			var _width = Math.floor(width * kF);
+			this.ctx.canvas.style.height = _height + 2 + "px";
+			this.ctx.canvas.style.width = _width + 2 + "px";
+			this.ctx.canvas.height = AscCommon.AscBrowser.convertToRetinaValue(_height, true);
+			this.ctx.canvas.width = AscCommon.AscBrowser.convertToRetinaValue(_width, true);
+			this.ctx.canvas.style.marginLeft = canvasWidth/2 - _width / 2 + "px";
+			this.ctx.canvas.style.marginTop = canvasHeight/2 - _height / 2 + "px";
 			isChangeForZoom = true;
 		}
-
+		kF = trueZoom;
 		if (!page || page.scale !== this.printZoom) {
 			this.printZoom = page ? page.scale : 1;
 			this.pageZoom = kF;
