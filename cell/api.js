@@ -1222,16 +1222,7 @@ var editor;
 		this.handlers.trigger("asc_onPrintPreviewSheetChanged", curPage && curPage.indexWorksheet);
 	};
 
-	spreadsheet_api.prototype.asc_closePrintPreview = function (isPrint) {
-		/*if (options) {
-			//сохраняем настройки
-			this.asc_savePagePrintOptions(options);
-		}*/
-		if (isPrint) {
-			//отправляем на печать
-			var printPages = this.wb.printPreviewState.getPages();
-
-		}
+	spreadsheet_api.prototype.asc_closePrintPreview = function () {
 		this.wb.printPreviewState.clean(true);
 	};
 
