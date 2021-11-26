@@ -3917,14 +3917,34 @@ PasteProcessor.prototype =
 		var oThis = this;
 		var glossaryDoc = this.oDocument.GetGlossaryDocument();
 		var map = {};
-		for (var i in glossaryDoc.DocParts) {
+		var i;
+		
+		//при чтении документа создаётся новый DocPart, который добавляется в DocParts, но не добавляется в g_oTableId
+		//чтобы он добавлялся в g_oTableId и соответсвенно в историю, делаю ему Copy()
+
+		//но далее вызывается функция InsertInDocument-> ... -> CheckDocPartNames, где берутся все СС во вставляемом фрагменте
+		//смотрится есть ли плесйхолдер и если он есть, то переименовывается плейсходер и DocPart->Name
+		//поскольку в DocParts уже есть несколько DocPart с одинаковым именем(один при чтении, второй и при Copy)
+		//то при попытке переименования берётся первый DocPart(который добавлен в DocParts, но не в g_oTableId)-> и переименовывается
+		//соответсвенно далее при накатывании изменений в g_oTableId отсутвует DocPart с нужным именем
+		//чтобы от этой проблемы уйти - удаляю тот первый, который был создан при чтении - delete glossaryDoc.DocParts[aDelIndexes[i]];
+
+		//но появляется другая проблема - при повтроном копировании делается CDocPart-> Copy и снова создаётся DocPart с таким именем
+		//и добавляется в DocParts. далее при вставке снова всё повторяется...
+
+		for (i in glossaryDoc.DocParts) {
 			map[i] = 1;
 		}
 		var aContent = this.ReadFromBinary(base64FromWord);
-		for (var i in glossaryDoc.DocParts) {
+		var aDelIndexes = [];
+		for (i in glossaryDoc.DocParts) {
 			if (!map[i]) {
 				glossaryDoc.DocParts[i].Copy();
+				aDelIndexes.push(i);
 			}
+		}
+		for (i = 0; i < aDelIndexes.length; i++) {
+			delete glossaryDoc.DocParts[aDelIndexes[i]];
 		}
 
 		if (null === aContent) {
@@ -3942,7 +3962,7 @@ PasteProcessor.prototype =
 			aContent.aPastedImages = [];
 
 			var newContent = [];
-			for (var i = 0; i < aContent.content.length; i++) {
+			for (i = 0; i < aContent.content.length; i++) {
 				if (type_Paragraph === aContent.content[i].Get_Type()) {
 					newContent.push(
 						AscFormat.ConvertParagraphToPPTX(aContent.content[i], this.oDocument.DrawingDocument,
@@ -3978,7 +3998,7 @@ PasteProcessor.prototype =
 				oThis.api.pre_Paste(aContent.fonts, aContent.images, fPrepasteCallback);
 			} else if (bIsOnlyFromBinary && window["NativeCorrectImageUrlOnPaste"]) {
 				var url;
-				for (var i = 0, length = aContent.aPastedImages.length; i < length; ++i) {
+				for (i = 0, length = aContent.aPastedImages.length; i < length; ++i) {
 					url = window["NativeCorrectImageUrlOnPaste"](aContent.aPastedImages[i].Url);
 					aContent.images[i] = url;
 
