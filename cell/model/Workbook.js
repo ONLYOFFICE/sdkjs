@@ -10403,8 +10403,42 @@
 	};
 
 	Worksheet.prototype.isLockedRange = function (range) {
+		var rangeType = range.getType();
+		var oRange = this.getRange3(range.r1, range.c1, range.r2, range.c2);
 		var res = true;
-		this.getRange3(range.r1, range.c1, range.r2, range.c2)._foreach2(function(cell){
+		var unLockedRowIndex = range.r1 - 1;
+		oRange._foreachRowNoEmpty(function(row){
+			if(null != row && row.xfs && false === row.xfs.getLocked()) {
+				if (unLockedRowIndex + 1 === row.index) {
+					unLockedRowIndex++;
+				}
+			}
+		});
+		if (unLockedRowIndex === range.r2) {
+			//если все строки разлочены, далее можно не проверять
+			return false;
+		} else if (rangeType === Asc.c_oAscSelectionType.RangeCells || rangeType === Asc.c_oAscSelectionType.RangeRow) {
+			//если выделены все строки, но среди них не все разлочены - далее не проверяем и возвращаем true
+			return true;
+		}
+
+		var unLockedColndex = range.c1 - 1;
+		oRange._foreachColNoEmpty(function(col){
+			if(null != col && col.xfs && false === col.xfs.getLocked()) {
+				if (unLockedColndex + 1 === col.index) {
+					unLockedColndex++;
+				}
+			}
+		});
+		if (unLockedColndex === range.c2) {
+			//если все столбцы разлочены, далее можно не проверять
+			return false;
+		} else if (rangeType === Asc.c_oAscSelectionType.RangeCells || rangeType === Asc.c_oAscSelectionType.RangeCol) {
+			//если выделены все столбцы, но среди них не все разлочены - далее не проверяем и возвращаем true
+			return true;
+		}
+
+		oRange._foreach2(function(cell){
 			if (!cell) {
 				res = true;
 				return true;
