@@ -10417,7 +10417,7 @@
 		if (unLockedRowIndex === range.r2) {
 			//если все строки разлочены, далее можно не проверять
 			return false;
-		} else if (rangeType === Asc.c_oAscSelectionType.RangeCells || rangeType === Asc.c_oAscSelectionType.RangeRow) {
+		} else if (rangeType === Asc.c_oAscSelectionType.RangeMax || rangeType === Asc.c_oAscSelectionType.RangeRow) {
 			//если выделены все строки, но среди них не все разлочены - далее не проверяем и возвращаем true
 			return true;
 		}
@@ -10433,7 +10433,7 @@
 		if (unLockedColndex === range.c2) {
 			//если все столбцы разлочены, далее можно не проверять
 			return false;
-		} else if (rangeType === Asc.c_oAscSelectionType.RangeCells || rangeType === Asc.c_oAscSelectionType.RangeCol) {
+		} else if (rangeType === Asc.c_oAscSelectionType.RangeMax || rangeType === Asc.c_oAscSelectionType.RangeCol) {
 			//если выделены все столбцы, но среди них не все разлочены - далее не проверяем и возвращаем true
 			return true;
 		}
