@@ -866,6 +866,7 @@
 				nRes = Asc.c_oAscError.ID.ConvertationTimeout;
 				break;
 			case c_oAscServerError.ConvertDRM :
+			case c_oAscServerError.ConvertDRM_UNSUPPORTED :
 			case c_oAscServerError.ConvertPASSWORD :
 				nRes = Asc.c_oAscError.ID.ConvertationPassword;
 				break;
@@ -1411,6 +1412,7 @@
 		ConvertUnknownFormat:     -82,
 		ConvertTimeout:           -83,
 		ConvertReadFile:          -84,
+		ConvertDRM_UNSUPPORTED:   -85,
 		ConvertCONVERT_CORRUPTED: -86,
 		ConvertLIBREOFFICE:       -87,
 		ConvertPARAMS:            -88,
