@@ -20429,7 +20429,7 @@
 	};
 
 	WorksheetView.prototype.groupRowClick = function (x, y, target, type) {
-		if(this.collaborativeEditing.getGlobalLock() || !window["Asc"]["editor"].canEdit()) {
+		if(this.collaborativeEditing.getGlobalLock()) {
 			return;
 		}
 		var currentSheetId = this.model.getId();
@@ -20601,7 +20601,7 @@
 	};
 
 	WorksheetView.prototype._groupRowMenuClick = function (x, y, target, type, bCol) {
-		if(this.collaborativeEditing.getGlobalLock() || !window["Asc"]["editor"].canEdit()) {
+		if(this.collaborativeEditing.getGlobalLock()) {
 			return;
 		}
 		var currentSheetId = this.model.getId();
@@ -20648,7 +20648,7 @@
 
 	WorksheetView.prototype._tryChangeGroup = function (pos, collapsed, level, bCol) {
 		// Проверка глобального лока
-		if (this.collaborativeEditing.getGlobalLock() || !window["Asc"]["editor"].canEdit()) {
+		if (this.collaborativeEditing.getGlobalLock()) {
 			return;
 		}
 
@@ -20781,7 +20781,7 @@
 		}
 
 		// Проверка глобального лока
-		if (this.collaborativeEditing.getGlobalLock() || !window["Asc"]["editor"].canEdit()) {
+		if (this.collaborativeEditing.getGlobalLock()) {
 			return;
 		}
 
