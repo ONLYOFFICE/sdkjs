@@ -1,10 +1,10 @@
 {
 	"name": "fonts",
-	"res_folder": "./..",
+	"res_folder": "./deploy",
 	"wasm": true,
 	"asm": false,
 	"run_before": "import sys;sys.path.append(\"../../../../../build_tools/scripts\");import base;base.configure_common_apps();base.download(\"https://netcologne.dl.sourceforge.net/project/freetype/freetype2/2.10.1/ft2101.zip\", \"freetype-2.10.1.zip\") or base.extract(\"freetype-2.10.1.zip\", \"./\") if not base.is_dir(\"freetype-2.10.1\") else None",
-	"run_after": "import sys;sys.path.append(\"../../../../../build_tools/scripts\");import base;import os;base.configure_common_apps();base.replaceInFile(\"./../fonts.js\", \"__ATPOSTRUN__=[];\", \"__ATPOSTRUN__=[function(){window[\\\"AscFonts\\\"].onLoadModule();}];\");base.replaceInFile(\"./../fonts.js\", \"function getBinaryPromise(){\", \"function getBinaryPromise2(){\");base.delete_file(\"freetype-2.10.1.zip\") if base.is_file(\"freetype-2.10.1.zip\") else None;base.delete_file(\"./../engine.js\") if base.is_file(\"./../engine.js\") else None;os.rename(\"./../fonts.js\", \"./../engine.js\")",
+	"run_after": "import sys;sys.path.append(\"../../../../../build_tools/scripts\");import base;import os;base.configure_common_apps();base.replaceInFile(\"./deploy/fonts.js\", \"__ATPOSTRUN__=[];\", \"__ATPOSTRUN__=[function(){window[\\\"AscFonts\\\"].onLoadModule();}];\");base.replaceInFile(\"./deploy/fonts.js\", \"function getBinaryPromise(){\", \"function getBinaryPromise2(){\");base.delete_file(\"freetype-2.10.1.zip\") if base.is_file(\"freetype-2.10.1.zip\") else None;base.delete_file(\"./../engine.js\") if base.is_file(\"./../engine.js\") else None;base.copy_file(\"./deploy/fonts.js\", \"./../engine.js\")",
 	"base_js_content": "./../engine_base.js",
 
 	"compiler_flags": [
