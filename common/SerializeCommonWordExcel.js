@@ -820,7 +820,7 @@ FT_Stream2.prototype.GetString1 = function(len) {
 	{
 		var _c = this.data[this.cur + i];
 		if (_c == 0)
-			break;
+			continue;
 
 		t += String.fromCharCode(_c);
 	}
