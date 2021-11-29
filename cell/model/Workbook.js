@@ -10219,6 +10219,7 @@
 	Worksheet.prototype.setProtectedSheet = function (props, addToHistory) {
 		if (!this.sheetProtection) {
 			this.sheetProtection = new window["Asc"].CSheetProtection();
+			this.sheetProtection.setDefaultInterface();
 		}
 		this.sheetProtection.set(props, addToHistory, this);
 		return true;
