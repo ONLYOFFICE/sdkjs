@@ -15590,20 +15590,29 @@
 						}
 					});
 				} else if (!notCheckMax && c && c.bbox && (c.bbox.getType() === c_oAscSelectionType.RangeMax || c.bbox.getType() === c_oAscSelectionType.RangeCol)) {
+
+					var coord = t.getCellCoord(bbox.c1, t.visibleRange.r1);
+					if (bbox.c1 !== bbox.c2) {
+						for (var i = bbox.c1 + 1; i <= bbox.c2; i++) {
+							coord.width += t._getColumnWidth(i);
+						}
+					}
+
 					if (window["AscDesktopEditor"]) {
 						var rowsCount = Math.max(c_maxColFillDataCount, t.model.getRowsCount());
 						bbox = new Asc.Range(c.bbox.c1, 0, c.bbox.c2, rowsCount);
 						c = t._getRange(bbox.c1, bbox.r1, bbox.c2, bbox.r2);
+
 						t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.FillAllRowsWarning,
 							c_oAscError.Level.NoCritical,
-							[t.getCellCoord(bbox.c1, t.visibleRange.r1), rowsCount], function () {
+							[coord, rowsCount], function () {
 								notCheckMax = true;
 								t._saveCellValueAfterEdit(c, val, flags, isNotHistory, lockDraw);
 							});
 					} else {
 						bbox = new Asc.Range(c.bbox.c1, 0, c.bbox.c2, c_maxColFillDataCount);
 						c = t._getRange(bbox.c1, bbox.r1, bbox.c2, bbox.r2);
-						t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.FillAllRowsWarning, c_oAscError.Level.NoCritical, [t.getCellCoord(bbox.c1, t.visibleRange.r1)]);
+						t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.FillAllRowsWarning, c_oAscError.Level.NoCritical, [coord]);
 					}
 					return;
 				}
