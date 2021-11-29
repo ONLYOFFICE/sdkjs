@@ -12044,6 +12044,9 @@ CDocument.prototype.EndFormEditing = function()
 			this.EndDrawingEditing();
 		else
 			oInlineSdt.MoveCursorOutsideElement(true);
+
+		this.UpdateSelection();
+		this.UpdateInterface();
 	}
 };
 CDocument.prototype.Document_Format_Paste = function()
