@@ -97,6 +97,8 @@
     var pageBreakPreviewMode = false;
 	var pageBreakPreviewModeOverlay = false;
 
+	var c_maxColFillDataCount = 10000;
+
     /*
      * Constants
      * -----------------------------------------------------------------------------
@@ -15563,6 +15565,7 @@
 		var bbox = c.bbox;
 		var t = this;
 
+		var notCheckMax;
 		var ctrlKey = flags && flags.ctrlKey;
 		var shiftKey = flags && flags.shiftKey;
 		var applyByArray = ctrlKey && shiftKey;
@@ -15576,6 +15579,7 @@
 		//***array-formula***
 		var changeRangesIfArrayFormula = function() {
 			if(ctrlKey) {
+				//TODO есть баг с тем, что не лочатся все ячейки при данном действии
 				c = t.getSelectedRange();
 				if(c.bbox.isOneCell()) {
 					//проверяем, есть ли формула массива в этой ячейке
@@ -15585,6 +15589,23 @@
 							c = t.model.getRange3(formulaRef.r1, formulaRef.c1, formulaRef.r2, formulaRef.c2);
 						}
 					});
+				} else if (!notCheckMax && c && c.bbox && (c.bbox.getType() === c_oAscSelectionType.RangeMax || c.bbox.getType() === c_oAscSelectionType.RangeCol)) {
+					if (window["AscDesktopEditor"]) {
+						var rowsCount = Math.max(c_maxColFillDataCount, t.model.getRowsCount());
+						bbox = new Asc.Range(c.bbox.c1, 0, c.bbox.c2, rowsCount);
+						c = t._getRange(bbox.c1, bbox.r1, bbox.c2, bbox.r2);
+						t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.FillAllRowsWarning,
+							c_oAscError.Level.NoCritical,
+							[t.getCellCoord(bbox.c1, 0), rowsCount], function () {
+								notCheckMax = true;
+								t._saveCellValueAfterEdit(c, val, flags, isNotHistory, lockDraw);
+							});
+					} else {
+						bbox = new Asc.Range(c.bbox.c1, 0, c.bbox.c2, c_maxColFillDataCount);
+						c = t._getRange(bbox.c1, bbox.r1, bbox.c2, bbox.r2);
+						t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.FillAllRowsWarning, c_oAscError.Level.NoCritical, [t.getCellCoord(bbox.c1, 0)]);
+					}
+					return;
 				}
 				bbox = c.bbox;
 			}
