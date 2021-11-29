@@ -8366,6 +8366,15 @@ CDocument.prototype.Selection_SetStart         = function(X, Y, MouseEvent)
 		bEndnotes  = this.Endnotes.CheckHitInEndnote(X, Y, this.CurPage);
 	}
 
+	// На странице нет ничего из основной части документа
+	if (-1 === this.Pages[this.CurPage].Pos || this.Pages[this.CurPage].Pos > this.Pages[this.CurPage].EndPos)
+	{
+		if (!bEndnotes && !this.Endnotes.IsEmptyPage(this.CurPage))
+			bEndnotes = true;
+		else if (!bFootnotes && !this.Footnotes.IsEmptyPage(this.CurPage))
+			bFootnotes = true;
+	}
+
     var PageMetrics = this.Get_PageContentStartPos(this.CurPage, this.Pages[this.CurPage].Pos);
 
 	var oldDocPosType = this.GetDocPosType();

@@ -1134,10 +1134,18 @@ CEndnotesController.prototype.private_GetEndnoteOnPageByXY = function(X, Y, nPag
 			}
 		}
 
-		if (!oColumn)
+		if (!oColumn || oColumn.Elements.length <= 0)
 			continue;
 
-		for (var nIndex = oColumn.Elements.length - 1; nIndex >= 0; --nIndex)
+		var nStartPos = oColumn.Elements.length - 1;
+		if (nStartPos > 0)
+		{
+			var oEndnote = oColumn.Elements[nStartPos];
+			if (oEndnote.IsEmptyPage(oEndnote.GetElementPageIndex(nPageAbs, nColumnIndex)))
+				nStartPos--;
+		}
+
+		for (var nIndex = nStartPos; nIndex >= 0; --nIndex)
 		{
 			var oEndnote = oColumn.Elements[nIndex];
 
