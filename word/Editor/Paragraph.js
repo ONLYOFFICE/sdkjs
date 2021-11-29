@@ -110,6 +110,8 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
     this.CurPos    = new CParagraphCurPos();
     this.Selection = new CParagraphSelection();
 
+    this.CorrectContentFlag = 0;
+
     this.DrawingDocument = null;
     this.LogicDocument   = null;
     this.bFromDocument   = true;
@@ -6837,11 +6839,26 @@ Paragraph.prototype.Internal_GetEndPos = function()
 
 	return 0;
 };
+Paragraph.prototype.TurnOnCorrectContent = function()
+{
+	this.CorrectContentFlag--;
+};
+Paragraph.prototype.TurnOffCorrectContent = function()
+{
+	this.CorrectContentFlag++;
+};
+Paragraph.prototype.CanCorrectContent = function()
+{
+	return (this.CorrectContentFlag <= 0 && this.NearPosArray.length <= 0);
+};
 /**
  * Корректируем содержимое параграфа
  */
 Paragraph.prototype.CorrectContent = function()
 {
+	if (!this.CanCorrectContent())
+		return;
+
 	this.Correct_Content();
 
 	if (this.CurPos.ContentPos >= this.Content.length - 1)
@@ -6849,6 +6866,9 @@ Paragraph.prototype.CorrectContent = function()
 };
 Paragraph.prototype.Correct_Content = function(_StartPos, _EndPos, bDoNotDeleteEmptyRuns)
 {
+	if (!this.CanCorrectContent())
+		return;
+
 	// Если у нас сейчас в данном параграфе используется ссылка на позицию, тогда мы не корректируем контент, чтобы
 	// не удалить место, на которое идет ссылка.
 	if (this.NearPosArray.length >= 1)
