@@ -6798,6 +6798,52 @@ CDocument.prototype.MoveCursorToPageEnd = function()
 	this.UpdateInterface();
 	this.UpdateSelection();
 };
+/**
+ * Переходим на заданную страницу, если на ней нет ничего из основной части документа, то идем вперед
+ * пока не найдем подходящую, если не нашли, то ищем в обратном направлении первую подходящую страницу
+ * (т.е. пустые страницы или страницы состоящие целиком из сносок мы пропускаем и на такие не переходим)
+ * @param nPageAbs
+ * @returns {number}
+ */
+CDocument.prototype.GoToPage = function(nPageAbs)
+{
+	if ((this.FullRecalc.Id && this.FullRecalc.PageIndex - 1 <= nPageAbs)
+		|| this.Pages.length < 0)
+		return;
+
+	var nLastPage = this.FullRecalc.Id ? Math.min(this.FullRecalc.PageIndex - 1, this.Pages.length - 1) : this.Pages.length - 1;
+	var nCurPage    = nPageAbs;
+	while (nCurPage <= nLastPage)
+	{
+		var oPage = this.Pages[nCurPage];
+		if (-1 !== oPage.Pos && oPage.Pos <= oPage.EndPos)
+			break;
+
+		nCurPage++;
+	}
+
+	if (nCurPage > nLastPage)
+	{
+		nCurPage = nPageAbs;
+		while (nCurPage > 0)
+		{
+			var oPage = this.Pages[nCurPage];
+			if (-1 !== oPage.Pos && oPage.Pos <= oPage.EndPos)
+				break;
+
+			nCurPage--;
+		}
+	}
+
+	this.RemoveSelection();
+	this.SetDocPosType(docpostype_Content);
+	this.Set_CurPage(nCurPage);
+	this.MoveCursorToXY(0, 0, false);
+	this.RecalculateCurPos();
+	this.UpdateSelection();
+
+	return nCurPage;
+};
 CDocument.prototype.SetParagraphAlign = function(Align)
 {
 	var SelectedInfo = this.GetSelectedElementsInfo();

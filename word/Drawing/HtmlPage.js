@@ -3940,12 +3940,7 @@ function CEditorPage(api)
 		{
 			if (false === drDoc.IsFreezePage(drDoc.m_lCurrentPage))
 			{
-				this.m_oLogicDocument.SetDocPosType(docpostype_Content);
-				this.m_oLogicDocument.Set_CurPage(drDoc.m_lCurrentPage);
-				this.m_oLogicDocument.MoveCursorToXY(0, 0, false);
-				this.m_oLogicDocument.RecalculateCurPos();
-				this.m_oLogicDocument.Document_UpdateSelectionState();
-
+				this.m_oLogicDocument.GoToPage(drDoc.m_lCurrentPage);
 				this.m_oApi.sync_currentPageCallback(drDoc.m_lCurrentPage);
 			}
 		}
