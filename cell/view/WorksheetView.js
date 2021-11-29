@@ -15596,14 +15596,14 @@
 						c = t._getRange(bbox.c1, bbox.r1, bbox.c2, bbox.r2);
 						t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.FillAllRowsWarning,
 							c_oAscError.Level.NoCritical,
-							[t.getCellCoord(bbox.c1, 0), rowsCount], function () {
+							[t.getCellCoord(bbox.c1, t.visibleRange.r1), rowsCount], function () {
 								notCheckMax = true;
 								t._saveCellValueAfterEdit(c, val, flags, isNotHistory, lockDraw);
 							});
 					} else {
 						bbox = new Asc.Range(c.bbox.c1, 0, c.bbox.c2, c_maxColFillDataCount);
 						c = t._getRange(bbox.c1, bbox.r1, bbox.c2, bbox.r2);
-						t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.FillAllRowsWarning, c_oAscError.Level.NoCritical, [t.getCellCoord(bbox.c1, 0)]);
+						t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.FillAllRowsWarning, c_oAscError.Level.NoCritical, [t.getCellCoord(bbox.c1, t.visibleRange.r1)]);
 					}
 					return;
 				}
