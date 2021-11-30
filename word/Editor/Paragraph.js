@@ -2212,7 +2212,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 			if (SdtHighlightColor || FormsHighlight || isFormShd)
 			{
 				var oSdtBounds;
-				var nPrevColorState = 0;
+				var oPrevColor = new CDocumentColor(-1, -1, -1);
 
 				for (var nSdtIndex = 0, nSdtCount = PDSH.InlineSdt.length; nSdtIndex < nSdtCount; ++nSdtIndex)
 				{
@@ -2221,34 +2221,39 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 					oSdtBounds = PDSH.InlineSdt[nSdtIndex].GetRangeBounds(CurLine, CurRange);
 					oFormShd   = isForm ? oInlineSdt.GetFormPr().GetShd() : null;
 
+					if (isForm && pGraphics.RENDERER_PDF_FLAG && !pGraphics.isPrintMode)
+						continue;
+
 					if (pGraphics.isPrintMode && isForm && (!oFormShd || oFormShd.IsNil()))
 						continue;
 
 					if (oFormShd && !oFormShd.IsNil())
 					{
-						var oFormShdColor = oFormShd.GetSimpleColor(this.GetTheme(), this.GetColorMap());
+						var oFormShdColor     = oFormShd.GetSimpleColor(this.GetTheme(), this.GetColorMap());
+						var oFormShdColorDark = new CDocumentColor(oFormShdColor.r * (201 / 255) | 0, oFormShdColor.g * (225 / 255) | 0, oFormShdColor.b, 255);
+
 						if (oInlineSdt.IsCurrent() || pGraphics.isPrintMode)
 						{
-							if (3 !== nPrevColorState)
+							if (!oPrevColor.IsEqualRGB(oFormShdColor))
 							{
 								pGraphics.b_color1(oFormShdColor.r, oFormShdColor.g, oFormShdColor.b, 255);
-								nPrevColorState = 3;
+								oPrevColor.SetFromColor(oFormShdColor);
 							}
 						}
 						else
 						{
 							if (FormsHighlight)
 							{
-								if (1 !== nPrevColorState)
+								if (!oPrevColor.IsEqualRGB(FormsHighlight))
 								{
 									pGraphics.b_color1(FormsHighlight.r, FormsHighlight.g, FormsHighlight.b, 255);
-									nPrevColorState = 1;
+									oPrevColor.SetFromColor(FormsHighlight);
 								}
 							}
-							else if (4 !== nPrevColorState)
+							else if (!oPrevColor.IsEqualRGB(oFormShdColorDark))
 							{
-								pGraphics.b_color1(oFormShdColor.r * (201 / 255) | 0, oFormShdColor.g * (225 / 255) | 0, oFormShdColor.b, 255);
-								nPrevColorState = 4;
+								pGraphics.b_color1(oFormShdColorDark.r, oFormShdColorDark.g, oFormShdColorDark.b, 255);
+								oPrevColor.SetFromColor(oFormShdColorDark);
 							}
 						}
 
@@ -2257,10 +2262,10 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 					}
 					else if (isForm && FormsHighlight && !oInlineSdt.IsCurrent())
 					{
-						if (1 !== nPrevColorState)
+						if (!oPrevColor.IsEqualRGB(FormsHighlight))
 						{
 							pGraphics.b_color1(FormsHighlight.r, FormsHighlight.g, FormsHighlight.b, 255);
-							nPrevColorState = 1;
+							oPrevColor.SetFromColor(FormsHighlight);
 						}
 
 						if (oInlineSdt.IsFixedForm())
@@ -2268,10 +2273,10 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 					}
 					else if (!isForm && SdtHighlightColor)
 					{
-						if (2 !== nPrevColorState)
+						if (!oPrevColor.IsEqualRGB(SdtHighlightColor))
 						{
 							pGraphics.b_color1(SdtHighlightColor.r, SdtHighlightColor.g, SdtHighlightColor.b, 255);
-							nPrevColorState = 2;
+							oPrevColor.SetFromColor(SdtHighlightColor);
 						}
 					}
 					else
@@ -2897,6 +2902,7 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 	var arrFormAreasColors = [];
 	var arrFormAreas       = [];
 	var arrFormRects       = [];
+	var arrFormAreasWidths = [];
 
 	for (var CurLine = StartLine; CurLine <= EndLine; CurLine++)
 	{
@@ -3154,6 +3160,7 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 							arrFormRects = [];
 							arrFormAreas.push(arrFormRects);
 							arrFormAreasColors.push(new CDocumentColor(Element.r, Element.g, Element.b));
+							arrFormAreasWidths.push(Element.w);
 						}
 
 						arrFormRectsLine.push({
@@ -3191,7 +3198,7 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 			for (var PolygonIndex = 0, PolygonsCount = PolygonPaths.length; PolygonIndex < PolygonsCount; ++PolygonIndex)
 			{
 				var Path = PolygonPaths[PolygonIndex];
-				pGraphics.DrawPolygon(Path, 1, 0);
+				pGraphics.DrawPolygon(Path, 0, 0);
 			}
 		}
 
@@ -3205,7 +3212,7 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 			pGraphics.p_color(oFormColor.r, oFormColor.g, oFormColor.b, 255);
 			for (var nPolygonIndex = 0, nPolygonsCount = arrPolygonPaths.length; nPolygonIndex < nPolygonsCount; ++nPolygonIndex)
 			{
-				pGraphics.DrawPolygon(arrPolygonPaths[nPolygonIndex], 1, 0);
+				pGraphics.DrawPolygon(arrPolygonPaths[nPolygonIndex], 1, 0);//arrFormAreasWidths[nFormAreaIndex], 0);
 			}
 		}
 	}
