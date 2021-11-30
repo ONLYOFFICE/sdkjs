@@ -20429,13 +20429,19 @@
 	};
 
 	WorksheetView.prototype.groupRowClick = function (x, y, target, type) {
-		if(this.collaborativeEditing.getGlobalLock()) {
+		//разрешаем открывать/скрывать группы во вьювере
+		var viewMode = this.handlers.trigger('getViewMode') || window["Asc"]["editor"].isRestrictionComments();
+
+		if(this.collaborativeEditing.getGlobalLock() && !viewMode) {
 			return;
 		}
-		var currentSheetId = this.model.getId();
-		var nLockAllType = this.collaborativeEditing.isLockAllOther(currentSheetId);
-		if (Asc.c_oAscMouseMoveLockedObjectType.Sheet === nLockAllType || Asc.c_oAscMouseMoveLockedObjectType.TableProperties === nLockAllType) {
-			return;
+
+		if (!viewMode) {
+			var currentSheetId = this.model.getId();
+			var nLockAllType = this.collaborativeEditing.isLockAllOther(currentSheetId);
+			if (Asc.c_oAscMouseMoveLockedObjectType.Sheet === nLockAllType || Asc.c_oAscMouseMoveLockedObjectType.TableProperties === nLockAllType) {
+				return;
+			}
 		}
 
 		var t = this;
@@ -20601,13 +20607,19 @@
 	};
 
 	WorksheetView.prototype._groupRowMenuClick = function (x, y, target, type, bCol) {
-		if(this.collaborativeEditing.getGlobalLock()) {
+		//разрешаем открывать/скрывать группы во вьювере
+		var viewMode = this.handlers.trigger('getViewMode') || window["Asc"]["editor"].isRestrictionComments();
+
+		if(this.collaborativeEditing.getGlobalLock() && !viewMode) {
 			return;
 		}
-		var currentSheetId = this.model.getId();
-		var nLockAllType = this.collaborativeEditing.isLockAllOther(currentSheetId);
-		if (Asc.c_oAscMouseMoveLockedObjectType.Sheet === nLockAllType || Asc.c_oAscMouseMoveLockedObjectType.TableProperties === nLockAllType) {
-			return;
+
+		if (!viewMode) {
+			var currentSheetId = this.model.getId();
+			var nLockAllType = this.collaborativeEditing.isLockAllOther(currentSheetId);
+			if (Asc.c_oAscMouseMoveLockedObjectType.Sheet === nLockAllType || Asc.c_oAscMouseMoveLockedObjectType.TableProperties === nLockAllType) {
+				return;
+			}
 		}
 
 		//TODO для группировки колонок - y должен быть больше поля колонок
@@ -20647,12 +20659,12 @@
 	};
 
 	WorksheetView.prototype._tryChangeGroup = function (pos, collapsed, level, bCol) {
+		var viewMode = this.handlers.trigger('getViewMode') || window["Asc"]["editor"].isRestrictionComments();
+
 		// Проверка глобального лока
-		if (this.collaborativeEditing.getGlobalLock()) {
+		if (this.collaborativeEditing.getGlobalLock() && !viewMode) {
 			return;
 		}
-
-		var viewMode = this.handlers.trigger('getViewMode');
 
 		//при закрытии группы всем внутренним строкам проставляется hidden
 		//при открытии группы проходимся по всем строкам и открываем только те, которые не закрыты внутренними группами
@@ -20766,8 +20778,7 @@
 	};
 
 	WorksheetView.prototype.hideGroupLevel = function (level, bCol) {
-
-		var viewMode = this.handlers.trigger('getViewMode');
+		var viewMode = this.handlers.trigger('getViewMode') || window["Asc"]["editor"].isRestrictionComments();
 		var t = this, groupArr;
 		if(bCol) {
 			groupArr = this.arrColGroups ? this.arrColGroups.groupArr : null;
@@ -20781,7 +20792,7 @@
 		}
 
 		// Проверка глобального лока
-		if (this.collaborativeEditing.getGlobalLock()) {
+		if (this.collaborativeEditing.getGlobalLock() && !viewMode) {
 			return;
 		}
 
