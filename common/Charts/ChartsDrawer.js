@@ -4980,6 +4980,76 @@ CChartsDrawer.prototype =
 				heightPer: getMaxHeightStacked(ptCount, chart, cChartDrawer, subType),
 				height: getMaxHeight(j, cChartDrawer) 
 			};
+	},
+
+	_calculateCylinder: function (startX, startY, individualBarWidth, height, val, gapDepth, perspectiveDepth, checkPathMethod) {
+
+		var x1 = startX + individualBarWidth / 2, y1 = startY, z1 = 0 + gapDepth + perspectiveDepth / 2;
+		var x5 = startX + individualBarWidth / 2, y5 = startY - height, z5 = 0 + gapDepth  + perspectiveDepth / 2;
+
+		var segmentPoints = [];
+		var segmentPoints2 = [];
+
+		var x, z;
+		var dt = Math.PI / 20;
+
+		var sizes1 = individualBarWidth / 2;
+		var sizes2 = perspectiveDepth / 2;
+
+		var angelY = this.processor3D.angleOy;
+		var k = Math.PI / 2;
+
+		// if (angelY > dt * 2 || angelY < -Math.PI * 2 + dt * 2) {
+		// 	k = Math.PI / 4;
+		// } else if (angelY < -Math.PI * 1.5) {
+		// 	k = -Math.PI;
+		// } else if (angelY > -Math.PI * 1.5) {
+		// 	k = 0;
+		// }
+		k -= Math.abs(angelY);
+
+		for(var t = k; t <= Math.PI * 2.1 + k; t += dt) {
+			x = sizes1 * Math.cos(t);
+			z = sizes2 * Math.sin(t);
+
+			var segmentPoint1 = this._convertAndTurnPoint(x1 - x, y1, z1 + z);
+			var segmentPoint2 = this._convertAndTurnPoint(x5 - x, y5, z5 + z);
+			segmentPoints.push(segmentPoint1);
+			segmentPoints2.push(segmentPoint2);
+		}
+
+		var x12 = startX, y12 = startY, z12 = 0 + gapDepth;
+		var x22 = startX, y22 = startY, z22 = perspectiveDepth + gapDepth;
+		var x32 = startX + individualBarWidth, y32 = startY, z32 = perspectiveDepth + gapDepth;
+		var x42 = startX + individualBarWidth, y42 = startY, z42 = 0 + gapDepth;
+		var x52 = startX, y52 = startY - height, z52 = 0 + gapDepth;
+		var x62 = startX, y62 = startY - height, z62 = perspectiveDepth + gapDepth;
+		var x72 = startX + individualBarWidth, y72 = startY - height, z72 = perspectiveDepth + gapDepth;
+		var x82 = startX + individualBarWidth, y82 = startY - height, z82 = 0 + gapDepth;
+
+		var point1 = this._convertAndTurnPoint(x12, y12, z12);
+		var point2 = this._convertAndTurnPoint(x22, y22, z22);
+		var point3 = this._convertAndTurnPoint(x32, y32, z32);
+		var point4 = this._convertAndTurnPoint(x42, y42, z42);
+		var point5 = this._convertAndTurnPoint(x52, y52, z52);
+		var point6 = this._convertAndTurnPoint(x62, y62, z62);
+		var point7 = this._convertAndTurnPoint(x72, y72, z72);
+		var point8 = this._convertAndTurnPoint(x82, y82, z82);
+
+
+		var isNotDrawDownVerge;
+		var center1 = this._convertAndTurnPoint(x1, y1, z1);
+		var center2 = this._convertAndTurnPoint(x5, y5, z5);
+
+		var points = [segmentPoints, segmentPoints2, point1, point2, point4, point5, point6, point8];	
+		var paths = this.calculateCylinder(points, val, isNotDrawDownVerge, checkPathMethod);
+
+		// var controlPoint1 = this.cChartDrawer._convertAndTurnPoint(x12 + individualBarWidth / 2, y12 - height / 2, z1);
+		// var controlPoint2 = center1;
+		// var controlPoint3 = center2;
+		//var sortPoints = [controlPoint1, controlPoint2, controlPoint3];
+
+		return paths;
 	}
 };
 
@@ -5244,23 +5314,7 @@ drawBarChart.prototype = {
 
 					paths = this._calculateRect3D(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, shapeType, testMaxHeight, maxHeight, minHeight);
 
-					if(shapeType === AscFormat.BAR_SHAPE_CYLINDER){
-						var pathsCylinder = this._calculateCylinder(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i);
-						for (k = 0; k < pathsCylinder.paths.length; k++) {
-							console.log(pathsCylinder.paths.length)
-							this.sortZIndexPaths.push({
-								seria: i,
-								point: idx,
-								verge: k,
-								paths: pathsCylinder.paths[k],
-								sort: pathsCylinder.sortPoints[k].z
-								// x: paths.sortPaths[k].x,
-								// y: paths.sortPaths[k].y,
-								// zIndex: paths.sortPaths[k].z,
-								// facePoint: paths.facePoints[k]
-							});
-						}
-					} else if (this.subType === "standard") {
+					if (this.subType === "standard") {
 						for (k = 0; k < paths.paths.length; k++) {
 							this.sortZIndexPaths.push({
 								seria: i,
@@ -5277,7 +5331,7 @@ drawBarChart.prototype = {
 
 					paths = paths.paths2;
 
-					//расчет clustered, stacked, stackedPer (parallelepipeds and pyramide)		
+					//расчет clustered, stacked, stackedPer (parallelepipeds and pyramide)
 					this.calculate3dCharts(startX, startY, individualBarWidth, testHeight, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp2, maxHeight, minHeight, testMaxHeight, shapeType);
 					this.calculate3dCharts(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i, idx, cubeCount, this.temp, maxHeight, minHeight, testMaxHeight, shapeType);
 
@@ -5731,6 +5785,9 @@ drawBarChart.prototype = {
 		if (type !== AscFormat.BAR_SHAPE_PYRAMIDTOMAX && type !== AscFormat.BAR_SHAPE_PYRAMID) {
 			points = [point1, point2, point3, point4, point5, point6, point7, point8];
 			paths = this.cChartDrawer.calculateRect3D(points, val, null, true);
+		}
+		if (type === AscFormat.BAR_SHAPE_CYLINDER) {
+			paths = this.cChartDrawer._calculateCylinder(startX, startY, individualBarWidth, height, val, gapDepth, perspectiveDepth, true);
 		}
 
 		var point11 = this.cChartDrawer._convertAndTurnPoint(x12, y12, z12, null, null, true);
@@ -6384,7 +6441,7 @@ drawBarChart.prototype = {
 		points = [point1, point2, point3, point4, point5, point6, point7, point8];
 		paths2 = this.cChartDrawer.calculateRect3D(points, val, isNotDrawDownVerge);
 
-		height = this.chartProp.heightCanvas - this.chartProp.chartGutter._top - this.chartProp.chartGutter._bottom;
+		//height = this.chartProp.heightCanvas - this.chartProp.chartGutter._top - this.chartProp.chartGutter._bottom;
 		var controlPoint1 = this.cChartDrawer._convertAndTurnPoint(x1 + individualBarWidth / 2, y1 - height / 2, z1);
 		var controlPoint2 = this.cChartDrawer._convertAndTurnPoint(x1 + individualBarWidth / 2, y1, z1 + perspectiveDepth / 2);
 		var controlPoint3 = this.cChartDrawer._convertAndTurnPoint(x1, y1 - height / 2, z1 + perspectiveDepth / 2);
@@ -6399,6 +6456,14 @@ drawBarChart.prototype = {
 
 		var sortPaths = [controlPoint1, controlPoint2, controlPoint3, controlPoint4, controlPoint5, controlPoint6];
 
+		if (type === AscFormat.BAR_SHAPE_CYLINDER) {
+			paths = this.cChartDrawer._calculateCylinder(startX, startY, individualBarWidth, height, val, gapDepth, perspectiveDepth);
+			// return {
+			// 	paths: paths.paths,
+			// 	facePoints: paths.sort
+			// };
+		}
+
 		return {
 			paths: paths,
 			paths2: paths2,
@@ -6408,95 +6473,6 @@ drawBarChart.prototype = {
 			sortPaths: sortPaths,
 			facePoints: facePoints
 		};
-	},
-
-	_calculateCylinder: function (startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, serNum, chartsDrawer) {
-		//параметр r и глубина по OZ
-		var perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
-
-		//сдвиг по OZ в глубину
-		var gapDepth = this.chart.gapDepth != null ? this.chart.gapDepth : globalGapDepth;
-		if (this.subType === "standard") {
-			perspectiveDepth = (perspectiveDepth / (gapDepth / 100 + 1)) / this.seriesCount;
-		} else {
-			perspectiveDepth = perspectiveDepth / (gapDepth / 100 + 1);
-		}
-
-		var DiffGapDepth = perspectiveDepth * (gapDepth / 2) / 100;
-		if (this.subType === "standard") {
-			gapDepth = (perspectiveDepth + DiffGapDepth + DiffGapDepth) * serNum + DiffGapDepth;
-		} else {
-			gapDepth = DiffGapDepth;
-		}
-
-		var x1 = startX + individualBarWidth / 2, y1 = startY, z1 = 0 + gapDepth + perspectiveDepth / 2;
-		var x5 = startX + individualBarWidth / 2, y5 = startY - height, z5 = 0 + gapDepth  + perspectiveDepth / 2;
-
-		var segmentPoints = [];
-		var segmentPoints2 = [];
-
-		var x, z;
-		var dt = Math.PI / 20;
-
-		var sizes1 = individualBarWidth / 2;
-		var sizes2 = perspectiveDepth / 2;
-
-		var angelY = this.cChartDrawer.processor3D.angleOy;
-		var k = Math.PI / 2;
-
-		// if (angelY > dt * 2 || angelY < -Math.PI * 2 + dt * 2) {
-		// 	k = Math.PI / 4;
-		// } else if (angelY < -Math.PI * 1.5) {
-		// 	k = -Math.PI;
-		// } else if (angelY > -Math.PI * 1.5) {
-		// 	k = 0;
-		// }
-
-		k = k - Math.abs(angelY)
-
-		for(var t = k; t <= Math.PI * 2.1 + k; t += dt) {
-			x = sizes1 * Math.cos(t);
-			z = sizes2 * Math.sin(t);
-
-			var segmentPoint1 = this.cChartDrawer._convertAndTurnPoint(x1 - x, y1, z1 + z);
-			var segmentPoint2 = this.cChartDrawer._convertAndTurnPoint(x5 - x, y5, z5 + z);
-			segmentPoints.push(segmentPoint1);
-			segmentPoints2.push(segmentPoint2);
-		}
-
-		var x12 = startX, y12 = startY, z12 = 0 + gapDepth;
-		var x22 = startX, y22 = startY, z22 = perspectiveDepth + gapDepth;
-		var x32 = startX + individualBarWidth, y32 = startY, z32 = perspectiveDepth + gapDepth;
-		var x42 = startX + individualBarWidth, y42 = startY, z42 = 0 + gapDepth;
-		var x52 = startX, y52 = startY - height, z52 = 0 + gapDepth;
-		var x62 = startX, y62 = startY - height, z62 = perspectiveDepth + gapDepth;
-		var x72 = startX + individualBarWidth, y72 = startY - height, z72 = perspectiveDepth + gapDepth;
-		var x82 = startX + individualBarWidth, y82 = startY - height, z82 = 0 + gapDepth;
-
-		var point1 = this.cChartDrawer._convertAndTurnPoint(x12, y12, z12);
-		var point2 = this.cChartDrawer._convertAndTurnPoint(x22, y22, z22);
-		var point3 = this.cChartDrawer._convertAndTurnPoint(x32, y32, z32);
-		var point4 = this.cChartDrawer._convertAndTurnPoint(x42, y42, z42);
-		var point5 = this.cChartDrawer._convertAndTurnPoint(x52, y52, z52);
-		var point6 = this.cChartDrawer._convertAndTurnPoint(x62, y62, z62);
-		var point7 = this.cChartDrawer._convertAndTurnPoint(x72, y72, z72);
-		var point8 = this.cChartDrawer._convertAndTurnPoint(x82, y82, z82);
-
-
-		var isNotDrawDownVerge;
-		var center1 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1);
-		var center2 = this.cChartDrawer._convertAndTurnPoint(x5, y5, z5);
-
-		var points = [segmentPoints, segmentPoints2, point1, point2, point4, point5, point6, point8];
-		
-		var paths = this.cChartDrawer.calculateCylinder(points, val, isNotDrawDownVerge);
-		var controlPoint1 = this.cChartDrawer._convertAndTurnPoint(x12 + individualBarWidth / 2, y12 - height / 2, z1);
-		var controlPoint2 = center1;
-		var controlPoint3 = center2;
-		var sortPoints = [controlPoint1, controlPoint2, controlPoint3];
-		console.log(paths)
-
-		return { paths: paths, sortPoints: sortPoints };
 	}
 };
 
