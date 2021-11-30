@@ -3824,7 +3824,7 @@ CChartsDrawer.prototype =
 		return pathId;
 	},
 	
-	_isVisibleVerge3D: function(k, n, m, val)
+	_isVisibleVerge3D: function(k, n, m, val, cylinder)
 	{
 		//roberts method - calculate normal
 		var aX = n.x * m.y - m.x * n.y;
@@ -3850,6 +3850,9 @@ CChartsDrawer.prototype =
 			if(!(this.calcProp.subType === "stacked") && !(this.calcProp.subType === "stackedPer") && this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX)
 				result = !result;
 		}
+		if (cylinder) {
+			result = !result;
+		}
 		
 		return result;
 	},
@@ -3860,8 +3863,12 @@ CChartsDrawer.prototype =
 
 		var segmentPoints = points[0];
 		var segmentPoints2 = points[1];
-		var center1 = points[2];
-		var center2 = points[3];
+		var point1 = points[2];
+		var point2 = points[3];
+		var point4 = points[4];
+		var point5 = points[5];
+		var point6 = points[6];
+		var point8 = points[7];
 
 		var frontPaths = [];
 		var darkPaths = [];
@@ -3881,25 +3888,61 @@ CChartsDrawer.prototype =
 			}
 		};
 
-		var face = [];
-		//front
+		var face;
+		var sortCylinderPoints1 = [], sortCylinderPoints2 = [];
 
-		face.push(this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, false, false, true));
+		for (var i = 1; i < segmentPoints.length - 1; i++) {
+			if (this._isVisibleVerge3D(segmentPoints[i], segmentPoints2[i], segmentPoints2[i - 1], val, true)) {
+				sortCylinderPoints1.push(segmentPoints[i]);
+				sortCylinderPoints2.push(segmentPoints2[i])
+			}
+		}
+
+		if (sortCylinderPoints2.length === 0) {
+			sortCylinderPoints1 = segmentPoints;
+			sortCylinderPoints2 = segmentPoints2;
+		}
+
+		//front
+		face = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, false, false, true);
 		addPathToArr(true, face, 0);
 
-		face.push(this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, false, true, true));
-		addPathToArr(this._isVisibleVerge3D(segmentPoints2[0], center2,
-			segmentPoints2[segmentPoints2.length - 1], val), face, 1);
+		//down
+		if(val === 0 && this.calcProp.type === c_oChartTypes.Bar)
+		{
+			face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, false, true, true);
+			addPathToArr(true, face, 1);
+		}
+		else
+		{
+			face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, false, true, true);
+			addPathToArr(this._isVisibleVerge3D(point4, point1, point2, val), face, 1);
+		}
 
-		face.push(this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, true, false, true));
-		addPathToArr(this._isVisibleVerge3D(segmentPoints[0], center1,
-			segmentPoints[segmentPoints.length - 1], val), face, 2);
+		//up
+		if(val === 0 && this.calcProp.type === c_oChartTypes.Bar)
+		{
+			face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, true, false, true);
+			addPathToArr(true, face, 2);
+		}
+		else
+		{
+			face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, true, false, true);
+			addPathToArr(this._isVisibleVerge3D(point6, point5, point8, val), face, 2);
+		}
 
+		// face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, false, false, true);
+		// addPathToArr(true, face, 0);
 
+		// face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, false, true, true);
+		// addPathToArr(true, face, 1);
+
+		// face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, true, false, true);
+		// addPathToArr(true, face, 2);
 
 		if(!isNotOnlyFrontFaces)
 		{
-			res = face//frontPaths;
+			res = frontPaths;
 		}
 		else
 		{
@@ -3923,6 +3966,11 @@ CChartsDrawer.prototype =
 		var pathH = this.calcProp.pathH;
 		var pathW = this.calcProp.pathW;
 
+		// path.lnTo(segmentPoints1.x / pxToMm * pathW, segmentPoints1.y / pxToMm * pathH);
+		// path.lnTo(segmentPoints2.x / pxToMm * pathW, segmentPoints2.y / pxToMm * pathH);
+		// path.lnTo(segmentPoints3.x / pxToMm * pathW, segmentPoints3.y / pxToMm * pathH);
+		// path.lnTo(segmentPoints4.x / pxToMm * pathW, segmentPoints4.y / pxToMm * pathH);
+
 		if (up) {
 			for(var i = 1; i < segmentPoints2.length - 1; i++) {
 				path.lnTo(segmentPoints2[i].x / pxToMm * pathW, segmentPoints2[i].y / pxToMm * pathH);
@@ -3932,49 +3980,37 @@ CChartsDrawer.prototype =
 				path.lnTo(segmentPoints[i].x / pxToMm * pathW, segmentPoints[i].y / pxToMm * pathH);
 			}
 		} else {
-			var startPoint = segmentPoints[0];
-			var endPoint = segmentPoints[segmentPoints.length - 1];
-			var startIndex = 0;
-			var endIndex = segmentPoints.length - 1;
-	
-			for(var i = 0; i < segmentPoints.length - 1; i++) {
-				if (startPoint.x < segmentPoints[i].x) {
-					startPoint.x = segmentPoints[i].x;
-					startIndex = i;
-				}
-			}
-	
-			for(var i = 0; i < segmentPoints.length - 1; i++) {
-				if (endPoint.x > segmentPoints[i].x) {
-					endPoint.x = segmentPoints[i].x;
-					endIndex = i;
-				}
-			}
-	
-			// if (startIndex > endIndex) {
-			// 	startIndex = endIndex;
-			// 	endIndex = startIndex;
+			var endIndex = 0;
+			var startIndex = segmentPoints.length - 1;
+
+			// path.lnTo(segmentPoints[endIndex].x / pxToMm * pathW, segmentPoints[endIndex].y / pxToMm * pathH);
+			// path.lnTo(segmentPoints2[endIndex].x / pxToMm * pathW, segmentPoints2[endIndex].y / pxToMm * pathH);
+
+			// for(var k = endIndex; startIndex <= k; k--) {
+			// 	path.lnTo(segmentPoints[k].x / pxToMm * pathW, segmentPoints[k].y / pxToMm * pathH);
+			// }
+		
+			// for(var i = startIndex; i <= endIndex; i++) {
+			// 	path.lnTo(segmentPoints2[i].x / pxToMm * pathW, segmentPoints2[i].y / pxToMm * pathH);
 			// }
 
 			path.lnTo(segmentPoints[endIndex].x / pxToMm * pathW, segmentPoints[endIndex].y / pxToMm * pathH);
 			path.lnTo(segmentPoints2[endIndex].x / pxToMm * pathW, segmentPoints2[endIndex].y / pxToMm * pathH);
-
-			//if (startIndex >= 0) {
-				for(var k = endIndex; startIndex <= k; k--) {
-					path.lnTo(segmentPoints[k].x / pxToMm * pathW, segmentPoints[k].y / pxToMm * pathH);
-				}
+			
+			for(var k = 0; k <= startIndex; k++) {
+				path.lnTo(segmentPoints[k].x / pxToMm * pathW, segmentPoints[k].y / pxToMm * pathH);
+			}
 		
-				for(var i = startIndex; i <= endIndex; i++) {
-					path.lnTo(segmentPoints2[i].x / pxToMm * pathW, segmentPoints2[i].y / pxToMm * pathH);
-				}
-			//} 
-	
-			// for(var i = startIndex; i <= endIndex; i++) {
-			// 	path.lnTo(segmentPoints[i].x / pxToMm * pathW, segmentPoints[i].y / pxToMm * pathH);
-			// }
-	
+			for(var k = startIndex; 0 <= k; k--) {
+				path.lnTo(segmentPoints2[k].x / pxToMm * pathW, segmentPoints2[k].y / pxToMm * pathH);
+			}
+
 			// for(var k = endIndex; startIndex <= k; k--) {
-			// 	path.lnTo(segmentPoints2[k].x / pxToMm * pathW, segmentPoints2[k].y / pxToMm * pathH);
+			// 	path.lnTo(segmentPoints[k].x / pxToMm * pathW, segmentPoints[k].y / pxToMm * pathH);
+			// }
+		
+			// for(var i = startIndex; i <= endIndex; i++) {
+			// 	path.lnTo(segmentPoints2[i].x / pxToMm * pathW, segmentPoints2[i].y / pxToMm * pathH);
 			// }
 
 		}
@@ -5211,11 +5247,13 @@ drawBarChart.prototype = {
 					if(shapeType === AscFormat.BAR_SHAPE_CYLINDER){
 						var pathsCylinder = this._calculateCylinder(startX, startY, individualBarWidth, height, val, isValMoreZero, isValLessZero, i);
 						for (k = 0; k < pathsCylinder.paths.length; k++) {
+							console.log(pathsCylinder.paths.length)
 							this.sortZIndexPaths.push({
 								seria: i,
 								point: idx,
 								verge: k,
 								paths: pathsCylinder.paths[k],
+								sort: pathsCylinder.sortPoints[k].z
 								// x: paths.sortPaths[k].x,
 								// y: paths.sortPaths[k].y,
 								// zIndex: paths.sortPaths[k].z,
@@ -5337,6 +5375,9 @@ drawBarChart.prototype = {
 					return zIndex;
 				};
 				this.sortZIndexPaths.sort(function sortArr(a, b) {
+					if (a.sort) {
+						return b.sort - a.sort;
+					}
 					var minZA = getMinZ(a.facePoint, a.verge, a.seria);
 					var minZB = getMinZ(b.facePoint, b.verge, b.seria);
 					if (minZB == minZA) {
@@ -6401,47 +6442,61 @@ drawBarChart.prototype = {
 		var sizes2 = perspectiveDepth / 2;
 
 		var angelY = this.cChartDrawer.processor3D.angleOy;
-		var k = 0;
+		var k = Math.PI / 2;
 
-		if (angelY > -Math.PI / 2 - dt || angelY < -Math.PI * 1.5) {
-			k = Math.PI / 2;
-		} else {
-			k = -Math.PI / 2;
-		}
+		// if (angelY > dt * 2 || angelY < -Math.PI * 2 + dt * 2) {
+		// 	k = Math.PI / 4;
+		// } else if (angelY < -Math.PI * 1.5) {
+		// 	k = -Math.PI;
+		// } else if (angelY > -Math.PI * 1.5) {
+		// 	k = 0;
+		// }
+
+		k = k - Math.abs(angelY)
 
 		for(var t = k; t <= Math.PI * 2.1 + k; t += dt) {
-
 			x = sizes1 * Math.cos(t);
 			z = sizes2 * Math.sin(t);
 
-			var point = this.cChartDrawer._convertAndTurnPoint(x1 - x, y1, z1 + z);
-			var point2 = this.cChartDrawer._convertAndTurnPoint(x5 - x, y5, z5 + z);
-			segmentPoints2.push(point2);
-			segmentPoints.push(point);
+			var segmentPoint1 = this.cChartDrawer._convertAndTurnPoint(x1 - x, y1, z1 + z);
+			var segmentPoint2 = this.cChartDrawer._convertAndTurnPoint(x5 - x, y5, z5 + z);
+			segmentPoints.push(segmentPoint1);
+			segmentPoints2.push(segmentPoint2);
 		}
-	//	} 
-		// else {
-		// 	for(var t = 0; t <= Math.PI * 2.1; t += dt) {
 
-		// 		x = sizes1 * Math.cos(t);
-		// 		z = sizes2 * Math.sin(t);
+		var x12 = startX, y12 = startY, z12 = 0 + gapDepth;
+		var x22 = startX, y22 = startY, z22 = perspectiveDepth + gapDepth;
+		var x32 = startX + individualBarWidth, y32 = startY, z32 = perspectiveDepth + gapDepth;
+		var x42 = startX + individualBarWidth, y42 = startY, z42 = 0 + gapDepth;
+		var x52 = startX, y52 = startY - height, z52 = 0 + gapDepth;
+		var x62 = startX, y62 = startY - height, z62 = perspectiveDepth + gapDepth;
+		var x72 = startX + individualBarWidth, y72 = startY - height, z72 = perspectiveDepth + gapDepth;
+		var x82 = startX + individualBarWidth, y82 = startY - height, z82 = 0 + gapDepth;
 
-		// 		var point = this.cChartDrawer._convertAndTurnPoint(x1 + x, y1, z1 - z);
-		// 		var point2 = this.cChartDrawer._convertAndTurnPoint(x5 + x, y5, z5 - z);
-		// 		segmentPoints2.push(point2);
-		// 		segmentPoints.push(point);
-		// 	}
-		// }
+		var point1 = this.cChartDrawer._convertAndTurnPoint(x12, y12, z12);
+		var point2 = this.cChartDrawer._convertAndTurnPoint(x22, y22, z22);
+		var point3 = this.cChartDrawer._convertAndTurnPoint(x32, y32, z32);
+		var point4 = this.cChartDrawer._convertAndTurnPoint(x42, y42, z42);
+		var point5 = this.cChartDrawer._convertAndTurnPoint(x52, y52, z52);
+		var point6 = this.cChartDrawer._convertAndTurnPoint(x62, y62, z62);
+		var point7 = this.cChartDrawer._convertAndTurnPoint(x72, y72, z72);
+		var point8 = this.cChartDrawer._convertAndTurnPoint(x82, y82, z82);
+
 
 		var isNotDrawDownVerge;
-		var point = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1);
-		var point2 = this.cChartDrawer._convertAndTurnPoint(x5, y5, z5);
+		var center1 = this.cChartDrawer._convertAndTurnPoint(x1, y1, z1);
+		var center2 = this.cChartDrawer._convertAndTurnPoint(x5, y5, z5);
 
-		var points = [segmentPoints, segmentPoints2, point, point2];
-		var paths = this.cChartDrawer.calculateCylinder(points, val, isNotDrawDownVerge, null);
+		var points = [segmentPoints, segmentPoints2, point1, point2, point4, point5, point6, point8];
+		
+		var paths = this.cChartDrawer.calculateCylinder(points, val, isNotDrawDownVerge);
+		var controlPoint1 = this.cChartDrawer._convertAndTurnPoint(x12 + individualBarWidth / 2, y12 - height / 2, z1);
+		var controlPoint2 = center1;
+		var controlPoint3 = center2;
+		var sortPoints = [controlPoint1, controlPoint2, controlPoint3];
+		console.log(paths)
 
-
-		return {paths: paths, x: segmentPoints[0].x, y: segmentPoints[0].y, zIndex: segmentPoints[0].z};
+		return { paths: paths, sortPoints: sortPoints };
 	}
 };
 
