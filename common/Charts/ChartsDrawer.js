@@ -3860,7 +3860,6 @@ CChartsDrawer.prototype =
 	calculateCylinder: function(points, val, isNotDrawDownVerge, isNotOnlyFrontFaces)
 	{
 		var res;
-
 		var segmentPoints = points[0];
 		var segmentPoints2 = points[1];
 		var point1 = points[2];
@@ -3963,17 +3962,6 @@ CChartsDrawer.prototype =
 			var endIndex = 0;
 			var startIndex = segmentPoints.length - 1;
 
-			// path.lnTo(segmentPoints[endIndex].x / pxToMm * pathW, segmentPoints[endIndex].y / pxToMm * pathH);
-			// path.lnTo(segmentPoints2[endIndex].x / pxToMm * pathW, segmentPoints2[endIndex].y / pxToMm * pathH);
-
-			// for(var k = endIndex; startIndex <= k; k--) {
-			// 	path.lnTo(segmentPoints[k].x / pxToMm * pathW, segmentPoints[k].y / pxToMm * pathH);
-			// }
-		
-			// for(var i = startIndex; i <= endIndex; i++) {
-			// 	path.lnTo(segmentPoints2[i].x / pxToMm * pathW, segmentPoints2[i].y / pxToMm * pathH);
-			// }
-
 			path.lnTo(segmentPoints[endIndex].x / pxToMm * pathW, segmentPoints[endIndex].y / pxToMm * pathH);
 			path.lnTo(segmentPoints2[endIndex].x / pxToMm * pathW, segmentPoints2[endIndex].y / pxToMm * pathH);
 			
@@ -3984,14 +3972,6 @@ CChartsDrawer.prototype =
 			for (k = startIndex; endIndex <= k; k--) {
 				path.lnTo(segmentPoints2[k].x / pxToMm * pathW, segmentPoints2[k].y / pxToMm * pathH);
 			}
-
-			// for(var k = endIndex; startIndex <= k; k--) {
-			// 	path.lnTo(segmentPoints[k].x / pxToMm * pathW, segmentPoints[k].y / pxToMm * pathH);
-			// }
-		
-			// for(var i = startIndex; i <= endIndex; i++) {
-			// 	path.lnTo(segmentPoints2[i].x / pxToMm * pathW, segmentPoints2[i].y / pxToMm * pathH);
-			// }
 
 		}
 
@@ -5038,8 +5018,8 @@ CChartsDrawer.prototype =
 		var point8 = this._convertAndTurnPoint(x82, y82, z82);
 
 		var isNotDrawDownVerge;
-		var center1 = this._convertAndTurnPoint(x1, y1, z1);
-		var center2 = this._convertAndTurnPoint(x5, y5, z5);
+		// var center1 = this._convertAndTurnPoint(x1, y1, z1);
+		// var center2 = this._convertAndTurnPoint(x5, y5, z5);
 
 		var points = [segmentPoints, segmentPoints2, point1, point2, point4, point5, point6, point8,
 			sortCylinderPoints1, sortCylinderPoints2];
