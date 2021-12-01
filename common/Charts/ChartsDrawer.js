@@ -4945,6 +4945,7 @@ CChartsDrawer.prototype =
 
 		var x, z;
 		// в ms 180 градусов составляют 17 сегментов
+		// todo пока что рассчитываем дополнительные точки, нужно будет оптимизировать
 		var dt = Math.PI / 34; //Math.PI / 17;
 
 		var sizes1 = individualBarWidth / 2;
@@ -4971,12 +4972,15 @@ CChartsDrawer.prototype =
 		var check = false;
 
 		// сортируем точки по видимости для построения плоскости цилиндра
-		for (var i = 1; i < segmentPoints.length - 1; i++) {
+		for (var i = 1; i < segmentPoints.length; i++) {
 			if (this._isVisibleVerge3D(segmentPoints[i], segmentPoints2[i], segmentPoints2[i - 1], val, true)) {
 				if (!check) {
 					sortCylinderPoints1.push(segmentPoints[i - 1]);
 					sortCylinderPoints2.push(segmentPoints2[i - 1]);
-				} else {
+				}
+				else {
+					// sortCylinderPoints1.push(segmentPoints[i - 1]);
+					// sortCylinderPoints2.push(segmentPoints2[i - 1]);
 					break;
 				}
 			} else {
@@ -4989,6 +4993,10 @@ CChartsDrawer.prototype =
 					sortCylinderPoints1.unshift(segmentPoints[k - 1]);
 					sortCylinderPoints2.unshift(segmentPoints2[k - 1]);
 				}
+				// else if (k === i) {
+				// 	sortCylinderPoints1.unshift(segmentPoints[k - 1]);
+				// 	sortCylinderPoints2.unshift(segmentPoints2[k - 1]);
+				// }
 			}
 		}		
 		if (sortCylinderPoints2.length === 0 || sortCylinderPoints1.length === 0) {
