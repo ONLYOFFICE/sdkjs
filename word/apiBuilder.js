@@ -224,6 +224,7 @@
 		{
 			Bold: '<strong>',
 			Italic: '<em>',
+			Span: '<span>',
 			CodeLine: '<pre>',
 			Code: '<code>',
 			Paragraph: '<p>',
@@ -269,17 +270,21 @@
 				return sSyblols + sText + sSyblols;
 		}
 	};
-	CMarkdownConverter.prototype.WrapInTag = function(sText, sHtmlTag, sWrapType)
+	CMarkdownConverter.prototype.WrapInTag = function(sText, sHtmlTag, sWrapType, sStyle)
 	{
 		switch (sWrapType)
 		{
 			case 'open':
-				return sHtmlTag + sText;
+				if (!sStyle)
+					return sHtmlTag + sText;
+				return sHtmlTag.replace('>', ' style="' + sStyle + ';">');
 			case 'close':
 				return sText + sHtmlTag.replace('<', '</');
 			case 'wholly':
 			default:
-				return sHtmlTag + sText + sHtmlTag.replace('<', '</');
+				if (!sStyle)
+					return sHtmlTag + sText + sHtmlTag.replace('<', '</');
+				return sHtmlTag.replace('>', ' style="' + sStyle + ';">') + sText + sHtmlTag.replace('<', '</');
 		}
 	};
 	CMarkdownConverter.prototype.DoMarkdown = function()
@@ -357,6 +362,10 @@
 			for (var nElm = 0, nElmsCount = oDocument.GetElementsCount(); nElm < nElmsCount; nElm ++)
 				sOutputText += this.HandleChildElement(oDocument.GetElement(nElm), 'html');
 		}
+
+		// рендер html тагов
+		if (!this.Config.renderHTMLTags)
+			sOutputText = sOutputText.replace(/</gi, '&lt;');
 
 		return sOutputText;
 	};
@@ -503,9 +512,9 @@
 					nHeadingLvl = 1;
 
 				if (oCMarkdownConverter.Config.convertType === 'html' || oCMarkdownConverter.isTableCellContent || oCMarkdownConverter.Config.htmlHeadings)
-					return oCMarkdownConverter.WrapInTag(sOutputText, oCMarkdownConverter.HtmlTags.Headings['h' + String(nHeadingLvl + 1)],'wholly');
+					return oCMarkdownConverter.WrapInTag(sOutputText, oCMarkdownConverter.HtmlTags.Headings[nHeadingLvl],'wholly');
 				else if (oCMarkdownConverter.Config.convertType === 'markdown')
-					return oCMarkdownConverter.WrapInSymbol(sOutputText, oCMarkdownConverter.MdSymbols.Headings['h' + String(nHeadingLvl + 1)], 'open');
+					return oCMarkdownConverter.WrapInSymbol(sOutputText, oCMarkdownConverter.MdSymbols.Headings[nHeadingLvl], 'open');
 			}
 		};
 		function SetQuote()
@@ -578,7 +587,10 @@
 				return true;
 			return false;
 		};
-
+		function HaveSepLine(oParagraph)
+		{
+			return oParagraph.Pr.Brd.Bottom && !oParagraph.Pr.Brd.Top && !oParagraph.Pr.Brd.Left && !oParagraph.Pr.Brd.Right
+		};
 		function SetCodeBlock(sOutputText)
 		{
 			if (oCMarkdownConverter.Config.convertType === 'markdown')
@@ -600,7 +612,12 @@
 		};
 
 		if (!oPara.Next && oPara.GetText().trim() === '')
+		{
+			if (HaveSepLine(oPara.Paragraph) && this.Config.convertType === "html")
+				return "<hr>";
 			return '';
+		}
+			
 		if (oPara.Paragraph.IsTableCellContent())
 			this.isTableCellContent = true;
 
@@ -675,6 +692,9 @@
 		// закрытие тега парагарфа, тег добавляем только в случае, если это не нумерованный список/заголовок/блок кода.
 		else if ((this.Config.convertType === "html" && !this.isTableCellContent) && !this.isNumbering && !this.isHeading && !this.isCodeBlock)
 			sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Paragraph, 'wholly');
+		if (HaveSepLine(oPara.Paragraph) && this.Config.convertType === "html")
+			sOutputText += "\n<hr>"
+
 		return sOutputText + '\n';
 	};
 	CMarkdownConverter.prototype.HandleHyperlink = function(oHyperlink, sType)
@@ -729,6 +749,17 @@
 
 			return false;
 		};
+		function isUnderline(oRun)
+		{
+			if (!oRun)
+				return false;
+
+			var oRunTextPr = oRun.Run.Get_CompiledPr();
+			if (oRunTextPr.Underline)
+				return true;
+
+			return false;
+		};
 
 		function GetTextWithPicture(oRun)
 		{
@@ -776,11 +807,51 @@
 
 			return sText;
 		};
+		function GetText(oRun)
+		{
+			var sText = "";
+			var ContentLen = oRun.Content.length;
+
+			for (var CurPos = 0; CurPos < ContentLen; CurPos++)
+			{
+				var Item     = oRun.Content[CurPos];
+				var ItemType = Item.Type;
+
+				switch (ItemType)
+				{
+					case para_Drawing:
+					case para_PageNum:
+					case para_PageCount:
+					case para_End:
+						break;
+					case para_Text :
+					{
+						sText += String.fromCharCode(Item.Value);
+						break;
+					}
+					case para_Space:
+					case para_NewLine:
+						if (this.Config.convertType === "html")
+							sText += "<br>"
+						else
+							sText += " \\\n";
+						break;
+					case para_Tab:
+					{
+						sText += " ";
+						break;
+					}
+				}
+
+			}
+
+			return sText;
+		};
 
 		var oCMarkdownConverter    = this;
 		var arrAllDrawings = oRun.Run.GetAllDrawingObjects();
 		var hasPicture     = false;
-		var sOutputText    = oRun.Run.GetText();
+		var sOutputText    = GetText.call(this, oRun.Run);
 		var oTextPr        = oRun.Run.Get_CompiledPr();
 
 		// находим все картинки и их позиции в строке
@@ -796,9 +867,7 @@
 		if (sOutputText === '' && hasPicture === false)
 			return '';
 
-		// рендер html тагов
-		if (!this.Config.renderHTMLTags)
-			sOutputText = sOutputText.replace(/</gi, '&lt;');
+		
 
 		if (!this.isCodeBlock)
 		{
@@ -849,7 +918,9 @@
 				var isBoldPrevRun   = IsBold(oRunPrev);
 				var isItalicNextRun = IsItalic(oRunNext);
 				var isItalicPrevRun = IsItalic(oRunPrev);
-
+				var isUnderlineNextRun = isUnderline(oRunNext);
+				var isUnderlinePrevRun = isUnderline(oRunPrev);
+				
 				if (hasPicture)
 					sOutputText = GetTextWithPicture(oRun);
 
@@ -894,6 +965,18 @@
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Italic, 'open');
 						else if (!isItalicNextRun)
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Italic, 'close');
+					}
+				}
+				if (oTextPr.Underline && !this.isQuoteLine)
+				{
+					if (sType === 'html' || this.Config.htmlHeadings)
+					{
+						if (!isUnderlinePrevRun && !isUnderlineNextRun)
+							sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Span, 'wholly', 'text-decoration:underline');
+						else if (!isUnderlinePrevRun)
+							sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Span, 'open', 'text-decoration:underline');
+						else if (!isUnderlineNextRun)
+							sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Span, 'close');
 					}
 				}
 			}
