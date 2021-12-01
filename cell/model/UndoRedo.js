@@ -4465,6 +4465,7 @@ function (window, undefined) {
 		var protectedSheet = oModel.sheetProtection;
 		if (!protectedSheet) {
 			oModel.sheetProtection = protectedSheet = new window["Asc"].CSheetProtection();
+			oModel.sheetProtection.setDefaultInterface();
 		}
 
 		if (protectedSheet) {
