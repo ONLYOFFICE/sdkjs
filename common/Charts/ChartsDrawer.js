@@ -3951,11 +3951,11 @@ CChartsDrawer.prototype =
 		// path.lnTo(segmentPoints4.x / pxToMm * pathW, segmentPoints4.y / pxToMm * pathH);
 
 		if (up) {
-			for(var i = 1; i < segmentPoints2.length - 1; i++) {
+			for(var i = 0; i < segmentPoints2.length; i++) {
 				path.lnTo(segmentPoints2[i].x / pxToMm * pathW, segmentPoints2[i].y / pxToMm * pathH);
 			}
 		} else if (down){
-			for(var i = 1; i < segmentPoints.length - 1; i++) {
+			for(var i = 0; i < segmentPoints.length; i++) {
 				path.lnTo(segmentPoints[i].x / pxToMm * pathW, segmentPoints[i].y / pxToMm * pathH);
 			}
 		} else {
@@ -4961,7 +4961,7 @@ CChartsDrawer.prototype =
 		k -= Math.abs(angelY);
 
 		// получаем точки основания цилиндра через парамметрические уравнения эллиптического цилиндра
-		for(var t = k; t <= Math.PI * 2.1 + k; t += dt) {
+		for(var t = k; t <= Math.PI * 2 + k; t += dt) {
 			x = sizes1 * Math.cos(t);
 			z = sizes2 * Math.sin(t);
 
