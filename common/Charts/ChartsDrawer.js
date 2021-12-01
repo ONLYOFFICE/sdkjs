@@ -3857,8 +3857,7 @@ CChartsDrawer.prototype =
 		return result;
 	},
 
-	calculateCylinder: function(points, val, isNotDrawDownVerge, isNotOnlyFrontFaces)
-	{
+	calculateCylinder: function(points, val, isNotDrawDownVerge, isNotOnlyFrontFaces) {
 		var res;
 		var segmentPoints = points[0];
 		var segmentPoints2 = points[1];
@@ -3874,17 +3873,13 @@ CChartsDrawer.prototype =
 		var frontPaths = [];
 		var darkPaths = [];
 
-		var addPathToArr = function(isFront, face, index)
-		{
+		var addPathToArr = function(isFront, face, index) {
 			frontPaths[index] = null;
 			darkPaths[index] = null;
 
-			if(isFront)
-			{
+			if (isFront) {
 				frontPaths[index] = face;
-			}
-			else
-			{
+			} else {
 				darkPaths[index] = face;
 			}
 		};
@@ -3896,36 +3891,27 @@ CChartsDrawer.prototype =
 		addPathToArr(true, face, 0);
 
 		//down
-		if(val === 0 && this.calcProp.type === c_oChartTypes.Bar)
-		{
+		if (val === 0 && this.calcProp.type === c_oChartTypes.Bar) {
 			face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, false, true, true);
 			addPathToArr(true, face, 1);
-		}
-		else
-		{
+		} else {
 			face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, false, true, true);
 			addPathToArr(this._isVisibleVerge3D(point4, point1, point2, val), face, 1);
 		}
 
 		//up
-		if(val === 0 && this.calcProp.type === c_oChartTypes.Bar)
-		{
+		if (val === 0 && this.calcProp.type === c_oChartTypes.Bar) {
 			face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, true, false, true);
 			addPathToArr(true, face, 2);
-		}
-		else
-		{
+		} else {
 			face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, true, false, true);
 			addPathToArr(this._isVisibleVerge3D(point6, point5, point8, val), face, 2);
 		}
 
-		if(!isNotOnlyFrontFaces)
-		{
+		if (!isNotOnlyFrontFaces) {
 			res = frontPaths;
-		}
-		else
-		{
-			res = {frontPaths: frontPaths, darkPaths: darkPaths};
+		} else {
+			res = { frontPaths: frontPaths, darkPaths: darkPaths };
 		}
 
 		return res;
@@ -4950,7 +4936,8 @@ CChartsDrawer.prototype =
 		var segmentPoints2 = [];
 
 		var x, z;
-		var dt = Math.PI / 20;
+		// в ms 180 градусов составляют 17 сегментов
+		var dt = Math.PI / 17;
 
 		var sizes1 = individualBarWidth / 2;
 		var sizes2 = perspectiveDepth / 2;
@@ -4961,7 +4948,7 @@ CChartsDrawer.prototype =
 		k -= Math.abs(angelY);
 
 		// получаем точки основания цилиндра через парамметрические уравнения эллиптического цилиндра
-		for(var t = k; t <= Math.PI * 2 + k; t += dt) {
+		for (var t = k; t <= Math.PI * 2 + k; t += dt) {
 			x = sizes1 * Math.cos(t);
 			z = sizes2 * Math.sin(t);
 
@@ -4976,11 +4963,11 @@ CChartsDrawer.prototype =
 		var check = false;
 
 		// сортируем точки по видимости для построения плоскости цилиндра
- 		for (var i = 1; i < segmentPoints.length - 1; i++) {
+ 		for (var i = 1; i < segmentPoints.length; i++) {
  			if (this._isVisibleVerge3D(segmentPoints[i], segmentPoints2[i], segmentPoints2[i - 1], val, true)) {
  				if (!check) {
- 					sortCylinderPoints1.push(segmentPoints[i]);
- 					sortCylinderPoints2.push(segmentPoints2[i]);
+ 					sortCylinderPoints1.push(segmentPoints[i - 1]);
+ 					sortCylinderPoints2.push(segmentPoints2[i - 1]);
  				} else {
  					break;
  				}
@@ -4992,8 +4979,8 @@ CChartsDrawer.prototype =
  		if (check) {
  			for (var k = segmentPoints.length - 1; i <= k; k--) {
  				if (this._isVisibleVerge3D(segmentPoints[k], segmentPoints2[k], segmentPoints2[k - 1], val, true)) {
- 					sortCylinderPoints1.unshift(segmentPoints[k]);
- 					sortCylinderPoints2.unshift(segmentPoints2[k]);
+ 					sortCylinderPoints1.unshift(segmentPoints[k - 1]);
+ 					sortCylinderPoints2.unshift(segmentPoints2[k - 1]);
  				}
  			}
  		}
@@ -5410,9 +5397,6 @@ drawBarChart.prototype = {
 					return zIndex;
 				};
 				this.sortZIndexPaths.sort(function sortArr(a, b) {
-					if (a.sort) {
-						return b.sort - a.sort;
-					}
 					var minZA = getMinZ(a.facePoint, a.verge, a.seria);
 					var minZB = getMinZ(b.facePoint, b.verge, b.seria);
 					if (minZB == minZA) {
@@ -5767,6 +5751,7 @@ drawBarChart.prototype = {
 			points = [point1, point2, point3, point4, point5, point6, point7, point8];
 			paths = this.cChartDrawer.calculateRect3D(points, val, null, true);
 		}
+		// todo пересмотреть с новым рассчетом
 		if (type === AscFormat.BAR_SHAPE_CYLINDER) {
 			paths = this.cChartDrawer._calculateCylinder(startX, startY, individualBarWidth, height, val, gapDepth, perspectiveDepth, true);
 		}
