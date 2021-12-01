@@ -226,6 +226,8 @@
 			Italic: '<em>',
 			Span: '<span>',
 			CodeLine: '<pre>',
+			SubScript: '<sub>',
+			SupScript: '<sup>',
 			Code: '<code>',
 			Paragraph: '<p>',
 			Headings: ['<h1>', '<h2>', '<h3>', '<h4>', '<h5>', '<h6>'],
@@ -760,7 +762,19 @@
 
 			return false;
 		};
+		function GetVertAlign(oRun)
+		{
+			if (!oRun)
+				return "";
 
+			var oRunTextPr = oRun.Run.Get_CompiledPr();
+			if (oRunTextPr.VertAlign === 1)
+				return "sup";
+			else if (oRunTextPr.VertAlign === 2)
+				return "sub";
+
+			return "";
+		};
 		function GetTextWithPicture(oRun)
 		{
 			var sText = '';
@@ -867,8 +881,6 @@
 		if (sOutputText === '' && hasPicture === false)
 			return '';
 
-		
-
 		if (!this.isCodeBlock)
 		{
 			// возможно текст в ране представляет собой блок кода, обрабатываем это
@@ -920,6 +932,8 @@
 				var isItalicPrevRun = IsItalic(oRunPrev);
 				var isUnderlineNextRun = isUnderline(oRunNext);
 				var isUnderlinePrevRun = isUnderline(oRunPrev);
+				var sVertAlgnNextRun = GetVertAlign(oRunNext);
+				var sVertAlgnPrevRun = GetVertAlign(oRunPrev);
 				
 				if (hasPicture)
 					sOutputText = GetTextWithPicture(oRun);
@@ -978,6 +992,29 @@
 						else if (!isUnderlineNextRun)
 							sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Span, 'close');
 					}
+				}
+				
+				var sVertAlgn = GetVertAlign(oRun);
+				if (sVertAlgn && !this.isQuoteLine && (sType === 'html' || this.Config.htmlHeadings) )
+				{
+					if (!sVertAlgnNextRun && !sVertAlgnPrevRun)
+						sOutputText = this.WrapInTag(sOutputText, sVertAlgn === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'wholly');
+					else if (!sVertAlgnPrevRun)
+						sOutputText = this.WrapInTag(sOutputText, sVertAlgn === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'open');
+					else if (sVertAlgnPrevRun && sVertAlgnPrevRun !== sVertAlgn)
+					{
+						var sCloseTag = this.WrapInTag("", sVertAlgnPrevRun === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'close');
+						if (sVertAlgnNextRun)
+							sOutputText = sCloseTag + this.WrapInTag("", sVertAlgn === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'open') + sOutputText;
+						else
+						{
+							sOutputText = this.WrapInTag("", sVertAlgn === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'open') + sOutputText;
+							sOutputText	= sOutputText + this.WrapInTag("", sVertAlgn === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'close');
+						}
+
+					}
+					else if (!sVertAlgnNextRun)
+						sOutputText = this.WrapInTag(sOutputText, sVertAlgn === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'close');
 				}
 			}
 		}
