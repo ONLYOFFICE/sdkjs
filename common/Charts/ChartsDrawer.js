@@ -3937,12 +3937,16 @@ CChartsDrawer.prototype =
 		// path.lnTo(segmentPoints4.x / pxToMm * pathW, segmentPoints4.y / pxToMm * pathH);
 
 		if (up) {
-			for(var i = 0; i < segmentPoints2.length; i++) {
-				path.lnTo(segmentPoints2[i].x / pxToMm * pathW, segmentPoints2[i].y / pxToMm * pathH);
+			for (var i = 0; i < segmentPoints2.length; i++) {
+				if (i % 2 === 0) {
+					path.lnTo(segmentPoints2[i].x / pxToMm * pathW, segmentPoints2[i].y / pxToMm * pathH);
+				}
 			}
-		} else if (down){
-			for(var i = 0; i < segmentPoints.length; i++) {
-				path.lnTo(segmentPoints[i].x / pxToMm * pathW, segmentPoints[i].y / pxToMm * pathH);
+		} else if (down) {
+			for (var i = 0; i < segmentPoints.length; i++) {
+				if (i % 2 === 0) {
+					path.lnTo(segmentPoints[i].x / pxToMm * pathW, segmentPoints[i].y / pxToMm * pathH);
+				}
 			}
 		} else {
 			var endIndex = 0;
@@ -3952,11 +3956,15 @@ CChartsDrawer.prototype =
 			path.lnTo(segmentPoints2[endIndex].x / pxToMm * pathW, segmentPoints2[endIndex].y / pxToMm * pathH);
 			
 			for (var k = endIndex; k <= startIndex; k++) {
-				path.lnTo(segmentPoints[k].x / pxToMm * pathW, segmentPoints[k].y / pxToMm * pathH);
+				if (k % 2 === 0) {
+					path.lnTo(segmentPoints[k].x / pxToMm * pathW, segmentPoints[k].y / pxToMm * pathH);
+				}
 			}
 		
 			for (k = startIndex; endIndex <= k; k--) {
-				path.lnTo(segmentPoints2[k].x / pxToMm * pathW, segmentPoints2[k].y / pxToMm * pathH);
+				if (k % 2 === 0) {
+					path.lnTo(segmentPoints2[k].x / pxToMm * pathW, segmentPoints2[k].y / pxToMm * pathH);
+				}
 			}
 
 		}
@@ -4937,7 +4945,7 @@ CChartsDrawer.prototype =
 
 		var x, z;
 		// в ms 180 градусов составляют 17 сегментов
-		var dt = Math.PI / 17;
+		var dt = Math.PI / 34; //Math.PI / 17;
 
 		var sizes1 = individualBarWidth / 2;
 		var sizes2 = perspectiveDepth / 2;
@@ -4963,28 +4971,26 @@ CChartsDrawer.prototype =
 		var check = false;
 
 		// сортируем точки по видимости для построения плоскости цилиндра
- 		for (var i = 1; i < segmentPoints.length; i++) {
- 			if (this._isVisibleVerge3D(segmentPoints[i], segmentPoints2[i], segmentPoints2[i - 1], val, true)) {
- 				if (!check) {
- 					sortCylinderPoints1.push(segmentPoints[i - 1]);
- 					sortCylinderPoints2.push(segmentPoints2[i - 1]);
- 				} else {
- 					break;
- 				}
- 			} else {
- 				check = true;
- 			}
-		}
-
- 		if (check) {
- 			for (var k = segmentPoints.length - 1; i <= k; k--) {
- 				if (this._isVisibleVerge3D(segmentPoints[k], segmentPoints2[k], segmentPoints2[k - 1], val, true)) {
- 					sortCylinderPoints1.unshift(segmentPoints[k - 1]);
- 					sortCylinderPoints2.unshift(segmentPoints2[k - 1]);
- 				}
- 			}
- 		}
-
+		for (var i = 1; i < segmentPoints.length - 1; i++) {
+			if (this._isVisibleVerge3D(segmentPoints[i], segmentPoints2[i], segmentPoints2[i - 1], val, true)) {
+				if (!check) {
+					sortCylinderPoints1.push(segmentPoints[i - 1]);
+					sortCylinderPoints2.push(segmentPoints2[i - 1]);
+				} else {
+					break;
+				}
+			} else {
+				check = true;
+			}
+		}		
+		if (check) {
+			for (var k = segmentPoints.length - 1; i <= k; k--) {
+				if (this._isVisibleVerge3D(segmentPoints[k], segmentPoints2[k], segmentPoints2[k - 1], val, true)) {
+					sortCylinderPoints1.unshift(segmentPoints[k - 1]);
+					sortCylinderPoints2.unshift(segmentPoints2[k - 1]);
+				}
+			}
+		}		
 		if (sortCylinderPoints2.length === 0 || sortCylinderPoints1.length === 0) {
 			sortCylinderPoints1 = segmentPoints;
 			sortCylinderPoints2 = segmentPoints2;
