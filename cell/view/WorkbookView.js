@@ -547,6 +547,11 @@
           if (!self.canEdit()) {
             return;
           }
+		  if (self.isProtectActiveCell()) {
+			  self.input.blur();
+			  self.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
+			  return;
+		  }
           self._onStopFormatPainter();
           self.cellEditor.callTopLineMouseup = true;
           if (!self.getCellEditMode() && !self.controller.isFillHandleMode) {
@@ -750,6 +755,8 @@
 				  self.controller._onWindowKeyDown.apply(self.controller, arguments);
 			  }, "canEdit": function () {
 				  return self.canEdit();
+			  }, "isProtectActiveCell": function () {
+				  return self.isProtectActiveCell();
 			  }, "getFormulaRanges": function () {
 			      return self.isActive() ? self.getWorksheet().oOtherRanges : null;
 			  }, "isActive": function () {
@@ -2158,8 +2165,17 @@
   WorkbookView.prototype.getCellEditMode = function() {
 	  return this.isCellEditMode;
   };
+
 	WorkbookView.prototype.canEdit = function() {
 		return this.Api.canEdit();
+	};
+
+	WorkbookView.prototype.isProtectActiveCell = function() {
+		var ws = this.getWorksheet();
+		if (!ws) {
+			return false;
+		}
+		return ws.isProtectActiveCell();
 	};
 
     WorkbookView.prototype.getDialogSheetName = function () {

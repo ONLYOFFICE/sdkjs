@@ -22814,6 +22814,19 @@
 		}
 	};
 
+	WorksheetView.prototype.isProtectActiveCell = function () {
+		var t = this;
+		var wsModel = this.model;
+		var isProtectSheet = wsModel && wsModel.getSheetProtection();
+		if (isProtectSheet) {
+			var activeCell = wsModel.selectionRange && wsModel.selectionRange.activeCell;
+			if (activeCell) {
+				return wsModel.getLockedCell(activeCell.col, activeCell.row) && !wsModel.protectedRangesContains(activeCell.col, activeCell.row);
+			}
+		}
+		return false;
+	};
+
 	//------------------------------------------------------------export---------------------------------------------------
     window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window["AscCommonExcel"].CellFlags = CellFlags;
