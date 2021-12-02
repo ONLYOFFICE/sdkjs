@@ -15565,7 +15565,6 @@
 		var bbox = c.bbox;
 		var t = this;
 
-		var notCheckMax;
 		var ctrlKey = flags && flags.ctrlKey;
 		var shiftKey = flags && flags.shiftKey;
 		var applyByArray = ctrlKey && shiftKey;
@@ -15581,6 +15580,7 @@
 			if(ctrlKey) {
 				//TODO есть баг с тем, что не лочатся все ячейки при данном действии
 				c = t.getSelectedRange();
+				var isAllColumnSelect = c && c.bbox && (c.bbox.getType() === c_oAscSelectionType.RangeMax || c.bbox.getType() === c_oAscSelectionType.RangeCol);
 				if(c.bbox.isOneCell()) {
 					//проверяем, есть ли формула массива в этой ячейке
 					t.model._getCell(c.bbox.r1, c.bbox.c1, function(cell){
@@ -15589,7 +15589,7 @@
 							c = t.model.getRange3(formulaRef.r1, formulaRef.c1, formulaRef.r2, formulaRef.c2);
 						}
 					});
-				} else if (!notCheckMax && c && c.bbox && (c.bbox.getType() === c_oAscSelectionType.RangeMax || c.bbox.getType() === c_oAscSelectionType.RangeCol)) {
+				} else if ((!flags || !flags.notCheckMax) && isAllColumnSelect) {
 
 					var coord = t.getCellCoord(bbox.c1, t.visibleRange.r1);
 					if (bbox.c1 !== bbox.c2) {
@@ -15600,6 +15600,11 @@
 
 					var allRows = t.model.getRowsCount();
 					var filledRows;
+					//by test
+					window["AscDesktopEditor"] = {}
+					window["AscDesktopEditor"]["onDocumentModifiedChanged"] = function () {
+
+					}
 					if (window["AscDesktopEditor"]) {
 						filledRows = Math.max(c_maxColFillDataCount, allRows);
 						bbox = new Asc.Range(c.bbox.c1, 0, c.bbox.c2, filledRows);
@@ -15608,7 +15613,10 @@
 						t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.FillAllRowsWarning,
 							c_oAscError.Level.NoCritical,
 							[coord, filledRows, allRows], function () {
-								notCheckMax = true;
+								if (!flags) {
+									flags = []
+								}
+								flags.notCheckMax = true;
 								t._saveCellValueAfterEdit(c, val, flags, isNotHistory, lockDraw);
 							});
 					} else {
