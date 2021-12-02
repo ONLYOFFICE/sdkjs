@@ -10230,6 +10230,9 @@
 			this.sheetProtection.setDefaultInterface();
 		}
 		this.sheetProtection.set(props, addToHistory, this);
+		if (this.sheetProtection.isDefault()) {
+			this.sheetProtection = null;
+		}
 		return true;
 	};
 

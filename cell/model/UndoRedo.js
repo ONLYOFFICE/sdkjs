@@ -4553,6 +4553,11 @@ function (window, undefined) {
 					break;
 				}
 			}
+			if (bUndo) {
+				if (oModel.sheetProtection && oModel.sheetProtection.isDefault()) {
+					oModel.sheetProtection = null;
+				}
+			}
 			this.wb.handlers.trigger("asc_onChangeProtectWorksheet", oModel.index);
 		}
 	};

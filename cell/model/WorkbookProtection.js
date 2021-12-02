@@ -210,6 +210,17 @@
 		this.selectUnlockedCells = false;
 	};
 
+	CSheetProtection.prototype.isDefault = function () {
+		if (this.algorithmName === null && this.hashValue === null && this.saltValue === null && this.spinCount === null) {
+			if (this.sheet === false && this.objects === true && this.scenarios === true && this.formatColumns === true && this.formatRows === true && this.insertColumns ===
+				true && this.insertRows === true && this.deleteRows === true && this.selectLockedCells === false && this.sort === true && this.autoFilter === true &&
+				this.pivotTables === true && this.selectUnlockedCells === false) {
+				return true;
+			}
+		}
+		return false;
+	};
+
 	CSheetProtection.prototype.set = function (val, addToHistory, ws) {
 		this.algorithmName = this.checkProperty(this.algorithmName, val.algorithmName, AscCH.historyitem_Protected_SetAlgorithmName, ws, addToHistory);
 		this.hashValue = this.checkProperty(this.hashValue, val.hashValue, AscCH.historyitem_Protected_SetHashValue, ws, addToHistory);
