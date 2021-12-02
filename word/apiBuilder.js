@@ -518,7 +518,7 @@
 				if (oCMarkdownConverter.Config.convertType === 'html' || oCMarkdownConverter.isTableCellContent || oCMarkdownConverter.Config.htmlHeadings)
 					return oCMarkdownConverter.WrapInTag(sOutputText, oCMarkdownConverter.HtmlTags.Headings[nHeadingLvl],'wholly');
 				else if (oCMarkdownConverter.Config.convertType === 'markdown')
-					return oCMarkdownConverter.WrapInSymbol(sOutputText, oCMarkdownConverter.MdSymbols.Headings[nHeadingLvl], 'open');
+					return oCMarkdownConverter.WrapInSymbol(sOutputText, oCMarkdownConverter.MdSymbols.Headings[nHeadingLvl] + ' ', 'open');
 			}
 		};
 		function SetQuote()
@@ -774,10 +774,9 @@
 			var sVertAlg1 = GetVertAlign(oRun1);
 			var sVertAlg2 = GetVertAlign(oRun2);
 
-			if (oTextPr1.Bold === oTextPr2.Bold && oTextPr1.Italic === oTextPr2.Italic && oTextPr1.Strikeout === oTextPr2.Strikeout
-				&& sVertAlg1 === sVertAlg2)
+			if (oTextPr1.Bold === oTextPr2.Bold && oTextPr1.Italic === oTextPr2.Italic && oTextPr1.Strikeout === oTextPr2.Strikeout)
 			{
-				if (this.Config.convertType === "html" && oTextPr1.Underline !== oTextPr2.Underline)
+				if (this.Config.convertType === "html" && (oTextPr1.Underline !== oTextPr2.Underline || sVertAlg1 !== sVertAlg2))
 					return false;
 
 				return true;
@@ -845,6 +844,14 @@
 					}
 					case para_Space:
 					case para_NewLine:
+						if (!this.isHeading)
+						{
+							if (this.Config.convertType === "html")
+								sText += "<br>"
+							else
+								sText += " \\\n";
+						}
+						break;
 					case para_Tab:
 					{
 						sText += " ";
@@ -879,10 +886,13 @@
 					}
 					case para_Space:
 					case para_NewLine:
-						if (this.Config.convertType === "html")
-							sText += "<br>"
-						else
-							sText += " \\\n";
+						if (!this.isHeading)
+						{
+							if (this.Config.convertType === "html")
+								sText += "<br>"
+							else
+								sText += " \\\n";
+						}
 						break;
 					case para_Tab:
 					{
@@ -1000,7 +1010,7 @@
 							if (!isStrikeoutNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
 								sOutputText = this.WrapInTag(sOutputText, this.MdSymbols.Strikeout, 'close');
 						}
-						else if (!isStrikeoutNextRun)
+						else if (!isStrikeoutNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Strikeout, 'close');
 					}
 				}
@@ -1016,7 +1026,7 @@
 							if (!isBoldNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
 								sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Bold, 'close');
 						}
-						else if (!isBoldNextRun)
+						else if (!isBoldNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
 							sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Bold, 'close');
 					}
 					else if (sType === 'markdown')
@@ -1029,7 +1039,7 @@
 							if (!isBoldNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
 								sOutputText = this.WrapInTag(sOutputText, this.MdSymbols.Bold, 'close');
 						}
-						else if (!isBoldNextRun)
+						else if (!isBoldNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Bold, 'close');
 					}
 				}
@@ -1046,8 +1056,7 @@
 							if (!isItalicNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
 								sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Italic, 'close');
 						}
-							
-						else if (!isItalicNextRun)
+						else if (!isItalicNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
 							sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Italic, 'close');
 					}
 					else if (sType === 'markdown')
@@ -1060,8 +1069,7 @@
 							if (!isItalicNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
 								sOutputText = this.WrapInTag(sOutputText, this.MdSymbols.Italic, 'close');
 						}
-							
-						else if (!isItalicNextRun)
+						else if (!isItalicNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Italic, 'close');
 					}
 				}
@@ -1077,7 +1085,7 @@
 							if (!isUnderlineNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
 								sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Span, 'close');
 						}
-						else if (!isUnderlineNextRun)
+						else if (!isUnderlineNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
 							sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Span, 'close');
 					}
 				}
@@ -1095,7 +1103,7 @@
 							sOutputText = this.WrapInTag(sOutputText, sVertAlgn === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'close');
 						}
 					}
-					else if (!sVertAlgnNextRun)
+					else if (!sVertAlgnNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
 						sOutputText = this.WrapInTag(sOutputText, sVertAlgn === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'close');
 				}
 			}
