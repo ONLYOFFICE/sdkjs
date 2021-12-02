@@ -228,6 +228,7 @@
 			CodeLine: '<pre>',
 			SubScript: '<sub>',
 			SupScript: '<sup>',
+			Strikeout: '<del>',
 			Code: '<code>',
 			Paragraph: '<p>',
 			Headings: ['<h1>', '<h2>', '<h3>', '<h4>', '<h5>', '<h6>'],
@@ -241,8 +242,9 @@
 		this.MdSymbols =
 		{
 			Bold: '**',
-			Italic: '*',
+			Italic: '_',
 			CodeLine: '```',
+			Strikeout: '~~',
 			Code:  '`',
 			Headings: ['#', '##', '###', '####', '#####', '######'],
 			Quote: '>'
@@ -762,6 +764,38 @@
 
 			return false;
 		};
+		function isEqualTxPr(oRun1, oRun2)
+		{
+			if (!oRun2)
+				return false;
+
+			var oTextPr1 = oRun1.Run.Get_CompiledPr();
+			var oTextPr2 = oRun2.Run.Get_CompiledPr();
+			var sVertAlg1 = GetVertAlign(oRun1);
+			var sVertAlg2 = GetVertAlign(oRun2);
+
+			if (oTextPr1.Bold === oTextPr2.Bold && oTextPr1.Italic === oTextPr2.Italic && oTextPr1.Strikeout === oTextPr2.Strikeout
+				&& sVertAlg1 === sVertAlg2)
+			{
+				if (this.Config.convertType === "html" && oTextPr1.Underline !== oTextPr2.Underline)
+					return false;
+
+				return true;
+			}
+
+			return false;
+		};
+		function isStrikeout(oRun)
+		{
+			if (!oRun)
+				return false;
+
+			var oRunTextPr = oRun.Run.Get_CompiledPr();
+			if (oRunTextPr.Strikeout)
+				return true;
+
+			return false;
+		};
 		function GetVertAlign(oRun)
 		{
 			if (!oRun)
@@ -932,20 +966,56 @@
 				var isItalicPrevRun = IsItalic(oRunPrev);
 				var isUnderlineNextRun = isUnderline(oRunNext);
 				var isUnderlinePrevRun = isUnderline(oRunPrev);
+				var isStrikeoutNextRun = isStrikeout(oRunNext);
+				var isStrikeoutPrevRun = isStrikeout(oRunPrev);
 				var sVertAlgnNextRun = GetVertAlign(oRunNext);
 				var sVertAlgnPrevRun = GetVertAlign(oRunPrev);
 				
+
 				if (hasPicture)
 					sOutputText = GetTextWithPicture(oRun);
 
+				if (oTextPr.Strikeout)
+				{
+					if (sType === 'html' || this.Config.htmlHeadings)
+					{
+						if (!isStrikeoutPrevRun && !isStrikeoutNextRun)
+							sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Strikeout, 'wholly');
+						else if (!isStrikeoutPrevRun || !isEqualTxPr.call(this, oRun, oRunPrev))
+						{
+							sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Strikeout, 'open');
+							if (!isStrikeoutNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
+								sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Strikeout, 'close');
+						}
+						else if (!isStrikeoutNextRun)
+							sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Strikeout, 'close');
+					}
+					else if (sType === 'markdown')
+					{
+						if (!isStrikeoutPrevRun && !isStrikeoutNextRun)
+							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Strikeout, 'wholly');
+						else if (!isStrikeoutPrevRun || !isEqualTxPr.call(this, oRun, oRunPrev))
+						{
+							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Strikeout, 'open');
+							if (!isStrikeoutNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
+								sOutputText = this.WrapInTag(sOutputText, this.MdSymbols.Strikeout, 'close');
+						}
+						else if (!isStrikeoutNextRun)
+							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Strikeout, 'close');
+					}
+				}
 				if (oTextPr.Bold)
 				{
 					if (sType === 'html' || this.Config.htmlHeadings)
 					{
 						if (!isBoldPrevRun && !isBoldNextRun)
 							sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Bold, 'wholly');
-						else if (!isBoldPrevRun)
+						else if (!isBoldPrevRun || !isEqualTxPr.call(this, oRun, oRunPrev))
+						{
 							sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Bold, 'open');
+							if (!isBoldNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
+								sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Bold, 'close');
+						}
 						else if (!isBoldNextRun)
 							sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Bold, 'close');
 					}
@@ -953,8 +1023,12 @@
 					{
 						if (!isBoldPrevRun && !isBoldNextRun)
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Bold, 'wholly');
-						else if (!isBoldPrevRun)
+						else if (!isBoldPrevRun || !isEqualTxPr.call(this, oRun, oRunPrev))
+						{
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Bold, 'open');
+							if (!isBoldNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
+								sOutputText = this.WrapInTag(sOutputText, this.MdSymbols.Bold, 'close');
+						}
 						else if (!isBoldNextRun)
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Bold, 'close');
 					}
@@ -966,8 +1040,13 @@
 					{
 						if (!isItalicPrevRun && !isItalicNextRun)
 							sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Italic, 'wholly');
-						else if (!isItalicPrevRun)
+						else if (!isItalicPrevRun || !isEqualTxPr.call(this, oRun, oRunPrev))
+						{
 							sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Italic, 'open');
+							if (!isItalicNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
+								sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Italic, 'close');
+						}
+							
 						else if (!isItalicNextRun)
 							sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Italic, 'close');
 					}
@@ -975,8 +1054,13 @@
 					{
 						if (!isItalicPrevRun && !isItalicNextRun)
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Italic, 'wholly');
-						else if (!isItalicPrevRun)
+						else if (!isItalicPrevRun || !isEqualTxPr.call(this, oRun, oRunPrev))
+						{
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Italic, 'open');
+							if (!isItalicNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
+								sOutputText = this.WrapInTag(sOutputText, this.MdSymbols.Italic, 'close');
+						}
+							
 						else if (!isItalicNextRun)
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Italic, 'close');
 					}
@@ -987,8 +1071,12 @@
 					{
 						if (!isUnderlinePrevRun && !isUnderlineNextRun)
 							sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Span, 'wholly', 'text-decoration:underline');
-						else if (!isUnderlinePrevRun)
+						else if (!isUnderlinePrevRun || !isEqualTxPr.call(this, oRun, oRunPrev))
+						{
 							sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Span, 'open', 'text-decoration:underline');
+							if (!isUnderlineNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
+								sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Span, 'close');
+						}
 						else if (!isUnderlineNextRun)
 							sOutputText = this.WrapInTag(sOutputText, this.HtmlTags.Span, 'close');
 					}
@@ -999,19 +1087,13 @@
 				{
 					if (!sVertAlgnNextRun && !sVertAlgnPrevRun)
 						sOutputText = this.WrapInTag(sOutputText, sVertAlgn === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'wholly');
-					else if (!sVertAlgnPrevRun)
-						sOutputText = this.WrapInTag(sOutputText, sVertAlgn === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'open');
-					else if (sVertAlgnPrevRun && sVertAlgnPrevRun !== sVertAlgn)
+					else if (!sVertAlgnPrevRun || !isEqualTxPr.call(this, oRun, oRunNext))
 					{
-						var sCloseTag = this.WrapInTag("", sVertAlgnPrevRun === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'close');
-						if (sVertAlgnNextRun)
-							sOutputText = sCloseTag + this.WrapInTag("", sVertAlgn === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'open') + sOutputText;
-						else
+						sOutputText = this.WrapInTag(sOutputText, sVertAlgn === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'open');
+						if (!isUnderlineNextRun || !isEqualTxPr.call(this, oRun, oRunNext))
 						{
-							sOutputText = this.WrapInTag("", sVertAlgn === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'open') + sOutputText;
-							sOutputText	= sOutputText + this.WrapInTag("", sVertAlgn === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'close');
+							sOutputText = this.WrapInTag(sOutputText, sVertAlgn === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'close');
 						}
-
 					}
 					else if (!sVertAlgnNextRun)
 						sOutputText = this.WrapInTag(sOutputText, sVertAlgn === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'close');
