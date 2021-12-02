@@ -1738,6 +1738,9 @@
 	}
 
     var editFunction = function() {
+      if (needBlurFunc) {
+		  t.input && t.input.focus();
+	  }
       t.setCellEditMode(true);
       t.hideSpecialPasteButton();
       ws.openCellEditor(t.cellEditor, enterOptions, selectionRange);
@@ -1774,7 +1777,15 @@
 		}
 	};
 
-    ws.checkProtectRangeOnEdit([new Asc.Range(activeCellRange.c1, activeCellRange.r1, activeCellRange.c1, activeCellRange.r1)], doEdit);
+	var needBlur = false;
+	var needBlurFunc;
+	if (t.input && t.input.isFocused) {
+		needBlurFunc = function () {
+			t.input && t.input.blur();
+			needBlur = true;
+		}
+	}
+    ws.checkProtectRangeOnEdit([new Asc.Range(activeCellRange.c1, activeCellRange.r1, activeCellRange.c1, activeCellRange.r1)], doEdit, null, needBlurFunc);
   };
 
   WorkbookView.prototype._checkStopCellEditorInFormulas = function() {

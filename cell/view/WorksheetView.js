@@ -22742,7 +22742,7 @@
 		this.draw();
 	};
 
-	WorksheetView.prototype.checkProtectRangeOnEdit = function (aRanges, callback, checkLockedRangeOnProtect) {
+	WorksheetView.prototype.checkProtectRangeOnEdit = function (aRanges, callback, checkLockedRangeOnProtect, textAreaBlurFunc) {
 		var t = this;
 		var wsModel = this.model;
 		var isProtectSheet = wsModel.getSheetProtection();
@@ -22776,6 +22776,7 @@
 					for (var n = 0; n < lockedRanges.length; n++) {
 						protectedRanges = wsModel.protectedRangesContainsRange(lockedRanges[i]);
 						if (!protectedRanges) {
+							textAreaBlurFunc && textAreaBlurFunc();
 							t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
 							callback(false);
 							return false;
@@ -22786,6 +22787,7 @@
 				} else {
 					protectedRanges = wsModel.protectedRangesContainsRange(range);
 					if (!protectedRanges) {
+						textAreaBlurFunc && textAreaBlurFunc();
 						t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
 						callback(false);
 						return false;
@@ -22799,9 +22801,11 @@
 		//в сдучае, допустим, мультиселекта, когда попадаем в несколько диапазонов с паролем, выдаём ошибку
 		//в дальнейшем можно использовать Promise.all
 		if (aCheckPasswordRanges.length > 1) {
+			textAreaBlurFunc && textAreaBlurFunc();
 			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
 			callback(false);
 		} else if (aCheckPasswordRanges.length === 1) {
+			textAreaBlurFunc && textAreaBlurFunc();
 			//внутри asc_onConfirmAction дёргаем checkProtectedRangesPassword
 			this.model.workbook.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmChangeProtectRange, function (can, isCancel) {
 				if (!can && !isCancel) {
