@@ -1770,6 +1770,26 @@ Paragraph.prototype.IsEmptyRange = function(nCurLine, nCurRange)
 
 	return true;
 };
+Paragraph.prototype.GetLinesCount = function()
+{
+	if (!this.IsRecalculated())
+		return 0;
+
+	return this.Lines.length;
+};
+Paragraph.prototype.GetLineBounds = function(nCurLine)
+{
+	var oLine    = this.Lines[nCurLine];
+	var nCurPage = this.GetPageByLine();
+	var oPage    = this.Pages[nCurPage];
+	if (!this.IsRecalculated() || !oLine || oLine.Ranges.length <= 0 || !oPage)
+		return new CDocumentBounds(0, 0, 0, 0);
+
+	var nTop    = oPage.Y + oLine.Top;
+	var nBottom = oPage.Y + oLine.Bottom;
+
+	return new CDocumentBounds(oPage.X, nTop, oPage.XLimit, nBottom);
+};
 Paragraph.prototype.Reset_RecalculateCache = function()
 {
 

@@ -736,7 +736,7 @@ CInlineLevelSdt.prototype.IsFixedForm = function()
 	var oShape = this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null;
 	return (oShape && oShape.isForm());
 };
-CInlineLevelSdt.prototype.GetFixedFormBounds = function()
+CInlineLevelSdt.prototype.GetFixedFormBounds = function(isUsePaddings)
 {
 	if (!this.Paragraph)
 		return {X : 0, Y : 0, W : 0, H : 0, Page : 0};
@@ -744,7 +744,7 @@ CInlineLevelSdt.prototype.GetFixedFormBounds = function()
 	var oShape = this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null;
 	if (oShape && oShape.isForm())
 	{
-		return oShape.getFormRelRect();
+		return oShape.getFormRelRect(isUsePaddings);
 	}
 
 	return {X : 0, Y : 0, W : 0, H : 0, Page : 0};

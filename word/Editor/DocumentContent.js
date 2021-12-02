@@ -1600,7 +1600,7 @@ CDocumentContent.prototype.CheckFormViewWindow = function()
 
 	var oParagraph  = this.GetElement(0);
 	var oPageBounds = this.GetContentBounds(0);
-	var oFormBounds = oForm.GetFixedFormBounds();
+	var oFormBounds = oForm.GetFixedFormBounds(true);
 
 	var nDx = 0, nDy = 0, nPad = 0;
 
@@ -1634,10 +1634,15 @@ CDocumentContent.prototype.CheckFormViewWindow = function()
 		isChanged = true;
 	}
 
-	var oCursorPos = oParagraph.GetCalculatedCurPosXY();
+	var oCursorPos  = oParagraph.GetCalculatedCurPosXY();
+	var oLineBounds = oParagraph.GetLineBounds(oCursorPos.Internal.Line);
 
 	nDx = 0;
 	nDy = 0;
+
+	var nCursorT = Math.min(oCursorPos.Y, oLineBounds.Top);
+	var nCursorB = Math.max(oCursorPos.Y + oCursorPos.Height, oLineBounds.Bottom);
+	var nCursorH = Math.max(0, nCursorB - nCursorT);
 
 	if (oPageBounds.Right - oPageBounds.Left > oFormBounds.W)
 	{
@@ -1649,10 +1654,10 @@ CDocumentContent.prototype.CheckFormViewWindow = function()
 
 	if (oPageBounds.Bottom - oPageBounds.Top > oFormBounds.H)
 	{
-		if (oCursorPos.Height > oFormBounds.H - nPad || oCursorPos.Y < oFormBounds.Y + nPad)
-			nDy = oFormBounds.Y + nPad - oCursorPos.Y;
-		else if (oCursorPos.Y + oCursorPos.Height > oFormBounds.H - nPad)
-			nDy = oFormBounds.H - nPad - oCursorPos.Y - oCursorPos.Height;
+		if (nCursorH > oFormBounds.H - nPad || nCursorT < oFormBounds.Y + nPad)
+			nDy = oFormBounds.Y + nPad - nCursorT;
+		else if (nCursorT + nCursorH > oFormBounds.H - nPad)
+			nDy = oFormBounds.H - nPad - nCursorT - nCursorH;
 	}
 
 	if (Math.abs(nDx) > 0.001 || Math.abs(nDy) > 0.001)
