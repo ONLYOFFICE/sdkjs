@@ -15600,14 +15600,9 @@
 
 					var allRows = t.model.getRowsCount();
 					var filledRows;
-					//by test
-					window["AscDesktopEditor"] = {}
-					window["AscDesktopEditor"]["onDocumentModifiedChanged"] = function () {
-
-					}
 					if (window["AscDesktopEditor"]) {
 						filledRows = Math.max(c_maxColFillDataCount, allRows);
-						bbox = new Asc.Range(c.bbox.c1, 0, c.bbox.c2, filledRows);
+						bbox = new Asc.Range(c.bbox.c1, 0, c.bbox.c2, filledRows - 1);
 						c = t._getRange(bbox.c1, bbox.r1, bbox.c2, bbox.r2);
 
 						t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.FillAllRowsWarning,
@@ -15621,7 +15616,7 @@
 							});
 					} else {
 						filledRows = c_maxColFillDataCount;
-						bbox = new Asc.Range(c.bbox.c1, 0, c.bbox.c2, filledRows);
+						bbox = new Asc.Range(c.bbox.c1, 0, c.bbox.c2, filledRows - 1);
 						c = t._getRange(bbox.c1, bbox.r1, bbox.c2, bbox.r2);
 						t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.FillAllRowsWarning, c_oAscError.Level.NoCritical, [coord, filledRows, allRows]);
 					}
