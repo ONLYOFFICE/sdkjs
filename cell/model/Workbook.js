@@ -10025,15 +10025,23 @@
 			return null;
 		}
 
+		//todo закрепленные области
 		var newVal;
 		if (range.c1 === 0 && range.r1 === 0) {
 			newVal = null;
 		} else {
-			newVal = new Asc.Range(0, 0, 0, 0);
-			newVal.c1 = range.c1;
-			newVal.r1 = range.r1;
-			newVal.c2 = range.c1;
-			newVal.r2 = range.r1;
+			var topLeftFrozenCell = this.sheetViews[0] && this.sheetViews[0].pane && this.sheetViews[0].pane.topLeftFrozenCell;
+			if (topLeftFrozenCell && topLeftFrozenCell.col > 1 && topLeftFrozenCell.row > 1) {
+				newVal = null;
+			} else {
+				newVal = new Asc.Range(0, 0, 0, 0);
+				if (!topLeftFrozenCell || topLeftFrozenCell.col <= 1) {
+					newVal.c1 = newVal.c2 = range.c1;
+				}
+				if (!topLeftFrozenCell || topLeftFrozenCell.row <= 1) {
+					newVal.r1 = newVal.r2 = range.r1;
+				}
+			}
 		}
 
 		return newVal;
