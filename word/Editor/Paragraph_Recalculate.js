@@ -1307,7 +1307,7 @@ Paragraph.prototype.private_RecalculateLinePosition    = function(CurLine, CurPa
     if (CurLine === this.Pages[CurPage].FirstLine)
     {
     	var oForm = null;
-    	if (this.IsInFixedForm() && (oForm = this.GetInnerForm()) && oForm.IsMultiLineForm())
+    	if (this.IsInFixedForm() && (oForm = this.GetInnerForm()) && oForm.IsMultiLineForm() && oForm.IsTextForm())
 		{
 			var oRun = oForm.GetElement(0);
 			if (oRun && oRun instanceof ParaRun)

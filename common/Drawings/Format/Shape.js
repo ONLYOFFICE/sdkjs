@@ -2341,7 +2341,8 @@ CShape.prototype.getFormRelRect = function (isUsePaddings) {
 	var nX = 0, nW = this.extX;
 	var nY = 0, nH = this.extY;
 
-	if (isUsePaddings && this.isForm())
+	var oInnerForm = null;
+	if (isUsePaddings && this.isForm() && (oInnerForm = this.getInnerForm()) && !oInnerForm.IsPictureForm() && !oInnerForm.IsCheckBox())
 	{
 		nX += g_nDefaultFormHorPadding;
 		nW -= 2 * g_nDefaultFormHorPadding;
@@ -2424,7 +2425,7 @@ CShape.prototype.checkTransformTextMatrix = function (oMatrix, oContent, oBodyPr
     }
 
     var oForm = null;
-	if (this.isForm() && (oForm = this.getInnerForm()))
+	if (this.isForm() && (oForm = this.getInnerForm()) && !oForm.IsPictureForm() && !oForm.IsCheckBox())
 	{
 		l_ins = g_nDefaultFormHorPadding;
 		r_ins = g_nDefaultFormHorPadding;
@@ -4155,7 +4156,7 @@ CShape.prototype.recalculateDocContent = function(oDocContent, oBodyPr)
     }
 
 	var oForm = null;
-	if (this.isForm() && (oForm = this.getInnerForm()))
+	if (this.isForm() && (oForm = this.getInnerForm()) && !oForm.IsPictureForm() && !oForm.IsCheckBox())
 	{
 		l_ins = g_nDefaultFormHorPadding;
 		r_ins = g_nDefaultFormHorPadding;
@@ -5860,6 +5861,15 @@ CShape.prototype.hit = function (x, y) {
 };
 
 CShape.prototype.hitInPath = function (x, y) {
+
+	var oInnerForm = null;
+	if (this.isForm() && (oInnerForm = this.getInnerForm()) && !oInnerForm.IsPictureForm()) {
+		var oApi = Asc.editor || editor;
+		var oLogicDocument = oApi && oApi.WordControl && oApi.WordControl.m_oLogicDocument ? oApi.WordControl.m_oLogicDocument : null;
+		if (oLogicDocument && oLogicDocument.IsDocumentEditor() && oLogicDocument.IsFillingFormMode())
+			return false;
+	}
+
     if(!this.checkHitToBounds(x, y))
         return false;
     var invert_transform = this.getInvertTransform();
@@ -5899,6 +5909,15 @@ CShape.prototype.hitInInnerArea = function (x, y) {
 };
 
 CShape.prototype.hitInBoundingRect = function (x, y) {
+
+	var oInnerForm = null;
+	if (this.isForm() && (oInnerForm = this.getInnerForm()) && !oInnerForm.IsPictureForm()) {
+		var oApi = Asc.editor || editor;
+		var oLogicDocument = oApi && oApi.WordControl && oApi.WordControl.m_oLogicDocument ? oApi.WordControl.m_oLogicDocument : null;
+		if (oLogicDocument && oLogicDocument.IsDocumentEditor() && oLogicDocument.IsFillingFormMode())
+			return false;
+	}
+
     if(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES){
         return false;
     }
