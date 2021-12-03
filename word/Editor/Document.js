@@ -9170,12 +9170,17 @@ CDocument.prototype.Can_InsertContent = function(SelectedContent, NearPos)
 
 	var Para = NearPos.Paragraph;
 
-	// Автофигуры не вставляем в другие автофигуры, сноски и концевые сноски
-	if ((true === Para.Parent.Is_DrawingShape() || true === Para.Parent.IsFootnote()) && true === SelectedContent.HaveShape)
+	var oParaParent = Para.GetParent();
+	if (!oParaParent)
 		return false;
 
+	// Автофигуры не вставляем в другие автофигуры, сноски и концевые сноски
+	// Единственное исключение, если вставка происходит картинки в картиночное поле (для замены картинки)
+	var oParentShape = oParaParent.Is_DrawingShape(true);
+	if (((oParentShape && !oParentShape.isForm()) || true === oParaParent.IsFootnote()) && true === SelectedContent.HaveShape)
+		return false;
 
-	//В заголовки диаграмм не вставляем формулы и любые DrawingObjects
+	// В заголовки диаграмм не вставляем формулы и любые DrawingObjects
 	if (Para.bFromDocument === false && (SelectedContent.DrawingObjects.length > 0 || SelectedContent.HaveMath || SelectedContent.HaveTable))
 		return false;
 
@@ -9207,9 +9212,6 @@ CDocument.prototype.Can_InsertContent = function(SelectedContent, NearPos)
 		}
 	}
 	else if (para_Run !== LastClass.Type)
-		return false;
-
-	if (null === Para.Parent || undefined === Para.Parent)
 		return false;
 
 	return true;

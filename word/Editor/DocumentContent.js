@@ -1592,6 +1592,7 @@ CDocumentContent.prototype.CheckFormViewWindow = function()
 	if (!this.LogicDocument
 		|| !oForm
 		|| oForm.IsCheckBox()
+		|| oForm.IsPicture()
 		|| (oForm.IsTextForm() && oForm.GetTextFormPr().IsComb())
 		|| oForm.IsAutoFitContent()
 		|| this.Content.length !== 1
