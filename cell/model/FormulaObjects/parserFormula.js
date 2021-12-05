@@ -6291,7 +6291,7 @@ function parserFormula( formula, parent, _ws ) {
 
 			/* Referens to DefinedNames */ else if (parserHelp.isName.call(ph, t.Formula, ph.pCurrPos)) {
 
-				if (ph.operand_str.length > g_nFormulaStringMaxLength) {
+				if (ph.operand_str.length > g_nFormulaStringMaxLength || !AscCommon.rx_r1c1DefError.test(ph.operand_str)) {
 					//TODO стоит добавить новую ошибку
 					parseResult.setError(c_oAscError.ID.FrmlWrongOperator);
 					if(!ignoreErrors) {

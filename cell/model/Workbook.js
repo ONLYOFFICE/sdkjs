@@ -10394,6 +10394,7 @@
 
 	Worksheet.prototype.checkProtectedRangeName = function (name) {
 		var res = c_oAscDefinedNameReason.OK;
+		//TODO пересмотреть проверку на rx_defName
 		if (!AscCommon.rx_defName.test(name.toLowerCase()) || name.length > g_nDefNameMaxLength) {
 			return c_oAscDefinedNameReason.WrongName;
 		}
