@@ -1404,6 +1404,9 @@ CSdtTextFormPr.prototype.SetMultiLine = function(isMultiLine)
 };
 CSdtTextFormPr.prototype.GetAutoFit = function()
 {
+	if (this.Comb)
+		return false;
+
 	return this.AutoFit;
 };
 CSdtTextFormPr.prototype.SetAutoFit = function(isAutoFit)
