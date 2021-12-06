@@ -2410,10 +2410,12 @@ ParaRun.prototype.Split2 = function(CurPos, Parent, ParentPos)
 		}
     }
 
-
-	// Разделяем содержимое по ранам
-    NewRun.ConcatToContent( this.Content.slice(CurPos) );
-    this.Remove_FromContent( CurPos, this.Content.length - CurPos, true );
+    // ВСЕГДА копируем элементы, для корректной работы не надо переносить имеющиеся элементы в новый ран
+	for (var nIndex = CurPos, nNewIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex, ++nNewIndex)
+	{
+		NewRun.AddToContent(nNewIndex, this.Content[nIndex].Copy());
+	}
+    this.RemoveFromContent(CurPos, this.Content.length - CurPos, true);
 
     // Если были точки орфографии, тогда переместим их в новый ран
     var SpellingMarksCount = this.SpellingMarks.length;
