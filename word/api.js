@@ -2249,10 +2249,11 @@ background-repeat: no-repeat;\
 		if (!_logicDoc || _logicDoc.IsSelectionEmpty(true))
 			return;
 
-		if (false === _logicDoc.Document_Is_SelectionLocked(AscCommon.changestype_Remove))
+		if (!_logicDoc.IsSelectionLocked(AscCommon.changestype_Remove, null, true, _logicDoc.IsFormFieldEditing()))
 		{
 			_logicDoc.StartAction(AscDFH.historydescription_Cut);
 			_logicDoc.Remove(-1, true, true); // -1 - нормальное удаление  (например, для таблиц)
+			_logicDoc.Recalculate();
 			_logicDoc.UpdateSelection();
 			_logicDoc.FinalizeAction();
 		}

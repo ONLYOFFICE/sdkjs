@@ -810,6 +810,16 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCu
 };
 CInlineLevelSdt.prototype.SelectContentControl = function()
 {
+	var arrDrawings, oLogicDocument;
+	if (this.IsPicture()
+		&& (arrDrawings = this.GetAllDrawingObjects())
+		&& arrDrawings.length > 0
+		&& (oLogicDocument = this.GetLogicDocument()))
+	{
+		oLogicDocument.Select_DrawingObject(arrDrawings[0].GetId());
+		return;
+	}
+
 	if (this.IsForm() && this.IsPlaceHolder() && this.GetLogicDocument() && this.GetLogicDocument().CheckFormPlaceHolder)
 	{
 		this.RemoveSelection();

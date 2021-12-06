@@ -25277,32 +25277,7 @@ CDocument.prototype.ClearAllSpecialForms = function()
 			if (!oCurrentForm && oForm.Is_UseInDocument())
 				oCurrentForm = oForm;
 
-			if (oForm.IsCheckBox())
-			{
-				oForm.SetCheckBoxChecked(false);
-			}
-			else if (oForm.IsPicture())
-			{
-				var arrDrawings = oForm.GetAllDrawingObjects();
-				if (arrDrawings.length > 0 && arrDrawings[0].IsPicture())
-				{
-					var nW = arrDrawings[0].Extent.W;
-					var nH = arrDrawings[0].Extent.H;
-
-					oForm.ReplaceContentWithPlaceHolder();
-					oForm.ApplyPicturePr(true, nW, nH);
-				}
-				else
-				{
-					oForm.ReplaceContentWithPlaceHolder();
-					oForm.ApplyPicturePr(true);
-				}
-			}
-			else
-			{
-				oForm.ReplaceContentWithPlaceHolder();
-			}
-
+			oForm.ClearContentControlExt();
 			oForm.RemoveSelection();
 		}
 

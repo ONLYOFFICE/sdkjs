@@ -3077,6 +3077,11 @@ ParaDrawing.prototype.CheckDeletingLock = function()
 		&& this.LogicDocument.IsDocumentEditor()
 		&& (!this.LogicDocument.CanEdit() || this.LogicDocument.IsFillingFormMode()))
 	{
+		// В формах мы не удаляем ничего, а чистим форму, если нужно
+		var oInnerForm = null;
+		if (this.IsForm() && (oInnerForm = this.GetInnerForm()) && !oInnerForm.IsPlaceHolder())
+			return;
+
 		return AscCommon.CollaborativeEditing.Add_CheckLock(true);
 	}
 
