@@ -420,8 +420,16 @@
 				if (sNumId && isBulleted)
 					sOutputText = oCMarkdownConverter.WrapInSymbol(sOutputText, '* ', 'open');
 				else
-					sOutputText = oCMarkdownConverter.WrapInSymbol(sOutputText, String(oPara.Paragraph.SavedNumberingValues.NumInfo[0][0]) + '. ', 'open');
-
+				{
+					var oNumInfo = oPara.Paragraph.SavedNumberingValues ? oPara.Paragraph.SavedNumberingValues.NumInfo : null;
+					if (!oNumInfo)
+					{
+						oNumInfo = oNumPr ? oPara.Paragraph.GetParent().CalculateNumberingValues(oPara.Paragraph, oNumPr, true) : null;
+					}
+					
+					sOutputText = oCMarkdownConverter.WrapInSymbol(sOutputText, String(oNumInfo[0][0]) + '. ', 'open');
+				}
+					
 				if (!oCMarkdownConverter.isTableCellContent)
 				{
 					// отступы для уровней нумерации
@@ -664,8 +672,7 @@
 			this.isCodeBlock = false;
 			this.isQuoteLine = true;
 		}
-
-		else if (sType === 'html' || this.isTableCellContent)
+		else
 		{
 			this.isNumbering = false;
 			this.isCodeBlock = false;
