@@ -4680,8 +4680,22 @@ CChartsDrawer.prototype =
 					point3 = point7;
 					point4 = point8;
 				}
-				points2 = [pointPlainDown1, pointPlainDown2, pointPlainDown3, pointPlainDown4,
-					pointPlainUp1, pointPlainUp2, pointPlainUp3, pointPlainUp4];
+				x5 = startX, y5 = startY - height / 2, z5 = 0 + gapDepth;
+				x6 = startX, y6 = startY - height / 2, z6 = perspectiveDepth + gapDepth;
+				x7 = startX + individualBarValue, y7 = startY - height / 2, z7 = perspectiveDepth + gapDepth;
+				x8 = startX + individualBarValue, y8 = startY - height / 2, z8 = 0 + gapDepth;
+
+				pointPlainUp1 = this._convertAndTurnPoint(x5, y5, z5);
+				pointPlainUp2 = this._convertAndTurnPoint(x6, y6, z6);
+				pointPlainUp3 = this._convertAndTurnPoint(x7, y7, z7);
+				pointPlainUp4 = this._convertAndTurnPoint(x8, y8, z8);
+				plainEquationUp = this.getPlainEquation(pointPlainUp1, pointPlainUp2, pointPlainUp3, pointPlainUp4)
+		
+				var point52 = this.isIntersectionPlainAndLine(plainEquationUp, lineEquation1);
+				var point62 = this.isIntersectionPlainAndLine(plainEquationUp, lineEquation4);
+				var point72 = this.isIntersectionPlainAndLine(plainEquationUp, lineEquation3);
+				var point82 = this.isIntersectionPlainAndLine(plainEquationUp, lineEquation2);
+				points2 = [point1, point2, point3, point4, point52, point62, point72, point82];
 			}
 		} else {
 
@@ -4757,7 +4771,7 @@ CChartsDrawer.prototype =
 		var points = [point1, point2, point3, point4, point5, point6, point7, point8];
 		var paths;
 		if (!hBar) {
-			paths = this.calculateRect3D(points, val, null, subType !== "standard");
+			paths = this.calculateRect3D(points, val, null, subType !== "standard", points2);
 			return { paths: paths, points: points }
 		} else {
 			paths = this.calculateRect3D(points, val, null, true);
