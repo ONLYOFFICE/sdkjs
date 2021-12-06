@@ -5866,6 +5866,11 @@ var editor;
 			return false;
 		}
 
+		if (this.wb && this.wb.getCellEditMode()) {
+			return;
+			//this.asc_closeCellEditor(true);
+		}
+
 		var ws = this.wb.getWorksheet();
 		var t = this;
 
@@ -6046,6 +6051,11 @@ var editor;
 			return;
 		}
 
+		if (this.wb && this.wb.getCellEditMode()) {
+			return;
+			//this.asc_closeCellEditor(true);
+		}
+
 		var wsView = this.wb.getWorksheet();
 		var i = this.wbModel.getActive();
 		var sheetId = this.wbModel.getWorksheet(i).getId();
@@ -6139,6 +6149,11 @@ var editor;
 			this.handlers.trigger("asc_onError", c_oAscError.ID.PasswordIsNotCorrect, c_oAscError.Level.NoCritical);
 			this.handlers.trigger("asc_onChangeProtectWorkbook");
 			return;
+		}
+
+		if (this.wb && this.wb.getCellEditMode()) {
+			return;
+			//this.asc_closeCellEditor(true);
 		}
 
 		var wb = this.wbModel;
