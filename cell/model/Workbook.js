@@ -11601,7 +11601,7 @@
 		// if (CellValueType.Error == this.getType()) {
 		// 	return this._getValueTypeError(textValueForEdit);
 		// }
-		if (this.isFormula() && this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden()) {
+		if (this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden()) {
 			return "";
 		}
 
