@@ -849,7 +849,6 @@
 						sText += String.fromCharCode(Item.Value);
 						break;
 					}
-					case para_Space:
 					case para_NewLine:
 						if (!this.isHeading)
 						{
@@ -859,9 +858,14 @@
 								sText += " \\\n";
 						}
 						break;
-					case para_Tab:
+					case para_Space:
 					{
 						sText += " ";
+						break;
+					}
+					case para_Tab:
+					{
+						sText += "	";
 						break;
 					}
 				}
@@ -891,7 +895,6 @@
 						sText += String.fromCharCode(Item.Value);
 						break;
 					}
-					case para_Space:
 					case para_NewLine:
 						if (!this.isHeading)
 						{
@@ -901,9 +904,14 @@
 								sText += " \\\n";
 						}
 						break;
-					case para_Tab:
+					case para_Space:
 					{
 						sText += " ";
+						break;
+					}
+					case para_Tab:
+					{
+						sText += "	";
 						break;
 					}
 				}
