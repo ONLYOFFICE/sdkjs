@@ -4547,6 +4547,7 @@ CChartsDrawer.prototype =
 		var point1, point2, point3, point4, point5, point6, point7, point8;
 		var value = height;
 		var points2;
+		perspectiveDepth = perspectiveDepth === 0 ? individualBarValue : perspectiveDepth;
 
 		var downPlainPointX1, downPlainPointX2, downPlainPointX3, downPlainPointX4, upPlainPointX1, upPlainPointX2, upPlainPointX3, upPlainPointX4;
 		var downPlainPointY1, downPlainPointY2, downPlainPointY3, downPlainPointY4, upPlainPointY1, upPlainPointY2, upPlainPointY3, upPlainPointY4;
@@ -4855,7 +4856,7 @@ CChartsDrawer.prototype =
 				maxH = maxH + (maxH - maxH * axisMax);
 			}
 			if (valueMin < axisMin) {
-				maxH = maxH + (maxH - maxH * axisMax);
+				minH = minH + (minH + minH * axisMin);
 			}
 
 		} else {
@@ -5784,10 +5785,10 @@ drawBarChart.prototype = {
 		var index, faces, face;
 		if (this.subType !== "standard") {
 			for (var i = 0; i < this.sortParallelepipeds.length; i++) {
-				var index = this.sortParallelepipeds[i].nextIndex;
-				var faces = this.temp[index].faces;
+				index = this.sortParallelepipeds[i].nextIndex;
+				faces = this.temp[index].faces;
 				for (var j = 0; j < faces.length; j++) {
-					var face = faces[j];
+					face = faces[j];
 					drawVerges(face.seria, face.point, face.frontPaths, null, face.verge);
 				}
 			}
@@ -5896,9 +5897,6 @@ drawBarChart.prototype = {
 	_calculateRect3D: function (startX, startY, individualBarWidth, height, val, serNum, type, maxH, minH, arr, cubeCount, idx, testHeight) {
 		//параметр r и глубина по OZ
 		var perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
-		if (perspectiveDepth === 0 && (type === AscFormat.BAR_SHAPE_PYRAMID || type === AscFormat.BAR_SHAPE_PYRAMIDTOMAX)) {
-			perspectiveDepth = 10;
-		}
 
 		//сдвиг по OZ в глубину
 		var gapDepth = this.chart.gapDepth != null ? this.chart.gapDepth : globalGapDepth;
