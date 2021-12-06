@@ -12751,6 +12751,49 @@ CTable.prototype.HorSplitCells = function(Y, RowIndex, CellsIndexes, CurPageStar
 		}
 	}
 
+	function TrySplitPara(oPara, YCoord)
+	{
+		
+		for (var nLine = 1; nLine < oPara.Lines.length; nLine++)
+		{
+			var oBounds1 = oPara.GetLineBounds(nLine - 1);
+			var oBounds2 = oPara.GetLineBounds(nLine);
+
+			if (YCoord >= oBounds1.Bottom - (oBounds1.Bottom - oBounds1.Top) / 2  - 1.5 && YCoord <= oBounds2.Bottom - (oBounds2.Bottom - oBounds2.Top) / 2)
+			{
+				var oRunForSplit = oPara.Content[oPara.Lines[nLine - 1].Ranges[oPara.Lines[nLine - 1].Ranges.length - 1].EndPos];
+
+				var oRunEndPos   = Math.max(0, oRunForSplit.protected_GetRangeEndPos(nLine - 1 - oRunForSplit.StartLine, 0));
+
+				var oContentPos  = new CParagraphContentPos();
+				oContentPos.Add(oPara.Lines[nLine - 1].Ranges[oPara.Lines[nLine - 1].Ranges.length - 1].EndPos);
+				oContentPos.Add(oRunEndPos);
+				var oResultPara = oPara.Split(null, oContentPos);
+
+				// удаляем знаки переноса строки
+				for (var nRun = 0; nRun < oResultPara.Content.length; nRun++)
+				{
+					if (oResultPara.Content[nRun].Content.length > 0 && oResultPara.Content[nRun].Content[0].Type === para_NewLine)
+					{
+						oResultPara.Content[nRun].RemoveFromContent(0, 1);
+						break;
+					}
+						
+				}
+				for (var nRun = oPara.Content.length - 2; nRun >= 0; nRun--)
+				{
+					if (oPara.Content[nRun].Content.length > 0 && oPara.Content[nRun].Content[oPara.Content[nRun].Content.length - 1].Type === para_NewLine)
+					{
+						oPara.Content[nRun].RemoveFromContent(oPara.Content[nRun].Content.length - 1, 1);
+						break;
+					}
+						
+				}
+
+				return oResultPara;
+			}
+		}
+	};
 	// Вертикальное разбиение (условие, что мы не попадаем в горизонтальные границы других ячеек)
 	if (Math.abs(this.RowsInfo[RowIndex].Y[CurPageStart] - Y) >= 1.5 && Math.abs(this.RowsInfo[RowIndex].Y[CurPageStart] + this.RowsInfo[RowIndex].H[CurPageStart] - Y) >= 1.5)
 	{
@@ -12836,21 +12879,56 @@ CTable.prototype.HorSplitCells = function(Y, RowIndex, CellsIndexes, CurPageStar
 				if (!CellToSplit)
 					CellToSplit = Old_Cell;
 
+				var nSplitFromParaIndex = 0;
+				var oSplittedPara = null;
+
 				for (var nElm = 0; nElm < CellToSplit.Content.Content.length; nElm++)
 				{
-					if (Y < CellToSplit.Content.Content[nElm].Y)
+					if (Y < CellToSplit.Content.Content[nElm].Y + 1.5 && CurPageStart === CellToSplit.Content.Content[nElm].PageNum)
 					{
-						ElmsToTransfer.push(CellToSplit.Content.Content[nElm].Copy());
-						CellToSplit.Content.Remove_FromContent(nElm, 1);
-						nElm--;
+						if (CellToSplit.Content.Content[nElm] instanceof CTable && !CellToSplit.Content.Content[nElm].Is_Inline())
+						{
+							ElmsToTransfer.push(CellToSplit.Content.Content[nElm].Copy());
+							CellToSplit.Content.Remove_FromContent(nElm, 1);
+							nElm--;
+						}
+						else
+						{
+							nSplitFromParaIndex = nElm;
+							break;
+						}
+					}
+					// дробим контент, разбитый по Lines
+					else if (CellToSplit.Content.Content[nElm] instanceof Paragraph && CellToSplit.Content.Content[nElm].Lines.length > 1)
+					{
+						oSplittedPara = TrySplitPara(CellToSplit.Content.Content[nElm], Y);
+						
+						if (oSplittedPara)
+						{
+							nSplitFromParaIndex = nElm + 1;
+							break;
+						}
 					}
 				}
 				
+				if (nSplitFromParaIndex !== 0)
+				{
+					oSplittedPara && ElmsToTransfer.push(oSplittedPara);
+
+					for (var nElm = nSplitFromParaIndex; nElm < CellToSplit.Content.Content.length; nElm++)
+					{
+						ElmsToTransfer.push(CellToSplit.Content.Content[nElm]);
+					}
+
+					CellToSplit.Content.Remove_FromContent(nSplitFromParaIndex, CellToSplit.Content.Content.length - nSplitFromParaIndex);
+				}
+
 				for (var nElm = ElmsToTransfer.length - 1; nElm >= 0; nElm--)
 				{
 					New_Cell.Content.Add_ToContent(0, ElmsToTransfer[nElm]);
 				}
 
+				ElmsToTransfer.length > 0 && New_Cell.Content.Remove_FromContent(New_Cell.Content.Content.length - 1, 1);
 				ElmsToTransfer = [];
 			}
 
@@ -12858,6 +12936,9 @@ CTable.prototype.HorSplitCells = function(Y, RowIndex, CellsIndexes, CurPageStar
 			New_Cell.CheckNonEmptyBorder(0);
 		}
 	}
+
+	
+	return CallAdded;
 
 	return CallAdded;
 };
