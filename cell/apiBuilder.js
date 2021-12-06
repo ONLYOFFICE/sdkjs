@@ -1797,21 +1797,48 @@
 	 * Set the value for the current cell or a cell range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {string} sValue - The general value for the cell or cell range in string format.
+	 * @param {string | bool | number | Array[] | Array[[]]} data - The general value for the cell or cell range in string format.
 	 * @return {bool} - returns false if such a range does not exist.
 	 */
-	ApiRange.prototype.SetValue = function (sValue) {
-		sValue = checkFormat(sValue);
+	ApiRange.prototype.SetValue = function (data) {
 		if (!this.range)
 			return false;
-		this.range.setValue(sValue.toString());
-		if (sValue.type === AscCommonExcel.cElementType.number) {
-			this.SetNumberFormat(AscCommon.getShortDateFormat());
+		
+		if (Array.isArray(data)) {
+			var checkDepth = x => Array.isArray(x) ? 1 + Math.max.apply(this, x.map(checkDepth)) : 0;
+			var maxDepth = checkDepth(data);
+			if (maxDepth <= 2) {
+				if (this.range.isOneCell()) {
+					data = maxDepth == 1 ? data[0] : data[0][0];
+				} else {
+					var bbox = this.range.bbox;
+					var nCol = Math.min( (bbox.c2 - bbox.c1 + 1), data.length);
+					var nRow = bbox.r2 - bbox.r1 + 1;
+					for (var i = 0; i < nCol; i++) {
+						var cRow = (nRow > data[i].length) ? data[i].length : nRow;
+						for (var k = 0; k < cRow; k++) {
+							var cell = this.range.worksheet.getRange3( (bbox.r1 + k), (bbox.c1 + i), (bbox.r1 + k), (bbox.c1 + i) );
+							var value = checkFormat( ( (maxDepth == 1) ? data[i] : data[i][k] ) );
+							cell.setValue(value.toString());
+							if (value.type === AscCommonExcel.cElementType.number)
+								cell.setNumFormat(AscCommon.getShortDateFormat());
+						}
+					}
+					// ToDo update range in setValue
+					var worksheet = this.range.worksheet;
+					worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [this.range.bbox], true);
+					return true;
+				}
+			}
 		}
+		data = checkFormat(data);
+		this.range.setValue(data.toString());
+		if (data.type === AscCommonExcel.cElementType.number)
+			this.SetNumberFormat(AscCommon.getShortDateFormat());
+
 		// ToDo update range in setValue
 		var worksheet = this.range.worksheet;
 		worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [this.range.bbox], true);
-
 		return true;
 	};
 
