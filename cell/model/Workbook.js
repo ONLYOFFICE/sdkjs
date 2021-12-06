@@ -10609,6 +10609,9 @@
 		if (!wsTo) {
 			wsTo = this;
 		}
+		if (wsTo.getSheetProtection()) {
+			return;
+		}
 		if (false === this.workbook.bUndoChanges && false === this.workbook.bRedoChanges) {
 			//чистим ту область, куда переносим
 			if (wsTo.aProtectedRanges && wsTo.aProtectedRanges.length) {
