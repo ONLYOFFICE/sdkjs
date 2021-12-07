@@ -8435,11 +8435,16 @@ CTable.prototype.Clear_DirectFormatting = function(bClearMerge)
 };
 CTable.prototype.Set_Pr = function(TablePr)
 {
+	var isHavePrChange = this.HavePrChange();
+
 	this.private_AddPrChange();
 	History.Add(new CChangesTablePr(this, this.Pr, TablePr));
 	this.Pr = TablePr;
 	this.Recalc_CompiledPr2();
 	this.private_UpdateTableGrid();
+
+	if (isHavePrChange || this.HavePrChange())
+		this.UpdateTrackRevisions();
 };
 CTable.prototype.SetPr = function(oTablePr)
 {
@@ -17090,6 +17095,7 @@ CTable.prototype.SetTableGridChange = function(arrTableGridChange)
 {
 	History.Add(new CChangesTableTableGridChange(this, this.TableGridChange, arrTableGridChange));
 	this.TableGridChange = arrTableGridChange;
+	this.UpdateTrackRevisions();
 };
 /**
  * Получаем ширину заданного промежутка в сетке таблицы
