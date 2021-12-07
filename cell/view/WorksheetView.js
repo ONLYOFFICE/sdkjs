@@ -488,14 +488,14 @@
 	WorksheetView.prototype._initWorksheetDefaultWidth = function () {
 		// Теперь рассчитываем число px
 		this.defaultColWidthChars = this.model.charCountToModelColWidth(this.model.getBaseColWidth());
-		this.defaultColWidthPx = this.model.modelColWidthToColWidth(this.defaultColWidthChars) * this.getZoom() * window.devicePixelRatio;
+		this.defaultColWidthPx = this.model.modelColWidthToColWidth(this.defaultColWidthChars);
 		// Делаем кратным 8 (http://support.microsoft.com/kb/214123)
 		this.defaultColWidthPx = asc_ceil(this.defaultColWidthPx / 8) * 8;
-		this.defaultColWidthChars = this.model.colWidthToCharCount(this.defaultColWidthPx / (this.getZoom() * window.devicePixelRatio));
+		this.defaultColWidthChars = this.model.colWidthToCharCount(this.defaultColWidthPx);
 		AscCommonExcel.oDefaultMetrics.ColWidthChars = this.model.charCountToModelColWidth(this.defaultColWidthChars);
 		var defaultColWidth = this.model.getDefaultWidth();
 		if (null !== defaultColWidth) {
-			this.defaultColWidthPx = this.model.modelColWidthToColWidth(defaultColWidth) * this.getZoom() * window.devicePixelRatio;
+			this.defaultColWidthPx = this.model.modelColWidthToColWidth(defaultColWidth);
 		}
 
 		// ToDo разобраться со значениями
@@ -726,7 +726,7 @@
 		var l = this.cols.length;
 		return this.cellsLeft + ((i < l) ? this.cols[i].left : (((0 === l) ? 0 :
 			this.cols[l - 1].left + this.cols[l - 1].width) + (!this.model.isDefaultWidthHidden()) *
-			Asc.round(this.defaultColWidthPx * this.getZoom()) * (i - l)));
+			Asc.round(this.defaultColWidthPx * this.getZoom() * window.devicePixelRatio) * (i - l)));
 	};
     WorksheetView.prototype.getCellLeft = function (column, units) {
 		var u = units >= 0 && units <= 3 ? units : 0;
@@ -801,7 +801,7 @@
 	};
 	WorksheetView.prototype._getColumnWidth = function (i) {
 		return (i < this.cols.length) ? this.cols[i].width :
-			(!this.model.isDefaultWidthHidden()) * Asc.round(this.defaultColWidthPx * this.getZoom());
+			(!this.model.isDefaultWidthHidden()) * Asc.round(this.defaultColWidthPx * this.getZoom() * window.devicePixelRatio);
 	};
 	WorksheetView.prototype._getWidthForPrint = function (i) {
 		if (i >= this.cols.length && !this.model.isDefaultWidthHidden() && this.defaultColWidthPxForPrint) {
@@ -1733,7 +1733,7 @@
 		}
 
 		this.cols[i] = new CacheColumn(w);
-		this.cols[i].width = Asc.round(w * this.getZoom());
+		this.cols[i].width = Asc.round(w * this.getZoom() * window.devicePixelRatio);
 		if (!w) {
 			this.cols[i]._widthForPrint = 0;
 		} else {
@@ -7505,7 +7505,7 @@
 		if (gc_nMaxCol !== this.nColsCount && !this.model.isDefaultWidthHidden()) {
 			var missingWidth = this._getMissingWidth();
 			if (0 < missingWidth) {
-				var colWidth = Asc.round(this.defaultColWidthPx * this.getZoom());
+				var colWidth = Asc.round(this.defaultColWidthPx * this.getZoom() * window.devicePixelRatio);
 				this.nColsCount = Math.min(this.nColsCount + Asc.ceil(missingWidth / colWidth), gc_nMaxCol);
 				this._calcVisibleColumns();
 				if (!skipScrollReinit) {
@@ -7896,9 +7896,9 @@
 			if (sum < x) {
 				result.col = this.nColsCount;
 				if (!this.model.isDefaultWidthHidden()) {
-					result.col += ((x - sum) / (this.defaultColWidthPx * this.getZoom())) | 0;
+					result.col += ((x - sum) / (this.defaultColWidthPx * this.getZoom() * window.devicePixelRatio)) | 0;
 					result.col = Math.min(result.col, gc_nMaxCol0);
-                    sum +=  (result.col - this.nColsCount) * (this.defaultColWidthPx * this.getZoom());
+                    sum +=  (result.col - this.nColsCount) * (this.defaultColWidthPx * this.getZoom() * window.devicePixelRatio);
 				}
 			} else {
 				sum = this.cellsLeft;
@@ -14992,13 +14992,13 @@
             }
 			width = Math.max(width, calcWidth);
         }
-        width = width / this.getZoom();
+        width = width / (this.getZoom() * window.devicePixelRatio);
         this.canChangeColWidth = c_oAscCanChangeColWidth.none;
 
         var pad, cc, cw;
         if (width > 0) {
             pad = this.settings.cells.padding * 2 + 1;
-            cc = Math.min(this.model.colWidthToCharCount((width + pad) / (this.getZoom() * window.devicePixelRatio)), Asc.c_oAscMaxColumnWidth);
+            cc = Math.min(this.model.colWidthToCharCount((width + pad)), Asc.c_oAscMaxColumnWidth);
         } else {
             cc = this.defaultColWidthChars;
         }
