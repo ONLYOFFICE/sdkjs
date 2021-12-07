@@ -242,7 +242,7 @@
 		this.MdSymbols =
 		{
 			Bold: '**',
-			Italic: '_',
+			Italic: '*',
 			CodeLine: '```',
 			Strikeout: '~~',
 			Code:  '`',
@@ -524,9 +524,9 @@
 					nHeadingLvl = 1;
 
 				if (oCMarkdownConverter.Config.convertType === 'html' || oCMarkdownConverter.isTableCellContent || oCMarkdownConverter.Config.htmlHeadings)
-					return oCMarkdownConverter.WrapInTag(sOutputText, oCMarkdownConverter.HtmlTags.Headings[nHeadingLvl],'wholly');
+					return oCMarkdownConverter.WrapInTag(sOutputText, oCMarkdownConverter.HtmlTags.Headings[Math.min(nHeadingLvl, oCMarkdownConverter.HtmlTags.Headings.length - 1)],'wholly');
 				else if (oCMarkdownConverter.Config.convertType === 'markdown')
-					return oCMarkdownConverter.WrapInSymbol(sOutputText, oCMarkdownConverter.MdSymbols.Headings[nHeadingLvl] + ' ', 'open');
+					return oCMarkdownConverter.WrapInSymbol(sOutputText, oCMarkdownConverter.MdSymbols.Headings[Math.min(nHeadingLvl, oCMarkdownConverter.MdSymbols.Headings.length - 1)] + ' ', 'open');
 			}
 		};
 		function SetQuote()
