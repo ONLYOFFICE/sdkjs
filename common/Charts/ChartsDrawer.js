@@ -5019,22 +5019,26 @@ CChartsDrawer.prototype =
 	},
 
 	_calculateCylinder: function (startX, startY, individualBarWidth, height, val, gapDepth, perspectiveDepth, checkPathMethod, hbar) {
+		var centerUpX, centerUpY, centerUpZ, centerDownX, centerDownY, centerDownZ;
+
 		if (hbar) {
-			var x1 = startX, y1 = startY + individualBarWidth / 2, z1 = 0 + gapDepth + perspectiveDepth / 2;
-			var x5 = startX + height, y5 = startY + individualBarWidth / 2, z5 = 0 + gapDepth  + perspectiveDepth / 2;
+			centerDownX = startX, centerDownY = startY + individualBarWidth / 2, centerDownZ = 0 + gapDepth + perspectiveDepth / 2;
+			centerUpX = startX + height, centerUpY = startY + individualBarWidth / 2, centerUpZ = 0 + gapDepth  + perspectiveDepth / 2;
 		} else {
-			var x1 = startX + individualBarWidth / 2, y1 = startY, z1 = 0 + gapDepth + perspectiveDepth / 2;
-			var x5 = startX + individualBarWidth / 2, y5 = startY - height, z5 = 0 + gapDepth  + perspectiveDepth / 2;
+			centerDownX = startX + individualBarWidth / 2, centerDownY = startY, centerDownZ = 0 + gapDepth + perspectiveDepth / 2;
+			centerUpX = startX + individualBarWidth / 2, centerUpY = startY - height, centerUpZ = 0 + gapDepth  + perspectiveDepth / 2;
 		}
 
 		var segmentPoints = [];
 		var segmentPoints2 = [];
+		var segmentPoint1, segmentPoint2;
 
-		var x, z;
+		var A, B;
 		// в ms 180 градусов составляют 17 сегментов
 		// todo пока что рассчитываем дополнительные точки, нужно будет оптимизировать
 		var dt = Math.PI / 34; //Math.PI / 17;
 
+		//большая и малая полуось эллипса
 		var sizes1 = individualBarWidth / 2;
 		var sizes2 = perspectiveDepth / 2;
 
@@ -5045,15 +5049,15 @@ CChartsDrawer.prototype =
 
 		// получаем точки основания цилиндра через парамметрические уравнения эллиптического цилиндра
 		for (var t = k; t <= Math.PI * 2 + k; t += dt) {
-			x = sizes1 * Math.cos(t);
-			z = sizes2 * Math.sin(t);
+			A = sizes1 * Math.cos(t);
+			B = sizes2 * Math.sin(t);
 
 			if (hbar) {
-				var segmentPoint1 = this._convertAndTurnPoint(x1, y1 + x, z1 + z);
-				var segmentPoint2 = this._convertAndTurnPoint(x5, y5 + x, z5 + z);
+				segmentPoint1 = this._convertAndTurnPoint(centerDownX, centerDownY + A, centerDownZ + B);
+				segmentPoint2 = this._convertAndTurnPoint(centerUpX, centerUpY + A, centerUpZ + B);
 			} else {
-				var segmentPoint1 = this._convertAndTurnPoint(x1 - x, y1, z1 + z);
-				var segmentPoint2 = this._convertAndTurnPoint(x5 - x, y5, z5 + z);
+				segmentPoint1 = this._convertAndTurnPoint(centerDownX - A, centerDownY, centerDownZ + B);
+				segmentPoint2 = this._convertAndTurnPoint(centerUpX - A, centerUpY, centerUpZ + B);
 			}
 
 			segmentPoints.push(segmentPoint1);
