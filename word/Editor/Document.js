@@ -11697,14 +11697,14 @@ CDocument.prototype.Document_AddPageNum = function(AlignV, AlignH)
 };
 CDocument.prototype.Document_SetHdrFtrFirstPage = function(Value)
 {
-	var CurHdrFtr = this.HdrFtr.CurHdrFtr;
+	var oCurHdrFtr, nCurPage;
 
-	if (null === CurHdrFtr || -1 === CurHdrFtr.RecalcInfo.CurPage)
+	if (!(oCurHdrFtr = this.HdrFtr.GetCurHdrFtr())
+		|| -1 === (nCurPage = oCurHdrFtr.GetPage()))
 		return;
 
-	var CurPage = CurHdrFtr.RecalcInfo.CurPage;
-	var Index   = this.Pages[CurPage].Pos;
-	var SectPr  = this.SectionsInfo.Get_SectPr(Index).SectPr;
+	var Index  = this.Pages[nCurPage].Pos;
+	var SectPr = this.SectionsInfo.Get_SectPr(Index).SectPr;
 
 	SectPr.Set_TitlePage(Value);
 
@@ -11744,6 +11744,13 @@ CDocument.prototype.Document_SetHdrFtrFirstPage = function(Value)
 			TempSectPr = this.SectionsInfo.Get_SectPr(TempIndex).SectPr;
 		}
 
+		var oHeader = TempSectPr.Get_Header_Default();
+		if (!oHeader)
+		{
+			var oHeader = new CHeaderFooter(this.HdrFtr, this, this.DrawingDocument, hdrftr_Header);
+			TempSectPr.Set_Header_Default(oHeader);
+		}
+
 		this.HdrFtr.Set_CurHdrFtr(TempSectPr.Get_Header_Default());
 	}
 
@@ -11753,7 +11760,7 @@ CDocument.prototype.Document_SetHdrFtrFirstPage = function(Value)
 	if (null !== this.HdrFtr.CurHdrFtr)
 	{
 		this.HdrFtr.CurHdrFtr.Content.MoveCursorToStartPos();
-		this.HdrFtr.CurHdrFtr.Set_Page(CurPage);
+		this.HdrFtr.CurHdrFtr.SetPage(nCurPage);
 	}
 
 	this.Document_UpdateSelectionState();
@@ -11787,9 +11794,20 @@ CDocument.prototype.Document_SetHdrFtrEvenAndOddHeaders = function(Value)
 	}
 
 	if (null !== FirstSectPr.Get_Header_First() && true === FirstSectPr.TitlePage)
+	{
 		this.HdrFtr.Set_CurHdrFtr(FirstSectPr.Get_Header_First());
+	}
 	else
-		this.HdrFtr.Set_CurHdrFtr(FirstSectPr.Get_Header_Default());
+	{
+		var oHeader = FirstSectPr.Get_Header_Default();
+		if (!oHeader)
+		{
+			oHeader = new CHeaderFooter(this.HdrFtr, this, this.DrawingDocument, hdrftr_Header);
+			FirstSectPr.Set_Header_Default(oHeader);
+		}
+
+		this.HdrFtr.Set_CurHdrFtr(oHeader);
+	}
 
 
 	this.Recalculate();
