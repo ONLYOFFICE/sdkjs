@@ -14998,7 +14998,7 @@
         var pad, cc, cw;
         if (width > 0) {
             pad = this.settings.cells.padding * 2 + 1;
-            cc = Math.min(this.model.colWidthToCharCount((width + pad)), Asc.c_oAscMaxColumnWidth);
+            cc = Math.min(this.model.colWidthToCharCount(width + pad), Asc.c_oAscMaxColumnWidth);
         } else {
             cc = this.defaultColWidthChars;
         }
@@ -20356,7 +20356,7 @@
 		//if(!headersWidth) {
 			var numDigit = Math.max(AscCommonExcel.calcDecades(this.visibleRange.r2 + 1), 3);
 			var nCharCount = this.model.charCountToModelColWidth(numDigit);
-			var headersWidth = Asc.round(this.model.modelColWidthToColWidth(nCharCount) * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio);
+			var headersWidth = Asc.round(this.model.modelColWidthToColWidth(nCharCount) * zoom * AscCommon.AscBrowser.retinaPixelRatio);
 		//}
 		//var headersHeight = this.headersHeight;
 		//if(!headersHeight) {
