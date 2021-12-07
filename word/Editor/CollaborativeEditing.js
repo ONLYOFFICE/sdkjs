@@ -169,10 +169,7 @@ CWordCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, Addition
     }
 
     if (false !== IsUpdateInterface)
-    {
-        // Обновляем интерфейс
-        editor.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
-    }
+        editor.WordControl.m_oLogicDocument.UpdateInterface(undefined, true);
 
     // TODO: Пока у нас обнуляется история на сохранении нужно обновлять Undo/Redo
     editor.WordControl.m_oLogicDocument.Document_UpdateUndoRedoState();

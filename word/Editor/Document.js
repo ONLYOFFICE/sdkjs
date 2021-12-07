@@ -3056,11 +3056,12 @@ CDocument.prototype.UpdateSelection = function(isRemoveEmptySelection)
 /**
  * Сообщаем документу, что потребуется обновить состояние интерфейса
  * @param {?boolean} bSaveCurRevisionChange
+ * @param {boolean} [isExternalTrigger=false] - обновление интерфейса вызвано не действиями данного пользователя (например, совместкой)
  */
-CDocument.prototype.UpdateInterface = function(bSaveCurRevisionChange)
+CDocument.prototype.UpdateInterface = function(bSaveCurRevisionChange, isExternalTrigger)
 {
-	if (undefined !== bSaveCurRevisionChange)
-		this.private_UpdateInterface(bSaveCurRevisionChange);
+	if (undefined !== bSaveCurRevisionChange || true === isExternalTrigger)
+		this.private_UpdateInterface(bSaveCurRevisionChange, isExternalTrigger);
 	else if (this.Action.Start)
 		this.Action.UpdateInterface = true;
 	else
@@ -12336,7 +12337,7 @@ CDocument.prototype.Document_UpdateInterfaceState = function(bSaveCurRevisionCha
 {
 	this.UpdateInterface(bSaveCurRevisionChange);
 };
-CDocument.prototype.private_UpdateInterface = function(bSaveCurRevisionChange)
+CDocument.prototype.private_UpdateInterface = function(bSaveCurRevisionChange, isExternalTrigger)
 {
 	if (!this.Api.isDocumentLoadComplete || true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
 		return;
@@ -12359,7 +12360,7 @@ CDocument.prototype.private_UpdateInterface = function(bSaveCurRevisionChange)
 	this.TrackRevisionsManager.EndCollectChanges(this);
 
 	// Сообщаем, что список составлен
-	this.Api.sync_EndCatchSelectedElements();
+	this.Api.sync_EndCatchSelectedElements(isExternalTrigger);
 
 	this.Document_UpdateUndoRedoState();
 	this.Document_UpdateCanAddHyperlinkState();

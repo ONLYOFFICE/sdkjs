@@ -1068,12 +1068,13 @@
 		if (this.WordControl && this.WordControl.m_oDrawingDocument)
 			this.WordControl.m_oDrawingDocument.StartTableStylesCheck();
 	};
-	asc_docs_api.prototype.sync_EndCatchSelectedElements   = function()
+	asc_docs_api.prototype.sync_EndCatchSelectedElements = function(isExternalTrigger)
 	{
 		if (this.WordControl && this.WordControl.m_oDrawingDocument)
 			this.WordControl.m_oDrawingDocument.EndTableStylesCheck();
 
-		this.sendEvent("asc_onFocusObject", this.SelectedObjectsStack);
+		console.log("UpdateInterface: " + !isExternalTrigger);
+		this.sendEvent("asc_onFocusObject", this.SelectedObjectsStack, !isExternalTrigger);
 	};
 	asc_docs_api.prototype.getSelectedElements             = function(bUpdate)
 	{
@@ -1578,7 +1579,7 @@ background-repeat: no-repeat;\
                         editor.sendEvent("asc_onLockCore", true);
                     }
 					// Теперь обновлять состояние необходимо, чтобы обновить локи в режиме рецензирования.
-					t.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
+					t.WordControl.m_oLogicDocument.UpdateInterface(undefined, true);
 				}
 				else
 				{
@@ -1629,7 +1630,7 @@ background-repeat: no-repeat;\
 					Lock.Set_Type(NewType, true);
 
 					// Теперь обновлять состояние необходимо, чтобы обновить локи в режиме рецензирования.
-					t.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
+					t.WordControl.m_oLogicDocument.UpdateInterface(undefined, true);
 
 					if (Class instanceof AscCommonWord.CHeaderFooterController)
 					{
