@@ -4617,6 +4617,7 @@ CDocumentContent.prototype.InsertContent = function(SelectedContent, NearPos)
     }
     else if (para_Run === LastClass.Type)
     {
+    	var oForm = null;
 		var oDstPictureCC = LastClass.GetParentPictureContentControl();
 		if (oDstPictureCC)
 		{
@@ -4656,8 +4657,15 @@ CDocumentContent.prototype.InsertContent = function(SelectedContent, NearPos)
 
 			return;
 		}
-		else if (LastClass.GetParentForm())
+		else if ((oForm = LastClass.GetParentForm()))
 		{
+			if ((!oForm.IsTextForm() || oForm.IsComboBox()))
+				return;
+
+			var sInsertedText = SelectedContent.GetText({ParaEndToSpace : false});
+			if (!sInsertedText || !sInsertedText.length)
+				return;
+
 			var nInLastClassPos = ParaNearPos.NearPos.ContentPos.Data[ParaNearPos.Classes.length - 1]
 
 			var isPlaceHolder = LastClass.GetParentForm().IsPlaceHolder();
@@ -4672,7 +4680,7 @@ CDocumentContent.prototype.InsertContent = function(SelectedContent, NearPos)
 			LastClass.State.ContentPos = nInLastClassPos;
 
 			var nInRunStartPos = LastClass.State.ContentPos;
-			LastClass.AddText(SelectedContent.GetText({ParaEndToSpace : false}), nInLastClassPos);
+			LastClass.AddText(sInsertedText, nInLastClassPos);
 			var nInRunEndPos = LastClass.State.ContentPos;
 
 			var nLastClassLen = LastClass.GetElementsCount();
