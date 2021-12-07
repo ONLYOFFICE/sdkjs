@@ -1073,7 +1073,6 @@
 		if (this.WordControl && this.WordControl.m_oDrawingDocument)
 			this.WordControl.m_oDrawingDocument.EndTableStylesCheck();
 
-		console.log("UpdateInterface: " + !isExternalTrigger);
 		this.sendEvent("asc_onFocusObject", this.SelectedObjectsStack, !isExternalTrigger);
 	};
 	asc_docs_api.prototype.getSelectedElements             = function(bUpdate)
