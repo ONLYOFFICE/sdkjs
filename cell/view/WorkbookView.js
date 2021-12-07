@@ -2244,7 +2244,7 @@
 
     if (!factor) {
 		this.wsMustDraw = true;
-		this._calcMaxDigitWidth();
+		//this._calcMaxDigitWidth();
 	}
 
     var item;
@@ -3260,23 +3260,44 @@
   };
 
   WorkbookView.prototype._calcMaxDigitWidth = function () {
-    // set default worksheet header font for calculations
-    this.buffers.main.setFont(AscCommonExcel.g_oDefaultFormat.Font);
-    // Измеряем в pt
-    this.stringRender.measureString("0123456789", new AscCommonExcel.CellFlags());
+	  var t = this;
+	  this.executeDefaultDpi(function () {
+		  // set default worksheet header font for calculations
+		  t.buffers.main.setFont(AscCommonExcel.g_oDefaultFormat.Font);
+		  // Измеряем в pt
+		  t.stringRender.measureString("0123456789", new AscCommonExcel.CellFlags());
 
-    // Переводим в px и приводим к целому (int)
-    this.model.maxDigitWidth = this.maxDigitWidth = this.stringRender.getWidestCharWidth();
-    // Проверка для Calibri 11 должно быть this.maxDigitWidth = 7
+		  // Переводим в px и приводим к целому (int)
+		  t.model.maxDigitWidth = t.maxDigitWidth = t.stringRender.getWidestCharWidth();
+		  // Проверка для Calibri 11 должно быть this.maxDigitWidth = 7
+		  console.log(t.model.maxDigitWidth);
 
-    if (!this.maxDigitWidth) {
-      throw new Error("Error: can't measure text string");
-    }
+		  if (!t.maxDigitWidth) {
+			  throw new Error("Error: can't measure text string");
+		  }
 
-    // Padding рассчитывается исходя из maxDigitWidth (http://social.msdn.microsoft.com/Forums/en-US/9a6a9785-66ad-4b6b-bb9f-74429381bd72/margin-padding-in-cell-excel?forum=os_binaryfile)
-    this.defaults.worksheetView.cells.padding = Math.max(asc.ceil(this.maxDigitWidth / 4), 2);
-    this.model.paddingPlusBorder = 2 * this.defaults.worksheetView.cells.padding + 1;
+		  // Padding рассчитывается исходя из maxDigitWidth (http://social.msdn.microsoft.com/Forums/en-US/9a6a9785-66ad-4b6b-bb9f-74429381bd72/margin-padding-in-cell-excel?forum=os_binaryfile)
+		  t.defaults.worksheetView.cells.padding = Math.max(asc.ceil(t.maxDigitWidth / 4), 2);
+		  t.model.paddingPlusBorder = 2 * t.defaults.worksheetView.cells.padding + 1;
+	  })
   };
+
+	WorkbookView.prototype.executeDefaultDpi = function (runFunction) {
+		var truePPIX = this.drawingCtx.ppiX;
+		var truePPIY = this.drawingCtx.ppiY;
+		var retinaPixelRatio = AscBrowser.retinaPixelRatio;
+
+		this.drawingCtx.ppiY = 96;
+		this.drawingCtx.ppiX = 96;
+		AscBrowser.retinaPixelRatio = 1;
+
+		runFunction();
+
+		this.drawingCtx.ppiY = truePPIY;
+		this.drawingCtx.ppiX = truePPIX;
+		AscBrowser.retinaPixelRatio = retinaPixelRatio;
+	};
+
 
 	WorkbookView.prototype.getPivotMergeStyle = function (sheetMergedStyles, range, style, pivot) {
 		var styleInfo = pivot.asc_getStyleInfo();

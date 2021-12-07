@@ -488,14 +488,14 @@
 	WorksheetView.prototype._initWorksheetDefaultWidth = function () {
 		// Теперь рассчитываем число px
 		this.defaultColWidthChars = this.model.charCountToModelColWidth(this.model.getBaseColWidth());
-		this.defaultColWidthPx = this.model.modelColWidthToColWidth(this.defaultColWidthChars);
+		this.defaultColWidthPx = this.model.modelColWidthToColWidth(this.defaultColWidthChars) * this.getZoom() * window.devicePixelRatio;
 		// Делаем кратным 8 (http://support.microsoft.com/kb/214123)
 		this.defaultColWidthPx = asc_ceil(this.defaultColWidthPx / 8) * 8;
-		this.defaultColWidthChars = this.model.colWidthToCharCount(this.defaultColWidthPx);
+		this.defaultColWidthChars = this.model.colWidthToCharCount(this.defaultColWidthPx / (this.getZoom() * window.devicePixelRatio));
 		AscCommonExcel.oDefaultMetrics.ColWidthChars = this.model.charCountToModelColWidth(this.defaultColWidthChars);
 		var defaultColWidth = this.model.getDefaultWidth();
 		if (null !== defaultColWidth) {
-			this.defaultColWidthPx = this.model.modelColWidthToColWidth(defaultColWidth);
+			this.defaultColWidthPx = this.model.modelColWidthToColWidth(defaultColWidth) * this.getZoom() * window.devicePixelRatio;
 		}
 
 		// ToDo разобраться со значениями
@@ -536,7 +536,7 @@
 			this.drawingCtx.ppiY = 96;
 			this.drawingCtx.ppiX = 96;
 			AscBrowser.retinaPixelRatio = 1;
-			this.workbook._calcMaxDigitWidth();
+			//this.workbook._calcMaxDigitWidth();
 		}
 
 		var defaultColWidthChars = this.model.charCountToModelColWidth(this.model.getBaseColWidth());
@@ -553,7 +553,7 @@
 			this.drawingCtx.ppiY = truePPIY;
 			this.drawingCtx.ppiX = truePPIX;
 			AscBrowser.retinaPixelRatio = retinaPixelRatio;
-			this.workbook._calcMaxDigitWidth();
+			//this.workbook._calcMaxDigitWidth();
 		}
 	};
 
@@ -1029,7 +1029,7 @@
 		if (w === this._getColumnWidth(col)) {
 			return;
 		}
-		w = Asc.round(w / this.getZoom());
+		w = Asc.round(w / ((this.getZoom() * window.devicePixelRatio)));
 		var cc = Math.min(this.model.colWidthToCharCount(w), Asc.c_oAscMaxColumnWidth);
 
 		var onChangeWidthCallback = function (isSuccess) {
@@ -1786,7 +1786,7 @@
             // Ширина колонки заголовков считается  - max число знаков в строке - перевести в символы - перевести в пикселы
             var numDigit = Math.max(AscCommonExcel.calcDecades(this.visibleRange.r2 + 1), 3);
             var nCharCount = this.model.charCountToModelColWidth(numDigit);
-            this.headersWidth = Asc.round(this.model.modelColWidthToColWidth(nCharCount) * this.getZoom());
+            this.headersWidth = Asc.round(this.model.modelColWidthToColWidth(nCharCount) * this.getZoom() * window.devicePixelRatio);
         }
         //todo приравниваю headersLeft и groupWidth. Необходимо пересмотреть!
         this.headersLeft = this.ignoreGroupSize ? 0 : this.groupWidth;
@@ -6264,7 +6264,7 @@
 
         var x1 = this._getColLeft(col) - offsetX - gridlineSize;
         var h = ctx.getHeight();
-        var width = Asc.round((x - x1) / this.getZoom());
+        var width = Asc.round((x - x1) / (this.getZoom() * window.devicePixelRatio));
         if ( 0 > width ) {
             width = 0;
         }
@@ -6443,7 +6443,7 @@
     WorksheetView.prototype._changeColWidth = function (col, width) {
 		var oldColWidth = this.getColumnWidthInSymbols(col);
         var pad = this.settings.cells.padding * 2 + 1;
-        var cc = Math.min(this.model.colWidthToCharCount(width + pad), Asc.c_oAscMaxColumnWidth);
+        var cc = Math.min(this.model.colWidthToCharCount((width + pad) / (this.getZoom() * window.devicePixelRatio)), Asc.c_oAscMaxColumnWidth);
 
         if (cc > oldColWidth) {
             History.Create_NewPoint();
@@ -14966,7 +14966,7 @@
                 // вычисление новой ширины столбца, чтобы высота текста была меньше maxRowHeightPx
                 c = this._getCell(col, row);
                 str = c.getValue2();
-                maxW = ct.metrics.width + this.maxDigitWidth;
+                maxW = ct.metrics.width + this.maxDigitWidth * this.getZoom() * window.devicePixelRatio;
                 while (1) {
                     tm = this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW));
                     if (tm.height <= this.maxRowHeightPx) {
@@ -14978,7 +14978,7 @@
                         break;
                     }
                     lastHeight = tm.height;
-                    maxW += this.maxDigitWidth;
+                    maxW += this.maxDigitWidth * this.getZoom() * window.devicePixelRatio;
                 }
 				calcWidth = Math.abs(tm.width * angleCos) + Math.abs(ct.metrics.height * angleSin);
             } else {
@@ -14998,7 +14998,7 @@
         var pad, cc, cw;
         if (width > 0) {
             pad = this.settings.cells.padding * 2 + 1;
-            cc = Math.min(this.model.colWidthToCharCount(width + pad), Asc.c_oAscMaxColumnWidth);
+            cc = Math.min(this.model.colWidthToCharCount((width + pad) / (this.getZoom() * window.devicePixelRatio)), Asc.c_oAscMaxColumnWidth);
         } else {
             cc = this.defaultColWidthChars;
         }
@@ -20356,7 +20356,7 @@
 		//if(!headersWidth) {
 			var numDigit = Math.max(AscCommonExcel.calcDecades(this.visibleRange.r2 + 1), 3);
 			var nCharCount = this.model.charCountToModelColWidth(numDigit);
-			var headersWidth = Asc.round(this.model.modelColWidthToColWidth(nCharCount) * zoom);
+			var headersWidth = Asc.round(this.model.modelColWidthToColWidth(nCharCount) * this.getZoom() * window.devicePixelRatio);
 		//}
 		//var headersHeight = this.headersHeight;
 		//if(!headersHeight) {
