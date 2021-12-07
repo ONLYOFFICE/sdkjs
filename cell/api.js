@@ -4716,19 +4716,12 @@ var editor;
 		return res;
 	};
 
-	spreadsheet_api.prototype.asc_checkActiveCellPassword = function () {
+	spreadsheet_api.prototype.asc_checkActiveCellPassword = function (val, callback) {
 		var ws = this.wbModel.getActiveWs();
-		var protectedRanges = ws.getProtectedRangesByActiveCell();
-		if (protectedRanges) {
-			//TODO добавить проверку пароля
-			for (var i = 0; i < protectedRanges.length; i++) {
-				if (protectedRanges[i].asc_isPassword()) {
-					return true;
-				}
-			}
-			return false;
+		var activeCell = ws && ws.selectionRange && ws.selectionRange.activeCell;
+		if (activeCell) {
+			ws.checkProtectedRangesPassword(val, activeCell, callback);
 		}
-		return true;
 	};
 
   // Формат по образцу
@@ -5956,6 +5949,11 @@ var editor;
 			return false;
 		}
 
+		if (this.wb && this.wb.getCellEditMode()) {
+			return;
+			//this.asc_closeCellEditor(true);
+		}
+
 		var ws = this.wb.getWorksheet();
 		var t = this;
 
@@ -6133,6 +6131,12 @@ var editor;
 		if (!props) {
 			this.handlers.trigger("asc_onError", c_oAscError.ID.PasswordIsNotCorrect, c_oAscError.Level.NoCritical);
 			this.handlers.trigger("asc_onChangeProtectWorksheet", i);
+			return;
+		}
+
+		if (this.wb && this.wb.getCellEditMode()) {
+			return;
+			//this.asc_closeCellEditor(true);
 		}
 
 		var wsView = this.wb.getWorksheet();
@@ -6228,6 +6232,11 @@ var editor;
 			this.handlers.trigger("asc_onError", c_oAscError.ID.PasswordIsNotCorrect, c_oAscError.Level.NoCritical);
 			this.handlers.trigger("asc_onChangeProtectWorkbook");
 			return;
+		}
+
+		if (this.wb && this.wb.getCellEditMode()) {
+			return;
+			//this.asc_closeCellEditor(true);
 		}
 
 		var wb = this.wbModel;

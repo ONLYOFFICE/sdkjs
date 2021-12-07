@@ -12479,7 +12479,7 @@ CCore.prototype.Refresh_RecalcData2 = function(){
                                 case 1:
                                 {
                                     sp = this.ReadShape();
-                                    if(sp.spPr && sp.spPr.xfrm){
+                                    if(!IsHiddenObj(sp) && sp.spPr && sp.spPr.xfrm){
                                         sp.setGroup(shape);
                                         shape.addToSpTree(shape.spTree.length, sp);
                                     }
@@ -12491,7 +12491,7 @@ CCore.prototype.Refresh_RecalcData2 = function(){
                                 case 8:
                                 {
                                     sp = this.ReadPic(_type);
-                                    if(sp.spPr && sp.spPr.xfrm){
+                                    if(!IsHiddenObj(sp) && sp.spPr && sp.spPr.xfrm){
                                         sp.setGroup(shape);
                                         shape.addToSpTree(shape.spTree.length, sp);
                                     }
@@ -12500,7 +12500,7 @@ CCore.prototype.Refresh_RecalcData2 = function(){
                                 case 3:
                                 {
                                     sp = this.ReadCxn();
-                                    if(sp.spPr && sp.spPr.xfrm) {
+                                    if(!IsHiddenObj(sp) && sp.spPr && sp.spPr.xfrm) {
                                         sp.setGroup(shape);
                                         shape.addToSpTree(shape.spTree.length, sp);
                                     }
@@ -12509,7 +12509,7 @@ CCore.prototype.Refresh_RecalcData2 = function(){
                                 case 4:
                                 {
                                     sp = this.ReadGroupShape();
-                                    if(sp && sp.spPr && sp.spPr.xfrm && sp.spTree.length > 0) {
+                                    if(sp && !IsHiddenObj(sp) && sp.spPr && sp.spPr.xfrm && sp.spTree.length > 0 ) {
                                         sp.setGroup(shape);
                                         shape.addToSpTree(shape.spTree.length, sp);
                                     }

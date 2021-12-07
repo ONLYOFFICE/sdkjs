@@ -4465,6 +4465,7 @@ function (window, undefined) {
 		var protectedSheet = oModel.sheetProtection;
 		if (!protectedSheet) {
 			oModel.sheetProtection = protectedSheet = new window["Asc"].CSheetProtection();
+			oModel.sheetProtection.setDefaultInterface();
 		}
 
 		if (protectedSheet) {
@@ -4527,6 +4528,10 @@ function (window, undefined) {
 					protectedSheet.setDeleteRows(value);
 					break;
 				}
+				case AscCH.historyitem_Protected_SetDeleteColumns: {
+					protectedSheet.setDeleteColumns(value);
+					break;
+				}
 				case AscCH.historyitem_Protected_SetSelectLockedCells: {
 					protectedSheet.setSelectLockedCells(value);
 					break;
@@ -4546,6 +4551,11 @@ function (window, undefined) {
 				case AscCH.historyitem_Protected_SetSelectUnlockedCells: {
 					protectedSheet.setSelectUnlockedCells(value);
 					break;
+				}
+			}
+			if (bUndo) {
+				if (oModel.sheetProtection && oModel.sheetProtection.isDefault()) {
+					oModel.sheetProtection = null;
 				}
 			}
 			this.wb.handlers.trigger("asc_onChangeProtectWorksheet", oModel.index);

@@ -201,15 +201,18 @@
     CTimeNodeBase.prototype.getChildrenTimeNodesInternal = function() {
         return [];
     };
-    CTimeNodeBase.prototype.resetState = function() {
-        this.state = TIME_NODE_STATE_IDLE;
-        this.simpleDurationIdx = -1;
+    CTimeNodeBase.prototype.resetChildrenState = function() {
         if(this.isTimingContainer()) {
             var aChildren = this.getChildrenTimeNodes();
             for(var nChild = 0; nChild < aChildren.length; ++nChild) {
                 aChildren[nChild].resetState();
             }
         }
+    };
+    CTimeNodeBase.prototype.resetState = function() {
+        this.state = TIME_NODE_STATE_IDLE;
+        this.simpleDurationIdx = -1;
+        this.resetChildrenState();
     };
     CTimeNodeBase.prototype.isRoot = function() {
         var oParentNode = this.getParentTimeNode();
@@ -496,6 +499,7 @@
     };
     CTimeNodeBase.prototype.startSimpleDuration = function(nIdx, oPlayer) {
         this.simpleDurationIdx = nIdx;
+        this.resetChildrenState();
         this.activateChildrenCallback(oPlayer);
     };
     CTimeNodeBase.prototype.calculateParams = function(oPlayer) {
@@ -532,11 +536,15 @@
                 if(!this.repeatCount.isIndefinite() && !this.isRoot() && !this.isMainSequence() || oEndSync) {
                     var oTrigger = new CAnimComplexTrigger();
                     var aChildren = this.getChildrenTimeNodes();
+                    var oThis = this;
                     oTrigger.addTrigger(function() {
                         for(var nChild = 0; nChild < aChildren.length; ++nChild) {
                             if(!aChildren[nChild].isAtEnd()) {
                                 return false;
                             }
+                        }
+                        if(oThis.checkRepeatCondition()) {
+                            return false;
                         }
                         return true;
                     });
@@ -671,6 +679,9 @@
     CTimeNodeBase.prototype.onFrozen = function(oChild, oPlayer) {
         return this.onFinished(oChild, oPlayer);
     };
+    CTimeNodeBase.prototype.checkRepeatCondition = function() {
+        return this.repeatCount.isSpecified() && this.simpleDurationIdx + 1 < this.repeatCount.getVal() / 1000;
+    };
     CTimeNodeBase.prototype.onFinished = function(oChild, oPlayer) {
         if(!this.isActive()) {
             return;
@@ -687,7 +698,7 @@
                 }
             }
             if(nChild === aChildren.length) {
-                if(this.repeatCount.isSpecified() && this.simpleDurationIdx + 1 < this.repeatCount.getVal() / 1000) {
+                if(this.checkRepeatCondition()) {
                     this.startSimpleDuration(++this.simpleDurationIdx, oPlayer);
                 }
             }
@@ -710,7 +721,7 @@
                 // }
             }
             else {
-                if(this.repeatCount.isSpecified() && this.simpleDurationIdx + 1 < this.repeatCount.getVal() / 1000) {
+                if(this.checkRepeatCondition()) {
                     this.startSimpleDuration(++this.simpleDurationIdx, oPlayer);
                 }
                 else {
@@ -7255,7 +7266,14 @@
         return this.createDiamond(1 - fTime, sOperation);
     };
     CAnimTexture.prototype.createDiamondOut = function(fTime, nTransition) {
-        return this.createDiamond(1 - fTime, "destination-in");
+        var sOperationType;
+        if(nTransition === TRANSITION_TYPE_IN) {
+            sOperationType = 'destination-in';
+        }
+        else {
+            sOperationType = 'destination-out';
+        }
+        return this.createDiamond(fTime, sOperationType);
     };
     CAnimTexture.prototype.getRandomRanges = function(fTime, nTransition) {
         var nFilledBars = RANDOM_BARS_ARRAY.length * fTime + 0.5 >> 0;
@@ -7897,6 +7915,9 @@
             }
         }
     };
+    CAnimationDrawer.prototype.clearObjectTexture = function(sId) {
+        this.texturesCache.removeTexture(sId);
+    };
 
     function CAnimationPlayer(oSlide, drawer) {
         this.slide = oSlide;
@@ -8094,6 +8115,9 @@
     };
     CAnimationPlayer.prototype.getExternalEvent = function() {
       return this.eventsProcessor.getExternalEvent();
+    };
+    CAnimationPlayer.prototype.clearObjectTexture = function(sId) {
+        this.animationDrawer.clearObjectTexture(sId);
     };
 
     var DEFAULT_SIMPLE_TRIGGER = function() {

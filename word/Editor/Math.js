@@ -3002,7 +3002,7 @@ ParaMath.prototype.Get_ClassesByPos = function(Classes, ContentPos, Depth)
     this.Root.Get_ClassesByPos(Classes, ContentPos, Depth);
 };
 
-ParaMath.prototype.Get_PosByDrawing = function(Id, ContentPos, Depth)
+ParaMath.prototype.GetPosByDrawing = function(Id, ContentPos, Depth)
 {
     return false;
 };

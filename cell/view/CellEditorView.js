@@ -1352,6 +1352,14 @@
 			this.canvasOuterStyle.zIndex = this.top < 0 ? -1 : z;
 		}
 
+		// в сафари с включенным аппаратным ускорением баг при вводе текста.
+		// видимо они кешируют по особенному текстуры, которые размером (w*h<5000)
+		// формула точная. ни пикселом меньше. больше - можно сколько угодно.
+		// нужно проверять каждое обновление сафари - и как поправят - убрать эту заглушку
+		// canvas'ы прозрачные и их увеличенный размер не влияет на результат.
+		if (AscCommon.AscBrowser.isSafariMacOs && (widthStyle * heightStyle) < 5000)
+			widthStyle = ((5000 / heightStyle) >> 0) + 1;
+
 		this.canvas.style.width = this.canvasOverlay.style.width = widthStyle + 'px';
 		this.canvas.style.height = this.canvasOverlay.style.height = heightStyle + 'px';
 	};

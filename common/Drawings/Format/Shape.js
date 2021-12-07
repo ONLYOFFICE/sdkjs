@@ -75,6 +75,7 @@ var MOVE_DELTA = AscFormat.MOVE_DELTA;
 
 var c_oAscFill = Asc.c_oAscFill;
 
+	var g_nDefaultFormHorPadding = 2 * 25.4 / 72; // 2pt
     var dTextFitDelta = 3;// mm
 
 function CheckObjectLine(obj)
@@ -2148,7 +2149,7 @@ CShape.prototype.recalculateTransformText = function () {
     var oBodyPr = this.getBodyPr();
     this.clipRect = this.checkTransformTextMatrix(this.localTransformText, oContent, oBodyPr, false);
     if(this.isForm && this.isForm()) {
-        this.clipRect = {x: -0.2, y: -0.2, w: this.extX + 0.4, h: this.extY + 0.4};
+        this.clipRect = {x: 0, y: -0.2, w: this.extX, h: this.extY + 0.4};
     }
     this.transformText = this.localTransformText.CreateDublicate();
     this.invertTransformText = global_MatrixTransformer.Invert(this.transformText);
@@ -2236,20 +2237,30 @@ CShape.prototype.getTextRect = function () {
         b: this.extY
     };
 };
-CShape.prototype.getFormRelRect = function () {
+CShape.prototype.getFormRelRect = function (isUsePaddings) {
     var oSpTransform = this.transform;
     var oInvTextTransform = this.invertTransformText;
 
-    var aX = [0, this.extX];
-    var aY = [0, this.extY];
+	var nX = 0, nW = this.extX;
+	var nY = 0, nH = this.extY;
+
+	var oInnerForm = null;
+	if (isUsePaddings && this.isForm() && (oInnerForm = this.getInnerForm()) && !oInnerForm.IsPictureForm() && !oInnerForm.IsCheckBox())
+	{
+		nX += g_nDefaultFormHorPadding;
+		nW -= 2 * g_nDefaultFormHorPadding;
+	}
+
+    var aX = [nX, nW];
+    var aY = [nY, nH];
     var fX0, fY0;
 
     if (!oSpTransform || !oInvTextTransform) {
 		return {
-			X    : 0,
-			Y    : 0,
-			W    : this.extX,
-			H    : this.extY,
+			X    : nX,
+			Y    : nY,
+			W    : nW,
+			H    : nH,
 			Page : this.parent.PageNum
 		};
 	}
@@ -2271,8 +2282,8 @@ CShape.prototype.getFormRelRect = function () {
     return {
         X    : Math.min.apply(Math, aRelX),
         Y    : Math.min.apply(Math, aRelY),
-        W    : this.extX,
-        H    : this.extY,
+        W    : nW,
+        H    : nH,
         Page : this.parent.PageNum
     };
 };
@@ -2361,6 +2372,15 @@ CShape.prototype.checkTransformTextMatrix = function (oMatrix, oContent, oBodyPr
         }
     }
 
+    var oForm = null;
+	if (this.isForm() && (oForm = this.getInnerForm()) && !oForm.IsPictureForm() && !oForm.IsCheckBox())
+	{
+		l_ins = g_nDefaultFormHorPadding;
+		r_ins = g_nDefaultFormHorPadding;
+		t_ins = 0;
+		b_ins = 0;
+	}
+
     _l = oRect.l + l_ins;
     _t = oRect.t + t_ins;
     _r = oRect.r - r_ins;
@@ -2427,7 +2447,28 @@ CShape.prototype.checkTransformTextMatrix = function (oMatrix, oContent, oBodyPr
     var _text_rect_width = _r - _l;
     var oClipRect;
     var Diff = 1.6;
-    if (!oBodyPr.upright) {
+
+	if (oForm) {
+		if (oForm.IsMultiLineForm())
+			_vertical_shift = 0;
+		else
+			_vertical_shift = (_text_rect_height - _content_height) * 0.5;
+
+		global_MatrixTransformer.TranslateAppend(oMatrix, 0, _vertical_shift);
+		if (_dx_lt_rb * _dy_t - _dy_lt_rb * _dx_t <= 0)
+		{
+			var alpha = Math.atan2(_dy_t, _dx_t);
+			global_MatrixTransformer.RotateRadAppend(oMatrix, -alpha);
+			global_MatrixTransformer.TranslateAppend(oMatrix, _t_x_lt, _t_y_lt);
+		}
+		else
+		{
+			var alpha = Math.atan2(_dy_t, _dx_t);
+			global_MatrixTransformer.RotateRadAppend(oMatrix, Math.PI - alpha);
+			global_MatrixTransformer.TranslateAppend(oMatrix, _t_x_rt, _t_y_rt);
+		}
+	}
+    else if (!oBodyPr.upright) {
         if (!(oBodyPr.vert === AscFormat.nVertTTvert || oBodyPr.vert === AscFormat.nVertTTvert270 || oBodyPr.vert === AscFormat.nVertTTeaVert || nSquare % 2 === 1)) {
             if (bWordArtTransform) {
                 _vertical_shift = 0;
@@ -4138,6 +4179,16 @@ CShape.prototype.recalculateDocContent = function(oDocContent, oBodyPr)
             b_ins += penW;
         }
     }
+
+	var oForm = null;
+	if (this.isForm() && (oForm = this.getInnerForm()) && !oForm.IsPictureForm() && !oForm.IsCheckBox())
+	{
+		l_ins = g_nDefaultFormHorPadding;
+		r_ins = g_nDefaultFormHorPadding;
+		t_ins = 0;
+		b_ins = 0;
+	}
+
     var oRect = this.getTextRect();
     if (this.txXfrm && this.txXfrm.rot) {
         var normRot = this.txXfrm.rot;
@@ -4295,8 +4346,7 @@ CShape.prototype.recalculateDocContent = function(oDocContent, oBodyPr)
 
 		var oContentW = oRet.w;
 
-		var oForm = null;
-		if (this.isForm() && (oForm = this.getInnerForm()) && !oForm.IsMultiLineForm())
+		if (oForm && !oForm.IsMultiLineForm())
 			oDocContent.SetUseXLimit(false);
 		else
 			oDocContent.SetUseXLimit(true);
@@ -5028,10 +5078,12 @@ CShape.prototype.updateCursorType = function (x, y, e)
     }
 };
 
-
-
 CShape.prototype.selectionSetStart = function (e, x, y, slideIndex)
 {
+    if(this.isProtectedText && this.isProtectedText())
+    {
+        return;
+    }
     var content = this.getDocContent();
     if (isRealObject(content))
     {
@@ -5060,6 +5112,10 @@ CShape.prototype.selectionSetStart = function (e, x, y, slideIndex)
 
 CShape.prototype.selectionSetEnd = function (e, x, y, slideIndex)
 {
+    if(this.isProtectedText && this.isProtectedText())
+    {
+        return;
+    }
     var content = this.getDocContent();
     if (isRealObject(content)) {
         var tx, ty;
@@ -6281,6 +6337,15 @@ CShape.prototype.hit = function (x, y) {
 };
 
 CShape.prototype.hitInPath = function (x, y) {
+
+	var oInnerForm = null;
+	if (this.isForm() && (oInnerForm = this.getInnerForm()) && !oInnerForm.IsPictureForm()) {
+		var oApi = Asc.editor || editor;
+		var oLogicDocument = oApi && oApi.WordControl && oApi.WordControl.m_oLogicDocument ? oApi.WordControl.m_oLogicDocument : null;
+		if (oLogicDocument && oLogicDocument.IsDocumentEditor() && oLogicDocument.IsFillingFormMode())
+			return false;
+	}
+
     if(!this.checkHitToBounds(x, y))
         return false;
     var invert_transform = this.getInvertTransform();
@@ -6320,6 +6385,15 @@ CShape.prototype.hitInInnerArea = function (x, y) {
 };
 
 CShape.prototype.hitInBoundingRect = function (x, y) {
+
+	var oInnerForm = null;
+	if (this.isForm() && (oInnerForm = this.getInnerForm()) && !oInnerForm.IsPictureForm()) {
+		var oApi = Asc.editor || editor;
+		var oLogicDocument = oApi && oApi.WordControl && oApi.WordControl.m_oLogicDocument ? oApi.WordControl.m_oLogicDocument : null;
+		if (oLogicDocument && oLogicDocument.IsDocumentEditor() && oLogicDocument.IsFillingFormMode())
+			return false;
+	}
+
     if(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES){
         return false;
     }

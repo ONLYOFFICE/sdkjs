@@ -1694,7 +1694,7 @@
             }
             if (null !== customXml.Content) {
                 this.bs.WriteItem(c_oSerCustoms.Content, function() {
-                    oThis.memory.WriteString3(customXml.Content);
+                   oThis.memory.WriteStringA(customXml.Content);
                 });
             }
         };
@@ -4124,6 +4124,11 @@
 				this.memory.WriteByte(c_oSerWorksheetProtection.FormatColumns);
 				this.memory.WriteByte(c_oSerPropLenType.Byte);
 				this.memory.WriteBool(sheetProtection.formatColumns);
+			}
+			if (null != sheetProtection.formatRows) {
+				this.memory.WriteByte(c_oSerWorksheetProtection.FormatRows);
+				this.memory.WriteByte(c_oSerPropLenType.Byte);
+				this.memory.WriteBool(sheetProtection.formatRows);
 			}
 			if (null != sheetProtection.insertColumns) {
 				this.memory.WriteByte(c_oSerWorksheetProtection.InsertColumns);
@@ -10663,7 +10668,7 @@
             } else if (c_oSerCustoms.ItemId === type) {
                 custom.ItemId = this.stream.GetString2LE(length);
             } else if (c_oSerCustoms.Content === type) {
-                custom.Content = this.stream.GetString2LE(length);
+                custom.Content = this.stream.GetString2A(length);
             } else
                 res = c_oSerConstants.ReadUnknown;
             return res;

@@ -6387,6 +6387,8 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
     var aDUnderline = PDSL.DUnderline;
     var aFormBorder = PDSL.FormBorder;
 
+    var isFormPlaceHolder = false;
+
     var oForm       = this.GetParentForm();
     var oFormBorder = null;
     var nCombMax    = -1;
@@ -6399,6 +6401,8 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
 
 		if (oForm.IsTextForm() && oForm.GetTextFormPr().IsComb())
 			nCombMax = oForm.GetTextFormPr().GetMaxCharacters();
+
+		isFormPlaceHolder = (oForm.IsPlaceHolder() && PDSL.Graphics.isPrintMode);
 	}
 
     var CurTextPr = this.Get_CompiledPr( false );
@@ -6539,21 +6543,47 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
 			var oFormBorderColor = oFormBorder.GetColor();
 
 			var oFormBounds = oForm.GetRangeBounds(PDSL.Line, PDSL.Range);
+			var oFormAdditional = {
+				Form : oForm,
+				Comb : nCombMax,
+				Y    : oFormBounds.Y,
+				H    : oFormBounds.H
+			};
 
 			if (Item.RGapCount)
 			{
 				var nGapEnd = X + ItemWidthVisible;
-				aFormBorder.Add(Y, Y, X, nGapEnd - Item.RGapCount * Item.RGapShift, nFormBorderW, oFormBorderColor.r, oFormBorderColor.g, oFormBorderColor.b, {Comb : nCombMax, Y : oFormBounds.Y, H : oFormBounds.H});
+				aFormBorder.Add(Y, Y, X, nGapEnd - Item.RGapCount * Item.RGapShift,
+					nFormBorderW,
+					oFormBorderColor.r,
+					oFormBorderColor.g,
+					oFormBorderColor.b,
+					oFormAdditional);
+
 				for (var nGapIndex = 0; nGapIndex < Item.RGapCount; ++nGapIndex)
 				{
-					aFormBorder.Add(Y, Y, nGapEnd - (Item.RGapCount - nGapIndex) * Item.RGapShift, nGapEnd - (Item.RGapCount - nGapIndex - 1) * Item.RGapShift, nFormBorderW, oFormBorderColor.r, oFormBorderColor.g, oFormBorderColor.b, {Comb : nCombMax, Y : oFormBounds.Y, H : oFormBounds.H});
+					aFormBorder.Add(Y, Y, nGapEnd - (Item.RGapCount - nGapIndex) * Item.RGapShift, nGapEnd - (Item.RGapCount - nGapIndex - 1) * Item.RGapShift,
+						nFormBorderW,
+						oFormBorderColor.r,
+						oFormBorderColor.g,
+						oFormBorderColor.b,
+						oFormAdditional);
 				}
 			}
 			else
 			{
-				aFormBorder.Add(Y, Y, X, X + ItemWidthVisible, nFormBorderW, oFormBorderColor.r, oFormBorderColor.g, oFormBorderColor.b, {Comb : nCombMax, Y : oFormBounds.Y, H : oFormBounds.H});
+				aFormBorder.Add(Y, Y, X, X + ItemWidthVisible,
+					nFormBorderW,
+					oFormBorderColor.r,
+					oFormBorderColor.g,
+					oFormBorderColor.b,
+					oFormAdditional);
 			}
 		}
+
+		// Для плейсхолдера форм нам нужна только рамка
+		if (isFormPlaceHolder)
+			continue;
 
 		switch (ItemType)
 		{
@@ -7170,7 +7200,7 @@ ParaRun.prototype.Get_ElementByPos = function(ContentPos, Depth)
     return this;
 };
 
-ParaRun.prototype.Get_PosByDrawing = function(Id, ContentPos, Depth)
+ParaRun.prototype.GetPosByDrawing = function(Id, ContentPos, Depth)
 {
     var Count = this.Content.length;
     for ( var CurPos = 0; CurPos < Count; CurPos++ )
@@ -11895,7 +11925,7 @@ ParaRun.prototype.IsFootEndnoteReferenceRun = function()
  * @param {number} nPos - позиция, на которой был добавлен последний элемент, с которого стартовала автозамена
  * @param {number} nFlags - флаги, какие автозамены мы пробуем делать
  * @param {number} [nHistoryActions=1] Автозамене предществовало заданное количество точек в истории
- * @returns {boolean}
+ * @returns {number} Возвращаются флаги, произведенных автозамен
  */
 ParaRun.prototype.ProcessAutoCorrect = function(nPos, nFlags, nHistoryActions)
 {
@@ -11910,12 +11940,13 @@ ParaRun.prototype.ProcessAutoCorrect = function(nPos, nFlags, nHistoryActions)
 	}
 
 	if (!nFlags)
-		return false;
+		return nRes;
 
 	// Сколько максимально просматриваем элементов влево
 	var nMaxElements = 1000;
 
 	var oParagraph = this.GetParagraph();
+
 	if (!oParagraph)
 		return nRes;
 
@@ -11928,6 +11959,15 @@ ParaRun.prototype.ProcessAutoCorrect = function(nPos, nFlags, nHistoryActions)
 		return nRes;
 
 	oContentPos.Update(nPos, oContentPos.GetDepth() + 1);
+
+	// Чтобы позиция oContentPos была актуальна, отключаем корректировку содержимого параграфа на время выполеняни
+	// автозамены. Все изменения должны происходить ТОЛЬКО внтури ранов
+	oParagraph.TurnOffCorrectContent();
+	function private_Return()
+	{
+		oParagraph.TurnOnCorrectContent();
+		return nRes;
+	}
 
 	var nLang = this.Get_CompiledPr(false).Lang ? this.Get_CompiledPr(false).Lang.Val : 1033;
 
@@ -11947,13 +11987,13 @@ ParaRun.prototype.ProcessAutoCorrect = function(nPos, nFlags, nHistoryActions)
 	oParagraph.GetPrevRunElements(oRunElementsBefore);
 	var arrElements = oRunElementsBefore.GetElements();
 	if (arrElements.length <= 0)
-		return nRes;
+		return private_Return();
 
 	var sText = "";
 	for (var nIndex = 0, nCount = arrElements.length; nIndex < nCount; ++nIndex)
 	{
 		if (para_Text !== arrElements[nCount - 1 - nIndex].Type)
-			return;
+			return private_Return();
 
 		sText += String.fromCharCode(arrElements[nCount - 1 - nIndex].Value);
 	}
@@ -11973,12 +12013,12 @@ ParaRun.prototype.ProcessAutoCorrect = function(nPos, nFlags, nHistoryActions)
 		nRes |= AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE;
 
 	if (!(nFlags & AUTOCORRECT_FLAGS_NUMBERING))
-		return nRes;
+		return private_Return();
 
 	// Автосоздание списка
 	if (oParagraph.bFromDocument && oParagraph.GetNumPr()
 	|| !oParagraph.bFromDocument && !oParagraph.PresentationPr.Bullet.IsNone())
-		return nRes;
+		return private_Return();
 
 	var oPrevNumPr = null;
 	var oPrevParagraph = oParagraph.Get_DocumentPrev();
@@ -12165,7 +12205,7 @@ ParaRun.prototype.ProcessAutoCorrect = function(nPos, nFlags, nHistoryActions)
 		}
 	}
 
-	return nRes;
+	return private_Return();
 };
 /**
  * Выполняем автозамену в конце параграфа

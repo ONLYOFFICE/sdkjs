@@ -6735,12 +6735,9 @@ function getHexColor(r, g, b) {
 
 function onFocusObject(SelectedObjects) {
     var settings = [];
-    var isChart = false;
-    var control_props = _api.asc_IsContentControl() ? _api.asc_GetContentControlProperties() : null,
-        control_lock = false;
+    var control_props = _api.asc_IsContentControl() ? _api.asc_GetContentControlProperties() : null;
 
-    for (i = 0; i < SelectedObjects.length; i++) {
-        var content_locked = false;
+    for (var i = 0; i < SelectedObjects.length; i++) {
         var eltype = SelectedObjects[i].get_ObjectType();
         var value = SelectedObjects[i].get_ObjectValue();
         

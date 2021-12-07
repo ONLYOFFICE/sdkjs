@@ -2145,18 +2145,6 @@
 				}
 			}
 
-			if (oStyle.ApplyBorder) {
-				// borders
-				var oBorders = oStyle.getBorder();
-				drawBorder(AscCommon.c_oAscBorderType.Ver, oBorders.l, 0, 0, 0, height);
-				drawBorder(AscCommon.c_oAscBorderType.Hor, oBorders.b, 0, height - 1, width, height - 1);
-				drawBorder(AscCommon.c_oAscBorderType.Ver, oBorders.r, width - 1, height, width - 1, 0);
-				drawBorder(AscCommon.c_oAscBorderType.Hor, oBorders.t, width, 0, 0, 0);
-				if (isNotFirst) {
-					ctx.stroke();
-				}
-			}
-
 			// Draw text
 			var format = oStyle.getFont().clone();
 			// Для размера шрифта делаем ограничение для превью в 16pt (у Excel 18pt, но и высота превью больше 22px)
@@ -2200,6 +2188,18 @@
 				ctx.fillText(sStyleName, width_padding, textY + tm.baseline);
 			} else {
 				sr.render(ctx, width_padding, textY, tm.width, oStyle.getFontColor() || new AscCommon.CColor(0, 0, 0));
+			}
+
+			if (oStyle.ApplyBorder) {
+				// borders
+				var oBorders = oStyle.getBorder();
+				drawBorder(AscCommon.c_oAscBorderType.Ver, oBorders.l, 0, 0, 0, height);
+				drawBorder(AscCommon.c_oAscBorderType.Hor, oBorders.b, 0, height - 1, width, height - 1);
+				drawBorder(AscCommon.c_oAscBorderType.Ver, oBorders.r, width - 1, height, width - 1, 0);
+				drawBorder(AscCommon.c_oAscBorderType.Hor, oBorders.t, width, 0, 0, 0);
+				if (isNotFirst) {
+					ctx.stroke();
+				}
 			}
 		}
 		
@@ -2300,7 +2300,19 @@
 			var nHIns = (height / 6 / 5 + 0.5) >> 0;
 			//whole
 			dxfWhole = oTableStyle.wholeTable && oTableStyle.wholeTable.dxf;
+			var oOldFill;
+			if(dxfWhole) {
+				oOldFill = dxfWhole.getFill();
+				if(!oOldFill) {
+					var oFill = new AscCommonExcel.Fill();
+					oFill.fromColor(new AscCommonExcel.RgbColor(0xFFFFFF));
+					dxfWhole.setFill(oFill);
+				}
+			}
 			drawSlicerPreviewElement(dxfWhole, null, ctx, graphics, 0, 0, width, height);
+			if(dxfWhole) {
+				dxfWhole.setFill(oOldFill);
+			}
 			dxfWhole = dxfWhole || true;
 
 			//header

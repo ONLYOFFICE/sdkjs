@@ -356,12 +356,20 @@ CDrawingsController.prototype.GetDirectTextPr = function()
 };
 CDrawingsController.prototype.RemoveSelection = function(bNoCheckDrawing)
 {
-	var ParaDrawing = this.DrawingObjects.getMajorParaDrawing();
-	if (ParaDrawing)
+	var oParaDrawing = this.DrawingObjects.getMajorParaDrawing();
+	this.DrawingObjects.resetSelection(undefined, bNoCheckDrawing);
+	if (oParaDrawing)
 	{
-		ParaDrawing.GoTo_Text(undefined, false);
+		var oInnerForm = null;
+		if (oParaDrawing.IsForm() && (oInnerForm = oParaDrawing.GetInnerForm()) && oInnerForm.IsPicture())
+		{
+			var arrDrawings = oInnerForm.GetAllDrawingObjects();
+			if (arrDrawings.length)
+				oParaDrawing = arrDrawings[0];
+		}
+
+		oParaDrawing.GoTo_Text(undefined, false);
 	}
-	return this.DrawingObjects.resetSelection(undefined, bNoCheckDrawing);
 };
 CDrawingsController.prototype.IsSelectionEmpty = function(bCheckHidden)
 {

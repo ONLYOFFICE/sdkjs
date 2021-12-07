@@ -1600,8 +1600,6 @@ function CDrawingDocument()
 
 		if (isMainAttack || !_word_control.m_oLogicDocument.IsFocusOnNotes())
 		{
-			var dKoef = (this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100);
-
 			var __x = x;
 			var __y = y;
 			if (transform)
@@ -1609,6 +1607,12 @@ function CDrawingDocument()
 				__x = transform.TransformPointX(x, y);
 				__y = transform.TransformPointY(x, y);
 			}
+			if (this.m_oWordControl.DemonstrationManager.Mode)
+			{
+				return this.m_oWordControl.DemonstrationManager.convertCoordsToCursorWR(__x, __y);
+			}
+			var dKoef = (this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100);
+
 
 			var x_pix = (this.SlideCurrectRect.left + __x * dKoef + (_word_control.m_oMainParent.AbsolutePosition.L + _word_control.m_oMainView.AbsolutePosition.L) * g_dKoef_mm_to_pix) >> 0;
 			var y_pix = (this.SlideCurrectRect.top + __y * dKoef + (_word_control.m_oMainParent.AbsolutePosition.T + _word_control.m_oMainView.AbsolutePosition.T) * g_dKoef_mm_to_pix) >> 0;

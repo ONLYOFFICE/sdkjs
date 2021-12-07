@@ -97,6 +97,8 @@
     var pageBreakPreviewMode = false;
 	var pageBreakPreviewModeOverlay = false;
 
+	var c_maxColFillDataCount = 10000;
+
     /*
      * Constants
      * -----------------------------------------------------------------------------
@@ -1732,8 +1734,12 @@
 
 		this.cols[i] = new CacheColumn(w);
 		this.cols[i].width = this.workbook.printPreviewState.isStart() ? w * this.getZoom() : Asc.round(w * this.getZoom());
-		this.cols[i]._widthForPrint = isDefaultWidth ? this.defaultColWidthPxForPrint : column && Asc.floor(
-			((256 * column.width + Asc.floor(128 / this.maxDigitWidthForPrint)) / 256) * this.maxDigitWidthForPrint);
+		if (!w) {
+			this.cols[i]._widthForPrint = 0;
+		} else {
+			this.cols[i]._widthForPrint = isDefaultWidth ? this.defaultColWidthPxForPrint : column && Asc.floor(
+				((256 * column.width + Asc.floor(128 / this.maxDigitWidthForPrint)) / 256) * this.maxDigitWidthForPrint);
+		}
 		
 		this.updateColumnsStart = Math.min(i, this.updateColumnsStart);
 	};
@@ -1763,7 +1769,11 @@
 		r = this.rows[i] = new CacheRow();
 		r.top = y;
 		r.height = this.workbook.printPreviewState.isStart() ? AscCommonExcel.convertPtToPx(hR) * this.getZoom() : Asc.round(AscCommonExcel.convertPtToPx(hR) * this.getZoom());
-		r._heightForPrint = isDefaultHeight ? null : hR;
+		if (!hR) {
+			r._heightForPrint = 0;
+		} else {
+			r._heightForPrint = isDefaultHeight ? null : hR;
+		}
 		r.descender = this.defaultRowDescender;
 	};
 
@@ -5545,17 +5555,22 @@
 		if (isRetina) {
 			widthLine = AscCommon.AscBrowser.convertToRetinaValue(widthLine, true);
 		}
+		//TODO проверить на следующих версиях. сдвиг, который получился опытным путём. проблема только в safari.
+		var _diff = 0;
+		if (AscBrowser.isSafari) {
+			_diff = 1;
+		}
 		ctx.setLineWidth(widthLine).setStrokeStyle(strokeColor);
 
         ctx.beginPath();
         if (drawTopSide && !firstRow) {
-            fHorLine.apply(ctx, [x1 - !isDashLine * (2 + isRetina * 1), y1, x2 + !isDashLine * (1 + isRetina * 1)]);
+            fHorLine.apply(ctx, [x1 - !isDashLine * (2 + isRetina * 1) + _diff, y1, x2 + !isDashLine * (1 + isRetina * 1) - _diff]);
         }
         if (drawBottomSide) {
             fHorLine.apply(ctx, [x1, y2 + !isDashLine * 1, x2]);
         }
         if (drawLeftSide && !firstCol) {
-            fVerLine.apply(ctx, [x1, y1, y2 + !isDashLine * (1 + isRetina * 1)]);
+            fVerLine.apply(ctx, [x1, y1, y2 + !isDashLine * (1 + isRetina * 1) - _diff]);
         }
         if (drawRightSide) {
             fVerLine.apply(ctx, [x2 + !isDashLine * 1, y1, y2 + !isDashLine * (1 + isRetina * 1)]);
@@ -15599,7 +15614,9 @@
 		//***array-formula***
 		var changeRangesIfArrayFormula = function() {
 			if(ctrlKey) {
+				//TODO есть баг с тем, что не лочатся все ячейки при данном действии
 				c = t.getSelectedRange();
+				var isAllColumnSelect = c && c.bbox && (c.bbox.getType() === c_oAscSelectionType.RangeMax || c.bbox.getType() === c_oAscSelectionType.RangeCol);
 				if(c.bbox.isOneCell()) {
 					//проверяем, есть ли формула массива в этой ячейке
 					t.model._getCell(c.bbox.r1, c.bbox.c1, function(cell){
@@ -15608,6 +15625,30 @@
 							c = t.model.getRange3(formulaRef.r1, formulaRef.c1, formulaRef.r2, formulaRef.c2);
 						}
 					});
+				} else if ((!flags || !flags.notCheckMax) && isAllColumnSelect) {
+					var allRows = t.model.getRowsCount();
+					var filledRows;
+					if (window["AscDesktopEditor"]) {
+						filledRows = Math.max(c_maxColFillDataCount, allRows);
+						bbox = new Asc.Range(c.bbox.c1, 0, c.bbox.c2, filledRows - 1);
+						c = t._getRange(bbox.c1, bbox.r1, bbox.c2, bbox.r2);
+
+						if (filledRows -1 !== gc_nMaxRow0) {
+							t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.FillAllRowsWarning, c_oAscError.Level.NoCritical, [filledRows, allRows], function () {
+								if (!flags) {
+									flags = []
+								}
+								flags.notCheckMax = true;
+								t._saveCellValueAfterEdit(c, val, flags, isNotHistory, lockDraw);
+							});
+						}
+					} else {
+						filledRows = c_maxColFillDataCount;
+						bbox = new Asc.Range(c.bbox.c1, 0, c.bbox.c2, filledRows - 1);
+						c = t._getRange(bbox.c1, bbox.r1, bbox.c2, bbox.r2);
+						t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.FillAllRowsWarning, c_oAscError.Level.NoCritical, [filledRows, allRows]);
+					}
+					return;
 				}
 				bbox = c.bbox;
 			}
@@ -22799,11 +22840,19 @@
 				}
 			}
 		}
-        var oObjectRender = this.objectRender;
-        if(oObjectRender && oObjectRender.controller) {
-            oObjectRender.OnUpdateOverlay();
-            oObjectRender.controller.updateSelectionState(true);
+        if(this.model.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
+            this._endSelectionShape();
+        } else {
+            var oObjectRender = this.objectRender;
+            if(oObjectRender && oObjectRender.controller) {
+                oObjectRender.OnUpdateOverlay();
+                oObjectRender.controller.updateSelectionState(true);
+            }
         }
+		var ar = this.model.selectionRange && this.model.selectionRange.getLast();
+		if (ar) {
+			this._updateRange(ar);
+		}
 		this.draw();
 	};
 

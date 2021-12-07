@@ -198,6 +198,20 @@ ParaDrawing.prototype = Object.create(CRunElementBase.prototype);
 ParaDrawing.prototype.constructor = ParaDrawing;
 
 ParaDrawing.prototype.Type = para_Drawing;
+ParaDrawing.prototype.SetParent = function(oParent)
+{
+	if (!oParent)
+		return;
+
+	if (oParent instanceof ParaRun)
+		this.Parent = oParent.GetParagraph();
+	else if (oParent instanceof Paragraph)
+		this.Parent = oParent;
+};
+ParaDrawing.prototype.GetParent = function()
+{
+	return this.Parent;
+};
 ParaDrawing.prototype.Get_Type = function()
 {
 	return this.Type;
@@ -1796,6 +1810,38 @@ ParaDrawing.prototype.GoTo_Text = function(bBefore, bUpdateStates)
 		Paragraph.Document_SetThisElementCurrent(undefined === bUpdateStates ? true : bUpdateStates);
 	}
 };
+ParaDrawing.prototype.GetDocumentPositionFromObject = function()
+{
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph)
+		return [];
+
+	var oLogicDocument = oParagraph.GetLogicDocument();
+	if (!oLogicDocument)
+		return [];
+
+	var oParaContentPos = oParagraph.GetPosByDrawing(this.GetId());
+	if (!oParaContentPos)
+		return [];
+
+	var nInRunPos = oParaContentPos.Get(oParaContentPos.GetDepth());
+
+	var oRunPos = oParaContentPos.Copy();
+	oRunPos.DecreaseDepth(1);
+
+	var oRun = oParagraph.GetClassByPos(oRunPos);
+
+	if (!(oRun instanceof ParaRun))
+		return [];
+
+	var oRunDocPos = oRun.GetDocumentPositionFromObject();
+	if (!oRunDocPos || !oRunDocPos.length)
+		return [];
+
+	oRunDocPos.push({Class : oRun, Position : nInRunPos});
+
+	return oRunDocPos;
+};
 ParaDrawing.prototype.Remove_FromDocument = function(bRecalculate)
 {
 	var oResult = null;
@@ -2914,7 +2960,7 @@ ParaDrawing.prototype.ConvertToMath = function(isUpdatePos)
 	if (!oLogicDocument)
 		return;
 
-	var oParaContentPos = oParagraph.Get_PosByDrawing(this.GetId());
+	var oParaContentPos = oParagraph.GetPosByDrawing(this.GetId());
 	if (!oParaContentPos)
 		return;
 
@@ -2993,6 +3039,7 @@ ParaDrawing.prototype.PreDelete = function()
 	for (var nIndex = 0, nCount = arrDocContents.length; nIndex < nCount; ++nIndex)
 	{
 		arrDocContents[nIndex].PreDelete();
+		arrDocContents[nIndex].ClearContent(true);
 	}
 	var oGrObject = this.GraphicObj;
 	if(oGrObject && oGrObject.signatureLine)

@@ -379,11 +379,15 @@ CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _C
 CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 {
 	PDSH.AddInlineSdt(this);
+	var oGraphics = PDSH.Graphics;
+
+	var isPrintMode = oGraphics.isPrintMode;
+	if (isPrintMode && this.IsForm() && this.IsPlaceHolder())
+		return this.SkipDraw(PDSH);
 
 	// Для экспорта в PDF записываем поля. Поля, находящиеся в автофигурах, пока не пишем
-	var oGraphics  = PDSH.Graphics;
 	var oTransform = this.Get_ParentTextTransform();
-	if (this.private_IsAddFormFieldToGraphics(oGraphics, oTransform))
+	if (!oGraphics.isPrintMode && this.private_IsAddFormFieldToGraphics(oGraphics, oTransform))
 	{
 		this.SkipDraw(PDSH);
 
@@ -480,14 +484,18 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 };
 CInlineLevelSdt.prototype.Draw_Elements = function(PDSE)
 {
-	if (this.private_IsAddFormFieldToGraphics(PDSE.Graphics))
+	if ((!PDSE.Graphics.isPrintMode && this.private_IsAddFormFieldToGraphics(PDSE.Graphics))
+		|| (PDSE.Graphics.isPrintMode && this.IsForm() && this.IsPlaceHolder()))
 		this.SkipDraw(PDSE);
 	else
 		CParagraphContentWithParagraphLikeContent.prototype.Draw_Elements.apply(this, arguments);
 };
 CInlineLevelSdt.prototype.Draw_Lines = function(PDSL)
 {
-	if (this.private_IsAddFormFieldToGraphics(PDSL.Graphics))
+	// Не отключаем отрисовку линий для PlaceHolder, т.к. рамка рисуется через данную функцию
+	// отключение остальных отрисовок идет внутри ParaRun.Draw_Lines
+
+	if ((!PDSL.Graphics.isPrintMode && this.private_IsAddFormFieldToGraphics(PDSL.Graphics)))
 		this.SkipDraw(PDSL);
 	else
 		CParagraphContentWithParagraphLikeContent.prototype.Draw_Lines.apply(this, arguments);
@@ -728,7 +736,7 @@ CInlineLevelSdt.prototype.IsFixedForm = function()
 	var oShape = this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null;
 	return (oShape && oShape.isForm());
 };
-CInlineLevelSdt.prototype.GetFixedFormBounds = function()
+CInlineLevelSdt.prototype.GetFixedFormBounds = function(isUsePaddings)
 {
 	if (!this.Paragraph)
 		return {X : 0, Y : 0, W : 0, H : 0, Page : 0};
@@ -736,7 +744,7 @@ CInlineLevelSdt.prototype.GetFixedFormBounds = function()
 	var oShape = this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null;
 	if (oShape && oShape.isForm())
 	{
-		return oShape.getFormRelRect();
+		return oShape.getFormRelRect(isUsePaddings);
 	}
 
 	return {X : 0, Y : 0, W : 0, H : 0, Page : 0};

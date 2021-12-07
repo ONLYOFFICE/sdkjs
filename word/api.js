@@ -6640,15 +6640,14 @@ background-repeat: no-repeat;\
 				CommentData.m_sOOTime = ((new Date()).getTime()).toString();
 
 			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_AddComment);
-			var Comment = this.WordControl.m_oLogicDocument.AddComment(CommentData, AscCommentData.asc_getDocumentFlag());
-			if (null != Comment)
-			{
-				this.sync_AddComment(Comment.Get_Id(), CommentData);
-			}
+			var oComment = this.WordControl.m_oLogicDocument.AddComment(CommentData, AscCommentData.asc_getDocumentFlag());
+			if (oComment)
+				this.sync_AddComment(oComment.GetId(), CommentData);
 
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 
-			return Comment.Get_Id();
+			if (oComment)
+				return oComment.GetId();
 		}
 
 		return null;
@@ -9006,6 +9005,182 @@ background-repeat: no-repeat;\
 	//----------------------------------------------------------------------------------------------------------------------
 	// Работаем с ContentControl
 	//----------------------------------------------------------------------------------------------------------------------
+	asc_docs_api.prototype.asc_AddContentControl = function(nType, oContentControlPr)
+	{
+		var oLogicDocument = this.WordControl.m_oLogicDocument;
+		if (!oLogicDocument)
+			return null;
+
+		var oResult = null;
+		if (c_oAscSdtLevelType.Block === nType)
+		{
+			if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_ContentControl_Add, null))
+			{
+				oLogicDocument.StartAction(AscDFH.historydescription_Document_AddBlockLevelContentControl);
+
+				var oContentControl = oLogicDocument.AddContentControl(c_oAscSdtLevelType.Block);
+				if (oContentControl)
+				{
+					if (oContentControlPr)
+						oContentControl.SetContentControlPr(oContentControlPr);
+
+					oLogicDocument.Recalculate();
+					oLogicDocument.UpdateInterface();
+					oLogicDocument.UpdateSelection();
+
+					oResult = oContentControl.GetContentControlPr();
+				}
+
+				oLogicDocument.FinalizeAction();
+			}
+		}
+		else if (c_oAscSdtLevelType.Inline === nType)
+		{
+			if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_ContentControl_Add, null))
+			{
+				oLogicDocument.StartAction(AscDFH.historydescription_Document_AddInlineLevelContentControl);
+
+				var oContentControl = oLogicDocument.AddContentControl(c_oAscSdtLevelType.Inline);
+				if (oContentControl)
+				{
+					if (oContentControlPr)
+						oContentControl.SetContentControlPr(oContentControlPr);
+
+					oLogicDocument.Recalculate();
+					oLogicDocument.UpdateInterface();
+					oLogicDocument.UpdateSelection();
+
+					oResult = oContentControl.GetContentControlPr();
+				}
+
+				oLogicDocument.FinalizeAction();
+			}
+		}
+		return oResult;
+	};
+	asc_docs_api.prototype.asc_AddContentControlCheckBox = function(oPr, oInternalPr, oCommonPr)
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return;
+
+		var nCheckedSymbol   = oPr && oPr.CheckedSymbol ? oPr.CheckedSymbol : Asc.c_oAscSdtCheckBoxDefaults.CheckedSymbol;
+		var nUncheckedSymbol = oPr && oPr.UncheckedSymbol ? oPr.UncheckedSymbol : Asc.c_oAscSdtCheckBoxDefaults.UncheckedSymbol;
+		var sCheckedFont     = oPr && oPr.CheckedFont ? oPr.CheckedFont : Asc.c_oAscSdtCheckBoxDefaults.CheckedFont;
+		var sUncheckedFont   = oPr && oPr.UncheckedFont ? oPr && oPr.UncheckedFont : Asc.c_oAscSdtCheckBoxDefaults.UncheckedFont;
+
+		var isLoadFonts = false;
+		if (!AscCommon.IsAscFontSupport(sCheckedFont, nCheckedSymbol))
+		{
+			isLoadFonts = true;
+			AscFonts.FontPickerByCharacter.getFontBySymbol(nCheckedSymbol);
+		}
+
+		if (!AscCommon.IsAscFontSupport(sUncheckedFont, nUncheckedSymbol))
+		{
+			isLoadFonts = true;
+			AscFonts.FontPickerByCharacter.getFontBySymbol(nUncheckedSymbol);
+		}
+
+		function private_PerformAddCheckBox()
+		{
+			oLogicDocument.RemoveTextSelection();
+			if (!oLogicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
+			{
+				oLogicDocument.StartAction(AscDFH.historydescription_Document_AddContentControlCheckBox);
+
+				var oCC = oLogicDocument.AddContentControlCheckBox(oPr);
+
+				if (oCC && oCommonPr)
+					oCC.SetContentControlPr(oCommonPr);
+
+				oLogicDocument.UpdateInterface();
+				oLogicDocument.Recalculate();
+				oLogicDocument.FinalizeAction();
+			}
+		}
+
+		if (isLoadFonts)
+		{
+			var oFonts = {};
+			oFonts[sCheckedFont]   = true;
+			oFonts[sUncheckedFont] = true;
+
+			AscCommon.Check_LoadingDataBeforePrepaste(this, oFonts, {}, private_PerformAddCheckBox);
+		}
+		else
+		{
+			private_PerformAddCheckBox();
+		}
+	};
+	asc_docs_api.prototype.asc_AddContentControlPicture = function(oInternalPr, oCommonPr)
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return;
+
+		oLogicDocument.RemoveTextSelection();
+		if (!oLogicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
+		{
+			oLogicDocument.StartAction(AscDFH.historydescription_Document_AddContentControlPicture);
+
+			var oCC = oLogicDocument.AddContentControlPicture();
+
+			if (oCC && oCommonPr)
+				oCC.SetContentControlPr(oCommonPr);
+
+			oLogicDocument.UpdateInterface();
+			oLogicDocument.Recalculate();
+			oLogicDocument.FinalizeAction();
+		}
+	};
+	asc_docs_api.prototype.asc_AddContentControlList = function(isComboBox, oPr, oInternalPr, oCommonPr)
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return;
+
+		oLogicDocument.RemoveTextSelection();
+		if (!oLogicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
+		{
+			oLogicDocument.StartAction(AscDFH.historydescription_Document_AddContentControlList);
+
+			var oCC;
+			if (isComboBox)
+				oCC = oLogicDocument.AddContentControlComboBox(oPr);
+			else
+				oCC = oLogicDocument.AddContentControlDropDownList(oPr);
+
+			if (oCC && oCommonPr)
+				oCC.SetContentControlPr(oCommonPr);
+
+			oLogicDocument.Recalculate();
+			oLogicDocument.UpdateInterface();
+			oLogicDocument.UpdateSelection();
+			oLogicDocument.FinalizeAction();
+		}
+	};
+	asc_docs_api.prototype.asc_AddContentControlDatePicker = function(oPr, oCommonPr)
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return;
+
+		oLogicDocument.RemoveTextSelection();
+		if (!oLogicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
+		{
+			oLogicDocument.StartAction(AscDFH.historydescription_Document_AddContentControlList);
+			var oCC = oLogicDocument.AddContentControlDatePicker(oPr, oCommonPr);
+
+			if (oCC && oCommonPr)
+				oCC.SetContentControlPr(oCommonPr);
+
+			oLogicDocument.Recalculate();
+			oLogicDocument.UpdateInterface();
+			oLogicDocument.UpdateSelection();
+			oLogicDocument.FinalizeAction();
+		}
+	};
 	asc_docs_api.prototype.asc_RemoveContentControl = function(Id)
 	{
 		var oLogicDocument = this.WordControl.m_oLogicDocument;
@@ -12270,6 +12445,11 @@ background-repeat: no-repeat;\
     asc_docs_api.prototype["SetDrawImagePreviewBulletChangeListLevel"]	= asc_docs_api.prototype.SetDrawImagePreviewBulletChangeListLevel;
     asc_docs_api.prototype["SetDrawImagePreviewBulletForMenu"]			= asc_docs_api.prototype.SetDrawImagePreviewBulletForMenu;
 
+	asc_docs_api.prototype["asc_AddContentControl"]                     = asc_docs_api.prototype.asc_AddContentControl;
+	asc_docs_api.prototype["asc_AddContentControlCheckBox"]             = asc_docs_api.prototype.asc_AddContentControlCheckBox;
+	asc_docs_api.prototype["asc_AddContentControlPicture"]              = asc_docs_api.prototype.asc_AddContentControlPicture;
+	asc_docs_api.prototype["asc_AddContentControlList"]                 = asc_docs_api.prototype.asc_AddContentControlList;
+	asc_docs_api.prototype["asc_AddContentControlDatePicker"]           = asc_docs_api.prototype.asc_AddContentControlDatePicker;
 	asc_docs_api.prototype["asc_RemoveContentControl"]                  = asc_docs_api.prototype.asc_RemoveContentControl;
 	asc_docs_api.prototype["asc_RemoveContentControlWrapper"]           = asc_docs_api.prototype.asc_RemoveContentControlWrapper;
 	asc_docs_api.prototype["asc_SetContentControlProperties"]           = asc_docs_api.prototype.asc_SetContentControlProperties;

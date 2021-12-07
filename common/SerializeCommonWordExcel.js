@@ -808,6 +808,25 @@ FT_Stream2.prototype.GetString = function() {
 	this.cur += 2 * Len;
 	return t;
 };
+FT_Stream2.prototype.GetString2A = function() {
+	var len = this.GetULong();
+	return this.GetString1(len);
+}
+FT_Stream2.prototype.GetString1 = function(len) {
+	if (this.cur + len > this.size)
+		return "";
+	var t = "";
+	for (var i = 0; i < len; i++)
+	{
+		var _c = this.data[this.cur + i];
+		if (_c == 0)
+			continue;
+
+		t += String.fromCharCode(_c);
+	}
+	this.cur += len;
+	return t;
+}
 FT_Stream2.prototype.GetCurPos = function() {
 	return this.cur;
 };

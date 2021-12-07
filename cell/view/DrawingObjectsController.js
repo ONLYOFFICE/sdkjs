@@ -334,7 +334,6 @@ DrawingObjectsController.prototype.handleChartDoubleClick = function()
 
 DrawingObjectsController.prototype.handleOleObjectDoubleClick = function(drawing, oleObject, e, x, y, pageIndex)
 {
-
     var drawingObjects = this.drawingObjects;
     var oThis = this;
     var fCallback = function(){
@@ -616,35 +615,28 @@ DrawingObjectsController.prototype.onKeyPress = function(e)
         Code = 0;//special char
 
     var bRetValue = false;
-    var aSelectedObjects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects;
-    if(aSelectedObjects.length === 1 && aSelectedObjects[0].getObjectType() === AscDFH.historyitem_type_Shape)
+    if(this.checkSelectedObjectsProtectionText())
     {
-        if(!aSelectedObjects[0].canEditText())
-        {
-            return false;
-        }
+        return true;
     }
-    if ( Code > 0x20 )
+    if ( Code >= 0x20 )
     {
-        var oApi = window["Asc"] && window["Asc"]["editor"];
-        var fCallback = function(){
-            this.paragraphAdd( new ParaText(Code), false );
+        var fCallback = function()
+        {
+            var oItem;
+            if(AscCommon.IsSpace(Code))
+            {
+                oItem = new ParaSpace(Code);
+            }
+            else
+            {
+                oItem = new ParaText(Code);
+            }
+            this.paragraphAdd(oItem, false);
             this.checkMobileCursorPosition();
             this.recalculateCurPos(true, true);
         };
         this.checkSelectedObjectsAndCallback(fCallback, [], false, AscDFH.historydescription_Spreadsheet_ParagraphAdd, undefined, window["Asc"]["editor"].collaborativeEditing.getFast());
-
-        bRetValue = true;
-    }
-    else if ( Code == 0x20 )
-    {
-        var oApi = window["Asc"] && window["Asc"]["editor"];
-        var fCallback = function(){
-            this.paragraphAdd(new ParaSpace());
-            this.checkMobileCursorPosition();
-            this.recalculateCurPos(true, true);
-        };
-        this.checkSelectedObjectsAndCallback(fCallback, [], false, AscDFH.historydescription_Spreadsheet_AddSpace, undefined, window["Asc"]["editor"].collaborativeEditing.getFast());
 
         bRetValue = true;
     }

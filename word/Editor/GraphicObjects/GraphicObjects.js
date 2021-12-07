@@ -297,11 +297,24 @@ CGraphicObjects.prototype =
     getChartObject: DrawingObjectsController.prototype.getChartObject,
     getChartSpace2: DrawingObjectsController.prototype.getChartSpace2,
     CreateDocContent: DrawingObjectsController.prototype.CreateDocContent,
-    isSlideShow: function(){
+    isSlideShow: function()
+    {
         return false;
     },
 
+    isObjectsProtected: function()
+    {
+        return false;
+    },
 
+    checkSelectedObjectsProtection: function()
+    {
+        return false;
+    },
+    checkSelectedObjectsProtectionText: function()
+    {
+        return false;
+    },
 
     clearPreTrackObjects: function()
     {
@@ -791,11 +804,16 @@ CGraphicObjects.prototype =
             }
         }
         this.document.Recalculate();
-        if(oApplyProps.textArtProperties && typeof oApplyProps.textArtProperties.asc_getForm() === "string")
+        if(oApplyProps &&
+            (oApplyProps.ChartProperties ||
+            oApplyProps.textArtProperties && typeof oApplyProps.textArtProperties.asc_getForm() === "string" ||
+            AscFormat.isRealNumber(oApplyProps.verticalTextAlign) ||
+            AscFormat.isRealNumber(oApplyProps.vert))
+        )
         {
             this.document.Document_UpdateSelectionState();
+            this.document.RecalculateCurPos();
         }
-        oApplyProps && (AscFormat.isRealNumber(oApplyProps.verticalTextAlign) || AscFormat.isRealNumber(oApplyProps.vert)) && this.document.Document_UpdateSelectionState();
     },
 
     applyDrawingProps: DrawingObjectsController.prototype.applyDrawingProps,

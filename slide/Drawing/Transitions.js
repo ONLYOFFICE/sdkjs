@@ -3588,6 +3588,10 @@ function CDemonstrationManager(htmlpage)
             {
                 _x -= ((oThis.HtmlPage.m_oMainParent.AbsolutePosition.L * g_dKoef_mm_to_pix) >> 0);
             }
+            if(oThis.HtmlPage.m_oApi.isEmbedVersion)
+            {
+                _y -= oThis.HtmlPage.Y;
+            }
 
             _x = _x * _w_mm / _w;
             _y = _y * _h_mm / _h;
@@ -3595,6 +3599,38 @@ function CDemonstrationManager(htmlpage)
             return { x : _x, y : _y, page : oThis.SlideNum };
         }
         return null;
+    };
+
+    this.convertCoordsToCursorWR = function(x, y)
+    {
+        var transition = oThis.Transition;
+        if(transition)
+        {
+            var _w = AscCommon.AscBrowser.convertToRetinaValue(transition.Rect.w);
+            var _h = AscCommon.AscBrowser.convertToRetinaValue(transition.Rect.h);
+            var _w_mm = oThis.HtmlPage.m_oLogicDocument.GetWidthMM();
+            var _h_mm = oThis.HtmlPage.m_oLogicDocument.GetHeightMM();
+
+            var _x = x * _w / _w_mm;
+            var _y = y * _h / _h_mm;
+
+
+            if (oThis.HtmlPage.m_oApi.isReporterMode)
+            {
+                _x += ((oThis.HtmlPage.m_oMainParent.AbsolutePosition.L * g_dKoef_mm_to_pix) >> 0);
+            }
+            if(oThis.HtmlPage.m_oApi.isEmbedVersion)
+            {
+                _y += oThis.HtmlPage.Y;
+            }
+
+            var nRetX = _x + AscCommon.AscBrowser.convertToRetinaValue(transition.Rect.x);
+            var nRetY = _y + AscCommon.AscBrowser.convertToRetinaValue(transition.Rect.y);
+
+            return { X : nRetX, Y : nRetY, Error: false};
+        }
+
+        return { x : 0, y : 0, Error: true};
     };
 
     this.CheckMouseDown = function(x, y, page)

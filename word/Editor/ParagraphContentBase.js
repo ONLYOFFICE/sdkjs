@@ -451,7 +451,7 @@ CParagraphContentBase.prototype.Get_ClassesByPos = function(Classes, ContentPos,
 {
 	Classes.push(this);
 };
-CParagraphContentBase.prototype.Get_PosByDrawing = function(Id, ContentPos, Depth)
+CParagraphContentBase.prototype.GetPosByDrawing = function(Id, ContentPos, Depth)
 {
 	return false;
 };
@@ -2247,11 +2247,17 @@ CParagraphContentWithParagraphLikeContent.prototype.Get_PosInParent = function(P
 };
 CParagraphContentWithParagraphLikeContent.prototype.Correct_Content = function()
 {
+	if (this.Paragraph && !this.Paragraph.CanCorrectContent())
+		return;
+
     if (this.Content.length <= 0)
         this.Add_ToContent(0, new ParaRun(this.GetParagraph(), false));
 };
 CParagraphContentWithParagraphLikeContent.prototype.CorrectContent = function()
 {
+	if (this.Paragraph && !this.Paragraph.CanCorrectContent())
+		return;
+
 	this.Correct_Content();
 };
 CParagraphContentWithParagraphLikeContent.prototype.UpdateBookmarks = function(oManager)
@@ -2856,7 +2862,7 @@ CParagraphContentWithParagraphLikeContent.prototype.ConvertParaContentPosToRange
 
 	return nRangePos;
 };
-CParagraphContentWithParagraphLikeContent.prototype.Get_PosByDrawing = function(Id, ContentPos, Depth)
+CParagraphContentWithParagraphLikeContent.prototype.GetPosByDrawing = function(Id, ContentPos, Depth)
 {
     var Count = this.Content.length;
     for ( var CurPos = 0; CurPos < Count; CurPos++ )
@@ -2865,7 +2871,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Get_PosByDrawing = function(
 
         ContentPos.Update( CurPos, Depth );
 
-        if ( true === Element.Get_PosByDrawing(Id, ContentPos, Depth + 1) )
+        if ( true === Element.GetPosByDrawing(Id, ContentPos, Depth + 1) )
             return true;
     }
 

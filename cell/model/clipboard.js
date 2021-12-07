@@ -1608,7 +1608,7 @@
 						window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
 					};
 
-					worksheet.objectRender.controller.checkSelectedObjectsAndCallback2(callback);
+					worksheet.objectRender.controller.checkPasteInText(callback);
 				};
 
 				var res = false;
@@ -1815,7 +1815,7 @@
 						window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
 					};
 
-					worksheet.objectRender.controller.checkSelectedObjectsAndCallback2(callback);
+					worksheet.objectRender.controller.checkPasteInText(callback);
 				} else {
 					var oPasteFromBinaryWord = new pasteFromBinaryWord(this, worksheet);
 					oPasteFromBinaryWord._paste(worksheet, pasteData);
@@ -1898,7 +1898,7 @@
 							window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
 						};
 
-						worksheet.objectRender.controller.checkSelectedObjectsAndCallback2(callback);
+						worksheet.objectRender.controller.checkPasteInText(callback);
 						return true;
 					} else {
 						History.TurnOff();
@@ -2684,7 +2684,7 @@
 						}
 					};
 
-					worksheet.objectRender.controller.checkSelectedObjectsAndCallback2(callback);
+					worksheet.objectRender.controller.checkPasteInText(callback);
 					return;
 				}
 
@@ -3400,7 +3400,7 @@
 					//check text
 					AscFonts.FontPickerByCharacter.getFontsByString(text);
 					worksheet._loadFonts([], function () {
-						worksheet.objectRender.controller.checkSelectedObjectsAndCallback2(callback);
+						worksheet.objectRender.controller.checkPasteInText(callback);
 					});
 					return;
 				}

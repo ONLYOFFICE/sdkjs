@@ -152,7 +152,7 @@ function CEditorPage(api)
 	this.m_bDocumentPlaceChangedEnabled = false;
 
 	this.m_nZoomValue = 100;
-	this.zoom_values  = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
+	this.zoom_values  = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 320, 340, 360, 380, 400, 425, 450, 475, 500];
 	this.m_nZoomType  = 2; // 0 - custom, 1 - fitToWodth, 2 - fitToPage
 
 	this.m_oBoundsController = new AscFormat.CBoundsController();
@@ -3168,7 +3168,7 @@ function CEditorPage(api)
 		if (this.MobileTouchManager)
 			this.MobileTouchManager.Resize_After();
 
-		if (this.IsSupportNotes && this.m_oNotesApi)
+		if (this.IsSupportNotes && this.m_oNotesApi && this.m_oApi.isDocumentLoadComplete/* asc_setSkin => OnResize before fonts loaded => crash on Notes.OnResize() */)
 			this.m_oNotesApi.OnResize();
 
 		this.FullRulersUpdate();

@@ -566,9 +566,9 @@
             }
         };
 
-        this.loadImageByUrl = function(_image, _url)
+        this.loadImageByUrl = function(_image, _url, isDisableCrypto)
         {
-            if (this.isBlockchainSupport)
+            if (this.isBlockchainSupport && (true !== isDisableCrypto))
                 _image.preload_crypto(_url);
             else
                 _image.src = _url;
@@ -716,7 +716,7 @@
             oThis.loadImageByUrl(oImage.Image, oImage.src);
         };
 
-        this.LoadImagesWithCallback = function(arr, loadImageCallBack, loadImageCallBackArgs)
+        this.LoadImagesWithCallback = function(arr, loadImageCallBack, loadImageCallBackArgs, isDisableCrypto)
         {
             var arrAsync = [];
             var i = 0;
@@ -766,7 +766,7 @@
 					oThis.loadImageByUrl(img, img.src);
 				});
 				//oImage.Image.crossOrigin = 'anonymous';
-                this.loadImageByUrl(oImage.Image, oImage.src);
+                this.loadImageByUrl(oImage.Image, oImage.src, isDisableCrypto);
 			}
         };
 
