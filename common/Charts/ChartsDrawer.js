@@ -8334,7 +8334,7 @@ drawHBarChart.prototype = {
 		}
 
 		if (this.cChartDrawer.nDimensionCount === 3) {
-			if (this.cChartDrawer.processor3D.view3D.getRAngAx() && this.subType !== "normal") {
+			if (this.cChartDrawer.processor3D.view3D.getRAngAx()) {
 				var angle = Math.abs(this.cChartDrawer.processor3D.angleOy);
 				this.sortZIndexPaths.sort(function sortArr(a, b) {
 					if (b.zIndex === a.zIndex) {
@@ -8629,7 +8629,7 @@ drawHBarChart.prototype = {
 
 	calculateParallalepiped: function (newStartX, newStartY, val, width, DiffGapDepth, perspectiveDepth,
 									   individualBarHeight, seriesHeight, i, idx, cubeCount, type, maxH, minH) {
-		var paths;
+		var paths, paths2;
 		var point1, point2, point3, point4, point5, point6, point7, point8;
 		var x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, x5, y5, z5, x6, y6, z6, x7, y7, z7, x8, y8, z8;
 		var xPoints = this.valAx.xPoints;
@@ -8667,14 +8667,16 @@ drawHBarChart.prototype = {
 			var nullPositionOX = this.catAx.posX * this.chartProp.pxToMM;
 			paths = this.cChartDrawer.calculatePyramid(true, this.subType, newStartX, newStartY, width, DiffGapDepth, 
 				individualBarHeight, perspectiveDepth, val, nullPositionOX, maxH, minH);
+			paths2 = this.cChartDrawer.calculateRect3D(points, val, null, true);
 		} else if (type === AscFormat.BAR_SHAPE_CYLINDER) {
 			paths = this.cChartDrawer._calculateCylinder(newStartX, newStartY, individualBarHeight, width, val, DiffGapDepth, perspectiveDepth, true, true);
+			paths2 = this.cChartDrawer.calculateRect3D(points, val, null, true);
 		} else {
-			paths = this.cChartDrawer.calculateRect3D(points, val, null, true);
+			paths2 = this.cChartDrawer.calculateRect3D(points, val, null, true);
+			paths = paths2;
 		}
-		var paths2 = this.cChartDrawer.calculateRect3D(points, val, null, true);
 
-		if (this.cChartDrawer.processor3D.view3D.getRAngAx() && this.subType !== "normal") {
+		if (this.cChartDrawer.processor3D.view3D.getRAngAx()) {
 			var controlPoint1 = this.cChartDrawer._convertAndTurnPoint(x5 + width / 2, y5 - individualBarHeight / 2,
 				z5);
 			var controlPoint2 = this.cChartDrawer._convertAndTurnPoint(x5 + width / 2, y5,
@@ -8939,7 +8941,7 @@ drawHBarChart.prototype = {
 		};
 
 		var index, faces, face;
-		if (this.cChartDrawer.processor3D.view3D.getRAngAx() && this.subType !== "normal") {
+		if (this.cChartDrawer.processor3D.view3D.getRAngAx()) {
 			for (var i = 0; i < this.sortZIndexPaths.length; i++) {
 				drawVerges(this.sortZIndexPaths[i].seria, this.sortZIndexPaths[i].point,
 					this.sortZIndexPaths[i].darkPaths, null, this.sortZIndexPaths[i].verge, null, true);
