@@ -3018,9 +3018,13 @@
 
 		//change zoom on default
 		var trueRetinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
-		AscCommon.AscBrowser.retinaPixelRatio = 1;
 		var viewZoom = this.getZoom();
+		if (viewZoom === 1 && trueRetinaPixelRatio === 1) {
+			runFunction();
+			return;
+		}
 
+		AscCommon.AscBrowser.retinaPixelRatio = 1;
 		//приходится несколько раз выполнять действия, чтобы ppi выставился правильно
 		//если не делать init, то не сбросится ppi от системного зума - смотри функцию DrawingContext.prototype.changeZoom
 		if (viewZoom !== 1) {
