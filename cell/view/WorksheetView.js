@@ -16268,7 +16268,10 @@
 			return;
 		}
 
-		if (!window['AscCommonExcel'].filteringMode || this.model.getSheetProtection(Asc.c_oAscSheetProtectType.autoFilter)) {
+		var isChangeStyle = Asc.c_oAscChangeFilterOptions.style === optionType;
+		var isProtectFilter = this.model.getSheetProtection(Asc.c_oAscSheetProtectType.autoFilter);
+		var isProtectFormat = this.model.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells);
+		if (!window['AscCommonExcel'].filteringMode || (!isChangeStyle && isProtectFilter) || (isChangeStyle && isProtectFormat)) {
 			if (opt_callback) {
 				opt_callback(false);
 			}
@@ -16381,7 +16384,7 @@
 			}
 		};
 
-		if (Asc.c_oAscChangeFilterOptions.style === optionType) {
+		if (isChangeStyle) {
 			onChangeAutoFilterCallback(true);
 		} else {
 			this._isLockedAll(onChangeAutoFilterCallback);
