@@ -16470,8 +16470,11 @@ function Binary_SettingsTableReader(doc, oReadResult, stream)
 		{
 			var textPr = new CTextPr();
 			res = this.brPrr.Read(length, textPr, null);
-			if (textPr.Color && !textPr.Color.Auto) {
-				this.Document.SetSpecialFormsHighlight(textPr.Color.r, textPr.Color.g, textPr.Color.b);
+			if (textPr.Color) {
+				if (textPr.Color.Auto)
+					this.Document.SetSpecialFormsHighlight(null);
+				else
+					this.Document.SetSpecialFormsHighlight(textPr.Color.r, textPr.Color.g, textPr.Color.b);
 			}
 		}
 		else if ( c_oSer_SettingsType.Compat === type )

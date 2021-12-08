@@ -16429,14 +16429,17 @@ CDocument.prototype.IsSdtGlobalSettingsDefault = function()
 };
 CDocument.prototype.GetSpecialFormsHighlight = function()
 {
+	if (!this.Settings.SpecialFormsSettings.Highlight)
+		return new AscCommonWord.CDocumentColor(201, 200, 255);
+
 	return this.Settings.SpecialFormsSettings.Highlight;
 };
 CDocument.prototype.SetSpecialFormsHighlight = function(r, g, b)
 {
-	if ((undefined === r || null === r) && undefined !== this.Settings.SpecialFormsSettings.Highlight)
+	if ((undefined === r || null === r) && (undefined === this.Settings.SpecialFormsSettings.Highlight || !this.Settings.SpecialFormsSettings.Highlight.IsAuto()))
 	{
 		var oNewSettings = this.Settings.SpecialFormsSettings.Copy();
-		oNewSettings.Highlight = undefined;
+		oNewSettings.Highlight = new AscCommonWord.CDocumentColor(0, 0, 0, true);
 
 		this.History.Add(new CChangesDocumentSpecialFormsGlobalSettings(this, this.Settings.SpecialFormsSettings, oNewSettings));
 		this.Settings.SpecialFormsSettings = oNewSettings;

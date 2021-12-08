@@ -10014,7 +10014,7 @@ background-repeat: no-repeat;\
 			return null;
 
 		var oColor = oLogicDocument.GetSpecialFormsHighlight();
-		return oColor ? new Asc.asc_CColor(oColor.r, oColor.g, oColor.b) : null;
+		return oColor && !oColor.IsAuto() ? new Asc.asc_CColor(oColor.r, oColor.g, oColor.b) : null;
 	};
 	asc_docs_api.prototype.sync_OnChangeSpecialFormsGlobalSettings = function()
 	{
