@@ -16389,7 +16389,9 @@
 	};
 
 	WorksheetView.prototype.applyAutoFilter = function (autoFilterObject) {
-		if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.autoFilter)) {
+		var isPivot = autoFilterObject && autoFilterObject.pivotObj;
+		var checkProtectProp = isPivot ? Asc.c_oAscSheetProtectType.pivotTables : Asc.c_oAscSheetProtectType.autoFilter;
+		if (this.model.getSheetProtection(checkProtectProp)) {
 			return;
 		}
 
