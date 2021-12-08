@@ -9560,23 +9560,26 @@ CDocument.prototype.UpdateCursorType = function(X, Y, PageAbs, MouseEvent)
 
 	this.DrawingDocument.OnDrawContentControl(null, AscCommon.ContentControlTrack.Hover);
 
-	var nDocPosType = this.GetDocPosType();
-	if (docpostype_HdrFtr === nDocPosType)
+	if (undefined !== X && null !== X)
 	{
-		this.HeaderFooterController.UpdateCursorType(X, Y, PageAbs, MouseEvent);
-	}
-	else if (docpostype_DrawingObjects === nDocPosType)
-	{
-		this.DrawingsController.UpdateCursorType(X, Y, PageAbs, MouseEvent);
-	}
-	else
-	{
-		if (true === this.Footnotes.CheckHitInFootnote(X, Y, PageAbs))
-			this.Footnotes.UpdateCursorType(X, Y, PageAbs, MouseEvent);
-		else if (this.Endnotes.CheckHitInEndnote(X, Y, PageAbs))
-			this.Endnotes.UpdateCursorType(X, Y, PageAbs, MouseEvent);
+		var nDocPosType = this.GetDocPosType();
+		if (docpostype_HdrFtr === nDocPosType)
+		{
+			this.HeaderFooterController.UpdateCursorType(X, Y, PageAbs, MouseEvent);
+		}
+		else if (docpostype_DrawingObjects === nDocPosType)
+		{
+			this.DrawingsController.UpdateCursorType(X, Y, PageAbs, MouseEvent);
+		}
 		else
-			this.LogicDocumentController.UpdateCursorType(X, Y, PageAbs, MouseEvent);
+		{
+			if (true === this.Footnotes.CheckHitInFootnote(X, Y, PageAbs))
+				this.Footnotes.UpdateCursorType(X, Y, PageAbs, MouseEvent);
+			else if (this.Endnotes.CheckHitInEndnote(X, Y, PageAbs))
+				this.Endnotes.UpdateCursorType(X, Y, PageAbs, MouseEvent);
+			else
+				this.LogicDocumentController.UpdateCursorType(X, Y, PageAbs, MouseEvent);
+		}
 	}
 
 	this.Api.sync_MouseMoveEndCallback();

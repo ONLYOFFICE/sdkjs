@@ -808,6 +808,14 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCu
 
 	oDrawingDocument.OnDrawContentControl(this, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In, this.GetBoundingPolygon());
 };
+CInlineLevelSdt.prototype.IsDrawContentControlsTrackBounds = function()
+{
+	var oShd;
+	return (!this.IsForm()
+		|| !this.IsCurrent()
+		|| !(oShd = this.GetFormPr().GetShd())
+		|| oShd.IsNil());
+};
 CInlineLevelSdt.prototype.SelectContentControl = function()
 {
 	var arrDrawings, oLogicDocument;
