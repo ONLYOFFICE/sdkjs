@@ -6326,6 +6326,10 @@ var editor;
 		this.sendEvent("asc_onHideForeignCursorLabel", UserId);
 	};
 
+	//TODO убрать!
+	window['Asc']['Addons'] = window['Asc']['Addons'] || {};
+	window['Asc']['Addons']['sheet-views'] = true;
+
 	//TODO временно положил в прототип. перенести!
 	spreadsheet_api.prototype.sheetViewManagerLocks = [];
 	spreadsheet_api.prototype.asc_addNamedSheetView = function (duplicateNamedSheetView, setActive) {
