@@ -9986,7 +9986,7 @@ background-repeat: no-repeat;\
 		if (!oLogicDocument)
 			return;
 
-		oLogicDocument.ClearAllSpecialForms();
+		oLogicDocument.ClearAllSpecialForms(true);
 	};
 	asc_docs_api.prototype.asc_SetSpecialFormsHighlightColor = function(r, g, b)
 	{

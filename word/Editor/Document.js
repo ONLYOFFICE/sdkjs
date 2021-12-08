@@ -25275,44 +25275,63 @@ CDocument.prototype.OnChangeRadioRequired = function(sGroupKey, isRequired)
 };
 /**
  * Очищаем все специальные формы до плейсхолдеров
+ * @param {boolean} [isClearAllContentControls=false] Очищаем ли вообще все контролы
  */
-CDocument.prototype.ClearAllSpecialForms = function()
+CDocument.prototype.ClearAllSpecialForms = function(isClearAllContentControls)
 {
-	var arrParagraphs = [];
-	for (var sId in this.SpecialForms)
+	var arrContentControls;
+	if (isClearAllContentControls)
 	{
-		var oForm = this.SpecialForms[sId];
-		if (oForm.IsInlineLevel())
-			arrParagraphs.push(oForm.GetParagraph());
-
-		oForm.SkipSpecialContentControlLock(true);
+		arrContentControls = this.GetAllContentControls();
+	}
+	else
+	{
+		arrContentControls = [];
+		for (var sId in this.SpecialForms)
+		{
+			arrContentControls.push(this.SpecialForms[sId]);
+		}
 	}
 
-	var oCurrentForm = this.GetSelectedElementsInfo().GetForm();
+	var arrParagraphs = [];
+	for (var nIndex = 0, nCount = arrContentControls.length; nIndex < nCount; ++nIndex)
+	{
+		var oControl = arrContentControls[nIndex];
+		if (oControl.IsInlineLevel())
+			arrParagraphs.push(oControl.GetParagraph());
+		else if (oControl.IsBlockLevel())
+			oControl.GetAllParagraphs({}, arrParagraphs);
+
+		oControl.SkipSpecialContentControlLock(true);
+	}
+
+	var oCurrentControl = isClearAllContentControls ? this.GetSelectedElementsInfo().GetInlineLevelSdt() : this.GetSelectedElementsInfo().GetForm();
 
 	if (!this.IsSelectionLocked(AscCommon.changestype_None, {
-		Type      : changestype_2_ElementsArray_and_Type,
-		Elements  : arrParagraphs,
+		Type : changestype_2_ElementsArray_and_Type,
+		Elements : arrParagraphs,
 		CheckType : AscCommon.changestype_Paragraph_Content
 	}, true, this.IsFillingFormMode()))
 	{
 		this.StartAction(AscDFH.historydescription_Document_ClearAllSpecialForms);
 
-		if (oCurrentForm)
+		if (oCurrentControl)
 			this.RemoveSelection();
 
-		for (var sId in this.SpecialForms)
+		for (var nIndex = 0, nCount = arrContentControls.length; nIndex < nCount; ++nIndex)
 		{
-			var oForm = this.SpecialForms[sId];
-			if (!oCurrentForm && oForm.Is_UseInDocument())
-				oCurrentForm = oForm;
+			var oControl = arrContentControls[nIndex];
 
-			oForm.ClearContentControlExt();
-			oForm.RemoveSelection();
+			if (!oCurrentControl && oControl.Is_UseInDocument())
+				oCurrentControl = oControl;
+
+			oControl.ClearContentControlExt();
+			oControl.RemoveSelection();
 		}
 
-		if (oCurrentForm)
-			oCurrentForm.SelectContentControl();
+
+		if (oCurrentControl)
+			oCurrentControl.SelectContentControl();
 
 		this.Recalculate();
 		this.UpdateInterface();
@@ -25320,9 +25339,10 @@ CDocument.prototype.ClearAllSpecialForms = function()
 		this.FinalizeAction();
 	}
 
-	for (var sId in this.SpecialForms)
+
+	for (var nIndex = 0, nCount = arrContentControls.length; nIndex < nCount; ++nIndex)
 	{
-		oForm.SkipSpecialContentControlLock(false);
+		oControl.SkipSpecialContentControlLock(false);
 	}
 };
 /**

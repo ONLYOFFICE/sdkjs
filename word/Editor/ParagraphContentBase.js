@@ -1439,6 +1439,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Add_ToContent = function(Pos
     this.private_UpdateTrackRevisions();
 	this.private_UpdateDocumentOutline();
     this.private_CheckUpdateBookmarks([Item]);
+	this.private_UpdateSelectionPosOnAdd(Pos, 1);
 
     if (false !== UpdatePosition)
     {
@@ -1524,6 +1525,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove_FromContent = functio
     this.private_UpdateTrackRevisions();
 	this.private_UpdateDocumentOutline();
 	this.private_CheckUpdateBookmarks(DeletedItems);
+	this.private_UpdateSelectionPosOnRemove(Pos, Count);
 
     if (false !== UpdatePosition)
     {
@@ -2277,6 +2279,101 @@ CParagraphContentWithParagraphLikeContent.prototype.RemoveTabsForTOC = function(
 CParagraphContentWithParagraphLikeContent.prototype.RemoveAll = function()
 {
 	this.Remove_FromContent(0, this.Content.length);
+};
+/**
+ * Обновляем позиции курсора и селекта во время добавления элементов
+ * @param nPosition {number}
+ * @param [nCount=1] {number}
+ */
+CParagraphContentWithParagraphLikeContent.prototype.private_UpdateSelectionPosOnAdd = function(nPosition, nCount)
+{
+	if (this.Content.length <= 0)
+	{
+		this.State.ContentPos   = 0;
+		this.Selection.StartPos = 0;
+		this.Selection.EndPos   = 0;
+		return;
+	}
+
+	if (undefined === nCount || null === nCount)
+		nCount = 1;
+
+	if (this.State.ContentPos >= nPosition)
+		this.State.ContentPos += nCount;
+
+	if (this.Selection.StartPos >= nPosition)
+		this.Selection.StartPos += nCount;
+
+	if (this.Selection.EndPos >= nPosition)
+		this.Selection.EndPos += nCount;
+
+	this.Selection.StartPos = Math.max(0, Math.min(this.Content.length - 1, this.Selection.StartPos));
+	this.Selection.EndPos   = Math.max(0, Math.min(this.Content.length - 1, this.Selection.EndPos));
+	this.State.ContentPos   = Math.max(0, Math.min(this.Content.length - 1, this.State.ContentPos));
+};
+/**
+ * Обновляем позиции курсора и селекта во время удаления элементов
+ * @param nPosition {number}
+ * @param nCount {number}
+ */
+CParagraphContentWithParagraphLikeContent.prototype.private_UpdateSelectionPosOnRemove = function(nPosition, nCount)
+{
+	if (this.State.ContentPos >= nPosition + nCount)
+	{
+		this.State.ContentPos -= nCount;
+	}
+	else if (this.State.ContentPos >= nPosition)
+	{
+		if (nPosition < this.Content.length)
+			this.State.ContentPos = nPosition;
+		else if (nPosition > 0)
+			this.State.ContentPos = nPosition - 1;
+		else
+			this.State.ContentPos = 0;
+	}
+
+	if (this.Selection.StartPos <= this.Selection.EndPos)
+	{
+		if (this.Selection.StartPos >= nPosition + nCount)
+			this.Selection.StartPos -= nCount;
+		else if (this.Selection.StartPos >= nPosition)
+			this.Selection.StartPos = nPosition;
+
+		if (this.Selection.EndPos >= nPosition + nCount)
+			this.Selection.EndPos -= nCount;
+		else if (this.Selection.EndPos >= nPosition)
+			this.Selection.StartPos = nPosition - 1;
+
+		if (this.Selection.StartPos > this.Selection.EndPos)
+		{
+			this.Selection.Use = false;
+			this.Selection.StartPos = 0;
+			this.Selection.EndPos   = 0;
+		}
+	}
+	else
+	{
+		if (this.Selection.EndPos >= nPosition + nCount)
+			this.Selection.EndPos -= nCount;
+		else if (this.Selection.EndPos >= nPosition)
+			this.Selection.EndPos = nPosition;
+
+		if (this.Selection.StartPos >= nPosition + nCount)
+			this.Selection.StartPos -= nCount;
+		else if (this.Selection.StartPos >= nPosition)
+			this.Selection.StartPos = nPosition - 1;
+
+		if (this.Selection.EndPos > this.Selection.StartPos)
+		{
+			this.Selection.Use = false;
+			this.Selection.StartPos = 0;
+			this.Selection.EndPos   = 0;
+		}
+	}
+
+	this.Selection.StartPos = Math.max(0, Math.min(this.Content.length - 1, this.Selection.StartPos));
+	this.Selection.EndPos   = Math.max(0, Math.min(this.Content.length - 1, this.Selection.EndPos));
+	this.State.ContentPos   = Math.max(0, Math.min(this.Content.length - 1, this.State.ContentPos));
 };
 CParagraphContentWithParagraphLikeContent.prototype.AddToContent = function(nPos, oItem, isUpdatePositions)
 {
