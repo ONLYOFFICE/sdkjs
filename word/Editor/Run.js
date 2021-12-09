@@ -5999,10 +5999,17 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
     var Y = PDSE.Y;
 
     var CurTextPr = this.Get_CompiledPr( false );
-    pGraphics.SetTextPr( CurTextPr, Theme );
 
     if (this.private_IsUseAscFont(CurTextPr))
-		pGraphics.SetFont({FontFamily : {Name : "ASCW3", Index : -1}, FontSize : CurTextPr.FontSize, Italic : CurTextPr.Italic, Bold : CurTextPr.Bold});
+	{
+		var oFontTextPr = CurTextPr.Copy();
+		oFontTextPr.RFonts.SetAll("ASCW3", -1);
+		pGraphics.SetTextPr(oFontTextPr, Theme);
+	}
+    else
+	{
+		pGraphics.SetTextPr(CurTextPr, Theme);
+	}
 
     var InfoMathText ;
     if(this.Type == para_Math_Run)
