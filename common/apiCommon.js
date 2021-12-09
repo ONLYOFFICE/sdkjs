@@ -2472,7 +2472,10 @@
 					this.Color = CreateAscColor(obj.Unifill.fill.color);
 				} else {
 					var oColor = obj.GetSimpleColor();
-					this.Color = CreateAscColorCustom(oColor.r, oColor.g, oColor.b, oColor.Auto);
+					if (oColor.Auto)
+						this.Color = null;
+					else
+						this.Color = CreateAscColorCustom(oColor.r, oColor.g, oColor.b, oColor.Auto);
 				}
 			}
 			else {
