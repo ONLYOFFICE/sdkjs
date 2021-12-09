@@ -1694,7 +1694,11 @@
             }
             if (null !== customXml.Content) {
                 this.bs.WriteItem(c_oSerCustoms.Content, function() {
-                   oThis.memory.WriteStringA(customXml.Content);
+                    oThis.memory.CheckSize(customXml.Content.length);
+                    for (var i = 0; i < customXml.Content.length; i++)
+                    {
+                        oThis.memory.data[oThis.memory.pos++] = customXml.Content[i];
+                    }
                 });
             }
         };
@@ -10668,7 +10672,12 @@
             } else if (c_oSerCustoms.ItemId === type) {
                 custom.ItemId = this.stream.GetString2LE(length);
             } else if (c_oSerCustoms.Content === type) {
-                custom.Content = this.stream.GetString2A(length);
+                custom.Content = new Uint8Array(length);
+                for (var i = 0; i < length; i++)
+                {
+                    custom.Content[i] = this.stream.data[this.stream.cur + i];
+                }
+                this.stream.cur += length;
             } else
                 res = c_oSerConstants.ReadUnknown;
             return res;
