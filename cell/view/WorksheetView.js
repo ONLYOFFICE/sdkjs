@@ -16677,10 +16677,6 @@
         var t = this;
         var ar = this.model.selectionRange.getLast().clone();
 
-		if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.sort)) {
-			return;
-		}
-
 		if (!window['AscCommonExcel'].filteringMode) {
 			return;
 		}
@@ -16695,9 +16691,16 @@
 			//TODO проверка защиты
 			var pivotTable = this.model.inPivotTable(activeRangeOrCellId);
 			if (pivotTable) {
+				if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.pivotTables)) {
+					return;
+				}
 				pivotTable.asc_sortByCell(t.model.workbook.oApi, type, activeCellOrCellId.row, activeCellOrCellId.col);
 				return;
 			}
+		}
+
+		if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.sort)) {
+			return;
 		}
 		//autoFilters
 		var sortProps = t.model.autoFilters.getPropForSort(cellId, ar, displayName);
