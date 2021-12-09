@@ -878,11 +878,11 @@ CInlineLevelSdt.prototype.RemoveContentControlWrapper = function()
 {
 	var oParent = this.Get_Parent();
 	if (!oParent)
-		return;
+		return {Parent : null, Pos : -1, Count : 0};
 
 	var nElementPos = this.Get_PosInParent(oParent);
 	if (-1 === nElementPos)
-		return;
+		return {Parent : null, Pos : -1, Count : 0};
 
 	var nParentCurPos            = oParent instanceof Paragraph ? oParent.CurPos.ContentPos : oParent.State.ContentPos;
 	var nParentSelectionStartPos = oParent.Selection.StartPos;
@@ -922,6 +922,8 @@ CInlineLevelSdt.prototype.RemoveContentControlWrapper = function()
 		oParent.Selection.EndPos = nParentSelectionEndPos + nCount - 1;
 
 	this.Remove_FromContent(0, this.Content.length);
+
+	return {Parent : oParent, Pos : nElementPos, Count : nCount};
 };
 CInlineLevelSdt.prototype.FindNextFillingForm = function(isNext, isCurrent, isStart)
 {

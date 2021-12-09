@@ -9360,17 +9360,48 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 			var NewPara          = FirstElement.Element;
 			var NewElementsCount = NewPara.Content.length - 1; // Последний ран с para_End не добавляем
 
-			if (LastClass instanceof ParaRun && LastClass.GetParent() instanceof CInlineLevelSdt && LastClass.GetParent().IsPlaceHolder())
+			// TODO: Как будет время проверить, возможно тут надо делать проверку
+			//  (oInlineLeveLSdt.IsPlaceHolder() || oInlineLeveLSdt.IsContentControlTemporary())
+			var oInlineLeveLSdt;
+			if (LastClass instanceof ParaRun
+				&& (oInlineLeveLSdt = LastClass.GetParent())
+				&& oInlineLeveLSdt instanceof CInlineLevelSdt
+				&& oInlineLeveLSdt.IsPlaceHolder())
 			{
-				var oInlineLeveLSdt = LastClass.GetParent();
-				oInlineLeveLSdt.ReplacePlaceHolderWithContent();
+				if (oInlineLeveLSdt.IsContentControlTemporary())
+				{
+					var oResult = oInlineLeveLSdt.RemoveContentControlWrapper();
 
-				LastClass = oInlineLeveLSdt.GetElement(0);
+					var oSdtParent = oResult.Parent;
+					var oSdtPos    = oResult.Pos;
+					var oSdtCount  = oResult.Count;
 
-				ParaNearPos.Classes[ParaNearPos.Classes.length - 1] = LastClass;
+					if (!oSdtParent
+						|| ParaNearPos.Classes.length < 3
+						|| ParaNearPos.Classes[ParaNearPos.Classes.length - 2] !== oInlineLeveLSdt
+						|| ParaNearPos.Classes[ParaNearPos.Classes.length - 3] !== oSdtParent)
+						return;
 
-				ParaNearPos.NearPos.ContentPos.Update(0, ParaNearPos.Classes.length - 1);
-				ParaNearPos.NearPos.ContentPos.Update(0, ParaNearPos.Classes.length - 2);
+					var oRun = new ParaRun(undefined, false);
+					oRun.SetPr(oInlineLeveLSdt.GetDefaultTextPr().Copy());
+
+					oSdtParent.RemoveFromContent(oSdtPos, oSdtCount);
+					oSdtParent.AddToContent(oSdtPos, oRun);
+
+					LastClass = oRun;
+					ParaNearPos.Classes.length--;
+					ParaNearPos.Classes[ParaNearPos.Classes.length - 1] = LastClass;
+					ParaNearPos.NearPos.ContentPos.Update(oSdtPos, ParaNearPos.Classes.length - 2);
+					ParaNearPos.NearPos.ContentPos.Update(0, ParaNearPos.Classes.length - 1);
+				}
+				else
+				{
+					oInlineLeveLSdt.ReplacePlaceHolderWithContent();
+					LastClass = oInlineLeveLSdt.GetElement(0);
+					ParaNearPos.Classes[ParaNearPos.Classes.length - 1] = LastClass;
+					ParaNearPos.NearPos.ContentPos.Update(0, ParaNearPos.Classes.length - 2);
+					ParaNearPos.NearPos.ContentPos.Update(0, ParaNearPos.Classes.length - 1);
+				}
 			}
 
 			var LastClass  = ParaNearPos.Classes[ParaNearPos.Classes.length - 1];
