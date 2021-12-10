@@ -2077,6 +2077,7 @@ function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPastePr
     var oPasteProcessor = new PasteProcessor(api, true, true, false, undefined, callback);
 	window['AscCommon'].g_specialPasteHelper.endRecalcDocument = false;
 
+	var specialPasteText = null;
 	if(undefined === specialPasteProps)
 	{
 		window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
@@ -2097,6 +2098,7 @@ function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPastePr
 		if(specialPasteProps === Asc.c_oSpecialPasteProps.keepTextOnly && _format !== AscCommon.c_oAscClipboardDataFormat.Text && text_data)
 		{
 			_format = AscCommon.c_oAscClipboardDataFormat.Text;
+			specialPasteText = true;
 		}
 	}
 
@@ -2114,7 +2116,11 @@ function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPastePr
 		}
 		case AscCommon.c_oAscClipboardDataFormat.Text:
 		{
-			oPasteProcessor.Start(data1, null, null, data1, text_data);
+			if (specialPasteText) {
+				oPasteProcessor.Start(data1, null, null, data1, text_data);
+			} else {
+				oPasteProcessor.Start(null, null, null, null, data1);
+			}
 			break;
 		}
 	}
@@ -2276,6 +2282,8 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
 
 	this.aMsoHeadStylesStr;
 	this.oMsoHeadStylesListMap = [];
+
+	this.pasteTextIntoList;
 
 	this.rtfImages;
 }
@@ -3551,7 +3559,21 @@ PasteProcessor.prototype =
 				return;
 			}
 
-			if (!(base64FromWord && PasteElementsId.g_bIsDocumentCopyPaste && (node || "" !== fromBinary))) {
+			//при вставке списка в список, ms вставляет именно html и фильтрует текст(убирает всё, что относится к списку)
+			//идея такая, если видим, что вставляем в список, то здесь не делаем pasteText, смотрим на функции prepeare есть ли внутри html списки
+			//причём в любом виде - стандартные списки/mso-list
+			//если есть, то парсим стандратно html, далее переводим в текст её без элементов списка и вставляем
+			//+ если из нас в нас вставляем, тоже отсекам всё что связано со списками
+
+			//TODO pasteTextIntoList - ввожу временно, искючение для вставки текста в список. позже сделать общую отдельную обработку для подобных исключений
+
+			if (PasteElementsId.g_bIsDocumentCopyPaste && (node || ("" !== fromBinary && base64FromWord))) {
+				this._initSelectedElem();
+				if (this.pasteIntoElem && this.pasteIntoElem.GetNumPr && this.pasteIntoElem.GetNumPr()) {
+					this.pasteTextIntoList = text;
+				}
+			}
+			if (!this.pasteTextIntoList) {
 				this.oLogicDocument.RemoveBeforePaste();
 				this.oDocument = this._GetTargetDocument(this.oDocument);
 				this._pasteText(text);
@@ -4836,6 +4858,7 @@ PasteProcessor.prototype =
 
 	_pasteFromHtml: function (node, bTurnOffTrackRevisions) {
 		var oThis = this;
+		var isPasteTextIntoList = !!this.pasteTextIntoList;
 
 		var fPasteHtmlPresentationCallback = function (fonts, images) {
 			oThis.aContent = [];
@@ -5008,8 +5031,13 @@ PasteProcessor.prototype =
 				}
 			};
 
-			oThis.aContent = [];
+			//если в итоге во вставляемом контенте нет следов списков, тогда вставляем просто текст, в противном случае - чистим списки
+			if (oThis.pasteTextIntoList) {
+				oThis._pasteText(oThis.pasteTextIntoList);
+				return;
+			}
 
+			oThis.aContent = [];
 			//если находимся внутри текстовой области диаграммы, то не вставляем ссылки
 			if (oThis.oDocument && oThis.oDocument.Parent && oThis.oDocument.Parent.parent && oThis.oDocument.Parent.parent.parent && oThis.oDocument.Parent.parent.parent.getObjectType && oThis.oDocument.Parent.parent.parent.getObjectType() == AscDFH.historyitem_type_Chart) {
 				var hyperlinks = node.getElementsByTagName("a");
@@ -5043,6 +5071,14 @@ PasteProcessor.prototype =
 			oThis._Execute(node, {}, true, true, false);
 			oThis._AddNextPrevToContent(oThis.oDocument);
 
+			if (isPasteTextIntoList) {
+				this.oLogicDocument.RemoveBeforePaste();
+
+				var oPr = {NewLineParagraph: true, Numbering: false};
+				oThis._pasteText(oThis._getTextFromContent(oThis.aContent, oPr));
+				return;
+			}
+
 			oThis.api.pre_Paste(fonts, images, executePasteWord);
 		};
 
@@ -5055,7 +5091,8 @@ PasteProcessor.prototype =
 		if (PasteElementsId.g_bIsDocumentCopyPaste) {
 			this.bIsPlainText = this._CheckIsPlainText(node);
 
-			if (window['AscCommon'].g_specialPasteHelper.specialPasteStart && Asc.c_oSpecialPasteProps.keepTextOnly === window['AscCommon'].g_specialPasteHelper.specialPasteProps) {
+			var specialPasteOnlyText = Asc.c_oSpecialPasteProps.keepTextOnly === window['AscCommon'].g_specialPasteHelper.specialPasteProps;
+			if (specialPasteOnlyText && !this.pasteTextIntoList) {
 				fPasteHtmlWordCallback();
 			} else {
 				this._Prepeare(node, fPasteHtmlWordCallback);
@@ -6216,9 +6253,16 @@ PasteProcessor.prototype =
 
 	_Prepeare: function (node, fCallback) {
 		var oThis = this;
-		if (true === this.bUploadImage || true === this.bUploadFonts) {
+		if (true === this.bUploadImage || true === this.bUploadFonts || this.pasteTextIntoList) {
 			//Пробегаемся по документу собираем список шрифтов и картинок.
-			var aPrepeareFonts = this._Prepeare_recursive(node, true, true);
+			var aPrepeareFonts;
+			if (this.pasteTextIntoList) {
+				this._Prepeare_recursive(node, true);
+				fCallback();
+				return;
+			} else {
+				aPrepeareFonts = this._Prepeare_recursive(node, true, true);
+			}
 
 			//TODO пересмотреть все "local" и сделать одинаковые проверки во всех редакторах
 			var aImagesToDownload = [];
@@ -6288,6 +6332,9 @@ PasteProcessor.prototype =
 			var style = child.getAttribute ? child.getAttribute("style") : null;
 			if (style && -1 !== style.indexOf("mso-element:comment") && -1 === style.indexOf("mso-element:comment-list")) {
 				this._parseMsoElementComment(child);
+			}
+			if (this.pasteTextIntoList && (nodeName === "li" || nodeName === "ol" || nodeName === "ul" || (style && -1 !== style.indexOf("mso-list")))) {
+				this.pasteTextIntoList = null;
 			}
 
 			var child_nodeType = child.nodeType;
