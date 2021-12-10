@@ -8464,7 +8464,7 @@ drawHBarChart.prototype = {
 			var isValMoreZero = false;
 			var isValLessZero = 0;
 			var shapeType = null !== this.chart.series[i].shape ? this.chart.series[i].shape : this.chart.shape;
-			shapeType = 0;
+			//shapeType = 0;
 			for (var j = 0; j < seria.length; j++) {
 				//стартовая позиция колонки Y(+ высота с учётом поправок на накопительные диаграммы)
 				val = parseFloat(seria[j].val);
