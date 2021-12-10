@@ -346,6 +346,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Protected_SetWorkbookSaltValue = 32;
 	window['AscCH'].historyitem_Protected_SetWorkbookSpinCount = 33;
 
+	window['AscCH'].historyitem_Protected_SetPassword = 34;
 
 function CHistory()
 {

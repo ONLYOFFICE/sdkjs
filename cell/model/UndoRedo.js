@@ -4537,6 +4537,10 @@ function (window, undefined) {
 					protectedSheet.setSpinCount(value);
 					break;
 				}
+				case AscCH.historyitem_Protected_SetPassword: {
+					protectedSheet.setPasswordXL(value);
+					break;
+				}
 				case AscCH.historyitem_Protected_SetSheet: {
 					protectedSheet.setSheet(value);
 					break;

@@ -104,11 +104,29 @@
 		return {spinCount: 100000, saltValue: AscCommon.randomBytes(16).base64(), algorithmName: c_oSerProtectedAlgorithmNameTypes.SHA_512};
 	}
 
+	function getPasswordHash(password, getString) {
+		var nResult = null;
+		if (password.length) {
+			nResult = 0;
+			for (var i = password.length - 1; i >= 0; i--) {
+				nResult = ((nResult >> 14) & 0x01) | ((nResult << 1) & 0x7FFF);
+				nResult ^= password.charCodeAt(i);
+			}
+
+			nResult = ((nResult >> 14) & 0x01) | ((nResult << 1) & 0x7FFF);
+			nResult ^= ((0x8000) | ('N'.charCodeAt(0) << 8) | ('K'.charCodeAt(0)));
+			nResult ^= password.length;
+		}
+
+		return getString && nResult ? nResult.toString(16) : nResult;
+	}
+
 	function CSheetProtection(ws) {
 		this.algorithmName = null;
 		this.hashValue = null;
 		this.saltValue = null;
 		this.spinCount = null;
+		this.password = null;
 
 		this.sheet = false;
 		this.objects = false;
@@ -140,6 +158,7 @@
 		res.hashValue = this.hashValue;
 		res.saltValue = this.saltValue;
 		res.spinCount = this.spinCount;
+		res.password = this.password;
 
 		res.sheet = this.sheet;
 		res.objects = this.objects;
@@ -167,6 +186,7 @@
 		this.hashValue = null;
 		this.saltValue = null;
 		this.spinCount = null;
+		this.password = null;
 
 		this.sheet = false;
 		this.objects = false;
@@ -191,6 +211,7 @@
 		this.hashValue = null;
 		this.saltValue = null;
 		this.spinCount = null;
+		this.password = null;
 
 		this.sheet = false;
 		this.objects = true;
@@ -214,7 +235,7 @@
 		if (this.algorithmName === null && this.hashValue === null && this.saltValue === null && this.spinCount === null) {
 			if (this.sheet === false && this.objects === true && this.scenarios === true && this.formatColumns === true && this.formatRows === true && this.insertColumns ===
 				true && this.insertRows === true && this.deleteRows === true && this.selectLockedCells === false && this.sort === true && this.autoFilter === true &&
-				this.pivotTables === true && this.selectUnlockedCells === false) {
+				this.pivotTables === true && this.selectUnlockedCells === false && this.password === null) {
 				return true;
 			}
 		}
@@ -226,6 +247,7 @@
 		this.hashValue = this.checkProperty(this.hashValue, val.hashValue, AscCH.historyitem_Protected_SetHashValue, ws, addToHistory);
 		this.saltValue = this.checkProperty(this.saltValue, val.saltValue, AscCH.historyitem_Protected_SetSaltValue, ws, addToHistory);
 		this.spinCount = this.checkProperty(this.spinCount, val.spinCount, AscCH.historyitem_Protected_SetSpinCount, ws, addToHistory);
+		this.password = this.checkProperty(this.password, val.password, AscCH.historyitem_Protected_SetPassword, ws, addToHistory);
 
 		this.sheet = this.checkProperty(this.sheet, val.sheet, AscCH.historyitem_Protected_SetSheet, ws, addToHistory);
 		this.objects = this.checkProperty(this.objects, val.objects, AscCH.historyitem_Protected_SetObjects, ws, addToHistory);
@@ -297,6 +319,13 @@
 			w.WriteBool(false);
 		}
 
+		if (null != this.password) {
+			w.WriteBool(true);
+			w.WriteString2(this.password);
+		} else {
+			w.WriteBool(false);
+		}
+
 		_writeBool(this.sheet);
 		_writeBool(this.objects);
 		_writeBool(this.scenarios);
@@ -326,6 +355,9 @@
 		}
 		if (r.GetBool()) {
 			this.spinCount = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.password = r.GetString2();
 		}
 
 		if (r.GetBool()) {
@@ -452,6 +484,15 @@
 	CSheetProtection.prototype.setSheet = function (val) {
 		this.sheet = val;
 	};
+	CSheetProtection.prototype.setPasswordXL = function (val) {
+		this.password = val;
+	};
+	CSheetProtection.prototype.getPasswordXL = function () {
+		return this.password;
+	};
+	CSheetProtection.prototype.isPasswordXL = function () {
+		return this.password != null;
+	};
 
 	CSheetProtection.prototype.asc_setSheet = function (password, callback) {
 		//просталяю временный пароль, аспинхронная проверка пароля в asc_setProtectedSheet
@@ -521,7 +562,7 @@
 		this.spinCount = "test";
 	};
 	CSheetProtection.prototype.asc_isPassword = function () {
-		return this.algorithmName != null;
+		return this.algorithmName != null || this.password != null;
 	};
 
 	function CWorkbookProtection(wb) {
@@ -1292,5 +1333,6 @@
 	prot["asc_getId"] = prot.asc_getId;
 
 	window["AscCommonExcel"].fromModelAlgoritmName = fromModelAlgoritmName;
+	window["AscCommonExcel"].getPasswordHash = getPasswordHash;
 
 })(window);
