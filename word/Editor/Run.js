@@ -9340,27 +9340,57 @@ ParaRun.prototype.Set_RFonts = function(Value)
     this.Recalc_CompiledPr(true);
     this.private_UpdateTrackRevisionOnChangeTextPr(true);
 };
-
 ParaRun.prototype.Get_RFonts = function()
 {
     return this.Get_CompiledPr(false).RFonts;
 };
-
 ParaRun.prototype.Set_RFonts2 = function(RFonts)
 {
 	if (undefined !== RFonts)
 	{
-		if (undefined !== RFonts.Ascii)
+		if (undefined !== RFonts.AsciiTheme)
+		{
+			this.Set_RFonts_Ascii(undefined);
+			this.SetRFontsAsciiTheme(RFonts.AsciiTheme);
+		}
+		else if (undefined !== RFonts.Ascii)
+		{
 			this.Set_RFonts_Ascii(RFonts.Ascii);
+			this.SetRFontsAsciiTheme(undefined);
+		}
 
-		if (undefined !== RFonts.HAnsi)
+		if (undefined !== RFonts.HAnsiTheme)
+		{
+			this.Set_RFonts_HAnsi(undefined);
+			this.SetRFontsHAnsiTheme(RFonts.HAnsiTheme);
+		}
+		else if (undefined !== RFonts.HAnsi)
+		{
 			this.Set_RFonts_HAnsi(RFonts.HAnsi);
+			this.SetRFontsHAnsiTheme(undefined);
+		}
 
-		if (undefined !== RFonts.CS)
+		if (undefined !== RFonts.CSTheme)
+		{
+			this.Set_RFonts_CS(undefined);
+			this.SetRFontsCSTheme(RFonts.CSTheme);
+		}
+		else if (undefined !== RFonts.CS)
+		{
 			this.Set_RFonts_CS(RFonts.CS);
+			this.SetRFontsCSTheme(undefined);
+		}
 
-		if (undefined !== RFonts.EastAsia)
+		if (undefined !== RFonts.EastAsiaTheme)
+		{
+			this.Set_RFonts_EastAsia(undefined);
+			this.SetRFontsEastAsiaTheme(RFonts.EastAsiaTheme);
+		}
+		else if (undefined !== RFonts.EastAsia)
+		{
 			this.Set_RFonts_EastAsia(RFonts.EastAsia);
+			this.SetRFontsEastAsiaTheme(undefined);
+		}
 
 		if (undefined !== RFonts.Hint)
 			this.Set_RFonts_Hint(RFonts.Hint);
@@ -9368,9 +9398,13 @@ ParaRun.prototype.Set_RFonts2 = function(RFonts)
 	else
 	{
 		this.Set_RFonts_Ascii(undefined);
+		this.SetRFontsAsciiTheme(undefined);
 		this.Set_RFonts_HAnsi(undefined);
+		this.SetRFontsHAnsiTheme(undefined);
 		this.Set_RFonts_CS(undefined);
+		this.SetRFontsCSTheme(undefined);
 		this.Set_RFonts_EastAsia(undefined);
+		this.SetRFontsEastAsiaTheme(undefined);
 		this.Set_RFonts_Hint(undefined);
 	}
 };
@@ -9447,6 +9481,54 @@ ParaRun.prototype.Set_RFonts_Hint = function(Value)
 		this.Pr.RFonts.Hint = _Value;
 
 		History.Add(new CChangesRunRFontsHint(this, OldValue, _Value, this.private_IsCollPrChangeMine()));
+		this.Recalc_CompiledPr(true);
+		this.private_UpdateTrackRevisionOnChangeTextPr(true);
+	}
+};
+ParaRun.prototype.SetRFontsAsciiTheme = function(sValue)
+{
+	var _sValue = (!sValue ? undefined : sValue);
+
+	if (_sValue !== this.Pr.RFonts.AsciiTheme)
+	{
+		AscCommon.History.Add(new CChangesRunRFontsAsciiTheme(this, this.Pr.RFonts.AsciiTheme, _sValue, this.private_IsCollPrChangeMine()));
+		this.Pr.RFonts.AsciiTheme = _sValue;
+		this.Recalc_CompiledPr(true);
+		this.private_UpdateTrackRevisionOnChangeTextPr(true);
+	}
+};
+ParaRun.prototype.SetRFontsHAnsiTheme = function(sValue)
+{
+	var _sValue = (!sValue ? undefined : sValue);
+
+	if (_sValue !== this.Pr.RFonts.HAnsiTheme)
+	{
+		AscCommon.History.Add(new CChangesRunRFontsHAnsiTheme(this, this.Pr.RFonts.HAnsiTheme, _sValue, this.private_IsCollPrChangeMine()));
+		this.Pr.RFonts.HAnsiTheme = _sValue;
+		this.Recalc_CompiledPr(true);
+		this.private_UpdateTrackRevisionOnChangeTextPr(true);
+	}
+};
+ParaRun.prototype.SetRFontsCSTheme = function(sValue)
+{
+	var _sValue = (!sValue ? undefined : sValue);
+
+	if (_sValue !== this.Pr.RFonts.CSTheme)
+	{
+		AscCommon.History.Add(new CChangesRunRFontsCSTheme(this, this.Pr.RFonts.CSTheme, _sValue, this.private_IsCollPrChangeMine()));
+		this.Pr.RFonts.CSTheme = _sValue;
+		this.Recalc_CompiledPr(true);
+		this.private_UpdateTrackRevisionOnChangeTextPr(true);
+	}
+};
+ParaRun.prototype.SetRFontsEastAsiaTheme = function(sValue)
+{
+	var _sValue = (!sValue ? undefined : sValue);
+
+	if (_sValue !== this.Pr.RFonts.EastAsiaTheme)
+	{
+		AscCommon.History.Add(new CChangesRunRFontsEastAsiaTheme(this, this.Pr.RFonts.EastAsiaTheme, _sValue, this.private_IsCollPrChangeMine()));
+		this.Pr.RFonts.EastAsiaTheme = _sValue;
 		this.Recalc_CompiledPr(true);
 		this.private_UpdateTrackRevisionOnChangeTextPr(true);
 	}

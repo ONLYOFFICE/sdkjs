@@ -443,24 +443,68 @@ ParaTextPr.prototype.Set_RFonts = function(Value)
 	History.Add(new CChangesParaTextPrRFonts(this, this.Value.RFonts, _Value));
 	this.Value.RFonts = _Value;
 };
-ParaTextPr.prototype.Set_RFonts2 = function(RFonts)
+ParaTextPr.prototype.Set_RFonts2 = function(oRFonts)
 {
-	if (undefined != RFonts)
+	if (oRFonts)
 	{
-		if (undefined !== RFonts.Ascii)
-			this.Set_RFonts_Ascii(RFonts.Ascii);
+		if (undefined !== oRFonts.AsciiTheme)
+		{
+			this.Set_RFonts_Ascii(undefined);
+			this.SetRFontsAsciiTheme(oRFonts.AsciiTheme);
+		}
+		else if (undefined !== oRFonts.Ascii)
+		{
+			this.Set_RFonts_Ascii(oRFonts.Ascii);
+			this.SetRFontsAsciiTheme(undefined);
+		}
 
-		if (undefined !== RFonts.HAnsi)
-			this.Set_RFonts_HAnsi(RFonts.HAnsi);
+		if (undefined !== oRFonts.HAnsiTheme)
+		{
+			this.Set_RFonts_HAnsi(undefined);
+			this.SetRFontsHAnsiTheme(oRFonts.HAnsiTheme);
+		}
+		else if (undefined !== oRFonts.HAnsi)
+		{
+			this.Set_RFonts_HAnsi(oRFonts.HAnsi);
+			this.SetRFontsHAnsiTheme(undefined);
+		}
 
-		if (undefined !== RFonts.CS)
-			this.Set_RFonts_CS(RFonts.CS);
+		if (undefined !== oRFonts.CSTheme)
+		{
+			this.Set_RFonts_CS(undefined);
+			this.SetRFontsCSTheme(oRFonts.CSTheme);
+		}
+		else if (undefined !== oRFonts.CS)
+		{
+			this.Set_RFonts_CS(oRFonts.CS);
+			this.SetRFontsCSTheme(undefined);
+		}
 
-		if (undefined !== RFonts.EastAsia)
-			this.Set_RFonts_EastAsia(RFonts.EastAsia);
+		if (undefined !== oRFonts.EastAsiaTheme)
+		{
+			this.Set_RFonts_EastAsia(undefined);
+			this.SetRFontsEastAsiaTheme(oRFonts.EastAsiaTheme);
+		}
+		else if (undefined !== oRFonts.EastAsia)
+		{
+			this.Set_RFonts_EastAsia(oRFonts.EastAsia);
+			this.SetRFontsEastAsiaTheme(undefined);
+		}
 
-		if (undefined !== RFonts.Hint)
-			this.Set_RFonts_Hint(RFonts.Hint);
+		if (undefined !== oRFonts.Hint)
+			this.Set_RFonts_Hint(oRFonts.Hint);
+	}
+	else
+	{
+		this.Set_RFonts_Ascii(undefined);
+		this.SetRFontsAsciiTheme(undefined);
+		this.Set_RFonts_HAnsi(undefined);
+		this.SetRFontsHAnsiTheme(undefined);
+		this.Set_RFonts_CS(undefined);
+		this.SetRFontsCSTheme(undefined);
+		this.Set_RFonts_EastAsia(undefined);
+		this.SetRFontsEastAsiaTheme(undefined);
+		this.Set_RFonts_Hint(undefined);
 	}
 };
 ParaTextPr.prototype.Set_RFonts_Ascii = function(Value)
@@ -502,6 +546,42 @@ ParaTextPr.prototype.Set_RFonts_Hint = function(Value)
 
 	History.Add(new CChangesParaTextPrRFontsHint(this, this.Value.RFonts.Hint, Value));
 	this.Value.RFonts.Hint = Value;
+};
+ParaTextPr.prototype.SetRFontsAsciiTheme = function(sValue)
+{
+	var _sValue = (!sValue ? undefined : sValue);
+	if (_sValue !== this.Value.RFonts.AsciiTheme)
+	{
+		AscCommon.History.Add(new CChangesParaTextPrRFontsAsciiTheme(this, this.Value.RFonts.Ascii, _sValue));
+		this.Value.RFonts.Ascii = _sValue;
+	}
+};
+ParaTextPr.prototype.SetRFontsHAnsiTheme = function(sValue)
+{
+	var _sValue = (!sValue ? undefined : sValue);
+	if (_sValue !== this.Value.RFonts.HAnsiTheme)
+	{
+		AscCommon.History.Add(new CChangesParaTextPrRFontsHAnsiTheme(this, this.Value.RFonts.HAnsiTheme, _sValue));
+		this.Value.RFonts.HAnsiTheme = _sValue;
+	}
+};
+ParaTextPr.prototype.SetRFontsCSTheme = function(sValue)
+{
+	var _sValue = (!sValue ? undefined : sValue);
+	if (_sValue !== this.Value.RFonts.CSTheme)
+	{
+		AscCommon.History.Add(new CChangesParaTextPrRFontsCSTheme(this, this.Value.RFonts.CSTheme, _sValue));
+		this.Value.RFonts.CSTheme = _sValue;
+	}
+};
+ParaTextPr.prototype.SetRFontsEastAsiaTheme = function(sValue)
+{
+	var _sValue = (!sValue ? undefined : sValue);
+	if (_sValue !== this.Value.RFonts.EastAsiaTheme)
+	{
+		AscCommon.History.Add(new CChangesParaTextPrRFontsEastAsiaTheme(this, this.Value.RFonts.EastAsiaTheme, _sValue));
+		this.Value.RFonts.EastAsiaTheme = _sValue;
+	}
 };
 ParaTextPr.prototype.Set_Lang = function(Value)
 {
