@@ -1106,7 +1106,7 @@
 				}
 				
 				var sVertAlgn = GetVertAlign(oRun);
-				if (sVertAlgn && !this.isQuoteLine && (sType === 'html' || this.Config.htmlHeadings) )
+				if (sVertAlgn && !this.isQuoteLine)
 				{
 					if (!sVertAlgnNextRun && !sVertAlgnPrevRun)
 						sOutputText = this.WrapInTag(sOutputText, sVertAlgn === "sup" ? this.HtmlTags.SupScript : this.HtmlTags.SubScript, 'wholly');
