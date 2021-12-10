@@ -2077,7 +2077,6 @@ function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPastePr
     var oPasteProcessor = new PasteProcessor(api, true, true, false, undefined, callback);
 	window['AscCommon'].g_specialPasteHelper.endRecalcDocument = false;
 
-	var specialPasteText = null;
 	if(undefined === specialPasteProps)
 	{
 		window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
@@ -2085,6 +2084,9 @@ function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPastePr
 		window['AscCommon'].g_specialPasteHelper.specialPasteData.data1 = data1;
 		window['AscCommon'].g_specialPasteHelper.specialPasteData.data2 = data2;
 		window['AscCommon'].g_specialPasteHelper.specialPasteData.text_data = text_data;
+		if (_format !== AscCommon.c_oAscClipboardDataFormat.Text) {
+			text_data = null;
+		}
 	}
 	else
 	{
@@ -2095,10 +2097,9 @@ function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPastePr
 		data2 = window['AscCommon'].g_specialPasteHelper.specialPasteData.data2;
 		text_data = window['AscCommon'].g_specialPasteHelper.specialPasteData.text_data;
 
-		if(specialPasteProps === Asc.c_oSpecialPasteProps.keepTextOnly && _format !== AscCommon.c_oAscClipboardDataFormat.Text && text_data)
+		if(!(specialPasteProps === Asc.c_oSpecialPasteProps.keepTextOnly && _format !== AscCommon.c_oAscClipboardDataFormat.Text && text_data))
 		{
-			_format = AscCommon.c_oAscClipboardDataFormat.Text;
-			specialPasteText = true;
+			text_data = null;
 		}
 	}
 
@@ -2106,21 +2107,17 @@ function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPastePr
 	{
 		case AscCommon.c_oAscClipboardDataFormat.HtmlElement:
 		{
-			oPasteProcessor.Start(data1, data2);
+			oPasteProcessor.Start(data1, data2, null, null, text_data);
 			break;
 		}
 		case AscCommon.c_oAscClipboardDataFormat.Internal:
 		{
-			oPasteProcessor.Start(null, null, null, data1);
+			oPasteProcessor.Start(null, null, null, data1, text_data);
 			break;
 		}
 		case AscCommon.c_oAscClipboardDataFormat.Text:
 		{
-			if (specialPasteText) {
-				oPasteProcessor.Start(data1, null, null, data1, text_data);
-			} else {
-				oPasteProcessor.Start(null, null, null, null, data1);
-			}
+			oPasteProcessor.Start(null, null, null, null, data1);
 			break;
 		}
 	}
