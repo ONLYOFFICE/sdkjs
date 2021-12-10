@@ -1694,11 +1694,7 @@
             }
             if (null !== customXml.Content) {
                 this.bs.WriteItem(c_oSerCustoms.Content, function() {
-                    oThis.memory.CheckSize(customXml.Content.length);
-                    for (var i = 0; i < customXml.Content.length; i++)
-                    {
-                        oThis.memory.data[oThis.memory.pos++] = customXml.Content[i];
-                    }
+                    oThis.memory.WriteBuffer(customXml.Content, 0, customXml.Content.length)
                 });
             }
         };
@@ -10672,12 +10668,8 @@
             } else if (c_oSerCustoms.ItemId === type) {
                 custom.ItemId = this.stream.GetString2LE(length);
             } else if (c_oSerCustoms.Content === type) {
-                custom.Content = new Uint8Array(length);
-                for (var i = 0; i < length; i++)
-                {
-                    custom.Content[i] = this.stream.data[this.stream.cur + i];
-                }
-                this.stream.cur += length;
+                //поскольку данную строку не использую, храню в виде массива. если нужно будет строка, то не забыть про BOM
+                custom.Content = this.stream.GetBuffer(length);
             } else
                 res = c_oSerConstants.ReadUnknown;
             return res;
