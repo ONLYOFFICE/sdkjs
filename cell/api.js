@@ -6090,7 +6090,7 @@ var editor;
 					if (props.isPasswordXL() && hash && hash[0] && hash[0].toLowerCase() === props.password.toLowerCase()) {
 						props.password = null;
 						t.collaborativeEditing.lock([lockInfo], callback);
-					} else if (hash && hash[0] === props.hashValue) {
+					} else if (!props.isPasswordXL() && hash && hash[0] === props.hashValue) {
 						props.hashValue = null;
 						props.saltValue = null;
 						props.spinCount = null;
@@ -6109,7 +6109,7 @@ var editor;
 		};
 
 		this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction);
-		if (props && props.temporaryPassword) {
+		if (props && props.temporaryPassword != null) {
 			if (props.isPasswordXL()) {
 				checkPassword([AscCommonExcel.getPasswordHash(props.temporaryPassword, true)]);
 			} else {
