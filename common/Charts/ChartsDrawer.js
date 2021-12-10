@@ -3226,7 +3226,7 @@ CChartsDrawer.prototype =
 	isIntersectionLineAndLine2d: function (x1, y1, x2, y2, x3, y3, x4, y4) {
 	
   		if ((x1 === x2 && y1 === y2) || (x3 === x4 && y3 === y4)) {
-				return false;
+			return false;
 		}
 
 		var k = ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
@@ -4830,8 +4830,9 @@ CChartsDrawer.prototype =
 
 	isConeIntersection: function (hbar, subType, startX, startY, height, gapDepth, individualBarValue, perspectiveDepth,
 		val, nullPositionOX, maxH, minH) {
-		var x1, y1, x2, y2, x3, y3, x4, y4;
-		var value;
+		var wUp, lUp, wDown, lDown;
+		var value, l1, l2, l3, l4;
+		var pyramidX1, pyramidX2, pyramidY1, pyramidY2, rectX1, rectX2, rectY1, rectY2;
 		if (subType === "stacked" || subType === "stackedPer") {
 			value = maxH;
 			if (val < 0 && minH) {
@@ -4846,97 +4847,101 @@ CChartsDrawer.prototype =
 				value = hbar ? -minH: minH;
 			}
 		}
+		if (val < 0 && this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+			startY = ++startY;
+		}
 
+		// рассчитываем большую и малую полуось оснований усеченного конуса через нахождение точек пересечения линий пирамиды и параллелепипеда
 		if (hbar) {
-			x1 = startY + individualBarValue / 2, y1 = nullPositionOX - value;
-			x2 = startY, y2 = nullPositionOX;
-			x3 = startY, y3 = startX + height;
-			x4 = startY + individualBarValue, y4 = startX + height;
+			pyramidX1 = startY + individualBarValue / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = startY, pyramidY2 = nullPositionOX;
+			rectX1 = startY, rectY1 = startX + height;
+			rectX2 = startY + individualBarValue, rectY2 = startX + height;
 
-			var l1 = this.isIntersectionLineAndLine2d(x1, y1, x2, y2, x3, y3, x4, y4);
-			x2 = startY + individualBarValue;
-			var l2 = this.isIntersectionLineAndLine2d(x1, y1, x2, y2, x3, y3, x4, y4);
+			l1 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = startY + individualBarValue;
+			l2 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
 
-			x1 = gapDepth + perspectiveDepth / 2, y1 = nullPositionOX - value;
-			x2 = gapDepth, y2 = nullPositionOX;
-			x3 = gapDepth, y3 = startX + height;
-			x4 = gapDepth + perspectiveDepth, y4 = startX + height;
+			pyramidX1 = gapDepth + perspectiveDepth / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = gapDepth, pyramidY2 = nullPositionOX;
+			rectX1 = gapDepth, rectY1 = startX + height;
+			rectX2 = gapDepth + perspectiveDepth, rectY2 = startX + height;
 
-			var l3 = this.isIntersectionLineAndLine2d(x1, y1, x2, y2, x3, y3, x4, y4);
-			x2 = gapDepth + perspectiveDepth;
-			var l4 = this.isIntersectionLineAndLine2d(x1, y1, x2, y2, x3, y3, x4, y4);
+			l3 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = gapDepth + perspectiveDepth;
+			l4 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
 		
-			var wUp = l1.x && l2.x ? (l2.x - l1.x) / 2 : 0;
-			var lUp = l3.x && l4.x ? (l4.x - l3.x) / 2 : 0;
+			wUp = l1.x && l2.x ? (l2.x - l1.x) / 2 : 0;
+			lUp = l3.x && l4.x ? (l4.x - l3.x) / 2 : 0;
 
-			x1 = startY + individualBarValue / 2, y1 = nullPositionOX - value;
-			x2 = startY, y2 = nullPositionOX;
-			x3 = startY + individualBarValue, y3 = startX;
-			x4 = startY, y4 = startX;
+			pyramidX1 = startY + individualBarValue / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = startY, pyramidY2 = nullPositionOX;
+			rectX1 = startY + individualBarValue, rectY1 = startX;
+			rectX2 = startY, rectY2 = startX;
 
-			l1 = this.isIntersectionLineAndLine2d(x1, y1, x2, y2, x3, y3, x4, y4);
-			x2 = startY + individualBarValue;
-			l2 = this.isIntersectionLineAndLine2d(x1, y1, x2, y2, x3, y3, x4, y4);
+			l1 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = startY + individualBarValue;
+			l2 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
 
-			x1 = gapDepth + perspectiveDepth / 2, y1 = nullPositionOX - value;
-			x2 = gapDepth, y2 = nullPositionOX;
-			x3 = gapDepth, y3 = startX;
-			x4 = gapDepth + perspectiveDepth, y4 = startX;
+			pyramidX1 = gapDepth + perspectiveDepth / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = gapDepth, pyramidY2 = nullPositionOX;
+			rectX1 = gapDepth, rectY1 = startX;
+			rectX2 = gapDepth + perspectiveDepth, rectY2 = startX;
 
-			l3 = this.isIntersectionLineAndLine2d(x1, y1, x2, y2, x3, y3, x4, y4);
-			x2 = gapDepth + perspectiveDepth;
-			l4 = this.isIntersectionLineAndLine2d(x1, y1, x2, y2, x3, y3, x4, y4);
+			l3 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = gapDepth + perspectiveDepth;
+			l4 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
 		
-			var wDown = l1.x && l2.x ? (l2.x - l1.x) / 2 : 0;
-			var lDown = l3.x && l4.x ? (l4.x - l3.x) / 2 : 0;
+			wDown = l1.x && l2.x ? (l2.x - l1.x) / 2 : 0;
+			lDown = l3.x && l4.x ? (l4.x - l3.x) / 2 : 0;
 		} else {
 			// координаты точек ребра пирамиды в плоскости x, y
-			x1 = startX + individualBarValue / 2, y1 = nullPositionOX - value;
-			x2 = startX, y2 = nullPositionOX;
+			pyramidX1 = startX + individualBarValue / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = startX, pyramidY2 = nullPositionOX;
 			// координаты точек стороны пересекающего прямоугольника
-			x3 = startX, y3 = startY - height;
-			x4 = startX + individualBarValue, y4 = startY - height;
+			rectX1 = startX, rectY1 = startY - height;
+			rectX2 = startX + individualBarValue, rectY2 = startY - height;
 
-			var l1 = this.isIntersectionLineAndLine2d(x1, y1, x2, y2, x3, y3, x4, y4);
-			x2 = startX + individualBarValue;
-			y2 = nullPositionOX;
-			var l2 = this.isIntersectionLineAndLine2d(x1, y1, x2, y2, x3, y3, x4, y4);
+			l1 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = startX + individualBarValue;
+			pyramidY2 = nullPositionOX;
+			l2 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
 
-			x1 = gapDepth + perspectiveDepth / 2, y1 = nullPositionOX - value;
-			x2 = gapDepth, y2 = nullPositionOX;
-			x3 = gapDepth, y3 = startY - height;
-			x4 = gapDepth + perspectiveDepth, y4 = startY - height;
+			pyramidX1 = gapDepth + perspectiveDepth / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = gapDepth, pyramidY2 = nullPositionOX;
+			rectX1 = gapDepth, rectY1 = startY - height;
+			rectX2 = gapDepth + perspectiveDepth, rectY2 = startY - height;
 
-			var l3 = this.isIntersectionLineAndLine2d(x1, y1, x2, y2, x3, y3, x4, y4);
-			x2 = gapDepth + perspectiveDepth;
-			y2 = nullPositionOX;
-			var l4 = this.isIntersectionLineAndLine2d(x1, y1, x2, y2, x3, y3, x4, y4);
+			l3 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = gapDepth + perspectiveDepth;
+			pyramidY2 = nullPositionOX;
+			l4 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
 		
-			var wUp = l1.x && l2.x ? (l2.x - l1.x) / 2 : 0;
-			var lUp = l3.x && l4.x ? (l4.x - l3.x) / 2 : 0;
+			wUp = l1.x && l2.x ? (l2.x - l1.x) / 2 : 0;
+			lUp = l3.x && l4.x ? (l4.x - l3.x) / 2 : 0;
 
-			x1 = startX + individualBarValue / 2, y1 = nullPositionOX - value;
-			x2 = startX, y2 = nullPositionOX;
-			x3 = startX, y3 = startY;
-			x4 = startX + individualBarValue, y4 = startY;
+			pyramidX1 = startX + individualBarValue / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = startX, pyramidY2 = nullPositionOX;
+			rectX1 = startX, rectY1 = startY;
+			rectX2 = startX + individualBarValue, rectY2 = startY;
 
-			l1 = this.isIntersectionLineAndLine2d(x1, y1, x2, y2, x3, y3, x4, y4);
-			x2 = startX + individualBarValue;
-			y2 = nullPositionOX;
-			l2 = this.isIntersectionLineAndLine2d(x1, y1, x2, y2, x3, y3, x4, y4);
+			l1 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = startX + individualBarValue;
+			pyramidY2 = nullPositionOX;
+			l2 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
 
-			x1 = gapDepth + perspectiveDepth / 2, y1 = nullPositionOX - value;
-			x2 = gapDepth, y2 = nullPositionOX;
-			x3 = gapDepth, y3 = startY;
-			x4 = gapDepth + perspectiveDepth, y4 = startY;
+			pyramidX1 = gapDepth + perspectiveDepth / 2, pyramidY1 = nullPositionOX - value;
+			pyramidX2 = gapDepth, pyramidY2 = nullPositionOX;
+			rectX1 = gapDepth, rectY1 = startY;
+			rectX2 = gapDepth + perspectiveDepth, rectY2 = startY;
 
-			l3 = this.isIntersectionLineAndLine2d(x1, y1, x2, y2, x3, y3, x4, y4);
-			x2 = gapDepth + perspectiveDepth;
-			y2 = nullPositionOX;
-			l4 = this.isIntersectionLineAndLine2d(x1, y1, x2, y2, x3, y3, x4, y4);
+			l3 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
+			pyramidX2 = gapDepth + perspectiveDepth;
+			pyramidY2 = nullPositionOX;
+			l4 = this.isIntersectionLineAndLine2d(pyramidX1, pyramidY1, pyramidX2, pyramidY2, rectX1, rectY1, rectX2, rectY2);
 		
-			var wDown = l1.x && l2.x ? (l2.x - l1.x) / 2 : 0;
-			var lDown = l3.x && l4.x ? (l4.x - l3.x) / 2 : 0;
+			wDown = l1.x && l2.x ? (l2.x - l1.x) / 2 : 0;
+			lDown = l3.x && l4.x ? (l4.x - l3.x) / 2 : 0;
 		}
 
 		return { wUp: wUp, lUp: lUp, wDown: wDown, lDown: lDown };		
@@ -5204,13 +5209,18 @@ CChartsDrawer.prototype =
 				sizes22 = 0;
 				sizes1 = points.wDown;
 				sizes2 = points.lDown;
+			} else if (val < 0 && this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+				sizes12 = points.wUp !== 0 ? points.wUp : individualBarWidth / 2;
+				sizes22 = points.lUp !== 0 ? points.lUp : perspectiveDepth / 2;
+				sizes1 = points.wDown;
+				sizes2 = points.lDown;
 			} else {
 				sizes12 = points.wUp;
 				sizes22 = points.lUp;
 				sizes1 = points.wDown !== 0 ? points.wDown : individualBarWidth / 2;
 				sizes2 = points.lDown !== 0 ? points.lDown : perspectiveDepth / 2;
 			}
-			
+
 		} else {
 			//большая и малая полуось эллипса
 			sizes1 = individualBarWidth / 2;
