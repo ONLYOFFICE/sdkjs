@@ -5072,10 +5072,7 @@ PasteProcessor.prototype =
 			oThis._AddNextPrevToContent(oThis.oDocument);
 
 			if (isPasteTextIntoList) {
-				this.oLogicDocument.RemoveBeforePaste();
-
-				var oPr = {NewLineParagraph: true, Numbering: false};
-				oThis._pasteText(oThis._getTextFromContent(oThis.aContent, oPr));
+				oThis._pasteText(oThis._getTextFromContent(oThis.aContent, {NewLineParagraph: true, Numbering: false}));
 				return;
 			}
 
