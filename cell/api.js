@@ -6110,7 +6110,9 @@ var editor;
 
 		this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction);
 		if (props && props.temporaryPassword != null) {
-			if (props.isPasswordXL()) {
+			if (props.temporaryPassword === "") {
+				checkPassword([""]);
+			} else if (props.isPasswordXL()) {
 				checkPassword([AscCommonExcel.getPasswordHash(props.temporaryPassword, true)]);
 			} else {
 				var checkHash = {password: props.temporaryPassword, salt: props.saltValue, spinCount: props.spinCount,

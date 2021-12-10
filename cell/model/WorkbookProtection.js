@@ -883,9 +883,8 @@
 	};
 
 	CProtectedRange.prototype.set = function (val, addToHistory, ws) {
-
-		//this.sqref = null;
-		//historyitem_Protected_SetSqRef
+		
+		this.cleanTemp();
 
 		this.name = this.checkProperty(this.name, val.name, AscCH.historyitem_Protected_SetName, ws, addToHistory);
 		this.algorithmName = this.checkProperty(this.algorithmName, val.algorithmName, AscCH.historyitem_Protected_SetAlgorithmName, ws, addToHistory);
@@ -909,6 +908,11 @@
 		if (this.sqref && val.sqref && !compareElements(this.sqref, val.sqref)) {
 			this.setSqref(val.sqref, ws, true);
 		}
+	};
+
+	CProtectedRange.prototype.cleanTemp = function () {
+		this._isEnterPassword = null;
+		//this.temporaryPassword = null;
 	};
 
 	CProtectedRange.prototype.checkProperty = function (propOld, propNew, type, ws, addToHistory) {
