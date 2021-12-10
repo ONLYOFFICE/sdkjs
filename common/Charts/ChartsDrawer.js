@@ -4847,8 +4847,12 @@ CChartsDrawer.prototype =
 				value = hbar ? -minH: minH;
 			}
 		}
-		if (val < 0 && this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
-			startY = ++startY;
+		if (this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+			if (hbar && (subType === "stacked" || subType === "stackedPer")) {
+				startX = val < 0 ? --startX : ++startX; 
+			} else if (val < 0 && !hbar) {
+				++startY;
+			}
 		}
 
 		// рассчитываем большую и малую полуось оснований усеченного конуса через нахождение точек пересечения линий пирамиды и параллелепипеда
@@ -5209,7 +5213,7 @@ CChartsDrawer.prototype =
 				sizes22 = 0;
 				sizes1 = points.wDown;
 				sizes2 = points.lDown;
-			} else if (val < 0 && this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+			} else if ((val < 0 || (hbar && subType !== "normal")) && this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
 				sizes12 = points.wUp !== 0 ? points.wUp : individualBarWidth / 2;
 				sizes22 = points.lUp !== 0 ? points.lUp : perspectiveDepth / 2;
 				sizes1 = points.wDown;
@@ -8460,7 +8464,7 @@ drawHBarChart.prototype = {
 			var isValMoreZero = false;
 			var isValLessZero = 0;
 			var shapeType = null !== this.chart.series[i].shape ? this.chart.series[i].shape : this.chart.shape;
-			//shapeType = 3;
+			shapeType = 0;
 			for (var j = 0; j < seria.length; j++) {
 				//стартовая позиция колонки Y(+ высота с учётом поправок на накопительные диаграммы)
 				val = parseFloat(seria[j].val);
