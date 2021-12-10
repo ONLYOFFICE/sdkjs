@@ -3225,7 +3225,7 @@ CChartsDrawer.prototype =
 
 	isIntersectionLineAndLine2d: function (x1, y1, x2, y2, x3, y3, x4, y4) {
 	
-  		if ((x1 === x2 && y1 === y2) || (x3 === x4 && y3 === y4)) {
+		if ((x1 === x2 && y1 === y2) || (x3 === x4 && y3 === y4)) {
 			return false;
 		}
 
@@ -4818,7 +4818,6 @@ CChartsDrawer.prototype =
 
 		var points = [point1, point2, point3, point4, point5, point6, point7, point8];
 		var paths;
-
 		if (!hBar) {
 			paths = this.calculateRect3D(points, val, null, subType !== "standard", points2);
 			return { paths: paths, points: points }
@@ -5304,8 +5303,6 @@ CChartsDrawer.prototype =
 			sortCylinderPoints1 = segmentPoints;
 			sortCylinderPoints2 = segmentPoints2;
 		}
-
-
 		var x12, y12, z12, x22, y22, z22, x32, y32, z32, x42, y42, z42, x52, y52, z52, x62, y62, z62, x72, y72, z72, x82, y82, z82;
 		var point1, point2, point4, point5, point6, point8;
 
@@ -5480,7 +5477,7 @@ drawBarChart.prototype = {
 					}
 				}
 
-				//shapeType = 0; //раскоментировать для теста пирамид
+				//shapeType = 5; //раскоментировать для теста пирамид
 				tempValues[i][idx] = val;
 
 				startYColumnPosition = this._getStartYColumnPosition(seriesHeight, i, idx, val, yPoints, prevVal, shapeType, axisMax, axisMin);
