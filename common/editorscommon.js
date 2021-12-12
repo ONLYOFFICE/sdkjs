@@ -4297,10 +4297,10 @@
 		return isCeil ? Math.ceil(nFontSize * 2) / 2 : Math.floor(nFontSize * 2) / 2;
 	}
 
+	// Non-breaking-space сюда не добавлять!
 	var c_oAscSpaces = [];
 	c_oAscSpaces[0x000A] = 1;
 	c_oAscSpaces[0x0020] = 1;
-	c_oAscSpaces[0x00A0] = 1;
 	c_oAscSpaces[0x2002] = 1;
 	c_oAscSpaces[0x2003] = 1;
 	c_oAscSpaces[0x2005] = 1;

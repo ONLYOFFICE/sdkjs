@@ -2702,37 +2702,6 @@ CGraphicObjects.prototype =
 
 	GetSelectionBounds: DrawingObjectsController.prototype.GetSelectionBounds,
 
-    checkCommonBounds: function(arrDrawings)
-    {
-        var l, t, r,b;
-        var x_arr_min = [], y_arr_min = [];
-        var x_arr_max = [], y_arr_max = [];
-        for(var i = 0; i < arrDrawings.length; ++i)
-        {
-            var rot = AscFormat.normalizeRotate(AscFormat.isRealNumber(arrDrawings[i].rot) ? arrDrawings[i].rot : 0);
-            if (AscFormat.checkNormalRotate(rot))
-            {
-                l = arrDrawings[i].posX;
-                r = arrDrawings[i].extX + arrDrawings[i].posX;
-                t = arrDrawings[i].posY;
-                b = arrDrawings[i].extY + arrDrawings[i].posY;
-            }
-            else
-            {
-                l = arrDrawings[i].posX + arrDrawings[i].extX/2 - arrDrawings[i].extY/2;
-                r = arrDrawings[i].posX + arrDrawings[i].extX/2 + arrDrawings[i].extY/2;
-                t = arrDrawings[i].posY + arrDrawings[i].extY/2 - arrDrawings[i].extX/2;
-                b = arrDrawings[i].extY + arrDrawings[i].extY/2 + arrDrawings[i].extX/2;
-            }
-
-            x_arr_max.push(r);
-            x_arr_min.push(l);
-            y_arr_max.push(b);
-            y_arr_min.push(t);
-        }
-        return {minX: Math.min.apply(Math, x_arr_min), maxX: Math.max.apply(Math, x_arr_max), minY: Math.min.apply(Math, y_arr_min), maxY: Math.max.apply(Math, y_arr_max)};
-    },
-
     groupSelectedObjects: function()
     {
         var objects_for_grouping = this.canGroup(true);
@@ -2745,8 +2714,7 @@ CGraphicObjects.prototype =
 			this.document.SetLocalTrackRevisions(false);
 		}
         var i;
-        var common_bounds = this.checkCommonBounds(objects_for_grouping);
-        var para_drawing = new ParaDrawing(common_bounds.maxX - common_bounds.minX, common_bounds.maxY - common_bounds.minY, null, this.drawingDocument, null, null);
+        var para_drawing = new ParaDrawing(5, 5, null, this.drawingDocument, null, null);
         para_drawing.Set_WrappingType(WRAPPING_TYPE_NONE);
         para_drawing.Set_DrawingType(drawing_Anchor);
         for(i = 0; i < objects_for_grouping.length; ++i)
@@ -2757,14 +2725,17 @@ CGraphicObjects.prototype =
             }
         }
         var group = this.getGroup(objects_for_grouping);
+        var dOffX = group.spPr.xfrm.offX;
+        var dOffY = group.spPr.xfrm.offY;
         group.spPr.xfrm.setOffX(0);
         group.spPr.xfrm.setOffY(0);
         group.setParent(para_drawing);
         para_drawing.Set_GraphicObject(group);
+        para_drawing.setExtent(group.spPr.xfrm.extX, group.spPr.xfrm.extY);
 
         var page_index = objects_for_grouping[0].parent.pageIndex;
         var first_paragraph = objects_for_grouping[0].parent.Get_ParentParagraph();
-        var nearest_pos = this.document.Get_NearestPos(objects_for_grouping[0].parent.pageIndex, common_bounds.minX, common_bounds.minY, true, para_drawing);
+        var nearest_pos = this.document.Get_NearestPos(objects_for_grouping[0].parent.pageIndex, dOffX, dOffY, true, para_drawing);
 
         nearest_pos.Paragraph.Check_NearestPos(nearest_pos);
 
@@ -2785,7 +2756,7 @@ CGraphicObjects.prototype =
                     RelativeFrom: Asc.c_oAscRelativeFromH.Page,
                     UseAlign : false,
                     Align    : undefined,
-                    Value    : common_bounds.minX
+                    Value    : dOffX
                 },
 
                 PositionV:
@@ -2793,10 +2764,10 @@ CGraphicObjects.prototype =
                     RelativeFrom: Asc.c_oAscRelativeFromV.Page,
                     UseAlign    : false,
                     Align       : undefined,
-                    Value       : common_bounds.minY
+                    Value       : dOffY
                 }
             }));
-        para_drawing.Set_XYForAdd( common_bounds.minX,  common_bounds.minY, nearest_pos, nPageIndex);
+        para_drawing.Set_XYForAdd(dOffX, dOffY, nearest_pos, nPageIndex);
 
         para_drawing.Add_ToDocument2(first_paragraph);
         para_drawing.Parent = first_paragraph;

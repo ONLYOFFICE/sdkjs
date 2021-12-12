@@ -98,6 +98,7 @@
 			"common/scroll.js",
 			"vendor/iscroll.js",
 			"vendor/delta.js",
+			"vendor/minhash.js",
 			"common/Scrolls/mobileTouchManagerBase.js",
 			"word/Drawing/mobileTouchManager.js",
 
@@ -196,6 +197,7 @@
 		    "word/Editor/GlossaryDocument.js",
 		    "word/Editor/GlossaryDocumentChanges.js",
 			"word/Editor/DocumentProtection.js",
+			"word/Editor/Comparison.js",
 
 			"word/Drawing/Graphics.js",
 			"word/Drawing/ShapeDrawer.js",

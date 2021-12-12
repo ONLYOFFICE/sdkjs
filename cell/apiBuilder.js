@@ -111,9 +111,11 @@
 	 * @property {ApiName} DefName - Returns the ApiName object.
 	 * @property {ApiComment | null} Comments - Returns the ApiComment collection that represents all the comments from the specified worksheet.
 	 * @property {'xlDownward' | 'xlHorizontal' | 'xlUpward' | 'xlVertical'} Orientation - Sets an angle to the current cell range.
+	 * @property {ApiAreas} Areas - Returns a collection of the areas.
 	 */
-	function ApiRange(range) {
+	function ApiRange(range, areas) {
 		this.range = range;
+		this.areas = areas || null;
 	}
 
 
@@ -233,6 +235,20 @@
 	function ApiComment(comment, ws) {
 		this.Comment = comment;
 		this.WS = ws;
+	}
+
+	/**
+	 * Class representing the areas.
+	 * @constructor
+	 * @property {number} Count - Returns a value that represents the number of objects in the collection.
+	 * @property {ApiRange} Parent - Returns the parent object for the specified object.
+	 */
+	function ApiAreas(items, parent) {
+		this.Items = [];
+		this._parent = parent;
+		for (var i = 0; i < items.length; i++) {
+			this.Items.push(new ApiRange(items[i]));
+		}
 	}
 
 	/**
@@ -729,7 +745,12 @@
 	 */
 	ApiWorksheet.prototype.GetSelection = function () {
 		var r = this.worksheet.selectionRange.getLast();
-		return new ApiRange(this.worksheet.getRange3(r.r1, r.c1, r.r2, r.c2));
+		var ranges = this.worksheet.selectionRange.ranges;
+		var arr = [];
+		for (var i = 0; i < ranges.length; i++) {
+			arr.push(this.worksheet.getRange3(ranges[i].r1, ranges[i].c1, ranges[i].r2, ranges[i].c2));
+		}
+		return new ApiRange(this.worksheet.getRange3(r.r1, r.c1, r.r2, r.c2), arr);
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "Selection", {
 		get: function () {
@@ -1805,7 +1826,7 @@
 			return false;
 		
 		if (Array.isArray(data)) {
-			var checkDepth = x => Array.isArray(x) ? 1 + Math.max.apply(this, x.map(checkDepth)) : 0;
+			var checkDepth = function(x) { return Array.isArray(x) ? 1 + Math.max.apply(this, x.map(checkDepth)) : 0;};
 			var maxDepth = checkDepth(data);
 			if (maxDepth <= 2) {
 				if (this.range.isOneCell()) {
@@ -2663,6 +2684,79 @@
 		}
 	});*/
 
+	/**
+	 * Delete the object.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {?String} shift - Specifies how to shift cells to replace deleted cells ("up", "left")
+	 */
+	ApiRange.prototype.Delete = function(shift) {
+		if (shift && typeof Shift == "string") {
+			shift = shift.toLocaleLowerCase();
+		} else {
+			var bbox = this.range.bbox;
+			var rows = bbox.r2 - bbox.r1 + 1;
+			var cols = bbox.c2 - bbox.c1 + 1;
+			shift = (rows <= cols) ? "up" : "left";
+		}
+		if (shift == "up")
+			this.range.deleteCellsShiftUp();
+		else
+			this.range.deleteCellsShiftLeft()
+	};
+
+	/**
+	 * Inserts a cell or a range of cells into the worksheet or macro sheet and shifts other cells away to make space.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {?String} shift - Specifies which way to shift the cells ("right", "down")
+	 */
+	 ApiRange.prototype.Insert = function(shift) {
+		if (shift && typeof Shift == "string") {
+			shift = shift.toLocaleLowerCase();
+		} else {
+			var bbox = this.range.bbox;
+			var rows = bbox.r2 - bbox.r1 + 1;
+			var cols = bbox.c2 - bbox.c1 + 1;
+			shift = (rows <= cols) ? "down" : "right";
+		}
+		if (shift == "down")
+			this.range.addCellsShiftBottom();
+		else
+			this.range.addCellsShiftRight()
+	};
+
+	/**
+	 * Changes the width of the columns in the range or the height of the rows in the range to achieve the best fit.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {?bool} bRows - Defines will we make autofit rows
+	 * @param {?bool} bCols - Defines will we make autofit cols
+	 */
+	ApiRange.prototype.AutoFit = function(bRows, bCols) {
+		var index = this.range.worksheet.getIndex();
+		if (bRows)
+			this.range.worksheet.workbook.oApi.wb.getWorksheet(index).autoFitRowHeight(this.range.bbox.r1, this.range.bbox.r2);
+
+		for (var i = this.range.bbox.c1; i <= this.range.bbox.c2 && bCols; i++)
+			this.range.worksheet.workbook.oApi.wb.getWorksheet(index).autoFitColumnsWidth(i);
+	};
+
+	/**
+	 * Returns a collection of the ranges.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @return {ApiAreas}
+	 */
+	ApiRange.prototype.GetAreas = function() {
+		return new ApiAreas(this.areas || [this.range], this);
+	};
+	Object.defineProperty(ApiRange.prototype, "Areas", {
+		get: function () {
+			return this.GetAreas();
+		}
+	});
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDrawing
@@ -3270,6 +3364,53 @@
 		return this.Comment.getType();
 	};
 
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiAreas
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns a value that represents the number of objects in the collection.
+	 * @memberof ApiAreas
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 */
+	ApiAreas.prototype.GetCount = function () {
+		return this.Items.length;
+	};
+	Object.defineProperty(ApiAreas.prototype, "Count", {
+		get: function () {
+			return this.GetCount();
+		}
+	});
+
+	/**
+	 * Returns a single object from a collection.
+	 * @memberof ApiAreas
+	 * @typeofeditors ["CSE"]
+	 * @param {number} ind - The index number of the object.
+	 * @returns {ApiRange}
+	 */
+	ApiAreas.prototype.GetItem = function (ind) {
+		return this.Items[ind - 1] || null;
+	};
+
+	/**
+	 * Returns a value that represents the number of objects in the collection.
+	 * @memberof ApiAreas
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 */
+	 ApiAreas.prototype.GetParent = function () {
+		return this._parent;
+	};
+	Object.defineProperty(ApiAreas.prototype, "Parent", {
+		get: function () {
+			return this.GetParent();
+		}
+	});
+
 	Api.prototype["Format"]                = Api.prototype.Format;
 	Api.prototype["AddSheet"]              = Api.prototype.AddSheet;
 	Api.prototype["GetSheets"]             = Api.prototype.GetSheets;
@@ -3382,6 +3523,10 @@
 	ApiRange.prototype["SetOrientation"] = ApiRange.prototype.SetOrientation;
 	ApiRange.prototype["GetOrientation"] = ApiRange.prototype.GetOrientation;
 	ApiRange.prototype["SetSort"] = ApiRange.prototype.SetSort;
+	ApiRange.prototype["Delete"] = ApiRange.prototype.Delete;
+	ApiRange.prototype["Insert"] = ApiRange.prototype.Insert;
+	ApiRange.prototype["AutoFit"] = ApiRange.prototype.AutoFit;
+	ApiRange.prototype["GetAreas"] = ApiRange.prototype.GetAreas;
 
 
 	ApiDrawing.prototype["GetClassType"]               =  ApiDrawing.prototype.GetClassType;
@@ -3438,6 +3583,11 @@
 	ApiComment.prototype["GetText"]              =  ApiComment.prototype.GetText;
 	ApiComment.prototype["Delete"]               =  ApiComment.prototype.Delete;
 	ApiComment.prototype["GetClassType"]         =  ApiComment.prototype.GetClassType;
+	
+
+	ApiAreas.prototype["GetCount"]               = ApiAreas.prototype.GetCount;
+	ApiAreas.prototype["GetItem"]                = ApiAreas.prototype.GetItem;
+	ApiAreas.prototype["GetParent"]              = ApiAreas.prototype.GetParent;
 
 
 	function private_SetCoords(oDrawing, oWorksheet, nExtX, nExtY, nFromCol, nColOffset,  nFromRow, nRowOffset, pos){

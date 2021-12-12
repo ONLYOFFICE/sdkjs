@@ -1679,6 +1679,8 @@ function CEditorPage(api)
 					oThis.m_oApi.sync_MouseMoveEndCallback();
 
 					oWordControl.m_oDrawingDocument.SetCursorType("grab");
+
+					oThis.m_oOverlayApi && oThis.m_oOverlayApi.Clear();
 					return;
 				}
 			}

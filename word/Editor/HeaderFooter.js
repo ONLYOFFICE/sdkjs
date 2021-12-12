@@ -137,6 +137,11 @@ CHeaderFooter.prototype =
         }        
     },
 
+	SetPage : function(nPageAbs)
+	{
+		this.Set_Page(nPageAbs);
+	},
+
 	GetPage : function()
 	{
 		return this.RecalcInfo.CurPage;
@@ -2461,7 +2466,10 @@ CHeaderFooterController.prototype =
 
 	GetCurrentParagraph : function(bIgnoreSelection, arrSelectedParagraphs, oPr)
 	{
-		return this.CurHdrFtr.GetCurrentParagraph(bIgnoreSelection, arrSelectedParagraphs, oPr);
+		if (this.CurHdrFtr)
+			return this.CurHdrFtr.GetCurrentParagraph(bIgnoreSelection, arrSelectedParagraphs, oPr);
+
+		return null;
 	},
 
 	GetCurrentTablesStack : function(arrTables)

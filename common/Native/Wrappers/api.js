@@ -4958,7 +4958,7 @@ Asc['asc_docs_api'].prototype.Send_Menu_Event = function(type)
     window["native"]["OnCallMenuEvent"](type, global_memory_stream_menu);
 };
 
-Asc['asc_docs_api'].prototype.sync_EndCatchSelectedElements = function()
+Asc['asc_docs_api'].prototype.sync_EndCatchSelectedElements = function(isExternalTrigger)
 {
     if (this.WordControl && this.WordControl.m_oDrawingDocument)
         this.WordControl.m_oDrawingDocument.EndTableStylesCheck();
@@ -5041,7 +5041,7 @@ Asc['asc_docs_api'].prototype.sync_EndCatchSelectedElements = function()
     }
 
     this.Send_Menu_Event(6);
-    this.sendEvent("asc_onFocusObject", this.SelectedObjectsStack);
+    this.sendEvent("asc_onFocusObject", this.SelectedObjectsStack, !isExternalTrigger);
 };
 
 function Deserialize_Table_Markup(_params, _cols, _margins, _rows)
@@ -6733,7 +6733,7 @@ function getHexColor(r, g, b) {
     return r + g + b;
 }
 
-function onFocusObject(SelectedObjects) {
+function onFocusObject(SelectedObjects, localTrigger) {
     var settings = [];
     var control_props = _api.asc_IsContentControl() ? _api.asc_GetContentControlProperties() : null;
 
@@ -6752,6 +6752,7 @@ function onFocusObject(SelectedObjects) {
             {
                 settings.push({
                     type: eltype,
+                    localTrigger: (typeof localTrigger === 'boolean') ? localTrigger : true,
                     rawValue: JSON.prune(value, 5)
                 });
                 break;
@@ -6770,6 +6771,7 @@ function onFocusObject(SelectedObjects) {
         settings.push({
             type: Asc.c_oAscTypeSelectElement.ContentControl,
             spectype: spectype,
+            localTrigger: (typeof localTrigger === 'boolean') ? localTrigger : true,
             rawValue: JSON.prune(control_props, 4),
             value: readSDKContentControl(control_props, SelectedObjects)
         });

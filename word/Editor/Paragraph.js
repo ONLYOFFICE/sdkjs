@@ -2031,6 +2031,9 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 	var SdtHighlightColor  = this.LogicDocument.GetSdtGlobalShowHighlight && this.LogicDocument.GetSdtGlobalShowHighlight() && undefined === pGraphics.RENDERER_PDF_FLAG ? this.LogicDocument.GetSdtGlobalColor() : null;
 	var FormsHighlight     = this.LogicDocument.GetSpecialFormsHighlight && this.LogicDocument.GetSpecialFormsHighlight() && undefined === pGraphics.RENDERER_PDF_FLAG ? this.LogicDocument.GetSpecialFormsHighlight() : null;
 
+	if (FormsHighlight && FormsHighlight.IsAuto())
+		FormsHighlight = null;
+
 	PDSH.Reset(this, pGraphics, DrawColl, DrawFind, DrawComm, DrawMMFields, this.GetEndInfoByPage(CurPage - 1), DrawSolvedComments);
 
 	var StartLine = _Page.StartLine;
@@ -9671,6 +9674,21 @@ Paragraph.prototype.GetBulletNum = function()
 		}
 	}
 	return BulletNum;
+};
+Paragraph.prototype.IsEmptyWithBullet = function()
+{
+	if(this.IsEmpty())
+	{
+		var oBullet =  this.PresentationPr && this.PresentationPr.Bullet;
+		if(oBullet)
+		{
+			if(!oBullet.IsNone())
+			{
+				return true;
+			}
+		}
+	}
+	return false;
 };
 //----------------------------------------------------------------------------------------------------------------------
 /**

@@ -3056,11 +3056,12 @@ CDocument.prototype.UpdateSelection = function(isRemoveEmptySelection)
 /**
  * Сообщаем документу, что потребуется обновить состояние интерфейса
  * @param {?boolean} bSaveCurRevisionChange
+ * @param {boolean} [isExternalTrigger=false] - обновление интерфейса вызвано не действиями данного пользователя (например, совместкой)
  */
-CDocument.prototype.UpdateInterface = function(bSaveCurRevisionChange)
+CDocument.prototype.UpdateInterface = function(bSaveCurRevisionChange, isExternalTrigger)
 {
-	if (undefined !== bSaveCurRevisionChange)
-		this.private_UpdateInterface(bSaveCurRevisionChange);
+	if (undefined !== bSaveCurRevisionChange || true === isExternalTrigger)
+		this.private_UpdateInterface(bSaveCurRevisionChange, isExternalTrigger);
 	else if (this.Action.Start)
 		this.Action.UpdateInterface = true;
 	else
@@ -9261,6 +9262,7 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 	}
 	else if (para_Run === LastClass.Type)
 	{
+		var oForm = null;
 		var oDstPictureCC = LastClass.GetParentPictureContentControl();
 		if (oDstPictureCC)
 		{
@@ -9297,8 +9299,15 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 
 			return;
 		}
-		else if (LastClass.GetParentForm())
+		else if ((oForm = LastClass.GetParentForm()))
 		{
+			if ((!oForm.IsTextForm() || oForm.IsComboBox()))
+				return;
+
+			var sInsertedText = SelectedContent.GetText({ParaEndToSpace : false});
+			if (!sInsertedText || !sInsertedText.length)
+				return;
+
 			var nInLastClassPos = ParaNearPos.NearPos.ContentPos.Data[ParaNearPos.Classes.length - 1];
 
 			var isPlaceHolder  = LastClass.GetParentForm().IsPlaceHolder();
@@ -9313,7 +9322,7 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 			LastClass.State.ContentPos = nInLastClassPos;
 
 			var nInRunStartPos = LastClass.State.ContentPos;
-			LastClass.AddText(SelectedContent.GetText({ParaEndToSpace : false}), nInLastClassPos);
+			LastClass.AddText(sInsertedText, nInLastClassPos);
 			var nInRunEndPos = LastClass.State.ContentPos;
 
 			var nLastClassLen = LastClass.GetElementsCount();
@@ -9355,17 +9364,48 @@ CDocument.prototype.InsertContent = function(SelectedContent, NearPos)
 			var NewPara          = FirstElement.Element;
 			var NewElementsCount = NewPara.Content.length - 1; // Последний ран с para_End не добавляем
 
-			if (LastClass instanceof ParaRun && LastClass.GetParent() instanceof CInlineLevelSdt && LastClass.GetParent().IsPlaceHolder())
+			// TODO: Как будет время проверить, возможно тут надо делать проверку
+			//  (oInlineLeveLSdt.IsPlaceHolder() || oInlineLeveLSdt.IsContentControlTemporary())
+			var oInlineLeveLSdt;
+			if (LastClass instanceof ParaRun
+				&& (oInlineLeveLSdt = LastClass.GetParent())
+				&& oInlineLeveLSdt instanceof CInlineLevelSdt
+				&& oInlineLeveLSdt.IsPlaceHolder())
 			{
-				var oInlineLeveLSdt = LastClass.GetParent();
-				oInlineLeveLSdt.ReplacePlaceHolderWithContent();
+				if (oInlineLeveLSdt.IsContentControlTemporary())
+				{
+					var oResult = oInlineLeveLSdt.RemoveContentControlWrapper();
 
-				LastClass = oInlineLeveLSdt.GetElement(0);
+					var oSdtParent = oResult.Parent;
+					var oSdtPos    = oResult.Pos;
+					var oSdtCount  = oResult.Count;
 
-				ParaNearPos.Classes[ParaNearPos.Classes.length - 1] = LastClass;
+					if (!oSdtParent
+						|| ParaNearPos.Classes.length < 3
+						|| ParaNearPos.Classes[ParaNearPos.Classes.length - 2] !== oInlineLeveLSdt
+						|| ParaNearPos.Classes[ParaNearPos.Classes.length - 3] !== oSdtParent)
+						return;
 
-				ParaNearPos.NearPos.ContentPos.Update(0, ParaNearPos.Classes.length - 1);
-				ParaNearPos.NearPos.ContentPos.Update(0, ParaNearPos.Classes.length - 2);
+					var oRun = new ParaRun(undefined, false);
+					oRun.SetPr(oInlineLeveLSdt.GetDefaultTextPr().Copy());
+
+					oSdtParent.RemoveFromContent(oSdtPos, oSdtCount);
+					oSdtParent.AddToContent(oSdtPos, oRun);
+
+					LastClass = oRun;
+					ParaNearPos.Classes.length--;
+					ParaNearPos.Classes[ParaNearPos.Classes.length - 1] = LastClass;
+					ParaNearPos.NearPos.ContentPos.Update(oSdtPos, ParaNearPos.Classes.length - 2);
+					ParaNearPos.NearPos.ContentPos.Update(0, ParaNearPos.Classes.length - 1);
+				}
+				else
+				{
+					oInlineLeveLSdt.ReplacePlaceHolderWithContent();
+					LastClass = oInlineLeveLSdt.GetElement(0);
+					ParaNearPos.Classes[ParaNearPos.Classes.length - 1] = LastClass;
+					ParaNearPos.NearPos.ContentPos.Update(0, ParaNearPos.Classes.length - 2);
+					ParaNearPos.NearPos.ContentPos.Update(0, ParaNearPos.Classes.length - 1);
+				}
 			}
 
 			var LastClass  = ParaNearPos.Classes[ParaNearPos.Classes.length - 1];
@@ -9555,23 +9595,26 @@ CDocument.prototype.UpdateCursorType = function(X, Y, PageAbs, MouseEvent)
 
 	this.DrawingDocument.OnDrawContentControl(null, AscCommon.ContentControlTrack.Hover);
 
-	var nDocPosType = this.GetDocPosType();
-	if (docpostype_HdrFtr === nDocPosType)
+	if (undefined !== X && null !== X)
 	{
-		this.HeaderFooterController.UpdateCursorType(X, Y, PageAbs, MouseEvent);
-	}
-	else if (docpostype_DrawingObjects === nDocPosType)
-	{
-		this.DrawingsController.UpdateCursorType(X, Y, PageAbs, MouseEvent);
-	}
-	else
-	{
-		if (true === this.Footnotes.CheckHitInFootnote(X, Y, PageAbs))
-			this.Footnotes.UpdateCursorType(X, Y, PageAbs, MouseEvent);
-		else if (this.Endnotes.CheckHitInEndnote(X, Y, PageAbs))
-			this.Endnotes.UpdateCursorType(X, Y, PageAbs, MouseEvent);
+		var nDocPosType = this.GetDocPosType();
+		if (docpostype_HdrFtr === nDocPosType)
+		{
+			this.HeaderFooterController.UpdateCursorType(X, Y, PageAbs, MouseEvent);
+		}
+		else if (docpostype_DrawingObjects === nDocPosType)
+		{
+			this.DrawingsController.UpdateCursorType(X, Y, PageAbs, MouseEvent);
+		}
 		else
-			this.LogicDocumentController.UpdateCursorType(X, Y, PageAbs, MouseEvent);
+		{
+			if (true === this.Footnotes.CheckHitInFootnote(X, Y, PageAbs))
+				this.Footnotes.UpdateCursorType(X, Y, PageAbs, MouseEvent);
+			else if (this.Endnotes.CheckHitInEndnote(X, Y, PageAbs))
+				this.Endnotes.UpdateCursorType(X, Y, PageAbs, MouseEvent);
+			else
+				this.LogicDocumentController.UpdateCursorType(X, Y, PageAbs, MouseEvent);
+		}
 	}
 
 	this.Api.sync_MouseMoveEndCallback();
@@ -11933,14 +11976,14 @@ CDocument.prototype.Document_AddPageNum = function(AlignV, AlignH)
 };
 CDocument.prototype.Document_SetHdrFtrFirstPage = function(Value)
 {
-	var CurHdrFtr = this.HdrFtr.CurHdrFtr;
+	var oCurHdrFtr, nCurPage;
 
-	if (null === CurHdrFtr || -1 === CurHdrFtr.RecalcInfo.CurPage)
+	if (!(oCurHdrFtr = this.HdrFtr.GetCurHdrFtr())
+		|| -1 === (nCurPage = oCurHdrFtr.GetPage()))
 		return;
 
-	var CurPage = CurHdrFtr.RecalcInfo.CurPage;
-	var Index   = this.Pages[CurPage].Pos;
-	var SectPr  = this.SectionsInfo.Get_SectPr(Index).SectPr;
+	var Index  = this.Pages[nCurPage].Pos;
+	var SectPr = this.SectionsInfo.Get_SectPr(Index).SectPr;
 
 	SectPr.Set_TitlePage(Value);
 
@@ -11980,6 +12023,13 @@ CDocument.prototype.Document_SetHdrFtrFirstPage = function(Value)
 			TempSectPr = this.SectionsInfo.Get_SectPr(TempIndex).SectPr;
 		}
 
+		var oHeader = TempSectPr.Get_Header_Default();
+		if (!oHeader)
+		{
+			var oHeader = new CHeaderFooter(this.HdrFtr, this, this.DrawingDocument, hdrftr_Header);
+			TempSectPr.Set_Header_Default(oHeader);
+		}
+
 		this.HdrFtr.Set_CurHdrFtr(TempSectPr.Get_Header_Default());
 	}
 
@@ -11989,7 +12039,7 @@ CDocument.prototype.Document_SetHdrFtrFirstPage = function(Value)
 	if (null !== this.HdrFtr.CurHdrFtr)
 	{
 		this.HdrFtr.CurHdrFtr.Content.MoveCursorToStartPos();
-		this.HdrFtr.CurHdrFtr.Set_Page(CurPage);
+		this.HdrFtr.CurHdrFtr.SetPage(nCurPage);
 	}
 
 	this.Document_UpdateSelectionState();
@@ -12023,9 +12073,20 @@ CDocument.prototype.Document_SetHdrFtrEvenAndOddHeaders = function(Value)
 	}
 
 	if (null !== FirstSectPr.Get_Header_First() && true === FirstSectPr.TitlePage)
+	{
 		this.HdrFtr.Set_CurHdrFtr(FirstSectPr.Get_Header_First());
+	}
 	else
-		this.HdrFtr.Set_CurHdrFtr(FirstSectPr.Get_Header_Default());
+	{
+		var oHeader = FirstSectPr.Get_Header_Default();
+		if (!oHeader)
+		{
+			oHeader = new CHeaderFooter(this.HdrFtr, this, this.DrawingDocument, hdrftr_Header);
+			FirstSectPr.Set_Header_Default(oHeader);
+		}
+
+		this.HdrFtr.Set_CurHdrFtr(oHeader);
+	}
 
 
 	this.Recalculate();
@@ -12573,7 +12634,7 @@ CDocument.prototype.Document_UpdateInterfaceState = function(bSaveCurRevisionCha
 {
 	this.UpdateInterface(bSaveCurRevisionChange);
 };
-CDocument.prototype.private_UpdateInterface = function(bSaveCurRevisionChange)
+CDocument.prototype.private_UpdateInterface = function(bSaveCurRevisionChange, isExternalTrigger)
 {
 	if (!this.Api.isDocumentLoadComplete || true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
 		return;
@@ -12596,7 +12657,7 @@ CDocument.prototype.private_UpdateInterface = function(bSaveCurRevisionChange)
 	this.TrackRevisionsManager.EndCollectChanges(this);
 
 	// Сообщаем, что список составлен
-	this.Api.sync_EndCatchSelectedElements();
+	this.Api.sync_EndCatchSelectedElements(isExternalTrigger);
 
 	this.Document_UpdateUndoRedoState();
 	this.Document_UpdateCanAddHyperlinkState();
@@ -16647,14 +16708,17 @@ CDocument.prototype.IsSdtGlobalSettingsDefault = function()
 };
 CDocument.prototype.GetSpecialFormsHighlight = function()
 {
+	if (!this.Settings.SpecialFormsSettings.Highlight)
+		return new AscCommonWord.CDocumentColor(201, 200, 255);
+
 	return this.Settings.SpecialFormsSettings.Highlight;
 };
 CDocument.prototype.SetSpecialFormsHighlight = function(r, g, b)
 {
-	if ((undefined === r || null === r) && undefined !== this.Settings.SpecialFormsSettings.Highlight)
+	if ((undefined === r || null === r) && (undefined === this.Settings.SpecialFormsSettings.Highlight || !this.Settings.SpecialFormsSettings.Highlight.IsAuto()))
 	{
 		var oNewSettings = this.Settings.SpecialFormsSettings.Copy();
-		oNewSettings.Highlight = undefined;
+		oNewSettings.Highlight = new AscCommonWord.CDocumentColor(0, 0, 0, true);
 
 		this.History.Add(new CChangesDocumentSpecialFormsGlobalSettings(this, this.Settings.SpecialFormsSettings, oNewSettings));
 		this.Settings.SpecialFormsSettings = oNewSettings;
@@ -25490,69 +25554,63 @@ CDocument.prototype.OnChangeRadioRequired = function(sGroupKey, isRequired)
 };
 /**
  * Очищаем все специальные формы до плейсхолдеров
+ * @param {boolean} [isClearAllContentControls=false] Очищаем ли вообще все контролы
  */
-CDocument.prototype.ClearAllSpecialForms = function()
+CDocument.prototype.ClearAllSpecialForms = function(isClearAllContentControls)
 {
-	var arrParagraphs = [];
-	for (var sId in this.SpecialForms)
+	var arrContentControls;
+	if (isClearAllContentControls)
 	{
-		var oForm = this.SpecialForms[sId];
-		if (oForm.IsInlineLevel())
-			arrParagraphs.push(oForm.GetParagraph());
-
-		oForm.SkipSpecialContentControlLock(true);
+		arrContentControls = this.GetAllContentControls();
+	}
+	else
+	{
+		arrContentControls = [];
+		for (var sId in this.SpecialForms)
+		{
+			arrContentControls.push(this.SpecialForms[sId]);
+		}
 	}
 
-	var oCurrentForm = this.GetSelectedElementsInfo().GetForm();
+	var arrParagraphs = [];
+	for (var nIndex = 0, nCount = arrContentControls.length; nIndex < nCount; ++nIndex)
+	{
+		var oControl = arrContentControls[nIndex];
+		if (oControl.IsInlineLevel())
+			arrParagraphs.push(oControl.GetParagraph());
+		else if (oControl.IsBlockLevel())
+			oControl.GetAllParagraphs({}, arrParagraphs);
+
+		oControl.SkipSpecialContentControlLock(true);
+	}
+
+	var oCurrentControl = isClearAllContentControls ? this.GetSelectedElementsInfo().GetInlineLevelSdt() : this.GetSelectedElementsInfo().GetForm();
 
 	if (!this.IsSelectionLocked(AscCommon.changestype_None, {
-		Type      : changestype_2_ElementsArray_and_Type,
-		Elements  : arrParagraphs,
+		Type : changestype_2_ElementsArray_and_Type,
+		Elements : arrParagraphs,
 		CheckType : AscCommon.changestype_Paragraph_Content
 	}, true, this.IsFillingFormMode()))
 	{
 		this.StartAction(AscDFH.historydescription_Document_ClearAllSpecialForms);
 
-		if (oCurrentForm)
+		if (oCurrentControl)
 			this.RemoveSelection();
 
-		for (var sId in this.SpecialForms)
+		for (var nIndex = 0, nCount = arrContentControls.length; nIndex < nCount; ++nIndex)
 		{
-			var oForm = this.SpecialForms[sId];
-			if (!oCurrentForm && oForm.Is_UseInDocument())
-				oCurrentForm = oForm;
+			var oControl = arrContentControls[nIndex];
 
-			if (oForm.IsCheckBox())
-			{
-				oForm.SetCheckBoxChecked(false);
-			}
-			else if (oForm.IsPicture())
-			{
-				var arrDrawings = oForm.GetAllDrawingObjects();
-				if (arrDrawings.length > 0 && arrDrawings[0].IsPicture())
-				{
-					var nW = arrDrawings[0].Extent.W;
-					var nH = arrDrawings[0].Extent.H;
+			if (!oCurrentControl && oControl.Is_UseInDocument())
+				oCurrentControl = oControl;
 
-					oForm.ReplaceContentWithPlaceHolder();
-					oForm.ApplyPicturePr(true, nW, nH);
-				}
-				else
-				{
-					oForm.ReplaceContentWithPlaceHolder();
-					oForm.ApplyPicturePr(true);
-				}
-			}
-			else
-			{
-				oForm.ReplaceContentWithPlaceHolder();
-			}
-
-			oForm.RemoveSelection();
+			oControl.ClearContentControlExt();
+			oControl.RemoveSelection();
 		}
 
-		if (oCurrentForm)
-			oCurrentForm.SelectContentControl();
+
+		if (oCurrentControl)
+			oCurrentControl.SelectContentControl();
 
 		this.Recalculate();
 		this.UpdateInterface();
@@ -25560,9 +25618,10 @@ CDocument.prototype.ClearAllSpecialForms = function()
 		this.FinalizeAction();
 	}
 
-	for (var sId in this.SpecialForms)
+
+	for (var nIndex = 0, nCount = arrContentControls.length; nIndex < nCount; ++nIndex)
 	{
-		oForm.SkipSpecialContentControlLock(false);
+		oControl.SkipSpecialContentControlLock(false);
 	}
 };
 /**

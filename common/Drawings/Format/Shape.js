@@ -5409,6 +5409,9 @@ CShape.prototype.draw = function (graphics, transform, transformText, pageIndex)
         return;
     }
 
+    if(graphics.StartDrawShape) {
+        graphics.StartDrawShape(undefined, this.isForm());
+    }
     var oClipRect;
     if(!graphics.IsSlideBoundsCheckerType && this.getClipRect){
         oClipRect = this.getClipRect();
@@ -5693,6 +5696,9 @@ CShape.prototype.draw = function (graphics, transform, transformText, pageIndex)
     //}
     graphics.SetIntegerGrid(true);
     graphics.reset();
+    if(graphics.EndDrawShape) {
+        graphics.EndDrawShape();
+    }
 };
 
     CShape.prototype.recalculateGeometry = function()

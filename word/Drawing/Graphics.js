@@ -144,7 +144,9 @@ function CGraphics()
 
     this.endGlobalAlphaColor = null;
     this.isDarkMode = false;
-    this.isShapeDraw = false;
+
+    this.shapeDrawCounter = 0;
+    this.isFormDraw = 0;
 }
 
 CGraphics.prototype =
@@ -263,7 +265,11 @@ CGraphics.prototype =
 		this.isDarkMode = true;
 		function _darkColor(_this, _func) {
 			return function(r, g, b, a) {
-				if (_this.isDarkMode && !this.isShapeDraw && AscCommon.darkModeCheckColor2(r, g, b))
+			    var isCorrect = _this.isDarkMode;
+			    if (isCorrect && 0 !== this.shapeDrawCounter)
+			        if (!(1 === this.shapeDrawCounter && this.isFormDraw)) //форму первого уровня не корректируем
+			            isCorrect = false;
+				if (isCorrect && AscCommon.darkModeCheckColor2(r, g, b))
 					_func.call(_this, 255 - r, 255 - g, 255 - b, a);
 				else
 					_func.call(_this, r, g, b, a);
@@ -279,7 +285,11 @@ CGraphics.prototype =
 		this.isDarkMode = true;
 		function _darkColor(_this, _func) {
 			return function(r, g, b, a) {
-				if (_this.isDarkMode && !this.isShapeDraw)
+                var isCorrect = _this.isDarkMode;
+                if (isCorrect && 0 !== this.shapeDrawCounter)
+                    if (!(1 === this.shapeDrawCounter && this.isFormDraw)) //форму первого уровня не корректируем
+                        isCorrect = false;
+				if (isCorrect)
 				{
 					var c = AscCommon.darkModeCorrectColor2(r, g, b);
 					_func.call(_this, c.R, c.G, c.B, a);
@@ -1589,8 +1599,7 @@ CGraphics.prototype =
 
     DrawHeaderEdit : function(yPos, lock_type, sectionNum, bIsRepeat, type)
     {
-        var isShapeDraw = this.isShapeDraw;
-        this.isShapeDraw = true;
+        this.StartDrawShape();
 
         var _y = this.m_oFullTransform.TransformPointY(0,yPos);
         _y = (_y >> 0) + 0.5;
@@ -1692,13 +1701,12 @@ CGraphics.prototype =
         if (false == bIsNoIntGrid)
             this.SetIntegerGrid(false);
 
-        this.isShapeDraw = isShapeDraw;
+        this.EndDrawShape();
     },
 
     DrawFooterEdit : function(yPos, lock_type, sectionNum, bIsRepeat, type)
     {
-        var isShapeDraw = this.isShapeDraw;
-        this.isShapeDraw = true;
+        this.StartDrawShape();
 
         var _y = this.m_oFullTransform.TransformPointY(0,yPos);
         _y = (_y >> 0) + 0.5;
@@ -1791,7 +1799,7 @@ CGraphics.prototype =
         if (false == bIsNoIntGrid)
             this.SetIntegerGrid(false);
 
-        this.isShapeDraw = isShapeDraw;
+        this.EndDrawShape();
     },
 
     DrawLockParagraph : function(lock_type, x, y1, y2)
@@ -2857,7 +2865,6 @@ CGraphics.prototype =
 
     CheckUseFonts2 : function(_transform, isForm)
     {
-        this.isShapeDraw = !isForm;
         if (!global_MatrixTransformer.IsIdentity2(_transform))
         {
             if (!AscCommon.g_fontManager2)
@@ -2877,7 +2884,6 @@ CGraphics.prototype =
 
     UncheckUseFonts2 : function()
     {
-		this.isShapeDraw = false;
         this.IsUseFonts2 = false;
     },
 
@@ -3009,6 +3015,17 @@ CGraphics.prototype =
 
         if (!_old)
             this.SetIntegerGrid(false);
+    },
+
+    StartDrawShape : function(type, isForm)
+    {
+        this.shapeDrawCounter++;
+        this.isFormDraw = isForm;
+    },
+    EndDrawShape : function()
+    {
+        this.isFormDraw = false;
+        this.shapeDrawCounter--;
     }
 };
 

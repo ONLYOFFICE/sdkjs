@@ -2425,10 +2425,12 @@ ParaRun.prototype.Split2 = function(CurPos, Parent, ParentPos)
 		}
     }
 
-
-	// Разделяем содержимое по ранам
-    NewRun.ConcatToContent( this.Content.slice(CurPos) );
-    this.Remove_FromContent( CurPos, this.Content.length - CurPos, true );
+    // ВСЕГДА копируем элементы, для корректной работы не надо переносить имеющиеся элементы в новый ран
+	for (var nIndex = CurPos, nNewIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex, ++nNewIndex)
+	{
+		NewRun.AddToContent(nNewIndex, this.Content[nIndex].Copy());
+	}
+    this.RemoveFromContent(CurPos, this.Content.length - CurPos, true);
 
     // Если были точки орфографии, тогда переместим их в новый ран
     var SpellingMarksCount = this.SpellingMarks.length;
@@ -6018,10 +6020,17 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
     var Y = PDSE.Y;
 
     var CurTextPr = this.Get_CompiledPr( false );
-    pGraphics.SetTextPr( CurTextPr, Theme );
 
     if (this.private_IsUseAscFont(CurTextPr))
-		pGraphics.SetFont({FontFamily : {Name : "ASCW3", Index : -1}, FontSize : CurTextPr.FontSize, Italic : CurTextPr.Italic, Bold : CurTextPr.Bold});
+	{
+		var oFontTextPr = CurTextPr.Copy();
+		oFontTextPr.RFonts.SetAll("ASCW3", -1);
+		pGraphics.SetTextPr(oFontTextPr, Theme);
+	}
+    else
+	{
+		pGraphics.SetTextPr(CurTextPr, Theme);
+	}
 
     var InfoMathText ;
     if(this.Type == para_Math_Run)
