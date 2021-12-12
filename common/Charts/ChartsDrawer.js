@@ -5003,8 +5003,7 @@ CChartsDrawer.prototype =
 			minPer = h.minPer;
 			
 			//значения для проверки условия усечения
-			valueMax = h.maxH / summBarVal[j];
-			valueMin = h.minH / summBarVal[j];
+			valueMax = maxVal / summBarVal[j];
 			
 			//по индексу определяем когда получаем наибольшую высоту для расчета усечения
 			//делится на this.summBarVal, чтобы получить пропорциональную величину для высоты
@@ -5026,7 +5025,7 @@ CChartsDrawer.prototype =
 			if (valueMax > axisMax) {
 				maxH = maxH + (maxH - maxH * axisMax);
 			}
-			if (valueMin < axisMin) {
+			if (valueMax < axisMin) {
 				minH = minH + (minH + minH * axisMin);
 			}
 
