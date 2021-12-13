@@ -360,7 +360,7 @@ CParaSpellChecker.prototype =
 			var oElement    = this.Elements[nIndex];
 			oElement.CurPos = false;
 
-			if (!editor.SpellCheckApi.checkDictionary(this.Elements[nIndex].Lang) || 1 >= oElement.Word.length || AscCommon.private_IsAbbreviation(oElement.Word))
+			if (!editor.SpellCheckApi.checkDictionary(oElement.Lang) || !this.IsNeedCheckWord(oElement.Word))
 			{
 				oElement.Checked = true;
 			}
@@ -754,6 +754,30 @@ CParaSpellChecker.prototype.GetPausedEngine = function()
 CParaSpellChecker.prototype.ClearPausedEngine = function()
 {
 	this.Engine = null;
+};
+/**
+ * Нужно ли проверять слово
+ * @param {string} sWord
+ * @returns {boolean}
+ */
+CParaSpellChecker.prototype.IsNeedCheckWord = function(sWord)
+{
+	if (1 >= sWord.length || AscCommon.private_IsAbbreviation(sWord))
+		return false;
+
+	for (var nPos = 0, nLen = sWord.length; nPos < nLen; ++nPos)
+	{
+		var nCharCode = sWord.charCodeAt(nPos);
+		// TODO: заменить на AscCommon.IsDigit при слиянии в develop
+		if (this.private_IsDigit(nCharCode))
+			return false;
+	}
+
+	return true;
+};
+CParaSpellChecker.prototype.private_IsDigit = function(nUnicode)
+{
+	return (nUnicode >= 48 && nUnicode <= 57);
 };
 //----------------------------------------------------------------------------------------------------------------------
 // CParaSpellCheckerElement
@@ -1178,8 +1202,7 @@ ParaRun.prototype.CheckSpelling = function(oSpellCheckerEngine, nDepth)
 
 		var oItem = this.Content[nPos];
 
-		//if ( para_Text === oItem.Type && ( false === oItem.IsPunctuation() || ( true === bWord && true === this.Internal_CheckPunctuationBreak( nPos ) ) ) && false === oItem.Is_NBSP() && false === oItem.Is_Number() && false === oItem.Is_SpecialSymbol() )
-		if (para_Text === oItem.Get_Type() && false === oItem.IsPunctuation() && false === oItem.Is_NBSP() && false === oItem.Is_Number() && false === oItem.Is_SpecialSymbol())
+		if (para_Text === oItem.Get_Type() && false === oItem.IsPunctuation() && false === oItem.Is_NBSP() && false === oItem.Is_SpecialSymbol())
 		{
 			if (false === bWord)
 			{
