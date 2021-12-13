@@ -4693,6 +4693,10 @@ function (window, undefined) {
 					protectedWorkbook.asc_setWorkbookSpinCount(value);
 					break;
 				}
+				case AscCH.historyitem_Protected_SetPassword: {
+					protectedWorkbook.setPasswordXL(value);
+					break;
+				}
 			}
 			oModel.handlers.trigger("asc_onChangeProtectWorkbook");
 		}

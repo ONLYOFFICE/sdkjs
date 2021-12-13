@@ -6199,7 +6199,10 @@ var editor;
 					props.workbookHashValue = hash && hash[0];
 					t.collaborativeEditing.lock(arrLocks, callback);
 				} else {
-					if (hash && hash[0] === props.workbookHashValue) {
+					if (props.isPasswordXL() && hash && hash[0] && hash[0].toLowerCase() === props.workbookPassword.toLowerCase()) {
+						props.workbookPassword = null;
+						t.collaborativeEditing.lock([lockInfo], callback);
+					} else if (!props.isPasswordXL() && hash && hash[0] === props.workbookHashValue) {
 						props.workbookHashValue = null;
 						props.workbookSaltValue = null;
 						props.workbookSpinCount = null;
@@ -6221,9 +6224,13 @@ var editor;
 		//only lockStructure
 		this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction);
 		if (props && props.temporaryPassword) {
-			var checkHash = {password: props.temporaryPassword, salt: props.workbookSaltValue, spinCount: props.workbookSpinCount,
-				alg: AscCommonExcel.fromModelAlgoritmName(props.workbookAlgorithmName)};
-			AscCommon.calculateProtectHash([checkHash], checkPassword);
+			if (props.isPasswordXL()) {
+				checkPassword([AscCommonExcel.getPasswordHash(props.temporaryPassword, true)]);
+			} else {
+				var checkHash = {password: props.temporaryPassword, salt: props.workbookSaltValue, spinCount: props.workbookSpinCount,
+					alg: AscCommonExcel.fromModelAlgoritmName(props.workbookAlgorithmName)};
+				AscCommon.calculateProtectHash([checkHash], checkPassword);
+			}
 		} else {
 			checkPassword(null, true);
 		}

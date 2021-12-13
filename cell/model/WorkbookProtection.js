@@ -579,6 +579,8 @@
 		this.workbookSaltValue = null;
 		this.workbookSpinCount = null;
 
+		this.workbookPassword = null;
+
 		this._wb = wb;
 		this.temporaryPassword = null;
 
@@ -602,6 +604,8 @@
 		res.workbookSaltValue = this.workbookSaltValue;
 		res.workbookSpinCount = this.workbookSpinCount;
 
+		res.workbookPassword = this.workbookPassword;
+
 		return res;
 	};
 
@@ -619,6 +623,8 @@
 		this.workbookHashValue = this.checkProperty(this.workbookHashValue, val.workbookHashValue, AscCH.historyitem_Protected_SetWorkbookHashValue, addToHistory);
 		this.workbookSaltValue = this.checkProperty(this.workbookSaltValue, val.workbookSaltValue, AscCH.historyitem_Protected_SetWorkbookSaltValue, addToHistory);
 		this.workbookSpinCount = this.checkProperty(this.workbookSpinCount, val.workbookSpinCount, AscCH.historyitem_Protected_SetWorkbookSpinCount, addToHistory);
+
+		this.workbookPassword = this.checkProperty(this.workbookPassword, val.workbookPassword, AscCH.historyitem_Protected_SetPassword, addToHistory);
 	};
 
 	CWorkbookProtection.prototype.checkProperty = function (propOld, propNew, type, addToHistory) {
@@ -711,6 +717,12 @@
 		} else {
 			w.WriteBool(false);
 		}
+		if (null != this.workbookPassword) {
+			w.WriteBool(true);
+			w.WriteString2(this.workbookPassword);
+		} else {
+			w.WriteBool(false);
+		}
 	};
 
 	CWorkbookProtection.prototype.Read_FromBinary2 = function(r) {
@@ -748,6 +760,10 @@
 		}
 		if (r.GetBool()) {
 			this.workbookSpinCount = r.GetLong();
+		}
+
+		if (r.GetBool()) {
+			this.workbookPassword = r.GetString2();
 		}
 	};
 
@@ -836,7 +852,16 @@
 		this.workbookSaltValue = "test";
 	};
 	CWorkbookProtection.prototype.asc_isPassword = function (val) {
-		return this.workbookAlgorithmName != null;
+		return this.workbookAlgorithmName != null || this.workbookPassword != null;
+	};
+	CWorkbookProtection.prototype.setPasswordXL = function (val) {
+		this.workbookPassword = val;
+	};
+	CWorkbookProtection.prototype.getPasswordXL = function () {
+		return this.workbookPassword;
+	};
+	CWorkbookProtection.prototype.isPasswordXL = function () {
+		return this.workbookPassword != null;
 	};
 
 
