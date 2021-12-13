@@ -1733,12 +1733,15 @@
 
     var activeWsModel = this.model.getActiveWs();
     if (activeWsModel.inPivotTable(activeCellRange)) {
+		if (t.input.isFocused) {
+			t.input.blur();
+		}
 		this.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot, c_oAscError.Level.NoCritical);
 		return;
 	}
 
     var editFunction = function() {
-      if (needBlurFunc) {
+      if (needBlur) {
 		  t.input && t.input.focus();
 	  }
       t.setCellEditMode(true);
@@ -3310,7 +3313,6 @@
 		  // Переводим в px и приводим к целому (int)
 		  t.model.maxDigitWidth = t.maxDigitWidth = t.stringRender.getWidestCharWidth();
 		  // Проверка для Calibri 11 должно быть this.maxDigitWidth = 7
-		  console.log(t.model.maxDigitWidth);
 
 		  if (!t.maxDigitWidth) {
 			  throw new Error("Error: can't measure text string");
