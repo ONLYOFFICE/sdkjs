@@ -1506,7 +1506,7 @@
 	// заточка на определенного делегата
 	CMobileTouchManagerBase.prototype.CheckTableRules = function(overlay)
 	{
-		if (this.Api.isViewMode || !this.TableTrackEnabled)
+		if (this.Api.isViewMode || this.Api.isRestrictionForms() || !this.TableTrackEnabled)
 			return;
 
 		var HtmlPage = this.delegate.HtmlPage;

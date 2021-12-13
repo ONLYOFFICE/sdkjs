@@ -2511,6 +2511,9 @@
 								{
 									_object.ActiveButtonIndex = indexButton;
 
+									xCC += _object.OffsetX;
+									yCC += _object.OffsetY;
+
 									if (_object.transform)
 									{
 										var tmp = _object.transform.TransformPointX(xCC, yCC);

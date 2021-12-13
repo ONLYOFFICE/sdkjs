@@ -147,6 +147,18 @@ CDrawingsController.prototype.AddToParagraph = function(oItem, bRecalculate)
 };
 CDrawingsController.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord)
 {
+	var oDrawing = this.DrawingObjects.getMajorParaDrawing();
+	if (oDrawing && oDrawing.IsForm() && this.LogicDocument.IsFillingFormMode())
+	{
+		var oForm = oDrawing.GetInnerForm();
+		if (oForm)
+		{
+			oForm.ClearContentControlExt();
+			oForm.SelectContentControl();
+			return;
+		}
+	}
+
 	return this.DrawingObjects.remove(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord);
 };
 CDrawingsController.prototype.GetCursorPosXY = function()

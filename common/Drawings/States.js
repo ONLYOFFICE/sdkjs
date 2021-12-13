@@ -246,13 +246,13 @@ function checkEmptyPlaceholderContent(content)
         }
         var oBodyPr;
         if(content.Parent.parent.getBodyPr){
-            oBodyPr = content.Parent.parent.getBodyPr;
+            oBodyPr = content.Parent.parent.getBodyPr();
             if(oBodyPr.vertOverflow !== AscFormat.nOTOwerflow){
                 return content;
             }
         }
         var oParagraph = content.GetCurrentParagraph();
-        if(oParagraph.IsEmpty()){
+        if(oParagraph && oParagraph.IsEmptyWithBullet()) {
             return content;
         }
     }
@@ -1630,7 +1630,7 @@ function TextAddState(drawingObjects, majorObject, startX, startY)
     this.majorObject = majorObject;
     this.startX = startX;
     this.startY = startY;
-    this.bIsSelectionEmpty = true;
+    this.bIsSelectionEmpty = this.isSelectionEmpty();
 }
 
 TextAddState.prototype =
@@ -1648,7 +1648,13 @@ TextAddState.prototype =
         var oContent = this.majorObject.getDocContent && this.majorObject.getDocContent();
         if(oContent)
         {
-            return oContent.IsSelectionEmpty();
+            if(oContent.IsSelectionEmpty()) {
+                var oParagraph = oContent.GetCurrentParagraph();
+                if(oParagraph && oParagraph.IsEmptyWithBullet()) {
+                    return true;
+                }
+            }
+            return false;
         }
         return true;
     },

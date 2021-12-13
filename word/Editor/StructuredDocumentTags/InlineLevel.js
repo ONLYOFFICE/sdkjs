@@ -808,8 +808,26 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCu
 
 	oDrawingDocument.OnDrawContentControl(this, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In, this.GetBoundingPolygon());
 };
+CInlineLevelSdt.prototype.IsDrawContentControlsTrackBounds = function()
+{
+	var oShd;
+	return (!this.IsForm()
+		|| !this.IsCurrent()
+		|| !(oShd = this.GetFormPr().GetShd())
+		|| oShd.IsNil());
+};
 CInlineLevelSdt.prototype.SelectContentControl = function()
 {
+	var arrDrawings, oLogicDocument;
+	if (this.IsPicture()
+		&& (arrDrawings = this.GetAllDrawingObjects())
+		&& arrDrawings.length > 0
+		&& (oLogicDocument = this.GetLogicDocument()))
+	{
+		oLogicDocument.Select_DrawingObject(arrDrawings[0].GetId());
+		return;
+	}
+
 	if (this.IsForm() && this.IsPlaceHolder() && this.GetLogicDocument() && this.GetLogicDocument().CheckFormPlaceHolder)
 	{
 		this.RemoveSelection();
@@ -860,11 +878,11 @@ CInlineLevelSdt.prototype.RemoveContentControlWrapper = function()
 {
 	var oParent = this.Get_Parent();
 	if (!oParent)
-		return;
+		return {Parent : null, Pos : -1, Count : 0};
 
 	var nElementPos = this.Get_PosInParent(oParent);
 	if (-1 === nElementPos)
-		return;
+		return {Parent : null, Pos : -1, Count : 0};
 
 	var nParentCurPos            = oParent instanceof Paragraph ? oParent.CurPos.ContentPos : oParent.State.ContentPos;
 	var nParentSelectionStartPos = oParent.Selection.StartPos;
@@ -904,6 +922,8 @@ CInlineLevelSdt.prototype.RemoveContentControlWrapper = function()
 		oParent.Selection.EndPos = nParentSelectionEndPos + nCount - 1;
 
 	this.Remove_FromContent(0, this.Content.length);
+
+	return {Parent : oParent, Pos : nElementPos, Count : nCount};
 };
 CInlineLevelSdt.prototype.FindNextFillingForm = function(isNext, isCurrent, isStart)
 {

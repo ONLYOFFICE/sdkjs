@@ -256,7 +256,7 @@ Asc['asc_docs_api'].prototype.AddImage = Asc['asc_docs_api'].prototype.asc_addIm
 			return;
 
 		var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](file);
-		editor.AddImageUrlAction(AscCommon.g_oDocumentUrls.getImageUrl(_url), undefined, obj);
+		editor._addImageUrl([AscCommon.g_oDocumentUrls.getImageUrl(_url)], obj);
 	});
 };
 Asc['asc_docs_api'].prototype.asc_isOffline = function()

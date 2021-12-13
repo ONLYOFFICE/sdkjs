@@ -10229,11 +10229,20 @@
 			this.sheetProtection = new window["Asc"].CSheetProtection();
 			this.sheetProtection.setDefaultInterface();
 		}
+		this.cleanTempProtectedRanges();
 		this.sheetProtection.set(props, addToHistory, this);
 		if (this.sheetProtection.isDefault()) {
 			this.sheetProtection = null;
 		}
 		return true;
+	};
+
+	Worksheet.prototype.cleanTempProtectedRanges = function () {
+		if (this.aProtectedRanges && this.aProtectedRanges.length) {
+			for (var i = 0; i < this.aProtectedRanges.length; i++) {
+				this.aProtectedRanges[i].cleanTemp();
+			}
+		}
 	};
 
 	Worksheet.prototype.getSheetProtection = function (type) {
@@ -10394,6 +10403,7 @@
 
 	Worksheet.prototype.checkProtectedRangeName = function (name) {
 		var res = c_oAscDefinedNameReason.OK;
+		//TODO пересмотреть проверку на rx_defName
 		if (!AscCommon.rx_defName.test(name.toLowerCase()) || name.length > g_nDefNameMaxLength) {
 			return c_oAscDefinedNameReason.WrongName;
 		}
@@ -10607,6 +10617,9 @@
 		var t = this;
 		if (!wsTo) {
 			wsTo = this;
+		}
+		if (wsTo.getSheetProtection()) {
+			return;
 		}
 		if (false === this.workbook.bUndoChanges && false === this.workbook.bRedoChanges) {
 			//чистим ту область, куда переносим
@@ -11600,7 +11613,7 @@
 		// if (CellValueType.Error == this.getType()) {
 		// 	return this._getValueTypeError(textValueForEdit);
 		// }
-		if (this.isFormula() && this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden()) {
+		if (this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden()) {
 			return "";
 		}
 

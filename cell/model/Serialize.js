@@ -1694,7 +1694,7 @@
             }
             if (null !== customXml.Content) {
                 this.bs.WriteItem(c_oSerCustoms.Content, function() {
-                   oThis.memory.WriteStringA(customXml.Content);
+                    oThis.memory.WriteBuffer(customXml.Content, 0, customXml.Content.length)
                 });
             }
         };
@@ -10668,7 +10668,8 @@
             } else if (c_oSerCustoms.ItemId === type) {
                 custom.ItemId = this.stream.GetString2LE(length);
             } else if (c_oSerCustoms.Content === type) {
-                custom.Content = this.stream.GetString2A(length);
+                //поскольку данную строку не использую, храню в виде массива. если нужно будет строка, то не забыть про BOM
+                custom.Content = this.stream.GetBuffer(length);
             } else
                 res = c_oSerConstants.ReadUnknown;
             return res;

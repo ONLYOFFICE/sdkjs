@@ -305,7 +305,9 @@
 			ChangeOnProtectedSheet: 1030,
 			PasswordIsNotCorrect: 1031,
 			DeleteColumnContainsLockedCell: 1032,
-			DeleteRowContainsLockedCell: 1033
+			DeleteRowContainsLockedCell: 1033,
+
+			FillAllRowsWarning: 1040
 		}
 	};
 
@@ -2434,6 +2436,7 @@
 	prot['PasswordIsNotCorrect']             = prot.PasswordIsNotCorrect;
 	prot['DeleteColumnContainsLockedCell']   = prot.DeleteColumnContainsLockedCell;
 	prot['DeleteRowContainsLockedCell']      = prot.DeleteRowContainsLockedCell;
+	prot['FillAllRowsWarning']               = prot.FillAllRowsWarning;
 
 
 	window['Asc']['c_oAscAsyncAction']       = window['Asc'].c_oAscAsyncAction = c_oAscAsyncAction;

@@ -156,14 +156,27 @@ window["DesktopOfflineAppDocumentEndLoad"] = function(_url, _data, _len)
 	}
 
 	AscCommon.g_oIdCounter.m_sUserId = window["AscDesktopEditor"]["CheckUserId"]();
-	if (_data == "")
+	if (_data === "")
 	{
         editor.sendEvent("asc_onError", c_oAscError.ID.ConvertationOpenError, c_oAscError.Level.Critical);
 		return;
 	}
 
+	var binaryArray = undefined;
+	if (0 === _data.indexOf("binary_content://"))
+	{
+		var bufferArray = window["AscDesktopEditor"]["GetOpenedFile"](_data);
+		if (bufferArray)
+			binaryArray = new Uint8Array(bufferArray);
+		else
+		{
+			editor.sendEvent("asc_onError", c_oAscError.ID.ConvertationOpenError, c_oAscError.Level.Critical);
+			return;
+		}
+	}
+
 	var file = new AscCommon.OpenFileResult();
-	file.data = (0 === _data.indexOf("binary_content://")) ? new Uint8Array(window["AscDesktopEditor"]["GetOpenedFile"](_data)) : getBinaryArray(_data, _len);
+	file.data = binaryArray ? binaryArray : getBinaryArray(_data, _len);
 	file.bSerFormat = AscCommon.checkStreamSignature(file.data, AscCommon.c_oSerFormat.Signature);
 	file.url = _url;
 	editor.openDocument(file);

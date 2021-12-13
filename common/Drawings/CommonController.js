@@ -866,7 +866,10 @@ DrawingObjectsController.prototype =
                             if(this.isSlideShow())
                             {
                                 ret.cursorType = "pointer";
-                                MMData.Hyperlink = null;
+                                if(AscCommon.IsLinkPPAction(sHyperlink))
+                                {
+                                    MMData.Hyperlink = null;
+                                }
                                 oDD.SetCursorType("pointer", MMData);
                             }
                             else
@@ -1655,7 +1658,10 @@ DrawingObjectsController.prototype =
         {
             if(this.isObjectsProtected() && object.getProtectionLocked())
             {
-                return {objectId: (group || object).Get_Id(), cursorType: "default", bMarker: bInSelect};
+                if(object.getObjectType() !== AscDFH.historyitem_type_Shape || object.getProtectionLockText())
+                {
+                    return {objectId: (group || object).Get_Id(), cursorType: "default", bMarker: bInSelect};
+                }
             }
             var selector = group ? group : this;
             this.checkChartTextSelection();
@@ -5694,7 +5700,8 @@ DrawingObjectsController.prototype =
 					{
 						oEndPara = oEndContent.GetCurrentParagraph();
 					}
-					if (oEndPara !== oStartPara)
+					if (oEndPara !== oStartPara &&
+                        (oStartPara && oStartPara.IsEmptyWithBullet() || oEndPara && oEndPara.IsEmptyWithBullet() ))
 					{
 						bRedraw = true;
 					}
@@ -7102,23 +7109,11 @@ DrawingObjectsController.prototype =
     getBoundsForGroup: function(arrDrawings)
     {
         var bounds = arrDrawings[0].getBoundsInGroup();
-        var max_x = bounds.r;
-        var max_y = bounds.b;
-        var min_x = bounds.l;
-        var min_y = bounds.t;
         for(var i = 1; i < arrDrawings.length; ++i)
         {
-            bounds = arrDrawings[i].getBoundsInGroup();
-            if(max_x < bounds.r)
-                max_x = bounds.r;
-            if(max_y < bounds.b)
-                max_y = bounds.b;
-            if(min_x > bounds.l)
-                min_x = bounds.l;
-            if(min_y > bounds.t)
-                min_y = bounds.t;
+            bounds.checkByOther(arrDrawings[i].getBoundsInGroup());
         }
-        return new AscFormat.CGraphicBounds(min_x, min_y, max_x, max_y);
+        return bounds;
     },
 
 

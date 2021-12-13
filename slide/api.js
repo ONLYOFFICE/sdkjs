@@ -5629,9 +5629,8 @@ background-repeat: no-repeat;\
 	{
 		if (Data.Hyperlink && typeof Data.Hyperlink.Value === "string")
 		{
-			var indAction = Data.Hyperlink.Value.indexOf("ppaction://hlink");
 			var Url       = Data.Hyperlink.Value;
-			if (0 == indAction)
+			if (AscCommon.IsLinkPPAction(Url))
 			{
 				if (Url == "ppaction://hlinkshowjump?jump=firstslide")
 				{
@@ -6193,8 +6192,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.sync_HyperlinkClickCallback = function(Url)
 	{
-		var indAction = Url.indexOf("ppaction://hlink");
-		if (0 == indAction)
+		if (AscCommon.IsLinkPPAction(Url))
 		{
 			if (Url == "ppaction://hlinkshowjump?jump=firstslide")
 			{

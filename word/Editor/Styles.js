@@ -17348,7 +17348,7 @@ g_oDocumentDefaultTableCellPr.InitDefault();
 g_oDocumentDefaultTableRowPr.InitDefault();
 g_oDocumentDefaultTableStylePr.InitDefault();
 
-var g_oDocumentDefaultFillColor   = new CDocumentColor(255, 255, 255, false);
-var g_oDocumentDefaultStrokeColor = new CDocumentColor(0, 0, 0, false);
+var g_oDocumentDefaultFillColor   = new CDocumentColor(255, 255, 255, true);
+var g_oDocumentDefaultStrokeColor = new CDocumentColor(0, 0, 0, true);
 
 // ----------------------------------------------------------------

@@ -547,6 +547,11 @@
           if (!self.canEdit()) {
             return;
           }
+		  if (self.isProtectActiveCell()) {
+			  self.input.blur();
+			  self.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
+			  return;
+		  }
           self._onStopFormatPainter();
           self.cellEditor.callTopLineMouseup = true;
           if (!self.getCellEditMode() && !self.controller.isFillHandleMode) {
@@ -750,6 +755,8 @@
 				  self.controller._onWindowKeyDown.apply(self.controller, arguments);
 			  }, "canEdit": function () {
 				  return self.canEdit();
+			  }, "isProtectActiveCell": function () {
+				  return self.isProtectActiveCell();
 			  }, "getFormulaRanges": function () {
 			      return self.isActive() ? self.getWorksheet().oOtherRanges : null;
 			  }, "isActive": function () {
@@ -1731,6 +1738,9 @@
 	}
 
     var editFunction = function() {
+      if (needBlurFunc) {
+		  t.input && t.input.focus();
+	  }
       t.setCellEditMode(true);
       t.hideSpecialPasteButton();
       ws.openCellEditor(t.cellEditor, enterOptions, selectionRange);
@@ -1767,7 +1777,15 @@
 		}
 	};
 
-    ws.checkProtectRangeOnEdit([new Asc.Range(activeCellRange.c1, activeCellRange.r1, activeCellRange.c1, activeCellRange.r1)], doEdit);
+	var needBlur = false;
+	var needBlurFunc;
+	if (t.input && t.input.isFocused) {
+		needBlurFunc = function () {
+			t.input && t.input.blur();
+			needBlur = true;
+		}
+	}
+    ws.checkProtectRangeOnEdit([new Asc.Range(activeCellRange.c1, activeCellRange.r1, activeCellRange.c1, activeCellRange.r1)], doEdit, null, needBlurFunc);
   };
 
   WorkbookView.prototype._checkStopCellEditorInFormulas = function() {
@@ -2158,8 +2176,17 @@
   WorkbookView.prototype.getCellEditMode = function() {
 	  return this.isCellEditMode;
   };
+
 	WorkbookView.prototype.canEdit = function() {
 		return this.Api.canEdit();
+	};
+
+	WorkbookView.prototype.isProtectActiveCell = function() {
+		var ws = this.getWorksheet();
+		if (!ws) {
+			return false;
+		}
+		return ws.isProtectActiveCell();
 	};
 
     WorkbookView.prototype.getDialogSheetName = function () {
@@ -2244,7 +2271,7 @@
 
     if (!factor) {
 		this.wsMustDraw = true;
-		this._calcMaxDigitWidth();
+		//this._calcMaxDigitWidth();
 	}
 
     var item;
@@ -2991,9 +3018,13 @@
 
 		//change zoom on default
 		var trueRetinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
-		AscCommon.AscBrowser.retinaPixelRatio = 1;
 		var viewZoom = this.getZoom();
+		if (viewZoom === 1 && trueRetinaPixelRatio === 1) {
+			runFunction();
+			return;
+		}
 
+		AscCommon.AscBrowser.retinaPixelRatio = 1;
 		//приходится несколько раз выполнять действия, чтобы ppi выставился правильно
 		//если не делать init, то не сбросится ppi от системного зума - смотри функцию DrawingContext.prototype.changeZoom
 		if (viewZoom !== 1) {
@@ -3260,23 +3291,44 @@
   };
 
   WorkbookView.prototype._calcMaxDigitWidth = function () {
-    // set default worksheet header font for calculations
-    this.buffers.main.setFont(AscCommonExcel.g_oDefaultFormat.Font);
-    // Измеряем в pt
-    this.stringRender.measureString("0123456789", new AscCommonExcel.CellFlags());
+	  var t = this;
+	  this.executeDefaultDpi(function () {
+		  // set default worksheet header font for calculations
+		  t.buffers.main.setFont(AscCommonExcel.g_oDefaultFormat.Font);
+		  // Измеряем в pt
+		  t.stringRender.measureString("0123456789", new AscCommonExcel.CellFlags());
 
-    // Переводим в px и приводим к целому (int)
-    this.model.maxDigitWidth = this.maxDigitWidth = this.stringRender.getWidestCharWidth();
-    // Проверка для Calibri 11 должно быть this.maxDigitWidth = 7
+		  // Переводим в px и приводим к целому (int)
+		  t.model.maxDigitWidth = t.maxDigitWidth = t.stringRender.getWidestCharWidth();
+		  // Проверка для Calibri 11 должно быть this.maxDigitWidth = 7
+		  console.log(t.model.maxDigitWidth);
 
-    if (!this.maxDigitWidth) {
-      throw new Error("Error: can't measure text string");
-    }
+		  if (!t.maxDigitWidth) {
+			  throw new Error("Error: can't measure text string");
+		  }
 
-    // Padding рассчитывается исходя из maxDigitWidth (http://social.msdn.microsoft.com/Forums/en-US/9a6a9785-66ad-4b6b-bb9f-74429381bd72/margin-padding-in-cell-excel?forum=os_binaryfile)
-    this.defaults.worksheetView.cells.padding = Math.max(asc.ceil(this.maxDigitWidth / 4), 2);
-    this.model.paddingPlusBorder = 2 * this.defaults.worksheetView.cells.padding + 1;
+		  // Padding рассчитывается исходя из maxDigitWidth (http://social.msdn.microsoft.com/Forums/en-US/9a6a9785-66ad-4b6b-bb9f-74429381bd72/margin-padding-in-cell-excel?forum=os_binaryfile)
+		  t.defaults.worksheetView.cells.padding = Math.max(asc.ceil(t.maxDigitWidth / 4), 2);
+		  t.model.paddingPlusBorder = 2 * t.defaults.worksheetView.cells.padding + 1;
+	  })
   };
+
+	WorkbookView.prototype.executeDefaultDpi = function (runFunction) {
+		var truePPIX = this.drawingCtx.ppiX;
+		var truePPIY = this.drawingCtx.ppiY;
+		var retinaPixelRatio = AscBrowser.retinaPixelRatio;
+
+		this.drawingCtx.ppiY = 96;
+		this.drawingCtx.ppiX = 96;
+		AscBrowser.retinaPixelRatio = 1;
+
+		runFunction();
+
+		this.drawingCtx.ppiY = truePPIY;
+		this.drawingCtx.ppiX = truePPIX;
+		AscBrowser.retinaPixelRatio = retinaPixelRatio;
+	};
+
 
 	WorkbookView.prototype.getPivotMergeStyle = function (sheetMergedStyles, range, style, pivot) {
 		var styleInfo = pivot.asc_getStyleInfo();

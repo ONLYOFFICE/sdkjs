@@ -37,36 +37,40 @@
  * Time: 16:42
  */
 
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_Bold]            = CChangesParaTextPrBold;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_Italic]          = CChangesParaTextPrItalic;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_Strikeout]       = CChangesParaTextPrStrikeout;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_Underline]       = CChangesParaTextPrUnderline;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_FontSize]        = CChangesParaTextPrFontSize;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_Color]           = CChangesParaTextPrColor;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_VertAlign]       = CChangesParaTextPrVertAlign;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_HighLight]       = CChangesParaTextPrHighLight;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_RStyle]          = CChangesParaTextPrRStyle;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_Spacing]         = CChangesParaTextPrSpacing;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_DStrikeout]      = CChangesParaTextPrDStrikeout;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_Caps]            = CChangesParaTextPrCaps;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_SmallCaps]       = CChangesParaTextPrSmallCaps;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_Position]        = CChangesParaTextPrPosition;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_Value]           = CChangesParaTextPrValue;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_RFonts]          = CChangesParaTextPrRFonts;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_RFonts_Ascii]    = CChangesParaTextPrRFontsAscii;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_RFonts_HAnsi]    = CChangesParaTextPrRFontsHAnsi;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_RFonts_CS]       = CChangesParaTextPrRFontsCS;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_RFonts_EastAsia] = CChangesParaTextPrRFontsEastAsia;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_RFonts_Hint]     = CChangesParaTextPrRFontsHint;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_Lang]            = CChangesParaTextPrLang;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_Lang_Bidi]       = CChangesParaTextPrLangBidi;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_Lang_EastAsia]   = CChangesParaTextPrLangEastAsia;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_Lang_Val]        = CChangesParaTextPrLangVal;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_Unifill]         = CChangesParaTextPrUnifill;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_FontSizeCS]      = CChangesParaTextPrFontSizeCS;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_Outline]         = CChangesParaTextPrTextOutline;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_Fill]            = CChangesParaTextPrTextFill;
-AscDFH.changesFactory[AscDFH.historyitem_TextPr_HighlightColor]  = CChangesParaTextPrHighlightColor;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_Bold]                  = CChangesParaTextPrBold;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_Italic]                = CChangesParaTextPrItalic;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_Strikeout]             = CChangesParaTextPrStrikeout;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_Underline]             = CChangesParaTextPrUnderline;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_FontSize]              = CChangesParaTextPrFontSize;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_Color]                 = CChangesParaTextPrColor;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_VertAlign]             = CChangesParaTextPrVertAlign;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_HighLight]             = CChangesParaTextPrHighLight;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_RStyle]                = CChangesParaTextPrRStyle;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_Spacing]               = CChangesParaTextPrSpacing;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_DStrikeout]            = CChangesParaTextPrDStrikeout;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_Caps]                  = CChangesParaTextPrCaps;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_SmallCaps]             = CChangesParaTextPrSmallCaps;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_Position]              = CChangesParaTextPrPosition;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_Value]                 = CChangesParaTextPrValue;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_RFonts]                = CChangesParaTextPrRFonts;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_RFonts_Ascii]          = CChangesParaTextPrRFontsAscii;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_RFonts_HAnsi]          = CChangesParaTextPrRFontsHAnsi;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_RFonts_CS]             = CChangesParaTextPrRFontsCS;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_RFonts_EastAsia]       = CChangesParaTextPrRFontsEastAsia;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_RFonts_Hint]           = CChangesParaTextPrRFontsHint;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_Lang]                  = CChangesParaTextPrLang;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_Lang_Bidi]             = CChangesParaTextPrLangBidi;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_Lang_EastAsia]         = CChangesParaTextPrLangEastAsia;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_Lang_Val]              = CChangesParaTextPrLangVal;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_Unifill]               = CChangesParaTextPrUnifill;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_FontSizeCS]            = CChangesParaTextPrFontSizeCS;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_Outline]               = CChangesParaTextPrTextOutline;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_Fill]                  = CChangesParaTextPrTextFill;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_HighlightColor]        = CChangesParaTextPrHighlightColor;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_RFonts_Ascii_Theme]    = CChangesParaTextPrRFontsAsciiTheme;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_RFonts_HAnsi_Theme]    = CChangesParaTextPrRFontsHAnsiTheme;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_RFonts_CS_Theme]       = CChangesParaTextPrRFontsCSTheme;
+AscDFH.changesFactory[AscDFH.historyitem_TextPr_RFonts_EastAsia_Theme] = CChangesParaTextPrRFontsEastAsiaTheme;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
@@ -157,7 +161,11 @@ AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_Value]           = [
 	AscDFH.historyitem_TextPr_FontSizeCS,
 	AscDFH.historyitem_TextPr_Outline,
 	AscDFH.historyitem_TextPr_Fill,
-	AscDFH.historyitem_TextPr_HighlightColor
+	AscDFH.historyitem_TextPr_HighlightColor,
+	AscDFH.historyitem_TextPr_RFonts_Ascii_Theme,
+	AscDFH.historyitem_TextPr_RFonts_HAnsi_Theme,
+	AscDFH.historyitem_TextPr_RFonts_CS_Theme,
+	AscDFH.historyitem_TextPr_RFonts_EastAsia_Theme
 ];
 AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_RFonts]          = [
 	AscDFH.historyitem_TextPr_RFonts,
@@ -166,7 +174,11 @@ AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_RFonts]          = [
 	AscDFH.historyitem_TextPr_RFonts_CS,
 	AscDFH.historyitem_TextPr_RFonts_EastAsia,
 	AscDFH.historyitem_TextPr_RFonts_Hint,
-	AscDFH.historyitem_TextPr_Value
+	AscDFH.historyitem_TextPr_Value,
+	AscDFH.historyitem_TextPr_RFonts_Ascii_Theme,
+	AscDFH.historyitem_TextPr_RFonts_HAnsi_Theme,
+	AscDFH.historyitem_TextPr_RFonts_CS_Theme,
+	AscDFH.historyitem_TextPr_RFonts_EastAsia_Theme
 ];
 AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_RFonts_Ascii]    = [
 	AscDFH.historyitem_TextPr_RFonts_Ascii,
@@ -233,6 +245,26 @@ AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_Fill]            = [
 ];
 AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_HighlightColor]            = [
 	AscDFH.historyitem_TextPr_HighlightColor,
+	AscDFH.historyitem_TextPr_Value
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_RFonts_Ascii_Theme] = [
+	AscDFH.historyitem_TextPr_RFonts_Ascii_Theme,
+	AscDFH.historyitem_TextPr_RFonts,
+	AscDFH.historyitem_TextPr_Value
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_RFonts_HAnsi_Theme] = [
+	AscDFH.historyitem_TextPr_RFonts_HAnsi_Theme,
+	AscDFH.historyitem_TextPr_RFonts,
+	AscDFH.historyitem_TextPr_Value
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_RFonts_CS_Theme] = [
+	AscDFH.historyitem_TextPr_RFonts_CS_Theme,
+	AscDFH.historyitem_TextPr_RFonts,
+	AscDFH.historyitem_TextPr_Value
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_TextPr_RFonts_EastAsia_Theme] = [
+	AscDFH.historyitem_TextPr_RFonts_EastAsia_Theme,
+	AscDFH.historyitem_TextPr_RFonts,
 	AscDFH.historyitem_TextPr_Value
 ];
 
@@ -1479,3 +1511,116 @@ CChangesParaTextPrTextFill.prototype.private_CreateObject = function()
 	return new AscFormat.CUniFill();
 };
 CChangesParaTextPrTextFill.prototype.Merge = private_ParaTextPrChangesOnMergeValue;
+/**
+ * Базовый класс для изменений ссылок на шрифт из темы
+ * @constructor
+ */
+function CChangesParaTextPrRFontsThemeBase()
+{}
+CChangesParaTextPrRFontsThemeBase.prototype.WriteToBinary = function(oWriter)
+{
+	// Long  : Flag
+	// 1-bit : Подсвечивать ли данные изменения
+	// 2-bit : Is undefined New ?
+	// 3-bit : Is undefined Old ?
+	// String : New
+	// String : Old
+
+	var nFlags = 0;
+
+	if (false !== this.Color)
+		nFlags |= 1;
+
+	if (undefined === this.New)
+		nFlags |= 2;
+
+	if (undefined === this.Old)
+		nFlags |= 4;
+
+	oWriter.WriteLong(nFlags);
+
+	if (undefined !== this.New)
+		oWriter.WriteString2(this.New);
+
+	if (undefined !== this.Old)
+		oWriter.WriteString2(this.Old);
+};
+CChangesParaTextPrRFontsThemeBase.prototype.ReadFromBinary = function(oReader)
+{
+	// Long  : Flag
+	// 1-bit : Подсвечивать ли данные изменения
+	// 2-bit : Is undefined New ?
+	// 3-bit : Is undefined Old ?
+	// String : New
+	// String : Old
+
+	var nFlags = oReader.GetLong();
+	this.Color = !!(nFlags & 1);
+	this.New   = !!(nFlags & 2) ? undefined : oReader.GetString2();
+	this.Old   = !!(nFlags & 4) ? undefined : oReader.GetString2();
+};
+CChangesParaTextPrRFontsThemeBase.prototype.Merge = private_ParaTextPrChangesOnMergeRFontsValue;
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesParaTextPrRFontsAsciiTheme(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+}
+CChangesParaTextPrRFontsAsciiTheme.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesParaTextPrRFontsAsciiTheme.prototype.constructor = CChangesParaTextPrRFontsAscii;
+AscCommon.ExtendPrototype(CChangesParaTextPrRFontsAsciiTheme, CChangesParaTextPrRFontsThemeBase);
+CChangesParaTextPrRFontsAsciiTheme.prototype.Type = AscDFH.historyitem_TextPr_RFonts_Ascii_Theme;
+CChangesParaTextPrRFontsAsciiTheme.prototype.private_SetValue = function(sValue)
+{
+	this.Class.Value.RFonts.Ascii = sValue;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesParaTextPrRFontsHAnsiTheme(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+}
+CChangesParaTextPrRFontsHAnsiTheme.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesParaTextPrRFontsHAnsiTheme.prototype.constructor = CChangesParaTextPrRFontsHAnsiTheme;
+AscCommon.ExtendPrototype(CChangesParaTextPrRFontsHAnsiTheme, CChangesParaTextPrRFontsThemeBase);
+CChangesParaTextPrRFontsHAnsiTheme.prototype.Type = AscDFH.historyitem_TextPr_RFonts_HAnsi_Theme;
+CChangesParaTextPrRFontsHAnsiTheme.prototype.private_SetValue = function(sValue)
+{
+	this.Class.Value.RFonts.HAnsiTheme = sValue;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesParaTextPrRFontsCSTheme(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+}
+CChangesParaTextPrRFontsCSTheme.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesParaTextPrRFontsCSTheme.prototype.constructor = CChangesParaTextPrRFontsCSTheme;
+CChangesParaTextPrRFontsCSTheme.prototype.Type = AscDFH.historyitem_TextPr_RFonts_CS_Theme;
+AscCommon.ExtendPrototype(CChangesParaTextPrRFontsCSTheme, CChangesParaTextPrRFontsThemeBase);
+CChangesParaTextPrRFontsCSTheme.prototype.private_SetValue = function(sValue)
+{
+	this.Class.Value.RFonts.CSTheme = sValue;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesParaTextPrRFontsEastAsiaTheme(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+}
+CChangesParaTextPrRFontsEastAsiaTheme.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesParaTextPrRFontsEastAsiaTheme.prototype.constructor = CChangesParaTextPrRFontsEastAsiaTheme;
+CChangesParaTextPrRFontsEastAsiaTheme.prototype.Type = AscDFH.historyitem_TextPr_RFonts_EastAsia_Theme;
+AscCommon.ExtendPrototype(CChangesParaTextPrRFontsEastAsiaTheme, CChangesParaTextPrRFontsThemeBase);
+CChangesParaTextPrRFontsEastAsiaTheme.prototype.private_SetValue = function(sValue)
+{
+	this.Class.Value.RFonts.EastAsiaTheme = sValue;
+};
