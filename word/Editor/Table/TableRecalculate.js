@@ -3111,7 +3111,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
         }
     }
 
-    var nCompatibilityMode = oLogicDocument ? oLogicDocument.GetCompatibilityMode() : AscCommon.document_compatibility_mode_Current;
+    var nCompatibilityMode = oLogicDocument && oLogicDocument.GetCompatibilityMode ? oLogicDocument.GetCompatibilityMode() : AscCommon.document_compatibility_mode_Current;
     // Сделаем вертикальное выравнивание ячеек в таблице. Делаем как Word, если ячейка разбилась на несколько
     // страниц, тогда вертикальное выравнивание применяем только к первой странице.
     // Делаем это не в общем цикле, потому что объединенные вертикально ячейки могут вносить поправки в значения
