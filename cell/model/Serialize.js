@@ -1109,11 +1109,12 @@
 		WorkbookSaltValue: 3,
 		LockStructure: 4,
 		LockWindows: 5,
-		RevisionsAlgorithmName: 6,
-		RevisionsHashValue: 7,
-		RevisionsSaltValue: 8,
-		RevisionsSpinCount: 9,
-		LockRevision: 10
+		Password: 6,
+		RevisionsAlgorithmName: 7,
+		RevisionsHashValue: 8,
+		RevisionsSaltValue: 9,
+		RevisionsSpinCount: 10,
+		LockRevision: 11
 	};
     var c_oSerCustoms = {
         Custom: 0, 
@@ -3708,6 +3709,11 @@
 				this.memory.WriteByte(c_oSerWorkbookProtection.LockRevision);
 				this.memory.WriteByte(c_oSerPropLenType.Byte);
 				this.memory.WriteBool(workbookProtection.lockRevision);
+			}
+			if (null != workbookProtection.workbookPassword) {
+				this.memory.WriteByte(c_oSerWorkbookProtection.Password);
+				this.memory.WriteByte(c_oSerPropLenType.Byte);
+				this.memory.WriteString2(workbookProtection.workbookPassword);
 			}
 
 		    if (null != workbookProtection.revisionsAlgorithmName) {
@@ -8302,6 +8308,8 @@
 				workbookProtection.workbookHashValue = this.stream.GetString2LE(length);
 			} else if (c_oSerWorkbookProtection.WorkbookSaltValue == type) {
 				workbookProtection.workbookSaltValue = this.stream.GetString2LE(length);
+			} else if (c_oSerWorkbookProtection.Password == type) {
+				workbookProtection.workbookPassword = this.stream.GetString2LE(length);
 			} else {
 				res = c_oSerConstants.ReadUnknown;
 			}

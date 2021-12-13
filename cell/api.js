@@ -6201,7 +6201,7 @@ var editor;
 				} else {
 					if (props.isPasswordXL() && hash && hash[0] && hash[0].toLowerCase() === props.workbookPassword.toLowerCase()) {
 						props.workbookPassword = null;
-						t.collaborativeEditing.lock([lockInfo], callback);
+						t.collaborativeEditing.lock(arrLocks, callback);
 					} else if (!props.isPasswordXL() && hash && hash[0] === props.workbookHashValue) {
 						props.workbookHashValue = null;
 						props.workbookSaltValue = null;
