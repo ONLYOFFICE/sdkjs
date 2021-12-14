@@ -447,52 +447,84 @@ ParaTextPr.prototype.Set_RFonts2 = function(oRFonts)
 {
 	if (oRFonts)
 	{
-		if (undefined !== oRFonts.AsciiTheme)
+		if (oRFonts.AsciiTheme)
 		{
 			this.Set_RFonts_Ascii(undefined);
 			this.SetRFontsAsciiTheme(oRFonts.AsciiTheme);
 		}
-		else if (undefined !== oRFonts.Ascii)
+		else if (oRFonts.Ascii)
 		{
 			this.Set_RFonts_Ascii(oRFonts.Ascii);
 			this.SetRFontsAsciiTheme(undefined);
 		}
+		else
+		{
+			if (null === oRFonts.Ascii)
+				this.Set_RFonts_Ascii(undefined);
 
-		if (undefined !== oRFonts.HAnsiTheme)
+			if (null === oRFonts.AsciiTheme)
+				this.SetRFontsAsciiTheme(undefined);
+		}
+
+		if (oRFonts.HAnsiTheme)
 		{
 			this.Set_RFonts_HAnsi(undefined);
 			this.SetRFontsHAnsiTheme(oRFonts.HAnsiTheme);
 		}
-		else if (undefined !== oRFonts.HAnsi)
+		else if (oRFonts.HAnsi)
 		{
 			this.Set_RFonts_HAnsi(oRFonts.HAnsi);
 			this.SetRFontsHAnsiTheme(undefined);
 		}
+		else
+		{
+			if (null === oRFonts.HAnsi)
+				this.Set_RFonts_HAnsi(undefined);
 
-		if (undefined !== oRFonts.CSTheme)
+			if (null === oRFonts.HAnsiTheme)
+				this.SetRFontsHAnsiTheme(undefined);
+		}
+
+		if (oRFonts.CSTheme)
 		{
 			this.Set_RFonts_CS(undefined);
 			this.SetRFontsCSTheme(oRFonts.CSTheme);
 		}
-		else if (undefined !== oRFonts.CS)
+		else if (oRFonts.CS)
 		{
 			this.Set_RFonts_CS(oRFonts.CS);
 			this.SetRFontsCSTheme(undefined);
 		}
+		else
+		{
+			if (null === oRFonts.CS)
+				this.Set_RFonts_CS(undefined);
 
-		if (undefined !== oRFonts.EastAsiaTheme)
+			if (null === oRFonts.CSTheme)
+				this.SetRFontsCSTheme(undefined);
+		}
+
+		if (oRFonts.EastAsiaTheme)
 		{
 			this.Set_RFonts_EastAsia(undefined);
 			this.SetRFontsEastAsiaTheme(oRFonts.EastAsiaTheme);
 		}
-		else if (undefined !== oRFonts.EastAsia)
+		else if (oRFonts.EastAsia)
 		{
 			this.Set_RFonts_EastAsia(oRFonts.EastAsia);
 			this.SetRFontsEastAsiaTheme(undefined);
 		}
+		else
+		{
+			if (null === oRFonts.EastAsia)
+				this.Set_RFonts_EastAsia(undefined);
+
+			if (null === oRFonts.EastAsiaTheme)
+				this.SetRFontsEastAsiaTheme(undefined);
+		}
 
 		if (undefined !== oRFonts.Hint)
-			this.Set_RFonts_Hint(oRFonts.Hint);
+			this.Set_RFonts_Hint(null === oRFonts.Hint ? undefined : oRFonts.Hint);
 	}
 	else
 	{
