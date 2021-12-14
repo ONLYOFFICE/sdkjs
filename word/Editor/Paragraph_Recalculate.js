@@ -358,6 +358,13 @@ Paragraph.prototype.RecalculateFastRunRange = function(oParaPos)
     var CurLine  = PrevLine;
     var CurRange = PrevRange;
 
+    // TODO: Для включения данной проверки нужно пробегаться по строке и пересчитывать Line.Info
+    // var arrLinesMetrics = [];
+    // for (var nLineIndex = 0; nLineIndex <= NextLine - CurLine; ++nLineIndex)
+	// {
+	// 	arrLinesMetrics.push(this.Lines[CurLine + nLineIndex].Metrics.Copy());
+	// }
+
     var Result;
     while ( ( CurLine < NextLine ) || ( CurLine === NextLine && CurRange <= NextRange ) )
     {
@@ -379,6 +386,18 @@ Paragraph.prototype.RecalculateFastRunRange = function(oParaPos)
             CurRange = 0;
         }
     }
+
+    // var oParaPr = this.Get_CompiledPr2(false).ParaPr;
+	// var oPRS    = this.m_oPRSW;
+	// for (var nLineIndex = PrevLine; nLineIndex <= NextLine; ++nLineIndex)
+	// {
+	// 	oPRS.Reset_Line();
+	// 	this.Lines[nLineIndex].Metrics.Reset();
+	// 	this.private_RecalculateLineMetrics(nLineIndex, oParaPos.Page, oPRS, oParaPr);
+	//
+	// 	if (!this.Lines[nLineIndex].Metrics.IsEqual(arrLinesMetrics[nLineIndex - PrevLine]))
+	// 		return null;
+	// }
 
     // Во время пересчета сбрасываем привязку курсора к строке.
     this.CurPos.Line  = -1;
@@ -2736,6 +2755,37 @@ CParaLineMetrics.prototype =
         }
         return LineGap;
     }
+};
+CParaLineMetrics.prototype.Copy = function()
+{
+	var oMetrics = new CParaLineMetrics();
+
+	oMetrics.Ascent      = this.Ascent;
+	oMetrics.Descent     = this.Descent;
+	oMetrics.TextAscent  = this.TextAscent;
+	oMetrics.TextAscent2 = this.TextAscent2;
+	oMetrics.TextDescent = this.TextDescent;
+	oMetrics.LineGap     = this.LineGap;
+
+	return oMetrics;
+};
+CParaLineMetrics.prototype.IsEqual = function(oMetrics)
+{
+	return (Math.abs(oMetrics.Ascent - this.Ascent) < 0.001
+		&& Math.abs(oMetrics.Descent - this.Descent) < 0.001
+		&& Math.abs(oMetrics.TextAscent - this.TextAscent) < 0.001
+		&& Math.abs(oMetrics.TextAscent2 - this.TextAscent2) < 0.001
+		&& Math.abs(oMetrics.TextDescent - this.TextDescent) < 0.001
+		&& Math.abs(oMetrics.LineGap - this.LineGap) < 0.001);
+};
+CParaLineMetrics.prototype.Reset = function()
+{
+	this.Ascent      = 0;
+	this.Descent     = 0;
+	this.TextAscent  = 0;
+	this.TextAscent2 = 0;
+	this.TextDescent = 0;
+	this.LineGap     = 0;
 };
 
 function CParaLineRange(X, XEnd)

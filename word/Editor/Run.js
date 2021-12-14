@@ -2120,7 +2120,7 @@ ParaRun.prototype.GetSimpleChangesRange = function(arrChanges, nStart, nEnd)
 	var _nStart = undefined !== nStart ? nStart : 0;
 	var _nEnd   = undefined !== nEnd ? nEnd : arrChanges.length - 1;
 
-	var nChangeCount = 0;
+	var arrAddItems = [], arrRemItems = [];
 	for (var nIndex = _nStart; nIndex <= _nEnd; ++nIndex)
 	{
 		var oChange = arrChanges[nIndex];
@@ -2136,17 +2136,17 @@ ParaRun.prototype.GetSimpleChangesRange = function(arrChanges, nStart, nEnd)
 			return null;
 
 		var nItemsCount = oChange.GetItemsCount();
-		if (AscDFH.historyitem_ParaRun_AddItem === nType)
-			nChangeCount += nItemsCount;
-		else
-			nChangeCount -= nItemsCount;
-
 		for (var nItemIndex = 0; nItemIndex < nItemsCount; ++nItemIndex)
 		{
 			var oItem = oChange.GetItem(nItemIndex);
 
 			if (!oItem)
 				return null;
+
+			if (AscDFH.historyitem_ParaRun_AddItem === nType)
+				arrAddItems.push(oItem);
+			else
+				arrRemItems.push(oItem);
 
 			// Добавление/удаление картинок может изменить размер строки. Добавление/удаление переноса строки/страницы/колонки
 			// нельзя обсчитывать функцией Recalculate_Fast. Добавление и удаление разметок сложных полей тоже нельзя
@@ -2163,8 +2163,9 @@ ParaRun.prototype.GetSimpleChangesRange = function(arrChanges, nStart, nEnd)
 				|| para_EndnoteReference === nItemType)
 				return null;
 
+			var nChangePos = oChange.GetPos(nItemIndex);
 			// Проверяем, что все изменения произошли в одном и том же отрезке
-			var oCurParaPos = this.Get_SimpleChanges_ParaPos(nType, oChange.GetPos(nItemIndex));
+			var oCurParaPos = this.Get_SimpleChanges_ParaPos(nType, nChangePos);
 			if (!oCurParaPos)
 				return null;
 
@@ -2177,12 +2178,92 @@ ParaRun.prototype.GetSimpleChangesRange = function(arrChanges, nStart, nEnd)
 		}
 	}
 
-	// Если после изменений Run стал пустым, или, наоборот, он был пустым, а стал не пустым, тогда
-	// мы не можем быть уверены, что высота строки не изменилась
-	if (0 === this.Content.length || 0 === this.Content.length - nChangeCount)
+	// Сравниваем, нужно ли использовать метрики данного Run до и после изменений
+	// Если значение не совпало, тогда метрики поменялись, значит пересчитывать надо полноценно
+	if (this.private_IsChangedLineMetrics(arrAddItems, arrRemItems))
 		return null;
 
 	return oParaPos;
+};
+ParaRun.prototype.private_IsChangedLineMetrics = function(arrAddItems, arrRemItems)
+{
+	var isUseMetricsBefore = false;
+	var isUseMetricsAfter  = false;
+
+	for (var nPos = 0, nContentCount = this.Content.length; nPos < nContentCount; ++nPos)
+	{
+		var oItem = this.Content[nPos];
+		var nItemType = oItem.Type;
+
+		if (para_Sym === nItemType
+			|| para_Text === nItemType
+			|| para_PageNum === nItemType
+			|| para_PageCount === nItemType
+			|| para_FootnoteReference === nItemType
+			|| para_FootnoteRef === nItemType
+			|| para_EndnoteReference === nItemType
+			|| para_EndnoteRef === nItemType
+			|| para_Separator === nItemType
+			|| para_ContinuationSeparator === nItemType
+			|| para_Math_Text === nItemType
+			|| para_Math_Ampersand === nItemType
+			|| para_Math_Placeholder === nItemType
+			|| para_Math_BreakOperator === nItemType
+			|| (para_Drawing === nItemType && (true === oItem.Is_Inline() || true === this.GetParagraph().Parent.Is_DrawingShape()))
+			|| (para_FieldChar === nItemType  && oItem.IsNumValue()))
+		{
+
+			var isAdd = false;
+			for (var nIndex = 0, nCount = arrAddItems.length; nIndex < nCount; ++nIndex)
+			{
+				if (oItem === arrAddItems[nIndex])
+				{
+					isAdd = true;
+					break;
+				}
+			}
+
+			if (!isAdd)
+				isUseMetricsBefore = true;
+
+			isUseMetricsAfter = true;
+		}
+
+		if (isUseMetricsAfter && isUseMetricsBefore)
+			break;
+	}
+
+	if (!isUseMetricsBefore)
+	{
+		for (var nIndex = 0, nCount = arrRemItems.length; nIndex < nCount; ++nIndex)
+		{
+			var oItem = arrRemItems[nIndex];
+			var nItemType = oItem.Type;
+
+			if (para_Sym === nItemType
+				|| para_Text === nItemType
+				|| para_PageNum === nItemType
+				|| para_PageCount === nItemType
+				|| para_FootnoteReference === nItemType
+				|| para_FootnoteRef === nItemType
+				|| para_EndnoteReference === nItemType
+				|| para_EndnoteRef === nItemType
+				|| para_Separator === nItemType
+				|| para_ContinuationSeparator === nItemType
+				|| para_Math_Text === nItemType
+				|| para_Math_Ampersand === nItemType
+				|| para_Math_Placeholder === nItemType
+				|| para_Math_BreakOperator === nItemType
+				|| (para_Drawing === nItemType && (true === oItem.Is_Inline() || true === this.GetParagraph().Parent.Is_DrawingShape()))
+				|| (para_FieldChar === nItemType  && oItem.IsNumValue()))
+			{
+				isUseMetricsBefore = true;
+				break;
+			}
+		}
+	}
+
+	return (isUseMetricsBefore !== isUseMetricsAfter);
 };
 /**
  * Проверяем произошло ли простое изменение параграфа, сейчас главное, чтобы это было не добавлениe/удаление картинки
