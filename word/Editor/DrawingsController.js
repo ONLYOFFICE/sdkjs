@@ -151,7 +151,7 @@ CDrawingsController.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySel
 	if (oDrawing && oDrawing.IsForm() && this.LogicDocument.IsFillingFormMode())
 	{
 		var oForm = oDrawing.GetInnerForm();
-		if (oForm)
+		if (oForm && oForm.IsPicture())
 		{
 			oForm.ClearContentControlExt();
 			oForm.SelectContentControl();
