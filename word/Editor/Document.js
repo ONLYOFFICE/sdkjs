@@ -891,7 +891,7 @@ CSelectedContent.prototype.CheckDocPartNames = function(oLogicDocument)
 				continue;
 
 			var sNewName = oGlossaryDocument.GetNewName();
-			oDocPart.SetDocPartName(sNewName);
+			oGlossaryDocument.AddDocPart(oDocPart.Copy(sNewName));
 			oCC.SetPlaceholder(sNewName);
 		}
 	}
