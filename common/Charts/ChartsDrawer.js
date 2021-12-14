@@ -6188,7 +6188,7 @@ drawBarChart.prototype = {
 				
 				paths = paths.paths;
 				break
-			};
+			}
 			case AscFormat.BAR_SHAPE_CYLINDER: {
 				paths = this.cChartDrawer._calculateCylinder(startX, startY, individualBarWidth, height, val, gapDepth,
 					perspectiveDepth, this.subType !== "standard", false, false);
@@ -8887,16 +8887,16 @@ drawHBarChart.prototype = {
 		point8 = this.cChartDrawer._convertAndTurnPoint(x8, y8, z8);
 
 		var points = [point1, point2, point3, point4, point5, point6, point7, point8];
-
+		var nullPositionOX;
 		switch (type) {
 			case AscFormat.BAR_SHAPE_PYRAMID:
 			case AscFormat.BAR_SHAPE_PYRAMIDTOMAX: {
-				var nullPositionOX = this.catAx.posX * this.chartProp.pxToMM;
+				nullPositionOX = this.catAx.posX * this.chartProp.pxToMM;
 				paths = this.cChartDrawer.calculatePyramid(true, this.subType, newStartX, newStartY, width, DiffGapDepth, 
 					individualBarHeight, perspectiveDepth, val, nullPositionOX, maxH, minH);
 				paths2 = this.cChartDrawer.calculateRect3D(points, val, null, true);
 				break
-			};
+			}
 			case AscFormat.BAR_SHAPE_CYLINDER: {
 				paths = this.cChartDrawer._calculateCylinder(newStartX, newStartY, individualBarHeight, width, val, DiffGapDepth, perspectiveDepth, true, true);
 				paths2 = this.cChartDrawer.calculateRect3D(points, val, null, true);
