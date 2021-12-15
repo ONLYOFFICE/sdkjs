@@ -3882,7 +3882,7 @@ CChartsDrawer.prototype =
 		return result;
 	},
 
-	calculateCylinder: function(points, val, isNotOnlyFrontFaces, notDraw) {
+	calculateCylinder: function(points, val, isNotOnlyFrontFaces, notDraw, check) {
 		var res;
 		var segmentPoints = points[0];
 		var segmentPoints2 = points[1];
@@ -3912,7 +3912,7 @@ CChartsDrawer.prototype =
 		var face, faceFront;
 
 		//front
-		faceFront = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, false, false, true);
+		faceFront = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, false, false, true, check);
 		addPathToArr(this._isVisibleVerge3D(sortCylinderPoints1[0], sortCylinderPoints1[sortCylinderPoints1.length - 1],
 			sortCylinderPoints2[0], val, true), faceFront, 0);
 
@@ -3937,7 +3937,7 @@ CChartsDrawer.prototype =
 		}
 		
 		//unfront
-		faceFront = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, false, false, true);
+		faceFront = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, false, false, true, check);
 		addPathToArr(this._isVisibleVerge3D(sortCylinderPoints1[0], sortCylinderPoints1[sortCylinderPoints1.length - 1],
 			sortCylinderPoints2[0], val), faceFront, 5);
 
@@ -3950,7 +3950,7 @@ CChartsDrawer.prototype =
 		return res;
 	},
 
-	_calculatePathFaceCylinder: function(segmentPoints, segmentPoints2, up, down, isConvertPxToMM)
+	_calculatePathFaceCylinder: function(segmentPoints, segmentPoints2, up, down, isConvertPxToMM, check)
 	{
 		var pxToMm = 1;
 		if(isConvertPxToMM)
@@ -3970,17 +3970,36 @@ CChartsDrawer.prototype =
 					path.lnTo(segmentPoints2[i].x / pxToMm * pathW, segmentPoints2[i].y / pxToMm * pathH);
 				}
 			}
+			path.lnTo(segmentPoints2[0].x / pxToMm * pathW, segmentPoints2[0].y / pxToMm * pathH);
 		} else if (down) {
 			for (var i = 0; i < segmentPoints.length; i++) {
 				if (i % 2 === 0) {
 					path.lnTo(segmentPoints[i].x / pxToMm * pathW, segmentPoints[i].y / pxToMm * pathH);
 				}
 			}
+			path.lnTo(segmentPoints[0].x / pxToMm * pathW, segmentPoints[0].y / pxToMm * pathH)
 		} else {
 			var endIndex = 0;
 			var startIndex = segmentPoints.length - 1;
 
-			if (segmentPoints2.length === 1) {
+			if (!check) {
+				path.moveTo(segmentPoints2[0].x / pxToMm * pathW, segmentPoints2[0].y / pxToMm * pathH)
+				for (var i = 0; i < segmentPoints2.length; i++) {
+					if (i % 2 === 0) {
+						path.lnTo(segmentPoints2[i].x / pxToMm * pathW, segmentPoints2[i].y / pxToMm * pathH);
+					}
+				}
+				path.lnTo(segmentPoints2[0].x / pxToMm * pathW, segmentPoints2[0].y / pxToMm * pathH);
+
+				path.moveTo(segmentPoints[0].x / pxToMm * pathW, segmentPoints[0].y / pxToMm * pathH)
+				for (var i = 0; i < segmentPoints.length; i++) {
+					if (i % 2 === 0) {
+						path.lnTo(segmentPoints[i].x / pxToMm * pathW, segmentPoints[i].y / pxToMm * pathH);
+					}
+				}
+				path.lnTo(segmentPoints[0].x / pxToMm * pathW, segmentPoints[0].y / pxToMm * pathH)
+
+			} else if (segmentPoints2.length === 1) {
 				path.lnTo(segmentPoints[endIndex].x / pxToMm * pathW, segmentPoints[endIndex].y / pxToMm * pathH);
 				path.lnTo(segmentPoints2[0].x / pxToMm * pathW, segmentPoints2[0].y / pxToMm * pathH);
 
@@ -3995,6 +4014,7 @@ CChartsDrawer.prototype =
 
 				path.lnTo(segmentPoints[endIndex].x / pxToMm * pathW, segmentPoints[endIndex].y / pxToMm * pathH);
 				path.lnTo(segmentPoints2[endIndex].x / pxToMm * pathW, segmentPoints2[endIndex].y / pxToMm * pathH);
+				path.moveTo(segmentPoints[endIndex].x / pxToMm * pathW, segmentPoints[endIndex].y / pxToMm * pathH)
 			
 				for (var k = endIndex; k <= startIndex; k++) {
 					if (k % 2 === 0) {
@@ -5293,22 +5313,21 @@ CChartsDrawer.prototype =
 		if (check) {
 			for (var k = segmentPoints.length - 1; i <= k; k--) {
 				if (this._isVisibleVerge3D(segmentPoints[k], segmentPoints[k - 1], segmentPoints2[k - 1], val, true)) {
-					//sortCylinderPoints1.unshift(segmentPoints[k - 1]);
-					//sortCylinderPoints2.unshift(segmentPoints2[k - 1]);
-					sortCylinderPoints1.unshift(segmentPoints[k]);
-					sortCylinderPoints2.unshift(segmentPoints2[k]);
-					// sortCylinderPoints1.push(segmentPoints[k - 1]);
-					// sortCylinderPoints2.push(segmentPoints2[k - 1]);
+					sortCylinderPoints1.unshift(segmentPoints[k - 1]);
+					sortCylinderPoints2.unshift(segmentPoints2[k - 1]);
 				}
 			}
 		}		
-		// if (sortCylinderPoints2.length === 0 || sortCylinderPoints1.length === 0) {
-		// 	console.log(segmentPoints, segmentPoints2)
-		// 	sortCylinderPoints1 = segmentPoints;
-		// 	sortCylinderPoints2 = segmentPoints2;
-		// }
-		sortCylinderPoints1 = sortCylinderPoints1.length === 0 ? segmentPoints : sortCylinderPoints1;
-		sortCylinderPoints2 = sortCylinderPoints2.length === 0 ? segmentPoints2 : sortCylinderPoints2;
+
+		if ((sortCylinderPoints1.length === 0 || sortCylinderPoints2.length === 0) && check) {
+			sortCylinderPoints1 = segmentPoints;
+			sortCylinderPoints2 = segmentPoints2;
+			check = false;
+		} else {
+			sortCylinderPoints1 = (sortCylinderPoints1.length === 0) || !check  ? segmentPoints : sortCylinderPoints1;
+			sortCylinderPoints2 = (sortCylinderPoints2.length === 0) || !check  ? segmentPoints2 : sortCylinderPoints2;
+		}
+
 		var x12, y12, z12, x22, y22, z22, x32, y32, z32, x42, y42, z42, x52, y52, z52, x62, y62, z62, x72, y72, z72, x82, y82, z82;
 		var point1, point2, point4, point5, point6, point8;
 
@@ -5344,7 +5363,7 @@ CChartsDrawer.prototype =
 
 		var points = [segmentPoints, segmentPoints2, point1, point2, point4, point5, point6, point8,
 			sortCylinderPoints1, sortCylinderPoints2];
-		var paths = this.calculateCylinder(points, val, checkPathMethod);
+		var paths = this.calculateCylinder(points, val, checkPathMethod, false, check);
 
 		return paths;
 	}
@@ -5483,7 +5502,7 @@ drawBarChart.prototype = {
 					}
 				}
 
-				//shapeType = 5; //раскоментировать для теста пирамид
+				shapeType = 0; //раскоментировать для теста пирамид
 				tempValues[i][idx] = val;
 
 				startYColumnPosition = this._getStartYColumnPosition(seriesHeight, i, idx, val, yPoints, prevVal, shapeType, axisMax, axisMin);
