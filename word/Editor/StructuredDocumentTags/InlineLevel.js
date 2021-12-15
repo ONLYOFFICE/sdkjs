@@ -690,14 +690,15 @@ CInlineLevelSdt.prototype.GetBoundingPolygonFirstLineH = function()
 	return 0;
 };
 /**
- * Специальная функция для мобильных версий, возвращает правую среднюю точку границы
- * @return {{X:number, Y:number, Page:number, Transform:object}}
+ * Функция возвращает рект, содержащий все отрезки данного контрола
+ * @return {{X:number, Y:number, W:number, H:number, Page:number, Transform:object}}
  */
-CInlineLevelSdt.prototype.GetBoundingPolygonAnchorPoint = function()
+CInlineLevelSdt.prototype.GetBoundingRect = function()
 {
-	var nR  = 0;
-	var nT = -1;
-	var nB = -1;
+	var nR = null;
+	var nT = null;
+	var nB = null;
+	var nL = null;
 
 	var nCurPage = -1;
 
@@ -708,7 +709,7 @@ CInlineLevelSdt.prototype.GetBoundingPolygonAnchorPoint = function()
 	}
 
 	if (-1 === nCurPage)
-		return {X : 0, Y : 0, Page : -1, Transform : null};
+		return {X: 0, Y : 0, W : 0, H : 0, Page : 0, Transform : null};
 
 	var nPageAbs = this.Paragraph.GetAbsolutePage(nCurPage);
 	for (var Key in this.Bounds)
@@ -716,17 +717,30 @@ CInlineLevelSdt.prototype.GetBoundingPolygonAnchorPoint = function()
 		if (nCurPage !== this.Bounds[Key].PageInternal)
 			continue;
 
-		if (nR < this.Bounds[Key].X + this.Bounds[Key].W)
+		if (null === nL || nL > this.Bounds[Key].X)
+			nL = this.Bounds[Key].X;
+
+		if (null === nR || nR < this.Bounds[Key].X + this.Bounds[Key].W)
 			nR = this.Bounds[Key].X + this.Bounds[Key].W;
 
-		if (-1 === nT || nT > this.Bounds[Key].Y)
+		if (null === nT || nT > this.Bounds[Key].Y)
 			nT = this.Bounds[Key].Y;
 
-		if (-1 === nB || nB < this.Bounds[Key].Y + this.Bounds[Key].H)
+		if (null === nB || nB < this.Bounds[Key].Y + this.Bounds[Key].H)
 			nB = this.Bounds[Key].Y + this.Bounds[Key].H;
 	}
 
-	return {X : nR, Y : (nT + nB) / 2, Page : nPageAbs, Transform : this.Get_ParentTextTransform()};
+	if (null === nL || null === nT || null === nR || null === nB)
+		return {X: 0, Y : 0, W : 0, H : 0, Page : 0, Transform : null};
+
+	return {
+		X : nL,
+		Y : nT,
+		W : nR - nL,
+		H : nB - nT,
+		Page : nPageAbs,
+		Transform : this.Get_ParentTextTransform()
+	};
 };
 CInlineLevelSdt.prototype.IsFixedForm = function()
 {

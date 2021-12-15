@@ -875,14 +875,15 @@ CBlockLevelSdt.prototype.GetBoundingPolygonFirstLineH = function()
 	return 0;
 };
 /**
- * Специальная функция для мобильных версий, возвращает правую среднюю точку границы
- * @return {{X:number, Y:number, Page:number, Transform:object}}
+ * Функция возвращает рект, содержащий все отрезки данного контрола
+ * @return {{X:number, Y:number, W:number, H:number, Page:number, Transform:object}}
  */
-CBlockLevelSdt.prototype.GetBoundingPolygonAnchorPoint = function()
+CBlockLevelSdt.prototype.GetBoundingRect = function()
 {
-	var nR  = 0;
-	var nT = -1;
-	var nB = -1;
+	var nL = null;
+	var nR = null;
+	var nT = null;
+	var nB = null;
 
 	var nCurPage = -1;
 	for (var nPageIndex = 0, nPagesCount = this.GetPagesCount(); nPageIndex < nPagesCount; ++nPageIndex)
@@ -897,18 +898,30 @@ CBlockLevelSdt.prototype.GetBoundingPolygonAnchorPoint = function()
 
 		var oBounds = this.Content.GetContentBounds(nPageIndex);
 
-		if (nR < oBounds.Right)
+		if (null === nL || nL > oBounds.Left)
+			nL = oBounds.Left;
+
+		if (null === nR || nR < oBounds.Right)
 			nR = oBounds.Right;
 
-		if (-1 === nT || nT > oBounds.Top)
+		if (null === nT || nT > oBounds.Top)
 			nT = oBounds.Top;
 
-		if (-1 === nB || nB < oBounds.Bottom)
+		if (null === nB || nB < oBounds.Bottom)
 			nB = oBounds.Bottom;
 	}
-	var nPageAbs = this.GetAbsolutePage(nCurPage);
 
-	return {X : nR, Y : (nT + nB) / 2, Page : nPageAbs, Transform : this.Get_ParentTextTransform()};
+	if (-1 === nCurPage || null === nL || null === nT || null === nR || null === nB)
+		return {X : 0, Y : 0, W : 0, H : 0, Page : -1, Transform : null};
+
+	return {
+		X         : nL,
+		Y         : nT,
+		W         : nR - nL,
+		H         : nB - nT,
+		Page      : this.GetAbsolutePage(nCurPage),
+		Transform : this.Get_ParentTextTransform()
+	};
 };
 CBlockLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCurPage, isCheckHit)
 {
