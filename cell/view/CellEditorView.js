@@ -1113,6 +1113,7 @@
 	CellEditor.prototype._fireUpdated = function () {
 		var s = AscCommonExcel.getFragmentsText(this.options.fragments);
 		var isFormula = -1 === this.beginCompositePos && s.charAt(0) === "=";
+		var api = window["Asc"]["editor"];
 		var fPos, fName, match, fCurrent;
 
 		if (!this.isTopLineActive || !this.skipTLUpdate || this.undoMode) {
@@ -1135,6 +1136,9 @@
 
 		this.handlers.trigger("updated", s, this.cursorPos, fPos, fName);
 		this.handlers.trigger("updatedEditableFunction", fCurrent, fPos !== undefined ? this.calculateOffset(fPos) : null);
+		if (api && api.isMobileVersion) {
+			this.restoreFocus();
+		}
 	};
 
 	CellEditor.prototype._getEditableFunction = function (parseResult, bEndCurPos) {
