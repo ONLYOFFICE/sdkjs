@@ -11078,8 +11078,7 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 
 		if (e.ClickCount <= 1 && 1 !== this.Selection.DragDrop.Flag)
 		{
-			this.RecalculateCurPos();
-			this.Document_UpdateSelectionState();
+			this.private_UpdateSelectionOnMouseEvent(X, Y, this.CurPage, e);
 		}
 	}
 };
@@ -11285,13 +11284,14 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 		}
 	}
 
+	var isUpdateTarget = true;
 	if (true === this.Selection.Start)
 	{
 		this.CurPage         = PageIndex;
 		this.Selection.Start = false;
 		this.Selection_SetEnd(X, Y, e);
 		this.CheckComplexFieldsInSelection();
-		this.Document_UpdateSelectionState();
+		isUpdateTarget = this.private_UpdateSelectionOnMouseEvent(X, Y, this.CurPage, e);
 
 		if (c_oAscFormatPainterState.kOff !== editor.isPaintFormat)
 		{
@@ -11338,7 +11338,7 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 
 	this.private_CheckCursorPosInFillingFormMode();
 
-	this.private_UpdateCursorXY(true, true);
+	this.private_UpdateCursorXY(true, true, isUpdateTarget);
 };
 CDocument.prototype.OnMouseMove = function(e, X, Y, PageIndex)
 {
@@ -11403,8 +11403,37 @@ CDocument.prototype.OnMouseMove = function(e, X, Y, PageIndex)
 	{
 		this.CurPage = PageIndex;
 		this.Selection_SetEnd(X, Y, e);
-		this.Document_UpdateSelectionState();
+		this.private_UpdateSelectionOnMouseEvent(X, Y, this.CurPage, e);
 	}
+};
+CDocument.prototype.private_UpdateSelectionOnMouseEvent = function(nX, nY, nCurPage, oMouseEvent)
+{
+	var isHitHdrFtr = docpostype_HdrFtr !== this.GetDocPosType() ? this.private_IsHitInHdrFtr(nY, nCurPage) : false;
+	if (isHitHdrFtr)
+		this.TurnOff_RecalculateCurPos();
+
+	// TODO: По логике это не нужно (убрать на develop)
+	if (oMouseEvent && AscCommon.g_mouse_event_type_down === oMouseEvent.Type)
+		this.RecalculateCurPos();
+
+	this.UpdateSelection();
+
+	if (isHitHdrFtr)
+		this.TurnOn_RecalculateCurPos();
+
+	return !isHitHdrFtr;
+};
+CDocument.prototype.private_IsHitInHdrFtr = function(nY, nCurPage)
+{
+	if (undefined === nCurPage)
+		nCurPage = this.CurPage;
+
+	if (!this.Pages[nCurPage])
+		return false;
+
+	var oPageMetrics = this.Get_PageContentStartPos(nCurPage, this.Pages[nCurPage].Pos);
+
+	return (nY <= oPageMetrics.Y || nY > oPageMetrics.YLimit);
 };
 /**
  * Проверяем будет ли добавление текста на ивенте KeyDown
