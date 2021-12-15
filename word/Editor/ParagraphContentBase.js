@@ -3087,7 +3087,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Get_WordStartPos = function(
 	this.Content[CurPos].Get_WordStartPos(SearchPos, ContentPos, Depth + 1, UseContentPos);
 
 	if (true === SearchPos.UpdatePos)
-		SearchPos.Pos.Update(CurPos, Depth);
+		SearchPos.Pos.Update2(CurPos, Depth);
 
 	if (true === SearchPos.Found)
 		return;
@@ -3103,7 +3103,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Get_WordStartPos = function(
 	if (CurPos >= 0 && this.Content[CurPos + 1].IsStopCursorOnEntryExit())
 	{
 		this.Content[CurPos].Get_EndPos(false, SearchPos.Pos, Depth + 1);
-		SearchPos.Pos.Update(CurPos, Depth);
+		SearchPos.Pos.Update2(CurPos, Depth);
 		SearchPos.Found = true;
 		return;
 	}
@@ -3115,7 +3115,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Get_WordStartPos = function(
 		this.Content[CurPos].Get_WordStartPos(SearchPos, ContentPos, Depth + 1, false);
 
 		if (true === SearchPos.UpdatePos)
-			SearchPos.Pos.Update(CurPos, Depth);
+			SearchPos.Pos.Update2(CurPos, Depth);
 		else
 			SearchPos.UpdatePos = OldUpdatePos;
 
@@ -3133,7 +3133,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Get_WordStartPos = function(
 		if (CurPos >= 0 && this.Content[CurPos + 1].IsStopCursorOnEntryExit())
 		{
 			this.Content[CurPos].Get_EndPos(false, SearchPos.Pos, Depth + 1);
-			SearchPos.Pos.Update(CurPos, Depth);
+			SearchPos.Pos.Update2(CurPos, Depth);
 			SearchPos.Found = true;
 			return;
 		}

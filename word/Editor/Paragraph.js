@@ -5999,7 +5999,7 @@ Paragraph.prototype.Get_WordStartPos = function(SearchPos, ContentPos)
 	this.Content[CurPos].Get_WordStartPos(SearchPos, ContentPos, Depth + 1, true);
 
 	if (true === SearchPos.UpdatePos)
-		SearchPos.Pos.Update(CurPos, Depth);
+		SearchPos.Pos.Update2(CurPos, Depth);
 
 	if (true === SearchPos.Found)
 		return;
@@ -6015,7 +6015,7 @@ Paragraph.prototype.Get_WordStartPos = function(SearchPos, ContentPos)
 	if (CurPos >= 0 && this.Content[CurPos + 1].IsStopCursorOnEntryExit())
 	{
 		this.Content[CurPos].Get_EndPos(false, SearchPos.Pos, Depth + 1);
-		SearchPos.Pos.Update(CurPos, Depth);
+		SearchPos.Pos.Update2(CurPos, Depth);
 		SearchPos.Found = true;
 		return;
 	}
@@ -6025,7 +6025,7 @@ Paragraph.prototype.Get_WordStartPos = function(SearchPos, ContentPos)
 		this.Content[CurPos].Get_WordStartPos(SearchPos, ContentPos, Depth + 1, false);
 
 		if (true === SearchPos.UpdatePos)
-			SearchPos.Pos.Update(CurPos, Depth);
+			SearchPos.Pos.Update2(CurPos, Depth);
 
 		if (true === SearchPos.Found)
 			return;
@@ -6041,7 +6041,7 @@ Paragraph.prototype.Get_WordStartPos = function(SearchPos, ContentPos)
 		if (CurPos >= 0 && this.Content[CurPos + 1].IsStopCursorOnEntryExit())
 		{
 			this.Content[CurPos].Get_EndPos(false, SearchPos.Pos, Depth + 1);
-			SearchPos.Pos.Update(CurPos, Depth);
+			SearchPos.Pos.Update2(CurPos, Depth);
 			SearchPos.Found = true;
 			return;
 		}
@@ -6060,7 +6060,7 @@ Paragraph.prototype.Get_WordEndPos = function(SearchPos, ContentPos, StepEnd)
 	this.Content[CurPos].Get_WordEndPos(SearchPos, ContentPos, Depth + 1, true, StepEnd);
 
 	if (true === SearchPos.UpdatePos)
-		SearchPos.Pos.Update(CurPos, Depth);
+		SearchPos.Pos.Update2(CurPos, Depth);
 
 	if (true === SearchPos.Found)
 		return;
@@ -6078,7 +6078,7 @@ Paragraph.prototype.Get_WordEndPos = function(SearchPos, ContentPos, StepEnd)
 	if (CurPos < Count && this.Content[CurPos - 1].IsStopCursorOnEntryExit())
 	{
 		this.Content[CurPos].Get_StartPos(SearchPos.Pos, Depth + 1);
-		SearchPos.Pos.Update(CurPos, Depth);
+		SearchPos.Pos.Update2(CurPos, Depth);
 		SearchPos.Found = true;
 		return;
 	}
@@ -6088,7 +6088,7 @@ Paragraph.prototype.Get_WordEndPos = function(SearchPos, ContentPos, StepEnd)
 		this.Content[CurPos].Get_WordEndPos(SearchPos, ContentPos, Depth + 1, false, StepEnd);
 
 		if (true === SearchPos.UpdatePos)
-			SearchPos.Pos.Update(CurPos, Depth);
+			SearchPos.Pos.Update2(CurPos, Depth);
 
 		if (true === SearchPos.Found)
 			return;
@@ -6104,7 +6104,7 @@ Paragraph.prototype.Get_WordEndPos = function(SearchPos, ContentPos, StepEnd)
 		if (CurPos < Count && this.Content[CurPos - 1].IsStopCursorOnEntryExit())
 		{
 			this.Content[CurPos].Get_StartPos(SearchPos.Pos, Depth + 1);
-			SearchPos.Pos.Update(CurPos, Depth);
+			SearchPos.Pos.Update2(CurPos, Depth);
 			SearchPos.Found = true;
 			return;
 		}
@@ -16249,11 +16249,121 @@ Paragraph.prototype.SelectCurrentWord = function()
 	if (this.Selection.Use)
 		return false;
 
+	var oInfo = this.private_GetCurrentWordParaPos();
+	if (!oInfo)
+		return false;
+
+	// Выставим временно селект от начала и до конца слова
+	this.Selection.Use = true;
+	this.Set_SelectionContentPos(oInfo.Start, oInfo.End);
+	this.Document_SetThisElementCurrent();
+
+	return true;
+};
+/**
+ * Получаем текущее слово (или часть текущего слова)
+ * @param nDirection {number} -1 - часть до курсора, 1 - часть после курсора, 0 (или не задано) слово целиком
+ * @returns {string}
+ */
+Paragraph.prototype.GetCurrentWord = function(nDirection)
+{
+	if (this.IsSelectionUse())
+		return "";
+
+	var oInfo = this.private_GetCurrentWordParaPos();
+	if (!oInfo)
+		return "";
+
+	var oState = this.SaveSelectionState();
+
+	var oStartPos, oEndPos;
+	if (!nDirection)
+	{
+		oStartPos = oInfo.Start;
+		oEndPos   = oInfo.End;
+	}
+	else if (nDirection < 0)
+	{
+		oStartPos = oInfo.Start;
+		oEndPos   = this.Get_ParaContentPos(false, false);
+	}
+	else
+	{
+		oStartPos = this.Get_ParaContentPos(false, false);
+		oEndPos   = oInfo.End;
+	}
+
+	this.Selection.Use = true;
+	this.Set_SelectionContentPos(oStartPos, oEndPos);
+
+	var sText = this.GetSelectedText(true, {Numbering : false});
+
+	this.LoadSelectionState(oState);
+
+	return sText;
+};
+/**
+ * Заменяем текущее слово (или часть текущего слова) на заданную строку
+ * @param nDirection {number} -1 - часть до курсора, 1 - часть после курсора, 0 (или не задано) слово целиком
+ * @param sReplace {string}
+ * @returns {string}
+ */
+Paragraph.prototype.ReplaceCurrentWord = function(nDirection, sReplace)
+{
+	if (this.IsSelectionUse())
+		return false;
+
+	var oInfo = this.private_GetCurrentWordParaPos();
+	if (!oInfo)
+		return false;
+
+	var oStartPos, oEndPos;
+	if (!nDirection)
+	{
+		oStartPos = oInfo.Start;
+		oEndPos   = oInfo.End;
+	}
+	else if (nDirection < 0)
+	{
+		oStartPos = oInfo.Start;
+		oEndPos   = this.Get_ParaContentPos(false, false);
+	}
+	else
+	{
+		oStartPos = this.Get_ParaContentPos(false, false);
+		oEndPos   = oInfo.End;
+	}
+
+	var _oStartPos = oStartPos.Copy();
+	var nInRunPos = oStartPos.Get(_oStartPos.GetDepth());
+	_oStartPos.DecreaseDepth(1);
+	var oRun = this.GetClassByPos(_oStartPos);
+	if (!oRun || !(oRun instanceof ParaRun))
+		return false;
+
+	this.TurnOffCorrectContent();
+	this.Selection.Use = true;
+	this.Set_SelectionContentPos(oStartPos, oEndPos);
+	this.Remove(1, false, false, false, false);
+	this.RemoveSelection();
+	this.TurnOnCorrectContent();
+
+	if (this.GetClassByPos(_oStartPos) !== oRun
+		|| oRun.GetElementsCount() < nInRunPos)
+		return false;
+
+	oRun.AddText(sReplace, nInRunPos);
+	oRun.SetThisElementCurrentInParagraph();
+
+	return true;
+};
+Paragraph.prototype.private_GetCurrentWordParaPos = function()
+{
 	var oLItem = this.GetPrevRunElement();
 	var oRItem = this.GetNextRunElement();
 
 	if (!oLItem && !oRItem)
-		return false;
+		return null;
 
 	var oStartPos = null;
 	var oEndPos   = null;
@@ -16281,7 +16391,7 @@ Paragraph.prototype.SelectCurrentWord = function()
 		this.Get_WordEndPos(oSearchEPos, oCurPos);
 
 		if (true !== oSearchEPos.Found)
-			return false;
+			return null;
 
 		oEndPos = oSearchEPos.Pos;
 	}
@@ -16295,20 +16405,18 @@ Paragraph.prototype.SelectCurrentWord = function()
 		this.Get_WordStartPos(oSearchSPos, oCurPos);
 
 		if (true !== oSearchSPos.Found)
-			return false;
+			return null;
 
 		oStartPos = oSearchSPos.Pos;
 	}
 
 	if (!oStartPos || !oEndPos || 0 === oStartPos.Compare(oEndPos))
-		return false;
+		return null;
 
-	// Выставим временно селект от начала и до конца слова
-	this.Selection.Use = true;
-	this.Set_SelectionContentPos(oStartPos, oEndPos);
-	this.Document_SetThisElementCurrent();
-
-	return true;
+	return {
+		Start : oStartPos,
+		End   : oEndPos
+	};
 };
 /**
  * Добавляем метки переноса текста во время рецензирования
