@@ -5244,7 +5244,7 @@ CChartsDrawer.prototype =
 		k += angel;
 
 		// получаем точки основания цилиндра через парамметрические уравнения эллиптического цилиндра
-		for (var t = k; t <= Math.PI * 2 + k + dt * 2; t += dt) {
+		for (var t = k; t <= Math.PI * 2 + k; t += dt) {
 			A = sizes1 * Math.cos(t);
 			B = sizes2 * Math.sin(t);
 
@@ -5293,15 +5293,22 @@ CChartsDrawer.prototype =
 		if (check) {
 			for (var k = segmentPoints.length - 1; i <= k; k--) {
 				if (this._isVisibleVerge3D(segmentPoints[k], segmentPoints[k - 1], segmentPoints2[k - 1], val, true)) {
-					sortCylinderPoints1.unshift(segmentPoints[k - 1]);
-					sortCylinderPoints2.unshift(segmentPoints2[k - 1]);
+					//sortCylinderPoints1.unshift(segmentPoints[k - 1]);
+					//sortCylinderPoints2.unshift(segmentPoints2[k - 1]);
+					sortCylinderPoints1.unshift(segmentPoints[k]);
+					sortCylinderPoints2.unshift(segmentPoints2[k]);
+					// sortCylinderPoints1.push(segmentPoints[k - 1]);
+					// sortCylinderPoints2.push(segmentPoints2[k - 1]);
 				}
 			}
 		}		
-		if (sortCylinderPoints2.length === 0 || sortCylinderPoints1.length === 0) {
-			sortCylinderPoints1 = segmentPoints;
-			sortCylinderPoints2 = segmentPoints2;
-		}
+		// if (sortCylinderPoints2.length === 0 || sortCylinderPoints1.length === 0) {
+		// 	console.log(segmentPoints, segmentPoints2)
+		// 	sortCylinderPoints1 = segmentPoints;
+		// 	sortCylinderPoints2 = segmentPoints2;
+		// }
+		sortCylinderPoints1 = sortCylinderPoints1.length === 0 ? segmentPoints : sortCylinderPoints1;
+		sortCylinderPoints2 = sortCylinderPoints2.length === 0 ? segmentPoints2 : sortCylinderPoints2;
 		var x12, y12, z12, x22, y22, z22, x32, y32, z32, x42, y42, z42, x52, y52, z52, x62, y62, z62, x72, y72, z72, x82, y82, z82;
 		var point1, point2, point4, point5, point6, point8;
 
