@@ -15698,6 +15698,12 @@
 
 		this.canChangeColWidth = isNotHistory ? c_oAscCanChangeColWidth.none : c_oAscCanChangeColWidth.numbers;
 		this._updateRange(bbox);
+		if (bbox && (bbox.getType() === c_oAscSelectionType.RangeMax || bbox.getType() === c_oAscSelectionType.RangeCol)) {
+			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
+			if (bbox.getType() === c_oAscSelectionType.RangeMax) {
+				this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
+			}
+		}
 		this.canChangeColWidth = c_oAscCanChangeColWidth.none;
 		this.draw(lockDraw);
 
