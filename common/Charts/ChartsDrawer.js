@@ -5502,7 +5502,7 @@ drawBarChart.prototype = {
 					}
 				}
 
-				//shapeType = 5; //раскоментировать для теста пирамид
+				shapeType = 5; //раскоментировать для теста пирамид
 				tempValues[i][idx] = val;
 
 				startYColumnPosition = this._getStartYColumnPosition(seriesHeight, i, idx, val, yPoints, prevVal, shapeType, axisMax, axisMin);
