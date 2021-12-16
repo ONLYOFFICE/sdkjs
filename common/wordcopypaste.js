@@ -9166,26 +9166,25 @@ PasteProcessor.prototype =
 			}
 
 			var sSrc = node.getAttribute("src");
-			if ((!window["Asc"] || (window["Asc"] && window["Asc"]["editor"] === undefined)) &&
-				(isNaN(nWidth) || isNaN(nHeight) || !(typeof nWidth === "number") ||
-					!(typeof nHeight === "number")//первое условие - мы не в редакторе таблиц, тогда выполняем
-					|| nWidth === 0 || nHeight === 0) && sSrc) {
+
+			if (isNaN(nWidth)) nWidth = 0;
+            if (isNaN(nHeight)) nHeight = 0;
+
+			if (sSrc && (nWidth === 0 || nHeight === 0)) {
 				var img_prop = new Asc.asc_CImgProperty();
 				img_prop.asc_putImageUrl(sSrc);
-				var or_sz = img_prop.asc_getOriginSize(editor);
-				nWidth = or_sz.Width / g_dKoef_pix_to_mm;
-				nHeight = or_sz.Height / g_dKoef_pix_to_mm;
-			} else if (bPresentation) {
-				nWidth *= g_dKoef_pix_to_mm;
-				nHeight *= g_dKoef_pix_to_mm;
-			}
+				var or_sz = img_prop.asc_getOriginSize(window['Asc']['editor'] || window['editor']);
+				nWidth = or_sz.Width;
+				nHeight = or_sz.Height;
+			} else {
+                nWidth *= AscCommon.g_dKoef_pix_to_mm;
+                nHeight *= AscCommon.g_dKoef_pix_to_mm;
+            }
 
-			if (!nWidth) {
-				nWidth = bPresentation ? oThis.defaultImgWidth : oThis.defaultImgWidth / g_dKoef_pix_to_mm;
-			}
-			if (!nHeight) {
-				nHeight = bPresentation ? oThis.defaultImgHeight : oThis.defaultImgHeight / g_dKoef_pix_to_mm;
-			}
+            if (!nWidth)
+                nWidth = oThis.defaultImgWidth;
+            if (!nHeight)
+                nHeight = oThis.defaultImgHeight;
 
 			if (bPresentation) {
 				if (nWidth && nHeight && sSrc) {
@@ -9204,8 +9203,6 @@ PasteProcessor.prototype =
 					if (nWidth && nHeight && sSrc) {
 						sSrc = oThis.oImages[sSrc];
 						if (sSrc) {
-							nWidth = nWidth * g_dKoef_pix_to_mm;
-							nHeight = nHeight * g_dKoef_pix_to_mm;
 							//вписываем в oThis.dMaxWidth
 							var bUseScaleKoef = oThis.bUseScaleKoef;
 							var dScaleKoef = oThis.dScaleKoef;
