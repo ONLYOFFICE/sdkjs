@@ -2943,10 +2943,18 @@ ParaRun.prototype.GetSelectedText = function(bAll, bClearText, oPr)
 			{
 				if (oPr && true === oPr.NewLineParagraph)
 				{
-					if (this.Paragraph && null === this.Paragraph.Get_DocumentNext() && true === this.Paragraph.Parent.IsTableCellContent() && true !== this.Paragraph.Parent.IsLastTableCellInRow(true))
-						Str += '\t';
+					var oParagraph = this.GetParagraph();
+					if (oParagraph && null === oParagraph.Get_DocumentNext() && oParagraph.Parent.IsTableCellContent())
+					{
+						if (!oParagraph.Parent.IsLastTableCellInRow(true))
+							Str += oPr.TableCellSeparator ? oPr.TableCellSeparator : '\t';
+						else
+							Str += oPr.TableRowSeparator ? oPr.TableRowSeparator : '\r\n';
+					}
 					else
-						Str += '\r\n';
+					{
+						Str += oPr.ParaSeparator ? oPr.ParaSeparator : '\r\n';
+					}
 				}
 
 				break;
