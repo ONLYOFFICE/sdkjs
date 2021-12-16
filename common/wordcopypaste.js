@@ -9168,7 +9168,7 @@ PasteProcessor.prototype =
 			var sSrc = node.getAttribute("src");
 
 			if (isNaN(nWidth)) nWidth = 0;
-            if (isNaN(nHeight)) nHeight = 0;
+			if (isNaN(nHeight)) nHeight = 0;
 
 			if (sSrc && (nWidth === 0 || nHeight === 0)) {
 				var img_prop = new Asc.asc_CImgProperty();
@@ -9177,14 +9177,14 @@ PasteProcessor.prototype =
 				nWidth = or_sz.Width;
 				nHeight = or_sz.Height;
 			} else {
-                nWidth *= AscCommon.g_dKoef_pix_to_mm;
-                nHeight *= AscCommon.g_dKoef_pix_to_mm;
-            }
+				nWidth *= AscCommon.g_dKoef_pix_to_mm;
+				nHeight *= AscCommon.g_dKoef_pix_to_mm;
+			}
 
-            if (!nWidth)
-                nWidth = oThis.defaultImgWidth;
-            if (!nHeight)
-                nHeight = oThis.defaultImgHeight;
+			if (!nWidth)
+				nWidth = oThis.defaultImgWidth;
+			if (!nHeight)
+				nHeight = oThis.defaultImgHeight;
 
 			if (bPresentation) {
 				if (nWidth && nHeight && sSrc) {
