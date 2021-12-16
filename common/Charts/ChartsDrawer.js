@@ -4012,8 +4012,6 @@ CChartsDrawer.prototype =
 
 			} else {
 
-				path.lnTo(segmentPoints[endIndex].x / pxToMm * pathW, segmentPoints[endIndex].y / pxToMm * pathH);
-				path.lnTo(segmentPoints2[endIndex].x / pxToMm * pathW, segmentPoints2[endIndex].y / pxToMm * pathH);
 				path.moveTo(segmentPoints[endIndex].x / pxToMm * pathW, segmentPoints[endIndex].y / pxToMm * pathH)
 			
 				for (var k = endIndex; k <= startIndex; k++) {
@@ -4027,6 +4025,7 @@ CChartsDrawer.prototype =
 						path.lnTo(segmentPoints2[k].x / pxToMm * pathW, segmentPoints2[k].y / pxToMm * pathH);
 					}
 				}
+				path.lnTo(segmentPoints[endIndex].x / pxToMm * pathW, segmentPoints[endIndex].y / pxToMm * pathH);
 			}
 
 		}
@@ -4867,10 +4866,12 @@ CChartsDrawer.prototype =
 			}
 		}
 		if (this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
-			if (hbar && (subType === "stacked" || subType === "stackedPer")) {
-				startX = val < 0 ? --startX : ++startX; 
-			} else if (val < 0 && !hbar) {
-				++startY;
+			if (subType === "stacked" || subType === "stackedPer") {
+				if (hbar) {
+					startX = val < 0 ? --startX : ++startX;
+				} else {
+					startY = val < 0 ? ++startY : --startY;
+				}
 			}
 		}
 
@@ -5231,7 +5232,7 @@ CChartsDrawer.prototype =
 				sizes22 = 0;
 				sizes1 = points.wDown;
 				sizes2 = points.lDown;
-			} else if ((val < 0 || (hbar && subType !== "normal")) && this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+			} else if ((subType === "stacked" || subType === "stackedPer") && this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
 				sizes12 = points.wUp !== 0 ? points.wUp : individualBarWidth / 2;
 				sizes22 = points.lUp !== 0 ? points.lUp : perspectiveDepth / 2;
 				sizes1 = points.wDown;
@@ -5319,13 +5320,12 @@ CChartsDrawer.prototype =
 			}
 		}		
 
-		if ((sortCylinderPoints1.length === 0 || sortCylinderPoints2.length === 0) && check) {
+		// проверяем если все точки поверхности цилиндра(конуса) либо видимы либо невидимы
+		// если уловие выполняется, то для отрисовки цилиндра(конуса) достаточно отрисовать эллипс (т.е вид сверху или снизу)
+		if (sortCylinderPoints1.length === 0 || sortCylinderPoints2.length === 0) {
 			sortCylinderPoints1 = segmentPoints;
 			sortCylinderPoints2 = segmentPoints2;
 			check = false;
-		} else {
-			sortCylinderPoints1 = (sortCylinderPoints1.length === 0) || !check  ? segmentPoints : sortCylinderPoints1;
-			sortCylinderPoints2 = (sortCylinderPoints2.length === 0) || !check  ? segmentPoints2 : sortCylinderPoints2;
 		}
 
 		var x12, y12, z12, x22, y22, z22, x32, y32, z32, x42, y42, z42, x52, y52, z52, x62, y62, z62, x72, y72, z72, x82, y82, z82;
