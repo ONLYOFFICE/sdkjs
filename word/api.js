@@ -4230,20 +4230,21 @@ background-repeat: no-repeat;\
 				Unifill.fill.color = AscFormat.CorrectUniColor(color, Unifill.fill.color, 1);
 
 				this.WordControl.m_oLogicDocument.SetParagraphShd({
-					Value   : Asc.c_oAscShd.Clear,
-					Color   : {
+					Value     : Asc.c_oAscShd.Clear,
+					Color     : {
 						r    : color.asc_getR(),
 						g    : color.asc_getG(),
 						b    : color.asc_getB(),
 						Auto : false
 					},
-					Fill    : {
+					Fill      : {
 						r    : color.asc_getR(),
 						g    : color.asc_getG(),
 						b    : color.asc_getB(),
 						Auto : false
 					},
-					Unifill : Unifill
+					Unifill   : Unifill,
+					ThemeFill : Unifill
 				});
 			}
 

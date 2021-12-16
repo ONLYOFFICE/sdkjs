@@ -9898,10 +9898,11 @@ function CDocumentShd()
 	this.Fill    = undefined;
 	this.Unifill = undefined;
 	this.FillRef = undefined;
-	this.themeFill = undefined;
+	this.ThemeFill = undefined;
+
 	// TODO:
 	//  1. this.Color по умолчанию должен быть undefined
-	//  2. Добавить аналог для themeFill и переименовать Unifill в themeColor
+	//  2. Переименовать Unifill в ThemeColor
 }
 
 CDocumentShd.prototype =
@@ -9978,6 +9979,9 @@ CDocumentShd.prototype.Copy = function()
 	if (undefined !== this.Fill)
 		Shd.Fill = new CDocumentColor(this.Fill.r, this.Fill.g, this.Fill.b, this.Fill.Auto);
 
+	if (undefined !== this.ThemeFill)
+		Shd.ThemeFill = this.ThemeFill.createDuplicate();
+
 	return Shd;
 };
 CDocumentShd.prototype.Compare = function(oShd)
@@ -9992,7 +9996,10 @@ CDocumentShd.prototype.IsEqual = function(oShd)
 	if (Asc.c_oAscShd.Nil === this.Value)
 		return true;
 
-	return (IsEqualStyleObjects(this.Color, oShd.Color) && IsEqualStyleObjects(this.Fill, oShd.Fill) && IsEqualStyleObjects(this.Unifill, oShd.Unifill));
+	return (IsEqualStyleObjects(this.Color, oShd.Color)
+		&& IsEqualStyleObjects(this.Fill, oShd.Fill)
+		&& IsEqualStyleObjects(this.Unifill, oShd.Unifill)
+		&& IsEqualStyleObjects(this.ThemeFill, oShd.ThemeFill));
 };
 CDocumentShd.prototype.Is_Equal = function(Shd)
 {
@@ -10000,11 +10007,12 @@ CDocumentShd.prototype.Is_Equal = function(Shd)
 };
 CDocumentShd.prototype.InitDefault = function()
 {
-	this.Value   = Asc.c_oAscShd.Nil;
-	this.Color   = new CDocumentColor(0, 0, 0, false);
-	this.Unifill = undefined;
-	this.FillRef = undefined;
-	this.Fill    = undefined;
+	this.Value     = Asc.c_oAscShd.Nil;
+	this.Color     = new CDocumentColor(0, 0, 0, false);
+	this.Unifill   = undefined;
+	this.FillRef   = undefined;
+	this.Fill      = undefined;
+	this.ThemeFill = undefined;
 };
 CDocumentShd.prototype.Set_FromObject = function(oShd)
 {
@@ -10029,6 +10037,9 @@ CDocumentShd.prototype.Set_FromObject = function(oShd)
 
 		if (oShd.Fill)
 			this.Fill = new CDocumentColor(oShd.Fill.r, oShd.Fill.g, oShd.Fill.b, oShd.Fill.Auto);
+
+		if (oShd.ThemeFill)
+			this.ThemeFill = oShd.ThemeFill.createDuplicate();
 	}
 	else if (oShd.Color)
 	{
@@ -10047,12 +10058,12 @@ CDocumentShd.prototype.GetSimpleColor = function(oTheme, oColorMap)
 	// TODO: Пока у нас неправильно работает сохранение и открытие в DOCX, поэтому считаем, что
 	//       цвет, заданный в теме влияет на оба цвета, чтобы работало нормально в текущей схеме
 
-	if (undefined !== this.Unifill)
+	if (undefined !== this.ThemeFill)
 	{
 		if (oTheme && oColorMap)
-			this.Unifill.check(oTheme, oColorMap);
+			this.ThemeFill.check(oTheme, oColorMap);
 
-		var RGBA = this.Unifill.getRGBAColor();
+		var RGBA = this.ThemeFill.getRGBAColor();
 		oFillColor = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B, false);
 	}
 	else if (undefined !== this.Fill)
@@ -10298,6 +10309,16 @@ CDocumentShd.prototype.Write_ToBinary = function(Writer)
 		{
 			Writer.WriteBool(false);
 		}
+
+		if (this.ThemeFill)
+		{
+			Writer.WriteBool(true);
+			this.ThemeFill.Write_ToBinary(Writer);
+		}
+		else
+		{
+			Writer.WriteBool(false);
+		}
 	}
 };
 CDocumentShd.prototype.Read_FromBinary = function(Reader)
@@ -10333,6 +10354,12 @@ CDocumentShd.prototype.Read_FromBinary = function(Reader)
 		{
 			this.Fill = new CDocumentColor();
 			this.Fill.Read_FromBinary(Reader);
+		}
+
+		if (Reader.GetBool())
+		{
+			this.ThemeFill = new AscFormat.CUniFill();
+			this.ThemeFill.Read_FromBinary(Reader);
 		}
 	}
 	else

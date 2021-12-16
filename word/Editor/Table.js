@@ -1989,6 +1989,8 @@ CTable.prototype.Set_Props = function(Props)
 				var Row = this.Content[CurRow];
 				for (var CurCell = 0; CurCell < Row.Get_CellsCount(); CurCell++)
 				{
+					var oUnifill = Props.CellsBackground.Unifill;
+
 					var Cell   = Row.Get_Cell(CurCell);
 					var NewShd = {
 						Value : Props.CellsBackground.Value,
@@ -2005,7 +2007,8 @@ CTable.prototype.Set_Props = function(Props)
 							Auto : false
 						},
 
-						Unifill : Props.CellsBackground.Unifill.createDuplicate()
+						Unifill   : oUnifill ? oUnifill.createDuplicate() : undefined,
+						ThemeFill : oUnifill ? oUnifill.createDuplicate() : undefined
 					};
 
 					Cell.Set_Shd(NewShd);
@@ -2024,6 +2027,7 @@ CTable.prototype.Set_Props = function(Props)
 
 				if (Props.CellsBackground.Value != Cell_shd.Value || Props.CellsBackground.Color.r != Cell_shd.Color.r || Props.CellsBackground.Color.g != Cell_shd.Color.g || Props.CellsBackground.Color.b != Cell_shd.Color.b || !AscFormat.CompareUnifillBool(Props.CellsBackground.Unifill, Cell_shd.Unifill))
 				{
+					var oUnifill = Props.CellsBackground.Unifill;
 					var NewShd = {
 						Value : Props.CellsBackground.Value,
 						Color : {
@@ -2040,7 +2044,9 @@ CTable.prototype.Set_Props = function(Props)
 							Auto : false
 						},
 
-						Unifill : Props.CellsBackground.Unifill.createDuplicate()
+						Unifill   : oUnifill ? oUnifill.createDuplicate() : undefined,
+						ThemeFill : oUnifill ? oUnifill.createDuplicate() : undefined
+
 					};
 
 					Cell.Set_Shd(NewShd);
@@ -2056,6 +2062,7 @@ CTable.prototype.Set_Props = function(Props)
 
 			if (Props.CellsBackground.Value != Cell_shd.Value || Props.CellsBackground.Color.r != Cell_shd.Color.r || Props.CellsBackground.Color.g != Cell_shd.Color.g || Props.CellsBackground.Color.b != Cell_shd.Color.b || !AscFormat.CompareUnifillBool(Props.CellsBackground.Unifill, Cell_shd.Unifill))
 			{
+				var oUnifill = Props.CellsBackground.Unifill;
 				var NewShd = {
 					Value : Props.CellsBackground.Value,
 					Color : {
@@ -2071,7 +2078,8 @@ CTable.prototype.Set_Props = function(Props)
 						b    : Props.CellsBackground.Color.b,
 						Auto : false
 					},
-					Unifill : Props.CellsBackground.Unifill.createDuplicate()
+					Unifill   : oUnifill ? oUnifill.createDuplicate() : undefined,
+					ThemeFill : oUnifill ? oUnifill.createDuplicate() : undefined
 				};
 
 				Cell.Set_Shd(NewShd);

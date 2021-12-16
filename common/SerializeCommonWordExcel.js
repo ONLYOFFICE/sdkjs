@@ -263,41 +263,34 @@ BinaryCommonWriter.prototype.WriteShd = function(Shd)
 	var fill = null;
 	if (null != Shd.Fill)
 		fill = Shd.Fill;
-	else if (null != Shd.themeFill) {
+	else if (null != Shd.ThemeFill) {
 		var doc = editor.WordControl.m_oLogicDocument;
-		Shd.themeFill.check(doc.Get_Theme(), doc.Get_ColorMap());
-		var RGBA = Shd.themeFill.getRGBAColor();
+		Shd.ThemeFill.check(doc.Get_Theme(), doc.Get_ColorMap());
+		var RGBA = Shd.ThemeFill.getRGBAColor();
 		fill = new AscCommonWord.CDocumentColor(RGBA.R, RGBA.G, RGBA.B);
 	}
     if (null != color && !color.Auto)
         this.WriteColor(c_oSerShdType.Color, color);
 	if (null != fill && !fill.Auto)
         this.WriteColor(c_oSerShdType.Fill, fill);
-	if(null != Shd.Unifill || (null != Shd.Color && Shd.Color.Auto))
+
+	if(Shd.Unifill || (Shd.Color && Shd.Color.Auto))
     {
-		//ColorTheme и FillTheme перепутаны в x2t
-		this.memory.WriteByte(c_oSerShdType.FillTheme);
+		this.memory.WriteByte(c_oSerShdType.ColorTheme);
 		this.memory.WriteByte(c_oSerPropLenType.Variable);
-		this.WriteItemWithLength(function(){_this.WriteColorTheme(Shd.Unifill, Shd.Color);});
+		this.WriteItemWithLength(function()
+		{
+			_this.WriteColorTheme(Shd.Unifill, Shd.Color);
+		});
     }
 
-	// TODO: Пока оставим так, до тех пор пока не будут переделаны по-нормальному ThemeFill и ThemeColor
-	if (Shd.themeFill || (Shd.Fill && Shd.Fill.Auto))
+	if (Shd.ThemeFill || (Shd.Fill && Shd.Fill.Auto))
 	{
-		this.memory.WriteByte(c_oSerShdType.ColorTheme);
+		this.memory.WriteByte(c_oSerShdType.FillTheme);
 		this.memory.WriteByte(c_oSerPropLenType.Variable);
 		this.WriteItemWithLength(function()
 		{
-			_this.WriteColorTheme(Shd.themeFill, Shd.Fill);
-		});
-	}
-	else if (Shd.Unifill)
-	{
-		this.memory.WriteByte(c_oSerShdType.ColorTheme);
-		this.memory.WriteByte(c_oSerPropLenType.Variable);
-		this.WriteItemWithLength(function()
-		{
-			_this.WriteColorTheme(Shd.Unifill, Shd.Fill);
+			_this.WriteColorTheme(Shd.ThemeFill, Shd.Fill);
 		});
 	}
 };
@@ -590,9 +583,8 @@ Binary_CommonReader.prototype.ReadShd = function(type, length, Shd, themeColor, 
         case c_oSerShdType.Value: Shd.Value = this.stream.GetUChar();break;
         case c_oSerShdType.Color: Shd.Color = this.ReadColor();break;
 		case c_oSerShdType.ColorTheme:
-			//ColorTheme и FillTheme перепутаны в x2t
 			res = this.Read2(length, function(t, l){
-				return oThis.ReadColorTheme(t, l, themeFill);
+				return oThis.ReadColorTheme(t, l, themeColor);
 			});
 			break;
 		case c_oSerShdType.Fill:
@@ -600,7 +592,7 @@ Binary_CommonReader.prototype.ReadShd = function(type, length, Shd, themeColor, 
 			break;
 		case c_oSerShdType.FillTheme:
 			res = this.Read2(length, function(t, l){
-				return oThis.ReadColorTheme(t, l, themeColor);
+				return oThis.ReadColorTheme(t, l, themeFill);
 			});
 			break;
         default:

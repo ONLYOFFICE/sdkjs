@@ -1723,24 +1723,22 @@ function ReadDocumentShd(length, bcr, oShd) {
 	var res = bcr.Read2(length, function (t, l) {
 		return bcr.ReadShd(t, l, oShd, themeColor, themeFill);
 	});
-	//1. this.Color по умолчанию должен быть undefined
-	if(!oShd.Color) {
+
+	// TODO: Как только будем нормально воспринимать CDocumentShd.Color = undefined, убрать отсюда проверку (!oShd.Color)
+	if (!oShd.Color || themeColor.Auto)
 		oShd.Color = new AscCommonWord.CDocumentColor(255, 255, 255, true);
-	}
-	if (true == themeColor.Auto && null != oShd.Color)
-		oShd.Color.Auto = true;//todo менять полностью цвет
-	if (true === themeFill.Auto) {
-		if(!oShd.Fill) {
-			oShd.Fill = new AscCommonWord.CDocumentColor(255, 255, 255, true);
-		}
-		oShd.Fill.Auto = true;//todo менять полностью цвет
-	}
+
+	if (themeFill.Auto)
+		oShd.Fill = new AscCommonWord.CDocumentColor(255, 255, 255, true);
+
 	var unifill = CreateThemeUnifill(themeColor.Color, themeColor.Tint, themeColor.Shade);
-	if (null != unifill)
+	if (unifill)
 		oShd.Unifill = unifill;
+
 	unifill = CreateThemeUnifill(themeFill.Color, themeFill.Tint, themeFill.Shade);
-	if (null != unifill)
-		oShd.themeFill = unifill;
+	if (unifill)
+		oShd.ThemeFill = unifill;
+
 	return oShd;
 }
 

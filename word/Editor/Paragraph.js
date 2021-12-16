@@ -10704,6 +10704,14 @@ Paragraph.prototype.Set_Shd = function(_Shd, bDeleteUndefined)
 			this.Pr.Shd.Unifill = Shd.Unifill;
 		}
 
+		if (Shd.ThemeFill || true === bDeleteUndefined)
+		{
+			var oThemeFill = Shd.ThemeFill ? Shd.ThemeFill.createDuplicate() : undefined;
+			this.private_AddPrChange();
+			History.Add(new CChangesParagraphShdThemeFill(this, this.Pr.Shd.ThemeFill, oThemeFill));
+			this.Pr.Shd.ThemeFill = oThemeFill;
+		}
+
 		if (Shd.Fill || true === bDeleteUndefined)
 		{
 			this.private_AddPrChange();
