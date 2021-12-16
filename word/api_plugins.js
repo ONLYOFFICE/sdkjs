@@ -325,7 +325,7 @@
      * @example
      * window.Asc.plugin.executeMethod("GetSelectedText", [{NewLine:true, NewLineParagraph:true, Numbering:true}])
      */
-    window["asc_docs_api"].prototype["pluginMethod_GetSelectedText"] = function(numbering)
+    window["asc_docs_api"].prototype["pluginMethod_GetSelectedText"] = function(prop)
     {
         var oLogicDocument = this.private_GetLogicDocument();
         if (!oLogicDocument)
