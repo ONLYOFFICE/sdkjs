@@ -1981,6 +1981,8 @@
 					res = leftDir;
 				} else if (coord1 === v1 && coord2 < v2) {
 					res = rightDir;
+				} else {
+					res = rightDir;
 				}
 			} else {
 				res = rightDir;
