@@ -26375,6 +26375,58 @@ CDocument.prototype.GetCommentsManager = function()
 {
 	return this.Comments;
 };
+/**
+ * Убираем все, что связано с формами
+ * @param {boolean} [isUseHistory=false] использовать ли историю и создать точку для этого действия
+ */
+CDocument.prototype.DocxfToDocx = function(isUseHistory)
+{
+	if (isUseHistory)
+		this.StartAction(AscDFH.historydescription_Document_Docxf_To_Docx);
+
+
+	for (var sId in this.SpecialForms)
+	{
+		var oForm = this.SpecialForms[sId];
+
+		var oShape, oParaDrawing;
+		if (oForm.IsFixedForm()
+			&& (oShape = oForm.GetFixedFormWrapperShape())
+			&& (oParaDrawing = oShape.parent)
+			&& oParaDrawing instanceof ParaDrawing)
+		{
+			var oParentParagraph = oParaDrawing.GetParagraph();
+			if (oParentParagraph && oParentParagraph.Parent && oParentParagraph.Parent.Is_DrawingShape())
+				oForm.ConvertFormToInline();
+			else
+				oParaDrawing.SetForm(false);
+		}
+
+		var oCheckBoxPr;
+		if ((oCheckBoxPr = oForm.GetCheckBoxPr()) && oCheckBoxPr.GetGroupKey())
+		{
+			var oNewPr = oCheckBoxPr.Copy();
+			oNewPr.SetGroupKey(undefined);
+			oForm.SetCheckBoxPr(oNewPr);
+		}
+
+		if (oForm.GetPictureFormPr())
+			oForm.SetPictureFormPr(undefined);
+
+		if (oForm.GetTextFormPr())
+			oForm.SetTextFormPr(undefined);
+
+		oForm.SetFormPr(undefined);
+	}
+
+	if (isUseHistory)
+	{
+		this.Recalculate();
+		this.UpdateInterface();
+		this.UpdateSelection();
+		this.FinalizeAction();
+	}
+};
 
 function CDocumentSelectionState()
 {

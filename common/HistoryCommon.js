@@ -1225,6 +1225,9 @@
 			case AscDFH.historydescription_Document_ReplaceCurrentWord:
 				sString = "Document_ReplaceCurrentWord";
 				break;
+			case AscDFH.historydescription_Document_Docxf_To_Docx:
+				sString = "Document_Docxf_To_Docx";
+				break;
 		}
 		return sString;
 	}
@@ -3696,6 +3699,7 @@
 	window['AscDFH'].historydescription_Document_ResolveAllComments                 = 0x018b;
 	window['AscDFH'].historydescription_Document_ConvertFormFixedType               = 0x018c;
 	window['AscDFH'].historydescription_Document_ReplaceCurrentWord                 = 0x018d;
+	window['AscDFH'].historydescription_Document_Docxf_To_Docx                      = 0x018e;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
