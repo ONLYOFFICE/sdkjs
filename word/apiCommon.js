@@ -2153,26 +2153,7 @@
 	};
 	CAscDateTime.prototype.get_FormatsExamples = function()
 	{
-		// TODO: Сдесь форматы для английского языка, надо добавить остальные
-		return [
-			"M/d/yyyy",
-			"dddd, MMMM d, yyyy",
-			"MMMM d, yyyy",
-			"M/d/yy",
-			"yyyy-MM-dd",
-			"d-MMM-yy",
-			"M.d.yyyy",
-			"MMM. d, yy",
-			"d MMMM yyyy",
-			"MMMM yy",
-			"MMM-yy",
-			"M/d/yyyy h:mm am/pm",
-			"M/d/yyyy h:mm:ss am/pm",
-			"h:mm am/pm",
-			"h:mm:ss am/pm",
-			"HH:mm",
-			"HH:mm:ss"
-		];
+		return Asc.c_oAscDateTimeFormat[this.Lang] ? Asc.c_oAscDateTimeFormat[this.Lang] : Asc.c_oAscDateTimeFormat[lcid_enUS];
 	};
 	CAscDateTime.prototype.get_String = function(sFormat, sDate, nLangId)
 	{
