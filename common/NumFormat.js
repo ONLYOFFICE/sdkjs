@@ -641,6 +641,7 @@ function NumFormat(bAddMinusIfNes)
     this.Color = -1;
 	this.ComporationOperator = null;
 	this.LCID = null;
+	this.CurrencyString = null;
     
 	this.bGeneralChart = false;//если в формате только один текст(например в chart "Основной")
     this.bAddMinusIfNes = bAddMinusIfNes;//когда не задано форматирование для отрицательных чисел иногда надо вставлять минус
@@ -1794,6 +1795,7 @@ NumFormat.prototype =
                     } else if (numFormat_Bracket == item.type) {
                         if (null != item.CurrencyString) {
 							this.bCurrency = true;
+							this.CurrencyString = item.CurrencyString;
                             sText += item.CurrencyString;
                         }
 						if (null != item.Lid) {
@@ -2499,6 +2501,7 @@ NumFormat.prototype =
 		info.asc_setDecimalPlaces(this.aFracFormat.length);
 		info.asc_setSeparator(this.bThousandSep);
 		info.asc_setSymbol(this.LCID);
+		info.asc_setCurrencySymbol(this.CurrencyString);
 		return info;
 	},
 	isGeneral: function() {
