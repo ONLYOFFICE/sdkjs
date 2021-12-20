@@ -4557,7 +4557,10 @@ CChartsDrawer.prototype =
 			}
 
 			if(null === res) {
-				if(points[0].val < 0) {
+				if (points[0].val < 0 && points[points.length - 1].val > 0) {
+					res = this.calcProp.type === c_oChartTypes.HBar ? this.cChartSpace.chart.plotArea.catAx.posX * this.calcProp.pxToMM :
+						this.cChartSpace.chart.plotArea.catAx.posY * this.calcProp.pxToMM;
+				} else if (points[0].val < 0) {
 					res = points[points.length - 1].pos * this.calcProp.pxToMM;
 				} else {
 					res = points[0].pos * this.calcProp.pxToMM;
@@ -4745,7 +4748,7 @@ CChartsDrawer.prototype =
 					point3 = point7;
 					point4 = point8;
 				}
-				if (val < 0) {
+				if (this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
 					x5 = startX, y5 = startY - height / 2, z5 = 0 + gapDepth;
 					x6 = startX, y6 = startY - height / 2, z6 = perspectiveDepth + gapDepth;
 					x7 = startX + individualBarValue, y7 = startY - height / 2, z7 = perspectiveDepth + gapDepth;
@@ -5676,10 +5679,14 @@ drawBarChart.prototype = {
 		var startY, height, curVal, prevVal, endBlockPosition, startBlockPosition, maxH, minH, h;
 		var nullPositionOX = this.subType === "stacked" ? this.cChartDrawer.getPositionZero(this.valAx) :
 			this.catAx.posY * this.chartProp.pxToMM;
-		var h;
+
 		if (this.subType === "stacked") {
 			prevVal = this._getStackedValue(this.chart.series, i - 1, j, val);
-			startBlockPosition = prevVal ? this.cChartDrawer.getYPosition(prevVal, this.valAx, null, true) * this.chartProp.pxToMM : nullPositionOX;
+			if (this.valAx.scaling.logBase && val < 0) {
+				startBlockPosition = nullPositionOX;
+			} else {
+				startBlockPosition = prevVal ? this.cChartDrawer.getYPosition(prevVal, this.valAx, null, true) * this.chartProp.pxToMM : nullPositionOX;
+			}
 
 			startY = startBlockPosition;
 			if (this.valAx && this.valAx.scaling.logBase && val < 0) {
