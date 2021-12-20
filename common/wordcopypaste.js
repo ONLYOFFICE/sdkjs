@@ -2219,6 +2219,7 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
     this.oFonts = {};
     this.oImages = {};
 	this.aContent = [];
+	this.AddedFootEndNotes = [];
 
 	this.pasteInExcel = pasteInExcel;
 	this.pasteInPresentationShape = null;
@@ -8855,6 +8856,7 @@ PasteProcessor.prototype =
 
 				//bIsPreviousSpace - игнорируем несколько пробелов подряд
 				var bIsPreviousSpace = false, clonePr;
+				var bIsForFootEndnote = checkEndFootnodeText(node);
 				for (var oIterator = value.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
 					if (oThis.needAddCommentStart) {
 						for (var i = 0; i < oThis.needAddCommentStart.length; i++) {
@@ -8887,7 +8889,7 @@ PasteProcessor.prototype =
 
 							shape.paragraphAdd(Item, false);
 						}
-					} else {
+					} else if (!bIsForFootEndnote){
 						if (null != nUnicode) {
 							if (whiteSpacing && 0xa === nUnicode) {
 								Item = null;
@@ -8915,6 +8917,24 @@ PasteProcessor.prototype =
 
 				}
 			}
+		};
+		var checkEndFootnodeText = function (Item) {
+			if (Item.parentNode)
+			{
+				if (Item.parentNode.nodeName.toLowerCase() === "p" && (Item.parentNode.className === "MsoFootnoteText" || Item.parentNode.className === "MsoEndnoteText"))
+				{
+					return true;
+				}
+				else if (Item.parentNode.nodeName.toLowerCase() === "p")
+				{
+					return false;
+				}
+				else
+				{
+					return checkEndFootnodeText(Item.parentNode);
+				}
+			}
+			return false;
 		};
 
 		var parseNumbering = function () {
@@ -9378,9 +9398,11 @@ PasteProcessor.prototype =
 				var oOldHyperlink = null;
 				var oOldHyperlinkContentPos = null;
 				var oHyperlink = null;
+			
 				if ("a" === sChildNodeName) {
 					var href = child.href;
 					if (null != href) {
+						
 						/*var sDecoded;
 						//decodeURI может выдавать malformed exception, потому что наш сайт в utf8, а некоторые сайты могут кодировать url в своей кодировке(например windows-1251)
 						try {
@@ -9390,19 +9412,52 @@ PasteProcessor.prototype =
 						}
 						href = sDecoded;*/
 						if (href && href.length > 0) {
-							var title = child.getAttribute("title");
-
-							bAddParagraph = oThis._Decide_AddParagraph(child, pPr, bAddParagraph);
-							oHyperlink = new ParaHyperlink();
-							oHyperlink.SetParagraph(oThis.oCurPar);
-							oHyperlink.Set_Value(href);
-							if (null != title) {
-								oHyperlink.SetToolTip(title);
+							var sStr = href.split("#");
+							var sText;
+							if (sStr[1].includes("_ftnref"))
+							{
+								oThis.AddedFootEndNotes[0].oFootnote.Content[0].Content[2].AddText(child.parentNode.parentNode.innerText);
+								oThis.AddedFootEndNotes.splice(0, 1);
 							}
-							oOldHyperlink = oThis.oCurHyperlink;
-							oOldHyperlinkContentPos = oThis.oCurHyperlinkContentPos;
-							oThis.oCurHyperlink = oHyperlink;
-							oThis.oCurHyperlinkContentPos = 0;
+							else if (sStr[1].includes("_ftn"))
+							{
+								sText = child.innerText;
+								sText = sText.replace("[", "").replace("]", "");
+								var oFootnote = oThis.oLogicDocument.Footnotes.CreateFootnote();
+								oFootnote.AddDefaultFootnoteContent(sText);
+								oThis._AddToParagraph(new ParaFootnoteReference(oFootnote, sText));
+								oThis.AddedFootEndNotes.push({oFootnote, sText});
+							}
+							else if (sStr[1].includes("_ednref"))
+							{
+								oThis.AddedFootEndNotes[0].oEndnote.Content[0].Content[2].AddText(child.parentNode.parentNode.innerText);
+								oThis.AddedFootEndNotes.splice(0, 1);
+							}
+							else if (sStr[1].includes("_edn"))
+							{
+								sText = child.innerText;
+								sText = sText.replace("[", "").replace("]", "");
+								var oEndnote = oThis.oLogicDocument.Endnotes.CreateEndnote();
+								oEndnote.AddDefaultEndnoteContent(sText);
+								oThis._AddToParagraph(new ParaEndnoteReference(oEndnote, sText));
+								oThis.AddedFootEndNotes.push({oEndnote, sText});
+							}
+							else
+							{
+								var title = child.getAttribute("title");
+
+								bAddParagraph = oThis._Decide_AddParagraph(child, pPr, bAddParagraph);
+								oHyperlink = new ParaHyperlink();
+								oHyperlink.SetParagraph(oThis.oCurPar);
+								oHyperlink.Set_Value(href);
+								if (null != title) {
+									oHyperlink.SetToolTip(title);
+								}
+								oOldHyperlink = oThis.oCurHyperlink;
+								oOldHyperlinkContentPos = oThis.oCurHyperlinkContentPos;
+								oThis.oCurHyperlink = oHyperlink;
+								oThis.oCurHyperlinkContentPos = 0;
+							}
 						}
 					}
 				}
