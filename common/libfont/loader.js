@@ -236,7 +236,7 @@
 	window['AscFonts'].getDefaultBlitting = function()
     {
         var isUseMap = false;
-        if (AscCommon.AscBrowser.AscBrowser.isAndroidNativeApp)
+        if (AscCommon.AscBrowser.isAndroidNativeApp)
             isUseMap = true;
         else if (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isArm)
             isUseMap = true;
