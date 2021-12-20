@@ -60,7 +60,8 @@ var AscBrowser = {
     isEmulateDevicePixelRatio : false,
     isNeedEmulateUpload : false,
     chromeVersion : 70,
-    iosVersion : 13
+    iosVersion : 13,
+    isAndroidNativeApp : false
 };
 
 // user agent lower case
@@ -147,6 +148,8 @@ AscBrowser.isSailfish = (AscBrowser.userAgent.indexOf("sailfish") > -1);
 AscBrowser.isEmulateDevicePixelRatio = (AscBrowser.userAgent.indexOf("emulatedevicepixelratio") > -1);
 
 AscBrowser.isNeedEmulateUpload = (AscBrowser.userAgent.indexOf("needemulateupload") > -1);
+
+AscBrowser.isAndroidNativeApp = (AscBrowser.userAgent.indexOf("ascandroidwebview") > -1);
 
 AscBrowser.zoom = 1;
 
