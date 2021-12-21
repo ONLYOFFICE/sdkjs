@@ -1845,14 +1845,6 @@
 									ctx.fill();
 									ctx.beginPath();
 
-									if (1 == this.ContentControlObjectState)
-									{
-										ctx.fillStyle = AscCommon.GlobalSkin.ContentControlsAnchorActive;
-										ctx.rect(_x, _y, Math.round(15 * rPR), Math.round(20 * rPR));
-										ctx.fill();
-										ctx.beginPath();
-									}
-
 									var cx = _x - 0.5 * Math.round(rPR) + Math.round(5 * rPR);
 									var cy = _y - 0.5 * Math.round(rPR) + Math.round(5 * rPR);
 
@@ -2057,14 +2049,6 @@
 									ctx.fillStyle = (1 == this.ContentControlObjectState) ? AscCommon.GlobalSkin.ContentControlsAnchorActive : AscCommon.GlobalSkin.ContentControlsBack;
 									ctx.fill();
 									ctx.beginPath();
-
-									if (1 == this.ContentControlObjectState)
-									{
-										ctx.fillStyle = AscCommon.GlobalSkin.ContentControlsAnchorActive;
-										ctx.rect(_x, _y, scaleX_15, scaleY_20);
-										ctx.fill();
-										ctx.beginPath();
-									}
 
 									var cx1 = _x + 5 / _koefX;
 									var cy1 = _y + 5 / _koefY;
@@ -3429,10 +3413,10 @@
 						// draw move rect
 						_x1 = ((drPage.left + koefX * (this.rectMove.x + object.OffsetX)) * rPR) >> 0;
 						_y1 = ((drPage.top + koefY * (this.rectMove.y + object.OffsetY)) * rPR) >> 0;
-						_x2 = ((drPage.left + koefX * (this.rectMove.x + this.rectMove.w + object.OffsetX)) * rPR) >> 0;
+						_x2 = 1 + ((drPage.left + koefX * (this.rectMove.x + this.rectMove.w + object.OffsetX)) * rPR) >> 0;
 						_y2 = _y1;
 						_x3 = _x2;
-						_y3 = ((drPage.top + koefY * (this.rectMove.y + this.rectMove.h + object.OffsetY)) * rPR) >> 0;
+						_y3 = 1 + ((drPage.top + koefY * (this.rectMove.y + this.rectMove.h + object.OffsetY)) * rPR) >> 0;
 						_x4 = _x1;
 						_y4 = _y3;
 
