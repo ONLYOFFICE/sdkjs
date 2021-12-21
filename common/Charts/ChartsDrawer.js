@@ -1814,6 +1814,8 @@ CChartsDrawer.prototype =
 		var manualMax = axis.scaling && axis.scaling.max !== null ? axis.scaling.max : null;
 
 		if (logBase) {
+			yMax = Math.abs(yMax);
+			yMin = Math.abs(yMin);
 			arrayValues = this._getLogArray(yMin, yMax, logBase, axis);
 			return arrayValues;
 		}
@@ -2721,7 +2723,7 @@ CChartsDrawer.prototype =
 	},
 
 	_getYPositionLogBase: function (val, yPoints, isOx, logBase) {
-		if (val < 0) {
+		if (val <= 0) {
 			return 0;
 		}
 
@@ -2771,7 +2773,7 @@ CChartsDrawer.prototype =
 	},
 
 	getLogarithmicValue: function (val, logBase) {
-		if (val < 0) {
+		if (val <= 0) {
 			return 0;
 		}
 
@@ -5495,7 +5497,9 @@ drawBarChart.prototype = {
 				//стартовая позиция колонки Y(+ высота с учётом поправок на накопительные диаграммы)
 				val = parseFloat(seria[j].val);
 				idx = seria[j].idx != null ? seria[j].idx : j;
-
+				if (this.valAx && this.valAx.scaling.logBase) {
+					val = this.cChartDrawer.getLogarithmicValue(val, this.valAx.scaling.logBase);
+				}
 				prevVal = 0;
 				if (this.subType === "stacked" || this.subType === "stackedPer") {
 					for (k = 0; k < tempValues.length; k++) {
@@ -5680,68 +5684,64 @@ drawBarChart.prototype = {
 		var nullPositionOX = this.subType === "stacked" ? this.cChartDrawer.getPositionZero(this.valAx) :
 			this.catAx.posY * this.chartProp.pxToMM;
 
-		if (this.subType === "stacked") {
-			prevVal = this._getStackedValue(this.chart.series, i - 1, j, val);
-			if (this.valAx.scaling.logBase && val < 0) {
-				startBlockPosition = nullPositionOX;
-			} else {
-				startBlockPosition = prevVal ? this.cChartDrawer.getYPosition(prevVal, this.valAx, null, true) * this.chartProp.pxToMM : nullPositionOX;
-			}
-
-			startY = startBlockPosition;
-			if (this.valAx && this.valAx.scaling.logBase && val < 0) {
-				height = 0;
-			} else {
-				curVal = this._getStackedValue(this.chart.series, i, j, val);
-				endBlockPosition = this.cChartDrawer.getYPosition(curVal, this.valAx, null, true) * this.chartProp.pxToMM;
-				height = startBlockPosition - endBlockPosition;
-
-				if (this.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
-					height = -height;
-				}
-			}
-		} else if (this.subType === "stackedPer") {
+		if (this.subType === "stacked" || this.subType === "stackedPer") {
+			curVal = this._getStackedValue(this.chart.series, i, j, val);
 			prevVal = this._getStackedValue(this.chart.series, i - 1, j, val);
 
-			this._calculateSummStacked(j);
-			if (this.valAx.scaling.logBase && i === 0 || !this.summBarVal[j]) {
-				startBlockPosition = nullPositionOX;
-			} else {
-				startBlockPosition = this.cChartDrawer.getYPosition((prevVal / this.summBarVal[j]), this.valAx, null, true) * this.chartProp.pxToMM;
-			}
-
-			startY = startBlockPosition;
-			if (this.valAx && this.valAx.scaling.logBase && val < 0) {
-				height = 0;
-			} else {
-				curVal = this._getStackedValue(this.chart.series, i, j, val);
-				endBlockPosition = this.cChartDrawer.getYPosition((curVal / this.summBarVal[j]), this.valAx, null, true) * this.chartProp.pxToMM;
-				height = startBlockPosition - endBlockPosition;
-
-				if (this.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
-					height = -height;
+			if (this.subType === "stacked") {
+				//если максимальное значение задано вручную, и присутвуют точки, которые больше этого значения
+				if (curVal > axisMax) {
+					curVal = axisMax;
 				}
+				if (curVal < axisMin) {
+					curVal = axisMin;
+				}
+
+				endBlockPosition = this.cChartDrawer.getYPosition(curVal, this.valAx) * this.chartProp.pxToMM;
+				startBlockPosition = prevVal ? this.cChartDrawer.getYPosition(prevVal, this.valAx) * this.chartProp.pxToMM : nullPositionOX;
+			} else {
+				this._calculateSummStacked(j);
+
+				var test = this.summBarVal[j];
+
+				//если максимальное значение задано вручную, и присутвуют точки, которые больше этого значения
+				if (curVal / test > axisMax) {
+					curVal = axisMax * test;
+				}
+				if (curVal / test < axisMin) {
+					curVal = axisMin * test;
+				}
+
+				if (prevVal / test > axisMax) {
+					prevVal = axisMax * test;
+				}
+				if (prevVal / test < axisMin) {
+					prevVal = axisMin * test;
+				}
+
+				endBlockPosition = this.cChartDrawer.getYPosition((curVal / test), this.valAx) * this.chartProp.pxToMM;
+				startBlockPosition = test ? this.cChartDrawer.getYPosition((prevVal / test), this.valAx) * this.chartProp.pxToMM : nullPositionOX;
 			}
 
+			startY = val === 0 ? nullPositionOX : startBlockPosition;
+			height = val === 0 ? val : startBlockPosition - endBlockPosition;
+
+			if (this.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+				height = -height;
+			}
 		} else {
-			startY = nullPositionOX;
-			if (this.valAx && this.valAx.scaling.logBase && val < 0) { //исключение для логарифмической шкалы
-				height = 0;
-			} else {
-				height = nullPositionOX - this.cChartDrawer.getYPosition(val, this.valAx, null, true) *
-					this.chartProp.pxToMM;
-			}
-
+			height = val === 0 ? val : nullPositionOX - this.cChartDrawer.getYPosition(val, this.valAx) * this.chartProp.pxToMM;
+			startY = val === 0 ? nullPositionOX : nullPositionOX;
 		}
-		if (type === AscFormat.BAR_SHAPE_PYRAMID || type === AscFormat.BAR_SHAPE_PYRAMIDTOMAX || 
+		if (type === AscFormat.BAR_SHAPE_PYRAMID || type === AscFormat.BAR_SHAPE_PYRAMIDTOMAX ||
 			type === AscFormat.BAR_SHAPE_CONE || type === AscFormat.BAR_SHAPE_CONETOMAX) {
 			var testMaxHeight = this.cChartDrawer.getYPosition(axisMax, this.valAx) * this.chartProp.pxToMM - nullPositionOX;
 			var testMinHeight = this.cChartDrawer.getYPosition(axisMin, this.valAx) * this.chartProp.pxToMM - nullPositionOX;
 
 			var maxVal = this._getStackedValue(this.chart.series, this.chart.series.length - 1, j, val);
-			h = this.cChartDrawer.getStartStackedPyramidPosition(val, this.chart, this.valAx, j, this.chartProp, 
+			h = this.cChartDrawer.getStartStackedPyramidPosition(val, this.chart, this.valAx, j, this.chartProp,
 				this.summBarVal, maxVal, nullPositionOX, this.subType, this.ptCount, axisMax, axisMin, testMaxHeight, testMinHeight, type, false);
-			
+
 			maxH = h.maxH;
 			minH = h.minH;
 		}
