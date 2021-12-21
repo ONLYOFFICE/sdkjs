@@ -2646,6 +2646,11 @@ function NativeOpenFileP(_params, documentInfo){
         window["native"]["OnCallMenuEvent"](8093, stream); // ASC_PRESENTATIONS_EVENT_TYPE_THEME_INDEX
     });
 
+    // Edit
+
+    _api.asc_registerCallback('asc_canIncreaseIndent', onApiCanIncreaseIndent);
+    _api.asc_registerCallback('asc_canDecreaseIndent', onApiCanDecreaseIndent);
+
     // Comments
 
     _api.asc_registerCallback("asc_onAddComment", onApiAddComment);
@@ -2948,6 +2953,16 @@ function onApiUpdateCommentPosition(uids, posX, posY, leftX) {
 
 function onDocumentPlaceChanged() {
     postDataAsJSONString(null, 23012); // ASC_MENU_EVENT_TYPE_DOCUMENT_PLACE_CHANGED
+}
+
+function onApiCanIncreaseIndent(value) {
+    var data = { "result": value };
+    postDataAsJSONString(data, 8127); // ASC_PRESENTATIONS_EVENT_CANINCREASEINDENT
+}
+
+function onApiCanDecreaseIndent(value) {
+    var data = { "result": value };
+    postDataAsJSONString(data, 8128); // ASC_PRESENTATIONS_EVENT_CANDECREASEINDENT
 }
 
 function onApiSendThemeColors(theme_colors, standart_colors) {
