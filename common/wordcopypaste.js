@@ -8921,7 +8921,8 @@ PasteProcessor.prototype =
 		var checkEndFootnodeText = function (Item) {
 			if (Item.parentNode)
 			{
-				if (Item.parentNode.nodeName.toLowerCase() === "p" && (Item.parentNode.className === "MsoFootnoteText" || Item.parentNode.className === "MsoEndnoteText"))
+				if (Item.parentNode.nodeName.toLowerCase() === "p" && (Item.parentNode.className === "MsoFootnoteText" || Item.parentNode.className === "MsoEndnoteText")
+				|| Item.parentNode.nodeName.toLowerCase() === "span" && (Item.parentNode.className === "MsoFootnoteReference" || Item.parentNode.className === "MsoEndnoteReference"))
 				{
 					return true;
 				}
@@ -9416,30 +9417,40 @@ PasteProcessor.prototype =
 							var sText;
 							if (sStr[1].includes("_ftnref"))
 							{
-								oThis.AddedFootEndNotes[0].oFootnote.Content[0].Content[2].AddText(child.parentNode.parentNode.innerText);
+								oThis.AddedFootEndNotes[0].oFootnote.Content[0].Content[2].AddText(child.parentNode.parentNode.innerText.replace(oThis.AddedFootEndNotes[0].sText, ""));
 								oThis.AddedFootEndNotes.splice(0, 1);
 							}
 							else if (sStr[1].includes("_ftn"))
 							{
 								sText = child.innerText;
-								sText = sText.replace("[", "").replace("]", "");
+								if (sText[0] === "[" && sText[sText.length - 1] === "]")
+									sText = undefined;
 								var oFootnote = oThis.oLogicDocument.Footnotes.CreateFootnote();
 								oFootnote.AddDefaultFootnoteContent(sText);
-								oThis._AddToParagraph(new ParaFootnoteReference(oFootnote, sText));
+								var oAddedRun = new ParaRun(oThis.oCurPar, false);
+								oAddedRun.SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultFootnoteReference());
+								oAddedRun.AddToContent(0, new ParaFootnoteReference(oFootnote, sText));
+								oThis._CommitElemToParagraph(oAddedRun);
+								sText = (sText === undefined) ? child.innerText : sText;
 								oThis.AddedFootEndNotes.push({oFootnote, sText});
 							}
 							else if (sStr[1].includes("_ednref"))
 							{
-								oThis.AddedFootEndNotes[0].oEndnote.Content[0].Content[2].AddText(child.parentNode.parentNode.innerText);
+								oThis.AddedFootEndNotes[0].oEndnote.Content[0].Content[2].AddText(child.parentNode.parentNode.innerText.replace(oThis.AddedFootEndNotes[0].sText, ""));
 								oThis.AddedFootEndNotes.splice(0, 1);
 							}
 							else if (sStr[1].includes("_edn"))
 							{
 								sText = child.innerText;
-								sText = sText.replace("[", "").replace("]", "");
+								if (sText[0] === "[" && sText[sText.length - 1] === "]")
+									sText = undefined;
 								var oEndnote = oThis.oLogicDocument.Endnotes.CreateEndnote();
 								oEndnote.AddDefaultEndnoteContent(sText);
-								oThis._AddToParagraph(new ParaEndnoteReference(oEndnote, sText));
+								var oAddedRun = new ParaRun(oThis.oCurPar, false);
+								oAddedRun.SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultEndnoteReference());
+								oAddedRun.AddToContent(0, new ParaEndnoteReference(oEndnote, sText));
+								oThis._CommitElemToParagraph(oAddedRun);
+								sText = (sText === undefined) ? child.innerText : sText;
 								oThis.AddedFootEndNotes.push({oEndnote, sText});
 							}
 							else
