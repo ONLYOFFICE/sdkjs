@@ -7501,8 +7501,8 @@ var GLOBAL_PATH_COUNT = 0;
                         }
                     }
                     val_ax.yPoints = [];
-                    for (i = 0; i < arr_val_labels_points.length; ++i) {
-                        val_ax.yPoints[i] = { val: arr_val[i], pos: arr_val_labels_points[i] };
+                    for(i = 0; i < arr_val_labels_points.length; ++i){
+                        val_ax.yPoints[i] = {val: arr_val[i], pos: arr_val_labels_points[i]};
                     }
                     cat_ax.xPoints = [];
                     for(i = 0; i < arr_cat_labels_points.length; ++i) {
@@ -8368,8 +8368,8 @@ var GLOBAL_PATH_COUNT = 0;
                     val_ax.xPoints = [];
 
 
-                    for (i = 0; i < arr_val_labels_points.length; ++i) {
-                        val_ax.xPoints[i] = { val: arr_val[i], pos: arr_val_labels_points[i] };
+                    for(i = 0; i < arr_val_labels_points.length; ++i){
+                        val_ax.xPoints[i] = {val: arr_val[i], pos: arr_val_labels_points[i]};
                     }
 
                     cat_ax.yPoints = [];
