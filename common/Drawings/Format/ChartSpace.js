@@ -7501,18 +7501,8 @@ var GLOBAL_PATH_COUNT = 0;
                         }
                     }
                     val_ax.yPoints = [];
-                    if (val_ax.scaling.logBase && arr_val_labels_points.length > 2) {
-                        var step = (arr_val_labels_points[0] - arr_val_labels_points[arr_val_labels_points.length - 1]) / arr_val_labels_points.length;
-                        var pos;
-                        for (i = 0; i < arr_val_labels_points.length; ++i) {
-                            pos = i === 0 ? i : step;
-                            val_ax.yPoints[i] = { val: arr_val[i], pos: arr_val_labels_points[0] - pos };
-                            step += step;
-                        }
-                    } else {
-                        for (i = 0; i < arr_val_labels_points.length; ++i) {
-                            val_ax.yPoints[i] = { val: arr_val[i], pos: arr_val_labels_points[i] };
-                        }
+                    for (i = 0; i < arr_val_labels_points.length; ++i) {
+                        val_ax.yPoints[i] = { val: arr_val[i], pos: arr_val_labels_points[i] };
                     }
                     cat_ax.xPoints = [];
                     for(i = 0; i < arr_cat_labels_points.length; ++i) {
@@ -8378,18 +8368,8 @@ var GLOBAL_PATH_COUNT = 0;
                     val_ax.xPoints = [];
 
 
-                    if (val_ax.scaling.logBase && arr_val_labels_points.length > 2) {
-                        var step = (arr_val_labels_points[0] - arr_val_labels_points[arr_val_labels_points.length - 1]) / arr_val_labels_points.length;
-                        var pos;
-                        for (i = 0; i < arr_val_labels_points.length; ++i) {
-                            pos = i === 0 ? i : step;
-                            val_ax.xPoints[i] = { val: arr_val[i], pos: arr_val_labels_points[0] - pos };
-                            step += step;
-                        }
-                    } else {
-                        for (i = 0; i < arr_val_labels_points.length; ++i) {
-                            val_ax.xPoints[i] = { val: arr_val[i], pos: arr_val_labels_points[i] };
-                        }
+                    for (i = 0; i < arr_val_labels_points.length; ++i) {
+                        val_ax.xPoints[i] = { val: arr_val[i], pos: arr_val_labels_points[i] };
                     }
 
                     cat_ax.yPoints = [];
