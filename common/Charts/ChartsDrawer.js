@@ -2062,6 +2062,7 @@ CChartsDrawer.prototype =
 					continue;
 				}
 				if(manualMax !== null && manualMax < temp) {
+					result[step] = manualMax;
 					break;
 				}
 				result[step] = temp;
@@ -2080,6 +2081,7 @@ CChartsDrawer.prototype =
 					continue;
 				}
 				if(manualMax !== null && manualMax < temp) {
+					result[step] = manualMax;
 					break;
 				}
 				result[step] = temp;
@@ -2732,6 +2734,10 @@ CChartsDrawer.prototype =
 
 		//TODO переписать функцию!
 		var parseVal, maxVal, minVal, startPos = 0, diffPos;
+
+		if (yPoints.length < 2) {
+			return parseFloat("0." + logVal.toString().split(".")[1]) * yPoints[0].pos;
+		}
 		if (logVal < 0) {
 			parseVal = logVal.toString().split(".");
 			maxVal = Math.pow(logBase, parseVal[0]);
