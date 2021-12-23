@@ -6291,6 +6291,7 @@ drawBarChart.prototype = {
 				arr[cubeCount].arrPoints = [point11, point22, point33, point44, point55, point66, point77, point88];
 				arr[cubeCount].z = point11.z;
 				arr[cubeCount].y = point11.y;
+				arr[cubeCount].isValZero = val === 0 ? true : false;
 			}
 	
 			for (var k = 0; k < paths.frontPaths.length; k++) {
@@ -9020,6 +9021,7 @@ drawHBarChart.prototype = {
 				this.temp[cubeCount].arrPoints =
 					[point11, point22, point33, point44, point55, point66, point77, point88];
 				this.temp[cubeCount].z = point11.z;
+				this.temp[cubeCount].isValZero = val === 0 ? true : false;
 			}
 
 			for (var k = 0; k < paths.frontPaths.length; k++) {
