@@ -205,7 +205,7 @@ Asc['asc_docs_api'].prototype.asc_DownloadAs = function(options)
 	this.asc_Save(false, true);
 };
 
-Asc['asc_docs_api'].prototype.AddImageUrl = function(url, imgProp, token, obj)
+Asc['asc_docs_api'].prototype.AddImageUrl = function(urls, imgProp, token, obj)
 {
 	var _urls = urls.map(function(currentValue) {
 		var localUrl = window["AscDesktopEditor"]["LocalFileGetImageUrl"](currentValue);
