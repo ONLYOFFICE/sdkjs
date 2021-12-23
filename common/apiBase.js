@@ -1660,6 +1660,7 @@
 					oAdditionalData["thumbnail"]["format"] = 3;
 					break;
 			}
+			oAdditionalData["outputformat"] = Asc.c_oAscFileType.IMG;
 			oAdditionalData["title"] = AscCommon.changeFileExtention(this.documentTitle, "zip", Asc.c_nMaxDownloadTitleLen);
 		}
 

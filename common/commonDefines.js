@@ -500,6 +500,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		OTP  : 0x008a,
 
 		//image
+		IMG  : 0x0400,
 		JPG  : 0x0401,
 		TIFF : 0x0402,
 		TGA  : 0x0403,

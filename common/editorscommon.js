@@ -1643,6 +1643,49 @@
 			case c_oAscFileType.OTP:
 				return 'otp';
 				break;
+
+			case c_oAscFileType.IMG:
+				return 'zip';
+				break;
+			case c_oAscFileType.JPG:
+				return 'jpg';
+				break;
+			case c_oAscFileType.TIFF:
+				return 'tiff';
+				break;
+			case c_oAscFileType.TGA:
+				return 'tga';
+				break;
+			case c_oAscFileType.GIF:
+				return 'gif';
+				break;
+			case c_oAscFileType.PNG:
+				return 'png';
+				break;
+			case c_oAscFileType.EMF:
+				return 'emf';
+				break;
+			case c_oAscFileType.WMF:
+				return 'wmf';
+				break;
+			case c_oAscFileType.BMP:
+				return 'bmp';
+				break;
+			case c_oAscFileType.CR2:
+				return 'cr2';
+				break;
+			case c_oAscFileType.PCX:
+				return 'pcx';
+				break;
+			case c_oAscFileType.RAS:
+				return 'ras';
+				break;
+			case c_oAscFileType.PSD:
+				return 'psd';
+				break;
+			case c_oAscFileType.ICO:
+				return 'ico';
+				break;
 		}
 		return '';
 	}
