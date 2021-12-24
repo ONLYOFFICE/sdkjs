@@ -247,8 +247,8 @@ CPresentationBullet.prototype.getHighlightForNumbering = function(intFormat) {
 	}
 }
 
-CPresentationBullet.prototype.getAdaptedNumberingFormat = function () {
-	switch (this.m_nType) {
+function getAdaptedNumberingFormat(nType) {
+	switch (nType) {
 		case numbering_presentationnumfrmt_AlphaLcParenBoth:
 		case numbering_presentationnumfrmt_AlphaLcParenR:
 		case numbering_presentationnumfrmt_AlphaLcPeriod:
@@ -354,7 +354,7 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 			sT = this.m_sChar;
 		}
 	} else {
-		var typeOfNum = this.getAdaptedNumberingFormat(this.m_nType);
+		var typeOfNum = getAdaptedNumberingFormat(this.m_nType);
 		var formatNum = IntToNumberFormat(Num, typeOfNum);
 		sT = this.getHighlightForNumbering(formatNum);
 	}
@@ -566,3 +566,4 @@ CPresentationBullet.prototype.IsAlpha = function()
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
+window['AscCommonWord'].getAdaptedNumberingFormat = getAdaptedNumberingFormat;
