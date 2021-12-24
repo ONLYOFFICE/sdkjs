@@ -65,6 +65,7 @@
 		ODT  : 0x0043,
 		RTF  : 0x0044,
 		TXT  : 0x0045,
+		HTML_TODO  : 0x0046,
 		MHT  : 0x0047,
 		EPUB : 0x0048,
 		FB2  : 0x0049,
@@ -2318,6 +2319,7 @@
 	prot['ODT']                  = prot.ODT;
 	prot['RTF']                  = prot.RTF;
 	prot['TXT']                  = prot.TXT;
+	prot['HTML_TODO']                = prot.HTML_TODO;
 	prot['MHT']                  = prot.MHT;
 	prot['EPUB']                 = prot.EPUB;
 	prot['FB2']                  = prot.FB2;

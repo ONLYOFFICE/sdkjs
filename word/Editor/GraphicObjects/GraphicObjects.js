@@ -4084,6 +4084,12 @@ CGraphicObjects.prototype =
         return;
     },
 
+    isChartSelection: function () 
+    {
+        var oSelectedor = this.selection.groupSelection ? this.selection.groupSelection : this;
+        return AscCommon.isRealObject(oSelectedor.chartSelection);
+    },
+
 
     drawSelectionPage: function(pageIndex)
     {

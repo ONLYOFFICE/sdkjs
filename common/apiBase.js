@@ -1636,6 +1636,9 @@
 		{
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, actionType);
 		}
+		if (Asc.c_oAscFileType.HTML === options.fileType && null == options.oDocumentMailMerge && null == options.oMailMergeSendData) {
+			options.fileType = Asc.c_oAscFileType.HTML_TODO;
+		}
 
 		var downloadType;
 		if (options.isDownloadEvent) {
@@ -1690,7 +1693,7 @@
 			oAdditionalData["textParams"] = {"association": options.textParams.asc_getAssociation()};
 		}
 
-		if (this._downloadAs(actionType, options, oAdditionalData, dataContainer))
+		if (this._downloadAs(actionType, options, oAdditionalData, dataContainer, downloadType))
 		{
 			return;
 		}

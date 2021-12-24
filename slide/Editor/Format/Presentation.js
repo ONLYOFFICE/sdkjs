@@ -10953,8 +10953,8 @@ CPresentation.prototype.StartAnimationPreview = function() {
     if(!oPlayer) {
         return false;
     }
-    oPlayer.start();
     this.previewPlayer = oPlayer;
+    oPlayer.start();
     return true;
 };
 CPresentation.prototype.StopAnimationPreview = function() {

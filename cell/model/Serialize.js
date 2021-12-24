@@ -8922,7 +8922,12 @@
             if ( c_oSerSheetFormatPrTypes.DefaultColWidth == type )
                 oWorksheet.oSheetFormatPr.dDefaultColWidth = this.stream.GetDoubleLE();
             else if (c_oSerSheetFormatPrTypes.BaseColWidth === type)
-                oWorksheet.oSheetFormatPr.nBaseColWidth = this.stream.GetULongLE();
+            {
+                var _nBaseColWidth = this.stream.GetULongLE();
+                if (_nBaseColWidth > 0) {
+                    oWorksheet.oSheetFormatPr.nBaseColWidth = _nBaseColWidth;
+                }
+            }
             else if ( c_oSerSheetFormatPrTypes.DefaultRowHeight == type )
             {
                 var oAllRow = oWorksheet.getAllRow();

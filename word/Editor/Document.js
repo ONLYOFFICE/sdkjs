@@ -25227,6 +25227,11 @@ CDocument.prototype.AddTextWithPr = function(sText, oTextPr, isMoveCursorOutside
 				isMath = (para_Math_Run === oLastClass.Type)
 			}
 			oParagraph.GetParent().InsertContent(oSelectedContent, oAnchorPos);
+			if(!oParagraph.bFromDocument) 
+			{
+				var oInsParagraph = oSelectedContent.Elements[0].Element;
+				oRun = oInsParagraph.Content[0];
+			}
 			if (isMath)
 			{
 				this.MoveCursorRight(false, false, true);
