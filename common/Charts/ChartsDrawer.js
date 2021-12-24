@@ -5932,13 +5932,9 @@ drawBarChart.prototype = {
 		var oCommand1 = oPath.getCommandByIndex(1);
 		var oCommand2 = oPath.getCommandByIndex(2);
 		var oCommand3 = oPath.getCommandByIndex(3);
-		//console.log(isZeroH, oCommand0, oCommand1, oCommand2, oCommand3, oCommand4, oPath);
 
 		var x = oCommand0.X;
-		var y = oCommand0.Y;
-		if (isZeroH) {
-			y = oCommand2.Y;
-		}
+		var y = isZeroH && point.val !== 0 ? oCommand3.Y : oCommand0.Y;
 
 		var h = oCommand0.Y - oCommand1.Y;
 		var w = oCommand2.X - oCommand1.X;
@@ -5955,13 +5951,10 @@ drawBarChart.prototype = {
 				break;
 			}
 			case c_oAscChartDataLabelsPos.ctr: {
-				if (isZeroH) {
-					console.log(y, h, height, isZeroH)
-					centerX = x + w / 2 - width / 2;
-					centerY = y //+ h / 2 - height / 2;
+				centerX = x + w / 2 - width / 2;
+				if (isZeroH && point.val !== 0) {
+					centerY = y - height / 2;
 				} else {
-					console.log(y, h, height, isZeroH)
-					centerX = x + w / 2 - width / 2;
 					centerY = y - h / 2 - height / 2;
 				}
 				break;
