@@ -1661,10 +1661,11 @@
 		BulletFlag   : 0x1000,
 		NumberedFlag : 0x2000,
 
-		Ea1JpnKor        : 0x3000,
-		CircleNumWdBlack : 0x4000,
-		Ea1JpnChsDb      : 0x5000,
-		Ea1Cht           : 0x6000
+		Ea1JpnKor             : 0x3000,
+		CircleNumWdBlack      : 0x4000,
+		Ea1JpnChsDb           : 0x5000,
+		Ea1Cht                : 0x6000,
+		CircleNumWdWhitePlain : 0x7000
 
 	};
 

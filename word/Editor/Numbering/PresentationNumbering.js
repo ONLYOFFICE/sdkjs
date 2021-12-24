@@ -276,10 +276,7 @@ CPresentationBullet.prototype.getAdaptedNumberingFormat = function () {
 			return Asc.c_oAscNumberingFormat.Decimal;
 
 		case numbering_presentationnumfrmt_CircleNumDbPlain:
-			return Asc.c_oAscNumberingFormat.DecimalEnclosedCircleChinese;
-
-		case numbering_presentationnumfrmt_CircleNumWdWhitePlain:
-			return Asc.c_oAscNumberingFormat.DecimalEnclosedCircleChinese;
+			return Asc.c_oAscNumberingFormat.DecimalEnclosedCircle;
 
 		case numbering_presentationnumfrmt_Ea1ChsPeriod:
 		case numbering_presentationnumfrmt_Ea1ChsPlain:
@@ -326,6 +323,9 @@ CPresentationBullet.prototype.getAdaptedNumberingFormat = function () {
 			break;
 
 		case numbering_presentationnumfrmt_CircleNumWdBlackPlain:
+			break;
+
+		case numbering_presentationnumfrmt_CircleNumWdWhitePlain: // TODO: new break type
 			break;
 
 		case numbering_presentationnumfrmt_Ea1JpnKorPeriod:
@@ -439,13 +439,12 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 	var bRTL =  this.m_oTextPr.RTL;
 	var lcid =  this.m_oTextPr.Lang.EastAsia;
 
-	var FontSlot = g_font_detector.Get_FontClass( sT.charCodeAt(0), Hint, lcid, bCS, bRTL );
+	var FontSlot = g_font_detector.Get_FontClass( sT.getUnicodeIterator().value(), Hint, lcid, bCS, bRTL );
 	Context.SetTextPr( this.m_oTextPr, Theme );
 	Context.SetFontSlot( FontSlot );
-	for ( var Index2 = 0; Index2 < sT.length; Index2++ )
-	{
-		var Char = sT.charAt(Index2);
-		X += Context.Measure( Char ).Width;
+	for (var iter = sT.getUnicodeIterator(); iter.check(); iter.next()) {
+		var charCode = iter.value();
+		X += Context.MeasureCode(charCode).Width;
 	}
 
 	if(OldTextPr)
@@ -492,7 +491,7 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 	var lcid =  this.m_oTextPr.Lang.EastAsia;
 
 	var sT = this.m_sString;
-	var FontSlot = g_font_detector.Get_FontClass( sT.charCodeAt(0), Hint, lcid, bCS, bRTL );
+	var FontSlot = g_font_detector.Get_FontClass( sT.getUnicodeIterator().value(), Hint, lcid, bCS, bRTL );
 
 	if(this.m_oTextPr.Unifill){
 		this.m_oTextPr.Unifill.check(PDSE.Theme, PDSE.ColorMap);
@@ -535,12 +534,10 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 	g_oTextMeasurer.SetTextPr( this.m_oTextPr, PDSE.Theme  );
 	g_oTextMeasurer.SetFontSlot( FontSlot );
 
-
-	for ( var Index2 = 0; Index2 < sT.length; Index2++ )
-	{
-		var Char = sT.charAt(Index2);
-		Context.FillText( X, Y, Char );
-		X += g_oTextMeasurer.Measure( Char ).Width;
+	for (var iter = sT.getUnicodeIterator(); iter.check(); iter.next()) {
+		var charCode = iter.value();
+		Context.FillTextCode( X, Y, charCode );
+		X += g_oTextMeasurer.MeasureCode(charCode).Width;
 	}
 
 	if(OldTextPr)
