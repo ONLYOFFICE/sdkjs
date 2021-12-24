@@ -5707,7 +5707,7 @@ drawBarChart.prototype = {
 				this.sortZIndexPaths.sort(function sortArr(a, b) {
 					var ZB = getMinZ(b, checkRotation, length, verges, angelY, angelX, _gapDepth);
 					var ZA = getMinZ(a, checkRotation, length, verges, angelY, angelX, _gapDepth);
-					if (ZB === ZA)
+					if ((ZB === ZA) && (b.facePoints[0] && a.facePoints[0]))
 						return b.facePoints[0].y - a.facePoints[0].y;
 
 					return ZB - ZA;
