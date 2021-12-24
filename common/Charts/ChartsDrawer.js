@@ -5904,6 +5904,7 @@ drawBarChart.prototype = {
 
 		var path = this.paths.series[serIdx][val];
 		//ToDo пересмотреть для 3d диаграмм
+		var isZeroH = false;
 		if (this.cChartDrawer.nDimensionCount === 3) {
 			if (AscFormat.isRealNumber(path[0])) {
 				path = path[0];
@@ -5916,6 +5917,10 @@ drawBarChart.prototype = {
 			} else if (AscFormat.isRealNumber(path[1])) {
 				//TODO добавлено для случая нулевой точки. возможно в данном случае сдвиги нужно считать иначе
 				path = path[1];
+				isZeroH = true;
+			} else if (AscFormat.isRealNumber(path[4])) {
+				path = path[4];
+				isZeroH = true;
 			}
 		}
 
@@ -5926,9 +5931,14 @@ drawBarChart.prototype = {
 		var oCommand0 = oPath.getCommandByIndex(0);
 		var oCommand1 = oPath.getCommandByIndex(1);
 		var oCommand2 = oPath.getCommandByIndex(2);
+		var oCommand3 = oPath.getCommandByIndex(3);
+		//console.log(isZeroH, oCommand0, oCommand1, oCommand2, oCommand3, oCommand4, oPath);
 
 		var x = oCommand0.X;
 		var y = oCommand0.Y;
+		if (isZeroH) {
+			y = oCommand2.Y;
+		}
 
 		var h = oCommand0.Y - oCommand1.Y;
 		var w = oCommand2.X - oCommand1.X;
@@ -5945,8 +5955,15 @@ drawBarChart.prototype = {
 				break;
 			}
 			case c_oAscChartDataLabelsPos.ctr: {
-				centerX = x + w / 2 - width / 2;
-				centerY = y - h / 2 - height / 2;
+				if (isZeroH) {
+					console.log(y, h, height, isZeroH)
+					centerX = x + w / 2 - width / 2;
+					centerY = y //+ h / 2 - height / 2;
+				} else {
+					console.log(y, h, height, isZeroH)
+					centerX = x + w / 2 - width / 2;
+					centerY = y - h / 2 - height / 2;
+				}
 				break;
 			}
 			case c_oAscChartDataLabelsPos.inBase: {
