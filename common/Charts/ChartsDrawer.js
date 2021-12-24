@@ -5622,7 +5622,8 @@ drawBarChart.prototype = {
 
 		if (this.cChartDrawer.nDimensionCount === 3) {
 
-			var getMinZ = function (arr, verge, seria, checkRotation, length, verges, angelY, angelX) {
+			var getMinZ = function (_paths, checkRotation, length, verges, angelY, angelX, _gapDepth) {
+				var arr = _paths.facePoints, verge = _paths.verge, seria = _paths.seria;
 				var zIndex = 0;
 				if (!arr) {
 					arr = []
@@ -5630,13 +5631,13 @@ drawBarChart.prototype = {
 				for (var i = 0; i < arr.length; i++) {
 					if (i === 0) {
 						zIndex = arr[i].z;
-					} else if (arr[i].z > zIndex) {
+					} else if (arr[i].z < zIndex) {
 						zIndex = arr[i].z;
 					}
 				}
-				//проверяем возможность вращения на 360
+				//проверяем что оси не под прямым углов и отступ в глубину OZ = 0
 				//в зависимости от угла увеличиваем zIndex фронтальной грани не первой к точке наблюдения колонки
-				if (checkRotation === false) {
+				if (!checkRotation && _gapDepth === 0) {
 					if (verge === verges.front && seria > 0 && angelX > 0) {
 						zIndex += angelX * 2;
 					}
@@ -5653,18 +5654,61 @@ drawBarChart.prototype = {
 			var cSortFaces;
 
 			if (this.subType !== "standard") {
-				cSortFaces = new window['AscFormat'].CSortFaces(this.cChartDrawer);
-				this.sortParallelepipeds = cSortFaces.sortParallelepipeds(this.temp);
+				this.sortParallelepipeds = [];
+				//когда оси под прямым углом можно отсортировать без поиска пересечений в sortParallelepipeds
+				if (this.cChartDrawer.processor3D.view3D.getRAngAx()) {
+					var angle;
+					if (this.subType !== "normal") {
+						angle = -this.cChartDrawer.processor3D.angleOx;
+						this.temp.sort(function sortArr(a, b) {
+							if (b.z === a.z) {
+								if (angle > 0) {
+									return b.y - a.y;
+								} else {
+									return a.y - b.y;
+								}
+							} else {
+								return b.z - a.z;
+							}
+						});
+						for (var i = 0; i < this.temp.length; i++) {
+							this.sortParallelepipeds.push({ nextIndex: i });
+						}
+					} else {
+						angle = Math.abs(this.cChartDrawer.processor3D.angleOy);
+						this.temp.sort(function sortArr(a, b) {
+							if (b.z === a.z) {
+								if (angle < Math.PI) {
+									return a.x - b.x;
+								} else {
+									return b.x - a.x;
+								}
+							} else {
+								return b.z - a.z;
+							}
+						});
+						for (var i = 0; i < this.temp.length; i++) {
+							this.sortParallelepipeds.push({ nextIndex: i });
+						}
+					}
+				} else {
+					cSortFaces = new window['AscFormat'].CSortFaces(this.cChartDrawer);
+					this.sortParallelepipeds = cSortFaces.sortParallelepipeds(this.temp);
+				}
+
 			} else {
 				var checkRotation = this.cChartDrawer.processor3D.view3D.getRAngAx();
 				var length = this.chart.series.length - 1;
+				var _gapDepth = this.chart.gapDepth;
 				var verges = {
 					front: 0, down: 1, left: 2, right: 3, up: 4, unfront: 5
 				};
 
 				this.sortZIndexPaths.sort(function sortArr(a, b) {
-					var ZB = getMinZ(b.facePoints, b.verge, b.seria, checkRotation, length, verges, angelY, angelX);
-					var ZA = getMinZ(a.facePoints, a.verge, a.seria, checkRotation, length, verges, angelY, angelX);
+					var ZB = getMinZ(b, checkRotation, length, verges, angelY, angelX, _gapDepth);
+					var ZA = getMinZ(a, checkRotation, length, verges, angelY, angelX, _gapDepth);
+					if (ZB === ZA)
+						return b.facePoints[0].y - a.facePoints[0].y;
 
 					return ZB - ZA;
 				});
@@ -6272,6 +6316,8 @@ drawBarChart.prototype = {
 			var point77 = this.cChartDrawer._convertAndTurnPoint(x72, y72, z72, null, null, true);
 			var point88 = this.cChartDrawer._convertAndTurnPoint(x82, y82, z82, null, null, true);
 
+			var controlPoint = this.cChartDrawer._convertAndTurnPoint(x12 + individualBarWidth / 2, y12 - height / 2, z12);
+
 			var arrPoints = [[point1, point4, point8, point5], [point1, point2, point3, point4],
 				[point1, point2, point6, point5], [point4, point8, point7, point3], [point5, point6, point7, point8],
 				[point6, point2, point3, point7]];
@@ -6289,8 +6335,9 @@ drawBarChart.prototype = {
 			if (!arr[cubeCount].faces) {
 				arr[cubeCount].faces = [];
 				arr[cubeCount].arrPoints = [point11, point22, point33, point44, point55, point66, point77, point88];
-				arr[cubeCount].z = point11.z;
-				arr[cubeCount].y = point11.y;
+				arr[cubeCount].z = controlPoint.z;
+				arr[cubeCount].y = controlPoint.y;
+				arr[cubeCount].x = controlPoint.x;
 				arr[cubeCount].isValZero = val === 0 ? true : false;
 			}
 	
@@ -8586,18 +8633,34 @@ drawHBarChart.prototype = {
 
 		if (this.cChartDrawer.nDimensionCount === 3) {
 			if (this.cChartDrawer.processor3D.view3D.getRAngAx()) {
-				var angle = Math.abs(this.cChartDrawer.processor3D.angleOy);
-				this.sortZIndexPaths.sort(function sortArr(a, b) {
-					if (b.zIndex === a.zIndex) {
-						if (angle < Math.PI) {
-							return a.x - b.x;
+				var angle;
+				if (this.subType !== "normal") {
+					angle = Math.abs(this.cChartDrawer.processor3D.angleOy);
+					this.sortZIndexPaths.sort(function sortArr(a, b) {
+						if (b.zIndex === a.zIndex) {
+							if (angle < Math.PI) {
+								return a.x - b.x;
+							} else {
+								return b.x - a.x;
+							}
 						} else {
-							return b.x - a.x;
+							return b.zIndex - a.zIndex;
 						}
-					} else {
-						return b.zIndex - a.zIndex;
-					}
-				});
+					});
+				} else {
+					angle = -this.cChartDrawer.processor3D.angleOx;
+					this.sortZIndexPaths.sort(function sortArr(a, b) {
+						if (b.zIndex === a.zIndex) {
+							if (angle > 0) {
+								return b.y - a.y;
+							} else {
+								return a.y - b.y;
+							}
+						} else {
+							return b.zIndex - a.zIndex;
+						}
+					});
+				}
 			} else {
 				var cSortFaces = new window['AscFormat'].CSortFaces(this.cChartDrawer);
 				//this.sortZIndexPaths = cSortFaces.sortFaces(this.sortZIndexPaths);
@@ -8945,21 +9008,8 @@ drawHBarChart.prototype = {
 		}
 
 		if (this.cChartDrawer.processor3D.view3D.getRAngAx()) {
-			var controlPoint1 = this.cChartDrawer._convertAndTurnPoint(x5 + width / 2, y5 - individualBarHeight / 2,
+			var controlPoint = this.cChartDrawer._convertAndTurnPoint(x5 + width / 2, y5 - individualBarHeight / 2,
 				z5);
-			var controlPoint2 = this.cChartDrawer._convertAndTurnPoint(x5 + width / 2, y5,
-				z5 + perspectiveDepth / 2);
-			var controlPoint3 = this.cChartDrawer._convertAndTurnPoint(x5, y5 - individualBarHeight / 2,
-				z5 + perspectiveDepth / 2);
-			var controlPoint4 = this.cChartDrawer._convertAndTurnPoint(x8, y8 - individualBarHeight / 2,
-				z8 + perspectiveDepth / 2);
-			var controlPoint5 = this.cChartDrawer._convertAndTurnPoint(x1 + width / 2, y1,
-				z1 + perspectiveDepth / 2);
-			var controlPoint6 = this.cChartDrawer._convertAndTurnPoint(x6 + width / 2, y6 - individualBarHeight / 2,
-				z6);
-
-			var sortPaths = [controlPoint1, controlPoint2, controlPoint3, controlPoint4, controlPoint5,
-				controlPoint6];
 
 			for (var k = 0; k < paths.frontPaths.length; k++) {
 				this.sortZIndexPaths.push({
@@ -8968,9 +9018,9 @@ drawHBarChart.prototype = {
 					verge: k,
 					frontPaths: paths.frontPaths[k],
 					darkPaths: paths.darkPaths[k],
-					x: sortPaths[k].x,
-					y: sortPaths[k].y,
-					zIndex: sortPaths[k].z
+					x: controlPoint.x,
+					y: controlPoint.y,
+					zIndex: controlPoint.z
 				});
 			}
 		} else {

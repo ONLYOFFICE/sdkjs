@@ -2528,7 +2528,10 @@ CSortFaces.prototype =
 			countIntersection[i] = 0;
 
 			for (var m = 0; m < parallelepipeds.length; m++) {
-				if (m === i || usuallyIntersect[i] === m || usuallyIntersectRev[i] === m || parallelepipeds[m].isValZero) {
+				if (m === i || usuallyIntersect[i] === m || usuallyIntersectRev[i] === m) {
+					continue;
+				}
+				if (parallelepipeds[m].isValZero && this.cChartDrawer.calcProp.subType !== "normal") {
 					continue;
 				}
 
