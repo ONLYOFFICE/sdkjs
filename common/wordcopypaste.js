@@ -2220,6 +2220,7 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
     this.oImages = {};
 	this.aContent = [];
 	this.AddedFootEndNotes = [];
+	this.aContentForNotes = [];
 
 	this.pasteInExcel = pasteInExcel;
 	this.pasteInPresentationShape = null;
@@ -8921,8 +8922,9 @@ PasteProcessor.prototype =
 		var checkEndFootnodeText = function (Item) {
 			if (Item.parentNode)
 			{
-				if (Item.parentNode.nodeName.toLowerCase() === "p" && (Item.parentNode.className === "MsoFootnoteText" || Item.parentNode.className === "MsoEndnoteText")
-				|| Item.parentNode.nodeName.toLowerCase() === "span" && (Item.parentNode.className === "MsoFootnoteReference" || Item.parentNode.className === "MsoEndnoteReference"))
+				if (Item.parentNode.nodeName.toLowerCase() === "span" && (Item.parentNode.className === "MsoFootnoteReference" || Item.parentNode.className === "MsoEndnoteReference")
+				//(Item.parentNode.nodeName.toLowerCase() === "p" && (Item.parentNode.className === "MsoFootnoteText" || Item.parentNode.className === "MsoEndnoteText")
+				/*|| Item.parentNode.nodeName.toLowerCase() === "span" && (Item.parentNode.className === "MsoFootnoteReference" || Item.parentNode.className === "MsoEndnoteReference")*/)
 				{
 					return true;
 				}
@@ -9417,8 +9419,8 @@ PasteProcessor.prototype =
 							var sText;
 							if (sStr[1].includes("_ftnref"))
 							{
-								oThis.AddedFootEndNotes[0].oFootnote.Content[0].Content[2].AddText(child.parentNode.parentNode.innerText.replace(oThis.AddedFootEndNotes[0].sText, ""));
-								oThis.AddedFootEndNotes.splice(0, 1);
+								//oThis.AddedFootEndNotes[0].Note.Content[0].Content[2].AddText(child.parentNode.parentNode.innerText.replace(oThis.AddedFootEndNotes[0].sText, ""));
+								//oThis.AddedFootEndNotes.splice(0, 1);
 							}
 							else if (sStr[1].includes("_ftn"))
 							{
@@ -9432,12 +9434,12 @@ PasteProcessor.prototype =
 								oAddedRun.AddToContent(0, new ParaFootnoteReference(oFootnote, sText));
 								oThis._CommitElemToParagraph(oAddedRun);
 								sText = (sText === undefined) ? child.innerText : sText;
-								oThis.AddedFootEndNotes.push({oFootnote, sText});
+								oThis.AddedFootEndNotes.push({Note:oFootnote, sText});
 							}
 							else if (sStr[1].includes("_ednref"))
 							{
-								oThis.AddedFootEndNotes[0].oEndnote.Content[0].Content[2].AddText(child.parentNode.parentNode.innerText.replace(oThis.AddedFootEndNotes[0].sText, ""));
-								oThis.AddedFootEndNotes.splice(0, 1);
+								//oThis.AddedFootEndNotes[0].Note.Content[0].Content[2].AddText(child.parentNode.parentNode.innerText.replace(oThis.AddedFootEndNotes[0].sText, ""));
+								//oThis.AddedFootEndNotes.splice(0, 1);
 							}
 							else if (sStr[1].includes("_edn"))
 							{
@@ -9451,7 +9453,7 @@ PasteProcessor.prototype =
 								oAddedRun.AddToContent(0, new ParaEndnoteReference(oEndnote, sText));
 								oThis._CommitElemToParagraph(oAddedRun);
 								sText = (sText === undefined) ? child.innerText : sText;
-								oThis.AddedFootEndNotes.push({oEndnote, sText});
+								oThis.AddedFootEndNotes.push({Note:oEndnote, sText});
 							}
 							else
 							{
@@ -9514,7 +9516,19 @@ PasteProcessor.prototype =
 				}
 			}
 		};
-
+		//oThis.aContent = (checkEndFootnodeText(node)) ? (oThis.AddedFootEndNotes[0]) ? oThis.AddedFootEndNotes[0].oFootnote.Content : oThis.aContent : oThis.aContent;
+		/*if  (checkEndFootnodeText(node))
+		{
+			oThis.aContentForNotes = oThis.aContent;
+			oThis.aContent = [];
+		}*/
+		
+		//if (node.nodeName.toLowerCase() === "p" && node.className === "MsoFootnoteText")
+		if (node.nodeName.toLowerCase() === "div" && (node.id.includes("ftn") || node.id.includes("edn")))
+		{
+			oThis.aContentForNotes = oThis.aContent;
+			oThis.aContent = [];
+		}
 		var bPresentation = !PasteElementsId.g_bIsDocumentCopyPaste;
 		if (bPresentation) {
 			var shape = arrShapes[arrShapes.length - 1];
@@ -9653,6 +9667,19 @@ PasteProcessor.prototype =
 
 		if (bRoot && bPresentation) {
 			this._Commit_Br(2, node, pPr);//word игнорируем 2 последних br
+		}
+		//if  (node.nodeName.toLowerCase() === "p" && node.className === "MsoFootnoteText")
+		if (node.nodeName.toLowerCase() === "div" && (node.id.includes("ftn") || node.id.includes("edn")))
+		{
+			var tmp = oThis.aContent;
+			oThis.aContent = oThis.aContentForNotes;
+
+			if (oThis.AddedFootEndNotes[0])
+			{
+				for (var i = 0; i < tmp.length; i++)
+					oThis.AddedFootEndNotes[0].Note.Content.push(tmp[i]);
+				oThis.AddedFootEndNotes.splice(0, 1);
+			}
 		}
 		return bAddParagraph;
 	},
