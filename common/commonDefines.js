@@ -1656,61 +1656,15 @@
 		UpperLetter                  : 60,
 		UpperRoman                   : 61,
 		VietnameseCounting           : 62,
-		// None                         : 0x0000,
-		// Bullet                       : 0x1001,
-		// Decimal                      : 0x2002,
-		// LowerRoman                   : 0x2003,
-		// UpperRoman                   : 0x2004,
-		// LowerLetter                  : 0x2005,
-		// UpperLetter                  : 0x2006,
-		// DecimalZero                  : 0x2007,
-		// DecimalEnclosedCircle        : 0x2008,
-		// RussianLower                 : 0x2009,
-		// RussianUpper                 : 0x200a,
-		// Aiueo                        : 0x200b,
-		// AiueoFullWidth               : 0x200c,
-		// ArabicAbjad                  : 0x200d,
-		// ArabicAlpha                  : 0x200e,
-		// // BahtText                  : 0x200f,
-		// // CardinalText              : 0x2010,
-		// Chicago                      : 0x2011,
-		// Chosung                      : 0x2012,
-		// // Custom                    : 0x2013,
-		// DecimalEnclosedCircleChinese : 0x2014,
-		// DecimalEnclosedFullstop      : 0x2015,
-		// DecimalEnclosedParen         : 0x2016,
-		// DecimalFullWidth             : 0x2017,
-		// DecimalHalfWidth             : 0x2018,
-		// //DecimalFullWidth2          : 0x2019,
-		// // DollarText                : 0x201a,
-		// Ganada                       : 0x201b,
-		// // Hebrew1                   : 0x201c,
-		// Hebrew2                      : 0x201d,
-		// Hex                          : 0x201e,
-		// HindiConsonants              : 0x201f,
-		// // HindiCounting             : 0x2020,
-		// HindiNumbers                 : 0x2021,
-		// HindiVowels                  : 0x2022,
-		// IdeographDigital             : 0x2023,
-		// IdeographEnclosedCircle      : 0x2024,
-		// // IdeographLegalTraditional : 0x2025,
-		// IdeographTraditional         : 0x2026,
-		// IdeographZodiac              : 0x2027,
-		// IdeographZodiacTraditional   : 0x2028,
-		// Iroha                        : 0x2029,
-		// IrohaFullWidth               : 0x203a,
-		// // JapaneseCounting          : 0x203b,
-		// JapaneseDigitalTenThousand   : 0x203c,
-		//
-		//
-		//
-		//
-		// ChineseCounting         : 0x2101,
-		// ChineseCountingThousand : 0x2102,
-		// ChineseLegalSimplified  : 0x2103,
 
 		BulletFlag   : 0x1000,
-		NumberedFlag : 0x2000
+		NumberedFlag : 0x2000,
+
+		Ea1JpnKor        : 0x3000,
+		CircleNumWdBlack : 0x4000,
+		Ea1JpnChsDb      : 0x5000,
+		Ea1Cht           : 0x6000
+
 	};
 
 	/** enum {number} */
