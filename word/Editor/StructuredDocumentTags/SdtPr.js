@@ -766,7 +766,7 @@ CSpecialFormsGlobalSettings.prototype.Copy = function()
  */
 CSpecialFormsGlobalSettings.prototype.IsDefault = function()
 {
-	return (undefined === this.Highlight);
+	return (undefined === this.Highlight || (!this.Highlight.IsAuto() && this.Highlight.IsEqualRGB({r : 201, g: 200, b : 255})));
 };
 CSpecialFormsGlobalSettings.prototype.Write_ToBinary = function(oWriter)
 {
@@ -1404,6 +1404,9 @@ CSdtTextFormPr.prototype.SetMultiLine = function(isMultiLine)
 };
 CSdtTextFormPr.prototype.GetAutoFit = function()
 {
+	if (this.Comb)
+		return false;
+
 	return this.AutoFit;
 };
 CSdtTextFormPr.prototype.SetAutoFit = function(isAutoFit)

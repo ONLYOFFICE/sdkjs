@@ -240,7 +240,7 @@ CEditorPage.prototype.SelectWheel = function()
 {
 };
 
-CEditorPage.prototype.createSplitterDiv = function(bIsVert)
+CEditorPage.prototype.createSplitterDiv = function(nIdx)
 {
 };
 

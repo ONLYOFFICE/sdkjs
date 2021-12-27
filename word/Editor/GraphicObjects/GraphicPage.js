@@ -367,10 +367,7 @@ CGraphicPage.prototype =
         for(var _object_index = 0; _object_index < this.behindDocObjects.length; ++_object_index)
         {
             oGraphicObject = this.behindDocObjects[_object_index];
-            if(oGraphicObject.isContainedInMainDoc())
-            {
-                oGraphicObject.draw(graphics);
-            }
+            oGraphicObject.draw(graphics);
         }
 
         graphics.SetIntegerGrid(true);
@@ -413,10 +410,7 @@ CGraphicPage.prototype =
         for(var _object_index = 0; _object_index < this.beforeTextObjects.length; ++_object_index)
         {
             oGraphicObject = this.beforeTextObjects[_object_index];
-            if(oGraphicObject.isContainedInTopDocument())
-            {
-                oGraphicObject.draw(graphics);
-            }
+            oGraphicObject.draw(graphics);
         }
         graphics.SetIntegerGrid(true);
     }

@@ -8574,25 +8574,25 @@
       pWriter._WriteInt1(1, this.anchor.y);
       pWriter._WriteInt1(2, this.anchor.z);
 
-      pWriter._WriteInt1(3, this.norm.x);
-      pWriter._WriteInt1(4, this.norm.y);
-      pWriter._WriteInt1(5, this.norm.z);
+      pWriter._WriteInt1(3, this.norm.dx);
+      pWriter._WriteInt1(4, this.norm.dy);
+      pWriter._WriteInt1(5, this.norm.dz);
 
-      pWriter._WriteInt1(6, this.up.x);
-      pWriter._WriteInt1(7, this.up.y);
-      pWriter._WriteInt1(8, this.up.z);
+      pWriter._WriteInt1(6, this.up.dx);
+      pWriter._WriteInt1(7, this.up.dy);
+      pWriter._WriteInt1(8, this.up.dz);
     };
     Backdrop.prototype.readAttribute = function(nType, pReader) {
       var oStream = pReader.stream;
       if (0 === nType) this.anchor.setX(oStream.GetLong());
       else if (1 === nType) this.anchor.setY(oStream.GetLong());
       else if (2 === nType) this.anchor.setZ(oStream.GetLong());
-      else if (3 === nType) this.norm.setX(oStream.GetLong());
-      else if (4 === nType) this.norm.setY(oStream.GetLong());
-      else if (5 === nType) this.norm.setZ(oStream.GetLong());
-      else if (6 === nType) this.up.setX(oStream.GetLong());
-      else if (7 === nType) this.up.setY(oStream.GetLong());
-      else if (8 === nType) this.up.setZ(oStream.GetLong());
+      else if (3 === nType) this.norm.setDx(oStream.GetLong());
+      else if (4 === nType) this.norm.setDy(oStream.GetLong());
+      else if (5 === nType) this.norm.setDz(oStream.GetLong());
+      else if (6 === nType) this.up.setDx(oStream.GetLong());
+      else if (7 === nType) this.up.setDy(oStream.GetLong());
+      else if (8 === nType) this.up.setDz(oStream.GetLong());
     };
 
     changesFactory[AscDFH.historyitem_CoordinateCoordinateUnqualified] = CChangeLong;
@@ -10827,6 +10827,9 @@
       var oCopy = this.copy();
       oCopy.setBDeleted2(false);
       return oCopy;
+    };
+    SmartArt.prototype.getTypeName = function() {
+      return AscCommon.translateManager.getValue("Diagram");
     };
 
     function SmartArtTree(rootInfo, rootData, parent) {

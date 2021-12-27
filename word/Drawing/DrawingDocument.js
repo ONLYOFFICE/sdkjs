@@ -3144,15 +3144,16 @@ function CDrawingDocument()
 		this.CheckTargetDraw(this.m_dTargetX, this.m_dTargetY);
 	};
 
+	this.GetTargetColor = function ()
+	{
+		if (!this.m_oWordControl.m_oApi.isDarkMode)
+			return this.TargetCursorColor;
+		return AscCommon.darkModeCorrectColor(this.TargetCursorColor.R, this.TargetCursorColor.G, this.TargetCursorColor.B);
+	};
 	this.GetTargetStyle = function ()
 	{
-		var color = this.TargetCursorColor;
-
-		if (!this.m_oWordControl.m_oApi.isDarkMode)
-			return "rgb(" + color.R + "," + color.G + "," + color.B + ")";
-
-		var newColor = AscCommon.darkModeCorrectColor(color.R, color.G, color.B);
-        return "rgb(" + newColor.R + "," + newColor.G + "," + newColor.B + ")";
+		var color = this.GetTargetColor();
+		return "rgb(" + color.R + "," + color.G + "," + color.B + ")";
 	};
 
 	this.SetTargetColor = function (r, g, b)
@@ -3184,13 +3185,11 @@ function CDrawingDocument()
 		}
 
 		var oldColor = this.TargetHtmlElement.oldColor;
-		if (!oldColor ||
-			oldColor.R !== this.TargetCursorColor.R ||
-			oldColor.G !== this.TargetCursorColor.G ||
-			oldColor.B !== this.TargetCursorColor.B)
+		var newColor = this.GetTargetColor();
+		if (!oldColor || oldColor.R !== newColor.R || oldColor.G !== newColor.G || oldColor.B !== newColor.B)
 		{
-			this.TargetHtmlElement.style.backgroundColor = this.GetTargetStyle();
-			this.TargetHtmlElement.oldColor = { R : this.TargetCursorColor.R, G : this.TargetCursorColor.G, B : this.TargetCursorColor.B };
+			this.TargetHtmlElement.style.backgroundColor = "rgb(" + newColor.R + "," + newColor.G + "," + newColor.B + ")";
+			this.TargetHtmlElement.oldColor = { R : newColor.R, G : newColor.G, B : newColor.B };
 		}
 
 		if (null == this.TextMatrix || global_MatrixTransformer.IsIdentity2(this.TextMatrix))
@@ -6589,7 +6588,7 @@ function CDrawingDocument()
                     var correctNum = 1;
                     if (levelNum === level.Text[i].Value)
                         correctNum = counterCurrent;
-                    text += AscCommon.IntToNumberFormat(correctNum, level.Format);
+                    text += AscCommon.IntToNumberFormat(correctNum, level.Format, level.GetOLang());
                     break;
                 default:
                     break;
@@ -6710,7 +6709,7 @@ function CDrawingDocument()
                             text += curLvl.Text[j].Value;
                             break;
                         case Asc.c_oAscNumberingLvlTextType.Num:
-                            text += AscCommon.IntToNumberFormat(1, curLvl.Format);
+                            text += AscCommon.IntToNumberFormat(1, curLvl.Format, curLvl.GetOLang());
                             break;
                         default:
                             break;
@@ -6942,7 +6941,7 @@ function CDrawingDocument()
                             text += curLvl.Text[j].Value;
                             break;
                         case Asc.c_oAscNumberingLvlTextType.Num:
-                            text += AscCommon.IntToNumberFormat(1, curLvl.Format);
+                            text += AscCommon.IntToNumberFormat(1, curLvl.Format, curLvl.GetOLang());
                             break;
                         default:
                             break;
@@ -7187,7 +7186,7 @@ function CDrawingDocument()
 									text += curLvl.Text[j].Value;
 									break;
 								case Asc.c_oAscNumberingLvlTextType.Num:
-									text += AscCommon.IntToNumberFormat(1, curLvl.Format);
+									text += AscCommon.IntToNumberFormat(1, curLvl.Format, curLvl.GetOLang());
 									break;
 								default:
 									break;
@@ -7217,7 +7216,7 @@ function CDrawingDocument()
 								text += curLvl.Text[j].Value;
 								break;
 							case Asc.c_oAscNumberingLvlTextType.Num:
-								text += AscCommon.IntToNumberFormat(1, curLvl.Format);
+								text += AscCommon.IntToNumberFormat(1, curLvl.Format, curLvl.GetOLang());
 								break;
 							default:
 								break;
@@ -7356,7 +7355,7 @@ function CDrawingDocument()
 							var correctNum = 1;
 							if (levelNum === props[i].Text[k].Value)
 								correctNum = counterCurrent;
-							text += AscCommon.IntToNumberFormat(correctNum, props[i].Format);
+							text += AscCommon.IntToNumberFormat(correctNum, props[i].Format, props[i].GetOLang());
 							break;
 						default:
 							break;

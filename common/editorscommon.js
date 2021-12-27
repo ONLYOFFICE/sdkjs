@@ -48,8 +48,24 @@
 	var contentchanges_Add = AscCommon.contentchanges_Add;
 	var CColor = AscCommon.CColor;
 	var g_oCellAddressUtils = AscCommon.g_oCellAddressUtils;
-
 	var c_oAscFileType = Asc.c_oAscFileType;
+	var languages = window['Asc'].g_oLcidIdToNameMap;
+	var availableIdeographLanguages = window['Asc'].availableIdeographLanguages;
+	var availableBidiLanguages = window['Asc'].availableBidiLanguages;
+
+	String.prototype.sentenceCase = function ()
+	{
+		var trimStr = this.trim();
+		if (trimStr.length === 0)
+		{
+			return "";
+		} else if (trimStr.length === 1)
+		{
+			return trimStr[0].toUpperCase();
+		}
+		return trimStr[0].toUpperCase() + trimStr.slice(1);
+	}
+	String.prototype['sentenceCase'] = String.prototype.sentenceCase;
 
 	if (typeof String.prototype.startsWith !== 'function')
 	{
@@ -66,6 +82,15 @@
 			return this.indexOf(suffix, this.length - suffix.length) !== -1;
 		};
 		String.prototype['endsWith'] = String.prototype.endsWith;
+	}
+	if (!String.prototype.trim) {
+		(function() {
+			// Вырезаем BOM и неразрывный пробел
+			String.prototype.trim = function() {
+				var reg = new RegExp('^[\\s\uFEFF\xA0]+|[\\s\uFEFF\xA0]+$', 'g');
+				return this.replace(reg, '');
+			};
+		})();
 	}
 	if (typeof String.prototype.repeat !== 'function')
 	{
@@ -286,6 +311,25 @@
 	var sSaveFileLocalUrl = "../../../../savefile";
 	var sDownloadFileLocalUrl = "../../../../downloadfile";
 	var nMaxRequestLength = 5242880;//5mb <requestLimits maxAllowedContentLength="30000000" /> default 30mb
+
+	function decimalNumberConversion(number, base) {
+		if (typeof number !== 'number') {
+			return;
+		}
+		var result = [];
+		while (number > 0) {
+			var remainder = number % base;
+			if (remainder === 0) {
+				result.unshift(0);
+
+			} else {
+				result.unshift(remainder);
+				number = number - remainder;
+			}
+			number /= base;
+		}
+		return result;
+	}
 
 	function getSockJs()
 	{
@@ -866,6 +910,7 @@
 				nRes = Asc.c_oAscError.ID.ConvertationTimeout;
 				break;
 			case c_oAscServerError.ConvertDRM :
+			case c_oAscServerError.ConvertDRM_UNSUPPORTED :
 			case c_oAscServerError.ConvertPASSWORD :
 				nRes = Asc.c_oAscError.ID.ConvertationPassword;
 				break;
@@ -1241,7 +1286,7 @@
 		this.test = function (str)
 		{
 			var match, m1, m2;
-			if (!nameRangeRE.test(str) && "_xlnm.print_area" !== str)
+			if ((!nameRangeRE.test(str) && "_xlnm.print_area" !== str) || !rx_r1c1DefError.test(str))
 			{
 				return false;
 			}
@@ -1411,6 +1456,7 @@
 		ConvertUnknownFormat:     -82,
 		ConvertTimeout:           -83,
 		ConvertReadFile:          -84,
+		ConvertDRM_UNSUPPORTED:   -85,
 		ConvertCONVERT_CORRUPTED: -86,
 		ConvertLIBREOFFICE:       -87,
 		ConvertPARAMS:            -88,
@@ -1507,6 +1553,7 @@
 				return 'pdf';
 				break;
 			case c_oAscFileType.HTML:
+			case c_oAscFileType.HTML_TODO:
 				return 'html';
 				break;
 			// Word
@@ -1926,6 +1973,43 @@
 			error: fError
 		});
 	}
+	function DownloadFileFromBytes(data, filename, mime, opt_bom) {
+		//'js-download' https://github.com/kennethjiang/js-file-download
+		var blobData = (typeof opt_bom !== 'undefined') ? [opt_bom, data] : [data];
+		var blob = new Blob(blobData, {type: mime || 'application/octet-stream'});
+		if (typeof window.navigator.msSaveBlob !== 'undefined') {
+			// IE workaround for "HTML7007: One or more blob URLs were
+			// revoked by closing the blob for which they were created.
+			// These URLs will no longer resolve as the data backing
+			// the URL has been freed."
+			window.navigator.msSaveBlob(blob, filename);
+		}
+		else {
+			var blobURL = (window.URL || window.webkitURL).createObjectURL(blob);
+			var tempLink = document.createElement('a');
+			tempLink.style.display = 'none';
+			tempLink.href = blobURL;
+			tempLink.setAttribute('download', filename);
+
+			// Safari thinks _blank anchor are pop ups. We only want to set _blank
+			// target if the browser does not support the HTML5 download attribute.
+			// This allows you to download files in desktop safari if pop up blocking
+			// is enabled.
+			if (typeof tempLink.download === 'undefined') {
+				tempLink.setAttribute('target', '_blank');
+			}
+
+			document.body.appendChild(tempLink);
+			tempLink.click();
+
+			// Fixes "webkit blob resource error 1"
+			setTimeout(function() {
+				document.body.removeChild(tempLink);
+				(window.URL || window.webkitURL).revokeObjectURL(blobURL);
+			}, 200)
+		}
+	}
+
 	function UploadImageFiles(files, documentId, documentUserId, jwt, callback)
 	{
 		if (files.length > 0)
@@ -2231,8 +2315,11 @@
 		str_namedSheetsRange  = "\u0001-\u0026\u0028-\u0029\u002B-\u002D\u003B-\u003E\u0040\u005E\u0060\u007B-\u007F\u0082\u0084\u008B\u0092\u0095\u0098\u009B\u00A0\u00A6\u00A9\u00AB-\u00AC\u00AE\u00BB\u0378-\u0379\u037E-\u0383\u0387\u038B\u038D\u03A2\u0524-\u0530\u0557-\u0558\u055A-\u0560\u0588-\u0590\u05BE\u05C0\u05C3\u05C6\u05C8-\u05CF\u05EB-\u05EF\u05F3-\u05FF\u0604-\u0605\u0609-\u060A\u060C-\u060D\u061B-\u061E\u0620\u065F\u066A-\u066D\u06D4\u0700-\u070E\u074B-\u074C\u07B2-\u07BF\u07F7-\u07F9\u07FB-\u0900\u093A-\u093B\u094E-\u094F\u0955-\u0957\u0964-\u0965\u0970\u0973-\u097A\u0980\u0984\u098D-\u098E\u0991-\u0992\u09A9\u09B1\u09B3-\u09B5\u09BA-\u09BB\u09C5-\u09C6\u09C9-\u09CA\u09CF-\u09D6\u09D8-\u09DB\u09DE\u09E4-\u09E5\u09FB-\u0A00\u0A04\u0A0B-\u0A0E\u0A11-\u0A12\u0A29\u0A31\u0A34\u0A37\u0A3A-\u0A3B\u0A3D\u0A43-\u0A46\u0A49-\u0A4A\u0A4E-\u0A50\u0A52-\u0A58\u0A5D\u0A5F-\u0A65\u0A76-\u0A80\u0A84\u0A8E\u0A92\u0AA9\u0AB1\u0AB4\u0ABA-\u0ABB\u0AC6\u0ACA\u0ACE-\u0ACF\u0AD1-\u0ADF\u0AE4-\u0AE5\u0AF0\u0AF2-\u0B00\u0B04\u0B0D-\u0B0E\u0B11-\u0B12\u0B29\u0B31\u0B34\u0B3A-\u0B3B\u0B45-\u0B46\u0B49-\u0B4A\u0B4E-\u0B55\u0B58-\u0B5B\u0B5E\u0B64-\u0B65\u0B72-\u0B81\u0B84\u0B8B-\u0B8D\u0B91\u0B96-\u0B98\u0B9B\u0B9D\u0BA0-\u0BA2\u0BA5-\u0BA7\u0BAB-\u0BAD\u0BBA-\u0BBD\u0BC3-\u0BC5\u0BC9\u0BCE-\u0BCF\u0BD1-\u0BD6\u0BD8-\u0BE5\u0BFB-\u0C00\u0C04\u0C0D\u0C11\u0C29\u0C34\u0C3A-\u0C3C\u0C45\u0C49\u0C4E-\u0C54\u0C57\u0C5A-\u0C5F\u0C64-\u0C65\u0C70-\u0C77\u0C80-\u0C81\u0C84\u0C8D\u0C91\u0CA9\u0CB4\u0CBA-\u0CBB\u0CC5\u0CC9\u0CCE-\u0CD4\u0CD7-\u0CDD\u0CDF\u0CE4-\u0CE5\u0CF0\u0CF3-\u0D01\u0D04\u0D0D\u0D11\u0D29\u0D3A-\u0D3C\u0D45\u0D49\u0D4E-\u0D56\u0D58-\u0D5F\u0D64-\u0D65\u0D76-\u0D78\u0D80-\u0D81\u0D84\u0D97-\u0D99\u0DB2\u0DBC\u0DBE-\u0DBF\u0DC7-\u0DC9\u0DCB-\u0DCE\u0DD5\u0DD7\u0DE0-\u0DF1\u0DF4-\u0E00\u0E3B-\u0E3E\u0E4F\u0E5A-\u0E80\u0E83\u0E85-\u0E86\u0E89\u0E8B-\u0E8C\u0E8E-\u0E93\u0E98\u0EA0\u0EA4\u0EA6\u0EA8-\u0EA9\u0EAC\u0EBA\u0EBE-\u0EBF\u0EC5\u0EC7\u0ECE-\u0ECF\u0EDA-\u0EDB\u0EDE-\u0EFF\u0F04-\u0F12\u0F3A-\u0F3D\u0F48\u0F6D-\u0F70\u0F85\u0F8C-\u0F8F\u0F98\u0FBD\u0FCD\u0FD0-\u0FFF\u104A-\u104F\u109A-\u109D\u10C6-\u10CF\u10FB\u10FD-\u10FF\u115A-\u115E\u11A3-\u11A7\u11FA-\u11FF\u1249\u124E-\u124F\u1257\u1259\u125E-\u125F\u1289\u128E-\u128F\u12B1\u12B6-\u12B7\u12BF\u12C1\u12C6-\u12C7\u12D7\u1311\u1316-\u1317\u135B-\u135E\u1361-\u1368\u137D-\u137F\u139A-\u139F\u13F5-\u1400\u166D-\u166E\u1677-\u167F\u169B-\u169F\u16EB-\u16ED\u16F1-\u16FF\u170D\u1715-\u171F\u1735-\u173F\u1754-\u175F\u176D\u1771\u1774-\u177F\u17D4-\u17D6\u17D8-\u17DA\u17DE-\u17DF\u17EA-\u17EF\u17FA-\u180A\u180F\u181A-\u181F\u1878-\u187F\u18AB-\u18FF\u191D-\u191F\u192C-\u192F\u193C-\u193F\u1941-\u1945\u196E-\u196F\u1975-\u197F\u19AA-\u19AF\u19CA-\u19CF\u19DA-\u19DF\u1A1C-\u1AFF\u1B4C-\u1B4F\u1B5A-\u1B60\u1B7D-\u1B7F\u1BAB-\u1BAD\u1BBA-\u1BFF\u1C38-\u1C3F\u1C4A-\u1C4C\u1C7E-\u1CFF\u1DE7-\u1DFD\u1F16-\u1F17\u1F1E-\u1F1F\u1F46-\u1F47\u1F4E-\u1F4F\u1F58\u1F5A\u1F5C\u1F5E\u1F7E-\u1F7F\u1FB5\u1FC5\u1FD4-\u1FD5\u1FDC\u1FF0-\u1FF1\u1FF5\u1FFF\u200e\u2011-\u2012\u2017\u2019-\u201B\u201E-\u201F\u2022-\u2024\u2031\u2034\u2036-\u203A\u203C-\u2043\u2045-\u2051\u2053-\u205E\u2065-\u2069\u2072-\u2073\u207D-\u207E\u208D-\u208F\u2095-\u209F\u20B6-\u20CF\u20F1-\u20FF\u2150-\u2152\u2189-\u218F\u2329-\u232A\u23E8-\u23FF\u2427-\u243F\u244B-\u245F\u269E-\u269F\u26BD-\u26BF\u26C4-\u2700\u2705\u270A-\u270B\u2728\u274C\u274E\u2753-\u2755\u2757\u275F-\u2760\u2768-\u2775\u2795-\u2797\u27B0\u27BF\u27C5-\u27C6\u27CB\u27CD-\u27CF\u27E6-\u27EF\u2983-\u2998\u29D8-\u29DB\u29FC-\u29FD\u2B4D-\u2B4F\u2B55-\u2BFF\u2C2F\u2C5F\u2C70\u2C7E-\u2C7F\u2CEB-\u2CFC\u2CFE-\u2CFF\u2D26-\u2D2F\u2D66-\u2D6E\u2D70-\u2D7F\u2D97-\u2D9F\u2DA7\u2DAF\u2DB7\u2DBF\u2DC7\u2DCF\u2DD7\u2DDF\u2E00-\u2E2E\u2E30-\u2E7F\u2E9A\u2EF4-\u2EFF\u2FD6-\u2FEF\u2FFC-\u2FFF\u3018-\u301C\u3030\u303D\u3040\u3097-\u3098\u30A0\u3100-\u3104\u312E-\u3130\u318F\u31B8-\u31BF\u31E4-\u31EF\u321F\u3244-\u324F\u32FF\u4DB6-\u4DBF\u9FC4-\u9FFF\uA48D-\uA48F\uA4C7-\uA4FF\uA60D-\uA60F\uA62C-\uA63F\uA660-\uA661\uA673-\uA67B\uA67E\uA698-\uA6FF\uA78D-\uA7FA\uA82C-\uA83F\uA874-\uA87F\uA8C5-\uA8CF\uA8DA-\uA8FF\uA92F\uA954-\uA9FF\uAA37-\uAA3F\uAA4E-\uAA4F\uAA5A-\uABFF\uD7A4-\uD7FF\uFA2E-\uFA2F\uFA6B-\uFA6F\uFADA-\uFAFF\uFB07-\uFB12\uFB18-\uFB1C\uFB37\uFB3D\uFB3F\uFB42\uFB45\uFBB2-\uFBD2\uFD3E-\uFD4F\uFD90-\uFD91\uFDC8-\uFDEF\uFDFE-\uFDFF\uFE10-\uFE1F\uFE27-\uFE2F\uFE32\uFE45-\uFE48\uFE53\uFE58\uFE67\uFE6C-\uFE6F\uFE75\uFEFD-\uFEFE\uFF00\uFF5F-\uFF60\uFFBF-\uFFC1\uFFC8-\uFFC9\uFFD0-\uFFD1\uFFD8-\uFFD9\uFFDD-\uFFDF\uFFE7\uFFEF-\uFFF8\uFFFE-\uFFFF",
 		rx_operators          = /^ *[-+*\/^&%<=>:] */,
 		rg                    = new XRegExp("^((?:_xlfn.)?[\\p{L}\\d._]+ *)[-+*/^&%<=>:;\\(\\)]"),
-		rgRange               = /^(\$?[A-Za-z]+\$?\d+:\$?[A-Za-z]+\$?\d+)(?:[-+*\/^&%<=>: ;),]|$)/,
-		rgRangeR1C1           = /^(([Rr]{1}(\[)?(-?\d*)(\])?)([Cc]{1}(\[)?(-?\d*)(\])?):([Rr]{1}(\[)?(-?\d*)(\])?)([Cc]{1}(\[)?(-?\d*)(\])?))([-+*\/^&%<=>: ;),]|$)/,
+		//TODO для правки ввода формулы SUM(A1:B1.) - меняю rgRange/rgRangeR1C1 ,
+		// есть ещё символы, на которые ругается ms подобным образом - ~@#(мы тоже ругаемся, но не выделяем диапазон перед данными символами).
+		// для проверки нужно ввести в ячейку SUM(A1:B1@)
+		rgRange               = /^(\$?[A-Za-z]+\$?\d+:\$?[A-Za-z]+\$?\d+)(?:[-+*\/^&%<=>: ;),.]|$)/,
+		rgRangeR1C1           = /^(([Rr]{1}(\[)?(-?\d*)(\])?)([Cc]{1}(\[)?(-?\d*)(\])?):([Rr]{1}(\[)?(-?\d*)(\])?)([Cc]{1}(\[)?(-?\d*)(\])?))([-+*\/^&%<=>: ;),.]|$)/,
 		rgCols                = /^(\$?[A-Za-z]+:\$?[A-Za-z]+)(?:[-+*\/^&%<=>: ;),]|$)/,
 		rgColsR1C1            = /^(([Cc]{1}(\[)?(-?\d*)(\])?(:)?)([Cc]?(\[)?(-?\d*)(\])?))([-+*\/^&%<=>: ;),]|$)/,
 		rgRows                = /^(\$?\d+:\$?\d+)(?:[-+*\/^&%<=>: ;),]|$)/,
@@ -2265,6 +2352,8 @@
 		rx_arraySeparatorsDef = /^ *[,;] */,
 		rx_numberDef          = /^ *[+-]?\d*(\d|\.)\d*([eE][+-]?\d+)?/,
 		rx_CommaDef           = /^ *[,;] */,
+		//пока не объединяю с проверкой именованных диапазонов, подумать на счёт объединения. при объединении в парсере формул проблема - мы не попадаем в isName, а далее заходим в isFunc
+		rx_r1c1DefError       = /^(?!(([Rr]|[Cc]|([Rr][Cc]))(\d)))/i,
 
 		rx_ControlSymbols     = /^ *[\u0000-\u001F\u007F-\u009F] */,
 
@@ -3859,14 +3948,31 @@
 		return (nFirstCharCode - 64) + 26 * (nLen - 1);
 	}
 
+	function repeatNumberingLvl(num, nLastTrueSymbol)
+	{
+		return ((num - 1) % nLastTrueSymbol) + 1;
+	}
+
 	/**
 	 * Переводим числовое значение в строку с заданным форматом нумерации
 	 * @param nValue {number}
 	 * @param nFormat {Asc.c_oAscNumberingFormat}
 	 * @returns {string}
 	 */
-	function IntToNumberFormat(nValue, nFormat)
+	function IntToNumberFormat(nValue, nFormat, oLang)
 	{
+		var nLang;
+		if (oLang)
+		{
+			nLang = oLang.Val;
+			if (availableIdeographLanguages.indexOf(languages[nLang]) !== -1)
+			{
+				nLang = oLang.EastAsia;
+			} else if (availableBidiLanguages.indexOf(languages[nLang]) !== -1)
+			{
+				nLang = oLang.Bidi;
+			}
+		}
 		var sResult = "";
 
 		switch (nFormat)
@@ -3891,6 +3997,18 @@
 				break;
 			}
 
+			case Asc.c_oAscNumberingFormat.DecimalEnclosedCircleChinese:
+			{
+				if (nValue <= 10)
+				{
+					sResult = String.fromCharCode(0x2460 + nValue - 1);
+				}
+				else
+				{
+					sResult = "" + nValue;
+				}
+				break;
+			}
 			case Asc.c_oAscNumberingFormat.DecimalEnclosedCircle:
 			{
 				if (nValue <= 20)
@@ -3909,6 +4027,7 @@
 			case Asc.c_oAscNumberingFormat.UpperLetter:
 			{
 				// Формат: a,..,z,aa,..,zz,aaa,...,zzz,...
+				nValue = repeatNumberingLvl(nValue, 780);
 				var Num = nValue - 1;
 
 				var Count = (Num - Num % 26) / 26;
@@ -3930,6 +4049,7 @@
 			case Asc.c_oAscNumberingFormat.RussianUpper:
 			{
 				// Формат: а,..,я,аа,..,яя,ааа,...,яяя,...
+				nValue = repeatNumberingLvl(nValue, 870);
 				var Num = nValue - 1;
 
 				var Count = (Num - Num % 29) / 29;
@@ -3958,6 +4078,7 @@
 			case Asc.c_oAscNumberingFormat.LowerRoman:
 			case Asc.c_oAscNumberingFormat.UpperRoman:
 			{
+				nValue = repeatNumberingLvl(nValue, 32767);
 				var Num = nValue;
 
 				// Переводим число Num в римскую систему исчисления
@@ -3984,6 +4105,387 @@
 					if (nIndex >= Rims.length)
 						break;
 				}
+				break;
+			}
+
+			case Asc.c_oAscNumberingFormat.Aiueo: {
+
+				var count = 1, numberOfLetters = 46;
+				nValue = repeatNumberingLvl(nValue, 46);
+				while (nValue > numberOfLetters)
+				{
+					++count;
+					nValue -= numberOfLetters;
+				}
+				var letter = nValue % 45 === 0 ? 0xFF66 : (nValue % 46 === 0 ? 0xFF9D : 0xFF71 + nValue - 1);
+
+				for (var i = 0; i < count; i++)
+					sResult += String.fromCharCode(letter);
+
+				break;
+			}
+			case Asc.c_oAscNumberingFormat.AiueoFullWidth: {
+
+				var count = 1, numberOfLetters = 46, letter;
+				nValue = repeatNumberingLvl(nValue, 46);
+				while (nValue > numberOfLetters)
+				{
+					++count;
+					nValue -= numberOfLetters;
+				}
+				if (nValue >= 1 && nValue <= 5)
+				{
+					letter = 0x30A2 + (nValue - 1) * 2;
+				} else if (nValue >= 6 && nValue <= 17)
+				{
+					letter = 0x30AB + (nValue - 6) * 2;
+				} else if (nValue >= 18 && nValue <= 21)
+				{
+					letter = 0x30C4 + (nValue - 18) * 2;
+				} else if (nValue >= 22 && nValue <= 26)
+				{
+					letter = 0x30CB + nValue - 22;
+				} else if (nValue >= 27 && nValue <= 31)
+				{
+					letter = 0x30D2 + (nValue - 27) * 3;
+				} else if (nValue >= 32 && nValue <= 35)
+				{
+					letter = 0x30DF + nValue - 32;
+				} else if (nValue >= 36 && nValue <= 38)
+				{
+					letter = 0x30E4 + nValue - 36;
+				} else if (nValue >= 39 && nValue <= 43)
+				{
+					letter = 0x30E9 + nValue - 39;
+				} else if (nValue === 44)
+				{
+					letter = 0x30EF + nValue - 44;
+				} else if (nValue >= 45 && nValue <= 46)
+				{
+					letter = 0x30F2 + nValue - 45;
+				}
+
+				for (var i = 0; i < count; i++)
+					sResult += String.fromCharCode(letter);
+
+				break;
+			}
+
+			case Asc.c_oAscNumberingFormat.ArabicAbjad:
+			case Asc.c_oAscNumberingFormat.ArabicAlpha:
+			case Asc.c_oAscNumberingFormat.Chicago:
+			case Asc.c_oAscNumberingFormat.Chosung:
+			case Asc.c_oAscNumberingFormat.Ganada: {
+				var count = 1, charArr;
+
+					if (nFormat === Asc.c_oAscNumberingFormat.ArabicAbjad)
+					{
+						nValue = repeatNumberingLvl(nValue, 392);
+						charArr = [
+							0x0623, 0x0628, 0x062C, 0x062F,
+							0x0647, 0x0648, 0x0632, 0x062D,
+							0x0637, 0x064A, 0x0643, 0x0644,
+							0x0645, 0x0646, 0x0633, 0x0639,
+							0x0641, 0x0635, 0x0642, 0x0631,
+							0x0634, 0x062A, 0x062B, 0x062E,
+							0x0630, 0x0636, 0x0638, 0x063A
+						];
+					} else if (nFormat === Asc.c_oAscNumberingFormat.ArabicAlpha)
+					{
+						nValue = repeatNumberingLvl(nValue, 392);
+						charArr = [
+							0x0623, 0x0628, 0x062A, 0x062B,
+							0x062C, 0x062D, 0x062E, 0x062F,
+							0x0630, 0x0631, 0x0632, 0x0633,
+							0x0634, 0x0635, 0x0636, 0x0637,
+							0x0638, 0x0639, 0x063A, 0x0641,
+							0x0642, 0x0643, 0x0644, 0x0645,
+							0x0646, 0x0647, 0x0648, 0x064A
+						];
+					} else if (nFormat === Asc.c_oAscNumberingFormat.Chicago)
+					{
+						nValue = repeatNumberingLvl(nValue, 120);
+						charArr = [0x002A, 0x2020, 0x2021, 0x00A7]
+					} else if(nFormat === Asc.c_oAscNumberingFormat.Chosung)
+					{
+						nValue = repeatNumberingLvl(nValue, 14);
+						charArr = [
+							0x3131, 0x3134, 0x3137, 0x3139,
+							0x3141, 0x3142, 0x3145, 0x3147,
+							0x3148, 0x314A, 0x314B, 0x314C,
+							0x314D, 0x314E
+						]
+					} else if (nFormat === Asc.c_oAscNumberingFormat.Ganada)
+					{
+						nValue = repeatNumberingLvl(nValue, 14);
+						charArr = [
+							0xAC00, 0xB098, 0xB2E4, 0xB77C,
+							0xB9C8, 0xBC14, 0xC0AC, 0xC544,
+							0xC790, 0xCC28, 0xCE74, 0xD0C0,
+							0xD30C, 0xD558
+						]
+					}
+
+
+
+					while (nValue > charArr.length)
+					{
+						++count;
+						nValue -= charArr.length;
+					}
+
+				for (var i = 0; i < count; i++)
+					sResult += String.fromCharCode(charArr[nValue - 1]);
+
+				break;
+			}
+
+			case Asc.c_oAscNumberingFormat.DecimalEnclosedFullstop:
+			case Asc.c_oAscNumberingFormat.DecimalEnclosedParen: {
+				var startNumber = nFormat === Asc.c_oAscNumberingFormat.DecimalEnclosedFullstop ? 0x2488 : 0x2474;
+				sResult = (nValue >= 1 && nValue <= 20) ? String.fromCharCode(startNumber + nValue - 1) : "" + nValue;
+
+				break;
+			}
+
+			case Asc.c_oAscNumberingFormat.DecimalFullWidth:
+			case Asc.c_oAscNumberingFormat.DecimalHalfWidth: {
+
+				var zeroInHex = nFormat === Asc.c_oAscNumberingFormat.DecimalFullWidth ? 0xFF10 : 0x0030;
+				var strValue = String(nValue);
+				for(var i = 0; i < strValue.length; i++)
+				{
+					sResult += String.fromCharCode(zeroInHex + parseInt(strValue[i]));
+				}
+				break;
+			}
+
+			case Asc.c_oAscNumberingFormat.Hebrew2: {
+				nValue = repeatNumberingLvl(nValue, 392);
+				var numberOfLetters = 22, count = 0,
+					charArr = [
+						0x05D0, 0x05D1, 0x05D2, 0x05D3,
+						0x05D4, 0x05D5, 0x05D6, 0x05D7,
+						0x05D8, 0x05D9, 0x05DB, 0x05DC,
+						0x05DE, 0x05E0, 0x05E1, 0x05E2,
+						0x05E4, 0x05E6, 0x05E7, 0x05E8,
+						0x05E9, 0x05EA
+					];
+
+				while (nValue > numberOfLetters)
+				{
+					++count;
+					nValue -= numberOfLetters;
+				}
+
+				sResult = String.fromCharCode(charArr[nValue - 1]);
+
+				while(count !== 0)
+				{
+					sResult += String.fromCharCode(charArr[21]);
+					--count;
+				}
+			break;
+			}
+
+			case Asc.c_oAscNumberingFormat.Hex: {
+				if (nValue <= 0xFFFF)
+				{
+					sResult = (nValue+0x10000).toString(16).substr(-4).toUpperCase();
+					sResult = sResult.replace(/^0+/, '');
+				}
+				break;
+			}
+
+			case Asc.c_oAscNumberingFormat.HindiConsonants: {
+				nValue = repeatNumberingLvl(nValue, 304);
+				var count = 1, numberOfLetters = 18;
+
+				var charArr = [
+					0x0905, 0x0906, 0x0907, 0x0908,
+					0x0909, 0x090A, 0x090B, 0x090C,
+					0x090D, 0x090E, 0x090F, 0x0910,
+					0x0911, 0x0912, 0x0913, 0x0914,
+					0x0905, 0x0905
+				];
+
+				while (nValue > numberOfLetters)
+				{
+					++count;
+					nValue -= numberOfLetters;
+				}
+				for (var i = 0; i < count; i++)
+				{
+					sResult += String.fromCharCode(charArr[nValue - 1]);
+
+					if(nValue === 17)
+					{
+						sResult += String.fromCharCode(0x0902)
+					} else if(nValue === 18)
+					{
+						sResult += String.fromCharCode(0x0903)
+					}
+				}
+				break;
+			}
+
+			case Asc.c_oAscNumberingFormat.HindiNumbers:
+			case Asc.c_oAscNumberingFormat.IdeographDigital:
+			case Asc.c_oAscNumberingFormat.JapaneseDigitalTenThousand: {
+				var digits;
+				if (nFormat === Asc.c_oAscNumberingFormat.HindiNumbers)
+				{
+					nValue = repeatNumberingLvl(nValue, 32767);
+					digits = [
+						0x0966, 0x0967, 0x0968, 0x0969, 0x096A,
+						0x096B, 0x096C, 0x096D, 0x096E, 0x096F
+					];
+				} else if (nFormat === Asc.c_oAscNumberingFormat.IdeographDigital)
+				{
+					digits = [
+						0x3007, 0x4E00, 0x4E8C, 0x4E09,
+						0x56DB, 0x4E94, 0x516D, 0x4E03,
+						0x516B, 0x4E5D
+					];
+				} else if (nFormat === Asc.c_oAscNumberingFormat.JapaneseDigitalTenThousand)
+				{
+					digits = [
+						0x3007, 0x4E00, 0x4E8C, 0x4E09,
+						0x56DB, 0x4E94, 0x516D, 0x4E03,
+						0x516B, 0x4E5D
+					];
+				}
+				if (nFormat !== Asc.c_oAscNumberingFormat.JapaneseDigitalTenThousand || nValue < 10000)
+				{
+					var strValue = nValue.toString();
+					for(var i = 0; i < strValue.length; i++)
+					{
+						sResult += String.fromCharCode(digits[strValue[i]]);
+					}
+				}
+				break;
+			}
+
+			case Asc.c_oAscNumberingFormat.HindiVowels: {
+				nValue = repeatNumberingLvl(nValue, 304);
+				var count = 1, numberOfLetters = 37;
+
+				while (nValue > numberOfLetters)
+				{
+					++count;
+					nValue -= numberOfLetters;
+				}
+
+				for (var i = 0; i < count; i++)
+				{
+					sResult += String.fromCharCode(0x0915 + nValue - 1);
+				}
+				break;
+			}
+
+			case Asc.c_oAscNumberingFormat.IdeographEnclosedCircle: {
+				sResult += nValue <= 10 ? String.fromCharCode(0x3220 + nValue - 1) : nValue;
+				break;
+			}
+
+			case Asc.c_oAscNumberingFormat.IdeographTraditional:
+			case Asc.c_oAscNumberingFormat.IdeographZodiac: {
+				var digits = [];
+
+				if (nFormat === Asc.c_oAscNumberingFormat.IdeographTraditional)
+					digits = [
+						0x7532, 0x4E59, 0x4E19, 0x4E01,
+						0x620A, 0x5DF1, 0x5E9A, 0x8F9B,
+						0x58EC, 0x7678
+					];
+				else if (nFormat === Asc.c_oAscNumberingFormat.IdeographZodiac)
+					digits = [
+						0x5B50, 0x4E11, 0x5BC5, 0x536F,
+						0x8FB0, 0x5DF3, 0x5348, 0x672A,
+						0x7533, 0x9149, 0x620C, 0x4EA5
+					];
+
+				sResult += nValue <= digits.length ? String.fromCharCode(digits[nValue - 1]) : nValue;
+
+				break;
+			}
+
+			case Asc.c_oAscNumberingFormat.IdeographZodiacTraditional: {
+				var digits = [
+					0x7532, 0x5B50, 0x4E59, 0x4E11, 0x4E19, 0x5BC5,
+					0x4E01, 0x536F, 0x620A, 0x8FB0, 0x5DF1, 0x5DF3,
+					0x5E9A, 0x5348, 0x8F9B, 0x672A, 0x58EC, 0x7533,
+					0x7678, 0x9149, 0x7532, 0x620D, 0x4E59, 0x4EA5,
+					0x4E19, 0x5B50, 0x4E01, 0x4E11, 0x620A, 0x5BC5,
+					0x5DF1, 0x536F, 0x5E9A, 0x8FB0, 0x8F9B, 0x5DF3,
+					0x58EC, 0x5348, 0x7678, 0x672A, 0x7532, 0x7533,
+					0x4E59, 0x9149, 0x4E19, 0x620D, 0x4E01, 0x4EA5,
+					0x620A, 0x5B50, 0x5DF1, 0x4E11, 0x5E9A, 0x5BC5,
+					0x8F9B, 0x536F, 0x58EC, 0x8FB0, 0x7678, 0x5DF3,
+					0x7532, 0x5348, 0x4E59, 0x672A, 0x4E19, 0x7533,
+					0x4E01, 0x9149, 0x620A, 0x620D, 0x5DF1, 0x4EA5,
+					0x5E9A, 0x5B50, 0x8F9B, 0x4E11, 0x58EC, 0x5BC5,
+					0x7678, 0x536F, 0x7532, 0x8FB0, 0x4E59, 0x5DF3,
+					0x4E19, 0x5348, 0x4E01, 0x672A, 0x620A, 0x7533,
+					0x5DF1, 0x9149, 0x5E9A, 0x620D, 0x8F9B, 0x4EA5,
+					0x58EC, 0x5B50, 0x7678, 0x4E11, 0x7532, 0x5BC5,
+					0x4E59, 0x536F, 0x4E19, 0x8FB0, 0x4E01, 0x5DF3,
+					0x620A, 0x5348, 0x5DF1, 0x672A, 0x5E9A, 0x7533,
+					0x8F9B, 0x9149, 0x58EC, 0x620D, 0x7678, 0x4EA5
+				];
+
+				while (nValue > digits.length / 2)
+				{
+					nValue -= digits.length / 2;
+				}
+
+				sResult += String.fromCharCode(digits[nValue * 2 - 2]) + String.fromCharCode(digits[nValue * 2 - 1]);
+
+				break;
+			}
+
+
+			case Asc.c_oAscNumberingFormat.Iroha:
+			case Asc.c_oAscNumberingFormat.IrohaFullWidth: {
+				var digits = [];
+				if (nFormat === Asc.c_oAscNumberingFormat.Iroha)
+					digits = [
+						0xFF72, 0xFF9B, 0xFF8A, 0xFF86,
+						0xFF8E, 0xFF8D, 0xFF84, 0xFF81,
+						0xFF98, 0xFF87, 0xFF99, 0xFF66,
+						0xFF9C, 0xFF76, 0xFF96, 0xFF80,
+						0xFF9A, 0xFF7F, 0xFF82, 0xFF88,
+						0xFF85, 0xFF97, 0xFF91, 0xFF73,
+						0x30F0, 0xFF89, 0xFF75, 0xFF78,
+						0xFF94, 0xFF8F, 0xFF79, 0xFF8C,
+						0xFF7A, 0xFF74, 0xFF83, 0xFF71,
+						0xFF7B, 0xFF77, 0xFF95, 0xFF92,
+						0xFF90, 0xFF7C, 0x30F1, 0xFF8B,
+						0xFF93, 0xFF7E, 0xFF7D, 0xFF9D
+					];
+				else
+					if (nFormat === Asc.c_oAscNumberingFormat.IrohaFullWidth)
+					digits = [
+						0x30A4, 0x30ED, 0x30CF, 0x30CB,
+						0x30DB, 0x30D8, 0x30C8, 0x30C1,
+						0x30EA, 0x30CC, 0x30EB, 0x30F2,
+						0x30EF, 0x30AB, 0x30E8, 0x30BF,
+						0x30EC, 0x30BD, 0x30C4, 0x30CD,
+						0x30CA, 0x30E9, 0x30E0, 0x30A6,
+						0x30F0, 0x30CE, 0x30AA, 0x30AF,
+						0x30E4, 0x30DE, 0x30B1, 0x30D5,
+						0x30B3, 0x30A8, 0x30C6, 0x30A2,
+						0x30B5, 0x30AD, 0x30E6, 0x30E1,
+						0x30DF, 0x30B7, 0x30F1, 0x30D2,
+						0x30E2, 0x30BB, 0x30B9, 0x30F3
+					]
+
+				while (nValue > digits.length)
+				{
+					nValue -= digits.length;
+				}
+
+				sResult += String.fromCharCode(digits[nValue - 1]);
 				break;
 			}
 
@@ -4053,108 +4555,109 @@
 					1000  : String.fromCharCode(0x5343),
 					10000 : String.fromCharCode(0x4E07)
 				};
-
-				var nRemValue = nValue;
-
-				while (true)
+				if (nValue < 1000000)
 				{
-					var nTTQuotient  = (nRemValue / 10000) | 0;
-					var nTTRemainder = nRemValue - nTTQuotient * 10000;
+					var nRemValue = nValue;
 
-					nRemValue = nTTQuotient;
-
-					var sGroup = "", isPrevZero = false;
-
-					if (nTTQuotient > 0)
-						sGroup += arrChinese[10000];
-					else
-						isPrevZero = true;
-
-					if (nTTRemainder <= 0)
+					while (true)
 					{
-						sResult = sGroup + sResult;
+						var nTTQuotient  = (nRemValue / 10000) | 0;
+						var nTTRemainder = nRemValue - nTTQuotient * 10000;
 
-						if (nRemValue <= 0)
-							break;
+						nRemValue = nTTQuotient;
 
-						continue;
-					}
+						var sGroup = "", isPrevZero = false;
 
-					var nQuotient  = (nTTRemainder / 1000) | 0;
-					var nRemainder = nTTRemainder - nQuotient * 1000;
-
-					if (0 !== nQuotient)
-					{
-						sGroup += arrChinese[nQuotient] + arrChinese[1000];
-						isPrevZero = false;
-					}
-					else if (nTTQuotient > 0)
-					{
-						sGroup += arrChinese[0];
-						isPrevZero = true;
-					}
-
-					if (nRemainder <= 0)
-					{
-						sResult = sGroup + sResult;
-
-						if (nRemValue <= 0)
-							break;
-
-						continue;
-					}
-
-					nQuotient  = (nRemainder / 100) | 0;
-					nRemainder = nRemainder - nQuotient * 100;
-
-					if (0 !== nQuotient)
-					{
-						sGroup += arrChinese[nQuotient] + arrChinese[100];
-						isPrevZero = false;
-					}
-					else if (!isPrevZero)
-					{
-						sGroup += arrChinese[0];
-						isPrevZero = true;
-					}
-
-					if (nRemainder <= 0)
-					{
-						sResult = sGroup + sResult;
-
-						if (nRemValue <= 0)
-							break;
-
-						continue;
-					}
-
-					nQuotient  = (nRemainder / 10) | 0;
-					nRemainder = nRemainder - nQuotient * 10;
-
-					if (0 !== nQuotient)
-					{
-						if (nValue < 20)
-							sGroup += arrChinese[10];
+						if (nTTQuotient > 0)
+							sGroup += arrChinese[10000];
 						else
-							sGroup += arrChinese[nQuotient] + arrChinese[10];
+							isPrevZero = true;
 
-						isPrevZero = false;
+						if (nTTRemainder <= 0)
+						{
+							sResult = sGroup + sResult;
+
+							if (nRemValue <= 0)
+								break;
+
+							continue;
+						}
+
+						var nQuotient  = (nTTRemainder / 1000) | 0;
+						var nRemainder = nTTRemainder - nQuotient * 1000;
+
+						if (0 !== nQuotient)
+						{
+							sGroup += arrChinese[nQuotient] + arrChinese[1000];
+							isPrevZero = false;
+						}
+						else if (nTTQuotient > 0)
+						{
+							sGroup += arrChinese[0];
+							isPrevZero = true;
+						}
+
+						if (nRemainder <= 0)
+						{
+							sResult = sGroup + sResult;
+
+							if (nRemValue <= 0)
+								break;
+
+							continue;
+						}
+
+						nQuotient  = (nRemainder / 100) | 0;
+						nRemainder = nRemainder - nQuotient * 100;
+
+						if (0 !== nQuotient)
+						{
+							sGroup += arrChinese[nQuotient] + arrChinese[100];
+							isPrevZero = false;
+						}
+						else if (!isPrevZero)
+						{
+							sGroup += arrChinese[0];
+							isPrevZero = true;
+						}
+
+						if (nRemainder <= 0)
+						{
+							sResult = sGroup + sResult;
+
+							if (nRemValue <= 0)
+								break;
+
+							continue;
+						}
+
+						nQuotient  = (nRemainder / 10) | 0;
+						nRemainder = nRemainder - nQuotient * 10;
+
+						if (0 !== nQuotient)
+						{
+							if (nValue < 20)
+								sGroup += arrChinese[10];
+							else
+								sGroup += arrChinese[nQuotient] + arrChinese[10];
+
+							isPrevZero = false;
+						}
+						else if (!isPrevZero)
+						{
+							sGroup += arrChinese[0];
+							isPrevZero = true;
+						}
+
+						if (0 !== nRemainder)
+							sGroup += arrChinese[nRemainder];
+
+						sResult = sGroup + sResult;
+
+						if (nRemValue <= 0)
+							break;
 					}
-					else if (!isPrevZero)
-					{
-						sGroup += arrChinese[0];
-						isPrevZero = true;
-					}
-
-					if (0 !== nRemainder)
-						sGroup += arrChinese[nRemainder];
-
-					sResult = sGroup + sResult;
-
-					if (nRemValue <= 0)
-						break;
 				}
-
 				break;
 			}
 			case Asc.c_oAscNumberingFormat.ChineseLegalSimplified:
@@ -4175,106 +4678,3749 @@
 					1000  : String.fromCharCode(0x4EDF),
 					10000 : String.fromCharCode(0x842C)
 				};
-
-				var nRemValue = nValue;
-
-				while (true)
+				if (nValue < 1000000)
 				{
-					var nTTQuotient  = (nRemValue / 10000) | 0;
-					var nTTRemainder = nRemValue - nTTQuotient * 10000;
+					var nRemValue = nValue;
 
-					nRemValue = nTTQuotient;
-
-					var sGroup = "", isPrevZero = false;
-
-					if (nTTQuotient > 0)
-						sGroup += arrChinese[10000];
-					else
-						isPrevZero = true;
-
-					if (nTTRemainder <= 0)
+					while (true)
 					{
+						var nTTQuotient  = (nRemValue / 10000) | 0;
+						var nTTRemainder = nRemValue - nTTQuotient * 10000;
+
+						nRemValue = nTTQuotient;
+
+						var sGroup = "", isPrevZero = false;
+
+						if (nTTQuotient > 0)
+							sGroup += arrChinese[10000];
+						else
+							isPrevZero = true;
+
+						if (nTTRemainder <= 0)
+						{
+							sResult = sGroup + sResult;
+
+							if (nRemValue <= 0)
+								break;
+
+							continue;
+						}
+
+						var nQuotient  = (nTTRemainder / 1000) | 0;
+						var nRemainder = nTTRemainder - nQuotient * 1000;
+
+						if (0 !== nQuotient)
+						{
+							sGroup += arrChinese[nQuotient] + arrChinese[1000];
+							isPrevZero = false;
+						}
+						else if (nTTQuotient > 0)
+						{
+							sGroup += arrChinese[0];
+							isPrevZero = true;
+						}
+
+						if (nRemainder <= 0)
+						{
+							sResult = sGroup + sResult;
+
+							if (nRemValue <= 0)
+								break;
+
+							continue;
+						}
+
+						nQuotient  = (nRemainder / 100) | 0;
+						nRemainder = nRemainder - nQuotient * 100;
+
+						if (0 !== nQuotient)
+						{
+							sGroup += arrChinese[nQuotient] + arrChinese[100];
+							isPrevZero = false;
+						}
+						else if (!isPrevZero)
+						{
+							sGroup += arrChinese[0];
+							isPrevZero = true;
+						}
+
+						if (nRemainder <= 0)
+						{
+							sResult = sGroup + sResult;
+
+							if (nRemValue <= 0)
+								break;
+
+							continue;
+						}
+
+						nQuotient  = (nRemainder / 10) | 0;
+						nRemainder = nRemainder - nQuotient * 10;
+
+						if (0 !== nQuotient)
+						{
+							sGroup += arrChinese[nQuotient] + arrChinese[10];
+							isPrevZero = false;
+						}
+						else if (!isPrevZero)
+						{
+							sGroup += arrChinese[0];
+							isPrevZero = true;
+						}
+
+						if (0 !== nRemainder)
+							sGroup += arrChinese[nRemainder];
+
 						sResult = sGroup + sResult;
 
 						if (nRemValue <= 0)
 							break;
-
-						continue;
 					}
-
-					var nQuotient  = (nTTRemainder / 1000) | 0;
-					var nRemainder = nTTRemainder - nQuotient * 1000;
-
-					if (0 !== nQuotient)
-					{
-						sGroup += arrChinese[nQuotient] + arrChinese[1000];
-						isPrevZero = false;
-					}
-					else if (nTTQuotient > 0)
-					{
-						sGroup += arrChinese[0];
-						isPrevZero = true;
-					}
-
-					if (nRemainder <= 0)
-					{
-						sResult = sGroup + sResult;
-
-						if (nRemValue <= 0)
-							break;
-
-						continue;
-					}
-
-					nQuotient  = (nRemainder / 100) | 0;
-					nRemainder = nRemainder - nQuotient * 100;
-
-					if (0 !== nQuotient)
-					{
-						sGroup += arrChinese[nQuotient] + arrChinese[100];
-						isPrevZero = false;
-					}
-					else if (!isPrevZero)
-					{
-						sGroup += arrChinese[0];
-						isPrevZero = true;
-					}
-
-					if (nRemainder <= 0)
-					{
-						sResult = sGroup + sResult;
-
-						if (nRemValue <= 0)
-							break;
-
-						continue;
-					}
-
-					nQuotient  = (nRemainder / 10) | 0;
-					nRemainder = nRemainder - nQuotient * 10;
-
-					if (0 !== nQuotient)
-					{
-						sGroup += arrChinese[nQuotient] + arrChinese[10];
-						isPrevZero = false;
-					}
-					else if (!isPrevZero)
-					{
-						sGroup += arrChinese[0];
-						isPrevZero = true;
-					}
-
-					if (0 !== nRemainder)
-						sGroup += arrChinese[nRemainder];
-
-					sResult = sGroup + sResult;
-
-					if (nRemValue <= 0)
-						break;
 				}
-
 				break;
 			}
+			case Asc.c_oAscNumberingFormat.IdeographLegalTraditional: {
+				digits = [
+					String.fromCharCode(0x58F9),
+					String.fromCharCode(0x8CB3),
+					String.fromCharCode(0x53C3),
+					String.fromCharCode(0x8086),
+					String.fromCharCode(0x4F0D),
+					String.fromCharCode(0x9678),
+					String.fromCharCode(0x67D2),
+					String.fromCharCode(0x634C),
+					String.fromCharCode(0x7396)
+				];
+				degrees = [
+					'萬',
+					'仟',
+					'佰',
+					'拾'
+				];
+
+				var IdeographLegalTraditionalSplitting = function (numberLessThen10000, isOver10000)
+				{
+					var resArr = [];
+					var groups = {};
+
+					groups[1000] = Math.floor(numberLessThen10000 / 1000);
+					numberLessThen10000 %= 1000;
+
+					groups[100] = Math.floor(numberLessThen10000 / 100);
+					numberLessThen10000 %= 100;
+
+					groups[10] = Math.floor(numberLessThen10000 / 10);
+					numberLessThen10000 %= 10;
+
+					groups[1] = numberLessThen10000;
+
+					if (groups[1000])
+					{
+						resArr.push(digits[groups[1000] - 1], degrees[1]);
+
+						if (!groups[100] && (groups[1] || groups[10]))
+						{
+							resArr.push('零');
+						}
+					}
+
+					if (groups[100])
+					{
+						resArr.push(digits[groups[100] - 1], degrees[2]);
+
+						if (!groups[10] && groups[1])
+						{
+							resArr.push('零');
+						}
+					}
+
+					if (groups[10])
+					{
+						if (isOver10000 && !groups[1000] && !groups[100] && !groups[1])
+						{
+							resArr.push('零');
+						}
+						resArr.push(digits[groups[10] - 1], degrees[3]);
+					}
+
+					if (groups[1])
+					{
+						if (isOver10000 && !groups[1000] && !groups[100] && !groups[10])
+						{
+							resArr.push('零');
+						}
+						resArr.push(digits[numberLessThen10000 - 1]);
+					}
+
+					return resArr;
+				}
+
+
+				if (nValue < 10000)
+				{
+					sResult = IdeographLegalTraditionalSplitting(nValue).join('');
+				} else {
+					if (nValue < 1000000)
+					{
+						var resultWith10000Reminder = ([degrees[0]]).concat(IdeographLegalTraditionalSplitting(nValue % 10000, true));
+						sResult = IdeographLegalTraditionalSplitting(Math.floor(nValue / 10000)).concat(resultWith10000Reminder).join('');
+					}
+				}
+				break;
+			}
+			case Asc.c_oAscNumberingFormat.JapaneseLegal:
+			case Asc.c_oAscNumberingFormat.KoreanCounting:
+			case Asc.c_oAscNumberingFormat.JapaneseCounting:
+				var ideographCount = function(differentFormat)
+				{
+					if (differentFormat)
+					{
+						nFormat = differentFormat;
+					}
+					var addFirstDegreeSymbol = true;
+					if (nFormat === Asc.c_oAscNumberingFormat.KoreanCounting)
+					{
+						addFirstDegreeSymbol = false;
+						digits = [
+							String.fromCharCode(0xC77C),
+							String.fromCharCode(0xC774),
+							String.fromCharCode(0xC0BC),
+							String.fromCharCode(0xC0AC),
+							String.fromCharCode(0xC624),
+							String.fromCharCode(0xC721),
+							String.fromCharCode(0xCE60),
+							String.fromCharCode(0xD314),
+							String.fromCharCode(0xAD6C)
+						];
+						var degrees = [
+							'만',
+							'천',
+							'백',
+							'십'
+						];
+					} else if (nFormat === Asc.c_oAscNumberingFormat.JapaneseLegal)
+					{
+						digits = [
+							String.fromCharCode(0x58F1),
+							String.fromCharCode(0x5F10),
+							String.fromCharCode(0x53C2),
+							String.fromCharCode(0x56DB),
+							String.fromCharCode(0x4F0D),
+							String.fromCharCode(0x516D),
+							String.fromCharCode(0x4E03),
+							String.fromCharCode(0x516B),
+							String.fromCharCode(0x4E5D)
+						];
+						degrees = [
+							'萬',
+							'阡',
+							'百',
+							'拾'
+						];
+					} else if (nFormat === Asc.c_oAscNumberingFormat.JapaneseCounting)
+					{
+						addFirstDegreeSymbol = false;
+						digits = [
+							String.fromCharCode(0x4E00),
+							String.fromCharCode(0x4E8C),
+							String.fromCharCode(0x4E09),
+							String.fromCharCode(0x56DB),
+							String.fromCharCode(0x4E94),
+							String.fromCharCode(0x516D),
+							String.fromCharCode(0x4E03),
+							String.fromCharCode(0x516B),
+							String.fromCharCode(0x4E5D)
+						];
+						degrees = [
+							'万',
+							'千',
+							'百',
+							'十'
+						];
+					}
+
+					var degreeCount = Math.pow(10, degrees.length);
+					var koreanLegalSplitting = function (numberLessThanX)
+					{
+						var answer = [];
+						var count;
+						var degreeCountCopy = degreeCount;
+						for (var i = 0; i < degrees.length; i += 1)
+						{
+							if (numberLessThanX / degreeCountCopy >= 1)
+							{
+								count = Math.floor(numberLessThanX / degreeCountCopy);
+								if (count !== 1 || addFirstDegreeSymbol)
+								{
+									answer.push(digits[count - 1]);
+								}
+								answer.push(degrees[i]);
+								numberLessThanX = numberLessThanX % degreeCountCopy;
+							}
+							degreeCountCopy /= 10;
+						}
+						if (numberLessThanX > 0)
+						{
+							answer.push(digits[numberLessThanX - 1]);
+						}
+						return answer;
+					}
+					if (nValue < degreeCount || (!addFirstDegreeSymbol && nValue < degreeCount * 2
+						&& nFormat !== Asc.c_oAscNumberingFormat.JapaneseCounting))
+					{
+						sResult = koreanLegalSplitting(nValue).join('');
+					} else {
+						if (
+							nValue < 1000000
+							|| differentFormat
+							|| nFormat === Asc.c_oAscNumberingFormat.JapaneseLegal)
+						{
+							var resultWith10000Reminder = ([degrees[0]]).concat(koreanLegalSplitting(nValue % degreeCount));
+							sResult = koreanLegalSplitting(Math.floor(nValue / degreeCount)).concat(resultWith10000Reminder).join('');
+						}
+					}
+				}
+				ideographCount();
+				break;
+			case Asc.c_oAscNumberingFormat.KoreanDigital:
+			case Asc.c_oAscNumberingFormat.ThaiNumbers:
+			case Asc.c_oAscNumberingFormat.KoreanDigital2:
+			case Asc.c_oAscNumberingFormat.TaiwaneseDigital:
+				if (nFormat === Asc.c_oAscNumberingFormat.KoreanDigital)
+				{
+					digits = [
+						String.fromCharCode(0xC601),
+						String.fromCharCode(0xC77C),
+						String.fromCharCode(0xC774),
+						String.fromCharCode(0xC0BC),
+						String.fromCharCode(0xC0AC),
+						String.fromCharCode(0xC624),
+						String.fromCharCode(0xC721),
+						String.fromCharCode(0xCE60),
+						String.fromCharCode(0xD314),
+						String.fromCharCode(0xAD6C)
+					];
+				} else if (nFormat === Asc.c_oAscNumberingFormat.KoreanDigital2 || nFormat === Asc.c_oAscNumberingFormat.TaiwaneseDigital)
+				{
+					digits = [
+						String.fromCharCode(0x96F6),
+						String.fromCharCode(0x4E00),
+						String.fromCharCode(0x4E8C),
+						String.fromCharCode(0x4E09),
+						String.fromCharCode(0x56DB),
+						String.fromCharCode(0x4E94),
+						String.fromCharCode(0x516D),
+						String.fromCharCode(0x4E03),
+						String.fromCharCode(0x516B),
+						String.fromCharCode(0x4E5D)
+					];
+					if (nFormat === Asc.c_oAscNumberingFormat.TaiwaneseDigital) digits[0] = String.fromCharCode(0x25CB);
+
+				} else if (nFormat === Asc.c_oAscNumberingFormat.ThaiNumbers)
+				{
+					nValue = repeatNumberingLvl(nValue, 32767);
+					digits = [
+						String.fromCharCode(0x0E50),
+						String.fromCharCode(0x0E51),
+						String.fromCharCode(0x0E52),
+						String.fromCharCode(0x0E53),
+						String.fromCharCode(0x0E54),
+						String.fromCharCode(0x0E55),
+						String.fromCharCode(0x0E56),
+						String.fromCharCode(0x0E57),
+						String.fromCharCode(0x0E58),
+						String.fromCharCode(0x0E59)
+					];
+				}
+				if (nFormat !== Asc.c_oAscNumberingFormat.KoreanDigital2 || nValue < 1000000)
+				{
+					var conv = decimalNumberConversion(nValue, digits.length);
+					sResult = conv.map(function (num)
+					{
+						return digits[num];
+					}).join('');
+				}
+				break;
+			case Asc.c_oAscNumberingFormat.None:
+				sResult = '';
+				break;
+			case Asc.c_oAscNumberingFormat.NumberInDash:
+				var dash = String.fromCharCode(0x002D);
+				sResult = dash + ' ' + nValue + ' ' + dash;
+				break;
+			case Asc.c_oAscNumberingFormat.TaiwaneseCounting:
+				digits = [
+					String.fromCharCode(0x5341),
+					String.fromCharCode(0x4E00),
+					String.fromCharCode(0x4E8C),
+					String.fromCharCode(0x4E09),
+					String.fromCharCode(0x56DB),
+					String.fromCharCode(0x4E94),
+					String.fromCharCode(0x516D),
+					String.fromCharCode(0x4E03),
+					String.fromCharCode(0x516B),
+					String.fromCharCode(0x4E5D)
+				];
+				var conv = decimalNumberConversion(nValue, digits.length);
+				if(nValue >= digits.length * 10)
+				{
+					digits[0] = String.fromCharCode(0x25CB);
+					sResult = conv.map(function (num)
+					{
+						return digits[num];
+					}).join('');
+				} else {
+					var previousIsPlus = false;
+					sResult = conv.map(function (num, idx)
+					{
+						if (conv.length === 2)
+						{
+							if (idx === 0)
+							{
+								if (num === 1)
+								{
+									previousIsPlus = true;
+									return digits[0];
+								} else {
+									previousIsPlus = true;
+									return digits[num] + digits[0];
+								}
+							} else if (previousIsPlus && num === 0)
+							{
+								return '';
+							}
+						}
+						return digits[num];
+					}).join('');
+				}
+				break;
+			case Asc.c_oAscNumberingFormat.ThaiLetters:
+				nValue = repeatNumberingLvl(nValue, 1230);
+				var spaces = [1, 3, 4, 5];
+				var repeatAmount = Math.floor((nValue - 1) / 41) + 1;
+				var repeatIndex = (nValue - 1) % 41;
+				var currentSpace;
+				if (repeatIndex <= 1) currentSpace = 0;
+				else if (repeatIndex <= 2) currentSpace = spaces[0];
+				else if (repeatIndex <= 31) currentSpace = spaces[1];
+				else if (repeatIndex <= 32) currentSpace = spaces[2];
+				else if (repeatIndex <= 40) currentSpace = spaces[3];
+				sResult = String.fromCharCode(0x0E01 + repeatIndex + currentSpace).repeat(repeatAmount);
+				break;
+			case Asc.c_oAscNumberingFormat.CardinalText:
+				var getCardinalTextFromValue = function(lang)
+				{
+					var arrAnswer = [];
+					var getConcatStringByRule = function (array)
+					{
+						return array.join(' ');
+					}
+					switch (lang)
+					{
+						case 'ru-RU':
+						case 'uk-UA':
+						case 'cs-CZ':
+						case 'pl-PL':
+						case 'el-GR':
+						case 'lv-LV': {
+							var alphaBet = {
+								'lv-LV': {
+									1: [
+										'viens',
+										'divi',
+										'trīs',
+										'četri',
+										'pieci',
+										'seši',
+										'septiņi',
+										'astoņi',
+										'deviņi',
+										'desmit',
+										'vienpadsmit',
+										'divpadsmit',
+										'trīspadsmit',
+										'četrpadsmit',
+										'piecpadsmit',
+										'sešpadsmit',
+										'septiņpadsmit',
+										'astoņpadsmit',
+										'deviņpadsmit'
+									],
+									10: [
+										'divdesmit',
+										'trīsdesmit',
+										'četrdesmit',
+										'piecdesmit',
+										'sešdesmit',
+										'septiņdesmit',
+										'astoņdesmit',
+										'deviņdesmit'
+									],
+									100: [
+										'simti',
+										'divi simti',
+										'trīs simti',
+										'četri simti',
+										'pieci simti',
+										'seši simti',
+										'septiņi simti',
+										'astoņi simti',
+										'deviņi simti'
+									],
+									'thousand': [
+										'tūkstotis',
+										'tūkstoši',
+										'tūkstoši'
+									],
+									'thousandType': [
+										'viens',
+										'divi'
+									]
+								},
+								'el-GR': {
+									1: [
+										'ένα',
+										'δύο',
+										'τρία',
+										'τέσσερα',
+										'πέντε',
+										'έξι',
+										'επτά',
+										'οκτώ',
+										'εννέά',
+										'δέκα',
+										'ένδεκα',
+										'δώδεκα',
+										'δεκατρία',
+										'δεκατέσσερα',
+										'δεκαπέντε',
+										'δεκαέξι',
+										'δεκαεπτά',
+										'δεκαοκτώ',
+										'δεκαεννέά'
+									],
+									10: [
+										'είκοσι',
+										'τριάντα',
+										'σαράντα',
+										'πενήντα',
+										'εξήντα',
+										'εβδομήντα',
+										'ογδόντα',
+										'ενενήντα'
+									],
+									100: [
+										'εκατό',
+										'διακόσια',
+										'τριακόσια',
+										'τετρακόσια',
+										'πεντακόσια',
+										'εξακόσια',
+										'επτακόσια',
+										'οκτακόσια',
+										'εννιακόσια'
+									],
+									'thousand': [
+										'χίλια',
+										'χιλιάδες',
+										'χιλιάδες'
+									],
+									'thousandType': [
+										'ένα',
+										'δύο'
+									]
+								},
+								'pl-PL': {
+									1: [
+										'jeden',
+										'dwa',
+										'trzy',
+										'cztery',
+										'pięć',
+										'sześć',
+										'siedem',
+										'osiem',
+										'dziewięć',
+										'dziesięć',
+										'jedenaście',
+										'dwanaście',
+										'trzynaście',
+										'czternaście',
+										'piętnaście',
+										'szesnaście',
+										'siedemnaście',
+										'osiemnaście',
+										'dziewiętnaście'
+									],
+									10: [
+										'dwadzieścia',
+										'trzydzieści',
+										'czterdzieści',
+										'pięćdziesiąt',
+										'sześćdziesiąt',
+										'siedemdziesiąt',
+										'osiemdziesiąt',
+										'dziewięćdziesiąt'
+									],
+									100: [
+										'sto',
+										'dwieście',
+										'trzysta',
+										'czterysta',
+										'pięćset',
+										'sześćset',
+										'siedemset',
+										'osiemset',
+										'dziewięćset'
+									],
+									'thousand': [
+										'tysiąc',
+										'tysiące',
+										'tysięcy'
+									],
+									'thousandType': [
+										'jeden',
+										'dwa'
+									]
+								},
+								'cs-CZ': {
+									1: [
+										'jedna',
+										'dva',
+										'tři',
+										'čtyři',
+										'pět',
+										'šest',
+										'sedm',
+										'osm',
+										'devět',
+										'deset',
+										'jedenáct',
+										'dvanáct',
+										'třináct',
+										'čtrnáct',
+										'patnáct',
+										'šestnáct',
+										'sedmnáct',
+										'osmnáct',
+										'devatenáct'
+									],
+									10: [
+										'dvacet',
+										'třicet',
+										'čtyřicet',
+										'padesát',
+										'šedesát',
+										'sedmdesát',
+										'osmdesát',
+										'devadesát'
+									],
+									100: [
+										'sto',
+										'dvě stě',
+										'tři sta',
+										'čtyři sta',
+										'pět set',
+										'šest set',
+										'sedm set',
+										'osm set',
+										'devět set'
+									],
+									'thousand': [
+										'tisíc',
+										'tisíce',
+										'tisíc'
+									],
+									'thousandType': [
+										'jedna',
+										'dva'
+									]
+								},
+								'ru-RU': {
+									1: [
+										'один',
+										'два',
+										'три',
+										'четыре',
+										'пять',
+										'шесть',
+										'семь',
+										'восемь',
+										'девять',
+										'десять',
+										'одиннадцать',
+										'двенадцать',
+										'тринадцать',
+										'четырнадцать',
+										'пятнадцать',
+										'шестнадцать',
+										'семнадцать',
+										'восемнадцать',
+										'девятнадцать'
+									],
+									10: [
+										'двадцать',
+										'тридцать',
+										'сорок',
+										'пятьдесят',
+										'шестьдесят',
+										'семьдесят',
+										'восемьдесят',
+										'девяносто'
+									],
+									100: [
+										'сто',
+										'двести',
+										'триста',
+										'четыреста',
+										'пятьсот',
+										'шестьсот',
+										'семьсот',
+										'восемьсот',
+										'девятьсот'
+									],
+									'thousand': [
+										'тысяча',
+										'тысячи',
+										'тысяч'
+									],
+									'thousandType': [
+										'одна',
+										'две'
+									]
+								},
+								'uk-UA': {
+									1: [
+										"один",
+										"два",
+										"три",
+										"чотири",
+										"п'ять",
+										"шість",
+										"сім",
+										"вісім",
+										"дев'ять",
+										"десять",
+										"одинадцять",
+										"дванадцять",
+										"тринадцять",
+										"чотирнадцять",
+										"п'ятнадцять",
+										"шістнадцять",
+										"сімнадцять",
+										"вісімнадцять",
+										"дев'ятнадцять"
+									],
+									10: [
+										"двадцять",
+										"тридцять",
+										"сорок",
+										"п'ятдесят",
+										"шiстдесят",
+										"сімдесят",
+										"вісімдесят",
+										"дев'яносто"
+									],
+									100: [
+										"сто",
+										"двісті",
+										"триста",
+										"чотириста",
+										"п'ятсот",
+										"шістсот",
+										"сімсот",
+										"вісімсот",
+										"дев'ятсот"
+									],
+									'thousand': [
+										'тисяча',
+										'тисячі',
+										'тисяч'
+									],
+									'thousandType': [
+										'одна',
+										'дві'
+									]
+								}
+							}
+
+							var letterNumberLessThen100CyrillicMim = function(num)
+							{
+								var resArr = [];
+								var reminder = num % 10;
+								var degree10 = Math.floor(num / 10);
+								if (num < 100 && num > 0)
+								{
+									if (num < 20)
+									{
+										resArr.push(alphaBet[lang][1][num - 1]);
+									} else {
+										if (reminder === 0)
+										{
+											resArr.push(alphaBet[lang][10][degree10 - 2]);
+										} else {
+											resArr.push(alphaBet[lang][10][degree10 - 2], alphaBet[lang][1][reminder - 1]);
+										}
+									}
+								}
+								return resArr;
+							};
+
+							var cardinalSplittingCyrillicMim = function(num, skipThousand)
+							{
+								var resArr = [];
+								var groups = {};
+								if (num < 1000000 && num > 0)
+								{
+									groups[1000] = Math.floor(num / 1000);
+									num %= 1000;
+									groups[100] = Math.floor(num / 100);
+									num %= 100;
+									groups[1] = num;
+
+									if (groups[1000])
+									{
+										var thousandType = groups[1000] % 10;
+										var groupArr = [];
+										if (groups[1000] >= 100)
+										{
+											groupArr = groupArr.concat(cardinalSplittingCyrillicMim(groups[1000]));
+										} else {
+											if (groups[1000] === 4 && lang === 'el-GR')
+											{
+												groupArr = groupArr.concat(['τέσσερις']);
+											} else {
+												groupArr = groupArr.concat(letterNumberLessThen100CyrillicMim(groups[1000]));
+											}
+										}
+										var thousand;
+										switch (thousandType)
+										{
+											case 1:
+												thousand = alphaBet[lang]['thousand'][0];
+												if (skipThousand && groups[1000] === 1)
+												{
+													groupArr.pop();
+												} else {
+													groupArr[groupArr.length - 1] = alphaBet[lang]['thousandType'][0];
+												}
+												break;
+											case 2:
+											case 3:
+											case 4:
+												thousand = alphaBet[lang]['thousand'][1];
+												if (thousandType === 2)
+												{
+													groupArr[groupArr.length - 1] = alphaBet[lang]['thousandType'][1];
+												}
+												break;
+											case 5:
+											case 6:
+											case 7:
+											case 8:
+											case 9:
+											case 0:
+												thousand = alphaBet[lang]['thousand'][2];
+												break;
+											default:
+												break;
+										}
+										groupArr.push(thousand);
+										resArr = resArr.concat(groupArr);
+									}
+									if (groups[100])
+									{
+										resArr.push(alphaBet[lang][100][groups[100] - 1]);
+
+										if (groups[100] === 1 && groups[1])
+										{
+
+											if (lang === 'el-GR')
+											{
+												resArr[resArr.length - 1] = resArr[resArr.length - 1] + 'v';
+											}
+											if (lang === 'lv-LV')
+											{
+												resArr[resArr.length - 1] = resArr[resArr.length - 1].slice(0, resArr[resArr.length - 1].length - 1) + 's';
+											}
+
+										}
+
+									}
+
+									if (groups[1])
+									{
+										var letterArr = letterNumberLessThen100CyrillicMim(groups[1]);
+										resArr = resArr.concat(letterArr);
+									}
+								}
+								return resArr;
+							};
+
+							if (lang === 'uk-UA' || lang === 'cs-CZ' || lang === 'pl-PL' || lang === 'el-GR' || lang === 'lv-LV')
+							{
+								arrAnswer = cardinalSplittingCyrillicMim(nValue, true);
+							} else if (lang === 'ru-RU')
+							{
+								arrAnswer = cardinalSplittingCyrillicMim(nValue);
+							}
+							break;
+						}
+						case 'pt-PT':
+						case 'pt-BR': {
+							alphaBet = {
+								1: [
+									'um',
+									'dois',
+									'três',
+									'quatro',
+									'cinco',
+									'seis',
+									'sete',
+									'oito',
+									'nove',
+									'dez',
+									'onze',
+									'doze',
+									'treze',
+									'quartorze',
+									'quinze',
+									'dezesseis',
+									'dezessete',
+									'dezoito',
+									'dezenove'
+								],
+								10: [
+									'vinte',
+									'trinta',
+									'quarenta',
+									'cinqüenta',
+									'sessenta',
+									'setenta',
+									'oitenta',
+									'noventa'
+								],
+								100: [
+									'cem',
+									'duzentos',
+									'trezentos',
+									'quatrocentos',
+									'quinhentos',
+									'seiscentos',
+									'setecentos',
+									'oitocentos',
+									'novecentos'
+								]
+							}
+
+							var letterNumberLessThen100PT = function(num)
+							{
+								var resArr = [];
+								if (num > 0 && num < 100)
+								{
+									var degree10 = Math.floor(num / 10);
+									var reminder = num % 10;
+									if (num < 20)
+									{
+										resArr.push(alphaBet[1][num - 1]);
+									} else {
+										resArr.push(alphaBet[10][degree10 - 2]);
+										if (reminder)
+										{
+											resArr.push('e', alphaBet[1][reminder - 1]);
+										}
+									}
+								}
+								return resArr;
+							};
+
+							var cardinalSplittingPT = function(num)
+							{
+								var resArr = [];
+								var groups = {};
+								if (num > 0 && num < 1000000)
+								{
+									groups[1000] = Math.floor(num / 1000);
+									num %= 1000;
+									groups[100] = Math.floor(num / 100);
+									num %= 100;
+									groups[1] = num;
+
+									if (groups[1000])
+									{
+										if (groups[1000] >= 100)
+										{
+											resArr = resArr.concat(cardinalSplittingPT(groups[1000]));
+										} else {
+											if (groups[1000] !== 1)
+											{
+												resArr = resArr.concat(letterNumberLessThen100PT(groups[1000]));
+											}
+										}
+										resArr.push('mil');
+										if ((groups[100] && !groups[1]) || (groups[1] && !groups[100]))
+										{
+											resArr.push('e');
+										}
+									}
+									if (groups[100])
+									{
+										if (groups[100] === 1 && (groups[1] || groups[1000]))
+										{
+											resArr.push('cento');
+										} else {
+											resArr.push(alphaBet[100][groups[100] - 1]);
+										}
+										if (groups[1])
+										{
+											resArr.push('e');
+										}
+									}
+									if (groups[1])
+									{
+										resArr = resArr.concat(letterNumberLessThen100PT(num));
+									}
+								}
+								return resArr;
+							};
+
+							arrAnswer = cardinalSplittingPT(nValue);
+							break;
+						}
+						case 'sk-SK': {
+							alphaBet = {
+								1: [
+									'jeden',
+									'dva',
+									'tri',
+									'štyri',
+									'päť',
+									'šesť',
+									'sedem',
+									'osem',
+									'deväť',
+									'desať',
+									'jedenásť',
+									'dvanásť',
+									'trinásť',
+									'štrnásť',
+									'pätnásť',
+									'šestnásť',
+									'sedemnásť',
+									'osemnásť',
+									'devätnásť'
+								],
+								10: [
+									'dvadsať',
+									'tridsať',
+									'štyridsať',
+									'päťdesiat',
+									'šesťdesiat',
+									'sedemdesiat',
+									'osemdesiat',
+									'deväťdesiat'
+								]
+							}
+
+							var letterNumberLessThen100SK = function(num, options)
+							{
+								var resArr = [];
+								if (num < 100 && num > 0)
+								{
+									var degree10 = Math.floor(num / 10);
+									var reminder = num % 10;
+									if (num < 20)
+									{
+										if (num === 2 && options && options.isHundred)
+										{
+											resArr.push('dve');
+										} else {
+											resArr.push(alphaBet[1][num - 1]);
+										}
+									} else {
+										resArr.push(alphaBet[10][degree10 - 2]);
+										if (reminder)
+										{
+											resArr.push(alphaBet[1][reminder - 1]);
+										}
+									}
+								}
+								return resArr;
+							};
+
+							var cardinalSplittingSK = function(num)
+							{
+								var resArr = [];
+								var groups = {};
+								if (num > 0 && num < 1000000)
+								{
+									groups[1000] = Math.floor(num / 1000);
+									num %= 1000;
+									groups[100] = Math.floor(num / 100);
+									num %= 100;
+									groups[1] = num;
+
+									if (groups[1000])
+									{
+										if (groups[1000] >= 100)
+										{
+											resArr = resArr.concat(cardinalSplittingSK(groups[1000]));
+										} else {
+											resArr = resArr.concat(letterNumberLessThen100SK(groups[1000]));
+										}
+										resArr.push('tisíc');
+									}
+									if (groups[100])
+									{
+										if (groups[100] !== 1)
+										{
+											resArr = resArr.concat(letterNumberLessThen100SK(groups[100], {isHundred: true}));
+										}
+										resArr.push('sto');
+									}
+									if (groups[1])
+									{
+										resArr = resArr.concat(letterNumberLessThen100SK(groups[1]));
+									}
+								}
+
+								return resArr;
+							};
+
+							arrAnswer = cardinalSplittingSK(nValue);
+							getConcatStringByRule = function (array)
+							{
+								return array.join('');
+							};
+							break;
+						}
+						case 'bg-BG': {
+							alphaBet = {
+								1: [
+									'един',
+									'два',
+									'три',
+									'четири',
+									'пет',
+									'шест',
+									'седем',
+									'осем',
+									'девет',
+									'десет',
+									'единадесет',
+									'дванадесет',
+									'тринадесет',
+									'четиринадесет',
+									'петнадесет',
+									'шестнадесет',
+									'седемнадесет',
+									'осемнадесет',
+									'деветнадесет'
+								],
+								10: [
+									'двадесет',
+									'тридесет',
+									'четиридесет',
+									'петдесет',
+									'шестдесет',
+									'седемдесет',
+									'осемдесет',
+									'деветдесет'
+								],
+								100: [
+									'сто',
+									'двеста',
+									'триста',
+									'четиристотин',
+									'петстотин',
+									'шестстотин',
+									'седемстотин',
+									'осемстотин',
+									'деветстотин'
+								],
+								'thousand': [
+									'хиляда',
+									'хиляди',
+									'хиляди'
+								],
+								'thousandType': [
+									'една',
+									'две'
+								]
+							}
+
+							var letterNumberLessThen100BG = function(num)
+							{
+								var resArr = [];
+
+								if (num > 0 && num < 100)
+								{
+									if (num < 20)
+									{
+										resArr.push(alphaBet[1][num - 1]);
+									} else {
+										var reminder = num % 10;
+										var degree10 = Math.floor(num / 10);
+
+										resArr.push(alphaBet[10][degree10 - 2]);
+										if (reminder)
+										{
+											resArr.push('и', alphaBet[1][reminder - 1]);
+										}
+									}
+								}
+
+								return resArr;
+							};
+
+							var cardinalSplittingBG = function(num)
+							{
+								var resArr = [];
+								var groups = {};
+
+								if (num > 0 && num < 1000000)
+								{
+									groups[1000] = Math.floor(num / 1000);
+									num %= 1000;
+									groups[100] = Math.floor(num / 100);
+									num %= 100;
+									groups[1] = num;
+									if (groups[1000])
+									{
+										var thousandType = groups[1000] % 10;
+										var groupArr = [];
+										if (groups[1000] >= 100)
+										{
+											groupArr = groupArr.concat(cardinalSplittingBG(groups[1000]));
+										} else if (groups[1000] !== 1)
+										{
+											groupArr = groupArr.concat(letterNumberLessThen100BG(groups[1000]));
+										}
+										var thousand;
+										switch (thousandType)
+										{
+											case 1:
+												thousand = alphaBet['thousand'][0];
+												break;
+											case 2:
+											case 3:
+											case 4:
+												thousand = alphaBet['thousand'][1];
+												if (thousandType === 2)
+												{
+													groupArr[groupArr.length - 1] = alphaBet['thousandType'][1];
+												}
+												break;
+											case 5:
+											case 6:
+											case 7:
+											case 8:
+											case 9:
+											case 0:
+												thousand = alphaBet['thousand'][2];
+												break;
+											default:
+												break;
+										}
+										groupArr.push(thousand);
+										resArr = resArr.concat(groupArr);
+									}
+
+									if (groups[100])
+									{
+										resArr = resArr.concat(alphaBet[100][groups[100] - 1]);
+									}
+
+									if (groups[1])
+									{
+										if ((groups[1] < 11 || groups[1] % 10 === 0) && (groups[100] || groups[1000]))
+										{
+											resArr.push('и');
+										}
+										resArr = resArr.concat(letterNumberLessThen100BG(groups[1]));
+									}
+								}
+								return resArr;
+								};
+
+							arrAnswer = cardinalSplittingBG(nValue);
+							break;
+						}
+						case 'sv-SE': {
+							alphaBet = {
+								1: [
+									'ett',
+									'två',
+									'tre',
+									'fyra',
+									'fem',
+									'sex',
+									'sju',
+									'åtta',
+									'nio',
+									'tio',
+									'elva',
+									'tolv',
+									'tretton',
+									'fjorton',
+									'femton',
+									'sexton',
+									'sjutton',
+									'arton',
+									'nitton'
+								],
+								10: [
+									'tjugo',
+									'trettio',
+									'fyrtio',
+									'femtio',
+									'sextio',
+									'sjuttio',
+									'åttio',
+									'nittio'
+								]
+							};
+
+							var letterNumberLessThen100SV = function(num)
+							{
+								var resArr = [];
+								if (num > 0 && num < 100)
+								{
+									if (num < 20)
+									{
+										resArr.push(alphaBet[1][num - 1]);
+									} else {
+										var degree10 = Math.floor(num / 10);
+										var reminder = num % 10;
+
+										resArr.push(alphaBet[10][degree10 - 2]);
+										if (reminder)
+										{
+											resArr.push(alphaBet[1][reminder - 1]);
+										}
+									}
+								}
+								return resArr;
+							};
+
+							var cardinalSplittingSV = function(num)
+							{
+								var resArr = [];
+								var groups = {};
+								if (num < 1000000 && num > 0)
+								{
+									groups[1000] = Math.floor(num / 1000);
+									num %= 1000;
+									groups[100] = Math.floor(num / 100);
+									num %= 100;
+									groups[1] = num;
+
+									if (groups[1000])
+									{
+										if (groups[1000] >= 100)
+										{
+											resArr = resArr.concat(cardinalSplittingSV(groups[1000]));
+										} else {
+											resArr = resArr.concat(letterNumberLessThen100SV(groups[1000]));
+										}
+										if (groups[1000] === 1)
+										{
+											resArr.push('usen');
+										} else {
+											resArr.push('tusen');
+										}
+									}
+
+									if (groups[100])
+									{
+										resArr = resArr.concat(letterNumberLessThen100SV(groups[100]));
+										resArr.push('hundra');
+									}
+
+									if (groups[1])
+									{
+										resArr = resArr.concat(letterNumberLessThen100SV(groups[1]));
+									}
+								}
+
+								return resArr;
+							};
+
+							arrAnswer = cardinalSplittingSV(nValue);
+							getConcatStringByRule = function (array)
+							{
+								return array.join('');
+							};
+
+							break;
+						}
+						case 'nl-NL': {
+							alphaBet = {
+								1: [
+									'één',
+									'twee',
+									'drie',
+									'vier',
+									'vijf',
+									'zes',
+									'zeven',
+									'acht',
+									'negen',
+									'tien',
+									'elf',
+									'twaalf',
+									'dertien',
+									'veertien',
+									'vijftien',
+									'zestien',
+									'zeventien',
+									'achttien',
+									'negentien'
+								],
+								10: [
+									'twintig',
+									'dertig',
+									'veertig',
+									'vijftig',
+									'zestig',
+									'zeventig',
+									'tachtig',
+									'negentig'
+								]
+							}
+
+							var letterNumberLessThen100NL = function(num)
+							{
+								var resArr = [];
+								if (num > 0 && num < 100)
+								{
+									if (num < 20)
+									{
+										resArr.push(alphaBet[1][num - 1]);
+									} else {
+										var degree10 = Math.floor(num / 10);
+										var reminder = num % 10;
+
+										if (reminder)
+										{
+											var letterReminder = alphaBet[1][reminder - 1];
+											resArr.push(letterReminder);
+											if (letterReminder[letterReminder.length - 1] === 'e')
+											{
+												resArr.push('ën');
+											} else {
+												resArr.push('en');
+											}
+										}
+										resArr.push(alphaBet[10][degree10 - 2]);
+									}
+								}
+								return resArr;
+							};
+
+							var cardinalSplittingNL = function(num)
+							{
+								var resArr = [];
+								var groups = {};
+								if (num < 1000000 && num > 0)
+								{
+									groups[1000] = Math.floor(num / 1000);
+									num %= 1000;
+									groups[100] = Math.floor(num / 100);
+									num %= 100;
+									groups[1] = num;
+
+									if (groups[1000])
+									{
+										if (groups[1000] >= 100)
+										{
+											resArr = resArr.concat(cardinalSplittingNL(groups[1000]));
+										} else if(groups[1000] !== 1 || groups[1] !== 0 || groups[100] !== 0)
+										{
+											resArr = resArr.concat(letterNumberLessThen100NL(groups[1000]));
+										}
+										resArr.push('duizend');
+									}
+
+									if (groups[100])
+									{
+										resArr = resArr.concat(letterNumberLessThen100NL(groups[100]));
+										resArr.push('honderd');
+									}
+
+									if (groups[1])
+									{
+										resArr = resArr.concat(letterNumberLessThen100NL(groups[1]));
+									}
+								}
+
+								return resArr;
+							};
+
+							arrAnswer = cardinalSplittingNL(nValue);
+							getConcatStringByRule = function (array)
+							{
+								return array.join('');
+							};
+
+							break;
+						}
+						case 'es-ES': {
+							alphaBet = {
+								1: [
+									'uno',
+									'dos',
+									'tres',
+									'cuatro',
+									'cinco',
+									'seis',
+									'siete',
+									'ocho',
+									'nueve',
+									'diez',
+									'once',
+									'doce',
+									'trece',
+									'catorce',
+									'quince',
+									'dieciséis',
+									'diecisiete',
+									'dieciocho',
+									'diecinueve'
+								],
+								10: [
+									'veint',
+									'treinta',
+									'cuarenta',
+									'cincuenta',
+									'sesenta',
+									'setenta',
+									'ochenta',
+									'noventa'
+								],
+								100: [
+									'ciento',
+									'doscientos',
+									'trescientos',
+									'cuatrocientos',
+									'quinientos',
+									'seiscientos',
+									'setecientos',
+									'ochocientos',
+									'novecientos'
+								],
+								20: {
+									2: 'dós',
+									3: 'trés',
+									6: 'séis'
+								}
+							}
+
+							var letterNumberLessThen100ES = function(num)
+							{
+								var resArr = [];
+								if (num < 100 && num > 0)
+								{
+									var degree10 = Math.floor(num / 10);
+									var reminder = num % 10;
+									if (num < 20)
+									{
+										resArr.push(alphaBet[1][num - 1]);
+									} else if (degree10 === 2)
+									{
+										if (reminder === 0)
+										{
+											resArr.push(alphaBet[10][degree10 - 2] + 'e');
+										} else {
+											if (reminder === 2 || reminder === 3 || reminder === 6)
+											{
+												resArr.push(alphaBet[10][degree10 - 2] + 'i', alphaBet[20][reminder]);
+											} else {
+												resArr.push(alphaBet[10][degree10 - 2] + 'i', alphaBet[1][reminder - 1]);
+											}
+										}
+									} else {
+										resArr.push(alphaBet[10][degree10 - 2]);
+										if (reminder !== 0)
+										{
+											resArr.push(' y ', alphaBet[1][reminder - 1]);
+										}
+									}
+								}
+								return resArr;
+							};
+
+							var cardinalSplittingES = function(num, isRecursive)
+							{
+								var resArr = [];
+								var groups = {};
+								if (num > 0 && num < 1000000)
+								{
+									groups[1000] = Math.floor(num / 1000);
+									num %= 1000;
+									groups[100] = Math.floor(num / 100);
+									num %= 100;
+									groups[1] = num;
+
+									if (groups[1000])
+									{
+										if (groups[1000] >= 100)
+										{
+											resArr = resArr.concat(cardinalSplittingES(groups[1000], true));
+										} else {
+											if (groups[1000] !== 1)
+											{
+												resArr.push(letterNumberLessThen100ES(groups[1000]));
+											}
+										}
+										resArr.push('mil');
+									}
+
+									if (groups[100])
+									{
+										if (isRecursive && groups[100] === 1)
+										{
+											resArr.push('cien');
+										} else {
+											resArr.push(alphaBet[100][groups[100] - 1]);
+										}
+									}
+									if (groups[1])
+									{
+										resArr.push(letterNumberLessThen100ES(groups[1]));
+									}
+								}
+								return resArr;
+							};
+							arrAnswer = cardinalSplittingES(nValue);
+							getConcatStringByRule = function (array)
+							{
+								return array.map(function (element)
+								{
+									if (Array.isArray(element))
+									{
+										return element.join('');
+									}
+									return element;
+								}).join(' ');
+							};
+							break;
+						}
+						case 'it-IT': {
+							alphaBet = {
+								1: [
+									'uno',
+									'due',
+									'tre',
+									'quattro',
+									'cinque',
+									'sei',
+									'sette',
+									'otto',
+									'nove',
+									'dieci',
+									'undici',
+									'dodici',
+									'tredici',
+									'quattordici',
+									'quindici',
+									'sedici',
+									'diciassette',
+									'diciotto',
+									'diciannove'
+								],
+								10: [
+									'venti',
+									'trenta',
+									'quaranta',
+									'cinquanta',
+									'sessanta',
+									'settanta',
+									'ottanta',
+									'novanta'
+								]
+							}
+
+							var letterNumberLessThen100IT = function(num)
+							{
+								var resArr = [];
+								if (num < 100 && num > 0)
+								{
+									var degree10 = Math.floor(num / 10);
+									var reminder = num % 10;
+									if (num < 20)
+									{
+										resArr.push(alphaBet[1][num - 1]);
+									} else {
+										var deg = alphaBet[10][degree10 - 2];
+										if (reminder === 1 || reminder === 8)
+										{
+											resArr.push(deg.slice(0, deg.length - 1));
+										} else {
+											resArr.push(deg);
+										}
+										if (reminder)
+										{
+											resArr.push(alphaBet[1][reminder - 1]);
+										}
+									}
+								}
+								return resArr;
+							};
+
+							var cardinalSplittingIT = function(num)
+							{
+								var resArr = [];
+								var groups = {};
+								if (num > 0 && num < 1000000)
+								{
+								groups[1000] = Math.floor(num / 1000);
+								num %= 1000;
+								groups[100] = Math.floor(num / 100);
+								num %= 100;
+								groups[1] = num;
+									if (groups[1000])
+									{
+										if (groups[1000] >= 100)
+										{
+											resArr = resArr.concat(cardinalSplittingIT(groups[1000]));
+										} else {
+											if (groups[1000] !== 1)
+											{
+												resArr = resArr.concat(letterNumberLessThen100IT(groups[1000]));
+											}
+										}
+										if (groups[1000] === 1)
+										{
+											resArr.push('mille');
+										} else {
+											resArr.push('mila');
+										}
+									}
+									if (groups[100])
+									{
+										if (groups[100] !== 1)
+										{
+											resArr = resArr.concat(letterNumberLessThen100IT(groups[100]));
+										}
+										resArr.push('cento');
+									}
+									if (groups[1])
+									{
+										resArr = resArr.concat(letterNumberLessThen100IT(groups[1]));
+										if (groups[1] > 20 && groups[1] % 10 === 3)
+										{
+											resArr[resArr.length - 1] = 'tré';
+										}
+									}
+								}
+
+								return resArr;
+							};
+							arrAnswer = cardinalSplittingIT(nValue);
+							getConcatStringByRule = function (array)
+							{
+								return array.join('');
+							};
+							break;
+						}
+						case 'de-DE': {
+							alphaBet = {
+								1: [
+									'eins',
+									'zwei',
+									'drei',
+									'vier',
+									'fünf',
+									'sechs',
+									'sieben',
+									'acht',
+									'neun',
+									'zehn',
+									'elf',
+									'zwölf',
+									'dreizehn',
+									'vierzehn',
+									'fünfzehn',
+									'sechzehn',
+									'siebzehn',
+									'achtzehn',
+									'neunzehn'
+								],
+								10: [
+									'zwanzig',
+									'dreißig',
+									'vierzig',
+									'fünfzig',
+									'sechzig',
+									'siebzig',
+									'achtzig',
+									'neunzig'
+								]
+							}
+
+							var letterNumberLessThen100DE = function(num)
+							{
+								var resArr = [];
+
+								if (num < 100 && num > 0)
+								{
+									var reminder = num % 10;
+									var degree10 = Math.floor(num / 10);
+									if (num < 20)
+									{
+										resArr.push(alphaBet[1][num - 1]);
+									} else {
+										if (reminder !== 0)
+										{
+											if (reminder === 1)
+											{
+												resArr.push(alphaBet[1][reminder - 1].slice(0, alphaBet[1][reminder - 1].length - 1), 'und');
+											} else {
+												resArr.push(alphaBet[1][reminder - 1], 'und');
+											}
+										}
+										resArr.push(alphaBet[10][degree10 - 2]);
+									}
+								}
+								return resArr;
+							};
+
+							var cardinalSplittingDE = function(num)
+							{
+								var resArr = [];
+								var groups = {};
+								if (num > 0 && num < 1000000)
+								{
+								groups[1000] = Math.floor(num / 1000);
+								num %= 1000;
+								groups[100] = Math.floor(num / 100);
+								num %= 100;
+								groups[1] = num;
+									if (groups[1000])
+									{
+										if (groups[1000] >= 100)
+										{
+											resArr = resArr.concat(cardinalSplittingDE(groups[1000]));
+										} else if (groups[1000] === 1)
+										{
+											resArr.push('ein');
+										}	else {
+											resArr = resArr.concat(letterNumberLessThen100DE(groups[1000]));
+										}
+										resArr.push('tausend');
+									}
+									if (groups[100])
+									{
+										if (groups[100] !== 1)
+										{
+											resArr = resArr.concat(letterNumberLessThen100DE(groups[100]));
+										}
+										resArr.push('hundert');
+									}
+									if (groups[1])
+									{
+										resArr = resArr.concat(letterNumberLessThen100DE(groups[1]));
+									}
+								}
+
+								return resArr;
+							};
+							arrAnswer = cardinalSplittingDE(nValue);
+							getConcatStringByRule = function (array)
+							{
+								return array.join('');
+							};
+							break;
+						}
+						case 'fr-FR': {
+							alphaBet = {
+								1: [
+									'un',
+									'deux',
+									'trois',
+									'quatre',
+									'cinq',
+									'six',
+									'sept',
+									'huit',
+									'neuf',
+									'dix',
+									'onze',
+									'douze',
+									'treize',
+									'quatorze',
+									'quinze',
+									'seize',
+									'dix-sept',
+									'dix-huit',
+									'dix-neuf'
+								],
+								10: [
+									'vingt',
+									'trente',
+									'quarante',
+									'cinquante',
+									'soixante',
+									'soixante-dix',
+									'quatre-vingt',
+									'quatre-vingt'
+								]
+							}
+
+							var letterNumberLessThen100FR = function(num)
+							{
+								var resArr = [];
+								if (num > 0 && num < 100)
+								{
+									if (num < 20)
+									{
+										resArr.push(alphaBet[1][num - 1]);
+									} else {
+										var degree10 = Math.floor(num / 10);
+										var reminder = num % 10;
+										switch (degree10)
+										{
+											case 7:
+												if (reminder === 0)
+												{
+													return alphaBet[10][degree10 - 2];
+												} else if (reminder === 1)
+												{
+													resArr.push(alphaBet[10][(degree10 - 1) - 2], ' et ', alphaBet[1][9 + reminder]);
+												} else {
+													resArr.push(alphaBet[10][(degree10 - 1) - 2], '-', alphaBet[1][9 + reminder]);
+												}
+												break;
+
+											case 8:
+												if (reminder === 0)
+												{
+													resArr.push(alphaBet[10][degree10 - 2], 's');
+												} else {
+													resArr.push(alphaBet[10][degree10 - 2], '-', alphaBet[1][reminder - 1]);
+												}
+												break;
+
+											case 9:
+												if (reminder === 0)
+												{
+													resArr.push(alphaBet[10][degree10 - 2], '-dix');
+												} else {
+													resArr.push(alphaBet[10][degree10 - 2], '-', alphaBet[1][9 + reminder]);
+												}
+												break;
+
+											default:
+												if (reminder === 0)
+												{
+													resArr.push(alphaBet[10][degree10 - 2]);
+												} else if (reminder === 1)
+												{
+													resArr.push(alphaBet[10][degree10 - 2], ' et ', alphaBet[1][reminder - 1]);
+												} else {
+													resArr.push(alphaBet[10][degree10 - 2], '-', alphaBet[1][reminder - 1]);
+												}
+										}
+									}
+								}
+								return resArr;
+							};
+
+							var cardinalSplittingFR = function(num)
+							{
+								var groups = {};
+								var resArr = [];
+								if (num < 1000000 && num > 0)
+								{
+									groups[1000] = Math.floor(num / 1000);
+									num %= 1000;
+									groups[100] = Math.floor(num / 100);
+									num %= 100;
+									groups[1] = num;
+									if (groups[1000])
+									{
+										if (groups[1000] >= 100)
+										{
+											resArr = resArr.concat(cardinalSplittingFR(groups[1000]));
+										} else if (groups[1000] !== 1)
+										{
+											resArr.push(letterNumberLessThen100FR(groups[1000]));
+										}
+										resArr.push('mille');
+									}
+									if (groups[100])
+									{
+										var hundred = 'cents';
+										if (groups[1] || groups[100] === 1)
+										{
+											hundred = 'cent';
+										}
+										if (groups[100] === 1)
+										{
+											resArr.push(hundred);
+										} else {
+											resArr.push(letterNumberLessThen100FR(groups[100]), hundred);
+										}
+									}
+									if (groups[1])
+									{
+										resArr.push(letterNumberLessThen100FR(groups[1]));
+									}
+								}
+								return resArr;
+							};
+							arrAnswer = cardinalSplittingFR(nValue);
+							getConcatStringByRule = function (array)
+							{
+								return array.map(function (element)
+								{
+									if (Array.isArray(element))
+									{
+										return element.join('');
+									}
+									return element;
+								}).join(' ');
+							};
+
+							break;
+						}
+						case 'en-US':
+						case 'az-Latn-AZ':
+						case 'en-GB':
+						case 'ja-JP':
+						case 'zh-CN':
+						case 'vi-VN':
+						case 'ko-KR':
+						default: {
+							alphaBet = {
+								1: [
+									'one',
+									'two',
+									'three',
+									'four',
+									'five',
+									'six',
+									'seven',
+									'eight',
+									'nine',
+									'ten',
+									'eleven',
+									'twelve',
+									'thirteen',
+									'fourteen',
+									'fifteen',
+									'sixteen',
+									'seventeen',
+									'eighteen',
+									'nineteen'
+								],
+								10: [
+									'twenty',
+									'thirty',
+									'forty',
+									'fifty',
+									'sixty',
+									'seventy',
+									'eighty',
+									'ninety'
+								]
+							};
+
+							var letterNumberLessThen100EN = function(num)
+							{
+								var resArr = [];
+								if (num > 0 && num < 100)
+								{
+									if (num < 20)
+									{
+										resArr.push(alphaBet[1][num - 1]);
+									} else {
+										var degree10 = Math.floor(num / 10);
+										var reminder = num % 10;
+										resArr.push(alphaBet[10][degree10 - 2]);
+										if (reminder)
+										{
+											resArr.push(alphaBet[1][reminder - 1]);
+										}
+									}
+								}
+								return resArr;
+							};
+
+							var cardinalSplittingEN = function(num)
+							{
+								var resArr = [];
+								var groups = {};
+
+								if (num < 1000000 && num > 0)
+								{
+									groups[1000] = Math.floor(num / 1000);
+									num %= 1000;
+									groups[100] = Math.floor(num / 100);
+									num %= 100;
+									groups[1] = num;
+
+									if (groups[1000])
+									{
+										if (groups[1000] >= 100)
+										{
+											resArr = resArr.concat(cardinalSplittingEN(groups[1000]));
+										} else {
+											resArr.push(letterNumberLessThen100EN(groups[1000]));
+										}
+										resArr.push('thousand');
+									}
+
+									if (groups[100])
+									{
+										resArr.push(letterNumberLessThen100EN(groups[100]), 'hundred');
+									}
+
+									if (groups[1])
+									{
+										resArr.push(letterNumberLessThen100EN(groups[1]));
+									}
+								}
+
+								return resArr;
+							};
+
+							getConcatStringByRule = function (array)
+							{
+								return array.map(function (element)
+								{
+									if (Array.isArray(element))
+									{
+										return element.join('-');
+									}
+									return element;
+								}).join(' ');
+							};
+							arrAnswer = cardinalSplittingEN(nValue);
+
+							break;
+						}
+					}
+					return {arrAnswer: arrAnswer, getConcatStringByRule: getConcatStringByRule};
+				}
+				var cardinalText = getCardinalTextFromValue(languages[nLang]);
+				sResult = cardinalText.getConcatStringByRule(cardinalText.arrAnswer).sentenceCase();
+				break;
+
+			case Asc.c_oAscNumberingFormat.Custom:
+				sResult = '' + nValue;
+				break;
+			case Asc.c_oAscNumberingFormat.Hebrew1: // todo: Считается неправильно, но в ворде так же (исправить, когда поправят в ворде)
+				var resArr = [];
+				var digits = {
+					1000: [
+						String.fromCharCode(0x05D0),
+						String.fromCharCode(0x05D1),
+						String.fromCharCode(0x05D2),
+						String.fromCharCode(0x05D3),
+						String.fromCharCode(0x05D4),
+						String.fromCharCode(0x05D5),
+						String.fromCharCode(0x05D6),
+						String.fromCharCode(0x05D7),
+						String.fromCharCode(0x05D8)
+
+					],
+					100: [
+						String.fromCharCode(0x05E7),
+						String.fromCharCode(0x05E8),
+						String.fromCharCode(0x05E9),
+						String.fromCharCode(0x05EA),
+						String.fromCharCode(0x05DA),
+						String.fromCharCode(0x05DD),
+						String.fromCharCode(0x05DF),
+						String.fromCharCode(0x05E3),
+						String.fromCharCode(0x05E5)
+
+					],
+					10: [
+						String.fromCharCode(0x05d9),
+						String.fromCharCode(0x05DB),
+						String.fromCharCode(0x05DC),
+						String.fromCharCode(0x05DE),
+						String.fromCharCode(0x05E0),
+						String.fromCharCode(0x05E1),
+						String.fromCharCode(0x05E2),
+						String.fromCharCode(0x05E4),
+						String.fromCharCode(0x05E6)
+
+					],
+					1: [
+						String.fromCharCode(0x05d0),
+						String.fromCharCode(0x05d1),
+						String.fromCharCode(0x05d2),
+						String.fromCharCode(0x05d3),
+						String.fromCharCode(0x05d4),
+						String.fromCharCode(0x05D5),
+						String.fromCharCode(0x05D6),
+						String.fromCharCode(0x05d7),
+						String.fromCharCode(0x05D8)
+					]
+				}
+				nValue = ((nValue - 1) % 392) + 1;
+
+				if (nValue % 100 === 15)
+				{
+					nValue -= 15;
+					resArr.push('וט');
+				} else if (nValue % 100 === 16)
+				{
+					nValue -= 16;
+					resArr.push('זט');
+				}
+				var nValueString = '' + nValue;
+
+				for (var i = nValueString.length - 1; i >= 0; i -= 1)
+				{
+					var degree = Math.pow(10, nValueString.length - i - 1);
+					if (nValueString[i] !== '0')
+					{
+						resArr.push(digits[degree][+nValueString[i] - 1]);
+					}
+				}
+
+				sResult = resArr.join('');
+				break;
+			case Asc.c_oAscNumberingFormat.Ordinal:
+				var textLang = languages[nLang];
+				sResult	+= nValue;
+				switch (textLang)
+				{
+						case 'de-DE':
+						case 'pl-PL':
+						case 'cs-CZ': {
+							sResult += '.';
+						break;
+					}
+						case 'el-GR': {
+							sResult += 'ο';
+						break;
+					}
+						case 'fr-FR': {
+							if (nValue === 1)
+							{
+								sResult += 'er';
+							} else {
+								sResult += 'e';
+							}
+						break;
+					}
+						case 'it-IT': {
+							sResult += '°';
+						break;
+					}
+						case 'nl-NL': {
+							sResult += 'e';
+						break;
+					}
+					case 'pt-PT':
+					case 'es-ES':
+					case 'pt-BR': {
+							sResult += 'º';
+						break;
+					}
+						case 'ru-RU': {
+							sResult += '-й';
+						break;
+					}
+						case 'sv-SE': {
+							if (nValue !== 11 && nValue !== 12)
+							{
+								if (nValue % 10 === 1)
+								{
+									sResult += ':a';
+								} else if (nValue % 10 === 2)
+								{
+									sResult += ':a';
+								} else {
+									sResult += ':e';
+								}
+							} else {
+								sResult += ':e';
+							}
+						break;
+					}
+					case 'bg-BG':
+					case 'en-GB':
+					case 'en-US':
+					case 'zh-CN':
+					case 'uk-UA':
+					case 'ja-JP':
+					case 'vi-VN':
+					case 'lv-LV':
+					case 'ko-KR':
+					case 'sk-SK':
+					case 'az-Latn-AZ':
+					default: {
+						if (nValue !== 11 && nValue !== 12 && nValue !== 13)
+						{
+							if (nValue % 10 === 1)
+							{
+								sResult += 'st';
+							} else if (nValue % 10 === 2)
+							{
+								sResult += 'nd';
+							} else if (nValue % 10 === 3)
+							{
+								sResult += 'rd';
+							} else {
+								sResult += 'th';
+							}
+						} else {
+							sResult += 'th';
+						}
+						break;
+					}
+				}
+				break;
+			case Asc.c_oAscNumberingFormat.TaiwaneseCountingThousand: //TODO: check again
+				digits = [
+					String.fromCharCode(0x4E00),
+					String.fromCharCode(0x4E8C),
+					String.fromCharCode(0x4E09),
+					String.fromCharCode(0x56DB),
+					String.fromCharCode(0x4E94),
+					String.fromCharCode(0x516D),
+					String.fromCharCode(0x4E03),
+					String.fromCharCode(0x516B),
+					String.fromCharCode(0x4E5D)
+				];
+				var degrees = [
+					'萬',
+					'千',
+					'百',
+					'十'
+				];
+
+				var taiwaneseCountingSplitting = function(initialNumber, isBigNumber, isSplit)
+				{
+					var resArr = [];
+					var copyNumber = initialNumber;
+					var isGroup = {};
+					var maxDegree = Math.pow(10, degrees.length);
+
+					for (var i = 0; i < degrees.length + 1; i += 1)
+					{
+						if (copyNumber / maxDegree >= 1)
+						{
+							isGroup[maxDegree] = Math.floor(copyNumber / maxDegree);
+						}
+						copyNumber %= maxDegree;
+						maxDegree /= 10;
+					}
+
+					if (isGroup[10000])
+					{
+						if (isGroup[10000] > 9)
+						{
+							resArr.push(taiwaneseCountingSplitting(isGroup[10000], undefined, true).join(''));
+						} else {
+							resArr.push(digits[isGroup[10000] - 1]);
+						}
+						resArr.push(degrees[0]);
+					} else if (initialNumber > 100000 && initialNumber % 10000 !== 0 && isGroup[1000])
+					{
+						resArr.push('零');
+					}
+
+					if (isGroup[1000])
+					{
+						resArr.push(digits[isGroup[1000] - 1]);
+						resArr.push('千');
+					} else if (initialNumber > 10000 && initialNumber % 1000 !== 0 && isGroup[100])
+					{
+						resArr.push('零');
+					}
+
+					if (isGroup[100])
+					{
+						resArr.push(digits[isGroup[100] - 1]);
+						resArr.push('百');
+					} else if (initialNumber > 1000 && initialNumber % 100 !== 0 && isGroup[10])
+					{
+						resArr.push('零');
+					}
+
+					if (isGroup[10])
+					{
+						if (isGroup[10] !== 1 || initialNumber > 100 || isSplit)
+						{
+							resArr.push(digits[isGroup[10] - 1]);
+						}
+						resArr.push('十');
+					} else {
+						if (initialNumber > 100 && initialNumber % 10 !== 0)
+						{
+							resArr.push('零');
+						}
+					}
+
+					if (isGroup[1])
+					{
+						resArr.push(digits[isGroup[1] - 1]);
+					}
+
+					return resArr;
+				};
+				if (nValue < 100000)
+				{
+					sResult = taiwaneseCountingSplitting(nValue).join('');
+				} else if (nValue >= 100000 && nValue < 1000000)
+				{
+					sResult = taiwaneseCountingSplitting(nValue, true).join('');
+				}
+				break;
+			case Asc.c_oAscNumberingFormat.KoreanLegal:
+				if (nValue < 100)
+				{
+					var answer = [];
+					digits = {
+						1: [
+							String.fromCharCode(0xD558, 0xB098),
+							String.fromCharCode(0xB458),
+							String.fromCharCode(0xC14B),
+							String.fromCharCode(0xB137),
+							String.fromCharCode(0xB2E4, 0xC12F),
+							String.fromCharCode(0xC5EC, 0xC12F),
+							String.fromCharCode(0xC77C, 0xACF1),
+							String.fromCharCode(0xC5EC, 0xB35F),
+							String.fromCharCode(0xC544 , 0xD649)
+						],
+						10: [
+							String.fromCharCode(0xC5F4),
+							String.fromCharCode(0xC2A4, 0xBB3C),
+							String.fromCharCode(0xC11C, 0xB978),
+							String.fromCharCode(0xB9C8, 0xD754),
+							String.fromCharCode(0xC270),
+							String.fromCharCode(0xC608, 0xC21C),
+							String.fromCharCode(0xC77C, 0xD754),
+							String.fromCharCode(0xC5EC, 0xB4E0),
+							String.fromCharCode(0xC544, 0xD754)
+						]
+					};
+					if (nValue / 10 >= 1)
+					{
+						answer.push(digits[10][Math.floor(nValue / 10) - 1]);
+					}
+					if (nValue % 10 >= 1)
+					{
+						answer.push(digits[1][(nValue % 10) - 1]);
+					}
+					sResult = answer.join('');
+				} else {
+					ideographCount(Asc.c_oAscNumberingFormat.KoreanCounting);
+				}
+				break;
+			case Asc.c_oAscNumberingFormat.OrdinalText:
+				var textLang = languages[nLang];
+				var ordinalText = getCardinalTextFromValue(textLang);
+				switch (textLang)
+				{
+					case 'de-DE': {
+						var alphaBet = {
+							'eins': 'erste',
+							'zwei': 'zweite',
+							'drei': 'dritte',
+							'vier': 'vierte',
+							'fünf': 'fünfte',
+							'sechs': 'sechste',
+							'sieben': 'siebente',
+							'acht': 'achte',
+							'neun': 'neunte',
+							'zehn': 'zehnte',
+							'elf': 'elfte',
+							'zwölf': 'zwölfte',
+							'dreizehn': 'dreizehnte',
+							'vierzehn': 'vierzehnte',
+							'fünfzehn': 'fünfzehnte',
+							'sechzehn': 'sechzehnte',
+							'siebzehn': 'siebzehnte',
+							'achtzehn': 'achtzehnte',
+							'neunzehn': 'neunzehnte'
+						};
+						var arrOfDigits = ordinalText.arrAnswer;
+						if (alphaBet[arrOfDigits[arrOfDigits.length - 1]])
+						{
+							arrOfDigits[arrOfDigits.length - 1] = alphaBet[arrOfDigits[arrOfDigits.length - 1]];
+						} else {
+							arrOfDigits[arrOfDigits.length - 1] += 'ste';
+						}
+						break;
+					}
+					case 'el-GR': {
+						var arrOfDigits = ordinalText.arrAnswer;
+						alphaBet = {
+							1: [
+								'πρώτο',
+								'δεύτερο',
+								'τρίτο',
+								'τετάρτο',
+								'πέμπτο',
+								'έκτο',
+								'έβδομο',
+								'όγδοο',
+								'ένατο',
+								'δέκατο',
+								'ενδέκατο',
+								'δωδέκατο',
+								'δέκατο τρίτο',
+								'δέκατο τέταρτο',
+								'δέκατο πέμπτο',
+								'δέκατο έκτο',
+								'δέκατο έβδομο',
+								'δέκατο όγδο',
+								'δέκατο ένατο'
+							],
+							10: [
+								'εικοστό',
+								'τριακοστό',
+								'τεσσερακοστό',
+								'πεντηκοστό',
+								'εξηκοστό',
+								'εβδομηκοστό',
+								'ογδοηκοστό',
+								'ενενηκοστό'
+							],
+							100: [
+								'εκατοστό',
+								'διακοσιοστό',
+								'τριακοσιοστό',
+								'τετρακοσιοστό',
+								'πεντακοσιοστό',
+								'εξακοσιοστό',
+								'επτακοσιοστό',
+								'οκτακοσιοστό',
+								'εννιακοσιοστό'
+							],
+							1000: [
+								'',
+								'δισ',
+								'τρισ',
+								'τετρακισ',
+								'πεντακισ',
+								'εξακισ',
+								'επτακισ',
+								'οκτακισ',
+								'εννιακισ',
+								'δεκακισ',
+								'ενδεκακισ',
+								'δωδεκακισ',
+								'δεκατριακισ',
+								'δεκατετρακισ',
+								'δεκαπεντακισ',
+								'δεκαεξακισ',
+								'δεκαεπτακισ',
+								'δεκαοκτακισ',
+								'δεκαεννιακισ',
+								'εικοσακισ'
+							]
+						}
+
+						var letterOrdinalNumberLessThen100GR = function(num)
+						{
+							var resArr = [];
+							if (num < 100 && num > 0)
+							{
+								if (num < 20)
+								{
+									resArr.push(alphaBet[1][num - 1]);
+								}else {
+									var reminder = num % 10;
+									var degree10 = Math.floor(num / 10);
+									resArr.push(alphaBet[10][degree10 - 2]);
+									if (reminder)
+									{
+										resArr.push(alphaBet[1][reminder - 1]);
+									}
+								}
+							}
+							return resArr;
+						};
+
+						var cardinalTextGR = function(num)
+						{
+							var groups = {};
+							var resArr = [];
+							if (num < 1000000)
+							{
+								groups[1000] = Math.floor(num / 1000);
+								num %= 1000;
+								groups[100] = Math.floor(num / 100);
+								num %= 100;
+								groups[1] = num;
+								if (groups[1000])
+								{
+									if (groups[1000] > 20)
+									{
+										var reminder;
+										if (groups[1000] < 100)
+										{
+											reminder = letterOrdinalNumberLessThen100GR(groups[1000]);
+										} else {
+											reminder = [];
+											if (arrOfDigits[0] === 'εκατό')
+											{
+												reminder.push('ένα');
+											}
+											for (var i = 0; arrOfDigits[i] !== 'χίλια' && arrOfDigits[i] !== 'χιλιάδες'; i += 1)
+											{
+												reminder.push(arrOfDigits[i]);
+											}
+										}
+										reminder.push('χιλιοστό');
+										if (groups[1000] % 100 === 0)
+										{
+											reminder = reminder.join('');
+										}
+										resArr.push(reminder);
+									} else {
+										resArr.push(alphaBet[1000][groups[1000] - 1] + 'χιλιοστό');
+									}
+								}
+
+								if (groups[100])
+								{
+									resArr.push(alphaBet[100][groups[100] - 1]);
+								}
+
+								if (groups[1])
+								{
+									resArr.push(letterOrdinalNumberLessThen100GR(groups[1]));
+								}
+							}
+							return resArr;
+						};
+						ordinalText.arrAnswer = cardinalTextGR(nValue);
+						ordinalText.getConcatStringByRule = function (arr)
+						{
+							return arr.reduce(function (acc, b)
+							{
+								if (Array.isArray(b))
+								{
+									acc.push(b.join(' '));
+								} else {
+									acc.push(b);
+								}
+								return acc;
+							}, []).join(' ');
+						};
+						break;
+					}
+					case 'fr-FR': {
+						var arrOfDigits = ordinalText.arrAnswer;
+						var switchingValue = arrOfDigits;
+						if (Array.isArray(arrOfDigits[arrOfDigits.length - 1]))
+						{
+							var arr = arrOfDigits[arrOfDigits.length - 1];
+							switchingValue = arr;
+						}
+						switch (switchingValue[switchingValue.length - 1])
+						{
+							case 'neuf':
+								switchingValue[switchingValue.length - 1] = 'neuv';
+								break;
+							case 'cinq':
+								switchingValue[switchingValue.length - 1] = 'cinqu';
+								break;
+							case 'un':
+								if(switchingValue.length === 1 && arrOfDigits.length === 1)
+								{
+									switchingValue[switchingValue.length - 1] = 'premier';
+								}
+								break;
+							case 'cents':
+								switchingValue[switchingValue.length - 1] = 'cent';
+								break;
+							default:
+								break;
+						}
+						if (nValue < 1000000)
+						{
+							var lastWord = switchingValue[switchingValue.length - 1];
+							if (lastWord[lastWord.length - 1] === 'e' || lastWord[lastWord.length - 1] === 'e')
+							{
+								switchingValue[switchingValue.length - 1] = lastWord.slice(0, lastWord.length - 1);
+							}
+							if (switchingValue[switchingValue.length - 1] !== 'premier')
+							{
+								switchingValue[switchingValue.length - 1] += 'ième';
+							}
+						}
+						break;
+					}
+					case 'it-IT': {
+						var alphaBet = {
+							'uno': 'primo',
+							'due': 'secondo',
+							'tre': 'terzo',
+							'quattro': 'quarto',
+							'cinque': 'quinto',
+							'sei': 'sesto',
+							'sette': 'settimo',
+							'otto': 'ottavo',
+							'nove': 'nono',
+							'dieci': 'decimo'
+						};
+						var arrOfDigits = ordinalText.arrAnswer;
+						var lastWord = arrOfDigits[arrOfDigits.length - 1];
+						if (lastWord)
+						{
+							if (alphaBet[lastWord] && arrOfDigits.length === 1)
+							{
+								arrOfDigits[arrOfDigits.length - 1] = alphaBet[lastWord];
+							} else if (lastWord === 'tré')
+							{
+								arrOfDigits[arrOfDigits.length - 1] = 'treesimo';
+							} else {
+								if (lastWord !== 'sei')
+								{
+									arrOfDigits[arrOfDigits.length - 1] = lastWord.substring(0, lastWord.length - 1);
+								}
+								if (lastWord === 'mila')
+								{
+									arrOfDigits.push('l');
+								}
+								arrOfDigits.push('esimo');
+							}
+						}
+						break;
+					}
+					case 'nl-NL': {
+						var alphaBet = {
+							'één': 'eerste',
+							'twee': 'tweede',
+							'drie': 'derde',
+							'vier': 'vierde',
+							'vijf': 'vijfde',
+							'zes': 'zesde',
+							'zeven': 'zevende',
+							'acht': 'achtste',
+							'negen': 'negende',
+							'tien': 'tiende'
+						};
+						var arrOfDigits = ordinalText.arrAnswer;
+						var lastWord = arrOfDigits[arrOfDigits.length - 1];
+						if (alphaBet[lastWord])
+						{
+							arrOfDigits[arrOfDigits.length - 1] = alphaBet[lastWord];
+						} else if (nValue < 20)
+						{
+							arrOfDigits[arrOfDigits.length - 1] += 'de';
+						} else if (nValue < 1000000)
+						{
+							arrOfDigits[arrOfDigits.length - 1] += 'ste';
+						}
+						break;
+					}
+					case 'pt-BR':
+					case 'es-ES':
+					case 'cs-CZ':
+					case 'pt-PT': {
+						if (textLang === 'pt-BR' || textLang === 'pt-PT')
+						{
+							alphaBet = {
+								'um': 'primeiro',
+								'dois': 'segundo',
+								'três': 'terceiro',
+								'quatro': 'quarto',
+								'cinco': 'quinto',
+								'seis': 'sexto',
+								'sete': 'sétimo',
+								'oito': 'oitavo',
+								'nove': 'nono',
+								'dez': 'décimo',
+								'onze': 'décimo primeiro',
+								'doze': 'décimo segundo',
+								'treze': 'décimo terceiro',
+								'quartorze': 'décimo quarto',
+								'quinze': 'décimo quinto',
+								'dezesseis': 'décimo sexto',
+								'dezessete': 'décimo sétimo',
+								'dezoito': 'décimo oitavo',
+								'dezenove': 'décimo nono',
+								'vinte': 'vigésimo',
+								'trinta': 'trigésimo',
+								'quarenta': 'quadragésimo',
+								'cinqüenta': 'qüinquagésimo',
+								'sessenta': 'sexagésimo',
+								'setenta': 'setuagésimo',
+								'oitenta': 'octogésimo',
+								'noventa': 'nonagésimo',
+								'cem': 'centésimo',
+								'cento': 'centésimo',
+								'duzentos': 'ducentésimo',
+								'trezentos': 'trecentésimo',
+								'quatrocentos': 'quadringentésimo',
+								'quinhentos': 'qüingentésimo',
+								'seiscentos': 'seiscentésimo',
+								'setecentos': 'setingentésimo',
+								'oitocentos': 'octingentésimo',
+								'novecentos': 'nongentésimo',
+								'mil': 'milésimo'
+							}
+						} else if (textLang === 'es-ES')
+						{
+							alphaBet = {
+							'uno': 'primero',
+							'dos': 'segundo',
+							'tres': 'tercero',
+							'cuatro': 'cuarto',
+							'cinco': 'quinto',
+							'seis': 'sexto',
+							'siete': 'séptimo',
+							'ocho': 'octavo',
+							'nueve': 'noveno',
+							'diez': 'décimo',
+							'once': 'undécimo',
+							'doce': 'duodécimo',
+							'trece': 'decimotercero',
+							'catorce': 'decimocuarto',
+							'quince': 'decimoquinto',
+							'dieciséis': 'decimosexto',
+							'diecisiete': 'decimoséptimo',
+							'dieciocho': 'decimoctavo',
+							'diecinueve': 'decimonoveno',
+							'veint': 'vigésimo',
+							'veinte': 'vigésimo',
+							'veinti': 'vigésimo',
+							'treinta': 'trigésimo',
+							'cuarenta': 'cuadragésimo',
+							'cincuenta': 'quincuagésimo',
+							'sesenta': 'sexagésimo',
+							'setenta': 'septuagésimo',
+							'ochenta': 'octogésimo',
+							'noventa': 'nonagésimo',
+							'ciento': 'centésimo',
+							'cien': 'cien',
+							'doscientos': 'ducentésimo',
+							'trescientos': 'tricentésimo',
+							'cuatrocientos': 'cuadringentésimo',
+							'quinientos': 'quingentésimo',
+							'seiscientos': 'sexcentésimo',
+							'setecientos': 'septingentésimo',
+							'ochocientos': 'octingentésimo',
+							'novecientos': 'noningentésimo',
+							'mil': 'milésimo',
+							'dós': 'segundo',
+							'trés': 'tercero',
+							'séis': 'sexto'
+							}
+						} else if (textLang === 'cs-CZ')
+						{
+							alphaBet = {
+								'jedna': 'první',
+								'dva': 'druhý',
+								'tři': 'třetí',
+								'čtyři': 'čtvrtý',
+								'pět': 'pátý',
+								'šest': 'šestý',
+								'sedm': 'sedmý',
+								'osm': 'osmý',
+								'devět': 'devátý',
+								'deset': 'desátý',
+								'jedenáct': 'jedenáctý',
+								'dvanáct': 'dvanáctý',
+								'třináct': 'třináctý',
+								'čtrnáct': 'čtrnáctý',
+								'patnáct': 'patnáctý',
+								'šestnáct': 'šestnáctý',
+								'sedmnáct': 'sedmnáctý',
+								'osmnáct': 'osmnáctý',
+								'devatenáct': 'devatenáctý',
+								'dvacet': 'dvacátý',
+								'třicet': 'třicátý',
+								'čtyřicet': 'čtyřicátý',
+								'padesát': 'padesátý',
+								'šedesát': 'šedesátý',
+								'sedmdesát': 'sedmdesátý',
+								'osmdesát': 'osmdesátý',
+								'devadesát': 'devadesátý',
+								'sto': 'stý',
+								'dvě stě': 'dvoustý',
+								'tři sta': 'třístý',
+								'čtyři sta': 'čtyřstý',
+								'pět set': 'pětistý',
+								'šest set': 'šestistý',
+								'sedm set': 'sedmistý',
+								'osm set': 'osmistý',
+								'devět set': 'devítistý',
+								'tisíc': 'tisící',
+								'tisíce': 'tisící'
+							};
+						}
+
+						var arrOfDigits = ordinalText.arrAnswer;
+						var newAnswerArr = [];
+						var isSkip = false;
+						for (var i = arrOfDigits.length - 1; i >= 0; i -= 1)
+						{
+							if (Array.isArray(arrOfDigits[i]))
+							{
+								var iterArr = arrOfDigits[i];
+								for (var j = 0; j < iterArr.length; j += 1)
+								{
+									if (alphaBet[iterArr[j]])
+									{
+										newAnswerArr.push(alphaBet[iterArr[j]]);
+									}
+								}
+
+							} else {
+								if (isSkip)
+								{
+									newAnswerArr.push(arrOfDigits[i]);
+								} else if (alphaBet[arrOfDigits[i]])
+								{
+									newAnswerArr.push(alphaBet[arrOfDigits[i]]);
+									if (arrOfDigits[i] === 'mil' && nValue >= 2000)
+									{
+										newAnswerArr[newAnswerArr.length - 1] += 's';
+									}
+								}
+								if (!isSkip && arrOfDigits[i] === 'mil')
+								{
+									isSkip = true;
+								}
+							}
+						}
+
+						ordinalText.arrAnswer = newAnswerArr.reverse();
+						break;
+					}
+					case 'lv-LV': {
+						var alphaBet = {
+							'viens': 'pirmais',
+							'divi': 'otrais',
+							'trīs': 'trešais',
+							'četri': 'ceturtais',
+							'pieci': 'piektais',
+							'seši': 'sestais',
+							'septiņi': 'septītais',
+							'astoņi': 'astotais',
+							'deviņi': 'devītais'
+						};
+						var arrOfDigits = ordinalText.arrAnswer;
+						var lastWord = arrOfDigits[arrOfDigits.length - 1];
+						if (nValue >= 1000)
+						{
+							for (var i = 0; i < arrOfDigits.length; i += 1)
+							{
+								if (arrOfDigits[i] === 'tūkstotis' || arrOfDigits[i] === 'tūkstoši')
+								{
+									arrOfDigits[i] = 'tūkstoš';
+								}
+							}
+						}
+						if (alphaBet[lastWord])
+						{
+							arrOfDigits[arrOfDigits.length - 1] = alphaBet[lastWord];
+						} else {
+							if (nValue % 100 === 0 && nValue % 1000 !== 0)
+							{
+								arrOfDigits[arrOfDigits.length - 1] = lastWord.slice(0, lastWord.length - 1);
+							}
+							arrOfDigits[arrOfDigits.length - 1] += 'ais';
+						}
+						break;
+					}
+					case 'uk-UA':
+					case 'pl-PL':
+					case 'ru-RU': {
+						var alphaBet = {
+							'ru-RU': {
+								'numbers': {
+									'один': 'первый',
+									'два': 'второй',
+									'три': 'третий',
+									'четыре': 'четвертый',
+									'пять': 'пятый',
+									'шесть': 'шестой',
+									'семь': 'седьмой',
+									'восемь': 'восьмой',
+									'девять': 'девятый',
+									'десять': 'десятый',
+									'одиннадцать': 'одиннадцатый',
+									'двенадцать': 'двенадцатый',
+									'тринадцать': 'тринадцатый',
+									'четырнадцать': 'четырнадцатый',
+									'пятнадцать': 'пятнадцатый',
+									'шестнадцать': 'шестнадцатый',
+									'семнадцать': 'семнадцатый',
+									'восемнадцать': 'восемнадцатый',
+									'девятнадцать': 'девятнадцатый',
+									'двадцать': 'двадцатый',
+									'тридцать': 'тридцатый',
+									'сорок': 'сороковой',
+									'пятьдесят': 'пятидесятый',
+									'шестьдесят': 'шестидесятый',
+									'семьдесят': 'семидесятый',
+									'восемьдесят': 'восьмидесятый',
+									'девяносто': 'девяностый',
+									'сто': 'сотый',
+									'двести': 'двухсотый',
+									'триста': 'трехсотый',
+									'четыреста': 'четырехсотый',
+									'пятьсот': 'пятисотый',
+									'шестьсот': 'шестисотый',
+									'семьсот': 'семисотый',
+									'восемьсот': 'восьмисотый',
+									'девятьсот': 'девятисотый'
+								},
+								'thousand': {
+									1: {
+										'одна': '',
+										'две': 'двух',
+										'три': 'трех',
+										'четыре': 'четырех',
+										'пять': 'пяти',
+										'шесть': 'шести',
+										'семь': 'семи',
+										'восемь': 'восьми',
+										'девять': 'девяти',
+										'десять': 'десяти',
+										'одиннадцать': 'одиннадцати',
+										'двенадцать': 'двенадцати',
+										'тринадцать': 'тринадцати',
+										'четырнадцать': 'четырнадцати',
+										'пятнадцать': 'пятнадцати',
+										'шестнадцать': 'шестнадцати',
+										'семнадцать': 'семнадцати',
+										'восемнадцать': 'восемнадцати',
+										'девятнадцать': 'девятнадцати',
+										'двадцать': 'двадцати',
+										'тридцать': 'тридцати',
+										'сорок': 'сорока',
+										'пятьдесят': 'пятидесяти',
+										'шестьдесят': 'шестидесяти',
+										'семьдесят': 'семидесяти',
+										'восемьдесят': 'восьмидесяти',
+										'девяносто': 'девяносто'
+									},
+									100: {
+										'сто': 'сто',
+										'двести': 'двухсот',
+										'триста': 'трехсот',
+										'четыреста': 'четырехсот',
+										'пятьсот': 'пятьсот',
+										'шестьсот': 'шестьсот',
+										'семьсот': 'семьсот',
+										'восемьсот': 'восемьсот',
+										'девятьсот': 'девятьсот'
+									}
+								},
+								'thousandEntry': 'тысяч',
+								'thousandType': 'тысячный'
+							},
+							'uk-UA': {
+								'numbers': {
+										"один": "перший",
+										"два": "другий",
+										"три": "третій",
+										"чотири": "четвертий",
+										"п'ять": "п'ятий",
+										"шість": "шостий",
+										"сім": "сьомий",
+										"вісім": "восьмий",
+										"дев'ять": "дев'ятий",
+										"десять": "десятий",
+										"одинадцять": "одинадцятий",
+										"дванадцять": "дванадцятий",
+										"тринадцять": "тринадцятий",
+										"чотирнадцять": "чотирнадцятий",
+										"п'ятнадцять": "п'ятнадцятий",
+										"шістнадцять": "шістнадцятий",
+										"сімнадцять": "сімнадцятий",
+										"вісімнадцять": "вісімнадцятий",
+										"дев'ятнадцять": "дев'ятнадцятий",
+										"двадцять": "двадцятий",
+										"тридцять": "тридцятий",
+										"сорок": "сороковий",
+										"п'ятдесят": "п'ятдесятий",
+										"шiстдесят": "шiстдесятий",
+										"сімдесят": "сімдесятий",
+										"вісімдесят": "вісімдесятий",
+										"дев'яносто": "дев'яностий",
+										"сто": "сотий",
+										"двісті": "двохсотий",
+										"триста": "трьохсотий",
+										"чотириста": "чотирьохсотий",
+										"п'ятсот": "п'ятисотий",
+										"шістсот": "шестисотий",
+										"сімсот": "семисотий",
+										"вісімсот": "восьмисотий",
+										"дев'ятсот": "дев'ятисотий"
+								},
+								'thousand': {
+									1: {
+										"одна": "одно",
+										"дві": "двох",
+										"три": "трьох",
+										"чотири": "чотирьох",
+										"п'ять": "п'яти",
+										"шість": "шести",
+										"сім": "семи",
+										"вісім": "восьми",
+										"дев'ять": "дев'яти",
+										"десять": "десяти",
+										"одинадцять": "одинадцяти",
+										"дванадцять": "дванадцяти",
+										"тринадцять": "тринадцяти",
+										"чотирнадцять": "чотирнадцяти",
+										"п'ятнадцять": "п'ятнадцяти",
+										"шістнадцять": "шістнадцяти",
+										"сімнадцять": "сімнадцяти",
+										"вісімнадцять": "вісімнадцяти",
+										"дев'ятнадцять": "дев'ятнадцяти",
+										"двадцять": "двадцяти",
+										"тридцять": "тридцяти",
+										"сорок": "сорока",
+										"п'ятдесят": "п'ятдесяти",
+										"шiстдесят": "шiстдесяти",
+										"сімдесят": "сімдесяти",
+										"вісімдесят": "вісімдесяти",
+										"дев'яносто": "дев'яносто"
+									},
+									100: {
+										"сто": "сто",
+										"двісті": "двохсот",
+										"триста": "трьохсот",
+										"чотириста": "чотирьохсот",
+										"п'ятсот": "п'ятисот",
+										"шістсот": "шестисот",
+										"сімсот": "семисот",
+										"вісімсот": "восьмисот",
+										"дев'ятьсот": "дев'ятисот"
+									}
+								},
+								'thousandEntry': 'тисяч',
+								'thousandType': 'тисячний'
+							},
+							'pl-PL': {
+								'tens': {
+									'dwadzieścia': 'dwudziesty',
+									'trzydzieści': 'trzydziesty',
+									'czterdzieści': 'czterdziesty',
+									'pięćdziesiąt': 'pięćdziesiąty',
+									'sześćdziesiąt': 'sześćdziesiąty',
+									'siedemdziesiąt': 'siedemdziesiąty',
+									'osiemdziesiąt': 'osiemdziesiąty',
+									'dziewięćdziesiąt': 'dziewięćdziesiąty'
+								},
+								'numbers': {
+									'jeden': 'pierwszy',
+									'dwa': 'drugi',
+									'trzy': 'trzeci',
+									'cztery': 'czwarty',
+									'pięć': 'piąty',
+									'sześć': 'szósty',
+									'siedem': 'siódmy',
+									'osiem': 'ósmy',
+									'dziewięć': 'dziewiąty',
+									'dziesięć': 'dziesiąty',
+									'jedenaście': 'jedenasty',
+									'dwanaście': 'dwunasty',
+									'trzynaście': 'trzynasty',
+									'czternaście': 'czternasty',
+									'piętnaście': 'piętnasty',
+									'szesnaście': 'szesnasty',
+									'siedemnaście': 'siedemnasty',
+									'osiemnaście': 'osiemnasty',
+									'dziewiętnaście': 'dziewiętnasty',
+									'dwadzieścia': 'dwudziesty',
+									'trzydzieści': 'trzydziesty',
+									'czterdzieści': 'czterdziesty',
+									'pięćdziesiąt': 'pięćdziesiąty',
+									'sześćdziesiąt': 'sześćdziesiąty',
+									'siedemdziesiąt': 'siedemdziesiąty',
+									'osiemdziesiąt': 'osiemdziesiąty',
+									'dziewięćdziesiąt': 'dziewięćdziesiąty',
+									'sto': 'setny',
+									'dwieście': 'dwusetny',
+									'trzysta': 'trzysetny',
+									'czterysta': 'czterysetny',
+									'pięćset': 'pięćsetny',
+									'sześćset': 'sześćsetny',
+									'siedemset': 'siedemsetny',
+									'osiemset': 'osiemsetny',
+									'dziewięćset': 'dziewięćsetny'
+
+								},
+								'thousand': {
+									1: {
+										'jeden': 'jedno',
+										'dwa': 'dwu',
+										'trzy': 'trzy',
+										'cztery': 'cztero',
+										'pięć': 'piącio',
+										'sześć': 'szeącio',
+										'siedem': 'siedmio',
+										'osiem': 'óąmio',
+										'dziewięć': 'dziewiącio',
+										'dziesięć': 'dziesiącio',
+										'jedenaście': 'jedenasto',
+										'dwanaście': 'dwunasto',
+										'trzynaście': 'trzynasto',
+										'czternaście': 'czternasto',
+										'piętnaście': 'piętnasto',
+										'szesnaście': 'szesnasto',
+										'siedemnaście': 'siedemnasto',
+										'osiemnaście': 'osiemnastotysięczny',
+										'dziewiętnaście': 'dziewiętnastotysięczny',
+										'dwadzieścia': 'dwudziestotysięczny',
+										'trzydzieści': 'trzydziestotysięczny',
+										'czterdzieści': 'czterdziesto',
+										'pięćdziesiąt': 'pięćdziesiącio',
+										'sześćdziesiąt': 'sześćdziesiącio',
+										'siedemdziesiąt': 'siedemdziesiącio',
+										'osiemdziesiąt': 'osiemdziesiącio',
+										'dziewięćdziesiąt': 'dziewięćdziesiącio'
+									},
+									100: {
+										'sto': 'stu',
+										'dwieście': 'dwustu',
+										'trzysta': 'trzystu',
+										'czterysta': 'czterystu',
+										'pięćset': 'pięćset',
+										'sześćset': 'szeuśćset',
+										'siedemset': 'siedemset',
+										'osiemset': 'osiemset',
+										'dziewięćset': 'dziewięćset'
+									}
+								}
+							}
+						}
+						var arrOfDigits = ordinalText.arrAnswer;
+						var lastWord = arrOfDigits[arrOfDigits.length - 1];
+						if (lastWord)
+						{
+							var thousandType;
+							if (textLang === 'pl-PL')
+							{
+								switch (lastWord)
+								{
+									case 'tysiąc':
+										thousandType = 'tysiączny';
+										break;
+									case 'tysiące':
+									case 'tysięcy':
+										thousandType = 'tysięczny';
+										break;
+									default:
+										break;
+								}
+							} else if (lastWord.indexOf(alphaBet[textLang]['thousandEntry']) !== -1)
+							{
+								thousandType = alphaBet[textLang]['thousandType'];
+							}
+							if (thousandType)
+							{
+								var answer = [];
+								answer.unshift(thousandType);
+								arrOfDigits.pop();
+								var lastWord = arrOfDigits[arrOfDigits.length - 1];
+								if (typeof alphaBet[textLang]['thousand'][1][lastWord] === 'string')
+								{
+									answer.unshift(alphaBet[textLang]['thousand'][1][lastWord]);
+									arrOfDigits.pop();
+									lastWord = arrOfDigits[arrOfDigits.length - 1];
+									if (alphaBet[textLang]['thousand'][1][lastWord])
+									{
+										answer.unshift(alphaBet[textLang]['thousand'][1][lastWord]);
+										arrOfDigits.pop();
+									}
+								}
+								lastWord = arrOfDigits[arrOfDigits.length - 1];
+								if (alphaBet[textLang]['thousand'][100][lastWord])
+								{
+									arrOfDigits.pop();
+									answer.unshift(alphaBet[textLang]['thousand'][100][lastWord]);
+								}
+								arrOfDigits.push(answer.join(''));
+							} else {
+								arrOfDigits[arrOfDigits.length - 1] = alphaBet[textLang]['numbers'][arrOfDigits[arrOfDigits.length - 1]];
+							}
+							if (textLang === 'pl-PL')
+							{
+								for (var i = 0; i < arrOfDigits.length; i += 1)
+								{
+									if (arrOfDigits[i] === 'tysiączny')
+									{
+										break;
+									}
+									if (alphaBet[textLang]['tens'][arrOfDigits[i]])
+									{
+										arrOfDigits[i] = alphaBet[textLang]['tens'][arrOfDigits[i]];
+									}
+								}
+							}
+						}
+						ordinalText.getConcatStringByRule = function (arr)
+						{
+							return arr.join(' ');
+						};
+						break;
+					}
+					case 'bg-BG': {
+						var alphaBet = {
+								1: {
+									'един': 'първият',
+									'два': 'вторият',
+									'три': 'третият',
+									'четири': 'четвъртият',
+									'пет': 'петият',
+									'шест': 'шестият',
+									'седем': 'седмият',
+									'осем': 'осмият',
+									'хиляди': 'хилядният'
+								},
+								100: {
+									'сто': 'стотеният',
+									'двеста': 'двестотеният',
+									'триста': 'тристотеният',
+									'четиристотин': 'четиристотеният',
+									'петстотин': 'петстотеният',
+									'шестстотин': 'шестстотеният',
+									'седемстотин': 'седемстотеният',
+									'осемстотин': 'осемстотеният',
+									'деветстотин': 'деветстотеният'
+								}
+						};
+						var arrOfDigits = ordinalText.arrAnswer;
+						for (var i = 0; i < arrOfDigits.length; i += 1)
+						{
+							if (arrOfDigits[i] === 'хиляда')
+							{
+								arrOfDigits[i] = 'хиляди';
+							}
+						}
+
+						var lastWord = arrOfDigits[arrOfDigits.length - 1];
+						if (alphaBet[1][lastWord] || alphaBet[100][lastWord])
+						{
+							arrOfDigits[arrOfDigits.length - 1] = alphaBet[1][lastWord] || alphaBet[100][lastWord];
+						} else if (nValue % 100 !== 0)
+						{
+							arrOfDigits[arrOfDigits.length - 1] += 'ият';
+						}
+						
+						if (Math.floor(nValue / 1000) === 1)
+						{
+							arrOfDigits.unshift('една');
+						}
+						for (var i = 0; i < arrOfDigits.length - 1; i += 1)
+						{
+							if (alphaBet[100][arrOfDigits[i]]
+								&& arrOfDigits[i + 1]
+								&& arrOfDigits[i + 1] !== 'хилядният'
+								&& arrOfDigits[i + 1] !== 'и')
+							{
+								arrOfDigits[i] += ' и';
+							}
+						}
+						break;
+					}
+					case 'sv-SE': {
+						var alphaBet = {
+							'ett': 'första',
+							'två': 'andra',
+							'tre': 'tredje',
+							'fyra': 'fjärde',
+							'fem': 'femte',
+							'sex': 'sjätte',
+							'sju': 'sjunde',
+							'åtta': 'åttonde',
+							'nio': 'nionde',
+							'tio': 'tionde',
+							'elva': 'elfte',
+							'tolv': 'tolfte'
+						};
+						var arrOfDigits = ordinalText.arrAnswer;
+						if (alphaBet[arrOfDigits[arrOfDigits.length - 1]])
+						{
+							arrOfDigits[arrOfDigits.length - 1] = alphaBet[arrOfDigits[arrOfDigits.length - 1]];
+						} else if (nValue % 100 < 20)
+						{
+							arrOfDigits[arrOfDigits.length - 1] += 'de';
+						} else if (nValue < 1000000)
+						{
+							arrOfDigits[arrOfDigits.length - 1] += 'nde';
+						}
+						break;
+					}
+					case 'sk-SK': {
+						var alphaBet = {
+							'jeden': 'prvý',
+							'dva': 'druhý',
+							'tri': 'tretí',
+							'štyri': 'štvrtý',
+							'päť': 'piaty',
+							'šesť': 'šiesty',
+							'sedem': 'siedmy',
+							'osem': 'ôsmy',
+							'deväť': 'deviaty',
+							'desať': 'desiaty',
+							'jedenásť': 'jedenásty',
+							'dvanásť': 'dvanásty',
+							'trinásť': 'trinásty',
+							'štrnásť': 'štrnásty',
+							'pätnásť': 'pätnásty',
+							'šestnásť': 'šestnásty',
+							'sedemnásť': 'sedemnásty',
+							'osemnásť': 'osemnásty',
+							'devätnásť': 'devätnásty',
+							'dvadsať': 'dvadsiaty',
+							'tridsať': 'tridsiaty',
+							'štyridsať': 'štyridsiaty',
+							'päťdesiat': 'päťdesiaty',
+							'šesťdesiat': 'šesťdesiaty',
+							'sedemdesiat': 'sedemdesiaty',
+							'osemdesiat': 'osemdesiaty',
+							'deväťdesiat': 'deväťdesiaty',
+							'tisíc': 'tisíci',
+							'sto': 'stý',
+							100: {
+								'dve': 'dvoj',
+								'dva': 'dvoj',
+								'tri': 'troj'
+							},
+							'other': {
+								'dve': 'dvoj',
+								'dva': 'dvoj',
+								'tri': 'tretí',
+								'štyri': 'štvrtý',
+								'päť': 'piaty',
+								'osem': 'ôsmy',
+								'deväť': 'deviaty',
+								'jedenásť': 'jedenásty',
+								'dvanásť': 'dvanásty',
+								'trinásť': 'trinásty',
+								'štrnásť': 'štrnásty',
+								'pätnásť': 'pätnásty',
+								'šestnásť': 'šestnásty',
+								'sedemnásť': 'sedemnásty',
+								'osemnásť': 'osemnásty',
+								'devätnásť': 'devätnásty',
+								'tridsať': 'třicátý',
+								'štyridsať': 'čtyřicátý',
+								'šesťdesiat': 'šedesátý',
+								'sedemdesiat': 'sedmdesátý',
+								'osemdesiat': 'osmdesátý',
+								'deväťdesiat': 'devadesátý'
+							}
+						}
+						var arrOfDigits = ordinalText.arrAnswer;
+						if (nValue % 10 !== 0 && nValue % 100 > 10)
+						{
+							if (alphaBet[arrOfDigits[arrOfDigits.length - 2]])
+							{
+								arrOfDigits[arrOfDigits.length - 2] = alphaBet[arrOfDigits[arrOfDigits.length - 2]];
+							}
+						}
+						if (Math.floor(nValue / 1000) === 1)
+						{
+							arrOfDigits.shift();
+						}
+						if (alphaBet[arrOfDigits[arrOfDigits.length - 1]])
+						{
+							arrOfDigits[arrOfDigits.length - 1] = alphaBet[arrOfDigits[arrOfDigits.length - 1]];
+						}
+						for (var i = 1; i < arrOfDigits.length; i += 1)
+						{
+							if (arrOfDigits[i] === 'sto' || arrOfDigits[i] === 'stý')
+							{
+								if (alphaBet[100][arrOfDigits[i - 1]])
+								{
+									arrOfDigits[i - 1] = alphaBet[100][arrOfDigits[i - 1]];
+								}
+							} else if (alphaBet['other'][arrOfDigits[i - 1]])
+							{
+								arrOfDigits[i - 1] = alphaBet['other'][arrOfDigits[i - 1]];
+							}
+						}
+						break;
+					}
+
+					case 'zh-CN':
+					case 'ja-JP':
+					case 'ko-KR':
+					case 'az-Latn-AZ':
+					case 'en-US':
+					case 'vi-VN':
+					case 'en-GB':
+					default: {
+						var alphaBet = {
+							'one': 'first',
+							'two': 'second',
+							'three': 'third',
+							'four': 'fourth',
+							'five': 'fifth',
+							'six': 'sixth',
+							'seven': 'seventh',
+							'eight': 'eighth',
+							'nine': 'ninth',
+							'ten': 'tenth',
+							'eleven': 'eleventh',
+							'twelve': 'twelfth'
+						};
+						var arrOfDigits = ordinalText.arrAnswer;
+						var changeArray = arrOfDigits;
+						if (Array.isArray(changeArray[changeArray.length - 1]))
+						{
+							arrOfDigits = changeArray[changeArray.length - 1];
+						}
+						if (alphaBet[arrOfDigits[arrOfDigits.length - 1]])
+						{
+							arrOfDigits[arrOfDigits.length - 1] = alphaBet[arrOfDigits[arrOfDigits.length - 1]];
+						} else {
+							if (nValue % 10 === 0 && nValue % 100 !== 0)
+							{
+								arrOfDigits[arrOfDigits.length - 1] = arrOfDigits[arrOfDigits.length - 1].slice(0, arrOfDigits[arrOfDigits.length - 1].length - 1) + 'ie';
+							}
+							arrOfDigits[arrOfDigits.length - 1] += 'th';
+
+						}
+						break;
+					}
+				}
+				sResult = ordinalText.getConcatStringByRule(ordinalText.arrAnswer).sentenceCase();
+				break;
+			case Asc.c_oAscNumberingFormat.HindiCounting:
+				var alphabet = [
+					"एक","दो","तीन","चार","पांच","छह","सात","आठ","नौ","दस","ग्यारह",
+					"बारह","तेरह","चौदह","पंद्रह","सोलह","सत्रह","अठारह","उन्नीस","बीस",
+					"इकीस","बाईस","तेइस","चौबीस","पच्चीस","छब्बीस","सताइस","अट्ठाइस",
+					"उनतीस","तीस","इकतीस","बतीस","तैंतीस","चौंतीस","पैंतीस","छतीस",
+					"सैंतीस","अड़तीस","उनतालीस","चालीस","इकतालीस","बयालीस","तैतालीस",
+					"चवालीस","पैंतालीस","छयालिस","सैंतालीस","अड़तालीस","उनचास",
+					"पचास","इक्यावन","बावन","तिरपन","चौवन","पचपन","छप्पन","सतावन",
+					"अठावन","उनसठ","साठ","इकसठ","बासठ","तिरसठ","चौंसठ","पैंसठ",
+					"छियासठ","सड़सठ","अड़सठ","उनहतर","सत्तर","इकहतर","बहतर",
+					"तिहतर","चौहतर","पचहतर","छिहतर","सतहतर","अठहतर","उन्नासी","अस्सी",
+					"इक्यासी","बयासी","तिरासी","चौरासी","पचासी","छियासी","सतासी",
+					"अट्ठासी","नवासी","नब्बे","इक्यानवे","बानवे","तिरानवे","चौरानवे",
+					"पचानवे","छियानवे","सतानवे","अट्ठानवे","निन्यानवे"
+				];
+				var degrees = {
+					100: "सौ",
+					1000: "हज़ार"
+				}
+				var hindiCounting = function(num)
+				{
+					var resArr = [];
+					var groups = {};
+					groups[1000] = Math.floor(num / 1000);
+					num %= 1000;
+					groups[100] = Math.floor(num / 100);
+					num %= 100;
+					groups[1] = num;
+					if (groups[1000])
+					{
+						resArr.push(alphabet[(groups[1000] - 1) % 99], degrees[1000]);
+					}
+					if (groups[100])
+					{
+						resArr.push(alphabet[(groups[100] - 1) % 99], degrees[100]);
+					}
+					if (groups[1])
+					{
+						resArr.push(alphabet[(groups[1] - 1) % 99]);
+					}
+					return resArr;
+				};
+				var adaptVal = ((nValue - 1) % 9999) + 1;
+
+				sResult = hindiCounting(adaptVal).join(' ');
+				break;
+			case Asc.c_oAscNumberingFormat.ThaiCounting:
+				var digits = [
+						'หนึ่ง',
+						'สอง',
+						'สาม',
+						'สี่',
+						'ห้า',
+						'หก',
+						'เจ็ด',
+						'แปด',
+						'เก้า',
+						'สิบ'
+				]
+
+				var thaiCountingLess100 = function(num, isInitialValueGreat100)
+				{
+					var resArr = [];
+					if (num > 0 && num < 100)
+					{
+						if (num <= 10)
+						{
+							if (isInitialValueGreat100)
+							{
+								if (num !== 1)
+								{
+									resArr.push(digits[num - 1]);
+								} else {
+									resArr.push('เอ็ด');
+								}
+							} else {
+								resArr.push(digits[num - 1]);
+							}
+						} else {
+							var degree10 = Math.floor(num / 10);
+							var reminder10 = num % 10;
+
+							if (degree10 !== 1)
+							{
+								if (degree10 === 2)
+								{
+									resArr.push('ยี่');
+								} else {
+									resArr.push(digits[degree10 - 1]);
+								}
+							}
+							resArr.push(digits[9]);
+
+							if (reminder10)
+							{
+								if (reminder10 !== 1)
+								{
+									resArr.push(digits[reminder10 - 1]);
+								} else {
+									resArr.push('เอ็ด');
+								}
+							}
+						}
+					}
+					return resArr;
+				};
+
+				var thaiCounting = function(num)
+				{
+					if (num >= 1000000000)
+					{
+						return ['ศูนย์'];
+					}
+					var resArr = [];
+					var groups = {};
+					groups[1000000] = Math.floor(num / 1000000);
+					num %= 1000000;
+					groups[100000] = Math.floor(num / 100000);
+					num %= 100000;
+					groups[10000] = Math.floor(num / 10000);
+					num %= 10000;
+					groups[1000] = Math.floor(num / 1000);
+					num %= 1000;
+					groups[100] = Math.floor(num / 100);
+					num %= 100;
+					groups[1] = num;
+
+					if (groups[1000000])
+					{
+						if (groups[1000000] >= 100)
+						{
+							resArr = resArr.concat(thaiCounting(groups[1000000]));
+						} else {
+							resArr = resArr.concat(thaiCountingLess100(groups[1000000]));
+						}
+						resArr.push('ล้าน');
+					}
+					if (groups[100000])
+					{
+						resArr = resArr.concat(thaiCountingLess100(groups[100000]));
+						resArr.push('แสน');
+					}
+					if (groups[10000])
+					{
+						resArr = resArr.concat(thaiCountingLess100(groups[10000]));
+						resArr.push('หมื่น');
+					}
+					if (groups[1000])
+					{
+						resArr = resArr.concat(thaiCountingLess100(groups[1000]));
+						resArr.push('พัน');
+					}
+					if (groups[100])
+					{
+						resArr = resArr.concat(thaiCountingLess100(groups[100]));
+						resArr.push('ร้อย');
+					}
+					if (groups[1])
+					{
+						resArr = resArr.concat(thaiCountingLess100(groups[1], groups[100] || groups[1000] || groups[10000] || groups[100000] || groups[1000000]));
+					}
+					return resArr;
+				};
+				sResult = thaiCounting(nValue).join('');
+				break;
+			case Asc.c_oAscNumberingFormat.DollarText:
+				sResult += nValue;
+				break;
+			case Asc.c_oAscNumberingFormat.BahtText:
+				sResult += nValue;
+				break;
+			case Asc.c_oAscNumberingFormat.VietnameseCounting:
+				digits = ['một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín', 'mười'];
+
+				var letterNumberLessThen100VI = function (num)
+				{
+					var resArr = [];
+					 if (num > 0 && num < 100)
+					 {
+					 	if (num <= 10)
+					 	{
+					 		resArr.push(digits[num - 1]);
+						} else {
+					 		var degree10 = Math.floor(num / 10);
+					 		var reminder = num % 10;
+					 		if (degree10 !== 1)
+					 		{
+								resArr.push(digits[degree10 - 1]);
+							}
+							resArr.push('mười');
+					 		if (reminder)
+					 		{
+					 			resArr.push(digits[reminder - 1]);
+							}
+						}
+					 }
+					return resArr;
+				};
+
+				var vietnameseCounting = function (num)
+				{
+					var adaptVal = (num - 1) % 1000 + 1;
+					var resArr = [];
+					var groups = {};
+					groups[1000] = Math.floor(adaptVal / 1000);
+					adaptVal %= 1000;
+					groups[100] = Math.floor(adaptVal / 100);
+					adaptVal %= 100;
+					groups[1] = adaptVal;
+
+					if (groups[1000])
+					{
+						resArr.push(digits[groups[1000] - 1], 'ngàn');
+					}
+					if (groups[100])
+					{
+						resArr.push(digits[groups[100] - 1], 'trăm');
+						if (groups[1] / 10 < 1 && groups[1] !== 0)
+						{
+							resArr.push('lẻ');
+						}
+					}
+					if (groups[1])
+					{
+						resArr = resArr.concat(letterNumberLessThen100VI(groups[1]));
+					}
+					return resArr;
+				};
+
+				sResult = vietnameseCounting(nValue).join(' ');
+				break;
 		}
 
 		return sResult;
@@ -4290,10 +8436,10 @@
 		return isCeil ? Math.ceil(nFontSize * 2) / 2 : Math.floor(nFontSize * 2) / 2;
 	}
 
+	// Non-breaking-space сюда не добавлять!
 	var c_oAscSpaces = [];
 	c_oAscSpaces[0x000A] = 1;
 	c_oAscSpaces[0x0020] = 1;
-	c_oAscSpaces[0x00A0] = 1;
 	c_oAscSpaces[0x2002] = 1;
 	c_oAscSpaces[0x2003] = 1;
 	c_oAscSpaces[0x2005] = 1;
@@ -7013,7 +11159,7 @@
 		var new_width = 0;
 		var new_height = 0;
 
-		// в мозилле поправили баг. отключаем особую ветку
+		// в мозилле баг. включаем особую ветку
 		if (!AscCommon.AscBrowser.isMozilla)
 		{
 			new_width = Math.round(scale * rect.right) - Math.round(scale * rect.left);
@@ -7021,13 +11167,23 @@
 		}
 		else
 		{
-			var sizeW = _getIntegerByDivide(rect.width);
-			var sizeH = _getIntegerByDivide(rect.height);
-			if (sizeW.start !== rect.width) element.style.width = sizeW.start + "px";
-			if (sizeH.start !== rect.height) element.style.height = sizeH.start + "px";
+			if (true)
+			{
+				new_width = Math.round(scale * rect.right) - Math.round(scale * rect.left);
+				new_height = Math.round(scale * rect.bottom) - Math.round(scale * rect.top);
 
-			new_width = sizeW.end;
-			new_height = sizeH.end;
+				element.style["imageRendering"] = "pixelated";
+			}
+			else
+			{
+				var sizeW = _getIntegerByDivide(rect.width);
+				var sizeH = _getIntegerByDivide(rect.height);
+				if (sizeW.start !== rect.width) element.style.width = sizeW.start + "px";
+				if (sizeH.start !== rect.height) element.style.height = sizeH.start + "px";
+
+				new_width = sizeW.end;
+				new_height = sizeH.end;
+			}
 		}
 
 		setCanvasSize(element,
@@ -7174,6 +11330,13 @@
 		return t.mmapCache[col] || [];
 	};
 
+	function IsLinkPPAction(sAction) {
+		if(!(typeof sAction === "string")) {
+			return false;
+		}
+		return sAction.indexOf("ppaction://hlink") === 0;
+	}
+
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
@@ -7212,6 +11375,7 @@
 	window["AscCommon"].UploadImageFiles = UploadImageFiles;
     window["AscCommon"].UploadImageUrls = UploadImageUrls;
 	window["AscCommon"].DownloadOriginalFile = DownloadOriginalFile;
+	window["AscCommon"].DownloadFileFromBytes = DownloadFileFromBytes;
 	window["AscCommon"].CanDropFiles = CanDropFiles;
 	window["AscCommon"].getUrlType = getUrlType;
 	window["AscCommon"].prepareUrl = prepareUrl;
@@ -7268,6 +11432,7 @@
 	window["AscCommon"].rx_space_g = rx_space_g;
 	window["AscCommon"].rx_space = rx_space;
 	window["AscCommon"].rx_defName = rx_defName;
+	window["AscCommon"].rx_r1c1DefError = rx_r1c1DefError;
 
 	window["AscCommon"].kCurFormatPainterWord = kCurFormatPainterWord;
 	window["AscCommon"].parserHelp = parserHelp;
@@ -7323,6 +11488,7 @@
 	window["AscCommon"].CCustomShortcutActionSymbol = window["AscCommon"]["CCustomShortcutActionSymbol"] = CCustomShortcutActionSymbol;
 	window['AscCommon'].g_oCRC32  = g_oCRC32;
 	window["AscCommon"].RangeTopBottomIterator = RangeTopBottomIterator;
+	window["AscCommon"].IsLinkPPAction = IsLinkPPAction;
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)
@@ -7530,6 +11696,14 @@ window["buildCryptoFile_End"] = function(url, error, hash, password)
 					break;
 				default:
 					break;
+			}
+
+			if (ext === ".docx")
+			{
+				if (_editor.DocInfo.Format === "oform")
+					ext = ".oform";
+				else if (_editor.DocInfo.Format === "docxf")
+					ext = ".docxf";
 			}
 
 			AscCommon.sendSaveFile(_editor.documentId, _editor.documentUserId, "output" + ext, _editor.asc_getSessionToken(), fileData, function(err) {

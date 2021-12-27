@@ -1222,6 +1222,9 @@
 			case AscDFH.historydescription_Document_ConvertFormFixedType:
 				sString = "Document_ConvertFormFixedType";
 				break;
+			case AscDFH.historydescription_Document_ReplaceCurrentWord:
+				sString = "Document_ReplaceCurrentWord";
+				break;
 		}
 		return sString;
 	}
@@ -1697,36 +1700,40 @@
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе ParaTextPr
 	//------------------------------------------------------------------------------------------------------------------
-	window['AscDFH'].historyitem_TextPr_Bold            = window['AscDFH'].historyitem_type_TextPr | 1;
-	window['AscDFH'].historyitem_TextPr_Italic          = window['AscDFH'].historyitem_type_TextPr | 2;
-	window['AscDFH'].historyitem_TextPr_Strikeout       = window['AscDFH'].historyitem_type_TextPr | 3;
-	window['AscDFH'].historyitem_TextPr_Underline       = window['AscDFH'].historyitem_type_TextPr | 4;
-	window['AscDFH'].historyitem_TextPr_FontSize        = window['AscDFH'].historyitem_type_TextPr | 5;
-	window['AscDFH'].historyitem_TextPr_Color           = window['AscDFH'].historyitem_type_TextPr | 6;
-	window['AscDFH'].historyitem_TextPr_VertAlign       = window['AscDFH'].historyitem_type_TextPr | 7;
-	window['AscDFH'].historyitem_TextPr_HighLight       = window['AscDFH'].historyitem_type_TextPr | 8;
-	window['AscDFH'].historyitem_TextPr_RStyle          = window['AscDFH'].historyitem_type_TextPr | 9;
-	window['AscDFH'].historyitem_TextPr_Spacing         = window['AscDFH'].historyitem_type_TextPr | 10;
-	window['AscDFH'].historyitem_TextPr_DStrikeout      = window['AscDFH'].historyitem_type_TextPr | 11;
-	window['AscDFH'].historyitem_TextPr_Caps            = window['AscDFH'].historyitem_type_TextPr | 12;
-	window['AscDFH'].historyitem_TextPr_SmallCaps       = window['AscDFH'].historyitem_type_TextPr | 13;
-	window['AscDFH'].historyitem_TextPr_Position        = window['AscDFH'].historyitem_type_TextPr | 14;
-	window['AscDFH'].historyitem_TextPr_Value           = window['AscDFH'].historyitem_type_TextPr | 15;
-	window['AscDFH'].historyitem_TextPr_RFonts          = window['AscDFH'].historyitem_type_TextPr | 16;
-	window['AscDFH'].historyitem_TextPr_RFonts_Ascii    = window['AscDFH'].historyitem_type_TextPr | 17;
-	window['AscDFH'].historyitem_TextPr_RFonts_HAnsi    = window['AscDFH'].historyitem_type_TextPr | 18;
-	window['AscDFH'].historyitem_TextPr_RFonts_CS       = window['AscDFH'].historyitem_type_TextPr | 19;
-	window['AscDFH'].historyitem_TextPr_RFonts_EastAsia = window['AscDFH'].historyitem_type_TextPr | 20;
-	window['AscDFH'].historyitem_TextPr_RFonts_Hint     = window['AscDFH'].historyitem_type_TextPr | 21;
-	window['AscDFH'].historyitem_TextPr_Lang            = window['AscDFH'].historyitem_type_TextPr | 22;
-	window['AscDFH'].historyitem_TextPr_Lang_Bidi       = window['AscDFH'].historyitem_type_TextPr | 23;
-	window['AscDFH'].historyitem_TextPr_Lang_EastAsia   = window['AscDFH'].historyitem_type_TextPr | 24;
-	window['AscDFH'].historyitem_TextPr_Lang_Val        = window['AscDFH'].historyitem_type_TextPr | 25;
-	window['AscDFH'].historyitem_TextPr_Unifill         = window['AscDFH'].historyitem_type_TextPr | 26;
-	window['AscDFH'].historyitem_TextPr_FontSizeCS      = window['AscDFH'].historyitem_type_TextPr | 27;
-	window['AscDFH'].historyitem_TextPr_Outline         = window['AscDFH'].historyitem_type_TextPr | 28;
-	window['AscDFH'].historyitem_TextPr_Fill            = window['AscDFH'].historyitem_type_TextPr | 29;
-	window['AscDFH'].historyitem_TextPr_HighlightColor  = window['AscDFH'].historyitem_type_TextPr | 30;
+	window['AscDFH'].historyitem_TextPr_Bold                  = window['AscDFH'].historyitem_type_TextPr | 1;
+	window['AscDFH'].historyitem_TextPr_Italic                = window['AscDFH'].historyitem_type_TextPr | 2;
+	window['AscDFH'].historyitem_TextPr_Strikeout             = window['AscDFH'].historyitem_type_TextPr | 3;
+	window['AscDFH'].historyitem_TextPr_Underline             = window['AscDFH'].historyitem_type_TextPr | 4;
+	window['AscDFH'].historyitem_TextPr_FontSize              = window['AscDFH'].historyitem_type_TextPr | 5;
+	window['AscDFH'].historyitem_TextPr_Color                 = window['AscDFH'].historyitem_type_TextPr | 6;
+	window['AscDFH'].historyitem_TextPr_VertAlign             = window['AscDFH'].historyitem_type_TextPr | 7;
+	window['AscDFH'].historyitem_TextPr_HighLight             = window['AscDFH'].historyitem_type_TextPr | 8;
+	window['AscDFH'].historyitem_TextPr_RStyle                = window['AscDFH'].historyitem_type_TextPr | 9;
+	window['AscDFH'].historyitem_TextPr_Spacing               = window['AscDFH'].historyitem_type_TextPr | 10;
+	window['AscDFH'].historyitem_TextPr_DStrikeout            = window['AscDFH'].historyitem_type_TextPr | 11;
+	window['AscDFH'].historyitem_TextPr_Caps                  = window['AscDFH'].historyitem_type_TextPr | 12;
+	window['AscDFH'].historyitem_TextPr_SmallCaps             = window['AscDFH'].historyitem_type_TextPr | 13;
+	window['AscDFH'].historyitem_TextPr_Position              = window['AscDFH'].historyitem_type_TextPr | 14;
+	window['AscDFH'].historyitem_TextPr_Value                 = window['AscDFH'].historyitem_type_TextPr | 15;
+	window['AscDFH'].historyitem_TextPr_RFonts                = window['AscDFH'].historyitem_type_TextPr | 16;
+	window['AscDFH'].historyitem_TextPr_RFonts_Ascii          = window['AscDFH'].historyitem_type_TextPr | 17;
+	window['AscDFH'].historyitem_TextPr_RFonts_HAnsi          = window['AscDFH'].historyitem_type_TextPr | 18;
+	window['AscDFH'].historyitem_TextPr_RFonts_CS             = window['AscDFH'].historyitem_type_TextPr | 19;
+	window['AscDFH'].historyitem_TextPr_RFonts_EastAsia       = window['AscDFH'].historyitem_type_TextPr | 20;
+	window['AscDFH'].historyitem_TextPr_RFonts_Hint           = window['AscDFH'].historyitem_type_TextPr | 21;
+	window['AscDFH'].historyitem_TextPr_Lang                  = window['AscDFH'].historyitem_type_TextPr | 22;
+	window['AscDFH'].historyitem_TextPr_Lang_Bidi             = window['AscDFH'].historyitem_type_TextPr | 23;
+	window['AscDFH'].historyitem_TextPr_Lang_EastAsia         = window['AscDFH'].historyitem_type_TextPr | 24;
+	window['AscDFH'].historyitem_TextPr_Lang_Val              = window['AscDFH'].historyitem_type_TextPr | 25;
+	window['AscDFH'].historyitem_TextPr_Unifill               = window['AscDFH'].historyitem_type_TextPr | 26;
+	window['AscDFH'].historyitem_TextPr_FontSizeCS            = window['AscDFH'].historyitem_type_TextPr | 27;
+	window['AscDFH'].historyitem_TextPr_Outline               = window['AscDFH'].historyitem_type_TextPr | 28;
+	window['AscDFH'].historyitem_TextPr_Fill                  = window['AscDFH'].historyitem_type_TextPr | 29;
+	window['AscDFH'].historyitem_TextPr_HighlightColor        = window['AscDFH'].historyitem_type_TextPr | 30;
+	window['AscDFH'].historyitem_TextPr_RFonts_Ascii_Theme    = window['AscDFH'].historyitem_type_TextPr | 31;
+	window['AscDFH'].historyitem_TextPr_RFonts_HAnsi_Theme    = window['AscDFH'].historyitem_type_TextPr | 32;
+	window['AscDFH'].historyitem_TextPr_RFonts_CS_Theme       = window['AscDFH'].historyitem_type_TextPr | 33;
+	window['AscDFH'].historyitem_TextPr_RFonts_EastAsia_Theme = window['AscDFH'].historyitem_type_TextPr | 34;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе ParaDrawing
 	//------------------------------------------------------------------------------------------------------------------
@@ -1838,8 +1845,6 @@
 	window['AscDFH'].historyitem_PresentationField_FieldType = window['AscDFH'].historyitem_type_PresentationField | 2;
 	window['AscDFH'].historyitem_PresentationField_PPr       = window['AscDFH'].historyitem_type_PresentationField | 3;
 	//------------------------------------------------------------------------------------------------------------------
-
-
 	// Типы изменений в классе СComment
 	//------------------------------------------------------------------------------------------------------------------
 	window['AscDFH'].historyitem_Comment_Change   = window['AscDFH'].historyitem_type_Comment | 1;
@@ -1982,50 +1987,55 @@
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе ParaRun
 	//------------------------------------------------------------------------------------------------------------------
-	window['AscDFH'].historyitem_ParaRun_AddItem           = window['AscDFH'].historyitem_type_ParaRun | 1;
-	window['AscDFH'].historyitem_ParaRun_RemoveItem        = window['AscDFH'].historyitem_type_ParaRun | 2;
-	window['AscDFH'].historyitem_ParaRun_Bold              = window['AscDFH'].historyitem_type_ParaRun | 3;
-	window['AscDFH'].historyitem_ParaRun_Italic            = window['AscDFH'].historyitem_type_ParaRun | 4;
-	window['AscDFH'].historyitem_ParaRun_Strikeout         = window['AscDFH'].historyitem_type_ParaRun | 5;
-	window['AscDFH'].historyitem_ParaRun_Underline         = window['AscDFH'].historyitem_type_ParaRun | 6;
-	window['AscDFH'].historyitem_ParaRun_FontFamily        = window['AscDFH'].historyitem_type_ParaRun | 7; // obsolete
-	window['AscDFH'].historyitem_ParaRun_FontSize          = window['AscDFH'].historyitem_type_ParaRun | 8;
-	window['AscDFH'].historyitem_ParaRun_Color             = window['AscDFH'].historyitem_type_ParaRun | 9;
-	window['AscDFH'].historyitem_ParaRun_VertAlign         = window['AscDFH'].historyitem_type_ParaRun | 10;
-	window['AscDFH'].historyitem_ParaRun_HighLight         = window['AscDFH'].historyitem_type_ParaRun | 11;
-	window['AscDFH'].historyitem_ParaRun_RStyle            = window['AscDFH'].historyitem_type_ParaRun | 12;
-	window['AscDFH'].historyitem_ParaRun_Spacing           = window['AscDFH'].historyitem_type_ParaRun | 13;
-	window['AscDFH'].historyitem_ParaRun_DStrikeout        = window['AscDFH'].historyitem_type_ParaRun | 14;
-	window['AscDFH'].historyitem_ParaRun_Caps              = window['AscDFH'].historyitem_type_ParaRun | 15;
-	window['AscDFH'].historyitem_ParaRun_SmallCaps         = window['AscDFH'].historyitem_type_ParaRun | 16;
-	window['AscDFH'].historyitem_ParaRun_Position          = window['AscDFH'].historyitem_type_ParaRun | 17;
-	window['AscDFH'].historyitem_ParaRun_Value             = window['AscDFH'].historyitem_type_ParaRun | 18; // obsolete
-	window['AscDFH'].historyitem_ParaRun_RFonts            = window['AscDFH'].historyitem_type_ParaRun | 19;
-	window['AscDFH'].historyitem_ParaRun_Lang              = window['AscDFH'].historyitem_type_ParaRun | 20;
-	window['AscDFH'].historyitem_ParaRun_RFonts_Ascii      = window['AscDFH'].historyitem_type_ParaRun | 21;
-	window['AscDFH'].historyitem_ParaRun_RFonts_HAnsi      = window['AscDFH'].historyitem_type_ParaRun | 22;
-	window['AscDFH'].historyitem_ParaRun_RFonts_CS         = window['AscDFH'].historyitem_type_ParaRun | 23;
-	window['AscDFH'].historyitem_ParaRun_RFonts_EastAsia   = window['AscDFH'].historyitem_type_ParaRun | 24;
-	window['AscDFH'].historyitem_ParaRun_RFonts_Hint       = window['AscDFH'].historyitem_type_ParaRun | 25;
-	window['AscDFH'].historyitem_ParaRun_Lang_Bidi         = window['AscDFH'].historyitem_type_ParaRun | 26;
-	window['AscDFH'].historyitem_ParaRun_Lang_EastAsia     = window['AscDFH'].historyitem_type_ParaRun | 27;
-	window['AscDFH'].historyitem_ParaRun_Lang_Val          = window['AscDFH'].historyitem_type_ParaRun | 28;
-	window['AscDFH'].historyitem_ParaRun_TextPr            = window['AscDFH'].historyitem_type_ParaRun | 29;
-	window['AscDFH'].historyitem_ParaRun_Unifill           = window['AscDFH'].historyitem_type_ParaRun | 30;
-	window['AscDFH'].historyitem_ParaRun_Shd               = window['AscDFH'].historyitem_type_ParaRun | 31;
-	window['AscDFH'].historyitem_ParaRun_MathStyle         = window['AscDFH'].historyitem_type_ParaRun | 32;
-	window['AscDFH'].historyitem_ParaRun_MathPrp           = window['AscDFH'].historyitem_type_ParaRun | 33;
-	window['AscDFH'].historyitem_ParaRun_ReviewType        = window['AscDFH'].historyitem_type_ParaRun | 34;
-	window['AscDFH'].historyitem_ParaRun_PrChange          = window['AscDFH'].historyitem_type_ParaRun | 35;
-	window['AscDFH'].historyitem_ParaRun_TextFill          = window['AscDFH'].historyitem_type_ParaRun | 36;
-	window['AscDFH'].historyitem_ParaRun_TextOutline       = window['AscDFH'].historyitem_type_ParaRun | 37;
-	window['AscDFH'].historyitem_ParaRun_PrReviewInfo      = window['AscDFH'].historyitem_type_ParaRun | 38;
-	window['AscDFH'].historyitem_ParaRun_ContentReviewInfo = window['AscDFH'].historyitem_type_ParaRun | 39;
-	window['AscDFH'].historyitem_ParaRun_OnStartSplit      = window['AscDFH'].historyitem_type_ParaRun | 40;
-	window['AscDFH'].historyitem_ParaRun_OnEndSplit        = window['AscDFH'].historyitem_type_ParaRun | 41;
-	window['AscDFH'].historyitem_ParaRun_MathAlnAt         = window['AscDFH'].historyitem_type_ParaRun | 42;
-	window['AscDFH'].historyitem_ParaRun_MathForcedBreak   = window['AscDFH'].historyitem_type_ParaRun | 43;
-	window['AscDFH'].historyitem_ParaRun_HighlightColor    = window['AscDFH'].historyitem_type_ParaRun | 44;
+	window['AscDFH'].historyitem_ParaRun_AddItem               = window['AscDFH'].historyitem_type_ParaRun | 1;
+	window['AscDFH'].historyitem_ParaRun_RemoveItem            = window['AscDFH'].historyitem_type_ParaRun | 2;
+	window['AscDFH'].historyitem_ParaRun_Bold                  = window['AscDFH'].historyitem_type_ParaRun | 3;
+	window['AscDFH'].historyitem_ParaRun_Italic                = window['AscDFH'].historyitem_type_ParaRun | 4;
+	window['AscDFH'].historyitem_ParaRun_Strikeout             = window['AscDFH'].historyitem_type_ParaRun | 5;
+	window['AscDFH'].historyitem_ParaRun_Underline             = window['AscDFH'].historyitem_type_ParaRun | 6;
+	window['AscDFH'].historyitem_ParaRun_FontFamily            = window['AscDFH'].historyitem_type_ParaRun | 7; // obsolete
+	window['AscDFH'].historyitem_ParaRun_FontSize              = window['AscDFH'].historyitem_type_ParaRun | 8;
+	window['AscDFH'].historyitem_ParaRun_Color                 = window['AscDFH'].historyitem_type_ParaRun | 9;
+	window['AscDFH'].historyitem_ParaRun_VertAlign             = window['AscDFH'].historyitem_type_ParaRun | 10;
+	window['AscDFH'].historyitem_ParaRun_HighLight             = window['AscDFH'].historyitem_type_ParaRun | 11;
+	window['AscDFH'].historyitem_ParaRun_RStyle                = window['AscDFH'].historyitem_type_ParaRun | 12;
+	window['AscDFH'].historyitem_ParaRun_Spacing               = window['AscDFH'].historyitem_type_ParaRun | 13;
+	window['AscDFH'].historyitem_ParaRun_DStrikeout            = window['AscDFH'].historyitem_type_ParaRun | 14;
+	window['AscDFH'].historyitem_ParaRun_Caps                  = window['AscDFH'].historyitem_type_ParaRun | 15;
+	window['AscDFH'].historyitem_ParaRun_SmallCaps             = window['AscDFH'].historyitem_type_ParaRun | 16;
+	window['AscDFH'].historyitem_ParaRun_Position              = window['AscDFH'].historyitem_type_ParaRun | 17;
+	window['AscDFH'].historyitem_ParaRun_Value                 = window['AscDFH'].historyitem_type_ParaRun | 18; // obsolete
+	window['AscDFH'].historyitem_ParaRun_RFonts                = window['AscDFH'].historyitem_type_ParaRun | 19;
+	window['AscDFH'].historyitem_ParaRun_Lang                  = window['AscDFH'].historyitem_type_ParaRun | 20;
+	window['AscDFH'].historyitem_ParaRun_RFonts_Ascii          = window['AscDFH'].historyitem_type_ParaRun | 21;
+	window['AscDFH'].historyitem_ParaRun_RFonts_HAnsi          = window['AscDFH'].historyitem_type_ParaRun | 22;
+	window['AscDFH'].historyitem_ParaRun_RFonts_CS             = window['AscDFH'].historyitem_type_ParaRun | 23;
+	window['AscDFH'].historyitem_ParaRun_RFonts_EastAsia       = window['AscDFH'].historyitem_type_ParaRun | 24;
+	window['AscDFH'].historyitem_ParaRun_RFonts_Hint           = window['AscDFH'].historyitem_type_ParaRun | 25;
+	window['AscDFH'].historyitem_ParaRun_Lang_Bidi             = window['AscDFH'].historyitem_type_ParaRun | 26;
+	window['AscDFH'].historyitem_ParaRun_Lang_EastAsia         = window['AscDFH'].historyitem_type_ParaRun | 27;
+	window['AscDFH'].historyitem_ParaRun_Lang_Val              = window['AscDFH'].historyitem_type_ParaRun | 28;
+	window['AscDFH'].historyitem_ParaRun_TextPr                = window['AscDFH'].historyitem_type_ParaRun | 29;
+	window['AscDFH'].historyitem_ParaRun_Unifill               = window['AscDFH'].historyitem_type_ParaRun | 30;
+	window['AscDFH'].historyitem_ParaRun_Shd                   = window['AscDFH'].historyitem_type_ParaRun | 31;
+	window['AscDFH'].historyitem_ParaRun_MathStyle             = window['AscDFH'].historyitem_type_ParaRun | 32;
+	window['AscDFH'].historyitem_ParaRun_MathPrp               = window['AscDFH'].historyitem_type_ParaRun | 33;
+	window['AscDFH'].historyitem_ParaRun_ReviewType            = window['AscDFH'].historyitem_type_ParaRun | 34;
+	window['AscDFH'].historyitem_ParaRun_PrChange              = window['AscDFH'].historyitem_type_ParaRun | 35;
+	window['AscDFH'].historyitem_ParaRun_TextFill              = window['AscDFH'].historyitem_type_ParaRun | 36;
+	window['AscDFH'].historyitem_ParaRun_TextOutline           = window['AscDFH'].historyitem_type_ParaRun | 37;
+	window['AscDFH'].historyitem_ParaRun_PrReviewInfo          = window['AscDFH'].historyitem_type_ParaRun | 38;
+	window['AscDFH'].historyitem_ParaRun_ContentReviewInfo     = window['AscDFH'].historyitem_type_ParaRun | 39;
+	window['AscDFH'].historyitem_ParaRun_OnStartSplit          = window['AscDFH'].historyitem_type_ParaRun | 40;
+	window['AscDFH'].historyitem_ParaRun_OnEndSplit            = window['AscDFH'].historyitem_type_ParaRun | 41;
+	window['AscDFH'].historyitem_ParaRun_MathAlnAt             = window['AscDFH'].historyitem_type_ParaRun | 42;
+	window['AscDFH'].historyitem_ParaRun_MathForcedBreak       = window['AscDFH'].historyitem_type_ParaRun | 43;
+	window['AscDFH'].historyitem_ParaRun_HighlightColor        = window['AscDFH'].historyitem_type_ParaRun | 44;
+	window['AscDFH'].historyitem_ParaRun_RFonts_Ascii_Theme    = window['AscDFH'].historyitem_type_ParaRun | 45;
+	window['AscDFH'].historyitem_ParaRun_RFonts_HAnsi_Theme    = window['AscDFH'].historyitem_type_ParaRun | 46;
+	window['AscDFH'].historyitem_ParaRun_RFonts_CS_Theme       = window['AscDFH'].historyitem_type_ParaRun | 47;
+	window['AscDFH'].historyitem_ParaRun_RFonts_EastAsia_Theme = window['AscDFH'].historyitem_type_ParaRun | 48;
+
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CSectionPr
 	//------------------------------------------------------------------------------------------------------------------
@@ -4237,7 +4247,8 @@
 	window['AscDFH'].historydescription_Document_ConvertTableToText                 = 0x018a;
 	window['AscDFH'].historydescription_Document_ResolveAllComments                 = 0x018b;
 	window['AscDFH'].historydescription_Document_ConvertFormFixedType               = 0x018c;
-	window['AscDFH'].historydescription_Document_ChangeGeometryEdit                 = 0x018d;
+	window['AscDFH'].historydescription_Document_ReplaceCurrentWord                 = 0x018d;
+	window['AscDFH'].historydescription_Document_ChangeGeometryEdit                 = 0x018e;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//

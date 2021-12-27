@@ -868,6 +868,7 @@ CGraphicFrame.prototype.draw = function(graphics)
             this.drawLocks(this.transform, graphics);
             graphics.RestoreGrState();
         }
+        this.drawAnimLabels && this.drawAnimLabels(graphics);
 };
 
 CGraphicFrame.prototype.Select = function()

@@ -2992,7 +2992,7 @@ CDrawingDocument.prototype =
   	},
   	Collaborative_RemoveTarget : function (_id)
   	{
-      //this.Native["collaborativeRemoveTarget"](_id);
+        this.Native["collaborativeRemoveTarget"](_id);
 
  		for (var i = 0; i < this.CollaborativeTargets.length; i++)
   		{

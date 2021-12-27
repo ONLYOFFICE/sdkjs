@@ -1018,8 +1018,11 @@
             oSizes.ushGID = unGID;
             oSizes.nCMapIndex = nCMapIndex.index;
 
-            if (0 != this.FT_Load_Glyph_Wrapper(this.m_pFace, unGID, this.GetCharLoadMode()))
-                return oSizes;
+			if (0 != this.FT_Load_Glyph_Wrapper(this.m_pFace, unGID, this.GetCharLoadMode()))
+			{
+				oSizes.fAdvanceX = (this.m_pFace.size.metrics.max_advance >> 6) / 2.0;
+				return oSizes;
+			}
 
             var pFaceGlyph = this.m_pFace.glyph;
             var pGlyph = AscFonts.FT_Get_Glyph(this.m_pFace.glyph);

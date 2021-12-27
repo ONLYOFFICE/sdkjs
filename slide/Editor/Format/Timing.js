@@ -54,11 +54,420 @@
     var InitClass = AscFormat.InitClass;
     var CBaseFormatObject = AscFormat.CBaseFormatObject;
 
+    var GENERATE_PRESETS_SCRIPT = false;
+    var aPresetClasses = [];
+    function getAnimPresetsScript() {
+        var sScript = "var ANIMATION_PRESET_CLASSES = [];\n";
+        sScript += "var PRESET_TYPES;\n";
+        sScript += "var PRESET_SUBTYPES;\n";
+        for(var nPresetClass = 0; nPresetClass < aPresetClasses.length; ++nPresetClass) {
+            if(aPresetClasses[nPresetClass]) {
+                sScript += "ANIMATION_PRESET_CLASSES[" + nPresetClass + "] = [];\n";
+                sScript += "PRESET_TYPES = ANIMATION_PRESET_CLASSES[" + nPresetClass + "] = [];\n";
+                var aPresets = aPresetClasses[nPresetClass];
+                if(aPresets) {
+                    for(var nPreset = 0; nPreset < aPresets.length; ++nPreset) {
+                        var aPresetSubtypes = aPresets[nPreset];
+                        if(aPresetSubtypes) {
+                            sScript += "PRESET_TYPES[" + nPreset + "] = [];\n";
+                            sScript += "PRESET_SUBTYPES = PRESET_TYPES[" + nPreset + "] = [];\n";
+                            for(var nSubtype = 0; nSubtype < aPresetSubtypes.length; ++nSubtype) {
+                                if(aPresetSubtypes[nSubtype]) {
+                                    sScript += "PRESET_SUBTYPES[" + nSubtype + "] = \"" + aPresetSubtypes[nSubtype] + "\";\n";
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return console.log(sScript);
+    }
+    AscFormat.getAnimPresetsScript = getAnimPresetsScript;
+
+
+    
+    var PRESET_CLASS_EMPH = 0;
+    var PRESET_CLASS_ENTR = 1;
+    var PRESET_CLASS_EXIT = 2;
+    var PRESET_CLASS_MEDIACALL = 3;
+    var PRESET_CLASS_PATH = 4;
+    var PRESET_CLASS_VERB = 5;
+
+    AscFormat.PRESET_CLASS_EMPH = AscFormat["PRESET_CLASS_EMPH"] = PRESET_CLASS_EMPH;
+    AscFormat.PRESET_CLASS_ENTR = AscFormat["PRESET_CLASS_ENTR"] = PRESET_CLASS_ENTR;
+    AscFormat.PRESET_CLASS_EXIT = AscFormat["PRESET_CLASS_EXIT"] = PRESET_CLASS_EXIT;
+    AscFormat.PRESET_CLASS_MEDIACALL = AscFormat["PRESET_CLASS_MEDIACALL"] = PRESET_CLASS_MEDIACALL;
+    AscFormat.PRESET_CLASS_PATH = AscFormat["PRESET_CLASS_PATH"] = PRESET_CLASS_PATH;
+    AscFormat.PRESET_CLASS_VERB = AscFormat["PRESET_CLASS_VERB"] = PRESET_CLASS_VERB;
+
+    AscFormat.ANIM_PRESET_NONE = AscFormat["ANIM_PRESET_NONE"] = -2;
+    AscFormat.ANIM_PRESET_MULTIPLE = AscFormat["ANIM_PRESET_MULTIPLE"] = -1;
+    AscFormat.MOTION_CUSTOM_PATH = AscFormat["MOTION_CUSTOM_PATH"] = 0;
+    AscFormat.MOTION_CIRCLE = AscFormat["MOTION_CIRCLE"] = 1;
+    AscFormat.MOTION_RIGHT_TRIANGLE = AscFormat["MOTION_RIGHT_TRIANGLE"] = 2;
+    AscFormat.MOTION_DIAMOND = AscFormat["MOTION_DIAMOND"] = 3;
+    AscFormat.MOTION_HEXAGON = AscFormat["MOTION_HEXAGON"] = 4;
+    AscFormat.MOTION_PATH_5_POINT_STAR = AscFormat["MOTION_PATH_5_POINT_STAR"] = 5;
+    AscFormat.MOTION_CRESCENT_MOON = AscFormat["MOTION_CRESCENT_MOON"] = 6;
+    AscFormat.MOTION_SQUARE = AscFormat["MOTION_SQUARE"] = 7;
+    AscFormat.MOTION_TRAPEZOID = AscFormat["MOTION_TRAPEZOID"] = 8;
+    AscFormat.MOTION_HEART = AscFormat["MOTION_HEART"] = 9;
+    AscFormat.MOTION_OCTAGON = AscFormat["MOTION_OCTAGON"] = 10;
+    AscFormat.MOTION_PATH_6_POINT_STAR = AscFormat["MOTION_PATH_6_POINT_STAR"] = 11;
+    AscFormat.MOTION_FOOTBALL = AscFormat["MOTION_FOOTBALL"] = 12;
+    AscFormat.MOTION_EQUAL_TRIANGLE = AscFormat["MOTION_EQUAL_TRIANGLE"] = 13;
+    AscFormat.MOTION_PARALLELOGRAM = AscFormat["MOTION_PARALLELOGRAM"] = 14;
+    AscFormat.MOTION_PENTAGON = AscFormat["MOTION_PENTAGON"] = 15;
+    AscFormat.MOTION_PATH_4_POINT_STAR = AscFormat["MOTION_PATH_4_POINT_STAR"] = 16;
+    AscFormat.MOTION_PATH_8_POINT_STAR = AscFormat["MOTION_PATH_8_POINT_STAR"] = 17;
+    AscFormat.MOTION_TEARDROP = AscFormat["MOTION_TEARDROP"] = 18;
+    AscFormat.MOTION_POINTY_STAR = AscFormat["MOTION_POINTY_STAR"] = 19;
+    AscFormat.MOTION_CURVED_SQUARE = AscFormat["MOTION_CURVED_SQUARE"] = 20;
+    AscFormat.MOTION_CURVED_X = AscFormat["MOTION_CURVED_X"] = 21;
+    AscFormat.MOTION_VERTICAL_FIGURE_8 = AscFormat["MOTION_VERTICAL_FIGURE_8"] = 22;
+    AscFormat.MOTION_CURVY_STAR = AscFormat["MOTION_CURVY_STAR"] = 23;
+    AscFormat.MOTION_LOOP_DE_LOOP = AscFormat["MOTION_LOOP_DE_LOOP"] = 24;
+    AscFormat.MOTION_HORIZONTAL_FIGURE_8_FOUR = AscFormat["MOTION_HORIZONTAL_FIGURE_8_FOUR"] = 26;
+    AscFormat.MOTION_PEANUT = AscFormat["MOTION_PEANUT"] = 27;
+    AscFormat.MOTION_FIGURE_8_FOUR = AscFormat["MOTION_FIGURE_8_FOUR"] = 28;
+    AscFormat.MOTION_NEUTRON = AscFormat["MOTION_NEUTRON"] = 29;
+    AscFormat.MOTION_SWOOSH = AscFormat["MOTION_SWOOSH"] = 30;
+    AscFormat.MOTION_BEAN = AscFormat["MOTION_BEAN"] = 31;
+    AscFormat.MOTION_PLUS = AscFormat["MOTION_PLUS"] = 32;
+    AscFormat.MOTION_INVERTED_TRIANGLE = AscFormat["MOTION_INVERTED_TRIANGLE"] = 33;
+    AscFormat.MOTION_INVERTED_SQUARE = AscFormat["MOTION_INVERTED_SQUARE"] = 34;
+    AscFormat.MOTION_LEFT = AscFormat["MOTION_LEFT"] = 35;
+    AscFormat.MOTION_TURN_DOWN_RIGHT = AscFormat["MOTION_TURN_DOWN_RIGHT"] = 36;
+    AscFormat.MOTION_ARC_DOWN = AscFormat["MOTION_ARC_DOWN"] = 37;
+    AscFormat.MOTION_ZIGZAG = AscFormat["MOTION_ZIGZAG"] = 38;
+    AscFormat.MOTION_S_CURVE_2 = AscFormat["MOTION_S_CURVE_2"] = 39;
+    AscFormat.MOTION_SINE_WAVE = AscFormat["MOTION_SINE_WAVE"] = 40;
+    AscFormat.MOTION_BOUNCE_LEFT = AscFormat["MOTION_BOUNCE_LEFT"] = 41;
+    AscFormat.MOTION_DOWN = AscFormat["MOTION_DOWN"] = 42;
+    AscFormat.MOTION_TURN_UP = AscFormat["MOTION_TURN_UP"] = 43;
+    AscFormat.MOTION_ARC_UP = AscFormat["MOTION_ARC_UP"] = 44;
+    AscFormat.MOTION_HEARTBEAT = AscFormat["MOTION_HEARTBEAT"] = 45;
+    AscFormat.MOTION_SINE_SPIRAL_RIGHT = AscFormat["MOTION_SINE_SPIRAL_RIGHT"] = 46;
+    AscFormat.MOTION_WAVE = AscFormat["MOTION_WAVE"] = 47;
+    AscFormat.MOTION_CURVY_LEFT = AscFormat["MOTION_CURVY_LEFT"] = 48;
+    AscFormat.MOTION_DIAGONAL_DOWN_RIGHT = AscFormat["MOTION_DIAGONAL_DOWN_RIGHT"] = 49;
+    AscFormat.MOTION_TURN_DOWN = AscFormat["MOTION_TURN_DOWN"] = 50;
+    AscFormat.MOTION_ARC_LEFT = AscFormat["MOTION_ARC_LEFT"] = 51;
+    AscFormat.MOTION_FUNNEL = AscFormat["MOTION_FUNNEL"] = 52;
+    AscFormat.MOTION_SPRING = AscFormat["MOTION_SPRING"] = 53;
+    AscFormat.MOTION_BOUNCE_RIGHT = AscFormat["MOTION_BOUNCE_RIGHT"] = 54;
+    AscFormat.MOTION_SINE_SPIRAL_LEFT = AscFormat["MOTION_SINE_SPIRAL_LEFT"] = 55;
+    AscFormat.MOTION_DIAGONAL_UP_RIGHT = AscFormat["MOTION_DIAGONAL_UP_RIGHT"] = 56;
+    AscFormat.MOTION_TURN_UP_RIGHT = AscFormat["MOTION_TURN_UP_RIGHT"] = 57;
+    AscFormat.MOTION_ARC_RIGHT = AscFormat["MOTION_ARC_RIGHT"] = 58;
+    AscFormat.MOTION_S_CURVE_1 = AscFormat["MOTION_S_CURVE_1"] = 59;
+    AscFormat.MOTION_DECAYING_WAVE = AscFormat["MOTION_DECAYING_WAVE"] = 60;
+    AscFormat.MOTION_CURVY_RIGHT = AscFormat["MOTION_CURVY_RIGHT"] = 61;
+    AscFormat.MOTION_STAIRS_DOWN = AscFormat["MOTION_STAIRS_DOWN"] = 62;
+    AscFormat.MOTION_RIGHT = AscFormat["MOTION_RIGHT"] = 63;
+    AscFormat.MOTION_UP = AscFormat["MOTION_UP"] = 64;
+
+    AscFormat.EXIT_DISAPPEAR = AscFormat["EXIT_DISAPPEAR"] = 1;
+    AscFormat.EXIT_FLY_OUT_TO = AscFormat["EXIT_FLY_OUT_TO"] = 2;
+    AscFormat.EXIT_BLINDS = AscFormat["EXIT_BLINDS"] = 3;
+    AscFormat.EXIT_BOX = AscFormat["EXIT_BOX"] = 4;
+    AscFormat.EXIT_CHECKERBOARD = AscFormat["EXIT_CHECKERBOARD"] = 5;
+    AscFormat.EXIT_CIRCLE = AscFormat["EXIT_CIRCLE"] = 6;
+    AscFormat.EXIT_DIAMOND = AscFormat["EXIT_DIAMOND"] = 8;
+    AscFormat.EXIT_DISSOLVE_OUT = AscFormat["EXIT_DISSOLVE_OUT"] = 9;
+    AscFormat.EXIT_FADE = AscFormat["EXIT_FADE"] = 10;
+    AscFormat.EXIT_PEEK_OUT_TO = AscFormat["EXIT_PEEK_OUT_TO"] = 12;
+    AscFormat.EXIT_PLUS = AscFormat["EXIT_PLUS"] = 13;
+    AscFormat.EXIT_RANDOM_BARS = AscFormat["EXIT_RANDOM_BARS"] = 14;
+    AscFormat.EXIT_SPIRAL_OUT = AscFormat["EXIT_SPIRAL_OUT"] = 15;
+    AscFormat.EXIT_SPLIT = AscFormat["EXIT_SPLIT"] = 16;
+    AscFormat.EXIT_COLLAPSE = AscFormat["EXIT_COLLAPSE"] = 17;
+    AscFormat.EXIT_STRIPS = AscFormat["EXIT_STRIPS"] = 18;
+    AscFormat.EXIT_BASIC_SWIVEL = AscFormat["EXIT_BASIC_SWIVEL"] = 19;
+    AscFormat.EXIT_WEDGE = AscFormat["EXIT_WEDGE"] = 20;
+    AscFormat.EXIT_WHEEL = AscFormat["EXIT_WHEEL"] = 21;
+    AscFormat.EXIT_WIPE_FROM = AscFormat["EXIT_WIPE_FROM"] = 22;
+    AscFormat.EXIT_BASIC_ZOOM = AscFormat["EXIT_BASIC_ZOOM"] = 23;
+    AscFormat.EXIT_BOOMERANG = AscFormat["EXIT_BOOMERANG"] = 25;
+    AscFormat.EXIT_BOUNCE = AscFormat["EXIT_BOUNCE"] = 26;
+    AscFormat.EXIT_CREDITS = AscFormat["EXIT_CREDITS"] = 28;
+    AscFormat.EXIT_FLOAT = AscFormat["EXIT_FLOAT"] = 30;
+    AscFormat.EXIT_SHRINK_AND_TURN = AscFormat["EXIT_SHRINK_AND_TURN"] = 31;
+    AscFormat.EXIT_PINWHEEL = AscFormat["EXIT_PINWHEEL"] = 35;
+    AscFormat.EXIT_SINK_DOWN = AscFormat["EXIT_SINK_DOWN"] = 37;
+    AscFormat.EXIT_DROP = AscFormat["EXIT_DROP"] = 38;
+    AscFormat.EXIT_WHIP = AscFormat["EXIT_WHIP"] = 41;
+    AscFormat.EXIT_FLOAT_DOWN = AscFormat["EXIT_FLOAT_DOWN"] = 42;
+    AscFormat.EXIT_CENTER_REVOLVE = AscFormat["EXIT_CENTER_REVOLVE"] = 43;
+    AscFormat.EXIT_SWIVEL = AscFormat["EXIT_SWIVEL"] = 45;
+    AscFormat.EXIT_FLOAT_UP = AscFormat["EXIT_FLOAT_UP"] = 47;
+    AscFormat.EXIT_SPINNER = AscFormat["EXIT_SPINNER"] = 49;
+    AscFormat.EXIT_STRETCHY = AscFormat["EXIT_STRETCHY"] = 50;
+    AscFormat.EXIT_CURVE_DOWN = AscFormat["EXIT_CURVE_DOWN"] = 52;
+    AscFormat.EXIT_ZOOM = AscFormat["EXIT_ZOOM"] = 53;
+    AscFormat.EXIT_CONTRACT = AscFormat["EXIT_CONTRACT"] = 55;
+    AscFormat.EXIT_FLIP = AscFormat["EXIT_FLIP"] = 56;
+
+    AscFormat.ENTRANCE_APPEAR = AscFormat["ENTRANCE_APPEAR"] = 1;
+    AscFormat.ENTRANCE_FLY_IN_FROM = AscFormat["ENTRANCE_FLY_IN_FROM"] = 2;
+    AscFormat.ENTRANCE_BLINDS = AscFormat["ENTRANCE_BLINDS"] = 3;
+    AscFormat.ENTRANCE_BOX = AscFormat["ENTRANCE_BOX"] = 4;
+    AscFormat.ENTRANCE_CHECKERBOARD = AscFormat["ENTRANCE_CHECKERBOARD"] = 5;
+    AscFormat.ENTRANCE_CIRCLE = AscFormat["ENTRANCE_CIRCLE"] = 6;
+    AscFormat.ENTRANCE_DIAMOND = AscFormat["ENTRANCE_DIAMOND"] = 8;
+    AscFormat.ENTRANCE_DISSOLVE_IN = AscFormat["ENTRANCE_DISSOLVE_IN"] = 9;
+    AscFormat.ENTRANCE_FADE = AscFormat["ENTRANCE_FADE"] = 10;
+    AscFormat.ENTRANCE_PEEK_IN_FROM = AscFormat["ENTRANCE_PEEK_IN_FROM"] = 12;
+    AscFormat.ENTRANCE_PLUS = AscFormat["ENTRANCE_PLUS"] = 13;
+    AscFormat.ENTRANCE_RANDOM_BARS = AscFormat["ENTRANCE_RANDOM_BARS"] = 14;
+    AscFormat.ENTRANCE_SPIRAL_IN = AscFormat["ENTRANCE_SPIRAL_IN"] = 15;
+    AscFormat.ENTRANCE_SPLIT = AscFormat["ENTRANCE_SPLIT"] = 16;
+    AscFormat.ENTRANCE_STRETCH = AscFormat["ENTRANCE_STRETCH"] = 17;
+    AscFormat.ENTRANCE_STRIPS = AscFormat["ENTRANCE_STRIPS"] = 18;
+    AscFormat.ENTRANCE_BASIC_SWIVEL = AscFormat["ENTRANCE_BASIC_SWIVEL"] = 19;
+    AscFormat.ENTRANCE_WEDGE = AscFormat["ENTRANCE_WEDGE"] = 20;
+    AscFormat.ENTRANCE_WHEEL = AscFormat["ENTRANCE_WHEEL"] = 21;
+    AscFormat.ENTRANCE_WIPE_FROM = AscFormat["ENTRANCE_WIPE_FROM"] = 22;
+    AscFormat.ENTRANCE_BASIC_ZOOM = AscFormat["ENTRANCE_BASIC_ZOOM"] = 23;
+    AscFormat.ENTRANCE_BOOMERANG = AscFormat["ENTRANCE_BOOMERANG"] = 25;
+    AscFormat.ENTRANCE_BOUNCE = AscFormat["ENTRANCE_BOUNCE"] = 26;
+    AscFormat.ENTRANCE_CREDITS = AscFormat["ENTRANCE_CREDITS"] = 28;
+    AscFormat.ENTRANCE_FLOAT = AscFormat["ENTRANCE_FLOAT"] = 30;
+    AscFormat.ENTRANCE_GROW_AND_TURN = AscFormat["ENTRANCE_GROW_AND_TURN"] = 31;
+    AscFormat.ENTRANCE_PINWHEEL = AscFormat["ENTRANCE_PINWHEEL"] = 35;
+    AscFormat.ENTRANCE_RISE_UP = AscFormat["ENTRANCE_RISE_UP"] = 37;
+    AscFormat.ENTRANCE_DROP = AscFormat["ENTRANCE_DROP"] = 38;
+    AscFormat.ENTRANCE_WHIP = AscFormat["ENTRANCE_WHIP"] = 41;
+    AscFormat.ENTRANCE_FLOAT_UP = AscFormat["ENTRANCE_FLOAT_UP"] = 42;
+    AscFormat.ENTRANCE_CENTER_REVOLVE = AscFormat["ENTRANCE_CENTER_REVOLVE"] = 43;
+    AscFormat.ENTRANCE_SWIVEL = AscFormat["ENTRANCE_SWIVEL"] = 45;
+    AscFormat.ENTRANCE_FLOAT_DOWN = AscFormat["ENTRANCE_FLOAT_DOWN"] = 47;
+    AscFormat.ENTRANCE_SPINNER = AscFormat["ENTRANCE_SPINNER"] = 49;
+    AscFormat.ENTRANCE_CENTER_COMPRESS = AscFormat["ENTRANCE_CENTER_COMPRESS"] = 50;
+    AscFormat.ENTRANCE_CURVE_UP = AscFormat["ENTRANCE_CURVE_UP"] = 52;
+    AscFormat.ENTRANCE_ZOOM = AscFormat["ENTRANCE_ZOOM"] = 53;
+    AscFormat.ENTRANCE_EXPAND = AscFormat["ENTRANCE_EXPAND"] = 55;
+    AscFormat.ENTRANCE_FLIP = AscFormat["ENTRANCE_FLIP"] = 56;
+
+    AscFormat.EMPHASIS_FILL_COLOR = AscFormat["EMPHASIS_FILL_COLOR"] = 1;
+    AscFormat.EMPHASIS_FONT_COLOR = AscFormat["EMPHASIS_FONT_COLOR"] = 3;
+    AscFormat.EMPHASIS_GROW_SHRINK = AscFormat["EMPHASIS_GROW_SHRINK"] = 6;
+    AscFormat.EMPHASIS_LINE_COLOR = AscFormat["EMPHASIS_LINE_COLOR"] = 7;
+    AscFormat.EMPHASIS_SPIN = AscFormat["EMPHASIS_SPIN"] = 8;
+    AscFormat.EMPHASIS_TRANSPARENCY = AscFormat["EMPHASIS_TRANSPARENCY"] = 9;
+    AscFormat.EMPHASIS_BOLD_FLASH = AscFormat["EMPHASIS_BOLD_FLASH"] = 10;
+    AscFormat.EMPHASIS_BOLD_REVEAL = AscFormat["EMPHASIS_BOLD_REVEAL"] = 15;
+    AscFormat.EMPHASIS_BRUSH_COLOR = AscFormat["EMPHASIS_BRUSH_COLOR"] = 16;
+    AscFormat.EMPHASIS_UNDERLINE = AscFormat["EMPHASIS_UNDERLINE"] = 18;
+    AscFormat.EMPHASIS_OBJECT_COLOR = AscFormat["EMPHASIS_OBJECT_COLOR"] = 19;
+    AscFormat.EMPHASIS_COMPLEMENTARY_COLOR = AscFormat["EMPHASIS_COMPLEMENTARY_COLOR"] = 21;
+    AscFormat.EMPHASIS_COMPLEMENTARY_COLOR_2 = AscFormat["EMPHASIS_COMPLEMENTARY_COLOR_2"] = 22;
+    AscFormat.EMPHASIS_CONTRASTING_COLOR = AscFormat["EMPHASIS_CONTRASTING_COLOR"] = 23;
+    AscFormat.EMPHASIS_CONTRASTING_DARKEN = AscFormat["EMPHASIS_CONTRASTING_DARKEN"] = 24;
+    AscFormat.EMPHASIS_DESATURATE = AscFormat["EMPHASIS_DESATURATE"] = 25;
+    AscFormat.EMPHASIS_PULSE = AscFormat["EMPHASIS_PULSE"] = 26;
+    AscFormat.EMPHASIS_COLOR_PULSE = AscFormat["EMPHASIS_COLOR_PULSE"] = 27;
+    AscFormat.EMPHASIS_GROW_WITH_COLOR = AscFormat["EMPHASIS_GROW_WITH_COLOR"] = 28;
+    AscFormat.EMPHASIS_LIGHTEN = AscFormat["EMPHASIS_LIGHTEN"] = 30;
+    AscFormat.EMPHASIS_TEETER = AscFormat["EMPHASIS_TEETER"] = 32;
+    AscFormat.EMPHASIS_WAVE = AscFormat["EMPHASIS_WAVE"] = 34;
+    AscFormat.EMPHASIS_BLINK = AscFormat["EMPHASIS_BLINK"] = 35;
+    AscFormat.EMPHASIS_SHIMMER = AscFormat["EMPHASIS_SHIMMER"] = 36;
+
+
+    //preset subtypes
+    AscFormat.EXIT_ZOOM_OBJECT_CENTER = AscFormat["EXIT_ZOOM_OBJECT_CENTER"] = 32;
+    AscFormat.EXIT_ZOOM_SLIDE_CENTER = AscFormat["EXIT_ZOOM_SLIDE_CENTER"] = 544;
+
+    AscFormat.EXIT_WIPE_FROM_TOP = AscFormat["EXIT_WIPE_FROM_TOP"] = 1;
+    AscFormat.EXIT_WIPE_FROM_RIGHT = AscFormat["EXIT_WIPE_FROM_RIGHT"] = 2;
+    AscFormat.EXIT_WIPE_FROM_BOTTOM = AscFormat["EXIT_WIPE_FROM_BOTTOM"] = 4;
+    AscFormat.EXIT_WIPE_FROM_LEFT = AscFormat["EXIT_WIPE_FROM_LEFT"] = 8;
+
+    AscFormat.EXIT_WHEEL_1_SPOKE = AscFormat["EXIT_WHEEL_1_SPOKE"] = 1;
+    AscFormat.EXIT_WHEEL_2_SPOKES = AscFormat["EXIT_WHEEL_2_SPOKES"] = 2;
+    AscFormat.EXIT_WHEEL_3_SPOKES = AscFormat["EXIT_WHEEL_3_SPOKES"] = 3;
+    AscFormat.EXIT_WHEEL_4_SPOKES = AscFormat["EXIT_WHEEL_4_SPOKES"] = 4;
+    AscFormat.EXIT_WHEEL_8_SPOKES = AscFormat["EXIT_WHEEL_8_SPOKES"] = 8;
+
+    AscFormat.EXIT_STRIPS_RIGHT_UP = AscFormat["EXIT_STRIPS_RIGHT_UP"] = 3;
+    AscFormat.EXIT_STRIPS_RIGHT_DOWN = AscFormat["EXIT_STRIPS_RIGHT_DOWN"] = 6;
+    AscFormat.EXIT_STRIPS_LEFT_UP = AscFormat["EXIT_STRIPS_LEFT_UP"] = 9;
+    AscFormat.EXIT_STRIPS_LEFT_DOWN = AscFormat["EXIT_STRIPS_LEFT_DOWN"] = 12;
+
+    AscFormat.EXIT_SPLIT_VERTICAL_IN = AscFormat["EXIT_SPLIT_VERTICAL_IN"] = 21;
+    AscFormat.EXIT_SPLIT_HORIZONTAL_IN = AscFormat["EXIT_SPLIT_HORIZONTAL_IN"] = 26;
+    AscFormat.EXIT_SPLIT_VERTICAL_OUT = AscFormat["EXIT_SPLIT_VERTICAL_OUT"] = 37;
+    AscFormat.EXIT_SPLIT_HORIZONTAL_OUT = AscFormat["EXIT_SPLIT_HORIZONTAL_OUT"] = 42;
+
+    AscFormat.EXIT_RANDOM_BARS_VERTICAL = AscFormat["EXIT_RANDOM_BARS_VERTICAL"] = 5;
+    AscFormat.EXIT_RANDOM_BARS_HORIZONTAL = AscFormat["EXIT_RANDOM_BARS_HORIZONTAL"] = 10;
+
+    AscFormat.EXIT_PLUS_IN = AscFormat["EXIT_PLUS_IN"] = 16;
+    AscFormat.EXIT_PLUS_OUT = AscFormat["EXIT_PLUS_OUT"] = 32;
+
+    AscFormat.EXIT_PEEK_OUT_TO_TOP = AscFormat["EXIT_PEEK_OUT_TO_TOP"] = 1;
+    AscFormat.EXIT_PEEK_OUT_TO_RIGHT = AscFormat["EXIT_PEEK_OUT_TO_RIGHT"] = 2;
+    AscFormat.EXIT_PEEK_OUT_TO_BOTTOM = AscFormat["EXIT_PEEK_OUT_TO_BOTTOM"] = 4;
+    AscFormat.EXIT_PEEK_OUT_TO_LEFT = AscFormat["EXIT_PEEK_OUT_TO_LEFT"] = 8;
+
+    AscFormat.EXIT_FLY_OUT_TO_TOP = AscFormat["EXIT_FLY_OUT_TO_TOP"] = 1;
+    AscFormat.EXIT_FLY_OUT_TO_RIGHT = AscFormat["EXIT_FLY_OUT_TO_RIGHT"] = 2;
+    AscFormat.EXIT_FLY_OUT_TO_TOP_RIGHT = AscFormat["EXIT_FLY_OUT_TO_TOP_RIGHT"] = 3;
+    AscFormat.EXIT_FLY_OUT_TO_BOTTOM = AscFormat["EXIT_FLY_OUT_TO_BOTTOM"] = 4;
+    AscFormat.EXIT_FLY_OUT_TO_BOTTOM_RIGHT = AscFormat["EXIT_FLY_OUT_TO_BOTTOM_RIGHT"] = 6;
+    AscFormat.EXIT_FLY_OUT_TO_LEFT = AscFormat["EXIT_FLY_OUT_TO_LEFT"] = 8;
+    AscFormat.EXIT_FLY_OUT_TO_TOP_LEFT = AscFormat["EXIT_FLY_OUT_TO_TOP_LEFT"] = 9;
+    AscFormat.EXIT_FLY_OUT_TO_BOTTOM_LEFT = AscFormat["EXIT_FLY_OUT_TO_BOTTOM_LEFT"] = 12;
+
+    AscFormat.EXIT_DIAMOND_IN = AscFormat["EXIT_DIAMOND_IN"] = 16;
+    AscFormat.EXIT_DIAMOND_OUT = AscFormat["EXIT_DIAMOND_OUT"] = 32;
+
+    AscFormat.EXIT_COLLAPSE_TO_TOP = AscFormat["EXIT_COLLAPSE_TO_TOP"] = 1;
+    AscFormat.EXIT_COLLAPSE_TO_RIGHT = AscFormat["EXIT_COLLAPSE_TO_RIGHT"] = 2;
+    AscFormat.EXIT_COLLAPSE_TO_BOTTOM = AscFormat["EXIT_COLLAPSE_TO_BOTTOM"] = 4;
+    AscFormat.EXIT_COLLAPSE_TO_LEFT = AscFormat["EXIT_COLLAPSE_TO_LEFT"] = 8;
+    AscFormat.EXIT_COLLAPSE_ACROSS = AscFormat["EXIT_COLLAPSE_ACROSS"] = 10;
+
+    AscFormat.EXIT_CIRCLE_IN = AscFormat["EXIT_CIRCLE_IN"] = 16;
+    AscFormat.EXIT_CIRCLE_OUT = AscFormat["EXIT_CIRCLE_OUT"] = 32;
+
+    AscFormat.EXIT_CHECKERBOARD_UP = AscFormat["EXIT_CHECKERBOARD_UP"] = 5;
+    AscFormat.EXIT_CHECKERBOARD_ACROSS = AscFormat["EXIT_CHECKERBOARD_ACROSS"] = 10;
+
+    AscFormat.EXIT_BOX_IN = AscFormat["EXIT_BOX_IN"] = 16;
+    AscFormat.EXIT_BOX_OUT = AscFormat["EXIT_BOX_OUT"] = 32;
+
+    AscFormat.EXIT_BLINDS_VERTICAL = AscFormat["EXIT_BLINDS_VERTICAL"] = 5;
+    AscFormat.EXIT_BLINDS_HORIZONTAL = AscFormat["EXIT_BLINDS_HORIZONTAL"] = 10;
+
+    AscFormat.EXIT_BASIC_ZOOM_IN = AscFormat["EXIT_BASIC_ZOOM_IN"] = 16;
+    AscFormat.EXIT_BASIC_ZOOM_IN_TO_SCREEN_BOTTOM = AscFormat["EXIT_BASIC_ZOOM_IN_TO_SCREEN_BOTTOM"] = 20;
+    AscFormat.EXIT_BASIC_ZOOM_OUT = AscFormat["EXIT_BASIC_ZOOM_OUT"] = 32;
+    AscFormat.EXIT_BASIC_ZOOM_IN_SLIGHTLY = AscFormat["EXIT_BASIC_ZOOM_IN_SLIGHTLY"] = 272;
+    AscFormat.EXIT_BASIC_ZOOM_OUT_SLIGHTLY = AscFormat["EXIT_BASIC_ZOOM_OUT_SLIGHTLY"] = 288;
+    AscFormat.EXIT_BASIC_ZOOM_OUT_TO_SCREEN_CENTER = AscFormat["EXIT_BASIC_ZOOM_OUT_TO_SCREEN_CENTER"] = 544;
+
+    AscFormat.EXIT_BASIC_SWIVEL_VERTICAL = AscFormat["EXIT_BASIC_SWIVEL_VERTICAL"] = 5;
+    AscFormat.EXIT_BASIC_SWIVEL_HORIZONTAL = AscFormat["EXIT_BASIC_SWIVEL_HORIZONTAL"] = 10;
+
+    AscFormat.ENTRANCE_ZOOM_OBJECT_CENTER = AscFormat["ENTRANCE_ZOOM_OBJECT_CENTER"] = 16;
+    AscFormat.ENTRANCE_ZOOM_SLIDE_CENTER = AscFormat["ENTRANCE_ZOOM_SLIDE_CENTER"] = 528;
+
+    AscFormat.ENTRANCE_WIPE_FROM_TOP = AscFormat["ENTRANCE_WIPE_FROM_TOP"] = 1;
+    AscFormat.ENTRANCE_WIPE_FROM_RIGHT = AscFormat["ENTRANCE_WIPE_FROM_RIGHT"] = 2;
+    AscFormat.ENTRANCE_WIPE_FROM_BOTTOM = AscFormat["ENTRANCE_WIPE_FROM_BOTTOM"] = 4;
+    AscFormat.ENTRANCE_WIPE_FROM_LEFT = AscFormat["ENTRANCE_WIPE_FROM_LEFT"] = 8;
+
+    AscFormat.ENTRANCE_WHEEL_1_SPOKE = AscFormat["ENTRANCE_WHEEL_1_SPOKE"] = 1;
+    AscFormat.ENTRANCE_WHEEL_2_SPOKES = AscFormat["ENTRANCE_WHEEL_2_SPOKES"] = 2;
+    AscFormat.ENTRANCE_WHEEL_3_SPOKES = AscFormat["ENTRANCE_WHEEL_3_SPOKES"] = 3;
+    AscFormat.ENTRANCE_WHEEL_4_SPOKES = AscFormat["ENTRANCE_WHEEL_4_SPOKES"] = 4;
+    AscFormat.ENTRANCE_WHEEL_8_SPOKES = AscFormat["ENTRANCE_WHEEL_8_SPOKES"] = 8;
+
+    AscFormat.ENTRANCE_STRIPS_RIGHT_UP = AscFormat["ENTRANCE_STRIPS_RIGHT_UP"] = 3;
+    AscFormat.ENTRANCE_STRIPS_RIGHT_DOWN = AscFormat["ENTRANCE_STRIPS_RIGHT_DOWN"] = 6;
+    AscFormat.ENTRANCE_STRIPS_LEFT_UP = AscFormat["ENTRANCE_STRIPS_LEFT_UP"] = 9;
+    AscFormat.ENTRANCE_STRIPS_LEFT_DOWN = AscFormat["ENTRANCE_STRIPS_LEFT_DOWN"] = 12;
+
+    AscFormat.ENTRANCE_STRETCH_FROM_TOP = AscFormat["ENTRANCE_STRETCH_FROM_TOP"] = 1;
+    AscFormat.ENTRANCE_STRETCH_FROM_RIGHT = AscFormat["ENTRANCE_STRETCH_FROM_RIGHT"] = 2;
+    AscFormat.ENTRANCE_STRETCH_FROM_BOTTOM = AscFormat["ENTRANCE_STRETCH_FROM_BOTTOM"] = 4;
+    AscFormat.ENTRANCE_STRETCH_FROM_LEFT = AscFormat["ENTRANCE_STRETCH_FROM_LEFT"] = 8;
+    AscFormat.ENTRANCE_STRETCH_ACROSS = AscFormat["ENTRANCE_STRETCH_ACROSS"] = 10;
+
+    AscFormat.ENTRANCE_SPLIT_VERTICAL_IN = AscFormat["ENTRANCE_SPLIT_VERTICAL_IN"] = 21;
+    AscFormat.ENTRANCE_SPLIT_HORIZONTAL_IN = AscFormat["ENTRANCE_SPLIT_HORIZONTAL_IN"] = 26;
+    AscFormat.ENTRANCE_SPLIT_VERTICAL_OUT = AscFormat["ENTRANCE_SPLIT_VERTICAL_OUT"] = 37;
+    AscFormat.ENTRANCE_SPLIT_HORIZONTAL_OUT = AscFormat["ENTRANCE_SPLIT_HORIZONTAL_OUT"] = 42;
+
+    AscFormat.ENTRANCE_RANDOM_BARS_VERTICAL = AscFormat["ENTRANCE_RANDOM_BARS_VERTICAL"] = 5;
+    AscFormat.ENTRANCE_RANDOM_BARS_HORIZONTAL = AscFormat["ENTRANCE_RANDOM_BARS_HORIZONTAL"] = 10;
+
+    AscFormat.ENTRANCE_PLUS_IN = AscFormat["ENTRANCE_PLUS_IN"] = 16;
+    AscFormat.ENTRANCE_PLUS_OUT = AscFormat["ENTRANCE_PLUS_OUT"] = 32;
+
+    AscFormat.ENTRANCE_PEEK_IN_FROM_TOP = AscFormat["ENTRANCE_PEEK_IN_FROM_TOP"] = 1;
+    AscFormat.ENTRANCE_PEEK_IN_FROM_RIGHT = AscFormat["ENTRANCE_PEEK_IN_FROM_RIGHT"] = 2;
+    AscFormat.ENTRANCE_PEEK_IN_FROM_BOTTOM = AscFormat["ENTRANCE_PEEK_IN_FROM_BOTTOM"] = 4;
+    AscFormat.ENTRANCE_PEEK_IN_FROM_LEFT = AscFormat["ENTRANCE_PEEK_IN_FROM_LEFT"] = 8;
+
+    AscFormat.ENTRANCE_FLY_IN_FROM_TOP = AscFormat["ENTRANCE_FLY_IN_FROM_TOP"] = 1;
+    AscFormat.ENTRANCE_FLY_IN_FROM_RIGHT = AscFormat["ENTRANCE_FLY_IN_FROM_RIGHT"] = 2;
+    AscFormat.ENTRANCE_FLY_IN_FROM_TOP_RIGHT = AscFormat["ENTRANCE_FLY_IN_FROM_TOP_RIGHT"] = 3;
+    AscFormat.ENTRANCE_FLY_IN_FROM_BOTTOM = AscFormat["ENTRANCE_FLY_IN_FROM_BOTTOM"] = 4;
+    AscFormat.ENTRANCE_FLY_IN_FROM_BOTTOM_RIGHT = AscFormat["ENTRANCE_FLY_IN_FROM_BOTTOM_RIGHT"] = 6;
+    AscFormat.ENTRANCE_FLY_IN_FROM_LEFT = AscFormat["ENTRANCE_FLY_IN_FROM_LEFT"] = 8;
+    AscFormat.ENTRANCE_FLY_IN_FROM_TOP_LEFT = AscFormat["ENTRANCE_FLY_IN_FROM_TOP_LEFT"] = 9;
+    AscFormat.ENTRANCE_FLY_IN_FROM_BOTTOM_LEFT = AscFormat["ENTRANCE_FLY_IN_FROM_BOTTOM_LEFT"] = 12;
+
+    AscFormat.ENTRANCE_DIAMOND_IN = AscFormat["ENTRANCE_DIAMOND_IN"] = 16;
+    AscFormat.ENTRANCE_DIAMOND_OUT = AscFormat["ENTRANCE_DIAMOND_OUT"] = 32;
+
+    AscFormat.ENTRANCE_CIRCLE_IN = AscFormat["ENTRANCE_CIRCLE_IN"] = 16;
+    AscFormat.ENTRANCE_CIRCLE_OUT = AscFormat["ENTRANCE_CIRCLE_OUT"] = 32;
+
+    AscFormat.ENTRANCE_CHECKERBOARD_DOWN = AscFormat["ENTRANCE_CHECKERBOARD_DOWN"] = 5;
+    AscFormat.ENTRANCE_CHECKERBOARD_ACROSS = AscFormat["ENTRANCE_CHECKERBOARD_ACROSS"] = 10;
+
+    AscFormat.ENTRANCE_BOX_IN = AscFormat["ENTRANCE_BOX_IN"] = 16;
+    AscFormat.ENTRANCE_BOX_OUT = AscFormat["ENTRANCE_BOX_OUT"] = 32;
+
+    AscFormat.ENTRANCE_BLINDS_VERTICAL = AscFormat["ENTRANCE_BLINDS_VERTICAL"] = 5;
+    AscFormat.ENTRANCE_BLINDS_HORIZONTAL = AscFormat["ENTRANCE_BLINDS_HORIZONTAL"] = 10;
+
+    AscFormat.ENTRANCE_BASIC_ZOOM_IN = AscFormat["ENTRANCE_BASIC_ZOOM_IN"] = 16;
+    AscFormat.ENTRANCE_BASIC_ZOOM_OUT = AscFormat["ENTRANCE_BASIC_ZOOM_OUT"] = 32;
+    AscFormat.ENTRANCE_BASIC_ZOOM_OUT_FROM_SCREEN_BOTTOM = AscFormat["ENTRANCE_BASIC_ZOOM_OUT_FROM_SCREEN_BOTTOM"] = 36;
+    AscFormat.ENTRANCE_BASIC_ZOOM_IN_SLIGHTLY = AscFormat["ENTRANCE_BASIC_ZOOM_IN_SLIGHTLY"] = 272;
+    AscFormat.ENTRANCE_BASIC_ZOOM_OUT_SLIGHTLY = AscFormat["ENTRANCE_BASIC_ZOOM_OUT_SLIGHTLY"] = 288;
+    AscFormat.ENTRANCE_BASIC_ZOOM_IN_FROM_SCREEN_CENTER = AscFormat["ENTRANCE_BASIC_ZOOM_IN_FROM_SCREEN_CENTER"] = 528;
+
+    AscFormat.ENTRANCE_BASIC_SWIVEL_VERTICAL = AscFormat["ENTRANCE_BASIC_SWIVEL_VERTICAL"] = 5;
+    AscFormat.ENTRANCE_BASIC_SWIVEL_HORIZONTAL = AscFormat["ENTRANCE_BASIC_SWIVEL_HORIZONTAL"] = 10;
+
+
+
     function CBaseAnimObject() {
         CBaseFormatObject.call(this);
     }
     InitClass(CBaseAnimObject, CBaseFormatObject, AscDFH.historyitem_type_Unknown);
+
+    if(GENERATE_PRESETS_SCRIPT) {
+        CBaseAnimObject.prototype.fromPPTY = function(pReader) {
+            var oStream = pReader.stream;
+            var nStart = oStream.cur;
+            var nEnd = nStart + oStream.GetULong() + 4;
+            this.readAttributes(pReader);
+            this.readChildren(nEnd, pReader);
+            oStream.Seek2(nEnd);
+            if(this.getObjectType() === AscDFH.historyitem_type_Par) {
+                var oCTn = this.cTn;
+                if(oCTn && oCTn.presetClass != null && oCTn.presetID != null) {
+                    console.log("SLIDENUM: " + editor.WordControl.m_oLogicDocument.Slides.length);
+                    if(!aPresetClasses[oCTn.presetClass]) {
+                        aPresetClasses[oCTn.presetClass] = [];
+                    }
+                    if(!aPresetClasses[oCTn.presetClass][oCTn.presetID]) {
+                        aPresetClasses[oCTn.presetClass][oCTn.presetID] = [];
+                    }
+                    var nPresetSubtype = oCTn.presetSubtype || 0;
+                    var nLength = nEnd - nStart;
+                    var aData = oStream.data.slice(nStart, nStart + nLength);
+                    var sData = "PPTY;v10;";
+                    sData += (nLength + ";");
+                    sData += AscCommon.Base64Encode(aData,aData.length, 0);
+
+                    aPresetClasses[oCTn.presetClass][oCTn.presetID][nPresetSubtype] = sData;
+                }
+            }
+        };
+    }
     CBaseAnimObject.prototype.isTimeNode = function() {
+        return false;
+    };
+    CBaseAnimObject.prototype.isTimingContainer = function() {
         return false;
     };
     CBaseAnimObject.prototype.parseTime = function(val) {
@@ -111,7 +520,51 @@
         }
         return 0;
     };
-
+    CBaseAnimObject.prototype.getEffectById = function(sId, oMltEffect) {
+        if(!oMltEffect) {
+            var oNewMltEffect = new CMultiple();
+            return this.getEffectById(sId, oMltEffect);
+        }
+        this.traverse(function(oChild) {
+            oChild.getEffectById(sId, oMltEffect);
+            return false;
+        });
+        return oMltEffect;
+    };
+    CBaseAnimObject.prototype.createCCTn = function(sDur, nFill, sDelay, nNodeType, nRestart, bCreateChldLst, nAccel) {
+        var oCCTn = new CCTn();
+        if(sDur) {
+            oCCTn.setDur(sDur);
+        }
+        if(AscFormat.isRealNumber(nFill)) {
+            oCCTn.setFill(nFill);
+        }
+        if(AscFormat.isRealNumber(nNodeType)) {
+            oCCTn.setNodeType(nNodeType);
+        }
+        if(sDelay) {
+            oCCTn.createStCondLstWithDelay(sDelay);
+        }
+        if(AscFormat.isRealNumber(nRestart)) {
+            oCCTn.setRestart(nRestart);
+        }
+        if(AscFormat.isRealNumber(nAccel)) {
+            if(nAccel >= 0) {
+                oCCTn.setAccel(nAccel);
+            }
+            else {
+                oCCTn.setDecel(-nAccel);
+            }
+        }
+        if(bCreateChldLst) {
+            oCCTn.setChildTnLst(new CChildTnLst());
+        }
+        return oCCTn;
+    };
+    CBaseAnimObject.prototype.getPresentation = function() {
+        return editor.WordControl.m_oLogicDocument;
+    };
+    CBaseAnimObject.prototype.isAnimObject = true;
     var TIME_NODE_STATE_IDLE = 0;
     var TIME_NODE_STATE_ACTIVE = 1;
     var TIME_NODE_STATE_FROZEN = 2;
@@ -136,6 +589,16 @@
     var NODE_TYPE_WITHEFFECT	 = 7;
     var NODE_TYPE_WITHGROUP		 = 8;
 
+    AscFormat.NODE_TYPE_AFTEREFFECT = AscFormat["NODE_TYPE_AFTEREFFECT"]	 = NODE_TYPE_AFTEREFFECT;
+    AscFormat.NODE_TYPE_AFTERGROUP = AscFormat["NODE_TYPE_AFTERGROUP"]	 = NODE_TYPE_AFTERGROUP;
+    AscFormat.NODE_TYPE_CLICKEFFECT = AscFormat["NODE_TYPE_CLICKEFFECT"]	 = NODE_TYPE_CLICKEFFECT;
+    AscFormat.NODE_TYPE_CLICKPAR = AscFormat["NODE_TYPE_CLICKPAR"]		 = NODE_TYPE_CLICKPAR;
+    AscFormat.NODE_TYPE_INTERACTIVESEQ = AscFormat["NODE_TYPE_INTERACTIVESEQ"] = NODE_TYPE_INTERACTIVESEQ;
+    AscFormat.NODE_TYPE_MAINSEQ = AscFormat["NODE_TYPE_MAINSEQ"]		 = NODE_TYPE_MAINSEQ;
+    AscFormat.NODE_TYPE_TMROOT = AscFormat["NODE_TYPE_TMROOT"]		 = NODE_TYPE_TMROOT;
+    AscFormat.NODE_TYPE_WITHEFFECT = AscFormat["NODE_TYPE_WITHEFFECT"]	 = NODE_TYPE_WITHEFFECT;
+    AscFormat.NODE_TYPE_WITHGROUP = AscFormat["NODE_TYPE_WITHGROUP"]		 = NODE_TYPE_WITHGROUP;
+
     var NODE_TYPE_MAP = {};
     NODE_TYPE_MAP[NODE_TYPE_AFTEREFFECT	 ] = "AFTEREFFECT";
     NODE_TYPE_MAP[NODE_TYPE_AFTERGROUP	 ] = "AFTERGROUP";
@@ -153,11 +616,16 @@
     var NODE_FILL_REMOVE = 2;
     var NODE_FILL_TRANSITION = 3;
 
+    var ANIM_TREE_LAVELS_COUNT = 5;
+
+
     function CTimeNodeBase() {
         CBaseAnimObject.call(this);
         this.state = TIME_NODE_STATE_IDLE;
 
         this.simpleDurationIdx = -1;
+
+        this.originalNode = undefined;
     }
     InitClass(CTimeNodeBase, CBaseAnimObject, AscDFH.historyitem_type_Unknown);
     CTimeNodeBase.prototype.isTimingContainer = function() {
@@ -181,6 +649,9 @@
     CTimeNodeBase.prototype.getParentTimeNode = function() {
         var oCurParent = this.parent;
         while (oCurParent && !oCurParent.isTimeNode()) {
+            if(oCurParent.getObjectType() === AscDFH.historyitem_type_Timing) {
+                return null;
+            }
             oCurParent = oCurParent.parent;
         }
         return oCurParent;
@@ -201,15 +672,18 @@
     CTimeNodeBase.prototype.getChildrenTimeNodesInternal = function() {
         return [];
     };
-    CTimeNodeBase.prototype.resetState = function() {
-        this.state = TIME_NODE_STATE_IDLE;
-        this.simpleDurationIdx = -1;
+    CTimeNodeBase.prototype.resetChildrenState = function() {
         if(this.isTimingContainer()) {
             var aChildren = this.getChildrenTimeNodes();
             for(var nChild = 0; nChild < aChildren.length; ++nChild) {
                 aChildren[nChild].resetState();
             }
         }
+    };
+    CTimeNodeBase.prototype.resetState = function() {
+        this.state = TIME_NODE_STATE_IDLE;
+        this.simpleDurationIdx = -1;
+        this.resetChildrenState();
     };
     CTimeNodeBase.prototype.isRoot = function() {
         var oParentNode = this.getParentTimeNode();
@@ -228,6 +702,16 @@
             oCurElem = oCurParent;
         }
         return oCurElem;
+    };
+    CTimeNodeBase.prototype.getTiming = function() {
+        var oCurElem = this;
+        while(oCurElem.parent && oCurElem.getObjectType() !== AscDFH.historyitem_type_Timing) {
+            oCurElem = oCurElem.parent;
+        }
+        if(oCurElem.getObjectType() === AscDFH.historyitem_type_Timing) {
+            return oCurElem;
+        }
+        return null;
     };
     CTimeNodeBase.prototype.getDepth = function() {
         var nDepth = 0;
@@ -496,6 +980,7 @@
     };
     CTimeNodeBase.prototype.startSimpleDuration = function(nIdx, oPlayer) {
         this.simpleDurationIdx = nIdx;
+        this.resetChildrenState();
         this.activateChildrenCallback(oPlayer);
     };
     CTimeNodeBase.prototype.calculateParams = function(oPlayer) {
@@ -532,11 +1017,15 @@
                 if(!this.repeatCount.isIndefinite() && !this.isRoot() && !this.isMainSequence() || oEndSync) {
                     var oTrigger = new CAnimComplexTrigger();
                     var aChildren = this.getChildrenTimeNodes();
+                    var oThis = this;
                     oTrigger.addTrigger(function() {
                         for(var nChild = 0; nChild < aChildren.length; ++nChild) {
                             if(!aChildren[nChild].isAtEnd()) {
                                 return false;
                             }
+                        }
+                        if(oThis.checkRepeatCondition()) {
+                            return false;
                         }
                         return true;
                     });
@@ -635,6 +1124,23 @@
         var sNodeType = NODE_TYPE_MAP[oAttr.nodeType];
         console.log(sPrefix + " | ID: " + this.Id + " | TYPE: " + this.constructor.name + " | NODE_TYPE: " + sNodeType + " | STATE: " + oSTATEDESCRMAP[this.state] + " | TIME: " + (new Date()).getTime() + " | FORMAT ID: " + oAttr.id);
     };
+
+    CTimeNodeBase.prototype.printTree = function () {
+        var nDepth = this.getDepth();
+        var sString = "";
+        for(var nIdx = 0; nIdx < nDepth; ++nIdx) {
+            sString += "        ";
+        }
+
+        var oAttr = this.getAttributesObject();
+        var sNodeType = NODE_TYPE_MAP[oAttr.nodeType];
+        sString += (nDepth + " TYPE: " + this.constructor.name + " | NODE_TYPE: " + sNodeType + " | FORMAT ID: " + oAttr.id );
+        console.log(sString);
+        var aChildren = this.getChildrenTimeNodes();
+        for(var nChild = 0; nChild < aChildren.length; ++nChild) {
+            aChildren[nChild].printTree();
+        }
+    };
     CTimeNodeBase.prototype.getFormatId = function () {
         return this.getAttributesObject().id;
     };
@@ -671,6 +1177,9 @@
     CTimeNodeBase.prototype.onFrozen = function(oChild, oPlayer) {
         return this.onFinished(oChild, oPlayer);
     };
+    CTimeNodeBase.prototype.checkRepeatCondition = function() {
+        return this.repeatCount.isSpecified() && this.simpleDurationIdx + 1 < this.repeatCount.getVal() / 1000;
+    };
     CTimeNodeBase.prototype.onFinished = function(oChild, oPlayer) {
         if(!this.isActive()) {
             return;
@@ -687,7 +1196,7 @@
                 }
             }
             if(nChild === aChildren.length) {
-                if(this.repeatCount.isSpecified() && this.simpleDurationIdx + 1 < this.repeatCount.getVal() / 1000) {
+                if(this.checkRepeatCondition()) {
                     this.startSimpleDuration(++this.simpleDurationIdx, oPlayer);
                 }
             }
@@ -710,7 +1219,7 @@
                 // }
             }
             else {
-                if(this.repeatCount.isSpecified() && this.simpleDurationIdx + 1 < this.repeatCount.getVal() / 1000) {
+                if(this.checkRepeatCondition()) {
                     this.startSimpleDuration(++this.simpleDurationIdx, oPlayer);
                 }
                 else {
@@ -769,6 +1278,39 @@
             return true;
         }
         return false;
+    };
+    CTimeNodeBase.prototype.isPartOfMainSequence = function() {
+        var aHierarchy = this.getHierarchy();
+        if(aHierarchy[1]) {
+            return aHierarchy[1].isMainSequence();
+        }
+        return false;
+    };
+    CTimeNodeBase.prototype.isInteractiveSeq = function(sSpId) {
+        return sSpId === this.getSpClickInteractiveSeq();
+    };
+
+    CTimeNodeBase.prototype.isPartOfInteractiveSeq = function() {
+        var aHierarchy = this.getHierarchy();
+        if(aHierarchy[1]) {
+            return aHierarchy[1].getSpClickInteractiveSeq();
+        }
+        return null;
+    };
+    CTimeNodeBase.prototype.getSpClickInteractiveSeq = function() {
+        if(this.getNodeType() === NODE_TYPE_INTERACTIVESEQ) {
+            return this.getSpClickAdvance();
+        }
+        return null;
+    };
+    CTimeNodeBase.prototype.isClickEffect = function() {
+        return this.isAnimEffect() && this.getNodeType() === NODE_TYPE_CLICKEFFECT;
+    };
+    CTimeNodeBase.prototype.isWithEffect = function() {
+        return this.isAnimEffect() && this.getNodeType() === NODE_TYPE_WITHEFFECT;
+    };
+    CTimeNodeBase.prototype.isAfterEffect = function() {
+        return this.isAnimEffect() && this.getNodeType() === NODE_TYPE_AFTEREFFECT;
     };
     CTimeNodeBase.prototype.traverseTimeNodes = function(fCallback) {
         fCallback(this);
@@ -896,9 +1438,6 @@
             fRelTime = 1 - fRelTime;
         }
         return fRelTime;
-    };
-    CTimeNodeBase.prototype.getPresentation = function() {
-        return editor.WordControl.m_oLogicDocument;
     };
     CTimeNodeBase.prototype.getSlideWidth = function() {
         return this.getPresentation().GetWidthMM();
@@ -1046,6 +1585,99 @@
     };
     CTimeNodeBase.prototype.isDescendant = function(oNode) {
         return oNode.isAncestor(this);
+    };
+    CTimeNodeBase.prototype.isAnimEffect = function() {
+        return false;
+    };
+    CTimeNodeBase.prototype.isObjectEffect = function(sObjectId) {
+        return false;
+    };
+    CTimeNodeBase.prototype.createSpTgt = function(sObjectId) {
+        var oTgt = new CTgtEl();
+        var oSpTgt = new CSpTgt();
+        oSpTgt.setSpid(sObjectId);
+        oTgt.setSpTgt(oSpTgt);
+        return oTgt;
+    };
+    CTimeNodeBase.prototype.getHierarchy = function() {
+        var oParentTimeNode = this.getParentTimeNode();
+        var aHierarchy;
+        if(oParentTimeNode) {
+            aHierarchy = oParentTimeNode.getHierarchy();
+        }
+        else {
+            aHierarchy = [];
+        }
+        aHierarchy.push(this);
+        return aHierarchy;
+    };
+    CTimeNodeBase.prototype.getAllAnimEffects = function (aEffects) {
+        var aEffectsInternal = aEffects;
+        if(!Array.isArray(aEffectsInternal)) {
+            aEffectsInternal = []
+        }
+        if(this.isAnimEffect()) {
+            aEffectsInternal.push(this);
+        }
+        else {
+            var aChildren = this.getChildrenTimeNodes();
+            for(var nChild = 0; nChild < aChildren.length; ++nChild) {
+                aChildren[nChild].getAllAnimEffects(aEffectsInternal);
+            }
+        }
+        return aEffectsInternal;
+    };
+
+    CTimeNodeBase.prototype.getNeighbourEffect = function(bPrev) {
+        if(!this.isAnimEffect()) {
+            return null;
+        }
+        if(this.originalNode) {
+            return this.originalNode.getNeighbourEffect(bPrev);
+        }
+        var aHierarchy = this.getHierarchy();
+        if(aHierarchy.length !== ANIM_TREE_LAVELS_COUNT) {
+            return null;
+        }
+        var oL1 = aHierarchy[1];
+        var aAllEffects = oL1.getAllAnimEffects();
+        for(var nEffect = 0; nEffect < aAllEffects.length; ++nEffect) {
+            if(aAllEffects[nEffect] === this) {
+                if(bPrev) {
+                    return aAllEffects[nEffect - 1] || null;
+                }
+                else {
+                    return aAllEffects[nEffect + 1] || null;
+                }
+            }
+        }
+
+    };
+    CTimeNodeBase.prototype.getPreviousEffect = function() {
+        return this.getNeighbourEffect(true);
+    };
+    CTimeNodeBase.prototype.getNextEffect = function() {
+        return this.getNeighbourEffect(false);
+    };
+    CTimeNodeBase.prototype.isAdvancedByShapeClick = function(sSpId) {
+        return sSpId === this.getSpClickAdvance();
+    };
+    CTimeNodeBase.prototype.getSpClickAdvance = function() {
+        var oAttr = this.getAttributesObject();
+        if(!oAttr) {
+            return null;
+        }
+        if(oAttr.stCondLst && this.nextCondLst) {
+            var sStSpClick = oAttr.stCondLst.getSpClick();
+            if(!sStSpClick) {
+                return sStSpClick;
+            }
+            var sNextSpClick = this.nextCondLst.getSpClick();
+            if(sNextSpClick === sStSpClick) {
+                return sStSpClick;
+            }
+        }
+        return null;
     };
 
     function CAnimationTime(val) {
@@ -1346,6 +1978,9 @@
         return [this.bldLst, this.tnLst];
     };
     CTiming.prototype.onRemoveObject = function(sObjectId) {
+        this.removeObjectAnimation(sObjectId);
+    };
+    CTiming.prototype.removeObjectAnimation = function(sObjectId) {
         this.traverse(function(oNode) {
             oNode.handleRemoveObject(sObjectId);
             return false;
@@ -1359,11 +1994,110 @@
             this.setBldLst(null);
         }
     };
+    CTiming.prototype.onAnimPaneChanged = function(oRect) {
+        var oSlide = this.parent;
+        if(!oSlide) {
+            return;
+        }
+        var oPresentation = this.getPresentation();
+        oPresentation.OnAnimPaneChanged(oSlide.num, oRect)
+    };
     CTiming.prototype.getTimingRootNode = function() {
         if(this.tnLst) {
-            if(this.tnLst) {
-                if(this.tnLst.list.length > 0) {
-                    return this.tnLst.list[0];
+            return this.tnLst.getTimeNodeByType(NODE_TYPE_TMROOT);
+        }
+        return null;
+    };
+    CTiming.prototype.updateNodesIDs = function() {
+        var oReplaceMap = {};
+        var nIdCounter = 0;
+        
+        //remove empty nodes
+        this.traverse(function(oChild) {
+            if(oChild.getObjectType() === AscDFH.historyitem_type_CTn) {
+                if(oChild.parent && oChild.parent.isTimingContainer() && 
+                oChild.childTnLst && oChild.childTnLst.isEmpty()) {
+                    if(oChild.parent) {
+                        oChild.parent.onRemoveChild(oChild);
+                    }
+                    return;
+                }
+            }
+        });
+        this.traverse(function(oChild) {
+            if(oChild.getObjectType() === AscDFH.historyitem_type_CTn) {
+                var nOldId = oChild.id;
+                oChild.setId(++nIdCounter);
+                if(AscFormat.isRealNumber(nOldId)) {
+                    oReplaceMap[nOldId] = oChild.id;
+                }
+            }
+        });
+        this.traverse(function(oChild) {
+            if(oChild.getObjectType() === AscDFH.historyitem_type_Cond) {
+                if(AscFormat.isRealNumber(oChild.tn) && AscFormat.isRealNumber(oReplaceMap[oChild.tn])) {
+                    oChild.setTn(oReplaceMap[oChild.tn]);
+                }
+            }
+        });
+
+        var aAllEffects = this.getAllAnimEffects();
+        var oEffect = aAllEffects[0];
+        if(oEffect && (oEffect.isAfterEffect() || oEffect.isWithEffect())) {
+            var aHierarchy = oEffect.getHierarchy();
+            var oSeqNode = aHierarchy[1];
+            var oPar2Lvl = aHierarchy[2];
+            var oPar3Lvl = aHierarchy[3];
+            if(oSeqNode && oPar2Lvl && oPar3Lvl) {
+                if(oPar3Lvl.getChildNodeIdx(oEffect) === 0 &&
+                oPar2Lvl.getChildNodeIdx(oPar3Lvl) === 0 && 
+                oSeqNode.getChildNodeIdx(oPar2Lvl) === 0) {
+                    if(oPar2Lvl.cTn.stCondLst.getLength() < 2) {
+                        var oCond = new CCond();
+                        oCond.setEvt(COND_EVNT_BEGIN);
+                        oCond.setDelay("0");
+                        oCond.setTn(oSeqNode.cTn.id);
+                        oPar2Lvl.cTn.stCondLst.push(oCond);
+                    }
+                }
+            }
+        }
+
+    };
+    CTiming.prototype.createEffect = function(sObjectId, nPresetClass, nPresetId, nPresetSubtype) {
+        var aPresetClass = ANIMATION_PRESET_CLASSES[nPresetClass];
+        if(aPresetClass) {
+            var aPresetType = aPresetClass[nPresetId];
+            if(aPresetType) {
+                var sPresetBinary = aPresetType[nPresetSubtype];
+                if(!sPresetBinary) {
+                    for(var nSubtype = 0; nSubtype < aPresetType.length; ++nSubtype) {
+                        if(aPresetType[nSubtype]) {
+                            sPresetBinary = aPresetType[nSubtype];
+                            break;
+                        }
+                    }
+                }
+                if(sPresetBinary) {
+                    AscCommon.pptx_content_loader.Clear(true);
+                    var stream = AscFormat.CreateBinaryReader(sPresetBinary, "PPTY;v10;".length, sPresetBinary.length);
+                    var oBinaryReader = new AscCommon.BinaryPPTYLoader();
+                    oBinaryReader.stream = new AscCommon.FileStream();
+                    oBinaryReader.stream.obj    = stream.obj;
+                    oBinaryReader.stream.data   = stream.data;
+                    oBinaryReader.stream.size   = stream.size;
+                    oBinaryReader.stream.pos    = stream.pos;
+                    oBinaryReader.stream.cur    = stream.cur;
+                    var oPar = new CPar();
+                    oPar.fromPPTY(oBinaryReader);
+                    var oConnetctedObjects = oBinaryReader.oConnectedObjects;
+                    for(var sKey in oConnetctedObjects) {
+                        var oConnectedObject = oConnetctedObjects[sKey];
+                        if(oConnectedObject.spid !== null && oConnectedObject.spid !== undefined) {
+                            oConnectedObject.setSpid(sObjectId);
+                        }
+                    }
+                    return oPar;
                 }
             }
         }
@@ -1387,7 +2121,824 @@
         }
         return oMainSeq.isAtEnd();
     };
+    CTiming.prototype.staticCreateNoneEffect = function() {
+        return AscFormat.ExecuteNoHistory(function() {
+            return CTiming.prototype.createPar(NODE_FILL_HOLD, "indefinite")
+        }, this, []);
+    };
+    CTiming.prototype.getAllAnimEffects = function() {
+        if(!this.tnLst) {
+            return [];
+        }
+        var oTmRoot = this.getTimingRootNode();
+        if(!oTmRoot) {
+            return [];
+        }
+        return oTmRoot.getAllAnimEffects();
+    };
+    CTiming.prototype.checkTimeRoot = function() {
+        if(!this.tnLst) {
+            this.setTnLst(new CTnLst());
+        }
+        var oTnContainer, oCTn;
+        var oTmRoot = this.getTimingRootNode();
+        if(!oTmRoot) {
+            //create timing root
+            oTnContainer = new CPar();
+            oCTn = this.createCCTn("indefinite", null, null, NODE_TYPE_TMROOT, RESTART_TYPE_NEVER, true);
+            oTnContainer.setCTn(oCTn);
+            this.tnLst.addToLst(0, oTnContainer);
+            oTmRoot = oTnContainer;
+        }
+        return oTmRoot;
+    };
+    CTiming.prototype.checkMainSequence = function() {
+        var oTnContainer, oCTn;
+        var oTmRoot = this.checkTimeRoot();
+        var oMainSeq = oTmRoot.getChildTimeNodeByType(NODE_TYPE_MAINSEQ);
+        if(!oMainSeq) {
+            oTnContainer = new CSeq();
+            oTnContainer.setConcurrent(true);
+            oTnContainer.setNextAc(NEXT_AC_SEEK);
+            oCTn = this.createCCTn("indefinite", null, null, NODE_TYPE_MAINSEQ, null, true);
+            oTnContainer.setCTn(oCTn);
+            oTmRoot.addToChildTnLst(0, oTnContainer);
+            var oPrevCondLst = new CCondLst();
+            var oCond = new CCond();
+            oCond.setEvt(COND_EVNT_ON_PREV);
+            oCond.setDelay("0");
+            var oTgt = new CTgtEl();
+            oCond.setTgtEl(oTgt);
+            oPrevCondLst.addToLst(0, oCond);
+            oTnContainer.setPrevCondLst(oPrevCondLst);
+            var oNextCondLst = new CCondLst();
+            oCond = new CCond();
+            oCond.setEvt(COND_EVNT_ON_NEXT);
+            oCond.setDelay("0");
+            oTgt = new CTgtEl();
+            oCond.setTgtEl(oTgt);
+            oNextCondLst.addToLst(0, oCond);
+            oTnContainer.setNextCondLst(oNextCondLst);
+            oMainSeq = oTnContainer;
+        }
+        return oMainSeq;
+    };
+    CTiming.prototype.checkInteractiveSequence = function(sObjectId) {
+        var oTnContainer, oCTn;
+        var oTmRoot = this.checkTimeRoot();
+        var aSeq = oTmRoot.getChildrenTimeNodes();
+        var oInteractiveSeq;
+        var oSeq;
+        for(var nSeq = 0; nSeq < aSeq.length; ++nSeq) {
+            oSeq = aSeq[nSeq];
+            if(oSeq.isInteractiveSeq(sObjectId)) {
+                oInteractiveSeq = oSeq;
+                break;
+            } 
+        }
+        if(!oInteractiveSeq) {
+            oTnContainer = new CSeq();
+            oTnContainer.setConcurrent(true);
+            oTnContainer.setNextAc(NEXT_AC_SEEK);
+            oCTn = this.createCCTn(null, NODE_FILL_HOLD, null, NODE_TYPE_INTERACTIVESEQ, RESTART_TYPE_WHEN_NOT_ACTIVE, true, null);
+            oTnContainer.setCTn(oCTn);
+            oCTn.setEvtFilter("cancelBubble");
+            var oStCondLst = new CCondLst();
+            var oCond = new CCond();
+            oCond.setEvt(COND_EVNT_ON_CLICK);
+            oCond.setDelay("0");
+            var oTgt = new CTgtEl();
+            var oSpTgt = new CSpTgt();
+            oSpTgt.setSpid(sObjectId);
+            oTgt.setSpTgt(oSpTgt);
+            oCond.setTgtEl(oTgt);
+            oStCondLst.push(oCond);
+            oCTn.setStCondLst(oStCondLst);
+            var oNextCondLst = oStCondLst.createDuplicate();
+            oTnContainer.setNextCondLst(oNextCondLst);
+            var oEndSync = new CCond();
+            oEndSync.setEvt(COND_EVNT_END);
+            oEndSync.setDelay("0");
+            oEndSync.setRtn(RTN_ALL);
+            oCTn.setEndSync(oEndSync);
+            oTmRoot.pushToChildTnLst(oTnContainer);
+            oInteractiveSeq = oTnContainer;
+        }
+        return oInteractiveSeq;
+    };
+    CTiming.prototype.getMainSequence = function() {
+        var oTmRoot = this.getTimingRootNode();
+        if(!oTmRoot) {
+            return null;
+        }
+        return oTmRoot.getChildTimeNodeByType(NODE_TYPE_MAINSEQ);
+    };
+    CTiming.prototype.addToMainSequence = function(oEffect) {
+        var aSeqs = this.getEffectsSequences();
+        var aMainSeq;
+        if(!aSeqs[0] || aSeqs[0][0] !== null) {
+            aMainSeq = [null];
+            aSeqs.splice(0, 0, aMainSeq);
+        }
+        else {
+            aMainSeq = aSeqs[0];
+        }
+        aMainSeq.push(oEffect);
+        this.buildTree(aSeqs);
+    };
+    CTiming.prototype.addToInteractiveSequence = function(oEffect, sObjectId) {
+        var aSeqs = this.getEffectsSequences();
+        var aMainSeq;
+        for(var nSeq = 0; nSeq < aSeqs.length; ++nSeq) {
+            if(aSeqs[nSeq][0] === sObjectId) {
+                aMainSeq = aSeqs[nSeq];
+                break;
+            }
+        }
+        if(!aMainSeq) {
+            aMainSeq = [sObjectId];
+            aSeqs.push(aMainSeq);
+        }
+        aMainSeq.push(oEffect);
+        this.buildTree(aSeqs);
+    };
+    CTiming.prototype.addAnimationToSelectedObjects = function(nPresetClass, nPresetId, nPresetSubtype) {
+        var aSelectedObjects = this.parent.graphicObjects.selectedObjects;
+        for(var nIdx = 0; nIdx < aSelectedObjects.length; ++nIdx) {
+            var sObjectId = aSelectedObjects[nIdx].Get_Id();
+            this.addEffectToMainSequence(sObjectId, nPresetClass, nPresetId, nPresetSubtype, false);
+        }
+    };
+    CTiming.prototype.addAnimation = function(nPresetClass, nPresetId, nPresetSubtype, bReplace) {
+        if(nPresetId === AscFormat.ANIM_PRESET_NONE) {
+            this.removeSelectedEffects();
+            return;
+        }
+        if(!AscFormat.isRealNumber(nPresetClass)
+		|| !AscFormat.isRealNumber(nPresetId))
+		{
+			return;
+		}
+        var aSelectedEffects = this.getSelectedEffects();
+        var nIdx;
+        var nEffectIdx;
+        var oEffect;
+        var oNewEffect;
+        var sObjectId;
+        var oDrawingsIdMap = {};
+        if(bReplace) {
+            if(aSelectedEffects.length === 0) {
+                this.addAnimationToSelectedObjects(nPresetClass, nPresetId, nPresetSubtype);
+            }
+            else {
+                var aSeqs = this.getEffectsSequences();
+                var aSeq;
+                var bNeedRebuild = false;
+                for(var nSeq = 0; nSeq < aSeqs.length; ++nSeq) {
+                    aSeq = aSeqs[nSeq];
+                    for(nEffectIdx = 1; nEffectIdx < aSeq.length; ++nEffectIdx) {
+                        oEffect = aSeq[nEffectIdx];
+                        if(oEffect.isSelected()) {
+                            sObjectId = oEffect.getObjectId();
+                            oNewEffect = this.createEffect(sObjectId, nPresetClass, nPresetId, nPresetSubtype);
+                            if(oNewEffect) {
+                                oNewEffect.cTn.setNodeType(oEffect.cTn.nodeType);
+                                oNewEffect.cTn.changeDelay(oEffect.cTn.getDelay(true));
+                                oNewEffect.select();
+                                aSeq[nEffectIdx] = oNewEffect;
+                                bNeedRebuild = true;
+                            }
+                        }
+                    }
+                }
+            }
+            if(bNeedRebuild) {
+                this.buildTree(aSeqs);
+            }
+        }
+        else {
+            if(aSelectedEffects.length > 0) {
+                for(nIdx = 0; nIdx < aSelectedEffects.length; ++nIdx) {
+                    oEffect = aSelectedEffects[nIdx];
+                    sObjectId = oEffect.getObjectId();
+                    if(sObjectId) {
+                        if(!oDrawingsIdMap[sObjectId]) {
+                            this.addEffectToMainSequence(sObjectId, nPresetClass, nPresetId, nPresetSubtype, false);
+                            oDrawingsIdMap[sObjectId] = true;
+                        }
+                    }
+                }
+            }
+            else {
+                this.addAnimationToSelectedObjects(nPresetClass, nPresetId, nPresetSubtype);
+            }
+        }
+    };
+    CTiming.prototype.removeSelectedEffects = function() {
+        this.removeEffects(this.getSelectedEffects());
+    };
 
+
+    CTiming.prototype.removeEffects = function(aEffectsToRemove) {
+        var aSeqs = this.getEffectsSequences();
+        var nSeq, nEffect, aSeq, oEffect;
+        var nEffectToRemove;
+        for(nSeq = aSeqs.length - 1; nSeq > -1; nSeq--) {
+            aSeq = aSeqs[nSeq];
+            for(nEffect = aSeq.length - 1; nEffect > 0; --nEffect) {
+                oEffect = aSeq[nEffect];
+                for(nEffectToRemove = aEffectsToRemove.length - 1; nEffectToRemove > -1; --nEffectToRemove) {
+                    if(oEffect === aEffectsToRemove[nEffectToRemove]) {
+                        aSeq.splice(nEffect, 1);
+                        break;
+                    }
+                }
+            }
+        }
+        this.buildTree(aSeqs);
+    };
+
+    CTiming.prototype.addEffectToMainSequence = function(sObjectId, nPresetClass, nPresetId, nPresetSubtype, bReplace) {
+     
+        if(bReplace) {
+            this.removeObjectAnimation(sObjectId);
+        }
+        var oEffect = this.createEffect(sObjectId, nPresetClass, nPresetId, nPresetSubtype);
+        if(!oEffect) {
+            return;
+        }
+        this.addToMainSequence(oEffect);
+        oEffect.select();
+    };
+    CTiming.prototype.createPar = function(nFill, sDelay) {
+        var oPar = new CPar();
+        var oCTn = CTiming.prototype.createCCTn(null, nFill, sDelay, null, null, true);
+        oPar.setCTn(oCTn);
+        return oPar;
+    };
+
+    CTiming.prototype.getSelectionRanges = function(aSeqs) {
+        var nSeq, nEffect;
+        var aRanges = [];
+        var aLastRange = null;
+        for(nSeq = 0; nSeq < aSeqs.length; ++nSeq) {
+            var aSeq = aSeqs[nSeq];
+            for(nEffect = 1; nEffect < aSeq.length; ++nEffect) {
+                if(aSeq[nEffect].isSelected()) {
+                    if(!Array.isArray(aLastRange)) {
+                        aLastRange = [[nSeq, nEffect], [nSeq, nEffect]];
+                        aRanges.push(aLastRange);
+                    }
+                    else {
+                        aLastRange[1][0] = nSeq;
+                        aLastRange[1][1] = nEffect;
+                    }
+                }
+                else {
+                    aLastRange = null;
+                }
+            }
+        }
+        return aRanges;
+    };
+
+    CTiming.prototype.getSequencesForMove = function(bEarlier, bCheckPossibility) {
+        var aSeqs = this.getEffectsSequences();
+        if(bEarlier && aSeqs[0][0] !== null) {
+            aSeqs.splice(0, 0, [null]);
+        }
+        var aRanges = this.getSelectionRanges(aSeqs);
+        var nSeq, aSeq;
+        if(aRanges.length !== 1) {
+            return bCheckPossibility ? false : null;
+        }
+        var aRange = aRanges[0];
+        var aStart = aRange[0];
+        var aEnd = aRange[1];
+        var nEffectStart;
+        var nEffectEnd;
+        var nCount;
+        var aEffectsToInsert = [];
+        var nPos;
+        if(bEarlier) {
+            if(aStart[0] === 0) {
+                if(aStart[1] === 1) {
+                    return bCheckPossibility ? false : null;
+                }
+            }
+            if(bCheckPossibility) {
+                return true;
+            }
+        }
+        else {
+            if(aEnd[0] === aSeqs.length - 1) {
+                if(aEnd[1] === aSeqs[aSeqs.length - 1].length - 1) {
+                    return bCheckPossibility ? false : null;
+                }
+            }
+            if(bCheckPossibility) {
+                return true;
+            }
+        }
+
+
+        var nPosStartEnd;
+        var aSeqToInsert;
+        if(bEarlier) {
+            if(aStart[1] === 1) {
+                aSeqToInsert = aSeqs[aStart[0] - 1];
+                nPosStartEnd = aSeqToInsert.length;
+            }
+            else {
+                aSeqToInsert = aSeqs[aStart[0]];
+                nPosStartEnd = aStart[1] - 1;
+            }
+        }
+        else {
+            if(aEnd[1] === aSeqs[aEnd[0]].length - 1) {
+                aSeqToInsert = aSeqs[aEnd[0] + 1];
+                nPosStartEnd = aSeqToInsert.length - 1;
+            }
+            else {
+                aSeqToInsert = aSeqs[aEnd[0]];
+                nPosStartEnd = aSeqToInsert.length - (aEnd[1] + 2);
+            }
+        }
+
+
+        for(nSeq = aStart[0]; nSeq <= aEnd[0]; ++nSeq) {
+            aSeq = aSeqs[nSeq];
+            if(nSeq === aStart[0]) {
+                nEffectStart = aStart[1];
+            }
+            else {
+                nEffectStart = 1;
+            }
+            if(nSeq === aEnd[0]) {
+                nEffectEnd = aEnd[1];
+            }
+            else {
+                nEffectEnd = aSeq.length - 1;
+            }
+            nCount = nEffectEnd - nEffectStart + 1;
+            aEffectsToInsert = aEffectsToInsert.concat(aSeq.splice(nEffectStart, nCount));
+        }
+        if(bEarlier) {
+            nPos = nPosStartEnd;
+        }
+        else {
+            nPos = aSeqToInsert.length - nPosStartEnd;
+        }
+        aSeqToInsert.splice.apply(aSeqToInsert, [nPos, 0].concat(aEffectsToInsert));
+        return aSeqs;
+    };
+    CTiming.prototype.canMoveAnimation = function(bEarlier) {
+        return this.getSequencesForMove(bEarlier, true);
+    };
+    CTiming.prototype.moveAnimation = function(bEarlier) {
+        var aSeqs = this.getSequencesForMove(bEarlier, false);
+        if(!Array.isArray(aSeqs)) {
+            return;
+        }
+        this.buildTree(aSeqs);
+    };
+    CTiming.prototype.drawAnimPane = function(oGraphics) {
+        if(!this.animPane) {
+            this.animPane = new CAnimPane(this);
+        }
+        this.animPane.recalculate();
+        this.animPane.draw(oGraphics);
+    };
+    CTiming.prototype.getAnimPane = function() {
+        if(!this.animPane) {
+            this.animPane = new CAnimPane(this);
+        }
+        return this.animPane;
+    };
+    CTiming.prototype.onAnimPaneResize = function() {
+        this.getAnimPane().onResize();
+    };
+    CTiming.prototype.onAnimPaneMouseDown = function(e, x, y) {
+        this.getAnimPane().onMouseDown(e, x, y);
+    };
+    CTiming.prototype.onAnimPaneMouseMove = function(e, x, y) {
+        this.getAnimPane().onMouseMove(e, x, y);
+    };
+    CTiming.prototype.onAnimPaneMouseUp = function(e, x, y) {
+        this.getAnimPane().onMouseUp(e, x, y);
+    };
+    CTiming.prototype.onAnimPaneMouseWheel = function(e, deltaY, X, Y) {
+        this.getAnimPane().onMouseWheel(e, deltaY, X, Y);
+    };
+    CTiming.prototype.getRootSequences = function() {
+        var oTmRoot = this.getTimingRootNode();
+        if(!oTmRoot) {
+            return [];
+        }
+        var aSeqs = [];
+        var aChildren = oTmRoot.getChildrenTimeNodes();
+        for(var nChild = 0; nChild < aChildren.length; ++nChild) {
+            var oChild = aChildren[nChild];
+            if(oChild.getObjectType() === AscDFH.historyitem_type_Seq) {
+                aSeqs.push(oChild);
+            }
+        }
+
+        return aSeqs;
+    };
+    CTiming.prototype.getEffectsSequences = function() {
+        var aSequences = [];
+        var aAllEffects = this.getAllAnimEffects();
+        var aCurSequence = null;
+        var oEffect;
+        var sSeqId;
+        var nEffect;
+        for(nEffect = 0; nEffect < aAllEffects.length; ++nEffect) {
+            oEffect = aAllEffects[nEffect];
+            if(oEffect.isPartOfMainSequence()) {
+                sSeqId = null;
+            }
+            else {
+                sSeqId = oEffect.isPartOfInteractiveSeq();
+            }
+            if(!Array.isArray(aCurSequence) || aCurSequence[0] !== sSeqId) {
+                aCurSequence = [sSeqId];
+                aSequences.push(aCurSequence);
+            }
+            aCurSequence.push(oEffect);
+        }
+        return aSequences;
+    };
+
+    CTiming.prototype.buildTree = function(aSequences, bRestedDelayShift) {
+        var aCurSequence;
+        var oEffect;
+        var sSeqId;
+        var nEffect;
+        var nSeq;
+        var oCont1;//containers by depth
+        if(bRestedDelayShift !== false) {
+            //substract delay shift from afterEffect nodes
+            for(nSeq = 0; nSeq < aSequences.length; ++nSeq) {
+               aCurSequence = aSequences[nSeq];
+               for(nEffect = 1; nEffect < aCurSequence.length; ++nEffect) {
+                   oEffect = aCurSequence[nEffect];
+                   oEffect.resetDelayShift();
+               }
+           }
+        }
+        var oTmRoot = this.getTimingRootNode();
+        if(oTmRoot) {
+            oTmRoot.clearChildTnLst();
+        }
+        for(nSeq = 0; nSeq < aSequences.length; ++nSeq) {
+            aCurSequence = aSequences[nSeq];
+            if(aCurSequence.length > 1) {
+                sSeqId = aCurSequence[0];
+                if(sSeqId === null) {
+                    oCont1 = this.checkMainSequence();
+                }
+                else {
+                    oCont1 = this.checkInteractiveSequence(sSeqId);
+                }
+                for(nEffect = 1; nEffect < aCurSequence.length; ++nEffect) {
+                    oEffect = aCurSequence[nEffect];
+                    oCont1.addEffectToTheEndOfSeq(oEffect);
+                }
+            }
+        }
+        this.updateNodesIDs();
+    };
+    CTiming.prototype.executeWithCheckDelay = function(fCallback, aEffects) {
+        var aDelays = [];
+        for(var nEffect = 0; nEffect < aEffects.length; ++nEffect) {
+            aDelays.push(aEffects[nEffect].cTn.getDelay(true));
+        }
+        fCallback();
+        for(nEffect = 0; nEffect < aEffects.length; ++nEffect) {
+            if(aEffects[nEffect].isAfterEffect()) {
+                aEffects[nEffect].cTn.changeDelay(aDelays[nEffect], true);
+            }
+        }
+    };
+    CTiming.prototype.setAnimationProperties = function(oPr) {
+        var aEffects = this.getSelectedEffects();
+        var oCurPr = this.getAnimProperties();
+        var nEffect, oEffect;
+        var aAllEffects = this.getAllAnimEffects();
+        var aEffectsForCheck;
+        var aSeqs, aSeq, nSeq;
+        if(aEffects.length < 1) {
+            return null;
+        }
+
+        if(oPr.asc_getDelay() !== oCurPr.asc_getDelay() && AscFormat.isRealNumber(oPr.asc_getDelay())) {
+            for(nEffect = aAllEffects.length - 1; nEffect > -1; --nEffect) {
+                if(aAllEffects[nEffect].isSelected()) {
+                    break;
+                }
+            }
+            aEffectsForCheck = aAllEffects.slice(nEffect + 1);
+            this.executeWithCheckDelay(function () {
+                for(nEffect = 0; nEffect < aEffects.length; ++nEffect) {
+                    oEffect = aEffects[nEffect];
+                    oEffect.cTn.changeDelay(oPr.asc_getDelay());
+                }
+            }, aEffectsForCheck);
+        }
+        
+        if(oPr.asc_getDuration() !== oCurPr.asc_getDuration() && AscFormat.isRealNumber(oPr.asc_getDuration())) {
+            for(nEffect = 0; nEffect < aAllEffects.length; ++nEffect) {
+                if(aAllEffects[nEffect].isSelected()) {
+                    break;
+                }
+            }
+            aEffectsForCheck = aAllEffects.slice(nEffect + 1);
+            this.executeWithCheckDelay(function () {
+                for(nEffect = 0; nEffect < aEffects.length; ++nEffect) {
+                    oEffect = aEffects[nEffect];
+                    oEffect.cTn.changeEffectDuration(oPr.asc_getDuration());
+                }
+            }, aEffectsForCheck);
+        }
+        if(oPr.asc_getSubtype() !== oCurPr.asc_getSubtype()) {
+            for(nEffect = 0; nEffect < aEffects.length; ++nEffect) {
+                oEffect = aEffects[nEffect];
+                oEffect.cTn.changeSubtype(oPr.asc_getSubtype());
+            }
+        }
+        if(oPr.asc_getRepeatCount() !== oCurPr.asc_getRepeatCount() && AscFormat.isRealNumber(oPr.asc_getRepeatCount())) {
+            for(nEffect = 0; nEffect < aEffects.length; ++nEffect) {
+                oEffect = aEffects[nEffect];
+                oEffect.cTn.changeRepeatCount(oPr.asc_getRepeatCount());
+            }
+        }
+
+        if(oPr.asc_getRewind() !== oCurPr.asc_getRewind() && AscFormat.isRealBool(oCurPr.asc_getRewind())) {
+            for(nEffect = 0; nEffect < aEffects.length; ++nEffect) {
+                oEffect = aEffects[nEffect];
+                oEffect.cTn.changeRewind(oPr.asc_getRewind());
+            }
+        }
+
+        
+        if(oPr.asc_getStartType() !== oCurPr.asc_getStartType()) {
+            aSeqs = this.getEffectsSequences();
+            for(nSeq = 0; nSeq < aSeqs.length; ++nSeq) {
+                aSeq = aSeqs[nSeq];
+                for(nEffect = 1; nEffect < aSeq.length; ++nEffect) {
+                    oEffect = aSeq[nEffect];
+                    oEffect.resetDelayShift();
+                    if(oEffect.isSelected()) {
+                        oEffect.cTn.setNodeType(oPr.asc_getStartType());
+                    }
+                }
+            }
+            this.buildTree(aSeqs, false);
+        }
+
+
+        if(oPr.asc_getTriggerClickSequence() !== oCurPr.asc_getTriggerClickSequence()
+        || oPr.asc_getTriggerObjectClick() !== oCurPr.asc_getTriggerObjectClick()) {
+            aSeqs = this.getEffectsSequences();
+            
+            var sSeqId;
+            if(oPr.asc_getTriggerClickSequence() || !oPr.asc_getTriggerObjectClick()) {
+                sSeqId = null;
+            }
+            else {
+                var oTimingParent = this.parent;//might be slide, layout, master
+                if(!oTimingParent) {
+                    return;
+                }
+                var oCSld = oTimingParent.cSld;
+                if(!oCSld) {
+                    return;
+                }
+                var sObjectId;
+                
+                var oDrawing = oCSld.getObjectByName(oPr.asc_getTriggerObjectClick());
+                if(!oDrawing) {
+                    return;
+                }
+                sObjectId = oDrawing.Get_Id();
+                sSeqId = sObjectId;
+            }
+            var aEffectsToInsert = [];
+            var sCurSeqId;
+            var aTriggerSeq = null;
+            for(nSeq = 0; nSeq < aSeqs.length; ++nSeq) {
+                aSeq = aSeqs[nSeq];
+                sCurSeqId = aSeq[0];
+                if(sCurSeqId === sSeqId) {
+                    aTriggerSeq = aSeq;
+                }
+                for(nEffect = aSeq.length - 1; nEffect > 0; --nEffect) {
+                    oEffect = aSeq[nEffect];
+                    oEffect.resetDelayShift();
+                    if(oEffect.isSelected()) {
+                        if(sCurSeqId !== sSeqId) {
+                            aEffectsToInsert.splice(0, 0, aSeq.splice(nEffect, 1)[0]);
+                        }
+                    }
+                }
+            }
+            if(!aTriggerSeq) {
+                aTriggerSeq = [sSeqId];
+                aSeqs.push(aTriggerSeq);
+            }
+            for(nEffect = 0; nEffect < aEffectsToInsert.length; ++nEffect) {
+                aTriggerSeq.push(aEffectsToInsert[nEffect]);
+            }
+            this.buildTree(aSeqs, false);
+        }
+    };
+    CTiming.prototype.getObjectEffects = function(sObjectId) {
+        var aEffects = [];
+        
+        if(!sObjectId) {
+            return aEffects;
+        }
+        if(!this.tnLst) {
+            return aEffects;
+        }
+        var oTmRoot = this.getTimingRootNode();
+        if(!oTmRoot) {
+            return aEffects;
+        }
+        oTmRoot.traverseTimeNodes(function(oNode) {
+            if(oNode.isObjectEffect(sObjectId)) {
+                aEffects.push(oNode);
+            }
+        });
+        return aEffects;
+    };
+    CTiming.prototype.getAnimEffect = function(sObjectId) {
+        var aEffects = this.getObjectEffects(sObjectId);
+        return this.getPropertiesFromEffects(aEffects);
+    };
+    CTiming.prototype.getSelectedEffects = function() {
+        //todo 
+        var aEffects = [];
+        var aAllEffects = this.getAllAnimEffects();
+        for(var nIdx = 0; nIdx < aAllEffects.length; ++nIdx) {
+            var oEffect = aAllEffects[nIdx];
+            if(oEffect.isSelected()) {
+                aEffects.push(oEffect);
+            }
+        }
+        return aEffects;
+    };
+    CTiming.prototype.getPropertiesFromEffects = function(aEffects) {
+        var oResultEffect = null;
+        var oEffect;
+        for(var nEffect = 0; nEffect < aEffects.length; ++nEffect) {
+            oEffect = aEffects[nEffect];
+            if(!oResultEffect) {
+                oResultEffect = oEffect.createDuplicate();
+            }
+            oResultEffect.merge(oEffect);
+        }
+        return oResultEffect;
+    };
+    CTiming.prototype.getAnimProperties = function() {
+        return AscFormat.ExecuteNoHistory(function(){
+            var aEffects = this.getSelectedEffects();
+            if(aEffects.length === 0) {
+                var oSlide = this.parent;
+                if(oSlide) {
+                    var oGrObjects = oSlide.graphicObjects;
+                    if(oGrObjects) {
+                        var aSelectedDrawings = oGrObjects.selectedObjects;
+                        if(aSelectedDrawings.length > 0) {
+                            aEffects.push(this.staticCreateNoneEffect());
+                        }
+                    }
+                }
+            }
+            return this.getPropertiesFromEffects(aEffects);
+        }, this, []);
+    };
+    CTiming.prototype.printTree = function() {
+        var oRoot = this.getTimingRootNode();
+        if(oRoot) {
+            oRoot.printTree();
+        }
+    };
+    CTiming.prototype.getEffectsForDemo = function() {
+        var aEffectsForDemo;
+        var aSelectedEffects = this.getSelectedEffects();
+        if(aSelectedEffects.length > 0) {
+            aEffectsForDemo = aSelectedEffects;
+        }
+        else {
+            aEffectsForDemo = this.getAllAnimEffects();
+        }
+        if(aEffectsForDemo.length === 0) {
+            return null;
+        }
+        return aEffectsForDemo;
+    };
+    CTiming.prototype.canStartDemo = function() {
+        return this.getEffectsForDemo() !== null;
+    };
+    CTiming.prototype.createDemoTiming = function() {
+        return AscFormat.ExecuteNoHistory(function() {
+            if(!this.canStartDemo()) {
+                return null;
+            }
+            var aEffectsForDemo = this.getEffectsForDemo();
+            if(!aEffectsForDemo) {
+                return null;
+            }
+            var aSeqs = [];
+            var aSeq = [null];
+            var oEffect;
+            aSeqs.push(aSeq);
+            for(var nIdx = 0; nIdx < aEffectsForDemo.length; ++nIdx) {
+                oEffect = aEffectsForDemo[nIdx];
+                var oCopyEffect = oEffect.createDuplicate();
+                if(oCopyEffect.cTn.nodeType === NODE_TYPE_CLICKEFFECT) {
+                    oCopyEffect.cTn.setNodeType(nIdx === 0 ? NODE_TYPE_WITHEFFECT : NODE_TYPE_AFTEREFFECT);
+                }
+                oCopyEffect.cTn.changeDelay(oEffect.cTn.getDelay(true), false);
+                oCopyEffect.cTn.changeRepeatCount(1000);
+                aSeq.push(oCopyEffect);
+            }
+            var oTiming = new CTiming();
+            oTiming.setParent(this.parent);
+            oTiming.buildTree(aSeqs);
+            return oTiming;
+        }, this, []);
+    };
+    CTiming.prototype.createDemoPlayer = function() {
+        if(!this.canStartDemo()) {
+            return null;
+        }
+        return new CDemoAnimPlayer(this.parent);
+    };
+    CTiming.prototype.onChangeDrawingsSelection = function() {
+        var oSlide = this.parent;
+        if(!oSlide) {
+            return;
+        }
+        var aSelectedDrawings = oSlide.graphicObjects.selectedObjects;
+        var aEffects = this.getAllAnimEffects();
+        for(var nEffect = 0; nEffect < aEffects.length; ++nEffect) {
+            var oEffect = aEffects[nEffect];
+            for(var nDrawing = 0; nDrawing < aSelectedDrawings.length; ++nDrawing) {
+                if(oEffect.isObjectEffect(aSelectedDrawings[nDrawing].Get_Id())) {
+                    break;
+                }
+            }
+            if(nDrawing < aSelectedDrawings.length) {
+                oEffect.select();
+            }
+            else {
+                oEffect.deselect();
+            }
+        }
+    };
+    CTiming.prototype.resetSelection = function() {
+        var aSelectedEffects = this.getSelectedEffects();
+        var aRet = [];
+        for(var nEff = 0; nEff < aSelectedEffects.length; ++nEff) {
+            aSelectedEffects[nEff].deselect();
+        }
+        return aRet;
+    };
+    
+    CTiming.prototype.getSelectionState = function() {
+        var aSelectedEffects = this.getSelectedEffects();
+        var aRet = [];
+        for(var nEff = 0; nEff < aSelectedEffects.length; ++nEff) {
+            aRet.push(aSelectedEffects[nEff].Get_Id());
+        }
+        return aRet;
+    };
+    CTiming.prototype.setSelectionState = function(aSelected) {
+        if(!Array.isArray(aSelected)) {
+            this.resetSelection();
+            return;
+        }
+        var aAllEffects = this.getAllAnimEffects();
+        var sCurId;
+        for(var nEff = 0; nEff < aAllEffects.length; ++nEff) {
+            var oEff = aAllEffects[nEff];
+            sCurId = oEff.Get_Id();
+            for(var nSel = 0; nSel < aSelected.length; ++nSel) {
+                if(aSelected[nSel] === sCurId) {
+                    break;
+                }
+            }
+            if(nSel < aSelected.length) {
+                oEff.select();
+            }
+            else {
+                oEff.deselect();
+            }
+        }
+    };
 
     changesFactory[AscDFH.historyitem_CommonTimingListAdd] = CChangeContent;
     changesFactory[AscDFH.historyitem_CommonTimingListRemove] = CChangeContent;
@@ -1404,12 +2955,43 @@
         this.list.splice(nInsertIdx, 0, oPr);
         this.setParentToChild(oPr);
     };
+    CCommonTimingList.prototype.push = function(oPr) {
+        this.addToLst(this.getLength(), oPr);
+    };
+    CCommonTimingList.prototype.splice = function() {
+        var nStart = arguments[0];
+        var nDeleteCount;
+        if(arguments.length > 1) {
+            nDeleteCount = arguments[1];
+        }
+        else {
+            nDeleteCount = this.getLength() - nStart;
+        }
+        var aDeleted = [];
+        for(var nIdx = nStart + nDeleteCount - 1; nIdx >= nStart; --nIdx) {
+            aDeleted.push(this.removeFromLst(nIdx));
+        }
+        aDeleted.reverse();
+        for(nIdx = arguments.length - 1; nIdx > 1 ; --nIdx) {
+            this.addToLst(nStart, arguments[nIdx]);
+        }
+        return aDeleted;
+    };
     CCommonTimingList.prototype.removeFromLst = function(nIdx) {
         if(nIdx > -1 && nIdx < this.list.length) {
             this.list[nIdx].setParent(null);
             History.Add(new CChangeContent(this, AscDFH.historyitem_CommonTimingListRemove, nIdx, [this.list[nIdx]], false));
-            this.list.splice(nIdx, 1);
+            return this.list.splice(nIdx, 1)[0];
         }
+        return null;
+    };
+    CCommonTimingList.prototype.clear = function() {
+        for(var nIdx = this.list.length - 1; nIdx > -1; --nIdx) {
+            this.removeFromLst(nIdx);
+        }
+    };
+    CCommonTimingList.prototype.isEmpty = function() {
+        return this.getLength() === 0;
     };
     CCommonTimingList.prototype.fillObject = function(oCopy, oIdMap) {
         for(var nIdx = 0; nIdx < this.list.length; ++nIdx) {
@@ -1452,18 +3034,50 @@
     CCommonTimingList.prototype.getChildren = function() {
         return [].concat(this.list);
     };
-    CCommonTimingList.prototype.onRemoveChild = function(oChild) {
+    
+    CCommonTimingList.prototype.removeChild = function(oChild) {
         if(this.parent) {
             for(var nIdx = this.list.length - 1; nIdx > -1; --nIdx) {
                 if(this.list[nIdx] === oChild) {
                     this.removeFromLst(nIdx);
-                    if(this.list.length === 0) {
-                        this.parent.onRemoveChild(this);
-                    }
-                    return;
+                    return nIdx;
                 }
             }
         }
+        return -1;
+    };
+    CCommonTimingList.prototype.onRemoveChild = function(oChild) {
+        this.removeChild(oChild);
+        if(this.parent) {
+            if(this.list.length === 0) {
+                this.parent.onRemoveChild(this);
+            }
+        }
+    };
+    CCommonTimingList.prototype.getLength = function() {
+        return this.list.length;
+    };
+    CCommonTimingList.prototype.getTimeNodeByType = function(nType) {
+        for(var nNode = 0; nNode < this.list.length; ++nNode) {
+            if(this.list[nNode].getNodeType() === nType) {
+                return this.list[nNode];
+            }
+        }
+        return null;
+    };
+    CCommonTimingList.prototype.getLast = function(nType) {
+        if(this.list.length > 0) {
+            return this.list[this.list.length - 1];
+        }
+        return null;
+    };
+    CCommonTimingList.prototype.getChildIdx = function(oChild) {
+        for(var nIdx = this.list.length - 1; nIdx > -1; --nIdx) {
+            if(this.list[nIdx] === oChild) {
+                return nIdx;
+            }
+        }
+        return -1;
     };
 
     function CAttrNameLst() {
@@ -1534,6 +3148,20 @@
         }
         return oComplexTrigger;
     };
+    CCondLst.prototype.getSpClick = function() {
+        if(this.list.length === 1) {
+            var oCond = this.list[0];
+            if(oCond) {
+                if(oCond.evt === COND_EVNT_ON_CLICK) {
+                    return oCond.getTargetObjectId();
+                }
+            }
+        }
+        return null;
+    };
+    CCondLst.prototype.isSpClick = function(sSpId) {
+        return this.getSpClick() === sSpId;
+    };
 
     function CChildTnLst() {
         CCommonTimingList.call(this);
@@ -1593,6 +3221,7 @@
             pWriter.EndRecord();
         }
     };
+
 
 
     function CTmplLst() {
@@ -2634,6 +4263,54 @@
         }
         return this.calcmode;
     };
+    CAnim.prototype.create = function(nCalcMode, nValueType, aAttrNames, aTavs, sObjectId, sDur, sDelay, nAccel) {
+        this.setCalcmode(nCalcMode);
+        this.setValueType(nValueType);
+        var oBhvr = new CCBhvr();
+        var oCTn = this.createCCTn(sDur, NODE_FILL_HOLD, sDelay, null, null, null, nAccel);
+        oBhvr.setCTn(oCTn);
+        oBhvr.createAttrNameLst(aAttrNames);
+        this.setTavLst(this.createTavLst(aTavs));
+        this.setCBhvr(oBhvr);
+    };
+    CAnim.prototype.createTav = function(sTm, sFmla, bBoolVal, oClrVal, fFltVal, nIntVal, sStrVal) {
+        var oTav = new CTav();
+        if(sTm !== null) {
+            oTav.setTm(sTm);
+        }
+        if(sFmla !== null && sFmla !== undefined) {
+            oTav.setFmla(sFmla);
+        }
+        var oAnimVariant = new CAnimVariant();
+        if(bBoolVal !== null && bBoolVal !== undefined) {
+            oAnimVariant.setBoolVal(bBoolVal);
+        }
+        else if(oClrVal !== null && oClrVal !== undefined) {
+            oAnimVariant.setClrVal(oClrVal);
+        }
+        else if(fFltVal !== null && fFltVal !== undefined) {
+            oAnimVariant.setFltVal(fFltVal);
+        }
+        else if(nIntVal !== null && nIntVal !== undefined) {
+            oAnimVariant.setIntVal(nIntVal);
+        }
+        else if(sStrVal !== null && sStrVal !== undefined) {
+            oAnimVariant.setStrVal(sStrVal);
+        }
+        oTav.setVal(oAnimVariant);
+
+        return oTav;
+    };
+    CAnim.prototype.createTavFromObject = function(oTav) {
+        return this.createTav(oTav.tm, oTav.fmla, oTav.boolVal, oTav.clrVal, oTav.fltVal, oTav.intVal, oTav.strVal);
+    };
+    CAnim.prototype.createTavLst = function(aTavs) {
+        var oTavLst = new CTavLst();
+        for(var nTav = 0; nTav < aTavs.length; ++nTav) {
+            oTavLst.push(aTavs[nTav]);
+        }
+        return oTavLst;
+    };
 
     changesFactory[AscDFH.historyitem_CBhvrAttrNameLst] = CChangeObject;
     changesFactory[AscDFH.historyitem_CBhvrCTn] = CChangeObject;
@@ -2828,13 +4505,19 @@
         }
         return this.attrNameLst.list;
     };
+    CCBhvr.prototype.createAttrNameLst = function(aAttrNames) {
+        this.setAttrNameLst(new CAttrNameLst());
+        for(var nName = 0; nName < aAttrNames.length; ++nName) {
+            var oAttrName = new CAttrName();
+            oAttrName.setText(aAttrNames[nName]);
+            this.attrNameLst.push(oAttrName);
+        }
+    };
 
-    var PRESTET_CLASS_EMPH = 0;
-    var PRESTET_CLASS_ENTR = 1;
-    var PRESTET_CLASS_EXIT = 2;
-    var PRESTET_CLASS_MEDIACALL = 3;
-    var PRESTET_CLASS_PATH = 4;
-    var PRESTET_CLASS_VERB = 5;
+
+    var RESTART_TYPE_ALWAYS = 0;
+    var RESTART_TYPE_NEVER = 1;
+    var RESTART_TYPE_WHEN_NOT_ACTIVE = 2;
 
     changesFactory[AscDFH.historyitem_CTnChildTnLst] = CChangeObject;
     changesFactory[AscDFH.historyitem_CTnEndCondLst] = CChangeObject;
@@ -3051,7 +4734,7 @@
         this.tmFilter = pr;
     };
     CCTn.prototype.fillObject = function(oCopy, oIdMap) {
-        if(this.childTnLst !== null) {
+        if(AscCommon.isRealObject(this.childTnLst)) {
             oCopy.setChildTnLst(this.childTnLst.createDuplicate(oIdMap));
         }
         if(this.endCondLst !== null) {
@@ -3241,6 +4924,408 @@
     CCTn.prototype.getChildren = function() {
         return [this.stCondLst, this.endCondLst, this.endSync, this.iterate, this.childTnLst, this.subTnLst];
     };
+    CCTn.prototype.merge = function(oOther) {
+        this.childTnLst = undefined;
+        this.endCondLst = this.checkEqualChild(this.endCondLst, oOther.endCondLst);
+        this.endSync = this.checkEqualChild(this.endSync, oOther.endSync);
+        this.iterate = this.checkEqualChild(this.iterate, oOther.iterate);
+        this.stCondLst = this.checkEqualChild(this.stCondLst, oOther.stCondLst);
+        this.subTnLst = this.checkEqualChild(this.subTnLst, oOther.subTnLst);
+        this.accel = this.checkEqualChild(this.accel, oOther.accel);
+        this.afterEffect = this.checkEqualChild(this.afterEffect, oOther.afterEffect);
+        this.autoRev = this.checkEqualChild(this.autoRev, oOther.autoRev);
+        this.bldLvl = this.checkEqualChild(this.bldLvl, oOther.bldLvl);
+        this.decel = this.checkEqualChild(this.decel, oOther.decel);
+        this.display = this.checkEqualChild(this.display, oOther.display);
+        this.dur = this.checkEqualChild(this.dur, oOther.dur);
+        this.evtFilter = this.checkEqualChild(this.evtFilter, oOther.evtFilter);
+        this.fill = this.checkEqualChild(this.fill, oOther.fill);
+        this.grpId = this.checkEqualChild(this.grpId, oOther.grpId);
+        this.id = this.checkEqualChild(this.id, oOther.id);
+        this.masterRel = this.checkEqualChild(this.masterRel, oOther.masterRel);
+        this.nodePh = this.checkEqualChild(this.nodePh, oOther.nodePh);
+        this.nodeType = this.checkEqualChild(this.nodeType, oOther.nodeType);
+        this.presetClass = this.checkEqualChild(this.presetClass, oOther.presetClass);
+        this.presetID = this.checkEqualChild(this.presetID, oOther.presetID);
+        this.presetSubtype = this.checkEqualChild(this.presetSubtype, oOther.presetSubtype);
+        this.repeatCount = this.checkEqualChild(this.repeatCount, oOther.repeatCount);
+        this.repeatDur = this.checkEqualChild(this.repeatDur, oOther.repeatDur);
+        this.restart = this.checkEqualChild(this.restart, oOther.restart);
+        this.spd = this.checkEqualChild(this.spd, oOther.spd);
+        this.syncBehavior = this.checkEqualChild(this.syncBehavior, oOther.syncBehavior);
+        this.tmFilter = this.checkEqualChild(this.tmFilter, oOther.tmFilter);
+    };
+    CCTn.prototype.createStCondLst = function() {
+        this.setStCondLst(new CCondLst());
+    };
+    CCTn.prototype.createStCondLstWithDelay = function(sDelay) {
+        this.createStCondLst();
+        var oCond = new CCond();
+        oCond.setDelay(sDelay);
+        this.stCondLst.addToLst(0, oCond);
+    };
+    CCTn.prototype.isAnimEffect = function() {
+        if(this.presetID !== null && this.presetClass !== null) {
+            return true;
+        }
+        return false;
+    };
+    CCTn.prototype.getTimeNodeByType = function(nType) {
+        if(this.childTnLst) {
+            return this.childTnLst.getTimeNodeByType(nType);
+        }
+        return null;
+    };
+    CCTn.prototype.addToChildTnLst = function(nIdx, oNode) {
+        if(this.childTnLst) {
+            this.childTnLst.addToLst(nIdx, oNode);
+        }
+    };
+    CCTn.prototype.pushToChildTnLst = function(oNode) {
+        if(this.childTnLst) {
+            this.childTnLst.push(oNode);
+        }
+    };
+    CCTn.prototype.clearChildTnLst = function() {
+        if(this.childTnLst) {
+            this.childTnLst.clear();
+        }
+    };
+    CCTn.prototype.createChildTnLst = function() {
+        if(!this.childTnLst) {
+            this.setChildTnLst(new CChildTnLst());
+        }
+    };
+    CCTn.prototype.getDelayShift = function() {
+        if(this.nodeType === NODE_TYPE_AFTEREFFECT) {
+            var oPrev = this.parent.getPreviousEffect();
+            if(oPrev && oPrev.cTn) {
+                return oPrev.cTn.getDelay() + oPrev.cTn.getEffectDuration();
+            }
+        }
+        return 0;
+    };
+    CCTn.prototype.getDelay = function(bUseDelayShift) {
+        var delay = 0;
+        var aConds;
+        if(this.stCondLst) {
+            aConds = this.stCondLst.list;
+            for(var nCond = 0; nCond < aConds.length; ++nCond) {
+                if(aConds[nCond].delay !== null) {
+                    delay = aConds[nCond].getDelayTime().getVal();
+                    break;
+                }
+            }
+        }
+        var nDelayShift;
+        if(bUseDelayShift === false) {
+            nDelayShift = 0;
+        }
+        else {
+            nDelayShift = this.getDelayShift();
+        }
+        delay = Math.max(0, delay - nDelayShift);
+        return delay;
+    };
+    CCTn.prototype.changeDelay = function(nDelay, bUseDelayShift) {
+        var nDelayShift;
+        if(bUseDelayShift === false) {
+            nDelayShift = 0;
+        }
+        else {
+            nDelayShift = this.getDelayShift();
+        }
+        var nNewDelay = ((Math.max(0, nDelay + nDelayShift) + 0.5) >> 0);
+        var sNewDelay = nNewDelay + "";
+        var aConds;
+        if(!this.stCondLst) {
+            this.setStCondLst(new CCondLst());
+        }
+        aConds = this.stCondLst.list;
+        for(var nCond = 0; nCond < aConds.length; ++nCond) {
+            if(aConds[nCond].delay !== null) {
+                return aConds[nCond].setDelay(sNewDelay);
+            }
+        }
+        var oCond = new CCond();
+        this.stCondLst.push(oCond);
+        oCond.setDelay(sNewDelay);
+    };
+    CCTn.prototype.resetDelayShift = function() {
+        var nDelayShift = this.getDelayShift();
+        if(nDelayShift > 0) {
+            this.changeDelay(this.getDelay(false) - this.getDelayShift(), false);
+        }
+    };
+    CCTn.prototype.setDelayShift = function() {
+        var nDelayShift = this.getDelayShift();
+        if(nDelayShift > 0) {
+            this.changeDelay(this.getDelay(false), true);
+        }
+    };
+    CCTn.prototype.getEffectDuration = function() {
+        var nDur = 0;
+        var aChildren = this.childTnLst && this.childTnLst.list;
+        if(aChildren) {
+            for(var nChild = 0; nChild < aChildren.length; ++nChild) {
+                var oChild = aChildren[nChild];
+                var oDur = oChild.getDur();
+                if(oDur.isSpecified()) {
+                    nDur = Math.max(nDur, oDur.getVal());
+                }
+            }
+        }
+        return nDur;
+    };
+    CCTn.prototype.changeEffectDuration = function(v) {
+        var dOldV = this.getEffectDuration();
+        var dCoef = null;
+        var v_ = Math.max(10, v);
+        if(dOldV > 0) {
+            dCoef = v_/dOldV;
+            if(AscFormat.fApproxEqual(dCoef, 1.0)) {
+                return;
+            }
+        }
+        var aChildren = this.childTnLst && this.childTnLst.list;
+        if(aChildren) {
+            for(var nChild = 0; nChild < aChildren.length; ++nChild) {
+                var oChild = aChildren[nChild];
+                var oDur = oChild.getDur();
+                if(oDur.isSpecified()) {
+                    var oAttr = oChild.getAttributesObject();
+                    var nDelay = oAttr.getDelay(false);
+                    if(dCoef !== null) {
+                        oAttr.setDur((oDur.getVal()*dCoef + 0.5 >> 0) + "");
+                        if(AscFormat.isRealNumber(nDelay) && nDelay !== 0) {
+                            oAttr.changeDelay(nDelay*dCoef);
+                        }
+                    }
+                    else {
+                        oAttr.setDur(v_ + "");
+                    }
+
+                }
+            }
+        }
+    };
+    CCTn.prototype.changeRepeatCount = function(v) {
+        var oAttrObject = this;
+        if(v !== AscFormat.untilNextSlide && v !== AscFormat.untilNextClick) {
+            oAttrObject.setRepeatCount(v + "");
+        }
+        else {
+            oAttrObject.setRepeatCount("indefinite");
+        }
+        if(v === AscFormat.untilNextClick) {
+            if(oAttrObject && oAttrObject.endCondLst) {
+                oAttrObject.setEndCondLst(null);
+            }
+        }
+        else {
+            if(!oAttrObject.endCondLst) {
+                oAttrObject.setEndCondLst(new CCondLst()) ;
+            }
+            oAttrObject.endCondLst.clear();
+            var oCond = new CCond();
+            oCond = new CCond();
+            oCond.setEvt(COND_EVNT_ON_NEXT);
+            oCond.setDelay("0");
+            var oTgt = new CTgtEl();
+            oCond.setTgtEl(oTgt);
+            oAttrObject.endCondLst.push(oCond);
+        }
+    };
+    CCTn.prototype.changeRewind = function(v) {
+        this.setFill(v === true ? NODE_FILL_REMOVE : NODE_FILL_HOLD);
+    };
+    CCTn.prototype.getObjectId = function(v) {
+        var sObjectId = null;
+        this.traverse(function(oChild) {
+            if(oChild.isTimeNode() && (sObjectId = oChild.getTargetObjectId())) {
+                return true;
+            }
+            return false
+        });
+        return sObjectId;
+    };
+    CCTn.prototype.changeSubtype = function(v) {
+        if(AscFormat.isRealNumber(v)) {
+            var sObjectId = this.getObjectId();
+            if(sObjectId !== null) {
+                var oNewEffect = CTiming.prototype.createEffect(sObjectId, this.presetClass, this.presetID, v);
+                if(oNewEffect) {
+                    var oNewCTn = oNewEffect.cTn;
+                    if(this.getEffectDuration() !== oNewCTn.getEffectDuration()) {
+                        oNewCTn.changeEffectDuration(this.getEffectDuration());
+                    }
+                    this.setPresetSubtype(v);
+                    this.childTnLst.clear();
+                    oNewCTn.childTnLst.fillObject(this.childTnLst, {});
+                }
+            }
+        }
+    };
+    CCTn.prototype.changeStartType = function(v) {
+        if(this.nodeType === v) {
+            return;
+        }
+        var oEffectNode = this.parent;
+        if(!oEffectNode) {
+            return;
+        }
+        var oCurPar2Lvl, oCurPar3Lvl, oCurMainSeq;
+        var nIdx2, nIdx3, nMainIdx;
+        oCurPar3Lvl = oEffectNode.getParentTimeNode();
+        if(!oCurPar3Lvl) {
+            return;
+        }
+        nIdx3 = oCurPar3Lvl.getChildNodeIdx(oEffectNode);
+        oCurPar2Lvl = oCurPar3Lvl.getParentTimeNode();
+        if(!oCurPar2Lvl) {
+            return;
+        }
+        nIdx2 = oCurPar2Lvl.getChildNodeIdx(oCurPar3Lvl);
+        oCurMainSeq = oCurPar2Lvl.getParentTimeNode();
+        if(!oCurMainSeq) {
+            return;
+        }
+        nMainIdx = oCurMainSeq.getChildNodeIdx(oCurPar2Lvl);
+
+        var oPar2Lvl, oPar3Lvl;
+        var aWithEffects, aAfterEffects;
+        if(v === NODE_TYPE_CLICKEFFECT) {
+            oEffectNode.cTn.setNodeType(NODE_TYPE_CLICKEFFECT);
+            oPar3Lvl = CTiming.prototype.createPar(NODE_FILL_HOLD, "0");
+            aWithEffects = oCurPar3Lvl.splice(nIdx3);
+            oPar3Lvl.addEffects(0, aWithEffects);
+            oPar2Lvl = CTiming.prototype.createPar(NODE_FILL_HOLD, "indefinite");
+            oPar2Lvl.pushToChildTnLst(oPar3Lvl);
+            oPar2Lvl.addEffects(1, oCurPar2Lvl.splice(nIdx2 + 1));
+            oCurMainSeq.splice(nMainIdx + 1, 0, oPar2Lvl);
+        }
+        else if(v === NODE_TYPE_WITHEFFECT) {
+            oEffectNode.cTn.setNodeType(NODE_TYPE_WITHEFFECT);
+            if(nIdx3 === 0) {
+                if(nIdx2 === 0) {
+                    if(nMainIdx === 0) {
+                        //do nothing: no previous animation
+                    }
+                    else {
+                        oCurPar3Lvl.splice(nIdx3);
+                        oPar2Lvl = oCurMainSeq.getChildNode(nMainIdx - 1);
+                        oPar3Lvl = oPar2Lvl.getChildNode(oPar2Lvl.getChildrenCount() - 1);
+                        if(!oPar3Lvl) {
+                            oPar3Lvl = CTiming.prototype.createPar(NODE_FILL_HOLD, "0");
+                            oPar2Lvl.pushToChildTnLst(oPar3Lvl);
+                        }
+                        oPar3Lvl.pushToChildTnLst(oEffectNode);
+                    }
+                }
+                else {
+                    oCurPar3Lvl.splice(nIdx3);
+                    oPar3Lvl = oCurPar2Lvl.getChildNode(nIdx2 - 1);
+                    oPar3Lvl.pushToChildTnLst(oEffectNode);
+                }
+            }
+        }
+        else if(v === NODE_TYPE_AFTEREFFECT) {
+            oEffectNode.cTn.setNodeType(NODE_TYPE_AFTEREFFECT);
+            if(nIdx3 === 0) {
+                if(nIdx2 > 0) {
+                    //do nothing
+                }
+                else {
+                    if(nMainIdx > 0) {
+                        oPar3Lvl = CTiming.prototype.createPar(NODE_FILL_HOLD, "0");
+                        oPar3Lvl.addEffects(0, oCurPar3Lvl.splice(nIdx3));
+                        oPar2Lvl = oCurMainSeq.getChildNode(nMainIdx - 1);
+                        oPar2Lvl.pushToChildTnLst(oPar3Lvl);
+                    }
+                }
+            }
+            else {
+                oPar3Lvl = CTiming.prototype.createPar(NODE_FILL_HOLD, "0");
+                oPar3Lvl.addEffects(0, oCurPar3Lvl.splice(nIdx3));
+                oPar2Lvl = oCurPar2Lvl;
+                oPar2Lvl.splice(nIdx2 + 1, 0, oPar3Lvl);
+            }
+            oEffectNode.setDelayShift();
+        }
+        if(oCurPar3Lvl.getChildrenCount() === 0) {
+            oCurPar3Lvl.parent.onRemoveChild(oCurPar3Lvl);
+        }
+        var oTiming = oEffectNode.getTiming();
+        if(oTiming) {
+            oTiming.updateNodesIDs();
+        }
+        oEffectNode.getRoot().printTree();
+    };
+    CCTn.prototype.changeTrigger = function(v) {
+        var oEffect = this.parent;
+        if(!oEffect) {
+            return;
+        }
+        var oTiming = oEffect.getTiming();
+        if(!oTiming) {
+            return;
+        }
+        var oTimingParent = oTiming.parent;//might be slide, layout, master
+        if(!oTimingParent) {
+            return;
+        }
+        var oCSld = oTimingParent.cSld;
+        if(!oCSld) {
+            return;
+        }
+
+        var aHierarchy = oEffect.getHierarchy();
+        
+        var oCurPar2Lvl, oCurPar3Lvl, oCurTopSeq;
+        oCurPar3Lvl = aHierarchy[3];
+        oCurPar2Lvl = aHierarchy[2];
+        oCurTopSeq = aHierarchy[1];
+        
+        if(!oCurTopSeq || !oCurPar2Lvl || !oCurPar3Lvl) {
+            return;
+        }
+        var nIdx3 = oCurPar3Lvl.getChildNodeIdx(oEffect);
+        if(!v) {
+            //move to the main sequence
+            if(oCurTopSeq.isMainSequence()) {
+                //do nothing
+                return;
+            }
+            else {
+                oCurPar3Lvl.splice(nIdx3);
+                if(oCurPar3Lvl.getChildrenCount() === 0) {
+                    oCurPar3Lvl.parent.onRemoveChild(oCurPar3Lvl);
+                }
+                oTiming.addToMainSequence(oEffect);
+            }
+        }
+        else {
+            //move to interactive seq with spId = v;
+            var sObjectId;
+            var oDrawing = oCSld.getObjectByName(v);
+            if(!oDrawing) {
+                return;
+            }
+            sObjectId = oDrawing.Get_Id();
+            if(oCurTopSeq.isInteractiveSeq(sObjectId)) {
+                //do nothing
+                return;
+            }
+            else {
+                oCurPar3Lvl.splice(nIdx3);
+                if(oCurPar3Lvl.getChildrenCount() === 0) {
+                    oCurPar3Lvl.parent.onRemoveChild(oCurPar3Lvl);
+                }
+                oTiming.addToInteractiveSequence(oEffect, sObjectId);
+            }
+        }
+    };
+
 
     changesFactory[AscDFH.historyitem_CondRtn] = CChangeObject;
     changesFactory[AscDFH.historyitem_CondTgtEl] = CChangeObject;
@@ -3281,6 +5366,10 @@
     EVENT_DESCR_MAP[COND_EVNT_ON_PREV] = "ON_PREV";
     EVENT_DESCR_MAP[COND_EVNT_ON_STOPAUDIO] = "ON_STOPAUDIO";
 
+    var RTN_ALL = 0;
+    var RTN_FIRST = 1;
+    var RTN_LAST = 2;
+
     function CCond() {
         CBaseAnimObject.call(this);
         this.rtn = null;
@@ -3291,7 +5380,7 @@
     }
     InitClass(CCond, CBaseAnimObject, AscDFH.historyitem_type_Cond);
     CCond.prototype.setRtn = function(pr) {
-        oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CondRtn, this.rtn, pr));
+        oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CondRtn, this.rtn, pr));
         this.rtn = pr;
         this.setParentToChild(pr);
     };
@@ -3488,6 +5577,12 @@
                 break;
             }
         }
+    };
+    CCond.prototype.getTargetObjectId = function() {
+        if(this.tgtEl) {
+            return this.tgtEl.getSpId();
+        }
+        return null;
     };
 
     changesFactory[AscDFH.historyitem_RtnVal] = CChangeLong;
@@ -4578,6 +6673,15 @@
         return oAttributes["effect"] = new CEffectData(aFilters, fRelTime, this.prLst, this.transition);
     };
 
+    CAnimEffect.prototype.create = function(nTransition, sFilter, sObjectId, sDur) {
+        this.setTransition(nTransition);
+        this.setFilter(sFilter);
+        var oBhvr = new CCBhvr();
+        var oCTn = this.createCCTn(sDur, null, null, null, null, null);
+        oBhvr.setCTn(oCTn);
+        oBhvr.setTgtEl(this.createSpTgt(sObjectId));
+        this.setCBhvr(oBhvr);
+    };
 
     function CEffectData(aFilters, fRelTime, sPrLst, nTransition) {
         this.filters = aFilters;
@@ -5638,6 +7742,11 @@
     function CTimeNodeContainer() {//par, excl
         CTimeNodeBase.call(this);
         this.cTn = null;
+
+        this.triggerClickSequence = undefined;
+        this.triggerObjectClick = undefined;
+        this.settingsDelay = undefined;
+        this.selected = false;
     }
     InitClass(CTimeNodeContainer, CTimeNodeBase, AscDFH.historyitem_type_TimeNodeContainer);
     CTimeNodeContainer.prototype.setCTn = function(pr) {
@@ -5677,8 +7786,470 @@
         }
         return [];
     };
+    CTimeNodeContainer.prototype.isAnimEffect = function() {
+        return this.cTn.isAnimEffect();
+    };
+    CTimeNodeContainer.prototype.findSeqWithIdx = function() {
+        var oTiming = this.getTiming();
+        if(!oTiming) {
+            return null;
+        }
+        var aSeqs = oTiming.getEffectsSequences();
+        for(var nSeq = 0; nSeq < aSeqs.length; ++nSeq) {
+            var aSeq = aSeqs[nSeq];
+            for(var nEffect = aSeq.length - 1; nEffect > 0; --nEffect) {
+                if(aSeq[nEffect] === this) {
+                    return {seq: aSeq, idx: nEffect};
+                }
+            }
+        }
+        return null;
+    };
+    CTimeNodeContainer.prototype.getIndexInSequence = function() {
+        var aHierarchy = this.getHierarchy();
+        if(aHierarchy[1] && aHierarchy[2]) {
+            return aHierarchy[1].getChildNodeIdx(aHierarchy[2]);
+        }
+        return -1;
+    };
+    CTimeNodeContainer.prototype.getLabelFillColor = function() {
 
-    function CPar() {//par, seq, excl
+    };
+    CTimeNodeContainer.prototype.drawEffectLabel = function(oGraphics, dX, dY, dW, dH) {
+        AscFormat.ExecuteNoHistory(function(){
+            oGraphics.SaveGrState();
+            
+            var oMatrix = new AscCommon.CMatrix();
+            oMatrix.tx = dX;
+            oMatrix.ty = dY;
+            oGraphics.transform3(oMatrix);
+            //draw rect
+            
+            oGraphics.SetIntegerGrid(true);
+            var nFillColor = this.isSelected() ? 0xE0E0E0 : 0xFFFFFF;
+            var nLineColor = 0xCBCBCB; 
+            oGraphics.b_color1((nFillColor >> 16) & 0xFF, (nFillColor >> 8) & 0xFF, nFillColor & 0xFF, 0xFF);
+            oGraphics.p_color((nLineColor >> 16) & 0xFF, (nLineColor >> 8) & 0xFF, nLineColor & 0xFF, 255);
+            oGraphics.p_width(0);
+            oGraphics._s();
+            oGraphics.rect(0, 0, dW, dH);
+            oGraphics.df();
+            oGraphics.ds();
+            
+            // oGraphics.p_color((nLineColor >> 16) & 0xFF, (nLineColor >> 8) & 0xFF, nLineColor & 0xFF, 255);
+            // oGraphics.p_width(0);
+            // oGraphics._s();
+            // oGraphics.drawVerLine(1, 0, 0, dH, 0);
+            // oGraphics.drawVerLine(1, dW, 0, dH, 0);
+            // oGraphics.drawHorLine(1, 0, 0, dW, 0);
+            // oGraphics.drawHorLine(1, dH, 0, dW, 0);
+            // oGraphics.ds();
+            //draw internal part
+            
+            oGraphics.RestoreGrState();
+            
+
+            if(this.isPartOfMainSequence()) {
+                var nIdx = this.getIndexInSequence();
+                if(AscFormat.isRealNumber(nIdx)) {
+                    var oLabel = new CLabel(null, (nIdx + 1) + "", 8, false, AscCommon.align_Center);
+                    oLabel.setLayout(dX, dY, dW, dH);
+                    oLabel.recalculate();
+                    oLabel.draw(oGraphics);
+                }
+            }
+
+        }, this, []);
+    };
+    CTimeNodeContainer.prototype.getObjectId = function() {
+        if(this.isAnimEffect()) {
+            return this.cTn.getObjectId();
+        }
+        return null;
+    };
+    CTimeNodeContainer.prototype.isObjectEffect = function(sObjectId) {
+        if(this.isAnimEffect()) {
+            return this.getObjectId() === sObjectId;
+        }
+        return false;
+    };
+    CTimeNodeContainer.prototype.merge = function(oTNContainer) {
+        AscFormat.ExecuteNoHistory(function() {
+            if(oTNContainer === this) {
+                return;
+            }
+            this.cTn.merge(oTNContainer.cTn);
+            if(!Array.isArray(this.merged)) {
+                this.merged = [];
+            }
+            var oCopy = oTNContainer.createDuplicate();
+            oCopy.originalNode = oTNContainer;
+            oCopy.setParent(oTNContainer.parent);
+            this.merged.push(oCopy);
+        }, this, []);
+    };
+    CTimeNodeContainer.prototype.isMultipleEffect = function() {
+        if(Array.isArray(this.merged) && this.merged.length > 1) {
+            if(this.presetClass === undefined || this.presetID === undefined || this.presetSubtype === undefined) {
+                return true;
+            }
+        }
+        return false;
+    };
+    CTimeNodeContainer.prototype.addToChildTnLst = function(nIdx, oNode) {
+        this.cTn.addToChildTnLst(nIdx, oNode);
+    };
+    CTimeNodeContainer.prototype.pushToChildTnLst = function(oNode) {
+        this.cTn.pushToChildTnLst(oNode);
+    };
+    CTimeNodeContainer.prototype.clearChildTnLst = function() {
+        this.cTn.clearChildTnLst();
+    };
+    CTimeNodeContainer.prototype.resetDelayShift = function() {
+        if(this.isAnimEffect()) {
+            this.cTn.resetDelayShift();
+        }
+    };
+    CTimeNodeContainer.prototype.setDelayShift = function() {
+        if(this.isAnimEffect()) {
+            this.cTn.setDelayShift();
+        }
+    };
+    CTimeNodeContainer.prototype.splice = function() {
+        return this.cTn.childTnLst.splice.apply(this.cTn.childTnLst, arguments);
+    };
+    CTimeNodeContainer.prototype.getLastChild = function() {
+        return this.cTn.childTnLst.getLast();
+    };
+    CTimeNodeContainer.prototype.addEffects = function(nInsertIdx, aEffects) {
+        for(var nIdx = 0; nIdx < aEffects.length; ++nIdx) {
+            this.splice(nInsertIdx + nIdx, 0, aEffects[nIdx]);
+        }
+    };
+    CTimeNodeContainer.prototype.addEffectToTheEndOfSeqAsClickEffect = function(oEffect) {
+        var oPar2Lvl, oPar3Lvl;
+        var sSecondLevelDelay = this.isMainSequence() ? "indefinite" : "0";
+        oPar2Lvl = CTiming.prototype.createPar(NODE_FILL_HOLD, sSecondLevelDelay);
+        oPar3Lvl = CTiming.prototype.createPar(NODE_FILL_HOLD, "0");
+        oPar3Lvl.pushToChildTnLst(oEffect);
+        oPar2Lvl.pushToChildTnLst(oPar3Lvl);
+        this.pushToChildTnLst(oPar2Lvl);
+    };
+    CTimeNodeContainer.prototype.addEffectToTheEndOfSeq = function(oEffect) {
+        if(!this.isMainSequence() && !this.getSpClickInteractiveSeq()) {
+            return;
+        }
+        if(!oEffect) {
+            return;
+        }
+        var oPar2Lvl, oPar3Lvl;
+        if(oEffect.isClickEffect()) {
+            this.addEffectToTheEndOfSeqAsClickEffect(oEffect);
+        }
+        else if(oEffect.isAfterEffect()) {
+            oPar2Lvl = this.getLastChild();
+            if(!oPar2Lvl) {
+                this.addEffectToTheEndOfSeqAsClickEffect(oEffect);
+            }
+            else {
+                oPar3Lvl = CTiming.prototype.createPar(NODE_FILL_HOLD, "0");
+                oPar3Lvl.pushToChildTnLst(oEffect);
+                oPar2Lvl.pushToChildTnLst(oPar3Lvl);
+            }
+        }
+        else if(oEffect.isWithEffect()) {
+            oPar2Lvl = this.getLastChild();
+            if(!oPar2Lvl) {
+                this.addEffectToTheEndOfSeqAsClickEffect(oEffect);
+            }
+            else {
+                oPar3Lvl = oPar2Lvl.getLastChild();
+                if(oPar3Lvl) {
+                    oPar3Lvl.pushToChildTnLst(oEffect);
+                }
+                else {
+                    oPar3Lvl = CTiming.prototype.createPar(NODE_FILL_HOLD, "0");
+                    oPar3Lvl.pushToChildTnLst(oEffect);
+                    oPar2Lvl.pushToChildTnLst(oPar3Lvl);
+                }
+            }
+        }
+        oEffect.setDelayShift();
+    };
+    CTimeNodeContainer.prototype.getChildrenCount = function() {
+        return this.cTn.childTnLst.getLength();
+    };
+    CTimeNodeContainer.prototype.getChildTimeNodeByType = function(nType) {
+        return this.cTn.getTimeNodeByType(nType);
+    };
+    CTimeNodeContainer.prototype.getChildNodeIdx = function(oChildNode) {
+        return this.cTn.childTnLst.getChildIdx(oChildNode);
+    };
+    CTimeNodeContainer.prototype.getAllEffects = function() {
+        var aAllEffects = [];
+        this.traverse(function(oChild){
+            if(oChild.isTimeNode() && oChild.isAnimEffect()) {
+                aAllEffects.push(oChild);
+            }
+        });
+        return aAllEffects;
+    };
+    CTimeNodeContainer.prototype.getLabel = function() {
+        if(this.isMainSequence()) {
+            return null;
+        }
+        var sClickSp = this.getSpClickInteractiveSeq();
+        if(sClickSp) {
+            var oSp = AscCommon.g_oTableId.Get_ById(sClickSp);
+            if(oSp) {
+                return AscCommon.translateManager.getValue("Trigger:") + " " + oSp.getObjectName();
+            }
+        }
+        return null;
+    };
+    CTimeNodeContainer.prototype.getObjectName = function() {
+        var sObjectId = this.getObjectId();
+        var oObject = AscCommon.g_oTableId.Get_ById(sObjectId);
+        if(oObject) {
+            return oObject.getObjectName();
+        }
+        return "";
+    };
+    CTimeNodeContainer.prototype.asc_getStartType = function() {
+        if(this.cTn) {
+            return this.cTn.nodeType;
+        }
+        return null;
+    };
+    CTimeNodeContainer.prototype["asc_getStartType"] = CTimeNodeContainer.prototype.asc_getStartType;
+    CTimeNodeContainer.prototype.asc_putStartType = function(v) {
+        if(this.cTn) {
+            this.cTn.nodeType = v;
+        }
+        return null;
+    };
+    CTimeNodeContainer.prototype["asc_putStartType"] = CTimeNodeContainer.prototype.asc_putStartType;
+    CTimeNodeContainer.prototype.asc_getDelay = function() {
+        if(AscFormat.isRealNumber(this.settingsDelay)) {
+            return this.settingsDelay;
+        }
+        if(Array.isArray(this.merged) && this.merged.length > 0) {
+            var nFirst = this.merged[0].asc_getDelay();
+            var nCurDelay;
+            for(var nIdx = 1; nIdx < this.merged.length; ++nIdx) {
+                nCurDelay = this.merged[nIdx];
+                if(nFirst !== nCurDelay) {
+                    return undefined;
+                }
+            }
+            return nFirst;
+        }
+        if(this.cTn) {
+            return this.cTn.getDelay();
+        }
+        return 0;
+    };
+    CTimeNodeContainer.prototype["asc_getDelay"] = CTimeNodeContainer.prototype.asc_getDelay;
+    CTimeNodeContainer.prototype.asc_putDelay = function(v) {
+        AscFormat.ExecuteNoHistory(function() {
+            this.settingsDelay = v;
+            if(this.cTn) {
+                return this.cTn.changeDelay(v);
+            }
+        }, this, []);
+    };
+    CTimeNodeContainer.prototype["asc_putDelay"] = CTimeNodeContainer.prototype.asc_putDelay;
+    CTimeNodeContainer.prototype.asc_getDuration = function() {
+        if(Array.isArray(this.merged) && this.merged.length > 0) {
+            var nDur = this.merged[0].asc_getDuration();
+            for(var nIdx = 1; nIdx < this.merged.length; ++nIdx) {
+                if(nDur !== this.merged[nIdx].asc_getDuration()) {
+                    return undefined;
+                }
+            }
+            return nDur;
+        }
+        else {
+            if(this.cTn) {
+                return this.cTn.getEffectDuration();
+            }
+        }
+        return 0;
+    };
+    CTimeNodeContainer.prototype["asc_getDuration"] = CTimeNodeContainer.prototype.asc_getDuration;
+    CTimeNodeContainer.prototype.asc_putDuration = function(v) {
+        AscFormat.ExecuteNoHistory(function() {
+            if(this.cTn) {
+                this.cTn.changeEffectDuration(v);
+            }
+            if(Array.isArray(this.merged) && this.merged.length > 0) {
+                for(var nIdx = 0; nIdx < this.merged.length; ++nIdx) {
+                    this.merged[nIdx].asc_putDuration(v);
+                }
+            }
+        }, this, []);
+    };
+    CTimeNodeContainer.prototype["asc_putDuration"] = CTimeNodeContainer.prototype.asc_putDuration;
+    CTimeNodeContainer.prototype.asc_getRepeatCount = function() {
+        var oRepeatCount = this.getRepeatCount();
+        if(oRepeatCount.isDefinite()) {
+            return oRepeatCount.val;
+        }
+        if(oRepeatCount.isIndefinite()) {
+            if(this.cTn.endCondLst && this.cTn.endCondLst) {
+                var aCond = this.cTn.endCondLst.list;
+                if(aCond[0] &&  aCond[0].evt === COND_EVNT_ON_NEXT ) {
+                    return AscFormat.untilNextSlide;
+                }
+            }
+            return AscFormat.untilNextClick;
+        }
+        return 1000;
+    };
+    CTimeNodeContainer.prototype["asc_getRepeatCount"] = CTimeNodeContainer.prototype.asc_getRepeatCount;
+    CTimeNodeContainer.prototype.asc_putRepeatCount = function(v) {
+        AscFormat.ExecuteNoHistory(function() {
+            if(this.cTn) {
+                this.cTn.changeRepeatCount(v);
+            }
+        }, this, []);
+    };
+    CTimeNodeContainer.prototype["asc_putRepeatCount"] = CTimeNodeContainer.prototype.asc_putRepeatCount;
+    CTimeNodeContainer.prototype.asc_getRewind = function() {
+        return this.getAttributesObject().fill === NODE_FILL_REMOVE;
+    };
+    CTimeNodeContainer.prototype["asc_getRewind"] = CTimeNodeContainer.prototype.asc_getRewind;
+    CTimeNodeContainer.prototype.asc_putRewind = function(v) {
+        return AscFormat.ExecuteNoHistory(function() {
+                this.cTn.setFill(v === true ? NODE_FILL_REMOVE : NODE_FILL_HOLD);
+            },
+            this, []);
+    };
+    CTimeNodeContainer.prototype["asc_putRewind"] = CTimeNodeContainer.prototype.asc_putRewind;
+
+    CTimeNodeContainer.prototype.asc_getClass = function() {
+        return this.isMultipleEffect() ? undefined : this.cTn.presetClass;
+    };
+    CTimeNodeContainer.prototype["asc_getClass"] = CTimeNodeContainer.prototype.asc_getClass;
+    CTimeNodeContainer.prototype.asc_getType = function() {
+        if(typeof this.cTn.presetID === "undefined") {
+            return this.isMultipleEffect() ? AscFormat.ANIM_PRESET_MULTIPLE : AscFormat.ANIM_PRESET_NONE;
+        }
+        return this.cTn.presetID;
+    };
+    CTimeNodeContainer.prototype["asc_getType"] = CTimeNodeContainer.prototype.asc_getType;
+    CTimeNodeContainer.prototype.asc_getSubtype = function() {
+        return this.isMultipleEffect() ? undefined : this.cTn.presetSubtype;
+    };
+    CTimeNodeContainer.prototype["asc_getSubtype"] = CTimeNodeContainer.prototype.asc_getSubtype;
+    CTimeNodeContainer.prototype.asc_putSubtype = function(v) {
+        AscFormat.ExecuteNoHistory(function() {
+            this.cTn.setPresetSubtype(v);
+        }, this, []);
+    };
+    CTimeNodeContainer.prototype["asc_putSubtype"] = CTimeNodeContainer.prototype.asc_putSubtype;
+    CTimeNodeContainer.prototype.asc_getTriggerClickSequence = function() {
+        if(this.triggerClickSequence !== undefined) {
+            return this.triggerClickSequence;
+        }
+        if(Array.isArray(this.merged) && this.merged.length > 0) {
+            var bIsInMainSeq = this.merged[0].isPartOfMainSequence();
+            var bCurVal;
+            for(var nEffect = 1; nEffect < this.merged.length; ++nEffect) {
+                bCurVal = this.merged[nEffect].isPartOfMainSequence();;
+                if(bCurVal !== bIsInMainSeq) {
+                    return undefined;
+                }
+            }
+            return bIsInMainSeq;
+        }
+        return this.isPartOfMainSequence();
+    };
+    CTimeNodeContainer.prototype["asc_getTriggerClickSequence"] = CTimeNodeContainer.prototype.asc_getTriggerClickSequence;
+    CTimeNodeContainer.prototype.asc_putTriggerClickSequence = function(v) {
+        this.triggerClickSequence = v;
+    };
+    CTimeNodeContainer.prototype.asc_getTriggerObjectClick = function() {
+        if(this.triggerObjectClick !== undefined) {
+            return this.triggerObjectClick;
+        }
+        var sInteractiveSeq;
+        if(Array.isArray(this.merged) && this.merged.length > 0) {
+            sInteractiveSeq = this.merged[0].isPartOfInteractiveSeq();
+            var sCurVal;
+            for(var nEffect = 1; nEffect < this.merged.length; ++nEffect) {
+                sCurVal = this.merged[nEffect].isPartOfInteractiveSeq();
+                if(sCurVal !== sInteractiveSeq) {
+                    return undefined;
+                }
+            }
+        }
+        if(!sInteractiveSeq) {
+            sInteractiveSeq = this.isPartOfInteractiveSeq();
+        }
+        var oSp = AscCommon.g_oTableId.Get_ById(sInteractiveSeq);
+        if(oSp) {
+            return oSp.getObjectName();
+        }
+    };
+    CTimeNodeContainer.prototype["asc_getTriggerObjectClick"] = CTimeNodeContainer.prototype.asc_getTriggerObjectClick;
+    CTimeNodeContainer.prototype.asc_putTriggerObjectClick = function(v) {
+        this.triggerObjectClick = v;
+    };
+    CTimeNodeContainer.prototype["asc_putTriggerObjectClick"] = CTimeNodeContainer.prototype.asc_putTriggerObjectClick;
+    CTimeNodeContainer.prototype.isEqualProperties = function(oPr) {
+        if(!oPr) {
+            return false;
+        }
+        if(this.asc_getStartType() !== oPr.asc_getStartType()) {
+            return false;
+        }
+        if(this.asc_getDelay() !== oPr.asc_getDelay()) {
+            return false;
+        }
+        if(this.asc_getDuration() !== oPr.asc_getDuration()) {
+            return false;
+        }
+        if(this.asc_getRepeatCount() !== oPr.asc_getRepeatCount()) {
+            return false;
+        }
+        if(this.asc_getRewind() !== oPr.asc_getRewind()) {
+            return false;
+        }
+        if(this.asc_getClass() !== oPr.asc_getClass()) {
+            return false;
+        }
+        if(this.asc_getType() !== oPr.asc_getType()) {
+            return false;
+        }
+        if(this.asc_getSubtype() !== oPr.asc_getSubtype()) {
+            return false;
+        }
+        if(this.asc_getTriggerClickSequence() !== oPr.asc_getTriggerClickSequence()) {
+            return false;
+        }
+        if(this.asc_getTriggerObjectClick() !== oPr.asc_getTriggerObjectClick()) {
+            return false;
+        }
+        return true;
+    };
+    CTimeNodeContainer.prototype.isSelected = function() {
+        if(this.isAnimEffect()) {
+            return this.selected === true;
+        }
+        return false;
+    };
+    CTimeNodeContainer.prototype.select = function() {
+        this.selected = true;
+    };
+    CTimeNodeContainer.prototype.deselect = function() {
+        this.selected = false;
+    };
+
+    AscFormat["untilNextClick"] = AscFormat.untilNextClick = -1;
+    AscFormat["untilNextSlide"] = AscFormat.untilNextSlide = -2;
+
+    function CPar() {
         CTimeNodeContainer.call(this);
         this.cTn = null;
     }
@@ -5690,6 +8261,8 @@
         for(nChild = 0; nChild < aChildren.length; ++nChild) {
             aChildren[nChild].scheduleStart(oPlayer);
         }
+    };
+    CPar.prototype.createEffect = function(sObjectId, nPresetClass, nPresetId, nPresetSubtype) {
     };
 
     function CExcl() {//par, excl
@@ -5975,13 +8548,30 @@
             var oParentNode;
             while(oParentNode = oCurNode.getParentTimeNode()) {
                 var oAttrObject = oParentNode.getAttributesObject();
-                if(PRESTET_CLASS_ENTR === oAttrObject.presetClass) {
+                if(PRESET_CLASS_ENTR === oAttrObject.presetClass) {
                     return true;
                 }
                 oCurNode = oParentNode;
             }
         }
         return false;
+    };
+    CSet.prototype.createSetVisibility = function(sObjectId, bVisible) {
+        var oBhvr = new CCBhvr();
+        this.setCBhvr(oBhvr);
+        var oCTn = this.createCCTn("1", NODE_FILL_HOLD, 0, null, null, null);
+        oBhvr.setCTn(oCTn);
+        var oTgtEl = this.createSpTgt(sObjectId);
+        oBhvr.setTgtEl(oTgtEl);
+        var oAttrLst = new CAttrNameLst();
+        oBhvr.setAttrNameLst(oAttrLst);
+        var oAttr = new CAttrName();
+        oAttrLst.addToLst(0, oAttr);
+        oAttr.setText("style.visibility");
+        var oTo = new CAnimVariant();
+        this.setTo(oTo);
+        oTo.setStrVal(bVisible ? "visible" : "hidden");
+        return this;
     };
 
 
@@ -6521,7 +9111,7 @@
     CAnimComplexTrigger.prototype.isDefault = function() {
         return this.triggers.length === 1 && this.triggers[0] === DEFAULT_SIMPLE_TRIGGER;
     };
-    
+
 
     function CAnimEvent(fCallback, oTrigger, oCaller) {
         this.trigger = oTrigger;
@@ -6643,13 +9233,13 @@
             bNoTransform = true;
         }
         else {
-            if(oTransform.IsIdentity2()) {
-                var fDelta = 2;
-                if(AscFormat.fApproxEqual(oTransform.tx*this.scale, this.x, fDelta) &&
-                    AscFormat.fApproxEqual(oTransform.ty*this.scale, this.y, fDelta)) {
-                    bNoTransform = true;
-                }
-            }
+            // if(oTransform.IsIdentity2()) {
+            //     var fDelta = 2;
+            //     if(AscFormat.fApproxEqual(oTransform.tx*this.scale, this.x, fDelta) &&
+            //         AscFormat.fApproxEqual(oTransform.ty*this.scale, this.y, fDelta)) {
+            //         bNoTransform = true;
+            //     }
+            // }
         }
         if(bNoTransform) {
             oGraphics.SaveGrState();
@@ -7255,7 +9845,14 @@
         return this.createDiamond(1 - fTime, sOperation);
     };
     CAnimTexture.prototype.createDiamondOut = function(fTime, nTransition) {
-        return this.createDiamond(1 - fTime, "destination-in");
+        var sOperationType;
+        if(nTransition === TRANSITION_TYPE_IN) {
+            sOperationType = 'destination-in';
+        }
+        else {
+            sOperationType = 'destination-out';
+        }
+        return this.createDiamond(fTime, sOperationType);
     };
     CAnimTexture.prototype.getRandomRanges = function(fTime, nTransition) {
         var nFilledBars = RANDOM_BARS_ARRAY.length * fTime + 0.5 >> 0;
@@ -7833,9 +10430,7 @@
         oGraphics.m_oFontManager = AscCommon.g_fontManager;
         oGraphics.transform(1,0,0,1,0,0);
         oGraphics.IsNoDrawingEmptyPlaceholder = true;
-        if(editor.WordControl.DemonstrationManager.Mode) {
-            oGraphics.IsDemonstrationMode = true;
-        }
+        oGraphics.IsDemonstrationMode = true;
         return oGraphics;
     };
     CAnimationDrawer.prototype.onRecalculateFrame = function() {
@@ -7897,31 +10492,33 @@
             }
         }
     };
+    CAnimationDrawer.prototype.clearObjectTexture = function(sId) {
+        this.texturesCache.removeTexture(sId);
+    };
 
     function CAnimationPlayer(oSlide, drawer) {
         this.slide = oSlide;
         this.timings = [];
-        if(oSlide.timing) {
-            this.timings.push(oSlide.timing);
-        }
-        if(oSlide.Layout.timing) {
-            this.timings.push(oSlide.Layout.timing);
-        }
-        if(oSlide.Layout.Master.timing) {
-            this.timings.push(oSlide.Layout.Master.timing);
-        }
-        for(var nTiming = 0; nTiming < this.timings.length; ++nTiming) {
-            var oRoot = this.timings[nTiming].getTimingRootNode();
-            if(oRoot) {
-                oRoot.resetState();
-            }
-        }
+        this.updateTimingList();
         this.eventsProcessor = new CEventsProcessor(this);
         this.animationScheduler = new CAnimationScheduler(this);
         this.animationDrawer = new CAnimationDrawer(this);
         this.timer = new CAnimationTimer(this);
         this.drawer = drawer;
     }
+    CAnimationPlayer.prototype.updateTimingList = function() {
+        this.timings.length = 0;
+        if(this.slide.timing) {
+            this.timings.push(this.slide.timing);
+        }
+        if(this.slide.Layout.timing) {
+            this.timings.push(this.slide.Layout.timing);
+        }
+        if(this.slide.Layout.Master.timing) {
+            this.timings.push(this.slide.Layout.Master.timing);
+        }
+        this.resetNodesState();
+    };
     CAnimationPlayer.prototype.getPresentation = function() {
         return editor.WordControl.m_oLogicDocument;
     };
@@ -7941,7 +10538,7 @@
         var bIsPaused = this.isPaused();
         this.timer.start();
         if(!bIsPaused) {
-            this.resetNodesState();
+            this.updateTimingList();
             this.scheduleNodesStart();
         }
         if(this.isMainSequenceFinished()) {
@@ -7983,7 +10580,7 @@
         }
     };
     CAnimationPlayer.prototype.isMainSequenceFinished = function () {
-        var oTiming = this.slide && this.slide.timing;
+        var oTiming = this.timings[0];
         if(oTiming) {
             return oTiming.isMainSequenceAtEnd();
         }
@@ -8094,6 +10691,53 @@
     };
     CAnimationPlayer.prototype.getExternalEvent = function() {
       return this.eventsProcessor.getExternalEvent();
+    };
+    CAnimationPlayer.prototype.clearObjectTexture = function(sId) {
+        this.animationDrawer.clearObjectTexture(sId);
+    };
+
+
+    function CDemoAnimPlayer(oSlide) {
+        CAnimationPlayer.call(this, oSlide, null);
+    }
+    InitClass(CDemoAnimPlayer, CAnimationPlayer, 0);
+    CDemoAnimPlayer.prototype.updateTimingList = function() {
+        this.timings.length = 0;
+        var oTiming = this.slide.timing;
+        if(oTiming) {
+            var oDemoTiming = oTiming.createDemoTiming();
+            if(oDemoTiming) {
+
+            }
+            this.timings.push(oDemoTiming);
+        }
+        var oTr      = editor.WordControl.m_oDrawingDocument.TransitionSlide;
+        oTr.CalculateRect();
+        var oR = oTr.Rect;
+        this.rect = new AscFormat.CGraphicBounds(oR.x, oR.y, oR.x + oR.w, oR.y + oR.h);
+        this.overlayCanvas = editor.WordControl.m_oOverlayApi.m_oContext.canvas;
+        this.overlay = editor.WordControl.m_oOverlayApi;
+    };
+    CDemoAnimPlayer.prototype.onMainSeqFinished = function () {
+        this.stop();
+        editor.WordControl.m_oLogicDocument.StopAnimationPreview();
+    };
+    
+    CDemoAnimPlayer.prototype.start = function () {
+        CAnimationPlayer.prototype.start.call(this);
+        this.overlay.CheckRect(this.rect.x, this.rect.y, this.rect.w, this.rect.h);
+        this.onRecalculateFrame();
+    };
+    CDemoAnimPlayer.prototype.stop = function () {
+        CAnimationPlayer.prototype.stop.call(this);
+        this.overlay.Clear();
+        this.overlay.CheckRect(this.rect.x, this.rect.y, this.rect.w, this.rect.h);
+        this.slide.showDrawingObjects();
+    };
+    CDemoAnimPlayer.prototype.onRecalculateFrame = function() {
+        this.overlay.Clear();
+        this.overlay.CheckRect(this.rect.x, this.rect.y, this.rect.w, this.rect.h);
+        this.drawFrame(this.overlayCanvas, this.rect);
     };
 
     var DEFAULT_SIMPLE_TRIGGER = function() {
@@ -9114,7 +11758,1918 @@
     //--------------------------------------------------------------------------
 
 
-    var GLOBAL_PLAYER = null;
+    var STATE_FLAG_SELECTED = 1;
+    var STATE_FLAG_HOVERED = 2;
+
+    var CONTROL_TYPE_UNKNOWN = 0;
+    var CONTROL_TYPE_HEADER = 1;
+    var CONTROL_TYPE_TOOLBAR = 2;
+    var CONTROL_TYPE_SEQ_LIST_CONTAINER = 3;
+    var CONTROL_TYPE_SCROLL_VERT = 4;
+    var CONTROL_TYPE_SCROLL_HOR = 5;
+    var CONTROL_TYPE_SEQ_LIST = 6;
+    var CONTROL_TYPE_ANIM_SEQ = 7;
+    var CONTROL_TYPE_ANIM_GROUP_LIST = 8;
+    var CONTROL_TYPE_ANIM_GROUP = 9;
+    var CONTROL_TYPE_ANIM_ITEM = 10;
+    var CONTROL_TYPE_LABEL = 11;
+    var CONTROL_TYPE_BUTTON = 12;
+    var CONTROL_TYPE_IMAGE = 13;
+    var CONTROL_TYPE_TIMELINE_CONTAINER = 14;
+    var CONTROL_TYPE_TIMELINE = 15;
+    var CONTROL_TYPE_EFFECT_BAR = 16;
+
+    var LEFT_TIMELINE_INDENT = 14 * AscCommon.g_dKoef_pix_to_mm;
+    var LABEL_TIMELINE_WIDTH = 155 * AscCommon.g_dKoef_pix_to_mm;
+
+    function CControl(oParentControl) {
+        AscFormat.ExecuteNoHistory(function() {
+            AscFormat.CShape.call(this);
+            this.setRecalculateInfo();
+            this.setBDeleted(false);
+            this.setLayout(0, 0, 0, 0);
+        }, this, []);
+
+        this.parent = editor.WordControl.m_oLogicDocument.Slides[0];
+        this.parentControl = oParentControl;
+        this.state = 0;
+        this.hidden = false;
+        this.previous = null;
+        this.next = null;
+    }
+    InitClass(CControl, AscFormat.CShape, CONTROL_TYPE_UNKNOWN);
+    CControl.prototype.DEFALT_WRAP_OBJECT = {oTxWarpStruct: null, oTxWarpStructParamarks: null, oTxWarpStructNoTransform: null, oTxWarpStructParamarksNoTransform: null};
+    CControl.prototype.setHidden = function(bVal) {
+        if(this.hidden !== bVal) {
+            this.hidden = bVal;
+            this.onUpdate();
+        }
+    };
+    CControl.prototype.show = function() {
+        this.setHidden(false);
+    };
+    CControl.prototype.hide = function() {
+        this.setHidden(true);
+    };
+    CControl.prototype.isHidden = function() {
+        return this.hidden;
+    };
+    CControl.prototype.notAllowedWithoutId = function() {
+        return false;
+    };
+    //define shape methods
+    CControl.prototype.getBodyPr = function () {
+        return this.bodyPr;
+    };
+    CControl.prototype.getScrollOffsetX = function (oChild) {
+        return 0;
+    };
+    CControl.prototype.getScrollOffsetY = function (oChild) {
+        return 0;
+    };
+    CControl.prototype.getParentScrollOffsetX = function (oChild) {
+        if(this.parentControl) {
+            return this.parentControl.getScrollOffsetX(oChild);
+        }
+        return 0;
+    };
+    CControl.prototype.getParentScrollOffsetY = function (oChild) {
+        if(this.parentControl) {
+            return this.parentControl.getScrollOffsetY(oChild);
+        }
+        return 0;
+    };
+    CControl.prototype.getFullTransformMatrix = function () {
+        return this.transform;
+    };
+    CControl.prototype.getInvFullTransformMatrix = function () {
+        return this.invertTransform;
+    };
+    CControl.prototype.multiplyParentTransforms = function(oLocalTransform) {
+        var oMT = AscCommon.global_MatrixTransformer;
+        var oTransform = oMT.CreateDublicateM(oLocalTransform);
+        var oScrollMatrix = new AscCommon.CMatrix();
+        oScrollMatrix.tx = this.getParentScrollOffsetX(this);
+        oScrollMatrix.ty = this.getParentScrollOffsetY(this);
+        oMT.MultiplyAppend(oTransform, oScrollMatrix);
+        var oParentTransform = this.parentControl && this.parentControl.getFullTransformMatrix();
+        oParentTransform && oMT.MultiplyAppend(oTransform, oParentTransform);
+        return oTransform;
+    };
+    CControl.prototype.getFullTransform = function() {
+        return this.transform;
+    };
+    CControl.prototype.getFullTextTransform = function() {
+        return this.transformText;
+    };
+
+    CControl.prototype.recalculate = function() {
+        AscFormat.CShape.prototype.recalculate.call(this);
+    };
+    CControl.prototype.recalculateBrush = function () {
+        this.brush = null;
+    };
+    CControl.prototype.recalculatePen = function () {
+        this.pen = null;
+    };
+    CControl.prototype.recalculateContent = function () {
+    };
+    CControl.prototype.recalculateGeometry = function() {
+        //this.calcGeometry = AscFormat.CreateGeometry("rect");
+        //this.calcGeometry.Recalculate(this.extX, this.extY);
+    };
+    CControl.prototype.recalculateTransform = function() {
+        if(!this.transform) {
+            this.transform = new AscCommon.CMatrix();
+        }
+        var tx = this.getLeft();
+        var ty = this.getTop();
+        this.x = tx;
+        this.y = ty;
+        this.rot = 0;
+        this.extX = this.getWidth();
+        this.extY = this.getHeight();
+        this.flipH = false;
+        this.flipV = false;
+        ty += this.getParentScrollOffsetY(this);
+        var oCurParent = this.parentControl;
+
+        if(oCurParent) {
+            tx += oCurParent.transform.tx;
+            ty += oCurParent.transform.ty
+        }
+        this.transform.tx = tx;
+        this.transform.ty = ty;
+        if(!this.invertTransform) {
+            this.invertTransform = new AscCommon.CMatrix();
+        }
+        this.invertTransform.tx = -tx;
+        this.invertTransform.ty = -ty;
+        this.localTransform = this.transform;
+    };
+    CControl.prototype.recalculateTransformText = function() {
+        if(!this.transformText) {
+            this.transformText = new AscCommon.CMatrix();
+        }
+        this.transformText.tx = this.transform.tx;
+        this.transformText.ty = this.transform.ty;
+
+        if(!this.invertTransformText) {
+            this.invertTransformText = new AscCommon.CMatrix();
+        }
+        this.invertTransformText.tx = -this.transform.tx;
+        this.invertTransformText.ty = -this.transform.ty;
+        this.localTransformText = this.transformText;
+    };
+    CControl.prototype.recalculateBounds = function() {
+        var dX = this.transform.tx;
+        var dY = this.transform.ty;
+        this.bounds.reset(dX, dY, dX + this.getWidth(), dY + this.getHeight())
+    };
+    CControl.prototype.recalculateSnapArrays = function() {
+    };
+    CControl.prototype.checkAutofit = function (bIgnoreWordShape) {
+        return false;
+    };
+    CControl.prototype.checkTextWarp = function(oContent, oBodyPr, dWidth, dHeight, bNeedNoTransform, bNeedWarp) {
+        return this.DEFALT_WRAP_OBJECT;
+    };
+    CControl.prototype.addToRecalculate = function() {
+    };
+    CControl.prototype.canHandleEvents = function() {
+        return true;
+    };
+    CControl.prototype.getPenWidth = function(graphics) {
+        var fScale = graphics.m_oCoordTransform.sx;
+        var nPenW = AscCommon.AscBrowser.convertToRetinaValue(1, true)/fScale;
+        return nPenW;
+    };
+    CControl.prototype.draw = function (graphics) {
+        if(this.isHidden()){
+            return false;
+        }
+        if(!this.checkUpdateRect(graphics.updatedRect)) {
+            return false;
+        }
+
+        this.recalculateTransform();
+        this.recalculateTransformText();
+
+        var sFillColor = this.getFillColor();
+        var sOutlineColor = this.getOutlineColor();
+        var oColor;
+        if(sOutlineColor || sFillColor) {
+            graphics.SaveGrState();
+            graphics.transform3(this.transform);
+            var x = 0;
+            var y = 0;
+            var extX = this.getWidth();
+            var extY = this.getHeight();
+            if(sFillColor) {
+                oColor = AscCommon.RgbaHexToRGBA(sFillColor);
+                graphics.b_color1(oColor.R, oColor.G, oColor.B, 0xFF);
+                graphics.rect(x, y, extX, extY);
+                graphics.df();
+            }
+            if(sOutlineColor) {
+                oColor = AscCommon.RgbaHexToRGBA(sOutlineColor);
+                graphics.SetIntegerGrid(true);
+
+                var nPenW = this.getPenWidth(graphics);
+                //graphics.p_width(100);//AscCommon.AscBrowser.convertToRetinaValue(1, true);
+                graphics.p_color(oColor.R, oColor.G, oColor.B, 0xFF);
+                graphics.drawHorLine(0, y, x, x + extX, nPenW);
+                graphics.drawHorLine(0, y + extY, x, x + extX, nPenW);
+                graphics.drawVerLine(2, x, y, y + extY, nPenW);
+                graphics.drawVerLine(2, x + extX, y, y + extY, nPenW);
+                graphics.ds();
+            }
+            graphics.RestoreGrState();
+        }
+        AscFormat.CShape.prototype.draw.call(this, graphics);
+        return true;
+
+    };
+    CControl.prototype.hit = function(x, y) {
+        if(this.parentControl && !this.parentControl.hit(x, y)) {
+            return false;
+        }
+        var oInv = this.invertTransform;
+        var tx = oInv.TransformPointX(x, y);
+        var ty = oInv.TransformPointY(x, y);
+        return tx >= 0 && tx <= this.extX && ty >= 0 && ty <= this.extY;
+    };
+    CControl.prototype.isHovered = function() {
+        return this.getStateFlag(STATE_FLAG_HOVERED);
+    };
+    CControl.prototype.isActive = function() {
+        if(this.parentControl) {
+            if(!this.eventListener && this.parentControl.isEventListener(this)) {
+                return true;
+            }
+        }
+        return false;
+    };
+    CControl.prototype.setStateFlag = function(nFlag, bValue) {
+        var nOldState = this.state;
+        if(bValue) {
+            this.state |= nFlag;
+        }
+        else {
+            this.state &= (~nFlag);
+        }
+        if(nOldState !== this.state) {
+            this.onUpdate();
+        }
+    };
+    CControl.prototype.setHoverState = function() {
+        this.setStateFlag(STATE_FLAG_HOVERED, true);
+    };
+    CControl.prototype.setNotHoverState = function() {
+        this.setStateFlag(STATE_FLAG_HOVERED, false);
+    };
+    CControl.prototype.getStateFlag = function(nFlag) {
+        return (this.state & nFlag) !== 0;
+    };
+    CControl.prototype.onMouseMove = function (e, x, y) {
+        if(e.IsLocked) {
+            return false;
+        }
+        if(!this.canHandleEvents()) {
+            return false;
+        }
+        var bHover = this.hit(x, y);
+        var bRet = bHover !== this.isHovered();
+        if(bHover) {
+            this.setHoverState();
+        }
+        else {
+            this.setNotHoverState();
+        }
+        return bRet;
+    };
+    CControl.prototype.onMouseDown = function (e, x, y) {
+        if(!this.canHandleEvents()) {
+            return false;
+        }
+        if(this.hit(x, y)) {
+            if(this.parentControl) {
+                this.parentControl.setEventListener(this);
+            }
+            return true;
+        }
+        return false;
+    };
+    CControl.prototype.onMouseUp = function (e, x, y) {
+        if(this.parentControl) {
+            this.parentControl.setEventListener(null);
+        }
+        return false;
+    };
+    CControl.prototype.onMouseWheel = function (e, deltaY, X, Y) {
+        return false;
+    };
+    CControl.prototype.onUpdate = function() {
+        if(this.parentControl) {
+            var oBounds = this.getBounds();
+            this.parentControl.onChildUpdate(oBounds);
+        }
+    };
+    CControl.prototype.onChildUpdate = function(oBounds) {
+        if(this.parentControl) {
+            this.parentControl.onChildUpdate(oBounds);
+        }
+    };
+    CControl.prototype.getCursorInfo = function(e, x, y) {
+        if(!this.hit(x, y)) {
+            return null;
+        }
+        else {
+            return {
+                cursorType: "default",
+                tooltip: this.getTooltipText()
+            }
+        }
+    };
+    CControl.prototype.checkUpdateRect = function(oUpdateRect) {
+        var oBounds = this.getBounds();
+        if(oUpdateRect && oBounds) {
+            if(!oUpdateRect.isIntersectOther(oBounds)) {
+                return false;
+            }
+        }
+        return true;
+    };
+    CControl.prototype.recalculate = function() {
+        AscFormat.CShape.prototype.recalculate.call(this);
+    };
+    CControl.prototype.setLayout = function(dX, dY, dExtX, dExtY) {
+        if(!this.spPr) {
+            this.spPr = new AscFormat.CSpPr();
+        }
+        if(!this.spPr.xfrm) {
+            this.spPr.xfrm = new AscFormat.CXfrm();
+        }
+
+        this.spPr.xfrm.offX = dX;
+        this.spPr.xfrm.offY = dY;
+        this.spPr.xfrm.extX = dExtX;
+        this.spPr.xfrm.extY = dExtY;
+        this.handleUpdateExtents();
+    };
+    CControl.prototype.getLeft = function() {
+        return this.spPr.xfrm.offX;
+    };
+    CControl.prototype.getTop = function() {
+        return this.spPr.xfrm.offY;
+    };
+    CControl.prototype.getRight = function() {
+        return this.spPr.xfrm.offX + this.spPr.xfrm.extX;
+    };
+    CControl.prototype.getBottom = function() {
+        return this.spPr.xfrm.offY + this.spPr.xfrm.extY;
+    };
+    CControl.prototype.getWidth = function() {
+        return this.spPr.xfrm.extX;
+    };
+    CControl.prototype.getHeight = function() {
+        return this.spPr.xfrm.extY;
+    };
+    CControl.prototype.getBounds = function() {
+        this.recalculateBounds();
+        this.recalculateTransform();
+        this.recalculateTransformText();
+        return this.bounds;
+    };
+    CControl.prototype.convertRelToAbs = function(oPos) {
+        var oAbsPos = {x: oPos.x, y: oPos.y};
+        var oParent = this;
+        while(oParent) {
+            oAbsPos.x += oParent.getLeft();
+            oAbsPos.y += oParent.getTop();
+            oParent = oParent.parentControl;
+        }
+        return oAbsPos;
+    };
+    CControl.prototype.convertAbsToRel = function(oPos) {
+        var oRelPos = {x: oPos.x, y: oPos.y};
+        var oParent = this;
+        while(oParent) {
+            oRelPos.x -= oParent.getLeft();
+            oRelPos.y -= oParent.getTop();
+            oParent = oParent.parentControl;
+        }
+        return oRelPos;
+    };
+    CControl.prototype.getNext = function() {
+        return this.next;
+    };
+    CControl.prototype.getPrevious = function() {
+        return this.previous;
+    };
+    CControl.prototype.setNext = function(v) {
+        this.next = v;
+    };
+    CControl.prototype.setPrevious = function(v) {
+        this.previous = v;
+    };
+    CControl.prototype.setParentControl = function(v) {
+        this.parentControl = v;
+    };
+    CControl.prototype.getTiming = function() {
+        var oSlide = this.getSlide();
+        if(oSlide) {
+            return oSlide.timing;
+        }
+        return null;
+    };
+    CControl.prototype.getSlide = function() {
+        var oSlide = null;
+        if(editor.WordControl && editor.WordControl.m_oLogicDocument) {
+            oSlide = editor.WordControl.m_oLogicDocument.GetCurrentSlide();
+            return oSlide;
+        }
+        return null;
+    };
+    CControl.prototype.getSlideNum = function() {
+        var oSlide = this.getSlide();
+        if(oSlide) {
+            return oSlide.num;
+        }
+        return -1;
+    };
+    CControl.prototype.getFillColor = function() {
+        var sFillColor;
+        var oSkin = AscCommon.GlobalSkin;
+        if(this.isActive()) {
+            sFillColor = oSkin.ThumbnailsPageOutlineActive;
+        }
+        else if(this.isHovered()) {
+            sFillColor = oSkin.ScrollerHoverColor;
+        }
+        else {
+            sFillColor = oSkin.BackgroundColorThumbnails;
+        }
+        return sFillColor;
+    };
+    CControl.prototype.getOutlineColor = function() {
+        var sOutlineColor;
+        var oSkin = AscCommon.GlobalSkin;
+        if(this.isActive()) {
+            sOutlineColor = oSkin.ScrollOutlineActiveColor;
+        }
+        else if(this.isHovered()) {
+            sOutlineColor = oSkin.ThumbnailsPageOutlineHover;
+        }
+        else {
+            sOutlineColor = oSkin.ScrollOutlineColor;
+        }
+        return sOutlineColor;
+    };
+    CControl.prototype.drawShdw = function() {
+
+    };
+
+    function CControlContainer(oParentControl) {
+        CControl.call(this, oParentControl);
+        this.children = [];
+        this.recalcInfo.recalculateChildrenLayout = true;
+        this.recalcInfo.recalculateChildren = true;
+
+        this.eventListener = null;
+    }
+    InitClass(CControlContainer, CControl, CONTROL_TYPE_UNKNOWN);
+    CControlContainer.prototype.isEventListener = function(oChild) {
+        return this.eventListener === oChild;
+    };
+    CControlContainer.prototype.onScroll = function() {
+    };
+    CControlContainer.prototype.onStartScroll = function() {
+    };
+    CControlContainer.prototype.onEndScroll = function() {
+    };
+    CControlContainer.prototype.clear = function() {
+        for(var nIdx = this.children.length - 1; nIdx > -1; --nIdx) {
+            this.removeControl(this.children[nIdx]);
+        }
+    };
+    CControlContainer.prototype.addControl = function(oChild) {
+        var oLast = this.children[this.children.length - 1];
+        this.children.push(oChild);
+        if(oLast) {
+            oLast.setNext(oChild);
+            oChild.setPrevious(oLast);
+            oChild.setParentControl(this);
+        }
+        return oChild;
+    };
+    CControlContainer.prototype.removeControl = function(oChild) {
+        var nIdx = this.getChildIdx(oChild);
+        this.removeByIdx(nIdx);
+    };
+    CControlContainer.prototype.removeByIdx = function(nIdx) {
+        if(nIdx > -1 && nIdx < this.children.length) {
+            var oChild = this.children[nIdx];
+            oChild.setNext(null);
+            oChild.setPrevious(null);
+            oChild.setParentControl(null);
+            var oPrev = this.children[nIdx - 1] || null;
+            var oNext = this.children[nIdx + 1] || null;
+            if(oPrev) {
+                oPrev.setNext(oNext);
+            }
+            if(oNext) {
+                oNext.setPrevious(oPrev);
+            }
+            this.children.splice(nIdx, 1);
+        }
+    };
+    CControlContainer.prototype.getChildIdx = function(oChild) {
+        for(var nChild = 0; nChild < this.children.length; ++nChild) {
+            if(this.children[nChild] === oChild) {
+                return nChild;
+            }
+        }
+        return -1;
+    };
+    CControlContainer.prototype.getChildByType = function(nType) {
+        for(var nChild = 0; nChild < this.children.length; ++nChild) {
+            var oChild = this.children[nChild];
+            if(oChild.getObjectType() === nType) {
+                return oChild;
+            }
+        }
+        return null;
+    };
+    CControlContainer.prototype.getChild = function(nIdx) {
+        if(nIdx > -1 && nIdx < this.children.length) {
+            return this.children[nIdx];
+        }
+    };
+    CControlContainer.prototype.draw = function(graphics) {
+        if(!CControl.prototype.draw.call(this, graphics)) {
+            return false;
+        }
+        this.clipStart(graphics);
+        for(var nChild = 0; nChild < this.children.length; ++nChild) {
+            this.children[nChild].draw(graphics);
+        }
+        this.clipEnd(graphics);
+        return true;
+    };
+    CControlContainer.prototype.clipStart = function(graphics) {
+    };
+    CControlContainer.prototype.clipEnd = function(graphics) {
+    };
+    CControlContainer.prototype.recalculateChildrenLayout = function() {
+    };
+    CControlContainer.prototype.recalculateChildren = function() {
+    };
+    CControlContainer.prototype.recalculate = function() {
+        AscFormat.ExecuteNoHistory(function() {
+            CControl.prototype.recalculate.call(this);
+            if(this.recalcInfo.recalculateChildren) {
+                this.recalculateChildren();
+                this.recalcInfo.recalculateChildren = false;
+            }
+            if(this.recalcInfo.recalculateChildrenLayout) {
+                this.recalculateChildrenLayout();
+                this.recalcInfo.recalculateChildrenLayout = false;
+            }
+            for(var nChild = 0; nChild < this.children.length; ++nChild) {
+                this.children[nChild].recalculate();
+            }
+        }, this, []);
+    };
+    CControlContainer.prototype.setLayout = function(dX, dY, dExtX, dExtY) {
+        AscFormat.ExecuteNoHistory(function() {
+            CControl.prototype.setLayout.call(this, dX, dY, dExtX, dExtY);
+            this.recalcInfo.recalculateChildrenLayout = true;
+        }, this, []);
+    };
+    CControlContainer.prototype.handleUpdateExtents = function() {
+        this.recalcInfo.recalculateChildrenLayout = true;
+        CControl.prototype.handleUpdateExtents.call(this);
+    };
+    CControlContainer.prototype.setEventListener = function(oChild) {
+        if(oChild) {
+            this.eventListener = oChild;
+            if(this.parentControl) {
+                this.parentControl.setEventListener(this);
+            }
+        }
+        else {
+            this.eventListener = null;
+            if(this.parentControl) {
+                this.parentControl.setEventListener(null);
+            }
+        }
+    };
+    CControlContainer.prototype.onMouseDown = function(e, x, y) {
+        for(var nChild = 0; nChild < this.children.length; ++nChild) {
+            if(this.children[nChild].onMouseDown(e, x, y)) {
+                return true;
+            }
+        }
+        return CControl.prototype.onMouseDown.call(this, e, x, y);
+    };
+    CControlContainer.prototype.onMouseMove = function(e, x, y) {
+        for(var nChild = 0; nChild < this.children.length; ++nChild) {
+            if(this.children[nChild].onMouseMove(e, x, y)) {
+                return true;
+            }
+        }
+        return CControl.prototype.onMouseMove.call(this, e, x, y);
+    };
+    CControlContainer.prototype.onMouseUp = function(e, x, y) {
+        for(var nChild = 0; nChild < this.children.length; ++nChild) {
+            if(this.children[nChild].onMouseUp(e, x, y)) {
+                return true;
+            }
+        }
+        return CControl.prototype.onMouseUp.call(this, e, x, y);
+    };
+    CControlContainer.prototype.onMouseWheel = function(e, deltaY, X, Y) {
+        for(var nChild = 0; nChild < this.children.length; ++nChild) {
+            if(this.children[nChild].onMouseWheel(e, deltaY, X, Y)) {
+                return true;
+            }
+        }
+        return CControl.prototype.onMouseWheel.call(this, e, deltaY, X, Y);
+    };
+    CControlContainer.prototype.isScrolling = function() {
+        for(var nChild = 0; nChild < this.children.length; ++nChild) {
+            var oChild = this.children[nChild];
+            if(oChild.isOnScroll && oChild.isOnScroll()) {
+                return true;
+            }
+        }
+        return false;
+    };
+    CControlContainer.prototype.canHandleEvents = function() {
+        return false;
+    };
+    CControlContainer.prototype.onResize = function() {
+        this.handleUpdateExtents();
+        this.recalculate();
+    };
+
+
+    function CTopControl(oDrawer) {
+        CControlContainer.call(this, null);
+        this.drawer = oDrawer;
+    }
+    InitClass(CTopControl, CControlContainer, CONTROL_TYPE_UNKNOWN);
+    CTopControl.prototype.onUpdateRect = function(oBounds) {
+        if(this.drawer) {
+            var oSlide = this.getSlide();
+            if(oSlide) {
+                this.drawer.OnAnimPaneChanged(oSlide.num, oBounds);
+            }
+        }
+    };
+    CTopControl.prototype.onUpdate = function() {
+        var oBounds = this.getBounds();
+        this.onUpdateRect(oBounds);
+    };
+    CTopControl.prototype.onChildUpdate = function(oBounds) {
+        this.onUpdateRect(oBounds);
+    };
+    CTopControl.prototype.onResize = function() {
+        this.setLayout(0, 0, this.drawer.GetWidth(), this.drawer.GetHeight());
+        CControlContainer.prototype.onResize.call(this);
+        this.onUpdate();
+    };
+
+    function CSeqListContainer(oDrawer) {
+        CTopControl.call(this, oDrawer);
+        this.seqList = this.addControl(new CSeqList(this));
+    }
+    InitClass(CSeqListContainer, CTopControl, CONTROL_TYPE_SEQ_LIST_CONTAINER);
+    CSeqListContainer.prototype.getScrollOffsetY = function(oChild) {
+        return 0;
+    };
+    CSeqListContainer.prototype.recalculateChildrenLayout = function() {
+        this.seqList.setLayout(0, 0, this.getWidth(), this.seqList.getHeight());
+        this.seqList.recalculate();
+        this.setLayout(0, 0, this.seqList.getWidth(), this.seqList.getHeight());
+    };
+    CSeqListContainer.prototype.clipStart = function(graphics) {
+
+    };
+    CSeqListContainer.prototype.clipEnd = function(graphics) {
+    };
+    CSeqListContainer.prototype.onScroll = function() {
+        this.onUpdate();
+    };
+    CSeqListContainer.prototype.getFillColor = function() {
+        return null;
+    };
+    CSeqListContainer.prototype.getOutlineColor = function() {
+        return null;
+    };
+    CSeqListContainer.prototype.onMouseWheel = function (e, deltaY, X, Y) {
+        return false;
+    };
+
+    var SCROLL_TIMER_INTERVAL = 200;
+    function CScrollBase(oParentControl, oContainer, oChild) {
+        CControlContainer.call(this, oParentControl);
+        this.addControl(new CButton(this, function(e, x, y) {
+            if(this.hit(x, y)) {
+                this.parentControl.setEventListener(this);
+                this.parentControl.startScroll(-ANIM_ITEM_HEIGHT);
+            }
+        }, null, function(e, x, y) {
+            this.parentControl.setEventListener(null);
+            this.parentControl.endScroll();
+        }));//left or top button
+        this.addControl(new CButton(this, function(e, x, y) {
+            if(this.hit(x, y)) {
+                this.parentControl.setEventListener(this);
+                this.parentControl.startScroll(ANIM_ITEM_HEIGHT);
+            }
+        }, null, function(e, x, y) {
+            this.parentControl.setEventListener(null);
+            this.parentControl.endScroll();
+        }));//right or bottom button
+        this.container = oContainer;
+        this.scrolledChild = oChild;
+        this.scrollOffset = 0;
+        this.tmpScrollOffset = null;
+        this.startScrollerPos = null;
+        this.startScrollTop = null;
+        this.timerId = null;
+    }
+    InitClass(CScrollBase, CControlContainer, CONTROL_TYPE_UNKNOWN);
+    CScrollBase.prototype.getScrollOffset = function() {
+        if(this.tmpScrollOffset !== null) {
+            return this.tmpScrollOffset;
+        }
+        this.checkOffset();
+        return this.scrollOffset;
+    };
+    CScrollBase.prototype.checkOffset = function() {
+        this.scrollOffset = Math.max(0, Math.min(this.scrollOffset, this.getMaxScrollOffset()));
+    };
+    CScrollBase.prototype.setTmpScroll = function (val) {
+        this.tmpScrollOffset = Math.max(0, Math.min(this.getMaxScrollOffset(), val));
+        this.parentControl.onScroll();
+        this.onUpdate();
+    };
+    CScrollBase.prototype.clearTmpScroll = function () {
+        if(this.tmpScrollOffset !== null) {
+            this.scrollOffset = this.tmpScrollOffset;
+            this.tmpScrollOffset = null;
+            this.parentControl.onScroll();
+            this.onUpdate();
+        }
+    };
+    CScrollBase.prototype.getMaxScrollOffset = function (val) {
+        return 0;
+    };
+    CScrollBase.prototype.getScrollerX = function(dScrollOffset) {
+        return 0;
+    };
+    CScrollBase.prototype.getScrollerY = function(dScrollOffset) {
+        return 0;
+    };
+    CScrollBase.prototype.getScrollerWidth = function(dScrollOffset) {
+        return 0;
+    };
+    CScrollBase.prototype.getScrollerHeight = function(dScrollOffset) {
+        return 0;
+    };
+    CScrollBase.prototype.hitInScroller = function(x, y) {
+        if(this.isHidden()) {
+            return false;
+        }
+        var oInv = this.getInvFullTransformMatrix();
+        var tx = oInv.TransformPointX(x, y);
+        var ty = oInv.TransformPointY(x, y);
+        var l = this.getScrollerX();
+        var t = this.getScrollerY();
+        var r = l + this.getScrollerWidth();
+        var b = t + this.getScrollerHeight();
+        return tx >= l && tx <= r && ty >= t && ty <= b;
+    };
+    CScrollBase.prototype.startScroll = function (step) {
+        this.endScroll();
+        var oScroll = this;
+        this.tmpScrollOffset = this.getScrollOffset();
+        oScroll.addScroll(step);
+        this.timerId = setInterval(function () {
+            oScroll.addScroll(step);
+        }, SCROLL_TIMER_INTERVAL);
+    };
+    CScrollBase.prototype.addScroll = function (step) {
+        this.setTmpScroll(this.tmpScrollOffset + step);
+        this.parentControl.onScroll();
+    };
+    CScrollBase.prototype.endScroll = function () {
+        if(this.timerId !== null) {
+            clearInterval(this.timerId);
+            this.timerId = null;
+        }
+        this.clearTmpScroll();
+        this.setStateFlag(STATE_FLAG_SELECTED, false);
+        this.startScrollerPos = null;
+        this.startScrollTop = null;
+    };
+    CScrollBase.prototype.isOnScroll = function (step) {
+        return this.timerId !== null || this.parentControl.isEventListener(this);
+    };
+    CScrollBase.prototype.getFillColor = function() {
+        return null;
+    };
+    CScrollBase.prototype.getOutlineColor = function() {
+        return null;
+    };
+
+    function CScrollVert(oParentControl, oContainer, oChild) {
+        CScrollBase.call(this, oParentControl, oContainer, oChild);
+        this.topButton = this.children[0];
+        this.bottomButton = this.children[1];
+    }
+    InitClass(CScrollVert, CScrollBase, CONTROL_TYPE_SCROLL_VERT);
+    CScrollVert.prototype.recalculateChildrenLayout = function() {
+        this.topButton.setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+        this.bottomButton.setLayout(0, this.getHeight() - SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+    };
+    CScrollVert.prototype.getRailHeight = function() {
+        return this.getHeight() - this.children[0].getHeight() - this.children[1].getHeight();
+    };
+    CScrollVert.prototype.getRelScrollerPos = function(dScrollOffset) {
+        return this.topButton.getBottom() + dScrollOffset * ((this.getRailHeight() - this.getScrollerHeight()) / (this.getMaxScrollOffset()));
+    };
+    CScrollVert.prototype.getScrollerX = function(dScrollOffset) {
+        return 0;
+    };
+    CScrollVert.prototype.getScrollerY = function() {
+        return this.getRelScrollerPos(this.getScrollOffset());
+    };
+    CScrollVert.prototype.getScrollerWidth = function(dScrollOffset) {
+        return this.getWidth();
+    };
+    CScrollVert.prototype.getScrollerHeight = function() {
+        var dRailH = this.getRailHeight();
+        var dMinRailH = dRailH / 4;
+        return Math.max(dMinRailH, dRailH * (dRailH / this.scrolledChild.getHeight()))
+    };
+    CScrollVert.prototype.getMaxScrollOffset = function() {
+        return Math.max(0, this.scrolledChild.getHeight() - this.container.getHeight());
+    };
+    CScrollVert.prototype.getMaxRelScrollOffset = function() {
+        return Math.max(0, this.getRailHeight() - this.getScrollerHeight());
+    };
+    CScrollVert.prototype.draw = function(graphics) {
+        if(this.isHidden()){
+            return false;
+        }
+        if(!this.checkUpdateRect(graphics.updatedRect)) {
+            return false;
+        }
+        this.children[0].draw(graphics);
+        this.children[1].draw(graphics);
+
+
+        graphics.SaveGrState();
+        var oSkin = AscCommon.GlobalSkin;
+            //ScrollBackgroundColor     : "#EEEEEE",
+            //ScrollOutlineColor        : "#CBCBCB",
+            //ScrollOutlineHoverColor   : "#CBCBCB",
+            //ScrollOutlineActiveColor  : "#ADADAD",
+            //ScrollerColor             : "#F7F7F7",
+            //ScrollerHoverColor        : "#C0C0C0",
+            //ScrollerActiveColor       : "#ADADAD",
+            //ScrollArrowColor          : "#ADADAD",
+            //ScrollArrowHoverColor     : "#F7F7F7",
+            //ScrollArrowActiveColor    : "#F7F7F7",
+            //ScrollerTargetColor       : "#CFCFCF",
+            //ScrollerTargetHoverColor  : "#F1F1F1",
+            //ScrollerTargetActiveColor : "#F1F1F1",
+        var x = this.getScrollerX();
+        var y = this.getRelScrollerPos(this.getScrollOffset());
+        var extX = this.getScrollerWidth();
+        var extY = this.getScrollerHeight();
+        graphics.transform3(this.transform);
+
+        var sFillColor;
+        var sOutlineColor;
+        var oColor;
+        if(this.isActive()) {
+            sFillColor = oSkin.ScrollerActiveColor;
+            sOutlineColor = oSkin.ScrollOutlineActiveColor;
+        }
+        else if(this.isHovered()) {
+            sFillColor = oSkin.ScrollerHoverColor;
+            sOutlineColor = oSkin.ScrollOutlineHoverColor;
+        }
+        else {
+            sFillColor = oSkin.ScrollerColor;
+            sOutlineColor = oSkin.ScrollOutlineColor;
+        }
+        oColor = AscCommon.RgbaHexToRGBA(sFillColor);
+        graphics.b_color1(oColor.R, oColor.G, oColor.B, 0xFF);
+        graphics.rect(x, y, extX, extY);
+        graphics.df();
+        oColor = AscCommon.RgbaHexToRGBA(sOutlineColor);
+
+        graphics.SetIntegerGrid(true);
+        var nPenW = this.getPenWidth(graphics);
+        graphics.p_color(oColor.R, oColor.G, oColor.B, 0xFF);
+        graphics.drawHorLine(0, y, x, x + extX, nPenW);
+        graphics.drawHorLine(0, y + extY, x, x + extX, nPenW);
+        graphics.drawVerLine(2, x, y, y + extY, nPenW);
+        graphics.drawVerLine(2, x + extX, y, y + extY, nPenW);
+        graphics.ds();
+        graphics.RestoreGrState();
+        return true;
+    };
+    CScrollVert.prototype.onMouseMove = function (e, x, y) {
+        if(this.isHidden()) {
+            return false;
+        }
+        var bRet = false;
+        if(this.eventListener) {
+            this.eventListener.onMouseMove(e, x, y);
+            return true;
+        }
+
+        if(this.parentControl.isEventListener(this)){
+            if(this.startScrollerPos === null) {
+                this.startScrollerPos = y;
+            }
+            if(this.startScrollTop === null) {
+                this.startScrollTop = this.getScrollOffset();
+            }
+            var dCoeff = this.getMaxScrollOffset()/this.getMaxRelScrollOffset();
+            var dy = dCoeff*(y - this.startScrollerPos);
+            this.setTmpScroll(dy  + this.startScrollTop);
+            return true;
+        }
+        bRet |= this.children[0].onMouseMove(e, x, y);
+        bRet |= this.children[1].onMouseMove(e, x, y);
+
+        var bHit = this.hitInScroller(x, y);
+        var nState = this.isHovered();
+        if(this.isHovered()) {
+            if(!bHit) {
+                this.setStateFlag(STATE_FLAG_HOVERED, false);
+                bRet = true;
+            }
+        }
+        else {
+            if(bHit) {
+                this.setStateFlag(STATE_FLAG_HOVERED, true);
+                bRet = true;
+            }
+        }
+        //-----------------------------
+        return bRet;
+    };
+    CScrollVert.prototype.onMouseDown = function (e, x, y) {
+        var bRet = false;
+        if(this.hit(x, y)) {
+            bRet |= this.children[0].onMouseDown(e, x, y);
+            bRet |= this.children[1].onMouseDown(e, x, y);
+            if(!bRet) {
+                if(this.hitInScroller(x, y)) {
+                    this.startScrollerPos = y;
+                    this.startScrollTop = this.getScrollOffset();
+                    this.setStateFlag(STATE_FLAG_SELECTED, true);
+                    this.parentControl.setEventListener(this);
+                    this.parentControl.onScroll();
+                    //-----------------------------
+                }
+                else {
+                    this.parentControl.setEventListener(this);
+                    var oInv = this.getInvFullTransformMatrix();
+                    var ty = oInv.TransformPointY(x, y);
+                    if(ty < this.getScrollerY()) {
+                        this.startScroll(-ANIM_ITEM_HEIGHT);
+                    }
+                    else {
+                        this.startScroll(ANIM_ITEM_HEIGHT);
+                    }
+                }
+                return true;
+            }
+        }
+        return bRet;
+    };
+    CScrollVert.prototype.onMouseUp = function (e, x, y) {
+        this.endScroll();
+        var bRet = false;
+        if(this.eventListener) {
+            bRet = this.eventListener.onMouseUp(e, x, y);
+            this.eventListener = null;
+            return bRet;
+        }
+        bRet |= this.children[0].onMouseUp(e, x, y);
+        bRet |= this.children[1].onMouseUp(e, x, y);
+        this.setEventListener(null);
+        return bRet;
+    };
+
+    function CScrollHor(oParentControl, oContainer, oChild) {
+        CScrollBase.call(this, oParentControl, oContainer, oChild);
+    }
+    InitClass(CScrollHor, CScrollBase, CONTROL_TYPE_SCROLL_HOR);
+
+    function CSeqList(oParentControl) {
+        CControlContainer.call(this, oParentControl);
+        this.sequences = this.children;
+    }
+    InitClass(CSeqList, CControlContainer, CONTROL_TYPE_SEQ_LIST);
+    CSeqList.prototype.getIndexLabelRight = function() {
+        return 10;//TODO
+    };
+    CSeqList.prototype.recalculateChildren = function() {
+        this.clear();
+        var oTiming = this.getTiming();
+        if(oTiming) {
+            var aAllSeqs = oTiming.getRootSequences();
+            var oLastSeqView = null;
+            for(var nSeq = 0; nSeq < aAllSeqs.length; ++nSeq) {
+                var oSeqView = new CAnimSequence(this, aAllSeqs[nSeq]);
+                this.addControl(oSeqView);
+                oLastSeqView = oSeqView;
+            }
+        }
+    };
+    CSeqList.prototype.recalculateChildrenLayout = function() {
+        var dLastBottom = 0;
+        for(var nChild = 0; nChild < this.children.length; ++nChild) {
+            var oSeq = this.children[nChild];
+            oSeq.setLayout(0, dLastBottom, this.getWidth(), 0);
+            oSeq.recalculate();
+            dLastBottom = oSeq.getBottom();
+        }
+        this.setLayout(this.getLeft(), this.getTop(), this.getWidth(), dLastBottom);
+    };
+    CSeqList.prototype.getFillColor = function() {
+        return null;
+    };
+    CSeqList.prototype.getOutlineColor = function() {
+        return null;
+    };
+    // CSeqList.prototype.draw = function(graphics) {
+    //     if(!this.checkUpdateRect(graphics.updateRect)) {
+    //         return false;
+    //     }
+    //     if(this.parentControl.isScrolling() && !this.bDrawTexture) {
+    //         this.recalculateTransform();
+    //         this.checkCachedTexture(graphics).draw(graphics, new AscCommon.CMatrix());
+    //         return;
+    //     }
+    //     this.clearCachedTexture();
+    //     return CControlContainer.prototype.draw.call(this, graphics);
+    // };
+
+
+    CSeqList.prototype.checkCachedTexture = function(graphics) {
+        var dGraphicsScale = graphics.m_oCoordTransform.sx;
+        if(this.cachedCanvas) {
+            var dScale = this.cachedCanvas.scale;
+            if(AscFormat.fApproxEqual(dScale, dGraphicsScale)) {
+                return this.cachedCanvas;
+            }
+        }
+        this.bDrawTexture = true;
+        var oBaseTexture = this.getAnimTexture(dGraphicsScale);
+        this.cachedCanvas = new CAnimTexture(this, oBaseTexture.canvas, oBaseTexture.scale, oBaseTexture.x, oBaseTexture.y);
+        this.bDrawTexture = false;
+        return this.cachedCanvas;
+    };
+    CSeqList.prototype.clearCachedTexture = function() {
+        if(this.cachedCanvas) {
+            this.cachedCanvas = null;
+        }
+    };
+
+    function CAnimSequence(oParentControl, oSeq) {//main seq, interactive seq
+        CControlContainer.call(this, oParentControl);
+        this.seq = oSeq;
+        this.label = null; //this.addControl(new CLabel(this, "seq"));
+        this.groupList = null;//this.addControl(new CAnimGroupList(this));
+    }
+    InitClass(CAnimSequence, CControlContainer, CONTROL_TYPE_ANIM_SEQ);
+    CAnimSequence.prototype.getIndexLabelRight = function() {
+        return this.parentControl.getIndexLabelRight() - this.getLeft();
+    };
+    CAnimSequence.prototype.recalculateChildren = function() {
+        this.clear();
+        var sLabel = this.seq.getLabel();
+        if(typeof sLabel === "string" && sLabel.length > 0) {
+            this.label = this.addControl(new CLabel(this, sLabel, 9, true));
+        }
+        else {
+            this.label = null;
+        }
+        this.groupList = this.addControl(new CAnimGroupList(this));
+    };
+    CAnimSequence.prototype.getSeq = function() {
+        return this.seq;
+    };
+    CAnimSequence.prototype.recalculateChildrenLayout = function() {
+        var dCurY = 0;
+        if(this.label) {
+            this.label.setLayout(0, dCurY, this.getWidth(), SEQ_LABEL_HEIGHT);
+            this.label.recalculate();
+            dCurY += this.label.getHeight();
+        }
+        if(this.groupList) {
+            this.groupList.setLayout(0, dCurY, this.getWidth(), 0);
+            this.groupList.recalculate();
+            dCurY += this.groupList.getHeight();
+        }
+        this.setLayout(this.getLeft(), this.getTop(), this.getWidth(), dCurY);
+    };
+    CAnimSequence.prototype.getFillColor = function() {
+        return null;
+    };
+    CAnimSequence.prototype.getOutlineColor = function() {
+        return null;
+    };
+
+    function CAnimGroupList(oParentControl) {//main seq, interactive seq
+        CControlContainer.call(this, oParentControl);
+    }
+    InitClass(CAnimGroupList, CControlContainer, CONTROL_TYPE_ANIM_GROUP_LIST);
+    CAnimGroupList.prototype.getIndexLabelRight = function() {
+        return this.parentControl.getIndexLabelRight() - this.getLeft();
+    };
+    CAnimGroupList.prototype.getSeq = function() {
+        return this.parentControl.getSeq();
+    };
+    CAnimGroupList.prototype.recalculateChildren = function() {
+        this.clear();
+        var oSeq = this.getSeq();
+        var aAllEffects = oSeq.getAllEffects();
+
+        for(var nCurEffect = 0; nCurEffect < aAllEffects.length; ++nCurEffect) {
+            var oItem = new CAnimItem(this, aAllEffects[nCurEffect]);
+            this.addControl(oItem);
+        }
+    };
+    CAnimGroupList.prototype.getFillColor = function() {
+        return null;
+    };
+    CAnimGroupList.prototype.getOutlineColor = function() {
+        return null;
+    };
+
+    //CAnimGroupList.prototype.draw = function() {
+    //};
+    CAnimGroupList.prototype.recalculateChildrenLayout = function() {
+        var dLastBottom = 0;
+        for(var nChild = 0; nChild < this.children.length; ++nChild) {
+            var oChild = this.children[nChild];
+            oChild.setLayout(0, dLastBottom, this.getWidth(), ANIM_ITEM_HEIGHT);
+            oChild.recalculate();
+            dLastBottom = oChild.getBottom();
+        }
+        this.setLayout(this.getLeft(), this.getTop(), this.getWidth(), dLastBottom);
+    };
+
+    function CAnimGroup(oParentControl, aEffects) {
+        CControlContainer.call(this, oParentControl);
+    }
+    InitClass(CAnimGroup, CControlContainer, CONTROL_TYPE_ANIM_GROUP);
+    CAnimGroup.prototype.getIndexLabelRight = function() {
+        return this.parentControl.getIndexLabelRight() - this.getLeft();
+    };
+
+    function CImageControl(oParentControl) {
+        CControl.call(this, oParentControl)
+    }
+    InitClass(CImageControl, CControl, CONTROL_TYPE_IMAGE);
+    CImageControl.prototype.canHandleEvents = function () {
+        return false;
+    };
+    //CImageControl.prototype.draw = function() {
+    //};
+
+    function CEffectBar(oParentControl) {
+        CControl.call(this, oParentControl)
+    }
+    InitClass(CEffectBar, CControl, CONTROL_TYPE_EFFECT_BAR);
+
+    function CAnimItem(oParentControl, oEffect) {
+        CControlContainer.call(this, oParentControl);
+        this.indexLabel = this.addControl(new CLabel(this, "1.", 7.5));
+        this.eventTypeImage = this.addControl(new CImageControl(this));
+        this.effectTypeImage = this.addControl(new CImageControl(this));
+        this.effectLabel = this.addControl(new CLabel(this, oEffect.getObjectName(), 7.5));
+        this.effectBar = this.addControl(new CEffectBar(this));
+        this.contextMenuButton = this.addControl(new CButton(this));
+
+        this.effect = oEffect;
+    }
+    InitClass(CAnimItem, CControlContainer, CONTROL_TYPE_ANIM_ITEM);
+    CAnimItem.prototype.getIndexLabelRight = function() {
+        return this.parentControl.getIndexLabelRight() - this.getLeft();
+    };
+    CAnimItem.prototype.getEffectLabelRight = function() {
+        return LABEL_TIMELINE_WIDTH;
+    };
+    CAnimItem.prototype.recalculateChildrenLayout = function() {
+        var dIndexLabelRight = this.getIndexLabelRight();
+        var dYInside = (this.getHeight() - EFFECT_BAR_HEIGHT) / 2;
+        this.indexLabel.setLayout(0, dYInside, dIndexLabelRight, EFFECT_BAR_HEIGHT);
+        this.eventTypeImage.setLayout(this.indexLabel.getRight(), dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
+        this.effectTypeImage.setLayout(this.eventTypeImage.getRight(), dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
+        var dLabelRight = this.getEffectLabelRight();
+        var dEffectLabelLeft = this.effectTypeImage.getRight();
+        this.effectLabel.setLayout(dEffectLabelLeft, dYInside, dLabelRight - dEffectLabelLeft, EFFECT_BAR_HEIGHT);
+        this.effectBar.setLayout(0, 0, 0, 0);//todo
+        var dRightSpace = dYInside;
+        this.contextMenuButton.setLayout(this.getRight() - dRightSpace - EFFECT_BAR_HEIGHT, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
+    };
+    CAnimItem.prototype.canHandleEvents = function () {
+        return true;
+    };
+    // CAnimItem.prototype.getFillColor = function() {
+    //     return null;
+    // };
+    CAnimItem.prototype.getOutlineColor = function() {
+        return null;
+    };
+
+    //CAnimItem.prototype.draw = function() {
+    //};
+
+    function CLabel(oParentControl, sString, nFontSize, bBold, nParaAlign) {
+        CControl.call(this, oParentControl);
+        AscFormat.ExecuteNoHistory(function(){
+            this.string = sString;
+            this.fontSize = nFontSize;
+            this.createTextBody();
+            var oTxLstStyle = new AscFormat.TextListStyle();
+            oTxLstStyle.levels[0] =  new CParaPr();
+            oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
+            oTxLstStyle.levels[0].DefaultRunPr.FontSize = nFontSize;
+            oTxLstStyle.levels[0].DefaultRunPr.Bold = bBold;
+            oTxLstStyle.levels[0].DefaultRunPr.Color = new AscCommonWord.CDocumentColor(0x44, 0x44, 0x44, false);
+            oTxLstStyle.levels[0].DefaultRunPr.RFonts.SetAll("Arial", -1);
+            if(AscFormat.isRealNumber(nParaAlign)) {
+                oTxLstStyle.levels[0].Jc = nParaAlign;
+            }
+            this.txBody.setLstStyle(oTxLstStyle);
+            this.bodyPr = new AscFormat.CBodyPr();
+            this.bodyPr.setDefault();
+            this.bodyPr.anchor = 1;//vertical align ctr
+            this.bodyPr.lIns = 0;
+            this.bodyPr.rIns = 0;
+            this.bodyPr.tIns = 0;
+            this.bodyPr.bIns = 0;
+            this.bodyPr.horzOverflow = AscFormat.nOTClip;
+            this.bodyPr.vertOverflow = AscFormat.nOTClip;
+        }, this, []);
+    }
+    InitClass(CLabel, CControl, CONTROL_TYPE_LABEL);
+    CLabel.prototype.getString = function() {
+        return AscCommon.translateManager.getValue(this.string);
+    };
+    CLabel.prototype.recalculateContent = function () {
+        //this.recalculateGeometry();
+        this.recalculateTransform();
+//        this.txBody.content.Recalc_AllParagraphs_CompiledPr();
+        if(!this.txBody.bFit || !AscFormat.isRealNumber(this.txBody.fitWidth) || this.txBody.fitWidth > this.getWidth()) {
+            this.txBody.recalculateOneString(this.getString());
+        }
+    };
+    CLabel.prototype.canHandleEvents = function () {
+        return false;
+    };
+    CLabel.prototype.getFillColor = function() {
+        return null;
+    };
+    CLabel.prototype.getOutlineColor = function() {
+        return null;
+    };
+    CLabel.prototype.recalculateTransformText = function() {
+        var Y = this.getHeight() / 2 - this.txBody.content.GetSummaryHeight() / 2;
+        if(!this.transformText) {
+            this.transformText = new AscCommon.CMatrix();
+        }
+        this.transformText.tx = this.transform.tx;
+        this.transformText.ty = this.transform.ty + Y;
+
+        if(!this.invertTransformText) {
+            this.invertTransformText = new AscCommon.CMatrix();
+        }
+        this.invertTransformText.tx = -this.transformText.tx;
+        this.invertTransformText.ty = -this.transformText.ty;
+        this.localTransformText = this.transformText;
+    };
+    CLabel.prototype.recalculateTransformText2 = function() {
+        return null;
+    };
+
+    function CButton(oParentControl, fOnMouseDown, fOnMouseMove, fOnMouseUp) {
+        CControlContainer.call(this, oParentControl);
+        this.onMouseDownCallback = fOnMouseDown;
+        this.onMouseMoveCallback = fOnMouseMove;
+        this.onMouseUpCallback = fOnMouseUp;
+    }
+    InitClass(CButton, CControlContainer, CONTROL_TYPE_BUTTON);
+    CButton.prototype.onMouseDown = function(e, x, y) {
+        if(this.onMouseDownCallback && this.onMouseDownCallback.call(this, e, x, y)) {
+            return true;
+        }
+        return CControlContainer.prototype.onMouseDown.call(this, e, x, y);
+    };
+    CButton.prototype.onMouseMove = function(e, x, y) {
+        if(this.onMouseMoveCallback && this.onMouseMoveCallback.call(this, e, x, y)) {
+            return true;
+        }
+        return CControlContainer.prototype.onMouseMove.call(this, e, x, y);
+    };
+    CButton.prototype.onMouseUp = function(e, x, y) {
+        if(this.onMouseUpCallback && this.onMouseUpCallback.call(this, e, x, y)) {
+            return true;
+        }
+        return CControlContainer.prototype.onMouseUp.call(this, e, x, y);
+    };
+    CButton.prototype.canHandleEvents = function () {
+        return true;
+    };
+    CButton.prototype.canHandleEvents = function () {
+        return true;
+    };
+    // CButton.prototype.draw = function(graphics) {
+    //     if(this.isHidden()){
+    //         return false;
+    //     }
+    //     if(!this.checkUpdateRect(graphics.updatedRect)) {
+    //         return false;
+    //     }
+    //
+    //     graphics.SaveGrState();
+    //     var oSkin = AscCommon.GlobalSkin;
+    //     //ScrollBackgroundColor     : "#EEEEEE",
+    //     //ScrollOutlineColor        : "#CBCBCB",
+    //     //ScrollOutlineHoverColor   : "#CBCBCB",
+    //     //ScrollOutlineActiveColor  : "#ADADAD",
+    //     //ScrollerColor             : "#F7F7F7",
+    //     //ScrollerHoverColor        : "#C0C0C0",
+    //     //ScrollerActiveColor       : "#ADADAD",
+    //     //ScrollArrowColor          : "#ADADAD",
+    //     //ScrollArrowHoverColor     : "#F7F7F7",
+    //     //ScrollArrowActiveColor    : "#F7F7F7",
+    //     //ScrollerTargetColor       : "#CFCFCF",
+    //     //ScrollerTargetHoverColor  : "#F1F1F1",
+    //     //ScrollerTargetActiveColor : "#F1F1F1",
+    //     var x = 0;
+    //     var y = 0;
+    //     var extX = this.getWidth();
+    //     var extY = this.getHeight();
+    //     graphics.transform3(this.transform);
+    //
+    //     var sFillColor;
+    //     var sOutlineColor;
+    //     var oColor;
+    //     if(this.isActive()) {
+    //         sFillColor = oSkin.ScrollerActiveColor;
+    //         sOutlineColor = oSkin.ScrollOutlineActiveColor;
+    //     }
+    //     else if(this.isHovered()) {
+    //         sFillColor = oSkin.ScrollerHoverColor;
+    //         sOutlineColor = oSkin.ScrollOutlineHoverColor;
+    //     }
+    //     else {
+    //         sFillColor = oSkin.ScrollerColor;
+    //         sOutlineColor = oSkin.ScrollOutlineColor;
+    //     }
+    //     oColor = AscCommon.RgbaHexToRGBA(sFillColor);
+    //     graphics.b_color1(oColor.R, oColor.G, oColor.B, 0xFF);
+    //     graphics.rect(x, y, extX, extY);
+    //     graphics.df();
+    //     oColor = AscCommon.RgbaHexToRGBA(sOutlineColor);
+    //
+    //     graphics.SetIntegerGrid(true);
+    //     graphics.p_width(0);
+    //     graphics.p_color(oColor.R, oColor.G, oColor.B, 0xFF);
+    //     graphics.drawHorLine(0, y, x, x + extX, 0);
+    //     graphics.drawHorLine(0, y + extY, x, x + extX, 0);
+    //     graphics.drawVerLine(2, x, y, y + extY, 0);
+    //     graphics.drawVerLine(2, x + extX, y, y + extY, 0);
+    //     graphics.ds();
+    //     graphics.RestoreGrState();
+    //     return true;
+    // };
+
+    CButton.prototype.getFillColor = function() {
+        // if(this.parentControl instanceof CTimelineContainer) {
+        //     return null;
+        // }
+        var oSkin = AscCommon.GlobalSkin;
+        if(this.isActive()) {
+            return oSkin.ScrollerActiveColor;
+        }
+        else if(this.isHovered()) {
+            return oSkin.ScrollerHoverColor;
+        }
+        else {
+            return oSkin.ScrollerColor;
+        }
+    };
+    CButton.prototype.getOutlineColor = function() {
+        // if(this.parentControl instanceof CTimelineContainer) {
+        //     return null;
+        // }
+        var oSkin = AscCommon.GlobalSkin;
+        if(this.isActive()) {
+            return oSkin.ScrollOutlineActiveColor;
+        }
+        else if(this.isHovered()) {
+            return oSkin.ScrollOutlineHoverColor;
+        }
+        else {
+            return oSkin.ScrollOutlineColor;
+        }
+    };
+
+    var PLAY_BUTTON_WIDTH = 82 * AscCommon.g_dKoef_pix_to_mm;
+    var PLAY_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
+    var PLAY_BUTTON_LEFT = 145 * AscCommon.g_dKoef_pix_to_mm;
+    var PLAY_BUTTON_TOP = 12 * AscCommon.g_dKoef_pix_to_mm;
+    function CAnimPaneHeader(oDrawer) {
+        CTopControl.call(this, oDrawer);
+        this.label = this.addControl(new CLabel(this, "Animation Pane", 10, true));
+        this.playButton = this.addControl(new CButton(this));
+        this.closeButton = this.addControl(new CButton(this));
+    }
+    InitClass(CAnimPaneHeader, CTopControl, CONTROL_TYPE_HEADER);
+    CAnimPaneHeader.prototype.recalculateChildrenLayout = function() {
+        this.closeButton.setLayout(
+            this.getWidth() - AscCommon.TIMELINE_LIST_RIGHT_MARGIN - BUTTON_SIZE,
+            (this.getHeight() - BUTTON_SIZE) / 2,
+            BUTTON_SIZE,
+            BUTTON_SIZE
+        );
+        this.playButton.setLayout(
+            PLAY_BUTTON_LEFT,
+            PLAY_BUTTON_TOP,
+            PLAY_BUTTON_WIDTH,
+            PLAY_BUTTON_HEIGHT
+        );
+        this.label.setLayout(
+            AscCommon.TIMELINE_LEFT_MARGIN,
+            0,
+            this.playButton.getLeft(),
+            this.getHeight()
+        );
+
+    };
+    CAnimPaneHeader.prototype.getFillColor = function() {
+        return null;
+    };
+    CAnimPaneHeader.prototype.getOutlineColor = function() {
+        return null;
+    };
+
+    function CToolbar(oParentControl) {
+        CControlContainer.call(this, oParentControl);
+        this.playButton = this.addControl(new CButton(this));
+        this.upButton = this.addControl(new CButton(this));
+        this.downButton = this.addControl(new CButton(this));
+    }
+    InitClass(CToolbar, CControlContainer, CONTROL_TYPE_TOOLBAR);
+    CToolbar.prototype.recalculateChildrenLayout = function() {
+        this.playButton.setLayout(0, 0, this.getWidth(), BUTTON_SIZE);
+        this.downButton.setLayout(
+            this.getWidth() - BUTTON_SIZE,
+            this.getHeight() - BUTTON_SIZE,
+            BUTTON_SIZE,
+            BUTTON_SIZE
+        );
+        this.upButton.setLayout(
+            this.downButton.getLeft() - BUTTON_SPACE - BUTTON_SIZE,
+            this.getHeight() - BUTTON_SIZE,
+            BUTTON_SIZE,
+            BUTTON_SIZE
+        );
+    };
+    CToolbar.prototype.getFillColor = function() {
+        return null;
+    };
+    CToolbar.prototype.getOutlineColor = function() {
+        return null;
+    };
+
+
+
+    var SECONDS_BUTTON_WIDTH = 76 * AscCommon.g_dKoef_pix_to_mm;
+    var SECONDS_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
+    var SECONDS_BUTTON_LEFT = 57 * AscCommon.g_dKoef_pix_to_mm;
+    function CTimelineContainer(oDrawer) {
+        CTopControl.call(this, oDrawer);
+        this.drawer = oDrawer;
+        this.secondsButton = this.addControl(new CButton(this));
+        this.timeline = this.addControl(new CTimeline(this));
+    }
+    InitClass(CTimelineContainer, CTopControl, CONTROL_TYPE_TIMELINE_CONTAINER);
+    CTimelineContainer.prototype.recalculateChildrenLayout = function() {
+        var dPosY = (this.getHeight() - SECONDS_BUTTON_HEIGHT) / 2;
+        this.secondsButton.setLayout(SECONDS_BUTTON_LEFT, dPosY, SECONDS_BUTTON_WIDTH, SECONDS_BUTTON_HEIGHT);
+        var dLeft = LABEL_TIMELINE_WIDTH + AscCommon.TIMELINE_LEFT_MARGIN - 1.5*SCROLL_THICKNESS;
+        var dWidth = this.getWidth() - AscCommon.TIMELINE_LIST_RIGHT_MARGIN - dLeft;
+        dPosY = (this.getHeight() - SCROLL_THICKNESS) / 2;
+        this.timeline.setLayout(dLeft, dPosY, dWidth, SCROLL_THICKNESS);
+    };
+    CTimelineContainer.prototype.getFillColor = function() {
+        return null;
+    };
+    CTimelineContainer.prototype.getOutlineColor = function() {
+        return null;
+    };
+
+    //Time scales in seconds
+    var TIME_SCALES = [
+        1,
+        1,
+        2,
+        5,
+        10,
+        20,
+        60,
+        120,
+        300,
+        600,
+        600
+    ];
+    //lengths
+    var SMALL_TIME_INTERVAL = 15;
+    var MIDDLE_1_TIME_INTERVAL = 20;
+    var MIDDLE_2_TIME_INTERVAL = 25;
+    var LONG_TIME_INTERVAL = 30;
+    var TIME_INTERVALS = [
+        LONG_TIME_INTERVAL, //1
+        SMALL_TIME_INTERVAL, //1
+        SMALL_TIME_INTERVAL, //2
+        MIDDLE_1_TIME_INTERVAL, //5
+        MIDDLE_1_TIME_INTERVAL,//10
+        MIDDLE_1_TIME_INTERVAL,//20
+        MIDDLE_2_TIME_INTERVAL,//60
+        MIDDLE_2_TIME_INTERVAL,//120
+        MIDDLE_2_TIME_INTERVAL,//300
+        MIDDLE_2_TIME_INTERVAL,//600
+        SMALL_TIME_INTERVAL//600
+    ];
+    var LABEL_WIDTH = 100;
+    function CTimeline(oParentControl) {
+        CScrollHor.call(this, oParentControl);
+        this.startTimePos = 0;
+        this.curTimePos = 0;
+        this.tmScaleIdx = 5;
+
+        //labels cache
+        this.labels = {};
+        this.usedLabels = {};
+
+        this.cachedParaPr = null;
+    }
+    InitClass(CTimeline, CScrollHor, CONTROL_TYPE_TIMELINE);
+    CTimeline.prototype.startDrawLabels = function() {
+        this.usedLabels = {};
+    };
+    CTimeline.prototype.endDrawLabels = function() {
+        for(var nTime in this.labels) {
+            if(!this.usedLabels[nTime]) {
+                var oLabel = this.labels[nTime];
+                oLabel.parentControl = null;
+                oLabel.bDeleted = true;
+                delete this.labels[nTime];
+            }
+        }
+    };
+    CTimeline.prototype.getLabel = function(nTime, scale) {
+      this.usedLabels[nTime] = true;
+      if(this.labels[nTime] && AscFormat.fApproxEqual(this.labels[nTime].scale, scale, 0.01)) {
+          return this.labels[nTime];
+      }
+      return this.cacheLabel(nTime, scale);
+    };
+    CTimeline.prototype.cacheLabel = function(nTime, scale) {
+      var oLabel = new CLabel(this, this.getTimeString(nTime), 7.5);
+      var oContent = oLabel.txBody.content;
+      oLabel.setLayout(0, 0, LABEL_WIDTH, this.getHeight());
+      if(this.cachedParaPr) {
+          oContent.Content[0].CompiledPr = this.cachedParaPr;
+      }
+      else {
+          oContent.SetApplyToAll(true);
+          oContent.SetParagraphAlign(AscCommon.align_Center);
+          oContent.SetApplyToAll(false);
+      }
+      oLabel.recalculate();
+      if(!this.cachedParaPr) {
+          this.cachedParaPr = oContent.Content[0].CompiledPr;
+      }
+      var oBaseTexture = oLabel.getAnimTexture(scale);
+      this.labels[nTime] = new CAnimTexture(this, oBaseTexture.canvas, oBaseTexture.scale, oBaseTexture.x, oBaseTexture.y);
+      return this.labels[nTime];
+    };
+    CTimeline.prototype.getTimeString = function(nTime) {
+      if(nTime < 60) {
+          return "" + nTime;
+      }
+      var nMin, nSec;
+      var sMin, sSec;
+      nSec = (nTime % 60);
+      if(nSec === 0) {
+          sSec = "00";
+      }
+      else {
+          sSec = "" + nSec;
+      }
+      if(nTime < 3600) {
+          return (((nTime / 60) >> 0)  + ":") + sSec;
+      }
+
+        nMin = ((nTime / 60) >> 0);
+        if(nMin === 0) {
+            sMin = "00";
+        }
+        else {
+            sMin = "" + nMin;
+        }
+      return (((nTime / 3600) >> 0)  + ":") + (sMin  + ":") + sSec;
+    };
+    CTimeline.prototype.drawLabel = function(graphics, dPos, nTime) {
+        var oLabelTexture = this.getLabel(nTime, graphics.m_oCoordTransform.sx);
+        var oMatrix = new AscCommon.CMatrix();
+        var dWidth = oLabelTexture.canvas.width / oLabelTexture.scale;
+        var dHeight = oLabelTexture.canvas.height / oLabelTexture.scale ;
+        graphics.drawImage2(oLabelTexture.canvas,
+            dPos - dWidth / 2, this.getHeight() / 2 - dHeight / 2,
+            dWidth,
+            dHeight);
+        // var oContent = oLabel.txBody.content;
+        // oContent.ShiftView(dPos - LABEL_WIDTH / 2, this.getHeight() / 2 - oContent.GetSummaryHeight() / 2);
+        // oContent.Draw(0, graphics);
+        // oContent.ResetShiftView();
+    };
+    CTimeline.prototype.getPaneLeft = function() {
+        return SCROLL_BUTTON_SIZE;
+    };
+    CTimeline.prototype.getFillColor = function() {
+        return null;
+    };
+    CTimeline.prototype.getOutlineColor = function() {
+        return null;
+    };
+    CTimeline.prototype.recalculateChildrenLayout = function() {
+        this.children[0].setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+        this.children[1].setLayout(this.getWidth() - SCROLL_BUTTON_SIZE, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+    };
+    CTimeline.prototype.canHandleEvents = function() {
+        return true;
+    };
+    CTimeline.prototype.drawMark = function(graphics, dPos) {
+        var dHeight = this.getHeight() / 3;
+        var nPenW = this.getPenWidth(graphics);
+        graphics.drawVerLine(1, dPos, dHeight, dHeight + dHeight, nPenW);
+    };
+    CTimeline.prototype.start = function(graphics, dPos) {
+        var dHeight = this.getHeight() / 3;
+        var nPenW = this.getPenWidth(graphics);
+        graphics.drawVerLine(1, dPos, dHeight, dHeight + dHeight, nPenW);
+    };
+    CTimeline.prototype.draw = function(graphics) {
+        if(!CScrollHor.prototype.draw.call(this, graphics)) {
+            return false;
+        }
+        graphics.SaveGrState();
+        // var dPenW = this.getPenWidth(graphics);
+        // graphics.SetIntegerGrid(true);
+        // graphics.p_width(dPenW);
+        // var sColor = this.children[0].getOutlineColor();
+        // var oColor = AscCommon.RgbaHexToRGBA(sColor);
+        // graphics.p_color(oColor.R, oColor.G, oColor.B, 255);
+        // var dPaneLeft = this.children[0].getRight();
+        // var dPaneWidth = this.getWidth() - (this.children[0].getWidth() + this.children[1].getWidth());
+        // graphics.rect(dPaneLeft, 0, dPaneWidth, this.getHeight());
+        // graphics.ds();
+        // graphics.RestoreGrState();
+        var sColor = this.children[0].getOutlineColor();
+        var oColor = AscCommon.RgbaHexToRGBA(sColor);
+        var dPaneLeft = this.getRulerStart();
+        var dPaneWidth = this.getRulerEnd() - dPaneLeft;
+        var x = dPaneLeft;
+        var y = 0;
+        var extX = dPaneWidth;
+        var extY = this.getHeight();
+        graphics.transform3(this.transform);
+        graphics.SetIntegerGrid(true);
+        var nPenW = this.getPenWidth(graphics);
+        graphics.p_color(oColor.R, oColor.G, oColor.B, 0xFF);
+        graphics.drawHorLine(0, y, x, x + extX, nPenW);
+        graphics.drawHorLine(0, y + extY, x, x + extX, nPenW);
+        graphics.drawVerLine(2, x, y, y + extY, nPenW);
+        graphics.drawVerLine(2, x + extX, y, y + extY, nPenW);
+        graphics.ds();
+
+        //draw marks
+        //find first visible
+        var fStartTime = this.posToTime(this.getRulerStart());
+        var fTimeInterval = TIME_SCALES[this.tmScaleIdx];
+        var nMarksCount = TIME_INTERVALS[this.tmScaleIdx] === LONG_TIME_INTERVAL ? 10 : 2;
+
+        var dTimeOfSmallInterval = fTimeInterval / nMarksCount;
+        var nStartIntervalIdx = this.startTimePos/dTimeOfSmallInterval >> 0;
+        var nEndIntervalIdx = this.posToTime(this.getRulerEnd()) / dTimeOfSmallInterval + 0.5 >> 0;
+        this.startDrawLabels();
+        var nInterval;
+        graphics.AddClipRect(x, y, extX, extY);
+        for(nInterval = nStartIntervalIdx; nInterval <= nEndIntervalIdx; ++nInterval) {
+            var dTime = nInterval*dTimeOfSmallInterval;
+            var dPos = this.timeToPos(dTime);
+            if(nInterval % nMarksCount !== 0) {
+                this.drawMark(graphics, dPos);
+            }
+            else {
+                this.drawLabel(graphics, dPos, dTime);
+            }
+        }
+        graphics.ds();
+        // for(nInterval = nFirstInterval; nInterval <= nLastInterval; ++nInterval) {
+        //     var dTime = nInterval*dSmallInterval;
+        //     var dPos = this.timeToPos(dTime);
+        //     if(nInterval % nMarksCount === 0) {
+        //         this.drawLabel(graphics, dPos, dTime);
+        //     }
+        // }
+        this.endDrawLabels();
+        //
+
+        graphics.RestoreGrState();
+    };
+    CTimeline.prototype.getRulerStart = function() {
+        return this.children[0].getRight();
+    };
+    CTimeline.prototype.getRulerEnd = function() {
+        return this.getWidth() - this.children[1].getWidth();
+    };
+    CTimeline.prototype.getCursorSize = function() {
+        return BUTTON_SIZE;
+    };
+    CTimeline.prototype.getZeroShift = function() {
+        return this.getRulerStart() + this.getCursorSize() / 2;
+    };
+    CTimeline.prototype.timeToPos = function(fTime) {
+        //linear relationship x = a*t + b
+        var oCoefs = this.getLinearCoeffs();
+        return oCoefs.a*fTime + oCoefs.b;
+    };
+    CTimeline.prototype.getLinearCoeffs = function() {
+        //linear relationship x = a*t + b
+        var a = TIME_INTERVALS[this.tmScaleIdx]/TIME_SCALES[this.tmScaleIdx];
+        var b = this.getZeroShift() - a*this.startTimePos;
+        return {a: a, b: b};
+    };
+    CTimeline.prototype.posToTime = function(fPos) {
+        //linear relationship x = a*t + b
+        var oCoefs = this.getLinearCoeffs();
+        return (fPos - oCoefs.b) / oCoefs.a;
+    };
+
+    var HEADER_HEIGHT = 7.5;
+    var BUTTON_SIZE = HEADER_HEIGHT;
+    var TOOLBAR_HEIGHT = HEADER_HEIGHT;
+    var PADDING_LEFT = 3;
+    var PADDING_TOP = PADDING_LEFT;
+    var PADDING_RIGHT = PADDING_LEFT;
+    var PADDING_BOTTOM = PADDING_LEFT;
+    var VERTICAL_SPACE = PADDING_LEFT;
+    var HORIZONTAL_SPACE = PADDING_LEFT;
+    var SCROLL_THICKNESS = 15 * AscCommon.g_dKoef_pix_to_mm;
+    var SCROLL_BUTTON_SIZE = SCROLL_THICKNESS;
+    var TIMELINE_HEIGHT = SCROLL_THICKNESS + 1;
+    var BUTTON_SPACE = HORIZONTAL_SPACE / 2;
+    var TOOLBAR_WIDTH = 25;
+    var ANIM_LABEL_WIDTH = 40;
+    var ANIM_ITEM_HEIGHT = TIMELINE_HEIGHT;
+    var EFFECT_BAR_HEIGHT = 2*ANIM_ITEM_HEIGHT/3;
+    var SEQ_LABEL_HEIGHT = EFFECT_BAR_HEIGHT;
+
+
+    function CAnimPane(oTiming) {
+        CControlContainer.call(this, null);
+        this.timing = oTiming;
+        this.header = this.addControl(new CAnimPaneHeader(this));
+        this.toolbar = this.addControl(new CToolbar(this));
+        this.seqListContainer = this.addControl(new CSeqListContainer(this));
+        this.timelineContainer = this.addControl(new CTimelineContainer(this));
+
+        this.recalcInfo.recalculateHeader = true;
+        this.recalcInfo.recalculateToolbar = true;
+        this.recalcInfo.recalculateSeqListContainer = true;
+        this.recalcInfo.recalculateTimelineContainer = true;
+    }
+    InitClass(CAnimPane, CControlContainer, CONTROL_TYPE_UNKNOWN);
+    CAnimPane.prototype.getHeader = function() {
+        return this.getChildByType(CONTROL_TYPE_HEADER);
+    };
+    CAnimPane.prototype.getToolbar = function() {
+        return this.getChildByType(CONTROL_TYPE_TOOLBAR);
+    };
+    CAnimPane.prototype.getSeqListContainer = function() {
+        return this.getChildByType(CONTROL_TYPE_SEQ_LIST_CONTAINER);
+    };
+    CAnimPane.prototype.getTimelineContainer = function() {
+        return this.getChildByType(CONTROL_TYPE_TIMELINE_CONTAINER);
+    };
+    CAnimPane.prototype.onChanged = function(oRect) {
+        this.timing.onAnimPaneChanged(oRect);
+    };
+    CAnimPane.prototype.onResize = function() {
+        return;
+        this.setLayout(
+            0,
+            0,
+            this.getExternalControlWidth(),
+            this.getExternalControlHeight()
+        );
+        this.recalculate();
+        this.onUpdate();
+    };
+    CAnimPane.prototype.getExternalControl = function() {
+        return editor.WordControl.m_oAnimPaneApi;
+    };
+    CAnimPane.prototype.getExternalControlWidth = function() {
+        return this.getExternalControl().GetWidth();
+    };
+    CAnimPane.prototype.getExternalControlHeight = function() {
+        return this.getExternalControl().GetHeight();
+    };
+    CAnimPane.prototype.onChildUpdate = function(oBounds) {
+        this.getExternalControl().OnAnimPaneChanged(this.getSlideNum(), oBounds);
+    };
+    CAnimPane.prototype.onUpdate = function() {
+        this.getExternalControl().OnAnimPaneChanged(this.getSlideNum(), this.getBounds());
+    };
+    CAnimPane.prototype.getSlideNum = function(oBounds) {
+        return this.timing.parent.num;
+    };
+    CAnimPane.prototype.recalculateChildrenLayout = function() {
+        var dControlWidth = Math.max(0, this.getWidth() - PADDING_LEFT - PADDING_RIGHT);
+        this.header.setLayout(
+            PADDING_LEFT,
+            PADDING_TOP,
+            this.getWidth() - PADDING_LEFT - PADDING_RIGHT,
+            HEADER_HEIGHT
+        );
+        var dBottomPartY = this.header.getBottom() + VERTICAL_SPACE;
+        this.toolbar.setLayout(
+            PADDING_LEFT,
+            dBottomPartY,
+            TOOLBAR_WIDTH,
+            this.getHeight() - dBottomPartY - PADDING_BOTTOM
+        );
+
+        var dRightPartX = PADDING_LEFT + this.toolbar.getWidth() + VERTICAL_SPACE;
+        var dRightPartWidth = Math.max(0, this.getWidth() - dRightPartX - PADDING_RIGHT);
+        this.timelineContainer.setLayout(
+            dRightPartX,
+            this.getHeight() - PADDING_BOTTOM - TIMELINE_HEIGHT,
+            dRightPartWidth,
+            TIMELINE_HEIGHT
+        );
+        var dListTop = dBottomPartY;
+        var dListBottom = this.timelineContainer.getTop();
+        var dListLeft = dRightPartX;
+        this.seqListContainer.setLayout(
+            dListLeft,
+            dListTop,
+            dRightPartWidth,
+            Math.max(0, dListBottom - dListTop)
+        );
+    };
+    CAnimPane.prototype.recalculateHeader = function() {
+        this.header.recalculate();
+    };
+    CAnimPane.prototype.recalculateToolbar = function() {
+        this.toolbar.recalculate();
+    };
+    CAnimPane.prototype.recalculateSeqListContainer = function() {
+        this.seqListContainer.recalculate();
+    };
+    CAnimPane.prototype.recalculateTimelineContainer = function() {
+        this.timelineContainer.recalculate();
+    };
+    
+    CAnimPane.prototype.recalculate = function() {
+        return;
+    };
+    //CAnimPane.prototype.draw = function(oGraphics) {
+    //    oGraphics.b_color1(255, 0, 0, 255);
+    //    oGraphics.rect(0, 0, 100, 100);
+    //    oGraphics.df();
+    //};
 
 
     window['AscFormat'] = window['AscFormat'] || {};
@@ -9177,4 +13732,753 @@
     window['AscFormat'].CBaseAnimObject = CBaseAnimObject;
     window['AscFormat'].CAnimFormulaParser = CFormulaParser;
     window['AscFormat'].CBaseAnimTexture = CBaseAnimTexture;
+    window['AscFormat'].CDemoAnimPlayer = CDemoAnimPlayer;
+    
+
+
+    function generate_preset_data() {
+        var aPresets = "emph,emphasis_blink,35,0;emph,emphasis_bold_flash,10,0;emph,emphasis_bold_reveal,15,0;emph,emphasis_brush_color,16,0;emph,emphasis_color_pulse,27,0;emph,emphasis_complementary_color,21,0;emph,emphasis_complementary_color_2,22,0;emph,emphasis_contrasting_color,23,0;emph,emphasis_contrasting_darken,24,0;emph,emphasis_desaturate,25,0;emph,emphasis_fill_color,1,2;emph,emphasis_font_color,3,2;emph,emphasis_grow_shrink,6,0;emph,emphasis_grow_with_color,28,0;emph,emphasis_lighten,30,0;emph,emphasis_line_color,7,2;emph,emphasis_object_color,19,0;emph,emphasis_pulse,26,0;emph,emphasis_shimmer,36,0;emph,emphasis_spin,8,0;emph,emphasis_teeter,32,0;emph,emphasis_transparency,9,0;emph,emphasis_underline,18,0;emph,emphasis_wave,34,0;entr,entrance_appear,1,0;entr,entrance_basic_swivel_horizontal,19,10;entr,entrance_basic_swivel_vertical,19,5;entr,entrance_basic_zoom_in,23,16;entr,entrance_basic_zoom_in_from_screen_center,23,528;entr,entrance_basic_zoom_in_slightly,23,272;entr,entrance_basic_zoom_out,23,32;entr,entrance_basic_zoom_out_from_screen_bottom,23,36;entr,entrance_basic_zoom_out_slightly,23,288;entr,entrance_blinds_horizontal,3,10;entr,entrance_blinds_vertical,3,5;entr,entrance_boomerang,25,0;entr,entrance_bounce,26,0;entr,entrance_box_in,4,16;entr,entrance_box_out,4,32;entr,entrance_center_compress,50,0;entr,entrance_center_revolve,43,0;entr,entrance_checkerboard_across,5,10;entr,entrance_checkerboard_down,5,5;entr,entrance_circle_in,6,16;entr,entrance_circle_out,6,32;entr,entrance_credits,28,0;entr,entrance_curve_up,52,0;entr,entrance_diamond_in,8,16;entr,entrance_diamond_out,8,32;entr,entrance_dissolve_in,9,0;entr,entrance_drop,38,0;entr,entrance_expand,55,0;entr,entrance_fade,10,0;entr,entrance_flip,56,0;entr,entrance_float,30,0;entr,entrance_float_down,47,0;entr,entrance_float_up,42,0;entr,entrance_fly_in_from_bottom,2,4;entr,entrance_fly_in_from_bottom_left,2,12;entr,entrance_fly_in_from_bottom_right,2,6;entr,entrance_fly_in_from_left,2,8;entr,entrance_fly_in_from_right,2,2;entr,entrance_fly_in_from_top,2,1;entr,entrance_fly_in_from_top_left,2,9;entr,entrance_fly_in_from_top_right,2,3;entr,entrance_grow_and_turn,31,0;entr,entrance_peek_in_from_bottom,12,4;entr,entrance_peek_in_from_left,12,8;entr,entrance_peek_in_from_right,12,2;entr,entrance_peek_in_from_top,12,1;entr,entrance_pinwheel,35,0;entr,entrance_plus_in,13,16;entr,entrance_plus_out,13,32;entr,entrance_random_bars_horizontal,14,10;entr,entrance_random_bars_vertical,14,5;entr,entrance_rise_up,37,0;entr,entrance_spinner,49,0;entr,entrance_spiral_in,15,0;entr,entrance_split_horizontal_in,16,26;entr,entrance_split_horizontal_out,16,42;entr,entrance_split_vertical_in,16,21;entr,entrance_split_vertical_out,16,37;entr,entrance_stretch_across,17,10;entr,entrance_stretch_from_bottom,17,4;entr,entrance_stretch_from_left,17,8;entr,entrance_stretch_from_right,17,2;entr,entrance_stretch_from_top,17,1;entr,entrance_strips_left_down,18,12;entr,entrance_strips_left_up,18,9;entr,entrance_strips_right_down,18,6;entr,entrance_strips_right_up,18,3;entr,entrance_swivel,45,0;entr,entrance_wedge,20,0;entr,entrance_wheel_1_spoke,21,1;entr,entrance_wheel_2_spokes,21,2;entr,entrance_wheel_3_spokes,21,3;entr,entrance_wheel_4_spokes,21,4;entr,entrance_wheel_8_spokes,21,8;entr,entrance_whip,41,0;entr,entrance_whipe_from_bottom,22,4;entr,entrance_whipe_from_left,22,8;entr,entrance_whipe_from_right,22,2;entr,entrance_whipe_from_top,22,1;entr,entrance_zoom_object_center,53,16;entr,entrance_zoom_slide_center,53,528;exit,exit_basic_swivel_horizontal,19,10;exit,exit_basic_swivel_vertical,19,5;exit,exit_basic_zoom_in,23,16;exit,exit_basic_zoom_in_slightly,23,272;exit,exit_basic_zoom_in_to_screen_bottom,23,20;exit,exit_basic_zoom_out,23,32;exit,exit_basic_zoom_out_slightly,23,288;exit,exit_basic_zoom_out_to_screen_center,23,544;exit,exit_blinds_horizontal,3,10;exit,exit_blinds_vertical,3,5;exit,exit_boomerang,25,0;exit,exit_bounce,26,0;exit,exit_box_in,4,16;exit,exit_box_out,4,32;exit,exit_center_revolve,43,0;exit,exit_checkerboard_across,5,10;exit,exit_checkerboard_up,5,5;exit,exit_circle_in,6,16;exit,exit_circle_out,6,32;exit,exit_collapse_across,17,10;exit,exit_collapse_to_bottom,17,4;exit,exit_collapse_to_left,17,8;exit,exit_collapse_to_right,17,2;exit,exit_collapse_to_top,17,1;exit,exit_contract,55,0;exit,exit_credits,28,0;exit,exit_curve_down,52,0;exit,exit_diamond_in,8,16;exit,exit_diamond_out,8,32;exit,exit_disappear,1,0;exit,exit_dissolve_out,9,0;exit,exit_drop,38,0;exit,exit_fade,10,0;exit,exit_flip,56,0;exit,exit_float,30,0;exit,exit_float_down,42,0;exit,exit_float_up,47,0;exit,exit_fly_out_to_bottom,2,4;exit,exit_fly_out_to_bottom_left,2,12;exit,exit_fly_out_to_bottom_right,2,6;exit,exit_fly_out_to_left,2,8;exit,exit_fly_out_to_right,2,2;exit,exit_fly_out_to_top,2,1;exit,exit_fly_out_to_top_left,2,9;exit,exit_fly_out_to_top_right,2,3;exit,exit_peek_out_to_bottom,12,4;exit,exit_peek_out_to_left,12,8;exit,exit_peek_out_to_right,12,2;exit,exit_peek_out_to_top,12,1;exit,exit_pinwheel,35,0;exit,exit_plus_in,13,16;exit,exit_plus_out,13,32;exit,exit_random_bars_horizontal,14,10;exit,exit_random_bars_vertical,14,5;exit,exit_shrink_and_turn,31,0;exit,exit_shrink_down,37,0;exit,exit_spinner,49,0;exit,exit_spiral_out,15,0;exit,exit_split_horizontal_in,16,26;exit,exit_split_horizontal_out,16,42;exit,exit_split_vertical_in,16,21;exit,exit_split_vertical_out,16,37;exit,exit_stretchy,50,0;exit,exit_strips_left_down,18,12;exit,exit_strips_left_up,18,9;exit,exit_strips_right_down,18,6;exit,exit_strips_right_up,18,3;exit,exit_swivel,45,0;exit,exit_wedge,20,0;exit,exit_wheel_1_spoke,21,1;exit,exit_wheel_2_spokes,21,2;exit,exit_wheel_3_spokes,21,3;exit,exit_wheel_4_spokes,21,4;exit,exit_wheel_8_spokes,21,8;exit,exit_whip,41,0;exit,exit_whipe_from_bottom,22,4;exit,exit_whipe_from_left,22,8;exit,exit_whipe_from_right,22,2;exit,exit_whipe_from_top,22,1;exit,exit_zoom_object_center,53,32;exit,exit_zoom_slide_center,53,544;path,motion_arc_down,37,0;path,motion_arc_left,51,0;path,motion_arc_right,58,0;path,motion_arc_up,44,0;path,motion_bean,31,0;path,motion_bounce_left,41,0;path,motion_bounce_right,54,0;path,motion_circle,1,0;path,motion_crescent_moon,6,0;path,motion_curved_square,20,0;path,motion_curved_x,21,0;path,motion_curvy_left,48,0;path,motion_curvy_right,61,0;path,motion_curvy_star,23,0;path,motion_custom_path,0,0;path,motion_decaying_wave,60,0;path,motion_diagonal_down_right,49,0;path,motion_diagonal_up_right,56,0;path,motion_diamond,3,0;path,motion_down,42,0;path,motion_equal_triangle,13,0;path,motion_figure_8_four,28,0;path,motion_football,12,0;path,motion_funnel,52,0;path,motion_heart,9,0;path,motion_heartbeat,45,0;path,motion_hexagon,4,0;path,motion_horizontal_figure_8_four,26,0;path,motion_inverted_square,34,0;path,motion_inverted_triangle,33,0;path,motion_left,35,0;path,motion_loop_de_loop,24,0;path,motion_neutron,29,0;path,motion_octagon,10,0;path,motion_parallelogram,14,0;path,motion_path_4_point_star,16,0;path,motion_path_5_point_star,5,0;path,motion_path_6_point_star,11,0;path,motion_path_8_point_star,17,0;path,motion_peanut,27,0;path,motion_pentagon,15,0;path,motion_plus,32,0;path,motion_pointy_star,19,0;path,motion_right,63,0;path,motion_right_triangle,2,0;path,motion_sine_spiral_left,55,0;path,motion_sine_spiral_right,46,0;path,motion_sine_wave,40,0;path,motion_spring,53,0;path,motion_square,7,0;path,motion_stairs_down,62,0;path,motion_swoosh,30,0;path,motion_s_curve_1,59,0;path,motion_s_curve_2,39,0;path,motion_teardrop,18,0;path,motion_trapezoid,8,0;path,motion_turn_down,50,0;path,motion_turn_down_right,36,0;path,motion_turn_up,43,0;path,motion_turn_up_right,57,0;path,motion_up,64,0;path,motion_vertical_figure_8,22,0;path,motion_wave,47,0;path,motion_zigzag,38,0".split(";");
+
+        function getPresetData(sPreset) {
+            var aPreset = sPreset.split(",");
+            return {
+                presetClass: aPreset[0],
+                presetID: aPreset[2],
+                presetSubtype: aPreset[3],
+                effectName: aPreset[1]
+            };
+        }
+        var oClassesNameMap = {"emph": 0, "entr": 1, "exit": 2, "path": 4};
+        var oPresetClassMap = {};
+        var oPresetIDMap = {};
+
+        var sKey;
+        var sConstName;
+        var sClassesConstScript = "";
+        for(sKey in oClassesNameMap) {
+            sConstName = "PRESET_CLASS_" + sKey.toUpperCase();
+            sClassesConstScript += ("AscFormat." + sConstName + " = AscFormat[\"" + sConstName + "\"] = " + oClassesNameMap[sKey]);
+
+        }
+
+        var sResultScript = "";
+        var sClasses;
+        var oEffectsByClass = {};
+        while(aPresets.length > 0) {
+            var sClassPreset = aPresets.pop();
+            var oClassPreset = getPresetData(sClassPreset);
+            var oCurPreset;
+            //find all presets with this presetClass and presetID
+            var aSameClassAndTypeEffects = [];
+            aSameClassAndTypeEffects.push(oClassPreset);
+            var nPreset = aPresets.length - 1;
+            var nMinEffectNameLenght = oClassPreset.effectName.length;
+            while(nPreset > -1) {
+                oCurPreset = getPresetData(aPresets[nPreset]);
+                if(oCurPreset.presetClass === oClassPreset.presetClass && oCurPreset.presetID === oClassPreset.presetID) {
+                    aPresets.splice(nPreset, 1);
+                    aSameClassAndTypeEffects.push(oCurPreset);
+                    nMinEffectNameLenght = Math.min(nMinEffectNameLenght, oClassPreset.effectName.length);
+                }
+                --nPreset;
+            }
+            //find preset name
+            var nPresetNameLength = nMinEffectNameLenght;
+            while(nPresetNameLength > 0) {
+                var sCheckName = aSameClassAndTypeEffects[0].effectName.slice(0, nPresetNameLength);
+                for(nPreset = 1; nPreset < aSameClassAndTypeEffects.length; ++nPreset) {
+                    if(aSameClassAndTypeEffects[nPreset].effectName.indexOf(sCheckName) !== 0) {
+                        break;
+                    }
+                }
+                if(nPreset === aSameClassAndTypeEffects.length) {
+                    break;
+                }
+                nPresetNameLength--;
+            }
+            var nPresetNameForSliceLength = nPresetNameLength;
+            if(oClassPreset.effectName.charAt(nPresetNameLength - 1) === "_") {
+                nPresetNameForSliceLength = nPresetNameLength - 1;
+            }
+            var sEffectName = oClassPreset.effectName.slice(0, nPresetNameForSliceLength).toUpperCase();
+            if(!oEffectsByClass[oClassPreset.presetClass]) {
+                oEffectsByClass[oClassPreset.presetClass] = {"type": oClassesNameMap[oClassPreset.presetClass], "subtypes": {}};
+            }
+            var oEffectClass = oEffectsByClass[oClassPreset.presetClass]["subtypes"];
+            oEffectClass[sEffectName] = {
+                "type": parseInt(oClassPreset.presetID),
+                "subtypes": {
+
+                }
+            };
+            if(aSameClassAndTypeEffects.length > 1) {
+                for(nPreset = 0; nPreset < aSameClassAndTypeEffects.length; ++nPreset) {
+                    oCurPreset = aSameClassAndTypeEffects[nPreset];
+                    var sPresetSubtypeName = oCurPreset.effectName.slice(nPresetNameLength);
+                    oEffectClass[sEffectName]["subtypes"][sPresetSubtypeName] = oCurPreset.presetSubtype;
+                }
+            }
+        }
+        var aEffectClassesStrings = [];
+        var aArraysOfEffects = [];
+        var aArrayOfEffectsSubtypes = [];
+        var sConstString, oConstStringStruct;
+
+        function getStr(sObj, sKey, sVal) {
+            return sConstString = sObj + "." + sKey + " = " + sObj + "[\"" + sKey + "\"] = " + sVal + ";";
+        }
+        for(sKey in oEffectsByClass) {
+            var oClassOfEffects = oEffectsByClass[sKey];
+            var sEffectClassName = "PRESET_CLASS_" + sKey.toUpperCase();
+            sConstString = getStr("AscFormat", sEffectClassName, oClassOfEffects["type"]);
+            oConstStringStruct = {idx: parseInt(oClassOfEffects["type"]), str: sConstString};
+            aEffectClassesStrings.push(oConstStringStruct);
+            var oTypesOfEffects = oClassOfEffects["subtypes"];
+            var aCurEffects = [];
+            aArraysOfEffects.push(aCurEffects);
+            for(var sKey2 in oTypesOfEffects) {
+                var oEffect = oTypesOfEffects[sKey2];
+                sConstString = getStr("AscFormat", sKey2, oEffect["type"]);
+                oConstStringStruct = {idx: parseInt(oEffect["type"]), str: sConstString};
+                aCurEffects.push(oConstStringStruct);
+                if(Object.keys(oEffect["subtypes"]).length !== 0) {
+                    var oCurEffectSubtypes = [];
+                    aArrayOfEffectsSubtypes.push(oCurEffectSubtypes);
+                    var oEffectSubtypes = oEffect["subtypes"];
+                    for(var sKey3 in oEffectSubtypes) {
+                        var sSubtypeConstName = sKey2 + "_" + sKey3.toUpperCase();
+                        sConstString = getStr("AscFormat", sSubtypeConstName, oEffectSubtypes[sKey3]);
+                        oCurEffectSubtypes.push({idx: parseInt(oEffectSubtypes[sKey3]), str: sConstString});
+                    }
+                }
+            }
+        }
+        var sResultScript = "";
+        function writeConstString(aStrObjects) {
+            var sResult = "";
+            if(Array.isArray(aStrObjects[0])) {
+                for(var nIdx = 0; nIdx < aStrObjects.length; ++nIdx) {
+                    sResult += writeConstString(aStrObjects[nIdx]);
+                }
+                return sResult;
+            }
+            sResult = "\n";
+            aStrObjects.sort(function(a, b){return a.idx - b.idx});
+            for(var nIdx = 0; nIdx < aStrObjects.length; ++nIdx) {
+                sResult += (aStrObjects[nIdx].str + "\n");
+            }
+            return sResult;
+        }
+        sResultScript += writeConstString(aEffectClassesStrings);
+        sResultScript += writeConstString(aArraysOfEffects);
+        sResultScript += writeConstString(aArrayOfEffectsSubtypes);
+        console.log(sResultScript);
+    }
+    AscFormat.generate_preset_data = generate_preset_data;
+
+
+    window['AscCommon'] = window['AscCommon'] || {};
+    window['AscCommon'].CAnimPaneHeader = CAnimPaneHeader;
+    window['AscCommon'].CSeqListContainer = CSeqListContainer;
+    window['AscCommon'].CTimelineContainer = CTimelineContainer;
+
+    var ANIMATION_PRESET_CLASSES = [];
+    var PRESET_TYPES;
+    var PRESET_SUBTYPES;
+    ANIMATION_PRESET_CLASSES[0] = [];
+    PRESET_TYPES = ANIMATION_PRESET_CLASSES[0] = [];
+    PRESET_TYPES[1] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[1] = [];
+    PRESET_SUBTYPES[2] = "PPTY;v10;486;4gEAAPr7ANsBAAD6AwEFAgYADgAAAAAPBQAAABABAAAAEQIAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BJwBAAD6+wCVAQAAAwAAAAeAAAAA+gAAAQH7AGIAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AikAAAD6+wAiAAAAAQAAAAAZAAAA+gAJAAAAZgBpAGwAbABjAG8AbABvAHIA+wEAAAAAAgkAAAADBAAAAPoAAfsNhAAAAPr7AGIAAAD6+wAWAAAA+gMBDwcAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AikAAAD6+wAiAAAAAQAAAAAZAAAA+gAJAAAAZgBpAGwAbAAuAHQAeQBwAGUA+wEWAAAA+gEFAAAAcwBvAGwAaQBkAPsAAAAAAA1+AAAA+vsAXgAAAPr7ABYAAAD6AwEPCAAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCJQAAAPr7AB4AAAABAAAAABUAAAD6AAcAAABmAGkAbABsAC4AbwBuAPsBFAAAAPoBBAAAAHQAcgB1AGUA+wAAAAAA";
+    PRESET_TYPES[3] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[3] = [];
+    PRESET_SUBTYPES[2] = "PPTY;v10;224;3AAAAPr7ANUAAAD6AwEFAgYADgAAAAAPBQAAABADAAAAEQIAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BJYAAAD6+wCPAAAAAQAAAAeGAAAA+gAAAQH7AGgAAAD6BAD7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCLQAAAPr7ACYAAAABAAAAAB0AAAD6AAsAAABzAHQAeQBsAGUALgBjAG8AbABvAHIA+wEAAAAAAgkAAAADBAAAAPoAAfs=";
+    PRESET_TYPES[6] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[6] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;159;mwAAAPr7AJQAAAD6AwEFAgYADgAAAAAPBQAAABAGAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BFUAAAD6+wBOAAAAAQAAAAtFAAAA+gDwSQIAAfBJAgD7ADQAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7";
+    PRESET_TYPES[7] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[7] = [];
+    PRESET_SUBTYPES[2] = "PPTY;v10;359;YwEAAPr7AFwBAAD6AwEFAgYADgAAAAAPBQAAABAHAAAAEQIAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BB0BAAD6+wAWAQAAAgAAAAeGAAAA+gAAAQH7AGgAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7Ai8AAAD6+wAoAAAAAQAAAAAfAAAA+gAMAAAAcwB0AHIAbwBrAGUALgBjAG8AbABvAHIA+wEAAAAAAgkAAAADBAAAAPoAAfsNggAAAPr7AGIAAAD6+wAWAAAA+gMBDwcAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AikAAAD6+wAiAAAAAQAAAAAZAAAA+gAJAAAAcwB0AHIAbwBrAGUALgBvAG4A+wEUAAAA+gEEAAAAdAByAHUAZQD7AAAAAAA=";
+    PRESET_TYPES[8] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[8] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;184;tAAAAPr7AK0AAAD6AwEFAgYADgAAAAAPBQAAABAIAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BG4AAAD6+wBnAAAAAQAAAApeAAAA+gAAl0kB+wBSAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIZAAAA+vsAEgAAAAEAAAAACQAAAPoAAQAAAHIA+w==";
+    PRESET_TYPES[9] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[9] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;361;ZQEAAPr7AF4BAAD6BQIGAA4AAAAADwUAAAAQCQAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wQhAQAA+vsAGgEAAAIAAAANkgAAAPr7AHQAAAD6+wAgAAAA+g8GAAAAEwoAAABpAG4AZABlAGYAaQBuAGkAdABlAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIxAAAA+vsAKgAAAAEAAAAAIQAAAPoADQAAAHMAdAB5AGwAZQAuAG8AcABhAGMAaQB0AHkA+wESAAAA+gEDAAAAMAAuADUA+wAAAAAACHoAAAD6AQUAAABpAG0AYQBnAGUAAgwAAABvAHAAYQBjAGkAdAB5ADoAIAAwAC4ANQD7AEcAAAD6BQIAAABJAEUA+wAgAAAA+g8HAAAAEwoAAABpAG4AZABlAGYAaQBuAGkAdABlAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w==";
+    PRESET_TYPES[10] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[10] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;425;pQEAAPr7AJ4BAAD6AwEFAgYADgAAAAAPBQAAABAKAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BF8BAAD6+wBYAQAAAQAAAAZPAQAA+gAABAL7AHIAAAD6BAD7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgBmAG8AbgB0AFcAZQBpAGcAaAB0APsBzQAAAPr7AMYAAAAEAAAAACYAAAD6AAEAAAAwAPsAGAAAAPoBBgAAAG4AbwByAG0AYQBsAPsAAAAAAAAqAAAA+gAFAAAANQAwADAAMAAwAPsAFAAAAPoBBAAAAGIAbwBsAGQA+wAAAAAAAC4AAAD6AAUAAAA2ADAAMAAwADAA+wAYAAAA+gEGAAAAbgBvAHIAbQBhAGwA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAABuAG8AcgBtAGEAbAD7AAAAAAA=";
+    PRESET_TYPES[15] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[15] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;262;AgEAAPr7APsAAAD6BQIGAA4AAAAADwUAAAAQDwAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wMNAAAA+gABAgIAAAAyADUA+wSsAAAA+vsApQAAAAEAAAANnAAAAPr7AHwAAAD6BAD7ACAAAAD6DwYAAAATCgAAAGkAbgBkAGUAZgBpAG4AaQB0AGUA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AZgBvAG4AdABXAGUAaQBnAGgAdAD7ARQAAAD6AQQAAABiAG8AbABkAPsAAAAAAA==";
+    PRESET_TYPES[16] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[16] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;498;7gEAAPr7AOcBAAD6AwEFAgYADgAAAAAPBQAAABAQAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7AwkAAAD6AAEDoA8AAPsEmgEAAPr7AJMBAAADAAAADYIAAAD6+wBmAAAA+gQA+wAUAAAA+gMBDwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wItAAAA+vsAJgAAAAEAAAAAHQAAAPoACwAAAHMAdAB5AGwAZQAuAGMAbwBsAG8AcgD7ARAAAAD6+wAJAAAAAwQAAAD6AAH7DXwAAAD6+wBgAAAA+vsAFAAAAPoDAQ8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCKQAAAPr7ACIAAAABAAAAABkAAAD6AAkAAABmAGkAbABsAGMAbwBsAG8AcgD7ARAAAAD6+wAJAAAAAwQAAAD6AAH7DYIAAAD6+wBgAAAA+vsAFAAAAPoDAQ8IAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCKQAAAPr7ACIAAAABAAAAABkAAAD6AAkAAABmAGkAbABsAC4AdAB5AHAAZQD7ARYAAAD6AQUAAABzAG8AbABpAGQA+wAAAAAA";
+    PRESET_TYPES[18] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[18] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;274;DgEAAPr7AAcBAAD6AwEFAgYADgAAAAAPBQAAABASAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7AwkAAAD6AAEDoA8AAPsEugAAAPr7ALMAAAABAAAADaoAAAD6+wCKAAAA+gQA+wAUAAAA+gMBDwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wJRAAAA+vsASgAAAAEAAAAAQQAAAPoAHQAAAHMAdAB5AGwAZQAuAHQAZQB4AHQARABlAGMAbwByAGEAdABpAG8AbgBVAG4AZABlAHIAbABpAG4AZQD7ARQAAAD6AQQAAAB0AHIAdQBlAPsAAAAAAA==";
+    PRESET_TYPES[19] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[19] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;617;ZQIAAPr7AF4CAAD6AwEFAgYADgAAAAAPBQAAABATAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BB8CAAD6+wAYAgAABAAAAAeEAAAA+gAAAQH7AGYAAAD6BAD7ABQAAAD6AwEPBgAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7Ai0AAAD6+wAmAAAAAQAAAAAdAAAA+gALAAAAcwB0AHkAbABlAC4AYwBvAGwAbwByAPsBAAAAAAIJAAAAAwQAAAD6AAH7B34AAAD6AAABAfsAYAAAAPr7ABQAAAD6AwEPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AikAAAD6+wAiAAAAAQAAAAAZAAAA+gAJAAAAZgBpAGwAbABjAG8AbABvAHIA+wEAAAAAAgkAAAADBAAAAPoAAfsNggAAAPr7AGAAAAD6+wAUAAAA+gMBDwgAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIpAAAA+vsAIgAAAAEAAAAAGQAAAPoACQAAAGYAaQBsAGwALgB0AHkAcABlAPsBFgAAAPoBBQAAAHMAbwBsAGkAZAD7AAAAAAANfAAAAPr7AFwAAAD6+wAUAAAA+gMBDwkAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIlAAAA+vsAHgAAAAEAAAAAFQAAAPoABwAAAGYAaQBsAGwALgBvAG4A+wEUAAAA+gEEAAAAdAByAHUAZQD7AAAAAAA=";
+    PRESET_TYPES[21] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[21] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;643;fwIAAPr7AHgCAAD6AwEFAgYADgAAAAAPBQAAABAVAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BDkCAAD6+wAyAgAABAAAAAeKAAAA+gABAQEFAN1tAAYAAAAABwAAAAD7AGYAAAD6BAD7ABQAAAD6AwEPBgAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7Ai0AAAD6+wAmAAAAAQAAAAAdAAAA+gALAAAAcwB0AHkAbABlAC4AYwBvAGwAbwByAPsBAAAAAAIAAAAAB4QAAAD6AAEBAQUA3W0ABgAAAAAHAAAAAPsAYAAAAPr7ABQAAAD6AwEPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AikAAAD6+wAiAAAAAQAAAAAZAAAA+gAJAAAAZgBpAGwAbABjAG8AbABvAHIA+wEAAAAAAgAAAAAHigAAAPoAAQEBBQDdbQAGAAAAAAcAAAAA+wBmAAAA+vsAFAAAAPoDAQ8IAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCLwAAAPr7ACgAAAABAAAAAB8AAAD6AAwAAABzAHQAcgBvAGsAZQAuAGMAbwBsAG8AcgD7AQAAAAACAAAAAA2CAAAA+vsAYAAAAPr7ABQAAAD6AwEPCQAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AikAAAD6+wAiAAAAAQAAAAAZAAAA+gAJAAAAZgBpAGwAbAAuAHQAeQBwAGUA+wEWAAAA+gEFAAAAcwBvAGwAaQBkAPsAAAAAAA==";
+    PRESET_TYPES[22] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[22] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;643;fwIAAPr7AHgCAAD6AwEFAgYADgAAAAAPBQAAABAWAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BDkCAAD6+wAyAgAABAAAAAeKAAAA+gABAQEFACOS/wYAAAAABwAAAAD7AGYAAAD6BAD7ABQAAAD6AwEPBgAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7Ai0AAAD6+wAmAAAAAQAAAAAdAAAA+gALAAAAcwB0AHkAbABlAC4AYwBvAGwAbwByAPsBAAAAAAIAAAAAB4QAAAD6AAEBAQUAI5L/BgAAAAAHAAAAAPsAYAAAAPr7ABQAAAD6AwEPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AikAAAD6+wAiAAAAAQAAAAAZAAAA+gAJAAAAZgBpAGwAbABjAG8AbABvAHIA+wEAAAAAAgAAAAAHigAAAPoAAQEBBQAjkv8GAAAAAAcAAAAA+wBmAAAA+vsAFAAAAPoDAQ8IAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCLwAAAPr7ACgAAAABAAAAAB8AAAD6AAwAAABzAHQAcgBvAGsAZQAuAGMAbwBsAG8AcgD7AQAAAAACAAAAAA2CAAAA+vsAYAAAAPr7ABQAAAD6AwEPCQAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AikAAAD6+wAiAAAAAQAAAAAZAAAA+gAJAAAAZgBpAGwAbAAuAHQAeQBwAGUA+wEWAAAA+gEFAAAAcwBvAGwAaQBkAPsAAAAAAA==";
+    PRESET_TYPES[23] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[23] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;643;fwIAAPr7AHgCAAD6AwEFAgYADgAAAAAPBQAAABAXAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BDkCAAD6+wAyAgAABAAAAAeKAAAA+gABAQEF8XClAAYAAAAABwAAAAD7AGYAAAD6BAD7ABQAAAD6AwEPBgAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7Ai0AAAD6+wAmAAAAAQAAAAAdAAAA+gALAAAAcwB0AHkAbABlAC4AYwBvAGwAbwByAPsBAAAAAAIAAAAAB4QAAAD6AAEBAQXxcKUABgAAAAAHAAAAAPsAYAAAAPr7ABQAAAD6AwEPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AikAAAD6+wAiAAAAAQAAAAAZAAAA+gAJAAAAZgBpAGwAbABjAG8AbABvAHIA+wEAAAAAAgAAAAAHigAAAPoAAQEBBfFwpQAGAAAAAAcAAAAA+wBmAAAA+vsAFAAAAPoDAQ8IAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCLwAAAPr7ACgAAAABAAAAAB8AAAD6AAwAAABzAHQAcgBvAGsAZQAuAGMAbwBsAG8AcgD7AQAAAAACAAAAAA2CAAAA+vsAYAAAAPr7ABQAAAD6AwEPCQAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AikAAAD6+wAiAAAAAQAAAAAZAAAA+gAJAAAAZgBpAGwAbAAuAHQAeQBwAGUA+wEWAAAA+gEFAAAAcwBvAGwAaQBkAPsAAAAAAA==";
+    PRESET_TYPES[24] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[24] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;643;fwIAAPr7AHgCAAD6AwEFAgYADgAAAAAPBQAAABAYAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BDkCAAD6+wAyAgAABAAAAAeKAAAA+gABAQEFAAAAAAb7zv//B/ad///7AGYAAAD6BAD7ABQAAAD6AwEPBgAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7Ai0AAAD6+wAmAAAAAQAAAAAdAAAA+gALAAAAcwB0AHkAbABlAC4AYwBvAGwAbwByAPsBAAAAAAIAAAAAB4QAAAD6AAEBAQUAAAAABvvO//8H9p3///sAYAAAAPr7ABQAAAD6AwEPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AikAAAD6+wAiAAAAAQAAAAAZAAAA+gAJAAAAZgBpAGwAbABjAG8AbABvAHIA+wEAAAAAAgAAAAAHigAAAPoAAQEBBQAAAAAG+87//wf2nf//+wBmAAAA+vsAFAAAAPoDAQ8IAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCLwAAAPr7ACgAAAABAAAAAB8AAAD6AAwAAABzAHQAcgBvAGsAZQAuAGMAbwBsAG8AcgD7AQAAAAACAAAAAA2CAAAA+vsAYAAAAPr7ABQAAAD6AwEPCQAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AikAAAD6+wAiAAAAAQAAAAAZAAAA+gAJAAAAZgBpAGwAbAAuAHQAeQBwAGUA+wEWAAAA+gEFAAAAcwBvAGwAaQBkAPsAAAAAAA==";
+    PRESET_TYPES[25] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[25] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;643;fwIAAPr7AHgCAAD6AwEFAgYADgAAAAAPBQAAABAZAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BDkCAAD6+wAyAgAABAAAAAeKAAAA+gABAQEFAAAAAAZE7P7/BwAAAAD7AGYAAAD6BAD7ABQAAAD6AwEPBgAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7Ai0AAAD6+wAmAAAAAQAAAAAdAAAA+gALAAAAcwB0AHkAbABlAC4AYwBvAGwAbwByAPsBAAAAAAIAAAAAB4QAAAD6AAEBAQUAAAAABkTs/v8HAAAAAPsAYAAAAPr7ABQAAAD6AwEPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AikAAAD6+wAiAAAAAQAAAAAZAAAA+gAJAAAAZgBpAGwAbABjAG8AbABvAHIA+wEAAAAAAgAAAAAHigAAAPoAAQEBBQAAAAAGROz+/wcAAAAA+wBmAAAA+vsAFAAAAPoDAQ8IAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCLwAAAPr7ACgAAAABAAAAAB8AAAD6AAwAAABzAHQAcgBvAGsAZQAuAGMAbwBsAG8AcgD7AQAAAAACAAAAAA2CAAAA+vsAYAAAAPr7ABQAAAD6AwEPCQAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AikAAAD6+wAiAAAAAQAAAAAZAAAA+gAJAAAAZgBpAGwAbAAuAHQAeQBwAGUA+wEWAAAA+gEFAAAAcwBvAGwAaQBkAPsAAAAAAA==";
+    PRESET_TYPES[26] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[26] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;291;HwEAAPr7ABgBAAD6AwEFAgYADgAAAAAPBQAAABAaAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BNkAAAD6+wDSAAAAAgAAAAh/AAAA+gABAQQAAABmAGEAZABlAPsAaQAAAPr7AEsAAAD6DwYAAAATAwAAADUAMAAwABcaAAAAMAAsACAAMAA7ACAALgAyACwAIAAuADUAOwAgAC4AOAAsACAALgA1ADsAIAAxACwAIAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wtFAAAA+gAomgEAASiaAQD7ADQAAAD6+wAWAAAA+gIBAwEPBwAAABMDAAAAMgA1ADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7";
+    PRESET_TYPES[27] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[27] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;625;bQIAAPr7AGYCAAD6AwIFAgYADgAAAAAPBQAAABAbAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCcCAAD6+wAgAgAABAAAAAeGAAAA+gAAAQH7AGgAAAD6BAD7ABYAAAD6AgEDAg8GAAAAEwMAAAAyADUAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCLQAAAPr7ACYAAAABAAAAAB0AAAD6AAsAAABzAHQAeQBsAGUALgBjAG8AbABvAHIA+wEAAAAAAgkAAAADBAAAAPoABvsHgAAAAPoAAAEB+wBiAAAA+vsAFgAAAPoCAQMCDwcAAAATAwAAADIANQAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIpAAAA+vsAIgAAAAEAAAAAGQAAAPoACQAAAGYAaQBsAGwAYwBvAGwAbwByAPsBAAAAAAIJAAAAAwQAAAD6AAb7DYQAAAD6+wBiAAAA+vsAFgAAAPoCAQMCDwgAAAATAwAAADIANQAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIpAAAA+vsAIgAAAAEAAAAAGQAAAPoACQAAAGYAaQBsAGwALgB0AHkAcABlAPsBFgAAAPoBBQAAAHMAbwBsAGkAZAD7AAAAAAANfgAAAPr7AF4AAAD6+wAWAAAA+gIBAwIPCQAAABMDAAAAMgA1ADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiUAAAD6+wAeAAAAAQAAAAAVAAAA+gAHAAAAZgBpAGwAbAAuAG8AbgD7ARQAAAD6AQQAAAB0AHIAdQBlAPsAAAAAAA==";
+    PRESET_TYPES[28] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[28] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;637;eQIAAPr7AHICAAD6AwEFAgYADgAAAAAPBQAAABAcAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7AwkAAAD6AAEDECcAAPsEJQIAAPr7AB4CAAAEAAAAB4QAAAD6AAABAfsAZgAAAPoEAPsAFAAAAPoDAQ8GAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCLQAAAPr7ACYAAAABAAAAAB0AAAD6AAsAAABzAHQAeQBsAGUALgBjAG8AbABvAHIA+wEAAAAAAgkAAAADBAAAAPoAAfsHfgAAAPoAAAEB+wBgAAAA+vsAFAAAAPoDAQ8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCKQAAAPr7ACIAAAABAAAAABkAAAD6AAkAAABmAGkAbABsAGMAbwBsAG8AcgD7AQAAAAACCQAAAAMEAAAA+gAB+w2CAAAA+vsAYAAAAPr7ABQAAAD6AwEPCAAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AikAAAD6+wAiAAAAAQAAAAAZAAAA+gAJAAAAZgBpAGwAbAAuAHQAeQBwAGUA+wEWAAAA+gEFAAAAcwBvAGwAaQBkAPsAAAAAAAaCAAAA+gABAwMAAAAxAC4ANQAEAPsAbAAAAPoEAPsAFAAAAPoDAQ8JAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCMwAAAPr7ACwAAAABAAAAACMAAAD6AA4AAABzAHQAeQBsAGUALgBmAG8AbgB0AFMAaQB6AGUA+w==";
+    PRESET_TYPES[30] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[30] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;643;fwIAAPr7AHgCAAD6AwEFAgYADgAAAAAPBQAAABAeAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BDkCAAD6+wAyAgAABAAAAAeKAAAA+gABAQEFAAAAAAYFMQAABwpiAAD7AGYAAAD6BAD7ABQAAAD6AwEPBgAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7Ai0AAAD6+wAmAAAAAQAAAAAdAAAA+gALAAAAcwB0AHkAbABlAC4AYwBvAGwAbwByAPsBAAAAAAIAAAAAB4QAAAD6AAEBAQUAAAAABgUxAAAHCmIAAPsAYAAAAPr7ABQAAAD6AwEPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AikAAAD6+wAiAAAAAQAAAAAZAAAA+gAJAAAAZgBpAGwAbABjAG8AbABvAHIA+wEAAAAAAgAAAAAHigAAAPoAAQEBBQAAAAAGBTEAAAcKYgAA+wBmAAAA+vsAFAAAAPoDAQ8IAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCLwAAAPr7ACgAAAABAAAAAB8AAAD6AAwAAABzAHQAcgBvAGsAZQAuAGMAbwBsAG8AcgD7AQAAAAACAAAAAA2CAAAA+vsAYAAAAPr7ABQAAAD6AwEPCQAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AikAAAD6+wAiAAAAAQAAAAAZAAAA+gAJAAAAZgBpAGwAbAAuAHQAeQBwAGUA+wEWAAAA+gEFAAAAcwBvAGwAaQBkAPsAAAAAAA==";
+    PRESET_TYPES[32] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[32] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;736;3AIAAPr7ANUCAAD6AwEFAgYADgAAAAAPBQAAABAgAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BJYCAAD6+wCPAgAABQAAAAp6AAAA+gDA1AEA+wBuAAAA+vsAMgAAAPoDAQ8GAAAAEwMAAAAxADAAMAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCGQAAAPr7ABIAAAABAAAAAAkAAAD6AAEAAAByAPsKfgAAAPoAgFb8//sAcgAAAPr7ADYAAAD6AwEPBwAAABMDAAAAMgAwADAA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADIAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIZAAAA+vsAEgAAAAEAAAAACQAAAPoAAQAAAHIA+wp+AAAA+gCAqQMA+wByAAAA+vsANgAAAPoDAQ8IAAAAEwMAAAAyADAAMAD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAANAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AhkAAAD6+wASAAAAAQAAAAAJAAAA+gABAAAAcgD7Cn4AAAD6AIBW/P/7AHIAAAD6+wA2AAAA+gMBDwkAAAATAwAAADIAMAAwAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA2ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCGQAAAPr7ABIAAAABAAAAAAkAAAD6AAEAAAByAPsKfgAAAPoAwNQBAPsAcgAAAPr7ADYAAAD6AwEPCgAAABMDAAAAMgAwADAA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADgAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIZAAAA+vsAEgAAAAEAAAAACQAAAPoAAQAAAHIA+w==";
+    PRESET_TYPES[34] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[34] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;845;SQMAAPr7AEIDAAD6AwEFAgYADgAAAAAPBQAAABAiAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7AwkAAAD6AAEDECcAAPsE9QIAAPr7AO4CAAAFAAAACd0AAAD6AAEBAQIYAAAATQAgADAALgAwACAAMAAuADAAIABMACAAMAAuADAAIAAtADAALgAwADcAMgAxADMAAwAAAAD7AJgAAAD6+wA+AAAA+gBQwwAAAgEDAQxQwwAADwYAAAATAwAAADIANQAwAPsAGQAAAPr7ABIAAAABAAAAAAkAAAD6AwEAAAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+wp6AAAA+gBg4xYA+wBuAAAA+vsAMgAAAPoDAQ8HAAAAEwMAAAAxADIANQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCGQAAAPr7ABIAAAABAAAAAAkAAAD6AAEAAAByAPsKfgAAAPoAoBzp//sAcgAAAPr7ADYAAAD6AwEPCAAAABMDAAAAMQAyADUA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADEAMgA1APsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIZAAAA+vsAEgAAAAEAAAAACQAAAPoAAQAAAHIA+wp+AAAA+gCgHOn/+wByAAAA+vsANgAAAPoDAQ8JAAAAEwMAAAAxADIANQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAAMgA1ADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AhkAAAD6+wASAAAAAQAAAAAJAAAA+gABAAAAcgD7Cn4AAAD6AGDjFgD7AHIAAAD6+wA2AAAA+gMBDwoAAAATAwAAADEAMgA1APsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAAzADcANQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCGQAAAPr7ABIAAAABAAAAAAkAAAD6AAEAAAByAPs=";
+    PRESET_TYPES[35] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[35] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;325;QQEAAPr7ADoBAAD6AwEFAgYADgAAAAAPBQAAABAjAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BPsAAAD6+wD0AAAAAQAAAAbrAAAA+gAABAL7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADEAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7AWsAAAD6+wBkAAAAAgAAAAAmAAAA+gABAAAAMAD7ABgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAAAMAAAAPoABQAAADUAMAAwADAAMAD7ABoAAAD6AQcAAAB2AGkAcwBpAGIAbABlAPsAAAAAAA==";
+    PRESET_TYPES[36] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[36] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;668;mAIAAPr7AJECAAD6AwEFAgYADgAAAAAPBQAAABAkAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7AwkAAAD6AAEDECcAAPsERAIAAPr7AD0CAAAEAAAAC2MAAAD6BIA4AQAFoIYBAPsAUgAAAPr7ADQAAAD6AgEDAQ8GAAAAEwMAAAAyADUAMAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsGogAAAPoAAQENAAAAKAAjAHAAcAB0AF8AdwAqADAALgAxADAAKQAEAPsAeAAAAPr7ADQAAAD6AgEDAQ8HAAAAEwMAAAAyADUAMAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wakAAAA+gABAQ4AAAAoAC0AIwBwAHAAdABfAHcAKgAwAC4AMQAwACkABAD7AHgAAAD6+wA0AAAA+gIBAwEPCAAAABMDAAAAMgA1ADAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsKfAAAAPoAAK34//sAcAAAAPr7ADQAAAD6AgEDAQ8JAAAAEwMAAAAyADUAMAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCGQAAAPr7ABIAAAABAAAAAAkAAAD6AAEAAAByAPs=";
+    ANIMATION_PRESET_CLASSES[1] = [];
+    PRESET_TYPES = ANIMATION_PRESET_CLASSES[1] = [];
+    PRESET_TYPES[1] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[1] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;264;BAEAAPr7AP0AAAD6AwEFAgYBDgAAAAAPBQAAABABAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BL4AAAD6+wC3AAAAAQAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAA";
+    PRESET_TYPES[2] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[2] = [];
+    PRESET_SUBTYPES[1] = "PPTY;v10;708;wAIAAPr7ALkCAAD6AwEFAgYBDgAAAAAPBQAAABACAAAAEQEAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BHoCAAD6+wBzAgAAAwAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABtUAAAD6AAEEAPsAWgAAAPoBAPsAFAAAAPoDAQ8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wFrAAAA+vsAZAAAAAIAAAAAJgAAAPoAAQAAADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHgA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeAD7AAAAAAAG3QAAAPoAAQQA+wBaAAAA+gEA+wAUAAAA+gMBDwgAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeQD7AXMAAAD6+wBsAAAAAgAAAAAuAAAA+gABAAAAMAD7ACAAAAD6AQoAAAAwAC0AIwBwAHAAdABfAGgALwAyAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHkA+wAAAAAA";
+    PRESET_SUBTYPES[2] = "PPTY;v10;708;wAIAAPr7ALkCAAD6AwEFAgYBDgAAAAAPBQAAABACAAAAEQIAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BHoCAAD6+wBzAgAAAwAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABt0AAAD6AAEEAPsAWgAAAPoBAPsAFAAAAPoDAQ8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wFzAAAA+vsAbAAAAAIAAAAALgAAAPoAAQAAADAA+wAgAAAA+gEKAAAAMQArACMAcABwAHQAXwB3AC8AMgD7AAAAAAAAMAAAAPoABgAAADEAMAAwADAAMAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB4APsAAAAAAAbVAAAA+gABBAD7AFoAAAD6AQD7ABQAAAD6AwEPCAAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBawAAAPr7AGQAAAACAAAAACYAAAD6AAEAAAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB5APsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHkA+wAAAAAA";
+    PRESET_SUBTYPES[3] = "PPTY;v10;716;yAIAAPr7AMECAAD6AwEFAgYBDgAAAAAPBQAAABACAAAAEQMAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BIICAAD6+wB7AgAAAwAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABt0AAAD6AAEEAPsAWgAAAPoBAPsAFAAAAPoDAQ8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wFzAAAA+vsAbAAAAAIAAAAALgAAAPoAAQAAADAA+wAgAAAA+gEKAAAAMQArACMAcABwAHQAXwB3AC8AMgD7AAAAAAAAMAAAAPoABgAAADEAMAAwADAAMAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB4APsAAAAAAAbdAAAA+gABBAD7AFoAAAD6AQD7ABQAAAD6AwEPCAAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBcwAAAPr7AGwAAAACAAAAAC4AAAD6AAEAAAAwAPsAIAAAAPoBCgAAADAALQAjAHAAcAB0AF8AaAAvADIA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeQD7AAAAAAA=";
+    PRESET_SUBTYPES[4] = "PPTY;v10;708;wAIAAPr7ALkCAAD6AwEFAgYBDgAAAAAPBQAAABACAAAAEQQAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BHoCAAD6+wBzAgAAAwAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABtUAAAD6AAEEAPsAWgAAAPoBAPsAFAAAAPoDAQ8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wFrAAAA+vsAZAAAAAIAAAAAJgAAAPoAAQAAADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHgA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeAD7AAAAAAAG3QAAAPoAAQQA+wBaAAAA+gEA+wAUAAAA+gMBDwgAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeQD7AXMAAAD6+wBsAAAAAgAAAAAuAAAA+gABAAAAMAD7ACAAAAD6AQoAAAAxACsAIwBwAHAAdABfAGgALwAyAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHkA+wAAAAAA";
+    PRESET_SUBTYPES[6] = "PPTY;v10;716;yAIAAPr7AMECAAD6AwEFAgYBDgAAAAAPBQAAABACAAAAEQYAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BIICAAD6+wB7AgAAAwAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABt0AAAD6AAEEAPsAWgAAAPoBAPsAFAAAAPoDAQ8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wFzAAAA+vsAbAAAAAIAAAAALgAAAPoAAQAAADAA+wAgAAAA+gEKAAAAMQArACMAcABwAHQAXwB3AC8AMgD7AAAAAAAAMAAAAPoABgAAADEAMAAwADAAMAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB4APsAAAAAAAbdAAAA+gABBAD7AFoAAAD6AQD7ABQAAAD6AwEPCAAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBcwAAAPr7AGwAAAACAAAAAC4AAAD6AAEAAAAwAPsAIAAAAPoBCgAAADEAKwAjAHAAcAB0AF8AaAAvADIA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeQD7AAAAAAA=";
+    PRESET_SUBTYPES[8] = "PPTY;v10;708;wAIAAPr7ALkCAAD6AwEFAgYBDgAAAAAPBQAAABACAAAAEQgAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BHoCAAD6+wBzAgAAAwAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABt0AAAD6AAEEAPsAWgAAAPoBAPsAFAAAAPoDAQ8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wFzAAAA+vsAbAAAAAIAAAAALgAAAPoAAQAAADAA+wAgAAAA+gEKAAAAMAAtACMAcABwAHQAXwB3AC8AMgD7AAAAAAAAMAAAAPoABgAAADEAMAAwADAAMAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB4APsAAAAAAAbVAAAA+gABBAD7AFoAAAD6AQD7ABQAAAD6AwEPCAAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBawAAAPr7AGQAAAACAAAAACYAAAD6AAEAAAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB5APsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHkA+wAAAAAA";
+    PRESET_SUBTYPES[9] = "PPTY;v10;716;yAIAAPr7AMECAAD6AwEFAgYBDgAAAAAPBQAAABACAAAAEQkAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BIICAAD6+wB7AgAAAwAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABt0AAAD6AAEEAPsAWgAAAPoBAPsAFAAAAPoDAQ8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wFzAAAA+vsAbAAAAAIAAAAALgAAAPoAAQAAADAA+wAgAAAA+gEKAAAAMAAtACMAcABwAHQAXwB3AC8AMgD7AAAAAAAAMAAAAPoABgAAADEAMAAwADAAMAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB4APsAAAAAAAbdAAAA+gABBAD7AFoAAAD6AQD7ABQAAAD6AwEPCAAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBcwAAAPr7AGwAAAACAAAAAC4AAAD6AAEAAAAwAPsAIAAAAPoBCgAAADAALQAjAHAAcAB0AF8AaAAvADIA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeQD7AAAAAAA=";
+    PRESET_SUBTYPES[12] = "PPTY;v10;716;yAIAAPr7AMECAAD6AwEFAgYBDgAAAAAPBQAAABACAAAAEQwAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BIICAAD6+wB7AgAAAwAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABt0AAAD6AAEEAPsAWgAAAPoBAPsAFAAAAPoDAQ8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wFzAAAA+vsAbAAAAAIAAAAALgAAAPoAAQAAADAA+wAgAAAA+gEKAAAAMAAtACMAcABwAHQAXwB3AC8AMgD7AAAAAAAAMAAAAPoABgAAADEAMAAwADAAMAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB4APsAAAAAAAbdAAAA+gABBAD7AFoAAAD6AQD7ABQAAAD6AwEPCAAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBcwAAAPr7AGwAAAACAAAAAC4AAAD6AAEAAAAwAPsAIAAAAPoBCgAAADEAKwAjAHAAcAB0AF8AaAAvADIA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeQD7AAAAAAA=";
+    PRESET_TYPES[3] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[3] = [];
+    PRESET_SUBTYPES[5] = "PPTY;v10;363;ZwEAAPr7AGABAAD6AwEFAgYBDgAAAAAPBQAAABADAAAAEQUAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCEBAAD6+wAaAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACF4AAAD6AAABEAAAAGIAbABpAG4AZABzACgAdgBlAHIAdABpAGMAYQBsACkA+wAwAAAA+vsAEgAAAPoPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7";
+    PRESET_SUBTYPES[10] = "PPTY;v10;367;awEAAPr7AGQBAAD6AwEFAgYBDgAAAAAPBQAAABADAAAAEQoAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCUBAAD6+wAeAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACGIAAAD6AAABEgAAAGIAbABpAG4AZABzACgAaABvAHIAaQB6AG8AbgB0AGEAbAApAPsAMAAAAPr7ABIAAAD6DwcAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w==";
+    PRESET_TYPES[4] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[4] = [];
+    PRESET_SUBTYPES[16] = "PPTY;v10;347;VwEAAPr7AFABAAD6AwEFAgYBDgAAAAAPBQAAABAEAAAAERAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBEBAAD6+wAKAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACE4AAAD6AAABBwAAAGIAbwB4ACgAaQBuACkA+wAyAAAA+vsAFAAAAPoPBwAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPs=";
+    PRESET_SUBTYPES[32] = "PPTY;v10;349;WQEAAPr7AFIBAAD6AwEFAgYBDgAAAAAPBQAAABAEAAAAESAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBMBAAD6+wAMAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACFAAAAD6AAABCAAAAGIAbwB4ACgAbwB1AHQAKQD7ADIAAAD6+wAUAAAA+g8HAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w==";
+    PRESET_TYPES[5] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[5] = [];
+    PRESET_SUBTYPES[5] = "PPTY;v10;367;awEAAPr7AGQBAAD6AwEFAgYBDgAAAAAPBQAAABAFAAAAEQUAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCUBAAD6+wAeAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACGIAAAD6AAABEgAAAGMAaABlAGMAawBlAHIAYgBvAGEAcgBkACgAZABvAHcAbgApAPsAMAAAAPr7ABIAAAD6DwcAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w==";
+    PRESET_SUBTYPES[10] = "PPTY;v10;371;bwEAAPr7AGgBAAD6AwEFAgYBDgAAAAAPBQAAABAFAAAAEQoAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCkBAAD6+wAiAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACGYAAAD6AAABFAAAAGMAaABlAGMAawBlAHIAYgBvAGEAcgBkACgAYQBjAHIAbwBzAHMAKQD7ADAAAAD6+wASAAAA+g8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPs=";
+    PRESET_TYPES[6] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[6] = [];
+    PRESET_SUBTYPES[16] = "PPTY;v10;353;XQEAAPr7AFYBAAD6AwEFAgYBDgAAAAAPBQAAABAGAAAAERAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBcBAAD6+wAQAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACFQAAAD6AAABCgAAAGMAaQByAGMAbABlACgAaQBuACkA+wAyAAAA+vsAFAAAAPoPBwAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPs=";
+    PRESET_SUBTYPES[32] = "PPTY;v10;355;XwEAAPr7AFgBAAD6AwEFAgYBDgAAAAAPBQAAABAGAAAAESAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBkBAAD6+wASAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACFYAAAD6AAABCwAAAGMAaQByAGMAbABlACgAbwB1AHQAKQD7ADIAAAD6+wAUAAAA+g8HAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w==";
+    PRESET_TYPES[8] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[8] = [];
+    PRESET_SUBTYPES[16] = "PPTY;v10;355;XwEAAPr7AFgBAAD6AwEFAgYBDgAAAAAPBQAAABAIAAAAERAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBkBAAD6+wASAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACFYAAAD6AAABCwAAAGQAaQBhAG0AbwBuAGQAKABpAG4AKQD7ADIAAAD6+wAUAAAA+g8HAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w==";
+    PRESET_SUBTYPES[32] = "PPTY;v10;357;YQEAAPr7AFoBAAD6AwEFAgYBDgAAAAAPBQAAABAIAAAAESAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBsBAAD6+wAUAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACFgAAAD6AAABDAAAAGQAaQBhAG0AbwBuAGQAKABvAHUAdAApAPsAMgAAAPr7ABQAAAD6DwcAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7";
+    PRESET_TYPES[9] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[9] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;347;VwEAAPr7AFABAAD6AwEFAgYBDgAAAAAPBQAAABAJAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBEBAAD6+wAKAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACE4AAAD6AAABCAAAAGQAaQBzAHMAbwBsAHYAZQD7ADAAAAD6+wASAAAA+g8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPs=";
+    PRESET_TYPES[10] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[10] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;339;TwEAAPr7AEgBAAD6AwEFAgYBDgAAAAAPBQAAABAKAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BAkBAAD6+wACAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACEYAAAD6AAABBAAAAGYAYQBkAGUA+wAwAAAA+vsAEgAAAPoPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7";
+    PRESET_TYPES[12] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[12] = [];
+    PRESET_SUBTYPES[1] = "PPTY;v10;599;UwIAAPr7AEwCAAD6AwEFAgYBDgAAAAAPBQAAABAMAAAAEQEAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BA0CAAD6+wAGAgAAAwAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABvMAAAD6AAEEAPsAWAAAAPoBAPsAEgAAAPoPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBiwAAAPr7AIQAAAACAAAAAEYAAAD6AAEAAAAwAPsAOAAAAPoBFgAAACMAcABwAHQAXwB5AC0AIwBwAHAAdABfAGgAKgAxAC4AMQAyADUAMAAwADAA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeQD7AAAAAAAIUgAAAPoAAAEKAAAAdwBpAHAAZQAoAGQAbwB3AG4AKQD7ADAAAAD6+wASAAAA+g8IAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPs=";
+    PRESET_SUBTYPES[2] = "PPTY;v10;599;UwIAAPr7AEwCAAD6AwEFAgYBDgAAAAAPBQAAABAMAAAAEQIAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BA0CAAD6+wAGAgAAAwAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABvMAAAD6AAEEAPsAWAAAAPoBAPsAEgAAAPoPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsBiwAAAPr7AIQAAAACAAAAAEYAAAD6AAEAAAAwAPsAOAAAAPoBFgAAACMAcABwAHQAXwB4ACsAIwBwAHAAdABfAHcAKgAxAC4AMQAyADUAMAAwADAA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeAD7AAAAAAAIUgAAAPoAAAEKAAAAdwBpAHAAZQAoAGwAZQBmAHQAKQD7ADAAAAD6+wASAAAA+g8IAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPs=";
+    PRESET_SUBTYPES[4] = "PPTY;v10;595;TwIAAPr7AEgCAAD6AwEFAgYBDgAAAAAPBQAAABAMAAAAEQQAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BAkCAAD6+wACAgAAAwAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABvMAAAD6AAEEAPsAWAAAAPoBAPsAEgAAAPoPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBiwAAAPr7AIQAAAACAAAAAEYAAAD6AAEAAAAwAPsAOAAAAPoBFgAAACMAcABwAHQAXwB5ACsAIwBwAHAAdABfAGgAKgAxAC4AMQAyADUAMAAwADAA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeQD7AAAAAAAITgAAAPoAAAEIAAAAdwBpAHAAZQAoAHUAcAApAPsAMAAAAPr7ABIAAAD6DwgAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w==";
+    PRESET_SUBTYPES[8] = "PPTY;v10;601;VQIAAPr7AE4CAAD6AwEFAgYBDgAAAAAPBQAAABAMAAAAEQgAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BA8CAAD6+wAIAgAAAwAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABvMAAAD6AAEEAPsAWAAAAPoBAPsAEgAAAPoPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsBiwAAAPr7AIQAAAACAAAAAEYAAAD6AAEAAAAwAPsAOAAAAPoBFgAAACMAcABwAHQAXwB4AC0AIwBwAHAAdABfAHcAKgAxAC4AMQAyADUAMAAwADAA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeAD7AAAAAAAIVAAAAPoAAAELAAAAdwBpAHAAZQAoAHIAaQBnAGgAdAApAPsAMAAAAPr7ABIAAAD6DwgAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w==";
+    PRESET_TYPES[13] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[13] = [];
+    PRESET_SUBTYPES[16] = "PPTY;v10;349;WQEAAPr7AFIBAAD6AwEFAgYBDgAAAAAPBQAAABANAAAAERAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBMBAAD6+wAMAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACFAAAAD6AAABCAAAAHAAbAB1AHMAKABpAG4AKQD7ADIAAAD6+wAUAAAA+g8HAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w==";
+    PRESET_SUBTYPES[32] = "PPTY;v10;351;WwEAAPr7AFQBAAD6AwEFAgYBDgAAAAAPBQAAABANAAAAESAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBUBAAD6+wAOAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACFIAAAD6AAABCQAAAHAAbAB1AHMAKABvAHUAdAApAPsAMgAAAPr7ABQAAAD6DwcAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7";
+    PRESET_TYPES[14] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[14] = [];
+    PRESET_SUBTYPES[5] = "PPTY;v10;369;bQEAAPr7AGYBAAD6AwEFAgYBDgAAAAAPBQAAABAOAAAAEQUAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCcBAAD6+wAgAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACGQAAAD6AAABEwAAAHIAYQBuAGQAbwBtAGIAYQByACgAdgBlAHIAdABpAGMAYQBsACkA+wAwAAAA+vsAEgAAAPoPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7";
+    PRESET_SUBTYPES[10] = "PPTY;v10;373;cQEAAPr7AGoBAAD6AwEFAgYBDgAAAAAPBQAAABAOAAAAEQoAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCsBAAD6+wAkAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACGgAAAD6AAABFQAAAHIAYQBuAGQAbwBtAGIAYQByACgAaABvAHIAaQB6AG8AbgB0AGEAbAApAPsAMAAAAPr7ABIAAAD6DwcAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w==";
+    PRESET_TYPES[15] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[15] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1342;OgUAAPr7ADMFAAD6AwEFAgYBDgAAAAAPBQAAABAPAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BPQEAAD6+wDtBAAABQAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABskAAAD6AAEEAPsAWgAAAPr7ABYAAAD6AwEPBwAAABMEAAAAMQAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHcA+wFfAAAA+vsAWAAAAAIAAAAAGgAAAPoAAQAAADAA+wAMAAAA+gMAAAAA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AdwD7AAAAAAAGyQAAAPoAAQQA+wBaAAAA+vsAFgAAAPoDAQ8IAAAAEwQAAAAxADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AaAD7AV8AAAD6+wBYAAAAAgAAAAAaAAAA+gABAAAAMAD7AAwAAAD6AwAAAAD7AAAAAAAAMAAAAPoABgAAADEAMAAwADAAMAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwBoAPsAAAAAAAZIAQAA+gABBAD7AFoAAAD6+wAWAAAA+gMBDwkAAAATBAAAADEAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsB3gAAAPr7ANcAAAACAAAAAKUAAAD6AAEAAAAwAAFDAAAAIwBwAHAAdABfAHgAKwAoAGMAbwBzACgALQAyACoAcABpACoAKAAxAC0AJAApACkAKgAtACMAcABwAHQAXwB4AC0AcwBpAG4AKAAtADIAKgBwAGkAKgAoADEALQAkACkAKQAqACgAMQAtACMAcABwAHQAXwB5ACkAKQAqACgAMQAtACQAKQD7AAwAAAD6AwAAAAD7AAAAAAAAJAAAAPoABgAAADEAMAAwADAAMAAwAPsADAAAAPoDoIYBAPsAAAAAAAZIAQAA+gABBAD7AFoAAAD6+wAWAAAA+gMBDwoAAAATBAAAADEAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsB3gAAAPr7ANcAAAACAAAAAKUAAAD6AAEAAAAwAAFDAAAAIwBwAHAAdABfAHkAKwAoAHMAaQBuACgALQAyACoAcABpACoAKAAxAC0AJAApACkAKgAtACMAcABwAHQAXwB4ACsAYwBvAHMAKAAtADIAKgBwAGkAKgAoADEALQAkACkAKQAqACgAMQAtACMAcABwAHQAXwB5ACkAKQAqACgAMQAtACQAKQD7AAwAAAD6AwAAAAD7AAAAAAAAJAAAAPoABgAAADEAMAAwADAAMAAwAPsADAAAAPoDoIYBAPsAAAAAAA==";
+    PRESET_TYPES[16] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[16] = [];
+    PRESET_SUBTYPES[21] = "PPTY;v10;363;ZwEAAPr7AGABAAD6AwEFAgYBDgAAAAAPBQAAABAQAAAAERUAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCEBAAD6+wAaAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACF4AAAD6AAABEAAAAGIAYQByAG4AKABpAG4AVgBlAHIAdABpAGMAYQBsACkA+wAwAAAA+vsAEgAAAPoPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7";
+    PRESET_SUBTYPES[26] = "PPTY;v10;367;awEAAPr7AGQBAAD6AwEFAgYBDgAAAAAPBQAAABAQAAAAERoAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCUBAAD6+wAeAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACGIAAAD6AAABEgAAAGIAYQByAG4AKABpAG4ASABvAHIAaQB6AG8AbgB0AGEAbAApAPsAMAAAAPr7ABIAAAD6DwcAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w==";
+    PRESET_SUBTYPES[37] = "PPTY;v10;365;aQEAAPr7AGIBAAD6AwEFAgYBDgAAAAAPBQAAABAQAAAAESUAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCMBAAD6+wAcAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACGAAAAD6AAABEQAAAGIAYQByAG4AKABvAHUAdABWAGUAcgB0AGkAYwBhAGwAKQD7ADAAAAD6+wASAAAA+g8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPs=";
+    PRESET_SUBTYPES[42] = "PPTY;v10;369;bQEAAPr7AGYBAAD6AwEFAgYBDgAAAAAPBQAAABAQAAAAESoAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCcBAAD6+wAgAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACGQAAAD6AAABEwAAAGIAYQByAG4AKABvAHUAdABIAG8AcgBpAHoAbwBuAHQAYQBsACkA+wAwAAAA+vsAEgAAAPoPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7";
+    PRESET_TYPES[17] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[17] = [];
+    PRESET_SUBTYPES[1] = "PPTY;v10;1134;agQAAPr7AGMEAAD6AwEFAgYBDgAAAAAPBQAAABARAAAAEQEAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCQEAAD6+wAdBAAABQAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABtMAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsBawAAAPr7AGQAAAACAAAAACYAAAD6AAEAAAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB4APsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHgA+wAAAAAABuUAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCAAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBfQAAAPr7AHYAAAACAAAAADgAAAD6AAEAAAAwAPsAKgAAAPoBDwAAACMAcABwAHQAXwB5AC0AIwBwAHAAdABfAGgALwAyAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHkA+wAAAAAABtMAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCQAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB3APsBawAAAPr7AGQAAAACAAAAACYAAAD6AAEAAAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB3APsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHcA+wAAAAAABscAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCgAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwBoAPsBXwAAAPr7AFgAAAACAAAAABoAAAD6AAEAAAAwAPsADAAAAPoDAAAAAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAGgA+wAAAAAA";
+    PRESET_SUBTYPES[2] = "PPTY;v10;1134;agQAAPr7AGMEAAD6AwEFAgYBDgAAAAAPBQAAABARAAAAEQIAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCQEAAD6+wAdBAAABQAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABuUAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsBfQAAAPr7AHYAAAACAAAAADgAAAD6AAEAAAAwAPsAKgAAAPoBDwAAACMAcABwAHQAXwB4ACsAIwBwAHAAdABfAHcALwAyAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHgA+wAAAAAABtMAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCAAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBawAAAPr7AGQAAAACAAAAACYAAAD6AAEAAAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB5APsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHkA+wAAAAAABscAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCQAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB3APsBXwAAAPr7AFgAAAACAAAAABoAAAD6AAEAAAAwAPsADAAAAPoDAAAAAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHcA+wAAAAAABtMAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCgAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwBoAPsBawAAAPr7AGQAAAACAAAAACYAAAD6AAEAAAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwBoAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAGgA+wAAAAAA";
+    PRESET_SUBTYPES[4] = "PPTY;v10;1134;agQAAPr7AGMEAAD6AwEFAgYBDgAAAAAPBQAAABARAAAAEQQAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCQEAAD6+wAdBAAABQAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABtMAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsBawAAAPr7AGQAAAACAAAAACYAAAD6AAEAAAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB4APsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHgA+wAAAAAABuUAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCAAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBfQAAAPr7AHYAAAACAAAAADgAAAD6AAEAAAAwAPsAKgAAAPoBDwAAACMAcABwAHQAXwB5ACsAIwBwAHAAdABfAGgALwAyAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHkA+wAAAAAABtMAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCQAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB3APsBawAAAPr7AGQAAAACAAAAACYAAAD6AAEAAAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB3APsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHcA+wAAAAAABscAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCgAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwBoAPsBXwAAAPr7AFgAAAACAAAAABoAAAD6AAEAAAAwAPsADAAAAPoDAAAAAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAGgA+wAAAAAA";
+    PRESET_SUBTYPES[8] = "PPTY;v10;1134;agQAAPr7AGMEAAD6AwEFAgYBDgAAAAAPBQAAABARAAAAEQgAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCQEAAD6+wAdBAAABQAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABuUAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsBfQAAAPr7AHYAAAACAAAAADgAAAD6AAEAAAAwAPsAKgAAAPoBDwAAACMAcABwAHQAXwB4AC0AIwBwAHAAdABfAHcALwAyAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHgA+wAAAAAABtMAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCAAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBawAAAPr7AGQAAAACAAAAACYAAAD6AAEAAAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB5APsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHkA+wAAAAAABscAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCQAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB3APsBXwAAAPr7AFgAAAACAAAAABoAAAD6AAEAAAAwAPsADAAAAPoDAAAAAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHcA+wAAAAAABtMAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCgAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwBoAPsBawAAAPr7AGQAAAACAAAAACYAAAD6AAEAAAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwBoAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAGgA+wAAAAAA";
+    PRESET_SUBTYPES[10] = "PPTY;v10;684;qAIAAPr7AKECAAD6AwEFAgYBDgAAAAAPBQAAABARAAAAEQoAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BGICAAD6+wBbAgAAAwAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABscAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB3APsBXwAAAPr7AFgAAAACAAAAABoAAAD6AAEAAAAwAPsADAAAAPoDAAAAAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHcA+wAAAAAABtMAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCAAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwBoAPsBawAAAPr7AGQAAAACAAAAACYAAAD6AAEAAAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwBoAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAGgA+wAAAAAA";
+    PRESET_TYPES[18] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[18] = [];
+    PRESET_SUBTYPES[3] = "PPTY;v10;361;ZQEAAPr7AF4BAAD6AwEFAgYBDgAAAAAPBQAAABASAAAAEQMAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BB8BAAD6+wAYAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACFwAAAD6AAABDwAAAHMAdAByAGkAcABzACgAdQBwAFIAaQBnAGgAdAApAPsAMAAAAPr7ABIAAAD6DwcAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w==";
+    PRESET_SUBTYPES[6] = "PPTY;v10;365;aQEAAPr7AGIBAAD6AwEFAgYBDgAAAAAPBQAAABASAAAAEQYAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCMBAAD6+wAcAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACGAAAAD6AAABEQAAAHMAdAByAGkAcABzACgAZABvAHcAbgBSAGkAZwBoAHQAKQD7ADAAAAD6+wASAAAA+g8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPs=";
+    PRESET_SUBTYPES[9] = "PPTY;v10;359;YwEAAPr7AFwBAAD6AwEFAgYBDgAAAAAPBQAAABASAAAAEQkAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BB0BAAD6+wAWAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACFoAAAD6AAABDgAAAHMAdAByAGkAcABzACgAdQBwAEwAZQBmAHQAKQD7ADAAAAD6+wASAAAA+g8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPs=";
+    PRESET_SUBTYPES[12] = "PPTY;v10;363;ZwEAAPr7AGABAAD6AwEFAgYBDgAAAAAPBQAAABASAAAAEQwAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCEBAAD6+wAaAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACF4AAAD6AAABEAAAAHMAdAByAGkAcABzACgAZABvAHcAbgBMAGUAZgB0ACkA+wAwAAAA+vsAEgAAAPoPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7";
+    PRESET_TYPES[19] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[19] = [];
+    PRESET_SUBTYPES[5] = "PPTY;v10;721;zQIAAPr7AMYCAAD6AwEFAgYBDgAAAAAPBQAAABATAAAAEQUAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BIcCAAD6+wCAAgAAAwAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABtUAAAD6AAEEAPsAWgAAAPr7ABYAAAD6AwEPBwAAABMEAAAANQAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHcA+wFrAAAA+vsAZAAAAAIAAAAAJgAAAPoAAQAAADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHcA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AdwD7AAAAAAAG6gAAAPoAAQQA+wBaAAAA+vsAFgAAAPoDAQ8IAAAAEwQAAAA1ADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AaAD7AYAAAAD6+wB5AAAAAgAAAABHAAAA+gABAAAAMAABFAAAACMAcABwAHQAXwBoACoAcwBpAG4AKAAyAC4ANQAqAHAAaQAqACQAKQD7AAwAAAD6AwAAAAD7AAAAAAAAJAAAAPoABgAAADEAMAAwADAAMAAwAPsADAAAAPoDoIYBAPsAAAAAAA==";
+    PRESET_SUBTYPES[10] = "PPTY;v10;721;zQIAAPr7AMYCAAD6AwEFAgYBDgAAAAAPBQAAABATAAAAEQoAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BIcCAAD6+wCAAgAAAwAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABuoAAAD6AAEEAPsAWgAAAPr7ABYAAAD6AwEPBwAAABMEAAAANQAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHcA+wGAAAAA+vsAeQAAAAIAAAAARwAAAPoAAQAAADAAARQAAAAjAHAAcAB0AF8AdwAqAHMAaQBuACgAMgAuADUAKgBwAGkAKgAkACkA+wAMAAAA+gMAAAAA+wAAAAAAACQAAAD6AAYAAAAxADAAMAAwADAAMAD7AAwAAAD6A6CGAQD7AAAAAAAG1QAAAPoAAQQA+wBaAAAA+vsAFgAAAPoDAQ8IAAAAEwQAAAA1ADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AaAD7AWsAAAD6+wBkAAAAAgAAAAAmAAAA+gABAAAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AaAD7AAAAAAAAMAAAAPoABgAAADEAMAAwADAAMAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwBoAPsAAAAAAA==";
+    PRESET_TYPES[20] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[20] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;343;UwEAAPr7AEwBAAD6AwEFAgYBDgAAAAAPBQAAABAUAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BA0BAAD6+wAGAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACEoAAAD6AAABBQAAAHcAZQBkAGcAZQD7ADIAAAD6+wAUAAAA+g8HAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w==";
+    PRESET_TYPES[21] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[21] = [];
+    PRESET_SUBTYPES[1] = "PPTY;v10;349;WQEAAPr7AFIBAAD6AwEFAgYBDgAAAAAPBQAAABAVAAAAEQEAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBMBAAD6+wAMAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACFAAAAD6AAABCAAAAHcAaABlAGUAbAAoADEAKQD7ADIAAAD6+wAUAAAA+g8HAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w==";
+    PRESET_SUBTYPES[2] = "PPTY;v10;349;WQEAAPr7AFIBAAD6AwEFAgYBDgAAAAAPBQAAABAVAAAAEQIAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBMBAAD6+wAMAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACFAAAAD6AAABCAAAAHcAaABlAGUAbAAoADIAKQD7ADIAAAD6+wAUAAAA+g8HAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w==";
+    PRESET_SUBTYPES[3] = "PPTY;v10;349;WQEAAPr7AFIBAAD6AwEFAgYBDgAAAAAPBQAAABAVAAAAEQMAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBMBAAD6+wAMAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACFAAAAD6AAABCAAAAHcAaABlAGUAbAAoADMAKQD7ADIAAAD6+wAUAAAA+g8HAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w==";
+    PRESET_SUBTYPES[4] = "PPTY;v10;349;WQEAAPr7AFIBAAD6AwEFAgYBDgAAAAAPBQAAABAVAAAAEQQAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBMBAAD6+wAMAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACFAAAAD6AAABCAAAAHcAaABlAGUAbAAoADQAKQD7ADIAAAD6+wAUAAAA+g8HAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w==";
+    PRESET_SUBTYPES[8] = "PPTY;v10;349;WQEAAPr7AFIBAAD6AwEFAgYBDgAAAAAPBQAAABAVAAAAEQgAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBMBAAD6+wAMAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACFAAAAD6AAABCAAAAHcAaABlAGUAbAAoADgAKQD7ADIAAAD6+wAUAAAA+g8HAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w==";
+    PRESET_TYPES[22] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[22] = [];
+    PRESET_SUBTYPES[1] = "PPTY;v10;347;VwEAAPr7AFABAAD6AwEFAgYBDgAAAAAPBQAAABAWAAAAEQEAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBEBAAD6+wAKAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACE4AAAD6AAABCAAAAHcAaQBwAGUAKAB1AHAAKQD7ADAAAAD6+wASAAAA+g8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPs=";
+    PRESET_SUBTYPES[2] = "PPTY;v10;353;XQEAAPr7AFYBAAD6AwEFAgYBDgAAAAAPBQAAABAWAAAAEQIAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBcBAAD6+wAQAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACFQAAAD6AAABCwAAAHcAaQBwAGUAKAByAGkAZwBoAHQAKQD7ADAAAAD6+wASAAAA+g8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPs=";
+    PRESET_SUBTYPES[4] = "PPTY;v10;351;WwEAAPr7AFQBAAD6AwEFAgYBDgAAAAAPBQAAABAWAAAAEQQAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBUBAAD6+wAOAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACFIAAAD6AAABCgAAAHcAaQBwAGUAKABkAG8AdwBuACkA+wAwAAAA+vsAEgAAAPoPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7";
+    PRESET_SUBTYPES[8] = "PPTY;v10;351;WwEAAPr7AFQBAAD6AwEFAgYBDgAAAAAPBQAAABAWAAAAEQgAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBUBAAD6+wAOAQAAAgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACFIAAAD6AAABCgAAAHcAaQBwAGUAKABsAGUAZgB0ACkA+wAwAAAA+vsAEgAAAPoPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7";
+    PRESET_TYPES[23] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[23] = [];
+    PRESET_SUBTYPES[16] = "PPTY;v10;672;nAIAAPr7AJUCAAD6AwEFAgYBDgAAAAAPBQAAABAXAAAAERAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BFYCAAD6+wBPAgAAAwAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABscAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB3APsBXwAAAPr7AFgAAAACAAAAABoAAAD6AAEAAAAwAPsADAAAAPoDAAAAAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHcA+wAAAAAABscAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCAAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwBoAPsBXwAAAPr7AFgAAAACAAAAABoAAAD6AAEAAAAwAPsADAAAAPoDAAAAAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAGgA+wAAAAAA";
+    PRESET_SUBTYPES[32] = "PPTY;v10;704;vAIAAPr7ALUCAAD6AwEFAgYBDgAAAAAPBQAAABAXAAAAESAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BHYCAAD6+wBvAgAAAwAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABtcAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB3APsBbwAAAPr7AGgAAAACAAAAACoAAAD6AAEAAAAwAPsAHAAAAPoBCAAAADQAKgAjAHAAcAB0AF8AdwD7AAAAAAAAMAAAAPoABgAAADEAMAAwADAAMAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB3APsAAAAAAAbXAAAA+gABBAD7AFgAAAD6+wAUAAAA+gMBDwgAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AaAD7AW8AAAD6+wBoAAAAAgAAAAAqAAAA+gABAAAAMAD7ABwAAAD6AQgAAAA0ACoAIwBwAHAAdABfAGgA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AaAD7AAAAAAA=";
+    PRESET_SUBTYPES[36] = "PPTY;v10;1370;VgUAAPr7AE8FAAD6AwEFAgYBDgAAAAAPBQAAABAXAAAAESQAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBAFAAD6+wAJBQAABQAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABiUBAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB3APsBvQAAAPr7ALYAAAACAAAAAHgAAAD6AAEAAAAwAPsAagAAAPoBLwAAACgANgAqAG0AaQBuACgAbQBhAHgAKAAjAHAAcAB0AF8AdwAqACMAcABwAHQAXwBoACwALgAzACkALAAxACkALQA3AC4ANAApAC8ALQAuADcAKgAjAHAAcAB0AF8AdwD7AAAAAAAAMAAAAPoABgAAADEAMAAwADAAMAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB3APsAAAAAAAYlAQAA+gABBAD7AFgAAAD6+wAUAAAA+gMBDwgAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AaAD7Ab0AAAD6+wC2AAAAAgAAAAB4AAAA+gABAAAAMAD7AGoAAAD6AS8AAAAoADYAKgBtAGkAbgAoAG0AYQB4ACgAIwBwAHAAdABfAHcAKgAjAHAAcAB0AF8AaAAsAC4AMwApACwAMQApAC0ANwAuADQAKQAvAC0ALgA3ACoAIwBwAHAAdABfAGgA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AaAD7AAAAAAAGxwAAAPoAAQQA+wBYAAAA+vsAFAAAAPoDAQ8JAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wFfAAAA+vsAWAAAAAIAAAAAGgAAAPoAAQAAADAA+wAMAAAA+gNQwwAA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeAD7AAAAAAAGLQEAAPoAAQQA+wBYAAAA+vsAFAAAAPoDAQ8KAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wHFAAAA+vsAvgAAAAIAAAAAgAAAAPoAAQAAADAA+wByAAAA+gEzAAAAMQArACgANgAqAG0AaQBuACgAbQBhAHgAKAAjAHAAcAB0AF8AdwAqACMAcABwAHQAXwBoACwALgAzACkALAAxACkALQA3AC4ANAApAC8ALQAuADcAKgAjAHAAcAB0AF8AaAAvADIA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeQD7AAAAAAA=";
+    PRESET_SUBTYPES[272] = "PPTY;v10;712;xAIAAPr7AL0CAAD6AwEFAgYBDgAAAAAPBQAAABAXAAAAERABAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BH4CAAD6+wB3AgAAAwAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABtsAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB3APsBcwAAAPr7AGwAAAACAAAAAC4AAAD6AAEAAAAwAPsAIAAAAPoBCgAAADIALwAzACoAIwBwAHAAdABfAHcA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AdwD7AAAAAAAG2wAAAPoAAQQA+wBYAAAA+vsAFAAAAPoDAQ8IAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAGgA+wFzAAAA+vsAbAAAAAIAAAAALgAAAPoAAQAAADAA+wAgAAAA+gEKAAAAMgAvADMAKgAjAHAAcAB0AF8AaAD7AAAAAAAAMAAAAPoABgAAADEAMAAwADAAMAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwBoAPsAAAAAAA==";
+    PRESET_SUBTYPES[288] = "PPTY;v10;712;xAIAAPr7AL0CAAD6AwEFAgYBDgAAAAAPBQAAABAXAAAAESABAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BH4CAAD6+wB3AgAAAwAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABtsAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB3APsBcwAAAPr7AGwAAAACAAAAAC4AAAD6AAEAAAAwAPsAIAAAAPoBCgAAADQALwAzACoAIwBwAHAAdABfAHcA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AdwD7AAAAAAAG2wAAAPoAAQQA+wBYAAAA+vsAFAAAAPoDAQ8IAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAGgA+wFzAAAA+vsAbAAAAAIAAAAALgAAAPoAAQAAADAA+wAgAAAA+gEKAAAANAAvADMAKgAjAHAAcAB0AF8AaAD7AAAAAAAAMAAAAPoABgAAADEAMAAwADAAMAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwBoAPsAAAAAAA==";
+    PRESET_SUBTYPES[528] = "PPTY;v10;1080;NAQAAPr7AC0EAAD6AwEFAgYBDgAAAAAPBQAAABAXAAAAERACAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BO4DAAD6+wDnAwAABQAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABscAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB3APsBXwAAAPr7AFgAAAACAAAAABoAAAD6AAEAAAAwAPsADAAAAPoDAAAAAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHcA+wAAAAAABscAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCAAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwBoAPsBXwAAAPr7AFgAAAACAAAAABoAAAD6AAEAAAAwAPsADAAAAPoDAAAAAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAGgA+wAAAAAABscAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCQAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsBXwAAAPr7AFgAAAACAAAAABoAAAD6AAEAAAAwAPsADAAAAPoDUMMAAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHgA+wAAAAAABscAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCgAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBXwAAAPr7AFgAAAACAAAAABoAAAD6AAEAAAAwAPsADAAAAPoDUMMAAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHkA+wAAAAAA";
+    PRESET_TYPES[25] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[25] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;2142;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";
+    PRESET_TYPES[26] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[26] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;3328;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";
+    PRESET_TYPES[28] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[28] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;712;xAIAAPr7AL0CAAD6AwEFAgYBDgAAAAAPBQAAABAcAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BH4CAAD6+wB3AgAAAwAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABtcAAAD6AAEEAPsAXAAAAPr7ABgAAAD6AwEPBwAAABMFAAAAMQA1ADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7AWsAAAD6+wBkAAAAAgAAAAAmAAAA+gABAAAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeAD7AAAAAAAAMAAAAPoABgAAADEAMAAwADAAMAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB4APsAAAAAAAbfAAAA+gABBAD7AFwAAAD6+wAYAAAA+gMBDwgAAAATBQAAADEANQAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wFzAAAA+vsAbAAAAAIAAAAAKgAAAPoAAQAAADAA+wAcAAAA+gEIAAAAIwBwAHAAdABfAHkAKwAxAPsAAAAAAAA0AAAA+gAGAAAAMQAwADAAMAAwADAA+wAcAAAA+gEIAAAAIwBwAHAAdABfAHkALQAxAPsAAAAAAA==";
+    PRESET_TYPES[30] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[30] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1563;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";
+    PRESET_TYPES[31] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[31] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;965;wQMAAPr7ALoDAAD6AwEFAgYBDgAAAAAPBQAAABAfAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BHsDAAD6+wB0AwAABQAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABskAAAD6AAEEAPsAWgAAAPr7ABYAAAD6AwEPBwAAABMEAAAAMQAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHcA+wFfAAAA+vsAWAAAAAIAAAAAGgAAAPoAAQAAADAA+wAMAAAA+gMAAAAA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AdwD7AAAAAAAGyQAAAPoAAQQA+wBaAAAA+vsAFgAAAPoDAQ8IAAAAEwQAAAAxADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AaAD7AV8AAAD6+wBYAAAAAgAAAAAaAAAA+gABAAAAMAD7AAwAAAD6AwAAAAD7AAAAAAAAMAAAAPoABgAAADEAMAAwADAAMAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwBoAPsAAAAAAAbPAAAA+gABBAD7AGwAAAD6+wAWAAAA+gMBDwkAAAATBAAAADEAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjMAAAD6+wAsAAAAAQAAAAAjAAAA+gAOAAAAcwB0AHkAbABlAC4AcgBvAHQAYQB0AGkAbwBuAPsBUwAAAPr7AEwAAAACAAAAABoAAAD6AAEAAAAwAPsADAAAAPoDQFSJAPsAAAAAAAAkAAAA+gAGAAAAMQAwADAAMAAwADAA+wAMAAAA+gMAAAAA+wAAAAAACEgAAAD6AAABBAAAAGYAYQBkAGUA+wAyAAAA+vsAFAAAAPoPCgAAABMEAAAAMQAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPs=";
+    PRESET_TYPES[35] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[35] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;965;wQMAAPr7ALoDAAD6AwEFAgYBDgAAAAAPBQAAABAjAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BHsDAAD6+wB0AwAABQAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACEgAAAD6AAABBAAAAGYAYQBkAGUA+wAyAAAA+vsAFAAAAPoPBwAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsGzwAAAPoAAQQA+wBsAAAA+vsAFgAAAPoDAQ8IAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIzAAAA+vsALAAAAAEAAAAAIwAAAPoADgAAAHMAdAB5AGwAZQAuAHIAbwB0AGEAdABpAG8AbgD7AVMAAAD6+wBMAAAAAgAAAAAaAAAA+gABAAAAMAD7AAwAAAD6AwCiSgT7AAAAAAAAJAAAAPoABgAAADEAMAAwADAAMAAwAPsADAAAAPoDAAAAAPsAAAAAAAbJAAAA+gABBAD7AFoAAAD6+wAWAAAA+gMBDwkAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwBoAPsBXwAAAPr7AFgAAAACAAAAABoAAAD6AAEAAAAwAPsADAAAAPoDAAAAAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAGgA+wAAAAAABskAAAD6AAEEAPsAWgAAAPr7ABYAAAD6AwEPCgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHcA+wFfAAAA+vsAWAAAAAIAAAAAGgAAAPoAAQAAADAA+wAMAAAA+gMAAAAA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AdwD7AAAAAAA=";
+    PRESET_TYPES[37] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[37] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1055;GwQAAPr7ABQEAAD6AwEFAgYBDgAAAAAPBQAAABAlAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BNUDAAD6+wDOAwAABQAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACEgAAAD6AAABBAAAAGYAYQBkAGUA+wAyAAAA+vsAFAAAAPoPBwAAABMEAAAAMQAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsG1QAAAPoAAQQA+wBaAAAA+vsAFgAAAPoDAQ8IAAAAEwQAAAAxADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7AWsAAAD6+wBkAAAAAgAAAAAmAAAA+gABAAAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeAD7AAAAAAAAMAAAAPoABgAAADEAMAAwADAAMAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB4APsAAAAAAAbkAAAA+gABBAD7AF0AAAD6+wAZAAAA+gMBDKCGAQAPCQAAABMDAAAAOQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBdwAAAPr7AHAAAAACAAAAACoAAAD6AAEAAAAwAPsAHAAAAPoBCAAAACMAcABwAHQAXwB5ACsAMQD7AAAAAAAAOAAAAPoABgAAADEAMAAwADAAMAAwAPsAIAAAAPoBCgAAACMAcABwAHQAXwB5AC0ALgAwADMA+wAAAAAABgIBAAD6AAEEAPsAfwAAAPr7ADsAAAD6AKCGAQADAQ8KAAAAEwMAAAAxADAAMAD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAAOQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBcwAAAPr7AGwAAAACAAAAAC4AAAD6AAEAAAAwAPsAIAAAAPoBCgAAACMAcABwAHQAXwB5AC0ALgAwADMA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeQD7AAAAAAA=";
+    PRESET_TYPES[38] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[38] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1740;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";
+    PRESET_TYPES[41] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[41] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1441;nQUAAPr7AJYFAAD6AwEFAgYBDgAAAAAPBQAAABApAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7AwkAAAD6AAEDECcAAPsESQUAAPr7AEIFAAAGAAAADa4AAAD6+wCIAAAA+vsALgAAAPoDAQ8GAAAAEwEAAAAxAPsAGQAAAPr7ABIAAAABAAAAAAkAAAD6AwEAAAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEaAAAA+gEHAAAAdgBpAHMAaQBiAGwAZQD7AAAAAAAGDAEAAPoAAQQA+wBYAAAA+vsAFAAAAPoDAQ8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wGkAAAA+vsAnQAAAAMAAAAAJgAAAPoAAQAAADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHgA+wAAAAAAADQAAAD6AAUAAAA1ADAAMAAwADAA+wAeAAAA+gEJAAAAIwBwAHAAdABfAHgAKwAuADEA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeAD7AAAAAAAG0wAAAPoAAQQA+wBYAAAA+vsAFAAAAPoDAQ8IAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wFrAAAA+vsAZAAAAAIAAAAAJgAAAPoAAQAAADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHkA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeQD7AAAAAAAGFAEAAPoAAQQA+wBYAAAA+vsAFAAAAPoDAQ8JAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAGgA+wGsAAAA+vsApQAAAAMAAAAALAAAAPoAAQAAADAA+wAeAAAA+gEJAAAAIwBwAHAAdABfAGgALwAxADAA+wAAAAAAADYAAAD6AAUAAAA1ADAAMAAwADAA+wAgAAAA+gEKAAAAIwBwAHAAdABfAGgAKwAuADAAMQD7AAAAAAAAMAAAAPoABgAAADEAMAAwADAAMAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwBoAPsAAAAAAAYUAQAA+gABBAD7AFgAAAD6+wAUAAAA+gMBDwoAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AdwD7AawAAAD6+wClAAAAAwAAAAAsAAAA+gABAAAAMAD7AB4AAAD6AQkAAAAjAHAAcAB0AF8AdwAvADEAMAD7AAAAAAAANgAAAPoABQAAADUAMAAwADAAMAD7ACAAAAD6AQoAAAAjAHAAcAB0AF8AdwArAC4AMAAxAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHcA+wAAAAAACGsAAAD6AAABBAAAAGYAYQBkAGUA+wBVAAAA+vsANwAAAPoPCwAAABMDAAAANQAwADAAFxAAAAAwACwAMAA7ACAALgA1ACwAIAAxADsAIAAxACwAIAAxAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w==";
+    PRESET_TYPES[42] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[42] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;783;CwMAAPr7AAQDAAD6AwEFAgYBDgAAAAAPBQAAABAqAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BMUCAAD6+wC+AgAABAAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACEgAAAD6AAABBAAAAGYAYQBkAGUA+wAyAAAA+vsAFAAAAPoPBwAAABMEAAAAMQAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsG1QAAAPoAAQQA+wBaAAAA+vsAFgAAAPoDAQ8IAAAAEwQAAAAxADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7AWsAAAD6+wBkAAAAAgAAAAAmAAAA+gABAAAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeAD7AAAAAAAAMAAAAPoABgAAADEAMAAwADAAMAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB4APsAAAAAAAbbAAAA+gABBAD7AFoAAAD6+wAWAAAA+gMBDwkAAAATBAAAADEAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBcQAAAPr7AGoAAAACAAAAACwAAAD6AAEAAAAwAPsAHgAAAPoBCQAAACMAcABwAHQAXwB5ACsALgAxAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHkA+wAAAAAA";
+    PRESET_TYPES[43] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[43] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;3773;uQ4AAPr7ALIOAAD6AwEFAgYBDgAAAAAPBQAAABArAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BHMOAAD6+wBsDgAABgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACEYAAAD6AAABBAAAAGYAYQBkAGUA+wAwAAAA+vsAEgAAAPoPBwAAABMDAAAAMQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7BtMAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCAAAABMDAAAANAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsBawAAAPr7AGQAAAACAAAAACYAAAD6AAEAAAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB4APsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHgA+wAAAAAABucAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCQAAABMDAAAANAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBfwAAAPr7AHgAAAACAAAAADAAAAD6AAEAAAAwAPsAIgAAAPoBCwAAACMAcABwAHQAXwB5ACsAMAAuADMAMQD7AAAAAAAAOgAAAPoABgAAADEAMAAwADAAMAAwAPsAIgAAAPoBCwAAACMAcABwAHQAXwB5ACsAMAAuADMAMQD7AAAAAAAGywUAAPoAAQQA+wB/AAAA+vsAOwAAAPoDAQxQwwAADwoAAAATAwAAADYAMAAwAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA0ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wE8BQAA+vsANQUAABUAAAAAJgAAAPoAAQAAADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHgA+wAAAAAAADoAAAD6AAQAAAA1ADAAMAAwAPsAJgAAAPoBDQAAACMAcABwAHQAXwB4ACsAMAAuADAAMgA0ADIA+wAAAAAAADwAAAD6AAUAAAAxADAAMAAwADAA+wAmAAAA+gENAAAAIwBwAHAAdABfAHgAKwAwAC4AMAA0ADcAOQD7AAAAAAAAPAAAAPoABQAAADEANQAwADAAMAD7ACYAAAD6AQ0AAAAjAHAAcAB0AF8AeAArADAALgAwADcAMAA0APsAAAAAAAA8AAAA+gAFAAAAMgAwADAAMAAwAPsAJgAAAPoBDQAAACMAcABwAHQAXwB4ACsAMAAuADAAOQAxADEA+wAAAAAAADwAAAD6AAUAAAAyADUAMAAwADAA+wAmAAAA+gENAAAAIwBwAHAAdABfAHgAKwAwAC4AMQAwADkANgD7AAAAAAAAPAAAAPoABQAAADMAMAAwADAAMAD7ACYAAAD6AQ0AAAAjAHAAcAB0AF8AeAArADAALgAxADIANQA0APsAAAAAAAA8AAAA+gAFAAAAMwA1ADAAMAAwAPsAJgAAAPoBDQAAACMAcABwAHQAXwB4ACsAMAAuADEAMwA4ADEA+wAAAAAAADwAAAD6AAUAAAA0ADAAMAAwADAA+wAmAAAA+gENAAAAIwBwAHAAdABfAHgAKwAwAC4AMQA0ADcANAD7AAAAAAAAPAAAAPoABQAAADQANQAwADAAMAD7ACYAAAD6AQ0AAAAjAHAAcAB0AF8AeAArADAALgAxADUAMwAxAPsAAAAAAAA8AAAA+gAFAAAANQAwADAAMAAwAPsAJgAAAPoBDQAAACMAcABwAHQAXwB4ACsAMAAuADEANQA1ADAA+wAAAAAAADwAAAD6AAUAAAA1ADUAMAAwADAA+wAmAAAA+gENAAAAIwBwAHAAdABfAHgAKwAwAC4AMQA1ADMAMQD7AAAAAAAAPAAAAPoABQAAADYAMAAwADAAMAD7ACYAAAD6AQ0AAAAjAHAAcAB0AF8AeAArADAALgAxADQANwA0APsAAAAAAAA8AAAA+gAFAAAANgA1ADAAMAAwAPsAJgAAAPoBDQAAACMAcABwAHQAXwB4ACsAMAAuADEAMwA4ADEA+wAAAAAAADwAAAD6AAUAAAA3ADAAMAAwADAA+wAmAAAA+gENAAAAIwBwAHAAdABfAHgAKwAwAC4AMQAyADUANAD7AAAAAAAAPAAAAPoABQAAADcANQAwADAAMAD7ACYAAAD6AQ0AAAAjAHAAcAB0AF8AeAArADAALgAxADAAOQA2APsAAAAAAAA8AAAA+gAFAAAAOAAwADAAMAAwAPsAJgAAAPoBDQAAACMAcABwAHQAXwB4ACsAMAAuADAAOQAxADEA+wAAAAAAADwAAAD6AAUAAAA4ADUAMAAwADAA+wAmAAAA+gENAAAAIwBwAHAAdABfAHgAKwAwAC4AMAA3ADAANAD7AAAAAAAAPAAAAPoABQAAADkAMAAwADAAMAD7ACYAAAD6AQ0AAAAjAHAAcAB0AF8AeAArADAALgAwADQANwA5APsAAAAAAAA8AAAA+gAFAAAAOQA1ADAAMAAwAPsAJgAAAPoBDQAAACMAcABwAHQAXwB4ACsAMAAuADAAMgA0ADIA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeAD7AAAAAAAG0QUAAPoAAQQA+wB/AAAA+vsAOwAAAPoDAQxQwwAADwsAAAATAwAAADYAMAAwAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA0ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wFCBQAA+vsAOwUAABUAAAAAMAAAAPoAAQAAADAA+wAiAAAA+gELAAAAIwBwAHAAdABfAHkAKwAwAC4AMwAxAPsAAAAAAAA4AAAA+gAEAAAANQAwADAAMAD7ACQAAAD6AQwAAAAjAHAAcAB0AF8AeQArADAALgAzADAAOAD7AAAAAAAAPAAAAPoABQAAADEAMAAwADAAMAD7ACYAAAD6AQ0AAAAjAHAAcAB0AF8AeQArADAALgAzADAAMgA0APsAAAAAAAA8AAAA+gAFAAAAMQA1ADAAMAAwAPsAJgAAAPoBDQAAACMAcABwAHQAXwB5ACsAMAAuADIAOQAzADEA+wAAAAAAADwAAAD6AAUAAAAyADAAMAAwADAA+wAmAAAA+gENAAAAIwBwAHAAdABfAHkAKwAwAC4AMgA4ADAANAD7AAAAAAAAPAAAAPoABQAAADIANQAwADAAMAD7ACYAAAD6AQ0AAAAjAHAAcAB0AF8AeQArADAALgAyADYANAA2APsAAAAAAAA8AAAA+gAFAAAAMwAwADAAMAAwAPsAJgAAAPoBDQAAACMAcABwAHQAXwB5ACsAMAAuADIANAA2ADEA+wAAAAAAADwAAAD6AAUAAAAzADUAMAAwADAA+wAmAAAA+gENAAAAIwBwAHAAdABfAHkAKwAwAC4AMgAyADUAMwD7AAAAAAAAPAAAAPoABQAAADQAMAAwADAAMAD7ACYAAAD6AQ0AAAAjAHAAcAB0AF8AeQArADAALgAyADAAMgA5APsAAAAAAAA8AAAA+gAFAAAANAA1ADAAMAAwAPsAJgAAAPoBDQAAACMAcABwAHQAXwB5ACsAMAAuADEANwA5ADIA+wAAAAAAADoAAAD6AAUAAAA1ADAAMAAwADAA+wAkAAAA+gEMAAAAIwBwAHAAdABfAHkAKwAwAC4AMQA1ADUA+wAAAAAAADwAAAD6AAUAAAA1ADUAMAAwADAA+wAmAAAA+gENAAAAIwBwAHAAdABfAHkAKwAwAC4AMQAzADAANwD7AAAAAAAAPAAAAPoABQAAADYAMAAwADAAMAD7ACYAAAD6AQ0AAAAjAHAAcAB0AF8AeQArADAALgAxADAANwAxAPsAAAAAAAA8AAAA+gAFAAAANgA1ADAAMAAwAPsAJgAAAPoBDQAAACMAcABwAHQAXwB5ACsAMAAuADAAOAA0ADYA+wAAAAAAADwAAAD6AAUAAAA3ADAAMAAwADAA+wAmAAAA+gENAAAAIwBwAHAAdABfAHkAKwAwAC4AMAA2ADMAOQD7AAAAAAAAPAAAAPoABQAAADcANQAwADAAMAD7ACYAAAD6AQ0AAAAjAHAAcAB0AF8AeQArADAALgAwADQANQA0APsAAAAAAAA8AAAA+gAFAAAAOAAwADAAMAAwAPsAJgAAAPoBDQAAACMAcABwAHQAXwB5ACsAMAAuADAAMgA5ADYA+wAAAAAAADwAAAD6AAUAAAA4ADUAMAAwADAA+wAmAAAA+gENAAAAIwBwAHAAdABfAHkAKwAwAC4AMAAxADYAOQD7AAAAAAAAPAAAAPoABQAAADkAMAAwADAAMAD7ACYAAAD6AQ0AAAAjAHAAcAB0AF8AeQArADAALgAwADAANwA2APsAAAAAAAA8AAAA+gAFAAAAOQA1ADAAMAAwAPsAJgAAAPoBDQAAACMAcABwAHQAXwB5ACsAMAAuADAAMAAxADkA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeQD7AAAAAAA=";
+    PRESET_TYPES[45] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[45] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;798;GgMAAPr7ABMDAAD6AwEFAgYBDgAAAAAPBQAAABAtAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BNQCAAD6+wDNAgAABAAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACEgAAAD6AAABBAAAAGYAYQBkAGUA+wAyAAAA+vsAFAAAAPoPBwAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsG6gAAAPoAAQQA+wBaAAAA+vsAFgAAAPoDAQ8IAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AdwD7AYAAAAD6+wB5AAAAAgAAAABHAAAA+gABAAAAMAABFAAAACMAcABwAHQAXwB3ACoAcwBpAG4AKAAyAC4ANQAqAHAAaQAqACQAKQD7AAwAAAD6AwAAAAD7AAAAAAAAJAAAAPoABgAAADEAMAAwADAAMAAwAPsADAAAAPoDoIYBAPsAAAAAAAbVAAAA+gABBAD7AFoAAAD6+wAWAAAA+gMBDwkAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwBoAPsBawAAAPr7AGQAAAACAAAAACYAAAD6AAEAAAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwBoAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAGgA+wAAAAAA";
+    PRESET_TYPES[47] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[47] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;783;CwMAAPr7AAQDAAD6AwEFAgYBDgAAAAAPBQAAABAvAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BMUCAAD6+wC+AgAABAAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAACEgAAAD6AAABBAAAAGYAYQBkAGUA+wAyAAAA+vsAFAAAAPoPBwAAABMEAAAAMQAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsG1QAAAPoAAQQA+wBaAAAA+vsAFgAAAPoDAQ8IAAAAEwQAAAAxADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7AWsAAAD6+wBkAAAAAgAAAAAmAAAA+gABAAAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeAD7AAAAAAAAMAAAAPoABgAAADEAMAAwADAAMAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB4APsAAAAAAAbbAAAA+gABBAD7AFoAAAD6+wAWAAAA+gMBDwkAAAATBAAAADEAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBcQAAAPr7AGoAAAACAAAAACwAAAD6AAEAAAAwAPsAHgAAAPoBCQAAACMAcABwAHQAXwB5AC0ALgAxAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHkA+wAAAAAA";
+    PRESET_TYPES[49] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[49] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;962;vgMAAPr7ALcDAAD6AwEFAgYBDKCGAQAOAAAAAA8FAAAAEDEAAAARAAAAAPsAGQAAAPr7ABIAAAABAAAAAAkAAAD6AwEAAAAwAPsEcwMAAPr7AGwDAAAFAAAADa4AAAD6+wCIAAAA+vsALgAAAPoDAQ8GAAAAEwEAAAAxAPsAGQAAAPr7ABIAAAABAAAAAAkAAAD6AwEAAAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEaAAAA+gEHAAAAdgBpAHMAaQBiAGwAZQD7AAAAAAAGxwAAAPoAAQQA+wBYAAAA+vsAFAAAAPoDAQ8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHcA+wFfAAAA+vsAWAAAAAIAAAAAGgAAAPoAAQAAADAA+wAMAAAA+gMAAAAA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AdwD7AAAAAAAGxwAAAPoAAQQA+wBYAAAA+vsAFAAAAPoDAQ8IAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAGgA+wFfAAAA+vsAWAAAAAIAAAAAGgAAAPoAAQAAADAA+wAMAAAA+gMAAAAA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AaAD7AAAAAAAGzQAAAPoAAQQA+wBqAAAA+vsAFAAAAPoDAQ8JAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCMwAAAPr7ACwAAAABAAAAACMAAAD6AA4AAABzAHQAeQBsAGUALgByAG8AdABhAHQAaQBvAG4A+wFTAAAA+vsATAAAAAIAAAAAGgAAAPoAAQAAADAA+wAMAAAA+gMAUSUC+wAAAAAAACQAAAD6AAYAAAAxADAAMAAwADAAMAD7AAwAAAD6AwAAAAD7AAAAAAAIRgAAAPoAAAEEAAAAZgBhAGQAZQD7ADAAAAD6+wASAAAA+g8KAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPs=";
+    PRESET_TYPES[50] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[50] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;788;EAMAAPr7AAkDAAD6AwEFAgYBDKCGAQAOAAAAAA8FAAAAEDIAAAARAAAAAPsAGQAAAPr7ABIAAAABAAAAAAkAAAD6AwEAAAAwAPsExQIAAPr7AL4CAAAEAAAADa4AAAD6+wCIAAAA+vsALgAAAPoDAQ8GAAAAEwEAAAAxAPsAGQAAAPr7ABIAAAABAAAAAAkAAAD6AwEAAAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEaAAAA+gEHAAAAdgBpAHMAaQBiAGwAZQD7AAAAAAAG2wAAAPoAAQQA+wBaAAAA+vsAFgAAAPoDAQ8HAAAAEwQAAAAxADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AdwD7AXEAAAD6+wBqAAAAAgAAAAAsAAAA+gABAAAAMAD7AB4AAAD6AQkAAAAjAHAAcAB0AF8AdwArAC4AMwD7AAAAAAAAMAAAAPoABgAAADEAMAAwADAAMAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwB3APsAAAAAAAbVAAAA+gABBAD7AFoAAAD6+wAWAAAA+gMBDwgAAAATBAAAADEAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwBoAPsBawAAAPr7AGQAAAACAAAAACYAAAD6AAEAAAAwAPsAGAAAAPoBBgAAACMAcABwAHQAXwBoAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAGgA+wAAAAAACEgAAAD6AAABBAAAAGYAYQBkAGUA+wAyAAAA+vsAFAAAAPoPCQAAABMEAAAAMQAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPs=";
+    PRESET_TYPES[52] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[52] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1077;MQQAAPr7ACoEAAD6AwEFAgYBDgAAAAAPBQAAABA0AAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BOsDAAD6+wDkAwAABAAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAAC3IAAAD6ApDQAwADkNADAASghgEABaCGAQD7AFcAAAD6+wA5AAAA+gMBDFDDAAAPBwAAABMEAAAAMQAwADAAMAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsJZAIAAPoAAQEBAt4AAABNACAALQAwAC4ANAA2ADcAMwA2ACAAMAAuADkAMgA4ADgANwAgACAAQwAgAC0AMAAuADMANwA1ADEANwAgADAALgA4ADgANQAwADgAIAAgAC0AMAAuADAAMgA1ADUAMgAgADAALgA3ADUAMgA3ADkAIAAgADAALgAwADkAMAA4ACAAMAAuADYANgA2ADEAMwAgACAAQwAgACAAMAAuADIAMAA3ADQANwAgADAALgA1ADcAOQA0ADgAIAAgADAALgAyADEANgA0ADkAIAAwAC4ANQAwADMAOQA0ACAAIAAwAC4AMgAzADEANwA3ACAAMAAuADQAMAA4ADIANQAgACAAQwAgADAALgAyADQANwAwADUAIAAwAC4AMwAxADIANQA2ACAAIAAwAC4AMgAyADEAMQA4ACAAMAAuADEANQA5ADYANAAgACAAIAAwAC4AMQA4ADIANgA0ACAAMAAuADAAOQAxADUAMgAgACAAQwAgADAALgAxADQANAAxACAAMAAuADAAMgAzADQAMQAgACAAMAAuADAAMwA4ADAAMgAgADAALgAwACAAIAAwAC4AMAAgADAALgAwACAAIAADAAAAAPsAkwAAAPr7ADkAAAD6AwEMUMMAAA8IAAAAEwQAAAAxADAAMAAwAPsAGQAAAPr7ABIAAAABAAAAAAkAAAD6AwEAAAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+whIAAAA+gAAAQQAAABmAGEAZABlAPsAMgAAAPr7ABQAAAD6DwkAAAATBAAAADEAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7";
+    PRESET_TYPES[53] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[53] = [];
+    PRESET_SUBTYPES[16] = "PPTY;v10;747;5wIAAPr7AOACAAD6AwEFAgYBDgAAAAAPBQAAABA1AAAAERAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BKECAAD6+wCaAgAABAAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABscAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB3APsBXwAAAPr7AFgAAAACAAAAABoAAAD6AAEAAAAwAPsADAAAAPoDAAAAAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHcA+wAAAAAABscAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCAAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwBoAPsBXwAAAPr7AFgAAAACAAAAABoAAAD6AAEAAAAwAPsADAAAAPoDAAAAAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAGgA+wAAAAAACEYAAAD6AAABBAAAAGYAYQBkAGUA+wAwAAAA+vsAEgAAAPoPCQAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7";
+    PRESET_SUBTYPES[528] = "PPTY;v10;1155;fwQAAPr7AHgEAAD6AwEFAgYBDgAAAAAPBQAAABA1AAAAERACAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BDkEAAD6+wAyBAAABgAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABscAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB3APsBXwAAAPr7AFgAAAACAAAAABoAAAD6AAEAAAAwAPsADAAAAPoDAAAAAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHcA+wAAAAAABscAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCAAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwBoAPsBXwAAAPr7AFgAAAACAAAAABoAAAD6AAEAAAAwAPsADAAAAPoDAAAAAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAGgA+wAAAAAACEYAAAD6AAABBAAAAGYAYQBkAGUA+wAwAAAA+vsAEgAAAPoPCQAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7BscAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCgAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsBXwAAAPr7AFgAAAACAAAAABoAAAD6AAEAAAAwAPsADAAAAPoDUMMAAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHgA+wAAAAAABscAAAD6AAEEAPsAWAAAAPr7ABQAAAD6AwEPCwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBXwAAAPr7AFgAAAACAAAAABoAAAD6AAEAAAAwAPsADAAAAPoDUMMAAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHkA+wAAAAAA";
+    PRESET_TYPES[55] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[55] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;787;DwMAAPr7AAgDAAD6AwEFAgYBDgAAAAAPBQAAABA3AAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BMkCAAD6+wDCAgAABAAAAA2uAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGgAAAPoBBwAAAHYAaQBzAGkAYgBsAGUA+wAAAAAABt8AAAD6AAEEAPsAWgAAAPr7ABYAAAD6AwEPBwAAABMEAAAAMQAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHcA+wF1AAAA+vsAbgAAAAIAAAAAMAAAAPoAAQAAADAA+wAiAAAA+gELAAAAIwBwAHAAdABfAHcAKgAwAC4ANwAwAPsAAAAAAAAwAAAA+gAGAAAAMQAwADAAMAAwADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAHcA+wAAAAAABtUAAAD6AAEEAPsAWgAAAPr7ABYAAAD6AwEPCAAAABMEAAAAMQAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAGgA+wFrAAAA+vsAZAAAAAIAAAAAJgAAAPoAAQAAADAA+wAYAAAA+gEGAAAAIwBwAHAAdABfAGgA+wAAAAAAADAAAAD6AAYAAAAxADAAMAAwADAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AaAD7AAAAAAAISAAAAPoAAAEEAAAAZgBhAGQAZQD7ADIAAAD6+wAUAAAA+g8JAAAAEwQAAAAxADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w==";
+    PRESET_TYPES[56] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[56] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;937;pQMAAPr7AJ4DAAD6AwEFAgYBDgAAAAAPBQAAABA4AAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7AwkAAAD6AAEDECcAAPsEUQMAAPr7AEoDAAAFAAAADa4AAAD6+wCIAAAA+vsALgAAAPoDAQ8GAAAAEwEAAAAxAPsAGQAAAPr7ABIAAAABAAAAAAkAAAD6AwEAAAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEaAAAA+gEHAAAAdgBpAHMAaQBiAGwAZQD7AAAAAAAGqQAAAPoAAQELAAAAKAAtACMAcABwAHQAXwB3ACoAMgApAAQA+wCDAAAA+gUDAAAAUABQAFQA+wA0AAAA+gIBAwEPBwAAABMDAAAANQAwADAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB3APsGpwAAAPoAAQENAAAAKAAjAHAAcAB0AF8AdwAqADAALgA1ADAAKQAEAPsAfQAAAPr7ADkAAAD6AgEDAQxQwwAADwgAAAATAwAAADUAMAAwAPsAGQAAAPr7ABIAAAABAAAAAAkAAAD6AwEAAAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7BrMAAAD6AAECCwAAACgALQAjAHAAcAB0AF8AaAAvADIAKQADCAAAACgAIwBwAHAAdABfAHkAKQAEAPsAeAAAAPr7ADQAAAD6AwEPCQAAABMEAAAAMQAwADAAMAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wp8AAAA+gAAl0kB+wBwAAAA+vsANAAAAPoDAQ8KAAAAEwQAAAAxADAAMAAwAPsAGQAAAPr7ABIAAAABAAAAAAkAAAD6AwEAAAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIZAAAA+vsAEgAAAAEAAAAACQAAAPoAAQAAAHIA+w==";
+    ANIMATION_PRESET_CLASSES[2] = [];
+    PRESET_TYPES = ANIMATION_PRESET_CLASSES[2] = [];
+    PRESET_TYPES[1] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[1] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;262;AgEAAPr7APsAAAD6AwEFAgYCDgAAAAAPBQAAABABAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BLwAAAD6+wC1AAAAAQAAAA2sAAAA+vsAiAAAAPr7AC4AAAD6AwEPBgAAABMBAAAAMQD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_TYPES[2] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[2] = [];
+    PRESET_SUBTYPES[1] = "PPTY;v10;698;tgIAAPr7AK8CAAD6AwEFAgYCDgAAAAAPBQAAABACAAAAEQEAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BHACAAD6+wBpAgAAAwAAAAbPAAAA+gABBAD7AFgAAAD6AQD7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7AWcAAAD6+wBgAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAHgA+wAAAAAAAC4AAAD6AAYAAAAxADAAMAAwADAAMAD7ABYAAAD6AQUAAABwAHAAdABfAHgA+wAAAAAABtcAAAD6AAEEAPsAWAAAAPoBAPsAEgAAAPoPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBbwAAAPr7AGgAAAACAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AeQD7AAAAAAAANgAAAPoABgAAADEAMAAwADAAMAAwAPsAHgAAAPoBCQAAADAALQBwAHAAdABfAGgALwAyAPsAAAAAAA2wAAAA+vsAjAAAAPr7ADIAAAD6AwEPCAAAABMBAAAAMQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAANAA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_SUBTYPES[2] = "PPTY;v10;698;tgIAAPr7AK8CAAD6AwEFAgYCDgAAAAAPBQAAABACAAAAEQIAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BHACAAD6+wBpAgAAAwAAAAbXAAAA+gABBAD7AFgAAAD6AQD7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7AW8AAAD6+wBoAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAHgA+wAAAAAAADYAAAD6AAYAAAAxADAAMAAwADAAMAD7AB4AAAD6AQkAAAAxACsAcABwAHQAXwB3AC8AMgD7AAAAAAAGzwAAAPoAAQQA+wBYAAAA+gEA+wASAAAA+g8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wFnAAAA+vsAYAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB5APsAAAAAAAAuAAAA+gAGAAAAMQAwADAAMAAwADAA+wAWAAAA+gEFAAAAcABwAHQAXwB5APsAAAAAAA2wAAAA+vsAjAAAAPr7ADIAAAD6AwEPCAAAABMBAAAAMQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAANAA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_SUBTYPES[3] = "PPTY;v10;706;vgIAAPr7ALcCAAD6AwEFAgYCDgAAAAAPBQAAABACAAAAEQMAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BHgCAAD6+wBxAgAAAwAAAAbXAAAA+gABBAD7AFgAAAD6AQD7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7AW8AAAD6+wBoAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAHgA+wAAAAAAADYAAAD6AAYAAAAxADAAMAAwADAAMAD7AB4AAAD6AQkAAAAxACsAcABwAHQAXwB3AC8AMgD7AAAAAAAG1wAAAPoAAQQA+wBYAAAA+gEA+wASAAAA+g8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wFvAAAA+vsAaAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB5APsAAAAAAAA2AAAA+gAGAAAAMQAwADAAMAAwADAA+wAeAAAA+gEJAAAAMAAtAHAAcAB0AF8AaAAvADIA+wAAAAAADbAAAAD6+wCMAAAA+vsAMgAAAPoDAQ8IAAAAEwEAAAAxAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA0ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_SUBTYPES[4] = "PPTY;v10;698;tgIAAPr7AK8CAAD6AwEFAgYCDgAAAAAPBQAAABACAAAAEQQAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BHACAAD6+wBpAgAAAwAAAAbPAAAA+gABBAD7AFgAAAD6AQD7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7AWcAAAD6+wBgAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAHgA+wAAAAAAAC4AAAD6AAYAAAAxADAAMAAwADAAMAD7ABYAAAD6AQUAAABwAHAAdABfAHgA+wAAAAAABtcAAAD6AAEEAPsAWAAAAPoBAPsAEgAAAPoPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBbwAAAPr7AGgAAAACAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AeQD7AAAAAAAANgAAAPoABgAAADEAMAAwADAAMAAwAPsAHgAAAPoBCQAAADEAKwBwAHAAdABfAGgALwAyAPsAAAAAAA2wAAAA+vsAjAAAAPr7ADIAAAD6AwEPCAAAABMBAAAAMQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAANAA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_SUBTYPES[6] = "PPTY;v10;706;vgIAAPr7ALcCAAD6AwEFAgYCDgAAAAAPBQAAABACAAAAEQYAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BHgCAAD6+wBxAgAAAwAAAAbXAAAA+gABBAD7AFgAAAD6AQD7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7AW8AAAD6+wBoAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAHgA+wAAAAAAADYAAAD6AAYAAAAxADAAMAAwADAAMAD7AB4AAAD6AQkAAAAxACsAcABwAHQAXwB3AC8AMgD7AAAAAAAG1wAAAPoAAQQA+wBYAAAA+gEA+wASAAAA+g8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wFvAAAA+vsAaAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB5APsAAAAAAAA2AAAA+gAGAAAAMQAwADAAMAAwADAA+wAeAAAA+gEJAAAAMQArAHAAcAB0AF8AaAAvADIA+wAAAAAADbAAAAD6+wCMAAAA+vsAMgAAAPoDAQ8IAAAAEwEAAAAxAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA0ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_SUBTYPES[8] = "PPTY;v10;698;tgIAAPr7AK8CAAD6AwEFAgYCDgAAAAAPBQAAABACAAAAEQgAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BHACAAD6+wBpAgAAAwAAAAbXAAAA+gABBAD7AFgAAAD6AQD7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7AW8AAAD6+wBoAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAHgA+wAAAAAAADYAAAD6AAYAAAAxADAAMAAwADAAMAD7AB4AAAD6AQkAAAAwAC0AcABwAHQAXwB3AC8AMgD7AAAAAAAGzwAAAPoAAQQA+wBYAAAA+gEA+wASAAAA+g8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wFnAAAA+vsAYAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB5APsAAAAAAAAuAAAA+gAGAAAAMQAwADAAMAAwADAA+wAWAAAA+gEFAAAAcABwAHQAXwB5APsAAAAAAA2wAAAA+vsAjAAAAPr7ADIAAAD6AwEPCAAAABMBAAAAMQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAANAA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_SUBTYPES[9] = "PPTY;v10;706;vgIAAPr7ALcCAAD6AwEFAgYCDgAAAAAPBQAAABACAAAAEQkAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BHgCAAD6+wBxAgAAAwAAAAbXAAAA+gABBAD7AFgAAAD6AQD7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7AW8AAAD6+wBoAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAHgA+wAAAAAAADYAAAD6AAYAAAAxADAAMAAwADAAMAD7AB4AAAD6AQkAAAAwAC0AcABwAHQAXwB3AC8AMgD7AAAAAAAG1wAAAPoAAQQA+wBYAAAA+gEA+wASAAAA+g8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wFvAAAA+vsAaAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB5APsAAAAAAAA2AAAA+gAGAAAAMQAwADAAMAAwADAA+wAeAAAA+gEJAAAAMAAtAHAAcAB0AF8AaAAvADIA+wAAAAAADbAAAAD6+wCMAAAA+vsAMgAAAPoDAQ8IAAAAEwEAAAAxAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA0ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_SUBTYPES[12] = "PPTY;v10;706;vgIAAPr7ALcCAAD6AwEFAgYCDgAAAAAPBQAAABACAAAAEQwAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BHgCAAD6+wBxAgAAAwAAAAbXAAAA+gABBAD7AFgAAAD6AQD7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7AW8AAAD6+wBoAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAHgA+wAAAAAAADYAAAD6AAYAAAAxADAAMAAwADAAMAD7AB4AAAD6AQkAAAAwAC0AcABwAHQAXwB3AC8AMgD7AAAAAAAG1wAAAPoAAQQA+wBYAAAA+gEA+wASAAAA+g8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wFvAAAA+vsAaAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB5APsAAAAAAAA2AAAA+gAGAAAAMQAwADAAMAAwADAA+wAeAAAA+gEJAAAAMQArAHAAcAB0AF8AaAAvADIA+wAAAAAADbAAAAD6+wCMAAAA+vsAMgAAAPoDAQ8IAAAAEwEAAAAxAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA0ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_TYPES[3] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[3] = [];
+    PRESET_SUBTYPES[5] = "PPTY;v10;365;aQEAAPr7AGIBAAD6AwEFAgYCDgAAAAAPBQAAABADAAAAEQUAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCMBAAD6+wAcAQAAAgAAAAheAAAA+gABARAAAABiAGwAaQBuAGQAcwAoAHYAZQByAHQAaQBjAGEAbAApAPsAMAAAAPr7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w2wAAAA+vsAjAAAAPr7ADIAAAD6AwEPBwAAABMBAAAAMQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAANAA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_SUBTYPES[10] = "PPTY;v10;369;bQEAAPr7AGYBAAD6AwEFAgYCDgAAAAAPBQAAABADAAAAEQoAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCcBAAD6+wAgAQAAAgAAAAhiAAAA+gABARIAAABiAGwAaQBuAGQAcwAoAGgAbwByAGkAegBvAG4AdABhAGwAKQD7ADAAAAD6+wASAAAA+g8GAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsAAAAPr7AIwAAAD6+wAyAAAA+gMBDwcAAAATAQAAADEA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADQAOQA5APsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEYAAAA+gEGAAAAaABpAGQAZABlAG4A+wAAAAAA";
+    PRESET_TYPES[4] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[4] = [];
+    PRESET_SUBTYPES[16] = "PPTY;v10;351;WwEAAPr7AFQBAAD6AwEFAgYCDgAAAAAPBQAAABAEAAAAERAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBUBAAD6+wAOAQAAAgAAAAhOAAAA+gABAQcAAABiAG8AeAAoAGkAbgApAPsAMgAAAPr7ABQAAAD6DwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7DbIAAAD6+wCOAAAA+vsANAAAAPoDAQ8HAAAAEwEAAAAxAPsAHwAAAPr7ABgAAAABAAAAAA8AAAD6AwQAAAAxADkAOQA5APsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEYAAAA+gEGAAAAaABpAGQAZABlAG4A+wAAAAAA";
+    PRESET_SUBTYPES[32] = "PPTY;v10;353;XQEAAPr7AFYBAAD6AwEFAgYCDgAAAAAPBQAAABAEAAAAESAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBcBAAD6+wAQAQAAAgAAAAhQAAAA+gABAQgAAABiAG8AeAAoAG8AdQB0ACkA+wAyAAAA+vsAFAAAAPoPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsgAAAPr7AI4AAAD6+wA0AAAA+gMBDwcAAAATAQAAADEA+wAfAAAA+vsAGAAAAAEAAAAADwAAAPoDBAAAADEAOQA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_TYPES[5] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[5] = [];
+    PRESET_SUBTYPES[5] = "PPTY;v10;369;bQEAAPr7AGYBAAD6AwEFAgYCDgAAAAAPBQAAABAFAAAAEQUAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCcBAAD6+wAgAQAAAgAAAAhiAAAA+gABARIAAABjAGgAZQBjAGsAZQByAGIAbwBhAHIAZAAoAGQAbwB3AG4AKQD7ADAAAAD6+wASAAAA+g8GAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsAAAAPr7AIwAAAD6+wAyAAAA+gMBDwcAAAATAQAAADEA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADQAOQA5APsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEYAAAA+gEGAAAAaABpAGQAZABlAG4A+wAAAAAA";
+    PRESET_SUBTYPES[10] = "PPTY;v10;373;cQEAAPr7AGoBAAD6AwEFAgYCDgAAAAAPBQAAABAFAAAAEQoAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCsBAAD6+wAkAQAAAgAAAAhmAAAA+gABARQAAABjAGgAZQBjAGsAZQByAGIAbwBhAHIAZAAoAGEAYwByAG8AcwBzACkA+wAwAAAA+vsAEgAAAPoPBgAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7DbAAAAD6+wCMAAAA+vsAMgAAAPoDAQ8HAAAAEwEAAAAxAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA0ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_TYPES[6] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[6] = [];
+    PRESET_SUBTYPES[16] = "PPTY;v10;357;YQEAAPr7AFoBAAD6AwEFAgYCDgAAAAAPBQAAABAGAAAAERAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBsBAAD6+wAUAQAAAgAAAAhUAAAA+gABAQoAAABjAGkAcgBjAGwAZQAoAGkAbgApAPsAMgAAAPr7ABQAAAD6DwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7DbIAAAD6+wCOAAAA+vsANAAAAPoDAQ8HAAAAEwEAAAAxAPsAHwAAAPr7ABgAAAABAAAAAA8AAAD6AwQAAAAxADkAOQA5APsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEYAAAA+gEGAAAAaABpAGQAZABlAG4A+wAAAAAA";
+    PRESET_SUBTYPES[32] = "PPTY;v10;359;YwEAAPr7AFwBAAD6AwEFAgYCDgAAAAAPBQAAABAGAAAAESAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BB0BAAD6+wAWAQAAAgAAAAhWAAAA+gABAQsAAABjAGkAcgBjAGwAZQAoAG8AdQB0ACkA+wAyAAAA+vsAFAAAAPoPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsgAAAPr7AI4AAAD6+wA0AAAA+gMBDwcAAAATAQAAADEA+wAfAAAA+vsAGAAAAAEAAAAADwAAAPoDBAAAADEAOQA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_TYPES[8] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[8] = [];
+    PRESET_SUBTYPES[16] = "PPTY;v10;359;YwEAAPr7AFwBAAD6AwEFAgYCDgAAAAAPBQAAABAIAAAAERAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BB0BAAD6+wAWAQAAAgAAAAhWAAAA+gABAQsAAABkAGkAYQBtAG8AbgBkACgAaQBuACkA+wAyAAAA+vsAFAAAAPoPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsgAAAPr7AI4AAAD6+wA0AAAA+gMBDwcAAAATAQAAADEA+wAfAAAA+vsAGAAAAAEAAAAADwAAAPoDBAAAADEAOQA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_SUBTYPES[32] = "PPTY;v10;361;ZQEAAPr7AF4BAAD6AwEFAgYCDgAAAAAPBQAAABAIAAAAESAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BB8BAAD6+wAYAQAAAgAAAAhYAAAA+gABAQwAAABkAGkAYQBtAG8AbgBkACgAbwB1AHQAKQD7ADIAAAD6+wAUAAAA+g8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w2yAAAA+vsAjgAAAPr7ADQAAAD6AwEPBwAAABMBAAAAMQD7AB8AAAD6+wAYAAAAAQAAAAAPAAAA+gMEAAAAMQA5ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_TYPES[9] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[9] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;349;WQEAAPr7AFIBAAD6AwEFAgYCDgAAAAAPBQAAABAJAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBMBAAD6+wAMAQAAAgAAAAhOAAAA+gABAQgAAABkAGkAcwBzAG8AbAB2AGUA+wAwAAAA+vsAEgAAAPoPBgAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7DbAAAAD6+wCMAAAA+vsAMgAAAPoDAQ8HAAAAEwEAAAAxAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA0ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_TYPES[10] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[10] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;341;UQEAAPr7AEoBAAD6AwEFAgYCDgAAAAAPBQAAABAKAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BAsBAAD6+wAEAQAAAgAAAAhGAAAA+gABAQQAAABmAGEAZABlAPsAMAAAAPr7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w2wAAAA+vsAjAAAAPr7ADIAAAD6AwEPBwAAABMBAAAAMQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAANAA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_TYPES[12] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[12] = [];
+    PRESET_SUBTYPES[1] = "PPTY;v10;597;UQIAAPr7AEoCAAD6AwEFAgYCDgAAAAAPBQAAABAMAAAAEQEAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BAsCAAD6+wAEAgAAAwAAAAbzAAAA+gABBAD7AFgAAAD6AQD7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeQD7AYsAAAD6+wCEAAAAAgAAAAAmAAAA+gABAAAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeQD7AAAAAAAAUAAAAPoABgAAADEAMAAwADAAMAAwAPsAOAAAAPoBFgAAACMAcABwAHQAXwB5AC0AIwBwAHAAdABfAGgAKgAxAC4AMQAyADUAMAAwADAA+wAAAAAACE4AAAD6AAEBCAAAAHcAaQBwAGUAKAB1AHAAKQD7ADAAAAD6+wASAAAA+g8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsAAAAPr7AIwAAAD6+wAyAAAA+gMBDwgAAAATAQAAADEA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADQAOQA5APsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEYAAAA+gEGAAAAaABpAGQAZABlAG4A+wAAAAAA";
+    PRESET_SUBTYPES[2] = "PPTY;v10;603;VwIAAPr7AFACAAD6AwEFAgYCDgAAAAAPBQAAABAMAAAAEQIAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBECAAD6+wAKAgAAAwAAAAbzAAAA+gABBAD7AFgAAAD6AQD7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7AYsAAAD6+wCEAAAAAgAAAAAmAAAA+gABAAAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeAD7AAAAAAAAUAAAAPoABgAAADEAMAAwADAAMAAwAPsAOAAAAPoBFgAAACMAcABwAHQAXwB4ACsAIwBwAHAAdABfAHcAKgAxAC4AMQAyADUAMAAwADAA+wAAAAAACFQAAAD6AAEBCwAAAHcAaQBwAGUAKAByAGkAZwBoAHQAKQD7ADAAAAD6+wASAAAA+g8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsAAAAPr7AIwAAAD6+wAyAAAA+gMBDwgAAAATAQAAADEA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADQAOQA5APsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEYAAAA+gEGAAAAaABpAGQAZABlAG4A+wAAAAAA";
+    PRESET_SUBTYPES[4] = "PPTY;v10;601;VQIAAPr7AE4CAAD6AwEFAgYCDgAAAAAPBQAAABAMAAAAEQQAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BA8CAAD6+wAIAgAAAwAAAAbzAAAA+gABBAD7AFgAAAD6AQD7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeQD7AYsAAAD6+wCEAAAAAgAAAAAmAAAA+gABAAAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeQD7AAAAAAAAUAAAAPoABgAAADEAMAAwADAAMAAwAPsAOAAAAPoBFgAAACMAcABwAHQAXwB5ACsAIwBwAHAAdABfAGgAKgAxAC4AMQAyADUAMAAwADAA+wAAAAAACFIAAAD6AAEBCgAAAHcAaQBwAGUAKABkAG8AdwBuACkA+wAwAAAA+vsAEgAAAPoPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7DbAAAAD6+wCMAAAA+vsAMgAAAPoDAQ8IAAAAEwEAAAAxAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA0ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_SUBTYPES[8] = "PPTY;v10;601;VQIAAPr7AE4CAAD6AwEFAgYCDgAAAAAPBQAAABAMAAAAEQgAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BA8CAAD6+wAIAgAAAwAAAAbzAAAA+gABBAD7AFgAAAD6AQD7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7AYsAAAD6+wCEAAAAAgAAAAAmAAAA+gABAAAAMAD7ABgAAAD6AQYAAAAjAHAAcAB0AF8AeAD7AAAAAAAAUAAAAPoABgAAADEAMAAwADAAMAAwAPsAOAAAAPoBFgAAACMAcABwAHQAXwB4AC0AIwBwAHAAdABfAHcAKgAxAC4AMQAyADUAMAAwADAA+wAAAAAACFIAAAD6AAEBCgAAAHcAaQBwAGUAKABsAGUAZgB0ACkA+wAwAAAA+vsAEgAAAPoPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7DbAAAAD6+wCMAAAA+vsAMgAAAPoDAQ8IAAAAEwEAAAAxAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA0ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_TYPES[13] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[13] = [];
+    PRESET_SUBTYPES[16] = "PPTY;v10;353;XQEAAPr7AFYBAAD6AwEFAgYCDgAAAAAPBQAAABANAAAAERAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBcBAAD6+wAQAQAAAgAAAAhQAAAA+gABAQgAAABwAGwAdQBzACgAaQBuACkA+wAyAAAA+vsAFAAAAPoPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsgAAAPr7AI4AAAD6+wA0AAAA+gMBDwcAAAATAQAAADEA+wAfAAAA+vsAGAAAAAEAAAAADwAAAPoDBAAAADEAOQA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_SUBTYPES[32] = "PPTY;v10;355;XwEAAPr7AFgBAAD6AwEFAgYCDgAAAAAPBQAAABANAAAAESAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBkBAAD6+wASAQAAAgAAAAhSAAAA+gABAQkAAABwAGwAdQBzACgAbwB1AHQAKQD7ADIAAAD6+wAUAAAA+g8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w2yAAAA+vsAjgAAAPr7ADQAAAD6AwEPBwAAABMBAAAAMQD7AB8AAAD6+wAYAAAAAQAAAAAPAAAA+gMEAAAAMQA5ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_TYPES[14] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[14] = [];
+    PRESET_SUBTYPES[5] = "PPTY;v10;371;bwEAAPr7AGgBAAD6AwEFAgYCDgAAAAAPBQAAABAOAAAAEQUAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCkBAAD6+wAiAQAAAgAAAAhkAAAA+gABARMAAAByAGEAbgBkAG8AbQBiAGEAcgAoAHYAZQByAHQAaQBjAGEAbAApAPsAMAAAAPr7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w2wAAAA+vsAjAAAAPr7ADIAAAD6AwEPBwAAABMBAAAAMQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAANAA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_SUBTYPES[10] = "PPTY;v10;375;cwEAAPr7AGwBAAD6AwEFAgYCDgAAAAAPBQAAABAOAAAAEQoAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BC0BAAD6+wAmAQAAAgAAAAhoAAAA+gABARUAAAByAGEAbgBkAG8AbQBiAGEAcgAoAGgAbwByAGkAegBvAG4AdABhAGwAKQD7ADAAAAD6+wASAAAA+g8GAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsAAAAPr7AIwAAAD6+wAyAAAA+gMBDwcAAAATAQAAADEA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADQAOQA5APsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEYAAAA+gEGAAAAaABpAGQAZABlAG4A+wAAAAAA";
+    PRESET_TYPES[15] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[15] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;6232;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";
+    PRESET_TYPES[16] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[16] = [];
+    PRESET_SUBTYPES[21] = "PPTY;v10;365;aQEAAPr7AGIBAAD6AwEFAgYCDgAAAAAPBQAAABAQAAAAERUAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCMBAAD6+wAcAQAAAgAAAAheAAAA+gABARAAAABiAGEAcgBuACgAaQBuAFYAZQByAHQAaQBjAGEAbAApAPsAMAAAAPr7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w2wAAAA+vsAjAAAAPr7ADIAAAD6AwEPBwAAABMBAAAAMQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAANAA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_SUBTYPES[26] = "PPTY;v10;369;bQEAAPr7AGYBAAD6AwEFAgYCDgAAAAAPBQAAABAQAAAAERoAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCcBAAD6+wAgAQAAAgAAAAhiAAAA+gABARIAAABiAGEAcgBuACgAaQBuAEgAbwByAGkAegBvAG4AdABhAGwAKQD7ADAAAAD6+wASAAAA+g8GAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsAAAAPr7AIwAAAD6+wAyAAAA+gMBDwcAAAATAQAAADEA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADQAOQA5APsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEYAAAA+gEGAAAAaABpAGQAZABlAG4A+wAAAAAA";
+    PRESET_SUBTYPES[37] = "PPTY;v10;367;awEAAPr7AGQBAAD6AwEFAgYCDgAAAAAPBQAAABAQAAAAESUAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCUBAAD6+wAeAQAAAgAAAAhgAAAA+gABAREAAABiAGEAcgBuACgAbwB1AHQAVgBlAHIAdABpAGMAYQBsACkA+wAwAAAA+vsAEgAAAPoPBgAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7DbAAAAD6+wCMAAAA+vsAMgAAAPoDAQ8HAAAAEwEAAAAxAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA0ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_SUBTYPES[42] = "PPTY;v10;371;bwEAAPr7AGgBAAD6AwEFAgYCDgAAAAAPBQAAABAQAAAAESoAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCkBAAD6+wAiAQAAAgAAAAhkAAAA+gABARMAAABiAGEAcgBuACgAbwB1AHQASABvAHIAaQB6AG8AbgB0AGEAbAApAPsAMAAAAPr7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w2wAAAA+vsAjAAAAPr7ADIAAAD6AwEPBwAAABMBAAAAMQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAANAA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_TYPES[17] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[17] = [];
+    PRESET_SUBTYPES[1] = "PPTY;v10;1112;VAQAAPr7AE0EAAD6AwEFAgYCDgAAAAAPBQAAABARAAAAEQEAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BA4EAAD6+wAHBAAABQAAAAbNAAAA+gABBAD7AFYAAAD6+wASAAAA+g8GAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wFnAAAA+vsAYAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB4APsAAAAAAAAuAAAA+gAGAAAAMQAwADAAMAAwADAA+wAWAAAA+gEFAAAAcABwAHQAXwB4APsAAAAAAAbdAAAA+gABBAD7AFYAAAD6+wASAAAA+g8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wF3AAAA+vsAcAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB5APsAAAAAAAA+AAAA+gAGAAAAMQAwADAAMAAwADAA+wAmAAAA+gENAAAAcABwAHQAXwB5AC0AcABwAHQAXwBoAC8AMgD7AAAAAAAGzQAAAPoAAQQA+wBWAAAA+vsAEgAAAPoPCAAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB3APsBZwAAAPr7AGAAAAACAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AdwD7AAAAAAAALgAAAPoABgAAADEAMAAwADAAMAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AdwD7AAAAAAAGwwAAAPoAAQQA+wBWAAAA+vsAEgAAAPoPCQAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwBoAPsBXQAAAPr7AFYAAAACAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AaAD7AAAAAAAAJAAAAPoABgAAADEAMAAwADAAMAAwAPsADAAAAPoDAAAAAPsAAAAAAA2wAAAA+vsAjAAAAPr7ADIAAAD6AwEPCgAAABMBAAAAMQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAANAA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_SUBTYPES[2] = "PPTY;v10;1112;VAQAAPr7AE0EAAD6AwEFAgYCDgAAAAAPBQAAABARAAAAEQIAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BA4EAAD6+wAHBAAABQAAAAbdAAAA+gABBAD7AFYAAAD6+wASAAAA+g8GAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wF3AAAA+vsAcAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB4APsAAAAAAAA+AAAA+gAGAAAAMQAwADAAMAAwADAA+wAmAAAA+gENAAAAcABwAHQAXwB4ACsAcABwAHQAXwB3AC8AMgD7AAAAAAAGzQAAAPoAAQQA+wBWAAAA+vsAEgAAAPoPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBZwAAAPr7AGAAAAACAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AeQD7AAAAAAAALgAAAPoABgAAADEAMAAwADAAMAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AeQD7AAAAAAAGwwAAAPoAAQQA+wBWAAAA+vsAEgAAAPoPCAAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB3APsBXQAAAPr7AFYAAAACAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AdwD7AAAAAAAAJAAAAPoABgAAADEAMAAwADAAMAAwAPsADAAAAPoDAAAAAPsAAAAAAAbNAAAA+gABBAD7AFYAAAD6+wASAAAA+g8JAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAGgA+wFnAAAA+vsAYAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwBoAPsAAAAAAAAuAAAA+gAGAAAAMQAwADAAMAAwADAA+wAWAAAA+gEFAAAAcABwAHQAXwBoAPsAAAAAAA2wAAAA+vsAjAAAAPr7ADIAAAD6AwEPCgAAABMBAAAAMQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAANAA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_SUBTYPES[4] = "PPTY;v10;1112;VAQAAPr7AE0EAAD6AwEFAgYCDgAAAAAPBQAAABARAAAAEQQAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BA4EAAD6+wAHBAAABQAAAAbNAAAA+gABBAD7AFYAAAD6+wASAAAA+g8GAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wFnAAAA+vsAYAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB4APsAAAAAAAAuAAAA+gAGAAAAMQAwADAAMAAwADAA+wAWAAAA+gEFAAAAcABwAHQAXwB4APsAAAAAAAbdAAAA+gABBAD7AFYAAAD6+wASAAAA+g8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wF3AAAA+vsAcAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB5APsAAAAAAAA+AAAA+gAGAAAAMQAwADAAMAAwADAA+wAmAAAA+gENAAAAcABwAHQAXwB5ACsAcABwAHQAXwBoAC8AMgD7AAAAAAAGzQAAAPoAAQQA+wBWAAAA+vsAEgAAAPoPCAAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB3APsBZwAAAPr7AGAAAAACAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AdwD7AAAAAAAALgAAAPoABgAAADEAMAAwADAAMAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AdwD7AAAAAAAGwwAAAPoAAQQA+wBWAAAA+vsAEgAAAPoPCQAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwBoAPsBXQAAAPr7AFYAAAACAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AaAD7AAAAAAAAJAAAAPoABgAAADEAMAAwADAAMAAwAPsADAAAAPoDAAAAAPsAAAAAAA2wAAAA+vsAjAAAAPr7ADIAAAD6AwEPCgAAABMBAAAAMQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAANAA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_SUBTYPES[8] = "PPTY;v10;1112;VAQAAPr7AE0EAAD6AwEFAgYCDgAAAAAPBQAAABARAAAAEQgAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BA4EAAD6+wAHBAAABQAAAAbdAAAA+gABBAD7AFYAAAD6+wASAAAA+g8GAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wF3AAAA+vsAcAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB4APsAAAAAAAA+AAAA+gAGAAAAMQAwADAAMAAwADAA+wAmAAAA+gENAAAAcABwAHQAXwB4AC0AcABwAHQAXwB3AC8AMgD7AAAAAAAGzQAAAPoAAQQA+wBWAAAA+vsAEgAAAPoPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB5APsBZwAAAPr7AGAAAAACAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AeQD7AAAAAAAALgAAAPoABgAAADEAMAAwADAAMAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AeQD7AAAAAAAGwwAAAPoAAQQA+wBWAAAA+vsAEgAAAPoPCAAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB3APsBXQAAAPr7AFYAAAACAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AdwD7AAAAAAAAJAAAAPoABgAAADEAMAAwADAAMAAwAPsADAAAAPoDAAAAAPsAAAAAAAbNAAAA+gABBAD7AFYAAAD6+wASAAAA+g8JAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAGgA+wFnAAAA+vsAYAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwBoAPsAAAAAAAAuAAAA+gAGAAAAMQAwADAAMAAwADAA+wAWAAAA+gEFAAAAcABwAHQAXwBoAPsAAAAAAA2wAAAA+vsAjAAAAPr7ADIAAAD6AwEPCgAAABMBAAAAMQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAANAA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_SUBTYPES[10] = "PPTY;v10;676;oAIAAPr7AJkCAAD6AwEFAgYCDgAAAAAPBQAAABARAAAAEQoAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BFoCAAD6+wBTAgAAAwAAAAbDAAAA+gABBAD7AFYAAAD6+wASAAAA+g8GAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHcA+wFdAAAA+vsAVgAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB3APsAAAAAAAAkAAAA+gAGAAAAMQAwADAAMAAwADAA+wAMAAAA+gMAAAAA+wAAAAAABs0AAAD6AAEEAPsAVgAAAPr7ABIAAAD6DwcAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AaAD7AWcAAAD6+wBgAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAGgA+wAAAAAAAC4AAAD6AAYAAAAxADAAMAAwADAAMAD7ABYAAAD6AQUAAABwAHAAdABfAGgA+wAAAAAADbAAAAD6+wCMAAAA+vsAMgAAAPoDAQ8IAAAAEwEAAAAxAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA0ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_TYPES[18] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[18] = [];
+    PRESET_SUBTYPES[3] = "PPTY;v10;363;ZwEAAPr7AGABAAD6AwEFAgYCDgAAAAAPBQAAABASAAAAEQMAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCEBAAD6+wAaAQAAAgAAAAhcAAAA+gABAQ8AAABzAHQAcgBpAHAAcwAoAHUAcABSAGkAZwBoAHQAKQD7ADAAAAD6+wASAAAA+g8GAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsAAAAPr7AIwAAAD6+wAyAAAA+gMBDwcAAAATAQAAADEA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADQAOQA5APsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEYAAAA+gEGAAAAaABpAGQAZABlAG4A+wAAAAAA";
+    PRESET_SUBTYPES[6] = "PPTY;v10;367;awEAAPr7AGQBAAD6AwEFAgYCDgAAAAAPBQAAABASAAAAEQYAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCUBAAD6+wAeAQAAAgAAAAhgAAAA+gABAREAAABzAHQAcgBpAHAAcwAoAGQAbwB3AG4AUgBpAGcAaAB0ACkA+wAwAAAA+vsAEgAAAPoPBgAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7DbAAAAD6+wCMAAAA+vsAMgAAAPoDAQ8HAAAAEwEAAAAxAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA0ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_SUBTYPES[9] = "PPTY;v10;361;ZQEAAPr7AF4BAAD6AwEFAgYCDgAAAAAPBQAAABASAAAAEQkAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BB8BAAD6+wAYAQAAAgAAAAhaAAAA+gABAQ4AAABzAHQAcgBpAHAAcwAoAHUAcABMAGUAZgB0ACkA+wAwAAAA+vsAEgAAAPoPBgAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7DbAAAAD6+wCMAAAA+vsAMgAAAPoDAQ8HAAAAEwEAAAAxAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA0ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_SUBTYPES[12] = "PPTY;v10;365;aQEAAPr7AGIBAAD6AwEFAgYCDgAAAAAPBQAAABASAAAAEQwAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCMBAAD6+wAcAQAAAgAAAAheAAAA+gABARAAAABzAHQAcgBpAHAAcwAoAGQAbwB3AG4ATABlAGYAdAApAPsAMAAAAPr7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w2wAAAA+vsAjAAAAPr7ADIAAAD6AwEPBwAAABMBAAAAMQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAANAA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_TYPES[19] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[19] = [];
+    PRESET_SUBTYPES[5] = "PPTY;v10;1755;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";
+    PRESET_SUBTYPES[10] = "PPTY;v10;1755;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";
+    PRESET_TYPES[20] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[20] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;347;VwEAAPr7AFABAAD6AwEFAgYCDgAAAAAPBQAAABAUAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBEBAAD6+wAKAQAAAgAAAAhKAAAA+gABAQUAAAB3AGUAZABnAGUA+wAyAAAA+vsAFAAAAPoPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsgAAAPr7AI4AAAD6+wA0AAAA+gMBDwcAAAATAQAAADEA+wAfAAAA+vsAGAAAAAEAAAAADwAAAPoDBAAAADEAOQA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_TYPES[21] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[21] = [];
+    PRESET_SUBTYPES[1] = "PPTY;v10;353;XQEAAPr7AFYBAAD6AwEFAgYCDgAAAAAPBQAAABAVAAAAEQEAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBcBAAD6+wAQAQAAAgAAAAhQAAAA+gABAQgAAAB3AGgAZQBlAGwAKAAxACkA+wAyAAAA+vsAFAAAAPoPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsgAAAPr7AI4AAAD6+wA0AAAA+gMBDwcAAAATAQAAADEA+wAfAAAA+vsAGAAAAAEAAAAADwAAAPoDBAAAADEAOQA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_SUBTYPES[2] = "PPTY;v10;353;XQEAAPr7AFYBAAD6AwEFAgYCDgAAAAAPBQAAABAVAAAAEQIAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBcBAAD6+wAQAQAAAgAAAAhQAAAA+gABAQgAAAB3AGgAZQBlAGwAKAAyACkA+wAyAAAA+vsAFAAAAPoPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsgAAAPr7AI4AAAD6+wA0AAAA+gMBDwcAAAATAQAAADEA+wAfAAAA+vsAGAAAAAEAAAAADwAAAPoDBAAAADEAOQA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_SUBTYPES[3] = "PPTY;v10;353;XQEAAPr7AFYBAAD6AwEFAgYCDgAAAAAPBQAAABAVAAAAEQMAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBcBAAD6+wAQAQAAAgAAAAhQAAAA+gABAQgAAAB3AGgAZQBlAGwAKAAzACkA+wAyAAAA+vsAFAAAAPoPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsgAAAPr7AI4AAAD6+wA0AAAA+gMBDwcAAAATAQAAADEA+wAfAAAA+vsAGAAAAAEAAAAADwAAAPoDBAAAADEAOQA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_SUBTYPES[4] = "PPTY;v10;353;XQEAAPr7AFYBAAD6AwEFAgYCDgAAAAAPBQAAABAVAAAAEQQAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBcBAAD6+wAQAQAAAgAAAAhQAAAA+gABAQgAAAB3AGgAZQBlAGwAKAA0ACkA+wAyAAAA+vsAFAAAAPoPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsgAAAPr7AI4AAAD6+wA0AAAA+gMBDwcAAAATAQAAADEA+wAfAAAA+vsAGAAAAAEAAAAADwAAAPoDBAAAADEAOQA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_SUBTYPES[8] = "PPTY;v10;353;XQEAAPr7AFYBAAD6AwEFAgYCDgAAAAAPBQAAABAVAAAAEQgAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBcBAAD6+wAQAQAAAgAAAAhQAAAA+gABAQgAAAB3AGgAZQBlAGwAKAA4ACkA+wAyAAAA+vsAFAAAAPoPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsgAAAPr7AI4AAAD6+wA0AAAA+gMBDwcAAAATAQAAADEA+wAfAAAA+vsAGAAAAAEAAAAADwAAAPoDBAAAADEAOQA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_TYPES[22] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[22] = [];
+    PRESET_SUBTYPES[1] = "PPTY;v10;349;WQEAAPr7AFIBAAD6AwEFAgYCDgAAAAAPBQAAABAWAAAAEQEAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBMBAAD6+wAMAQAAAgAAAAhOAAAA+gABAQgAAAB3AGkAcABlACgAdQBwACkA+wAwAAAA+vsAEgAAAPoPBgAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7DbAAAAD6+wCMAAAA+vsAMgAAAPoDAQ8HAAAAEwEAAAAxAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA0ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_SUBTYPES[2] = "PPTY;v10;355;XwEAAPr7AFgBAAD6AwEFAgYCDgAAAAAPBQAAABAWAAAAEQIAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBkBAAD6+wASAQAAAgAAAAhUAAAA+gABAQsAAAB3AGkAcABlACgAcgBpAGcAaAB0ACkA+wAwAAAA+vsAEgAAAPoPBgAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7DbAAAAD6+wCMAAAA+vsAMgAAAPoDAQ8HAAAAEwEAAAAxAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA0ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_SUBTYPES[4] = "PPTY;v10;353;XQEAAPr7AFYBAAD6AwEFAgYCDgAAAAAPBQAAABAWAAAAEQQAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBcBAAD6+wAQAQAAAgAAAAhSAAAA+gABAQoAAAB3AGkAcABlACgAZABvAHcAbgApAPsAMAAAAPr7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w2wAAAA+vsAjAAAAPr7ADIAAAD6AwEPBwAAABMBAAAAMQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAANAA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_SUBTYPES[8] = "PPTY;v10;353;XQEAAPr7AFYBAAD6AwEFAgYCDgAAAAAPBQAAABAWAAAAEQgAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BBcBAAD6+wAQAQAAAgAAAAhSAAAA+gABAQoAAAB3AGkAcABlACgAbABlAGYAdAApAPsAMAAAAPr7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+w2wAAAA+vsAjAAAAPr7ADIAAAD6AwEPBwAAABMBAAAAMQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAANAA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_TYPES[23] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[23] = [];
+    PRESET_SUBTYPES[16] = "PPTY;v10;694;sgIAAPr7AKsCAAD6AwEFAgYCDgAAAAAPBQAAABAXAAAAERAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BGwCAAD6+wBlAgAAAwAAAAbRAAAA+gABBAD7AFYAAAD6+wASAAAA+g8GAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHcA+wFrAAAA+vsAZAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB3APsAAAAAAAAyAAAA+gAGAAAAMQAwADAAMAAwADAA+wAaAAAA+gEHAAAANAAqAHAAcAB0AF8AdwD7AAAAAAAG0QAAAPoAAQQA+wBWAAAA+vsAEgAAAPoPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwBoAPsBawAAAPr7AGQAAAACAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AaAD7AAAAAAAAMgAAAPoABgAAADEAMAAwADAAMAAwAPsAGgAAAPoBBwAAADQAKgBwAHAAdABfAGgA+wAAAAAADbAAAAD6+wCMAAAA+vsAMgAAAPoDAQ8IAAAAEwEAAAAxAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA0ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_SUBTYPES[20] = "PPTY;v10;1138;bgQAAPr7AGcEAAD6AwEFAgYCDgAAAAAPBQAAABAXAAAAERQAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCgEAAD6+wAhBAAABAAAAAYbAQAA+gABBAD7AFYAAAD6+wASAAAA+g8GAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHcA+wG1AAAA+vsArgAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB3APsAAAAAAAB8AAAA+gAGAAAAMQAwADAAMAAwADAA+wBkAAAA+gEsAAAAKAA2ACoAbQBpAG4AKABtAGEAeAAoAHAAcAB0AF8AdwAqAHAAcAB0AF8AaAAsAC4AMwApACwAMQApAC0ANwAuADQAKQAvAC0ALgA3ACoAcABwAHQAXwB3APsAAAAAAAYbAQAA+gABBAD7AFYAAAD6+wASAAAA+g8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAGgA+wG1AAAA+vsArgAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwBoAPsAAAAAAAB8AAAA+gAGAAAAMQAwADAAMAAwADAA+wBkAAAA+gEsAAAAKAA2ACoAbQBpAG4AKABtAGEAeAAoAHAAcAB0AF8AdwAqAHAAcAB0AF8AaAAsAC4AMwApACwAMQApAC0ANwAuADQAKQAvAC0ALgA3ACoAcABwAHQAXwBoAPsAAAAAAAYjAQAA+gABBAD7AFYAAAD6+wASAAAA+g8IAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wG9AAAA+vsAtgAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB5APsAAAAAAACEAAAA+gAGAAAAMQAwADAAMAAwADAA+wBsAAAA+gEwAAAAMQArACgANgAqAG0AaQBuACgAbQBhAHgAKABwAHAAdABfAHcAKgBwAHAAdABfAGgALAAuADMAKQAsADEAKQAtADcALgA0ACkALwAtAC4ANwAqAHAAcAB0AF8AaAAvADIA+wAAAAAADbAAAAD6+wCMAAAA+vsAMgAAAPoDAQ8JAAAAEwEAAAAxAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA0ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_SUBTYPES[32] = "PPTY;v10;666;lgIAAPr7AI8CAAD6AwEFAgYCDgAAAAAPBQAAABAXAAAAESAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BFACAAD6+wBJAgAAAwAAAAbDAAAA+gABBAD7AFYAAAD6+wASAAAA+g8GAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHcA+wFdAAAA+vsAVgAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB3APsAAAAAAAAkAAAA+gAGAAAAMQAwADAAMAAwADAA+wAMAAAA+gMAAAAA+wAAAAAABsMAAAD6AAEEAPsAVgAAAPr7ABIAAAD6DwcAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AaAD7AV0AAAD6+wBWAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAGgA+wAAAAAAACQAAAD6AAYAAAAxADAAMAAwADAAMAD7AAwAAAD6AwAAAAD7AAAAAAANsAAAAPr7AIwAAAD6+wAyAAAA+gMBDwgAAAATAQAAADEA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADQAOQA5APsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEYAAAA+gEGAAAAaABpAGQAZABlAG4A+wAAAAAA";
+    PRESET_SUBTYPES[272] = "PPTY;v10;702;ugIAAPr7ALMCAAD6AwEFAgYCDgAAAAAPBQAAABAXAAAAERABAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BHQCAAD6+wBtAgAAAwAAAAbVAAAA+gABBAD7AFYAAAD6+wASAAAA+g8GAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHcA+wFvAAAA+vsAaAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB3APsAAAAAAAA2AAAA+gAGAAAAMQAwADAAMAAwADAA+wAeAAAA+gEJAAAANAAvADMAKgBwAHAAdABfAHcA+wAAAAAABtUAAAD6AAEEAPsAVgAAAPr7ABIAAAD6DwcAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AaAD7AW8AAAD6+wBoAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAGgA+wAAAAAAADYAAAD6AAYAAAAxADAAMAAwADAAMAD7AB4AAAD6AQkAAAA0AC8AMwAqAHAAcAB0AF8AaAD7AAAAAAANsAAAAPr7AIwAAAD6+wAyAAAA+gMBDwgAAAATAQAAADEA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADQAOQA5APsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEYAAAA+gEGAAAAaABpAGQAZABlAG4A+wAAAAAA";
+    PRESET_SUBTYPES[288] = "PPTY;v10;702;ugIAAPr7ALMCAAD6AwEFAgYCDgAAAAAPBQAAABAXAAAAESABAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BHQCAAD6+wBtAgAAAwAAAAbVAAAA+gABBAD7AFYAAAD6+wASAAAA+g8GAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHcA+wFvAAAA+vsAaAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB3APsAAAAAAAA2AAAA+gAGAAAAMQAwADAAMAAwADAA+wAeAAAA+gEJAAAAMgAvADMAKgBwAHAAdABfAHcA+wAAAAAABtUAAAD6AAEEAPsAVgAAAPr7ABIAAAD6DwcAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AaAD7AW8AAAD6+wBoAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAGgA+wAAAAAAADYAAAD6AAYAAAAxADAAMAAwADAAMAD7AB4AAAD6AQkAAAAyAC8AMwAqAHAAcAB0AF8AaAD7AAAAAAANsAAAAPr7AIwAAAD6+wAyAAAA+gMBDwgAAAATAQAAADEA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADQAOQA5APsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEYAAAA+gEGAAAAaABpAGQAZABlAG4A+wAAAAAA";
+    PRESET_SUBTYPES[544] = "PPTY;v10;1066;JgQAAPr7AB8EAAD6AwEFAgYCDgAAAAAPBQAAABAXAAAAESACAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BOADAAD6+wDZAwAABQAAAAbDAAAA+gABBAD7AFYAAAD6+wASAAAA+g8GAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHcA+wFdAAAA+vsAVgAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB3APsAAAAAAAAkAAAA+gAGAAAAMQAwADAAMAAwADAA+wAMAAAA+gMAAAAA+wAAAAAABsMAAAD6AAEEAPsAVgAAAPr7ABIAAAD6DwcAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AaAD7AV0AAAD6+wBWAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAGgA+wAAAAAAACQAAAD6AAYAAAAxADAAMAAwADAAMAD7AAwAAAD6AwAAAAD7AAAAAAAGwwAAAPoAAQQA+wBWAAAA+vsAEgAAAPoPCAAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsBXQAAAPr7AFYAAAACAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AeAD7AAAAAAAAJAAAAPoABgAAADEAMAAwADAAMAAwAPsADAAAAPoDUMMAAPsAAAAAAAbDAAAA+gABBAD7AFYAAAD6+wASAAAA+g8JAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wFdAAAA+vsAVgAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB5APsAAAAAAAAkAAAA+gAGAAAAMQAwADAAMAAwADAA+wAMAAAA+gNQwwAA+wAAAAAADbAAAAD6+wCMAAAA+vsAMgAAAPoDAQ8KAAAAEwEAAAAxAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA0ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_TYPES[25] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[25] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;2108;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";
+    PRESET_TYPES[26] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[26] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;6084;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";
+    PRESET_TYPES[28] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[28] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;706;vgIAAPr7ALcCAAD6AwEFAgYCDgAAAAAPBQAAABAcAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BHgCAAD6+wBxAgAAAwAAAAbRAAAA+gABBAD7AFoAAAD6+wAWAAAA+g8GAAAAEwUAAAAxADUAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsBZwAAAPr7AGAAAAACAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AeAD7AAAAAAAALgAAAPoABgAAADEAMAAwADAAMAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AeAD7AAAAAAAG2QAAAPoAAQQA+wBaAAAA+vsAFgAAAPoPBwAAABMFAAAAMQA1ADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeQD7AW8AAAD6+wBoAAAAAgAAAAAoAAAA+gABAAAAMAD7ABoAAAD6AQcAAABwAHAAdABfAHkALQAxAPsAAAAAAAAyAAAA+gAGAAAAMQAwADAAMAAwADAA+wAaAAAA+gEHAAAAcABwAHQAXwB5ACsAMQD7AAAAAAANtAAAAPr7AJAAAAD6+wA2AAAA+gMBDwgAAAATAQAAADEA+wAhAAAA+vsAGgAAAAEAAAAAEQAAAPoDBQAAADEANAA5ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_TYPES[30] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[30] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1607;QwYAAPr7ADwGAAD6AwEFAgYCDgAAAAAPBQAAABAeAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BP0FAAD6+wD2BQAABwAAAAhtAAAA+gABAQQAAABmAGEAZABlAPsAVwAAAPr7ADkAAAD6AKCGAQAPBgAAABMDAAAAOAAwADAA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADIAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wbyAAAA+gABBAD7AI8AAAD6+wA5AAAA+gCghgEADwcAAAATAwAAADgAMAAwAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAAyADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCMwAAAPr7ACwAAAABAAAAACMAAAD6AA4AAABzAHQAeQBsAGUALgByAG8AdABhAHQAaQBvAG4A+wFTAAAA+vsATAAAAAIAAAAAGgAAAPoAAQAAADAA+wAMAAAA+gMAAAAA+wAAAAAAACQAAAD6AAYAAAAxADAAMAAwADAAMAD7AAwAAAD6A8Crdv/7AAAAAAAG3AAAAPoAAQQA+wBbAAAA+vsAFwAAAPoMoIYBAA8IAAAAEwMAAAAyADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wFxAAAA+vsAagAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB4APsAAAAAAAA4AAAA+gAGAAAAMQAwADAAMAAwADAA+wAgAAAA+gEKAAAAcABwAHQAXwB4AC0AMAAuADAANQD7AAAAAAAG2gAAAPoAAQQA+wBbAAAA+vsAFwAAAPoMoIYBAA8JAAAAEwMAAAAyADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wFvAAAA+vsAaAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB5APsAAAAAAAA2AAAA+gAGAAAAMQAwADAAMAAwADAA+wAeAAAA+gEJAAAAcABwAHQAXwB5ACsAMAAuADEA+wAAAAAABgYBAAD6AAEEAPsAfQAAAPr7ADkAAAD6AKCGAQAPCgAAABMDAAAAOAAwADAA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADIAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7AXkAAAD6+wByAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAHgA+wAAAAAAAEAAAAD6AAYAAAAxADAAMAAwADAAMAD7ACgAAAD6AQ4AAABwAHAAdABfAHgAKwAwAC4ANAArADAALgAwADUA+wAAAAAABgQBAAD6AAEEAPsAfQAAAPr7ADkAAAD6AKCGAQAPCwAAABMDAAAAOAAwADAA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADIAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeQD7AXcAAAD6+wBwAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAHkA+wAAAAAAAD4AAAD6AAYAAAAxADAAMAAwADAAMAD7ACYAAAD6AQ0AAABwAHAAdABfAHkALQAwAC4ANAAtADAALgAxAPsAAAAAAA2wAAAA+vsAjAAAAPr7ADIAAAD6AwEPDAAAABMBAAAAMQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAAOQA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_TYPES[31] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[31] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;957;uQMAAPr7ALIDAAD6AwEFAgYCDgAAAAAPBQAAABAfAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BHMDAAD6+wBsAwAABQAAAAbFAAAA+gABBAD7AFgAAAD6+wAUAAAA+g8GAAAAEwQAAAAxADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AdwD7AV0AAAD6+wBWAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAHcA+wAAAAAAACQAAAD6AAYAAAAxADAAMAAwADAAMAD7AAwAAAD6AwAAAAD7AAAAAAAGxQAAAPoAAQQA+wBYAAAA+vsAFAAAAPoPBwAAABMEAAAAMQAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAGgA+wFdAAAA+vsAVgAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwBoAPsAAAAAAAAkAAAA+gAGAAAAMQAwADAAMAAwADAA+wAMAAAA+gMAAAAA+wAAAAAABs0AAAD6AAEEAPsAagAAAPr7ABQAAAD6DwgAAAATBAAAADEAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjMAAAD6+wAsAAAAAQAAAAAjAAAA+gAOAAAAcwB0AHkAbABlAC4AcgBvAHQAYQB0AGkAbwBuAPsBUwAAAPr7AEwAAAACAAAAABoAAAD6AAEAAAAwAPsADAAAAPoDAAAAAPsAAAAAAAAkAAAA+gAGAAAAMQAwADAAMAAwADAA+wAMAAAA+gNAVIkA+wAAAAAACEgAAAD6AAEBBAAAAGYAYQBkAGUA+wAyAAAA+vsAFAAAAPoPCQAAABMEAAAAMQAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsAAAAPr7AIwAAAD6+wAyAAAA+gMBDwoAAAATAQAAADEA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADkAOQA5APsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEYAAAA+gEGAAAAaABpAGQAZABlAG4A+wAAAAAA";
+    PRESET_TYPES[35] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[35] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;959;uwMAAPr7ALQDAAD6AwEFAgYCDgAAAAAPBQAAABAjAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BHUDAAD6+wBuAwAABQAAAAhIAAAA+gABAQQAAABmAGEAZABlAPsAMgAAAPr7ABQAAAD6DwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7Bs0AAAD6AAEEAPsAagAAAPr7ABQAAAD6DwcAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjMAAAD6+wAsAAAAAQAAAAAjAAAA+gAOAAAAcwB0AHkAbABlAC4AcgBvAHQAYQB0AGkAbwBuAPsBUwAAAPr7AEwAAAACAAAAABoAAAD6AAEAAAAwAPsADAAAAPoDAAAAAPsAAAAAAAAkAAAA+gAGAAAAMQAwADAAMAAwADAA+wAMAAAA+gMAokoE+wAAAAAABsUAAAD6AAEEAPsAWAAAAPr7ABQAAAD6DwgAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwBoAPsBXQAAAPr7AFYAAAACAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AaAD7AAAAAAAAJAAAAPoABgAAADEAMAAwADAAMAAwAPsADAAAAPoDAAAAAPsAAAAAAAbFAAAA+gABBAD7AFgAAAD6+wAUAAAA+g8JAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AdwD7AV0AAAD6+wBWAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAHcA+wAAAAAAACQAAAD6AAYAAAAxADAAMAAwADAAMAD7AAwAAAD6AwAAAAD7AAAAAAANsgAAAPr7AI4AAAD6+wA0AAAA+gMBDwoAAAATAQAAADEA+wAfAAAA+vsAGAAAAAEAAAAADwAAAPoDBAAAADEAOQA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_TYPES[37] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[37] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1031;AwQAAPr7APwDAAD6AwEFAgYCDgAAAAAPBQAAABAlAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BL0DAAD6+wC2AwAABQAAAAhIAAAA+gABAQQAAABmAGEAZABlAPsAMgAAAPr7ABQAAAD6DwYAAAATBAAAADEAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7Bs8AAAD6AAEEAPsAWAAAAPr7ABQAAAD6DwcAAAATBAAAADEAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsBZwAAAPr7AGAAAAACAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AeAD7AAAAAAAALgAAAPoABgAAADEAMAAwADAAMAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AeAD7AAAAAAAG2gAAAPoAAQQA+wBbAAAA+vsAFwAAAPoMoIYBAA8IAAAAEwMAAAAxADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wFvAAAA+vsAaAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB5APsAAAAAAAA2AAAA+gAGAAAAMQAwADAAMAAwADAA+wAeAAAA+gEJAAAAcABwAHQAXwB5AC0ALgAwADMA+wAAAAAABvgAAAD6AAEEAPsAfQAAAPr7ADkAAAD6AKCGAQAPCQAAABMDAAAAOQAwADAA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADEAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeQD7AWsAAAD6+wBkAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAHkA+wAAAAAAADIAAAD6AAYAAAAxADAAMAAwADAAMAD7ABoAAAD6AQcAAABwAHAAdABfAHkAKwAxAPsAAAAAAA2wAAAA+vsAjAAAAPr7ADIAAAD6AwEPCgAAABMBAAAAMQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAAOQA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_TYPES[38] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[38] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;771;/wIAAPr7APgCAAD6AFDDAAADAQUCBgIOAAAAAA8FAAAAECYAAAARAAAAAPsAGQAAAPr7ABIAAAABAAAAAAkAAAD6AwEAAAAwAPsDCQAAAPoAAQNQwwAA+wSmAgAA+vsAnwIAAAMAAAAG6wAAAPoAAQQA+wCIAAAA+vsAMgAAAPoPBgAAABMEAAAAMQAwADAAMAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCMwAAAPr7ACwAAAABAAAAACMAAAD6AA4AAABzAHQAeQBsAGUALgByAG8AdABhAHQAaQBvAG4A+wFTAAAA+vsATAAAAAIAAAAAGgAAAPoAAQAAADAA+wAMAAAA+gMAAAAA+wAAAAAAACQAAAD6AAYAAAAxADAAMAAwADAAMAD7AAwAAAD6AyCqRAD7AAAAAAAG8QAAAPoAAQQA+wB2AAAA+vsAMgAAAPoPBwAAABMEAAAAMQAwADAAMAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wFrAAAA+vsAZAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB5APsAAAAAAAAyAAAA+gAGAAAAMQAwADAAMAAwADAA+wAaAAAA+gEHAAAAcABwAHQAXwB5ACsAMQD7AAAAAAANsAAAAPr7AIwAAAD6+wAyAAAA+gMBDwgAAAATAQAAADEA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADkAOQA5APsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEYAAAA+gEGAAAAaABpAGQAZABlAG4A+wAAAAAA";
+    PRESET_TYPES[41] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[41] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1413;gQUAAPr7AHoFAAD6AwEFAgYCDgAAAAAPBQAAABApAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7AwkAAAD6AAEDECcAAPsELQUAAPr7ACYFAAAGAAAABgQBAAD6AAEEAPsAVgAAAPr7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7AZ4AAAD6+wCXAAAAAwAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAHgA+wAAAAAAADIAAAD6AAUAAAA1ADAAMAAwADAA+wAcAAAA+gEIAAAAcABwAHQAXwB4ACsALgAxAPsAAAAAAAAuAAAA+gAGAAAAMQAwADAAMAAwADAA+wAWAAAA+gEFAAAAcABwAHQAXwB4APsAAAAAAAbNAAAA+gABBAD7AFYAAAD6+wASAAAA+g8HAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wFnAAAA+vsAYAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB5APsAAAAAAAAuAAAA+gAGAAAAMQAwADAAMAAwADAA+wAWAAAA+gEFAAAAcABwAHQAXwB5APsAAAAAAAYMAQAA+gABBAD7AFYAAAD6+wASAAAA+g8IAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAGgA+wGmAAAA+vsAnwAAAAMAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwBoAPsAAAAAAAA0AAAA+gAFAAAANQAwADAAMAAwAPsAHgAAAPoBCQAAAHAAcAB0AF8AaAArAC4AMAAxAPsAAAAAAAA0AAAA+gAGAAAAMQAwADAAMAAwADAA+wAcAAAA+gEIAAAAcABwAHQAXwBoAC8AMQAwAPsAAAAAAAYMAQAA+gABBAD7AFYAAAD6+wASAAAA+g8JAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHcA+wGmAAAA+vsAnwAAAAMAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB3APsAAAAAAAA0AAAA+gAFAAAANQAwADAAMAAwAPsAHgAAAPoBCQAAAHAAcAB0AF8AdwArAC4AMAAxAPsAAAAAAAA0AAAA+gAGAAAAMQAwADAAMAAwADAA+wAcAAAA+gEIAAAAcABwAHQAXwB3AC8AMQAwAPsAAAAAAAhrAAAA+gABAQQAAABmAGEAZABlAPsAVQAAAPr7ADcAAAD6DwoAAAATAwAAADUAMAAwABcQAAAAMAAsADAAOwAgAC4ANQAsACAAMAA7ACAAMQAsACAAMQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsAAAAPr7AIwAAAD6+wAyAAAA+gMBDwsAAAATAQAAADEA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADQAOQA5APsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEYAAAA+gEGAAAAaABpAGQAZABlAG4A+wAAAAAA";
+    PRESET_TYPES[42] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[42] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;773;AQMAAPr7APoCAAD6AwEFAgYCDgAAAAAPBQAAABAqAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BLsCAAD6+wC0AgAABAAAAAhIAAAA+gABAQQAAABmAGEAZABlAPsAMgAAAPr7ABQAAAD6DwYAAAATBAAAADEAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7Bs8AAAD6AAEEAPsAWAAAAPr7ABQAAAD6DwcAAAATBAAAADEAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsBZwAAAPr7AGAAAAACAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AeAD7AAAAAAAALgAAAPoABgAAADEAMAAwADAAMAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AeAD7AAAAAAAG1QAAAPoAAQQA+wBYAAAA+vsAFAAAAPoPCAAAABMEAAAAMQAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wFtAAAA+vsAZgAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB5APsAAAAAAAA0AAAA+gAGAAAAMQAwADAAMAAwADAA+wAcAAAA+gEIAAAAcABwAHQAXwB5ACsALgAxAPsAAAAAAA2wAAAA+vsAjAAAAPr7ADIAAAD6AwEPCQAAABMBAAAAMQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAAOQA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_TYPES[43] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[43] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;3747;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";
+    PRESET_TYPES[45] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[45] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1832;JAcAAPr7AB0HAAD6AwEFAgYCDgAAAAAPBQAAABAtAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BN4GAAD6+wDXBgAABAAAAAhIAAAA+gABAQQAAABmAGEAZABlAPsAMgAAAPr7ABQAAAD6DwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7BvYEAAD6AAEEAPsAWAAAAPr7ABQAAAD6DwcAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB3APsBjgQAAPr7AIcEAAAVAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AdwD7AAAAAAAANAAAAPoABAAAADUAMAAwADAA+wAgAAAA+gEKAAAAMAAuADkAMgAqAHAAcAB0AF8AdwD7AAAAAAAANgAAAPoABQAAADEAMAAwADAAMAD7ACAAAAD6AQoAAAAwAC4ANwAxACoAcABwAHQAXwB3APsAAAAAAAA2AAAA+gAFAAAAMQA1ADAAMAAwAPsAIAAAAPoBCgAAADAALgAzADgAKgBwAHAAdABfAHcA+wAAAAAAACIAAAD6AAUAAAAyADAAMAAwADAA+wAMAAAA+gMAAAAA+wAAAAAAADgAAAD6AAUAAAAyADUAMAAwADAA+wAiAAAA+gELAAAALQAwAC4AMwA4ACoAcABwAHQAXwB3APsAAAAAAAA4AAAA+gAFAAAAMwAwADAAMAAwAPsAIgAAAPoBCwAAAC0AMAAuADcAMQAqAHAAcAB0AF8AdwD7AAAAAAAAOAAAAPoABQAAADMANQAwADAAMAD7ACIAAAD6AQsAAAAtADAALgA5ADIAKgBwAHAAdABfAHcA+wAAAAAAAC4AAAD6AAUAAAA0ADAAMAAwADAA+wAYAAAA+gEGAAAALQBwAHAAdABfAHcA+wAAAAAAADgAAAD6AAUAAAA0ADUAMAAwADAA+wAiAAAA+gELAAAALQAwAC4AOQAyACoAcABwAHQAXwB3APsAAAAAAAA4AAAA+gAFAAAANQAwADAAMAAwAPsAIgAAAPoBCwAAAC0AMAAuADcAMQAqAHAAcAB0AF8AdwD7AAAAAAAAOAAAAPoABQAAADUANQAwADAAMAD7ACIAAAD6AQsAAAAtADAALgAzADgAKgBwAHAAdABfAHcA+wAAAAAAACIAAAD6AAUAAAA2ADAAMAAwADAA+wAMAAAA+gMAAAAA+wAAAAAAADYAAAD6AAUAAAA2ADUAMAAwADAA+wAgAAAA+gEKAAAAMAAuADMAOAAqAHAAcAB0AF8AdwD7AAAAAAAANgAAAPoABQAAADcAMAAwADAAMAD7ACAAAAD6AQoAAAAwAC4ANwAxACoAcABwAHQAXwB3APsAAAAAAAA2AAAA+gAFAAAANwA1ADAAMAAwAPsAIAAAAPoBCgAAADAALgA5ADIAKgBwAHAAdABfAHcA+wAAAAAAACwAAAD6AAUAAAA4ADAAMAAwADAA+wAWAAAA+gEFAAAAcABwAHQAXwB3APsAAAAAAAA2AAAA+gAFAAAAOAA1ADAAMAAwAPsAIAAAAPoBCgAAADAALgA5ADIAKgBwAHAAdABfAHcA+wAAAAAAADYAAAD6AAUAAAA5ADAAMAAwADAA+wAgAAAA+gEKAAAAMAAuADcAMQAqAHAAcAB0AF8AdwD7AAAAAAAANgAAAPoABQAAADkANQAwADAAMAD7ACAAAAD6AQoAAAAwAC4AMwA4ACoAcABwAHQAXwB3APsAAAAAAAAkAAAA+gAGAAAAMQAwADAAMAAwADAA+wAMAAAA+gMAAAAA+wAAAAAABs8AAAD6AAEEAPsAWAAAAPr7ABQAAAD6DwgAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwBoAPsBZwAAAPr7AGAAAAACAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AaAD7AAAAAAAALgAAAPoABgAAADEAMAAwADAAMAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AaAD7AAAAAAANsgAAAPr7AI4AAAD6+wA0AAAA+gMBDwkAAAATAQAAADEA+wAfAAAA+vsAGAAAAAEAAAAADwAAAPoDBAAAADEAOQA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_TYPES[47] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[47] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;773;AQMAAPr7APoCAAD6AwEFAgYCDgAAAAAPBQAAABAvAAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BLsCAAD6+wC0AgAABAAAAAhIAAAA+gABAQQAAABmAGEAZABlAPsAMgAAAPr7ABQAAAD6DwYAAAATBAAAADEAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7Bs8AAAD6AAEEAPsAWAAAAPr7ABQAAAD6DwcAAAATBAAAADEAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsBZwAAAPr7AGAAAAACAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AeAD7AAAAAAAALgAAAPoABgAAADEAMAAwADAAMAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AeAD7AAAAAAAG1QAAAPoAAQQA+wBYAAAA+vsAFAAAAPoPCAAAABMEAAAAMQAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wFtAAAA+vsAZgAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB5APsAAAAAAAA0AAAA+gAGAAAAMQAwADAAMAAwADAA+wAcAAAA+gEIAAAAcABwAHQAXwB5AC0ALgAxAPsAAAAAAA2wAAAA+vsAjAAAAPr7ADIAAAD6AwEPCQAAABMBAAAAMQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAAOQA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    PRESET_TYPES[49] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[49] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;954;tgMAAPr7AK8DAAD6AKCGAQADAQUCBgIOAAAAAA8FAAAAEDEAAAARAAAAAPsAGQAAAPr7ABIAAAABAAAAAAkAAAD6AwEAAAAwAPsEawMAAPr7AGQDAAAFAAAABsMAAAD6AAEEAPsAVgAAAPr7ABIAAAD6DwYAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AdwD7AV0AAAD6+wBWAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAHcA+wAAAAAAACQAAAD6AAYAAAAxADAAMAAwADAAMAD7AAwAAAD6AwAAAAD7AAAAAAAGwwAAAPoAAQQA+wBWAAAA+vsAEgAAAPoPBwAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwBoAPsBXQAAAPr7AFYAAAACAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AaAD7AAAAAAAAJAAAAPoABgAAADEAMAAwADAAMAAwAPsADAAAAPoDAAAAAPsAAAAAAAbLAAAA+gABBAD7AGgAAAD6+wASAAAA+g8IAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCMwAAAPr7ACwAAAABAAAAACMAAAD6AA4AAABzAHQAeQBsAGUALgByAG8AdABhAHQAaQBvAG4A+wFTAAAA+vsATAAAAAIAAAAAGgAAAPoAAQAAADAA+wAMAAAA+gMAAAAA+wAAAAAAACQAAAD6AAYAAAAxADAAMAAwADAAMAD7AAwAAAD6AwBRJQL7AAAAAAAIRgAAAPoAAQEEAAAAZgBhAGQAZQD7ADAAAAD6+wASAAAA+g8JAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsAAAAPr7AIwAAAD6+wAyAAAA+gMBDwoAAAATAQAAADEA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADQAOQA5APsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEYAAAA+gEGAAAAaABpAGQAZABlAG4A+wAAAAAA";
+    PRESET_TYPES[50] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[50] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;778;BgMAAPr7AP8CAAD6AKCGAQADAQUCBgIOAAAAAA8FAAAAEDIAAAARAAAAAPsAGQAAAPr7ABIAAAABAAAAAAkAAAD6AwEAAAAwAPsEuwIAAPr7ALQCAAAEAAAABtUAAAD6AAEEAPsAWAAAAPr7ABQAAAD6DwYAAAATBAAAADEAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB3APsBbQAAAPr7AGYAAAACAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AdwD7AAAAAAAANAAAAPoABgAAADEAMAAwADAAMAAwAPsAHAAAAPoBCAAAAHAAcAB0AF8AdwArAC4AMwD7AAAAAAAGzwAAAPoAAQQA+wBYAAAA+vsAFAAAAPoPBwAAABMEAAAAMQAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAGgA+wFnAAAA+vsAYAAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwBoAPsAAAAAAAAuAAAA+gAGAAAAMQAwADAAMAAwADAA+wAWAAAA+gEFAAAAcABwAHQAXwBoAPsAAAAAAAhIAAAA+gABAQQAAABmAGEAZABlAPsAMgAAAPr7ABQAAAD6DwgAAAATBAAAADEAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7DbAAAAD6+wCMAAAA+vsAMgAAAPoDAQ8JAAAAEwEAAAAxAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA5ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_TYPES[52] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[52] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1041;DQQAAPr7AAYEAAD6AwEFAgYCDgAAAAAPBQAAABA0AAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BMcDAAD6+wDAAwAABAAAAAtwAAAA+gKghgEAA6CGAQAEkNADAAWQ0AMA+wBVAAAA+vsANwAAAPoAUMMAAA8GAAAAEwQAAAAxADAAMAAwAPsAGQAAAPr7ABIAAAABAAAAAAkAAAD6AwEAAAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wlAAgAA+gABAQECzQAAAE0AIAAwAC4AMAAwADAAMAAgADAALgAwADAAMAAwACAAQwAgADAALgAwADMAOAAwADIAIAAwAC4AMAAgADAALgAxADQANAAxACAAMAAuADAAMgAzADQAMQAgADAALgAxADgAMgA2ACAAMAAuADAAOQAxADUAIABDACAAMAAuADIAMgAxADEAOAAgADAALgAxADUAOQA2ADQAIAAwAC4AMgA0ADcAMAA1ACAAMAAuADMAMQAyADUANgAgADAALgAyADMAMQA4ACAAMAAuADQAMAA4ADMAIABDACAAMAAuADIAMQA2ADQAOQAgADAALgA1ADAAMwA5ADQAIAAwAC4AMgAwADcANAA3ACAAMAAuADUANwA5ADQAOAAgADAALgAwADkAMAA4ACAAMAAuADYANgA2ADEAIABDACAALQAwAC4AMAAyADUANQAyACAAMAAuADcANQAyADcAOQAgAC0AMAAuADMANwA1ADEANwAgADAALgA4ADgANQAwADgAIAAtADAALgA0ADYANwA0ACAAMAAuADkAMgA4ADkAAwAAAAD7AJEAAAD6+wA3AAAA+gBQwwAADwcAAAATBAAAADEAMAAwADAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7CEgAAAD6AAEBBAAAAGYAYQBkAGUA+wAyAAAA+vsAFAAAAPoPCAAAABMEAAAAMQAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsAAAAPr7AIwAAAD6+wAyAAAA+gMBDwkAAAATAQAAADEA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADkAOQA5APsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEYAAAA+gEGAAAAaABpAGQAZABlAG4A+wAAAAAA";
+    PRESET_TYPES[53] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[53] = [];
+    PRESET_SUBTYPES[32] = "PPTY;v10;741;4QIAAPr7ANoCAAD6AwEFAgYCDgAAAAAPBQAAABA1AAAAESAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BJsCAAD6+wCUAgAABAAAAAbDAAAA+gABBAD7AFYAAAD6+wASAAAA+g8GAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHcA+wFdAAAA+vsAVgAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB3APsAAAAAAAAkAAAA+gAGAAAAMQAwADAAMAAwADAA+wAMAAAA+gMAAAAA+wAAAAAABsMAAAD6AAEEAPsAVgAAAPr7ABIAAAD6DwcAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AaAD7AV0AAAD6+wBWAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAGgA+wAAAAAAACQAAAD6AAYAAAAxADAAMAAwADAAMAD7AAwAAAD6AwAAAAD7AAAAAAAIRgAAAPoAAQEEAAAAZgBhAGQAZQD7ADAAAAD6+wASAAAA+g8IAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsAAAAPr7AIwAAAD6+wAyAAAA+gMBDwkAAAATAQAAADEA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADQAOQA5APsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEYAAAA+gEGAAAAaABpAGQAZABlAG4A+wAAAAAA";
+    PRESET_SUBTYPES[544] = "PPTY;v10;1141;cQQAAPr7AGoEAAD6AwEFAgYCDgAAAAAPBQAAABA1AAAAESACAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BCsEAAD6+wAkBAAABgAAAAbDAAAA+gABBAD7AFYAAAD6+wASAAAA+g8GAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHcA+wFdAAAA+vsAVgAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB3APsAAAAAAAAkAAAA+gAGAAAAMQAwADAAMAAwADAA+wAMAAAA+gMAAAAA+wAAAAAABsMAAAD6AAEEAPsAVgAAAPr7ABIAAAD6DwcAAAATAwAAADUAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AaAD7AV0AAAD6+wBWAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAGgA+wAAAAAAACQAAAD6AAYAAAAxADAAMAAwADAAMAD7AAwAAAD6AwAAAAD7AAAAAAAIRgAAAPoAAQEEAAAAZgBhAGQAZQD7ADAAAAD6+wASAAAA+g8IAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsGwwAAAPoAAQQA+wBWAAAA+vsAEgAAAPoPCQAAABMDAAAANQAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AiEAAAD6+wAaAAAAAQAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsBXQAAAPr7AFYAAAACAAAAACQAAAD6AAEAAAAwAPsAFgAAAPoBBQAAAHAAcAB0AF8AeAD7AAAAAAAAJAAAAPoABgAAADEAMAAwADAAMAAwAPsADAAAAPoDUMMAAPsAAAAAAAbDAAAA+gABBAD7AFYAAAD6+wASAAAA+g8KAAAAEwMAAAA1ADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCIQAAAPr7ABoAAAABAAAAABEAAAD6AAUAAABwAHAAdABfAHkA+wFdAAAA+vsAVgAAAAIAAAAAJAAAAPoAAQAAADAA+wAWAAAA+gEFAAAAcABwAHQAXwB5APsAAAAAAAAkAAAA+gAGAAAAMQAwADAAMAAwADAA+wAMAAAA+gNQwwAA+wAAAAAADbAAAAD6+wCMAAAA+vsAMgAAAPoDAQ8LAAAAEwEAAAAxAPsAHQAAAPr7ABYAAAABAAAAAA0AAAD6AwMAAAA0ADkAOQD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAABAAAAACcAAAD6ABAAAABzAHQAeQBsAGUALgB2AGkAcwBpAGIAaQBsAGkAdAB5APsBGAAAAPoBBgAAAGgAaQBkAGQAZQBuAPsAAAAAAA==";
+    PRESET_TYPES[55] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[55] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;777;BQMAAPr7AP4CAAD6AwEFAgYCDgAAAAAPBQAAABA3AAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7BL8CAAD6+wC4AgAABAAAAAbZAAAA+gABBAD7AFgAAAD6+wAUAAAA+g8GAAAAEwQAAAAxADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AdwD7AXEAAAD6+wBqAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAHcA+wAAAAAAADgAAAD6AAYAAAAxADAAMAAwADAAMAD7ACAAAAD6AQoAAABwAHAAdABfAHcAKgAwAC4ANwAwAPsAAAAAAAbPAAAA+gABBAD7AFgAAAD6+wAUAAAA+g8HAAAAEwQAAAAxADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AaAD7AWcAAAD6+wBgAAAAAgAAAAAkAAAA+gABAAAAMAD7ABYAAAD6AQUAAABwAHAAdABfAGgA+wAAAAAAAC4AAAD6AAYAAAAxADAAMAAwADAAMAD7ABYAAAD6AQUAAABwAHAAdABfAGgA+wAAAAAACEgAAAD6AAEBBAAAAGYAYQBkAGUA+wAyAAAA+vsAFAAAAPoPCAAAABMEAAAAMQAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsNsAAAAPr7AIwAAAD6+wAyAAAA+gMBDwkAAAATAQAAADEA+wAdAAAA+vsAFgAAAAEAAAAADQAAAPoDAwAAADkAOQA5APsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAEAAAAAJwAAAPoAEAAAAHMAdAB5AGwAZQAuAHYAaQBzAGkAYgBpAGwAaQB0AHkA+wEYAAAA+gEGAAAAaABpAGQAZABlAG4A+wAAAAAA";
+    PRESET_TYPES[56] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[56] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;944;rAMAAPr7AKUDAAD6AwEFAgYCDgAAAAAPBQAAABA4AAAAEQAAAAD7ABkAAAD6+wASAAAAAQAAAAAJAAAA+gMBAAAAMAD7AwkAAAD6AAEDECcAAPsEWAMAAPr7AFEDAAAFAAAABrgAAAD6AAECBwAAACgAcABwAHQAXwB3ACkAAwoAAAAoAC0AcABwAHQAXwB3ACoAMgApAAQA+wCBAAAA+gUDAAAAUABQAFQA+wAyAAAA+gIBDwYAAAATAwAAADUAMAAwAPsAGQAAAPr7ABIAAAABAAAAAAkAAAD6AwEAAAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AdwD7BqMAAAD6AAEBDAAAACgAcABwAHQAXwB3ACoAMAAuADUAMAApAAQA+wB7AAAA+vsANwAAAPoCAQxQwwAADwcAAAATAwAAADUAMAAwAPsAGQAAAPr7ABIAAAABAAAAAAkAAAD6AwEAAAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7Bq8AAAD6AAECBwAAACgAcABwAHQAXwB5ACkAAwsAAAAoADEAKwBwAHAAdABfAGgALwAyACkABAD7AHYAAAD6+wAyAAAA+g8IAAAAEwQAAAAxADAAMAAwAPsAGQAAAPr7ABIAAAABAAAAAAkAAAD6AwEAAAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIhAAAA+vsAGgAAAAEAAAAAEQAAAPoABQAAAHAAcAB0AF8AeQD7CnoAAAD6AACXSQH7AG4AAAD6+wAyAAAA+g8JAAAAEwQAAAAxADAAMAAwAPsAGQAAAPr7ABIAAAABAAAAAAkAAAD6AwEAAAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wIZAAAA+vsAEgAAAAEAAAAACQAAAPoAAQAAAHIA+w2wAAAA+vsAjAAAAPr7ADIAAAD6AwEPCgAAABMBAAAAMQD7AB0AAAD6+wAWAAAAAQAAAAANAAAA+gMDAAAAOQA5ADkA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAQAAAAAnAAAA+gAQAAAAcwB0AHkAbABlAC4AdgBpAHMAaQBiAGkAbABpAHQAeQD7ARgAAAD6AQYAAABoAGkAZABkAGUAbgD7AAAAAAA=";
+    ANIMATION_PRESET_CLASSES[4] = [];
+    PRESET_TYPES = ANIMATION_PRESET_CLASSES[4] = [];
+    PRESET_TYPES[0] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[0] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;3275;xwwAAPr7AMAMAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQAAAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wR3DAAA+vsAcAwAAAEAAAAJZwwAAPoAAQEBAs8FAABNACAAMAAuADAAOQA4ADcAIAAwAC4AMAA3ADcANwA4ACAATAAgADAALgAwADkAOAA3ACAAMAAuADAANwA3ADcAOAAgAEMAIAAwAC4AMQAwADIANgAxACAAMAAuADAANwA4ADcAMQAgADAALgAxADAANgA2ADQAIAAwAC4AMAA3ADkAMQA3ACAAMAAuADEAMQAwADUANQAgADAALgAwADgAMAA1ADYAIABDACAAMAAuADEAMgAwADMAMgAgADAALgAwADgAMwA4ACAAMAAuADEAMgA1ACAAMAAuADAAOAA2ADMANQAgADAALgAxADMAMwA0ADcAIAAwAC4AMAA5ADAANwA0ACAATAAgADAALgAxADcAMwA1ADcAIAAwAC4AMAA4ADcAOQA3ACAAQwAgADAALgAxADkAMAAzADcAIAAwAC4AMAA4ADYANQA4ACAAMAAuADEANgA3ADUAOAAgADAALgAwADgANwAwADQAIAAwAC4AMQA4ADgAMQA1ACAAMAAuADAAOAA3ADAANAAgAEwAIAAwAC4AMgAxADYAMgA4ACAAMAAuADEAMgAyADIAMwAgAEMAIAAwAC4AMgAxADYANAAxACAAMAAuADEAMgAyADIAMwAgADAALgAyADYAMQAwADcAIAAwAC4AMQA3ADcANwA4ACAAMAAuADIANgA2ADIAOAAgADAALgAxADgAMwAzADQAIABDACAAMAAuADMAMgAzADEAOAAgADAALgAyADQAMAA5ADgAIAAwAC4AMgA2ADMAMQA1ACAAMAAuADEAOAAxADcAMgAgADAALgAzADAAMQAxADgAIAAwAC4AMgAxADUANwA0ACAAQwAgADAALgAzADAAOQA1ADEAIAAwAC4AMgAyADIAOQAyACAAMAAuADMAMQA3ADMAMgAgADAALgAyADMAMQA5ADUAIAAwAC4AMwAyADUANgA1ACAAMAAuADIAMwA4ADgAOQAgAEMAIAAwAC4AMwA0ADQAMQA0ACAAMAAuADIANQAzADcAMQAgADAALgAzADcAOAAgADAALgAyADcANgAxADYAIAAwAC4AMwA5ADcAMAAxACAAMAAuADIAOAA1ADEAOQAgAEMAIAAwAC4ANAAwADgANwAzACAAMAAuADIAOQAwADUAMQAgADAALgA0ADIAMAA3ADEAIAAwAC4AMgA5ADMAMAA2ACAAMAAuADQAMwAyADQAMwAgADAALgAyADkANwAyADMAIABDACAAMAAuADQANQAyADYAMQAgADAALgAyADkAMgA2ACAAMAAuADQANwAzADEAOAAgADAALgAyADkAMgAxADMAIAAwAC4ANAA5ADIAOAA0ACAAMAAuADIAOAAzADMANAAgAEMAIAAwAC4ANQAwADYAMQAyACAAMAAuADIANwA3ADAAOQAgADAALgA1ADMAMwA0ADcAIAAwAC4AMgA0ADAANwA0ACAAMAAuADUANAAyADMAMgAgADAALgAyADIAMwAxADUAIABDACAAMAAuADUANwAxADcANQAgADAALgAxADYANAAxADIAIAAwAC4ANQA2ADYAOAAgADAALgAxADMANQA2ADUAIAAwAC4ANQA5ADUAOQA3ACAAMAAuADAANgAyADAANAAgAEMAIAAwAC4ANQA5ADgAOQA2ACAAMAAuADAANQA0ADQAIAAwAC4ANgAwADgAMAA4ACAAMAAuADAAMgA5ADgANwAgADAALgA2ADEAMwA2ADgAIAAwAC4AMAAxADkANAA1ACAAQwAgADAALgA2ADEANgAwADIAIAAwAC4AMAAxADUAMAA1ACAAMAAuADYAMQA4ADQAOQAgADAALgAwADEAMQAxADIAIAAwAC4ANgAyADAAOQA3ACAAMAAuADAAMAA3ADQAMQAgAEMAIAAwAC4ANgAyADIAMAAxACAAMAAuADAAMAA1ADcAOQAgADAALgA2ADIAMwAwADUAIAAwAC4AMAAwADQAOAA3ACAAMAAuADYAMgA0ADAAOQAgADAALgAwADAAMwA3ADEAIABDACAAMAAuADYAMgA2ADAANQAgADAALgAwADEANwA2ACAAMAAuADYAMgA1ADIANgAgADAALgAwADEAMAA0ADIAIAAwAC4ANgAyADQAMAA5ACAAMAAuADAANAAwADcANAAgAEMAIAAwAC4ANgAyADMAOAAzACAAMAAuADAANAA3ADYAOQAgADAALgA2ADIAMwAwADUAIAAwAC4AMAA1ADQAOAA3ACAAMAAuADYAMgAyADUAMwAgADAALgAwADYAMgAwADQAIABDACAAMAAuADYAMgAxADYAMgAgADAALgAwADQANgA1ADMAIAAwAC4ANgAyADIANwA5ACAAMAAuADAANQA5ADkANgAgADAALgA2ADEAOQA0ACAAMAAuADAAMwA5ADgAMgAgAEMAIAAwAC4ANgAxADkAMAAxACAAMAAuADAAMwA3ADAANAAgADAALgA2ADEAOAAzADYAIAAwAC4AMAAzADEANAA5ACAAMAAuADYAMQA4ADMANgAgADAALgAwADMAMQA0ADkAIABMACAAMAAuADUAOQAzADMANgAgAC0AMAAuADAAMQA1ADcANAAgAEMAIAAwAC4ANQA5ADEAOAAgAC0AMAAuADAAMQA2ADQAMwAgADAALgA1ADkAMAAyADQAIAAtADAALgAwADEANwAxADMAIAAwAC4ANQA4ADgANgA4ACAALQAwAC4AMAAxADcANQA5ACAAQwAgADAALgA1ADgANwA1ACAALQAwAC4AMAAxADgAMgA4ACAAMAAuADUAOAA2ADMAMwAgAC0AMAAuADAAMQA5ADIAMQAgADAALgA1ADgANQAwADMAIAAtADAALgAwADEAOQA0ADQAIABDACAAMAAuADUAOAAzADcAMwAgAC0AMAAuADAAMgAwADEAMwAgADAALgA1ADgAMgAzACAALQAwAC4AMAAyADAAMQAzACAAMAAuADUAOAAwADgANgAgAC0AMAAuADAAMgAwADMANwAgAEMAIAAwAC4ANQA3ADcAMAA5ACAALQAwAC4AMAAyADEANQAyACAAMAAuADUANwAzADMAMQAgAC0AMAAuADAAMgAzADEANAAgADAALgA1ADYAOQA0ACAALQAwAC4AMAAyADQAMAA3ACAAQwAgADAALgA1ADYANQAxADEAIAAtADAALgAwADIANQAyADMAIAAwAC4ANQA1ADYAMwA4ACAALQAwAC4AMAAyADYAOAA1ACAAMAAuADUANQA2ADMAOAAgAC0AMAAuADAAMgA2ADgANQAgAEwAIAAwAC4ANAA1ADYAOQAgAC0AMAAuADAAMwAyADQAIABDACAAMAAuADQANQAzADEAMwAgAC0AMAAuADAAMwAzADcAOQAgADAALgA0ADQAOQAzADUAIAAtADAALgAwADMANQAxADgAIAAwAC4ANAA0ADUANAA1ACAALQAwAC4AMAAzADYAMQAxACAAQwAgADAALgA0ADMANwAxADEAIAAtADAALgAwADMAOAA0ADIAIAAwAC4ANAA0ADAANgAzACAALQAwAC4AMAAzADcAMgA2ACAAMAAuADQAMwA1ADAAMwAgAC0AMAAuADAAMwA4ADgAOAAgAEMAIAAwAC4ANAAzADQAMgA1ACAALQAwAC4AMAAzADkANQA4ACAAMAAuADQAMwAzADMANAAgAC0AMAAuADAANAAwADIANwAgADAALgA0ADMAMgA0ADMAIAAtADAALgAwADQAMAA3ADQAIABDACAAMAAuADQAMgA5ADkANQAgAC0AMAAuADAANAAyADUAOQAgADAALgA0ADMAMQA5ACAALQAwAC4AMAA0ADAAOQA3ACAAMAAuADQAMgA5ADgAMgAgAC0AMAAuADAANAAyADUAOQAgAEwAIAAwAC4ANAAyADkAOAAyACAALQAwAC4AMAA0ADIANQA5ACAAAyIAAABBAEEAQQBBAEEAQQBBAEEAQQBBAEEAQQBBAEEAQQBBAEEAQQBBAEEAQQBBAEEAQQBBAEEAQQBBAEEAQQBBAEEAQQBBAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[1] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[1] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;515;/wEAAPr7APgBAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQAQAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wSvAQAA+vsAqAEAAAEAAAAJnwEAAPoAAQEBAo0AAABNACAAMAAgADAAIABDACAAMAAuADAANgA5ACAAMAAgADAALgAxADIANQAgADAALgAwADUANgAgADAALgAxADIANQAgADAALgAxADIANQAgAEMAIAAwAC4AMQAyADUAIAAwAC4AMQA5ADQAIAAwAC4AMAA2ADkAIAAwAC4AMgA1ACAAMAAgADAALgAyADUAIABDACAALQAwAC4AMAA2ADkAIAAwAC4AMgA1ACAALQAwAC4AMQAyADUAIAAwAC4AMQA5ADQAIAAtADAALgAxADIANQAgADAALgAxADIANQAgAEMAIAAtADAALgAxADIANQAgADAALgAwADUANgAgAC0AMAAuADAANgA5ACAAMAAgADAAIAAwACAAWgADAAAAAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[2] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[2] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;299;JwEAAPr7ACABAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQAgAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wTXAAAA+vsA0AAAAAEAAAAJxwAAAPoAAQEBAiEAAABNACAAMAAgADAAIABMACAAMAAgAC0AMAAuADEANAA3ACAATAAgADAALgAyADUAIAAwACAATAAgADAAIAAwACAAWgADAAAAAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[3] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[3] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;335;SwEAAPr7AEQBAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQAwAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wT7AAAA+vsA9AAAAAEAAAAJ6wAAAPoAAQEBAjMAAABNACAAMAAgADAAIABMACAAMAAuADEAMgA1ACAALQAwAC4AMAA4ADQAIABMACAAMAAuADIANQAgADAAIABMACAAMAAuADEAMgA1ACAAMAAuADAAOAA0ACAATAAgADAAIAAwACAAWgADAAAAAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[4] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[4] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;385;fQEAAPr7AHYBAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQBAAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wQtAQAA+vsAJgEAAAEAAAAJHQEAAPoAAQEBAkwAAABNACAAMAAgADAAIABMACAAMAAuADEAMgA1ACAAMAAgAEwAIAAwAC4AMQA4ADgAIAAwAC4AMQAwADkAIABMACAAMAAuADEAMgA1ACAAMAAuADIAMQA3ACAATAAgADAAIAAwAC4AMgAxADcAIABMACAALQAwAC4AMAA2ADMAIAAwAC4AMQAwADkAIABMACAAMAAgADAAIABaAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[5] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[5] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;511;+wEAAPr7APQBAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQBQAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wSrAQAA+vsApAEAAAEAAAAJmwEAAPoAAQEBAosAAABNACAAMAAgADAAIABMACAAMAAuADAAMgA5ACAAMAAuADAAOQAxACAATAAgADAALgAxADIANQAgADAALgAwADkAMQAgAEwAIAAwAC4AMAA0ADgAIAAwAC4AMQA0ADcAIABMACAAMAAuADAANwA3ACAAMAAuADIAMwA4ACAATAAgADAAIAAwAC4AMQA4ADIAIABMACAALQAwAC4AMAA3ADcAIAAwAC4AMgAzADgAIABMACAALQAwAC4AMAA0ADgAIAAwAC4AMQA0ADcAIABMACAALQAwAC4AMQAyADUAIAAwAC4AMAA5ADEAIABMACAALQAwAC4AMAAyADkAIAAwAC4AMAA5ADEAIABMACAAMAAgADAAIABaAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[6] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[6] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;711;wwIAAPr7ALwCAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQBgAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wRzAgAA+vsAbAIAAAEAAAAJYwIAAPoAAQEBAu8AAABNACAAMAAgADAAIABDACAALQAwAC4AMAAxADQAIAAtADAALgAwADAANQAgAC0AMAAuADAAMgA5ACAALQAwAC4AMAAwADkAIAAtADAALgAwADQANAAgAC0AMAAuADAAMAA5ACAAQwAgAC0AMAAuADEAMQA0ACAALQAwAC4AMAAwADkAIAAtADAALgAxADYAOQAgADAALgAwADQAOAAgAC0AMAAuADEANgA5ACAAMAAuADEAMQA3ACAAQwAgAC0AMAAuADEANgA5ACAAMAAuADEAOAA1ACAALQAwAC4AMQAxADQAIAAwAC4AMgA0ADEAIAAtADAALgAwADQANAAgADAALgAyADQAMQAgAEMAIAAtADAALgAwADIAOQAgADAALgAyADQAMQAgAC0AMAAuADAAMQA0ACAAMAAuADIAMwA4ACAAMAAgADAALgAyADMAMwAgAEMAIAAtADAALgAwADQANwAgADAALgAyADEANQAgAC0AMAAuADAAOAAgADAALgAxADcAIAAtADAALgAwADgAIAAwAC4AMQAxADcAIABDACAALQAwAC4AMAA4ACAAMAAuADAANgAzACAALQAwAC4AMAA0ADcAIAAwAC4AMAAxADgAIAAwACAAMAAgAFoAAwAAAAD7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7";
+    PRESET_TYPES[7] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[7] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;319;OwEAAPr7ADQBAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQBwAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wTrAAAA+vsA5AAAAAEAAAAJ2wAAAPoAAQEBAisAAABNACAAMAAgADAAIABMACAAMAAuADIANQAgADAAIABMACAAMAAuADIANQAgADAALgAyADUAIABMACAAMAAgADAALgAyADUAIABMACAAMAAgADAAIABaAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[8] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[8] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;333;SQEAAPr7AEIBAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQCAAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wT5AAAA+vsA8gAAAAEAAAAJ6QAAAPoAAQEBAjIAAABNACAAMAAgADAAIABMACAAMAAuADEANgA3ACAAMAAgAEwAIAAwAC4AMgAxACAAMAAuADEANgA3ACAATAAgAC0AMAAuADAANAAgADAALgAxADYANwAgAEwAIAAwACAAMAAgAFoAAwAAAAD7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7";
+    PRESET_TYPES[9] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[9] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;855;UwMAAPr7AEwDAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQCQAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wQDAwAA+vsA/AIAAAEAAAAJ8wIAAPoAAQEBAjcBAABNACAAMAAgADAAIABDACAAMAAuADAAMQAyACAALQAwAC4AMAAxADgAIAAwAC4AMAAzADMAIAAtADAALgAwADQANAAgADAALgAwADUAOAAgAC0AMAAuADAANAA0ACAAQwAgADAALgAwADkANQAgAC0AMAAuADAANAA0ACAAMAAuADEAMgA1ACAALQAwAC4AMAAxADcAIAAwAC4AMQAyADUAIAAwAC4AMAAxADcAIABDACAAMAAuADEAMgA1ACAAMAAuADAAMgA4ACAAMAAuADEAMgAyACAAMAAuADAAMwA4ACAAMAAuADEAMQA2ACAAMAAuADAANAA3ACAAQwAgADAALgAxADEANwAgADAALgAwADQANwAgADAAIAAwAC4AMQA4ADIAIAAwACAAMAAuADEAOAAzACAAQwAgADAAIAAwAC4AMQA4ADIAIAAtADAALgAxADEANwAgADAALgAwADQANwAgAC0AMAAuADEAMQA2ACAAMAAuADAANAA3ACAAQwAgAC0AMAAuADEAMgAyACAAMAAuADAAMwA4ACAALQAwAC4AMQAyADUAIAAwAC4AMAAyADgAIAAtADAALgAxADIANQAgADAALgAwADEANwAgAEMAIAAtADAALgAxADIANQAgAC0AMAAuADAAMQA3ACAALQAwAC4AMAA5ADUAIAAtADAALgAwADQANAAgAC0AMAAuADAANQA3ACAALQAwAC4AMAA0ADQAIABDACAALQAwAC4AMAAzADMAIAAtADAALgAwADQANAAgAC0AMAAuADAAMQAyACAALQAwAC4AMAAxADgAIAAwACAAMAAgAFoAAwAAAAD7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7";
+    PRESET_TYPES[10] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[10] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;439;swEAAPr7AKwBAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQCgAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wRjAQAA+vsAXAEAAAEAAAAJUwEAAPoAAQEBAmcAAABNACAAMAAgADAAIABMACAAMAAuADAANwAzACAALQAwAC4AMAA3ADMAIABMACAAMAAuADEANwA3ACAALQAwAC4AMAA3ADMAIABMACAAMAAuADIANQAgADAAIABMACAAMAAuADIANQAgADAALgAxADAANAAgAEwAIAAwAC4AMQA3ADcAIAAwAC4AMQA3ADcAIABMACAAMAAuADAANwAzACAAMAAuADEANwA3ACAATAAgADAAIAAwAC4AMQAwADQAIABMACAAMAAgADAAIABaAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[11] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[11] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;567;MwIAAPr7ACwCAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQCwAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wTjAQAA+vsA3AEAAAEAAAAJ0wEAAPoAAQEBAqcAAABNACAAMAAgADAAIABMACAAMAAuADAAMwA2ACAAMAAuADAANgAyACAATAAgADAALgAxADAAOAAgADAALgAwADYAMgAgAEwAIAAwAC4AMAA3ADIAIAAwAC4AMQAyADUAIABMACAAMAAuADEAMAA4ACAAMAAuADEAOAA3ACAATAAgADAALgAwADMANgAgADAALgAxADgANwAgAEwAIAAwACAAMAAuADIANQAgAEwAIAAtADAALgAwADMANgAgADAALgAxADgANwAgAEwAIAAtADAALgAxADAAOAAgADAALgAxADgANwAgAEwAIAAtADAALgAwADcAMgAgADAALgAxADIANQAgAEwAIAAtADAALgAxADAAOAAgADAALgAwADYAMgAgAEwAIAAtADAALgAwADMANgAgADAALgAwADYAMgAgAEwAIAAwACAAMAAgAFoAAwAAAAD7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7";
+    PRESET_TYPES[12] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[12] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;527;CwIAAPr7AAQCAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQDAAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wS7AQAA+vsAtAEAAAEAAAAJqwEAAPoAAQEBApMAAABNACAAMAAgADAAIABDACAAMAAuADAAMwAgAC0AMAAuADAAMwA4ACAAMAAuADAANwA1ACAALQAwAC4AMAA2ADIAIAAwAC4AMQAyADUAIAAtADAALgAwADYAMgAgAEMAIAAwAC4AMQA3ADUAIAAtADAALgAwADYAMgAgADAALgAyADIAIAAtADAALgAwADMAOAAgADAALgAyADUAIAAwACAAQwAgADAALgAyADIAIAAwAC4AMAAzADgAIAAwAC4AMQA3ADUAIAAwAC4AMAA2ADIAIAAwAC4AMQAyADUAIAAwAC4AMAA2ADIAIABDACAAMAAuADAANwA1ACAAMAAuADAANgAyACAAMAAuADAAMwAgADAALgAwADMAOAAgADAAIAAwACAAWgADAAAAAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[13] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[13] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;317;OQEAAPr7ADIBAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQDQAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wTpAAAA+vsA4gAAAAEAAAAJ2QAAAPoAAQEBAioAAABNACAAMAAgADAAIABMACAAMAAuADEAMgA1ACAAMAAuADIAMQA2ACAATAAgAC0AMAAuADEAMgA1ACAAMAAuADIAMQA2ACAATAAgADAAIAAwACAAWgADAAAAAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[14] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[14] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;333;SQEAAPr7AEIBAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQDgAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wT5AAAA+vsA8gAAAAEAAAAJ6QAAAPoAAQEBAjIAAABNACAAMAAgADAAIABMACAAMAAuADEANwA4ACAAMAAgAEwAIAAwAC4AMgA1ACAAMAAuADEAMgAxACAATAAgADAALgAwADcAMgAgADAALgAxADIAMQAgAEwAIAAwACAAMAAgAFoAAwAAAAD7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7";
+    PRESET_TYPES[15] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[15] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;375;cwEAAPr7AGwBAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQDwAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wQjAQAA+vsAHAEAAAEAAAAJEwEAAPoAAQEBAkcAAABNACAAMAAgADAAIABMACAAMAAuADEAMgA1ACAAMAAuADAAOQAxACAATAAgADAALgAwADcANwAgADAALgAyADMAOAAgAEwAIAAtADAALgAwADcANwAgADAALgAyADMAOAAgAEwAIAAtADAALgAxADIANQAgADAALgAwADkAMQAgAEwAIAAwACAAMAAgAFoAAwAAAAD7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7";
+    PRESET_TYPES[16] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[16] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;453;wQEAAPr7ALoBAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQEAAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wRxAQAA+vsAagEAAAEAAAAJYQEAAPoAAQEBAm4AAABNACAAMAAgADAAIABMACAAMAAuADAAOQAxACAALQAwAC4AMAAzADQAIABMACAAMAAuADEAMgA1ACAALQAwAC4AMQAyADUAIABMACAAMAAuADEANQA4ACAALQAwAC4AMAAzADQAIABMACAAMAAuADIANAA5ACAAMAAgAEwAIAAwAC4AMQA1ADgAIAAwAC4AMAAzADQAIABMACAAMAAuADEAMgA1ACAAMAAuADEAMgA1ACAATAAgADAALgAwADkAMQAgADAALgAwADMANAAgAEwAIAAwACAAMAAgAFoAAwAAAAD7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7";
+    PRESET_TYPES[17] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[17] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;635;dwIAAPr7AHACAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQEQAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wQnAgAA+vsAIAIAAAEAAAAJFwIAAPoAAQEBAskAAABNACAAMAAgADAAIABMACAAMAAuADAANQAyACAAMAAgAEwAIAAwAC4AMAA4ADkAIAAtADAALgAwADMANwAgAEwAIAAwAC4AMQAyADUAIAAwACAATAAgADAALgAxADcANwAgADAAIABMACAAMAAuADEANwA3ACAAMAAuADAANQAyACAATAAgADAALgAyADEAMwAgADAALgAwADgAOQAgAEwAIAAwAC4AMQA3ADcAIAAwAC4AMQAyADUAIABMACAAMAAuADEANwA3ACAAMAAuADEANwA3ACAATAAgADAALgAxADIANQAgADAALgAxADcANwAgAEwAIAAwAC4AMAA4ADkAIAAwAC4AMgAxADMAIABMACAAMAAuADAANQAyACAAMAAuADEANwA3ACAATAAgADAAIAAwAC4AMQA3ADcAIABMACAAMAAgADAALgAxADIANQAgAEwAIAAtADAALgAwADMANwAgADAALgAwADgAOQAgAEwAIAAwACAAMAAuADAANQAyACAATAAgADAAIAAwACAAWgADAAAAAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[18] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[18] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;843;RwMAAPr7AEADAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQEgAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wT3AgAA+vsA8AIAAAEAAAAJ5wIAAPoAAQEBAjEBAABNACAAMAAgADAAIABDACAAMAAuADAAMAAxACAAMAAuADAAMwA0ACAAMAAuADAAMQAxACAAMAAuADAANgA1ACAAMAAuADAAMgA4ACAAMAAuADAAOAA1ACAAQwAgADAALgAwADIAOAAgADAALgAwADgANgAgADAALgAwADUANQAgADAALgAxADEAMwAgADAALgAwADUANQAgADAALgAxADEAMgAgAEMAIAAwAC4AMAA3ACAAMAAuADEAMgA3ACAAMAAuADAANwA5ACAAMAAuADEANAA4ACAAMAAuADAANwA5ACAAMAAuADEANwAgAEMAIAAwAC4AMAA3ADkAIAAwAC4AMgAxADQAIAAwAC4AMAA0ADQAIAAwAC4AMgA0ADkAIAAwACAAMAAuADIANQAgAEMAIAAtADAALgAwADQANAAgADAALgAyADQAOQAgAC0AMAAuADAANwA5ACAAMAAuADIAMQA0ACAALQAwAC4AMAA3ADkAIAAwAC4AMQA3ACAAQwAgAC0AMAAuADAANwA5ACAAMAAuADEANAA4ACAALQAwAC4AMAA3ACAAMAAuADEAMgA3ACAALQAwAC4AMAA1ADUAIAAwAC4AMQAxADIAIABDACAALQAwAC4AMAA1ADUAIAAwAC4AMQAxADMAIAAtADAALgAwADIAOAAgADAALgAwADgANgAgAC0AMAAuADAAMgA4ACAAMAAuADAAOAA1ACAAQwAgAC0AMAAuADAAMQAxACAAMAAuADAANgA1ACAALQAwAC4AMAAwADEAIAAwAC4AMAAzADQAIAAwACAAMAAgAFoAAwAAAAD7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7";
+    PRESET_TYPES[19] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[19] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;531;DwIAAPr7AAgCAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQEwAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wS/AQAA+vsAuAEAAAEAAAAJrwEAAPoAAQEBApUAAABNACAAMAAgADAAIABDACAAMAAuADAANgA5ACAAMAAgADAALgAxADIANAAgAC0AMAAuADAANQA2ACAAMAAuADEAMgA0ACAALQAwAC4AMQAyADUAIABDACAAMAAuADEAMgA0ACAALQAwAC4AMAA1ADYAIAAwAC4AMQA3ADkAIAAtADAALgAwADAAMQAgADAALgAyADQAOAAgAC0AMAAuADAAMAAxACAAQwAgADAALgAxADcAOQAgAC0AMAAuADAAMAAxACAAMAAuADEAMgA1ACAAMAAuADAANQA2ACAAMAAuADEAMgA1ACAAMAAuADEAMgA1ACAAQwAgADAALgAxADIANQAgADAALgAwADUANgAgADAALgAwADYAOQAgADAAIAAwACAAMAAgAFoAAwAAAAD7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7";
+    PRESET_TYPES[20] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[20] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;607;WwIAAPr7AFQCAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQFAAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wQLAgAA+vsABAIAAAEAAAAJ+wEAAPoAAQEBArsAAABNACAAMAAgADAAIABDACAAMAAgAC0AMAAuADAAMwAyACAAMAAuADAAMgA2ACAALQAwAC4AMAA1ADgAIAAwAC4AMAA1ADgAIAAtADAALgAwADUAOAAgAEwAIAAwAC4AMQA5ADIAIAAtADAALgAwADUAOAAgAEMAIAAwAC4AMgAyADQAIAAtADAALgAwADUAOAAgADAALgAyADUAIAAtADAALgAwADMAMgAgADAALgAyADUAIAAwACAATAAgADAALgAyADUAIAAwAC4AMQAzADIAIABDACAAMAAuADIANQAgADAALgAxADYANAAgADAALgAyADIANAAgADAALgAxADkAMQAgADAALgAxADkAMgAgADAALgAxADkAMQAgAEwAIAAwAC4AMAA1ADgAIAAwAC4AMQA5ADEAIABDACAAMAAuADAAMgA2ACAAMAAuADEAOQAxACAAMAAgADAALgAxADYANAAgADAAIAAwAC4AMQAzADIAIABaAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[21] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[21] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1429;kQUAAPr7AIoFAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQFQAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wRBBQAA+vsAOgUAAAEAAAAJMQUAAPoAAQEBAlYCAABNACAAMAAgADAAIABDACAAMAAuADAAMAA2ACAAMAAuADAAMAA2ACAAMAAuADAAMQAxACAAMAAuADAAMQAxACAAMAAuADAAMQA1ACAAMAAuADAAMQA3ACAAQwAgADAALgAwADIAIAAwAC4AMAAxADEAIAAwAC4AMAAyADQAIAAwAC4AMAAwADYAIAAwAC4AMAAzACAAMAAgAEMAIAAwAC4AMAA2ADUAIAAtADAALgAwADMANQAgADAALgAxADAANwAgAC0AMAAuADAANQAgADAALgAxADIANAAgAC0AMAAuADAAMwA0ACAAQwAgADAALgAxADQAIAAtADAALgAwADEANwAgADAALgAxADIANQAgADAALgAwADIANQAgADAALgAwADkAIAAwAC4AMAA2ACAAQwAgADAALgAwADgANAAgADAALgAwADYANQAgADAALgAwADcAOQAgADAALgAwADcAIAAwAC4AMAA3ADMAIAAwAC4AMAA3ADUAIABDACAAMAAuADAANwA5ACAAMAAuADAANwA5ACAAMAAuADAAOAA0ACAAMAAuADAAOAA0ACAAMAAuADAAOQAgADAALgAwADkAIABDACAAMAAuADEAMgA1ACAAMAAuADEAMgA1ACAAMAAuADEANAAgADAALgAxADYANwAgADAALgAxADIANAAgADAALgAxADgAMwAgAEMAIAAwAC4AMQAwADcAIAAwAC4AMgAgADAALgAwADYANQAgADAALgAxADgANQAgADAALgAwADMAIAAwAC4AMQA1ACAAQwAgADAALgAwADIANAAgADAALgAxADQANAAgADAALgAwADIAIAAwAC4AMQAzADkAIAAwAC4AMAAxADUAIAAwAC4AMQAzADMAIABDACAAMAAuADAAMQAxACAAMAAuADEAMwA5ACAAMAAuADAAMAA2ACAAMAAuADEANAA0ACAAMAAgADAALgAxADUAIABDACAALQAwAC4AMAAzADUAIAAwAC4AMQA4ADUAIAAtADAALgAwADcANwAgADAALgAyACAALQAwAC4AMAA5ADQAIAAwAC4AMQA4ADMAIABDACAALQAwAC4AMQAxACAAMAAuADEANgA3ACAALQAwAC4AMAA5ADUAIAAwAC4AMQAyADUAIAAtADAALgAwADYAIAAwAC4AMAA5ACAAQwAgAC0AMAAuADAANQA0ACAAMAAuADAAOAA0ACAALQAwAC4AMAA0ADkAIAAwAC4AMAA3ADkAIAAtADAALgAwADQAMwAgADAALgAwADcANQAgAEMAIAAtADAALgAwADQAOQAgADAALgAwADcAIAAtADAALgAwADUANAAgADAALgAwADYANQAgAC0AMAAuADAANgAgADAALgAwADYAIABDACAALQAwAC4AMAA5ADUAIAAwAC4AMAAyADUAIAAtADAALgAxADEAIAAtADAALgAwADEANwAgAC0AMAAuADAAOQA0ACAALQAwAC4AMAAzADQAIABDACAALQAwAC4AMAA3ADcAIAAtADAALgAwADUAIAAtADAALgAwADMANQAgAC0AMAAuADAAMwA1ACAAMAAgADAAIABaAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[22] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[22] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;849;TQMAAPr7AEYDAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQFgAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wT9AgAA+vsA9gIAAAEAAAAJ7QIAAPoAAQEBAjQBAABNACAAMAAgADAAIABDACAAMAAuADAAMwAzACAAMAAgADAALgAwADYAIAAwAC4AMAAyADcAIAAwAC4AMAA2ACAAMAAuADAANgAgAEMAIAAwAC4AMAA2ACAAMAAuADAAOQA5ACAAMAAuADAAMwAgADAALgAxADEAMwAgADAALgAwADEAMgAgADAALgAxADEAOQAgAEwAIAAtADAALgAwADEAMgAgADAALgAxADIANQAgAEMAIAAtADAALgAwADMAIAAwAC4AMQAzADEAIAAtADAALgAwADYAIAAwAC4AMQA0ADYAIAAtADAALgAwADYAIAAwAC4AMQA5ACAAQwAgAC0AMAAuADAANgAgADAALgAyADEAOAAgAC0AMAAuADAAMwAzACAAMAAuADIANQAgADAAIAAwAC4AMgA1ACAAQwAgADAALgAwADMAMwAgADAALgAyADUAIAAwAC4AMAA2ACAAMAAuADIAMQA4ACAAMAAuADAANgAgADAALgAxADkAIABDACAAMAAuADAANgAgADAALgAxADQANgAgADAALgAwADMAIAAwAC4AMQAzADEAIAAwAC4AMAAxADIAIAAwAC4AMQAyADUAIABMACAALQAwAC4AMAAxADIAIAAwAC4AMQAxADkAIABDACAALQAwAC4AMAAzACAAMAAuADEAMQAzACAALQAwAC4AMAA2ACAAMAAuADAAOQA5ACAALQAwAC4AMAA2ACAAMAAuADAANgAgAEMAIAAtADAALgAwADYAIAAwAC4AMAAyADcAIAAtADAALgAwADMAMwAgADAAIAAwACAAMAAgAFoAAwAAAAD7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7";
+    PRESET_TYPES[23] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[23] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;619;ZwIAAPr7AGACAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQFwAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wQXAgAA+vsAEAIAAAEAAAAJBwIAAPoAAQEBAsEAAABNACAAMAAgADAAIABDACAAMAAuADAANwAyACAAMAAuADAANQA4ACAAMAAuADEAIAAwAC4AMQA1ADIAIAAwAC4AMAA3ADcAIAAwAC4AMgAzADgAIABDACAALQAwAC4AMAAxADUAIAAwAC4AMgAzADMAIAAtADAALgAwADkAMwAgADAALgAxADcAMwAgAC0AMAAuADEAMgA1ACAAMAAuADAAOQAxACAAQwAgAC0AMAAuADAANAA3ACAAMAAuADAANAAgADAALgAwADUAMQAgADAALgAwADQAMwAgADAALgAxADIANQAgADAALgAwADkAMQAgAEMAIAAwAC4AMAA5ADIAIAAwAC4AMQA3ADgAIAAwAC4AMAAxADEAIAAwAC4AMgAzADMAIAAtADAALgAwADcANwAgADAALgAyADMAOAAgAEMAIAAtADAALgAxADAAMQAgADAALgAxADQAOAAgAC0AMAAuADAANgA4ACAAMAAuADAANQA2ACAAMAAgADAAIABaAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[24] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[24] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1273;9QQAAPr7AO4EAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQGAAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wSlBAAA+vsAngQAAAEAAAAJlQQAAPoAAQEBAggCAABNACAAMAAgADAAIABDACAAMAAuADAAMgAzACAAMAAuADAAMAAxACAAMAAuADAANAAyACAAMAAuADAAMAA5ACAAMAAuADAANQAyACAAMAAuADAAMgAxACAATAAgADAALgAwADcANQAgADAALgAwADQAOQAgAEMAIAAwAC4AMAA4ACAAMAAuADAANQA1ACAAMAAuADAAOAA4ACAAMAAuADAANQA4ACAAMAAuADAAOQA4ACAAMAAuADAANQA4ACAAQwAgADAALgAxADEAMgAgADAALgAwADUAOAAgADAALgAxADIANAAgADAALgAwADUAIAAwAC4AMQAyADUAIAAwAC4AMAAzADgAIABDACAAMAAuADEAMgA0ACAAMAAuADAAMgA4ACAAMAAuADEAMQAyACAAMAAuADAAMQA5ACAAMAAuADAAOQA4ACAAMAAuADAAMQA5ACAAQwAgADAALgAwADgAOAAgADAALgAwADEAOQAgADAALgAwADgAIAAwAC4AMAAyADMAIAAwAC4AMAA3ADUAIAAwAC4AMAAyADgAIABMACAAMAAuADAANQAyACAAMAAuADAANQA2ACAAQwAgADAALgAwADQAMgAgADAALgAwADYAOAAgADAALgAwADIAMwAgADAALgAwADcANgAgADAAIAAwAC4AMAA3ADcAIABDACAALQAwAC4AMAAyADMAIAAwAC4AMAA3ADYAIAAtADAALgAwADQAMgAgADAALgAwADYAOAAgAC0AMAAuADAANQAyACAAMAAuADAANQA2ACAATAAgAC0AMAAuADAANwA1ACAAMAAuADAAMgA4ACAAQwAgAC0AMAAuADAAOAAgADAALgAwADIAMwAgAC0AMAAuADAAOAA4ACAAMAAuADAAMQA5ACAALQAwAC4AMAA5ADgAIAAwAC4AMAAxADkAIABDACAALQAwAC4AMQAxADIAIAAwAC4AMAAxADkAIAAtADAALgAxADIANAAgADAALgAwADIAOAAgAC0AMAAuADEAMgA1ACAAMAAuADAAMwA4ACAAQwAgAC0AMAAuADEAMgA0ACAAMAAuADAANQAgAC0AMAAuADEAMQAyACAAMAAuADAANQA4ACAALQAwAC4AMAA5ADgAIAAwAC4AMAA1ADgAIABDACAALQAwAC4AMAA4ADgAIAAwAC4AMAA1ADgAIAAtADAALgAwADgAIAAwAC4AMAA1ADUAIAAtADAALgAwADcANQAgADAALgAwADQAOQAgAEwAIAAtADAALgAwADUAMgAgADAALgAwADIAMQAgAEMAIAAtADAALgAwADQAMgAgADAALgAwADAAOQAgAC0AMAAuADAAMgAzACAAMAAuADAAMAAxACAAMAAgADAAIABaAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[26] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[26] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;849;TQMAAPr7AEYDAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQGgAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wT9AgAA+vsA9gIAAAEAAAAJ7QIAAPoAAQEBAjQBAABNACAAMAAgADAAIABDACAAMAAgADAALgAwADMAMwAgADAALgAwADIANwAgADAALgAwADYAIAAwAC4AMAA2ACAAMAAuADAANgAgAEMAIAAwAC4AMAA5ADkAIAAwAC4AMAA2ACAAMAAuADEAMQAzACAAMAAuADAAMwAgADAALgAxADEAOQAgADAALgAwADEAMgAgAEwAIAAwAC4AMQAyADUAIAAtADAALgAwADEAMgAgAEMAIAAwAC4AMQAzADEAIAAtADAALgAwADMAIAAwAC4AMQA0ADYAIAAtADAALgAwADYAIAAwAC4AMQA5ACAALQAwAC4AMAA2ACAAQwAgADAALgAyADEAOAAgAC0AMAAuADAANgAgADAALgAyADUAIAAtADAALgAwADMAMwAgADAALgAyADUAIAAwACAAQwAgADAALgAyADUAIAAwAC4AMAAzADMAIAAwAC4AMgAxADgAIAAwAC4AMAA2ACAAMAAuADEAOQAgADAALgAwADYAIABDACAAMAAuADEANAA2ACAAMAAuADAANgAgADAALgAxADMAMQAgADAALgAwADMAIAAwAC4AMQAyADUAIAAwAC4AMAAxADIAIABMACAAMAAuADEAMQA5ACAALQAwAC4AMAAxADIAIABDACAAMAAuADEAMQAzACAALQAwAC4AMAAzACAAMAAuADAAOQA5ACAALQAwAC4AMAA2ACAAMAAuADAANgAgAC0AMAAuADAANgAgAEMAIAAwAC4AMAAyADcAIAAtADAALgAwADYAIAAwACAALQAwAC4AMAAzADMAIAAwACAAMAAgAFoAAwAAAAD7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7";
+    PRESET_TYPES[27] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[27] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1325;KQUAAPr7ACIFAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQGwAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wTZBAAA+vsA0gQAAAEAAAAJyQQAAPoAAQEBAiICAABNACAAMAAgADAAIABDACAAMAAuADAAMwA4ACAAMAAgADAALgAwADYAOQAgADAALgAwADMAMQAgADAALgAwADYAOQAgADAALgAwADYAOQAgAEMAIAAwAC4AMAA2ADkAIAAwAC4AMAA5ADQAIAAwAC4AMAA1ADYAIAAwAC4AMQAxADYAIAAwAC4AMAAzADcAIAAwAC4AMQAyADkAIABDACAAMAAuADAAMwA3ACAAMAAuADEAMgA5ACAAMAAuADAAMwA2ACAAMAAuADEAMgA5ACAAMAAuADAAMwA2ACAAMAAuADEAMgA5ACAAQwAgADAALgAwADIAOQAgADAALgAxADMANAAgADAALgAwADIANQAgADAALgAxADQAMgAgADAALgAwADIANQAgADAALgAxADUAMQAgAEMAIAAwAC4AMAAyADUAIAAwAC4AMQA1ADkAIAAwAC4AMAAyADkAIAAwAC4AMQA2ADYAIAAwAC4AMAAzADQAIAAwAC4AMQA3ADEAIABDACAAMAAuADAANAAyACAAMAAuADEANwA5ACAAMAAuADAANAA3ACAAMAAuADEAOQAxACAAMAAuADAANAA3ACAAMAAuADIAMAAzACAAQwAgADAALgAwADQANwAgADAALgAyADIAOQAgADAALgAwADIANgAgADAALgAyADUAIAAwACAAMAAuADIANQAgAEMAIAAtADAALgAwADIANgAgADAALgAyADUAIAAtADAALgAwADQANwAgADAALgAyADIAOQAgAC0AMAAuADAANAA3ACAAMAAuADIAMAAzACAAQwAgAC0AMAAuADAANAA3ACAAMAAuADEAOQAxACAALQAwAC4AMAA0ADIAIAAwAC4AMQA3ADkAIAAtADAALgAwADMANAAgADAALgAxADcAMQAgAEMAIAAtADAALgAwADIAOQAgADAALgAxADYANgAgAC0AMAAuADAAMgA2ACAAMAAuADEANQA5ACAALQAwAC4AMAAyADYAIAAwAC4AMQA1ADEAIABDACAALQAwAC4AMAAyADYAIAAwAC4AMQA0ADIAIAAtADAALgAwADMAIAAwAC4AMQAzADQAIAAtADAALgAwADMANgAgADAALgAxADIAOQAgAEMAIAAtADAALgAwADMANgAgADAALgAxADIAOQAgAC0AMAAuADAAMwA3ACAAMAAuADEAMgA5ACAALQAwAC4AMAAzADcAIAAwAC4AMQAyADkAIABDACAALQAwAC4AMAA1ADcAIAAwAC4AMQAxADYAIAAtADAALgAwADcAIAAwAC4AMAA5ADQAIAAtADAALgAwADcAIAAwAC4AMAA2ADkAIABDACAALQAwAC4AMAA3ACAAMAAuADAAMwAxACAALQAwAC4AMAAzADkAIAAwACAAMAAgADAAIABDACAAMAAgADAAIAAwACAAMAAgADAAIAAwACAAWgADAAAAAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[28] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[28] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1409;fQUAAPr7AHYFAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQHAAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wQtBQAA+vsAJgUAAAEAAAAJHQUAAPoAAQEBAkwCAABNACAAMAAgADAAIABDACAAMAAuADAAMQA3ACAAMAAgADAALgAwADMAMQAgADAALgAwADEANAAgADAALgAwADMAMQAgADAALgAwADMAMQAgAEMAIAAwAC4AMAAzADEAIAAwAC4AMAA0ADkAIAAwAC4AMAAxADcAIAAwAC4AMAA2ADMAIAAwACAAMAAuADAANgAzACAAQwAgAC0AMAAuADAAMQA3ACAAMAAuADAANgAzACAALQAwAC4AMAAzADEAIAAwAC4AMAA3ADcAIAAtADAALgAwADMAMQAgADAALgAwADkANAAgAEMAIAAtADAALgAwADMAMQAgADAALgAxADEAMQAgAC0AMAAuADAAMQA3ACAAMAAuADEAMgA1ACAAMAAgADAALgAxADIANQAgAEMAIAAwAC4AMAAxADcAIAAwAC4AMQAyADUAIAAwAC4AMAAzADEAIAAwAC4AMQAzADkAIAAwAC4AMAAzADEAIAAwAC4AMQA1ADYAIABDACAAMAAuADAAMwAxACAAMAAuADEANwAzACAAMAAuADAAMQA3ACAAMAAuADEAOAA3ACAAMAAgADAALgAxADgANwAgAEMAIAAtADAALgAwADEANwAgADAALgAxADgANwAgAC0AMAAuADAAMwAxACAAMAAuADIAMAAxACAALQAwAC4AMAAzADEAIAAwAC4AMgAxADkAIABDACAALQAwAC4AMAAzADEAIAAwAC4AMgAzADYAIAAtADAALgAwADEANwAgADAALgAyADUAIAAwACAAMAAuADIANQAgAEMAIAAwAC4AMAAxADcAIAAwAC4AMgA1ACAAMAAuADAAMwAxACAAMAAuADIAMwA2ACAAMAAuADAAMwAxACAAMAAuADIAMQA5ACAAQwAgADAALgAwADMAMQAgADAALgAyADAAMQAgADAALgAwADEANwAgADAALgAxADgANwAgADAAIAAwAC4AMQA4ADcAIABDACAALQAwAC4AMAAxADcAIAAwAC4AMQA4ADcAIAAtADAALgAwADMAMQAgADAALgAxADcAMwAgAC0AMAAuADAAMwAxACAAMAAuADEANQA2ACAAQwAgAC0AMAAuADAAMwAxACAAMAAuADEAMwA5ACAALQAwAC4AMAAxADcAIAAwAC4AMQAyADUAIAAwACAAMAAuADEAMgA1ACAAQwAgADAALgAwADEANwAgADAALgAxADIANQAgADAALgAwADMAMQAgADAALgAxADEAMQAgADAALgAwADMAMQAgADAALgAwADkANAAgAEMAIAAwAC4AMAAzADEAIAAwAC4AMAA3ADcAIAAwAC4AMAAxADcAIAAwAC4AMAA2ADMAIAAwACAAMAAuADAANgAzACAAQwAgAC0AMAAuADAAMQA3ACAAMAAuADAANgAzACAALQAwAC4AMAAzADEAIAAwAC4AMAA0ADkAIAAtADAALgAwADMAMQAgADAALgAwADMAMQAgAEMAIAAtADAALgAwADMAMQAgADAALgAwADEANAAgAC0AMAAuADAAMQA3ACAAMAAgADAAIAAwACAAWgADAAAAAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[29] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[29] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;2505;xQkAAPr7AL4JAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQHQAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wR1CQAA+vsAbgkAAAEAAAAJZQkAAPoAAQEBAnAEAABNACAAMAAgADAAIABDACAAMAAuADAAMAA3ACAALQAwAC4AMAAxACAAMAAuADAAMQA0ACAALQAwAC4AMAAyADEAIAAwAC4AMAAyADEAIAAtADAALgAwADMANQAgAEMAIAAwAC4AMAA0ACAALQAwAC4AMAA3ADUAIAAwAC4AMAA0ADUAIAAtADAALgAxADEANAAgADAALgAwADMAMQAgAC0AMAAuADEAMgAgAEMAIAAwAC4AMAAxADcAIAAtADAALgAxADIANwAgAC0AMAAuADAAMQAgAC0AMAAuADAAOQA5ACAALQAwAC4AMAAyADkAIAAtADAALgAwADUAOQAgAEMAIAAtADAALgAwADMAOQAgAC0AMAAuADAAMwA4ACAALQAwAC4AMAA0ADUAIAAtADAALgAwADEAOAAgAC0AMAAuADAANAA3ACAALQAwAC4AMAAwADMAIABDACAALQAwAC4AMAA1ACAAMAAuADAAMAA5ACAALQAwAC4AMAA1ADEAIAAwAC4AMAAyADEAIAAtADAALgAwADUAMQAgADAALgAwADMANQAgAEMAIAAtADAALgAwADUAMQAgADAALgAwADgAIAAtADAALgAwADMAOAAgADAALgAxADEANwAgAC0AMAAuADAAMgAzACAAMAAuADEAMQA3ACAAQwAgAC0AMAAuADAAMAA4ACAAMAAuADEAMQA3ACAAMAAuADAAMAA1ACAAMAAuADAAOAAgADAALgAwADAANQAgADAALgAwADMANQAgAEMAIAAwAC4AMAAwADUAIAAwAC4AMAAxADQAIAAwAC4AMAAwADIAIAAtADAALgAwADAANgAgAC0AMAAuADAAMAAzACAALQAwAC4AMAAyACAAQwAgAC0AMAAuADAAMAA1ACAALQAwAC4AMAAzADIAIAAtADAALgAwADEAIAAtADAALgAwADQANQAgAC0AMAAuADAAMQA2ACAALQAwAC4AMAA1ADgAIABDACAALQAwAC4AMAAzADYAIAAtADAALgAwADkAOQAgAC0AMAAuADAANgAzACAALQAwAC4AMQAyADcAIAAtADAALgAwADcANwAgAC0AMAAuADEAMgAgAEMAIAAtADAALgAwADkAMQAgAC0AMAAuADEAMQAzACAALQAwAC4AMAA4ADYAIAAtADAALgAwADcANQAgAC0AMAAuADAANgA2ACAALQAwAC4AMAAzADQAIABDACAALQAwAC4AMAA1ADgAIAAtADAALgAwADEANQAgAC0AMAAuADAANAA3ACAAMAAuADAAMAAxACAALQAwAC4AMAAzADYAIAAwAC4AMAAxADIAIABDACAALQAwAC4AMAAyADgAIAAwAC4AMAAyADIAIAAtADAALgAwADEAOQAgADAALgAwADMAMQAgAC0AMAAuADAAMAA3ACAAMAAuADAANAAgAEMAIAAwAC4AMAAyADkAIAAwAC4AMAA2ADkAIAAwAC4AMAA2ADUAIAAwAC4AMAA4ADIAIAAwAC4AMAA3ADUAIAAwAC4AMAA3ACAAQwAgADAALgAwADgANAAgADAALgAwADUAOAAgADAALgAwADYANAAgADAALgAwADIANQAgADAALgAwADIAOAAgAC0AMAAuADAAMAAzACAAQwAgADAALgAwADEAMwAgAC0AMAAuADAAMQA1ACAALQAwAC4AMAAwADMAIAAtADAALgAwADIANAAgAC0AMAAuADAAMQA2ACAALQAwAC4AMAAzACAAQwAgAC0AMAAuADAAMgA4ACAALQAwAC4AMAAzADYAIAAtADAALgAwADQAMwAgAC0AMAAuADAANAAxACAALQAwAC4AMAA1ADkAIAAtADAALgAwADQANAAgAEMAIAAtADAALgAxADAAMwAgAC0AMAAuADAANQA0ACAALQAwAC4AMQA0ADEAIAAtADAALgAwADUAMQAgAC0AMAAuADEANAA0ACAALQAwAC4AMAAzADUAIABDACAALQAwAC4AMQA0ADgAIAAtADAALgAwADIAIAAtADAALgAxADEANQAgADAAIAAtADAALgAwADcAMQAgADAALgAwADEAIABDACAALQAwAC4AMAA1ADEAIAAwAC4AMAAxADQAIAAtADAALgAwADMAMgAgADAALgAwADEANgAgAC0AMAAuADAAMQA3ACAAMAAuADAAMQA1ACAAQwAgAC0AMAAuADAAMAA0ACAAMAAuADAAMQA1ACAAMAAuADAAMQAgADAALgAwADEAMwAgADAALgAwADIANQAgADAALgAwADEAIABDACAAMAAuADAANgA5ACAAMAAgADAALgAxADAAMgAgAC0AMAAuADAAMgAxACAAMAAuADAAOQA4ACAALQAwAC4AMAAzADYAIABDACAAMAAuADAAOQA1ACAALQAwAC4AMAA1ADEAIAAwAC4AMAA1ADcAIAAtADAALgAwADUANQAgADAALgAwADEAMwAgAC0AMAAuADAANAA1ACAAQwAgAC0AMAAuADAAMAA4ACAALQAwAC4AMAA0ACAALQAwAC4AMAAyADcAIAAtADAALgAwADMAMwAgAC0AMAAuADAANAAgAC0AMAAuADAAMgA1ACAAQwAgAC0AMAAuADAANQAxACAALQAwAC4AMAAxADkAIAAtADAALgAwADYAMgAgAC0AMAAuADAAMQAyACAALQAwAC4AMAA3ADQAIAAtADAALgAwADAAMwAgAEMAIAAtADAALgAxADAAOQAgADAALgAwADIANgAgAC0AMAAuADEAMwAgADAALgAwADUAOAAgAC0AMAAuADEAMgAgADAALgAwADcAIABDACAALQAwAC4AMQAxADEAIAAwAC4AMAA4ADIAIAAtADAALgAwADcANAAgADAALgAwADYAOQAgAC0AMAAuADAAMwA5ACAAMAAuADAANAAxACAAQwAgAC0AMAAuADAAMgAyACAAMAAuADAAMgA3ACAALQAwAC4AMAAwADgAIAAwAC4AMAAxADMAIAAwACAAMAAgAFoAAwAAAAD7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7";
+    PRESET_TYPES[30] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[30] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1153;fQQAAPr7AHYEAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQHgAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wQtBAAA+vsAJgQAAAEAAAAJHQQAAPoAAQEBAswBAABNACAAMAAgADAAIABDACAAMAAgADAAIAAwAC4AMAAxADcAIAAtADAALgAwADYANQAgADAALgAwADEANwAgAC0AMAAuADAANgA1ACAAQwAgADAALgAwADMANAAgAC0AMAAuADEAMQA4ACAAMAAuADAANgAxACAALQAwAC4AMQAzADkAIAAwAC4AMQAgAC0AMAAuADEAMwA5ACAAQwAgADAALgAxADIAIAAtADAALgAxADMAOQAgADAALgAxADMAOAAgAC0AMAAuADEAMwAxACAAMAAuADEANQAyACAALQAwAC4AMQAxADgAIABDACAAMAAuADEANgAyACAALQAwAC4AMQAwADkAIAAwAC4AMQA3ADQAIAAtADAALgAxADAANAAgADAALgAxADgANwAgAC0AMAAuADEAMAA0ACAAQwAgADAALgAyADEAMgAgAC0AMAAuADEAMAA0ACAAMAAuADIAMwAzACAALQAwAC4AMQAyADIAIAAwAC4AMgA0ADEAIAAtADAALgAxADQAOAAgAEMAIAAwAC4AMgA0ADEAIAAtADAALgAxADQAOAAgADAALgAyADUAIAAtADAALgAxADcAOQAgADAALgAyADUAIAAtADAALgAxADcAOQAgAEMAIAAwAC4AMgA1ACAALQAwAC4AMQA3ADkAIAAwAC4AMgAzADIAIAAtADAALgAxADEAMwAgADAALgAyADMAMgAgAC0AMAAuADEAMQAzACAAQwAgADAALgAyADEANQAgAC0AMAAuADAANgAxACAAMAAuADEAOAA4ACAALQAwAC4AMAA0ACAAMAAuADEANQAgAC0AMAAuADAANAAgAEMAIAAwAC4AMQAzACAALQAwAC4AMAA0ACAAMAAuADEAMQAxACAALQAwAC4AMAA0ADgAIAAwAC4AMAA5ADYAIAAtADAALgAwADYAMgAgAEMAIAAwAC4AMAA4ADcAIAAtADAALgAwADcAIAAwAC4AMAA3ADUAIAAtADAALgAwADcANQAgADAALgAwADYAMwAgAC0AMAAuADAANwA1ACAAQwAgADAALgAwADMAOAAgAC0AMAAuADAANwA1ACAAMAAuADAAMQA3ACAALQAwAC4AMAA1ADcAIAAwAC4AMAAwADkAIAAtADAALgAwADMAMQAgAEMAIAAwAC4AMAAwADkAIAAtADAALgAwADMAMQAgADAAIAAwACAAMAAgADAAIABaAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[31] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[31] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;709;wQIAAPr7ALoCAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQHwAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wRxAgAA+vsAagIAAAEAAAAJYQIAAPoAAQEBAu4AAABNACAAMAAgADAAIABDACAAMAAuADAAMAAyACAALQAwAC4AMAAwADMAIAAwAC4AMAAxADIAIAAtADAALgAwADMANAAgADAALgAwADMANwAgAC0AMAAuADAAMwAyACAAQwAgADAALgAwADcANQAgAC0AMAAuADAAMgA5ACAAMAAuADAAOQAgAC0AMAAuADAAMAA3ACAAMAAuADEAMgA1ACAALQAwAC4AMAAyADkAIABDACAAMAAuADEANAA3ACAALQAwAC4AMAA0ADIAIAAwAC4AMQA3ADMAIAAtADAALgAwADcANQAgADAALgAxADkAMgAgAC0AMAAuADAANwA0ACAAQwAgADAALgAyADMANQAgAC0AMAAuADAANwAzACAAMAAuADIANAA0ACAALQAwAC4AMAAzADkAIAAwAC4AMgA0ADQAIAAtADAALgAwADAAOAAgAEMAIAAwAC4AMgA0ADUAIAAwAC4AMAAzADYAIAAwAC4AMQA4ADkAIAAwAC4AMAA3ADMAIAAwAC4AMQAyADEAIAAwAC4AMAA3ADcAIABDACAAMAAuADAANQAyACAAMAAuADAAOAAgAC0AMAAuADAAMAA1ACAAMAAuADAAMwAzACAAMAAgADAAIABaAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[32] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[32] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;535;EwIAAPr7AAwCAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQIAAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wTDAQAA+vsAvAEAAAEAAAAJswEAAPoAAQEBApcAAABNACAAMAAgADAAIABDACAALQAwAC4AMQAxADgAIAAtADAALgAxADEAOAAgADAALgAxADMAMgAgAC0AMAAuADEAMQA4ACAAMAAuADAAMQAxACAAMAAgAEMAIAAwAC4AMQAzADIAIAAtADAALgAxADEAOAAgADAALgAxADMAMgAgADAALgAxADMAMgAgADAALgAwADEAMQAgADAALgAwADEAMQAgAEMAIAAwAC4AMQAzADIAIAAwAC4AMQAzADIAIAAtADAALgAxADEAOAAgADAALgAxADMAMgAgADAAIAAwAC4AMAAxADEAIABDACAALQAwAC4AMQAxADgAIAAwAC4AMQAzADIAIAAtADAALgAxADEAOAAgAC0AMAAuADEAMQA4ACAAMAAgADAAIABaAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[33] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[33] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1193;pQQAAPr7AJ4EAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQIQAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wRVBAAA+vsATgQAAAEAAAAJRQQAAPoAAQEBAuABAABNACAAMAAgADAAIABDACAAMAAuADAAMQA1ACAAMAAuADAAMgA0ACAAMAAuADAAMwA3ACAAMAAuADAANAA5ACAAMAAuADAANQA1ACAAMAAuADAANQA5ACAAQwAgADAALgAwADgAMgAgADAALgAwADcANQAgADAALgAxADAAOAAgADAALgAwADgAMQAgADAALgAxADEAMwAgADAALgAwADcAMwAgAEMAIAAwAC4AMQAxADcAIAAwAC4AMAA2ADUAIAAwAC4AMAA5ADkAIAAwAC4AMAA0ADUAIAAwAC4AMAA3ADIAIAAwAC4AMAAyADkAIABDACAAMAAuADAANQA0ACAAMAAuADAAMQA5ACAAMAAuADAAMgAxACAAMAAuADAAMQAyACAALQAwAC4AMAAwADgAIAAwAC4AMAAxADEAIABDACAALQAwAC4AMAAzADYAIAAwAC4AMAAxADIAIAAtADAALgAwADcAIAAwAC4AMAAxADkAIAAtADAALgAwADgAOAAgADAALgAwADIAOQAgAEMAIAAtADAALgAxADEANQAgADAALgAwADQANQAgAC0AMAAuADEAMwAzACAAMAAuADAANgA1ACAALQAwAC4AMQAyADgAIAAwAC4AMAA3ADMAIABDACAALQAwAC4AMQAyADMAIAAwAC4AMAA4ADEAIAAtADAALgAwADkANwAgADAALgAwADcANQAgAC0AMAAuADAANwAxACAAMAAuADAANQA5ACAAQwAgAC0AMAAuADAANQAzACAAMAAuADAANAA5ACAALQAwAC4AMAAzACAAMAAuADAAMgA0ACAALQAwAC4AMAAxADYAIAAwACAAQwAgAC0AMAAuADAAMAAxACAALQAwAC4AMAAyADUAIAAwAC4AMAAwADkAIAAtADAALgAwADUAOAAgADAALgAwADAAOQAgAC0AMAAuADAANwA5ACAAQwAgADAALgAwADAAOQAgAC0AMAAuADEAMQAxACAAMAAuADAAMAAyACAALQAwAC4AMQAzADYAIAAtADAALgAwADAAOAAgAC0AMAAuADEAMwA2ACAAQwAgAC0AMAAuADAAMQA3ACAALQAwAC4AMQAzADYAIAAtADAALgAwADIANQAgAC0AMAAuADEAMQAxACAALQAwAC4AMAAyADUAIAAtADAALgAwADcAOQAgAEMAIAAtADAALgAwADIANQAgAC0AMAAuADAANQA4ACAALQAwAC4AMAAxADQAIAAtADAALgAwADIANQAgADAAIAAwACAAWgADAAAAAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[34] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[34] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;2645;UQoAAPr7AEoKAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQIgAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wQBCgAA+vsA+gkAAAEAAAAJ8QkAAPoAAQEBArYEAABNACAAMAAgADAAIABDACAAMAAuADAAMAA0ACAALQAwAC4AMAAwADQAIAAwAC4AMAAxACAALQAwAC4AMAAwADYAIAAwAC4AMAAxADUAIAAtADAALgAwADAANgAgAEMAIAAwAC4AMAAyADIAIAAtADAALgAwADAANgAgADAALgAwADIAOQAgAC0AMAAuADAAMAAzACAAMAAuADAAMwAzACAAMAAuADAAMAAyACAAQwAgADAALgAwADUAIAAwAC4AMAAyADIAIAAwAC4AMAA2ADMAIAAwAC4AMAA2ADYAIAAwAC4AMAA2ADMAIAAwAC4AMQAxADgAIABDACAAMAAuADAANgAzACAAMAAuADEAMQA4ACAAMAAuADAANgAzACAAMAAuADEAMQA5ACAAMAAuADAANgAzACAAMAAuADEAMQA5ACAAQwAgADAALgAwADYAMwAgADAALgAxADEAOQAgADAALgAwADYAMwAgADAALgAxADIAIAAwAC4AMAA2ADMAIAAwAC4AMQAyACAAQwAgADAALgAwADYAMwAgADAALgAxADcAMgAgADAALgAwADUAIAAwAC4AMgAxADcAIAAwAC4AMAAzADMAIAAwAC4AMgAzADcAIABDACAAMAAuADAAMgA5ACAAMAAuADIANAAxACAAMAAuADAAMgAyACAAMAAuADIANAA0ACAAMAAuADAAMQA1ACAAMAAuADIANAA0ACAAQwAgADAALgAwADEAIAAwAC4AMgA0ADQAIAAwAC4AMAAwADQAIAAwAC4AMgA0ADIAIAAwACAAMAAuADIAMwA4ACAAQwAgAC0AMAAuADAAMAA0ACAAMAAuADIAMwA0ACAALQAwAC4AMAAwADYAIAAwAC4AMgAyADkAIAAtADAALgAwADAANgAgADAALgAyADIAMwAgAEMAIAAtADAALgAwADAANgAgADAALgAyADEANgAgAC0AMAAuADAAMAAzACAAMAAuADIAMQAgADAALgAwADAAMgAgADAALgAyADAANgAgAEMAIAAwAC4AMAAyADIAIAAwAC4AMQA4ADgAIAAwAC4AMAA2ADYAIAAwAC4AMQA3ADUAIAAwAC4AMQAxADgAIAAwAC4AMQA3ADUAIABDACAAMAAuADEAMQA4ACAAMAAuADEANwA1ACAAMAAuADEAMQA5ACAAMAAuADEANwA1ACAAMAAuADEAMQA5ACAAMAAuADEANwA1ACAAQwAgADAALgAxADEAOQAgADAALgAxADcANQAgADAALgAxADIAIAAwAC4AMQA3ADUAIAAwAC4AMQAyACAAMAAuADEANwA1ACAAQwAgADAALgAxADcAMgAgADAALgAxADcANQAgADAALgAyADEANwAgADAALgAxADgAOAAgADAALgAyADMANwAgADAALgAyADAANgAgAEMAIAAwAC4AMgA0ADEAIAAwAC4AMgAxACAAMAAuADIANAA0ACAAMAAuADIAMQA2ACAAMAAuADIANAA0ACAAMAAuADIAMgAzACAAQwAgADAALgAyADQANAAgADAALgAyADIAOQAgADAALgAyADQAMgAgADAALgAyADMANAAgADAALgAyADMAOAAgADAALgAyADMAOAAgAEMAIAAwAC4AMgAzADQAIAAwAC4AMgA0ADIAIAAwAC4AMgAyADkAIAAwAC4AMgA0ADQAIAAwAC4AMgAyADMAIAAwAC4AMgA0ADQAIABDACAAMAAuADIAMQA2ACAAMAAuADIANAA0ACAAMAAuADIAMQAgADAALgAyADQAMQAgADAALgAyADAANgAgADAALgAyADMANwAgAEMAIAAwAC4AMQA4ADgAIAAwAC4AMgAxADcAIAAwAC4AMQA3ADUAIAAwAC4AMQA3ADIAIAAwAC4AMQA3ADUAIAAwAC4AMQAyACAAQwAgADAALgAxADcANQAgADAALgAxADIAIAAwAC4AMQA3ADUAIAAwAC4AMQAxADkAIAAwAC4AMQA3ADUAIAAwAC4AMQAxADkAIABDACAAMAAuADEANwA1ACAAMAAuADEAMQA5ACAAMAAuADEANwA1ACAAMAAuADEAMQA4ACAAMAAuADEANwA1ACAAMAAuADEAMQA4ACAAQwAgADAALgAxADcANQAgADAALgAwADYANgAgADAALgAxADgAOAAgADAALgAwADIAMgAgADAALgAyADAANgAgADAALgAwADAAMQAgAEMAIAAwAC4AMgAxACAALQAwAC4AMAAwADMAIAAwAC4AMgAxADYAIAAtADAALgAwADAANgAgADAALgAyADIAMwAgAC0AMAAuADAAMAA2ACAAQwAgADAALgAyADIAOQAgAC0AMAAuADAAMAA2ACAAMAAuADIAMwA0ACAALQAwAC4AMAAwADQAIAAwAC4AMgAzADgAIAAwACAAQwAgADAALgAyADQAMgAgADAALgAwADAANAAgADAALgAyADQANAAgADAALgAwADEAIAAwAC4AMgA0ADQAIAAwAC4AMAAxADUAIABDACAAMAAuADIANAA0ACAAMAAuADAAMgAyACAAMAAuADIANAAxACAAMAAuADAAMgA4ACAAMAAuADIAMwA3ACAAMAAuADAAMwAzACAAQwAgADAALgAyADEANwAgADAALgAwADUAIAAwAC4AMQA3ADIAIAAwAC4AMAA2ADMAIAAwAC4AMQAyACAAMAAuADAANgAzACAAQwAgADAALgAxADIAIAAwAC4AMAA2ADMAIAAwAC4AMQAyACAAMAAuADAANgAzACAAMAAuADEAMQA5ACAAMAAuADAANgAzACAAQwAgADAALgAxADEAOQAgADAALgAwADYAMwAgADAALgAxADEAOAAgADAALgAwADYAMwAgADAALgAxADEAOAAgADAALgAwADYAMwAgAEMAIAAwAC4AMAA2ADYAIAAwAC4AMAA2ADMAIAAwAC4AMAAyADIAIAAwAC4AMAA1ACAAMAAuADAAMAAyACAAMAAuADAAMwAzACAAQwAgAC0AMAAuADAAMAAzACAAMAAuADAAMgA4ACAALQAwAC4AMAAwADYAIAAwAC4AMAAyADIAIAAtADAALgAwADAANgAgADAALgAwADEANQAgAEMAIAAtADAALgAwADAANgAgADAALgAwADEAIAAtADAALgAwADAANAAgADAALgAwADAANAAgADAAIAAwACAAWgADAAAAAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[35] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[35] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;267;BwEAAPr7AAABAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQIwAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wS3AAAA+vsAsAAAAAEAAAAJpwAAAPoAAQEBAhEAAABNACAAMAAgADAAIABMACAALQAwAC4AMgA1ACAAMAAgAEUAAwAAAAD7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7";
+    PRESET_TYPES[36] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[36] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;355;XwEAAPr7AFgBAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQJAAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wQPAQAA+vsACAEAAAEAAAAJ/wAAAPoAAQEBAj0AAABNACAAMAAgADAAIABMACAAMAAgADAALgAxADIANQAgAEMAIAAwACAAMAAuADEAOAAxACAAMAAuADAANgA5ACAAMAAuADIANQAgADAALgAxADIANQAgADAALgAyADUAIABMACAAMAAuADIANQAgADAALgAyADUAIABFAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[37] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[37] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;441;tQEAAPr7AK4BAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQJQAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wRlAQAA+vsAXgEAAAEAAAAJVQEAAPoAAQEBAmgAAABNACAAMAAgADAAIABMACAAMAAuADAANgA3ACAAMAAuADAANAAgAEMAIAAwAC4AMAA4ADEAIAAwAC4AMAA0ADkAIAAwAC4AMQAwADIAIAAwAC4AMAA1ADQAIAAwAC4AMQAyADQAIAAwAC4AMAA1ADQAIABDACAAMAAuADEANAA5ACAAMAAuADAANQA0ACAAMAAuADEANgA5ACAAMAAuADAANAA5ACAAMAAuADEAOAAzACAAMAAuADAANAAgAEwAIAAwAC4AMgA1ACAAMAAgAEUAAwAAAAD7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7";
+    PRESET_TYPES[38] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[38] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;629;cQIAAPr7AGoCAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQJgAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wQhAgAA+vsAGgIAAAEAAAAJEQIAAPoAAQEBAsYAAABNACAAMAAgADAAIABMACAAMAAuADAAMQA2ACAAMAAuADAAOQA5ACAATAAgADAALgAwADMAMQAgADAAIABMACAAMAAuADAANAA3ACAAMAAuADAAOQA5ACAATAAgADAALgAwADYAMwAgADAAIABMACAAMAAuADAANwA4ACAAMAAuADAAOQA5ACAATAAgADAALgAwADkANAAgADAAIABMACAAMAAuADEAMAA5ACAAMAAuADAAOQA5ACAATAAgADAALgAxADIANQAgADAAIABMACAAMAAuADEANAAxACAAMAAuADAAOQA5ACAATAAgADAALgAxADUANgAgADAAIABMACAAMAAuADEANwAyACAAMAAuADAAOQA5ACAATAAgADAALgAxADgANwAgADAAIABMACAAMAAuADIAMAAzACAAMAAuADAAOQA5ACAATAAgADAALgAyADEAOQAgADAAIABMACAAMAAuADIAMwA0ACAAMAAuADAAOQA5ACAATAAgADAALgAyADUAIAAwACAARQADAAAAAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[39] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[39] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;533;EQIAAPr7AAoCAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQJwAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wTBAQAA+vsAugEAAAEAAAAJsQEAAPoAAQEBApYAAABNACAAMAAgADAAIABDACAAMAAgADAALgAwADMANQAgADAALgAwADIAOAAgADAALgAwADYAMgAgADAALgAwADYAMgAgADAALgAwADYAMgAgAEMAIAAwAC4AMAA5ADcAIAAwAC4AMAA2ADIAIAAwAC4AMQAyADUAIAAwAC4AMAAzADUAIAAwAC4AMQAyADUAIAAwACAAQwAgADAALgAxADIANQAgAC0AMAAuADAAMwA1ACAAMAAuADEANQAzACAALQAwAC4AMAA2ADIAIAAwAC4AMQA4ADgAIAAtADAALgAwADYAMgAgAEMAIAAwAC4AMgAyADIAIAAtADAALgAwADYAMgAgADAALgAyADUAIAAtADAALgAwADMANQAgADAALgAyADUAIAAwACAARQADAAAAAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[40] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[40] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1419;hwUAAPr7AIAFAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQKAAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wQ3BQAA+vsAMAUAAAEAAAAJJwUAAPoAAQEBAlECAABNACAAMAAgADAAIABDACAAMAAuADAAMAAzACAALQAwAC4AMAAxADkAIAAwAC4AMAAwADcAIAAtADAALgAwADMANwAgADAALgAwADEANQAgAC0AMAAuADAAMwA3ACAAQwAgADAALgAwADIANAAgAC0AMAAuADAAMwA3ACAAMAAuADAAMgA3ACAALQAwAC4AMAAxADkAIAAwAC4AMAAzACAAMAAgAEMAIAAwAC4AMAAzADQAIAAwAC4AMAAyADEAIAAwAC4AMAAzADcAIAAwAC4AMAA0ADIAIAAwAC4AMAA0ADcAIAAwAC4AMAA0ADIAIABDACAAMAAuADAANQA2ACAAMAAuADAANAAyACAAMAAuADAANQA5ACAAMAAuADAAMgAxACAAMAAuADAANgAzACAAMAAgAEMAIAAwAC4AMAA2ADUAIAAtADAALgAwADEAOQAgADAALgAwADYAOQAgAC0AMAAuADAAMwA3ACAAMAAuADAANwA4ACAALQAwAC4AMAAzADcAIABDACAAMAAuADAAOAA2ACAALQAwAC4AMAAzADcAIAAwAC4AMAA5ACAALQAwAC4AMAAxADkAIAAwAC4AMAA5ADMAIAAwACAAQwAgADAALgAwADkANgAgADAALgAwADIAMQAgADAALgAxACAAMAAuADAANAAyACAAMAAuADEAMAA5ACAAMAAuADAANAAyACAAQwAgADAALgAxADEAOAAgADAALgAwADQAMgAgADAALgAxADIANQAgADAAIAAwAC4AMQAyADUAIAAwACAAQwAgADAALgAxADIAOAAgAC0AMAAuADAAMQA5ACAAMAAuADEAMwAxACAALQAwAC4AMAAzADcAIAAwAC4AMQA0ACAALQAwAC4AMAAzADcAIABDACAAMAAuADEANAA5ACAALQAwAC4AMAAzADcAIAAwAC4AMQA1ADIAIAAtADAALgAwADEAOQAgADAALgAxADUANQAgADAAIABDACAAMAAuADEANQA5ACAAMAAuADAAMgAxACAAMAAuADEANgAyACAAMAAuADAANAAyACAAMAAuADEANwAyACAAMAAuADAANAAyACAAQwAgADAALgAxADgAMQAgADAALgAwADQAMgAgADAALgAxADgANAAgADAALgAwADIAMQAgADAALgAxADgANwAgADAAIABDACAAMAAuADEAOQAxACAALQAwAC4AMAAxADkAIAAwAC4AMQA5ADQAIAAtADAALgAwADMANwAgADAALgAyADAAMwAgAC0AMAAuADAAMwA3ACAAQwAgADAALgAyADEAMQAgAC0AMAAuADAAMwA3ACAAMAAuADIAMQA1ACAALQAwAC4AMAAxADkAIAAwAC4AMgAxADgAIAAwACAAQwAgADAALgAyADIAMQAgADAALgAwADIAMQAgADAALgAyADIANQAgADAALgAwADQAMgAgADAALgAyADMANAAgADAALgAwADQAMgAgAEMAIAAwAC4AMgA0ADMAIAAwAC4AMAA0ADIAIAAwAC4AMgA0ADYAIAAwAC4AMAAyADEAIAAwAC4AMgA1ACAAMAAgAEUAAwAAAAD7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7";
+    PRESET_TYPES[41] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[41] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1591;MwYAAPr7ACwGAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQKQAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wTjBQAA+vsA3AUAAAEAAAAJ0wUAAPoAAQEBAqcCAABNACAAMAAgADAAIABjACAALQAwAC4AMAAwADQAIAAtADAALgAwADAAOAAgAC0AMAAuADAAMQA4ACAALQAwAC4AMAAxADYAIAAtADAALgAwADIAMwAgAC0AMAAuADAAMQA2ACAAYwAgAC0AMAAuADAAMwAxACAAMAAgAC0AMAAuADAANgAzACAAMAAuADEAMgA1ACAALQAwAC4AMAA2ADMAIAAwAC4AMgA1ACAAYwAgADAAIAAtADAALgAwADYAMwAgAC0AMAAuADAAMQA2ACAALQAwAC4AMQAyADUAIAAtADAALgAwADMAMQAgAC0AMAAuADEAMgA1ACAAYwAgAC0AMAAuADAAMQA2ACAAMAAgAC0AMAAuADAAMwAxACAAMAAuADAANgAzACAALQAwAC4AMAAzADEAIAAwAC4AMQAyADUAIABjACAAMAAgAC0AMAAuADAAMwAxACAALQAwAC4AMAAwADgAIAAtADAALgAwADYAMwAgAC0AMAAuADAAMQA2ACAALQAwAC4AMAA2ADMAIABjACAALQAwAC4AMAAwADgAIAAwACAALQAwAC4AMAAxADYAIAAwAC4AMAAzADEAIAAtADAALgAwADEANgAgADAALgAwADYAMwAgAGMAIAAwACAALQAwAC4AMAAxADYAIAAtADAALgAwADAANAAgAC0AMAAuADAAMwAxACAALQAwAC4AMAAwADgAIAAtADAALgAwADMAMQAgAGMAIAAtADAALgAwADAANAAgADAAIAAtADAALgAwADAAOAAgADAALgAwADEANgAgAC0AMAAuADAAMAA4ACAAMAAuADAAMwAxACAAYwAgADAAIAAtADAALgAwADAAOAAgAC0AMAAuADAAMAAyACAALQAwAC4AMAAxADYAIAAtADAALgAwADAANAAgAC0AMAAuADAAMQA2ACAAYwAgAC0AMAAuADAAMAAxACAAMAAgAC0AMAAuADAAMAA0ACAAMAAuADAAMAA4ACAALQAwAC4AMAAwADQAIAAwAC4AMAAxADYAIABjACAAMAAgAC0AMAAuADAAMAA0ACAALQAwAC4AMAAwADEAIAAtADAALgAwADAAOAAgAC0AMAAuADAAMAAyACAALQAwAC4AMAAwADgAIABjACAAMAAgAC0AMAAuADAAMAAxACAALQAwAC4AMAAwADIAIAAwAC4AMAAwADQAIAAtADAALgAwADAAMgAgADAALgAwADAAOAAgAGMAIAAwACAALQAwAC4AMAAwADIAIAAwACAALQAwAC4AMAAwADQAIAAtADAALgAwADAAMQAgAC0AMAAuADAAMAA0ACAAYwAgADAAIAAwAC4AMAAwADEAIAAtADAALgAwADAAMQAgADAALgAwADAAMgAgAC0AMAAuADAAMAAxACAAMAAuADAAMAA0ACAAYwAgADAAIAAtADAALgAwADAAMQAgADAAIAAtADAALgAwADAAMgAgADAAIAAtADAALgAwADAAMwAgAGMAIAAtADAALgAwADAAMQAgADAAIAAtADAALgAwADAAMQAgADAALgAwADAAMQAgAC0AMAAuADAAMAAxACAAMAAuADAAMAAyACAAYwAgAC0AMAAuADAAMAAxACAAMAAgAC0AMAAuADAAMAAxACAALQAwAC4AMAAwADEAIAAtADAALgAwADAAMQAgAC0AMAAuADAAMAAyACAAYwAgAC0AMAAuADAAMAAxACAAMAAgAC0AMAAuADAAMAAxACAAMAAuADAAMAAxACAALQAwAC4AMAAwADEAIAAwAC4AMAAwADIAIABFAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[42] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[42] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;265;BQEAAPr7AP4AAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQKgAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wS1AAAA+vsArgAAAAEAAAAJpQAAAPoAAQEBAhAAAABNACAAMAAgADAAIABMACAAMAAgADAALgAyADUAIABFAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[43] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[43] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;361;ZQEAAPr7AF4BAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQKwAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wQVAQAA+vsADgEAAAEAAAAJBQEAAPoAAQEBAkAAAABNACAAMAAgADAAIABMACAAMAAuADEAMgA1ACAAMAAgAEMAIAAwAC4AMQA4ADEAIAAwACAAMAAuADIANQAgAC0AMAAuADAANgA5ACAAMAAuADIANQAgAC0AMAAuADEAMgA1ACAATAAgADAALgAyADUAIAAtADAALgAyADUAIABFAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[44] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[44] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;455;wwEAAPr7ALwBAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQLAAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wRzAQAA+vsAbAEAAAEAAAAJYwEAAPoAAQEBAm8AAABNACAAMAAgADAAIABMACAAMAAuADAANgA3ACAALQAwAC4AMAA0ACAAQwAgADAALgAwADgAMQAgAC0AMAAuADAANAA5ACAAMAAuADEAMAAyACAALQAwAC4AMAA1ADQAIAAwAC4AMQAyADQAIAAtADAALgAwADUANAAgAEMAIAAwAC4AMQA0ADkAIAAtADAALgAwADUANAAgADAALgAxADYAOQAgAC0AMAAuADAANAA5ACAAMAAuADEAOAAzACAALQAwAC4AMAA0ACAATAAgADAALgAyADUAIAAwACAARQADAAAAAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[45] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[45] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;995;3wMAAPr7ANgDAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQLQAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wSPAwAA+vsAiAMAAAEAAAAJfwMAAPoAAQEBAn0BAABNACAAMAAgADAAIABMACAAMAAuADAAMQA3ACAAMAAgAEMAIAAwAC4AMAAyADUAIAAwACAAMAAuADAAMwA0ACAALQAwAC4AMAAxADQAIAAwAC4AMAA0ADIAIAAtADAALgAwADEANgAgAEMAIAAwAC4AMAA0ADgAIAAtADAALgAwADEANgAgADAALgAwADUAOQAgAC0AMAAuADAAMAAzACAAMAAuADAANgA0ACAALQAwAC4AMAAwADMAIABDACAAMAAuADAANwAxACAALQAwAC4AMAAwADMAIAAwAC4AMAA3ADgAIAAtADAALgAwADAANwAgADAALgAwADkAMQAgAC0AMAAuADAAMAA3ACAATAAgADAALgAxACAALQAwAC4AMQA2ADIAIABMACAAMAAuADEAMQAgADAALgAwADIANQAgAEwAIAAwAC4AMQAyADIAIAAwACAATAAgADAALgAxADMAMgAgAC0AMAAuADAAMAA3ACAATAAgADAALgAxADUANgAgAC0AMAAuADAAMAAxACAAQwAgADAALgAxADYANwAgAC0AMAAuADAAMAA0ACAAMAAuADEANwA2ACAALQAwAC4AMAAxADcAIAAwAC4AMQA4ADcAIAAtADAALgAwADIAMgAgAEMAIAAwAC4AMQA5ADEAIAAtADAALgAwADIAMwAgADAALgAyACAALQAwAC4AMAAyADQAIAAwAC4AMgAwADYAIAAtADAALgAwADIAMgAgAEMAIAAwAC4AMgAxADIAIAAtADAALgAwADIAIAAwAC4AMgAxADcAIAAtADAALgAwADAANgAgADAALgAyADEAOQAgAC0AMAAuADAAMAA1ACAAQwAgADAALgAyADIAMgAgAC0AMAAuADAAMAAxACAAMAAuADIAMgA5ACAALQAwAC4AMAAwADUAIAAwAC4AMgAzADMAIAAtADAALgAwADAAMwAgAEwAIAAwAC4AMgAzADkAIAAwACAATAAgADAALgAyADUAIAAwACAARQADAAAAAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[46] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[46] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1489;zQUAAPr7AMYFAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQLgAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wR9BQAA+vsAdgUAAAEAAAAJbQUAAPoAAQEBAnQCAABNACAAMAAgADAAIABDACAALQAwAC4AMAAwADQAIAAtADAALgAwADYANwAgADAALgAwADQANgAgAC0AMAAuADEAMgA1ACAAMAAuADEAMQAzACAALQAwAC4AMQAyADkAIABDACAAMAAuADEANwA3ACAALQAwAC4AMQAzADQAIAAwAC4AMgAzADcAIAAtADAALgAwADgAOQAgADAALgAyADQAMQAgAC0AMAAuADAAMgA0ACAAQwAgADAALgAyADQANgAgADAALgAwADMANgAgADAALgAyADAANAAgADAALgAwADkAMgAgADAALgAxADQANAAgADAALgAwADkANgAgAEMAIAAwAC4AMAA4ADkAIAAwAC4AMAA5ADkAIAAwAC4AMAAzADcAIAAwAC4AMAA2ADIAIAAwAC4AMAAzADMAIAAwAC4AMAAwADYAIABDACAAMAAuADAAMgA5ACAALQAwAC4AMAA0ADUAIAAwAC4AMAA2ADQAIAAtADAALgAwADkAMwAgADAALgAxADEANQAgAC0AMAAuADAAOQA3ACAAQwAgADAALgAxADYAMgAgAC0AMAAuADEAIAAwAC4AMgAwADYAIAAtADAALgAwADYAOQAgADAALgAyADAAOQAgAC0AMAAuADAAMgAyACAAQwAgADAALgAyADEAMgAgADAALgAwADIAIAAwAC4AMQA4ADQAIAAwAC4AMAA2ADEAIAAwAC4AMQA0ADIAIAAwAC4AMAA2ADMAIABDACAAMAAuADEAMAA0ACAAMAAuADAANgA2ACAAMAAuADAANgA4ACAAMAAuADAANAAyACAAMAAuADAANgA1ACAAMAAuADAAMAA0ACAAQwAgADAALgAwADYAMwAgAC0AMAAuADAAMwAgADAALgAwADgANAAgAC0AMAAuADAANgAzACAAMAAuADEAMQA3ACAALQAwAC4AMAA2ADUAIABDACAAMAAuADEANAA2ACAALQAwAC4AMAA2ADcAIAAwAC4AMQA3ADUAIAAtADAALgAwADQAOQAgADAALgAxADcANwAgAC0AMAAuADAAMgAgAEMAIAAwAC4AMQA3ADkAIAAwAC4AMAAwADUAIAAwAC4AMQA2ADQAIAAwAC4AMAAyADkAIAAwAC4AMQA0ACAAMAAuADAAMwAxACAAQwAgADAALgAxADIAIAAwAC4AMAAzADMAIAAwAC4AMAA5ADkAIAAwAC4AMAAyADIAIAAwAC4AMAA5ADgAIAAwAC4AMAAwADIAIABDACAAMAAuADAAOQA2ACAALQAwAC4AMAAxADQAIAAwAC4AMQAwADQAIAAtADAALgAwADMAMQAgADAALgAxADEAOQAgAC0AMAAuADAAMwAzACAAQwAgADAALgAxADMAMQAgAC0AMAAuADAAMwAzACAAMAAuADEANAAzACAALQAwAC4AMAAyADkAIAAwAC4AMQA0ADUAIAAtADAALgAwADEAOAAgAEMAIAAwAC4AMQA0ADYAIAAtADAALgAwADEAMQAgADAALgAxADQANAAgAC0AMAAuADAAMAA0ACAAMAAuADEAMwA4ACAALQAwAC4AMAAwADEAIABDACAAMAAuADEAMwA1ACAAMAAgADAALgAxADMAMwAgADAAIAAwAC4AMQAzACAALQAwAC4AMAAwADEAIABFAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[47] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[47] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1387;ZwUAAPr7AGAFAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQLwAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wQXBQAA+vsAEAUAAAEAAAAJBwUAAPoAAQEBAkECAABNACAAMAAgADAAIABDACAAMAAuADAAMAAyACAAMAAuADAANgAzACAAMAAuADAAMAA5ACAAMAAuADEAMAA4ACAAMAAuADAAMQA2ACAAMAAuADEAMAA4ACAAQwAgADAALgAwADIAMwAgADAALgAxADAAOAAgADAALgAwADIAOQAgADAALgAwADYAMwAgADAALgAwADMAMQAgADAAIABDACAAMAAuADAAMwA0ACAAMAAuADAANgAzACAAMAAuADAANAAgADAALgAxADAAOAAgADAALgAwADQANwAgADAALgAxADAAOAAgAEMAIAAwAC4AMAA1ADQAIAAwAC4AMQAwADgAIAAwAC4AMAA2ACAAMAAuADAANgAzACAAMAAuADAANgAyACAAMAAgAEMAIAAwAC4AMAA2ADUAIAAwAC4AMAA2ADMAIAAwAC4AMAA3ADEAIAAwAC4AMQAwADgAIAAwAC4AMAA3ADgAIAAwAC4AMQAwADgAIABDACAAMAAuADAAOAA1ACAAMAAuADEAMAA4ACAAMAAuADAAOQAyACAAMAAuADAANgAzACAAMAAuADAAOQA0ACAAMAAgAEMAIAAwAC4AMAA5ADYAIAAwAC4AMAA2ADMAIAAwAC4AMQAwADIAIAAwAC4AMQAwADgAIAAwAC4AMQAxACAAMAAuADEAMAA4ACAAQwAgADAALgAxADEANgAgADAALgAxADAAOAAgADAALgAxADIAMwAgADAALgAwADYAMwAgADAALgAxADIANQAgADAAIABDACAAMAAuADEAMgA3ACAAMAAuADAANgAzACAAMAAuADEAMwA0ACAAMAAuADEAMAA4ACAAMAAuADEANAAxACAAMAAuADEAMAA4ACAAQwAgADAALgAxADQAOAAgADAALgAxADAAOAAgADAALgAxADUANAAgADAALgAwADYAMwAgADAALgAxADUANgAgADAAIABDACAAMAAuADEANQA5ACAAMAAuADAANgAzACAAMAAuADEANgA1ACAAMAAuADEAMAA4ACAAMAAuADEANwAyACAAMAAuADEAMAA4ACAAQwAgADAALgAxADcAOQAgADAALgAxADAAOAAgADAALgAxADgANQAgADAALgAwADYAMwAgADAALgAxADgAOAAgADAAIABDACAAMAAuADEAOQAgADAALgAwADYAMwAgADAALgAxADkANgAgADAALgAxADAAOAAgADAALgAyADAAMwAgADAALgAxADAAOAAgAEMAIAAwAC4AMgAxACAAMAAuADEAMAA4ACAAMAAuADIAMQA3ACAAMAAuADAANgAzACAAMAAuADIAMQA5ACAAMAAgAEMAIAAwAC4AMgAyADEAIAAwAC4AMAA2ADMAIAAwAC4AMgAyADcAIAAwAC4AMQAwADgAIAAwAC4AMgAzADUAIAAwAC4AMQAwADgAIABDACAAMAAuADIANAAyACAAMAAuADEAMAA4ACAAMAAuADIANAA4ACAAMAAuADAANgAzACAAMAAuADIANQAgADAAIABFAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[48] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[48] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1997;yQcAAPr7AMIHAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQMAAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wR5BwAA+vsAcgcAAAEAAAAJaQcAAPoAAQEBAnIDAABNACAAMAAgADAAIABDACAAMAAuADAAMAA4ACAAMAAuADAAMAA4ACAAMAAuADAAMQA3ACAAMAAuADAAMQA2ACAAMAAuADAAMgAxACAAMAAuADAAMgA2ACAAQwAgADAALgAwADIANQAgADAALgAwADMANwAgADAALgAwADIANwAgADAALgAwADUAIAAwAC4AMAAyADkAIAAwAC4AMAA2ADMAIABDACAAMAAuADAAMwAxACAAMAAuADAANwA2ACAAMAAuADAAMgA5ACAAMAAuADAAOAA3ACAAMAAuADAAMgA3ACAAMAAuADAAOQA5ACAAQwAgADAALgAwADIANQAgADAALgAxADEAIAAwAC4AMAAyADIAIAAwAC4AMQAyADIAIAAwAC4AMAAxADUAIAAwAC4AMQAzADIAIABDACAAMAAuADAAMAA5ACAAMAAuADEANAAyACAALQAwAC4AMAAwADEAIAAwAC4AMQA1ACAALQAwAC4AMAAxADIAIAAwAC4AMQA1ADYAIABDACAALQAwAC4AMAAyADIAIAAwAC4AMQA2ADIAIAAtADAALgAwADMANAAgADAALgAxADYANgAgAC0AMAAuADAANAA2ACAAMAAuADEANgA4ACAAQwAgAC0AMAAuADAANQA4ACAAMAAuADEANwAgAC0AMAAuADAANwAgADAALgAxADcAIAAtADAALgAwADgAMQAgADAALgAxADYAOAAgAEMAIAAtADAALgAwADkAMwAgADAALgAxADYANgAgAC0AMAAuADEAMAA0ACAAMAAuADEANgAxACAALQAwAC4AMQAxADMAIAAwAC4AMQA1ADMAIABDACAALQAwAC4AMQAyADIAIAAwAC4AMQA0ADYAIAAtADAALgAxADMAIAAwAC4AMQAzADcAIAAtADAALgAxADMANAAgADAALgAxADIANgAgAEMAIAAtADAALgAxADMAOQAgADAALgAxADEANgAgAC0AMAAuADEANAAxACAAMAAuADEAMAAyACAALQAwAC4AMQA0ADEAIAAwAC4AMAA5ADEAIABDACAALQAwAC4AMQA0ADIAIAAwAC4AMAA4ACAALQAwAC4AMQA0ADEAIAAwAC4AMAA2ADcAIAAtADAALgAxADMANgAgADAALgAwADUANgAgAEMAIAAtADAALgAxADMAMQAgADAALgAwADQANgAgAC0AMAAuADEAMgAyACAAMAAuADAAMwA4ACAALQAwAC4AMQAxACAAMAAuADAAMwA0ACAAQwAgAC0AMAAuADAAOQA4ACAAMAAuADAAMwAxACAALQAwAC4AMAA4ADYAIAAwAC4AMAAzADUAIAAtADAALgAwADcAOAAgADAALgAwADQAMgAgAEMAIAAtADAALgAwADcAMQAgADAALgAwADQAOQAgAC0AMAAuADAANgA2ACAAMAAuADAANgAgAC0AMAAuADAANgA1ACAAMAAuADAANwAzACAAQwAgAC0AMAAuADAANgA1ACAAMAAuADAAOAA2ACAALQAwAC4AMAA2ADYAIAAwAC4AMAA5ADgAIAAtADAALgAwADcAMQAgADAALgAxADAAOAAgAEMAIAAtADAALgAwADcANgAgADAALgAxADEAOAAgAC0AMAAuADAANwA1ACAAMAAuADEAMgAgAC0AMAAuADAAOQA1ACAAMAAuADEAMwAzACAAQwAgAC0AMAAuADEAMQAzACAAMAAuADEANAA3ACAALQAwAC4AMQAzADEAIAAwAC4AMQA0ADMAIAAtADAALgAxADQAMgAgADAALgAxADQANAAgAEMAIAAtADAALgAxADUAMwAgADAALgAxADQANAAgAC0AMAAuADEANgAyACAAMAAuADEANAAgAC0AMAAuADEANwAzACAAMAAuADEAMwA2ACAAQwAgAC0AMAAuADEAOAA1ACAAMAAuADEAMwAxACAALQAwAC4AMQA5ADUAIAAwAC4AMQAyADIAIAAtADAALgAyADAAMgAgADAALgAxADEANAAgAEMAIAAtADAALgAyADAAOQAgADAALgAxADAANgAgAC0AMAAuADIAMQAyACAAMAAuADAAOQA2ACAALQAwAC4AMgAxADYAIAAwAC4AMAA4ACAAQwAgAC0AMAAuADIAMQA5ACAAMAAuADAANgA0ACAALQAwAC4AMgAxADkAIAAwAC4AMAA1ADYAIAAtADAALgAyADEAOQAgADAALgAwADQANAAgAEMAIAAtADAALgAyADEAOQAgADAALgAwADMAMgAgAC0AMAAuADIAMQA5ACAAMAAuADAAMgAgAC0AMAAuADIAMQA5ACAAMAAuADAAMAA4ACAARQADAAAAAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[49] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[49] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;271;CwEAAPr7AAQBAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQMQAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wS7AAAA+vsAtAAAAAEAAAAJqwAAAPoAAQEBAhMAAABNACAAMAAgADAAIABMACAAMAAuADIANQAgADAALgAyADUAIABFAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[50] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[50] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;355;XwEAAPr7AFgBAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQMgAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wQPAQAA+vsACAEAAAEAAAAJ/wAAAPoAAQEBAj0AAABNACAAMAAgADAAIABMACAAMAAuADEAMgA1ACAAMAAgAEMAIAAwAC4AMQA4ADEAIAAwACAAMAAuADIANQAgADAALgAwADYAOQAgADAALgAyADUAIAAwAC4AMQAyADUAIABMACAAMAAuADIANQAgADAALgAyADUAIABFAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[51] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[51] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;455;wwEAAPr7ALwBAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQMwAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wRzAQAA+vsAbAEAAAEAAAAJYwEAAPoAAQEBAm8AAABNACAAMAAgADAAIABMACAALQAwAC4AMAA0ACAAMAAuADAANgA3ACAAQwAgAC0AMAAuADAANAA5ACAAMAAuADAAOAAxACAALQAwAC4AMAA1ADQAIAAwAC4AMQAwADIAIAAtADAALgAwADUANAAgADAALgAxADIANAAgAEMAIAAtADAALgAwADUANAAgADAALgAxADQAOQAgAC0AMAAuADAANAA5ACAAMAAuADEANgA5ACAALQAwAC4AMAA0ACAAMAAuADEAOAAzACAATAAgADAAIAAwAC4AMgA1ACAARQADAAAAAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[52] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[52] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;5197;SRQAAPr7AEIUAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQNAAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wT5EwAA+vsA8hMAAAEAAAAJ6RMAAPoAAQEBArIJAABNACAAMAAgADAAIABDACAALQAwAC4AMAAwADEAIAAwAC4AMAAyADUAIAAwAC4AMAA2ACAAMAAuADAANAA3ACAAMAAuADEAMwA3ACAAMAAuADAANAA4ACAAQwAgADAALgAxADkAOAAgADAALgAwADUAIAAwAC4AMgA0ADgAIAAwAC4AMAAzADgAIAAwAC4AMgA0ADkAIAAwAC4AMAAyADMAIABDACAAMAAuADIANAA5ACAAMAAuADAAMAA4ACAAMAAuADIAIAAtADAALgAwADAANgAgADAALgAxADMAOAAgAC0AMAAuADAAMAA3ACAAQwAgADAALgAxADAANwAgAC0AMAAuADAAMAA3ACAAMAAuADAANwA5ACAALQAwAC4AMAAwADUAIAAwAC4AMAA1ADkAIAAwACAAQwAgADAALgAwADMAIAAwAC4AMAAwADcAIAAwAC4AMAAxADMAIAAwAC4AMAAxADgAIAAwAC4AMAAxADMAIAAwAC4AMAAzADEAIABDACAAMAAuADAAMQAzACAAMAAuADAAMwA4ACAAMAAuADAAMQA4ACAAMAAuADAANAA1ACAAMAAuADAAMgA3ACAAMAAuADAANQAxACAAQwAgADAALgAwADQAOAAgADAALgAwADYANAAgADAALgAwADgAOQAgADAALgAwADcAMwAgADAALgAxADMANgAgADAALgAwADcANAAgAEMAIAAwAC4AMQA5ADEAIAAwAC4AMAA3ADYAIAAwAC4AMgAzADYAIAAwAC4AMAA2ADUAIAAwAC4AMgAzADYAIAAwAC4AMAA1ADIAIABDACAAMAAuADIAMwA3ACAAMAAuADAAMwA4ACAAMAAuADEAOQAyACAAMAAuADAAMgA2ACAAMAAuADEAMwA3ACAAMAAuADAAMgA0ACAAQwAgADAALgAxADAAOQAgADAALgAwADIANAAgADAALgAwADgANAAgADAALgAwADIANgAgADAALgAwADYANQAgADAALgAwADMAIABDACAAMAAuADAANAAgADAALgAwADMANwAgADAALgAwADIANAAgADAALgAwADQAOAAgADAALgAwADIANAAgADAALgAwADUAOQAgAEMAIAAwAC4AMAAyADQAIAAwAC4AMAA2ADUAIAAwAC4AMAAyADkAIAAwAC4AMAA3ADEAIAAwAC4AMAAzADcAIAAwAC4AMAA3ADcAIABDACAAMAAuADAANQA2ACAAMAAuADAAOAA4ACAAMAAuADAAOQAyACAAMAAuADAAOQA3ACAAMAAuADEAMwA1ACAAMAAuADAAOQA4ACAAQwAgADAALgAxADgANQAgADAALgAwADkAOQAgADAALgAyADIANQAgADAALgAwADgAOQAgADAALgAyADIANQAgADAALgAwADcANwAgAEMAIAAwAC4AMgAyADYAIAAwAC4AMAA2ADUAIAAwAC4AMQA4ADYAIAAwAC4AMAA1ADQAIAAwAC4AMQAzADYAIAAwAC4AMAA1ADMAIABDACAAMAAuADEAMQAxACAAMAAuADAANQAyACAAMAAuADAAOAA4ACAAMAAuADAANQA0ACAAMAAuADAANwAxACAAMAAuADAANQA4ACAAQwAgADAALgAwADQAOAAgADAALgAwADYANAAgADAALgAwADMANQAgADAALgAwADcAMwAgADAALgAwADMANQAgADAALgAwADgANAAgAEMAIAAwAC4AMAAzADUAIAAwAC4AMAA4ADkAIAAwAC4AMAAzADkAIAAwAC4AMAA5ADUAIAAwAC4AMAA0ADYAIAAwAC4AMQAgAEMAIAAwAC4AMAA2ADMAIAAwAC4AMQAxACAAMAAuADAAOQA2ACAAMAAuADEAMQA4ACAAMAAuADEAMwA0ACAAMAAuADEAMQA5ACAAQwAgADAALgAxADcAOQAgADAALgAxADEAOQAgADAALgAyADEANQAgADAALgAxADEAMQAgADAALgAyADEANQAgADAALgAxACAAQwAgADAALgAyADEANQAgADAALgAwADgAOQAgADAALgAxADgAIAAwAC4AMAA3ADkAIAAwAC4AMQAzADUAIAAwAC4AMAA3ADgAIABDACAAMAAuADEAMQAzACAAMAAuADAANwA4ACAAMAAuADAAOQAyACAAMAAuADAAOAAgADAALgAwADcANwAgADAALgAwADgAMwAgAEMAIAAwAC4AMAA1ADYAIAAwAC4AMAA4ADgAIAAwAC4AMAA0ADQAIAAwAC4AMAA5ADcAIAAwAC4AMAA0ADMAIAAwAC4AMQAwADYAIABDACAAMAAuADAANAAzACAAMAAuADEAMQAxACAAMAAuADAANAA4ACAAMAAuADEAMQA2ACAAMAAuADAANQA0ACAAMAAuADEAMgAgAEMAIAAwAC4AMAA2ADkAIAAwAC4AMQAzACAAMAAuADAAOQA5ACAAMAAuADEAMwA3ACAAMAAuADEAMwAzACAAMAAuADEAMwA3ACAAQwAgADAALgAxADcAMwAgADAALgAxADMAOAAgADAALgAyADAANgAgADAALgAxADMAMQAgADAALgAyADAANgAgADAALgAxADIAMQAgAEMAIAAwAC4AMgAwADcAIAAwAC4AMQAxADEAIAAwAC4AMQA3ADQAIAAwAC4AMQAwADIAIAAwAC4AMQAzADQAIAAwAC4AMQAwADEAIABDACAAMAAuADEAMQA0ACAAMAAuADEAMAAxACAAMAAuADAAOQA1ACAAMAAuADEAMAAyACAAMAAuADAAOAAyACAAMAAuADEAMAA2ACAAQwAgADAALgAwADYAMwAgADAALgAxADEAIAAwAC4AMAA1ADIAIAAwAC4AMQAxADgAIAAwAC4AMAA1ADIAIAAwAC4AMQAyADYAIABDACAAMAAuADAANQAyACAAMAAuADEAMwAxACAAMAAuADAANQA1ACAAMAAuADEAMwA1ACAAMAAuADAANgAxACAAMAAuADEAMwA5ACAAQwAgADAALgAwADcANQAgADAALgAxADQAOAAgADAALgAxADAAMQAgADAALgAxADUANAAgADAALgAxADMAMgAgADAALgAxADUANQAgAEMAIAAwAC4AMQA2ADkAIAAwAC4AMQA1ADUAIAAwAC4AMQA5ADgAIAAwAC4AMQA0ADkAIAAwAC4AMQA5ADgAIAAwAC4AMQA0ACAAQwAgADAALgAxADkAOQAgADAALgAxADMAMQAgADAALgAxADcAIAAwAC4AMQAyADMAIAAwAC4AMQAzADMAIAAwAC4AMQAyADIAIABDACAAMAAuADEAMQA1ACAAMAAuADEAMgAyACAAMAAuADAAOQA5ACAAMAAuADEAMgAzACAAMAAuADAAOAA3ACAAMAAuADEAMgA2ACAAQwAgADAALgAwADcAIAAwAC4AMQAzACAAMAAuADAANgAgADAALgAxADMANwAgADAALgAwADYAIAAwAC4AMQA0ADUAIABDACAAMAAuADAANgAgADAALgAxADQAOQAgADAALgAwADYAMwAgADAALgAxADUAMgAgADAALgAwADYAOAAgADAALgAxADUANgAgAEMAIAAwAC4AMAA4ACAAMAAuADEANgA0ACAAMAAuADEAMAA0ACAAMAAuADEANgA5ACAAMAAuADEAMwAyACAAMAAuADEANwAgAEMAIAAwAC4AMQA2ADUAIAAwAC4AMQA3ADEAIAAwAC4AMQA5ADEAIAAwAC4AMQA2ADUAIAAwAC4AMQA5ADEAIAAwAC4AMQA1ADYAIABDACAAMAAuADEAOQAxACAAMAAuADEANAA5ACAAMAAuADEANgA2ACAAMAAuADEANAAxACAAMAAuADEAMwAzACAAMAAuADEANAAxACAAQwAgADAALgAxADEANgAgADAALgAxADQAIAAwAC4AMQAwADEAIAAwAC4AMQA0ADIAIAAwAC4AMAA5ACAAMAAuADEANAA0ACAAQwAgADAALgAwADcANQAgADAALgAxADQAOAAgADAALgAwADYANgAgADAALgAxADUANAAgADAALgAwADYANgAgADAALgAxADYAMQAgAEMAIAAwAC4AMAA2ADYAIAAwAC4AMQA2ADUAIAAwAC4AMAA2ADkAIAAwAC4AMQA2ADgAIAAwAC4AMAA3ADQAIAAwAC4AMQA3ADEAIABDACAAMAAuADAAOAA1ACAAMAAuADEANwA4ACAAMAAuADEAMAA3ACAAMAAuADEAOAAzACAAMAAuADEAMwAxACAAMAAuADEAOAA0ACAAQwAgADAALgAxADYAMQAgADAALgAxADgANQAgADAALgAxADgANQAgADAALgAxADcAOQAgADAALgAxADgANQAgADAALgAxADcAMgAgAEMAIAAwAC4AMQA4ADUAIAAwAC4AMQA2ADQAIAAwAC4AMQA2ADEAIAAwAC4AMQA1ADgAIAAwAC4AMQAzADIAIAAwAC4AMQA1ADcAIABDACAAMAAuADEAMQA4ACAAMAAuADEANQA3ACAAMAAuADEAMAA0ACAAMAAuADEANQA4ACAAMAAuADAAOQA0ACAAMAAuADEANgAxACAAQwAgADAALgAwADgAIAAwAC4AMQA2ADQAIAAwAC4AMAA3ADIAIAAwAC4AMQA2ADkAIAAwAC4AMAA3ADIAIAAwAC4AMQA3ADYAIABDACAAMAAuADAANwAyACAAMAAuADEANwA5ACAAMAAuADAANwA1ACAAMAAuADEAOAAyACAAMAAuADAANwA5ACAAMAAuADEAOAA1ACAAQwAgADAALgAwADgAOQAgADAALgAxADkAMQAgADAALgAxADAAOAAgADAALgAxADkANgAgADAALgAxADMAMQAgADAALgAxADkANgAgAEMAIAAwAC4AMQA1ADcAIAAwAC4AMQA5ADcAIAAwAC4AMQA3ADkAIAAwAC4AMQA5ADIAIAAwAC4AMQA3ADkAIAAwAC4AMQA4ADUAIABDACAAMAAuADEANwA5ACAAMAAuADEANwA5ACAAMAAuADEANQA4ACAAMAAuADEANwAzACAAMAAuADEAMwAxACAAMAAuADEANwAzACAAQwAgADAALgAxADEAOQAgADAALgAxADcAMgAgADAALgAxADAANgAgADAALgAxADcAMwAgADAALgAwADkANwAgADAALgAxADcANQAgAEMAIAAwAC4AMAA4ADUAIAAwAC4AMQA3ADkAIAAwAC4AMAA3ADgAIAAwAC4AMQA4ADQAIAAwAC4AMAA3ADgAIAAwAC4AMQA4ADkAIABDACAAMAAuADAANwA4ACAAMAAuADEAOQAyACAAMAAuADAAOAAgADAALgAxADkANQAgADAALgAwADgANAAgADAALgAxADkANwAgAEMAIAAwAC4AMAA5ADMAIAAwAC4AMgAwADMAIAAwAC4AMQAxACAAMAAuADIAMAA3ACAAMAAuADEAMwAxACAAMAAuADIAMAA4ACAAQwAgADAALgAxADUANQAgADAALgAyADAAOAAgADAALgAxADcANAAgADAALgAyADAAMwAgADAALgAxADcANAAgADAALgAxADkAOAAgAEMAIAAwAC4AMQA3ADQAIAAwAC4AMQA5ADIAIAAwAC4AMQA1ADUAIAAwAC4AMQA4ADYAIAAwAC4AMQAzADEAIAAwAC4AMQA4ADYAIABDACAAMAAuADEAMQA5ACAAMAAuADEAOAA2ACAAMAAuADEAMAA4ACAAMAAuADEAOAA3ACAAMAAuADEAMAAxACAAMAAuADEAOAA5ACAAQwAgADAALgAwADgAOQAgADAALgAxADkAMQAgADAALgAwADgAMwAgADAALgAxADkANgAgADAALgAwADgAMwAgADAALgAyADAAMQAgAEMAIAAwAC4AMAA4ADMAIAAwAC4AMgAwADMAIAAwAC4AMAA4ADUAIAAwAC4AMgAwADYAIAAwAC4AMAA4ADgAIAAwAC4AMgAwADgAIABDACAAMAAuADAAOQA2ACAAMAAuADIAMQA0ACAAMAAuADEAMQAyACAAMAAuADIAMQA3ACAAMAAuADEAMwAgADAALgAyADEAOAAgAEMAIAAwAC4AMQA1ADIAIAAwAC4AMgAxADgAIAAwAC4AMQA2ADkAIAAwAC4AMgAxADQAIAAwAC4AMQA2ADkAIAAwAC4AMgAwADkAIABDACAAMAAuADEANgA5ACAAMAAuADIAMAAzACAAMAAuADEANQAyACAAMAAuADEAOQA5ACAAMAAuADEAMwAxACAAMAAuADEAOQA4ACAAQwAgADAALgAxADIAIAAwAC4AMQA5ADgAIAAwAC4AMQAxACAAMAAuADEAOQA5ACAAMAAuADEAMAAzACAAMAAuADIAMAAxACAAQwAgADAALgAwADkAMwAgADAALgAyADAAMwAgADAALgAwADgANwAgADAALgAyADAANwAgADAALgAwADgANwAgADAALgAyADEAMgAgAEMAIAAwAC4AMAA4ADcAIAAwAC4AMgAxADQAIAAwAC4AMAA4ADkAIAAwAC4AMgAxADYAIAAwAC4AMAA5ADIAIAAwAC4AMgAxADgAIABFAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[53] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[53] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;2731;pwoAAPr7AKAKAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQNQAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wRXCgAA+vsAUAoAAAEAAAAJRwoAAPoAAQEBAuEEAABNACAAMAAgADAAIABDACAALQAwAC4AMAA2ADYAIAAwAC4AMAAwADYAIAAtADAALgAxADEANQAgADAALgAwADIAMQAgAC0AMAAuADEAMQA1ACAAMAAuADAAMwAzACAAQwAgAC0AMAAuADEAMQA1ACAAMAAuADAANAA0ACAALQAwAC4AMAA2ADcAIAAwAC4AMAA1ADIAIAAtADAALgAwADAAMwAgADAALgAwADUAMgAgAEMAIAAwAC4AMAA2ADEAIAAwAC4AMAA1ADIAIAAwAC4AMQAxADUAIAAwAC4AMAA0ADQAIAAwAC4AMQAxADUAIAAwAC4AMAAzADMAIABDACAAMAAuADEAMQA1ACAAMAAuADAAMgAxACAAMAAuADAANQA5ACAAMAAuADAAMQA4ACAALQAwAC4AMAAwADUAIAAwAC4AMAAyADYAIABDACAALQAwAC4AMAA2ADgAIAAwAC4AMAAzADUAIAAtADAALgAxADEANQAgADAALgAwADUAIAAtADAALgAxADEANQAgADAALgAwADYAMQAgAEMAIAAtADAALgAxADEANQAgADAALgAwADcAMgAgAC0AMAAuADAANgA2ACAAMAAuADAAOAAxACAALQAwAC4AMAAwADMAIAAwAC4AMAA4ADEAIABDACAAMAAuADAANgAxACAAMAAuADAAOAAxACAAMAAuADEAMQA1ACAAMAAuADAANwAyACAAMAAuADEAMQA1ACAAMAAuADAANgAxACAAQwAgADAALgAxADEANQAgADAALgAwADUAIAAwAC4AMAA1ADkAIAAwAC4AMAA0ADcAIAAtADAALgAwADAANAAgADAALgAwADUANQAgAEMAIAAtADAALgAwADYAOAAgADAALgAwADYAMwAgAC0AMAAuADEAMQA1ACAAMAAuADAANwA4ACAALQAwAC4AMQAxADUAIAAwAC4AMAA4ADkAIABDACAALQAwAC4AMQAxADUAIAAwAC4AMQAwADEAIAAtADAALgAwADYANgAgADAALgAxADEAIAAtADAALgAwADAAMgAgADAALgAxADEAIABDACAAMAAuADAANgAxACAAMAAuADEAMQAgADAALgAxADEANQAgADAALgAxADAAMQAgADAALgAxADEANQAgADAALgAwADgAOQAgAEMAIAAwAC4AMQAxADUAIAAwAC4AMAA3ADkAIAAwAC4AMAA1ADkAIAAwAC4AMAA3ADYAIAAtADAALgAwADAANAAgADAALgAwADgAMwAgAEMAIAAtADAALgAwADYANwAgADAALgAwADkAMQAgAC0AMAAuADEAMQA1ACAAMAAuADEAMAA3ACAALQAwAC4AMQAxADUAIAAwAC4AMQAxADgAIABDACAALQAwAC4AMQAxADUAIAAwAC4AMQAyADkAIAAtADAALgAwADYANQAgADAALgAxADMAOAAgAC0AMAAuADAAMAAyACAAMAAuADEAMwA4ACAAQwAgADAALgAwADYAMwAgADAALgAxADMAOAAgADAALgAxADEANQAgADAALgAxADIAOQAgADAALgAxADEANQAgADAALgAxADEAOAAgAEMAIAAwAC4AMQAxADUAIAAwAC4AMQAwADcAIAAwAC4AMAA2ACAAMAAuADEAMAA0ACAALQAwAC4AMAAwADMAIAAwAC4AMQAxADIAIABDACAALQAwAC4AMAA2ADYAIAAwAC4AMQAyACAALQAwAC4AMQAxADUAIAAwAC4AMQAzADUAIAAtADAALgAxADEANQAgADAALgAxADQANgAgAEMAIAAtADAALgAxADEANQAgADAALgAxADUAOAAgAC0AMAAuADAANgA1ACAAMAAuADEANgA2ACAALQAwAC4AMAAwADEAIAAwAC4AMQA2ADYAIABDACAAMAAuADAANgAzACAAMAAuADEANgA2ACAAMAAuADEAMQA1ACAAMAAuADEANQA3ACAAMAAuADEAMQA1ACAAMAAuADEANAA2ACAAQwAgADAALgAxADEANQAgADAALgAxADMANQAgADAALgAwADYAIAAwAC4AMQAzADIAIAAtADAALgAwADAAMwAgADAALgAxADQAIABDACAALQAwAC4AMAA2ADYAIAAwAC4AMQA0ADgAIAAtADAALgAxADEANQAgADAALgAxADYANAAgAC0AMAAuADEAMQA1ACAAMAAuADEANwA0ACAAQwAgAC0AMAAuADEAMQA1ACAAMAAuADEAOAA1ACAALQAwAC4AMAA2ADQAIAAwAC4AMQA5ADQAIAAtADAALgAwADAAMQAgADAALgAxADkANAAgAEMAIAAwAC4AMAA2ADMAIAAwAC4AMQA5ADQAIAAwAC4AMQAxADUAIAAwAC4AMQA4ADUAIAAwAC4AMQAxADUAIAAwAC4AMQA3ADQAIABDACAAMAAuADEAMQA1ACAAMAAuADEANgA0ACAAMAAuADAANgAxACAAMAAuADEANgAxACAALQAwAC4AMAAwADMAIAAwAC4AMQA2ADgAIABDACAALQAwAC4AMAA2ADYAIAAwAC4AMQA3ADYAIAAtADAALgAxADEANQAgADAALgAxADkAMgAgAC0AMAAuADEAMQA1ACAAMAAuADIAMAAzACAAQwAgAC0AMAAuADEAMQA1ACAAMAAuADIAMQAzACAALQAwAC4AMAA2ADQAIAAwAC4AMgAyADMAIAAwACAAMAAuADIAMgAzACAAQwAgADAALgAwADYANAAgADAALgAyADIAMwAgADAALgAxADEANQAgADAALgAyADEANAAgADAALgAxADEANQAgADAALgAyADAAMwAgAEMAIAAwAC4AMQAxADUAIAAwAC4AMQA5ADIAIAAwAC4AMAA2ADEAIAAwAC4AMQA4ADkAIAAtADAALgAwADAAMgAgADAALgAxADkANwAgAEMAIAAtADAALgAwADYANQAgADAALgAyADAANQAgAC0AMAAuADEAMQA2ACAAMAAuADIAMgAgAC0AMAAuADEAMQA1ACAAMAAuADIAMwAxACAAQwAgAC0AMAAuADEAMQA0ACAAMAAuADIANAAyACAALQAwAC4AMAA2ADQAIAAwAC4AMgA1ACAAMAAgADAALgAyADUAIABDACAAMAAuADAANgA0ACAAMAAuADIANQAgADAALgAxADEANQAgADAALgAyADQAMQAgADAALgAxADEANQAgADAALgAyADMAIABDACAAMAAuADEAMQA1ACAAMAAuADIAMgAgADAALgAwADYAMwAgADAALgAyADEANwAgADAAIAAwAC4AMgAyADYAIABFAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[54] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[54] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1505;3QUAAPr7ANYFAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQNgAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wSNBQAA+vsAhgUAAAEAAAAJfQUAAPoAAQEBAnwCAABNACAAMAAgADAAIABjACAAMAAuADAAMAA0ACAALQAwAC4AMAAwADgAIAAwAC4AMAAxADgAIAAtADAALgAwADEANgAgADAALgAwADIAMwAgAC0AMAAuADAAMQA2ACAAYwAgADAALgAwADMAMQAgADAAIAAwAC4AMAA2ADMAIAAwAC4AMQAyADUAIAAwAC4AMAA2ADMAIAAwAC4AMgA1ACAAYwAgADAAIAAtADAALgAwADYAMwAgADAALgAwADEANgAgAC0AMAAuADEAMgA1ACAAMAAuADAAMwAxACAALQAwAC4AMQAyADUAIABjACAAMAAuADAAMQA2ACAAMAAgADAALgAwADMAMQAgADAALgAwADYAMwAgADAALgAwADMAMQAgADAALgAxADIANQAgAGMAIAAwACAALQAwAC4AMAAzADEAIAAwAC4AMAAwADgAIAAtADAALgAwADYAMwAgADAALgAwADEANgAgAC0AMAAuADAANgAzACAAYwAgADAALgAwADAAOAAgADAAIAAwAC4AMAAxADYAIAAwAC4AMAAzADEAIAAwAC4AMAAxADYAIAAwAC4AMAA2ADMAIABjACAAMAAgAC0AMAAuADAAMQA2ACAAMAAuADAAMAA0ACAALQAwAC4AMAAzADEAIAAwAC4AMAAwADgAIAAtADAALgAwADMAMQAgAGMAIAAwAC4AMAAwADQAIAAwACAAMAAuADAAMAA4ACAAMAAuADAAMQA2ACAAMAAuADAAMAA4ACAAMAAuADAAMwAxACAAYwAgADAAIAAtADAALgAwADAAOAAgADAALgAwADAAMgAgAC0AMAAuADAAMQA2ACAAMAAuADAAMAA0ACAALQAwAC4AMAAxADYAIABjACAAMAAuADAAMAAxACAAMAAgADAALgAwADAANAAgADAALgAwADAAOAAgADAALgAwADAANAAgADAALgAwADEANgAgAGMAIAAwACAALQAwAC4AMAAwADQAIAAwAC4AMAAwADEAIAAtADAALgAwADAAOAAgADAALgAwADAAMgAgAC0AMAAuADAAMAA4ACAAYwAgADAAIAAwAC4AMAAwADEAIAAwAC4AMAAwADIAIAAwAC4AMAAwADQAIAAwAC4AMAAwADIAIAAwAC4AMAAwADgAIABjACAAMAAgAC0AMAAuADAAMAAyACAAMAAgAC0AMAAuADAAMAA0ACAAMAAuADAAMAAxACAALQAwAC4AMAAwADQAIABjACAAMAAgADAALgAwADAAMQAgADAALgAwADAAMQAgADAALgAwADAAMgAgADAALgAwADAAMQAgADAALgAwADAANAAgAGMAIAAwACAALQAwAC4AMAAwADEAIAAwACAALQAwAC4AMAAwADIAIAAwACAALQAwAC4AMAAwADMAIABjACAAMAAuADAAMAAxACAAMAAgADAALgAwADAAMQAgADAALgAwADAAMQAgADAALgAwADAAMQAgADAALgAwADAAMgAgAGMAIAAwAC4AMAAwADEAIAAwACAAMAAuADAAMAAxACAALQAwAC4AMAAwADEAIAAwAC4AMAAwADEAIAAtADAALgAwADAAMgAgAGMAIAAwAC4AMAAwADEAIAAwACAAMAAuADAAMAAxACAAMAAuADAAMAAxACAAMAAuADAAMAAxACAAMAAuADAAMAAyACAARQADAAAAAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[55] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[55] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1581;KQYAAPr7ACIGAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQNwAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wTZBQAA+vsA0gUAAAEAAAAJyQUAAPoAAQEBAqICAABNACAAMAAgADAAIABDACAAMAAuADAAMAA0ACAALQAwAC4AMAA2ADcAIAAtADAALgAwADQANgAgAC0AMAAuADEAMgA1ACAALQAwAC4AMQAxADMAIAAtADAALgAxADIAOQAgAEMAIAAtADAALgAxADcANwAgAC0AMAAuADEAMwA0ACAALQAwAC4AMgAzADcAIAAtADAALgAwADgAOQAgAC0AMAAuADIANAAxACAALQAwAC4AMAAyADQAIABDACAALQAwAC4AMgA0ADYAIAAwAC4AMAAzADYAIAAtADAALgAyADAANAAgADAALgAwADkAMgAgAC0AMAAuADEANAA0ACAAMAAuADAAOQA2ACAAQwAgAC0AMAAuADAAOAA5ACAAMAAuADAAOQA5ACAALQAwAC4AMAAzADcAIAAwAC4AMAA2ADIAIAAtADAALgAwADMAMwAgADAALgAwADAANgAgAEMAIAAtADAALgAwADIAOQAgAC0AMAAuADAANAA1ACAALQAwAC4AMAA2ADQAIAAtADAALgAwADkAMwAgAC0AMAAuADEAMQA1ACAALQAwAC4AMAA5ADcAIABDACAALQAwAC4AMQA2ADIAIAAtADAALgAxACAALQAwAC4AMgAwADYAIAAtADAALgAwADYAOQAgAC0AMAAuADIAMAA5ACAALQAwAC4AMAAyADIAIABDACAALQAwAC4AMgAxADIAIAAwAC4AMAAyACAALQAwAC4AMQA4ADQAIAAwAC4AMAA2ADEAIAAtADAALgAxADQAMgAgADAALgAwADYAMwAgAEMAIAAtADAALgAxADAANAAgADAALgAwADYANgAgAC0AMAAuADAANgA4ACAAMAAuADAANAAyACAALQAwAC4AMAA2ADUAIAAwAC4AMAAwADQAIABDACAALQAwAC4AMAA2ADMAIAAtADAALgAwADMAIAAtADAALgAwADgANAAgAC0AMAAuADAANgAzACAALQAwAC4AMQAxADcAIAAtADAALgAwADYANQAgAEMAIAAtADAALgAxADQANgAgAC0AMAAuADAANgA3ACAALQAwAC4AMQA3ADUAIAAtADAALgAwADQAOQAgAC0AMAAuADEANwA3ACAALQAwAC4AMAAyACAAQwAgAC0AMAAuADEANwA5ACAAMAAuADAAMAA1ACAALQAwAC4AMQA2ADQAIAAwAC4AMAAyADkAIAAtADAALgAxADQAIAAwAC4AMAAzADEAIABDACAALQAwAC4AMQAyACAAMAAuADAAMwAzACAALQAwAC4AMAA5ADkAIAAwAC4AMAAyADIAIAAtADAALgAwADkAOAAgADAALgAwADAAMgAgAEMAIAAtADAALgAwADkANgAgAC0AMAAuADAAMQA0ACAALQAwAC4AMQAwADQAIAAtADAALgAwADMAMQAgAC0AMAAuADEAMQA5ACAALQAwAC4AMAAzADMAIABDACAALQAwAC4AMQAzADEAIAAtADAALgAwADMAMwAgAC0AMAAuADEANAAzACAALQAwAC4AMAAyADkAIAAtADAALgAxADQANQAgAC0AMAAuADAAMQA4ACAAQwAgAC0AMAAuADEANAA2ACAALQAwAC4AMAAxADEAIAAtADAALgAxADQANAAgAC0AMAAuADAAMAA0ACAALQAwAC4AMQAzADgAIAAtADAALgAwADAAMQAgAEMAIAAtADAALgAxADMANQAgADAAIAAtADAALgAxADMAMwAgADAAIAAtADAALgAxADMAIAAtADAALgAwADAAMQAgAEUAAwAAAAD7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7";
+    PRESET_TYPES[56] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[56] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;273;DQEAAPr7AAYBAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQOAAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wS9AAAA+vsAtgAAAAEAAAAJrQAAAPoAAQEBAhQAAABNACAAMAAgADAAIABMACAAMAAuADIANQAgAC0AMAAuADIANQAgAEUAAwAAAAD7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7";
+    PRESET_TYPES[57] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[57] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;365;aQEAAPr7AGIBAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQOQAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wQZAQAA+vsAEgEAAAEAAAAJCQEAAPoAAQEBAkIAAABNACAAMAAgADAAIABMACAAMAAgAC0AMAAuADEAMgA1ACAAQwAgADAAIAAtADAALgAxADgAMQAgADAALgAwADYAOQAgAC0AMAAuADIANQAgADAALgAxADIANQAgAC0AMAAuADIANQAgAEwAIAAwAC4AMgA1ACAALQAwAC4AMgA1ACAARQADAAAAAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[58] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[58] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;441;tQEAAPr7AK4BAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQOgAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wRlAQAA+vsAXgEAAAEAAAAJVQEAAPoAAQEBAmgAAABNACAAMAAgADAAIABMACAAMAAuADAANAAgADAALgAwADYANwAgAEMAIAAwAC4AMAA0ADkAIAAwAC4AMAA4ADEAIAAwAC4AMAA1ADQAIAAwAC4AMQAwADIAIAAwAC4AMAA1ADQAIAAwAC4AMQAyADQAIABDACAAMAAuADAANQA0ACAAMAAuADEANAA5ACAAMAAuADAANAA5ACAAMAAuADEANgA5ACAAMAAuADAANAAgADAALgAxADgAMwAgAEwAIAAwACAAMAAuADIANQAgAEUAAwAAAAD7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7";
+    PRESET_TYPES[59] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[59] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;533;EQIAAPr7AAoCAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQOwAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wTBAQAA+vsAugEAAAEAAAAJsQEAAPoAAQEBApYAAABNACAAMAAgADAAIABDACAAMAAgAC0AMAAuADAAMwA1ACAAMAAuADAAMgA4ACAALQAwAC4AMAA2ADIAIAAwAC4AMAA2ADIAIAAtADAALgAwADYAMgAgAEMAIAAwAC4AMAA5ADcAIAAtADAALgAwADYAMgAgADAALgAxADIANQAgAC0AMAAuADAAMwA1ACAAMAAuADEAMgA1ACAAMAAgAEMAIAAwAC4AMQAyADUAIAAwAC4AMAAzADUAIAAwAC4AMQA1ADMAIAAwAC4AMAA2ADIAIAAwAC4AMQA4ADgAIAAwAC4AMAA2ADIAIABDACAAMAAuADIAMgAyACAAMAAuADAANgAyACAAMAAuADIANQAgADAALgAwADMANQAgADAALgAyADUAIAAwACAARQADAAAAAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[60] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[60] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;791;EwMAAPr7AAwDAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQPAAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wTDAgAA+vsAvAIAAAEAAAAJswIAAPoAAQEBAhcBAABNACAAMAAgADAAIABDACAAMAAuADAAMAAyACAAMAAuADAANQAzACAAMAAuADAAMAA3ACAAMAAuADEAMgA3ACAAMAAuADAAMgA1ACAAMAAuADEAMgA2ACAAQwAgADAALgAwADUAMQAgADAALgAxADIANgAgADAALgAwADUAMwAgAC0AMAAuADEAMgAyACAAMAAuADAAOAA0ACAALQAwAC4AMQAyADMAIABDACAAMAAuADEAMQAyACAALQAwAC4AMQAyADMAIAAwAC4AMAA5ADcAIAAwAC4AMAA5ADQAIAAwAC4AMQAyADQAIAAwAC4AMAA5ADMAIABDACAAMAAuADEANQAyACAAMAAuADAAOQAzACAAMAAuADEAMwA3ACAALQAwAC4AMAA2ADQAIAAwAC4AMQA2ADcAIAAtADAALgAwADYANAAgAEMAIAAwAC4AMQA5ADQAIAAtADAALgAwADYANAAgADAALgAxADcAOQAgADAALgAwADQAMgAgADAALgAyADAAMwAgADAALgAwADQAMgAgAEMAIAAwAC4AMgAyADYAIAAwAC4AMAA0ADIAIAAwAC4AMgAxADQAIAAtADAALgAwADMAOQAgADAALgAyADMANQAgAC0AMAAuADAAMwA5ACAAQwAgADAALgAyADQANwAgAC0AMAAuADAAMwA5ACAAMAAuADIANAA4ACAALQAwAC4AMAAxADcAIAAwAC4AMgA0ADkAIAAwACAARQADAAAAAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[61] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[61] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;1917;eQcAAPr7AHIHAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQPQAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wQpBwAA+vsAIgcAAAEAAAAJGQcAAPoAAQEBAkoDAABNACAAMAAgADAAIABDACAALQAwAC4AMAAwADgAIAAwAC4AMAAwADgAIAAtADAALgAwADEANwAgADAALgAwADEANgAgAC0AMAAuADAAMgAxACAAMAAuADAAMgA2ACAAQwAgAC0AMAAuADAAMgA1ACAAMAAuADAAMwA3ACAALQAwAC4AMAAyADcAIAAwAC4AMAA1ACAALQAwAC4AMAAyADkAIAAwAC4AMAA2ADMAIABDACAALQAwAC4AMAAzADEAIAAwAC4AMAA3ADYAIAAtADAALgAwADIAOQAgADAALgAwADgANwAgAC0AMAAuADAAMgA3ACAAMAAuADAAOQA5ACAAQwAgAC0AMAAuADAAMgA1ACAAMAAuADEAMQAgAC0AMAAuADAAMgAyACAAMAAuADEAMgAyACAALQAwAC4AMAAxADUAIAAwAC4AMQAzADIAIABDACAALQAwAC4AMAAwADkAIAAwAC4AMQA0ADIAIAAwAC4AMAAwADEAIAAwAC4AMQA1ACAAMAAuADAAMQAyACAAMAAuADEANQA2ACAAQwAgADAALgAwADIAMgAgADAALgAxADYAMgAgADAALgAwADMANAAgADAALgAxADYANgAgADAALgAwADQANgAgADAALgAxADYAOAAgAEMAIAAwAC4AMAA1ADgAIAAwAC4AMQA3ACAAMAAuADAANwAgADAALgAxADcAIAAwAC4AMAA4ADEAIAAwAC4AMQA2ADgAIABDACAAMAAuADAAOQAzACAAMAAuADEANgA2ACAAMAAuADEAMAA0ACAAMAAuADEANgAxACAAMAAuADEAMQAzACAAMAAuADEANQAzACAAQwAgADAALgAxADIAMgAgADAALgAxADQANgAgADAALgAxADMAIAAwAC4AMQAzADcAIAAwAC4AMQAzADQAIAAwAC4AMQAyADYAIABDACAAMAAuADEAMwA5ACAAMAAuADEAMQA2ACAAMAAuADEANAAxACAAMAAuADEAMAAyACAAMAAuADEANAAxACAAMAAuADAAOQAxACAAQwAgADAALgAxADQAMgAgADAALgAwADgAIAAwAC4AMQA0ADEAIAAwAC4AMAA2ADcAIAAwAC4AMQAzADYAIAAwAC4AMAA1ADYAIABDACAAMAAuADEAMwAxACAAMAAuADAANAA2ACAAMAAuADEAMgAyACAAMAAuADAAMwA4ACAAMAAuADEAMQAgADAALgAwADMANAAgAEMAIAAwAC4AMAA5ADgAIAAwAC4AMAAzADEAIAAwAC4AMAA4ADYAIAAwAC4AMAAzADUAIAAwAC4AMAA3ADgAIAAwAC4AMAA0ADIAIABDACAAMAAuADAANwAxACAAMAAuADAANAA5ACAAMAAuADAANgA2ACAAMAAuADAANgAgADAALgAwADYANQAgADAALgAwADcAMwAgAEMAIAAwAC4AMAA2ADUAIAAwAC4AMAA4ADYAIAAwAC4AMAA2ADYAIAAwAC4AMAA5ADgAIAAwAC4AMAA3ADEAIAAwAC4AMQAwADgAIABDACAAMAAuADAANwA2ACAAMAAuADEAMQA4ACAAMAAuADAANwA1ACAAMAAuADEAMgAgADAALgAwADkANQAgADAALgAxADMAMwAgAEMAIAAwAC4AMQAxADMAIAAwAC4AMQA0ADcAIAAwAC4AMQAzADEAIAAwAC4AMQA0ADMAIAAwAC4AMQA0ADIAIAAwAC4AMQA0ADQAIABDACAAMAAuADEANQAzACAAMAAuADEANAA0ACAAMAAuADEANgAyACAAMAAuADEANAAgADAALgAxADcAMwAgADAALgAxADMANgAgAEMAIAAwAC4AMQA4ADUAIAAwAC4AMQAzADEAIAAwAC4AMQA5ADUAIAAwAC4AMQAyADIAIAAwAC4AMgAwADIAIAAwAC4AMQAxADQAIABDACAAMAAuADIAMAA5ACAAMAAuADEAMAA2ACAAMAAuADIAMQAyACAAMAAuADAAOQA2ACAAMAAuADIAMQA2ACAAMAAuADAAOAAgAEMAIAAwAC4AMgAxADkAIAAwAC4AMAA2ADQAIAAwAC4AMgAxADkAIAAwAC4AMAA1ADYAIAAwAC4AMgAxADkAIAAwAC4AMAA0ADQAIABDACAAMAAuADIAMQA5ACAAMAAuADAAMwAyACAAMAAuADIAMQA5ACAAMAAuADAAMgAgADAALgAyADEAOQAgADAALgAwADAAOAAgAEUAAwAAAAD7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7";
+    PRESET_TYPES[62] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[62] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;527;CwIAAPr7AAQCAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQPgAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wS7AQAA+vsAtAEAAAEAAAAJqwEAAPoAAQEBApMAAABNACAAMAAgADAAIABsACAAMAAuADAAMwA2ACAAMAAgAGwAIAAwACAAMAAuADAAMwA2ACAAbAAgADAALgAwADMANgAgADAAIABsACAAMAAgADAALgAwADMANgAgAGwAIAAwAC4AMAAzADYAIAAwACAAbAAgADAAIAAwAC4AMAAzADYAIABsACAAMAAuADAAMwA2ACAAMAAgAGwAIAAwACAAMAAuADAAMwA2ACAAbAAgADAALgAwADMANgAgADAAIABsACAAMAAgADAALgAwADMANgAgAGwAIAAwAC4AMAAzADYAIAAwACAAbAAgADAAIAAwAC4AMAAzADYAIABsACAAMAAuADAAMwA2ACAAMAAgAGwAIAAwACAAMAAuADAAMwA2ACAARQADAAAAAPsAcAAAAPr7ABYAAAD6AwEPBgAAABMEAAAAMgAwADAAMAD7ARIAAAD6+wALAAAA+gABAAAANAACAPsCNwAAAPr7ADAAAAACAAAAABEAAAD6AAUAAABwAHAAdABfAHgA+wARAAAA+gAFAAAAcABwAHQAXwB5APs=";
+    PRESET_TYPES[63] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[63] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;265;BQEAAPr7AP4AAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQPwAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wS1AAAA+vsArgAAAAEAAAAJpQAAAPoAAQEBAhAAAABNACAAMAAgADAAIABMACAAMAAuADIANQAgADAAIABFAAMAAAAA+wBwAAAA+vsAFgAAAPoDAQ8GAAAAEwQAAAAyADAAMAAwAPsBEgAAAPr7AAsAAAD6AAEAAAA0AAIA+wI3AAAA+vsAMAAAAAIAAAAAEQAAAPoABQAAAHAAcAB0AF8AeAD7ABEAAAD6AAUAAABwAHAAdABfAHkA+w==";
+    PRESET_TYPES[64] = [];
+    PRESET_SUBTYPES = PRESET_TYPES[64] = [];
+    PRESET_SUBTYPES[0] = "PPTY;v10;267;BwEAAPr7AAABAAD6AFDDAAADAQUCBgQMUMMAAA4AAAAADwUAAAAQQAAAABEAAAAA+wAZAAAA+vsAEgAAAAEAAAAACQAAAPoDAQAAADAA+wS3AAAA+vsAsAAAAAEAAAAJpwAAAPoAAQEBAhEAAABNACAAMAAgADAAIABMACAAMAAgAC0AMAAuADIANQAgAEUAAwAAAAD7AHAAAAD6+wAWAAAA+gMBDwYAAAATBAAAADIAMAAwADAA+wESAAAA+vsACwAAAPoAAQAAADQAAgD7AjcAAAD6+wAwAAAAAgAAAAARAAAA+gAFAAAAcABwAHQAXwB4APsAEQAAAPoABQAAAHAAcAB0AF8AeQD7";
+
+
 })(window);

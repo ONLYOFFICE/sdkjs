@@ -4284,7 +4284,7 @@ function CBinaryFileWriter()
 
         oThis.WriteRecord2(1, spPr.geometry, oThis.WriteGeometry);
 
-        if ((spPr.geometry === undefined || spPr.geometry == null) && !(spPr.parent instanceof AscFormat.Point))
+        if ((spPr.geometry === undefined || spPr.geometry == null) && !(AscFormat.Point && spPr.parent instanceof AscFormat.Point))
         {
             if (bIsExistFill || bIsExistLn)
             {

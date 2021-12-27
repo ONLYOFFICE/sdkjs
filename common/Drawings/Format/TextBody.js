@@ -416,10 +416,11 @@
     };
     CTextBody.prototype.recalculateOneString = function(sText) {
         if(this.checkContentFit(sText)) {
-
             this.bFit = true;
+            this.fitWidth = this.content.Content[0].Lines[0].Ranges[0].W;
             return;
         }
+        this.fitWidth = null;
         this.bFit = false;
         var nLeftPos = 0, nRightPos = sText.length;
         var nMiddlePos;

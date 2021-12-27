@@ -732,6 +732,10 @@ Slide.prototype =
     {
         History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SlideSetTiming, this.timing, oTiming));
         this.timing = oTiming;
+        if(this.timing)
+        {
+            this.timing.setParent(this);
+        }
     },
 
     setSlideSize: function(w, h)
@@ -775,6 +779,25 @@ Slide.prototype =
         History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideRemoveFromSpTree, pos, this.cSld.spTree.slice(pos, pos + count), false));
         this.cSld.spTree.splice(pos, count);
         }
+    },
+
+    addAnimation: function(nPresetClass, nPresetId, nPresetSubtype, bReplace) {
+        var sObjectId;
+        var aSelectedObjects = this.graphicObjects.selectedObjects;
+        if(aSelectedObjects.length > 0) {
+            if(!this.timing) {
+                this.setTiming(new AscFormat.CTiming());
+            }
+            this.timing.addAnimation(nPresetClass, nPresetId, nPresetSubtype, bReplace);
+        }
+    },
+    setAnimationProperties: function(oPr) {
+        if(!this.timing) {
+            return;
+        }
+        
+        this.timing.setAnimationProperties(oPr);
+        this.showDrawingObjects();
     },
 
     isVisible: function(){
@@ -1358,6 +1381,39 @@ Slide.prototype =
                     g.DrawLockObjectRect(oLock.Get_Type(), 0, 0, Width, Height);
                 }
             }
+        }
+    },
+
+    drawAnimPane: function(oGraphics) {
+        if(this.timing) {
+            this.timing.drawAnimPane(oGraphics);
+        }
+    },
+
+    onAnimPaneResize: function(oGraphics) {
+        if(this.timing) {
+            this.timing.onAnimPaneResize(oGraphics);
+        }
+    },
+
+    onAnimPaneMouseDown: function(e, x, y) {
+        if(this.timing) {
+            this.timing.onAnimPaneMouseDown(e, x, y);
+        }
+    },
+    onAnimPaneMouseMove: function(e, x, y) {
+        if(this.timing) {
+            this.timing.onAnimPaneMouseMove(e, x, y);
+        }
+    },
+    onAnimPaneMouseUp: function(e, x, y) {
+        if(this.timing) {
+            this.timing.onAnimPaneMouseUp(e, x, y);
+        }
+    },
+    onAnimPaneMouseWheel: function(e, deltaY, X, Y) {
+        if(this.timing) {
+            this.timing.onAnimPaneMouseWheel(e, deltaY, X, Y);
         }
     },
 

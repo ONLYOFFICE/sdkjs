@@ -6739,6 +6739,12 @@ function RangeDataManagerElem(bbox, data)
 			var rangeTotal = autoFilters.worksheet.getRange3(this.Ref.r2, this.Ref.c1, this.Ref.r2, this.Ref.c2);
 			rangeTotal.cleanText()
 		}
+
+		if (this.QueryTable) {
+			this.cleanQueryTables();
+			//this.QueryTable.syncIndexes(this.TableColumns);
+		}
+
 		this.Ref = new Asc.Range(range.c1, range.r1, range.c2, range.r2);
 		//event
 		this.handlers.trigger("changeRefTablePart", this);
@@ -11696,6 +11702,148 @@ QueryTableField.prototype.clone = function() {
 		return this.name;
 	};
 
+	function CPrintPreviewState(wb) {
+		this.ctx = null;
+		this.pages = null;
+
+		//отслеживаем активную страницу и активный лист
+		this.activePage = null;
+		this.activeSheet = null;
+
+		this.start = null;
+
+		//зум для масштабирования страницы и зум печати
+		this.pageZoom = null;
+		this.printZoom = null;
+
+		this.wb = wb;
+		//после закрытия окна предварительной печати возвращаем зум и актиный лист
+		this.realZoom = null;
+		this.realActiveSheet = null;
+
+		return this;
+	}
+
+	CPrintPreviewState.prototype.init = function () {
+		this.start = true;
+	};
+	CPrintPreviewState.prototype.isStart = function () {
+		return this.start;
+	};
+	CPrintPreviewState.prototype.setCtx = function (val) {
+		this.ctx = val;
+	};
+	CPrintPreviewState.prototype.setPages = function (val) {
+		this.pages = val;
+	};
+	CPrintPreviewState.prototype.getCtx = function () {
+		return this.ctx;
+	};
+	CPrintPreviewState.prototype.getPages = function () {
+		return this.pages;
+	};
+	CPrintPreviewState.prototype.getPage = function (index) {
+		return this.pages && this.pages.arrPages[index];
+	};
+	CPrintPreviewState.prototype.clean = function (revertZoom) {
+		//this.ctx = null;
+		this.pages = null;
+		this.activePage = null;
+		this.activeSheet = null;
+		this.start = null;
+
+		if (revertZoom) {
+			this.wb.model.setActive(this.realActiveSheet);
+			this.wb.changeZoom(this.realZoom);
+		}
+		this.realActiveSheet = null;
+		this.realZoom = null;
+	};
+	CPrintPreviewState.prototype.getPagesLength = function () {
+		return this.pages && this.pages.arrPages.length;
+	};
+	CPrintPreviewState.prototype.setPage = function (index, checkZoom) {
+		this.activePage = index;
+		var page = this.getPage(this.activePage);
+		var newIndexSheet = page && page.indexWorksheet;
+		var needUpdateActiveSheet;
+		if (newIndexSheet !== this.activeSheet) {
+			this.activeSheet = newIndexSheet;
+			needUpdateActiveSheet = true;
+		}
+		if (checkZoom) {
+			this.checkZoom(needUpdateActiveSheet);
+		}
+	};
+	CPrintPreviewState.prototype.checkZoom = function (needUpdateActiveSheet) {
+		if (null === this.realZoom) {
+			this.realZoom = this.wb.getZoom();
+		}
+		if (null === this.realActiveSheet) {
+			this.realActiveSheet = this.wb.model.getActive();
+		}
+
+		var page = this.getPage(this.activePage);
+		var pageWidth = page && page.pageWidth ? page.pageWidth : AscCommon.c_oAscPrintDefaultSettings.PageWidth;
+		var pageHeight = page && page.pageHeight ? page.pageHeight : AscCommon.c_oAscPrintDefaultSettings.PageHeight;
+
+		var canvasTopPadding = 24;
+		var ppiX = AscCommon.AscBrowser.convertToRetinaValue(96, true);
+		var height = Math.floor(pageHeight * Asc.getCvtRatio(3/*mm*/, 0/*px*/, ppiX));
+		var width = Math.floor(pageWidth * Asc.getCvtRatio(3/*mm*/, 0/*px*/, ppiX));
+		var canvasHeight = this.ctx.canvas.parentElement.clientHeight;
+		var canvasWidth = this.ctx.canvas.parentElement.clientWidth;
+
+		var kF = 1;
+		if (height > canvasHeight) {
+			kF = canvasHeight / height;
+		}
+		if (width * kF > canvasWidth) {
+			kF = canvasWidth / width;
+		}
+
+		kF *= (height * kF) / (height * kF + canvasTopPadding)
+
+		var isChangeForZoom;
+		var trueZoom = kF * AscCommon.AscBrowser.convertToRetinaValue(1, true);
+		var _height = Math.floor(height * kF);
+		var _width = Math.floor(width * kF);
+		if (trueZoom !== this.pageZoom) {
+			this.pageZoom = trueZoom;
+			this.ctx.canvas.style.height = _height + 2 + "px";
+			this.ctx.canvas.style.width = _width + 2 + "px";
+			this.ctx.canvas.height = AscCommon.AscBrowser.convertToRetinaValue(_height, true);
+			this.ctx.canvas.width = AscCommon.AscBrowser.convertToRetinaValue(_width, true);
+			isChangeForZoom = true;
+		}
+		this.ctx.canvas.style.marginLeft = canvasWidth/2 - _width / 2 + "px";
+		this.ctx.canvas.style.marginTop = canvasHeight/2 - _height / 2 + canvasTopPadding * kF + "px";
+
+
+		kF = trueZoom;
+		if (!page || page.scale !== this.printZoom) {
+			this.printZoom = page ? page.scale : 1;
+			this.pageZoom = kF;
+			isChangeForZoom = true;
+		}
+
+		if (isChangeForZoom || needUpdateActiveSheet) {
+			//change zoom on default
+			if (needUpdateActiveSheet) {
+				this.wb.model.setActive(this.activeSheet);
+			}
+			this.wb.changeZoom(this.pageZoom * this.printZoom);
+			this.ctx.changeZoom(this.pageZoom* this.printZoom);
+		}
+		var oGraphics = new AscCommon.CGraphics();
+		var nWidth = this.ctx.getWidth(0);
+		var nHeight = this.ctx.getHeight(0);
+		var dWidth = this.ctx.getWidth(3);
+		var dHeight = this.ctx.getHeight(3);
+		oGraphics.init(this.ctx.canvas.getContext('2d'), nWidth, nHeight, dWidth, dHeight);
+		oGraphics.m_oFontManager = AscCommon.g_fontManager;
+		this.ctx.DocumentRenderer = oGraphics;
+	};
 
 
 	//----------------------------------------------------------export----------------------------------------------------
@@ -12054,5 +12202,7 @@ QueryTableField.prototype.clone = function() {
 	prot["asc_getFormulaResult"] = prot.asc_getFormulaResult;
 	prot["asc_getFunctionResult"] = prot.asc_getFunctionResult;
 	prot["asc_getName"] = prot.asc_getName;
+
+	window["AscCommonExcel"].CPrintPreviewState = CPrintPreviewState;
 
 })(window);

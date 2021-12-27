@@ -1109,11 +1109,12 @@
 		WorkbookSaltValue: 3,
 		LockStructure: 4,
 		LockWindows: 5,
-		RevisionsAlgorithmName: 6,
-		RevisionsHashValue: 7,
-		RevisionsSaltValue: 8,
-		RevisionsSpinCount: 9,
-		LockRevision: 10
+		Password: 6,
+		RevisionsAlgorithmName: 7,
+		RevisionsHashValue: 8,
+		RevisionsSaltValue: 9,
+		RevisionsSpinCount: 10,
+		LockRevision: 11
 	};
     var c_oSerCustoms = {
         Custom: 0, 
@@ -1694,7 +1695,7 @@
             }
             if (null !== customXml.Content) {
                 this.bs.WriteItem(c_oSerCustoms.Content, function() {
-                    oThis.memory.WriteString3(customXml.Content);
+                    oThis.memory.WriteBuffer(customXml.Content, 0, customXml.Content.length)
                 });
             }
         };
@@ -3709,6 +3710,11 @@
 				this.memory.WriteByte(c_oSerPropLenType.Byte);
 				this.memory.WriteBool(workbookProtection.lockRevision);
 			}
+			if (null != workbookProtection.workbookPassword) {
+				this.memory.WriteByte(c_oSerWorkbookProtection.Password);
+				this.memory.WriteByte(c_oSerPropLenType.Byte);
+				this.memory.WriteString2(workbookProtection.workbookPassword);
+			}
 
 		    if (null != workbookProtection.revisionsAlgorithmName) {
 				this.memory.WriteByte(c_oSerWorkbookProtection.RevisionsAlgorithmName);
@@ -4124,6 +4130,11 @@
 				this.memory.WriteByte(c_oSerWorksheetProtection.FormatColumns);
 				this.memory.WriteByte(c_oSerPropLenType.Byte);
 				this.memory.WriteBool(sheetProtection.formatColumns);
+			}
+			if (null != sheetProtection.formatRows) {
+				this.memory.WriteByte(c_oSerWorksheetProtection.FormatRows);
+				this.memory.WriteByte(c_oSerPropLenType.Byte);
+				this.memory.WriteBool(sheetProtection.formatRows);
 			}
 			if (null != sheetProtection.insertColumns) {
 				this.memory.WriteByte(c_oSerWorksheetProtection.InsertColumns);
@@ -8297,6 +8308,8 @@
 				workbookProtection.workbookHashValue = this.stream.GetString2LE(length);
 			} else if (c_oSerWorkbookProtection.WorkbookSaltValue == type) {
 				workbookProtection.workbookSaltValue = this.stream.GetString2LE(length);
+			} else if (c_oSerWorkbookProtection.Password == type) {
+				workbookProtection.workbookPassword = this.stream.GetString2LE(length);
 			} else {
 				res = c_oSerConstants.ReadUnknown;
 			}
@@ -8909,7 +8922,12 @@
             if ( c_oSerSheetFormatPrTypes.DefaultColWidth == type )
                 oWorksheet.oSheetFormatPr.dDefaultColWidth = this.stream.GetDoubleLE();
             else if (c_oSerSheetFormatPrTypes.BaseColWidth === type)
-                oWorksheet.oSheetFormatPr.nBaseColWidth = this.stream.GetULongLE();
+            {
+                var _nBaseColWidth = this.stream.GetULongLE();
+                if (_nBaseColWidth > 0) {
+                    oWorksheet.oSheetFormatPr.nBaseColWidth = _nBaseColWidth;
+                }
+            }
             else if ( c_oSerSheetFormatPrTypes.DefaultRowHeight == type )
             {
                 var oAllRow = oWorksheet.getAllRow();
@@ -10663,7 +10681,8 @@
             } else if (c_oSerCustoms.ItemId === type) {
                 custom.ItemId = this.stream.GetString2LE(length);
             } else if (c_oSerCustoms.Content === type) {
-                custom.Content = this.stream.GetString2LE(length);
+                //поскольку данную строку не использую, храню в виде массива. если нужно будет строка, то не забыть про BOM
+                custom.Content = this.stream.GetBuffer(length);
             } else
                 res = c_oSerConstants.ReadUnknown;
             return res;

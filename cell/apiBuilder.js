@@ -111,9 +111,11 @@
 	 * @property {ApiName} DefName - Returns the ApiName object.
 	 * @property {ApiComment | null} Comments - Returns the ApiComment collection that represents all the comments from the specified worksheet.
 	 * @property {'xlDownward' | 'xlHorizontal' | 'xlUpward' | 'xlVertical'} Orientation - Sets an angle to the current cell range.
+	 * @property {ApiAreas} Areas - Returns a collection of the areas.
 	 */
-	function ApiRange(range) {
+	function ApiRange(range, areas) {
 		this.range = range;
+		this.areas = areas || null;
 	}
 
 
@@ -233,6 +235,20 @@
 	function ApiComment(comment, ws) {
 		this.Comment = comment;
 		this.WS = ws;
+	}
+
+	/**
+	 * Class representing the areas.
+	 * @constructor
+	 * @property {number} Count - Returns a value that represents the number of objects in the collection.
+	 * @property {ApiRange} Parent - Returns the parent object for the specified object.
+	 */
+	function ApiAreas(items, parent) {
+		this.Items = [];
+		this._parent = parent;
+		for (var i = 0; i < items.length; i++) {
+			this.Items.push(new ApiRange(items[i]));
+		}
 	}
 
 	/**
@@ -729,7 +745,12 @@
 	 */
 	ApiWorksheet.prototype.GetSelection = function () {
 		var r = this.worksheet.selectionRange.getLast();
-		return new ApiRange(this.worksheet.getRange3(r.r1, r.c1, r.r2, r.c2));
+		var ranges = this.worksheet.selectionRange.ranges;
+		var arr = [];
+		for (var i = 0; i < ranges.length; i++) {
+			arr.push(this.worksheet.getRange3(ranges[i].r1, ranges[i].c1, ranges[i].r2, ranges[i].c2));
+		}
+		return new ApiRange(this.worksheet.getRange3(r.r1, r.c1, r.r2, r.c2), arr);
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "Selection", {
 		get: function () {
@@ -1797,21 +1818,48 @@
 	 * Set the value for the current cell or a cell range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {string} sValue - The general value for the cell or cell range in string format.
+	 * @param {string | bool | number | Array[] | Array[[]]} data - The general value for the cell or cell range in string format.
 	 * @return {bool} - returns false if such a range does not exist.
 	 */
-	ApiRange.prototype.SetValue = function (sValue) {
-		sValue = checkFormat(sValue);
+	ApiRange.prototype.SetValue = function (data) {
 		if (!this.range)
 			return false;
-		this.range.setValue(sValue.toString());
-		if (sValue.type === AscCommonExcel.cElementType.number) {
-			this.SetNumberFormat(AscCommon.getShortDateFormat());
+		
+		if (Array.isArray(data)) {
+			var checkDepth = function(x) { return Array.isArray(x) ? 1 + Math.max.apply(this, x.map(checkDepth)) : 0;};
+			var maxDepth = checkDepth(data);
+			if (maxDepth <= 2) {
+				if (this.range.isOneCell()) {
+					data = maxDepth == 1 ? data[0] : data[0][0];
+				} else {
+					var bbox = this.range.bbox;
+					var nCol = Math.min( (bbox.c2 - bbox.c1 + 1), data.length);
+					var nRow = bbox.r2 - bbox.r1 + 1;
+					for (var i = 0; i < nCol; i++) {
+						var cRow = (nRow > data[i].length) ? data[i].length : nRow;
+						for (var k = 0; k < cRow; k++) {
+							var cell = this.range.worksheet.getRange3( (bbox.r1 + k), (bbox.c1 + i), (bbox.r1 + k), (bbox.c1 + i) );
+							var value = checkFormat( ( (maxDepth == 1) ? data[i] : data[i][k] ) );
+							cell.setValue(value.toString());
+							if (value.type === AscCommonExcel.cElementType.number)
+								cell.setNumFormat(AscCommon.getShortDateFormat());
+						}
+					}
+					// ToDo update range in setValue
+					var worksheet = this.range.worksheet;
+					worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [this.range.bbox], true);
+					return true;
+				}
+			}
 		}
+		data = checkFormat(data);
+		this.range.setValue(data.toString());
+		if (data.type === AscCommonExcel.cElementType.number)
+			this.SetNumberFormat(AscCommon.getShortDateFormat());
+
 		// ToDo update range in setValue
 		var worksheet = this.range.worksheet;
 		worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [this.range.bbox], true);
-
 		return true;
 	};
 
@@ -2636,6 +2684,115 @@
 		}
 	});*/
 
+	/**
+	 * Delete the object.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {?String} shift - Specifies how to shift cells to replace deleted cells ("up", "left")
+	 */
+	ApiRange.prototype.Delete = function(shift) {
+		if (shift && typeof Shift == "string") {
+			shift = shift.toLocaleLowerCase();
+		} else {
+			var bbox = this.range.bbox;
+			var rows = bbox.r2 - bbox.r1 + 1;
+			var cols = bbox.c2 - bbox.c1 + 1;
+			shift = (rows <= cols) ? "up" : "left";
+		}
+		if (shift == "up")
+			this.range.deleteCellsShiftUp();
+		else
+			this.range.deleteCellsShiftLeft()
+	};
+
+	/**
+	 * Inserts a cell or a range of cells into the worksheet or macro sheet and shifts other cells away to make space.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {?String} shift - Specifies which way to shift the cells ("right", "down")
+	 */
+	 ApiRange.prototype.Insert = function(shift) {
+		if (shift && typeof Shift == "string") {
+			shift = shift.toLocaleLowerCase();
+		} else {
+			var bbox = this.range.bbox;
+			var rows = bbox.r2 - bbox.r1 + 1;
+			var cols = bbox.c2 - bbox.c1 + 1;
+			shift = (rows <= cols) ? "down" : "right";
+		}
+		if (shift == "down")
+			this.range.addCellsShiftBottom();
+		else
+			this.range.addCellsShiftRight()
+	};
+
+	/**
+	 * Changes the width of the columns in the range or the height of the rows in the range to achieve the best fit.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {?bool} bRows - Defines will we make autofit rows
+	 * @param {?bool} bCols - Defines will we make autofit cols
+	 */
+	ApiRange.prototype.AutoFit = function(bRows, bCols) {
+		var index = this.range.worksheet.getIndex();
+		if (bRows)
+			this.range.worksheet.workbook.oApi.wb.getWorksheet(index).autoFitRowHeight(this.range.bbox.r1, this.range.bbox.r2);
+
+		for (var i = this.range.bbox.c1; i <= this.range.bbox.c2 && bCols; i++)
+			this.range.worksheet.workbook.oApi.wb.getWorksheet(index).autoFitColumnsWidth(i);
+	};
+
+	/**
+	 * Returns a collection of the ranges.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @return {ApiAreas}
+	 */
+	ApiRange.prototype.GetAreas = function() {
+		return new ApiAreas(this.areas || [this.range], this);
+	};
+	Object.defineProperty(ApiRange.prototype, "Areas", {
+		get: function () {
+			return this.GetAreas();
+		}
+	});
+
+	/**
+	 * Copies the range to the specified range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} destination - Specifies the new range to which the specified range will be copied
+	 */
+	ApiRange.prototype.Copy = function(destination) {
+		if (destination && destination instanceof ApiRange) {
+			var cols = this.GetCols().Count - 1;
+			var rows = this.GetRows().Count - 1;
+			var bbox = destination.range.bbox;
+			var range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols) );
+			this.range.move(range.bbox, true, destination.range.worksheet);
+		} else {
+			return new Error ("Invalid destination");
+		}
+	};
+	
+	/**
+	 * Pastes a Range object.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} rangeFrom - Specifies the range to be pasted to the current range
+	 */
+	ApiRange.prototype.Paste = function(rangeFrom) {
+		if (rangeFrom && rangeFrom instanceof ApiRange) {
+			var cols = rangeFrom.GetCols().Count - 1;
+			var rows = rangeFrom.GetRows().Count - 1;
+			var bbox = this.range.bbox;
+			var range = this.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols) );
+			rangeFrom.range.move(range.bbox, true, range.worksheet);
+		} else {
+			return new Error ("Invalid range");
+		}
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDrawing
@@ -2749,6 +2906,22 @@
 	 * @returns {?ApiDocumentContent}
 	 */
 	ApiShape.prototype.GetContent = function()
+	{
+		var oApi = Asc["editor"];
+		if(oApi && this.Drawing && this.Drawing.txBody && this.Drawing.txBody.content)
+		{
+			return oApi.private_CreateApiDocContent(this.Drawing.txBody.content);
+		}
+		return null;
+	};
+
+	/**
+	 * Get the shape inner contents where a paragraph or text runs can be inserted. 
+	 * @memberof ApiShape
+	 * @typeofeditors ["CSE"]
+	 * @returns {?ApiDocumentContent}
+	 */
+	ApiShape.prototype.GetDocContent = function()
 	{
 		var oApi = Asc["editor"];
 		if(oApi && this.Drawing && this.Drawing.txBody && this.Drawing.txBody.content)
@@ -3243,6 +3416,53 @@
 		return this.Comment.getType();
 	};
 
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiAreas
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns a value that represents the number of objects in the collection.
+	 * @memberof ApiAreas
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 */
+	ApiAreas.prototype.GetCount = function () {
+		return this.Items.length;
+	};
+	Object.defineProperty(ApiAreas.prototype, "Count", {
+		get: function () {
+			return this.GetCount();
+		}
+	});
+
+	/**
+	 * Returns a single object from a collection.
+	 * @memberof ApiAreas
+	 * @typeofeditors ["CSE"]
+	 * @param {number} ind - The index number of the object.
+	 * @returns {ApiRange}
+	 */
+	ApiAreas.prototype.GetItem = function (ind) {
+		return this.Items[ind - 1] || null;
+	};
+
+	/**
+	 * Returns a value that represents the number of objects in the collection.
+	 * @memberof ApiAreas
+	 * @typeofeditors ["CSE"]
+	 * @returns {number}
+	 */
+	 ApiAreas.prototype.GetParent = function () {
+		return this._parent;
+	};
+	Object.defineProperty(ApiAreas.prototype, "Parent", {
+		get: function () {
+			return this.GetParent();
+		}
+	});
+
 	Api.prototype["Format"]                = Api.prototype.Format;
 	Api.prototype["AddSheet"]              = Api.prototype.AddSheet;
 	Api.prototype["GetSheets"]             = Api.prototype.GetSheets;
@@ -3355,6 +3575,12 @@
 	ApiRange.prototype["SetOrientation"] = ApiRange.prototype.SetOrientation;
 	ApiRange.prototype["GetOrientation"] = ApiRange.prototype.GetOrientation;
 	ApiRange.prototype["SetSort"] = ApiRange.prototype.SetSort;
+	ApiRange.prototype["Delete"] = ApiRange.prototype.Delete;
+	ApiRange.prototype["Insert"] = ApiRange.prototype.Insert;
+	ApiRange.prototype["AutoFit"] = ApiRange.prototype.AutoFit;
+	ApiRange.prototype["GetAreas"] = ApiRange.prototype.GetAreas;
+	ApiRange.prototype["Copy"] = ApiRange.prototype.Copy;
+	ApiRange.prototype["Paste"] = ApiRange.prototype.Paste;
 
 
 	ApiDrawing.prototype["GetClassType"]               =  ApiDrawing.prototype.GetClassType;
@@ -3411,6 +3637,11 @@
 	ApiComment.prototype["GetText"]              =  ApiComment.prototype.GetText;
 	ApiComment.prototype["Delete"]               =  ApiComment.prototype.Delete;
 	ApiComment.prototype["GetClassType"]         =  ApiComment.prototype.GetClassType;
+	
+
+	ApiAreas.prototype["GetCount"]               = ApiAreas.prototype.GetCount;
+	ApiAreas.prototype["GetItem"]                = ApiAreas.prototype.GetItem;
+	ApiAreas.prototype["GetParent"]              = ApiAreas.prototype.GetParent;
 
 
 	function private_SetCoords(oDrawing, oWorksheet, nExtX, nExtY, nFromCol, nColOffset,  nFromRow, nRowOffset, pos){

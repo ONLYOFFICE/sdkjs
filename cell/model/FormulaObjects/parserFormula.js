@@ -529,6 +529,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return [localStr, localStrWithoutSheet];
 	};
+	cBaseType.prototype.getDimensions = function () {
+		return {col: 1, row: 1};
+	};
 
 	/*Basic types of an elements used into formulas*/
 	/**
@@ -6291,7 +6294,7 @@ function parserFormula( formula, parent, _ws ) {
 
 			/* Referens to DefinedNames */ else if (parserHelp.isName.call(ph, t.Formula, ph.pCurrPos)) {
 
-				if (ph.operand_str.length > g_nFormulaStringMaxLength) {
+				if (ph.operand_str.length > g_nFormulaStringMaxLength || !AscCommon.rx_r1c1DefError.test(ph.operand_str)) {
 					//TODO стоит добавить новую ошибку
 					parseResult.setError(c_oAscError.ID.FrmlWrongOperator);
 					if(!ignoreErrors) {
@@ -7179,8 +7182,8 @@ function parserFormula( formula, parent, _ws ) {
 	};
 
 	/* Сборка функции в инфиксную форму */
-	parserFormula.prototype.assembleLocale = function (locale, digitDelim) {
-		if (this.outStack.length === 1 && this.outStack[this.outStack.length - 1] instanceof cError) {
+	parserFormula.prototype.assembleLocale = function (locale, digitDelim, rFormula) {
+		if (!rFormula && this.outStack.length === 1 && this.outStack[this.outStack.length - 1] instanceof cError) {
 			return this.Formula;
 		}
 

@@ -233,6 +233,7 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_Shape]                  = AscFormat.CShape;
 		this.m_oFactoryClass[AscDFH.historyitem_type_DispUnits]              = AscFormat.CDispUnits;
 		this.m_oFactoryClass[AscDFH.historyitem_type_GroupShape]             = AscFormat.CGroupShape;
+		this.m_oFactoryClass[AscDFH.historyitem_type_LockedCanvas]           = AscFormat.CLockedCanvas;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ImageShape]             = AscFormat.CImageShape;
 		this.m_oFactoryClass[AscDFH.historyitem_type_Geometry]               = AscFormat.Geometry;
 		this.m_oFactoryClass[AscDFH.historyitem_type_Path]                   = AscFormat.Path;

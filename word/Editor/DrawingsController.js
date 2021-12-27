@@ -147,6 +147,18 @@ CDrawingsController.prototype.AddToParagraph = function(oItem, bRecalculate)
 };
 CDrawingsController.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord)
 {
+	var oDrawing = this.DrawingObjects.getMajorParaDrawing();
+	if (oDrawing && oDrawing.IsForm() && this.LogicDocument.IsFillingFormMode())
+	{
+		var oForm = oDrawing.GetInnerForm();
+		if (oForm && oForm.IsPicture())
+		{
+			oForm.ClearContentControlExt();
+			oForm.SelectContentControl();
+			return;
+		}
+	}
+
 	return this.DrawingObjects.remove(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord);
 };
 CDrawingsController.prototype.GetCursorPosXY = function()
@@ -356,12 +368,20 @@ CDrawingsController.prototype.GetDirectTextPr = function()
 };
 CDrawingsController.prototype.RemoveSelection = function(bNoCheckDrawing)
 {
-	var ParaDrawing = this.DrawingObjects.getMajorParaDrawing();
-	if (ParaDrawing)
+	var oParaDrawing = this.DrawingObjects.getMajorParaDrawing();
+	this.DrawingObjects.resetSelection(undefined, bNoCheckDrawing);
+	if (oParaDrawing)
 	{
-		ParaDrawing.GoTo_Text(undefined, false);
+		var oInnerForm = null;
+		if (oParaDrawing.IsForm() && (oInnerForm = oParaDrawing.GetInnerForm()) && oInnerForm.IsPicture())
+		{
+			var arrDrawings = oInnerForm.GetAllDrawingObjects();
+			if (arrDrawings.length)
+				oParaDrawing = arrDrawings[0];
+		}
+
+		oParaDrawing.GoTo_Text(undefined, false);
 	}
-	return this.DrawingObjects.resetSelection(undefined, bNoCheckDrawing);
 };
 CDrawingsController.prototype.IsSelectionEmpty = function(bCheckHidden)
 {

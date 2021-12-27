@@ -90,42 +90,13 @@ function CTransitionAnimation(htmlpage)
     {
         // эта функция определяет, где находится рект для перехода
 
-        var _page = this.HtmlPage;
 
-        var w = _page.m_oEditor.HtmlElement.width;
-        var h = _page.m_oEditor.HtmlElement.height;
+        var _rect   = editor.WordControl.m_oDrawingDocument.SlideCurrectRect;
 
-        var koefMMToPx = g_dKoef_mm_to_pix * AscCommon.AscBrowser.retinaPixelRatio;
-
-        var _pageWidth = _page.m_oLogicDocument.GetWidthMM() * koefMMToPx;
-        var _pageHeight = _page.m_oLogicDocument.GetHeightMM() * koefMMToPx;
-
-        var koefX = (w - 2 * _page.SlideDrawer.CONST_BORDER) / _pageWidth;
-        var koefY = (h - 2 * _page.SlideDrawer.CONST_BORDER) / _pageHeight;
-
-        var koefMin = Math.min(koefX, koefY);
-        if (koefMin < 0.05)
-            koefMin = 0.05;
-
-        var dKoef = koefMin * koefMMToPx;
-
-        var _slideW = (dKoef * _page.m_oLogicDocument.GetWidthMM()) >> 0;
-        var _slideH = (dKoef * _page.m_oLogicDocument.GetHeightMM()) >> 0;
-
-        var _centerX = (w / 2) >> 0;
-        var _centerSlideX = (dKoef * _page.m_oLogicDocument.GetWidthMM() / 2) >> 0;
-        var _hor_width_left = Math.min(0, _centerX - (_centerSlideX) - _page.SlideDrawer.CONST_BORDER);
-        var _hor_width_right = Math.max(w - 1, _centerX + (_slideW - _centerSlideX) + _page.SlideDrawer.CONST_BORDER);
-
-        var _centerY = (h / 2) >> 0;
-        var _centerSlideY = (dKoef * _page.m_oLogicDocument.GetHeightMM() / 2) >> 0;
-        var _ver_height_top = Math.min(0, _centerY - _centerSlideY - _page.SlideDrawer.CONST_BORDER);
-        var _ver_height_bottom = Math.max(h - 1, _centerX + (_slideH - _centerSlideY) + _page.SlideDrawer.CONST_BORDER);
-
-        this.Rect.x = _centerX - _centerSlideX - _hor_width_left;
-        this.Rect.y = _centerY - _centerSlideY - _ver_height_top;
-        this.Rect.w = _slideW;
-        this.Rect.h = _slideH;
+        this.Rect.x = AscCommon.AscBrowser.convertToRetinaValue(_rect.left, true);
+        this.Rect.y = AscCommon.AscBrowser.convertToRetinaValue(_rect.top, true);
+        this.Rect.w = AscCommon.AscBrowser.convertToRetinaValue(_rect.right - _rect.left, true);
+        this.Rect.h = AscCommon.AscBrowser.convertToRetinaValue(_rect.bottom - _rect.top, true);
     };
 
     this.CalculateRectDemonstration = function()
@@ -3588,6 +3559,10 @@ function CDemonstrationManager(htmlpage)
             {
                 _x -= ((oThis.HtmlPage.m_oMainParent.AbsolutePosition.L * g_dKoef_mm_to_pix) >> 0);
             }
+            if(oThis.HtmlPage.m_oApi.isEmbedVersion)
+            {
+                _y -= oThis.HtmlPage.Y;
+            }
 
             _x = _x * _w_mm / _w;
             _y = _y * _h_mm / _h;
@@ -3595,6 +3570,38 @@ function CDemonstrationManager(htmlpage)
             return { x : _x, y : _y, page : oThis.SlideNum };
         }
         return null;
+    };
+
+    this.convertCoordsToCursorWR = function(x, y)
+    {
+        var transition = oThis.Transition;
+        if(transition)
+        {
+            var _w = AscCommon.AscBrowser.convertToRetinaValue(transition.Rect.w);
+            var _h = AscCommon.AscBrowser.convertToRetinaValue(transition.Rect.h);
+            var _w_mm = oThis.HtmlPage.m_oLogicDocument.GetWidthMM();
+            var _h_mm = oThis.HtmlPage.m_oLogicDocument.GetHeightMM();
+
+            var _x = x * _w / _w_mm;
+            var _y = y * _h / _h_mm;
+
+
+            if (oThis.HtmlPage.m_oApi.isReporterMode)
+            {
+                _x += ((oThis.HtmlPage.m_oMainParent.AbsolutePosition.L * g_dKoef_mm_to_pix) >> 0);
+            }
+            if(oThis.HtmlPage.m_oApi.isEmbedVersion)
+            {
+                _y += oThis.HtmlPage.Y;
+            }
+
+            var nRetX = _x + AscCommon.AscBrowser.convertToRetinaValue(transition.Rect.x);
+            var nRetY = _y + AscCommon.AscBrowser.convertToRetinaValue(transition.Rect.y);
+
+            return { X : nRetX, Y : nRetY, Error: false};
+        }
+
+        return { x : 0, y : 0, Error: true};
     };
 
     this.CheckMouseDown = function(x, y, page)

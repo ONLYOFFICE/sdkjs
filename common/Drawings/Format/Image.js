@@ -717,6 +717,7 @@ CImageShape.prototype.draw = function(graphics, transform)
     }
     graphics.reset();
     graphics.SetIntegerGrid(true);
+    this.drawAnimLabels && this.drawAnimLabels(graphics);
 };
 
 
@@ -840,6 +841,9 @@ CImageShape.prototype.Load_LinkData = function(linkData)
 {
 };
 
+    CImageShape.prototype.getTypeName = function() {
+        return AscCommon.translateManager.getValue("Picture");
+    };
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].CImageShape = CImageShape;

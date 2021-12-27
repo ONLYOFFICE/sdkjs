@@ -69,6 +69,7 @@ CChangesParaFieldAddItem.prototype.Undo = function()
 	oField.private_UpdateSpellChecking();
 	oField.private_UpdateTrackRevisions();
 	oField.private_CheckUpdateBookmarks(this.Items);
+	oField.private_UpdateSelectionPosOnRemove(this.Pos, this.Items.length);
 	oField.SetIsRecalculated(false);
 };
 CChangesParaFieldAddItem.prototype.Redo = function()
@@ -82,6 +83,7 @@ CChangesParaFieldAddItem.prototype.Redo = function()
 	oField.private_UpdateTrackRevisions();
 	oField.private_CheckUpdateBookmarks(this.Items);
 	oField.private_UpdateSpellChecking();
+	oField.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
 	oField.SetIsRecalculated(false);
 
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
@@ -129,6 +131,7 @@ CChangesParaFieldAddItem.prototype.Load = function(Color)
 				Element.SetParent(oField);
 
 			oField.Content.splice(Pos, 0, Element);
+			oField.private_UpdateSelectionPosOnAdd(Pos, 1);
 			AscCommon.CollaborativeEditing.Update_DocumentPositionsOnAdd(oField, Pos);
 		}
 	}
@@ -171,6 +174,7 @@ CChangesParaFieldRemoveItem.prototype.Undo = function()
 	oField.private_UpdateSpellChecking();
 	oField.private_CheckUpdateBookmarks(this.Items);
 	oField.private_UpdateTrackRevisions();
+	oField.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
 	oField.SetIsRecalculated(false);
 
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
@@ -195,6 +199,7 @@ CChangesParaFieldRemoveItem.prototype.Redo = function()
 	oField.private_UpdateTrackRevisions();
 	oField.private_CheckUpdateBookmarks(this.Items);
 	oField.private_UpdateSpellChecking();
+	oField.private_UpdateSelectionPosOnRemove(this.Pos, this.Items.length);
 	oField.SetIsRecalculated(false);
 };
 CChangesParaFieldRemoveItem.prototype.private_WriteItem = function(Writer, Item)
@@ -216,6 +221,7 @@ CChangesParaFieldRemoveItem.prototype.Load = function(Color)
 			continue;
 
 		oField.Content.splice(ChangesPos, 1);
+		oField.private_UpdateSelectionPosOnRemove(ChangesPos, 1);
 		AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(oField, ChangesPos, 1);
 	}
 	oField.private_UpdateTrackRevisions();

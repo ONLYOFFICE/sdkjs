@@ -6850,86 +6850,86 @@ window["Asc"]["spreadsheet_api"].prototype.openDocument = function(file) {
     
     setTimeout(function() {
                
-               //console.log("JS - openDocument()");
+        //console.log("JS - openDocument()");
                
-               t._openDocument(file.data);
-               
-               var thenCallback = function() {
-               t.wb = new AscCommonExcel.WorkbookView(t.wbModel, t.controller, t.handlers,
-                                                      window["_null_object"], window["_null_object"], t,
-                                                      t.collaborativeEditing, t.fontRenderingMode);
-               };
-               
-               t.openDocumentFromZip(t.wbModel, window["native"]["GetXlsxPath"]()).then(thenCallback, thenCallback);
-               
-               if (!sdkCheck) {
-               
-               //console.log("OPEN FILE ONLINE");
-               
-               t.wb.showWorksheet(undefined, true);
-               
-               var ws = t.wb.getWorksheet();
-               window["native"]["onEndLoadingFile"](ws.headersWidth, ws.headersHeight);
-               
-               _s.asc_WriteAllWorksheets(true);
-               _s.asc_WriteCurrentCell();
-               
-               return;
-               }
-               
-               t.asc_CheckGuiControlColors();
-               t.sendColorThemes(_api.wbModel.theme);
-               t.asc_ApplyColorScheme(false);
-               
-               t.sendStandartTextures();
-               
-               //console.log("JS - applyFirstLoadChanges() before");
-               
-               t._applyPreOpenLocks();
-               // Применяем пришедшие при открытии изменения
-               t._applyFirstLoadChanges();
-               // Go to if sent options
-               t.goTo();
+        t._openDocument(file.data);
 
-               t.isDocumentLoadComplete = true;
-               
-               // Меняем тип состояния (на никакое)
-               t.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.None;
-               
-               // Были ошибки при открытии, посылаем предупреждение
-               if (0 < t.wbModel.openErrors.length) {
-               t.sendEvent('asc_onError', c_oAscError.ID.OpenWarning, c_oAscError.Level.NoCritical);
-               }
-               
-               //console.log("JS - applyFirstLoadChanges() after");
-               
-               setTimeout(function() {
-                          
-                          t.wb.showWorksheet(undefined, true);
-                          //console.log("JS - showWorksheet()");
-                          
-                          var ws = t.wb.getWorksheet();
-                          //console.log("JS - getWorksheet()");
-                          
-                          window["native"]["onEndLoadingFile"](ws.headersWidth, ws.headersHeight);
-                          //console.log("JS - onEndLoadingFile()");
-                          
-                          _s.asc_WriteAllWorksheets(true);
-                          _s.asc_WriteCurrentCell();
-                          
-                          setInterval(function() {
-                                      
-                                      _api._autoSave();
-                                      
-                                      testLockedObjects();
-                                      
-                                      }, 100);
-                          
-                          //console.log("JS - openDocument()");
-                          
-                          }, 5);
-               
-               }, 5);
+        var thenCallback = function() {
+            t.wb = new AscCommonExcel.WorkbookView(t.wbModel, t.controller, t.handlers,
+                                                window["_null_object"], window["_null_object"], t,
+                                                t.collaborativeEditing, t.fontRenderingMode);
+
+            if (!sdkCheck) {
+
+                //console.log("OPEN FILE ONLINE");
+
+                t.wb.showWorksheet(undefined, true);
+
+                var ws = t.wb.getWorksheet();
+                window["native"]["onEndLoadingFile"](ws.headersWidth, ws.headersHeight);
+
+                _s.asc_WriteAllWorksheets(true);
+                _s.asc_WriteCurrentCell();
+
+                return;
+            }
+
+            t.asc_CheckGuiControlColors();
+            t.sendColorThemes(_api.wbModel.theme);
+            t.asc_ApplyColorScheme(false);
+
+            t.sendStandartTextures();
+
+            //console.log("JS - applyFirstLoadChanges() before");
+
+            t._applyPreOpenLocks();
+            // Применяем пришедшие при открытии изменения
+            t._applyFirstLoadChanges();
+            // Go to if sent options
+            t.goTo();
+
+            t.isDocumentLoadComplete = true;
+
+            // Меняем тип состояния (на никакое)
+            t.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.None;
+
+            // Были ошибки при открытии, посылаем предупреждение
+            if (0 < t.wbModel.openErrors.length) {
+                t.sendEvent('asc_onError', c_oAscError.ID.OpenWarning, c_oAscError.Level.NoCritical);
+            }
+
+            //console.log("JS - applyFirstLoadChanges() after");
+
+            setTimeout(function() {
+
+                t.wb.showWorksheet(undefined, true);
+                //console.log("JS - showWorksheet()");
+
+                var ws = t.wb.getWorksheet();
+                //console.log("JS - getWorksheet()");
+
+                window["native"]["onEndLoadingFile"](ws.headersWidth, ws.headersHeight);
+                //console.log("JS - onEndLoadingFile()");
+
+                _s.asc_WriteAllWorksheets(true);
+                _s.asc_WriteCurrentCell();
+
+                setInterval(function() {
+
+                    _api._autoSave();
+
+                    testLockedObjects();
+
+                }, 100);
+
+                //console.log("JS - openDocument()");
+
+            }, 5);
+        };
+
+        t.openDocumentFromZip(t.wbModel, window["native"]["GetXlsxPath"]()).then(thenCallback, thenCallback);
+
+    }, 5);
 };
 
 window["AscCommon"].getFullImageSrc2 = function (src) {

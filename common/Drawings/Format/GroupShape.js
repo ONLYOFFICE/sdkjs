@@ -492,6 +492,7 @@ function CGroupShape()
         }
         graphics.reset();
         graphics.SetIntegerGrid(true);
+        this.drawAnimLabels && this.drawAnimLabels(graphics);
     };
 
     CGroupShape.prototype.deselectObject = function(object)
@@ -714,6 +715,9 @@ function CGroupShape()
     CGroupShape.prototype.selectObject = function(object, pageIndex)
     {
         object.select(this, pageIndex);
+    };
+    CGroupShape.prototype.onChangeDrawingsSelection = function()
+    {
     };
 
     CGroupShape.prototype.recalculate = function()
@@ -1964,6 +1968,9 @@ function CGroupShape()
         }
     };
 
+    CGroupShape.prototype.getTypeName = function() {
+        return AscCommon.translateManager.getValue("Group");
+    };
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].CGroupShape = CGroupShape;

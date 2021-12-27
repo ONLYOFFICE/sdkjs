@@ -457,7 +457,7 @@ CDocMeta.prototype =
             g.SetIntegerGrid(true);
 
             var _url = window["AscDesktopEditor"]["NativeViewerGetPageUrl"](obj.Page, g.m_lWidthPix, g.m_lHeightPix,
-                editor.WordControl.m_oDrawingDocument.m_lDrawingFirst, editor.WordControl.m_oDrawingDocument.m_lDrawingEnd);
+                editor.WordControl.m_oDrawingDocument.m_lDrawingFirst, editor.WordControl.m_oDrawingDocument.m_lDrawingEnd, editor.isDarkMode);
 
             if (_url == "")
             {

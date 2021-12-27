@@ -1527,9 +1527,6 @@ CDocumentContent.prototype.Draw                           = function(nPageIndex,
         pGraphics.RestoreGrState();
     }
 
-	if (this.LogicDocument)
-		this.LogicDocument.DrawingObjects.drawBeforeObjectsByContent(this.Get_AbsolutePage(CurPage), pGraphics, this);
-
     if (pGraphics.End_Command)
     {
         pGraphics.End_Command();
@@ -1625,6 +1622,7 @@ CDocumentContent.prototype.CheckFormViewWindow = function()
 	if (!this.LogicDocument
 		|| !oForm
 		|| oForm.IsCheckBox()
+		|| oForm.IsPicture()
 		|| (oForm.IsTextForm() && oForm.GetTextFormPr().IsComb())
 		|| oForm.IsAutoFitContent()
 		|| this.Content.length !== 1
@@ -1633,7 +1631,7 @@ CDocumentContent.prototype.CheckFormViewWindow = function()
 
 	var oParagraph  = this.GetElement(0);
 	var oPageBounds = this.GetContentBounds(0);
-	var oFormBounds = oForm.GetFixedFormBounds();
+	var oFormBounds = oForm.GetFixedFormBounds(true);
 
 	var nDx = 0, nDy = 0, nPad = 0;
 
@@ -1667,10 +1665,15 @@ CDocumentContent.prototype.CheckFormViewWindow = function()
 		isChanged = true;
 	}
 
-	var oCursorPos = oParagraph.GetCalculatedCurPosXY();
+	var oCursorPos  = oParagraph.GetCalculatedCurPosXY();
+	var oLineBounds = oParagraph.GetLineBounds(oCursorPos.Internal.Line);
 
 	nDx = 0;
 	nDy = 0;
+
+	var nCursorT = Math.min(oCursorPos.Y, oLineBounds.Top);
+	var nCursorB = Math.max(oCursorPos.Y + oCursorPos.Height, oLineBounds.Bottom);
+	var nCursorH = Math.max(0, nCursorB - nCursorT);
 
 	if (oPageBounds.Right - oPageBounds.Left > oFormBounds.W)
 	{
@@ -1682,10 +1685,10 @@ CDocumentContent.prototype.CheckFormViewWindow = function()
 
 	if (oPageBounds.Bottom - oPageBounds.Top > oFormBounds.H)
 	{
-		if (oCursorPos.Height > oFormBounds.H - nPad || oCursorPos.Y < oFormBounds.Y + nPad)
-			nDy = oFormBounds.Y + nPad - oCursorPos.Y;
-		else if (oCursorPos.Y + oCursorPos.Height > oFormBounds.H - nPad)
-			nDy = oFormBounds.H - nPad - oCursorPos.Y - oCursorPos.Height;
+		if (nCursorH > oFormBounds.H - nPad || nCursorT < oFormBounds.Y + nPad)
+			nDy = oFormBounds.Y + nPad - nCursorT;
+		else if (nCursorT + nCursorH > oFormBounds.H - nPad)
+			nDy = oFormBounds.H - nPad - nCursorT - nCursorH;
 	}
 
 	if (Math.abs(nDx) > 0.001 || Math.abs(nDy) > 0.001)
@@ -4646,6 +4649,7 @@ CDocumentContent.prototype.InsertContent = function(SelectedContent, NearPos)
     }
     else if (para_Run === LastClass.Type)
     {
+    	var oForm = null;
 		var oDstPictureCC = LastClass.GetParentPictureContentControl();
 		if (oDstPictureCC)
 		{
@@ -4654,7 +4658,7 @@ CDocumentContent.prototype.InsertContent = function(SelectedContent, NearPos)
 			{
 				if (SelectedContent.DrawingObjects[nIndex].IsPicture())
 				{
-					oSrcPicture = SelectedContent.DrawingObjects[nIndex].GraphicObj;
+					oSrcPicture = SelectedContent.DrawingObjects[nIndex].GraphicObj.copy();
 					break;
 				}
 			}
@@ -4685,8 +4689,15 @@ CDocumentContent.prototype.InsertContent = function(SelectedContent, NearPos)
 
 			return;
 		}
-		else if (LastClass.GetParentForm())
+		else if ((oForm = LastClass.GetParentForm()))
 		{
+			if ((!oForm.IsTextForm() || oForm.IsComboBox()))
+				return;
+
+			var sInsertedText = SelectedContent.GetText({ParaEndToSpace : false});
+			if (!sInsertedText || !sInsertedText.length)
+				return;
+
 			var nInLastClassPos = ParaNearPos.NearPos.ContentPos.Data[ParaNearPos.Classes.length - 1]
 
 			var isPlaceHolder = LastClass.GetParentForm().IsPlaceHolder();
@@ -4701,9 +4712,15 @@ CDocumentContent.prototype.InsertContent = function(SelectedContent, NearPos)
 			LastClass.State.ContentPos = nInLastClassPos;
 
 			var nInRunStartPos = LastClass.State.ContentPos;
-			LastClass.AddText(SelectedContent.GetText({ParaEndToSpace : false}), nInLastClassPos);
+			LastClass.AddText(sInsertedText, nInLastClassPos);
 			var nInRunEndPos = LastClass.State.ContentPos;
 
+			var nLastClassLen = LastClass.GetElementsCount();
+			nInRunStartPos    = Math.min(nLastClassLen, Math.min(nInRunStartPos, nInRunEndPos));
+			nInRunEndPos      = Math.min(nLastClassLen, nInRunEndPos);
+
+			// TODO: Оставляем селект, т.к. в большинстве случаев после Insert он убирается командой
+			//       MoveCursorRight. Когда это будет контролироваться в данной функции, передлать здесь
 			LastClass.SelectThisElement();
 			LastClass.Selection.Use      = true;
 			LastClass.Selection.StartPos = nInRunStartPos;
@@ -4757,17 +4774,48 @@ CDocumentContent.prototype.InsertContent = function(SelectedContent, NearPos)
             var NewPara          = FirstElement.Element;
             var NewElementsCount = NewPara.Content.length - 1; // Последний ран с para_End не добавляем
 
-			if (LastClass instanceof ParaRun && LastClass.GetParent() instanceof CInlineLevelSdt && LastClass.GetParent().IsPlaceHolder())
+			// TODO: Как будет время проверить, возможно тут надо делать проверку
+			//  (oInlineLeveLSdt.IsPlaceHolder() || oInlineLeveLSdt.IsContentControlTemporary())
+			var oInlineLeveLSdt;
+			if (LastClass instanceof ParaRun
+				&& (oInlineLeveLSdt = LastClass.GetParent())
+				&& oInlineLeveLSdt instanceof CInlineLevelSdt
+				&& oInlineLeveLSdt.IsPlaceHolder())
 			{
-				var oInlineLeveLSdt = LastClass.GetParent();
-				oInlineLeveLSdt.ReplacePlaceHolderWithContent();
+				if (oInlineLeveLSdt.IsContentControlTemporary())
+				{
+					var oResult = oInlineLeveLSdt.RemoveContentControlWrapper();
 
-				LastClass = oInlineLeveLSdt.GetElement(0);
+					var oSdtParent = oResult.Parent;
+					var oSdtPos    = oResult.Pos;
+					var oSdtCount  = oResult.Count;
 
-				ParaNearPos.Classes[ParaNearPos.Classes.length - 1] = LastClass;
+					if (!oSdtParent
+						|| ParaNearPos.Classes.length < 3
+						|| ParaNearPos.Classes[ParaNearPos.Classes.length - 2] !== oInlineLeveLSdt
+						|| ParaNearPos.Classes[ParaNearPos.Classes.length - 3] !== oSdtParent)
+						return;
 
-				ParaNearPos.NearPos.ContentPos.Update(0, ParaNearPos.Classes.length - 1);
-				ParaNearPos.NearPos.ContentPos.Update(0, ParaNearPos.Classes.length - 2);
+					var oRun = new ParaRun(undefined, false);
+					oRun.SetPr(oInlineLeveLSdt.GetDefaultTextPr().Copy());
+
+					oSdtParent.RemoveFromContent(oSdtPos, oSdtCount);
+					oSdtParent.AddToContent(oSdtPos, oRun);
+
+					LastClass = oRun;
+					ParaNearPos.Classes.length--;
+					ParaNearPos.Classes[ParaNearPos.Classes.length - 1] = LastClass;
+					ParaNearPos.NearPos.ContentPos.Update(oSdtPos, ParaNearPos.Classes.length - 2);
+					ParaNearPos.NearPos.ContentPos.Update(0, ParaNearPos.Classes.length - 1);
+				}
+				else
+				{
+					oInlineLeveLSdt.ReplacePlaceHolderWithContent();
+					LastClass = oInlineLeveLSdt.GetElement(0);
+					ParaNearPos.Classes[ParaNearPos.Classes.length - 1] = LastClass;
+					ParaNearPos.NearPos.ContentPos.Update(0, ParaNearPos.Classes.length - 2);
+					ParaNearPos.NearPos.ContentPos.Update(0, ParaNearPos.Classes.length - 1);
+				}
 			}
 
             var NewElement = LastClass.Split(ParaNearPos.NearPos.ContentPos, ParaNearPos.Classes.length - 1);

@@ -137,6 +137,11 @@ CHeaderFooter.prototype =
         }        
     },
 
+	SetPage : function(nPageAbs)
+	{
+		this.Set_Page(nPageAbs);
+	},
+
 	GetPage : function()
 	{
 		return this.RecalcInfo.CurPage;
@@ -1294,6 +1299,17 @@ CHeaderFooter.prototype =
 		return this.Content.CanAddComment();
 	}
 };
+CHeaderFooter.prototype.GetSectionIndex = function()
+{
+	if (!this.LogicDocument)
+		return -1;
+
+	return this.LogicDocument.SectionsInfo.Find_ByHdrFtr(this);
+};
+CHeaderFooter.prototype.GetSectionPr = function()
+{
+	return this.Get_SectPr();
+};
 CHeaderFooter.prototype.Get_SectPr = function()
 {
     if (this.LogicDocument)
@@ -2450,7 +2466,10 @@ CHeaderFooterController.prototype =
 
 	GetCurrentParagraph : function(bIgnoreSelection, arrSelectedParagraphs, oPr)
 	{
-		return this.CurHdrFtr.GetCurrentParagraph(bIgnoreSelection, arrSelectedParagraphs, oPr);
+		if (this.CurHdrFtr)
+			return this.CurHdrFtr.GetCurrentParagraph(bIgnoreSelection, arrSelectedParagraphs, oPr);
+
+		return null;
 	},
 
 	GetCurrentTablesStack : function(arrTables)

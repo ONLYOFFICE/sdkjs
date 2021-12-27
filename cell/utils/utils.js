@@ -2145,18 +2145,6 @@
 				}
 			}
 
-			if (oStyle.ApplyBorder) {
-				// borders
-				var oBorders = oStyle.getBorder();
-				drawBorder(AscCommon.c_oAscBorderType.Ver, oBorders.l, 0, 0, 0, height);
-				drawBorder(AscCommon.c_oAscBorderType.Hor, oBorders.b, 0, height - 1, width, height - 1);
-				drawBorder(AscCommon.c_oAscBorderType.Ver, oBorders.r, width - 1, height, width - 1, 0);
-				drawBorder(AscCommon.c_oAscBorderType.Hor, oBorders.t, width, 0, 0, 0);
-				if (isNotFirst) {
-					ctx.stroke();
-				}
-			}
-
 			// Draw text
 			var format = oStyle.getFont().clone();
 			// Для размера шрифта делаем ограничение для превью в 16pt (у Excel 18pt, но и высота превью больше 22px)
@@ -2200,6 +2188,18 @@
 				ctx.fillText(sStyleName, width_padding, textY + tm.baseline);
 			} else {
 				sr.render(ctx, width_padding, textY, tm.width, oStyle.getFontColor() || new AscCommon.CColor(0, 0, 0));
+			}
+
+			if (oStyle.ApplyBorder) {
+				// borders
+				var oBorders = oStyle.getBorder();
+				drawBorder(AscCommon.c_oAscBorderType.Ver, oBorders.l, 0, 0, 0, height);
+				drawBorder(AscCommon.c_oAscBorderType.Hor, oBorders.b, 0, height - 1, width, height - 1);
+				drawBorder(AscCommon.c_oAscBorderType.Ver, oBorders.r, width - 1, height, width - 1, 0);
+				drawBorder(AscCommon.c_oAscBorderType.Hor, oBorders.t, width, 0, 0, 0);
+				if (isNotFirst) {
+					ctx.stroke();
+				}
 			}
 		}
 		
@@ -2300,7 +2300,19 @@
 			var nHIns = (height / 6 / 5 + 0.5) >> 0;
 			//whole
 			dxfWhole = oTableStyle.wholeTable && oTableStyle.wholeTable.dxf;
+			var oOldFill;
+			if(dxfWhole) {
+				oOldFill = dxfWhole.getFill();
+				if(!oOldFill) {
+					var oFill = new AscCommonExcel.Fill();
+					oFill.fromColor(new AscCommonExcel.RgbColor(0xFFFFFF));
+					dxfWhole.setFill(oFill);
+				}
+			}
 			drawSlicerPreviewElement(dxfWhole, null, ctx, graphics, 0, 0, width, height);
+			if(dxfWhole) {
+				dxfWhole.setFill(oOldFill);
+			}
 			dxfWhole = dxfWhole || true;
 
 			//header
@@ -2677,6 +2689,37 @@
 
 			return this;
 		}
+		CPagePrint.prototype.clone = function () {
+			var res = new CPagePrint();
+			res.pageWidth = this.pageWidth;
+			res.pageHeight = this.pageHeight;
+			res.pageClipRectLeft = this.pageClipRectLeft;
+			res.pageClipRectTop = this.pageClipRectTop;
+			res.pageClipRectWidth = this.pageClipRectWidth;
+			res.pageClipRectHeight = this.pageClipRectHeight;
+
+			res.pageRange = this.pageRange ? this.pageRange.clone() : null;
+
+			res.leftFieldInPx = this.leftFieldInPx;
+			res.topFieldInPx = this.topFieldInPx;
+
+			res.pageGridLines = this.pageGridLines;
+			res.pageHeadings = this.pageHeadings;
+
+			res.indexWorksheet = this.indexWorksheet;
+
+			res.startOffset = this.startOffset;
+			res.startOffsetPx = this.startOffsetPx;
+
+			res.scale = this.scale;
+
+			res.titleRowRange = this.titleRowRange;
+			res.titleColRange = this.titleColRange;
+			res.titleWidth = this.titleWidth;
+			res.titleHeight = this.titleHeight;
+
+			return res;
+		};
 		function CPrintPagesData () {
 			this.arrPages = [];
 			this.currentIndex = 0;
@@ -3140,15 +3183,18 @@
 			this.decimalPlaces = 2;
 			this.separator = false;
 			this.symbol = null;
+			this.currency = null;
 		}
 		asc_CFormatCellsInfo.prototype.asc_setType = function (val) {this.type = val;};
 		asc_CFormatCellsInfo.prototype.asc_setDecimalPlaces = function (val) {this.decimalPlaces = val;};
 		asc_CFormatCellsInfo.prototype.asc_setSeparator = function (val) {this.separator = val;};
 		asc_CFormatCellsInfo.prototype.asc_setSymbol = function (val) {this.symbol = val;};
+		asc_CFormatCellsInfo.prototype.asc_setCurrencySymbol = function (val) {this.currency = val;};
 		asc_CFormatCellsInfo.prototype.asc_getType = function () {return this.type;};
 		asc_CFormatCellsInfo.prototype.asc_getDecimalPlaces = function () {return this.decimalPlaces;};
 		asc_CFormatCellsInfo.prototype.asc_getSeparator = function () {return this.separator;};
 		asc_CFormatCellsInfo.prototype.asc_getSymbol = function () {return this.symbol;};
+		asc_CFormatCellsInfo.prototype.asc_getCurrencySymbol = function () {return this.currency;};
 
 		/**
 		 * передаём в меню для того, чтобы показать иконку опций авторавертывания таблиц
@@ -3538,10 +3584,12 @@
 		prot["asc_setDecimalPlaces"] = prot.asc_setDecimalPlaces;
 		prot["asc_setSeparator"] = prot.asc_setSeparator;
 		prot["asc_setSymbol"] = prot.asc_setSymbol;
+		prot["asc_setCurrencySymbol"] = prot.asc_setCurrencySymbol;
 		prot["asc_getType"] = prot.asc_getType;
 		prot["asc_getDecimalPlaces"] = prot.asc_getDecimalPlaces;
 		prot["asc_getSeparator"] = prot.asc_getSeparator;
 		prot["asc_getSymbol"] = prot.asc_getSymbol;
+		prot["asc_getCurrencySymbol"] = prot.asc_getCurrencySymbol;
 
 		window["Asc"]["asc_CAutoCorrectOptions"] = window["Asc"].asc_CAutoCorrectOptions = asc_CAutoCorrectOptions;
 		prot = asc_CAutoCorrectOptions.prototype;

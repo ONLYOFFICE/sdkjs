@@ -390,7 +390,7 @@ ParaComment.prototype =
         Classes.push(this);
     },
 
-    Get_PosByDrawing : function(Id, ContentPos, Depth)
+    GetPosByDrawing : function(Id, ContentPos, Depth)
     {
         return false;
     },

@@ -1636,6 +1636,9 @@
 		{
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, actionType);
 		}
+		if (Asc.c_oAscFileType.HTML === options.fileType && null == options.oDocumentMailMerge && null == options.oMailMergeSendData) {
+			options.fileType = Asc.c_oAscFileType.HTML_TODO;
+		}
 
 		var downloadType;
 		if (options.isDownloadEvent) {
@@ -1686,8 +1689,11 @@
 			}
 			oAdditionalData["title"] = AscCommon.changeFileExtention(this.documentTitle, "zip", Asc.c_nMaxDownloadTitleLen);
 		}
+		if (options.textParams) {
+			oAdditionalData["textParams"] = {"association": options.textParams.asc_getAssociation()};
+		}
 
-		if (this._downloadAs(actionType, options, oAdditionalData, dataContainer))
+		if (this._downloadAs(actionType, options, oAdditionalData, dataContainer, downloadType))
 		{
 			return;
 		}
@@ -2181,7 +2187,7 @@
 		}
 		this.ImageLoader.LoadImagesWithCallback(arrToDownload, function () {
 
-		}, 0);
+		}, 0, true);
 
 		this.sendEvent('asc_onInitStandartTextures', arr);
 	};
@@ -3485,6 +3491,34 @@
 		return nActionType;
 	};
 	baseEditorsApi.prototype.asc_setSkin = function(obj)
+	{
+	};
+	baseEditorsApi.prototype.isLocalMode = function()
+	{
+		if (window["AscDesktopEditor"])
+		{
+			if (window["AscDesktopEditor"]["IsLocalFile"]())
+				return true;
+			if (AscCommon.EncryptionWorker && AscCommon.EncryptionWorker.isNeedCrypt())
+				return true;
+		}
+		return false;
+	};
+	baseEditorsApi.prototype.isCloudModeCrypt = function()
+	{
+		if (window["AscDesktopEditor"])
+		{
+			if (window["AscDesktopEditor"]["IsLocalFile"]())
+				return false;
+			if (AscCommon.EncryptionWorker && AscCommon.EncryptionWorker.isNeedCrypt())
+				return true;
+		}
+		return false;
+	};
+	baseEditorsApi.prototype.asc_initPrintPreview                     = function()
+	{
+	};
+	baseEditorsApi.prototype.asc_drawPrintPreview                     = function()
 	{
 	};
 	//---------------------------------------------------------version----------------------------------------------------

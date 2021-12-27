@@ -2255,6 +2255,55 @@ function (window, undefined) {
 		}
 	};
 
+	function UndoRedoData_NamedSheetView(sheetView, from, to) {
+		this.sheetView = sheetView;
+		this.from = from;
+		this.to = to;
+	}
+
+	UndoRedoData_NamedSheetView.prototype.Properties = {
+		sheetView: 0, from: 1, to: 2
+	};
+	UndoRedoData_NamedSheetView.prototype.getType = function () {
+		return window['AscCommonExcel'].UndoRedoDataTypes.NamedSheetViewChange;
+	};
+	UndoRedoData_NamedSheetView.prototype.getProperties = function () {
+		return this.Properties;
+	};
+	UndoRedoData_NamedSheetView.prototype.getProperty = function (nType) {
+		switch (nType) {
+			case this.Properties.sheetView:
+				return this.sheetView;
+			case this.Properties.from:
+				return this.from;
+			case this.Properties.to:
+				return this.to;
+		}
+		return null;
+	};
+	UndoRedoData_NamedSheetView.prototype.setProperty = function (nType, value) {
+		switch (nType) {
+			case this.Properties.sheetView:
+				this.sheetView = value;
+				break;
+			case this.Properties.from:
+				this.from = value;
+				break;
+			case this.Properties.to:
+				this.to = value;
+				break;
+		}
+	};
+
+	function UndoRedoData_NamedSheetViewRedo(sheetView, from, to) {
+		this.sheetView = sheetView;
+		this.from = from;
+		this.to = to;
+	}
+	UndoRedoData_NamedSheetViewRedo.prototype = Object.create(UndoRedoData_NamedSheetView.prototype);
+	UndoRedoData_NamedSheetViewRedo.prototype.Properties = {
+		sheetView: 0, to: 2
+	};
 
 	//для применения изменений
 	var UndoRedoClassTypes = new function () {
@@ -4465,6 +4514,7 @@ function (window, undefined) {
 		var protectedSheet = oModel.sheetProtection;
 		if (!protectedSheet) {
 			oModel.sheetProtection = protectedSheet = new window["Asc"].CSheetProtection();
+			oModel.sheetProtection.setDefaultInterface();
 		}
 
 		if (protectedSheet) {
@@ -4485,6 +4535,10 @@ function (window, undefined) {
 				}
 				case AscCH.historyitem_Protected_SetSpinCount: {
 					protectedSheet.setSpinCount(value);
+					break;
+				}
+				case AscCH.historyitem_Protected_SetPassword: {
+					protectedSheet.setPasswordXL(value);
 					break;
 				}
 				case AscCH.historyitem_Protected_SetSheet: {
@@ -4527,6 +4581,10 @@ function (window, undefined) {
 					protectedSheet.setDeleteRows(value);
 					break;
 				}
+				case AscCH.historyitem_Protected_SetDeleteColumns: {
+					protectedSheet.setDeleteColumns(value);
+					break;
+				}
 				case AscCH.historyitem_Protected_SetSelectLockedCells: {
 					protectedSheet.setSelectLockedCells(value);
 					break;
@@ -4546,6 +4604,11 @@ function (window, undefined) {
 				case AscCH.historyitem_Protected_SetSelectUnlockedCells: {
 					protectedSheet.setSelectUnlockedCells(value);
 					break;
+				}
+			}
+			if (bUndo) {
+				if (oModel.sheetProtection && oModel.sheetProtection.isDefault()) {
+					oModel.sheetProtection = null;
 				}
 			}
 			this.wb.handlers.trigger("asc_onChangeProtectWorksheet", oModel.index);
@@ -4630,12 +4693,56 @@ function (window, undefined) {
 					protectedWorkbook.asc_setWorkbookSpinCount(value);
 					break;
 				}
+				case AscCH.historyitem_Protected_SetPassword: {
+					protectedWorkbook.setPasswordXL(value);
+					break;
+				}
 			}
 			oModel.handlers.trigger("asc_onChangeProtectWorkbook");
 		}
 	};
 
+	function UndoRedoNamedSheetViews(wb) {
+		this.wb = wb;
+		this.nType = UndoRedoClassTypes.Add(function () {
+			return AscCommonExcel.g_oUndoRedoNamedSheetViews;
+		});
+	}
 
+	UndoRedoNamedSheetViews.prototype.getClassType = function () {
+		return this.nType;
+	};
+	UndoRedoNamedSheetViews.prototype.Undo = function (Type, Data, nSheetId) {
+		this.UndoRedo(Type, Data, nSheetId, true);
+	};
+	UndoRedoNamedSheetViews.prototype.Redo = function (Type, Data, nSheetId) {
+		this.UndoRedo(Type, Data, nSheetId, false);
+	};
+	UndoRedoNamedSheetViews.prototype.UndoRedo = function (Type, Data, nSheetId, bUndo) {
+		var ws = this.wb.getWorksheetById(nSheetId);
+		if (!ws) {
+			return;
+		}
+		var api = window["Asc"]["editor"];
+		var sheetView;
+		switch (Type) {
+			case AscCH.historyitem_NamedSheetView_SetName: {
+				sheetView = ws.getNamedSheetViewById(Data.sheetView);
+				if (sheetView) {
+					sheetView.setName(bUndo ? Data.from : Data.to);
+				}
+				break;
+			}
+			case AscCH.historyitem_NamedSheetView_DeleteFilter: {
+				sheetView = ws.getNamedSheetViewById(Data.sheetView);
+				if (sheetView && bUndo) {
+					sheetView.nsvFilters.push(Data.from);
+				}
+				break;
+			}
+		}
+
+	};
 
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
@@ -4712,5 +4819,9 @@ function (window, undefined) {
 	window['AscCommonExcel'].g_UndoRedoProtectedRange = null;
 	window['AscCommonExcel'].g_UndoRedoProtectedSheet = null;
 	window['AscCommonExcel'].g_UndoRedoProtectedWorkbook = null;
+
+	window['AscCommonExcel'].UndoRedoNamedSheetViews = UndoRedoNamedSheetViews;
+	window['AscCommonExcel'].UndoRedoData_NamedSheetView = UndoRedoData_NamedSheetView;
+	window['AscCommonExcel'].UndoRedoData_NamedSheetViewRedo = UndoRedoData_NamedSheetViewRedo;
 
 })(window);

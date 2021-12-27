@@ -251,13 +251,13 @@ function checkEmptyPlaceholderContent(content)
         }
         var oBodyPr;
         if(content.Parent.parent.getBodyPr){
-            oBodyPr = content.Parent.parent.getBodyPr;
+            oBodyPr = content.Parent.parent.getBodyPr();
             if(oBodyPr.vertOverflow !== AscFormat.nOTOwerflow){
                 return content;
             }
         }
         var oParagraph = content.GetCurrentParagraph();
-        if(oParagraph.IsEmpty()){
+        if(oParagraph && oParagraph.IsEmptyWithBullet()) {
             return content;
         }
     }
@@ -574,28 +574,31 @@ ChangeAdjState.prototype =
     {
         if(this.drawingObjects.canEdit())
         {
-            var trackObjects = [].concat(this.drawingObjects.arrTrackObjects);
-            var drawingObjects = this.drawingObjects;
-            this.drawingObjects.checkSelectedObjectsAndCallback(function()
+            if(!this.drawingObjects.checkSelectedObjectsProtection())
             {
-                var oOriginalObjects = [];
-                var oMapOriginalsIds = {};
-                for(var i = 0; i < trackObjects.length; ++i){
-                    trackObjects[i].trackEnd();
-                    if(trackObjects[i].originalObject && !trackObjects[i].processor3D){
-                        oOriginalObjects.push(trackObjects[i].originalObject);
-                        oMapOriginalsIds[trackObjects[i].originalObject.Get_Id()] = true;
+                var trackObjects = [].concat(this.drawingObjects.arrTrackObjects);
+                var drawingObjects = this.drawingObjects;
+                this.drawingObjects.checkSelectedObjectsAndCallback(function()
+                {
+                    var oOriginalObjects = [];
+                    var oMapOriginalsIds = {};
+                    for(var i = 0; i < trackObjects.length; ++i){
+                        trackObjects[i].trackEnd();
+                        if(trackObjects[i].originalObject && !trackObjects[i].processor3D){
+                            oOriginalObjects.push(trackObjects[i].originalObject);
+                            oMapOriginalsIds[trackObjects[i].originalObject.Get_Id()] = true;
+                        }
                     }
-                }
-                var aAllConnectors = drawingObjects.getAllConnectorsByDrawings(oOriginalObjects, [],  undefined, true);
-                for(i = 0; i < aAllConnectors.length; ++i){
-                    if(!oMapOriginalsIds[aAllConnectors[i].Get_Id()]){
-                        aAllConnectors[i].calculateTransform();
+                    var aAllConnectors = drawingObjects.getAllConnectorsByDrawings(oOriginalObjects, [],  undefined, true);
+                    for(i = 0; i < aAllConnectors.length; ++i){
+                        if(!oMapOriginalsIds[aAllConnectors[i].Get_Id()]){
+                            aAllConnectors[i].calculateTransform();
+                        }
                     }
-                }
 
-                drawingObjects.startRecalculate();
-            },[], false, AscDFH.historydescription_CommonDrawings_ChangeAdj);
+                    drawingObjects.startRecalculate();
+                },[], false, AscDFH.historydescription_CommonDrawings_ChangeAdj);
+            }
 
         }
         this.drawingObjects.clearTrackObjects();
@@ -745,87 +748,91 @@ RotateState.prototype =
             {
                 if(bCopyOnMoveInGroup)
                 {
-                    this.drawingObjects.checkSelectedObjectsAndCallback(function(){
-                        var oIdMap = {};
-                        var aCopies = [];
-                        var oCopyPr = new AscFormat.CCopyObjectProperties();
-                        oCopyPr.idMap = oIdMap;
-                        group.resetSelection();
-                        for(i = 0; i < tracks.length; ++i)
-                        {
-                            copy = tracks[i].originalObject.copy(oCopyPr);
-                            aCopies.push(copy);
-                            oThis.drawingObjects.drawingObjects.getWorksheetModel && copy.setWorksheet(oThis.drawingObjects.drawingObjects.getWorksheetModel());
-                            if(oThis.drawingObjects.drawingObjects && oThis.drawingObjects.drawingObjects.cSld)
+                    if(!this.drawingObjects.checkSelectedObjectsProtection())
+                    {
+                        this.drawingObjects.checkSelectedObjectsAndCallback(function(){
+                            var oIdMap = {};
+                            var aCopies = [];
+                            var oCopyPr = new AscFormat.CCopyObjectProperties();
+                            oCopyPr.idMap = oIdMap;
+                            group.resetSelection();
+                            for(i = 0; i < tracks.length; ++i)
                             {
-                                copy.setParent2(oThis.drawingObjects.drawingObjects);
+                                copy = tracks[i].originalObject.copy(oCopyPr);
+                                aCopies.push(copy);
+                                oThis.drawingObjects.drawingObjects.getWorksheetModel && copy.setWorksheet(oThis.drawingObjects.drawingObjects.getWorksheetModel());
+                                if(oThis.drawingObjects.drawingObjects && oThis.drawingObjects.drawingObjects.cSld)
+                                {
+                                    copy.setParent2(oThis.drawingObjects.drawingObjects);
+                                }
+                                copy.setGroup(tracks[i].originalObject.group);
+                                copy.group.addToSpTree(copy.group.length, copy);
+                                tracks[i].originalObject = copy;
+                                tracks[i].trackEnd(false);
+                                group.selectObject(copy, 0);
                             }
-                            copy.setGroup(tracks[i].originalObject.group);
-                            copy.group.addToSpTree(copy.group.length, copy);
-                            tracks[i].originalObject = copy;
-                            tracks[i].trackEnd(false);
-                            group.selectObject(copy, 0);
-                        }
-                        AscFormat.fResetConnectorsIds(aCopies, oIdMap);
-                        if(group)
-                        {
-                            group.updateCoordinatesAfterInternalResize();
-                        }
-                        if(!oThis.drawingObjects.drawingObjects || !oThis.drawingObjects.drawingObjects.cSld)
-                        {
-                            var min_x, min_y, drawing, arr_x2 = [], arr_y2 = [], oTransform;
-                            for(i = 0; i < oThis.drawingObjects.selectedObjects.length; ++i)
+                            AscFormat.fResetConnectorsIds(aCopies, oIdMap);
+                            if(group)
                             {
-                                drawing = oThis.drawingObjects.selectedObjects[i];
-                                var rot = AscFormat.isRealNumber(drawing.spPr.xfrm.rot) ? drawing.spPr.xfrm.rot : 0;
-                                rot = AscFormat.normalizeRotate(rot);
-                                arr_x2.push(drawing.spPr.xfrm.offX);
-                                arr_y2.push(drawing.spPr.xfrm.offY);
-                                arr_x2.push(drawing.spPr.xfrm.offX + drawing.spPr.xfrm.extX);
-                                arr_y2.push(drawing.spPr.xfrm.offY + drawing.spPr.xfrm.extY);
-                                if (AscFormat.checkNormalRotate(rot))
-                                {
-                                    min_x = drawing.spPr.xfrm.offX;
-                                    min_y = drawing.spPr.xfrm.offY;
-                                }
-                                else
-                                {
-                                    min_x = drawing.spPr.xfrm.offX + drawing.spPr.xfrm.extX/2 - drawing.spPr.xfrm.extY/2;
-                                    min_y = drawing.spPr.xfrm.offY + drawing.spPr.xfrm.extY/2 - drawing.spPr.xfrm.extX/2;
-                                    arr_x2.push(min_x);
-                                    arr_y2.push(min_y);
-                                    arr_x2.push(min_x + drawing.spPr.xfrm.extY);
-                                    arr_y2.push(min_y + drawing.spPr.xfrm.extX);
-                                }
-                                if(min_x < 0)
-                                {
-                                    drawing.spPr.xfrm.setOffX(drawing.spPr.xfrm.offX - min_x);
-                                }
-                                if(min_y < 0)
-                                {
-                                    drawing.spPr.xfrm.setOffY(drawing.spPr.xfrm.offY - min_y);
-                                }
-                                drawing.checkDrawingBaseCoords();
-                                drawing.recalculateTransform();
-                                oTransform = drawing.transform;
-                                arr_x2.push(oTransform.TransformPointX(0, 0));
-                                arr_y2.push(oTransform.TransformPointY(0, 0));
-                                arr_x2.push(oTransform.TransformPointX(drawing.extX, 0));
-                                arr_y2.push(oTransform.TransformPointY(drawing.extX, 0));
-                                arr_x2.push(oTransform.TransformPointX(drawing.extX, drawing.extY));
-                                arr_y2.push(oTransform.TransformPointY(drawing.extX, drawing.extY));
-                                arr_x2.push(oTransform.TransformPointX(0, drawing.extY));
-                                arr_y2.push(oTransform.TransformPointY(0, drawing.extY));
+                                group.updateCoordinatesAfterInternalResize();
                             }
-                            oThis.drawingObjects.drawingObjects.checkGraphicObjectPosition(0, 0, Math.max.apply(Math, arr_x2), Math.max.apply(Math, arr_y2));
-                        }
-                        if(oThis.drawingObjects.checkSlicerCopies)
-                        {
-                            oThis.drawingObjects.checkSlicerCopies(aCopies);
-                        }
-                    }, [], false, AscDFH.historydescription_CommonDrawings_EndTrack)
+                            if(!oThis.drawingObjects.drawingObjects || !oThis.drawingObjects.drawingObjects.cSld)
+                            {
+                                var min_x, min_y, drawing, arr_x2 = [], arr_y2 = [], oTransform;
+                                for(i = 0; i < oThis.drawingObjects.selectedObjects.length; ++i)
+                                {
+                                    drawing = oThis.drawingObjects.selectedObjects[i];
+                                    var rot = AscFormat.isRealNumber(drawing.spPr.xfrm.rot) ? drawing.spPr.xfrm.rot : 0;
+                                    rot = AscFormat.normalizeRotate(rot);
+                                    arr_x2.push(drawing.spPr.xfrm.offX);
+                                    arr_y2.push(drawing.spPr.xfrm.offY);
+                                    arr_x2.push(drawing.spPr.xfrm.offX + drawing.spPr.xfrm.extX);
+                                    arr_y2.push(drawing.spPr.xfrm.offY + drawing.spPr.xfrm.extY);
+                                    if (AscFormat.checkNormalRotate(rot))
+                                    {
+                                        min_x = drawing.spPr.xfrm.offX;
+                                        min_y = drawing.spPr.xfrm.offY;
+                                    }
+                                    else
+                                    {
+                                        min_x = drawing.spPr.xfrm.offX + drawing.spPr.xfrm.extX/2 - drawing.spPr.xfrm.extY/2;
+                                        min_y = drawing.spPr.xfrm.offY + drawing.spPr.xfrm.extY/2 - drawing.spPr.xfrm.extX/2;
+                                        arr_x2.push(min_x);
+                                        arr_y2.push(min_y);
+                                        arr_x2.push(min_x + drawing.spPr.xfrm.extY);
+                                        arr_y2.push(min_y + drawing.spPr.xfrm.extX);
+                                    }
+                                    if(min_x < 0)
+                                    {
+                                        drawing.spPr.xfrm.setOffX(drawing.spPr.xfrm.offX - min_x);
+                                    }
+                                    if(min_y < 0)
+                                    {
+                                        drawing.spPr.xfrm.setOffY(drawing.spPr.xfrm.offY - min_y);
+                                    }
+                                    drawing.checkDrawingBaseCoords();
+                                    drawing.recalculateTransform();
+                                    oTransform = drawing.transform;
+                                    arr_x2.push(oTransform.TransformPointX(0, 0));
+                                    arr_y2.push(oTransform.TransformPointY(0, 0));
+                                    arr_x2.push(oTransform.TransformPointX(drawing.extX, 0));
+                                    arr_y2.push(oTransform.TransformPointY(drawing.extX, 0));
+                                    arr_x2.push(oTransform.TransformPointX(drawing.extX, drawing.extY));
+                                    arr_y2.push(oTransform.TransformPointY(drawing.extX, drawing.extY));
+                                    arr_x2.push(oTransform.TransformPointX(0, drawing.extY));
+                                    arr_y2.push(oTransform.TransformPointY(0, drawing.extY));
+                                }
+                                oThis.drawingObjects.drawingObjects.checkGraphicObjectPosition(0, 0, Math.max.apply(Math, arr_x2), Math.max.apply(Math, arr_y2));
+                            }
+                            if(oThis.drawingObjects.checkSlicerCopies)
+                            {
+                                oThis.drawingObjects.checkSlicerCopies(aCopies);
+                            }
+                        }, [], false, AscDFH.historydescription_CommonDrawings_EndTrack);
+                    }
                 }
-                else{
+                else
+                {
                     var oOriginalObjects = [];
                     var oMapOriginalsId = {};
                     var oMapAdditionalForCheck = {};
@@ -880,84 +887,84 @@ RotateState.prototype =
                             }
                         }
                     }
-                    this.drawingObjects.checkSelectedObjectsAndCallback(
-                        function () {
+                    if(!this.drawingObjects.checkSelectedObjectsProtection())
+                    {
+                        this.drawingObjects.checkSelectedObjectsAndCallback(function () {
 
-                            for(i = 0; i < tracks.length; ++i){
-                                tracks[i].trackEnd(false, bFlag);
-                            }
-                            if(tracks.length === 1 && tracks[0].chartSpace){
-                                return;
-                            }
-                            var oGroupMaps = {};
-                            for(i = 0; i < aConnectors.length; ++i){
-                                aConnectors[i].calculateTransform(bFlag);
-                                var oGroup = aConnectors[i].getMainGroup && aConnectors[i].getMainGroup();
-                                if(oGroup){
-                                    oGroupMaps[oGroup.Id] = oGroup;
+                                for(i = 0; i < tracks.length; ++i){
+                                    tracks[i].trackEnd(false, bFlag);
                                 }
-                            }
-                            for(var key in oGroupMaps){
-                                if(oGroupMaps.hasOwnProperty(key)){
-                                    oGroupMaps[key].updateCoordinatesAfterInternalResize();
+                                if(tracks.length === 1 && tracks[0].chartSpace){
+                                    return;
                                 }
-                            }
-                            if(group)
-                            {
-                                group.updateCoordinatesAfterInternalResize();
-                            }
-                            if(!oThis.drawingObjects.drawingObjects || !oThis.drawingObjects.drawingObjects.cSld)
-                            {
-                                var min_x, min_y, drawing, arr_x2 = [], arr_y2 = [], oTransform;
-                                for(i = 0; i < oThis.drawingObjects.selectedObjects.length; ++i)
+                                var oGroupMaps = {};
+                                for(i = 0; i < aConnectors.length; ++i){
+                                    aConnectors[i].calculateTransform(bFlag);
+                                    var oGroup = aConnectors[i].getMainGroup && aConnectors[i].getMainGroup();
+                                    if(oGroup){
+                                        oGroupMaps[oGroup.Id] = oGroup;
+                                    }
+                                }
+                                for(var key in oGroupMaps){
+                                    if(oGroupMaps.hasOwnProperty(key)){
+                                        oGroupMaps[key].updateCoordinatesAfterInternalResize();
+                                    }
+                                }
+                                if(group)
                                 {
-                                    drawing = oThis.drawingObjects.selectedObjects[i];
-                                    var rot = AscFormat.isRealNumber(drawing.spPr.xfrm.rot) ? drawing.spPr.xfrm.rot : 0;
-                                    rot = AscFormat.normalizeRotate(rot);
-                                    arr_x2.push(drawing.spPr.xfrm.offX);
-                                    arr_y2.push(drawing.spPr.xfrm.offY);
-                                    arr_x2.push(drawing.spPr.xfrm.offX + drawing.spPr.xfrm.extX);
-                                    arr_y2.push(drawing.spPr.xfrm.offY + drawing.spPr.xfrm.extY);
-                                    if (AscFormat.checkNormalRotate(rot))
-                                    {
-                                        min_x = drawing.spPr.xfrm.offX;
-                                        min_y = drawing.spPr.xfrm.offY;
-                                    }
-                                    else
-                                    {
-                                        min_x = drawing.spPr.xfrm.offX + drawing.spPr.xfrm.extX/2 - drawing.spPr.xfrm.extY/2;
-                                        min_y = drawing.spPr.xfrm.offY + drawing.spPr.xfrm.extY/2 - drawing.spPr.xfrm.extX/2;
-                                        arr_x2.push(min_x);
-                                        arr_y2.push(min_y);
-                                        arr_x2.push(min_x + drawing.spPr.xfrm.extY);
-                                        arr_y2.push(min_y + drawing.spPr.xfrm.extX);
-                                    }
-                                    if(min_x < 0)
-                                    {
-                                        drawing.spPr.xfrm.setOffX(drawing.spPr.xfrm.offX - min_x);
-                                    }
-                                    if(min_y < 0)
-                                    {
-                                        drawing.spPr.xfrm.setOffY(drawing.spPr.xfrm.offY - min_y);
-                                    }
-                                    drawing.checkDrawingBaseCoords && drawing.checkDrawingBaseCoords();
-                                    drawing.recalculateTransform && drawing.recalculateTransform();
-                                    oTransform = drawing.transform;
-                                    arr_x2.push(oTransform.TransformPointX(0, 0));
-                                    arr_y2.push(oTransform.TransformPointY(0, 0));
-                                    arr_x2.push(oTransform.TransformPointX(drawing.extX, 0));
-                                    arr_y2.push(oTransform.TransformPointY(drawing.extX, 0));
-                                    arr_x2.push(oTransform.TransformPointX(drawing.extX, drawing.extY));
-                                    arr_y2.push(oTransform.TransformPointY(drawing.extX, drawing.extY));
-                                    arr_x2.push(oTransform.TransformPointX(0, drawing.extY));
-                                    arr_y2.push(oTransform.TransformPointY(0, drawing.extY));
+                                    group.updateCoordinatesAfterInternalResize();
                                 }
-                                oThis.drawingObjects.drawingObjects.checkGraphicObjectPosition(0, 0, Math.max.apply(Math, arr_x2), Math.max.apply(Math, arr_y2));
-                            }
-
-
-                        }, [], false, AscDFH.historydescription_CommonDrawings_EndTrack, aAdditionalForCheck
-                    );
+                                if(!oThis.drawingObjects.drawingObjects || !oThis.drawingObjects.drawingObjects.cSld)
+                                {
+                                    var min_x, min_y, drawing, arr_x2 = [], arr_y2 = [], oTransform;
+                                    for(i = 0; i < oThis.drawingObjects.selectedObjects.length; ++i)
+                                    {
+                                        drawing = oThis.drawingObjects.selectedObjects[i];
+                                        var rot = AscFormat.isRealNumber(drawing.spPr.xfrm.rot) ? drawing.spPr.xfrm.rot : 0;
+                                        rot = AscFormat.normalizeRotate(rot);
+                                        arr_x2.push(drawing.spPr.xfrm.offX);
+                                        arr_y2.push(drawing.spPr.xfrm.offY);
+                                        arr_x2.push(drawing.spPr.xfrm.offX + drawing.spPr.xfrm.extX);
+                                        arr_y2.push(drawing.spPr.xfrm.offY + drawing.spPr.xfrm.extY);
+                                        if (AscFormat.checkNormalRotate(rot))
+                                        {
+                                            min_x = drawing.spPr.xfrm.offX;
+                                            min_y = drawing.spPr.xfrm.offY;
+                                        }
+                                        else
+                                        {
+                                            min_x = drawing.spPr.xfrm.offX + drawing.spPr.xfrm.extX/2 - drawing.spPr.xfrm.extY/2;
+                                            min_y = drawing.spPr.xfrm.offY + drawing.spPr.xfrm.extY/2 - drawing.spPr.xfrm.extX/2;
+                                            arr_x2.push(min_x);
+                                            arr_y2.push(min_y);
+                                            arr_x2.push(min_x + drawing.spPr.xfrm.extY);
+                                            arr_y2.push(min_y + drawing.spPr.xfrm.extX);
+                                        }
+                                        if(min_x < 0)
+                                        {
+                                            drawing.spPr.xfrm.setOffX(drawing.spPr.xfrm.offX - min_x);
+                                        }
+                                        if(min_y < 0)
+                                        {
+                                            drawing.spPr.xfrm.setOffY(drawing.spPr.xfrm.offY - min_y);
+                                        }
+                                        drawing.checkDrawingBaseCoords && drawing.checkDrawingBaseCoords();
+                                        drawing.recalculateTransform && drawing.recalculateTransform();
+                                        oTransform = drawing.transform;
+                                        arr_x2.push(oTransform.TransformPointX(0, 0));
+                                        arr_y2.push(oTransform.TransformPointY(0, 0));
+                                        arr_x2.push(oTransform.TransformPointX(drawing.extX, 0));
+                                        arr_y2.push(oTransform.TransformPointY(drawing.extX, 0));
+                                        arr_x2.push(oTransform.TransformPointX(drawing.extX, drawing.extY));
+                                        arr_y2.push(oTransform.TransformPointY(drawing.extX, drawing.extY));
+                                        arr_x2.push(oTransform.TransformPointX(0, drawing.extY));
+                                        arr_y2.push(oTransform.TransformPointY(0, drawing.extY));
+                                    }
+                                    oThis.drawingObjects.drawingObjects.checkGraphicObjectPosition(0, 0, Math.max.apply(Math, arr_x2), Math.max.apply(Math, arr_y2));
+                                }
+                            }, [], false, AscDFH.historydescription_CommonDrawings_EndTrack, aAdditionalForCheck
+                        );
+                    }
                 }
             }
         }
@@ -1028,9 +1035,21 @@ ResizeState.prototype =
             this.onMouseUp(e, x, y, pageIndex);
             return;
         }
+        var start_arr = this.drawingObjects.getDrawingArray();
         var coords = AscFormat.CheckCoordsNeedPage(x, y, pageIndex, this.majorObject.selectStartPage, this.drawingObjects.getDrawingDocument());
-        var resize_coef = this.majorObject.getResizeCoefficients(this.handleNum, coords.x, coords.y);
+        var resize_coef = this.majorObject.getResizeCoefficients(this.handleNum, coords.x, coords.y, start_arr);
         this.drawingObjects.trackResizeObjects(resize_coef.kd1, resize_coef.kd2, e, x, y);
+        if(this.drawingObjects.drawingObjects.cSld)
+        {
+            if(AscFormat.isRealNumber(resize_coef.snapX))
+            {
+                this.drawingObjects.getDrawingDocument().DrawVerAnchor(pageIndex, resize_coef.snapX);
+            }
+            if(AscFormat.isRealNumber(resize_coef.snapY))
+            {
+                this.drawingObjects.getDrawingDocument().DrawHorAnchor(pageIndex, resize_coef.snapY);
+            }
+        }
         this.drawingObjects.updateOverlay();
     },
 
@@ -1616,7 +1635,7 @@ function TextAddState(drawingObjects, majorObject, startX, startY)
     this.majorObject = majorObject;
     this.startX = startX;
     this.startY = startY;
-    this.bIsSelectionEmpty = true;
+    this.bIsSelectionEmpty = this.isSelectionEmpty();
 }
 
 TextAddState.prototype =
@@ -1634,7 +1653,13 @@ TextAddState.prototype =
         var oContent = this.majorObject.getDocContent && this.majorObject.getDocContent();
         if(oContent)
         {
-            return oContent.IsSelectionEmpty();
+            if(oContent.IsSelectionEmpty()) {
+                var oParagraph = oContent.GetCurrentParagraph();
+                if(oParagraph && oParagraph.IsEmptyWithBullet()) {
+                    return true;
+                }
+            }
+            return false;
         }
         return true;
     },
@@ -1707,6 +1732,7 @@ TextAddState.prototype =
             this.drawingObjects.drawingObjects.showDrawingObjects();
             if(this.drawingObjects.isSlideShow())
             {
+                cursor_type.hyperlink.Visited = true;
                 oApi.sync_HyperlinkClickCallback(cursor_type.hyperlink.Value);
             }
         }

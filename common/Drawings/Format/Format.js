@@ -74,11 +74,14 @@ var asc_CShapeProperty = Asc.asc_CShapeProperty;
 
     function CBaseObject() {
         this.Id = null;
-        if(AscCommon.g_oIdCounter.m_bLoad || History.CanAddChanges()) {
+        if(AscCommon.g_oIdCounter.m_bLoad || History.CanAddChanges() || this.notAllowedWithoutId()) {
             this.Id = AscCommon.g_oIdCounter.Get_NewId();
             AscCommon.g_oTableId.Add( this, this.Id );
         }
     }
+    CBaseObject.prototype.notAllowedWithoutId = function() {
+        return false;
+    };
     CBaseObject.prototype.getObjectType = function() {
         return AscDFH.historyitem_type_Unknown;
     };
@@ -105,12 +108,6 @@ var asc_CShapeProperty = Asc.asc_CShapeProperty;
     function CBaseFormatObject() {
         CBaseObject.call(this);
         this.parent = null;
-        if(this.Id === null) {
-            if(this.notAllowedWithoutId()) {
-                this.Id = AscCommon.g_oIdCounter.Get_NewId();
-                AscCommon.g_oTableId.Add(this, this.Id);
-            }
-        }
     }
     CBaseFormatObject.prototype = Object.create(CBaseObject.prototype);
     CBaseFormatObject.prototype.constructor = CBaseFormatObject;
@@ -225,7 +222,42 @@ var asc_CShapeProperty = Asc.asc_CShapeProperty;
     CBaseFormatObject.prototype.notAllowedWithoutId = function() {
         return true;
     };
-    //Method for debug
+    CBaseFormatObject.prototype.isEqual = function(oOther) {
+        if(!oOther) {
+            return false;
+        }
+        if(this.getObjectType() !== oOther.getObjectType()) {
+            return false;
+        }
+        var aThisChildren = this.getChildren();
+        var aOtherChildren = oOther.getChildren();
+        if(aThisChildren.length !== aOtherChildren.length) {
+            return false;
+        }
+        for(var nChild = 0; nChild < aThisChildren.length; ++nChild) {
+            var oThisChild = aThisChildren[nChild];
+            var oOtherChild = aOtherChildren[nChild];
+            if(oThisChild !== this.checkEqualChild(oThisChild, oOtherChild)) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    CBaseFormatObject.prototype.checkEqualChild = function(oThisChild, oOtherChild) {
+        if(AscCommon.isRealObject(oThisChild) && oThisChild.isEqual) {
+            if(!oThisChild.isEqual(oOtherChild)) {
+                return undefined;
+            }
+        }
+        else {
+            if(oThisChild !== oOtherChild) {
+                return undefined;
+            }
+        }
+        return oThisChild;
+    };
+     //Method for debug
     CBaseObject.prototype.compareTypes = function(oOther) {
         if(!oOther || !oOther.compareTypes) {
             debugger;
@@ -9340,6 +9372,45 @@ function CSld()
     this.Bg = null;
     this.spTree = [];//new GroupShape();
 }
+CSld.prototype.getObjectsNamesPairs = function() 
+{
+    var aPairs = [];
+    var aSpTree = this.spTree;
+    for(var nSp = 0; nSp < aSpTree.length; ++nSp) 
+    {
+        var oSp = aSpTree[nSp];
+        if(!oSp.isEmptyPlaceholder()) 
+        {
+            aPairs.push({object: oSp, name: oSp.getObjectName()});
+        }
+    }
+    return aPairs;
+};
+CSld.prototype.getObjectsNames = function() 
+{
+    var aPairs = this.getObjectsNamesPairs();
+    var aNames = [];
+    for(var nPair = 0; nPair < aPairs.length; ++nPair) 
+    {
+        var oPair = aPairs[nPair];
+        aNames.push(oPair.name);
+    }
+    return aNames;
+};
+CSld.prototype.getObjectByName = function(sName) 
+{
+    var aSpTree = this.spTree;
+    for(var nSp = 0; nSp < aSpTree.length; ++nSp) 
+    {
+        var oSp = aSpTree[nSp];
+        if(oSp.getObjectName() === sName) 
+        {
+            return oSp;
+        }
+    }
+    return null;
+};
+
 
 // ----------------------------------
 

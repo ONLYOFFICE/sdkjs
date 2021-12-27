@@ -641,6 +641,7 @@ function NumFormat(bAddMinusIfNes)
     this.Color = -1;
 	this.ComporationOperator = null;
 	this.LCID = null;
+	this.CurrencyString = null;
     
 	this.bGeneralChart = false;//если в формате только один текст(например в chart "Основной")
     this.bAddMinusIfNes = bAddMinusIfNes;//когда не задано форматирование для отрицательных чисел иногда надо вставлять минус
@@ -1794,6 +1795,7 @@ NumFormat.prototype =
                     } else if (numFormat_Bracket == item.type) {
                         if (null != item.CurrencyString) {
 							this.bCurrency = true;
+							this.CurrencyString = item.CurrencyString;
                             sText += item.CurrencyString;
                         }
 						if (null != item.Lid) {
@@ -2499,6 +2501,7 @@ NumFormat.prototype =
 		info.asc_setDecimalPlaces(this.aFracFormat.length);
 		info.asc_setSeparator(this.bThousandSep);
 		info.asc_setSymbol(this.LCID);
+		info.asc_setCurrencySymbol(this.CurrencyString);
 		return info;
 	},
 	isGeneral: function() {
@@ -4383,21 +4386,30 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 		var symbol = opt_currency ? cultureInfo.CurrencySymbol : '';
 		return '[$' + symbol + '-' + cultureInfo.LCID.toString(16).toUpperCase() + ']';
 	}
+	function getCurrencyCustomFormat(symbol) {
+		return '[$' + symbol + ']';
+	}
 
-	function getCurrencyFormatSimple(opt_cultureInfo, opt_fraction, opt_currency, opt_currencyLocale, opt_red) {
+	function getCurrencyFormatSimple(opt_cultureInfo, opt_fraction, opt_currency, opt_currencyLocale, opt_currencySymbol, opt_red) {
 		var cultureInfo = opt_cultureInfo ? opt_cultureInfo : g_oDefaultCultureInfo;
 		var numberFormat = getNumberFormatSimple(true, opt_fraction);
 		var signCurrencyFormat;
 		var signCurrencyFormatEnd;
 		var signCurrencyFormatSpace;
 		if (opt_currency) {
-			if (opt_currencyLocale) {
-				signCurrencyFormat = getLocaleFormat(cultureInfo, true);
+			if (opt_currencySymbol) {
+				signCurrencyFormat = getCurrencyCustomFormat(opt_currencySymbol);
+				signCurrencyFormatEnd = signCurrencyFormat;
+				signCurrencyFormat = signCurrencyFormatSpace = signCurrencyFormat + '\\ ';
 			} else {
-				signCurrencyFormat = '"' + cultureInfo.CurrencySymbol + '"';
+				if (opt_currencyLocale) {
+					signCurrencyFormat = getLocaleFormat(cultureInfo, true);
+				} else {
+					signCurrencyFormat = '"' + cultureInfo.CurrencySymbol + '"';
+				}
+				signCurrencyFormatEnd = signCurrencyFormat;
+				signCurrencyFormatSpace = signCurrencyFormat + '\\ ';
 			}
-			signCurrencyFormatEnd = signCurrencyFormat;
-			signCurrencyFormatSpace = signCurrencyFormat + '\\ ';
 		} else {
 			signCurrencyFormatEnd = signCurrencyFormat = signCurrencyFormatSpace = '';
 			for (var i = 0; i < cultureInfo.CurrencySymbol.length; ++i) {
@@ -4486,15 +4498,22 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 		return positiveFormat + ';' + red + negativeFormat;
 	}
 
-	function getCurrencyFormatSimple2(opt_cultureInfo, opt_fraction, opt_currency, opt_negative) {
+	function getCurrencyFormatSimple2(opt_cultureInfo, opt_fraction, opt_currency, opt_currencySymbol, opt_negative) {
 		var cultureInfo = opt_cultureInfo ? opt_cultureInfo : g_oDefaultCultureInfo;
 		var numberFormat = getNumberFormatSimple(true, opt_fraction);
 		var signCurrencyFormat;
 		var signCurrencyFormatEnd;
 		var signCurrencyFormatSpace;
 		if (opt_currency) {
-			signCurrencyFormat = signCurrencyFormatEnd = getLocaleFormat(cultureInfo, true);
-			signCurrencyFormatSpace = signCurrencyFormat + '\\ ';
+			if (opt_currencySymbol) {
+				signCurrencyFormat = getCurrencyCustomFormat(opt_currencySymbol);
+				signCurrencyFormatEnd = signCurrencyFormat;
+				signCurrencyFormat = signCurrencyFormatSpace = signCurrencyFormat + '\\ ';
+			} else {
+				signCurrencyFormat = getLocaleFormat(cultureInfo, true);
+				signCurrencyFormatEnd = signCurrencyFormat;
+				signCurrencyFormatSpace = signCurrencyFormat + '\\ ';
+			}
 		} else {
 			signCurrencyFormatEnd = signCurrencyFormat = signCurrencyFormatSpace = '';
 			for (var i = 0; i < cultureInfo.CurrencySymbol.length; ++i) {
@@ -4531,7 +4550,7 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 		return opt_negative ? positiveFormat + ';[Red]' + positiveFormat : positiveFormat;
 	}
 
-	function getCurrencyFormat(opt_cultureInfo, opt_fraction, opt_currency, opt_currencyLocale) {
+	function getCurrencyFormat(opt_cultureInfo, opt_fraction, opt_currency, opt_currencyLocale, opt_currencySymbol) {
 		var cultureInfo = opt_cultureInfo ? opt_cultureInfo : g_oDefaultCultureInfo;
 		var numberFormat = getNumberFormatSimple(true, opt_fraction);
 		var nullSignFormat = '* "-"';
@@ -4542,13 +4561,19 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 		var signCurrencyFormatEnd;
 		var signCurrencyFormatSpace;
 		if (opt_currency) {
-			if (opt_currencyLocale) {
-				signCurrencyFormat = getLocaleFormat(cultureInfo, true);
+			if (opt_currencySymbol) {
+				signCurrencyFormat = getCurrencyCustomFormat(opt_currencySymbol);
+				signCurrencyFormatEnd = signCurrencyFormat;
+				signCurrencyFormat = signCurrencyFormatSpace = signCurrencyFormat + '\\ ';
 			} else {
-				signCurrencyFormat = '"' + cultureInfo.CurrencySymbol + '"';
+				if (opt_currencyLocale) {
+					signCurrencyFormat = getLocaleFormat(cultureInfo, true);
+				} else {
+					signCurrencyFormat = '"' + cultureInfo.CurrencySymbol + '"';
+				}
+				signCurrencyFormatEnd = signCurrencyFormat;
+				signCurrencyFormatSpace = signCurrencyFormat + '\\ ';
 			}
-			signCurrencyFormatEnd = signCurrencyFormat;
-			signCurrencyFormatSpace = signCurrencyFormat + '\\ ';
 		} else {
 			signCurrencyFormatEnd = signCurrencyFormat = signCurrencyFormatSpace = '';
 			for (var i = 0; i < cultureInfo.CurrencySymbol.length; ++i) {
@@ -4655,8 +4680,9 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 		if (info) {
 			var format;
 			var i;
+			var currencySymbol = info.currency;
 			var cultureInfo = g_aCultureInfos[info.symbol];
-			var currency = !!cultureInfo;
+			var hasCurrency = !!cultureInfo || !!currencySymbol;
 			if (Asc.c_oAscNumFormatType.General === info.type) {
 				res.push(AscCommon.g_cGeneralFormat);
 			} else if (Asc.c_oAscNumFormatType.Number === info.type) {
@@ -4666,12 +4692,12 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 				res.push(getNumberFormat(cultureInfo, info.separator, info.decimalPlaces, false));
 				res.push(getNumberFormat(cultureInfo, info.separator, info.decimalPlaces, true));
 			} else if (Asc.c_oAscNumFormatType.Currency === info.type) {
-				res.push(getCurrencyFormatSimple2(cultureInfo, info.decimalPlaces, currency, false));
-				res.push(getCurrencyFormatSimple2(cultureInfo, info.decimalPlaces, currency, true));
-				res.push(getCurrencyFormatSimple(cultureInfo, info.decimalPlaces, currency, currency, false));
-				res.push(getCurrencyFormatSimple(cultureInfo, info.decimalPlaces, currency, currency, true));
+				res.push(getCurrencyFormatSimple2(cultureInfo, info.decimalPlaces, hasCurrency, currencySymbol, false));
+				res.push(getCurrencyFormatSimple2(cultureInfo, info.decimalPlaces, hasCurrency, currencySymbol, true));
+				res.push(getCurrencyFormatSimple(cultureInfo, info.decimalPlaces, hasCurrency, true, currencySymbol, false));
+				res.push(getCurrencyFormatSimple(cultureInfo, info.decimalPlaces, hasCurrency, true, currencySymbol, true));
 			} else if (Asc.c_oAscNumFormatType.Accounting === info.type) {
-				res.push(getCurrencyFormat(cultureInfo, info.decimalPlaces, currency, currency));
+				res.push(getCurrencyFormat(cultureInfo, info.decimalPlaces, hasCurrency, true, currencySymbol));
 			} else if (Asc.c_oAscNumFormatType.Date === info.type) {
 				//todo locale dependence
 				if (info.symbol == g_oDefaultCultureInfo.LCID) {
@@ -4728,14 +4754,14 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 				for (i = 0; i <= 4; ++i) {
 					res.push(AscCommonExcel.aStandartNumFormats[i]);
 				}
-				res.push(getCurrencyFormatSimple(null, 0, false, false, false));
-				res.push(getCurrencyFormatSimple(null, 0, false, false, true));
-				res.push(getCurrencyFormatSimple(null, 2, false, false, false));
-				res.push(getCurrencyFormatSimple(null, 2, false, false, true));
-				res.push(getCurrencyFormatSimple(null, 0, true, false, false));
-				res.push(getCurrencyFormatSimple(null, 0, true, false, true));
-				res.push(getCurrencyFormatSimple(null, 2, true, false, false));
-				res.push(getCurrencyFormatSimple(null, 2, true, false, true));
+				res.push(getCurrencyFormatSimple(null, 0, false, false, null, false));
+				res.push(getCurrencyFormatSimple(null, 0, false, false, null, true));
+				res.push(getCurrencyFormatSimple(null, 2, false, false, null, false));
+				res.push(getCurrencyFormatSimple(null, 2, false, false, null, true));
+				res.push(getCurrencyFormatSimple(null, 0, true, false, null, false));
+				res.push(getCurrencyFormatSimple(null, 0, true, false, null, true));
+				res.push(getCurrencyFormatSimple(null, 2, true, false, null, false));
+				res.push(getCurrencyFormatSimple(null, 2, true, false, null, true));
 				for (i = 9; i <= 13; ++i) {
 					res.push(AscCommonExcel.aStandartNumFormats[i]);
 				}
@@ -4750,16 +4776,16 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 				for (i = 45; i <= 49; ++i) {
 					res.push(AscCommonExcel.aStandartNumFormats[i]);
 				}
-				res.push(AscCommon.getCurrencyFormat(null, 0, true, false));
-				res.push(AscCommon.getCurrencyFormat(null, 0, false, false));
-				res.push(AscCommon.getCurrencyFormat(null, 2, true, false));
-				res.push(AscCommon.getCurrencyFormat(null, 2, false, false));
+				res.push(AscCommon.getCurrencyFormat(null, 0, true, false, null));
+				res.push(AscCommon.getCurrencyFormat(null, 0, false, false, null));
+				res.push(AscCommon.getCurrencyFormat(null, 2, true, false, null));
+				res.push(AscCommon.getCurrencyFormat(null, 2, false, false, null));
 			} else {
 				res.push(AscCommon.g_cGeneralFormat);
 				res.push('0.00');
 				res.push('0.00E+00');
-				res.push(getCurrencyFormat(cultureInfo, 2, currency, true));
-				res.push(getCurrencyFormatSimple2(cultureInfo, 2, currency, false));
+				res.push(getCurrencyFormat(cultureInfo, 2, hasCurrency, true, currencySymbol));
+				res.push(getCurrencyFormatSimple2(cultureInfo, 2, hasCurrency, currencySymbol, false));
 				res.push(getShortDateFormat(cultureInfo));
 				//todo F400
 				res.push('[$-F400]h:mm:ss AM/PM');
@@ -4789,16 +4815,16 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 			var currencyLocale = true;
 			switch (id) {
 				case 5:
-					res = AscCommon.getCurrencyFormatSimple(null, 0, true, currencyLocale, false);
+					res = AscCommon.getCurrencyFormatSimple(null, 0, true, currencyLocale, null, false);
 					break;
 				case 6:
-					res = AscCommon.getCurrencyFormatSimple(null, 0, true, currencyLocale, true);
+					res = AscCommon.getCurrencyFormatSimple(null, 0, true, currencyLocale, null, true);
 					break;
 				case 7:
-					res = AscCommon.getCurrencyFormatSimple(null, 2, true, currencyLocale, false);
+					res = AscCommon.getCurrencyFormatSimple(null, 2, true, currencyLocale, null, false);
 					break;
 				case 8:
-					res = AscCommon.getCurrencyFormatSimple(null, 2, true, currencyLocale, true);
+					res = AscCommon.getCurrencyFormatSimple(null, 2, true, currencyLocale, null, true);
 					break;
 				case 14:
 					res = AscCommon.getShortDateFormat(null);
@@ -4815,28 +4841,28 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 					res = AscCommon.getShortDateFormat(null);
 					break;
 				case 37:
-					res = AscCommon.getCurrencyFormatSimple(null, 0, false, currencyLocale, false);
+					res = AscCommon.getCurrencyFormatSimple(null, 0, false, currencyLocale, null, false);
 					break;
 				case 38:
-					res = AscCommon.getCurrencyFormatSimple(null, 0, false, currencyLocale, true);
+					res = AscCommon.getCurrencyFormatSimple(null, 0, false, currencyLocale, null, true);
 					break;
 				case 39:
-					res = AscCommon.getCurrencyFormatSimple(null, 2, false, currencyLocale, false);
+					res = AscCommon.getCurrencyFormatSimple(null, 2, false, currencyLocale, null, false);
 					break;
 				case 40:
-					res = AscCommon.getCurrencyFormatSimple(null, 2, false, currencyLocale, true);
+					res = AscCommon.getCurrencyFormatSimple(null, 2, false, currencyLocale, null, true);
 					break;
 				case 41:
-					res = AscCommon.getCurrencyFormat(null, 0, false, currencyLocale);
+					res = AscCommon.getCurrencyFormat(null, 0, false, currencyLocale, null);
 					break;
 				case 42:
-					res = AscCommon.getCurrencyFormat(null, 0, true, currencyLocale);
+					res = AscCommon.getCurrencyFormat(null, 0, true, currencyLocale, null);
 					break;
 				case 43:
-					res = AscCommon.getCurrencyFormat(null, 2, false, currencyLocale);
+					res = AscCommon.getCurrencyFormat(null, 2, false, currencyLocale, null);
 					break;
 				case 44:
-					res = AscCommon.getCurrencyFormat(null, 2, true, currencyLocale);
+					res = AscCommon.getCurrencyFormat(null, 2, true, currencyLocale, null);
 					break;
                 default:
                     res = AscCommonExcel.aStandartNumFormats[id];
@@ -4978,6 +5004,22 @@ var g_aCultureInfos = {
 };
 var g_oDefaultCultureInfo, g_oLCID;
 setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049//hindi//1081
+	var g_aAdditionalCurrencySymbols = ["ADP", "AED", "AFA", "AFN", "ALL", "AMD", "ANG", "AOA", "ARS", "ATS", "AUD",
+		"AWG", "AZM", "AZN", "BAM", "BBD", "BDT", "BEF", "BGL", "BGN", "BHD", "BIF", "BMD", "BND", "BOB", "BOV", "BRL",
+		"BSD", "BTN", "BWP", "BYB", "BYN", "BYR", "BZD", "CAD", "CDF", "CHE", "CHF", "CHW", "CLF", "CLP", "CNY", "COP",
+		"COU", "CRC", "CSD", "CUC", "CUP", "CVE", "CYP", "CZK", "DEM", "DJF", "DKK", "DOP", "DZD", "ECS", "ECV", "EEK",
+		"EGP", "ERN", "ESP", "ETB", "EUR", "FIM", "FJD", "FKP", "FRF", "GBP", "GEL", "GHC", "GHS", "GIP", "GMD", "GNF",
+		"GRD", "GTQ", "GYD", "HKD", "HNL", "HRK", "HTG", "HUF", "IDR", "IEP", "ILS", "INR", "IQD", "IRR", "ISK", "ITL",
+		"JMD", "JOD", "JPY", "KAF", "KES", "KGS", "KHR", "KMF", "KPW", "KRW", "KWD", "KYD", "KZT", "LAK", "LBP", "LKR",
+		"LRD", "LSL", "LTL", "LUF", "LVL", "LYD", "MAD", "MDL", "MGA", "MGF", "MKD", "MMK", "MNT", "MOP", "MRO", "MRU",
+		"MTL", "MUR", "MVR", "MWK", "MXN", "MXV", "MYR", "MZM", "MZN", "NAD", "NGN", "NIO", "NLG", "NOK", "NPR", "NTD",
+		"NZD", "OMR", "PAB", "PEN", "PGK", "PHP", "PKR", "PLN", "PTE", "PYG", "QAR", "ROL", "RON", "RSD", "RUB", "RUR",
+		"RWF", "SAR", "SBD", "SCR", "SDD", "SDG", "SDP", "SEK", "SGD", "SHP", "SIT", "SKK", "SLL", "SOS", "SPL", "SRD",
+		"SRG", "STD", "SVC", "SYP", "SZL", "THB", "TJR", "TJS", "TMM", "TMT", "TND", "TOP", "TRL", "TRY", "TTD", "TWD",
+		"TZS", "UAH", "UGX", "USD", "USN", "USS", "UYI", "UYU", "UZS", "VEB", "VEF", "VES", "VND", "VUV", "WST", "XAF",
+		"XAG", "XAU", "XB5", "XBA", "XBB", "XBC", "XBD", "XCD", "XDR", "XFO", "XFU", "XOF", "XPD", "XPF", "XPT", "XTS",
+		"XXX", "YER", "YUM", "ZAR", "ZMK", "ZMW", "ZWD", "ZWL", "ZWN", "ZWR"
+	];
 
     //---------------------------------------------------------export---------------------------------------------------
     window['AscCommon'] = window['AscCommon'] || {};
@@ -5009,6 +5051,7 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
     window["AscCommon"].g_oFormatParser = g_oFormatParser;
     window["AscCommon"].g_aCultureInfos = g_aCultureInfos;
     window["AscCommon"].g_oDefaultCultureInfo = g_oDefaultCultureInfo;
+	window["AscCommon"].g_aAdditionalCurrencySymbols = g_aAdditionalCurrencySymbols;
 	window["AscCommon"].NumFormatType = NumFormatType;
 
 })(window);

@@ -4061,19 +4061,19 @@
     ApiTableRow.prototype["GetCell"]                      = ApiTableRow.prototype.GetCell;
     ApiTableRow.prototype["SetHeight"]                    = ApiTableRow.prototype.SetHeight;
 
-    ApiTableCell.prototype["GetClassType"]                = ApiTableRow.prototype.GetClassType;
-    ApiTableCell.prototype["GetContent"]                  = ApiTableRow.prototype.GetContent;
-    ApiTableCell.prototype["SetShd"]                      = ApiTableRow.prototype.SetShd;
-    ApiTableCell.prototype["SetCellMarginBottom"]         = ApiTableRow.prototype.SetCellMarginBottom;
-    ApiTableCell.prototype["SetCellMarginLeft"]           = ApiTableRow.prototype.SetCellMarginLeft;
-    ApiTableCell.prototype["SetCellMarginRight"]          = ApiTableRow.prototype.SetCellMarginRight;
-    ApiTableCell.prototype["SetCellMarginTop"]            = ApiTableRow.prototype.SetCellMarginTop;
-    ApiTableCell.prototype["SetCellBorderBottom"]         = ApiTableRow.prototype.SetCellBorderBottom;
-    ApiTableCell.prototype["SetCellBorderLeft"]           = ApiTableRow.prototype.SetCellBorderLeft;
-    ApiTableCell.prototype["SetCellBorderRight"]          = ApiTableRow.prototype.SetCellBorderRight;
-    ApiTableCell.prototype["SetCellBorderTop"]            = ApiTableRow.prototype.SetCellBorderTop;
-    ApiTableCell.prototype["SetVerticalAlign"]            = ApiTableRow.prototype.SetVerticalAlign;
-    ApiTableCell.prototype["SetTextDirection"]            = ApiTableRow.prototype.SetTextDirection;
+    ApiTableCell.prototype["GetClassType"]                = ApiTableCell.prototype.GetClassType;
+    ApiTableCell.prototype["GetContent"]                  = ApiTableCell.prototype.GetContent;
+    ApiTableCell.prototype["SetShd"]                      = ApiTableCell.prototype.SetShd;
+    ApiTableCell.prototype["SetCellMarginBottom"]         = ApiTableCell.prototype.SetCellMarginBottom;
+    ApiTableCell.prototype["SetCellMarginLeft"]           = ApiTableCell.prototype.SetCellMarginLeft;
+    ApiTableCell.prototype["SetCellMarginRight"]          = ApiTableCell.prototype.SetCellMarginRight;
+    ApiTableCell.prototype["SetCellMarginTop"]            = ApiTableCell.prototype.SetCellMarginTop;
+    ApiTableCell.prototype["SetCellBorderBottom"]         = ApiTableCell.prototype.SetCellBorderBottom;
+    ApiTableCell.prototype["SetCellBorderLeft"]           = ApiTableCell.prototype.SetCellBorderLeft;
+    ApiTableCell.prototype["SetCellBorderRight"]          = ApiTableCell.prototype.SetCellBorderRight;
+    ApiTableCell.prototype["SetCellBorderTop"]            = ApiTableCell.prototype.SetCellBorderTop;
+    ApiTableCell.prototype["SetVerticalAlign"]            = ApiTableCell.prototype.SetVerticalAlign;
+    ApiTableCell.prototype["SetTextDirection"]            = ApiTableCell.prototype.SetTextDirection;
 
 
 

@@ -1061,7 +1061,10 @@
 			}
 
             if (this.FT_Load_Glyph_Wrapper(this.m_pFace, unGID, load_mode))
-                return oSizes;
+            {
+				oSizes.fAdvanceX = (AscFonts.FT_GetFaceMaxAdvanceX(this.m_pFace) >> 6) / 2.0;
+				return oSizes;
+			}
 
             var _painter = null;
             if (undefined !== workerVector)

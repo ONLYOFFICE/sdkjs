@@ -863,6 +863,7 @@
             Cursor.Y         = Y;
             Cursor.PageIndex = PageIndex;
             Cursor.H         = H;
+            Cursor.SheetId   = SheetId;
         }
 
         var Transform = Paragraph.Get_ParentTextTransform();

@@ -9875,6 +9875,20 @@ CDocumentColor.prototype.IsAuto = function()
 {
 	return this.Auto;
 };
+CDocumentColor.prototype.IsEqualRGB = function(oColor)
+{
+	return (oColor && this.r === oColor.r && this.g === oColor.g && this.b === oColor.b);
+};
+CDocumentColor.prototype.SetFromColor = function(oColor)
+{
+	if (!oColor)
+		return;
+
+	this.r    = undefined !== oColor.r ? oColor.r : 0;
+	this.g    = undefined !== oColor.g ? oColor.g : 0;
+	this.b    = undefined !== oColor.b ? oColor.b : 0;
+	this.Auto = undefined !== oColor.Auto ? oColor.Auto : false;
+};
 
 
 function CDocumentShd()
@@ -17394,7 +17408,7 @@ g_oDocumentDefaultTableCellPr.InitDefault();
 g_oDocumentDefaultTableRowPr.InitDefault();
 g_oDocumentDefaultTableStylePr.InitDefault();
 
-var g_oDocumentDefaultFillColor   = new CDocumentColor(255, 255, 255, false);
-var g_oDocumentDefaultStrokeColor = new CDocumentColor(0, 0, 0, false);
+var g_oDocumentDefaultFillColor   = new CDocumentColor(255, 255, 255, true);
+var g_oDocumentDefaultStrokeColor = new CDocumentColor(0, 0, 0, true);
 
 // ----------------------------------------------------------------

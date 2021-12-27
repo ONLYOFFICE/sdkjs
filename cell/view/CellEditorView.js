@@ -865,6 +865,13 @@
 					}
 					oSelectionRange.addRange();
 					range = oSelectionRange.getLast();
+					if (bboxOper.isOneCell()) {
+						var isMerged = ws.getMergedByCell(bboxOper.r1, bboxOper.c1);
+						if (isMerged) {
+							bboxOper.r2 = isMerged.r2;
+							bboxOper.c2 = isMerged.c2;
+						}
+					}
 					range.assign2(bboxOper);
 					range.cursorePos = range.colorRangePos = r.start + 1;
 					range.formulaRangeLength = r.end - r.start;
@@ -1128,6 +1135,7 @@
 		//TODO оставляю текст!
 		var s = AscCommonExcel.getFragmentsText(this.options.fragments);
 		var isFormula = -1 === this.beginCompositePos && s.charAt(0) === "=";
+		var api = window["Asc"]["editor"];
 		var fPos, fName, match, fCurrent;
 
 		if (!this.isTopLineActive || !this.skipTLUpdate || this.undoMode) {
@@ -1157,6 +1165,9 @@
 
 		this.handlers.trigger("updated", s, this.cursorPos, fPos, fName);
 		this.handlers.trigger("updatedEditableFunction", fCurrent, fPos !== undefined ? this.calculateOffset(fPos) : null);
+		if (api && api.isMobileVersion) {
+			this.restoreFocus();
+		}
 	};
 
 	CellEditor.prototype._getEditableFunction = function (parseResult, bEndCurPos) {
@@ -1351,6 +1362,14 @@
 		if(!this.getMenuEditorMode()) {
 			this.canvasOuterStyle.zIndex = this.top < 0 ? -1 : z;
 		}
+
+		// в сафари с включенным аппаратным ускорением баг при вводе текста.
+		// видимо они кешируют по особенному текстуры, которые размером (w*h<5000)
+		// формула точная. ни пикселом меньше. больше - можно сколько угодно.
+		// нужно проверять каждое обновление сафари - и как поправят - убрать эту заглушку
+		// canvas'ы прозрачные и их увеличенный размер не влияет на результат.
+		if (AscCommon.AscBrowser.isSafariMacOs && (widthStyle * heightStyle) < 5000)
+			widthStyle = ((5000 / heightStyle) >> 0) + 1;
 
 		this.canvas.style.width = this.canvasOverlay.style.width = widthStyle + 'px';
 		this.canvas.style.height = this.canvasOverlay.style.height = heightStyle + 'px';
@@ -2771,6 +2790,9 @@
 		//TODO оставляю текст!
 		var t = this;
 		if (!this.handlers.trigger("canEdit") || this.loadFonts) {
+			return true;
+		}
+		if (this.handlers.trigger("isProtectActiveCell")) {
 			return true;
 		}
 		this.loadFonts = true;

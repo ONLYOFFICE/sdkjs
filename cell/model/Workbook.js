@@ -10035,15 +10035,23 @@
 			return null;
 		}
 
+		//todo закрепленные области
 		var newVal;
 		if (range.c1 === 0 && range.r1 === 0) {
 			newVal = null;
 		} else {
-			newVal = new Asc.Range(0, 0, 0, 0);
-			newVal.c1 = range.c1;
-			newVal.r1 = range.r1;
-			newVal.c2 = range.c1;
-			newVal.r2 = range.r1;
+			var topLeftFrozenCell = this.sheetViews[0] && this.sheetViews[0].pane && this.sheetViews[0].pane.topLeftFrozenCell;
+			if (topLeftFrozenCell && topLeftFrozenCell.col > 1 && topLeftFrozenCell.row > 1) {
+				newVal = null;
+			} else {
+				newVal = new Asc.Range(0, 0, 0, 0);
+				if (!topLeftFrozenCell || topLeftFrozenCell.col <= 1) {
+					newVal.c1 = newVal.c2 = range.c1;
+				}
+				if (!topLeftFrozenCell || topLeftFrozenCell.row <= 1) {
+					newVal.r1 = newVal.r2 = range.r1;
+				}
+			}
 		}
 
 		return newVal;
@@ -10229,9 +10237,22 @@
 	Worksheet.prototype.setProtectedSheet = function (props, addToHistory) {
 		if (!this.sheetProtection) {
 			this.sheetProtection = new window["Asc"].CSheetProtection();
+			this.sheetProtection.setDefaultInterface();
 		}
+		this.cleanTempProtectedRanges();
 		this.sheetProtection.set(props, addToHistory, this);
+		if (this.sheetProtection.isDefault()) {
+			this.sheetProtection = null;
+		}
 		return true;
+	};
+
+	Worksheet.prototype.cleanTempProtectedRanges = function () {
+		if (this.aProtectedRanges && this.aProtectedRanges.length) {
+			for (var i = 0; i < this.aProtectedRanges.length; i++) {
+				this.aProtectedRanges[i].cleanTemp();
+			}
+		}
 	};
 
 	Worksheet.prototype.getSheetProtection = function (type) {
@@ -10392,6 +10413,7 @@
 
 	Worksheet.prototype.checkProtectedRangeName = function (name) {
 		var res = c_oAscDefinedNameReason.OK;
+		//TODO пересмотреть проверку на rx_defName
 		if (!AscCommon.rx_defName.test(name.toLowerCase()) || name.length > g_nDefNameMaxLength) {
 			return c_oAscDefinedNameReason.WrongName;
 		}
@@ -10413,8 +10435,42 @@
 	};
 
 	Worksheet.prototype.isLockedRange = function (range) {
+		var rangeType = range.getType();
+		var oRange = this.getRange3(range.r1, range.c1, range.r2, range.c2);
 		var res = true;
-		this.getRange3(range.r1, range.c1, range.r2, range.c2)._foreach2(function(cell){
+		var unLockedRowIndex = range.r1 - 1;
+		oRange._foreachRowNoEmpty(function(row){
+			if(null != row && row.xfs && false === row.xfs.getLocked()) {
+				if (unLockedRowIndex + 1 === row.index) {
+					unLockedRowIndex++;
+				}
+			}
+		});
+		if (unLockedRowIndex === range.r2) {
+			//если все строки разлочены, далее можно не проверять
+			return false;
+		} else if (rangeType === Asc.c_oAscSelectionType.RangeMax || rangeType === Asc.c_oAscSelectionType.RangeRow) {
+			//если выделены все строки, но среди них не все разлочены - далее не проверяем и возвращаем true
+			return true;
+		}
+
+		var unLockedColndex = range.c1 - 1;
+		oRange._foreachColNoEmpty(function(col){
+			if(null != col && col.xfs && false === col.xfs.getLocked()) {
+				if (unLockedColndex + 1 === col.index) {
+					unLockedColndex++;
+				}
+			}
+		});
+		if (unLockedColndex === range.c2) {
+			//если все столбцы разлочены, далее можно не проверять
+			return false;
+		} else if (rangeType === Asc.c_oAscSelectionType.RangeMax || rangeType === Asc.c_oAscSelectionType.RangeCol) {
+			//если выделены все столбцы, но среди них не все разлочены - далее не проверяем и возвращаем true
+			return true;
+		}
+
+		oRange._foreach2(function(cell){
 			if (!cell) {
 				res = true;
 				return true;
@@ -10571,6 +10627,9 @@
 		var t = this;
 		if (!wsTo) {
 			wsTo = this;
+		}
+		if (wsTo.getSheetProtection()) {
+			return;
 		}
 		if (false === this.workbook.bUndoChanges && false === this.workbook.bRedoChanges) {
 			//чистим ту область, куда переносим
@@ -11564,7 +11623,7 @@
 		// if (CellValueType.Error == this.getType()) {
 		// 	return this._getValueTypeError(textValueForEdit);
 		// }
-		if (this.isFormula() && this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden()) {
+		if (this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden()) {
 			return "";
 		}
 
@@ -13492,7 +13551,7 @@
 				_formula.outStack = [];
 				_formula.parse(true);
 				var offset = new AscCommon.CellBase(cell.nRow - activeCell.row, cell.nCol - activeCell.col);
-				_val = "=" + _formula.changeOffset(offset, null, true).assemble(true);
+				_val = "=" + _formula.changeOffset(offset, null, true).assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true, true);
 			}
 			cell.setValue(_val, callback, isCopyPaste, byRef, ignoreHyperlink);
 		});
@@ -16844,6 +16903,10 @@
 
 	Range.prototype.getLeftTopCellNoEmpty = function(fAction) {
 		return this.worksheet._getCellNoEmpty(this.bbox.r1, this.bbox.c1, fAction);
+	};
+
+	Range.prototype.move = function (oBBoxTo, copyRange, wsTo) {
+		this.worksheet._moveRange(this.bbox, oBBoxTo, copyRange, wsTo);
 	};
 
 	function RowIterator() {

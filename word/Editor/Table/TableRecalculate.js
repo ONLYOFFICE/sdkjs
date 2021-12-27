@@ -1904,7 +1904,8 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
     var Y = StartPos.Y;
     var TableHeight = 0;
 
-    if (this.LogicDocument && this.LogicDocument.IsDocumentEditor() && this.IsInline())
+    var oLogicDocument = this.GetLogicDocument();
+    if (oLogicDocument && oLogicDocument.IsDocumentEditor() && this.IsInline())
 	{
 		var nTableX_min = -1;
 		var nTableX_max = -1;
@@ -3110,6 +3111,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
         }
     }
 
+    var nCompatibilityMode = oLogicDocument && oLogicDocument.GetCompatibilityMode ? oLogicDocument.GetCompatibilityMode() : AscCommon.document_compatibility_mode_Current;
     // Сделаем вертикальное выравнивание ячеек в таблице. Делаем как Word, если ячейка разбилась на несколько
     // страниц, тогда вертикальное выравнивание применяем только к первой странице.
     // Делаем это не в общем цикле, потому что объединенные вертикально ячейки могут вносить поправки в значения
@@ -3174,7 +3176,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
                 CellHeight = CellMetrics.X_cell_end - CellMetrics.X_cell_start - CellMar.Left.W - CellMar.Right.W;
             }
 
-            if (CellHeight - ContentHeight > 0.001)
+            if (CellHeight - ContentHeight > 0.001 || nCompatibilityMode <= AscCommon.document_compatibility_mode_Word14)
             {
                 if (vertalignjc_Bottom === VAlign)
                     Dy = CellHeight - ContentHeight;

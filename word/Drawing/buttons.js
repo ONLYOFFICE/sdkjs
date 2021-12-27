@@ -1584,7 +1584,7 @@
 							{
 								_geom = _object.rects[j];
 
-								if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
+								if (_geom.Page < _pageStart || _geom.Page > _pageEnd)
 									continue;
 
 								_drawingPage = _pages[_geom.Page].drawingPage;
@@ -1611,7 +1611,7 @@
 							for (var j = 0; j < _object.paths.length; j++)
 							{
 								_geom = _object.paths[j];
-								if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
+								if (_geom.Page < _pageStart || _geom.Page > _pageEnd)
 									continue;
 
 								_drawingPage = _pages[_geom.Page].drawingPage;
@@ -1652,7 +1652,7 @@
 							{
 								_geom = _object.rects[j];
 
-								if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
+								if (_geom.Page < _pageStart || _geom.Page > _pageEnd)
 									continue;
 
 								_drawingPage = _pages[_geom.Page].drawingPage;
@@ -1701,7 +1701,7 @@
 							for (var j = 0; j < _object.paths.length; j++)
 							{
 								_geom = _object.paths[j];
-								if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
+								if (_geom.Page < _pageStart || _geom.Page > _pageEnd)
 									continue;
 
 								_drawingPage = _pages[_geom.Page].drawingPage;
@@ -1743,7 +1743,7 @@
 						{
 							_geom = _object.rects[j];
 
-							if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
+							if (_geom.Page < _pageStart || _geom.Page > _pageEnd)
 								continue;
 
 							_drawingPage = _pages[_geom.Page].drawingPage;
@@ -1765,7 +1765,7 @@
 						for (var j = 0; j < _object.paths.length; j++)
 						{
 							_geom = _object.paths[j];
-							if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
+							if (_geom.Page < _pageStart || _geom.Page > _pageEnd)
 								continue;
 
 							_drawingPage = _pages[_geom.Page].drawingPage;
@@ -2510,6 +2510,9 @@
 								else
 								{
 									_object.ActiveButtonIndex = indexButton;
+
+									xCC += _object.OffsetX;
+									yCC += _object.OffsetY;
 
 									if (_object.transform)
 									{

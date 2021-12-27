@@ -456,13 +456,13 @@
         this.cropObject = null;
         this.Lock = new AscCommon.CLock();
         this.setRecalculateInfo();
-        if(this.Id === null) {
-            this.Id = AscCommon.g_oIdCounter.Get_NewId();
-            AscCommon.g_oTableId.Add(this, this.Id);
-        }
     }
     CGraphicObjectBase.prototype = Object.create(CBaseObject.prototype);
     CGraphicObjectBase.prototype.constructor = CGraphicObjectBase;
+
+    CGraphicObjectBase.prototype.notAllowedWithoutId = function() {
+        return true;
+    };
     /**
      * Create a scheme color
      * @memberof CGraphicObjectBase
@@ -623,7 +623,7 @@
     };
     CGraphicObjectBase.prototype.setClientData = function(oClientData)
     {
-        History.Add(new AscDFH.CChangesDrawingsBool(this, AscDFH.historyitem_ShapeSetClientData, this.clientdata, oClientData));
+        History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ShapeSetClientData, this.clientData, oClientData));
         this.clientData = oClientData;
     };
     CGraphicObjectBase.prototype.checkClientData = function()
@@ -643,7 +643,7 @@
             return this.group.getProtectionLocked();
         }
         if(!this.clientData) {
-            return false;
+            return true;
         }
         return this.clientData.fLocksWithSheet !== false;
     };
@@ -1640,37 +1640,124 @@
     CGraphicObjectBase.prototype.getInvertTransform = function(){
         return this.invertTransform;
     };
-    CGraphicObjectBase.prototype.getResizeCoefficients = function (numHandle, x, y) {
+    CGraphicObjectBase.prototype.getResizeCoefficients = function (numHandle, x, y, aDrawings) {
         var cx, cy;
         cx = this.extX > 0 ? this.extX : 0.01;
         cy = this.extY > 0 ? this.extY : 0.01;
 
         var invert_transform = this.getInvertTransform();
-        if(!invert_transform){
+        if(!invert_transform) {
             return { kd1: 1, kd2: 1 };
         }
         var t_x = invert_transform.TransformPointX(x, y);
         var t_y = invert_transform.TransformPointY(x, y);
 
+        var bSnapH = false;
+        var bSnapV = false;
+
+        var oSnapHorObject, oSnapVertObject;
+        var dSnapX = null;
+        var dSnapY = null;
+        var bOwnH = false;
+        var bOwnV = false;
+        if(numHandle === 0 || numHandle === 6 || numHandle === 7) {
+            if(Math.abs(t_x) < AscFormat.SNAP_DISTANCE) {
+                t_x = 0;
+                bSnapH = true;
+                bOwnH = true;
+            }
+        }
+        if(numHandle === 2 || numHandle === 3 || numHandle === 4) {
+            if(Math.abs(t_x - this.extX) < AscFormat.SNAP_DISTANCE) {
+                t_x = this.extX;
+                bSnapH = true;
+                bOwnH = true;
+            }
+        }
+
+        if(numHandle === 0 || numHandle === 1 || numHandle === 2) {
+            if(Math.abs(t_y) < AscFormat.SNAP_DISTANCE) {
+                t_y = 0;
+                bSnapV = true;
+                bOwnV = true;
+            }
+        }
+
+        if(numHandle === 4 || numHandle === 5 || numHandle === 6) {
+            if(Math.abs(t_y - this.extY) < AscFormat.SNAP_DISTANCE) {
+                t_y = this.extY;
+                bSnapV = true;
+                bOwnV = true;
+            }
+        }
+
+
+        if(!bSnapH) {
+            if(Array.isArray(aDrawings)) {
+                oSnapHorObject = AscFormat.GetMinSnapDistanceXObject(x, aDrawings, this);
+                if(oSnapHorObject) {
+                    if(Math.abs(oSnapHorObject.dist) < AscFormat.SNAP_DISTANCE) {
+                        bSnapH = true;
+                    }
+                    else {
+                        oSnapHorObject = null;
+                    }
+                }
+            }
+        }
+        if(!bSnapV) {
+            if(Array.isArray(aDrawings)) {
+                oSnapVertObject = AscFormat.GetMinSnapDistanceYObject(y, aDrawings, this);
+                if(oSnapVertObject && Math.abs(oSnapVertObject.dist) < AscFormat.SNAP_DISTANCE) {
+                    bSnapV = true;
+                }
+                else {
+                    oSnapVertObject = null;
+                }
+            }
+        }
+        if(oSnapHorObject || oSnapVertObject) {
+            var newX = oSnapHorObject ? x + oSnapHorObject.dist : x;
+            var newY = oSnapVertObject ? y + oSnapVertObject.dist : y;
+            if(oSnapHorObject || !bSnapH) {
+                t_x = invert_transform.TransformPointX(newX, newY);
+            }
+            if(oSnapVertObject || !bSnapV) {
+                t_y = invert_transform.TransformPointY(newX, newY);
+            }
+        }
+        if(bSnapH && !bOwnH) {
+            if(numHandle !== 1 && numHandle !== 5 &&
+                !((numHandle === 7 || numHandle === 3) && !this.transform.IsIdentity2())) {
+                dSnapX = this.transform.TransformPointX(t_x, t_y);
+            }
+        }
+        if(bSnapV && !bOwnV) {
+            if(numHandle !== 7 && numHandle !== 3 &&
+                !((numHandle === 1 || numHandle === 5) && !this.transform.IsIdentity2())) {
+                dSnapY = this.transform.TransformPointY(t_x, t_y);
+            }
+        }
+
         switch (numHandle) {
             case 0:
-                return { kd1: (cx - t_x) / cx, kd2: (cy - t_y) / cy };
+                return { kd1: (cx - t_x) / cx, kd2: (cy - t_y) / cy, snapH: bSnapH, snapV: bSnapV, snapX: dSnapX, snapY: dSnapY};
             case 1:
-                return { kd1: (cy - t_y) / cy, kd2: 0 };
+                return { kd1: (cy - t_y) / cy, kd2: 0, snapH: bSnapH, snapV: bSnapV, snapX: dSnapX, snapY: dSnapY };
             case 2:
-                return { kd1: (cy - t_y) / cy, kd2: t_x / cx };
+                return { kd1: (cy - t_y) / cy, kd2: t_x / cx, snapH: bSnapH, snapV: bSnapV, snapX: dSnapX, snapY: dSnapY };
             case 3:
-                return { kd1: t_x / cx, kd2: 0 };
+                return { kd1: t_x / cx, kd2: 0, snapH: bSnapH, snapV: bSnapV, snapX: dSnapX, snapY: dSnapY };
             case 4:
-                return { kd1: t_x / cx, kd2: t_y / cy };
+                return { kd1: t_x / cx, kd2: t_y / cy, snapH: bSnapH, snapV: bSnapV, snapX: dSnapX, snapY: dSnapY };
             case 5:
-                return { kd1: t_y / cy, kd2: 0 };
+                return { kd1: t_y / cy, kd2: 0, snapH: bSnapH, snapV: bSnapV, snapX: dSnapX, snapY: dSnapY };
             case 6:
-                return { kd1: t_y / cy, kd2: (cx - t_x) / cx };
+                return { kd1: t_y / cy, kd2: (cx - t_x) / cx, snapH: bSnapH, snapV: bSnapV, snapX: dSnapX, snapY: dSnapY };
             case 7:
-                return { kd1: (cx - t_x) / cx, kd2: 0 };
+                return { kd1: (cx - t_x) / cx, kd2: 0, snapH: bSnapH, snapV: bSnapV, snapX: dSnapX, snapY: dSnapY };
         }
-        return { kd1: 1, kd2: 1 };
+        return { kd1: 1, kd2: 1, snapH: bSnapH, snapV: bSnapV, snapX: dSnapX, snapY: dSnapY };
     };
     CGraphicObjectBase.prototype.GetAllContentControls = function(arrContentControls) {};
 	CGraphicObjectBase.prototype.GetAllDrawingObjects = function(arrDrawingObjects) {};
@@ -1692,6 +1779,9 @@
     };
     CGraphicObjectBase.prototype.hitToHandles = function (x, y) {
         if(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES){
+            return -1;
+        }
+        if(this.isProtected && this.isProtected()) {
             return -1;
         }
         return AscFormat.hitToHandles(x, y, this);
@@ -2322,7 +2412,7 @@
             content.Set_StartPage(pageIndex);
         var selected_objects;
         if (!AscCommon.isRealObject(this.group))
-            selected_objects = drawingObjectsController.selectedObjects;
+            selected_objects = drawingObjectsController ? drawingObjectsController.selectedObjects : [];
         else
             selected_objects = this.group.getMainGroup().selectedObjects;
         for (var i = 0; i < selected_objects.length; ++i) {
@@ -2331,12 +2421,17 @@
         }
         if (i === selected_objects.length)
             selected_objects.push(this);
+
+    
+        if(drawingObjectsController) {
+            drawingObjectsController.onChangeDrawingsSelection();
+        }
     };
     CGraphicObjectBase.prototype.deselect = function (drawingObjectsController) {
         this.selected = false;
         var selected_objects;
         if (!AscCommon.isRealObject(this.group))
-            selected_objects = drawingObjectsController.selectedObjects;
+            selected_objects = drawingObjectsController ? drawingObjectsController.selectedObjects : [];
         else
             selected_objects = this.group.getMainGroup().selectedObjects;
         for (var i = 0; i < selected_objects.length; ++i) {
@@ -2348,6 +2443,10 @@
         if(this.graphicObject)
         {
             this.graphicObject.RemoveSelection();
+        }
+        
+        if(drawingObjectsController) {
+            drawingObjectsController.onChangeDrawingsSelection();
         }
         return this;
     };
@@ -2433,15 +2532,39 @@
         AscCommon.IsShapeToImageConverter = false;
         return new AscFormat.CBaseAnimTexture(oCanvas, scale, nX, nY)
     };
+
+    CGraphicObjectBase.prototype.isOnProtectedSheet = function() {
+        if(this.worksheet) {
+            if(this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
+                return true;
+            }
+        }
+        return false;
+    };
+    CGraphicObjectBase.prototype.isProtectedText = function() {
+        if(this.getProtectionLockText()) {
+            if(this.isOnProtectedSheet()) {
+                return true;
+            }
+        }
+        return false;
+    };
+    CGraphicObjectBase.prototype.isProtected = function() {
+        if(this.getProtectionLocked()) {
+            if(this.isOnProtectedSheet()) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+
+
 	CGraphicObjectBase.prototype.canEditText = function() {
         if(this.getObjectType() === AscDFH.historyitem_type_Shape) {
             if(!AscFormat.CheckLinePresetForParagraphAdd(this.getPresetGeom()) && !this.signatureLine) {
-                if(this.getProtectionLockText()) {
-                    if(this.worksheet) {
-                        if(this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
-                            return false;
-                        }
-                    }
+                if(this.isProtectedText()) {
+                    return false;
                 }
                 if (this.isObjectInSmartArt()) {
                     return this.canEditTextInSmartArt();
@@ -2452,12 +2575,8 @@
         return false;
 	};
     CGraphicObjectBase.prototype.canEdit = function() {
-        if(this.getProtectionLocked()) {
-            if(this.worksheet) {
-                if(this.worksheet.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
-                    return false;
-                }
-            }
+        if(this.isProtected()) {
+            return false;
         }
         return true;
     };
@@ -2569,6 +2688,51 @@
             }
         }
     };
+    CGraphicObjectBase.prototype.getTypeName = function() {
+        return AscCommon.translateManager.getValue("Graphic Object");
+    };
+    CGraphicObjectBase.prototype.getObjectName = function() {
+        return this.getTypeName() + " " + this.getFormatId();
+    };
+    CGraphicObjectBase.prototype.getTimimng = function() {
+        if(this.group) {
+            return this.group.getTimimng();
+        }
+        return (this.parent && this.parent.timing) || null;
+    };
+    CGraphicObjectBase.prototype.drawAnimLabels = function(oGraphics) {
+        if(oGraphics.IsThumbnail === true || oGraphics.IsDemonstrationMode === true || AscCommon.IsShapeToImageConverter) {
+            return;
+        }
+        if(this.group) {
+            return;
+        }
+        var oApi = Asc.editor || editor;
+        if(!oApi.isDrawAnimLabels || !oApi.isDrawAnimLabels()) {
+            return;
+        }
+        var oTiming = this.getTimimng();
+        if(!oTiming) {
+            return;
+        }
+        var aEffects = oTiming.getObjectEffects(this.Get_Id());
+        if(aEffects.length === 0) {
+            return;
+        }
+        var oBounds = this.bounds;
+        var dX = oBounds.x - this.convertPixToMM(9) - this.convertPixToMM(ANIM_LABEL_WIDTH_PIX);
+        var dY = oBounds.y;
+        var dW = this.convertPixToMM(ANIM_LABEL_WIDTH_PIX);
+        var dH = this.convertPixToMM(ANIM_LABEL_HEIGHT_PIX);
+        for(var nEffect = 0; nEffect < aEffects.length; ++nEffect) {
+            aEffects[nEffect].drawEffectLabel(oGraphics, dX, dY, dW, dH);
+            dY += (this.convertPixToMM(4) + dH);
+        }
+    };
+
+    var ANIM_LABEL_WIDTH_PIX = 22;
+    var ANIM_LABEL_HEIGHT_PIX = 17;
+
 
     function CRelSizeAnchor() {
         CBaseObject.call(this);

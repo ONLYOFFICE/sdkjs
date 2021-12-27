@@ -346,7 +346,7 @@ function (window, undefined) {
         if(this.selected) {
             var nSelectStartPage = this.selectStartPage;
             this.deselect(oController);
-            oShape.select(oController, nSelectStartPage)
+            oShape.select(oController, nSelectStartPage);
         }
         return oShape;
     };

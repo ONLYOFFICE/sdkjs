@@ -311,6 +311,10 @@ SlideLayout.prototype =
     {
         History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SlideLayoutSetTiming, this.timing, oTiming));
         this.timing = oTiming;
+        if(this.timing)
+        {
+            this.timing.setParent(this);
+        }
     },
 
     changeSize: Slide.prototype.changeSize,

@@ -2447,20 +2447,7 @@ CSortFaces.prototype =
 
 		if (startIndexes.length === 0) {
 			//TODO сделано для графиков типа stacked, когда пересечения найдены всех параллалеп.
-			var minZ = parallelepipeds[0].z;
-			var minZArray = [];
-			for (var i = 0; i < parallelepipeds.length; i++) {
-				if (parallelepipeds[i].z < minZ) {
-					minZ = parallelepipeds[i].z;
-					minZArray = [];
-				}
-
-				if (minZ === parallelepipeds[i].z) {
-					minZArray.push({index: parseInt(i)});
-				}
-			}
-
-			startIndexes = minZArray.reverse();
+			return this._getSortZIndexArray(parallelepipeds);
 		}
 
 		var g = revIntersections;
@@ -2509,8 +2496,22 @@ CSortFaces.prototype =
 			res.push({nextIndex: index});
 			addIndexes[index] = 1;
 		}
+		if (res.length < parallelepipeds.length) {
+			return this._getSortZIndexArray(parallelepipeds);
+		}
 
 		return res.reverse();
+	},
+
+	_getSortZIndexArray: function (arr) {
+		arr.sort(function sortArr(a, b) {
+			return b.z - a.z;
+		});
+		var result = [];
+		for (var i = 0; i < arr.length; i++) {
+			result.push({ nextIndex: i });
+		}
+		return result;
 	},
 
 	_getIntersectionsParallelepipeds: function (parallelepipeds) {
@@ -2528,6 +2529,9 @@ CSortFaces.prototype =
 
 			for (var m = 0; m < parallelepipeds.length; m++) {
 				if (m === i || usuallyIntersect[i] === m || usuallyIntersectRev[i] === m) {
+					continue;
+				}
+				if (parallelepipeds[m].isValZero && this.cChartDrawer.calcProp.subType !== "normal") {
 					continue;
 				}
 
