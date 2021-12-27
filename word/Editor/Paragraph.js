@@ -3094,6 +3094,8 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 		{
 			if (this.IsInFixedForm())
 			{
+				pGraphics.RemoveLastClip && pGraphics.RemoveLastClip();
+
 				var isIntegerGrid = pGraphics.GetIntegerGrid();
 				if (!isIntegerGrid)
 				{
@@ -3128,6 +3130,8 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 
 				if (!isIntegerGrid)
 					pGraphics.RestoreGrState();
+
+				pGraphics.RestoreLastClip() && pGraphics.RestoreLastClip();
 			}
 			else
 			{
