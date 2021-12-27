@@ -9607,12 +9607,17 @@ PasteProcessor.prototype =
 						}
 						href = sDecoded;*/
 						if (href && href.length > 0) {
+							// проверяем, является ли ссылка ссылкой на контент сноски
+							// если да, то создаём сноску и добавляем в контент
+							// если нет, значит создаём гиперссылку
 							var sStr = href.split("#");
 							var sText;
 							if (sStr[1].includes("_ftnref")) {
 							}
+							// обычная сноска
 							else if (sStr[1].includes("_ftn")) {
 								sText = child.innerText;
+								// проверяем, является ли название сноски кастомной или нет
 								if (sText[0] === "[" && sText[sText.length - 1] === "]") {
 									sText = undefined;
 								}
@@ -9632,8 +9637,10 @@ PasteProcessor.prototype =
 							}
 							else if (sStr[1].includes("_ednref")) {
 							}
+							// концевая сноска
 							else if (sStr[1].includes("_edn")) {
 								sText = child.innerText;
+								// проверяем, является ли название сноски кастомной или нет
 								if (sText[0] === "[" && sText[sText.length - 1] === "]") {
 									sText = undefined;
 								}
@@ -9711,11 +9718,40 @@ PasteProcessor.prototype =
 				}
 			}
 		};
+		var startExecuteNotes = function () {
+			// Проверяем является ли тег контентом сноски
+			if (node.nodeName.toLowerCase() === "div" && (node.id.includes("ftn") || node.id.includes("edn"))) {
+				oThis.aContentForNotes = oThis.aContent;
+				oThis.aContent = [];
+			}
+		};
+		var endExecuteNotes = function () {
+			// Проверяем является ли тег контентом сноски
+			if (node.nodeName.toLowerCase() === "div" && (node.id.includes("ftn") || node.id.includes("edn"))) {
+				var tmp = oThis.aContent;
+				// Меняем контент обратно, для работы вне контента сносок
+				oThis.aContent = oThis.aContentForNotes;
+	
+				// Заполняем контент сносок
+				if (oThis.AddedFootEndNotes[node.id]) {
+					for (var i = 0; i < tmp.length; i++) {
+						if (i === 0) {
+							oThis.AddedFootEndNotes[node.id].Content[0].Concat(tmp[i], false)
+						}
+						else {
+							oThis.AddedFootEndNotes[node.id].Content.push(tmp[i]);
+						}
+					}
+					// Удаляем сноску из PasteProcessor, после того, как добавили в неё контент
+					delete oThis.AddedFootEndNotes[node.id];
+				}
+			}
+		};
 
-		if (node.nodeName.toLowerCase() === "div" && (node.id.includes("ftn") || node.id.includes("edn"))) {
-			oThis.aContentForNotes = oThis.aContent;
-			oThis.aContent = [];
-		}
+
+		// Меняем контент, если начинается контент сноски
+		startExecuteNotes();
+
 		var bPresentation = !PasteElementsId.g_bIsDocumentCopyPaste;
 		if (bPresentation) {
 			var shape = arrShapes[arrShapes.length - 1];
@@ -9855,25 +9891,10 @@ PasteProcessor.prototype =
 		if (bRoot && bPresentation) {
 			this._Commit_Br(2, node, pPr);//word игнорируем 2 последних br
 		}
-		if (node.nodeName.toLowerCase() === "div" && (node.id.includes("ftn") || node.id.includes("edn"))) {
-			var tmp = oThis.aContent;
-			oThis.aContent = oThis.aContentForNotes;
 
-			if (oThis.AddedFootEndNotes[node.id]) {
-				for (var i = 0; i < tmp.length; i++) {
-					if (i === 0) {
-						oThis.AddedFootEndNotes[node.id].Content[0].Concat(tmp[i], false)
-					}
-					else {
-						oThis.AddedFootEndNotes[node.id].Content.push(tmp[i]);
-					}
-				}
-				delete oThis.AddedFootEndNotes[node.id];
-				/*if (Object.keys(oThis.AddedFootEndNotes).length === 0) {
-					//delete oThis.AddedFootEndNotes;
-				}*/
-			}
-		}
+		// Если тег с контентом для сноски, то записываем контент в сноску и заменяем его на обычный
+		endExecuteNotes();
+
 		return bAddParagraph;
 	},
 
