@@ -8482,6 +8482,7 @@ PasteProcessor.prototype =
 		//content
 		if (!checkBox && !comboBox && !dropdown) {
 			var oPasteProcessor = new PasteProcessor(this.api, false, false, true);
+			oPasteProcessor.AddedFootEndNotes = this.AddedFootEndNotes;
 			oPasteProcessor.msoComments = this.msoComments;
 			oPasteProcessor.oFonts = this.oFonts;
 			oPasteProcessor.oImages = this.oImages;
@@ -8881,6 +8882,7 @@ PasteProcessor.prototype =
 		} else {
 			//content
 			var oPasteProcessor = new PasteProcessor(this.api, false, false, true);
+			oPasteProcessor.AddedFootEndNotes = this.AddedFootEndNotes;
 			oPasteProcessor.msoComments = this.msoComments;
 			oPasteProcessor.oFonts = this.oFonts;
 			oPasteProcessor.oImages = this.oImages;
@@ -9620,12 +9622,12 @@ PasteProcessor.prototype =
 								oAddedRun.SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultFootnoteReference());
 								oAddedRun.AddToContent(0, new ParaFootnoteReference(oFootnote, sText));
 								oThis._CommitElemToParagraph(oAddedRun);
-								if (!oThis.oLogicDocument.AddedFootEndNotes) {
-									oThis.oLogicDocument.AddedFootEndNotes = {};
-									oThis.oLogicDocument.AddedFootEndNotes[sStr[1].replace("_", "")] = oFootnote;
+								if (!oThis.AddedFootEndNotes) {
+									oThis.AddedFootEndNotes = {};
+									oThis.AddedFootEndNotes[sStr[1].replace("_", "")] = oFootnote;
 								}
 								else {
-									oThis.oLogicDocument.AddedFootEndNotes[sStr[1].replace("_", "")] = oFootnote;
+									oThis.AddedFootEndNotes[sStr[1].replace("_", "")] = oFootnote;
 								}
 							}
 							else if (sStr[1].includes("_ednref")) {
@@ -9641,12 +9643,12 @@ PasteProcessor.prototype =
 								oAddedRun.SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultEndnoteReference());
 								oAddedRun.AddToContent(0, new ParaEndnoteReference(oEndnote, sText));
 								oThis._CommitElemToParagraph(oAddedRun);
-								if (!oThis.oLogicDocument.AddedFootEndNotes) {
-									oThis.oLogicDocument.AddedFootEndNotes = {};
-									oThis.oLogicDocument.AddedFootEndNotes[sStr[1].replace("_", "")] = oEndnote;
+								if (!oThis.AddedFootEndNotes) {
+									oThis.AddedFootEndNotes = {};
+									oThis.AddedFootEndNotes[sStr[1].replace("_", "")] = oEndnote;
 								}
 								else {
-									oThis.oLogicDocument.AddedFootEndNotes[sStr[1].replace("_", "")] = oEndnote;
+									oThis.AddedFootEndNotes[sStr[1].replace("_", "")] = oEndnote;
 								}
 							}
 							else {
@@ -9857,19 +9859,19 @@ PasteProcessor.prototype =
 			var tmp = oThis.aContent;
 			oThis.aContent = oThis.aContentForNotes;
 
-			if (oThis.oLogicDocument.AddedFootEndNotes[node.id]) {
+			if (oThis.AddedFootEndNotes[node.id]) {
 				for (var i = 0; i < tmp.length; i++) {
 					if (i === 0) {
-						oThis.oLogicDocument.AddedFootEndNotes[node.id].Content[0].Concat(tmp[i], false)
+						oThis.AddedFootEndNotes[node.id].Content[0].Concat(tmp[i], false)
 					}
 					else {
-						oThis.oLogicDocument.AddedFootEndNotes[node.id].Content.push(tmp[i]);
+						oThis.AddedFootEndNotes[node.id].Content.push(tmp[i]);
 					}
 				}
-				delete oThis.oLogicDocument.AddedFootEndNotes[node.id];
-				if (Object.keys(oThis.oLogicDocument.AddedFootEndNotes).length === 0) {
-					delete oThis.oLogicDocument.AddedFootEndNotes;
-				}
+				delete oThis.AddedFootEndNotes[node.id];
+				/*if (Object.keys(oThis.AddedFootEndNotes).length === 0) {
+					//delete oThis.AddedFootEndNotes;
+				}*/
 			}
 		}
 		return bAddParagraph;
