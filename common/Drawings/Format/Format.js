@@ -5428,6 +5428,24 @@ function FormatRGBAColor()
         return this.fill && this.fill.type !== window['Asc'].c_oAscFill.FILL_TYPE_NOFILL;
     };
 
+
+    function CBuBlip() {
+        this.blip = null;
+    }
+
+    CBuBlip.prototype.toPPTY = function (pWriter) {
+        pWriter.StartRecord(AscFormat.BULLET_TYPE_BULLET_CHAR);
+        pWriter.WriteRecord1(0, this.blip);
+        pWriter.EndRecord();
+    }
+
+    CBuBlip.prototype.fromPPTY = function (pReader) {
+        this.blip = new AscFormat.CUniFill();
+        this.blip.fill = new AscFormat.CBlipFill();
+        pReader.ReadBlip(this.blip);
+        console.log(this.blip);
+    }
+
 function CompareUniFill(unifill_1, unifill_2)
 {
 
@@ -11506,6 +11524,7 @@ function CBulletType()
     this.type = null;//BULLET_TYPE_BULLET_NONE;
     this.Char = null;
     this.AutoNumType = null;
+    this.Blip = null;
     this.startAt = null;
 }
 
@@ -11577,6 +11596,10 @@ CBulletType.prototype =
         d.AutoNumType = this.AutoNumType;
         d.startAt = this.startAt;
         return d;
+    },
+
+    setBlip(oPr) {
+        this.Blip = oPr;
     },
 
     Write_ToBinary: function(w)
@@ -13569,6 +13592,7 @@ function CorrectUniColor(asc_color, unicolor, flag)
     window['AscFormat'].CHyperlink = CHyperlink;
     window['AscFormat'].CTextParagraphPr = CTextParagraphPr;
     window['AscFormat'].CompareBullets = CompareBullets;
+    window['AscFormat'].CBuBlip = CBuBlip;
     window['AscFormat'].CBullet = CBullet;
     window['AscFormat'].CBulletColor = CBulletColor;
     window['AscFormat'].CBulletSize = CBulletSize;

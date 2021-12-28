@@ -2124,12 +2124,16 @@ function CBinaryFileWriter()
                     }
                     case AscFormat.BULLET_TYPE_BULLET_BLIP:
                     {
+
+                        bullet.bulletType.Blip.toPPTY(oThis);
+                        //oThis.StartRecord(AscFormat.BULLET_TYPE_BULLET_BLIP);
+
                         // not support. char (*)
-                        oThis.StartRecord(AscFormat.BULLET_TYPE_BULLET_CHAR);
-                        oThis.WriteUChar(g_nodeAttributeStart);
-                        oThis._WriteString1(0, "*");
-                        oThis.WriteUChar(g_nodeAttributeEnd);
-                        oThis.EndRecord();
+                        // oThis.StartRecord(AscFormat.BULLET_TYPE_BULLET_CHAR);
+                        // oThis.WriteUChar(g_nodeAttributeStart);
+                        // oThis._WriteString1(0, "*");
+                        // oThis.WriteUChar(g_nodeAttributeEnd);
+                        // oThis.EndRecord();
                         break;
                     }
                     case AscFormat.BULLET_TYPE_BULLET_AUTONUM:

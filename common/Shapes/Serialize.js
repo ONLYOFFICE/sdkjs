@@ -3092,6 +3092,131 @@ function BinaryPPTYLoader()
         return ret;
     };
 
+    this.ReadBlip = function (uni_fill, oSpPr, oImageShape, oLn) {
+        var s = this.stream;
+        var _s2 = s.cur;
+        var _e2 = _s2 + s.GetLong() + 4;
+
+        s.Skip2(1);
+
+        while (true)
+        {
+            var _at = s.GetUChar();
+            if (g_nodeAttributeEnd == _at)
+                break;
+
+            if (_at == 0)
+                s.Skip2(1);
+        }
+
+        while (s.cur < _e2)
+        {
+            var _t = s.GetUChar();
+
+            switch (_t)
+            {
+                case 0:
+                case 1:
+                {
+                    // id. embed / link
+                    s.Skip2(4);
+                    break;
+                }
+                case 10:
+                case 11:
+                {
+                    // id. embed / link
+                    s.GetString2();
+                    break;
+                }
+                case 2:
+                {
+                    var len2 = s.GetLong();
+
+                    var  _end_rec_effect = s.cur + len2;
+
+                    var count_effects = s.GetULong();
+                    for (var _eff = 0; _eff < count_effects; ++_eff)
+                    {
+
+                        s.Skip2(1); // type
+                        var oEffect = this.ReadEffect();
+                        if(oEffect)
+                        {
+                            uni_fill.fill.Effects.push(oEffect);
+                            if(oEffect instanceof AscFormat.CAlphaModFix && AscFormat.isRealNumber(oEffect.amt))
+                            {
+                                uni_fill.setTransparent(255 * oEffect.amt / 100000);
+                            }
+                        }
+                    }
+                    s.Seek2(_end_rec_effect);
+                    break;
+                }
+                case 3:
+                {
+                    s.Skip2(6); // len + start attributes + type
+
+                    var sReadPath = s.GetString2();
+                    if (this.IsUseFullUrl && this.insertDocumentUrlsData && this.insertDocumentUrlsData.imageMap) {
+                        var sReadPathNew = this.insertDocumentUrlsData.imageMap[AscCommon.g_oDocumentUrls.mediaPrefix + sReadPath];
+                        if(sReadPathNew){
+                            sReadPath = sReadPathNew;
+                        }
+                    }
+                    if(this.IsUseFullUrl) {
+                        if(window["native"] && window["native"]["CopyTmpToMedia"]){
+                            if(!(window.documentInfo && window.documentInfo["iscoauthoring"])){
+                                var sMedia = window["native"]["CopyTmpToMedia"](sReadPath);
+                                if(typeof sMedia === "string" && sMedia.length > 0){
+                                    sReadPath = sMedia;
+                                }
+                            }
+                        }
+                    }
+                    uni_fill.fill.setRasterImageId(sReadPath);
+
+                    // TEST version ---------------
+                    var _s = sReadPath;
+                    var indS = _s.lastIndexOf("emf");
+                    if (indS == -1)
+                        indS = _s.lastIndexOf("wmf");
+
+                    if (indS != -1 && (indS == (_s.length - 3)))
+                    {
+                        _s = _s.substring(0, indS);
+                        _s += "svg";
+                        sReadPath = _s;
+                        uni_fill.fill.setRasterImageId(_s);
+                    }
+                    // ----------------------------
+
+                    if (this.IsThemeLoader)
+                    {
+                        sReadPath = "theme" + (this.Api.ThemeLoader.CurrentLoadThemeIndex + 1) + "/media/" + sReadPath;
+                        uni_fill.fill.setRasterImageId(sReadPath);
+                    }
+
+                    if (this.ImageMapChecker != null)
+                        this.ImageMapChecker[sReadPath] = true;
+
+                    if (this.IsUseFullUrl)
+                        this.RebuildImages.push(new CBuilderImages(uni_fill.fill, sReadPath, oImageShape, oSpPr, oLn));
+
+                    s.Skip2(1); // end attribute
+                    break;
+                }
+                default:
+                {
+                    s.SkipRecord();
+                    break;
+                }
+            }
+        }
+
+        s.Seek2(_e2);
+    }
+
 
     this.ReadUniFill = function(oSpPr, oImageShape, oLn)
     {
@@ -3141,128 +3266,8 @@ function BinaryPPTYLoader()
                         {
                             case 0:
                             {
-                                var _s2 = s.cur;
-                                var _e2 = _s2 + s.GetLong() + 4;
-
-                                s.Skip2(1);
-
-                                while (true)
-                                {
-                                    var _at = s.GetUChar();
-                                    if (g_nodeAttributeEnd == _at)
-                                        break;
-
-                                    if (_at == 0)
-                                        s.Skip2(1);
-                                }
-
-                                while (s.cur < _e2)
-                                {
-                                    var _t = s.GetUChar();
-
-                                    switch (_t)
-                                    {
-                                        case 0:
-                                        case 1:
-                                        {
-                                            // id. embed / link
-                                            s.Skip2(4);
-                                            break;
-                                        }
-                                        case 10:
-                                        case 11:
-                                        {
-                                            // id. embed / link
-                                            s.GetString2();
-                                            break;
-                                        }
-                                        case 2:
-                                        {
-                                            var len2 = s.GetLong();
-
-                                            var  _end_rec_effect = s.cur + len2;
-
-                                            var count_effects = s.GetULong();
-                                            for (var _eff = 0; _eff < count_effects; ++_eff)
-                                            {
-
-                                                s.Skip2(1); // type
-                                                var oEffect = this.ReadEffect();
-                                                if(oEffect)
-                                                {
-                                                    uni_fill.fill.Effects.push(oEffect);
-                                                    if(oEffect instanceof AscFormat.CAlphaModFix && AscFormat.isRealNumber(oEffect.amt))
-                                                    {
-                                                        uni_fill.setTransparent(255 * oEffect.amt / 100000);
-                                                    }
-                                                }
-                                            }
-                                            s.Seek2(_end_rec_effect);
-                                            break;
-                                        }
-                                        case 3:
-                                        {
-                                            s.Skip2(6); // len + start attributes + type
-
-                                            var sReadPath = s.GetString2();
-											if (this.IsUseFullUrl && this.insertDocumentUrlsData && this.insertDocumentUrlsData.imageMap) {
-												var sReadPathNew = this.insertDocumentUrlsData.imageMap[AscCommon.g_oDocumentUrls.mediaPrefix + sReadPath];
-												if(sReadPathNew){
-													sReadPath = sReadPathNew;
-												}
-                                            }
-                                            if(this.IsUseFullUrl) {
-                                                if(window["native"] && window["native"]["CopyTmpToMedia"]){
-                                                    if(!(window.documentInfo && window.documentInfo["iscoauthoring"])){
-                                                        var sMedia = window["native"]["CopyTmpToMedia"](sReadPath);
-                                                        if(typeof sMedia === "string" && sMedia.length > 0){
-                                                            sReadPath = sMedia;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            uni_fill.fill.setRasterImageId(sReadPath);
-
-                                            // TEST version ---------------
-                                            var _s = sReadPath;
-                                            var indS = _s.lastIndexOf("emf");
-                                            if (indS == -1)
-                                                indS = _s.lastIndexOf("wmf");
-
-                                            if (indS != -1 && (indS == (_s.length - 3)))
-                                            {
-                                                _s = _s.substring(0, indS);
-                                                _s += "svg";
-                                                sReadPath = _s;
-                                                uni_fill.fill.setRasterImageId(_s);
-                                            }
-                                            // ----------------------------
-
-                                            if (this.IsThemeLoader)
-                                            {
-                                                sReadPath = "theme" + (this.Api.ThemeLoader.CurrentLoadThemeIndex + 1) + "/media/" + sReadPath;
-                                                uni_fill.fill.setRasterImageId(sReadPath);
-                                            }
-
-                                            if (this.ImageMapChecker != null)
-                                                this.ImageMapChecker[sReadPath] = true;
-
-                                            if (this.IsUseFullUrl)
-                                                this.RebuildImages.push(new CBuilderImages(uni_fill.fill, sReadPath, oImageShape, oSpPr, oLn));
-
-                                            s.Skip2(1); // end attribute
-                                            break;
-                                        }
-                                        default:
-                                        {
-                                            s.SkipRecord();
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                s.Seek2(_e2);
-                                break;
+                                this.ReadBlip(uni_fill, oSpPr, oImageShape, oLn);
+                               break;
                             }
                             case 1:
                             {
@@ -9666,7 +9671,10 @@ function BinaryPPTYLoader()
                         }
                         else if (bullet.bulletType.type == AscFormat.BULLET_TYPE_BULLET_BLIP)
                         {
-                            s.SkipRecord();
+                            s.Skip2(5);
+                            var buBlip = new AscFormat.CBuBlip();
+                            buBlip.fromPPTY(this);
+                            bullet.bulletType.setBlip(buBlip);
                         }
                         else if (bullet.bulletType.type == AscFormat.BULLET_TYPE_BULLET_AUTONUM)
                         {
