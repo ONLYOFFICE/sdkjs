@@ -40,6 +40,7 @@
 // Import
 var g_oTextMeasurer = AscCommon.g_oTextMeasurer;
 var History         = AscCommon.History;
+var IntToNumberFormat = window["AscCommon"].IntToNumberFormat;
 
 
 var numbering_presentationnumfrmt_AlphaLcParenBoth = 0;
@@ -195,6 +196,151 @@ function CPresentationBullet()
 	this.m_oBlip = null;
 }
 
+CPresentationBullet.prototype.getHighlightForNumbering = function(intFormat) {
+	switch (this.m_nType) {
+		case numbering_presentationnumfrmt_AlphaLcParenBoth:
+		case numbering_presentationnumfrmt_AlphaUcParenBoth:
+		case numbering_presentationnumfrmt_ArabicParenBoth:
+		case numbering_presentationnumfrmt_RomanLcParenBoth:
+		case numbering_presentationnumfrmt_RomanUcParenBoth:
+		case numbering_presentationnumfrmt_ThaiAlphaParenBoth:
+		case numbering_presentationnumfrmt_ThaiNumParenBoth:
+			return '(' + intFormat + ')';
+		case numbering_presentationnumfrmt_AlphaLcParenR:
+		case numbering_presentationnumfrmt_AlphaUcParenR:
+		case numbering_presentationnumfrmt_ArabicParenR:
+		case numbering_presentationnumfrmt_HindiNumParenR:
+		case numbering_presentationnumfrmt_RomanLcParenR:
+		case numbering_presentationnumfrmt_RomanUcParenR:
+		case numbering_presentationnumfrmt_ThaiAlphaParenR:
+		case numbering_presentationnumfrmt_ThaiNumParenR:
+			return '' + intFormat + ')';
+		case numbering_presentationnumfrmt_AlphaLcPeriod:
+		case numbering_presentationnumfrmt_AlphaUcPeriod:
+		case numbering_presentationnumfrmt_ArabicDbPeriod:
+		case numbering_presentationnumfrmt_ArabicPeriod:
+		case numbering_presentationnumfrmt_Ea1ChsPeriod:
+		case numbering_presentationnumfrmt_Ea1ChtPeriod:
+		case numbering_presentationnumfrmt_Ea1JpnChsDbPeriod:
+		case numbering_presentationnumfrmt_Ea1JpnKorPeriod:
+		case numbering_presentationnumfrmt_HindiAlpha1Period:
+		case numbering_presentationnumfrmt_HindiAlphaPeriod:
+		case numbering_presentationnumfrmt_HindiNumPeriod:
+		case numbering_presentationnumfrmt_RomanLcPeriod:
+		case numbering_presentationnumfrmt_RomanUcPeriod:
+		case numbering_presentationnumfrmt_ThaiAlphaPeriod:
+		case numbering_presentationnumfrmt_ThaiNumPeriod:
+			return '' + intFormat + '.';
+		case numbering_presentationnumfrmt_Arabic1Minus:
+		case numbering_presentationnumfrmt_Arabic2Minus:
+		case numbering_presentationnumfrmt_Hebrew2Minus:
+			return '' + intFormat + '-';
+		case numbering_presentationnumfrmt_ArabicDbPlain:
+		case numbering_presentationnumfrmt_ArabicPlain:
+		case numbering_presentationnumfrmt_CircleNumDbPlain:
+		case numbering_presentationnumfrmt_CircleNumWdBlackPlain:
+		case numbering_presentationnumfrmt_CircleNumWdWhitePlain:
+		case numbering_presentationnumfrmt_Ea1ChsPlain:
+		case numbering_presentationnumfrmt_Ea1ChtPlain:
+		case numbering_presentationnumfrmt_Ea1JpnKorPlain:
+		case numbering_presentationnumfrmt_Char:
+		case numbering_presentationnumfrmt_None:
+		default:
+			return '' + intFormat;
+	}
+}
+
+function getAdaptedNumberingFormat(nType) {
+	switch (nType) {
+		case numbering_presentationnumfrmt_AlphaLcParenBoth:
+		case numbering_presentationnumfrmt_AlphaLcParenR:
+		case numbering_presentationnumfrmt_AlphaLcPeriod:
+			return Asc.c_oAscNumberingFormat.LowerLetter;
+
+		case numbering_presentationnumfrmt_AlphaUcParenBoth:
+		case numbering_presentationnumfrmt_AlphaUcParenR:
+		case numbering_presentationnumfrmt_AlphaUcPeriod:
+			return Asc.c_oAscNumberingFormat.UpperLetter;
+
+		case numbering_presentationnumfrmt_Arabic1Minus:
+			return Asc.c_oAscNumberingFormat.ArabicAlpha;
+
+		case numbering_presentationnumfrmt_Arabic2Minus:
+			return Asc.c_oAscNumberingFormat.ArabicAbjad;
+
+		case numbering_presentationnumfrmt_ArabicDbPeriod:
+		case numbering_presentationnumfrmt_ArabicDbPlain:
+			return Asc.c_oAscNumberingFormat.DecimalFullWidth;
+
+		case numbering_presentationnumfrmt_ArabicParenBoth:
+		case numbering_presentationnumfrmt_ArabicParenR:
+		case numbering_presentationnumfrmt_ArabicPeriod:
+		case numbering_presentationnumfrmt_ArabicPlain:
+			return Asc.c_oAscNumberingFormat.Decimal;
+
+		case numbering_presentationnumfrmt_CircleNumDbPlain:
+			return Asc.c_oAscNumberingFormat.DecimalEnclosedCircle;
+
+		case numbering_presentationnumfrmt_Ea1ChsPeriod:
+		case numbering_presentationnumfrmt_Ea1ChsPlain:
+			return Asc.c_oAscNumberingFormat.ChineseCounting;
+
+		case numbering_presentationnumfrmt_Hebrew2Minus:
+			return Asc.c_oAscNumberingFormat.Hebrew2;
+
+		case numbering_presentationnumfrmt_HindiAlpha1Period:
+			return Asc.c_oAscNumberingFormat.HindiConsonants;
+
+		case numbering_presentationnumfrmt_HindiAlphaPeriod:
+			return Asc.c_oAscNumberingFormat.HindiVowels;
+
+		case numbering_presentationnumfrmt_HindiNumParenR:
+		case numbering_presentationnumfrmt_HindiNumPeriod:
+			return Asc.c_oAscNumberingFormat.HindiNumbers;
+
+		case numbering_presentationnumfrmt_RomanLcParenBoth:
+		case numbering_presentationnumfrmt_RomanLcParenR:
+		case numbering_presentationnumfrmt_RomanLcPeriod:
+			return Asc.c_oAscNumberingFormat.LowerRoman;
+
+		case numbering_presentationnumfrmt_RomanUcParenBoth:
+		case numbering_presentationnumfrmt_RomanUcParenR:
+		case numbering_presentationnumfrmt_RomanUcPeriod:
+			return Asc.c_oAscNumberingFormat.UpperRoman;
+
+		case numbering_presentationnumfrmt_ThaiAlphaParenBoth:
+		case numbering_presentationnumfrmt_ThaiAlphaParenR:
+		case numbering_presentationnumfrmt_ThaiAlphaPeriod:
+			return Asc.c_oAscNumberingFormat.ThaiLetters;
+
+		case numbering_presentationnumfrmt_ThaiNumParenBoth:
+		case numbering_presentationnumfrmt_ThaiNumParenR:
+		case numbering_presentationnumfrmt_ThaiNumPeriod:
+			return Asc.c_oAscNumberingFormat.ThaiNumbers;
+
+		case numbering_presentationnumfrmt_Ea1ChtPeriod:
+		case numbering_presentationnumfrmt_Ea1ChtPlain:
+			break;
+
+		case numbering_presentationnumfrmt_Ea1JpnChsDbPeriod:
+			break;
+
+		case numbering_presentationnumfrmt_CircleNumWdBlackPlain:
+			break;
+
+		case numbering_presentationnumfrmt_CircleNumWdWhitePlain: // TODO: new break type
+			break;
+
+		case numbering_presentationnumfrmt_Ea1JpnKorPeriod:
+		case numbering_presentationnumfrmt_Ea1JpnKorPlain:
+			break;
+
+		case numbering_presentationnumfrmt_None:
+		default:
+			return Asc.c_oAscNumberingFormat.None;
+	}
+}
+
 CPresentationBullet.prototype.Get_Type = function()
 {
 	return this.m_nType;
@@ -206,117 +352,16 @@ CPresentationBullet.prototype.Get_StartAt = function()
 CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Theme, ColorMap)
 {
 	var sT = "";
-
-	switch ( this.m_nType )
-	{
-		case numbering_presentationnumfrmt_Char:
-		{
-			if ( null != this.m_sChar )
-				sT = this.m_sChar;
-
-			break;
+	if (this.m_nType === numbering_presentationnumfrmt_Char) {
+		if ( null != this.m_sChar ) {
+			sT = this.m_sChar;
 		}
-
-		case numbering_presentationnumfrmt_AlphaLcParenBoth:
-		{
-			sT = "(" + Numbering_Number_To_Alpha( Num, true ) + ")";
-			break;
-		}
-
-		case numbering_presentationnumfrmt_AlphaLcParenR:
-		{
-			sT = Numbering_Number_To_Alpha( Num, true ) + ")";
-			break;
-		}
-
-		case numbering_presentationnumfrmt_AlphaLcPeriod:
-		{
-			sT = Numbering_Number_To_Alpha( Num, true ) + ".";
-			break;
-		}
-
-		case numbering_presentationnumfrmt_AlphaUcParenBoth:
-		{
-			sT = "(" + Numbering_Number_To_Alpha( Num, false ) + ")";
-			break;
-		}
-
-		case numbering_presentationnumfrmt_AlphaUcParenR:
-		{
-			sT = Numbering_Number_To_Alpha( Num, false ) + ")";
-			break;
-		}
-
-		case numbering_presentationnumfrmt_AlphaUcPeriod:
-		{
-			sT = Numbering_Number_To_Alpha( Num, false ) + ".";
-			break;
-		}
-
-		case numbering_presentationnumfrmt_ArabicParenBoth:
-		{
-			sT += "(" + Numbering_Number_To_String(Num) + ")";
-			break;
-		}
-
-		case numbering_presentationnumfrmt_ArabicParenR:
-		{
-			sT += Numbering_Number_To_String(Num) + ")";
-			break;
-		}
-
-		case numbering_presentationnumfrmt_ArabicPeriod:
-		{
-			sT += Numbering_Number_To_String(Num) + ".";
-			break;
-		}
-
-		case numbering_presentationnumfrmt_ArabicPlain:
-		{
-			sT += Numbering_Number_To_String(Num);
-			break;
-		}
-
-		case numbering_presentationnumfrmt_RomanLcParenBoth:
-		{
-			sT += "(" + Numbering_Number_To_Roman(Num, true) + ")";
-			break;
-		}
-		case numbering_presentationnumfrmt_RomanLcParenR:
-		{
-			sT += Numbering_Number_To_Roman(Num, true) + ")";
-			break;
-		}
-		case numbering_presentationnumfrmt_RomanLcPeriod:
-		{
-			sT += Numbering_Number_To_Roman(Num, true) + ".";
-			break;
-		}
-		case numbering_presentationnumfrmt_RomanUcParenBoth:
-		{
-			sT += "(" + Numbering_Number_To_Roman(Num, false) + ")";
-			break;
-		}
-		case numbering_presentationnumfrmt_RomanUcParenR:
-		{
-			sT += Numbering_Number_To_Roman(Num, false) + ")";
-			break;
-		}
-		case numbering_presentationnumfrmt_RomanUcPeriod:
-		{
-			sT += Numbering_Number_To_Roman(Num, false) + ".";
-			break;
-		}
-		case numbering_presentationnumfrmt_None:
-		{
-			break;
-		}
-		default:
-		{
-			sT += Numbering_Number_To_String(Num) + ".";
-			break;
-		}
+	} else {
+		var typeOfNum = getAdaptedNumberingFormat(this.m_nType);
+		var formatNum = IntToNumberFormat(Num, typeOfNum);
+		sT = this.getHighlightForNumbering(formatNum);
 	}
+
 	this.m_sString = sT;
 	this.m_nNum = Num;
 	if(sT.length === 0)
@@ -397,13 +442,12 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 	var bRTL =  this.m_oTextPr.RTL;
 	var lcid =  this.m_oTextPr.Lang.EastAsia;
 
-	var FontSlot = g_font_detector.Get_FontClass( sT.charCodeAt(0), Hint, lcid, bCS, bRTL );
+	var FontSlot = g_font_detector.Get_FontClass( sT.getUnicodeIterator().value(), Hint, lcid, bCS, bRTL );
 	Context.SetTextPr( this.m_oTextPr, Theme );
 	Context.SetFontSlot( FontSlot );
-	for ( var Index2 = 0; Index2 < sT.length; Index2++ )
-	{
-		var Char = sT.charAt(Index2);
-		X += Context.Measure( Char ).Width;
+	for (var iter = sT.getUnicodeIterator(); iter.check(); iter.next()) {
+		var charCode = iter.value();
+		X += Context.MeasureCode(charCode).Width;
 	}
 
 	if(OldTextPr)
@@ -450,7 +494,7 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 	var lcid =  this.m_oTextPr.Lang.EastAsia;
 
 	var sT = this.m_sString;
-	var FontSlot = g_font_detector.Get_FontClass( sT.charCodeAt(0), Hint, lcid, bCS, bRTL );
+	var FontSlot = g_font_detector.Get_FontClass( sT.getUnicodeIterator().value(), Hint, lcid, bCS, bRTL );
 
 	if(this.m_oTextPr.Unifill){
 		this.m_oTextPr.Unifill.check(PDSE.Theme, PDSE.ColorMap);
@@ -493,12 +537,10 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 	g_oTextMeasurer.SetTextPr( this.m_oTextPr, PDSE.Theme  );
 	g_oTextMeasurer.SetFontSlot( FontSlot );
 
-
-	for ( var Index2 = 0; Index2 < sT.length; Index2++ )
-	{
-		var Char = sT.charAt(Index2);
-		Context.FillText( X, Y, Char );
-		X += g_oTextMeasurer.Measure( Char ).Width;
+	for (var iter = sT.getUnicodeIterator(); iter.check(); iter.next()) {
+		var charCode = iter.value();
+		Context.FillTextCode( X, Y, charCode );
+		X += g_oTextMeasurer.MeasureCode(charCode).Width;
 	}
 
 	if(OldTextPr)
@@ -527,3 +569,4 @@ CPresentationBullet.prototype.IsAlpha = function()
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
+window['AscCommonWord'].getAdaptedNumberingFormat = getAdaptedNumberingFormat;
