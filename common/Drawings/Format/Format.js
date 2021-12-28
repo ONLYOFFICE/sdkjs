@@ -5434,16 +5434,14 @@ function FormatRGBAColor()
     }
 
     CBuBlip.prototype.toPPTY = function (pWriter) {
-        pWriter.StartRecord(AscFormat.BULLET_TYPE_BULLET_CHAR);
-        pWriter.WriteRecord1(0, this.blip);
-        pWriter.EndRecord();
+        var _src = this.blip.RasterImageId;
+        pWriter.WriteBlip(this.blip, _src);
     }
 
     CBuBlip.prototype.fromPPTY = function (pReader) {
         this.blip = new AscFormat.CUniFill();
         this.blip.fill = new AscFormat.CBlipFill();
         pReader.ReadBlip(this.blip);
-        console.log(this.blip);
     }
 
 function CompareUniFill(unifill_1, unifill_2)

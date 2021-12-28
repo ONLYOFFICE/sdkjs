@@ -86,6 +86,7 @@ var numbering_presentationnumfrmt_ThaiNumPeriod = 40;
 
 var numbering_presentationnumfrmt_None          =     100;
 var numbering_presentationnumfrmt_Char          =     101;
+var numbering_presentationnumfrmt_Blip          =     102;
 
 function IsAlphaPrNumbering(nType)
 {
@@ -190,6 +191,8 @@ function CPresentationBullet()
 	this.m_oTextPr = null;
 	this.m_nNum    = null;
 	this.m_sString = null;
+
+	this.m_oBlip = null;
 }
 
 CPresentationBullet.prototype.Get_Type = function()

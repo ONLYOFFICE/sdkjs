@@ -2124,7 +2124,7 @@ function CBinaryFileWriter()
                     }
                     case AscFormat.BULLET_TYPE_BULLET_BLIP:
                     {
-
+                        console.log(bullet);
                         bullet.bulletType.Blip.toPPTY(oThis);
                         //oThis.StartRecord(AscFormat.BULLET_TYPE_BULLET_BLIP);
 
@@ -2923,6 +2923,53 @@ function CBinaryFileWriter()
         }
     };
 
+    this.WriteBlip = function (fill, _src) {
+        oThis.StartRecord(c_oAscFill.FILL_TYPE_BLIP);
+
+        oThis.WriteUChar(g_nodeAttributeStart);
+        oThis.WriteUChar(g_nodeAttributeEnd);
+        oThis.StartRecord(0);
+        oThis.WriteUChar(g_nodeAttributeStart);
+        oThis.WriteUChar(g_nodeAttributeEnd);
+
+
+        var effects_count = fill.Effects.length;
+        if(effects_count > 0)
+        {
+
+            oThis.StartRecord(2);
+            oThis.WriteULong(effects_count);
+            for(var effect_index = 0; effect_index < effects_count; ++effect_index)
+            {
+                oThis.WriteRecord1(0, fill.Effects[effect_index], oThis.WriteEffect);
+            }
+            oThis.EndRecord();
+        }
+
+        // if (null != trans)
+        // {
+        //     oThis.StartRecord(2);
+        //     oThis.WriteULong(1);
+        //     oThis.StartRecord(3);
+        //     oThis.StartRecord(21);
+        //     oThis.WriteUChar(g_nodeAttributeStart);
+        //     oThis._WriteInt1(0, (trans * 100000 / 255) >> 0);
+        //     oThis.WriteUChar(g_nodeAttributeEnd);
+        //     oThis.EndRecord();
+        //     oThis.EndRecord();
+        //     oThis.EndRecord();
+        // }
+
+        oThis.StartRecord(3);
+        oThis.WriteUChar(g_nodeAttributeStart);
+        oThis._WriteString1(0, _src);
+        oThis.WriteUChar(g_nodeAttributeEnd);
+        oThis.EndRecord();
+
+        oThis.EndRecord();
+
+    }
+
     this.WriteUniFill = function(unifill)
     {
         if (undefined === unifill || null == unifill)
@@ -3022,13 +3069,8 @@ function CBinaryFileWriter()
             }
             case c_oAscFill.FILL_TYPE_BLIP:
             {
-                oThis.StartRecord(c_oAscFill.FILL_TYPE_BLIP);
-
-                oThis.WriteUChar(g_nodeAttributeStart);
-                oThis.WriteUChar(g_nodeAttributeEnd);
-
                 var _src = fill.RasterImageId;
-				var imageLocal = AscCommon.g_oDocumentUrls.getImageLocal(_src);
+				        var imageLocal = AscCommon.g_oDocumentUrls.getImageLocal(_src);
                 if(imageLocal)
                     _src = imageLocal;
                 else
@@ -3074,46 +3116,7 @@ function CBinaryFileWriter()
 
                     }
                 }
-
-                oThis.StartRecord(0);
-                oThis.WriteUChar(g_nodeAttributeStart);
-                oThis.WriteUChar(g_nodeAttributeEnd);
-
-
-                var effects_count = fill.Effects.length;
-                if(effects_count > 0)
-                {
-
-                    oThis.StartRecord(2);
-                    oThis.WriteULong(effects_count);
-                    for(var effect_index = 0; effect_index < effects_count; ++effect_index)
-                    {
-                        oThis.WriteRecord1(0, fill.Effects[effect_index], oThis.WriteEffect);
-                    }
-                    oThis.EndRecord();
-                }
-
-                // if (null != trans)
-                // {
-                //     oThis.StartRecord(2);
-                //     oThis.WriteULong(1);
-                //     oThis.StartRecord(3);
-                //     oThis.StartRecord(21);
-                //     oThis.WriteUChar(g_nodeAttributeStart);
-                //     oThis._WriteInt1(0, (trans * 100000 / 255) >> 0);
-                //     oThis.WriteUChar(g_nodeAttributeEnd);
-                //     oThis.EndRecord();
-                //     oThis.EndRecord();
-                //     oThis.EndRecord();
-                // }
-
-                oThis.StartRecord(3);
-                oThis.WriteUChar(g_nodeAttributeStart);
-                oThis._WriteString1(0, _src);
-                oThis.WriteUChar(g_nodeAttributeEnd);
-                oThis.EndRecord();
-
-                oThis.EndRecord();
+                this.WriteBlip(fill, _src);
 
                 if (fill.srcRect != null)
                 {

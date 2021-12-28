@@ -16895,8 +16895,8 @@ CParaPr.prototype.Get_PresentationBullet = function(theme, colorMap)
 			}
 			case AscFormat.BULLET_TYPE_BULLET_BLIP :
 			{
-				Bullet.m_nType = numbering_presentationnumfrmt_Char;
-				Bullet.m_sChar = "•";
+				Bullet.m_nType = numbering_presentationnumfrmt_Blip;
+				Bullet.m_oBlip = this.Bullet.bulletType.blip;
 				break;
 			}
 		}
