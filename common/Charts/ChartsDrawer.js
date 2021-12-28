@@ -3893,7 +3893,6 @@ CChartsDrawer.prototype =
 				result = !result;
 			}
 		}
-		console.log(_valAx.scaling.orientation === ORIENTATION_MIN_MAX)
 
 		if (cylinder) {
 			result = !result;
