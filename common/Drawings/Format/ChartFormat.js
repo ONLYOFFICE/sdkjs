@@ -7549,6 +7549,38 @@
         this.setCrosses(oAdditionalDataAxis.crosses);
         this.setCrossesAt(oAdditionalDataAxis.crossesAt);
     };
+    CAxisBase.prototype.checkLogScale = function() {
+        if(this.scaling && AscFormat.isRealNumber(this.scaling.logBase)) {
+            var aPoints = this.yPoints || this.xPoints;
+            if(Array.isArray(aPoints) && aPoints.length > 2) {
+                aPoints.sort(function(a, b) {
+                    return a.val - b.val
+                });
+                if(aPoints[0].val > 0) {
+                    var dLog = this.scaling.logBase;
+                    var oFirstPt = aPoints[0];
+                    var oLastPt = aPoints[aPoints.length - 1];
+                    var oPt;
+                    var dMinLog = getBaseLog(dLog, oFirstPt.val);
+                    var dMaxLog = getBaseLog(dLog, oLastPt.val);
+                    var dDiff = dMaxLog - dMinLog;
+                    if(dDiff > 0) {
+                        var dScale = (oLastPt.pos - oFirstPt.pos) / dDiff;
+                        if(!AscFormat.fApproxEqual(0, dScale)) {
+                            for(var nPt = 1; nPt < aPoints.length - 1; ++nPt) {
+                                oPt = aPoints[nPt];
+                                oPt.pos = oFirstPt.pos + (getBaseLog(dLog, oPt.val) - dMinLog) * dScale;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    function getBaseLog(x, y) {
+        return Math.log(y) / Math.log(x);
+    }
 
     function CCatAx() {
         CAxisBase.call(this);

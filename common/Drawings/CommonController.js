@@ -1682,7 +1682,7 @@ DrawingObjectsController.prototype =
             {
                 if(!object.isCrop && !object.cropObject)
                 {
-                    selector.resetSelection();
+                    selector.resetSelection(this);
                 }
             }
             if(!e.CtrlKey || !object.selected){
@@ -1810,7 +1810,7 @@ DrawingObjectsController.prototype =
         if(this.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
         {
             this.checkChartTextSelection();
-            selector.resetSelection();
+            selector.resetSelection(this);
             selector.selectObject(drawing, pageIndex);
             selector.selection.chartSelection = drawing;
             if(title.select)
@@ -5646,7 +5646,7 @@ DrawingObjectsController.prototype =
                     {
                         if(i < this.selection.groupSelection.arrGraphicObjects.length-1)
                         {
-                            this.selection.groupSelection.resetSelection();
+                            this.selection.groupSelection.resetSelection(this);
                             this.selection.groupSelection.selectObject(this.selection.groupSelection.arrGraphicObjects[i+1], this.selection.groupSelection.selectStartPage);
                         }
                         else
@@ -5712,7 +5712,7 @@ DrawingObjectsController.prototype =
                     {
                         if(i > 0)
                         {
-                            this.selection.groupSelection.resetSelection();
+                            this.selection.groupSelection.resetSelection(this);
                             this.selection.groupSelection.selectObject(this.selection.groupSelection.arrGraphicObjects[i-1], this.selection.groupSelection.selectStartPage);
                         }
                         else
@@ -6167,7 +6167,7 @@ DrawingObjectsController.prototype =
             {
                 if(!this.selection.groupSelection.selection.chartSelection)
                 {
-                    this.selection.groupSelection.resetSelection();
+                    this.selection.groupSelection.resetSelection(this);
                     for(i = this.selection.groupSelection.arrGraphicObjects.length - 1; i > -1; --i)
                     {
                         this.selection.groupSelection.selectObject(this.selection.groupSelection.arrGraphicObjects[i], 0);
@@ -6382,7 +6382,7 @@ DrawingObjectsController.prototype =
                 }
                 else
                 {
-                    this.selection.groupSelection.resetSelection();
+                    this.selection.groupSelection.resetSelection(this);
                     this.selection.groupSelection = null;
                 }
                 drawingObjectsController.updateSelectionState();

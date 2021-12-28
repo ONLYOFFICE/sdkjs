@@ -2779,6 +2779,30 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
             break;
         }
 
+        case 27001: //ASC_MENU_EVENT_TYPE_SET_FOOTNOTE_PROP
+        {
+            var json = JSON.parse(_params),
+                pos = json["Pos"],
+                numFormat = json["NumFormat"],
+                numStart = json["NumStart"],
+                numRestart = json["NumRestart"],
+                isAll = json["IsAll"] || true,
+                isEndnote = json["IsEndnote"] || false;
+
+            var props = new Asc.CAscFootnotePr();
+            props.put_Pos(pos);
+            props.put_NumFormat(numFormat);
+            props.put_NumStart(numStart);
+            props.put_NumRestart(numRestart);
+
+            if (isEndnote) {
+                _api.asc_SetEndnoteProps(props, isAll);
+            } else {
+                _api.asc_SetFootnoteProps(props, isAll);
+            }
+            break;
+        }
+
         default:
             break;
     }

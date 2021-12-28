@@ -8251,7 +8251,7 @@ background-repeat: no-repeat;\
 		}
 		return false;
 	};
-	asc_docs_api.prototype._downloadAs    = function(actionType, options, oAdditionalData, dataContainer)
+	asc_docs_api.prototype._downloadAs    = function(actionType, options, oAdditionalData, dataContainer, downloadType)
 	{
 		var t = this;
 		var fileType = options.fileType;
@@ -8311,15 +8311,24 @@ background-repeat: no-repeat;\
 			oAdditionalData["codepage"] = AscCommon.c_oAscCodePageUtf8;
 			dataContainer.data = last.data;
 		}
-		else if (c_oAscFileType.HTML === fileType && null == options.oDocumentMailMerge && null == options.oMailMergeSendData)
+		else if (c_oAscFileType.HTML_TODO === fileType && !window.isCloudCryptoDownloadAs && DownloadType.None === downloadType
+			&& !(AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.isChrome))
 		{
+			//DownloadFileFromBytes has bug on Chrome on iOS https://github.com/kennethjiang/js-file-download/issues/72
 			//в asc_nativeGetHtml будет вызван select all, чтобы выделился документ должны выйти из колонтитулов и автофигур
 			var _e     = new AscCommon.CKeyboardEvent();
 			_e.CtrlKey = false;
 			_e.KeyCode = 27;
 			this.WordControl.m_oLogicDocument.OnKeyDown(_e);
-			//сделано через сервер, потому что нет простого механизма сохранения на клиенте
-			dataContainer.data = '\ufeff' + window["asc_docs_api"].prototype["asc_nativeGetHtml"].call(this);
+
+			var data =  window["asc_docs_api"].prototype["asc_nativeGetHtml"].call(this);
+			AscCommon.DownloadFileFromBytes(data, oAdditionalData["title"], "text/html", '\ufeff');
+
+			if (actionType)
+			{
+				this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, actionType);
+			}
+			return true;
 		}
 		else
 		{

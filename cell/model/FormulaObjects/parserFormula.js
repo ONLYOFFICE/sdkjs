@@ -529,6 +529,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return [localStr, localStrWithoutSheet];
 	};
+	cBaseType.prototype.getDimensions = function () {
+		return {col: 1, row: 1};
+	};
 
 	/*Basic types of an elements used into formulas*/
 	/**

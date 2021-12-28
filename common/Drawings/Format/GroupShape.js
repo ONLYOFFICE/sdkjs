@@ -716,6 +716,9 @@ function CGroupShape()
     {
         object.select(this, pageIndex);
     };
+    CGroupShape.prototype.onChangeDrawingsSelection = function()
+    {
+    };
 
     CGroupShape.prototype.recalculate = function()
     {

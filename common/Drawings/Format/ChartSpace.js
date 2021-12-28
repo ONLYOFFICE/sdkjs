@@ -4866,6 +4866,14 @@ var GLOBAL_PATH_COUNT = 0;
             AscCommon.global_MatrixTransformer.TranslateAppend(this.chart.plotArea.localTransform, oChartSize.startX, oChartSize.startY);
         }
     };
+    CChartSpace.prototype.distributeValues = function(aVals) {
+        if(Array.isArray(aVals) && aVals.length > 2) {
+            var fStride = (aVals[aVals.length - 1] - aVals[0])/(aVals.length - 1);
+            for(var nVal = 1; nVal < aVals.length - 1; ++nVal) {
+                aVals[nVal] = aVals[0] + fStride*nVal;
+            }
+        }
+    };
     CChartSpace.prototype.recalculateAxis = function() {
         if(this.chart && this.chart.plotArea && this.chart.plotArea.charts[0]) {
             this.cachedCanvas = null;
@@ -7451,6 +7459,7 @@ var GLOBAL_PATH_COUNT = 0;
                         }
                     }
 
+                    this.distributeValues(arr_val_labels_points);
                     cat_ax.interval = unit_height;
                     //запишем в оси необходимую информацию для отрисовщика plotArea  и выставим окончательные позиции для подписей
                     var arr_labels, transform_text, local_text_transform;
@@ -8329,6 +8338,7 @@ var GLOBAL_PATH_COUNT = 0;
                                 arr_val_labels_points[i] = cat_ax.posX - (arr_val[i] - crosses_val_ax) * unit_width;
                         }
                     }
+                    this.distributeValues(arr_val_labels_points);
                     val_ax.interval = unit_width;
                     //запишем в оси необходимую информацию для отрисовщика plotArea  и выставим окончательные позиции для подписей
                     var local_transform_text;

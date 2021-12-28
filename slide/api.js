@@ -599,6 +599,7 @@
 		this.isKeepLinesTogether  = false;
 		this.isPresentationEditor = true;
 		this.bSelectedSlidesTheme = false;
+		this.bIsShowAnimTab       = false;
 
 		this.isPaintFormat              = AscCommon.c_oAscFormatPainterState.kOff;
 		this.isMarkerFormat             = false;
@@ -3942,9 +3943,7 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_StopAnimationPreview = function()
 	{
-		if(this.WordControl.m_oLogicDocument.StopAnimationPreview()) 
-		{
-		}
+		this.WordControl.m_oLogicDocument.StopAnimationPreview();
 	};
 	asc_docs_api.prototype.asc_SetAnimationProperties = function(oPr)
 	{
@@ -3967,6 +3966,22 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_canMoveAnimationLater = function() 
 	{
 		return this.WordControl.m_oLogicDocument.CanMoveAnimation(false);
+	};
+	asc_docs_api.prototype.asc_onShowAnimTab = function(bShow) 
+	{
+		this.bIsShowAnimTab = bShow;
+		if(this.WordControl && this.WordControl.m_oLogicDocument) 
+		{
+			var slide = this.WordControl.m_oLogicDocument.Slides[this.WordControl.m_oLogicDocument.CurPage];
+			if(slide) 
+			{
+				this.WordControl.m_oDrawingDocument.OnRecalculatePage(this.WordControl.m_oLogicDocument.CurPage, slide);
+			}
+		}
+	};
+	asc_docs_api.prototype.isDrawAnimLabels = function() 
+	{
+		return this.bIsShowAnimTab;
 	};
 	asc_docs_api.prototype.asc_moveAnimationEarlier = function() 
 	{
@@ -7334,7 +7349,7 @@ background-repeat: no-repeat;\
         }
 	};
 
-	asc_docs_api.prototype._downloadAs = function(actionType, options, oAdditionalData, dataContainer)
+	asc_docs_api.prototype._downloadAs = function(actionType, options, oAdditionalData, dataContainer, downloadType)
 	{
 		var fileType = options.fileType;
 		if (c_oAscFileType.PDF === fileType || c_oAscFileType.PDFA === fileType)
@@ -8204,6 +8219,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_canMoveAnimationLater']           = asc_docs_api.prototype.asc_canMoveAnimationLater;
 	asc_docs_api.prototype['asc_moveAnimationEarlier']            = asc_docs_api.prototype.asc_moveAnimationEarlier;
 	asc_docs_api.prototype['asc_moveAnimationLater']              = asc_docs_api.prototype.asc_moveAnimationLater;
+	asc_docs_api.prototype['asc_onShowAnimTab']                   = asc_docs_api.prototype.asc_onShowAnimTab;
+	
 
 	asc_docs_api.prototype['StartAddShape']                       = asc_docs_api.prototype.StartAddShape;
 	asc_docs_api.prototype['asc_canEditGeometry']                 = asc_docs_api.prototype.asc_canEditGeometry;

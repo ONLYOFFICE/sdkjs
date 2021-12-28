@@ -7441,6 +7441,50 @@ $( function () {
 		testArrayFormulaEqualsValues("1,0,0,#N/A;1,0,0,#N/A;#N/A,#N/A,#N/A,#N/A", "COUNTIFS(A1:C2,A1:A2,A1:C2,A1:C2,A1:C2,A1:C2)");
 		testArrayFormulaEqualsValues("#VALUE!,#VALUE!,#VALUE!,#N/A;#VALUE!,#VALUE!,#VALUE!,#N/A;#N/A,#N/A,#N/A,#N/A", "COUNTIFS(A1:C2,A1:C2,A1:A2,A1:C2,A1:A2,A1:C2)");
 
+
+		ws.getRange2( "DS2" ).setValue( "12" );
+		ws.getRange2( "DS3" ).setValue( "2" );
+		ws.getRange2( "DS4" ).setValue( "3" );
+		ws.getRange2( "DS5" ).setValue( "4" );
+		ws.getRange2( "DS6" ).setValue( "e" );
+		ws.getRange2( "DS10" ).setValue( "12" );
+
+		ws.getRange2( "DU2" ).setValue( "1" );
+		ws.getRange2( "DU3" ).setValue( "2" );
+		ws.getRange2( "DU4" ).setValue( "11" );
+		ws.getRange2( "DU5" ).setValue( "11" );
+		ws.getRange2( "DU6" ).setValue( "w" );
+		ws.getRange2( "DU9" ).setValue( "12" );
+		ws.getRange2( "DU10" ).setValue( "12" );
+
+		oParser = new parserFormula( 'COUNTIFS(DS:DS,">3",DU:DU,">10")', "E1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), 2 );
+
+		oParser = new parserFormula( 'COUNTIFS(DS:DS,">3",DU1:DU2,">10")', "E1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+		oParser = new parserFormula( 'COUNTIFS(DS2:DS3,">3",DU:DU,">10")', "E1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+		oParser = new parserFormula( 'COUNTIFS(DS:DS,"e",DU:DU,"w")', "E1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), 1 );
+
+		oParser = new parserFormula( 'COUNTIFS(DS1:DS10,"<5",DU1:DU10,">2")', "E1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), 2 );
+
+		oParser = new parserFormula( 'COUNTIFS(DS1:DS11,"<5",DU1:DU10,">2")', "E1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
+		oParser = new parserFormula( 'COUNTIFS(DS1:DS10,"<5",DU1:DU11,">2")', "E1", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "#VALUE!" );
+
     } );
 
 	test( "Test: \"COUNTIF\"", function () {

@@ -1135,7 +1135,7 @@ var editor;
 		}
 	};
 
-  spreadsheet_api.prototype._downloadAs = function(actionType, options, oAdditionalData, dataContainer) {
+  spreadsheet_api.prototype._downloadAs = function(actionType, options, oAdditionalData, dataContainer, downloadType) {
     var fileType = options.fileType;
     if (c_oAscFileType.PDF === fileType || c_oAscFileType.PDFA === fileType) {
       var printPagesData = this.wb.calcPagesPrint(options.advancedOptions);

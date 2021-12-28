@@ -5189,7 +5189,7 @@ function (window, undefined) {
 	cCOUNTIFS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
 	cCOUNTIFS.prototype.argumentsType = [[argType.reference, argType.any]];
 	cCOUNTIFS.prototype.Calculate = function (arg) {
-		var i, j, arg0, arg1, matchingInfo, arg0Matrix, arg1Matrix, _count = 0;
+		var i, j, arg0, arg1, matchingInfo, arg0Matrix, arg1Matrix, _count = 0, argBaseDimension, argNextDimension;
 		for (var k = 0; k < arg.length; k += 2) {
 			arg0 = arg[k];
 			arg1 = arg[k + 1];
@@ -5210,23 +5210,26 @@ function (window, undefined) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 
+			argNextDimension = arg0.getDimensions();
 			matchingInfo = AscCommonExcel.matchingValue(arg1);
-			arg1Matrix = arg0.getMatrix();
+			arg1Matrix = arg0.getMatrixNoEmpty ? arg0.getMatrixNoEmpty() : arg0.getMatrix();
 			if (cElementType.cellsRange3D === arg0.type) {
 				arg1Matrix = arg1Matrix[0];
 			}
 			if (!arg0Matrix) {
 				arg0Matrix = arg1Matrix;
+				argBaseDimension = argNextDimension;
 			}
-			if (arg0Matrix.length !== arg1Matrix.length) {
+			if (argNextDimension.row !== argBaseDimension.row || argNextDimension.col !== argBaseDimension.col) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 			for (i = 0; i < arg1Matrix.length; ++i) {
-				if (arg0Matrix[i].length !== arg1Matrix[i].length) {
-					return new cError(cErrorType.wrong_value_type);
+				if (!arg1Matrix[i]) {
+					arg0Matrix[i] = null;
+					continue;
 				}
 				for (j = 0; j < arg1Matrix[i].length; ++j) {
-					if (arg0Matrix[i][j] && !matching(arg1Matrix[i][j], matchingInfo)) {
+					if (arg0Matrix[i] && arg0Matrix[i][j] && !matching(arg1Matrix[i][j], matchingInfo)) {
 						arg0Matrix[i][j] = null;
 					}
 				}
@@ -5234,8 +5237,11 @@ function (window, undefined) {
 		}
 
 		for (i = 0; i < arg0Matrix.length; ++i) {
+			if (!arg0Matrix[i]) {
+				continue;
+			}
 			for (j = 0; j < arg0Matrix[i].length; ++j) {
-				if (arg0Matrix[i][j]) {
+				if (arg0Matrix[i] && arg0Matrix[i][j]) {
 					++_count;
 				}
 			}
