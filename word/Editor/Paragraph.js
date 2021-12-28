@@ -3131,7 +3131,7 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 				if (!isIntegerGrid)
 					pGraphics.RestoreGrState();
 
-				pGraphics.RestoreLastClip() && pGraphics.RestoreLastClip();
+				pGraphics.RestoreLastClip && pGraphics.RestoreLastClip();
 			}
 			else
 			{
