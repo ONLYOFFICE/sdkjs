@@ -3864,12 +3864,13 @@ CChartsDrawer.prototype =
 		var bY = - (k.x * m.y - m.x * k.y);
 		var cZ = k.x * n.y - n.x * k.y;
 		var visible = aX + bY + cZ;
+		var _valAx = this.cChartSpace.chart.plotArea.valAx;
 
 		var result;
 		if(this.calcProp.type === c_oChartTypes.Bar)
 		{
 			result = val > 0 && visible < 0 || val < 0 && visible > 0;
-			if(!(this.calcProp.subType === "stacked") && !(this.calcProp.subType === "stackedPer") && this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX)
+			if(!(this.calcProp.subType === "stacked") && !(this.calcProp.subType === "stackedPer") && _valAx.scaling.orientation !== ORIENTATION_MIN_MAX)
 				result = !result;
 		}
 		else if(this.calcProp.type === c_oChartTypes.Line)
@@ -3880,9 +3881,20 @@ CChartsDrawer.prototype =
 		{
 			result = val < 0 && visible < 0 || val > 0 && visible > 0;
 			
-			if(!(this.calcProp.subType === "stacked") && !(this.calcProp.subType === "stackedPer") && this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX)
+			if(!(this.calcProp.subType === "stacked") && !(this.calcProp.subType === "stackedPer") && _valAx.scaling.orientation !== ORIENTATION_MIN_MAX)
 				result = !result;
 		}
+
+		if ((_valAx.crossAx.crosses === AscFormat.CROSSES_MAX && val > 0) || 
+			(_valAx.crossAx.crosses === AscFormat.CROSSES_MIN && val < 0)) {		
+			result = !result;
+		} else if (_valAx.crossAx.crossesAt) {
+			if ((val > 0 && val < _valAx.crossAx.crossesAt) || (val < 0 && val > _valAx.crossAx.crossesAt)) {
+				result = !result;
+			}
+		}
+		console.log(_valAx.scaling.orientation === ORIENTATION_MIN_MAX)
+
 		if (cylinder) {
 			result = !result;
 		}
@@ -5747,8 +5759,8 @@ drawBarChart.prototype = {
 					curVal = axisMin;
 				}
 
-				endBlockPosition = this.cChartDrawer.getYPosition(curVal, this.valAx) * this.chartProp.pxToMM;
-				startBlockPosition = prevVal ? this.cChartDrawer.getYPosition(prevVal, this.valAx) * this.chartProp.pxToMM : nullPositionOX;
+				endBlockPosition = this.cChartDrawer.getYPosition(curVal, this.valAx, null, true) * this.chartProp.pxToMM;
+				startBlockPosition = prevVal ? this.cChartDrawer.getYPosition(prevVal, this.valAx, null, true) * this.chartProp.pxToMM : nullPositionOX;
 			} else {
 				this._calculateSummStacked(j);
 
@@ -5769,8 +5781,8 @@ drawBarChart.prototype = {
 					prevVal = axisMin * test;
 				}
 
-				endBlockPosition = this.cChartDrawer.getYPosition((curVal / test), this.valAx) * this.chartProp.pxToMM;
-				startBlockPosition = test ? this.cChartDrawer.getYPosition((prevVal / test), this.valAx) * this.chartProp.pxToMM : nullPositionOX;
+				endBlockPosition = this.cChartDrawer.getYPosition((curVal / test), this.valAx, null, true) * this.chartProp.pxToMM;
+				startBlockPosition = test ? this.cChartDrawer.getYPosition((prevVal / test), this.valAx, null, true) * this.chartProp.pxToMM : nullPositionOX;
 			}
 
 			startY = val === 0 ? nullPositionOX : startBlockPosition;
@@ -5780,7 +5792,7 @@ drawBarChart.prototype = {
 				height = -height;
 			}
 		} else {
-			height = val === 0 ? val : nullPositionOX - this.cChartDrawer.getYPosition(val, this.valAx) * this.chartProp.pxToMM;
+			height = val === 0 ? val : nullPositionOX - this.cChartDrawer.getYPosition(val, this.valAx, null, true) * this.chartProp.pxToMM;
 			startY = val === 0 ? nullPositionOX : nullPositionOX;
 		}
 		if (type === AscFormat.BAR_SHAPE_PYRAMID || type === AscFormat.BAR_SHAPE_PYRAMIDTOMAX ||
