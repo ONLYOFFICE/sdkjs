@@ -5249,12 +5249,7 @@ CChartsDrawer.prototype =
 			points = this.isConeIntersection(hbar, subType, startX, startY, height, gapDepth, individualBarWidth, perspectiveDepth,
 				val, nullPositionOX, maxH, minH);
 
-			if (val === 0) {
-				sizes12 = 0;
-				sizes22 = 0;
-				sizes1 = points.wDown;
-				sizes2 = points.lDown;
-			} else if ((subType === "stacked" || subType === "stackedPer") && this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+			if ((subType === "stacked" || subType === "stackedPer") && this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
 				sizes12 = points.wUp !== 0 ? points.wUp : individualBarWidth / 2;
 				sizes22 = points.lUp !== 0 ? points.lUp : perspectiveDepth / 2;
 				sizes1 = points.wDown;
@@ -5325,8 +5320,7 @@ CChartsDrawer.prototype =
 				if (!check) {
 					sortCylinderPoints1.push(segmentPoints[i - 1]);
 					sortCylinderPoints2.push(segmentPoints2[i - 1]);
-				}
-				else {
+				} else {
 					break;
 				}
 			} else {
@@ -5340,11 +5334,11 @@ CChartsDrawer.prototype =
 					sortCylinderPoints2.unshift(segmentPoints2[k - 1]);
 				}
 			}
-		}		
-
+		}
+		
 		// проверяем если все точки поверхности цилиндра(конуса) либо видимы либо невидимы
 		// если уловие выполняется, то для отрисовки цилиндра(конуса) достаточно отрисовать эллипс (т.е вид сверху или снизу)
-		if (sortCylinderPoints1.length === 0 || sortCylinderPoints2.length === 0) {
+		if (sortCylinderPoints1.length === 0 || sortCylinderPoints2.length === 0 || val === 0) {
 			sortCylinderPoints1 = segmentPoints;
 			sortCylinderPoints2 = segmentPoints2;
 			check = false;
