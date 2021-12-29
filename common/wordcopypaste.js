@@ -2222,7 +2222,6 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
     this.oImages = {};
 	this.aContent = [];
 	this.AddedFootEndNotes = {};
-	this.oPrForNotes = {};
 	this.aContentForNotes = [];
 
 	this.pasteInExcel = pasteInExcel;
@@ -9120,7 +9119,7 @@ PasteProcessor.prototype =
 		};
 		var checkEndFootnodeText = function (Item, oThis, Text) {
 			if (Item.parentNode) {
-				if (Item.parentNode.nodeName.toLowerCase() === "span" && (Item.parentNode.className === "MsoFootnoteReference" || Item.parentNode.className === "MsoEndnoteReference")) {
+				if (Item.parentNode.nodeName.toLowerCase() === "a" && (Item.parentNode.name.toLowerCase().includes("ftn") || Item.parentNode.name.toLowerCase().includes("edn"))) {
 					var oNewItem = Item;
 					while (!(oNewItem.nodeName.toLowerCase() === "a")) {
 						if (!oNewItem.parentNode || oNewItem.parentNode.nodeName.toLowerCase() === "body") {
@@ -9131,11 +9130,31 @@ PasteProcessor.prototype =
 					if (oNewItem.nodeName.toLowerCase() === "a") {
 						if (oNewItem.name.toLowerCase().includes("ftn") || oNewItem.name.toLowerCase().includes("edn")) {
 							if (oNewItem.name.includes("_ftnref") || oNewItem.name.includes("_ednref")) {
-								oThis.AddedFootEndNotes[oNewItem.hash.replace("#_", "")].Ref.Run.SetPr(oThis.oCur_rPr);
+								if (oThis.oCur_rPr.Color.b === 238 && oThis.oCur_rPr.Color.g === 0 && oThis.oCur_rPr.Color.r === 0 && oThis.oCur_rPr.Underline === true) {
+									if (oNewItem.name.includes("_ftnref")) {
+										oThis.AddedFootEndNotes[oNewItem.hash.replace("#_", "")].Ref.Run.SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultFootnoteReference());
+									}
+									else {
+										oThis.AddedFootEndNotes[oNewItem.hash.replace("#_", "")].Ref.Run.SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultEndnoteReference());
+									}
+								}
+								else {
+									oThis.AddedFootEndNotes[oNewItem.hash.replace("#_", "")].Ref.Run.SetPr(oThis.oCur_rPr);
+								}
 							}
-							/*else if (oNewItem.name.includes("_ftn") || oNewItem.name.includes("_edn")) {
-								oThis.AddedFootEndNotes[oNewItem.name.replace("_", "")].Content[0].Content[0].SetPr(oThis.oCur_rPr);
-							}*/
+							else if (oNewItem.name.includes("_ftn") || oNewItem.name.includes("_edn")) {
+								if (oThis.oCur_rPr.Color.b === 238 && oThis.oCur_rPr.Color.g === 0 && oThis.oCur_rPr.Color.r === 0 && oThis.oCur_rPr.Underline === true) {
+									if (oNewItem.name.includes("_ftnref")) {
+										oThis.AddedFootEndNotes[oNewItem.name.replace("_", "")].Content[0].Content[0].SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultFootnoteReference());
+									}
+									else {
+										oThis.AddedFootEndNotes[oNewItem.name.replace("_", "")].Content[0].Content[0].SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultEndnoteReference());
+									}
+								}
+								else {
+									oThis.AddedFootEndNotes[oNewItem.name.replace("_", "")].Content[0].Content[0].SetPr(oThis.oCur_rPr);
+								}
+							}
 						}
 					}
 					return true;
@@ -9651,13 +9670,8 @@ PasteProcessor.prototype =
 									oAddedRun.AddToContent(0, new ParaFootnoteReference(oFootnote));
 								}
 								oThis._CommitElemToParagraph(oAddedRun);
-								if (!oThis.AddedFootEndNotes) {
-									oThis.AddedFootEndNotes = {};
+								if (oThis.AddedFootEndNotes) {
 									oThis.AddedFootEndNotes[sStr[1].replace("_", "")] = oFootnote;
-								}
-								else {
-									oThis.AddedFootEndNotes[sStr[1].replace("_", "")] = oFootnote;
-									oThis.oPrForNotes[child.innerText]
 								}
 							}
 							else if (sStr[1].includes("_ednref")) {
@@ -9681,11 +9695,7 @@ PasteProcessor.prototype =
 									oAddedRun.AddToContent(0, new ParaFootnoteReference(oEndnote));
 								}
 								oThis._CommitElemToParagraph(oAddedRun);
-								if (!oThis.AddedFootEndNotes) {
-									oThis.AddedFootEndNotes = {};
-									oThis.AddedFootEndNotes[sStr[1].replace("_", "")] = oEndnote;
-								}
-								else {
+								if (oThis.AddedFootEndNotes) {
 									oThis.AddedFootEndNotes[sStr[1].replace("_", "")] = oEndnote;
 								}
 							}
