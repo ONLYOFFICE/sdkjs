@@ -8032,7 +8032,7 @@ function BinaryFileReader(doc, openParams)
 			if("normaltable" == sNewStyleName)
 				tableNameId = sNewStyleId;
 			if ("caption" == sNewStyleName)
-				stDefault.Caption = sNewStyleName;
+				stDefault.Caption = sNewStyleId;
 			oDocStyle.Add(oNewStyle);
 		}
 		var oStyleTypes = {par: 1, table: 2, lvl: 3, run: 4, styleLink: 5, numStyleLink: 6};
