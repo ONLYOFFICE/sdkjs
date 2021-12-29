@@ -842,4 +842,68 @@
     {
         return this.ConvertDocument(sConvertType, bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags);
     };
+    /**
+     * Get selection in document in text format
+     * @memberof Api
+     * @typeofeditors ["CDE", "CPE", "CSE"]
+     * @alias GetSelectedText
+     * @param {prop} numbering is an option that includes numbering in the return value.
+     * @return {string} selected text
+     * @example
+     * window.Asc.plugin.executeMethod("GetSelectedText", [{NewLine:true, NewLineParagraph:true, Numbering:true}])
+     */
+    Api.prototype["pluginMethod_GetSelectedText"] = function(prop)
+    {
+        var properties;
+        if (typeof prop === "object")
+        {
+            properties =
+            {
+                NewLine : (prop.hasOwnProperty("NewLine")) ? prop.NewLine : true,
+                NewLineParagraph : (prop.hasOwnProperty("NewLineParagraph")) ? prop.NewLineParagraph : true,
+                Numbering : (prop.hasOwnProperty("Numbering")) ? prop.Numbering : true,
+                Math : (prop.hasOwnProperty("Math")) ? prop.Math : true,
+                TableCellSeparator: prop.TableCellSeparator,
+                TableRowSeparator: prop.TableRowSeparator,
+                ParaSeparator: prop.ParaSeparator,
+                TabSymbol: prop.TabSymbol
+            }
+        }
+        else
+        {
+            properties =
+            {
+                NewLine : true,
+                NewLineParagraph : true,
+                Numbering : true
+            }
+        }
+
+        return this.asc_GetSelectedText(false, properties);
+    };
+    /**
+	 * Replaces each paragraph(or text in cell) in the select with the corresponding text from an array of strings.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias GetSelectedText
+	 * @param {Array} arrString - represents an array of strings.
+	 * @param {string} [sParaTab=" "] - specifies which character to use to define the tab in the source text.
+	 * @param {string} [sParaNewLine=" "] - specifies which character to use to specify the line break character in the source text.
+	 */
+    Api.prototype["pluginMethod_ReplaceTextSmart"] = function(arrString, sParaTab, sParaNewLine)
+    {
+        this.asc_canPaste();
+        this.ReplaceTextSmart(arrString, sParaTab, sParaNewLine);
+        this.asc_Recalculate(true);
+        switch (this.editorId)
+        {
+            case AscCommon.c_oEditorId.Spreadsheet:
+                this.asc_endPaste();
+                break;
+            case AscCommon.c_oEditorId.Word:
+            case AscCommon.c_oEditorId.Presentation:
+                this.WordControl.m_oLogicDocument.FinalizeAction();
+                break;
+        }
+    };
 })(window);

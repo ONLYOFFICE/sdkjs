@@ -12850,10 +12850,17 @@
 	 * Replaces each paragraph(or text in cell) in the select with the corresponding text from an array of strings.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {Array} arrString - represents an array of strings. 
+	 * @param {Array} arrString - represents an array of strings.
+	 * @param {string} [sParaTab=" "] - specifies which character to use to define the tab in the source text.
+	 * @param {string} [sParaNewLine=" "] - specifies which character to use to specify the line break character in the source text.
 	 */
-	Api.prototype.ReplaceTextSmart = function(arrString)
+	Api.prototype.ReplaceTextSmart = function(arrString, sParaTab, sParaNewLine)
 	{
+		if (typeof(sParaTab) !== "string")
+			sParaTab = String.fromCharCode(32);
+		if (typeof(sParaNewLine) !== "string")
+			sParaNewLine = String.fromCharCode(32);
+
 		var allRunsInfo      = null;
 		var textDelta        = null;
 		var arrSelectedParas = null;
@@ -12906,19 +12913,39 @@
 						case para_PageCount:
 						case para_End:
 						case para_Drawing:
-						case para_NewLine:
+						case para_FieldChar:
+						case para_InstrText:
 						{
 							if (posToSplit.indexOf(Pos) === -1)
 								posToSplit.push(Pos);
 							
 							break;
 						}
+						case para_NewLine:
+							if (sParaNewLine === "")
+							{
+								if (posToSplit.indexOf(Pos) === -1)
+									posToSplit.push(Pos);
+								
+								break;
+							}
+							break;
+						case para_Tab:
+							if (sParaTab === "")
+							{
+								if (posToSplit.indexOf(Pos) === -1)
+									posToSplit.push(Pos);
+								
+								break;
+							}
+							break;
 					}
 				}
-
-				var noTextCount = 0;
+				
 				for (var Index = 0; Index < posToSplit.length; Index++)
 				{
+					var noTextCount = 0;
+
 					var oInfo = {
 						Run : oRun,
 						StartPos : null,
@@ -12944,8 +12971,9 @@
 							case para_PageNum:
 							case para_PageCount:
 							case para_End:
+							case para_FieldChar:
+							case para_InstrText:
 							case para_Drawing:
-							case para_NewLine:
 							{
 								noTextCount++;
 								break;
@@ -12956,8 +12984,35 @@
 								oInfo.StringCount++;				
 								break;
 							}
+							case para_Tab:
+							{
+								if (sParaTab !== "")
+								{
+									oInfo.String += sParaTab;
+									oInfo.StringCount++; 
+									break;
+								}
+								else
+								{
+									noTextCount++;
+									break;
+								}
+							}
+							case para_NewLine:
+							{
+								if (sParaNewLine !== "")
+								{
+									oInfo.String += sParaNewLine;
+									oInfo.StringCount++; 
+									break;
+								}
+								else 
+								{
+									noTextCount++;
+									break;
+								}
+							}
 							case para_Space:
-							case para_Tab  : 
 							{
 								oInfo.String += " ";
 								oInfo.StringCount++; 
@@ -12967,7 +13022,7 @@
 					}
 					
 					if (oInfo.String === "")
-						break;
+						continue;
 					
 					oInfo.StartPos = posToSplit[Index] + noTextCount;
 
@@ -13003,8 +13058,8 @@
 						var nPosToAdd   = nPosToDel
 						var nCharsToDel = Math.min(oChange.deleteCount, oInfo.StringCount);
 						
-						if ((nPosToDel >= oInfo.Run.Content.length && nCharsToDel !== 0) || (nCharsToDel === 0 && oChange.deleteCount !== 0)
-							|| nPosToAdd > oInfo.Run.Content.length)
+						if ((nPosToDel >= oInfo.StartPos + oInfo.StringCount && nCharsToDel !== 0) || (nCharsToDel === 0 && oChange.deleteCount !== 0)
+							|| nPosToAdd > oInfo.StartPos + oInfo.StringCount)
 							continue;
 
 						for (var nChar = 0; nChar < nCharsToDel; nChar++)
@@ -13012,7 +13067,7 @@
 							if (!oInfo.Run.Content[nPosToDel])
 								break;
 								
-							if (para_Text === oInfo.Run.Content[nPosToDel].Type || para_Space === oInfo.Run.Content[nPosToDel].Type || para_Tab === oInfo.Run.Content[nPosToDel].Type)
+							if (para_Text === oInfo.Run.Content[nPosToDel].Type || para_Space === oInfo.Run.Content[nPosToDel].Type || para_Tab === oInfo.Run.Content[nPosToDel].Type || para_NewLine === oInfo.Run.Content[nPosToDel].Type)
 							{
 								oInfo.Run.RemoveFromContent(nPosToDel, 1);
 								nChar--;
@@ -13042,9 +13097,13 @@
 						for (var nChar = 0; nChar < oChange.insert.length; nChar++)
 						{
 							var itemText = null;
-							
+							if (oChange.insert[nChar] === 160)
+								oChange.insert[nChar] = 32;
+
 							if (AscCommon.IsSpace(oChange.insert[nChar]))
 								itemText = new AscCommonWord.ParaSpace(oChange.insert[nChar]);
+							else if (oChange.insert[nChar] === '\t')
+								itemText = new ParaTab();
 							else
 								itemText = new AscCommonWord.ParaText(oChange.insert[nChar]);
 
@@ -13110,6 +13169,8 @@
 				arrSelectedParas = [];
 				oContent.GetCurrentParagraph(false, arrSelectedParas, {});
 				ReplaceInParas(arrSelectedParas);
+				if (arrSelectedParas[0] && arrSelectedParas[0].Parent)
+					arrSelectedParas[0].Parent.RemoveSelection();
 				Asc.editor.wb.recalculateDrawingObjects();
 				return;
 			}
@@ -13156,6 +13217,24 @@
 				arrSelectedParas[0].Parent.RemoveSelection();
 			else 
 				oDocument.Document.RemoveSelection();
+
+			// вставка оставшихся параграфов из arrString
+			var oParaParent   = arrSelectedParas[0].Parent;
+			var nIndexToPaste = arrSelectedParas[arrSelectedParas.length - 1].Index + 1;
+			var isPres        = !arrSelectedParas[0].bFromDocument;
+			if (!oParaParent)
+				return;
+
+			for (var nPara = arrSelectedParas.length; nPara < arrString.length; nPara++)
+			{
+				var oPara = new AscCommonWord.Paragraph(private_GetDrawingDocument(), oParaParent, isPres);
+				var oRun = new ParaRun(this.Paragraph, false);
+				oRun.AddText(arrString[nPara]);
+				private_PushElementToParagraph(oPara, oRun);
+				oParaParent.AddToContent(nIndexToPaste, oPara);
+
+				nIndexToPaste++;
+			}
 		}
 	};
 	Api.prototype.CoAuthoringChatSendMessage = function(sString)
