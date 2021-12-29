@@ -14070,7 +14070,10 @@ CDocument.prototype.UpdateCommentPosition = function(oComment)
 	if (!this.Action.Start)
 	{
 		var oChangedComments = this.Comments.UpdateCommentPosition(oComment);
-		this.Api.sync_ChangeCommentLogicalPosition(oChangedComments, this.Comments.GetCommentsPositionsCount());
+		
+		if (this.Api)
+			this.Api.sync_ChangeCommentLogicalPosition(oChangedComments, this.Comments.GetCommentsPositionsCount());
+
 		return;
 	}
 
