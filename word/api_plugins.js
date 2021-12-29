@@ -316,45 +316,6 @@
         oLogicDocument.MoveCursorToContentControl(id, isBegin);
     };
     /**
-     * Get selection in document in text format
-     * @memberof Api
-     * @typeofeditors ["CDE"]
-     * @alias GetSelectedText
-     * @param {object} prop
-     * @return {string} selected text
-     * @example
-     * window.Asc.plugin.executeMethod("GetSelectedText", [{NewLine:true, NewLineParagraph:true, Numbering:true}])
-     */
-    window["asc_docs_api"].prototype["pluginMethod_GetSelectedText"] = function(prop)
-    {
-        var oLogicDocument = this.private_GetLogicDocument();
-        if (!oLogicDocument)
-            return;
-
-        var properties;
-        if (typeof prop === "object")
-        {
-            properties =
-            {
-                NewLine : (prop.hasOwnProperty("NewLine")) ? prop.NewLine : true,
-                NewLineParagraph : (prop.hasOwnProperty("NewLineParagraph")) ? prop.NewLineParagraph : true,
-                Numbering : (prop.hasOwnProperty("Numbering")) ? prop.Numbering : true,
-                Math : (prop.hasOwnProperty("Math")) ? prop.Math : true
-            }
-        }
-        else
-        {
-            properties = 
-            {
-                NewLine : true,
-                NewLineParagraph : true,
-                Numbering : true
-            }
-        }
-
-        return oLogicDocument.GetSelectedText(false, properties);
-    };
-    /**
      * Remove selection in document
      * @memberof Api
      * @typeofeditors ["CDE"]

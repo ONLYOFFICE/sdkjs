@@ -11065,13 +11065,14 @@ background-repeat: no-repeat;\
 
 		return oLogicDocument.ReplaceCurrentWord(nDirection, sReplace);
 	};
-	asc_docs_api.prototype.asc_GetSelectedText = function()
+	asc_docs_api.prototype.asc_GetSelectedText = function(bClearText, select_Pr)
 	{
+		bClearText = typeof(bClearText) === "boolean" ? bClearText : true;
 		var oLogicDocument = this.private_GetLogicDocument();
 		if (!oLogicDocument)
 			return null;
 
-		return oLogicDocument.GetSelectedText(false);
+		return oLogicDocument.GetSelectedText(bClearText, select_Pr);
 	};
 	asc_docs_api.prototype.asc_AddBlankPage = function()
 	{
