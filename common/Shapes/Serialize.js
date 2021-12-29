@@ -3238,6 +3238,7 @@ function BinaryPPTYLoader()
                     s.Skip2(1);
 
                     uni_fill.setFill(new AscFormat.CBlipFill());
+                    console.log(oImageShape);
 
                     while (true)
                     {

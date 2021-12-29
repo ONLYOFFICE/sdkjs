@@ -10848,7 +10848,11 @@ function CompareBullets(bullet1, bullet2)
             }
             case BULLET_TYPE_BULLET_BLIP:
             {
-                ret.bulletType.type = BULLET_TYPE_BULLET_CHAR; //TODO: в меню отдаем, что символьный.
+                ret.bulletType.type = BULLET_TYPE_BULLET_BLIP;
+                if(bullet1.bulletType.Blip === bullet2.bulletType.Blip)
+                {
+                    ret.bulletType.Blip = bullet1.bulletType.Blip;
+                }
                 break;
             }
             case BULLET_TYPE_BULLET_AUTONUM:
@@ -11593,6 +11597,7 @@ CBulletType.prototype =
         d.Char = this.Char;
         d.AutoNumType = this.AutoNumType;
         d.startAt = this.startAt;
+        d.Blip = this.Blip;
         return d;
     },
 
