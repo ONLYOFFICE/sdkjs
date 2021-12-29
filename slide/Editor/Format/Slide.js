@@ -1348,6 +1348,10 @@ Slide.prototype =
             }
             oSp.draw(graphics);
         }
+
+        if(this.timing) {
+            this.timing.drawEffectsLabels(graphics);
+        }
         if(this.slideComments)
         {
             var comments = this.slideComments.comments;

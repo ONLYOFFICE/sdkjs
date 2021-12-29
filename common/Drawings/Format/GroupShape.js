@@ -492,7 +492,6 @@ function CGroupShape()
         }
         graphics.reset();
         graphics.SetIntegerGrid(true);
-        this.drawAnimLabels && this.drawAnimLabels(graphics);
     };
 
     CGroupShape.prototype.deselectObject = function(object)

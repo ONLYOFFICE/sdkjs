@@ -2337,8 +2337,6 @@
     CTiming.prototype.removeSelectedEffects = function() {
         this.removeEffects(this.getSelectedEffects());
     };
-
-
     CTiming.prototype.removeEffects = function(aEffectsToRemove) {
         var aSeqs = this.getEffectsSequences();
         var nSeq, nEffect, aSeq, oEffect;
@@ -2357,7 +2355,6 @@
         }
         this.buildTree(aSeqs);
     };
-
     CTiming.prototype.addEffectToMainSequence = function(sObjectId, nPresetClass, nPresetId, nPresetSubtype, bReplace) {
      
         if(bReplace) {
@@ -2376,7 +2373,6 @@
         oPar.setCTn(oCTn);
         return oPar;
     };
-
     CTiming.prototype.getSelectionRanges = function(aSeqs) {
         var nSeq, nEffect;
         var aRanges = [];
@@ -2401,7 +2397,6 @@
         }
         return aRanges;
     };
-
     CTiming.prototype.getSequencesForMove = function(bEarlier, bCheckPossibility) {
         var aSeqs = this.getEffectsSequences();
         if(bEarlier && aSeqs[0][0] !== null) {
@@ -2569,7 +2564,6 @@
         }
         return aSequences;
     };
-
     CTiming.prototype.buildTree = function(aSequences, bRestedDelayShift) {
         var aCurSequence;
         var oEffect;
@@ -2907,7 +2901,6 @@
         }
         return aRet;
     };
-    
     CTiming.prototype.getSelectionState = function() {
         var aSelectedEffects = this.getSelectedEffects();
         var aRet = [];
@@ -2937,6 +2930,47 @@
             else {
                 oEff.deselect();
             }
+        }
+    };
+    CTiming.prototype.getEffectsForLabelsDraw = function() {
+        var aResult = [];
+        var aAllEffects = this.getAllAnimEffects();
+        var aSelectedEffects = [];
+        var nEffect, oEffect;
+        //draw selected effects after non-selected
+        //draw non-selected effects
+        for(nEffect = 0; nEffect < aAllEffects.length; ++nEffect) {
+            oEffect = aAllEffects[nEffect];
+            if(oEffect.isSelected()) {
+                aSelectedEffects.push(oEffect);
+            }
+            else {
+                aResult.push(oEffect);
+            }
+        }
+        aResult = aResult.concat(aSelectedEffects);
+        return aResult;
+    };
+    CTiming.prototype.drawEffectsLabels = function(oGraphics) {
+        if(oGraphics.IsThumbnail === true || oGraphics.IsDemonstrationMode === true || AscCommon.IsShapeToImageConverter) {
+            return;
+        }
+        var oApi = editor || Asc.editor;
+        if(!oApi.isDrawAnimLabels || !oApi.isDrawAnimLabels()) {
+            return;
+        }
+        var aEffectsForDraw = this.getEffectsForLabelsDraw();
+        for(var nEffect = 0; nEffect < aEffectsForDraw.length; ++nEffect) {
+            aEffectsForDraw[nEffect].drawEffectLabel(oGraphics);
+        }
+    };
+    CTiming.prototype.onMouseDown = function(e, x, y) {
+        var oApi = editor || Asc.editor;
+        if(!oApi.isDrawAnimLabels || !oApi.isDrawAnimLabels()) {
+            return null;
+        }
+        var aEffectsForDraw = this.getEffectsForLabelsDraw();
+        for(var nEffect = aEffectsForDraw.length - 1; nEffect > -1; --nEffect) {
         }
     };
 
@@ -7739,6 +7773,14 @@
     changesFactory[AscDFH.historyitem_TimeNodeContainerCTn] = CChangeObject;
     drawingsChangesMap[AscDFH.historyitem_TimeNodeContainerCTn] = function(oClass, value) {oClass.cTn = value;};
 
+
+
+
+    var ANIM_LABEL_WIDTH_PIX = 22;
+    var ANIM_LABEL_HEIGHT_PIX = 17;
+    var HOR_LABEL_SPACE = 9;
+    var VERT_LABEL_SPACE = 4;
+
     function CTimeNodeContainer() {//par, excl
         CTimeNodeBase.call(this);
         this.cTn = null;
@@ -7815,8 +7857,45 @@
     CTimeNodeContainer.prototype.getLabelFillColor = function() {
 
     };
-    CTimeNodeContainer.prototype.drawEffectLabel = function(oGraphics, dX, dY, dW, dH) {
+    CTimeNodeContainer.prototype.getLabelRect = function() {
+        var oTiming = this.getTiming();
+        if(!oTiming) {
+            return null;
+        }
+        var sObjectId = this.getObjectId();
+        var oObject = AscCommon.g_oTableId.Get_ById(sObjectId);
+        if(!oObject) {
+            return null;
+        }
+        var aObjectEffects = oTiming.getObjectEffects(sObjectId);
+        var dX, dY;
+        var dW = oObject.convertPixToMM(ANIM_LABEL_WIDTH_PIX);
+        var dH = oObject.convertPixToMM(ANIM_LABEL_HEIGHT_PIX);
+        var oObjectBounds = oObject.bounds;
+        dX = oObjectBounds.x - oObject.convertPixToMM(HOR_LABEL_SPACE + ANIM_LABEL_WIDTH_PIX);
+        dY = oObjectBounds.y;
+        for(var nEffect = 0; nEffect < aObjectEffects.length; ++nEffect) {
+            if(aObjectEffects[nEffect] === this) {
+                break;
+            }
+            dY += (dH + oObject.convertPixToMM(VERT_LABEL_SPACE));
+        }
+        return new AscFormat.CGraphicBounds(dX, dY, dX + dW, dY + dH);
+    };
+    CTimeNodeContainer.prototype.drawEffectLabel = function(oGraphics) {
+        this.internalDrawEffectLabel(oGraphics);
+    };
+    CTimeNodeContainer.prototype.internalDrawEffectLabel = function(oGraphics) {
+        var oRect = this.getLabelRect();
+        if(!oRect) {
+            return;
+        }
         AscFormat.ExecuteNoHistory(function(){
+            var dX, dY, dW, dH;
+            dX = oRect.l;
+            dY = oRect.t;
+            dW = oRect.w;
+            dH = oRect.h;
             oGraphics.SaveGrState();
             
             var oMatrix = new AscCommon.CMatrix();

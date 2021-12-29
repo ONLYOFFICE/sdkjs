@@ -5699,8 +5699,6 @@ CShape.prototype.draw = function (graphics, transform, transformText, pageIndex)
     if(graphics.EndDrawShape) {
         graphics.EndDrawShape();
     }
-
-    this.drawAnimLabels && this.drawAnimLabels(graphics);
 };
 
     CShape.prototype.recalculateGeometry = function()

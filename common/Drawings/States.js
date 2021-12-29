@@ -368,6 +368,7 @@ NullState.prototype =
             {
                 if(!this.drawingObjects.isSlideShow())
                 {
+                    
                     this.drawingObjects.stX = x;
                     this.drawingObjects.stY = y;
                     this.drawingObjects.selectionRect = {x : x, y : y, w: 0, h: 0};
