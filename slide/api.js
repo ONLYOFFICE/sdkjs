@@ -7472,12 +7472,13 @@ background-repeat: no-repeat;\
 		return oLogicDocument.SetAutoCorrectFirstLetterOfCells(isCorrect);
 	};
 
-	asc_docs_api.prototype.asc_GetSelectedText = function()
+	asc_docs_api.prototype.asc_GetSelectedText = function(bClearText, select_Pr)
 	{
+		bClearText = typeof(bClearText) === "boolean" ? bClearText : true;
 		var oPresentation = this.WordControl && this.WordControl.m_oLogicDocument;
 		if(oPresentation)
 		{
-			return oPresentation.GetSelectedText(true);
+			return oPresentation.GetSelectedText(bClearText, select_Pr);
 		}
 		return "";
 	};
