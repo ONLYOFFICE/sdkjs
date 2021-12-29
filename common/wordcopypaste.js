@@ -2221,7 +2221,8 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
     this.oFonts = {};
     this.oImages = {};
 	this.aContent = [];
-	this.AddedFootEndNotes = [];
+	this.AddedFootEndNotes = {};
+	this.oPrForNotes = {};
 	this.aContentForNotes = [];
 
 	this.pasteInExcel = pasteInExcel;
@@ -9055,7 +9056,7 @@ PasteProcessor.prototype =
 
 				//bIsPreviousSpace - игнорируем несколько пробелов подряд
 				var bIsPreviousSpace = false, clonePr;
-				var bIsForFootEndnote = checkEndFootnodeText(node);
+				var bIsForFootEndnote = checkEndFootnodeText(node, oThis, value);
 				for (var oIterator = value.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
 					if (oThis.needAddCommentStart) {
 						for (var i = 0; i < oThis.needAddCommentStart.length; i++) {
@@ -9117,16 +9118,33 @@ PasteProcessor.prototype =
 				}
 			}
 		};
-		var checkEndFootnodeText = function (Item) {
+		var checkEndFootnodeText = function (Item, oThis, Text) {
 			if (Item.parentNode) {
 				if (Item.parentNode.nodeName.toLowerCase() === "span" && (Item.parentNode.className === "MsoFootnoteReference" || Item.parentNode.className === "MsoEndnoteReference")) {
+					var oNewItem = Item;
+					while (!(oNewItem.nodeName.toLowerCase() === "a")) {
+						if (!oNewItem.parentNode || oNewItem.parentNode.nodeName.toLowerCase() === "body") {
+							break;
+						}
+						oNewItem = oNewItem.parentNode;
+					}
+					if (oNewItem.nodeName.toLowerCase() === "a") {
+						if (oNewItem.name.toLowerCase().includes("ftn") || oNewItem.name.toLowerCase().includes("edn")) {
+							if (oNewItem.name.includes("_ftnref") || oNewItem.name.includes("_ednref")) {
+								oThis.AddedFootEndNotes[oNewItem.hash.replace("#_", "")].Ref.Run.SetPr(oThis.oCur_rPr);
+							}
+							/*else if (oNewItem.name.includes("_ftn") || oNewItem.name.includes("_edn")) {
+								oThis.AddedFootEndNotes[oNewItem.name.replace("_", "")].Content[0].Content[0].SetPr(oThis.oCur_rPr);
+							}*/
+						}
+					}
 					return true;
 				}
 				else if (Item.parentNode.nodeName.toLowerCase() === "p") {
 					return false;
 				}
 				else {
-					return checkEndFootnodeText(Item.parentNode);
+					return checkEndFootnodeText(Item.parentNode, oThis, Text);
 				}
 			}
 			return false;
@@ -9625,7 +9643,13 @@ PasteProcessor.prototype =
 								oFootnote.AddDefaultFootnoteContent(sText);
 								var oAddedRun = new ParaRun(oThis.oCurPar, false);
 								oAddedRun.SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultFootnoteReference());
-								oAddedRun.AddToContent(0, new ParaFootnoteReference(oFootnote, sText));
+								if (sText) {
+									oAddedRun.AddToContent(0, new ParaFootnoteReference(oFootnote));
+									oAddedRun.AddText(sText, 1);
+								}
+								else {
+									oAddedRun.AddToContent(0, new ParaFootnoteReference(oFootnote));
+								}
 								oThis._CommitElemToParagraph(oAddedRun);
 								if (!oThis.AddedFootEndNotes) {
 									oThis.AddedFootEndNotes = {};
@@ -9633,6 +9657,7 @@ PasteProcessor.prototype =
 								}
 								else {
 									oThis.AddedFootEndNotes[sStr[1].replace("_", "")] = oFootnote;
+									oThis.oPrForNotes[child.innerText]
 								}
 							}
 							else if (sStr[1].includes("_ednref")) {
@@ -9648,7 +9673,13 @@ PasteProcessor.prototype =
 								oEndnote.AddDefaultEndnoteContent(sText);
 								var oAddedRun = new ParaRun(oThis.oCurPar, false);
 								oAddedRun.SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultEndnoteReference());
-								oAddedRun.AddToContent(0, new ParaEndnoteReference(oEndnote, sText));
+								if (sText) {
+									oAddedRun.AddToContent(0, new ParaFootnoteReference(oEndnote));
+									oAddedRun.AddText(sText, 1);
+								}
+								else {
+									oAddedRun.AddToContent(0, new ParaFootnoteReference(oEndnote));
+								}
 								oThis._CommitElemToParagraph(oAddedRun);
 								if (!oThis.AddedFootEndNotes) {
 									oThis.AddedFootEndNotes = {};
