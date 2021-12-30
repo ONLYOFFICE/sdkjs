@@ -2972,8 +2972,19 @@
             return;
         }
         var aEffectsForDraw = this.getEffectsForLabelsDraw();
+
+        var oContext = oGraphics.m_oContext;
+        var sOldFill;
+        if(oContext) {
+            var dPR = AscCommon.AscBrowser.retinaPixelRatio;
+            oContext.font = Math.round(8 * dPR) + "pt Arial";
+            oContext.textAlign = "center"; 
+        }
         for(var nEffect = 0; nEffect < aEffectsForDraw.length; ++nEffect) {
             aEffectsForDraw[nEffect].drawEffectLabel(oGraphics);
+        }
+        if(oContext) {
+            oContext.fillStyle = sOldFill;
         }
     };
     CTiming.prototype.onMouseDown = function(e, x, y, bHandle) {
@@ -7967,17 +7978,38 @@
             //draw internal part
             
             oGraphics.RestoreGrState();
-            
 
             if(this.isPartOfMainSequence()) {
                 var nIdx = this.getIndexInSequence();
                 if(AscFormat.isRealNumber(nIdx)) {
-                    var oLabel = new CLabel(null, (nIdx + 1) + "", 8, false, AscCommon.align_Center);
-                    oLabel.setLayout(dX, dY, dW, dH);
-                    oLabel.recalculate();
-                    oLabel.draw(oGraphics);
+
+                    var oContext = oGraphics.m_oContext;
+                    if(oContext) {
+                        var sObjectId = this.getObjectId();
+                        var oObject = AscCommon.g_oTableId.Get_ById(sObjectId);
+                        if(!oObject) {
+                            return null;
+                        }
+                        var dTX = dX + dW / 2;
+                        var dTY = dY + dH - oObject.convertPixToMM(4);
+
+                        var oT = oGraphics.m_oCoordTransform;
+
+                        var nX = oT.TransformPointX(dTX, dTY);
+                        var nY = oT.TransformPointY(dTX, dTY);
+                        var sOldFill = oContext.fillStyle;
+                        oContext.fillStyle = "#000000";
+                        oContext.fillText((nIdx + 1) + "", nX, nY);    
+                        oContext.fillStyle = sOldFill;
+                    }
+                    //var oLabel = new CLabel(null, (nIdx + 1) + "", 8, false, AscCommon.align_Center);
+                    //oLabel.setLayout(dX, dY, dW, dH);
+                    //oLabel.recalculate();
+                    //oLabel.draw(oGraphics);
                 }
             }
+            
+            
 
         }, this, []);
     };
