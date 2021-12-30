@@ -7155,7 +7155,7 @@ DrawingObjectsController.prototype =
         return bRet;
     },
 
-    resetSelection: function(noResetContentSelect, bNoCheckChart, bDoNotRedraw)
+    resetSelection: function(noResetContentSelect, bNoCheckChart, bDoNotRedraw, bNoCheckAnim)
     {
         if(bNoCheckChart !== true)
         {
@@ -7176,7 +7176,10 @@ DrawingObjectsController.prototype =
             cropSelection: null,
             geometrySelection: null
         };
-        this.onChangeDrawingsSelection();
+        if(bNoCheckAnim !== true) 
+        {
+            this.onChangeDrawingsSelection();
+        }
     },
 
     clearPreTrackObjects: function()

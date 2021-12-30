@@ -402,7 +402,9 @@
         }
         return oRes;
     };
-
+    CGraphicBounds.prototype.hit = function(x, y) {
+        return x >= this.l && x <= this.r && y >= this.t && y <= this.b;  
+    };
 
     function CCopyObjectProperties()
     {

@@ -2964,14 +2964,36 @@
             aEffectsForDraw[nEffect].drawEffectLabel(oGraphics);
         }
     };
-    CTiming.prototype.onMouseDown = function(e, x, y) {
+    CTiming.prototype.onMouseDown = function(e, x, y, bHandle) {
         var oApi = editor || Asc.editor;
         if(!oApi.isDrawAnimLabels || !oApi.isDrawAnimLabels()) {
-            return null;
+            return bHandle ? false : null;
         }
         var aEffectsForDraw = this.getEffectsForLabelsDraw();
         for(var nEffect = aEffectsForDraw.length - 1; nEffect > -1; --nEffect) {
+            var oEffect = aEffectsForDraw[nEffect];
+            if(oEffect.hit(x, y)) {
+                if(bHandle) {
+                    if(e.CtrlKey) {
+                        if(oEffect.isSelected()) {
+                            oEffect.deselect();
+                        }
+                        else {
+                            oEffect.select();
+                        }
+                    }
+                    else {
+                        this.resetSelection();
+                        oEffect.select();
+                    }
+                    return true;
+                }
+                else {
+                    return {cursorType: "default", objectId: "1"};
+                }
+            }
         }
+        return bHandle ? false : null;
     };
 
     changesFactory[AscDFH.historyitem_CommonTimingListAdd] = CChangeContent;
@@ -7884,6 +7906,13 @@
     };
     CTimeNodeContainer.prototype.drawEffectLabel = function(oGraphics) {
         this.internalDrawEffectLabel(oGraphics);
+    };
+    CTimeNodeContainer.prototype.hit = function(x, y) {
+        var oRect = this.getLabelRect();
+        if(!oRect) {
+            return;
+        }
+        return oRect.hit(x, y);
     };
     CTimeNodeContainer.prototype.internalDrawEffectLabel = function(oGraphics) {
         var oRect = this.getLabelRect();
