@@ -1371,6 +1371,13 @@
             oAttributes[sName] = value;
         }
     };
+    CTimeNodeBase.prototype.getRewind = function() {
+        var oParentTimeNode = this.getParentTimeNode();
+        if(oParentTimeNode) {
+            return oParentTimeNode.getRewind();
+        }
+        return false;
+    };
     CTimeNodeBase.prototype.getRelativeTime = function(nElapsedTime) {
         var oAttr = this.getAttributesObject();
         var oParentTimeNode = this.getParentTimeNode();
@@ -1382,11 +1389,16 @@
         var sTmFilter = oAttr.tmFilter;
         var fRelTime = 0.0;
         if(this.isFrozen() || this.isFinished()) {
-            if(bAutoRev) {
+            if(this.getRewind()) {
                 fRelTime = 0.0;
             }
             else {
-                fRelTime = 1.0;
+                if(bAutoRev) {
+                    fRelTime = 0.0;
+                }
+                else {
+                    fRelTime = 1.0;
+                }
             }
         }
         else {
@@ -8223,8 +8235,14 @@
         }, this, []);
     };
     CTimeNodeContainer.prototype["asc_putRepeatCount"] = CTimeNodeContainer.prototype.asc_putRepeatCount;
+    CTimeNodeContainer.prototype.getRewind = function() {
+        if(this.isAnimEffect()) {
+            return this.getAttributesObject().fill === NODE_FILL_REMOVE;
+        }
+        return CTimeNodeBase.prototype.getRewind.call(this);
+    };
     CTimeNodeContainer.prototype.asc_getRewind = function() {
-        return this.getAttributesObject().fill === NODE_FILL_REMOVE;
+        return this.getRewind();
     };
     CTimeNodeContainer.prototype["asc_getRewind"] = CTimeNodeContainer.prototype.asc_getRewind;
     CTimeNodeContainer.prototype.asc_putRewind = function(v) {
