@@ -2399,7 +2399,7 @@
     };
     CTiming.prototype.getSequencesForMove = function(bEarlier, bCheckPossibility) {
         var aSeqs = this.getEffectsSequences();
-        if(bEarlier && aSeqs[0][0] !== null) {
+        if(bEarlier && (!aSeqs[0] || aSeqs[0][0] !== null)) {
             aSeqs.splice(0, 0, [null]);
         }
         var aRanges = this.getSelectionRanges(aSeqs);
