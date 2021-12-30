@@ -2224,6 +2224,7 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
 	this.AddedFootEndNotes = {};
 	this.aContentForNotes = [];
 
+	this.bIsForFootEndnote = false;
 	this.pasteInExcel = pasteInExcel;
 	this.pasteInPresentationShape = null;
 	this.pasteCallback = pasteCallback;
@@ -8486,6 +8487,7 @@ PasteProcessor.prototype =
 			oPasteProcessor.msoComments = this.msoComments;
 			oPasteProcessor.oFonts = this.oFonts;
 			oPasteProcessor.oImages = this.oImages;
+			oPasteProcessor.bIsForFootEndnote = this.bIsForFootEndnote;
 			oPasteProcessor.oDocument = blockLevelSdt.Content;
 			oPasteProcessor.bIgnoreNoBlockText = true;
 			oPasteProcessor.aMsoHeadStylesStr = this.aMsoHeadStylesStr;
@@ -8886,6 +8888,7 @@ PasteProcessor.prototype =
 			oPasteProcessor.msoComments = this.msoComments;
 			oPasteProcessor.oFonts = this.oFonts;
 			oPasteProcessor.oImages = this.oImages;
+			oPasteProcessor.bIsForFootEndnote = this.bIsForFootEndnote;
 			oPasteProcessor.oDocument = cell.Content;
 			oPasteProcessor.bIgnoreNoBlockText = true;
 			oPasteProcessor.aMsoHeadStylesStr = this.aMsoHeadStylesStr;
@@ -9055,7 +9058,7 @@ PasteProcessor.prototype =
 
 				//bIsPreviousSpace - игнорируем несколько пробелов подряд
 				var bIsPreviousSpace = false, clonePr;
-				var bIsForFootEndnote = checkEndFootnodeText(node, oThis, value);
+				
 				for (var oIterator = value.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
 					if (oThis.needAddCommentStart) {
 						for (var i = 0; i < oThis.needAddCommentStart.length; i++) {
@@ -9088,7 +9091,7 @@ PasteProcessor.prototype =
 
 							shape.paragraphAdd(Item, false);
 						}
-					} else if (!bIsForFootEndnote){
+					} else if (!oThis.bIsForFootEndnote){
 						if (null != nUnicode) {
 							if (whiteSpacing && 0xa === nUnicode) {
 								Item = null;
@@ -9117,7 +9120,7 @@ PasteProcessor.prototype =
 				}
 			}
 		};
-		var checkEndFootnodeText = function (Item, oThis, Text) {
+		/*var checkEndFootnodeText = function (Item, oThis, Text) {
 			if (Item.parentNode) {
 				if (Item.parentNode.nodeName.toLowerCase() === "a" && (Item.parentNode.name.toLowerCase().includes("ftn") || Item.parentNode.name.toLowerCase().includes("edn"))) {
 					var oNewItem = Item;
@@ -9167,7 +9170,7 @@ PasteProcessor.prototype =
 				}
 			}
 			return false;
-		};
+		};*/
 
 		var parseNumbering = function () {
 			if ("ul" === sNodeName || "ol" === sNodeName || "li" === sNodeName) {
@@ -9788,8 +9791,55 @@ PasteProcessor.prototype =
 				}
 			}
 		};
+		var checkStylesForNotes = function() {
+			if (node && node.name && node.nodeName && node.hash &&
+				node.nodeName.toLowerCase() === "a" && (node.name.toLowerCase().includes("ftn") || node.name.toLowerCase().includes("edn"))) {
+				if (node.name.toLowerCase().includes("ftn") || node.name.toLowerCase().includes("edn")) {
 
+					if (oThis.oCur_rPr && oThis.oCur_rPr.Color && oThis.oCur_rPr.Color.b != null && oThis.oCur_rPr.Color.g != null && oThis.oCur_rPr.Color.r != null && oThis.oCur_rPr.Underline != null
+						&& oThis.AddedFootEndNotes) {
+						
+						if ((node.name.includes("_ftnref") || node.name.includes("_ednref"))
+						&& oThis.AddedFootEndNotes[node.hash.replace("#_", "")] && oThis.AddedFootEndNotes[node.hash.replace("#_", "")].Ref && oThis.AddedFootEndNotes[node.hash.replace("#_", "")].Ref.Run) {
 
+							if (oThis.oCur_rPr.Color.b === 238 && oThis.oCur_rPr.Color.g === 0 && oThis.oCur_rPr.Color.r === 0 && oThis.oCur_rPr.Underline === true) {
+								
+								if (node.name.includes("_ftnref")) {
+									oThis.AddedFootEndNotes[node.hash.replace("#_", "")].Ref.Run.SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultFootnoteReference());
+								}
+								else {
+									oThis.AddedFootEndNotes[node.hash.replace("#_", "")].Ref.Run.SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultEndnoteReference());
+								}
+							}
+							else {
+								oThis.AddedFootEndNotes[node.hash.replace("#_", "")].Ref.Run.SetPr(oThis.oCur_rPr);
+							}
+						}
+						else if ((node.name.includes("_ftn") || node.name.includes("_edn"))
+							&& oThis.AddedFootEndNotes[node.name.replace("_", "")] && oThis.AddedFootEndNotes[node.name.replace("_", "")].Content[0] && oThis.AddedFootEndNotes[node.name.replace("_", "")].Content[0].Content[0]) {
+							
+							if (oThis.oCur_rPr.Color.b === 238 && oThis.oCur_rPr.Color.g === 0 && oThis.oCur_rPr.Color.r === 0 && oThis.oCur_rPr.Underline === true) {
+								
+								if (node.name.includes("_ftnref")) {
+									oThis.AddedFootEndNotes[node.name.replace("_", "")].Content[0].Content[0].SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultFootnoteReference());
+								}
+								else {
+									oThis.AddedFootEndNotes[node.name.replace("_", "")].Content[0].Content[0].SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultEndnoteReference());
+								}
+							}
+							else {
+								oThis.AddedFootEndNotes[node.name.replace("_", "")].Content[0].Content[0].SetPr(oThis.oCur_rPr);
+							}
+						}
+					}
+				}
+			}
+		};
+
+		if (node && node.nodeName && node.name &&
+			node.nodeName.toLowerCase() === "a" && (node.name.includes("ftn") || node.name.includes("edn"))) {
+				oThis.bIsForFootEndnote = true;
+			}
 		// Меняем контент, если начинается контент сноски
 		startExecuteNotes();
 
@@ -9896,6 +9946,10 @@ PasteProcessor.prototype =
 					if (-1 !== value.indexOf("supportLineBreakNewLine")) {
 						bSkip = true;
 					}
+					// TODO пересмотреть информацию в <![if !supportFootnotes]>
+					/*if (-1 !== value.indexOf("supportFootnotes")) {
+						bSkip = true;
+					}*/
 				}
 				if (true === bSkip) {
 					//пропускаем все до закрывающегося комментария
@@ -9932,10 +9986,14 @@ PasteProcessor.prototype =
 		if (bRoot && bPresentation) {
 			this._Commit_Br(2, node, pPr);//word игнорируем 2 последних br
 		}
-
+		checkStylesForNotes();
 		// Если тег с контентом для сноски, то записываем контент в сноску и заменяем его на обычный
 		endExecuteNotes();
 
+		if (node && node.nodeName && node.name &&
+			node.nodeName.toLowerCase() === "a" && (node.name.includes("ftn") || node.name.includes("ftn"))) {
+				oThis.bIsForFootEndnote = false;
+			}
 		return bAddParagraph;
 	},
 
