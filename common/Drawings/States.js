@@ -371,7 +371,7 @@ NullState.prototype =
             var bRet =  this.drawingObjects.checkChartTextSelection(true);
             if(e.ClickCount < 2)
             {
-                this.drawingObjects.resetSelection(undefined, undefined, undefined, true);
+                this.drawingObjects.resetSelection(undefined, undefined, undefined, !!handleAnimLables);
             }
             if(start_target_doc_content || selected_comment_index > -1 || bRet || handleAnimLables)
             {
