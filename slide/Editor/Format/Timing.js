@@ -4598,8 +4598,8 @@
     changesFactory[AscDFH.historyitem_CTnPresetClass] = CChangeLong;
     changesFactory[AscDFH.historyitem_CTnPresetID] = CChangeLong;
     changesFactory[AscDFH.historyitem_CTnPresetSubtype] = CChangeLong;
-    changesFactory[AscDFH.historyitem_CTnRepeatCount] = CChangeLong;
-    changesFactory[AscDFH.historyitem_CTnRepeatDur] = CChangeLong;
+    changesFactory[AscDFH.historyitem_CTnRepeatCount] = CChangeString;
+    changesFactory[AscDFH.historyitem_CTnRepeatDur] = CChangeString;
     changesFactory[AscDFH.historyitem_CTnRestart] = CChangeLong;
     changesFactory[AscDFH.historyitem_CTnSpd] = CChangeLong;
     changesFactory[AscDFH.historyitem_CTnSyncBehavior] = CChangeLong;
