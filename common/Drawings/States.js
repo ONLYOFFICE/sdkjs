@@ -306,58 +306,65 @@ NullState.prototype =
             }
             selected_comment_index = ret.selectedIndex;
         }
-        var selection = this.drawingObjects.selection;
-        if(selection.groupSelection)
-        {
-
-            ret = AscFormat.handleSelectedObjects(this.drawingObjects, e, x, y, selection.groupSelection, pageIndex, false);
-            if(ret)
-            {
-                if(bHandleMode)
-                {
-                    this.checkRedrawOnMouseDown(start_target_doc_content, oStartPara);
-                    AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
-                }
-                return ret;
-            }
-            ret = AscFormat.handleFloatObjects(this.drawingObjects, selection.groupSelection.arrGraphicObjects, e, x, y, selection.groupSelection, pageIndex, false);
-            if(ret)
-            {
-                if(bHandleMode)
-                {
-                    this.checkRedrawOnMouseDown(start_target_doc_content, oStartPara);
-                    AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
-                }
-                return ret;
-            }
-        }
-        else if(selection.chartSelection)
-        {}
-        ret = AscFormat.handleSelectedObjects(this.drawingObjects, e, x, y, null, pageIndex, false);
-        if(ret)
-        {
-            if(bHandleMode)
-            {
-                this.checkRedrawOnMouseDown(start_target_doc_content, oStartPara);
-                AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
-            }
-            return ret;
-        }
-
-        ret = AscFormat.handleFloatObjects(this.drawingObjects, this.drawingObjects.getDrawingArray(), e, x, y, null, pageIndex, false);
-        if(ret)
-        {
-            if(bHandleMode)
-            {
-                this.checkRedrawOnMouseDown(start_target_doc_content, oStartPara);
-                AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
-            }
-            return ret;
-        }
-
+        
         var handleAnimLables = null;
         var oTiming = this.drawingObjects && this.drawingObjects.drawingObjects.timing;
+        if(oTiming) 
+        {
+            handleAnimLables = oTiming.onMouseDown(e, x, y, bHandleMode);
+        }
     
+        var selection = this.drawingObjects.selection;
+        if(!handleAnimLables) 
+        {
+            if(selection.groupSelection)
+            {
+    
+                ret = AscFormat.handleSelectedObjects(this.drawingObjects, e, x, y, selection.groupSelection, pageIndex, false);
+                if(ret)
+                {
+                    if(bHandleMode)
+                    {
+                        this.checkRedrawOnMouseDown(start_target_doc_content, oStartPara);
+                        AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
+                    }
+                    return ret;
+                }
+                ret = AscFormat.handleFloatObjects(this.drawingObjects, selection.groupSelection.arrGraphicObjects, e, x, y, selection.groupSelection, pageIndex, false);
+                if(ret)
+                {
+                    if(bHandleMode)
+                    {
+                        this.checkRedrawOnMouseDown(start_target_doc_content, oStartPara);
+                        AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
+                    }
+                    return ret;
+                }
+            }
+            else if(selection.chartSelection)
+            {}
+            ret = AscFormat.handleSelectedObjects(this.drawingObjects, e, x, y, null, pageIndex, false);
+            if(ret)
+            {
+                if(bHandleMode)
+                {
+                    this.checkRedrawOnMouseDown(start_target_doc_content, oStartPara);
+                    AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
+                }
+                return ret;
+            }
+    
+            ret = AscFormat.handleFloatObjects(this.drawingObjects, this.drawingObjects.getDrawingArray(), e, x, y, null, pageIndex, false);
+            if(ret)
+            {
+                if(bHandleMode)
+                {
+                    this.checkRedrawOnMouseDown(start_target_doc_content, oStartPara);
+                    AscCommon.CollaborativeEditing.Update_ForeignCursorsPositions();
+                }
+                return ret;
+            }    
+        }
 
         if(bHandleMode)
         {
@@ -365,10 +372,6 @@ NullState.prototype =
             if(e.ClickCount < 2)
             {
                 this.drawingObjects.resetSelection(undefined, undefined, undefined, true);
-            }
-            if(oTiming) 
-            {
-                handleAnimLables = oTiming.onMouseDown(e, x, y, bHandleMode);
             }
             if(start_target_doc_content || selected_comment_index > -1 || bRet || handleAnimLables)
             {
@@ -409,10 +412,6 @@ NullState.prototype =
                     oRet.cursorType = "default";
                     oRet.tooltip = null;
                     return oRet;
-                }
-                if(oTiming) 
-                {
-                    handleAnimLables = oTiming.onMouseDown(e, x, y, bHandleMode);
                 }
                 if(handleAnimLables) 
                 {
