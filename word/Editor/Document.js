@@ -824,6 +824,8 @@ CSelectedContent.prototype.CheckDocPartNames = function(oLogicDocument)
 };
 CSelectedContent.prototype.CheckComments = function(oLogicDocument, isFromCopy)
 {
+	if (!(oLogicDocument instanceof CDocument))
+		return;
 	var mCommentsMarks = {};
 	for (var nIndex = 0, nCount = this.Comments.length; nIndex < nCount; ++nIndex)
 	{
