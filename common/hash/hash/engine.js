@@ -368,7 +368,6 @@
         return false;
     }
 
-    debugger;
     if (isLocal())
     {
         // fetch not support file:/// scheme
