@@ -5457,6 +5457,8 @@
 		_object["index"]       = this.index;
 
 		_object["icons"]          = this.icons;
+		_object["icons2"]         = this.icons2;
+
 		_object["isViewer"]       = this.isViewer;
 		_object["EditorsSupport"] = this.EditorsSupport;
 
@@ -5486,6 +5488,7 @@
 		this.index       = (_object["index"] != null) ? _object["index"] : this.index;
 
 		this.icons          = (_object["icons"] != null) ? _object["icons"] : this.icons;
+		this.icons2         = (_object["icons2"] != null) ? _object["icons2"] : this.icons2;
 		this.isViewer       = (_object["isViewer"] != null) ? _object["isViewer"] : this.isViewer;
 		this.EditorsSupport = (_object["EditorsSupport"] != null) ? _object["EditorsSupport"] : this.EditorsSupport;
 
