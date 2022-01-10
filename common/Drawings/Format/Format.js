@@ -5434,8 +5434,15 @@ function FormatRGBAColor()
     }
 
     CBuBlip.prototype.toPPTY = function (pWriter) {
-        var _src = this.blip.RasterImageId;
-        pWriter.WriteBlip(this.blip, _src);
+        var _src = this.blip.fill.RasterImageId;
+        var imageLocal = AscCommon.g_oDocumentUrls.getImageLocal(_src);
+        if(imageLocal)
+            _src = imageLocal;
+
+        pWriter.image_map[_src] = true;
+
+        _src = pWriter.prepareRasterImageIdForWrite(_src);
+        pWriter.WriteBlip(this.blip.fill, _src);
     }
 
     CBuBlip.prototype.fromPPTY = function (pReader) {
