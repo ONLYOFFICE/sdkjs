@@ -3026,7 +3026,7 @@ var editor;
 
     var ws = this.wb.getWorksheet();
     if (ws.model.getSheetProtection()) {
-        this.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
+        this.handlers.trigger("asc_onError", c_oAscError.ID.CannotUseCommandProtectedSheet, c_oAscError.Level.NoCritical);
         return;
     }
 

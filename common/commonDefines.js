@@ -714,6 +714,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 			PasswordIsNotCorrect: 1031,
 			DeleteColumnContainsLockedCell: 1032,
 			DeleteRowContainsLockedCell: 1033,
+			CannotUseCommandProtectedSheet: 1034,
 
 			FillAllRowsWarning: 1040
 		}
@@ -2918,6 +2919,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['DeleteColumnContainsLockedCell']   = prot.DeleteColumnContainsLockedCell;
 	prot['DeleteRowContainsLockedCell']      = prot.DeleteRowContainsLockedCell;
 	prot['FillAllRowsWarning']               = prot.FillAllRowsWarning;
+	prot['CannotUseCommandProtectedSheet']   = prot.CannotUseCommandProtectedSheet;
+
 
 
 	window['Asc']['c_oAscAsyncAction']       = window['Asc'].c_oAscAsyncAction = c_oAscAsyncAction;
