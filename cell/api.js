@@ -3023,6 +3023,13 @@ var editor;
     if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
       return;
     }
+
+    var ws = this.wb.getWorksheet();
+    if (ws.model.getSheetProtection()) {
+        this.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
+        return;
+    }
+
     options.lookIn = Asc.c_oAscFindLookIn.Formulas; // При замене поиск только в формулах
     this.wb.replaceCellText(options);
   };
