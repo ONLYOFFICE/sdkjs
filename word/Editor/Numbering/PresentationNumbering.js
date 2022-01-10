@@ -194,6 +194,7 @@ function CPresentationBullet()
 	this.m_sString = null;
 
 	this.m_oBlip = null;
+	this.m_sSrc = null;
 }
 
 CPresentationBullet.prototype.getHighlightForNumbering = function(intFormat) {
@@ -349,7 +350,7 @@ CPresentationBullet.prototype.Get_StartAt = function()
 {
 	return this.m_nStartAt;
 };
-CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Theme, ColorMap)
+CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Theme)
 {
 	var sT = "";
 	if (this.m_nType === numbering_presentationnumfrmt_Char) {
@@ -357,7 +358,7 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 			sT = this.m_sChar;
 		}
 	} else if (this.m_nType === numbering_presentationnumfrmt_Blip) {
-
+		this.m_sSrc = AscCommon.getFullImageSrc2(this.m_oBlip.blip.fill.RasterImageId);
 	} else {
 		var typeOfNum = getAdaptedNumberingFormat(this.m_nType);
 		var formatNum = IntToNumberFormat(Num, typeOfNum);
@@ -431,10 +432,13 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 	});
 	FirstTextPr_.Merge(TextPr_);
 	this.m_oTextPr = FirstTextPr_;
+
 	if (this.m_nType === numbering_presentationnumfrmt_Blip) {
-		var _src = AscCommon.getFullImageSrc2(this.m_oBlip.blip.fill.RasterImageId);
-		var sizes = AscCommon.getSourceImageSize(_src);
-		return { Width: 0 };
+		var sizes = AscCommon.getSourceImageSize(this.m_sSrc);
+		var x_height = g_oTextMeasurer.GetHeight() - (g_oTextMeasurer.GetAscender() + g_oTextMeasurer.GetDescender());
+		var adaptImageHeight = x_height;
+		var adaptImageWidth = sizes.width * adaptImageHeight / sizes.height;
+		return { Width: adaptImageWidth + 0.8 }; // TODO: существует добавочная единица (какая?)
 	}
 
 	if(sT.length === 0)
@@ -514,7 +518,7 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 		if (sT) {
 			FontSlot = g_font_detector.Get_FontClass( sT.getUnicodeIterator().value(), Hint, lcid, bCS, bRTL );
 		} else {
-			FontSlot = g_font_detector.Get_FontClass( '|', Hint, lcid, bCS, bRTL );
+			FontSlot = g_font_detector.Get_FontClass( '*', Hint, lcid, bCS, bRTL );
 		}
 
 
@@ -558,16 +562,15 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 		}
 		g_oTextMeasurer.SetTextPr( this.m_oTextPr, PDSE.Theme  );
 		g_oTextMeasurer.SetFontSlot( FontSlot );
+	if (this.m_nType === numbering_presentationnumfrmt_Blip) {
+	 var sizes = AscCommon.getSourceImageSize(this.m_sSrc);
 
-	var _src = AscCommon.getFullImageSrc2(this.m_oBlip.blip.fill.RasterImageId);
-	var sizes = AscCommon.getSourceImageSize(_src);
-	console.log(this.m_oTextPr)
-	var height = g_oTextMeasurer.GetHeight() - (g_oTextMeasurer.GetAscender() + g_oTextMeasurer.GetDescender());// TODO: think about it
-	console.log(height)
-	var imageHeight = height;
-	var imageWidth = sizes.width * imageHeight / sizes.height;
-	Context.drawImage(_src, X, Y - imageHeight, imageWidth, imageHeight);
+	 var x_height = g_oTextMeasurer.GetHeight() - (g_oTextMeasurer.GetAscender() + g_oTextMeasurer.GetDescender());// TODO: think about it
+	 var adaptImageHeight = x_height;
+	 var adaptImageWidth = sizes.width * adaptImageHeight / sizes.height;
 
+	 Context.drawImage(this.m_sSrc, X, Y - adaptImageHeight, adaptImageWidth, adaptImageHeight);
+ }
 	if (this.m_nType !== numbering_presentationnumfrmt_Blip) {
 		for (var iter = sT.getUnicodeIterator(); iter.check(); iter.next()) {
 			var charCode = iter.value();
