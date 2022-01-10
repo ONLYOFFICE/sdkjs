@@ -9652,15 +9652,16 @@ PasteProcessor.prototype =
 							// если нет, значит создаём гиперссылку
 							var sStr = href.split("#");
 							var sText;
-							if (sStr[1].includes("_ftnref")) {
+							if (-1 !== sStr[1].indexOf("_ftnref")) {
 							}
 							// обычная сноска
-							else if (sStr[1].includes("_ftn")) {
+							else if (-1 !== sStr[1].indexOf("_ftn")) {
 								sText = child.innerText;
 								// проверяем, является ли название сноски кастомной или нет
 								if (sText[0] === "[" && sText[sText.length - 1] === "]") {
 									sText = undefined;
 								}
+								bAddParagraph = oThis._Decide_AddParagraph(child, pPr, bAddParagraph);
 								var oFootnote = oThis.oLogicDocument.Footnotes.CreateFootnote();
 								oFootnote.AddDefaultFootnoteContent(sText);
 								var oAddedRun = new ParaRun(oThis.oCurPar, false);
@@ -9677,25 +9678,26 @@ PasteProcessor.prototype =
 									oThis.AddedFootEndNotes[sStr[1].replace("_", "")] = oFootnote;
 								}
 							}
-							else if (sStr[1].includes("_ednref")) {
+							else if (-1 !== sStr[1].indexOf("_ednref")) {
 							}
 							// концевая сноска
-							else if (sStr[1].includes("_edn")) {
+							else if (-1 !== sStr[1].indexOf("_edn")) {
 								sText = child.innerText;
 								// проверяем, является ли название сноски кастомной или нет
 								if (sText[0] === "[" && sText[sText.length - 1] === "]") {
 									sText = undefined;
 								}
+								bAddParagraph = oThis._Decide_AddParagraph(child, pPr, bAddParagraph);
 								var oEndnote = oThis.oLogicDocument.Endnotes.CreateEndnote();
 								oEndnote.AddDefaultEndnoteContent(sText);
 								var oAddedRun = new ParaRun(oThis.oCurPar, false);
 								oAddedRun.SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultEndnoteReference());
 								if (sText) {
-									oAddedRun.AddToContent(0, new ParaFootnoteReference(oEndnote));
+									oAddedRun.AddToContent(0, new ParaEndnoteReference(oEndnote));
 									oAddedRun.AddText(sText, 1);
 								}
 								else {
-									oAddedRun.AddToContent(0, new ParaFootnoteReference(oEndnote));
+									oAddedRun.AddToContent(0, new ParaEndnoteReference(oEndnote));
 								}
 								oThis._CommitElemToParagraph(oAddedRun);
 								if (oThis.AddedFootEndNotes) {
@@ -9764,14 +9766,14 @@ PasteProcessor.prototype =
 		};
 		var startExecuteNotes = function () {
 			// Проверяем является ли тег контентом сноски
-			if (node.nodeName.toLowerCase() === "div" && (node.id.includes("ftn") || node.id.includes("edn"))) {
+			if (node.nodeName.toLowerCase() === "div" && (-1 !== node.id.indexOf("ftn") || -1 !== node.id.indexOf("edn"))) {
 				oThis.aContentForNotes = oThis.aContent;
 				oThis.aContent = [];
 			}
 		};
 		var endExecuteNotes = function () {
 			// Проверяем является ли тег контентом сноски
-			if (node.nodeName.toLowerCase() === "div" && (node.id.includes("ftn") || node.id.includes("edn"))) {
+			if (node.nodeName.toLowerCase() === "div" && (-1 !== node.id.indexOf("ftn") || -1 !== node.id.indexOf("edn"))) {
 				var tmp = oThis.aContent;
 				// Меняем контент обратно, для работы вне контента сносок
 				oThis.aContent = oThis.aContentForNotes;
@@ -9793,18 +9795,18 @@ PasteProcessor.prototype =
 		};
 		var checkStylesForNotes = function() {
 			if (node && node.name && node.nodeName && node.hash &&
-				node.nodeName.toLowerCase() === "a" && (node.name.toLowerCase().includes("ftn") || node.name.toLowerCase().includes("edn"))) {
-				if (node.name.toLowerCase().includes("ftn") || node.name.toLowerCase().includes("edn")) {
+				node.nodeName.toLowerCase() === "a" && (-1 !== node.name.toLowerCase().indexOf("ftn") || -1 !== node.name.toLowerCase().indexOf("edn"))) {
+				if (-1 !== node.name.toLowerCase().indexOf("ftn") || -1 !== node.name.toLowerCase().indexOf("edn")) {
 
-					if (oThis.oCur_rPr && oThis.oCur_rPr.Color && oThis.oCur_rPr.Color.b != null && oThis.oCur_rPr.Color.g != null && oThis.oCur_rPr.Color.r != null && oThis.oCur_rPr.Underline != null
-						&& oThis.AddedFootEndNotes) {
+					if (oThis.AddedFootEndNotes) {
 						
-						if ((node.name.includes("_ftnref") || node.name.includes("_ednref"))
+						if ((-1 !== node.name.indexOf("_ftnref") || -1 !== node.name.indexOf("_ednref"))
 						&& oThis.AddedFootEndNotes[node.hash.replace("#_", "")] && oThis.AddedFootEndNotes[node.hash.replace("#_", "")].Ref && oThis.AddedFootEndNotes[node.hash.replace("#_", "")].Ref.Run) {
 
-							if (oThis.oCur_rPr.Color.b === 238 && oThis.oCur_rPr.Color.g === 0 && oThis.oCur_rPr.Color.r === 0 && oThis.oCur_rPr.Underline === true) {
+							if (oThis.oCur_rPr && oThis.oCur_rPr.Color && oThis.oCur_rPr.Color.b != null && oThis.oCur_rPr.Color.g != null && oThis.oCur_rPr.Color.r != null && oThis.oCur_rPr.Underline != null
+								&& oThis.oCur_rPr.Color.b === 238 && oThis.oCur_rPr.Color.g === 0 && oThis.oCur_rPr.Color.r === 0 && oThis.oCur_rPr.Underline === true) {
 								
-								if (node.name.includes("_ftnref")) {
+								if (-1 !== node.name.indexOf("_ftnref")) {
 									oThis.AddedFootEndNotes[node.hash.replace("#_", "")].Ref.Run.SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultFootnoteReference());
 								}
 								else {
@@ -9815,12 +9817,13 @@ PasteProcessor.prototype =
 								oThis.AddedFootEndNotes[node.hash.replace("#_", "")].Ref.Run.SetPr(oThis.oCur_rPr);
 							}
 						}
-						else if ((node.name.includes("_ftn") || node.name.includes("_edn"))
+						else if ((-1 !== node.name.indexOf("_ftn") || -1 !== node.name.indexOf("_edn"))
 							&& oThis.AddedFootEndNotes[node.name.replace("_", "")] && oThis.AddedFootEndNotes[node.name.replace("_", "")].Content[0] && oThis.AddedFootEndNotes[node.name.replace("_", "")].Content[0].Content[0]) {
 							
-							if (oThis.oCur_rPr.Color.b === 238 && oThis.oCur_rPr.Color.g === 0 && oThis.oCur_rPr.Color.r === 0 && oThis.oCur_rPr.Underline === true) {
+							if (oThis.oCur_rPr && oThis.oCur_rPr.Color && oThis.oCur_rPr.Color.b != null && oThis.oCur_rPr.Color.g != null && oThis.oCur_rPr.Color.r != null && oThis.oCur_rPr.Underline != null
+								&& oThis.oCur_rPr.Color.b === 238 && oThis.oCur_rPr.Color.g === 0 && oThis.oCur_rPr.Color.r === 0 && oThis.oCur_rPr.Underline === true) {
 								
-								if (node.name.includes("_ftnref")) {
+								if (-1 !== node.name.indexOf("_ftnref")) {
 									oThis.AddedFootEndNotes[node.name.replace("_", "")].Content[0].Content[0].SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultFootnoteReference());
 								}
 								else {
@@ -9837,7 +9840,7 @@ PasteProcessor.prototype =
 		};
 
 		if (node && node.nodeName && node.name &&
-			node.nodeName.toLowerCase() === "a" && (node.name.includes("ftn") || node.name.includes("edn"))) {
+			node.nodeName.toLowerCase() === "a" && (-1 !== node.name.indexOf("ftn") || -1 !== node.name.indexOf("edn"))) {
 				oThis.bIsForFootEndnote = true;
 			}
 		// Меняем контент, если начинается контент сноски
@@ -9991,7 +9994,7 @@ PasteProcessor.prototype =
 		endExecuteNotes();
 
 		if (node && node.nodeName && node.name &&
-			node.nodeName.toLowerCase() === "a" && (node.name.includes("ftn") || node.name.includes("ftn"))) {
+			node.nodeName.toLowerCase() === "a" && (-1 !== node.name.indexOf("ftn") || -1 !== node.name.indexOf("edn"))) {
 				oThis.bIsForFootEndnote = false;
 			}
 		return bAddParagraph;
