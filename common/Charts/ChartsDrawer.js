@@ -1363,7 +1363,7 @@ CChartsDrawer.prototype =
 	_calculateExtremumAllCharts: function (chartSpace, isFirstChart) {
 		//возвращает массив, где первый элемент - для основной оси, второй - для вспомогательной
 		//максимальные/минимальные значения среди всех графиков
-		var t = this, isStackedType;
+		var t = this, isStackedType, isCombinationChartTypes;
 		var plotArea = chartSpace.chart.plotArea;
 		var charts = plotArea.charts;
 		if(!charts || isFirstChart) {
@@ -1388,6 +1388,10 @@ CChartsDrawer.prototype =
 				grouping = t.getChartGrouping(chart);
 				minMaxData = t._calculateData2(chart, grouping, axis);
 
+				//условие добавлено для случая когда комбинированная диаграмма содержит stacked и stackedPer
+				if (grouping === "stacked" && isStackedType) {
+					isCombinationChartTypes = true;
+				}
 				/*if("stackedPer" !== grouping && isStackedType) {
 					minMaxData.min = minMaxData.min*100;
 					minMaxData.max = minMaxData.max*100;
@@ -1397,25 +1401,25 @@ CChartsDrawer.prototype =
 
 				if(AscDFH.historyitem_type_ScatterChart === chart.getObjectType()) {
 					if(axis.axPos === window['AscFormat'].AX_POS_B || axis.axPos === window['AscFormat'].AX_POS_T) {
-						if(i == 0 || minMaxData.min < min) {
+						if(i === 0 || minMaxData.min < min) {
 							min = minMaxData.min;
 						}
-						if(i == 0 || minMaxData.max > max) {
+						if(i === 0 || minMaxData.max > max) {
 							max = minMaxData.max;
 						}
 					} else {
-						if(i == 0 || minMaxData.ymin < min) {
+						if(i === 0 || minMaxData.ymin < min) {
 							min = minMaxData.ymin;
 						}
-						if(i == 0 || minMaxData.ymax > max) {
+						if(i === 0 || minMaxData.ymax > max) {
 							max = minMaxData.ymax;
 						}
 					}
 				} else {
-					if(i == 0 || minMaxData.min < min) {
+					if(i === 0 || minMaxData.min < min) {
 						min = minMaxData.min;
 					}
-					if(i == 0 || minMaxData.max > max) {
+					if(i === 0 || minMaxData.max > max) {
 						max = minMaxData.max;
 					}
 				}
@@ -1431,9 +1435,9 @@ CChartsDrawer.prototype =
 			axObj.min = minMaxAxis.min;
 			axObj.max = minMaxAxis.max;
 			//если будут проблемы, протестить со старой функцией -> this._getAxisValues(false, minMaxAxis.min, minMaxAxis.max, chartSpace)
-			axObj.scale = this._roundValues(this._getAxisValues2(axObj, chartSpace, isStackedType));
+			axObj.scale = this._roundValues(this._getAxisValues2(axObj, chartSpace, isStackedType && !isCombinationChartTypes));
 
-			if(isStackedType && !axObj.scaling.logBase) {
+			if(isStackedType && !axObj.scaling.logBase && !isCombinationChartTypes) {
 				//для случая 100% stacked - если макс/мин равно определенному делению, большие/меньшие - убираем, логарифмическая шкала - исключение
 				if(axObj.scale[0] !== 0 && axObj.min === axObj.scale[1]) {
 					axObj.scale.splice(0, 1);
@@ -1998,7 +2002,7 @@ CChartsDrawer.prototype =
 			minUnit = parseInt(axisMin / step) * step;
 		} else {
 			if (axisMin < 0) {
-				while (minUnit > axisMin) {
+				while (minUnit >= axisMin) {
 					minUnit -= step;
 				}
 			} else if (axisMin > 0) {

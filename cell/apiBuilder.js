@@ -1948,7 +1948,7 @@
 	});
 
 	/**
-	 * Get the value hiding property.
+	 * Get the value hiding property. The specified range must span an entire column or row.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {bool} - returns true if the values in the range specified are hidden.
@@ -1958,10 +1958,10 @@
 		var worksheet = range.worksheet;
 		var bbox = range.bbox;
 		switch (bbox.getType()) {
-			case 2:		
+			case Asc.c_oAscSelectionType.RangeCol:		
 				return worksheet.getColHidden(bbox.c1);	
 
-			case 3:
+			case Asc.c_oAscSelectionType.RangeRow:
 				return worksheet.getRowHidden(bbox.r1);				
 
 			default:
@@ -1969,7 +1969,7 @@
 		}
 	};
 	/**
-	 * Set the value hiding property.
+	 * Set the value hiding property. The specified range must span an entire column or row.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {bool} isHidden - Specifies if the values in the range specified are hidden or not.
@@ -1979,11 +1979,11 @@
 		var worksheet = range.worksheet;
 		var bbox = range.bbox;
 		switch (bbox.getType()) {
-			case 2:		
+			case Asc.c_oAscSelectionType.RangeCol:		
 				worksheet.setColHidden(isHidden, bbox.c1, bbox.c2);	
 				break;
 
-			case 3:
+			case Asc.c_oAscSelectionType.RangeRow:
 				worksheet.setRowHidden(isHidden, bbox.r1, bbox.r2);
 				break;				
 		}
@@ -2060,7 +2060,7 @@
 	* @param {pt} nHeight The row height in the range specified, measured in points.
 	 */
 	ApiRange.prototype.SetRowHeight = function (nHeight) {
-		this.range.worksheet.setRowHeight(nHeight, this.range.bbox.r1, this.range.bbox.r2, false);
+		this.range.worksheet.setRowHeight(nHeight, this.range.bbox.r1, this.range.bbox.r2, true);
 	};
 	Object.defineProperty(ApiRange.prototype, "RowHeight", {
 		get: function () {
@@ -3413,7 +3413,7 @@
 	 * @returns {number}
 	 */
 	 ApiComment.prototype.GetClassType = function () {
-		return this.Comment.getType();
+		return "comment";
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
