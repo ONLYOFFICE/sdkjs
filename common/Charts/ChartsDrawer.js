@@ -1388,7 +1388,8 @@ CChartsDrawer.prototype =
 				grouping = t.getChartGrouping(chart);
 				minMaxData = t._calculateData2(chart, grouping, axis);
 
-				if (grouping !== "stackedPer") {
+				//условие добавлено для случая когда комбинированная диаграмма содержит stacked и stackedPer
+				if (grouping === "stacked") {
 					isCombinationCharts = isStackedType ? true : false;
 				}
 				/*if("stackedPer" !== grouping && isStackedType) {
