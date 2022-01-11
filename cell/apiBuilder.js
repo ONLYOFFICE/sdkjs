@@ -1818,7 +1818,7 @@
 	 * Set the value for the current cell or a cell range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {string | bool | number | Array[] | Array[[]]} data - The general value for the cell or cell range in string format.
+	 * @param {string | bool | number | Array[] | Array[][]} data - The general value for the cell or cell range in string format.
 	 * @return {bool} - returns false if such a range does not exist.
 	 */
 	ApiRange.prototype.SetValue = function (data) {
