@@ -13402,9 +13402,26 @@ Paragraph.prototype.AddComment = function(Comment, bStart, bEnd)
 
 	this.Correct_Content();
 };
-Paragraph.prototype.AddCommentToObject = function(Comment, ObjectId)
+Paragraph.prototype.AddCommentToDrawingObject = function(oComment, sId)
 {
-	// TODO: Реализовать добавление комментария по ID объекта
+	var oStartPos = this.Get_DrawingObjectContentPos(sId);
+	var nDepth = 0;
+	if (!oStartPos || (nDepth = oStartPos.GetDepth()) <= 0)
+		return;
+
+	var oEndPos = oStartPos.Copy();
+	oEndPos.Update2(oEndPos.Get(nDepth) + 1, nDepth);
+
+	var oState = this.SaveSelectionState();
+
+	this.Set_ParaContentPos(oStartPos, false, -1, -1);
+	this.StartSelectionFromCurPos();
+	this.SetSelectionContentPos(oStartPos, oEndPos);
+
+	if (this.CanAddComment())
+		this.AddComment(oComment, true, true);
+
+	this.LoadSelectionState(oState);
 };
 Paragraph.prototype.CanAddComment = function()
 {

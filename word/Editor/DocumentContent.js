@@ -8256,7 +8256,20 @@ CDocumentContent.prototype.AddComment = function(Comment, bStart, bEnd)
 	{
 		if (docpostype_DrawingObjects === this.CurPos.Type)
 		{
-			return this.LogicDocument.DrawingObjects.addComment(Comment);
+			var oLogicDocument  = this.GetLogicDocument();
+			var oDrawingObjects = oLogicDocument.DrawingObjects;
+
+			if (!oDrawingObjects.isSelectedText())
+			{
+				var oParaDrawing = oDrawingObjects.getMajorParaDrawing();
+				var oParagraph;
+				if (oParaDrawing && (oParagraph = oParaDrawing.GetParagraph()))
+					oParagraph.AddCommentToDrawingObject(Comment, oParaDrawing.GetId());
+			}
+			else
+			{
+				oDrawingObjects.addComment(Comment);
+			}
 		}
 		else //if ( docpostype_Content === this.CurPos.Type )
 		{

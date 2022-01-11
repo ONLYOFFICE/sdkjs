@@ -597,7 +597,7 @@ CDrawingsController.prototype.AddComment = function(Comment)
 		if (null != ParaDrawing)
 		{
 			var Paragraph = ParaDrawing.Parent;
-			Paragraph.AddCommentToObject(Comment, ParaDrawing.Get_Id());
+			Paragraph.AddCommentToDrawingObject(Comment, ParaDrawing.Get_Id());
 		}
 	}
 	else
