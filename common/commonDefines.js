@@ -3856,4 +3856,20 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['Original'] = prot.Original;
 	prot['Simple']   = prot.Simple;
 
+	window['AscFormat'] = window['AscFormat'] || {};
+
+	window['AscFormat'].text_fit_No         = window['AscFormat']['text_fit_No']         = 0;
+    window['AscFormat'].text_fit_Auto       = window['AscFormat']['text_fit_Auto']       = 1;
+    window['AscFormat'].text_fit_NormAuto   = window['AscFormat']['text_fit_NormAuto']   = 2;
+
+	//Overflow Types
+    window['AscFormat'].nOTClip = window['AscFormat']['nOTClip'] = 0;
+    window['AscFormat'].nOTEllipsis = window['AscFormat']['nOTEllipsis'] = 1;
+	window['AscFormat'].nOTOwerflow = window['AscFormat']['nOTOwerflow'] = 2;
+
+    window['AscFormat'].BULLET_TYPE_BULLET_NONE = window['AscFormat']['BULLET_TYPE_BULLET_NONE'] = 0;
+    window['AscFormat'].BULLET_TYPE_BULLET_CHAR = window['AscFormat']['BULLET_TYPE_BULLET_CHAR'] = 1;
+    window['AscFormat'].BULLET_TYPE_BULLET_AUTONUM = window['AscFormat']['BULLET_TYPE_BULLET_AUTONUM'] = 2;
+    window['AscFormat'].BULLET_TYPE_BULLET_BLIP = window['AscFormat']['BULLET_TYPE_BULLET_BLIP'] = 3;
+
 })(window);

@@ -87,346 +87,9 @@
 
 
     
-    var PRESET_CLASS_EMPH = 0;
-    var PRESET_CLASS_ENTR = 1;
-    var PRESET_CLASS_EXIT = 2;
-    var PRESET_CLASS_MEDIACALL = 3;
-    var PRESET_CLASS_PATH = 4;
-    var PRESET_CLASS_VERB = 5;
-
-    AscFormat.PRESET_CLASS_EMPH = AscFormat["PRESET_CLASS_EMPH"] = PRESET_CLASS_EMPH;
-    AscFormat.PRESET_CLASS_ENTR = AscFormat["PRESET_CLASS_ENTR"] = PRESET_CLASS_ENTR;
-    AscFormat.PRESET_CLASS_EXIT = AscFormat["PRESET_CLASS_EXIT"] = PRESET_CLASS_EXIT;
-    AscFormat.PRESET_CLASS_MEDIACALL = AscFormat["PRESET_CLASS_MEDIACALL"] = PRESET_CLASS_MEDIACALL;
-    AscFormat.PRESET_CLASS_PATH = AscFormat["PRESET_CLASS_PATH"] = PRESET_CLASS_PATH;
-    AscFormat.PRESET_CLASS_VERB = AscFormat["PRESET_CLASS_VERB"] = PRESET_CLASS_VERB;
-
-    AscFormat.ANIM_PRESET_NONE = AscFormat["ANIM_PRESET_NONE"] = -2;
-    AscFormat.ANIM_PRESET_MULTIPLE = AscFormat["ANIM_PRESET_MULTIPLE"] = -1;
-    AscFormat.MOTION_CUSTOM_PATH = AscFormat["MOTION_CUSTOM_PATH"] = 0;
-    AscFormat.MOTION_CIRCLE = AscFormat["MOTION_CIRCLE"] = 1;
-    AscFormat.MOTION_RIGHT_TRIANGLE = AscFormat["MOTION_RIGHT_TRIANGLE"] = 2;
-    AscFormat.MOTION_DIAMOND = AscFormat["MOTION_DIAMOND"] = 3;
-    AscFormat.MOTION_HEXAGON = AscFormat["MOTION_HEXAGON"] = 4;
-    AscFormat.MOTION_PATH_5_POINT_STAR = AscFormat["MOTION_PATH_5_POINT_STAR"] = 5;
-    AscFormat.MOTION_CRESCENT_MOON = AscFormat["MOTION_CRESCENT_MOON"] = 6;
-    AscFormat.MOTION_SQUARE = AscFormat["MOTION_SQUARE"] = 7;
-    AscFormat.MOTION_TRAPEZOID = AscFormat["MOTION_TRAPEZOID"] = 8;
-    AscFormat.MOTION_HEART = AscFormat["MOTION_HEART"] = 9;
-    AscFormat.MOTION_OCTAGON = AscFormat["MOTION_OCTAGON"] = 10;
-    AscFormat.MOTION_PATH_6_POINT_STAR = AscFormat["MOTION_PATH_6_POINT_STAR"] = 11;
-    AscFormat.MOTION_FOOTBALL = AscFormat["MOTION_FOOTBALL"] = 12;
-    AscFormat.MOTION_EQUAL_TRIANGLE = AscFormat["MOTION_EQUAL_TRIANGLE"] = 13;
-    AscFormat.MOTION_PARALLELOGRAM = AscFormat["MOTION_PARALLELOGRAM"] = 14;
-    AscFormat.MOTION_PENTAGON = AscFormat["MOTION_PENTAGON"] = 15;
-    AscFormat.MOTION_PATH_4_POINT_STAR = AscFormat["MOTION_PATH_4_POINT_STAR"] = 16;
-    AscFormat.MOTION_PATH_8_POINT_STAR = AscFormat["MOTION_PATH_8_POINT_STAR"] = 17;
-    AscFormat.MOTION_TEARDROP = AscFormat["MOTION_TEARDROP"] = 18;
-    AscFormat.MOTION_POINTY_STAR = AscFormat["MOTION_POINTY_STAR"] = 19;
-    AscFormat.MOTION_CURVED_SQUARE = AscFormat["MOTION_CURVED_SQUARE"] = 20;
-    AscFormat.MOTION_CURVED_X = AscFormat["MOTION_CURVED_X"] = 21;
-    AscFormat.MOTION_VERTICAL_FIGURE_8 = AscFormat["MOTION_VERTICAL_FIGURE_8"] = 22;
-    AscFormat.MOTION_CURVY_STAR = AscFormat["MOTION_CURVY_STAR"] = 23;
-    AscFormat.MOTION_LOOP_DE_LOOP = AscFormat["MOTION_LOOP_DE_LOOP"] = 24;
-    AscFormat.MOTION_HORIZONTAL_FIGURE_8_FOUR = AscFormat["MOTION_HORIZONTAL_FIGURE_8_FOUR"] = 26;
-    AscFormat.MOTION_PEANUT = AscFormat["MOTION_PEANUT"] = 27;
-    AscFormat.MOTION_FIGURE_8_FOUR = AscFormat["MOTION_FIGURE_8_FOUR"] = 28;
-    AscFormat.MOTION_NEUTRON = AscFormat["MOTION_NEUTRON"] = 29;
-    AscFormat.MOTION_SWOOSH = AscFormat["MOTION_SWOOSH"] = 30;
-    AscFormat.MOTION_BEAN = AscFormat["MOTION_BEAN"] = 31;
-    AscFormat.MOTION_PLUS = AscFormat["MOTION_PLUS"] = 32;
-    AscFormat.MOTION_INVERTED_TRIANGLE = AscFormat["MOTION_INVERTED_TRIANGLE"] = 33;
-    AscFormat.MOTION_INVERTED_SQUARE = AscFormat["MOTION_INVERTED_SQUARE"] = 34;
-    AscFormat.MOTION_LEFT = AscFormat["MOTION_LEFT"] = 35;
-    AscFormat.MOTION_TURN_DOWN_RIGHT = AscFormat["MOTION_TURN_DOWN_RIGHT"] = 36;
-    AscFormat.MOTION_ARC_DOWN = AscFormat["MOTION_ARC_DOWN"] = 37;
-    AscFormat.MOTION_ZIGZAG = AscFormat["MOTION_ZIGZAG"] = 38;
-    AscFormat.MOTION_S_CURVE_2 = AscFormat["MOTION_S_CURVE_2"] = 39;
-    AscFormat.MOTION_SINE_WAVE = AscFormat["MOTION_SINE_WAVE"] = 40;
-    AscFormat.MOTION_BOUNCE_LEFT = AscFormat["MOTION_BOUNCE_LEFT"] = 41;
-    AscFormat.MOTION_DOWN = AscFormat["MOTION_DOWN"] = 42;
-    AscFormat.MOTION_TURN_UP = AscFormat["MOTION_TURN_UP"] = 43;
-    AscFormat.MOTION_ARC_UP = AscFormat["MOTION_ARC_UP"] = 44;
-    AscFormat.MOTION_HEARTBEAT = AscFormat["MOTION_HEARTBEAT"] = 45;
-    AscFormat.MOTION_SINE_SPIRAL_RIGHT = AscFormat["MOTION_SINE_SPIRAL_RIGHT"] = 46;
-    AscFormat.MOTION_WAVE = AscFormat["MOTION_WAVE"] = 47;
-    AscFormat.MOTION_CURVY_LEFT = AscFormat["MOTION_CURVY_LEFT"] = 48;
-    AscFormat.MOTION_DIAGONAL_DOWN_RIGHT = AscFormat["MOTION_DIAGONAL_DOWN_RIGHT"] = 49;
-    AscFormat.MOTION_TURN_DOWN = AscFormat["MOTION_TURN_DOWN"] = 50;
-    AscFormat.MOTION_ARC_LEFT = AscFormat["MOTION_ARC_LEFT"] = 51;
-    AscFormat.MOTION_FUNNEL = AscFormat["MOTION_FUNNEL"] = 52;
-    AscFormat.MOTION_SPRING = AscFormat["MOTION_SPRING"] = 53;
-    AscFormat.MOTION_BOUNCE_RIGHT = AscFormat["MOTION_BOUNCE_RIGHT"] = 54;
-    AscFormat.MOTION_SINE_SPIRAL_LEFT = AscFormat["MOTION_SINE_SPIRAL_LEFT"] = 55;
-    AscFormat.MOTION_DIAGONAL_UP_RIGHT = AscFormat["MOTION_DIAGONAL_UP_RIGHT"] = 56;
-    AscFormat.MOTION_TURN_UP_RIGHT = AscFormat["MOTION_TURN_UP_RIGHT"] = 57;
-    AscFormat.MOTION_ARC_RIGHT = AscFormat["MOTION_ARC_RIGHT"] = 58;
-    AscFormat.MOTION_S_CURVE_1 = AscFormat["MOTION_S_CURVE_1"] = 59;
-    AscFormat.MOTION_DECAYING_WAVE = AscFormat["MOTION_DECAYING_WAVE"] = 60;
-    AscFormat.MOTION_CURVY_RIGHT = AscFormat["MOTION_CURVY_RIGHT"] = 61;
-    AscFormat.MOTION_STAIRS_DOWN = AscFormat["MOTION_STAIRS_DOWN"] = 62;
-    AscFormat.MOTION_RIGHT = AscFormat["MOTION_RIGHT"] = 63;
-    AscFormat.MOTION_UP = AscFormat["MOTION_UP"] = 64;
-
-    AscFormat.EXIT_DISAPPEAR = AscFormat["EXIT_DISAPPEAR"] = 1;
-    AscFormat.EXIT_FLY_OUT_TO = AscFormat["EXIT_FLY_OUT_TO"] = 2;
-    AscFormat.EXIT_BLINDS = AscFormat["EXIT_BLINDS"] = 3;
-    AscFormat.EXIT_BOX = AscFormat["EXIT_BOX"] = 4;
-    AscFormat.EXIT_CHECKERBOARD = AscFormat["EXIT_CHECKERBOARD"] = 5;
-    AscFormat.EXIT_CIRCLE = AscFormat["EXIT_CIRCLE"] = 6;
-    AscFormat.EXIT_DIAMOND = AscFormat["EXIT_DIAMOND"] = 8;
-    AscFormat.EXIT_DISSOLVE_OUT = AscFormat["EXIT_DISSOLVE_OUT"] = 9;
-    AscFormat.EXIT_FADE = AscFormat["EXIT_FADE"] = 10;
-    AscFormat.EXIT_PEEK_OUT_TO = AscFormat["EXIT_PEEK_OUT_TO"] = 12;
-    AscFormat.EXIT_PLUS = AscFormat["EXIT_PLUS"] = 13;
-    AscFormat.EXIT_RANDOM_BARS = AscFormat["EXIT_RANDOM_BARS"] = 14;
-    AscFormat.EXIT_SPIRAL_OUT = AscFormat["EXIT_SPIRAL_OUT"] = 15;
-    AscFormat.EXIT_SPLIT = AscFormat["EXIT_SPLIT"] = 16;
-    AscFormat.EXIT_COLLAPSE = AscFormat["EXIT_COLLAPSE"] = 17;
-    AscFormat.EXIT_STRIPS = AscFormat["EXIT_STRIPS"] = 18;
-    AscFormat.EXIT_BASIC_SWIVEL = AscFormat["EXIT_BASIC_SWIVEL"] = 19;
-    AscFormat.EXIT_WEDGE = AscFormat["EXIT_WEDGE"] = 20;
-    AscFormat.EXIT_WHEEL = AscFormat["EXIT_WHEEL"] = 21;
-    AscFormat.EXIT_WIPE_FROM = AscFormat["EXIT_WIPE_FROM"] = 22;
-    AscFormat.EXIT_BASIC_ZOOM = AscFormat["EXIT_BASIC_ZOOM"] = 23;
-    AscFormat.EXIT_BOOMERANG = AscFormat["EXIT_BOOMERANG"] = 25;
-    AscFormat.EXIT_BOUNCE = AscFormat["EXIT_BOUNCE"] = 26;
-    AscFormat.EXIT_CREDITS = AscFormat["EXIT_CREDITS"] = 28;
-    AscFormat.EXIT_FLOAT = AscFormat["EXIT_FLOAT"] = 30;
-    AscFormat.EXIT_SHRINK_AND_TURN = AscFormat["EXIT_SHRINK_AND_TURN"] = 31;
-    AscFormat.EXIT_PINWHEEL = AscFormat["EXIT_PINWHEEL"] = 35;
-    AscFormat.EXIT_SINK_DOWN = AscFormat["EXIT_SINK_DOWN"] = 37;
-    AscFormat.EXIT_DROP = AscFormat["EXIT_DROP"] = 38;
-    AscFormat.EXIT_WHIP = AscFormat["EXIT_WHIP"] = 41;
-    AscFormat.EXIT_FLOAT_DOWN = AscFormat["EXIT_FLOAT_DOWN"] = 42;
-    AscFormat.EXIT_CENTER_REVOLVE = AscFormat["EXIT_CENTER_REVOLVE"] = 43;
-    AscFormat.EXIT_SWIVEL = AscFormat["EXIT_SWIVEL"] = 45;
-    AscFormat.EXIT_FLOAT_UP = AscFormat["EXIT_FLOAT_UP"] = 47;
-    AscFormat.EXIT_SPINNER = AscFormat["EXIT_SPINNER"] = 49;
-    AscFormat.EXIT_STRETCHY = AscFormat["EXIT_STRETCHY"] = 50;
-    AscFormat.EXIT_CURVE_DOWN = AscFormat["EXIT_CURVE_DOWN"] = 52;
-    AscFormat.EXIT_ZOOM = AscFormat["EXIT_ZOOM"] = 53;
-    AscFormat.EXIT_CONTRACT = AscFormat["EXIT_CONTRACT"] = 55;
-    AscFormat.EXIT_FLIP = AscFormat["EXIT_FLIP"] = 56;
-
-    AscFormat.ENTRANCE_APPEAR = AscFormat["ENTRANCE_APPEAR"] = 1;
-    AscFormat.ENTRANCE_FLY_IN_FROM = AscFormat["ENTRANCE_FLY_IN_FROM"] = 2;
-    AscFormat.ENTRANCE_BLINDS = AscFormat["ENTRANCE_BLINDS"] = 3;
-    AscFormat.ENTRANCE_BOX = AscFormat["ENTRANCE_BOX"] = 4;
-    AscFormat.ENTRANCE_CHECKERBOARD = AscFormat["ENTRANCE_CHECKERBOARD"] = 5;
-    AscFormat.ENTRANCE_CIRCLE = AscFormat["ENTRANCE_CIRCLE"] = 6;
-    AscFormat.ENTRANCE_DIAMOND = AscFormat["ENTRANCE_DIAMOND"] = 8;
-    AscFormat.ENTRANCE_DISSOLVE_IN = AscFormat["ENTRANCE_DISSOLVE_IN"] = 9;
-    AscFormat.ENTRANCE_FADE = AscFormat["ENTRANCE_FADE"] = 10;
-    AscFormat.ENTRANCE_PEEK_IN_FROM = AscFormat["ENTRANCE_PEEK_IN_FROM"] = 12;
-    AscFormat.ENTRANCE_PLUS = AscFormat["ENTRANCE_PLUS"] = 13;
-    AscFormat.ENTRANCE_RANDOM_BARS = AscFormat["ENTRANCE_RANDOM_BARS"] = 14;
-    AscFormat.ENTRANCE_SPIRAL_IN = AscFormat["ENTRANCE_SPIRAL_IN"] = 15;
-    AscFormat.ENTRANCE_SPLIT = AscFormat["ENTRANCE_SPLIT"] = 16;
-    AscFormat.ENTRANCE_STRETCH = AscFormat["ENTRANCE_STRETCH"] = 17;
-    AscFormat.ENTRANCE_STRIPS = AscFormat["ENTRANCE_STRIPS"] = 18;
-    AscFormat.ENTRANCE_BASIC_SWIVEL = AscFormat["ENTRANCE_BASIC_SWIVEL"] = 19;
-    AscFormat.ENTRANCE_WEDGE = AscFormat["ENTRANCE_WEDGE"] = 20;
-    AscFormat.ENTRANCE_WHEEL = AscFormat["ENTRANCE_WHEEL"] = 21;
-    AscFormat.ENTRANCE_WIPE_FROM = AscFormat["ENTRANCE_WIPE_FROM"] = 22;
-    AscFormat.ENTRANCE_BASIC_ZOOM = AscFormat["ENTRANCE_BASIC_ZOOM"] = 23;
-    AscFormat.ENTRANCE_BOOMERANG = AscFormat["ENTRANCE_BOOMERANG"] = 25;
-    AscFormat.ENTRANCE_BOUNCE = AscFormat["ENTRANCE_BOUNCE"] = 26;
-    AscFormat.ENTRANCE_CREDITS = AscFormat["ENTRANCE_CREDITS"] = 28;
-    AscFormat.ENTRANCE_FLOAT = AscFormat["ENTRANCE_FLOAT"] = 30;
-    AscFormat.ENTRANCE_GROW_AND_TURN = AscFormat["ENTRANCE_GROW_AND_TURN"] = 31;
-    AscFormat.ENTRANCE_PINWHEEL = AscFormat["ENTRANCE_PINWHEEL"] = 35;
-    AscFormat.ENTRANCE_RISE_UP = AscFormat["ENTRANCE_RISE_UP"] = 37;
-    AscFormat.ENTRANCE_DROP = AscFormat["ENTRANCE_DROP"] = 38;
-    AscFormat.ENTRANCE_WHIP = AscFormat["ENTRANCE_WHIP"] = 41;
-    AscFormat.ENTRANCE_FLOAT_UP = AscFormat["ENTRANCE_FLOAT_UP"] = 42;
-    AscFormat.ENTRANCE_CENTER_REVOLVE = AscFormat["ENTRANCE_CENTER_REVOLVE"] = 43;
-    AscFormat.ENTRANCE_SWIVEL = AscFormat["ENTRANCE_SWIVEL"] = 45;
-    AscFormat.ENTRANCE_FLOAT_DOWN = AscFormat["ENTRANCE_FLOAT_DOWN"] = 47;
-    AscFormat.ENTRANCE_SPINNER = AscFormat["ENTRANCE_SPINNER"] = 49;
-    AscFormat.ENTRANCE_CENTER_COMPRESS = AscFormat["ENTRANCE_CENTER_COMPRESS"] = 50;
-    AscFormat.ENTRANCE_CURVE_UP = AscFormat["ENTRANCE_CURVE_UP"] = 52;
-    AscFormat.ENTRANCE_ZOOM = AscFormat["ENTRANCE_ZOOM"] = 53;
-    AscFormat.ENTRANCE_EXPAND = AscFormat["ENTRANCE_EXPAND"] = 55;
-    AscFormat.ENTRANCE_FLIP = AscFormat["ENTRANCE_FLIP"] = 56;
-
-    AscFormat.EMPHASIS_FILL_COLOR = AscFormat["EMPHASIS_FILL_COLOR"] = 1;
-    AscFormat.EMPHASIS_FONT_COLOR = AscFormat["EMPHASIS_FONT_COLOR"] = 3;
-    AscFormat.EMPHASIS_GROW_SHRINK = AscFormat["EMPHASIS_GROW_SHRINK"] = 6;
-    AscFormat.EMPHASIS_LINE_COLOR = AscFormat["EMPHASIS_LINE_COLOR"] = 7;
-    AscFormat.EMPHASIS_SPIN = AscFormat["EMPHASIS_SPIN"] = 8;
-    AscFormat.EMPHASIS_TRANSPARENCY = AscFormat["EMPHASIS_TRANSPARENCY"] = 9;
-    AscFormat.EMPHASIS_BOLD_FLASH = AscFormat["EMPHASIS_BOLD_FLASH"] = 10;
-    AscFormat.EMPHASIS_BOLD_REVEAL = AscFormat["EMPHASIS_BOLD_REVEAL"] = 15;
-    AscFormat.EMPHASIS_BRUSH_COLOR = AscFormat["EMPHASIS_BRUSH_COLOR"] = 16;
-    AscFormat.EMPHASIS_UNDERLINE = AscFormat["EMPHASIS_UNDERLINE"] = 18;
-    AscFormat.EMPHASIS_OBJECT_COLOR = AscFormat["EMPHASIS_OBJECT_COLOR"] = 19;
-    AscFormat.EMPHASIS_COMPLEMENTARY_COLOR = AscFormat["EMPHASIS_COMPLEMENTARY_COLOR"] = 21;
-    AscFormat.EMPHASIS_COMPLEMENTARY_COLOR_2 = AscFormat["EMPHASIS_COMPLEMENTARY_COLOR_2"] = 22;
-    AscFormat.EMPHASIS_CONTRASTING_COLOR = AscFormat["EMPHASIS_CONTRASTING_COLOR"] = 23;
-    AscFormat.EMPHASIS_CONTRASTING_DARKEN = AscFormat["EMPHASIS_CONTRASTING_DARKEN"] = 24;
-    AscFormat.EMPHASIS_DESATURATE = AscFormat["EMPHASIS_DESATURATE"] = 25;
-    AscFormat.EMPHASIS_PULSE = AscFormat["EMPHASIS_PULSE"] = 26;
-    AscFormat.EMPHASIS_COLOR_PULSE = AscFormat["EMPHASIS_COLOR_PULSE"] = 27;
-    AscFormat.EMPHASIS_GROW_WITH_COLOR = AscFormat["EMPHASIS_GROW_WITH_COLOR"] = 28;
-    AscFormat.EMPHASIS_LIGHTEN = AscFormat["EMPHASIS_LIGHTEN"] = 30;
-    AscFormat.EMPHASIS_TEETER = AscFormat["EMPHASIS_TEETER"] = 32;
-    AscFormat.EMPHASIS_WAVE = AscFormat["EMPHASIS_WAVE"] = 34;
-    AscFormat.EMPHASIS_BLINK = AscFormat["EMPHASIS_BLINK"] = 35;
-    AscFormat.EMPHASIS_SHIMMER = AscFormat["EMPHASIS_SHIMMER"] = 36;
 
 
-    //preset subtypes
-    AscFormat.EXIT_ZOOM_OBJECT_CENTER = AscFormat["EXIT_ZOOM_OBJECT_CENTER"] = 32;
-    AscFormat.EXIT_ZOOM_SLIDE_CENTER = AscFormat["EXIT_ZOOM_SLIDE_CENTER"] = 544;
-
-    AscFormat.EXIT_WIPE_FROM_TOP = AscFormat["EXIT_WIPE_FROM_TOP"] = 1;
-    AscFormat.EXIT_WIPE_FROM_RIGHT = AscFormat["EXIT_WIPE_FROM_RIGHT"] = 2;
-    AscFormat.EXIT_WIPE_FROM_BOTTOM = AscFormat["EXIT_WIPE_FROM_BOTTOM"] = 4;
-    AscFormat.EXIT_WIPE_FROM_LEFT = AscFormat["EXIT_WIPE_FROM_LEFT"] = 8;
-
-    AscFormat.EXIT_WHEEL_1_SPOKE = AscFormat["EXIT_WHEEL_1_SPOKE"] = 1;
-    AscFormat.EXIT_WHEEL_2_SPOKES = AscFormat["EXIT_WHEEL_2_SPOKES"] = 2;
-    AscFormat.EXIT_WHEEL_3_SPOKES = AscFormat["EXIT_WHEEL_3_SPOKES"] = 3;
-    AscFormat.EXIT_WHEEL_4_SPOKES = AscFormat["EXIT_WHEEL_4_SPOKES"] = 4;
-    AscFormat.EXIT_WHEEL_8_SPOKES = AscFormat["EXIT_WHEEL_8_SPOKES"] = 8;
-
-    AscFormat.EXIT_STRIPS_RIGHT_UP = AscFormat["EXIT_STRIPS_RIGHT_UP"] = 3;
-    AscFormat.EXIT_STRIPS_RIGHT_DOWN = AscFormat["EXIT_STRIPS_RIGHT_DOWN"] = 6;
-    AscFormat.EXIT_STRIPS_LEFT_UP = AscFormat["EXIT_STRIPS_LEFT_UP"] = 9;
-    AscFormat.EXIT_STRIPS_LEFT_DOWN = AscFormat["EXIT_STRIPS_LEFT_DOWN"] = 12;
-
-    AscFormat.EXIT_SPLIT_VERTICAL_IN = AscFormat["EXIT_SPLIT_VERTICAL_IN"] = 21;
-    AscFormat.EXIT_SPLIT_HORIZONTAL_IN = AscFormat["EXIT_SPLIT_HORIZONTAL_IN"] = 26;
-    AscFormat.EXIT_SPLIT_VERTICAL_OUT = AscFormat["EXIT_SPLIT_VERTICAL_OUT"] = 37;
-    AscFormat.EXIT_SPLIT_HORIZONTAL_OUT = AscFormat["EXIT_SPLIT_HORIZONTAL_OUT"] = 42;
-
-    AscFormat.EXIT_RANDOM_BARS_VERTICAL = AscFormat["EXIT_RANDOM_BARS_VERTICAL"] = 5;
-    AscFormat.EXIT_RANDOM_BARS_HORIZONTAL = AscFormat["EXIT_RANDOM_BARS_HORIZONTAL"] = 10;
-
-    AscFormat.EXIT_PLUS_IN = AscFormat["EXIT_PLUS_IN"] = 16;
-    AscFormat.EXIT_PLUS_OUT = AscFormat["EXIT_PLUS_OUT"] = 32;
-
-    AscFormat.EXIT_PEEK_OUT_TO_TOP = AscFormat["EXIT_PEEK_OUT_TO_TOP"] = 1;
-    AscFormat.EXIT_PEEK_OUT_TO_RIGHT = AscFormat["EXIT_PEEK_OUT_TO_RIGHT"] = 2;
-    AscFormat.EXIT_PEEK_OUT_TO_BOTTOM = AscFormat["EXIT_PEEK_OUT_TO_BOTTOM"] = 4;
-    AscFormat.EXIT_PEEK_OUT_TO_LEFT = AscFormat["EXIT_PEEK_OUT_TO_LEFT"] = 8;
-
-    AscFormat.EXIT_FLY_OUT_TO_TOP = AscFormat["EXIT_FLY_OUT_TO_TOP"] = 1;
-    AscFormat.EXIT_FLY_OUT_TO_RIGHT = AscFormat["EXIT_FLY_OUT_TO_RIGHT"] = 2;
-    AscFormat.EXIT_FLY_OUT_TO_TOP_RIGHT = AscFormat["EXIT_FLY_OUT_TO_TOP_RIGHT"] = 3;
-    AscFormat.EXIT_FLY_OUT_TO_BOTTOM = AscFormat["EXIT_FLY_OUT_TO_BOTTOM"] = 4;
-    AscFormat.EXIT_FLY_OUT_TO_BOTTOM_RIGHT = AscFormat["EXIT_FLY_OUT_TO_BOTTOM_RIGHT"] = 6;
-    AscFormat.EXIT_FLY_OUT_TO_LEFT = AscFormat["EXIT_FLY_OUT_TO_LEFT"] = 8;
-    AscFormat.EXIT_FLY_OUT_TO_TOP_LEFT = AscFormat["EXIT_FLY_OUT_TO_TOP_LEFT"] = 9;
-    AscFormat.EXIT_FLY_OUT_TO_BOTTOM_LEFT = AscFormat["EXIT_FLY_OUT_TO_BOTTOM_LEFT"] = 12;
-
-    AscFormat.EXIT_DIAMOND_IN = AscFormat["EXIT_DIAMOND_IN"] = 16;
-    AscFormat.EXIT_DIAMOND_OUT = AscFormat["EXIT_DIAMOND_OUT"] = 32;
-
-    AscFormat.EXIT_COLLAPSE_TO_TOP = AscFormat["EXIT_COLLAPSE_TO_TOP"] = 1;
-    AscFormat.EXIT_COLLAPSE_TO_RIGHT = AscFormat["EXIT_COLLAPSE_TO_RIGHT"] = 2;
-    AscFormat.EXIT_COLLAPSE_TO_BOTTOM = AscFormat["EXIT_COLLAPSE_TO_BOTTOM"] = 4;
-    AscFormat.EXIT_COLLAPSE_TO_LEFT = AscFormat["EXIT_COLLAPSE_TO_LEFT"] = 8;
-    AscFormat.EXIT_COLLAPSE_ACROSS = AscFormat["EXIT_COLLAPSE_ACROSS"] = 10;
-
-    AscFormat.EXIT_CIRCLE_IN = AscFormat["EXIT_CIRCLE_IN"] = 16;
-    AscFormat.EXIT_CIRCLE_OUT = AscFormat["EXIT_CIRCLE_OUT"] = 32;
-
-    AscFormat.EXIT_CHECKERBOARD_UP = AscFormat["EXIT_CHECKERBOARD_UP"] = 5;
-    AscFormat.EXIT_CHECKERBOARD_ACROSS = AscFormat["EXIT_CHECKERBOARD_ACROSS"] = 10;
-
-    AscFormat.EXIT_BOX_IN = AscFormat["EXIT_BOX_IN"] = 16;
-    AscFormat.EXIT_BOX_OUT = AscFormat["EXIT_BOX_OUT"] = 32;
-
-    AscFormat.EXIT_BLINDS_VERTICAL = AscFormat["EXIT_BLINDS_VERTICAL"] = 5;
-    AscFormat.EXIT_BLINDS_HORIZONTAL = AscFormat["EXIT_BLINDS_HORIZONTAL"] = 10;
-
-    AscFormat.EXIT_BASIC_ZOOM_IN = AscFormat["EXIT_BASIC_ZOOM_IN"] = 16;
-    AscFormat.EXIT_BASIC_ZOOM_IN_TO_SCREEN_BOTTOM = AscFormat["EXIT_BASIC_ZOOM_IN_TO_SCREEN_BOTTOM"] = 20;
-    AscFormat.EXIT_BASIC_ZOOM_OUT = AscFormat["EXIT_BASIC_ZOOM_OUT"] = 32;
-    AscFormat.EXIT_BASIC_ZOOM_IN_SLIGHTLY = AscFormat["EXIT_BASIC_ZOOM_IN_SLIGHTLY"] = 272;
-    AscFormat.EXIT_BASIC_ZOOM_OUT_SLIGHTLY = AscFormat["EXIT_BASIC_ZOOM_OUT_SLIGHTLY"] = 288;
-    AscFormat.EXIT_BASIC_ZOOM_OUT_TO_SCREEN_CENTER = AscFormat["EXIT_BASIC_ZOOM_OUT_TO_SCREEN_CENTER"] = 544;
-
-    AscFormat.EXIT_BASIC_SWIVEL_VERTICAL = AscFormat["EXIT_BASIC_SWIVEL_VERTICAL"] = 5;
-    AscFormat.EXIT_BASIC_SWIVEL_HORIZONTAL = AscFormat["EXIT_BASIC_SWIVEL_HORIZONTAL"] = 10;
-
-    AscFormat.ENTRANCE_ZOOM_OBJECT_CENTER = AscFormat["ENTRANCE_ZOOM_OBJECT_CENTER"] = 16;
-    AscFormat.ENTRANCE_ZOOM_SLIDE_CENTER = AscFormat["ENTRANCE_ZOOM_SLIDE_CENTER"] = 528;
-
-    AscFormat.ENTRANCE_WIPE_FROM_TOP = AscFormat["ENTRANCE_WIPE_FROM_TOP"] = 1;
-    AscFormat.ENTRANCE_WIPE_FROM_RIGHT = AscFormat["ENTRANCE_WIPE_FROM_RIGHT"] = 2;
-    AscFormat.ENTRANCE_WIPE_FROM_BOTTOM = AscFormat["ENTRANCE_WIPE_FROM_BOTTOM"] = 4;
-    AscFormat.ENTRANCE_WIPE_FROM_LEFT = AscFormat["ENTRANCE_WIPE_FROM_LEFT"] = 8;
-
-    AscFormat.ENTRANCE_WHEEL_1_SPOKE = AscFormat["ENTRANCE_WHEEL_1_SPOKE"] = 1;
-    AscFormat.ENTRANCE_WHEEL_2_SPOKES = AscFormat["ENTRANCE_WHEEL_2_SPOKES"] = 2;
-    AscFormat.ENTRANCE_WHEEL_3_SPOKES = AscFormat["ENTRANCE_WHEEL_3_SPOKES"] = 3;
-    AscFormat.ENTRANCE_WHEEL_4_SPOKES = AscFormat["ENTRANCE_WHEEL_4_SPOKES"] = 4;
-    AscFormat.ENTRANCE_WHEEL_8_SPOKES = AscFormat["ENTRANCE_WHEEL_8_SPOKES"] = 8;
-
-    AscFormat.ENTRANCE_STRIPS_RIGHT_UP = AscFormat["ENTRANCE_STRIPS_RIGHT_UP"] = 3;
-    AscFormat.ENTRANCE_STRIPS_RIGHT_DOWN = AscFormat["ENTRANCE_STRIPS_RIGHT_DOWN"] = 6;
-    AscFormat.ENTRANCE_STRIPS_LEFT_UP = AscFormat["ENTRANCE_STRIPS_LEFT_UP"] = 9;
-    AscFormat.ENTRANCE_STRIPS_LEFT_DOWN = AscFormat["ENTRANCE_STRIPS_LEFT_DOWN"] = 12;
-
-    AscFormat.ENTRANCE_STRETCH_FROM_TOP = AscFormat["ENTRANCE_STRETCH_FROM_TOP"] = 1;
-    AscFormat.ENTRANCE_STRETCH_FROM_RIGHT = AscFormat["ENTRANCE_STRETCH_FROM_RIGHT"] = 2;
-    AscFormat.ENTRANCE_STRETCH_FROM_BOTTOM = AscFormat["ENTRANCE_STRETCH_FROM_BOTTOM"] = 4;
-    AscFormat.ENTRANCE_STRETCH_FROM_LEFT = AscFormat["ENTRANCE_STRETCH_FROM_LEFT"] = 8;
-    AscFormat.ENTRANCE_STRETCH_ACROSS = AscFormat["ENTRANCE_STRETCH_ACROSS"] = 10;
-
-    AscFormat.ENTRANCE_SPLIT_VERTICAL_IN = AscFormat["ENTRANCE_SPLIT_VERTICAL_IN"] = 21;
-    AscFormat.ENTRANCE_SPLIT_HORIZONTAL_IN = AscFormat["ENTRANCE_SPLIT_HORIZONTAL_IN"] = 26;
-    AscFormat.ENTRANCE_SPLIT_VERTICAL_OUT = AscFormat["ENTRANCE_SPLIT_VERTICAL_OUT"] = 37;
-    AscFormat.ENTRANCE_SPLIT_HORIZONTAL_OUT = AscFormat["ENTRANCE_SPLIT_HORIZONTAL_OUT"] = 42;
-
-    AscFormat.ENTRANCE_RANDOM_BARS_VERTICAL = AscFormat["ENTRANCE_RANDOM_BARS_VERTICAL"] = 5;
-    AscFormat.ENTRANCE_RANDOM_BARS_HORIZONTAL = AscFormat["ENTRANCE_RANDOM_BARS_HORIZONTAL"] = 10;
-
-    AscFormat.ENTRANCE_PLUS_IN = AscFormat["ENTRANCE_PLUS_IN"] = 16;
-    AscFormat.ENTRANCE_PLUS_OUT = AscFormat["ENTRANCE_PLUS_OUT"] = 32;
-
-    AscFormat.ENTRANCE_PEEK_IN_FROM_TOP = AscFormat["ENTRANCE_PEEK_IN_FROM_TOP"] = 1;
-    AscFormat.ENTRANCE_PEEK_IN_FROM_RIGHT = AscFormat["ENTRANCE_PEEK_IN_FROM_RIGHT"] = 2;
-    AscFormat.ENTRANCE_PEEK_IN_FROM_BOTTOM = AscFormat["ENTRANCE_PEEK_IN_FROM_BOTTOM"] = 4;
-    AscFormat.ENTRANCE_PEEK_IN_FROM_LEFT = AscFormat["ENTRANCE_PEEK_IN_FROM_LEFT"] = 8;
-
-    AscFormat.ENTRANCE_FLY_IN_FROM_TOP = AscFormat["ENTRANCE_FLY_IN_FROM_TOP"] = 1;
-    AscFormat.ENTRANCE_FLY_IN_FROM_RIGHT = AscFormat["ENTRANCE_FLY_IN_FROM_RIGHT"] = 2;
-    AscFormat.ENTRANCE_FLY_IN_FROM_TOP_RIGHT = AscFormat["ENTRANCE_FLY_IN_FROM_TOP_RIGHT"] = 3;
-    AscFormat.ENTRANCE_FLY_IN_FROM_BOTTOM = AscFormat["ENTRANCE_FLY_IN_FROM_BOTTOM"] = 4;
-    AscFormat.ENTRANCE_FLY_IN_FROM_BOTTOM_RIGHT = AscFormat["ENTRANCE_FLY_IN_FROM_BOTTOM_RIGHT"] = 6;
-    AscFormat.ENTRANCE_FLY_IN_FROM_LEFT = AscFormat["ENTRANCE_FLY_IN_FROM_LEFT"] = 8;
-    AscFormat.ENTRANCE_FLY_IN_FROM_TOP_LEFT = AscFormat["ENTRANCE_FLY_IN_FROM_TOP_LEFT"] = 9;
-    AscFormat.ENTRANCE_FLY_IN_FROM_BOTTOM_LEFT = AscFormat["ENTRANCE_FLY_IN_FROM_BOTTOM_LEFT"] = 12;
-
-    AscFormat.ENTRANCE_DIAMOND_IN = AscFormat["ENTRANCE_DIAMOND_IN"] = 16;
-    AscFormat.ENTRANCE_DIAMOND_OUT = AscFormat["ENTRANCE_DIAMOND_OUT"] = 32;
-
-    AscFormat.ENTRANCE_CIRCLE_IN = AscFormat["ENTRANCE_CIRCLE_IN"] = 16;
-    AscFormat.ENTRANCE_CIRCLE_OUT = AscFormat["ENTRANCE_CIRCLE_OUT"] = 32;
-
-    AscFormat.ENTRANCE_CHECKERBOARD_DOWN = AscFormat["ENTRANCE_CHECKERBOARD_DOWN"] = 5;
-    AscFormat.ENTRANCE_CHECKERBOARD_ACROSS = AscFormat["ENTRANCE_CHECKERBOARD_ACROSS"] = 10;
-
-    AscFormat.ENTRANCE_BOX_IN = AscFormat["ENTRANCE_BOX_IN"] = 16;
-    AscFormat.ENTRANCE_BOX_OUT = AscFormat["ENTRANCE_BOX_OUT"] = 32;
-
-    AscFormat.ENTRANCE_BLINDS_VERTICAL = AscFormat["ENTRANCE_BLINDS_VERTICAL"] = 5;
-    AscFormat.ENTRANCE_BLINDS_HORIZONTAL = AscFormat["ENTRANCE_BLINDS_HORIZONTAL"] = 10;
-
-    AscFormat.ENTRANCE_BASIC_ZOOM_IN = AscFormat["ENTRANCE_BASIC_ZOOM_IN"] = 16;
-    AscFormat.ENTRANCE_BASIC_ZOOM_OUT = AscFormat["ENTRANCE_BASIC_ZOOM_OUT"] = 32;
-    AscFormat.ENTRANCE_BASIC_ZOOM_OUT_FROM_SCREEN_BOTTOM = AscFormat["ENTRANCE_BASIC_ZOOM_OUT_FROM_SCREEN_BOTTOM"] = 36;
-    AscFormat.ENTRANCE_BASIC_ZOOM_IN_SLIGHTLY = AscFormat["ENTRANCE_BASIC_ZOOM_IN_SLIGHTLY"] = 272;
-    AscFormat.ENTRANCE_BASIC_ZOOM_OUT_SLIGHTLY = AscFormat["ENTRANCE_BASIC_ZOOM_OUT_SLIGHTLY"] = 288;
-    AscFormat.ENTRANCE_BASIC_ZOOM_IN_FROM_SCREEN_CENTER = AscFormat["ENTRANCE_BASIC_ZOOM_IN_FROM_SCREEN_CENTER"] = 528;
-
-    AscFormat.ENTRANCE_BASIC_SWIVEL_VERTICAL = AscFormat["ENTRANCE_BASIC_SWIVEL_VERTICAL"] = 5;
-    AscFormat.ENTRANCE_BASIC_SWIVEL_HORIZONTAL = AscFormat["ENTRANCE_BASIC_SWIVEL_HORIZONTAL"] = 10;
-
+   
 
 
     function CBaseAnimObject() {
@@ -579,36 +242,18 @@
 
 
 
-    var NODE_TYPE_AFTEREFFECT	 = 0;
-    var NODE_TYPE_AFTERGROUP	 = 1;
-    var NODE_TYPE_CLICKEFFECT	 = 2;
-    var NODE_TYPE_CLICKPAR		 = 3;
-    var NODE_TYPE_INTERACTIVESEQ = 4;
-    var NODE_TYPE_MAINSEQ		 = 5;
-    var NODE_TYPE_TMROOT		 = 6;
-    var NODE_TYPE_WITHEFFECT	 = 7;
-    var NODE_TYPE_WITHGROUP		 = 8;
 
-    AscFormat.NODE_TYPE_AFTEREFFECT = AscFormat["NODE_TYPE_AFTEREFFECT"]	 = NODE_TYPE_AFTEREFFECT;
-    AscFormat.NODE_TYPE_AFTERGROUP = AscFormat["NODE_TYPE_AFTERGROUP"]	 = NODE_TYPE_AFTERGROUP;
-    AscFormat.NODE_TYPE_CLICKEFFECT = AscFormat["NODE_TYPE_CLICKEFFECT"]	 = NODE_TYPE_CLICKEFFECT;
-    AscFormat.NODE_TYPE_CLICKPAR = AscFormat["NODE_TYPE_CLICKPAR"]		 = NODE_TYPE_CLICKPAR;
-    AscFormat.NODE_TYPE_INTERACTIVESEQ = AscFormat["NODE_TYPE_INTERACTIVESEQ"] = NODE_TYPE_INTERACTIVESEQ;
-    AscFormat.NODE_TYPE_MAINSEQ = AscFormat["NODE_TYPE_MAINSEQ"]		 = NODE_TYPE_MAINSEQ;
-    AscFormat.NODE_TYPE_TMROOT = AscFormat["NODE_TYPE_TMROOT"]		 = NODE_TYPE_TMROOT;
-    AscFormat.NODE_TYPE_WITHEFFECT = AscFormat["NODE_TYPE_WITHEFFECT"]	 = NODE_TYPE_WITHEFFECT;
-    AscFormat.NODE_TYPE_WITHGROUP = AscFormat["NODE_TYPE_WITHGROUP"]		 = NODE_TYPE_WITHGROUP;
 
     var NODE_TYPE_MAP = {};
-    NODE_TYPE_MAP[NODE_TYPE_AFTEREFFECT	 ] = "AFTEREFFECT";
-    NODE_TYPE_MAP[NODE_TYPE_AFTERGROUP	 ] = "AFTERGROUP";
-    NODE_TYPE_MAP[NODE_TYPE_CLICKEFFECT	 ] = "CLICKEFFECT";
-    NODE_TYPE_MAP[NODE_TYPE_CLICKPAR		 ] = "CLICKPAR";
-    NODE_TYPE_MAP[NODE_TYPE_INTERACTIVESEQ ] = "INTERACTIVESEQ";
-    NODE_TYPE_MAP[NODE_TYPE_MAINSEQ		 ] = "MAINSEQ";
-    NODE_TYPE_MAP[NODE_TYPE_TMROOT		 ] = "TMROOT";
-    NODE_TYPE_MAP[NODE_TYPE_WITHEFFECT	 ] = "WITHEFFECT";
-    NODE_TYPE_MAP[NODE_TYPE_WITHGROUP		 ] = "WITHGROUP";
+    NODE_TYPE_MAP[AscFormat.NODE_TYPE_AFTEREFFECT	 ] = "AFTEREFFECT";
+    NODE_TYPE_MAP[AscFormat.NODE_TYPE_AFTERGROUP	 ] = "AFTERGROUP";
+    NODE_TYPE_MAP[AscFormat.NODE_TYPE_CLICKEFFECT	 ] = "CLICKEFFECT";
+    NODE_TYPE_MAP[AscFormat.NODE_TYPE_CLICKPAR		 ] = "CLICKPAR";
+    NODE_TYPE_MAP[AscFormat.NODE_TYPE_INTERACTIVESEQ ] = "INTERACTIVESEQ";
+    NODE_TYPE_MAP[AscFormat.NODE_TYPE_MAINSEQ		 ] = "MAINSEQ";
+    NODE_TYPE_MAP[AscFormat.NODE_TYPE_TMROOT		 ] = "TMROOT";
+    NODE_TYPE_MAP[AscFormat.NODE_TYPE_WITHEFFECT	 ] = "WITHEFFECT";
+    NODE_TYPE_MAP[AscFormat.NODE_TYPE_WITHGROUP		 ] = "WITHGROUP";
 
 
     var NODE_FILL_FREEZE = 0;
@@ -846,18 +491,18 @@
         var nNodeType = this.getNodeType();
         var oPreviousTimeNode;
         switch (nNodeType) {
-            case NODE_TYPE_MAINSEQ: {
+            case AscFormat.NODE_TYPE_MAINSEQ: {
                 oTrigger = this.getDefaultTrigger(oPlayer);
                 break;
             }
-            case NODE_TYPE_CLICKEFFECT: {
+            case AscFormat.NODE_TYPE_CLICKEFFECT: {
                 oTrigger = this.createEffectTrigger(this.createExternalEventTrigger(oPlayer, oTrigger, COND_EVNT_ON_CLICK, null), oPlayer);
                 break;
             }
-            case NODE_TYPE_WITHEFFECT: {
+            case AscFormat.NODE_TYPE_WITHEFFECT: {
                 oPreviousTimeNode = this;
                 while ((oPreviousTimeNode = oPreviousTimeNode.getPreviousNode()) &&
-                (oPreviousTimeNode.getNodeType() === NODE_TYPE_WITHEFFECT)) {
+                (oPreviousTimeNode.getNodeType() === AscFormat.NODE_TYPE_WITHEFFECT)) {
                 }
                 if(oPreviousTimeNode) {
                     oTrigger = this.createEffectTrigger(function() {
@@ -869,7 +514,7 @@
                 }
                 break;
             }
-            case NODE_TYPE_AFTEREFFECT: {
+            case AscFormat.NODE_TYPE_AFTEREFFECT: {
                 oPreviousTimeNode = this.getPreviousNode();
                 if(oPreviousTimeNode) {
                     oTrigger = this.createEffectTrigger(function() {
@@ -1206,7 +851,7 @@
             if(nChildIdx < aChildren.length - 1) {
                 aChildren[nChildIdx + 1].scheduleStart(oPlayer);
                 // //handle advance after
-                // if(this.getNodeType() === NODE_TYPE_MAINSEQ) {
+                // if(this.getNodeType() === AscFormat.NODE_TYPE_MAINSEQ) {
                 //     var oSlide = oPlayer.slide;
                 //     if(oSlide) {
                 //         var oTransition = oSlide.transition;
@@ -1274,7 +919,7 @@
     };
     CTimeNodeBase.prototype.isMainSequence = function() {
         var oAttributes = this.getAttributesObject();
-        if(oAttributes && oAttributes.nodeType === NODE_TYPE_MAINSEQ) {
+        if(oAttributes && oAttributes.nodeType === AscFormat.NODE_TYPE_MAINSEQ) {
             return true;
         }
         return false;
@@ -1298,19 +943,19 @@
         return null;
     };
     CTimeNodeBase.prototype.getSpClickInteractiveSeq = function() {
-        if(this.getNodeType() === NODE_TYPE_INTERACTIVESEQ) {
+        if(this.getNodeType() === AscFormat.NODE_TYPE_INTERACTIVESEQ) {
             return this.getSpClickAdvance();
         }
         return null;
     };
     CTimeNodeBase.prototype.isClickEffect = function() {
-        return this.isAnimEffect() && this.getNodeType() === NODE_TYPE_CLICKEFFECT;
+        return this.isAnimEffect() && this.getNodeType() === AscFormat.NODE_TYPE_CLICKEFFECT;
     };
     CTimeNodeBase.prototype.isWithEffect = function() {
-        return this.isAnimEffect() && this.getNodeType() === NODE_TYPE_WITHEFFECT;
+        return this.isAnimEffect() && this.getNodeType() === AscFormat.NODE_TYPE_WITHEFFECT;
     };
     CTimeNodeBase.prototype.isAfterEffect = function() {
-        return this.isAnimEffect() && this.getNodeType() === NODE_TYPE_AFTEREFFECT;
+        return this.isAnimEffect() && this.getNodeType() === AscFormat.NODE_TYPE_AFTEREFFECT;
     };
     CTimeNodeBase.prototype.traverseTimeNodes = function(fCallback) {
         fCallback(this);
@@ -2019,7 +1664,7 @@
     };
     CTiming.prototype.getTimingRootNode = function() {
         if(this.tnLst) {
-            return this.tnLst.getTimeNodeByType(NODE_TYPE_TMROOT);
+            return this.tnLst.getTimeNodeByType(AscFormat.NODE_TYPE_TMROOT);
         }
         return null;
     };
@@ -2160,7 +1805,7 @@
         if(!oTmRoot) {
             //create timing root
             oTnContainer = new CPar();
-            oCTn = this.createCCTn("indefinite", null, null, NODE_TYPE_TMROOT, RESTART_TYPE_NEVER, true);
+            oCTn = this.createCCTn("indefinite", null, null, AscFormat.NODE_TYPE_TMROOT, RESTART_TYPE_NEVER, true);
             oTnContainer.setCTn(oCTn);
             this.tnLst.addToLst(0, oTnContainer);
             oTmRoot = oTnContainer;
@@ -2170,12 +1815,12 @@
     CTiming.prototype.checkMainSequence = function() {
         var oTnContainer, oCTn;
         var oTmRoot = this.checkTimeRoot();
-        var oMainSeq = oTmRoot.getChildTimeNodeByType(NODE_TYPE_MAINSEQ);
+        var oMainSeq = oTmRoot.getChildTimeNodeByType(AscFormat.NODE_TYPE_MAINSEQ);
         if(!oMainSeq) {
             oTnContainer = new CSeq();
             oTnContainer.setConcurrent(true);
             oTnContainer.setNextAc(NEXT_AC_SEEK);
-            oCTn = this.createCCTn("indefinite", null, null, NODE_TYPE_MAINSEQ, null, true);
+            oCTn = this.createCCTn("indefinite", null, null, AscFormat.NODE_TYPE_MAINSEQ, null, true);
             oTnContainer.setCTn(oCTn);
             oTmRoot.addToChildTnLst(0, oTnContainer);
             var oPrevCondLst = new CCondLst();
@@ -2215,7 +1860,7 @@
             oTnContainer = new CSeq();
             oTnContainer.setConcurrent(true);
             oTnContainer.setNextAc(NEXT_AC_SEEK);
-            oCTn = this.createCCTn(null, NODE_FILL_HOLD, null, NODE_TYPE_INTERACTIVESEQ, RESTART_TYPE_WHEN_NOT_ACTIVE, true, null);
+            oCTn = this.createCCTn(null, NODE_FILL_HOLD, null, AscFormat.NODE_TYPE_INTERACTIVESEQ, RESTART_TYPE_WHEN_NOT_ACTIVE, true, null);
             oTnContainer.setCTn(oCTn);
             oCTn.setEvtFilter("cancelBubble");
             var oStCondLst = new CCondLst();
@@ -2246,7 +1891,7 @@
         if(!oTmRoot) {
             return null;
         }
-        return oTmRoot.getChildTimeNodeByType(NODE_TYPE_MAINSEQ);
+        return oTmRoot.getChildTimeNodeByType(AscFormat.NODE_TYPE_MAINSEQ);
     };
     CTiming.prototype.addToMainSequence = function(oEffect) {
         var aSeqs = this.getEffectsSequences();
@@ -2867,8 +2512,8 @@
             for(var nIdx = 0; nIdx < aEffectsForDemo.length; ++nIdx) {
                 oEffect = aEffectsForDemo[nIdx];
                 var oCopyEffect = oEffect.createDuplicate();
-                if(oCopyEffect.cTn.nodeType === NODE_TYPE_CLICKEFFECT) {
-                    oCopyEffect.cTn.setNodeType(nIdx === 0 ? NODE_TYPE_WITHEFFECT : NODE_TYPE_AFTEREFFECT);
+                if(oCopyEffect.cTn.nodeType === AscFormat.NODE_TYPE_CLICKEFFECT) {
+                    oCopyEffect.cTn.setNodeType(nIdx === 0 ? AscFormat.NODE_TYPE_WITHEFFECT : AscFormat.NODE_TYPE_AFTEREFFECT);
                 }
                 oCopyEffect.cTn.changeDelay(oEffect.cTn.getDelay(true), false);
                 oCopyEffect.cTn.changeRepeatCount(1000);
@@ -5079,7 +4724,7 @@
         }
     };
     CCTn.prototype.getDelayShift = function() {
-        if(this.nodeType === NODE_TYPE_AFTEREFFECT) {
+        if(this.nodeType === AscFormat.NODE_TYPE_AFTEREFFECT) {
             var oPrev = this.parent.getPreviousEffect();
             if(oPrev && oPrev.cTn) {
                 return oPrev.cTn.getDelay() + oPrev.cTn.getEffectDuration();
@@ -5276,8 +4921,8 @@
 
         var oPar2Lvl, oPar3Lvl;
         var aWithEffects, aAfterEffects;
-        if(v === NODE_TYPE_CLICKEFFECT) {
-            oEffectNode.cTn.setNodeType(NODE_TYPE_CLICKEFFECT);
+        if(v === AscFormat.NODE_TYPE_CLICKEFFECT) {
+            oEffectNode.cTn.setNodeType(AscFormat.NODE_TYPE_CLICKEFFECT);
             oPar3Lvl = CTiming.prototype.createPar(NODE_FILL_HOLD, "0");
             aWithEffects = oCurPar3Lvl.splice(nIdx3);
             oPar3Lvl.addEffects(0, aWithEffects);
@@ -5286,8 +4931,8 @@
             oPar2Lvl.addEffects(1, oCurPar2Lvl.splice(nIdx2 + 1));
             oCurMainSeq.splice(nMainIdx + 1, 0, oPar2Lvl);
         }
-        else if(v === NODE_TYPE_WITHEFFECT) {
-            oEffectNode.cTn.setNodeType(NODE_TYPE_WITHEFFECT);
+        else if(v === AscFormat.NODE_TYPE_WITHEFFECT) {
+            oEffectNode.cTn.setNodeType(AscFormat.NODE_TYPE_WITHEFFECT);
             if(nIdx3 === 0) {
                 if(nIdx2 === 0) {
                     if(nMainIdx === 0) {
@@ -5311,8 +4956,8 @@
                 }
             }
         }
-        else if(v === NODE_TYPE_AFTEREFFECT) {
-            oEffectNode.cTn.setNodeType(NODE_TYPE_AFTEREFFECT);
+        else if(v === AscFormat.NODE_TYPE_AFTEREFFECT) {
+            oEffectNode.cTn.setNodeType(AscFormat.NODE_TYPE_AFTEREFFECT);
             if(nIdx3 === 0) {
                 if(nIdx2 > 0) {
                     //do nothing
@@ -8407,8 +8052,6 @@
         this.selected = false;
     };
 
-    AscFormat["untilNextClick"] = AscFormat.untilNextClick = -1;
-    AscFormat["untilNextSlide"] = AscFormat.untilNextSlide = -2;
 
     function CPar() {
         CTimeNodeContainer.call(this);
@@ -8709,7 +8352,7 @@
             var oParentNode;
             while(oParentNode = oCurNode.getParentTimeNode()) {
                 var oAttrObject = oParentNode.getAttributesObject();
-                if(PRESET_CLASS_ENTR === oAttrObject.presetClass) {
+                if(AscFormat.PRESET_CLASS_ENTR === oAttrObject.presetClass) {
                     return true;
                 }
                 oCurNode = oParentNode;
