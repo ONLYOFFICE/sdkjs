@@ -6267,6 +6267,12 @@ CT_pivotTableDefinition.prototype.groupPivot = function (api, layout, confirmati
 			var changeRes = api._changePivot(pivotTable, confirmation, true, function () {
 				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
 
+				//todo redo 
+				//clone pivotCache to avoid conflict with other pivotTables(case adding discrete fields)
+				var tmpPivot = pivotTable.cloneForHistory(true, false)
+				tmpPivot.cacheDefinition.cacheRecords = pivotTable.cacheDefinition.cacheRecords;
+				pivotTable.setCacheDefinition(tmpPivot.cacheDefinition);
+
 				AscFormat.ExecuteNoHistory(function () {
 					pivotTable.ungroupRangePr(baseFld);
 					pivotTable.groupRangePr(baseFld, opt_rangePr, opt_dateTypes);
@@ -6291,6 +6297,12 @@ CT_pivotTableDefinition.prototype.groupPivot = function (api, layout, confirmati
 		api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, confirmation, function (confirmation, pivotTables) {
 			var changeRes = api._changePivot(pivotTable, confirmation, true, function () {
 				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+
+				//todo redo 
+				//clone pivotCache to avoid conflict with other pivotTables(case adding discrete fields)
+				var tmpPivot = pivotTable.cloneForHistory(true, false)
+				tmpPivot.cacheDefinition.cacheRecords = pivotTable.cacheDefinition.cacheRecords;
+				pivotTable.setCacheDefinition(tmpPivot.cacheDefinition);
 
 				AscFormat.ExecuteNoHistory(function () {
 					var groupRes = pivotTable.groupDiscreteCache(layout);
@@ -6319,6 +6331,11 @@ CT_pivotTableDefinition.prototype.ungroupPivot = function (api, layout, confirma
 			var changeRes = api._changePivot(pivotTable, confirmation, true, function () {
 				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
 
+				//todo redo 				//clone pivotCache to avoid conflict with other pivotTables(case adding discrete fields)
+				var tmpPivot = pivotTable.cloneForHistory(true, false)
+				tmpPivot.cacheDefinition.cacheRecords = pivotTable.cacheDefinition.cacheRecords;
+				pivotTable.setCacheDefinition(tmpPivot.cacheDefinition);
+
 				AscFormat.ExecuteNoHistory(function () {
 					pivotTable.ungroupRangePr(baseFld);
 				}, api);
@@ -6336,6 +6353,12 @@ CT_pivotTableDefinition.prototype.ungroupPivot = function (api, layout, confirma
 			var groupRes;
 			var changeRes = api._changePivot(pivotTable, confirmation, true, function () {
 				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+
+				//todo redo 
+				//clone pivotCache to avoid conflict with other pivotTables(case adding discrete fields)
+				var tmpPivot = pivotTable.cloneForHistory(true, false)
+				tmpPivot.cacheDefinition.cacheRecords = pivotTable.cacheDefinition.cacheRecords;
+				pivotTable.setCacheDefinition(tmpPivot.cacheDefinition);
 
 				AscFormat.ExecuteNoHistory(function () {
 					groupRes = pivotTable.ungroupDiscreteCache(layout);
