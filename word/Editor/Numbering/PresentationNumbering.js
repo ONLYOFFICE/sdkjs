@@ -433,7 +433,23 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 	FirstTextPr_.Merge(TextPr_);
 	this.m_oTextPr = FirstTextPr_;
 
-	if (this.m_nType === numbering_presentationnumfrmt_Blip) {
+	var X = 0;
+	var OldTextPr = Context.GetTextPr();
+	var Hint =  this.m_oTextPr.RFonts.Hint;
+	var bCS  =  this.m_oTextPr.CS;
+	var bRTL =  this.m_oTextPr.RTL;
+	var lcid =  this.m_oTextPr.Lang.EastAsia;
+	var FontSlot;
+	if (sT)
+	{
+		FontSlot = g_font_detector.Get_FontClass( sT.getUnicodeIterator().value(), Hint, lcid, bCS, bRTL );
+	} else {
+		FontSlot = g_font_detector.Get_FontClass( '*', Hint, lcid, bCS, bRTL );
+	}
+	Context.SetTextPr( this.m_oTextPr, Theme );
+	Context.SetFontSlot( FontSlot );
+	if (this.m_nType === numbering_presentationnumfrmt_Blip)
+	{
 		var sizes = AscCommon.getSourceImageSize(this.m_sSrc);
 		var x_height = g_oTextMeasurer.GetHeight() - (g_oTextMeasurer.GetAscender() + g_oTextMeasurer.GetDescender());
 		var adaptImageHeight = x_height;
@@ -445,18 +461,8 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 	{
 		return { Width : 0 };
 	}
-
-	var X = 0;
-	var OldTextPr = Context.GetTextPr();
-	var Hint =  this.m_oTextPr.RFonts.Hint;
-	var bCS  =  this.m_oTextPr.CS;
-	var bRTL =  this.m_oTextPr.RTL;
-	var lcid =  this.m_oTextPr.Lang.EastAsia;
-
-	var FontSlot = g_font_detector.Get_FontClass( sT.getUnicodeIterator().value(), Hint, lcid, bCS, bRTL );
-	Context.SetTextPr( this.m_oTextPr, Theme );
-	Context.SetFontSlot( FontSlot );
-	for (var iter = sT.getUnicodeIterator(); iter.check(); iter.next()) {
+	for (var iter = sT.getUnicodeIterator(); iter.check(); iter.next())
+	{
 		var charCode = iter.value();
 		X += Context.MeasureCode(charCode).Width;
 	}
