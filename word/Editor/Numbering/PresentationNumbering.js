@@ -353,11 +353,14 @@ CPresentationBullet.prototype.Get_StartAt = function()
 CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Theme)
 {
 	var sT = "";
-	if (this.m_nType === numbering_presentationnumfrmt_Char) {
-		if ( null != this.m_sChar ) {
+	if (this.m_nType === numbering_presentationnumfrmt_Char)
+	{
+		if ( null != this.m_sChar )
+		{
 			sT = this.m_sChar;
 		}
-	} else if (this.m_nType === numbering_presentationnumfrmt_Blip) {
+	} else if (this.m_nType === numbering_presentationnumfrmt_Blip)
+	{
 		this.m_sSrc = AscCommon.getFullImageSrc2(this.m_oBlip.blip.fill.RasterImageId);
 	} else {
 		var typeOfNum = getAdaptedNumberingFormat(this.m_nType);
@@ -496,7 +499,8 @@ CPresentationBullet.prototype.Copy = function()
 	return Bullet;
 };
 
-CPresentationBullet.prototype.IsErrorInNumeration = function() {
+CPresentationBullet.prototype.IsErrorInNumeration = function()
+{
 	return (null === this.m_oTextPr
 		|| null === this.m_nNum
 		|| null == this.m_sString
@@ -521,7 +525,8 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 
 		var sT = this.m_sString;
 	var FontSlot;
-		if (sT) {
+		if (sT)
+		{
 			FontSlot = g_font_detector.Get_FontClass( sT.getUnicodeIterator().value(), Hint, lcid, bCS, bRTL );
 		} else {
 			FontSlot = g_font_detector.Get_FontClass( '*', Hint, lcid, bCS, bRTL );
@@ -568,7 +573,8 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 		}
 		g_oTextMeasurer.SetTextPr( this.m_oTextPr, PDSE.Theme  );
 		g_oTextMeasurer.SetFontSlot( FontSlot );
-	if (this.m_nType === numbering_presentationnumfrmt_Blip) {
+	if (this.m_nType === numbering_presentationnumfrmt_Blip)
+	{
 	 var sizes = AscCommon.getSourceImageSize(this.m_sSrc);
 
 	 var x_height = g_oTextMeasurer.GetHeight() - (g_oTextMeasurer.GetAscender() + g_oTextMeasurer.GetDescender());// TODO: think about it
@@ -577,8 +583,10 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 
 	 Context.drawImage(this.m_sSrc, X, Y - adaptImageHeight, adaptImageWidth, adaptImageHeight);
  }
-	if (this.m_nType !== numbering_presentationnumfrmt_Blip) {
-		for (var iter = sT.getUnicodeIterator(); iter.check(); iter.next()) {
+	if (this.m_nType !== numbering_presentationnumfrmt_Blip)
+	{
+		for (var iter = sT.getUnicodeIterator(); iter.check(); iter.next())
+		{
 			var charCode = iter.value();
 			Context.FillTextCode( X, Y, charCode );
 			X += g_oTextMeasurer.MeasureCode(charCode).Width;
