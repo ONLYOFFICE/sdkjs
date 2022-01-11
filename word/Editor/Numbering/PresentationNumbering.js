@@ -457,7 +457,7 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 		var x_height = g_oTextMeasurer.GetHeight() - (g_oTextMeasurer.GetAscender() + g_oTextMeasurer.GetDescender());
 		var adaptImageHeight = x_height;
 		var adaptImageWidth = sizes.width * adaptImageHeight / sizes.height;
-		return { Width: adaptImageWidth + 0.8 }; // TODO: существует добавочная единица (какая?)
+		return { Width: adaptImageWidth + adaptImageWidth / 35 }; // TODO: существует добавочная единица (какая?)
 	}
 
 	if(sT.length === 0)
