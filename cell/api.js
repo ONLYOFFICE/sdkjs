@@ -6086,7 +6086,7 @@ var editor;
 				t.collaborativeEditing.lock([lockInfo], callback);
 			} else {
 				if (props.sheet) {
-					props.hashValue = hash && hash[0];
+					props.hashValue = hash && hash[0] ? hash[0] : null;
 					t.collaborativeEditing.lock([lockInfo], callback);
 				} else {
 					if (props.isPasswordXL() && hash && hash[0] && hash[0].toLowerCase() === props.password.toLowerCase()) {
