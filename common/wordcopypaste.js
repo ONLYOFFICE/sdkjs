@@ -2221,7 +2221,10 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
     this.oFonts = {};
     this.oImages = {};
 	this.aContent = [];
+	this.AddedFootEndNotes = {};
+	this.aContentForNotes = [];
 
+	this.bIsForFootEndnote = false;
 	this.pasteInExcel = pasteInExcel;
 	this.pasteInPresentationShape = null;
 	this.pasteCallback = pasteCallback;
@@ -8480,9 +8483,11 @@ PasteProcessor.prototype =
 		//content
 		if (!checkBox && !comboBox && !dropdown) {
 			var oPasteProcessor = new PasteProcessor(this.api, false, false, true);
+			oPasteProcessor.AddedFootEndNotes = this.AddedFootEndNotes;
 			oPasteProcessor.msoComments = this.msoComments;
 			oPasteProcessor.oFonts = this.oFonts;
 			oPasteProcessor.oImages = this.oImages;
+			oPasteProcessor.bIsForFootEndnote = this.bIsForFootEndnote;
 			oPasteProcessor.oDocument = blockLevelSdt.Content;
 			oPasteProcessor.bIgnoreNoBlockText = true;
 			oPasteProcessor.aMsoHeadStylesStr = this.aMsoHeadStylesStr;
@@ -8879,9 +8884,11 @@ PasteProcessor.prototype =
 		} else {
 			//content
 			var oPasteProcessor = new PasteProcessor(this.api, false, false, true);
+			oPasteProcessor.AddedFootEndNotes = this.AddedFootEndNotes;
 			oPasteProcessor.msoComments = this.msoComments;
 			oPasteProcessor.oFonts = this.oFonts;
 			oPasteProcessor.oImages = this.oImages;
+			oPasteProcessor.bIsForFootEndnote = this.bIsForFootEndnote;
 			oPasteProcessor.oDocument = cell.Content;
 			oPasteProcessor.bIgnoreNoBlockText = true;
 			oPasteProcessor.aMsoHeadStylesStr = this.aMsoHeadStylesStr;
@@ -9051,6 +9058,7 @@ PasteProcessor.prototype =
 
 				//bIsPreviousSpace - игнорируем несколько пробелов подряд
 				var bIsPreviousSpace = false, clonePr;
+				
 				for (var oIterator = value.getUnicodeIterator(); oIterator.check(); oIterator.next()) {
 					if (oThis.needAddCommentStart) {
 						for (var i = 0; i < oThis.needAddCommentStart.length; i++) {
@@ -9083,7 +9091,7 @@ PasteProcessor.prototype =
 
 							shape.paragraphAdd(Item, false);
 						}
-					} else {
+					} else if (!oThis.bIsForFootEndnote){
 						if (null != nUnicode) {
 							if (whiteSpacing && 0xa === nUnicode) {
 								Item = null;
@@ -9112,6 +9120,57 @@ PasteProcessor.prototype =
 				}
 			}
 		};
+		/*var checkEndFootnodeText = function (Item, oThis, Text) {
+			if (Item.parentNode) {
+				if (Item.parentNode.nodeName.toLowerCase() === "a" && (Item.parentNode.name.toLowerCase().includes("ftn") || Item.parentNode.name.toLowerCase().includes("edn"))) {
+					var oNewItem = Item;
+					while (!(oNewItem.nodeName.toLowerCase() === "a")) {
+						if (!oNewItem.parentNode || oNewItem.parentNode.nodeName.toLowerCase() === "body") {
+							break;
+						}
+						oNewItem = oNewItem.parentNode;
+					}
+					if (oNewItem.nodeName.toLowerCase() === "a") {
+						if (oNewItem.name.toLowerCase().includes("ftn") || oNewItem.name.toLowerCase().includes("edn")) {
+							if (oNewItem.name.includes("_ftnref") || oNewItem.name.includes("_ednref")) {
+								if (oThis.oCur_rPr.Color.b === 238 && oThis.oCur_rPr.Color.g === 0 && oThis.oCur_rPr.Color.r === 0 && oThis.oCur_rPr.Underline === true) {
+									if (oNewItem.name.includes("_ftnref")) {
+										oThis.AddedFootEndNotes[oNewItem.hash.replace("#_", "")].Ref.Run.SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultFootnoteReference());
+									}
+									else {
+										oThis.AddedFootEndNotes[oNewItem.hash.replace("#_", "")].Ref.Run.SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultEndnoteReference());
+									}
+								}
+								else {
+									oThis.AddedFootEndNotes[oNewItem.hash.replace("#_", "")].Ref.Run.SetPr(oThis.oCur_rPr);
+								}
+							}
+							else if (oNewItem.name.includes("_ftn") || oNewItem.name.includes("_edn")) {
+								if (oThis.oCur_rPr.Color.b === 238 && oThis.oCur_rPr.Color.g === 0 && oThis.oCur_rPr.Color.r === 0 && oThis.oCur_rPr.Underline === true) {
+									if (oNewItem.name.includes("_ftnref")) {
+										oThis.AddedFootEndNotes[oNewItem.name.replace("_", "")].Content[0].Content[0].SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultFootnoteReference());
+									}
+									else {
+										oThis.AddedFootEndNotes[oNewItem.name.replace("_", "")].Content[0].Content[0].SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultEndnoteReference());
+									}
+								}
+								else {
+									oThis.AddedFootEndNotes[oNewItem.name.replace("_", "")].Content[0].Content[0].SetPr(oThis.oCur_rPr);
+								}
+							}
+						}
+					}
+					return true;
+				}
+				else if (Item.parentNode.nodeName.toLowerCase() === "p") {
+					return false;
+				}
+				else {
+					return checkEndFootnodeText(Item.parentNode, oThis, Text);
+				}
+			}
+			return false;
+		};*/
 
 		var parseNumbering = function () {
 			if ("ul" === sNodeName || "ol" === sNodeName || "li" === sNodeName) {
@@ -9574,9 +9633,11 @@ PasteProcessor.prototype =
 				var oOldHyperlink = null;
 				var oOldHyperlinkContentPos = null;
 				var oHyperlink = null;
+			
 				if ("a" === sChildNodeName) {
 					var href = child.href;
 					if (null != href) {
+						
 						/*var sDecoded;
 						//decodeURI может выдавать malformed exception, потому что наш сайт в utf8, а некоторые сайты могут кодировать url в своей кодировке(например windows-1251)
 						try {
@@ -9586,19 +9647,78 @@ PasteProcessor.prototype =
 						}
 						href = sDecoded;*/
 						if (href && href.length > 0) {
-							var title = child.getAttribute("title");
-
-							bAddParagraph = oThis._Decide_AddParagraph(child, pPr, bAddParagraph);
-							oHyperlink = new ParaHyperlink();
-							oHyperlink.SetParagraph(oThis.oCurPar);
-							oHyperlink.Set_Value(href);
-							if (null != title) {
-								oHyperlink.SetToolTip(title);
+							// проверяем, является ли ссылка ссылкой на контент сноски
+							// если да, то создаём сноску и добавляем в контент
+							// если нет, значит создаём гиперссылку
+							var sStr = href.split("#");
+							var sText;
+							if (-1 !== sStr[1].indexOf("_ftnref")) {
 							}
-							oOldHyperlink = oThis.oCurHyperlink;
-							oOldHyperlinkContentPos = oThis.oCurHyperlinkContentPos;
-							oThis.oCurHyperlink = oHyperlink;
-							oThis.oCurHyperlinkContentPos = 0;
+							// обычная сноска
+							else if (-1 !== sStr[1].indexOf("_ftn")) {
+								sText = child.innerText;
+								// проверяем, является ли название сноски кастомной или нет
+								if (sText[0] === "[" && sText[sText.length - 1] === "]") {
+									sText = undefined;
+								}
+								bAddParagraph = oThis._Decide_AddParagraph(child, pPr, bAddParagraph);
+								var oFootnote = oThis.oLogicDocument.Footnotes.CreateFootnote();
+								oFootnote.AddDefaultFootnoteContent(sText);
+								var oAddedRun = new ParaRun(oThis.oCurPar, false);
+								oAddedRun.SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultFootnoteReference());
+								if (sText) {
+									oAddedRun.AddToContent(0, new ParaFootnoteReference(oFootnote));
+									oAddedRun.AddText(sText, 1);
+								}
+								else {
+									oAddedRun.AddToContent(0, new ParaFootnoteReference(oFootnote));
+								}
+								oThis._CommitElemToParagraph(oAddedRun);
+								if (oThis.AddedFootEndNotes) {
+									oThis.AddedFootEndNotes[sStr[1].replace("_", "")] = oFootnote;
+								}
+							}
+							else if (-1 !== sStr[1].indexOf("_ednref")) {
+							}
+							// концевая сноска
+							else if (-1 !== sStr[1].indexOf("_edn")) {
+								sText = child.innerText;
+								// проверяем, является ли название сноски кастомной или нет
+								if (sText[0] === "[" && sText[sText.length - 1] === "]") {
+									sText = undefined;
+								}
+								bAddParagraph = oThis._Decide_AddParagraph(child, pPr, bAddParagraph);
+								var oEndnote = oThis.oLogicDocument.Endnotes.CreateEndnote();
+								oEndnote.AddDefaultEndnoteContent(sText);
+								var oAddedRun = new ParaRun(oThis.oCurPar, false);
+								oAddedRun.SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultEndnoteReference());
+								if (sText) {
+									oAddedRun.AddToContent(0, new ParaEndnoteReference(oEndnote));
+									oAddedRun.AddText(sText, 1);
+								}
+								else {
+									oAddedRun.AddToContent(0, new ParaEndnoteReference(oEndnote));
+								}
+								oThis._CommitElemToParagraph(oAddedRun);
+								if (oThis.AddedFootEndNotes) {
+									oThis.AddedFootEndNotes[sStr[1].replace("_", "")] = oEndnote;
+								}
+							}
+							else {
+								var title = child.getAttribute("title");
+
+								bAddParagraph = oThis._Decide_AddParagraph(child, pPr, bAddParagraph);
+								oHyperlink = new ParaHyperlink();
+								oHyperlink.SetParagraph(oThis.oCurPar);
+								oHyperlink.Set_Value(href);
+								if (null != title) {
+									oHyperlink.SetToolTip(title);
+								}
+								oOldHyperlink = oThis.oCurHyperlink;
+								oOldHyperlinkContentPos = oThis.oCurHyperlinkContentPos;
+								oThis.oCurHyperlink = oHyperlink;
+								oThis.oCurHyperlinkContentPos = 0;
+							}
 						}
 					}
 				}
@@ -9644,6 +9764,87 @@ PasteProcessor.prototype =
 				}
 			}
 		};
+		var startExecuteNotes = function () {
+			// Проверяем является ли тег контентом сноски
+			if (node.nodeName.toLowerCase() === "div" && (-1 !== node.id.indexOf("ftn") || -1 !== node.id.indexOf("edn"))) {
+				oThis.aContentForNotes = oThis.aContent;
+				oThis.aContent = [];
+			}
+		};
+		var endExecuteNotes = function () {
+			// Проверяем является ли тег контентом сноски
+			if (node.nodeName.toLowerCase() === "div" && (-1 !== node.id.indexOf("ftn") || -1 !== node.id.indexOf("edn"))) {
+				var tmp = oThis.aContent;
+				// Меняем контент обратно, для работы вне контента сносок
+				oThis.aContent = oThis.aContentForNotes;
+	
+				// Заполняем контент сносок
+				if (oThis.AddedFootEndNotes[node.id]) {
+					for (var i = 0; i < tmp.length; i++) {
+						if (i === 0) {
+							oThis.AddedFootEndNotes[node.id].Content[0].Concat(tmp[i], false)
+						}
+						else {
+							oThis.AddedFootEndNotes[node.id].Content.push(tmp[i]);
+						}
+					}
+					// Удаляем сноску из PasteProcessor, после того, как добавили в неё контент
+					delete oThis.AddedFootEndNotes[node.id];
+				}
+			}
+		};
+		var checkStylesForNotes = function() {
+			if (node && node.name && node.nodeName && node.hash &&
+				node.nodeName.toLowerCase() === "a" && (-1 !== node.name.toLowerCase().indexOf("ftn") || -1 !== node.name.toLowerCase().indexOf("edn"))) {
+				if (-1 !== node.name.toLowerCase().indexOf("ftn") || -1 !== node.name.toLowerCase().indexOf("edn")) {
+
+					if (oThis.AddedFootEndNotes) {
+						
+						if ((-1 !== node.name.indexOf("_ftnref") || -1 !== node.name.indexOf("_ednref"))
+						&& oThis.AddedFootEndNotes[node.hash.replace("#_", "")] && oThis.AddedFootEndNotes[node.hash.replace("#_", "")].Ref && oThis.AddedFootEndNotes[node.hash.replace("#_", "")].Ref.Run) {
+
+							if (oThis.oCur_rPr && oThis.oCur_rPr.Color && oThis.oCur_rPr.Color.b != null && oThis.oCur_rPr.Color.g != null && oThis.oCur_rPr.Color.r != null && oThis.oCur_rPr.Underline != null
+								&& oThis.oCur_rPr.Color.b === 238 && oThis.oCur_rPr.Color.g === 0 && oThis.oCur_rPr.Color.r === 0 && oThis.oCur_rPr.Underline === true) {
+								
+								if (-1 !== node.name.indexOf("_ftnref")) {
+									oThis.AddedFootEndNotes[node.hash.replace("#_", "")].Ref.Run.SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultFootnoteReference());
+								}
+								else {
+									oThis.AddedFootEndNotes[node.hash.replace("#_", "")].Ref.Run.SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultEndnoteReference());
+								}
+							}
+							else {
+								oThis.AddedFootEndNotes[node.hash.replace("#_", "")].Ref.Run.SetPr(oThis.oCur_rPr);
+							}
+						}
+						else if ((-1 !== node.name.indexOf("_ftn") || -1 !== node.name.indexOf("_edn"))
+							&& oThis.AddedFootEndNotes[node.name.replace("_", "")] && oThis.AddedFootEndNotes[node.name.replace("_", "")].Content[0] && oThis.AddedFootEndNotes[node.name.replace("_", "")].Content[0].Content[0]) {
+							
+							if (oThis.oCur_rPr && oThis.oCur_rPr.Color && oThis.oCur_rPr.Color.b != null && oThis.oCur_rPr.Color.g != null && oThis.oCur_rPr.Color.r != null && oThis.oCur_rPr.Underline != null
+								&& oThis.oCur_rPr.Color.b === 238 && oThis.oCur_rPr.Color.g === 0 && oThis.oCur_rPr.Color.r === 0 && oThis.oCur_rPr.Underline === true) {
+								
+								if (-1 !== node.name.indexOf("_ftnref")) {
+									oThis.AddedFootEndNotes[node.name.replace("_", "")].Content[0].Content[0].SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultFootnoteReference());
+								}
+								else {
+									oThis.AddedFootEndNotes[node.name.replace("_", "")].Content[0].Content[0].SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultEndnoteReference());
+								}
+							}
+							else {
+								oThis.AddedFootEndNotes[node.name.replace("_", "")].Content[0].Content[0].SetPr(oThis.oCur_rPr);
+							}
+						}
+					}
+				}
+			}
+		};
+
+		if (node && node.nodeName && node.name &&
+			node.nodeName.toLowerCase() === "a" && (-1 !== node.name.indexOf("ftn") || -1 !== node.name.indexOf("edn"))) {
+				oThis.bIsForFootEndnote = true;
+			}
+		// Меняем контент, если начинается контент сноски
+		startExecuteNotes();
 
 		var bPresentation = !PasteElementsId.g_bIsDocumentCopyPaste;
 		if (bPresentation) {
@@ -9748,6 +9949,10 @@ PasteProcessor.prototype =
 					if (-1 !== value.indexOf("supportLineBreakNewLine")) {
 						bSkip = true;
 					}
+					// TODO пересмотреть информацию в <![if !supportFootnotes]>
+					/*if (-1 !== value.indexOf("supportFootnotes")) {
+						bSkip = true;
+					}*/
 				}
 				if (true === bSkip) {
 					//пропускаем все до закрывающегося комментария
@@ -9784,6 +9989,14 @@ PasteProcessor.prototype =
 		if (bRoot && bPresentation) {
 			this._Commit_Br(2, node, pPr);//word игнорируем 2 последних br
 		}
+		checkStylesForNotes();
+		// Если тег с контентом для сноски, то записываем контент в сноску и заменяем его на обычный
+		endExecuteNotes();
+
+		if (node && node.nodeName && node.name &&
+			node.nodeName.toLowerCase() === "a" && (-1 !== node.name.indexOf("ftn") || -1 !== node.name.indexOf("edn"))) {
+				oThis.bIsForFootEndnote = false;
+			}
 		return bAddParagraph;
 	},
 
