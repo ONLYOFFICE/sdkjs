@@ -11640,7 +11640,7 @@ CBulletType.prototype =
         return d;
     },
 
-    setBlip(oPr) {
+    setBlip: function (oPr) {
         this.Blip = oPr;
     },
 
