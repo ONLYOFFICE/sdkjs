@@ -374,6 +374,8 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArtTree      ]     = AscFormat.SmartArtTree;
 		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArtNode      ]     = AscFormat.SmartArtNode;
 		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArtNodeData  ]     = AscFormat.SmartArtNodeData;
+		this.m_oFactoryClass[AscDFH.historyitem_type_BuBlip            ]     = AscFormat.CBuBlip;
+
 		if (window['AscCommonSlide'])
 		{
 			this.m_oFactoryClass[AscDFH.historyitem_type_Slide]               = AscCommonSlide.Slide;

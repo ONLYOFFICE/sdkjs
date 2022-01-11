@@ -1624,6 +1624,7 @@
 	window['AscDFH'].historyitem_type_SmartArtTree           = 2096 << 16;
 	window['AscDFH'].historyitem_type_SmartArtNode           = 2097 << 16;
 	window['AscDFH'].historyitem_type_SmartArtNodeData       = 2098 << 16;
+	window['AscDFH'].historyitem_type_BuBlip                 = 2099 << 16;
 
 
 
@@ -3733,6 +3734,8 @@
 	AscDFH.historyitem_SmartArtNodeDataRemoveFromLstShapes    = AscDFH.historyitem_type_SmartArtNodeData | 6;
 	AscDFH.historyitem_SmartArtNodeDataAddToLstPresPoint      = AscDFH.historyitem_type_SmartArtNodeData | 7;
 	AscDFH.historyitem_SmartArtNodeDataRemoveFromLstPresPoint = AscDFH.historyitem_type_SmartArtNodeData | 8;
+
+	AscDFH.historyitem_BuBlipBlip              = AscDFH.historyitem_type_BuBlip | 1;
 
 	AscDFH.historyitem_PointInfoPoint                = AscDFH.historyitem_type_PointInfo | 1;
 	AscDFH.historyitem_PointInfoAssociation          = AscDFH.historyitem_type_PointInfo | 2;

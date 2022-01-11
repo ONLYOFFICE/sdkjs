@@ -5429,8 +5429,29 @@ function FormatRGBAColor()
     };
 
 
+    AscDFH.changesFactory[AscDFH.historyitem_BuBlipBlip] = CChangesDrawingsObjectNoId;
+    drawingsChangesMap[AscDFH.historyitem_BuBlipBlip] = function (oClass, value) {
+        oClass.blip = value;
+    };
     function CBuBlip() {
+        CBaseFormatObject.call(this);
         this.blip = null;
+    }
+    InitClass(CBuBlip, CBaseFormatObject, AscDFH.historyitem_type_BuBlip);
+
+    CBuBlip.prototype.setBlip = function (oPr) {
+        History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_BuBlipBlip, this.blip, oPr));
+        this.blip = oPr;
+    };
+
+    CBuBlip.prototype.fillObject = function (oCopy, oIdMap) {
+        if (this.blip) {
+            oCopy.setBlip(this.blip.createDuplicate(oIdMap));
+        }
+    }
+
+    CBuBlip.prototype.getChildren = function () {
+        return [this.blip];
     }
 
     CBuBlip.prototype.toPPTY = function (pWriter) {
@@ -5446,15 +5467,9 @@ function FormatRGBAColor()
     }
 
     CBuBlip.prototype.fromPPTY = function (pReader) {
-        this.blip = new AscFormat.CUniFill();
-        this.blip.fill = new AscFormat.CBlipFill();
+        this.setBlip(new AscFormat.CUniFill());
+        this.blip.setFill(new AscFormat.CBlipFill());
         pReader.ReadBlip(this.blip);
-    }
-
-    CBuBlip.prototype.createDuplicate = function () {
-        var ret = new CBuBlip();
-        ret.blip = this.blip.createDuplicate();
-        return ret;
     }
 
     CBuBlip.prototype.compare = function (compareObj) {
@@ -5462,7 +5477,7 @@ function FormatRGBAColor()
         if (compareObj instanceof CBuBlip) {
             ret = new CBuBlip();
             if (this.blip) {
-                ret.blip = this.blip.compare(compareObj);
+                ret.setBlip(this.blip.compare(compareObj));
             }
         }
         return ret;
