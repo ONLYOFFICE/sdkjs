@@ -1711,6 +1711,7 @@
 				this._selectChars(kPosition, e);
 			}
 		}
+		this.handlers.trigger("onSelectionEnd");
 	};
 
 	CellEditor.prototype._syncEditors = function () {
