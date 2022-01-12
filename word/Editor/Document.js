@@ -6621,7 +6621,7 @@ CDocument.prototype.ClearParagraphFormatting = function(isClearParaPr, isClearTe
 	this.Document_UpdateSelectionState();
 	this.Document_UpdateInterfaceState();
 };
-CDocument.prototype.Remove = function(nDirection, isRemoveWholeElement, bRemoveOnlySelection, bOnTextAdd, isWord)
+CDocument.prototype.Remove = function(nDirection, isRemoveWholeElement, bRemoveOnlySelection, bOnTextAdd, isWord, isCheckInlineLevelSdt)
 {
 	if (undefined === nDirection)
 		nDirection = 1;
@@ -6638,7 +6638,20 @@ CDocument.prototype.Remove = function(nDirection, isRemoveWholeElement, bRemoveO
 	if (undefined === isWord)
 		isWord = false;
 
+	if (undefined === isCheckInlineLevelSdt)
+		isCheckInlineLevelSdt = false;
+
+	if (isCheckInlineLevelSdt)
+	{
+		// Эта проверка важна для работы с fixed-form, чтобы CC не удалялся при простом backspace/remove/cut
+		var oSelectInfo = this.GetSelectedElementsInfo();
+		if (oSelectInfo.GetInlineLevelSdt())
+			this.CheckInlineSdtOnDelete = oSelectInfo.GetInlineLevelSdt();
+	}
+
 	this.Controller.Remove(nDirection, isRemoveWholeElement, bRemoveOnlySelection, bOnTextAdd, isWord);
+
+	this.CheckInlineSdtOnDelete = null;
 
 	this.Recalculate();
 	this.UpdateInterface();
@@ -10303,15 +10316,7 @@ CDocument.prototype.OnKeyDown = function(e)
 			if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Remove, null, true, this.IsFormFieldEditing()))
 			{
 				this.StartAction(AscDFH.historydescription_Document_BackSpaceButton);
-
-				var oSelectInfo = this.GetSelectedElementsInfo();
-				if (oSelectInfo.GetInlineLevelSdt())
-					this.CheckInlineSdtOnDelete = oSelectInfo.GetInlineLevelSdt();
-
-				this.Remove(-1, true, false, false, e.CtrlKey);
-
-				this.CheckInlineSdtOnDelete = null;
-
+				this.Remove(-1, true, false, false, e.CtrlKey, true);
 				this.FinalizeAction();
 			}
 			bRetValue = keydownresult_PreventAll;
@@ -10793,15 +10798,7 @@ CDocument.prototype.OnKeyDown = function(e)
 				if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Delete, null, true, this.IsFormFieldEditing()))
 				{
 					this.StartAction(AscDFH.historydescription_Document_DeleteButton);
-
-					var oSelectInfo = this.GetSelectedElementsInfo();
-					if (oSelectInfo.GetInlineLevelSdt())
-						this.CheckInlineSdtOnDelete = oSelectInfo.GetInlineLevelSdt();
-
-					this.Remove(1, false, false, false, e.CtrlKey);
-
-					this.CheckInlineSdtOnDelete = null;
-
+					this.Remove(1, false, false, false, e.CtrlKey, true);
 					this.FinalizeAction();
 				}
 				bRetValue = keydownresult_PreventAll;
