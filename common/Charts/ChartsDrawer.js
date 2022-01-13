@@ -1369,6 +1369,7 @@ CChartsDrawer.prototype =
 		if(!charts || isFirstChart) {
 			charts = [plotArea.chart];
 		}
+		var typeArray = []; // массив типов диаграмм для расчета шага
 
 		var getMinMaxCurCharts = function(axisCharts, axis) {
 
@@ -1376,9 +1377,12 @@ CChartsDrawer.prototype =
 			isStackedType = false;
 			for (var i = 0; i < axisCharts.length; i++) {
 				grouping = t.getChartGrouping(axisCharts[i]);
-				if("stackedPer" === grouping) {
+				if (AscDFH.historyitem_type_ScatterChart === charts[i].getObjectType()) {
+					typeArray[0] = true;
+				}
+				if ("stackedPer" === grouping && !isStackedType) {
 					isStackedType = true;
-					break;
+					//break; // пока что заменяем на !isStackedType (т.к. другие типы могут быть нужны для расчета шага)
 				}
 			}
 
@@ -1435,7 +1439,7 @@ CChartsDrawer.prototype =
 			axObj.min = minMaxAxis.min;
 			axObj.max = minMaxAxis.max;
 			//если будут проблемы, протестить со старой функцией -> this._getAxisValues(false, minMaxAxis.min, minMaxAxis.max, chartSpace)
-			axObj.scale = this._roundValues(this._getAxisValues2(axObj, chartSpace, isStackedType && !isCombinationChartTypes, charts));
+			axObj.scale = this._roundValues(this._getAxisValues2(axObj, chartSpace, isStackedType && !isCombinationChartTypes, typeArray));
 
 			if(isStackedType && !axObj.scaling.logBase && !isCombinationChartTypes) {
 				//для случая 100% stacked - если макс/мин равно определенному делению, большие/меньшие - убираем, логарифмическая шкала - исключение
@@ -1795,11 +1799,8 @@ CChartsDrawer.prototype =
 		return res;
 	},
 
-	_getAxisValues2: function (axis, chartSpace, isStackedType, charts) {
-		var isScatter;
-		for (var i = 0; i < charts.length; i++) {
-			isScatter = AscDFH.historyitem_type_ScatterChart === charts[i].getObjectType();
-		}
+	_getAxisValues2: function (axis, chartSpace, isStackedType, typeArray) {
+		var isScatter = typeArray[0];
 		//для оси категорий берем интервал 1
 		var arrayValues;
 		if(AscDFH.historyitem_type_CatAx === axis.getObjectType() || AscDFH.historyitem_type_DateAx === axis.getObjectType()) {
@@ -2169,7 +2170,7 @@ CChartsDrawer.prototype =
 		if (yMin >= 0 && yMax >= 0) {
 			diffMaxMin = (yMax - yMin) / yMax;
 			if (cDiff > diffMaxMin) {
-				axisMin = yMin - ((yMax - yMin) * 0.05);
+				axisMin = yMin - ((yMax - yMin) * 0.05); //(yMax - yMin) / 2
 				axisMax = isStackedType ? yMax : yMax + 0.05 * ( yMax - yMin );
 			} else {
 				axisMin = 0;
