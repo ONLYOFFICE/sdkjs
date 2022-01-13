@@ -22283,6 +22283,10 @@ CDocument.prototype.MoveToFillingForm = function(isNext)
 
 				arrPassedParagraphs.push(oParagraph);
 				oRes = oParaDrawing.FindNextFillingForm(isNext, true);
+
+				if (oRes === oForm)
+					oRes = null;
+				
 				if (oRes)
 				{
 					break;
