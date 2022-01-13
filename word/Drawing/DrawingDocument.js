@@ -6588,7 +6588,7 @@ function CDrawingDocument()
                     var correctNum = 1;
                     if (levelNum === level.Text[i].Value)
                         correctNum = counterCurrent;
-                    text += AscCommon.IntToNumberFormat(correctNum, level.Format, level.GetOLang());
+                    text += AscCommon.IntToNumberFormat(correctNum, level.Format, level.get_OLang());
                     break;
                 default:
                     break;
@@ -6709,7 +6709,7 @@ function CDrawingDocument()
                             text += curLvl.Text[j].Value;
                             break;
                         case Asc.c_oAscNumberingLvlTextType.Num:
-                            text += AscCommon.IntToNumberFormat(1, curLvl.Format, curLvl.GetOLang());
+                            text += AscCommon.IntToNumberFormat(1, curLvl.Format, curLvl.get_OLang());
                             break;
                         default:
                             break;
@@ -6941,7 +6941,7 @@ function CDrawingDocument()
                             text += curLvl.Text[j].Value;
                             break;
                         case Asc.c_oAscNumberingLvlTextType.Num:
-                            text += AscCommon.IntToNumberFormat(1, curLvl.Format, curLvl.GetOLang());
+                            text += AscCommon.IntToNumberFormat(1, curLvl.Format, curLvl.get_OLang());
                             break;
                         default:
                             break;
@@ -7186,7 +7186,7 @@ function CDrawingDocument()
 									text += curLvl.Text[j].Value;
 									break;
 								case Asc.c_oAscNumberingLvlTextType.Num:
-									text += AscCommon.IntToNumberFormat(1, curLvl.Format, curLvl.GetOLang());
+									text += AscCommon.IntToNumberFormat(1, curLvl.Format, curLvl.get_OLang());
 									break;
 								default:
 									break;
@@ -7216,7 +7216,7 @@ function CDrawingDocument()
 								text += curLvl.Text[j].Value;
 								break;
 							case Asc.c_oAscNumberingLvlTextType.Num:
-								text += AscCommon.IntToNumberFormat(1, curLvl.Format, curLvl.GetOLang());
+								text += AscCommon.IntToNumberFormat(1, curLvl.Format, curLvl.get_OLang());
 								break;
 							default:
 								break;
@@ -7355,7 +7355,7 @@ function CDrawingDocument()
 							var correctNum = 1;
 							if (levelNum === props[i].Text[k].Value)
 								correctNum = counterCurrent;
-							text += AscCommon.IntToNumberFormat(correctNum, props[i].Format, props[i].GetOLang());
+							text += AscCommon.IntToNumberFormat(correctNum, props[i].Format, props[i].get_OLang());
 							break;
 						default:
 							break;
