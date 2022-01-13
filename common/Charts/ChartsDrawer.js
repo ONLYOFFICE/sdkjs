@@ -1377,7 +1377,7 @@ CChartsDrawer.prototype =
 			isStackedType = false;
 			for (var i = 0; i < axisCharts.length; i++) {
 				grouping = t.getChartGrouping(axisCharts[i]);
-				if (AscDFH.historyitem_type_ScatterChart === charts[i].getObjectType()) {
+				if (AscDFH.historyitem_type_ScatterChart === axisCharts[i].getObjectType()) {
 					typeArray[0] = true;
 				}
 				if ("stackedPer" === grouping && !isStackedType) {
