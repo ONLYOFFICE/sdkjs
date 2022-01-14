@@ -150,10 +150,7 @@ var EditorSkins = {
 		ColorDarkHighlighted     : "#c1c1c1",
 
 		GroupDataBorder          : "#000000",
-		EditorBorder             : "#cbcbcb",
-
-		LoaderImage              : "url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PGNpcmNsZSBjeD0iMTAiIGN5PSIxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNDQ0IiBzdHJva2Utd2lkdGg9IjEuNSIgcj0iNy4yNSIgc3Ryb2tlLWRhc2hhcnJheT0iMTYwJSwgNDAlIiAvPjwvc3ZnPg==) !important"
-
+		EditorBorder             : "#cbcbcb"
 	},
 	"theme-dark" : {
 		Name                      : "theme-dark",
@@ -267,9 +264,7 @@ var EditorSkins = {
 		ColorDarkHighlighted     : "#ffffff",
 
 		GroupDataBorder          : "#ffffff",
-		EditorBorder             : "#2a2a2a",
-
-		LoaderImage              : "url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyOCAyOCI+PGNpcmNsZSBjeD0iMTQiIGN5PSIxNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjEuNSIgcj0iMTAuMjUiIHN0cm9rZS1kYXNoYXJyYXk9IjE2MCUsIDQwJSIgLz48L3N2Zz4=) !important"
+		EditorBorder             : "#2a2a2a"
 	}
 };
 
