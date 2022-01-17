@@ -447,7 +447,7 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 	{
 		FontSlot = g_font_detector.Get_FontClass( sT.getUnicodeIterator().value(), Hint, lcid, bCS, bRTL );
 	} else {
-		FontSlot = g_font_detector.Get_FontClass( '*', Hint, lcid, bCS, bRTL );
+		FontSlot = g_font_detector.Get_FontClass( 42, Hint, lcid, bCS, bRTL );
 	}
 	Context.SetTextPr( this.m_oTextPr, Theme );
 	Context.SetFontSlot( FontSlot );
@@ -495,6 +495,9 @@ CPresentationBullet.prototype.Copy = function()
 	Bullet.m_dSize    = this.m_dSize;
 	Bullet.m_bSizeTx  = this.m_bSizeTx;
 	Bullet.m_bSizePct = this.m_bSizePct;
+	if (this.m_oBlip) {
+		Bullet.m_oBlip    = this.m_oBlip.createDuplicate();
+	}
 
 	return Bullet;
 };
@@ -529,7 +532,7 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 		{
 			FontSlot = g_font_detector.Get_FontClass( sT.getUnicodeIterator().value(), Hint, lcid, bCS, bRTL );
 		} else {
-			FontSlot = g_font_detector.Get_FontClass( '*', Hint, lcid, bCS, bRTL );
+			FontSlot = g_font_detector.Get_FontClass( 42, Hint, lcid, bCS, bRTL );
 		}
 
 
