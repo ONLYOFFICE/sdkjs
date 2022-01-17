@@ -11199,7 +11199,7 @@ function CompareBullets(bullet1, bullet2)
         if (!this.bulletType.Blip) {
             this.bulletType.Blip = new AscFormat.CBuBlip();
         }
-        this.bulletType.Type = BULLET_TYPE_BULLET_BLIP;
+        this.bulletType.Type = AscFormat.BULLET_TYPE_BULLET_BLIP;
         this.bulletType.Blip.setBlip(AscFormat.CreateBlipFillUniFillFromUrl(url));
 
     }
