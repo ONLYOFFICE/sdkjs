@@ -9515,7 +9515,7 @@ Paragraph.prototype.Add_PresentationNumbering = function(Bullet)
 
 		if (NewType === UndefType)
 		{
-			if (NewType === numbering_presentationnumfrmt_Char)//буллеты
+			if (NewType === numbering_presentationnumfrmt_Char || NewType === numbering_presentationnumfrmt_Blip)//буллеты
 			{
 				var oUndefPresentationBullet = oUndefParaPr.Bullet.getPresentationBullet(oTheme, oColorMap);
 				var oNewPresentationBullet   = oBullet2.getPresentationBullet(oTheme, oColorMap);
@@ -9583,7 +9583,7 @@ Paragraph.prototype.Add_PresentationNumbering = function(Bullet)
 					var oFirstRunPr = this.Get_FirstTextPr2();
 
 					var Indent = oFirstRunPr.FontSize*0.305954545 + 2.378363636;
-					if (NewType === numbering_presentationnumfrmt_Char)
+					if (NewType === numbering_presentationnumfrmt_Char || NewType === numbering_presentationnumfrmt_Blip)
 					{
 						this.Set_Ind({Left : LeftInd + Indent, FirstLine : -Indent}, false);
 					}

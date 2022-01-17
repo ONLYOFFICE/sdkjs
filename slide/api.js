@@ -2759,13 +2759,40 @@ background-repeat: no-repeat;\
 	 1.1.1         - SubType = 2
 	 маркированный - SubType = 3
 	 */
-	asc_docs_api.prototype.put_ListType = function(type, subtype)
+	asc_docs_api.prototype.put_ImageBulletFromFile = function () {
+		this.asc_addImage({isImageBullet: true});
+	}
+	asc_docs_api.prototype.put_ListType = function(type, subtype, blip)
 	{
+		var blipUrl = blip instanceof Asc.asc_CFillBlip && blip.url;
+		if (blipUrl) {
+			var that = this;
+			var checkImageUrlFromServer = AscFormat.checkRasterImageId(blipUrl);
+			if (checkImageUrlFromServer) {
+				blipUrl = checkImageUrlFromServer;
+				blip.url = blipUrl;
+				var isImageNotAttendInImageLoader = !this.ImageLoader.map_image_index[blipUrl];
+				if (isImageNotAttendInImageLoader) {
+					var tryToSetImageBulletAgain = function () {
+						that.put_ListType(undefined, undefined, blip);
+					}
+					this.ImageLoader.LoadImagesWithCallback([blipUrl], tryToSetImageBulletAgain);
+				}
+			} else {
+				var changeBlipFillUrlToLocalAndTrySetImageBulletAgain = function (data) {
+					var uploadImageUrl = data[0].path;
+					blip.url = uploadImageUrl;
+					that.put_ListType(undefined, undefined, blip);
+				}
+				AscCommon.sendImgUrls(this, [blipUrl], changeBlipFillUrlToLocalAndTrySetImageBulletAgain, false, true, blip.token);
+			}
+		}
 		var oPresentation = this.WordControl.m_oLogicDocument;
 		var NumberInfo =
 		{
 			Type     : type,
-			SubType  : subtype
+			SubType  : subtype,
+			Blip     : blip
 		};
 		var oBullet = AscFormat.fGetPresentationBulletByNumInfo(NumberInfo);
 		var sBullet = oBullet.asc_getSymbol();
@@ -4223,7 +4250,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype._addImageUrl = function(urls, obj)
 	{
-		if(obj && (obj.isImageChangeUrl || obj.isShapeImageChangeUrl || obj.isSlideImageChangeUrl || obj.isTextArtChangeUrl)){
+		if(obj && (obj.isImageChangeUrl || obj.isShapeImageChangeUrl || obj.isSlideImageChangeUrl || obj.isTextArtChangeUrl || obj.isImageBullet)){
             this.AddImageUrlAction(urls[0], undefined, obj);
 		}
 		else{
@@ -4267,6 +4294,13 @@ background-repeat: no-repeat;\
                 AscShapeProp.fill.fill.asc_putType(obj.textureType);
 			}
 			this.ShapeApply(AscShapeProp);
+		}
+		else if (obj && obj.isImageBullet)
+		{
+			console.log(_image)
+			var fillBlip = new Asc.asc_CFillBlip();
+			fillBlip.asc_putUrl(src, null);
+			this.put_ListType(undefined, undefined, fillBlip);
 		}
 		else if (obj && obj.isSlideImageChangeUrl)
 		{
@@ -8220,7 +8254,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_moveAnimationEarlier']            = asc_docs_api.prototype.asc_moveAnimationEarlier;
 	asc_docs_api.prototype['asc_moveAnimationLater']              = asc_docs_api.prototype.asc_moveAnimationLater;
 	asc_docs_api.prototype['asc_onShowAnimTab']                   = asc_docs_api.prototype.asc_onShowAnimTab;
-	
+
 
 	asc_docs_api.prototype['StartAddShape']                       = asc_docs_api.prototype.StartAddShape;
 	asc_docs_api.prototype['asc_canEditGeometry']                 = asc_docs_api.prototype.asc_canEditGeometry;

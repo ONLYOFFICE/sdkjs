@@ -11548,8 +11548,21 @@ function CalcLiterByLength(aAlphaBet, nLength)
         return numberingType;
     }
 
+    function fFillImageBullet(bullet, url) {
+        var buBlip = new AscFormat.CBuBlip();
+        var blip = CreateBlipFillUniFillFromUrl(url);
+        buBlip.setBlip(blip);
+        bullet.bulletType = new AscFormat.CBulletType();
+        bullet.bulletType.type = AscFormat.BULLET_TYPE_BULLET_BLIP;
+        bullet.bulletType.setBlip(buBlip);
+    }
+
 
     function fFillBullet(NumInfo, bullet) {
+        if (NumInfo.Blip) {
+            fFillImageBullet(bullet, NumInfo.Blip.url);
+            return;
+        }
         if(NumInfo.SubType < 0)
         {
             bullet.bulletType = new AscFormat.CBulletType();
@@ -11650,7 +11663,7 @@ function CalcLiterByLength(aAlphaBet, nLength)
         }
     }
     function fGetPresentationBulletByNumInfo(NumInfo){
-        if(!AscFormat.isRealNumber(NumInfo.Type) && !AscFormat.isRealNumber(NumInfo.SubType))
+        if(!AscFormat.isRealNumber(NumInfo.Type) && !AscFormat.isRealNumber(NumInfo.SubType) && !(NumInfo.Blip instanceof Asc.asc_CFillBlip))
         {
             return null;
         }
@@ -11993,6 +12006,7 @@ function CalcLiterByLength(aAlphaBet, nLength)
 	window['AscFormat'].fGetDefaultShapeExtents = fGetDefaultShapeExtents;
 	window['AscFormat'].HitToRect = HitToRect;
 	window['AscFormat'].drawingsUpdateForeignCursor = drawingsUpdateForeignCursor;
+	window['AscFormat'].fFillImageBullet = fFillImageBullet;
 
     window['AscCommon'] = window['AscCommon'] || {};
     window["AscCommon"].CDrawTask = CDrawTask;

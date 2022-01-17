@@ -5401,6 +5401,10 @@ function FormatRGBAColor()
     {
         return this.IsIdentical(unfill);
     };
+    CUniFill.prototype.isEqual = function(unfill)
+    {
+        return this.IsIdentical(unfill);
+    };
     CUniFill.prototype.compare = function(unifill)
     {
         if(unifill == null)
@@ -11188,8 +11192,86 @@ function CompareBullets(bullet1, bullet2)
         }
         return true;
     };
+    CBullet.prototype.fillBulletImage = function (url) {
+        if (!this.bulletType) {
+            this.bulletType = new CBulletType();
+        }
+        if (!this.bulletType.Blip) {
+            this.bulletType.Blip = new AscFormat.CBuBlip();
+        }
+        this.bulletType.Type = BULLET_TYPE_BULLET_BLIP;
+        this.bulletType.Blip.setBlip(AscFormat.CreateBlipFillUniFillFromUrl(url));
+
+    }
     //interface methods
     var prot = CBullet.prototype;
+    prot.put_ImageUrl = function (sUrl, token) {
+        var _this = this;
+        var Api = editor;
+        if(!Api)
+        {
+            return;
+        }
+        AscCommon.sendImgUrls(Api, [sUrl], function(data) {
+            if (data && data[0] && data[0].url !== "error")
+            {
+                var url = AscCommon.g_oDocumentUrls.imagePath2Local(data[0].path);
+                Api.ImageLoader.LoadImagesWithCallback([AscCommon.getFullImageSrc2(url)], function(){
+                    _this.fillBulletImage(url);
+                    editor.WordControl.m_oLogicDocument.SetParagraphNumbering(this);
+                    _this.Api.sendEvent("asc_onBulletImageLoaded");
+                });
+            }
+        }, false, undefined, token);
+    }
+    prot["put_ImageUrl"] = prot["asc_putImageUrl"] = CBullet.prototype.put_ImageUrl;
+    prot.showFileDialog = function () {
+        if(!editor){
+            return;
+        }
+        var t = editor;
+        var _this = this;
+        AscCommon.ShowImageFileDialog(t.documentId, t.documentUserId, t.CoAuthoringApi.get_jwt(), function(error, files)
+          {
+              if (Asc.c_oAscError.ID.No !== error)
+              {
+                  t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
+              }
+              else
+              {
+                  t.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+                  AscCommon.UploadImageFiles(files, t.documentId, t.documentUserId, t.CoAuthoringApi.get_jwt(), function(error, urls)
+                  {
+                      if (Asc.c_oAscError.ID.No !== error)
+                      {
+                          t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
+                          t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+                      }
+                      else
+                      {
+                          t.ImageLoader.LoadImagesWithCallback(urls, function(){
+                              if(urls.length > 0)
+                              {
+                                  _this.fillBulletImage(urls[0]);
+                                  editor.WordControl.m_oLogicDocument.SetParagraphNumbering(this);
+                                  t.sendEvent("asc_onBulletImageLoaded");
+                              }
+                              t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+                          });
+                      }
+                  });
+              }
+          },
+          function(error)
+          {
+              if (Asc.c_oAscError.ID.No !== error)
+              {
+                  t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
+              }
+              t.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+          });
+    }
+    prot["showFileDialog"] = prot["asc_showFileDialog"] = CBullet.prototype.showFileDialog;
     prot.asc_getSize = function () {
         var nRet = 100;
         if(this.bulletSize) {
@@ -11583,7 +11665,8 @@ CBulletType.prototype =
         return this.type === oBulletType.type
             && this.Char === oBulletType.Char
             && this.AutoNumType === oBulletType.AutoNumType
-            && this.startAt === oBulletType.startAt;
+            && this.startAt === oBulletType.startAt
+            && ((this.Blip && this.Blip.isEqual(oBulletType.Blip)) || this.Blip === oBulletType.Blip);
     },
 
     merge: function(oBulletType)
@@ -11598,6 +11681,9 @@ CBulletType.prototype =
             this.Char = oBulletType.Char;
             this.AutoNumType = oBulletType.AutoNumType;
             this.startAt = oBulletType.startAt;
+            if (oBulletType.Blip) {
+                this.Blip = oBulletType.Blip.createDuplicate();
+            }
         }
         else
         {
@@ -11610,6 +11696,12 @@ CBulletType.prototype =
                     {
                         this.Char = oBulletType.Char;
                     }
+                }
+            }
+            if(this.type === AscFormat.BULLET_TYPE_BULLET_BLIP)
+            {
+                if (this.Blip instanceof AscFormat.CBuBlip && this.Blip !== oBulletType.Blip) {
+                    this.Blip = oBulletType.Blip.createDuplicate();
                 }
             }
             if(this.type === AscFormat.BULLET_TYPE_BULLET_AUTONUM)
@@ -13848,6 +13940,7 @@ function CorrectUniColor(asc_color, unicolor, flag)
         window['AscFormat'].InitClass = InitClass;
         window['AscFormat'].CBaseObject           = CBaseObject;
         window['AscFormat'].CBaseFormatObject = CBaseFormatObject;
+        window['AscFormat'].checkRasterImageId = checkRasterImageId;
 
     window['AscFormat'].DEFAULT_COLOR_MAP = GenerateDefaultColorMap();
 })(window);
