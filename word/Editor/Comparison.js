@@ -1704,26 +1704,35 @@
     };
     CDocumentComparison.prototype.copyComment = function(sId)
     {
+        var oCopyComment;
         if(this.CommentsMap[sId])
         {
-            return this.CommentsMap[sId];
+            oCopyComment = this.CommentsMap[sId];
         }
-        var oComment = this.revisedDocument.Comments.Get_ById(sId);
-        if(oComment)
+        else 
         {
-            var oOrigComments = this.originalDocument.Comments;
-            if(oOrigComments)
+            var oComment = this.revisedDocument.Comments.Get_ById(sId);
+            if(oComment)
             {
-                var oOldParent = oComment.Parent;
-                oComment.Parent = oOrigComments;
-                var oCopyComment = oComment.Copy();
-                this.CommentsMap[sId] = oCopyComment;
-                this.originalDocument.Comments.Add(oCopyComment);
-                this.api.sync_AddComment(oCopyComment.Id, oCopyComment.Data);
-                oComment.Parent = oOldParent;
+                var oOrigComments = this.originalDocument.Comments;
+                if(oOrigComments)
+                {
+                    var oOldParent = oComment.Parent;
+                    oComment.Parent = oOrigComments;
+                    var oCopyComment = oComment.Copy();
+                    this.CommentsMap[sId] = oCopyComment;
+                    this.originalDocument.Comments.Add(oCopyComment);
+                    this.api.sync_AddComment(oCopyComment.Id, oCopyComment.Data);
+                    oComment.Parent = oOldParent;
+                }
             }
         }
-        return this.CommentsMap[sId] || null;
+        oCopyComment = this.CommentsMap[sId] || null;
+        if(oCopyComment) 
+        {
+            return oCopyComment.Get_Id();
+        }
+        return null;
     };
     CDocumentComparison.prototype.getRevisedStyle = function(sStyleId)
     {

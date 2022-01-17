@@ -8635,9 +8635,9 @@
       oCopy.setUniversalMeasure(this.getUniversalMeasure());
     }
 
-    changesFactory[AscDFH.historyitem_BackdropAnchorX] = CChangeObject;
-    changesFactory[AscDFH.historyitem_BackdropAnchorY] = CChangeObject;
-    changesFactory[AscDFH.historyitem_BackdropAnchorZ] = CChangeObject;
+    changesFactory[AscDFH.historyitem_BackdropAnchorX] = CChangeLong;
+    changesFactory[AscDFH.historyitem_BackdropAnchorY] = CChangeLong;
+    changesFactory[AscDFH.historyitem_BackdropAnchorZ] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_BackdropAnchorX] = function (oClass, value) {
       oClass.x = value;
     };
@@ -8658,17 +8658,17 @@
     InitClass(BackdropAnchor, CBaseFormatObject, AscDFH.historyitem_type_BackdropAnchor);
 
     BackdropAnchor.prototype.setX = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropAnchorX, this.getX(), oPr));
+      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropAnchorX, this.getX(), oPr));
       this.x = oPr;
     }
 
     BackdropAnchor.prototype.setY = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropAnchorY, this.getY(), oPr));
+      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropAnchorY, this.getY(), oPr));
       this.y = oPr;
     }
 
     BackdropAnchor.prototype.setZ = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropAnchorZ, this.getZ(), oPr));
+      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropAnchorZ, this.getZ(), oPr));
       this.z = oPr;
     }
 
@@ -8685,14 +8685,14 @@
     }
 
     BackdropAnchor.prototype.fillObject = function (oCopy, oIdMap) {
-      if (this.getX()) {
-        oCopy.setX(this.getX().createDuplicate(oIdMap));
+      if (this.getX() !== null) {
+        oCopy.setX(this.getX());
       }
-      if (this.getY()) {
-        oCopy.setY(this.getY().createDuplicate(oIdMap));
+      if (this.getY() !== null) {
+        oCopy.setY(this.getY());
       }
-      if (this.getZ()) {
-        oCopy.setZ(this.getZ().createDuplicate(oIdMap));
+      if (this.getZ() !== null) {
+        oCopy.setZ(this.getZ());
       }
     }
 
@@ -8785,9 +8785,9 @@
     };
 
 
-    changesFactory[AscDFH.historyitem_BackdropNormDx] = CChangeObject;
-    changesFactory[AscDFH.historyitem_BackdropNormDy] = CChangeObject;
-    changesFactory[AscDFH.historyitem_BackdropNormDz] = CChangeObject;
+    changesFactory[AscDFH.historyitem_BackdropNormDx] = CChangeLong;
+    changesFactory[AscDFH.historyitem_BackdropNormDy] = CChangeLong;
+    changesFactory[AscDFH.historyitem_BackdropNormDz] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_BackdropNormDx] = function (oClass, value) {
       oClass.dx = value;
     };
@@ -8808,17 +8808,17 @@
     InitClass(BackdropNorm, CBaseFormatObject, AscDFH.historyitem_type_BackdropNorm);
 
     BackdropNorm.prototype.setDx = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropNormDx, this.getDx(), oPr));
+      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropNormDx, this.getDx(), oPr));
       this.dx = oPr;
     }
 
     BackdropNorm.prototype.setDy = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropNormDy, this.getDy(), oPr));
+      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropNormDy, this.getDy(), oPr));
       this.dy = oPr;
     }
 
     BackdropNorm.prototype.setDz = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropNormDz, this.getDz(), oPr));
+      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropNormDz, this.getDz(), oPr));
       this.dz = oPr;
     }
 
@@ -8836,20 +8836,20 @@
 
     BackdropNorm.prototype.fillObject = function (oCopy, oIdMap) {
       if (this.getDx()) {
-        oCopy.setDx(this.getDx().createDuplicate(oIdMap));
+        oCopy.setDx(this.getDx());
       }
       if (this.getDy()) {
-        oCopy.setDy(this.getDy().createDuplicate(oIdMap));
+        oCopy.setDy(this.getDy());
       }
       if (this.getDz()) {
-        oCopy.setDz(this.getDz().createDuplicate(oIdMap));
+        oCopy.setDz(this.getDz());
       }
     }
 
 
-    changesFactory[AscDFH.historyitem_BackdropUpDx] = CChangeObject;
-    changesFactory[AscDFH.historyitem_BackdropUpDy] = CChangeObject;
-    changesFactory[AscDFH.historyitem_BackdropUpDz] = CChangeObject;
+    changesFactory[AscDFH.historyitem_BackdropUpDx] = CChangeLong;
+    changesFactory[AscDFH.historyitem_BackdropUpDy] = CChangeLong;
+    changesFactory[AscDFH.historyitem_BackdropUpDz] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_BackdropUpDx] = function (oClass, value) {
       oClass.dx = value;
     };
@@ -8870,17 +8870,17 @@
     InitClass(BackdropUp, CBaseFormatObject, AscDFH.historyitem_type_BackdropUp);
 
     BackdropUp.prototype.setDx = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropUpDx, this.getDx(), oPr));
+      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropUpDx, this.getDx(), oPr));
       this.dx = oPr;
     }
 
     BackdropUp.prototype.setDy = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropUpDy, this.getDy(), oPr));
+      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropUpDy, this.getDy(), oPr));
       this.dy = oPr;
     }
 
     BackdropUp.prototype.setDz = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropUpDz, this.getDz(), oPr));
+      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropUpDz, this.getDz(), oPr));
       this.dz = oPr;
     }
 
@@ -8898,13 +8898,13 @@
 
     BackdropUp.prototype.fillObject = function (oCopy, oIdMap) {
       if (this.getDx()) {
-        oCopy.setDx(this.getDx().createDuplicate(oIdMap));
+        oCopy.setDx(this.getDx());
       }
       if (this.getDy()) {
-        oCopy.setDy(this.getDy().createDuplicate(oIdMap));
+        oCopy.setDy(this.getDy());
       }
       if (this.getDz()) {
-        oCopy.setDz(this.getDz().createDuplicate(oIdMap));
+        oCopy.setDz(this.getDz());
       }
     }
 

@@ -1682,10 +1682,6 @@ CShape.prototype.isShape = function () {
     return true;
 };
 
-CShape.prototype.isImage = function () {
-    return false;
-};
-
 CShape.prototype.isChart = function () {
     return false;
 };
@@ -5699,8 +5695,6 @@ CShape.prototype.draw = function (graphics, transform, transformText, pageIndex)
     if(graphics.EndDrawShape) {
         graphics.EndDrawShape();
     }
-
-    this.drawAnimLabels && this.drawAnimLabels(graphics);
 };
 
     CShape.prototype.recalculateGeometry = function()

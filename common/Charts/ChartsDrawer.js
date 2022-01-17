@@ -1369,6 +1369,7 @@ CChartsDrawer.prototype =
 		if(!charts || isFirstChart) {
 			charts = [plotArea.chart];
 		}
+		var isScatterType = false; //входит в условие расчета шага
 
 		var getMinMaxCurCharts = function(axisCharts, axis) {
 
@@ -1376,9 +1377,12 @@ CChartsDrawer.prototype =
 			isStackedType = false;
 			for (var i = 0; i < axisCharts.length; i++) {
 				grouping = t.getChartGrouping(axisCharts[i]);
-				if("stackedPer" === grouping) {
+				if (AscDFH.historyitem_type_ScatterChart === axisCharts[i].getObjectType()) {
+					isScatterType = true;
+				}
+				if ("stackedPer" === grouping && !isStackedType) {
 					isStackedType = true;
-					break;
+					//break; // пока что заменяем на !isStackedType (т.к. другие типы могут быть нужны для расчета шага)
 				}
 			}
 
@@ -1435,7 +1439,7 @@ CChartsDrawer.prototype =
 			axObj.min = minMaxAxis.min;
 			axObj.max = minMaxAxis.max;
 			//если будут проблемы, протестить со старой функцией -> this._getAxisValues(false, minMaxAxis.min, minMaxAxis.max, chartSpace)
-			axObj.scale = this._roundValues(this._getAxisValues2(axObj, chartSpace, isStackedType && !isCombinationChartTypes));
+			axObj.scale = this._roundValues(this._getAxisValues2(axObj, chartSpace, isStackedType && !isCombinationChartTypes, isScatterType));
 
 			if(isStackedType && !axObj.scaling.logBase && !isCombinationChartTypes) {
 				//для случая 100% stacked - если макс/мин равно определенному делению, большие/меньшие - убираем, логарифмическая шкала - исключение
@@ -1795,7 +1799,7 @@ CChartsDrawer.prototype =
 		return res;
 	},
 
-	_getAxisValues2: function (axis, chartSpace, isStackedType) {
+	_getAxisValues2: function (axis, chartSpace, isStackedType, isScatter) {
 		//для оси категорий берем интервал 1
 		var arrayValues;
 		if(AscDFH.historyitem_type_CatAx === axis.getObjectType() || AscDFH.historyitem_type_DateAx === axis.getObjectType()) {
@@ -1825,7 +1829,7 @@ CChartsDrawer.prototype =
 		}
 
 		//максимальное и минимальное значение(по документации excel)
-		var trueMinMax = this._getTrueMinMax(yMin, yMax, isStackedType);
+		var trueMinMax = this._getTrueMinMax(yMin, yMax, isStackedType, isScatter);
 
 		//TODO временная проверка для некорректных минимальных и максимальных значений
 		if (manualMax && manualMin && manualMax < manualMin) {
@@ -1867,7 +1871,7 @@ CChartsDrawer.prototype =
 			bIsManualStep = true;
 		} else {
 			//было следующее условие - isOx || c_oChartTypes.HBar === this.calcProp.type
-			if (axis.axPos === window['AscFormat'].AX_POS_B || axis.axPos === window['AscFormat'].AX_POS_T) {
+			if ((axis.axPos === window['AscFormat'].AX_POS_B || axis.axPos === window['AscFormat'].AX_POS_T) && !isScatter) {
 				step = this._getStep(firstDegree.val + (firstDegree.val / 10) * 3);
 			} else {
 				step = this._getStep(firstDegree.val);
@@ -2155,7 +2159,7 @@ CChartsDrawer.prototype =
 		return step;
 	},
 
-	_getTrueMinMax: function (yMin, yMax, isStackedType) {
+	_getTrueMinMax: function (yMin, yMax, isStackedType, isScatter) {
 
 		var axisMax, axisMin, diffMaxMin;
 		var cDiff = 1/6;
@@ -2165,8 +2169,13 @@ CChartsDrawer.prototype =
 		if (yMin >= 0 && yMax >= 0) {
 			diffMaxMin = (yMax - yMin) / yMax;
 			if (cDiff > diffMaxMin) {
-				axisMin = yMin - ((yMax - yMin) / 2);
-				axisMax = isStackedType ? yMax : yMax + 0.05 * ( yMax - yMin );
+				if (isScatter) {
+					axisMin = isStackedType ? yMin : yMin - 0.05 * (yMax - yMin);
+					axisMax = isStackedType ? yMax : yMax + 0.05 * (yMax - yMin);
+				} else {
+					axisMin = yMin - ((yMax - yMin) / 2);
+					axisMax = isStackedType ? yMax : yMax + 0.05 * (yMax - yMin);
+				}
 			} else {
 				axisMin = 0;
 				axisMax = isStackedType ? yMax : yMax + 0.05 * ( yMax - 0 );

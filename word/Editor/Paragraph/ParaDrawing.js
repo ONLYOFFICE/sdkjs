@@ -1015,6 +1015,36 @@ ParaDrawing.prototype.Set_Props = function(Props)
 		this.docPr.setTitle(Props.title);
 	}
 };
+ParaDrawing.prototype.CheckFitToColumn = function() 
+{
+	var oLogicDoc = this.document;
+	if(oLogicDoc) 
+	{
+		var oColumnSize = oLogicDoc.GetColumnSize();
+		if(oColumnSize) 
+		{
+			if(this.Extent.W > oColumnSize.W || this.Extent.H > oColumnSize.H) 
+			{
+				if(oColumnSize.W > 0 && oColumnSize.H > 0) 
+				{
+					if(this.GraphicObj) 
+					{
+						var oXfrm = this.GraphicObj.spPr && this.GraphicObj.spPr.xfrm;
+						if(oXfrm) 
+						{
+							var dScaleW = oColumnSize.W/oXfrm.extX;
+							var dScaleH = oColumnSize.H/oXfrm.extY;
+							var dScale = Math.min(dScaleW, dScaleH);
+							oXfrm.setExtX(oXfrm.extX * dScale);
+							oXfrm.setExtY(oXfrm.extY * dScale);
+							this.CheckWH();
+						}
+					}
+				}
+			}
+		}
+	}
+};
 ParaDrawing.prototype.CheckWH = function()
 {
 	if (!this.GraphicObj)

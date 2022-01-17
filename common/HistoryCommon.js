@@ -1225,6 +1225,9 @@
 			case AscDFH.historydescription_Document_ReplaceCurrentWord:
 				sString = "Document_ReplaceCurrentWord";
 				break;
+			case AscDFH.historydescription_Document_Docxf_To_Docx:
+				sString = "Document_Docxf_To_Docx";
+				break;
 		}
 		return sString;
 	}
@@ -1698,6 +1701,7 @@
 	window['AscDFH'].historyitem_Paragraph_DefaultTabSize            = window['AscDFH'].historyitem_type_Paragraph | 38;
 	window['AscDFH'].historyitem_Paragraph_SuppressLineNumbers       = window['AscDFH'].historyitem_type_Paragraph | 39;
 	window['AscDFH'].historyitem_Paragraph_Shd_Fill                  = window['AscDFH'].historyitem_type_Paragraph | 40;
+	window['AscDFH'].historyitem_Paragraph_Shd_ThemeFill             = window['AscDFH'].historyitem_type_Paragraph | 41;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе ParaTextPr
 	//------------------------------------------------------------------------------------------------------------------
@@ -1848,9 +1852,11 @@
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе СComment
 	//------------------------------------------------------------------------------------------------------------------
-	window['AscDFH'].historyitem_Comment_Change   = window['AscDFH'].historyitem_type_Comment | 1;
-	window['AscDFH'].historyitem_Comment_TypeInfo = window['AscDFH'].historyitem_type_Comment | 2;
-	window['AscDFH'].historyitem_Comment_Position = window['AscDFH'].historyitem_type_Comment | 3;
+	window['AscDFH'].historyitem_Comment_Change     = window['AscDFH'].historyitem_type_Comment | 1;
+	window['AscDFH'].historyitem_Comment_TypeInfo   = window['AscDFH'].historyitem_type_Comment | 2;
+	window['AscDFH'].historyitem_Comment_Position   = window['AscDFH'].historyitem_type_Comment | 3;
+	window['AscDFH'].historyitem_Comment_RangeStart = window['AscDFH'].historyitem_type_Comment | 4;
+	window['AscDFH'].historyitem_Comment_RangeEnd   = window['AscDFH'].historyitem_type_Comment | 5;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе AscCommon.CComments
 	//------------------------------------------------------------------------------------------------------------------
@@ -4252,7 +4258,7 @@
 	window['AscDFH'].historydescription_Document_ConvertFormFixedType               = 0x018c;
 	window['AscDFH'].historydescription_Document_ReplaceCurrentWord                 = 0x018d;
 	window['AscDFH'].historydescription_Document_ChangeGeometryEdit                 = 0x018e;
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	window['AscDFH'].historydescription_Document_Docxf_To_Docx                      = 0x018f;	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
 	// Фабрика изменений (заполняется там же, где и определяются классы изменений)

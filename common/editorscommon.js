@@ -1695,6 +1695,49 @@
 			case c_oAscFileType.OTP:
 				return 'otp';
 				break;
+
+			case c_oAscFileType.IMG:
+				return 'zip';
+				break;
+			case c_oAscFileType.JPG:
+				return 'jpg';
+				break;
+			case c_oAscFileType.TIFF:
+				return 'tiff';
+				break;
+			case c_oAscFileType.TGA:
+				return 'tga';
+				break;
+			case c_oAscFileType.GIF:
+				return 'gif';
+				break;
+			case c_oAscFileType.PNG:
+				return 'png';
+				break;
+			case c_oAscFileType.EMF:
+				return 'emf';
+				break;
+			case c_oAscFileType.WMF:
+				return 'wmf';
+				break;
+			case c_oAscFileType.BMP:
+				return 'bmp';
+				break;
+			case c_oAscFileType.CR2:
+				return 'cr2';
+				break;
+			case c_oAscFileType.PCX:
+				return 'pcx';
+				break;
+			case c_oAscFileType.RAS:
+				return 'ras';
+				break;
+			case c_oAscFileType.PSD:
+				return 'psd';
+				break;
+			case c_oAscFileType.ICO:
+				return 'ico';
+				break;
 		}
 		return '';
 	}
@@ -11073,6 +11116,7 @@
 			}
 		});
 	}
+
 	if (!Object.values) {
 		Object.values = function (obj) {
 			return Object.keys(obj).map(function (e) {
@@ -11255,6 +11299,9 @@
 			res[i - start] = i;
 		}
 		return res;
+	}
+	function isEqualSortedArrays(array1, array2) {
+		return array1.length === array2.length && array1.every(function(value, index) { return value === array2[index]});
 	}
 
 	var g_oBackoffDefaults = {
@@ -11805,6 +11852,7 @@
 	window["AscCommon"].valueToMmType = valueToMmType;
 	window["AscCommon"].arrayMove = arrayMove;
 	window["AscCommon"].getRangeArray = getRangeArray;
+	window["AscCommon"].isEqualSortedArrays = isEqualSortedArrays;
 
 	window["AscCommon"].CUnicodeStringEmulator = CUnicodeStringEmulator;
 

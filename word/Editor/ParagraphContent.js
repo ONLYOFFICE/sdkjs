@@ -2311,6 +2311,15 @@ ParaFootnoteReference.prototype.ToSearchElement = function(oProps)
 {
 	return new CSearchTextSpecialFootnoteMark();
 };
+ParaFootnoteReference.prototype.PreDelete = function()
+{
+	var oFootnote = this.Footnote;
+	if (oFootnote)
+	{
+		oFootnote.PreDelete();
+		oFootnote.ClearContent(true);
+	}
+};
 
 /**
  * Класс представляющий номер сноски внутри сноски.
@@ -2364,6 +2373,9 @@ ParaFootnoteRef.prototype.UpdateNumber = function(oFootnote)
 		this.NumFormat = Asc.c_oAscNumberingFormat.Decimal;
 		this.private_Measure();
 	}
+};
+ParaFootnoteRef.prototype.PreDelete = function()
+{
 };
 
 /**
@@ -2435,7 +2447,7 @@ ParaSeparator.prototype.LoadRecalculateObject = function(oRecalcObj)
 	this.Width        = oRecalcObj.Width;
 	this.WidthVisible = oRecalcObj.Width;
 };
-ParaSeparator.PrepareRecalculateObject = function()
+ParaSeparator.prototype.PrepareRecalculateObject = function()
 {
 };
 
@@ -2508,7 +2520,7 @@ ParaContinuationSeparator.prototype.LoadRecalculateObject = function(oRecalcObj)
 	this.Width        = oRecalcObj.Width;
 	this.WidthVisible = oRecalcObj.Width;
 };
-ParaContinuationSeparator.PrepareRecalculateObject = function()
+ParaContinuationSeparator.prototype.PrepareRecalculateObject = function()
 {
 };
 
@@ -2773,6 +2785,9 @@ ParaEndnoteRef.prototype.UpdateNumber = function(oEndnote)
 		this.NumFormat = Asc.c_oAscNumberingFormat.Decimal;
 		this.private_Measure();
 	}
+};
+ParaEndnoteRef.prototype.PreDelete = function()
+{
 };
 
 function ParagraphContent_Read_FromBinary(Reader)

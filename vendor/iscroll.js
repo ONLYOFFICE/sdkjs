@@ -332,6 +332,10 @@ function IScroll (el, options) {
 	if (AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.iosVersion >= 13)
 		this.options.click = true;
 
+	// на андроиде тоже нужно обрабатывать клик, иначе не показать диалог с картинками
+	if (AscCommon.AscBrowser.isAndroid)
+		this.options.click = true;
+
 	// Normalize options
 	this.translateZ = this.options.HWCompositing && utils.hasPerspective ? ' translateZ(0)' : '';
 
@@ -1666,8 +1670,10 @@ IScroll.prototype = {
 			case 'mousedown':
 				this.isDown = true;
 				this.isDownBeforeClick = true;
-				this.eventsElement ? this.manager.mainOnTouchStart(e) : this._start(e);
+				this.manager.removeHandlersOnClick();
+				// enableLongTapAction вызываем ДО обработки, чтобы была возможность отменить внутри
 				this.enableLongTapAction(e);
+				this.eventsElement ? this.manager.mainOnTouchStart(e) : this._start(e);
 				break;
 			case 'touchmove':
 			case 'pointermove':
@@ -1714,6 +1720,8 @@ IScroll.prototype = {
 				this._key(e);
 				break;
 			case 'click':
+				this.manager.checkHandlersOnClick();
+
 				if ( this.enabled && !e._constructed ) {
 					e.preventDefault();
 					e.stopPropagation();
@@ -1729,6 +1737,9 @@ IScroll.prototype = {
 
 				this.isDownBeforeClick = false;
 				this.isUpBeforeClick = false;
+
+				if (AscCommon.AscBrowser.isAndroid)
+					AscCommon.stopEvent(e);
 
 				break;
 		}

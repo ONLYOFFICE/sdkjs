@@ -309,6 +309,17 @@ PivotDataElem.prototype.resetTotal = function (dataLength) {
 		this.total[i].reset();
 	}
 }
+function PivotDataLocation(ws, bbox, headings) {
+	this.ws = ws;
+	this.bbox = bbox;
+	this.headings = headings;
+}
+PivotDataLocation.prototype.isEqual = function (val) {
+	var res = val && this.ws === val.ws
+		&& (!this.bbox && !val.bbox) || (this.bbox && val.bbox && this.bbox.isEqual(val.bbox))
+		&& (!this.headings && !val.headings) || (this.headings && val.headings && AscCommon.isEqualSortedArrays(this.headings, val.headings));
+	return !!res;
+}
 function setTableProperty(pivot, oldVal, newVal, addToHistory, historyType, changeData) {
 	if (oldVal === newVal) {
 		return;
@@ -1427,7 +1438,7 @@ CT_PivotCacheDefinition.prototype.clone = function () {
 	var data = new AscCommonExcel.UndoRedoData_BinaryWrapper(this);
 	return data.getData();
 };
-CT_pivotTableDefinition.prototype.cloneShallow = function () {
+CT_PivotCacheDefinition.prototype.cloneShallow = function () {
 	var oldCacheRecords = this.cacheRecords;
 	this.cacheRecords = null;
 	var newPivot = this.clone();
@@ -1748,11 +1759,15 @@ CT_PivotCacheDefinition.prototype.getWorksheetSource = function() {
 CT_PivotCacheDefinition.prototype.getDataRef = function() {
 	return this.getWorksheetSource() && this.getWorksheetSource().getDataRef() || '';
 };
+CT_PivotCacheDefinition.prototype.getDataLocation = function() {
+	return this.getWorksheetSource() && this.getWorksheetSource().getDataLocation();
+};
 CT_PivotCacheDefinition.prototype.fromDataRef = function(dataRef) {
 	this.cacheSource = new CT_CacheSource();
 	this.cacheSource.type = c_oAscSourceType.Worksheet;
 	this.cacheSource.worksheetSource = new CT_WorksheetSource();
 	this.cacheSource.worksheetSource.fromDataRef(dataRef);
+	this.cacheSource.worksheetSource.buildDependencies();
 	this.cacheRecords = new CT_PivotCacheRecords();
 	var location = this.cacheSource.worksheetSource.getDataLocation();
 	if (location) {
@@ -4016,6 +4031,9 @@ CT_pivotTableDefinition.prototype.asc_select = function (api) {
 CT_pivotTableDefinition.prototype.asc_getDataRef = function() {
 	return this.cacheDefinition && this.cacheDefinition.getDataRef() || '';
 };
+CT_pivotTableDefinition.prototype.getDataLocation = function() {
+	return this.cacheDefinition && this.cacheDefinition.getDataLocation();
+};
 CT_pivotTableDefinition.prototype.asc_getFillDownLabelsDefault = function() {
 	return !!(this.pivotTableDefinitionX14 && this.pivotTableDefinitionX14.fillDownLabelsDefault);
 };
@@ -4053,7 +4071,7 @@ CT_pivotTableDefinition.prototype.checkPivotFieldItems = function(index) {
 CT_pivotTableDefinition.prototype.checkPivotFieldItem = function(index, pivotField, cacheRecords, cacheField) {
 	cacheField.checkSharedItems(this, index, cacheRecords);
 	var pivotFieldOld = pivotField.clone();
-	pivotField.init(cacheField.sharedItems.Items.getSize());
+	pivotField.init(cacheField.getSharedSize(), cacheField.getSharedItems());
 	pivotField.sortItems(Asc.c_oAscSortOptions.Ascending, cacheField.getSharedItems());
 	pivotField.checkSubtotal();
 	History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_PivotField,
@@ -4072,7 +4090,7 @@ CT_pivotTableDefinition.prototype.refreshPivotFieldItem = function(index, pivotF
 	if (rangePr && rangePr.getFieldGroupType() === cacheField.getFieldGroupType()) {
 		var rangePrAuto = cacheField.createGroupRangePr();
 		cacheField.refreshGroupRangePr(index, rangePr.clone(), rangePrAuto);
-		pivotField.groupRangePr(cacheField.getGroupOrSharedSize());
+		pivotField.groupRangePr(cacheField.getGroupOrSharedSize(), cacheField.getGroupOrSharedItems());//
 	} else {
 		//save old items order
 		if (pivotField.items) {
@@ -5395,6 +5413,7 @@ CT_pivotTableDefinition.prototype._updateCacheDataUpdatePivotFieldsIndexesGroup 
 					var newPivotField = oldPivotField.clone();
 					if (c_oAscGroupType.Text === newCacheField.getFieldGroupType()) {
 						var groupItemsMap = newCacheField.refreshGroupDiscrete(newBaseCacheField.getGroupOrSharedItems(), discretePrMaps[newBaseIndex]);
+						//todo add getGroupOrSharedItems param
 						newPivotField.refreshGroupDiscrete(groupItemsMap, newCacheField.getGroupOrSharedSize());
 						var topCacheField = newCacheFields[newCacheDefinition.getFieldsTopParWithBase(newBaseIndex)];
 						if (topCacheField) {
@@ -5406,7 +5425,7 @@ CT_pivotTableDefinition.prototype._updateCacheDataUpdatePivotFieldsIndexesGroup 
 						var rangePrAuto = newBaseCacheField.createGroupRangePr();
 						var rangePr = newCacheField.getGroupRangePr().clone();
 						newCacheField.refreshGroupRangePr(newBaseIndex, rangePr, rangePrAuto);
-						newPivotField.groupRangePr(newCacheField.getGroupOrSharedSize());
+						newPivotField.groupRangePr(newCacheField.getGroupOrSharedSize(), newCacheField.getGroupOrSharedItems());//
 						newBaseCacheField.initGroupPar(newIndexPar);
 					}
 					newCacheField.initGroupBase(newBaseIndex);
@@ -6248,6 +6267,12 @@ CT_pivotTableDefinition.prototype.groupPivot = function (api, layout, confirmati
 			var changeRes = api._changePivot(pivotTable, confirmation, true, function () {
 				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
 
+				//todo redo 
+				//clone pivotCache to avoid conflict with other pivotTables(case adding discrete fields)
+				var tmpPivot = pivotTable.cloneForHistory(true, false)
+				tmpPivot.cacheDefinition.cacheRecords = pivotTable.cacheDefinition.cacheRecords;
+				pivotTable.setCacheDefinition(tmpPivot.cacheDefinition);
+
 				AscFormat.ExecuteNoHistory(function () {
 					pivotTable.ungroupRangePr(baseFld);
 					pivotTable.groupRangePr(baseFld, opt_rangePr, opt_dateTypes);
@@ -6272,6 +6297,12 @@ CT_pivotTableDefinition.prototype.groupPivot = function (api, layout, confirmati
 		api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, confirmation, function (confirmation, pivotTables) {
 			var changeRes = api._changePivot(pivotTable, confirmation, true, function () {
 				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+
+				//todo redo 
+				//clone pivotCache to avoid conflict with other pivotTables(case adding discrete fields)
+				var tmpPivot = pivotTable.cloneForHistory(true, false)
+				tmpPivot.cacheDefinition.cacheRecords = pivotTable.cacheDefinition.cacheRecords;
+				pivotTable.setCacheDefinition(tmpPivot.cacheDefinition);
 
 				AscFormat.ExecuteNoHistory(function () {
 					var groupRes = pivotTable.groupDiscreteCache(layout);
@@ -6300,6 +6331,11 @@ CT_pivotTableDefinition.prototype.ungroupPivot = function (api, layout, confirma
 			var changeRes = api._changePivot(pivotTable, confirmation, true, function () {
 				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
 
+				//todo redo 				//clone pivotCache to avoid conflict with other pivotTables(case adding discrete fields)
+				var tmpPivot = pivotTable.cloneForHistory(true, false)
+				tmpPivot.cacheDefinition.cacheRecords = pivotTable.cacheDefinition.cacheRecords;
+				pivotTable.setCacheDefinition(tmpPivot.cacheDefinition);
+
 				AscFormat.ExecuteNoHistory(function () {
 					pivotTable.ungroupRangePr(baseFld);
 				}, api);
@@ -6317,6 +6353,12 @@ CT_pivotTableDefinition.prototype.ungroupPivot = function (api, layout, confirma
 			var groupRes;
 			var changeRes = api._changePivot(pivotTable, confirmation, true, function () {
 				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
+
+				//todo redo 
+				//clone pivotCache to avoid conflict with other pivotTables(case adding discrete fields)
+				var tmpPivot = pivotTable.cloneForHistory(true, false)
+				tmpPivot.cacheDefinition.cacheRecords = pivotTable.cacheDefinition.cacheRecords;
+				pivotTable.setCacheDefinition(tmpPivot.cacheDefinition);
 
 				AscFormat.ExecuteNoHistory(function () {
 					groupRes = pivotTable.ungroupDiscreteCache(layout);
@@ -6352,14 +6394,14 @@ CT_pivotTableDefinition.prototype.groupRangePr = function (fld, rangePr, dateTyp
 	var i;
 	var pivotFields = this.asc_getPivotFields();
 	var cacheFields = this.asc_getCacheFields();
-	pivotFields[fld].groupRangePr(cacheFields[fld].getGroupOrSharedSize());
+	pivotFields[fld].groupRangePr(cacheFields[fld].getGroupOrSharedSize(), cacheFields[fld].getGroupOrSharedItems());
 	if (addFields) {
 		var insertIndexRow = this.rowFields && this.rowFields.find(fld);
 		var insertIndexCol = this.colFields && this.colFields.find(fld);
 		for (i = 0; i < addFields.length; ++i) {
 			var pivotIndex = pivotFields.length;
 			var newPivotField = pivotFields[fld].clone();
-			newPivotField.groupRangePr(cacheFields[pivotIndex].getGroupOrSharedSize());
+			newPivotField.groupRangePr(cacheFields[pivotIndex].getGroupOrSharedSize(), cacheFields[pivotIndex].getGroupOrSharedItems());
 			pivotFields.push(newPivotField);
 			if (null !== insertIndexRow && -1 !== insertIndexRow) {
 				this.addRowField(pivotIndex, insertIndexRow, false);
@@ -6377,7 +6419,7 @@ CT_pivotTableDefinition.prototype.ungroupRangePr = function (fld) {
 	var cacheFields = this.asc_getCacheFields();
 	var removeFields = this.cacheDefinition.ungroupRangePr(fld);
 	var pivotField = pivotFields[fld];
-	pivotField.init(cacheFields[fld].getGroupOrSharedSize());
+	pivotField.init(cacheFields[fld].getGroupOrSharedSize(), cacheFields[fld].getGroupOrSharedItems());
 	var sortType = pivotField.sortType !== c_oAscFieldSortType.Manual ? pivotField.sortType : Asc.c_oAscSortOptions.Ascending;
 	pivotField.sortItems(sortType, cacheFields[fld].getGroupOrSharedItems());
 	pivotField.checkSubtotal();
@@ -8975,7 +9017,7 @@ CT_WorksheetSource.prototype.getDataLocation = function() {
 				case AscCommonExcel.cElementType.cell3D:
 				case AscCommonExcel.cElementType.cellsRange3D:
 					var ws = val.getWS() !== AscCommonExcel.g_DefNameWorksheet ? val.getWS() : null;
-					return {ws: ws, bbox: val.getBBox0(), headings: headings};
+					return new PivotDataLocation(ws, val.getBBox0(), headings);
 					break;
 			}
 		}
@@ -8990,6 +9032,10 @@ CT_WorksheetSource.prototype.fromDataRef = function(dataRef) {
 	if (dataRef) {
 		this.formula = new AscCommonExcel.parserFormula(dataRef, this, AscCommonExcel.g_DefNameWorksheet);
 		this.formula.parse();
+	}
+};
+CT_WorksheetSource.prototype.buildDependencies = function() {
+	if (this.formula) {
 		this.formula.buildDependencies();
 	}
 };
@@ -10399,14 +10445,22 @@ CT_PivotField.prototype.initPostOpenZip = function (oNumFmts) {
 		this.numFmtId = null;
 	}
 };
-CT_PivotField.prototype.init = function (count) {
+CT_PivotField.prototype.init = function (count, opt_sharedItems) {
 	this.showAll = false;
 	this.items = new CT_Items();
 	var items = this.items.item;
-	for(var i = 0; i < count; ++i){
+	for (var i = 0; i < count; ++i) {
 		var newItem = new CT_Item();
 		newItem.x = i;
 		items.push(newItem);
+	}
+	if (opt_sharedItems) {
+		for (var i = 0; i < opt_sharedItems.Items.getSize(); ++i) {
+			var sharedItem = opt_sharedItems.Items.get(i);
+			if (sharedItem.addition && sharedItem.addition.u) {
+				items[i].m = true;
+			}
+		}
 	}
 	return items;
 };
@@ -11396,8 +11450,8 @@ CT_PivotField.prototype.groupDiscrete = function(reorderArray) {
 		this.checkSubtotal();
 	}
 };
-CT_PivotField.prototype.groupRangePr = function(cacheSize) {
-	this.init(cacheSize);
+CT_PivotField.prototype.groupRangePr = function(cacheSize, opt_sharedItems) {
+	this.init(cacheSize, opt_sharedItems);
 	this.checkSubtotal();
 };
 CT_PivotField.prototype.convertToCacheGroupMap = function (groupMap) {

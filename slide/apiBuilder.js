@@ -444,7 +444,7 @@
      * @typeofeditors ["CPE"]
      * @memberof Api
      * @param {string} sName - specified name of theme's color scheme.
-     * @param {(ApiUniColor | ApiRGBColor)[]} arrColors - This array defines a set of colors which are referred to as a color scheme.
+     * @param {(ApiUniColor[] | ApiRGBColor[])} arrColors - This array defines a set of colors which are referred to as a color scheme.
      * The color scheme is responsible for defining a list of twelve colors.
      * The array should contain a sequence of colors: 2 dark, 2 light,6 primary and a color for each of a hyperlink and followed hyperlink.     
      * @returns {?ApiThemeColorScheme} 
@@ -2061,7 +2061,7 @@
      * **Need to do**
      * Sets the effect styles.
      * @typeofeditors ["CPE"]
-     * @param {?[]} arrEffect - the array of line styles must contains 3 elements and consist of subtle, moderate and intense fills.
+     * @param {?Array} arrEffect - the array of line styles must contains 3 elements and consist of subtle, moderate and intense fills.
      * If there are empty or no ApiStroke elements in the array, it will be filled by Api.CreateStroke(0, Api.CreateNoFill()) element.
      * @returns {bool}
      */

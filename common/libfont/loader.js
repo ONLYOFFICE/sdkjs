@@ -235,7 +235,12 @@
 
 	window['AscFonts'].getDefaultBlitting = function()
     {
-		return (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isArm) ? true : false;
+        var isUseMap = false;
+        if (AscCommon.AscBrowser.isAndroidNativeApp)
+            isUseMap = true;
+        else if (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isArm)
+            isUseMap = true;
+        return isUseMap;
     };
 	window['AscFonts'].setDefaultBlitting = function(value)
 	{

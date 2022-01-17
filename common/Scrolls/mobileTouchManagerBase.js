@@ -633,6 +633,22 @@
 		this.iScroll._initEvents();
 	};
 
+	CMobileTouchManagerBase.prototype.checkHandlersOnClick = function()
+	{
+		var handler = this.Api.getHandlerOnClick();
+		if (handler)
+		{
+			handler.call(this);
+			this.Api.setHandlerOnClick(undefined);
+		}
+	};
+	CMobileTouchManagerBase.prototype.removeHandlersOnClick = function()
+	{
+		var handler = this.Api.getHandlerOnClick();
+		if (handler)
+			this.Api.setHandlerOnClick(undefined);
+	};
+
 	// создание вспомогательного элемента, для прокрутки. по идее потом можно изменить
 	// просто на сдвиги. но пока так
 	CMobileTouchManagerBase.prototype.CreateScrollerDiv = function(_wrapper)

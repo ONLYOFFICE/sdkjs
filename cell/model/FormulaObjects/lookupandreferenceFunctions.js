@@ -1553,6 +1553,10 @@ function (window, undefined) {
 		if (cElementType.error === arg0Val.type) {
 			return arg0;
 		}
+		//TODO не тестировал на hlookup/x - поэтому поставил условия
+		if (!opt_xlookup && false === this.bHor && cElementType.empty === arg0Val.type) {
+			return new cError(cErrorType.not_available);
+		}
 
 		//TODO hlookup не правильно работает если первый агумент массив - раскомментировать тесты для hlookup
 		var found = false;

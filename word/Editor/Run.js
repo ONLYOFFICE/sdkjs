@@ -2944,15 +2944,22 @@ ParaRun.prototype.GetSelectedText = function(bAll, bClearText, oPr)
                 Str += AscCommon.encodeSurrogateChar(Item.Value);
                 break;
             }
+			case para_Space:
+			{
+				Str += " ";
+				break;
+			}
+			case para_Tab:
+			{
+				Str += oPr && oPr.TabSymbol ? oPr.TabSymbol : ' ';
+				break;
+			}
             case para_Math_Text:
             case para_Math_BreakOperator:
             {
                 Str += AscCommon.encodeSurrogateChar(Item.value);
                 break;
-            }
-            case para_Space:
-            case para_Tab  : Str += " "; break;
-			case para_NewLine:
+            }			case para_NewLine:
 			{
 				if (oPr && true === oPr.NewLine)
 				{
@@ -2964,10 +2971,18 @@ ParaRun.prototype.GetSelectedText = function(bAll, bClearText, oPr)
 			{
 				if (oPr && true === oPr.NewLineParagraph)
 				{
-					if (this.Paragraph && null === this.Paragraph.Get_DocumentNext() && true === this.Paragraph.Parent.IsTableCellContent() && true !== this.Paragraph.Parent.IsLastTableCellInRow(true))
-						Str += '\t';
+					var oParagraph = this.GetParagraph();
+					if (oParagraph && null === oParagraph.Get_DocumentNext() && oParagraph.Parent.IsTableCellContent())
+					{
+						if (!oParagraph.Parent.IsLastTableCellInRow(true))
+							Str += oPr.TableCellSeparator ? oPr.TableCellSeparator : '\t';
+						else
+							Str += oPr.TableRowSeparator ? oPr.TableRowSeparator : '\r\n';
+					}
 					else
-						Str += '\r\n';
+					{
+						Str += oPr.ParaSeparator ? oPr.ParaSeparator : '\r\n';
+					}
 				}
 
 				break;

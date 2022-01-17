@@ -1146,10 +1146,11 @@ CTableCell.prototype =
 		{
 			// TODO: переделать здесь на нармальное выставление настроек
 			this.Set_Shd({
-				Value   : OtherPr.Shd.Value,
-				Color   : OtherPr.Shd.Color ? {r : OtherPr.Shd.Color.r, g : OtherPr.Shd.Color.g, b : OtherPr.Shd.Color.b} : undefined,
-				Fill    : OtherPr.Shd.Fill ? {r : OtherPr.Shd.Fill.r, g : OtherPr.Shd.Fill.g, b : OtherPr.Shd.Fill.b} : undefined,
-				Unifill : OtherPr.Shd.Unifill ? OtherPr.Shd.Unifill.createDuplicate() : undefined
+				Value    : OtherPr.Shd.Value,
+				Color    : OtherPr.Shd.Color ? {r : OtherPr.Shd.Color.r, g : OtherPr.Shd.Color.g, b : OtherPr.Shd.Color.b} : undefined,
+				Fill     : OtherPr.Shd.Fill ? {r : OtherPr.Shd.Fill.r, g : OtherPr.Shd.Fill.g, b : OtherPr.Shd.Fill.b} : undefined,
+				Unifill  : OtherPr.Shd.Unifill ? OtherPr.Shd.Unifill.createDuplicate() : undefined,
+                ThemeFill: OtherPr.Shd.ThemeFill ? OtherPr.Shd.ThemeFill.createDuplicate() : undefined
 			});
 		}
 

@@ -3712,7 +3712,7 @@
 			}
 			if (null != workbookProtection.workbookPassword) {
 				this.memory.WriteByte(c_oSerWorkbookProtection.Password);
-				this.memory.WriteByte(c_oSerPropLenType.Byte);
+				this.memory.WriteByte(c_oSerPropLenType.Variable);
 				this.memory.WriteString2(workbookProtection.workbookPassword);
 			}
 

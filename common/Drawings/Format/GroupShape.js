@@ -407,10 +407,6 @@ function CGroupShape()
         return false;
     };
 
-    CGroupShape.prototype.isImage = function()
-    {
-        return false;
-    };
 
     CGroupShape.prototype.isChart = function()
     {
@@ -492,7 +488,6 @@ function CGroupShape()
         }
         graphics.reset();
         graphics.SetIntegerGrid(true);
-        this.drawAnimLabels && this.drawAnimLabels(graphics);
     };
 
     CGroupShape.prototype.deselectObject = function(object)

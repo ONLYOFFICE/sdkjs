@@ -1944,26 +1944,36 @@ CopyProcessor.prototype =
 
 				var shd = compilePr.Shd;
 				var color = shd.Get_Color2(this.oDocument.Get_Theme(), this.oDocument.Get_ColorMap());
-				cell.Pr.Shd.Unifill = AscFormat.CreteSolidFillRGB(color.r, color.g, color.b);
+				if(color) {
+					cell.Pr.Shd.Unifill = AscFormat.CreteSolidFillRGB(color.r, color.g, color.b);
+				}
 
 				if (compilePr.TableCellBorders.Bottom) {
 					color = compilePr.TableCellBorders.Bottom.Get_Color2(this.oDocument.Get_Theme(), this.oDocument.Get_ColorMap());
-					cell.Pr.TableCellBorders.Bottom.Unifill = AscFormat.CreteSolidFillRGB(color.r, color.g, color.b);
+					if(color) {
+						cell.Pr.TableCellBorders.Bottom.Unifill = AscFormat.CreteSolidFillRGB(color.r, color.g, color.b);
+					}
 				}
 
 				if (compilePr.TableCellBorders.Top) {
 					color = compilePr.TableCellBorders.Top.Get_Color2(this.oDocument.Get_Theme(), this.oDocument.Get_ColorMap());
-					cell.Pr.TableCellBorders.Top.Unifill = AscFormat.CreteSolidFillRGB(color.r, color.g, color.b);
+					if(color) {
+						cell.Pr.TableCellBorders.Top.Unifill = AscFormat.CreteSolidFillRGB(color.r, color.g, color.b);
+					}
 				}
 
 				if (compilePr.TableCellBorders.Left) {
 					color = compilePr.TableCellBorders.Left.Get_Color2(this.oDocument.Get_Theme(), this.oDocument.Get_ColorMap());
-					cell.Pr.TableCellBorders.Left.Unifill = AscFormat.CreteSolidFillRGB(color.r, color.g, color.b);
+					if(color) {
+						cell.Pr.TableCellBorders.Left.Unifill = AscFormat.CreteSolidFillRGB(color.r, color.g, color.b);
+					}
 				}
 
 				if (compilePr.TableCellBorders.Right) {
 					color = compilePr.TableCellBorders.Right.Get_Color2(this.oDocument.Get_Theme(), this.oDocument.Get_ColorMap());
-					cell.Pr.TableCellBorders.Right.Unifill = AscFormat.CreteSolidFillRGB(color.r, color.g, color.b);
+					if(color) {
+						cell.Pr.TableCellBorders.Right.Unifill = AscFormat.CreteSolidFillRGB(color.r, color.g, color.b);
+					}
 				}
 			}
 		}
@@ -5467,14 +5477,14 @@ PasteProcessor.prototype =
 
 					tempParagraph.Content.splice(tempParagraph.Content.length - 1, 0, tempParaRun);
 				} else if (isGraphicFrame) {
-					drawing.setBDeleted(true);
-					drawing.setWordFlag(false);
-					var copyObj = drawing.graphicObject.Copy();
-					copyObj.Set_Parent(this.oDocument);
-					aContent[aContent.length] = copyObj;
-					drawing.setWordFlag(true);
+					
+					var copyObj = drawing.getWordTable();
+					if(copyObj) {
+						copyObj.Set_Parent(this.oDocument);
+						aContent[aContent.length] = copyObj;
+						drawing.getAllFonts(font_map);
+					}
 
-					drawing.getAllFonts(font_map);
 				} else {
 					if (!tempParagraph)
 						tempParagraph = new Paragraph(this.oDocument.DrawingDocument, this.oDocument);
@@ -9273,26 +9283,25 @@ PasteProcessor.prototype =
 			}
 
 			var sSrc = node.getAttribute("src");
-			if ((!window["Asc"] || (window["Asc"] && window["Asc"]["editor"] === undefined)) &&
-				(isNaN(nWidth) || isNaN(nHeight) || !(typeof nWidth === "number") ||
-					!(typeof nHeight === "number")//первое условие - мы не в редакторе таблиц, тогда выполняем
-					|| nWidth === 0 || nHeight === 0) && sSrc) {
+
+			if (isNaN(nWidth)) nWidth = 0;
+			if (isNaN(nHeight)) nHeight = 0;
+
+			if (sSrc && (nWidth === 0 || nHeight === 0)) {
 				var img_prop = new Asc.asc_CImgProperty();
 				img_prop.asc_putImageUrl(sSrc);
-				var or_sz = img_prop.asc_getOriginSize(editor);
-				nWidth = or_sz.Width / g_dKoef_pix_to_mm;
-				nHeight = or_sz.Height / g_dKoef_pix_to_mm;
-			} else if (bPresentation) {
-				nWidth *= g_dKoef_pix_to_mm;
-				nHeight *= g_dKoef_pix_to_mm;
+				var or_sz = img_prop.asc_getOriginSize(window['Asc']['editor'] || window['editor']);
+				nWidth = or_sz.Width;
+				nHeight = or_sz.Height;
+			} else {
+				nWidth *= AscCommon.g_dKoef_pix_to_mm;
+				nHeight *= AscCommon.g_dKoef_pix_to_mm;
 			}
 
-			if (!nWidth) {
-				nWidth = bPresentation ? oThis.defaultImgWidth : oThis.defaultImgWidth / g_dKoef_pix_to_mm;
-			}
-			if (!nHeight) {
-				nHeight = bPresentation ? oThis.defaultImgHeight : oThis.defaultImgHeight / g_dKoef_pix_to_mm;
-			}
+			if (!nWidth)
+				nWidth = oThis.defaultImgWidth;
+			if (!nHeight)
+				nHeight = oThis.defaultImgHeight;
 
 			if (bPresentation) {
 				if (nWidth && nHeight && sSrc) {
@@ -9311,8 +9320,6 @@ PasteProcessor.prototype =
 					if (nWidth && nHeight && sSrc) {
 						sSrc = oThis.oImages[sSrc];
 						if (sSrc) {
-							nWidth = nWidth * g_dKoef_pix_to_mm;
-							nHeight = nHeight * g_dKoef_pix_to_mm;
 							//вписываем в oThis.dMaxWidth
 							var bUseScaleKoef = oThis.bUseScaleKoef;
 							var dScaleKoef = oThis.dScaleKoef;
@@ -9337,6 +9344,20 @@ PasteProcessor.prototype =
 									oThis.oCurRun.Pr.Underline = false;
 								}
 
+								if(oThis.oLogicDocument && oThis.oLogicDocument.GetColumnSize) {
+									var oColumnSize = oThis.oLogicDocument.GetColumnSize();
+									if(oColumnSize) {
+										if(nWidth > oColumnSize.W || nHeight > oColumnSize.H) {
+											if(oColumnSize.W > 0 && oColumnSize.H > 0)  {
+												var dScaleW = oColumnSize.W/nWidth;
+												var dScaleH = oColumnSize.H/nHeight;
+												var dScale = Math.min(dScaleW, dScaleH);
+												nWidth *= dScale;
+												nHeight *= dScale;
+											}
+										}
+									}
+								}
 								var Drawing = CreateImageFromBinary(sSrc, nWidth, nHeight);
 								// oTargetDocument.DrawingObjects.Add( Drawing );
 

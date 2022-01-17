@@ -477,8 +477,11 @@ CDrawingsController.prototype.GetSelectedElementsInfo = function(oInfo)
 	if (oParaDrawing && oParaDrawing.IsForm())
 	{
 		var oInnerForm = oParaDrawing.GetInnerForm();
-		if (oInnerForm)
+		if (oInnerForm && oInnerForm !== oInfo.GetInlineLevelSdt())
+		{
 			oInfo.SetInlineLevelSdt(oInnerForm);
+			oInfo.SetFixedFormShape(true);
+		}
 	}
 
 };
@@ -594,7 +597,7 @@ CDrawingsController.prototype.AddComment = function(Comment)
 		if (null != ParaDrawing)
 		{
 			var Paragraph = ParaDrawing.Parent;
-			Paragraph.AddCommentToObject(Comment, ParaDrawing.Get_Id());
+			Paragraph.AddCommentToDrawingObject(Comment, ParaDrawing.Get_Id());
 		}
 	}
 	else
@@ -648,14 +651,7 @@ CDrawingsController.prototype.RestoreDocumentStateAfterLoadChanges = function(St
 };
 CDrawingsController.prototype.GetColumnSize = function()
 {
-	// TODO: Переделать
-	var _w = Math.max(1, AscCommon.Page_Width - (AscCommon.X_Left_Margin + AscCommon.X_Right_Margin));
-	var _h = Math.max(1, AscCommon.Page_Height - (AscCommon.Y_Top_Margin + AscCommon.Y_Bottom_Margin));
-
-	return {
-		W : AscCommon.Page_Width - (AscCommon.X_Left_Margin + AscCommon.X_Right_Margin),
-		H : AscCommon.Page_Height - (AscCommon.Y_Top_Margin + AscCommon.Y_Bottom_Margin)
-	};
+	return this.DrawingObjects.getColumnSize();
 };
 CDrawingsController.prototype.GetCurrentSectionPr = function()
 {

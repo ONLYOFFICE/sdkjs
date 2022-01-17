@@ -849,7 +849,7 @@ function CDrawingDocument()
 
 		// check dark theme
 		if (AscCommon.GlobalSkin.Type !== "dark" || (this.TargetCursorColor.R > 10 || this.TargetCursorColor.R > 10 || this.TargetCursorColor.R > 10))
-			return this.TargetCursorColor.R;
+			return this.TargetCursorColor;
 
 		return { R : 255 - this.TargetCursorColor.R, G : 255 - this.TargetCursorColor.G, B : 255 - this.TargetCursorColor.B };
 	};
@@ -3478,7 +3478,7 @@ function CDrawingDocument()
                     var correctNum = 1;
                     if (levelNum === level.Text[i].Value)
                         correctNum = counterCurrent;
-                    text += AscCommon.IntToNumberFormat(correctNum, level.Format, level.GetOLang());
+                    text += AscCommon.IntToNumberFormat(correctNum, level.Format, level.get_OLang());
                     break;
                 default:
                     break;
@@ -3703,7 +3703,7 @@ function CDrawingDocument()
 							text += curLvl.Text[j].Value;
 							break;
 						case Asc.c_oAscNumberingLvlTextType.Num:
-							text += AscCommon.IntToNumberFormat(1, curLvl.Format, curLvl.GetOLang());
+							text += AscCommon.IntToNumberFormat(1, curLvl.Format, curLvl.get_OLang());
 							break;
 						default:
 							break;
@@ -3840,7 +3840,7 @@ function CDrawingDocument()
 							var correctNum = 1;
 							if (levelNum === props[i].Text[k].Value)
 								correctNum = counterCurrent;
-							text += AscCommon.IntToNumberFormat(correctNum, props[i].Format, props[i].GetOLang());
+							text += AscCommon.IntToNumberFormat(correctNum, props[i].Format, props[i].get_OLang());
 							break;
 						default:
 							break;

@@ -658,7 +658,7 @@
 
 		this.checkPointerMultiTouchRemove(e);
 
-		if (this.Api.isViewMode || isPreventDefault)
+		if (this.Api.isViewMode || isPreventDefault && !this.Api.getHandlerOnClick())
 			AscCommon.stopEvent(e);//AscCommon.g_inputContext.preventVirtualKeyboard(e);
 
 		if (true !== this.iScroll.isAnimating)

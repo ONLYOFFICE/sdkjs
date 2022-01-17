@@ -1704,6 +1704,9 @@ ParaMath.prototype.GetSelectedText = function(bAll, bClearText, oPr)
 		if (true === bClearText)
 			return null;
 
+		if (oPr && false === oPr.Math)
+			return "";
+
 		var res             = "";
 		var selectedContent = this.GetSelectContent(bAll);
 		if (selectedContent && selectedContent.Content && selectedContent.Content.GetTextContent)

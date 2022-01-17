@@ -1710,6 +1710,11 @@
 			if (b !== e) {
 				this._selectChars(kPosition, e);
 			}
+
+			//onSelectionEnd - используется в плагинах. нужен он для отслеживания смены селекта.
+			if (!this.isSelectMode) {
+				this.handlers.trigger("onSelectionEnd");
+			}
 		}
 	};
 

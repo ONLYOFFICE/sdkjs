@@ -97,7 +97,9 @@ CInlineLevelSdt.prototype.Add = function(Item)
 	var oTextFormRun;
 	if (this.IsTextForm())
 	{
-		if (Item.Type !== para_Text && Item.Type !== para_Space)
+		if (para_Tab === Item.Type)
+			return CParagraphContentWithParagraphLikeContent.prototype.Add.call(this, new ParaSpace());
+		else if (Item.Type !== para_Text && Item.Type !== para_Space)
 			return;
 
 		oTextFormRun = this.MakeSingleRunElement(false);
@@ -2150,6 +2152,9 @@ CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
 		{
 			var oInfo = this.Paragraph.LogicDocument.GetSelectedElementsInfo();
 			bSelectedOnlyThis = (oInfo.GetInlineLevelSdt() === this);
+
+			if (bSelectedOnlyThis && oInfo.IsFixedFormShape())
+				bSelectedOnlyThis = false;
 		}
 
 		if (c_oAscSdtLockType.SdtContentLocked === nContentControlLock

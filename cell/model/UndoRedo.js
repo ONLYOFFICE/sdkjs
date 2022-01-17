@@ -3181,7 +3181,7 @@ function (window, undefined) {
 				pivot.cacheDefinition.cacheRecords = oldPivot.cacheDefinition.cacheRecords;
 				pivot.replaceSlicersPivotCacheDefinition(oldPivot.cacheDefinition, pivot.cacheDefinition);
 				ws.deletePivotTable(Data.pivot);
-				ws.insertPivotTable(pivot, false, true);
+				ws.insertPivotTable(pivot, false, false);
 			}
 		} else if (AscCH.historyitem_Worksheet_SlicerAdd === Type) {
 			if (bUndo) {

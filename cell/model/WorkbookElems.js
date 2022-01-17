@@ -7464,6 +7464,9 @@ function RangeDataManagerElem(bbox, data)
 				if (colId !== cellId) {
 					var cell = worksheet.getCell3(row, colId + col);
 					var isDateTimeFormat = cell.getType() === window["AscCommon"].CellValueType.Number && cell.getNumFormat().isDateTimeFormat();
+					if (isDateTimeFormat) {
+						isDateTimeFormat = cell.getNumFormat().getType() === Asc.c_oAscNumFormatType.Data;
+					}
 
 					var isNumberFilter = filterColumn.isApplyCustomFilter();
 					var val = (isDateTimeFormat || isNumberFilter) ? cell.getValueWithoutFormat() : cell.getValueWithFormat();
@@ -7507,6 +7510,10 @@ function RangeDataManagerElem(bbox, data)
 					var isNumberFilter = false;
 					if (newFilterColumn.CustomFiltersObj || newFilterColumn.Top10 || newFilterColumn.DynamicFilter) {
 						isNumberFilter = true;
+					}
+
+					if (isDateTimeFormat) {
+						isDateTimeFormat = cell.getNumFormat().getType() === Asc.c_oAscNumFormatType.Data;
 					}
 
 					var currentValue = (isDateTimeFormat || isNumberFilter) ? cell.getValueWithoutFormat() : cell.getValueWithFormat();

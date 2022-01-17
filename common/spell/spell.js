@@ -101,6 +101,7 @@ function CSpellchecker(settings)
 		"1044" : "nb_NO",
 		"1043" : "nl_NL",
 		"2068" : "nn_NO",
+		"1154" : "oc_FR",
 		"1045" : "pl_PL",
 		"1046" : "pt_BR",
 		"2070" : "pt_PT",

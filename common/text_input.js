@@ -399,7 +399,7 @@
 			if (this.Api.asc_IsFocus() && !AscCommon.g_clipboardBase.IsFocus() && !AscCommon.g_clipboardBase.IsWorking())
 			{
 				if (document.activeElement != this.HtmlArea)
-					this.HtmlArea.focus();
+					focusHtmlElement(this.HtmlArea);
 			}
 		},
 
@@ -469,7 +469,7 @@
 			}
 
 			if (isFromFocus !== true)
-				this.HtmlArea.focus();
+				focusHtmlElement(this.HtmlArea);
 
 			this.TextBeforeComposition = "";
 			this.Text = "";
@@ -810,8 +810,8 @@
 						{
 							// ie тепряет фокус
 							setTimeout(function(){
-                                window['AscCommon'].g_inputContext.clear();
-                                window['AscCommon'].g_inputContext.HtmlArea.focus();
+								window['AscCommon'].g_inputContext.clear();
+								focusHtmlElement(window['AscCommon'].g_inputContext.HtmlArea);
 							}, 0);
 						}
 						else
@@ -1468,7 +1468,7 @@
 			            return;
 			    }
 
-				this.HtmlArea.focus();
+				focusHtmlElement(this.HtmlArea);
 			}
 		},
 
@@ -1703,14 +1703,26 @@
 
 			var _elem = t.nativeFocusElement;
 			t.nativeFocusElementNoRemoveOnElementFocus = true; // ie focus async
-			AscCommon.AscBrowser.isMozilla ? setTimeout(function(){ t.HtmlArea.focus(); }, 0) : t.HtmlArea.focus();
+			AscCommon.AscBrowser.isMozilla ? setTimeout(function(){ focusHtmlElement(t.HtmlArea); }, 0) : focusHtmlElement(t.HtmlArea);
 			t.nativeFocusElement = _elem;
 			t.Api.asc_enableKeyEvents(true, true);
 		}, true);
 
 		// send focus
 		if (!api.isMobileVersion && !api.isEmbedVersion)
-			window['AscCommon'].g_inputContext.HtmlArea.focus();
+			focusHtmlElement(window['AscCommon'].g_inputContext.HtmlArea);
+	};
+
+	function focusHtmlElement(element)
+	{
+		element.focus();
+		/*
+		var api = window['AscCommon'].g_inputContext.Api;
+		if (api.isMobileVersion)
+			element.focus();
+		else
+			element.focus({ "preventScroll" : true });
+		*/
 	};
 
 	window["SetInputDebugMode"] = function()

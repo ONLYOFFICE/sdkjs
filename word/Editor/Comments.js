@@ -410,9 +410,10 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 			Data : null
 		};
 
-		this.StartId  = null; // Id объекта, в содержимом которого идет начало комментария
-		this.EndId    = null; // Id объекта, в содержимом которого идет конец комментария
-		this.Position = -1;   // Позиция комментария в общем списке
+		this.RangeStart = null; // Id начала комментария
+		this.RangeEnd   = null; // Id конца комментария
+		this.Reference  = null; // Id ссылки на комментарий
+		this.Position   = -1;   // Позиция комментария в общем списке
 
 		this.m_oStartInfo = {
 			X : 0,
@@ -435,17 +436,46 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	{
 		return new CComment(this.Parent, this.Data.Copy());
 	};
-	CComment.prototype.Set_StartId = function(ObjId)
+	CComment.prototype.SetRangeStart = function(sId)
 	{
-		this.StartId = ObjId;
+		if (sId !== this.RangeStart)
+		{
+			AscCommon.History.Add(new CChangesCommentRangeStart(this, this.RangeStart, sId));
+			this.RangeStart = sId;
+			this.UpdatePosition();
+		}
+	};
+	CComment.prototype.GetRangeStart = function()
+	{
+		return this.RangeStart;
+	};
+	CComment.prototype.SetRangeEnd = function(sId)
+	{
+		if (sId !== this.RangeEnd)
+		{
+			AscCommon.History.Add(new CChangesCommentRangeEnd(this, this.RangeEnd, sId));
+			this.RangeEnd = sId;
+		}
+	};
+	CComment.prototype.GetRangeEnd = function()
+	{
+		return this.RangeEnd;
+	};
+	CComment.prototype.SetRangeMark = function(oMark)
+	{
+		if (!oMark)
+			return;
 
+		if (oMark.IsCommentStart())
+			this.SetRangeStart(oMark.GetId());
+		else
+			this.SetRangeEnd(oMark.GetId());
+	};
+	CComment.prototype.UpdatePosition = function()
+	{
 		var oLogicDocument = this.private_GetLogicDocument();
 		if (oLogicDocument)
 			oLogicDocument.UpdateCommentPosition(this);
-	};
-	CComment.prototype.Set_EndId = function(ObjId)
-	{
-		this.EndId = ObjId;
 	};
 	CComment.prototype.Set_StartInfo = function(PageNum, X, Y, H)
 	{
@@ -460,22 +490,13 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	};
 	CComment.prototype.RemoveMarks = function()
 	{
-		var ObjStart = AscCommon.g_oTableId.Get_ById(this.StartId);
-		var ObjEnd   = AscCommon.g_oTableId.Get_ById(this.EndId);
+		var oMark = AscCommon.g_oTableId.Get_ById(this.RangeStart);
+		if (oMark)
+			oMark.RemoveMark();
 
-		if (ObjStart === ObjEnd)
-		{
-			if (null != ObjStart)
-				ObjStart.RemoveCommentMarks(this.Id);
-		}
-		else
-		{
-			if (null != ObjStart)
-				ObjStart.RemoveCommentMarks(this.Id);
-
-			if (null != ObjEnd)
-				ObjEnd.RemoveCommentMarks(this.Id);
-		}
+		oMark = AscCommon.g_oTableId.Get_ById(this.RangeEnd);
+		if (oMark)
+			oMark.RemoveMark();
 	};
 	CComment.prototype.Set_TypeInfo = function(Type, Data)
 	{
@@ -522,6 +543,10 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 		//          : m_oTypeInfo.Data
 		//    Если comment_type_HdrFtr
 		//    String : Id колонтитула
+		// Long     : Flags
+		//        1 : RangeStart
+		//        2 : RangeEnd
+		//        3 : Reference
 
 		Writer.WriteString2(this.Id);
 		this.Data.Write_ToBinary2(Writer);
@@ -529,6 +554,33 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 
 		if (comment_type_HdrFtr === this.m_oTypeInfo.Type)
 			Writer.WriteString2(this.m_oTypeInfo.Data.Get_Id());
+
+		var nFlagsPos = Writer.GetCurPosition();
+		Writer.Skip(4);
+		var nFlags = 0;
+
+		if (this.RangeStart)
+		{
+			Writer.WriteString2(this.RangeStart);
+			nFlags |= 1;
+		}
+
+		if (this.RangeEnd)
+		{
+			Writer.WriteString2(this.RangeEnd);
+			nFlags |= 2;
+		}
+
+		if (this.Reference)
+		{
+			Writer.WriteString2(this.Reference);
+			nFlags |= 4;
+		}
+
+		var nCurPos = Writer.GetCurPosition();
+		Writer.Seek(nFlagsPos);
+		Writer.WriteLong(nFlags);
+		Writer.Seek(nCurPos);
 	};
 	CComment.prototype.Read_FromBinary2 = function(Reader)
 	{
@@ -538,6 +590,10 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 		//          : m_oTypeInfo.Data
 		//    Если comment_type_HdrFtr
 		//    String : Id колонтитула
+		// Long     : Flags
+		//        1 : RangeStart
+		//        2 : RangeEnd
+		//        3 : Reference
 
 		this.Id   = Reader.GetString2();
 		this.Data = new CCommentData();
@@ -548,56 +604,16 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 
 		if (editor && editor.WordControl.m_oLogicDocument)
 			this.Parent = editor.WordControl.m_oLogicDocument.Comments;
-	};
-	CComment.prototype.Check_MergeData = function(arrAllParagraphs)
-	{
-		// Проверяем, не удалили ли мы параграф, к которому был сделан данный комментарий
-		// Делаем это в самом конце, а не сразу, чтобы заполнились данные о начальном и
-		// конечном параграфах.
 
-		this.Set_StartId(null);
-		this.Set_EndId(null);
+		var nFlags = Reader.GetLong();
+		if (nFlags & 1)
+			this.RangeStart = Reader.GetString2();
 
-		var bStartSet = false, bEndSet = false;
-		for (var nIndex = 0, nCount = arrAllParagraphs.length; nIndex < nCount; ++nIndex)
-		{
-			var oPara   = arrAllParagraphs[nIndex];
-			var oResult = oPara.CheckCommentStartEnd(this.Id);
-			if (true === oResult.Start)
-			{
-				this.Set_StartId(oPara.Get_Id());
-				bStartSet = true;
-			}
+		if (nFlags & 2)
+			this.RangeEnd = Reader.GetString2();
 
-			if (true === oResult.End)
-			{
-				this.Set_EndId(oPara.Get_Id());
-				bEndSet = true;
-			}
-
-			if (bStartSet && bEndSet)
-				break;
-		}
-
-		var bUse = true;
-		if (null != this.StartId)
-		{
-			var ObjStart = AscCommon.g_oTableId.Get_ById(this.StartId);
-
-			if (!ObjStart.Is_UseInDocument())
-				bUse = false;
-		}
-
-		if (true === bUse && null != this.EndId)
-		{
-			var ObjEnd = AscCommon.g_oTableId.Get_ById(this.EndId);
-
-			if (!ObjEnd.Is_UseInDocument())
-				bUse = false;
-		}
-
-		if (false === bUse)
-			editor.WordControl.m_oLogicDocument.RemoveComment(this.Id, true, false);
+		if (nFlags & 4)
+			this.Reference = Reader.GetString2();
 	};
 	CComment.prototype.GetId = function()
 	{
@@ -621,7 +637,7 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	};
 	CComment.prototype.IsQuoted = function()
 	{
-		return (this.Data && this.Data.GetQuoteText());
+		return (this.Data && null !== this.Data.GetQuoteText());
 	};
 	CComment.prototype.IsSolved = function()
 	{
@@ -662,11 +678,9 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	};
 	CComment.prototype.MoveCursorToStart = function()
 	{
-		var oStartPara = AscCommon.g_oTableId.Get_ById(this.StartId);
-		if (oStartPara && (oStartPara instanceof Paragraph))
-		{
-			oStartPara.MoveCursorToCommentMark(this.Id);
-		}
+		var oRangeStart = AscCommon.g_oTableId.Get_ById(this.RangeStart);
+		if (oRangeStart)
+			oRangeStart.MoveCursorToMark();
 	};
 	CComment.prototype.SetPosition = function(nPos)
 	{
@@ -688,13 +702,9 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	 */
 	CComment.prototype.GetDocumentPosition = function()
 	{
-		var oStartObject = AscCommon.g_oTableId.Get_ById(this.StartId);
+		var oMark = AscCommon.g_oTableId.Get_ById(this.RangeStart);
 
-		if (!oStartObject || !oStartObject.Is_UseInDocument())
-			return null;
-
-		var oMark = oStartObject.GetCommentMark(this.Id, true);
-		if (!oMark)
+		if (!oMark || !oMark.Is_UseInDocument())
 			return null;
 
 		return oMark.GetDocumentPositionFromObject();
@@ -797,15 +807,7 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 
     this.Check_MergeData = function()
     {
-    	var arrAllParagraphs = null;
-
-        for (var Id in this.m_arrCommentsById)
-        {
-        	if (!arrAllParagraphs && editor && editor.WordControl.m_oLogicDocument)
-        		arrAllParagraphs = editor.WordControl.m_oLogicDocument.GetAllParagraphs({All : true});
-
-            this.m_arrCommentsById[Id].Check_MergeData(arrAllParagraphs);
-        }
+    	this.UpdateAll();
     };
 
 //-----------------------------------------------------------------------------------
@@ -1139,10 +1141,7 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 			var oParagraph = oMark.GetParagraph();
 			if (oComment && oParagraph)
 			{
-				if (oMark.IsCommentStart())
-					oComment.Set_StartId(oParagraph.GetId());
-				else
-					oComment.Set_EndId(oParagraph.GetId());
+				oComment.SetRangeMark(oMark);
 			}
 		}
 
@@ -1221,14 +1220,7 @@ ParaComment.prototype.Recalculate_Range_Spaces = function(PRSA, CurLine, CurRang
 	{
 		// Заглушка для повторяющегося заголовка в таблицах
 		if (true === this.Start)
-		{
-			Comment.Set_StartId(Para.Get_Id());
 			Comment.Set_StartInfo(Page, X, Y, H);
-		}
-		else
-		{
-			Comment.Set_EndId(Para.Get_Id());
-		}
 	}
 };
 ParaComment.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)
@@ -1334,6 +1326,30 @@ ParaComment.prototype.SetParagraph = function(oParagraph)
 		var oDocComments = oLogicDocument.Comments;
 		oDocComments.AddMarkToCheck(this);
 	}
+};
+ParaComment.prototype.Is_UseInDocument = function()
+{
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph)
+		return false;
+
+	return oParagraph.Is_UseInDocument();
+}
+ParaComment.prototype.RemoveMark = function()
+{
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph)
+		return;
+
+	return oParagraph.RemoveElement(this);
+};
+ParaComment.prototype.MoveCursorToMark = function()
+{
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph)
+		return;
+
+	oParagraph.MoveCursorToCommentMark(this.CommentId);
 };
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};

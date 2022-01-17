@@ -2674,6 +2674,15 @@ CGraphics.prototype =
         this.GrState.RestoreGrState();
     },
 
+    RemoveLastClip : function()
+    {
+        this.GrState.RemoveLastClip();
+    },
+    RestoreLastClip : function()
+    {
+        this.GrState.RestoreLastClip();
+    },
+
     StartClipPath : function()
     {
     },

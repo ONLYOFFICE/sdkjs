@@ -7421,11 +7421,15 @@ function BinaryPPTYLoader()
             if(AscCommon.isRealObject(_nvGraphicFramePr) )
             {
                 _chart.setNvSpPr(_nvGraphicFramePr);
-                if(AscFormat.isRealNumber(_nvGraphicFramePr.locks)){
+                if(AscFormat.isRealNumber(_nvGraphicFramePr.locks))
+                {
                     _chart.setLocks(_nvGraphicFramePr.locks);
                 }
+                if(_nvGraphicFramePr.cNvPr) 
+                {
+                    this.map_shapes_by_id[_nvGraphicFramePr.cNvPr.id] = _chart;
+                }
             }
-            this.map_shapes_by_id[_nvGraphicFramePr.cNvPr.id] = _chart;
             _chart.spPr.setXfrm(_xfrm);
             _xfrm.setParent(_chart.spPr);
             return _chart;
@@ -7483,6 +7487,10 @@ function BinaryPPTYLoader()
                 if(AscFormat.isRealNumber(_nvGraphicFramePr.locks))
                 {
                     _smartArt.setLocks(_nvGraphicFramePr.locks);
+                }
+                if(_nvGraphicFramePr.cNvPr) 
+                {
+                    this.map_shapes_by_id[_nvGraphicFramePr.cNvPr.id] = _smartArt;
                 }
             }
             if(_smartArt.drawing)

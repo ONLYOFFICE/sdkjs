@@ -356,7 +356,19 @@
     var print = undefined;
 
     var getBinaryPromise = null;
-    if (window["AscDesktopEditor"] && document.currentScript && 0 == document.currentScript.src.indexOf("file:///"))
+
+    function isLocal()
+    {
+        if (window.navigator && window.navigator.userAgent.toLowerCase().indexOf("ascdesktopeditor") < 0)
+            return false;
+        if (window.location && window.location.protocol == "file:")
+            return true;
+        if (window.document && window.document.currentScript && 0 == window.document.currentScript.src.indexOf("file:///"))
+            return true;
+        return false;
+    }
+
+    if (isLocal())
     {
         // fetch not support file:/// scheme
         window.fetch = undefined;

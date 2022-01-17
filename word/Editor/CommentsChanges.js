@@ -37,8 +37,10 @@
  * Time: 15:59
  */
 
-AscDFH.changesFactory[AscDFH.historyitem_Comment_Change]   = CChangesCommentChange;
-AscDFH.changesFactory[AscDFH.historyitem_Comment_TypeInfo] = CChangesCommentTypeInfo;
+AscDFH.changesFactory[AscDFH.historyitem_Comment_Change]     = CChangesCommentChange;
+AscDFH.changesFactory[AscDFH.historyitem_Comment_TypeInfo]   = CChangesCommentTypeInfo;
+AscDFH.changesFactory[AscDFH.historyitem_Comment_RangeStart] = CChangesCommentRangeStart;
+AscDFH.changesFactory[AscDFH.historyitem_Comment_RangeEnd]   = CChangesCommentRangeEnd;
 
 AscDFH.changesFactory[AscDFH.historyitem_Comments_Add]    = CChangesCommentsAdd;
 AscDFH.changesFactory[AscDFH.historyitem_Comments_Remove] = CChangesCommentsRemove;
@@ -48,16 +50,20 @@ AscDFH.changesFactory[AscDFH.historyitem_ParaComment_CommentId] = CChangesParaCo
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
 //----------------------------------------------------------------------------------------------------------------------
-AscDFH.changesRelationMap[AscDFH.historyitem_Comment_Change]        = [AscDFH.historyitem_Comment_Change];
-AscDFH.changesRelationMap[AscDFH.historyitem_Comment_TypeInfo]      = [AscDFH.historyitem_Comment_TypeInfo];
-AscDFH.changesRelationMap[AscDFH.historyitem_Comments_Add]          = [
+AscDFH.changesRelationMap[AscDFH.historyitem_Comment_Change]     = [AscDFH.historyitem_Comment_Change];
+AscDFH.changesRelationMap[AscDFH.historyitem_Comment_TypeInfo]   = [AscDFH.historyitem_Comment_TypeInfo];
+AscDFH.changesRelationMap[AscDFH.historyitem_Comment_RangeStart] = [AscDFH.historyitem_Comment_RangeStart];
+AscDFH.changesRelationMap[AscDFH.historyitem_Comment_RangeEnd]   = [AscDFH.historyitem_Comment_RangeEnd];
+
+AscDFH.changesRelationMap[AscDFH.historyitem_Comments_Add]    = [
 	AscDFH.historyitem_Comments_Add,
 	AscDFH.historyitem_Comments_Remove
 ];
-AscDFH.changesRelationMap[AscDFH.historyitem_Comments_Remove]       = [
+AscDFH.changesRelationMap[AscDFH.historyitem_Comments_Remove] = [
 	AscDFH.historyitem_Comments_Add,
 	AscDFH.historyitem_Comments_Remove
 ];
+
 AscDFH.changesRelationMap[AscDFH.historyitem_ParaComment_CommentId] = [AscDFH.historyitem_ParaComment_CommentId];
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -145,6 +151,36 @@ CChangesCommentTypeInfo.prototype.ReadFromBinary = function(Reader)
 CChangesCommentTypeInfo.prototype.private_SetValue = function(Value)
 {
 	this.Class.m_oTypeInfo = Value;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesCommentRangeStart(Class, Old, New)
+{
+	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New);
+}
+CChangesCommentRangeStart.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesCommentRangeStart.prototype.constructor = CChangesCommentRangeStart;
+CChangesCommentRangeStart.prototype.Type = AscDFH.historyitem_Comment_RangeStart;
+CChangesCommentRangeStart.prototype.private_SetValue = function(Value)
+{
+	this.Class.RangeStart = Value;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesCommentRangeEnd(Class, Old, New)
+{
+	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New);
+}
+CChangesCommentRangeEnd.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesCommentRangeEnd.prototype.constructor = CChangesCommentRangeEnd;
+CChangesCommentRangeEnd.prototype.Type = AscDFH.historyitem_Comment_RangeEnd;
+CChangesCommentRangeEnd.prototype.private_SetValue = function(Value)
+{
+	this.Class.RangeEnd = Value;
 };
 /**
  * @constructor
@@ -294,14 +330,9 @@ CChangesParaCommentCommentId.prototype.Load = function()
 {
 	this.Redo();
 
-	var Comment = AscCommon.g_oTableId.Get_ById(this.New);
-	if (null !== this.Class.Paragraph && null !== Comment && Comment instanceof AscCommon.CComment)
-	{
-		if (true === this.Class.Start)
-			Comment.Set_StartId(this.Class.Paragraph.Get_Id());
-		else
-			Comment.Set_EndId(this.Class.Paragraph.Get_Id());
-	}
+	var oComment = AscCommon.g_oTableId.Get_ById(this.New);
+	if (oComment instanceof AscCommon.CComment)
+		oComment.UpdatePosition();
 };
 CChangesParaCommentCommentId.prototype.CreateReverseChange = function()
 {

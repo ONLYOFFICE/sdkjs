@@ -1687,6 +1687,7 @@
 					oAdditionalData["thumbnail"]["format"] = 3;
 					break;
 			}
+			oAdditionalData["outputformat"] = Asc.c_oAscFileType.IMG;
 			oAdditionalData["title"] = AscCommon.changeFileExtention(this.documentTitle, "zip", Asc.c_nMaxDownloadTitleLen);
 		}
 		if (options.textParams) {
@@ -3568,6 +3569,16 @@
 			}
         }
         return false;
+	};
+
+    // это для отложенных действий на клике (диалоги в мобильной версии)
+	baseEditorsApi.prototype.setHandlerOnClick = function(handler)
+	{
+		this._handlerOnClick = handler;
+	};
+	baseEditorsApi.prototype.getHandlerOnClick = function()
+	{
+		return this._handlerOnClick;
 	};
 	// ---------------------------------------------------- interface events ---------------------------------------------
 	baseEditorsApi.prototype["asc_onShowPopupWindow"] = function()
