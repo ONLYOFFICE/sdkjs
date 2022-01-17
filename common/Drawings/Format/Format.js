@@ -5485,7 +5485,7 @@ function FormatRGBAColor()
         if (compareObj instanceof CBuBlip) {
             ret = new CBuBlip();
             if (this.blip) {
-                ret.setBlip(this.blip.compare(compareObj));
+                ret.setBlip(this.blip.compare(compareObj.blip));
             }
         }
         return ret;
