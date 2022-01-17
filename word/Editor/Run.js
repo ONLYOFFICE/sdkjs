@@ -13472,7 +13472,7 @@ ParaRun.prototype.GetSelectedElementsInfo = function(oInfo)
 {
 	if (oInfo && oInfo.IsCheckAllSelection() && !this.IsSelectionEmpty(true))
 	{
-		oInfo.RegisterRunWithReviewType(this.GetReviewType());
+		oInfo.RegisterReviewType(this.GetReviewType());
 
         var oElement;
 		for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)

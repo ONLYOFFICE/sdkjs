@@ -1959,9 +1959,7 @@ function CSelectedElementsInfo(oPr)
 	this.m_arrComplexFields   = [];
 	this.m_oPageNum           = null;
 	this.m_oPagesCount        = null;
-	this.m_bReviewAdd         = false; // Добавленный контент в режиме рецензирования
-	this.m_bReviewRemove      = false; // Удаленный контент в режиме рецензирования
-	this.m_bReviewNormal      = false; // Обычный контент
+	this.m_nReviewFlags       = 0x00; // 0 - common, 1 - add, 2 - remove, 3 - change properties
 	this.m_oPresentationField = null;
 	this.m_arrMoveMarks       = [];
 	this.m_arrFootEndNoteRefs = [];
@@ -2240,27 +2238,38 @@ CSelectedElementsInfo.prototype.IsCheckAllSelection = function()
 {
 	return this.m_bCheckAllSelection;
 };
-CSelectedElementsInfo.prototype.RegisterRunWithReviewType = function(nReviewType)
+CSelectedElementsInfo.prototype.RegisterReviewType = function(nReviewType)
 {
 	switch (nReviewType)
 	{
-		case reviewtype_Add: this.m_bReviewAdd = true; break;
-		case reviewtype_Remove : this.m_bReviewRemove = true; break;
-		case reviewtype_Common: this.m_bReviewNormal = true; break;
-
+		case reviewtype_Common:
+		{
+			this.m_nReviewFlags |= 1;
+			break;
+		}
+		case reviewtype_Add:
+		{
+			this.m_nReviewFlags |= 2;
+			break;
+		}
+		case reviewtype_Remove:
+		{
+			this.m_nReviewFlags |= 4;
+			break;
+		}
 	}
 };
 CSelectedElementsInfo.prototype.HaveAddedInReview = function()
 {
-	return this.m_bReviewAdd;
+	return !!(this.m_nReviewFlags & 2);
 };
 CSelectedElementsInfo.prototype.HaveRemovedInReview = function()
 {
-	return this.m_bReviewRemove;
+	return !!(this.m_nReviewFlags & 4);
 };
 CSelectedElementsInfo.prototype.HaveNotReviewedContent = function()
 {
-	return this.m_bReviewNormal;
+	return !!(this.m_nReviewFlags & 1);
 };
 CSelectedElementsInfo.prototype.SetPresentationField = function(oField)
 {
@@ -2294,6 +2303,7 @@ CSelectedElementsInfo.prototype.IsFixedFormShape = function()
 {
 	return this.FixedFormShape;
 };
+
 
 function CDocumentSettings()
 {
