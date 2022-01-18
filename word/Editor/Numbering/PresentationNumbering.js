@@ -193,7 +193,6 @@ function CPresentationBullet()
 	this.m_nNum    = null;
 	this.m_sString = null;
 
-	this.m_oBlip = null;
 	this.m_sSrc = null;
 }
 
@@ -359,10 +358,8 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 		{
 			sT = this.m_sChar;
 		}
-	} else if (this.m_nType === numbering_presentationnumfrmt_Blip)
+	} else if (this.m_nType !== numbering_presentationnumfrmt_Blip)
 	{
-		this.m_sSrc = AscCommon.getFullImageSrc2(this.m_oBlip.blip.fill.RasterImageId);
-	} else {
 		var typeOfNum = getAdaptedNumberingFormat(this.m_nType);
 		var formatNum = IntToNumberFormat(Num, typeOfNum);
 		sT = this.getHighlightForNumbering(formatNum);
@@ -495,20 +492,18 @@ CPresentationBullet.prototype.Copy = function()
 	Bullet.m_dSize    = this.m_dSize;
 	Bullet.m_bSizeTx  = this.m_bSizeTx;
 	Bullet.m_bSizePct = this.m_bSizePct;
-	if (this.m_oBlip) {
-		Bullet.m_oBlip    = this.m_oBlip.createDuplicate();
-	}
+	Bullet.m_sSrc     = this.m_sSrc;
 
 	return Bullet;
 };
 
 CPresentationBullet.prototype.IsErrorInNumeration = function()
 {
-	return (null === this.m_oTextPr
+	return ((null === this.m_oTextPr
 		|| null === this.m_nNum
 		|| null == this.m_sString
 		|| this.m_sString.length === 0)
-		&& this.m_oBlip === null;
+		&& this.m_sSrc === null);
 }
 
 CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
