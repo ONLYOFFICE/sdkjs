@@ -5480,6 +5480,20 @@ function FormatRGBAColor()
         pReader.ReadBlip(this.blip);
     }
 
+    CBuBlip.prototype.Read_FromBinary = function (r) {
+        if (r.GetBool()) {
+            this.blip = new CUniFill();
+            this.blip.Read_FromBinary(r);
+        }
+    };
+
+    CBuBlip.prototype.Write_ToBinary = function (w) {
+        w.WriteBool(isRealObject(this.blip));
+        if (isRealObject(this.blip)) {
+            this.blip.Write_ToBinary(w);
+        }
+    };
+
     CBuBlip.prototype.compare = function (compareObj) {
         var ret = null;
         if (compareObj instanceof CBuBlip) {
@@ -11757,6 +11771,10 @@ CBulletType.prototype =
         {
             w.WriteLong(this.startAt);
         }
+        w.WriteBool(isRealObject(this.Blip));
+        if (isRealObject(this.Blip)) {
+            this.Blip.Write_ToBinary(w);
+        }
     },
 
     Read_FromBinary: function(r)
@@ -11780,6 +11798,10 @@ CBulletType.prototype =
         if(r.GetBool())
         {
             (this.startAt) = r.GetLong();
+        }
+        if (r.GetBool()) {
+            this.Blip = new CBuBlip();
+            this.Blip.Read_FromBinary(r);
         }
     }
 };
