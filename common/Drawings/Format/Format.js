@@ -11217,6 +11217,55 @@ function CompareBullets(bullet1, bullet2)
         this.bulletType.Blip.setBlip(AscFormat.CreateBlipFillUniFillFromUrl(url));
 
     }
+    CBullet.prototype.getImageBulletURL = function () {
+        return (this.bulletType
+          && this.bulletType.Blip
+          && this.bulletType.Blip.blip
+          && this.bulletType.Blip.blip.fill
+          && this.bulletType.Blip.blip.fill.RasterImageId);
+    }
+
+    CBullet.prototype.drawSquareImage = function () {
+        var url = this.getImageBulletURL();
+        if(!url || !editor){
+            return;
+        }
+        var oDiv = document.getElementById(this.DivId);
+        if(!oDiv){
+            return;
+        }
+        var aChildren = oDiv.children;
+        var oCanvas = null;
+        for(var i = 0; i < aChildren.length; ++i){
+            if(aChildren[i].nodeName && aChildren[i].nodeName.toUpperCase() === 'CANVAS'){
+                oCanvas = aChildren[i];
+                break;
+            }
+        }
+        var nWidth = oDiv.clientWidth;
+        var nHeight = oDiv.clientHeight;
+        if (nWidth !== nHeight) {
+            return;
+        }
+        if(null === oCanvas){
+            oCanvas = document.createElement('canvas');
+            oCanvas.width = parseInt(nWidth);
+            oCanvas.height = parseInt(nHeight);
+            oDiv.appendChild(oCanvas);
+        }
+        var oContext = oCanvas.getContext('2d');
+        oContext.clearRect(0, 0, oCanvas.width, oCanvas.height);
+        var _img = this.Api.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(url)];
+        if (_img != undefined && _img.Image != null && _img.Status != AscFonts.ImageLoadStatus.Loading)
+        {
+            var indent = nWidth * 0.125;
+            var _x = indent;
+            var _y = indent;
+            var _w = nWidth - indent;
+            var _h = nHeight - indent;
+            oContext.drawImage(_img.Image, _x, _y, _w, _h);
+        }
+    }
     //interface methods
     var prot = CBullet.prototype;
     prot.put_ImageUrl = function (sUrl, token) {
@@ -11232,7 +11281,7 @@ function CompareBullets(bullet1, bullet2)
                 var url = AscCommon.g_oDocumentUrls.imagePath2Local(data[0].path);
                 Api.ImageLoader.LoadImagesWithCallback([AscCommon.getFullImageSrc2(url)], function(){
                     _this.fillBulletImage(url);
-                    editor.WordControl.m_oLogicDocument.SetParagraphNumbering(this);
+                    _this.drawSquareImage();
                     _this.Api.sendEvent("asc_onBulletImageLoaded");
                 });
             }
@@ -11267,7 +11316,7 @@ function CompareBullets(bullet1, bullet2)
                               if(urls.length > 0)
                               {
                                   _this.fillBulletImage(urls[0]);
-                                  editor.WordControl.m_oLogicDocument.SetParagraphNumbering(this);
+                                  _this.drawSquareImage();
                                   t.sendEvent("asc_onBulletImageLoaded");
                               }
                               t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
