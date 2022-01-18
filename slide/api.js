@@ -2777,6 +2777,7 @@ background-repeat: no-repeat;\
 						that.put_ListType(undefined, undefined, blip);
 					}
 					this.ImageLoader.LoadImagesWithCallback([blipUrl], tryToSetImageBulletAgain);
+					return;
 				}
 			} else {
 				var changeBlipFillUrlToLocalAndTrySetImageBulletAgain = function (data) {
@@ -2785,6 +2786,7 @@ background-repeat: no-repeat;\
 					that.put_ListType(undefined, undefined, blip);
 				}
 				AscCommon.sendImgUrls(this, [blipUrl], changeBlipFillUrlToLocalAndTrySetImageBulletAgain, false, true, blip.token);
+				return;
 			}
 		}
 		var oPresentation = this.WordControl.m_oLogicDocument;
