@@ -5437,18 +5437,11 @@ function FormatRGBAColor()
     };
 
 
-    AscDFH.changesFactory[AscDFH.historyitem_BuBlipBlip] = CChangesDrawingsObjectNoId;
-    drawingsChangesMap[AscDFH.historyitem_BuBlipBlip] = function (oClass, value) {
-        oClass.blip = value;
-    };
     function CBuBlip() {
-        CBaseFormatObject.call(this);
         this.blip = null;
     }
-    InitClass(CBuBlip, CBaseFormatObject, AscDFH.historyitem_type_BuBlip);
 
     CBuBlip.prototype.setBlip = function (oPr) {
-        History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_BuBlipBlip, this.blip, oPr));
         this.blip = oPr;
     };
 
@@ -5456,11 +5449,17 @@ function FormatRGBAColor()
         if (this.blip) {
             oCopy.setBlip(this.blip.createDuplicate(oIdMap));
         }
-    }
+    };
+    
+    CBuBlip.prototype.createDuplicate = function () {
+        var oCopy = new CBuBlip();
+        this.fillObject(oCopy, {});
+        return oCopy;
+    };
 
     CBuBlip.prototype.getChildren = function () {
         return [this.blip];
-    }
+    };
 
     CBuBlip.prototype.toPPTY = function (pWriter) {
         var _src = this.blip.fill.RasterImageId;
@@ -5472,13 +5471,13 @@ function FormatRGBAColor()
 
         _src = pWriter.prepareRasterImageIdForWrite(_src);
         pWriter.WriteBlip(this.blip.fill, _src);
-    }
+    };
 
     CBuBlip.prototype.fromPPTY = function (pReader) {
         this.setBlip(new AscFormat.CUniFill());
         this.blip.setFill(new AscFormat.CBlipFill());
         pReader.ReadBlip(this.blip);
-    }
+    };
 
     CBuBlip.prototype.Read_FromBinary = function (r) {
         if (r.GetBool()) {
@@ -5503,7 +5502,7 @@ function FormatRGBAColor()
             }
         }
         return ret;
-    }
+    };
 
 function CompareUniFill(unifill_1, unifill_2)
 {
@@ -11851,6 +11850,16 @@ CBulletType.prototype =
         if (r.GetBool()) {
             this.Blip = new CBuBlip();
             this.Blip.Read_FromBinary(r);
+
+            var oUnifill = this.Blip.blip;
+            var sRasterImageId = oUnifill && oUnifill.fill && oUnifill.fill.RasterImageId;
+            if(typeof AscCommon.CollaborativeEditing !== "undefined")
+            {
+                if(typeof sRasterImageId === "string" && sRasterImageId.length > 0)
+                {
+                    AscCommon.CollaborativeEditing.Add_NewImage(sRasterImageId);
+                }
+            }
         }
     }
 };

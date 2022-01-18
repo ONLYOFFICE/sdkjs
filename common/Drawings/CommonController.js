@@ -11558,14 +11558,6 @@ function CalcLiterByLength(aAlphaBet, nLength)
         bullet.bulletType = new AscFormat.CBulletType();
         bullet.bulletType.type = AscFormat.BULLET_TYPE_BULLET_BLIP;
         bullet.bulletType.setBlip(buBlip);
-        var sRasterImageId = blip.fill.RasterImageId;
-        if(typeof AscCommon.CollaborativeEditing !== "undefined")
-        {
-            if(typeof sRasterImageId === "string" && sRasterImageId.length > 0)
-            {
-                AscCommon.CollaborativeEditing.Add_NewImage(sRasterImageId);
-            }
-        }
     }
 
 
