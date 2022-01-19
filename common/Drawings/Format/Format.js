@@ -5461,6 +5461,10 @@ function FormatRGBAColor()
         return [this.blip];
     };
 
+    CBuBlip.prototype.isEqual = function (oBlip) {
+        return this.blip.isEqual(oBlip.blip);
+    };
+
     CBuBlip.prototype.toPPTY = function (pWriter) {
         var _src = this.blip.fill.RasterImageId;
         var imageLocal = AscCommon.g_oDocumentUrls.getImageLocal(_src);
