@@ -2767,7 +2767,14 @@ background-repeat: no-repeat;\
 		var blipUrl = blip instanceof Asc.asc_CFillBlip && blip.url;
 		if (blipUrl) {
 			var that = this;
-			var checkImageUrlFromServer = AscFormat.checkRasterImageId(blipUrl);
+			var checkImageUrlFromServer;
+			var localUrl = AscCommon.g_oDocumentUrls.getLocal(blipUrl);
+			var fullUrl = AscCommon.g_oDocumentUrls.getUrl(blipUrl);
+			if (fullUrl) {
+				checkImageUrlFromServer = fullUrl;
+			} else if (localUrl) {
+				checkImageUrlFromServer = blipUrl;
+			}
 			if (checkImageUrlFromServer) {
 				blipUrl = checkImageUrlFromServer;
 				blip.url = blipUrl;
@@ -2781,7 +2788,7 @@ background-repeat: no-repeat;\
 				}
 			} else {
 				var changeBlipFillUrlToLocalAndTrySetImageBulletAgain = function (data) {
-					var uploadImageUrl = data[0].path;
+					var uploadImageUrl = data[0].url;
 					blip.url = uploadImageUrl;
 					that.put_ListType(undefined, undefined, blip);
 				}
