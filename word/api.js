@@ -1413,6 +1413,9 @@ background-repeat: no-repeat;\
 			}
 
 		});
+		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.registerEvent("onHyperlinkClick", function(url){
+			_t.sendEvent("asc_onHyperlinkClick", url);
+		});
 	};
 	asc_docs_api.prototype["asc_setViewerThumbnailsZoom"] = function(value) {
 		if (this.WordControl.m_oDrawingDocument.m_oDocumentRenderer &&
@@ -8196,6 +8199,16 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.OnMouseUp = function(x, y)
 	{
+		if (this.isUseNativeViewer)
+		{
+			if (this.WordControl && this.WordControl.m_oDrawingDocument && this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
+			{
+				this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.onMouseUp();
+				return;
+			}
+			return;
+		}
+
 		this.WordControl.onMouseUpExternal(x, y);
 	};
 

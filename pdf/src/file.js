@@ -230,6 +230,11 @@
         return this.nativeFile ? this.nativeFile["getLinks"](pageIndex) : [];
     };
 
+    CFile.prototype.getText = function(pageIndex)
+    {
+        return this.nativeFile ? this.nativeFile["getGlyphs"](pageIndex) : [];
+    };
+
     CFile.prototype.getPageBase64 = function(pageIndex, width, height)
 	{
 		var _canvas = this.getPage(pageIndex, width, height);
@@ -913,6 +918,8 @@ void main() {\n\
 
         var dKoefX = width / this.pages[pageIndex].W;
         var dKoefY = height / this.pages[pageIndex].H;
+        dKoefX *= (this.pages[pageIndex].Dpi / 25.4);
+        dKoefY *= (this.pages[pageIndex].Dpi / 25.4);
 
         while (stream.pos < stream.size)
         {
@@ -922,12 +929,12 @@ void main() {\n\
             {
                 case 41:
                 {
-                    s.Skip(12);
+                    stream.Skip(12);
                     break;
                 }
                 case 22:
                 {
-                    s.Skip(4);
+                    stream.Skip(4);
                     break;
                 }
                 case 80:
@@ -1043,10 +1050,10 @@ void main() {\n\
                     var rPR = AscCommon.AscBrowser.retinaPixelRatio;
                     if (_lineEx == 1 && _lineEy == 0)
                     {
-                        var _x = (rPR * (xDst + dKoefX * (_lineX + off1))) >> 0;
-                        var _r = (rPR * (xDst + dKoefX * (_lineX + off2))) >> 0;
-                        var _y = (rPR * (yDst + dKoefY * (_lineY - _lineAscent))) >> 0;
-                        var _b = (rPR * (yDst + dKoefY * (_lineY + _lineDescent))) >> 0;
+                        var _x = (rPR * (x + dKoefX * (_lineX + off1))) >> 0;
+                        var _r = (rPR * (x + dKoefX * (_lineX + off2))) >> 0;
+                        var _y = (rPR * (y + dKoefY * (_lineY - _lineAscent))) >> 0;
+                        var _b = (rPR * (y + dKoefY * (_lineY + _lineDescent))) >> 0;
 
                         if (_x < overlay.min_x)
                             overlay.min_x = _x;
@@ -1081,15 +1088,15 @@ void main() {\n\
                         var _x4 = _x3 + ortX * (_lineAscent + _lineDescent);
                         var _y4 = _y3 + ortY * (_lineAscent + _lineDescent);
 
-                        _x1 = rPR * (xDst + dKoefX * _x1);
-                        _x2 = rPR * (xDst + dKoefX * _x2);
-                        _x3 = rPR * (xDst + dKoefX * _x3);
-                        _x4 = rPR * (xDst + dKoefX * _x4);
+                        _x1 = rPR * (x + dKoefX * _x1);
+                        _x2 = rPR * (x + dKoefX * _x2);
+                        _x3 = rPR * (x + dKoefX * _x3);
+                        _x4 = rPR * (x + dKoefX * _x4);
 
-                        _y1 = rPR * (yDst + dKoefY * _y1);
-                        _y2 = rPR * (yDst + dKoefY * _y2);
-                        _y3 = rPR * (yDst + dKoefY * _y3);
-                        _y4 = rPR * (yDst + dKoefY * _y4);
+                        _y1 = rPR * (y + dKoefY * _y1);
+                        _y2 = rPR * (y + dKoefY * _y2);
+                        _y3 = rPR * (y + dKoefY * _y3);
+                        _y4 = rPR * (y + dKoefY * _y4);
 
                         overlay.CheckPoint(_x1, _y1);
                         overlay.CheckPoint(_x2, _y2);
@@ -1233,7 +1240,7 @@ void main() {\n\
                     curSpan.colorR = stream.GetUChar();
                     curSpan.colorG = stream.GetUChar();
                     curSpan.colorB = stream.GetUChar();
-                    s.Skip(1);
+                    stream.Skip(1);
                     isChangeSpan = true;
                     break;
                 }
@@ -1383,6 +1390,29 @@ void main() {\n\
                 }
             }
         }
+        return ret;
+    };
+
+    CFile.prototype.copy = function(_text_format)
+    {
+        var sel = this.Selection;
+        var page1 = sel.Page1;
+        var page2 = sel.Page2;
+
+        if (page2 < page1)
+        {
+            page1 = page2;
+            page2 = sel.Page1;
+        }
+
+        var ret = "<div>";
+        for (var i = page1; i <= page2; i++)
+        {
+            ret += this.CopySelection(i, _text_format);
+        }
+        ret += "</div>";
+
+        //console.log(ret);
         return ret;
     };
 

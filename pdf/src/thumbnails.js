@@ -440,8 +440,9 @@
     // очередь задач - нужно ли перерисоваться и/или перерисовать страницу
     CDocument.prototype.checkTasks = function(isViewerTask)
     {
+        var isNeedTasks = false;
         if (!this.isEnabled)
-            return;
+            return isNeedTasks;
 
         if (!isViewerTask && -1 != this.startBlock)
         {
@@ -467,6 +468,7 @@
 
             if (needPage)
             {
+                isNeedTasks = true;
                 needPage.page.image = this.viewer.file.getPage(needPage.num, needPage.pageRect.w, needPage.pageRect.h, true);
                 this.isRepaint = true;
             }
@@ -478,6 +480,8 @@
             this._paint();
             this.isRepaint = false;
         }
+
+        return isNeedTasks;
     };
 
     CDocument.prototype.updateCurrentPage = function(pageObject)

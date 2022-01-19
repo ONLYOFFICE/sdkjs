@@ -81,28 +81,37 @@
 		};
 	};
 
+	// wasm/asmjs module state
 	var ModuleState = {
 		None : 0,
 		Loading : 1,
 		Loaded : 2
 	};
 
+	// zoom mode
 	var ZoomMode = {
 		Custom : 0,
 		Width : 1,
 		Page : 2
 	};
 
+	// класс страницы.
+	// isPainted - значит она когда-либо рисовалась и дорисовалась до конца (шрифты загружены)
+	// links - гиперссылки. они запрашиваются ТОЛЬКО у страниц на экране и у отрисованных страниц.
+	// так как нет смысла запрашивать ссылки у невидимых страниц и у страниц, которые мы в данный момент не можем отрисовать
+	// text - текстовые команды. они запрашиваются всегда, если есть какая-то страница без текстовых команд
+	// страницы на экране в приоритете.
 	function CPageInfo()
 	{
-		this.isReady = false;
+		this.isPainted = false;
 		this.links = null;
-		this.text = null;
 	}
 	function CDocumentPagesInfo()
 	{
 		this.pages = [];
-		this.isCheck = false;
+
+		// все страницы ДО this.countCurrentPage должны иметь текстовые команды
+		this.countTextPages = 0;
 	}
 	CDocumentPagesInfo.prototype.setCount = function(count)
 	{
@@ -111,12 +120,11 @@
 		{
 			this.pages[i] = new CPageInfo();
 		}
+		this.countTextPages = 0;
 	};
-	CDocumentPagesInfo.prototype.checkPage = function(index)
+	CDocumentPagesInfo.prototype.setPainted = function(index)
 	{
-		this.pages[index].isReady = true;
-		if (null === this.pages[index].links)
-			this.isCheck = true;
+		this.pages[index].isPainted = true;
 	};
 
 	function CHtmlPage(id)
@@ -171,6 +179,9 @@
 
 		this.handlers = {};
 
+		this.overlay = null;
+		this.timerScrollSelect = -1;
+
 		this.SearchResults = {
 			IsSearch    : false,
 			Text        : "",
@@ -200,6 +211,10 @@
 
 			this.canvasOverlay = document.getElementById("id_overlay");
 			this.canvasOverlay.style.pointerEvents = "none";
+
+			this.overlay = new AscCommon.COverlay();
+			this.overlay.m_oControl = { HtmlElement : this.canvasOverlay };
+			this.overlay.m_bIsShow = true;
 		};
 		this.createComponents();
 
@@ -291,20 +306,33 @@
 
 		this.timer = function()
 		{
+			// в порядке важности
+
+			// 1) отрисовка
+			// 2) гиперссылки для видимых (и уже отрисованных!) страниц
+			// 3) табнейлы (если надо)
+			// 4) текстовые команды
+
 			var isViewerTask = oThis.isRepaint;
 			if (oThis.isRepaint)
 			{
 				oThis._paint();
+				oThis.onUpdateOverlay();
 				oThis.isRepaint = false;
 			}
-			else if (oThis.checkPageInfos())
+			else if (oThis.checkPagesLinks())
 			{
 				isViewerTask = true;
 			}
 
 			if (oThis.thumbnails)
 			{
-				oThis.thumbnails.checkTasks(isViewerTask);
+				isViewerTask = oThis.thumbnails.checkTasks(isViewerTask);
+			}
+
+			if (!isViewerTask)
+			{
+				oThis.checkPagesText();
 			}
 
 			if (!oThis.UseRequestAnimationFrame)
@@ -512,7 +540,19 @@
 
 		this.onUpdatePages = function(pages) 
 		{
-			// TODO: проверить, есть ли страницы на экране
+			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
+				return false;
+
+			var isRepaint = false;
+			for (var i = 0, len = pages.length; i < len; i++)
+			{
+				if (pages[i] >= this.startVisiblePage && pages[i] <= this.endVisiblePage)
+				{
+					isRepaint = true;
+					break;
+				}
+			}
+
 			this.paint();
 		};
 
@@ -666,6 +706,7 @@
 		this.setMouseLockMode = function(isEnabled)
 		{
 			this.MouseHandObject = isEnabled ? {} : null;
+			this.overlay.Clear();
 		};
 
 		this.navigate = function(id)
@@ -693,6 +734,23 @@
 			var posY = drawingPage.Y;
 			posY -= this.betweenPages;
 			this.m_oScrollVerApi.scrollToY(posY);
+		};
+
+		this.navigateToLink = function(link)
+		{
+			if ("" === link["link"])
+				return;
+
+			if ("#" === link["link"].charAt(0))
+			{
+				this.navigateToPage(parseInt(link["link"].substring(1)));
+			}
+			else
+			{
+				this.sendEvent("onHyperlinkClick", link["link"]);
+			}
+
+			//console.log(link["link"]);
 		};
 
 		this.setTargetType = function(type)
@@ -758,37 +816,39 @@
 
 		this.onMouseDown = function(e)
 		{
+			AscCommon.stopEvent(e);
+
 			if (!oThis.file || !oThis.file.isValid())
 				return;
 
 			AscCommon.check_MouseDownEvent(e, true);
 			AscCommon.global_mouseEvent.LockMouse();
 
-			if (oThis.MouseHandObject)
+			if (AscCommon.global_keyboardEvent.CtrlKey)
 			{
-				if (AscCommon.global_keyboardEvent.CtrlKey)
+				var pageObject = oThis.getPageByCoords(AscCommon.global_mouseEvent.X - oThis.x, AscCommon.global_mouseEvent.Y - oThis.y);
+				if (pageObject)
 				{
-					var pageObject = oThis.getPageByCoords(AscCommon.global_mouseEvent.X - oThis.x, AscCommon.global_mouseEvent.Y - oThis.y);
-					if (pageObject)
+					// links
+					var pageLinks = oThis.pagesInfo.pages[pageObject.index];
+					if (pageLinks.links)
 					{
-						// links
-						var pageLinks = oThis.pagesInfo.pages[pageObject.index];
-						if (pageLinks.links)
+						for (var i = 0, len = pageLinks.links.length; i < len; i++)
 						{
-							for (var i = 0, len = pageLinks.links.length; i < len; i++)
+							if (pageObject.x >= pageLinks.links[i]["x"] && pageObject.x <= (pageLinks.links[i]["x"] + pageLinks.links[i]["w"]) &&
+								pageObject.y >= pageLinks.links[i]["y"] && pageObject.y <= (pageLinks.links[i]["y"] + pageLinks.links[i]["h"]))
 							{
-								if (pageObject.x >= pageLinks.links[i]["x"] && pageObject.x <= (pageLinks.links[i]["x"] + pageLinks.links[i]["w"]) &&
-									pageObject.y >= pageLinks.links[i]["y"] && pageObject.y <= (pageLinks.links[i]["y"] + pageLinks.links[i]["h"]))
-								{
-									oThis.setCursorType("pointer");
-									console.log(pageLinks.links[i]["link"]);
-									return;
-								}
+								oThis.setCursorType("pointer");
+								oThis.navigateToLink(pageLinks.links[i]);
+								return;
 							}
 						}
 					}
 				}
+			}
 
+			if (oThis.MouseHandObject)
+			{
 				oThis.MouseHandObject.X = AscCommon.global_mouseEvent.X;
 				oThis.MouseHandObject.Y = AscCommon.global_mouseEvent.Y;
 				oThis.MouseHandObject.Active = true;
@@ -798,13 +858,41 @@
 				return;
 			}
 
-			// TODO: SELECT
+			var pageObjectLogic = oThis.getPageByCoords2(AscCommon.global_mouseEvent.X - oThis.x, AscCommon.global_mouseEvent.Y - oThis.y);
+			oThis.file.onMouseDown(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+			oThis.onUpdateOverlay();
+
+			if (-1 === oThis.timerScrollSelect && AscCommon.global_mouseEvent.IsLocked)
+			{
+				oThis.timerScrollSelect = setInterval(oThis.selectWheel, 20);
+			}
 		};
 		
 		this.onMouseUp = function(e)
 		{
+			AscCommon.stopEvent(e);
+
 			if (!oThis.file || !oThis.file.isValid())
 				return;
+
+			if (!e)
+			{
+				// здесь - имитируем моус мув ---------------------------
+				e   = {};
+				e.pageX = AscCommon.global_mouseEvent.X;
+				e.pageY = AscCommon.global_mouseEvent.Y;
+
+				e.clientX = AscCommon.global_mouseEvent.X;
+				e.clientY = AscCommon.global_mouseEvent.Y;
+
+				e.altKey   = AscCommon.global_mouseEvent.AltKey;
+				e.shiftKey = AscCommon.global_mouseEvent.ShiftKey;
+				e.ctrlKey  = AscCommon.global_mouseEvent.CtrlKey;
+				e.metaKey  = AscCommon.global_mouseEvent.CtrlKey;
+
+				e.srcElement = AscCommon.global_mouseEvent.Sender;
+				// ------------------------------------------------------
+			}
 
 			AscCommon.check_MouseUpEvent(e);
 			if (oThis.MouseHandObject && oThis.MouseHandObject.Active)
@@ -814,7 +902,14 @@
 				return;
 			}
 
-			// TODO: SELECT
+			oThis.file.onMouseUp();
+			oThis.onUpdateOverlay();
+
+			if (-1 !== oThis.timerScrollSelect)
+			{
+				clearInterval(oThis.timerScrollSelect);
+				oThis.timerScrollSelect = -1;
+			}
 		};
 
 		this.onMouseMove = function(e)
@@ -823,6 +918,7 @@
 				return;
 
 			AscCommon.check_MouseMoveEvent(e);
+
 			if (oThis.MouseHandObject)
 			{
 				if (oThis.MouseHandObject.Active)
@@ -852,7 +948,7 @@
 			}
 
 			var pageObject = oThis.getPageByCoords(AscCommon.global_mouseEvent.X - oThis.x, AscCommon.global_mouseEvent.Y - oThis.y);
-			if (pageObject)
+			if (pageObject && !oThis.file.Selection.IsSelection)
 			{
 				// links
 				var pageLinks = oThis.pagesInfo.pages[pageObject.index];
@@ -876,10 +972,15 @@
 			}
 			else
 			{
-				oThis.setCursorType("arrow");
+				oThis.setCursorType("default");
+
+				var pageObjectLogic = oThis.getPageByCoords2(AscCommon.global_mouseEvent.X - oThis.x, AscCommon.global_mouseEvent.Y - oThis.y);
+				oThis.file.onMouseMove(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+
+				oThis.onUpdateOverlay();
 			}
-			
-			// TODO: SELECT
+
+			AscCommon.stopEvent(e);
 		};
 
 		this.onMouseWhell = function(e)
@@ -896,13 +997,10 @@
 			else
 				_ctrl = e.ctrlKey;
 
+			AscCommon.stopEvent(e);
+
 			if (true === _ctrl)
 			{
-				if (e.preventDefault)
-					e.preventDefault();
-				else
-					e.returnValue = false;
-
 				return false;
 			}
 
@@ -971,12 +1069,87 @@
 			oThis.onMouseMove(_e);
 			// ------------------------------------------------------
 
-			if (e.preventDefault)
-				e.preventDefault();
-			else
-				e.returnValue = false;
-
 			return false;
+		};
+
+		this.selectWheel = function()
+		{
+			if (!oThis.file || !oThis.file.isValid())
+				return;
+
+			if (oThis.MouseHandObject)
+				return;
+
+			var positionMinY = oThis.y;
+			var positionMaxY = oThis.y + oThis.height;
+
+			var scrollYVal = 0;
+			if (global_mouseEvent.Y < positionMinY)
+			{
+				var delta = 30;
+				if (20 > (positionMinY - global_mouseEvent.Y))
+					delta = 10;
+
+				scrollYVal = -delta;
+			}
+			else if (global_mouseEvent.Y > positionMaxY)
+			{
+				var delta = 30;
+				if (20 > (global_mouseEvent.Y - positionMaxY))
+					delta = 10;
+
+				scrollYVal = delta;
+			}
+
+			var scrollXVal = 0;
+			if (oThis.isVisibleHorScroll)
+			{
+				var positionMinX = oThis.x;
+				var positionMaxX = oThis.x + oThis.width;
+
+				if (global_mouseEvent.X < positionMinX)
+				{
+					var delta = 30;
+					if (20 > (positionMinX - global_mouseEvent.X))
+						delta = 10;
+
+					scrollXVal = -delta;
+				}
+				else if (global_mouseEvent.X > positionMaxX)
+				{
+					var delta = 30;
+					if (20 > (global_mouseEvent.X - positionMaxX))
+						delta = 10;
+
+					scrollXVal = delta;
+				}
+			}
+
+			if (0 != scrollYVal)
+				oThis.m_oScrollVerApi.scrollByY(scrollYVal, false);
+			if (0 != scrollXVal)
+				oThis.m_oScrollHorApi.scrollByX(scrollXVal, false);
+
+			if (scrollXVal != 0 || scrollYVal != 0)
+			{
+				// здесь - имитируем моус мув ---------------------------
+				var _e   = {};
+				_e.pageX = AscCommon.global_mouseEvent.X;
+				_e.pageY = AscCommon.global_mouseEvent.Y;
+
+				_e.clientX = AscCommon.global_mouseEvent.X;
+				_e.clientY = AscCommon.global_mouseEvent.Y;
+
+				_e.altKey   = AscCommon.global_mouseEvent.AltKey;
+				_e.shiftKey = AscCommon.global_mouseEvent.ShiftKey;
+				_e.ctrlKey  = AscCommon.global_mouseEvent.CtrlKey;
+				_e.metaKey  = AscCommon.global_mouseEvent.CtrlKey;
+
+				_e.srcElement = AscCommon.global_mouseEvent.Sender;
+
+				oThis.onMouseMove(_e);
+				// ------------------------------------------------------
+			}
 		};
 
 		this.paint = function()
@@ -990,6 +1163,170 @@
 				return null;
 			var res = this.file.structure();
 			return res;
+		};
+
+		this.drawSearchPlaces = function(dKoefX, dKoefY, xDst, yDst, places)
+		{
+			var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+			var len = places.length;
+
+			var ctx = this.overlay.m_oContext;
+			ctx.fillStyle = "rgba(51,102,204,255)";
+
+			for (var i = 0; i < len; i++)
+			{
+				var place = places[i];
+				if (undefined === place.Ex)
+				{
+					var _x = (rPR * (xDst + dKoefX * place.X)) >> 0;
+					var _y = (rPR * (yDst + dKoefY * place.Y)) >> 0;
+
+					var _w = (rPR * (dKoefX * place.W)) >> 0;
+					var _h = (rPR * (dKoefY * place.H)) >> 0;
+
+					if (_x < overlay.min_x)
+						overlay.min_x = _x;
+					if ((_x + _w) > overlay.max_x)
+						overlay.max_x = _x + _w;
+
+					if (_y < overlay.min_y)
+						overlay.min_y = _y;
+					if ((_y + _h) > overlay.max_y)
+						overlay.max_y = _y + _h;
+
+					ctx.rect(_x, _y, _w, _h);
+				}
+				else
+				{
+					var _x1 = (rPR * (xDst + dKoefX * place.X)) >> 0;
+					var _y1 = (rPR * (yDst + dKoefY * place.Y)) >> 0;
+
+					var x2 = place.X + place.W * place.Ex;
+					var y2 = place.Y + place.W * place.Ey;
+					var _x2 = (rPR * (xDst + dKoefX * x2)) >> 0;
+					var _y2 = (rPR * (yDst + dKoefY * y2)) >> 0;
+
+					var x3 = x2 - place.H * place.Ey;
+					var y3 = y2 + place.H * place.Ex;
+					var _x3 = (rPR * (xDst + dKoefX * x3)) >> 0;
+					var _y3 = (rPR * (yDst + dKoefY * y3)) >> 0;
+
+					var x4 = place.X - place.H * place.Ey;
+					var y4 = place.Y + place.H * place.Ex;
+					var _x4 = (rPR * (xDst + dKoefX * x4)) >> 0;
+					var _y4 = (rPR * (yDst + dKoefY * y4)) >> 0;
+
+					overlay.CheckPoint(_x1, _y1);
+					overlay.CheckPoint(_x2, _y2);
+					overlay.CheckPoint(_x3, _y3);
+					overlay.CheckPoint(_x4, _y4);
+
+					ctx.moveTo(_x1, _y1);
+					ctx.lineTo(_x2, _y2);
+					ctx.lineTo(_x3, _y3);
+					ctx.lineTo(_x4, _y4);
+					ctx.lineTo(_x1, _y1);
+				}
+			}
+
+			ctx.fill();
+			ctx.beginPath();
+		};
+
+		this.drawSearchCur = function(pageIndex, places)
+		{
+			var pageCoords = this.pageDetector.pages[pageIndex - this.startVisiblePage];
+			if (!pageCoords)
+				return;
+
+			var dKoefX = pageCoords.w / this.file.pages[pageIndex].W;
+			var dKoefY = pageCoords.h / this.file.pages[pageIndex].H;
+
+			ctx.fillStyle = "rgba(51,102,204,255)";
+
+			this.drawSearchPlaces(dKoefX, dKoefY, pageCoords.x, pageCoords.y, places);
+
+			ctx.fill();
+			ctx.beginPath();
+		};
+
+		this.drawSearch = function (pageIndex, searchingObj)
+		{
+			var pageCoords = this.pageDetector.pages[pageIndex - this.startVisiblePage];
+			if (!pageCoords)
+				return;
+
+			var dKoefX = pageCoords.w / this.file.pages[pageIndex].W;
+			var dKoefY = pageCoords.h / this.file.pages[pageIndex].H;
+			var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+
+			var ctx = this.overlay.m_oContext;
+			for (var i = 0; i < searchingObj.length; i++)
+			{
+				this.drawSearchPlaces(dKoefX, dKoefY, pageCoords.x, pageCoords.y, searchingObj[i]);
+			}
+		};
+
+		this.onUpdateOverlay = function()
+		{
+			this.overlay.Clear()
+
+			if (this.MouseHandObject)
+				return;
+
+			if (!this.file)
+				return;
+
+			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
+				return;
+
+			// seletion
+			var ctx = this.overlay.m_oContext;
+			ctx.globalAlpha = 0.2;
+
+			if (this.file.SearchResults.IsSearch)
+			{
+				if (this.file.SearchResults.Show)
+				{
+					ctx.globalAlpha = 0.5;
+					ctx.fillStyle = "rgba(255,200,0,1)";
+					ctx.beginPath();
+
+					for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
+					{
+						var searchingObj = this.file.SearchResults.Pages[i];
+						if (0 != searchingObj.length)
+							this.drawSearch(i, searchingObj);
+					}
+
+					ctx.fill();
+					ctx.globalAlpha = 0.2;
+				}
+				ctx.beginPath();
+
+				if (this.CurrentSearchNavi && this.file.SearchResults.Show)
+				{
+					var pageNum  = this.CurrentSearchNavi[0].PageNum;
+					ctx.fillStyle = "rgba(51,102,204,255)";
+					if (pageNum >= this.startVisiblePage && pageNum <= this.endVisiblePage)
+					{
+						this.drawSearchCur(pageNum, this.CurrentSearchNavi);
+					}
+				}
+			}
+
+			ctx.fillStyle = "rgba(51,102,204,255)";
+			ctx.beginPath();
+
+			for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
+			{
+				var pageCoords = this.pageDetector.pages[i - this.startVisiblePage];
+				this.file.drawSelection(i, this.overlay, pageCoords.x, pageCoords.y, pageCoords.w, pageCoords.h);
+			}
+
+			ctx.fill();
+			ctx.beginPath();
+			ctx.globalAlpha = 1.0;
 		};
 
 		this._paint = function()
@@ -1080,7 +1417,7 @@
 				if (page.Image)
 				{
 					ctx.drawImage(page.Image, 0, 0, w, h, x, y, w, h);
-					this.pagesInfo.checkPage(i);
+					this.pagesInfo.setPainted(i);
 				}
 				else
 				{
@@ -1095,25 +1432,66 @@
 			this.updateCurrentPage(this.pageDetector.getCurrentPage());
 		};
 
-		this.checkPageInfos = function()
+		this.checkPagesLinks = function()
 		{
-			if (!this.pagesInfo.isCheck)
-				return false;
-
-			this.pagesInfo.isCheck = false;
 			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
 				return false;
 
 			for (var i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 			{
 				var page = this.pagesInfo.pages[i];
-				if (page.isReady && null === page.links)
+				if (page.isPainted && null === page.links)
 				{
 					page.links = this.file.getLinks(i);
+					return true;
 				}
 			}
 
-			return true;
+			return false;
+		};
+
+		this.checkPagesText = function()
+		{
+			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
+				return false;
+
+			var pagesCount = this.pagesInfo.pages.length;
+			if (this.pagesInfo.countTextPages === pagesCount)
+				return false;
+
+			var isCommands = false;
+			for (var i = this.startVisiblePage; i <= this.endVisiblePage; i++)
+			{
+				if (null == this.file.pages[i].text)
+				{
+					this.file.pages[i].text = this.file.getText(i);
+					isCommands = true;
+				}
+			}
+
+			if (!isCommands)
+			{
+				while (this.pagesInfo.countTextPages < pagesCount)
+				{
+					// мы могли уже получить команды, так как видимые страницы в приоритете
+					if (null != this.file.pages[this.pagesInfo.countTextPages].text)
+					{
+						this.pagesInfo.countTextPages++;
+						continue;
+					}
+
+					this.file.pages[this.pagesInfo.countTextPages].text = this.file.getText(this.pagesInfo.countTextPages);
+					if (null != this.file.pages[this.pagesInfo.countTextPages].text)
+					{
+						this.pagesInfo.countTextPages++;
+						isCommands = true;
+					}
+
+					break;
+				}
+			}
+
+			return isCommands;
 		};
 
 		this.getPageByCoords = function(x, y)
@@ -1134,153 +1512,39 @@
 					};
 				}
 			}
+			return null;
+		};
+
+		this.getPageByCoords2 = function(x, y)
+		{
+			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
+				return null;
+
+			var pageCoords = null;
+			var pageIndex = 0;
+			for (pageIndex = this.startVisiblePage; pageIndex <= this.endVisiblePage; pageIndex++)
+			{
+				var pageCoords = this.pageDetector.pages[pageIndex - this.startVisiblePage];
+				if ((pageCoords.y + pageCoords.h) > y)
+					break;
+			}
+
+			var pixToMM = (25.4 / this.file.pages[pageIndex].Dpi);
+			return {
+				index : pageIndex,
+				x : this.file.pages[pageIndex].W * pixToMM * (x - pageCoords.x) / pageCoords.w,
+				y : this.file.pages[pageIndex].H * pixToMM * (y - pageCoords.y) / pageCoords.h
+			};
 		};
 
 		this.Copy = function(_text_format)
 		{
-			var ret = "<div>";
-			if (_text_format && _text_format.Text)
-				_text_format.Text = "";
-
-			ret += "</div>";
-			return ret;
+			return this.file.copy(_text_format);
 		};
 
 		this.findText = function(text, isMachingCase, isNext)
 		{
-			this.SearchResults.IsSearch = true;
-			if (text === this.SearchResults.Text && isMachingCase === this.SearchResults.MachingCase)
-			{
-				if (this.SearchResults.Count === 0)
-				{
-					editor.WordControl.m_oDrawingDocument.CurrentSearchNavi = null;
-					this.SearchResults.CurrentPage = -1;
-					this.SearchResults.Current = -1;
-					return;
-				}
-
-				// поиск совпал, просто делаем навигацию к нужному месту
-				if (isNext)
-				{
-					if ((this.SearchResults.Current + 1) < this.SearchResults.Pages[this.SearchResults.CurrentPage].length)
-					{
-						// результат на этой же странице
-						this.SearchResults.Current++;
-					}
-					else
-					{
-						var _pageFind = this.SearchResults.CurrentPage + 1;
-						var _bIsFound = false;
-						for (var i = _pageFind; i < this.PagesCount; i++)
-						{
-							if (0 < this.SearchResults.Pages[i].length)
-							{
-								this.SearchResults.Current = 0;
-								this.SearchResults.CurrentPage = i;
-								_bIsFound = true;
-								break;
-							}
-						}
-						if (!_bIsFound)
-						{
-							for (var i = 0; i < _pageFind; i++)
-							{
-								if (0 < this.SearchResults.Pages[i].length)
-								{
-									this.SearchResults.Current = 0;
-									this.SearchResults.CurrentPage = i;
-									_bIsFound = true;
-									break;
-								}
-							}
-						}
-					}
-				}
-				else
-				{
-					if (this.SearchResults.Current > 0)
-					{
-						// результат на этой же странице
-						this.SearchResults.Current--;
-					}
-					else
-					{
-						var _pageFind = this.SearchResults.CurrentPage - 1;
-						var _bIsFound = false;
-						for (var i = _pageFind; i >= 0; i--)
-						{
-							if (0 < this.SearchResults.Pages[i].length)
-							{
-								this.SearchResults.Current = this.SearchResults.Pages[i].length - 1;
-								this.SearchResults.CurrentPage = i;
-								_bIsFound = true;
-								break;
-							}
-						}
-						if (!_bIsFound)
-						{
-							for (var i = this.PagesCount - 1; i > _pageFind; i--)
-							{
-								if (0 < this.SearchResults.Pages[i].length)
-								{
-									this.SearchResults.Current = this.SearchResults.Pages[i].length - 1;
-									this.SearchResults.CurrentPage = i;
-									_bIsFound = true;
-									break;
-								}
-							}
-						}
-					}
-				}
-
-				editor.WordControl.m_oDrawingDocument.CurrentSearchNavi =
-					this.SearchResults.Pages[this.SearchResults.CurrentPage][this.SearchResults.Current];
-
-				editor.WordControl.ToSearchResult();
-				return;
-			}
-			// новый поиск
-			for (var i = 0; i < this.PagesCount; i++)
-			{
-				this.SearchResults.Pages[i].splice(0,  this.SearchResults.Pages[i].length);
-			}
-			this.SearchResults.Count = 0;
-
-			this.SearchResults.CurrentPage = -1;
-			this.SearchResults.Current = -1;
-
-			this.SearchResults.Text = text;
-			this.SearchResults.MachingCase = isMachingCase;
-
-			for (var i = 0; i < this.PagesCount; i++)
-			{
-				// TODO: Search
-				// this.SearchPage2(i);
-				this.SearchResults.Count += this.SearchResults.Pages[i].length;
-			}
-
-			if (this.SearchResults.Count == 0)
-			{
-				editor.WordControl.m_oDrawingDocument.CurrentSearchNavi = null;
-				editor.WordControl.OnUpdateOverlay();
-				return;
-			}
-
-			for (var i = 0; i < this.SearchResults.Pages.length; i++)
-			{
-				if (0 != this.SearchResults.Pages[i].length)
-				{
-					this.SearchResults.CurrentPage = i;
-					this.SearchResults.Current = 0;
-
-					break;
-				}
-			}
-
-			editor.WordControl.m_oDrawingDocument.CurrentSearchNavi =
-				this.SearchResults.Pages[this.SearchResults.CurrentPage][this.SearchResults.Current];
-
-			editor.WordControl.ToSearchResult();
+			this.file.findText(text, isMachingCase, isNext);
 		};
 	}
 
