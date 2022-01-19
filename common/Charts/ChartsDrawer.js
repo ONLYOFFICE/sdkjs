@@ -1882,7 +1882,7 @@ CChartsDrawer.prototype =
 		}
 		
 		if (isNaN(step) || step === 0) {
-			arrayValues = [0, 0.2, 0.4, 0.6, 0.8, 1, 1.2];
+			arrayValues = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
 		} else {
 			arrayValues = this._getArrayDataValues(step, axisMin, axisMax, manualMin, manualMax);
 		}
