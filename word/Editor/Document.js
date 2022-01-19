@@ -9712,7 +9712,7 @@ CDocument.prototype.CloseAllWindowsPopups = function()
 
 	// Закрываем балун с рецензированием
 	this.TrackRevisionsManager.BeginCollectChanges(false);
-	this.TrackRevisionsManager.EndCollectChanges(this);
+	this.TrackRevisionsManager.EndCollectChanges();
 
 	// Закрываем балун с комментариями
 	this.SelectComment(null, false);
@@ -12754,7 +12754,7 @@ CDocument.prototype.Document_UpdateInterfaceState = function(bSaveCurRevisionCha
 {
 	this.UpdateInterface(bSaveCurRevisionChange);
 };
-CDocument.prototype.private_UpdateInterface = function(bSaveCurRevisionChange, isExternalTrigger)
+CDocument.prototype.private_UpdateInterface = function(isSaveCurrentReviewChange, isExternalTrigger)
 {
 	if (!this.Api.isDocumentLoadComplete || true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
 		return;
@@ -12768,16 +12768,15 @@ CDocument.prototype.private_UpdateInterface = function(bSaveCurRevisionChange, i
 	// Удаляем весь список
 	this.Api.sync_BeginCatchSelectedElements();
 
-	this.TrackRevisionsManager.BeginCollectChanges(bSaveCurRevisionChange);
-
 	// Уберем из интерфейса записи о том где мы находимся (параграф, таблица, картинка или колонтитул)
 	this.Api.ClearPropObjCallback();
 
 	this.Controller.UpdateInterfaceState();
-	this.TrackRevisionsManager.EndCollectChanges(this);
 
 	// Сообщаем, что список составлен
 	this.Api.sync_EndCatchSelectedElements(isExternalTrigger);
+
+	this.UpdateSelectedReviewChanges(isSaveCurrentReviewChange);
 
 	this.Document_UpdateUndoRedoState();
 	this.Document_UpdateCanAddHyperlinkState();
@@ -12956,6 +12955,12 @@ CDocument.prototype.private_UpdateTracks = function(bSelection, bEmptySelection)
 		this.DrawingDocument.ClearCachePages();
 		this.DrawingDocument.FirePaint();
 	}
+};
+CDocument.prototype.UpdateSelectedReviewChanges = function(isSaveCurrentReviewChange)
+{
+	this.TrackRevisionsManager.BeginCollectChanges(isSaveCurrentReviewChange);
+	this.Controller.CollectSelectedReviewChanges(this.TrackRevisionsManager);
+	this.TrackRevisionsManager.EndCollectChanges();
 };
 CDocument.prototype.Document_UpdateUndoRedoState = function()
 {
@@ -14433,7 +14438,7 @@ CDocument.prototype.Viewer_OnChangePosition = function()
 		this.Api.sync_UpdateCommentPosition(oComment.GetId(), oAnchorPoint.X, oAnchorPoint.Y);
 	}
     window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Update_Position();
-	this.TrackRevisionsManager.Update_VisibleChangesPosition(this.Api);
+	this.TrackRevisionsManager.UpdateSelectedChangesPosition(this.Api);
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для работы с секциями
@@ -22244,6 +22249,24 @@ CDocument.prototype.controller_IsTableCellSelection = function()
 {
 	return (this.Selection.Use && this.Selection.StartPos === this.Selection.EndPos && this.Content[this.Selection.StartPos].IsTable() && this.Content[this.Selection.StartPos].IsTableCellSelection());
 };
+CDocument.prototype.controller_CollectSelectedReviewChanges = function(oTrackManager)
+{
+	var isUseSelection = this.Selection.Use;
+
+	var nStartPos = isUseSelection ? this.Selection.StartPos : this.CurPos.ContentPos;
+	var nEndPos   = isUseSelection ? this.Selection.EndPos   : this.CurPos.ContentPos;
+	if (nStartPos > nEndPos)
+	{
+		var nTemp = nStartPos;
+		nStartPos = nEndPos;
+		nEndPos   = nTemp;
+	}
+
+	for (var nPos = nStartPos; nPos <= nEndPos; ++nPos)
+	{
+		this.Content[nPos].CollectSelectedReviewChanges(oTrackManager);
+	}
+};
 //----------------------------------------------------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------------------------------------------------
@@ -26774,6 +26797,22 @@ CDocument.prototype.DocxfToDocx = function(isUseHistory)
 		this.FinalizeAction();
 	}
 };
+/**
+ * Получаем массив всех изменений совместного редактирования, попавших в текущее выделение
+ * @returns {[]}
+ */
+CDocument.prototype.GetCurrentReviewChanges = function()
+{
+	var oCurChange
+	if ((oCurChange = this.TrackRevisionsManager.GetCurrentChange()))
+		return [oCurChange];
+
+	var arrReviewChanges = [];
+
+	this.Controller.GetCurrentReviewChanges(arrReviewChanges);
+
+	return arrReviewChanges;
+};
 
 function CDocumentSelectionState()
 {
@@ -27394,8 +27433,11 @@ function CTrackRevisionsManager(oLogicDocument)
 	this.ChangesOutline    = [];   // Упорядоченный массив с объектами, в которых есть изменения в рецензировании
 	this.CurChange         = null; // Текущее изменение
 	this.CurElement        = null; // Элемент с текущим изменением
-	this.VisibleChanges    = [];   // Изменения, которые отображаются в сплывающем окне
-	this.OldVisibleChanges = [];
+
+	this.SelectedChanges     = [];    // Список изменений, попавших в выделение
+	this.PrevSelectedChanges = [];
+	this.PrevTextSelection   = false;
+
 
 	this.MoveId      = 1;
 	this.MoveMarks   = {};
@@ -27799,22 +27841,22 @@ CTrackRevisionsManager.prototype.GetCurrentChange = function()
 {
     return this.CurChange;
 };
-CTrackRevisionsManager.prototype.Clear_VisibleChanges = function()
+CTrackRevisionsManager.prototype.ClearSelectedChanges = function()
 {
-	if (this.VisibleChanges.length > 0)
+	if (this.SelectedChanges.length > 0)
 	{
-		var oEditorApi = this.LogicDocument.Get_Api();
+		var oEditorApi = this.LogicDocument.GetApi();
 		oEditorApi.sync_BeginCatchRevisionsChanges();
 		oEditorApi.sync_EndCatchRevisionsChanges();
 	}
 
-    this.VisibleChanges = [];
+    this.SelectedChanges = [];
 };
 /**
  * Добавляем изменение, видимое в текущей позиции
  * @param oChange
  */
-CTrackRevisionsManager.prototype.AddVisibleChange = function(oChange)
+CTrackRevisionsManager.prototype.AddSelectedChange = function(oChange)
 {
 	if (this.CurChange)
 		return;
@@ -27825,9 +27867,9 @@ CTrackRevisionsManager.prototype.AddVisibleChange = function(oChange)
 	if (oChange.IsMove() && !oChange.IsComplexChange())
 		oChange = this.CollectMoveChange(oChange);
 
-	for (var nIndex = 0, nCount = this.VisibleChanges.length; nIndex < nCount; ++nIndex)
+	for (var nIndex = 0, nCount = this.SelectedChanges.length; nIndex < nCount; ++nIndex)
 	{
-		var oVisChange = this.VisibleChanges[nIndex];
+		var oVisChange = this.SelectedChanges[nIndex];
 		if (oVisChange.IsComplexChange() && !oChange.IsComplexChange())
 		{
 			var arrSimpleChanges = oVisChange.GetSimpleChanges();
@@ -27844,7 +27886,7 @@ CTrackRevisionsManager.prototype.AddVisibleChange = function(oChange)
 			{
 				if (arrSimpleChanges[nSimpleIndex] === oVisChange)
 				{
-					this.VisibleChanges.splice(nIndex, 1);
+					this.SelectedChanges.splice(nIndex, 1);
 					nCount--;
 					nIndex--;
 					break;
@@ -27879,19 +27921,20 @@ CTrackRevisionsManager.prototype.AddVisibleChange = function(oChange)
 		}
 	}
 
-    this.VisibleChanges.push(oChange);
+    this.SelectedChanges.push(oChange);
 };
-CTrackRevisionsManager.prototype.Get_VisibleChanges = function()
+CTrackRevisionsManager.prototype.GetSelectedChanges = function()
 {
-    return this.VisibleChanges;
+    return this.SelectedChanges;
 };
 CTrackRevisionsManager.prototype.BeginCollectChanges = function(bSaveCurrentChange)
 {
     if (!this.private_IsAllParagraphsChecked())
         return;
 
-	this.OldVisibleChanges = this.VisibleChanges;
-	this.VisibleChanges = [];
+	this.PrevSelectedChanges = this.SelectedChanges;
+	this.SelectedChanges     = [];
+	this.PrevTextSelection   = this.LogicDocument.IsTextSelectionUse();
 
     if (true !== bSaveCurrentChange)
 	{
@@ -27907,102 +27950,105 @@ CTrackRevisionsManager.prototype.BeginCollectChanges = function(bSaveCurrentChan
 		{
 			var X = this.LogicDocument.Get_PageLimits(oBounds.Page).XLimit;
 			this.CurChange.put_InternalPos(X, oBounds.Y, oBounds.Page);
-			this.VisibleChanges.push(this.CurChange);
+			this.SelectedChanges.push(this.CurChange);
 		}
 	}
 };
-CTrackRevisionsManager.prototype.EndCollectChanges = function(oDocument)
+CTrackRevisionsManager.prototype.EndCollectChanges = function()
 {
 	if (!this.private_IsAllParagraphsChecked())
 		return;
 
-	var oEditor = oDocument.GetApi();
-	if (oDocument.IsSimpleMarkupInReview())
+	var oEditor = this.LogicDocument.GetApi();
+	if (this.LogicDocument.IsSimpleMarkupInReview())
 	{
-		this.VisibleChanges = [];
+		this.SelectedChanges = [];
 
 		oEditor.sync_BeginCatchRevisionsChanges();
 		oEditor.sync_EndCatchRevisionsChanges();
 		return;
 	}
 
-    if (null !== this.CurChange)
-        this.VisibleChanges = [this.CurChange];
+    if (this.CurChange)
+        this.SelectedChanges = [this.CurChange];
 
-    var bMove = false;
-    var bChange = false;
+	var isPositionChanged = false;
+	var isArrayChanged    = false;
+	var isTextSelection   = this.LogicDocument.IsTextSelectionUse();
 
-    var Len = this.VisibleChanges.length;
-    if (this.OldVisibleChanges.length !== Len)
+    var nChangesCount = this.SelectedChanges.length;
+    if (this.PrevSelectedChanges.length !== nChangesCount || this.PrevTextSelection !== isTextSelection)
     {
-        bChange = true;
+		isArrayChanged = true;
     }
-    else if (0 !== Len)
+    else if (0 !== nChangesCount)
     {
-        for (var ChangeIndex = 0; ChangeIndex < Len; ChangeIndex++)
+        for (var nChangeIndex = 0; nChangeIndex < nChangesCount; ++nChangeIndex)
         {
-            if (this.OldVisibleChanges[ChangeIndex] !== this.VisibleChanges[ChangeIndex])
+            if (this.SelectedChanges[nChangeIndex] !== this.PrevSelectedChanges[nChangeIndex])
             {
-                bChange = true;
+				isArrayChanged = true;
                 break;
             }
-            else if (true !== this.VisibleChanges[ChangeIndex].ComparePrevPosition())
+            else if (this.SelectedChanges[nChangeIndex].IsPositionChanged())
             {
-                bMove = true;
+				isPositionChanged = true;
             }
         }
     }
 
-    if (true === bChange)
+    if (isArrayChanged)
     {
         oEditor.sync_BeginCatchRevisionsChanges();
 
-        if (Len > 0)
+        if (nChangesCount > 0)
         {
-            var Pos = this.private_GetVisibleChangesXY();
-            for (var ChangeIndex = 0; ChangeIndex < Len; ChangeIndex++)
+            var oPos = this.private_GetSelectedChangesXY();
+            for (var ChangeIndex = 0; ChangeIndex < nChangesCount; ChangeIndex++)
             {
-                var Change = this.VisibleChanges[ChangeIndex];
-                Change.put_XY(Pos.X, Pos.Y);
+                var Change = this.SelectedChanges[ChangeIndex];
+                Change.put_XY(oPos.X, oPos.Y);
                 oEditor.sync_AddRevisionsChange(Change);
             }
         }
-        oEditor.sync_EndCatchRevisionsChanges();
+        oEditor.sync_EndCatchRevisionsChanges(!isTextSelection);
     }
-    else if (true === bMove)
+    else if (isPositionChanged)
     {
-        this.Update_VisibleChangesPosition(oEditor);
+        this.UpdateSelectedChangesPosition(oEditor);
     }
 };
-CTrackRevisionsManager.prototype.Update_VisibleChangesPosition = function(oEditor)
+CTrackRevisionsManager.prototype.UpdateSelectedChangesPosition = function(oEditor)
 {
-    if (this.VisibleChanges.length > 0)
+    if (this.SelectedChanges.length > 0)
     {
-        var Pos = this.private_GetVisibleChangesXY();
-        oEditor.sync_UpdateRevisionsChangesPosition(Pos.X, Pos.Y);
+        var oPos = this.private_GetSelectedChangesXY();
+        oEditor.sync_UpdateRevisionsChangesPosition(oPos.X, oPos.Y);
     }
 };
-CTrackRevisionsManager.prototype.private_GetVisibleChangesXY = function()
+CTrackRevisionsManager.prototype.private_GetSelectedChangesXY = function()
 {
-    if (this.VisibleChanges.length > 0)
-    {
-        var Change = this.VisibleChanges[0];
-        var Change_X       = Change.get_InternalPosX();
-        var Change_Y       = Change.get_InternalPosY();
-        var Change_PageNum = Change.get_InternalPosPageNum();
-        var Change_Para    = Change.get_Paragraph();
-        if (Change_Para && Change_Para.DrawingDocument)
-        {
-            var TextTransform = (Change_Para ? Change_Para.Get_ParentTextTransform() : undefined);
-            if (TextTransform)
-                Change_Y = TextTransform.TransformPointY(Change_X, Change_Y);
+	if (this.SelectedChanges.length > 0)
+	{
+		var oChange = this.SelectedChanges[0];
 
-            var Coords = Change_Para.DrawingDocument.ConvertCoordsToCursorWR(Change_X, Change_Y, Change_PageNum);
-            return {X : Coords.X, Y : Coords.Y};
-        }
-    }
+		var nX       = oChange.GetInternalPosX();
+		var nY       = oChange.GetInternalPosY();
+		var nPageNum = oChange.GetInternalPosPageNum();
+		var oElement = oChange.GetElement();
 
-    return {X : 0, Y : 0};
+		if (oElement && oElement.DrawingDocument)
+		{
+			var oTransform = (oElement ? oElement.Get_ParentTextTransform() : undefined);
+			if (oTransform)
+				nY = oTransform.TransformPointY(nX, nY);
+
+			var oWorldCoords = oElement.DrawingDocument.ConvertCoordsToCursorWR(nX, nY, nPageNum);
+			return {X : oWorldCoords.X, Y : oWorldCoords.Y};
+		}
+	}
+
+	return {X : 0, Y : 0};
 };
 CTrackRevisionsManager.prototype.Get_AllChangesLogicDocuments = function()
 {

@@ -3416,6 +3416,11 @@ CEndnotesController.prototype.FindNextFillingForm = function(isNext, isCurrent)
 
 	return null;
 };
+CEndnotesController.prototype.CollectSelectedReviewChanges = function(oTrackManager)
+{
+	if (this.CurEndnote)
+		this.CurEndnote.CollectSelectedReviewChanges(oTrackManager);
+};
 
 /**
  * Класс регистрирующий концевые сноски на странице

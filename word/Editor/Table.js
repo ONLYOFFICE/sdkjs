@@ -3676,61 +3676,83 @@ CTable.prototype.Document_Get_AllFontNames = function(AllFonts)
 };
 CTable.prototype.Document_UpdateInterfaceState = function()
 {
-	// Если у нас выделено несколько ячеек, тогда данная таблица - нижний уровень
-	if (true != this.Selection.Use || table_Selection_Cell != this.Selection.Type)
+	if (!this.IsCellSelection())
 	{
 		this.CurCell.Content.Document_UpdateInterfaceState();
-
-		if (this.LogicDocument && !this.bPresentation && this.LogicDocument.GetTrackRevisionsManager)
-		{
-			var oTrackManager = this.LogicDocument.GetTrackRevisionsManager();
-
-			var arrChanges = oTrackManager.GetElementChanges(this.GetId());
-			if (arrChanges.length > 0)
-			{
-				var nCurRow = this.CurCell.GetRow().GetIndex();
-				if (this.RowsInfo[nCurRow] && undefined !== this.RowsInfo[nCurRow].Y[this.RowsInfo[nCurRow].StartPage])
-				{
-					var nCurPage = this.RowsInfo[nCurRow].StartPage;
-					var nPageAbs = this.GetAbsolutePage(nCurPage);
-					var dY       = this.RowsInfo[nCurRow].Y[nCurPage];
-					var dX       = this.LogicDocument.Get_PageLimits(nPageAbs).XLimit;
-
-					for (var nChangeIndex = 0, nChangesCount = arrChanges.length; nChangeIndex < nChangesCount; ++nChangeIndex)
-					{
-						var oChange = arrChanges[nChangeIndex];
-						var nType   = oChange.get_Type();
-
-						if ((c_oAscRevisionsChangeType.RowsAdd !== nType
-							&& c_oAscRevisionsChangeType.RowsRem !== nType)
-							|| (nCurRow >= oChange.get_StartPos()
-							&& nCurRow <= oChange.get_EndPos()))
-						{
-							oChange.put_InternalPos(dX, dY, nPageAbs);
-							oTrackManager.AddVisibleChange(oChange);
-						}
-					}
-				}
-			}
-		}
 	}
 	else
 	{
-		var ParaPr         = this.GetCalculatedParaPr();
-		ParaPr.CanAddTable = false;
-		if (null != ParaPr)
-			editor.UpdateParagraphProp(ParaPr);
+		var oParaPr = this.GetCalculatedParaPr();
+		if (oParaPr)
+		{
+			oParaPr.CanAddTable = false;
+			editor.UpdateParagraphProp(oParaPr);
+		}
 
-		var TextPr = this.GetCalculatedTextPr();
-		if (null != TextPr)
+		var oTextPr = this.GetCalculatedTextPr();
+		if (oTextPr)
 		{
 			var theme = this.Get_Theme();
 			if (theme && theme.themeElements && theme.themeElements.fontScheme)
-			{
-				TextPr.ReplaceThemeFonts(theme.themeElements.fontScheme);
-			}
-			editor.UpdateTextPr(TextPr);
+				oTextPr.ReplaceThemeFonts(theme.themeElements.fontScheme);
+
+			editor.UpdateTextPr(oTextPr);
 		}
+	}
+};
+CTable.prototype.CollectSelectedReviewChanges = function(oTrackManager)
+{
+	var oLogicDocument = this.GetLogicDocument();
+	if (!oLogicDocument || this.bPresentation && !oLogicDocument.GetTrackRevisionsManager)
+		return;
+
+	var arrSelection = this.GetSelectionArray(false);
+	if (!arrSelection.length)
+		return;
+
+	var nFirstRow = arrSelection[0].Row;
+	if (!this.RowsInfo[nFirstRow] || !this.RowsInfo[nFirstRow].Y[this.RowsInfo[nFirstRow].StartPage])
+		return;
+
+	var nCurPage = this.RowsInfo[nFirstRow].StartPage;
+	var nPageAbs = this.GetAbsolutePage(nCurPage);
+	var dY       = this.RowsInfo[nFirstRow].Y[nCurPage];
+	var dX       = oLogicDocument.Get_PageLimits(nPageAbs).XLimit;
+
+	var arrChanges = oTrackManager.GetElementChanges(this.GetId());
+	for (var nChangeIndex = 0, nChangesCount = arrChanges.length; nChangeIndex < nChangesCount; ++nChangeIndex)
+	{
+		var oChange     = arrChanges[nChangeIndex];
+		var isAddChange = false;
+
+		if (oChange.IsTableRowChange())
+		{
+			for (var nSelectionPos = 0, nSelectionLength = arrSelection.length; nSelectionPos < nSelectionLength; ++nSelectionPos)
+			{
+				var nCurRow = arrSelection[nSelectionPos].Row;
+				if (nCurRow >= oChange.GetStartPos() && nCurRow <= oChange.GetEndPos())
+				{
+					isAddChange = true;
+					break;
+				}
+			}
+		}
+		else
+		{
+			isAddChange = true;
+		}
+
+		if (isAddChange)
+		{
+			oChange.SetInternalPos(dX, dY, nPageAbs);
+			oTrackManager.AddSelectedChange(oChange);
+		}
+	}
+
+	for (var nPos = 0, nCount = arrSelection.length; nPos < nCount; ++nPos)
+	{
+		var oCell = this.GetRow(arrSelection[nPos].Row).GetCell(arrSelection[nPos].Cell);
+		oCell.GetContent().CollectSelectedReviewChanges(oTrackManager);
 	}
 };
 CTable.prototype.Document_UpdateRulersState = function(CurPage)

@@ -1238,6 +1238,10 @@ CDocumentContentElementBase.prototype.UpdateLineNumbersInfo = function(){};
  * @param oEngine {CTextToTableEngine}
  */
 CDocumentContentElementBase.prototype.CalculateTextToTable = function(oEngine){};
+/**
+ * @param arrChanges
+ */
+CDocumentContentElementBase.prototype.GetSelectedReviewChanges = function(arrChanges, oTrackChanges) {return arrChanges ? arrChanges : [];};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

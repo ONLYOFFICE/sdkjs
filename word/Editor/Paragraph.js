@@ -11663,53 +11663,6 @@ Paragraph.prototype.Document_UpdateInterfaceState = function()
 			editor.sync_HyperlinkPropCallback(oHyperProps);
 		}
 	}
-
-	if (editor && this.bFromDocument)
-	{
-		if(!this.LogicDocument)
-		{
-			return;
-		}
-		var TrackManager = this.LogicDocument.GetTrackRevisionsManager();
-
-		if (this.Pages.length <= 0 && this.Lines.length <= 0)
-			return;
-
-		var ContentPos = this.Get_ParaContentPos(this.Selection.Use, true);
-		var ParaPos    = this.Get_ParaPosByContentPos(ContentPos);
-
-		if (this.Pages.length <= ParaPos.Page || this.Lines.length <= ParaPos.Line)
-			return;
-
-		var Page_abs      = this.Get_AbsolutePage(ParaPos.Page);
-		var _Y            = this.Pages[ParaPos.Page].Y + this.Lines[ParaPos.Line].Top;
-		var TextTransform = this.Get_ParentTextTransform();
-
-		var _X     = (this.LogicDocument ? this.LogicDocument.Get_PageLimits(Page_abs).XLimit : 0);
-		var Coords = this.DrawingDocument.ConvertCoordsToCursorWR(_X, _Y, Page_abs, TextTransform);
-
-		if (false === this.Selection.Use)
-		{
-			var Changes = TrackManager.GetElementChanges(this.GetId());
-			if (Changes.length > 0)
-			{
-				for (var ChangeIndex = 0, ChangesCount = Changes.length; ChangeIndex < ChangesCount; ChangeIndex++)
-				{
-					var Change = Changes[ChangeIndex];
-					var Type   = Change.get_Type();
-					if ((c_oAscRevisionsChangeType.TextAdd !== Type
-						&& c_oAscRevisionsChangeType.TextRem !== Type
-						&& c_oAscRevisionsChangeType.TextPr !== Type)
-						|| (StartPos.Compare(Change.get_StartPos()) >= 0
-						&& StartPos.Compare(Change.get_EndPos()) <= 0))
-					{
-						Change.put_InternalPos(_X, _Y, Page_abs);
-						TrackManager.AddVisibleChange(Change);
-					}
-				}
-			}
-		}
-	}
 };
 Paragraph.prototype.private_GetReviewChangesByContentPos = function(oContentPos)
 {
@@ -11795,6 +11748,50 @@ Paragraph.prototype.private_GetReviewChangeForHover = function(X, Y, CurPage, oC
 	}
 
 	return oChange;
+};
+Paragraph.prototype.CollectSelectedReviewChanges = function(oTrackManager)
+{
+	var oLogicDocument = this.GetLogicDocument();
+	if (!this.IsRecalculated() || !oLogicDocument)
+		return;
+
+	var oStartPos, oEndPos;
+	if (this.Selection.Use)
+	{
+		oStartPos = this.Get_ParaContentPos(true, true);
+		oEndPos   = this.Get_ParaContentPos(true, false);
+	}
+	else
+	{
+		oStartPos = this.Get_ParaContentPos(false, false);
+		oEndPos   = oStartPos;
+	}
+
+	var nX       = 0;
+	var nY       = 0;
+	var nPageAbs = 0;
+
+	var oParaPos = this.Get_ParaPosByContentPos(oStartPos);
+	if (this.Pages.length > oParaPos.Page && this.Lines.length > oParaPos.Line)
+	{
+		nPageAbs = this.GetAbsolutePage(oParaPos.Page);
+		nY       = this.Pages[oParaPos.Page].Y + this.Lines[oParaPos.Line].Top;
+		nX       = oLogicDocument.Get_PageLimits(nPageAbs).XLimit;
+	}
+
+	var arrChanges = oTrackManager.GetElementChanges(this.GetId());
+	for (var nChangeIndex = 0, nChangesCount = arrChanges.length; nChangeIndex < nChangesCount; ++nChangeIndex)
+	{
+		var oChange = arrChanges[nChangeIndex];
+
+		if (!oChange.IsTextChange()
+			|| (oStartPos.Compare(oChange.GetEndPos()) <= 0
+				&& oEndPos.Compare(oChange.GetStartPos()) >= 0))
+		{
+			oChange.SetInternalPos(nX, nY, nPageAbs);
+			oTrackManager.AddSelectedChange(oChange);
+		}
+	}
 };
 /**
  * Функция, которую нужно вызвать перед удалением данного элемента

@@ -455,3 +455,7 @@ CLogicDocumentController.prototype.IsSelectionLocked = function(CheckType)
 {
 	this.LogicDocument.controller_IsSelectionLocked(CheckType);
 };
+CLogicDocumentController.prototype.CollectSelectedReviewChanges = function(oTrackManager)
+{
+	return this.LogicDocument.controller_CollectSelectedReviewChanges(oTrackManager);
+};

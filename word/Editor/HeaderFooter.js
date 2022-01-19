@@ -2850,6 +2850,12 @@ CHeaderFooterController.prototype.GetAllTablesOnPage = function(nPageAbs, arrTab
 
 	return arrTables;
 };
+CHeaderFooterController.prototype.CollectSelectedReviewChanges = function(oTrackManager)
+{
+	if (this.CurHdrFtr)
+		this.CurHdrFtr.GetContent().CollectSelectedReviewChanges(oTrackManager);
+};
+
 
 
 function CHdrFtrPage()

@@ -98,9 +98,9 @@ CRevisionsChange.prototype.put_Paragraph = function(Para){this.Element = Para;};
 CRevisionsChange.prototype.get_Paragraph = function(){return this.Element;};
 CRevisionsChange.prototype.get_LockUserId = function()
 {
-	if (this.Paragraph)
+	if (this.Element)
 	{
-		var Lock = this.Paragraph.GetLock();
+		var Lock = this.Element.GetLock();
 		var LockType = Lock.Get_Type();
 
 		if (AscCommon.locktype_Mine !== LockType && AscCommon.locktype_None !== LockType)
@@ -137,12 +137,9 @@ CRevisionsChange.prototype.get_InternalPosPageNum = function()
 {
 	return this._PageNum;
 };
-CRevisionsChange.prototype.ComparePrevPosition = function()
+CRevisionsChange.prototype.IsPositionChanged = function()
 {
-	if (true === this._PosChanged)
-		return false;
-
-	return true;
+	return this._PosChanged;
 };
 CRevisionsChange.prototype.private_UpdateUserColor = function()
 {
@@ -290,7 +287,7 @@ CRevisionsChange.prototype.GetInternalPosPageNum = function()
 };
 CRevisionsChange.prototype.GetStartPos = function()
 {
-	return this.StartPos
+	return this.StartPos;
 };
 CRevisionsChange.prototype.SetStartPos = function(oStartPos)
 {
@@ -298,11 +295,22 @@ CRevisionsChange.prototype.SetStartPos = function(oStartPos)
 };
 CRevisionsChange.prototype.GetEndPos = function()
 {
-	return this.EndPos
+	return this.EndPos;
 };
 CRevisionsChange.prototype.SetEndPos = function(oEndPos)
 {
 	this.EndPos = oEndPos;
+};
+CRevisionsChange.prototype.IsTextChange = function()
+{
+	return (c_oAscRevisionsChangeType.TextAdd === this.Type
+		|| c_oAscRevisionsChangeType.TextRem === this.Type
+		|| c_oAscRevisionsChangeType.TextPr === this.Type);
+};
+CRevisionsChange.prototype.IsTableRowChange = function()
+{
+	return (c_oAscRevisionsChangeType.RowsAdd === this.Type
+		|| c_oAscRevisionsChangeType.RowsRem === this.Type);
 };
 
 //--------------------------------------------------------export--------------------------------------------------------

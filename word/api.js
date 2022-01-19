@@ -8766,9 +8766,9 @@ background-repeat: no-repeat;\
 	{
 		this.RevisionChangesStack = [];
 	};
-	asc_docs_api.prototype.sync_EndCatchRevisionsChanges       = function()
+	asc_docs_api.prototype.sync_EndCatchRevisionsChanges       = function(isShow)
 	{
-		this.sendEvent("asc_onShowRevisionsChange", this.RevisionChangesStack);
+		this.sendEvent("asc_onShowRevisionsChange", this.RevisionChangesStack, isShow);
 	};
 	asc_docs_api.prototype.asc_GetRevisionsChangesStack        = function()
 	{

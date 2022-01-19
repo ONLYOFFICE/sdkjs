@@ -2593,6 +2593,10 @@ CBlockLevelSdt.prototype.CalculateTextToTable = function(oEngine)
 {
 	this.Content.CalculateTextToTable(oEngine);
 };
+CBlockLevelSdt.prototype.CollectSelectedReviewChanges = function(oTrackManager)
+{
+	return this.Content.CollectSelectedReviewChanges(oTrackManager);
+};
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CBlockLevelSdt = CBlockLevelSdt;

@@ -696,3 +696,9 @@ CDrawingsController.prototype.IsSelectionLocked = function(nCheckType)
 	if (oContentControl)
 		oContentControl.Document_Is_SelectionLocked(nCheckType);
 };
+CDrawingsController.prototype.CollectSelectedReviewChanges = function(oTrackManager)
+{
+	var oTargetDocContent = this.DrawingObjects.getTargetDocContent();
+	if (oTargetDocContent && oTargetDocContent.CollectSelectedReviewChanges)
+		oTargetDocContent.CollectSelectedReviewChanges(oTrackManager);
+};

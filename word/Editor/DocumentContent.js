@@ -9336,7 +9336,24 @@ CDocumentContent.prototype.CalculateTextToTable = function(oEngine)
 		this.Content[nIndex].CalculateTextToTable(oEngine);
 	}
 };
+CDocumentContent.prototype.CollectSelectedReviewChanges = function(oTrackManager)
+{
+	var isUseSelection = this.Selection.Use;
 
+	var nStartPos = isUseSelection ? this.Selection.StartPos : this.CurPos.ContentPos;
+	var nEndPos   = isUseSelection ? this.Selection.EndPos   : this.CurPos.ContentPos;
+	if (nStartPos > nEndPos)
+	{
+		var nTemp = nStartPos;
+		nStartPos = nEndPos;
+		nEndPos   = nTemp;
+	}
+
+	for (var nPos = nStartPos; nPos <= nEndPos; ++nPos)
+	{
+		this.Content[nPos].CollectSelectedReviewChanges(oTrackManager);
+	}
+};
 
 function CDocumentContentStartState(DocContent)
 {

@@ -3478,6 +3478,11 @@ CFootnotesController.prototype.FindNextFillingForm = function(isNext, isCurrent)
 
 	return null;
 };
+CFootnotesController.prototype.CollectSelectedReviewChanges = function(oTrackManager)
+{
+	if (this.CurFootnote)
+		this.CurFootnote.CollectSelectedReviewChanges(oTrackManager);
+};
 
 
 function CFootEndnotePageColumn()
