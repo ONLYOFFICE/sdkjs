@@ -3162,6 +3162,12 @@ background-repeat: no-repeat;\
 		if (null != this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
 		{
 			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.SearchResults.Show = bShow;
+			if (this.isUseNativeViewer)
+			{
+				this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.onUpdateOverlay();
+				return;
+			}
+
 			this.WordControl.OnUpdateOverlay();
 			return;
 		}

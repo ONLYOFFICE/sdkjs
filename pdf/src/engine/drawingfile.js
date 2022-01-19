@@ -311,7 +311,7 @@
                 "H" : _buffer[_cur++], 
                 "Dpi" : _buffer[_cur++],
                 fonts : [],
-                textCommands : null
+                text : null
             });
         }
 

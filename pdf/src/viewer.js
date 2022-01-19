@@ -182,16 +182,7 @@
 		this.overlay = null;
 		this.timerScrollSelect = -1;
 
-		this.SearchResults = {
-			IsSearch    : false,
-			Text        : "",
-			MachingCase : false,
-			Pages       : [],
-			CurrentPage : -1,
-			Current     : -1,
-			Show        : false,
-			Count       : 0
-		};
+		this.SearchResults = null;
 
 		var oThis = this;
 
@@ -569,6 +560,8 @@
 				if (!this.file)
 				{
 					this.file = window["AscViewer"].createFile(data);
+					this.SearchResults = this.file.SearchResults;
+					this.file.searchObject = this;
 				}
 
 				if (this.file.isNeedPassword())
@@ -582,6 +575,8 @@
 					this.file.close();
 
 				this.file = window["AscViewer"].createFile(data);
+				this.SearchResults = this.file.SearchResults;
+				this.file.searchObject = this;
 			}
 
 			if (this.file.isNeedPassword())
@@ -1171,7 +1166,6 @@
 			var len = places.length;
 
 			var ctx = this.overlay.m_oContext;
-			ctx.fillStyle = "rgba(51,102,204,255)";
 
 			for (var i = 0; i < len; i++)
 			{
@@ -1184,15 +1178,15 @@
 					var _w = (rPR * (dKoefX * place.W)) >> 0;
 					var _h = (rPR * (dKoefY * place.H)) >> 0;
 
-					if (_x < overlay.min_x)
-						overlay.min_x = _x;
-					if ((_x + _w) > overlay.max_x)
-						overlay.max_x = _x + _w;
+					if (_x < this.overlay.min_x)
+						this.overlay.min_x = _x;
+					if ((_x + _w) > this.overlay.max_x)
+						this.overlay.max_x = _x + _w;
 
-					if (_y < overlay.min_y)
-						overlay.min_y = _y;
-					if ((_y + _h) > overlay.max_y)
-						overlay.max_y = _y + _h;
+					if (_y < this.overlay.min_y)
+						this.overlay.min_y = _y;
+					if ((_y + _h) > this.overlay.max_y)
+						this.overlay.max_y = _y + _h;
 
 					ctx.rect(_x, _y, _w, _h);
 				}
@@ -1216,10 +1210,10 @@
 					var _x4 = (rPR * (xDst + dKoefX * x4)) >> 0;
 					var _y4 = (rPR * (yDst + dKoefY * y4)) >> 0;
 
-					overlay.CheckPoint(_x1, _y1);
-					overlay.CheckPoint(_x2, _y2);
-					overlay.CheckPoint(_x3, _y3);
-					overlay.CheckPoint(_x4, _y4);
+					this.overlay.CheckPoint(_x1, _y1);
+					this.overlay.CheckPoint(_x2, _y2);
+					this.overlay.CheckPoint(_x3, _y3);
+					this.overlay.CheckPoint(_x4, _y4);
 
 					ctx.moveTo(_x1, _y1);
 					ctx.lineTo(_x2, _y2);
@@ -1239,9 +1233,11 @@
 			if (!pageCoords)
 				return;
 
-			var dKoefX = pageCoords.w / this.file.pages[pageIndex].W;
-			var dKoefY = pageCoords.h / this.file.pages[pageIndex].H;
+			var scale = this.file.pages[pageIndex].Dpi / 25.4;
+			var dKoefX = scale * pageCoords.w / this.file.pages[pageIndex].W;
+			var dKoefY = scale * pageCoords.h / this.file.pages[pageIndex].H;
 
+			var ctx = this.overlay.m_oContext;
 			ctx.fillStyle = "rgba(51,102,204,255)";
 
 			this.drawSearchPlaces(dKoefX, dKoefY, pageCoords.x, pageCoords.y, places);
@@ -1256,11 +1252,10 @@
 			if (!pageCoords)
 				return;
 
-			var dKoefX = pageCoords.w / this.file.pages[pageIndex].W;
-			var dKoefY = pageCoords.h / this.file.pages[pageIndex].H;
-			var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+			var scale = this.file.pages[pageIndex].Dpi / 25.4;
+			var dKoefX = scale * pageCoords.w / this.file.pages[pageIndex].W;
+			var dKoefY = scale * pageCoords.h / this.file.pages[pageIndex].H;
 
-			var ctx = this.overlay.m_oContext;
 			for (var i = 0; i < searchingObj.length; i++)
 			{
 				this.drawSearchPlaces(dKoefX, dKoefY, pageCoords.x, pageCoords.y, searchingObj[i]);
@@ -1270,9 +1265,6 @@
 		this.onUpdateOverlay = function()
 		{
 			this.overlay.Clear()
-
-			if (this.MouseHandObject)
-				return;
 
 			if (!this.file)
 				return;
@@ -1315,17 +1307,20 @@
 				}
 			}
 
-			ctx.fillStyle = "rgba(51,102,204,255)";
-			ctx.beginPath();
-
-			for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
+			if (!this.MouseHandObject)
 			{
-				var pageCoords = this.pageDetector.pages[i - this.startVisiblePage];
-				this.file.drawSelection(i, this.overlay, pageCoords.x, pageCoords.y, pageCoords.w, pageCoords.h);
-			}
+				ctx.fillStyle = "rgba(51,102,204,255)";
+				ctx.beginPath();
 
-			ctx.fill();
-			ctx.beginPath();
+				for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
+				{
+					var pageCoords = this.pageDetector.pages[i - this.startVisiblePage];
+					this.file.drawSelection(i, this.overlay, pageCoords.x, pageCoords.y, pageCoords.w, pageCoords.h);
+				}
+
+				ctx.fill();
+				ctx.beginPath();
+			}
 			ctx.globalAlpha = 1.0;
 		};
 
@@ -1545,6 +1540,12 @@
 		this.findText = function(text, isMachingCase, isNext)
 		{
 			this.file.findText(text, isMachingCase, isNext);
+			this.onUpdateOverlay();
+		};
+
+		this.ToSearchResult = function()
+		{
+			// TODO: scroll to CurrentSearchNavi
 		};
 	}
 

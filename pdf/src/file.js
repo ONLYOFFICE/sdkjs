@@ -171,6 +171,7 @@
             Show        : false,
             Count       : 0
         };
+        this.searchObject = null;
     }
 
     // interface
@@ -1201,7 +1202,7 @@ void main() {\n\
         if (Page1 > pageIndex  || Page2 < pageIndex)
             return;
 
-        if (Page1 < pageNum)
+        if (Page1 < pageIndex)
         {
             Page1 = pageIndex;
             Line1 = 0;
@@ -1679,11 +1680,11 @@ void main() {\n\
                                 var _l = arrayLines[i];
                                 if (_l.Ex == 1 && _l.Ey == 0)
                                 {
-                                    _rects[_rects.length] = { PageNum : pageNum, X : _l.X + ps, Y : _l.Y, W : pe - ps, H : _l.H };
+                                    _rects[_rects.length] = { PageNum : pageIndex, X : _l.X + ps, Y : _l.Y, W : pe - ps, H : _l.H };
                                 }
                                 else
                                 {
-                                    _rects[_rects.length] = { PageNum : pageNum, X : _l.X + ps * _l.Ex, Y : _l.Y + ps * _l.Ey, W : pe - ps, H : _l.H, Ex : _l.Ex, Ey : _l.Ey };
+                                    _rects[_rects.length] = { PageNum : pageIndex, X : _l.X + ps * _l.Ex, Y : _l.Y + ps * _l.Ey, W : pe - ps, H : _l.H, Ex : _l.Ex, Ey : _l.Ey };
                                 }
                             }
 
@@ -1860,7 +1861,7 @@ void main() {\n\
         this.SearchResults.Text = text;
         this.SearchResults.MachingCase = isMachingCase;
 
-        for (var i = 0; i < this.PagesCount; i++)
+        for (var i = 0; i < this.pages.length; i++)
         {
             this.searchPage(i);
             this.SearchResults.Count += this.SearchResults.Pages[i].length;
@@ -1888,6 +1889,15 @@ void main() {\n\
         this.searchObject.ToSearchResult();
     };
 
+    CFile.prototype.prepareSearch = function()
+    {
+        this.SearchResults.Pages = new Array(this.pages.length);
+        for (var i = this.pages.length - 1; i >= 0; i--)
+        {
+            this.SearchResults.Pages[i] = [];
+        }
+    };
+
     window["AscViewer"] = window["AscViewer"] || {};
 
     window["AscViewer"]["baseUrl"] = (typeof document !== 'undefined' && document.currentScript) ? "" : "./../src/engine/";
@@ -1913,6 +1923,7 @@ void main() {\n\
                 page.Dpi = page["Dpi"];
             }
 
+            file.prepareSearch();
             file.cacheManager = new AscCommon.CCacheManager(); 
             return file;   
         }
@@ -1943,6 +1954,7 @@ void main() {\n\
                 page.Dpi = page["Dpi"];
             }
 
+            file.prepareSearch();
             file.cacheManager = new AscCommon.CCacheManager();
         }
     };
