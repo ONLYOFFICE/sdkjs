@@ -1298,6 +1298,9 @@ CChartsDrawer.prototype =
 				if(sum) {
 					for (var j = 0; j < data.length; j++) {
 						for (var i = 0; i < data[j].length; i++) {
+							if (sum[j] === 0) {
+								continue;
+							}
 							data[j][i] = data[j][i] / sum[j];
 						}
 					}
