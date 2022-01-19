@@ -433,6 +433,15 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 	FirstTextPr_.Merge(TextPr_);
 	this.m_oTextPr = FirstTextPr_;
 
+	if (this.m_nType === numbering_presentationnumfrmt_Blip)
+	{
+		var sizes = AscCommon.getSourceImageSize(this.m_sSrc);
+		var x_height = this.m_oTextPr.FontSize / 4;
+		var adaptImageHeight = x_height;
+		var adaptImageWidth = sizes.width * adaptImageHeight / (sizes.height ? sizes.height : 1);
+		return { Width: adaptImageWidth + adaptImageWidth / 35 };
+	}
+
 	var X = 0;
 	var OldTextPr = Context.GetTextPr();
 	var Hint =  this.m_oTextPr.RFonts.Hint;
@@ -443,19 +452,9 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 	if (sT)
 	{
 		FontSlot = g_font_detector.Get_FontClass( sT.getUnicodeIterator().value(), Hint, lcid, bCS, bRTL );
-	} else {
-		FontSlot = g_font_detector.Get_FontClass( 42, Hint, lcid, bCS, bRTL );
 	}
 	Context.SetTextPr( this.m_oTextPr, Theme );
 	Context.SetFontSlot( FontSlot );
-	if (this.m_nType === numbering_presentationnumfrmt_Blip)
-	{
-		var sizes = AscCommon.getSourceImageSize(this.m_sSrc);
-		var x_height = g_oTextMeasurer.GetHeight() - (g_oTextMeasurer.GetAscender() + g_oTextMeasurer.GetDescender());
-		var adaptImageHeight = x_height;
-		var adaptImageWidth = sizes.width * adaptImageHeight / sizes.height;
-		return { Width: adaptImageWidth + adaptImageWidth / 35 }; // TODO: существует добавочная единица (какая?)
-	}
 
 	if(sT.length === 0)
 	{
@@ -511,7 +510,15 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 	if (this.IsErrorInNumeration())
 		return;
 
-
+	if (this.m_nType === numbering_presentationnumfrmt_Blip)
+	{
+		var sizes = AscCommon.getSourceImageSize(this.m_sSrc);
+		var x_height = this.m_oTextPr.FontSize / 4;
+		var adaptImageHeight = x_height;
+		var adaptImageWidth = sizes.width * adaptImageHeight / (sizes.height ? sizes.height : 1);
+		Context.drawImage(this.m_sSrc, X, Y - adaptImageHeight, adaptImageWidth, adaptImageHeight);
+		return;
+	}
 
 		var OldTextPr  = Context.GetTextPr();
 		var OldTextPr2 = g_oTextMeasurer.GetTextPr();
@@ -526,10 +533,7 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 		if (sT)
 		{
 			FontSlot = g_font_detector.Get_FontClass( sT.getUnicodeIterator().value(), Hint, lcid, bCS, bRTL );
-		} else {
-			FontSlot = g_font_detector.Get_FontClass( 42, Hint, lcid, bCS, bRTL );
 		}
-
 
 		if(this.m_oTextPr.Unifill){
 			this.m_oTextPr.Unifill.check(PDSE.Theme, PDSE.ColorMap);
@@ -571,25 +575,14 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 		}
 		g_oTextMeasurer.SetTextPr( this.m_oTextPr, PDSE.Theme  );
 		g_oTextMeasurer.SetFontSlot( FontSlot );
-	if (this.m_nType === numbering_presentationnumfrmt_Blip)
-	{
-	 var sizes = AscCommon.getSourceImageSize(this.m_sSrc);
 
-	 var x_height = g_oTextMeasurer.GetHeight() - (g_oTextMeasurer.GetAscender() + g_oTextMeasurer.GetDescender());// TODO: think about it
-	 var adaptImageHeight = x_height;
-	 var adaptImageWidth = sizes.width * adaptImageHeight / sizes.height;
-
-	 Context.drawImage(this.m_sSrc, X, Y - adaptImageHeight, adaptImageWidth, adaptImageHeight);
- }
-	if (this.m_nType !== numbering_presentationnumfrmt_Blip)
-	{
 		for (var iter = sT.getUnicodeIterator(); iter.check(); iter.next())
 		{
 			var charCode = iter.value();
 			Context.FillTextCode( X, Y, charCode );
 			X += g_oTextMeasurer.MeasureCode(charCode).Width;
 		}
-	}
+		
 		if(OldTextPr)
 		{
 			Context.SetTextPr( OldTextPr, PDSE.Theme );
