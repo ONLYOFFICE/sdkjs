@@ -12425,8 +12425,8 @@
 				{
 					oNewItem.setFragmentText(oCurtext.text);
 					var oCurFormat = new AscCommonExcel.Font();
-					if (isMultyText) {
-						if (null != oCurtext.format && !(cellSelfFont && cellSelfFont.isEqual(oCurtext.format))) {
+					if (isMultyText && xfs && xfs.font) {
+						if (null != oCurtext.format &&  !(cellSelfFont && cellSelfFont.isEqual(oCurtext.format))) {
 							//MultyText format equals to cell font
 							if (this.xfs && !this.xfs.isNormalFont()) {
 								//cell font is not default
@@ -12441,17 +12441,15 @@
 							}
 						} else {
 							oCurFormat.assign(cellfont);
-							oCurFormat.setSkip(false);
-							oCurFormat.setRepeat(false);
 						}
 					} else {
 						oCurFormat.assign(cellfont);
-						oCurFormat.setSkip(false);
-						oCurFormat.setRepeat(false);
 						if (null != oCurtext.format) {
 							oCurFormat.assignFromObject(oCurtext.format);
 						}
 					}
+					oCurFormat.setSkip(false);
+					oCurFormat.setRepeat(false);
 					oNewItem.format = oCurFormat;
 					oNewItem.checkVisitedHyperlink(this.nRow, this.nCol, this.ws.hyperlinkManager);
 					aResult.push(oNewItem);
