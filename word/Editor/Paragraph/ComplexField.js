@@ -382,6 +382,17 @@ CComplexField.prototype.SetSeparateChar = function(oChar)
 	this.SeparateChar = oChar;
 	this.EndChar      = null;
 };
+CComplexField.prototype.ReplaceChar = function(oChar)
+{
+	oChar.SetComplexField(this);
+
+	if (oChar.IsBegin())
+		this.BeginChar = oChar;
+	else if (oChar.IsSeparate())
+		this.SeparateChar = oChar;
+	else if (oChar.IsEnd())
+		this.EndChar = oChar;
+};
 CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculate)
 {
 	this.private_CheckNestedComplexFields();

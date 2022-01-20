@@ -2494,7 +2494,14 @@ ParaRun.prototype.Split2 = function(CurPos, Parent, ParentPos)
     // ВСЕГДА копируем элементы, для корректной работы не надо переносить имеющиеся элементы в новый ран
 	for (var nIndex = CurPos, nNewIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex, ++nNewIndex)
 	{
-		NewRun.AddToContent(nNewIndex, this.Content[nIndex].Copy());
+		var oNewItem = this.Content[nIndex].Copy();
+		NewRun.AddToContent(nNewIndex, oNewItem);
+		if (para_FieldChar === this.Content[nIndex].Type)
+		{
+			var oComplexField = this.Content[nIndex].GetComplexField();
+			if (oComplexField)
+				oComplexField.ReplaceChar(oNewItem);
+		}
 	}
     this.RemoveFromContent(CurPos, this.Content.length - CurPos, true);
 
