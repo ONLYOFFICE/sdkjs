@@ -11284,11 +11284,11 @@ function CompareBullets(bullet1, bullet2)
                 var url = AscCommon.g_oDocumentUrls.imagePath2Local(data[0].path);
                 Api.ImageLoader.LoadImagesWithCallback([AscCommon.getFullImageSrc2(url)], function(){
                     _this.fillBulletImage(url);
-                    _this.drawSquareImage();
+                    //_this.drawSquareImage();
                     _this.Api.sendEvent("asc_onBulletImageLoaded");
                 });
             }
-        }, false, undefined, token);
+        }, false, false, token);
     }
     prot["put_ImageUrl"] = prot["asc_putImageUrl"] = CBullet.prototype.put_ImageUrl;
     prot.showFileDialog = function () {
@@ -11319,7 +11319,7 @@ function CompareBullets(bullet1, bullet2)
                               if(urls.length > 0)
                               {
                                   _this.fillBulletImage(urls[0]);
-                                  _this.drawSquareImage();
+                                  //_this.drawSquareImage();
                                   t.sendEvent("asc_onBulletImageLoaded");
                               }
                               t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
