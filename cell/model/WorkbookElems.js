@@ -7097,6 +7097,16 @@ function RangeDataManagerElem(bbox, data)
 		return null;
 	};
 
+	TablePart.prototype.getIndexTableColumnById = function(id) {
+		for (var i = 0; i < this.TableColumns.length; i++) {
+			if (id === this.TableColumns[i].id) {
+				return i + 1;
+			}
+		}
+		return null;
+	};
+
+
 	/** @constructor */
 	function AutoFilter() {
 		this.Ref = null;
@@ -7770,6 +7780,8 @@ function RangeDataManagerElem(bbox, data)
 		this.fillFormulas = null;
 		this.queryName = null;
 		this.rowNumbers = null;
+
+		this.id = null;
 		//формируется на сохранения
 		//this.tableColumnId = null;
 	}
@@ -7822,6 +7834,8 @@ function RangeDataManagerElem(bbox, data)
 
 		res.queryTableFieldId = this.queryTableFieldId;
 		res.uniqueName = this.uniqueName;
+
+		res.id = this.id;
 
 		return res;
 	};

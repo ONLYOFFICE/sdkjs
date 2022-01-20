@@ -1772,7 +1772,7 @@
 				this.bs.WriteItem(c_oSer_TablePart.AltTextTable, function(){oThis.WriteAltTextTable(table);});
 
 			if(null != table.QueryTable)
-				this.bs.WriteItem(c_oSer_TablePart.QueryTable, function(){oThis.WriteQueryTable(table.QueryTable);});
+				this.bs.WriteItem(c_oSer_TablePart.QueryTable, function(){oThis.WriteQueryTable(table.QueryTable, table);});
 
 			if(null != table.tableType)
 				this.bs.WriteItem(c_oSer_TablePart.TableType, function(){oThis.memory.WriteULong(elem.tableType);});
@@ -2135,7 +2135,7 @@
                 this.memory.WriteBool(tableStyleInfo.ShowLastColumn);
             }
         };
-		this.WriteQueryTable = function(queryTable)
+		this.WriteQueryTable = function(queryTable, table)
 		{
 			var oThis = this;
 
@@ -2246,11 +2246,11 @@
 			}
 			if (null != queryTable.queryTableRefresh) {
 				this.bs.WriteItem(c_oSer_QueryTable.QueryTableRefresh, function () {
-					oThis.WriteQueryTableRefresh(queryTable.queryTableRefresh);
+					oThis.WriteQueryTableRefresh(queryTable.queryTableRefresh, table);
 				});
 			}
 		};
-		this.WriteQueryTableRefresh = function(queryTableRefresh)
+		this.WriteQueryTableRefresh = function(queryTableRefresh, table)
 		{
 			var oThis = this;
 			if (null != queryTableRefresh.nextId) {
@@ -2296,24 +2296,28 @@
 			}
 			if (null != queryTableRefresh.queryTableFields) {
 				this.bs.WriteItem(c_oSer_QueryTableRefresh.QueryTableFields, function () {
-					oThis.WriteQueryTableFields(queryTableRefresh.queryTableFields);
+					oThis.WriteQueryTableFields(queryTableRefresh.queryTableFields, table);
 				});
 			}
 			if (null != queryTableRefresh.queryTableDeletedFields) {
 				this.bs.WriteItem(c_oSer_QueryTableRefresh.QueryTableDeletedFields, function () {
-					oThis.WriteQueryTableDeletedFields(queryTableRefresh.queryTableDeletedFields);
+					oThis.WriteQueryTableDeletedFields(queryTableRefresh.queryTableDeletedFields/*,table*/);
 				});
 			}
 		};
-		this.WriteQueryTableFields = function (queryTableFields) {
+		this.WriteQueryTableFields = function (queryTableFields, table) {
 			var oThis = this;
 			for (var i = 0, length = queryTableFields.length; i < length; ++i) {
-				this.bs.WriteItem(c_oSer_QueryTableField.QueryTableField, function () {
-					oThis.WriteQueryTableField(queryTableFields[i]);
-				});
-			}
-		};
-		this.WriteQueryTableField = function (queryTableField) {
+                //нужна синхронизация по id таблицы. поскольку, id генерируется в x2t по индексу колонки, то отправляем на сохранение именно индекс колонки
+                var tableColumnId = table.getIndexTableColumnById(queryTableFields[i].tableColumnId);
+                if (tableColumnId !== null) {
+                    this.bs.WriteItem(c_oSer_QueryTableField.QueryTableField, function () {
+                        oThis.WriteQueryTableField(queryTableFields[i], tableColumnId);
+                    });
+                }
+            }
+        };
+		this.WriteQueryTableField = function (queryTableField, tableColumnId) {
 
 			var oThis = this;
 			if (null != queryTableField.name) {
@@ -2326,9 +2330,9 @@
 					oThis.memory.WriteLong(queryTableField.id);
 				});
 			}
-			if (null != queryTableField.tableColumnId) {
+			if (null != tableColumnId) {
 				this.bs.WriteItem(c_oSer_QueryTableField.TableColumnId, function () {
-					oThis.memory.WriteLong(queryTableField.tableColumnId);
+					oThis.memory.WriteLong(tableColumnId);
 				});
 			}
 			if (null != queryTableField.rowNumbers) {
@@ -6482,7 +6486,9 @@
 			}
 			else if ( c_oSer_TableColumns.UniqueName == type ) {
 				oTableColumn.uniqueName = this.stream.GetString2LE(length);
-			}
+			} else if ( c_oSer_TableColumns.Id == type ) {
+                oTableColumn.id = this.stream.GetULongLE();
+            }
             else
                 res = c_oSerConstants.ReadUnknown;
             return res;
