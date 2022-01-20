@@ -23776,6 +23776,45 @@ CDocument.prototype.GetTableOfContents = function(isCurrent)
 
 	return null;
 };
+/**
+ * Данная функция получает все таблицы TOC в документе по схеме Word
+ * @returns {Array}
+ */
+CDocument.prototype.GetAllTablesOfContentsInDoc = function()
+{
+	// 1. Ищем среди CBlockLevelSdt с параметром Unique = true
+	// 2. Ищем среди CBlockLevelSdt
+	// 3. Ищем потом просто в сложных полях
+
+	var aTOC = [];
+	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+	{
+		var oResult = this.Content[nIndex].GetTableOfContents(true, false);
+		if (oResult)
+			aTOC.indexOf(oResult) === -1 && aTOC.push(oResult);
+	}
+
+	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+	{
+		var oResult = this.Content[nIndex].GetTableOfContents(false, true);
+		if (oResult)
+			aTOC.indexOf(oResult) === -1 && aTOC.push(oResult);
+	}
+
+	return aTOC;
+};
+/**
+ * Данная функция получает все таблицы TOF в документе по схеме Word
+ * @returns {Array}
+ */
+CDocument.prototype.GetAllTablesOfFiguresInDoc = function()
+{
+	var aTOF = [];
+	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+		this.Content[nIndex].GetTablesOfFigures(aTOF);
+
+	return aTOF;
+};
 CDocument.prototype.GetAllTablesOfFigures = function(isCurrent)
 {
     if (true === isCurrent)
