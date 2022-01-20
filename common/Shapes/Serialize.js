@@ -3238,7 +3238,6 @@ function BinaryPPTYLoader()
                     s.Skip2(1);
 
                     uni_fill.setFill(new AscFormat.CBlipFill());
-                    console.log(oImageShape);
 
                     while (true)
                     {
@@ -9684,7 +9683,6 @@ function BinaryPPTYLoader()
                             var buBlip = new AscFormat.CBuBlip();
                             buBlip.fromPPTY(this);
                             bullet.bulletType.setBlip(buBlip);
-                            console.log(bullet);
                         }
                         else if (bullet.bulletType.type == AscFormat.BULLET_TYPE_BULLET_AUTONUM)
                         {
