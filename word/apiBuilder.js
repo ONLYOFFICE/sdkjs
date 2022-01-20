@@ -13280,6 +13280,9 @@
 	Api.prototype.ConvertDocument = function(sConvertType, bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags) 
 	{
 		var oDocument = this.GetDocument();
+		if (!oDocument.Document)
+			return "Please, use this plugin with the Word document editor";
+
 		if (sConvertType === "html")
 			return oDocument.ToHtml(bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags);
 		else
