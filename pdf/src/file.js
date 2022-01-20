@@ -171,7 +171,7 @@
             Show        : false,
             Count       : 0
         };
-        this.searchObject = null;
+        this.viewer = null;
     }
 
     // interface
@@ -513,6 +513,8 @@ void main() {\n\
         sel.Glyph2 = ret.Glyph;
 
         sel.IsSelection = true;
+
+        this.onUpdateSelection();
         this.onUpdateOverlay();
     };
 
@@ -534,6 +536,8 @@ void main() {\n\
     CFile.prototype.onMouseUp = function()
     {
         this.Selection.IsSelection = false;
+        this.onUpdateSelection();
+        this.onUpdateOverlay();
     };
 
     CFile.prototype.getPageTextStream = function(pageIndex)
@@ -1409,7 +1413,7 @@ void main() {\n\
         var ret = "<div>";
         for (var i = page1; i <= page2; i++)
         {
-            ret += this.CopySelection(i, _text_format);
+            ret += this.copySelection(i, _text_format);
         }
         ret += "</div>";
 
@@ -1417,15 +1421,132 @@ void main() {\n\
         return ret;
     };
 
+    CFile.prototype.getCountLines = function(pageIndex)
+    {
+        var stream = this.getPageTextStream(pageIndex);
+        if (!stream)
+            return -1;
+
+        var _lineGidExist = false;
+        var _lineCharCount = 0;
+        var _numLine = -1;
+
+        while (stream.pos < stream.size)
+        {
+            var command = stream.GetUChar();
+
+            switch (command)
+            {
+                case 41:
+                {
+                    stream.Skip(12);
+                    break;
+                }
+                case 22:
+                {
+                    stream.Skip(4);
+                    break;
+                }
+                case 80:
+                {
+                    if (0 != _lineCharCount)
+                        stream.Skip(2);
+
+                    _lineCharCount++;
+                    stream.Skip(_lineGidExist ? 6 : 4);
+                    break;
+                }
+                case 160:
+                {
+                    // textline
+                    _lineCharCount = 0;
+                    ++_numLine;
+
+                    var mask = stream.GetUChar();
+                    stream.Skip(8);
+
+                    if ((mask & 0x01) == 0)
+                        stream.Skip(8);
+
+                    stream.Skip(8);
+
+                    if ((mask & 0x04) != 0)
+                        stream.Skip(4);
+
+                    if ((mask & 0x02) != 0)
+                        _lineGidExist = true;
+                    else
+                        _lineGidExist = false;
+
+                    break;
+                }
+                case 162:
+                {
+                    break;
+                }
+                case 161:
+                {
+                    // text transform
+                    stream.Skip(16);
+                    break;
+                }
+                default:
+                {
+                    stream.pos = stream.size;
+                }
+            }
+        }
+
+        return _numLine;
+    };
+
+    CFile.prototype.selectAll = function()
+    {
+        var sel = this.Selection;
+
+        sel.Page1 = 0;
+        sel.Line1 = 0;
+        sel.Glyph1 = 0;
+
+        sel.Page2 = 0;
+        sel.Line2 = 0;
+        sel.Glyph2 = 0;
+
+        sel.IsSelection = false;
+
+        var pagesCount = this.pages.length;
+        if (0 != pagesCount)
+        {
+            var lLinesLastPage = this.getCountLines(pagesCount - 1);
+            if (1 != pagesCount || 0 != lLinesLastPage)
+            {
+                sel.Glyph1 = -2;
+                sel.Page2 = this.PagesCount - 1;
+                sel.Line2 = lLinesLastPage;
+                sel.Glyph2 = -1;
+
+                this.onUpdateOverlay();
+            }
+        }
+
+        this.onUpdateSelection();
+    };
+
     CFile.prototype.onUpdateOverlay = function()
     {
-        // send update overlay event
+        this.viewer.onUpdateOverlay();
+    };
+
+    CFile.prototype.onUpdateSelection = function()
+    {
+        if (window.editor)
+            window.editor.sendEvent("asc_onSelectionEnd");
     };
 
     // SEARCH
     CFile.prototype.startSearch = function(text)
     {
-        this.searchObject.StartSearch();
+        this.viewer.StartSearch();
 
         this.SearchInfo.Text = text;
         this.SearchInfo.Page = 0;
@@ -1456,7 +1577,7 @@ void main() {\n\
             clearTimeout(this.SearchInfo.Id);
             this.SearchInfo.Id = null;
         }
-        this.searchObject.EndSearch(false);
+        this.viewer.EndSearch(false);
     };
 
     CFile.prototype.searchPage = function(pageIndex)
@@ -1763,7 +1884,7 @@ void main() {\n\
         {
             if (this.SearchResults.Count === 0)
             {
-                this.searchObject.CurrentSearchNavi = null;
+                this.viewer.CurrentSearchNavi = null;
                 this.SearchResults.CurrentPage = -1;
                 this.SearchResults.Current = -1;
                 return;
@@ -1843,9 +1964,9 @@ void main() {\n\
                 }
             }
 
-            this.searchObject.CurrentSearchNavi = this.SearchResults.Pages[this.SearchResults.CurrentPage][this.SearchResults.Current];
+            this.viewer.CurrentSearchNavi = this.SearchResults.Pages[this.SearchResults.CurrentPage][this.SearchResults.Current];
 
-            this.searchObject.ToSearchResult();
+            this.viewer.ToSearchResult();
             return;
         }
         // новый поиск
@@ -1869,7 +1990,7 @@ void main() {\n\
 
         if (this.SearchResults.Count == 0)
         {
-            this.searchObject.CurrentSearchNavi = null;
+            this.viewer.CurrentSearchNavi = null;
             this.onUpdateOverlay();
             return;
         }
@@ -1885,8 +2006,8 @@ void main() {\n\
             }
         }
 
-        this.searchObject.CurrentSearchNavi = this.SearchResults.Pages[this.SearchResults.CurrentPage][this.SearchResults.Current];
-        this.searchObject.ToSearchResult();
+        this.viewer.CurrentSearchNavi = this.SearchResults.Pages[this.SearchResults.CurrentPage][this.SearchResults.Current];
+        this.viewer.ToSearchResult();
     };
 
     CFile.prototype.prepareSearch = function()

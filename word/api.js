@@ -1242,6 +1242,14 @@ background-repeat: no-repeat;\
 			document.getElementById("id_horscrollpanel").style.backgroundColor = AscCommon.GlobalSkin.ScrollBackgroundColor;
 		}
 
+		if (this.isUseNativeViewer)
+		{
+			if (this.WordControl && this.WordControl.m_oDrawingDocument && this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
+			{
+				this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.updateSkin();
+			}
+		}
+
 		if (this.WordControl && this.WordControl.m_oBody)
 		{
 			this.WordControl.OnResize(true);
@@ -1416,6 +1424,10 @@ background-repeat: no-repeat;\
 		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.registerEvent("onHyperlinkClick", function(url){
 			_t.sendEvent("asc_onHyperlinkClick", url);
 		});
+
+		AscCommon.InitBrowserInputContext(this, "", this.HtmlElementName);
+		if (AscCommon.g_inputContext)
+			AscCommon.g_inputContext.onResize(this.HtmlElementName);
 	};
 	asc_docs_api.prototype["asc_setViewerThumbnailsZoom"] = function(value) {
 		if (this.WordControl.m_oDrawingDocument.m_oDocumentRenderer &&

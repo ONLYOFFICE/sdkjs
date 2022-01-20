@@ -166,6 +166,9 @@
 		this.m_oScrollVerApi = null;
 
 		this.backgroundColor = "#E6E6E6";
+		this.backgroundPageColor = "#FFFFFF";
+		this.outlinePageColor = "#000000";
+
 		this.betweenPages = 20;
 
 		this.moduleState = ModuleState.None;
@@ -186,8 +189,26 @@
 
 		var oThis = this;
 
+		this.updateSkin = function()
+		{
+			this.backgroundColor = AscCommon.GlobalSkin.BackgroundColor;
+			this.backgroundPageColor = AscCommon.GlobalSkin.Type === "dark" ? AscCommon.GlobalSkin.BackgroundColor : "#FFFFFF";
+			this.outlinePageColor = AscCommon.GlobalSkin.PageOutline;
+
+			if (this.canvas)
+				this.canvas.style.backgroundColor = this.backgroundColor;
+
+			if (this.thumbnails)
+				this.thumbnails.updateSkin();
+
+			if (this.resize)
+				this.resize();
+		};
+
 		this.createComponents = function()
 		{
+			this.updateSkin();
+
 			var elements = "";
 			elements += "<canvas id=\"id_viewer\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
 			elements += "<canvas id=\"id_overlay\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
@@ -198,7 +219,7 @@
 			this.parent.innerHTML = elements;
 
 			this.canvas = document.getElementById("id_viewer");
-			this.canvas.backgroundColor = this.backgroundColor;
+			this.canvas.style.backgroundColor = this.backgroundColor;
 
 			this.canvasOverlay = document.getElementById("id_overlay");
 			this.canvasOverlay.style.pointerEvents = "none";
@@ -332,6 +353,11 @@
 			}
 		};
 
+		this.timerSync = function()
+		{
+			this.timer();
+		};
+
 		this.CreateScrollSettings = function()
 		{
 			var settings = new AscCommon.ScrollSettings();
@@ -339,6 +365,30 @@
 			settings.screenH = this.height;
 			settings.vscrollStep = 45;
 			settings.hscrollStep = 45;
+			settings.isNeedInvertOnActive = GlobalSkin.isNeedInvertOnActive;
+
+			settings.scrollBackgroundColor = GlobalSkin.ScrollBackgroundColor;
+			settings.scrollBackgroundColorHover = GlobalSkin.ScrollBackgroundColor;
+			settings.scrollBackgroundColorActive = GlobalSkin.ScrollBackgroundColor;
+
+			settings.scrollerColor = GlobalSkin.ScrollerColor;
+			settings.scrollerHoverColor = GlobalSkin.ScrollerHoverColor;
+			settings.scrollerActiveColor = GlobalSkin.ScrollerActiveColor;
+
+			settings.arrowColor = GlobalSkin.ScrollArrowColor;
+			settings.arrowHoverColor = GlobalSkin.ScrollArrowHoverColor;
+			settings.arrowActiveColor = GlobalSkin.ScrollArrowActiveColor;
+
+			settings.strokeStyleNone = GlobalSkin.ScrollOutlineColor;
+			settings.strokeStyleOver = GlobalSkin.ScrollOutlineHoverColor;
+			settings.strokeStyleActive = GlobalSkin.ScrollOutlineActiveColor;
+
+			settings.targetColor = GlobalSkin.ScrollerTargetColor;
+			settings.targetHoverColor = GlobalSkin.ScrollerTargetHoverColor;
+			settings.targetActiveColor = GlobalSkin.ScrollerTargetActiveColor;
+
+			settings.screenW = AscCommon.AscBrowser.convertToRetinaValue(settings.screenW);
+			settings.screenH = AscCommon.AscBrowser.convertToRetinaValue(settings.screenH);
 			return settings;
 		};
 
@@ -462,6 +512,8 @@
 				if (newScrollY < this.scrollMaxY)
 					this.m_oScrollVerApi.scrollToY(newScrollY);
 			}
+
+			this.timerSync();
 		};
 
 		this.onLoadModule = function()
@@ -561,7 +613,7 @@
 				{
 					this.file = window["AscViewer"].createFile(data);
 					this.SearchResults = this.file.SearchResults;
-					this.file.searchObject = this;
+					this.file.viewer = this;
 				}
 
 				if (this.file.isNeedPassword())
@@ -576,7 +628,7 @@
 
 				this.file = window["AscViewer"].createFile(data);
 				this.SearchResults = this.file.SearchResults;
-				this.file.searchObject = this;
+				this.file.viewer = this;
 			}
 
 			if (this.file.isNeedPassword())
@@ -855,7 +907,6 @@
 
 			var pageObjectLogic = oThis.getPageByCoords2(AscCommon.global_mouseEvent.X - oThis.x, AscCommon.global_mouseEvent.Y - oThis.y);
 			oThis.file.onMouseDown(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
-			oThis.onUpdateOverlay();
 
 			if (-1 === oThis.timerScrollSelect && AscCommon.global_mouseEvent.IsLocked)
 			{
@@ -898,7 +949,6 @@
 			}
 
 			oThis.file.onMouseUp();
-			oThis.onUpdateOverlay();
 
 			if (-1 !== oThis.timerScrollSelect)
 			{
@@ -971,8 +1021,6 @@
 
 				var pageObjectLogic = oThis.getPageByCoords2(AscCommon.global_mouseEvent.X - oThis.x, AscCommon.global_mouseEvent.Y - oThis.y);
 				oThis.file.onMouseMove(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
-
-				oThis.onUpdateOverlay();
 			}
 
 			AscCommon.stopEvent(e);
@@ -1497,6 +1545,8 @@
 			for (var i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 			{
 				var pageCoords = this.pageDetector.pages[i - this.startVisiblePage];
+				if (!pageCoords)
+					continue;
 				if (x >= pageCoords.x && x <= (pageCoords.x + pageCoords.w) &&
 					y >= pageCoords.y && y <= (pageCoords.y + pageCoords.h))
 				{
@@ -1524,6 +1574,9 @@
 					break;
 			}
 
+			if (!pageCoords)
+				pageCoords = {x:0, y:0, w:1, h:1};
+
 			var pixToMM = (25.4 / this.file.pages[pageIndex].Dpi);
 			return {
 				index : pageIndex,
@@ -1546,6 +1599,75 @@
 		this.ToSearchResult = function()
 		{
 			// TODO: scroll to CurrentSearchNavi
+		};
+
+		this.OnKeyDown = function(e)
+		{
+			var bRetValue = false;
+
+			if ( e.KeyCode == 33 ) // PgUp
+			{
+				this.m_oScrollVerApi.scrollByY(-this.height, false);
+				this.timerSync();
+			}
+			else if ( e.KeyCode == 34 ) // PgDn
+			{
+				this.m_oScrollVerApi.scrollByY(this.height, false);
+				this.timerSync();
+			}
+			else if ( e.KeyCode == 35 ) // End
+			{
+				if ( true === e.CtrlKey ) // Ctrl + End
+				{
+					this.m_oScrollVerApi.scrollToY(this.m_oScrollVerApi.maxScrollY, false);
+				}
+				this.timerSync();
+				bRetValue = true;
+			}
+			else if ( e.KeyCode == 36 ) // клавиша Home
+			{
+				if ( true === e.CtrlKey ) // Ctrl + Home
+				{
+					this.m_oScrollVerApi.scrollToY(0, false);
+				}
+				this.timerSync();
+				bRetValue = true;
+			}
+			else if ( e.KeyCode == 37 ) // Left Arrow
+			{
+				bRetValue = true;
+			}
+			else if ( e.KeyCode == 38 ) // Top Arrow
+			{
+				bRetValue = true;
+			}
+			else if ( e.KeyCode == 39 ) // Right Arrow
+			{
+				bRetValue = true;
+			}
+			else if ( e.KeyCode == 40 ) // Bottom Arrow
+			{
+				bRetValue = true;
+			}
+			else if ( e.KeyCode == 65 && true === e.CtrlKey ) // Ctrl + A
+			{
+				bRetValue = true;
+
+				// TODO: waiting if not loaded
+				this.selectAll();
+			}
+			else if ( e.KeyCode == 80 && true === e.CtrlKey ) // Ctrl + P + ...
+			{
+				// TODO: print
+				bRetValue = true;
+			}
+			else if ( e.KeyCode == 83 && true === e.CtrlKey ) // Ctrl + S + ...
+			{
+				// nothing
+				bRetValue = true;
+			}
+
+			return bRetValue;
 		};
 	}
 
