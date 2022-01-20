@@ -9829,6 +9829,9 @@ drawPieChart.prototype = {
 		if (this.cChartDrawer.nDimensionCount === 3) {
 			if (this.paths.series[val][ser] && this.paths.series[val][ser].upPath) {
 				path = this.paths.series[val][ser].upPath;
+			} else if (this.paths.series[val][ser] && this.paths.series[val][ser].insidePath) {
+				// функция для случая когда все значения серии равны нулю, рассчитывает позицию исходя из insidePath
+				return this._calculateDLblOnlyZeroValue(val, this.paths.series[val][ser].insidePath);
 			}
 		} else {
 			path = this.paths.series[val];
@@ -9958,6 +9961,41 @@ drawPieChart.prototype = {
 		}
 
 		return {x: centerX, y: centerY};
+	},
+
+	_calculateDLblOnlyZeroValue: function (val, path) {
+		var numCache = this._getFirstRealNumCache();
+		var oCommand1, calcPath, oCommand0;
+		// циклом находим крайнюю точку
+		for (var i = 0; i < this.paths.series.length; i++) {
+			calcPath = this.paths.series[i][numCache[i].val].insidePath;
+			calcPath = this.cChartSpace.GetPath(calcPath).getCommandByIndex(1);
+			if (calcPath) {
+				oCommand1 = calcPath;
+			}
+		}
+
+		if (!AscFormat.isRealNumber(path)) {
+			return;
+		}
+
+		path = this.cChartSpace.GetPath(path);
+		oCommand0 = path.getCommandByIndex(0);
+
+		var x = oCommand0.X + (oCommand1.X - oCommand0.X) / 2;
+		var y = oCommand0.Y + (oCommand1.Y - oCommand0.Y) / 2;
+
+		var _numCache = this.chart.series[0].val.numRef ? this.chart.series[0].val.numRef.numCache : this.chart.series[0].val.numLit;
+		var point = _numCache ? _numCache.getPtByIndex(val) : null;
+
+		if (!point || !point.compiledDlb) {
+			return;
+		}
+
+		var width = point.compiledDlb.extX;
+		var height = point.compiledDlb.extY;
+
+		return { x: x - width / 2, y: y - height / 2 }
 	},
 
 	//****fast calulate and drawing(for switch on slow drawing: change name function _Slow)
