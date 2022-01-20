@@ -12441,15 +12441,17 @@
 							}
 						} else {
 							oCurFormat.assign(cellfont);
+							oCurFormat.setSkip(false);
+							oCurFormat.setRepeat(false);
 						}
 					} else {
 						oCurFormat.assign(cellfont);
+						oCurFormat.setSkip(false);
+						oCurFormat.setRepeat(false);
 						if (null != oCurtext.format) {
 							oCurFormat.assignFromObject(oCurtext.format);
 						}
 					}
-					oCurFormat.setSkip(false);
-					oCurFormat.setRepeat(false);
 					oNewItem.format = oCurFormat;
 					oNewItem.checkVisitedHyperlink(this.nRow, this.nCol, this.ws.hyperlinkManager);
 					aResult.push(oNewItem);
