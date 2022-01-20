@@ -1746,10 +1746,6 @@ CNumberingLvl.prototype.private_CheckSymbols = function()
 				AscFonts.FontPickerByCharacter.getFontBySymbol(0x4F70);
 				AscFonts.FontPickerByCharacter.getFontBySymbol(0x4EDF);
 				AscFonts.FontPickerByCharacter.getFontBySymbol(0x842C);
-				AscFonts.FontPickerByCharacter.getFontBySymbol('萬'.charCodeAt(0));
-				AscFonts.FontPickerByCharacter.getFontBySymbol('仟'.charCodeAt(0));
-				AscFonts.FontPickerByCharacter.getFontBySymbol('佰'.charCodeAt(0));
-				AscFonts.FontPickerByCharacter.getFontBySymbol('拾'.charCodeAt(0));
 				break;
 			}
 			case Asc.c_oAscNumberingFormat.IdeographTraditional:
@@ -1928,9 +1924,6 @@ CNumberingLvl.prototype.private_CheckSymbols = function()
 				AscFonts.FontPickerByCharacter.getFontBySymbol(0x5341);
 				AscFonts.FontPickerByCharacter.getFontBySymbol(0x5343);
 				AscFonts.FontPickerByCharacter.getFontBySymbol(0x767E);
-				AscFonts.FontPickerByCharacter.getFontBySymbol('千'.charCodeAt(0));
-				AscFonts.FontPickerByCharacter.getFontBySymbol('百'.charCodeAt(0));
-				AscFonts.FontPickerByCharacter.getFontBySymbol('十'.charCodeAt(0));
 				break;
 			}
 			case Asc.c_oAscNumberingFormat.JapaneseLegal:
@@ -1947,10 +1940,7 @@ CNumberingLvl.prototype.private_CheckSymbols = function()
 				AscFonts.FontPickerByCharacter.getFontBySymbol(0x62FE);
 				AscFonts.FontPickerByCharacter.getFontBySymbol(0x767E);
 				AscFonts.FontPickerByCharacter.getFontBySymbol(0x842C);
-				AscFonts.FontPickerByCharacter.getFontBySymbol('萬'.charCodeAt(0));
-				AscFonts.FontPickerByCharacter.getFontBySymbol('阡'.charCodeAt(0));
-				AscFonts.FontPickerByCharacter.getFontBySymbol('百'.charCodeAt(0));
-				AscFonts.FontPickerByCharacter.getFontBySymbol('拾'.charCodeAt(0));
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x9621);
 				break;
 			}
 			case Asc.c_oAscNumberingFormat.KoreanCounting:
@@ -1968,10 +1958,6 @@ CNumberingLvl.prototype.private_CheckSymbols = function()
 				AscFonts.FontPickerByCharacter.getFontBySymbol(0xB9CC);
 				AscFonts.FontPickerByCharacter.getFontBySymbol(0xCC9C);
 				AscFonts.FontPickerByCharacter.getFontBySymbol(0xBC31);
-				AscFonts.FontPickerByCharacter.getFontBySymbol('만'.charCodeAt(0));
-				AscFonts.FontPickerByCharacter.getFontBySymbol('천'.charCodeAt(0));
-				AscFonts.FontPickerByCharacter.getFontBySymbol('백'.charCodeAt(0));
-				AscFonts.FontPickerByCharacter.getFontBySymbol('십'.charCodeAt(0));
 				break;
 			}
 			case Asc.c_oAscNumberingFormat.KoreanDigital:
