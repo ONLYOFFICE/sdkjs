@@ -2792,7 +2792,7 @@ background-repeat: no-repeat;\
 					blip.url = uploadImageUrl;
 					that.put_ListType(undefined, undefined, blip);
 				}
-				AscCommon.sendImgUrls(this, [blipUrl], changeBlipFillUrlToLocalAndTrySetImageBulletAgain, false, true, blip.token);
+				AscCommon.sendImgUrls(this, [blipUrl], changeBlipFillUrlToLocalAndTrySetImageBulletAgain, false, false, blip.token);
 				return;
 			}
 		}
