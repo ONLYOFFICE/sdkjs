@@ -42,6 +42,7 @@ var g_oTextMeasurer = AscCommon.g_oTextMeasurer;
 var History         = AscCommon.History;
 var IntToNumberFormat = window["AscCommon"].IntToNumberFormat;
 
+var kHeightImageBullet = 1 / 4.043478260869565;
 
 var numbering_presentationnumfrmt_AlphaLcParenBoth = 0;
 var numbering_presentationnumfrmt_AlphaLcParenR = 1;
@@ -436,10 +437,10 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 	if (this.m_nType === numbering_presentationnumfrmt_Blip)
 	{
 		var sizes = AscCommon.getSourceImageSize(this.m_sSrc);
-		var x_height = this.m_oTextPr.FontSize / 4;
+		var x_height = this.m_oTextPr.FontSize * kHeightImageBullet;
 		var adaptImageHeight = x_height;
 		var adaptImageWidth = sizes.width * adaptImageHeight / (sizes.height ? sizes.height : 1);
-		return { Width: adaptImageWidth + adaptImageWidth / 35 };
+		return { Width: adaptImageWidth };
 	}
 
 	var X = 0;
@@ -513,7 +514,7 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 	if (this.m_nType === numbering_presentationnumfrmt_Blip)
 	{
 		var sizes = AscCommon.getSourceImageSize(this.m_sSrc);
-		var x_height = this.m_oTextPr.FontSize / 4;
+		var x_height = this.m_oTextPr.FontSize * kHeightImageBullet;
 		var adaptImageHeight = x_height;
 		var adaptImageWidth = sizes.width * adaptImageHeight / (sizes.height ? sizes.height : 1);
 		Context.drawImage(this.m_sSrc, X, Y - adaptImageHeight, adaptImageWidth, adaptImageHeight);
