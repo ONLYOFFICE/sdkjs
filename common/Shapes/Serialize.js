@@ -99,7 +99,7 @@ function IsHiddenObj(object)
     return false;
 }
 
-function CBuilderImages(blip_fill, full_url, image_shape, sp_pr, ln, text_pr, para_text_pr, run, paragraph)
+function CBuilderImages(blip_fill, full_url, image_shape, sp_pr, ln, text_pr, para_text_pr, run, paragraph, bullet)
 {
     this.Url = full_url;
     this.BlipFill = blip_fill;
@@ -111,6 +111,7 @@ function CBuilderImages(blip_fill, full_url, image_shape, sp_pr, ln, text_pr, pa
     this.ParaTextPr = para_text_pr;
     this.Run        = run;
     this.Paragraph  = paragraph;
+    this.Bullet = bullet;
     this.AdditionalUrls = [];//для wmf, ole
 }
 CBuilderImages.prototype =
@@ -166,6 +167,20 @@ CBuilderImages.prototype =
                         oCopyFill = this.Run.Pr.Unifill.createDuplicate();
                         oCopyFill.fill.setRasterImageId(url);
                         this.Run.Set_Unifill(oCopyFill);
+                    }
+                }
+            }
+            if(this.Bullet) 
+            {
+                if(this.Paragraph) 
+                {
+                    var oPr = this.Paragraph.Pr;
+                    var oBullet = oPr.Bullet;
+                    if(oBullet.getImageBulletURL()) 
+                    {
+                        var oNewPr = oPr.Copy();
+                        oNewPr.Bullet.fillBulletImage(url);
+                        this.Paragraph.Set_Pr(oNewPr);
                     }
                 }
             }
@@ -3092,7 +3107,7 @@ function BinaryPPTYLoader()
         return ret;
     };
 
-    this.ReadBlip = function (uni_fill, oSpPr, oImageShape, oLn) {
+    this.ReadBlip = function (uni_fill, oSpPr, oImageShape, oLn, oParagraph, oBullet) {
         var s = this.stream;
         var _s2 = s.cur;
         var _e2 = _s2 + s.GetLong() + 4;
@@ -3201,7 +3216,7 @@ function BinaryPPTYLoader()
                         this.ImageMapChecker[sReadPath] = true;
 
                     if (this.IsUseFullUrl)
-                        this.RebuildImages.push(new CBuilderImages(uni_fill.fill, sReadPath, oImageShape, oSpPr, oLn));
+                        this.RebuildImages.push(new CBuilderImages(uni_fill.fill, sReadPath, oImageShape, oSpPr, oLn, undefined, undefined, undefined, oParagraph, oBullet));
 
                     s.Skip2(1); // end attribute
                     break;
@@ -3218,7 +3233,7 @@ function BinaryPPTYLoader()
     }
 
 
-    this.ReadUniFill = function(oSpPr, oImageShape, oLn)
+    this.ReadUniFill = function(oSpPr, oImageShape, oLn, oParagraph, oBullet)
     {
         var s = this.stream;
         var read_start = s.cur;
@@ -3266,7 +3281,7 @@ function BinaryPPTYLoader()
                         {
                             case 0:
                             {
-                                this.ReadBlip(uni_fill, oSpPr, oImageShape, oLn);
+                                this.ReadBlip(uni_fill, oSpPr, oImageShape, oLn, oParagraph, oBullet);
                                break;
                             }
                             case 1:
@@ -9681,7 +9696,7 @@ function BinaryPPTYLoader()
                         {
                             s.Skip2(5);
                             var buBlip = new AscFormat.CBuBlip();
-                            buBlip.fromPPTY(this);
+                            buBlip.fromPPTY(this, par, bullet);
                             bullet.bulletType.setBlip(buBlip);
                         }
                         else if (bullet.bulletType.type == AscFormat.BULLET_TYPE_BULLET_AUTONUM)

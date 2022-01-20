@@ -992,6 +992,25 @@ function SetXfrmFromMetrics(oDrawing, metrics)
         }
     };
 
+    function getBulletImages(oContent, aImages) {
+        if(!oContent) {
+            return;
+        }
+        var aParagraphs = oContent.Content;
+        var sImageId;
+        for(var nPar = 0; nPar < aParagraphs.length; ++nPar) 
+        {
+            var oPr = aParagraphs[nPar].Pr;
+            if(oPr.Bullet) 
+            {
+                sImageId = oPr.Bullet.getImageBulletURL();
+                if(sImageId) 
+                {
+                    aImages.push(sImageId);
+                }
+            }
+        }
+    }
 
     function CSignatureLine(){
         this.id = null;
@@ -1654,6 +1673,7 @@ CShape.prototype.getAllImages = function (images) {
     if (this.spPr && this.spPr.Fill && this.spPr.Fill.fill instanceof AscFormat.CBlipFill && typeof this.spPr.Fill.fill.RasterImageId === "string") {
         images[AscCommon.getFullImageSrc2(this.spPr.Fill.fill.RasterImageId)] = true;
     }
+    getBulletImages(this.getDocContent && this.getDocContent(), images);
 };
 
 CShape.prototype.getAllFonts = function (fonts) {
@@ -5913,6 +5933,10 @@ CShape.prototype.getAllRasterImages = function(images)
             {
                 drawings[i].GraphicObj && drawings[i].GraphicObj.getAllRasterImages && drawings[i].GraphicObj.getAllRasterImages(images);
             }
+        }
+        else 
+        {
+            getBulletImages(oContent, images);
         }
         var fCallback = function(oRun)
 		{

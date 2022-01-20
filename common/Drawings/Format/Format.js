@@ -5477,10 +5477,10 @@ function FormatRGBAColor()
         pWriter.WriteBlip(this.blip.fill, _src);
     };
 
-    CBuBlip.prototype.fromPPTY = function (pReader) {
+    CBuBlip.prototype.fromPPTY = function (pReader, oParagraph, oBullet) {
         this.setBlip(new AscFormat.CUniFill());
         this.blip.setFill(new AscFormat.CBlipFill());
-        pReader.ReadBlip(this.blip);
+        pReader.ReadBlip(this.blip, undefined, undefined, undefined, oParagraph, oBullet);
     };
 
     CBuBlip.prototype.Read_FromBinary = function (r) {

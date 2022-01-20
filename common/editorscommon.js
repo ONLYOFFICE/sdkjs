@@ -1003,9 +1003,12 @@
 	}
 	function getSourceImageSize(src)
 	{
-		var _img = editor.ImageLoader.map_image_index[src];
-		if (_img && _img.Image) {
-			return {width: _img.Image.width, height: _img.Image.height};
+		var oApi = (Asc.editor || editor);
+		if(oApi) {
+			var _img = oApi.ImageLoader.map_image_index[src];
+			if (_img && _img.Image) {
+				return {width: _img.Image.width, height: _img.Image.height};
+			}
 		}
 		return {width: 0, height: 0};
 	}
