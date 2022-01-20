@@ -8615,6 +8615,9 @@
 		if (isWholeWordTrue !== null) {
 			options.isWholeWord = isWholeWordTrue;
 		}
+		if (findEmptyStr) {
+			options.findWhat = "";
+		}
 		this.lastFindOptions = options.clone();
 		// ToDo support multiselect
 		this.lastFindOptions.findRange = findRange.getBBox0().clone();
