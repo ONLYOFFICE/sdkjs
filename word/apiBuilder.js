@@ -5154,7 +5154,7 @@
 		if (typeof(bOnlyPageNumbers) !== "boolean")
 			bOnlyPageNumbers = false;
 
-		var oDocument = this.private_GetLogicDocument();
+		var oDocument = private_GetLogicDocument();
 		var allTOC = oDocument.GetAllTablesOfContentsInDoc();
 
 		for (var nItem = 0; nItem < allTOC.length; nItem++)
@@ -5179,9 +5179,7 @@
 
 			if (bOnlyPageNumbers)
 			{
-				if (false === oDocument.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Content))
-				{
-					var arrParagraphs = oDocument.GetCurrentParagraph(false, true);
+				var arrParagraphs = oDocument.GetCurrentParagraph(false, true);
 
 					for (var nParaIndex = 0, nParasCount = arrParagraphs.length; nParaIndex < nParasCount; ++nParaIndex)
 					{
@@ -5193,15 +5191,11 @@
 					}
 
 					oDocument.LoadDocumentState(oState);
-				}
 			}
 			else
 			{
-				if (false === oDocument.Document_Is_SelectionLocked(AscCommon.changestype_Document_Content))
-				{
-					oTOC.Update();
-					oDocument.LoadDocumentState(oState);
-				}
+				oTOC.Update();
+				oDocument.LoadDocumentState(oState);
 			}
 		}
 	};
@@ -5216,7 +5210,7 @@
 		if (typeof(bOnlyPageNumbers) !== "boolean")
 			bOnlyPageNumbers = false;
 
-		var oDocument = this.private_GetLogicDocument();
+		var oDocument = private_GetLogicDocument();
 		var allTOC = oDocument.GetAllTablesOfFiguresInDoc();
 
 		for (var nItem = 0; nItem < allTOC.length; nItem++)
@@ -5241,29 +5235,23 @@
 
 			if (bOnlyPageNumbers)
 			{
-				if (false === oDocument.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Content))
+				var arrParagraphs = oDocument.GetCurrentParagraph(false, true);
+
+				for (var nParaIndex = 0, nParasCount = arrParagraphs.length; nParaIndex < nParasCount; ++nParaIndex)
 				{
-					var arrParagraphs = oDocument.GetCurrentParagraph(false, true);
-
-					for (var nParaIndex = 0, nParasCount = arrParagraphs.length; nParaIndex < nParasCount; ++nParaIndex)
+					var arrPageNumbers = arrParagraphs[nParaIndex].GetComplexFieldsArrayByType(AscCommonWord.fieldtype_PAGEREF);
+					for (var nRefIndex = 0, nRefsCount = arrPageNumbers.length; nRefIndex < nRefsCount; ++nRefIndex)
 					{
-						var arrPageNumbers = arrParagraphs[nParaIndex].GetComplexFieldsArrayByType(AscCommonWord.fieldtype_PAGEREF);
-						for (var nRefIndex = 0, nRefsCount = arrPageNumbers.length; nRefIndex < nRefsCount; ++nRefIndex)
-						{
-							arrPageNumbers[nRefIndex].Update();
-						}
+						arrPageNumbers[nRefIndex].Update();
 					}
-
-					oDocument.LoadDocumentState(oState);
 				}
+
+				oDocument.LoadDocumentState(oState);
 			}
 			else
 			{
-				if (false === oDocument.Document_Is_SelectionLocked(AscCommon.changestype_Document_Content))
-				{
-					oTOC.Update();
-					oDocument.LoadDocumentState(oState);
-				}
+				oTOC.Update();
+				oDocument.LoadDocumentState(oState);
 			}
 		}
 	};
