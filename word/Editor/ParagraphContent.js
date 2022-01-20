@@ -171,14 +171,15 @@ var PARATEXT_FLAGS_NON_CAPITALS           = PARATEXT_FLAGS_MASK ^ PARATEXT_FLAGS
 
 var TEXTWIDTH_DIVIDER = 16384;
 
-var AUTOCORRECT_FLAGS_NONE                  = 0x00000000;
-var AUTOCORRECT_FLAGS_ALL                   = 0xFFFFFFFF;
-var AUTOCORRECT_FLAGS_FRENCH_PUNCTUATION    = 0x00000001;
-var AUTOCORRECT_FLAGS_SMART_QUOTES          = 0x00000002;
-var AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH      = 0x00000004;
-var AUTOCORRECT_FLAGS_HYPERLINK             = 0x00000008;
-var AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE = 0x00000010;
-var AUTOCORRECT_FLAGS_NUMBERING             = 0x00000020;
+var AUTOCORRECT_FLAGS_NONE                    = 0x00000000;
+var AUTOCORRECT_FLAGS_ALL                     = 0xFFFFFFFF;
+var AUTOCORRECT_FLAGS_FRENCH_PUNCTUATION      = 0x00000001;
+var AUTOCORRECT_FLAGS_SMART_QUOTES            = 0x00000002;
+var AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH        = 0x00000004;
+var AUTOCORRECT_FLAGS_HYPERLINK               = 0x00000008;
+var AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE   = 0x00000010;
+var AUTOCORRECT_FLAGS_NUMBERING               = 0x00000020;
+var AUTOCORRECT_FLAGS_DOUBLESPACE_WITH_PERIOD = 0x00000040;
 
 /**
  * Базовый класс для элементов, лежащих внутри рана.
@@ -351,6 +352,14 @@ CRunElementBase.prototype.IsNeedSaveRecalculateObject = function()
  * @returns {boolean}
  */
 CRunElementBase.prototype.IsDigit = function()
+{
+	return false;
+};
+/**
+ * Является ли данный элемент пробельным символом
+ * @returns {boolean}
+ */
+CRunElementBase.prototype.IsSpace = function()
 {
 	return false;
 };
@@ -763,6 +772,10 @@ ParaSpace.prototype = Object.create(CRunElementBase.prototype);
 ParaSpace.prototype.constructor = ParaSpace;
 
 ParaSpace.prototype.Type = para_Space;
+ParaSpace.prototype.IsSpace = function()
+{
+	return true;
+};
 ParaSpace.prototype.Draw = function(X, Y, Context, PDSE, oTextPr)
 {
 	if (undefined !== editor && editor.ShowParaMarks)

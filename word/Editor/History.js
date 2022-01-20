@@ -1281,9 +1281,10 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 	 * Проверяем перед автозаменой, что действие совершается во время набора
 	 * @param oLastElement - последний элемент, добавленный перед автозаменой
 	 * @param nHistoryActions - количество точек предществующих автозамене
+	 * @param [nMaxTimeDelay=0] - если задано, то максимальное значение времени, которое прошло с момента последнего действия
 	 * @returns {boolean}
 	 */
-	CHistory.prototype.CheckAsYouTypeAutoCorrect = function(oLastElement, nHistoryActions)
+	CHistory.prototype.CheckAsYouTypeAutoCorrect = function(oLastElement, nHistoryActions, nMaxTimeDelay)
 	{
 		// В nHistoryActions задано количество точек, которые предществовали автозамене, т.е.
 		// выполнялись действия, которые и вызывали автозамену в итоге. Нам надо проверить предыдущую точку до заданных
@@ -1292,10 +1293,22 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		if (this.Index < nHistoryActions)
 			return false;
 
-		var oPoint      = this.Points[this.Index - nHistoryActions];
+		var nCurIndex = this.Index - nHistoryActions;
+		while (this.private_IsPointDoAutoCorrect(nCurIndex) && nCurIndex > 0)
+			nCurIndex--;
+
+		if (nCurIndex < 0)
+			return false;
+
+		var oPoint = this.Points[nCurIndex];
+
+		if (nMaxTimeDelay && (new Date().getTime() - oPoint.Time) > nMaxTimeDelay)
+			return false;
+
 		var nItemsCount = oPoint.Items.length;
 		if ((AscDFH.historydescription_Document_AddLetter === oPoint.Description
 			|| AscDFH.historydescription_Document_AddLetterUnion === oPoint.Description
+			|| AscDFH.historydescription_Document_SpaceButton === oPoint.Description
 			|| AscDFH.historydescription_Presentation_ParagraphAdd === oPoint.Description)
 			&& nItemsCount > 0)
 		{
@@ -1308,6 +1321,18 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		}
 
 		return false;
+	};
+	CHistory.prototype.private_IsPointDoAutoCorrect = function(nPointIndex)
+	{
+		if (nPointIndex < 0 || nPointIndex >= this.Points.length)
+			return false;
+
+		var nDescription = this.Points[nPointIndex].Description;
+
+		return (AscDFH.historydescription_Document_AutoCorrectCommon === nDescription
+			|| AscDFH.historydescription_Document_AutoCorrectFirstLetterOfSentence === nDescription
+			|| AscDFH.historydescription_Document_AutoCorrectHyphensWithDash === nDescription
+			|| AscDFH.historydescription_Document_AutoCorrectSmartQuotes === nDescription);
 	};
 
 	//----------------------------------------------------------export--------------------------------------------------

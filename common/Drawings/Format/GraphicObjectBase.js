@@ -2696,6 +2696,22 @@
     CGraphicObjectBase.prototype.getObjectName = function() {
         return this.getTypeName() + " " + this.getFormatId();
     };
+    
+    CGraphicObjectBase.prototype.isPlaceholder = function() {
+        return false;
+    };
+    CGraphicObjectBase.prototype.getPlaceholderName = function() {
+        if(!this.isPlaceholder()) {
+            return "";
+        }
+        var nPhType = this.getPlaceholderType();
+        var sText = AscFormat.pHText[nPhType];
+        if(!sText) {
+            sText = AscFormat.pHText[AscFormat.phType_body];
+        }
+        var sTrText = AscCommon.translateManager.getValue(sText);
+        return sTrText;
+    };
     CGraphicObjectBase.prototype.getTimimng = function() {
         if(this.group) {
             return this.group.getTimimng();

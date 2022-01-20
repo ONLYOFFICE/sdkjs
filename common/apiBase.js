@@ -112,6 +112,9 @@
 		// translate manager
 		this.translateManager = AscCommon.translateManager.init(config['translate']);
 
+		//shape names map by preset. Set from interface
+		this.shapeNames = {};
+
 		// Chart
 		this.chartPreviewManager   = null;
 		this.textArtPreviewManager = null;
@@ -1975,6 +1978,25 @@
 	{
 	};
 
+	
+	baseEditorsApi.prototype.asc_setShapeNames = function(oShapeNames)
+	{
+		if(oShapeNames !== null && typeof oShapeNames === "object") 
+		{
+			this.shapeNames = oShapeNames;
+		}
+	};
+
+	baseEditorsApi.prototype.getShapeName = function(sPreset)
+	{
+		var sShapeName = this.shapeNames[sPreset];
+		if(typeof sShapeName !== "string" || sShapeName.length === 0) 
+		{
+			sShapeName = "Shape";
+		}
+		return sShapeName;
+	};
+
 
 	//Remove All comments
 	baseEditorsApi.prototype.asc_RemoveAllComments = function(isMine, isCurrent)
@@ -3634,6 +3656,7 @@
 	prot['asc_removeShortcuts'] = prot.asc_removeShortcuts;
 	prot['asc_addCustomShortcutInsertSymbol'] = prot.asc_addCustomShortcutInsertSymbol;
 	prot['asc_wopi_renameFile'] = prot.asc_wopi_renameFile;
+	prot['asc_setShapeNames'] = prot.asc_setShapeNames;
 
 	prot['asc_isCrypto'] = prot.asc_isCrypto;
 

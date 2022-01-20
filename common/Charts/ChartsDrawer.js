@@ -1298,6 +1298,9 @@ CChartsDrawer.prototype =
 				if(sum) {
 					for (var j = 0; j < data.length; j++) {
 						for (var i = 0; i < data[j].length; i++) {
+							if (sum[j] === 0) {
+								break;
+							}
 							data[j][i] = data[j][i] / sum[j];
 						}
 					}
@@ -1800,6 +1803,7 @@ CChartsDrawer.prototype =
 	},
 
 	_getAxisValues2: function (axis, chartSpace, isStackedType, isScatter) {
+		var isOx = axis.axPos === window['AscFormat'].AX_POS_B || axis.axPos === window['AscFormat'].AX_POS_T;
 		//для оси категорий берем интервал 1
 		var arrayValues;
 		if(AscDFH.historyitem_type_CatAx === axis.getObjectType() || AscDFH.historyitem_type_DateAx === axis.getObjectType()) {
@@ -1871,7 +1875,7 @@ CChartsDrawer.prototype =
 			bIsManualStep = true;
 		} else {
 			//было следующее условие - isOx || c_oChartTypes.HBar === this.calcProp.type
-			if ((axis.axPos === window['AscFormat'].AX_POS_B || axis.axPos === window['AscFormat'].AX_POS_T) && !isScatter) {
+			if (isOx && !isScatter && axisMin !== 0 && axisMax !== 0) {
 				step = this._getStep(firstDegree.val + (firstDegree.val / 10) * 3);
 			} else {
 				step = this._getStep(firstDegree.val);
@@ -1881,7 +1885,7 @@ CChartsDrawer.prototype =
 		}
 		
 		if (isNaN(step) || step === 0) {
-			arrayValues = [0, 0.2, 0.4, 0.6, 0.8, 1, 1.2];
+			arrayValues = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
 		} else {
 			arrayValues = this._getArrayDataValues(step, axisMin, axisMax, manualMin, manualMax);
 		}
@@ -9829,6 +9833,9 @@ drawPieChart.prototype = {
 		if (this.cChartDrawer.nDimensionCount === 3) {
 			if (this.paths.series[val][ser] && this.paths.series[val][ser].upPath) {
 				path = this.paths.series[val][ser].upPath;
+			} else if (this.paths.series[val][ser] && this.paths.series[val][ser].insidePath) {
+				// функция для случая когда все значения серии равны нулю, рассчитывает позицию исходя из insidePath
+				return this._calculateDLblOnlyZeroValue(val, this.paths.series[val][ser].insidePath);
 			}
 		} else {
 			path = this.paths.series[val];
@@ -9958,6 +9965,41 @@ drawPieChart.prototype = {
 		}
 
 		return {x: centerX, y: centerY};
+	},
+
+	_calculateDLblOnlyZeroValue: function (val, path) {
+		var numCache = this._getFirstRealNumCache();
+		var oCommand1, calcPath, oCommand0;
+		// циклом находим крайнюю точку
+		for (var i = 0; i < this.paths.series.length; i++) {
+			calcPath = this.paths.series[i][numCache[i].val].insidePath;
+			calcPath = this.cChartSpace.GetPath(calcPath).getCommandByIndex(1);
+			if (calcPath) {
+				oCommand1 = calcPath;
+			}
+		}
+
+		if (!AscFormat.isRealNumber(path)) {
+			return;
+		}
+
+		path = this.cChartSpace.GetPath(path);
+		oCommand0 = path.getCommandByIndex(0);
+
+		var x = oCommand0.X + (oCommand1.X - oCommand0.X) / 2;
+		var y = oCommand0.Y + (oCommand1.Y - oCommand0.Y) / 2;
+
+		var _numCache = this.chart.series[0].val.numRef ? this.chart.series[0].val.numRef.numCache : this.chart.series[0].val.numLit;
+		var point = _numCache ? _numCache.getPtByIndex(val) : null;
+
+		if (!point || !point.compiledDlb) {
+			return;
+		}
+
+		var width = point.compiledDlb.extX;
+		var height = point.compiledDlb.extY;
+
+		return { x: x - width / 2, y: y - height / 2 }
 	},
 
 	//****fast calulate and drawing(for switch on slow drawing: change name function _Slow)

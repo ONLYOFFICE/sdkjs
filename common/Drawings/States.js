@@ -437,7 +437,16 @@ NullState.prototype =
     },
 
     onMouseUp: function(e, x, y, pageIndex)
-    {}
+    {
+        var oTiming = this.drawingObjects && this.drawingObjects.drawingObjects.timing;
+        if(oTiming) 
+        {
+            if(oTiming.onMouseDown(e, x, y, false)) 
+            {
+                editor.WordControl.m_oLogicDocument.noShowContextMenu = true;
+            }
+        }
+    }
 };
 
 

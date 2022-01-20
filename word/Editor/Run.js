@@ -2509,7 +2509,14 @@ ParaRun.prototype.Split2 = function(CurPos, Parent, ParentPos)
     // ВСЕГДА копируем элементы, для корректной работы не надо переносить имеющиеся элементы в новый ран
 	for (var nIndex = CurPos, nNewIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex, ++nNewIndex)
 	{
-		NewRun.AddToContent(nNewIndex, this.Content[nIndex].Copy());
+		var oNewItem = this.Content[nIndex].Copy();
+		NewRun.AddToContent(nNewIndex, oNewItem);
+		if (para_FieldChar === this.Content[nIndex].Type)
+		{
+			var oComplexField = this.Content[nIndex].GetComplexField();
+			if (oComplexField)
+				oComplexField.ReplaceChar(oNewItem);
+		}
 	}
     this.RemoveFromContent(CurPos, this.Content.length - CurPos, true);
 
@@ -12190,6 +12197,9 @@ ParaRun.prototype.ProcessAutoCorrect = function(nPos, nFlags, nHistoryActions)
 
 	var nLang = this.Get_CompiledPr(false).Lang ? this.Get_CompiledPr(false).Lang.Val : 1033;
 
+	if (nFlags & AUTOCORRECT_FLAGS_DOUBLESPACE_WITH_PERIOD && this.private_ProcessDoubleSpaceWithPeriod(oDocument, oParagraph, private_IsCheckLock(), oContentPos, nPos, nLang))
+		return (nRes |= AUTOCORRECT_FLAGS_DOUBLESPACE_WITH_PERIOD);
+
 	if (nFlags & AUTOCORRECT_FLAGS_FRENCH_PUNCTUATION && this.private_ProcessFrenchPunctuation(oDocument, oParagraph, private_IsCheckLock(), oContentPos, nPos, nLang))
 		nRes |= AUTOCORRECT_FLAGS_FRENCH_PUNCTUATION;
 
@@ -12797,6 +12807,66 @@ ParaRun.prototype.private_GetSuitablePrNumberingForAutoCorrect = function (sText
 		return oBullet;
 	}
 	return null;
+};
+/**
+ * Производим автозамену для замены двух пробелов знаком точки
+ * @param oDocument {CDocument}
+ * @param oParagraph {Paragraph}
+ * @param isCheckLock {boolean}
+ * @param oContentPos {CParagraphContentPos}
+ * @param nPos {number}
+ * @param nLang {number}
+ * @returns {boolean}
+ */
+ParaRun.prototype.private_ProcessDoubleSpaceWithPeriod = function(oDocument, oParagraph, isCheckLock, oContentPos, nPos, nLang)
+{
+	if (!oDocument.IsAutoCorrectDoubleSpaceWithPeriod())
+		return false;
+
+	if (!this.Content[nPos].IsSpace())
+		return false;
+
+	var oRunElementsBefore = new CParagraphRunElements(oContentPos, 1, null, false);
+	oRunElementsBefore.SetSaveContentPositions(true);
+	oParagraph.GetPrevRunElements(oRunElementsBefore);
+	var arrElements = oRunElementsBefore.GetElements();
+	var oHistory    = oDocument.GetHistory();
+	if (1 !== arrElements.length
+		|| !arrElements[0].IsSpace()
+		|| !oHistory.CheckAsYouTypeAutoCorrect(arrElements[0], 1, 500))
+		return false;
+
+	if (isCheckLock && this.private_CheckDocumentLockedBeforeAutoCorrect(oDocument, oParagraph))
+		return false;
+
+	oDocument.StartAction(AscDFH.historydescription_Document_AutoCorrectHyphensWithDash);
+
+	var oDot = new ParaText(46);
+	this.AddToContent(nPos + 1, oDot);
+	var oStartPos = oRunElementsBefore.GetContentPositions()[0];
+	var oEndPos   = oContentPos;
+	oContentPos.Update(nPos + 1, oContentPos.GetDepth());
+
+	oParagraph.RemoveSelection();
+	oParagraph.SetSelectionUse(true);
+	oParagraph.SetSelectionContentPos(oStartPos, oEndPos, false);
+	oParagraph.Remove(1);
+	oParagraph.RemoveSelection();
+
+	// Надо корректировать ContentPos, потому что мы производили удаление
+	for (var nTempPos = 0, nCount = this.Content.length; nTempPos < nCount; ++nTempPos)
+	{
+		if (this.Content[nTempPos] === oDot)
+		{
+			this.State.ContentPos = nTempPos + 1;
+			oContentPos.Update(nTempPos + 1, oContentPos.GetDepth());
+			break;
+		}
+	}
+
+	oDocument.Recalculate();
+	oDocument.FinalizeAction();
+	return true;
 };
 /**
  * Производим автозамену для французской пунктуации

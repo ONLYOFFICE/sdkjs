@@ -5378,7 +5378,7 @@ Paragraph.prototype.Set_SelectionContentPos = function(StartContentPos, EndConte
  * NB: Данная функция не стартует селект в параграфе, а лишь выставляет его границы!!!
  * @param oStartPos {CParagraphContentPos}
  * @param oEndPos {CParagraphContentPos}
- * @param isCorrectAnchor {boolean}
+ * @param [isCorrectAnchor=true] {boolean}
  */
 Paragraph.prototype.SetSelectionContentPos = function(oStartPos, oEndPos, isCorrectAnchor)
 {
@@ -13431,7 +13431,7 @@ Paragraph.prototype.AddCommentToDrawingObject = function(oComment, sId)
 
 	this.Set_ParaContentPos(oStartPos, false, -1, -1);
 	this.StartSelectionFromCurPos();
-	this.SetSelectionContentPos(oStartPos, oEndPos);
+	this.SetSelectionContentPos(oStartPos, oEndPos, false);
 
 	if (this.CanAddComment())
 		this.AddComment(oComment, true, true);

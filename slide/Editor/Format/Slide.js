@@ -785,7 +785,7 @@ Slide.prototype =
         if(!this.timing) {
             this.setTiming(new AscFormat.CTiming());
         }
-        this.timing.addAnimation(nPresetClass, nPresetId, nPresetSubtype, bReplace);
+        return this.timing.addAnimation(nPresetClass, nPresetId, nPresetSubtype, bReplace);
     },
     setAnimationProperties: function(oPr) {
         if(!this.timing) {

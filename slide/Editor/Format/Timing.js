@@ -96,6 +96,11 @@
         CBaseFormatObject.call(this);
     }
     InitClass(CBaseAnimObject, CBaseFormatObject, AscDFH.historyitem_type_Unknown);
+    CBaseAnimObject.prototype.Refresh_RecalcData2 = function() {
+        if(this.parent && this.parent.Refresh_RecalcData2) {
+            this.parent.Refresh_RecalcData2();
+        }
+    };
 
     if(GENERATE_PRESETS_SCRIPT) {
         CBaseAnimObject.prototype.fromPPTY = function(pReader) {
@@ -502,7 +507,8 @@
             case AscFormat.NODE_TYPE_WITHEFFECT: {
                 oPreviousTimeNode = this;
                 while ((oPreviousTimeNode = oPreviousTimeNode.getPreviousNode()) &&
-                (oPreviousTimeNode.getNodeType() === AscFormat.NODE_TYPE_WITHEFFECT)) {
+                (oPreviousTimeNode.getNodeType() === AscFormat.NODE_TYPE_WITHEFFECT ||
+                 oPreviousTimeNode.getNodeType() === AscFormat.NODE_TYPE_AFTEREFFECT)) {
                 }
                 if(oPreviousTimeNode) {
                     oTrigger = this.createEffectTrigger(function() {
@@ -767,6 +773,7 @@
     CTimeNodeBase.prototype.logState = function (sPrefix) {
         var oAttr = this.getAttributesObject();
         var sNodeType = NODE_TYPE_MAP[oAttr.nodeType];
+        if(sNodeType) 
         console.log(sPrefix + " | ID: " + this.Id + " | TYPE: " + this.constructor.name + " | NODE_TYPE: " + sNodeType + " | STATE: " + oSTATEDESCRMAP[this.state] + " | TIME: " + (new Date()).getTime() + " | FORMAT ID: " + oAttr.id);
     };
 
@@ -1634,6 +1641,18 @@
             }
         }
     };
+    
+    CTiming.prototype.Refresh_RecalcData2 = function() {
+        AscCommon.History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Object: this});
+    };
+    CTiming.prototype.recalculate = function() {
+    };
+    CTiming.prototype.getSlideIndex = function() {
+        if(this.parent && this.parent.getSlideIndex) {
+            return this.parent.getSlideIndex();
+        }
+        return null;
+    };
     CTiming.prototype.getChildren = function() {
         return [this.bldLst, this.tnLst];
     };
@@ -1924,31 +1943,37 @@
     };
     CTiming.prototype.addAnimationToSelectedObjects = function(nPresetClass, nPresetId, nPresetSubtype) {
         var aSelectedObjects = this.parent.graphicObjects.selectedObjects;
+        var aAddedEffects = [];
         for(var nIdx = 0; nIdx < aSelectedObjects.length; ++nIdx) {
             var sObjectId = aSelectedObjects[nIdx].Get_Id();
-            this.addEffectToMainSequence(sObjectId, nPresetClass, nPresetId, nPresetSubtype, false);
+            var oEffect = this.addEffectToMainSequence(sObjectId, nPresetClass, nPresetId, nPresetSubtype, false);
+            if(oEffect) {
+                aAddedEffects.push(oEffect);
+            }
         }
+        return aAddedEffects;
     };
     CTiming.prototype.addAnimation = function(nPresetClass, nPresetId, nPresetSubtype, bReplace) {
+        var aAddedEffects = [];
         if(nPresetId === AscFormat.ANIM_PRESET_NONE) {
             this.removeSelectedEffects();
-            return;
+            return aAddedEffects;
         }
         if(!AscFormat.isRealNumber(nPresetClass)
 		|| !AscFormat.isRealNumber(nPresetId))
 		{
-			return;
+			return aAddedEffects;
 		}
         var aSelectedEffects = this.getSelectedEffects();
         var nIdx;
         var nEffectIdx;
         var oEffect;
-        var oNewEffect;
+        var oNewEffect = null;
         var sObjectId;
         var oDrawingsIdMap = {};
         if(bReplace) {
             if(aSelectedEffects.length === 0) {
-                this.addAnimationToSelectedObjects(nPresetClass, nPresetId, nPresetSubtype);
+                return this.addAnimationToSelectedObjects(nPresetClass, nPresetId, nPresetSubtype);
             }
             else {
                 var aSeqs = this.getEffectsSequences();
@@ -1967,6 +1992,7 @@
                                 oNewEffect.select();
                                 aSeq[nEffectIdx] = oNewEffect;
                                 bNeedRebuild = true;
+                                aAddedEffects.push(oNewEffect);
                             }
                         }
                     }
@@ -1983,16 +2009,20 @@
                     sObjectId = oEffect.getObjectId();
                     if(sObjectId) {
                         if(!oDrawingsIdMap[sObjectId]) {
-                            this.addEffectToMainSequence(sObjectId, nPresetClass, nPresetId, nPresetSubtype, false);
+                            oNewEffect = this.addEffectToMainSequence(sObjectId, nPresetClass, nPresetId, nPresetSubtype, false);
+                            if(oNewEffect) {
+                                aAddedEffects.push(oNewEffect);
+                            }
                             oDrawingsIdMap[sObjectId] = true;
                         }
                     }
                 }
             }
             else {
-                this.addAnimationToSelectedObjects(nPresetClass, nPresetId, nPresetSubtype);
+                aAddedEffects = this.addAnimationToSelectedObjects(nPresetClass, nPresetId, nPresetSubtype);
             }
         }
+        return aAddedEffects;
     };
     CTiming.prototype.removeSelectedEffects = function() {
         this.removeEffects(this.getSelectedEffects());
@@ -2022,10 +2052,11 @@
         }
         var oEffect = this.createEffect(sObjectId, nPresetClass, nPresetId, nPresetSubtype);
         if(!oEffect) {
-            return;
+            return null;
         }
         this.addToMainSequence(oEffect);
         oEffect.select();
+        return oEffect;
     };
     CTiming.prototype.createPar = function(nFill, sDelay) {
         var oPar = new CPar();
@@ -2512,16 +2543,26 @@
             for(var nIdx = 0; nIdx < aEffectsForDemo.length; ++nIdx) {
                 oEffect = aEffectsForDemo[nIdx];
                 var oCopyEffect = oEffect.createDuplicate();
+                oCopyEffect.originalNode = oEffect;
+                oCopyEffect.cTn.resetDelayShift();
                 if(oCopyEffect.cTn.nodeType === AscFormat.NODE_TYPE_CLICKEFFECT) {
                     oCopyEffect.cTn.setNodeType(nIdx === 0 ? AscFormat.NODE_TYPE_WITHEFFECT : AscFormat.NODE_TYPE_AFTEREFFECT);
                 }
-                oCopyEffect.cTn.changeDelay(oEffect.cTn.getDelay(true), false);
-                oCopyEffect.cTn.changeRepeatCount(1000);
+                var nRepeatCount = oCopyEffect.asc_getRepeatCount();
+                if(nRepeatCount === AscFormat.untilNextSlide || nRepeatCount === AscFormat.untilNextClick) {
+                    oCopyEffect.cTn.changeRepeatCount(1000);
+                }
+                var nDur = oCopyEffect.asc_getDuration();
+                if(nDur === AscFormat.untilNextSlide || nDur === AscFormat.untilNextClick) {
+                    oCopyEffect.cTn.changeEffectDuration(1000);
+                }
+
+                oCopyEffect.originalNode = null;
                 aSeq.push(oCopyEffect);
             }
             var oTiming = new CTiming();
             oTiming.setParent(this.parent);
-            oTiming.buildTree(aSeqs);
+            oTiming.buildTree(aSeqs, false);
             return oTiming;
         }, this, []);
     };
@@ -2948,7 +2989,9 @@
             pWriter.EndRecord();
         }
     };
-
+    CChildTnLst.prototype.Refresh_RecalcData = function(oData) {
+        this.Refresh_RecalcData2();
+    };
 
 
     function CTmplLst() {
@@ -4724,10 +4767,15 @@
         }
     };
     CCTn.prototype.getDelayShift = function() {
-        if(this.nodeType === AscFormat.NODE_TYPE_AFTEREFFECT) {
+        if(this.nodeType === AscFormat.NODE_TYPE_AFTEREFFECT || 
+            this.nodeType === AscFormat.NODE_TYPE_WITHEFFECT) {
             var oPrev = this.parent.getPreviousEffect();
             if(oPrev && oPrev.cTn) {
-                return oPrev.cTn.getDelay() + oPrev.cTn.getEffectDuration();
+                var nShift =  oPrev.cTn.getDelay(false);
+                if(this.nodeType === AscFormat.NODE_TYPE_AFTEREFFECT) {
+                    nShift += oPrev.cTn.getEffectDuration()
+                }
+                return nShift;
             }
         }
         return 0;
@@ -4814,6 +4862,7 @@
                 return;
             }
         }
+        var bIsIndefinite = (v === AscFormat.untilNextSlide || v === AscFormat.untilNextClick);
         var aChildren = this.childTnLst && this.childTnLst.list;
         if(aChildren) {
             for(var nChild = 0; nChild < aChildren.length; ++nChild) {
@@ -4822,7 +4871,10 @@
                 if(oDur.isSpecified()) {
                     var oAttr = oChild.getAttributesObject();
                     var nDelay = oAttr.getDelay(false);
-                    if(dCoef !== null) {
+                    if(bIsIndefinite) {
+                        oAttr.setDur("indefinite");
+                    }
+                    else if(dCoef !== null) {
                         oAttr.setDur((oDur.getVal()*dCoef + 0.5 >> 0) + "");
                         if(AscFormat.isRealNumber(nDelay) && nDelay !== 0) {
                             oAttr.changeDelay(nDelay*dCoef);
@@ -4834,6 +4886,9 @@
 
                 }
             }
+        }
+        if(bIsIndefinite) {
+            this.changeRepeatCount(v);
         }
     };
     CCTn.prototype.changeRepeatCount = function(v) {
@@ -7690,7 +7745,7 @@
     };
     CTimeNodeContainer.prototype.isMultipleEffect = function() {
         if(Array.isArray(this.merged) && this.merged.length > 1) {
-            if(this.presetClass === undefined || this.presetID === undefined || this.presetSubtype === undefined) {
+            if(this.cTn.presetClass === undefined || this.cTn.presetID === undefined) {
                 return true;
             }
         }
@@ -7860,23 +7915,39 @@
     };
     CTimeNodeContainer.prototype["asc_putDelay"] = CTimeNodeContainer.prototype.asc_putDelay;
     CTimeNodeContainer.prototype.asc_getDuration = function() {
+        var nDur = 0;
         if(Array.isArray(this.merged) && this.merged.length > 0) {
-            var nDur = this.merged[0].asc_getDuration();
+            nDur = this.merged[0].asc_getDuration();
             for(var nIdx = 1; nIdx < this.merged.length; ++nIdx) {
                 if(nDur !== this.merged[nIdx].asc_getDuration()) {
                     return undefined;
                 }
             }
-            return nDur;
         }
         else {
             if(this.cTn) {
-                return this.cTn.getEffectDuration();
+                nDur = this.cTn.getEffectDuration();
             }
         }
-        return 0;
+        var oTime = new CAnimationTime(nDur);
+        if(oTime.isIndefinite()) {
+            if(this.cTn.endCondLst && this.cTn.endCondLst) {
+                var aCond = this.cTn.endCondLst.list;
+                if(aCond[0] &&  aCond[0].evt === COND_EVNT_ON_NEXT ) {
+                    return AscFormat.untilNextSlide;
+                }
+            }
+            return AscFormat.untilNextClick;
+        }
+        else {
+            return nDur;
+        }
     };
     CTimeNodeContainer.prototype["asc_getDuration"] = CTimeNodeContainer.prototype.asc_getDuration;
+    CTimeNodeContainer.prototype.asc_getIsAutoDuration = function() {
+        return (new CAnimationTime(this.asc_getDuration())).isIndefinite();
+    };
+    CTimeNodeContainer.prototype["asc_getIsAutoDuration"] = CTimeNodeContainer.prototype.asc_getIsAutoDuration;
     CTimeNodeContainer.prototype.asc_putDuration = function(v) {
         AscFormat.ExecuteNoHistory(function() {
             if(this.cTn) {
@@ -7934,12 +8005,19 @@
     CTimeNodeContainer.prototype["asc_putRewind"] = CTimeNodeContainer.prototype.asc_putRewind;
 
     CTimeNodeContainer.prototype.asc_getClass = function() {
-        return this.isMultipleEffect() ? undefined : this.cTn.presetClass;
+        if(AscFormat.isRealNumber(this.cTn.presetID) 
+        && AscFormat.isRealNumber(this.cTn.presetClass)) {
+            return this.cTn.presetClass;
+        }
+        return undefined;
     };
     CTimeNodeContainer.prototype["asc_getClass"] = CTimeNodeContainer.prototype.asc_getClass;
     CTimeNodeContainer.prototype.asc_getType = function() {
-        if(typeof this.cTn.presetID === "undefined") {
-            return this.isMultipleEffect() ? AscFormat.ANIM_PRESET_MULTIPLE : AscFormat.ANIM_PRESET_NONE;
+        if(this.isMultipleEffect()) {
+            return AscFormat.ANIM_PRESET_MULTIPLE;
+        }
+        if(typeof this.cTn.presetClass === "undefined" || typeof this.cTn.presetID === "undefined") {
+            return AscFormat.ANIM_PRESET_NONE;
         }
         return this.cTn.presetID;
     };

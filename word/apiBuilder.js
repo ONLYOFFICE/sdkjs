@@ -5143,6 +5143,118 @@
 		}
 	};
 
+	/**
+	 * Update all tables of contents.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {bool} [bOnlyPageNumbers=false] - Determines that only page numbers need to be updated.
+	 */
+	ApiDocument.prototype.UpdateAllTOC = function(bOnlyPageNumbers) 
+	{
+		if (typeof(bOnlyPageNumbers) !== "boolean")
+			bOnlyPageNumbers = false;
+
+		var oDocument = private_GetLogicDocument();
+		var allTOC = oDocument.GetAllTablesOfContentsInDoc();
+
+		for (var nItem = 0; nItem < allTOC.length; nItem++)
+		{
+			var oTOC = allTOC[nItem];
+			if (!oTOC)
+			{
+				oTOC = oDocument.GetTableOfContents();
+				if (!oTOC)
+					return;
+			}
+
+			if (oTOC instanceof AscCommonWord.CBlockLevelSdt)
+				oTOC = oTOC.GetInnerTableOfContents();
+
+			if (!oTOC)
+				return;
+
+			var oState = oDocument.SaveDocumentState();
+			
+			oTOC.SelectField();
+
+			if (bOnlyPageNumbers)
+			{
+				var arrParagraphs = oDocument.GetCurrentParagraph(false, true);
+
+					for (var nParaIndex = 0, nParasCount = arrParagraphs.length; nParaIndex < nParasCount; ++nParaIndex)
+					{
+						var arrPageNumbers = arrParagraphs[nParaIndex].GetComplexFieldsArrayByType(AscCommonWord.fieldtype_PAGEREF);
+						for (var nRefIndex = 0, nRefsCount = arrPageNumbers.length; nRefIndex < nRefsCount; ++nRefIndex)
+						{
+							arrPageNumbers[nRefIndex].Update();
+						}
+					}
+
+					oDocument.LoadDocumentState(oState);
+			}
+			else
+			{
+				oTOC.Update();
+				oDocument.LoadDocumentState(oState);
+			}
+		}
+	};
+	/**
+	 * Update all tables of contents.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {bool} [bOnlyPageNumbers=false] - Determines that only page numbers need to be updated.
+	 */
+	ApiDocument.prototype.UpdateAllTOF = function(bOnlyPageNumbers) 
+	{
+		if (typeof(bOnlyPageNumbers) !== "boolean")
+			bOnlyPageNumbers = false;
+
+		var oDocument = private_GetLogicDocument();
+		var allTOC = oDocument.GetAllTablesOfFiguresInDoc();
+
+		for (var nItem = 0; nItem < allTOC.length; nItem++)
+		{
+			var oTOC = allTOC[nItem];
+			if (!oTOC)
+			{
+				oTOC = oDocument.GetTableOfContents();
+				if (!oTOC)
+					return;
+			}
+
+			if (oTOC instanceof AscCommonWord.CBlockLevelSdt)
+				oTOC = oTOC.GetInnerTableOfContents();
+
+			if (!oTOC)
+				return;
+
+			var oState = oDocument.SaveDocumentState();
+			
+			oTOC.SelectField();
+
+			if (bOnlyPageNumbers)
+			{
+				var arrParagraphs = oDocument.GetCurrentParagraph(false, true);
+
+				for (var nParaIndex = 0, nParasCount = arrParagraphs.length; nParaIndex < nParasCount; ++nParaIndex)
+				{
+					var arrPageNumbers = arrParagraphs[nParaIndex].GetComplexFieldsArrayByType(AscCommonWord.fieldtype_PAGEREF);
+					for (var nRefIndex = 0, nRefsCount = arrPageNumbers.length; nRefIndex < nRefsCount; ++nRefIndex)
+					{
+						arrPageNumbers[nRefIndex].Update();
+					}
+				}
+
+				oDocument.LoadDocumentState(oState);
+			}
+			else
+			{
+				oTOC.Update();
+				oDocument.LoadDocumentState(oState);
+			}
+		}
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiParagraph
@@ -13285,7 +13397,7 @@
 		else
 			return oDocument.ToMarkdown(bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags);
 	};
-
+	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -13399,6 +13511,8 @@
 	ApiDocument.prototype["Search"]                  = ApiDocument.prototype.Search;
 	ApiDocument.prototype["ToMarkdown"]              = ApiDocument.prototype.ToMarkdown;
 	ApiDocument.prototype["ToHtml"]                  = ApiDocument.prototype.ToHtml;
+	ApiDocument.prototype["UpdateAllTOC"]		     = ApiDocument.prototype.UpdateAllTOC;
+	ApiDocument.prototype["UpdateAllTOF"]		     = ApiDocument.prototype.UpdateAllTOF;
 
 	ApiParagraph.prototype["GetClassType"]           = ApiParagraph.prototype.GetClassType;
 	ApiParagraph.prototype["AddText"]                = ApiParagraph.prototype.AddText;

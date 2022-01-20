@@ -2902,16 +2902,7 @@ function CPresentation(DrawingDocument) {
 
     this.lastMaster = null;
 
-    this.AutoCorrectSettings = {
-        SmartQuotes            : true,
-        HyphensWithDash        : true,
-        AutomaticBulletedLists : true,
-        AutomaticNumberedLists : true,
-        FrenchPunctuation      : true,
-		FirstLetterOfSentences : true,
-        FirstLetterOfCells     : true,
-        Hyperlinks             : true
-    };
+    this.AutoCorrectSettings = new AscCommon.CAutoCorrectOptions();
 }
 
 //CPresentation.prototype = Object.create(CDocumentContentBase.prototype);
@@ -5571,9 +5562,23 @@ CPresentation.prototype.Remove = function (Count, bOnlyText, bRemoveOnlySelectio
     if (this.SendRemoveCommentEvent()) {
         return;
     }
-    if (oController && oController.selectedObjects.length !== 0) {
-        oController.remove(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord);
-        this.Document_UpdateInterfaceState();
+    if (oController) {
+        if(oController.selectedObjects.length !== 0) {
+            oController.remove(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord);
+            this.Document_UpdateInterfaceState();
+
+        }
+        else {
+            var aAnims = oController.getAnimSelectionState();
+            if(aAnims.length > 0) {
+                var oTiming = this.GetCurTiming();
+                if(oTiming) {
+                    AscCommon.History.Create_NewPoint(0);
+                    oTiming.removeSelectedEffects();
+                    this.Recalculate();
+                }
+            }
+        }
     }
 };
 
@@ -6162,7 +6167,10 @@ CPresentation.prototype.OnKeyDown = function (e) {
 
 
     var oController = this.GetCurrentController();
-    var aStartAnims = oController.getAnimSelectionState();
+    var aStartAnims;
+    if(oController) {
+        aStartAnims = oController.getAnimSelectionState();
+    }
 
     var nShortcutAction = this.Api.getShortcut(e);
     switch (nShortcutAction) {
@@ -6860,7 +6868,9 @@ CPresentation.prototype.OnKeyDown = function (e) {
         this.Document_UpdateSelectionState();
 
         
-    oController.checkRedrawAnimLabels(aStartAnims);
+    if(oController) {
+        oController.checkRedrawAnimLabels(aStartAnims);
+    }
     return bRetValue;
 };
 
@@ -7019,9 +7029,12 @@ CPresentation.prototype.OnMouseDown = function (e, X, Y, PageIndex) {
     e.ctrlKey = e.CtrlKey;
     e.shiftKey = e.ShiftKey;
     var oController = this.Slides[this.CurPage].graphicObjects;
-    var aStartAnims = oController.getAnimSelectionState();
-    var ret = oController.onMouseDown(e, X, Y);
-    oController.checkRedrawAnimLabels(aStartAnims);
+    var ret = null;
+    if(oController) {
+        var aStartAnims = oController.getAnimSelectionState();
+        ret = oController.onMouseDown(e, X, Y);
+        oController.checkRedrawAnimLabels(aStartAnims);
+    }
     this.private_UpdateCursorXY(true, true);
     if (!ret) {
         this.Document_UpdateSelectionState();
@@ -7043,7 +7056,6 @@ CPresentation.prototype.OnMouseUp = function (e, X, Y, PageIndex) {
 
     var oController = this.Slides[this.CurPage] && this.Slides[this.CurPage].graphicObjects;
     if (oController) {
-        
         var aStartAnims = oController.getAnimSelectionState();
         oController.onMouseUp(e, X, Y);
         oController.checkRedrawAnimLabels(aStartAnims);
@@ -10890,14 +10902,24 @@ CPresentation.prototype.AddToLayout = function () {
     }, [], false, AscDFH.historydescription_Presentation_AddToLayout);
 };
 
-CPresentation.prototype.AddAnimation = function(nPresetClass, nPresetId, nPresetSubtype, bReplace) {
+CPresentation.prototype.AddAnimation = function(nPresetClass, nPresetId, nPresetSubtype, bReplace, bPreview) {
     var oSlide = this.GetCurrentSlide();
     if(oSlide) {
         this.StartAction(0);
-        oSlide.addAnimation(nPresetClass, nPresetId, nPresetSubtype, bReplace);
+        var aAddedEffects = oSlide.addAnimation(nPresetClass, nPresetId, nPresetSubtype, bReplace);
         this.FinalizeAction();
-        this.DrawingDocument.OnRecalculatePage(this.CurPage, this.Slides[this.CurPage]);
         this.Document_UpdateInterfaceState();
+        if(bPreview && aAddedEffects.length > 0) {
+            oSlide.graphicObjects.resetSelection();
+            oSlide.timing.resetSelection();
+            for(var nEffect = 0; nEffect < aAddedEffects.length; ++nEffect) {
+                aAddedEffects[nEffect].select();
+            }
+            this.StartAnimationPreview();
+        }
+        else {
+            this.DrawingDocument.OnRecalculatePage(this.CurPage, oSlide);
+        }
     }
 };
 CPresentation.prototype.GetCurSlideObjectsNamesPairs = function() {
@@ -10915,12 +10937,28 @@ CPresentation.prototype.GetCurSlideObjectsNames = function() {
     return oSlide.cSld.getObjectsNames();
 };
 CPresentation.prototype.SetAnimationProperties = function(oPr) {
+    
+    var oController = this.GetCurrentController();
+    if(!oController) {
+        return;
+    }
+    var oCurPr = oController.getDrawingProps().animProps;
+    if(oCurPr && oCurPr.isEqualProperties(oPr)) {
+        return;
+    }
     var oSlide = this.GetCurrentSlide();
     if(oSlide) {
+        var bChangeSubtype = false;
+        if(oPr && oCurPr && oPr.asc_getSubtype() !== oCurPr.asc_getSubtype()) {
+            bChangeSubtype = true;
+        }
         this.StartAction(0);
         oSlide.setAnimationProperties(oPr);
         this.FinalizeAction();
         this.Document_UpdateInterfaceState();
+        if(bChangeSubtype) {
+            this.StartAnimationPreview();
+        }
     }
 };
 CPresentation.prototype.GetCurTiming = function() {
@@ -10955,6 +10993,7 @@ CPresentation.prototype.StartAnimationPreview = function() {
     }
     this.previewPlayer = oPlayer;
     oPlayer.start();
+    this.DrawingDocument.TargetEnd()
     return true;
 };
 CPresentation.prototype.StopAnimationPreview = function() {
@@ -10964,6 +11003,7 @@ CPresentation.prototype.StopAnimationPreview = function() {
         }
 		this.Api.sendEvent("asc_onAnimPreviewFinished");
         this.previewPlayer = null;
+        this.UpdateSelection();
         return true;
     }
     return false;
@@ -11288,40 +11328,50 @@ CPresentation.prototype.UpdateUndoRedo = function () {
     this.Document_UpdateUndoRedoState();
 };
 
+
+ CPresentation.prototype.GetAutoCorrectSettings = function()
+ {
+     return this.AutoCorrectSettings;
+ };
 /**
  * Устанавливаем настройку автосоздания маркированных списков
  * @param isAuto {boolean}
  */
-CPresentation.prototype.SetAutomaticBulletedLists = function(isAuto) {
-    this.AutoCorrectSettings.AutomaticBulletedLists = isAuto;
+CPresentation.prototype.SetAutomaticBulletedLists = function(isAuto)
+{
+    this.AutoCorrectSettings.SetAutomaticBulletedLists(isAuto);
 };
 /**
  * Запрашиваем настройку автосоздания маркированных списков
  * @returns {boolean}
  */
-CPresentation.prototype.IsAutomaticBulletedLists = function() {
-    return this.AutoCorrectSettings.AutomaticBulletedLists;
+CPresentation.prototype.IsAutomaticBulletedLists = function()
+{
+    return this.AutoCorrectSettings.IsAutomaticBulletedLists();
 };
 /**
  * Устанавливаем настройку автосоздания нумерованных списков
  * @param isAuto {boolean}
  */
-CPresentation.prototype.SetAutomaticNumberedLists = function(isAuto) {
-    this.AutoCorrectSettings.AutomaticNumberedLists = isAuto;
+CPresentation.prototype.SetAutomaticNumberedLists = function(isAuto)
+{
+    this.AutoCorrectSettings.SetAutomaticNumberedLists(isAuto);
 };
 /**
  * Запрашиваем настройку автосоздания нумерованных списков
  * @returns {boolean}
  */
-CPresentation.prototype.IsAutomaticNumberedLists = function() {
-    return this.AutoCorrectSettings.AutomaticNumberedLists;
+CPresentation.prototype.IsAutomaticNumberedLists = function()
+{
+    return this.AutoCorrectSettings.IsAutomaticNumberedLists();
 };
 /**
  * Устанавливаем параметр автозамены: заменять ли прямые кавычки "умными"
  * @param isSmartQuotes {boolean}
  */
-CPresentation.prototype.SetAutoCorrectSmartQuotes = function(isSmartQuotes) {
-    this.AutoCorrectSettings.SmartQuotes = isSmartQuotes;
+CPresentation.prototype.SetAutoCorrectSmartQuotes = function(isSmartQuotes)
+{
+    this.AutoCorrectSettings.SetSmartQuotes(isSmartQuotes);
 };
 /**
  * Запрашиваем настройку автозамены: заменять ли прямые кавычки "умными"
@@ -11329,7 +11379,7 @@ CPresentation.prototype.SetAutoCorrectSmartQuotes = function(isSmartQuotes) {
  */
 CPresentation.prototype.IsAutoCorrectSmartQuotes = function()
 {
-    return this.AutoCorrectSettings.SmartQuotes;
+    return this.AutoCorrectSettings.IsSmartQuotes();
 };
 /**
  * Устанавливаем параметр автозамены двух дефисов на тире
@@ -11337,7 +11387,7 @@ CPresentation.prototype.IsAutoCorrectSmartQuotes = function()
  */
 CPresentation.prototype.SetAutoCorrectHyphensWithDash = function(isReplace)
 {
-    this.AutoCorrectSettings.HyphensWithDash = isReplace;
+    this.AutoCorrectSettings.SetHyphensWithDash(isReplace);
 };
 /**
  * Запрашиваем настройку автозамены двух дефисов на тире
@@ -11345,7 +11395,7 @@ CPresentation.prototype.SetAutoCorrectHyphensWithDash = function(isReplace)
  */
 CPresentation.prototype.IsAutoCorrectHyphensWithDash = function()
 {
-    return this.AutoCorrectSettings.HyphensWithDash;
+    return this.AutoCorrectSettings.IsHyphensWithDash();
 };
 /**
  * Запрашиваем настройку автозамены для французской пунктуации
@@ -11353,39 +11403,39 @@ CPresentation.prototype.IsAutoCorrectHyphensWithDash = function()
  */
 CPresentation.prototype.IsAutoCorrectFrenchPunctuation = function()
 {
-    return this.AutoCorrectSettings.FrenchPunctuation;
+    return this.AutoCorrectSettings.IsFrenchPunctuation();
 };
 /**
- * Выставляем настройку атозамены для первового символа предложения
+ * Запрашиваем настройку автозамены двойного пробела на точку
+ * @returns {boolean}
+ */
+CPresentation.prototype.IsAutoCorrectDoubleSpaceWithPeriod = function()
+{
+    return this.AutoCorrectSettings.IsDoubleSpaceWithPeriod();
+};
+/**
+ * Выставляем настройку атозамены двойного пробела на точку
+ * @param {boolean} isCorrect
+ */
+CPresentation.prototype.SetAutoCorrectDoubleSpaceWithPeriod = function(isCorrect)
+{
+    this.AutoCorrectSettings.SetDoubleSpaceWithPeriod(isCorrect);
+};
+/**
+ * Выставляем настройку атозамены для первого символа предложения
  * @param {boolean} isCorrect
  */
 CPresentation.prototype.SetAutoCorrectFirstLetterOfSentences = function(isCorrect)
 {
-	this.AutoCorrectSettings.FirstLetterOfSentences = isCorrect;
+    this.AutoCorrectSettings.SetFirstLetterOfSentences(isCorrect);
 };
 /**
- * Запрашиваем настройку атозамены для первового символа предложения
+ * Запрашиваем настройку атозамены для первого символа предложения
  * @return {boolean}
  */
 CPresentation.prototype.IsAutoCorrectFirstLetterOfSentences = function()
 {
-	return this.AutoCorrectSettings.FirstLetterOfSentences;
-};
-/**
- * Выставляем настройку атозамены для гиперссылок
- * @param {boolean} isCorrect
- */
-CPresentation.prototype.SetAutoCorrectHyperlinks = function(isCorrect)
-{
-	this.AutoCorrectSettings.Hyperlinks = isCorrect;
-};
-/**
- * Запрашиваем настройку атозамены для гиперссылок
- * @return {boolean}
- */
-CPresentation.prototype.IsAutoCorrectHyperlinks = function()
-{
-	return this.AutoCorrectSettings.Hyperlinks;
+    return this.AutoCorrectSettings.IsFirstLetterOfSentences();
 };
 /**
  * Выставляем настройку атозамены для первого символа в ячейке таблицы
@@ -11393,15 +11443,60 @@ CPresentation.prototype.IsAutoCorrectHyperlinks = function()
  */
 CPresentation.prototype.SetAutoCorrectFirstLetterOfCells = function(isCorrect)
 {
-    this.AutoCorrectSettings.FirstLetterOfCells = isCorrect;
+    this.AutoCorrectSettings.SetFirstLetterOfCells(isCorrect);
 }
 /**
  * Запрашиваем настройку атозамены для первого символа ячейки таблицы
  * @return {boolean}
  */
-CPresentation.prototype.IsAutoCorrectFirstLetterOfCells = function()
+ CPresentation.prototype.IsAutoCorrectFirstLetterOfCells = function()
 {
-    return this.AutoCorrectSettings.FirstLetterOfCells;
+    return this.AutoCorrectSettings.IsFirstLetterOfCells();
+};
+/**
+ * Выставляем настройку атозамены для гиперссылок
+ * @param {boolean} isCorrect
+ */
+CPresentation.prototype.SetAutoCorrectHyperlinks = function(isCorrect)
+{
+    this.AutoCorrectSettings.SetHyperlinks(isCorrect);
+};
+/**
+ * Запрашиваем настройку атозамены для гиперссылок
+ * @return {boolean}
+ */
+CPresentation.prototype.IsAutoCorrectHyperlinks = function()
+{
+    return this.AutoCorrectSettings.IsHyperlinks();
+};
+/**
+ * Получаем массив исключений для автозамены первой буквы предложения
+ * @returns {Array.string}
+ */
+CPresentation.prototype.GetFirstLetterAutoCorrectExceptions = function()
+{
+    return this.AutoCorrectSettings.GetFirstLetterAutoCorrectExceptions();
+};
+/**
+ * Задаем массив исключений для автозамены первой буквы предложения
+ * @returns {Array.string}
+ */
+CPresentation.prototype.SetFirstLetterAutoCorrectExceptions = function(arrExceptions)
+{
+    this.AutoCorrectSettings.SetFirstLetterAutoCorrectExceptions(arrExceptions);
+};
+/**
+ * Проверяем слово, попадает ли оно в список исключений
+ * @param sWord
+ * @returns {boolean}
+ */
+CPresentation.prototype.CheckFirstLetterAutoCorrectException = function(sWord)
+{
+    return this.AutoCorrectSettings.CheckFirstLetterAutoCorrectException(sWord);
+};
+CPresentation.prototype.GetFirstLetterAutoCorrectExceptionsMaxLen = function()
+{
+    return this.AutoCorrectSettings.GetFirstLetterAutoCorrectExceptionsMaxLen();
 };
 CPresentation.prototype.StopAnimation = function()
 {

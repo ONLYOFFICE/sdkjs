@@ -503,6 +503,15 @@ CGraphicFrame.prototype.isTable = function()
         return this.graphicObject instanceof CTable;
 };
 
+CGraphicFrame.prototype.getTypeName = function() 
+{
+    if(this.isTable()) 
+    {
+        return AscCommon.translateManager.getValue("Table");
+    }
+    return AscFormat.CGraphicObjectBase.prototype.getTypeName.call(this)
+};
+
 CGraphicFrame.prototype.CanAddHyperlink = function(bCheck)
     {
         if(this.graphicObject)
