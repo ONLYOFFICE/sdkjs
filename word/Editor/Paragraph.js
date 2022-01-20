@@ -11755,11 +11755,20 @@ Paragraph.prototype.CollectSelectedReviewChanges = function(oTrackManager)
 	if (!this.IsRecalculated() || !oLogicDocument)
 		return;
 
+	var isSelection = this.IsSelectionUse();
+
 	var oStartPos, oEndPos;
-	if (this.Selection.Use)
+	if (isSelection)
 	{
 		oStartPos = this.Get_ParaContentPos(true, true);
 		oEndPos   = this.Get_ParaContentPos(true, false);
+
+		if (oStartPos.Compare(oEndPos) > 0)
+		{
+			var oTemp = oStartPos;
+			oStartPos = oEndPos;
+			oEndPos   = oTemp;
+		}
 	}
 	else
 	{
@@ -11784,8 +11793,10 @@ Paragraph.prototype.CollectSelectedReviewChanges = function(oTrackManager)
 	{
 		var oChange = arrChanges[nChangeIndex];
 
-		if (!oChange.IsTextChange()
-			|| (oStartPos.Compare(oChange.GetEndPos()) <= 0
+		if ((oChange.IsParaPrChange() && (!isSelection || this.IsSelectedAll()))
+			|| (oChange.IsParagraphContentChange() && (!isSelection || this.IsSelectionToEnd()))
+			|| (oChange.IsTextChange()
+				&& oStartPos.Compare(oChange.GetEndPos()) <= 0
 				&& oEndPos.Compare(oChange.GetStartPos()) >= 0))
 		{
 			oChange.SetInternalPos(nX, nY, nPageAbs);

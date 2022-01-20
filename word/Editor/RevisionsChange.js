@@ -312,6 +312,19 @@ CRevisionsChange.prototype.IsTableRowChange = function()
 	return (c_oAscRevisionsChangeType.RowsAdd === this.Type
 		|| c_oAscRevisionsChangeType.RowsRem === this.Type);
 };
+CRevisionsChange.prototype.IsTablePrChange = function()
+{
+	return (c_oAscRevisionsChangeType.TablePr === this.Type);
+};
+CRevisionsChange.prototype.IsParagraphContentChange = function()
+{
+	return (c_oAscRevisionsChangeType.ParaAdd === this.Type
+		|| c_oAscRevisionsChangeType.ParaRem === this.Type);
+};
+CRevisionsChange.prototype.IsParaPrChange = function()
+{
+	return (c_oAscRevisionsChangeType.ParaPr === this.Type);
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 CRevisionsChange.prototype['get_UserId'] = CRevisionsChange.prototype.GetUserId;

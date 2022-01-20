@@ -27934,7 +27934,6 @@ CTrackRevisionsManager.prototype.BeginCollectChanges = function(bSaveCurrentChan
 
 	this.PrevSelectedChanges = this.SelectedChanges;
 	this.SelectedChanges     = [];
-	this.PrevTextSelection   = this.LogicDocument.IsTextSelectionUse();
 
     if (true !== bSaveCurrentChange)
 	{
@@ -28017,6 +28016,8 @@ CTrackRevisionsManager.prototype.EndCollectChanges = function()
     {
         this.UpdateSelectedChangesPosition(oEditor);
     }
+
+    this.PrevTextSelection = isTextSelection;
 };
 CTrackRevisionsManager.prototype.UpdateSelectedChangesPosition = function(oEditor)
 {

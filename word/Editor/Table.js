@@ -3719,13 +3719,15 @@ CTable.prototype.CollectSelectedReviewChanges = function(oTrackManager)
 	var dY       = this.RowsInfo[nFirstRow].Y[nCurPage];
 	var dX       = oLogicDocument.Get_PageLimits(nPageAbs).XLimit;
 
-	var arrChanges = oTrackManager.GetElementChanges(this.GetId());
+	var arrChanges      = oTrackManager.GetElementChanges(this.GetId());
+	var isCellSelection = this.IsCellSelection();
+	var isSelection     = this.IsSelectionUse();
 	for (var nChangeIndex = 0, nChangesCount = arrChanges.length; nChangeIndex < nChangesCount; ++nChangeIndex)
 	{
 		var oChange     = arrChanges[nChangeIndex];
 		var isAddChange = false;
 
-		if (oChange.IsTableRowChange())
+		if (oChange.IsTableRowChange() && (!isSelection || isCellSelection))
 		{
 			for (var nSelectionPos = 0, nSelectionLength = arrSelection.length; nSelectionPos < nSelectionLength; ++nSelectionPos)
 			{
@@ -3737,7 +3739,7 @@ CTable.prototype.CollectSelectedReviewChanges = function(oTrackManager)
 				}
 			}
 		}
-		else
+		else if (oChange.IsTablePrChange() && (!isSelection || this.IsSelectedAll()))
 		{
 			isAddChange = true;
 		}
