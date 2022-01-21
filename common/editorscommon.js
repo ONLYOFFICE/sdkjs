@@ -11190,6 +11190,11 @@
 			}
 			//todo quotes
 			if (textQualifier) {
+				if (!row.length) {
+					matrix.push(row.split(delimiterChar));
+					continue;
+				}
+
 				var _text = "";
 				var startQualifier = false;
 				for (var j = 0; j < row.length; j++) {
