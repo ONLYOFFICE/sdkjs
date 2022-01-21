@@ -1882,8 +1882,6 @@ function CEditorPage(api)
 			oWordControl.MouseDownDocumentCounter = 0;
 
 		oWordControl.m_bIsMouseUpSend = false;
-		oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
-		oWordControl.m_oLogicDocument.Document_UpdateRulersState();
 
 		oWordControl.EndUpdateOverlay();
 

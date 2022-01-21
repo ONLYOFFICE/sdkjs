@@ -11441,87 +11441,9 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 		this.Selection.DragDrop.Data = null;
 	}
 
-	// Если мы нажимали правую кнопку мыши, тогда нам надо сделать
 	if (AscCommon.g_mouse_button_right === e.Button)
 	{
-		if (true === this.Selection.Start)
-			return;
-
-		var ConvertedPos = this.DrawingDocument.ConvertCoordsToCursorWR(X, Y, PageIndex);
-		var X_abs        = ConvertedPos.X;
-		var Y_abs        = ConvertedPos.Y;
-
-		// Проверим попадание в значок таблицы, если в него попадаем, тогда выделяем таблицу
-		if (true === this.DrawingDocument.IsCursorInTableCur(X, Y, PageIndex))
-		{
-			var Table = this.DrawingDocument.TableOutlineDr.TableOutline.Table;
-			Table.SelectAll();
-			Table.Document_SetThisElementCurrent(false);
-			this.Document_UpdateSelectionState();
-			this.Document_UpdateInterfaceState();
-			editor.sync_ContextMenuCallback({Type : Asc.c_oAscContextMenuTypes.Common, X_abs : X_abs, Y_abs : Y_abs});
-			return;
-		}
-
-		// Сначала проверим попадание в Flow-таблицы и автофигуры
-		var pFlowTable = this.DrawingObjects.getTableByXY(X, Y, PageIndex, this);
-		var nInDrawing = this.DrawingObjects.IsInDrawingObject(X, Y, PageIndex, this);
-
-		if (docpostype_HdrFtr != this.CurPos.Type && -1 === nInDrawing && null === pFlowTable)
-		{
-			var PageMetrics = this.Get_PageContentStartPos(this.CurPage, this.Pages[this.CurPage].Pos);
-			// Проверяем, не попали ли мы в колонтитул
-			if (Y <= PageMetrics.Y)
-			{
-				editor.sync_ContextMenuCallback({
-					Type    : Asc.c_oAscContextMenuTypes.ChangeHdrFtr,
-					X_abs   : X_abs,
-					Y_abs   : Y_abs,
-					Header  : true,
-					PageNum : PageIndex
-				});
-				return;
-			}
-			else if (Y > PageMetrics.YLimit)
-			{
-				editor.sync_ContextMenuCallback({
-					Type    : Asc.c_oAscContextMenuTypes.ChangeHdrFtr,
-					X_abs   : X_abs,
-					Y_abs   : Y_abs,
-					Header  : false,
-					PageNum : PageIndex
-				});
-				return;
-			}
-		}
-
-		// Проверяем попалили мы в селект
-		if (false === this.CheckPosInSelection(X, Y, PageIndex, undefined))
-		{
-			this.CurPage = PageIndex;
-
-			var MouseEvent_new =
-				{
-					// TODO : Если в MouseEvent будет использоваться что-то кроме ClickCount, Type и CtrlKey, добавить здесь
-					ClickCount : 1,
-					Type       : AscCommon.g_mouse_event_type_down,
-					CtrlKey    : false,
-					Button     : AscCommon.g_mouse_button_right
-				};
-			this.Selection_SetStart(X, Y, MouseEvent_new);
-
-			MouseEvent_new.Type = AscCommon.g_mouse_event_type_up;
-			this.Selection_SetEnd(X, Y, MouseEvent_new);
-
-			this.Document_UpdateSelectionState();
-			this.Document_UpdateRulersState();
-			this.Document_UpdateInterfaceState();
-		}
-
-		editor.sync_ContextMenuCallback({Type : Asc.c_oAscContextMenuTypes.Common, X_abs : X_abs, Y_abs : Y_abs});
-		this.private_UpdateCursorXY(true, true);
-
-		return;
+		return this.private_HandleMouseRightClick(X, Y, PageIndex);
 	}
 	else if (AscCommon.g_mouse_button_left === e.Button)
 	{
@@ -11619,6 +11541,9 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 	this.private_CheckCursorPosInFillingFormMode();
 
 	this.private_UpdateCursorXY(true, true, isUpdateTarget);
+
+	this.UpdateInterface();
+	this.UpdateRulers();
 };
 CDocument.prototype.OnMouseMove = function(e, X, Y, PageIndex)
 {
@@ -11685,6 +11610,98 @@ CDocument.prototype.OnMouseMove = function(e, X, Y, PageIndex)
 		this.Selection_SetEnd(X, Y, e);
 		this.private_UpdateSelectionOnMouseEvent(X, Y, this.CurPage, e);
 	}
+};
+CDocument.prototype.private_HandleMouseRightClick = function(X, Y, nPageIndex)
+{
+	if (this.IsStartSelection())
+		return;
+
+	if (this.private_HandleMouseRightClickOnTableTrack(X, Y, nPageIndex))
+		return;
+
+	if (this.private_HandleMouseRightClickOnHeaderFooter(X, Y, nPageIndex))
+		return;
+
+	if (!this.CheckPosInSelection(X, Y, nPageIndex, undefined))
+	{
+		this.CurPage = nPageIndex;
+
+		var oMouseEvent = {
+			// TODO : Если в MouseEvent будет использоваться что-то кроме ClickCount, Type и CtrlKey, добавить здесь
+			ClickCount : 1,
+			Type       : AscCommon.g_mouse_event_type_down,
+			CtrlKey    : false,
+			Button     : AscCommon.g_mouse_button_right
+		};
+
+		this.Selection_SetStart(X, Y, oMouseEvent);
+		oMouseEvent.Type = AscCommon.g_mouse_event_type_up;
+		this.Selection_SetEnd(X, Y, oMouseEvent);
+
+		this.UpdateSelection();
+		this.UpdateRulers();
+		this.UpdateInterface();
+	}
+
+	var oAppCoords = this.DrawingDocument.ConvertCoordsToCursorWR(X, Y, nPageIndex);
+
+	this.Api.sync_ContextMenuCallback({
+		Type  : Asc.c_oAscContextMenuTypes.Common,
+		X_abs : oAppCoords.X,
+		Y_abs : oAppCoords.Y
+	});
+
+	this.private_UpdateCursorXY(true, true);
+};
+CDocument.prototype.private_HandleMouseRightClickOnTableTrack = function(X, Y, nPageIndex)
+{
+	if (this.DrawingDocument.IsCursorInTableCur(X, Y, nPageIndex))
+	{
+		var oTable = this.DrawingDocument.TableOutlineDr.TableOutline.Table;
+		oTable.SelectAll();
+		oTable.Document_SetThisElementCurrent(false);
+
+		this.Document_UpdateSelectionState();
+		this.Document_UpdateInterfaceState();
+
+		var oAppCoords = this.DrawingDocument.ConvertCoordsToCursorWR(X, Y, nPageIndex);
+
+		this.Api.sync_ContextMenuCallback({
+			Type  : Asc.c_oAscContextMenuTypes.Common,
+			X_abs : oAppCoords.X,
+			Y_abs : oAppCoords.Y
+		});
+
+		return true;
+	}
+
+	return false;
+};
+CDocument.prototype.private_HandleMouseRightClickOnHeaderFooter = function(X, Y, nPageIndex)
+{
+	if (docpostype_HdrFtr !== this.GetDocPosType()
+		&& -1 === this.DrawingObjects.IsInDrawingObject(X, Y, nPageIndex, this)
+		&& !this.DrawingObjects.getTableByXY(X, Y, nPageIndex, this))
+	{
+		var oPageMetrics = this.Get_PageContentStartPos(nPageIndex, this.Pages[nPageIndex].Pos);
+
+		if (Y <= oPageMetrics.Y || Y > oPageMetrics.YLimit)
+		{
+			var oAppCoords = this.DrawingDocument.ConvertCoordsToCursorWR(X, Y, nPageIndex);
+
+			this.Api.sync_ContextMenuCallback({
+				Type    : Asc.c_oAscContextMenuTypes.ChangeHdrFtr,
+				X_abs   : oAppCoords.X,
+				Y_abs   : oAppCoords.Y,
+				Header  : Y <= oPageMetrics.Y,
+				PageNum : nPageIndex
+			});
+
+			return true;
+		}
+	}
+
+	return false;
 };
 CDocument.prototype.private_UpdateSelectionOnMouseEvent = function(nX, nY, nCurPage, oMouseEvent)
 {
