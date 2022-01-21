@@ -329,6 +329,13 @@
     }
     return null;
   };
+
+  CDocsCoApi.prototype.getParticipantName = function(userId) {
+    if (this._CoAuthoringApi && this._onlineWork) {
+      return this._CoAuthoringApi.getParticipantName(userId);
+    }
+    return "";
+  };
   
   CDocsCoApi.prototype.get_indexUser = function() {
     if (this._CoAuthoringApi && this._onlineWork) {
@@ -713,6 +720,12 @@
 
   DocsCoApi.prototype.getUserConnectionId = function() {
     return this._userId;
+  };
+
+  DocsCoApi.prototype.getParticipantName = function(userId) {
+  	if (this._participants[userId])
+      return this._participants[userId].asc_getUserName();
+    return "";
   };
 
   DocsCoApi.prototype.getLocks = function() {

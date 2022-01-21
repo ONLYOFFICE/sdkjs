@@ -16142,8 +16142,10 @@ CDocument.prototype.Update_ForeignCursor = function(CursorInfo, UserId, Show, Us
 	if (UserId === this.Api.CoAuthoringApi.getUserConnectionId())
 		return;
 
+	var sUserName = this.Api.CoAuthoringApi.getParticipantName(UserId);
+
 	// "" - это означает, что курсор нужно удалить
-	if (!CursorInfo || "" === CursorInfo)
+	if (!CursorInfo || "" === CursorInfo || !AscCommon.UserInfoParser.isUserVisible(sUserName))
 	{
 		this.Remove_ForeignCursor(UserId);
 		return;
