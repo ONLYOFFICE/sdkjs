@@ -27323,7 +27323,7 @@ function CTrackRevisionsManager(oLogicDocument)
 
 	this.SelectedChanges     = [];    // Список изменений, попавших в выделение
 	this.PrevSelectedChanges = [];
-	this.PrevTextSelection   = false;
+	this.PrevShowChanges     = true;
 
 
 	this.MoveId      = 1;
@@ -27860,10 +27860,10 @@ CTrackRevisionsManager.prototype.EndCollectChanges = function()
 
 	var isPositionChanged = false;
 	var isArrayChanged    = false;
-	var isTextSelection   = this.LogicDocument.IsTextSelectionUse();
+	var isShowChanges     = this.CurChange || !this.LogicDocument.IsTextSelectionUse();
 
     var nChangesCount = this.SelectedChanges.length;
-    if (this.PrevSelectedChanges.length !== nChangesCount || this.PrevTextSelection !== isTextSelection)
+    if (this.PrevSelectedChanges.length !== nChangesCount || this.PrevShowChanges !== isShowChanges)
     {
 		isArrayChanged = true;
     }
@@ -27897,14 +27897,14 @@ CTrackRevisionsManager.prototype.EndCollectChanges = function()
                 oEditor.sync_AddRevisionsChange(Change);
             }
         }
-        oEditor.sync_EndCatchRevisionsChanges(!isTextSelection);
+        oEditor.sync_EndCatchRevisionsChanges(isShowChanges);
     }
     else if (isPositionChanged)
     {
         this.UpdateSelectedChangesPosition(oEditor);
     }
 
-    this.PrevTextSelection = isTextSelection;
+    this.PrevShowChanges = isShowChanges;
 };
 CTrackRevisionsManager.prototype.UpdateSelectedChangesPosition = function(oEditor)
 {
