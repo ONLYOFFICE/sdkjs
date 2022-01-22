@@ -297,8 +297,8 @@ c_oAscDateTimeFormat[lcid_azLatnAZ] = [
 	"mmm-yy",
 	"dd.mm.yyyy hh:mm",
 	"dd.mm.yyyy hh:mm:ss",
-	"H:mm b",
-	"H:mm:ss b",
+	"H:mm am/pm",
+	"H:mm:ss am/pm",
 	"hh:mm",
 	"hh:mm:ss"
 ];
@@ -335,8 +335,8 @@ c_oAscDateTimeFormat[lcid_csCZ]     = [
 	"mmm-yy",
 	"dd.mm.yyyy hh:mm",
 	"dd.mm.yyyy hh:mm:ss",
-	"H:mm b",
-	"H:mm:ss b",
+	"H:mm am/pm",
+	"H:mm:ss am/pm",
 	"hh:mm",
 	"hh:mm:ss"
 ];
@@ -373,8 +373,8 @@ c_oAscDateTimeFormat[lcid_deCH]     = [
 	"Mmm-yy",
 	"dd.mm.yyyy hh:mm",
 	"dd.mm.yyyy hh:mm:ss",
-	"H:mm b",
-	"H:mm:ss b",
+	"H:mm am/pm",
+	"H:mm:ss am/pm",
 	"hh:mm",
 	"hh:mm:ss"
 ];
@@ -390,10 +390,10 @@ c_oAscDateTimeFormat[lcid_elGR]     = [
 	"d.m.yy",
 	"Mmmm yy",
 	"Mmm-yy",
-	"d/m/yyyy H:mm b",
-	"d/m/yyyy H:mm:ss b",
-	"H:mm b",
-	"H:mm:ss b",
+	"d/m/yyyy H:mm am/pm",
+	"d/m/yyyy H:mm:ss am/pm",
+	"H:mm am/pm",
+	"H:mm:ss am/pm",
 	"hh:mm",
 	"hh:mm:ss"
 ];
@@ -408,10 +408,10 @@ c_oAscDateTimeFormat[lcid_enAU]     = [
 	"d Mmm. yy",
 	"Mmmm yy",
 	"Mmm-yy",
-	"d/mm/yyyy H:mm b",
-	"d/mm/yyyy H:mm:ss b",
-	"H:mm b",
-	"H:mm:ss b",
+	"d/mm/yyyy H:mm am/pm",
+	"d/mm/yyyy H:mm:ss am/pm",
+	"H:mm am/pm",
+	"H:mm:ss am/pm",
 	"hh:mm",
 	"hh:mm:ss"
 ];
@@ -429,8 +429,8 @@ c_oAscDateTimeFormat[lcid_enGB]     = [
 	"Mmm-yy",
 	"dd/mm/yyyy hh:mm",
 	"dd/mm/yyyy hh:mm:ss",
-	"H:mm b",
-	"H:mm:ss b",
+	"H:mm am/pm",
+	"H:mm:ss am/pm",
 	"hh:mm",
 	"hh:mm:ss"
 ];
@@ -465,10 +465,10 @@ c_oAscDateTimeFormat[lcid_esMX]     = [
 	"dd.mm.yy",
 	"mmmm de yyyy",
 	"mmm.-yy",
-	"dd/mm/yyyy HH:mm b",
-	"dd/mm/yyyy HH:mm:ss b",
-	"H:mm b",
-	"H:mm:ss b",
+	"dd/mm/yyyy HH:mm am/pm",
+	"dd/mm/yyyy HH:mm:ss am/pm",
+	"H:mm am/pm",
+	"H:mm:ss am/pm",
 	"hh:mm",
 	"hh:mm:ss"
 ];
@@ -486,8 +486,8 @@ c_oAscDateTimeFormat[lcid_fiFI]     = [
 	"mmm-yy",
 	"d.m.yyyy hh.mm",
 	"d.m.yyyy hh.mm.ss",
-	"H.mm b",
-	"H.mm.ss b",
+	"H.mm am/pm",
+	"H.mm.ss am/pm",
 	"hh.mm",
 	"hh.mm.ss"
 ];
@@ -538,8 +538,8 @@ c_oAscDateTimeFormat[lcid_jaJP]     = [
 	"yyyy/m/d",
 	"yy/m/d h時m分",
 	"yy/m/d h時m分s秒",
-	"bH時M分",
-	"bH時M分s秒",
+	"am/pmH時M分",
+	"am/pmH時M分s秒",
 	"h時M分",
 	"h時M分s秒",
 	"yyyy-mm-dd"
@@ -551,10 +551,10 @@ c_oAscDateTimeFormat[lcid_koKR]     = [
 	"yyyy/m/d",
 	"yymmdd",
 	"yyyy년 m월",
-	"yyyy년 m월 d일 b h시 M분",
+	"yyyy년 m월 d일 am/pm h시 M분",
 	"y년 m월 d일 h시 M분 s초",
-	"b h시 M분",
-	"b h시 M분 s초",
+	"am/pm h시 M분",
+	"am/pm h시 M분 s초",
 	"h시 M분",
 	"h시 M분 s초"
 ];
@@ -572,8 +572,8 @@ c_oAscDateTimeFormat[lcid_lvLV]     = [
 	"mmm.-yy",
 	"dd.mm.yyyy hh:mm",
 	"dd.mm.yyyy hh:mm:ss",
-	"H:mm b",
-	"H:mm:ss b",
+	"H:mm am/pm",
+	"H:mm:ss am/pm",
 	"hh:mm",
 	"hh:mm:ss"
 ];
@@ -591,8 +591,8 @@ c_oAscDateTimeFormat[lcid_huHU]     = [
 	"mmm.-yy",
 	"yyyy. mm. dd. hh:mm",
 	"yyyy. mm. dd. hh:mm:ss",
-	"b H:mm",
-	"b H:mm:ss",
+	"am/pm H:mm",
+	"am/pm H:mm:ss",
 	"hh:mm",
 	"hh:mm:ss"
 ];
@@ -629,8 +629,8 @@ c_oAscDateTimeFormat[lcid_plPL]     = [
 	"mmm-yy",
 	"dd.mm.yyyy hh:mm",
 	"dd.mm.yyyy hh:mm:ss",
-	"H:mm B",
-	"H:mm:ss B",
+	"H:mm am/pm",
+	"H:mm:ss am/pm",
 	"hh:mm",
 	"hh:mm:ss"
 ];
@@ -705,8 +705,8 @@ c_oAscDateTimeFormat[lcid_skSK]     = [
 	"mmm-yy",
 	"d. m. yyyy hh:mm",
 	"d. m. yyyy hh:mm:ss",
-	"H:mm b",
-	"H:mm:ss b",
+	"H:mm am/pm",
+	"H:mm:ss am/pm",
 	"hh:mm",
 	"hh:mm:ss"
 ];
@@ -724,8 +724,8 @@ c_oAscDateTimeFormat[lcid_slSI]     = [
 	"mmm.-yy",
 	"d. mm. yyyy hh:mm",
 	"d. mm. yyyy hh:mm:ss",
-	"H:mm b",
-	"H:mm:ss b",
+	"H:mm am/pm",
+	"H:mm:ss am/pm",
 	"hh:mm",
 	"hh:mm:ss"
 ];
@@ -743,8 +743,8 @@ c_oAscDateTimeFormat[lcid_svFI]     = [
 	"mmm.-yy",
 	"d. mm. yyyy hh:mm",
 	"d. mm. yyyy hh:mm:ss",
-	"H:mm b",
-	"H:mm:ss b",
+	"H:mm am/pm",
+	"H:mm:ss am/pm",
 	"hh:mm",
 	"hh:mm:ss"
 ];
@@ -781,8 +781,8 @@ c_oAscDateTimeFormat[lcid_trTR]     = [
 	"Mmm-yy",
 	"d.mm.yyyy hh:mm",
 	"d.mm.yyyy hh:mm:ss",
-	"H:mm b",
-	"H:mm:ss b",
+	"H:mm am/pm",
+	"H:mm:ss am/pm",
 	"hh:mm",
 	"hh:mm:ss"
 ];
@@ -817,10 +817,10 @@ c_oAscDateTimeFormat[lcid_viVN]     = [
 	"dd.mm.yy",
 	"Mmmm yy",
 	"Mmm-yy",
-	"dd/mm/yyyy H:mm b",
-	"dd/mm/yyyy H:mm:ss b",
-	"H:mm b",
-	"H:mm:ss b",
+	"dd/mm/yyyy H:mm am/pm",
+	"dd/mm/yyyy H:mm:ss am/pm",
+	"H:mm am/pm",
+	"H:mm:ss am/pm",
 	"hh:mm",
 	"hh:mm:ss"
 ];
@@ -832,7 +832,7 @@ c_oAscDateTimeFormat[lcid_zhCN]     = [
 	"yyyy年m月",
 	"h时m分ss秒",
 	"h时m分",
-	"bh时m分",
+	"am/pmh时m分",
 	"JYYYY年mmmmd日",
 	"JYYYY年JM月JD日dddd",
 	"JYYYY年JM月JD"
