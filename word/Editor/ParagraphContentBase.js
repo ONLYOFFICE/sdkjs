@@ -1142,6 +1142,10 @@ CParagraphContentWithParagraphLikeContent.prototype.Copy = function(Selected, oP
 
 	return NewElement;
 };
+CParagraphContentWithParagraphLikeContent.prototype.IsPlaceHolder = function()
+{
+	return false;
+};
 CParagraphContentWithParagraphLikeContent.prototype.GetSelectedContent = function(oSelectedContent)
 {
 	var oNewElement = new this.constructor();
@@ -3782,6 +3786,10 @@ CParagraphContentWithParagraphLikeContent.prototype.Clear_SpellingMarks = functi
 CParagraphContentWithParagraphLikeContent.prototype.Search = function(oParaSearch)
 {
 	this.SearchMarks = [];
+
+	if (this.IsPlaceHolder())
+		return oParaSearch.Reset();
+
 	for (var nPos = 0, nContentLen = this.Content.length; nPos < nContentLen; ++nPos)
 	{
 		this.Content[nPos].Search(oParaSearch);
