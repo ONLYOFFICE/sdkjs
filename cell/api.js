@@ -3003,20 +3003,23 @@ var editor;
   spreadsheet_api.prototype.asc_searchEnabled = function(bIsEnabled) {
   };
 
-  spreadsheet_api.prototype.asc_findText = function(options) {
+  spreadsheet_api.prototype.asc_findText = function(options, callback) {
+    var result = null;
     if (window["NATIVE_EDITOR_ENJINE"]) {
       if (this.wb.findCellText(options)) {
         var ws = this.wb.getWorksheet();
         var activeCell = this.wbModel.getActiveWs().selectionRange.activeCell;
-        return [ws.getCellLeftRelative(activeCell.col, 0), ws.getCellTopRelative(activeCell.row, 0)];
+        result = [ws.getCellLeftRelative(activeCell.col, 0), ws.getCellTopRelative(activeCell.row, 0)];
       }
-
-      return null;
+    } else {
+      var d = this.wb.findCellText(options);
+      this.controller.scroll(d);
+      result = !!d;
     }
 
-    var d = this.wb.findCellText(options);
-    this.controller.scroll(d);
-    return !!d;
+    if (callback)
+      callback(result);
+    return result;
   };
 
   spreadsheet_api.prototype.asc_replaceText = function(options) {

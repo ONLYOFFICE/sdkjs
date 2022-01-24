@@ -5182,7 +5182,7 @@ Asc['asc_docs_api'].prototype.SetDocumentModified = function(bValue)
 };
 
 // find -------------------------------------------------------------------------------------------------
-Asc['asc_docs_api'].prototype.asc_findText = function(text, isNext, isMatchCase)
+Asc['asc_docs_api'].prototype.asc_findText = function(text, isNext, isMatchCase, callback)
 {
     var SearchEngine = editor.WordControl.m_oLogicDocument.Search( text, { MatchCase : isMatchCase } );
 
@@ -5191,6 +5191,8 @@ Asc['asc_docs_api'].prototype.asc_findText = function(text, isNext, isMatchCase)
     if ( null != Id )
         this.WordControl.m_oLogicDocument.SelectSearchElement( Id );
 
+    if (callback)
+        callback(SearchEngine.Count);
     return SearchEngine.Count;
 };
 

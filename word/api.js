@@ -3123,22 +3123,30 @@ background-repeat: no-repeat;\
 		}
 	};
 
-	asc_docs_api.prototype.asc_findText = function(text, isNext, isMatchCase)
+	asc_docs_api.prototype.asc_findText = function(text, isNext, isMatchCase, callback)
 	{
+		var result = 0;
+		var isAsync = false;
 		if (null != this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
 		{
-			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.findText(text, isMatchCase, isNext);
-			return this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.SearchResults.Count;
+			isAsync = (true === this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.findText(text, isMatchCase, isNext, callback)) ? true : false;
+			result = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.SearchResults.Count;
+		}
+		else
+		{
+			var SearchEngine = editor.WordControl.m_oLogicDocument.Search(text, {MatchCase: isMatchCase});
+
+			var Id = this.WordControl.m_oLogicDocument.GetSearchElementId(isNext);
+
+			if (null != Id)
+				this.WordControl.m_oLogicDocument.SelectSearchElement(Id);
+
+			result = SearchEngine.Count;
 		}
 
-		var SearchEngine = editor.WordControl.m_oLogicDocument.Search(text, {MatchCase : isMatchCase});
-
-		var Id = this.WordControl.m_oLogicDocument.GetSearchElementId(isNext);
-
-		if (null != Id)
-			this.WordControl.m_oLogicDocument.SelectSearchElement(Id);
-
-		return SearchEngine.Count;
+		if (!isAsync && callback)
+			callback(result);
+		return result;
 	};
 
 	asc_docs_api.prototype.asc_replaceText = function(text, replaceWith, isReplaceAll, isMatchCase)

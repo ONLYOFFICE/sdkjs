@@ -2463,9 +2463,12 @@ background-repeat: no-repeat;\
 		// пустой метод
 	};
 
-	asc_docs_api.prototype.asc_findText             = function(text, isNext, isMatchCase)
+	asc_docs_api.prototype.asc_findText             = function(text, isNext, isMatchCase, callback)
 	{
-		return this.WordControl.m_oLogicDocument.findText(text, isNext === true);
+		var result = this.WordControl.m_oLogicDocument.findText(text, isNext === true);
+		if (callback)
+			callback(result);
+		return result;
 	};
 	// returns: CSearchResult
 	asc_docs_api.prototype.sync_SearchFoundCallback = function(obj)

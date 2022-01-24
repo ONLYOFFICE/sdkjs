@@ -1650,25 +1650,28 @@
 			return this.file.copy(_text_format);
 		};
 
-		this.findText = function(text, isMachingCase, isNext)
+		this.findText = function(text, isMachingCase, isNext, callback)
 		{
 			if (this.isFullTextMessage)
 				return bRetValue;
 
 			if (!this.isFullText)
 			{
-				this.fullTextMessageCallbackArgs = [text, isMachingCase, isNext];
+				this.fullTextMessageCallbackArgs = [text, isMachingCase, isNext, callback];
 				this.fullTextMessageCallback = function() {
 					this.file.findText(this.fullTextMessageCallbackArgs[0], this.fullTextMessageCallbackArgs[1], this.fullTextMessageCallbackArgs[2]);
 					this.onUpdateOverlay();
+
+					if (this.fullTextMessageCallbackArgs[3])
+						this.fullTextMessageCallbackArgs[3](this.SearchResults.Count);
 				};
 				this.showTextMessage();
+				return true; // async
 			}
-			else
-			{
-				this.file.findText(text, isMachingCase, isNext);
-				this.onUpdateOverlay();
-			}
+
+			this.file.findText(text, isMachingCase, isNext);
+			this.onUpdateOverlay();
+			return false;
 		};
 
 		this.ToSearchResult = function()
