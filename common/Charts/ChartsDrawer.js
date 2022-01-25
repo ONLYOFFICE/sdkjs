@@ -10642,7 +10642,7 @@ drawPieChart.prototype = {
 		var arrAngles2 = breakAng(startAngle2, swapAngle2);
 		var frontPath = [];
 		for (var i = 1; i < arrAngles.length; i++) {
-			var start = arrAngles[i - 1].angle; 0
+			var start = arrAngles[i - 1].angle;
 			var end = arrAngles[i].angle;
 			var swap = end - start;
 
