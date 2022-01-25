@@ -833,6 +833,7 @@ NumFormat.prototype =
 			second = 's';
 			dayOfWeek = 'a';
 		}
+		var bIsForGannen = false;
         var sGeneralFirst = sGeneral[0];
         this.bGeneralChart = true;
         while(true)
@@ -888,8 +889,16 @@ NumFormat.prototype =
                 this._addToFormat(numFormat_General);
                 this._skip(sGeneral.length - 1);
             }
-			// Конфликты с японской эрой и экспонентой
-            /*else if("E" == next || "e" == next)
+			else if ("e" == next && bIsForGannen/* || "E" == next*/)
+			{
+				this._addToFormat2(new FormatObjDateVal(numFormat_JapanYearsGannen, 1, false));
+			}
+			else if ("g" == next/* || "G" == next*/)
+			{
+				bIsForGannen = true;
+				this._addToFormat2(new FormatObjDateVal(numFormat_Gannen, 1, false));
+			}
+            else if("E" == next || "e" == next)
             {
                 var nextnext = this._readChar();
                 if(this.EOF != nextnext && "+" == nextnext || "-" == nextnext)
@@ -897,15 +906,7 @@ NumFormat.prototype =
                     var sign = ("+" == nextnext) ? SignType.Positive : SignType.Negative;
                     this._addToFormat2(new FormatObjScientific(next, "", sign));
                 }
-            }*/
-			else if ("e" == next/* || "E" == next*/)
-			{
-				this._addToFormat2(new FormatObjDateVal(numFormat_JapanYearsGannen, 1, false));
-			}
-			else if ("g" == next/* || "G" == next*/)
-			{
-				this._addToFormat2(new FormatObjDateVal(numFormat_Gannen, 1, false));
-			}
+            }
             else if("*" == next)
             {
                 var nextnext = this._readChar();
@@ -2179,7 +2180,7 @@ NumFormat.prototype =
 						else if(item.val >= 2)
 						{
 							var nYear = oParsedNumber.date.year - oCurrentEra[3] + 1;
-							oCurText.text += (nYear < 10) ? nYear : "0"+nYear;
+							oCurText.text += (nYear >= 10) ? nYear : "0"+nYear;
 						}
 					}
 				}
