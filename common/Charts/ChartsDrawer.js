@@ -10397,13 +10397,12 @@ drawPieChart.prototype = {
 			var endAng = startAng + swapAng;
 			var p = getSegmentPoints(startAng, endAng);
 
+			path.moveTo(xCenter / pxToMm * pathW, yCenter / pxToMm * pathH);
 			if (empty) {
-				path.moveTo(xCenter / pxToMm * pathW, yCenter / pxToMm * pathH);
 				path.moveTo(p.x0 / pxToMm * pathW, p.y0 / pxToMm * pathH);
 				path.arcTo(radius1 / pxToMm * pathW, radius2 / pxToMm * pathH, -1 * stAng * cToDeg, -1 * swapAng * cToDeg);
 				path.moveTo(xCenter / pxToMm * pathW, yCenter / pxToMm * pathH);
 			} else {
-				path.moveTo(xCenter / pxToMm * pathW, yCenter / pxToMm * pathH);
 				path.lnTo(p.x0 / pxToMm * pathW, p.y0 / pxToMm * pathH);
 				path.arcTo(radius1 / pxToMm * pathW, radius2 / pxToMm * pathH, -1 * stAng * cToDeg, -1 * swapAng * cToDeg);
 				path.lnTo(xCenter / pxToMm * pathW, yCenter / pxToMm * pathH);
@@ -10596,13 +10595,12 @@ drawPieChart.prototype = {
 			var x0 = (xCenter + radiusSpec * Math.cos(startAng));
 			var y0 = (yCenter - radiusSpec * Math.sin(startAng));
 
+			path.moveTo(pointCenter1.x / pxToMm * pathW, pointCenter1.y / pxToMm * pathH);
 			if (empty) {
-				path.moveTo(pointCenter1.x / pxToMm * pathW, pointCenter1.y / pxToMm * pathH);
 				path.moveTo(x0 / pxToMm * pathW, y0 / pxToMm * pathH);
 				path.arcTo(radiusUp1 / pxToMm * pathW, radiusUp2 / pxToMm * pathH, -1 * startAng * cToDeg, -1 * swapAng * cToDeg);
 				path.moveTo(pointCenter1.x / pxToMm * pathW, pointCenter1.y / pxToMm * pathH);
 			} else {
-				path.moveTo(pointCenter1.x / pxToMm * pathW, pointCenter1.y / pxToMm * pathH);
 				path.lnTo(x0 / pxToMm * pathW, y0 / pxToMm * pathH);
 				path.arcTo(radiusUp1 / pxToMm * pathW, radiusUp2 / pxToMm * pathH, -1 * startAng * cToDeg, -1 * swapAng * cToDeg);
 				path.lnTo(pointCenter1.x / pxToMm * pathW, pointCenter1.y / pxToMm * pathH);
