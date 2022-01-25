@@ -2408,11 +2408,6 @@ background-repeat: no-repeat;\
 		this.sendEvent("asc_onSearchEnd");
 	};
 
-	asc_docs_api.prototype.findText             = function(text, isNext, isMatchCase, callback)
-	{
-		return this.asc_findText(text, isNext, isMatchCase, callback);
-	};
-
 	asc_docs_api.prototype.asc_replaceText = function(text, replaceWith, isReplaceAll, isMatchCase)
 	{
 		if (null == this.WordControl.m_oLogicDocument)
@@ -8116,7 +8111,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['goToNextSearchResult']                = asc_docs_api.prototype.goToNextSearchResult;
 	asc_docs_api.prototype['gotoSearchResultText']                = asc_docs_api.prototype.gotoSearchResultText;
 	asc_docs_api.prototype['stopSearchText']                      = asc_docs_api.prototype.stopSearchText;
-	asc_docs_api.prototype['findText']                            = asc_docs_api.prototype.findText;
 	asc_docs_api.prototype['asc_searchEnabled']                   = asc_docs_api.prototype.asc_searchEnabled;
 	asc_docs_api.prototype['asc_findText']                        = asc_docs_api.prototype.asc_findText;
 	asc_docs_api.prototype['asc_replaceText']                     = asc_docs_api.prototype.asc_replaceText;
