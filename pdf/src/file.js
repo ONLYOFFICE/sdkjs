@@ -172,6 +172,10 @@
             Count       : 0
         };
         this.viewer = null;
+
+        this.maxCanvasSize = 0;
+        if (AscCommon.AscBrowser.isAppleDevices || AscCommon.AscBrowser.isAndroid)
+            this.maxCanvasSize = 4096;
     }
 
     // interface
@@ -196,35 +200,55 @@
         return this.nativeFile ? this.nativeFile["getStructure"]() : [];
     };
 
-	CFile.prototype.getPage = function(pageIndex, width, height, isNoUseCacheManager, backgroundColor)
-	{
+    CFile.prototype.getPage = function(pageIndex, width, height, isNoUseCacheManager, backgroundColor)
+    {
         if (!this.nativeFile)
             return null;
-		if (pageIndex < 0 || pageIndex >= this.pages.length)
-			return null;
+        if (pageIndex < 0 || pageIndex >= this.pages.length)
+            return null;
 
-		if (!width) width = this.pages[pageIndex].W;
-		if (!height) height = this.pages[pageIndex].H;
-		var t0 = performance.now();
-		var pixels = this.nativeFile["getPagePixmap"](pageIndex, width, height, backgroundColor);
-		if (!pixels)
-			return null;
-        
+        if (!width) width = this.pages[pageIndex].W;
+        if (!height) height = this.pages[pageIndex].H;
+
+        var requestW = width;
+        var requestH = height;
+
+        if (this.maxCanvasSize > 0)
+        {
+            if (width > this.maxCanvasSize || height > this.maxCanvasSize)
+            {
+                var maxKoef = Math.max(width / this.maxCanvasSize, height / this.maxCanvasSize);
+                width = (0.5 + (width / maxKoef)) >> 0;
+                height = (0.5 + (height / maxKoef)) >> 0;
+
+                if (width > this.maxCanvasSize) width = this.maxCanvasSize;
+                if (height > this.maxCanvasSize) height = this.maxCanvasSize;
+            }
+        }
+
+        var t0 = performance.now();
+        var pixels = this.nativeFile["getPagePixmap"](pageIndex, width, height, backgroundColor);
+        if (!pixels)
+            return null;
+
         var image = null;
-		if (!this.logging)
-		{
-			image = this._pixelsToCanvas(pixels, width, height, isNoUseCacheManager);
-		}
-		else
-		{
-			var t1 = performance.now();
-			image = this._pixelsToCanvas(pixels, width, height, isNoUseCacheManager);
-			var t2 = performance.now();
-			//console.log("time: " + (t1 - t0) + ", " + (t2 - t1));
-		}
+        if (!this.logging)
+        {
+            image = this._pixelsToCanvas(pixels, width, height, isNoUseCacheManager);
+        }
+        else
+        {
+            var t1 = performance.now();
+            image = this._pixelsToCanvas(pixels, width, height, isNoUseCacheManager);
+            var t2 = performance.now();
+            //console.log("time: " + (t1 - t0) + ", " + (t2 - t1));
+        }
         this.free(pixels);
+
+        image.requestWidth = requestW;
+        image.requestHeight = requestH;
         return image;
-	};
+    };
 
     CFile.prototype.getLinks = function(pageIndex)
     {
@@ -2049,7 +2073,7 @@ void main() {\n\
             }
 
             file.prepareSearch();
-            file.cacheManager = new AscCommon.CCacheManager(); 
+            //file.cacheManager = new AscCommon.CCacheManager();
             return file;   
         }
         else if (4 === error)
@@ -2080,7 +2104,7 @@ void main() {\n\
             }
 
             file.prepareSearch();
-            file.cacheManager = new AscCommon.CCacheManager();
+            //file.cacheManager = new AscCommon.CCacheManager();
         }
     };
 

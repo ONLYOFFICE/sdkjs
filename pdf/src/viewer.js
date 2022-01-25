@@ -160,7 +160,7 @@
 		this.file = null;
 		this.isStarted = false;
 
-		this.scrollWidth = 14;
+		this.scrollWidth = this.Api.isMobileVersion ? 0 : 14;
 		this.isVisibleHorScroll = false;
 
 		this.m_oScrollHorApi = null;
@@ -216,7 +216,7 @@
 
 		this.updateDarkMode = function()
 		{
-			this.isClearPages = false;
+			this.isClearPages = true;
 
 			if (this.thumbnails)
 				this.thumbnails.updateSkin();
@@ -544,6 +544,9 @@
 				this.thumbnails.resize();
 
 			this.timerSync();
+
+			if (this.Api.WordControl.MobileTouchManager)
+				this.Api.WordControl.MobileTouchManager.Resize();
 		};
 
 		this.onLoadModule = function()
@@ -852,15 +855,26 @@
 			if (!this.file || !this.file.isValid)
 				return;
 
-			this.drawingPages = [];
+			// здесь картинки не обнуляем
 			for (let i = 0, len = this.file.pages.length; i < len; i++)
 			{
-				this.drawingPages.push({ 
-					X : 0,
-					Y : 0,
-					W : (this.file.pages[i].W * 96 * this.zoom / this.file.pages[i].Dpi) >> 0,
-					H : (this.file.pages[i].H * 96 * this.zoom / this.file.pages[i].Dpi) >> 0,
-				});
+				if (!this.drawingPages[i])
+				{
+					this.drawingPages[i] = {
+						X : 0,
+						Y : 0,
+						W : (this.file.pages[i].W * 96 * this.zoom / this.file.pages[i].Dpi) >> 0,
+						H : (this.file.pages[i].H * 96 * this.zoom / this.file.pages[i].Dpi) >> 0,
+						Image : undefined
+					};
+				}
+				else
+				{
+					this.drawingPages[i].X = 0;
+					this.drawingPages[i].Y = 0;
+					this.drawingPages[i].W = (this.file.pages[i].W * 96 * this.zoom / this.file.pages[i].Dpi) >> 0;
+					this.drawingPages[i].H = (this.file.pages[i].H * 96 * this.zoom / this.file.pages[i].Dpi) >> 0;
+				}
 			}
 
 			this.documentWidth = 0;
@@ -1428,7 +1442,7 @@
 
 			this.canvas.width = this.canvas.width;
 			let ctx = this.canvas.getContext("2d");
-			ctx.strokeStyle = "#000000";
+			ctx.strokeStyle = AscCommon.GlobalSkin.PageOutline;
 			let lineW = AscCommon.AscBrowser.retinaPixelRatio >> 0;
 			ctx.lineWidth = lineW;
 
@@ -1476,6 +1490,10 @@
 			this.startVisiblePage = lStartPage;
 			this.endVisiblePage = lEndPage;
 
+			var isStretchPaint = this.Api.WordControl.NoneRepaintPages;
+			if (this.isClearPages)
+				isStretchPaint = false;
+
 			for (let i = lStartPage; i <= lEndPage; i++)
 			{
 				// отрисовываем страницу
@@ -1484,25 +1502,28 @@
 				let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 				let h = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
-				if (!this.file.cacheManager)
+				if (!isStretchPaint)
 				{
-					if (this.isClearPages || (page.Image && ((page.Image.width != w) || (page.Image.height != h))))
-						delete page.Image;
-				}
-				else
-				{
-					if (this.isClearPages || (page.Image && ((page.Image.width < w) || (page.Image.height < h))))
+					if (!this.file.cacheManager)
 					{
-						if (this.file.cacheManager)
-							this.file.cacheManager.unlock(page.Image);
-						
-						delete page.Image;	
+						if (this.isClearPages || (page.Image && ((page.Image.requestWidth != w) || (page.Image.requestHeight != h))))
+							delete page.Image;
+					}
+					else
+					{
+						if (this.isClearPages || (page.Image && ((page.Image.requestWidth < w) || (page.Image.requestHeight < h))))
+						{
+							if (this.file.cacheManager)
+								this.file.cacheManager.unlock(page.Image);
+
+							delete page.Image;
+						}
 					}
 				}
 
 				this.isClearPages = false;
 				
-				if (!page.Image)
+				if (!page.Image && !isStretchPaint)
 					page.Image = this.file.getPage(i, w, h, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
 
 				let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
@@ -1510,7 +1531,7 @@
 
 				if (page.Image)
 				{
-					ctx.drawImage(page.Image, 0, 0, w, h, x, y, w, h);
+					ctx.drawImage(page.Image, 0, 0, page.Image.width, page.Image.height, x, y, w, h);
 					this.pagesInfo.setPainted(i);
 				}
 				else

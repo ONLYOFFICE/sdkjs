@@ -482,7 +482,7 @@
                 {
                     drPage = block.pages[pageNum];
                     if (drPage.page.image === null ||
-                        (drPage.page.image.width != drPage.pageRect.w || drPage.page.image.height != drPage.pageRect.h))
+                        (drPage.page.image.requestWidth != drPage.pageRect.w || drPage.page.image.requestHeight != drPage.pageRect.h))
                     {
                         needPage = drPage;
                         break;

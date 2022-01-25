@@ -1425,9 +1425,12 @@ background-repeat: no-repeat;\
 			_t.sendEvent("asc_onHyperlinkClick", url);
 		});
 
-		AscCommon.InitBrowserInputContext(this, "", this.HtmlElementName);
+		AscCommon.InitBrowserInputContext(this, "", "id_viewer");
 		if (AscCommon.g_inputContext)
 			AscCommon.g_inputContext.onResize(this.HtmlElementName);
+
+		if (this.isMobileVersion)
+			this.WordControl.initEventsMobile();
 	};
 	asc_docs_api.prototype["asc_setViewerThumbnailsZoom"] = function(value) {
 		if (this.WordControl.m_oDrawingDocument.m_oDocumentRenderer &&
