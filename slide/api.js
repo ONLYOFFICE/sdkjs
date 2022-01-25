@@ -2408,19 +2408,9 @@ background-repeat: no-repeat;\
 		this.sendEvent("asc_onSearchEnd");
 	};
 
-	asc_docs_api.prototype.findText             = function(text, isNext, isMatchCase)
+	asc_docs_api.prototype.findText             = function(text, isNext, isMatchCase, callback)
 	{
-
-		var SearchEngine = editor.WordControl.m_oLogicDocument.Search(text, {MatchCase : isMatchCase});
-
-		var Id = this.WordControl.m_oLogicDocument.GetSearchElementId(isNext);
-
-		if (null != Id)
-			this.WordControl.m_oLogicDocument.SelectSearchElement(Id);
-
-		return SearchEngine.Count;
-
-		//return this.WordControl.m_oLogicDocument.findText(text, scanForward);
+		return this.asc_findText(text, isNext, isMatchCase, callback);
 	};
 
 	asc_docs_api.prototype.asc_replaceText = function(text, replaceWith, isReplaceAll, isMatchCase)
@@ -2463,13 +2453,21 @@ background-repeat: no-repeat;\
 		// пустой метод
 	};
 
-	asc_docs_api.prototype.asc_findText             = function(text, isNext, isMatchCase, callback)
+	asc_docs_api.prototype.asc_findText = function(text, isNext, isMatchCase, callback)
 	{
-		var result = this.WordControl.m_oLogicDocument.findText(text, isNext === true);
+		var SearchEngine = editor.WordControl.m_oLogicDocument.Search(text, {MatchCase : isMatchCase});
+
+		var Id = this.WordControl.m_oLogicDocument.GetSearchElementId(isNext);
+
+		if (null != Id)
+			this.WordControl.m_oLogicDocument.SelectSearchElement(Id);
+
+		var result = SearchEngine.Count;
 		if (callback)
 			callback(result);
 		return result;
 	};
+
 	// returns: CSearchResult
 	asc_docs_api.prototype.sync_SearchFoundCallback = function(obj)
 	{
