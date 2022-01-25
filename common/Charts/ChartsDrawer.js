@@ -11893,9 +11893,14 @@ drawScatterChart.prototype = {
 			compiledMarkerSize = seria && seria.compiledSeriesMarker ? seria.compiledSeriesMarker.size : null;
 			compiledMarkerSymbol = seria && seria.compiledSeriesMarker ? seria.compiledSeriesMarker.symbol : null;
 
+			//idx не всегда начинается с нуля
 			for (var n = 0; n < yNumCache.ptCount; n++) {
-				var values = this.cChartDrawer._getScatterPointVal(seria, n);
-				if(values) {
+				idx = yNumCache.pts && undefined !== yNumCache.pts[n] ? yNumCache.pts[n].idx : null;
+				if (null === idx) {
+					continue;
+				}
+				var values = this.cChartDrawer._getScatterPointVal(seria, idx);
+				if(values){
 					yVal = values.y;
 					xVal = values.x;
 					xPoint = values.xPoint;
