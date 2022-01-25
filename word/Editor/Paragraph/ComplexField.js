@@ -238,6 +238,23 @@ ParaFieldChar.prototype.PrepareRecalculateObject = function()
 	this.Widths = [];
 	this.String = "";
 };
+ParaFieldChar.prototype.IsValid = function()
+{
+	var oRun = this.GetRun();
+	return (oRun && oRun.IsUseInDocument() && -1 !== oRun.GetElementPosition(this));
+};
+ParaFieldChar.prototype.RemoveThisFromDocument = function()
+{
+	var oRun = this.GetRun();
+	var nInRunPos = oRun.GetElementPosition(this);
+	if (-1 !== nInRunPos)
+		oRun.RemoveFromContent(nInRunPos, 1);
+};
+ParaFieldChar.prototype.PreDelete = function()
+{
+	if (this.LogicDocument && this.ComplexField)
+		this.LogicDocument.ValidateComplexField(this.ComplexField);
+};
 
 /**
  * Класс представляющий символ инструкции сложного поля
@@ -1464,7 +1481,10 @@ CComplexField.prototype.GetEndDocumentPosition = function()
 };
 CComplexField.prototype.IsValid = function()
 {
-	return this.IsUse() && this.BeginChar && this.SeparateChar && this.EndChar;
+	return (this.IsUse()
+		&& this.BeginChar && this.BeginChar.IsValid()
+		&& this.SeparateChar && this.SeparateChar.IsValid()
+		&& this.EndChar && this.EndChar.IsValid());
 };
 CComplexField.prototype.GetInstruction = function()
 {
@@ -1509,10 +1529,7 @@ CComplexField.prototype.RemoveFieldWrap = function()
 	if (!this.IsValid())
 		return;
 
-	var oRun = this.EndChar.GetRun();
-	var nInRunPos = oRun.GetElementPosition(this.EndChar);
-	if (-1 !== nInRunPos)
-		oRun.RemoveFromContent(nInRunPos, 1);
+	this.EndChar.RemoveThisFromDocument();
 
 	var oDocument = this.GetTopDocumentContent();
 	if (!oDocument)
@@ -1570,6 +1587,17 @@ CComplexField.prototype.RemoveField = function()
 	this.SelectField();
 	oDocument.Remove();
 };
+CComplexField.prototype.RemoveFieldChars = function()
+{
+	if (this.BeginChar)
+		this.BeginChar.RemoveThisFromDocument();
+
+	if (this.EndChar)
+		this.EndChar.RemoveThisFromDocument();
+
+	if (this.SeparateChar)
+		this.SeparateChar.RemoveThisFromDocument();
+};
 /**
  * Выставляем свойства для данного поля
  * @param oPr (зависит от типа данного поля)
@@ -1623,7 +1651,6 @@ CComplexField.prototype.ChangeInstruction = function(sNewInstruction)
 	this.InstructionCF      = [];
 	this.private_UpdateInstruction();
 };
-
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CComplexField = CComplexField;

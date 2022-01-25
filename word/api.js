@@ -992,7 +992,7 @@
 	asc_docs_api.prototype.isLongAction = function()
 	{
 		if (this.WordControl.m_oLogicDocument)
-			return (0 !== this.IsLongActionCurrent || this.WordControl.m_oLogicDocument.IsActionInProgress());
+			return (0 !== this.IsLongActionCurrent || this.WordControl.m_oLogicDocument.IsActionStarted());
 
 		return (0 !== this.IsLongActionCurrent);
 	};

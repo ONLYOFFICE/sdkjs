@@ -2707,6 +2707,10 @@ CDocument.prototype.Init                           = function()
 {
 
 };
+CDocument.prototype.IsLoadingDocument = function()
+{
+	return (AscCommon.g_oIdCounter.m_bLoad);
+};
 CDocument.prototype.On_EndLoad                     = function()
 {
 	this.ClearListsCache();
@@ -3052,7 +3056,7 @@ CDocument.prototype.StartAction = function(nDescription, oSelectionState)
  * В процессе ли какое-либо действие
  * @returns {boolean}
  */
-CDocument.prototype.IsActionInProgress = function()
+CDocument.prototype.IsActionStarted = function()
 {
 	return this.Action.Start;
 };
@@ -3182,7 +3186,7 @@ CDocument.prototype.private_Redraw = function(nStartPage, nEndPage)
  */
 CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 {
-	if (!this.Action.Start)
+	if (!this.IsActionStarted())
 		return;
 
 	if (this.Action.Depth > 0)
@@ -3198,24 +3202,7 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 		return;
 	}
 
-	// Дополнительная обработка-----------------------------------------------------------------------------------------
-	this.Comments.CheckMarks();
-
-	if (this.Action.Additional.TrackMove)
-		this.private_FinalizeRemoveTrackMove();
-
-	if (this.TrackMoveId)
-		this.private_FinalizeCheckTrackMove();
-
-	if (this.Action.Additional.FormChange)
-		this.private_FinalizeFormChange();
-
-	if (this.Action.Additional.RadioRequired)
-		this.private_FinalizeRadioRequired();
-
-	if (this.Action.Additional.CommentPosition)
-		this.private_FinalizeUpdateCommentPosition();
-	//------------------------------------------------------------------------------------------------------------------
+	this.private_CheckAdditionalOnFinalize();
 
 	var isAllPointsEmpty = true;
 	if (false !== isCheckEmptyAction)
@@ -3288,6 +3275,28 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	this.Action.Redraw.Start    = undefined;
 	this.Action.Redraw.End      = undefined;
 	this.Action.Additional      = {};
+};
+CDocument.prototype.private_CheckAdditionalOnFinalize = function()
+{
+	this.Comments.CheckMarks();
+
+	if (this.Action.Additional.TrackMove)
+		this.private_FinalizeRemoveTrackMove();
+
+	if (this.TrackMoveId)
+		this.private_FinalizeCheckTrackMove();
+
+	if (this.Action.Additional.FormChange)
+		this.private_FinalizeFormChange();
+
+	if (this.Action.Additional.RadioRequired)
+		this.private_FinalizeRadioRequired();
+
+	if (this.Action.Additional.CommentPosition)
+		this.private_FinalizeUpdateCommentPosition();
+
+	if (this.Action.Additional.ValidateComplexFields)
+		this.private_FinalizeValidateComplexFields();
 };
 /**
  * Пересчитываем нумерацию строк
@@ -17820,6 +17829,8 @@ CDocument.prototype.private_SelectRevisionChange = function(oChange, isSkipCompl
 				oElement.Document_SetThisElementCurrent(false);
 			}
 		}
+
+		this.CheckComplexFieldsInSelection();
 	}
 };
 CDocument.prototype.AcceptRevisionChange = function(oChange)
@@ -22942,6 +22953,32 @@ CDocument.prototype.AddDateTime = function(oPr)
 	else
 	{
 		this.AddTextWithPr(oPr.get_String(), {Lang : {Val : nLang}}, true);
+	}
+};
+CDocument.prototype.ValidateComplexField = function(oComplexField)
+{
+	if (this.IsLoadingDocument()
+		|| !this.IsActionStarted())
+		return;
+
+	if (!this.Action.Additional.ValidateComplexFields)
+		this.Action.Additional.ValidateComplexFields = [];
+
+	for (var nIndex = 0, nCount = this.Action.Additional.ValidateComplexFields.length; nIndex < nCount; ++nIndex)
+	{
+		if (oComplexField === this.Action.Additional.ValidateComplexFields[nIndex])
+			return;
+	}
+
+	this.Action.Additional.ValidateComplexFields.push(oComplexField);
+};
+CDocument.prototype.private_FinalizeValidateComplexFields = function()
+{
+	for (var nIndex = 0, nCount = this.Action.Additional.ValidateComplexFields.length; nIndex < nCount; ++nIndex)
+	{
+		var oComplexField = this.Action.Additional.ValidateComplexFields[nIndex];
+		if (!oComplexField.IsValid())
+			oComplexField.RemoveFieldChars();
 	}
 };
 CDocument.prototype.AddRefToParagraph = function(oParagraph, nType, bHyperlink, bAboveBelow, sSeparator)

@@ -11295,7 +11295,7 @@ CPresentation.prototype.IsDoNotExpandShiftReturn = function() {
 };
 
 
-CPresentation.prototype.IsActionInProgress = function () {
+CPresentation.prototype.IsActionStarted = function () {
 };
 /**
  * Сообщаем документу, что потребуется пересчет

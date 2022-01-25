@@ -4790,9 +4790,6 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
             }
 			case para_FieldChar:
 			{
-				if (reviewtype_Remove === this.GetReviewType())
-					break;
-
 				if (this.Paragraph && this.Paragraph.m_oPRSW.IsFastRecalculate())
 					PRSC.ComplexFields.ProcessFieldChar(Item);
 				else
@@ -5260,9 +5257,9 @@ ParaRun.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)
 };
 ParaRun.prototype.RecalculateEndInfo = function(oPRSI)
 {
-	if (reviewtype_Remove === this.GetReviewType()
-		|| (this.Paragraph
-			&& (this.Paragraph.m_oPRSW.IsFastRecalculate() || this.Paragraph.bFromDocument === false)))
+	var isRemovedInReview = (reviewtype_Remove === this.GetReviewType());
+
+	if (this.Paragraph && (this.Paragraph.m_oPRSW.IsFastRecalculate() || this.Paragraph.bFromDocument === false))
 		return;
 
 	for (var nCurPos = 0, nCount = this.Content.length; nCurPos < nCount; ++nCurPos)
@@ -5272,7 +5269,7 @@ ParaRun.prototype.RecalculateEndInfo = function(oPRSI)
 		{
 			oPRSI.ProcessFieldCharAndCollectComplexField(oItem);
 		}
-		else if (para_InstrText === oItem.Type)
+		else if (para_InstrText === oItem.Type && !isRemovedInReview)
 		{
 			oPRSI.ProcessInstruction(oItem);
 		}
@@ -11419,6 +11416,7 @@ ParaRun.prototype.AcceptRevisionChanges = function(nType, bAll)
 			&& oProcessMove.GetUserId() === this.GetReviewInfo().GetUserId())))
 		{
 			Parent.RemoveFromContent(CenterRunPos, 1);
+			CenterRun.ClearContent();
 
 			if (Parent.GetContentLength() <= 0)
 			{
@@ -11503,6 +11501,7 @@ ParaRun.prototype.RejectRevisionChanges = function(nType, bAll)
 			&& oPrevInfo))
 		{
 			Parent.RemoveFromContent(CenterRunPos, 1);
+			CenterRun.ClearContent();
 
 			if (Parent.GetContentLength() <= 0)
 			{
@@ -11676,6 +11675,10 @@ ParaRun.prototype.GetFootnotesList = function(oEngine)
 ParaRun.prototype.Is_UseInDocument = function()
 {
 	return (this.Paragraph && true === this.Paragraph.Is_UseInDocument() && true === this.Is_UseInParagraph() ? true : false);
+};
+ParaRun.prototype.IsUseInDocument = function()
+{
+	return this.Is_UseInDocument();
 };
 ParaRun.prototype.GetParaEnd = function()
 {
@@ -13458,8 +13461,7 @@ ParaRun.prototype.CheckRunContent = function(fCheck)
 };
 ParaRun.prototype.ProcessComplexFields = function(oComplexFields)
 {
-	if (reviewtype_Remove === this.GetReviewType())
-		return;
+	var isRemovedInReview = (reviewtype_Remove === this.GetReviewType());
 
 	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
 	{
@@ -13471,7 +13473,7 @@ ParaRun.prototype.ProcessComplexFields = function(oComplexFields)
 
 		if (para_FieldChar === nItemType)
 			oComplexFields.ProcessFieldCharAndCollectComplexField(oItem);
-		else if (para_InstrText === nItemType)
+		else if (para_InstrText === nItemType && !isRemovedInReview)
 			oComplexFields.ProcessInstruction(oItem);
 	}
 };
