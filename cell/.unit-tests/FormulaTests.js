@@ -5389,6 +5389,26 @@ $( function () {
         ok( oParser.parse() );
         strictEqual( oParser.calculate().getValue(), 2 );
 
+		oParser = new parserFormula( "WEEKNUM(0, 21)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), 52 );
+
+		oParser = new parserFormula( "WEEKNUM(1, 21)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), 52 );
+
+		oParser = new parserFormula( "WEEKNUM(2, 21)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), 1 );
+
+		oParser = new parserFormula( "WEEKNUM(0, 17)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), 0 );
+
+		oParser = new parserFormula( "WEEKNUM(1, 17)", "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), 1 );
+
         testArrayFormula2("WEEKNUM", 1, 2, true);
     } );
 

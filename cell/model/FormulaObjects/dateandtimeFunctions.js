@@ -489,7 +489,12 @@
 		}
 
 		dt.setUTCHours(0, 0, 0);
-		var startOfYear = new cDate(Date.UTC(dt.getUTCFullYear(), 0, 1));
+		var utcFullYear = dt.getUTCFullYear();
+		if (type) {
+			//если это исключение не обработать, то будет бесконечная рекурсия
+			utcFullYear = Date.prototype.getUTCFullYear.call(dt);
+		}
+		var startOfYear = new cDate(Date.UTC(utcFullYear, 0, 1));
 		var endOfYear = new cDate(dt);
 		endOfYear.setUTCMonth(11);
 		endOfYear.setUTCDate(31);
