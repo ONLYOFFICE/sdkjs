@@ -397,6 +397,11 @@ function CEditorPage(api)
 
 		this.m_oDrawingDocument.TargetHtmlElement = document.getElementById('id_target_cursor');
 
+		if (this.m_oApi.isMobileVersion && !this.m_oDrawingDocument.m_oDocumentRenderer)
+		{
+			this.MobileTouchManager = new AscCommon.CMobileTouchManager( { eventsElement : "word_mobile_element" } );
+			this.MobileTouchManager.Init(this.m_oApi);
+		}
 		this.checkNeedRules();
 		this.initEvents2();
 
@@ -737,8 +742,11 @@ function CEditorPage(api)
 	{
         if (this.m_oApi.isMobileVersion)
 		{
-			this.MobileTouchManager = new AscCommon.CMobileTouchManager( { eventsElement : "word_mobile_element" } );
-			this.MobileTouchManager.Init(this.m_oApi);
+			if (this.m_oDrawingDocument.m_oDocumentRenderer)
+			{
+				this.MobileTouchManager = new AscCommon.CMobileTouchManager( { eventsElement : "word_mobile_element" } );
+				this.MobileTouchManager.Init(this.m_oApi);
+			}
 
 		    this.TextBoxBackground = CreateControl(AscCommon.g_inputContext.HtmlArea.id);
             this.TextBoxBackground.HtmlElement.parentNode.parentNode.style.zIndex = 10;
