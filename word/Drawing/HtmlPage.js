@@ -735,15 +735,17 @@ function CEditorPage(api)
 
 	this.initEventsMobile = function()
 	{
-        if (this.m_oApi.isMobileVersion)
+		if (this.m_oApi.isMobileVersion)
 		{
 			this.MobileTouchManager = new AscCommon.CMobileTouchManager( { eventsElement : "word_mobile_element" } );
 			this.MobileTouchManager.Init(this.m_oApi);
+			if (!this.MobileTouchManager.delegate.IsNativeViewer())
+				this.MobileTouchManager.Resize();
 
-		    this.TextBoxBackground = CreateControl(AscCommon.g_inputContext.HtmlArea.id);
-            this.TextBoxBackground.HtmlElement.parentNode.parentNode.style.zIndex = 10;
+			this.TextBoxBackground = CreateControl(AscCommon.g_inputContext.HtmlArea.id);
+			this.TextBoxBackground.HtmlElement.parentNode.parentNode.style.zIndex = 10;
 
-            this.MobileTouchManager.initEvents(AscCommon.g_inputContext.HtmlArea.id);
+			this.MobileTouchManager.initEvents(AscCommon.g_inputContext.HtmlArea.id);
 
 			if (AscBrowser.isAndroid)
 			{
