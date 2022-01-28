@@ -319,6 +319,10 @@ function ParseLocalFormatSymbol(Name)
 	LocaleFormatSymbol['minute'] = 'm';
 	LocaleFormatSymbol['S'] = 'S';
 	LocaleFormatSymbol['s'] = 's';
+	LocaleFormatSymbol['G'] = 'G';
+	LocaleFormatSymbol['g'] = 'g';
+	LocaleFormatSymbol['E'] = 'E';
+	LocaleFormatSymbol['e'] = 'e';
 	LocaleFormatSymbol['a'] = 'a';
 	LocaleFormatSymbol['general'] = 'General';
 	switch (Name) {
@@ -494,6 +498,8 @@ function ParseLocalFormatSymbol(Name)
 			LocaleFormatSymbol['y'] = 'a';
 			LocaleFormatSymbol['D'] = 'G';
 			LocaleFormatSymbol['d'] = 'g';
+			LocaleFormatSymbol['G'] = 'X';
+			LocaleFormatSymbol['g'] = 'x';
 			LocaleFormatSymbol['a'] = 'o';
 			LocaleFormatSymbol['general'] = 'Standard';
 			break;
@@ -629,6 +635,16 @@ function ParseLocalFormatSymbol(Name)
 		case("ko-KR"): {
 			LocaleFormatSymbol['general'] = 'G/표준';
 			break;
+		}
+		case("iu"):
+		case("iu-Cans"): {
+			LocaleFormatSymbol['Y'] = 'A';
+			LocaleFormatSymbol['y'] = 'a';
+			LocaleFormatSymbol['D'] = 'G';
+			LocaleFormatSymbol['d'] = 'g';
+			LocaleFormatSymbol['G'] = 'X';
+			LocaleFormatSymbol['g'] = 'x';
+			LocaleFormatSymbol['general'] = 'Standard';
 		}
 	}
 	return true;
@@ -813,6 +829,10 @@ NumFormat.prototype =
 			minute = LocaleFormatSymbol['minute'];
 			Second = LocaleFormatSymbol['S'];
 			second = LocaleFormatSymbol['s'];
+			Gannen = LocaleFormatSymbol['G'];
+			gannen = LocaleFormatSymbol['g'];
+			Era = LocaleFormatSymbol['E'];
+			era = LocaleFormatSymbol['e'];
 			dayOfWeek = LocaleFormatSymbol['a'];
 		} else {
 			sGeneral = AscCommon.g_cGeneralFormat.toLowerCase();
@@ -831,6 +851,10 @@ NumFormat.prototype =
 			minute = 'm';
 			Second = 'S';
 			second = 's';
+			Gannen = 'G';
+			gannen = 'g';
+			Era = 'E';
+			era = 'e';
 			dayOfWeek = 'a';
 		}
 		var bIsForGannen = false;
@@ -889,11 +913,11 @@ NumFormat.prototype =
                 this._addToFormat(numFormat_General);
                 this._skip(sGeneral.length - 1);
             }
-			else if ("e" == next && bIsForGannen/* || "E" == next*/)
+			else if ((Era == next || era == next) && bIsForGannen/* || "E" == next*/)
 			{
 				this._addToFormat2(new FormatObjDateVal(numFormat_JapanYearsGannen, 1, false));
 			}
-			else if ("g" == next/* || "G" == next*/)
+			else if (Gannen == next || gannen == next/* || "G" == next*/)
 			{
 				bIsForGannen = true;
 				this._addToFormat2(new FormatObjDateVal(numFormat_Gannen, 1, false));
