@@ -11681,7 +11681,8 @@
 											sDateFormat = AscCommon.getShortDateFormat(cultureInfo);
 										}
 										var sTimeFormat = 'h:mm:ss';
-										if (cultureInfo.AMDesignator.length > 0 && cultureInfo.PMDesignator.length > 0){
+
+										if (cultureInfo.UseAMPM > 0){
 											sTimeFormat += ' AM/PM';
 										}
 										if(bDate && bTime)
