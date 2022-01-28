@@ -487,7 +487,8 @@
 		"*::-webkit-scrollbar-track" : { "background" : "background-normal" },
 		"*::-webkit-scrollbar-track:hover" : { "background" : "background-toolbar-additional" },
 		"*::-webkit-scrollbar-thumb" : { "background-color" : "background-toolbar", "border-color" : "border-regular-control" },
-		"*::-webkit-scrollbar-thumb:hover" : { "background-color" : "canvas-scroll-thumb-hover" }
+		"*::-webkit-scrollbar-thumb:hover" : { "background-color" : "canvas-scroll-thumb-hover" },
+		".asc-plugin-loader" : { "color" : "text-normal" }
 	};
 
     var g_isMouseSendEnabled = false;
