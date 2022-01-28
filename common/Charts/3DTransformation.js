@@ -384,6 +384,12 @@ Processor3D.prototype.calculateZPositionCatAxis = function () {
 
 	return result;
 };
+	
+Processor3D.prototype.calculateXPositionSerAxis = function () {
+	if (!this.view3D.getRAngAx()) {
+		return Math.sin(this.angleOy) > 0;
+	}
+};
 
 Processor3D.prototype.calculateFloorPosition = function () {
 	var res, absOy;
