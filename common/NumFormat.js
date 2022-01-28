@@ -4332,7 +4332,7 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 
 	function getShortTimeFormat(opt_cultureInfo) {
 		var cultureInfo = opt_cultureInfo ? opt_cultureInfo : g_oDefaultCultureInfo;
-		if (cultureInfo.UseAMPM > 0) {
+		if (AscCommon.is12HourTimeFormat(cultureInfo)) {
 			return 'h:mm AM/PM;@';
 		} else {
 			return 'h:mm;@'
@@ -4340,7 +4340,7 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 	}
 	function getLongTimeFormat(opt_cultureInfo) {
 		var cultureInfo = opt_cultureInfo ? opt_cultureInfo : g_oDefaultCultureInfo;
-		if (cultureInfo.UseAMPM > 0) {
+		if (AscCommon.is12HourTimeFormat(cultureInfo)) {
 			return 'h:mm:ss AM/PM;@';
 		} else {
 			return 'h:mm:ss;@'
@@ -4709,7 +4709,11 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 					res.push('yyyy' + separator + 'mm' + separator + 'dd;@');
 				}
 			} else if (Asc.c_oAscNumFormatType.Time === info.type) {
-				res = gc_aTimeFormats;
+				if (AscCommon.is12HourTimeFormat(cultureInfo)) {
+					res = ['[$-F400]h:mm:ss AM/PM', 'h:mm;@', 'h:mm AM/PM;@', 'h:mm:ss;@', 'h:mm:ss AM/PM;@', 'mm:ss.0;@', '[h]:mm:ss;@'];
+				} else {
+					res = ['[$-F400]h:mm:ss', 'h:mm;@', 'h:mm AM/PM;@', 'h:mm:ss;@', 'h:mm:ss AM/PM;@', 'mm:ss.0;@', '[h]:mm:ss;@'];
+				}
 			} else if (Asc.c_oAscNumFormatType.Percent === info.type) {
 				format = '0';
 				if (info.decimalPlaces > 0) {
@@ -4762,7 +4766,7 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 				res.push(getCurrencyFormatSimple2(cultureInfo, 2, currency, false));
 				res.push(getShortDateFormat(cultureInfo));
 				//todo F400
-				if (cultureInfo.UseAMPM > 0) {
+				if (AscCommon.is12HourTimeFormat(cultureInfo)) {
 					res.push('[$-F400]h:mm:ss AM/PM');
 				} else {
 					res.push('[$-F400]h:mm:ss');
@@ -4848,6 +4852,10 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 			}
 		}
 		return res;
+	}
+	function is12HourTimeFormat(opt_cultureInfo) {
+		var cultureInfo = opt_cultureInfo ? opt_cultureInfo : g_oDefaultCultureInfo;
+		return cultureInfo.UseAMPM > 0;
 	}
 
 var g_aCultureInfos = {
@@ -5004,6 +5012,7 @@ setCurrentCultureInfo(1033);//en-US//1033//fr-FR//1036//basq//1069//ru-Ru//1049/
 	window['AscCommon'].getCurrencyFormat = getCurrencyFormat;
 	window['AscCommon'].getFormatCells = getFormatCells;
 	window['AscCommon'].getFormatByStandardId = getFormatByStandardId;
+	window['AscCommon'].is12HourTimeFormat = is12HourTimeFormat;
 	window['AscCommon'].compareNumbers = compareNumbers;
 
     window["AscCommon"].gc_nMaxDigCount = gc_nMaxDigCount;

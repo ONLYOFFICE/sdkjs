@@ -11682,7 +11682,7 @@
 										}
 										var sTimeFormat = 'h:mm:ss';
 
-										if (cultureInfo.UseAMPM > 0){
+										if (AscCommon.is12HourTimeFormat(cultureInfo)){
 											sTimeFormat += ' AM/PM';
 										}
 										if(bDate && bTime)
