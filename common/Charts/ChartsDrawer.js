@@ -14015,34 +14015,22 @@ axisChart.prototype = {
 
 		this.paths = {};
 
-		this.axisType = this._getAxisType(axisId);
-		if (this.axisType !== "ser") {
+		this.axisType = this.axis.getObjectType();
+		if (!(this.axisType === AscDFH.historyitem_type_SerAx)) {
 			this._calculateGridLines();
 		}
 
 		if (this.axis.bDelete !== true) {
-			if (this.axisType === "val") {
+			if (this.axisType === AscDFH.historyitem_type_ValAx) {
 				this._calculateValAxis();
 				this._calculateValTickMark();
-			} else if (this.axisType === "cat") {
+			} else if (this.axisType === AscDFH.historyitem_type_CatAx) {
 				this._calculateCatAxis();
 				this._calculateCatTickMark();
-			} else if (this.axisType === "ser") {
+			} else if (this.axisType === AscDFH.historyitem_type_SerAx) {
 				this._calculateSerAxis();
 				this._calculateSerTickMark();
 			}
-		}
-	},
-
-	_getAxisType: function (axId) {
-		if (axId instanceof AscFormat.CCatAx) {
-			return "cat";
-		} else if (axId instanceof AscFormat.CValAx) {
-			return "val";
-		} else if (axId instanceof AscFormat.CSerAx) {
-			return "ser";
-		} else if (axId instanceof AscFormat.CDateAx) {
-			return "cat";
 		}
 	},
 
@@ -14464,7 +14452,7 @@ axisChart.prototype = {
 		var pathH = this.chartProp.pathH;
 		var pathW = this.chartProp.pathW;
 
-		if (this.axisType === "ser") {
+		if (this.axisType === AscDFH.historyitem_type_SerAx) {
 			path.moveTo(x * pathW, y * pathH);
 			path.lnTo(x1 * pathW, y1 * pathH);
 	
@@ -14473,9 +14461,9 @@ axisChart.prototype = {
 
 		if (this.cChartDrawer.nDimensionCount === 3) {
 			var z;
-			if (this.axisType === "val") {
+			if (this.axisType === AscDFH.historyitem_type_ValAx) {
 				z = this.cChartDrawer.processor3D.calculateZPositionValAxis();
-			} else if (this.axisType === "cat") {
+			} else if (this.axisType === AscDFH.historyitem_type_CatAx) {
 				z = this.cChartDrawer.processor3D.calculateZPositionCatAxis();
 			}
 			var convertResult = this.cChartDrawer._convertAndTurnPoint(x * this.chartProp.pxToMM, y * this.chartProp.pxToMM, z);
@@ -14535,7 +14523,7 @@ axisChart.prototype = {
 
 	_drawTickMark: function () {
 		var pen, path;
-		if (this.axisType === "ser") {
+		if (this.axisType === AscDFH.historyitem_type_SerAx) {
 			if (!this.paths.tickMarks) {
 				return;
 			}
