@@ -4534,7 +4534,16 @@ CChartsDrawer.prototype =
 				if (rAngAx) {
 					path = calculate3DLine(x2n, y2n, x3n, y3n, x4n, y4n);
 				} else {
-					path = calculate3DLine(x2n, y2n, x3n, y3n, x4n, y4n);
+					if (this.calcProp.type === c_oChartTypes.HBar) {
+						var angleOyAbs = Math.abs(angleOy);
+						if (angleOyAbs >= 3 * Math.PI / 2 || angleOyAbs < Math.PI / 2) {
+							path = calculate3DLine(x2n, y2n, x3n, y3n, x4n, y4n);
+						} else if (angleOyAbs >= Math.PI / 2 && angleOyAbs < 3 * Math.PI / 2) {
+							path = calculate3DLine(x1n, y1n, x4n, y4n, x3n, y3n);
+						}
+					} else {
+						path = calculate3DLine(x2n, y2n, x3n, y3n, x4n, y4n);
+					}
 				}
 			}
 
