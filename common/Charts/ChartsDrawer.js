@@ -5418,6 +5418,7 @@ drawBarChart.prototype = {
 			this.catAx = this.cChartDrawer.getAxisFromAxId(this.chart.axId, AscDFH.historyitem_type_DateAx);
 		}
 		this.valAx = this.cChartDrawer.getAxisFromAxId(this.chart.axId, AscDFH.historyitem_type_ValAx);
+		this.serAx = this.cChartDrawer.getAxisFromAxId(this.chart.axId, AscDFH.historyitem_type_SerAx);
 
 		this._recalculateBars();
 	},
@@ -6238,23 +6239,8 @@ drawBarChart.prototype = {
 	},
 
 	_calculateRect3D: function (startX, startY, individualBarWidth, height, val, serNum, type, maxH, minH, arr, cubeCount, idx, testHeight) {
-		//параметр r и глубина по OZ
-		var perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
-
-		//сдвиг по OZ в глубину
-		var gapDepth = this.chart.gapDepth != null ? this.chart.gapDepth : globalGapDepth;
-		if (this.subType === "standard") {
-			perspectiveDepth = (perspectiveDepth / (gapDepth / 100 + 1)) / this.seriesCount;
-		} else {
-			perspectiveDepth = perspectiveDepth / (gapDepth / 100 + 1);
-		}
-
-		var DiffGapDepth = perspectiveDepth * (gapDepth / 2) / 100;
-		if (this.subType === "standard") {
-			gapDepth = (perspectiveDepth + DiffGapDepth + DiffGapDepth) * serNum + DiffGapDepth;
-		} else {
-			gapDepth = DiffGapDepth;
-		}
+		var depths = this.getDepths(serNum);
+		var gapDepth = depths.gapDepth, perspectiveDepth = depths.perspectiveDepth;
 
 		var point1, point2, point3, point4, point5, point6, point7, point8;
 		var isNotDrawDownVerge, paths2, paths, points, points, paths, nullPositionOX;
@@ -6398,6 +6384,33 @@ drawBarChart.prototype = {
 			facePoints: facePoints,
 		};
 	},
+
+	getDepths: function (serNum) {
+		//параметр r и глубина по OZ
+		var perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
+
+		//сдвиг по OZ в глубину
+		var gapDepth = this.chart.gapDepth != null ? this.chart.gapDepth : globalGapDepth;
+		if (this.subType === "standard") {
+			perspectiveDepth = (perspectiveDepth / (gapDepth / 100 + 1)) / this.seriesCount;
+		} else {
+			perspectiveDepth = perspectiveDepth / (gapDepth / 100 + 1);
+		}
+
+		//если есть ось z берем pos из zPoints
+		if (this.serAx && this.serAx.zPoints[serNum]) {
+			return { gapDepth: this.serAx.zPoints[serNum].pos - (perspectiveDepth / 2), perspectiveDepth: perspectiveDepth };
+		}
+
+		var DiffGapDepth = perspectiveDepth * (gapDepth / 2) / 100;
+		if (this.subType === "standard") {
+			gapDepth = (perspectiveDepth + DiffGapDepth + DiffGapDepth) * serNum + DiffGapDepth;
+		} else {
+			gapDepth = DiffGapDepth;
+		}
+
+		return { gapDepth: gapDepth, perspectiveDepth: perspectiveDepth };
+	}
 };
 
 
@@ -6956,6 +6969,7 @@ drawAreaChart.prototype = {
 			this.catAx = this.cChartDrawer.getAxisFromAxId(this.chart.axId, AscDFH.historyitem_type_DateAx);
 		}
 		this.valAx = this.cChartDrawer.getAxisFromAxId(this.chart.axId, AscDFH.historyitem_type_ValAx);
+		this.serAx = this.cChartDrawer.getAxisFromAxId(this.chart.axId, AscDFH.historyitem_type_SerAx);
 
 		this._calculateProps();
 		this._calculate();
@@ -6973,7 +6987,11 @@ drawAreaChart.prototype = {
 				this.gapDepth = [];
 
 				for (var i = 0; i < this.seriesCount; i++) {
-					this.gapDepth[i] = (this.perspectiveDepth + DiffGapDepth + DiffGapDepth) * i + DiffGapDepth;
+					if (this.serAx && this.serAx.zPoints[i]) {
+						this.gapDepth[i] = this.serAx.zPoints[i].pos - this.perspectiveDepth / 2;
+					} else {
+						this.gapDepth[i] = (this.perspectiveDepth + DiffGapDepth + DiffGapDepth) * i + DiffGapDepth;
+					}
 				}
 			} else {
 				this.gapDepth = DiffGapDepth;
@@ -8346,29 +8364,56 @@ drawAreaChart.prototype = {
 					this._drawBar3D(this.paths.series[j][0], pen, brush, 0);
 				}
 			} else {
-				for (var j = this.paths.series.length - 1; j >= 0; j--) {
-					seria = this.chart.series[j];
-					brush = seria.brush;
-					pen = seria.pen;
+				if (this.serAx && this.serAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+					for (var j = 0; j < this.paths.series.length; j++) {
+						seria = this.chart.series[j];
+						brush = seria.brush;
+						pen = seria.pen;
 
-					numCache = this.cChartDrawer.getNumCache(seria.val);
-					if (numCache.pts[0] && numCache.pts[0].pen) {
-						pen = numCache.pts[0].pen;
-					}
-					if (numCache.pts[0] && numCache.pts[0].brush) {
-						brush = numCache.pts[0].brush;
-					}
+						numCache = this.cChartDrawer.getNumCache(seria.val);
+						if (numCache.pts[0] && numCache.pts[0].pen) {
+							pen = numCache.pts[0].pen;
+						}
+						if (numCache.pts[0] && numCache.pts[0].brush) {
+							brush = numCache.pts[0].brush;
+						}
 
-					if(!this.paths.series[j]) {
-						continue;
-					}
+						if (!this.paths.series[j]) {
+							continue;
+						}
 
-					this._drawBar3D(this.paths.series[j][1], pen, brush, 1);
-					this._drawBar3D(this.paths.series[j][4], pen, brush, 4);
-					this._drawBar3D(this.paths.series[j][2], pen, brush, 2);
-					this._drawBar3D(this.paths.series[j][3], pen, brush, 3);
-					this._drawBar3D(this.paths.series[j][5], pen, brush, 5);
-					this._drawBar3D(this.paths.series[j][0], pen, brush, 0);
+						this._drawBar3D(this.paths.series[j][1], pen, brush, 1);
+						this._drawBar3D(this.paths.series[j][4], pen, brush, 4);
+						this._drawBar3D(this.paths.series[j][2], pen, brush, 2);
+						this._drawBar3D(this.paths.series[j][3], pen, brush, 3);
+						this._drawBar3D(this.paths.series[j][5], pen, brush, 5);
+						this._drawBar3D(this.paths.series[j][0], pen, brush, 0);
+					}
+				} else {
+					for (var j = this.paths.series.length - 1; j >= 0; j--) {
+						seria = this.chart.series[j];
+						brush = seria.brush;
+						pen = seria.pen;
+
+						numCache = this.cChartDrawer.getNumCache(seria.val);
+						if (numCache.pts[0] && numCache.pts[0].pen) {
+							pen = numCache.pts[0].pen;
+						}
+						if (numCache.pts[0] && numCache.pts[0].brush) {
+							brush = numCache.pts[0].brush;
+						}
+
+						if (!this.paths.series[j]) {
+							continue;
+						}
+
+						this._drawBar3D(this.paths.series[j][1], pen, brush, 1);
+						this._drawBar3D(this.paths.series[j][4], pen, brush, 4);
+						this._drawBar3D(this.paths.series[j][2], pen, brush, 2);
+						this._drawBar3D(this.paths.series[j][3], pen, brush, 3);
+						this._drawBar3D(this.paths.series[j][5], pen, brush, 5);
+						this._drawBar3D(this.paths.series[j][0], pen, brush, 0);
+					}
 				}
 			}
 
@@ -12761,6 +12806,7 @@ drawSurfaceChart.prototype = {
 			this.catAx = this.cChartDrawer.getAxisFromAxId(this.chart.axId, AscDFH.historyitem_type_DateAx);
 		}
 		this.valAx = this.cChartDrawer.getAxisFromAxId(this.chart.axId, AscDFH.historyitem_type_ValAx);
+		this.serAx = this.cChartDrawer.getAxisFromAxId(this.chart.axId, AscDFH.historyitem_type_SerAx);
 
 		this._recalculate();
 	},
@@ -12796,7 +12842,11 @@ drawSurfaceChart.prototype = {
 
 				x = xPoints[n].pos * this.chartProp.pxToMM;
 				y = this.cChartDrawer.getYPosition(val, this.valAx) * this.chartProp.pxToMM;
-				z = (perspectiveDepth / (this.chart.series.length - 1)) * (i);
+				if (this.serAx && this.serAx.zPoints[i]) {
+					z = this.serAx.zPoints[i].pos;
+				} else {
+					z = (perspectiveDepth / (this.chart.series.length - 1)) * (i);
+				}
 
 				//рассчитываем значения
 				idx2 = dataSeries[n + 1] && dataSeries[n + 1].idx != null ? dataSeries[n + 1].idx : null;
