@@ -363,13 +363,14 @@ Processor3D.prototype.calculateZPositionValAxis = function () {
 			if ((angleOyAbs >= Math.PI / 2 && angleOyAbs < Math.PI) || (angleOyAbs >= 3 * Math.PI / 2 && angleOyAbs < 2 * Math.PI))
 				result = this.orientationCatAx !== ORIENTATION_MIN_MAX ? 0 : this.depthPerspective;
 		} else {
-			result = Math.cos(this.angleOy) > 0 ? 0 : this.depthPerspective;
+			if (this.orientationCatAx !== ORIENTATION_MIN_MAX) {
+				result = Math.cos(this.angleOy) > 0 ? this.depthPerspective : 0;
+			} else {
+				result = Math.cos(this.angleOy) > 0 ? 0 : this.depthPerspective;
+			}
 		}
 	} else if (this.chartsDrawer.calcProp.type !== AscFormat.c_oChartTypes.HBar && this.orientationCatAx !== ORIENTATION_MIN_MAX && this.depthPerspective !== undefined) {
-		//if(this.chartSpace.chart.plotArea.valAx && this.chartSpace.chart.plotArea.valAx.yPoints && this.chartSpace.chart.plotArea.catAx.posY === this.chartSpace.chart.plotArea.valAx.yPoints[0].pos)
-		if (this.chartsDrawer.calcProp.type !== AscFormat.c_oChartTypes.Bar || this.orientationValAx !== ORIENTATION_MIN_MAX) {
-			result = this.depthPerspective;
-		}
+		result = this.depthPerspective;
 	} else if (this.chartsDrawer.calcProp.type === AscFormat.c_oChartTypes.HBar && this.orientationCatAx !== ORIENTATION_MIN_MAX && this.depthPerspective !== undefined) {
 		//if(this.chartSpace.chart.plotArea.valAx && this.chartSpace.chart.plotArea.valAx.yPoints && this.chartSpace.chart.plotArea.catAx.posY === this.chartSpace.chart.plotArea.valAx.yPoints[0].pos)
 		result = this.depthPerspective;
@@ -381,7 +382,11 @@ Processor3D.prototype.calculateZPositionValAxis = function () {
 Processor3D.prototype.calculateZPositionCatAxis = function () {
 	var result = 0;
 	if (!this.view3D.getRAngAx()) {
-		result = Math.cos(this.angleOy) > 0 ? 0 : this.depthPerspective;
+		if (this.chartsDrawer.calcProp.type === AscFormat.c_oChartTypes.HBar && this.orientationValAx !== ORIENTATION_MIN_MAX) {
+			result = Math.cos(this.angleOy) > 0 ? this.depthPerspective : 0;
+		} else {
+			result = Math.cos(this.angleOy) > 0 ? 0 : this.depthPerspective;
+		}
 	} else if (this.chartsDrawer.calcProp.type !== AscFormat.c_oChartTypes.HBar && this.orientationValAx !== ORIENTATION_MIN_MAX && this.depthPerspective !== undefined) {
 		if (this.chartSpace.chart.plotArea.valAx && this.chartSpace.chart.plotArea.valAx.yPoints && this.chartSpace.chart.plotArea.catAx.posY === this.chartSpace.chart.plotArea.valAx.yPoints[0].pos)
 			result = this.depthPerspective;
