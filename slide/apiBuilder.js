@@ -341,10 +341,10 @@
      * @typeofeditors ["CPE"]
      * @memberof Api
      * @param {ApiTheme} [oTheme    = ApiPresentation.GetMaster(0).GetTheme()] - ApiTheme object.
-     * @returns {ApiMaster | null} - returns null if presentation theme doesn't exist.
+     * @returns {?ApiMaster} - returns null if presentation theme doesn't exist.
      */
     Api.prototype.CreateMaster = function(oTheme){
-        if (!oTheme || !oTheme.GetClassType || !oTheme.GetClassType() === "theme")
+        if (!oTheme || !oTheme.GetClassType || oTheme.GetClassType() !== "theme")
             if (editor.GetPresentation().GetMaster(0))
                 oTheme = editor.GetPresentation().GetMaster(0).GetTheme();
         
@@ -647,7 +647,7 @@
         var oSlide = private_GetCurrentSlide();
         if(oPresentation && oSlide){
             var oGraphicFrame = oPresentation.Create_TableGraphicFrame(nCols, nRows, oSlide, oPresentation.DefaultTableStyleId);
-            var content = oGraphicFrame.graphicObject.Content, i, j;
+            var content = oGraphicFrame.graphicObject.Content, i;
             for(i = 0; i < content.length; ++i)
             {
                 content[i].Set_Height(0, Asc.linerule_AtLeast );
@@ -743,7 +743,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @memberof Api
      * @param {ApiSlide | ApiLayout | ApiMaster} object - object in which placeholders will be checked.
-     * @param {ApiPlaceholder}  - placeholder to be added. 
+     * @param {ApiPlaceholder} oPlaceholder - placeholder to be added.
      * @return {bool} - return false if object insupported or oPlaceholder isn't placeholder.
 	 */
     Api.prototype.private_checkPlaceholders = function(object, oPlaceholder)
@@ -775,7 +775,7 @@
         {
             noIdxPlaceholders[nPh].idx = String(maxIndex + 1);
             maxIndex++;
-        };
+        }
 
         return true;
     };
@@ -1026,7 +1026,7 @@
      * @returns {bool} - returns false if param isn't theme or presentation doesn't exist.
      * */
     ApiPresentation.prototype.ApplyTheme = function(oApiTheme){
-       if (!this.Presentation || !oApiTheme.GetClassType || !oApiTheme.GetClassType() !== "theme")
+       if (!this.Presentation || !oApiTheme.GetClassType || oApiTheme.GetClassType() !== "theme")
        {
            this.Presentation.changeTheme(oApiTheme.ThemeInfo);
            return true;
@@ -1086,7 +1086,7 @@
      */
     ApiMaster.prototype.GetLayout = function(nPos)
     {
-        if (nPos < 0 | nPos > this.Master.sldLayoutLst.length)
+        if (nPos < 0 || nPos > this.Master.sldLayoutLst.length)
             return null;
         
         return new ApiLayout(this.Master.sldLayoutLst[nPos])
@@ -1117,7 +1117,6 @@
      * @typeofeditors ["CPE"]
      * @param {number} nPos - position from which to delete
      * @param {number} [nCount = 1] - count of elements for delete.
-     * @param {ApiLayout} oLayout
      * @returns {bool} - return false if position is invalid.
      */
     ApiMaster.prototype.RemoveLayout = function(nPos, nCount)
@@ -1199,6 +1198,7 @@
      * @memberOf ApiSlide
      * @typeofeditors ["CPE"]
      * @param {ApiFill} oApiFill - The color or pattern used to fill the presentation slide master background.
+     * @returns {boolean}
      * */
     ApiMaster.prototype.SetBackground = function(oApiFill){
         if(oApiFill && oApiFill.GetClassType && oApiFill.GetClassType() === "fill" && this.Master){
@@ -1206,7 +1206,9 @@
             bg.bgPr      = new AscFormat.CBgPr();
             bg.bgPr.Fill = oApiFill.UniFill;
             this.Master.changeBackground(bg);
+            return true;
         }
+        return false;
     };
 
     /**
@@ -1407,7 +1409,7 @@
     /**
      * Get the type of this class.
      * @typeofeditors ["CPE"]
-     * @returns {"master"}
+     * @returns {"layout"}
      */
     ApiLayout.prototype.GetClassType = function()
     {
@@ -1480,7 +1482,8 @@
      * Sets the background to the current slide layout.
      * @memberOf ApiSlide
      * @typeofeditors ["CPE"]
-     * @param {ApiFill} oApiFill - The color or pattern used to fill the presentation slide layout background.
+     * @param {ApiFill} oApiFill - The color or pattern used to fill the presentation slide layout background.\
+     * @returns {boolean}
      * */
     ApiLayout.prototype.SetBackground = function(oApiFill){
         if(oApiFill && oApiFill.GetClassType && oApiFill.GetClassType() === "fill" && this.Layout){
@@ -1488,7 +1491,9 @@
             bg.bgPr      = new AscFormat.CBgPr();
             bg.bgPr.Fill = oApiFill.UniFill;
             this.Layout.changeBackground(bg);
+            return true;
         }
+        return false;
     };
 
     /**
@@ -1719,7 +1724,7 @@
      */
     ApiPlaceholder.prototype.SetType = function(sType)
     {
-        var nType   = null;
+        var nType;
         switch (sType)
         {
             case "body":
@@ -1935,6 +1940,7 @@
     /**
      * Change color in color scheme.
      * @typeofeditors ["CPE"]
+     * @param {number} nPos
      * @param {ApiUniColor | ApiRGBColor} oColor
      * @returns {bool}
      */
@@ -1970,7 +1976,7 @@
     /**
      * Get the type of this class.
      * @typeofeditors ["CPE"]
-     * @returns {"formatColorScheme"}
+     * @returns {"themeFormatScheme"}
      */
     ApiThemeFormatScheme.prototype.GetClassType = function()
     {
@@ -2102,7 +2108,7 @@
     /**
      * Get the type of this class.
      * @typeofeditors ["CPE"]
-     * @returns {"fontScheme"}
+     * @returns {"themeFontScheme"}
      */
     ApiThemeFontScheme.prototype.GetClassType = function()
     {
@@ -2249,6 +2255,7 @@
      * @memberOf ApiSlide
      * @typeofeditors ["CPE"]
      * @param {ApiFill} oApiFill - The color or pattern used to fill the presentation slide background.
+     * @returns {boolean}
      * */
     ApiSlide.prototype.SetBackground = function(oApiFill){
         if(oApiFill && oApiFill.GetClassType && oApiFill.GetClassType() === "fill" && this.Slide){
@@ -2257,7 +2264,9 @@
             bg.bgPr.Fill = oApiFill.UniFill;
             this.Slide.changeBackground(bg);
             this.Slide.recalculateBackground();
+            return true;
         }
+        return false;
     };
 
     /**
@@ -2863,7 +2872,7 @@
      */
     ApiDrawing.prototype.SetPlaceholder = function(oPlaceholder)
     {
-        if (!this.Drawing || !oPlaceholder || !oPlaceholder.GetClassType || !oPlaceholder.GetClassType() === "placeholder")
+        if (!this.Drawing || !oPlaceholder || !oPlaceholder.GetClassType || oPlaceholder.GetClassType() !== "placeholder")
             return false;
 
         var drawingNvPr = null;
@@ -2932,6 +2941,7 @@
                     break;
                 case AscDFH.historyitem_type_GroupShape:
                     oPh = this.Drawing.nvGrpSpPr.ph;
+                    break;
                 case AscDFH.historyitem_type_ImageShape:
                 case AscDFH.historyitem_type_OleObject:
                     oPh = this.Drawing.nvPicPr.nvPr.ph;
@@ -3334,9 +3344,7 @@
                 }
                 else
                 {
-                    if (oCurPos.Cell < oPos.Cell)
-                        continue;
-                    else
+                    if (oCurPos.Cell >= oPos.Cell)
                         break;
                 }
             }
@@ -3461,8 +3469,7 @@
         this.private_PrepareTableForActions();
         this.Table.RemoveSelection();
         this.Table.CurCell = oCell.Cell;
-        var isEmpty = !(this.Table.RemoveTableRow());
-        return isEmpty;
+        return !(this.Table.RemoveTableRow());
     };
     /**
      * Remove the table column with a specified cell.
@@ -3476,9 +3483,7 @@
         this.private_PrepareTableForActions();
         this.Table.RemoveSelection();
         this.Table.CurCell = oCell.Cell;
-        var isEmpty = !(this.Table.RemoveTableColumn());
-
-        return isEmpty;
+        return !(this.Table.RemoveTableColumn());
     };
 
     /**

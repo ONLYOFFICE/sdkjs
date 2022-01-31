@@ -415,7 +415,7 @@
 		if (Range1.GetWorksheet().Id === Range2.GetWorksheet().Id) {
 			var res = Range1.range.bbox.intersection(Range2.range.bbox);
 			if (!res) {
-				return "Ranges do not intersect.";
+				return new Error("Ranges do not intersect.");
 			} else {
 				return new ApiRange(this.GetActiveSheet().worksheet.getRange3(res.r1, res.c1, res.r2, res.c2));
 			}
@@ -591,7 +591,7 @@
 	 */
 	Api.prototype.GetMailMergeData = function (nSheet) {
 		var arrFields       = this.private_GetMailMergeFields(nSheet);
-		var arrMailMergeMap = this.private_GetMailMergeMap(nSheet, arrFields);
+		var arrMailMergeMap = this.private_GetMailMergeMap(nSheet);
 		var resultList      = [arrFields];
 
 		for (var nMailMergeMap = 0; nMailMergeMap < arrMailMergeMap.length; nMailMergeMap++) {
@@ -805,7 +805,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {string | number} value - Specifies the rows range in the string or number format.
-	 * @returns {ApiRange}
+	 * @returns {ApiRange | Error}
 	 */
 	ApiWorksheet.prototype.GetRows = function (value) {
 		if (typeof  value === "undefined") {
@@ -1296,7 +1296,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRange - The range where the hyperlink will be added to.
 	 * @param {string} sAddress - The link address.
-	 * @param {string} ScreenTip - The screen tip text.
+	 * @param {string} sScreenTip - The screen tip text.
 	 * @param {string} sTextToDisplay - The link text that will be displayed on the sheet.
 	 * */
 	ApiWorksheet.prototype.SetHyperlink = function (sRange, sAddress, sScreenTip, sTextToDisplay)	{
@@ -1419,18 +1419,18 @@
 	 * Replaces the current image with a new one.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently only internet URL or Base64 encoded images are supported).
+	 * @param {string} sImageUrl - The image source where the image to be inserted should be taken from (currently only internet URL or Base64 encoded images are supported).
 	 * @param {EMU} nWidth - The image width in English measure units.
 	 * @param {EMU} nHeight - The image height in English measure units.
 	 */
-	ApiWorksheet.prototype.ReplaceCurrentImage = function(sImageUrl, Width, Height){
+	ApiWorksheet.prototype.ReplaceCurrentImage = function(sImageUrl, nWidth, nHeight){
 
 		var oWorksheet = Asc['editor'].wb.getWorksheet();
 		if(oWorksheet && oWorksheet.objectRender && oWorksheet.objectRender.controller){
 
 			var oController = oWorksheet.objectRender.controller;
-			var _w = Width/36000.0;
-			var _h = Height/36000.0;
+			var _w = nWidth/36000.0;
+			var _h = nHeight/36000.0;
 			var oImage = oController.createImage(sImageUrl, 0, 0, _w, _h);
 			oImage.setWorksheet(oWorksheet.model);
 			var selectedObjects, spTree;
@@ -1500,7 +1500,7 @@
 				}
 			}
 			var cell = this.worksheet.selectionRange.activeCell;
-			private_SetCoords(oImage, oWorksheet.model, Width, Height, cell ? cell.col : 0, 0,  cell ? cell.row : 0, 0, undefined);
+			private_SetCoords(oImage, oWorksheet.model, nWidth, nHeight, cell ? cell.col : 0, 0,  cell ? cell.row : 0, 0, undefined);
 			oController.resetSelection();
 			oController.selectObject(oImage, 0);
 			oWorksheet.isSelectOnShape = true;
@@ -1598,7 +1598,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nRow - The row number (starts counting from 1, the 0 value returns an error).
-	 * @returns {ApiRange}
+	 * @returns {ApiRange | Error}
 	 */
 	ApiRange.prototype.GetRows = function (nRow) {
 		if (typeof nRow === "undefined") {
@@ -1628,7 +1628,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nCol - The column number. * 
-	 * @returns {ApiRange}
+	 * @returns {ApiRange | Error}
 	 */
 	 ApiRange.prototype.GetCols = function (nCol) {
 		if (typeof nCol === "undefined") {
@@ -1747,7 +1747,7 @@
 		var range = this.range.bbox;
 		var isOneCell = this.range.isOneCell();
 		var ws = this.range.worksheet;
-		var value = ""
+		var value;
 		var row1 = range.r1 + ( (RowAbs || RefStyle != "xlR1C1") ? 1 : 0),
 			col1 = range.c1 + ( (ColAbs || RefStyle != "xlR1C1") ? 1 : 0),
 			row2 = range.r2 + ( (RowAbs || RefStyle != "xlR1C1") ? 1 : 0),
@@ -1836,7 +1836,10 @@
 	ApiRange.prototype.SetValue = function (data) {
 		if (!this.range)
 			return false;
-		
+
+		// ToDo update range in setValue
+		var worksheet = this.range.worksheet;
+
 		if (Array.isArray(data)) {
 			var checkDepth = function(x) { return Array.isArray(x) ? 1 + Math.max.apply(this, x.map(checkDepth)) : 0;};
 			var maxDepth = checkDepth(data);
@@ -1857,8 +1860,6 @@
 								cell.setNumFormat(AscCommon.getShortDateFormat());
 						}
 					}
-					// ToDo update range in setValue
-					var worksheet = this.range.worksheet;
 					worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [this.range.bbox], true);
 					return true;
 				}
@@ -1869,8 +1870,6 @@
 		if (data.type === AscCommonExcel.cElementType.number)
 			this.SetNumberFormat(AscCommon.getShortDateFormat());
 
-		// ToDo update range in setValue
-		var worksheet = this.range.worksheet;
 		worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [this.range.bbox], true);
 		return true;
 	};
@@ -2703,7 +2702,7 @@
 	 * @param {?String} shift - Specifies how to shift cells to replace deleted cells ("up", "left")
 	 */
 	ApiRange.prototype.Delete = function(shift) {
-		if (shift && typeof Shift == "string") {
+		if (shift && typeof shift == "string") {
 			shift = shift.toLocaleLowerCase();
 		} else {
 			var bbox = this.range.bbox;
@@ -3422,7 +3421,7 @@
 	 * Returns a type of the ApiComment class.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CSE"]
-	 * @returns {number}
+	 * @returns {comment}
 	 */
 	 ApiComment.prototype.GetClassType = function () {
 		return "comment";
