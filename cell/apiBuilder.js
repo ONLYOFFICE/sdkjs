@@ -55,7 +55,7 @@
 	/**
 	 * Class representing a sheet.
 	 * @constructor
-	 * @property {bool} Visible - Returns or sets the state of sheet visibility.
+	 * @property {boolean} Visible - Returns or sets the state of sheet visibility.
 	 * @property {number} Active - Makes the current sheet active.
 	 * @property {ApiRange} ActiveCell - Returns an object that represents an active cell.
 	 * @property {ApiRange} Selection - Returns an object that represents the selected range.
@@ -70,8 +70,8 @@
 	 * @property {number} TopMargin - Returns or sets the size of the sheet top margin measured in points.
 	 * @property {number} BottomMargin - Returns or sets the size of the sheet bottom margin measured in points.
 	 * @property {PageOrientation} PageOrientation - Returns or sets the page orientation.
-	 * @property {bool} PrintHeadings - Returns or sets the page PrintHeadings property.
-	 * @property {bool} PrintGridlines - Returns or sets the page PrintGridlines property.
+	 * @property {boolean} PrintHeadings - Returns or sets the page PrintHeadings property.
+	 * @property {boolean} PrintGridlines - Returns or sets the page PrintGridlines property.
 	 * @property {Array} Defnames - Returns an array of the ApiName objects.
 	 * @property {Array} Comments - Returns an array of the ApiComment objects.
 	 */
@@ -92,7 +92,7 @@
 	 * @property {string} Value2 - Returns the value2 (value without format) from the first cell of the specified range or sets it to this cell.
 	 * @property {string} Text - Returns the text from the first cell of the specified range or sets it to this cell.
 	 * @property {ApiColor} FontColor - Sets the text color to the current cell range with the previously created color object.
-	 * @property {bool} Hidden - Returns or sets the value hiding property.
+	 * @property {boolean} Hidden - Returns or sets the value hiding property.
 	 * @property {number} ColumnWidth - Returns or sets the width of all the columns in the specified range measured in points.
 	 * @property {number} Width - Returns a value that represents the range width measured in points.
 	 * @property {number} RowHeight - Returns or sets the height of the first row in the specified range measured in points.
@@ -101,9 +101,9 @@
 	 * @property {string} FontName - Sets the specified font family as the font name for the current cell range.
 	 * @property {'center' | 'bottom' | 'top' | 'distributed' | 'justify'} AlignVertical - Sets the text vertical alignment to the current cell range.
 	 * @property {'left' | 'right' | 'center' | 'justify'} AlignHorizontal - Sets the text horizontal alignment to the current cell range.
-	 * @property {bool} Bold - Sets the bold property to the text characters from the current cell or cell range.
+	 * @property {boolean} Bold - Sets the bold property to the text characters from the current cell or cell range.
 	 * @property {'none' | 'single' | 'singleAccounting' | 'double' | 'doubleAccounting'} Underline - Sets the type of underline applied to the font.
-	 * @property {bool} Strikeout - Sets a value that indicates whether the contents of the current cell or cell range are displayed struck through.
+	 * @property {boolean} Strikeout - Sets a value that indicates whether the contents of the current cell or cell range are displayed struck through.
 	 * @property {ApiColor|'No Fill'} FillColor - Returns or sets the background color of the current cell range.
 	 * @property {string} NumberFormat - Sets a value that represents the format code for the object.
 	 * @property {ApiRange} MergeArea - Returns the cell or cell range from the merge area.
@@ -364,7 +364,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sTheme - The color scheme that will be set to the current spreadsheet.
-	 * @returns {bool} - returns false if sTheme isn't a string.
+	 * @returns {boolean} - returns false if sTheme isn't a string.
 	 */
 	Api.prototype.SetThemeColors = function (sTheme) {
 		if ('string' === typeof sTheme) {
@@ -446,7 +446,7 @@
 	 * @param {string} sName - The range name.
 	 * @param {string} sRef - The reference to the specified range. It must contain the sheet name, followed by sign ! and a range of cells. 
 	 * Example: "Sheet1!$A$1:$B$2".  
-	 * @param {bool} isHidden - Defines if the range name is hidden or not.
+	 * @param {boolean} isHidden - Defines if the range name is hidden or not.
 	 * @returns {Error | true} - returns error if sName or sRef are invalid.
 	 */
 	Api.prototype.AddDefName = function (sName, sRef, isHidden) {
@@ -606,7 +606,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {Function} fLogger - A function which specifies the logger object for checking recalculation of formulas.
-	 * @returns {bool}
+	 * @returns {boolean}
 	 */
 	Api.prototype.RecalculateAllFormulas = function(fLogger) {
 		var formulas = this.wbModel.getAllFormulas(true);
@@ -692,7 +692,7 @@
 	 * Returns the state of sheet visibility.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @returns {bool}
+	 * @returns {boolean}
 	 */
 	ApiWorksheet.prototype.GetVisible = function () {
 		return !this.worksheet.getHidden();
@@ -702,7 +702,7 @@
 	 * Sets the state of sheet visibility.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {bool} isVisible - Specifies if the sheet is visible or not.
+	 * @param {boolean} isVisible - Specifies if the sheet is visible or not.
 	 */
 	ApiWorksheet.prototype.SetVisible = function (isVisible) {
 		this.worksheet.setHidden(!isVisible);
@@ -991,7 +991,7 @@
 	 * Specifies whether the current sheet gridlines must be displayed or not.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {bool} isDisplayed - Specifies whether the current sheet gridlines must be displayed or not. The default value is <b>true</b>.
+	 * @param {boolean} isDisplayed - Specifies whether the current sheet gridlines must be displayed or not. The default value is <b>true</b>.
 	 */
 	ApiWorksheet.prototype.SetDisplayGridlines = function (isDisplayed) {
 		this.worksheet.setDisplayGridlines(!!isDisplayed);
@@ -1001,7 +1001,7 @@
 	 * Specifies whether the current sheet row/column headers must be displayed or not.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {bool} isDisplayed - Specifies whether the current sheet row/column headers must be displayed or not. The default value is <b>true</b>.
+	 * @param {boolean} isDisplayed - Specifies whether the current sheet row/column headers must be displayed or not. The default value is <b>true</b>.
 	 */
 	ApiWorksheet.prototype.SetDisplayHeadings = function (isDisplayed) {
 		this.worksheet.setDisplayHeadings(!!isDisplayed);
@@ -1154,7 +1154,7 @@
 	 * Returns the page PrintHeadings property which specifies whether the current sheet row/column headings must be printed or not.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @returns {bool} - Specifies whether the current sheet row/column headings must be printed or not.
+	 * @returns {boolean} - Specifies whether the current sheet row/column headings must be printed or not.
 	 * */
 	ApiWorksheet.prototype.GetPrintHeadings = function ()	{
 		return this.worksheet.PagePrintOptions.asc_getHeadings();
@@ -1164,7 +1164,7 @@
 	 * Specifies whether the current sheet row/column headers must be printed or not.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {bool} bPrint - Specifies whether the current sheet row/column headers must be printed or not.
+	 * @param {boolean} bPrint - Specifies whether the current sheet row/column headers must be printed or not.
 	 * */
 	ApiWorksheet.prototype.SetPrintHeadings = function (bPrint)	{
 		this.worksheet.PagePrintOptions.asc_setHeadings(!!bPrint);
@@ -1183,7 +1183,7 @@
 	 * Returns the page PrintGridlines property which specifies whether the current sheet gridlines must be printed or not.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @returns {bool} - True if cell gridlines are printed on this page.
+	 * @returns {boolean} - True if cell gridlines are printed on this page.
 	 * */
 	ApiWorksheet.prototype.GetPrintGridlines = function ()	{
 		return this.worksheet.PagePrintOptions.asc_getGridLines();
@@ -1193,7 +1193,7 @@
 	 * Specifies whether the current sheet gridlines must be printed or not.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {bool} bPrint - Defines if cell gridlines are printed on this page or not.
+	 * @param {boolean} bPrint - Defines if cell gridlines are printed on this page or not.
 	 * */
 	ApiWorksheet.prototype.SetPrintGridlines = function (bPrint)	{
 		this.worksheet.PagePrintOptions.asc_setGridLines(!!bPrint);
@@ -1249,7 +1249,7 @@
 	 * @param {string} sName - The range name.
 	 * @param {string} sRef  - Must contain the sheet name, followed by sign ! and a range of cells. 
 	 * Example: "Sheet1!$A$1:$B$2".  
-	 * @param {bool} isHidden - Defines if the range name is hidden or not.
+	 * @param {boolean} isHidden - Defines if the range name is hidden or not.
 	 * @returns {Error | true} - returns error if sName or sRef are invalid.
 	 */
 	ApiWorksheet.prototype.AddDefName = function (sName, sRef, isHidden) {
@@ -1335,7 +1335,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sDataRange - The selected cell range which will be used to get the data for the chart, formed specifically and including the sheet name.
-	 * @param {bool} bInRows - Specifies whether to take the data from the rows or from the columns. If true, the data from the rows will be used.
+	 * @param {boolean} bInRows - Specifies whether to take the data from the rows or from the columns. If true, the data from the rows will be used.
 	 * @param {ChartType} sType - The chart type used for the chart display.
 	 * @param {number} nStyleIndex - The chart color style index (can be <b>1 - 48</b>, as described in OOXML specification).
 	 * @param {EMU} nExtX - The chart width in English measure units
@@ -1736,10 +1736,10 @@
 	 * Returns the cell address.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {bool} RowAbs - Defines if the link to the row is absolute or not.
-	 * @param {bool} ColAbs - Defines if the link to the column is absolute or not.
+	 * @param {boolean} RowAbs - Defines if the link to the row is absolute or not.
+	 * @param {boolean} ColAbs - Defines if the link to the column is absolute or not.
 	 * @param {string} RefStyle - The reference style.
-	 * @param {bool} External - Defines if the range is in the current file or not.
+	 * @param {boolean} External - Defines if the range is in the current file or not.
 	 * @param {range} RelativeTo - The range which the current range is relative to.
 	 * @returns {string | null} - returns address of range as string. 
 	 */
@@ -1831,7 +1831,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {string | bool | number | Array[] | Array[][]} data - The general value for the cell or cell range in the string format.
-	 * @return {bool} - returns false if such a range does not exist.
+	 * @return {boolean} - returns false if such a range does not exist.
 	 */
 	ApiRange.prototype.SetValue = function (data) {
 		if (!this.range)
@@ -1962,7 +1962,7 @@
 	 * Returns the value hiding property. The specified range must span an entire column or row.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @returns {bool} - returns true if the values in the range specified are hidden.
+	 * @returns {boolean} - returns true if the values in the range specified are hidden.
 	 */
 	ApiRange.prototype.GetHidden = function () {
 		var range = this.range;
@@ -1983,7 +1983,7 @@
 	 * Sets the value hiding property. The specified range must span an entire column or row.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {bool} isHidden - Specifies if the values in the current range are hidden or not.
+	 * @param {boolean} isHidden - Specifies if the values in the current range are hidden or not.
 	 */
 	ApiRange.prototype.SetHidden = function (isHidden) {
 		var range = this.range;
@@ -2127,7 +2127,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {'center' | 'bottom' | 'top' | 'distributed' | 'justify'} sAligment - The vertical alignment that will be applied to the cell contents.
-	 * @returns {bool} - return false if sAligment doesn't exist.
+	 * @returns {boolean} - return false if sAligment doesn't exist.
 	 */
 	ApiRange.prototype.SetAlignVertical = function (sAligment) {
 		switch(sAligment)
@@ -2174,7 +2174,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {'left' | 'right' | 'center' | 'justify'} sAlignment - The horizontal alignment that will be applied to the cell contents.
-	 * @returns {bool} - return false if sAligment doesn't exist.
+	 * @returns {boolean} - return false if sAligment doesn't exist.
 	 */
 	ApiRange.prototype.SetAlignHorizontal = function (sAlignment) {
 		switch(sAlignment)
@@ -2215,7 +2215,7 @@
 	 * Sets the bold property to the text characters in the current cell or cell range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {bool} isBold - Specifies that the contents of the current cell / cell range are displayed bold.
+	 * @param {boolean} isBold - Specifies that the contents of the current cell / cell range are displayed bold.
 	 */
 	ApiRange.prototype.SetBold = function (isBold) {
 		this.range.setBold(!!isBold);
@@ -2230,7 +2230,7 @@
 	 * Sets the italic property to the text characters in the current cell or cell range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {bool} isItalic - Specifies that the contents of the current cell / cell range are displayed italicized.
+	 * @param {boolean} isItalic - Specifies that the contents of the current cell / cell range are displayed italicized.
 	 */
 	ApiRange.prototype.SetItalic = function (isItalic) {
 		this.range.setItalic(!!isItalic);
@@ -2285,7 +2285,7 @@
 	 * Specifies that the contents of the cell / cell range are displayed with a single horizontal line through the center of the contents.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {bool} isStrikeout - Specifies if the contents of the current cell / cell range are displayed struck through.
+	 * @param {boolean} isStrikeout - Specifies if the contents of the current cell / cell range are displayed struck through.
 	 */
 	ApiRange.prototype.SetStrikeout = function (isStrikeout) {
 		this.range.setStrikeout(!!isStrikeout);
@@ -2300,7 +2300,7 @@
 	 * Specifies whether the words in the cell must be wrapped to fit the cell size or not.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {bool} isWrap - Specifies if the words in the cell will be wrapped to fit the cell size.
+	 * @param {boolean} isWrap - Specifies if the words in the cell will be wrapped to fit the cell size.
 	 */
 	ApiRange.prototype.SetWrap = function (isWrap) {
 		this.range.setWrap(!!isWrap);
@@ -2310,7 +2310,7 @@
 	 * Returns the information about the wrapping cell style.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @returns {bool}
+	 * @returns {boolean}
 	 */
 	ApiRange.prototype.GetWrapText = function () {
 		return this.range.getAlign().getWrap();
@@ -2413,7 +2413,7 @@
 	 * Merges the selected cell range into a single cell or a cell row.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {bool} isAcross - When set to <b>true</b>, the cells within the selected range will be merged along the rows,
+	 * @param {boolean} isAcross - When set to <b>true</b>, the cells within the selected range will be merged along the rows,
 	 * but remain split in the columns. When set to <b>false</b>, the whole selected range of cells will be merged into a single cell.
 	 */
 	ApiRange.prototype.Merge = function (isAcross) {
@@ -2474,7 +2474,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sText - The comment text.
-	 * @returns {bool} - returns false if comment can't be added.
+	 * @returns {boolean} - returns false if comment can't be added.
 	 */
 	ApiRange.prototype.AddComment = function (sText) {
 		var ws = Asc['editor'].wb.getWorksheet(this.range.getWorksheet().getIndex());
@@ -2947,7 +2947,7 @@
 	 * @memberof ApiShape
 	 * @typeofeditors ["CSE"]
 	 * @param {"top" | "center" | "bottom" } sVerticalAlign - The vertical alignment type for the shape inner contents.
-	 * @returns {bool} - returns false if shape or aligment doesn't exist. 
+	 * @returns {boolean} - returns false if shape or aligment doesn't exist. 
 	 */
 	ApiShape.prototype.SetVerticalTextAlign = function(sVerticalAlign)
 	{
@@ -3040,7 +3040,7 @@
 	 * Specifies the direction of the data displayed on the vertical axis.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CSE"]
-	 * @param {bool} bIsMinMax - The <code>true</code> value sets the normal data direction for the vertical axis (from minimum to maximum).
+	 * @param {boolean} bIsMinMax - The <code>true</code> value sets the normal data direction for the vertical axis (from minimum to maximum).
 	 * The <code>false</code> value sets the inverted data direction for the vertical axis (from maximum to minimum).
 	 * */
 	ApiChart.prototype.SetVerAxisOrientation = function(bIsMinMax){
@@ -3092,7 +3092,7 @@
 	 * Specifies the direction of the data displayed on the horizontal axis.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CSE"]
-	 * @param {bool} bIsMinMax - The <code>true</code> value sets the normal data direction for the horizontal axis
+	 * @param {boolean} bIsMinMax - The <code>true</code> value sets the normal data direction for the horizontal axis
 	 * (from minimum to maximum). The <code>false</code> value sets the inverted data direction for the horizontal axis (from maximum to minimum).
 	 * */
 	ApiChart.prototype.SetHorAxisOrientation = function(bIsMinMax){
@@ -3128,10 +3128,10 @@
 	 * Specifies which chart data labels are shown for the chart.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CSE"]
-	 * @param {bool} bShowSerName - Whether to show or hide the source table column names used for the data which the chart will be build from.
-	 * @param {bool} bShowCatName - Whether to show or hide the source table row names used for the data which the chart will be build from.
-	 * @param {bool} bShowVal - Whether to show or hide the chart data values.
-	 * @param {bool} bShowPercent - Whether to show or hide the percent for the data values (works with stacked chart types).
+	 * @param {boolean} bShowSerName - Whether to show or hide the source table column names used for the data which the chart will be build from.
+	 * @param {boolean} bShowCatName - Whether to show or hide the source table row names used for the data which the chart will be build from.
+	 * @param {boolean} bShowVal - Whether to show or hide the chart data values.
+	 * @param {boolean} bShowPercent - Whether to show or hide the percent for the data values (works with stacked chart types).
 	 * */
 	ApiChart.prototype.SetShowDataLabels = function(bShowSerName, bShowCatName, bShowVal, bShowPercent)
 	{
@@ -3144,10 +3144,10 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nSeriesIndex - The series index from the array of the data used to build the chart from.
 	 * @param {number} nPointIndex - The point index from this series.
-	 * @param {bool} bShowSerName - Whether to show or hide the source table column names used for the data which the chart will be build from.
-	 * @param {bool} bShowCatName - Whether to show or hide the source table row names used for the data which the chart will be build from.
-	 * @param {bool} bShowVal - Whether to show or hide the chart data values.
-	 * @param {bool} bShowPercent - Whether to show or hide the percent for the data values (works with stacked chart types).
+	 * @param {boolean} bShowSerName - Whether to show or hide the source table column names used for the data which the chart will be build from.
+	 * @param {boolean} bShowCatName - Whether to show or hide the source table row names used for the data which the chart will be build from.
+	 * @param {boolean} bShowVal - Whether to show or hide the chart data values.
+	 * @param {boolean} bShowPercent - Whether to show or hide the percent for the data values (works with stacked chart types).
 	 * */
 	ApiChart.prototype.SetShowPointDataLabel = function(nSeriesIndex, nPointIndex, bShowSerName, bShowCatName, bShowVal, bShowPercent)
 	{
@@ -3421,7 +3421,7 @@
 	 * Returns a type of the ApiComment class.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CSE"]
-	 * @returns {comment}
+	 * @returns {"comment"}
 	 */
 	 ApiComment.prototype.GetClassType = function () {
 		return "comment";

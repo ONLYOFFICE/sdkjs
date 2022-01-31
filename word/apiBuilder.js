@@ -1802,7 +1802,7 @@
 	 * Sets the bold property to the text character.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {bool} isBold - Specifies if the Range contents are displayed bold or not.
+	 * @param {boolean} isBold - Specifies if the Range contents are displayed bold or not.
 	 * @returns {ApiRange | null} - returns null if can't apply bold.
 	 */
 	ApiRange.prototype.SetBold = function(isBold)
@@ -1846,7 +1846,7 @@
 	 * Specifies that any lowercase characters in the current text Range are formatted for display only as their capital letter character equivalents.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {bool} isCaps - Specifies if the Range contents are displayed capitalized or not.
+	 * @param {boolean} isCaps - Specifies if the Range contents are displayed capitalized or not.
 	 * @returns {ApiRange | null} - returns null if can't apply caps.
 	 */
 	ApiRange.prototype.SetCaps = function(isCaps)
@@ -5004,10 +5004,10 @@
 	 * Converts a document to Markdown.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {bool} [bHtmlHeadings=false] - Defines if the HTML headings and IDs will be generated when the Markdown renderer of your target platform does not handle Markdown-style IDs.
-	 * @param {bool} [bBase64img=false] - Defines if the images will be created in the base64 format.
-	 * @param {bool} [bDemoteHeadings=false] - Defines if all heading levels in your document will be demoted to conform with the following standard: single H1 as title, H2 as top-level heading in the text body.
-	 * @param {bool} [bRenderHTMLTags=false] - Defines if HTML tags will be preserved in your Markdown. If you just want to use an occasional HTML tag, you can avoid using the opening angle bracket 
+	 * @param {boolean} [bHtmlHeadings=false] - Defines if the HTML headings and IDs will be generated when the Markdown renderer of your target platform does not handle Markdown-style IDs.
+	 * @param {boolean} [bBase64img=false] - Defines if the images will be created in the base64 format.
+	 * @param {boolean} [bDemoteHeadings=false] - Defines if all heading levels in your document will be demoted to conform with the following standard: single H1 as title, H2 as top-level heading in the text body.
+	 * @param {boolean} [bRenderHTMLTags=false] - Defines if HTML tags will be preserved in your Markdown. If you just want to use an occasional HTML tag, you can avoid using the opening angle bracket 
 	 * in the following way: \&lt;tag&gt;text\&lt;/tag&gt;. By default, angle brackets will be replaced with the special characters.
 	 * @returns {string}
 	 */
@@ -5028,10 +5028,10 @@
 	 * Converts a document to HTML.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {bool} [bHtmlHeadings=false] - Defines if the HTML headings and IDs will be generated when the Markdown renderer of your target platform does not handle Markdown-style IDs.
-	 * @param {bool} [bBase64img=false] - Defines if the images will be created in the base64 format.
-	 * @param {bool} [bDemoteHeadings=false] - Defines if all heading levels in your document will be demoted to conform with the following standard: single H1 as title, H2 as top-level heading in the text body.
-	 * @param {bool} [bRenderHTMLTags=false] - Defines if HTML tags will be preserved in your Markdown. If you just want to use an occasional HTML tag, you can avoid using the opening angle bracket 
+	 * @param {boolean} [bHtmlHeadings=false] - Defines if the HTML headings and IDs will be generated when the Markdown renderer of your target platform does not handle Markdown-style IDs.
+	 * @param {boolean} [bBase64img=false] - Defines if the images will be created in the base64 format.
+	 * @param {boolean} [bDemoteHeadings=false] - Defines if all heading levels in your document will be demoted to conform with the following standard: single H1 as title, H2 as top-level heading in the text body.
+	 * @param {boolean} [bRenderHTMLTags=false] - Defines if HTML tags will be preserved in your Markdown. If you just want to use an occasional HTML tag, you can avoid using the opening angle bracket 
 	 * in the following way: \&lt;tag&gt;text\&lt;/tag&gt;. By default, angle brackets will be replaced with the special characters.
 	 * @returns {string}
 	 */
@@ -7966,7 +7966,7 @@
      * Sets the table wrapping style.
      * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
-     * @param {bool} isFlow - Specifies if the table is inline or not.
+     * @param {boolean} isFlow - Specifies if the table is inline or not.
 	 * @returns {boolean} - returns false if param is invalid.
      * */
     ApiTable.prototype.SetWrappingStyle = function(isFlow)
@@ -11074,7 +11074,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string | ApiParagraph} paragraph - Text or paragraph.
 	 * @param {string} sPosition - The position where the text or paragraph will be inserted ("before" or "after" the drawing specified).
-	 * @param {bool} beRNewPara - Defines if this method returns a new paragraph (true) or the current ApiDrawing (false).
+	 * @param {boolean} beRNewPara - Defines if this method returns a new paragraph (true) or the current ApiDrawing (false).
 	 * @return {ApiParagraph | ApiDrawing} - returns null if parent paragraph doesn't exist.
 	 */
 	ApiDrawing.prototype.InsertParagraph = function(paragraph, sPosition, beRNewPara)
@@ -11140,7 +11140,7 @@
 	 * Flips the current drawing horizontally.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
-	 * @param {bool} bFlip - Specifies if the figure will be flipped horizontally or not.
+	 * @param {boolean} bFlip - Specifies if the figure will be flipped horizontally or not.
 	 */	
 	ApiDrawing.prototype.SetHorFlip = function(bFlip)
 	{
@@ -11151,7 +11151,7 @@
 	 * Flips the current drawing vertically.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
-	 * @param {bool} bFlip - Specifies if the figure will be flipped vertically or not.
+	 * @param {boolean} bFlip - Specifies if the figure will be flipped vertically or not.
 	 * @returns {boolean} - returns false if param is invalid.
 	 */	
 	ApiDrawing.prototype.SetVertFlip = function(bFlip)
@@ -11593,7 +11593,7 @@
 	 * Specifies the vertical axis orientation.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE"]
-	 * @param {bool} bIsMinMax - The <code>true</code> value will set the normal data direction for the vertical axis (from minimum to maximum).
+	 * @param {boolean} bIsMinMax - The <code>true</code> value will set the normal data direction for the vertical axis (from minimum to maximum).
 	 * */
 	ApiChart.prototype.SetVerAxisOrientation = function(bIsMinMax){
 		AscFormat.builder_SetChartVertAxisOrientation(this.Chart, bIsMinMax);
@@ -11603,7 +11603,7 @@
 	 * Specifies the horizontal axis orientation.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE"]
-	 * @param {bool} bIsMinMax - The <code>true</code> value will set the normal data direction for the horizontal axis (from minimum to maximum).
+	 * @param {boolean} bIsMinMax - The <code>true</code> value will set the normal data direction for the horizontal axis (from minimum to maximum).
 	 * */
 	ApiChart.prototype.SetHorAxisOrientation = function(bIsMinMax){
 		AscFormat.builder_SetChartHorAxisOrientation(this.Chart, bIsMinMax);
@@ -12198,7 +12198,7 @@
 	 * Removes all the elements from the current inline text content control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @returns {bool} - returns false if control haven't elements.
+	 * @returns {boolean} - returns false if control haven't elements.
 	 */
 	ApiInlineLvlSdt.prototype.RemoveAllElements = function()
 	{
@@ -12219,7 +12219,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {ParagraphContent} oElement - The document element which will be added at the position specified. Returns **false** if the type of *oElement* is not supported by an inline text content control.
 	 * @param {number} [nPos] - The position of the element where it will be added to the current inline text content control. If this value is not specified, then the element will be added to the end of the current inline text content control.
-	 * @returns {bool} - returns false if oElement unsupported.
+	 * @returns {boolean} - returns false if oElement unsupported.
 	 */
 	ApiInlineLvlSdt.prototype.AddElement = function(oElement, nPos)
 	{
@@ -12244,7 +12244,7 @@
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {DocumentElement} oElement - The document element which will be added to the end of the container.
-	 * @returns {bool} - returns false if oElement unsupported.
+	 * @returns {boolean} - returns false if oElement unsupported.
 	 */
 	ApiInlineLvlSdt.prototype.Push = function(oElement)
 	{
@@ -12269,7 +12269,7 @@
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {String} sText - The text which will be added to the content control.
-	 * @returns {bool} - returns false if param is invalid.
+	 * @returns {boolean} - returns false if param is invalid.
 	 */
 	ApiInlineLvlSdt.prototype.AddText = function(sText)
 	{
@@ -12289,8 +12289,8 @@
 	 * Removes a content control and its content. If keepContent is true, the content is not deleted.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {bool} keepContent - Specifies if the content will be deleted or not.
-	 * @returns {bool} - returns false if control haven't parent paragraph.
+	 * @param {boolean} keepContent - Specifies if the content will be deleted or not.
+	 * @returns {boolean} - returns false if control haven't parent paragraph.
 	 */
 	ApiInlineLvlSdt.prototype.Delete = function(keepContent)
 	{
@@ -12658,7 +12658,7 @@
 	 * Clears the contents from the current content control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @returns {bool} - returns true.
+	 * @returns {boolean} - returns true.
 	 */
 	ApiBlockLvlSdt.prototype.RemoveAllElements = function()
 	{
@@ -12671,8 +12671,8 @@
 	 * Removes a content control and its content. If keepContent is true, the content is not deleted.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {bool} keepContent - Specifies if the content will be deleted or not.
-	 * @returns {bool} - returns false if content control haven't parent.
+	 * @param {boolean} keepContent - Specifies if the content will be deleted or not.
+	 * @returns {boolean} - returns false if content control haven't parent.
 	 */
 	ApiBlockLvlSdt.prototype.Delete = function(keepContent)
 	{
@@ -12790,7 +12790,7 @@
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {DocumentElement} oElement - The type of the element which will be pushed to the current container.
-	 * @return {bool} - returns false if oElement unsupported.
+	 * @return {boolean} - returns false if oElement unsupported.
 	 */
 	ApiBlockLvlSdt.prototype.Push = function(oElement)
 	{
@@ -12815,7 +12815,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {DocumentElement} oElement - The type of the element which will be added to the current container.
 	 * @param {Number} nPos - The specified position.
-	 * @return {bool} - returns false if oElement unsupported.
+	 * @return {boolean} - returns false if oElement unsupported.
 	 */
 	ApiBlockLvlSdt.prototype.AddElement = function(oElement, nPos)
 	{
@@ -12839,7 +12839,7 @@
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {String} sText - The text which will be added to the content control.
-	 * @return {bool} - returns false if param is invalid.
+	 * @return {boolean} - returns false if param is invalid.
 	 */
 	ApiBlockLvlSdt.prototype.AddText = function(sText)
 	{
@@ -12873,7 +12873,7 @@
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - Search string.
-	 * @param {bool} isMatchCase - Case sensitive or not. 
+	 * @param {boolean} isMatchCase - Case sensitive or not. 
 	 * @return {ApiRange[]}  
 	 */
 	ApiBlockLvlSdt.prototype.Search = function(sText, isMatchCase)
@@ -13321,10 +13321,10 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {"markdown" | "html"} [sConvertType="markdown"] - Conversion type.
-	 * @param {bool} [bHtmlHeadings=false] - Defines if the HTML headings and IDs will be generated when the Markdown renderer of your target platform does not handle Markdown-style IDs.
-	 * @param {bool} [bBase64img=false] - Defines if the images will be created in the base64 format.
-	 * @param {bool} [bDemoteHeadings=false] - Defines if all heading levels in your document will be demoted to conform with the following standard: single H1 as title, H2 as top-level heading in the text body.
-	 * @param {bool} [bRenderHTMLTags=false] - Defines if HTML tags will be preserved in your Markdown. If you just want to use an occasional HTML tag, you can avoid using the opening angle bracket 
+	 * @param {boolean} [bHtmlHeadings=false] - Defines if the HTML headings and IDs will be generated when the Markdown renderer of your target platform does not handle Markdown-style IDs.
+	 * @param {boolean} [bBase64img=false] - Defines if the images will be created in the base64 format.
+	 * @param {boolean} [bDemoteHeadings=false] - Defines if all heading levels in your document will be demoted to conform with the following standard: single H1 as title, H2 as top-level heading in the text body.
+	 * @param {boolean} [bRenderHTMLTags=false] - Defines if HTML tags will be preserved in your Markdown. If you just want to use an occasional HTML tag, you can avoid using the opening angle bracket 
 	 * in the following way: \&lt;tag&gt;text\&lt;/tag&gt;. By default, angle brackets will be replaced with the special characters.
 	 * @returns {string}
 	 */
