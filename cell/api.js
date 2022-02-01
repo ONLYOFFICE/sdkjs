@@ -1203,7 +1203,7 @@ var editor;
 		this.wb.printPreviewState.setPages(pages);
 
 		this.asc_drawPrintPreview(0);
-		return pages.arrPages.length;
+		return pages.arrPages.length ? pages.arrPages.length : 1;
 	};
 
 	spreadsheet_api.prototype.asc_updatePrintPreview = function (options) {
@@ -1218,7 +1218,11 @@ var editor;
 		this.wb.printSheetPrintPreview(index);
 		var curPage = this.wb.printPreviewState.getPage(index);
 		//возвращаю инфомарцию об активном листе, который печатаем
-		this.handlers.trigger("asc_onPrintPreviewSheetChanged", curPage && curPage.indexWorksheet);
+		var indexActiveWs = curPage && curPage.indexWorksheet;
+		if (indexActiveWs === undefined) {
+			indexActiveWs = this.wbModel.getActive();
+		}
+		this.handlers.trigger("asc_onPrintPreviewSheetChanged", indexActiveWs);
 	};
 
 	spreadsheet_api.prototype.asc_closePrintPreview = function () {
