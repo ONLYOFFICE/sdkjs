@@ -1416,6 +1416,42 @@
 	};
 
 	/**
+	 * Adds an word art to the current sheet with the parameters specified.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiTextPr} [oTextPr=Api.CreateTextPr()] - The text properties.
+	 * @param {string} [sText="Your text here"] - text for text art.
+	 * @param {ApiFill} [oFill=Api.CreateNoFill()] - The color or pattern used to fill the shape.
+	 * @param {ApiStroke} [oStroke=Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the shape shadow.
+	 * @param {number} [nRotAngle=0] - Rotation angle
+	 * @param {EMU} [nWidth=1828800] - Word atr width
+	 * @param {EMU} [nHeight=1828800] - Word atr heigth
+	 * @param {number} [nFromCol=0] - The number of the column where the beginning of the shape will be placed.
+	 * @param {number} [nFromRow=0] - The number of the row where the beginning of the shape will be placed.
+     * @param {EMU} [nColOffset=0] - The offset from the nFromCol column to the left part of the shape measured in English measure units.
+	 * @param {EMU} [nRowOffset=0] - The offset from the nFromRow row to the upper part of the shape measured in English measure units.
+	 * @returns {ApiDrawing}
+	 */
+	ApiWorksheet.prototype.AddWordArt = function(oTextPr, sText, oFill, oStroke, nRotAngle, nWidth, nHeight, nFromCol, nFromRow, nColOffset, nRowOffset) {
+		oTextPr    = oTextPr && oTextPr.TextPr ? oTextPr.TextPr : null;
+		nRotAngle  = typeof(nRotAngle) === "number" && nRotAngle > 0 ? nRotAngle : 0;
+		nWidth     = typeof(nWidth) === "number" && nWidth > 0 ? nWidth : 1828800;
+		nHeight    = typeof(nHeight) === "number" && nHeight > 0 ? nHeight : 1828800;
+		oFill      = oFill && oFill.UniFill ? oFill.UniFill : Asc.editor.CreateNoFill().UniFill;
+		oStroke    = oStroke && oStroke.Ln ? oStroke.Ln : Asc.editor.CreateStroke(0, Asc.editor.CreateNoFill()).Ln;
+		nFromCol   = typeof(nFromCol) === "number" && nFromCol > 0 ? nFromCol : 0;
+		nFromRow   = typeof(nFromRow) === "number" && nFromRow > 0 ? nFromRow : 0;
+		nColOffset = typeof(nColOffset) === "number" && nColOffset > 0 ? nColOffset : 0;
+		nRowOffset = typeof(nRowOffset) === "number" && nRowOffset > 0 ? nRowOffset : 0;
+
+		var oArt = Asc.editor.private_createWordArt(oTextPr, sText, oFill, oStroke, nRotAngle, nWidth, nHeight);
+
+        private_SetCoords(oArt, this.worksheet, nWidth, nHeight, nFromCol, nColOffset,  nFromRow, nRowOffset);
+
+		return new ApiDrawing(oArt);
+	};
+
+	/**
 	 * Replaces the current image with a new one.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
@@ -3581,6 +3617,7 @@
 	ApiWorksheet.prototype["AddShape"] = ApiWorksheet.prototype.AddShape;
 	ApiWorksheet.prototype["AddImage"] = ApiWorksheet.prototype.AddImage;
 	ApiWorksheet.prototype["ReplaceCurrentImage"] = ApiWorksheet.prototype.ReplaceCurrentImage;
+	ApiWorksheet.prototype["AddWordArt"] = ApiWorksheet.prototype.AddWordArt;
 
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;

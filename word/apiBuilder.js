@@ -9049,6 +9049,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiStyle} oStyle - The style which must be applied to the text character.
+	 * @return {ApiTextPr} - this text properties.
 	 */
 	ApiTextPr.prototype.SetStyle = function(oStyle)
 	{
@@ -9057,39 +9058,46 @@
 
 		this.TextPr.RStyle = oStyle.Style.Get_Id();
 		this.private_OnChange();
+		return this;
 	};
 	/**
 	 * Sets the bold property to the text character.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} isBold - Specifies that the contents of the run are displayed bold.
+	 * @return {ApiTextPr} - this text properties.
 	 */
 	ApiTextPr.prototype.SetBold = function(isBold)
 	{
 		this.TextPr.Bold = isBold;
 		this.private_OnChange();
+		return this;
 	};
 	/**
 	 * Sets the italic property to the text character.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} isItalic - Specifies that the contents of the current run are displayed italicized.
+	 * @return {ApiTextPr} - this text properties.
 	 */
 	ApiTextPr.prototype.SetItalic = function(isItalic)
 	{
 		this.TextPr.Italic = isItalic;
 		this.private_OnChange();
+		return this;
 	};
 	/**
 	 * Specifies that the contents of the run are displayed with a single horizontal line through the center of the line.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} isStrikeout - Specifies that the contents of the current run are displayed struck through.
+	 * @return {ApiTextPr} - this text properties.
 	 */
 	ApiTextPr.prototype.SetStrikeout = function(isStrikeout)
 	{
 		this.TextPr.Strikeout = isStrikeout;
 		this.private_OnChange();
+		return this;
 	};
 	/**
 	 * Specifies that the contents of the run are displayed along with a line appearing directly below the character
@@ -9097,33 +9105,39 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} isUnderline - Specifies that the contents of the current run are displayed underlined.
+	 * @return {ApiTextPr} - this text properties.
 	 */
 	ApiTextPr.prototype.SetUnderline = function(isUnderline)
 	{
 		this.TextPr.Underline = isUnderline;
 		this.private_OnChange();
+		return this;
 	};
 	/**
 	 * Sets all 4 font slots with the specified font family.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} sFontFamily - The font family or families used for the current text run.
+	 * @return {ApiTextPr} - this text properties.
 	 */
 	ApiTextPr.prototype.SetFontFamily = function(sFontFamily)
 	{
 		this.TextPr.RFonts.SetAll(sFontFamily, -1);
 		this.private_OnChange();
+		return this;
 	};
 	/**
 	 * Sets the font size to the characters of the current text run.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {hps} nSize - The text size value measured in half-points (1/144 of an inch).
+	 * @return {ApiTextPr} - this text properties.
 	 */
 	ApiTextPr.prototype.SetFontSize = function(nSize)
 	{
 		this.TextPr.FontSize = private_GetHps(nSize);
 		this.private_OnChange();
+		return this;
 	};
 	/**
 	 * Sets the text color to the current text run in the RGB format.
@@ -9133,11 +9147,13 @@
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [isAuto=false] - If this parameter is set to "true", then r,g,b parameters will be ignored.
+	 * @return {ApiTextPr} - this text properties.
 	 */
 	ApiTextPr.prototype.SetColor = function(r, g, b, isAuto)
 	{
 		this.TextPr.Color = private_GetColor(r, g, b, isAuto);
 		this.private_OnChange();
+		return this;
 	};
 	/**
 	 * Specifies the alignment which will be applied to the contents of the run in relation to the default appearance of the run text:
@@ -9147,6 +9163,7 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {("baseline" | "subscript" | "superscript")} sType - The vertical alignment type applied to the text contents.
+	 * @return {ApiTextPr} - this text properties.
 	 */
 	ApiTextPr.prototype.SetVertAlign = function(sType)
 	{
@@ -9158,6 +9175,7 @@
 			this.TextPr.VertAlign = AscCommon.vertalign_SuperScript;
 
 		this.private_OnChange();
+		return this;
 	};
 	/**
 	 * Specifies a highlighting color in the RGB format which is applied as a background for the contents of the current run.
@@ -9167,6 +9185,7 @@
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} [isNone=false] If this parameter is set to "true", then r,g,b parameters will be ignored.
+	 * @return {ApiTextPr} - this text properties.
 	 */
 	ApiTextPr.prototype.SetHighlight = function(r, g, b, isNone)
 	{
@@ -9179,39 +9198,46 @@
 			this.TextPr.HighLight = new AscCommonWord.CDocumentColor(r, g, b, false);
 
 		this.private_OnChange();
+		return this;
 	};
 	/**
 	 * Sets the text spacing measured in twentieths of a point.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {twips} nSpacing - The value of the text spacing measured in twentieths of a point (1/1440 of an inch).
+	 * @return {ApiTextPr} - this text properties.
 	 */
 	ApiTextPr.prototype.SetSpacing = function(nSpacing)
 	{
 		this.TextPr.Spacing = private_Twips2MM(nSpacing);
 		this.private_OnChange();
+		return this;
 	};
 	/**
 	 * Specifies that the contents of the run are displayed with two horizontal lines through each character displayed on the line.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} isDoubleStrikeout - Specifies that the contents of the current run are displayed double struck through.
+	 * @return {ApiTextPr} - this text properties.
 	 */
 	ApiTextPr.prototype.SetDoubleStrikeout = function(isDoubleStrikeout)
 	{
 		this.TextPr.DStrikeout = isDoubleStrikeout;
 		this.private_OnChange();
+		return this;
 	};
 	/**
 	 * Specifies that any lowercase characters in the text run are formatted for display only as their capital letter character equivalents.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} isCaps - Specifies that the contents of the current run are displayed capitalized.
+	 * @return {ApiTextPr} - this text properties.
 	 */
 	ApiTextPr.prototype.SetCaps = function(isCaps)
 	{
 		this.TextPr.Caps = isCaps;
 		this.private_OnChange();
+		return this;
 	};
 	/**
 	 * Specifies that all the small letter characters in the text run are formatted for display only as their capital
@@ -9219,11 +9245,13 @@
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {boolean} isSmallCaps - Specifies if the contents of the current run are displayed capitalized two points smaller or not.
+	 * @return {ApiTextPr} - this text properties.
 	 */
 	ApiTextPr.prototype.SetSmallCaps = function(isSmallCaps)
 	{
 		this.TextPr.SmallCaps = isSmallCaps;
 		this.private_OnChange();
+		return this;
 	};
 	/**
 	 * Specifies an amount by which text is raised or lowered for this run in relation to the default
@@ -9232,11 +9260,13 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {hps} nPosition - Specifies a positive (raised text) or negative (lowered text)
 	 * measurement in half-points (1/144 of an inch).
+	 * @return {ApiTextPr} - this text properties.
 	 */
 	ApiTextPr.prototype.SetPosition = function(nPosition)
 	{
 		this.TextPr.Position = private_PtToMM(private_GetHps(nPosition));
 		this.private_OnChange();
+		return this;
 	};
 	/**
 	 * Specifies the languages which will be used to check spelling and grammar (if requested) when processing
@@ -9245,6 +9275,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sLangId - The possible value for this parameter is a language identifier as defined by
 	 * RFC 4646/BCP 47. Example: "en-CA".
+	 * @return {ApiTextPr} - this text properties.
 	 */
 	ApiTextPr.prototype.SetLanguage = function(sLangId)
 	{
@@ -9253,6 +9284,7 @@
 		{
 			this.TextPr.Lang.Val = nLcid;
 			this.private_OnChange();
+			return this;
 		}
 	};
 	/**
@@ -9263,24 +9295,52 @@
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
+	 * @return {ApiTextPr} - this text properties.
 	 */
 	ApiTextPr.prototype.SetShd = function(sType, r, g, b)
 	{
 		this.TextPr.Shd = private_GetShd(sType, r, g, b, false);
 		this.private_OnChange();
+		return this;
 	};
-
-
 	/**
 	 * Sets the text color to the current text run.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CSE", "CPE"]
 	 * @param {ApiFill} oApiFill - The color or pattern used to fill the text color.
+	 * @return {ApiTextPr} - this text properties.
 	 */
 	ApiTextPr.prototype.SetFill = function(oApiFill)
 	{
 		this.TextPr.Unifill = oApiFill.UniFill;
 		this.private_OnChange();
+		return this;
+	};
+	/**
+	 * Sets the text fill to the current text run.
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CSE", "CPE", "CSE"]
+	 * @param {ApiFill} oApiFill - The color or pattern used to fill the text color.
+	 * @return {ApiTextPr} - this text properties.
+	 */
+	ApiTextPr.prototype.SetTextFill = function(oApiFill)
+	{
+		this.TextPr.TextFill = oApiFill.UniFill;
+		this.private_OnChange();
+		return this;
+	};
+	/**
+	 * Sets the text outline to the current text run.
+	 * @memberof ApiTextPr
+	 * @typeofeditors ["CSE", "CPE", "CSE"]
+	 * @param {ApiStroke} oStroke - The stroke used to create the text outline.
+	 * @return {ApiTextPr} - this text properties.
+	 */
+	ApiTextPr.prototype.SetOutLine = function(oStroke)
+	{
+		this.TextPr.TextOutline = oStroke.Ln;
+		this.private_OnChange();
+		return this;
 	};
 
 
@@ -13379,6 +13439,45 @@
 		else
 			return oDocument.ToMarkdown(bHtmlHeadings, bBase64img, bDemoteHeadings, bRenderHTMLTags);
 	};
+
+	/**
+	 * Creates the empty text properties.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiTextPr} 
+	 */
+	Api.prototype.CreateTextPr = function () {
+		return this.private_CreateTextPr(null, new AscCommonWord.CTextPr());	
+	};
+
+	/**
+	 * Creates a word art with the parameters specified.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {ApiTextPr} [oTextPr=Api.CreateTextPr()] - The text properties.
+	 * @param {string} [sText="Your text here"] - text for text art.
+	 * @param {ApiFill}   [oFill=Api.CreateNoFill()] - The color or pattern used to fill the shape.
+	 * @param {ApiStroke} [oStroke=Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the shape shadow.
+	 * @param {number} [nRotAngle=0] - rotation angle
+	 * @param {EMU} [nWidth=1828800] - word atr width
+	 * @param {EMU} [nHeight=1828800] - word atr heigth
+	 * @returns {ApiDrawing}
+	 */
+	Api.prototype.CreateWordArt = function(oTextPr, sText, oFill, oStroke, nRotAngle, nWidth, nHeight) {
+		oTextPr   = oTextPr && oTextPr.TextPr ? oTextPr.TextPr : null;
+		nRotAngle = typeof(nRotAngle) === "number" && nRotAngle > 0 ? nRotAngle : 0;
+		nWidth    = typeof(nWidth) === "number" && nWidth > 0 ? nWidth : 1828800;
+		nHeight   = typeof(nHeight) === "number" && nHeight > 0 ? nHeight : 1828800;
+		oFill     = oFill && oFill.UniFill ? oFill.UniFill : this.CreateNoFill().UniFill;
+		oStroke   = oStroke && oStroke.Ln ? oStroke.Ln : this.CreateStroke(0, this.CreateNoFill()).Ln;
+
+		var oDrawing = new ParaDrawing(private_EMU2MM(nWidth), private_EMU2MM(nHeight), null, private_GetDrawingDocument(), private_GetLogicDocument(), null);
+		var oArt = this.private_createWordArt(oTextPr, sText, oFill, oStroke, nRotAngle, nWidth, nHeight);
+		oArt.setParent(oDrawing);
+		oDrawing.Set_GraphicObject(oArt);
+
+		return new ApiDrawing(oDrawing);
+	};
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
@@ -13416,6 +13515,8 @@
 	Api.prototype["ReplaceTextSmart"]				 = Api.prototype.ReplaceTextSmart;
 	Api.prototype["CoAuthoringChatSendMessage"]		 = Api.prototype.CoAuthoringChatSendMessage;
 	Api.prototype["ConvertDocument"]		         = Api.prototype.ConvertDocument;
+	Api.prototype["CreateTextPr"]		             = Api.prototype.CreateTextPr;
+	Api.prototype["CreateWordArt"]		             = Api.prototype.CreateWordArt;
 	
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 
@@ -13739,6 +13840,8 @@
 	ApiTextPr.prototype["SetLanguage"]               = ApiTextPr.prototype.SetLanguage;
 	ApiTextPr.prototype["SetShd"]                    = ApiTextPr.prototype.SetShd;
 	ApiTextPr.prototype["SetFill"]                   = ApiTextPr.prototype.SetFill;
+	ApiTextPr.prototype["SetTextFill"]               = ApiTextPr.prototype.SetTextFill;
+	ApiTextPr.prototype["SetOutLine"]                = ApiTextPr.prototype.SetOutLine;
 
 	ApiParaPr.prototype["GetClassType"]              = ApiParaPr.prototype.GetClassType;
 	ApiParaPr.prototype["SetStyle"]                  = ApiParaPr.prototype.SetStyle;
@@ -14484,7 +14587,8 @@
 	};
 	ApiTextPr.prototype.private_OnChange = function()
 	{
-		this.Parent.OnChangeTextPr(this);
+		if (this.Parent)
+			this.Parent.OnChangeTextPr(this);
 	};
 	ApiParaPr.prototype.private_OnChange = function()
 	{
@@ -14545,6 +14649,110 @@
 	Api.prototype.private_CreateApiDocContent = function(oDocContent){
 		return new ApiDocumentContent(oDocContent);
 	};
+
+	Api.prototype.private_createWordArt = function(oTextPr, sText, oFill, oStroke, nRotAngle, nWidth, nHeight) {
+		var oWorksheet, bWord, nFontSize;
+		if (this.editorId === AscCommon.c_oEditorId.Spreadsheet) 
+			oWorksheet = this.GetActiveSheet().worksheet;
+		else if (this.editorId === AscCommon.c_oEditorId.Presentation)
+			bWord = false;
+		else if (this.editorId === AscCommon.c_oEditorId.Word)
+			bWord = true;
+
+		var dAngle = nRotAngle !== 0 ? (Math.PI / 180) * nRotAngle : 0; 
+		var oArt = new AscFormat.CShape();
+
+		oArt.setWordShape(bWord === true);
+		oArt.setBDeleted(false);
+		if (oWorksheet)
+			oArt.setWorksheet(oWorksheet);
+
+		if(bWord)
+        {
+            nFontSize = 36;
+            oArt.createTextBoxContent();
+        }
+        else
+        {
+            nFontSize = 54;
+            oArt.createTextBody();
+        }
+
+		var sText = typeof(sText) == "string" && sText !== "" ? sText : "Your text here";
+		
+		if (!oTextPr)
+		{
+			oTextPr = new CTextPr();
+            oTextPr.FontSize = nFontSize;
+            oTextPr.RFonts.Ascii = {Name: "Cambria Math", Index: -1};
+            oTextPr.RFonts.HAnsi = {Name: "Cambria Math", Index: -1};
+            oTextPr.RFonts.CS = {Name: "Cambria Math", Index: -1};
+            oTextPr.RFonts.EastAsia = {Name: "Cambria Math", Index: -1};
+		}
+		if (!oTextPr.FontSize)
+			oTextPr.FontSize = nFontSize;
+
+		var oSpPr = new AscFormat.CSpPr();
+        var oXfrm = new AscFormat.CXfrm();
+		oXfrm.setOffX(0);
+        oXfrm.setOffY(0);
+        oXfrm.setExtX(nWidth/36000);
+        oXfrm.setExtY(nHeight/36000);
+        oSpPr.setXfrm(oXfrm);
+        oXfrm.setParent(oSpPr);
+		if (dAngle !== 0)
+		{
+			var dRot = AscFormat.normalizeRotate(dAngle);
+            oXfrm.setRot(dRot);
+		}
+
+		oSpPr.setFill(oFill);
+        oSpPr.setLn(oStroke);
+        oSpPr.setGeometry(AscFormat.CreateGeometry("rect"));
+        oArt.setSpPr(oSpPr);
+        oSpPr.setParent(oArt);
+
+		var oContent = oArt.getDocContent();
+		AscFormat.AddToContentFromString(oContent, sText);
+
+		oContent.SetApplyToAll(true);
+        oContent.AddToParagraph(new ParaTextPr(oTextPr));
+        oContent.SetParagraphAlign(AscCommon.align_Center);
+        oContent.SetApplyToAll(false);
+        var oBodyPr = oArt.getBodyPr().createDuplicate();
+        oBodyPr.rot = 0;
+        oBodyPr.spcFirstLastPara = false;
+        oBodyPr.vertOverflow = AscFormat.nOTOwerflow;
+        oBodyPr.horzOverflow = AscFormat.nOTOwerflow;
+        oBodyPr.vert = AscFormat.nVertTThorz;
+        oBodyPr.wrap = AscFormat.nTWTNone;
+        oBodyPr.lIns = 2.54;
+        oBodyPr.tIns = 1.27;
+        oBodyPr.rIns = 2.54;
+        oBodyPr.bIns = 1.27;
+        oBodyPr.numCol = 1;
+        oBodyPr.spcCol = 0;
+        oBodyPr.rtlCol = 0;
+        oBodyPr.fromWordArt = false;
+        oBodyPr.anchor = 4;
+        oBodyPr.anchorCtr = false;
+        oBodyPr.forceAA = false;
+        oBodyPr.compatLnSpc = true;
+        oBodyPr.prstTxWarp = AscFormat.CreatePrstTxWarpGeometry("textNoShape");
+        oBodyPr.textFit = new AscFormat.CTextFit();
+        oBodyPr.textFit.type = AscFormat.text_fit_Auto;
+        if(bWord)
+        {
+            oArt.setBodyPr(oBodyPr);
+        }
+        else
+        {
+            oArt.txBody.setBodyPr(oBodyPr);
+        }
+
+		return oArt;
+	};
+
 }(window, null));
 
 
