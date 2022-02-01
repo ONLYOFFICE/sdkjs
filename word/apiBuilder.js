@@ -3452,6 +3452,16 @@
 	 *
 	 * @typedef {"unlocked" | "contentLocked" | "sdtContentLocked" | "sdtLocked"} SdtLock
 	 */
+
+	/**
+     * Text transform preset
+	 * @typedef {("textArchDown" | "textArchDownPour" | "textArchUp" | "textArchUpPour" | "textButton" | "textButtonPour" | "textCanDown" 
+	 * | "textCanUp" | "textCascadeDown" | "textCascadeUp" | "textChevron" | "textChevronInverted" | "textCircle" | "textCirclePour"
+	 * | "textCurveDown" | "textCurveUp" | "textDeflate" | "textDeflateBottom" | "textDeflateInflate" | "textDeflateInflateDeflate" | "textDeflateTop"
+	 * | "textDoubleWave1" | "textFadeDown" | "textFadeLeft" | "textFadeRight" | "textFadeUp" | "textInflate" | "textInflateBottom" | "textInflateTop"
+	 * | "textPlain" | "textRingInside" | "textRingOutside" | "textSlantDown" | "textSlantUp" | "textStop" | "textTriangle" | "textTriangleInverted"
+	 * | "textWave1" | "textWave2" | "textWave4" | "textNoShape")} TextTransofrm
+	 * */
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// Base Api
@@ -13456,6 +13466,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiTextPr} [oTextPr=Api.CreateTextPr()] - The text properties.
 	 * @param {string} [sText="Your text here"] - text for text art.
+	 * @param {TextTransofrm} [sTransform="textNoShape"] - Text transform type.
 	 * @param {ApiFill}   [oFill=Api.CreateNoFill()] - The color or pattern used to fill the shape.
 	 * @param {ApiStroke} [oStroke=Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the shape shadow.
 	 * @param {number} [nRotAngle=0] - rotation angle
@@ -13463,16 +13474,17 @@
 	 * @param {EMU} [nHeight=1828800] - word atr heigth
 	 * @returns {ApiDrawing}
 	 */
-	Api.prototype.CreateWordArt = function(oTextPr, sText, oFill, oStroke, nRotAngle, nWidth, nHeight) {
+	Api.prototype.CreateWordArt = function(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight) {
 		oTextPr   = oTextPr && oTextPr.TextPr ? oTextPr.TextPr : null;
 		nRotAngle = typeof(nRotAngle) === "number" && nRotAngle > 0 ? nRotAngle : 0;
 		nWidth    = typeof(nWidth) === "number" && nWidth > 0 ? nWidth : 1828800;
 		nHeight   = typeof(nHeight) === "number" && nHeight > 0 ? nHeight : 1828800;
 		oFill     = oFill && oFill.UniFill ? oFill.UniFill : this.CreateNoFill().UniFill;
 		oStroke   = oStroke && oStroke.Ln ? oStroke.Ln : this.CreateStroke(0, this.CreateNoFill()).Ln;
+		sTransform = typeof(sTransform) === "string" && sTransform !== "" ? sTransform : "textNoShape";
 
 		var oDrawing = new ParaDrawing(private_EMU2MM(nWidth), private_EMU2MM(nHeight), null, private_GetDrawingDocument(), private_GetLogicDocument(), null);
-		var oArt = this.private_createWordArt(oTextPr, sText, oFill, oStroke, nRotAngle, nWidth, nHeight);
+		var oArt = this.private_createWordArt(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight);
 		oArt.setParent(oDrawing);
 		oDrawing.Set_GraphicObject(oArt);
 
@@ -14650,7 +14662,7 @@
 		return new ApiDocumentContent(oDocContent);
 	};
 
-	Api.prototype.private_createWordArt = function(oTextPr, sText, oFill, oStroke, nRotAngle, nWidth, nHeight) {
+	Api.prototype.private_createWordArt = function(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight) {
 		var oWorksheet, bWord, nFontSize;
 		if (this.editorId === AscCommon.c_oEditorId.Spreadsheet) 
 			oWorksheet = this.GetActiveSheet().worksheet;
@@ -14738,7 +14750,7 @@
         oBodyPr.anchorCtr = false;
         oBodyPr.forceAA = false;
         oBodyPr.compatLnSpc = true;
-        oBodyPr.prstTxWarp = AscFormat.CreatePrstTxWarpGeometry("textNoShape");
+        oBodyPr.prstTxWarp = AscFormat.CreatePrstTxWarpGeometry(sTransform);
         oBodyPr.textFit = new AscFormat.CTextFit();
         oBodyPr.textFit.type = AscFormat.text_fit_Auto;
         if(bWord)

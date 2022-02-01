@@ -211,6 +211,16 @@
 	 * */
 
 	/**
+     * Text transform preset
+	 * @typedef {("textArchDown" | "textArchDownPour" | "textArchUp" | "textArchUpPour" | "textButton" | "textButtonPour" | "textCanDown" 
+	 * | "textCanUp" | "textCascadeDown" | "textCascadeUp" | "textChevron" | "textChevronInverted" | "textCircle" | "textCirclePour"
+	 * | "textCurveDown" | "textCurveUp" | "textDeflate" | "textDeflateBottom" | "textDeflateInflate" | "textDeflateInflateDeflate" | "textDeflateTop"
+	 * | "textDoubleWave1" | "textFadeDown" | "textFadeLeft" | "textFadeRight" | "textFadeUp" | "textInflate" | "textInflateBottom" | "textInflateTop"
+	 * | "textPlain" | "textRingInside" | "textRingOutside" | "textSlantDown" | "textSlantUp" | "textStop" | "textTriangle" | "textTriangleInverted"
+	 * | "textWave1" | "textWave2" | "textWave4" | "textNoShape")} TextTransofrm
+	 * */
+
+	/**
 	 * Class representing a base class for color types.
 	 * @constructor
 	 */
@@ -1421,6 +1431,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiTextPr} [oTextPr=Api.CreateTextPr()] - The text properties.
 	 * @param {string} [sText="Your text here"] - text for text art.
+	 * @param {TextTransofrm} [sTransform="textNoShape"] - Text transform type.
 	 * @param {ApiFill} [oFill=Api.CreateNoFill()] - The color or pattern used to fill the shape.
 	 * @param {ApiStroke} [oStroke=Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the shape shadow.
 	 * @param {number} [nRotAngle=0] - Rotation angle
@@ -1432,7 +1443,7 @@
 	 * @param {EMU} [nRowOffset=0] - The offset from the nFromRow row to the upper part of the shape measured in English measure units.
 	 * @returns {ApiDrawing}
 	 */
-	ApiWorksheet.prototype.AddWordArt = function(oTextPr, sText, oFill, oStroke, nRotAngle, nWidth, nHeight, nFromCol, nFromRow, nColOffset, nRowOffset) {
+	ApiWorksheet.prototype.AddWordArt = function(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight, nFromCol, nFromRow, nColOffset, nRowOffset) {
 		oTextPr    = oTextPr && oTextPr.TextPr ? oTextPr.TextPr : null;
 		nRotAngle  = typeof(nRotAngle) === "number" && nRotAngle > 0 ? nRotAngle : 0;
 		nWidth     = typeof(nWidth) === "number" && nWidth > 0 ? nWidth : 1828800;
@@ -1443,8 +1454,9 @@
 		nFromRow   = typeof(nFromRow) === "number" && nFromRow > 0 ? nFromRow : 0;
 		nColOffset = typeof(nColOffset) === "number" && nColOffset > 0 ? nColOffset : 0;
 		nRowOffset = typeof(nRowOffset) === "number" && nRowOffset > 0 ? nRowOffset : 0;
+		sTransform = typeof(sTransform) === "string" && sTransform !== "" ? sTransform : "textNoShape";
 
-		var oArt = Asc.editor.private_createWordArt(oTextPr, sText, oFill, oStroke, nRotAngle, nWidth, nHeight);
+		var oArt = Asc.editor.private_createWordArt(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight);
 
         private_SetCoords(oArt, this.worksheet, nWidth, nHeight, nFromCol, nColOffset,  nFromRow, nRowOffset);
 

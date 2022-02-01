@@ -312,6 +312,15 @@
      * @typedef {("cross" | "in" | "none" | "out")} TickMark
      * */
 
+    /**
+     * Text transform preset
+	 * @typedef {("textArchDown" | "textArchDownPour" | "textArchUp" | "textArchUpPour" | "textButton" | "textButtonPour" | "textCanDown" 
+	 * | "textCanUp" | "textCascadeDown" | "textCascadeUp" | "textChevron" | "textChevronInverted" | "textCircle" | "textCirclePour"
+	 * | "textCurveDown" | "textCurveUp" | "textDeflate" | "textDeflateBottom" | "textDeflateInflate" | "textDeflateInflateDeflate" | "textDeflateTop"
+	 * | "textDoubleWave1" | "textFadeDown" | "textFadeLeft" | "textFadeRight" | "textFadeUp" | "textInflate" | "textInflateBottom" | "textInflateTop"
+	 * | "textPlain" | "textRingInside" | "textRingOutside" | "textSlantDown" | "textSlantUp" | "textStop" | "textTriangle" | "textTriangleInverted"
+	 * | "textWave1" | "textWave2" | "textWave4" | "textNoShape")} TextTransofrm
+	 * */
     //------------------------------------------------------------------------------------------------------------------
     //
     // Base Api
@@ -786,6 +795,7 @@
 	 * @typeofeditors ["CPE"]
 	 * @param {ApiTextPr} [oTextPr=Api.CreateTextPr()] - The text properties.
 	 * @param {string} [sText="Your text here"] - text for text art.
+     * @param {TextTransofrm} [sTransform="textNoShape"] - Text transform type.
 	 * @param {ApiFill} [oFill=Api.CreateNoFill()] - The color or pattern used to fill the shape.
 	 * @param {ApiStroke} [oStroke=Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the shape shadow.
 	 * @param {number} [nRotAngle=0] - rotation angle
@@ -795,7 +805,7 @@
 	 * @param {EMU} [nIndTop=ApiPresentation.GetHeight() / 2] - word atr heigth
 	 * @returns {ApiDrawing}
 	 */
-    Api.prototype.CreateWordArt = function(oTextPr, sText, oFill, oStroke, nRotAngle, nWidth, nHeight, nIndLeft, nIndTop) {
+    Api.prototype.CreateWordArt = function(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight, nIndLeft, nIndTop) {
         var oPres = private_GetPresentation();
 		oTextPr   = oTextPr && oTextPr.TextPr ? oTextPr.TextPr : null;
 		nRotAngle = typeof(nRotAngle) === "number" && nRotAngle > 0 ? nRotAngle : 0;
@@ -803,8 +813,9 @@
 		nHeight   = typeof(nHeight) === "number" && nHeight > 0 ? nHeight : 1828800;
 		oFill     = oFill && oFill.UniFill ? oFill.UniFill : this.CreateNoFill().UniFill;
 		oStroke   = oStroke && oStroke.Ln ? oStroke.Ln : this.CreateStroke(0, this.CreateNoFill()).Ln;
+        sTransform = typeof(sTransform) === "string" && sTransform !== "" ? sTransform : "textNoShape";
 
-		var oArt = this.private_createWordArt(oTextPr, sText, oFill, oStroke, nRotAngle, nWidth, nHeight);
+		var oArt = this.private_createWordArt(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight);
 
         nIndLeft  = typeof(nIndLeft) === "number" && nIndLeft > -1 ? nIndLeft : (oPres.GetWidthMM() - oArt.spPr.xfrm.extX) / 2;
         nIndTop  = typeof(nIndTop) === "number" && nIndTop > -1 ? nIndTop : (oPres.GetHeightMM() - oArt.spPr.xfrm.extY) / 2;
