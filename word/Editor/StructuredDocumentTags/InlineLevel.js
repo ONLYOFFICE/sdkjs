@@ -3085,6 +3085,17 @@ CInlineLevelSdt.prototype.IsFormExceedsBounds = function()
 	var oParaBounds = oParagraph.GetContentBounds(0);
 	return (oParaBounds.Right - oParaBounds.Left > oFormBounds.W || oParaBounds.Bottom - oParaBounds.Top > oFormBounds.H);
 };
+CInlineLevelSdt.prototype.CheckSpelling = function(oCollector, nDepth)
+{
+	let isForm = this.IsForm();
+	if (isForm)
+		oCollector.FlushWord();
+
+	CParagraphContentWithParagraphLikeContent.prototype.CheckSpelling.apply(this, arguments);
+
+	if (isForm)
+		oCollector.FlushWord();
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

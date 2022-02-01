@@ -163,7 +163,7 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
 
     this.SearchResults = {};
 
-    this.SpellChecker  = new CParaSpellChecker(this);
+    this.SpellChecker  = new AscCommonWord.CParagraphSpellChecker(this);
 
     this.NearPosArray  = [];
 
@@ -951,7 +951,7 @@ Paragraph.prototype.Internal_Content_Add = function(Pos, Item, bCorrectPos)
 			ContentPos.Data[0]++;
 	}
 
-	this.SpellChecker.Update_OnAdd(this, Pos, Item);
+	this.RecalcInfo.NeedSpellCheck();
 
 	if (Item.SetParent)
 		Item.SetParent(this);
@@ -1000,8 +1000,9 @@ Paragraph.prototype.Internal_Content_Concat = function(arrItems)
 	this.private_CheckUpdateBookmarks(arrItems);
 	this.UpdateDocumentOutline();
 
+	this.RecalcInfo.NeedSpellCheck();
+
 	// Обновлять позиции в NearestPos не надо, потому что мы добавляем новые элементы в конец массива
-	this.RecalcInfo.Set_Type_0_Spell(pararecalc_0_Spell_All);
 };
 /**
  * Удаляем элемент из содержимого параграфа. (Здесь передвигаются все позиции
@@ -1064,8 +1065,7 @@ Paragraph.prototype.Internal_Content_Remove = function(Pos)
 			ContentPos.Data[0]--;
 	}
 
-	// Передвинем все метки слов для проверки орфографии
-	this.SpellChecker.Update_OnRemove(this, Pos, 1);
+	this.RecalcInfo.NeedSpellCheck();
 };
 /**
  * Удаляем несколько элементов
@@ -1172,8 +1172,7 @@ Paragraph.prototype.Internal_Content_Remove2 = function(Pos, Count)
 		}
 	}
 
-	// Передвинем все метки слов для проверки орфографии
-	this.SpellChecker.Update_OnRemove(this, Pos, Count);
+	this.RecalcInfo.NeedSpellCheck();
 };
 /**
  * Очищаем полностью параграф (включая последний ран)
@@ -9039,7 +9038,7 @@ Paragraph.prototype.Is_UseInDocument = function(Id)
 		return false;
 	}
 
-	if (null != this.Parent)
+	if (this.Parent && this.Parent.Is_UseInDocument)
 		return this.Parent.Is_UseInDocument(this.Get_Id());
 
 	return false;
@@ -11622,7 +11621,14 @@ Paragraph.prototype.Document_UpdateInterfaceState = function()
 	}
 
 	if (this.LogicDocument && true === this.LogicDocument.Spelling.Use && (selectionflag_Numbering !== this.Selection.Flag && selectionflag_NumberingCur !== this.Selection.Flag))
-		this.SpellChecker.Document_UpdateInterfaceState(StartPos, EndPos);
+	{
+		let oSpellCheckElement = this.SpellChecker.GetElementByRange(StartPos, EndPos);
+		if (oSpellCheckElement && oSpellCheckElement.IsWrong())
+		{
+			this.SpellChecker.CheckVariants(oSpellCheckElement);
+			editor.sync_SpellCheckCallback(oSpellCheckElement.GetWord(), false, oSpellCheckElement.GetVariants(), this.GetId(), oSpellCheckElement);
+		}
+	}
 
 	if (true === this.Selection.Use)
 	{
@@ -12317,6 +12323,11 @@ Paragraph.prototype.Supplement_FramePr = function(FramePr)
 
 	FramePr.Brd = ParaPr.Brd;
 	FramePr.Shd = ParaPr.Shd;
+};
+Paragraph.prototype.IsDropCap = function()
+{
+	var oFramePr = this.Get_FramePr();
+	return (oFramePr && oFramePr.DropCap);
 };
 /**
  * Можно ли добавлять буквицу
@@ -13625,6 +13636,124 @@ Paragraph.prototype.GetCurrentComments = function(oComments)
 
 	return oComments;
 };
+//----------------------------------------------------------------------------------------------------------------------
+// SpellCheck
+//----------------------------------------------------------------------------------------------------------------------
+/**
+ * @returns {AscCommonWord.CParagraphSpellChecker}
+ */
+Paragraph.prototype.GetSpellChecker = function()
+{
+	return this.SpellChecker;
+};
+Paragraph.prototype.RestartSpellCheck = function()
+{
+	this.RecalcInfo.NeedSpellCheck();
+
+	this.Recalc_CompiledPr();
+
+	for (let nIndex = 0, nCount = this.Content.length; nIndex < nCount; nIndex++)
+	{
+		this.Content[nIndex].RestartSpellCheck();
+	}
+
+	this.LogicDocument.Spelling.AddParagraphToCheck(this);
+};
+Paragraph.prototype.RequestSpellCheck = function()
+{
+	if (this.RecalcInfo.SpellCheck)
+	{
+		this.LogicDocument && this.LogicDocument.Spelling.AddParagraphToCheck(this);
+	}
+};
+/**
+ * Производим проверку орфографии.
+ * @param isForceFullCheck {boolean} принуждаем параграф проверить целиком, даже если он большой
+ * @return {boolean} true - проверка прошла до конца, false - параграф слишком большой и за один раз проверка не выполнилась
+ */
+Paragraph.prototype.ContinueSpellCheck = function(isForceFullCheck)
+{
+	var oLogicDocument = this.GetLogicDocument();
+	if (!this.RecalcInfo.SpellCheck || !oLogicDocument)
+	{
+		this.RecalcInfo.SpellCheck = false;
+		return true;
+	}
+
+	if (!this.private_CollectSpellCheckerElements(isForceFullCheck))
+		return false;
+
+	this.private_CheckDropCapForSpellCheck();
+
+	this.SpellChecker.Check(oLogicDocument.GetRecalcId());
+
+	this.RecalcInfo.SpellCheck = false;
+
+	return true;
+};
+Paragraph.prototype.private_CollectSpellCheckerElements = function(isForceFullCheck)
+{
+	let oCollector = this.SpellChecker.GetCollector(isForceFullCheck);
+	let nStartPos  = oCollector.GetPos(0);
+
+	for (let nPos = nStartPos, nCount = this.Content.length; nPos < nCount; ++nPos)
+	{
+		let oItem = this.Content[nPos];
+
+		oCollector.UpdatePos(nPos, 0);
+		oItem.CheckSpelling(oCollector, 1);
+
+		if (oCollector.IsExceedLimit())
+			break;
+	}
+
+	if (oCollector.IsExceedLimit())
+	{
+		this.SpellChecker.Pause(oCollector);
+		return false;
+	}
+
+	this.SpellChecker.OnEndCollectingElements();
+
+	return true;
+};
+Paragraph.prototype.private_CheckDropCapForSpellCheck = function()
+{
+	let oPrevParagraph = this.Get_DocumentPrev();
+	if (!oPrevParagraph || !oPrevParagraph.IsParagraph() || !oPrevParagraph.IsDropCap())
+		return;
+
+	let oElement = this.SpellChecker.GetElement(0);
+	if (!oElement || oElement.IsCorrect())
+		return;
+
+	let oRunElements = new CParagraphRunElements(oElement.GetStartPos(), 10, null, true);
+	this.GetPrevRunElements(oRunElements);
+
+	let arrElements = oRunElements.GetElements();
+	for (let nIndex = 0, nCount = arrElements.length; nIndex < nCount; ++nIndex)
+	{
+		var oRunItem = arrElements[nIndex];
+		if (!oRunItem.IsDrawing() || oRunItem.IsInline())
+			return;
+	}
+
+	oElement.SetCorrect();
+};
+Paragraph.prototype.AddSpellCheckerElement = function(oElement)
+{
+	let oRun = this.GetClassByPos(oElement.GetStartPos());
+	if (!oRun || !oRun.IsRun())
+		return;
+
+	oRun.AddSpellCheckerElement(oElement, true);
+
+	oRun = this.GetClassByPos(oElement.GetEndPos());
+	if (!oRun || !oRun.IsRun())
+		return;
+
+	oRun.AddSpellCheckerElement(oElement, false);
+};
 Paragraph.prototype.ReplaceMisspelledWord = function(Word, oElement)
 {
 	var Element = null;
@@ -13713,6 +13842,7 @@ Paragraph.prototype.IgnoreMisspelledWord = function(oElement)
 		}
 	}
 };
+//----------------------------------------------------------------------------------------------------------------------
 Paragraph.prototype.Get_SectionPr = function()
 {
 	return this.SectPr;
@@ -16199,13 +16329,6 @@ Paragraph.prototype.GetFirstParagraph = function()
 	return this;
 };
 /**
- * @returns {CParaSpellChecker}
- */
-Paragraph.prototype.GetSpellChecker = function()
-{
-	return this.SpellChecker;
-};
-/**
  * Получаем номер страницы, на которой расположена нумерация
  * @param {boolean} isAbsolute возвращаем абсолютный номер страницы или нет
  * @returns {number}
@@ -17230,20 +17353,11 @@ Paragraph.prototype["asc_canAddRefToCaptionText"] = Paragraph.prototype.asc_canA
 var pararecalc_0_All  = 0;
 var pararecalc_0_None = 1;
 
-var pararecalc_0_Spell_All  = 0;
-var pararecalc_0_Spell_Pos  = 1;
-var pararecalc_0_Spell_Lang = 2;
-var pararecalc_0_Spell_None = 3;
 
 function CParaRecalcInfo()
 {
     this.Recalc_0_Type = pararecalc_0_All;
-    this.Recalc_0_Spell =
-    {
-        Type      : pararecalc_0_All,
-        StartPos  : 0,
-        EndPos    : 0
-    };
+    this.SpellCheck = false;
 }
 
 CParaRecalcInfo.prototype =
@@ -17251,65 +17365,11 @@ CParaRecalcInfo.prototype =
     Set_Type_0 : function(Type)
     {
         this.Recalc_0_Type = Type;
-    },
-
-    Set_Type_0_Spell : function(Type, StartPos, EndPos)
-    {
-        if ( pararecalc_0_Spell_All === this.Recalc_0_Spell.Type )
-            return;
-        else if ( pararecalc_0_Spell_None === this.Recalc_0_Spell.Type || pararecalc_0_Spell_Lang === this.Recalc_0_Spell.Type )
-        {
-            this.Recalc_0_Spell.Type = Type;
-            if ( pararecalc_0_Spell_Pos === Type )
-            {
-                this.Recalc_0_Spell.StartPos = StartPos;
-                this.Recalc_0_Spell.EndPos   = EndPos;
-            }
-        }
-        else if ( pararecalc_0_Spell_Pos === this.Recalc_0_Spell.Type )
-        {
-            if ( pararecalc_0_Spell_All === Type )
-                this.Recalc_0_Spell.Type = Type;
-            else if ( pararecalc_0_Spell_Pos === Type )
-            {
-                this.Recalc_0_Spell.StartPos = Math.min( StartPos, this.Recalc_0_Spell.StartPos );
-                this.Recalc_0_Spell.EndPos   = Math.max( EndPos,   this.Recalc_0_Spell.EndPos   );
-            }
-        }
-    },
-
-    Update_Spell_OnChange : function(Pos, Count, bAdd)
-    {
-        if ( pararecalc_0_Spell_Pos === this.Recalc_0_Spell.Type )
-        {
-            if ( true === bAdd )
-            {
-                if ( this.Recalc_0_Spell.StartPos > Pos )
-                    this.Recalc_0_Spell.StartPos++;
-
-                if ( this.Recalc_0_Spell.EndPos >= Pos )
-                    this.Recalc_0_Spell.EndPos++;
-            }
-            else
-            {
-                if ( this.Recalc_0_Spell.StartPos > Pos )
-                {
-                    if ( this.Recalc_0_Spell.StartPos > Pos + Count )
-                        this.Recalc_0_Spell.StartPos -= Count;
-                    else
-                        this.Recalc_0_Spell.StartPos = Pos;
-                }
-
-                if ( this.Recalc_0_Spell.EndPos >= Pos )
-                {
-                    if ( this.Recalc_0_Spell.EndPos >= Pos + Count )
-                        this.Recalc_0_Spell.EndPos -= Count;
-                    else
-                        this.Recalc_0_Spell.EndPos = Math.max( 0, Pos - 1 );
-                }
-            }
-        }
     }
+};
+CParaRecalcInfo.prototype.NeedSpellCheck = function()
+{
+	this.SpellCheck = true;
 };
 
 function CDocumentBounds(Left, Top, Right, Bottom)

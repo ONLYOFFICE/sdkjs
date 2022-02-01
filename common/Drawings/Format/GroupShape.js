@@ -1714,11 +1714,11 @@ function CGroupShape()
         this.nvGrpSpPr = pr;
     };
 
-    CGroupShape.prototype.Restart_CheckSpelling = function()
+    CGroupShape.prototype.RestartSpellCheck = function()
     {
         for(var i = 0; i < this.spTree.length; ++i)
         {
-            this.spTree[i].Restart_CheckSpelling && this.spTree[i].Restart_CheckSpelling();
+            this.spTree[i].RestartSpellCheck && this.spTree[i].RestartSpellCheck();
         }
     };
 

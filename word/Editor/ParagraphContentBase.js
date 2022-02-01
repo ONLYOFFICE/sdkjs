@@ -91,6 +91,10 @@ CParagraphContentBase.prototype.GetParagraph = function()
 {
 	return this.Paragraph;
 };
+CParagraphContentBase.prototype.IsRun = function()
+{
+	return false;
+};
 CParagraphContentBase.prototype.Is_Empty = function()
 {
 	return true;
@@ -232,7 +236,7 @@ CParagraphContentBase.prototype.UpdateBookmarks = function(oManager)
 {
 };
 /**
- * @param oSpellCheckerEngine {CParagraphSpellCheckerEngine}
+ * @param oSpellCheckerEngine {CParagraphSpellCheckerCollector}
  * @param nDepth {number}
  */
 CParagraphContentBase.prototype.CheckSpelling = function(oSpellCheckerEngine, nDepth)
@@ -667,7 +671,7 @@ CParagraphContentBase.prototype.GetSearchElementId = function(bNext, bUseContent
 CParagraphContentBase.prototype.Check_NearestPos = function(ParaNearPos, Depth)
 {
 };
-CParagraphContentBase.prototype.Restart_CheckSpelling = function()
+CParagraphContentBase.prototype.RestartSpellCheck = function()
 {
 };
 CParagraphContentBase.prototype.GetDirectTextPr = function()
@@ -1017,8 +1021,8 @@ CParagraphContentWithContentBase.prototype.private_UpdateSpellChecking = functio
 {
 	if (this.Paragraph)
 	{
-		this.Paragraph.SpellChecker.ClearPausedEngine();
-		this.Paragraph.RecalcInfo.Set_Type_0_Spell(pararecalc_0_Spell_All);
+		this.Paragraph.SpellChecker.ClearCollector();
+		this.Paragraph.RecalcInfo.NeedSpellCheck();
 	}
 };
 CParagraphContentWithContentBase.prototype.Is_UseInDocument = function(Id)
@@ -3719,17 +3723,17 @@ CParagraphContentWithParagraphLikeContent.prototype.IsSelectionUse = function()
     return this.State.Selection.Use;
 };
 //----------------------------------------------------------------------------------------------------------------------
-// Spelling
+// SpellCheck
 //----------------------------------------------------------------------------------------------------------------------
-CParagraphContentWithParagraphLikeContent.prototype.Restart_CheckSpelling = function()
+CParagraphContentWithParagraphLikeContent.prototype.RestartSpellCheck = function()
 {
-    for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; nIndex++)
+    for (let nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
     {
-        this.Content[nIndex].Restart_CheckSpelling();
+        this.Content[nIndex].RestartSpellCheck();
     }
 };
 /**
- * @param oSpellCheckerEngine {CParagraphSpellCheckerEngine}
+ * @param oSpellCheckerEngine {CParagraphSpellCheckerCollector}
  * @param nDepth {number}
  */
 CParagraphContentWithParagraphLikeContent.prototype.CheckSpelling = function(oSpellCheckerEngine, nDepth)
@@ -3740,8 +3744,6 @@ CParagraphContentWithParagraphLikeContent.prototype.CheckSpelling = function(oSp
 	var nStartPos = 0;
 	if (oSpellCheckerEngine.IsFindStart())
 		nStartPos = oSpellCheckerEngine.GetPos(nDepth);
-	else
-		this.SpellingMarks = [];
 
     for (var nPos = nStartPos, nCount = this.Content.length; nPos < nCount; ++nPos)
     {
@@ -3753,32 +3755,6 @@ CParagraphContentWithParagraphLikeContent.prototype.CheckSpelling = function(oSp
         if (oSpellCheckerEngine.IsExceedLimit())
         	return;
     }
-};
-CParagraphContentWithParagraphLikeContent.prototype.Add_SpellCheckerElement = function(Element, Start, Depth)
-{
-    if (true === Start)
-        this.Content[Element.StartPos.Get(Depth)].Add_SpellCheckerElement(Element, Start, Depth + 1);
-    else
-        this.Content[Element.EndPos.Get(Depth)].Add_SpellCheckerElement(Element, Start, Depth + 1);
-
-    this.SpellingMarks.push( new CParagraphSpellingMark( Element, Start, Depth ) );
-};
-CParagraphContentWithParagraphLikeContent.prototype.Remove_SpellCheckerElement = function(Element)
-{
-    var Count = this.SpellingMarks.length;
-    for (var Pos = 0; Pos < Count; Pos++)
-    {
-        var SpellingMark = this.SpellingMarks[Pos];
-        if (Element === SpellingMark.Element)
-        {
-            this.SpellingMarks.splice(Pos, 1);
-            break;
-        }
-    }
-};
-CParagraphContentWithParagraphLikeContent.prototype.Clear_SpellingMarks = function()
-{
-    this.SpellingMarks = [];
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Search and Replace

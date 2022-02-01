@@ -166,6 +166,10 @@ ParaRun.prototype.GetId = function()
 {
 	return this.Id;
 };
+ParaRun.prototype.IsRun = function()
+{
+	return true;
+};
 ParaRun.prototype.Set_ParaMath = function(ParaMath, Parent)
 {
     this.ParaMath = ParaMath;
@@ -14023,6 +14027,81 @@ ParaRun.prototype.GetNextRunElement = function(nPos)
 
 	return oRunElements.Elements[0];
 };
+//----------------------------------------------------------------------------------------------------------------------
+// SpellCheck
+//----------------------------------------------------------------------------------------------------------------------
+ParaRun.prototype.RestartSpellCheck = function()
+{
+	this.Recalc_CompiledPr(false);
+
+	for (let nIndex = 0, nCount = this.Content.length; nIndex < nCount; nIndex++)
+	{
+		let oItem = this.Content[nIndex];
+		if (oItem.IsDrawing())
+			oItem.RestartSpellCheck();
+	}
+};
+ParaRun.prototype.CheckSpelling = function(oCollector, nDepth)
+{
+	if (oCollector.IsExceedLimit())
+		return;
+
+	if (reviewtype_Remove === this.GetReviewType())
+	{
+		oCollector.FlushWord();
+		return;
+	}
+
+	let nStartPos = 0;
+	let oCurTextPr = this.Get_CompiledPr(false);
+	if (oCollector.IsFindStart())
+	{
+		nStartPos = oCollector.GetPos(nDepth);
+		oCollector.SetFindStart(false);
+	}
+	else
+	{
+		this.SpellingMarks = [];
+
+		if (true === this.IsEmpty())
+			return;
+
+		oCollector.HandleLang(oCurTextPr.Lang.Val);
+	}
+
+	for (let nPos = nStartPos, nContentLen = this.Content.length; nPos < nContentLen; ++nPos)
+	{
+		oCollector.UpdatePos(nPos, nDepth);
+		oCollector.HandleRunElement(this.Content[nPos], oCurTextPr);
+
+		if (oCollector.IsExceedLimit())
+			break;
+	}
+};
+ParaRun.prototype.AddSpellCheckerElement = function(oElement, isStart)
+{
+	if (isStart)
+		oElement.StartRun = this;
+	else
+		oElement.EndRun = this;
+
+	// TODO: Зачем тут Depth?
+	this.SpellingMarks.push(new AscCommonWord.CParagraphSpellingMark(oElement, isStart, isStart ? oElement.GetStartPos().GetDepth() : oElement.GetEndPos().GetDepth()));
+};
+ParaRun.prototype.RemoveSpellCheckerElement = function(oElement)
+{
+	for (let nCount = this.SpellingMarks.length, nIndex = nCount - 1; nIndex >= 0; --nIndex)
+	{
+		let oMark = this.SpellingMarks[nIndex];
+		if (oElement === oMark.Element)
+			this.SpellingMarks.splice(nIndex, 1);
+	}
+};
+ParaRun.prototype.ClearSpellingMarks = function()
+{
+	this.SpellingMarks = [];
+};
+//----------------------------------------------------------------------------------------------------------------------
 
 
 function CParaRunStartState(Run)

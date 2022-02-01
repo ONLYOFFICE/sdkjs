@@ -1576,9 +1576,9 @@ CBlockLevelSdt.prototype.GetContentControlPr = function()
 	oPr.FillFromContentControl(this);
 	return oPr;
 };
-CBlockLevelSdt.prototype.Restart_CheckSpelling = function()
+CBlockLevelSdt.prototype.RestartSpellCheck = function()
 {
-	this.Content.Restart_CheckSpelling();
+	this.Content.RestartSpellCheck();
 };
 CBlockLevelSdt.prototype.ClearContentControl = function()
 {

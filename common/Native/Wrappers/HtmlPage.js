@@ -354,7 +354,7 @@ function CEditorPage(api)
             var oWordControl = editor.WordControl;
             if(oWordControl.m_oLogicDocument)
             {
-                oWordControl.m_oLogicDocument.ContinueCheckSpelling();
+                oWordControl.m_oLogicDocument.ContinueSpellCheck();
             }
             oWordControl.m_nPaintTimerId = setTimeout(oWordControl.onTimerScroll, 500);
     };

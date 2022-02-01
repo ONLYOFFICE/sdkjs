@@ -19136,6 +19136,22 @@ CTable.prototype.CalculateTextToTable = function(oEngine)
 {
 	oEngine.OnTable(this);
 };
+CTable.prototype.RestartSpellCheck = function()
+{
+	this.Recalc_CompiledPr();
+	for (let nCurRow = 0, nRowsCount = this.GetRowsCount(); nCurRow < nRowsCount; ++nCurRow)
+	{
+		let oRow = this.GetRow(nCurRow);
+		oRow.Recalc_CompiledPr();
+
+		for (let nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+		{
+			let oCell = oRow.GetCell(nCurCell);
+			oCell.Recalc_CompiledPr();
+			oCell.GetContent().RestartSpellCheck();
+		}
+	}
+};
 
 //----------------------------------------------------------------------------------------------------------------------
 // Класс  CTableLook

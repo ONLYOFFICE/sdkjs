@@ -2958,9 +2958,9 @@ ParaDrawing.prototype.isPointInObject = function(x, y, pageIndex)
 	}
 	return false;
 };
-ParaDrawing.prototype.Restart_CheckSpelling = function()
+ParaDrawing.prototype.RestartSpellCheck = function()
 {
-	this.GraphicObj && this.GraphicObj.Restart_CheckSpelling && this.GraphicObj.Restart_CheckSpelling();
+	this.GraphicObj && this.GraphicObj.RestartSpellCheck && this.GraphicObj.RestartSpellCheck();
 };
 /**
  * Проверяем является ли данная автофигура формулой в старом формате
@@ -3201,6 +3201,10 @@ ParaDrawing.prototype.IsComparable = function(oDrawing)
 ParaDrawing.prototype.ToSearchElement = function(oProps)
 {
 	return new CSearchTextSpecialGraphicObject();
+};
+ParaDrawing.prototype.IsDrawing = function()
+{
+	return true;
 };
 /**
  * Класс, описывающий текущее положение параграфа при рассчете позиции автофигуры.

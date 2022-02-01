@@ -6510,11 +6510,11 @@ CShape.prototype.getWatermarkProps = function()
     return oProps;
 };
 
-CShape.prototype.Restart_CheckSpelling = function()
+CShape.prototype.RestartSpellCheck = function()
 {
     this.recalcInfo.recalculateShapeStyleForParagraph = true;
     var content = this.getDocContent();
-    content && content.Restart_CheckSpelling();
+    content && content.RestartSpellCheck();
 };
 
 CShape.prototype.Refresh_RecalcData = function (data)

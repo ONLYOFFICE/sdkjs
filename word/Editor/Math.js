@@ -3497,6 +3497,13 @@ ParaMath.prototype.CalculateTextToTable = function(oEngine)
 {
 	this.Root.CalculateTextToTable(oEngine);
 };
+ParaMath.prototype.CheckSpelling = function(oCollector, nDepth)
+{
+	if (oCollector.IsExceedLimit())
+		return;
+
+	oCollector.FlushWord();
+};
 
 function MatGetKoeffArgSize(FontSize, ArgSize)
 {

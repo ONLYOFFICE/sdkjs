@@ -2503,7 +2503,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
         this.SearchEngine = new CDocumentSearch();
 
     // Параграфы, в которых есть ошибки в орфографии (объект с ключом - Id параграфа)
-    this.Spelling = new CDocumentSpelling();
+    this.Spelling = new AscCommonWord.CDocumentSpellChecker();
 
     // Дополнительные настройки
 	this.ForceHideCCTrack          = false; // Насильно запрещаем отрисовку рамок у ContentControl
@@ -26759,6 +26759,58 @@ CDocument.prototype.GetCurrentReviewChanges = function()
 
 	return arrReviewChanges;
 };
+//----------------------------------------------------------------------------------------------------------------------
+// SpellCheck
+//----------------------------------------------------------------------------------------------------------------------
+CDocument.prototype.SetDefaultLanguage = function(nNewLang)
+{
+	let oStyles  = this.GetStyles();
+	let nOldLang = oStyles.Default.TextPr.Lang.Val;
+
+	if (nOldLang !== nNewLang)
+	{
+		this.History.Add(new CChangesDocumentDefaultLanguage(this, nOldLang, nNewLang));
+		oStyles.Default.TextPr.Lang.Val = nNewLang;
+
+		this.RestartSpellCheck();
+		this.UpdateInterface();
+	}
+};
+CDocument.prototype.GetDefaultLanguage = function()
+{
+	return this.GetStyles().Default.TextPr.Lang.Val;
+};
+CDocument.prototype.RestartSpellCheck = function()
+{
+	this.Spelling.Reset();
+
+	// TODO: добавить обработку в автофигурах
+	// TODO: Надо добавить обработку во всех контроллерах
+
+	this.SectionsInfo.RestartSpellCheck();
+
+	for (let nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+	{
+		this.Content[nIndex].RestartSpellCheck();
+	}
+};
+CDocument.prototype.StopSpellCheck = function()
+{
+	this.Spelling.Reset();
+};
+CDocument.prototype.ContinueSpellCheck = function()
+{
+	this.Spelling.ContinueSpellCheck();
+};
+CDocument.prototype.TurnOffSpellCheck = function()
+{
+	this.Spelling.TurnOff();
+};
+CDocument.prototype.TurnOnSpellCheck = function()
+{
+	this.Spelling.TurnOn();
+};
+//----------------------------------------------------------------------------------------------------------------------
 
 function CDocumentSelectionState()
 {
@@ -27355,6 +27407,33 @@ CDocumentSectionsInfo.prototype.FindNextFillingForm = function(isNext, oCurHdrFt
 	}
 
 	return null;
+};
+CDocumentSectionsInfo.prototype.RestartSpellCheck = function()
+{
+	var bEvenOdd = EvenAndOddHeaders;
+	for (let nIndex = 0, nCount = this.Elements.length; nIndex < nCount; ++nIndex)
+	{
+		var SectPr = this.Elements[nIndex].SectPr;
+		var bFirst = SectPr.Get_TitlePage();
+
+		if (null != SectPr.HeaderFirst && true === bFirst)
+			SectPr.HeaderFirst.RestartSpellCheck();
+
+		if (null != SectPr.HeaderEven && true === bEvenOdd)
+			SectPr.HeaderEven.RestartSpellCheck();
+
+		if (null != SectPr.HeaderDefault)
+			SectPr.HeaderDefault.RestartSpellCheck();
+
+		if (null != SectPr.FooterFirst && true === bFirst)
+			SectPr.FooterFirst.RestartSpellCheck();
+
+		if (null != SectPr.FooterEven && true === bEvenOdd)
+			SectPr.FooterEven.RestartSpellCheck();
+
+		if (null != SectPr.FooterDefault)
+			SectPr.FooterDefault.RestartSpellCheck();
+	}
 };
 
 function CDocumentSectionsInfoElement(SectPr, Index)

@@ -403,7 +403,7 @@ Paragraph.prototype.RecalculateFastRunRange = function(oParaPos)
     this.CurPos.Line  = -1;
     this.CurPos.Range = -1;
 
-    this.Internal_CheckSpelling();
+    this.RequestSpellCheck();
 	this.SetIsRecalculated(true);
 
 	//console.log("Recalc Fast Range");
@@ -432,7 +432,7 @@ Paragraph.prototype.Recalculate_Page = function(CurPage)
 
     this.FontMap.NeedRecalc = true;
 
-    this.Internal_CheckSpelling();
+    this.RequestSpellCheck();
     this.RecalculateEndInfo();
 
     var RecalcResult = this.private_RecalculatePage( CurPage );

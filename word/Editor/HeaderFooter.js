@@ -1412,6 +1412,11 @@ CHeaderFooter.prototype.GetAllTablesOnPage = function(nPageAbs, arrTables)
 	this.Set_Page(nPageAbs);
 	return this.Content.GetAllTablesOnPage(nPageAbs, arrTables);
 };
+CHeaderFooter.prototype.RestartSpellCheck = function()
+{
+	this.Content.RestartSpellCheck();
+};
+
 
 //-----------------------------------------------------------------------------------
 // Класс для работы с колонтитулами

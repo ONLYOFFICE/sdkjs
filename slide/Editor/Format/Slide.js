@@ -1710,18 +1710,18 @@ Slide.prototype =
     },
 
 
-    Restart_CheckSpelling: function()
+	RestartSpellCheck: function()
     {
         for(var i = 0; i < this.cSld.spTree.length; ++i)
         {
-            this.cSld.spTree[i].Restart_CheckSpelling();
+            this.cSld.spTree[i].RestartSpellCheck();
         }
         if(this.notes)
         {
             var spTree = this.notes.cSld.spTree;
             for(i = 0; i < spTree.length; ++i)
             {
-                spTree[i].Restart_CheckSpelling();
+                spTree[i].RestartSpellCheck();
             }
         }
     },

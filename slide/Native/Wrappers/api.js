@@ -3456,7 +3456,7 @@ Asc['asc_docs_api'].prototype.asc_setSpellCheck = function(isOn)
         var _drawing_document = editor.WordControl.m_oDrawingDocument;
         if(isOn)
         {
-            this.spellCheckTimerId = setInterval(function(){_presentation.ContinueCheckSpelling();}, 500);
+            this.spellCheckTimerId = setInterval(function(){_presentation.ContinueSpellCheck();}, 500);
         }
         else
         {

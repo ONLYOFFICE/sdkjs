@@ -644,7 +644,7 @@ CDocumentContent.prototype.Is_UseInDocument = function(Id)
 	else
 		bUse = true;
 
-	if (true === bUse && this.Parent)
+	if (true === bUse && this.Parent && this.Parent.Is_UseInDocument)
 		return this.Parent.Is_UseInDocument(this.Get_Id());
 
 	return false;
@@ -9352,6 +9352,13 @@ CDocumentContent.prototype.CollectSelectedReviewChanges = function(oTrackManager
 	for (var nPos = nStartPos; nPos <= nEndPos; ++nPos)
 	{
 		this.Content[nPos].CollectSelectedReviewChanges(oTrackManager);
+	}
+};
+CDocumentContent.prototype.RestartSpellCheck = function()
+{
+	for (let nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+	{
+		this.Content[nIndex].RestartSpellCheck();
 	}
 };
 
