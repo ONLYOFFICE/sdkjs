@@ -427,12 +427,18 @@
 		{
 			this.scrollX = pos;
 			this.scrollMaxX = maxPos;
+			if (this.Api.WordControl.MobileTouchManager && this.Api.WordControl.MobileTouchManager.iScroll)
+				this.Api.WordControl.MobileTouchManager.iScroll.x = - Math.max(0, Math.min(pos, maxPos));
+
 			this.paint();
 		};
 		this.scrollVertical = function(pos, maxPos)
 		{
 			this.scrollY = pos;
 			this.scrollMaxY = maxPos;
+			if (this.Api.WordControl.MobileTouchManager && this.Api.WordControl.MobileTouchManager.iScroll)
+				this.Api.WordControl.MobileTouchManager.iScroll.y = - Math.max(0, Math.min(pos, maxPos));
+
 			this.paint();
 		};
 
@@ -450,7 +456,7 @@
 			else if (this.zoomMode === ZoomMode.Page)
 				this.zoom = this.calculateZoomToHeight();
 
-			var lastPosition = this.getFirstPagePosition();
+			var posDoc = this.getPageByCoords2( (rect.width >> 1), (rect.height >> 1) );
 
 			this.sendEvent("onZoom", this.zoom, this.zoomMode);
 
@@ -535,13 +541,18 @@
 			if (this.scrollY >= this.scrollMaxY)
 				this.scrollY = this.scrollMaxY;
 
-			if (lastPosition)
+			if (posDoc)
 			{
-				var drawingPage = this.drawingPages[lastPosition.page];
-				var newScrollY = drawingPage.Y + lastPosition.scrollY - lastPosition.y;
+				var newPoint = this.ConvertCoordsToCursor(posDoc.x, posDoc.y, posDoc.index);
+				var newScrollX = this.scrollX + newPoint.x - (rect.width >> 1);
+				var newScrollY = this.scrollY + newPoint.y - (rect.height >> 1);
+				newScrollX = Math.max(0, Math.min(newScrollX, this.scrollMaxX));
+				newScrollY = Math.max(0, Math.min(newScrollY, this.scrollMaxY));
+				if (this.scrollY == 0)
+					newScrollY = 0;
 
-				if (newScrollY < this.scrollMaxY)
-					this.m_oScrollVerApi.scrollToY(newScrollY);
+				this.m_oScrollVerApi.scrollToY(newScrollY);
+				this.m_oScrollHorApi.scrollToX(newScrollX);
 			}
 
 			if (this.thumbnails)
@@ -1819,6 +1830,29 @@
 				x : this.file.pages[pageIndex].W * pixToMM * (x * AscCommon.AscBrowser.retinaPixelRatio - pageCoords.x) / pageCoords.w,
 				y : this.file.pages[pageIndex].H * pixToMM * (y * AscCommon.AscBrowser.retinaPixelRatio - pageCoords.y) / pageCoords.h
 			};
+		};
+
+		this.ConvertCoordsToCursor = function(x, y, pageIndex) {
+			var dKoef = (this.zoom * g_dKoef_mm_to_pix);
+			var rPR = 1;//AscCommon.AscBrowser.retinaPixelRatio;
+			let yPos = this.scrollY >> 0;
+			let xCenter = this.width >> 1;
+			if (this.documentWidth > this.width)
+			{
+				xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
+			}
+
+			let page = this.drawingPages[pageIndex];
+
+			let _w = (page.W * rPR) >> 0;
+			let _h = (page.H * rPR) >> 0;
+			let _x = ((xCenter * rPR) >> 0) - (_w >> 1);
+			let _y = ((page.Y - yPos) * rPR) >> 0;
+
+			var x_pix = (_x + x * dKoef) >> 0;
+			var y_pix = (_y + y * dKoef) >> 0;
+
+			return ({x : x_pix, y : y_pix});
 		};
 
 		this.Copy = function(_text_format)
