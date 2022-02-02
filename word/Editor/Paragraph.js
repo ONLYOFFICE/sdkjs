@@ -13699,7 +13699,10 @@ Paragraph.prototype.ContinueSpellCheck = function(isForceFullCheck)
 
 	this.private_CheckDropCapForSpellCheck();
 
-	this.SpellChecker.Check(oLogicDocument.GetRecalcId());
+	// Возможна ситуация, когда новых слов для проверки нет, но перерисовать нужно,
+	// т.к. одно из старых было удалено, либо стало текущим, и нам нужно убрать подчеркивание
+	if (!this.SpellChecker.Check(oLogicDocument.GetRecalcId()))
+		this.ReDraw();
 
 	this.RecalcInfo.SpellCheck = false;
 

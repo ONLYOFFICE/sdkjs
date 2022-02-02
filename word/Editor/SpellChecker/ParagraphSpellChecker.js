@@ -67,24 +67,20 @@
 		let arrLangs = [];
 		this.private_GetWordsListForRequest(arrWords, arrLangs, isCheckCurrentWord);
 
-		if (0 < arrWords.length)
+		if (0 < arrWords.length
+			&& true === this.GetDocumentSpellChecker().AddWaitingParagraph(this.Paragraph, this.RecalcId, arrWords, arrLangs))
 		{
-			if (true === editor.WordControl.m_oLogicDocument.Spelling.AddWaitingParagraph(this.Paragraph, this.RecalcId, arrWords, arrLangs))
-			{
-				editor.SpellCheckApi.spellCheck({
-					"type"        : "spell",
-					"ParagraphId" : this.Paragraph.GetId(),
-					"RecalcId"    : this.RecalcId,
-					"ElementId"   : 0,
-					"usrWords"    : arrWords,
-					"usrLang"     : arrLangs
-				});
-			}
+			editor.SpellCheckApi.spellCheck({
+				"type"        : "spell",
+				"ParagraphId" : this.Paragraph.GetId(),
+				"RecalcId"    : this.RecalcId,
+				"ElementId"   : 0,
+				"usrWords"    : arrWords,
+				"usrLang"     : arrLangs
+			});
 		}
-		else
-		{
-			this.Paragraph.ReDraw();
-		}
+
+		return arrWords.length;
 	};
 	CParagraphSpellChecker.prototype.private_GetWordsListForRequest = function(arrWords, arrLangs, isCheckCurrentWord)
 	{
