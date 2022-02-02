@@ -4581,24 +4581,8 @@ CChartsDrawer.prototype =
 
 			if(null === res) {
 				if (points[0].val < 0 && points[points.length - 1].val > 0) {
-					//oCrossAxis.nullPos = fAxisPos + (fCrossValue - 0) * (oCrossGrid.fStride) / bKoeff;
-					// if (this.calcProp.type === c_oChartTypes.HBar) {
-					// 	res = this.cChartSpace.chart.plotArea.valAx.nullPos * this.calcProp.pxToMM;
-					// } else {
-					res = this.cChartSpace.chart.plotArea.catAx.nullPos * this.calcProp.pxToMM;
-					//}
-					// var valAx = this.cChartSpace.chart.plotArea.valAx;
-					// console.log(catAx)
-					// if (catAx.crossesAt || catAx.crosses) {
-					// 	var crossValue = catAx.crossesAt ? catAx.crossesAt : this.getMinMaxAxesCrosses(catAx);
-
-					// 	var bKoeff = catAx.scale[1] - catAx.scale[0];
-					// 	res = catAx.grid.fStart;
-					// 	res += crossValue * catAx.grid.fStride / bKoeff;//(catAx.grid.fStride + catAx.grid.fStart + (catAx.grid.fStride / 2.0)) * this.calcProp.pxToMM;
-					// } else {
-					// 	res = this.calcProp.type === c_oChartTypes.HBar ? this.cChartSpace.chart.plotArea.catAx.posX * this.calcProp.pxToMM :
-					// 		this.cChartSpace.chart.plotArea.catAx.posY * this.calcProp.pxToMM;
-					// }
+					res = this.calcProp.type === c_oChartTypes.HBar ? this.cChartSpace.chart.plotArea.catAx.posX * this.calcProp.pxToMM :
+						this.cChartSpace.chart.plotArea.catAx.posY * this.calcProp.pxToMM;
 				} else if (points[0].val < 0) {
 					res = points[points.length - 1].pos * this.calcProp.pxToMM;
 				} else {
@@ -4608,21 +4592,6 @@ CChartsDrawer.prototype =
 		}
 
 		return res;
-	},
-
-	getMinMaxAxesCrosses: function (axis) {
-		var result;
-		switch (axis.crosses) {
-			case AscFormat.CROSSES_MAX: {
-				result = axis.scale[axis.scale.length - 1];
-				break;
-			}
-			case AscFormat.CROSSES_MIN: {
-				result = axis.scale[0];
-				break;
-			}
-		}
-		return result;
 	},
 
 	calculateSplineLine: function (x, y, x1, y1, x2, y2, x3, y3, catAx, valAx) {

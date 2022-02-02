@@ -4473,7 +4473,6 @@ var GLOBAL_PATH_COUNT = 0;
                 bKoeff = oCrossAxis.scale[1] - oCrossAxis.scale[0];
             }
             fAxisPos = oCrossGrid.fStart;
-            oCrossAxis.nullPos = fAxisPos + (fCrossValue) * ((oCrossGrid.fStride) / bKoeff);
             if(oCrossAxis.scale.length > 0) {
                 fAxisPos += (fCrossValue - oCrossAxis.scale[0]) * (oCrossGrid.fStride) / bKoeff;
             }
