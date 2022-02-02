@@ -11751,7 +11751,7 @@ background-repeat: no-repeat;\
 				this.ShowParaMarks                = false;
 
 				let oLogicDocument = _drawing_document_print.m_oLogicDocument;
-				oLogicDocument.SetupBeforeNativePrint(layoutOptions);
+				oLogicDocument.SetupBeforeNativePrint(layoutOptions, oDocRenderer);
 
 				for (var i = 0; i < pagescount; i++)
 				{
@@ -11776,7 +11776,7 @@ background-repeat: no-repeat;\
 		else
 		{
 			let oLogicDocument = this.WordControl.m_oLogicDocument;
-			oLogicDocument.SetupBeforeNativePrint(layoutOptions);
+			oLogicDocument.SetupBeforeNativePrint(layoutOptions, _printer);
 			var page = this.WordControl.m_oDrawingDocument.m_arrPages[_page];
 			_printer.BeginPage(page.width_mm, page.height_mm);
 			oLogicDocument.DrawPage(_page, _printer);

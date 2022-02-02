@@ -188,7 +188,6 @@
 			"word/Editor/StructuredDocumentTags/SdtPrChanges.js",
 			"word/Editor/Serialize2.js",
 			"word/Editor/Search.js",
-			"word/Editor/Spelling.js",
 			"word/Editor/SpellChecker/DocumentSpellChecker.js",
 			"word/Editor/SpellChecker/ParagraphCollector.js",
 			"word/Editor/SpellChecker/ParagraphSpellChecker.js",

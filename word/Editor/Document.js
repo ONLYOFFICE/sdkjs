@@ -26813,9 +26813,9 @@ CDocument.prototype.TurnOnSpellCheck = function()
 	this.Spelling.TurnOn();
 };
 //----------------------------------------------------------------------------------------------------------------------
-CDocument.prototype.SetupBeforeNativePrint = function(layoutOptions)
+CDocument.prototype.SetupBeforeNativePrint = function(layoutOptions, oGraphics)
 {
-	if (!layoutOptions)
+	if (!layoutOptions || !oGraphics)
 		return;
 
 	if (!this.StoredOptions)
@@ -26823,12 +26823,17 @@ CDocument.prototype.SetupBeforeNativePrint = function(layoutOptions)
 
 	this.StoredOptions.DrawFormHighlight = this.ForceDrawFormHighlight;
 	this.StoredOptions.DrawPlaceHolders  = this.ForceDrawPlaceHolders;
+	this.StoredOptions.Graphics          = oGraphics;
+	this.StoredOptions.GraphicsPrintMode = oGraphics.isPrintMode;
 
 	if (true === layoutOptions["drawPlaceHolders"] || false === layoutOptions["drawPlaceHolders"])
 		this.ForceDrawPlaceHolders = layoutOptions["drawPlaceHolders"];
 
 	if (true === layoutOptions["drawFormHighlight"] || false === layoutOptions["drawFormHighlight"])
 		this.ForceDrawFormHighlight = layoutOptions["drawFormHighlight"];
+
+	if (true === layoutOptions["isPrint"] || false === layoutOptions["isPrint"])
+		oGraphics.isPrintMode = layoutOptions["isPrint"];
 };
 CDocument.prototype.RestoreAfterNativePrint = function()
 {
@@ -26845,6 +26850,17 @@ CDocument.prototype.RestoreAfterNativePrint = function()
 	{
 		this.ForceDrawPlaceHolders = this.StoredOptions.DrawPlaceHolders;
 		delete this.StoredOptions.DrawPlaceHolders;
+	}
+
+	if (this.StoredOptions.Graphics)
+	{
+		if (undefined !== this.StoredOptions.GraphicsPrintMode)
+		{
+			this.StoredOptions.Graphics.isPrintMode = this.StoredOptions.GraphicsPrintMode;
+			delete this.StoredOptions.GraphicsPrintMode;
+		}
+
+		delete this.StoredOptions.Graphics;
 	}
 };
 
