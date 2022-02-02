@@ -9069,7 +9069,7 @@ drawHBarChart.prototype = {
 			case AscFormat.BAR_SHAPE_PYRAMID:
 			case AscFormat.BAR_SHAPE_PYRAMIDTOMAX: {
 				var nullPositionOX = this.subType === "stacked" ? this.cChartDrawer.getPositionZero(this.valAx) :
-					this.catAx.posY * this.chartProp.pxToMM;
+					this.catAx.posX * this.chartProp.pxToMM;
 				paths = this.cChartDrawer.calculatePyramid(true, this.subType, newStartX, newStartY, width, DiffGapDepth, 
 					individualBarHeight, perspectiveDepth, val, nullPositionOX, maxH, minH);
 				paths2 = this.cChartDrawer.calculateRect3D(points, val, null, true);
@@ -9083,7 +9083,7 @@ drawHBarChart.prototype = {
 			case AscFormat.BAR_SHAPE_CONE:
 			case AscFormat.BAR_SHAPE_CONETOMAX: {
 				var nullPositionOX = this.subType === "stacked" ? this.cChartDrawer.getPositionZero(this.valAx) :
-					this.catAx.posY * this.chartProp.pxToMM;
+					this.catAx.posX * this.chartProp.pxToMM;
 				paths = this.cChartDrawer._calculateCylinder(newStartX, newStartY, individualBarHeight, width, val, DiffGapDepth, perspectiveDepth, true, true,
 					this.subType, nullPositionOX, maxH, minH);
 				paths2 = this.cChartDrawer.calculateRect3D(points, val, null, true);
