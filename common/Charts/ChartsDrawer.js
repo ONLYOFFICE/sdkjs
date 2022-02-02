@@ -3878,12 +3878,14 @@ CChartsDrawer.prototype =
 				result = !result;
 		}
 
-		if ((_valAx.crossAx.crosses === AscFormat.CROSSES_MAX && val > 0) || 
-			(_valAx.crossAx.crosses === AscFormat.CROSSES_MIN && val < 0)) {		
-			result = !result;
-		} else if (_valAx.crossAx.crossesAt) {
-			if ((val > 0 && val < _valAx.crossAx.crossesAt) || (val < 0 && val > _valAx.crossAx.crossesAt)) {
+		if (!(this.calcProp.subType === "stacked") && !(this.calcProp.subType === "stackedPer")) {
+			if ((_valAx.crossAx.crosses === AscFormat.CROSSES_MAX && val > 0) ||
+				(_valAx.crossAx.crosses === AscFormat.CROSSES_MIN && val < 0)) {
 				result = !result;
+			} else if (_valAx.crossAx.crossesAt) {
+				if ((val > 0 && val < _valAx.crossAx.crossesAt) || (val < 0 && val > _valAx.crossAx.crossesAt)) {
+					result = !result;
+				}
 			}
 		}
 
@@ -4579,8 +4581,24 @@ CChartsDrawer.prototype =
 
 			if(null === res) {
 				if (points[0].val < 0 && points[points.length - 1].val > 0) {
-					res = this.calcProp.type === c_oChartTypes.HBar ? this.cChartSpace.chart.plotArea.catAx.posX * this.calcProp.pxToMM :
-						this.cChartSpace.chart.plotArea.catAx.posY * this.calcProp.pxToMM;
+					//oCrossAxis.nullPos = fAxisPos + (fCrossValue - 0) * (oCrossGrid.fStride) / bKoeff;
+					// if (this.calcProp.type === c_oChartTypes.HBar) {
+					// 	res = this.cChartSpace.chart.plotArea.valAx.nullPos * this.calcProp.pxToMM;
+					// } else {
+					res = this.cChartSpace.chart.plotArea.catAx.nullPos * this.calcProp.pxToMM;
+					//}
+					// var valAx = this.cChartSpace.chart.plotArea.valAx;
+					// console.log(catAx)
+					// if (catAx.crossesAt || catAx.crosses) {
+					// 	var crossValue = catAx.crossesAt ? catAx.crossesAt : this.getMinMaxAxesCrosses(catAx);
+
+					// 	var bKoeff = catAx.scale[1] - catAx.scale[0];
+					// 	res = catAx.grid.fStart;
+					// 	res += crossValue * catAx.grid.fStride / bKoeff;//(catAx.grid.fStride + catAx.grid.fStart + (catAx.grid.fStride / 2.0)) * this.calcProp.pxToMM;
+					// } else {
+					// 	res = this.calcProp.type === c_oChartTypes.HBar ? this.cChartSpace.chart.plotArea.catAx.posX * this.calcProp.pxToMM :
+					// 		this.cChartSpace.chart.plotArea.catAx.posY * this.calcProp.pxToMM;
+					// }
 				} else if (points[0].val < 0) {
 					res = points[points.length - 1].pos * this.calcProp.pxToMM;
 				} else {
@@ -4590,6 +4608,21 @@ CChartsDrawer.prototype =
 		}
 
 		return res;
+	},
+
+	getMinMaxAxesCrosses: function (axis) {
+		var result;
+		switch (axis.crosses) {
+			case AscFormat.CROSSES_MAX: {
+				result = axis.scale[axis.scale.length - 1];
+				break;
+			}
+			case AscFormat.CROSSES_MIN: {
+				result = axis.scale[0];
+				break;
+			}
+		}
+		return result;
 	},
 
 	calculateSplineLine: function (x, y, x1, y1, x2, y2, x3, y3, catAx, valAx) {
@@ -6276,7 +6309,8 @@ drawBarChart.prototype = {
 		switch (type) {
 			case AscFormat.BAR_SHAPE_PYRAMID:
 			case AscFormat.BAR_SHAPE_PYRAMIDTOMAX: {
-				nullPositionOX = this.catAx.posY * this.chartProp.pxToMM;
+				var nullPositionOX = this.subType === "stacked" ? this.cChartDrawer.getPositionZero(this.valAx) :
+					this.catAx.posY * this.chartProp.pxToMM;
 				paths = this.cChartDrawer.calculatePyramid(false, this.subType, startX, startY, height, gapDepth,
 					individualBarWidth, perspectiveDepth, val, nullPositionOX, maxH, minH);
 				
@@ -6290,7 +6324,8 @@ drawBarChart.prototype = {
 			}
 			case AscFormat.BAR_SHAPE_CONE:
 			case AscFormat.BAR_SHAPE_CONETOMAX: {
-				nullPositionOX = this.catAx.posY * this.chartProp.pxToMM;
+				var nullPositionOX = this.subType === "stacked" ? this.cChartDrawer.getPositionZero(this.valAx) :
+					this.catAx.posY * this.chartProp.pxToMM;
 				paths = this.cChartDrawer._calculateCylinder(startX, startY, individualBarWidth, height, val, gapDepth,
 					perspectiveDepth, this.subType !== "standard", false, this.subType, nullPositionOX, maxH, minH);
 				break;
@@ -9060,11 +9095,12 @@ drawHBarChart.prototype = {
 		point8 = this.cChartDrawer._convertAndTurnPoint(x8, y8, z8);
 
 		var points = [point1, point2, point3, point4, point5, point6, point7, point8];
-		var nullPositionOX;
+
 		switch (type) {
 			case AscFormat.BAR_SHAPE_PYRAMID:
 			case AscFormat.BAR_SHAPE_PYRAMIDTOMAX: {
-				nullPositionOX = this.catAx.posX * this.chartProp.pxToMM;
+				var nullPositionOX = this.subType === "stacked" ? this.cChartDrawer.getPositionZero(this.valAx) :
+					this.catAx.posY * this.chartProp.pxToMM;
 				paths = this.cChartDrawer.calculatePyramid(true, this.subType, newStartX, newStartY, width, DiffGapDepth, 
 					individualBarHeight, perspectiveDepth, val, nullPositionOX, maxH, minH);
 				paths2 = this.cChartDrawer.calculateRect3D(points, val, null, true);
@@ -9077,7 +9113,8 @@ drawHBarChart.prototype = {
 			}
 			case AscFormat.BAR_SHAPE_CONE:
 			case AscFormat.BAR_SHAPE_CONETOMAX: {
-				nullPositionOX = this.catAx.posX * this.chartProp.pxToMM;
+				var nullPositionOX = this.subType === "stacked" ? this.cChartDrawer.getPositionZero(this.valAx) :
+					this.catAx.posY * this.chartProp.pxToMM;
 				paths = this.cChartDrawer._calculateCylinder(newStartX, newStartY, individualBarHeight, width, val, DiffGapDepth, perspectiveDepth, true, true,
 					this.subType, nullPositionOX, maxH, minH);
 				paths2 = this.cChartDrawer.calculateRect3D(points, val, null, true);
