@@ -908,5 +908,6 @@
                 this.WordControl.m_oLogicDocument.FinalizeAction();
                 break;
         }
+        return true;
     };
 })(window);
