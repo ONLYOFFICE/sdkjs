@@ -2521,6 +2521,8 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.MoveDrawing               = false; // Происходит ли сейчас перенос автофигуры
 	this.PrintSelection            = false; // Печатаем выделенный фрагмент
 	this.CheckFormPlaceHolder      = true;  // Выполняем ли специальную обработку для плейсхолдеров у форм
+	this.ForceDrawPlaceHolders     = null;  // true/false - насильно заставляем рисовать или не рисовать плейсхолдеры и подсветку,
+	this.ForceDrawFormHighlight    = null;  // null - редактор решает рисовать или нет в зависимости от других параметров
 
 	this.DrawTableMode = {
 		Start  : false,
@@ -26811,6 +26813,41 @@ CDocument.prototype.TurnOnSpellCheck = function()
 	this.Spelling.TurnOn();
 };
 //----------------------------------------------------------------------------------------------------------------------
+CDocument.prototype.SetupBeforeNativePrint = function(layoutOptions)
+{
+	if (!layoutOptions)
+		return;
+
+	if (!this.StoredOptions)
+		this.StoredOptions = {};
+
+	this.StoredOptions.DrawFormHighlight = this.ForceDrawFormHighlight;
+	this.StoredOptions.DrawPlaceHolders  = this.ForceDrawPlaceHolders;
+
+	if (true === layoutOptions["drawPlaceHolders"] || false === layoutOptions["drawPlaceHolders"])
+		this.ForceDrawPlaceHolders = layoutOptions["drawPlaceHolders"];
+
+	if (true === layoutOptions["drawFormHighlight"] || false === layoutOptions["drawFormHighlight"])
+		this.ForceDrawFormHighlight = layoutOptions["drawFormHighlight"];
+};
+CDocument.prototype.RestoreAfterNativePrint = function()
+{
+	if (!this.StoredOptions)
+		return;
+
+	if (undefined !== this.StoredOptions.DrawFormHighlight)
+	{
+		this.ForceDrawFormHighlight = this.StoredOptions.DrawFormHighlight;
+		delete this.StoredOptions.DrawFormHighlight;
+	}
+
+	if (undefined !== this.StoredOptions.DrawPlaceHolders)
+	{
+		this.ForceDrawPlaceHolders = this.StoredOptions.DrawPlaceHolders;
+		delete this.StoredOptions.DrawPlaceHolders;
+	}
+};
+
 
 function CDocumentSelectionState()
 {

@@ -6516,6 +6516,12 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
 			nCombMax = oForm.GetTextFormPr().GetMaxCharacters();
 
 		isFormPlaceHolder = (oForm.IsPlaceHolder() && PDSL.Graphics.isPrintMode);
+
+		let isForceDrawPlaceHolders = PDSL.GetLogicDocument().ForceDrawPlaceHolders;
+		if (true === isForceDrawPlaceHolders)
+			isFormPlaceHolder = false;
+		else if (false === isForceDrawPlaceHolders && oForm.IsPlaceHolder())
+			isFormPlaceHolder = true;
 	}
 
     var CurTextPr = this.Get_CompiledPr( false );
