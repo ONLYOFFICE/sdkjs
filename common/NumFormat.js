@@ -636,7 +636,7 @@ function ParseLocalFormatSymbol(Name)
 			LocaleFormatSymbol['general'] = 'G/표준';
 			break;
 		}
-		case("iu"):
+		/*case("iu"):
 		case("iu-Cans"): {
 			LocaleFormatSymbol['Y'] = 'A';
 			LocaleFormatSymbol['y'] = 'a';
@@ -645,7 +645,7 @@ function ParseLocalFormatSymbol(Name)
 			LocaleFormatSymbol['G'] = 'X';
 			LocaleFormatSymbol['g'] = 'x';
 			LocaleFormatSymbol['general'] = 'Standard';
-		}
+		}*/
 	}
 	return true;
 }
@@ -811,6 +811,10 @@ NumFormat.prototype =
         var minute;
         var Second;
         var second;
+		var Gannen;
+		var gannen;
+		var Era;
+		var era;
 		var dayOfWeek;
 		if (useLocaleFormat) {
 			sGeneral = LocaleFormatSymbol['general'].toLowerCase();
@@ -913,23 +917,23 @@ NumFormat.prototype =
                 this._addToFormat(numFormat_General);
                 this._skip(sGeneral.length - 1);
             }
-			else if ((Era == next || era == next) && bIsForGannen/* || "E" == next*/)
+			else if ((Era == next || era == next) && bIsForGannen)
 			{
 				this._addToFormat2(new FormatObjDateVal(numFormat_JapanYearsGannen, 1, false));
 			}
-			else if (Gannen == next || gannen == next/* || "G" == next*/)
+			else if (Gannen == next || gannen == next)
 			{
 				bIsForGannen = true;
 				this._addToFormat2(new FormatObjDateVal(numFormat_Gannen, 1, false));
 			}
             else if("E" == next || "e" == next)
             {
-                var nextnext = this._readChar();
-                if(this.EOF != nextnext && "+" == nextnext || "-" == nextnext)
-                {
-                    var sign = ("+" == nextnext) ? SignType.Positive : SignType.Negative;
-                    this._addToFormat2(new FormatObjScientific(next, "", sign));
-                }
+				var nextnext = this._readChar();
+				if(this.EOF != nextnext && "+" == nextnext || "-" == nextnext)
+				{
+					var sign = ("+" == nextnext) ? SignType.Positive : SignType.Negative;
+					this._addToFormat2(new FormatObjScientific(next, "", sign));
+				}
             }
             else if("*" == next)
             {
