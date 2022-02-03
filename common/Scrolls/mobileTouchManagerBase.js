@@ -2012,7 +2012,7 @@
 			{
 				this.delegate.HtmlPage.NoneRepaintPages = true;
 
-				this.ZoomDistance = this.getPointerDistance(e);
+				this.ZoomDistance = this.getPointerDistance(e, true);
 				this.ZoomValue    = this.delegate.GetZoom();
 
 				break;
@@ -2102,7 +2102,12 @@
 				this.delegate.HtmlPage.NoneRepaintPages = false;
 
 				if (this.delegate.IsNativeViewer && this.delegate.IsNativeViewer())
+				{
 					this.delegate.DrawingDocument.m_oDocumentRenderer.paint();
+					// очищаем координаты зума для мобильного веба
+					this.delegate.DrawingDocument.m_oDocumentRenderer.skipClearZoomCoord = false;
+					this.delegate.DrawingDocument.m_oDocumentRenderer.clearZoomCoord();
+				}
 
 				this.delegate.HtmlPage.m_bIsFullRepaint = true;
 				this.delegate.HtmlPage.OnScroll();
@@ -2204,7 +2209,7 @@
 
 		return true;
 	};
-	CMobileTouchManagerBase.prototype.getPointerDistance = function(e)
+	CMobileTouchManagerBase.prototype.getPointerDistance = function(e, bFixZoomCoord)
 	{
 		var isPointers = this.checkPointerEvent(e);
 		if (e.touches && (e.touches.length > 1) && !isPointers)
@@ -2214,6 +2219,12 @@
 
 			var _x2 = (e.touches[1].pageX !== undefined) ? e.touches[1].pageX : e.touches[1].clientX;
 			var _y2 = (e.touches[1].pageY !== undefined) ? e.touches[1].pageY : e.touches[1].clientY;
+
+			// запоминаем координаты между тачами только на старте
+			if (bFixZoomCoord && this.delegate.IsNativeViewer && this.delegate.IsNativeViewer()) {
+				this.delegate.DrawingDocument.m_oDocumentRenderer.fixZoomCoord( ( ( _x1 + _x2 ) / 2 ), ( ( _y1 + _y2 ) / 2 ) );
+				this.delegate.DrawingDocument.m_oDocumentRenderer.skipClearZoomCoord = true;
+			}
 
 			return Math.sqrt((_x1 - _x2) * (_x1 - _x2) + (_y1 - _y2) * (_y1 - _y2));
 		}
@@ -2232,6 +2243,11 @@
 				++_counter;
 				if (_counter > 1)
 					break;
+			}
+			// запоминаем координаты между тачами только на старте
+			if (bFixZoomCoord && this.delegate.IsNativeViewer && this.delegate.IsNativeViewer()) {
+				this.delegate.DrawingDocument.m_oDocumentRenderer.fixZoomCoord( ( ( _touch1.X + _touch2.X ) / 2 ), ( ( _touch1.Y + _touch2.Y ) / 2 ) );
+				this.delegate.DrawingDocument.m_oDocumentRenderer.skipClearZoomCoord = true;
 			}
 
 			return Math.sqrt((_touch1.X - _touch2.X) * (_touch1.X - _touch2.X) + (_touch1.Y - _touch2.Y) * (_touch1.Y - _touch2.Y));

@@ -148,6 +148,8 @@
 
 		this.zoomMode = ZoomMode.Custom;
 		this.zoom 	= 1;
+		this.zoomCoordinate = null;
+		this.skipClearZoomCoord = false;
 		
 		this.drawingPages = [];
 		this.isRepaint = false;
@@ -448,6 +450,7 @@
 			this.x = rect.x;
 			this.y = rect.y;
 
+			var oldsize = {w: this.width, h: this.height};
 			this.width = this.parent.offsetWidth - this.scrollWidth;
 			this.height = this.parent.offsetHeight;
 
@@ -456,7 +459,10 @@
 			else if (this.zoomMode === ZoomMode.Page)
 				this.zoom = this.calculateZoomToHeight();
 
-			var posDoc = this.getPageByCoords2( (rect.width >> 1), (rect.height >> 1) );
+			// в мобильной версии мы будем получать координаты от MobileTouchManager (до этого момента они уже должны быть) и не нужно их запоминать, так как мы перетрём нужные нам значения
+			// ну а если их нет и зум произошёл не от тача, то запоминаем их как при обычном зуме
+			if (!this.zoomCoordinate)
+				this.fixZoomCoord( (this.width >> 1), (this.height >> 1) );
 
 			this.sendEvent("onZoom", this.zoom, this.zoomMode);
 
@@ -541,14 +547,17 @@
 			if (this.scrollY >= this.scrollMaxY)
 				this.scrollY = this.scrollMaxY;
 
-			if (posDoc)
+			if (this.zoomCoordinate)
 			{
-				var newPoint = this.ConvertCoordsToCursor(posDoc.x, posDoc.y, posDoc.index);
-				var newScrollX = this.scrollX + newPoint.x - (rect.width >> 1);
-				var newScrollY = this.scrollY + newPoint.y - (rect.height >> 1);
-				newScrollX = Math.max(0, Math.min(newScrollX, this.scrollMaxX));
-				newScrollY = Math.max(0, Math.min(newScrollY, this.scrollMaxY));
-				if (this.scrollY == 0)
+				var newPoint = this.ConvertCoordsToCursor(this.zoomCoordinate.x, this.zoomCoordinate.y, this.zoomCoordinate.index);
+				// oldsize используется чтобы при смене ориентации экрана был небольшой скролл
+				var shiftX = this.Api.isMobileVersion ? ( (oldsize.w - this.width) >> 1) : 0;
+				var shiftY = this.Api.isMobileVersion ? ( (oldsize.h - this.height) >> 1) : 0;
+				var newScrollX = this.scrollX + newPoint.x - this.zoomCoordinate.xShift + shiftX;
+				var newScrollY = this.scrollY + newPoint.y - this.zoomCoordinate.yShift + shiftY;
+				newScrollX = Math.max(0, Math.min(newScrollX, this.scrollMaxX) );
+				newScrollY = Math.max(0, Math.min(newScrollY, this.scrollMaxY) );
+				if (this.scrollY == 0 && !this.Api.isMobileVersion)
 					newScrollY = 0;
 
 				this.m_oScrollVerApi.scrollToY(newScrollY);
@@ -562,6 +571,9 @@
 
 			if (this.Api.WordControl.MobileTouchManager)
 				this.Api.WordControl.MobileTouchManager.Resize();
+
+			if (!this.Api.isMobileVersion || !this.skipClearZoomCoord)
+				this.clearZoomCoord();
 		};
 
 		this.onLoadModule = function()
@@ -797,6 +809,26 @@
 			var zoom2 = (this.height - 2 * this.betweenPages) / maxHeight;
 
 			return Math.min(zoom1, zoom2);
+		};
+		this.fixZoomCoord = function(x, y)
+		{
+			if (this.Api.isMobileVersion)
+			{
+				x -= this.x;
+				y -= this.y;
+			}
+			this.zoomCoordinate = this.getPageByCoords2(x, y);
+			if (this.zoomCoordinate)
+			{
+				this.zoomCoordinate['xShift'] = x;
+				this.zoomCoordinate['yShift'] = y;
+			}
+		};
+
+		this.clearZoomCoord = function()
+		{
+			// нужно очищать, чтобы при любом ресайзе мы не скролились к последней сохранённой точке
+			this.zoomCoordinate = null;
 		};
 
 		this.getFirstPagePosition = function()
@@ -1832,7 +1864,8 @@
 			};
 		};
 
-		this.ConvertCoordsToCursor = function(x, y, pageIndex) {
+		this.ConvertCoordsToCursor = function(x, y, pageIndex)
+		{
 			var dKoef = (this.zoom * g_dKoef_mm_to_pix);
 			var rPR = 1;//AscCommon.AscBrowser.retinaPixelRatio;
 			let yPos = this.scrollY >> 0;
@@ -1846,13 +1879,15 @@
 
 			let _w = (page.W * rPR) >> 0;
 			let _h = (page.H * rPR) >> 0;
-			let _x = ((xCenter * rPR) >> 0) - (_w >> 1);
-			let _y = ((page.Y - yPos) * rPR) >> 0;
+			let _x = ( (xCenter * rPR) >> 0) - (_w >> 1);
+			let _y = ( (page.Y - yPos) * rPR) >> 0;
 
 			var x_pix = (_x + x * dKoef) >> 0;
 			var y_pix = (_y + y * dKoef) >> 0;
+			var w_pix = (_w * dKoef) >> 0;
+			var h_pix = (_h * dKoef) >> 0
 
-			return ({x : x_pix, y : y_pix});
+			return ( {x : x_pix, y : y_pix, w : w_pix, h: h_pix} );
 		};
 
 		this.Copy = function(_text_format)
