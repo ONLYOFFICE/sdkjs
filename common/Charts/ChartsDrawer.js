@@ -8452,10 +8452,12 @@ drawAreaChart.prototype = {
 		var cZ = k.x * n.y - n.x * k.y;
 		var visible = (aX + bY + cZ) < 0;
 
-		if ((this.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) && !isSideFace) {
+		var valOrientation = this.valAx.scaling.orientation === ORIENTATION_MIN_MAX;
+		var catOrientation = this.catAx.scaling.orientation === ORIENTATION_MIN_MAX;
+
+		if ((!valOrientation && !isSideFace) || (!valOrientation && catOrientation)) {
 			return !visible;
-		}
-		if ((this.catAx.scaling.orientation !== ORIENTATION_MIN_MAX) && isSideFace && (this.valAx.scaling.orientation === ORIENTATION_MIN_MAX)) {
+		} else if (!catOrientation && isSideFace && valOrientation) {
 			return !visible;
 		}
 		return visible;
