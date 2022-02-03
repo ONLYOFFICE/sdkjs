@@ -8343,86 +8343,54 @@ drawAreaChart.prototype = {
 		}
 	},
 
+	_standardDraw: function (typeCalculate) {
+		var j = typeCalculate ? 0 : this.paths.series.length - 1;
+		var i = typeCalculate ? this.paths.series.length : 0;
+
+		var seria, brush, pen, numCache;
+		while (((j < i) && typeCalculate) || ((j >= i) && !typeCalculate)) {
+			seria = this.chart.series[j];
+			brush = seria.brush;
+			pen = seria.pen;
+
+			numCache = this.cChartDrawer.getNumCache(seria.val);
+			if (numCache && numCache.pts[0].pen) {
+				pen = numCache.pts[0].pen;
+			}
+			if (numCache && numCache.pts[0].brush) {
+				brush = numCache.pts[0].brush;
+			}
+
+			this._drawBar3D(this.paths.series[j][1], pen, brush, 1);
+			this._drawBar3D(this.paths.series[j][4], pen, brush, 4);
+			this._drawBar3D(this.paths.series[j][2], pen, brush, 2);
+			this._drawBar3D(this.paths.series[j][3], pen, brush, 3);
+			this._drawBar3D(this.paths.series[j][5], pen, brush, 5);
+			this._drawBar3D(this.paths.series[j][0], pen, brush, 0);
+
+			j = typeCalculate ? j + 1 : j - 1;
+		}
+
+	},
+
 	_drawBars3D: function () {
 		var t = this;
 		var isStacked = this.subType === "stackedPer" || this.subType === "stacked";
 
 		if (!isStacked) {
 			var angle = Math.abs(this.cChartDrawer.processor3D.angleOy);
-			var seria, brush, pen, numCache;
 			if (!this.cChartDrawer.processor3D.view3D.getRAngAx() && angle > Math.PI / 2 &&
 				angle < 3 * Math.PI / 2) {
-				for (var j = 0; j < this.paths.series.length; j++) {
-					seria = this.chart.series[j];
-					brush = seria.brush;
-					pen = seria.pen;
-
-					numCache = this.cChartDrawer.getNumCache(seria.val);
-					if (numCache && numCache.pts[0].pen) {
-						pen = numCache.pts[0].pen;
-					}
-					if (numCache && numCache.pts[0].brush) {
-						brush = numCache.pts[0].brush;
-					}
-
-					this._drawBar3D(this.paths.series[j][1], pen, brush, 1);
-					this._drawBar3D(this.paths.series[j][4], pen, brush, 4);
-					this._drawBar3D(this.paths.series[j][2], pen, brush, 2);
-					this._drawBar3D(this.paths.series[j][3], pen, brush, 3);
-					this._drawBar3D(this.paths.series[j][5], pen, brush, 5);
-					this._drawBar3D(this.paths.series[j][0], pen, brush, 0);
+				if (this.serAx && this.serAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+					this._standardDraw(false);
+				} else {
+					this._standardDraw(true);
 				}
 			} else {
 				if (this.serAx && this.serAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
-					for (var j = 0; j < this.paths.series.length; j++) {
-						seria = this.chart.series[j];
-						brush = seria.brush;
-						pen = seria.pen;
-
-						numCache = this.cChartDrawer.getNumCache(seria.val);
-						if (numCache.pts[0] && numCache.pts[0].pen) {
-							pen = numCache.pts[0].pen;
-						}
-						if (numCache.pts[0] && numCache.pts[0].brush) {
-							brush = numCache.pts[0].brush;
-						}
-
-						if (!this.paths.series[j]) {
-							continue;
-						}
-
-						this._drawBar3D(this.paths.series[j][1], pen, brush, 1);
-						this._drawBar3D(this.paths.series[j][4], pen, brush, 4);
-						this._drawBar3D(this.paths.series[j][2], pen, brush, 2);
-						this._drawBar3D(this.paths.series[j][3], pen, brush, 3);
-						this._drawBar3D(this.paths.series[j][5], pen, brush, 5);
-						this._drawBar3D(this.paths.series[j][0], pen, brush, 0);
-					}
+					this._standardDraw(true);
 				} else {
-					for (var j = this.paths.series.length - 1; j >= 0; j--) {
-						seria = this.chart.series[j];
-						brush = seria.brush;
-						pen = seria.pen;
-
-						numCache = this.cChartDrawer.getNumCache(seria.val);
-						if (numCache.pts[0] && numCache.pts[0].pen) {
-							pen = numCache.pts[0].pen;
-						}
-						if (numCache.pts[0] && numCache.pts[0].brush) {
-							brush = numCache.pts[0].brush;
-						}
-
-						if (!this.paths.series[j]) {
-							continue;
-						}
-
-						this._drawBar3D(this.paths.series[j][1], pen, brush, 1);
-						this._drawBar3D(this.paths.series[j][4], pen, brush, 4);
-						this._drawBar3D(this.paths.series[j][2], pen, brush, 2);
-						this._drawBar3D(this.paths.series[j][3], pen, brush, 3);
-						this._drawBar3D(this.paths.series[j][5], pen, brush, 5);
-						this._drawBar3D(this.paths.series[j][0], pen, brush, 0);
-					}
+					this._standardDraw(false);
 				}
 			}
 
