@@ -948,14 +948,14 @@ NumFormat.prototype =
 				}
 				else if (Era == next || era == next)
 				{
-					if (bIsForGannen)
-					{
+					/* if (bIsForGannen)
+					{*/
 						this._addToFormat2(new FormatObjDateVal(numFormat_JapanYearsGannen, 1, false));
-					}
+					/*}
 					else
 					{
 						this._addToFormat2(new FormatObjDateVal(numFormat_Year, 4, false));
-					}
+					}*/
 				}
             }
             else if("*" == next)
@@ -2189,7 +2189,7 @@ NumFormat.prototype =
 				}
 				else if(numFormat_Gannen == item.type)
 				{
-					if (item.val != null && oParsedNumber.dec != null)
+					if (item.val != null && oParsedNumber.dec != null && this.LCID === 1041)
 					{
 						if (oParsedNumber.dec <= 4594) {
 							oCurrentEra = gc_aJapanEras[0];
@@ -2233,6 +2233,10 @@ NumFormat.prototype =
 							var nYear = oParsedNumber.date.year - oCurrentEra[3] + 1;
 							oCurText.text += (nYear >= 10) ? nYear : "0"+nYear;
 						}
+					}
+					else
+					{
+						oCurText.text += oParsedNumber.date.year;
 					}
 				}
 				else if(numFormat_DayOfWeek == item.type)
@@ -2429,8 +2433,8 @@ NumFormat.prototype =
 		var minute;
 		var second;
 
-		var gannen = 'g';
-		var era = 'e';
+		var gannen;
+		var era;
 		var dayOfWeek;
 		if (useLocaleFormat) {
 			sGeneral = LocaleFormatSymbol['general'];
@@ -2449,6 +2453,8 @@ NumFormat.prototype =
 			hour = LocaleFormatSymbol['h'];
 			minute = LocaleFormatSymbol['minute'];
 			second = LocaleFormatSymbol['s'];
+			gannen = LocaleFormatSymbol['g'];
+			era = LocaleFormatSymbol['e'];
 			dayOfWeek = LocaleFormatSymbol['a'];
 		} else {
 			sGeneral = AscCommon.g_cGeneralFormat;
@@ -2461,6 +2467,8 @@ NumFormat.prototype =
 			hour = 'h';
 			minute = 'm';
 			second = 's';
+			gannen = 'g';
+			era = 'e';
 			dayOfWeek = 'a';
 		}
         var nDecLength = this.aDecFormat.length;
@@ -2658,9 +2666,16 @@ NumFormat.prototype =
             }
 			else if(numFormat_Gannen == item.type)
 			{
-				var nIndex = (item.val > 3) ? 3 : item.val;
-				for(var j = 0; j < nIndex; ++j)
-					res += gannen;
+				if (this.LCID == 1041/* || this.LCID == 17*/)
+				{
+					var nIndex = (item.val > 3) ? 3 : item.val;
+					for(var j = 0; j < nIndex; ++j)
+						res += gannen;
+				}
+				else
+				{
+					
+				}
 			}
 			else if(numFormat_JapanYearsGannen == item.type)
 			{
