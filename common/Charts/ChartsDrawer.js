@@ -5773,15 +5773,25 @@ drawBarChart.prototype = {
 				startBlockPosition = test ? this.cChartDrawer.getYPosition((prevVal / test), this.valAx) * this.chartProp.pxToMM : nullPositionOX;
 			}
 
-			startY = val === 0 ? nullPositionOX : startBlockPosition;
-			height = val === 0 ? val : startBlockPosition - endBlockPosition;
+			if (this.valAx.scaling.logBase) {
+				startY = val === 0 ? nullPositionOX : startBlockPosition;
+				height = val === 0 ? 0 : startBlockPosition - endBlockPosition;
+			} else {
+				startY = startBlockPosition;
+				height = startBlockPosition - endBlockPosition;
+			}
 
 			if (this.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
 				height = -height;
 			}
 		} else {
-			height = val === 0 ? val : nullPositionOX - this.cChartDrawer.getYPosition(val, this.valAx) * this.chartProp.pxToMM;
-			startY = val === 0 ? nullPositionOX : nullPositionOX;
+			if (this.valAx.scaling.logBase) {
+				height = val === 0 ? 0 : nullPositionOX - this.cChartDrawer.getYPosition(val, this.valAx) * this.chartProp.pxToMM;
+				startY = val === 0 ? nullPositionOX : nullPositionOX;
+			} else {
+				height = nullPositionOX - this.cChartDrawer.getYPosition(val, this.valAx) * this.chartProp.pxToMM;
+				startY = nullPositionOX;
+			}
 		}
 		if (type === AscFormat.BAR_SHAPE_PYRAMID || type === AscFormat.BAR_SHAPE_PYRAMIDTOMAX ||
 			type === AscFormat.BAR_SHAPE_CONE || type === AscFormat.BAR_SHAPE_CONETOMAX) {
