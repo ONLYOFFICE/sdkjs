@@ -606,6 +606,8 @@ function ParseLocalFormatSymbol(Name)
 			LocaleFormatSymbol['minute'] = 'd';
 			LocaleFormatSymbol['S'] = 'N';
 			LocaleFormatSymbol['s'] = 'n';
+			LocaleFormatSymbol['G'] = 'Z';
+			LocaleFormatSymbol['g'] = 'z';
 			LocaleFormatSymbol['a'] = 'o';
 			LocaleFormatSymbol['general'] = 'Genel';
 			break;
@@ -616,6 +618,8 @@ function ParseLocalFormatSymbol(Name)
 			LocaleFormatSymbol['y'] = 'r';
 			LocaleFormatSymbol['H'] = 'G';
 			LocaleFormatSymbol['h'] = 'g';
+			LocaleFormatSymbol['G'] = 'Z';
+			LocaleFormatSymbol['g'] = 'z';
 			LocaleFormatSymbol['general'] = 'Standardowy';
 			break;
 		}
@@ -701,6 +705,10 @@ NumFormat.prototype =
             this.index++;
         return curChar;
     },
+	_readNextChar : function()
+	{
+		return this._getChar();
+	},
     _skip : function(val)
     {
         var nNewIndex = this.index + val;
@@ -917,22 +925,37 @@ NumFormat.prototype =
                 this._addToFormat(numFormat_General);
                 this._skip(sGeneral.length - 1);
             }
-			else if ((Era == next || era == next) && bIsForGannen)
+			/*else if ((Era == next || era == next) && bIsForGannen)
 			{
 				this._addToFormat2(new FormatObjDateVal(numFormat_JapanYearsGannen, 1, false));
-			}
+			}*/
 			else if (Gannen == next || gannen == next)
 			{
 				bIsForGannen = true;
 				this._addToFormat2(new FormatObjDateVal(numFormat_Gannen, 1, false));
 			}
-            else if("E" == next || "e" == next)
+            else if("E" == next || "e" == next || Era == next || era == next)
             {
-				var nextnext = this._readChar();
-				if(this.EOF != nextnext && "+" == nextnext || "-" == nextnext)
+				var nextChar = this._readNextChar();
+				if(this.EOF != nextChar && "+" == nextChar || "-" == nextChar)
 				{
-					var sign = ("+" == nextnext) ? SignType.Positive : SignType.Negative;
-					this._addToFormat2(new FormatObjScientific(next, "", sign));
+					var nextnext = this._readChar();
+					if(this.EOF != nextnext && "+" == nextnext || "-" == nextnext)
+					{
+						var sign = ("+" == nextnext) ? SignType.Positive : SignType.Negative;
+						this._addToFormat2(new FormatObjScientific(next, "", sign));
+					}
+				}
+				else if (Era == next || era == next)
+				{
+					if (bIsForGannen)
+					{
+						this._addToFormat2(new FormatObjDateVal(numFormat_JapanYearsGannen, 1, false));
+					}
+					else
+					{
+						this._addToFormat2(new FormatObjDateVal(numFormat_Year, 4, false));
+					}
 				}
             }
             else if("*" == next)
