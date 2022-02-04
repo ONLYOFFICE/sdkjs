@@ -8347,12 +8347,12 @@ drawAreaChart.prototype = {
 		}
 	},
 
-	_standardDraw: function (typeCalculate) {
-		var j = typeCalculate ? 0 : this.paths.series.length - 1;
-		var i = typeCalculate ? this.paths.series.length : 0;
+	_standardDraw: function (isReverse) {
+		var j = isReverse ? 0 : this.paths.series.length - 1;
+		var i = isReverse ? this.paths.series.length : 0;
 
 		var seria, brush, pen, numCache;
-		while (((j < i) && typeCalculate) || ((j >= i) && !typeCalculate)) {
+		while (((j < i) && isReverse) || ((j >= i) && !isReverse)) {
 			seria = this.chart.series[j];
 			brush = seria.brush;
 			pen = seria.pen;
@@ -8372,7 +8372,7 @@ drawAreaChart.prototype = {
 			this._drawBar3D(this.paths.series[j][5], pen, brush, 5);
 			this._drawBar3D(this.paths.series[j][0], pen, brush, 0);
 
-			j = typeCalculate ? j + 1 : j - 1;
+			j = isReverse ? j + 1 : j - 1;
 		}
 
 	},
