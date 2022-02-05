@@ -4945,7 +4945,7 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
 
                 // TODO: Надо здесь почистить все, а то названия переменных путаются, и некоторые имеют неправильное значение
 
-                if (isTableCellContent && (!isUseWrap || !isLayoutInCell))
+                if (isTableCellContent && !isLayoutInCell)
                 {
                     X_Left_Field   = LD_PageFields.X;
                     Y_Top_Field    = LD_PageFields.Y;
@@ -5854,12 +5854,12 @@ ParaRun.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 
 		if (para_Drawing === Item.Type)
 		{
-			if (!Item.IsInline() && !Item.IsUseTextWrap())
+			if (!Item.IsInline())
 			{
-				if (Asc.c_oAscRelativeFromV.Paragraph !== Item.GetPositionV().RelativeFrom && Asc.c_oAscRelativeFromV.Line !== Item.GetPositionV().RelativeFrom)
+				if (!Item.IsMoveWithTextVertically())
 					Dy = 0;
 
-				if (Asc.c_oAscRelativeFromH.Column !== Item.GetPositionH().RelativeFrom && Asc.c_oAscRelativeFromH.Character !== Item.GetPositionH().RelativeFrom)
+				if (!Item.IsMoveWithTextHorizontally())
 					Dx = 0;
 			}
 

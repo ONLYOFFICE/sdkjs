@@ -1019,7 +1019,7 @@ CTableCell.prototype =
 		return oResult;
 	},
 
-    Content_Shift : function(CurPage, dX, dY)
+	ShiftCell : function(CurPage, dX, dY)
     {
         if (true === this.IsVerticalText())
         {
@@ -1038,6 +1038,22 @@ CTableCell.prototype =
         else
         {
             this.Content.Shift(CurPage, dX, dY);
+
+            var arrDrawings = this.Content.GetAllDrawingObjects();
+            for (var nIndex = 0, nCount = arrDrawings.length; nIndex < nCount; ++nIndex)
+			{
+				var nShiftX = 0, nShiftY = 0;
+				var oDrawing = arrDrawings[nIndex];
+				if (!oDrawing.IsInline() && oDrawing.IsLayoutInCell())
+				{
+					if (!oDrawing.IsMoveWithTextHorizontally())
+						nShiftX = dX;
+					if (!oDrawing.IsMoveWithTextVertically())
+						nShiftY = dY;
+
+					oDrawing.Shift(nShiftX, nShiftY);
+				}
+			}
         }
     },
 

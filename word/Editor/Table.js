@@ -2752,7 +2752,7 @@ CTable.prototype.Shift = function(CurPage, Dx, Dy)
 			var CellPageIndex = CurPage - Cell.Content.Get_StartPage_Relative();
 			if (vmerge_Restart === Cell.GetVMerge())
 			{
-				Cell.Content_Shift(CellPageIndex, Dx, Dy);
+				Cell.ShiftCell(CellPageIndex, Dx, Dy);
 			}
 		}
 

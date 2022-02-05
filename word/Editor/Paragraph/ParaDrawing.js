@@ -1453,6 +1453,13 @@ ParaDrawing.prototype.GetClipRect = function ()
 };
 ParaDrawing.prototype.Update_PositionYHeaderFooter = function(TopMarginY, BottomMarginY)
 {
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph)
+		return;
+
+	if (oParagraph.IsTableCellContent() && this.IsLayoutInCell())
+		return;
+
 	this.Internal_Position.Update_PositionYHeaderFooter(TopMarginY, BottomMarginY);
 	this.Internal_Position.Calculate_Y(this.Is_Inline(), this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent);
 	this.OrigY = this.Internal_Position.CalcY;
@@ -1527,22 +1534,34 @@ ParaDrawing.prototype.selectionIsEmpty = function()
 ParaDrawing.prototype.recalculateDocContent = function()
 {
 };
-ParaDrawing.prototype.Shift = function(Dx, Dy, nPageAbs)
+ParaDrawing.prototype.Shift = function(nShiftX, nShiftY, nPageAbs)
 {
 	if (undefined !== nPageAbs)
 		this.PageNum = nPageAbs;
 
-	this.ShiftX += Dx;
-	this.ShiftY += Dy;
+	this.ShiftX += nShiftX;
+	this.ShiftY += nShiftY;
+
 	this.X = this.OrigX + this.ShiftX;
 	this.Y = this.OrigY + this.ShiftY;
 
 	this.updatePosition3(this.PageNum, this.X, this.Y);
 };
+ParaDrawing.prototype.IsMoveWithTextHorizontally = function()
+{
+	let oHorRelative = this.GetPositionH().RelativeFrom;
+	return (Asc.c_oAscRelativeFromH.Column === oHorRelative || Asc.c_oAscRelativeFromH.Character === oHorRelative);
+};
+ParaDrawing.prototype.IsMoveWithTextVertically = function()
+{
+	let oVertRelative = this.GetPositionV().RelativeFrom;
+	return (Asc.c_oAscRelativeFromV.Paragraph === oVertRelative || Asc.c_oAscRelativeFromV.Line === oVertRelative);
+};
 ParaDrawing.prototype.IsLayoutInCell = function()
 {
-	// Начиная с 15-ой версии Word не дает менять этот параметр и всегда считает его true
-	if (this.LogicDocument && this.LogicDocument.GetCompatibilityMode() >= AscCommon.document_compatibility_mode_Word15)
+	// Начиная с 15-ой версии Word автофигуры с обтеканием всегда считает расположенными внутри
+	// ячейки, и данный флаг считается как true
+	if (this.IsUseTextWrap() && this.LogicDocument && this.LogicDocument.GetCompatibilityMode() >= AscCommon.document_compatibility_mode_Word15)
 		return true;
 
 	return this.LayoutInCell;
@@ -3639,7 +3658,7 @@ CAnchorPosition.prototype.Calculate_Y = function(bInline, RelativeFrom, bAlign, 
 
 			case c_oAscRelativeFromV.Margin:
 			{
-				var Y_s = this.Top_Margin;
+				var Y_s = this.Top_Margin + this.Page_Y;
 				var Y_e = this.Page_H - this.Bottom_Margin;
 
 				if (true === bAlign)

@@ -2655,7 +2655,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 
                 if ( true === bCanShift )
                 {
-                    Cell.Content.Shift( 0, ShiftDx, ShiftDy );
+					Cell.ShiftCell(0, ShiftDx, ShiftDy);
                     Cell.Content.UpdateEndInfo();
                 }
                 else

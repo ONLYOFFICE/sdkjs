@@ -2917,15 +2917,35 @@ CDocument.prototype.Get_PageLimits = function(nPageIndex)
 };
 CDocument.prototype.Get_PageFields = function(nPageIndex)
 {
-	var nIndex  = this.Pages[nPageIndex] ? this.Pages[nPageIndex].Pos : 0;
+	var oPage   = this.Pages[nPageIndex];
+	var nIndex  = oPage ? oPage.Pos : 0;
 	var oSectPr = this.SectionsInfo.Get_SectPr(nIndex).SectPr;
 	var oFrame  = oSectPr.GetContentFrame(nPageIndex);
+	if (!oPage)
+	{
+		return {
+			X      : oFrame.Left,
+			Y      : oFrame.Top,
+			XLimit : oFrame.Right,
+			YLimit : oFrame.Bottom
+		};
+	}
+
+	var oHdrFtrLine = this.HdrFtr.GetHdrFtrLines(nPageIndex);
+
+	var nTop = oFrame.Top;
+	if (null !== oHdrFtrLine.Top && oHdrFtrLine.Top > nTop)
+		nTop = oHdrFtrLine.Top;
+
+	var nBottom = oFrame.Bottom;
+	if (null !== oHdrFtrLine.Bottom && oHdrFtrLine.Bottom < nBottom)
+		nBottom = oHdrFtrLine.Bottom;
 
 	return {
 		X      : oFrame.Left,
-		Y      : oFrame.Top,
+		Y      : nTop,
 		XLimit : oFrame.Right,
-		YLimit : oFrame.Bottom
+		YLimit : nBottom
 	};
 };
 CDocument.prototype.Get_ColumnFields = function(nElementIndex, nColumnIndex, nPageIndex)
