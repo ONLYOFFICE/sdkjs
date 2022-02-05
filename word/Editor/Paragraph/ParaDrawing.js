@@ -1549,12 +1549,12 @@ ParaDrawing.prototype.Shift = function(nShiftX, nShiftY, nPageAbs)
 };
 ParaDrawing.prototype.IsMoveWithTextHorizontally = function()
 {
-	let oHorRelative = this.GetPositionH().RelativeFrom;
+	var oHorRelative = this.GetPositionH().RelativeFrom;
 	return (Asc.c_oAscRelativeFromH.Column === oHorRelative || Asc.c_oAscRelativeFromH.Character === oHorRelative);
 };
 ParaDrawing.prototype.IsMoveWithTextVertically = function()
 {
-	let oVertRelative = this.GetPositionV().RelativeFrom;
+	var oVertRelative = this.GetPositionV().RelativeFrom;
 	return (Asc.c_oAscRelativeFromV.Paragraph === oVertRelative || Asc.c_oAscRelativeFromV.Line === oVertRelative);
 };
 ParaDrawing.prototype.IsLayoutInCell = function()
