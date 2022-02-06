@@ -8468,10 +8468,10 @@
                 for(var i = 0; i < aTempCols.length; ++i)
                 {
                     var elem = aTempCols[i];
-                    if(elem.Max >= oWorksheet.nColsCount)
-                        oWorksheet.nColsCount = elem.Max;
                     if(null != oAllCol && oAllCol.isEqual(elem.col))
                         continue;
+                    if(elem.col.isUpdateScroll() && elem.Max >= oWorksheet.nColsCount)
+                        oWorksheet.nColsCount = elem.Max;
 
                     for(var j = elem.Min; j <= elem.Max; j++){
                         var oNewCol = new AscCommonExcel.Col(oWorksheet, j - 1);
