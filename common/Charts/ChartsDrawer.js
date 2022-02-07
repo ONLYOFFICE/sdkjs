@@ -4581,8 +4581,7 @@ CChartsDrawer.prototype =
 
 			if(null === res) {
 				if (points[0].val < 0 && points[points.length - 1].val > 0) {
-					res = this.calcProp.type === c_oChartTypes.HBar ? this.cChartSpace.chart.plotArea.catAx.posX * this.calcProp.pxToMM :
-						this.cChartSpace.chart.plotArea.catAx.posY * this.calcProp.pxToMM;
+					res = axis.nullPos * this.calcProp.pxToMM;
 				} else if (points[0].val < 0) {
 					res = points[points.length - 1].pos * this.calcProp.pxToMM;
 				} else {
