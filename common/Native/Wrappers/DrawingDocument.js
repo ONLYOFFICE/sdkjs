@@ -2193,7 +2193,7 @@ CDrawingDocument.prototype =
 
         var logicDoc = this.m_oWordControl.m_oLogicDocument;
 
-        var _styles = logicDoc.Styles.Get_AllTableStyles();
+        var _styles = logicDoc.Styles.GetAllTableStyles();
         var _styles_len = _styles.length;
 
         if (_styles_len == 0)
@@ -2220,11 +2220,8 @@ CDrawingDocument.prototype =
         AscCommon.g_oTableId.m_bTurnOff = true;
         for (var i1 = 0; i1 < _styles_len; i1++)
         {
-            var i = _styles[i1];
-            var _style = logicDoc.Styles.Style[i];
-
-            if (!_style || _style.Type != styletype_Table)
-                continue;
+        	let _style = _styles[i1];
+        	let i = _style.GetId();
 
             if (_table_styles == null)
             {

@@ -933,6 +933,8 @@
 
 		this.isDarkMode = false;
 
+		this.TableStylesPreviewGenerator = null;
+
 		//g_clipboardBase.Init(this);
 
 		this._init();
@@ -3573,11 +3575,19 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_getTableStylesPreviews    = function(bUseDefault)
 	{
-		if(this.WordControl && this.WordControl.m_oDrawingDocument)
+		if (this.WordControl && this.WordControl.m_oDrawingDocument)
 		{
 			return this.WordControl.m_oDrawingDocument.GetTableStylesPreviews(bUseDefault);
 		}
+
 		return [];
+	};
+	asc_docs_api.prototype.asc_generateTableStylesPreviews = function(bUseDefault)
+	{
+		if (!this.TableStylesPreviewGenerator)
+			this.TableStylesPreviewGenerator = new AscCommon.CTableStylesPreviewGenerator(this, this.WordControl.m_oDrawingDocument)
+
+		this.TableStylesPreviewGenerator.Begin(bUseDefault);
 	};
 
 
@@ -12925,6 +12935,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_canEditGeometry"] 					    = asc_docs_api.prototype.asc_canEditGeometry;
 	asc_docs_api.prototype["asc_editPointsGeometry"] 					= asc_docs_api.prototype.asc_editPointsGeometry;
 	asc_docs_api.prototype["asc_getTableStylesPreviews"] 				= asc_docs_api.prototype.asc_getTableStylesPreviews;
+	asc_docs_api.prototype["asc_generateTableStylesPreviews"] 		    = asc_docs_api.prototype.asc_generateTableStylesPreviews;
 
 	CDocInfoProp.prototype['get_PageCount']             = CDocInfoProp.prototype.get_PageCount;
 	CDocInfoProp.prototype['put_PageCount']             = CDocInfoProp.prototype.put_PageCount;

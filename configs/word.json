@@ -28,7 +28,9 @@
 			"word/api_plugins.js",
 			"common/spell/spell.js"
 		],
-		"common": [			
+		"common": [
+			"common/api/tableStylesPreviewGenerator.js",
+
 			"common/downloaderfiles.js",
 			"common/NumFormat.js",
 			"common/SerializeChart.js",

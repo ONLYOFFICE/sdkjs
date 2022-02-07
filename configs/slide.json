@@ -28,6 +28,8 @@
 			"common/spell/spell.js"
 		],
 		"common": [
+			"common/api/tableStylesPreviewGenerator.js",
+
 			"common/downloaderfiles.js",
 			"common/NumFormat.js",
 			"common/SerializeChart.js",

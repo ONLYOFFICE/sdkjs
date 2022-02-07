@@ -7556,6 +7556,13 @@ CStyle.prototype.Document_Is_SelectionLocked = function(CheckType)
 		}
 	}
 };
+/**
+ * @returns {boolean}
+ */
+CStyle.prototype.IsTableStyle = function()
+{
+	return (this.Type === styletype_Table);
+};
 
 function CStyles(bCreateDefault)
 {
@@ -9072,19 +9079,6 @@ CStyles.prototype =
         this.Default.TextPr.Document_Get_AllFontNames(AllFonts);
     },
 
-    Get_AllTableStyles : function()
-    {
-        var TableStyles = [];
-        for ( var Id in this.Style )
-        {
-            var Style = this.Style[Id];
-            if ( styletype_Table === Style.Type )
-                TableStyles.push( Id );
-        }
-
-        return TableStyles;
-    },
-
     Update_Interface : function(StyleId)
     {
         if (null != this.LogicDocument && undefined !== this.LogicDocument)
@@ -9284,6 +9278,18 @@ CStyles.prototype =
 CStyles.prototype.Get = function(sStyleId)
 {
 	return (this.Style[sStyleId] ? this.Style[sStyleId] : null);
+};
+CStyles.prototype.GetAllTableStyles = function()
+{
+	let arrTableStyles = [];
+	for (let Id in this.Style)
+	{
+		let oStyle = this.Style[Id];
+		if (oStyle.IsTableStyle())
+			arrTableStyles.push(oStyle);
+	}
+
+	return arrTableStyles;
 };
 /**
  * Получаем идентификатор стиля по его имени
