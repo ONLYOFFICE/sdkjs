@@ -2774,6 +2774,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['ICO']                  = prot.ICO;
 
 	window['Asc']['c_oAscTextAssociation'] = window['Asc'].c_oAscTextAssociation = c_oAscTextAssociation;
+	prot = c_oAscTextAssociation;
 	prot['BlockChar'] = prot.BlockChar;
 	prot['BlockLine'] = prot.BlockLine;
 	prot['PlainLine'] = prot.PlainLine;
