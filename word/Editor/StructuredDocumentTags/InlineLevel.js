@@ -765,7 +765,7 @@ CInlineLevelSdt.prototype.IsFixedForm = function()
 		return false;
 
 	var oShape = this.Paragraph.Parent ? this.Paragraph.Parent.Is_DrawingShape(true) : null;
-	return (oShape && oShape.isForm());
+	return !!(oShape && oShape.isForm());
 };
 CInlineLevelSdt.prototype.GetFixedFormBounds = function(isUsePaddings)
 {
