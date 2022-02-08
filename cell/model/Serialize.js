@@ -1088,7 +1088,7 @@
 		PivotTables: 16,
 		Scenarios: 17,
 		SelectLockedCells: 18,
-		SelectUnlockedCell: 19,
+		SelectUnlockedCells: 19,
 		Sheet: 20,
 		Sort: 21
 	};
@@ -4177,10 +4177,10 @@
 				this.memory.WriteByte(c_oSerPropLenType.Byte);
 				this.memory.WriteBool(sheetProtection.selectLockedCells);
 			}
-			if (null != sheetProtection.selectUnlockedCell) {
-				this.memory.WriteByte(c_oSerWorksheetProtection.SelectUnlockedCell);
+			if (null != sheetProtection.selectUnlockedCells) {
+				this.memory.WriteByte(c_oSerWorksheetProtection.SelectUnlockedCells);
 				this.memory.WriteByte(c_oSerPropLenType.Byte);
-				this.memory.WriteBool(sheetProtection.selectUnlockedCell);
+				this.memory.WriteBool(sheetProtection.selectUnlockedCells);
 			}
 			if (null != sheetProtection.sheet) {
 				this.memory.WriteByte(c_oSerWorksheetProtection.Sheet);
@@ -8796,8 +8796,8 @@
 				sheetProtection.scenarios = this.stream.GetBool();
 			} else if (c_oSerWorksheetProtection.SelectLockedCells == type) {
 				sheetProtection.selectLockedCells = this.stream.GetBool();
-			} else if (c_oSerWorksheetProtection.SelectUnlockedCell == type) {
-				sheetProtection.selectUnlockedCell = this.stream.GetBool();
+			} else if (c_oSerWorksheetProtection.SelectUnlockedCells == type) {
+				sheetProtection.selectUnlockedCells = this.stream.GetBool();
 			} else if (c_oSerWorksheetProtection.Sheet == type) {
 				sheetProtection.sheet = this.stream.GetBool();
 			} else if (c_oSerWorksheetProtection.Sort == type) {
