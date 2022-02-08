@@ -1202,8 +1202,10 @@ var editor;
 		var pages = this.wb.calcPagesPrint();
 		this.wb.printPreviewState.setPages(pages);
 
-		this.asc_drawPrintPreview(0);
-		return pages.arrPages.length ? pages.arrPages.length : 1;
+		if (pages.arrPages.length) {
+			this.asc_drawPrintPreview(0);
+		}
+		return pages.arrPages.length;
 	};
 
 	spreadsheet_api.prototype.asc_updatePrintPreview = function (options) {
