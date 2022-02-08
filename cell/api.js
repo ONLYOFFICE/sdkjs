@@ -1177,7 +1177,7 @@ var editor;
     }
   };
 
-	spreadsheet_api.prototype.asc_initPrintPreview = function (containerId) {
+	spreadsheet_api.prototype.asc_initPrintPreview = function (containerId, options) {
 		var curElem = document.getElementById(containerId);
 		if (curElem) {
 			var canvasId = containerId + "-canvas"
@@ -1199,7 +1199,7 @@ var editor;
 		}
 
 		this.wb.printPreviewState.init();
-		var pages = this.wb.calcPagesPrint();
+		var pages = this.wb.calcPagesPrint(options ? options.advancedOptions : null);
 		this.wb.printPreviewState.setPages(pages);
 
 		if (pages.arrPages.length) {
