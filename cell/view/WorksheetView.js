@@ -6920,6 +6920,30 @@
 		return minRow;
 	};
 
+	WorksheetView.prototype._updateColsWidth = function () {
+		if (0 === this.arrRecalcRangesWithHeight.length) {
+			return null;
+		}
+		var t = this;
+		var duplicate = {};
+		var range;
+		for (var i = 0; i < this.arrRecalcRangesWithHeight.length; ++i) {
+			range = this.arrRecalcRangesWithHeight[i];
+
+			for (var c = range.c1; c <= range.c2 && c < t.cols.length; duplicate[c++] = 1) {
+				if (duplicate[c]) {
+					continue;
+				}
+				if (t.model.getColCustomWidth(c)) {
+					t._calcColWidth(c);
+					continue;
+				}
+			}
+		}
+	
+		this._updateColumnPositions();
+	};
+
     WorksheetView.prototype._calcMaxWidth = function (col, row, mc) {
         if (null === mc) {
             return this._getColumnWidthInner(col);
@@ -16220,6 +16244,8 @@
 			this._calcHeightRows(AscCommonExcel.recalcType.newLines);
 			this._calcWidthColumns(AscCommonExcel.recalcType.newLines);
 
+			this._updateColsWidth();
+			this._updateVisibleColsCount(/*skipScrolReinit*/true);
 			var minRow = this._updateRowsHeight();
 			this._updateVisibleRowsCount(/*skipScrolReinit*/true);
 			this._updateSelectionNameAndInfo();
