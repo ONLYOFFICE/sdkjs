@@ -323,7 +323,7 @@ CDocumentContent.prototype.Get_PageLimits = function(nCurPage)
 		return {X : 0, Y : 0, XLimit : W, YLimit : H};
 	}
 };
-CDocumentContent.prototype.Get_PageFields = function(PageIndex)
+CDocumentContent.prototype.Get_PageFields = function(PageIndex, isHdrFtr)
 {
 	if (true === this.Parent.IsCell() || (undefined !== AscFormat.CShape && this.Parent instanceof AscFormat.CShape))
 	{
@@ -356,19 +356,8 @@ CDocumentContent.prototype.Get_PageFields = function(PageIndex)
 		if (null === this.LogicDocument)
 			return {X : 0, Y : 0, XLimit : 0, YLimit : 0};
 
-		var nPageAbs = this.Get_AbsolutePage(PageIndex);
-		var Index    = ( undefined !== this.LogicDocument.Pages[nPageAbs] ? this.LogicDocument.Pages[nPageAbs].Pos : 0 );
-		var oSectPr  = this.LogicDocument.SectionsInfo.Get_SectPr(Index).SectPr;
-		var oFrame   = oSectPr.GetContentFrame(nPageAbs);
-
-		return {
-			X      : oFrame.Left,
-			Y      : oFrame.Top,
-			XLimit : oFrame.Right,
-			YLimit : oFrame.Bottom
-		};
+		return this.LogicDocument.Get_PageFields(this.GetAbsolutePage(PageIndex), isHdrFtr);
 	}
-
 };
 CDocumentContent.prototype.Get_EmptyHeight = function()
 {

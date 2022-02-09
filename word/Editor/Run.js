@@ -4914,20 +4914,22 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
             case para_Drawing:
             {
                 var Para = PRSA.Paragraph;
+                let isInHdrFtr = Para.Parent.IsHdrFtr();
+
                 var PageAbs = Para.private_GetAbsolutePageIndex(CurPage);
                 var PageRel = Para.private_GetRelativePageIndex(CurPage);
                 var ColumnAbs = Para.Get_AbsoluteColumn(CurPage);
 
                 var LogicDocument = this.Paragraph.LogicDocument;
                 var LD_PageLimits = LogicDocument.Get_PageLimits(PageAbs);
-                var LD_PageFields = LogicDocument.Get_PageFields(PageAbs);
+                var LD_PageFields = LogicDocument.Get_PageFields(PageAbs, isInHdrFtr);
 
                 var Page_Width  = LD_PageLimits.XLimit;
                 var Page_Height = LD_PageLimits.YLimit;
 
                 var DrawingObjects = Para.Parent.DrawingObjects;
                 var PageLimits     = Para.Parent.Get_PageLimits(PageRel);
-                var PageFields     = Para.Parent.Get_PageFields(PageRel);
+                var PageFields     = Para.Parent.Get_PageFields(PageRel, isInHdrFtr);
 
                 var X_Left_Field   = PageFields.X;
                 var Y_Top_Field    = PageFields.Y;

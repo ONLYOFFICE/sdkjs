@@ -2915,7 +2915,7 @@ CDocument.prototype.Get_PageLimits = function(nPageIndex)
 		YLimit : oSectPr.GetPageHeight()
 	};
 };
-CDocument.prototype.Get_PageFields = function(nPageIndex)
+CDocument.prototype.Get_PageFields = function(nPageIndex, isHdrFtr)
 {
 	var oPage   = this.Pages[nPageIndex];
 	var nIndex  = oPage ? oPage.Pos : 0;
@@ -2931,15 +2931,19 @@ CDocument.prototype.Get_PageFields = function(nPageIndex)
 		};
 	}
 
-	var oHdrFtrLine = this.HdrFtr.GetHdrFtrLines(nPageIndex);
-
-	var nTop = oFrame.Top;
-	if (null !== oHdrFtrLine.Top && oHdrFtrLine.Top > nTop)
-		nTop = oHdrFtrLine.Top;
-
+	var nTop    = oFrame.Top;
 	var nBottom = oFrame.Bottom;
-	if (null !== oHdrFtrLine.Bottom && oHdrFtrLine.Bottom < nBottom)
-		nBottom = oHdrFtrLine.Bottom;
+
+	if (!isHdrFtr)
+	{
+		var oHdrFtrLine = this.HdrFtr.GetHdrFtrLines(nPageIndex);
+
+		if (null !== oHdrFtrLine.Top && oHdrFtrLine.Top > nTop)
+			nTop = oHdrFtrLine.Top;
+
+		if (null !== oHdrFtrLine.Bottom && oHdrFtrLine.Bottom < nBottom)
+			nBottom = oHdrFtrLine.Bottom;
+	}
 
 	return {
 		X      : oFrame.Left,
