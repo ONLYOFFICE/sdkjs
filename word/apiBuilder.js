@@ -5181,7 +5181,7 @@
 	 * Gets all existing forms in document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @returns {ApiInlineLvlSdt[]}
+	 * @returns {ApiForm[]}
 	 */
 	ApiDocument.prototype.GetAllForms = function() 
 	{
@@ -13035,7 +13035,7 @@
 		return "form";
 	};
 	/**
-	 * Returns a type of the ApiForm class.
+	 * Returns a type of current form.
 	 * @memberof ApiForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {FormType}
@@ -13241,7 +13241,7 @@
 	};
 	/**
 	 * Determines whether the form should be autofit content.
-	 * Used for fixed text forms. 
+	 * Used for "textForm". 
 	 * @memberof ApiForm
 	 * @param {boolean} bAutoFit
 	 * @typeofeditors ["CDE"]
@@ -13272,7 +13272,7 @@
 	};
 	/**
 	 * Determines whether the form should be miltiline.
-	 * Used for fixed text forms. 
+	 * Used for "textForm". 
 	 * @memberof ApiForm
 	 * @param {boolean} bMultiline
 	 * @typeofeditors ["CDE"]
@@ -13308,7 +13308,8 @@
 		return oFormPr.MaxCharacters;
 	};
 	/**
-	 * Sets characters limit. Used with text forms.
+	 * Sets characters limit.
+	 * Used for "textForm".
 	 * @memberof ApiForm
 	 * @param {number} nChars - if param is -1 -> sets no limit.
 	 * Can't sets no limit, if comb of characters is applied.
@@ -13355,6 +13356,7 @@
 	};
 	/**
 	 * Sets comb of characters.
+	 * Used for "textForm".
 	 * @memberof ApiForm
 	 * @param {boolean} bComb
 	 * @typeofeditors ["CDE"]
@@ -13437,7 +13439,7 @@
 	};
 	/**
 	 * Gets the current condition for scaling picture.
-	 * Used with picture forms.
+	 * Used for "pictureForm".
 	 * @memberof ApiForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {scaleCase}
@@ -13469,7 +13471,7 @@
 	};
 	/**
 	 * Sets the condition for scaling the picture.
-	 * Used with picture forms.
+	 * Used for "pictureForm".
 	 * @memberof ApiForm
 	 * @param {slaceCase} sScaleCase
 	 * @typeofeditors ["CDE"]
@@ -13506,7 +13508,7 @@
 	};
 	/**
 	 * Sets the lock aspect ratio for picture.
-	 * Used with picture forms.
+	 * Used for "pictureForm".
 	 * @memberof ApiForm
 	 * @param {percentage} xRatio
 	 * @param {percentage} yRatio
@@ -13536,7 +13538,7 @@
 	};
 	/**
 	 * Sets cell width with applied comb of characters.
-	 * Used with "textForm" with applied comb of characters.
+	 * Used for "textForm" with applied comb of characters.
 	 * @memberof ApiForm
 	 * @param {mm} [nCellWidth=0] - if nCellWidth === 0, then the width will be set automatically. Must be >= 1 and <= 558.8
 	 * @typeofeditors ["CDE"]
@@ -13574,7 +13576,8 @@
 		return oText.Text;
 	};
 	/**
-	 * Sets text to form. Used with text/comboBox forms.
+	 * Sets text to form.
+	 * Used for "textForm"/"comboBoxForm".
 	 * @memberof ApiForm
 	 * @param {string} sText
 	 * @typeofeditors ["CDE"]
@@ -13598,7 +13601,8 @@
 		return true;
 	};
 	/**
-	 * Gets values from combobox/dropdown form.
+	 * Gets list values from current form.
+	 * Used for "comboBoxForm"/"dropDownForm".
 	 * @memberof ApiForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {string[]}
@@ -13620,7 +13624,8 @@
 		return aValues;
 	};
 	/**
-	 * Sets values to combobox/dropdown form.
+	 * Sets list values to current form.
+	 * Used for "comboBoxForm"/"dropDownForm".
 	 * @memberof ApiForm
 	 * @param {string[]} aListString
 	 * @typeofeditors ["CDE"]
@@ -13654,7 +13659,7 @@
 	};
 	/**
 	 * Select specified value from the list value. 
-	 * Used with "comboBoxForm"/"dropDownForm".
+	 * Used for "comboBoxForm"/"dropDownForm".
 	 * @memberof ApiForm
 	 * @param {string} sValue
 	 * @typeofeditors ["CDE"]
@@ -13680,7 +13685,7 @@
 	};
 	/**
 	 * Sets checkbox checked. 
-	 * Used with "checkBoxForm"/"radioButtonForm".
+	 * Used for "checkBoxForm"/"radioButtonForm".
 	 * @memberof ApiForm
 	 * @param {boolean} isChecked
 	 * @typeofeditors ["CDE"]
@@ -13699,7 +13704,7 @@
 		return true;
 	};
 	/**
-	 * Gets base64 image from picture form.
+	 * Gets base64 image from "pictureForm".
 	 * @memberof ApiForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {base64img}
@@ -13726,7 +13731,7 @@
 		return "";
 	};
 	/**
-	 * Sets image to picture form.
+	 * Sets image to "pictureForm".
 	 * @memberof ApiForm
 	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently only internet URL or Base64 encoded images are supported).
 	 * @typeofeditors ["CDE"]
