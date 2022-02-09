@@ -3587,7 +3587,8 @@ background-repeat: no-repeat;\
 		if (!this.TableStylesPreviewGenerator)
 			this.TableStylesPreviewGenerator = new AscCommon.CTableStylesPreviewGenerator(this, this.WordControl.m_oDrawingDocument)
 
-		let oCurrentStyle = sCurrentStyleId ? this.LogicDocument.GetStyles().Get(sCurrentStyleId) : null;
+		let oLogicDocument = this.private_GetLogicDocument();
+		let oCurrentStyle = sCurrentStyleId && oLogicDocument ? oLogicDocument.GetStyles().Get(sCurrentStyleId) : null;
 		this.TableStylesPreviewGenerator.Begin(bUseDefault, oCurrentStyle);
 	};
 
