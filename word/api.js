@@ -3582,12 +3582,13 @@ background-repeat: no-repeat;\
 
 		return [];
 	};
-	asc_docs_api.prototype.asc_generateTableStylesPreviews = function(bUseDefault)
+	asc_docs_api.prototype.asc_generateTableStylesPreviews = function(bUseDefault, sCurrentStyleId)
 	{
 		if (!this.TableStylesPreviewGenerator)
 			this.TableStylesPreviewGenerator = new AscCommon.CTableStylesPreviewGenerator(this, this.WordControl.m_oDrawingDocument)
 
-		this.TableStylesPreviewGenerator.Begin(bUseDefault);
+		let oCurrentStyle = sCurrentStyleId ? this.LogicDocument.GetStyles().Get(sCurrentStyleId) : null;
+		this.TableStylesPreviewGenerator.Begin(bUseDefault, oCurrentStyle);
 	};
 
 

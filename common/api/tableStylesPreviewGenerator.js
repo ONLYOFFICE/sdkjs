@@ -52,7 +52,7 @@
 		this.TableLook       = null;
 		this.Start           = false;
 	}
-	CTableStylesPreviewGenerator.prototype.Begin = function(isDefaultTableLook)
+	CTableStylesPreviewGenerator.prototype.Begin = function(isDefaultTableLook, oCurrentStyle)
 	{
 		if (this.Start)
 			this.End();
@@ -63,6 +63,8 @@
 		this.Start       = true;
 
 		this.Api.sendEvent("asc_onBeginTableStylesPreview", this.TableStyles.length);
+
+		this.HandleCurrentStyle(oCurrentStyle);
 
 		return this.Continue();
 	};
@@ -112,6 +114,14 @@
 		this.TimerId     = null;
 		this.Index       = -1;
 		this.TableStyles = [];
+	};
+	CTableStylesPreviewGenerator.prototype.HandleCurrentStyle = function(oStyle)
+	{
+		if (!oStyle)
+			return;
+
+		let oPreview = this.DrawingDocument.DrawTableStylePreview(oStyle, this.TableLook);
+		this.Api.sendEvent("asc_onCurrentTableStylesPreview", oPreview);
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
