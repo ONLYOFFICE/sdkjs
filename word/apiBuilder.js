@@ -5194,6 +5194,36 @@
 
 		return aForms;
 	};
+
+	/**
+	 * Clear all fields.
+	 * @memberof ApiDocument
+	 * @param {boolean} [bOnlyForms=false] - Determines whether only forms or all fields will be cleared.
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiDocument.prototype.ClearAllFields = function(bOnlyForms) 
+	{
+		bOnlyForms = typeof(bOnlyForms) === "boolean" ? bOnlyForms : false;
+		this.Document.ClearAllSpecialForms(!bOnlyForms);
+	};
+
+	/**
+	 * Sets highlight to forms.
+	 * @memberof ApiDocument
+	 * @param {byte} r - Red color component value.
+	 * @param {byte} g - Green color component value.
+	 * @param {byte} b - Blue color component value.
+	 * @param {boolean} [bNone=false] - Determines that highlight will not be set.
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiDocument.prototype.SetFormsHighlight = function(r, g, b, bNone) 
+	{
+		if (bNone === true)
+			this.Document.SetSpecialFormsHighlight(null, null, null);
+		else
+			this.Document.SetSpecialFormsHighlight(r, g, b);
+	};
+	
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiParagraph
@@ -13083,7 +13113,6 @@
 	{
 		return this.Sdt.GetPlaceholderText();
 	};
-
 	/**
 	 * Sets the placeholder text.
 	 * @memberof ApiForm
@@ -13438,7 +13467,6 @@
 
 		return sScaleFlag;
 	};
-
 	/**
 	 * Sets the condition for scaling the picture.
 	 * Used with picture forms.
@@ -13476,7 +13504,6 @@
 		this.Sdt.UpdatePictureFormLayout();
 		return true;
 	};
-
 	/**
 	 * Sets the lock aspect ratio for picture.
 	 * Used with picture forms.
@@ -13507,7 +13534,6 @@
 
 		return true;
 	};
-
 	/**
 	 * Sets cell width with applied comb of characters.
 	 * Used with "textForm" with applied comb of characters.
@@ -13531,7 +13557,6 @@
 		this.Sdt.SetTextFormPr(oPr);
 		return true;
 	};
-
 	/**
 	 * Gets text from form.
 	 * @memberof ApiForm
@@ -13548,7 +13573,6 @@
 
 		return oText.Text;
 	};
-	
 	/**
 	 * Sets text to form. Used with text/comboBox forms.
 	 * @memberof ApiForm
@@ -13562,17 +13586,17 @@
 		if (sType != "textForm" && sType != "comboBoxForm")
 			return false;
 
-		if (typeof(sText) !== "string")
+		if (typeof(sText) !== "string" || sText === "")
 			return false;
 
 		var oRun = editor.CreateRun();
-		oRun.AddText(sText);
+		
+		this.Sdt.SetShowingPlcHdr(false);
 		this.Sdt.RemoveAll();
 		this.Sdt.AddToContent(0, oRun.Run);
-		
+		oRun.AddText(sText);
 		return true;
 	};
-
 	/**
 	 * Gets values from combobox/dropdown form.
 	 * @memberof ApiForm
@@ -13674,7 +13698,6 @@
 		this.Sdt.ToggleCheckBox(isChecked);
 		return true;
 	};
-
 	/**
 	 * Gets base64 image from picture form.
 	 * @memberof ApiForm
@@ -14289,6 +14312,8 @@
 	ApiDocument.prototype["ToMarkdown"]              = ApiDocument.prototype.ToMarkdown;
 	ApiDocument.prototype["ToHtml"]                  = ApiDocument.prototype.ToHtml;
 	ApiDocument.prototype["GetAllForms"]             = ApiDocument.prototype.GetAllForms;
+	ApiDocument.prototype["ClearAllFields"]          = ApiDocument.prototype.ClearAllFields;
+	ApiDocument.prototype["SetFormsHighlight"]       = ApiDocument.prototype.SetFormsHighlight;
 
 	ApiParagraph.prototype["GetClassType"]           = ApiParagraph.prototype.GetClassType;
 	ApiParagraph.prototype["AddText"]                = ApiParagraph.prototype.AddText;
@@ -14753,6 +14778,43 @@
 	ApiBlockLvlSdt.prototype["Select"]                  = ApiBlockLvlSdt.prototype.Select;
 	ApiBlockLvlSdt.prototype["GetPlaceholderText"]      = ApiBlockLvlSdt.prototype.GetPlaceholderText;
 	ApiBlockLvlSdt.prototype["SetPlaceholderText"]      = ApiBlockLvlSdt.prototype.SetPlaceholderText;
+
+	ApiBlockLvlSdt.prototype["GetClassType"]        = ApiBlockLvlSdt.prototype.GetClassType;
+	ApiBlockLvlSdt.prototype["GetFormType"]         = ApiBlockLvlSdt.prototype.GetFormType;
+	ApiBlockLvlSdt.prototype["GetFormKey"]          = ApiBlockLvlSdt.prototype.GetFormKey;
+	ApiBlockLvlSdt.prototype["SetFormKey"]          = ApiBlockLvlSdt.prototype.SetFormKey;
+	ApiBlockLvlSdt.prototype["GetPlaceholderText"]  = ApiBlockLvlSdt.prototype.GetPlaceholderText;
+	ApiBlockLvlSdt.prototype["SetPlaceholderText"]  = ApiBlockLvlSdt.prototype.SetPlaceholderText;
+	ApiBlockLvlSdt.prototype["GetTipText"]          = ApiBlockLvlSdt.prototype.GetTipText;
+	ApiBlockLvlSdt.prototype["SetTipText"]          = ApiBlockLvlSdt.prototype.SetTipText;
+	ApiBlockLvlSdt.prototype["IsRequired"]          = ApiBlockLvlSdt.prototype.IsRequired;
+	ApiBlockLvlSdt.prototype["SetRequired"]         = ApiBlockLvlSdt.prototype.SetRequired;
+	ApiBlockLvlSdt.prototype["IsFixedForm"]         = ApiBlockLvlSdt.prototype.IsFixedForm;
+	ApiBlockLvlSdt.prototype["SetFixedForm"]        = ApiBlockLvlSdt.prototype.SetFixedForm;
+	ApiBlockLvlSdt.prototype["IsAutoFit"]           = ApiBlockLvlSdt.prototype.IsAutoFit;
+	ApiBlockLvlSdt.prototype["SetAutoFit"]          = ApiBlockLvlSdt.prototype.SetAutoFit;
+	ApiBlockLvlSdt.prototype["IsMultiline"]         = ApiBlockLvlSdt.prototype.IsMultiline;
+	ApiBlockLvlSdt.prototype["SetMultiline"]        = ApiBlockLvlSdt.prototype.SetMultiline;
+	ApiBlockLvlSdt.prototype["GetCharactersLimit"]  = ApiBlockLvlSdt.prototype.GetCharactersLimit;
+	ApiBlockLvlSdt.prototype["SetCharactersLimit"]  = ApiBlockLvlSdt.prototype.SetCharactersLimit;
+	ApiBlockLvlSdt.prototype["IsCharactersComb"]    = ApiBlockLvlSdt.prototype.IsCharactersComb;
+	ApiBlockLvlSdt.prototype["SetCharactersComb"]   = ApiBlockLvlSdt.prototype.SetCharactersComb;
+	ApiBlockLvlSdt.prototype["SetBorderColor"]      = ApiBlockLvlSdt.prototype.SetBorderColor;
+	ApiBlockLvlSdt.prototype["SetBackgroundColor"]  = ApiBlockLvlSdt.prototype.SetBackgroundColor;
+	ApiBlockLvlSdt.prototype["GetPictureScaleCase"] = ApiBlockLvlSdt.prototype.GetPictureScaleCase;
+	ApiBlockLvlSdt.prototype["SetPictureScaleCase"] = ApiBlockLvlSdt.prototype.SetPictureScaleCase;
+	ApiBlockLvlSdt.prototype["SetLockAspectRatio"]  = ApiBlockLvlSdt.prototype.SetLockAspectRatio;
+	ApiBlockLvlSdt.prototype["SetCellWidth"]        = ApiBlockLvlSdt.prototype.SetCellWidth;
+	ApiBlockLvlSdt.prototype["GetText"]             = ApiBlockLvlSdt.prototype.GetText;
+	ApiBlockLvlSdt.prototype["SetText"]             = ApiBlockLvlSdt.prototype.SetText;
+	ApiBlockLvlSdt.prototype["GetListValues"]       = ApiBlockLvlSdt.prototype.GetListValues;
+	ApiBlockLvlSdt.prototype["SetListValues"]       = ApiBlockLvlSdt.prototype.SetListValues;
+	ApiBlockLvlSdt.prototype["SelectListValue"]     = ApiBlockLvlSdt.prototype.SelectListValue;
+	ApiBlockLvlSdt.prototype["SetCheckBoxChecked"]  = ApiBlockLvlSdt.prototype.SetCheckBoxChecked;
+	ApiBlockLvlSdt.prototype["GetImage"]            = ApiBlockLvlSdt.prototype.GetImage;
+	ApiBlockLvlSdt.prototype["SetImage"]            = ApiBlockLvlSdt.prototype.SetImage;
+	ApiBlockLvlSdt.prototype["Clear"]               = ApiBlockLvlSdt.prototype.Clear;
+
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
