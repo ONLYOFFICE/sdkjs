@@ -3922,15 +3922,20 @@ CChartsDrawer.prototype =
 		//front
 		faceFront = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, false, false, true, check);
 		addPathToArr(this._isVisibleVerge3D(sortCylinderPoints1[0], sortCylinderPoints1[sortCylinderPoints1.length - 1],
-			sortCylinderPoints2[0], val, true), faceFront, 0);
+			sortCylinderPoints2[0], val), faceFront, 0);
 
 		//down
 		if (val === 0) {
 			face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, false, true, true);
 			addPathToArr(true, face, 1);
 		} else {
-			face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, false, true, true);
-			addPathToArr(this._isVisibleVerge3D(point4, point1, point2, val), face, 1);
+			if (this._isVisibleVerge3D(point4, point1, point2, val)) {
+				face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, false, true, true);
+				addPathToArr(true, face, 1);
+			} else {
+				face = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, false, true, true, true);
+				addPathToArr(true, face, 1);
+			}
 		}
 
 		//up
@@ -3939,15 +3944,20 @@ CChartsDrawer.prototype =
 				face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, true, false, true);
 				addPathToArr(true, face, 4);
 			} else {
-				face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, true, false, true);
-				addPathToArr(this._isVisibleVerge3D(point6, point5, point8, val), face, 4);
+				if (this._isVisibleVerge3D(point6, point5, point8, val)) {
+					face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, true, false, true);
+					addPathToArr(true, face, 4);
+				} else {
+					face = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, true, false, true, true);
+					addPathToArr(true, face, 4);
+				}
 			}
 		}
 		
 		//unfront
 		faceFront = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, false, false, true, check);
 		addPathToArr(this._isVisibleVerge3D(sortCylinderPoints1[0], sortCylinderPoints1[sortCylinderPoints1.length - 1],
-			sortCylinderPoints2[0], val), faceFront, 5);
+			sortCylinderPoints2[0], val, true), faceFront, 5);
 
 		if (!isNotOnlyFrontFaces) {
 			res = frontPaths;
@@ -3978,14 +3988,30 @@ CChartsDrawer.prototype =
 					path.lnTo(segmentPoints2[i].x / pxToMm * pathW, segmentPoints2[i].y / pxToMm * pathH);
 				}
 			}
-			path.lnTo(segmentPoints2[0].x / pxToMm * pathW, segmentPoints2[0].y / pxToMm * pathH);
+			if (check) {
+				for (var i = segmentPoints2.length - 1; i >= 0; i--) {
+					if (i % 2 === 0) {
+						path.lnTo(segmentPoints2[i].x / pxToMm * pathW, segmentPoints2[i].y / pxToMm * pathH);
+					}
+				}
+			} else {
+				path.lnTo(segmentPoints2[0].x / pxToMm * pathW, segmentPoints2[0].y / pxToMm * pathH)
+			}
 		} else if (down) {
 			for (var i = 0; i < segmentPoints.length; i++) {
 				if (i % 2 === 0) {
 					path.lnTo(segmentPoints[i].x / pxToMm * pathW, segmentPoints[i].y / pxToMm * pathH);
 				}
 			}
-			path.lnTo(segmentPoints[0].x / pxToMm * pathW, segmentPoints[0].y / pxToMm * pathH)
+			if (check) {
+				for (var i = segmentPoints.length - 1; i >= 0; i--) {
+					if (i % 2 === 0) {
+						path.lnTo(segmentPoints[i].x / pxToMm * pathW, segmentPoints[i].y / pxToMm * pathH);
+					}
+				}
+			} else {
+				path.lnTo(segmentPoints[0].x / pxToMm * pathW, segmentPoints[0].y / pxToMm * pathH)
+			}
 		} else {
 			var endIndex = 0;
 			var startIndex = segmentPoints.length - 1;
@@ -5377,6 +5403,11 @@ CChartsDrawer.prototype =
 		var paths = this.calculateCylinder(points, val, checkPathMethod, false, check);
 
 		return paths;
+	},
+
+	checkingPenForDrawing: function (shape, verge) {
+		var isCone = shape === AscFormat.BAR_SHAPE_CONE || shape === AscFormat.BAR_SHAPE_CONETOMAX;
+		return isCone && (verge === 0 || verge === 5);
 	}
 };
 
@@ -5606,7 +5637,8 @@ drawBarChart.prototype = {
 								point: idx,
 								verge: k,
 								paths: paths.paths[k],
-								facePoints: paths.facePoints[k]
+								facePoints: paths.facePoints[k],
+								shapeType: shapeType
 							});
 						}
 					}
@@ -6137,20 +6169,22 @@ drawBarChart.prototype = {
 			}
 		};
 
-		var index, faces, face;
+		var index, faces, face, isNotPen;
 		if (this.subType !== "standard") {
 			for (var i = 0; i < this.sortParallelepipeds.length; i++) {
 				index = this.sortParallelepipeds[i].nextIndex;
 				faces = this.temp[index].faces;
 				for (var j = 0; j < faces.length; j++) {
 					face = faces[j];
-					drawVerges(face.seria, face.point, face.frontPaths, null, face.verge);
+					isNotPen = this.cChartDrawer.checkingPenForDrawing(face.shapeType, face.verge);
+					drawVerges(face.seria, face.point, face.frontPaths, null, face.verge, isNotPen);
 				}
 			}
 		} else {
 			for (var i = 0; i < this.sortZIndexPaths.length; i++) {
+				isNotPen = this.cChartDrawer.checkingPenForDrawing(this.sortZIndexPaths[i].shapeType, this.sortZIndexPaths[i].verge);
 				drawVerges(this.sortZIndexPaths[i].seria, this.sortZIndexPaths[i].point,
-					this.sortZIndexPaths[i].paths, null, this.sortZIndexPaths[i].verge);
+					this.sortZIndexPaths[i].paths, null, this.sortZIndexPaths[i].verge, isNotPen);
 			}
 		}
 
@@ -6399,7 +6433,8 @@ drawBarChart.prototype = {
 					points: arrPoints2[k],
 					points2: arrPoints[k],
 					plainEquation: plainEquation,
-					plainArea: plainArea
+					plainArea: plainArea,
+					shapeType: type,
 				});
 			}
 		}
@@ -9061,7 +9096,8 @@ drawHBarChart.prototype = {
 					darkPaths: paths.darkPaths[k],
 					x: controlPoint.x,
 					y: controlPoint.y,
-					zIndex: controlPoint.z
+					zIndex: controlPoint.z,
+					shapeType: type,
 				});
 			}
 		} else {
@@ -9133,7 +9169,8 @@ drawHBarChart.prototype = {
 					points: arrPoints2[k],
 					points2: arrPoints[k],
 					plainEquation: plainEquation,
-					plainArea: plainArea
+					plainArea: plainArea,
+					shapeType: type,
 				});
 			}
 		}
@@ -9300,16 +9337,18 @@ drawHBarChart.prototype = {
 			}
 		};
 
-		var index, faces, face;
+		var index, faces, face, isNotPen;
 		if (this.cChartDrawer.processor3D.view3D.getRAngAx()) {
 			for (var i = 0; i < this.sortZIndexPaths.length; i++) {
+				isNotPen = this.cChartDrawer.checkingPenForDrawing(this.sortZIndexPaths[i].shapeType, this.sortZIndexPaths[i].verge);
 				drawVerges(this.sortZIndexPaths[i].seria, this.sortZIndexPaths[i].point,
-					this.sortZIndexPaths[i].darkPaths, null, this.sortZIndexPaths[i].verge, null, true);
+					this.sortZIndexPaths[i].darkPaths, null, this.sortZIndexPaths[i].verge, isNotPen, true);
 			}
 
 			for (var i = 0; i < this.sortZIndexPaths.length; i++) {
+				isNotPen = this.cChartDrawer.checkingPenForDrawing(this.sortZIndexPaths[i].shapeType, this.sortZIndexPaths[i].verge);
 				drawVerges(this.sortZIndexPaths[i].seria, this.sortZIndexPaths[i].point,
-					this.sortZIndexPaths[i].frontPaths, null, this.sortZIndexPaths[i].verge);
+					this.sortZIndexPaths[i].frontPaths, null, this.sortZIndexPaths[i].verge, isNotPen);
 			}
 		} else {
 			for (var i = 0; i < this.sortParallelepipeds.length; i++) {
@@ -9317,7 +9356,8 @@ drawHBarChart.prototype = {
 				faces = this.temp[index].faces;
 				for (var j = 0; j < faces.length; j++) {
 					face = faces[j];
-					drawVerges(face.seria, face.point, face.darkPaths, null, face.verge, null, true);
+					isNotPen = this.cChartDrawer.checkingPenForDrawing(face.shapeType, face.verge);
+					drawVerges(face.seria, face.point, face.darkPaths, null, face.verge, isNotPen, true);
 				}
 			}
 
@@ -9326,7 +9366,8 @@ drawHBarChart.prototype = {
 				faces = this.temp[index].faces;
 				for (var j = 0; j < faces.length; j++) {
 					face = faces[j];
-					drawVerges(face.seria, face.point, face.frontPaths, null, face.verge);
+					isNotPen = this.cChartDrawer.checkingPenForDrawing(face.shapeType, face.verge);
+					drawVerges(face.seria, face.point, face.frontPaths, null, face.verge, isNotPen);
 				}
 			}
 		}
