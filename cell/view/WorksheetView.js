@@ -14034,7 +14034,9 @@
 			for (var j = _range.r1; j <= _range.r2; j++) {
 				var isHidden = t.model.getRowHidden(j);
 				if (j >= intersection.r1 && j <= intersection.r2 && isHidden) {
-					tempRanges.push(tempRange);
+					if (tempRange) {
+						tempRanges.push(tempRange);
+					}
 					tempRange = null;
 				} else {
 					if (!tempRange) {
