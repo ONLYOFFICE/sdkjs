@@ -3890,7 +3890,7 @@ CChartsDrawer.prototype =
 		return result;
 	},
 
-	calculateCylinder: function(points, val, isNotOnlyFrontFaces, notDraw, check) {
+	calculateCylinder: function (points, val, isNotOnlyFrontFaces, notDraw, check, cone) {
 		var res;
 		var segmentPoints = points[0];
 		var segmentPoints2 = points[1];
@@ -3905,6 +3905,8 @@ CChartsDrawer.prototype =
 
 		var frontPaths = [];
 		var darkPaths = [];
+
+		var isVisibleReverse = cone ? check : true;
 
 		var addPathToArr = function (isFront, face, index) {
 			frontPaths[index] = null;
@@ -3922,19 +3924,24 @@ CChartsDrawer.prototype =
 		//front
 		faceFront = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, false, false, true, check);
 		addPathToArr(this._isVisibleVerge3D(sortCylinderPoints1[0], sortCylinderPoints1[sortCylinderPoints1.length - 1],
-			sortCylinderPoints2[0], val), faceFront, 0);
+			sortCylinderPoints2[0], val, !isVisibleReverse), faceFront, 0);
 
 		//down
 		if (val === 0) {
 			face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, false, true, true);
 			addPathToArr(true, face, 1);
 		} else {
-			if (this._isVisibleVerge3D(point4, point1, point2, val)) {
-				face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, false, true, true);
-				addPathToArr(true, face, 1);
+			if (cone) {
+				if (this._isVisibleVerge3D(point4, point1, point2, val)) {
+					face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, false, true, true);
+					addPathToArr(true, face, 1);
+				} else {
+					face = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, false, true, true, true);
+					addPathToArr(true, face, 1);
+				}
 			} else {
-				face = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, false, true, true, true);
-				addPathToArr(true, face, 1);
+				face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, false, true, true);
+				addPathToArr(this._isVisibleVerge3D(point4, point1, point2, val), face, 1);
 			}
 		}
 
@@ -3944,20 +3951,25 @@ CChartsDrawer.prototype =
 				face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, true, false, true);
 				addPathToArr(true, face, 4);
 			} else {
-				if (this._isVisibleVerge3D(point6, point5, point8, val)) {
-					face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, true, false, true);
-					addPathToArr(true, face, 4);
+				if (cone) {
+					if (this._isVisibleVerge3D(point6, point5, point8, val)) {
+						face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, true, false, true);
+						addPathToArr(true, face, 4);
+					} else {
+						face = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, true, false, true, true);
+						addPathToArr(true, face, 4);
+					}
 				} else {
-					face = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, true, false, true, true);
-					addPathToArr(true, face, 4);
-				}
+					face = this._calculatePathFaceCylinder(segmentPoints, segmentPoints2, true, false, true);
+					addPathToArr(this._isVisibleVerge3D(point6, point5, point8, val), face, 4);
+				} 
 			}
 		}
 		
 		//unfront
 		faceFront = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, false, false, true, check);
 		addPathToArr(this._isVisibleVerge3D(sortCylinderPoints1[0], sortCylinderPoints1[sortCylinderPoints1.length - 1],
-			sortCylinderPoints2[0], val, true), faceFront, 5);
+			sortCylinderPoints2[0], val, isVisibleReverse), faceFront, 5);
 
 		if (!isNotOnlyFrontFaces) {
 			res = frontPaths;
@@ -5400,7 +5412,7 @@ CChartsDrawer.prototype =
 
 		var points = [segmentPoints, segmentPoints2, point1, point2, point4, point5, point6, point8,
 			sortCylinderPoints1, sortCylinderPoints2];
-		var paths = this.calculateCylinder(points, val, checkPathMethod, false, check);
+		var paths = this.calculateCylinder(points, val, checkPathMethod, false, check, cone);
 
 		return paths;
 	},
