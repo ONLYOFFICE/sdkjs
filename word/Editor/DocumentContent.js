@@ -607,7 +607,7 @@ CDocumentContent.prototype.Is_UseInDocument = function(Id)
 };
 CDocumentContent.prototype.IsHdrFtr = function(bReturnHdrFtr)
 {
-	if (this.Parent)
+	if (this.Parent && this.Parent.IsHdrFtr)
 		return this.Parent.IsHdrFtr(bReturnHdrFtr);
 	else
 		return (bReturnHdrFtr ? null : false);
