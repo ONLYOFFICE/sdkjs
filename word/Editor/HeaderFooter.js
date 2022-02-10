@@ -74,7 +74,8 @@ function CHeaderFooter(Parent, LogicDocument, DrawingDocument, Type)
 		PageNumInfo   : {}, // Объект с ключом - номером страницы, значением - информация о нумерации
 		SectPr        : {}, // Объект с ключом - номером страницы и полем - ссылкой на секцию
 		LastPage      : -1, // Номер страницы, которая была пересчитана последней
-		RequestedPage : -1  // Страница, которую хотели сделать текущей, но не смогли, т.к. она была не пересчитана
+		RequestedPage : -1, // Страница, которую хотели сделать текущей, но не смогли, т.к. она была не пересчитана
+		InProgress    : false // Запущен ли в данны момент пересчет данного колонтитула
 	};
 
 	this.PageCountElements = [];
@@ -113,6 +114,9 @@ CHeaderFooter.prototype =
 
     Set_Page : function(Page_abs)
     {
+    	if (this.IsRecalculateInProgress())
+    		return;
+
     	if (Page_abs > this.RecalcInfo.LastPage)
 		{
 			this.RecalcInfo.RequestedPage = Page_abs;
@@ -157,9 +161,29 @@ CHeaderFooter.prototype =
 		return true;
 	},
 
+	OnStartRecalculate : function()
+	{
+		this.RecalcInfo.InProgress = true;
+	},
+
+	OnEndRecalculate : function()
+	{
+		this.RecalcInfo.InProgress = false;
+	},
+
+	IsRecalculateInProgress : function()
+	{
+		return this.RecalcInfo.InProgress;
+	},
+
     Recalculate : function(Page_abs, SectPr)
     {
-        // Логика пересчета колонтитулов следующая:
+		if (this.IsRecalculateInProgress())
+			return;
+
+		this.OnStartRecalculate();
+
+		// Логика пересчета колонтитулов следующая:
         // 1. При пересчете страницы каждый раз пересчитывается колонтитул (всмысле заходим в функцию Recalculate,т.е. сюда)
         // 2. Далее мы смотрим, нужно ли вообще пересчитывать данную страницу RecalcInfo.NeedRecalc[Page_abs] если это значение
         //    не false, тогда пересчитывать нужно, а если нет, тогда выходим
@@ -286,18 +310,27 @@ CHeaderFooter.prototype =
             this.Content.LoadRecalculateObject( RecalcObj );
         }
 
+        this.OnEndRecalculate();
+
         return bChanges;
     },
     
-    Recalculate2 : function(Page_abs)
+    RecalculateContent : function(nPageAbs)
     {
-        this.Content.Set_StartPage( Page_abs );
-        this.Content.PrepareRecalculateObject();
+		if (this.IsRecalculateInProgress())
+			return;
 
-        var CurPage = 0;
-        var RecalcResult = recalcresult2_NextPage;
-        while ( recalcresult2_End != RecalcResult  )
-            RecalcResult = this.Content.Recalculate_Page( CurPage++, true );
+		this.OnStartRecalculate();
+
+		this.Content.Set_StartPage(nPageAbs);
+		this.Content.PrepareRecalculateObject();
+
+		let nCurPage      = 0;
+		let nRecalcResult = recalcresult2_NextPage;
+		while (recalcresult2_End !== nRecalcResult)
+			nRecalcResult = this.Content.Recalculate_Page(nCurPage++, true);
+
+		this.OnEndRecalculate();
     },
 
     Reset_RecalculateCache : function()
@@ -1664,7 +1697,7 @@ CHeaderFooterController.prototype =
                 var YLimit = SectPr.GetPageHeight();
 
                 Footer.Reset( X, Y, XLimit, YLimit );
-                Footer.Recalculate2(PageIndex);
+                Footer.RecalculateContent(PageIndex);
 
                 var SummaryHeight = Footer.Content.GetSummaryHeight();
                 Y = Math.max( 2 * YLimit / 3, YLimit - SectPr.GetPageMarginFooter() - SummaryHeight );

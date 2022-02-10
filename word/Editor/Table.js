@@ -873,7 +873,7 @@ CTable.prototype.Get_Props = function()
 	}
 	else
 	{
-		var LD_PageFields = this.LogicDocument.Get_PageFields(this.Get_StartPage_Absolute());
+		var LD_PageFields = this.LogicDocument.Get_PageFields(this.Get_StartPage_Absolute(), this.Parent && this.Parent.IsHdrFtr());
 
 		Pr.TableAlignment     = 0; // align_Left
 		Pr.TableIndent        = this.X_origin - LD_PageFields.X;

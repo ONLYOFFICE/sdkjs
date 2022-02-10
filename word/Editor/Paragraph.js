@@ -4532,7 +4532,7 @@ Paragraph.prototype.Add_Tab = function(bShift)
 		if (nDefaultTabStop < 0.001)
 			return;
 
-		var LD_PageFields = this.LogicDocument.Get_PageFields(this.Get_AbsolutePage(0));
+		var LD_PageFields = this.LogicDocument.Get_PageFields(this.Get_AbsolutePage(0), this.Parent && this.Parent.IsHdrFtr());
 
 		var nLeft  = ParaPr.Ind.Left;
 		var nFirst = ParaPr.Ind.FirstLine;
@@ -11261,9 +11261,10 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 
 		if (true === DrawingLayout.Layout)
 		{
+			let isInHdrFtr    = this.Parent.IsHdrFtr();
 			var LogicDocument = this.LogicDocument;
 			var LD_PageLimits = LogicDocument.Get_PageLimits(CurPage);
-			var LD_PageFields = LogicDocument.Get_PageFields(CurPage);
+			var LD_PageFields = LogicDocument.Get_PageFields(CurPage, isInHdrFtr);
 
 			var Page_Width  = LD_PageLimits.XLimit;
 			var Page_Height = LD_PageLimits.YLimit;
@@ -11286,7 +11287,7 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 			var PageRel   = PageAbs - this.Parent.Get_AbsolutePage(0);
 
 			var PageLimits = this.Parent.Get_PageLimits(PageRel);
-			var PageFields = this.Parent.Get_PageFields(PageRel);
+			var PageFields = this.Parent.Get_PageFields(PageRel, isInHdrFtr);
 
 			var _CurPage = 0;
 			if (0 !== PageAbs && CurPage > ColumnAbs)
@@ -11310,7 +11311,7 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 			if (true === this.Parent.IsTableCellContent() && false === Drawing.IsLayoutInCell())
 			{
 				PageLimitsOrigin     = LogicDocument.Get_PageLimits(PageAbs);
-				var PageFieldsOrigin = LogicDocument.Get_PageFields(PageAbs);
+				var PageFieldsOrigin = LogicDocument.Get_PageFields(PageAbs, isInHdrFtr);
 				ColumnStartX         = PageFieldsOrigin.X;
 				ColumnEndX           = PageFieldsOrigin.XLimit;
 			}
