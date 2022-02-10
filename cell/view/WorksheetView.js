@@ -12098,7 +12098,7 @@
 
 		if (!specialPasteHelper.specialPasteStart) {
 			if (pasteInfo && pasteInfo.originalSelectBeforePaste) {
-				specialPasteHelper.selectionRange = pasteInfo.originalSelectBeforePaste ? pasteInfo.originalSelectBeforePaste.clone() : null;
+				specialPasteHelper.selectionRange = pasteInfo.originalSelectBeforePaste;
 			} else {
 				specialPasteHelper.selectionRange = this.model.selectionRange ? this.model.selectionRange.clone() : null;
 			}
@@ -12336,7 +12336,11 @@
 
 		if (specialPasteHelper.specialPasteStart) {
 			if (window['Asc'].c_oSpecialPasteOperation.none !== specialPasteProps.operation && null !== specialPasteProps.operation) {
-				specialPasteHelper.selectionRange = t.model.selectionRange ? t.model.selectionRange.clone() : null;
+				if (pasteInfo && pasteInfo.originalSelectBeforePaste) {
+					specialPasteHelper.selectionRange = pasteInfo.originalSelectBeforePaste;
+				} else {
+					specialPasteHelper.selectionRange = this.model.selectionRange ? this.model.selectionRange.clone() : null;
+				}
 			}
 		}
 
