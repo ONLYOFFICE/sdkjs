@@ -11418,6 +11418,12 @@
         var activeCell = this.model.selectionRange.activeCell.clone();
         var arn = this.model.selectionRange.getLast().clone(true);
 
+		var revertSelection = function () {
+			if (originalSelectBeforePaste) {
+				t.model.selectionRange.ranges = originalSelectBeforePaste;
+			}
+		};
+
         var onSelectionCallback = function (isSuccess) {
             if (false === isSuccess) {
                 return;
@@ -11755,7 +11761,7 @@
 							specialPasteHelper.specialPasteProps.asc_setProps(Asc.c_oSpecialPasteProps.formulaColumnWidth);
 						}
 
-                        t._loadDataBeforePaste(isLargeRange, val, bIsUpdate, canChangeColWidth, checkPasteRange);
+                        t._loadDataBeforePaste(isLargeRange, val, bIsUpdate, canChangeColWidth, checkPasteRange, revertSelection);
 						bIsUpdate = false;
                         break;
                     case "hyperlink":
@@ -11830,6 +11836,7 @@
 			}
 		};
 
+		var originalSelectBeforePaste;
 		var checkPasteRange;
 		if ("paste" === prop) {
 			if (val.onlyImages) {
@@ -11839,11 +11846,20 @@
 				t.handlers.trigger("onErrorEvent", c_oAscError.ID.PasteMultiSelectError, c_oAscError.Level.NoCritical);
 				return false;
 			} else {
+
+				if (val.fromBinary) {
+					//при вставке извне не работает эта обработка в мс
+					//не клонирую, поскольку нигде меняться не будет
+					originalSelectBeforePaste = this.model.selectionRange.ranges;
+					this.changeSelectOnMultiSelect();
+				}
+
 				var newRange = val.fromBinary ? this.pasteFromBinary(val.data, true) : this._pasteFromHTML(val.data, true);
 				checkPasteRange = newRange && newRange.length ? newRange : [newRange];
 				checkRange = [checkPasteRange[0]];
 
 				if (!newRange) {
+					revertSelection();
 					return false;
 				}
 
@@ -11854,6 +11870,7 @@
 					}*/
 					if (this.intersectionFormulaArray(_checkRange)) {
 						t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
+						revertSelection();
 						return false;
 					}
 					if (val.data && val.data.pivotTables && val.data.pivotTables.length > 0) {
@@ -11861,12 +11878,14 @@
 						for (var i = 0; i < intersectionTableParts.length; i++) {
 							if (intersectionTableParts[i] && intersectionTableParts[i].Ref && !_checkRange.containsRange(intersectionTableParts[i].Ref)) {
 								t.handlers.trigger("onErrorEvent", c_oAscError.ID.PivotOverlap, c_oAscError.Level.NoCritical);
+								revertSelection();
 								return false;
 							}
 						}
 					}
 					if (this.model._isPivotsIntersectRangeButNotInIt(_checkRange)) {
 						t.handlers.trigger("onErrorEvent", c_oAscError.ID.LockedCellPivot, c_oAscError.Level.NoCritical);
+						revertSelection();
 						return false;
 					}
 				}
@@ -12421,7 +12440,7 @@
 		return {selectData: pastedData, adjustFormatArr: adjustFormatArr};
 	};
 
-	WorksheetView.prototype._loadDataBeforePaste = function (isLargeRange, val, bIsUpdate, canChangeColWidth, pasteToRange) {
+	WorksheetView.prototype._loadDataBeforePaste = function (isLargeRange, val, bIsUpdate, canChangeColWidth, pasteToRange, endPasteCallFunc) {
 		var t = this;
 		var specialPasteHelper = window['AscCommon'].g_specialPasteHelper;
 		var specialPasteProps = specialPasteHelper.specialPasteProps;
@@ -12437,6 +12456,7 @@
 				_doPaste(pasteToRange[j]);
 				if (!selectData && !fromBinaryExcel) {
 					History.EndTransaction();
+					endPasteCallFunc && endPasteCallFunc();
 					window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
 					return;
 				}
@@ -12464,6 +12484,7 @@
 
 			selectData = selectData ? selectData.selectData : null;
 			if (!selectData) {
+				endPasteCallFunc && endPasteCallFunc();
 				window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
 				return;
 			}
@@ -12486,6 +12507,7 @@
 					}
 				}
 			}
+			endPasteCallFunc && endPasteCallFunc();
 			window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
 
 			if (val.needDraw) {
@@ -13990,6 +14012,71 @@
 		return cellCoord;
 	};
 
+	WorksheetView.prototype.changeSelectOnMultiSelect = function () {
+		//разбиваем селект в зависимости от наличия скрытых строк внутри фильтра
+		var t = this;
+		var breakRange;
+		if (this.model.AutoFilter && this.model.AutoFilter.isApplyAutoFilter()) {
+			//отсеиваем все скрытые строки
+			breakRange = new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxRow0);
+		} else {
+			//проверяем, попала ли активная ячейка в ф/т с примененным а/ф и в зависимости от этого составляем список скрытых внутри строк
+			var table = this.model.autoFilters.getTableByActiveCell();
+			if (table && table.isApplyAutoFilter()) {
+				breakRange = table.Ref;
+			}
+		}
+
+		var breakRangeByHiddenRows = function (_range, intersection) {
+			//чтобы не усложнять логику прохожусь по всем строкам селекта
+			var tempRanges = [];
+			var tempRange;
+			for (var j = _range.r1; j <= _range.r2; j++) {
+				var isHidden = t.model.getRowHidden(j);
+				if (j >= intersection.r1 && j <= intersection.r2 && isHidden) {
+					tempRanges.push(tempRange);
+					tempRange = null;
+				} else {
+					if (!tempRange) {
+						tempRange = new Asc.Range(_range.c1, j, _range.c2, j);
+					} else {
+						tempRange.r2++;
+					}
+					if (j === _range.r2) {
+						tempRanges.push(tempRange);
+					}
+				}
+			}
+			return tempRanges;
+		};
+
+
+		var isChange;
+		var newRanges = [];
+		if (breakRange) {
+			var sr = this.model.selectionRange;
+			for (var i = 0; i < sr.ranges.length; i++) {
+				if (sr.ranges[i]) {
+					var intersection = sr.ranges[i].intersection(breakRange);
+					if (intersection) {
+						//нужно пройтись по всем строкам пересечения и отсеять скрытые
+						var breakRanges = breakRangeByHiddenRows(sr.ranges[i], intersection);
+						if (breakRanges.length > 1) {
+							isChange = true;
+						}
+						newRanges = newRanges.concat(breakRanges);
+					} else {
+						newRanges.push(sr.ranges[i].clone());
+					}
+				}
+			}
+		}
+
+		if (isChange && newRanges.length) {
+			this.model.selectionRange.ranges = newRanges;
+		}
+	};
+	
 	WorksheetView.prototype._isLockedHeaderFooter = function (callback) {
 		var lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Object, null, this.model.getId(),
 			AscCommonExcel.c_oAscHeaderFooterEdit);
