@@ -1747,7 +1747,7 @@ CTable.prototype.private_RecalculatePageXY = function(CurPage)
 };
 CTable.prototype.private_RecalculatePositionX = function(CurPage)
 {
-	let isHdtFtr = this.Parent.IsHdrFtr();
+	var isHdtFtr = this.Parent.IsHdrFtr();
 
     var TablePr = this.Get_CompiledPr(false).TablePr;
     var PageLimits = this.Parent.Get_PageLimits(this.PageNum);
@@ -3315,9 +3315,9 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 };
 CTable.prototype.private_RecalculatePositionY = function(CurPage)
 {
-	let isHdrFtr = this.Parent.IsHdrFtr();
-	let nPageRel = this.GetRelativePage(CurPage);
-	let nPageAbs = this.GetAbsolutePage(CurPage);
+	var isHdrFtr = this.Parent.IsHdrFtr();
+	var nPageRel = this.GetRelativePage(CurPage);
+	var nPageAbs = this.GetAbsolutePage(CurPage);
 
 	var PageLimits = this.Parent.Get_PageLimits(nPageRel);
 	var PageFields = this.Parent.Get_PageFields(nPageRel, isHdrFtr);

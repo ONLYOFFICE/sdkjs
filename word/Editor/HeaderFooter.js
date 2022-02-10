@@ -325,8 +325,8 @@ CHeaderFooter.prototype =
 		this.Content.Set_StartPage(nPageAbs);
 		this.Content.PrepareRecalculateObject();
 
-		let nCurPage      = 0;
-		let nRecalcResult = recalcresult2_NextPage;
+		var nCurPage      = 0;
+		var nRecalcResult = recalcresult2_NextPage;
 		while (recalcresult2_End !== nRecalcResult)
 			nRecalcResult = this.Content.Recalculate_Page(nCurPage++, true);
 

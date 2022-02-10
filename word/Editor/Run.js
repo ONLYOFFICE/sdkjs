@@ -4914,7 +4914,7 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
             case para_Drawing:
             {
                 var Para = PRSA.Paragraph;
-                let isInHdrFtr = Para.Parent.IsHdrFtr();
+                var isInHdrFtr = Para.Parent.IsHdrFtr();
 
                 var PageAbs = Para.private_GetAbsolutePageIndex(CurPage);
                 var PageRel = Para.private_GetRelativePageIndex(CurPage);

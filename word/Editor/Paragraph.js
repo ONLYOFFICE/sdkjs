@@ -11261,7 +11261,7 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 
 		if (true === DrawingLayout.Layout)
 		{
-			let isInHdrFtr    = this.Parent.IsHdrFtr();
+			var isInHdrFtr    = this.Parent.IsHdrFtr();
 			var LogicDocument = this.LogicDocument;
 			var LD_PageLimits = LogicDocument.Get_PageLimits(CurPage);
 			var LD_PageFields = LogicDocument.Get_PageFields(CurPage, isInHdrFtr);
