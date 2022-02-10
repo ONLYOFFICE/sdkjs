@@ -1334,7 +1334,10 @@ CSdtTextFormPr.prototype.GetMaxCharacters = function()
 };
 CSdtTextFormPr.prototype.SetMaxCharacters = function(nMax)
 {
-	this.MaxCharacters = nMax;
+	if (undefined === nMax || null === nMax || nMax <= 0)
+		this.MaxCharacters = -1;
+	else
+		this.MaxCharacters = nMax | 0;
 };
 CSdtTextFormPr.prototype.GetComb = function()
 {
