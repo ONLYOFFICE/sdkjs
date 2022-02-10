@@ -1559,9 +1559,8 @@ ParaDrawing.prototype.IsMoveWithTextVertically = function()
 };
 ParaDrawing.prototype.IsLayoutInCell = function()
 {
-	// Начиная с 15-ой версии Word автофигуры с обтеканием всегда считает расположенными внутри
-	// ячейки, и данный флаг считается как true
-	if (this.IsUseTextWrap() && this.LogicDocument && this.LogicDocument.GetCompatibilityMode() >= AscCommon.document_compatibility_mode_Word15)
+	// Начиная с 15-ой версии Word автофигуры всегда считает расположенными внутри ячейки, и данный флаг считается как true
+	if (this.LogicDocument && this.LogicDocument.GetCompatibilityMode() >= AscCommon.document_compatibility_mode_Word15)
 		return true;
 
 	return this.LayoutInCell;
