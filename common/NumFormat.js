@@ -606,6 +606,8 @@ function ParseLocalFormatSymbol(Name)
 			LocaleFormatSymbol['minute'] = 'd';
 			LocaleFormatSymbol['S'] = 'N';
 			LocaleFormatSymbol['s'] = 'n';
+			
+			// В excel это не работает и нет в данной локализации таких символов, поэтому пока такой костыль, иначе всё перестанет работать вообще
 			LocaleFormatSymbol['G'] = 'Z';
 			LocaleFormatSymbol['g'] = 'z';
 			LocaleFormatSymbol['a'] = 'o';
@@ -618,8 +620,11 @@ function ParseLocalFormatSymbol(Name)
 			LocaleFormatSymbol['y'] = 'r';
 			LocaleFormatSymbol['H'] = 'G';
 			LocaleFormatSymbol['h'] = 'g';
+
+			// В excel это не работает и нет в данной локализации таких символов, поэтому пока такой костыль, иначе всё перестанет работать вообще
 			LocaleFormatSymbol['G'] = 'Z';
 			LocaleFormatSymbol['g'] = 'z';
+
 			LocaleFormatSymbol['general'] = 'Standardowy';
 			break;
 		}
@@ -925,10 +930,6 @@ NumFormat.prototype =
                 this._addToFormat(numFormat_General);
                 this._skip(sGeneral.length - 1);
             }
-			/*else if ((Era == next || era == next) && bIsForGannen)
-			{
-				this._addToFormat2(new FormatObjDateVal(numFormat_JapanYearsGannen, 1, false));
-			}*/
 			else if (Gannen == next || gannen == next)
 			{
 				bIsForGannen = true;
@@ -948,14 +949,7 @@ NumFormat.prototype =
 				}
 				else if (Era == next || era == next)
 				{
-					/* if (bIsForGannen)
-					{*/
-						this._addToFormat2(new FormatObjDateVal(numFormat_JapanYearsGannen, 1, false));
-					/*}
-					else
-					{
-						this._addToFormat2(new FormatObjDateVal(numFormat_Year, 4, false));
-					}*/
+					this._addToFormat2(new FormatObjDateVal(numFormat_JapanYearsGannen, 1, false));
 				}
             }
             else if("*" == next)
@@ -2063,6 +2057,8 @@ NumFormat.prototype =
             }
 
 			var oCurrentEra;
+			//var bInsertDatesAccordingSelectedCalendar = false; // Вставлять даты согласно выбранному календарю
+
             var hasSign = false;
             var nReadState = FormatStates.Decimal;
             var nFormatLength = this.aRawFormat.length;    
@@ -2236,7 +2232,32 @@ NumFormat.prototype =
 					}
 					else
 					{
-						oCurText.text += oParsedNumber.date.year;
+						if (this.LCID === 1041)
+						{
+							if (oParsedNumber.dec <= 4594) {
+								oCurrentEra = gc_aJapanEras[0];
+							}
+							else if (oParsedNumber.dec <= 9855) {
+								oCurrentEra = gc_aJapanEras[1];
+							}
+							else if (oParsedNumber.dec <= 32515) {
+								oCurrentEra = gc_aJapanEras[2];
+							}
+							else if (oParsedNumber.dec <= 43585) {
+								oCurrentEra = gc_aJapanEras[3];
+							}
+							else if (oParsedNumber.dec >= 43586) {
+								oCurrentEra = gc_aJapanEras[4];
+							}
+							if (oCurrentEra != null)
+							{
+								oCurText.text += (oParsedNumber.date.year - oCurrentEra[3] + 1);
+							}
+						}
+						else
+						{
+							oCurText.text += oParsedNumber.date.year;
+						}
 					}
 				}
 				else if(numFormat_DayOfWeek == item.type)
@@ -2258,9 +2279,9 @@ NumFormat.prototype =
                 {
                   if (item.val > 0) {
                     if (item.val <= 2) {
-                      oCurText.text += (oParsedNumber.date.year+'').substring(2);
+                      	oCurText.text += (oParsedNumber.date.year+'').substring(2);
                     } else {
-                      oCurText.text += oParsedNumber.date.year;
+                		oCurText.text += oParsedNumber.date.year;
                     }
                   }
                 }
@@ -2671,10 +2692,6 @@ NumFormat.prototype =
 					var nIndex = (item.val > 3) ? 3 : item.val;
 					for(var j = 0; j < nIndex; ++j)
 						res += gannen;
-				}
-				else
-				{
-					
 				}
 			}
 			else if(numFormat_JapanYearsGannen == item.type)
