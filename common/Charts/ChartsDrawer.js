@@ -3890,7 +3890,7 @@ CChartsDrawer.prototype =
 		return result;
 	},
 
-	calculateCylinder: function (points, val, isNotOnlyFrontFaces, notDraw, check, cone) {
+	calculateCylinder: function (points, val, isNotOnlyFrontFaces, notDraw, isNotAllPointsVisible, cone) {
 		var res;
 		var segmentPoints = points[0];
 		var segmentPoints2 = points[1];
@@ -3906,7 +3906,8 @@ CChartsDrawer.prototype =
 		var frontPaths = [];
 		var darkPaths = [];
 
-		var isVisibleReverse = cone ? check : true;
+		// условие для конусов
+		var isVisibleReverse = cone ? isNotAllPointsVisible : true;
 
 		var addPathToArr = function (isFront, face, index) {
 			frontPaths[index] = null;
@@ -3922,7 +3923,7 @@ CChartsDrawer.prototype =
 		var face, faceFront;
 
 		//front
-		faceFront = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, false, false, true, check);
+		faceFront = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, false, false, true, isNotAllPointsVisible);
 		addPathToArr(this._isVisibleVerge3D(sortCylinderPoints1[0], sortCylinderPoints1[sortCylinderPoints1.length - 1],
 			sortCylinderPoints2[0], val, !isVisibleReverse), faceFront, 0);
 
@@ -3967,7 +3968,7 @@ CChartsDrawer.prototype =
 		}
 		
 		//unfront
-		faceFront = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, false, false, true, check);
+		faceFront = this._calculatePathFaceCylinder(sortCylinderPoints1, sortCylinderPoints2, false, false, true, isNotAllPointsVisible);
 		addPathToArr(this._isVisibleVerge3D(sortCylinderPoints1[0], sortCylinderPoints1[sortCylinderPoints1.length - 1],
 			sortCylinderPoints2[0], val, isVisibleReverse), faceFront, 5);
 
@@ -5344,12 +5345,12 @@ CChartsDrawer.prototype =
 
 		var sortCylinderPoints1 = [];
 		var sortCylinderPoints2 = [];
-		var check = false;
+		var invisible = false;
 
 		// сортируем точки по видимости для построения плоскости цилиндра
 		for (var i = 1; i < segmentPoints.length; i++) {
 			if (this._isVisibleVerge3D(segmentPoints[i], segmentPoints[i - 1], segmentPoints2[i - 1], val, true)) {
-				if (!check) {
+				if (!invisible) {
 					sortCylinderPoints1.push(segmentPoints[i - 1]);
 					sortCylinderPoints2.push(segmentPoints2[i - 1]);
 				}
@@ -5357,10 +5358,10 @@ CChartsDrawer.prototype =
 					break;
 				}
 			} else {
-				check = true;
+				invisible = true;
 			}
 		}		
-		if (check) {
+		if (invisible) {
 			for (var k = segmentPoints.length - 1; i <= k; k--) {
 				if (this._isVisibleVerge3D(segmentPoints[k], segmentPoints[k - 1], segmentPoints2[k - 1], val, true)) {
 					sortCylinderPoints1.unshift(segmentPoints[k - 1]);
@@ -5368,13 +5369,14 @@ CChartsDrawer.prototype =
 				}
 			}
 		}		
+		var isNotAllPointsVisible = invisible;
 
 		// проверяем если все точки поверхности цилиндра(конуса) либо видимы либо невидимы
 		// если уловие выполняется, то для отрисовки цилиндра(конуса) достаточно отрисовать эллипс (т.е вид сверху или снизу)
 		if (sortCylinderPoints1.length === 0 || sortCylinderPoints2.length === 0) {
 			sortCylinderPoints1 = segmentPoints;
 			sortCylinderPoints2 = segmentPoints2;
-			check = false;
+			isNotAllPointsVisible = false;
 		}
 
 		var x12, y12, z12, x22, y22, z22, x32, y32, z32, x42, y42, z42, x52, y52, z52, x62, y62, z62, x72, y72, z72, x82, y82, z82;
@@ -5412,7 +5414,7 @@ CChartsDrawer.prototype =
 
 		var points = [segmentPoints, segmentPoints2, point1, point2, point4, point5, point6, point8,
 			sortCylinderPoints1, sortCylinderPoints2];
-		var paths = this.calculateCylinder(points, val, checkPathMethod, false, check, cone);
+		var paths = this.calculateCylinder(points, val, checkPathMethod, false, isNotAllPointsVisible, cone);
 
 		return paths;
 	},
