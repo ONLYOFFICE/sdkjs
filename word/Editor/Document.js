@@ -3492,6 +3492,8 @@ CDocument.prototype.private_FinalizeFormChange = function()
 				}
 			}
 		}
+
+		this.Action.Recalculate = true;
 	}
 
 	delete this.Action.Additional.FormChangeStart;
@@ -3502,6 +3504,9 @@ CDocument.prototype.private_FinalizeFormAutoFit = function(isFastRecalc)
 	{
 		this.Action.Additional.FormAutoFit[nIndex].ProcessAutoFitContent(isFastRecalc);
 	}
+
+	if (this.Action.Additional.FormAutoFit.length)
+		this.Action.Recalculate = true;
 };
 CDocument.prototype.private_FinalizeRadioRequired = function()
 {
@@ -3516,6 +3521,8 @@ CDocument.prototype.private_FinalizeRadioRequired = function()
 			if (oRadioButton.IsFormRequired() !== isRequired)
 				oRadioButton.SetFormRequired(isRequired);
 		}
+
+		this.Action.Recalculate = true;
 	}
 };
 CDocument.prototype.private_FinalizeUpdateCommentPosition = function()
@@ -23056,7 +23063,10 @@ CDocument.prototype.private_FinalizeValidateComplexFields = function()
 	{
 		var oComplexField = this.Action.Additional.ValidateComplexFields[nIndex];
 		if (!oComplexField.IsValid())
+		{
 			oComplexField.RemoveFieldChars();
+			this.Action.Recalculate = true;
+		}
 	}
 };
 CDocument.prototype.AddRefToParagraph = function(oParagraph, nType, bHyperlink, bAboveBelow, sSeparator)
