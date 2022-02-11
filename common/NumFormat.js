@@ -232,7 +232,7 @@ function FormatObjBracket(sData)
 					case "<=": this.operator = NumComporationOperators.lessorequal;break;
 					case "<>": this.operator = NumComporationOperators.notequal;break;
 				}
-				this.operatorValue = parseInt(data.substring(nIndex));
+				this.operatorValue = parseFloat(data.substring(nIndex));
 			}
             else
             {
