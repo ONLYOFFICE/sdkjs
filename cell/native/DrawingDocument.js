@@ -3544,7 +3544,7 @@ function CDrawingDocument()
         var logicDoc = this.m_oWordControl.m_oLogicDocument;
         var _dst_styles = [];
 
-        var _styles = logicDoc.Styles.Get_AllTableStyles();
+        var _styles = logicDoc.Styles.GetAllTableStyles();
         var _styles_len = _styles.length;
 
         if (_styles_len == 0)
@@ -3575,13 +3575,10 @@ function CDrawingDocument()
         AscCommon.History.TurnOff();
         for (var i1 = 0; i1 < _styles_len; i1++)
         {
-            var i = _styles[i1];
-            var _style = logicDoc.Styles.Style[i];
+            let _style =  _styles[i1];
+			let i = _style.GetId();
 
-            if (!_style || _style.Type != styletype_Table)
-                continue;
-
-            var table = new CTable(this, logicDoc, true, Rows, Cols, Grid);
+			var table = new CTable(this, logicDoc, true, Rows, Cols, Grid);
             table.Set_Props({TableStyle : i, TableLook : tableLook});
 
             for (var j = 0; j < Rows; j++)

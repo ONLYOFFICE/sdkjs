@@ -1714,11 +1714,11 @@ function CGroupShape()
         this.nvGrpSpPr = pr;
     };
 
-    CGroupShape.prototype.Restart_CheckSpelling = function()
+    CGroupShape.prototype.RestartSpellCheck = function()
     {
         for(var i = 0; i < this.spTree.length; ++i)
         {
-            this.spTree[i].Restart_CheckSpelling && this.spTree[i].Restart_CheckSpelling();
+            this.spTree[i].RestartSpellCheck && this.spTree[i].RestartSpellCheck();
         }
     };
 
@@ -1962,9 +1962,13 @@ function CGroupShape()
             this.spTree[nSp].applySmartArtTextStyle();
         }
     };
-
     CGroupShape.prototype.getTypeName = function() {
         return AscCommon.translateManager.getValue("Group");
+    };
+    CGroupShape.prototype.GetAllOleObjects = function(sPluginId, arrObjects) {
+        for(let nSp = 0; nSp < this.spTree.length; ++nSp) {
+            this.spTree[nSp].GetAllOleObjects(sPluginId, arrObjects);
+        }
     };
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};

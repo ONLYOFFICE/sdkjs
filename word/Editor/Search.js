@@ -261,7 +261,7 @@ CDocumentSearch.prototype.Set = function(sText, oProps)
 	this.Word      = oProps ? oProps.Word : false;
 
 	var _sText = sText;
-	if (this.MatchCase)
+	if (!this.MatchCase)
 		_sText = sText.toLowerCase();
 
 	this.Pattern.Set(_sText);

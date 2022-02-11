@@ -2023,14 +2023,26 @@ void main() {\n\
             return;
         }
 
-        for (var i = 0; i < this.SearchResults.Pages.length; i++)
+        var currentPage = this.viewer.currentPage;
+        for (var i = currentPage; i < this.SearchResults.Pages.length; i++)
         {
             if (0 != this.SearchResults.Pages[i].length)
             {
                 this.SearchResults.CurrentPage = i;
                 this.SearchResults.Current = 0;
-
                 break;
+            }
+        }
+        if (this.SearchResults.Current === -1)
+        {
+            for (var i = 0; i < currentPage; i++)
+            {
+                if (0 != this.SearchResults.Pages[i].length)
+                {
+                    this.SearchResults.CurrentPage = i;
+                    this.SearchResults.Current = 0;
+                    break;
+                }
             }
         }
 
@@ -2062,6 +2074,9 @@ void main() {\n\
             file.nativeFile["onRepaintPages"] = function(pages) {
                 file.onRepaintPages && file.onRepaintPages(pages);
             };
+            file.nativeFile["onUpdateStatistics"] = function(par, word, symbol, space) {
+                file.onUpdateStatistics && file.onUpdateStatistics(par, word, symbol, space);
+            };
             file.pages = file.nativeFile["getPages"]();
 
             for (var i = 0, len = file.pages.length; i < len; i++)
@@ -2092,6 +2107,9 @@ void main() {\n\
         {
             file.nativeFile["onRepaintPages"] = function(pages) {
                 file.onRepaintPages && file.onRepaintPages(pages);
+            };
+            file.nativeFile["onUpdateStatistics"] = function(par, word, symbol, space) {
+                file.onUpdateStatistics && file.onUpdateStatistics(par, word, symbol, space);
             };
             file.pages = file.nativeFile["getPages"]();
 

@@ -428,37 +428,34 @@
 
     CDocument.prototype.updateScroll = function(scrollV)
     {
-        if (this.documentHeight > this.panelHeight)
+        scrollV.style.display = (this.documentHeight > this.panelHeight) ? "block" : "none";
+
+        var settings = this.CreateScrollSettings();
+        settings.isHorizontalScroll = false;
+        settings.isVerticalScroll = true;
+        settings.contentH = this.documentHeight;
+        if (this.m_oScrollVerApi)
+            this.m_oScrollVerApi.Repos(settings, undefined, true);
+        else
         {
-            scrollV.style.display = "block";
+            this.m_oScrollVerApi = new AscCommon.ScrollObject("id_vertical_scroll_th", settings);
 
-            var settings = this.CreateScrollSettings();
-			settings.isHorizontalScroll = false;
-			settings.isVerticalScroll = true;
-			settings.contentH = this.documentHeight;
-			if (this.m_oScrollVerApi)
-				this.m_oScrollVerApi.Repos(settings, undefined, true);
-			else
-			{
-				this.m_oScrollVerApi = new AscCommon.ScrollObject("id_vertical_scroll_th", settings);
-
-				this.m_oScrollVerApi.onLockMouse  = function(evt) {
-					AscCommon.check_MouseDownEvent(evt, true);
-					AscCommon.global_mouseEvent.LockMouse();
-				};
-				this.m_oScrollVerApi.offLockMouse = function(evt) {
-					AscCommon.check_MouseUpEvent(evt);
-                };
-                var _t = this;
-				this.m_oScrollVerApi.bind("scrollvertical", function(evt) {
-					_t.scrollVertical(evt.scrollD, evt.maxScrollY);
-				});
-			}
-
-			this.scrollMaxY = this.m_oScrollVerApi.getMaxScrolledY();
-			if (this.scrollY >= this.scrollMaxY)
-				this.scrollY = this.scrollMaxY;
+            this.m_oScrollVerApi.onLockMouse  = function(evt) {
+                AscCommon.check_MouseDownEvent(evt, true);
+                AscCommon.global_mouseEvent.LockMouse();
+            };
+            this.m_oScrollVerApi.offLockMouse = function(evt) {
+                AscCommon.check_MouseUpEvent(evt);
+            };
+            var _t = this;
+            this.m_oScrollVerApi.bind("scrollvertical", function(evt) {
+                _t.scrollVertical(evt.scrollD, evt.maxScrollY);
+            });
         }
+
+        this.scrollMaxY = this.m_oScrollVerApi.getMaxScrolledY();
+        if (this.scrollY >= this.scrollMaxY)
+            this.scrollY = this.scrollMaxY;
     };
 
     // очередь задач - нужно ли перерисоваться и/или перерисовать страницу
@@ -493,7 +490,7 @@
             if (needPage)
             {
                 isNeedTasks = true;
-                needPage.page.image = this.viewer.file.getPage(needPage.num, needPage.pageRect.w, needPage.pageRect.h, true);
+                needPage.page.image = this.viewer.file.getPage(needPage.num, needPage.pageRect.w, needPage.pageRect.h, undefined, this.viewer.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
                 this.isRepaint = true;
             }
         }
@@ -621,7 +618,7 @@
         if (this.defaultPageW != 0)
         {
             // зум "по умолчанию"
-            this.zoom = this.defaultPageW / pageWidthMax;
+            this.zoom = AscCommon.AscBrowser.convertToRetinaValue(this.defaultPageW, true) / pageWidthMax;
 
             if (0 != this.panelWidth)
                 this.defaultPageW = 0;
@@ -637,7 +634,7 @@
 
         if (isZoomUpdated !== false)
         {
-            var interfaceZoom = (this.zoomMax - this.zoomMin) < 0.001 ? 0 : this.zoom / (this.zoomMax - this.zoomMin);
+            var interfaceZoom = (this.zoomMax - this.zoomMin) < 0.001 ? 0 : (this.zoom - this.zoomMin) / (this.zoomMax - this.zoomMin);
             this.sendEvent("onZoomChanged", interfaceZoom);
         }
 
@@ -824,7 +821,8 @@
     {
         AscCommon.check_MouseDownEvent(e, true);
         AscCommon.global_mouseEvent.LockMouse();
-
+        this.viewer.isFocusOnThumbnails = true;
+        
         var drPage = this.getPageByCoords(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
         if (drPage && drPage.num !== this.selectPage)
         {
@@ -838,7 +836,8 @@
     CDocument.prototype.onMouseUp = function(e)
     {
         AscCommon.check_MouseUpEvent(e);
-        AscCommon.stopEvent(e);
+        if (e && e.preventDefault)
+            e.preventDefault();
         return false;
     };
 
@@ -863,7 +862,8 @@
             }
         }
 
-        AscCommon.stopEvent(e);
+        if (e && e.preventDefault)
+            e.preventDefault();
         return false;
     };
 
@@ -929,6 +929,35 @@
             this.canvas.style.backgroundColor = ThumbnailsStyle.backgroundColor;
 
         this.resize();
+    };
+
+    CDocument.prototype.checkPageEmptyStyle = function()
+    {
+        PageStyle.emptyColor = "#FFFFFF";
+        if (this.viewer)
+        {
+            var backColor = this.viewer.Api.getPageBackgroundColor();
+            PageStyle.emptyColor = "#" + backColor[0].toString(16) + backColor[1].toString(16) + backColor[2].toString(16);
+        }
+    }
+
+    CDocument.prototype.clearCachePages = function()
+    {
+        this.checkPageEmptyStyle();
+
+        for (var blockNum = 0, blocksCount = this.blocks.length; blockNum < blocksCount; blockNum++)
+        {
+            block = this.blocks[blockNum];
+
+            for (var pageNum = 0, pagesCount = block.pages.length; pageNum < pagesCount; pageNum++)
+            {
+                drPage = block.pages[pageNum];
+                if (drPage.page.image)
+                {
+                    drPage.page.image = null;
+                }
+            }
+        }
     };
 
     // export

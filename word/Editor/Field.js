@@ -617,6 +617,13 @@ ParaField.prototype.IsStopCursorOnEntryExit = function()
 {
 	return true;
 };
+ParaField.prototype.CheckSpelling = function(oCollector, nDepth)
+{
+	if (oCollector.IsExceedLimit())
+		return;
+
+	oCollector.FlushWord();
+};
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].ParaField = ParaField;

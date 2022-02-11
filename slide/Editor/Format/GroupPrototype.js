@@ -175,6 +175,7 @@ CGroupShape.prototype.recalculateBounds = function()
 CGroupShape.prototype.getRotateAngle = CShape.prototype.getRotateAngle;
 CGroupShape.prototype.handleUpdatePosition = function()
 {
+    this.recalcBounds();
     this.recalcTransform();
     this.addToRecalculate();
     for(var i = 0; i < this.spTree.length; ++i)
@@ -184,7 +185,6 @@ CGroupShape.prototype.handleUpdatePosition = function()
             this.spTree[i].handleUpdatePosition();
         }
     }
-    this.addToRecalculate();
 };
 CGroupShape.prototype.handleUpdateExtents = function()
 {

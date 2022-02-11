@@ -1002,7 +1002,8 @@ var c_oSerCustoms = {
 	Custom: 0,
 	ItemId: 1,
 	Uri: 2,
-	Content: 3
+	Content: 3,
+	ContentA: 4
 };
 var c_oSerApp = {
 	Application: 0,
@@ -7455,8 +7456,8 @@ function BinaryCustomsTableWriter(memory, doc, CustomXmls)
 			});
 		}
 		if (null !== customXml.Content) {
-			this.bs.WriteItem(c_oSerCustoms.Content, function() {
-				oThis.memory.WriteString3(customXml.Content);
+			this.bs.WriteItem(c_oSerCustoms.ContentA, function() {
+				oThis.memory.WriteBuffer(customXml.Content, 0, customXml.Content.length)
 			});
 		}
 	};
@@ -16235,8 +16236,8 @@ function Binary_CustomsTableReader(doc, oReadResult, stream, CustomXmls) {
 			custom.Uri.push(this.stream.GetString2LE(length));
 		} else if (c_oSerCustoms.ItemId === type) {
 			custom.ItemId = this.stream.GetString2LE(length);
-		} else if (c_oSerCustoms.Content === type) {
-			custom.Content = this.stream.GetString2LE(length);
+		} else if (c_oSerCustoms.ContentA === type) {
+			custom.Content = this.stream.GetBuffer(length);
 		} else
 			res = c_oSerConstants.ReadUnknown;
 		return res;

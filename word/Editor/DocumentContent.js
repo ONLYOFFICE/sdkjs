@@ -356,7 +356,7 @@ CDocumentContent.prototype.Get_PageLimits = function(nCurPage)
 		return {X : 0, Y : 0, XLimit : W, YLimit : H};
 	}
 };
-CDocumentContent.prototype.Get_PageFields = function(PageIndex)
+CDocumentContent.prototype.Get_PageFields = function(PageIndex, isHdrFtr)
 {
 	if (true === this.Parent.IsCell() || (undefined !== AscFormat.CShape && this.Parent instanceof AscFormat.CShape))
 	{
@@ -389,19 +389,8 @@ CDocumentContent.prototype.Get_PageFields = function(PageIndex)
 		if (null === this.LogicDocument)
 			return {X : 0, Y : 0, XLimit : 0, YLimit : 0};
 
-		var nPageAbs = this.Get_AbsolutePage(PageIndex);
-		var Index    = ( undefined !== this.LogicDocument.Pages[nPageAbs] ? this.LogicDocument.Pages[nPageAbs].Pos : 0 );
-		var oSectPr  = this.LogicDocument.SectionsInfo.Get_SectPr(Index).SectPr;
-		var oFrame   = oSectPr.GetContentFrame(nPageAbs);
-
-		return {
-			X      : oFrame.Left,
-			Y      : oFrame.Top,
-			XLimit : oFrame.Right,
-			YLimit : oFrame.Bottom
-		};
+		return this.LogicDocument.Get_PageFields(this.GetAbsolutePage(PageIndex), isHdrFtr);
 	}
-
 };
 CDocumentContent.prototype.Get_EmptyHeight = function()
 {
@@ -644,14 +633,14 @@ CDocumentContent.prototype.Is_UseInDocument = function(Id)
 	else
 		bUse = true;
 
-	if (true === bUse && this.Parent)
+	if (true === bUse && this.Parent && this.Parent.Is_UseInDocument)
 		return this.Parent.Is_UseInDocument(this.Get_Id());
 
 	return false;
 };
 CDocumentContent.prototype.IsHdrFtr = function(bReturnHdrFtr)
 {
-	if (this.Parent)
+	if (this.Parent && this.Parent.IsHdrFtr)
 		return this.Parent.IsHdrFtr(bReturnHdrFtr);
 	else
 		return (bReturnHdrFtr ? null : false);
@@ -9352,6 +9341,13 @@ CDocumentContent.prototype.CollectSelectedReviewChanges = function(oTrackManager
 	for (var nPos = nStartPos; nPos <= nEndPos; ++nPos)
 	{
 		this.Content[nPos].CollectSelectedReviewChanges(oTrackManager);
+	}
+};
+CDocumentContent.prototype.RestartSpellCheck = function()
+{
+	for (let nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+	{
+		this.Content[nIndex].RestartSpellCheck();
 	}
 };
 

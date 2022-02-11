@@ -163,7 +163,13 @@ CGraphicPage.prototype =
         this.flowTables = [];
     },
 
-
+    getAllDrawings: function ()
+    {
+        var aAllDrawings = [].concat(this.behindDocObjects);
+        aAllDrawings = aAllDrawings.concat(this.inlineObjects);
+        aAllDrawings = aAllDrawings.concat(this.beforeTextObjects);
+        return aAllDrawings;
+    },
 
     CheckRange: function(X0, Y0, X1, Y1, Y0sp, Y1Ssp, LeftField, RightField, HdrFtrRanges, docContent, bMathWrap)
     {

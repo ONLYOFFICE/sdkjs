@@ -3593,8 +3593,6 @@
 			//oleObjects
 			this.pluginGuid = obj.pluginGuid !== undefined ? obj.pluginGuid : undefined;
 			this.pluginData = obj.pluginData !== undefined ? obj.pluginData : undefined;
-			this.oleWidth = obj.oleWidth != undefined ? obj.oleWidth : undefined;
-			this.oleHeight = obj.oleHeight != undefined ? obj.oleHeight : undefined;
 
 			this.title = obj.title != undefined ? obj.title : undefined;
 			this.description = obj.description != undefined ? obj.description : undefined;
@@ -3650,8 +3648,6 @@
 			this.pluginGuid = undefined;
 			this.pluginData = undefined;
 
-			this.oleWidth = undefined;
-			this.oleHeight = undefined;
             this.title = undefined;
             this.description = undefined;
 
@@ -3821,10 +3817,6 @@
 
 		asc_getOriginSize: function (api)
 		{
-			if (window['AscFormat'].isRealNumber(this.oleWidth) && window['AscFormat'].isRealNumber(this.oleHeight))
-			{
-				return new asc_CImageSize(this.oleWidth, this.oleHeight, true);
-			}
 			if (this.ImageUrl === null)
 			{
 				return new asc_CImageSize(50, 50, false);

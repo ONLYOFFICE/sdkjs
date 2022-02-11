@@ -4558,6 +4558,9 @@ StyleManager.prototype =
 		return null == this.BestFit && null == this.hd && null == this.width && null == this.xfs &&
 			null == this.CustomWidth && 0 === this.outlineLevel && false == this.collapsed;
 	};
+	Col.prototype.isUpdateScroll = function () {
+		return null !== this.hd || null !== this.xfs || 0 !== this.outlineLevel || false !== this.collapsed;
+	};
 	Col.prototype.clone = function (oNewWs) {
 		if (!oNewWs) {
 			oNewWs = this.ws;
@@ -7200,6 +7203,16 @@ function RangeDataManagerElem(bbox, data)
 		return null;
 	};
 
+	TablePart.prototype.getIndexTableColumnById = function(id) {
+		for (var i = 0; i < this.TableColumns.length; i++) {
+			if (id === this.TableColumns[i].id) {
+				return i + 1;
+			}
+		}
+		return null;
+	};
+
+
 	/** @constructor */
 	function AutoFilter() {
 		this.Ref = null;
@@ -7880,6 +7893,8 @@ function RangeDataManagerElem(bbox, data)
 		this.fillFormulas = null;
 		this.queryName = null;
 		this.rowNumbers = null;
+
+		this.id = null;
 		//формируется на сохранения
 		//this.tableColumnId = null;
 	}
@@ -7932,6 +7947,8 @@ function RangeDataManagerElem(bbox, data)
 
 		res.queryTableFieldId = this.queryTableFieldId;
 		res.uniqueName = this.uniqueName;
+
+		res.id = this.id;
 
 		return res;
 	};

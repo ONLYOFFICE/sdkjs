@@ -6016,13 +6016,15 @@
     changesFactory[AscDFH.historyitem_AnimClrByRGB] = CChangeObjectNoId;
     changesFactory[AscDFH.historyitem_AnimClrByHSL] = CChangeObjectNoId;
     changesFactory[AscDFH.historyitem_AnimClrCBhvr] = CChangeObject;
-    changesFactory[AscDFH.historyitem_AnimClrFrom] = CChangeObject;
-    changesFactory[AscDFH.historyitem_AnimClrTo] = CChangeObject;
+    changesFactory[AscDFH.historyitem_AnimClrFrom] = CChangeObjectNoId;
+    changesFactory[AscDFH.historyitem_AnimClrTo] = CChangeObjectNoId;
     changesFactory[AscDFH.historyitem_AnimClrClrSpc] = CChangeLong;
     changesFactory[AscDFH.historyitem_AnimClrDir] = CChangeLong;
 
     drawingConstructorsMap[AscDFH.historyitem_AnimClrByRGB] = CColorPercentage;
     drawingConstructorsMap[AscDFH.historyitem_AnimClrByHSL] = CColorPercentage;
+    drawingConstructorsMap[AscDFH.historyitem_AnimClrFrom] = AscFormat.CUniColor;
+    drawingConstructorsMap[AscDFH.historyitem_AnimClrTo] = AscFormat.CUniColor;
 
     drawingsChangesMap[AscDFH.historyitem_AnimClrByRGB] = function(oClass, value) {oClass.byRGB = value;};
     drawingsChangesMap[AscDFH.historyitem_AnimClrByHSL] = function(oClass, value) {oClass.byHSL = value;};
@@ -6087,12 +6089,12 @@
         this.setParentToChild(pr);
     };
     CAnimClr.prototype.setFrom = function(pr) {
-        oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimClrFrom, this.from, pr));
+        oHistory.Add(new CChangeObjectNoId(this, AscDFH.historyitem_AnimClrFrom, this.from, pr));
         this.from = pr;
         this.setParentToChild(pr);
     };
     CAnimClr.prototype.setTo = function(pr) {
-        oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AnimClrTo, this.to, pr));
+        oHistory.Add(new CChangeObjectNoId(this, AscDFH.historyitem_AnimClrTo, this.to, pr));
         this.to = pr;
         this.setParentToChild(pr);
     };

@@ -8625,6 +8625,9 @@
 		if (isWholeWordTrue !== null) {
 			options.isWholeWord = isWholeWordTrue;
 		}
+		if (findEmptyStr) {
+			options.findWhat = "";
+		}
 		this.lastFindOptions = options.clone();
 		// ToDo support multiselect
 		this.lastFindOptions.findRange = findRange.getBBox0().clone();
@@ -11688,7 +11691,8 @@
 											sDateFormat = AscCommon.getShortDateFormat(cultureInfo);
 										}
 										var sTimeFormat = 'h:mm:ss';
-										if (cultureInfo.AMDesignator.length > 0 && cultureInfo.PMDesignator.length > 0){
+
+										if (AscCommon.is12HourTimeFormat(cultureInfo)){
 											sTimeFormat += ' AM/PM';
 										}
 										if(bDate && bTime)

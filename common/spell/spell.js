@@ -146,7 +146,17 @@ function CSpellchecker(settings)
 
 		if (this.isUseSharedWorker)
 		{
-			this.worker = new SharedWorker(worker_src, "onlyoffice-spellchecker");
+			try
+			{
+				// may be security errors
+				this.worker = new SharedWorker(worker_src, "onlyoffice-spellchecker");
+			}
+			catch (err)
+			{
+				this.isUseSharedWorker = false;
+				return this.restart();
+			}
+
 			this.worker.creator = this;
 			this.worker.onerror = function() {
 				var creator = this.creator;

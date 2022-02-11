@@ -13325,7 +13325,8 @@
 	Api.prototype["ReplaceTextSmart"]				 = Api.prototype.ReplaceTextSmart;
 	Api.prototype["CoAuthoringChatSendMessage"]		 = Api.prototype.CoAuthoringChatSendMessage;
 	Api.prototype["ConvertDocument"]		         = Api.prototype.ConvertDocument;
-	
+	Api.prototype["CreateRange"]		             = Api.prototype.CreateRange;
+
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 
 	ApiDocumentContent.prototype["GetClassType"]     = ApiDocumentContent.prototype.GetClassType;

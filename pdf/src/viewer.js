@@ -183,6 +183,14 @@
 		this.endVisiblePage = -1;
 		this.pagesInfo = new CDocumentPagesInfo();
 
+		this.statistics = {
+			paragraph : 0,
+			words : 0,
+			symbols : 0,
+			spaces : 0,
+			process : false
+		};
+
 		this.handlers = {};
 
 		this.overlay = null;
@@ -201,6 +209,8 @@
 		this.mouseMoveEpsilon = 5;
 		this.mouseDownCoords = { X : 0, Y : 0 };
 		this.mouseDownLinkObject = null;
+
+		this.isFocusOnThumbnails = false;
 
 		var oThis = this;
 
@@ -225,7 +235,10 @@
 			this.isClearPages = true;
 
 			if (this.thumbnails)
+			{
 				this.thumbnails.updateSkin();
+				this.thumbnails.clearCachePages();
+			}
 
 			if (this.resize)
 				this.resize();
@@ -260,6 +273,7 @@
 		{
 			this.thumbnails = thumbnails;
 			this.thumbnails.viewer = this;
+			this.thumbnails.checkPageEmptyStyle();
 			if (this.isStarted)
 			{
 				this.thumbnails.init();
@@ -446,6 +460,8 @@
 
 		this.resize = function()
 		{
+			this.isFocusOnThumbnails = false;
+
 			var rect = this.canvas.getBoundingClientRect();
 			this.x = rect.x;
 			this.y = rect.y;
@@ -659,6 +675,35 @@
 			this.paint();
 		};
 
+		this.onUpdateStatistics = function(countParagraph, countWord, countSymbol, countSpace)
+		{
+			this.statistics.paragraph += countParagraph;
+			this.statistics.words += countWord;
+			this.statistics.symbols += countSymbol;
+			this.statistics.spaces += countSpace;
+
+			if (this.statistics.process)
+			{
+				this.Api.sync_DocInfoCallback({
+					PageCount: this.getPagesCount(),
+					WordsCount: this.statistics.words,
+					ParagraphCount: this.statistics.paragraph,
+					SymbolsCount: this.statistics.symbols,
+					SymbolsWSCount: (this.statistics.symbols + this.statistics.spaces)
+				});
+			}
+		};
+
+		this.startStatistics = function()
+		{
+			this.statistics.process = true;
+		};
+
+		this.endStatistics = function()
+		{
+			this.statistics.process = false;
+		};
+
 		this.open = function(data, password)
 		{
 			if (!this.checkModule())
@@ -723,6 +768,7 @@
 			}, 0);
 
 			this.file.onRepaintPages = this.onUpdatePages.bind(this);
+			this.file.onUpdateStatistics = this.onUpdateStatistics.bind(this);
 			this.currentPage = -1;
 			this.structure = this.file.getStructure();
 
@@ -854,7 +900,6 @@
 		this.setMouseLockMode = function(isEnabled)
 		{
 			this.MouseHandObject = isEnabled ? {} : null;
-			this.overlay.Clear();
 		};
 
 		this.getPagesCount = function()
@@ -877,6 +922,8 @@
 			var posY = drawingPage.Y;
 			posY -= this.betweenPages;
 			//posY += item["Y"];
+			if (posY > this.scrollMaxY)
+				posY = this.scrollMaxY;
 			this.m_oScrollVerApi.scrollToY(posY);
 		};
 
@@ -888,6 +935,8 @@
 
 			var posY = drawingPage.Y;
 			posY -= this.betweenPages;
+			if (posY > this.scrollMaxY)
+				posY = this.scrollMaxY;
 			this.m_oScrollVerApi.scrollToY(posY);
 		};
 
@@ -1003,7 +1052,61 @@
 
 		this.onMouseDown = function(e)
 		{
+			oThis.isFocusOnThumbnails = false;
 			AscCommon.stopEvent(e);
+
+			var mouseButton = AscCommon.getMouseButton(e || {});
+			if (mouseButton !== 0)
+			{
+				if (2 === mouseButton)
+				{
+					var posX = e.pageX || e.clientX;
+					var posY = e.pageY || e.clientY;
+
+					var x = posX - oThis.x;
+					var y = posY - oThis.y;
+
+					var isInSelection = false;
+					if (oThis.overlay.m_oContext)
+					{
+						var pixX = AscCommon.AscBrowser.convertToRetinaValue(x, true);
+						var pixY = AscCommon.AscBrowser.convertToRetinaValue(y, true);
+
+						if (pixX >= 0 && pixY >= 0 && pixX < oThis.canvasOverlay.width && pixY < oThis.canvasOverlay.height)
+						{
+							var pixelOnOverlay = oThis.overlay.m_oContext.getImageData(pixX, pixY, 1, 1);
+							if (Math.abs(pixelOnOverlay.data[0] - 51) < 10 &&
+								Math.abs(pixelOnOverlay.data[1] - 102) < 10 &&
+								Math.abs(pixelOnOverlay.data[2] - 204) < 10)
+							{
+								isInSelection = true;
+							}
+						}
+					}
+
+					if (isInSelection)
+					{
+						oThis.Api.sync_BeginCatchSelectedElements();
+						oThis.Api.sync_ChangeLastSelectedElement(Asc.c_oAscTypeSelectElement.Text, undefined);
+						oThis.Api.sync_EndCatchSelectedElements();
+
+						oThis.Api.sync_ContextMenuCallback({
+							Type: Asc.c_oAscContextMenuTypes.Common,
+							X_abs: x,
+							Y_abs: y
+						});
+					}
+					else
+					{
+						oThis.Api.sync_BeginCatchSelectedElements();
+						oThis.Api.sync_EndCatchSelectedElements();
+						oThis.removeSelection();
+						oThis.Api.sendEvent("asc_onContextMenu", undefined);
+					}
+				}
+				return;
+			}
+
 			oThis.isMouseDown = true;
 
 			if (!oThis.file || !oThis.file.isValid())
@@ -1074,7 +1177,13 @@
 
 		this.onMouseUp = function(e)
 		{
+			oThis.isFocusOnThumbnails = false;
 			AscCommon.stopEvent(e);
+
+			var mouseButton = AscCommon.getMouseButton(e || {});
+			if (mouseButton !== 0)
+				return;
+
 			oThis.isMouseDown = false;
 
 			if (!oThis.file || !oThis.file.isValid())
@@ -1120,18 +1229,18 @@
 					else
 						oThis.setCursorType("grab");
 				}
-				else if (oThis.MouseHandObject.Active)
+				else if (!oThis.isMouseMoveBetweenDownUp)
 				{
-					oThis.MouseHandObject.Active = false;
 					oThis.setCursorType("grab");
 
-					if (!oThis.isMouseMoveBetweenDownUp)
-					{
-						// делаем клик в логическом документе, чтобы сбросить селект, если он был
-						var pageObjectLogic = oThis.getPageByCoords2(AscCommon.global_mouseEvent.X - oThis.x, AscCommon.global_mouseEvent.Y - oThis.y);
-						oThis.file.onMouseDown(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
-						oThis.file.onMouseUp(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
-					}
+					// делаем клик в логическом документе, чтобы сбросить селект, если он был
+					var pageObjectLogic = oThis.getPageByCoords2(AscCommon.global_mouseEvent.X - oThis.x, AscCommon.global_mouseEvent.Y - oThis.y);
+					oThis.file.onMouseDown(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+					oThis.file.onMouseUp(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+				}
+				else
+				{
+					oThis.setCursorType("grab");
 				}
 
 				oThis.isMouseMoveBetweenDownUp = false;
@@ -1152,7 +1261,7 @@
 			}
 
 			// если было нажатие - то отжимаем
-			if (!oThis.isMouseMoveBetweenDownUp)
+			if (oThis.isMouseMoveBetweenDownUp)
 				oThis.file.onMouseUp();
 
 			oThis.isMouseMoveBetweenDownUp = false;
@@ -1696,6 +1805,8 @@
 			{
 				// отрисовываем страницу
 				let page = this.drawingPages[i];
+				if (!page)
+					break;
 
 				let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 				let h = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
@@ -1719,8 +1830,6 @@
 					}
 				}
 
-				this.isClearPages = false;
-				
 				if (!page.Image && !isStretchPaint)
 					page.Image = this.file.getPage(i, w, h, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
 
@@ -1742,6 +1851,7 @@
 				this.pageDetector.addPage(i, x, y, w, h);
 			}
 
+			this.isClearPages = false;
 			this.updateCurrentPage(this.pageDetector.getCurrentPage());
 		};
 
@@ -1811,16 +1921,24 @@
 				this.isFullText = true;
 				if (this.isFullTextMessage)
 					this.unshowTextMessage();
+
+				if (this.statistics.process)
+				{
+					this.endStatistics();
+					this.Api.sync_GetDocInfoEndCallback();
+				}
 			}
 
 			return isCommands;
 		};
 
-		this.getPageByCoords = function(x, y)
+		this.getPageByCoords = function(xInp, yInp)
 		{
 			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
 				return null;
 
+			var x = xInp * AscCommon.AscBrowser.retinaPixelRatio;
+			var y = yInp * AscCommon.AscBrowser.retinaPixelRatio;
 			for (var i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 			{
 				var pageCoords = this.pageDetector.pages[i - this.startVisiblePage];
@@ -1848,7 +1966,7 @@
 			var pageIndex = 0;
 			for (pageIndex = this.startVisiblePage; pageIndex <= this.endVisiblePage; pageIndex++)
 			{
-				var pageCoords = this.pageDetector.pages[pageIndex - this.startVisiblePage];
+				pageCoords = this.pageDetector.pages[pageIndex - this.startVisiblePage];
 				if ((pageCoords.y + pageCoords.h) > y)
 					break;
 			}
@@ -1893,6 +2011,25 @@
 		this.Copy = function(_text_format)
 		{
 			return this.file.copy(_text_format);
+		};
+		this.selectAll = function()
+		{
+			return this.file.selectAll();
+		};
+		this.removeSelection = function()
+		{
+			var pageObjectLogic = this.getPageByCoords2(AscCommon.global_mouseEvent.X - this.x, AscCommon.global_mouseEvent.Y - this.y);
+			this.file.onMouseDown(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+			this.file.onMouseUp(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+		};
+
+		this.isCanCopy = function()
+		{
+			// TODO: нужно прерываться после первого же символа
+			var text_format = { Text : "" };
+			this.Copy(text_format);
+			text_format.Text = text_format.Text.replace(new RegExp("\n", 'g'), "");
+			return (text_format.Text === "") ? false : true;
 		};
 
 		this.findText = function(text, isMachingCase, isNext, callback)
@@ -2025,18 +2162,44 @@
 			}
 			else if ( e.KeyCode == 37 ) // Left Arrow
 			{
+				if (!this.isFocusOnThumbnails && this.isVisibleHorScroll)
+				{
+					this.m_oScrollHorApi.scrollByX(-40);
+				}
 				bRetValue = true;
 			}
 			else if ( e.KeyCode == 38 ) // Top Arrow
 			{
+				if (!this.isFocusOnThumbnails)
+				{
+					this.m_oScrollVerApi.scrollByY(-40);
+				}
+				else
+				{
+					if (this.currentPage > 0)
+						this.navigateToPage(this.currentPage - 1);
+				}
 				bRetValue = true;
 			}
 			else if ( e.KeyCode == 39 ) // Right Arrow
 			{
+				if (!this.isFocusOnThumbnails && this.isVisibleHorScroll)
+				{
+					this.m_oScrollHorApi.scrollByX(40);
+				}
 				bRetValue = true;
 			}
 			else if ( e.KeyCode == 40 ) // Bottom Arrow
 			{
+				if (!this.isFocusOnThumbnails)
+				{
+					this.m_oScrollVerApi.scrollByY(40);
+				}
+				else
+				{
+					if (this.currentPage < (this.getPagesCount() - 1))
+						this.navigateToPage(this.currentPage + 1);
+				}
 				bRetValue = true;
 			}
 			else if ( e.KeyCode == 65 && true === e.CtrlKey ) // Ctrl + A
@@ -2092,6 +2255,17 @@
 				this.fullTextMessageCallback = null;
 				this.fullTextMessageCallbackArgs = null;
 			}
+		};
+
+		this.getTextCommandsSize = function()
+		{
+			var result = 0;
+			for (var i = 0; i < this.file.pages.length; i++)
+			{
+				if (this.file.pages[i].text)
+					result += this.file.pages[i].text.length;
+			}
+			return result;
 		};
 	}
 

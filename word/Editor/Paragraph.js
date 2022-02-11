@@ -163,7 +163,7 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
 
     this.SearchResults = {};
 
-    this.SpellChecker  = new CParaSpellChecker(this);
+    this.SpellChecker  = new AscCommonWord.CParagraphSpellChecker(this);
 
     this.NearPosArray  = [];
 
@@ -951,7 +951,7 @@ Paragraph.prototype.Internal_Content_Add = function(Pos, Item, bCorrectPos)
 			ContentPos.Data[0]++;
 	}
 
-	this.SpellChecker.Update_OnAdd(this, Pos, Item);
+	this.RecalcInfo.NeedSpellCheck();
 
 	if (Item.SetParent)
 		Item.SetParent(this);
@@ -1000,8 +1000,9 @@ Paragraph.prototype.Internal_Content_Concat = function(arrItems)
 	this.private_CheckUpdateBookmarks(arrItems);
 	this.UpdateDocumentOutline();
 
+	this.RecalcInfo.NeedSpellCheck();
+
 	// Обновлять позиции в NearestPos не надо, потому что мы добавляем новые элементы в конец массива
-	this.RecalcInfo.Set_Type_0_Spell(pararecalc_0_Spell_All);
 };
 /**
  * Удаляем элемент из содержимого параграфа. (Здесь передвигаются все позиции
@@ -1064,8 +1065,7 @@ Paragraph.prototype.Internal_Content_Remove = function(Pos)
 			ContentPos.Data[0]--;
 	}
 
-	// Передвинем все метки слов для проверки орфографии
-	this.SpellChecker.Update_OnRemove(this, Pos, 1);
+	this.RecalcInfo.NeedSpellCheck();
 };
 /**
  * Удаляем несколько элементов
@@ -1172,8 +1172,7 @@ Paragraph.prototype.Internal_Content_Remove2 = function(Pos, Count)
 		}
 	}
 
-	// Передвинем все метки слов для проверки орфографии
-	this.SpellChecker.Update_OnRemove(this, Pos, Count);
+	this.RecalcInfo.NeedSpellCheck();
 };
 /**
  * Очищаем полностью параграф (включая последний ран)
@@ -2028,8 +2027,16 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 	var DrawColl           = undefined !== pGraphics.RENDERER_PDF_FLAG;
 	var DrawMMFields       = !!(this.LogicDocument && this.LogicDocument.Is_HighlightMailMergeFields && true === this.LogicDocument.Is_HighlightMailMergeFields());
 	var DrawSolvedComments = DocumentComments ? DocumentComments.IsUseSolved() : false;
-	var SdtHighlightColor  = this.LogicDocument.GetSdtGlobalShowHighlight && this.LogicDocument.GetSdtGlobalShowHighlight() && undefined === pGraphics.RENDERER_PDF_FLAG ? this.LogicDocument.GetSdtGlobalColor() : null;
-	var FormsHighlight     = this.LogicDocument.GetSpecialFormsHighlight && this.LogicDocument.GetSpecialFormsHighlight() && undefined === pGraphics.RENDERER_PDF_FLAG ? this.LogicDocument.GetSpecialFormsHighlight() : null;
+
+	var SdtHighlightColor  = this.LogicDocument.GetSdtGlobalShowHighlight && this.LogicDocument.GetSdtGlobalShowHighlight() ? this.LogicDocument.GetSdtGlobalColor() : null;
+	var FormsHighlight     = this.LogicDocument.GetSpecialFormsHighlight && this.LogicDocument.GetSpecialFormsHighlight() ? this.LogicDocument.GetSpecialFormsHighlight() : null;
+
+	if (false === this.LogicDocument.ForceDrawFormHighlight
+		|| (true !== this.LogicDocument.ForceDrawFormHighlight && undefined !== pGraphics.RENDERER_PDF_FLAG))
+	{
+		SdtHighlightColor = null;
+		FormsHighlight    = null;
+	}
 
 	if (FormsHighlight && FormsHighlight.IsAuto())
 		FormsHighlight = null;
@@ -2252,6 +2259,12 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 				var oSdtBounds;
 				var oPrevColor = new CDocumentColor(-1, -1, -1);
 
+				let isDrawFormHighlight = !pGraphics.isPrintMode;
+				if (true === LogicDocument.ForceDrawFormHighlight)
+					isDrawFormHighlight = true;
+				else if (false === LogicDocument.ForceDrawFormHighlight)
+					isDrawFormHighlight = false;
+
 				for (var nSdtIndex = 0, nSdtCount = PDSH.InlineSdt.length; nSdtIndex < nSdtCount; ++nSdtIndex)
 				{
 					oInlineSdt = PDSH.InlineSdt[nSdtIndex];
@@ -2262,7 +2275,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 					if (isForm && pGraphics.RENDERER_PDF_FLAG && !pGraphics.isPrintMode)
 						continue;
 
-					if (pGraphics.isPrintMode && isForm && (!oFormShd || oFormShd.IsNil()))
+					if (!isDrawFormHighlight && isForm && (!oFormShd || oFormShd.IsNil()))
 						continue;
 
 					if (oFormShd && !oFormShd.IsNil())
@@ -2270,7 +2283,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 						var oFormShdColor     = oFormShd.GetSimpleColor(this.GetTheme(), this.GetColorMap());
 						var oFormShdColorDark = new CDocumentColor(oFormShdColor.r * (201 / 255) | 0, oFormShdColor.g * (225 / 255) | 0, oFormShdColor.b, 255);
 
-						if (oInlineSdt.IsCurrent() || pGraphics.isPrintMode)
+						if (oInlineSdt.IsCurrent() || !isDrawFormHighlight)
 						{
 							if (!oPrevColor.IsEqualRGB(oFormShdColor))
 							{
@@ -4547,7 +4560,7 @@ Paragraph.prototype.Add_Tab = function(bShift)
 		if (nDefaultTabStop < 0.001)
 			return;
 
-		var LD_PageFields = this.LogicDocument.Get_PageFields(this.Get_AbsolutePage(0));
+		var LD_PageFields = this.LogicDocument.Get_PageFields(this.Get_AbsolutePage(0), this.Parent && this.Parent.IsHdrFtr());
 
 		var nLeft  = ParaPr.Ind.Left;
 		var nFirst = ParaPr.Ind.FirstLine;
@@ -9039,7 +9052,7 @@ Paragraph.prototype.Is_UseInDocument = function(Id)
 		return false;
 	}
 
-	if (null != this.Parent)
+	if (this.Parent && this.Parent.Is_UseInDocument)
 		return this.Parent.Is_UseInDocument(this.Get_Id());
 
 	return false;
@@ -11276,9 +11289,10 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 
 		if (true === DrawingLayout.Layout)
 		{
+			var isInHdrFtr    = this.Parent.IsHdrFtr();
 			var LogicDocument = this.LogicDocument;
 			var LD_PageLimits = LogicDocument.Get_PageLimits(CurPage);
-			var LD_PageFields = LogicDocument.Get_PageFields(CurPage);
+			var LD_PageFields = LogicDocument.Get_PageFields(CurPage, isInHdrFtr);
 
 			var Page_Width  = LD_PageLimits.XLimit;
 			var Page_Height = LD_PageLimits.YLimit;
@@ -11301,7 +11315,7 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 			var PageRel   = PageAbs - this.Parent.Get_AbsolutePage(0);
 
 			var PageLimits = this.Parent.Get_PageLimits(PageRel);
-			var PageFields = this.Parent.Get_PageFields(PageRel);
+			var PageFields = this.Parent.Get_PageFields(PageRel, isInHdrFtr);
 
 			var _CurPage = 0;
 			if (0 !== PageAbs && CurPage > ColumnAbs)
@@ -11325,7 +11339,7 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 			if (true === this.Parent.IsTableCellContent() && false === Drawing.IsLayoutInCell())
 			{
 				PageLimitsOrigin     = LogicDocument.Get_PageLimits(PageAbs);
-				var PageFieldsOrigin = LogicDocument.Get_PageFields(PageAbs);
+				var PageFieldsOrigin = LogicDocument.Get_PageFields(PageAbs, isInHdrFtr);
 				ColumnStartX         = PageFieldsOrigin.X;
 				ColumnEndX           = PageFieldsOrigin.XLimit;
 			}
@@ -11622,7 +11636,14 @@ Paragraph.prototype.Document_UpdateInterfaceState = function()
 	}
 
 	if (this.LogicDocument && true === this.LogicDocument.Spelling.Use && (selectionflag_Numbering !== this.Selection.Flag && selectionflag_NumberingCur !== this.Selection.Flag))
-		this.SpellChecker.Document_UpdateInterfaceState(StartPos, EndPos);
+	{
+		let oSpellCheckElement = this.SpellChecker.GetElementByRange(StartPos, EndPos);
+		if (oSpellCheckElement && oSpellCheckElement.IsWrong())
+		{
+			this.SpellChecker.CheckVariants(oSpellCheckElement);
+			editor.sync_SpellCheckCallback(oSpellCheckElement.GetWord(), false, oSpellCheckElement.GetVariants(), this.GetId(), oSpellCheckElement);
+		}
+	}
 
 	if (true === this.Selection.Use)
 	{
@@ -12317,6 +12338,11 @@ Paragraph.prototype.Supplement_FramePr = function(FramePr)
 
 	FramePr.Brd = ParaPr.Brd;
 	FramePr.Shd = ParaPr.Shd;
+};
+Paragraph.prototype.IsDropCap = function()
+{
+	var oFramePr = this.Get_FramePr();
+	return (oFramePr && oFramePr.DropCap);
 };
 /**
  * Можно ли добавлять буквицу
@@ -13625,6 +13651,127 @@ Paragraph.prototype.GetCurrentComments = function(oComments)
 
 	return oComments;
 };
+//----------------------------------------------------------------------------------------------------------------------
+// SpellCheck
+//----------------------------------------------------------------------------------------------------------------------
+/**
+ * @returns {AscCommonWord.CParagraphSpellChecker}
+ */
+Paragraph.prototype.GetSpellChecker = function()
+{
+	return this.SpellChecker;
+};
+Paragraph.prototype.RestartSpellCheck = function()
+{
+	this.RecalcInfo.NeedSpellCheck();
+
+	this.Recalc_CompiledPr();
+
+	for (let nIndex = 0, nCount = this.Content.length; nIndex < nCount; nIndex++)
+	{
+		this.Content[nIndex].RestartSpellCheck();
+	}
+
+	this.LogicDocument.Spelling.AddParagraphToCheck(this);
+};
+Paragraph.prototype.RequestSpellCheck = function()
+{
+	if (this.RecalcInfo.SpellCheck)
+	{
+		this.LogicDocument && this.LogicDocument.Spelling.AddParagraphToCheck(this);
+	}
+};
+/**
+ * Производим проверку орфографии.
+ * @param isForceFullCheck {boolean} принуждаем параграф проверить целиком, даже если он большой
+ * @return {boolean} true - проверка прошла до конца, false - параграф слишком большой и за один раз проверка не выполнилась
+ */
+Paragraph.prototype.ContinueSpellCheck = function(isForceFullCheck)
+{
+	var oLogicDocument = this.GetLogicDocument();
+	if (!this.RecalcInfo.SpellCheck || !oLogicDocument)
+	{
+		this.RecalcInfo.SpellCheck = false;
+		return true;
+	}
+
+	if (!this.private_CollectSpellCheckerElements(isForceFullCheck))
+		return false;
+
+	this.private_CheckDropCapForSpellCheck();
+
+	// Возможна ситуация, когда новых слов для проверки нет, но перерисовать нужно,
+	// т.к. одно из старых было удалено, либо стало текущим, и нам нужно убрать подчеркивание
+	if (!this.SpellChecker.Check(oLogicDocument.GetRecalcId()))
+		this.ReDraw();
+
+	this.RecalcInfo.SpellCheck = false;
+
+	return true;
+};
+Paragraph.prototype.private_CollectSpellCheckerElements = function(isForceFullCheck)
+{
+	let oCollector = this.SpellChecker.GetCollector(isForceFullCheck);
+	let nStartPos  = oCollector.GetPos(0);
+
+	for (let nPos = nStartPos, nCount = this.Content.length; nPos < nCount; ++nPos)
+	{
+		let oItem = this.Content[nPos];
+
+		oCollector.UpdatePos(nPos, 0);
+		oItem.CheckSpelling(oCollector, 1);
+
+		if (oCollector.IsExceedLimit())
+			break;
+	}
+
+	if (oCollector.IsExceedLimit())
+	{
+		this.SpellChecker.Pause(oCollector);
+		return false;
+	}
+
+	this.SpellChecker.OnEndCollectingElements();
+
+	return true;
+};
+Paragraph.prototype.private_CheckDropCapForSpellCheck = function()
+{
+	let oPrevParagraph = this.Get_DocumentPrev();
+	if (!oPrevParagraph || !oPrevParagraph.IsParagraph() || !oPrevParagraph.IsDropCap())
+		return;
+
+	let oElement = this.SpellChecker.GetElement(0);
+	if (!oElement || oElement.IsCorrect())
+		return;
+
+	let oRunElements = new CParagraphRunElements(oElement.GetStartPos(), 10, null, true);
+	this.GetPrevRunElements(oRunElements);
+
+	let arrElements = oRunElements.GetElements();
+	for (let nIndex = 0, nCount = arrElements.length; nIndex < nCount; ++nIndex)
+	{
+		var oRunItem = arrElements[nIndex];
+		if (!oRunItem.IsDrawing() || oRunItem.IsInline())
+			return;
+	}
+
+	oElement.SetCorrect();
+};
+Paragraph.prototype.AddSpellCheckerElement = function(oElement)
+{
+	let oRun = this.GetClassByPos(oElement.GetStartPos());
+	if (!oRun || !oRun.IsRun())
+		return;
+
+	oRun.AddSpellCheckerElement(oElement, true);
+
+	oRun = this.GetClassByPos(oElement.GetEndPos());
+	if (!oRun || !oRun.IsRun())
+		return;
+
+	oRun.AddSpellCheckerElement(oElement, false);
+};
 Paragraph.prototype.ReplaceMisspelledWord = function(Word, oElement)
 {
 	var Element = null;
@@ -13713,6 +13860,7 @@ Paragraph.prototype.IgnoreMisspelledWord = function(oElement)
 		}
 	}
 };
+//----------------------------------------------------------------------------------------------------------------------
 Paragraph.prototype.Get_SectionPr = function()
 {
 	return this.SectPr;
@@ -16199,13 +16347,6 @@ Paragraph.prototype.GetFirstParagraph = function()
 	return this;
 };
 /**
- * @returns {CParaSpellChecker}
- */
-Paragraph.prototype.GetSpellChecker = function()
-{
-	return this.SpellChecker;
-};
-/**
  * Получаем номер страницы, на которой расположена нумерация
  * @param {boolean} isAbsolute возвращаем абсолютный номер страницы или нет
  * @returns {number}
@@ -17230,20 +17371,11 @@ Paragraph.prototype["asc_canAddRefToCaptionText"] = Paragraph.prototype.asc_canA
 var pararecalc_0_All  = 0;
 var pararecalc_0_None = 1;
 
-var pararecalc_0_Spell_All  = 0;
-var pararecalc_0_Spell_Pos  = 1;
-var pararecalc_0_Spell_Lang = 2;
-var pararecalc_0_Spell_None = 3;
 
 function CParaRecalcInfo()
 {
     this.Recalc_0_Type = pararecalc_0_All;
-    this.Recalc_0_Spell =
-    {
-        Type      : pararecalc_0_All,
-        StartPos  : 0,
-        EndPos    : 0
-    };
+    this.SpellCheck = false;
 }
 
 CParaRecalcInfo.prototype =
@@ -17251,65 +17383,11 @@ CParaRecalcInfo.prototype =
     Set_Type_0 : function(Type)
     {
         this.Recalc_0_Type = Type;
-    },
-
-    Set_Type_0_Spell : function(Type, StartPos, EndPos)
-    {
-        if ( pararecalc_0_Spell_All === this.Recalc_0_Spell.Type )
-            return;
-        else if ( pararecalc_0_Spell_None === this.Recalc_0_Spell.Type || pararecalc_0_Spell_Lang === this.Recalc_0_Spell.Type )
-        {
-            this.Recalc_0_Spell.Type = Type;
-            if ( pararecalc_0_Spell_Pos === Type )
-            {
-                this.Recalc_0_Spell.StartPos = StartPos;
-                this.Recalc_0_Spell.EndPos   = EndPos;
-            }
-        }
-        else if ( pararecalc_0_Spell_Pos === this.Recalc_0_Spell.Type )
-        {
-            if ( pararecalc_0_Spell_All === Type )
-                this.Recalc_0_Spell.Type = Type;
-            else if ( pararecalc_0_Spell_Pos === Type )
-            {
-                this.Recalc_0_Spell.StartPos = Math.min( StartPos, this.Recalc_0_Spell.StartPos );
-                this.Recalc_0_Spell.EndPos   = Math.max( EndPos,   this.Recalc_0_Spell.EndPos   );
-            }
-        }
-    },
-
-    Update_Spell_OnChange : function(Pos, Count, bAdd)
-    {
-        if ( pararecalc_0_Spell_Pos === this.Recalc_0_Spell.Type )
-        {
-            if ( true === bAdd )
-            {
-                if ( this.Recalc_0_Spell.StartPos > Pos )
-                    this.Recalc_0_Spell.StartPos++;
-
-                if ( this.Recalc_0_Spell.EndPos >= Pos )
-                    this.Recalc_0_Spell.EndPos++;
-            }
-            else
-            {
-                if ( this.Recalc_0_Spell.StartPos > Pos )
-                {
-                    if ( this.Recalc_0_Spell.StartPos > Pos + Count )
-                        this.Recalc_0_Spell.StartPos -= Count;
-                    else
-                        this.Recalc_0_Spell.StartPos = Pos;
-                }
-
-                if ( this.Recalc_0_Spell.EndPos >= Pos )
-                {
-                    if ( this.Recalc_0_Spell.EndPos >= Pos + Count )
-                        this.Recalc_0_Spell.EndPos -= Count;
-                    else
-                        this.Recalc_0_Spell.EndPos = Math.max( 0, Pos - 1 );
-                }
-            }
-        }
     }
+};
+CParaRecalcInfo.prototype.NeedSpellCheck = function()
+{
+	this.SpellCheck = true;
 };
 
 function CDocumentBounds(Left, Top, Right, Bottom)

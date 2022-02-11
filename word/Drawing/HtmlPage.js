@@ -3549,7 +3549,7 @@ function CEditorPage(api)
 			_c.m_oDrawingDocument.CheckFontCache();
 		}
 
-		oThis.m_oLogicDocument.ContinueCheckSpelling();
+		oThis.m_oLogicDocument.ContinueSpellCheck();
 		oThis.m_oLogicDocument.ContinueTrackRevisions();
 	};
 	this.OnScroll       = function(isFromLA)

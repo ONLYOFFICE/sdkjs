@@ -383,8 +383,7 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 	PDSH.AddInlineSdt(this);
 	var oGraphics = PDSH.Graphics;
 
-	var isPrintMode = oGraphics.isPrintMode;
-	if (isPrintMode && this.IsForm() && this.IsPlaceHolder())
+	if (this.IsSkipDraw(oGraphics))
 		return this.SkipDraw(PDSH);
 
 	// Для экспорта в PDF записываем поля. Поля, находящиеся в автофигурах, пока не пишем
@@ -487,7 +486,7 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 CInlineLevelSdt.prototype.Draw_Elements = function(PDSE)
 {
 	if ((!PDSE.Graphics.isPrintMode && this.private_IsAddFormFieldToGraphics(PDSE.Graphics))
-		|| (PDSE.Graphics.isPrintMode && this.IsForm() && this.IsPlaceHolder()))
+		|| (this.IsSkipDraw(PDSE.Graphics)))
 		this.SkipDraw(PDSE);
 	else
 		CParagraphContentWithParagraphLikeContent.prototype.Draw_Elements.apply(this, arguments);
@@ -501,6 +500,22 @@ CInlineLevelSdt.prototype.Draw_Lines = function(PDSL)
 		this.SkipDraw(PDSL);
 	else
 		CParagraphContentWithParagraphLikeContent.prototype.Draw_Lines.apply(this, arguments);
+};
+CInlineLevelSdt.prototype.IsSkipDraw = function(oGraphics)
+{
+	if (!this.IsPlaceHolder() || !this.IsForm())
+		return false;
+
+	let oLogicDocument = this.GetLogicDocument();
+	if (oLogicDocument)
+	{
+		if (true === oLogicDocument.ForceDrawPlaceHolders)
+			return false;
+		else if (false === oLogicDocument.ForceDrawPlaceHolders)
+			return true;
+	}
+
+	return !!oGraphics.isPrintMode;
 };
 CInlineLevelSdt.prototype.GetRangeBounds = function(_CurLine, _CurRange)
 {
@@ -3084,6 +3099,17 @@ CInlineLevelSdt.prototype.IsFormExceedsBounds = function()
 
 	var oParaBounds = oParagraph.GetContentBounds(0);
 	return (oParaBounds.Right - oParaBounds.Left > oFormBounds.W || oParaBounds.Bottom - oParaBounds.Top > oFormBounds.H);
+};
+CInlineLevelSdt.prototype.CheckSpelling = function(oCollector, nDepth)
+{
+	let isForm = this.IsForm();
+	if (isForm)
+		oCollector.FlushWord();
+
+	CParagraphContentWithParagraphLikeContent.prototype.CheckSpelling.apply(this, arguments);
+
+	if (isForm)
+		oCollector.FlushWord();
 };
 
 //--------------------------------------------------------export--------------------------------------------------------

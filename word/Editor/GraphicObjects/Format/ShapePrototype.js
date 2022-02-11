@@ -916,28 +916,18 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex)
 		para_drawing = this.parent;
 	}
 
+
 	if (para_drawing && para_drawing.DocumentContent)
 	{
+        var nPageIndex = AscFormat.isRealNumber(pageIndex) ? pageIndex : para_drawing.PageNum;
 		var drawing_objects = oLogicDoc.DrawingObjects;
-		drawing_objects.resetSelection(true);
-		if (this.group)
-		{
-			var main_group = this.group.getMainGroup();
-			drawing_objects.selectObject(main_group, pageIndex);
-			main_group.selectObject(this, pageIndex);
-			main_group.selection.textSelection       = this;
-			drawing_objects.selection.groupSelection = main_group;
-		}
-		else
-		{
-			drawing_objects.selectObject(this, pageIndex);
-			drawing_objects.selection.textSelection = this;
-		}
+
+        this.SetControllerTextSelection(drawing_objects, nPageIndex);
 
 		var hdr_ftr = para_drawing.DocumentContent.IsHdrFtr(true);
 		if (hdr_ftr)
 		{
-			hdr_ftr.Content.SetDocPosType(docpostype_DrawingObjects);
+			hdr_ftr.Content.SetDocPosType(AscCommonWord.docpostype_DrawingObjects);
 			hdr_ftr.Set_CurrentElement(bUpdate);
 		}
 		else
@@ -946,7 +936,7 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex)
 
 			var nOldDocPosType = oDocument.GetDocPosType();
 
-			drawing_objects.document.SetDocPosType(docpostype_DrawingObjects);
+			drawing_objects.document.SetDocPosType(AscCommonWord.docpostype_DrawingObjects);
 			drawing_objects.document.Selection.Use = true;
 
 			if (true === bUpdate)
@@ -956,7 +946,7 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex)
 				drawing_objects.document.Document_UpdateSelectionState();
 			}
 
-			if (docpostype_HdrFtr === nOldDocPosType && oDocument.Redraw)
+			if (AscCommonWord.docpostype_HdrFtr === nOldDocPosType && oDocument.Redraw)
 				oDocument.Redraw(-1, -1);
 		}
 	}

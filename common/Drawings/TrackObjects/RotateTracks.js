@@ -429,13 +429,13 @@ function RotateTrackShapeImage(originalObject)
 
     };
 
-    this.trackEnd = function()
+    this.trackEnd = function(bWord)
     {
         if(!this.bIsTracked){
             return;
         }
         AscFormat.CheckSpPrXfrm(this.originalObject);
-        this.originalObject.changeRot(this.angle);
+        this.originalObject.changeRot(this.angle, bWord);
     };
 
     this.getBounds = function()

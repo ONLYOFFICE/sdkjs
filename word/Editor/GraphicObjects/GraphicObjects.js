@@ -340,10 +340,62 @@ CGraphicObjects.prototype =
     {
         this.clearTrackObjects();
         for(var i = 0; i < this.arrPreTrackObjects.length; ++i)
+        {
             this.addTrackObject(this.arrPreTrackObjects[i]);
+        }
+        if(this.arrPreTrackObjects.length > 1)
+        {
+            var aAllDrawings;
+            var oFirstTrack = this.arrPreTrackObjects[0];
+            if(oFirstTrack)
+            {
+                var oOrigObj = oFirstTrack.originalObject;
+                if(oOrigObj)
+                {
+                    if(oOrigObj.group)
+                    {
+                        aAllDrawings = [];
+                    }
+                    else
+                    {
+                        var oGrPage = this.getGraphicPage(oOrigObj.selectStartPage);
+                        if(oGrPage && oGrPage.getAllDrawings)
+                        {
+                            var aParaDrawings = oGrPage.getAllDrawings();
+                            if(Array.isArray(aParaDrawings))
+                            {
+                                aAllDrawings = [];
+                                for(var nDrawing = 0; nDrawing < aParaDrawings.length; ++nDrawing)
+                                {
+                                    if(aParaDrawings[nDrawing].GraphicObj)
+                                    {
+                                        aAllDrawings.push(aParaDrawings[nDrawing].GraphicObj);
+                                    }
+                                }
+                            }
+                            aAllDrawings = oGrPage.getAllDrawings();
+                        }
+                    }
+                    AscFormat.fSortTrackObjects(this, aAllDrawings);
+                }
+            }
+        }
         this.clearPreTrackObjects();
     },
 
+    getGraphicPage: function(pageIndex)
+    {
+        var drawing_page;
+        if(this.document.GetDocPosType() !== docpostype_HdrFtr)
+        {
+            drawing_page = this.graphicPages[pageIndex];
+        }
+        else
+        {
+            drawing_page = this.getHdrFtrObjectsByPageIndex(pageIndex);
+        }
+        return drawing_page;
+    },
 
     addToRecalculate: function(object)
     {
@@ -683,8 +735,6 @@ CGraphicObjects.prototype =
                 image_props.pluginGuid = props_by_types.imageProps.pluginGuid;
                 image_props.pluginData = props_by_types.imageProps.pluginData;
 
-                image_props.oleWidth = props_by_types.imageProps.oleWidth;
-                image_props.oleHeight = props_by_types.imageProps.oleHeight;
                 if(this.selection.groupSelection){
                     image_props.description = props_by_types.imageProps.description;
                     image_props.title = props_by_types.imageProps.title;

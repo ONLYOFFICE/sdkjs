@@ -670,6 +670,140 @@
 		this.asc_AddContentControlDatePicker(oPr, _content_control_pr);
 	};
 
+
+	/**
+	 * @typedef {Object} OLEObjectData
+	 * @property {string} Data - data which is stored in ole-object
+	 * @property {string} ImageData - image encoded in base64
+	 * @property {string} ApplicationId - identifier of plugin which able edit this ole-object
+	 * @property {string} InternalId - identifier of ole-object which is used for work with ole-object added to document
+	 * @property {number} Width - width of ole object in millimeters
+	 * @property {number} Height - height of ole object in millimeters
+	 * @property {?number} WidthPix - width image of ole-object in pixels
+	 * @property {?number} HeightPix - height image of ole-object in pixels
+	 */
+
+	/**
+	 * This method returns all ole-objects data for objects which can be opened by plugin with sPluginId.
+	 * If sPluginId is not present this method returns all ole-objects contained in this document
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias GetAllOleObjects
+	 * @param {?string} sPluginId
+	 * @returns {OLEObjectData[]}
+	 * */
+	window["asc_docs_api"].prototype["pluginMethod_GetAllOleObjects"] = function (sPluginId)
+	{
+		let aDataObjects = [];
+		let aOleObjects = this.WordControl.m_oLogicDocument.GetAllOleObjects(sPluginId, []);
+		for(let nObj = 0; nObj < aOleObjects.length; ++nObj)
+		{
+			aDataObjects.push(aOleObjects[nObj].getDataObject());
+		}
+		return aDataObjects;
+	};
+
+	/**
+	 * Remove ole-object from document by internal id
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias RemoveOleObject
+	 * @param {string} sInternalId
+	 * @return {undefined}
+	 * */
+	window["asc_docs_api"].prototype["pluginMethod_RemoveOleObject"] = function (sInternalId)
+	{
+		this.WordControl.m_oLogicDocument.RemoveDrawingObjectById(sInternalId);
+	};
+
+	/**
+	 * This method allows to remove several ole-objects.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias RemoveContentControls
+	 * @param {OLEObjectData[]} arrObjects is a array of InternalId's. example: [{"InternalId": "5_556"}]
+	 * @return {undefined}
+	 * @example
+	 * window.Asc.plugin.executeMethod("RemoveOleObjects", [[{"InternalId": "5_556"}]])
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_RemoveOleObjects"] = function (arrObjects)
+	{
+		var arrIds = [];
+		for(var nIdx = 0; nIdx < arrObjects.length; ++nIdx)
+		{
+			arrIds.push(arrObjects[nIdx].InternalId);
+		}
+		this.WordControl.m_oLogicDocument.RemoveDrawingObjects(arrIds);
+	};
+
+	/**
+	 * Select specified ole-object
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias SelectOleObject
+	 * @param {string} id is a InternalId of the content control
+	 * @example
+	 * window.Asc.plugin.executeMethod("SelectOleObject", ["5_665"]);
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_SelectOleObject"] = function(id)
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return;
+
+		var oDrawing = AscCommon.g_oTableId.Get_ById(id);
+		if(!oDrawing)
+		{
+			return;
+		}
+		oDrawing.Set_CurrentElement(true, null);
+	};
+
+	/**
+	 * Add ole-object in current document position
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias AddOleObject
+	 * @param {OLEObjectData} NewObject - new object data
+	 * @return {undefined}
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_InsertOleObject"] = function(NewObject)
+	{
+		var oPluginData = {};
+		oPluginData["imgSrc"] = NewObject["ImageData"];
+		oPluginData["widthPix"] = NewObject["WidthPix"];
+		oPluginData["heightPix"] = NewObject["HeightPix"];
+		oPluginData["width"] = NewObject["Width"];
+		oPluginData["height"] = NewObject["Height"];
+		oPluginData["data"] = NewObject["Data"];
+		oPluginData["guid"] = NewObject["ApplicationId"];
+		this.asc_addOleObject(oPluginData);
+	};
+
+
+	/**
+	 * Change ole-object in current document position
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias AddOleObject
+	 * @param {OLEObjectData} ObjectData
+	 * @return {undefined} sInternalId - internal id of new ole-object
+	 * window.Asc.plugin.executeMethod("SelectOleObject", ["5_665"]);
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_ChangeOleObject"] = function(ObjectData)
+	{
+		var oPluginData = {};
+		oPluginData["objectId"] = ObjectData["InternalId"];
+		oPluginData["imgSrc"] = ObjectData["ImageData"];
+		oPluginData["widthPix"] = ObjectData["WidthPix"];
+		oPluginData["heightPix"] = ObjectData["HeightPix"];
+		oPluginData["width"] = ObjectData["Width"];
+		oPluginData["height"] = ObjectData["Height"];
+		oPluginData["data"] = ObjectData["Data"];
+		oPluginData["guid"] = ObjectData["ApplicationId"];
+		this.asc_editOleObject(oPluginData);
+	};
+
 	function private_ReadContentControlCommonPr(commonPr)
 	{
 		var resultPr;

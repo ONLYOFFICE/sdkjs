@@ -359,6 +359,22 @@ CRunElementBase.prototype.ToSearchElement = function(oProps)
 {
 	return null;
 };
+/**
+ * Является ли данный элемент автофигурой
+ * @returns {boolean}
+ */
+CRunElementBase.prototype.IsDrawing = function()
+{
+	return false;
+};
+/**
+ * Является ли данный элемент текстовым элементом (но не пробелом и не табом)
+ * @returns {boolean}
+ */
+CRunElementBase.prototype.IsText = function()
+{
+	return false;
+};
 
 /**
  * Класс представляющий текстовый символ
@@ -723,10 +739,14 @@ ParaText.prototype.IsDigit = function()
 };
 ParaText.prototype.ToSearchElement = function(oProps)
 {
-	if (oProps.MatchCase)
+	if (!oProps.MatchCase)
 		return new CSearchTextItemChar(String.fromCodePoint(this.Value).toLowerCase().codePointAt(0));
 
 	return new CSearchTextItemChar(this.Value);
+};
+ParaText.prototype.IsText = function()
+{
+	return true;
 };
 
 

@@ -3897,7 +3897,7 @@ function CEditorPage(api)
 			_c.m_nCurrentTimeClearCache = 0;
 			_c.m_oDrawingDocument.CheckFontCache();
 		}
-        oThis.m_oLogicDocument.ContinueCheckSpelling();
+        oThis.m_oLogicDocument.ContinueSpellCheck();
 	};
 	this.OnScroll       = function()
 	{

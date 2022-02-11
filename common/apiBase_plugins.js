@@ -266,6 +266,9 @@
         if (!AscCommon.g_clipboardBase)
             return null;
 
+		if (this.isViewMode)
+			return null;
+
         var _elem = document.getElementById("pmpastehtml");
         if (_elem)
             return;
@@ -885,10 +888,11 @@
      * Replaces each paragraph(or text in cell) in the select with the corresponding text from an array of strings.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @alias GetSelectedText
+     * @alias ReplaceTextSmart
      * @param {Array} arrString - represents an array of strings.
      * @param {string} [sParaTab=" "] - specifies which character to use to define the tab in the source text.
      * @param {string} [sParaNewLine=" "] - specifies which character to use to specify the line break character in the source text.
+     * @returns {boolean} - always returns true
      */
     Api.prototype["pluginMethod_ReplaceTextSmart"] = function(arrString, sParaTab, sParaNewLine)
     {
@@ -905,5 +909,7 @@
                 this.WordControl.m_oLogicDocument.FinalizeAction();
                 break;
         }
+
+        return true;
     };
 })(window);

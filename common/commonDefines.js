@@ -524,10 +524,10 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	};
 
 	var c_oAscTextAssociation = {
-		Char: 0,
-		Line: 1,
-		NoFrames: 2,
-		Block: 3
+		BlockChar : 0,
+		BlockLine : 1,
+		PlainLine : 2,
+		PlainParagraph : 3
 	};
 
 	var c_oAscError = {
@@ -849,7 +849,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		Math           : 9,
 		MailMerge      : 10,
 		ContentControl : 11,
-		Animation      : 12
+		Animation      : 12,
+		Text           : 13 // viewer
 	};
 
 	var c_oAscLineDrawingRule = {
@@ -2773,10 +2774,11 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['ICO']                  = prot.ICO;
 
 	window['Asc']['c_oAscTextAssociation'] = window['Asc'].c_oAscTextAssociation = c_oAscTextAssociation;
-	prot['Char']                  = prot.Char;
-	prot['Line']                  = prot.Line;
-	prot['NoFrames']              = prot.NoFrames;
-	prot['Block']                 = prot.Block;
+	prot = c_oAscTextAssociation;
+	prot['BlockChar'] = prot.BlockChar;
+	prot['BlockLine'] = prot.BlockLine;
+	prot['PlainLine'] = prot.PlainLine;
+	prot['PlainParagraph'] = prot.PlainParagraph;
 
 	window['Asc']['c_oAscError'] = window['Asc'].c_oAscError = c_oAscError;
 	prot                                     = c_oAscError;
@@ -2986,7 +2988,6 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['Image']                     = prot.Image;
 	prot['Header']                    = prot.Header;
 	prot['Hyperlink']                 = prot.Hyperlink;
-
 	prot['SpellCheck']                = prot.SpellCheck;
 	prot['Shape']                     = prot.Shape;
 	prot['Slide']                     = prot.Slide;
@@ -2994,6 +2995,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['Math']                      = prot.Math;
 	prot['MailMerge']                 = prot.MailMerge;
 	prot['ContentControl']            = prot.ContentControl;
+	prot['Animation']                 = prot.Animation;
+	prot['Text']                      = prot.Text;
 	window['Asc']['linerule_AtLeast'] = window['Asc'].linerule_AtLeast = linerule_AtLeast;
 	window['Asc']['linerule_Auto'] = window['Asc'].linerule_Auto = linerule_Auto;
 	window['Asc']['linerule_Exact'] = window['Asc'].linerule_Exact = linerule_Exact;

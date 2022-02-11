@@ -655,12 +655,7 @@
 		correctData : function(pluginData)
 		{
 			pluginData.setAttribute("editorType", this.api._editorNameById());
-
-			var _mmToPx = AscCommon.g_dKoef_mm_to_pix;
-			if (this.api.WordControl && this.api.WordControl.m_nZoomValue)
-				_mmToPx *= this.api.WordControl.m_nZoomValue / 100;
-
-			pluginData.setAttribute("mmToPx", _mmToPx);
+			pluginData.setAttribute("mmToPx", AscCommon.g_dKoef_mm_to_pix);
 
 			if (undefined == pluginData.getAttribute("data"))
 				pluginData.setAttribute("data", "");

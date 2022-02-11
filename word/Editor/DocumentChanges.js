@@ -475,15 +475,15 @@ CChangesDocumentDefaultLanguage.prototype.constructor = CChangesDocumentDefaultL
 CChangesDocumentDefaultLanguage.prototype.Type = AscDFH.historyitem_Document_DefaultLanguage;
 CChangesDocumentDefaultLanguage.prototype.Undo = function()
 {
-	var oDocument = this.Class;
+	let oDocument = this.Class;
 	oDocument.Styles.Default.TextPr.Lang.Val = this.Old;
-	oDocument.Restart_CheckSpelling();
+	oDocument.RestartSpellCheck();
 };
 CChangesDocumentDefaultLanguage.prototype.Redo = function()
 {
-	var oDocument = this.Class;
+	let oDocument = this.Class;
 	oDocument.Styles.Default.TextPr.Lang.Val = this.New;
-	oDocument.Restart_CheckSpelling();
+	oDocument.RestartSpellCheck();
 };
 CChangesDocumentDefaultLanguage.prototype.WriteToBinary = function(Writer)
 {

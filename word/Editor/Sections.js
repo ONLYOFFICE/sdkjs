@@ -1152,6 +1152,10 @@ CSectionPr.prototype.GetColumnWidth = function(nColIndex)
 {
 	return this.Columns.Get_ColumnWidth(nColIndex);
 };
+CSectionPr.prototype.GetMinColumnWidth = function()
+{
+	return this.Columns.GetMinColumnWidth();
+};
 CSectionPr.prototype.GetColumnSpace = function(nColIndex)
 {
 	return this.Columns.Get_ColumnSpace(nColIndex);
@@ -1635,8 +1639,7 @@ CSectionColumns.prototype.Get_ColumnWidth = function(ColIndex)
 {
 	if (true === this.EqualWidth)
 	{
-		var nFrameW = this.SectPr.GetContentFrameWidth();
-		return this.Num > 0 ? (nFrameW - this.Space * (this.Num - 1)) / this.Num : nFrameW;
+		return this.private_GetEqualColumnWidth();
 	}
 	else
 	{
@@ -1667,6 +1670,32 @@ CSectionColumns.prototype.Get_ColumnSpace = function(ColIndex)
 
 		return this.Cols[ColIndex].Space;
 	}
+};
+CSectionColumns.prototype.GetMinColumnWidth = function()
+{
+	if (true === this.EqualWidth)
+	{
+		return this.private_GetEqualColumnWidth();
+	}
+	else
+	{
+		if (this.Cols.length <= 0)
+			return 0;
+
+		let nWidth = this.Cols[0].W;
+		for (let nColumn = 1, nColumnsCount = this.Cols.length; nColumn < nColumnsCount; ++nColumn)
+		{
+			if (this.Cols[nColumn].W < nWidth)
+				nWidth = this.Cols[nColumn].W;
+		}
+
+		return nWidth;
+	}
+};
+CSectionColumns.prototype.private_GetEqualColumnWidth = function()
+{
+	let nFrameW = this.SectPr.GetContentFrameWidth();
+	return this.Num > 0 ? (nFrameW - this.Space * (this.Num - 1)) / this.Num : nFrameW;
 };
 
 function CSectionLayoutColumnInfo(X, XLimit)

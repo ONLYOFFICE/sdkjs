@@ -1010,10 +1010,14 @@ CMathText.prototype.Is_LetterCS = function()
 };
 CMathText.prototype.ToSearchElement = function(oProps)
 {
-	if (oProps.MatchCase)
-		return new CSearchTextItemChar(String.fromCodePoint(this.Value).toLowerCase().codePointAt(0));
+	var nCodePoint = this.value;
+	if (undefined === nCodePoint || null === nCodePoint)
+		return null;
 
-	return new CSearchTextItemChar(this.Value);
+	if (oProps.MatchCase)
+		return new CSearchTextItemChar(String.fromCodePoint(nCodePoint).toLowerCase().codePointAt(0));
+
+	return new CSearchTextItemChar(nCodePoint);
 };
 /*CMathText.prototype.Recalculate_Reset = function(StartRange, StartLine, PRS)
 {

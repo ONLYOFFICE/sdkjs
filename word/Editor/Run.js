@@ -166,6 +166,10 @@ ParaRun.prototype.GetId = function()
 {
 	return this.Id;
 };
+ParaRun.prototype.IsRun = function()
+{
+	return true;
+};
 ParaRun.prototype.Set_ParaMath = function(ParaMath, Parent)
 {
     this.ParaMath = ParaMath;
@@ -4931,20 +4935,22 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
             case para_Drawing:
             {
                 var Para = PRSA.Paragraph;
+                var isInHdrFtr = Para.Parent.IsHdrFtr();
+
                 var PageAbs = Para.private_GetAbsolutePageIndex(CurPage);
                 var PageRel = Para.private_GetRelativePageIndex(CurPage);
                 var ColumnAbs = Para.Get_AbsoluteColumn(CurPage);
 
                 var LogicDocument = this.Paragraph.LogicDocument;
                 var LD_PageLimits = LogicDocument.Get_PageLimits(PageAbs);
-                var LD_PageFields = LogicDocument.Get_PageFields(PageAbs);
+                var LD_PageFields = LogicDocument.Get_PageFields(PageAbs, isInHdrFtr);
 
                 var Page_Width  = LD_PageLimits.XLimit;
                 var Page_Height = LD_PageLimits.YLimit;
 
                 var DrawingObjects = Para.Parent.DrawingObjects;
                 var PageLimits     = Para.Parent.Get_PageLimits(PageRel);
-                var PageFields     = Para.Parent.Get_PageFields(PageRel);
+                var PageFields     = Para.Parent.Get_PageFields(PageRel, isInHdrFtr);
 
                 var X_Left_Field   = PageFields.X;
                 var Y_Top_Field    = PageFields.Y;
@@ -4962,7 +4968,7 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
 
                 // TODO: Надо здесь почистить все, а то названия переменных путаются, и некоторые имеют неправильное значение
 
-                if (isTableCellContent && (!isUseWrap || !isLayoutInCell))
+                if (isTableCellContent && !isLayoutInCell)
                 {
                     X_Left_Field   = LD_PageFields.X;
                     Y_Top_Field    = LD_PageFields.Y;
@@ -5011,7 +5017,7 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
                 if (isTableCellContent && !isLayoutInCell)
                 {
                     PageLimitsOrigin = LogicDocument.Get_PageLimits(PageAbs);
-                    var PageFieldsOrigin = LogicDocument.Get_PageFields(PageAbs);
+                    var PageFieldsOrigin = LogicDocument.Get_PageFields(PageAbs, isInHdrFtr);
                     ColumnStartX = PageFieldsOrigin.X;
                     ColumnEndX   = PageFieldsOrigin.XLimit;
                 }
@@ -5871,12 +5877,12 @@ ParaRun.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 
 		if (para_Drawing === Item.Type)
 		{
-			if (!Item.IsInline() && !Item.IsUseTextWrap())
+			if (!Item.IsInline())
 			{
-				if (Asc.c_oAscRelativeFromV.Paragraph !== Item.GetPositionV().RelativeFrom && Asc.c_oAscRelativeFromV.Line !== Item.GetPositionV().RelativeFrom)
+				if (!Item.IsMoveWithTextVertically())
 					Dy = 0;
 
-				if (Asc.c_oAscRelativeFromH.Column !== Item.GetPositionH().RelativeFrom && Asc.c_oAscRelativeFromH.Character !== Item.GetPositionH().RelativeFrom)
+				if (!Item.IsMoveWithTextHorizontally())
 					Dx = 0;
 			}
 
@@ -6512,6 +6518,12 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
 			nCombMax = oForm.GetTextFormPr().GetMaxCharacters();
 
 		isFormPlaceHolder = (oForm.IsPlaceHolder() && PDSL.Graphics.isPrintMode);
+
+		let isForceDrawPlaceHolders = PDSL.GetLogicDocument().ForceDrawPlaceHolders;
+		if (true === isForceDrawPlaceHolders)
+			isFormPlaceHolder = false;
+		else if (false === isForceDrawPlaceHolders && oForm.IsPlaceHolder())
+			isFormPlaceHolder = true;
 	}
 
     var CurTextPr = this.Get_CompiledPr( false );
@@ -12829,13 +12841,14 @@ ParaRun.prototype.private_ProcessDoubleSpaceWithPeriod = function(oDocument, oPa
 	if (!this.Content[nPos].IsSpace())
 		return false;
 
-	var oRunElementsBefore = new CParagraphRunElements(oContentPos, 1, null, false);
+	var oRunElementsBefore = new CParagraphRunElements(oContentPos, 2, null, false);
 	oRunElementsBefore.SetSaveContentPositions(true);
 	oParagraph.GetPrevRunElements(oRunElementsBefore);
 	var arrElements = oRunElementsBefore.GetElements();
 	var oHistory    = oDocument.GetHistory();
-	if (1 !== arrElements.length
+	if (2 !== arrElements.length
 		|| !arrElements[0].IsSpace()
+		|| !arrElements[1].IsText()
 		|| !oHistory.CheckAsYouTypeAutoCorrect(arrElements[0], 1, 500))
 		return false;
 
@@ -14023,6 +14036,81 @@ ParaRun.prototype.GetNextRunElement = function(nPos)
 
 	return oRunElements.Elements[0];
 };
+//----------------------------------------------------------------------------------------------------------------------
+// SpellCheck
+//----------------------------------------------------------------------------------------------------------------------
+ParaRun.prototype.RestartSpellCheck = function()
+{
+	this.Recalc_CompiledPr(false);
+
+	for (let nIndex = 0, nCount = this.Content.length; nIndex < nCount; nIndex++)
+	{
+		let oItem = this.Content[nIndex];
+		if (oItem.IsDrawing())
+			oItem.RestartSpellCheck();
+	}
+};
+ParaRun.prototype.CheckSpelling = function(oCollector, nDepth)
+{
+	if (oCollector.IsExceedLimit())
+		return;
+
+	if (reviewtype_Remove === this.GetReviewType())
+	{
+		oCollector.FlushWord();
+		return;
+	}
+
+	let nStartPos = 0;
+	let oCurTextPr = this.Get_CompiledPr(false);
+	if (oCollector.IsFindStart())
+	{
+		nStartPos = oCollector.GetPos(nDepth);
+		oCollector.SetFindStart(false);
+	}
+	else
+	{
+		this.SpellingMarks = [];
+
+		if (true === this.IsEmpty())
+			return;
+
+		oCollector.HandleLang(oCurTextPr.Lang.Val);
+	}
+
+	for (let nPos = nStartPos, nContentLen = this.Content.length; nPos < nContentLen; ++nPos)
+	{
+		oCollector.UpdatePos(nPos, nDepth);
+		oCollector.HandleRunElement(this.Content[nPos], oCurTextPr);
+
+		if (oCollector.IsExceedLimit())
+			break;
+	}
+};
+ParaRun.prototype.AddSpellCheckerElement = function(oElement, isStart)
+{
+	if (isStart)
+		oElement.StartRun = this;
+	else
+		oElement.EndRun = this;
+
+	// TODO: Зачем тут Depth?
+	this.SpellingMarks.push(new AscCommonWord.CParagraphSpellingMark(oElement, isStart, isStart ? oElement.GetStartPos().GetDepth() : oElement.GetEndPos().GetDepth()));
+};
+ParaRun.prototype.RemoveSpellCheckerElement = function(oElement)
+{
+	for (let nCount = this.SpellingMarks.length, nIndex = nCount - 1; nIndex >= 0; --nIndex)
+	{
+		let oMark = this.SpellingMarks[nIndex];
+		if (oElement === oMark.Element)
+			this.SpellingMarks.splice(nIndex, 1);
+	}
+};
+ParaRun.prototype.ClearSpellingMarks = function()
+{
+	this.SpellingMarks = [];
+};
+//----------------------------------------------------------------------------------------------------------------------
 
 
 function CParaRunStartState(Run)

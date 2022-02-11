@@ -142,6 +142,8 @@ function CTable(DrawingDocument, Parent, Inline, Rows, Cols, TableGrid, bPresent
     this.CalculatedX        = null;
     this.CalculatedXLimit   = null;
 
+    this.TableWidthRange = 0;
+
     this.RecalcInfo = new CTableRecalcInfo();
 
     this.Rows = Rows;
@@ -874,7 +876,7 @@ CTable.prototype.Get_Props = function()
 	}
 	else
 	{
-		var LD_PageFields = this.LogicDocument.Get_PageFields(this.Get_StartPage_Absolute());
+		var LD_PageFields = this.LogicDocument.Get_PageFields(this.Get_StartPage_Absolute(), this.Parent && this.Parent.IsHdrFtr());
 
 		Pr.TableAlignment     = 0; // align_Left
 		Pr.TableIndent        = this.X_origin - LD_PageFields.X;
@@ -2753,7 +2755,7 @@ CTable.prototype.Shift = function(CurPage, Dx, Dy)
 			var CellPageIndex = CurPage - Cell.Content.Get_StartPage_Relative();
 			if (vmerge_Restart === Cell.GetVMerge())
 			{
-				Cell.Content_Shift(CellPageIndex, Dx, Dy);
+				Cell.ShiftCell(CellPageIndex, Dx, Dy);
 			}
 		}
 
@@ -3020,7 +3022,7 @@ CTable.prototype.Move = function(X, Y, PageNum, NearestPos)
 	oTargetTable.MoveCursorToStartPos();
 	editor.WordControl.m_oLogicDocument.Document_UpdateSelectionState();
 };
-CTable.prototype.Reset = function(X, Y, XLimit, YLimit, PageNum, ColumnNum, ColumnsCount, SectionY)
+CTable.prototype.Reset = function(X, Y, XLimit, YLimit, PageNum, ColumnNum, ColumnsCount)
 {
 	this.X_origin = X;
 	this.X        = X;
@@ -3032,31 +3034,48 @@ CTable.prototype.Reset = function(X, Y, XLimit, YLimit, PageNum, ColumnNum, Colu
 	this.ColumnNum    = ColumnNum ? ColumnNum : 0;
 	this.ColumnsCount = ColumnsCount ? ColumnsCount : 1;
 
-	// Для плавающей таблицы, которая расположена во второй или далее колонке, текущее положение по Y - это верх
-	// текущей секции
-	if (!this.IsInline() && ColumnNum > 0 && undefined !== SectionY)
-		this.Y = SectionY;
-
-	var _X      = this.X;
-	var _XLimit = this.XLimit;
-	if (this.LogicDocument && this.LogicDocument.IsDocumentEditor() && this.IsInline() && this.Parent && this.Parent.CheckRange)
+	this.private_CalculateTableWidthRange();
+	this.private_CheckRangeOnReset();
+};
+CTable.prototype.private_CalculateTableWidthRange = function()
+{
+	if (this.ColumnsCount > 1)
 	{
-		var arrRanges = this.Parent.CheckRange(_X, this.Y, _XLimit, this.Y + 0.001, this.Y, this.Y + 0.001, _X, _XLimit, this.private_GetRelativePageIndex(0));
+		var oSectPr = this.Get_SectPr();
+		this.TableWidthRange = oSectPr.GetMinColumnWidth();
+	}
+	else
+	{
+		this.TableWidthRange = this.XLimit - this.X;
+	}
+};
+CTable.prototype.private_CheckRangeOnReset = function()
+{
+	let X      = this.X;
+	let XLimit = this.XLimit;
+
+	if (this.LogicDocument
+		&& this.LogicDocument.IsDocumentEditor()
+		&& this.IsInline()
+		&& this.Parent
+		&& this.Parent.CheckRange)
+	{
+		var arrRanges = this.Parent.CheckRange(X, this.Y, XLimit, this.Y + 0.001, this.Y, this.Y + 0.001, X, XLimit, this.private_GetRelativePageIndex(0));
 		if (arrRanges.length > 0)
 		{
 			for (var nRangeIndex = 0, nRangesCount = arrRanges.length; nRangeIndex < nRangesCount; ++nRangeIndex)
 			{
-				if (arrRanges[nRangeIndex].X0 < this.X + 3.2 && arrRanges[nRangeIndex].X1 > _X)
-					_X = arrRanges[nRangeIndex].X1 + 0.001;
+				if (arrRanges[nRangeIndex].X0 < this.X + 3.2 && arrRanges[nRangeIndex].X1 > X)
+					X = arrRanges[nRangeIndex].X1 + 0.001;
 
-				if (arrRanges[nRangeIndex].X1 > this.XLimit - 3.2 && arrRanges[nRangeIndex].X0 < _XLimit)
-					_XLimit = arrRanges[nRangeIndex].X0 - 0.001;
+				if (arrRanges[nRangeIndex].X1 > this.XLimit - 3.2 && arrRanges[nRangeIndex].X0 < XLimit)
+					XLimit = arrRanges[nRangeIndex].X0 - 0.001;
 			}
 		}
 	}
 
-	this.X      = _X;
-	this.XLimit = _XLimit;
+	this.X      = X;
+	this.XLimit = XLimit;
 };
 CTable.prototype.Recalculate = function()
 {
@@ -19135,6 +19154,22 @@ CTable.prototype.GetDocumentPositionFromObject = function(arrPos)
 CTable.prototype.CalculateTextToTable = function(oEngine)
 {
 	oEngine.OnTable(this);
+};
+CTable.prototype.RestartSpellCheck = function()
+{
+	this.Recalc_CompiledPr();
+	for (let nCurRow = 0, nRowsCount = this.GetRowsCount(); nCurRow < nRowsCount; ++nCurRow)
+	{
+		let oRow = this.GetRow(nCurRow);
+		oRow.Recalc_CompiledPr();
+
+		for (let nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+		{
+			let oCell = oRow.GetCell(nCurCell);
+			oCell.Recalc_CompiledPr();
+			oCell.GetContent().RestartSpellCheck();
+		}
+	}
 };
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -2864,7 +2864,7 @@ function CPresentation(DrawingDocument) {
     this.CompositeInput = null;
 
 
-    this.Spelling = new CDocumentSpelling();
+    this.Spelling = new AscCommonWord.CDocumentSpellChecker();
 
     this.Sections = [];//array of CPrSection
 
@@ -3041,9 +3041,9 @@ CPresentation.prototype.removeSection = function (pos) {
     this.Sections.splice(pos, 0);
 };
 
-CPresentation.prototype.Set_DefaultLanguage = function (NewLangId) {
+CPresentation.prototype.SetDefaultLanguage = function (NewLangId) {
     this.SetLanguage(NewLangId);
-    this.Restart_CheckSpelling();
+    this.RestartSpellCheck();
     this.Recalculate();
     this.Document_UpdateInterfaceState();
 };
@@ -3059,7 +3059,7 @@ CPresentation.prototype.SetLanguage = function (NewLangId) {
     this.setDefaultTextStyle(oTextStyle);
 };
 
-CPresentation.prototype.Get_DefaultLanguage = function () {
+CPresentation.prototype.GetDefaultLanguage = function () {
     var oTextPr = null;
     if (this.defaultTextStyle && this.defaultTextStyle.levels[9]) {
         oTextPr = this.defaultTextStyle.levels[9].DefaultRunPr;
@@ -3728,10 +3728,10 @@ CPresentation.prototype.addDateTime = function (oPr) {
     });
 };
 
-CPresentation.prototype.Restart_CheckSpelling = function () {
+CPresentation.prototype.RestartSpellCheck = function () {
     this.Spelling.Reset();
     for (var i = 0; i < this.Slides.length; ++i) {
-        this.Slides[i].Restart_CheckSpelling();
+        this.Slides[i].RestartSpellCheck();
     }
 };
 
@@ -3780,19 +3780,19 @@ CPresentation.prototype.CanEdit = function () {
 };
 
 
-CPresentation.prototype.Stop_CheckSpelling = function () {
+CPresentation.prototype.StopSpellCheck = function () {
     this.Spelling.Reset();
 };
 
-CPresentation.prototype.ContinueCheckSpelling = function () {
-    this.Spelling.ContinueCheckSpelling();
+CPresentation.prototype.ContinueSpellCheck = function () {
+    this.Spelling.ContinueSpellCheck();
 };
 
-CPresentation.prototype.TurnOffCheckSpelling = function () {
+CPresentation.prototype.TurnOffSpellCheck = function () {
     this.Spelling.TurnOff();
 };
 
-CPresentation.prototype.TurnOnCheckSpelling = function () {
+CPresentation.prototype.TurnOnSpellCheck = function () {
     this.Spelling.TurnOn();
 };
 
@@ -5074,12 +5074,8 @@ CPresentation.prototype.AddOleObject = function (fWidth, fHeight, nWidthPix, nHe
     }
 };
 
-CPresentation.prototype.EditOleObject = function (oOleObject, sData, sImageUrl, nPixWidth, nPixHeight) {
-    oOleObject.setData(sData);
-    var _blipFill = new AscFormat.CBlipFill();
-    _blipFill.RasterImageId = sImageUrl;
-    oOleObject.setBlipFill(_blipFill);
-    oOleObject.setPixSizes(nPixWidth, nPixHeight);
+CPresentation.prototype.EditOleObject = function (oOleObject, sData, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight) {
+    oOleObject.editExternal(sData, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight);
 };
 
 
@@ -7876,10 +7872,10 @@ CPresentation.prototype.Document_UpdateInterfaceState = function () {
                 target_content.Document_UpdateInterfaceState();
             } else {
                 if (text_pr) {
-                    var lang = text_pr && text_pr.Lang.Val ? text_pr.Lang.Val : this.Get_DefaultLanguage();
+                    var lang = text_pr && text_pr.Lang.Val ? text_pr.Lang.Val : this.GetDefaultLanguage();
                     this.Api.sendEvent("asc_onTextLanguage", lang);
                 } else {
-                    this.Api.sendEvent("asc_onTextLanguage", this.Get_DefaultLanguage());
+                    this.Api.sendEvent("asc_onTextLanguage", this.GetDefaultLanguage());
                 }
             }
         }
@@ -9483,7 +9479,7 @@ CPresentation.prototype.Refresh_RecalcData = function (Data) {
             for (key = 0; key < this.Slides.length; ++key) {
                 this.Slides[key].checkSlideSize();
             }
-            this.Restart_CheckSpelling();
+            this.RestartSpellCheck();
             break;
         }
         case AscDFH.historyitem_Presentation_SlideSize: {

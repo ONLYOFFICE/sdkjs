@@ -3387,7 +3387,7 @@ PasteProcessor.prototype =
                     Item.Internal_Content_Add(nContentPos, TextPr);
                 }
                 Item.RecalcInfo.Set_Type_0(pararecalc_0_All);
-                Item.RecalcInfo.Set_Type_0_Spell(pararecalc_0_Spell_All);
+                Item.RecalcInfo.NeedSpellCheck();
             }
             else
             {
@@ -3466,7 +3466,7 @@ PasteProcessor.prototype =
                     LastPosCurDoc--;
                 }
                 Item.RecalcInfo.Set_Type_0(pararecalc_0_All);
-                Item.RecalcInfo.Set_Type_0_Spell(pararecalc_0_Spell_All);
+                Item.RecalcInfo.NeedSpellCheck();
                 oDoc.CurPos.ContentPos = LastPosCurDoc;
             }
         }

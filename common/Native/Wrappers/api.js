@@ -7046,7 +7046,7 @@ Asc['asc_docs_api'].prototype.asc_setSpellCheck = function(isOn)
         var oLogicDoc = this.WordControl.m_oLogicDocument;
         if(isOn)
         {
-            this.spellCheckTimerId = setInterval(function(){oLogicDoc.ContinueCheckSpelling();}, 500);
+            this.spellCheckTimerId = setInterval(function(){oLogicDoc.ContinueSpellCheck();}, 500);
         }
         else
         {

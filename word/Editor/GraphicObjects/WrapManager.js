@@ -819,14 +819,14 @@ CWrapManager.prototype =
                 oParaDrawing = aDrawings[index].parent;
                 if(oParaDrawing)
                 {
-                    if(oParaDrawing.IsLayoutInCell())
-                    {
-                        var oTableCell = oParaDrawing.DocumentContent.IsTableCellContent(true);
-                        if(oTableCell !== docContent)
-                        {
-                            continue;
-                        }
-                    }
+					var oTableCell = oParaDrawing.DocumentContent.IsTableCellContent(true);
+					if (oTableCell
+						&& oParaDrawing.IsLayoutInCell()
+						&& oTableCell.GetContent() !== docContent)
+					{
+						continue;
+					}
+
                     aDrawings[index].getArrayWrapIntervals(x0,y0, x1, y1, Y0sp, Y1Ssp, LeftField, RightField,  arr_intervals, bMathWrap);
                 }
             }
@@ -837,14 +837,14 @@ CWrapManager.prototype =
                 oParaDrawing = aDrawings[index].parent;
                 if(oParaDrawing)
                 {
-                    if(oParaDrawing.IsLayoutInCell())
-                    {
-                        var oTableCell = oParaDrawing.DocumentContent.IsTableCellContent(true);
-                        if(oTableCell !== docContent)
-                        {
-                            continue;
-                        }
-                    }
+					var oTableCell = oParaDrawing.DocumentContent.IsTableCellContent(true);
+					if (oTableCell
+						&& oParaDrawing.IsLayoutInCell()
+						&& oTableCell.GetContent() !== docContent)
+					{
+						continue;
+					}
+
                     aDrawings[index].getArrayWrapIntervals(x0,y0, x1, y1, Y0sp, Y1Ssp, LeftField, RightField,  arr_intervals, bMathWrap);
                 }
             }

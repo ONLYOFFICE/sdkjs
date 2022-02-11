@@ -1088,7 +1088,7 @@
 		PivotTables: 16,
 		Scenarios: 17,
 		SelectLockedCells: 18,
-		SelectUnlockedCell: 19,
+		SelectUnlockedCells: 19,
 		Sheet: 20,
 		Sort: 21
 	};
@@ -1772,7 +1772,7 @@
 				this.bs.WriteItem(c_oSer_TablePart.AltTextTable, function(){oThis.WriteAltTextTable(table);});
 
 			if(null != table.QueryTable)
-				this.bs.WriteItem(c_oSer_TablePart.QueryTable, function(){oThis.WriteQueryTable(table.QueryTable);});
+				this.bs.WriteItem(c_oSer_TablePart.QueryTable, function(){oThis.WriteQueryTable(table.QueryTable, table);});
 
 			if(null != table.tableType)
 				this.bs.WriteItem(c_oSer_TablePart.TableType, function(){oThis.memory.WriteULong(elem.tableType);});
@@ -2135,7 +2135,7 @@
                 this.memory.WriteBool(tableStyleInfo.ShowLastColumn);
             }
         };
-		this.WriteQueryTable = function(queryTable)
+		this.WriteQueryTable = function(queryTable, table)
 		{
 			var oThis = this;
 
@@ -2246,11 +2246,11 @@
 			}
 			if (null != queryTable.queryTableRefresh) {
 				this.bs.WriteItem(c_oSer_QueryTable.QueryTableRefresh, function () {
-					oThis.WriteQueryTableRefresh(queryTable.queryTableRefresh);
+					oThis.WriteQueryTableRefresh(queryTable.queryTableRefresh, table);
 				});
 			}
 		};
-		this.WriteQueryTableRefresh = function(queryTableRefresh)
+		this.WriteQueryTableRefresh = function(queryTableRefresh, table)
 		{
 			var oThis = this;
 			if (null != queryTableRefresh.nextId) {
@@ -2296,24 +2296,28 @@
 			}
 			if (null != queryTableRefresh.queryTableFields) {
 				this.bs.WriteItem(c_oSer_QueryTableRefresh.QueryTableFields, function () {
-					oThis.WriteQueryTableFields(queryTableRefresh.queryTableFields);
+					oThis.WriteQueryTableFields(queryTableRefresh.queryTableFields, table);
 				});
 			}
 			if (null != queryTableRefresh.queryTableDeletedFields) {
 				this.bs.WriteItem(c_oSer_QueryTableRefresh.QueryTableDeletedFields, function () {
-					oThis.WriteQueryTableDeletedFields(queryTableRefresh.queryTableDeletedFields);
+					oThis.WriteQueryTableDeletedFields(queryTableRefresh.queryTableDeletedFields/*,table*/);
 				});
 			}
 		};
-		this.WriteQueryTableFields = function (queryTableFields) {
+		this.WriteQueryTableFields = function (queryTableFields, table) {
 			var oThis = this;
 			for (var i = 0, length = queryTableFields.length; i < length; ++i) {
-				this.bs.WriteItem(c_oSer_QueryTableField.QueryTableField, function () {
-					oThis.WriteQueryTableField(queryTableFields[i]);
-				});
-			}
-		};
-		this.WriteQueryTableField = function (queryTableField) {
+                //нужна синхронизация по id таблицы. поскольку, id генерируется в x2t по индексу колонки, то отправляем на сохранение именно индекс колонки
+                var tableColumnId = table.getIndexTableColumnById(queryTableFields[i].tableColumnId);
+                if (tableColumnId !== null) {
+                    this.bs.WriteItem(c_oSer_QueryTableField.QueryTableField, function () {
+                        oThis.WriteQueryTableField(queryTableFields[i], tableColumnId);
+                    });
+                }
+            }
+        };
+		this.WriteQueryTableField = function (queryTableField, tableColumnId) {
 
 			var oThis = this;
 			if (null != queryTableField.name) {
@@ -2326,9 +2330,9 @@
 					oThis.memory.WriteLong(queryTableField.id);
 				});
 			}
-			if (null != queryTableField.tableColumnId) {
+			if (null != tableColumnId) {
 				this.bs.WriteItem(c_oSer_QueryTableField.TableColumnId, function () {
-					oThis.memory.WriteLong(queryTableField.tableColumnId);
+					oThis.memory.WriteLong(tableColumnId);
 				});
 			}
 			if (null != queryTableField.rowNumbers) {
@@ -4173,10 +4177,10 @@
 				this.memory.WriteByte(c_oSerPropLenType.Byte);
 				this.memory.WriteBool(sheetProtection.selectLockedCells);
 			}
-			if (null != sheetProtection.selectUnlockedCell) {
-				this.memory.WriteByte(c_oSerWorksheetProtection.SelectUnlockedCell);
+			if (null != sheetProtection.selectUnlockedCells) {
+				this.memory.WriteByte(c_oSerWorksheetProtection.SelectUnlockedCells);
 				this.memory.WriteByte(c_oSerPropLenType.Byte);
-				this.memory.WriteBool(sheetProtection.selectUnlockedCell);
+				this.memory.WriteBool(sheetProtection.selectUnlockedCells);
 			}
 			if (null != sheetProtection.sheet) {
 				this.memory.WriteByte(c_oSerWorksheetProtection.Sheet);
@@ -6482,7 +6486,9 @@
 			}
 			else if ( c_oSer_TableColumns.UniqueName == type ) {
 				oTableColumn.uniqueName = this.stream.GetString2LE(length);
-			}
+			} else if ( c_oSer_TableColumns.Id == type ) {
+                oTableColumn.id = this.stream.GetULongLE();
+            }
             else
                 res = c_oSerConstants.ReadUnknown;
             return res;
@@ -8468,10 +8474,10 @@
                 for(var i = 0; i < aTempCols.length; ++i)
                 {
                     var elem = aTempCols[i];
-                    if(elem.Max >= oWorksheet.nColsCount)
-                        oWorksheet.nColsCount = elem.Max;
                     if(null != oAllCol && oAllCol.isEqual(elem.col))
                         continue;
+                    if(elem.col.isUpdateScroll() && elem.Max >= oWorksheet.nColsCount)
+                        oWorksheet.nColsCount = elem.Max;
 
                     for(var j = elem.Min; j <= elem.Max; j++){
                         var oNewCol = new AscCommonExcel.Col(oWorksheet, j - 1);
@@ -8790,8 +8796,8 @@
 				sheetProtection.scenarios = this.stream.GetBool();
 			} else if (c_oSerWorksheetProtection.SelectLockedCells == type) {
 				sheetProtection.selectLockedCells = this.stream.GetBool();
-			} else if (c_oSerWorksheetProtection.SelectUnlockedCell == type) {
-				sheetProtection.selectUnlockedCell = this.stream.GetBool();
+			} else if (c_oSerWorksheetProtection.SelectUnlockedCells == type) {
+				sheetProtection.selectUnlockedCells = this.stream.GetBool();
 			} else if (c_oSerWorksheetProtection.Sheet == type) {
 				sheetProtection.sheet = this.stream.GetBool();
 			} else if (c_oSerWorksheetProtection.Sort == type) {

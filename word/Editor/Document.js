@@ -2503,7 +2503,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
         this.SearchEngine = new CDocumentSearch();
 
     // Параграфы, в которых есть ошибки в орфографии (объект с ключом - Id параграфа)
-    this.Spelling = new CDocumentSpelling();
+    this.Spelling = new AscCommonWord.CDocumentSpellChecker();
 
     // Дополнительные настройки
 	this.ForceHideCCTrack          = false; // Насильно запрещаем отрисовку рамок у ContentControl
@@ -2521,6 +2521,8 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.MoveDrawing               = false; // Происходит ли сейчас перенос автофигуры
 	this.PrintSelection            = false; // Печатаем выделенный фрагмент
 	this.CheckFormPlaceHolder      = true;  // Выполняем ли специальную обработку для плейсхолдеров у форм
+	this.ForceDrawPlaceHolders     = null;  // true/false - насильно заставляем рисовать или не рисовать плейсхолдеры и подсветку,
+	this.ForceDrawFormHighlight    = null;  // null - редактор решает рисовать или нет в зависимости от других параметров
 
 	this.DrawTableMode = {
 		Start  : false,
@@ -2952,17 +2954,41 @@ CDocument.prototype.Get_PageLimits = function(nPageIndex)
 		YLimit : oSectPr.GetPageHeight()
 	};
 };
-CDocument.prototype.Get_PageFields = function(nPageIndex)
+CDocument.prototype.Get_PageFields = function(nPageIndex, isHdrFtr)
 {
-	var nIndex  = this.Pages[nPageIndex] ? this.Pages[nPageIndex].Pos : 0;
+	var oPage   = this.Pages[nPageIndex];
+	var nIndex  = oPage ? oPage.Pos : 0;
 	var oSectPr = this.SectionsInfo.Get_SectPr(nIndex).SectPr;
 	var oFrame  = oSectPr.GetContentFrame(nPageIndex);
+	if (!oPage)
+	{
+		return {
+			X      : oFrame.Left,
+			Y      : oFrame.Top,
+			XLimit : oFrame.Right,
+			YLimit : oFrame.Bottom
+		};
+	}
+
+	var nTop    = oFrame.Top;
+	var nBottom = oFrame.Bottom;
+
+	if (!isHdrFtr)
+	{
+		var oHdrFtrLine = this.HdrFtr.GetHdrFtrLines(nPageIndex);
+
+		if (null !== oHdrFtrLine.Top && oHdrFtrLine.Top > nTop)
+			nTop = oHdrFtrLine.Top;
+
+		if (null !== oHdrFtrLine.Bottom && oHdrFtrLine.Bottom < nBottom)
+			nBottom = oHdrFtrLine.Bottom;
+	}
 
 	return {
 		X      : oFrame.Left,
-		Y      : oFrame.Top,
+		Y      : nTop,
 		XLimit : oFrame.Right,
-		YLimit : oFrame.Bottom
+		YLimit : nBottom
 	};
 };
 CDocument.prototype.Get_ColumnFields = function(nElementIndex, nColumnIndex, nPageIndex)
@@ -5071,10 +5097,15 @@ CDocument.prototype.private_RecalculateFlowTable             = function(RecalcIn
     if (true === this.RecalcInfo.Can_RecalcObject())
     {
         var ElementPageIndex = 0;
-        if ((0 === Index && 0 === PageIndex) || Index != StartIndex || (Index === StartIndex && true === bResetStartElement))
+        if ((0 === Index && 0 === PageIndex) || Index !== StartIndex || (Index === StartIndex && true === bResetStartElement))
         {
-            Element.Set_DocumentIndex(Index);
-            Element.Reset(X, Y, XLimit, YLimit, PageIndex, ColumnIndex, ColumnsCount, this.Pages[PageIndex].Sections[this.Pages[PageIndex].Sections.length - 1].Y);
+        	// См. баги #42163 #55288
+			let oPageSection = this.Pages[PageIndex].Sections[RecalcInfo.SectionIndex];
+			if (ColumnIndex > 0 && oPageSection.IsCalculatingSectionBottomLine())
+				Y = oPageSection.Y;
+
+			Element.Set_DocumentIndex(Index);
+            Element.Reset(X, Y, XLimit, YLimit, PageIndex, ColumnIndex, ColumnsCount);
             ElementPageIndex = 0;
         }
         else
@@ -5641,6 +5672,7 @@ CDocument.prototype.private_RecalculateHdrFtrPageCountUpdate = function()
 			this.FullRecalc.Start             = true;
 			this.FullRecalc.StartPage         = nPageAbs;
 			this.FullRecalc.ResetStartElement = this.private_RecalculateIsNewSection(nPageAbs, this.Pages[nPageAbs].Pos);
+			this.FullRecalc.Endnotes          = this.Endnotes.IsContinueRecalculateFromPrevPage(nPageAbs);
 			this.FullRecalc.MainStartPos      = this.Pages[nPageAbs].Pos;
 
 			this.DrawingDocument.OnStartRecalculate(nPageAbs);
@@ -6349,13 +6381,9 @@ CDocument.prototype.AddOleObject  = function(W, H, nWidthPix, nHeightPix, Img, D
 {
 	this.Controller.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId);
 };
-CDocument.prototype.EditOleObject = function(oOleObject, sData, sImageUrl, nPixWidth, nPixHeight)
+CDocument.prototype.EditOleObject = function(oOleObject, sData, sImageUrl, fWidth, fHeight, fHeightMM, nPixWidth, nPixHeight)
 {
-	oOleObject.setData(sData);
-	var _blipFill           = new AscFormat.CBlipFill();
-	_blipFill.RasterImageId = sImageUrl;
-	oOleObject.setBlipFill(_blipFill);
-	oOleObject.setPixSizes(nPixWidth, nPixHeight);
+    oOleObject.editExternal(sData, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight);
 };
 CDocument.prototype.AddTextArt = function(nStyle)
 {
@@ -6708,6 +6736,58 @@ CDocument.prototype.RemoveBeforePaste = function()
 	else
 		this.Remove(1, true, true, true);
 };
+CDocument.prototype.RemoveDrawingObjectById = function(sObjectId)
+{
+    var oState = this.SaveDocumentState();
+    var oDrawing = AscCommon.g_oTableId.Get_ById(sObjectId);
+    oDrawing.Set_CurrentElement(false, null);
+    if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Remove, null, true, this.IsFormFieldEditing()))
+    {
+        this.StartAction(AscDFH.historydescription_Document_BackSpaceButton);
+        this.Remove(-1, true, false, false, false, true);
+        this.FinalizeAction();
+    }
+    this.LoadDocumentState(oState);
+};
+CDocument.prototype.RemoveDrawingObjects = function(arrObjectsId)
+{
+    var oState = this.SaveDocumentState();
+    var oDrawing = AscCommon.g_oTableId.Get_ById(arrObjectsId[0]);
+    if(!oDrawing)
+    {
+        return;
+    }
+    oDrawing.Set_CurrentElement(false, null);
+    var aObjectsToDelete = [];
+    for(var nObject = 0; nObject < arrObjectsId.length; ++nObject)
+    {
+        oDrawing = AscCommon.g_oTableId.Get_ById(arrObjectsId[nObject]);
+        if(oDrawing)
+        {
+            aObjectsToDelete.push(oDrawing);
+            if(oDrawing.group)
+            {
+                oDrawing.getMainGroup().select(this.DrawingObjects);
+            }
+            else
+            {
+                oDrawing.select(this.DrawingObjects);
+            }
+        }
+    }
+    if (false === this.Document_Is_SelectionLocked(AscCommon.changestype_Remove, null, true, this.IsFormFieldEditing()))
+    {
+        this.StartAction(AscDFH.historydescription_Document_BackSpaceButton);
+        for(nObject = 0; nObject < aObjectsToDelete.length; ++nObject)
+        {
+            oDrawing = aObjectsToDelete[nObject];
+            oDrawing.Set_CurrentElement(false, null);
+            this.Remove(-1, true, false, false, false, true);
+        }
+        this.FinalizeAction();
+    }
+    this.LoadDocumentState(oState);
+};
 CDocument.prototype.GetCursorPosXY = function()
 {
 	return this.Controller.GetCursorPosXY();
@@ -6976,6 +7056,9 @@ CDocument.prototype.SetParagraphSuppressLineNumbers = function(isSuppress)
 CDocument.prototype.private_SetParagraphNumbering = function(oNumInfo)
 {
 	var oNumPr = this.GetSelectedNum();
+
+	if (!oNumPr && !this.IsTextSelectionUse())
+		oNumPr = this.GetSelectedNum(true);
 
 	var arrSelectedParagraphs;
 
@@ -26756,6 +26839,109 @@ CDocument.prototype.GetCurrentReviewChanges = function()
 
 	return arrReviewChanges;
 };
+//----------------------------------------------------------------------------------------------------------------------
+// SpellCheck
+//----------------------------------------------------------------------------------------------------------------------
+CDocument.prototype.SetDefaultLanguage = function(nNewLang)
+{
+	let oStyles  = this.GetStyles();
+	let nOldLang = oStyles.Default.TextPr.Lang.Val;
+
+	if (nOldLang !== nNewLang)
+	{
+		this.History.Add(new CChangesDocumentDefaultLanguage(this, nOldLang, nNewLang));
+		oStyles.Default.TextPr.Lang.Val = nNewLang;
+
+		this.RestartSpellCheck();
+		this.UpdateInterface();
+	}
+};
+CDocument.prototype.GetDefaultLanguage = function()
+{
+	return this.GetStyles().Default.TextPr.Lang.Val;
+};
+CDocument.prototype.RestartSpellCheck = function()
+{
+	this.Spelling.Reset();
+
+	// TODO: добавить обработку в автофигурах
+	// TODO: Надо добавить обработку во всех контроллерах
+
+	this.SectionsInfo.RestartSpellCheck();
+
+	for (let nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+	{
+		this.Content[nIndex].RestartSpellCheck();
+	}
+};
+CDocument.prototype.StopSpellCheck = function()
+{
+	this.Spelling.Reset();
+};
+CDocument.prototype.ContinueSpellCheck = function()
+{
+	this.Spelling.ContinueSpellCheck();
+};
+CDocument.prototype.TurnOffSpellCheck = function()
+{
+	this.Spelling.TurnOff();
+};
+CDocument.prototype.TurnOnSpellCheck = function()
+{
+	this.Spelling.TurnOn();
+};
+//----------------------------------------------------------------------------------------------------------------------
+CDocument.prototype.SetupBeforeNativePrint = function(layoutOptions, oGraphics)
+{
+	if (!layoutOptions || !oGraphics)
+		return;
+
+	if (!this.StoredOptions)
+		this.StoredOptions = {};
+
+	this.StoredOptions.DrawFormHighlight = this.ForceDrawFormHighlight;
+	this.StoredOptions.DrawPlaceHolders  = this.ForceDrawPlaceHolders;
+	this.StoredOptions.Graphics          = oGraphics;
+	this.StoredOptions.GraphicsPrintMode = oGraphics.isPrintMode;
+
+	if (true === layoutOptions["drawPlaceHolders"] || false === layoutOptions["drawPlaceHolders"])
+		this.ForceDrawPlaceHolders = layoutOptions["drawPlaceHolders"];
+
+	if (true === layoutOptions["drawFormHighlight"] || false === layoutOptions["drawFormHighlight"])
+		this.ForceDrawFormHighlight = layoutOptions["drawFormHighlight"];
+
+	if (true === layoutOptions["isPrint"] || false === layoutOptions["isPrint"])
+		oGraphics.isPrintMode = layoutOptions["isPrint"];
+};
+CDocument.prototype.RestoreAfterNativePrint = function()
+{
+	if (!this.StoredOptions)
+		return;
+
+	if (undefined !== this.StoredOptions.DrawFormHighlight)
+	{
+		this.ForceDrawFormHighlight = this.StoredOptions.DrawFormHighlight;
+		delete this.StoredOptions.DrawFormHighlight;
+	}
+
+	if (undefined !== this.StoredOptions.DrawPlaceHolders)
+	{
+		this.ForceDrawPlaceHolders = this.StoredOptions.DrawPlaceHolders;
+		delete this.StoredOptions.DrawPlaceHolders;
+	}
+
+	if (this.StoredOptions.Graphics)
+	{
+		if (undefined !== this.StoredOptions.GraphicsPrintMode)
+		{
+			this.StoredOptions.Graphics.isPrintMode = this.StoredOptions.GraphicsPrintMode;
+			delete this.StoredOptions.GraphicsPrintMode;
+		}
+
+		delete this.StoredOptions.Graphics;
+	}
+};
+
 
 function CDocumentSelectionState()
 {
@@ -27352,6 +27538,33 @@ CDocumentSectionsInfo.prototype.FindNextFillingForm = function(isNext, oCurHdrFt
 	}
 
 	return null;
+};
+CDocumentSectionsInfo.prototype.RestartSpellCheck = function()
+{
+	var bEvenOdd = EvenAndOddHeaders;
+	for (let nIndex = 0, nCount = this.Elements.length; nIndex < nCount; ++nIndex)
+	{
+		var SectPr = this.Elements[nIndex].SectPr;
+		var bFirst = SectPr.Get_TitlePage();
+
+		if (null != SectPr.HeaderFirst && true === bFirst)
+			SectPr.HeaderFirst.RestartSpellCheck();
+
+		if (null != SectPr.HeaderEven && true === bEvenOdd)
+			SectPr.HeaderEven.RestartSpellCheck();
+
+		if (null != SectPr.HeaderDefault)
+			SectPr.HeaderDefault.RestartSpellCheck();
+
+		if (null != SectPr.FooterFirst && true === bFirst)
+			SectPr.FooterFirst.RestartSpellCheck();
+
+		if (null != SectPr.FooterEven && true === bEvenOdd)
+			SectPr.FooterEven.RestartSpellCheck();
+
+		if (null != SectPr.FooterDefault)
+			SectPr.FooterDefault.RestartSpellCheck();
+	}
 };
 
 function CDocumentSectionsInfoElement(SectPr, Index)

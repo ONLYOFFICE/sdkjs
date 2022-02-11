@@ -330,15 +330,7 @@ NullState.prototype =
             }
         }
 
-        var drawing_page;
-        if(this.drawingObjects.document.GetDocPosType() !== docpostype_HdrFtr)
-        {
-            drawing_page = this.drawingObjects.graphicPages[pageIndex];
-        }
-        else
-        {
-            drawing_page = this.drawingObjects.getHdrFtrObjectsByPageIndex(pageIndex);
-        }
+        var drawing_page = this.drawingObjects.getGraphicPage && this.drawingObjects.getGraphicPage(pageIndex);
         if(drawing_page)
         {
             ret = AscFormat.handleFloatObjects(this.drawingObjects, drawing_page.beforeTextObjects, e, x, y, null, pageIndex, true);

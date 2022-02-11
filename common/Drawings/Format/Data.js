@@ -4822,7 +4822,7 @@
       this.setPtType(new ElementType());
       this.refFor = null;
       this.refForName = null;
-      this.refPtType = null;
+      this.setRefPtType(new ElementType());
       this.refType = null;
       this.type = null;
       this.val = null;
@@ -4869,7 +4869,7 @@
 
     Constr.prototype.setRefPtType = function (oPr) {
       oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ConstrRefPtType, this.getRefPtType(), oPr));
-      this.ptRefType = oPr;
+      this.refPtType = oPr;
       this.setParentToChild(oPr);
     }
 
@@ -4971,7 +4971,7 @@
       pWriter._WriteUChar2(4, this.ptType.getVal());
       pWriter._WriteUChar2(5, this.refFor);
       pWriter._WriteString2(6, this.refForName);
-      pWriter._WriteUChar2(7, this.refPtType);
+      pWriter._WriteUChar2(7, this.refPtType.getVal());
       pWriter._WriteUChar2(8, this.refType);
       pWriter._WriteUChar2(9, this.type);
       pWriter._WriteDoubleReal2(10, this.val);
@@ -4991,7 +4991,11 @@
       }
       else if (5 === nType) this.setRefFor(oStream.GetUChar());
       else if (6 === nType) this.setRefForName(oStream.GetString2());
-      else if (7 === nType) this.setRefPtType(oStream.GetUChar());
+      else if (7 === nType) {
+        var pt = new ElementType();
+        pt.setVal(oStream.GetUChar());
+        this.setRefPtType(pt);
+      }
       else if (8 === nType) this.setRefType(oStream.GetUChar());
       else if (9 === nType) this.setType(oStream.GetUChar());
       else if (10 === nType) this.setVal(oStream.GetDouble());

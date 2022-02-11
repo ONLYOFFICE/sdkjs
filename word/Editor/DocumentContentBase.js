@@ -2230,3 +2230,23 @@ CDocumentContentBase.prototype.IsEmptyParagraphAfterTableInTableCell = function(
 CDocumentContentBase.prototype.SetThisElementCurrent = function(isUpdateStates)
 {
 };
+
+/**
+ * Method for getting all
+ * @param {string} sPluginId - id of plugin which can edit those ole-objects, if it's not specified return all ole-objects
+ * @param {Array} arrObjects - create array if not specified
+ * @returns {Array}
+ */
+CDocumentContentBase.prototype.GetAllOleObjects = function(sPluginId, arrObjects)
+{
+	if (Array.isArray(arrObjects))
+	{
+		arrObjects = [];
+	}
+	let arrDrawings = this.GetAllDrawingObjects([]);
+	for(let nDrawing = 0; nDrawing < arrDrawings.length; ++nDrawing)
+	{
+		arrDrawings[nDrawing].GetAllOleObjects(sPluginId, arrObjects)
+	}
+	return arrObjects;
+};

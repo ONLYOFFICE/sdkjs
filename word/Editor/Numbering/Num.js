@@ -370,7 +370,7 @@ CNum.prototype.ApplyTextPr = function(nLvl, oTextPr)
 	{
 		var oNumberingLvl = this.LvlOverride[nLvl].GetLvl();
 		var oNewNumberingLvl = oNumberingLvl.Copy();
-		oNewNumberingLvl.TextPr.Merge(oTextPr());
+		oNewNumberingLvl.TextPr.Merge(oTextPr);
 		this.SetLvlOverride(oNewNumberingLvl, nLvl);
 	}
 	else
