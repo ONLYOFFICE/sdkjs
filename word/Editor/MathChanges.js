@@ -290,6 +290,9 @@ CChangesMathContentRemoveItem.prototype.Undo = function()
 	var Array_end   = oMathContent.Content.slice(this.Pos);
 
 	oMathContent.Content = Array_start.concat(this.Items, Array_end);
+	if (oMathContent.Selection.EndPos > oMathContent.Content.length - 1) {
+		oMathContent.Selection.EndPos = oMathContent.Content.length - 1;
+	}
 
 	for (var nIndex = 0; nIndex < this.Items.length; ++nIndex)
 	{

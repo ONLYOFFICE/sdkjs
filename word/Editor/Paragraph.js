@@ -8959,7 +8959,7 @@ Paragraph.prototype.GetCalculatedTextPr = function()
 		TextPr = this.TextPr.Value.Copy();
 
 	// TODO: Пока возвращаем всегда шрифт лежащий в Ascii, в будущем надо будет это переделать
-	if (undefined !== TextPr.RFonts && null !== TextPr.RFonts)
+	if (undefined !== TextPr.RFonts && null !== TextPr.RFonts && undefined !== TextPr.RFonts.Ascii)
 	{
 		TextPr.ReplaceThemeFonts(this.GetTheme().themeElements.fontScheme);
 
