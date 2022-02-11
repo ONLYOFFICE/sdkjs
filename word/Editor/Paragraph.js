@@ -8955,11 +8955,11 @@ Paragraph.prototype.GetCalculatedTextPr = function()
 		}
 	}
 
-	if (null === TextPr || undefined === TextPr)
-		TextPr = this.TextPr.Value.Copy();
+	if (!TextPr)
+		TextPr = this.TextPr.GetCompiledPr();
 
 	// TODO: Пока возвращаем всегда шрифт лежащий в Ascii, в будущем надо будет это переделать
-	if (undefined !== TextPr.RFonts && null !== TextPr.RFonts && undefined !== TextPr.RFonts.Ascii)
+	if (undefined !== TextPr.RFonts && null !== TextPr.RFonts)
 	{
 		TextPr.ReplaceThemeFonts(this.GetTheme().themeElements.fontScheme);
 

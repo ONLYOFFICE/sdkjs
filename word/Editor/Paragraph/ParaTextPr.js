@@ -101,6 +101,22 @@ ParaTextPr.prototype.IsParagraphSimpleChanges = function()
 {
 	return true;
 };
+ParaTextPr.prototype.GetCompiledPr = function()
+{
+	let oTextPr;
+	if (!this.Parent || !this.Parent.Get_CompiledPr2)
+	{
+		oTextPr = new CTextPr();
+		oTextPr.InitDefault();
+	}
+	else
+	{
+		oTextPr = this.Parent.Get_CompiledPr2(false).TextPr.Copy();
+	}
+
+	oTextPr.Merge(this.Value);
+	return oTextPr;
+};
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для изменения свойств
 //----------------------------------------------------------------------------------------------------------------------

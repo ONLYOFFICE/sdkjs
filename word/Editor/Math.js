@@ -1153,12 +1153,22 @@ ParaMath.prototype.Get_TextPr = function(_ContentPos, Depth)
     return TextPr;
 };
 
-ParaMath.prototype.Get_CompiledTextPr = function(Copy)
+ParaMath.prototype.Get_CompiledTextPr = function(isCopy)
 {
-    var oContent = this.GetSelectContent();
-    var mTextPr = oContent.Content.Get_CompiledTextPr(Copy);
+	let oContent = this.GetSelectContent();
 
-    return mTextPr;
+	let oTextPr = oContent.Content.Get_CompiledTextPr(isCopy);
+	if (!oTextPr)
+		return this.GetCompiledDefaultTextPr();
+
+	return oTextPr;
+};
+ParaMath.prototype.GetCompiledDefaultTextPr = function()
+{
+	let oTextPr = new CTextPr();
+	oTextPr.InitDefault();
+	oTextPr.Merge(this.DefaultTextPr);
+	return oTextPr;
 };
 
 ParaMath.prototype.Add = function(Item)
