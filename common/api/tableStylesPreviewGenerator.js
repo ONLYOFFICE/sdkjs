@@ -44,7 +44,7 @@
 	{
 		AscCommon.CActionOnTimerBase.call(this);
 
-		this.FirstActionOnTimer = false;
+		this.FirstActionOnTimer = true;
 
 		this.Api             = oApi;
 		this.DrawingDocument = oDrawingDocument;
