@@ -34,84 +34,54 @@
 
 (function (window)
 {
-	const MAX_GENERATE_TIME = 20;
-	const TIMEOUT_TIME      = 20;
-
 	/**
 	 * @param oApi
 	 * @param oDrawingDocument
 	 * @constructor
+	 * @extends AscCommon.CActionOnTimerBase
 	 */
 	function CTableStylesPreviewGenerator(oApi, oDrawingDocument)
 	{
+		AscCommon.CActionOnTimerBase.call(this);
+
+		this.FirstActionOnTimer = false;
+
 		this.Api             = oApi;
 		this.DrawingDocument = oDrawingDocument;
 		this.TableStyles     = [];
 		this.Index           = -1;
-		this.TimerId         = null;
-		this.TableLook       = null;
-		this.Start           = false;
+		this.Buffer          = [];
 	}
-	CTableStylesPreviewGenerator.prototype.Begin = function(isDefaultTableLook)
+	CTableStylesPreviewGenerator.prototype = Object.create(AscCommon.CActionOnTimerBase.prototype);
+	CTableStylesPreviewGenerator.prototype.constructor = CTableStylesPreviewGenerator;
+	CTableStylesPreviewGenerator.prototype.OnBegin = function(isDefaultTableLook)
 	{
-		if (this.Start)
-			this.End();
-
 		this.TableStyles = this.DrawingDocument.GetTableStyles();
 		this.Index       = -1;
 		this.TableLook   = this.DrawingDocument.GetTableLook(isDefaultTableLook);
-		this.Start       = true;
 
 		this.Api.sendEvent("asc_onBeginTableStylesPreview", this.TableStyles.length);
-
-		return this.Continue();
 	};
-	CTableStylesPreviewGenerator.prototype.Continue = function()
+	CTableStylesPreviewGenerator.prototype.OnEnd = function()
 	{
-		let nTime  = performance.now();
-		let nCount = this.TableStyles.length;
-
-		let arrPreviews = [];
-		while (this.Index < nCount)
-		{
-			if (performance.now() - nTime > MAX_GENERATE_TIME)
-				break;
-
-			let oPreview = this.DrawingDocument.DrawTableStylePreview(this.TableStyles[this.Index], this.TableLook);
-			if (oPreview)
-				arrPreviews.push(oPreview);
-
-			this.Index++;
-		}
-
-		this.Api.sendEvent("asc_onAddTableStylesPreview", arrPreviews);
-
-		let oThis = this;
-		if (this.Index >= nCount)
-			this.End();
-		else
-			this.TimerId = setTimeout(function(){oThis.Continue();}, TIMEOUT_TIME);
-
-		return arrPreviews;
+		this.Api.sendEvent("asc_onEndTableStylesPreview");
 	};
-	CTableStylesPreviewGenerator.prototype.End = function()
+	CTableStylesPreviewGenerator.prototype.IsContinue = function()
 	{
-		this.Reset();
-
-		if (this.Start)
-		{
-			this.Start = false;
-			this.Api.sendEvent("asc_onEndTableStylesPreview");
-		}
+		return (this.Index < this.TableStyles.length);
 	};
-	CTableStylesPreviewGenerator.prototype.Reset = function()
+	CTableStylesPreviewGenerator.prototype.DoAction = function()
 	{
-		if (this.TimerId)
-			clearTimeout(this.TimerId);
+		let oPreview = this.DrawingDocument.DrawTableStylePreview(this.TableStyles[this.Index], this.TableLook);
+		if (oPreview)
+			this.Buffer.push(oPreview);
 
-		this.TimerId     = null;
-		this.Index       = -1;
-		this.TableStyles = [];
+		this.Index++;
+	};
+	CTableStylesPreviewGenerator.prototype.OnEndTimer = function()
+	{
+		this.Api.sendEvent("asc_onAddTableStylesPreview", this.Buffer);
+		this.Buffer = [];
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};

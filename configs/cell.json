@@ -30,6 +30,7 @@
 			"common/spell/spell.js"
 		],
 		"common": [
+			"common/api/actionOnTimer.js",
 			"common/api/tableStylesPreviewGenerator.js",
 
 			"common/downloaderfiles.js",
@@ -265,7 +266,7 @@
 			"common/Drawings/Format/OleObject.js",
 			"common/Drawings/Format/DrawingContent.js",
 			"common/plugins.js",
-			
+
 			"common/Native/native_graphics.js"
 		],
 		"desktop": {
