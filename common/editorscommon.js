@@ -3967,7 +3967,6 @@
 	/**
 	 * Конвертируем нумерацию {a b ... z aa bb ... zz aaa bbb ... zzz ...} в число
 	 * @param sLetters
-	 * @constructor
 	 */
 	function LatinNumberingToInt(sLetters)
 	{
@@ -8883,6 +8882,44 @@
 				|| 0x2610 === nUnicode));
 	}
 
+	function ExecuteNoHistory(f, oLogicDocument, oThis, args)
+	{
+		// TODO: Надо перевести все редакторы на StartNoHistoryMode/EndNoHistoryMode
+
+		let oState = null, isTableId = false;
+		if (oLogicDocument && oLogicDocument.IsDocumentEditor && oLogicDocument.IsDocumentEditor())
+		{
+			oState = oLogicDocument.StartNoHistoryMode();
+		}
+		else
+		{
+			History.TurnOff && History.TurnOff();
+
+			if (g_oTableId && !g_oTableId.m_bTurnOff)
+			{
+				g_oTableId.m_bTurnOff = true;
+				isTableId             = true;
+			}
+		}
+
+		let result = f.apply(oThis, args);
+
+		if (oLogicDocument && oLogicDocument.IsDocumentEditor && oLogicDocument.IsDocumentEditor())
+		{
+			oLogicDocument.EndNoHistoryMode(oState);
+		}
+		else
+		{
+			History.TurnOn && History.TurnOn();
+			if (isTableId)
+			{
+				g_oTableId.m_bTurnOff = false;
+			}
+		}
+
+		return result;
+	}
+
 	function private_IsAbbreviation(sWord) {
 		if (sWord.toUpperCase() === sWord) {
 			// Корейские символы считаются символами в верхнем регистре, но при этом мы не должны считать их аббревиатурой
@@ -11793,6 +11830,7 @@
 	window["AscCommon"].IsLetter = IsLetter;
 	window["AscCommon"].CorrectFontSize = CorrectFontSize;
 	window["AscCommon"].IsAscFontSupport = IsAscFontSupport;
+	window["AscCommon"].ExecuteNoHistory = ExecuteNoHistory;
 
 	window["AscCommon"].loadSdk = loadSdk;
     window["AscCommon"].loadScript = loadScript;

@@ -3580,33 +3580,37 @@ background-repeat: no-repeat;\
 		if (!oDrawingDocument || !oLogicDocument)
 			return [];
 
+		this.private_CheckTableStylesPreviewGenerator();
+
 		let arrPreviews = [];
 
 		if (arrIds && arrIds.length)
 		{
-			let oTableLook  = oDrawingDocument.GetTableLook(bUseDefault);
 			let oStylesList = oLogicDocument.GetStyles();
 			for (let nIndex = 0, nCount = arrIds.length; nIndex < nCount; ++nIndex)
 			{
 				let oStyle   = oStylesList.Get(arrIds[nIndex]);
-				let oPreview = oDrawingDocument.DrawTableStylePreview(oStyle, oTableLook);
+				let oPreview = this.TableStylesPreviewGenerator.GetPreview(oStyle);
 				if (oPreview)
 					arrPreviews.push(oPreview);
 			}
 		}
 		else
 		{
-			arrPreviews = oDrawingDocument.GetTableStylesPreviews(bUseDefault);
+			arrPreviews = this.TableStylesPreviewGenerator.GetAllPreviews(bUseDefault);
 		}
 
 		return arrPreviews;
 	};
 	asc_docs_api.prototype.asc_generateTableStylesPreviews = function(bUseDefault)
 	{
-		if (!this.TableStylesPreviewGenerator)
-			this.TableStylesPreviewGenerator = new AscCommon.CTableStylesPreviewGenerator(this, this.WordControl.m_oDrawingDocument)
-
+		this.private_CheckTableStylesPreviewGenerator();
 		this.TableStylesPreviewGenerator.Begin(bUseDefault);
+	};
+	asc_docs_api.prototype.private_CheckTableStylesPreviewGenerator = function()
+	{
+		if (!this.TableStylesPreviewGenerator)
+			this.TableStylesPreviewGenerator = new AscCommon.CTableStylesPreviewGenerator(this.private_GetLogicDocument())
 	};
 
 

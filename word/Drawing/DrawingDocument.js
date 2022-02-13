@@ -46,9 +46,6 @@ var global_MatrixTransformer = AscCommon.global_MatrixTransformer;
 var g_dKoef_pix_to_mm = AscCommon.g_dKoef_pix_to_mm;
 var g_dKoef_mm_to_pix = AscCommon.g_dKoef_mm_to_pix;
 
-var _canvas_tables = null;
-var _table_styles = null;
-
 function CColumnsMarkupColumn()
 {
 	this.W = 0;
@@ -7526,74 +7523,7 @@ function CDrawingDocument()
 
 	this.GetTableStylesPreviews = function(bUseDefault)
 	{
-		var logicDoc = this.m_oWordControl.m_oLogicDocument;
-		var _dst_styles = [];
-
-		var _styles = logicDoc.Styles.GetAllTableStyles();
-		var _styles_len = _styles.length;
-
-		if (0 === _styles_len)
-			return _dst_styles;
-
-		var oTableLook = this.GetTableLook(bUseDefault);
-		if (!oTableLook)
-			return _dst_styles;
-
-		History.TurnOff();
-		g_oTableId.m_bTurnOff = true;
-
-		var isTrackRevision = false;
-		if (logicDoc.IsTrackRevisions())
-		{
-			isTrackRevision = logicDoc.GetLocalTrackRevisions();
-			logicDoc.SetLocalTrackRevisions(false);
-		}
-
-		for (let i = 0; i < _styles_len; ++i)
-		{
-			_dst_styles.push(this.private_DrawTableStylePreview(_styles[i], oTableLook));
-		}
-
-		g_oTableId.m_bTurnOff = false;
-		History.TurnOn();
-
-		if (false !== isTrackRevision)
-			logicDoc.SetLocalTrackRevisions(isTrackRevision);
-
-		return _dst_styles;
-	};
-
-	this.DrawTableStylePreview = function(oStyle, oTableLook)
-	{
-		var oLogicDocument = this.m_oWordControl.m_oLogicDocument;
-
-		if (!oLogicDocument || !oTableLook || !oStyle)
-			return null;
-
-		History.TurnOff();
-		g_oTableId.m_bTurnOff = true;
-
-		var isTrackRevision = false;
-		if (oLogicDocument.IsTrackRevisions())
-		{
-			isTrackRevision = oLogicDocument.GetLocalTrackRevisions();
-			oLogicDocument.SetLocalTrackRevisions(false);
-		}
-
-		let _styleD = this.private_DrawTableStylePreview(oStyle, oTableLook);
-
-		g_oTableId.m_bTurnOff = false;
-		History.TurnOn();
-
-		if (false !== isTrackRevision)
-			oLogicDocument.SetLocalTrackRevisions(isTrackRevision);
-
-		return _styleD;
-	};
-
-	this.GetTableStyles = function()
-	{
-		return this.m_oWordControl.m_oLogicDocument.Styles.GetAllTableStyles();
+		return (new AscCommon.CTableStylesPreviewGenerator(this.m_oWordControl.m_oLogicDocument)).GetAllPreviews(bUseDefault);
 	};
 
 	this.GetTableLook = function(isDefault)
@@ -7612,96 +7542,6 @@ function CDrawingDocument()
 		}
 
 		return oTableLook;
-	};
-
-	this.GetCanvasForTableStylesPreview = function()
-	{
-		if (_canvas_tables == null)
-		{
-			_canvas_tables = document.createElement('canvas');
-
-			_canvas_tables.width = (TABLE_STYLE_WIDTH_PIX * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-			_canvas_tables.height = (TABLE_STYLE_HEIGHT_PIX * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-		}
-
-		return _canvas_tables;
-	};
-
-	this.GetTableForTableStylesPreview = function()
-	{
-		if (_table_styles == null)
-		{
-			let nCols = 5, nRows = 5;
-
-			let _x_mar = 10;
-			let _y_mar = 10;
-			let _r_mar = 10;
-			let _b_mar = 10;
-			let _pageW = 297;
-			let _pageH = 210;
-
-			let W = (_pageW - _x_mar - _r_mar);
-			let H = (_pageH - _y_mar - _b_mar);
-
-
-			let arrGrid = [];
-			for (let nIndex = 0; nIndex < nCols; ++nIndex)
-				arrGrid[nIndex] = W / nCols;
-
-			_table_styles = new CTable(this, this.m_oWordControl.m_oLogicDocument, true, nRows, nCols, arrGrid);
-			_table_styles.Reset(_x_mar, _y_mar, 1000, 1000, 0, 0, 1);
-			_table_styles.Set_Props({
-				TableDefaultMargins : {Top : 0, Bottom : 0},
-				TableLayout: c_oAscTableLayout.Fixed
-			});
-
-			for (let nCurRow = 0, nRowsCount = _table_styles.GetRowsCount(); nCurRow < nRowsCount; ++nCurRow)
-				_table_styles.GetRow(nCurRow).SetHeight(H / nRows, Asc.linerule_AtLeast);
-		}
-
-		return _table_styles;
-	};
-
-	this.private_DrawTableStylePreview = function(oStyle, oTableLook)
-	{
-		var _pageW = 297;
-		var _pageH = 210;
-
-		var _canvas = this.GetCanvasForTableStylesPreview();
-		var ctx = _canvas.getContext('2d');
-
-		var oTable = this.GetTableForTableStylesPreview();
-		oTable.Set_Props({
-			TableStyle : oStyle.GetId(),
-			TableLook  : oTableLook,
-			CellSelect : false
-		});
-		oTable.Recalc_CompiledPr2();
-
-		ctx.fillStyle = "#FFFFFF";
-		ctx.fillRect(0, 0, _canvas.width, _canvas.height);
-
-		var graphics = new AscCommon.CGraphics();
-		graphics.init(ctx, _canvas.width, _canvas.height, _pageW, _pageH);
-		graphics.m_oFontManager = AscCommon.g_fontManager;
-		graphics.transform(1, 0, 0, 1, 0, 0);
-
-		oTable.Recalculate_Page(0);
-
-		var _old_mode = editor.isViewMode;
-		editor.isViewMode = true;
-		editor.isShowTableEmptyLineAttack = true;
-		oTable.Draw(0, graphics, false);
-		editor.isShowTableEmptyLineAttack = false;
-		editor.isViewMode = _old_mode;
-
-		var _styleD = new AscCommon.CStyleImage();
-		_styleD.type = AscCommon.c_oAscStyleImage.Default;
-		_styleD.image = _canvas.toDataURL("image/png");
-		_styleD.name = oStyle.GetId();
-		_styleD.displayName = oStyle.GetName();
-
-		return _styleD;
 	};
 
 	this.IsMobileVersion = function ()
