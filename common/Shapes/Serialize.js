@@ -8570,7 +8570,7 @@ function BinaryPPTYLoader()
 
         var obj = {};
         obj.props = new CTablePr();
-        obj.look = new CTableLook(false, false, false, false, false, false);
+        obj.look = new AscCommon.CTableLook(false, false, false, false, false, false);
         obj.style = -1;
 
         while (true)
@@ -8595,32 +8595,32 @@ function BinaryPPTYLoader()
                 }
                 case 2:
                 {
-                    obj.look.m_bFirst_Row = s.GetBool();
+                    obj.look.SetFirstRow(s.GetBool());
                     break;
                 }
                 case 3:
                 {
-                    obj.look.m_bFirst_Col = s.GetBool();
+                    obj.look.SetFirstCol(s.GetBool());
                     break;
                 }
                 case 4:
                 {
-                    obj.look.m_bLast_Row = s.GetBool();
+                    obj.look.SetLastRow(s.GetBool());
                     break;
                 }
                 case 5:
                 {
-                    obj.look.m_bLast_Col = s.GetBool();
+                    obj.look.SetLastCol(s.GetBool());
                     break;
                 }
                 case 6:
                 {
-                    obj.look.m_bBand_Hor = s.GetBool();
+                    obj.look.SetBandHor(s.GetBool());
                     break;
                 }
                 case 7:
                 {
-                    obj.look.m_bBand_Ver = s.GetBool();
+                    obj.look.SetBandVer(s.GetBool());
                     break;
                 }
                 default:

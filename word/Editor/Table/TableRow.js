@@ -277,10 +277,10 @@ CTableRow.prototype =
             RowPr.TableCellSpacing = TablePr.TablePr.TableCellSpacing;
 
         // Совместим настройки с настройками для групп строк
-        if ( true === TableLook.Is_BandHor() )
+        if ( true === TableLook.IsBandHor() )
         {
             var RowBandSize = TablePr.TablePr.TableStyleRowBandSize;
-            var _CurIndex   = ( true != TableLook.Is_FirstRow() ? CurIndex : CurIndex - 1 );
+            var _CurIndex   = ( true != TableLook.IsFirstRow() ? CurIndex : CurIndex - 1 );
             var GroupIndex = ( 1 != RowBandSize ? Math.floor( _CurIndex / RowBandSize ) : _CurIndex );
             if ( 0 === GroupIndex % 2 )
                 RowPr.Merge(TablePr.TableBand1Horz.TableRowPr);
@@ -289,13 +289,13 @@ CTableRow.prototype =
         }
 
         // Совместим настройки с настройками для последней строки
-        if ( true === TableLook.Is_LastRow() && this.Table.Content.length - 1 === CurIndex )
+        if ( true === TableLook.IsLastRow() && this.Table.Content.length - 1 === CurIndex )
         {
             RowPr.Merge(TablePr.TableLastRow.TableRowPr);
         }
 
         // Совместим настройки с настройками для первой строки
-        if ( true === TableLook.Is_FirstRow() && ( 0 === CurIndex || true === this.Pr.TableHeader )  )
+        if ( true === TableLook.IsFirstRow() && ( 0 === CurIndex || true === this.Pr.TableHeader )  )
         {
             RowPr.Merge(TablePr.TableFirstRow.TableRowPr);
         }

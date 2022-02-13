@@ -4336,17 +4336,17 @@ Binary_tblPrWriter.prototype =
 		if(null != oLook)
 		{
 			var nLook = 0;
-			if(oLook.Is_FirstCol())
+			if(oLook.IsFirstCol())
 				nLook |= 0x0080;
-			if(oLook.Is_FirstRow())
+			if(oLook.IsFirstRow())
 				nLook |= 0x0020;
-			if(oLook.Is_LastCol())
+			if(oLook.IsLastCol())
 				nLook |= 0x0100;
-			if(oLook.Is_LastRow())
+			if(oLook.IsLastRow())
 				nLook |= 0x0040;
-			if(!oLook.Is_BandHor())
+			if(!oLook.IsBandHor())
 				nLook |= 0x0200;
-			if(!oLook.Is_BandVer())
+			if(!oLook.IsBandVer())
 				nLook |= 0x0400;
 			this.bs.WriteItem(c_oSerProp_tblPrType.Look, function(){oThis.memory.WriteLong(nLook);});
 		}
@@ -10245,7 +10245,7 @@ Binary_tblPrReader.prototype =
 				var bLR = 0 != (nLook & 0x0040);
 				var bBH = 0 != (nLook & 0x0200);
 				var bBV = 0 != (nLook & 0x0400);
-				table.Set_TableLook(new CTableLook(bFC, bFR, bLC, bLR, !bBH, !bBV));
+				table.Set_TableLook(new AscCommon.CTableLook(bFC, bFR, bLC, bLR, !bBH, !bBV));
 			}
 			else if( c_oSerProp_tblPrType.Style === type )
 				this.oReadResult.tableStyles.push({pPr: table, style: this.stream.GetString2LE(length)});

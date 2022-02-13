@@ -3386,7 +3386,7 @@
      */
     ApiTable.prototype.SetTableLook = function(isFirstColumn, isFirstRow, isLastColumn, isLastRow, isHorBand, isVerBand)
     {
-        var oTableLook = new CTableLook(private_GetBoolean(isFirstColumn),
+        var oTableLook = new AscCommon.CTableLook(private_GetBoolean(isFirstColumn),
             private_GetBoolean(isFirstRow),
             private_GetBoolean(isLastColumn),
             private_GetBoolean(isLastRow),

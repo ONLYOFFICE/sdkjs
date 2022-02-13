@@ -129,7 +129,7 @@ function CTable(DrawingDocument, Parent, Inline, Rows, Cols, TableGrid, bPresent
 
     // TODO: TableLook и TableStyle нужно перемесить в TablePr
     this.TableStyle = (undefined !== this.DrawingDocument && null !== this.DrawingDocument && this.DrawingDocument.m_oLogicDocument && this.DrawingDocument.m_oLogicDocument.Styles ? this.DrawingDocument.m_oLogicDocument.Styles.Get_Default_TableGrid() : null);
-    this.TableLook  = new CTableLook(false, false, false, false, false, false);
+    this.TableLook  = new AscCommon.CTableLook(false, false, false, false, false, false);
 	this.TableLook.SetDefault();
 
     this.TableSumGrid  = []; // данный массив будет заполнен после private_RecalculateGrid
@@ -930,7 +930,7 @@ CTable.prototype.Get_Props = function()
 
 	if (!this.bPresentation)
 	{
-		this.DrawingDocument.CheckTableStyles(new Asc.CTablePropLook(this.TableLook));
+		this.DrawingDocument.CheckTableStyles(this.TableLook);
 	}
 
 	Pr.PercentFullWidth = this.private_RecalculatePercentWidth();
@@ -965,7 +965,7 @@ CTable.prototype.Set_Props = function(Props)
 	// TableLook
 	if ("undefined" != typeof(Props.TableLook))
 	{
-		var NewLook = new CTableLook(Props.TableLook.FirstCol, Props.TableLook.FirstRow, Props.TableLook.LastCol, Props.TableLook.LastRow, Props.TableLook.BandHor, Props.TableLook.BandVer);
+		var NewLook = new AscCommon.CTableLook(Props.TableLook.FirstCol, Props.TableLook.FirstRow, Props.TableLook.LastCol, Props.TableLook.LastRow, Props.TableLook.BandHor, Props.TableLook.BandVer);
 		this.Set_TableLook(NewLook);
 		bRecalc_All = true;
 	}
@@ -19173,105 +19173,6 @@ CTable.prototype.RestartSpellCheck = function()
 };
 
 //----------------------------------------------------------------------------------------------------------------------
-// Класс  CTableLook
-//----------------------------------------------------------------------------------------------------------------------
-function CTableLook(bFC, bFR, bLC, bLR, bBH, bBV)
-{
-    this.m_bFirst_Col = ( true === bFC ? true : false );
-    this.m_bFirst_Row = ( true === bFR ? true : false );
-    this.m_bLast_Col  = ( true === bLC ? true : false );
-    this.m_bLast_Row  = ( true === bLR ? true : false );
-    this.m_bBand_Hor  = ( true === bBH ? true : false );
-    this.m_bBand_Ver  = ( true === bBV ? true : false );
-}
-CTableLook.prototype =
-{
-
-    Set : function(bFC, bFR, bLC, bLR, bBH, bBV)
-    {
-        this.m_bFirst_Col = ( true === bFC ? true : false );
-        this.m_bFirst_Row = ( true === bFR ? true : false );
-        this.m_bLast_Col  = ( true === bLC ? true : false );
-        this.m_bLast_Row  = ( true === bLR ? true : false );
-        this.m_bBand_Hor  = ( true === bBH ? true : false );
-        this.m_bBand_Ver  = ( true === bBV ? true : false );
-    },
-
-    Copy : function()
-    {
-        return new CTableLook( this.m_bFirst_Col, this.m_bFirst_Row, this.m_bLast_Col, this.m_bLast_Row, this.m_bBand_Hor, this.m_bBand_Ver );
-    },
-
-    Is_FirstCol : function()
-    {
-        return this.m_bFirst_Col;
-    },
-
-    Is_FirstRow : function()
-    {
-        return this.m_bFirst_Row;
-    },
-
-    Is_LastCol : function()
-    {
-        return this.m_bLast_Col;
-    },
-
-    Is_LastRow : function()
-    {
-        return this.m_bLast_Row;
-    },
-
-    Is_BandHor : function()
-    {
-        return this.m_bBand_Hor;
-    },
-
-    Is_BandVer : function()
-    {
-        return this.m_bBand_Ver;
-    },
-
-    Write_ToBinary : function(Writer)
-    {
-        // Bool : m_bFirst_Col
-        // Bool : m_bFirst_Row
-        // Bool : m_bLast_Col
-        // Bool : m_bLast_Row
-        // Bool : m_bBand_Hor
-        // Bool : m_bBand_Ver
-
-        Writer.WriteBool( this.m_bFirst_Col );
-        Writer.WriteBool( this.m_bFirst_Row );
-        Writer.WriteBool( this.m_bLast_Col );
-        Writer.WriteBool( this.m_bLast_Row );
-        Writer.WriteBool( this.m_bBand_Hor );
-        Writer.WriteBool( this.m_bBand_Ver );
-    },
-
-    Read_FromBinary : function(Reader)
-    {
-        // Bool : m_bFirst_Col
-        // Bool : m_bFirst_Row
-        // Bool : m_bLast_Col
-        // Bool : m_bLast_Row
-        // Bool : m_bBand_Hor
-        // Bool : m_bBand_Ver
-
-        this.m_bFirst_Col = Reader.GetBool();
-        this.m_bFirst_Row = Reader.GetBool();
-        this.m_bLast_Col  = Reader.GetBool();
-        this.m_bLast_Row  = Reader.GetBool();
-        this.m_bBand_Hor  = Reader.GetBool();
-        this.m_bBand_Ver  = Reader.GetBool();
-    },
-
-	SetDefault : function()
-	{
-		this.Set(true, true, false, false, true, false);
-	}
-};
-//----------------------------------------------------------------------------------------------------------------------
 // Класс  CTableAnchorPosition
 //----------------------------------------------------------------------------------------------------------------------
 function CTableAnchorPosition()
@@ -19635,5 +19536,4 @@ CTableRowsInfo.prototype.Init = function()
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CTable = CTable;
-window['AscCommonWord'].CTableLook = CTableLook;
 window['AscCommonWord'].type_Table = type_Table;

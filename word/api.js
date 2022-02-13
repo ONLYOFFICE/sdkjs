@@ -3108,14 +3108,8 @@ background-repeat: no-repeat;\
 		if (!this.WordControl.m_oLogicDocument)
 			return;
 
-
-
-
 		this.WordControl.m_oDrawingDocument.StartTableStylesCheck();
-		this.WordControl.m_oDrawingDocument.TableStylesCheckLook = new Asc.CTablePropLook();
-		this.WordControl.m_oDrawingDocument.TableStylesCheckLook.FirstCol = true;
-		this.WordControl.m_oDrawingDocument.TableStylesCheckLook.FirstRow = true;
-		this.WordControl.m_oDrawingDocument.TableStylesCheckLook.BandHor  = true;
+		this.WordControl.m_oDrawingDocument.TableStylesCheckLook = new AscCommon.CTableLook(true, true, false, false, true, false);
 		this.WordControl.m_oDrawingDocument.EndTableStylesCheck();
 	};
 

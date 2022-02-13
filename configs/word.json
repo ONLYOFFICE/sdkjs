@@ -180,6 +180,7 @@
 			"word/Editor/Table/TableChanges.js",
 			"word/Editor/Table/TableRecalculate.js",
 			"word/Editor/Table/TableDraw.js",
+			"word/Editor/Table/TableLook.js",
 			"word/Editor/Table/TableRow.js",
 			"word/Editor/Table/TableRowChanges.js",
 			"word/Editor/Table/TableCell.js",

@@ -5296,7 +5296,7 @@ CPresentation.prototype.Create_TableGraphicFrame = function (Cols, Rows, Parent,
     if (typeof StyleId === "string") {
         table.Set_TableStyle(StyleId);
     }
-    table.Set_TableLook(new CTableLook(false, true, false, false, true, false));
+    table.Set_TableLook(new AscCommon.CTableLook(false, true, false, false, true, false));
     for (var i = 0; i < table.Content.length; ++i) {
         var Row = table.Content[i];
         if (AscFormat.isRealNumber(RowHeight)) {
@@ -7915,7 +7915,7 @@ CPresentation.prototype.changeBackground = function (bg, arr_ind, bNoCreatePoint
 };
 
 CPresentation.prototype.CheckTableStylesDefault = function (Slide) {
-    var tableLook = new CTableLook(true, true, false, false, true, false);
+    var tableLook = new AscCommon.CTableLook(true, true, false, false, true, false);
     return this.CheckTableStyles(Slide, tableLook);
 };
 
@@ -7949,12 +7949,7 @@ CPresentation.prototype.CheckTableStyles = function (Slide, TableLook) {
         || this.LastColorScheme !== Slide.Layout.Master.Theme.themeElements.clrScheme
         || !this.LastColorMap || !this.LastColorMap.compare(Slide.Get_ColorMap())
         || !this.LastTableLook
-        || (b_table_look = TableLook.m_bFirst_Col !== this.LastTableLook.m_bFirst_Col
-            || TableLook.m_bFirst_Row !== this.LastTableLook.m_bFirst_Row
-            || TableLook.m_bLast_Col !== this.LastTableLook.m_bLast_Col
-            || TableLook.m_bLast_Row !== this.LastTableLook.m_bLast_Row
-            || TableLook.m_bBand_Hor !== this.LastTableLook.m_bBand_Hor
-            || TableLook.m_bBand_Ver !== this.LastTableLook.m_bBand_Ver)) {
+        || (b_table_look = (!this.LastTableLook.IsEqual(TableLook)))) {
 
 
         var only_redraw = !b_table_look && this.LastTheme === Slide.Layout.Master.Theme /*&& this.LastColorScheme === Slide.Layout.Master.Theme.themeElements.clrScheme && Slide.Get_ColorMap().compare(this.LastColorMap)*/;
@@ -7968,7 +7963,7 @@ CPresentation.prototype.CheckTableStyles = function (Slide, TableLook) {
             if (!only_redraw) {
                 var TableLook2;
                 if (b_table_look) {
-                    TableLook2 = new CTableLook(TableLook.m_bFirst_Col, TableLook.m_bFirst_Row, TableLook.m_bLast_Col, TableLook.m_bLast_Row, TableLook.m_bBand_Hor, TableLook.m_bBand_Ver);
+                    TableLook2 = TableLook.Copy();
                 }
                 if (this.TablesForInterface[0].parent !== Slide) {
                     need_set_recalc = false;

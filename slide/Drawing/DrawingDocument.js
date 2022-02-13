@@ -3114,7 +3114,7 @@ function CDrawingDocument()
 		var oLastTableLook = logicDoc.LastTableLook;
 		if(bUseDefault)
 		{
-			var oFormatTableLook = new AscCommonWord.CTableLook();
+			var oFormatTableLook = new AscCommon.CTableLook();
 			oFormatTableLook.SetDefault();
 			logicDoc.CheckTableStyles(oCurrentSlide, oFormatTableLook)
 		}

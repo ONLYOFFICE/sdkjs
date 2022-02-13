@@ -228,90 +228,6 @@
 	CTablePositionV.prototype['get_Value'] = CTablePositionV.prototype.get_Value;
 	CTablePositionV.prototype['put_Value'] = CTablePositionV.prototype.put_Value;
 
-// ---------------------------------------------------------------
-	function CTablePropLook(obj)
-	{
-		this.FirstCol = false;
-		this.FirstRow = false;
-		this.LastCol = false;
-		this.LastRow = false;
-		this.BandHor = false;
-		this.BandVer = false;
-
-		if (obj)
-		{
-			this.FirstCol = ( undefined === obj.m_bFirst_Col ? false : obj.m_bFirst_Col );
-			this.FirstRow = ( undefined === obj.m_bFirst_Row ? false : obj.m_bFirst_Row );
-			this.LastCol = ( undefined === obj.m_bLast_Col ? false : obj.m_bLast_Col );
-			this.LastRow = ( undefined === obj.m_bLast_Row ? false : obj.m_bLast_Row );
-			this.BandHor = ( undefined === obj.m_bBand_Hor ? false : obj.m_bBand_Hor );
-			this.BandVer = ( undefined === obj.m_bBand_Ver ? false : obj.m_bBand_Ver );
-		}
-	}
-
-	CTablePropLook.prototype.get_FirstCol = function ()
-	{
-		return this.FirstCol;
-	};
-	CTablePropLook.prototype.put_FirstCol = function (v)
-	{
-		this.FirstCol = v;
-	};
-	CTablePropLook.prototype.get_FirstRow = function ()
-	{
-		return this.FirstRow;
-	};
-	CTablePropLook.prototype.put_FirstRow = function (v)
-	{
-		this.FirstRow = v;
-	};
-	CTablePropLook.prototype.get_LastCol = function ()
-	{
-		return this.LastCol;
-	};
-	CTablePropLook.prototype.put_LastCol = function (v)
-	{
-		this.LastCol = v;
-	};
-	CTablePropLook.prototype.get_LastRow = function ()
-	{
-		return this.LastRow;
-	};
-	CTablePropLook.prototype.put_LastRow = function (v)
-	{
-		this.LastRow = v;
-	};
-	CTablePropLook.prototype.get_BandHor = function ()
-	{
-		return this.BandHor;
-	};
-	CTablePropLook.prototype.put_BandHor = function (v)
-	{
-		this.BandHor = v;
-	};
-	CTablePropLook.prototype.get_BandVer = function ()
-	{
-		return this.BandVer;
-	};
-	CTablePropLook.prototype.put_BandVer = function (v)
-	{
-		this.BandVer = v;
-	};
-
-	window['Asc']['CTablePropLook'] = window['Asc'].CTablePropLook = CTablePropLook;
-	CTablePropLook.prototype['get_FirstCol'] = CTablePropLook.prototype.get_FirstCol;
-	CTablePropLook.prototype['put_FirstCol'] = CTablePropLook.prototype.put_FirstCol;
-	CTablePropLook.prototype['get_FirstRow'] = CTablePropLook.prototype.get_FirstRow;
-	CTablePropLook.prototype['put_FirstRow'] = CTablePropLook.prototype.put_FirstRow;
-	CTablePropLook.prototype['get_LastCol'] = CTablePropLook.prototype.get_LastCol;
-	CTablePropLook.prototype['put_LastCol'] = CTablePropLook.prototype.put_LastCol;
-	CTablePropLook.prototype['get_LastRow'] = CTablePropLook.prototype.get_LastRow;
-	CTablePropLook.prototype['put_LastRow'] = CTablePropLook.prototype.put_LastRow;
-	CTablePropLook.prototype['get_BandHor'] = CTablePropLook.prototype.get_BandHor;
-	CTablePropLook.prototype['put_BandHor'] = CTablePropLook.prototype.put_BandHor;
-	CTablePropLook.prototype['get_BandVer'] = CTablePropLook.prototype.get_BandVer;
-	CTablePropLook.prototype['put_BandVer'] = CTablePropLook.prototype.put_BandVer;
-
 	/*
 	 {
 	 TableWidth   : null - галочка убрана, либо заданное значение в мм
@@ -501,7 +417,7 @@
 
 			this.ForSelectedCells = (undefined != tblProp.ForSelectedCells) ? tblProp.ForSelectedCells : true;
 			this.TableStyle = (undefined != tblProp.TableStyle) ? tblProp.TableStyle : null;
-			this.TableLook = (undefined != tblProp.TableLook) ? new CTablePropLook(tblProp.TableLook) : null;
+			this.TableLook = (undefined != tblProp.TableLook) ? tblProp.TableLook.Copy() : null;
 			this.RowsInHeader = (undefined !== tblProp.RowsInHeader) ? tblProp.RowsInHeader : false;
 			this.CellsVAlign = (undefined != tblProp.CellsVAlign) ? tblProp.CellsVAlign : c_oAscVertAlignJc.Top;
 			this.AllowOverlap = (undefined != tblProp.AllowOverlap) ? tblProp.AllowOverlap : undefined;

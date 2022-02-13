@@ -2110,13 +2110,8 @@ CDrawingDocument.prototype =
 
     CheckTableStylesOne : function()
     {
-        var _tableLook = new Asc.CTablePropLook(undefined);
-
-        _tableLook.FirstRow = true;
-        _tableLook.BandHor = true;
-        _tableLook.FirstCol = true;
-
-        this.CheckTableStyles(_tableLook);
+    	let oTableLook = new AscCommon.CTableLook(true, true, false, false, true, false);
+        this.CheckTableStyles(oTableLook);
 
         this.TableStylesSendOne = true;
     },
@@ -2141,55 +2136,16 @@ CDrawingDocument.prototype =
          	return;
          */
 
-        var bIsChanged = false;
-        if (null == this.TableStylesLastLook)
-        {
-            this.TableStylesLastLook = new Asc.CTablePropLook();
+		let isChanged = false;
 
-            this.TableStylesLastLook.FirstCol = tableLook.FirstCol;
-            this.TableStylesLastLook.FirstRow = tableLook.FirstRow;
-            this.TableStylesLastLook.LastCol = tableLook.LastCol;
-            this.TableStylesLastLook.LastRow = tableLook.LastRow;
-            this.TableStylesLastLook.BandHor = tableLook.BandHor;
-            this.TableStylesLastLook.BandVer = tableLook.BandVer;
-            bIsChanged = true;
-        }
-        else
-        {
-            if (this.TableStylesLastLook.FirstCol != tableLook.FirstCol)
-            {
-                this.TableStylesLastLook.FirstCol = tableLook.FirstCol;
-                bIsChanged = true;
-            }
-            if (this.TableStylesLastLook.FirstRow != tableLook.FirstRow)
-            {
-                this.TableStylesLastLook.FirstRow = tableLook.FirstRow;
-                bIsChanged = true;
-            }
-            if (this.TableStylesLastLook.LastCol != tableLook.LastCol)
-            {
-                this.TableStylesLastLook.LastCol = tableLook.LastCol;
-                bIsChanged = true;
-            }
-            if (this.TableStylesLastLook.LastRow != tableLook.LastRow)
-            {
-                this.TableStylesLastLook.LastRow = tableLook.LastRow;
-                bIsChanged = true;
-            }
-            if (this.TableStylesLastLook.BandHor != tableLook.BandHor)
-            {
-                this.TableStylesLastLook.BandHor = tableLook.BandHor;
-                bIsChanged = true;
-            }
-            if (this.TableStylesLastLook.BandVer != tableLook.BandVer)
-            {
-                this.TableStylesLastLook.BandVer = tableLook.BandVer;
-                bIsChanged = true;
-            }
-        }
+		if (!this.TableStylesLastLook || !this.TableStylesLastLook.IsEqual(tableLook))
+		{
+			this.TableStylesLastLook = tableLook.Copy();
+			isChanged = true;
+		}
 
-        if (!bIsChanged)
-            return;
+		if (!isChanged)
+			return;
 
         var logicDoc = this.m_oWordControl.m_oLogicDocument;
 

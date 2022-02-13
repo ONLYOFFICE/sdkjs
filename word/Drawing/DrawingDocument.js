@@ -7462,62 +7462,23 @@ function CDrawingDocument()
         if (logicDoc && logicDoc.theme && logicDoc.theme.themeElements)
         	newClrScheme = logicDoc.theme.themeElements.clrScheme;
 
-		var bIsChanged = false;
-		if (null == this.TableStylesLastLook)
-		{
-			this.TableStylesLastLook = new Asc.CTablePropLook();
+		let isChanged = false;
 
-			this.TableStylesLastLook.FirstCol = tableLook.FirstCol;
-			this.TableStylesLastLook.FirstRow = tableLook.FirstRow;
-			this.TableStylesLastLook.LastCol = tableLook.LastCol;
-			this.TableStylesLastLook.LastRow = tableLook.LastRow;
-			this.TableStylesLastLook.BandHor = tableLook.BandHor;
-			this.TableStylesLastLook.BandVer = tableLook.BandVer;
-			bIsChanged = true;
-
-            this.TableStylesLastClrScheme = newClrScheme;
-		}
-		else
+		if (!this.TableStylesLastLook || !this.TableStylesLastLook.IsEqual(tableLook))
 		{
-			if (this.TableStylesLastLook.FirstCol != tableLook.FirstCol)
-			{
-				this.TableStylesLastLook.FirstCol = tableLook.FirstCol;
-				bIsChanged = true;
-			}
-			if (this.TableStylesLastLook.FirstRow != tableLook.FirstRow)
-			{
-				this.TableStylesLastLook.FirstRow = tableLook.FirstRow;
-				bIsChanged = true;
-			}
-			if (this.TableStylesLastLook.LastCol != tableLook.LastCol)
-			{
-				this.TableStylesLastLook.LastCol = tableLook.LastCol;
-				bIsChanged = true;
-			}
-			if (this.TableStylesLastLook.LastRow != tableLook.LastRow)
-			{
-				this.TableStylesLastLook.LastRow = tableLook.LastRow;
-				bIsChanged = true;
-			}
-			if (this.TableStylesLastLook.BandHor != tableLook.BandHor)
-			{
-				this.TableStylesLastLook.BandHor = tableLook.BandHor;
-				bIsChanged = true;
-			}
-			if (this.TableStylesLastLook.BandVer != tableLook.BandVer)
-			{
-				this.TableStylesLastLook.BandVer = tableLook.BandVer;
-				bIsChanged = true;
-			}
-			if (this.TableStylesLastClrScheme !== newClrScheme)
-			{
-				this.TableStylesLastClrScheme = newClrScheme;
-				bIsChanged = true;
-			}
+			this.TableStylesLastLook = tableLook.Copy();
+			isChanged = true;
 		}
 
-		if (!bIsChanged)
+		if (this.TableStylesLastClrScheme !== newClrScheme)
+		{
+			this.TableStylesLastClrScheme = newClrScheme;
+			isChanged = true;
+		}
+
+		if (!isChanged)
 			return;
+
 		this.m_oWordControl.m_oApi.sync_InitEditorTableStyles();
 	};
 
@@ -7532,9 +7493,8 @@ function CDrawingDocument()
 
 		if (isDefault)
 		{
-			var oFormatTableLook = new AscCommonWord.CTableLook();
-			oFormatTableLook.SetDefault();
-			oTableLook = new Asc.CTablePropLook(oFormatTableLook);
+			oTableLook = new AscCommon.CTableLook();
+			oTableLook.SetDefault();
 		}
 		else
 		{

@@ -1817,7 +1817,7 @@ function asc_menu_WriteTableAnchorPosition(_type, _position, _stream)
 
 function asc_menu_ReadTableLook(_params, _cursor)
 {
-    var _position = new CTableLook();
+    var _position = new AscCommon.CTableLook();
     var _continue = true;
     while (_continue)
     {
