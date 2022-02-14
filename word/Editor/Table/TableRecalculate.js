@@ -2370,7 +2370,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
                         else if ( vertalignjc_Center === VAlign )
                             Dy = (CellHeight - ContentHeight) / 2;
 
-                        Cell.ShiftCell(CellPageIndex, 0, Dy);
+                        Cell.ShiftCellContent(CellPageIndex, 0, Dy);
                     }
 
                     Cell.Temp.Y_VAlign_offset[CellPageIndex] = Dy;
@@ -3185,7 +3185,7 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
                 else if (vertalignjc_Center === VAlign)
                     Dy = (CellHeight - ContentHeight) / 2;
 
-                Cell.ShiftCell(CellPageIndex, 0, Dy);
+                Cell.ShiftCellContent(CellPageIndex, 0, Dy);
             }
 
             Cell.Temp.Y_VAlign_offset[CellPageIndex] = Dy;
