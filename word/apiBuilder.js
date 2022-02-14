@@ -2840,17 +2840,69 @@
 	};
 	
 	/**
-	 * Class representing a document form.
+	 * Class representing a document form base.
 	 * @constructor
-	 * @extends {ApiForm}
+	 * @extends {ApiFormBase}
 	 */
-	function ApiForm(oSdt)
+	function ApiFormBase(oSdt)
 	{
 		ApiInlineLvlSdt.call(this, oSdt);
 	}
  
-	ApiForm.prototype = Object.create(ApiInlineLvlSdt.prototype);
-	ApiForm.prototype.constructor = ApiForm;
+	ApiFormBase.prototype = Object.create(ApiInlineLvlSdt.prototype);
+	ApiFormBase.prototype.constructor = ApiFormBase;
+
+	/**
+	 * Class representing a document text form.
+	 * @constructor
+	 * @extends {ApiTextForm}
+	 */
+	function ApiTextForm(oSdt)
+	{
+		ApiFormBase.call(this, oSdt);
+	}
+
+	ApiTextForm.prototype = Object.create(ApiFormBase.prototype);
+	ApiTextForm.prototype.constructor = ApiTextForm;
+	
+	/**
+	 * Class representing a document combobox form.
+	 * @constructor
+	 * @extends {ApiComboBoxForm}
+	 */
+	function ApiComboBoxForm(oSdt)
+	{
+		ApiFormBase.call(this, oSdt);
+	}
+
+	ApiComboBoxForm.prototype = Object.create(ApiFormBase.prototype);
+	ApiComboBoxForm.prototype.constructor = ApiComboBoxForm;
+
+	/**
+	 * Class representing a document checkbox form.
+	 * @constructor
+	 * @extends {ApiCheckBoxForm}
+	 */
+	function ApiCheckBoxForm(oSdt)
+	{
+		ApiFormBase.call(this, oSdt);
+	}
+
+	ApiCheckBoxForm.prototype = Object.create(ApiFormBase.prototype);
+	ApiCheckBoxForm.prototype.constructor = ApiCheckBoxForm;
+
+	/**
+	 * Class representing a document picture form.
+	 * @constructor
+	 * @extends {ApiPictureForm}
+	 */
+	function ApiPictureForm(oSdt)
+	{
+		ApiFormBase.call(this, oSdt);
+	}
+
+	ApiPictureForm.prototype = Object.create(ApiFormBase.prototype);
+	ApiPictureForm.prototype.constructor = ApiPictureForm;
 
 	/**
 	 * Sets the hyperlink address.
@@ -5181,17 +5233,38 @@
 	 * Gets all existing forms in document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @returns {ApiForm[]}
+	 * @returns {(ApiTextForm | ApiPictureForm | ApiComboBoxForm | ApiCheckBoxForm)[]}
 	 */
 	ApiDocument.prototype.GetAllForms = function() 
 	{
 		var aForms = [];
 		var allControls = this.Document.GetAllContentControls();
-
+		var oTemp;
 		for (var nElm = 0; nElm < allControls.length; nElm++)
+		{
 			if (allControls[nElm].IsForm())
-				aForms.push(new ApiForm(allControls[nElm]));
-
+			{
+				oTemp = new ApiFormBase(allControls[nElm]);
+				switch (oTemp.GetFormType())
+				{
+					case "textForm":
+						aForms.push(new ApiTextForm(allControls[nElm]));
+						break;
+					case "comboBoxForm":
+					case "dropDownForm":
+						aForms.push(new ApiComboBoxForm(allControls[nElm]));
+						break;
+					case "radioButtonForm":
+					case "checkBoxForm":
+						aForms.push(new ApiCheckBoxForm(allControls[nElm]));
+						break;
+					case "pictureForm":
+						aForms.push(new ApiPictureForm(allControls[nElm]));
+						break;
+				}
+			}
+		}
+			
 		return aForms;
 	};
 
@@ -12486,6 +12559,7 @@
 
 	/**
 	 * Sets the placeholder text.
+	 * *Can't be set to checkbox or radio button*
 	 * @memberof ApiInlineLvlSdt
 	 * @param {string} sText
 	 * @typeofeditors ["CDE"]
@@ -12495,7 +12569,9 @@
 	{
 		if (typeof(sText) !== "string" || sText === "")
 			return false;
-
+		if (this.Sdt.IsCheckBox() || this.Sdt.IsRadioButton())
+			return false;
+		
 		this.Sdt.SetPlaceholderText(sText);
 		return true;
 	};
@@ -12517,8 +12593,28 @@
 	 */
 	ApiInlineLvlSdt.prototype.GetForm = function()
 	{
-		if (this.Sdt.IsForm())
-			return new ApiForm(this.Sdt);
+		if (!this.Sdt.IsForm())
+			return null;
+
+		var oForm = new ApiFormBase(this.Sdt);
+		switch (oForm.GetFormType())
+		{
+			case "textForm":
+				oForm = new ApiTextForm(this.Sdt);
+				break;
+			case "comboBoxForm":
+			case "dropDownForm":
+				oForm = new ApiComboBoxForm(this.Sdt);
+				break;
+			case "radioButtonForm":
+			case "checkBoxForm":
+				oForm = new ApiCheckBoxForm(this.Sdt);
+				break;
+			case "pictureForm":
+				oForm = new ApiPictureForm(this.Sdt);
+				break;
+		}
+		
 
 		return null;
 	};
@@ -13020,27 +13116,27 @@
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
-	// ApiForm
+	// ApiFormBase
 	//
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Returns a type of the ApiForm class.
-	 * @memberof ApiForm
+	 * Returns a type of the ApiFormBase class.
+	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @returns {"form"}
 	 */
-	ApiForm.prototype.GetClassType = function()
+	ApiFormBase.prototype.GetClassType = function()
 	{
 		return "form";
 	};
 	/**
 	 * Returns a type of current form.
-	 * @memberof ApiForm
+	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @returns {FormType}
 	 */
-	ApiForm.prototype.GetFormType = function()
+	ApiFormBase.prototype.GetFormType = function()
 	{
 		if (this.Sdt.IsTextForm())
 			return "textForm";
@@ -13057,11 +13153,11 @@
 	};	
 	/**
 	 * Returns the form key. (Gets group key for radiobutton form)
-	 * @memberof ApiForm
+	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
 	 */
-	ApiForm.prototype.GetFormKey = function()
+	ApiFormBase.prototype.GetFormKey = function()
 	{
 		if (this.GetFormType() === "radioButtonForm")
 			return this.Sdt.GetRadioButtonGroupKey();
@@ -13073,12 +13169,12 @@
 	};
 	/**
 	 * Sets the form key. (Sets group key for radiobutton form)
-	 * @memberof ApiForm
+	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sKey
 	 * @returns {boolean}
 	 */
-	ApiForm.prototype.SetFormKey = function(sKey)
+	ApiFormBase.prototype.SetFormKey = function(sKey)
 	{
 		if (typeof(sKey) !== "string")
 			return false;
@@ -13104,41 +13200,12 @@
 		return true;
 	};
 	/**
-	 * Gets the placeholder text.
-	 * @memberof ApiForm
-	 * @typeofeditors ["CDE"]
-	 * @returns {string}
-	 */
-	ApiForm.prototype.GetPlaceholderText = function()
-	{
-		return this.Sdt.GetPlaceholderText();
-	};
-	/**
-	 * Sets the placeholder text.
-	 * @memberof ApiForm
-	 * @param {string} sText
-	 * @typeofeditors ["CDE"]
-	 * @returns {boolean}
-	 */
-	ApiForm.prototype.SetPlaceholderText = function(sText)
-	{
-		var sType = this.GetFormType();
-
-		if (sType == "checkBoxForm" || sType == "radioButtonForm")
-			return false;
-		if (typeof(sText) !== "string" || sText === "")
-			return false;
-
-		this.Sdt.SetPlaceholderText(sText);
-		return true;
-	};
-	/**
 	 * Returns the tip text.
-	 * @memberof ApiForm
+	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
 	 */
-	ApiForm.prototype.GetTipText = function()
+	ApiFormBase.prototype.GetTipText = function()
 	{
 		var oFormPr = this.Sdt.GetFormPr();
 		var sTip = oFormPr.HelpText;
@@ -13149,12 +13216,12 @@
 	};
 	/**
 	 * Sets the tip text.
-	 * @memberof ApiForm
+	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText
 	 * @returns {boolean}
 	 */
-	ApiForm.prototype.SetTipText = function(sText)
+	ApiFormBase.prototype.SetTipText = function(sText)
 	{
 		if (typeof(sText) !== "string")
 			return false;
@@ -13167,22 +13234,22 @@
 	};
 	/**
 	 * Checking whether the form is required.
-	 * @memberof ApiForm
+	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiForm.prototype.IsRequired = function()
+	ApiFormBase.prototype.IsRequired = function()
 	{
 		return this.Sdt.IsFormRequired();
 	};
 	/**
 	 * Determines whether the form should be required.
-	 * @memberof ApiForm
+	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} bRequired
 	 * @returns {boolean}
 	 */
-	ApiForm.prototype.SetRequired = function(bRequired)
+	ApiFormBase.prototype.SetRequired = function(bRequired)
 	{
 		if (typeof(bRequired) !== "boolean")
 			return false;
@@ -13197,23 +13264,23 @@
 	};
 	/**
 	 * Checking whether the form is fixed.
-	 * @memberof ApiForm
+	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiForm.prototype.IsFixedForm = function()
+	ApiFormBase.prototype.IsFixedForm = function()
 	{
 		return this.Sdt.IsFixedForm();
 	};
 	/**
 	 * Determines whether the form should be fixed.
 	 * *Not for picture form*
-	 * @memberof ApiForm
+	 * @memberof ApiFormBase
 	 * @param {boolean} bFixed
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiForm.prototype.SetFixedForm = function(bFixed)
+	ApiFormBase.prototype.SetFixedForm = function(bFixed)
 	{
 		if (typeof(bFixed) !== "boolean")
 			return false;
@@ -13230,26 +13297,116 @@
 		return true;
 	};
 	/**
-	 * Checking whether the form is autofit content.
-	 * @memberof ApiForm
+	 * Sets border to form.
+	 * @memberof ApiFormBase
+	 * @param {byte} r - Red color component value.
+	 * @param {byte} g - Green color component value.
+	 * @param {byte} b - Blue color component value.
+	 * @param {boolean} bNone - is true, then sets no border.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiForm.prototype.IsAutoFit = function()
+	ApiFormBase.prototype.SetBorderColor = function(r, g, b, bNone)
+	{
+		var oFormPr = this.Sdt.GetFormPr().Copy();
+		var oBorder;
+		if (typeof(r) == "number" && typeof(g) == "number" && typeof(b) == "number" && !bNone)
+		{
+			oBorder = new CDocumentBorder();
+			oBorder.Color = new CDocumentColor(r, g, b);
+		}
+		else if (bNone)
+			oBorder = undefined;
+		else
+			return false;
+
+		oFormPr.Border = oBorder;
+
+		this.Sdt.SetFormPr(oFormPr);
+		return true;
+	};
+	/**
+	 * Sets background color to form.
+	 * @memberof ApiFormBase
+	 * @param {byte} r - Red color component value.
+	 * @param {byte} g - Green color component value.
+	 * @param {byte} b - Blue color component value.
+	 * @param {boolean} bNone - is true, then sets no background color.
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiFormBase.prototype.SetBackgroundColor = function(r, g, b, bNone)
+	{
+		var oFormPr = this.Sdt.GetFormPr().Copy();
+		var oUtils = Common.Utils.ThemeColor;
+		var oAscColor;
+		if (typeof(r) == "number" && typeof(g) == "number" && typeof(b) == "number" && !bNone)
+			oAscColor = oUtils.getRgbColor(oUtils.getHexColor(r, g, b));
+		else if (bNone)
+			oAscColor = undefined;
+		else
+			return false;
+
+		if (oAscColor)
+			oFormPr.put_Shd(true, oAscColor);
+		else
+			oFormPr.put_Shd(false);
+
+		this.Sdt.SetFormPr(oFormPr);
+		return true;
+	};
+	/**
+	 * Gets text from form.
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE"]
+	 * @returns {string}
+	 */
+	ApiFormBase.prototype.GetText = function()
+	{
+		var oText = {
+			Text: ""
+		};
+
+		this.Sdt.Get_Text(oText);
+
+		return oText.Text;
+	};
+	/**
+	 * Clears the current form.
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiFormBase.prototype.Clear = function()
+	{
+		this.Sdt.ClearContentControlExt();
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiTextForm
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Checking whether the form is autofit content.
+	 * @memberof ApiTextForm
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiTextForm.prototype.IsAutoFit = function()
 	{
 		return this.Sdt.IsAutoFitContent();
 	};
 	/**
 	 * Determines whether the form should be autofit content.
-	 * Used for "textForm". 
-	 * @memberof ApiForm
+	 * @memberof ApiTextForm
 	 * @param {boolean} bAutoFit
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiForm.prototype.SetAutoFit = function(bAutoFit)
+	ApiTextForm.prototype.SetAutoFit = function(bAutoFit)
 	{
-		if (this.GetFormType() !== "textForm" || typeof(bAutoFit) !== "boolean" || !this.IsFixedForm())
+		if (typeof(bAutoFit) !== "boolean" || !this.IsFixedForm())
 			return false;
 		if (bAutoFit === this.IsAutoFit())
 			return true;
@@ -13262,25 +13419,24 @@
 	};
 	/**
 	 * Checking whether the form is miltiline.
-	 * @memberof ApiForm
+	 * @memberof ApiTextForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiForm.prototype.IsMultiline = function()
+	ApiTextForm.prototype.IsMultiline = function()
 	{
 		return this.Sdt.IsMultiLineForm();
 	};
 	/**
 	 * Determines whether the form should be miltiline.
-	 * Used for "textForm". 
-	 * @memberof ApiForm
+	 * @memberof ApiTextForm
 	 * @param {boolean} bMultiline
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean} - return false, if form is not fixed.
 	 */
-	ApiForm.prototype.SetMultiline = function(bMultiline)
+	ApiTextForm.prototype.SetMultiline = function(bMultiline)
 	{
-		if (this.GetFormType() !== "textForm" || typeof(bMultiline) !== "boolean" || !this.IsFixedForm())
+		if (typeof(bMultiline) !== "boolean" || !this.IsFixedForm())
 			return false;
 		if (!this.IsFixedForm())
 			return false;
@@ -13295,11 +13451,11 @@
 	};
 	/**
 	 * Gets characters limit.
-	 * @memberof ApiForm
+	 * @memberof ApiTextForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {number} - if returns -1 -> characters is no limit
 	 */
-	ApiForm.prototype.GetCharactersLimit = function()
+	ApiTextForm.prototype.GetCharactersLimit = function()
 	{
 		var oFormPr = this.Sdt.GetTextFormPr();
 		if (false === oFormPr.MaxCharacters)
@@ -13309,18 +13465,15 @@
 	};
 	/**
 	 * Sets characters limit.
-	 * Used for "textForm".
-	 * @memberof ApiForm
+	 * @memberof ApiTextForm
 	 * @param {number} nChars - if param is -1 -> sets no limit.
 	 * Can't sets no limit, if comb of characters is applied.
 	 * Max value is 1000000.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiForm.prototype.SetCharactersLimit = function(nChars)
+	ApiTextForm.prototype.SetCharactersLimit = function(nChars)
 	{
-		if (this.GetFormType() !== "textForm")
-			return false;
 		if (typeof(nChars) !== "number" || nChars < -1 || nChars === 0)
 			return false;
 
@@ -13342,11 +13495,11 @@
 	};
 	/**
 	 * Checking whether the form is characters comb.
-	 * @memberof ApiForm
+	 * @memberof ApiTextForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiForm.prototype.IsCharactersComb = function()
+	ApiTextForm.prototype.IsCharactersComb = function()
 	{
 		if (this.GetFormType() !== "textForm")
 			return false;
@@ -13356,15 +13509,14 @@
 	};
 	/**
 	 * Sets comb of characters.
-	 * Used for "textForm".
-	 * @memberof ApiForm
+	 * @memberof ApiTextForm
 	 * @param {boolean} bComb
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiForm.prototype.SetCharactersComb = function(bComb)
+	ApiTextForm.prototype.SetCharactersComb = function(bComb)
 	{
-		if (this.GetFormType() !== "textForm" || typeof(bComb) !== "boolean")
+		if (typeof(bComb) !== "boolean")
 			return false;
 		if (bComb === this.IsCharactersComb())
 			return true;
@@ -13379,76 +13531,62 @@
 		return true;
 	};
 	/**
-	 * Sets border to form.
-	 * @memberof ApiForm
-	 * @param {byte} r - Red color component value.
-	 * @param {byte} g - Green color component value.
-	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} bNone - is true, then sets no border.
+	 * Sets cell width with applied comb of characters.
+	 * @memberof ApiTextForm
+	 * @param {mm} [nCellWidth=0] - if nCellWidth === 0, then the width will be set automatically. Must be >= 1 and <= 558.8
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiForm.prototype.SetBorderColor = function(r, g, b, bNone)
+	ApiTextForm.prototype.SetCellWidth = function(nCellWidth)
 	{
-		var oFormPr = this.Sdt.GetFormPr().Copy();
-		var oBorder;
-		if (typeof(r) == "number" && typeof(g) == "number" && typeof(b) == "number" && !bNone)
-		{
-			oBorder = new CDocumentBorder();
-			oBorder.Color = new CDocumentColor(r, g, b);
-		}
-		else if (bNone)
-			oBorder = undefined;
-		else
+		if (typeof(nCellWidth) !== "number" || !this.IsCharactersComb())
 			return false;
 
-		oFormPr.Border = oBorder;
+		var nWidthMax = 558.8;
+		nCellWidth = nCellWidth < 1 ? 1 : Math.floor(nCellWidth * 100) / 100;
+		nCellWidth = nCellWidth > nWidthMax ? nWidthMax : nCellWidth;
 
-		this.Sdt.SetFormPr(oFormPr);
+		var oPr = this.Sdt.GetTextFormPr().Copy();
+		oPr.put_Width(Math.floor(nCellWidth * 72 * 20 / 25.4 + 0.5));
+
+		this.Sdt.SetTextFormPr(oPr);
 		return true;
 	};
 	/**
-	 * Sets background color to form.
-	 * @memberof ApiForm
-	 * @param {byte} r - Red color component value.
-	 * @param {byte} g - Green color component value.
-	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} bNone - is true, then sets no background color.
+	 * Sets text to form.
+	 * @memberof ApiTextForm
+	 * @param {string} sText
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiForm.prototype.SetBackgroundColor = function(r, g, b, bNone)
+	ApiTextForm.prototype.SetText = function(sText)
 	{
-		var oFormPr = this.Sdt.GetFormPr().Copy();
-		var oUtils = Common.Utils.ThemeColor;
-		var oAscColor;
-		if (typeof(r) == "number" && typeof(g) == "number" && typeof(b) == "number" && !bNone)
-			oAscColor = oUtils.getRgbColor(oUtils.getHexColor(r, g, b));
-		else if (bNone)
-			oAscColor = undefined;
-		else
+		if (typeof(sText) !== "string" || sText === "")
 			return false;
 
-		if (oAscColor)
-			oFormPr.put_Shd(true, oAscColor);
-		else
-			oFormPr.put_Shd(false);
-
-		this.Sdt.SetFormPr(oFormPr);
+		var oRun = editor.CreateRun();
+		
+		this.Sdt.SetShowingPlcHdr(false);
+		this.Sdt.RemoveAll();
+		this.Sdt.AddToContent(0, oRun.Run);
+		oRun.AddText(sText);
 		return true;
 	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiPictureForm
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
 	/**
 	 * Gets the current condition for scaling picture.
-	 * Used for "pictureForm".
-	 * @memberof ApiForm
+	 * @memberof ApiPictureForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {scaleCase}
 	 */
-	ApiForm.prototype.GetPictureScaleCase = function()
+	ApiPictureForm.prototype.GetPictureScaleCase = function()
 	{
-		if (this.GetFormType() !== "pictureForm")
-			return false;
-
 		var sScaleFlag;
 		var oPr = this.Sdt.GetPictureFormPr().Copy();
 		switch (oPr.ScaleFlag)
@@ -13471,16 +13609,13 @@
 	};
 	/**
 	 * Sets the condition for scaling the picture.
-	 * Used for "pictureForm".
-	 * @memberof ApiForm
+	 * @memberof ApiPictureForm
 	 * @param {slaceCase} sScaleCase
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiForm.prototype.SetPictureScaleCase = function(sScaleCase)
+	ApiPictureForm.prototype.SetPictureScaleCase = function(sScaleCase)
 	{
-		if (this.GetFormType() !== "pictureForm")
-			return false;
 		var nScaleFlag;
 		switch (sScaleCase)
 		{
@@ -13508,18 +13643,14 @@
 	};
 	/**
 	 * Sets the lock aspect ratio for picture.
-	 * Used for "pictureForm".
-	 * @memberof ApiForm
+	 * @memberof ApiPictureForm
 	 * @param {percentage} xRatio
 	 * @param {percentage} yRatio
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiForm.prototype.SetLockAspectRatio = function(xRatio, yRatio)
+	ApiPictureForm.prototype.SetLockAspectRatio = function(xRatio, yRatio)
 	{
-		if (this.GetFormType() !== "pictureForm")
-			return false;
-		
 		if (typeof(xRatio) !== "number" || typeof(yRatio) !== "number")
 			return false;
 		if (xRatio < 0 || xRatio > 100 || yRatio < 0 || yRatio > 100)
@@ -13537,82 +13668,76 @@
 		return true;
 	};
 	/**
-	 * Sets cell width with applied comb of characters.
-	 * Used for "textForm" with applied comb of characters.
-	 * @memberof ApiForm
-	 * @param {mm} [nCellWidth=0] - if nCellWidth === 0, then the width will be set automatically. Must be >= 1 and <= 558.8
+	 * Gets base64 image.
+	 * @memberof ApiPictureForm
 	 * @typeofeditors ["CDE"]
-	 * @returns {boolean}
+	 * @returns {base64img}
 	 */
-	ApiForm.prototype.SetCellWidth = function(nCellWidth)
+	ApiPictureForm.prototype.GetImage = function()
 	{
-		if (this.GetFormType() !== "textForm" || typeof(nCellWidth) !== "number" || !this.IsCharactersComb())
-			return false;
-
-		var nWidthMax = 558.8;
-		nCellWidth = nCellWidth < 1 ? 1 : Math.floor(nCellWidth * 100) / 100;
-		nCellWidth = nCellWidth > nWidthMax ? nWidthMax : nCellWidth;
-
-		var oPr = this.Sdt.GetTextFormPr().Copy();
-		oPr.put_Width(Math.floor(nCellWidth * 72 * 20 / 25.4 + 0.5));
-
-		this.Sdt.SetTextFormPr(oPr);
-		return true;
-	};
-	/**
-	 * Gets text from form.
-	 * @memberof ApiForm
-	 * @typeofeditors ["CDE"]
-	 * @returns {string}
-	 */
-	ApiForm.prototype.GetText = function()
-	{
-		var oText = {
-			Text: ""
-		};
-
-		this.Sdt.Get_Text(oText);
-
-		return oText.Text;
-	};
-	/**
-	 * Sets text to form.
-	 * Used for "textForm"/"comboBoxForm".
-	 * @memberof ApiForm
-	 * @param {string} sText
-	 * @typeofeditors ["CDE"]
-	 * @returns {boolean}
-	 */
-	ApiForm.prototype.SetText = function(sText)
-	{
-		var sType = this.GetFormType();
-		if (sType != "textForm" && sType != "comboBoxForm")
-			return false;
-
-		if (typeof(sText) !== "string" || sText === "")
-			return false;
-
-		var oRun = editor.CreateRun();
+		var oImg;
+		var allDrawings = this.Sdt.GetAllDrawingObjects();
+		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++)
+		{
+			if (allDrawings[nDrawing].IsPicture())
+			{
+				oImg = allDrawings[nDrawing].GraphicObj;
+				break;
+			}
+		}
+		if (oImg)
+			return oImg.getBase64Img();
 		
-		this.Sdt.SetShowingPlcHdr(false);
-		this.Sdt.RemoveAll();
-		this.Sdt.AddToContent(0, oRun.Run);
-		oRun.AddText(sText);
-		return true;
+		return "";
 	};
+	/**
+	 * Sets image to form.
+	 * @memberof ApiPictureForm
+	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently only internet URL or Base64 encoded images are supported).
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiPictureForm.prototype.SetImage = function(sImageSrc)
+	{
+		if (typeof(sImageSrc) !== "string" || sImageSrc === "")
+			return false;
+		
+		var oImg;
+		var allDrawings = this.Sdt.GetAllDrawingObjects();
+		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++)
+		{
+			if (allDrawings[nDrawing].IsPicture())
+			{
+				oImg = allDrawings[nDrawing].GraphicObj;
+				break;
+			}
+		}
+
+		if (oImg)
+		{
+			oImg.setBlipFill(AscFormat.CreateBlipFillRasterImageId(sImageSrc));
+			return true;
+		}
+
+		return false;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiComboBoxForm 
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
 	/**
 	 * Gets list values from current form.
-	 * Used for "comboBoxForm"/"dropDownForm".
-	 * @memberof ApiForm
+	 * @memberof ApiComboBoxForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {string[]}
 	 */
-	ApiForm.prototype.GetListValues = function()
+	ApiComboBoxForm.prototype.GetListValues = function()
 	{
 		var aValues = [];
 		var sType = this.GetFormType();
-		if (sType !== "comboBoxForm" && sType !== "dropDownForm")
-			return [];
 
 		var oSpecProps = sType === "comboBoxForm" ? this.Sdt.Pr.ComboBox.Copy() : this.Sdt.Pr.DropDown.Copy();
 		if (!oSpecProps)
@@ -13625,17 +13750,14 @@
 	};
 	/**
 	 * Sets list values to current form.
-	 * Used for "comboBoxForm"/"dropDownForm".
-	 * @memberof ApiForm
+	 * @memberof ApiComboBoxForm
 	 * @param {string[]} aListString
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiForm.prototype.SetListValues = function(aListString)
+	ApiComboBoxForm.prototype.SetListValues = function(aListString)
 	{
 		var sType = this.GetFormType();
-		if (sType !== "comboBoxForm" && sType !== "dropDownForm")
-			return false;
 		if (!Array.isArray(aListString))
 			return false;
 
@@ -13659,17 +13781,14 @@
 	};
 	/**
 	 * Select specified value from the list value. 
-	 * Used for "comboBoxForm"/"dropDownForm".
-	 * @memberof ApiForm
+	 * @memberof ApiComboBoxForm
 	 * @param {string} sValue
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiForm.prototype.SelectListValue = function(sValue)
+	ApiComboBoxForm.prototype.SelectListValue = function(sValue)
 	{
 		var sType = this.GetFormType();
-		if (sType !== "comboBoxForm" && sType !== "dropDownForm")
-			return false;
 		if (typeof(sValue) !== "string" || sValue === "")
 			return false;
 
@@ -13684,19 +13803,55 @@
 		return true;		
 	};
 	/**
+	 * Sets text to form.
+	 * @memberof ApiTextForm
+	 * @param {string} sText
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiComboBoxForm.prototype.SetText = function(sText)
+	{
+		if (typeof(sText) !== "string" || sText === "")
+			return false;
+		if ("comboBoxForm" !== this.GetFormType())
+			return false;
+
+		var oRun = editor.CreateRun();
+		
+		this.Sdt.SetShowingPlcHdr(false);
+		this.Sdt.RemoveAll();
+		this.Sdt.AddToContent(0, oRun.Run);
+		oRun.AddText(sText);
+		return true;
+	};
+	/**
+	 * Check that the text can be edited.
+	 * @memberof ApiTextForm
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiComboBoxForm.prototype.IsEditable = function()
+	{
+		if ("comboBoxForm" === this.GetFormType())
+			return true;
+
+		return false;
+	};
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiCheckBoxForm 
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
 	 * Sets checkbox checked. 
-	 * Used for "checkBoxForm"/"radioButtonForm".
-	 * @memberof ApiForm
+	 * @memberof ApiCheckBoxForm
 	 * @param {boolean} isChecked
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiForm.prototype.SetCheckBoxChecked = function(isChecked)
+	ApiCheckBoxForm.prototype.SetCheckBoxChecked = function(isChecked)
 	{
-		var sType = this.GetFormType();
-		if (sType !== "checkBoxForm" && sType !== "radioButtonForm")
-			return false;
-
 		if (typeof(isChecked) !== "boolean")
 			return false;
 
@@ -13704,77 +13859,16 @@
 		return true;
 	};
 	/**
-	 * Gets base64 image from "pictureForm".
-	 * @memberof ApiForm
-	 * @typeofeditors ["CDE"]
-	 * @returns {base64img}
-	 */
-	ApiForm.prototype.GetImage = function()
-	{
-		var sType = this.GetFormType();
-		if (sType !== "pictureForm")
-			return "";
-		
-		var oImg;
-		var allDrawings = this.Sdt.GetAllDrawingObjects();
-		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++)
-		{
-			if (allDrawings[nDrawing].IsPicture())
-			{
-				oImg = allDrawings[nDrawing].GraphicObj;
-				break;
-			}
-		}
-		if (oImg)
-			return oImg.getBase64Img();
-		
-		return "";
-	};
-	/**
-	 * Sets image to "pictureForm".
-	 * @memberof ApiForm
-	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently only internet URL or Base64 encoded images are supported).
+	 * Check if the form is a radio button. 
+	 * @memberof ApiCheckBoxForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiForm.prototype.SetImage = function(sImageSrc)
+	ApiCheckBoxForm.prototype.IsRadioButton = function()
 	{
-		var sType = this.GetFormType();
-		if (sType !== "pictureForm")
-			return false;
-		if (typeof(sImageSrc) !== "string" || sImageSrc === "")
-			return false;
-		
-		var oImg;
-		var allDrawings = this.Sdt.GetAllDrawingObjects();
-		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++)
-		{
-			if (allDrawings[nDrawing].IsPicture())
-			{
-				oImg = allDrawings[nDrawing].GraphicObj;
-				break;
-			}
-		}
-
-		if (oImg)
-		{
-			oImg.setBlipFill(AscFormat.CreateBlipFillRasterImageId(sImageSrc));
-			return true;
-		}
-
-		return false;
-	};
-	/**
-	 * Clears the current form.
-	 * @memberof ApiForm
-	 * @typeofeditors ["CDE"]
-	 */
-	ApiForm.prototype.Clear = function()
-	{
-		this.Sdt.ClearContentControlExt();
+		return this.Sdt.IsRadioButton();
 	};
 	
-
 	/**
 	 * Replaces each paragraph (or text in cell) in the select with the corresponding text from an array of strings.
 	 * @memberof Api
@@ -14784,41 +14878,46 @@
 	ApiBlockLvlSdt.prototype["GetPlaceholderText"]      = ApiBlockLvlSdt.prototype.GetPlaceholderText;
 	ApiBlockLvlSdt.prototype["SetPlaceholderText"]      = ApiBlockLvlSdt.prototype.SetPlaceholderText;
 
-	ApiForm.prototype["GetClassType"]        = ApiForm.prototype.GetClassType;
-	ApiForm.prototype["GetFormType"]         = ApiForm.prototype.GetFormType;
-	ApiForm.prototype["GetFormKey"]          = ApiForm.prototype.GetFormKey;
-	ApiForm.prototype["SetFormKey"]          = ApiForm.prototype.SetFormKey;
-	ApiForm.prototype["GetPlaceholderText"]  = ApiForm.prototype.GetPlaceholderText;
-	ApiForm.prototype["SetPlaceholderText"]  = ApiForm.prototype.SetPlaceholderText;
-	ApiForm.prototype["GetTipText"]          = ApiForm.prototype.GetTipText;
-	ApiForm.prototype["SetTipText"]          = ApiForm.prototype.SetTipText;
-	ApiForm.prototype["IsRequired"]          = ApiForm.prototype.IsRequired;
-	ApiForm.prototype["SetRequired"]         = ApiForm.prototype.SetRequired;
-	ApiForm.prototype["IsFixedForm"]         = ApiForm.prototype.IsFixedForm;
-	ApiForm.prototype["SetFixedForm"]        = ApiForm.prototype.SetFixedForm;
-	ApiForm.prototype["IsAutoFit"]           = ApiForm.prototype.IsAutoFit;
-	ApiForm.prototype["SetAutoFit"]          = ApiForm.prototype.SetAutoFit;
-	ApiForm.prototype["IsMultiline"]         = ApiForm.prototype.IsMultiline;
-	ApiForm.prototype["SetMultiline"]        = ApiForm.prototype.SetMultiline;
-	ApiForm.prototype["GetCharactersLimit"]  = ApiForm.prototype.GetCharactersLimit;
-	ApiForm.prototype["SetCharactersLimit"]  = ApiForm.prototype.SetCharactersLimit;
-	ApiForm.prototype["IsCharactersComb"]    = ApiForm.prototype.IsCharactersComb;
-	ApiForm.prototype["SetCharactersComb"]   = ApiForm.prototype.SetCharactersComb;
-	ApiForm.prototype["SetBorderColor"]      = ApiForm.prototype.SetBorderColor;
-	ApiForm.prototype["SetBackgroundColor"]  = ApiForm.prototype.SetBackgroundColor;
-	ApiForm.prototype["GetPictureScaleCase"] = ApiForm.prototype.GetPictureScaleCase;
-	ApiForm.prototype["SetPictureScaleCase"] = ApiForm.prototype.SetPictureScaleCase;
-	ApiForm.prototype["SetLockAspectRatio"]  = ApiForm.prototype.SetLockAspectRatio;
-	ApiForm.prototype["SetCellWidth"]        = ApiForm.prototype.SetCellWidth;
-	ApiForm.prototype["GetText"]             = ApiForm.prototype.GetText;
-	ApiForm.prototype["SetText"]             = ApiForm.prototype.SetText;
-	ApiForm.prototype["GetListValues"]       = ApiForm.prototype.GetListValues;
-	ApiForm.prototype["SetListValues"]       = ApiForm.prototype.SetListValues;
-	ApiForm.prototype["SelectListValue"]     = ApiForm.prototype.SelectListValue;
-	ApiForm.prototype["SetCheckBoxChecked"]  = ApiForm.prototype.SetCheckBoxChecked;
-	ApiForm.prototype["GetImage"]            = ApiForm.prototype.GetImage;
-	ApiForm.prototype["SetImage"]            = ApiForm.prototype.SetImage;
-	ApiForm.prototype["Clear"]               = ApiForm.prototype.Clear;
+	ApiFormBase.prototype["GetClassType"]        = ApiFormBase.prototype.GetClassType;
+	ApiFormBase.prototype["GetFormType"]         = ApiFormBase.prototype.GetFormType;
+	ApiFormBase.prototype["GetFormKey"]          = ApiFormBase.prototype.GetFormKey;
+	ApiFormBase.prototype["SetFormKey"]          = ApiFormBase.prototype.SetFormKey;
+	ApiFormBase.prototype["GetTipText"]          = ApiFormBase.prototype.GetTipText;
+	ApiFormBase.prototype["SetTipText"]          = ApiFormBase.prototype.SetTipText;
+	ApiFormBase.prototype["IsRequired"]          = ApiFormBase.prototype.IsRequired;
+	ApiFormBase.prototype["SetRequired"]         = ApiFormBase.prototype.SetRequired;
+	ApiFormBase.prototype["IsFixedForm"]         = ApiFormBase.prototype.IsFixedForm;
+	ApiFormBase.prototype["SetFixedForm"]        = ApiFormBase.prototype.SetFixedForm;
+	ApiFormBase.prototype["SetBorderColor"]      = ApiFormBase.prototype.SetBorderColor;
+	ApiFormBase.prototype["SetBackgroundColor"]  = ApiFormBase.prototype.SetBackgroundColor;
+	ApiFormBase.prototype["GetText"]             = ApiFormBase.prototype.GetText;
+	ApiFormBase.prototype["Clear"]               = ApiFormBase.prototype.Clear;
+
+	ApiTextForm.prototype["IsAutoFit"]           = ApiTextForm.prototype.IsAutoFit;
+	ApiTextForm.prototype["SetAutoFit"]          = ApiTextForm.prototype.SetAutoFit;
+	ApiTextForm.prototype["IsMultiline"]         = ApiTextForm.prototype.IsMultiline;
+	ApiTextForm.prototype["SetMultiline"]        = ApiTextForm.prototype.SetMultiline;
+	ApiTextForm.prototype["GetCharactersLimit"]  = ApiTextForm.prototype.GetCharactersLimit;
+	ApiTextForm.prototype["SetCharactersLimit"]  = ApiTextForm.prototype.SetCharactersLimit;
+	ApiTextForm.prototype["IsCharactersComb"]    = ApiTextForm.prototype.IsCharactersComb;
+	ApiTextForm.prototype["SetCharactersComb"]   = ApiTextForm.prototype.SetCharactersComb;
+	ApiTextForm.prototype["SetCellWidth"]        = ApiTextForm.prototype.SetCellWidth;
+	ApiTextForm.prototype["SetText"]             = ApiTextForm.prototype.SetText;
+
+	ApiPictureForm.prototype["GetPictureScaleCase"] = ApiPictureForm.prototype.GetPictureScaleCase;
+	ApiPictureForm.prototype["SetPictureScaleCase"] = ApiPictureForm.prototype.SetPictureScaleCase;
+	ApiPictureForm.prototype["SetLockAspectRatio"]  = ApiPictureForm.prototype.SetLockAspectRatio;
+	ApiPictureForm.prototype["GetImage"]            = ApiPictureForm.prototype.GetImage;
+	ApiPictureForm.prototype["SetImage"]            = ApiPictureForm.prototype.SetImage;
+	
+	ApiComboBoxForm.prototype["GetListValues"]       = ApiComboBoxForm.prototype.GetListValues;
+	ApiComboBoxForm.prototype["SetListValues"]       = ApiComboBoxForm.prototype.SetListValues;
+	ApiComboBoxForm.prototype["SelectListValue"]     = ApiComboBoxForm.prototype.SelectListValue;
+	ApiComboBoxForm.prototype["SetText"]             = ApiComboBoxForm.prototype.SetText;
+	ApiComboBoxForm.prototype["IsEditable"]          = ApiComboBoxForm.prototype.IsEditable;
+
+	ApiCheckBoxForm.prototype["SetCheckBoxChecked"]  = ApiCheckBoxForm.prototype.SetCheckBoxChecked;
+	ApiCheckBoxForm.prototype["IsRadioButton"]       = ApiCheckBoxForm.prototype.IsRadioButton;
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
