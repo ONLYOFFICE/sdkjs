@@ -13290,6 +13290,9 @@
 									{
 										var bDate = oTargetFormat.bDate;
 										var bTime = oTargetFormat.bTime;
+										var bGannen = true;
+										var bCurrentEraYear = oTargetFormat.bCurrentEraYear;
+
 										if(false == bDate && nValue >= 1)
 											bDate = true;
 										if(false == bTime && Math.floor(nValue) != nValue)
@@ -13310,7 +13313,7 @@
 										else
 											oNumFormat = oNumFormatCache.get(sDateFormat);
 
-										var aFormatedValue = oNumFormat.format(nValue, CellValueType.Number, AscCommon.gc_nMaxDigCount);
+										var aFormatedValue = oNumFormat.format(nValue, CellValueType.Number, AscCommon.gc_nMaxDigCount, undefined, undefined, true, undefined, bCurrentEraYear);
 										oValueText = "";
 										for(var i = 0, length = aFormatedValue.length; i < length; ++i)
 											oValueText += aFormatedValue[i].text;
