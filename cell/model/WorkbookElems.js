@@ -11778,7 +11778,7 @@ QueryTableField.prototype.clone = function() {
 
 		if (revertZoom) {
 			this.wb.model.setActive(this.realActiveSheet);
-			this.wb.changeZoom(this.realZoom);
+			this.wb.changeZoom(this.realZoom, true);
 		}
 		this.realActiveSheet = null;
 		this.realZoom = null;
@@ -11856,7 +11856,7 @@ QueryTableField.prototype.clone = function() {
 			if (needUpdateActiveSheet) {
 				this.wb.model.setActive(this.activeSheet);
 			}
-			this.wb.changeZoom(this.pageZoom * this.printZoom);
+			this.wb.changeZoom(this.pageZoom * this.printZoom, true);
 			this.ctx.changeZoom(this.pageZoom* this.printZoom);
 		}
 		var oGraphics = new AscCommon.CGraphics();

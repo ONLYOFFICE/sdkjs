@@ -932,7 +932,7 @@
 	};
 
     WorksheetView.prototype.changeZoom = function (isUpdate, changeZoomOnPrint) {
-        if (isUpdate) {
+        if (isUpdate || changeZoomOnPrint) {
             this.isZooming = true;
             this.notUpdateRowHeight = true;
             this.cleanSelection();
@@ -3140,6 +3140,9 @@
         if (lockDraw || this.model.workbook.bCollaborativeChanges || window['IS_NATIVE_EDITOR']) {
             return this;
         }
+		if (this.workbook.printPreviewState && this.workbook.printPreviewState.isStart()) {
+			return;
+		}
         this._recalculate();
 		this.handlers.trigger("checkLastWork");
         this._clean();

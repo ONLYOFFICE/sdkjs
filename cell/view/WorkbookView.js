@@ -2250,7 +2250,7 @@
     return this.drawingCtx.getZoom();
   };
 
-  WorkbookView.prototype.changeZoom = function(factor, changeZoomOnPrint) {
+  WorkbookView.prototype.changeZoom = function(factor, changeZoomOnPrint, doNotDraw) {
   	if (factor === this.getZoom()) {
       return;
     }
@@ -2294,7 +2294,7 @@
       item.changeZoom(/*isDraw*/i == activeIndex, changeZoomOnPrint);
       this._reInitGraphics();
       item.objectRender.changeZoom(this.drawingCtx.scaleFactor);
-      if (i == activeIndex && factor) {
+      if (i == activeIndex && factor && !doNotDraw) {
         item.draw();
         //ToDo item.drawDepCells();
       }
@@ -3123,15 +3123,15 @@
 		//приходится несколько раз выполнять действия, чтобы ppi выставился правильно
 		//если не делать init, то не сбросится ppi от системного зума - смотри функцию DrawingContext.prototype.changeZoom
 		if (viewZoom !== 1) {
-			this.changeZoom(1, true);
+			this.changeZoom(1, true, true);
 		}
-		this.changeZoom(null, true);
+		this.changeZoom(null, true, true);
 
 		runFunction();
 
 		AscCommon.AscBrowser.retinaPixelRatio = trueRetinaPixelRatio;
-		this.changeZoom(null, true);
-		this.changeZoom(viewZoom, true);
+		this.changeZoom(null, true, true);
+		this.changeZoom(viewZoom, true, true);
 	};
 
 	WorkbookView.prototype.printSheetPrintPreview = function(index) {
@@ -3181,7 +3181,7 @@
 	}
 
     var viewZoom = this.getZoom();
-    this.changeZoom(1);
+    this.changeZoom(1, true, true);
 
     var printPagesData = new asc_CPrintPagesData();
     var printType = adjustPrint.asc_getPrintType();
@@ -3204,7 +3204,7 @@
       this.handlers.trigger("asc_onError", c_oAscError.ID.PrintMaxPagesCount, c_oAscError.Level.NoCritical);
     }
 
-    this.changeZoom(viewZoom);
+    this.changeZoom(viewZoom, true, true);
 
     return printPagesData;
   };
