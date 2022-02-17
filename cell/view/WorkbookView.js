@@ -3155,6 +3155,9 @@
 		}
 
 		printPreviewContext.clear();
+		printPreviewContext.setFillStyle( this.defaults.worksheetView.cells.defaultState.background )
+			.fillRect( 0, 0, printPreviewContext.getWidth(), printPreviewContext.getHeight() );
+
 		var ws;
 		if (!page) {
 			// Печать пустой страницы
