@@ -2842,7 +2842,7 @@
 	/**
 	 * Class representing a document form base.
 	 * @constructor
-	 * @extends {ApiFormBase}
+	 * @extends {ApiInlineLvlSdt}
 	 */
 	function ApiFormBase(oSdt)
 	{
@@ -2855,7 +2855,7 @@
 	/**
 	 * Class representing a document text form.
 	 * @constructor
-	 * @extends {ApiTextForm}
+	 * @extends {ApiFormBase}
 	 */
 	function ApiTextForm(oSdt)
 	{
@@ -2868,7 +2868,7 @@
 	/**
 	 * Class representing a document combobox form.
 	 * @constructor
-	 * @extends {ApiComboBoxForm}
+	 * @extends {ApiFormBase}
 	 */
 	function ApiComboBoxForm(oSdt)
 	{
@@ -2881,7 +2881,7 @@
 	/**
 	 * Class representing a document checkbox form.
 	 * @constructor
-	 * @extends {ApiCheckBoxForm}
+	 * @extends {ApiFormBase}
 	 */
 	function ApiCheckBoxForm(oSdt)
 	{
@@ -2894,7 +2894,7 @@
 	/**
 	 * Class representing a document picture form.
 	 * @constructor
-	 * @extends {ApiPictureForm}
+	 * @extends {ApiFormBase}
 	 */
 	function ApiPictureForm(oSdt)
 	{
@@ -3572,7 +3572,7 @@
 
 	/**
 	 * Condition when to scale image.
-	 * @typedef {"always" | "never" | "tooBig" | "tooSmall"} scaleCase
+	 * @typedef {"always" | "never" | "tooBig" | "tooSmall"} ScaleCase
 	 */
 
 	/**
@@ -13152,23 +13152,20 @@
 			return "pictureForm";
 	};	
 	/**
-	 * Returns the form key. (Gets group key for radiobutton form)
+	 * Returns the form key
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
 	 */
 	ApiFormBase.prototype.GetFormKey = function()
 	{
-		if (this.GetFormType() === "radioButtonForm")
-			return this.Sdt.GetRadioButtonGroupKey();
-
 		var sKey = this.Sdt.GetFormKey();
 		if (typeof(sKey) !== "string")
 			sKey = "";
 		return sKey;
 	};
 	/**
-	 * Sets the form key. (Sets group key for radiobutton form)
+	 * Sets the form key
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sKey
@@ -13180,18 +13177,6 @@
 			return false;
 
 		sKey = sKey === "" ? undefined : sKey;
-
-		if (this.GetFormType() === "radioButtonForm")
-		{
-			if (sKey === undefined)
-				return false;
-
-			var oPr = this.Sdt.GetCheckBoxPr().Copy();
-			oPr.put_GroupKey(sKey);
-			this.Sdt.SetCheckBoxPr(oPr);
-			this.Sdt.private_UpdateCheckBoxContent();
-			return true;
-		}
 
 		var oFormPr = this.Sdt.GetFormPr().Copy();
 		oFormPr && oFormPr.put_Key(sKey);
@@ -13457,11 +13442,11 @@
 	 */
 	ApiTextForm.prototype.GetCharactersLimit = function()
 	{
-		var oFormPr = this.Sdt.GetTextFormPr();
-		if (false === oFormPr.MaxCharacters)
+		var oPr = this.Sdt.GetTextFormPr();
+		if (!oPr)
 			return -1;
 
-		return oFormPr.MaxCharacters;
+		return oPr.GetMaxCharacters();
 	};
 	/**
 	 * Sets characters limit.
@@ -13474,21 +13459,21 @@
 	 */
 	ApiTextForm.prototype.SetCharactersLimit = function(nChars)
 	{
-		if (typeof(nChars) !== "number" || nChars < -1 || nChars === 0)
+		if (typeof(nChars) !== "number")
 			return false;
 
-		var oPr = this.Sdt.GetTextFormPr().Copy();
-		var nMax = 1000000;
+		const nMax = 1000000;
 		nChars = nChars > nMax ? nMax : Math.floor(nChars);
 
-		if (this.IsCharactersComb())
-		{
-			if (nChars === -1)
-				return false;
-			oPr.put_MaxCharacters(nChars);
-		}
-		else
-			oPr.put_MaxCharacters(nChars === -1 ? false : nChars);
+		if (nChars <= 0)
+			nChars = -1;
+
+		let oPr = this.Sdt.GetTextFormPr();
+		if (!oPr || (-1 === nChars && this.IsComb()))
+			return false;
+
+		oPr = oPr.Copy();
+		oPr.SetMaxCharacters(nChars);
 
 		this.Sdt.SetTextFormPr(oPr);
 		return true;
@@ -13499,13 +13484,10 @@
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiTextForm.prototype.IsCharactersComb = function()
+	ApiTextForm.prototype.IsComb = function()
 	{
-		if (this.GetFormType() !== "textForm")
-			return false;
-
-		var oPr = this.Sdt.GetTextFormPr();
-		return oPr.Comb;
+		let oPr = this.Sdt.GetTextFormPr();
+		return oPr ? oPr.IsComb() : false;
 	};
 	/**
 	 * Sets comb of characters.
@@ -13514,18 +13496,23 @@
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiTextForm.prototype.SetCharactersComb = function(bComb)
+	ApiTextForm.prototype.SetComb = function(bComb)
 	{
 		if (typeof(bComb) !== "boolean")
 			return false;
-		if (bComb === this.IsCharactersComb())
+
+		let oPr = this.Sdt.GetTextFormPr();
+		if (!oPr)
+			return false;
+
+		if (oPr.IsComb() === bComb)
 			return true;
 
-		var oPr = this.Sdt.GetTextFormPr().Copy();
-		oPr.put_Comb(bComb);
-		if (this.GetCharactersLimit() === -1)
-			oPr.put_MaxCharacters(10);
-		oPr.put_Width(0);
+		oPr = oPr.Copy();
+		oPr.SetComb(bComb);
+		if (oPr.GetMaxCharacters() === -1)
+			oPr.SetMaxCharacters(10);
+		oPr.SetWidth(0);
 
 		this.Sdt.SetTextFormPr(oPr);
 		return true;
@@ -13539,7 +13526,7 @@
 	 */
 	ApiTextForm.prototype.SetCellWidth = function(nCellWidth)
 	{
-		if (typeof(nCellWidth) !== "number" || !this.IsCharactersComb())
+		if (typeof(nCellWidth) !== "number" || !this.IsComb())
 			return false;
 
 		var nWidthMax = 558.8;
@@ -13561,15 +13548,16 @@
 	 */
 	ApiTextForm.prototype.SetText = function(sText)
 	{
-		if (typeof(sText) !== "string" || sText === "")
+		if (typeof (sText) !== "string" || sText === "")
 			return false;
 
-		var oRun = editor.CreateRun();
-		
-		this.Sdt.SetShowingPlcHdr(false);
-		this.Sdt.RemoveAll();
-		this.Sdt.AddToContent(0, oRun.Run);
+		if (this.Sdt.IsPlaceHolder())
+			this.Sdt.ReplacePlaceHolderWithContent();
+
+		let oRun = this.Sdt.MakeSingleRunElement();
+		oRun.ClearContent();
 		oRun.AddText(sText);
+
 		return true;
 	};
 
@@ -13583,24 +13571,24 @@
 	 * Gets the current condition for scaling picture.
 	 * @memberof ApiPictureForm
 	 * @typeofeditors ["CDE"]
-	 * @returns {scaleCase}
+	 * @returns {ScaleCase}
 	 */
 	ApiPictureForm.prototype.GetPictureScaleCase = function()
 	{
-		var sScaleFlag;
-		var oPr = this.Sdt.GetPictureFormPr().Copy();
-		switch (oPr.ScaleFlag)
+		let sScaleFlag = "always";
+		let oPr = this.Sdt.GetPictureFormPr();
+		switch (oPr.GetScaleFlag())
 		{
-			case 0:
+			case Asc.c_oAscPictureFormScaleFlag.Always:
 				sScaleFlag = "always";
 				break;
-			case 3:
+			case Asc.c_oAscPictureFormScaleFlag.Never:
 				sScaleFlag = "never";
 				break;
-			case 1:
+			case Asc.c_oAscPictureFormScaleFlag.Bigger:
 				sScaleFlag = "tooBig";
 				break;
-			case 2:
+			case Asc.c_oAscPictureFormScaleFlag.Small:
 				sScaleFlag = "tooSmall";
 				break;
 		}
@@ -13610,33 +13598,33 @@
 	/**
 	 * Sets the condition for scaling the picture.
 	 * @memberof ApiPictureForm
-	 * @param {slaceCase} sScaleCase
+	 * @param {ScaleCase} sScaleCase
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
 	ApiPictureForm.prototype.SetPictureScaleCase = function(sScaleCase)
 	{
-		var nScaleFlag;
+		let nScaleFlag;
 		switch (sScaleCase)
 		{
 			case "always":
-				nScaleFlag = 0;
+				nScaleFlag = Asc.c_oAscPictureFormScaleFlag.Always;
 				break;
 			case "never":
-				nScaleFlag = 3;
+				nScaleFlag = Asc.c_oAscPictureFormScaleFlag.Never;
 				break;
 			case "tooBig":
-				nScaleFlag = 1;
+				nScaleFlag = Asc.c_oAscPictureFormScaleFlag.Bigger;
 				break;
 			case "tooSmall":
-				nScaleFlag = 2;
+				nScaleFlag = Asc.c_oAscPictureFormScaleFlag.Small;
 				break;
 			default:
 				return false;
 		}
 
 		var oPr = this.Sdt.GetPictureFormPr().Copy();
-		oPr.put_ScaleFlag(nScaleFlag);
+		oPr.SetScaleFlag(nScaleFlag);
 		this.Sdt.SetPictureFormPr(oPr);
 		this.Sdt.UpdatePictureFormLayout();
 		return true;
@@ -13660,8 +13648,8 @@
 		yRatio = Math.floor(yRatio);
 
 		var oPr = this.Sdt.GetPictureFormPr().Copy();
-		oPr.put_ShiftX(xRatio / 100);
-		oPr.put_ShiftY(yRatio / 100);
+		oPr.SetShiftX(xRatio / 100);
+		oPr.SetShiftY(yRatio / 100);
 		this.Sdt.SetPictureFormPr(oPr);
 		this.Sdt.UpdatePictureFormLayout();
 
@@ -13737,14 +13725,13 @@
 	ApiComboBoxForm.prototype.GetListValues = function()
 	{
 		var aValues = [];
-		var sType = this.GetFormType();
 
-		var oSpecProps = sType === "comboBoxForm" ? this.Sdt.Pr.ComboBox.Copy() : this.Sdt.Pr.DropDown.Copy();
+		var oSpecProps = this.Sdt.IsComboBox() ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
 		if (!oSpecProps)
 			return [];
 
-		for (var nItem = 0; nItem < oSpecProps.ListItems.length; nItem++)
-			aValues.push(oSpecProps.ListItems[nItem].DisplayText)
+		for (var nItem = 0, nCount = oSpecProps.GetItemsCount(); nItem < nCount; nItem++)
+			aValues.push(oSpecProps.GetItemDisplayText(nItem));
 
 		return aValues;
 	};
@@ -13757,22 +13744,23 @@
 	 */
 	ApiComboBoxForm.prototype.SetListValues = function(aListString)
 	{
-		var sType = this.GetFormType();
 		if (!Array.isArray(aListString))
 			return false;
 
-		var oSpecProps = sType === "comboBoxForm" ? this.Sdt.Pr.ComboBox.Copy() : this.Sdt.Pr.DropDown.Copy();
+		let isComboBox = this.Sdt.IsComboBox();
+		let oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
 		if (!oSpecProps)
-			return false;
+			return [];
 
-		oSpecProps.clear();
-		for (var nValue = 0; nValue < aListString.length; nValue++)
+		oSpecProps = oSpecProps.Copy();
+		oSpecProps.Clear();
+		for (let nValue = 0; nValue < aListString.length; nValue++)
 		{
 			if (typeof(aListString[nValue]) === "string" && aListString[nValue] !== "")
-				oSpecProps.add_Item(aListString[nValue], aListString[nValue]);
+				oSpecProps.AddItem(aListString[nValue], aListString[nValue]);
 		}
 
-		if (sType === "comboBoxForm")
+		if (isComboBox)
 			this.Sdt.SetComboBoxPr(oSpecProps);
 		else
 			this.Sdt.SetDropDownListPr(oSpecProps);
@@ -13788,11 +13776,10 @@
 	 */
 	ApiComboBoxForm.prototype.SelectListValue = function(sValue)
 	{
-		var sType = this.GetFormType();
 		if (typeof(sValue) !== "string" || sValue === "")
 			return false;
 
-		var oSpecProps = sType === "comboBoxForm" ? this.Sdt.Pr.ComboBox.Copy() : this.Sdt.Pr.DropDown.Copy();
+		var oSpecProps = this.Sdt.IsComboBox() ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
 		if (!oSpecProps)
 			return false;
 
@@ -13811,17 +13798,19 @@
 	 */
 	ApiComboBoxForm.prototype.SetText = function(sText)
 	{
-		if (typeof(sText) !== "string" || sText === "")
-			return false;
-		if ("comboBoxForm" !== this.GetFormType())
+		if (typeof (sText) !== "string" || sText === "")
 			return false;
 
-		var oRun = editor.CreateRun();
-		
-		this.Sdt.SetShowingPlcHdr(false);
-		this.Sdt.RemoveAll();
-		this.Sdt.AddToContent(0, oRun.Run);
+		if (!this.Sdt.IsComboBox())
+			return false;
+
+		if (this.Sdt.IsPlaceHolder())
+			this.Sdt.ReplacePlaceHolderWithContent();
+
+		let oRun = this.Sdt.MakeSingleRunElement();
+		oRun.ClearContent();
 		oRun.AddText(sText);
+
 		return true;
 	};
 	/**
@@ -13832,10 +13821,7 @@
 	 */
 	ApiComboBoxForm.prototype.IsEditable = function()
 	{
-		if ("comboBoxForm" === this.GetFormType())
-			return true;
-
-		return false;
+		return (this.Sdt.IsComboBox());
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -13850,13 +13836,23 @@
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiCheckBoxForm.prototype.SetCheckBoxChecked = function(isChecked)
+	ApiCheckBoxForm.prototype.SetChecked = function(isChecked)
 	{
 		if (typeof(isChecked) !== "boolean")
 			return false;
 
 		this.Sdt.ToggleCheckBox(isChecked);
 		return true;
+	};
+	/**
+	 * Get the state of this checkbox
+	 * @memberof ApiCheckBoxForm
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiCheckBoxForm.prototype.IsChecked = function()
+	{
+		return this.Sdt.IsCheckBoxChecked();
 	};
 	/**
 	 * Check if the form is a radio button. 
@@ -13868,7 +13864,34 @@
 	{
 		return this.Sdt.IsRadioButton();
 	};
-	
+	/**
+	 * Get radio group key, if it is a radio button
+	 * @memberof ApiCheckBoxForm
+	 * @typeofeditors ["CDE"]
+	 * @returns {string}
+	 */
+	ApiCheckBoxForm.prototype.GetRadioGroup = function()
+	{
+		let sRadioGroup = this.Sdt.GetRadioButtonGroupKey();
+		return (sRadioGroup ? sRadioGroup : "");
+	};
+	/**
+	 * Set radio group key
+	 * @memberof ApiCheckBoxForm
+	 * @param {string} sKey
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiCheckBoxForm.prototype.SetRadioGroup = function(sKey)
+	{
+		let oPr = this.Sdt.GetCheckBoxPr();
+		if (!oPr)
+			return;
+
+		oPr = oPr.Copy();
+		oPr.SetGroupKey(sKey);
+		this.Sdt.SetCheckBoxPr(oPr);
+	};
+
 	/**
 	 * Replaces each paragraph (or text in cell) in the select with the corresponding text from an array of strings.
 	 * @memberof Api
@@ -14899,8 +14922,8 @@
 	ApiTextForm.prototype["SetMultiline"]        = ApiTextForm.prototype.SetMultiline;
 	ApiTextForm.prototype["GetCharactersLimit"]  = ApiTextForm.prototype.GetCharactersLimit;
 	ApiTextForm.prototype["SetCharactersLimit"]  = ApiTextForm.prototype.SetCharactersLimit;
-	ApiTextForm.prototype["IsCharactersComb"]    = ApiTextForm.prototype.IsCharactersComb;
-	ApiTextForm.prototype["SetCharactersComb"]   = ApiTextForm.prototype.SetCharactersComb;
+	ApiTextForm.prototype["IsComb"]              = ApiTextForm.prototype.IsComb;
+	ApiTextForm.prototype["SetComb"]             = ApiTextForm.prototype.SetComb;
 	ApiTextForm.prototype["SetCellWidth"]        = ApiTextForm.prototype.SetCellWidth;
 	ApiTextForm.prototype["SetText"]             = ApiTextForm.prototype.SetText;
 
@@ -14916,9 +14939,11 @@
 	ApiComboBoxForm.prototype["SetText"]             = ApiComboBoxForm.prototype.SetText;
 	ApiComboBoxForm.prototype["IsEditable"]          = ApiComboBoxForm.prototype.IsEditable;
 
-	ApiCheckBoxForm.prototype["SetCheckBoxChecked"]  = ApiCheckBoxForm.prototype.SetCheckBoxChecked;
-	ApiCheckBoxForm.prototype["IsRadioButton"]       = ApiCheckBoxForm.prototype.IsRadioButton;
-
+	ApiCheckBoxForm.prototype["SetChecked"]    = ApiCheckBoxForm.prototype.SetChecked;
+	ApiCheckBoxForm.prototype["IsChecked"]     = ApiCheckBoxForm.prototype.IsChecked;
+	ApiCheckBoxForm.prototype["IsRadioButton"] = ApiCheckBoxForm.prototype.IsRadioButton;
+	ApiCheckBoxForm.prototype["GetRadioGroup"] = ApiCheckBoxForm.prototype.GetRadioGroup;
+	ApiCheckBoxForm.prototype["SetRadioGroup"] = ApiCheckBoxForm.prototype.SetRadioGroup;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
