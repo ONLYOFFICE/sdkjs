@@ -15108,6 +15108,26 @@ $( function () {
 
 	test( "Test: \"Gannen Calendar\"", function () {
 
+		oParser = new parserFormula( 'TEXT(DATE(1900,01,01),"[$-411]ge.yyyy.m.d;@")', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "M33.33.1.1" );
+
+		oParser = new parserFormula( 'TEXT(DATE(1900,01,01),"[$-411]ge.m.d.yyyy;@")', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "M33.1.1.33" );
+
+		oParser = new parserFormula( 'TEXT(DATE(1900,01,01),"ge.yyyy.m.d;@")', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "1900.1900.1.1" );
+
+		oParser = new parserFormula( 'TEXT(DATE(1900,01,01),"[$-411]yyyy.m.d;@")', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "1900.1.1" );
+
+		oParser = new parserFormula( 'TEXT(DATE(1900,01,01),"[$-411]yyyy.ge.m.d;@")', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "1900.M33.1.1" );
+
 		oParser = new parserFormula( 'TEXT(DATE(1900,01,01),"[$-411]ggge年m月d日;@")', "A2", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getValue(), "明治33年1月1日" );
