@@ -681,6 +681,7 @@
     this._isViewer = false;
     this._isReSaveAfterAuth = false;	// Флаг для сохранения после повторной авторизации (для разрыва соединения во время сохранения)
     this._lockBuffer = [];
+    this._saveChangesChunks = [];
     this._authChanges = [];
     this._authOtherChanges = [];
   }
@@ -1187,6 +1188,16 @@
       }
       return;
     }
+    if (!data["endSaveChanges"]) {
+      this._saveChangesChunks.push(data["changes"]);
+      return;
+    } else if(this._saveChangesChunks.length > 0){
+      this._saveChangesChunks.push(data["changes"]);
+      var newChanges = [];
+      data["changes"] = newChanges.concat.apply(newChanges, this._saveChangesChunks);
+      this._saveChangesChunks = [];
+    }
+
     if (!useEncryption && AscCommon.EncryptionWorker && AscCommon.EncryptionWorker.isInit())
       return AscCommon.EncryptionWorker.sendChanges(this, data, AscCommon.EncryptionMessageType.Decrypt);
     if (data["locks"]) {
