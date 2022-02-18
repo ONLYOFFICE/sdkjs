@@ -13292,6 +13292,7 @@
 										var bTime = oTargetFormat.bTime;
 										var bGannen = true;
 										var bCurrentEraYear = oTargetFormat.bCurrentEraYear;
+										
 
 										if(false == bDate && nValue >= 1)
 											bDate = true;
@@ -13299,7 +13300,9 @@
 											bTime = true;
 										var sDateFormat = "";
 										if (bDate) {
-											sDateFormat = AscCommon.getShortDateFormat(cultureInfo);
+											sDateFormat = AscCommon.getShortDateFormat(cultureInfo, bCurrentEraYear);
+											if (bCurrentEraYear)
+												sDateFormat = (sDateFormat.indexOf("[$-411]") != -1) ? sDateFormat.replace("/", "") : sDateFormat;
 										}
 										var sTimeFormat = 'h:mm:ss';
 

@@ -1998,6 +1998,27 @@ NumFormat.prototype =
 		}
 		return forceNull;
 	},
+	checkEra: function (dec)
+	{
+		if (dec < 4595) {
+			return gc_aJapanEras[0];
+		}
+		else if (dec < 9856) {
+			return gc_aJapanEras[1];
+		}
+		else if (dec < 32516) {
+			return gc_aJapanEras[2];
+		}
+		else if (dec < 43586) {
+			return gc_aJapanEras[3];
+		}
+		else if (dec >= 43586) {
+			return gc_aJapanEras[4];
+		}
+		else {
+			return null;
+		}
+	},
     format: function (number, nValType, dDigitsCount, cultureInfo, bChart, opt_forceNull, bIsCurrentEra)
     {
         if (null == cultureInfo)
@@ -2048,6 +2069,7 @@ NumFormat.prototype =
             }
 
 			var oCurrentEra;
+			var bIsGannen = false;
 			//var bInsertDatesAccordingSelectedCalendar = false; // Вставлять даты согласно выбранному календарю
 
             var hasSign = false;
@@ -2178,21 +2200,7 @@ NumFormat.prototype =
 				{
 					if (item.val != null && oParsedNumber.dec != null && this.LCID === 1041)
 					{
-						if (oParsedNumber.dec <= 4594) {
-							oCurrentEra = gc_aJapanEras[0];
-						}
-						else if (oParsedNumber.dec <= 9855) {
-							oCurrentEra = gc_aJapanEras[1];
-						}
-						else if (oParsedNumber.dec <= 32515) {
-							oCurrentEra = gc_aJapanEras[2];
-						}
-						else if (oParsedNumber.dec <= 43585) {
-							oCurrentEra = gc_aJapanEras[3];
-						}
-						else if (oParsedNumber.dec >= 43586) {
-							oCurrentEra = gc_aJapanEras[4];
-						}
+						oCurrentEra = this.checkEra(oParsedNumber.date.hour < 12 ? oParsedNumber.dec : oParsedNumber.dec - 1);
 						if (oCurrentEra != null)
 						{
 							if(item.val == 1) {
@@ -2204,6 +2212,7 @@ NumFormat.prototype =
 							else if(item.val >= 3) {
 								oCurText.text += oCurrentEra[2];
 							}
+							bIsGannen = true;
 						}
 					}
 				}
@@ -2225,21 +2234,7 @@ NumFormat.prototype =
 					{
 						if (this.LCID === 1041)
 						{
-							if (oParsedNumber.dec <= 4594) {
-								oCurrentEra = gc_aJapanEras[0];
-							}
-							else if (oParsedNumber.dec <= 9855) {
-								oCurrentEra = gc_aJapanEras[1];
-							}
-							else if (oParsedNumber.dec <= 32515) {
-								oCurrentEra = gc_aJapanEras[2];
-							}
-							else if (oParsedNumber.dec <= 43585) {
-								oCurrentEra = gc_aJapanEras[3];
-							}
-							else if (oParsedNumber.dec >= 43586) {
-								oCurrentEra = gc_aJapanEras[4];
-							}
+							oCurrentEra = this.checkEra(oParsedNumber.date.hour < 12 ? oParsedNumber.dec : oParsedNumber.dec - 1);
 							if (oCurrentEra != null)
 							{
 								oCurText.text += (oParsedNumber.date.year - oCurrentEra[3] + 1);
@@ -2268,23 +2263,9 @@ NumFormat.prototype =
 				}
                 else if(numFormat_Year == item.type)
                 {
-					if(null !== bIsCurrentEra && bIsCurrentEra)
+					if (bIsGannen != null && bIsGannen)
 					{
-						if (oParsedNumber.dec <= 4594) {
-							oCurrentEra = gc_aJapanEras[0];
-						}
-						else if (oParsedNumber.dec <= 9855) {
-							oCurrentEra = gc_aJapanEras[1];
-						}
-						else if (oParsedNumber.dec <= 32515) {
-							oCurrentEra = gc_aJapanEras[2];
-						}
-						else if (oParsedNumber.dec <= 43585) {
-							oCurrentEra = gc_aJapanEras[3];
-						}
-						else if (oParsedNumber.dec >= 43586) {
-							oCurrentEra = gc_aJapanEras[4];
-						}
+						oCurrentEra = this.checkEra(oParsedNumber.date.hour < 12 ? oParsedNumber.dec : oParsedNumber.dec - 1);
 						if (oCurrentEra != null)
 						{
 							oCurText.text += (oParsedNumber.date.year - oCurrentEra[3] + 1);
@@ -2700,12 +2681,12 @@ NumFormat.prototype =
             }
 			else if(numFormat_Gannen == item.type)
 			{
-				if (this.LCID == 1041/* || this.LCID == 17*/)
-				{
+				//if (this.LCID == 1041)
+				//{
 					var nIndex = (item.val > 3) ? 3 : item.val;
 					for(var j = 0; j < nIndex; ++j)
 						res += gannen;
-				}
+				//}
 			}
 			else if(numFormat_JapanYearsGannen == item.type)
 			{
@@ -4462,7 +4443,7 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 		}
 		return sRes;
 	}
-	function getShortDateFormat(opt_cultureInfo) {
+	function getShortDateFormat(opt_cultureInfo, bCurrentEraYear) {
 		var cultureInfo = opt_cultureInfo ? opt_cultureInfo : g_oDefaultCultureInfo;
 		var dateElems = [];
 		for (var i = 0; i < cultureInfo.ShortDatePattern.length; ++i) {
@@ -4480,10 +4461,22 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 					dateElems.push('mm');
 					break;
 				case '4':
-					dateElems.push('yy');
+					if (bCurrentEraYear)
+					{
+						dateElems.push('ee');
+						dateElems.unshift("[$-411]");
+					}
+					else
+						dateElems.push('yy');
 					break;
 				case '5':
-					dateElems.push('yyyy');
+					if (bCurrentEraYear)
+					{
+						dateElems.push('eeee');
+						dateElems.unshift("[$-411]");
+					}
+					else
+						dateElems.push('yyyy');
 					break;
 			}
 		}
