@@ -1039,23 +1039,24 @@
 				{
 					if (pluginData.getAttribute("interface"))
 					{
-						var _script = "(function(){ var Api = window.g_asc_plugins.api;\n" + value.replace(/\\/g, "\\\\") + "\n})();";
+						var _script = "(function(Api, window, alert, document){\r\n" + "\"use strict\"" + ";\r\n" + value.replace(/\\/g, "\\\\") + "\n})(window.g_asc_plugins.api, {}, function(){}, {});";
 						eval(_script);
 					}
 					else if (!window.g_asc_plugins.api.isLongAction() && (pluginData.getAttribute("resize") || window.g_asc_plugins.api.asc_canPaste()))
 					{
 						window.g_asc_plugins.api._beforeEvalCommand();
 
-                        AscFonts.IsCheckSymbols = true;
-						var _script = "(function(){ var Api = window.g_asc_plugins.api;\n" + value.replace(/\\/g, "\\\\") + "\n})();";
+						AscFonts.IsCheckSymbols = true;
+						var _script = "(function(Api, window, alert, document){\r\n" + "\"use strict\"" + ";\r\n" + value.replace(/\\/g, "\\\\") + "\n})(window.g_asc_plugins.api, {}, function(){}, {});";
 						try
 						{
 							eval(_script);
 						}
 						catch (err)
 						{
+							console.log(err);
 						}
-                        AscFonts.IsCheckSymbols = false;
+						AscFonts.IsCheckSymbols = false;
 
 						if (pluginData.getAttribute("recalculate") == true)
 						{
