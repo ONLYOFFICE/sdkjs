@@ -8309,6 +8309,9 @@
 			}
 		}
 	};
+	Worksheet.prototype.inAutoFilter = function (range) {
+		return this.AutoFilter && this.AutoFilter.Ref && this.AutoFilter.Ref.intersection(range);
+	};
 	Worksheet.prototype.inPivotTable = function (range, exceptPivot) {
 		return this.pivotTables.find(function (element) {
 			return exceptPivot !== element && element.intersection(range);
