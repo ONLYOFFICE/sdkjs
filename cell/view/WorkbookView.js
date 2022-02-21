@@ -3186,10 +3186,12 @@
     var viewZoom = this.getZoom();
     this.changeZoom(1, true, true);
 
+	var nActive = this.printPreviewState.isStart() && null !== this.printPreviewState.realActiveSheet ? this.printPreviewState.realActiveSheet : this.model.getActive();
+
     var printPagesData = new asc_CPrintPagesData();
     var printType = adjustPrint.asc_getPrintType();
     if (printType === Asc.c_oAscPrintType.ActiveSheets) {
-      this._calcPagesPrintSheet(this.model.getActive(), printPagesData, false, adjustPrint);
+      this._calcPagesPrintSheet(nActive, printPagesData, false, adjustPrint);
     } else if (printType === Asc.c_oAscPrintType.EntireWorkbook) {
       // Колличество листов
       var countWorksheets = this.model.getWorksheetCount();
@@ -3200,7 +3202,7 @@
       	this._calcPagesPrintSheet(i, printPagesData, false, adjustPrint);
       }
     } else if (printType === Asc.c_oAscPrintType.Selection) {
-      this._calcPagesPrintSheet(this.model.getActive(), printPagesData, true, adjustPrint);
+      this._calcPagesPrintSheet(nActive, printPagesData, true, adjustPrint);
     }
 
     if (AscCommonExcel.c_kMaxPrintPages === printPagesData.arrPages.length) {
