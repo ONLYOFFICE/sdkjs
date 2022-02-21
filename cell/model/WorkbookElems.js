@@ -11777,8 +11777,12 @@ QueryTableField.prototype.clone = function() {
 		this.start = null;
 
 		if (revertZoom) {
-			this.wb.model.setActive(this.realActiveSheet);
-			this.wb.changeZoom(this.realZoom, true);
+			if (null != this.realActiveSheet) {
+				this.wb.model.setActive(this.realActiveSheet);
+			}
+			if (null != this.realZoom) {
+				this.wb.changeZoom(this.realZoom, true);
+			}
 		}
 		this.realActiveSheet = null;
 		this.realZoom = null;
