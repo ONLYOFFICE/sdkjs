@@ -4519,12 +4519,12 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
                 if (paragraph.CompiledPr.Pr && paragraph.CompiledPr.Pr.TextPr && paragraph.CompiledPr.Pr.TextPr.FontSize) {
                     var paragraphFontSize = paragraph.CompiledPr.Pr.TextPr.FontSize;
                     var paraRunFontSize;
-                    paragraph.Content.forEach(function (paraRun) {
+                    paragraph.CheckRunContent(function (paraRun) {
                         paraRunFontSize = paraRun.Pr.FontSize ? paraRun.Pr.FontSize : paragraphFontSize;
                         paraRun.Set_FontSize(fontSize);
-                    })
+                    });
                 }
-            })
+            });
             this.recalculateContentWitCompiledPr();
         }
     }
