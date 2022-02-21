@@ -11841,6 +11841,606 @@
 		return null;
 	};
 
+	/**
+	 * Sets style to chart by style id.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @param nStyleId - one of the styles available in the editor.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.ApplyChartStyle = function(nStyleId)
+	{
+		if (typeof(nStyleId) !== "number" || nStyleId < 0)
+			return false;
+
+		var nChartType = this.Chart.getChartType();
+		var aStyle = AscCommon.g_oChartStyles[nChartType] && AscCommon.g_oChartStyles[nChartType][nStyleId];
+		
+		if (aStyle)
+		{
+			this.Chart.applyChartStyleByIds(aStyle);
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
+	 * Sets fill to plot area.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @param {ApiFill} oFill - The fill type used to fill the plot area.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.SetPlotAreaFill = function(oFill)
+	{
+		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
+			return false;
+
+		this.Chart.chart.plotArea.spPr.setFill(oFill.UniFill);
+		return true;
+	};
+
+	/**
+	 * Sets outline to plot area of the chart.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @param {ApiStroke} oStroke - The stroke used to create the plot area outline.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.SetPlotAreaOutLine = function(oStroke)
+	{
+		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
+			return false;
+
+		this.Chart.chart.plotArea.spPr.setLn(oStroke.Ln);
+		return true;
+	};
+
+	/**
+	 * Sets fill to specified series.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @param {ApiFill} oFill - The fill type used to fill the series.
+	 * @param {number} nSeries - The index of the series in chart.
+	 * @param {boolean} [bAll=false] - whether to apply to all series.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.SetSeriesFill = function(oFill, nSeries, bAll)
+	{
+		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
+			return false;
+
+		var oSeries, isOk;
+		var nSeriesCount = 0;
+		for (var nChart = 0; nChart < this.Chart.chart.plotArea.charts.length; nChart++)
+		{
+			for (var nCurSeries = 0; nCurSeries < this.Chart.chart.plotArea.charts[nChart].series.length; nCurSeries++)
+			{
+				nSeriesCount += 1;
+				if (!bAll && nSeriesCount - 1 !== nSeries)
+					continue;
+
+				oSeries = this.Chart.chart.plotArea.charts[nChart].series[nCurSeries];
+				
+				if (!oSeries.spPr)
+				{
+					oSeries.setSpPr(new AscFormat.CSpPr());
+					oSeries.spPr.setParent(oSeries);
+				}
+	
+				oSeries.spPr.setFill(oFill.UniFill);
+				if (Array.isArray(oSeries.dPt))
+				{
+					for (var i = 0; i < oSeries.dPt.length; ++i)
+					{
+						if (oSeries.dPt[i].spPr)
+						{
+							oSeries.dPt[i].spPr.setFill(oFill.UniFill.createDuplicate());
+						}
+					}
+				}
+
+				isOk = true;
+				if (isOk && !bAll)
+					return true;
+			}
+		}
+
+		if (isOk)
+			return true;
+		
+		return false;
+	};
+	
+	/**
+	 * Sets outline to specified series.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @param {ApiStroke} oStroke - The stroke used to create the series outline.
+	 * @param {number} nSeries - The index of the series in chart.
+	 * @param {boolean} [bAll=false] - whether to apply to all series.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.SetSeriesOutLine = function(oStroke, nSeries, bAll)
+	{
+		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
+			return false;
+
+		var oSeries, isOk;
+		var nSeriesCount = 0;
+		for (var nChart = 0; nChart < this.Chart.chart.plotArea.charts.length; nChart++)
+		{
+			for (var nCurSeries = 0; nCurSeries < this.Chart.chart.plotArea.charts[nChart].series.length; nCurSeries++)
+			{
+				nSeriesCount += 1;
+				if (!bAll && nSeriesCount - 1 !== nSeries)
+					continue;
+
+				oSeries = this.Chart.chart.plotArea.charts[nChart].series[nCurSeries];
+				
+				if (!oSeries.spPr)
+				{
+					oSeries.setSpPr(new AscFormat.CSpPr());
+					oSeries.spPr.setParent(oSeries);
+				}
+	
+				oSeries.spPr.setLn(oStroke.Ln);
+				if (Array.isArray(oSeries.dPt))
+				{
+					for (var i = 0; i < oSeries.dPt.length; ++i)
+					{
+						if (oSeries.dPt[i].spPr)
+						{
+							oSeries.dPt[i].spPr.setLn(oStroke.Ln.createDuplicate());
+						}
+					}
+				}
+
+				isOk = true;
+				if (isOk && !bAll)
+					return true;
+			}
+		}
+
+		if (isOk)
+			return true;
+		
+		return false;
+	};
+
+	/**
+	 * Sets fill to data point in specified series.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @param {ApiFill} oFill - The fill type used to fill the data point.
+	 * @param {number} nSeries - The index of the series in chart.
+	 * @param {number} nDataPoint - The index of the data point in the specified series in chart.
+	 * @param {boolean} [bAllSeries=false] - whether to apply to specified datapoint in all series.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.SetDataPointFill = function(oFill, nSeries, nDataPoint, bAllSeries)
+	{
+		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
+			return false;
+ 
+		var oDataPoint, oSeries, isOk;
+		var nSeriesCount = 0;
+		
+		for (var nChart = 0; nChart < this.Chart.chart.plotArea.charts.length; nChart++)
+		{
+			for (var nCurSeries = 0; nCurSeries < this.Chart.chart.plotArea.charts[nChart].series.length; nCurSeries++)
+			{
+				nSeriesCount += 1;
+				if (!bAllSeries && nSeriesCount - 1 !== nSeries)
+					continue;
+
+				oSeries = this.Chart.chart.plotArea.chart.series[nCurSeries];
+				var pts = oSeries.getNumPts();
+				if (nDataPoint >= pts.length)
+					return false;
+
+				oDataPoint = oSeries.dPt[nDataPoint];
+				if(!oDataPoint)
+				{
+					oDataPoint = new AscFormat.CDPt();
+					oDataPoint.setIdx(nDataPoint);
+					oSeries.addDPt(oDataPoint);
+					if(!oDataPoint.spPr)
+					{
+						oDataPoint.setSpPr(new AscFormat.CSpPr());
+						oDataPoint.spPr.setParent(oDataPoint);
+					}
+				}
+				oDataPoint.spPr.setFill(oFill.UniFill);
+
+				isOk = true;
+				if (isOk && !bAllSeries)
+					return true;
+			}
+		}
+
+		if (isOk)
+			return true;
+		
+		return false;
+	};
+
+	/**
+	 * Sets outline to data point in specified series.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @param {ApiStroke} oStroke - The stroke used to create the data point outline.
+	 * @param {number} nSeries - The index of the series in chart.
+	 * @param {number} nDataPoint - The index of the data point in the specified series in chart.
+	 * @param {boolean} bAllSeries - whether to apply to specified datapoint in all series.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.SetDataPointOutLine = function(oStroke, nSeries, nDataPoint, bAllSeries)
+	{
+		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
+			return false;
+
+		var oDataPoint, oSeries, isOk;
+		var nSeriesCount = 0;
+		
+		for (var nChart = 0; nChart < this.Chart.chart.plotArea.charts.length; nChart++)
+		{
+			for (var nCurSeries = 0; nCurSeries < this.Chart.chart.plotArea.charts[nChart].series.length; nCurSeries++)
+			{
+				nSeriesCount += 1;
+				if (!bAllSeries && nSeriesCount - 1 !== nSeries)
+					continue;
+
+				oSeries = this.Chart.chart.plotArea.chart.series[nCurSeries];
+				var pts = oSeries.getNumPts();
+				if (nDataPoint >= pts.length)
+					return false;
+
+				oDataPoint = oSeries.dPt[nDataPoint];
+				if(!oDataPoint)
+				{
+					oDataPoint = new AscFormat.CDPt();
+					oDataPoint.setIdx(nDataPoint);
+					oSeries.addDPt(oDataPoint);
+					if(!oDataPoint.spPr)
+					{
+						oDataPoint.setSpPr(new AscFormat.CSpPr());
+						oDataPoint.spPr.setParent(oDataPoint);
+					}
+				}
+				oDataPoint.spPr.setLn(oStroke.Ln);
+
+				isOk = true;
+				if (isOk && !bAllSeries)
+					return true;
+			}
+		}
+
+		if (isOk)
+			return true;
+		
+		return false;
+	};
+
+	/**
+	 * Sets fill to marker in specified series.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @param {ApiFill} oFill - The fill type used to fill the marker.
+	 * @param {number} nSeries - The index of the series in chart.
+	 * @param {number} nMarker - The index of the marker in the specified series in chart.
+	 * @param {boolean} [bAllMarkers=false] - whether to apply to all markers in specified series.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.SetMarkerFill = function(oFill, nSeries, nMarker, bAllMarkers)
+	{
+		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
+			return false;
+		
+		var oDataPoint, oSeries;
+		var nSeriesCount = 0;
+		for (var nChart = 0; nChart < this.Chart.chart.plotArea.charts.length; nChart++)
+		{
+			for (var nCurSeries = 0; nCurSeries < this.Chart.chart.plotArea.charts[nChart].series.length; nCurSeries++)
+			{
+				nSeriesCount += 1;
+				if (nSeriesCount - 1 === nSeries)
+				{
+					oSeries = this.Chart.chart.plotArea.chart.series[nSeries];
+					break;
+				}
+			}
+		}
+
+		if (!oSeries)
+			return false;
+
+		if (bAllMarkers)
+		{
+			if (oSeries.marker)
+			{
+				if(!oSeries.marker.spPr)
+				{
+					oSeries.marker.setSpPr(new AscFormat.CSpPr());
+					oSeries.marker.spPr.setParent(oSeries.marker);
+				}
+				oSeries.marker.spPr.setFill(oFill.UniFill);
+				if(Array.isArray(oSeries.dPt))
+				{
+					for(var i = 0; i < oSeries.dPt.length; ++i)
+					{
+						if(oSeries.dPt[i].marker && oSeries.dPt[i].marker.spPr)
+							oSeries.dPt[i].marker.spPr.setFill(oFill.UniFill.createDuplicate());
+					}
+				}
+				return true;
+			}
+		}
+		else
+		{
+			var pts = oSeries.getNumPts();
+			var oPt;
+			for (var nPt = 0; nPt < pts.length; nPt++)
+			{
+				if (pts[nPt].idx === nMarker)
+				{
+					oPt = pts[nPt]; 
+					break;
+				}
+			}
+
+			if (!oPt)
+				return false;
+
+			if(Array.isArray(oSeries.dPt))
+			{
+				for(var k = 0; k < oSeries.dPt.length; ++k)
+				{
+					if(oSeries.dPt[k].idx === nMarker)
+					{
+						oDataPoint = oSeries.dPt[k];
+						break;
+					}
+				}
+			}
+
+			if(!oDataPoint)
+			{
+				oDataPoint = new AscFormat.CDPt();
+				oDataPoint.setIdx(nMarker);
+				oSeries.addDPt(oDataPoint);
+			}
+
+			if(oPt.compiledMarker)
+			{
+				oDataPoint.setMarker(oPt.compiledMarker.createDuplicate());
+				if(!oDataPoint.marker.spPr)
+				{
+					oDataPoint.marker.setSpPr(new AscFormat.CSpPr());
+					oDataPoint.marker.spPr.setParent(oDataPoint.marker);
+				}
+				oDataPoint.marker.spPr.setFill(oFill.UniFill);
+				return true;
+			}
+		}
+
+		return false;
+	};
+
+	/**
+	 * Sets outline to marker in specified series.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @param {ApiStroke} oStroke - The stroke used to create the marker outline.
+	 * @param {number} nSeries - The index of the series in chart.
+	 * @param {number} nMarker - The index of the marker in the specified series in chart.
+	 * @param {boolean} [bAllMarkers=false] - whether to apply to all markers in specified series.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.SetMarkerOutLine = function(oStroke, nSeries, nMarker, bAllMarkers)
+	{
+		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
+			return false;
+			
+		var oDataPoint, oSeries;
+		var nSeriesCount = 0;
+		for (var nChart = 0; nChart < this.Chart.chart.plotArea.charts.length; nChart++)
+		{
+			for (var nCurSeries = 0; nCurSeries < this.Chart.chart.plotArea.charts[nChart].series.length; nCurSeries++)
+			{
+				nSeriesCount += 1;
+				if (nSeriesCount - 1 === nSeries)
+				{
+					oSeries = this.Chart.chart.plotArea.chart.series[nSeries];
+					break;
+				}
+			}
+		}
+
+		if (!oSeries)
+			return false;
+
+		if (bAllMarkers)
+		{
+			if (oSeries.marker)
+			{
+				if(!oSeries.marker.spPr)
+				{
+					oSeries.marker.setSpPr(new AscFormat.CSpPr());
+					oSeries.marker.spPr.setParent(oSeries.marker);
+				}
+				oSeries.marker.spPr.setLn(oStroke.Ln);
+				if(Array.isArray(oSeries.dPt))
+				{
+					for(var i = 0; i < oSeries.dPt.length; ++i)
+					{
+						if(oSeries.dPt[i].marker && oSeries.dPt[i].marker.spPr)
+							oSeries.dPt[i].marker.spPr.setLn(oStroke.Ln.createDuplicate());
+					}
+				}
+				return true;
+			}
+		}
+		else
+		{
+			var pts = oSeries.getNumPts();
+			var oPt;
+			for (var nPt = 0; nPt < pts.length; nPt++)
+			{
+				if (pts[nPt].idx === nMarker)
+				{
+					oPt = pts[nPt]; 
+					break;
+				}
+			}
+
+			if (!oPt)
+				return false;
+
+			if(Array.isArray(oSeries.dPt))
+			{
+				for(var k = 0; k < oSeries.dPt.length; ++k)
+				{
+					if(oSeries.dPt[k].idx === nMarker)
+					{
+						oDataPoint = oSeries.dPt[k];
+						break;
+					}
+				}
+			}
+
+			if(!oDataPoint)
+			{
+				oDataPoint = new AscFormat.CDPt();
+				oDataPoint.setIdx(nMarker);
+				oSeries.addDPt(oDataPoint);
+			}
+
+			if(oPt.compiledMarker)
+			{
+				oDataPoint.setMarker(oPt.compiledMarker.createDuplicate());
+				if(!oDataPoint.marker.spPr)
+				{
+					oDataPoint.marker.setSpPr(new AscFormat.CSpPr());
+					oDataPoint.marker.spPr.setParent(oDataPoint.marker);
+				}
+				oDataPoint.marker.spPr.setLn(oStroke.Ln);
+				return true;
+			}
+		}
+
+		return false;
+	};
+
+	/**
+	 * Sets fill to title.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @param {ApiFill} oFill - The fill type used to fill the title.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.SetTitleFill = function(oFill)
+	{
+		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
+			return false;
+		
+		if (this.Chart.chart.title)
+		{
+			if (!this.Chart.chart.title.spPr)
+			{
+                this.Chart.chart.title.setSpPr(new AscFormat.CSpPr());
+                this.Chart.chart.title.spPr.setParent(this.Chart.chart.title);
+            }
+
+			this.Chart.chart.title.spPr.setFill(oFill.UniFill);
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
+	 * Sets outline to title.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @param {ApiStroke} oStroke - The stroke used to create the title outline.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.SetTitleOutLine = function(oStroke)
+	{
+		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
+			return false;
+			
+		if (this.Chart.chart.title)
+		{
+			if (!this.Chart.chart.title.spPr)
+			{
+				this.Chart.chart.title.setSpPr(new AscFormat.CSpPr());
+				this.Chart.chart.title.spPr.setParent(this.Chart.chart.title);
+			}
+
+			this.Chart.chart.title.spPr.setLn(oStroke.Ln);
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
+	 * Sets fill to legend.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @param {ApiFill} oFill - The fill type used to fill the legend.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.SetLegendFill = function(oFill)
+	{
+		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
+			return false;
+		
+		if (this.Chart.chart.legend)
+		{
+			if (!this.Chart.chart.legend.spPr)
+			{
+				this.Chart.chart.legend.setSpPr(new AscFormat.CSpPr());
+				this.Chart.chart.legend.spPr.setParent(this.Chart.chart.legend);
+			}
+
+			this.Chart.chart.legend.spPr.setFill(oFill.UniFill);
+			return true;
+		}
+
+		return false;
+	};
+
+	/**
+	 * Sets outline to legend.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @param {ApiStroke} oStroke - The stroke used to create the legend outline.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.SetLegendOutLine = function(oStroke)
+	{
+		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
+			return false;
+			
+		if (this.Chart.chart.legend)
+		{
+			if (!this.Chart.chart.legend.spPr)
+			{
+				this.Chart.chart.legend.setSpPr(new AscFormat.CSpPr());
+				this.Chart.chart.legend.spPr.setParent(this.Chart.chart.legend);
+			}
+
+			this.Chart.chart.legend.spPr.setLn(oStroke.Ln);
+			return true;
+		}
+
+		return false;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiFill
@@ -13791,8 +14391,22 @@
 	ApiChart.prototype["SetMinorHorizontalGridlines"]  =  ApiChart.prototype.SetMinorHorizontalGridlines;
 	ApiChart.prototype["SetHorAxisLablesFontSize"]     =  ApiChart.prototype.SetHorAxisLablesFontSize;
 	ApiChart.prototype["SetVertAxisLablesFontSize"]    =  ApiChart.prototype.SetVertAxisLablesFontSize;
-	ApiChart.prototype["GetNextChart"]                 = ApiChart.prototype.GetNextChart;
-    ApiChart.prototype["GetPrevChart"]                 = ApiChart.prototype.GetPrevChart;
+	ApiChart.prototype["GetNextChart"]                 =  ApiChart.prototype.GetNextChart;
+    ApiChart.prototype["GetPrevChart"]                 =  ApiChart.prototype.GetPrevChart;
+	ApiChart.prototype["ApplyChartStyle"]              =  ApiChart.prototype.ApplyChartStyle;
+	ApiChart.prototype["SetPlotAreaFill"]              =  ApiChart.prototype.SetPlotAreaFill;
+	ApiChart.prototype["SetPlotAreaOutLine"]           =  ApiChart.prototype.SetPlotAreaOutLine;
+	ApiChart.prototype["SetSeriesFill"]                =  ApiChart.prototype.SetSeriesFill;
+	ApiChart.prototype["SetSeriesOutLine"]             =  ApiChart.prototype.SetSeriesOutLine;
+	ApiChart.prototype["SetDataPointFill"]             =  ApiChart.prototype.SetDataPointFill;
+	ApiChart.prototype["SetDataPointOutLine"]          =  ApiChart.prototype.SetDataPointOutLine;
+	ApiChart.prototype["SetMarkerFill"]                =  ApiChart.prototype.SetMarkerFill;
+	ApiChart.prototype["SetMarkerOutLine"]             =  ApiChart.prototype.SetMarkerOutLine;
+	ApiChart.prototype["SetTitleFill"]                 =  ApiChart.prototype.SetTitleFill;
+	ApiChart.prototype["SetTitleOutLine"]              =  ApiChart.prototype.SetTitleOutLine;
+	ApiChart.prototype["SetLegendFill"]                =  ApiChart.prototype.SetLegendFill;
+	ApiChart.prototype["SetLegendOutLine"]             =  ApiChart.prototype.SetLegendOutLine;
+
 
 	ApiFill.prototype["GetClassType"]                = ApiFill.prototype.GetClassType;
 
