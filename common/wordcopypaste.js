@@ -3598,6 +3598,9 @@ PasteProcessor.prototype =
 		var tempPresentation = !PasteElementsId.g_bIsDocumentCopyPaste && editor && editor.WordControl ? editor.WordControl.m_oLogicDocument : null;
 		var insertToPresentationWithoutSlides = tempPresentation && tempPresentation.Slides && !tempPresentation.Slides.length;
 
+		var test = new MsoStylesParser(node);
+		test.init();
+
 		var base64FromExcel, base64FromWord, base64FromPresentation
 		if (PasteElementsId.copyPasteUseBinary) {
 			//get binary
@@ -10155,6 +10158,217 @@ SpecialPasteShowOptions.prototype = {
 		this.containTables = val;
 	}
 };
+
+function MsoStylesParser(node) {
+	this.node = node;
+	this.classes = null;
+
+	this._isInit = null;
+}
+MsoStylesParser.prototype.init = function () {
+	//TODO копия функции _findMsoHeadStyle, пока не трогаю новый функционал, потом порефакторить и избавиться от старых функций
+	var msoStyleParser;
+	var headTag = this.node && this.node.parentElement && this.node.parentElement.getElementsByTagName( "head" );
+	if (headTag && headTag[0]) {
+		for (var i = 0; i < headTag[0].children.length; ++i) {
+			if ("style" === headTag[0].children[i].nodeName.toLowerCase()) {
+				var headText = headTag[0].children[i].innerText;
+				if (!msoStyleParser) {
+					msoStyleParser = new MsoStyleParser(headText);
+				} else {
+					msoStyleParser.clean();
+					msoStyleParser.setStr(headText);
+				}
+
+				msoStyleParser.parse();
+			}
+		}
+	}
+
+	this._isInit = true;
+};
+MsoStylesParser.prototype.getMsoClassByName = function (name) {
+	if (!this._isInit) {
+		this.init();
+	}
+	return this.classes && this.classes[name];
+};
+
+function MsoStyleParser(str) {
+	this.str = str;
+
+	this.startReadStyle = null;
+	this.startAttrs = null;
+	this.startComment = null;
+	this.attrName = null;
+	this.attrVal = null;
+
+	this.msoClass= null;
+
+	this.res = null;
+}
+MsoStyleParser.prototype.clean = function () {
+	this.startReadStyle = null;
+	this.startAttrs = null;
+	this.startComment = null;
+	this.attrName = null;
+	this.attrVal = null;
+
+	this.msoClass= null;
+
+	this.res = null;
+};
+MsoStyleParser.prototype.setStr = function (str) {
+	this.str = str;
+};
+MsoStyleParser.prototype.parse = function () {
+	var _style = this.str;
+
+	if (!_style) {
+		return null;
+	}
+
+	for (var j = 0; j < _style.length; j++) {
+
+		if (_style[j] === "\n" || _style[j] === "\t") {
+			continue;
+		}
+
+		if (!this.startReadStyle) {
+			if (_style[j] === "<" && _style[j + 1] === "!" && _style[j + 2] === "-" && _style[j + 3] === "-") {
+				this.startReadStyle = true;
+				j += 3;
+			}
+			continue;
+		} else {
+			if (_style[j] === "-" && _style[j + 1] === "-" && _style[j + 2] === ">") {
+				this.startReadStyle = false;
+				break;
+			}
+		}
+
+		//skip comment
+		if (_style[j] === "/" && _style[j + 1] === "*") {
+			this.startComment = true;
+			j++;
+			continue;
+		} else if (this.startComment) {
+			if (_style[j] === "*" && _style[j + 1] === "/") {
+				j++;
+				this.startComment = false;
+			}
+			continue;
+		}
+
+		if (_style[j] === "{") {
+			this.startReadAttrs();
+		} else if (_style[j] === "}") {
+			this.endReadClass();
+		} else if (this.isStartReadAttrs()) {
+			if (_style[j] === ":") {
+				this.startReadAttrVal();
+			} else if (_style[j] === ";") {
+				this.endReadAttrVal();
+			} else if (this.isStartReadAttrVal()) {
+				this.addByAttrVal(_style[j])
+			} else {
+				this.addByAttrName(_style[j]);
+			}
+		} else {
+			this.addByClassName(_style[j]);
+		}
+	}
+};
+
+MsoStyleParser.prototype.startReadAttrs = function () {
+	this.startAttrs = true;
+	this.startName = null;
+};
+
+MsoStyleParser.prototype.endReadClass = function () {
+	if (!this.msoClass) {
+		this.msoClass = new MsoStyleClass();
+	}
+	if (!this.msoClass.attributes) {
+		this.msoClass.attributes = [];
+	}
+	if (this.attrName !== null) {
+		this.msoClass.attributes[this.attrName] = this.attrVal;
+	}
+	if (!this.res) {
+		this.res = [];
+	}
+	this.res.push(this.msoClass);
+
+	this.msoClass = null;
+	this.startAttrs = false;
+	this.attrName = null;
+	this.attrVal = null;
+};
+MsoStyleParser.prototype.startReadAttrVal = function () {
+	this.attrVal = "";
+};
+MsoStyleParser.prototype.isStartReadAttrs = function () {
+	return this.startAttrs;
+};
+MsoStyleParser.prototype.endReadAttrVal = function () {
+	if (!this.msoClass) {
+		this.msoClass = new MsoStyleClass();
+	}
+
+	if (!this.msoClass.attributes) {
+		this.msoClass.attributes = [];
+	}
+	this.msoClass.attributes[this.attrName] = this.attrVal;
+
+	this.attrName = null;
+	this.attrVal = null;
+};
+MsoStyleParser.prototype.isStartReadAttrVal = function () {
+	return this.attrVal !== null;
+};
+MsoStyleParser.prototype.addByAttrVal = function (sym) {
+	this.attrVal += sym;
+};
+MsoStyleParser.prototype.addByAttrName = function (sym) {
+	if (!this.attrName) {
+		this.attrName = "";
+	}
+	this.attrName += sym;
+};
+MsoStyleParser.prototype.addByClassName = function (sym) {
+	//TODO - классов может быть несколько с одинаковыми аттрибутами
+	//TODO имя класса разделить по пробелам - @page WordSection1(префикс + имя)
+	/*p.MsoListParagraph, li.MsoListParagraph, div.MsoListParagraph
+	{mso-style-priority:34;
+		mso-style-unhide:no;
+		mso-style-qformat:yes;
+		margin-top:0in;
+		margin-right:0in;
+		margin-bottom:8.0pt;
+		margin-left:.5in;
+		mso-add-space:auto;*/
+
+	if (!this.msoClass) {
+		this.msoClass = new MsoStyleClass();
+	}
+	if (!this.msoClass.name) {
+		this.msoClass.name = "";
+	}
+	if (this.msoClass.name === "" && sym === " ") {
+		return;
+	}
+	this.msoClass.name += sym;
+};
+
+
+
+
+function MsoStyleClass() {
+	this.name = null;
+	this.attributes = null;
+}
+
 
 function checkOnlyOneImage(node)
 {
