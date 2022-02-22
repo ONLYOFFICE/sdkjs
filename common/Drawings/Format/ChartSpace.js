@@ -12387,9 +12387,9 @@ var GLOBAL_PATH_COUNT = 0;
 		{
 			for (var nCurSeries = 0; nCurSeries < this.chart.plotArea.charts[nChart].series.length; nCurSeries++)
 			{
-				if (this.chart.plotArea.charts[nChart].series[nSeries].idx === nSeries)
+				if (this.chart.plotArea.charts[nChart].series[nCurSeries].idx === nSeries)
 				{
-					oSeries = this.chart.plotArea.charts[nChart].series[nSeries];
+					oSeries = this.chart.plotArea.charts[nChart].series[nCurSeries];
 					break;
 				}
 			}
@@ -12476,9 +12476,9 @@ var GLOBAL_PATH_COUNT = 0;
 		{
 			for (var nCurSeries = 0; nCurSeries < this.chart.plotArea.charts[nChart].series.length; nCurSeries++)
 			{
-				if (this.chart.plotArea.charts[nChart].series[nSeries].idx === nSeries)
+				if (this.chart.plotArea.charts[nChart].series[nCurSeries].idx === nSeries)
 				{
-					oSeries = this.chart.plotArea.charts[nChart].series[nSeries];
+					oSeries = this.chart.plotArea.charts[nChart].series[nCurSeries];
 					break;
 				}
 			}
