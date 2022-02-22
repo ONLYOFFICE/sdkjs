@@ -3279,7 +3279,7 @@
 		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
 			return false;
 
-		this.Chart.chart.plotArea.spPr.setFill(oFill.UniFill);
+		this.Chart.SetPlotAreaFill(oFill.UniFill);
 		return true;
 	};
 
@@ -3295,7 +3295,7 @@
 		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
 			return false;
 
-		this.Chart.chart.plotArea.spPr.setLn(oStroke.Ln);
+		this.Chart.SetPlotAreaOutLine(oStroke.Ln);
 		return true;
 	};
 
@@ -3313,46 +3313,7 @@
 		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
 			return false;
 
-		var oSeries, isOk;
-		var nSeriesCount = 0;
-		for (var nChart = 0; nChart < this.Chart.chart.plotArea.charts.length; nChart++)
-		{
-			for (var nCurSeries = 0; nCurSeries < this.Chart.chart.plotArea.charts[nChart].series.length; nCurSeries++)
-			{
-				nSeriesCount += 1;
-				if (!bAll && nSeriesCount - 1 !== nSeries)
-					continue;
-
-				oSeries = this.Chart.chart.plotArea.charts[nChart].series[nCurSeries];
-				
-				if (!oSeries.spPr)
-				{
-					oSeries.setSpPr(new AscFormat.CSpPr());
-					oSeries.spPr.setParent(oSeries);
-				}
-	
-				oSeries.spPr.setFill(oFill.UniFill);
-				if (Array.isArray(oSeries.dPt))
-				{
-					for (var i = 0; i < oSeries.dPt.length; ++i)
-					{
-						if (oSeries.dPt[i].spPr)
-						{
-							oSeries.dPt[i].spPr.setFill(oFill.UniFill.createDuplicate());
-						}
-					}
-				}
-
-				isOk = true;
-				if (isOk && !bAll)
-					return true;
-			}
-		}
-
-		if (isOk)
-			return true;
-		
-		return false;
+		return this.Chart.SetSeriesFill(oFill.UniFill, nSeries, bAll);
 	};
 	
 	/**
@@ -3369,46 +3330,7 @@
 		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
 			return false;
 
-		var oSeries, isOk;
-		var nSeriesCount = 0;
-		for (var nChart = 0; nChart < this.Chart.chart.plotArea.charts.length; nChart++)
-		{
-			for (var nCurSeries = 0; nCurSeries < this.Chart.chart.plotArea.charts[nChart].series.length; nCurSeries++)
-			{
-				nSeriesCount += 1;
-				if (!bAll && nSeriesCount - 1 !== nSeries)
-					continue;
-
-				oSeries = this.Chart.chart.plotArea.charts[nChart].series[nCurSeries];
-				
-				if (!oSeries.spPr)
-				{
-					oSeries.setSpPr(new AscFormat.CSpPr());
-					oSeries.spPr.setParent(oSeries);
-				}
-	
-				oSeries.spPr.setLn(oStroke.Ln);
-				if (Array.isArray(oSeries.dPt))
-				{
-					for (var i = 0; i < oSeries.dPt.length; ++i)
-					{
-						if (oSeries.dPt[i].spPr)
-						{
-							oSeries.dPt[i].spPr.setLn(oStroke.Ln.createDuplicate());
-						}
-					}
-				}
-
-				isOk = true;
-				if (isOk && !bAll)
-					return true;
-			}
-		}
-
-		if (isOk)
-			return true;
-		
-		return false;
+		return this.Chart.SetSeriesOutLine(oStroke.Ln, nSeries, bAll);
 	};
 
 	/**
@@ -3426,46 +3348,7 @@
 		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
 			return false;
 
-		var oDataPoint, oSeries, isOk;
-		var nSeriesCount = 0;
-		
-		for (var nChart = 0; nChart < this.Chart.chart.plotArea.charts.length; nChart++)
-		{
-			for (var nCurSeries = 0; nCurSeries < this.Chart.chart.plotArea.charts[nChart].series.length; nCurSeries++)
-			{
-				nSeriesCount += 1;
-				if (!bAllSeries && nSeriesCount - 1 !== nSeries)
-					continue;
-
-				oSeries = this.Chart.chart.plotArea.chart.series[nCurSeries];
-				var pts = oSeries.getNumPts();
-				if (nDataPoint >= pts.length)
-					return false;
-
-				oDataPoint = oSeries.dPt[nDataPoint];
-				if(!oDataPoint)
-				{
-					oDataPoint = new AscFormat.CDPt();
-					oDataPoint.setIdx(nDataPoint);
-					oSeries.addDPt(oDataPoint);
-					if(!oDataPoint.spPr)
-					{
-						oDataPoint.setSpPr(new AscFormat.CSpPr());
-						oDataPoint.spPr.setParent(oDataPoint);
-					}
-				}
-				oDataPoint.spPr.setFill(oFill.UniFill);
-
-				isOk = true;
-				if (isOk && !bAllSeries)
-					return true;
-			}
-		}
-
-		if (isOk)
-			return true;
-		
-		return false;
+		return this.Chart.SetDataPointFill(oFill.UniFill, nSeries, nDataPoint, bAllSeries);
 	};
 
 	/**
@@ -3483,46 +3366,7 @@
 		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
 			return false;
 
-		var oDataPoint, oSeries, isOk;
-		var nSeriesCount = 0;
-		
-		for (var nChart = 0; nChart < this.Chart.chart.plotArea.charts.length; nChart++)
-		{
-			for (var nCurSeries = 0; nCurSeries < this.Chart.chart.plotArea.charts[nChart].series.length; nCurSeries++)
-			{
-				nSeriesCount += 1;
-				if (!bAllSeries && nSeriesCount - 1 !== nSeries)
-					continue;
-
-				oSeries = this.Chart.chart.plotArea.chart.series[nCurSeries];
-				var pts = oSeries.getNumPts();
-				if (nDataPoint >= pts.length)
-					return false;
-
-				oDataPoint = oSeries.dPt[nDataPoint];
-				if(!oDataPoint)
-				{
-					oDataPoint = new AscFormat.CDPt();
-					oDataPoint.setIdx(nDataPoint);
-					oSeries.addDPt(oDataPoint);
-					if(!oDataPoint.spPr)
-					{
-						oDataPoint.setSpPr(new AscFormat.CSpPr());
-						oDataPoint.spPr.setParent(oDataPoint);
-					}
-				}
-				oDataPoint.spPr.setLn(oStroke.Ln);
-
-				isOk = true;
-				if (isOk && !bAllSeries)
-					return true;
-			}
-		}
-
-		if (isOk)
-			return true;
-		
-		return false;
+		return this.Chart.SetDataPointOutLine(oStroke.Ln, nSeries, nDataPoint, bAllSeries);
 	};
 
 	/**
@@ -3540,94 +3384,7 @@
 		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
 			return false;
 		
-		var oDataPoint, oSeries;
-		var nSeriesCount = 0;
-		for (var nChart = 0; nChart < this.Chart.chart.plotArea.charts.length; nChart++)
-		{
-			for (var nCurSeries = 0; nCurSeries < this.Chart.chart.plotArea.charts[nChart].series.length; nCurSeries++)
-			{
-				nSeriesCount += 1;
-				if (nSeriesCount - 1 === nSeries)
-				{
-					oSeries = this.Chart.chart.plotArea.chart.series[nSeries];
-					break;
-				}
-			}
-		}
-
-		if (!oSeries)
-			return false;
-
-		if (bAllMarkers)
-		{
-			if (oSeries.marker)
-			{
-				if(!oSeries.marker.spPr)
-				{
-					oSeries.marker.setSpPr(new AscFormat.CSpPr());
-					oSeries.marker.spPr.setParent(oSeries.marker);
-				}
-				oSeries.marker.spPr.setFill(oFill.UniFill);
-				if(Array.isArray(oSeries.dPt))
-				{
-					for(var i = 0; i < oSeries.dPt.length; ++i)
-					{
-						if(oSeries.dPt[i].marker && oSeries.dPt[i].marker.spPr)
-							oSeries.dPt[i].marker.spPr.setFill(oFill.UniFill.createDuplicate());
-					}
-				}
-				return true;
-			}
-		}
-		else
-		{
-			var pts = oSeries.getNumPts();
-			var oPt;
-			for (var nPt = 0; nPt < pts.length; nPt++)
-			{
-				if (pts[nPt].idx === nMarker)
-				{
-					oPt = pts[nPt]; 
-					break;
-				}
-			}
-
-			if (!oPt)
-				return false;
-
-			if(Array.isArray(oSeries.dPt))
-			{
-				for(var k = 0; k < oSeries.dPt.length; ++k)
-				{
-					if(oSeries.dPt[k].idx === nMarker)
-					{
-						oDataPoint = oSeries.dPt[k];
-						break;
-					}
-				}
-			}
-
-			if(!oDataPoint)
-			{
-				oDataPoint = new AscFormat.CDPt();
-				oDataPoint.setIdx(nMarker);
-				oSeries.addDPt(oDataPoint);
-			}
-
-			if(oPt.compiledMarker)
-			{
-				oDataPoint.setMarker(oPt.compiledMarker.createDuplicate());
-				if(!oDataPoint.marker.spPr)
-				{
-					oDataPoint.marker.setSpPr(new AscFormat.CSpPr());
-					oDataPoint.marker.spPr.setParent(oDataPoint.marker);
-				}
-				oDataPoint.marker.spPr.setFill(oFill.UniFill);
-				return true;
-			}
-		}
-
-		return false;
+		return this.Chart.SetMarkerFill(oFill.UniFill, nSeries, nMarker, bAllMarkers);
 	};
 
 	/**
@@ -3645,94 +3402,7 @@
 		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
 			return false;
 			
-		var oDataPoint, oSeries;
-		var nSeriesCount = 0;
-		for (var nChart = 0; nChart < this.Chart.chart.plotArea.charts.length; nChart++)
-		{
-			for (var nCurSeries = 0; nCurSeries < this.Chart.chart.plotArea.charts[nChart].series.length; nCurSeries++)
-			{
-				nSeriesCount += 1;
-				if (nSeriesCount - 1 === nSeries)
-				{
-					oSeries = this.Chart.chart.plotArea.chart.series[nSeries];
-					break;
-				}
-			}
-		}
-
-		if (!oSeries)
-			return false;
-
-		if (bAllMarkers)
-		{
-			if (oSeries.marker)
-			{
-				if(!oSeries.marker.spPr)
-				{
-					oSeries.marker.setSpPr(new AscFormat.CSpPr());
-					oSeries.marker.spPr.setParent(oSeries.marker);
-				}
-				oSeries.marker.spPr.setLn(oStroke.Ln);
-				if(Array.isArray(oSeries.dPt))
-				{
-					for(var i = 0; i < oSeries.dPt.length; ++i)
-					{
-						if(oSeries.dPt[i].marker && oSeries.dPt[i].marker.spPr)
-							oSeries.dPt[i].marker.spPr.setLn(oStroke.Ln.createDuplicate());
-					}
-				}
-				return true;
-			}
-		}
-		else
-		{
-			var pts = oSeries.getNumPts();
-			var oPt;
-			for (var nPt = 0; nPt < pts.length; nPt++)
-			{
-				if (pts[nPt].idx === nMarker)
-				{
-					oPt = pts[nPt]; 
-					break;
-				}
-			}
-
-			if (!oPt)
-				return false;
-
-			if(Array.isArray(oSeries.dPt))
-			{
-				for(var k = 0; k < oSeries.dPt.length; ++k)
-				{
-					if(oSeries.dPt[k].idx === nMarker)
-					{
-						oDataPoint = oSeries.dPt[k];
-						break;
-					}
-				}
-			}
-
-			if(!oDataPoint)
-			{
-				oDataPoint = new AscFormat.CDPt();
-				oDataPoint.setIdx(nMarker);
-				oSeries.addDPt(oDataPoint);
-			}
-
-			if(oPt.compiledMarker)
-			{
-				oDataPoint.setMarker(oPt.compiledMarker.createDuplicate());
-				if(!oDataPoint.marker.spPr)
-				{
-					oDataPoint.marker.setSpPr(new AscFormat.CSpPr());
-					oDataPoint.marker.spPr.setParent(oDataPoint.marker);
-				}
-				oDataPoint.marker.spPr.setLn(oStroke.Ln);
-				return true;
-			}
-		}
-
-		return false;
+		return this.Chart.SetMarkerOutLine(oStroke.Ln, nSeries, nMarker, bAllMarkers);
 	};
 
 	/**
@@ -3747,19 +3417,7 @@
 		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
 			return false;
 		
-		if (this.Chart.chart.title)
-		{
-			if (!this.Chart.chart.title.spPr)
-			{
-				this.Chart.chart.title.setSpPr(new AscFormat.CSpPr());
-				this.Chart.chart.title.spPr.setParent(this.Chart.chart.title);
-			}
-
-			this.Chart.chart.title.spPr.setFill(oFill.UniFill);
-			return true;
-		}
-
-		return false;
+		return this.Chart.SetTitleFill(oFill.UniFill);
 	};
 
 	/**
@@ -3774,21 +3432,9 @@
 		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
 			return false;
 			
-		if (this.Chart.chart.title)
-		{
-			if (!this.Chart.chart.title.spPr)
-			{
-				this.Chart.chart.title.setSpPr(new AscFormat.CSpPr());
-				this.Chart.chart.title.spPr.setParent(this.Chart.chart.title);
-			}
-
-			this.Chart.chart.title.spPr.setLn(oStroke.Ln);
-			return true;
-		}
-
-		return false;
+		return this.Chart.SetTitleOutLine(oStroke.Ln);
 	};
- 
+
 	/**
 	 * Sets fill to legend.
 	 * @memberof ApiChart
@@ -3801,19 +3447,7 @@
 		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
 			return false;
 		
-		if (this.Chart.chart.legend)
-		{
-			if (!this.Chart.chart.legend.spPr)
-			{
-				this.Chart.chart.legend.setSpPr(new AscFormat.CSpPr());
-				this.Chart.chart.legend.spPr.setParent(this.Chart.chart.legend);
-			}
-
-			this.Chart.chart.legend.spPr.setFill(oFill.UniFill);
-			return true;
-		}
-
-		return false;
+		return this.Chart.SetLegendFill(oFill.UniFill);
 	};
 
 	/**
@@ -3828,19 +3462,7 @@
 		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
 			return false;
 			
-		if (this.Chart.chart.legend)
-		{
-			if (!this.Chart.chart.legend.spPr)
-			{
-				this.Chart.chart.legend.setSpPr(new AscFormat.CSpPr());
-				this.Chart.chart.legend.spPr.setParent(this.Chart.chart.legend);
-			}
-
-			this.Chart.chart.legend.spPr.setLn(oStroke.Ln);
-			return true;
-		}
-
-		return false;
+		return this.Chart.SetLegendOutLine(oStroke.Ln);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------

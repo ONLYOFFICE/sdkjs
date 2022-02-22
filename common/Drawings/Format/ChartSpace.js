@@ -12200,6 +12200,428 @@ var GLOBAL_PATH_COUNT = 0;
         return AscCommon.translateManager.getValue("Chart");
     };
 
+    CChartSpace.prototype.SetPlotAreaFill = function(oFill)
+	{
+		if (!this.chart.plotArea.spPr)
+		{
+			this.chart.plotArea.setSpPr(new AscFormat.CSpPr());
+			this.chart.plotArea.spPr.setParent(this.chart.plotArea);
+		}
+
+		this.chart.plotArea.spPr.setFill(oFill);
+	};
+    CChartSpace.prototype.SetPlotAreaOutLine = function(oLn)
+	{
+		if (!this.chart.plotArea.spPr)
+		{
+			this.chart.plotArea.setSpPr(new AscFormat.CSpPr());
+			this.chart.plotArea.spPr.setParent(this.chart.plotArea);
+		}
+
+		this.chart.plotArea.spPr.setLn(oLn);
+	};
+    CChartSpace.prototype.SetSeriesFill = function(oFill, nSeries, bAll)
+	{
+		var oSeries, isOk;
+		for (var nChart = 0; nChart < this.chart.plotArea.charts.length; nChart++)
+		{
+			for (var nCurSeries = 0; nCurSeries < this.chart.plotArea.charts[nChart].series.length; nCurSeries++)
+			{
+				oSeries = this.chart.plotArea.charts[nChart].series[nCurSeries];
+				if (!bAll && oSeries.idx !== nSeries)
+					continue;
+
+				if (!oSeries.spPr)
+				{
+					oSeries.setSpPr(new AscFormat.CSpPr());
+					oSeries.spPr.setParent(oSeries);
+				}
+	
+				oSeries.spPr.setFill(oFill);
+				if (Array.isArray(oSeries.dPt))
+				{
+					for (var i = 0; i < oSeries.dPt.length; ++i)
+					{
+						if (oSeries.dPt[i].spPr)
+						{
+							oSeries.dPt[i].spPr.setFill(oFill.createDuplicate());
+						}
+					}
+				}
+
+				isOk = true;
+				if (isOk && !bAll)
+					return true;
+			}
+		}
+
+		if (isOk)
+			return true;
+		
+		return false;
+	};
+    CChartSpace.prototype.SetSeriesOutLine = function(oLn, nSeries, bAll)
+	{
+		var oSeries, isOk;
+		for (var nChart = 0; nChart < this.chart.plotArea.charts.length; nChart++)
+		{
+			for (var nCurSeries = 0; nCurSeries < this.chart.plotArea.charts[nChart].series.length; nCurSeries++)
+			{
+				oSeries = this.chart.plotArea.charts[nChart].series[nCurSeries];
+				if (!bAll && oSeries.idx !== nSeries)
+					continue;
+				
+				if (!oSeries.spPr)
+				{
+					oSeries.setSpPr(new AscFormat.CSpPr());
+					oSeries.spPr.setParent(oSeries);
+				}
+	
+				oSeries.spPr.setLn(oLn);
+				if (Array.isArray(oSeries.dPt))
+				{
+					for (var i = 0; i < oSeries.dPt.length; ++i)
+					{
+						if (oSeries.dPt[i].spPr)
+						{
+							oSeries.dPt[i].spPr.setLn(oLn.createDuplicate());
+						}
+					}
+				}
+
+				isOk = true;
+				if (isOk && !bAll)
+					return true;
+			}
+		}
+
+		if (isOk)
+			return true;
+		
+		return false;
+	};
+    CChartSpace.prototype.SetDataPointFill = function(oFill, nSeries, nDataPoint, bAllSeries)
+	{
+		var oDataPoint, oSeries, isOk;
+		for (var nChart = 0; nChart < this.chart.plotArea.charts.length; nChart++)
+		{
+			for (var nCurSeries = 0; nCurSeries < this.chart.plotArea.charts[nChart].series.length; nCurSeries++)
+			{
+				oSeries = this.chart.plotArea.charts[nChart].series[nCurSeries];
+				if (!bAllSeries && oSeries.idx !== nSeries)
+					continue;
+
+				var pts = oSeries.getNumPts();
+				if (nDataPoint >= pts.length)
+					return false;
+
+				oDataPoint = oSeries.dPt[nDataPoint];
+				if(!oDataPoint)
+				{
+					oDataPoint = new AscFormat.CDPt();
+					oDataPoint.setIdx(nDataPoint);
+					oSeries.addDPt(oDataPoint);
+					if(!oDataPoint.spPr)
+					{
+						oDataPoint.setSpPr(new AscFormat.CSpPr());
+						oDataPoint.spPr.setParent(oDataPoint);
+					}
+				}
+				oDataPoint.spPr.setFill(oFill);
+
+				isOk = true;
+				if (isOk && !bAllSeries)
+					return true;
+			}
+		}
+
+		if (isOk)
+			return true;
+		
+		return false;
+	};
+    CChartSpace.prototype.SetDataPointOutLine = function(oLn, nSeries, nDataPoint, bAllSeries)
+	{
+		var oDataPoint, oSeries, isOk;
+		for (var nChart = 0; nChart < this.chart.plotArea.charts.length; nChart++)
+		{
+			for (var nCurSeries = 0; nCurSeries < this.chart.plotArea.charts[nChart].series.length; nCurSeries++)
+			{
+				oSeries = this.chart.plotArea.charts[nChart].series[nCurSeries];
+				if (!bAllSeries && oSeries.idx !== nSeries)
+					continue;
+
+				var pts = oSeries.getNumPts();
+				if (nDataPoint >= pts.length)
+					return false;
+
+				oDataPoint = oSeries.dPt[nDataPoint];
+				if(!oDataPoint)
+				{
+					oDataPoint = new AscFormat.CDPt();
+					oDataPoint.setIdx(nDataPoint);
+					oSeries.addDPt(oDataPoint);
+					if(!oDataPoint.spPr)
+					{
+						oDataPoint.setSpPr(new AscFormat.CSpPr());
+						oDataPoint.spPr.setParent(oDataPoint);
+					}
+				}
+				oDataPoint.spPr.setLn(oLn);
+
+				isOk = true;
+				if (isOk && !bAllSeries)
+					return true;
+			}
+		}
+
+		if (isOk)
+			return true;
+		
+		return false;
+	};
+    CChartSpace.prototype.SetMarkerFill = function(oFill, nSeries, nMarker, bAllMarkers)
+	{
+		var oDataPoint, oSeries;
+		for (var nChart = 0; nChart < this.chart.plotArea.charts.length; nChart++)
+		{
+			for (var nCurSeries = 0; nCurSeries < this.chart.plotArea.charts[nChart].series.length; nCurSeries++)
+			{
+				if (this.chart.plotArea.chart.series[nSeries].idx === nSeries)
+				{
+					oSeries = this.chart.plotArea.chart.series[nSeries];
+					break;
+				}
+			}
+		}
+
+		if (!oSeries)
+			return false;
+
+		if (bAllMarkers)
+		{
+			if (oSeries.marker)
+			{
+				if(!oSeries.marker.spPr)
+				{
+					oSeries.marker.setSpPr(new AscFormat.CSpPr());
+					oSeries.marker.spPr.setParent(oSeries.marker);
+				}
+				oSeries.marker.spPr.setFill(oFill);
+				if(Array.isArray(oSeries.dPt))
+				{
+					for(var i = 0; i < oSeries.dPt.length; ++i)
+					{
+						if(oSeries.dPt[i].marker && oSeries.dPt[i].marker.spPr)
+							oSeries.dPt[i].marker.spPr.setFill(oFill.createDuplicate());
+					}
+				}
+				return true;
+			}
+		}
+		else
+		{
+			var pts = oSeries.getNumPts();
+			var oPt;
+			for (var nPt = 0; nPt < pts.length; nPt++)
+			{
+				if (pts[nPt].idx === nMarker)
+				{
+					oPt = pts[nPt]; 
+					break;
+				}
+			}
+
+			if (!oPt)
+				return false;
+
+			if(Array.isArray(oSeries.dPt))
+			{
+				for(var k = 0; k < oSeries.dPt.length; ++k)
+				{
+					if(oSeries.dPt[k].idx === nMarker)
+					{
+						oDataPoint = oSeries.dPt[k];
+						break;
+					}
+				}
+			}
+
+			if(!oDataPoint)
+			{
+				oDataPoint = new AscFormat.CDPt();
+				oDataPoint.setIdx(nMarker);
+				oSeries.addDPt(oDataPoint);
+			}
+
+			if(oPt.compiledMarker)
+			{
+				oDataPoint.setMarker(oPt.compiledMarker.createDuplicate());
+				if(!oDataPoint.marker.spPr)
+				{
+					oDataPoint.marker.setSpPr(new AscFormat.CSpPr());
+					oDataPoint.marker.spPr.setParent(oDataPoint.marker);
+				}
+				oDataPoint.marker.spPr.setFill(oFill);
+				return true;
+			}
+		}
+
+		return false;
+	};
+    CChartSpace.prototype.SetMarkerOutLine = function(oLn, nSeries, nMarker, bAllMarkers)
+	{
+		var oDataPoint, oSeries;
+		for (var nChart = 0; nChart < this.chart.plotArea.charts.length; nChart++)
+		{
+			for (var nCurSeries = 0; nCurSeries < this.chart.plotArea.charts[nChart].series.length; nCurSeries++)
+			{
+				if (this.chart.plotArea.chart.series[nSeries].idx === nSeries)
+				{
+					oSeries = this.chart.plotArea.chart.series[nSeries];
+					break;
+				}
+			}
+		}
+
+		if (!oSeries)
+			return false;
+
+		if (bAllMarkers)
+		{
+			if (oSeries.marker)
+			{
+				if(!oSeries.marker.spPr)
+				{
+					oSeries.marker.setSpPr(new AscFormat.CSpPr());
+					oSeries.marker.spPr.setParent(oSeries.marker);
+				}
+				oSeries.marker.spPr.setLn(oLn);
+				if(Array.isArray(oSeries.dPt))
+				{
+					for(var i = 0; i < oSeries.dPt.length; ++i)
+					{
+						if(oSeries.dPt[i].marker && oSeries.dPt[i].marker.spPr)
+							oSeries.dPt[i].marker.spPr.setLn(oLn.createDuplicate());
+					}
+				}
+				return true;
+			}
+		}
+		else
+		{
+			var pts = oSeries.getNumPts();
+			var oPt;
+			for (var nPt = 0; nPt < pts.length; nPt++)
+			{
+				if (pts[nPt].idx === nMarker)
+				{
+					oPt = pts[nPt]; 
+					break;
+				}
+			}
+
+			if (!oPt)
+				return false;
+
+			if(Array.isArray(oSeries.dPt))
+			{
+				for(var k = 0; k < oSeries.dPt.length; ++k)
+				{
+					if(oSeries.dPt[k].idx === nMarker)
+					{
+						oDataPoint = oSeries.dPt[k];
+						break;
+					}
+				}
+			}
+
+			if(!oDataPoint)
+			{
+				oDataPoint = new AscFormat.CDPt();
+				oDataPoint.setIdx(nMarker);
+				oSeries.addDPt(oDataPoint);
+			}
+
+			if(oPt.compiledMarker)
+			{
+				oDataPoint.setMarker(oPt.compiledMarker.createDuplicate());
+				if(!oDataPoint.marker.spPr)
+				{
+					oDataPoint.marker.setSpPr(new AscFormat.CSpPr());
+					oDataPoint.marker.spPr.setParent(oDataPoint.marker);
+				}
+				oDataPoint.marker.spPr.setLn(oLn);
+				return true;
+			}
+		}
+
+		return false;
+	};
+    CChartSpace.prototype.SetTitleFill = function(oFill)
+	{
+		if (this.chart.title)
+		{
+			if (!this.chart.title.spPr)
+			{
+                this.chart.title.setSpPr(new AscFormat.CSpPr());
+                this.chart.title.spPr.setParent(this.chart.title);
+            }
+
+			this.chart.title.spPr.setFill(oFill);
+			return true;
+		}
+
+		return false;
+	};
+    CChartSpace.prototype.SetTitleOutLine = function(oLn)
+	{
+		if (this.chart.title)
+		{
+			if (!this.chart.title.spPr)
+			{
+				this.chart.title.setSpPr(new AscFormat.CSpPr());
+				this.chart.title.spPr.setParent(this.chart.title);
+			}
+
+			this.chart.title.spPr.setLn(oLn);
+			return true;
+		}
+
+		return false;
+	};
+    CChartSpace.prototype.SetLegendFill = function(oFill)
+	{
+		if (this.chart.legend)
+		{
+			if (!this.chart.legend.spPr)
+			{
+				this.chart.legend.setSpPr(new AscFormat.CSpPr());
+				this.chart.legend.spPr.setParent(this.chart.legend);
+			}
+
+			this.chart.legend.spPr.setFill(oFill);
+			return true;
+		}
+
+		return false;
+	};
+    CChartSpace.prototype.SetLegendOutLine = function(oLn)
+	{
+		if (this.chart.legend)
+		{
+			if (!this.chart.legend.spPr)
+			{
+				this.chart.legend.setSpPr(new AscFormat.CSpPr());
+				this.chart.legend.spPr.setParent(this.chart.legend);
+			}
+
+			this.chart.legend.spPr.setLn(oLn);
+			return true;
+		}
+
+		return false;
+	};
     function CAdditionalStyleData() {
         this.dLbls = null;
         this.catAx = null;
