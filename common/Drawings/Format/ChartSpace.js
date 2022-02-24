@@ -12222,38 +12222,36 @@ var GLOBAL_PATH_COUNT = 0;
 	};
     CChartSpace.prototype.SetSeriesFill = function(oFill, nSeries, bAll)
 	{
+        var allSeries = this.getAllSeries();
 		var oSeries, isOk;
-		for (var nChart = 0; nChart < this.chart.plotArea.charts.length; nChart++)
-		{
-			for (var nCurSeries = 0; nCurSeries < this.chart.plotArea.charts[nChart].series.length; nCurSeries++)
-			{
-				oSeries = this.chart.plotArea.charts[nChart].series[nCurSeries];
-				if (!bAll && oSeries.idx !== nSeries)
-					continue;
+        for (var nCurSeries = 0; nCurSeries < allSeries.length; nCurSeries++)
+        {
+            oSeries = allSeries[nCurSeries];
+            if (!bAll && oSeries.idx !== nSeries)
+                continue;
 
-				if (!oSeries.spPr)
-				{
-					oSeries.setSpPr(new AscFormat.CSpPr());
-					oSeries.spPr.setParent(oSeries);
-				}
-	
-				oSeries.spPr.setFill(oFill);
-				if (Array.isArray(oSeries.dPt))
-				{
-					for (var i = 0; i < oSeries.dPt.length; ++i)
-					{
-						if (oSeries.dPt[i].spPr)
-						{
-							oSeries.dPt[i].spPr.setFill(oFill.createDuplicate());
-						}
-					}
-				}
+            if (!oSeries.spPr)
+            {
+                oSeries.setSpPr(new AscFormat.CSpPr());
+                oSeries.spPr.setParent(oSeries);
+            }
 
-				isOk = true;
-				if (isOk && !bAll)
-					return true;
-			}
-		}
+            oSeries.spPr.setFill(oFill);
+            if (Array.isArray(oSeries.dPt))
+            {
+                for (var i = 0; i < oSeries.dPt.length; ++i)
+                {
+                    if (oSeries.dPt[i].spPr)
+                    {
+                        oSeries.dPt[i].spPr.setFill(oFill.createDuplicate());
+                    }
+                }
+            }
+
+            isOk = true;
+            if (isOk && !bAll)
+                return true;
+        }
 
 		if (isOk)
 			return true;
@@ -12262,38 +12260,37 @@ var GLOBAL_PATH_COUNT = 0;
 	};
     CChartSpace.prototype.SetSeriesOutLine = function(oLn, nSeries, bAll)
 	{
+		var allSeries = this.getAllSeries();
 		var oSeries, isOk;
-		for (var nChart = 0; nChart < this.chart.plotArea.charts.length; nChart++)
-		{
-			for (var nCurSeries = 0; nCurSeries < this.chart.plotArea.charts[nChart].series.length; nCurSeries++)
-			{
-				oSeries = this.chart.plotArea.charts[nChart].series[nCurSeries];
-				if (!bAll && oSeries.idx !== nSeries)
-					continue;
-				
-				if (!oSeries.spPr)
-				{
-					oSeries.setSpPr(new AscFormat.CSpPr());
-					oSeries.spPr.setParent(oSeries);
-				}
-	
-				oSeries.spPr.setLn(oLn);
-				if (Array.isArray(oSeries.dPt))
-				{
-					for (var i = 0; i < oSeries.dPt.length; ++i)
-					{
-						if (oSeries.dPt[i].spPr)
-						{
-							oSeries.dPt[i].spPr.setLn(oLn.createDuplicate());
-						}
-					}
-				}
+        for (var nCurSeries = 0; nCurSeries < allSeries.length; nCurSeries++)
+        {
+            oSeries = allSeries[nCurSeries];
+            if (!bAll && oSeries.idx !== nSeries)
+                continue;
+            
+            if (!oSeries.spPr)
+            {
+                oSeries.setSpPr(new AscFormat.CSpPr());
+                oSeries.spPr.setParent(oSeries);
+            }
 
-				isOk = true;
-				if (isOk && !bAll)
-					return true;
-			}
-		}
+            oSeries.spPr.setLn(oLn);
+            if (Array.isArray(oSeries.dPt))
+            {
+                for (var i = 0; i < oSeries.dPt.length; ++i)
+                {
+                    if (oSeries.dPt[i].spPr)
+                    {
+                        oSeries.dPt[i].spPr.setLn(oLn.createDuplicate());
+                    }
+                }
+            }
+
+            isOk = true;
+            if (isOk && !bAll)
+                return true;
+        }
+		
 
 		if (isOk)
 			return true;
@@ -12302,37 +12299,35 @@ var GLOBAL_PATH_COUNT = 0;
 	};
     CChartSpace.prototype.SetDataPointFill = function(oFill, nSeries, nDataPoint, bAllSeries)
 	{
+        var allSeries = this.getAllSeries();
 		var oDataPoint, oSeries, isOk;
-		for (var nChart = 0; nChart < this.chart.plotArea.charts.length; nChart++)
-		{
-			for (var nCurSeries = 0; nCurSeries < this.chart.plotArea.charts[nChart].series.length; nCurSeries++)
-			{
-				oSeries = this.chart.plotArea.charts[nChart].series[nCurSeries];
-				if (!bAllSeries && oSeries.idx !== nSeries)
-					continue;
+		for (var nCurSeries = 0; nCurSeries < allSeries.length; nCurSeries++)
+        {
+            oSeries = allSeries[nCurSeries];
+            if (!bAllSeries && oSeries.idx !== nSeries)
+                continue;
 
-				var pts = oSeries.getNumPts();
-				if (nDataPoint >= pts.length)
-					return false;
+            var pts = oSeries.getNumPts();
+            if (nDataPoint >= pts.length)
+                return false;
 
-				oDataPoint = oSeries.dPt[nDataPoint];
-				if(!oDataPoint)
-				{
-					oDataPoint = new AscFormat.CDPt();
-					oDataPoint.setIdx(nDataPoint);
-					oSeries.addDPt(oDataPoint);
-					if(!oDataPoint.spPr)
-					{
-						oDataPoint.setSpPr(new AscFormat.CSpPr());
-						oDataPoint.spPr.setParent(oDataPoint);
-					}
-				}
-				oDataPoint.spPr.setFill(oFill);
+            oDataPoint = oSeries.dPt[nDataPoint];
+            if(!oDataPoint)
+            {
+                oDataPoint = new AscFormat.CDPt();
+                oDataPoint.setIdx(nDataPoint);
+                oSeries.addDPt(oDataPoint);
+                if(!oDataPoint.spPr)
+                {
+                    oDataPoint.setSpPr(new AscFormat.CSpPr());
+                    oDataPoint.spPr.setParent(oDataPoint);
+                }
+            }
+            oDataPoint.spPr.setFill(oFill);
 
-				isOk = true;
-				if (isOk && !bAllSeries)
-					return true;
-			}
+            isOk = true;
+            if (isOk && !bAllSeries)
+                return true;
 		}
 
 		if (isOk)
@@ -12342,37 +12337,35 @@ var GLOBAL_PATH_COUNT = 0;
 	};
     CChartSpace.prototype.SetDataPointOutLine = function(oLn, nSeries, nDataPoint, bAllSeries)
 	{
+        var allSeries = this.getAllSeries();
 		var oDataPoint, oSeries, isOk;
-		for (var nChart = 0; nChart < this.chart.plotArea.charts.length; nChart++)
-		{
-			for (var nCurSeries = 0; nCurSeries < this.chart.plotArea.charts[nChart].series.length; nCurSeries++)
-			{
-				oSeries = this.chart.plotArea.charts[nChart].series[nCurSeries];
-				if (!bAllSeries && oSeries.idx !== nSeries)
-					continue;
+		for (var nCurSeries = 0; nCurSeries < allSeries.length; nCurSeries++)
+        {
+            oSeries = allSeries[nCurSeries];
+            if (!bAllSeries && oSeries.idx !== nSeries)
+                continue;
 
-				var pts = oSeries.getNumPts();
-				if (nDataPoint >= pts.length)
-					return false;
+            var pts = oSeries.getNumPts();
+            if (nDataPoint >= pts.length)
+                return false;
 
-				oDataPoint = oSeries.dPt[nDataPoint];
-				if(!oDataPoint)
-				{
-					oDataPoint = new AscFormat.CDPt();
-					oDataPoint.setIdx(nDataPoint);
-					oSeries.addDPt(oDataPoint);
-					if(!oDataPoint.spPr)
-					{
-						oDataPoint.setSpPr(new AscFormat.CSpPr());
-						oDataPoint.spPr.setParent(oDataPoint);
-					}
-				}
-				oDataPoint.spPr.setLn(oLn);
+            oDataPoint = oSeries.dPt[nDataPoint];
+            if(!oDataPoint)
+            {
+                oDataPoint = new AscFormat.CDPt();
+                oDataPoint.setIdx(nDataPoint);
+                oSeries.addDPt(oDataPoint);
+                if(!oDataPoint.spPr)
+                {
+                    oDataPoint.setSpPr(new AscFormat.CSpPr());
+                    oDataPoint.spPr.setParent(oDataPoint);
+                }
+            }
+            oDataPoint.spPr.setLn(oLn);
 
-				isOk = true;
-				if (isOk && !bAllSeries)
-					return true;
-			}
+            isOk = true;
+            if (isOk && !bAllSeries)
+                return true;
 		}
 
 		if (isOk)
@@ -12382,17 +12375,15 @@ var GLOBAL_PATH_COUNT = 0;
 	};
     CChartSpace.prototype.SetMarkerFill = function(oFill, nSeries, nMarker, bAllMarkers)
 	{
+        var allSeries = this.getAllSeries();
 		var oDataPoint, oSeries;
-		for (var nChart = 0; nChart < this.chart.plotArea.charts.length; nChart++)
-		{
-			for (var nCurSeries = 0; nCurSeries < this.chart.plotArea.charts[nChart].series.length; nCurSeries++)
-			{
-				if (this.chart.plotArea.charts[nChart].series[nCurSeries].idx === nSeries)
-				{
-					oSeries = this.chart.plotArea.charts[nChart].series[nCurSeries];
-					break;
-				}
-			}
+		for (var nCurSeries = 0; nCurSeries < allSeries.length; nCurSeries++)
+        {
+            if (allSeries[nCurSeries].idx === nSeries)
+            {
+                oSeries = allSeries[nCurSeries];
+                break;
+            }
 		}
 
 		if (!oSeries)
@@ -12471,17 +12462,15 @@ var GLOBAL_PATH_COUNT = 0;
 	};
     CChartSpace.prototype.SetMarkerOutLine = function(oLn, nSeries, nMarker, bAllMarkers)
 	{
+        var allSeries = this.getAllSeries();
 		var oDataPoint, oSeries;
-		for (var nChart = 0; nChart < this.chart.plotArea.charts.length; nChart++)
-		{
-			for (var nCurSeries = 0; nCurSeries < this.chart.plotArea.charts[nChart].series.length; nCurSeries++)
-			{
-				if (this.chart.plotArea.charts[nChart].series[nCurSeries].idx === nSeries)
-				{
-					oSeries = this.chart.plotArea.charts[nChart].series[nCurSeries];
-					break;
-				}
-			}
+		for (var nCurSeries = 0; nCurSeries < allSeries.length; nCurSeries++)
+        {
+            if (allSeries[nCurSeries].idx === nSeries)
+            {
+                oSeries = allSeries[nCurSeries];
+                break;
+            }
 		}
 
 		if (!oSeries)
