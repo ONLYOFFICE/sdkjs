@@ -3436,12 +3436,16 @@
 		//TODO во время печати едиственный флаг usePrintScale выставляется в true, использую здесь именно его
 		//в дальнейшем необходимо его изменить/переименовать
 		var isPrint = this.usePrintScale;
+		var isFiltering = false;
+		if (!isPrint && !isColHeader) {
+			isFiltering = this.model.autoFilters.containInFilter(index, true, true)
+		}
 		var activeNamedSheetView = !isPrint && this.model.getActiveNamedSheetViewId() !== null;
         var ctx = drawingCtx || this.drawingCtx;
         var st = this.settings.header.style[style];
 		var backgroundColor = isPrint ? this.settings.header.printBackground : (activeNamedSheetView ? st.backgroundDark : st.background);
 		var borderColor = isPrint ? this.settings.header.printBorder : st.border;
-		var color = isPrint ? this.settings.header.printColor : (activeNamedSheetView ? st.colorDark : st.color);
+		var color = isPrint ? this.settings.header.printColor : (isFiltering ? (activeNamedSheetView ? st.backgroundDark : st.background) : (activeNamedSheetView ? st.colorDark : st.color));
         var x2 = x + w;
         var y2 = y + h;
         var x2WithoutBorder = x2 - gridlineSize;

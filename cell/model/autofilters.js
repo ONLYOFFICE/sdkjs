@@ -5998,21 +5998,33 @@
 				return [filterArr, otherArr];
 			},
 
-			containInFilter: function(row, checkApplyFilter) {
+			containInFilter: function(row, checkApplyFilter, checkNamedSheetView) {
 				var ws = this.worksheet;
 				var tables = ws.TableParts;
 				var autoFilter = ws.AutoFilter;
+				var t = this;
+
+				var activeNamedSheetView = checkNamedSheetView && ws.getActiveNamedSheetViewId() !== null
+				var _isApplyFilter = function (_filter) {
+					if (activeNamedSheetView) {
+						var nsvFilter = ws.getNvsFilterByTableName(_filter.DisplayName);
+						return nsvFilter && nsvFilter.isApplyAutoFilter();
+					} else {
+						return _filter.isApplyAutoFilter();
+					}
+				};
+
 				if (tables) {
 					for (var i = 0; i < tables.length; i++) {
 						var tableFilter = tables[i].AutoFilter;
-						if (tableFilter && (!checkApplyFilter || (checkApplyFilter && tableFilter.isApplyAutoFilter()))) {
+						if (tableFilter && (!checkApplyFilter || (checkApplyFilter && _isApplyFilter(tables[i])))) {
 							if (row >= tables[i].Ref.r1 && row <= tables[i].Ref.r2) {
 								return true;
 							}
 						}
 					}
 				}
-				if (autoFilter && (!checkApplyFilter || (checkApplyFilter && autoFilter.isApplyAutoFilter()))) {
+				if (autoFilter && (!checkApplyFilter || (checkApplyFilter && _isApplyFilter(autoFilter)))) {
 					if (row >= autoFilter.Ref.r1 && row <= autoFilter.Ref.r2) {
 						return true;
 					}
