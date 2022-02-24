@@ -5240,7 +5240,7 @@
 	};
 
 	/**
-	 * Gets all existing forms in document.
+	 * Returns all existing forms in the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {(ApiTextForm | ApiPictureForm | ApiComboBoxForm | ApiCheckBoxForm)[]}
@@ -5279,9 +5279,9 @@
 	};
 
 	/**
-	 * Clear all fields.
+	 * Clears all fields in the document.
 	 * @memberof ApiDocument
-	 * @param {boolean} [bOnlyForms=false] - Determines whether only forms or all fields will be cleared.
+	 * @param {boolean} [bOnlyForms=false] - Defines if only forms or all fields will be cleared.
 	 * @typeofeditors ["CDE"]
 	 */
 	ApiDocument.prototype.ClearAllFields = function(bOnlyForms) 
@@ -5291,12 +5291,12 @@
 	};
 
 	/**
-	 * Sets highlight to forms.
+	 * Sets the highlight to the forms in the document.
 	 * @memberof ApiDocument
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} [bNone=false] - Determines that highlight will not be set.
+	 * @param {boolean} [bNone=false] - Defines that highlight will not be set.
 	 * @typeofeditors ["CDE"]
 	 */
 	ApiDocument.prototype.SetFormsHighlight = function(r, g, b, bNone) 
@@ -12557,7 +12557,7 @@
 	};
 
 	/**
-	 * Gets the placeholder text.
+	 * Returns the placeholder text from the current inline content control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
@@ -12568,10 +12568,10 @@
 	};
 
 	/**
-	 * Sets the placeholder text.
+	 * Sets the placeholder text to the current inline content control.
 	 * *Can't be set to checkbox or radio button*
 	 * @memberof ApiInlineLvlSdt
-	 * @param {string} sText
+	 * @param {string} sText - The text that will be set to the current inline content control.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -12586,7 +12586,7 @@
 		return true;
 	};
 	/**
-	 * Check if the content control is a form.
+	 * Checks if the content control is a form.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -12596,7 +12596,7 @@
 		return this.Sdt.IsForm();
 	};
 	/**
-	 * Gets a form if it is one.
+	 * Returns a form object if the current content control is a form.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @returns {?ApiForm}
@@ -13098,7 +13098,7 @@
 	};
 
 	/**
-	 * Gets the placeholder text.
+	 * Returns the placeholder text from the current content control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
@@ -13109,9 +13109,9 @@
 	};
 
 	/**
-	 * Sets the placeholder text.
+	 * Sets the placeholder text to the current content control.
 	 * @memberof ApiBlockLvlSdt
-	 * @param {string} sText
+	 * @param {string} sText - The text that will be set to the current content control.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -13141,7 +13141,7 @@
 		return "form";
 	};
 	/**
-	 * Returns a type of current form.
+	 * Returns a type of the current form.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @returns {FormType}
@@ -13162,7 +13162,7 @@
 			return "pictureForm";
 	};	
 	/**
-	 * Returns the form key
+	 * Returns the current form key.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
@@ -13175,10 +13175,10 @@
 		return sKey;
 	};
 	/**
-	 * Sets the form key
+	 * Sets a key to the current form.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sKey
+	 * @param {string} sKey - Form key.
 	 * @returns {boolean}
 	 */
 	ApiFormBase.prototype.SetFormKey = function(sKey)
@@ -13195,7 +13195,7 @@
 		return true;
 	};
 	/**
-	 * Returns the tip text.
+	 * Returns the tip text of the current form.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
@@ -13210,10 +13210,10 @@
 		return sTip;
 	};
 	/**
-	 * Sets the tip text.
+	 * Sets the tip text to the current form.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText
+	 * @param {string} sText - Tip text.
 	 * @returns {boolean}
 	 */
 	ApiFormBase.prototype.SetTipText = function(sText)
@@ -13228,7 +13228,7 @@
 		return true;
 	};
 	/**
-	 * Checking whether the form is required.
+	 * Checks if the current form is required.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -13238,10 +13238,10 @@
 		return this.Sdt.IsFormRequired();
 	};
 	/**
-	 * Determines whether the form should be required.
+	 * Specifies if the current form should be required.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
-	 * @param {boolean} bRequired
+	 * @param {boolean} bRequired - Defines if the current form is required (true) or not (false).
 	 * @returns {boolean}
 	 */
 	ApiFormBase.prototype.SetRequired = function(bRequired)
@@ -13258,7 +13258,7 @@
 		return true;
 	};
 	/**
-	 * Checking whether the form is fixed.
+	 * Checks if the current form is fixed.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -13268,10 +13268,10 @@
 		return this.Sdt.IsFixedForm();
 	};
 	/**
-	 * Determines whether the form should be fixed.
-	 * *Not for picture form*
+	 * Specifies if the current form should be fixed.
+	 * *Not for picture forms*
 	 * @memberof ApiFormBase
-	 * @param {boolean} bFixed
+	 * @param {boolean} bFixed - Defines if the current form is fixed (true) or not (false).
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -13292,12 +13292,12 @@
 		return true;
 	};
 	/**
-	 * Sets border to form.
+	 * Sets the border color to the current form.
 	 * @memberof ApiFormBase
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} bNone - is true, then sets no border.
+	 * @param {boolean} bNone - Defines that border color will not be set.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -13321,12 +13321,12 @@
 		return true;
 	};
 	/**
-	 * Sets background color to form.
+	 * Sets the background color to the current form.
 	 * @memberof ApiFormBase
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} bNone - is true, then sets no background color.
+	 * @param {boolean} bNone - Defines that background color will not be set.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -13351,7 +13351,7 @@
 		return true;
 	};
 	/**
-	 * Gets text from form.
+	 * Returns the text from the current form.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
@@ -13383,7 +13383,7 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Checking whether the form is autofit content.
+	 * Checks if the text form content is autofit.
 	 * @memberof ApiTextForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -13393,9 +13393,9 @@
 		return this.Sdt.IsAutoFitContent();
 	};
 	/**
-	 * Determines whether the form should be autofit content.
+	 * Specifies if the text form content should be autofit.
 	 * @memberof ApiTextForm
-	 * @param {boolean} bAutoFit
+	 * @param {boolean} bAutoFit - Defines if the text form content is autofit (true) or not (false).
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -13413,7 +13413,7 @@
 		return true;
 	};
 	/**
-	 * Checking whether the form is miltiline.
+	 * Checks if the current text form is multiline.
 	 * @memberof ApiTextForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -13423,11 +13423,11 @@
 		return this.Sdt.IsMultiLineForm();
 	};
 	/**
-	 * Determines whether the form should be miltiline.
+	 * Specifies if the current text form should be miltiline.
 	 * @memberof ApiTextForm
-	 * @param {boolean} bMultiline
+	 * @param {boolean} bMultiline - Defines if the current text form is multiline (true) or not (false).
 	 * @typeofeditors ["CDE"]
-	 * @returns {boolean} - return false, if form is not fixed.
+	 * @returns {boolean} - return false, if the text form is not fixed.
 	 */
 	ApiTextForm.prototype.SetMultiline = function(bMultiline)
 	{
@@ -13445,10 +13445,10 @@
 		return true;
 	};
 	/**
-	 * Gets characters limit.
+	 * Returns a limit of the text form characters.
 	 * @memberof ApiTextForm
 	 * @typeofeditors ["CDE"]
-	 * @returns {number} - if returns -1 -> characters is no limit
+	 * @returns {number} - if this method returns -1 -> the form has no limit for characters
 	 */
 	ApiTextForm.prototype.GetCharactersLimit = function()
 	{
@@ -13459,11 +13459,11 @@
 		return oPr.GetMaxCharacters();
 	};
 	/**
-	 * Sets characters limit.
+	 * Sets a limit to the text form characters.
 	 * @memberof ApiTextForm
-	 * @param {number} nChars - if param is -1 -> sets no limit.
-	 * Can't sets no limit, if comb of characters is applied.
-	 * Max value is 1000000.
+	 * @param {number} nChars - The maximum number of characters in the text form. If this parameter is equal to -1, no limit will be set.
+	 * A limit is required to be set, if a comb of characters is applied.
+	 * Maximum value for this parameter is 1000000.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -13489,7 +13489,7 @@
 		return true;
 	};
 	/**
-	 * Checking whether the form is characters comb.
+	 * Checks if the text form is a comb of characters.
 	 * @memberof ApiTextForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -13500,9 +13500,9 @@
 		return oPr ? oPr.IsComb() : false;
 	};
 	/**
-	 * Sets comb of characters.
+	 * Specifies if the text form should be a comb of characters.
 	 * @memberof ApiTextForm
-	 * @param {boolean} bComb
+	 * @param {boolean} bComb - Defines if the text form is a comb of characters (true) or not (false).
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -13528,9 +13528,9 @@
 		return true;
 	};
 	/**
-	 * Sets cell width with applied comb of characters.
+	 * Sets the width of a cell to the applied comb of characters.
 	 * @memberof ApiTextForm
-	 * @param {mm} [nCellWidth=0] - if nCellWidth === 0, then the width will be set automatically. Must be >= 1 and <= 558.8
+	 * @param {mm} [nCellWidth=0] - The cell width measured in millimeters. If this parameter is equal to 0, then the width will be set automatically. Must be >= 1 and <= 558.8.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -13550,9 +13550,9 @@
 		return true;
 	};
 	/**
-	 * Sets text to form.
+	 * Sets the text to the current text form.
 	 * @memberof ApiTextForm
-	 * @param {string} sText
+	 * @param {string} sText - The text that will be set to the current text form.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -13578,7 +13578,7 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Gets the current condition for scaling picture.
+	 * Returns the current scaling condition of the picture form.
 	 * @memberof ApiPictureForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {ScaleCase}
@@ -13606,9 +13606,9 @@
 		return sScaleFlag;
 	};
 	/**
-	 * Sets the condition for scaling the picture.
+	 * Sets the condition for scaling to the current picture form.
 	 * @memberof ApiPictureForm
-	 * @param {ScaleCase} sScaleCase
+	 * @param {ScaleCase} sScaleCase - Picture scaling condition: "always", "never", "tooBig" or "tooSmall".
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -13640,10 +13640,10 @@
 		return true;
 	};
 	/**
-	 * Sets the lock aspect ratio for picture.
+	 * Sets the lock aspect ratio to the current picture form.
 	 * @memberof ApiPictureForm
-	 * @param {percentage} xRatio
-	 * @param {percentage} yRatio
+	 * @param {percentage} xRatio - Horizontal lock aspect ratio measured in percent.
+	 * @param {percentage} yRatio - Vertical lock aspect ratio measured in percent.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -13666,7 +13666,7 @@
 		return true;
 	};
 	/**
-	 * Gets base64 image.
+	 * Returns an image in the base64 format from the current picture form.
 	 * @memberof ApiPictureForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {base64img}
@@ -13689,9 +13689,9 @@
 		return "";
 	};
 	/**
-	 * Sets image to form.
+	 * Sets an image to the current picture form.
 	 * @memberof ApiPictureForm
-	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently only internet URL or Base64 encoded images are supported).
+	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently, only internet URL or base64 encoded images are supported).
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -13727,7 +13727,7 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Gets list values from current form.
+	 * Returns the list values from the current combobox.
 	 * @memberof ApiComboBoxForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {string[]}
@@ -13746,9 +13746,9 @@
 		return aValues;
 	};
 	/**
-	 * Sets list values to current form.
+	 * Sets the list values to the current combobox.
 	 * @memberof ApiComboBoxForm
-	 * @param {string[]} aListString
+	 * @param {string[]} aListString - The combobox list values.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -13778,9 +13778,9 @@
 		return true;
 	};
 	/**
-	 * Select specified value from the list value. 
+	 * Selects the specified value from the combobox list values. 
 	 * @memberof ApiComboBoxForm
-	 * @param {string} sValue
+	 * @param {string} sValue - The combobox list value that will be selected.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -13800,9 +13800,9 @@
 		return true;		
 	};
 	/**
-	 * Sets text to form.
-	 * @memberof ApiTextForm
-	 * @param {string} sText
+	 * Sets the text to the current combobox.
+	 * @memberof ApiComboBoxForm
+	 * @param {string} sText - The combobox text.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -13824,8 +13824,8 @@
 		return true;
 	};
 	/**
-	 * Check that the text can be edited.
-	 * @memberof ApiTextForm
+	 * Checks if the combobox text can be edited.
+	 * @memberof ApiComboBoxForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -13840,9 +13840,9 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Sets checkbox checked. 
+	 * Checks the current checkbox.
 	 * @memberof ApiCheckBoxForm
-	 * @param {boolean} isChecked
+	 * @param {boolean} isChecked - Defines if the current checkbox is checked (true) or not (false).
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -13855,7 +13855,7 @@
 		return true;
 	};
 	/**
-	 * Get the state of this checkbox
+	 * Returns the state of the current checkbox (checked or not).
 	 * @memberof ApiCheckBoxForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -13865,7 +13865,7 @@
 		return this.Sdt.IsCheckBoxChecked();
 	};
 	/**
-	 * Check if the form is a radio button. 
+	 * Checks if the current checkbox is a radio button. 
 	 * @memberof ApiCheckBoxForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -13875,7 +13875,7 @@
 		return this.Sdt.IsRadioButton();
 	};
 	/**
-	 * Get radio group key, if it is a radio button
+	 * Returns the radio group key, if the current checkbox is a radio button.
 	 * @memberof ApiCheckBoxForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
@@ -13886,9 +13886,9 @@
 		return (sRadioGroup ? sRadioGroup : "");
 	};
 	/**
-	 * Set radio group key
+	 * Sets the radio group key to the current checkbox.
 	 * @memberof ApiCheckBoxForm
-	 * @param {string} sKey
+	 * @param {string} sKey - Radio group key.
 	 * @typeofeditors ["CDE"]
 	 */
 	ApiCheckBoxForm.prototype.SetRadioGroup = function(sKey)
