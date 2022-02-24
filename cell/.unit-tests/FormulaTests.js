@@ -15108,6 +15108,22 @@ $( function () {
 
 	test( "Test: \"Gannen Calendar\"", function () {
 
+		oParser = new parserFormula( 'TEXT(4358.9,"[$-411]ggge年m月d日;@")', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "明治44年12月6日" );
+
+		oParser = new parserFormula( 'TEXT(4358.1,"[$-411]ggge年m月d日;@")', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "明治44年12月6日" );
+
+		oParser = new parserFormula( 'TEXT(5684.168,"[$-411]ggge年m月d日;@")', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "大正4年7月24日" );
+
+		oParser = new parserFormula( 'TEXT(19648.005,"[$-411]ggge年m月d日;@")', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "昭和28年10月16日" );
+
 		oParser = new parserFormula( 'TEXT(DATE(1900,01,01),"[$-411]ge.yyyy.m.d;@")', "A2", ws );
 		ok( oParser.parse() );
 		strictEqual( oParser.calculate().getValue(), "M33.33.1.1" );

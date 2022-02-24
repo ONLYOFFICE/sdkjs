@@ -97,31 +97,32 @@ var gc_aJapanEras = [
 	["R", "令", "令和", 2019]
 ];
 var gc_aIsForEra = [
-	8389649, // Япония от императора
-	8796172, // Французский (Морокко) Хиджра
-	9910284, // Францзский (Морокко) Ум аль-Кура
-	8782880, // Урду
-	8782976, // Уйгурский (КНР)
-	8782914, // Туркменский
-	8783987, // Тигринья (Эритерия)
-	8783967, // Тамазигхт (латиница, Алжир)
-	8782943, // Тамазигхт (арабское письмо, Морокко)
-	9897055, // Тамазигхт (арабское письмо, Морокко)
-	25624576, // Тайский
-	8782888, // Таджикский
-	8783961, // Синдхи (арабское письмо) Хиджра
-	9831523, // Пушту (Джалали)
-	8782947, // Пушту Хиджра
-	9897059, // Пушту Ум аль-Кура
-	8783942, // Панджаби (Пакистан)
-	8716288, // Корейский (Данки)
-	8782954, // Йоруба (Арабский, Хиджра)
-	9831564, // Дари (Афганистан) Джалли
-	8782988, // Дари (Афганистан) Хиджра
-	8782984, //	Волоф (Хиджра)
-	25559040, // Арабский (Хиджра)
-	26673152, // Арабский (Ум аль-Кура)
-	8799241 // Английский (Малайзия) Хиджра
+	0x800411, // Япония от императора
+	// Пока не поддерживаем эти локали
+	/*0x86380C, // Французский (Морокко) Хиджра
+	0x97380C, // Францзский (Морокко) Ум аль-Кура
+	0x860420, // Урду
+	0x860480, // Уйгурский (КНР)
+	0x860442, // Туркменский
+	0x860873, // Тигринья (Эритерия)
+	0x86085F, // Тамазигхт (латиница, Алжир)
+	0x86045F, // Тамазигхт (арабское письмо, Морокко)
+	0x97045F, // Тамазигхт (арабское письмо, Морокко)
+	0x1870000, // Тайский
+	0x860428, // Таджикский
+	0x860859, // Синдхи (арабское письмо) Хиджра
+	0x960463, // Пушту (Джалали)
+	0x860463, // Пушту Хиджра
+	0x970463, // Пушту Ум аль-Кура
+	0x860846, // Панджаби (Пакистан)
+	0x850000, // Корейский (Данки)
+	0x86046A, // Йоруба (Арабский, Хиджра)
+	0x96048C, // Дари (Афганистан) Джалли
+	0x86048C, // Дари (Афганистан) Хиджра
+	0x860488, //	Волоф (Хиджра)
+	0x1860000, // Арабский (Хиджра)
+	0x1970000, // Арабский (Ум аль-Кура)
+	0x864409 // Английский (Малайзия) Хиджра*/
 ];
 var NumComporationOperators =
 {
@@ -292,7 +293,7 @@ function FormatObjBracket(sData)
                     this.color = 0xffff00;
                 else if("y" == first || "m" == first || "d" == first || "h" == first || "s" == first ||
                     "Y" == first || "M" == first || "D" == first || "H" == first || "S" == first ||
-					"g" == first || "G" == first || "e" == first || "E" == first || "a" == first)
+					"g" == first || "G" == first || "e" == first || "a" == first)
                 {
                     var bSame = true;
                     var nCount = 1;
@@ -321,7 +322,6 @@ function FormatObjBracket(sData)
                             case "s": this.dataObj = new FormatObjDateVal(numFormat_Second, nCount, true);break;
 							case "G":
                             case "g": this.dataObj = new FormatObjDateVal(numFormat_Gannen, nCount, true);break;
-							case "E":
                             case "e": this.dataObj = new FormatObjDateVal(numFormat_JapanYearsGannen, nCount, true);break;
                             case "a": this.dataObj = new FormatObjDateVal(numFormat_DayOfWeek, nCount, true);break;
                         }
@@ -2046,7 +2046,7 @@ NumFormat.prototype =
 			return null;
 		}
 	},
-    format: function (number, nValType, dDigitsCount, cultureInfo, bChart, opt_forceNull, bIsCurrentEra)
+    format: function (number, nValType, dDigitsCount, cultureInfo, bChart, opt_forceNull)
     {
         if (null == cultureInfo)
             cultureInfo = g_oDefaultCultureInfo;
@@ -2227,7 +2227,7 @@ NumFormat.prototype =
 				{
 					if (item.val != null && oParsedNumber.dec != null && this.LCID === 1041)
 					{
-						oCurrentEra = this.checkEra(oParsedNumber.date.hour < 12 ? oParsedNumber.dec : oParsedNumber.dec - 1);
+						oCurrentEra = this.checkEra(number);
 						if (oCurrentEra != null)
 						{
 							if(item.val == 1) {
@@ -2245,32 +2245,25 @@ NumFormat.prototype =
 				}
 				else if(numFormat_JapanYearsGannen == item.type)
 				{
-					if (oCurrentEra != null)
+					if (this.LCID === 1041)
 					{
-						if(item.val == 1)
+						oCurrentEra = this.checkEra(number);
+						if (oCurrentEra != null)
 						{
-							oCurText.text += (oParsedNumber.date.year - oCurrentEra[3] + 1);
-						}
-						else if(item.val >= 2)
-						{
-							var nYear = oParsedNumber.date.year - oCurrentEra[3] + 1;
-							oCurText.text += (nYear >= 10) ? nYear : "0"+nYear;
+							if(item.val == 1)
+							{
+								oCurText.text += (oParsedNumber.date.year - oCurrentEra[3] + 1);
+							}
+							else if(item.val >= 2)
+							{
+								var nYear = oParsedNumber.date.year - oCurrentEra[3] + 1;
+								oCurText.text += (nYear >= 10) ? nYear : "0"+nYear;
+							}
 						}
 					}
 					else
 					{
-						if (this.LCID === 1041)
-						{
-							oCurrentEra = this.checkEra(oParsedNumber.date.hour < 12 ? oParsedNumber.dec : oParsedNumber.dec - 1);
-							if (oCurrentEra != null)
-							{
-								oCurText.text += (oParsedNumber.date.year - oCurrentEra[3] + 1);
-							}
-						}
-						else
-						{
-							oCurText.text += oParsedNumber.date.year;
-						}
+						oCurText.text += oParsedNumber.date.year;
 					}
 				}
 				else if(numFormat_DayOfWeek == item.type)
@@ -2292,7 +2285,7 @@ NumFormat.prototype =
                 {
 					if (bIsGannen != null && bIsGannen)
 					{
-						oCurrentEra = this.checkEra(oParsedNumber.date.hour < 12 ? oParsedNumber.dec : oParsedNumber.dec - 1);
+						oCurrentEra = this.checkEra(number);
 						if (oCurrentEra != null)
 						{
 							oCurText.text += (oParsedNumber.date.year - oCurrentEra[3] + 1);
@@ -2708,12 +2701,9 @@ NumFormat.prototype =
             }
 			else if(numFormat_Gannen == item.type)
 			{
-				//if (this.LCID == 1041)
-				//{
-					var nIndex = (item.val > 3) ? 3 : item.val;
-					for(var j = 0; j < nIndex; ++j)
-						res += gannen;
-				//}
+				var nIndex = (item.val > 3) ? 3 : item.val;
+				for(var j = 0; j < nIndex; ++j)
+					res += gannen;
 			}
 			else if(numFormat_JapanYearsGannen == item.type)
 			{
@@ -2742,6 +2732,7 @@ NumFormat.prototype =
     },
 	getFormatCellsInfo: function() {
 		var info = new Asc.asc_CFormatCellsInfo();
+		info.asc_setCurrentEra(this.bCurrentEraYear);
 		info.asc_setDecimalPlaces(this.aFracFormat.length);
 		info.asc_setSeparator(this.bThousandSep);
 		info.asc_setSymbol(this.LCID);
@@ -2961,7 +2952,7 @@ CellFormat.prototype =
 		}
 		return oRes;
 	},
-    format : function(number, nValType, dDigitsCount, bChart, cultureInfo, opt_withoutCache, opt_forceNull, bIsCurrentEra)
+    format : function(number, nValType, dDigitsCount, bChart, cultureInfo, opt_withoutCache, opt_forceNull)
     {
 		//opt_withoutCache = true;
         var res = null;
@@ -2989,7 +2980,7 @@ CellFormat.prototype =
 		{
 			oFormat = this.getFormatByValue(dNumber);
 			if(null != oFormat)
-			    res = oFormat.format(number, nValType, dDigitsCount, cultureInfo, bChart, opt_forceNull, bIsCurrentEra);
+			    res = oFormat.format(number, nValType, dDigitsCount, cultureInfo, bChart, opt_forceNull);
 			else if(null != this.aComporationFormats)
 			{
 			    var oNewFont = new AscCommonExcel.Font();
@@ -3002,7 +2993,7 @@ CellFormat.prototype =
 			//text
 		    if (null != this.oTextFormat) {
 		        oFormat = this.oTextFormat;
-		        res = oFormat.format(number, nValType, dDigitsCount, cultureInfo, bChart, opt_forceNull, bIsCurrentEra);
+		        res = oFormat.format(number, nValType, dDigitsCount, cultureInfo, bChart, opt_forceNull);
 		    }
 		}
         if (!opt_withoutCache) {
@@ -4491,7 +4482,7 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 					if (bCurrentEraYear)
 					{
 						dateElems.push('ee');
-						dateElems.unshift("[$-411]");
+						dateElems[0] = "[$-411]" + dateElems[0];
 					}
 					else
 						dateElems.push('yy');
@@ -4500,7 +4491,7 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 					if (bCurrentEraYear)
 					{
 						dateElems.push('eeee');
-						dateElems.unshift("[$-411]");
+						dateElems[0] = "[$-411]" + dateElems[0];
 					}
 					else
 						dateElems.push('yyyy');
@@ -4888,7 +4879,8 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 			var currencySymbol = info.currency;
 			var cultureInfo = g_aCultureInfos[info.symbol];
 			var hasCurrency = !!cultureInfo || !!currencySymbol;
-			var bIsUseLocalFormatYear = true;
+			var bIsUseLocalFormatYear = info.inputSelectedCalendar;
+			
 			if (Asc.c_oAscNumFormatType.General === info.type) {
 				res.push(AscCommon.g_cGeneralFormat);
 			} else if (Asc.c_oAscNumFormatType.Number === info.type) {
@@ -5004,6 +4996,7 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 				res.push(AscCommon.g_cGeneralFormat);
 				res.push('0.00');
 				res.push('0.00E+00');
+				// заменить
 				res.push(getCurrencyFormat(cultureInfo, 2, hasCurrency, true, currencySymbol));
 				res.push(getCurrencyFormatSimple2(cultureInfo, 2, hasCurrency, currencySymbol, false));
 				res.push(getShortDateFormat(cultureInfo));
