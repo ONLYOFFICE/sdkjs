@@ -1513,6 +1513,74 @@
 	};
 
 	/**
+	 * Gets all drawings from a sheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiDrawing[]}.
+	*/
+	ApiWorksheet.prototype.GetAllDrawings = function(){
+		var allDrawings = this.worksheet.Drawings;
+		var allApiDrawings = [];
+
+		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++){
+			if (allDrawings[nDrawing].graphicObject){
+				allApiDrawings.push(new ApiDrawing(allDrawings[nDrawing].graphicObject));
+			}
+		}
+		return allApiDrawings;
+	};
+	/**
+	 * Gets all images from a sheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiImage[]}.
+	*/
+	ApiWorksheet.prototype.GetAllImages = function(){
+		var allDrawings = this.worksheet.Drawings;
+		var allApiDrawings = [];
+
+		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++){
+			if (allDrawings[nDrawing].graphicObject && allDrawings[nDrawing].isImage()){
+				allApiDrawings.push(new ApiImage(allDrawings[nDrawing].graphicObject));
+			}
+		}
+		return allApiDrawings;
+	};
+	/**
+	 * Gets all shapes from a sheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiShape[]}.
+	*/
+	ApiWorksheet.prototype.GetAllShapes = function(){
+		var allDrawings = this.worksheet.Drawings;
+		var allApiDrawings = [];
+
+		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++){
+			if (allDrawings[nDrawing].graphicObject && allDrawings[nDrawing].isShape()){
+				allApiDrawings.push(new ApiShape(allDrawings[nDrawing].graphicObject));
+			}
+		}
+		return allApiDrawings;
+	};
+	/**
+	 * Gets all charts from a sheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiChart[]}.
+	*/
+	ApiWorksheet.prototype.GetAllCharts = function(){
+		var allDrawings = this.worksheet.Drawings;
+		var allApiDrawings = [];
+
+		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++){
+			if (allDrawings[nDrawing].graphicObject && allDrawings[nDrawing].isChart()){
+				allApiDrawings.push(new ApiChart(allDrawings[nDrawing].graphicObject));
+			}
+		}
+		return allApiDrawings;
+	};
+	/**
 	 * Specifies the cell border position.
 	 * @typedef {("DiagonalDown" | "DiagonalUp" | "Bottom" | "Left" | "Right" | "Top" | "InsideHorizontal" | "InsideVertical")} BordersIndex
 	 */
@@ -3265,6 +3333,106 @@
 		}
 	};
 
+	/**
+	 * Sets values to seria by range.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @param {string} sRange - The range of cells from the sheet.
+	 * e.g. "'sheet 1'!$A$2:$A$5" - must be a single cell, row or column.
+	 * e.g "A1:A5" - must be a single cell, row or column.
+	 * e.g "Example seria"
+	 * @param {number} nSeria - number of seria.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.SetSeriaValues = function(sRange, nSeria)
+	{
+		return this.Chart.SetSeriaValues(sRange, nSeria);
+	};
+
+	/**
+	 * Sets values to seria by range.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sRange - The range of cells from the sheet.
+	 * e.g. "'sheet 1'!$A$2:$A$5" - must be a single cell, row or column.
+	 * e.g "A1:A5" - must be a single cell, row or column.
+	 * e.g "Example seria"
+	 * @param {number} nSeria - number of seria.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.SetSeriaXValues = function(sRange, nSeria)
+	{
+		return this.Chart.SetSeriaXValues(sRange, nSeria);
+	};
+
+	/**
+	 * Sets name to seria.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sNameRange - Can be a range of cells or usual text.
+	 * e.g. "'sheet 1'!$A$2:$A$5" - must be a single cell, row or column.
+	 * e.g "A1:A5" - must be a single cell, row or column.
+	 * e.g "Example seria"
+	 * @param {number} nSeria - number of seria.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.SetSeriaName = function(sNameRange, nSeria)
+	{
+		return this.Chart.SetSeriaName(sNameRange, nSeria);
+	};
+
+	/**
+	 * Sets categories's formula.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sName - The range of cells from the sheet.
+	 * e.g. "'sheet 1'!$A$2:$A$5".
+	 * e.g "A1:A5".
+	 */
+	ApiChart.prototype.SetCatFormula = function(sRange)
+	{
+		return this.Chart.SetCatFormula(sRange);
+	};
+
+	/**
+	 * Adds new seria to chart.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sName - The range of cells from the sheet or text. Can be a range or usual text.
+	 * e.g. "'sheet 1'!$A$2:$A$5" - must be a single cell, row or column.
+	 * e.g "A1:A5" - must be a single cell, row or column.
+	 * e.g "Example seria"
+	 * @param {string} sValuesRange - The range of cells from the sheet.
+	 * e.g. "'sheet 1'!$A$2:$A$5" - must be a single cell, row or column.
+	 * e.g "A1:A5" - must be a single cell, row or column.
+	 * @param {string} [sXValuesRange=undefined] - The range of cells from the sheet.
+	 * Used with scatter charts. 
+	 * e.g. "'sheet 1'!$A$2:$A$5".
+	 * e.g "A1:A5".
+	 */
+	ApiChart.prototype.AddSeria = function(sNameRange, sValuesRange, sXValuesRange)
+	{
+		if (this.Chart.isScatterChartType() && typeof(sXValuesRange) === "string" && sXValuesRange !== "")
+		{
+			this.Chart.addScatterSeries(sNameRange, sXValuesRange, sValuesRange);
+		}
+		else
+			this.Chart.addSeries(sNameRange, sValuesRange);
+	};
+
+
+	/**
+	 * Removes specified seria.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @param {number} nSeria - number of seria.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.RemoveSeria = function(nSeria)
+	{
+		return this.Chart.RemoveSeria(nSeria);
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiColor
@@ -3541,6 +3709,11 @@
 	ApiWorksheet.prototype["AddShape"] = ApiWorksheet.prototype.AddShape;
 	ApiWorksheet.prototype["AddImage"] = ApiWorksheet.prototype.AddImage;
 	ApiWorksheet.prototype["ReplaceCurrentImage"] = ApiWorksheet.prototype.ReplaceCurrentImage;
+	ApiWorksheet.prototype["GetAllDrawings"] = ApiWorksheet.prototype.GetAllDrawings;
+	ApiWorksheet.prototype["GetAllImages"] = ApiWorksheet.prototype.GetAllImages;
+	ApiWorksheet.prototype["GetAllShapes"] = ApiWorksheet.prototype.GetAllShapes;
+	ApiWorksheet.prototype["GetAllCharts"] = ApiWorksheet.prototype.GetAllCharts;
+
 
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
@@ -3630,14 +3803,21 @@
 
 
 
-	ApiChart.prototype["SetMajorVerticalGridlines"]  =  ApiChart.prototype.SetMajorVerticalGridlines;
-	ApiChart.prototype["SetMinorVerticalGridlines"]  =  ApiChart.prototype.SetMinorVerticalGridlines;
-	ApiChart.prototype["SetMajorHorizontalGridlines"]  =  ApiChart.prototype.SetMajorHorizontalGridlines;
-	ApiChart.prototype["SetMinorHorizontalGridlines"]  =  ApiChart.prototype.SetMinorHorizontalGridlines;
-	ApiChart.prototype["SetHorAxisLablesFontSize"]   =  ApiChart.prototype.SetHorAxisLablesFontSize;
-	ApiChart.prototype["SetVertAxisLablesFontSize"]  =  ApiChart.prototype.SetVertAxisLablesFontSize;
-	ApiChart.prototype["ApplyChartStyle"]            =  ApiChart.prototype.ApplyChartStyle;
+	ApiChart.prototype["SetMajorVerticalGridlines"]   =  ApiChart.prototype.SetMajorVerticalGridlines;
+	ApiChart.prototype["SetMinorVerticalGridlines"]   =  ApiChart.prototype.SetMinorVerticalGridlines;
+	ApiChart.prototype["SetMajorHorizontalGridlines"] =  ApiChart.prototype.SetMajorHorizontalGridlines;
+	ApiChart.prototype["SetMinorHorizontalGridlines"] =  ApiChart.prototype.SetMinorHorizontalGridlines;
+	ApiChart.prototype["SetHorAxisLablesFontSize"]    =  ApiChart.prototype.SetHorAxisLablesFontSize;
+	ApiChart.prototype["SetVertAxisLablesFontSize"]   =  ApiChart.prototype.SetVertAxisLablesFontSize;
+	ApiChart.prototype["ApplyChartStyle"]             =  ApiChart.prototype.ApplyChartStyle;
+	ApiChart.prototype["SetSeriaValues"]              =  ApiChart.prototype.SetSeriaValues;
+	ApiChart.prototype["SetSeriaXValues"]             =  ApiChart.prototype.SetSeriaXValues;
+	ApiChart.prototype["SetSeriaName"]                =  ApiChart.prototype.SetSeriaName;
+	ApiChart.prototype["SetCatFormula"]               =  ApiChart.prototype.SetCatFormula;
+	ApiChart.prototype["AddSeria"]                    =  ApiChart.prototype.AddSeria;
+	ApiChart.prototype["RemoveSeria"]                 =  ApiChart.prototype.RemoveSeria;
 
+	ApiChart.prototype["SetSeriaName"]                    = ApiChart.prototype.SetSeriaName;
 
 	ApiColor.prototype["GetClassType"]                 =  ApiColor.prototype.GetClassType;
 

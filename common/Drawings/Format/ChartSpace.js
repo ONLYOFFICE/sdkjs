@@ -12227,6 +12227,273 @@ var GLOBAL_PATH_COUNT = 0;
             }
         }
     };
+    CChartSpace.prototype.SetValuesToDataPoints = function(aData, nSeria)
+    {
+        if (editor.editorId === AscCommon.c_oEditorId.Spreadsheet)
+            return false;
+            
+        var oSeria, isOkey;
+		var allSeries = this.getAllSeries();
+
+		for (var nCurSeria = 0; nCurSeria < allSeries.length; nCurSeria++)
+		{
+            if (allSeries[nCurSeria].idx === nSeria)
+            {
+                oSeria = allSeries[nCurSeria];
+                break;
+            }
+		}
+
+        if (!oSeria)
+            return false;
+
+        var oVal = this.isScatterChartType() ? oSeria.yVal : oSeria.val;
+        if (oVal && oVal.numRef && oVal.numRef.numCache)
+        {
+            var oPt, nValue;
+            for (var nPt = 0; nPt < aData.length; nPt++)
+            {
+                nValue = aData[nPt];
+                if (typeof(nValue) !== "number")
+                    continue;
+
+                oPt = oVal.numRef.numCache.pts[nPt];
+                if (oPt)
+                {
+                    oPt.setVal(nValue);
+                    isOkey = true;
+                }
+                else
+                    break;
+            }
+        }
+
+        if (isOkey)
+        {
+            this.onDataUpdate();
+            return true;
+        }
+
+        return false;
+    };
+    CChartSpace.prototype.SetXValuesToDataPoints = function(aData)
+    {
+        if (editor.editorId === AscCommon.c_oEditorId.Spreadsheet)
+            return false;
+            
+        var oSeria, isOkey;
+		var allSeries = this.getAllSeries();
+
+		for (var nSeria = 0; nSeria < allSeries.length; nSeria++)
+		{
+            oSeria = allSeries[nSeria];
+            var oVal = oSeria.xVal;
+            if (oVal && oVal.strRef && oVal.strRef.strCache)
+            {
+                var oPt, value;
+                for (var nPt = 0; nPt < aData.length; nPt++)
+                {
+                    value = aData[nPt];
+                    if (typeof(value) === "number")
+                        value = String(value);
+                        
+                    if (typeof(value) !== "string")
+                        continue;
+
+                    oPt = oVal.strRef.strCache.pts[nPt];
+                    if (oPt)
+                    {
+                        oPt.setVal(value);
+                        isOkey = true;
+                    }
+                    else
+                        break;
+                }
+            }
+		}
+
+        if (isOkey)
+        {
+            this.onDataUpdate();
+            return true;
+        }
+
+        return false;
+    };
+    CChartSpace.prototype.SetSeriaValues = function(sRange, nSeria)
+    {
+        var oSeria;
+		var allSeries = this.getAllSeries();
+
+        if (typeof(sRange) !== "string" || sRange === "")
+            return false;
+
+		for (var nCurSeria = 0; nCurSeria < allSeries.length; nCurSeria++)
+		{
+            if (allSeries[nCurSeria].idx === nSeria)
+            {
+                oSeria = allSeries[nCurSeria];
+                break;
+            }
+		}
+
+        if (!oSeria)
+            return false;
+
+        if (Asc.editor && Asc.editor.editorId === AscCommon.c_oEditorId.Spreadsheet)
+        {
+            if (oSeria.asc_IsValidValues(sRange) !== 0)
+                return false;
+            oSeria.asc_setValues(sRange);
+            return true;
+        }
+        // пока только для Spreadsheet
+        return false;
+    };
+    CChartSpace.prototype.SetSeriaXValues = function(sRange, nSeria)
+    {
+        var oSeria;
+		var allSeries = this.getAllSeries();
+
+        if (typeof(sRange) !== "string" || sRange === "")
+            return false;
+
+		for (var nCurSeria = 0; nCurSeria < allSeries.length; nCurSeria++)
+		{
+            if (allSeries[nCurSeria].idx === nSeria)
+            {
+                oSeria = allSeries[nCurSeria];
+                break;
+            }
+		}
+
+        if (!oSeria)
+            return false;
+
+        if (Asc.editor && Asc.editor.editorId === AscCommon.c_oEditorId.Spreadsheet)
+        {
+            if (oSeria.asc_IsValidXValues(sRange) !== 0)
+                return false;
+            oSeria.asc_setXValues(sRange);
+            return true;
+        }
+        // пока только для Spreadsheet
+        return false;
+    };
+    CChartSpace.prototype.SetSeriaName = function(sName, nSeria)
+    {
+        var allSeries = this.getAllSeries();
+        var oSeria;
+
+		for (var nCurSeria = 0; nCurSeria < allSeries.length; nCurSeria++)
+		{
+            if (allSeries[nCurSeria].idx === nSeria)
+            {
+                oSeria = allSeries[nCurSeria];
+                break;
+            }
+		}
+
+        if (!oSeria || typeof(sName) !== "string")
+            return false;
+
+        if (Asc.editor && Asc.editor.editorId === AscCommon.c_oEditorId.Spreadsheet)
+        {
+            if (oSeria.asc_IsValidName(sName) !== 0)
+                return false;
+            oSeria.asc_setName(sName);
+            return true;
+        }
+
+        var oTx = oSeria.tx;
+        if (oTx && oTx.strRef && oTx.strRef.strCache)
+        {
+            var oPt;
+            oPt = oTx.strRef.strCache.pts[0];
+            if (!oPt)
+                return false;
+            oPt.setVal(sName);
+        }
+        return true;
+    };
+    CChartSpace.prototype.SetCatName = function(sName, nCategory)
+    {
+        if (Asc.editor && Asc.editor.editorId === AscCommon.c_oEditorId.Spreadsheet)
+            return false;
+        
+        var oSeria, oCat, oPt, isOkey;
+        if (typeof(sName) !== "string")
+            return false;
+
+        var allSeries = this.getAllSeries();
+
+        for (var nCurSeries = 0; nCurSeries < allSeries.length; nCurSeries++)
+        {
+            oSeria = allSeries[nCurSeries];
+            oCat = oSeria.cat;
+            if (oCat && oCat.strRef && oCat.strRef.strCache)
+            {
+                for (var nPt = 0; nPt < oCat.strRef.strCache.pts.length; nPt++)
+                {
+                    oPt = oCat.strRef.strCache.pts[nPt];
+                    if (oPt.idx === nCategory)
+                    {
+                        oPt.setVal(sName);
+                        isOkey = true;
+                    }
+                }
+            }
+        }
+
+        if (isOkey)
+            return true;
+
+        return false;
+    };
+    CChartSpace.prototype.SetCatFormula = function(sRange)
+    {
+        if (typeof(sRange) !== "string")
+            return false;
+
+        if (Asc.editor && Asc.editor.editorId === AscCommon.c_oEditorId.Spreadsheet)
+        {
+            var isValid = AscFormat.ExecuteNoHistory(function(){
+                var oCat = new AscFormat.CCat();
+                return oCat.setValues(sRange).getError();
+            }, this, []);
+         
+            if (isValid === 0)
+            {
+                this.setCatFormula(sRange);
+                return true;
+            }
+        }
+
+        // пока только для Spreadsheet
+        return false;
+    };
+    CChartSpace.prototype.RemoveSeria = function(nSeria)
+    {
+        var oSeria;
+		var allSeries = this.getAllSeries();
+
+		for (var nCurSeria = 0; nCurSeria < allSeries.length; nCurSeria++)
+		{
+            if (allSeries[nCurSeria].idx === nSeria)
+            {
+                oSeria = allSeries[nCurSeria];
+                break;
+            }
+		}
+        
+        if (!oSeria)
+            return false;
+
+        oSeria.asc_Remove();
+        return true;
+    };
+
+   
     function CAdditionalStyleData() {
         this.dLbls = null;
         this.catAx = null;

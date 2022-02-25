@@ -3272,6 +3272,72 @@
         AscFormat.builder_SetVerAxisFontSize(this.Chart, nFontSize);
     };
 
+    /**
+	 * Removes specified seria.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @param {number} nSeria - number of seria.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.RemoveSeria = function(nSeria)
+	{
+		return this.Chart.RemoveSeria(nSeria);
+	};
+
+    /**
+	 * Sets values to seria's data points.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE, CPE"]
+	 * @param {number[]} aValues - The array of the data which will be set to specified seria.
+	 * @param {number} nSeria - number of seria.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.SetSeriaValues = function(aValues, nSeria)
+	{
+		return this.Chart.SetValuesToDataPoints(aValues, nSeria);
+	};
+
+	/**
+	 * Sets the values for the x-axis in all series.
+	 * Used for scatter chart.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE, CPE"]
+	 * @param {string[]} aValues - The array of the data which will be set to x-axis data points.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.SetXValues = function(aValues)
+	{
+		if (this.Chart.isScatterChartType())
+			return this.Chart.SetValuesToXDataPoints(aValues);
+		return false;
+	};
+
+	/**
+	 * Sets name to seria.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE, CPE"]
+	 * @param {string} sName - The name which will be set to specified seria.
+	 * @param {number} nSeria - number of seria.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.SetSeriaName = function(sName, nSeria)
+	{
+		return this.Chart.SetSeriaName(sName, nSeria);
+	};
+
+	/**
+	 * Sets name to category.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE, CPE"]
+	 * @param {string} sName - The name which will be set to specified seria.
+	 * @param {number} nCategory - number of category.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.SetCategoryName = function(sName, nCategory)
+	{
+		return this.Chart.SetCategoryName(sName, nCategory);
+	};
+
 
     //------------------------------------------------------------------------------------------------------------------
     //
@@ -4049,6 +4115,11 @@
     ApiChart.prototype["SetMinorHorizontalGridlines"]     = ApiChart.prototype.SetMinorHorizontalGridlines;
     ApiChart.prototype["SetHorAxisLablesFontSize"]        = ApiChart.prototype.SetHorAxisLablesFontSize;
     ApiChart.prototype["SetVertAxisLablesFontSize"]       = ApiChart.prototype.SetVertAxisLablesFontSize;
+    ApiChart.prototype["RemoveSeria"]                     = ApiChart.prototype.RemoveSeria;
+	ApiChart.prototype["SetSeriaValues"]                  = ApiChart.prototype.SetSeriaValues;
+	ApiChart.prototype["SetXValues"]                      = ApiChart.prototype.SetXValues;
+	ApiChart.prototype["SetSeriaName"]                    = ApiChart.prototype.SetSeriaName;
+	ApiChart.prototype["SetCategoryName"]                 = ApiChart.prototype.SetCategoryName;
 
     ApiTable.prototype["GetClassType"]                    = ApiTable.prototype.GetClassType;
     ApiTable.prototype["GetRow"]                          = ApiTable.prototype.GetRow;
