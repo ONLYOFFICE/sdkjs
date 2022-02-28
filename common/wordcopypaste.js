@@ -156,6 +156,8 @@ function ResetNewUrls(data, aUrls, aBuilderImagesByUrl, oImageMap)
     }
 }
 
+//TODO на счёт коэффициэнта не нахожу подходящего преобразования. пересмотреть.
+var koef_mm_to_indent = 3.88;
 
 var PasteElementsId = {
   copyPasteUseBinary : true,
@@ -2289,6 +2291,7 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
 
 	this.aMsoHeadStylesStr;
 	this.oMsoHeadStylesListMap = [];
+	this.oMsoStylesParser = null;
 
 	this.pasteTextIntoList;
 
@@ -3597,9 +3600,6 @@ PasteProcessor.prototype =
 		//PASTE
 		var tempPresentation = !PasteElementsId.g_bIsDocumentCopyPaste && editor && editor.WordControl ? editor.WordControl.m_oLogicDocument : null;
 		var insertToPresentationWithoutSlides = tempPresentation && tempPresentation.Slides && !tempPresentation.Slides.length;
-
-		var test = new MsoStylesParser(node);
-		test.init();
 
 		var base64FromExcel, base64FromWord, base64FromPresentation
 		if (PasteElementsId.copyPasteUseBinary) {
@@ -7412,12 +7412,17 @@ PasteProcessor.prototype =
 			}
 		}
 	},
-	_PrepareContent: function () {
+	_PrepareContent: function (indent) {
 		//Не допускам чтобы контент заканчивался на таблицу, иначе тяжело вставить параграф после
 		if (this.aContent.length > 0) {
 			var last = this.aContent[this.aContent.length - 1];
 			if (type_Table === last.GetType()) {
 				this._Add_NewParagraph();
+			} else if (indent && type_Paragraph === last.GetType()) {
+				//при копировании внутри мс indent ячейки записывается в FirstLine (excel->word->xlsx->w:ind->w:firstLine)
+				if (last.Pr && last.Pr.Ind) {
+					last.Pr.Ind.FirstLine = indent * koef_mm_to_indent;
+				}
 			}
 		}
 	},
@@ -8800,6 +8805,15 @@ PasteProcessor.prototype =
 			bAddIfNull = true;
 		}
 
+		var indent; 
+		var className = node.className;
+		if (className && this.oMsoStylesParser) {
+			var msoClass = this.oMsoStylesParser.getMsoClassByName("." + className);
+			if (msoClass) {
+				indent = msoClass.getAttributeByName("mso-char-indent-count");
+			}
+		}
+
 		var computedStyle = this._getComputedStyle(node);
 		var background_color = this._getStyle(node, computedStyle, "background-color");
 		if (null != background_color && (background_color = this._ParseColor(background_color))) {
@@ -8901,12 +8915,13 @@ PasteProcessor.prototype =
 			oPasteProcessor.oMsoHeadStylesListMap = this.oMsoHeadStylesListMap;
 			oPasteProcessor.msoListMap = this.msoListMap;
 			oPasteProcessor.dMaxWidth = this._CalcMaxWidthByCell(cell);
+			oPasteProcessor.oMsoStylesParser = this.oMsoStylesParser;
 			if (true === bUseScaleKoef) {
 				oPasteProcessor.bUseScaleKoef = bUseScaleKoef;
 				oPasteProcessor.dScaleKoef = dScaleKoef;
 			}
 			oPasteProcessor._Execute(node, {}, true, true, false);
-			oPasteProcessor._PrepareContent();
+			oPasteProcessor._PrepareContent(indent);
 			oPasteProcessor._AddNextPrevToContent(cell.Content);
 			if (0 === oPasteProcessor.aContent.length) {
 				var oDocContent = cell.Content;
@@ -8987,6 +9002,13 @@ PasteProcessor.prototype =
 		var bRootHasBlock = false;//Если root есть блочный элемент, то надо все child считать параграфами
 		//Для Root node не смотрим стили и не добавляем текст
 		//var presentation = editor.WordControl.m_oLogicDocument;
+
+		//для правки бага на релизе обработку добавляю только для вставки из ms excel, потом сделать данный класс как основной для получения данных из стилей ms
+		if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Excel) {
+			if (!this.oMsoStylesParser) {
+				this.oMsoStylesParser = new MsoStylesParser(node);
+			}
+		}
 
 		var parseTextNode = function () {
 			var value = node.nodeValue;
@@ -10161,7 +10183,7 @@ SpecialPasteShowOptions.prototype = {
 
 function MsoStylesParser(node) {
 	this.node = node;
-	this.classes = null;
+	this.styleParsers = null;
 
 	this._isInit = null;
 }
@@ -10181,6 +10203,10 @@ MsoStylesParser.prototype.init = function () {
 				}
 
 				msoStyleParser.parse();
+				if (!this.styleParsers) {
+					this.styleParsers = [];
+				}
+				this.styleParsers.push(msoStyleParser);
 			}
 		}
 	}
@@ -10191,7 +10217,18 @@ MsoStylesParser.prototype.getMsoClassByName = function (name) {
 	if (!this._isInit) {
 		this.init();
 	}
-	return this.classes && this.classes[name];
+	if (this.styleParsers) {
+		for (var i = 0; i < this.styleParsers.length; i++) {
+			if (this.styleParsers[i]) {
+				var msoStyleClass = this.styleParsers[i].getMsoClassByName(name);
+				if (msoStyleClass) {
+					return msoStyleClass;
+				}
+			}
+		}
+	}
+
+	return null;
 };
 
 function MsoStyleParser(str) {
@@ -10205,7 +10242,7 @@ function MsoStyleParser(str) {
 
 	this.msoClass= null;
 
-	this.res = null;
+	this.classes = null;
 }
 MsoStyleParser.prototype.clean = function () {
 	this.startReadStyle = null;
@@ -10216,7 +10253,7 @@ MsoStyleParser.prototype.clean = function () {
 
 	this.msoClass= null;
 
-	this.res = null;
+	this.classes = null;
 };
 MsoStyleParser.prototype.setStr = function (str) {
 	this.str = str;
@@ -10295,10 +10332,10 @@ MsoStyleParser.prototype.endReadClass = function () {
 	if (this.attrName !== null) {
 		this.msoClass.attributes[this.attrName] = this.attrVal;
 	}
-	if (!this.res) {
-		this.res = [];
+	if (!this.classes) {
+		this.classes = [];
 	}
-	this.res.push(this.msoClass);
+	this.classes.push(this.msoClass);
 
 	this.msoClass = null;
 	this.startAttrs = false;
@@ -10361,6 +10398,17 @@ MsoStyleParser.prototype.addByClassName = function (sym) {
 	this.msoClass.name += sym;
 };
 
+MsoStyleParser.prototype.getMsoClassByName = function (name) {
+	if (this.classes) {
+		for (var i = 0; i < this.classes.length; i++) {
+			if (this.classes[i].name === name) {
+				return this.classes[i];
+			}
+		}
+	}
+
+	return null;
+};
 
 
 
@@ -10369,6 +10417,13 @@ function MsoStyleClass() {
 	this.attributes = null;
 }
 
+MsoStyleClass.prototype.getAttributeByName = function (name) {
+	if (this.attributes) {
+		return this.attributes[name];
+	}
+
+	return null;
+};
 
 function checkOnlyOneImage(node)
 {
@@ -10424,6 +10479,8 @@ function checkOnlyOneImage(node)
   prot["asc_getContainTables"]			    = prot.asc_getContainTables;
 
   window["AscCommon"].checkOnlyOneImage = checkOnlyOneImage;
+
+  window["AscCommon"].koef_mm_to_indent = koef_mm_to_indent;
 
 
 })(window);

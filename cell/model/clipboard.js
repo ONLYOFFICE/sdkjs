@@ -3749,6 +3749,7 @@
 			this.hyperLink = null;
 			this.location = null;
 
+			this.indent = null;
 			this.props = null;
 
 			return this;
@@ -4007,6 +4008,11 @@
 				//настройки параграфа
 				paragraph.elem.CompiledPr.NeedRecalc = true;
 				var paraPr = paragraph.elem.Get_CompiledPr();
+
+				var firstLine = paraPr && paraPr.ParaPr && paraPr.ParaPr.Ind && paraPr.ParaPr.Ind.FirstLine;
+				if (firstLine) {
+					oNewItem.indent = parseInt(firstLine / AscCommon.koef_mm_to_indent);
+				}
 
 				//горизонтальное выравнивание
 				var horisontalAlign = this._getAlignHorisontal(paraPr);
