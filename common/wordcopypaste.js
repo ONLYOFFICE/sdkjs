@@ -10190,24 +10190,22 @@ function MsoStylesParser(node) {
 MsoStylesParser.prototype.init = function () {
 	//TODO копия функции _findMsoHeadStyle, пока не трогаю новый функционал, потом порефакторить и избавиться от старых функций
 	var msoStyleParser;
-	var headTag = this.node && this.node.parentElement && this.node.parentElement.getElementsByTagName( "head" );
-	if (headTag && headTag[0]) {
-		for (var i = 0; i < headTag[0].children.length; ++i) {
-			if ("style" === headTag[0].children[i].nodeName.toLowerCase()) {
-				var headText = headTag[0].children[i].innerText;
-				if (!msoStyleParser) {
-					msoStyleParser = new MsoStyleParser(headText);
-				} else {
-					msoStyleParser.clean();
-					msoStyleParser.setStr(headText);
-				}
-
-				msoStyleParser.parse();
-				if (!this.styleParsers) {
-					this.styleParsers = [];
-				}
-				this.styleParsers.push(msoStyleParser);
+	var styleTags = this.node && this.node.parentElement && this.node.parentElement.getElementsByTagName("style");
+	if (styleTags && styleTags.length) {
+		for (var i = 0; i < styleTags.length; ++i) {
+			var headText = styleTags[i].innerText;
+			if (!msoStyleParser) {
+				msoStyleParser = new MsoStyleParser(headText);
+			} else {
+				msoStyleParser.clean();
+				msoStyleParser.setStr(headText);
 			}
+
+			msoStyleParser.parse();
+			if (!this.styleParsers) {
+				this.styleParsers = [];
+			}
+			this.styleParsers.push(msoStyleParser);
 		}
 	}
 
@@ -10234,7 +10232,6 @@ MsoStylesParser.prototype.getMsoClassByName = function (name) {
 function MsoStyleParser(str) {
 	this.str = str;
 
-	this.startReadStyle = null;
 	this.startAttrs = null;
 	this.startComment = null;
 	this.attrName = null;
@@ -10245,7 +10242,6 @@ function MsoStyleParser(str) {
 	this.classes = null;
 }
 MsoStyleParser.prototype.clean = function () {
-	this.startReadStyle = null;
 	this.startAttrs = null;
 	this.startComment = null;
 	this.attrName = null;
@@ -10271,17 +10267,9 @@ MsoStyleParser.prototype.parse = function () {
 			continue;
 		}
 
-		if (!this.startReadStyle) {
-			if (_style[j] === "<" && _style[j + 1] === "!" && _style[j + 2] === "-" && _style[j + 3] === "-") {
-				this.startReadStyle = true;
-				j += 3;
-			}
+		if (_style[j] === "<" && _style[j + 1] === "!" && _style[j + 2] === "-" && _style[j + 3] === "-") {
+			j += 3;
 			continue;
-		} else {
-			if (_style[j] === "-" && _style[j + 1] === "-" && _style[j + 2] === ">") {
-				this.startReadStyle = false;
-				break;
-			}
 		}
 
 		//skip comment
