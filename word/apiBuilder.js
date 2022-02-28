@@ -2036,17 +2036,18 @@
 	};
 
 	/**
-	 * Specifies a highlighting color in the RGB format which is applied as a background for the contents of the current Range.
+	 * Specifies a highlighting color which is applied as a background to the contents of the current Range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {byte} r - Red color component value.
-	 * @param {byte} g - Green color component value.
-	 * @param {byte} b - Blue color component value.
-	 * @param {bool} [isNone=false] If this parameter is set to "true", then r,g,b parameters will be ignored.
+	 * @param {highlightColor} sColor - available highlight color
 	 * @returns {ApiRange | null} - returns null if can't apply highlight.
 	 */
-	ApiRange.prototype.SetHighlight = function(r, g, b, isNone)
+	ApiRange.prototype.SetHighlight = function(sColor)
 	{
+		var color = private_getHighlightColorByName(sColor);
+		if (!color && sColor !== "none")
+			return null;
+
 		private_RefreshRangesPosition();
 		private_RemoveEmptyRanges();
 
@@ -2072,14 +2073,14 @@
 		}
 
 		var TextPr = null;
-		if (true === isNone)
+		if ("none" === sColor)
 		{
 			TextPr = new ParaTextPr({HighLight : highlight_None});
 			Document.AddToParagraph(TextPr);
 		}
 		else
 		{
-			var color = new CDocumentColor(r, g, b);
+			color = new CDocumentColor(color.r, color.g, color.b);
 			TextPr = new ParaTextPr({HighLight : color});
 			Document.AddToParagraph(TextPr);
 		}
@@ -3579,6 +3580,12 @@
 	/**
 	 * Value from 1 to 100.
 	 * @typedef {number} percentage
+	 */
+
+	/**
+	 * Available highlight colors.
+	 * @typedef {"black" | "blue" | "cyan" | "green" | "magenta" | "red" | "yellow" | "white" | "darkBlue" |
+	 * "darkCyan" | "darkGreen" | "darkMagenta" | "darkRed" | "darkYellow" | "darkGray" | "lightGray" | "none"} highlightColor
 	 */
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -5991,26 +5998,38 @@
 		return this;
 	};
 	/**
-	 * Specifies a highlighting color in the RGB format which is applied as a background to the contents of the current paragraph.
+	 * Specifies a highlighting color which is applied as a background to the contents of the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
-	 * @param {byte} r - Red color component value.
-	 * @param {byte} g - Green color component value.
-	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} [isNone=false] If this parameter is set to "true", then r,g,b parameters will be ignored.
+	 * @typeofeditors ["CDE, CPE"]
+	 * @param {highlightColor} sColor - available highlight color
 	 * @returns {ApiParagraph} this
 	 */
-	ApiParagraph.prototype.SetHighlight = function(r, g, b, isNone)
+	ApiParagraph.prototype.SetHighlight = function(sColor)
 	{
+		if (!editor || Asc.editor)
+			return this;
+			
 		this.Paragraph.SetApplyToAll(true);
-		if (true === isNone)
+		if ("none" === sColor)
 		{
-			this.Paragraph.Add(new ParaTextPr({HighLight : highlight_None}));
+			if (editor.editorId === AscCommon.c_oEditorId.Word)
+				this.Paragraph.Add(new ParaTextPr({HighLight : highlight_None}));
+			else if (editor.editorId === AscCommon.c_oEditorId.Presentation)
+				this.Paragraph.Add(new ParaTextPr({HighlightColor : null}));
 		}
 		else
 		{
-			var color = new CDocumentColor(r, g, b);
-			this.Paragraph.Add(new ParaTextPr({HighLight : color}));
+			var color = private_getHighlightColorByName(sColor);
+			if (color && editor.editorId === AscCommon.c_oEditorId.Word)
+			{
+				color = new CDocumentColor(color.r, color.g, color.b);
+				this.Paragraph.Add(new ParaTextPr({HighLight : color}));
+			}
+			else if (color && editor.editorId === AscCommon.c_oEditorId.Presentation)
+			{
+				color = AscFormat.CreateUniColorRGB(color.r, color.g, color.b);
+				this.Paragraph.Add(new ParaTextPr({HighlightColor : color}));
+			}
 		}
 		this.Paragraph.SetApplyToAll(false);
 		
@@ -7053,19 +7072,16 @@
 		return oTextPr;
 	};
 	/**
-	 * Specifies a highlighting color in the RGB format which is applied as a background for the contents of the current run.
+	 * Specifies a highlighting color which is applied as a background to the contents of the current run.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {byte} r - Red color component value.
-	 * @param {byte} g - Green color component value.
-	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} [isNone=false] If this parameter is set to "true", then r,g,b parameters will be ignored.
+	 * @typeofeditors ["CDE, CPE"]
+	 * @param {highlightColor} sColor - available highlight color
 	 * @returns {ApiTextPr}
 	 */
-	ApiRun.prototype.SetHighlight = function(r, g, b, isNone)
+	ApiRun.prototype.SetHighlight = function(sColor)
 	{
 		var oTextPr = this.GetTextPr();
-		oTextPr.SetHighlight(r, g, b, isNone);
+		oTextPr.SetHighlight(sColor);
 		
 		return oTextPr;
 	};
@@ -9309,25 +9325,35 @@
 		this.private_OnChange();
 	};
 	/**
-	 * Specifies a highlighting color in the RGB format which is applied as a background for the contents of the current run.
+	 * Specifies a highlighting color which is applied as a background to the contents of the current run.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE"]
-	 * @param {byte} r - Red color component value.
-	 * @param {byte} g - Green color component value.
-	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} [isNone=false] If this parameter is set to "true", then r,g,b parameters will be ignored.
+	 * @typeofeditors ["CDE, CPE"]
+	 * @param {highlightColor} sColor - available highlight color
+	 * @returns {ApiTextPr}
 	 */
-	ApiTextPr.prototype.SetHighlight = function(r, g, b, isNone)
+	ApiTextPr.prototype.SetHighlight = function(sColor)
 	{
-		if (undefined === isNone)
-			isNone = false;
+		if (!editor || Asc.editor)
+			return this;
 
-		if (true === isNone)
-			this.TextPr.HighLight = AscCommonWord.highlight_None;
+		if ("none" === sColor)
+		{
+			if (editor.editorId === AscCommon.c_oEditorId.Word)
+				this.TextPr.HighLight = AscCommonWord.highlight_None;
+			else if (editor.editorId === AscCommon.c_oEditorId.Presentation)
+				this.TextPr.HighlightColor = null;
+		}
 		else
-			this.TextPr.HighLight = new AscCommonWord.CDocumentColor(r, g, b, false);
-
+		{
+			var color = private_getHighlightColorByName(sColor);
+			if (color && editor.editorId === AscCommon.c_oEditorId.Word)
+				this.TextPr.HighLight = new CDocumentColor(color.r, color.g, color.b)
+			else if (color && editor.editorId === AscCommon.c_oEditorId.Presentation)
+				this.TextPr.HighlightColor = AscFormat.CreateUniColorRGB(color.r, color.g, color.b)
+		}
 		this.private_OnChange();
+		
+		return this;
 	};
 	/**
 	 * Sets the text spacing measured in twentieths of a point.
@@ -15320,6 +15346,69 @@
 				oContent.Push(oElement);
 			}
 		}
+	}
+
+	/**
+	 * Gets a document color object by color name.
+	 * @param {highlightColor} - available highlight color
+	 * @returns {object}
+	 */
+	function private_getHighlightColorByName(sColor)
+	{
+		var oColor;
+		switch (sColor)
+		{
+			case "black":
+				oColor = {r: 0, g: 0, b: 0};
+				break;
+			case "blue":
+				oColor = {r: 0, g: 0, b: 255};
+				break;
+			case "cyan":
+				oColor = {r: 0, g: 255, b: 255};
+				break;
+			case "green":
+				oColor = {r: 0, g: 255, b: 0};
+				break;
+			case "magenta":
+				oColor = {r: 255, g: 0, b: 255};
+				break;
+			case "red":
+				oColor = {r: 255, g: 0, b: 0};
+				break;
+			case "yellow":
+				oColor = {r: 255, g: 255, b: 0};
+				break;
+			case "white":
+				oColor = {r: 255, g: 255, b: 255};
+				break;
+			case "darkBlue":
+				oColor = {r: 0, g: 0, b: 139};
+				break;
+			case "darkCyan":
+				oColor = {r: 0, g: 139, b: 139};
+				break;
+			case "darkGreen":
+				oColor = {r: 0, g: 100, b: 0};
+				break;
+			case "darkMagenta":
+				oColor = {r: 128, g: 0, b: 128};
+				break;
+			case "darkRed":
+				oColor = {r: 139, g: 0, b: 0};
+				break;
+			case "darkYellow":
+				oColor = {r: 128, g: 128, b: 0};
+				break;
+			case "darkGray":
+				oColor = {r: 169, g: 169, b: 169};
+				break;
+			case "lightGray":
+				oColor = {r: 211, g: 211, b: 211};
+				break;
+		}
+
+		return oColor;
 	}
 
 	ApiDocument.prototype.OnChangeParaPr = function(oApiParaPr)
