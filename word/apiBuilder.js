@@ -2866,7 +2866,7 @@
 	ApiTextForm.prototype.constructor = ApiTextForm;
 	
 	/**
-	 * Class representing a document combobox form.
+	 * Class representing a document combo box form.
 	 * @constructor
 	 * @extends {ApiFormBase}
 	 */
@@ -13727,7 +13727,7 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Returns the list values from the current combobox.
+	 * Returns the list values from the current combo box.
 	 * @memberof ApiComboBoxForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {string[]}
@@ -13746,9 +13746,9 @@
 		return aValues;
 	};
 	/**
-	 * Sets the list values to the current combobox.
+	 * Sets the list values to the current combo box.
 	 * @memberof ApiComboBoxForm
-	 * @param {string[]} aListString - The combobox list values.
+	 * @param {string[]} aListString - The combo box list values.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -13778,9 +13778,9 @@
 		return true;
 	};
 	/**
-	 * Selects the specified value from the combobox list values. 
+	 * Selects the specified value from the combo box list values. 
 	 * @memberof ApiComboBoxForm
-	 * @param {string} sValue - The combobox list value that will be selected.
+	 * @param {string} sValue - The combo box list value that will be selected.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -13800,9 +13800,9 @@
 		return true;		
 	};
 	/**
-	 * Sets the text to the current combobox.
+	 * Sets the text to the current combo box.
 	 * @memberof ApiComboBoxForm
-	 * @param {string} sText - The combobox text.
+	 * @param {string} sText - The combo box text.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -13824,7 +13824,7 @@
 		return true;
 	};
 	/**
-	 * Checks if the combobox text can be edited.
+	 * Checks if the combo box text can be edited.
 	 * @memberof ApiComboBoxForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
