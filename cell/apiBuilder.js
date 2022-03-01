@@ -539,9 +539,10 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nSheet - The sheet index.
+	 * @param {boolean} [bWithFormat=false] - indicates that data will be received with the format.
 	 * @returns {string[][]}
 	 */
-	Api.prototype.private_GetMailMergeMap = function (nSheet) {
+	Api.prototype.private_GetMailMergeMap = function (nSheet, bWithFormat) {
 		var oSheet           = this.GetSheet(nSheet);
 		var arrMailMergeMap  = [];
 		var valuesInRow      = null;
@@ -575,9 +576,9 @@
 
 			for (var nCol = 0; nCol < colsCount; nCol++) {
 				oRange     = oSheet.GetRangeByNumber(nRow, nCol);
-				mergeValue = oRange.GetValue();
+				mergeValue = bWithFormat ? oRange.GetText() : oRange.GetValue();
 	
-				valuesInRow.push(oRange.GetValue());
+				valuesInRow.push(mergeValue);
 			}
 			
 			arrMailMergeMap.push(valuesInRow);
@@ -592,11 +593,15 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nSheet - The sheet index.
+	 * @param {boolean} [bWithFormat=false] - indicates that data will be received with the format.
 	 * @returns {string[][]} 
 	 */
-	Api.prototype.GetMailMergeData = function (nSheet) {
+	Api.prototype.GetMailMergeData = function (nSheet, bWithFormat) {
+		if (bWithFormat !== true)
+			bWithFormat = false;
+
 		var arrFields       = this.private_GetMailMergeFields(nSheet);
-		var arrMailMergeMap = this.private_GetMailMergeMap(nSheet, arrFields);
+		var arrMailMergeMap = this.private_GetMailMergeMap(nSheet, arrFields, bWithFormat);
 		var resultList      = [arrFields];
 
 		for (var nMailMergeMap = 0; nMailMergeMap < arrMailMergeMap.length; nMailMergeMap++) {
