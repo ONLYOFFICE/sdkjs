@@ -6179,6 +6179,12 @@ drawBarChart.prototype = {
 					brush = options.brush;
 				}
 
+				if (pen && pen.Join) {
+					pen = pen.createDuplicate();
+					pen.Join = new AscFormat.LineJoin();
+					pen.Join.type = Asc['c_oAscLineJoinType'].Round;
+				}
+
 				t._drawBar3D(paths, pen, brush, k, options.val);
 			}
 		};
