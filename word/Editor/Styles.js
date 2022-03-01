@@ -13191,10 +13191,16 @@ CTextPr.prototype.createDuplicateForSmartArt = function(oPr) {
 	TextPr.Bold      = this.Bold;
 	TextPr.Italic    = this.Italic;
 	TextPr.Strikeout = this.Strikeout;
+	TextPr.DStrikeout = this.DStrikeout;
+	TextPr.Caps       = this.Caps;
+	TextPr.SmallCaps  = this.SmallCaps;
+
 	TextPr.Underline = this.Underline;
 	TextPr.Lang       = this.Lang.Copy();
 	TextPr.Spacing    = this.Spacing;
-	TextPr.RFonts     = this.RFonts.Copy();
+	TextPr.RFonts     = this.RFonts.Copy()
+
+	TextPr.Vanish = this.Vanish;
 
 	if (oPr.custT) {
 		TextPr.FontSize = this.FontSize;
@@ -13215,15 +13221,15 @@ CTextPr.prototype.createDuplicateForSmartArt = function(oPr) {
 
 	if (undefined != this.Unifill)
 		TextPr.Unifill = this.Unifill.createDuplicate();
+
 	if (undefined != this.FontRef)
 		TextPr.FontRef = this.FontRef.createDuplicate();
 
 	if (undefined !== this.Shd)
 		TextPr.Shd = this.Shd.Copy();
+
 	if (undefined !== this.FontScale)
 		TextPr.FontScale = this.FontScale;
-
-	TextPr.Vanish = this.Vanish;
 
 	if (undefined != this.TextOutline)
 	{
@@ -16253,6 +16259,18 @@ CParaPr.prototype.Copy = function(bCopyPrChange, oPr)
 CParaPr.prototype.createDuplicateForSmartArt = function (bCopyPrChange, oPr) {
 	var ParaPr = new CParaPr();
 	ParaPr.Jc              = this.Jc;
+
+	if (undefined != this.Spacing)
+		ParaPr.Spacing = this.Spacing.Copy();
+
+	if (undefined != this.Ind) // TODO: apply only changed ind
+		ParaPr.Ind = this.Ind.Copy();
+
+	if (undefined != this.Tabs)
+		ParaPr.Tabs = this.Tabs.Copy();
+
+	if (undefined != this.DefaultTab)
+		ParaPr.DefaultTab = this.DefaultTab;
 	return ParaPr;
 };
 CParaPr.prototype.Merge = function(ParaPr)

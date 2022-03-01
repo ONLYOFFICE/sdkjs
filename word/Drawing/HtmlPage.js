@@ -2780,6 +2780,16 @@ function CEditorPage(api)
 	{
 		this.m_bIsFullRepaint = true;
 		this.OnScroll();
+
+		if (this.m_oApi.isUseNativeViewer)
+		{
+			var oViewer = this.m_oDrawingDocument.m_oDocumentRenderer;
+			if (oViewer)
+			{
+				oViewer.isClearPages = true;
+				oViewer.paint();
+			}
+		}
 	};
 
 	this.OnResize = function(isAttack)

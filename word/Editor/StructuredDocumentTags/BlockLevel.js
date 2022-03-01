@@ -1168,6 +1168,8 @@ CBlockLevelSdt.prototype.Is_UseInDocument = function(Id)
 {
 	if (Id === this.Content.GetId() && this.Parent)
 		return this.Parent.Is_UseInDocument(this.GetId());
+	else if (this.Parent && this.Parent.Is_UseInDocument)
+		return this.Parent.Is_UseInDocument(this.Get_Id());
 
 	return false;
 };

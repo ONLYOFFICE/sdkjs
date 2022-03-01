@@ -1322,15 +1322,15 @@ CGraphicObjects.prototype =
         {
             this.graphicPages[table.PageNum + table.PageController] = new CGraphicPage(table.PageNum + table.PageController, this);
         }
-        if(!hdr_ftr)
-        {
 
-            this.graphicPages[table.PageNum + table.PageController].addFloatTable(table);
-        }
-        else
-        {
-           // this.graphicPages[table.PageNum + table.PageController].hdrFtrPage.addFloatTable(table);
-        }
+		if (!hdr_ftr)
+		{
+			this.graphicPages[table.PageNum + table.PageController].addFloatTable(table);
+		}
+		else
+		{
+			this.graphicPages[table.PageNum + table.PageController].hdrFtrPage.addFloatTable(table);
+		}
     },
 
 	updateFloatTable : function(table)
@@ -1967,17 +1967,24 @@ CGraphicObjects.prototype =
             this.graphicPages[pageIndex] = new CGraphicPage(pageIndex, this);
     },
 
-    resetDrawingArrays : function(pageIndex, docContent)
-    {
-        var hdr_ftr = docContent.IsHdrFtr(true);
-        if(!hdr_ftr)
-        {
-            if(isRealObject(this.graphicPages[pageIndex]))
-            {
-                this.graphicPages[pageIndex].resetDrawingArrays(docContent);
-            }
-        }
-    },
+	resetDrawingArrays : function(pageIndex, docContent)
+	{
+		var hdr_ftr = docContent.IsHdrFtr(true);
+		if (!hdr_ftr)
+		{
+			if (isRealObject(this.graphicPages[pageIndex]))
+			{
+				this.graphicPages[pageIndex].resetDrawingArrays(docContent);
+			}
+		}
+	},
+
+	resetHdrFtrDrawingArrays : function(pageIndex)
+	{
+		let oPage = this.getHdrFtrObjectsByPageIndex(pageIndex);
+		if (oPage)
+			oPage.clear();
+	},
 
     mergeHdrFtrPages: function(page1, page2, pageIndex)
     {
@@ -2751,27 +2758,27 @@ CGraphicObjects.prototype =
 
     getGroup: DrawingObjectsController.prototype.getGroup,
 
-    addObjectOnPage: function(pageIndex, object)
-    {
-        var hdr_ftr = object.parent.DocumentContent.IsHdrFtr(true);
-        if(!hdr_ftr)
-        {
-            if(!this.graphicPages[pageIndex])
-            {
-                this.graphicPages[pageIndex] = new CGraphicPage(pageIndex, this);
-                for(var z = 0; z < pageIndex; ++z)
-                {
-                    if(!this.graphicPages[z])
-                        this.graphicPages[z] = new CGraphicPage(z, this);
-                }
-            }
-            this.graphicPages[pageIndex].addObject(object);
-        }
-        else
-        {
-            //hdr_ftr.DrawingPage.addObject(object);
-        }
-    },
+	addObjectOnPage : function(pageIndex, object)
+	{
+		if (!this.graphicPages[pageIndex])
+		{
+			this.graphicPages[pageIndex] = new CGraphicPage(pageIndex, this);
+			for (var z = 0; z < pageIndex; ++z)
+			{
+				if (!this.graphicPages[z])
+					this.graphicPages[z] = new CGraphicPage(z, this);
+			}
+		}
+
+		if (!object.parent.DocumentContent.IsHdrFtr(true))
+		{
+			this.graphicPages[pageIndex].addObject(object);
+		}
+		else
+		{
+			this.graphicPages[pageIndex].hdrFtrPage.addObject(object);
+		}
+	},
 
     cursorGetPos: function()
     {

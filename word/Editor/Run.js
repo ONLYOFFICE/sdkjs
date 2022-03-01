@@ -352,7 +352,7 @@ ParaRun.prototype.Copy2 = function(oPr)
 ParaRun.prototype.createDuplicateForSmartArt = function(oPr)
 {
 	var NewRun = new ParaRun(this.Paragraph);
-	NewRun.Set_Pr(this.Pr.createDuplicateForSmartArt(oPr) );
+	NewRun.Set_Pr(this.Pr.createDuplicateForSmartArt(oPr));
 	var StartPos = 0;
 	var EndPos   = this.Content.length;
 	var CurPos;
@@ -8935,7 +8935,7 @@ ParaRun.prototype.Apply_Pr = function(TextPr)
 		if (undefined !== TextPr.Color)
 		{
 			this.Set_Color(null === TextPr.Color ? undefined : TextPr.Color);
-			if(null !== TextPr.Colornull)
+			if(null !== TextPr.Color)
 			{
 				this.Set_Unifill(undefined);
 				this.Set_TextFill(undefined);

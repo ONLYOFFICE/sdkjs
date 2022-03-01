@@ -1834,6 +1834,10 @@
       return [this.spPr, this.t, this.prSet];
     };
 
+    Point.prototype.getPresStyleLbl = function () {
+      return this.prSet && this.prSet.presStyleLbl;
+    };
+
 
 
     changesFactory[AscDFH.historyitem_PrSetCoherent3DOff] = CChangeBool;
@@ -7321,14 +7325,44 @@
     }
 
 
+    function CChangesDrawingsContentStyleLbl(Class, Type, Pos, Items, isAdd) {
+      AscDFH.CChangesDrawingsContent.call(this, Class, Type, Pos, Items, isAdd);
+    }
+
+    CChangesDrawingsContentStyleLbl.prototype = Object.create(AscDFH.CChangesDrawingsContent.prototype);
+    CChangesDrawingsContentStyleLbl.prototype.constructor = CChangesDrawingsContentStyleLbl;
+
+    CChangesDrawingsContentStyleLbl.prototype.Undo = function () {
+      AscDFH.CChangesDrawingsContent.prototype.Undo.call(this);
+      this.updateStyleLbl();
+    };
+
+    CChangesDrawingsContentStyleLbl.prototype.Redo = function () {
+      AscDFH.CChangesDrawingsContent.prototype.Redo.call(this);
+      this.updateStyleLbl();
+    };
+
+    CChangesDrawingsContentStyleLbl.prototype.updateStyleLbl = function () {
+      //console.log(this.Items);
+      if (this.IsAdd()) {
+        for (var i = 0; i < this.Items.length; i += 1) {
+          this.Class.styleLblByName[this.Items[i].name] = this.Items[i];
+        }
+      } else {
+        for (var i = 0; i < this.Items.length; i += 1) {
+          delete this.Class.styleLblByName[this.Items[i].name];
+        }
+      }
+    };
+
     changesFactory[AscDFH.historyitem_ColorsDefMinVer] = CChangeString;
     changesFactory[AscDFH.historyitem_ColorsDefUniqueId] = CChangeString;
     changesFactory[AscDFH.historyitem_ColorsDefCatLst] = CChangeObject;
     changesFactory[AscDFH.historyitem_ColorsDefExtLst] = CChangeObject;
     changesFactory[AscDFH.historyitem_ColorsDefDesc] = CChangeObject;
     changesFactory[AscDFH.historyitem_ColorsDefTitle] = CChangeObject;
-    changesFactory[AscDFH.historyitem_ColorsDefAddStyleLbl] = CChangeContent;
-    changesFactory[AscDFH.historyitem_ColorsDefRemoveStyleLbl] = CChangeContent;
+    changesFactory[AscDFH.historyitem_ColorsDefAddStyleLbl] = CChangesDrawingsContentStyleLbl;
+    changesFactory[AscDFH.historyitem_ColorsDefRemoveStyleLbl] = CChangesDrawingsContentStyleLbl;
     drawingsChangesMap[AscDFH.historyitem_ColorsDefMinVer] = function (oClass, value) {
       oClass.minVer = value;
     };
@@ -7363,6 +7397,7 @@
       this.desc = null;
       this.title = null;
       this.styleLbl = [];
+      this.styleLblByName = {};
     }
 
     InitClass(ColorsDef, CBaseFormatObject, AscDFH.historyitem_type_ColorsDef);
@@ -7403,16 +7438,18 @@
 
     ColorsDef.prototype.addToLstStyleLbl = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.styleLbl.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ColorsDefAddStyleLbl, nInsertIdx, [oPr], true));
+      oHistory.Add(new CChangesDrawingsContentStyleLbl(this, AscDFH.historyitem_ColorsDefAddStyleLbl, nInsertIdx, [oPr], true));
       this.styleLbl.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
+      this.styleLblByName[oPr.name] = oPr;
     };
 
     ColorsDef.prototype.removeFromLstStyleLbl = function (nIdx) {
       if (nIdx > -1 && nIdx < this.styleLbl.length) {
         this.styleLbl[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ColorsDefRemoveStyleLbl, nIdx, [this.styleLbl[nIdx]], false));
-        this.styleLbl.splice(nIdx, 1);
+        oHistory.Add(new CChangesDrawingsContentStyleLbl(this, AscDFH.historyitem_ColorsDefRemoveStyleLbl, nIdx, [this.styleLbl[nIdx]], false));
+        var deleteObj = this.styleLbl.splice(nIdx, 1);
+        delete this.styleLblByName[deleteObj[0].name];
       }
     };
 
@@ -9958,6 +9995,40 @@
         }
       }
       return tree;
+    }
+
+    SmartArt.prototype.getDefColorsByName = function () {
+      var colorsDef = this.getColorsDef();
+      return colorsDef && colorsDef.styleLblByName;
+    }
+
+    SmartArt.prototype.getDefaultColorsForPoint = function (point) {
+      var styleLbl = point.getPresStyleLbl();
+      var defaultColors = this.getDefColorsByName();
+      if (defaultColors && styleLbl) {
+        return defaultColors[styleLbl];
+      }
+    }
+    
+    SmartArt.prototype.getDefaultTxColorFromPoint = function (point) {
+      var currentDefaultColors = this.getDefaultColorsForPoint(point);
+      if (currentDefaultColors) {
+        var txFillLst = currentDefaultColors.txFillClrLst;
+        if (txFillLst) {
+          return txFillLst.list[0];
+        }
+      }
+    }
+    
+    SmartArt.prototype.getSmartArtDefaultTxFill = function (shape) {
+      var shapePoint = shape && shape.getSmartArtShapePoint();
+      var defaultTxColorFromShape = shapePoint && this.getDefaultTxColorFromPoint(shapePoint);
+      var defaultTxFill;
+
+      if (defaultTxColorFromShape) {
+        defaultTxFill = AscFormat.CreateUniFillByUniColorCopy(defaultTxColorFromShape);
+      }
+      return defaultTxFill;
     }
 
     SmartArt.prototype.getTypeOfSmartArt = function () {

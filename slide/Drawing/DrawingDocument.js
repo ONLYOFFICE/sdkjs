@@ -3884,10 +3884,15 @@ function CDrawingDocument()
 
 	this.OnAnimPaneChanged = function(nSlideNum, oRect)
 	{
+		if(!this.m_oWordControl || !this.m_oWordControl.m_oAnimPaneApi)
+		{
+			return;
+		}
 		if(nSlideNum !== this.SlideCurrent)
 		{
 			return;
 		}
+
 		this.m_oWordControl.m_oAnimPaneApi.OnAnimPaneChanged(nSlideNum, oRect);
 	};
 }
@@ -6654,6 +6659,10 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 	};
 	oThis.CheckControl = function()
 	{
+		if(!oThis.HtmlPage.m_oApi.isDocumentLoadComplete)
+		{
+			return;
+		}
 		if(!oThis.Control)
 		{
 			if(oThis.HtmlPage.m_oLogicDocument)

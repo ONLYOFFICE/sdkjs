@@ -1334,6 +1334,7 @@ Paragraph.prototype.private_RecalculateLinePosition    = function(CurLine, CurPa
 				// Адобовский вариант отступа первой строки для многострочных форм
 				var oTextPr = oRun.Get_CompiledTextPr(false);
 				g_oTextMeasurer.SetTextPr(oTextPr, this.GetTheme());
+				g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
 				var oLimits = g_oTextMeasurer.GetLimitsY();
 				var nBBoxH  = oLimits.max - oLimits.min + 2 * 25.4 / 72;
 

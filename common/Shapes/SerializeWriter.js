@@ -2231,8 +2231,13 @@ function CBinaryFileWriter()
         if(rPr.TextOutline)
             oThis.WriteRecord1(0, rPr.TextOutline, oThis.WriteLn);
 
-        if(rPr.Unifill)
+        var color = rPr.Color;
+        if (color && !(rPr.Unifill && rPr.Unifill.fill)) {
+            var unifill = AscFormat.CreateSolidFillRGBA(color.r, color.g, color.b, 255);
+            oThis.WriteRecord1(1, unifill, oThis.WriteUniFill);
+        } else if(rPr.Unifill) {
             oThis.WriteRecord1(1, rPr.Unifill, oThis.WriteUniFill);
+        }
 
         if (rPr.RFonts)
         {

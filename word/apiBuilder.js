@@ -2036,17 +2036,18 @@
 	};
 
 	/**
-	 * Specifies a highlighting color in the RGB format which is applied as a background for the contents of the current Range.
+	 * Specifies a highlighting color which is applied as a background to the contents of the current Range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {byte} r - Red color component value.
-	 * @param {byte} g - Green color component value.
-	 * @param {byte} b - Blue color component value.
-	 * @param {bool} [isNone=false] If this parameter is set to "true", then r,g,b parameters will be ignored.
+	 * @param {highlightColor} sColor - available highlight color
 	 * @returns {ApiRange | null} - returns null if can't apply highlight.
 	 */
-	ApiRange.prototype.SetHighlight = function(r, g, b, isNone)
+	ApiRange.prototype.SetHighlight = function(sColor)
 	{
+		var color = private_getHighlightColorByName(sColor);
+		if (!color && sColor !== "none")
+			return null;
+
 		private_RefreshRangesPosition();
 		private_RemoveEmptyRanges();
 
@@ -2072,14 +2073,14 @@
 		}
 
 		var TextPr = null;
-		if (true === isNone)
+		if ("none" === sColor)
 		{
 			TextPr = new ParaTextPr({HighLight : highlight_None});
 			Document.AddToParagraph(TextPr);
 		}
 		else
 		{
-			var color = new CDocumentColor(r, g, b);
+			color = new CDocumentColor(color.r, color.g, color.b);
 			TextPr = new ParaTextPr({HighLight : color});
 			Document.AddToParagraph(TextPr);
 		}
@@ -3459,7 +3460,7 @@
 
 	/**
 	 * The types of elements that can be added to the paragraph structure.
-	 * @typedef {(ApiUnsupported | ApiRun | ApiInlineLvlSdt)} ParagraphContent
+	 * @typedef {(ApiUnsupported | ApiRun | ApiInlineLvlSdt | ApiHyperlink)} ParagraphContent
 	 */
 
 	/**
@@ -3579,6 +3580,12 @@
 	/**
 	 * Value from 1 to 100.
 	 * @typedef {number} percentage
+	 */
+
+	/**
+	 * Available highlight colors.
+	 * @typedef {"black" | "blue" | "cyan" | "green" | "magenta" | "red" | "yellow" | "white" | "darkBlue" |
+	 * "darkCyan" | "darkGreen" | "darkMagenta" | "darkRed" | "darkYellow" | "darkGray" | "lightGray" | "none"} highlightColor
 	 */
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -4022,7 +4029,7 @@
 	 */
 	Api.prototype.CreateBlockLvlSdt = function()
 	{
-		return new ApiBlockLvlSdt(new CBlockLevelSdt(editor.private_GetLogicDocument()));
+		return new ApiBlockLvlSdt(new CBlockLevelSdt(editor.private_GetLogicDocument(), private_GetLogicDocument()));
 	};
 
 	/**
@@ -4229,8 +4236,7 @@
 		// Если oElement не является массивом, определяем параграф это или документ
 		if (!Array.isArray(oElement))
 		{
-			// Проверка на параграф
-			if (oElement instanceof ApiParagraph | oElement instanceof ApiDocument)
+			if (oElement instanceof ApiParagraph || oElement instanceof ApiDocument)
 				return oElement.AddComment(Comment, Autor);
 		}
 		// Проверка на массив с ранами
@@ -4251,34 +4257,55 @@
 					return false;
 			}
 			
+			var oDocument = private_GetLogicDocument();
+
 			var CommentData = new AscCommon.CCommentData();
 			CommentData.SetText(Comment);
 			CommentData.SetUserName(Autor);
 
-			var oDocument = private_GetLogicDocument();
-			
 			var oStartRun = private_GetFirstRunInArray(oElement); 
-			var StartPos = oStartRun.Run.GetDocumentPositionFromObject();
-
+			var oStartPos = oStartRun.Run.GetDocumentPositionFromObject();
 			var oEndRun	= private_GetLastRunInArray(oElement)
-			var EndPos	= oEndRun.Run.GetDocumentPositionFromObject();
+			var oEndPos	= oEndRun.Run.GetDocumentPositionFromObject();
 
-			StartPos.push({Class: oStartRun.Run, Position: 0});
-			EndPos.push({Class: oEndRun.Run, Position: oEndRun.Run.Content.length});
+			oStartPos.push({Class: oStartRun.Run, Position: 0});
+			oEndPos.push({Class: oEndRun.Run, Position: oEndRun.Run.Content.length});
 
 			oDocument.Selection.Use = true;
-			oDocument.SetContentSelection(StartPos, EndPos, 0, 0, 0);
-			
-			var COMENT = oDocument.AddComment(CommentData, false);
+			oDocument.SetContentSelection(oStartPos, oEndPos, 0, 0, 0);
+
+			var sQuotedText = oDocument.GetSelectedText(false);
+			CommentData.Set_QuoteText(sQuotedText);
+
+			var oComment = new AscCommon.CComment(oDocument.Comments, CommentData);
+			oDocument.Comments.Add(oComment);
 			oDocument.RemoveSelection();
-			
-			if (null != COMENT)
+
+			var oCommentEnd = new AscCommon.ParaComment(false, oComment.Get_Id());
+			oComment.SetRangeEnd(oCommentEnd.GetId());
+			var oEndRunParent = oEndRun.Run.GetParent();
+			if (!oEndRunParent)
+				return false;
+			var nEndRunPosInParent = oEndRun.Run.GetPosInParent();
+			oEndRunParent.Internal_Content_Add(nEndRunPosInParent + 1, oCommentEnd);
+
+			var oCommentStart = new AscCommon.ParaComment(true, oComment.Get_Id());
+			oComment.SetRangeStart(oCommentStart.GetId());
+			var oStartRunParent = oStartRun.Run.GetParent();
+			if (!oStartRunParent)
+				return false;
+			var nStartRunPosInParent = oStartRun.Run.GetPosInParent();
+			oStartRunParent.Internal_Content_Add(nStartRunPosInParent, oCommentStart);
+
+			if (null != oComment)
 			{
-				editor.sync_AddComment(COMENT.Get_Id(), CommentData);
+				editor.sync_AddComment(oComment.Get_Id(), CommentData);
 			}
 
 			return true;
 		}
+
+		return false;
 	};
 
 	
@@ -4342,7 +4369,10 @@
 	{
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
-			this.Document.Internal_Content_Add(nPos, oElement.private_GetImpl());
+			var oElm = oElement.private_GetImpl();
+			if (oElm.Is_UseInDocument())
+				return false;
+			this.Document.Internal_Content_Add(nPos, oElm);
 		}
 	};
 	/**
@@ -4356,7 +4386,11 @@
 	{
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
-			this.Document.Internal_Content_Add(this.Document.Content.length, oElement.private_GetImpl());
+			var oElm = oElement.private_GetImpl();
+			if (oElm.Is_UseInDocument())
+				return false;
+
+			this.Document.Internal_Content_Add(this.Document.Content.length, oElm);
 			return true;
 		}
 
@@ -4604,12 +4638,17 @@
 		for (var nIndex = 0, nCount = arrContent.length; nIndex < nCount; ++nIndex)
 		{
 			var oElement = arrContent[nIndex];
-			if (oElement instanceof ApiParagraph || oElement instanceof ApiTable)
+			var oElm;
+			if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 			{
+				oElm = oElement.private_GetImpl();
+				if (oElm.Is_UseInDocument())
+					continue;
+
 				if (true === isInline && oElement instanceof ApiParagraph)
-					oSelectedContent.Add(new CSelectedElement(oElement.private_GetImpl(), false));
+					oSelectedContent.Add(new CSelectedElement(oElm, false));
 				else
-					oSelectedContent.Add(new CSelectedElement(oElement.private_GetImpl(), true));
+					oSelectedContent.Add(new CSelectedElement(oElm, true));
 			}
 		}
 		oSelectedContent.On_EndCollectElements(this.Document, true);
@@ -5608,6 +5647,9 @@
 			return false;
 
 		var oParaElement = oElement.private_GetImpl();
+		if (oParaElement.Is_UseInDocument())
+			return false;
+
 		if (undefined !== nPos)
 		{
 			this.Paragraph.Add_ToContent(nPos, oParaElement);
@@ -5684,35 +5726,29 @@
 	{
 		if (!Comment || typeof(Comment) !== "string")
 			return false;
-	
 		if (typeof(Autor) !== "string")
 			Autor = "";
 
+		var oDocument = private_GetLogicDocument();
+
+		var sQuotedText = this.GetText();
 		var CommentData = new AscCommon.CCommentData();
+		CommentData.Set_QuoteText(sQuotedText);
 		CommentData.SetText(Comment);
 		CommentData.SetUserName(Autor);
-
-		var oDocument = private_GetLogicDocument()
-
-		var oFirstun    = this.Paragraph.GetFirstRun();
-		var StartPos	= oFirstun.GetDocumentPositionFromObject();
-		var oEndRun     = this.Paragraph.Content[this.Paragraph.Content.length - 2];
-		var EndPos		= oEndRun.GetDocumentPositionFromObject();
-		StartPos.push({Class: oFirstun, Position: 0});
-		EndPos.push({Class: oEndRun, Position: oEndRun.Content.length});
-
-		oDocument.Selection.Use = true;
-		oDocument.SetContentSelection(StartPos, EndPos, 0, 0, 0);
-
-		var COMENT = oDocument.AddComment(CommentData, false);
-		oDocument.RemoveSelection();
 		
-		if (null != COMENT)
+		var oComment = new AscCommon.CComment(oDocument.Comments, CommentData);
+		oDocument.Comments.Add(oComment);
+		this.Paragraph.SetApplyToAll(true);
+		this.Paragraph.AddComment(oComment, true, true);
+		this.Paragraph.SetApplyToAll(false);
+
+		if (null != oComment)
 		{
-			editor.sync_AddComment(COMENT.Get_Id(), CommentData);
+			editor.sync_AddComment(oComment.Get_Id(), CommentData);
 		}
 
-		return true;
+		return true
 	};
 	/**
 	 * Adds a hyperlink to a paragraph. 
@@ -5773,7 +5809,10 @@
 	 */
 	ApiParagraph.prototype.Push = function(oElement)
 	{
-		if (oElement instanceof ApiRun || ApiInlineLvlSdt)
+		if (oElement.private_GetImpl().Is_UseInDocument())
+			return false;
+
+		if (oElement instanceof ApiRun || ApiInlineLvlSdt || ApiHyperlink)
 		{
 			this.AddElement(oElement);
 		}
@@ -5959,26 +5998,38 @@
 		return this;
 	};
 	/**
-	 * Specifies a highlighting color in the RGB format which is applied as a background to the contents of the current paragraph.
+	 * Specifies a highlighting color which is applied as a background to the contents of the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE"]
-	 * @param {byte} r - Red color component value.
-	 * @param {byte} g - Green color component value.
-	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} [isNone=false] If this parameter is set to "true", then r,g,b parameters will be ignored.
+	 * @typeofeditors ["CDE, CPE"]
+	 * @param {highlightColor} sColor - available highlight color
 	 * @returns {ApiParagraph} this
 	 */
-	ApiParagraph.prototype.SetHighlight = function(r, g, b, isNone)
+	ApiParagraph.prototype.SetHighlight = function(sColor)
 	{
+		if (!editor || Asc.editor)
+			return this;
+			
 		this.Paragraph.SetApplyToAll(true);
-		if (true === isNone)
+		if ("none" === sColor)
 		{
-			this.Paragraph.Add(new ParaTextPr({HighLight : highlight_None}));
+			if (editor.editorId === AscCommon.c_oEditorId.Word)
+				this.Paragraph.Add(new ParaTextPr({HighLight : highlight_None}));
+			else if (editor.editorId === AscCommon.c_oEditorId.Presentation)
+				this.Paragraph.Add(new ParaTextPr({HighlightColor : null}));
 		}
 		else
 		{
-			var color = new CDocumentColor(r, g, b);
-			this.Paragraph.Add(new ParaTextPr({HighLight : color}));
+			var color = private_getHighlightColorByName(sColor);
+			if (color && editor.editorId === AscCommon.c_oEditorId.Word)
+			{
+				color = new CDocumentColor(color.r, color.g, color.b);
+				this.Paragraph.Add(new ParaTextPr({HighLight : color}));
+			}
+			else if (color && editor.editorId === AscCommon.c_oEditorId.Presentation)
+			{
+				color = AscFormat.CreateUniColorRGB(color.r, color.g, color.b);
+				this.Paragraph.Add(new ParaTextPr({HighlightColor : color}));
+			}
 		}
 		this.Paragraph.SetApplyToAll(false);
 		
@@ -7021,19 +7072,16 @@
 		return oTextPr;
 	};
 	/**
-	 * Specifies a highlighting color in the RGB format which is applied as a background for the contents of the current run.
+	 * Specifies a highlighting color which is applied as a background to the contents of the current run.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {byte} r - Red color component value.
-	 * @param {byte} g - Green color component value.
-	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} [isNone=false] If this parameter is set to "true", then r,g,b parameters will be ignored.
+	 * @typeofeditors ["CDE, CPE"]
+	 * @param {highlightColor} sColor - available highlight color
 	 * @returns {ApiTextPr}
 	 */
-	ApiRun.prototype.SetHighlight = function(r, g, b, isNone)
+	ApiRun.prototype.SetHighlight = function(sColor)
 	{
 		var oTextPr = this.GetTextPr();
-		oTextPr.SetHighlight(r, g, b, isNone);
+		oTextPr.SetHighlight(sColor);
 		
 		return oTextPr;
 	};
@@ -7880,7 +7928,10 @@
 
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
-			apiCellContent.Document.Internal_Content_Add(nPos, oElement.private_GetImpl());
+			var oElm = oElement.private_GetImpl();
+			if (oElm.Is_UseInDocument())
+				return false;
+			apiCellContent.Document.Internal_Content_Add(nPos, oElm);
 
 			return true;
 		}
@@ -8957,7 +9008,10 @@
 
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
-			apiCellContent.Document.Internal_Content_Add(nPos, oElement.private_GetImpl());
+			var oElm = oElement.private_GetImpl();
+			if (oElm.Is_UseInDocument())
+				return false;
+			apiCellContent.Document.Internal_Content_Add(nPos, oElm);
 
 			return true;
 		}
@@ -9271,25 +9325,35 @@
 		this.private_OnChange();
 	};
 	/**
-	 * Specifies a highlighting color in the RGB format which is applied as a background for the contents of the current run.
+	 * Specifies a highlighting color which is applied as a background to the contents of the current run.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE"]
-	 * @param {byte} r - Red color component value.
-	 * @param {byte} g - Green color component value.
-	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} [isNone=false] If this parameter is set to "true", then r,g,b parameters will be ignored.
+	 * @typeofeditors ["CDE, CPE"]
+	 * @param {highlightColor} sColor - available highlight color
+	 * @returns {ApiTextPr}
 	 */
-	ApiTextPr.prototype.SetHighlight = function(r, g, b, isNone)
+	ApiTextPr.prototype.SetHighlight = function(sColor)
 	{
-		if (undefined === isNone)
-			isNone = false;
+		if (!editor || Asc.editor)
+			return this;
 
-		if (true === isNone)
-			this.TextPr.HighLight = AscCommonWord.highlight_None;
+		if ("none" === sColor)
+		{
+			if (editor.editorId === AscCommon.c_oEditorId.Word)
+				this.TextPr.HighLight = AscCommonWord.highlight_None;
+			else if (editor.editorId === AscCommon.c_oEditorId.Presentation)
+				this.TextPr.HighlightColor = null;
+		}
 		else
-			this.TextPr.HighLight = new AscCommonWord.CDocumentColor(r, g, b, false);
-
+		{
+			var color = private_getHighlightColorByName(sColor);
+			if (color && editor.editorId === AscCommon.c_oEditorId.Word)
+				this.TextPr.HighLight = new CDocumentColor(color.r, color.g, color.b)
+			else if (color && editor.editorId === AscCommon.c_oEditorId.Presentation)
+				this.TextPr.HighlightColor = AscFormat.CreateUniColorRGB(color.r, color.g, color.b)
+		}
 		this.private_OnChange();
+		
+		return this;
 	};
 	/**
 	 * Sets the text spacing measured in twentieths of a point.
@@ -12295,14 +12359,21 @@
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {number} nPos - The position of the element which we want to remove from the current inline text content control.
+	 * @returns {boolean}
 	 */
 	ApiInlineLvlSdt.prototype.RemoveElement = function(nPos)
 	{
 		if (nPos < 0 || nPos >= this.Sdt.Content.length)
-			return;
+			return false;
 
 		this.Sdt.RemoveFromContent(nPos, 1);
-		this.Sdt.CorrectContent();
+		if (this.Sdt.Content.length === 0)
+		{
+			this.Sdt.SetShowingPlcHdr(true);
+			this.Sdt.private_FillPlaceholderContent();
+		}
+
+		return true;
 	};
 
 	/**
@@ -12316,7 +12387,11 @@
 		if (this.Sdt.Content.length > 0)
 		{
 			this.Sdt.RemoveFromContent(0, this.Sdt.Content.length);
-			this.Sdt.CorrectContent();
+			if (this.Sdt.Content.length === 0)
+			{
+				this.Sdt.SetShowingPlcHdr(true);
+				this.Sdt.private_FillPlaceholderContent();
+			}
 
 			return true;
 		}
@@ -12338,6 +12413,15 @@
 			return false;
 
 		var oParaElement = oElement.private_GetImpl();
+		if (oParaElement.Is_UseInDocument())
+			return false;
+
+		if (this.Sdt.IsShowingPlcHdr())
+		{
+			this.Sdt.RemoveFromContent(0, this.Sdt.GetElementsCount(), false);
+			this.Sdt.SetShowingPlcHdr(false);
+		}
+
 		if (undefined !== nPos)
 		{
 			this.Sdt.AddToContent(nPos, oParaElement);
@@ -12362,13 +12446,15 @@
 		if (!private_IsSupportedParaElement(oElement))
 			return false;
 
+		var oParaElement = oElement.private_GetImpl();
+		if (oParaElement.Is_UseInDocument())
+			return false;
+
 		if (this.Sdt.IsShowingPlcHdr())
 		{
 			this.Sdt.RemoveFromContent(0, this.Sdt.GetElementsCount(), false);
 			this.Sdt.SetShowingPlcHdr(false);
 		}
-
-		var oParaElement = oElement.private_GetImpl();
 
 		this.Sdt.AddToContent(this.Sdt.GetElementsCount(), oParaElement);
 
@@ -12386,6 +12472,12 @@
 	{
 		if (typeof sText === "string")
 		{
+			if (this.Sdt.IsShowingPlcHdr())
+			{
+				this.Sdt.RemoveFromContent(0, this.Sdt.GetElementsCount(), false);
+				this.Sdt.SetShowingPlcHdr(false);
+			}
+
 			var newRun = editor.CreateRun();
 			newRun.AddText(sText);
 			this.AddElement(newRun, this.GetElementsCount())
@@ -12981,13 +13073,17 @@
 	{
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || ApiBlockLvlSdt)
 		{
+			var oElm = oElement.private_GetImpl();
+			if (oElm.Is_UseInDocument())
+				return false;
+
 			if (this.Sdt.IsShowingPlcHdr())
 			{
 				this.Sdt.Content.RemoveFromContent(0, this.Sdt.Content.GetElementsCount(), false);
 				this.Sdt.SetShowingPlcHdr(false);
 			}
 			
-			this.Sdt.Content.Internal_Content_Add(this.Sdt.Content.Content.length, oElement.private_GetImpl());
+			this.Sdt.Content.Internal_Content_Add(this.Sdt.Content.Content.length, oElm);
 			return true;
 		}
 
@@ -13006,13 +13102,17 @@
 	{
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || ApiBlockLvlSdt)
 		{
+			var oElm = oElement.private_GetImpl();
+			if (oElm.Is_UseInDocument())
+				return false;
+
 			if (this.Sdt.IsShowingPlcHdr())
 			{
 				this.Sdt.Content.RemoveFromContent(0, this.Sdt.Content.GetElementsCount(), false);
 				this.Sdt.SetShowingPlcHdr(false);
 			}
 			
-			this.Sdt.Content.Internal_Content_Add(nPos, oElement.private_GetImpl());
+			this.Sdt.Content.Internal_Content_Add(nPos, oElm);
 			return true;
 		}
 
@@ -15246,6 +15346,69 @@
 				oContent.Push(oElement);
 			}
 		}
+	}
+
+	/**
+	 * Gets a document color object by color name.
+	 * @param {highlightColor} - available highlight color
+	 * @returns {object}
+	 */
+	function private_getHighlightColorByName(sColor)
+	{
+		var oColor;
+		switch (sColor)
+		{
+			case "black":
+				oColor = {r: 0, g: 0, b: 0};
+				break;
+			case "blue":
+				oColor = {r: 0, g: 0, b: 255};
+				break;
+			case "cyan":
+				oColor = {r: 0, g: 255, b: 255};
+				break;
+			case "green":
+				oColor = {r: 0, g: 255, b: 0};
+				break;
+			case "magenta":
+				oColor = {r: 255, g: 0, b: 255};
+				break;
+			case "red":
+				oColor = {r: 255, g: 0, b: 0};
+				break;
+			case "yellow":
+				oColor = {r: 255, g: 255, b: 0};
+				break;
+			case "white":
+				oColor = {r: 255, g: 255, b: 255};
+				break;
+			case "darkBlue":
+				oColor = {r: 0, g: 0, b: 139};
+				break;
+			case "darkCyan":
+				oColor = {r: 0, g: 139, b: 139};
+				break;
+			case "darkGreen":
+				oColor = {r: 0, g: 100, b: 0};
+				break;
+			case "darkMagenta":
+				oColor = {r: 128, g: 0, b: 128};
+				break;
+			case "darkRed":
+				oColor = {r: 139, g: 0, b: 0};
+				break;
+			case "darkYellow":
+				oColor = {r: 128, g: 128, b: 0};
+				break;
+			case "darkGray":
+				oColor = {r: 169, g: 169, b: 169};
+				break;
+			case "lightGray":
+				oColor = {r: 211, g: 211, b: 211};
+				break;
+		}
+
+		return oColor;
 	}
 
 	ApiDocument.prototype.OnChangeParaPr = function(oApiParaPr)

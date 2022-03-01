@@ -443,8 +443,12 @@ CSelectedContent.prototype =
         this.MoveDrawing = Value;
     },
 
-    On_EndCollectElements : function(LogicDocument, bFromCopy)
+    On_EndCollectElements : function(LogicDocument)
     {
+    	// TODO: Данную функцию нужно разделить на 2. Первая будет обрабатывать элементы после сборки
+		//       и собирать различные списки. Вторая нужна перед непосредственной вставкой, она должна
+		//       делать копии объектов типа комментариев, DocParts и других
+
         // Теперь пройдемся по всем найденным элементам и выясним есть ли автофигуры и комментарии
         var Count = this.Elements.length;
 
@@ -501,7 +505,7 @@ CSelectedContent.prototype =
             }
         }
 
-        this.CheckComments(LogicDocument, bFromCopy);
+        this.CheckComments(LogicDocument);
 		this.CheckDocPartNames(LogicDocument);
 
         // Ставим метки переноса в начало и конец
@@ -858,7 +862,7 @@ CSelectedContent.prototype.CheckDocPartNames = function(oLogicDocument)
 		}
 	}
 };
-CSelectedContent.prototype.CheckComments = function(oLogicDocument, isFromCopy)
+CSelectedContent.prototype.CheckComments = function(oLogicDocument)
 {
 	if (!(oLogicDocument instanceof CDocument))
 		return;
@@ -905,8 +909,9 @@ CSelectedContent.prototype.CheckComments = function(oLogicDocument, isFromCopy)
 		}
 	}
 
-	// TODO: Проверить необходимость этого условия
-	if (!isFromCopy && oLogicDocument.GetHistory().Is_On())
+	// Если история включена, то мы не можем быть уверены, что один и тот же комментарий не вставляется несколько раз,
+	// поэтому необходимо делать копию
+	if (oLogicDocument.GetHistory().IsOn())
 	{
 		var oCommentsManager = oLogicDocument.GetCommentsManager();
 		for (var sId in mCommentsMarks)
@@ -2716,6 +2721,8 @@ CDocument.prototype.IsLoadingDocument = function()
 CDocument.prototype.On_EndLoad                     = function()
 {
 	this.ClearListsCache();
+
+	this.TrackRevisionsManager.InitSelectedChanges();
 
     // Обновляем информацию о секциях
     this.UpdateAllSectionsInfo();
@@ -28073,6 +28080,12 @@ CTrackRevisionsManager.prototype.GetCurrentChangeElement = function()
 CTrackRevisionsManager.prototype.GetCurrentChange = function()
 {
     return this.CurChange;
+};
+CTrackRevisionsManager.prototype.InitSelectedChanges = function()
+{
+	var oEditorApi = this.LogicDocument.GetApi();
+	oEditorApi.sync_BeginCatchRevisionsChanges();
+	oEditorApi.sync_EndCatchRevisionsChanges();
 };
 CTrackRevisionsManager.prototype.ClearSelectedChanges = function()
 {

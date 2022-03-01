@@ -2837,9 +2837,6 @@ CInlineLevelSdt.prototype.IsAutoFitContent = function()
 };
 CInlineLevelSdt.prototype.ProcessAutoFitContent = function(isFastRecalc)
 {
-	if (this.IsMultiLineForm() && isFastRecalc)
-		return;
-
 	var oParagraph = this.GetParagraph();
 	var oRun       = this.GetElement(0);
 	var oTextPr    = this.Get_CompiledTextPr();
@@ -2847,7 +2844,7 @@ CInlineLevelSdt.prototype.ProcessAutoFitContent = function(isFastRecalc)
 	if (!oShape || !oShape.isForm())
 		return;
 
-	var oShapeBounds = oShape.getFormRelRect();
+	var oShapeBounds = oShape.getFormRelRect(true);
 
 	g_oTextMeasurer.SetTextPr(oTextPr, oParagraph.GetTheme());
 	g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
@@ -2864,59 +2861,54 @@ CInlineLevelSdt.prototype.ProcessAutoFitContent = function(isFastRecalc)
 	History.TurnOff();
 	if (this.IsMultiLineForm())
 	{
-		var nFontStep = 0.1;
+		const nFontStep = 0.1;
 
-		if (nMaxWidth > oShapeBounds.W)
+		oParagraph.Recalculate_Page(0);
+		var oContentBounds = oParagraph.GetContentBounds(0);
+		if (oContentBounds.Bottom - oContentBounds.Top > oShapeBounds.H)
 		{
-			oParagraph.Recalculate_Page(0);
-			var oContentBounds = oParagraph.GetContentBounds(0);
-			if (oContentBounds.Bottom - oContentBounds.Top > oShapeBounds.H)
+			nNewFontSize = AscCommon.CorrectFontSize(nFontSize, true);
+			while (nNewFontSize > 1)
 			{
-				nNewFontSize = AscCommon.CorrectFontSize(nFontSize, true);
-				while (nNewFontSize > 1)
+				oRun.Set_FontSize(nNewFontSize);
+				oParagraph.Recalculate_Page(0);
+
+				oContentBounds = oParagraph.GetContentBounds(0);
+				if (oContentBounds.Bottom - oContentBounds.Top < oShapeBounds.H)
+					break;
+
+				nNewFontSize -= nFontStep;
+			}
+		}
+		else
+		{
+			var nMaxFontSize = this.Pr.TextPr.FontSize;
+			if (!nMaxFontSize)
+				nMaxFontSize = 12;
+
+			//nNewFontSize = AscCommon.CorrectFontSize(nFontSize, true);
+			while (nNewFontSize <= nMaxFontSize)
+			{
+				oRun.Set_FontSize(nNewFontSize);
+				oParagraph.Recalculate_Page(0);
+
+				var oContentBounds = oParagraph.GetContentBounds(0);
+				if (oContentBounds.Bottom - oContentBounds.Top > oShapeBounds.H)
 				{
-					oRun.Set_FontSize(nNewFontSize);
-					oParagraph.Recalculate_Page(0);
-
-					oContentBounds = oParagraph.GetContentBounds(0);
-					if (oContentBounds.Bottom - oContentBounds.Top < oShapeBounds.H)
-						break;
-
 					nNewFontSize -= nFontStep;
-				}
-			}
-			else
-			{
-				var nMaxFontSize = this.Pr.TextPr.FontSize;
-				if (!nMaxFontSize)
-					nMaxFontSize = 12;
-
-				//nNewFontSize = AscCommon.CorrectFontSize(nFontSize, true);
-				while (nNewFontSize <= nMaxFontSize)
-				{
 					oRun.Set_FontSize(nNewFontSize);
-					oParagraph.Recalculate_Page(0);
-
-					var oContentBounds = oParagraph.GetContentBounds(0);
-					if (oContentBounds.Bottom - oContentBounds.Top > oShapeBounds.H)
-					{
-						nNewFontSize -= nFontStep;
-						oRun.Set_FontSize(nNewFontSize);
-						break;
-					}
-
-					nNewFontSize += nFontStep;
+					break;
 				}
 
-				nNewFontSize = Math.min(nNewFontSize, nMaxFontSize);
+				nNewFontSize += nFontStep;
 			}
+
+			nNewFontSize = Math.min(nNewFontSize, nMaxFontSize);
 		}
 
 		oParagraph.Recalculate_Page(0);
 		oShape.recalcContent();
 		oShape.recalculateText();
-		// Восстанавливаем старое значение, чтобы в историю все правильно записалось
-		oRun.Set_FontSize(nFontSize);
 	}
 	else
 	{
@@ -2928,17 +2920,16 @@ CInlineLevelSdt.prototype.ProcessAutoFitContent = function(isFastRecalc)
 			oParagraph.Recalculate_Page(0);
 			oShape.recalcContent();
 			oShape.recalculateText();
-			// Восстанавливаем старое значение, чтобы в историю все правильно записалось
-			oRun.Set_FontSize(nFontSize);
 		}
 		else if (AscCommon.align_Left !== oParagraph.GetParagraphAlign())
 		{
 			oRun.Set_FontSize(nNewFontSize);
 			oParagraph.private_RecalculateFastRange(0, 0);
-			// Восстанавливаем старое значение, чтобы в историю все правильно записалось
-			oRun.Set_FontSize(nFontSize);
 		}
 	}
+	// Восстанавливаем старое значение, чтобы в историю все правильно записалось
+	oRun.Set_FontSize(nFontSize);
+
 	nNewFontSize = ((nNewFontSize * 100) | 0) / 100;
 	History.TurnOn();
 

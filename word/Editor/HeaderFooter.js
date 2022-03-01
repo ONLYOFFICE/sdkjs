@@ -41,29 +41,20 @@ var History = AscCommon.History;
 //-----------------------------------------------------------------------------------
 // Класс работающий с одним колонтитулом
 //-----------------------------------------------------------------------------------
-function CHeaderFooter(Parent, LogicDocument, DrawingDocument, Type)
+function CHeaderFooter(Parent, oLogicDocument, DrawingDocument, Type)
 {
     this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
     this.Parent          = Parent;
     this.DrawingDocument = DrawingDocument;
-    this.LogicDocument   = LogicDocument;
+    this.LogicDocument   = oLogicDocument;
 
-    // Содержимое колонтитула
-
-    if ( "undefined" != typeof(LogicDocument) && null != LogicDocument )
-    {
-        if ( Type === hdrftr_Header )
-        {
-            this.Content = new CDocumentContent( this, DrawingDocument, 0, 0, 0, 0, false, true );
-            this.Content.Content[0].Style_Add( this.Get_Styles().Get_Default_Header() );
-        }
-        else
-        {
-            this.Content = new CDocumentContent( this, DrawingDocument, 0, 0, 0, 0, false, true );
-            this.Content.Content[0].Style_Add( this.Get_Styles().Get_Default_Footer() );
-        }
-    }
+    if (oLogicDocument)
+	{
+		let sStyleId = Type === hdrftr_Header ? oLogicDocument.GetStyles().Get_Default_Header() : oLogicDocument.GetStyles().Get_Default_Footer();
+		this.Content = new CDocumentContent(this, DrawingDocument, 0, 0, 0, 0, false, true);
+		this.Content.Content[0].Style_Add(sStyleId);
+	}
 
     this.Type = Type;
 
@@ -211,6 +202,7 @@ CHeaderFooter.prototype =
         this.Content.PrepareRecalculateObject();
 
 		this.Clear_PageCountElements();
+		this.LogicDocument.GetDrawingObjects().resetHdrFtrDrawingArrays(Page_abs);
 
         var CurPage = 0;
         var RecalcResult = recalcresult2_NextPage;

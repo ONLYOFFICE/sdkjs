@@ -463,8 +463,8 @@
 			this.isFocusOnThumbnails = false;
 
 			var rect = this.canvas.getBoundingClientRect();
-			this.x = rect.x;
-			this.y = rect.y;
+			this.x = rect.left;
+			this.y = rect.top;
 
 			var oldsize = {w: this.width, h: this.height};
 			this.width = this.parent.offsetWidth - this.scrollWidth;
@@ -1831,7 +1831,11 @@
 				}
 
 				if (!page.Image && !isStretchPaint)
+				{
 					page.Image = this.file.getPage(i, w, h, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
+					if (this.Api.watermarkDraw)
+						this.Api.watermarkDraw.Draw(page.Image.getContext("2d"), w, h);
+				}
 
 				let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
 				let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;

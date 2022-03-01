@@ -2222,7 +2222,7 @@ background-repeat: no-repeat;\
 			{
 				opt["printOptions"] = { "selection" : 1 };
 			}
-
+			opt["documentLayout"] = {"drawPlaceHolders":false,"drawFormHighlight":false,"isPrint":true};
 			window["AscDesktopEditor"]["Print"](JSON.stringify(opt));
 			return true;
 		}

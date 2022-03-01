@@ -96,10 +96,7 @@ function CDocumentContent(Parent, DrawingDocument, X, Y, XLimit, YLimit, Split, 
         }
     }
 
-    if ( "undefined" === typeof(TurnOffInnerWrap) )
-        TurnOffInnerWrap = false;
-
-    this.TurnOffInnerWrap = TurnOffInnerWrap;
+    this.TurnOffInnerWrap = undefined === TurnOffInnerWrap ? false : TurnOffInnerWrap;
 
     this.Pages = [];
 
@@ -416,25 +413,33 @@ CDocumentContent.prototype.Get_EmptyHeight = function()
  *         Запрос от родительского класса нужен, например, для колонтитулов, потому
  *         что у них врапится текст не колонтитула, а документа.
  */
-CDocumentContent.prototype.CheckRange = function(X0, Y0, X1, Y1, _Y0, _Y1, X_lf, X_rf, CurPage, Inner, bMathWrap)
+CDocumentContent.prototype.CheckRange = function(X0, Y0, X1, Y1, _Y0, _Y1, X_lf, X_rf, CurPage, isInner, bMathWrap)
 {
-	if (undefined === Inner)
-		Inner = true;
+	if (undefined === isInner)
+		isInner = true;
 
-	if (this.IsBlockLevelSdtContent() && true === Inner)
+	if (this.IsBlockLevelSdtContent() && isInner)
 		return this.Parent.CheckRange(X0, Y0, X1, Y1, _Y0, _Y1, X_lf, X_rf, CurPage, true, bMathWrap);
 
 	if (this.LogicDocument && editor && editor.isDocumentEditor)
 	{
-		var oDocContent = this;
+		let oDocContent = this;
 		if (this.Parent && this.Parent instanceof CBlockLevelSdt)
 			oDocContent = this.Parent.Parent;
 
-		if ((false === this.TurnOffInnerWrap && true === Inner) || (false === Inner))
-			return this.LogicDocument.DrawingObjects.CheckRange(X0, Y0, X1, Y1, _Y0, _Y1, X_lf, X_rf, this.Get_AbsolutePage(CurPage), [], this, bMathWrap);
+		if (!isInner || this.IsUseInnerWrap())
+			return this.LogicDocument.DrawingObjects.CheckRange(X0, Y0, X1, Y1, _Y0, _Y1, X_lf, X_rf, this.Get_AbsolutePage(CurPage), [], oDocContent, bMathWrap);
 	}
 
 	return [];
+};
+CDocumentContent.prototype.IsUseInnerWrap = function()
+{
+	if (!this.IsHdrFtr())
+		return true;
+
+	let oLogicDocument = this.GetLogicDocument();
+	return oLogicDocument ? oLogicDocument.GetCompatibilityMode() >= AscCommon.document_compatibility_mode_Word15 : false;
 };
 CDocumentContent.prototype.Is_PointInDrawingObjects = function(X, Y, Page_Abs)
 {
@@ -5418,7 +5423,7 @@ CDocumentContent.prototype.SetParagraphShd = function(Shd)
 			var StartPos = this.Selection.StartPos;
 			var EndPos   = this.Selection.EndPos;
 
-			if (undefined !== this.LogicDocument && true === this.LogicDocument.UseTextShd && StartPos === EndPos && type_Paragraph === this.Content[StartPos].GetType() && false === this.Content[StartPos].Selection_CheckParaEnd() && selectionflag_Common === this.Selection.Flag)
+			if (this.LogicDocument && true === this.LogicDocument.UseTextShd && StartPos === EndPos && type_Paragraph === this.Content[StartPos].GetType() && false === this.Content[StartPos].Selection_CheckParaEnd() && selectionflag_Common === this.Selection.Flag)
 			{
 				this.AddToParagraph(new ParaTextPr({Shd : Shd}));
 			}

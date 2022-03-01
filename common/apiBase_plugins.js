@@ -527,6 +527,34 @@
      */
     Api.prototype["pluginMethod_SetProperties"] = function(obj)
     {
+		if (!this.isDocumentLoadComplete && obj)
+		{
+			if (!this.setPropertiesObj)
+			{
+				this.setPropertiesObj = obj;
+			}
+			else
+			{
+				for (var item in obj)
+					this.setPropertiesObj[item] = obj[item];
+			}
+			return;
+		}
+
+		if (this.setPropertiesObj)
+		{
+			if (!obj)
+			{
+				obj = this.setPropertiesObj;
+			}
+			else
+			{
+				for (var item in this.setPropertiesObj)
+					if (!obj[item]) obj[item] = this.setPropertiesObj[item];
+			}
+			delete this.setPropertiesObj;
+		}
+
         if (!obj)
             return;
 

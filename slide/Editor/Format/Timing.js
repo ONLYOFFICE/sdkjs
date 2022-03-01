@@ -2564,6 +2564,9 @@
                 if(nDur === AscFormat.untilNextSlide || nDur === AscFormat.untilNextClick) {
                     oCopyEffect.cTn.changeEffectDuration(1000);
                 }
+                if(AscFormat.isRealNumber(nDur) && nDur < 50) {
+                    oCopyEffect.cTn.changeEffectDuration(750);
+                }
 
                 oCopyEffect.originalNode = null;
                 aSeq.push(oCopyEffect);
@@ -8093,6 +8096,8 @@
     CTimeNodeContainer.prototype.asc_putTriggerClickSequence = function(v) {
         this.triggerClickSequence = v;
     };
+    CTimeNodeContainer.prototype["asc_putTriggerClickSequence"] = CTimeNodeContainer.prototype.asc_putTriggerClickSequence;
+
     CTimeNodeContainer.prototype.asc_getTriggerObjectClick = function() {
         if(this.triggerObjectClick !== undefined) {
             return this.triggerObjectClick;
@@ -10641,8 +10646,13 @@
         this.overlay = editor.WordControl.m_oOverlayApi;
     };
     CDemoAnimPlayer.prototype.onMainSeqFinished = function () {
-        this.stop();
-        editor.WordControl.m_oLogicDocument.StopAnimationPreview();
+        var oThis = this;
+        setTimeout(function () {
+            if(!oThis.isStopped()) {
+                oThis.stop();
+                editor.WordControl.m_oLogicDocument.StopAnimationPreview();
+            }
+        }, 1000);
     };
     
     CDemoAnimPlayer.prototype.start = function () {

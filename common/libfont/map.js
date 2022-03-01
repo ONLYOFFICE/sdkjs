@@ -3053,5 +3053,8 @@ var g_fontApplication = new CApplicationFonts();
             "size" : s.size
         };
     };
+    window['AscFonts']['updateFontStreamNative'] = function(pointer, size) {
+        return {"asc_marker":true, data:pointer, len:size};
+    };
 
 })(window);

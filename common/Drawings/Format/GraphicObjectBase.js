@@ -2510,6 +2510,9 @@
 	CGraphicObjectBase.prototype.isForm = function() {
 		return (this.parent && this.parent.IsForm && this.parent.IsForm());
 	};
+	CGraphicObjectBase.prototype.getFormHorPadding = function() {
+		return 0;
+	};
 	CGraphicObjectBase.prototype.getInnerForm = function() {
 		return null;
 	};

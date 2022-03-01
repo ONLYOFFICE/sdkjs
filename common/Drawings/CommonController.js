@@ -2821,6 +2821,7 @@ DrawingObjectsController.prototype =
     applyDocContentFunction: function(f, args, tableFunction)
     {
         var oThis = this;
+        var isIncreaseDecreaseFunction = f === CDocumentContent.prototype.IncreaseDecreaseFontSize;
         function applyToArrayDrawings(arr)
         {
             var ret = false, ret2;
@@ -2866,7 +2867,7 @@ DrawingObjectsController.prototype =
                         f.apply(content, args);
                         content.SetApplyToAll(false);
                         ret = true;
-                        if (arr[i].isObjectInSmartArt()) {
+                        if (isIncreaseDecreaseFunction && arr[i].isObjectInSmartArt()) {
                             arr[i].setCustT(true);
                         }
                     }
@@ -2947,7 +2948,7 @@ DrawingObjectsController.prototype =
                 {
                     var frame = this.selection.groupSelection.selection.textSelection;
                     f.apply(frame.getDocContent(), args);
-                    if (frame.isObjectInSmartArt()) {
+                    if (frame.isObjectInSmartArt() && isIncreaseDecreaseFunction) {
                         frame.setCustT(true);
                     }
                     frame.checkExtentsByDocContent();
@@ -2959,7 +2960,7 @@ DrawingObjectsController.prototype =
             }
             else if(this.selection.groupSelection.selection.chartSelection)
             {
-                if(f === CDocumentContent.prototype.IncreaseDecreaseFontSize)
+                if(isIncreaseDecreaseFunction)
                 {
                     this.selection.groupSelection.selection.chartSelection.paragraphIncDecFontSize(args[0]);
                 }
@@ -2974,7 +2975,7 @@ DrawingObjectsController.prototype =
         }
         else if(this.selection.chartSelection)
         {
-            if(f === CDocumentContent.prototype.IncreaseDecreaseFontSize)
+            if(isIncreaseDecreaseFunction)
             {
                 this.selection.chartSelection.paragraphIncDecFontSize(args[0]);
             }

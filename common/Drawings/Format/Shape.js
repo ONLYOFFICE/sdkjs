@@ -74,7 +74,6 @@ var MOVE_DELTA = AscFormat.MOVE_DELTA;
 
 var c_oAscFill = Asc.c_oAscFill;
 
-	var g_nDefaultFormHorPadding = 2 * 25.4 / 72; // 2pt
     var dTextFitDelta = 3;// mm
 
 function CheckObjectLine(obj)
@@ -2243,11 +2242,11 @@ CShape.prototype.getFormRelRect = function (isUsePaddings) {
 	var nX = 0, nW = this.extX;
 	var nY = 0, nH = this.extY;
 
-	var oInnerForm = null;
-	if (isUsePaddings && this.isForm && this.isForm() && (oInnerForm = this.getInnerForm()) && !oInnerForm.IsPictureForm() && !oInnerForm.IsCheckBox())
+	if (isUsePaddings)
 	{
-		nX += g_nDefaultFormHorPadding;
-		nW -= 2 * g_nDefaultFormHorPadding;
+		let nFormHorPadding = this.getFormHorPadding();
+		nX += nFormHorPadding;
+		nW -= 2 * nFormHorPadding;
 	}
 
     var aX = [nX, nW];
@@ -2347,11 +2346,12 @@ CShape.prototype.checkTransformTextMatrix = function (oMatrix, oContent, oBodyPr
         }
     }
 
-    var oForm = null;
-	if (this.isForm && this.isForm() && (oForm = this.getInnerForm()) && !oForm.IsPictureForm() && !oForm.IsCheckBox())
+    let oForm = this.isForm && this.isForm() ? this.getInnerForm() : null;
+	if (oForm)
 	{
-		l_ins = g_nDefaultFormHorPadding;
-		r_ins = g_nDefaultFormHorPadding;
+		let nFormHorPadding = this.getFormHorPadding();
+		l_ins = nFormHorPadding;
+		r_ins = nFormHorPadding;
 		t_ins = 0;
 		b_ins = 0;
 	}
@@ -2936,6 +2936,13 @@ CShape.prototype.isPlaceholderInSmartArt = function () {
         }
     }
 };
+
+CShape.prototype.getSmartArtDefaultTxFill = function () {
+    if (this.isObjectInSmartArt()) {
+        return this.group.group.getSmartArtDefaultTxFill(this);
+    }
+};
+
 CShape.prototype.Get_Styles = function (level) {
 
     var _level = AscFormat.isRealNumber(level) ? level : 0;
@@ -3069,6 +3076,10 @@ CShape.prototype.recalculateTextStyles = function (level) {
             shape_text_style.TextPr.RFonts.SetFontStyle(compiled_style.fontRef.idx);
             if (compiled_style.fontRef.Color && compiled_style.fontRef.Color.isCorrect()) {
                 shape_text_style.TextPr.Unifill = AscFormat.CreateUniFillByUniColor(compiled_style.fontRef.Color);
+            }
+            var smartArtTxFill = this.getSmartArtDefaultTxFill();
+            if (smartArtTxFill) {
+                shape_text_style.TextPr.Unifill = smartArtTxFill;
             }
         }
         var Styles = new CStyles(false);
@@ -4125,11 +4136,12 @@ CShape.prototype.recalculateDocContent = function(oDocContent, oBodyPr)
         }
     }
 
-	var oForm = null;
-	if (this.isForm && this.isForm() && (oForm = this.getInnerForm()) && !oForm.IsPictureForm() && !oForm.IsCheckBox())
+	let oForm = this.isForm && this.isForm() ? this.getInnerForm() : null;
+	if (oForm)
 	{
-		l_ins = g_nDefaultFormHorPadding;
-		r_ins = g_nDefaultFormHorPadding;
+		let nFormHorPadding = this.getFormHorPadding();
+		l_ins = nFormHorPadding;
+		r_ins = nFormHorPadding;
 		t_ins = 0;
 		b_ins = 0;
 	}
@@ -4514,17 +4526,10 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
     };
 
     CShape.prototype.setFontSizeInSmartArt = function (fontSize) {
-        if (this.txBody && this.txBody.content && this.txBody.content.Content) {
-            this.txBody.content.Content.forEach(function (paragraph) {
-                if (paragraph.CompiledPr.Pr && paragraph.CompiledPr.Pr.TextPr && paragraph.CompiledPr.Pr.TextPr.FontSize) {
-                    var paragraphFontSize = paragraph.CompiledPr.Pr.TextPr.FontSize;
-                    var paraRunFontSize;
-                    paragraph.Content.forEach(function (paraRun) {
-                        paraRunFontSize = paraRun.Pr.FontSize ? paraRun.Pr.FontSize : paragraphFontSize;
-                        paraRun.Set_FontSize(fontSize);
-                    })
-                }
-            })
+        if (this.txBody && this.txBody.content) {
+            this.txBody.content.CheckRunContent(function (paraRun) {
+                paraRun.Set_FontSize(fontSize);
+            });
             this.recalculateContentWitCompiledPr();
         }
     }
@@ -6932,6 +6937,13 @@ CShape.prototype.getColumnNumber = function(){
     };
     CShape.prototype.getInnerForm = function() {
 		return this.textBoxContent ? this.textBoxContent.GetInnerForm() : null;
+	};
+	CShape.prototype.getFormHorPadding = function() {
+		let oInnerForm;
+		if (this.isForm && this.isForm() && (oInnerForm = this.getInnerForm()) && !oInnerForm.IsPictureForm() && !oInnerForm.IsCheckBox())
+			return 2 * 25.4 / 72; // 2pt
+
+		return 0;
 	};
 
     //for bug 52775. remove in the next version

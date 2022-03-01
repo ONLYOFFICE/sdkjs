@@ -1543,7 +1543,10 @@ ParaDrawing.prototype.updatePosition3 = function(pageIndex, x, y, oldPageNum)
 	}
 	if (!(this.DocumentContent && this.DocumentContent.IsHdrFtr() && this.DocumentContent.Get_StartPage_Absolute() !== pageIndex))
 	{
-		this.graphicObjects.addObjectOnPage(pageIndex, this.GraphicObj);
+		// TODO: ситуацию в колонтитуле с привязкой к полю нужно отдельно обрабатывать через дополнительные пересчеты
+		if (!this.DocumentContent || !this.DocumentContent.IsHdrFtr() || this.GetPositionV().RelativeFrom !== Asc.c_oAscRelativeFromV.Margin)
+			this.graphicObjects.addObjectOnPage(pageIndex, this.GraphicObj);
+
 		this.bNoNeedToAdd = false;
 	}
 	else

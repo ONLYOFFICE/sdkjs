@@ -12777,6 +12777,9 @@
 				pastedRangeProps.hyperLink = currentObj;
 			}
 
+			//indent
+			pastedRangeProps.indent = currentObj.indent;
+
 			//apply props by cell
 			t._setPastedDataByCurrentRange(range, pastedRangeProps, {arrFormula: arrFormula}, specialPasteProps);
 		};

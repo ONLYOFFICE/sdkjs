@@ -1428,7 +1428,8 @@ ParaMath.prototype.Remove = function(Direction, bOnAddText)
                     else
                     {
 						this.SelectThisElement(1);
-                        oContent.Select_ElementByPos(nStartPos + 1, true);
+						this.RemoveSelection();
+                        oContent.SelectElementByPos(nStartPos + 1);
                     }
                 }
                 else
@@ -1452,7 +1453,8 @@ ParaMath.prototype.Remove = function(Direction, bOnAddText)
                     else
                     {
 						this.SelectThisElement(1);
-                        oContent.Select_ElementByPos(nStartPos - 1, true);
+						this.RemoveSelection();
+						oContent.SelectElementByPos(nStartPos - 1);
                     }
                 }
             }
