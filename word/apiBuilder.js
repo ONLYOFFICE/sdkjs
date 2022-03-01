@@ -2039,7 +2039,7 @@
 	 * Specifies a highlighting color which is applied as a background to the contents of the current Range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
-	 * @param {highlightColor} sColor - available highlight color
+	 * @param {highlightColor} sColor - Available highlight color.
 	 * @returns {ApiRange | null} - returns null if can't apply highlight.
 	 */
 	ApiRange.prototype.SetHighlight = function(sColor)
@@ -6001,7 +6001,7 @@
 	 * Specifies a highlighting color which is applied as a background to the contents of the current paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE, CPE"]
-	 * @param {highlightColor} sColor - available highlight color
+	 * @param {highlightColor} sColor - Available highlight color.
 	 * @returns {ApiParagraph} this
 	 */
 	ApiParagraph.prototype.SetHighlight = function(sColor)
@@ -7075,7 +7075,7 @@
 	 * Specifies a highlighting color which is applied as a background to the contents of the current run.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE, CPE"]
-	 * @param {highlightColor} sColor - available highlight color
+	 * @param {highlightColor} sColor - Available highlight color.
 	 * @returns {ApiTextPr}
 	 */
 	ApiRun.prototype.SetHighlight = function(sColor)
@@ -9325,10 +9325,10 @@
 		this.private_OnChange();
 	};
 	/**
-	 * Specifies a highlighting color which is applied as a background to the contents of the current run.
+	 * Specifies a highlighting color which is added to the text properties and applied as a background to the contents of the current run/range/paragraph.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE, CPE"]
-	 * @param {highlightColor} sColor - available highlight color
+	 * @param {highlightColor} sColor - Available highlight color.
 	 * @returns {ApiTextPr}
 	 */
 	ApiTextPr.prototype.SetHighlight = function(sColor)
