@@ -51,6 +51,8 @@
 		var CopyPasteCorrectString = AscCommon.CopyPasteCorrectString;
 		
 		var c_oSpecialPasteProps = Asc.c_oSpecialPasteProps;
+
+		var c_MaxStringLength = 536870888;
 		
 
 		function number2color(n) {
@@ -1146,11 +1148,29 @@
 
 				var str = "";
 
-				str += '<table cellpadding="0" cellSpacing="0"';
-				if(sBase64) {
-					str += ' class=' + '"' + sBase64 + '"';
+				var addByStr = function (_str) {
+					//исследования по максимальной длине строки:
+					//Edge/chrome 96.0.4664 -> 536870888 символов(1073741776 байта)
+					//FF 95.0.2 -> 1073741822 символов(2147483644 байта)
+					if (str.length + _str.length > c_MaxStringLength) {
+						return false;
+					}
+					str += _str;
+					return true;
+				};
+
+				if (!addByStr('<table cellpadding="0" cellSpacing="0"')) {
+					return false;
 				}
-				str += ' style="border-collapse: collapse;font-family:' + fn + ';font-size:' + fs + 'pt' + ';color:#000;background-color:transparent;' + '">';
+
+				if(sBase64) {
+					if (!addByStr(' class=' + '"' + sBase64 + '"')) {
+						return false;
+					}
+				}
+				if (!addByStr(' style="border-collapse: collapse;font-family:' + fn + ';font-size:' + fs + 'pt' + ';color:#000;background-color:transparent;' + '">')) {
+					return false;
+				}
 
 				var maxRow = bbox.r2;
 				var maxCol = bbox.c2;
@@ -1164,25 +1184,36 @@
 					if (worksheet.model.bExcludeHiddenRows && worksheet.model.getRowHidden(row)) {
 						continue;
 					}
+					if (!addByStr('<tr style="height:')) {
+						return false;
+					}
 
-					str += '<tr style="height:';
 					h = worksheet.model.getRowHeight(row);
-					str += h + "pt" + '"' + ">";
+
+					if (!addByStr(h + "pt" + '"' + ">")) {
+						return false;
+					}
 
 					for (col = bbox.c1; col <= maxCol; ++col) {
 						if (skipMerged()) {
 							continue;
 						}
 
-						str += '<td';
+						if (!addByStr('<td')) {
+							return false;
+						}
 
 						var style = "";
 						cell = worksheet.model.getCell3(row, col);
 						mbbox = cell.hasMerged();
 						if (mbbox) {
 							merged.push(mbbox);
-							str += " colspan=" + (mbbox.c2 - mbbox.c1 + 1);
-							str += " rowSpan=" + (mbbox.r2 - mbbox.r1 + 1);
+							if (!addByStr(" colspan=" + (mbbox.c2 - mbbox.c1 + 1))) {
+								return false;
+							}
+							if (!addByStr(" rowSpan=" + (mbbox.r2 - mbbox.r1 + 1))) {
+								return false;
+							}
 							for (w = 0, j = mbbox.c1; j <= mbbox.c2; ++j) {
 								w += worksheet.getColumnWidth(j, 1/*pt*/);
 							}
@@ -1254,16 +1285,28 @@
 								style += "background-color:" + number2color(b.getRgb()) + ";";
 							}
 
-							str += ' style=' + '"' +  style + '">';
-							str += this._makeNodesFromCellValueStr(cell.getValue2(), fn, fs, cell);
+							if (!addByStr(' style=' + '"' +  style + '">')) {
+								return false;
+							}
+							if (!addByStr(this._makeNodesFromCellValueStr(cell.getValue2(), fn, fs, cell))) {
+								return false;
+							}
 						} else {
-							str += '>';
+							if (!addByStr('>')) {
+								return false;
+							}
 						}
-						str += '</td>';
+						if (!addByStr('</td>')) {
+							return false;
+						}
 					}
-					str += "</tr>";
+					if (!addByStr("</tr>")) {
+						return false;
+					}
 				}
-				str += "</table>";
+				if (!addByStr("</table>")) {
+					return false;
+				}
 
 				return str;
 			},
@@ -1448,18 +1491,30 @@
 			_getTextFromShape: function (documentContent) {
 				var res = null;
 
+				var addByStr = function (_str) {
+					if (res && res.length + _str.length > c_MaxStringLength) {
+						return false;
+					}
+					if (!res) {
+						res = "";
+					}
+					res += _str;
+					return true;
+				};
+
 				if (documentContent && documentContent.Content && documentContent.Content.length) {
 					for (var i = 0; i < documentContent.Content.length; i++) {
 						if (documentContent.Content[i]) {
 							var paraText = documentContent.Content[i].GetSelectedText();
 							if (paraText) {
-								if(null === res) {
-									res = "";
-								}
 								if (i !== 0) {
-									res += '\r\n';
+									if (!addByStr('\r\n')) {
+										return null;
+									}
 								}
-								res += paraText;
+								if (!addByStr(paraText)) {
+									return null;
+								}
 							}
 						}
 					}
@@ -1470,7 +1525,17 @@
 
 			_getTextFromSheet: function (range, worksheet) {
 				var res = null;
-				var t = this;
+
+				var addByStr = function (_str) {
+					if (res && res.length + _str.length > c_MaxStringLength) {
+						return false;
+					}
+					if (!res) {
+						res = "";
+					}
+					res += _str;
+					return true;
+				};
 
 				if (range) {
 					var bbox = range.bbox;
@@ -1490,18 +1555,24 @@
 						}
 
 						if (row !== bbox.r1) {
-							res += '\r\n';
+							if (!addByStr('\r\n')) {
+								return null;
+							}
 						}
 
 						for (var col = bbox.c1; col <= maxCol; ++col) {
 							if (col !== bbox.c1) {
-								res += '\t';
+								if (!addByStr('\t')) {
+									return null;
+								}
 							}
 
 							var currentRange = worksheet.model.getCell3(row, col);
 							var textRange = currentRange.getValueWithFormat();
 							if (textRange !== '' && textRange !== undefined) {
-								res += textRange;
+								if (!addByStr(textRange)) {
+									return null;
+								}
 							}
 						}
 					}

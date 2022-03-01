@@ -9341,6 +9341,7 @@
 	};
 
     WorksheetView.prototype.getSelectionMathInfo = function () {
+       //TODO при выделении большого количетсва данных функция работает долго
         var oSelectionMathInfo = new asc_CSelectionMathInfo();
         var sum = 0;
         var oExistCells = {};
