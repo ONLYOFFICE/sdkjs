@@ -1666,9 +1666,7 @@ function (window, undefined) {
 		var cacheElem = this.cacheId[sRangeName];
 		if (!cacheElem) {
 			cacheElem = {elements: [], results: {}};
-			range._foreachNoEmpty(function (cell, r, c) {
-				cacheElem.elements.push({v: checkTypeCell(cell), i: (_this.bHor ? c : r)});
-			});
+			this.generateElements(range, cacheElem);
 			this.cacheId[sRangeName] = cacheElem;
 			var cacheRange = this.cacheRanges[wsId];
 			if (!cacheRange) {
@@ -1844,6 +1842,78 @@ function (window, undefined) {
 		this.cacheId = {};
 		this.cacheRanges = {};
 	};
+	VHLOOKUPCache.prototype.generateElements = function (range, cacheElem) {
+		var _this = this;
+		if (range && cacheElem) {
+
+			//ищем пересечения с уже имеющимися диапазонами
+			var elementsIntervals = [];
+			var addByIntervals = function (_elem, isIntersection) {
+				if (elementsIntervals && elementsIntervals.length) {
+					for (var k = 0; k < elementsIntervals.length; k++) {
+						if (elementsIntervals[k].bbox.containsRange(_elem)) {
+							return;
+						} else if (_elem.bbox.containsRange(elementsIntervals[k].bbox)) {
+							elementsIntervals.splice(k, 1);
+							elementsIntervals.push(_elem);
+							return;
+						}
+					}
+				}
+
+				elementsIntervals.push(_elem);
+			};
+
+			var ws = range.getWorksheet();
+			if (ws) {
+				var rangeData = this.getRangeDataBySheetId(range.getWorksheet().Id);
+				if (rangeData) {
+					var intervals = rangeData.tree && rangeData.tree.searchNodes(range.bbox);
+					if (intervals && intervals.length) {
+						for (var i = 0; i < intervals.length; i++) {
+							var interval = intervals[i];
+							var elem = interval.data;
+							if (elem.bbox.isIntersect(range.bbox)) {
+								if (elem.bbox.containsRange(range.bbox)) {
+									//диапазон в кэшэ полностью перекрывает новый
+									//формируем новый массив из того, которые в кэше
+									if (elem.data && elem.data.elements) {
+										cacheElem.elements = elem.data.slice(_this.bHor ? range.bbox.c1 - elem.bbox.c1 : range.bbox.r1 - elem.bbox.r1, _this.bHor ? elem.bbox.c2 - range.bbox.c2 : elem.bbox.r2 - range.bbox.r2);
+										return;
+									}
+								} else if (range.bbox.containsRange(elem.bbox)){
+									//новый диапазон включает в себя диапазон из кэша
+									addByIntervals(elem);
+								} else {
+									//ищем пересечение
+									var intersection = elem.bbox.intersection(range.bbox);
+									addByIntervals({bbox: intersection, elements: elem.data.elements.slice(_this.bHor ? intersection.c1 - elem.bbox.c1 : intersection.r1 - elem.bbox.r1, _this.bHor ? elem.bbox.c2 - intersection.c2 : elem.bbox.r2 - intersection.r2)});
+								}
+							}
+						}
+
+					}
+				}
+			}
+			if (elementsIntervals && elementsIntervals.length) {
+				var start = _this.bHor ? range.bbox.c1 : range.bbox.r1;
+				var end = _this.bHor ? range.bbox.c2 : range.bbox.r2;
+				for (var j = start; j <= end; j++) {
+
+				}
+			} else {
+				range._foreachNoEmpty(function (cell, r, c) {
+					cacheElem.elements.push({v: checkTypeCell(cell), i: (_this.bHor ? c : r)});
+				});
+			}
+		}
+	};
+	VHLOOKUPCache.prototype.getRangeDataBySheetId = function (id) {
+		return this.cacheRanges[id];
+	};
+
+
+
 
 	function MatchCache() {
 		this.cacheId = {};
