@@ -596,7 +596,7 @@
 	 * @param {boolean} [bWithFormat=false] - indicates that data will be received with the format.
 	 * @returns {string[][]} 
 	 */
-	Api.prototype.GetMailMergeData = function (nSheet, bWithFormat) {
+	Api.prototype.GetMailMergeData = function(nSheet, bWithFormat) {
 		if (bWithFormat !== true)
 			bWithFormat = false;
 
