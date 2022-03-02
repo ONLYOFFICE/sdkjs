@@ -1866,7 +1866,7 @@ function (window, undefined) {
 
 			var ws = range.getWorksheet();
 			if (ws) {
-				var rangeData = this.getRangeDataBySheetId(range.getWorksheet().Id);
+				var rangeData = this.getRangeDataBySheetId(ws.Id);
 				if (rangeData) {
 					var intervals = rangeData.tree && rangeData.tree.searchNodes(range.bbox);
 					if (intervals && intervals.length) {
@@ -1881,13 +1881,10 @@ function (window, undefined) {
 										cacheElem.elements = elem.data.slice(_this.bHor ? range.bbox.c1 - elem.bbox.c1 : range.bbox.r1 - elem.bbox.r1, _this.bHor ? elem.bbox.c2 - range.bbox.c2 : elem.bbox.r2 - range.bbox.r2);
 										return;
 									}
-								} else if (range.bbox.containsRange(elem.bbox)){
-									//новый диапазон включает в себя диапазон из кэша
-									addByIntervals(elem);
-								} else {
+								} else /*if (range.bbox.containsRange(elem.bbox))*/{
 									//ищем пересечение
 									var intersection = elem.bbox.intersection(range.bbox);
-									addByIntervals({bbox: intersection, elements: elem.data.elements.slice(_this.bHor ? intersection.c1 - elem.bbox.c1 : intersection.r1 - elem.bbox.r1, _this.bHor ? elem.bbox.c2 - intersection.c2 : elem.bbox.r2 - intersection.r2)});
+									addByIntervals({bbox: intersection, elements: elem.data.elements.slice(_this.bHor ? intersection.c1 - elem.bbox.c1 : intersection.r1 - elem.bbox.r1, _this.bHor ? elem.bbox.c2 - intersection.c1 : elem.bbox.r2 - intersection.r1)});
 								}
 							}
 						}
@@ -1895,16 +1892,86 @@ function (window, undefined) {
 					}
 				}
 			}
-			if (elementsIntervals && elementsIntervals.length) {
-				var start = _this.bHor ? range.bbox.c1 : range.bbox.r1;
-				var end = _this.bHor ? range.bbox.c2 : range.bbox.r2;
-				for (var j = start; j <= end; j++) {
 
-				}
-			} else {
-				range._foreachNoEmpty(function (cell, r, c) {
+			var addElemsFromWs = function (_range) {
+				_range._foreachNoEmpty(function (cell, r, c) {
 					cacheElem.elements.push({v: checkTypeCell(cell), i: (_this.bHor ? c : r)});
 				});
+			};
+
+			if (elementsIntervals && elementsIntervals.length) {
+				//сортируем по порядку
+				elementsIntervals.sort(function (a, b) {
+					return _this.bHor ? b.c1 - a.c1 : b.r1 - a.r1;
+				});
+
+				//проходимся по всем диапазонам, заполняем "окна"
+				for (var j = 0; j < elementsIntervals.length; j++) {
+					var lastCacheElem = cacheElem.elements[cacheElem.elements.length - 1];
+					var elemIndex = elementsIntervals[j].elements[0].i;
+
+					//если в cacheElem ещё ничего не добавлено или индекс следующего элемента из интервала не соответвует индексу + 1 элемента из кэша
+					var cacheIndex = lastCacheElem && lastCacheElem.i;
+					if (!lastCacheElem || elemIndex !== lastCacheElem.i + 1) {
+						var r1, c1, r2, c2;
+						if (!lastCacheElem) {
+							if (!_this.bHor && range.bbox.r1 === elemIndex || _this.bHor && range.bbox.c1 === elemIndex) {
+								//начало диапазонов совпадает
+								cacheElem.elements = cacheElem.elements.concat(elementsIntervals[j].elements);
+								if (j === elementsIntervals.length - 1) {
+									lastCacheElem = cacheElem.elements[cacheElem.elements.length - 1];
+									cacheIndex = lastCacheElem && lastCacheElem.i;
+
+									if (!(!_this.bHor && range.bbox.r1 === cacheIndex || _this.bHor && range.bbox.c1 === cacheIndex)) {
+										//берём последние элементы
+										r1 = !_this.bHor ? cacheIndex + 1 : range.bbox.r1;
+										c1 = _this.bHor ? cacheIndex + 1 : range.bbox.c1;
+
+										r2 = range.bbox.r2;
+										c2 =  range.bbox.c2;
+
+										addElemsFromWs(ws.getRange3(r1, c1, r2, c2));
+									}
+								}
+							} else {
+								//берём от начала range до начала первого интервала
+								r1 = range.bbox.r1;
+								c1 = range.bbox.c1;
+
+								r2 = !_this.bHor ? elemIndex - 1: range.bbox.r2;
+								c2 = _this.bHor ? elemIndex - 1 : range.bbox.c2;
+
+								addElemsFromWs(ws.getRange3(r1, c1, r2, c2));
+								j--;
+							}
+
+						} else {
+							//берём от конца последнего элемента из кэша до начала интервала
+							r1 = !_this.bHor ? cacheIndex + 1 : range.bbox.r1;
+							c1 = _this.bHor ? cacheIndex + 1 : range.bbox.c1;
+
+							r2 = !_this.bHor ? elemIndex - 1: range.bbox.r2;
+							c2 = _this.bHor ? elemIndex - 1 : range.bbox.c2;
+
+							addElemsFromWs(ws.getRange3(r1, c1, r2, c2));
+							j--;
+						}
+					} else {
+						cacheElem.elements = cacheElem.elements.concat(elementsIntervals[j].elements);
+						if (j === elementsIntervals.length - 1) {
+							//берём последние элементы
+							r1 = !_this.bHor ? cacheIndex + 1 : range.bbox.r1;
+							c1 = _this.bHor ? cacheIndex + 1 : range.bbox.c1;
+
+							r2 = range.bbox.r2;
+							c2 =  range.bbox.c2;
+
+							addElemsFromWs(ws.getRange3(r1, c1, r2, c2));
+						}
+					}
+				}
+			} else {
+				addElemsFromWs(range);
 			}
 		}
 	};
