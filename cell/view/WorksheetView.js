@@ -2648,12 +2648,14 @@
 			var changedCellLeft = cellsLeft - cellsLeft*printScale;
 			var changedCellTop = cellsTop - cellsTop*printScale;
 			var pageWidth, pageHeight;
+			//увеличиваем область клипирования на половину максимального размера бордера - максимально выступающую часть за пределы листа
+			var borderDiff = 2;//Math.ceil(1.5)
 			if(printPagesData.titleRowRange || printPagesData.titleColRange) {
 				if(printPagesData.titleRowRange && printPagesData.titleColRange){
-					clipLeft = printPagesData.pageClipRectLeft;
-					clipTop =  printPagesData.pageClipRectTop;
-					clipWidth = printPagesData.titleWidth + cellsLeft*printScale;
-					clipHeight = printPagesData.titleHeight + cellsTop*printScale;
+					clipLeft = printPagesData.pageClipRectLeft - borderDiff;
+					clipTop =  printPagesData.pageClipRectTop - borderDiff;
+					clipWidth = printPagesData.titleWidth + cellsLeft*printScale + borderDiff;
+					clipHeight = printPagesData.titleHeight + cellsTop*printScale + borderDiff;
 
 					clipLeftShape = printPagesData.pageClipRectLeft + cellsLeft*printScale;
 					clipTopShape =  printPagesData.pageClipRectTop + cellsTop*printScale;
@@ -2663,10 +2665,10 @@
 					doDraw(new asc_Range(printPagesData.titleColRange.c1, printPagesData.titleRowRange.r1, printPagesData.titleColRange.c2, printPagesData.titleRowRange.r2), 0, 0);
 				}
 				if(printPagesData.titleRowRange){
-					clipLeft = printPagesData.pageClipRectLeft + printPagesData.titleWidth + (printPagesData.titleWidth ? (cellsLeft*printScale) : 0);
-					clipTop =  printPagesData.pageClipRectTop;
-					clipWidth = printPagesData.pageClipRectWidth + cellsLeft*printScale;
-					clipHeight = printPagesData.titleHeight + cellsTop*printScale;
+					clipLeft = printPagesData.pageClipRectLeft + printPagesData.titleWidth + (printPagesData.titleWidth ? (cellsLeft*printScale) : 0) - borderDiff;
+					clipTop =  printPagesData.pageClipRectTop - borderDiff;
+					clipWidth = printPagesData.pageClipRectWidth + cellsLeft*printScale + borderDiff;
+					clipHeight = printPagesData.titleHeight + cellsTop*printScale + borderDiff;
 
 					pageWidth = (t.getCellLeft(printPagesData.titleRowRange.c2 + 1, 0) - t.getCellLeft(printPagesData.titleRowRange.c1, 0)) * printScale;
 
@@ -2678,10 +2680,10 @@
 					doDraw(printPagesData.titleRowRange, printPagesData.titleWidth/printScale, 0);
 				}
 				if(printPagesData.titleColRange){
-					clipLeft = printPagesData.pageClipRectLeft;
-					clipTop =  printPagesData.pageClipRectTop + printPagesData.titleHeight + (printPagesData.titleHeight ? (cellsTop*printScale) : 0);
-					clipWidth = printPagesData.titleWidth + cellsLeft*printScale;
-					clipHeight = printPagesData.pageClipRectHeight + (printPagesData.titleHeight ? cellsTop : 0) - changedCellTop;
+					clipLeft = printPagesData.pageClipRectLeft - borderDiff;
+					clipTop =  printPagesData.pageClipRectTop + printPagesData.titleHeight + (printPagesData.titleHeight ? (cellsTop*printScale) : 0) - borderDiff;
+					clipWidth = printPagesData.titleWidth + cellsLeft*printScale + borderDiff;
+					clipHeight = printPagesData.pageClipRectHeight + (printPagesData.titleHeight ? cellsTop : 0) - changedCellTop + borderDiff;
 
 					pageHeight = (t.getCellTop(printPagesData.titleColRange.r2 + 1, 0) - t.getCellTop(printPagesData.titleColRange.r1, 0)) * printScale;
 
@@ -2696,10 +2698,10 @@
 				pageWidth = (t.getCellLeft(printPagesData.pageRange.c2 + 1, 0) - t.getCellLeft(printPagesData.pageRange.c1, 0)) * printScale;
 				pageHeight = (t.getCellTop(printPagesData.pageRange.r2 + 1, 0) - t.getCellTop(printPagesData.pageRange.r1, 0)) * printScale;
 
-				clipLeft = printPagesData.pageClipRectLeft + printPagesData.titleWidth + (printPagesData.titleWidth ? (cellsLeft*printScale) : 0);
-				clipTop =  printPagesData.pageClipRectTop + printPagesData.titleHeight + (printPagesData.titleHeight ? (cellsTop*printScale) : 0);
-				clipWidth = printPagesData.pageClipRectWidth + cellsLeft*printScale;
-				clipHeight = printPagesData.pageClipRectHeight + (printPagesData.titleHeight ? cellsTop : 0) - changedCellTop;
+				clipLeft = printPagesData.pageClipRectLeft + printPagesData.titleWidth + (printPagesData.titleWidth ? (cellsLeft*printScale) : 0) - borderDiff;
+				clipTop =  printPagesData.pageClipRectTop + printPagesData.titleHeight + (printPagesData.titleHeight ? (cellsTop*printScale) : 0) - borderDiff;
+				clipWidth = printPagesData.pageClipRectWidth + cellsLeft*printScale + borderDiff;
+				clipHeight = printPagesData.pageClipRectHeight + (printPagesData.titleHeight ? cellsTop : 0) - changedCellTop + borderDiff;
 
 				clipLeftShape = printPagesData.pageClipRectLeft + printPagesData.titleWidth + cellsLeft*printScale;
 				clipTopShape =  printPagesData.pageClipRectTop + printPagesData.titleHeight + cellsTop*printScale;
@@ -2712,10 +2714,10 @@
 				//поэтому при расчтетах из него вычетаем размер заголовка как при 100%
 				//смещение слева/сверху рассчитывается с учётом измененной ширины заголовков - поэтому домножаем её на printScale
 
-				clipLeft = printPagesData.pageClipRectLeft;
-				clipTop =  printPagesData.pageClipRectTop;
-				clipWidth = printPagesData.pageClipRectWidth - changedCellLeft;
-				clipHeight = printPagesData.pageClipRectHeight - changedCellTop;
+				clipLeft = printPagesData.pageClipRectLeft - borderDiff;
+				clipTop =  printPagesData.pageClipRectTop - borderDiff;
+				clipWidth = printPagesData.pageClipRectWidth - changedCellLeft + borderDiff;
+				clipHeight = printPagesData.pageClipRectHeight - changedCellTop + borderDiff;
 
 				clipLeftShape = printPagesData.pageClipRectLeft + cellsLeft*printScale;
 				clipTopShape = printPagesData.pageClipRectTop + cellsTop*printScale;
