@@ -5672,6 +5672,18 @@ function RangeDataManagerElem(bbox, data)
 		}
 		return oRes;
 	};
+	RangeDataManager.prototype.getFirst = function (bbox) {
+		this._delayedInit();
+		var intervals = this.tree.searchNodes(bbox);
+		for (var i = 0; i < intervals.length; i++) {
+			var interval = intervals[i];
+			var elem = interval.data;
+			if (elem.bbox.isIntersect(bbox)) {
+				return elem
+			}
+		}
+		return null;
+	};
 	RangeDataManager.prototype.getAny = function (bbox) {
 		this._delayedInit();
 		return this.tree.searchAny(bbox);

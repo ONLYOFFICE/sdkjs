@@ -1844,8 +1844,12 @@ function (window, undefined) {
 	};
 	VHLOOKUPCache.prototype.generateElements = function (range, cacheElem) {
 		var _this = this;
-		if (range && cacheElem) {
 
+
+		//попытка оптимизации фукнции. если находим диапазон, который полностью перекрывает текущий или пересекаемся с текущим - тогда данные из кэша берём и не обращаемся к модели
+		//флаг - получаем из кэша только первый элемент
+		var bFast = true;
+		if (range && cacheElem) {
 			//ищем пересечения с уже имеющимися диапазонами
 			var elementsIntervals = [];
 			var addByIntervals = function (_elem, isIntersection) {
@@ -1868,23 +1872,48 @@ function (window, undefined) {
 			if (ws) {
 				var rangeData = this.getRangeDataBySheetId(ws.Id);
 				if (rangeData) {
-					var intervals = rangeData.tree && rangeData.tree.searchNodes(range.bbox);
-					if (intervals && intervals.length) {
-						for (var i = 0; i < intervals.length; i++) {
-							var interval = intervals[i];
-							var elem = interval.data;
-							if (elem.bbox.isIntersect(range.bbox)) {
-								if (elem.bbox.containsRange(range.bbox)) {
-									//диапазон в кэшэ полностью перекрывает новый
-									//формируем новый массив из того, которые в кэше
-									if (elem.data && elem.data.elements) {
-										cacheElem.elements = elem.data.slice(_this.bHor ? range.bbox.c1 - elem.bbox.c1 : range.bbox.r1 - elem.bbox.r1, _this.bHor ? elem.bbox.c2 - range.bbox.c2 : elem.bbox.r2 - range.bbox.r2);
-										return;
+					var interval, elem, intersection;
+					if (bFast) {
+						interval = rangeData.getFirst(range.bbox);
+						if (interval) {
+							elem = interval;
+							if (elem.bbox.containsRange(range.bbox)) {
+								//диапазон в кэшэ полностью перекрывает новый
+								//формируем новый массив из того, которые в кэше
+								if (elem.data && elem.data.elements) {
+									cacheElem.elements = elem.data.slice(_this.bHor ? range.bbox.c1 - elem.bbox.c1 : range.bbox.r1 - elem.bbox.r1, _this.bHor ? elem.bbox.c2 - range.bbox.c2 : elem.bbox.r2 - range.bbox.r2);
+									return;
+								}
+							} else /*if (range.bbox.containsRange(elem.bbox))*/{
+								//ищем пересечение
+								intersection = elem.bbox.intersection(range.bbox);
+								addByIntervals({bbox: intersection, elements: elem.data.elements.slice(_this.bHor ? intersection.c1 - elem.bbox.c1 : intersection.r1 - elem.bbox.r1, _this.bHor ? elem.bbox.c2 - intersection.c1 : elem.bbox.r2 - intersection.r1)});
+							}
+						}
+					} else {
+						var intervals = rangeData.tree && rangeData.tree.searchNodes(range.bbox);
+						if (intervals && intervals.length) {
+							for (var i = 0; i < intervals.length; i++) {
+								interval = intervals[i];
+								elem = interval.data;
+								if (elem.bbox.isIntersect(range.bbox)) {
+									if (elem.bbox.containsRange(range.bbox)) {
+										//диапазон в кэшэ полностью перекрывает новый
+										//формируем новый массив из того, которые в кэше
+										if (elem.data && elem.data.elements) {
+											cacheElem.elements = elem.data.slice(_this.bHor ? range.bbox.c1 - elem.bbox.c1 : range.bbox.r1 - elem.bbox.r1,
+												_this.bHor ? elem.bbox.c2 - range.bbox.c2 : elem.bbox.r2 - range.bbox.r2);
+											return;
+										}
+									} else /*if (range.bbox.containsRange(elem.bbox))*/{
+										//ищем пересечение
+										intersection = elem.bbox.intersection(range.bbox);
+										addByIntervals({
+											bbox: intersection,
+											elements: elem.data.elements.slice(_this.bHor ? intersection.c1 - elem.bbox.c1 : intersection.r1 - elem.bbox.r1,
+												_this.bHor ? elem.bbox.c2 - intersection.c1 : elem.bbox.r2 - intersection.r1)
+										});
 									}
-								} else /*if (range.bbox.containsRange(elem.bbox))*/{
-									//ищем пересечение
-									var intersection = elem.bbox.intersection(range.bbox);
-									addByIntervals({bbox: intersection, elements: elem.data.elements.slice(_this.bHor ? intersection.c1 - elem.bbox.c1 : intersection.r1 - elem.bbox.r1, _this.bHor ? elem.bbox.c2 - intersection.c1 : elem.bbox.r2 - intersection.r1)});
 								}
 							}
 						}
