@@ -1775,7 +1775,7 @@
 				this.bs.WriteItem(c_oSer_TablePart.QueryTable, function(){oThis.WriteQueryTable(table.QueryTable, table);});
 
 			if(null != table.tableType)
-				this.bs.WriteItem(c_oSer_TablePart.TableType, function(){oThis.memory.WriteULong(elem.tableType);});
+				this.bs.WriteItem(c_oSer_TablePart.TableType, function(){oThis.memory.WriteULong(table.tableType);});
         };
 		this.WriteAltTextTable = function(table)
 		{
