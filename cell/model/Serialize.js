@@ -6544,7 +6544,7 @@
 			}
 			else if(c_oSer_QueryTable.GrowShrinkType == type)
 			{
-				oQueryTable.growShrinkType = this.stream.GetString2LE();
+				oQueryTable.growShrinkType = this.stream.GetString2LE(length);
 			}
 			else if(c_oSer_QueryTable.AdjustColumnWidth == type)
 			{
