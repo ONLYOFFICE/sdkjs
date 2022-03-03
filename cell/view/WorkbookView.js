@@ -98,19 +98,25 @@
 					border: this.getCColor(AscCommon.GlobalSkin.Border),
 					color: this.getCColor(AscCommon.GlobalSkin.Color),
 					backgroundDark: this.getCColor(AscCommon.GlobalSkin.BackgroundDark),
-					colorDark: this.getCColor(AscCommon.GlobalSkin.ColorDark)
+					colorDark: this.getCColor(AscCommon.GlobalSkin.ColorDark),
+					colorFiltering: this.getCColor(AscCommon.GlobalSkin.ColorFiltering),
+					colorDarkFiltering: this.getCColor(AscCommon.GlobalSkin.ColorDarkFiltering)
 				}, { // kHeaderActive
 					background: this.getCColor(AscCommon.GlobalSkin.BackgroundActive),
 					border: this.getCColor(AscCommon.GlobalSkin.BorderActive),
 					color: this.getCColor(AscCommon.GlobalSkin.ColorActive),
 					backgroundDark: this.getCColor(AscCommon.GlobalSkin.BackgroundDarkActive),
-					colorDark: this.getCColor(AscCommon.GlobalSkin.ColorDarkActive)
+					colorDark: this.getCColor(AscCommon.GlobalSkin.ColorDarkActive),
+					colorFiltering: this.getCColor(AscCommon.GlobalSkin.ColorFiltering),
+					colorDarkFiltering: this.getCColor(AscCommon.GlobalSkin.ColorDarkFiltering)
 				}, { // kHeaderHighlighted
 					background: this.getCColor(AscCommon.GlobalSkin.BackgroundHighlighted),
 					border: this.getCColor(AscCommon.GlobalSkin.BorderHighlighted),
 					color: this.getCColor(AscCommon.GlobalSkin.ColorHighlighted),
 					backgroundDark: this.getCColor(AscCommon.GlobalSkin.BackgroundDarkHighlighted),
-					colorDark: this.getCColor(AscCommon.GlobalSkin.ColorDarkHighlighted)
+					colorDark: this.getCColor(AscCommon.GlobalSkin.ColorDarkHighlighted),
+					colorFiltering: this.getCColor(AscCommon.GlobalSkin.ColorFiltering),
+					colorDarkFiltering: this.getCColor(AscCommon.GlobalSkin.ColorDarkFiltering)
 				}];
 		};
 		this.header = {

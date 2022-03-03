@@ -5998,7 +5998,7 @@
 				return [filterArr, otherArr];
 			},
 
-			containInFilter: function(row, checkApplyFilter, checkNamedSheetView) {
+			containInFilter: function(row, checkApplyFilter, checkNamedSheetView, ignoreHeader) {
 				var ws = this.worksheet;
 				var tables = ws.TableParts;
 				var autoFilter = ws.AutoFilter;
@@ -6014,18 +6014,19 @@
 					}
 				};
 
+				var headerDiff = ignoreHeader ? 1 : 0;
 				if (tables) {
 					for (var i = 0; i < tables.length; i++) {
 						var tableFilter = tables[i].AutoFilter;
 						if (tableFilter && (!checkApplyFilter || (checkApplyFilter && _isApplyFilter(tables[i])))) {
-							if (row >= tables[i].Ref.r1 && row <= tables[i].Ref.r2) {
+							if (row >= tables[i].Ref.r1 + headerDiff && row <= tables[i].Ref.r2) {
 								return true;
 							}
 						}
 					}
 				}
 				if (autoFilter && (!checkApplyFilter || (checkApplyFilter && _isApplyFilter(autoFilter)))) {
-					if (row >= autoFilter.Ref.r1 && row <= autoFilter.Ref.r2) {
+					if (row >= autoFilter.Ref.r1 + headerDiff && row <= autoFilter.Ref.r2) {
 						return true;
 					}
 				}
