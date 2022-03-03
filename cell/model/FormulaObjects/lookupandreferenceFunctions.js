@@ -1845,6 +1845,11 @@ function (window, undefined) {
 	VHLOOKUPCache.prototype.generateElements = function (range, cacheElem) {
 		var _this = this;
 
+		//сильного прироста не получил, пока оставляю прежнюю обработку, подумать на счёт разбития диапазонов
+		range._foreachNoEmpty(function (cell, r, c) {
+			cacheElem.elements.push({v: checkTypeCell(cell), i: (_this.bHor ? c : r)});
+		});
+		return;
 
 		//попытка оптимизации фукнции. если находим диапазон, который полностью перекрывает текущий или пересекаемся с текущим - тогда данные из кэша берём и не обращаемся к модели
 		//флаг - получаем из кэша только первый элемент
