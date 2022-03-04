@@ -13880,8 +13880,9 @@
 				}
 				else
 				{
+					var oTypeCalendar = oNumFormat.getCalendarInfo();
 					//распознаем формат
-					var res = AscCommon.g_oFormatParser.parse(val);
+					var res = AscCommon.g_oFormatParser.parse(val, undefined, oTypeCalendar);
 					if(null != res)
 					{
 						//Сравниваем с текущим форматом, если типы совпадают - меняем только значение ячейки

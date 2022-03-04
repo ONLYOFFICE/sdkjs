@@ -96,6 +96,15 @@ var gc_aJapanEras = [
 	["H", "平", "平成", 1989],
 	["R", "令", "令和", 2019]
 ];
+var gc_oLocalesNames = {
+	"ja-jp" : 1041,
+	"ru-ru" : 1049
+};
+var gc_oFirstLocalesName = {
+	"en" : ["ca", "ie", "au"],
+	"ja" : ["jp"],
+	"ru" : ["ru"]
+};
 var gc_aIsForEra = [
 	0x800411, // Япония от императора
 	// Пока не поддерживаем эти локали
@@ -241,9 +250,18 @@ function FormatObjBracket(sData)
             if("$" == first)
             {
                 var aParams = data.substring(1).split('-');
+				var aElems = data.split(",");
+				this.currentEra = false;
+				if (aElems.length > 1 && aElems[1].length > 0) {
+					this.currentEra = true;
+				}
+				if (aParams.length > 2) {
+					aParams[1] += "-" + aParams[2].split(",")[0];
+				}
 				if (aParams[0].length > 0) {
 					this.CurrencyString = aParams[0];
-				} if(aParams.length > 1 && aParams[1].length > 0) {
+				}
+				if(aParams.length > 1 && aParams[1].length > 0) {
 					this.Lid = aParams[1];
 				}
             }
@@ -1904,14 +1922,31 @@ NumFormat.prototype =
                             sText += item.CurrencyString;
                         }
 						if (null != item.Lid) {
+							var el = item.Lid.split('-');
+							var arr = gc_oFirstLocalesName[el[0]];
+							if(arr != null && arr.length > 0) {
+								if(arr.indexOf(el[1]) != -1) {
+									if(el[0] != null && el[1] != null) 
+										this.LCID = gc_oLocalesNames[el[0].toLowerCase() + "-" + el[1].toLowerCase()];
+								} else {
+									if(el[0] != null && arr[0] != null)
+										this.LCID = gc_oLocalesNames[el[0].toLowerCase() + "-" + arr[0].toLowerCase()];
+								}
+							}
+							/*if(gc_oLocalesNames[item.Lid.toLowerCase()] != null) {
+								this.LCID = gc_oLocalesNames[item.Lid.toLowerCase()];
+								if (item.currentEra != null)
+									this.bCurrentEraYear = item.currentEra;
+							}*/
+							if(this.LCID !== null && this.LCID != 0) {
+								if (item.currentEra != null)
+									this.bCurrentEraYear = item.currentEra;
+							}
 							//Excel sometimes add 0x10000(0x442 and 0x10442)
-							if(gc_aIsForEra.indexOf(parseInt(item.Lid, 16)) != -1)
-							{
+							else if(gc_aIsForEra.indexOf(parseInt(item.Lid, 16)) != -1) {
 								this.bCurrentEraYear = true;
 								this.LCID = parseInt(item.Lid, 16) & 0xFFFF;
-							}
-							else
-							{
+							} else {
 								this.bCurrentEraYear = false;
 								this.LCID = parseInt(item.Lid, 16) & 0xFFFF;
 							}
@@ -3132,6 +3167,9 @@ CellFormat.prototype =
 		}
 		return result;
 	},
+	getCalendarInfo: function() {
+		return this.getTypeInfo().inputSelectedCalendar;
+	},
 	getType: function() {
 		return this.getTypeInfo().type;
 	},
@@ -3548,7 +3586,7 @@ FormatParser.prototype =
         }
         return val - 0;
     },
-    parse: function (value, cultureInfo)
+    parse: function (value, cultureInfo, oTypeCalendar)
     {
         if (null == cultureInfo)
             cultureInfo = g_oDefaultCultureInfo;
@@ -3759,7 +3797,7 @@ FormatParser.prototype =
 			}
         }
         if (null == res && !bError)
-            res = this.parseDate(value, cultureInfo);
+            res = this.parseDate(value, cultureInfo, oTypeCalendar);
         return res;
     },
     _parseStringLetters: function (sVal, currencySymbol, bBefore, oRes) {
@@ -3840,7 +3878,7 @@ FormatParser.prototype =
         }
 		return oRes;
 	},
-    _parseDateFromArray: function (match, oDataTypes, cultureInfo)
+    _parseDateFromArray: function (match, oDataTypes, cultureInfo, oTypeCalendar)
 	{
         var res = null;
         var bError = false;
@@ -4060,10 +4098,18 @@ FormatParser.prototype =
                     }
                     if(null != res.y)
                     {
-                        if(res.y < 30)
-                            res.y = 2000 + res.y;
-                        else if(res.y < 100)
-                            res.y = 1900 + res.y;
+						if (oTypeCalendar != null && oTypeCalendar)
+						{
+							// Получаем последнюю эру и к ней прибовляем текущий год
+							res.y = gc_aJapanEras[gc_aJapanEras.length - 1][3] + res.y - 1;
+						}
+						else
+						{
+							if(res.y < 30)
+								res.y = 2000 + res.y;
+							else if(res.y < 100)
+								res.y = 1900 + res.y;
+						}
                     }
                 }
                 if(nTimeLength > 0){
@@ -4091,7 +4137,7 @@ FormatParser.prototype =
         }
         return bRes;
     },
-	parseDate: function (value, cultureInfo)
+	parseDate: function (value, cultureInfo, oTypeCalendar)
 	{
 		var res = null;
 		var match = [];
@@ -4214,7 +4260,7 @@ FormatParser.prototype =
 		}
 		if(null != match && match.length > 0)
 		{
-		    var oParsedDate = this._parseDateFromArray(match, oDataTypes, cultureInfo);
+		    var oParsedDate = this._parseDateFromArray(match, oDataTypes, cultureInfo, oTypeCalendar);
 			if(null != oParsedDate)
 			{
 				var d = oParsedDate.d;
@@ -4997,6 +5043,7 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 				res.push('0.00');
 				res.push('0.00E+00');
 				// заменить
+				
 				res.push(getCurrencyFormat(cultureInfo, 2, hasCurrency, true, currencySymbol));
 				res.push(getCurrencyFormatSimple2(cultureInfo, 2, hasCurrency, currencySymbol, false));
 				res.push(getShortDateFormat(cultureInfo));
