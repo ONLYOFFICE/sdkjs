@@ -3143,7 +3143,7 @@
 			page = page.clone();
 		}
 
-		var kF = printPreviewState.pageZoom;
+		var kF = printPreviewState.pageZoom * AscCommon.AscBrowser.retinaPixelRatio;
 		//TODO 1 -
 		if (page) {
 			page.leftFieldInPx = Math.floor(page.leftFieldInPx * kF)  - 1;
