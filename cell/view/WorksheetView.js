@@ -2633,6 +2633,11 @@
 				t.objectRender.print(drawingPrintOptions);
 				if (drawingCtx.DocumentRenderer.SetBaseTransform) {
 					drawingCtx.DocumentRenderer.SetBaseTransform(oOldBaseTransform);
+				} else {
+					if (drawingCtx.DocumentRenderer.m_oCoordTransform) {
+						drawingCtx.DocumentRenderer.m_oCoordTransform.tx = oOldBaseTransform.tx * drawingCtx.DocumentRenderer.m_oCoordTransform.sx;
+						drawingCtx.DocumentRenderer.m_oCoordTransform.ty = oOldBaseTransform.ty * drawingCtx.DocumentRenderer.m_oCoordTransform.sy;
+					}
 				}
 				t.visibleRange = tmpVisibleRange;
 

@@ -3152,6 +3152,9 @@
 			page.pageClipRectTop = Math.floor(page.pageClipRectTop * kF);
 			page.pageClipRectWidth = Math.ceil(page.pageClipRectWidth * kF);
 			page.topFieldInPx = Math.floor(page.topFieldInPx * kF) - 1;
+
+			page.titleWidth = Math.floor(page.titleWidth * kF);
+			page.titleHeight = Math.floor(page.titleHeight * kF);
 		}
 
 		printPreviewContext.clear();
