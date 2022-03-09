@@ -6936,7 +6936,6 @@
 				}
 				if (t.model.getColCustomWidth(c)) {
 					t._calcColWidth(c);
-					continue;
 				}
 			}
 		}
