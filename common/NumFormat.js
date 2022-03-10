@@ -96,14 +96,20 @@ var gc_aJapanEras = [
 	["H", "平", "平成", 1989],
 	["R", "令", "令和", 2019]
 ];
+// Из буквенного представления локалей в численное
 var gc_oLocalesNames = {
 	"ja-jp" : 1041,
 	"ru-ru" : 1049
 };
+// Подлокали локалей
 var gc_oFirstLocalesName = {
 	"en" : ["ca", "ie", "au"],
 	"ja" : ["jp"],
 	"ru" : ["ru"]
+};
+// Добавочные значения к форматам по локалям
+var gc_oDifferentEras = {
+	"ja" : ["80"]
 };
 var gc_aIsForEra = [
 	0x800411, // Япония от императора
@@ -251,12 +257,19 @@ function FormatObjBracket(sData)
             {
                 var aParams = data.substring(1).split('-');
 				var aElems = data.split(",");
+				this.formatsSecondPart = "";
 				this.currentEra = false;
-				if (aElems.length > 1 && aElems[1].length > 0) {
-					this.currentEra = true;
+				if (aParams[1] != null && gc_oDifferentEras[aParams[1]] != null && aElems[1] != null && aElems[1].length > 0) {
+					if (gc_oDifferentEras[aParams[1]].indexOf(aElems[1]) != -1) {
+						this.currentEra = true;
+						this.formatsSecondPart = aElems[1];
+					}
 				}
 				if (aParams.length > 2) {
 					aParams[1] += "-" + aParams[2].split(",")[0];
+				}
+				if (aElems[1] != null && aElems[1].length > 0) {
+					this.formatsSecondPart = aElems[1];
 				}
 				if (aParams[0].length > 0) {
 					this.CurrencyString = aParams[0];
@@ -1924,6 +1937,8 @@ NumFormat.prototype =
 						if (null != item.Lid) {
 							var el = item.Lid.split('-');
 							var arr = gc_oFirstLocalesName[el[0]];
+							if (item.formatsSecondPart != null && item.formatsSecondPart != "")
+								item.Lid = item.Lid + "," + item.formatsSecondPart;
 							if(arr != null && arr.length > 0) {
 								if(arr.indexOf(el[1]) != -1) {
 									if(el[0] != null && el[1] != null) 
@@ -1933,11 +1948,6 @@ NumFormat.prototype =
 										this.LCID = gc_oLocalesNames[el[0].toLowerCase() + "-" + arr[0].toLowerCase()];
 								}
 							}
-							/*if(gc_oLocalesNames[item.Lid.toLowerCase()] != null) {
-								this.LCID = gc_oLocalesNames[item.Lid.toLowerCase()];
-								if (item.currentEra != null)
-									this.bCurrentEraYear = item.currentEra;
-							}*/
 							if(this.LCID !== null && this.LCID != 0) {
 								if (item.currentEra != null)
 									this.bCurrentEraYear = item.currentEra;
