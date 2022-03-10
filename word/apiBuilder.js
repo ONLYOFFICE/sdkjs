@@ -8437,12 +8437,12 @@
 		return true;
 	};
 	/**
-	 * Sets background color to all cells in table.
+	 * Sets the background color to all cells in the current table.
 	 * @memberof ApiTable
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} bNone - if true, then sets no background color.
+	 * @param {boolean} bNone - Defines that background color will not be set.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -8742,12 +8742,12 @@
 		return arrApiRanges;
 	};
 	/**
-	 * Sets background color to all cells in row.
+	 * Sets the background color to all cells in the current table row.
 	 * @memberof ApiTableRow
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} bNone - if true, then sets no background color.
+	 * @param {boolean} bNone - Defines that background color will not be set.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -9068,12 +9068,12 @@
 		return false;
 	};
 	/**
-	 * Sets background color to cell.
+	 * Sets the background color to the current table cell.
 	 * @memberof ApiTableCell
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} bNone - if true, then sets no background color.
+	 * @param {boolean} bNone - Defines that background color will not be set.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -9121,12 +9121,12 @@
 		return true;
 	};
 	/**
-	 * Sets background color to all cells in column which is formed by the current cell.
+	 * Sets the background color to all cells in the column containing the current cell.
 	 * @memberof ApiTable
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} bNone - if true, then sets no background color.
+	 * @param {boolean} bNone - Defines that background color will not be set.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
