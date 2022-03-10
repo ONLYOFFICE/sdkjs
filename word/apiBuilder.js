@@ -4178,9 +4178,8 @@
 	 * Starts the mail merge process.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {number} nStartIndex - The start index of the document for mail merge process.
-	 * @param {number} nEndIndex - The end index of the document for mail merge process.
-	 * @param {bool} bAll - if true -> be mail merge all recipients 
+	 * @param {number} [nStartIndex=0] - The start index of the document for mail merge process.
+	 * @param {number} [nEndIndex=Api.GetMailMergeReceptionsCount() - 1] - The end index of the document for mail merge process.
 	 * @returns {bool}
 	 */
 	Api.prototype.MailMerge = function(nStartIndex, nEndIndex)
@@ -8437,7 +8436,32 @@
 		
 		return true;
 	};
-
+	/**
+	 * Sets background color to all cells in table.
+	 * @memberof ApiTable
+	 * @param {byte} r - Red color component value.
+	 * @param {byte} g - Green color component value.
+	 * @param {byte} b - Blue color component value.
+	 * @param {boolean} bNone - if true, then sets no background color.
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiTable.prototype.SetBackgroundColor = function(r, g, b, bNone)
+	{
+		if ((typeof(r) == "number" && typeof(g) == "number" && typeof(b) == "number" && !bNone) || bNone)
+		{
+			var oRow;
+			for (var nRow = 0, nCount = this.GetRowsCount(); nRow < nCount; nRow++)
+			{
+				oRow = this.GetRow(nRow);
+				oRow.SetBackgroundColor(r, g, b, bNone);
+			}
+			return true;
+		}
+		else
+			return false;
+	};
+	
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiTableRow
@@ -8716,6 +8740,31 @@
 		}
 
 		return arrApiRanges;
+	};
+	/**
+	 * Sets background color to all cells in row.
+	 * @memberof ApiTableRow
+	 * @param {byte} r - Red color component value.
+	 * @param {byte} g - Green color component value.
+	 * @param {byte} b - Blue color component value.
+	 * @param {boolean} bNone - if true, then sets no background color.
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiTableRow.prototype.SetBackgroundColor = function(r, g, b, bNone)
+	{
+		if ((typeof(r) == "number" && typeof(g) == "number" && typeof(b) == "number" && !bNone) || bNone)
+		{
+			var oCell;
+			for (var nCell = 0, nCount = this.GetCellsCount(); nCell < nCount; nCell++)
+			{
+				oCell = this.GetCell(nCell);
+				oCell.SetBackgroundColor(r, g, b, bNone);
+			}
+			return true;
+		}
+		else
+			return false;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -9017,6 +9066,93 @@
 		}
 
 		return false;
+	};
+	/**
+	 * Sets background color to cell.
+	 * @memberof ApiTableCell
+	 * @param {byte} r - Red color component value.
+	 * @param {byte} g - Green color component value.
+	 * @param {byte} b - Blue color component value.
+	 * @param {boolean} bNone - if true, then sets no background color.
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiTableCell.prototype.SetBackgroundColor = function(r, g, b, bNone)
+	{
+		var oUtils = Common.Utils.ThemeColor;
+		var background = new Asc.CBackground();
+
+		var oAscColor;
+		if (typeof(r) == "number" && typeof(g) == "number" && typeof(b) == "number" && !bNone)
+		{
+			oAscColor = oUtils.getRgbColor(oUtils.getHexColor(r, g, b));
+			background.put_Value(0);
+			background.put_Color(oAscColor);
+		}
+		else if (bNone)
+		{
+			background.put_Value(1);
+			oAscColor = undefined;
+		}
+		else
+			return false;
+
+		background.Unifill = AscFormat.CreateUnifillFromAscColor(background.Color, 1);
+		var oNewShd = {
+			Value : background.Value,
+			Color : {
+				r    : background.Color.r,
+				g    : background.Color.g,
+				b    : background.Color.b,
+				Auto : false
+			},
+
+			Fill    : {
+				r    : background.Color.r,
+				g    : background.Color.g,
+				b    : background.Color.b,
+				Auto : false
+			},
+			Unifill   : background.Unifill ? background.Unifill.createDuplicate() : undefined,
+			ThemeFill : background.Unifill ? background.Unifill.createDuplicate() : undefined
+		}
+
+		this.Cell.Set_Shd(oNewShd);
+		return true;
+	};
+	/**
+	 * Sets background color to all cells in column which is formed by the current cell.
+	 * @memberof ApiTable
+	 * @param {byte} r - Red color component value.
+	 * @param {byte} g - Green color component value.
+	 * @param {byte} b - Blue color component value.
+	 * @param {boolean} bNone - if true, then sets no background color.
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiTableCell.prototype.SetColumnBackgroundColor = function(r, g, b, bNone)
+	{
+		if ((typeof(r) == "number" && typeof(g) == "number" && typeof(b) == "number" && !bNone) || bNone)
+		{
+			var oTable = this.GetParentTable();
+			var aColumnCells = oTable.Table.GetColumn(this.GetIndex(), this.GetParentRow().GetIndex());
+			var aCellsToFill = [];
+
+			for (var nCell = 0; nCell < aColumnCells.length; nCell++)
+				aCellsToFill[nCell] = new ApiTableCell(aColumnCells[nCell]);
+
+			if (aCellsToFill.length > 0)
+			{
+				for (nCell = 0; nCell < aCellsToFill.length; nCell++)
+				{
+					aCellsToFill[nCell].SetBackgroundColor(r, g, b, bNone);
+				}
+				return true;
+			}
+			return false;
+		}
+		else
+			return false;
 	};
 	
 	//------------------------------------------------------------------------------------------------------------------
@@ -14712,6 +14848,7 @@
 	ApiTable.prototype["Clear"]    					 = ApiTable.prototype.Clear;
 	ApiTable.prototype["Search"]    				 = ApiTable.prototype.Search;
 	ApiTable.prototype["SetTextPr"]    				 = ApiTable.prototype.SetTextPr;
+	ApiTable.prototype["SetBackgroundColor"]    	 = ApiTable.prototype.SetBackgroundColor;
 
 	ApiTableRow.prototype["GetClassType"]            = ApiTableRow.prototype.GetClassType;
 	ApiTableRow.prototype["GetCellsCount"]           = ApiTableRow.prototype.GetCellsCount;
@@ -14726,25 +14863,28 @@
 	ApiTableRow.prototype["Remove"]           		 = ApiTableRow.prototype.Remove;
 	ApiTableRow.prototype["SetTextPr"]          	 = ApiTableRow.prototype.SetTextPr;
 	ApiTableRow.prototype["Search"]          		 = ApiTableRow.prototype.Search;
+	ApiTableRow.prototype["SetBackgroundColor"]      = ApiTableRow.prototype.SetBackgroundColor;
 
-	ApiTableCell.prototype["GetClassType"]           = ApiTableCell.prototype.GetClassType;
-	ApiTableCell.prototype["GetContent"]             = ApiTableCell.prototype.GetContent;
-	ApiTableCell.prototype["GetIndex"]    			 = ApiTableCell.prototype.GetIndex;
-	ApiTableCell.prototype["GetRowIndex"]    		 = ApiTableCell.prototype.GetRowIndex;
-	ApiTableCell.prototype["GetParentRow"]    		 = ApiTableCell.prototype.GetParentRow;
-	ApiTableCell.prototype["GetParentTable"]    	 = ApiTableCell.prototype.GetParentTable;
-	ApiTableCell.prototype["AddRows"]    			 = ApiTableCell.prototype.AddRows;
-	ApiTableCell.prototype["AddColumns"]    		 = ApiTableCell.prototype.AddColumns;
-	ApiTableCell.prototype["RemoveColumn"]    		 = ApiTableCell.prototype.RemoveColumn;
-	ApiTableCell.prototype["RemoveRow"]    			 = ApiTableCell.prototype.RemoveRow;
-	ApiTableCell.prototype["Search"]    			 = ApiTableCell.prototype.Search;
-	ApiTableCell.prototype["GetNext"]    			 = ApiTableCell.prototype.GetNext;
-	ApiTableCell.prototype["GetPrevious"]    		 = ApiTableCell.prototype.GetPrevious;
-	ApiTableCell.prototype["Split"]    				 = ApiTableCell.prototype.Split;
-	ApiTableCell.prototype["SetCellPr"]    			 = ApiTableCell.prototype.SetCellPr;
-	ApiTableCell.prototype["SetTextPr"]    			 = ApiTableCell.prototype.SetTextPr;
-	ApiTableCell.prototype["Clear"]    		         = ApiTableCell.prototype.Clear;
-	ApiTableCell.prototype["AddElement"]    		 = ApiTableCell.prototype.AddElement;
+	ApiTableCell.prototype["GetClassType"]             = ApiTableCell.prototype.GetClassType;
+	ApiTableCell.prototype["GetContent"]               = ApiTableCell.prototype.GetContent;
+	ApiTableCell.prototype["GetIndex"]    			   = ApiTableCell.prototype.GetIndex;
+	ApiTableCell.prototype["GetRowIndex"]    		   = ApiTableCell.prototype.GetRowIndex;
+	ApiTableCell.prototype["GetParentRow"]    		   = ApiTableCell.prototype.GetParentRow;
+	ApiTableCell.prototype["GetParentTable"]    	   = ApiTableCell.prototype.GetParentTable;
+	ApiTableCell.prototype["AddRows"]    			   = ApiTableCell.prototype.AddRows;
+	ApiTableCell.prototype["AddColumns"]    		   = ApiTableCell.prototype.AddColumns;
+	ApiTableCell.prototype["RemoveColumn"]    		   = ApiTableCell.prototype.RemoveColumn;
+	ApiTableCell.prototype["RemoveRow"]    			   = ApiTableCell.prototype.RemoveRow;
+	ApiTableCell.prototype["Search"]    			   = ApiTableCell.prototype.Search;
+	ApiTableCell.prototype["GetNext"]    			   = ApiTableCell.prototype.GetNext;
+	ApiTableCell.prototype["GetPrevious"]    		   = ApiTableCell.prototype.GetPrevious;
+	ApiTableCell.prototype["Split"]    				   = ApiTableCell.prototype.Split;
+	ApiTableCell.prototype["SetCellPr"]    			   = ApiTableCell.prototype.SetCellPr;
+	ApiTableCell.prototype["SetTextPr"]    			   = ApiTableCell.prototype.SetTextPr;
+	ApiTableCell.prototype["Clear"]    		           = ApiTableCell.prototype.Clear;
+	ApiTableCell.prototype["AddElement"]    		   = ApiTableCell.prototype.AddElement;
+	ApiTableCell.prototype["SetBackgroundColor"]       = ApiTableCell.prototype.SetBackgroundColor;
+	ApiTableCell.prototype["SetColumnBackgroundColor"] = ApiTableCell.prototype.SetColumnBackgroundColor;
 
 	ApiStyle.prototype["GetClassType"]               = ApiStyle.prototype.GetClassType;
 	ApiStyle.prototype["GetName"]                    = ApiStyle.prototype.GetName;

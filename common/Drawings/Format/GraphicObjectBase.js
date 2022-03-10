@@ -1186,6 +1186,23 @@
         }
         return null;
     };
+
+    CGraphicObjectBase.prototype.recalcBrush = function() {};
+    CGraphicObjectBase.prototype.recalcPen = function() {};
+    CGraphicObjectBase.prototype.recalcTransform = function() {};
+    CGraphicObjectBase.prototype.recalcTransformText = function() {};
+    CGraphicObjectBase.prototype.recalcBounds = function() {};
+    CGraphicObjectBase.prototype.recalcGeometry = function() {};
+    CGraphicObjectBase.prototype.recalcStyle = function() {};
+    CGraphicObjectBase.prototype.recalcFill = function() {};
+    CGraphicObjectBase.prototype.recalcLine = function() {};
+    CGraphicObjectBase.prototype.recalcTransparent = function() {};
+    CGraphicObjectBase.prototype.recalcTextStyles = function() {};
+    CGraphicObjectBase.prototype.recalcTxBoxContent = function() {};
+    CGraphicObjectBase.prototype.recalcWrapPolygon = function() {};
+    CGraphicObjectBase.prototype.recalcContent = function() {};
+    CGraphicObjectBase.prototype.recalcContent2 = function() {};
+
     CGraphicObjectBase.prototype.checkDrawingBaseCoords = function()
     {
         if(this.drawingBase && this.spPr && this.spPr.xfrm && !this.group) {

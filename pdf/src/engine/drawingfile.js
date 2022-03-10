@@ -621,7 +621,7 @@ else
         var streamPointer = Module["_malloc"](stream.size);
         Module["HEAP8"].set(stream.data, streamPointer);
 
-		// не скидываем стрим, чтобы можно было использовать его а fonts.js
+        // не скидываем стрим, чтобы можно было использовать его а fonts.js
         //streams[stream_index] = null;
         //streams[stream_index] = AscFonts.updateFontStreamNative(streamPointer, stream.size);
 

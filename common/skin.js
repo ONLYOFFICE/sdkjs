@@ -151,7 +151,6 @@ var EditorSkins = {
 
 		GroupDataBorder          : "#000000",
 		EditorBorder             : "#cbcbcb"
-
 	},
 	"theme-dark" : {
 		Name                      : "theme-dark",

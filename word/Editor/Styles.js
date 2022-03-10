@@ -17660,6 +17660,7 @@ window["AscCommonWord"].g_dKoef_in_to_mm = g_dKoef_in_to_mm;
 window["AscCommonWord"].g_dKoef_mm_to_twips = g_dKoef_mm_to_twips;
 window["AscCommonWord"].g_dKoef_mm_to_pt = g_dKoef_mm_to_pt;
 window["AscCommonWord"].g_dKoef_mm_to_emu = g_dKoef_mm_to_emu;
+window["AscCommonWord"].g_dKoef_emu_to_mm = g_dKoef_emu_to_mm;
 window["AscCommonWord"].border_Single = border_Single;
 window["AscCommonWord"].Default_Tab_Stop = Default_Tab_Stop;
 window["AscCommonWord"].highlight_None = highlight_None;

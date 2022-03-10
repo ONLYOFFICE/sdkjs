@@ -2175,6 +2175,13 @@ function ShapeForResizeInGroup(originalObject, parentTrack)
         this.rot = originalObject.rot;
         this.flipH = originalObject.flipH;
         this.flipV = originalObject.flipV;
+
+
+        this.origX = this.x;
+        this.origY = this.y;
+        this.origExtX = this.extX;
+        this.origExtY = this.extY;
+
         this.transform = originalObject.transform.CreateDublicate();
         this.bSwapCoef = !(AscFormat.checkNormalRotate(this.rot));
         this.centerDistX = this.x + this.extX*0.5 - this.parentTrack.extX*0.5;
@@ -2271,10 +2278,10 @@ function ShapeForResizeInGroup(originalObject, parentTrack)
                 var currentXfrmY = this.y;
                 var currentXfrmExtX = this.extX;
                 var currentXfrmExtY = this.extY;
-                var previousXfrmOffX = this.originalObject.x || 0.0001;
-                var previousXfrmOffY = this.originalObject.y || 0.0001;
-                var previousXfrmExtX = this.originalObject.extX || 0.0001;
-                var previousXfrmExtY = this.originalObject.extY || 0.0001;
+                var previousXfrmOffX = this.origX || 0.0001;
+                var previousXfrmOffY = this.origY || 0.0001;
+                var previousXfrmExtX = this.origExtX || 0.0001;
+                var previousXfrmExtY = this.origExtY || 0.0001;
 
                 txXfrm.setOffX( previousTxXfrmX * (currentXfrmX / previousXfrmOffX));
                 txXfrm.setOffY(previousTxXfrmY * (currentXfrmY / previousXfrmOffY));

@@ -4530,6 +4530,9 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
             this.txBody.content.CheckRunContent(function (paraRun) {
                 paraRun.Set_FontSize(fontSize);
             });
+            this.txBody.content.Content.forEach(function (paragraph) {
+                paragraph.TextPr.Set_FontSize(fontSize);
+            });
             this.recalculateContentWitCompiledPr();
         }
     }
@@ -5276,7 +5279,7 @@ CShape.prototype.clipTextRect = function(graphics, transform, transformText, pag
     }
 };
 
-CShape.prototype.draw = function (graphics, transform, transformText, pageIndex) {
+CShape.prototype.draw = function (graphics, transform, transformText, pageIndex, opt) {
 
     if(this.checkNeedRecalculate && this.checkNeedRecalculate()){
         return;
@@ -5292,9 +5295,10 @@ CShape.prototype.draw = function (graphics, transform, transformText, pageIndex)
         graphics.animationDrawer.drawObject(this, graphics);
         return;
     }
-
+    var options = opt || {};
     var _transform = transform ? transform : this.transform;
     var _transform_text = transformText ? transformText : this.transformText;
+    var _transform_text2 = options.transformText2 || this.transformText2;
     var geometry = this.calcGeometry || this.spPr && this.spPr.geometry;
 
 	this.drawShdw &&  this.drawShdw(graphics);
@@ -5318,7 +5322,7 @@ CShape.prototype.draw = function (graphics, transform, transformText, pageIndex)
 
             var transform_text;
             if ((!this.txBody.content || this.txBody.content.Is_Empty()) && this.txBody.content2 != null && !this.txBody.checkCurrentPlaceholder() && (this.isEmptyPlaceholder ? this.isEmptyPlaceholder() : false) && this.transformText2) {
-                transform_text = this.transformText2;
+                transform_text = _transform_text2;
             }
             else if (this.txBody.content) {
                 transform_text = _transform_text;
@@ -6510,7 +6514,7 @@ CShape.prototype.OnContentRecalculate = function()
 CShape.prototype.recalculateBounds = function()
 {
     var boundsChecker = new  AscFormat.CSlideBoundsChecker();
-    this.draw(boundsChecker, this.localTransform, this.localTransformText);
+    this.draw(boundsChecker, this.localTransform, this.localTransformText, undefined, {transformText2: this.localTransformText2});
     this.bounds.l = boundsChecker.Bounds.min_x;
     this.bounds.t = boundsChecker.Bounds.min_y;
     this.bounds.r = boundsChecker.Bounds.max_x;

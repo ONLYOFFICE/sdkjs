@@ -773,6 +773,11 @@ function asc_menu_ReadAscStroke(_params, _cursor){
                 _stroke.canChangeArrows = _params[_cursor.pos++];
                 break;
             }
+            case 10:
+            {
+                _stroke.prstDash = _params[_cursor.pos++];
+                break;
+            }
             case 255:
             default:
             {
@@ -838,6 +843,11 @@ function asc_menu_WriteAscStroke(_type, _stroke, _stream){
     {
         _stream["WriteByte"](9);
         _stream["WriteBool"](_stroke.canChangeArrows);
+    }
+    if (_stroke.prstDash !== undefined && _stroke.prstDash !== null)
+    {
+        _stream["WriteByte"](10);
+        _stream["WriteLong"](_stroke.prstDash);
     }
     
     _stream["WriteByte"](255);
@@ -3728,8 +3738,12 @@ function OfflineEditor () {
                                   
         _api.asc_registerCallback("asc_onSendThemeColors", onApiSendThemeColors);
 
-        // Comments
+        // Common
+        _api.asc_registerCallback('asc_onStartAction', onApiLongActionBegin);
+        _api.asc_registerCallback('asc_onEndAction', onApiLongActionEnd);
+        _api.asc_registerCallback('asc_onError', onApiError);
 
+        // Comments
         _api.asc_registerCallback("asc_onAddComment", onApiAddComment);
         _api.asc_registerCallback("asc_onAddComments", onApiAddComments);
         _api.asc_registerCallback("asc_onRemoveComment", onApiRemoveComment);
@@ -6797,6 +6811,31 @@ function readSDKReplies (data) {
         }
     }
     return replies;
+}
+
+function onApiLongActionBegin(type, id) {
+    var info = {
+        "type" : type,
+        "id" : id
+    };
+    postDataAsJSONString(info, 26102); // ASC_MENU_EVENT_TYPE_LONGACTION_BEGIN
+}
+
+function onApiLongActionEnd(type, id) {
+    var info = {
+        "type" : type,
+        "id" : id
+    };
+    postDataAsJSONString(info, 26103); // ASC_MENU_EVENT_TYPE_LONGACTION_END
+}
+
+function onApiError(id, level, errData) {
+    var info = {
+        "level" : level,
+        "id" : id,
+        "errData" : JSON.prune(errData, 4),
+    };
+    postDataAsJSONString(info, 26104); // ASC_MENU_EVENT_TYPE_API_ERROR
 }
 
 function onApiAddComment(id, data) {

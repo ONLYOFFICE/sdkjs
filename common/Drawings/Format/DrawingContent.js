@@ -60,6 +60,10 @@
         }
     };
 
+    CDrawingDocContent.prototype.CanAddComment = function() {
+        return false;
+    };
+
     CDrawingDocContent.prototype.getFontSizeForConstr = function () {
         return this.Content.reduce(function (pAcc, paragraph) {
             var maxFontSizeInParagraph = paragraph.Content.reduce(function (acc, paraRun) {

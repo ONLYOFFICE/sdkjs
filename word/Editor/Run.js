@@ -3424,7 +3424,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 				continue;
 
 			// Проверяем, не нужно ли добавить нумерацию к данному элементу
-            if (true === this.RecalcInfo.NumberingAdd && true === Item.Can_AddNumbering())
+            if (true === this.RecalcInfo.NumberingAdd && true === Item.CanAddNumbering())
                 X = this.private_RecalculateNumbering(PRS, Item, ParaPr, X);
 
             switch (ItemType)

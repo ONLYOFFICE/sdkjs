@@ -211,7 +211,7 @@ CRunElementBase.prototype.Is_RealContent   = function()
 {
 	return true;
 };
-CRunElementBase.prototype.Can_AddNumbering = function()
+CRunElementBase.prototype.CanAddNumbering  = function()
 {
 	return true;
 };
@@ -525,7 +525,7 @@ ParaText.prototype.Is_RealContent = function()
 {
 	return true;
 };
-ParaText.prototype.Can_AddNumbering = function()
+ParaText.prototype.CanAddNumbering = function()
 {
 	return true;
 };
@@ -878,7 +878,7 @@ ParaSpace.prototype.Is_RealContent = function()
 {
 	return true;
 };
-ParaSpace.prototype.Can_AddNumbering = function()
+ParaSpace.prototype.CanAddNumbering = function()
 {
 	return true;
 };
@@ -1022,7 +1022,7 @@ ParaSym.prototype.Is_RealContent = function()
 {
 	return true;
 };
-ParaSym.prototype.Can_AddNumbering = function()
+ParaSym.prototype.CanAddNumbering = function()
 {
 	return true;
 };
@@ -1197,7 +1197,7 @@ ParaEnd.prototype.Is_RealContent = function()
 {
 	return true;
 };
-ParaEnd.prototype.Can_AddNumbering = function()
+ParaEnd.prototype.CanAddNumbering = function()
 {
 	return true;
 };
@@ -1441,7 +1441,7 @@ ParaNewLine.prototype.Is_RealContent = function()
 {
 	return true;
 };
-ParaNewLine.prototype.Can_AddNumbering = function()
+ParaNewLine.prototype.CanAddNumbering = function()
 {
 	if (break_Line === this.BreakType)
 		return true;
@@ -1662,7 +1662,7 @@ ParaNumbering.prototype.Is_RealContent = function()
 {
 	return true;
 };
-ParaNumbering.prototype.Can_AddNumbering = function()
+ParaNumbering.prototype.CanAddNumbering = function()
 {
 	return false;
 };
@@ -1974,7 +1974,7 @@ ParaPageNum.prototype.Is_RealContent = function()
 {
 	return true;
 };
-ParaPageNum.prototype.Can_AddNumbering = function()
+ParaPageNum.prototype.CanAddNumbering = function()
 {
 	return true;
 };
@@ -2072,7 +2072,7 @@ ParaPresentationNumbering.prototype.Is_RealContent = function()
 {
 	return true;
 };
-ParaPresentationNumbering.prototype.Can_AddNumbering = function()
+ParaPresentationNumbering.prototype.CanAddNumbering = function()
 {
 	return false;
 };
@@ -2591,7 +2591,7 @@ ParaPageCount.prototype.Is_RealContent = function()
 {
 	return true;
 };
-ParaPageCount.prototype.Can_AddNumbering = function()
+ParaPageCount.prototype.CanAddNumbering = function()
 {
 	return true;
 };

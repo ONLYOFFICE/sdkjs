@@ -160,7 +160,7 @@ CMathBaseText.prototype.IsNBSP = function()
 {
     return false;
 };
-CMathBaseText.prototype.Can_AddNumbering = function()
+CMathBaseText.prototype.CanAddNumbering = function()
 {
     return true;
 };

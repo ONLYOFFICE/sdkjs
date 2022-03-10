@@ -598,6 +598,10 @@ CSelectedContent.prototype =
 
 	CheckDrawingsSize: function() 
 	{
+		if(this.MoveDrawing) 
+		{
+			return;
+		}
 		//correct size of inline image when SelectedContent contains the only one inline image
 		if(this.DrawingObjects.length === 1) 
 		{

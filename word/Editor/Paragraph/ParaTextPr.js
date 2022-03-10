@@ -82,7 +82,7 @@ ParaTextPr.prototype.Is_RealContent = function()
 {
 	return true;
 };
-ParaTextPr.prototype.Can_AddNumbering = function()
+ParaTextPr.prototype.CanAddNumbering = function()
 {
 	return false;
 };

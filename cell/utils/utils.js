@@ -3269,22 +3269,22 @@
 			return this;
 		};
 
-		cDate.prototype.getExcelDate = function () {
-			return Math.floor( this.getExcelDateWithTime() );
+		cDate.prototype.getExcelDate = function (bLocal) {
+			return Math.floor( this.getExcelDateWithTime(bLocal) );
 		};
 
-		cDate.prototype.getExcelDateWithTime = function () {
-//    return Math.floor( ( this.getTime() / 1000 - this.getTimezoneOffset() * 60 ) / c_sPerDay + ( AscCommonExcel.c_DateCorrectConst + (bDate1904 ? 0 : 1) ) );
+		cDate.prototype.getExcelDateWithTime = function (bLocal) {
 			var year = this.getUTCFullYear(), month = this.getUTCMonth(), date = this.getUTCDate(), res;
+			var timeZoneOffset = bLocal ? this.getTimezoneOffset() * 60 * 1000 : 0;
 
-			if(1900 === year && 0 === month && 0 === date) {
+			if (1900 === year && 0 === month && 0 === date) {
 				res = 0;
-			} else if (1900 < year || (1900 == year && 1 < month)) {
-				res = (Date.UTC(year, month, date, this.getUTCHours(), this.getUTCMinutes(), this.getUTCSeconds()) - this.getExcelNullDate() ) / c_msPerDay;
-			} else if (1900 == year && 1 == month && 29 == date) {
+			} else if (1900 < year || (1900 === year && 1 < month)) {
+				res = (Date.UTC(year, month, date, this.getUTCHours(), this.getUTCMinutes(), this.getUTCSeconds()) - this.getExcelNullDate() - timeZoneOffset) / c_msPerDay;
+			} else if (1900 === year && 1 === month && 29 === date) {
 				res = 60;
 			} else {
-				res = (Date.UTC(year, month, date, this.getUTCHours(), this.getUTCMinutes(), this.getUTCSeconds()) - this.getExcelNullDate() ) / c_msPerDay - 1;
+				res = (Date.UTC(year, month, date, this.getUTCHours(), this.getUTCMinutes(), this.getUTCSeconds()) - this.getExcelNullDate() - timeZoneOffset) / c_msPerDay - 1;
 			}
 
 			return res;
@@ -3387,7 +3387,7 @@
 			return api.asc_getLocaleExample(AscCommon.getShortDateFormat(), this.getExcelDate());
 		};
 		cDate.prototype.getTimeString = function (api) {
-			return api.asc_getLocaleExample(AscCommon.getShortTimeFormat(), this.getExcelDateWithTime(true) - this.getTimezoneOffset()/(60*24));
+			return api.asc_getLocaleExample(AscCommon.getShortTimeFormat(), this.getExcelDateWithTime() - this.getTimezoneOffset()/(60*24));
 		};
 		cDate.prototype.fromISO8601 = function (dateStr) {
 			if (dateStr.endsWith("Z")) {

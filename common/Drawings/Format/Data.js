@@ -1649,6 +1649,10 @@
     Point.prototype.getDrawingDocument = function () {
     }
 
+    Point.prototype.isForm = function () {
+      return false;
+    }
+
     Point.prototype.Get_Theme = function () {
       return null;
     }
@@ -8855,6 +8859,20 @@
       }
     };
 
+    Drawing.prototype.handleUpdateExtents = function(bExt)
+    {
+      this.recalcTransform();
+      this.recalcBounds();
+      this.addToRecalculate();
+      this.recalcWrapPolygon();
+      if(this.spTree)
+      {
+        for(var i = 0; i < this.spTree.length; ++i)
+        {
+          this.spTree[i].handleUpdateExtents(bExt);
+        }
+      }
+    };
 
     changesFactory[AscDFH.historyitem_BackdropNormDx] = CChangeLong;
     changesFactory[AscDFH.historyitem_BackdropNormDy] = CChangeLong;
@@ -9855,6 +9873,32 @@
       return 'SmartArt';
     };
 
+    SmartArt.prototype.recalculate = function () {
+    var oldParaMarks = editor && editor.ShowParaMarks;
+      if (oldParaMarks) {
+        editor.ShowParaMarks = false;
+      }
+      CGroupShape.prototype.recalculate.call(this);
+      if (oldParaMarks) {
+        editor.ShowParaMarks = oldParaMarks;
+      }
+    }
+
+    SmartArt.prototype.handleUpdateExtents = function(bExt)
+    {
+      this.recalcTransform();
+      this.recalcBounds();
+      this.addToRecalculate();
+      this.recalcWrapPolygon();
+      if(this.spTree)
+      {
+        for(var i = 0; i < this.spTree.length; ++i)
+        {
+          this.spTree[i].handleUpdateExtents(bExt);
+        }
+      }
+    };
+
     SmartArt.prototype.startAlgorithm = function (pointTree) {
       var layoutDef = this.getLayoutDef();
       if (layoutDef) {
@@ -10720,6 +10764,12 @@
       if(this.checkNeedRecalculate()){
         return;
       }
+
+      var oldParaMarks = editor && editor.ShowParaMarks;
+      if (oldParaMarks) {
+        editor.ShowParaMarks = false;
+      }
+
       if(this.calcGeometry) {
         graphics.SaveGrState();
         graphics.SetIntegerGrid(false);
@@ -10730,6 +10780,9 @@
         graphics.RestoreGrState();
       }
       AscFormat.CGroupShape.prototype.draw.call(this, graphics);
+      if (oldParaMarks) {
+        editor.ShowParaMarks = oldParaMarks;
+      }
     };
     SmartArt.prototype.getBg = function() {
       var oDataModel = this.getDataModel() && this.getDataModel().getDataModel();

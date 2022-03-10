@@ -1027,22 +1027,22 @@ ParaDrawing.prototype.Set_Props = function(Props)
 		this.docPr.setTitle(Props.title);
 	}
 };
-ParaDrawing.prototype.CheckFitToColumn = function() 
+ParaDrawing.prototype.CheckFitToColumn = function()
 {
 	var oLogicDoc = this.document;
-	if(oLogicDoc) 
+	if(oLogicDoc)
 	{
 		var oColumnSize = oLogicDoc.GetColumnSize();
-		if(oColumnSize) 
+		if(oColumnSize)
 		{
-			if(this.Extent.W > oColumnSize.W || this.Extent.H > oColumnSize.H) 
+			if(this.Extent.W > oColumnSize.W || this.Extent.H > oColumnSize.H)
 			{
-				if(oColumnSize.W > 0 && oColumnSize.H > 0) 
+				if(oColumnSize.W > 0 && oColumnSize.H > 0)
 				{
-					if(this.GraphicObj) 
+					if(this.GraphicObj && !this.GraphicObj.isGroupObject())
 					{
 						var oXfrm = this.GraphicObj.spPr && this.GraphicObj.spPr.xfrm;
-						if(oXfrm) 
+						if(oXfrm)
 						{
 							var dScaleW = oColumnSize.W/oXfrm.extX;
 							var dScaleH = oColumnSize.H/oXfrm.extY;
@@ -1070,7 +1070,8 @@ ParaDrawing.prototype.CheckWH = function()
 		this.Extent.W = this.GraphicObj.spPr.xfrm.extX;
 		this.Extent.H = this.GraphicObj.spPr.xfrm.extY;
 	}
-	if(this.GraphicObj.getObjectType() === AscDFH.historyitem_type_Shape)
+	if(this.GraphicObj.getObjectType() === AscDFH.historyitem_type_Shape ||
+		this.GraphicObj.getObjectType() === AscDFH.historyitem_type_SmartArt)
 	{
 		this.GraphicObj.handleUpdateExtents();
 	}
@@ -1109,6 +1110,12 @@ ParaDrawing.prototype.CheckWH = function()
 
 
 	var EEL = 0.0, EET = 0.0, EER = 0.0, EEB = 0.0;
+	var addEEL = 0.0, addEET = 0.0, addEER = 0.0, addEEB = 0.0;
+
+	if (this.GraphicObj.getObjectType() === AscDFH.historyitem_type_SmartArt) {
+		addEER = 57150 * AscCommonWord.g_dKoef_emu_to_mm;
+		addEEL = 38100 * AscCommonWord.g_dKoef_emu_to_mm;
+	}
 	//if(this.Is_Inline())
 	{
 		var xc          = this.GraphicObj.localTransform.TransformPointX(this.GraphicObj.extX / 2.0, this.GraphicObj.extY / 2.0);
@@ -1151,10 +1158,10 @@ ParaDrawing.prototype.CheckWH = function()
 			b = startY + extY;
 		}
 
-		EEL = (xc - extX / 2) - l + LineCorrect;
-		EET = (yc - extY / 2) - t + LineCorrect;
-		EER = r + LineCorrect - (xc + extX / 2);
-		EEB = b + LineCorrect - (yc + extY / 2);
+		EEL = (xc - extX / 2) - l + LineCorrect + addEEL;
+		EET = (yc - extY / 2) - t + LineCorrect + addEET;
+		EER = r + LineCorrect - (xc + extX / 2) + addEER;
+		EEB = b + LineCorrect - (yc + extY / 2) + addEEB;
 	}
 	this.setEffectExtent(EEL, EET, EER, EEB);
 	this.Check_WrapPolygon();
@@ -1299,12 +1306,9 @@ ParaDrawing.prototype.Is_RealContent = function()
 {
 	return true;
 };
-ParaDrawing.prototype.Can_AddNumbering = function()
+ParaDrawing.prototype.CanAddNumbering = function()
 {
-	if (drawing_Inline === this.DrawingType)
-		return true;
-
-	return false;
+	return this.IsInline();
 };
 ParaDrawing.prototype.Copy = function(oPr)
 {
@@ -1764,7 +1768,7 @@ ParaDrawing.prototype.GetInnerForm = function()
 ParaDrawing.prototype.Use_TextWrap = function()
 {
 	// Если автофигура привязана к параграфу с рамкой, обтекание не делается
-	if (!this.Parent || !this.Parent.Get_FramePr || (null !== this.Parent.Get_FramePr() && undefined !== this.Parent.Get_FramePr()))
+	if (this.IsInline() || !this.Parent || !this.Parent.Get_FramePr || (null !== this.Parent.Get_FramePr() && undefined !== this.Parent.Get_FramePr()))
 		return false;
 
 	// здесь должна быть проверка, нужно ли использовать обтекание относительно данного объекта,

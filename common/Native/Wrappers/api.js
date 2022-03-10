@@ -4181,6 +4181,12 @@ function asc_menu_ReadAscStroke(_params, _cursor)
                 _stroke.canChangeArrows = _params[_cursor.pos++];
                 break;
             }
+            case 10:
+            {
+                _stroke.prstDash = _params[_cursor.pos++];
+                break;
+            }
+
             case 255:
             default:
             {
@@ -4247,6 +4253,11 @@ function asc_menu_WriteAscStroke(_type, _stroke, _stream)
     {
         _stream["WriteByte"](9);
         _stream["WriteBool"](_stroke.canChangeArrows);
+    }
+    if (_stroke.prstDash !== undefined && _stroke.prstDash !== null)
+    {
+        _stream["WriteByte"](10);
+        _stream["WriteLong"](_stroke.prstDash);
     }
 
     _stream["WriteByte"](255);

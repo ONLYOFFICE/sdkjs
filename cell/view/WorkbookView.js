@@ -3143,15 +3143,18 @@
 			page = page.clone();
 		}
 
-		var kF = printPreviewState.pageZoom;
+		var kF = printPreviewState.pageZoom * AscCommon.AscBrowser.retinaPixelRatio;
 		//TODO 1 -
 		if (page) {
 			page.leftFieldInPx = Math.floor(page.leftFieldInPx * kF)  - 1;
-			page.pageClipRectHeight = Math.ceil(page.pageClipRectHeight * kF) + 2;
+			page.pageClipRectHeight = Math.ceil(page.pageClipRectHeight * kF);
 			page.pageClipRectLeft = Math.floor(page.pageClipRectLeft * kF);
 			page.pageClipRectTop = Math.floor(page.pageClipRectTop * kF);
-			page.pageClipRectWidth = Math.ceil(page.pageClipRectWidth * kF) + 2;
+			page.pageClipRectWidth = Math.ceil(page.pageClipRectWidth * kF);
 			page.topFieldInPx = Math.floor(page.topFieldInPx * kF) - 1;
+
+			page.titleWidth = Math.floor(page.titleWidth * kF);
+			page.titleHeight = Math.floor(page.titleHeight * kF);
 		}
 
 		printPreviewContext.clear();

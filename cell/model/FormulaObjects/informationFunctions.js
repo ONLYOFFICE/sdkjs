@@ -137,6 +137,9 @@
 		} else {
 			var str = arg0.toString().toUpperCase();
 
+			//если первый аргумент из набора тех, которые не требуют значения второго аргумента, то обрабатываем его частично
+			var needCheckVal2Arg = {"CONTENTS": 1, "TYPE": 1};
+
 			var cell, bbox;
 			if(arg1) {
 				//TODO добавил заглушку, на случай если приходит массив.
@@ -147,9 +150,11 @@
 
 				var isRangeArg1 = cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type;
 				if (isRangeArg1 || cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
-					var _tempValue = isRangeArg1 ? arg1.getValueByRowCol(0,0) : arg1.getValue();
-					if (_tempValue instanceof cError) {
-						return _tempValue;
+					if (needCheckVal2Arg[str]) {
+						var _tempValue = isRangeArg1 ? arg1.getValueByRowCol(0,0) : arg1.getValue();
+						if (_tempValue instanceof cError) {
+							return _tempValue;
+						}
 					}
 					bbox = arg1.getRange();
 					bbox = bbox && bbox.bbox;

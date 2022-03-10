@@ -1575,7 +1575,7 @@
 	cNOW.prototype.Calculate = function () {
 		var d = new cDate();
 		var res =
-			new cNumber(d.getExcelDate() + (d.getHours() * 60 * 60 + d.getMinutes() * 60 + d.getSeconds()) / c_sPerDay);
+			new cNumber(d.getExcelDate(true) + (d.getHours() * 60 * 60 + d.getMinutes() * 60 + d.getSeconds()) / c_sPerDay);
 		res.numFormat = 22;
 		return res;
 	};
@@ -1779,7 +1779,7 @@
 	cTODAY.prototype.ca = true;
 	cTODAY.prototype.argumentsType = null;
 	cTODAY.prototype.Calculate = function () {
-		var res = new cNumber(new cDate().getExcelDate());
+		var res = new cNumber(new cDate().getExcelDate(true));
 		res.numFormat = 14;
 		return res;
 	};
