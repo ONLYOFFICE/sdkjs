@@ -9033,7 +9033,12 @@ PasteProcessor.prototype =
 				}
 			}
 
-			//Вначале и конце вырезаем \r|\t|\n, в середине текста заменяем их на пробелы
+			//в конструкциях вида text/n<b>text<b/> || <b>text<b/>/ntext заменяю символ переноса на пробел
+			if ((node.nextSibling && node.nextSibling.nodeType !== Node.TEXT_NODE) ||
+				(node.previousSibling && node.previousSibling.nodeType !== Node.TEXT_NODE)) {
+				value = value.replace(/(\r|\t|\n)/g, ' ');
+			}
+
 			//потому что(например иногда chrome при вставке разбивает строки с помощью \n)
 			if (!whiteSpacing) {
 				value = value.replace(/^(\r|\t|\n)+|(\r|\t|\n)+$/g, '');
