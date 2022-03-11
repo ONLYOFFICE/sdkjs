@@ -9033,7 +9033,12 @@ PasteProcessor.prototype =
 				}
 			}
 
-			//Вначале и конце вырезаем \r|\t|\n, в середине текста заменяем их на пробелы
+			//в конструкциях вида text/n<b>text<b/> || <b>text<b/>/ntext заменяю символ переноса на пробел
+			if ((node.nextSibling && node.nextSibling.nodeType !== Node.TEXT_NODE) ||
+				(node.previousSibling && node.previousSibling.nodeType !== Node.TEXT_NODE)) {
+				value = value.replace(/(\r|\t|\n)/g, ' ');
+			}
+
 			//потому что(например иногда chrome при вставке разбивает строки с помощью \n)
 			if (!whiteSpacing) {
 				value = value.replace(/^(\r|\t|\n)+|(\r|\t|\n)+$/g, '');
@@ -9079,8 +9084,11 @@ PasteProcessor.prototype =
 				}
 
 				//для проблемы с лишними прообелами в начале новой строки при копировании из MS EXCEL ячеек с текстом, разделенным alt+enter
+				//мс в данном случае(баг 55851) оборачивает данные в тэг font. чтобы сохранить пробелы, добавляю проверку.
+				//можно было бы проверить на наличие переноса строки вначале, но 55851 - перед вторым Bold добавляет символ переноса
+				//тег font является устаревшим, но мс его активно испольует
 				var ignoreFirstSpaces = false;
-				if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Excel) {
+				if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Excel && !(node.parentNode && node.parentNode.nodeName.toLowerCase() === "font")) {
 					ignoreFirstSpaces = true;
 				}
 

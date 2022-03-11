@@ -2033,6 +2033,8 @@
 			tempLink.style.display = 'none';
 			tempLink.href = blobURL;
 			tempLink.setAttribute('download', filename);
+			//to prevent click hook in web-apps/vendor/framework7-react/node_modules/framework7/esm/modules/clicks/clicks.js
+			tempLink.classList.add("external");
 
 			// Safari thinks _blank anchor are pop ups. We only want to set _blank
 			// target if the browser does not support the HTML5 download attribute.

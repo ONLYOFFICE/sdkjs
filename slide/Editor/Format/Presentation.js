@@ -6472,7 +6472,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
                             oGroupSelection.chartSelection.resetSelection(false);
                             oGroupSelection.chartSelection = null;
                         } else {
-                            oDrawingObjects.selection.groupSelection.resetSelection(this);
+                            oDrawingObjects.selection.groupSelection.resetSelection(oDrawingObjects);
                             oDrawingObjects.selection.groupSelection = null;
                         }
                     } else if (oDrawingObjects.selection.textSelection) {

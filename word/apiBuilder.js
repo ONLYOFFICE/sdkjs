@@ -3590,6 +3590,47 @@
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
+	// Cross-reference
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Available refs to "numbered" type of reference.
+	 * @typedef {"pageNum" | "paraNum" | "noCtxParaNum" | "fullCtxParaNum" | "text" | "aboveBelow"} numberedRefTo
+	 */
+
+	/**
+	 * Available refs to "heading" type of reference.
+	 * @typedef {"text" | "pageNum" | "headingNum" | "noCtxHeadingNum" | "fullCtxHeadingNum" | "aboveBelow"} headingRefTo
+	 */
+
+	/**
+	 * Available refs to "bookmark" type of reference.
+	 * @typedef {"text" | "pageNum" | "paraNum" | "noCtxParaNum" | "fullCtxParaNum" | "aboveBelow"} bookmarkRefTo
+	 */
+
+	/**
+	 * Available refs to "footnote" type of reference.
+	 * @typedef {"footnoteNum" | "pageNum" | "aboveBelow" | "formFootnoteNum"} footnoteRefTo
+	 */
+
+	/**
+	 * Available refs to "endnote" type of reference.
+	 * @typedef {"endnoteNum" | "pageNum" | "aboveBelow" | "formEndnoteNum"} endnoteRefTo
+	 */
+
+	/**
+	 * Available refs to "equation" type of reference.
+	 * @typedef {"entireCaption" | "labelNumber" | "captionText" | "pageNum" | "aboveBelow"} captionRefTo
+	 */
+
+	/**
+	 * Available caption types.
+	 * @typedef {"equation" | "figure" | "table"} captionType
+	 */
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
 	// Base Api
 	//
 	//------------------------------------------------------------------------------------------------------------------
@@ -5344,6 +5385,90 @@
 		else
 			this.Document.SetSpecialFormsHighlight(r, g, b);
 	};
+
+	/**
+	 * Gets all numbered paragraphs.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiParagraph[]}
+	 */
+	ApiDocument.prototype.GetAllNumberedParagraphs = function() 
+	{
+		var allParas = this.Document.GetAllNumberedParagraphs();
+		var aResult = [];
+		for (var nPara = 0; nPara < allParas.length; nPara++)
+			aResult.push(new ApiParagraph(allParas[nPara]));
+
+		return aResult;
+	};
+
+	/**
+	 * Gets all heading paragraphs.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiParagraph[]}
+	 */
+	ApiDocument.prototype.GetAllHeadingParagraphs = function() 
+	{
+		var allParas = editor.asc_GetAllHeadingParagraphs();
+		var aResult = [];
+		for (var nPara = 0; nPara < allParas.length; nPara++)
+			aResult.push(new ApiParagraph(allParas[nPara]));
+
+		return aResult;
+	};
+
+	/**
+	 * Gets first paragraphs from all footnotes.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiParagraph[]}
+	 */
+	ApiDocument.prototype.GetFootnotesFirstParagraphs = function() 
+	{
+		var allParas = this.Document.GetFootNotesFirstParagraphs();
+		var aResult = [];
+		for (var nPara = 0; nPara < allParas.length; nPara++)
+			aResult.push(new ApiParagraph(allParas[nPara]));
+
+		return aResult;
+	};
+
+	/**
+	 * Gets first paragraphs from all endnotes.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiParagraph[]}
+	 */
+	ApiDocument.prototype.GetEndNotesFirstParagraphs = function() 
+	{
+		var allParas = this.Document.GetEndNotesFirstParagraphs();
+		var aResult = [];
+		for (var nPara = 0; nPara < allParas.length; nPara++)
+			aResult.push(new ApiParagraph(allParas[nPara]));
+
+		return aResult;
+	};
+
+	/**
+	 * Gets all caption paragraphs.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @param {captionType} - caption type
+	 * @returns {ApiParagraph[]}
+	 */
+	ApiDocument.prototype.GetAllCaptionParagraphs = function(sCaption) 
+	{
+		if (typeof(sCaption) !== "string" || sCaption.length === 0)
+			return [];
+
+		var allParas = this.Document.GetAllCaptionParagraphs(sCaption[0].toUpperCase() + sCaption.slice(1));
+		var aResult = [];
+		for (var nPara = 0; nPara < allParas.length; nPara++)
+			aResult.push(new ApiParagraph(allParas[nPara]));
+
+		return aResult;
+	};
 	
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -6627,6 +6752,371 @@
 		oDocument.Register_Field(oField);
 		this.Paragraph.AddToParagraph(oField);
 	};
+
+	/**
+	 * Adds numbered cross-reference.
+	 * Paragraph must be in document.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 * @param {numberedRefTo} sRefType - specify what the reference should display.
+	 * @param {ApiParagraph} oParaTo - the numbered paragraph to be referred to (must be in document).
+	 * @param {boolean} [bLink=true] - specify what the reference should be inserted as hyperlink.
+	 * @param {boolean} [bAboveBelow=false] - specify what above/below should be included (don't used with "text" and "aboveBelow" refType).
+	 * @param {string} [sSepWith=""] - separate numbers with (used only with "fullCtxParaNum" refType).
+	 * @returns {boolean}
+	 */
+	ApiParagraph.prototype.AddNumberedCrossRef = function(sRefTo, oParaTo, bLink, bAboveBelow, sSepWith) 
+	{
+		var nRefTo = -1;
+		switch (sRefTo)
+		{
+			case "pageNum":
+				nRefTo = 1;
+				break;
+			case "paraNum":
+				nRefTo = 2;
+				break;
+			case "noCtxParaNum":
+				nRefTo = 3;
+				break;
+			case "fullCtxParaNum":
+				nRefTo = 4;
+				break;
+			case "text":
+				nRefTo = 0;
+				break;
+			case "aboveBelow":
+				nRefTo = 5;
+				break;
+		}
+		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !this.Paragraph.Is_UseInDocument())
+			return false;
+		if (typeof(bLink) !== "boolean")
+			bLink = true;
+		if (typeof(bAboveBelow) !== "boolean" || nRefTo === 5 || nRefTo === 0)
+			bAboveBelow = false;
+		if (typeof(sSepWith) !== "string" || nRefTo !== 4)
+			sSepWith = "";
+
+		var oDocument = private_GetLogicDocument();
+		var oParaPos, oldSelectionInfo;
+
+		var allNumberedParas = oDocument.GetAllNumberedParagraphs();
+		for (var nPara = 0; nPara < allNumberedParas.length; nPara++)
+		{
+			if (allNumberedParas[nPara].Id === oParaTo.Paragraph.Id)
+			{
+				oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
+				oldSelectionInfo = oDocument.SaveDocumentState();
+				oDocument.RemoveSelection();
+				oDocument.SetContentPosition(oParaPos, 0, 0);
+				oDocument.AddRefToParagraph(oParaTo.private_GetImpl(), nRefTo, bLink, bAboveBelow, sSepWith);
+				oDocument.LoadDocumentState(oldSelectionInfo);
+				return true;
+			}
+		}
+		return false;
+	};
+
+	/**
+	 * Adds heading cross-reference.
+	 * Paragraph must be in document.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 * @param {headingRefTo} sRefType - specify what the reference should display.
+	 * @param {ApiParagraph} oParaTo - the paragraph with heading style to be referred to (must be in document).
+	 * @param {boolean} [bLink=true] - specify what the reference should be inserted as hyperlink.
+	 * @param {boolean} [bAboveBelow=false] - specify what above/below should be included (don't used with "text" and "aboveBelow" refType).
+	 * @returns {boolean}
+	 */
+	ApiParagraph.prototype.AddHeadingCrossRef = function(sRefTo, oParaTo, bLink, bAboveBelow) 
+	{
+		var nRefTo = -1;
+		switch (sRefTo)
+		{
+			case "text":
+				nRefTo = 0;
+				break;
+			case "pageNum":
+				nRefTo = 1;
+				break;
+			case "headingNum":
+				nRefTo = 2;
+				break;
+			case "noCtxHeadingNum":
+				nRefTo = 3;
+				break;
+			case "fullCtxHeadingNum":
+				nRefTo = 4;
+				break;
+			case "aboveBelow":
+				nRefTo = 5;
+				break;
+		}
+		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !oParaTo.Paragraph.Is_UseInDocument() || !this.Paragraph.Is_UseInDocument())
+			return false;
+		if (typeof(bLink) !== "boolean")
+			bLink = true;
+		if (typeof(bAboveBelow) !== "boolean" || nRefTo === 5 || nRefTo === 0)
+			bAboveBelow = false;
+
+		var nOutlineLvl = oParaTo.Paragraph.GetOutlineLvl();
+		if (nOutlineLvl === undefined || nOutlineLvl < 0 || nOutlineLvl > 8)
+			return false;
+
+		var oDocument = private_GetLogicDocument();
+		var oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
+		var oldSelectionInfo = oDocument.SaveDocumentState();
+		oDocument.RemoveSelection();
+		oDocument.SetContentPosition(oParaPos, 0, 0);
+		oDocument.AddRefToParagraph(oParaTo.private_GetImpl(), nRefTo, bLink, bAboveBelow, undefined);
+		oDocument.LoadDocumentState(oldSelectionInfo);
+		return true;
+	};
+
+	/**
+	 * Adds bookmark cross-reference.
+	 * Paragraph must be in document.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 * @param {bookmarkRefTo} sRefType - specify what the reference should display.
+	 * @param {string} sBookmarkName - the name of bookmark to be referred to (must be in document).
+	 * @param {boolean} [bLink=true] - specify what the reference should be inserted as hyperlink.
+	 * @param {boolean} [bAboveBelow=false] - specify what above/below should be included (don't used with "text" and "aboveBelow" refType).
+	 * @param {string} [sSepWith=""] - separate numbers with (used only with "fullCtxParaNum" refType).
+	 * @returns {boolean}
+	 */
+	ApiParagraph.prototype.AddBookmarkCrossRef = function(sRefTo, sBookmarkName, bLink, bAboveBelow, sSepWith) 
+	{
+		var nRefTo = -1;
+		switch (sRefTo)
+		{
+			case "text":
+				nRefTo = 0;
+				break;
+			case "pageNum":
+				nRefTo = 1;
+				break;
+			case "paraNum":
+				nRefTo = 2;
+				break;
+			case "noCtxParaNum":
+				nRefTo = 3;
+				break;
+			case "fullCtxParaNum":
+				nRefTo = 4;
+				break;
+			case "aboveBelow":
+				nRefTo = 5;
+				break;
+		}
+		if (nRefTo === -1 || typeof(sBookmarkName) !== "string" || sBookmarkName.length === 0 || !this.Paragraph.Is_UseInDocument())
+			return false;
+		if (typeof(bLink) !== "boolean")
+			bLink = true;
+		if (typeof(bAboveBelow) !== "boolean" || nRefTo === 5 || nRefTo === 0)
+			bAboveBelow = false;
+		if (typeof(sSepWith) !== "string" || nRefTo !== 4)
+			sSepWith = "";
+
+		var oManager = editor.asc_GetBookmarksManager();
+		var oDocument, oParaPos, sName, oldSelectionInfo;
+		for (var nBookmark = 0, nCount = oManager.asc_GetCount(); nBookmark < nCount; nBookmark++)
+		{
+			sName = oManager.asc_GetName(nBookmark);
+			if (!oManager.asc_IsInternalUseBookmark(sName) && !oManager.asc_IsHiddenBookmark(sName) && sName === sBookmarkName)
+			{
+				oDocument = private_GetLogicDocument();
+				oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
+				oldSelectionInfo = oDocument.SaveDocumentState();
+				oDocument.RemoveSelection();
+				oDocument.SetContentPosition(oParaPos, 0, 0);
+				oDocument.AddRefToBookmark(sBookmarkName, nRefTo, bLink, bAboveBelow, sSepWith);
+				oDocument.LoadDocumentState(oldSelectionInfo);
+				return true;
+			}
+		}
+		
+		return false;
+	};
+
+	/**
+	 * Adds footnote cross-reference.
+	 * Paragraph must be in document.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 * @param {footnoteRefTo} sRefType - specify what the reference should display.
+	 * @param {ApiParagraph} oParaTo - the first paragraph from footnote (must be in document).
+	 * @param {boolean} [bLink=true] - specify what the reference should be inserted as hyperlink.
+	 * @param {boolean} [bAboveBelow=false] - specify what above/below should be included (don't used with "aboveBelow" refType).
+	 * @returns {boolean}
+	 */
+	ApiParagraph.prototype.AddFootnoteCrossRef = function(sRefTo, oParaTo, bLink, bAboveBelow) 
+	{
+		var nRefTo = -1;
+		switch (sRefTo)
+		{
+			case "footnoteNum":
+				nRefTo = 8;
+				break;
+			case "pageNum":
+				nRefTo = 1;
+				break;
+			case "aboveBelow":
+				nRefTo = 5;
+				break;
+			case "formFootnoteNum":
+				nRefTo = 9;
+				break;
+		}
+		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !this.Paragraph.Is_UseInDocument())
+			return false;
+		if (typeof(bLink) !== "boolean")
+			bLink = true;
+		if (typeof(bAboveBelow) !== "boolean" || nRefTo === 5)
+			bAboveBelow = false;
+
+		var oDocument = private_GetLogicDocument();
+		var oParaPos, oldSelectionInfo;
+
+		var aFirstFootnoteParas = oDocument.GetFootNotesFirstParagraphs();
+		for (var nPara = 0; nPara < aFirstFootnoteParas.length; nPara++)
+		{
+			if (aFirstFootnoteParas[nPara].Id === oParaTo.Paragraph.Id)
+			{
+				oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
+				oldSelectionInfo = oDocument.SaveDocumentState();
+				oDocument.RemoveSelection();
+				oDocument.SetContentPosition(oParaPos, 0, 0);
+				oDocument.AddNoteRefToParagraph(oParaTo.private_GetImpl(), nRefTo, bLink, bAboveBelow);
+				oDocument.LoadDocumentState(oldSelectionInfo);
+				return true;
+			}
+		}
+		return false;
+	};
+
+	/**
+	 * Adds endnote cross-reference.
+	 * Paragraph must be in document.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 * @param {endnoteRefTo} sRefType - specify what the reference should display.
+	 * @param {ApiParagraph} oParaTo - the first paragraph from endnote (must be in document).
+	 * @param {boolean} [bLink=true] - specify what the reference should be inserted as hyperlink.
+	 * @param {boolean} [bAboveBelow=false] - specify what above/below should be included (don't used with "aboveBelow" refType).
+	 * @returns {boolean}
+	 */
+	ApiParagraph.prototype.AddEndnoteCrossRef = function(sRefTo, oParaTo, bLink, bAboveBelow) 
+	{
+		var nRefTo = -1;
+		switch (sRefTo)
+		{
+			case "endnoteNum":
+				nRefTo = 8;
+				break;
+			case "pageNum":
+				nRefTo = 1;
+				break;
+			case "aboveBelow":
+				nRefTo = 5;
+				break;
+			case "formEndnoteNum":
+				nRefTo = 9;
+				break;
+		}
+		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !this.Paragraph.Is_UseInDocument())
+			return false;
+		if (typeof(bLink) !== "boolean")
+			bLink = true;
+		if (typeof(bAboveBelow) !== "boolean" || nRefTo === 5)
+			bAboveBelow = false;
+
+		var oDocument = private_GetLogicDocument();
+		var aFirstEndnoteParas = oDocument.GetEndNotesFirstParagraphs();
+		var oParaPos, oldSelectionInfo;
+		
+		for (var nPara = 0; nPara < aFirstEndnoteParas.length; nPara++)
+		{
+			if (aFirstEndnoteParas[nPara].Id === oParaTo.Paragraph.Id)
+			{
+				oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
+				oldSelectionInfo = oDocument.SaveDocumentState();
+				oDocument.RemoveSelection();
+				oDocument.SetContentPosition(oParaPos, 0, 0);
+				oDocument.AddNoteRefToParagraph(oParaTo.private_GetImpl(), nRefTo, bLink, bAboveBelow);
+				oDocument.LoadDocumentState(oldSelectionInfo);
+				return true;
+			}
+		}
+		return false;
+	};
+
+	/**
+	 * Adds caption cross-reference.
+	 * Paragraph must be in document.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 * @param {captionType} sCaption - type of caption.
+	 * @param {captionRefTo} sRefType - specify what the reference should display.
+	 * @param {ApiParagraph} oParaTo - the paragraph with caption (must be in document).
+	 * @param {boolean} [bLink=true] - specify what the reference should be inserted as hyperlink.
+	 * @param {boolean} [bAboveBelow=false] - specify what above/below should be included (used only with "pageNum" refType).
+	 * @returns {boolean}
+	 */
+	ApiParagraph.prototype.AddCaptionCrossRef = function(sCaption, sRefTo, oParaTo, bLink, bAboveBelow) 
+	{
+		var nRefTo = -1;
+		if (typeof(sCaption) !== "string" || sCaption.length === 0)
+			return false;
+
+		switch (sRefTo)
+		{
+			case "entireCaption":
+				nRefTo = 0;
+				break;
+			case "labelNumber":
+				nRefTo = 6;
+				break;
+			case "captionText":
+				nRefTo = 7;
+				break;
+			case "pageNum":
+				nRefTo = 1;
+				break;
+			case "aboveBelow":
+				nRefTo = 5;
+				break;
+		}
+		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !this.Paragraph.Is_UseInDocument())
+			return false;
+		if (typeof(bLink) !== "boolean")
+			bLink = true;
+		if (typeof(bAboveBelow) !== "boolean" || nRefTo !== 1)
+			bAboveBelow = false;
+
+		var aTempCompFlds = [];
+		oParaTo = oParaTo.private_GetImpl();
+		
+		oParaTo.GetAllSeqFieldsByType(sCaption[0].toUpperCase() + sCaption.slice(1), aTempCompFlds);
+		if (aTempCompFlds.length === 0)
+			return false;
+		if (nRefTo === 7 && oParaTo.asc_canAddRefToCaptionText(typeRec.displayValue) === false)
+		{
+			console.log("The request reference is empty.");
+			return false;
+		}
+
+		var oDocument = private_GetLogicDocument();
+		var oldSelectionInfo = oDocument.SaveDocumentState();
+		var oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
+		oDocument.RemoveSelection();
+		oDocument.SetContentPosition(oParaPos, 0, 0);
+		oDocument.AddRefToCaption(sCaption[0].toUpperCase() + sCaption.slice(1), oParaTo, nRefTo, bLink, bAboveBelow);
+		oDocument.LoadDocumentState(oldSelectionInfo);
+		return true;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiRun
@@ -14644,45 +15134,51 @@
 	ApiRange.prototype["SetTextPr"]                  = ApiRange.prototype.SetTextPr;
 	ApiRange.prototype["Delete"]                     = ApiRange.prototype.Delete;
 
-	ApiDocument.prototype["GetClassType"]            = ApiDocument.prototype.GetClassType;
-	ApiDocument.prototype["CreateNewHistoryPoint"]   = ApiDocument.prototype.CreateNewHistoryPoint;
-	ApiDocument.prototype["GetDefaultTextPr"]        = ApiDocument.prototype.GetDefaultTextPr;
-	ApiDocument.prototype["GetDefaultParaPr"]        = ApiDocument.prototype.GetDefaultParaPr;
-	ApiDocument.prototype["GetStyle"]                = ApiDocument.prototype.GetStyle;
-	ApiDocument.prototype["CreateStyle"]             = ApiDocument.prototype.CreateStyle;
-	ApiDocument.prototype["GetDefaultStyle"]         = ApiDocument.prototype.GetDefaultStyle;
-	ApiDocument.prototype["GetFinalSection"]         = ApiDocument.prototype.GetFinalSection;
-	ApiDocument.prototype["CreateSection"]           = ApiDocument.prototype.CreateSection;
-	ApiDocument.prototype["SetEvenAndOddHdrFtr"]     = ApiDocument.prototype.SetEvenAndOddHdrFtr;
-	ApiDocument.prototype["CreateNumbering"]         = ApiDocument.prototype.CreateNumbering;
-	ApiDocument.prototype["InsertContent"]           = ApiDocument.prototype.InsertContent;
-	ApiDocument.prototype["GetCommentsReport"]       = ApiDocument.prototype.GetCommentsReport;
-	ApiDocument.prototype["GetReviewReport"]         = ApiDocument.prototype.GetReviewReport;
-	ApiDocument.prototype["InsertWatermark"]         = ApiDocument.prototype.InsertWatermark;
-	ApiDocument.prototype["SearchAndReplace"]        = ApiDocument.prototype.SearchAndReplace;
-	ApiDocument.prototype["GetAllContentControls"]   = ApiDocument.prototype.GetAllContentControls;
-	ApiDocument.prototype["SetTrackRevisions"]       = ApiDocument.prototype.SetTrackRevisions;
-	ApiDocument.prototype["IsTrackRevisions"]        = ApiDocument.prototype.IsTrackRevisions;
-	ApiDocument.prototype["GetRange"]                = ApiDocument.prototype.GetRange;
-	ApiDocument.prototype["GetRangeBySelect"]        = ApiDocument.prototype.GetRangeBySelect;
-	ApiDocument.prototype["Last"]                    = ApiDocument.prototype.Last;
-	ApiDocument.prototype["Push"]                    = ApiDocument.prototype.Push;
-	ApiDocument.prototype["DeleteBookmark"]          = ApiDocument.prototype.DeleteBookmark;
-	ApiDocument.prototype["AddComment"]              = ApiDocument.prototype.AddComment;
-	ApiDocument.prototype["GetBookmarkRange"]        = ApiDocument.prototype.GetBookmarkRange;
-	ApiDocument.prototype["GetSections"]             = ApiDocument.prototype.GetSections;
-	ApiDocument.prototype["GetAllTablesOnPage"]      = ApiDocument.prototype.GetAllTablesOnPage;
-	ApiDocument.prototype["RemoveSelection"]         = ApiDocument.prototype.RemoveSelection;
-	ApiDocument.prototype["GetAllDrawingObjects"]    = ApiDocument.prototype.GetAllDrawingObjects;
-	ApiDocument.prototype["GetAllShapes"]            = ApiDocument.prototype.GetAllShapes;
-	ApiDocument.prototype["GetAllImages"]            = ApiDocument.prototype.GetAllImages;
-	ApiDocument.prototype["GetAllCharts"]            = ApiDocument.prototype.GetAllCharts;
-	ApiDocument.prototype["Search"]                  = ApiDocument.prototype.Search;
-	ApiDocument.prototype["ToMarkdown"]              = ApiDocument.prototype.ToMarkdown;
-	ApiDocument.prototype["ToHtml"]                  = ApiDocument.prototype.ToHtml;
-	ApiDocument.prototype["GetAllForms"]             = ApiDocument.prototype.GetAllForms;
-	ApiDocument.prototype["ClearAllFields"]          = ApiDocument.prototype.ClearAllFields;
-	ApiDocument.prototype["SetFormsHighlight"]       = ApiDocument.prototype.SetFormsHighlight;
+	ApiDocument.prototype["GetClassType"]                = ApiDocument.prototype.GetClassType;
+	ApiDocument.prototype["CreateNewHistoryPoint"]       = ApiDocument.prototype.CreateNewHistoryPoint;
+	ApiDocument.prototype["GetDefaultTextPr"]            = ApiDocument.prototype.GetDefaultTextPr;
+	ApiDocument.prototype["GetDefaultParaPr"]            = ApiDocument.prototype.GetDefaultParaPr;
+	ApiDocument.prototype["GetStyle"]                    = ApiDocument.prototype.GetStyle;
+	ApiDocument.prototype["CreateStyle"]                 = ApiDocument.prototype.CreateStyle;
+	ApiDocument.prototype["GetDefaultStyle"]             = ApiDocument.prototype.GetDefaultStyle;
+	ApiDocument.prototype["GetFinalSection"]             = ApiDocument.prototype.GetFinalSection;
+	ApiDocument.prototype["CreateSection"]               = ApiDocument.prototype.CreateSection;
+	ApiDocument.prototype["SetEvenAndOddHdrFtr"]         = ApiDocument.prototype.SetEvenAndOddHdrFtr;
+	ApiDocument.prototype["CreateNumbering"]             = ApiDocument.prototype.CreateNumbering;
+	ApiDocument.prototype["InsertContent"]               = ApiDocument.prototype.InsertContent;
+	ApiDocument.prototype["GetCommentsReport"]           = ApiDocument.prototype.GetCommentsReport;
+	ApiDocument.prototype["GetReviewReport"]             = ApiDocument.prototype.GetReviewReport;
+	ApiDocument.prototype["InsertWatermark"]             = ApiDocument.prototype.InsertWatermark;
+	ApiDocument.prototype["SearchAndReplace"]            = ApiDocument.prototype.SearchAndReplace;
+	ApiDocument.prototype["GetAllContentControls"]       = ApiDocument.prototype.GetAllContentControls;
+	ApiDocument.prototype["SetTrackRevisions"]           = ApiDocument.prototype.SetTrackRevisions;
+	ApiDocument.prototype["IsTrackRevisions"]            = ApiDocument.prototype.IsTrackRevisions;
+	ApiDocument.prototype["GetRange"]                    = ApiDocument.prototype.GetRange;
+	ApiDocument.prototype["GetRangeBySelect"]            = ApiDocument.prototype.GetRangeBySelect;
+	ApiDocument.prototype["Last"]                        = ApiDocument.prototype.Last;
+	ApiDocument.prototype["Push"]                        = ApiDocument.prototype.Push;
+	ApiDocument.prototype["DeleteBookmark"]              = ApiDocument.prototype.DeleteBookmark;
+	ApiDocument.prototype["AddComment"]                  = ApiDocument.prototype.AddComment;
+	ApiDocument.prototype["GetBookmarkRange"]            = ApiDocument.prototype.GetBookmarkRange;
+	ApiDocument.prototype["GetSections"]                 = ApiDocument.prototype.GetSections;
+	ApiDocument.prototype["GetAllTablesOnPage"]          = ApiDocument.prototype.GetAllTablesOnPage;
+	ApiDocument.prototype["RemoveSelection"]             = ApiDocument.prototype.RemoveSelection;
+	ApiDocument.prototype["GetAllDrawingObjects"]        = ApiDocument.prototype.GetAllDrawingObjects;
+	ApiDocument.prototype["GetAllShapes"]                = ApiDocument.prototype.GetAllShapes;
+	ApiDocument.prototype["GetAllImages"]                = ApiDocument.prototype.GetAllImages;
+	ApiDocument.prototype["GetAllCharts"]                = ApiDocument.prototype.GetAllCharts;
+	ApiDocument.prototype["Search"]                      = ApiDocument.prototype.Search;
+	ApiDocument.prototype["ToMarkdown"]                  = ApiDocument.prototype.ToMarkdown;
+	ApiDocument.prototype["ToHtml"]                      = ApiDocument.prototype.ToHtml;
+	ApiDocument.prototype["GetAllForms"]                 = ApiDocument.prototype.GetAllForms;
+	ApiDocument.prototype["ClearAllFields"]              = ApiDocument.prototype.ClearAllFields;
+	ApiDocument.prototype["SetFormsHighlight"]           = ApiDocument.prototype.SetFormsHighlight;
+	ApiDocument.prototype["GetAllNumberedParagraphs"]    = ApiDocument.prototype.GetAllNumberedParagraphs;
+	ApiDocument.prototype["GetAllHeadingParagraphs"]     = ApiDocument.prototype.GetAllHeadingParagraphs;
+	ApiDocument.prototype["GetFootnotesFirstParagraphs"] = ApiDocument.prototype.GetFootnotesFirstParagraphs;
+	ApiDocument.prototype["GetEndNotesFirstParagraphs"]  = ApiDocument.prototype.GetEndNotesFirstParagraphs;
+	ApiDocument.prototype["GetAllCaptionParagraphs"]     = ApiDocument.prototype.GetAllCaptionParagraphs;
+	
 
 	ApiParagraph.prototype["GetClassType"]           = ApiParagraph.prototype.GetClassType;
 	ApiParagraph.prototype["AddText"]                = ApiParagraph.prototype.AddText;
@@ -14744,6 +15240,12 @@
 	ApiParagraph.prototype["Select"]                 = ApiParagraph.prototype.Select;
 	ApiParagraph.prototype["Search"]                 = ApiParagraph.prototype.Search;
 	ApiParagraph.prototype["WrapInMailMergeField"]   = ApiParagraph.prototype.WrapInMailMergeField;
+	ApiParagraph.prototype["AddNumberedCrossRef"]    = ApiParagraph.prototype.AddNumberedCrossRef;
+	ApiParagraph.prototype["AddHeadingCrossRef"]     = ApiParagraph.prototype.AddHeadingCrossRef;
+	ApiParagraph.prototype["AddBookmarkCrossRef"]    = ApiParagraph.prototype.AddBookmarkCrossRef;
+	ApiParagraph.prototype["AddFootnoteCrossRef"]    = ApiParagraph.prototype.AddFootnoteCrossRef;
+	ApiParagraph.prototype["AddEndnoteCrossRef"]     = ApiParagraph.prototype.AddEndnoteCrossRef;
+	ApiParagraph.prototype["AddCaptionCrossRef"]     = ApiParagraph.prototype.AddCaptionCrossRef;
 
 
 	ApiRun.prototype["GetClassType"]                 = ApiRun.prototype.GetClassType;
