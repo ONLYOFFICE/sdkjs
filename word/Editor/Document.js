@@ -23062,9 +23062,9 @@ CDocument.prototype.AddField = function(nType, oPr)
 
 	return false;
 };
-CDocument.prototype.AddFieldWithInstruction = function(sInstruction)
+CDocument.prototype.AddFieldWithInstruction = function(sInstruction, oCurPara)
 {
-	var oParagraph = this.GetCurrentParagraph(false, false, {ReplacePlaceHolder : true});
+	var oParagraph = oCurPara || this.GetCurrentParagraph(false, false, {ReplacePlaceHolder : true});
 	if (!oParagraph)
 		return null;
 
@@ -23152,7 +23152,7 @@ CDocument.prototype.private_FinalizeValidateComplexFields = function()
 		}
 	}
 };
-CDocument.prototype.AddRefToParagraph = function(oParagraph, nType, bHyperlink, bAboveBelow, sSeparator)
+CDocument.prototype.AddRefToParagraph = function(oParagraph, nType, bHyperlink, bAboveBelow, sSeparator, oCurPara)
 {
 	if(false === this.IsSelectionLocked(AscCommon.changestype_Document_Content, {
 		Type      : changestype_2_ElementsArray_and_Type,
@@ -23164,25 +23164,25 @@ CDocument.prototype.AddRefToParagraph = function(oParagraph, nType, bHyperlink, 
 		var sBookmarkName = oParagraph.AddBookmarkForRef();
 		if(sBookmarkName)
 		{
-			this.private_AddRefToBookmark(sBookmarkName, nType, bHyperlink, bAboveBelow, sSeparator);
+			this.private_AddRefToBookmark(sBookmarkName, nType, bHyperlink, bAboveBelow, sSeparator, oCurPara);
 		}
 		this.UpdateInterface();
 		this.UpdateSelection();
 		this.FinalizeAction();
 	}
 };
-CDocument.prototype.AddRefToBookmark = function(sBookmarkName, nType, bHyperlink, bAboveBelow, sSeparator)
+CDocument.prototype.AddRefToBookmark = function(sBookmarkName, nType, bHyperlink, bAboveBelow, sSeparator, oCurPara)
 {
 	if(false === this.IsSelectionLocked(AscCommon.changestype_Document_Content))
 	{
 		this.StartAction(AscDFH.historydescription_Document_AddCrossRef);
-		this.private_AddRefToBookmark(sBookmarkName, nType, bHyperlink, bAboveBelow, sSeparator);
+		this.private_AddRefToBookmark(sBookmarkName, nType, bHyperlink, bAboveBelow, sSeparator, oCurPara);
 		this.UpdateInterface();
 		this.UpdateSelection();
 		this.FinalizeAction();
 	}
 };
-CDocument.prototype.private_AddRefToBookmark = function(sBookmarkName, nType, bHyperlink, bAboveBelow, sSeparator)
+CDocument.prototype.private_AddRefToBookmark = function(sBookmarkName, nType, bHyperlink, bAboveBelow, sSeparator, oCurPara)
 {
 	if(!(typeof sBookmarkName === "string" && sBookmarkName.length > 0))
 	{
@@ -23243,7 +23243,7 @@ CDocument.prototype.private_AddRefToBookmark = function(sBookmarkName, nType, bH
 			break;
 		}
 	}
-	var oComplexField = this.AddFieldWithInstruction(sInstr);
+	var oComplexField = this.AddFieldWithInstruction(sInstr, oCurPara);
     if(nType === Asc.c_oAscDocumentRefenceToType.PageNum)
     {
         this.FullRecalc.Continue = false;
@@ -23259,7 +23259,7 @@ CDocument.prototype.private_AddRefToBookmark = function(sBookmarkName, nType, bH
     }
     return oComplexField;
 };
-CDocument.prototype.AddNoteRefToParagraph = function(oParagraph, nType, bHyperlink, bAboveBelow)
+CDocument.prototype.AddNoteRefToParagraph = function(oParagraph, nType, bHyperlink, bAboveBelow, oCurPara)
 {
 	if(!oParagraph.Parent)
 	{
@@ -23312,7 +23312,7 @@ CDocument.prototype.AddNoteRefToParagraph = function(oParagraph, nType, bHyperli
         }
 		if(sBookmarkName)
 		{
-			this.private_AddNoteRefToBookmark(sBookmarkName, nType, bHyperlink, bAboveBelow);
+			this.private_AddNoteRefToBookmark(sBookmarkName, nType, bHyperlink, bAboveBelow, oCurPara);
 			this.Recalculate();
 		}
 		this.UpdateInterface();
@@ -23320,7 +23320,7 @@ CDocument.prototype.AddNoteRefToParagraph = function(oParagraph, nType, bHyperli
 		this.FinalizeAction();
 	}
 };
-CDocument.prototype.private_AddNoteRefToBookmark = function(sBookmarkName, nType, bHyperlink, bAboveBelow)
+CDocument.prototype.private_AddNoteRefToBookmark = function(sBookmarkName, nType, bHyperlink, bAboveBelow, oCurPara)
 {
 	if(!(typeof sBookmarkName === "string" && sBookmarkName.length > 0))
 	{
@@ -23363,7 +23363,7 @@ CDocument.prototype.private_AddNoteRefToBookmark = function(sBookmarkName, nType
 			break;
 		}
 	}
-	var oComplexField = this.AddFieldWithInstruction(sInstr);
+	var oComplexField = this.AddFieldWithInstruction(sInstr, oCurPara);
     if(nType !== Asc.c_oAscDocumentRefenceToType.AboveBelow)
     {
         this.FullRecalc.Continue = false;
@@ -23379,13 +23379,13 @@ CDocument.prototype.private_AddNoteRefToBookmark = function(sBookmarkName, nType
     }
     return oComplexField;
 };
-CDocument.prototype.AddRefToCaption = function(sCaption, oParagraph, nType, bHyperlink, bAboveBelow)
+CDocument.prototype.AddRefToCaption = function(sCaption, oParagraph, nType, bHyperlink, bAboveBelow, oCurPara)
 {
 	if(nType  === Asc.c_oAscDocumentRefenceToType.PageNum || 
 		nType === Asc.c_oAscDocumentRefenceToType.AboveBelow ||
 		nType ===  Asc.c_oAscDocumentRefenceToType.Text)
 	{
-		this.AddRefToParagraph(oParagraph, nType, bHyperlink, bAboveBelow);
+		this.AddRefToParagraph(oParagraph, nType, bHyperlink, bAboveBelow, undefined, oCurPara);
 		return;
 	}
 	this.StartAction(AscDFH.historydescription_Document_AddCrossRef);
@@ -23405,7 +23405,7 @@ CDocument.prototype.AddRefToCaption = function(sCaption, oParagraph, nType, bHyp
 	}
 	if(sBookmarkName)
 	{
-		this.private_AddRefToBookmark(sBookmarkName, nType, bHyperlink, bAboveBelow, null);
+		this.private_AddRefToBookmark(sBookmarkName, nType, bHyperlink, bAboveBelow, null, oCurPara);
 	}
 	this.UpdateInterface();
 	this.UpdateSelection();
