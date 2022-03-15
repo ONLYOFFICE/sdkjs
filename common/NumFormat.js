@@ -2777,6 +2777,7 @@ NumFormat.prototype =
     },
 	getFormatCellsInfo: function() {
 		var info = new Asc.asc_CFormatCellsInfo();
+		//info.asc_setCalendarType(this.)
 		info.asc_setCurrentEra(this.bCurrentEraYear);
 		info.asc_setDecimalPlaces(this.aFracFormat.length);
 		info.asc_setSeparator(this.bThousandSep);

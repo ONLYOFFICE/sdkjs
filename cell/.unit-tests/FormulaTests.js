@@ -15530,6 +15530,33 @@ $( function () {
 
 	} );
 
+	test( "Test: \"Letter's locales\"", function () {
+
+		oParser = new parserFormula( 'TEXT(DATE(1900,01,01),"[$-ja-JP]ggge年m月d日;@")', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "明治33年1月1日" );
+
+		oParser = new parserFormula( 'TEXT(DATE(1900,01,01),"[$-ja-JP,80]ggge年m月d日;@")', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "明治33年1月1日" );
+
+		oParser = new parserFormula( 'TEXT(DATE(1900,05,02),"[$-ja-JP]yyyy.ge.m.d;@")', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "1900.M33.5.2" );
+
+		oParser = new parserFormula( 'TEXT(DATE(1900,05,02),"[$-ja-JP]ge.yyyy.m.d;@")', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "M33.33.5.2" );
+
+		oParser = new parserFormula( 'TEXT(DATE(1900,05,02),"[$-ru-RU]ge.yyyy.m.d;@")', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "1900.1900.5.2" );
+
+		oParser = new parserFormula( 'TEXT(DATE(1900,05,02),"[$-ru-RU]ge.yyyy.m.d;@")', "A2", ws );
+		ok( oParser.parse() );
+		strictEqual( oParser.calculate().getValue(), "1900.1900.5.2" );
+
+	} );
 	test( "Test: \"Gannen calendar Locales FI\"", function () {
 
 		AscCommon.setCurrentCultureInfo(11); 

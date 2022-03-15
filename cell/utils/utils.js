@@ -3380,7 +3380,9 @@
 			this.symbol = null;
 			this.currency = null;
 			this.inputSelectedCalendar = null;
+			this.calendarType = null;
 		}
+		asc_CFormatCellsInfo.prototype.asc_setCalendarType = function (val) {this.calendarType = val;};
 		asc_CFormatCellsInfo.prototype.asc_setCurrentEra = function (val) {this.inputSelectedCalendar = val;};
 		asc_CFormatCellsInfo.prototype.asc_setType = function (val) {this.type = val;};
 		asc_CFormatCellsInfo.prototype.asc_setDecimalPlaces = function (val) {this.decimalPlaces = val;};
@@ -3393,6 +3395,7 @@
 		asc_CFormatCellsInfo.prototype.asc_getSymbol = function () {return this.symbol;};
 		asc_CFormatCellsInfo.prototype.asc_getCurrencySymbol = function () {return this.currency;};
 		asc_CFormatCellsInfo.prototype.asc_getCurrentEra = function () {return this.inputSelectedCalendar;};
+		asc_CFormatCellsInfo.prototype.asc_getCalendarType = function () {return this.calendarType;};
 
 		/**
 		 * передаём в меню для того, чтобы показать иконку опций авторавертывания таблиц
