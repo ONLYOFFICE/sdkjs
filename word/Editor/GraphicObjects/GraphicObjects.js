@@ -4186,6 +4186,18 @@ CGraphicObjects.prototype =
         return AscCommon.isRealObject(oSelectedor.chartSelection);
     },
 
+    getSmartArtSelection: function () {
+        var groupSelection = this.selection.groupSelection;
+        if (groupSelection && groupSelection.getObjectType() === AscDFH.historyitem_type_SmartArt) {
+            return groupSelection;
+        }
+    },
+
+    isTextSelectionInSmartArt: function ()
+    {
+        return !!this.getSmartArtSelection() && this.isTextSelectionUse();
+    },
+
 
     drawSelectionPage: function(pageIndex)
     {

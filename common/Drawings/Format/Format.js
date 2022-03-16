@@ -7438,6 +7438,25 @@ CXfrm.prototype =
             && isRealNumber(this.chExtX) && isRealNumber(this.chExtY);
     },
 
+    isZero: function () {
+        return (
+          this.offX === 0 &&
+          this.offY === 0 &&
+          this.extX === 0 &&
+          this.extY === 0
+        );
+    },
+
+    isZeroInGroup: function () {
+        return (
+          this.isZero() &&
+          this.chOffX === 0 &&
+          this.chOffY === 0 &&
+          this.chExtX === 0 &&
+          this.chExtY === 0
+        );
+    },
+
     isEqual: function(xfrm)
     {
 

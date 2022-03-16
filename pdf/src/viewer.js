@@ -915,19 +915,28 @@
 			if (!item)
 				return;
 
-			var drawingPage = this.drawingPages[item["page"]];
+			var pageIndex = item["page"];
+			var drawingPage = this.drawingPages[pageIndex];
 			if (!drawingPage)
 				return;
 
 			var posY = drawingPage.Y;
 			posY -= this.betweenPages;
-			//posY += item["Y"];
+
+			var yOffset = item["y"];
+			if (yOffset)
+			{
+				yOffset *= (drawingPage.H / this.file.pages[pageIndex].H);
+				yOffset = yOffset >> 0;
+				posY += yOffset;
+			}
+
 			if (posY > this.scrollMaxY)
 				posY = this.scrollMaxY;
 			this.m_oScrollVerApi.scrollToY(posY);
 		};
 
-		this.navigateToPage = function(pageNum)
+		this.navigateToPage = function(pageNum, yOffset)
 		{
 			var drawingPage = this.drawingPages[pageNum];
 			if (!drawingPage)
@@ -935,6 +944,14 @@
 
 			var posY = drawingPage.Y;
 			posY -= this.betweenPages;
+
+			if (yOffset)
+			{
+				yOffset *= (drawingPage.H / this.file.pages[pageNum].H);
+				yOffset = yOffset >> 0;
+				posY += yOffset;
+			}
+
 			if (posY > this.scrollMaxY)
 				posY = this.scrollMaxY;
 			this.m_oScrollVerApi.scrollToY(posY);
@@ -947,7 +964,7 @@
 
 			if ("#" === link["link"].charAt(0))
 			{
-				this.navigateToPage(parseInt(link["link"].substring(1)));
+				this.navigateToPage(parseInt(link["link"].substring(1)), link["dest"]);
 			}
 			else
 			{

@@ -4293,7 +4293,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 						break;
 
 					Item.SetXY(X + SpaceLen + WordLen, PRS.Y);
-					Item.SetPage(Para.Get_AbsolutePage(CurPage));
+					Item.SetPage(Para.Get_AbsolutePage(PRS.Page));
 
 					Item.SetRun(this);
 					PRS.ComplexFields.ProcessFieldChar(Item);
@@ -6273,8 +6273,6 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
 			case para_EndnoteRef:
             case para_Separator:
             case para_ContinuationSeparator:
-			case para_EndnoteReference:
-			case para_EndnoteRef:
             {
                 if (para_Drawing != ItemType || Item.Is_Inline())
                 {
@@ -6750,8 +6748,6 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
 			case para_EndnoteRef:
 			case para_Separator:
 			case para_ContinuationSeparator:
-			case para_EndnoteReference:
-			case para_EndnoteRef:
 			{
 				if (para_Text === ItemType && null !== this.CompositeInput && Pos >= this.CompositeInput.Pos && Pos < this.CompositeInput.Pos + this.CompositeInput.Length)
 				{
@@ -10588,15 +10584,17 @@ ParaRun.prototype.getPropsForWrite = function()
 
     return {wRPrp: wRPrp, mathRPrp: mathRPrp, prRPrp: prRPr};
 };
-ParaRun.prototype.Get_MathPr = function(bCopy)
+ParaRun.prototype.GetMathPr = function(isCopy)
 {
-    if(this.Type = para_Math_Run)
-    {
-        if(bCopy)
-            return this.MathPrp.Copy();
-        else
-            return this.MathPrp;
-    }
+	if (para_Math_Run === this.Type)
+	{
+		if (isCopy)
+			return this.MathPrp.Copy();
+		else
+			return this.MathPrp;
+	}
+
+	return null;
 };
 ParaRun.prototype.Math_PreRecalc = function(Parent, ParaMath, ArgSize, RPI, GapsInfo)
 {
@@ -12213,7 +12211,7 @@ ParaRun.prototype.ProcessAutoCorrect = function(nPos, nFlags, nHistoryActions)
 		return (nRes |= AUTOCORRECT_FLAGS_DOUBLESPACE_WITH_PERIOD);
 
 	if (nFlags & AUTOCORRECT_FLAGS_FRENCH_PUNCTUATION && this.private_ProcessFrenchPunctuation(oDocument, oParagraph, private_IsCheckLock(), oContentPos, nPos, nLang))
-		nRes |= AUTOCORRECT_FLAGS_FRENCH_PUNCTUATION;
+		return (nRes |= AUTOCORRECT_FLAGS_FRENCH_PUNCTUATION);
 
 	if (nFlags & AUTOCORRECT_FLAGS_SMART_QUOTES && this.private_ProcessSmartQuotesAutoCorrect(oDocument, oParagraph, private_IsCheckLock(), oContentPos, nPos, nLang))
 		nRes |= AUTOCORRECT_FLAGS_SMART_QUOTES;

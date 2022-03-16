@@ -895,6 +895,21 @@ DrawingObjectsController.prototype =
                     return ret;
                 }
             }
+			else {
+				if(this.handleEventMode === HANDLE_EVENT_MODE_HANDLE) {
+					
+				}
+				else {
+					if(this.isSlideShow()) {
+						var oAnimPlayer = this.getAnimationPlayer();
+						if(oAnimPlayer) {
+							if(oAnimPlayer.isSpClickTrigger(drawing)) {
+								return {objectId: drawing.Get_Id(), cursorType: "pointer", bMarker: false, hyperlink: null};
+							}
+						}
+					}
+				}
+			}
         }
         else if(this.drawingObjects && this.drawingObjects.getWorksheetModel){
             oNvPr = drawing.getCNvProps();
@@ -2172,6 +2187,12 @@ DrawingObjectsController.prototype =
                         }
                         else
                         {
+							if(oAnimPlayer) {
+								if(oAnimPlayer.isSpClickTrigger(object)) {
+									ret.cursorType = "pointer";
+									return ret;
+								}
+							}
                             return null;
                         }
                     }

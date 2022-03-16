@@ -8859,6 +8859,17 @@
       }
     };
 
+    Drawing.prototype.setXfrmByParent = function () {
+      var oXfrm = this.spPr.xfrm;
+      if (oXfrm.isZero()) {
+        var parent = this.group;
+        if (parent && parent.spPr.xfrm) {
+          oXfrm.setExtX(parent.spPr.xfrm.extX);
+          oXfrm.setExtY(parent.spPr.xfrm.extY);
+        }
+      }
+    };
+
     Drawing.prototype.handleUpdateExtents = function(bExt)
     {
       this.recalcTransform();
@@ -10752,6 +10763,21 @@
       oXfrm.setExtY(this.extY);
       return {posX: oXfrm.offX, posY: oXfrm.offY};
     };
+
+    SmartArt.prototype.setXfrmByParent = function () {
+      var oXfrm = this.spPr.xfrm;
+      if (oXfrm.isZero()) {
+        var parent = this.parent;
+        if (parent instanceof AscCommonWord.ParaDrawing) {
+          oXfrm.setExtX(parent.Extent.W);
+          oXfrm.setExtY(parent.Extent.H);
+        }
+      }
+      for (var i = 0; i < this.spTree.length; i += 1) {
+        this.spTree[i].setXfrmByParent();
+      }
+    };
+
     SmartArt.prototype.recalculateTransform = function() {
       var oThis = this;
       AscFormat.ExecuteNoHistory(function(){

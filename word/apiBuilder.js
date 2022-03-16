@@ -837,6 +837,7 @@
 							else if (sType === 'html')
 								sText += oCMarkdownConverter.Config.base64img ? '<img src="' + Item.GraphicObj.getBase64Img() + '">' : '<img src="' + Item.GraphicObj.getImageUrl() + '">';
 						}
+						break;
 					}
 					case para_PageNum:
 					case para_PageCount:

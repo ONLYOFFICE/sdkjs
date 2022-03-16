@@ -2661,7 +2661,7 @@ CMathContent.prototype.private_LoadFromMenuSymbol = function(Type, Pr)
         {
             TextPr = this.Content[this.CurPos].Get_TextPr();
             TextPr.RFonts.SetAll("Cambria Math", -1);          //  на данный момент добавляются символы исключительно из Cambria Math
-            MathPr = this.Content[this.CurPos].Get_MathPr();
+            MathPr = this.Content[this.CurPos].GetMathPr();
         }
 
         this.Add_Symbol(Code, TextPr, MathPr);
