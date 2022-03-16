@@ -693,6 +693,9 @@
 		cellFlags.wrapText = true;
 		cellFlags.textAlign = this.getAlign();
 
+		//не зависит от зума страницы
+		var realZoom = ws.stringRender.drawingCtx.getZoom()
+		ws.stringRender.drawingCtx.changeZoom(1);
 
 		var cellEditorWidth = width - 2 * wb.defaults.worksheetView.cells.padding + 1 + 2 * correctCanvasDiff;
 		ws.stringRender.setString(this.fragments, cellFlags);
@@ -702,6 +705,8 @@
 
 		drawBackground();
 		ws.stringRender.render(drawingCtx, wb.defaults.worksheetView.cells.padding, 0, cellEditorWidth, ws.settings.activeCellBorderColor);
+
+		ws.stringRender.drawingCtx.changeZoom(realZoom)
 	};
 	CHeaderFooterEditorSection.prototype.getElem = function () {
 		return document.getElementById(this.canvasObj.idParent);
