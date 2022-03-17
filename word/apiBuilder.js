@@ -3596,32 +3596,63 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Available refs to "numbered" type of reference.
+	 * Available values of the "numbered" reference type.
+	 * * **"pageNum"** - the page number of the numbered item.
+     * * **"paraNum"** - the paragraph number of the numbered item.
+	 * * **"noCtxParaNum"** - an abbreviated paragraph number (the specific item of the numbered list only, e.g., instead of "4.1.1" you refer to "1" only).
+     * * **"fullCtxParaNum"** - a full paragraph number, e.g., "4.1.1".
+	 * * **"text"** - the text value of the paragraph, e.g., if you have "4.1.1. Terms and Conditions", you refer to "Terms and Conditions" only.
+     * * **"aboveBelow"** - the words "above" or "below" depending on the position of the item.
 	 * @typedef {"pageNum" | "paraNum" | "noCtxParaNum" | "fullCtxParaNum" | "text" | "aboveBelow"} numberedRefTo
 	 */
 
 	/**
-	 * Available refs to "heading" type of reference.
+	 * Available values of the "heading" reference type.
+	 * * **"text"** - the entire text of the heading.
+	 * * **"pageNum"** - the page number of the heading.
+     * * **"headingNum"** - the sequence number of the heading.
+	 * * **"noCtxHeadingNum"** - an abbreviated heading number. Make sure the cursor point is in the section you are referencing to, e.g., you are in section 4 and you wish to refer to heading 4.B, so instead of "4.B" you receive "B" only.
+     * * **"fullCtxHeadingNum"** - a full heading number even if the cursor point is in the same section.
+     * * **"aboveBelow"** - the words "above" or "below" depending on the position of the item.
 	 * @typedef {"text" | "pageNum" | "headingNum" | "noCtxHeadingNum" | "fullCtxHeadingNum" | "aboveBelow"} headingRefTo
 	 */
 
 	/**
-	 * Available refs to "bookmark" type of reference.
+	 * Available values of the "bookmark" reference type.
+	 * * **"text"** - the entire text of the bookmark.
+	 * * **"pageNum"** - the page number of the bookmark.
+     * * **"paraNum"** - the paragraph number of the bookmark.
+	 * * **"noCtxParaNum"** - an abbreviated paragraph number (the specific item only, e.g., instead of "4.1.1" you refer to "1" only).
+     * * **"fullCtxParaNum"** - a full paragraph number, e.g., "4.1.1".
+     * * **"aboveBelow"** - the words "above" or "below" depending on the position of the item.
 	 * @typedef {"text" | "pageNum" | "paraNum" | "noCtxParaNum" | "fullCtxParaNum" | "aboveBelow"} bookmarkRefTo
 	 */
 
 	/**
-	 * Available refs to "footnote" type of reference.
+	 * Available values of the "footnote" reference type.
+	 * * **"footnoteNum"** - the footnote number.
+	 * * **"pageNum"** - the page number of the footnote.
+     * * **"aboveBelow"** - the words "above" or "below" depending on the position of the item.
+	 * * **"formFootnoteNum"** - the number of the footnote formatted as a footnote. The numbering of the actual footnotes is not affected.
 	 * @typedef {"footnoteNum" | "pageNum" | "aboveBelow" | "formFootnoteNum"} footnoteRefTo
 	 */
 
 	/**
-	 * Available refs to "endnote" type of reference.
+	 * Available values of the "endnote" reference type.
+	 * * **"endnoteNum"** - the endnote number.
+	 * * **"pageNum"** - the page number of the endnote.
+     * * **"aboveBelow"** - the words "above" or "below" depending on the position of the item.
+	 * * **"formEndnoteNum"** - the number of the endnote formatted as an endnote. The numbering of the actual endnotes is not affected.
 	 * @typedef {"endnoteNum" | "pageNum" | "aboveBelow" | "formEndnoteNum"} endnoteRefTo
 	 */
 
 	/**
-	 * Available refs to "equation" type of reference.
+	 * Available values of the "equation"/"figure"/"table" reference type.
+	 * * **"entireCaption"** - the full text of the caption.
+	 * * **"labelNumber"** - the label and object number only, e.g., "Table 1.1".
+     * * **"captionText"** - the text of the caption only.
+	 * * **"pageNum"** - the page number containing the referenced object.
+	 * * **"aboveBelow"** - the words "above" or "below" depending on the position of the item.
 	 * @typedef {"entireCaption" | "labelNumber" | "captionText" | "pageNum" | "aboveBelow"} captionRefTo
 	 */
 
@@ -5388,7 +5419,7 @@
 	};
 
 	/**
-	 * Gets all numbered paragraphs.
+	 * Returns all numbered paragraphs from the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiParagraph[]}
@@ -5404,7 +5435,7 @@
 	};
 
 	/**
-	 * Gets all heading paragraphs.
+	 * Returns all heading paragraphs from the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiParagraph[]}
@@ -5420,7 +5451,7 @@
 	};
 
 	/**
-	 * Gets first paragraphs from all footnotes.
+	 * Returns the first paragraphs from all footnotes in the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiParagraph[]}
@@ -5436,7 +5467,7 @@
 	};
 
 	/**
-	 * Gets first paragraphs from all endnotes.
+	 * Returns the first paragraphs from all endnotes in the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiParagraph[]}
@@ -5452,10 +5483,10 @@
 	};
 
 	/**
-	 * Gets all caption paragraphs.
+	 * Returns all caption paragraphs of the specified type from the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {captionType} - caption type
+	 * @param {captionType} - Caption type (equation, figure or table).
 	 * @returns {ApiParagraph[]}
 	 */
 	ApiDocument.prototype.GetAllCaptionParagraphs = function(sCaption) 
@@ -6755,15 +6786,15 @@
 	};
 
 	/**
-	 * Adds numbered cross-reference.
-	 * Paragraph must be in document.
+	 * Adds a numbered cross-reference to the current paragraph.
+	 * The paragraph must be in the document.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {numberedRefTo} sRefType - specify what the reference should display.
-	 * @param {ApiParagraph} oParaTo - the numbered paragraph to be referred to (must be in document).
-	 * @param {boolean} [bLink=true] - specify what the reference should be inserted as hyperlink.
-	 * @param {boolean} [bAboveBelow=false] - specify what above/below should be included (don't used with "text" and "aboveBelow" refType).
-	 * @param {string} [sSepWith=""] - separate numbers with (used only with "fullCtxParaNum" refType).
+	 * @param {numberedRefTo} sRefType - The text or numeric value of a numbered reference you want to insert.
+	 * @param {ApiParagraph} oParaTo - The numbered paragraph to be referred to (must be in the document).
+	 * @param {boolean} [bLink=true] - Specifies if the reference will be inserted as a hyperlink.
+	 * @param {boolean} [bAboveBelow=false] - Specifies if the above/below words indicating the position of the reference should be included (don't used with the "text" and "aboveBelow" sRefType).
+	 * @param {string} [sSepWith=""] - A number separator (used only with the "fullCtxParaNum" sRefType).
 	 * @returns {boolean}
 	 */
 	ApiParagraph.prototype.AddNumberedCrossRef = function(sRefTo, oParaTo, bLink, bAboveBelow, sSepWith) 
@@ -6820,14 +6851,14 @@
 	};
 
 	/**
-	 * Adds heading cross-reference.
-	 * Paragraph must be in document.
+	 * Adds a heading cross-reference to the current paragraph.
+	 * The paragraph must be in the document.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {headingRefTo} sRefType - specify what the reference should display.
-	 * @param {ApiParagraph} oParaTo - the paragraph with heading style to be referred to (must be in document).
-	 * @param {boolean} [bLink=true] - specify what the reference should be inserted as hyperlink.
-	 * @param {boolean} [bAboveBelow=false] - specify what above/below should be included (don't used with "text" and "aboveBelow" refType).
+	 * @param {headingRefTo} sRefType - The text or numeric value of a heading reference you want to insert.
+	 * @param {ApiParagraph} oParaTo - The heading paragraph to be referred to (must be in the document).
+	 * @param {boolean} [bLink=true] - Specifies if the reference will be inserted as a hyperlink.
+	 * @param {boolean} [bAboveBelow=false] - Specifies if the above/below words indicating the position of the reference should be included (don't used with the "text" and "aboveBelow" sRefType).
 	 * @returns {boolean}
 	 */
 	ApiParagraph.prototype.AddHeadingCrossRef = function(sRefTo, oParaTo, bLink, bAboveBelow) 
@@ -6876,15 +6907,15 @@
 	};
 
 	/**
-	 * Adds bookmark cross-reference.
-	 * Paragraph must be in document.
+	 * Adds a bookmark cross-reference to the current paragraph.
+	 * The paragraph must be in the document.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {bookmarkRefTo} sRefType - specify what the reference should display.
-	 * @param {string} sBookmarkName - the name of bookmark to be referred to (must be in document).
-	 * @param {boolean} [bLink=true] - specify what the reference should be inserted as hyperlink.
-	 * @param {boolean} [bAboveBelow=false] - specify what above/below should be included (don't used with "text" and "aboveBelow" refType).
-	 * @param {string} [sSepWith=""] - separate numbers with (used only with "fullCtxParaNum" refType).
+	 * @param {bookmarkRefTo} sRefType - The text or numeric value of a bookmark reference you want to insert.
+	 * @param {string} sBookmarkName - The name of the bookmark to be referred to (must be in the document).
+	 * @param {boolean} [bLink=true] - Specifies if the reference will be inserted as a hyperlink.
+	 * @param {boolean} [bAboveBelow=false] - Specifies if the above/below words indicating the position of the reference should be included (don't used with the "text" and "aboveBelow" sRefType).
+	 * @param {string} [sSepWith=""] - A number separator (used only with the "fullCtxParaNum" sRefType).
 	 * @returns {boolean}
 	 */
 	ApiParagraph.prototype.AddBookmarkCrossRef = function(sRefTo, sBookmarkName, bLink, bAboveBelow, sSepWith) 
@@ -6942,14 +6973,14 @@
 	};
 
 	/**
-	 * Adds footnote cross-reference.
-	 * Paragraph must be in document.
+	 * Adds a footnote cross-reference to the current paragraph.
+	 * The paragraph must be in the document.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {footnoteRefTo} sRefType - specify what the reference should display.
-	 * @param {ApiParagraph} oParaTo - the first paragraph from footnote (must be in document).
-	 * @param {boolean} [bLink=true] - specify what the reference should be inserted as hyperlink.
-	 * @param {boolean} [bAboveBelow=false] - specify what above/below should be included (don't used with "aboveBelow" refType).
+	 * @param {footnoteRefTo} sRefType - The text or numeric value of a footnote reference you want to insert.
+	 * @param {ApiParagraph} oParaTo - The first paragraph from a footnote to be referred to (must be in the document).
+	 * @param {boolean} [bLink=true] - Specifies if the reference will be inserted as a hyperlink.
+	 * @param {boolean} [bAboveBelow=false] - Specifies if the above/below words indicating the position of the reference should be included (don't used with the "aboveBelow" sRefType).
 	 * @returns {boolean}
 	 */
 	ApiParagraph.prototype.AddFootnoteCrossRef = function(sRefTo, oParaTo, bLink, bAboveBelow) 
@@ -6998,14 +7029,14 @@
 	};
 
 	/**
-	 * Adds endnote cross-reference.
-	 * Paragraph must be in document.
+	 * Adds an endnote cross-reference to the current paragraph.
+	 * The paragraph must be in the document.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {endnoteRefTo} sRefType - specify what the reference should display.
-	 * @param {ApiParagraph} oParaTo - the first paragraph from endnote (must be in document).
-	 * @param {boolean} [bLink=true] - specify what the reference should be inserted as hyperlink.
-	 * @param {boolean} [bAboveBelow=false] - specify what above/below should be included (don't used with "aboveBelow" refType).
+	 * @param {endnoteRefTo} sRefType - The text or numeric value of an endnote reference you want to insert.
+	 * @param {ApiParagraph} oParaTo - The first paragraph from an endnote to be referred to (must be in the document).
+	 * @param {boolean} [bLink=true] - Specifies if the reference will be inserted as a hyperlink.
+	 * @param {boolean} [bAboveBelow=false] - Specifies if the above/below words indicating the position of the reference should be included (don't used with the "aboveBelow" sRefType).
 	 * @returns {boolean}
 	 */
 	ApiParagraph.prototype.AddEndnoteCrossRef = function(sRefTo, oParaTo, bLink, bAboveBelow) 
@@ -7054,15 +7085,15 @@
 	};
 
 	/**
-	 * Adds caption cross-reference.
-	 * Paragraph must be in document.
+	 * Adds a caption cross-reference to the current paragraph.
+	 * The paragraph must be in the document.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @param {captionType} sCaption - type of caption.
-	 * @param {captionRefTo} sRefType - specify what the reference should display.
-	 * @param {ApiParagraph} oParaTo - the paragraph with caption (must be in document).
-	 * @param {boolean} [bLink=true] - specify what the reference should be inserted as hyperlink.
-	 * @param {boolean} [bAboveBelow=false] - specify what above/below should be included (used only with "pageNum" refType).
+	 * @param {captionType} sCaption - Caption type (equation, figure, table).
+	 * @param {captionRefTo} sRefType - The text or numeric value of a caption reference you want to insert.
+	 * @param {ApiParagraph} oParaTo - The caption paragraph to be referred to (must be in the document).
+	 * @param {boolean} [bLink=true] - Specifies if the reference will be inserted as a hyperlink.
+	 * @param {boolean} [bAboveBelow=false] - Specifies if the above/below words indicating the position of the reference should be included (used only with the "pageNum" sRefType).
 	 * @returns {boolean}
 	 */
 	ApiParagraph.prototype.AddCaptionCrossRef = function(sCaption, sRefTo, oParaTo, bLink, bAboveBelow) 
