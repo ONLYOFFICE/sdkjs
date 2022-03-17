@@ -514,9 +514,16 @@
 			  // DataValidation
 			  "onDataValidation": function () {
 				  if (self.oSelectionInfo && self.oSelectionInfo.dataValidation) {
-					  var list = self.oSelectionInfo.dataValidation.getListValues(self.model.getActiveWs());
+					  var ws = self.model.getActiveWs()
+					  var list = self.oSelectionInfo.dataValidation.getListValues(ws);
 					  if (list) {
-						  self.handlers.trigger("asc_onValidationListMenu", list[0], list[1]);
+						 /*var activeCell = ws.selectionRange && ws.selectionRange.activeCell;
+						 var merged = ws.getMergedByCell(activeCell.row, activeCell.col);
+						 if (merged) {
+							 activeCell.row = merged.r1;
+							 activeCell.col = merged.c1;
+						 }*/
+						 self.handlers.trigger("asc_onValidationListMenu", list[0], list[1]);
 					  }
 					  return !!list;
 				  }
@@ -2491,7 +2498,9 @@
             this.skipHelpSelector = false;
         } else {
             if (c_oAscPopUpSelectorType.None === type) {
-                ws.setSelectionInfo("value", name, /*onlyActive*/true);
+				ws.executeWithFirstActiveCellInMerge(function () {
+					ws.setSelectionInfo("value", name, /*onlyActive*/true);
+				})
                 return;
             } else if (c_oAscPopUpSelectorType.TotalRowFunc === type) {
                 ws.setSelectionInfo("totalRowFunc", name, /*onlyActive*/true);
