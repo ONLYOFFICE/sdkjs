@@ -4397,14 +4397,14 @@ var editor;
   };
 
   // Получить координаты активной ячейки
-  spreadsheet_api.prototype.asc_getActiveCellCoord = function() {
+  spreadsheet_api.prototype.asc_getActiveCellCoord = function(useUpRightMerge) {
     var oWorksheet = this.wb.getWorksheet();
     if(oWorksheet){
       if(oWorksheet.isSelectOnShape){
         return oWorksheet.objectRender.getContextMenuPosition();
       }
       else{
-          return oWorksheet.getActiveCellCoord();
+          return oWorksheet.getActiveCellCoord(useUpRightMerge);
       }
     }
 

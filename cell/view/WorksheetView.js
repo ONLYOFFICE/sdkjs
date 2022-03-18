@@ -9768,9 +9768,18 @@
     };
 
     // Получаем координаты активной ячейки
-    WorksheetView.prototype.getActiveCellCoord = function () {
+    WorksheetView.prototype.getActiveCellCoord = function (useUpRightMerge) {
         var selection = this.model.getSelection();
-        return this.getCellCoord(selection.activeCell.col, selection.activeCell.row);
+		var row = selection.activeCell.row;
+		var col = selection.activeCell.col;
+		if (useUpRightMerge) {
+			var merged = this.model.getMergedByCell(selection.activeCell.row, selection.activeCell.col);
+			if (merged) {
+				row = merged.r1;
+				col = merged.c2;
+			}
+		}
+        return this.getCellCoord(col, row);
     };
     WorksheetView.prototype.getCellCoord = function (col, row) {
         var offsetX = 0, offsetY = 0;
