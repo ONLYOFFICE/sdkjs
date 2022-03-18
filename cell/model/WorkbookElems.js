@@ -2112,6 +2112,11 @@ var g_oFontProperties = {
 		this.patternFill = null;
 		this.gradientFill = value;
 	};
+	Fill.prototype.checkEmptyContent = function () {
+		if (!this.patternFill && !this.gradientFill) {
+			this.fromPatternParams(AscCommonExcel.c_oAscPatternType.None, null);
+		}
+	};
 
 	function FromXml_ST_BorderStyle(val) {
 		var res = -1;

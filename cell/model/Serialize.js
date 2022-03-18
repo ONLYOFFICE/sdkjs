@@ -2662,6 +2662,7 @@
         this.WriteFill = function(fill, fixDxf)
         {
             var oThis = this;
+            fill.checkEmptyContent();
             if (fill.patternFill) {
                 this.bs.WriteItem(c_oSerFillTypes.Pattern, function(){oThis.WritePatternFill(fill.patternFill, fixDxf);});
             }
