@@ -8314,8 +8314,9 @@ function BinaryFileReader(doc, openParams)
 
         this.Document.On_EndLoad();
 
-		if (this.Document.Settings && this.Document.Settings.DocumentProtection) {
-			if (this.Document.Settings.DocumentProtection.isOnlyView()) {
+		var docProtection = this.Document.Settings && this.Document.Settings.DocumentProtection;
+		if (docProtection) {
+			if (docProtection.isOnlyView() && false !== docProtection.getEnforcment()) {
 				var _api = this.Document.DrawingDocument && this.Document.DrawingDocument.m_oWordControl && this.Document.DrawingDocument.m_oWordControl.m_oApi;
 				_api && _api.asc_addRestriction(Asc.c_oAscRestrictionType.View);
 			}
