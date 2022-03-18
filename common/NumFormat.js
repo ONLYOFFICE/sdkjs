@@ -96,16 +96,33 @@ var gc_aJapanEras = [
 	["H", "平", "平成", 1989],
 	["R", "令", "令和", 2019]
 ];
-// Из буквенного представления локалей в численное
-var gc_oLocalesNames = {
-	"ja-jp" : 1041,
-	"ru-ru" : 1049
-};
 // Подлокали локалей
-var gc_oFirstLocalesName = {
-	"en" : ["ca", "ie", "au"],
-	"ja" : ["jp"],
-	"ru" : ["ru"]
+var gc_oDefaultLocales = {
+"az" : "az-Cyrl",
+"cs" : "cs-CZ",
+"de" : "de-AT",
+"el" : "el-GR",
+"en" : "en-029",
+"es" : "es-419",
+"fi" : "fi-FI",
+"fr" : "fr-029",
+"hu" : "hu-HU",
+"it" : "it-CH",
+"ja" : "ja-JP",
+"kk" : "kk-KZ",
+"ko" : "ko-KR",
+"lt" : "lt-LT",
+"lv" : "lv-LV",
+"mn" : "mn-Cyrl",
+"pl" : "pl-PL",
+"pt" : "pt-BR",
+"ru" : "ru-MD",
+"sl" : "sl-SI",
+"sv" : "sv-FI",
+"tr" : "tr-TR",
+"uk" : "uk-UA",
+"vi" : "vi-VN",
+"zh" : "zh-CN"
 };
 // Добавочные значения к форматам по локалям
 var gc_oDifferentEras = {
@@ -275,7 +292,7 @@ function FormatObjBracket(sData)
 					this.CurrencyString = aParams[0];
 				}
 				if(aParams.length > 1 && aParams[1].length > 0) {
-					this.Lid = aParams[1];
+					this.Lid = aParams[1].split(",")[0];
 				}
             }
 			else if("=" == first || ">" == first || "<" == first)
@@ -1935,20 +1952,19 @@ NumFormat.prototype =
                             sText += item.CurrencyString;
                         }
 						if (null != item.Lid) {
-							var el = item.Lid.split('-');
-							var arr = gc_oFirstLocalesName[el[0]];
+							var el = item.Lid.toLowerCase().split('-');
+							el = this.checkUpperAndLowerLoceles(el);
+							var defaultSecondPart = gc_oDefaultLocales[el[0]];
 							if (item.formatsSecondPart != null && item.formatsSecondPart != "")
 								item.Lid = item.Lid + "," + item.formatsSecondPart;
-							if(arr != null && arr.length > 0) {
-								if(arr.indexOf(el[1]) != -1) {
-									if(el[0] != null && el[1] != null) 
-										this.LCID = gc_oLocalesNames[el[0].toLowerCase() + "-" + el[1].toLowerCase()];
-								} else {
-									if(el[0] != null && arr[0] != null)
-										this.LCID = gc_oLocalesNames[el[0].toLowerCase() + "-" + arr[0].toLowerCase()];
-								}
+							if(defaultSecondPart != null && defaultSecondPart.length > 0) {
+								if(el[0] != null && el[1] != null) 
+									this.LCID = Asc.g_oLcidNameToIdMap[el[0] + "-" + el[1]];
+								if(defaultSecondPart != null && defaultSecondPart.length > 0
+									&& (this.LCID == null || this.LCID == 0))
+									this.LCID = Asc.g_oLcidNameToIdMap[defaultSecondPart];
 							}
-							if(this.LCID !== null && this.LCID != 0) {
+							if(this.LCID != null && this.LCID != 0) {
 								if (item.currentEra != null)
 									this.bCurrentEraYear = item.currentEra;
 							}
@@ -1980,6 +1996,20 @@ NumFormat.prototype =
                 }
         return this.valid;
     },
+	checkUpperAndLowerLoceles: function (item) {
+		if (item.length >= 3) {
+			if (item[1].length > 0)
+				item[1][0] = item[1][0].toUpperCase();
+			if (item[2].length === 2)
+				item[2] = item[2].toUpperCase();
+		}
+		else if (item.length === 2)
+			if (item[1].length === 2)
+				item[1] = item[1].toUpperCase();
+			else if (item[1].length > 2)
+					item[1][0] = item[1][0].toUpperCase();
+		return item;
+	},
     isInvalidDateValue : function(number)
     {
         return (number == number - 0) && ((number < 0 && !AscCommon.bDate1904) || number > 2958465.9999884);
