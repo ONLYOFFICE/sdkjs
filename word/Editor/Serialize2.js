@@ -7210,13 +7210,13 @@ function BinarySettingsTableWriter(memory, doc, saveParams)
 				oThis.memory.WriteByte(oDocProtect.edit);
 			});
 		}
-		if (oDocProtect.enforcment)
+		if (null !== oDocProtect.enforcment)
 		{
 			this.bs.WriteItem(c_oDocProtect.Enforcment, function () {
 				oThis.memory.WriteBool(oDocProtect.enforcment);
 			});
 		}
-		if (oDocProtect.formatting)
+		if (null !== oDocProtect.formatting)
 		{
 			this.bs.WriteItem(c_oDocProtect.Formatting, function () {
 				oThis.memory.WriteBool(oDocProtect.formatting);
