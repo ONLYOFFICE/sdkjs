@@ -514,15 +514,8 @@
 			  // DataValidation
 			  "onDataValidation": function () {
 				  if (self.oSelectionInfo && self.oSelectionInfo.dataValidation) {
-					  var ws = self.model.getActiveWs()
-					  var list = self.oSelectionInfo.dataValidation.getListValues(ws);
+					  var list = self.oSelectionInfo.dataValidation.getListValues(self.model.getActiveWs());
 					  if (list) {
-						 /*var activeCell = ws.selectionRange && ws.selectionRange.activeCell;
-						 var merged = ws.getMergedByCell(activeCell.row, activeCell.col);
-						 if (merged) {
-							 activeCell.row = merged.r1;
-							 activeCell.col = merged.c1;
-						 }*/
 						 self.handlers.trigger("asc_onValidationListMenu", list[0], list[1]);
 					  }
 					  return !!list;
