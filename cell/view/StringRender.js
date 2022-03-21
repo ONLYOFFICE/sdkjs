@@ -1097,12 +1097,12 @@
 					   .beginPath();
 					dy = (lw / 2); dy = dy >> 0;
 					if (ul) {
-						y = asc_round(y1 + bl + prop.lm.d * 0.4);
+						y = asc_round(y1 + bl + prop.lm.d * 0.4 * zoom);
 						ctx.lineHor(x1, y + dy, x2 + 1/*px*/); // ToDo вопрос тут
 					}
 					if (isSO) {
 						dy += 1;
-						y = asc_round(y1 + bl - prop.lm.a * 0.275);
+						y = asc_round(y1 + bl - prop.lm.a * 0.275 * zoom);
 						ctx.lineHor(x1, y - dy, x2 + 1/*px*/); // ToDo вопрос тут
 					}
 					ctx.stroke();
