@@ -8923,9 +8923,10 @@ CT_WorksheetSource.prototype.onFormulaEvent = function (type, eventData) {
 				var elem = this.formula.getOutStackElem(0);
 				if (elem.type === AscCommonExcel.cElementType.table) {
 					var table = elem.getTable();
-					if (table.isHeaderRow()) {
+					if (table && table.isHeaderRow()) {
 						var dataLocation = this.getDataLocation();
 						if (dataLocation && dataLocation.ws) {
+							//todo excel keep table formula
 							eventData.formula.removeTableName(data.from, true);
 							var bbox = dataLocation.bbox.clone();
 							bbox.r1--;
