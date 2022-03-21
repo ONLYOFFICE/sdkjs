@@ -2693,7 +2693,7 @@
 		return true;
 	};
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiRange object into the JSON object.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @returns {JSON}
@@ -3102,7 +3102,7 @@
 		return new ApiRange(this.ParaHyperlink, Start, End);
 	};
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiHyperlink object into the JSON object.
 	 * @memberof ApiHyperlink
 	 * @typeofeditors ["CDE"]
 	 * @returns {JSON}
@@ -4266,9 +4266,9 @@
 	};
 
 	/**
-	 * Convert from JSON to object.
+	 * Converts the specified JSON object into the Document Builder object of the corresponding type.
 	 * @memberof Api
-	 * @param {JSON} sMessage
+	 * @param {JSON} sMessage - The JSON object to convert.
 	 * @typeofeditors ["CDE"]
 	 */
 	Api.prototype.FromJSON = function(sMessage)
@@ -4691,7 +4691,7 @@
 		return new ApiRange(this.Document, Start, End);
 	};
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiDocumentContent object into the JSON object.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
 	 */
@@ -4701,9 +4701,10 @@
 		return JSON.stringify(oWriter.SerDocContent(this.Document));
 	};
 	/**
-	 * Convert to JSON object.
+	 * Returns an array of document elements from the current ApiDocumentContent object.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
+	 * @param {boolean} bGetCopies - Specifies if the copies of the document elements will be returned or not.
 	 * @returns {Array}
 	 */
 	ApiDocumentContent.prototype.GetContent = function(bGetCopies)
@@ -5572,10 +5573,10 @@
 	};
 
 	/**
-	 * Update all tables of contents.
+	 * Updates all tables of contents in the current document.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {boolean} [bOnlyPageNumbers=false] - Determines that only page numbers need to be updated.
+	 * @param {boolean} [bOnlyPageNumbers=false] - Specifies that only page numbers will be updated.
 	 */
 	ApiDocument.prototype.UpdateAllTOC = function(bOnlyPageNumbers)
 	{
@@ -5628,10 +5629,10 @@
 		}
 	};
 	/**
-	 * Update all tables of contents.
+	 * Updates all tables of figures in the current document.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @param {boolean} [bOnlyPageNumbers=false] - Determines that only page numbers need to be updated.
+	 * @param {boolean} [bOnlyPageNumbers=false] - Specifies that only page numbers will be updated.
 	 */
 	ApiDocument.prototype.UpdateAllTOF = function(bOnlyPageNumbers)
 	{
@@ -5683,13 +5684,13 @@
 			}
 		}
 	};	/**
-	 * Convert to JSON object.
+	 * Converts the ApiDocument object into the JSON object.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param bWriteDefaultTextPr - Indicates whether or not to record default text properties
-	 * @param bWriteDefaultParaPr - Indicates whether or not to record default paragraph properties
-	 * @param bWriteTheme         - Indicates whether or not to record document theme
-	 * @param bWriteSectionPr     - Indicates whether or not to record section properties of document
+	 * @param bWriteDefaultTextPr - Specifies if the default text properties will be written to the JSON object or not.
+	 * @param bWriteDefaultParaPr - Specifies if the default paragraph properties will be written to the JSON object or not.
+	 * @param bWriteTheme         - Specifies if the document theme will be written to the JSON object or not.
+	 * @param bWriteSectionPr     - Specifies if the section properties will be written to the JSON object or not.
 	 * @returns {JSON}
 	 */
 	ApiDocument.prototype.ToJSON = function(bWriteDefaultTextPr, bWriteDefaultParaPr, bWriteTheme, bWriteSectionPr)
@@ -7524,7 +7525,7 @@
 	};
 
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiParagraph object into the JSON object.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @returns {JSON}
@@ -8190,7 +8191,7 @@
 		oDocument.Register_Field(oField);
 	};
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiRun object into the JSON object.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
 	 */
@@ -8504,7 +8505,7 @@
 		return null;
 	};
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiSection object into the JSON object.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
 	 * @returns {JSON}
@@ -9361,7 +9362,7 @@
 	};
 	
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiTable object into the JSON object.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 * @returns {JSON}
@@ -10236,7 +10237,7 @@
 		return new ApiTableStylePr(sType, this, this.Style.TableWholeTable.Copy());
 	};
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiStyle object into the JSON object.
 	 * @memberof ApiStyle
 	 * @typeofeditors ["CDE"]
 	 * @returns {JSON}
@@ -10574,7 +10575,7 @@
 	};
 
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiTextPr object into the JSON object.
 	 * @memberof ApiTextPr
 	 * @typeofeditors ["CDE"]
 	 * @returns {JSON}
@@ -11204,7 +11205,7 @@
 		this.private_OnChange();
 	};
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiParaPr object into the JSON object.
 	 * @memberof ApiParaPr
 	 * @typeofeditors ["CDE"]
 	 * @returns {JSON}
@@ -11244,7 +11245,7 @@
 		return new ApiNumberingLevel(this.Num, nLevel);
 	};
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiNumbering object into the JSON object.
 	 * @memberof ApiNumbering
 	 * @typeofeditors ["CDE"]
 	 * @returns {JSON}
@@ -11699,7 +11700,7 @@
 		this.private_OnChange();
 	};
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiTablePr object into the JSON object.
 	 * @memberof ApiTablePr
 	 * @typeofeditors ["CDE"]
 	 * @returns {JSON}
@@ -11757,7 +11758,7 @@
 		this.private_OnChange();
 	};
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiTableRowPr object into the JSON object.
 	 * @memberof ApiTableRowPr
 	 * @typeofeditors ["CDE"]
 	 * @returns {JSON}
@@ -12035,7 +12036,7 @@
 		this.private_OnChange();
 	};
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiTableCellPr object into the JSON object.
 	 * @memberof ApiTableCellPr
 	 * @typeofeditors ["CDE"]
 	 * @returns {JSON}
@@ -12123,7 +12124,7 @@
 		return new ApiTableCellPr(this, this.TableStylePr.TableCellPr);
 	};
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiTableStylePr object into the JSON object.
 	 * @memberof ApiTableStylePr
 	 * @typeofeditors ["CDE"]
 	 * @returns {JSON}
@@ -12661,7 +12662,7 @@
 		return null;
 	};
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiDrawing object into the JSON object.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 * @returns {JSON}
@@ -13317,10 +13318,10 @@
 	};
 
 	/**
-	 * Removes specified seria.
+	 * Removes the specified series from the current chart.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE, CPE, CSE"]
-	 * @param {number} nSeria - number of seria.
+	 * @param {number} nSeria - The index of the chart series.
 	 * @returns {boolean}
 	 */
 	ApiChart.prototype.RemoveSeria = function(nSeria)
@@ -13329,11 +13330,11 @@
 	};
 
 	/**
-	 * Sets values to seria's data points.
+	 * Sets values to the specified chart series.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE, CPE"]
-	 * @param {number[]} aValues - The array of the data which will be set to specified seria.
-	 * @param {number} nSeria - number of seria.
+	 * @param {number[]} aValues - The array of the data which will be set to the specified chart series.
+	 * @param {number} nSeria - The index of the chart series.
 	 * @returns {boolean}
 	 */
 	ApiChart.prototype.SetSeriaValues = function(aValues, nSeria)
@@ -13342,11 +13343,10 @@
 	};
 
 	/**
-	 * Sets the values for the x-axis in all series.
-	 * Used for scatter chart.
+	 * Sets the x-axis values to all chart series. It is used with the scatter charts only.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE, CPE"]
-	 * @param {string[]} aValues - The array of the data which will be set to x-axis data points.
+	 * @param {string[]} aValues - The array of the data which will be set to the x-axis data points.
 	 * @returns {boolean}
 	 */
 	ApiChart.prototype.SetXValues = function(aValues)
@@ -13357,11 +13357,11 @@
 	};
 
 	/**
-	 * Sets name to seria.
+	 * Sets a name to the specified chart series.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE, CPE"]
-	 * @param {string} sName - The name which will be set to specified seria.
-	 * @param {number} nSeria - number of seria.
+	 * @param {string} sName - The name which will be set to the specified chart series.
+	 * @param {number} nSeria - The index of the chart series.
 	 * @returns {boolean}
 	 */
 	ApiChart.prototype.SetSeriaName = function(sName, nSeria)
@@ -13370,11 +13370,11 @@
 	};
 
 	/**
-	 * Sets name to category.
+	 * Sets a name to the specified chart category.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE, CPE"]
-	 * @param {string} sName - The name which will be set to specified seria.
-	 * @param {number} nCategory - number of category.
+	 * @param {string} sName - The name which will be set to the specified chart category.
+	 * @param {number} nCategory - The index of the chart category.
 	 * @returns {boolean}
 	 */
 	ApiChart.prototype.SetCategoryName = function(sName, nCategory)
@@ -13383,10 +13383,10 @@
 	};
 
 	/**
-	 * Sets style to chart by style id.
+	 * Sets a style to the current chart by style ID.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE, CPE, CSE"]
-	 * @param nStyleId - one of the styles available in the editor.
+	 * @param nStyleId - One of the styles available in the editor.
 	 * @returns {boolean}
 	 */
 	ApiChart.prototype.ApplyChartStyle = function(nStyleId)
@@ -13407,7 +13407,7 @@
 	};
 
 	/**
-	 * Sets fill to plot area.
+	 * Sets the fill to the chart plot area.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE, CPE, CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the plot area.
@@ -13423,7 +13423,7 @@
 	};
 
 	/**
-	 * Sets outline to plot area of the chart.
+	 * Sets the outline to the chart plot area.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE, CPE, CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the plot area outline.
@@ -13439,12 +13439,12 @@
 	};
 
 	/**
-	 * Sets fill to specified series.
+	 * Sets the fill to the specified chart series.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE, CPE, CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the series.
-	 * @param {number} nSeries - The index of the series in chart.
-	 * @param {boolean} [bAll=false] - whether to apply to all series.
+	 * @param {number} nSeries - The index of the chart series.
+	 * @param {boolean} [bAll=false] - Specifies if the fill will be applied to all series.
 	 * @returns {boolean}
 	 */
 	ApiChart.prototype.SetSeriesFill = function(oFill, nSeries, bAll)
@@ -13456,12 +13456,12 @@
 	};
 
 	/**
-	 * Sets outline to specified series.
+	 * Sets the outline to the specified chart series.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE, CPE, CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the series outline.
-	 * @param {number} nSeries - The index of the series in chart.
-	 * @param {boolean} [bAll=false] - whether to apply to all series.
+	 * @param {number} nSeries - The index of the chart series.
+	 * @param {boolean} [bAll=false] - Specifies if the outline will be applied to all series.
 	 * @returns {boolean}
 	 */
 	ApiChart.prototype.SetSeriesOutLine = function(oStroke, nSeries, bAll)
@@ -13473,13 +13473,13 @@
 	};
 
 	/**
-	 * Sets fill to data point in specified series.
+	 * Sets the fill to the data point in the specified chart series.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE, CPE, CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the data point.
-	 * @param {number} nSeries - The index of the series in chart.
-	 * @param {number} nDataPoint - The index of the data point in the specified series in chart.
-	 * @param {boolean} [bAllSeries=false] - whether to apply to specified datapoint in all series.
+	 * @param {number} nSeries - The index of the chart series.
+	 * @param {number} nDataPoint - The index of the data point in the specified chart series.
+	 * @param {boolean} [bAllSeries=false] - Specifies if the fill will be applied to the specified data point in all series.
 	 * @returns {boolean}
 	 */
 	ApiChart.prototype.SetDataPointFill = function(oFill, nSeries, nDataPoint, bAllSeries)
@@ -13491,13 +13491,13 @@
 	};
 
 	/**
-	 * Sets outline to data point in specified series.
+	 * Sets the outline to the data point in the specified chart series.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE, CPE, CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the data point outline.
-	 * @param {number} nSeries - The index of the series in chart.
-	 * @param {number} nDataPoint - The index of the data point in the specified series in chart.
-	 * @param {boolean} bAllSeries - whether to apply to specified datapoint in all series.
+	 * @param {number} nSeries - The index of the chart series.
+	 * @param {number} nDataPoint - The index of the data point in the specified chart series.
+	 * @param {boolean} bAllSeries - Specifies if the outline will be applied to the specified data point in all series.
 	 * @returns {boolean}
 	 */
 	ApiChart.prototype.SetDataPointOutLine = function(oStroke, nSeries, nDataPoint, bAllSeries)
@@ -13509,13 +13509,13 @@
 	};
 
 	/**
-	 * Sets fill to marker in specified series.
+	 * Sets the fill to the marker in the specified chart series.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE, CPE, CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the marker.
-	 * @param {number} nSeries - The index of the series in chart.
-	 * @param {number} nMarker - The index of the marker in the specified series in chart.
-	 * @param {boolean} [bAllMarkers=false] - whether to apply to all markers in specified series.
+	 * @param {number} nSeries - The index of the chart series.
+	 * @param {number} nMarker - The index of the marker in the specified chart series.
+	 * @param {boolean} [bAllMarkers=false] - Specifies if the fill will be applied to all markers in the specified chart series.
 	 * @returns {boolean}
 	 */
 	ApiChart.prototype.SetMarkerFill = function(oFill, nSeries, nMarker, bAllMarkers)
@@ -13527,13 +13527,13 @@
 	};
 
 	/**
-	 * Sets outline to marker in specified series.
+	 * Sets the outline to the marker in the specified chart series.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE, CPE, CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the marker outline.
-	 * @param {number} nSeries - The index of the series in chart.
-	 * @param {number} nMarker - The index of the marker in the specified series in chart.
-	 * @param {boolean} [bAllMarkers=false] - whether to apply to all markers in specified series.
+	 * @param {number} nSeries - The index of the chart series.
+	 * @param {number} nMarker - The index of the marker in the specified chart series.
+	 * @param {boolean} [bAllMarkers=false] - Specifies if the outline will be applied to all markers in the specified chart series.
 	 * @returns {boolean}
 	 */
 	ApiChart.prototype.SetMarkerOutLine = function(oStroke, nSeries, nMarker, bAllMarkers)
@@ -13545,7 +13545,7 @@
 	};
 
 	/**
-	 * Sets fill to title.
+	 * Sets the fill to the chart title.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE, CPE, CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the title.
@@ -13560,7 +13560,7 @@
 	};
 
 	/**
-	 * Sets outline to title.
+	 * Sets the outline to the chart title.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE, CPE, CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the title outline.
@@ -13575,7 +13575,7 @@
 	};
 
 	/**
-	 * Sets fill to legend.
+	 * Sets the fill to the chart legend.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE, CPE, CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the legend.
@@ -13590,7 +13590,7 @@
 	};
 
 	/**
-	 * Sets outline to legend.
+	 * Sets the outline to the chart legend.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE, CPE, CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the legend outline.
@@ -13621,7 +13621,7 @@
 		return "fill";
 	};
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiFill object into the JSON object.
 	 * @memberof ApiFill
 	 * @typeofeditors ["CDE"]
 	 */
@@ -13648,7 +13648,7 @@
 		return "stroke";
 	};
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiStroke object into the JSON object.
 	 * @memberof ApiStroke
 	 * @typeofeditors ["CDE"]
 	 */
@@ -13675,7 +13675,7 @@
 		return "gradientStop"
 	};
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiGradientStop object into the JSON object.
 	 * @memberof ApiGradientStop
 	 * @typeofeditors ["CDE"]
 	 */
@@ -13702,7 +13702,7 @@
 		return "uniColor"
 	};
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiUniColor object into the JSON object.
 	 * @memberof ApiUniColor
 	 * @typeofeditors ["CDE"]
 	 */
@@ -13729,7 +13729,7 @@
 		return "rgbColor"
 	};
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiRGBColor object into the JSON object.
 	 * @memberof ApiRGBColor
 	 * @typeofeditors ["CDE"]
 	 */
@@ -13756,7 +13756,7 @@
 		return "schemeColor"
 	};
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiSchemeColor object into the JSON object.
 	 * @memberof ApiSchemeColor
 	 * @typeofeditors ["CDE"]
 	 */
@@ -13783,7 +13783,7 @@
 		return "presetColor"
 	};
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiPresetColor object into the JSON object.
 	 * @memberof ApiPresetColor
 	 * @typeofeditors ["CDE"]
 	 */
@@ -14252,7 +14252,7 @@
 	};
 
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiInlineLvlSdt object into the JSON object.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 */
@@ -15615,7 +15615,7 @@
 	};
 
 	/**
-	 * Convert to JSON object.
+	 * Converts the ApiBlockLvlSdt object into the JSON object.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 */
