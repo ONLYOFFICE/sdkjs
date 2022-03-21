@@ -4434,17 +4434,18 @@
 			if (ct.indent) {
 				var verticalText = ct.angle === AscCommonExcel.g_nVerticalTextAngle ||
 					(ct.flags && ct.flags.verticalText);
+				var _defaultSpaceWidth = this.workbook.printPreviewState && this.workbook.printPreviewState.isStart() ? this.defaultSpaceWidth * this.getZoom() : this.defaultSpaceWidth;
 				if (verticalText) {
 					if (Asc.c_oAscVAlign.Bottom === ct.cellVA) {
 						//textY -= ct.indent * 3 * this.defaultSpaceWidth;
 					} else if (Asc.c_oAscVAlign.Top === ct.cellVA) {
-						textY += ct.indent * 3 * this.defaultSpaceWidth;
+						textY += ct.indent * 3 * _defaultSpaceWidth;
 					}
 				} else {
 					if (AscCommon.align_Right === ct.cellHA) {
-						textX -= ct.indent * 3 * this.defaultSpaceWidth;
+						textX -= ct.indent * 3 * _defaultSpaceWidth;
 					} else if (AscCommon.align_Left === ct.cellHA) {
-						textX += ct.indent * 3 * this.defaultSpaceWidth;
+						textX += ct.indent * 3 * _defaultSpaceWidth;
 					}
 				}
 			}
