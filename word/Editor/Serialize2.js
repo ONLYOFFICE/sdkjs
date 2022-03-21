@@ -16515,7 +16515,7 @@ function Binary_SettingsTableReader(doc, oReadResult, stream)
 			res = this.bcr.Read1(length, function(t, l){
 				return oThis.ReadDocProtect(t,l,oDocProtect);
 			});
-			editor.WordControl.m_oLogicDocument.Settings.DocumentProtection = oDocProtect;
+			//editor.WordControl.m_oLogicDocument.Settings.DocumentProtection = oDocProtect;
 		}
 		else if ( c_oSer_SettingsType.WriteProtection === type )
 		{
