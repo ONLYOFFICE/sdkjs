@@ -156,6 +156,43 @@ var gc_aIsForEra = [
 	0x1970000, // Арабский (Ум аль-Кура)
 	0x864409 // Английский (Малайзия) Хиджра*/
 ];
+var aSystemFormats = {
+	1068: ["[$-42C]d mmmm yyyy, dddd", "[$-42C]hh:mm:ss"],
+	1026: ["[$-402]dd mmmm yyyy \"г.\"", "[$-402]hh:mm:ss"],
+	1029: ["[$-405]dddd d. mmmm rrrr", "[$-405]hh:mm:ss"],
+	3079: ["[$-C07]tttt, t. MMMM jjjj", "[$-C07]hh:mm:ss"],
+	1031: ["[$-407]tttt, t. MMMM jjjj", "[$-407]hh:mm:ss"],
+	2055: ["[$-807]tttt, t. MMMM jjjj", "[$-807]hh:mm:ss"],
+	1032: ["[$-408]ηηηη, η μμμμ εεεε", "[$-408]ωω:λλ:δδ"],
+	3081: ["[$-C09]dddd, d mmmm yyyy", "[$-C09]hh:mm:ss"],
+	2057: ["[$-809]dd mmmm yyyy", "[$-809]hh:mm:ss"],
+	1033: ["[$-409]dddd, mmmm d, yyyy", "[$-409]hh:mm:ss AM/PM"],
+	3082: ["[$-C0A]dddd, d \"de\" mmmm \"de\" aaaa", "[$-C0A]h:mm:ss"],
+	// todo Фикс AM/PM для испании
+	2058: ["[$-80A]dddd, d \"de\" mmmm \"de\" aaaa", "[$-80A]h:mm:ss AM/PM"],
+	1035: ["[$-40B]pppp p. kkkk vvvv", "[$-40B]t.mm.ss"],
+	1036: ["[$-40C]jjjj j mmmm aaaa", "[$-40C]hh:mm:ss"],
+	4108: ["[$-100C]jjjj, j mmmm aaaa", "[$-100C]hh:mm:ss"],
+	1040: ["[$-410]gggg g mmmm aaaa", "[$-410]hh:mm:ss"],
+	2064: ["[$-810]gggg, g mmmm aaaa", "[$-810]hh:mm:ss"],
+	1041: ["[$-411]yyyy年m月d日", "[$-411]h:mm:ss"],
+	1042: ["[$-412]yyyy년 m월 d일 dddd", "[$-412]AM/PM hh:mm:ss"],
+	1062: ["[$-426]dddd, yyyy.\" gada\" d. mmmm", "[$-426]hh:mm:ss"],
+	1038: ["[$-40E]éééé. hhhh n., nnnn", "[$-40E]ó:pp:mm"],
+	1043: ["[$-413]dddd d mmmm jjjj", "[$-413]uu:pp:mm"],
+	1045: ["[$-415]dddd, d mmmm rrrr", "[$-415]gg:mm:ss"],
+	1046: ["[$-416]dddd, d \"de\" mmmm \"de\" aaaa", "[$-416]hh:mm:ss"],
+	2070: ["[$-816]d \"de\" mmmm \"de\" aaaa", "[$-816]hh:mm:ss"],
+	1049: ["[$-419]Д ММММ ГГГГ \"г.\"", "[$-419]ч:мм:сс"],
+	1051: ["[$-41B]dddd d. mmmm yyyy", "[$-41B]h:mm:ss"],
+	1060: ["[$-424]dddd, dd. mmmm yyyy", "[$-424]hh:mm:ss"],
+	2077: ["[$-81D]pppp p kkkk vvvv", "[$-81D]tt:mm:ss"],
+	1053: ["[$-41D]\"den\" d MMMM åååå", "[$-41D]tt:mm:ss"],
+	1055: ["[$-41F]g aaaa yyyy gggg", "[$-41F]ss:dd:nn"],
+	1058: ["[$-422]d mmmm yyyy \"p.\"", "[$-422]h:mm:ss"],
+	1066: ["[$-42A]dd mmmm yyyy", "[$-42A]hh:mm:ss AM/PM"],
+	2052: ["[$-804]yyyy年m月d日", "[$-804]h:mm:ss"]
+};
 var NumComporationOperators =
 {
 	equal: 1,
@@ -1952,6 +1989,25 @@ NumFormat.prototype =
                             sText += item.CurrencyString;
                         }
 						if (null != item.Lid) {
+							this.bSystemDateTime = -1;
+							if (item.Lid == "x-sysdate" || item.Lid == "x-systime")
+							{
+								this.LCID = cultureInfo.LCID;
+								switch(item.Lid)
+								{
+									case("x-sysdate"):
+									{
+										this.bSystemDateTime = 0;
+										break;
+									}
+									case("x-systime"):
+									{
+										this.bSystemDateTime = 1;
+										break;
+									}
+									
+								}
+							}
 							var el = item.Lid.toLowerCase().split('-');
 							el = this.checkUpperAndLowerLoceles(el);
 							var defaultSecondPart = gc_oDefaultLocales[el[0]];
@@ -1999,7 +2055,7 @@ NumFormat.prototype =
 	checkUpperAndLowerLoceles: function (item) {
 		if (item.length >= 3) {
 			if (item[1].length > 0)
-				item[1][0] = item[1][0].toUpperCase();
+				item[1] = item[1].charAt(0).toUpperCase() + item[1].slice(1);
 			if (item[2].length === 2)
 				item[2] = item[2].toUpperCase();
 		}
@@ -2007,7 +2063,7 @@ NumFormat.prototype =
 			if (item[1].length === 2)
 				item[1] = item[1].toUpperCase();
 			else if (item[1].length > 2)
-					item[1][0] = item[1][0].toUpperCase();
+					item[1] = item[1].charAt(0).toUpperCase() + item[1].slice(1);
 		return item;
 	},
     isInvalidDateValue : function(number)
@@ -2172,11 +2228,35 @@ NumFormat.prototype =
 
 			var oCurrentEra;
 			var bIsGannen = false;
-			//var bInsertDatesAccordingSelectedCalendar = false; // Вставлять даты согласно выбранному календарю
+			var aFlagForRawFormat;
 
             var hasSign = false;
             var nReadState = FormatStates.Decimal;
-            var nFormatLength = this.aRawFormat.length;    
+            var nFormatLength = this.aRawFormat.length;
+			var aCopyRowFormat = this.aRawFormat;
+			
+			if (this.bSystemDateTime != null && this.bSystemDateTime != -1)
+			{
+				aFlagForRawFormat = new NumFormat();
+				aFlagForRawFormat.formatString = aSystemFormats[this.LCID];
+				if(aFlagForRawFormat.formatString != null && aFlagForRawFormat.formatString.length > 0)
+					aFlagForRawFormat.formatString = aFlagForRawFormat.formatString[this.bSystemDateTime];
+				if(aFlagForRawFormat.formatString != null && aFlagForRawFormat.formatString.length > 0)
+				{
+					aFlagForRawFormat.length = aFlagForRawFormat.formatString.length;
+					aFlagForRawFormat._parseFormat(undefined, true);
+					aFlagForRawFormat._prepareFormat();
+					this.aRawFormat = aFlagForRawFormat.aRawFormat;
+					nFormatLength = this.aRawFormat.length;
+					if (oParsedNumber.date.d == undefined && oParsedNumber.date.countDay == undefined)
+					{
+						oParsedNumber.date = this.parseDate(number);
+						if (oParsedNumber.date.d != undefined)
+							this.bDay = true;
+					}
+				}
+			}
+
             for(var i = 0; i < nFormatLength; ++i)
             {
                 var item = this.aRawFormat[i];
@@ -2495,6 +2575,10 @@ NumFormat.prototype =
 					}
 				}
             }
+			if (this.bSystemDateTime != null && this.bSystemDateTime != -1)
+			{
+				this.aRawFormat = aCopyRowFormat;
+			}
 
 			if (true == this.bAddMinusIfNes && SignType.Negative == oParsedNumber.sign && !hasSign) {
 				//todo разобраться с минусами
