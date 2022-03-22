@@ -1924,7 +1924,7 @@
 					specialOptionsArr = [specialProps.sourceformatting, specialProps.picture];
 				}
 
-				var defaultSelectedContent = selectedContent2[1] ? selectedContent2[1] : selectedContent2[0];
+				var defaultSelectedContent = selectedContent2[0] ? selectedContent2[0] : selectedContent2[1];
 				var bSlideObjects = defaultSelectedContent && defaultSelectedContent.content.SlideObjects &&
 					defaultSelectedContent.content.SlideObjects.length > 0;
 				var pasteObj = bSlideObjects ? selectedContent2[2] : defaultSelectedContent;
