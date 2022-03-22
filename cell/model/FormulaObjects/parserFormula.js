@@ -2681,6 +2681,37 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		return res;
 	};
+	cBaseOperator.prototype.tryDoArraysOperation = function (operand1, operand2, func) {
+		//применяем в случае, если один или оба операнда area/array
+		//возвращаем либо null, либо array
+		var res = null;
+
+		var dimension1 = operand1 && operand1.getDimensions();
+		var dimension2 = operand2 && operand2.getDimensions();
+
+		if (dimension1 && dimension2) {
+			if (dimension1.row > 1 || dimension1.col > 1 || dimension2.row > 1 || dimension2.col > 1) {
+				if (dimension1.row === dimension2.row && dimension1.col === dimension2.col) {
+					//размер row/col
+					
+				} else if (dimension1.row === dimension2.row && (dimension1.col === 1 || dimension2.col === 1)) {
+					//размер row/(col1||col2->max)
+
+				} else if (dimension1.col === dimension2.col && (dimension1.row === 1 || dimension2.row === 1)) {
+					//размер col/(row1||row2->max)
+
+				} else if (dimension1.col === 1 && dimension1.row === 1) {
+					//размер col2/row2
+
+				} else if (dimension2.col === 1 && dimension2.row === 1) {
+					//размер col1/row1
+
+				}
+			}
+		}
+
+		return res;
+	};
 
 	/** @constructor */
 	function cBaseFunction() {
@@ -3758,8 +3789,21 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cConcatSTROperator.prototype.priority = 15;
 	cConcatSTROperator.prototype.argumentsCurrent = 2;
 	cConcatSTROperator.prototype.numFormat = cNumFormatNone;
-	cConcatSTROperator.prototype.Calculate = function (arg) {
+	cConcatSTROperator.prototype.Calculate = function (arg, opt_bbox, opt_defName, ws, bIsSpecialFunction) {
 		var arg0 = arg[0], arg1 = arg[1];
+
+		var doOperation = function (_arg0, _arg1) {
+			return _arg0 instanceof cError ? _arg0 :
+				_arg1 instanceof cError ? _arg1 : new cString(_arg0.toString().concat(_arg1.toString()))
+		};
+
+		if(bIsSpecialFunction){
+			var array = this.tryDoArraysOperation(arg0, arg1, doOperation);
+			if (array) {
+				return array;
+			}
+		}
+
 		if (arg0 instanceof cArea) {
 			arg0 = arg0.cross(arguments[1]);
 		} else if (arg0 instanceof cArea3D) {
@@ -3773,8 +3817,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		arg1 = arg1.tocString();
 
-		return arg0 instanceof cError ? arg0 :
-			arg1 instanceof cError ? arg1 : new cString(arg0.toString().concat(arg1.toString()));
+		return doOperation(arg0, arg1);
 	};
 
 	/**
