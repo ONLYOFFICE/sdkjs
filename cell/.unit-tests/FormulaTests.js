@@ -7883,7 +7883,7 @@ $( function () {
 		assert.strictEqual( array.getElementRowCol(0,1).getValue(), "34");
 		assert.strictEqual( array.getElementRowCol(1,1).getValue(), "45");
 
-		oParser = new parserFormula( "J2:M5&AAA101:AAB102", "A1", ws );
+		oParser = new parserFormula( "AJ2:AM5&AAA101:AAB102", "A1", ws );
 		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
 		assert.ok( oParser.parse() );
 		array = oParser.calculate();
@@ -7892,7 +7892,7 @@ $( function () {
 		assert.strictEqual( array.getElementRowCol(0,1).getValue(), "3");
 		assert.strictEqual( array.getElementRowCol(1,1).getValue(), "4");
 
-		oParser = new parserFormula( "J2:M5&AAA101:AAA102", "A1", ws );
+		oParser = new parserFormula( "AJ2:AM5&AAA101:AAA102", "A1", ws );
 		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
 		assert.ok( oParser.parse() );
 		array = oParser.calculate();
