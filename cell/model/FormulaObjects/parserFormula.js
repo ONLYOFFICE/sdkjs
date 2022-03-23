@@ -2422,7 +2422,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (row > this.rowCount || col > this.getCountElementInRow()) {
 			return new cError(cErrorType.not_available);
 		}
-		return this.array[row][col];
+		return this.array[row] && this.array[row][col] ? this.array[row][col] : new cEmpty();
 	};
 	cArray.prototype.getElement = function (index) {
 		for (var i = 0; i < this.rowCount; i++) {
@@ -3801,6 +3801,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var arg0 = arg[0], arg1 = arg[1];
 
 		var doOperation = function (_arg0, _arg1) {
+			_arg0 = _arg0.tocString();
+			_arg1 = _arg1.tocString();
 			return _arg0 instanceof cError ? _arg0 :
 				_arg1 instanceof cError ? _arg1 : new cString(_arg0.toString().concat(_arg1.toString()))
 		};
@@ -3817,13 +3819,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		} else if (arg0 instanceof cArea3D) {
 			arg0 = arg0.cross(arguments[1], arguments[3]);
 		}
-		arg0 = arg0.tocString();
 		if (arg1 instanceof cArea) {
 			arg1 = arg1.cross(arguments[1]);
 		} else if (arg1 instanceof cArea3D) {
 			arg1 = arg1.cross(arguments[1], arguments[3]);
 		}
-		arg1 = arg1.tocString();
 
 		return doOperation(arg0, arg1);
 	};

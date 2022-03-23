@@ -7842,6 +7842,110 @@ $( function () {
 		testArrayFormula2(assert, "CONCATENATE", 1, 8);
 	});
 
+	QUnit.test("Test: \"&\"", function (assert) {
+		ws.getRange2( "AA1" ).setValue( "1" );
+		ws.getRange2( "AA2" ).setValue( "2" );
+		ws.getRange2( "AB1" ).setValue( "3" );
+		ws.getRange2( "AB2" ).setValue( "4" );
+
+		ws.getRange2( "AD1" ).setValue( "2" );
+		ws.getRange2( "AD2" ).setValue( "3" );
+		ws.getRange2( "AE1" ).setValue( "4" );
+		ws.getRange2( "AE2" ).setValue( "5" );
+		ws.getRange2( "AF1" ).setValue( "test" );
+		ws.getRange2( "AF2" ).setValue( "test" );
+
+		var array;
+		oParser = new parserFormula( "1&AA1:AB2", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
+		assert.ok( oParser.parse() );
+		array = oParser.calculate();
+		assert.strictEqual( array.getElementRowCol(0,0).getValue(), "11");
+		assert.strictEqual( array.getElementRowCol(1,0).getValue(), "12");
+		assert.strictEqual( array.getElementRowCol(0,1).getValue(), "13");
+		assert.strictEqual( array.getElementRowCol(1,1).getValue(), "14");
+
+		oParser = new parserFormula( "AA1:AB2&AD1:AE2", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
+		assert.ok( oParser.parse() );
+		array = oParser.calculate();
+		assert.strictEqual( array.getElementRowCol(0,0).getValue(), "12");
+		assert.strictEqual( array.getElementRowCol(1,0).getValue(), "23");
+		assert.strictEqual( array.getElementRowCol(0,1).getValue(), "34");
+		assert.strictEqual( array.getElementRowCol(1,1).getValue(), "45");
+
+		oParser = new parserFormula( "AA1:AB2&AD1:AF2", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
+		assert.ok( oParser.parse() );
+		array = oParser.calculate();
+		assert.strictEqual( array.getElementRowCol(0,0).getValue(), "12");
+		assert.strictEqual( array.getElementRowCol(1,0).getValue(), "23");
+		assert.strictEqual( array.getElementRowCol(0,1).getValue(), "34");
+		assert.strictEqual( array.getElementRowCol(1,1).getValue(), "45");
+
+		oParser = new parserFormula( "J2:M5&AA1:AB2", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
+		assert.ok( oParser.parse() );
+		array = oParser.calculate();
+		assert.strictEqual( array.getElementRowCol(0,0).getValue(), "1");
+		assert.strictEqual( array.getElementRowCol(1,0).getValue(), "2");
+		assert.strictEqual( array.getElementRowCol(0,1).getValue(), "3");
+		assert.strictEqual( array.getElementRowCol(1,1).getValue(), "4");
+
+		oParser = new parserFormula( "J2:M5&AA1:AA2", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
+		assert.ok( oParser.parse() );
+		array = oParser.calculate();
+		assert.strictEqual( array.getElementRowCol(0,0).getValue(), "1");
+		assert.strictEqual( array.getElementRowCol(1,0).getValue(), "2");
+		assert.strictEqual( array.getElementRowCol(0,1).getValue(), "1");
+		assert.strictEqual( array.getElementRowCol(1,1).getValue(), "2");
+		assert.strictEqual( array.getElementRowCol(0,2).getValue(), "1");
+		assert.strictEqual( array.getElementRowCol(1,2).getValue(), "2");
+
+		oParser = new parserFormula( "AA1:AB1&AD1:AF2", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
+		assert.ok( oParser.parse() );
+		array = oParser.calculate();
+		assert.strictEqual( array.getElementRowCol(0,0).getValue(), "12");
+		assert.strictEqual( array.getElementRowCol(1,0).getValue(), "13");
+		assert.strictEqual( array.getElementRowCol(0,1).getValue(), "34");
+		assert.strictEqual( array.getElementRowCol(1,1).getValue(), "35");
+
+		oParser = new parserFormula( "AA1&AD1:AF2", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
+		assert.ok( oParser.parse() );
+		array = oParser.calculate();
+		assert.strictEqual( array.getElementRowCol(0,0).getValue(), "12");
+		assert.strictEqual( array.getElementRowCol(1,0).getValue(), "13");
+		assert.strictEqual( array.getElementRowCol(0,1).getValue(), "14");
+		assert.strictEqual( array.getElementRowCol(1,1).getValue(), "15");
+		assert.strictEqual( array.getElementRowCol(0,2).getValue(), "1test");
+		assert.strictEqual( array.getElementRowCol(1,2).getValue(), "1test");
+
+		oParser = new parserFormula( "1&AD1:AF2", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
+		assert.ok( oParser.parse() );
+		array = oParser.calculate();
+		assert.strictEqual( array.getElementRowCol(0,0).getValue(), "12");
+		assert.strictEqual( array.getElementRowCol(1,0).getValue(), "13");
+		assert.strictEqual( array.getElementRowCol(0,1).getValue(), "14");
+		assert.strictEqual( array.getElementRowCol(1,1).getValue(), "15");
+		assert.strictEqual( array.getElementRowCol(0,2).getValue(), "1test");
+		assert.strictEqual( array.getElementRowCol(1,2).getValue(), "1test");
+
+		oParser = new parserFormula( "AD1:AF2&\"test\"", "A1", ws );
+		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
+		assert.ok( oParser.parse() );
+		array = oParser.calculate();
+		assert.strictEqual( array.getElementRowCol(0,0).getValue(), "2test");
+		assert.strictEqual( array.getElementRowCol(1,0).getValue(), "3test");
+		assert.strictEqual( array.getElementRowCol(0,1).getValue(), "4test");
+		assert.strictEqual( array.getElementRowCol(1,1).getValue(), "5test");
+		assert.strictEqual( array.getElementRowCol(0,2).getValue(), "testtest");
+		assert.strictEqual( array.getElementRowCol(1,2).getValue(), "testtest");
+	});
+
     QUnit.test("Test: \"DEVSQ\"", function (assert) {
         ws.getRange2( "A1" ).setValue( "5.6" );
         ws.getRange2( "A2" ).setValue( "8.2" );
