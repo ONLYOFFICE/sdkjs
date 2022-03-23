@@ -2690,22 +2690,30 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var dimension2 = operand2 && operand2.getDimensions();
 
 		if (dimension1 && dimension2) {
-			if (dimension1.row > 1 || dimension1.col > 1 || dimension2.row > 1 || dimension2.col > 1) {
-				if (dimension1.row === dimension2.row && dimension1.col === dimension2.col) {
-					//размер row/col
-					
-				} else if (dimension1.row === dimension2.row && (dimension1.col === 1 || dimension2.col === 1)) {
-					//размер row/(col1||col2->max)
+			//берём наименьший размер, исключение - когда одна строка/столбец
+			var colCount = dimension1.col === 1 ? dimension2.col : (dimension2.col === 1 ? dimension1.col : Math.min(dimension1.col, dimension2.col));
+			var rowCount = dimension1.row === 1 ? dimension2.row : (dimension2.row === 1 ? dimension1.row : Math.min(dimension1.row, dimension2.row));
 
-				} else if (dimension1.col === dimension2.col && (dimension1.row === 1 || dimension2.row === 1)) {
-					//размер col/(row1||row2->max)
+			var matrix1, matrix2;
+			if (operand1.type === cElementType.array) {
+				matrix1 = operand1;
+			}
+			if (operand2.type === cElementType.array) {
+				matrix2 = operand2;
+			}
+			if (operand1.type === cElementType.cellsRange || operand1.type === cElementType.cellsRange3D) {
+				matrix1 = convertAreaToArray(operand1);
+			}
+			if (operand2.type === cElementType.cellsRange || operand2.type === cElementType.cellsRange3D) {
+				matrix2 = convertAreaToArray(operand2);
+			}
 
-				} else if (dimension1.col === 1 && dimension1.row === 1) {
-					//размер col2/row2
-
-				} else if (dimension2.col === 1 && dimension2.row === 1) {
-					//размер col1/row1
-
+			res = new cArray();
+			for (var iRow = 0; iRow < rowCount; iRow++, iRow < rowCount ? res.addRow() : true) {
+				for (var iCol = 0; iCol < colCount; iCol++) {
+					var elem1 = matrix1 ? matrix1.getElementRowCol(dimension1.row === 1 ? 0 : iRow, dimension1.col === 1 ? 0 : iCol) : operand1;
+					var elem2 = matrix2 ? matrix2.getElementRowCol(dimension2.row === 1 ? 0 : iRow, dimension2.col === 1 ? 0 : iCol) : operand2;
+					res.addElement(func(elem1, elem2));
 				}
 			}
 		}

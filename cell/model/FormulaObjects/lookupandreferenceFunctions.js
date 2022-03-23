@@ -2233,6 +2233,8 @@ function (window, undefined) {
 				var _startRange = 0;
 				if (dimensions2.bbox) {
 					_startRange = bVertical ? dimensions2.bbox.r1 : dimensions2.bbox.c1;
+				} else if (dimensions1.bbox) {
+					_startRange = bVertical ? dimensions1.bbox.r1 : dimensions1.bbox.c1;
 				}
 
 				if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
