@@ -1242,7 +1242,7 @@
 
 			var ret = this.Api.onKeyPress(e);
 
-			if (!e.charCode) {
+			if (e.key === "Delete" || e.code === "Delete") {
 				switch (e.which)
 				{
 					case 46: // delete
