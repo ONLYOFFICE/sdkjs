@@ -7843,20 +7843,20 @@ $( function () {
 	});
 
 	QUnit.test("Test: \"&\"", function (assert) {
-		ws.getRange2( "AA1" ).setValue( "1" );
-		ws.getRange2( "AA2" ).setValue( "2" );
-		ws.getRange2( "AB1" ).setValue( "3" );
-		ws.getRange2( "AB2" ).setValue( "4" );
+		ws.getRange2( "AAA101" ).setValue( "1" );
+		ws.getRange2( "AAA102" ).setValue( "2" );
+		ws.getRange2( "AAB101" ).setValue( "3" );
+		ws.getRange2( "AAB102" ).setValue( "4" );
 
-		ws.getRange2( "AD1" ).setValue( "2" );
-		ws.getRange2( "AD2" ).setValue( "3" );
-		ws.getRange2( "AE1" ).setValue( "4" );
-		ws.getRange2( "AE2" ).setValue( "5" );
-		ws.getRange2( "AF1" ).setValue( "test" );
-		ws.getRange2( "AF2" ).setValue( "test" );
+		ws.getRange2( "AAD101" ).setValue( "2" );
+		ws.getRange2( "AAD102" ).setValue( "3" );
+		ws.getRange2( "AAE101" ).setValue( "4" );
+		ws.getRange2( "AAE102" ).setValue( "5" );
+		ws.getRange2( "AAF101" ).setValue( "test" );
+		ws.getRange2( "AAF102" ).setValue( "test" );
 
 		var array;
-		oParser = new parserFormula( "1&AA1:AB2", "A1", ws );
+		oParser = new parserFormula( "1&AAA101:AAB102", "A1", ws );
 		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
 		assert.ok( oParser.parse() );
 		array = oParser.calculate();
@@ -7865,7 +7865,7 @@ $( function () {
 		assert.strictEqual( array.getElementRowCol(0,1).getValue(), "13");
 		assert.strictEqual( array.getElementRowCol(1,1).getValue(), "14");
 
-		oParser = new parserFormula( "AA1:AB2&AD1:AE2", "A1", ws );
+		oParser = new parserFormula( "AAA101:AAB102&AAD101:AAE102", "A1", ws );
 		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
 		assert.ok( oParser.parse() );
 		array = oParser.calculate();
@@ -7874,7 +7874,7 @@ $( function () {
 		assert.strictEqual( array.getElementRowCol(0,1).getValue(), "34");
 		assert.strictEqual( array.getElementRowCol(1,1).getValue(), "45");
 
-		oParser = new parserFormula( "AA1:AB2&AD1:AF2", "A1", ws );
+		oParser = new parserFormula( "AAA101:AAB102&AAD101:AAF102", "A1", ws );
 		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
 		assert.ok( oParser.parse() );
 		array = oParser.calculate();
@@ -7883,7 +7883,7 @@ $( function () {
 		assert.strictEqual( array.getElementRowCol(0,1).getValue(), "34");
 		assert.strictEqual( array.getElementRowCol(1,1).getValue(), "45");
 
-		oParser = new parserFormula( "J2:M5&AA1:AB2", "A1", ws );
+		oParser = new parserFormula( "J2:M5&AAA101:AAB102", "A1", ws );
 		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
 		assert.ok( oParser.parse() );
 		array = oParser.calculate();
@@ -7892,7 +7892,7 @@ $( function () {
 		assert.strictEqual( array.getElementRowCol(0,1).getValue(), "3");
 		assert.strictEqual( array.getElementRowCol(1,1).getValue(), "4");
 
-		oParser = new parserFormula( "J2:M5&AA1:AA2", "A1", ws );
+		oParser = new parserFormula( "J2:M5&AAA101:AAA102", "A1", ws );
 		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
 		assert.ok( oParser.parse() );
 		array = oParser.calculate();
@@ -7903,7 +7903,7 @@ $( function () {
 		assert.strictEqual( array.getElementRowCol(0,2).getValue(), "1");
 		assert.strictEqual( array.getElementRowCol(1,2).getValue(), "2");
 
-		oParser = new parserFormula( "AA1:AB1&AD1:AF2", "A1", ws );
+		oParser = new parserFormula( "AAA101:AAB101&AAD101:AAF102", "A1", ws );
 		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
 		assert.ok( oParser.parse() );
 		array = oParser.calculate();
@@ -7912,7 +7912,7 @@ $( function () {
 		assert.strictEqual( array.getElementRowCol(0,1).getValue(), "34");
 		assert.strictEqual( array.getElementRowCol(1,1).getValue(), "35");
 
-		oParser = new parserFormula( "AA1&AD1:AF2", "A1", ws );
+		oParser = new parserFormula( "AAA101&AAD101:AAF102", "A1", ws );
 		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
 		assert.ok( oParser.parse() );
 		array = oParser.calculate();
@@ -7923,7 +7923,7 @@ $( function () {
 		assert.strictEqual( array.getElementRowCol(0,2).getValue(), "1test");
 		assert.strictEqual( array.getElementRowCol(1,2).getValue(), "1test");
 
-		oParser = new parserFormula( "1&AD1:AF2", "A1", ws );
+		oParser = new parserFormula( "1&AAD101:AAF102", "A1", ws );
 		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
 		assert.ok( oParser.parse() );
 		array = oParser.calculate();
@@ -7934,7 +7934,7 @@ $( function () {
 		assert.strictEqual( array.getElementRowCol(0,2).getValue(), "1test");
 		assert.strictEqual( array.getElementRowCol(1,2).getValue(), "1test");
 
-		oParser = new parserFormula( "AD1:AF2&\"test\"", "A1", ws );
+		oParser = new parserFormula( "AAD101:AAF102&\"test\"", "A1", ws );
 		oParser.setArrayFormulaRef(ws.getRange2("AD6:AF8").bbox);
 		assert.ok( oParser.parse() );
 		array = oParser.calculate();
