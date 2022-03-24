@@ -6550,9 +6550,34 @@
     WorksheetView.prototype._addCellTextToCache = function (col, row) {
         var self = this;
 
-        function makeFnIsGoodNumFormat(flags, width) {
+        function makeFnIsGoodNumFormat(flags, width, isWidth) {
             return function (str) {
-                return self.stringRender.measureString(str, flags, width).width <= width;
+				var widthStr;
+				if (isWidth && self.workbook.printPreviewState && self.workbook.printPreviewState.isStart()) {
+					//заглушка для печати
+					//попробовать перейти на все расчёты как при 100%(потом * zoom)
+					// но в данном случае есть проблемы с измерением текста
+					//получаем ширину колонки как при 100% и длину строки как при 100%, чтобы не было разницы
+					var _scale = self.getZoom()*AscCommon.AscBrowser.retinaPixelRatio;
+					var _innerDiff = self.settings.cells.padding * 2 + gridlineSize;
+					width = Math.ceil((width + _innerDiff - _innerDiff*_scale)/_scale);
+					var realPpiX = self.stringRender.drawingCtx.ppiX;
+					var realPpiY = self.stringRender.drawingCtx.ppiY;
+					var realScaleFactor = self.stringRender.drawingCtx.scaleFactor;
+
+					self.stringRender.drawingCtx.ppiX = 96;
+					self.stringRender.drawingCtx.ppiY = 96;
+					self.stringRender.drawingCtx.scaleFactor = 1;
+
+					widthStr = self.stringRender.measureString(str, flags, width).width;
+
+					self.stringRender.drawingCtx.ppiX = realPpiX;
+					self.stringRender.drawingCtx.ppiY = realPpiY;
+					self.stringRender.drawingCtx.scaleFactor = realScaleFactor;
+				} else {
+					widthStr = self.stringRender.measureString(str, flags, width).width;
+				}
+				return widthStr <= width;
             };
         }
 
@@ -6672,7 +6697,7 @@
 
         // ToDo dDigitsCount нужно рассчитывать исходя не из дефалтового шрифта и размера, а исходя из текущего шрифта и размера ячейки
         if (angle === 0 && !fl.shrinkToFit) {
-            str = c.getValue2(dDigitsCount, makeFnIsGoodNumFormat(fl, colWidth));
+            str = c.getValue2(dDigitsCount, makeFnIsGoodNumFormat(fl, colWidth, true));
         } else {
             str = c.getValue2();
         }
