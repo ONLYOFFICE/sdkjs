@@ -592,9 +592,14 @@
 	baseEditorsApi.prototype.onUpdateRestrictions = function()
 	{
 	};
+	baseEditorsApi.prototype.isLongActionBase                    = function()
+	{
+		//word api overrides isLongAction with additional checks
+		return (0 !== this.IsLongActionCurrent);
+	};
 	baseEditorsApi.prototype.isLongAction                    = function()
 	{
-		return (0 !== this.IsLongActionCurrent);
+		return this.isLongActionBase();
 	};
 	baseEditorsApi.prototype.incrementCounterLongAction      = function()
 	{
@@ -608,7 +613,7 @@
 			this.IsLongActionCurrent = 0;
 		}
 
-		if (!this.isLongAction())
+		if (!this.isLongActionBase())
 		{
 			var _length = this.LongActionCallbacks.length;
 			for (var i = 0; i < _length; i++)
@@ -621,7 +626,7 @@
 	};
 	baseEditorsApi.prototype.checkLongActionCallback         = function(_callback, _param)
 	{
-		if (this.isLongAction())
+		if (this.isLongActionBase())
 		{
 			this.LongActionCallbacks[this.LongActionCallbacks.length]             = _callback;
 			this.LongActionCallbacksParams[this.LongActionCallbacksParams.length] = _param;
