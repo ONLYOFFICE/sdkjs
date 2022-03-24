@@ -179,7 +179,7 @@ var aSystemFormats = {
 	1042: ["[$-412]yyyy년 m월 d일 dddd", "[$-412]AM/PM hh:mm:ss"],
 	1062: ["[$-426]dddd, yyyy.\" gada\" d. mmmm", "[$-426]hh:mm:ss"],
 	1038: ["[$-40E]éééé. hhhh n., nnnn", "[$-40E]ó:pp:mm"],
-	1043: ["[$-413]dddd d mmmm jjjj", "[$-413]uu:pp:mm"],
+	1043: ["[$-413]dddd d mmmm jjjj", "[$-413]uu:mm:ss"],
 	1045: ["[$-415]dddd, d mmmm rrrr", "[$-415]gg:mm:ss"],
 	1046: ["[$-416]dddd, d \"de\" mmmm \"de\" aaaa", "[$-416]hh:mm:ss"],
 	2070: ["[$-816]d \"de\" mmmm \"de\" aaaa", "[$-816]hh:mm:ss"],
