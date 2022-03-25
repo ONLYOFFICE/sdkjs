@@ -4648,11 +4648,12 @@
 	{
 		if (!(oParagraph instanceof ApiParagraph))
 			return null;
+		if (oParagraph.Paragraph.LogicDocument !== oParagraph.Paragraph.Parent || !oParagraph.Paragraph.Is_UseInDocument())
+			return null;
 
 		var oSectPr = new CSectionPr(this.Document);
-
-		var nContentPos = this.Document.CurPos.ContentPos;
-		var oCurSectPr  = this.Document.SectionsInfo.Get_SectPr(nContentPos).SectPr;
+		var nContentPos = oParagraph.Paragraph.GetIndex();
+		var oCurSectPr = this.Document.SectionsInfo.Get_SectPr(nContentPos).SectPr;
 
 		oSectPr.Copy(oCurSectPr);
 		oCurSectPr.Set_Type(oSectPr.Type);
