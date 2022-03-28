@@ -3639,6 +3639,16 @@
 		var scaleWithDoc = this.model.headerFooter.getScaleWithDoc();
 		var printScale = (scaleWithDoc === null || scaleWithDoc === true) ? this.getPrintScale() : 1;
 
+		//for print preview
+		var isPrintPreview = this.workbook.printPreviewState.isStart();
+		var printScaleForPrintPreview = 1;
+		if (this.workbook.printPreviewState && this.workbook.printPreviewState.isStart()) {
+			var printOptions = this.model.PagePrintOptions;
+			printScaleForPrintPreview = printOptions && printOptions.pageSetup ? printOptions.pageSetup.scale : 100;
+			printScaleForPrintPreview = printScaleForPrintPreview / 100;
+			vector_koef = vector_koef * printScaleForPrintPreview;
+		}
+
 		var margins = this.model.PagePrintOptions.asc_getPageMargins();
 		var width = printPagesData.pageWidth / vector_koef;
 		var height = printPagesData.pageHeight / vector_koef;
@@ -3650,11 +3660,11 @@
 		var left =  alignWithMargins ? margins.left / vector_koef : defaultMargin / vector_koef;
 		var right = alignWithMargins ? margins.right / vector_koef : defaultMargin / vector_koef;
 		//для превью - делю на zoom
-		var top = margins.header / (AscCommonExcel.vector_koef / this.getZoom());
-		var bottom = margins.footer / (AscCommonExcel.vector_koef / this.getZoom());
+		var top = margins.header / (AscCommonExcel.vector_koef / (this.getZoom() / printScaleForPrintPreview));
+		var bottom = margins.footer / (AscCommonExcel.vector_koef / (this.getZoom() / printScaleForPrintPreview));
 
 		//TODO пересмотреть минимальный отступ
-		var rowTop = this._getRowTop(0) - this.groupHeight;
+		var rowTop = (this._getRowTop(0) - this.groupHeight) / printScaleForPrintPreview;
 		if(top < rowTop) {
 			top = rowTop;
 		}
