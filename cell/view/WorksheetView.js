@@ -2559,6 +2559,8 @@
 
 			this._setDefaultFont(drawingCtx);
 
+			this.usePrintScale = true;
+
 			//draw header/footer
 			this._drawHeaderFooter(drawingCtx, printPagesData, indexPrintPage, countPrintPages);
 
@@ -2691,7 +2693,6 @@
 				drawingCtx.RemoveClipRect && drawingCtx.RemoveClipRect();
 			};
 
-			this.usePrintScale = true;
 			var printScale = printPagesData.scale ? printPagesData.scale : this.getPrintScale();
 
 
@@ -3637,10 +3638,17 @@
 		}
 
 		var scaleWithDoc = this.model.headerFooter.getScaleWithDoc();
-		var printScale = (scaleWithDoc === null || scaleWithDoc === true) ? this.getPrintScale() : 1;
+		scaleWithDoc =  scaleWithDoc === null || scaleWithDoc === true
+		var printScale = scaleWithDoc ? this.getPrintScale() : 1;
+
+		//посольку в данном случае printScale уже включен в zoom, то меняем printScale
+		var isPrintPreview = this.workbook.printPreviewState && this.workbook.printPreviewState.isStart();
+		if (isPrintPreview) {
+			printScale = scaleWithDoc ? 1 : 1 / this.getPrintScale();
+		}
+
 
 		//for print preview
-		var isPrintPreview = this.workbook.printPreviewState.isStart();
 		var printScaleForPrintPreview = 1;
 		if (this.workbook.printPreviewState && this.workbook.printPreviewState.isStart()) {
 			var printOptions = this.model.PagePrintOptions;
