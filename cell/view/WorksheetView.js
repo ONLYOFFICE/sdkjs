@@ -6584,6 +6584,7 @@
 					self.stringRender.drawingCtx.ppiX = realPpiX;
 					self.stringRender.drawingCtx.ppiY = realPpiY;
 					self.stringRender.drawingCtx.scaleFactor = realScaleFactor;
+					self.stringRender.fontNeedUpdate = true;
 				} else {
 					widthStr = self.stringRender.measureString(str, flags, width).width;
 				}
