@@ -4936,11 +4936,10 @@
 				borderRightObject && borderRightObject.getBottomBorder())); // bottom border width
 
 
-
 			var dy1 = tbw > bw ? tbw - 1 : (tbw > 1 ? -1 : 0);
 			var dy2 = bbw > bw ? -2 : (bbw > 2 ? 1 : 0);
 
-			drawBorder(c_oAscBorderType.Ver, border, x, y1 + (-1 + dy1), x, y2 + (1 + dy2), bw);
+			drawBorder(c_oAscBorderType.Ver, border, x, y1 + (-1 + dy1), x, y2 + (1 + dy2));
 		}
 
 		function drawHorizontalBorder(borderTopObject, borderBottomObject, x1, y, x2) {
@@ -4957,11 +4956,10 @@
 				var rbw = zoomPrintPreviewCorrect(t._calcMaxBorderWidth(borderTopObject && borderTopObject.getRightBorder(),
 					borderTopObject && borderTopObject.getRightBorder()));
 
-
 				var dx1 = bw > lbw ? (lbw > 1 ? -1 : 0) : (lbw > 2 ? 2 : 1);
 				var dx2 = bw > rbw ? (rbw > 2 ? 1 : 0) : (rbw > 1 ? -2 : -1);
 
-				drawBorder(c_oAscBorderType.Hor, border, x1 + (-1 + dx1), y, x2 + (1 + dx2), y, bw);
+				drawBorder(c_oAscBorderType.Hor, border, x1 + (-1 + dx1), y, x2 + (1 + dx2), y);
 			}
 		}
 
