@@ -1694,6 +1694,7 @@
       'permissions': this.permissions,
       'encrypted': this.encrypted,
       'IsAnonymousUser': this.IsAnonymousUser,
+      'timezoneOffset': (new Date()).getTimezoneOffset(),
       'jwtOpen': this.jwtOpen,
       'jwtSession': this.jwtSession
     });

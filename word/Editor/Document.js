@@ -2772,6 +2772,10 @@ CDocument.prototype.UpdateDefaultsDependingOnCompatibility = function()
 };
 CDocument.prototype.private_UpdateFieldsOnEndLoad = function()
 {
+	let openedAt = this.Api.openedAt;
+	if (undefined === openedAt) {
+		return;
+	}
 	let arrHdrFtrs = this.SectionsInfo.GetAllHdrFtrs();
 	for (let nIndex = 0, nCount = arrHdrFtrs.length; nIndex < nCount; ++nIndex)
 	{
@@ -2785,7 +2789,7 @@ CDocument.prototype.private_UpdateFieldsOnEndLoad = function()
 				&& oField.GetInstruction()
 				&& fieldtype_TIME === oField.GetInstruction().Type)
 			{
-				oField.UpdateTIME(530003437 * 1000);
+				oField.UpdateTIME(openedAt);
 			}
 		}
 	}
