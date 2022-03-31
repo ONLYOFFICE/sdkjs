@@ -4914,10 +4914,12 @@
 		}
 
 		var zoomPrintPreviewCorrect = function (val) {
+			if (val < 1) {
+				return val;
+			}
 			//учитываю здесь только зум масштабирования
 			var printScale = t.model.PagePrintOptions.pageSetup && t.model.PagePrintOptions.pageSetup.scale;
 			var zoom = t.getZoom() / printScale;
-			console.log(zoom)
 			return t.workbook.printPreviewState && t.workbook.printPreviewState.isStart() ? Math.max(Asc.round(val * zoom), 1) : val;
 		};
 
