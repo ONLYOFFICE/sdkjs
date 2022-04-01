@@ -5066,7 +5066,6 @@
 					continue;
 				}
 				// Нужно отсеять пустые справа
-				//если пустая является частью мерженной ячейки, то её бордер может потеряться
 				for (; nextCol <= range.c2 && nextCol < t.nColsCount; ++nextCol) {
 					if (0 < this._getColumnWidth(nextCol)) {
 						break;
@@ -5153,6 +5152,7 @@
 //						}
 				}
 				// draw right border
+				//если пустая является частью мерженной ячейки, то её бордер может потеряться,  nextCol === mc.c2 + 1 - условие для этого
 				if ((!mc || col === mc.c2 || nextCol === mc.c2 + 1) && !t._isRightBorderErased(col, rowCache)) {
 					drawVerticalBorder(bCur, bNext, x2, y1, y2);
 				}
