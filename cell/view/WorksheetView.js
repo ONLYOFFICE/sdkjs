@@ -6760,17 +6760,19 @@
 		tm = this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW));
 
 		if (indent) {
+			var printZoom = this.workbook.printPreviewState && this.workbook.printPreviewState.isStart() ? this.getZoom() : 1;
+			var _defaultSpaceWidth = this.defaultSpaceWidth * printZoom;
 			if (verticalText) {
 				if (Asc.c_oAscVAlign.Bottom === va) {
-					tm.height += indent * 3 * this.defaultSpaceWidth;
+					tm.height += indent * 3 * _defaultSpaceWidth;
 				} else if (Asc.c_oAscVAlign.Top === va) {
-					tm.height += indent * 3 * this.defaultSpaceWidth;
+					tm.height += indent * 3 * _defaultSpaceWidth;
 				}
 			} else {
 				if (AscCommon.align_Right === alignH) {
-					tm.width += indent * 3 * this.defaultSpaceWidth + 1;
+					tm.width += indent * 3 * _defaultSpaceWidth + 1 * printZoom;
 				} else if (AscCommon.align_Left === alignH) {
-					tm.width += indent * 3 * this.defaultSpaceWidth;
+					tm.width += indent * 3 * _defaultSpaceWidth;
 				}
 			}
 		}
