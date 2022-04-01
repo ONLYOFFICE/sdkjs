@@ -3651,9 +3651,7 @@
 		//for print preview
 		var printScaleForPrintPreview = 1;
 		if (this.workbook.printPreviewState && this.workbook.printPreviewState.isStart()) {
-			var printOptions = this.model.PagePrintOptions;
-			printScaleForPrintPreview = printOptions && printOptions.pageSetup ? printOptions.pageSetup.scale : 100;
-			printScaleForPrintPreview = printScaleForPrintPreview / 100;
+			printScaleForPrintPreview = printPagesData.scale;
 			vector_koef = vector_koef * printScaleForPrintPreview;
 		}
 
