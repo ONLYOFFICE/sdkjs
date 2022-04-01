@@ -4913,7 +4913,7 @@
 
 		var zoomPrintPreviewCorrect = function (val) {
 			var zoom = t.getZoom();
-			if (val < 1 || zoom > 1) {
+			if (val < 1) {
 				return val;
 			}
 			//учитываю здесь только зум масштабирования
