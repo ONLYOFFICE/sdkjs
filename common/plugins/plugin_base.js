@@ -601,14 +601,12 @@
                 g_language = newLang;
                 if (g_language == "en-EN" || g_language == "")
 				{
-					window.Asc.plugin.translateManager = {};
-					if (window.Asc.plugin.onTranslate)
-						window.Asc.plugin.onTranslate();
+					pluginInitTranslateManager();
 				}
 				else
 				{
 					var _client = new XMLHttpRequest();
-					_client.open("GET", "./translations/" + g_language + ".json");
+					_client.open("GET", "./translations/files.json");
 
 					_client.onreadystatechange = function ()
 					{
@@ -616,23 +614,46 @@
 						{
 						    if (_client.status == 200 || location.href.indexOf("file:") == 0)
 						    {
-                                try
-                                {
-                                    window.Asc.plugin.translateManager = JSON.parse(_client.responseText);
-                                }
-                                catch (err)
-                                {
-                                    window.Asc.plugin.translateManager = {};
-                                }
-                            }
-                            else
-                            {
-                                window.Asc.plugin.translateManager = {};
-                            }
+								try
+								{
+									var arr = JSON.parse(_client.responseText);
+									var fullName, shortName;
+									for (var i = 0; i < arr.length; i++)
+									{
+										var file = arr[i];
+										if (file == g_language) 
+										{
+											fullName = file;
+											break;
+										} 
+										else if (file.split('-')[0] == g_language.split('-')[0])
+										{
+											shortName = file;
+										}
+									}
 
-
-                            if (window.Asc.plugin.onTranslate)
-                                window.Asc.plugin.onTranslate();
+									if (fullName || shortName)
+									{
+										pluginGetTranslateFile( (fullName || shortName) );
+									}
+									else
+									{
+										pluginInitTranslateManager();
+									}
+								}
+								catch (error)
+								{
+									pluginGetTranslateFile(g_language);
+								}
+							}
+							else if (_client.status == 404)
+							{
+								pluginGetTranslateFile(g_language);
+							}
+							else
+							{
+								pluginInitTranslateManager();
+							}
 						}
 					};
 					_client.send();
@@ -721,6 +742,39 @@
             }
         }
     };
+
+	function pluginGetTranslateFile (fileName) {
+		var _client = new XMLHttpRequest();
+		_client.open("GET", "./translations/" + fileName + ".json");
+		_client.onreadystatechange = function ()
+		{
+			if (_client.readyState == 4)
+			{
+				if (_client.status == 200 || location.href.indexOf("file:") == 0)
+				{
+					try
+					{
+						pluginInitTranslateManager( JSON.parse(_client.responseText) );
+					}
+					catch (err)
+					{
+						pluginInitTranslateManager();
+					}
+				}
+
+				if (_client.status == 404)
+					pluginInitTranslateManager();
+			}
+		};
+		_client.send();
+	}
+
+	function pluginInitTranslateManager (data)
+	{
+		window.Asc.plugin.translateManager = data || {};
+		if (window.Asc.plugin.onTranslate)
+			window.Asc.plugin.onTranslate();
+	}
 
     function pluginStart()
     {
