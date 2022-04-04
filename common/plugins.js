@@ -1046,7 +1046,7 @@
 						window.g_asc_plugins.api._beforeEvalCommand();
 
 						AscFonts.IsCheckSymbols = true;
-						var _script = "(function(Api, window, alert, document){\r\n" + "\"use strict\"" + ";\r\n" + value + "\n})(window.g_asc_plugins.api, {}, function(){}, {});";
+						var _script = "(function(Api, window, alert, document){\r\n" + "\"use strict\"" + ";\r\n" + value.replace(/\\/g, "\\\\") + "\n})(window.g_asc_plugins.api, {}, function(){}, {});";
 						try
 						{
 							eval(_script);
