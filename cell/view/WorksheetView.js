@@ -6587,6 +6587,7 @@
         function makeFnIsGoodNumFormat(flags, width, isWidth) {
             return function (str) {
 				var widthStr;
+				var widthWithoutZoom = null;
 				if (isWidth && self.workbook.printPreviewState && self.workbook.printPreviewState.isStart()) {
 					//заглушка для печати
 					//попробовать перейти на все расчёты как при 100%(потом * zoom)
@@ -6594,7 +6595,7 @@
 					//получаем ширину колонки как при 100% и длину строки как при 100%, чтобы не было разницы
 					var _scale = self.getZoom()*AscCommon.AscBrowser.retinaPixelRatio;
 					var _innerDiff = self.settings.cells.padding * 2 + gridlineSize;
-					width = Math.ceil((width + _innerDiff - _innerDiff*_scale)/_scale);
+					widthWithoutZoom = Math.ceil((width + _innerDiff - _innerDiff*_scale)/_scale);
 					var realPpiX = self.stringRender.drawingCtx.ppiX;
 					var realPpiY = self.stringRender.drawingCtx.ppiY;
 					var realScaleFactor = self.stringRender.drawingCtx.scaleFactor;
@@ -6612,7 +6613,7 @@
 				} else {
 					widthStr = self.stringRender.measureString(str, flags, width).width;
 				}
-				return widthStr <= width;
+				return widthStr <= (widthWithoutZoom !== null ? widthWithoutZoom : width);
             };
         }
 
