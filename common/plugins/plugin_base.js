@@ -606,7 +606,7 @@
 				else
 				{
 					var _client = new XMLHttpRequest();
-					_client.open("GET", "./translations/files.json");
+					_client.open("GET", "./translations/langs.json");
 
 					_client.onreadystatechange = function ()
 					{
