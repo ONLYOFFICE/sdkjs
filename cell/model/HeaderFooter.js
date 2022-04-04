@@ -778,7 +778,7 @@
 
 	var correctCanvasDiff = 0;
 	window.Asc.g_header_footer_editor = null;
-	function CHeaderFooterEditor(idArr, width, pageType) {
+	function CHeaderFooterEditor(idArr, width, pageType, opt_objForSave) {
 		window.Asc.g_header_footer_editor = this;
 
 		this.parentWidth = AscCommon.AscBrowser.convertToRetinaValue(this.correctCanvasWidth(width), true);
@@ -804,10 +804,10 @@
 		this.differentOddEven = null;
 		this.scaleWithDoc = null;
 
-		this.init(idArr);
+		this.init(idArr, opt_objForSave);
 	}
 
-	CHeaderFooterEditor.prototype.init = function (idArr) {
+	CHeaderFooterEditor.prototype.init = function (idArr, opt_objForSave) {
 		//создаем 6 канвы(+ добавляем их в дом структуру внутрь элемента от меню) + 3 drawingCtx, необходимые для отрисовки 3 поля
 		//делается это только 1 раз при инициализации класса
 		//потом эти 6 канвы используются для отрисовки всех first/odd/even
@@ -849,17 +849,17 @@
 
 		//add common options
 		var ws = this.wb.getWorksheet();
-		this.alignWithMargins = ws.model.headerFooter.alignWithMargins;
-		this.differentFirst = ws.model.headerFooter.differentFirst;
-		this.differentOddEven = ws.model.headerFooter.differentOddEven;
-		this.scaleWithDoc = ws.model.headerFooter.scaleWithDoc;
+		this.alignWithMargins = opt_objForSave ? opt_objForSave.alignWithMargins : ws.model.headerFooter.alignWithMargins;
+		this.differentFirst = opt_objForSave ? opt_objForSave.differentFirst : ws.model.headerFooter.differentFirst;
+		this.differentOddEven = opt_objForSave ? opt_objForSave.differentOddEven : ws.model.headerFooter.differentOddEven;
+		this.scaleWithDoc = opt_objForSave ? opt_objForSave.scaleWithDoc : ws.model.headerFooter.scaleWithDoc;
 
 		//сохраняем редактор ячейки
 		this.wbCellEditor = this.wb.cellEditor;
 
 		//далее создаем классы, где будем хранить fragments всех типов колонтитулов + выполнять отрисовку
 		//хранить будем в следующем виде: [c_nPageHFType.firstHeader/.../][c_nPortionLeft/.../c_nPortionRight]
-		this._createAndDrawSections();
+		this._createAndDrawSections(opt_objForSave);
 		this._generatePresetsArr();
 
 		//лочим
@@ -1047,7 +1047,7 @@
 		return true;
 	};
 
-	CHeaderFooterEditor.prototype.destroy = function (bSave) {
+	CHeaderFooterEditor.prototype.destroy = function (bSave, opt_objForSave) {
 		//возвращаем cellEditor у wb
 		var t = this;
 		var api = window["Asc"]["editor"];
@@ -1066,7 +1066,11 @@
 					}
 					t._saveToModel();
 				};
-				ws._isLockedHeaderFooter(saveCallback);
+				if (opt_objForSave) {
+					opt_objForSave.headerFooter = this.getPropsToInterface();
+				} else {
+					ws._isLockedHeaderFooter(saveCallback);
+				}
 			} else {
 				return checkError;
 			}
@@ -1154,8 +1158,31 @@
 		return null;
 	};
 
-	CHeaderFooterEditor.prototype._saveToModel = function () {
-		var ws = this.wb.getWorksheet();
+	CHeaderFooterEditor.prototype.setPropsFromInterface = function (props) {
+		this.sections = props.sections;
+
+		this.alignWithMargins = props.alignWithMargins;
+		this.differentFirst = props.differentFirst;
+		this.differentOddEven = props.differentOddEven;
+		this.scaleWithDoc = props.scaleWithDoc;
+	};
+
+	CHeaderFooterEditor.prototype.getPropsToInterface = function () {
+		var res = {};
+		res.sections = this.sections;
+
+		res.alignWithMargins = this.alignWithMargins;
+		res.differentFirst = this.differentFirst;
+		res.differentOddEven = this.differentOddEven;
+		res.scaleWithDoc = this.scaleWithDoc;
+
+		return res;
+	};
+
+	CHeaderFooterEditor.prototype._saveToModel = function (ws) {
+		if (!ws) {
+			ws = this.wb.getWorksheet();
+		}
 
 		var isAddHistory = false;
 		for(var i = 0; i < this.sections.length; i++) {
@@ -1448,7 +1475,7 @@
 		return true === this.scaleWithDoc || null === this.scaleWithDoc;
 	};
 
-	CHeaderFooterEditor.prototype._createAndDrawSections = function(pageCommonType) {
+	CHeaderFooterEditor.prototype._createAndDrawSections = function(pageCommonType, opt_objForSave) {
 		var pageHeaderType = this._getHeaderFooterType(pageCommonType);
 		var pageFooterType = this._getHeaderFooterType(pageCommonType, true);
 
@@ -1470,9 +1497,13 @@
 			return res;
 		};
 
+		if (opt_objForSave) {
+			this.sections = opt_objForSave.sections;
+		}
+
 		//header
 		var curPageHF, parser, leftFragments, centerFragments, rightFragments;
-		if(!this.sections[pageHeaderType]) {
+		if(!this.sections[pageHeaderType] && !opt_objForSave) {
 			this.sections[pageHeaderType] = [];
 
 			//создаём секции, если они уже не созданы
@@ -1503,7 +1534,7 @@
 		}
 
 		//footer
-		if(!this.sections[pageFooterType]) {
+		if(!this.sections[pageFooterType] && !opt_objForSave) {
 			this.sections[pageFooterType] = [];
 
 			//создаём секции, если они уже не созданы

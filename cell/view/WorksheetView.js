@@ -14262,6 +14262,12 @@
 		this.collaborativeEditing.lock([lockInfo], callback);
 	};
 
+	WorksheetView.prototype.getHeaderFooterLockInfo = function () {
+		var lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Object, null, this.model.getId(),
+			AscCommonExcel.c_oAscHeaderFooterEdit);
+		return lockInfo;
+	};
+
 	WorksheetView.prototype._isLockedLayoutOptions = function (callback) {
 		var lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Object, null, this.model.getId(),
 			AscCommonExcel.c_oAscLockLayoutOptions);
@@ -19512,6 +19518,13 @@
 
 		pageOptions.asc_setOptions(obj);
 		this._changePrintTitles(obj.printTitlesWidth, obj.printTitlesHeight);
+
+		//может прийти только из превью
+		if (obj.headerFooter) {
+			var tempEditor = new AscCommonExcel.CHeaderFooterEditor();
+			tempEditor.setPropsFromInterface(obj.headerFooter);
+			tempEditor._saveToModel(this);
+		}
 
 		this.recalcPrintScale();
 		this.changeViewPrintLines(true);

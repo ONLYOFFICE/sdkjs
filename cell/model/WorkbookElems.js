@@ -10932,6 +10932,9 @@ QueryTableField.prototype.clone = function() {
 		this.printTitlesWidth = null;
 		this.printTitlesHeight = null;
 
+		//для превью передаём из интерфейса
+		this.headerFooter = null;
+
 		return this;
 	}
 	asc_CPageOptions.prototype.init = function () {
@@ -11036,6 +11039,12 @@ QueryTableField.prototype.clone = function() {
 	};
 	asc_CPageOptions.prototype.asc_getPrintTitlesHeight = function () {
 		return this.printTitlesHeight;
+	};
+	asc_CPageOptions.prototype.asc_getHeaderFooter = function () {
+		return this.headerFooter;
+	};
+	asc_CPageOptions.prototype.asc_setHeaderFooter = function (val) {
+		this.headerFooter = val;
 	};
 
 
@@ -12181,6 +12190,8 @@ QueryTableField.prototype.clone = function() {
 	prot["asc_setPrintTitlesHeight"] = prot.asc_setPrintTitlesHeight;
 	prot["asc_getPrintTitlesWidth"] = prot.asc_getPrintTitlesWidth;
 	prot["asc_getPrintTitlesHeight"] = prot.asc_getPrintTitlesHeight;
+	prot["asc_getHeaderFooter"] = prot.asc_getHeaderFooter;
+	prot["asc_setHeaderFooter"] = prot.asc_setHeaderFooter;
 
 	window["Asc"]["CHeaderFooter"] = window["Asc"].CHeaderFooter = CHeaderFooter;
 	window["Asc"]["CHeaderFooterData"] = window["Asc"].CHeaderFooterData = CHeaderFooterData;
