@@ -220,6 +220,10 @@ ParaDrawing.prototype.Get_Width = function()
 {
 	return this.Width;
 };
+ParaDrawing.prototype.Get_Height = function()
+{
+	return this.Width;
+};
 ParaDrawing.prototype.Get_WidthVisible = function()
 {
 	return this.WidthVisible;

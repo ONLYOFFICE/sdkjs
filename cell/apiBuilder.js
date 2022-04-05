@@ -2885,6 +2885,26 @@
 		this.Drawing.setDrawingBaseCoords(nFromCol, nColOffset/36000.0, nFromRow, nRowOffset/36000.0, 0, 0, 0, 0, 0, 0, extX, extY);
 	};
 
+	/**
+	 * Gets the width of drawing. 
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @returns {EMU}
+	 */
+	ApiDrawing.prototype.GetWidth = function()
+	{
+		return private_MM2EMU(this.Drawing.GetWidth());
+	};
+	/**
+	 * Gets the height of drawing. 
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @returns {EMU}
+	 */
+	ApiDrawing.prototype.GetHeight = function()
+	{
+		return private_MM2EMU(this.Drawing.GetHeight());
+	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -3607,6 +3627,8 @@
 	ApiDrawing.prototype["GetClassType"]               =  ApiDrawing.prototype.GetClassType;
 	ApiDrawing.prototype["SetSize"]                    =  ApiDrawing.prototype.SetSize;
 	ApiDrawing.prototype["SetPosition"]                =  ApiDrawing.prototype.SetPosition;
+	ApiDrawing.prototype["GetWidth"]                   =  ApiDrawing.prototype.GetWidth;
+	ApiDrawing.prototype["GetHeight"]                  =  ApiDrawing.prototype.GetHeight;
 
 	ApiImage.prototype["GetClassType"]                 =  ApiImage.prototype.GetClassType;
 
@@ -3752,4 +3774,8 @@
 		return true;
 	}
 
+	function private_MM2EMU(mm)
+	{
+		return mm * 36000.0;
+	}
 }(window, null));

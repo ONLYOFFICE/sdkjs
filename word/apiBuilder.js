@@ -12171,6 +12171,26 @@
 		return null;
 	};
 
+	/**
+	 * Gets the width of drawing. 
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @returns {EMU}
+	 */
+	ApiDrawing.prototype.GetWidth = function()
+	{
+		return private_MM2EMU(this.Drawing.Get_Width());
+	};
+	/**
+	 * Gets the height of drawing. 
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @returns {EMU}
+	 */
+	ApiDrawing.prototype.GetHeight = function()
+	{
+		return private_MM2EMU(this.Drawing.Get_Height());
+	};
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -15621,6 +15641,8 @@
 	ApiDrawing.prototype["SetOutLine"]               = ApiDrawing.prototype.SetOutLine;
 	ApiDrawing.prototype["GetNextDrawing"]           = ApiDrawing.prototype.GetNextDrawing;
 	ApiDrawing.prototype["GetPrevDrawing"]           = ApiDrawing.prototype.GetPrevDrawing;
+	ApiDrawing.prototype["GetWidth"]                 = ApiDrawing.prototype.GetWidth;
+	ApiDrawing.prototype["GetHeight"]                = ApiDrawing.prototype.GetHeight;
 
 	ApiImage.prototype["GetClassType"]               = ApiImage.prototype.GetClassType;
 	ApiImage.prototype["GetNextImage"]               = ApiImage.prototype.GetNextImage;
@@ -15827,6 +15849,10 @@
 	function private_EMU2MM(EMU)
 	{
 		return EMU / 36000.0;
+	}
+	function private_MM2EMU(mm)
+	{
+		return mm * 36000.0;
 	}
 
 	function private_GetHps(hps)
