@@ -1216,6 +1216,9 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_drawPrintPreview = function (index) {
+		if (index == null) {
+			index = this.wb.printPreviewState.activePage;
+		}
 		this.wb.printPreviewState.setPage(index, true);
 		this.wb.printSheetPrintPreview(index);
 		var curPage = this.wb.printPreviewState.getPage(index);

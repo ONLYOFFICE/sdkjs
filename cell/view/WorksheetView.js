@@ -3203,6 +3203,8 @@
             return this;
         }
 		if (this.workbook.printPreviewState && this.workbook.printPreviewState.isStart()) {
+			//только перерисовываю, каждый раз пересчёт - может потребовать много ресурсов
+			window["Asc"]["editor"].asc_drawPrintPreview();
 			return;
 		}
         this._recalculate();
