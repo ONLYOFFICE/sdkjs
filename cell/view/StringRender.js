@@ -810,6 +810,9 @@
 			while (charProp.total * w + width + w <= maxWidth) {
 				insertRepeatChars();
 				charProp.total += 1;
+				if (w === 0) {
+					break;
+				}
 			}
 
 			if (0 === charProp.total)
