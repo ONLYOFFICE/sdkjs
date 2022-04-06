@@ -13232,7 +13232,7 @@ function CorrectUniColor(asc_color, unicolor, flag)
         }
         return null;
     }
-    function builder_CreateChart(nW, nH, sType, aCatNames, aSeriesNames, aSeries, nStyleIndex){
+    function builder_CreateChart(nW, nH, sType, aCatNames, aSeriesNames, aSeries, nStyleIndex, aNumFormats){
         var settings = new Asc.asc_ChartSettings();
         settings.type = ChartBuilderTypeToInternal(sType);
         var aAscSeries = [];
@@ -13252,6 +13252,10 @@ function CorrectUniColor(asc_color, unicolor, flag)
             var oAscSeries = new AscFormat.asc_CChartSeria();
             oAscSeries.Val.NumCache = [];
             var aData = aSeries[i];
+            
+            if (Array.isArray(aNumFormats) && typeof(aNumFormats[i]) === "string")
+                oAscSeries.FormatCode = aNumFormats[i];
+
             var sEndLiter = AscFormat.CalcLiterByLength(aAlphaBet, aData.length);
             oAscSeries.Val.Formula = 'Sheet1!' + '$B$' + (i + 2) + ':$' + sEndLiter + '$' + (i + 2);
             if(aSeriesNames[i])
@@ -13266,8 +13270,9 @@ function CorrectUniColor(asc_color, unicolor, flag)
             for(var j = 0; j < aData.length; ++j)
             {
 
-                oAscSeries.Val.NumCache.push({ numFormatStr: "General", isDateTimeFormat: false, val: aData[j], isHidden: false });
+                oAscSeries.Val.NumCache.push({ numFormatStr: oAscSeries.FormatCode !== "" ? null : "General", isDateTimeFormat: false, val: aData[j], isHidden: false });
             }
+
             aAscSeries.push(oAscSeries);
         }
 
