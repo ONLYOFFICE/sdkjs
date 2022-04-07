@@ -211,7 +211,7 @@
 	 * */
 
 	/**
-     * Text transform preset
+     * Text transform type.
 	 * @typedef {("textArchDown" | "textArchDownPour" | "textArchUp" | "textArchUpPour" | "textButton" | "textButtonPour" | "textCanDown"
 	 * | "textCanUp" | "textCascadeDown" | "textCascadeUp" | "textChevron" | "textChevronInverted" | "textCircle" | "textCirclePour"
 	 * | "textCurveDown" | "textCurveUp" | "textDeflate" | "textDeflateBottom" | "textDeflateInflate" | "textDeflateInflateDeflate" | "textDeflateTop"
@@ -221,12 +221,20 @@
 	 * */
 
 	/**
-	 * Axie position in chart.
-	 * @typedef {("top" | "bottom" | "right" | "left")} AxiePos
+	 * Axis position in the chart.
+	 * @typedef {("top" | "bottom" | "right" | "left")} AxisPos
 	 */
 
 	/**
-	 * Class representing a base class for color types.
+	 * Standard numeric format.
+	 * @typedef {("General" | "0" | "0.00" | "#,##0" | "#,##0.00" | "0%" | "0.00%" |
+	 * "0.00E+00" | "# ?/?" | "# ??/??" | "m/d/yyyy" | "d-mmm-yy" | "d-mmm" | "mmm-yy" | "h:mm AM/PM" |
+	 * | "h:mm:ss AM/PM" | "h:mm" | "h:mm:ss" | "m/d/yyyy h:mm" | "#,##0_);(#,##0)" | "#,##0_);[Red](#,##0)" | 
+	 * "#,##0.00_);(#,##0.00)" | "#,##0.00_);[Red](#,##0.00)" | "mm:ss" | "[h]:mm:ss" | "mm:ss.0" | "##0.0E+0" | "@")} NumFormat
+	 */
+
+	/**
+	 * Class representing a base class for the color types.
 	 * @constructor
 	 */
 	function ApiColor(color) {
@@ -554,7 +562,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nSheet - The sheet index.
-	 * @param {boolean} [bWithFormat=false] - indicates that data will be received with the format.
+	 * @param {boolean} [bWithFormat=false] - Specifies if the data will be received with the format.
 	 * @returns {string[][]}
 	 */
 	Api.prototype.private_GetMailMergeMap = function (nSheet, bWithFormat) {
@@ -608,7 +616,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nSheet - The sheet index.
-	 * @param {boolean} [bWithFormat=false] - indicates that data will be received with the format.
+	 * @param {boolean} [bWithFormat=false] - Specifies if the data will be received with the format.
 	 * @returns {string[][]}
 	 */
 	Api.prototype.GetMailMergeData = function(nSheet, bWithFormat) {
@@ -1442,21 +1450,21 @@
 	};
 
 	/**
-	 * Adds an word art to the current sheet with the parameters specified.
+	 * Adds a Text Art object to the current sheet with the parameters specified.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiTextPr} [oTextPr=Api.CreateTextPr()] - The text properties.
-	 * @param {string} [sText="Your text here"] - text for text art.
+	 * @param {string} [sText="Your text here"] - The text for the Text Art object.
 	 * @param {TextTransofrm} [sTransform="textNoShape"] - Text transform type.
-	 * @param {ApiFill} [oFill=Api.CreateNoFill()] - The color or pattern used to fill the shape.
-	 * @param {ApiStroke} [oStroke=Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the shape shadow.
-	 * @param {number} [nRotAngle=0] - Rotation angle
-	 * @param {EMU} [nWidth=1828800] - Word atr width
-	 * @param {EMU} [nHeight=1828800] - Word atr heigth
-	 * @param {number} [nFromCol=0] - The number of the column where the beginning of the shape will be placed.
-	 * @param {number} [nFromRow=0] - The number of the row where the beginning of the shape will be placed.
-     * @param {EMU} [nColOffset=0] - The offset from the nFromCol column to the left part of the shape measured in English measure units.
-	 * @param {EMU} [nRowOffset=0] - The offset from the nFromRow row to the upper part of the shape measured in English measure units.
+	 * @param {ApiFill} [oFill=Api.CreateNoFill()] - The color or pattern used to fill the Text Art object.
+	 * @param {ApiStroke} [oStroke=Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the Text Art object shadow.
+	 * @param {number} [nRotAngle=0] - Rotation angle.
+	 * @param {EMU} [nWidth=1828800] - Text Art width measured in English measure units.
+	 * @param {EMU} [nHeight=1828800] - Text Art heigth measured in English measure units.
+	 * @param {number} [nFromCol=0] - The column number where the beginning of the Text Art object will be placed.
+	 * @param {number} [nFromRow=0] - The row number where the beginning of the Text Art object will be placed.
+     * @param {EMU} [nColOffset=0] - The offset from the nFromCol column to the left part of the Text Art object measured in English measure units.
+	 * @param {EMU} [nRowOffset=0] - The offset from the nFromRow row to the upper part of the Text Art object measured in English measure units.
 	 * @returns {ApiDrawing}
 	 */
 	ApiWorksheet.prototype.AddWordArt = function(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight, nFromCol, nFromRow, nColOffset, nRowOffset) {
@@ -3065,7 +3073,7 @@
 	};
 
 	/**
-	 * Gets the width of drawing. 
+	 * Returns the width of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE, CPE, CSE"]
 	 * @returns {EMU}
@@ -3075,7 +3083,7 @@
 		return private_MM2EMU(this.Drawing.GetWidth());
 	};
 	/**
-	 * Gets the height of drawing. 
+	 * Returns the height of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE, CPE, CSE"]
 	 * @returns {EMU}
@@ -3085,10 +3093,10 @@
 		return private_MM2EMU(this.Drawing.GetHeight());
 	};
 	/**
-     * Gets the lock type of drawing.
+     * Returns the lock value for the specified lock type of the current drawing.
      * @typeofeditors ["CPE"]
 	 * @param {"noGrp" | "noUngrp" | "noSelect" | "noRot" | "noChangeAspect" | "noMove" | "noResize" | "noEditPoints" | "noAdjustHandles"
-	 * 	| "noChangeArrowheads" | "noChangeShapeType" | "noDrilldown" | "noTextEdit" | "noCrop" | "txBox"} sType - lock typeof string format
+	 * 	| "noChangeArrowheads" | "noChangeShapeType" | "noDrilldown" | "noTextEdit" | "noCrop" | "txBox"} sType - Lock type in the string format.
      * @returns {bool}
      */
 	ApiDrawing.prototype.GetLockValue = function(sType)
@@ -3105,11 +3113,11 @@
 	};
 
 	/**
-     * Sets the lock type of drawing.
+     * Sets the lock value to the specified lock type of the current drawing.
      * @typeofeditors ["CPE"]
 	 * @param {"noGrp" | "noUngrp" | "noSelect" | "noRot" | "noChangeAspect" | "noMove" | "noResize" | "noEditPoints" | "noAdjustHandles"
-	 * 	| "noChangeArrowheads" | "noChangeShapeType" | "noDrilldown" | "noTextEdit" | "noCrop" | "txBox"} sType - lock type in string format
-     * @param {bool} bValue - determines the value for the specified lock
+	 * 	| "noChangeArrowheads" | "noChangeShapeType" | "noDrilldown" | "noTextEdit" | "noCrop" | "txBox"} sType - Lock type in the string format.
+     * @param {bool} bValue - Specifies if the specified lock is applied to the current drawing.
 	 * @returns {bool}
      */
 	ApiDrawing.prototype.SetLockValue = function(sType, bValue)
@@ -3817,12 +3825,11 @@
 	};
 
 	/**
-	 * Sets number format to value axie.
-	 * Used for values axies.
+	 * Sets the specified numeric format to the axis values.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {NumFormat | String} sFormat - number format (can be custom format).
-	 * @param {AxiePos} - axie position.
+	 * @param {NumFormat | String} sFormat - Numeric format (can be custom format).
+	 * @param {AxisPos} - Axis position.
 	 * @returns {boolean}
 	 */
 	ApiChart.prototype.SetAxieNumFormat = function(sFormat, sAxiePos)

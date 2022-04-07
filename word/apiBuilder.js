@@ -3578,7 +3578,7 @@
 	 */
 
 	/**
-     * Text transform preset
+     * Text transform type.
 	 * @typedef {("textArchDown" | "textArchDownPour" | "textArchUp" | "textArchUpPour" | "textButton" | "textButtonPour" | "textCanDown"
 	 * | "textCanUp" | "textCascadeDown" | "textCascadeUp" | "textChevron" | "textChevronInverted" | "textCircle" | "textCirclePour"
 	 * | "textCurveDown" | "textCurveUp" | "textDeflate" | "textDeflateBottom" | "textDeflateInflate" | "textDeflateInflateDeflate" | "textDeflateTop"
@@ -3588,7 +3588,7 @@
 	 * */
 
 	/**
-	 *
+	 * Form type.
 	 * @typedef {"textForm" | "comboBoxForm" | "dropDownForm" | "checkBoxForm" | "radioButtonForm" | "pictureForm"} FormType
 	 */
 
@@ -3687,12 +3687,12 @@
 	//------------------------------------------------------End Cross-reference types--------------------------------------------------
 
 	/**
-	 * Axie position in chart.
-	 * @typedef {("top" | "bottom" | "right" | "left")} AxiePos
+	 * Axis position in the chart.
+	 * @typedef {("top" | "bottom" | "right" | "left")} AxisPos
 	 */
 
 	/**
-	 * Standart num format.
+	 * Standard numeric format.
 	 * @typedef {("General" | "0" | "0.00" | "#,##0" | "#,##0.00" | "0%" | "0.00%" |
 	 * "0.00E+00" | "# ?/?" | "# ??/??" | "m/d/yyyy" | "d-mmm-yy" | "d-mmm" | "mmm-yy" | "h:mm AM/PM" |
 	 * | "h:mm:ss AM/PM" | "h:mm" | "h:mm:ss" | "m/d/yyyy h:mm" | "#,##0_);(#,##0)" | "#,##0_);[Red](#,##0)" | 
@@ -3711,6 +3711,7 @@
 	 * */
 
 	/**
+	 * The type of tick mark appearance.
 	 * @typedef {("cross" | "in" | "none" | "out")} TickMark
 	 * */
 
@@ -3882,8 +3883,8 @@
 	 * @param {EMU} nWidth - The chart width in English measure units.
 	 * @param {EMU} nHeight - The chart height in English measure units.
 	 * @param {number} nStyleIndex - The chart color style index (can be 1 - 48, as described in OOXML specification).
-	 * @param {NumFormat[] | String[]} aNumFormats - number formats wich will be applied to series (can be custom formats).
-     * Sets "General" number format by default.
+	 * @param {NumFormat[] | String[]} aNumFormats - Numeric formats which will be applied to the series (can be custom formats).
+     * The default numeric format is "General".
 	 * @returns {ApiChart}
 	 * */
 	Api.prototype.CreateChart = function(sType, aSeries, aSeriesNames, aCatNames, nWidth, nHeight, nStyleIndex, aNumFormats)
@@ -5991,11 +5992,11 @@
 	};
 
 	/**
-	 * Replaces the drawing by a new drawing.
+	 * Replaces a drawing with a new drawing.
 	 * @memberof ApiDocument
-	 * @param {ApiDrawing} oOldDrawing - a drawing which will be replaced.
-	 * @param {ApiDrawing} oNewDrawing - a drawing to replace the old drawing.
-	 * @param {boolean} [bSaveOldDrawingPr=false] - specified that the old drawing settings should be saved.
+	 * @param {ApiDrawing} oOldDrawing - A drawing which will be replaced.
+	 * @param {ApiDrawing} oNewDrawing - A drawing to replace the old drawing.
+	 * @param {boolean} [bSaveOldDrawingPr=false] - Specifies if the old drawing settings will be saved.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -12847,7 +12848,7 @@
 	};
 
 	/**
-	 * Gets the width of drawing. 
+	 * Returns the width of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE, CPE, CSE"]
 	 * @returns {EMU}
@@ -12857,7 +12858,7 @@
 		return private_MM2EMU(this.Drawing.Get_Width());
 	};
 	/**
-	 * Gets the height of drawing. 
+	 * Returns the height of the current drawing.
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE, CPE, CSE"]
 	 * @returns {EMU}
@@ -12867,10 +12868,10 @@
 		return private_MM2EMU(this.Drawing.Get_Height());
 	};
 	/**
-     * Gets the lock type of drawing.
+     * Returns the lock value for the specified lock type of the current drawing.
      * @typeofeditors ["CPE"]
 	 * @param {"noGrp" | "noUngrp" | "noSelect" | "noRot" | "noChangeAspect" | "noMove" | "noResize" | "noEditPoints" | "noAdjustHandles"
-	 * 	| "noChangeArrowheads" | "noChangeShapeType" | "noDrilldown" | "noTextEdit" | "noCrop" | "txBox"} sType - lock type in string format
+	 * 	| "noChangeArrowheads" | "noChangeShapeType" | "noDrilldown" | "noTextEdit" | "noCrop" | "txBox"} sType - Lock type in the string format.
      * @returns {bool}
      */
 	ApiDrawing.prototype.GetLockValue = function(sType)
@@ -12887,11 +12888,11 @@
 	};
 
 	/**
-     * Sets the lock type of drawing.
+     * Sets the lock value to the specified lock type of the current drawing.
      * @typeofeditors ["CPE"]
 	 * @param {"noGrp" | "noUngrp" | "noSelect" | "noRot" | "noChangeAspect" | "noMove" | "noResize" | "noEditPoints" | "noAdjustHandles"
-	 * 	| "noChangeArrowheads" | "noChangeShapeType" | "noDrilldown" | "noTextEdit" | "noCrop" | "txBox"} sType - lock typeof string format
-     * @param {bool} bValue - determines the value for the specified lock
+	 * 	| "noChangeArrowheads" | "noChangeShapeType" | "noDrilldown" | "noTextEdit" | "noCrop" | "txBox"} sType - Lock type in the string format.
+     * @param {bool} bValue - Specifies if the specified lock is applied to the current drawing.
 	 * @returns {bool}
      */
 	ApiDrawing.prototype.SetLockValue = function(sType, bValue)
@@ -12911,10 +12912,10 @@
 	};
 
 	/**
-     * Sets drawing properties from another drawing.
-	 * Will be copied: PosH, PosV, Distance, WrappingStyle, drawing name, title and description.
+     * Sets the properties from another drawing to the current drawing.
+	 * The following properties will be copied: PosH, PosV, Distance, WrappingStyle, drawing name, title and description.
      * @memberof ApiDrawing
-     * @param {ApiDrawing} oAnotherDrawing - drawing wich properties will be set to current drawing.
+     * @param {ApiDrawing} oAnotherDrawing - Drawing whose properties will be set to the current drawing.
      * @typeofeditors ["CDE"]
      * @returns {boolean}
      */
@@ -13815,12 +13816,11 @@
 	};
 
 	/**
-	 * Sets number format to value axie.
-	 * Used for values axies.
+	 * Sets the specified numeric format to the axis values.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
-	 * @param {NumFormat | String} sFormat - number format (can be custom format).
-	 * @param {AxiePos} - axie position.
+	 * @param {NumFormat | String} sFormat - Numeric format (can be custom format).
+	 * @param {AxisPos} - Axis position in the chart.
 	 * @returns {boolean}
 	 */
 	ApiChart.prototype.SetAxieNumFormat = function(sFormat, sAxiePos)
@@ -13848,11 +13848,11 @@
 	};
  
 	/**
-	 * Sets number format to seria.
+	 * Sets the specified numeric format to the chart series.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE, "CPE"]
-	 * @param {NumFormat | String} sFormat - number format (can be custom format).
-	 * @param {Number} nSeria - seria index.
+	 * @param {NumFormat | String} sFormat - Numeric format (can be custom format).
+	 * @param {Number} nSeria - Series index.
 	 * @returns {boolean}
 	 */
 	ApiChart.prototype.SetSeriaNumFormat = function(sFormat, nSeria)
@@ -13861,13 +13861,13 @@
 	};
 
 	/**
-	 * Sets number format to value axie.
+	 * Sets the specified numeric format to the chart data point.
 	 * @memberof ApiChart
 	 * @typeofeditors ["CDE, "CPE"]
-	 * @param {NumFormat | String} sFormat - number format (can be custom format).
-	 * @param {Number} nSeria - seria index.
-	 * @param {number} nDataPoint - The index of the data point in the specified series in chart.
-	 * @param {boolean} bAllSeries - whether to apply to specified datapoint in all series.
+	 * @param {NumFormat | String} sFormat - Numeric format (can be custom format).
+	 * @param {Number} nSeria - Series index.
+	 * @param {number} nDataPoint - The index of the data point in the specified chart series.
+	 * @param {boolean} bAllSeries - Specifies if the numeric format will be applied to the specified data point in all series.
 	 * @returns {boolean}
 	 */
 	ApiChart.prototype.SetDataPointNumFormat = function(sFormat, nSeria, nDataPoint, bAllSeries)
@@ -16336,17 +16336,17 @@
 	};
 
 	/**
-	 * Creates a word art with the parameters specified.
+	 * Creates a Text Art object with the parameters specified.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiTextPr} [oTextPr=Api.CreateTextPr()] - The text properties.
-	 * @param {string} [sText="Your text here"] - text for text art.
+	 * @param {string} [sText="Your text here"] - The text for the Text Art object.
 	 * @param {TextTransofrm} [sTransform="textNoShape"] - Text transform type.
-	 * @param {ApiFill}   [oFill=Api.CreateNoFill()] - The color or pattern used to fill the shape.
-	 * @param {ApiStroke} [oStroke=Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the shape shadow.
-	 * @param {number} [nRotAngle=0] - rotation angle
-	 * @param {EMU} [nWidth=1828800] - word atr width
-	 * @param {EMU} [nHeight=1828800] - word atr heigth
+	 * @param {ApiFill}   [oFill=Api.CreateNoFill()] - The color or pattern used to fill the Text Art object.
+	 * @param {ApiStroke} [oStroke=Api.CreateStroke(0, Api.CreateNoFill())] - The stroke used to create the Text Art object shadow.
+	 * @param {number} [nRotAngle=0] - Rotation angle.
+	 * @param {EMU} [nWidth=1828800] - Text Art width measured in English measure units.
+	 * @param {EMU} [nHeight=1828800] - Text Art heigth measured in English measure units.
 	 * @returns {ApiDrawing}
 	 */
 	Api.prototype.CreateWordArt = function(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight) {
