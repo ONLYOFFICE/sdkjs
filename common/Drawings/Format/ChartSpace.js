@@ -8034,8 +8034,11 @@ var GLOBAL_PATH_COUNT = 0;
             }
         }
     };
+    CChartSpace.prototype.createImage = function () {
+        return this.drawingBase.createImage();
+    }
     CChartSpace.prototype.checkDrawingCache = function(graphics) {
-        if(window["NATIVE_EDITOR_ENJINE"] || graphics.RENDERER_PDF_FLAG || this.isSparkline || this.bPreview) {
+        if(window["NATIVE_EDITOR_ENJINE"] || graphics.RENDERER_PDF_FLAG || this.isSparkline || this.bPreview || graphics.PrintPreview) {
             return false;
         }
         if(graphics.IsSlideBoundsCheckerType) {
@@ -9111,8 +9114,8 @@ var GLOBAL_PATH_COUNT = 0;
                 continue;
 
             var pts = oSeries.getNumPts();
-            if (nDataPoint >= pts.length)
-                return false;
+            if (nDataPoint >= pts.length || nDataPoint < 0)
+                continue;
 
             oDataPoint = oSeries.dPt[nDataPoint];
             if(!oDataPoint)
@@ -9149,8 +9152,8 @@ var GLOBAL_PATH_COUNT = 0;
                 continue;
 
             var pts = oSeries.getNumPts();
-            if (nDataPoint >= pts.length)
-                return false;
+            if (nDataPoint >= pts.length || nDataPoint < 0)
+                continue;
 
             oDataPoint = oSeries.dPt[nDataPoint];
             if(!oDataPoint)
@@ -9414,6 +9417,89 @@ var GLOBAL_PATH_COUNT = 0;
 
 		return false;
 	};
+    
+    CChartSpace.prototype.SetAxieNumFormat = function(sNumFormat, nAxiePos)
+	{
+        if (this.chart.plotArea.axId)
+        {
+            var oAxie;
+            for (var nAxie = 0; nAxie < this.chart.plotArea.axId.length; nAxie++)
+            {
+                oAxie = this.chart.plotArea.axId[nAxie];
+                if (oAxie instanceof AscFormat.CValAx && oAxie.axPos === nAxiePos)
+                {
+                    oAxie.numFmt.setFormatCode(sNumFormat);
+                    if (sNumFormat !== "General")
+                        oAxie.numFmt.setSourceLinked(false);
+                    else
+                        oAxie.numFmt.setSourceLinked(true);
+
+                    return true;
+                }
+            }
+
+        }
+        return false;
+	};
+
+    CChartSpace.prototype.SetSeriaNumFormat = function(sNumFormat, nSeria)
+	{
+        if (Asc.editor && Asc.editor.editorId === AscCommon.c_oEditorId.Spreadsheet)
+            return false;
+
+        var allSeries = this.getAllSeries();
+        var oSeria;
+
+		for (var nCurSeria = 0; nCurSeria < allSeries.length; nCurSeria++)
+		{
+            if (allSeries[nCurSeria].idx === nSeria)
+            {
+                oSeria = allSeries[nCurSeria];
+                break;
+            }
+		}
+
+        if (!oSeria || typeof(sNumFormat) !== "string")
+            return false;
+
+        var oNumLit = oSeria.getNumLit();
+        oNumLit.setFormatCode(sNumFormat);
+
+        for (var nPt = 0; nPt < oNumLit.pts.length; nPt++)
+            oNumLit.pts[nPt].setFormatCode(null);
+
+        return true;
+    };
+
+    CChartSpace.prototype.SetDataPointNumFormat = function(sFormat, nSeria, nDataPoint, bAllSeries)
+	{
+        if (Asc.editor && Asc.editor.editorId === AscCommon.c_oEditorId.Spreadsheet)
+            return false;
+
+        var allSeries = this.getAllSeries();
+		var oSeries, isOk;
+		for (var nCurSeries = 0; nCurSeries < allSeries.length; nCurSeries++)
+        {
+            oSeries = allSeries[nCurSeries];
+            if (!bAllSeries && oSeries.idx !== nSeria)
+                continue;
+
+            var pts = oSeries.getNumPts();
+            if (nDataPoint >= pts.length || nDataPoint < 0)
+                continue;
+
+            pts[nDataPoint].setFormatCode(sFormat);
+            isOk = true;
+
+            if (isOk && !bAllSeries)
+                return true;
+		}
+
+        if (isOk)
+		    return true;
+
+        return false;
+    };
     
     function CAdditionalStyleData() {
         this.dLbls = null;

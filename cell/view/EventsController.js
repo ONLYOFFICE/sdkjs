@@ -144,13 +144,17 @@
 		 */
 		asc_CEventsController.prototype.init = function (view, widgetElem, canvasElem, handlers) {
 			var self = this;
-
 			this.view     = view;
 			this.widget   = widgetElem;
 			this.element  = canvasElem;
 			this.handlers = new AscCommonExcel.asc_CHandlersList(handlers);
             this._createScrollBars();
-            if( this.view.Api.isMobileVersion ){
+
+			if(Asc.editor.isOleEditor) {
+				return;
+			}
+
+			if( this.view.Api.isMobileVersion ){
                 /*раньше события на ресайз вызывался из меню через контроллер. теперь контроллер в меню не доступен, для ресайза подписываемся на глобальный ресайз от window.*/
                 window.addEventListener("resize", function () {self._onWindowResize.apply(self, arguments);}, false);
                 return this;

@@ -6944,14 +6944,18 @@ function BinarySettingsTableWriter(memory, doc, saveParams)
 		this.bs.WriteItem(c_oSerCompat.CompatSetting, function() {oThis.WriteCompatSetting("overrideTableStyleFontSizeAndJustification", "http://schemas.microsoft.com/office/word", "1");});
 		this.bs.WriteItem(c_oSerCompat.CompatSetting, function() {oThis.WriteCompatSetting("enableOpenTypeFeatures", "http://schemas.microsoft.com/office/word", "1");});
 		this.bs.WriteItem(c_oSerCompat.CompatSetting, function() {oThis.WriteCompatSetting("doNotFlipMirrorIndents", "http://schemas.microsoft.com/office/word", "1");});
+		let oSettings = oThis.Document.GetDocumentSettings();
 		var flags1 = 0;
+		flags1 |= (oSettings.BalanceSingleByteDoubleByteWidth ? 1 : 0) << 6;
+		flags1 |= (oSettings.UlTrailSpace ? 1 : 0) << 9;
 		if (this.saveParams.isCompatible) {
-			flags1 |= (oThis.Document.IsDoNotExpandShiftReturn() ? 1 : 0) << 10;
+			flags1 |= (oSettings.DoNotExpandShiftReturn ? 1 : 0) << 10;
 		}
 		this.bs.WriteItem(c_oSerCompat.Flags1, function() {oThis.memory.WriteULong(flags1);});
 		var flags2 = 0;
+		flags2 |=  (oSettings.UseFELayout ? 1 : 0) << 17;
 		if (this.saveParams.isCompatible) {
-			flags2 |= (oThis.Document.IsSplitPageBreakAndParaMark() ? 1 : 0) << 27;
+			flags2 |= (oSettings.SplitPageBreakAndParaMark ? 1 : 0) << 27;
 		}
 		this.bs.WriteItem(c_oSerCompat.Flags2, function() {oThis.memory.WriteULong(flags2);});
 	};
@@ -7210,13 +7214,13 @@ function BinarySettingsTableWriter(memory, doc, saveParams)
 				oThis.memory.WriteByte(oDocProtect.edit);
 			});
 		}
-		if (oDocProtect.enforcment)
+		if (null !== oDocProtect.enforcment)
 		{
 			this.bs.WriteItem(c_oDocProtect.Enforcment, function () {
 				oThis.memory.WriteBool(oDocProtect.enforcment);
 			});
 		}
-		if (oDocProtect.formatting)
+		if (null !== oDocProtect.formatting)
 		{
 			this.bs.WriteItem(c_oDocProtect.Formatting, function () {
 				oThis.memory.WriteBool(oDocProtect.formatting);
@@ -8311,11 +8315,21 @@ function BinaryFileReader(doc, openParams)
 		if (this.oReadResult.DoNotExpandShiftReturn) {
 			this.Document.Settings.DoNotExpandShiftReturn = this.oReadResult.DoNotExpandShiftReturn;
 		}
+		if (this.oReadResult.UlTrailSpace) {
+			this.Document.Settings.UlTrailSpace = this.oReadResult.UlTrailSpace;
+		}
+		if (this.oReadResult.BalanceSingleByteDoubleByteWidth) {
+			this.Document.Settings.BalanceSingleByteDoubleByteWidth = this.oReadResult.BalanceSingleByteDoubleByteWidth;
+		}
+		if (this.oReadResult.UseFELayout) {
+			this.Document.Settings.UseFELayout = this.oReadResult.UseFELayout;
+		}
 
         this.Document.On_EndLoad();
 
-		if (this.Document.Settings && this.Document.Settings.DocumentProtection) {
-			if (this.Document.Settings.DocumentProtection.isOnlyView()) {
+		var docProtection = this.Document.Settings && this.Document.Settings.DocumentProtection;
+		if (docProtection) {
+			if (docProtection.isOnlyView() && false !== docProtection.getEnforcment()) {
 				var _api = this.Document.DrawingDocument && this.Document.DrawingDocument.m_oWordControl && this.Document.DrawingDocument.m_oWordControl.m_oApi;
 				_api && _api.asc_addRestriction(Asc.c_oAscRestrictionType.View);
 			}
@@ -16514,7 +16528,7 @@ function Binary_SettingsTableReader(doc, oReadResult, stream)
 			res = this.bcr.Read1(length, function(t, l){
 				return oThis.ReadDocProtect(t,l,oDocProtect);
 			});
-			editor.WordControl.m_oLogicDocument.Settings.DocumentProtection = oDocProtect;
+			//editor.WordControl.m_oLogicDocument.Settings.DocumentProtection = oDocProtect;
 		}
 		else if ( c_oSer_SettingsType.WriteProtection === type )
 		{
@@ -16968,9 +16982,12 @@ function Binary_SettingsTableReader(doc, oReadResult, stream)
 			}
 		} else if (c_oSerCompat.Flags1 === type) {
 			var flags1 = this.stream.GetULong(length);
+			this.oReadResult.BalanceSingleByteDoubleByteWidth = 0 !== ((flags1 >> 6) & 1);
+			this.oReadResult.UlTrailSpace = 0 !== ((flags1 >> 9) & 1);
 			this.oReadResult.DoNotExpandShiftReturn = 0 != ((flags1 >> 10) & 1);
 		} else if (c_oSerCompat.Flags2 === type) {
 			var flags2 = this.stream.GetULong(length);
+			this.oReadResult.UseFELayout = 0 != ((flags2 >> 17) & 1);
 			this.oReadResult.SplitPageBreakAndParaMark = 0 != ((flags2 >> 27) & 1);
 		} else
 			res = c_oSerConstants.ReadUnknown;
@@ -17509,7 +17526,10 @@ function DocReadResult(doc) {
 	this.AppVersion;
 	this.compatibilityMode = null;
 	this.SplitPageBreakAndParaMark = false;
+	this.BalanceSingleByteDoubleByteWidth = false;
+	this.UlTrailSpace = false;
 	this.DoNotExpandShiftReturn = false;
+	this.UseFELayout = false;
 	this.bdtr = null;
 	this.runsToSplit = [];
 	this.bCopyPaste = false;

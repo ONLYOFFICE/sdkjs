@@ -97,6 +97,20 @@ var textdirection_LRTBV = 0x03;
 var textdirection_TBRLV = 0x04;
 var textdirection_TBLRV = 0x05;
 
+// Данный список шрифтов используется совместно с настройкой BalanceSingleByteDoubleByteWidth
+// если список будет изменяться, то проверить работу этой настройки с новыми шрифтами, если работать не будет, тогда
+// надо будет иметь два разных списка
+const EAST_ASIA_FONTS = [
+	"MingLiU", "PMingLiU",
+	"SimSun", "NSimSun", "SimSun-ExtA", "SimSun-ExtB",
+	"MS Mincho",
+	"Batang",
+	"Arial Unicode MS",
+	"Microsoft JhengHei", "Microsoft YaHei", "SimHei", "DengXian",
+	"Meiryo", "MS Gothic", "MS PGothic", "MS UI Gothic", "Yu Gothic",
+	"Dotum", "Gulim", "Malgun Gothic"
+];
+
 function IsEqualStyleObjects(Object1, Object2)
 {
     if (undefined === Object1 && undefined === Object2)
@@ -7566,6 +7580,8 @@ CStyle.prototype.IsTableStyle = function()
 
 function CStyles(bCreateDefault)
 {
+	this.ValidDefaultEastAsiaFont = false;
+
     if (bCreateDefault !== false)
     {
         this.Id = AscCommon.g_oIdCounter.Get_NewId();
@@ -8304,6 +8320,7 @@ function CStyles(bCreateDefault)
 	}
 
     this.LogicDocument = null;
+	this.OnChangeDefaultTextPr();
 }
 
 CStyles.prototype =
@@ -8651,6 +8668,7 @@ CStyles.prototype =
             Styles.Style[StyleId] = this.Style[StyleId].Copy();
         }
 
+        Styles.OnChangeDefaultTextPr();
         return Styles;
     },
 
@@ -8689,7 +8707,7 @@ CStyles.prototype =
 		History.Add(new CChangesStylesChangeDefaultTextPr(this, this.Default.TextPr, TextPr));
         this.Default.TextPr.InitDefault();
 		this.Default.TextPr.Merge(TextPr);
-
+		this.OnChangeDefaultTextPr();
 		// TODO: Пока данная функция используется только в билдере, как только будет использоваться в самом редакторе,
 		//       надо будет сделать, чтобы происходил пересчет всех стилей.
 	},
@@ -9999,6 +10017,8 @@ CStyles.prototype.UpdateDefaultsDependingOnCompatibility = function(nCompatibili
 	g_oDocumentDefaultTableCellPr.InitDefault(nCompatibilityMode);
 	g_oDocumentDefaultTableRowPr.InitDefault(nCompatibilityMode);
 	g_oDocumentDefaultTableStylePr.InitDefault(nCompatibilityMode);
+
+	this.OnChangeDefaultTextPr();
 };
 CStyles.prototype.GetDefaultParaPrForWrite = function()
 {
@@ -10011,6 +10031,45 @@ CStyles.prototype.GetDefaultTextPrForWrite = function()
 	var oTextPr = new CTextPr();
 	oTextPr.InitDefault();
 	return this.Default.TextPr.GetDiff(oTextPr);
+};
+/**
+ * @param {string} sName
+ * @returns {boolean}
+ */
+CStyles.prototype.IsEastAsiaFont = function(sName)
+{
+	for (let oIterator = sName.getUnicodeIterator(); oIterator.check(); oIterator.next())
+	{
+		let	nUnicode = oIterator.value();
+		if (AscCommon.isEastAsianScript(nUnicode))
+			return true;
+	}
+
+	for (let nIndex = 0, nCount = EAST_ASIA_FONTS.length; nIndex < nCount; ++nIndex)
+	{
+		if (sName === EAST_ASIA_FONTS[nIndex])
+			return true;
+	}
+
+	return false;
+};
+CStyles.prototype.OnChangeDefaultTextPr = function()
+{
+	this.ValidDefaultEastAsiaFont = false;
+	if (this.Default.TextPr.RFonts && this.Default.TextPr.RFonts.EastAsia)
+		this.ValidDefaultEastAsiaFont = this.IsEastAsiaFont(this.Default.TextPr.RFonts.EastAsia.Name);
+};
+CStyles.prototype.IsValidDefaultEastAsiaFont = function()
+{
+	return this.ValidDefaultEastAsiaFont;
+};
+CStyles.prototype.OnEndDocumentLoad = function(oDocument)
+{
+	// Специальная проверка плохо заданных нумераций через стиль. Когда ссылка на нумерацию в стиле есть,
+	// а обратной ссылки в нумерации на стиль - нет.
+	this.Check_StyleNumberingOnLoad(oDocument.GetNumbering());
+
+	this.OnChangeDefaultTextPr();
 };
 
 function CDocumentColor(r,g,b, Auto)
@@ -10119,6 +10178,10 @@ CDocumentColor.prototype.SetFromColor = function(oColor)
 	this.Auto = undefined !== oColor.Auto ? oColor.Auto : false;
 };
 
+CDocumentColor.prototype.ConvertToUniColor = function()
+{
+	return AscFormat.CreateUniColorRGB(this.r, this.g, this.b);
+};
 
 function CDocumentShd()
 {

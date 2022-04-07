@@ -6481,7 +6481,32 @@ window["native"]["offline_apply_event"] = function(type,params) {
             
             break;
         }
-            
+
+        case 21002: // ASC_COAUTH_EVENT_TYPE_REPLACE_URL_IMAGE
+        {
+            var urls = JSON.parse(params[0]);
+            AscCommon.g_oDocumentUrls.addUrls(urls);
+            var firstUrl;
+            for (var i in urls) {
+                if (urls.hasOwnProperty(i)) {
+                    firstUrl = urls[i];
+                    break;
+                }
+            }
+
+            var _src = firstUrl;
+
+            var imageProp = new Asc.asc_CImgProperty();
+            imageProp.ImageUrl = _src;
+
+            var ws = _api.wb.getWorksheet();
+            if (ws && ws.objectRender && ws.objectRender.controller) {
+                ws.objectRender.controller.setGraphicObjectProps(imageProp);
+            }
+
+            break;
+        }
+
         case 22000: // ASC_MENU_EVENT_TYPE_ADVANCED_OPTIONS
         {
             var obj = JSON.parse(params);
@@ -7173,6 +7198,7 @@ window["Asc"]["spreadsheet_api"].prototype.openDocument = function(file) {
                 var ws = t.wb.getWorksheet();
                 //console.log("JS - getWorksheet()");
 
+                window["native"]["onTokenJWT"](_api.CoAuthoringApi.get_jwt());
                 window["native"]["onEndLoadingFile"](ws.headersWidth, ws.headersHeight);
                 //console.log("JS - onEndLoadingFile()");
 

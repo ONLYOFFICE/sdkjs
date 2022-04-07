@@ -637,6 +637,11 @@ function CEditorPage(api)
 		this.m_oAnimPaneTimeline.Anchor = (g_anchor_left | g_anchor_right | g_anchor_top | g_anchor_bottom);
 		this.m_oAnimPaneTimelineContainer.AddControl(this.m_oAnimPaneTimeline);
 
+
+		if(!this.IsSupportAnimPane)
+		{
+			this.m_oAnimationPaneContainer.HtmlElement.style.display = "none";
+		}
 		// ----------
 
 		this.m_oMainView = CreateControlContainer("id_main_view");
@@ -982,6 +987,7 @@ function CEditorPage(api)
 			this.m_oNotes.HtmlElement.style.backgroundColor = GlobalSkin.BackgroundColor;
 			this.m_oNotesContainer.HtmlElement.style.backgroundColor = GlobalSkin.BackgroundColor;
 			this.m_oBottomPanesContainer.HtmlElement.style.borderTop = ("1px solid " + GlobalSkin.BorderSplitterColor);
+			this.m_oBottomPanesContainer.HtmlElement.style.backgroundColor = GlobalSkin.BackgroundColor;
 			this.m_oAnimationPaneContainer.HtmlElement.style.borderTop = ("1px solid " + GlobalSkin.BorderSplitterColor);
 		}
 

@@ -443,7 +443,7 @@ CSelectedContent.prototype =
         this.MoveDrawing = Value;
     },
 
-    On_EndCollectElements : function(LogicDocument)
+    On_EndCollectElements : function(LogicDocument, isFromCopy)
     {
     	// TODO: Данную функцию нужно разделить на 2. Первая будет обрабатывать элементы после сборки
 		//       и собирать различные списки. Вторая нужна перед непосредственной вставкой, она должна
@@ -505,7 +505,7 @@ CSelectedContent.prototype =
             }
         }
 
-        this.CheckComments(LogicDocument);
+        this.CheckComments(LogicDocument, isFromCopy);
 		this.CheckDocPartNames(LogicDocument);
 
         // Ставим метки переноса в начало и конец
@@ -866,7 +866,7 @@ CSelectedContent.prototype.CheckDocPartNames = function(oLogicDocument)
 		}
 	}
 };
-CSelectedContent.prototype.CheckComments = function(oLogicDocument)
+CSelectedContent.prototype.CheckComments = function(oLogicDocument, isFromCopy)
 {
 	if (!(oLogicDocument instanceof CDocument))
 		return;
@@ -915,7 +915,7 @@ CSelectedContent.prototype.CheckComments = function(oLogicDocument)
 
 	// Если история включена, то мы не можем быть уверены, что один и тот же комментарий не вставляется несколько раз,
 	// поэтому необходимо делать копию
-	if (oLogicDocument.GetHistory().IsOn())
+	if (!isFromCopy && oLogicDocument.GetHistory().IsOn())
 	{
 		var oCommentsManager = oLogicDocument.GetCommentsManager();
 		for (var sId in mCommentsMarks)
@@ -2328,8 +2328,11 @@ function CDocumentSettings()
 	this.TrackRevisions = false; // Флаг рецензирования, который записан в самом файле
 
 	// Compatibility
-	this.SplitPageBreakAndParaMark = false;
-	this.DoNotExpandShiftReturn    = false;
+	this.SplitPageBreakAndParaMark        = false;
+	this.DoNotExpandShiftReturn           = false;
+	this.BalanceSingleByteDoubleByteWidth = false;
+	this.UlTrailSpace                     = false;
+	this.UseFELayout                      = false;
 }
 
 /**
@@ -2724,6 +2727,8 @@ CDocument.prototype.IsLoadingDocument = function()
 };
 CDocument.prototype.On_EndLoad                     = function()
 {
+	this.Start_SilentMode();
+
 	this.ClearListsCache();
 
 	this.TrackRevisionsManager.InitSelectedChanges();
@@ -2734,9 +2739,7 @@ CDocument.prototype.On_EndLoad                     = function()
     // Проверяем последний параграф на наличие секции
     this.Check_SectionLastParagraph();
 
-    // Специальная проверка плохо заданных нумераций через стиль. Когда ссылка на нумерацию в стиле есть,
-    // а обратной ссылки в нумерации на стиль - нет.
-    this.Styles.Check_StyleNumberingOnLoad(this.Numbering);
+    this.Styles.OnEndDocumentLoad(this);
 
     // Обновляем массив позиций для комментариев
     this.Comments.UpdateAll();
@@ -2760,6 +2763,8 @@ CDocument.prototype.On_EndLoad                     = function()
     {
         this.Set_FastCollaborativeEditing(true);
     }
+
+	this.End_SilentMode();
 };
 CDocument.prototype.UpdateDefaultsDependingOnCompatibility = function()
 {
@@ -2767,27 +2772,37 @@ CDocument.prototype.UpdateDefaultsDependingOnCompatibility = function()
 };
 CDocument.prototype.private_UpdateFieldsOnEndLoad = function()
 {
-	return;
+	let openedAt = this.Api.openedAt;
+	if (undefined === openedAt) {
+		return;
+	}
 
-	// TODO: Из-за совместки мы не можем обновлять текущую дату таким образом при открытии, нам нужно, чтобы
-	//       дату для обновления присылал сервер
+	//let nTime = performance.now();
 
-	var arrHdrFtrs = this.SectionsInfo.GetAllHdrFtrs();
-	for (var nIndex = 0, nCount = arrHdrFtrs.length; nIndex < nCount; ++nIndex)
+	let arrHdrFtrs = this.SectionsInfo.GetAllHdrFtrs();
+	let arrFields  = [];
+	for (let nIndex = 0, nCount = arrHdrFtrs.length; nIndex < nCount; ++nIndex)
 	{
-		var oContent = arrHdrFtrs[nIndex].GetContent();
+		let oContent = arrHdrFtrs[nIndex].GetContent();
 		oContent.ProcessComplexFields();
-		var arrFields = oContent.GetAllFields(false);
-		for (var nFieldIndex = 0, nFieldsCount = arrFields.length; nFieldIndex < nFieldsCount; ++nFieldIndex)
+		oContent.GetAllFields(false, arrFields);
+	}
+
+	this.ProcessComplexFields();
+	this.controller_GetAllFields(false, arrFields);
+
+	for (var nFieldIndex = 0, nFieldsCount = arrFields.length; nFieldIndex < nFieldsCount; ++nFieldIndex)
+	{
+		let oField = arrFields[nFieldIndex];
+		if (oField instanceof CComplexField
+			&& oField.GetInstruction()
+			&& fieldtype_TIME === oField.GetInstruction().Type)
 		{
-			var oField = arrFields[nFieldIndex];
-			if (oField instanceof CComplexField)
-			{
-				if (oField.GetInstruction() && fieldtype_TIME === oField.GetInstruction().Type)
-					oField.Update(false, false);
-			}
+			oField.UpdateTIME(openedAt);
 		}
 	}
+
+	//console.log("FieldUpdateTime : " + ((performance.now() - nTime) / 1000) + "s");
 };
 CDocument.prototype.Add_TestDocument               = function()
 {
@@ -12771,6 +12786,24 @@ CDocument.prototype.GetCurrentTablesStack = function()
 	return arrTables;
 };
 /**
+ * Получаем массив автофигур, попавших в текстовый селект
+ * @returns {ParaDrawing[]}
+ */
+CDocument.prototype.GetSelectedDrawingObjectsInText = function()
+{
+	let arrDrawings = [];
+	let arrParagraphs = this.GetSelectedParagraphs();
+	for (let nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
+	{
+		arrParagraphs[nIndex].CheckRunContent(function(oRun)
+		{
+			oRun.GetSelectedDrawingObjectsInText(arrDrawings);
+		});
+	}
+
+	return arrDrawings;
+};
+/**
  * Получаем информацию о текущем выделении
  * @returns {CSelectedElementsInfo}
  */
@@ -12967,25 +13000,30 @@ CDocument.prototype.Document_UpdateInterfaceState = function(bSaveCurRevisionCha
 };
 CDocument.prototype.private_UpdateInterface = function(isSaveCurrentReviewChange, isExternalTrigger)
 {
-	if (!this.Api.isDocumentLoadComplete || true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
+	let oApi = this.GetApi();
+	if (!oApi.isDocumentLoadComplete || true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
 		return;
 
 	if (true === this.TurnOffInterfaceEvents)
 		return;
 
 	if (true === AscCommon.CollaborativeEditing.Get_GlobalLockSelection())
+	{
+		let oThis = this;
+		oApi.checkLongActionCallback(function(){oThis.UpdateInterface();});
 		return;
+	}
 
 	// Удаляем весь список
-	this.Api.sync_BeginCatchSelectedElements();
+	oApi.sync_BeginCatchSelectedElements();
 
 	// Уберем из интерфейса записи о том где мы находимся (параграф, таблица, картинка или колонтитул)
-	this.Api.ClearPropObjCallback();
+	oApi.ClearPropObjCallback();
 
 	this.Controller.UpdateInterfaceState();
 
 	// Сообщаем, что список составлен
-	this.Api.sync_EndCatchSelectedElements(isExternalTrigger);
+	oApi.sync_EndCatchSelectedElements(isExternalTrigger);
 
 	this.UpdateSelectedReviewChanges(isSaveCurrentReviewChange);
 
@@ -15955,7 +15993,7 @@ CDocument.prototype.Set_FastCollaborativeEditing = function(isOn)
 };
 CDocument.prototype.Continue_FastCollaborativeEditing = function()
 {
-	if (true === this.CollaborativeEditing.Get_GlobalLock())
+	if (true === this.CollaborativeEditing.Get_GlobalLock() && !this.Api.isLiveViewer())
 	{
 		if (this.Api.forceSaveUndoRequest)
 			this.Api.asc_Save(true);
@@ -15966,7 +16004,7 @@ CDocument.prototype.Continue_FastCollaborativeEditing = function()
 	if (this.Api.isLongAction())
 		return;
 
-	if (true !== this.CollaborativeEditing.Is_Fast() || true === this.CollaborativeEditing.Is_SingleUser())
+	if (true !== this.CollaborativeEditing.Is_Fast() || (true === this.CollaborativeEditing.Is_SingleUser() && !this.Api.isLiveViewer()))
 		return;
 
 	if (true === this.IsMovingTableBorder() || true === this.Api.isStartAddShape || this.DrawingObjects.checkTrackDrawings() || this.Api.isOpenedChartFrame)
@@ -15985,7 +16023,7 @@ CDocument.prototype.Continue_FastCollaborativeEditing = function()
 	}
 
 	var CurTime = new Date().getTime();
-	if (true === this.NeedUpdateTargetForCollaboration && (CurTime - this.LastUpdateTargetTime > 1000))
+	if (!this.Api.isLiveViewer() && true === this.NeedUpdateTargetForCollaboration && (CurTime - this.LastUpdateTargetTime > 1000))
 	{
 		this.NeedUpdateTargetForCollaboration = false;
 		if (true !== HaveChanges)
@@ -16994,6 +17032,10 @@ CDocument.prototype.AddPageCount = function()
 //----------------------------------------------------------------------------------------------------------------------
 // Settings
 //----------------------------------------------------------------------------------------------------------------------
+CDocument.prototype.GetDocumentSettings = function()
+{
+	return this.Settings;
+};
 CDocument.prototype.GetCompatibilityMode = function()
 {
 	return this.Settings.CompatibilityMode;
@@ -17044,6 +17086,14 @@ CDocument.prototype.IsSplitPageBreakAndParaMark = function()
 CDocument.prototype.IsDoNotExpandShiftReturn = function()
 {
 	return this.Settings.DoNotExpandShiftReturn;
+};
+CDocument.prototype.IsBalanceSingleByteDoubleByteWidth = function()
+{
+	return (this.Settings.BalanceSingleByteDoubleByteWidth && (this.Styles.IsValidDefaultEastAsiaFont() || this.Settings.UseFELayout));
+};
+CDocument.prototype.IsUnderlineTrailSpace = function()
+{
+	return this.Settings.UlTrailSpace;
 };
 /**
  * Проверяем все ли параметры SdtSettings выставлены по умолчанию
@@ -18486,6 +18536,18 @@ CDocument.prototype.Begin_CompositeInput = function()
 
 	return bResult;
 };
+CDocument.prototype.CheckCurrentTextObjectExtends = function()
+{
+	var oController = this.DrawingObjects;
+	if (oController)
+	{
+		var oTargetTextObject = AscFormat.getTargetTextObject(oController);
+		if (oTargetTextObject && oTargetTextObject.checkExtentsByDocContent)
+		{
+			oTargetTextObject.checkExtentsByDocContent(true, true);
+		}
+	}
+};
 CDocument.prototype.Replace_CompositeText = function(arrCharCodes)
 {
 	if (null === this.CompositeInput)
@@ -18511,6 +18573,7 @@ CDocument.prototype.Replace_CompositeText = function(arrCharCodes)
 		AscCommon.g_inputContext.externalEndCompositeInput();
 	}
 
+	this.CheckCurrentTextObjectExtends();
 	this.Recalculate();
 	this.UpdateSelection();
 	this.UpdateUndoRedo();
@@ -18616,6 +18679,7 @@ CDocument.prototype.private_AddCompositeText = function(nCharCode)
 	if (oForm && oForm.IsAutoFitContent())
 		this.CheckFormAutoFit(oForm);
 
+	this.CheckCurrentTextObjectExtends();
 	this.Recalculate();
 	this.UpdateSelection();
 };
@@ -18632,6 +18696,7 @@ CDocument.prototype.private_RemoveCompositeText = function(nCount)
 	if (oForm && oForm.IsAutoFitContent())
 		this.CheckFormAutoFit(oForm);
 
+	this.CheckCurrentTextObjectExtends();
 	this.Recalculate();
 	this.UpdateSelection();
 };
@@ -20081,7 +20146,10 @@ CDocument.prototype.controller_MoveCursorLeft = function(AddToSelect, Word)
 					this.CurPos.ContentPos = this.Selection.EndPos;
 
 					var Item = this.Content[this.Selection.EndPos];
-					Item.MoveCursorLeftWithSelectionFromEnd(Word);
+					if (this.Selection.StartPos <= this.Selection.EndPos)
+						Item.MoveCursorLeft(true, Word);
+					else
+						Item.MoveCursorLeftWithSelectionFromEnd(Word);
 				}
 			}
 
@@ -20173,17 +20241,18 @@ CDocument.prototype.controller_MoveCursorRight = function(AddToSelect, Word)
 	{
 		if (true === AddToSelect)
 		{
-			// Добавляем к селекту
 			if (false === this.Content[this.Selection.EndPos].MoveCursorRight(true, Word))
 			{
-				// Нужно перейти в начало следующего элемента
-				if (this.Content.length - 1 != this.Selection.EndPos)
+				if (this.Content.length - 1 !== this.Selection.EndPos)
 				{
 					this.Selection.EndPos++;
 					this.CurPos.ContentPos = this.Selection.EndPos;
 
 					var Item = this.Content[this.Selection.EndPos];
-					Item.MoveCursorRightWithSelectionFromStart(Word);
+					if (this.Selection.StartPos >= this.Selection.EndPos)
+						Item.MoveCursorRight(true, Word);
+					else
+						Item.MoveCursorRightWithSelectionFromStart(Word);
 				}
 			}
 
@@ -27084,6 +27153,10 @@ CDocument.prototype.TurnOffSpellCheck = function()
 CDocument.prototype.TurnOnSpellCheck = function()
 {
 	this.Spelling.TurnOn();
+};
+CDocument.prototype.GetSpellCheckManager = function()
+{
+	return this.Spelling;
 };
 //----------------------------------------------------------------------------------------------------------------------
 CDocument.prototype.SetupBeforeNativePrint = function(layoutOptions, oGraphics)

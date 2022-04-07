@@ -3601,5 +3601,6 @@
 
 		window['AscCommonExcel'].CEditorEnterOptions = CEditorEnterOptions;
 		window['AscCommonExcel'].drawFillCell = drawFillCell;
-
-})(window);
+		window['AscCommonExcel'].getContext = getContext;
+		window['AscCommonExcel'].getGraphics = getGraphics;
+	})(window);

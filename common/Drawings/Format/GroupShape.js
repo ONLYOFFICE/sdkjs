@@ -140,7 +140,7 @@ function CGroupShape()
 
     CGroupShape.prototype.setBDeleted2 = function(pr)
     {
-        this.bDeleted = pr;
+        this.setBDeleted(pr);
         for(var i = 0; i < this.spTree.length; ++i)
         {
             if(this.spTree[i].setBDeleted2)
@@ -149,7 +149,7 @@ function CGroupShape()
             }
             else
             {
-                this.spTree[i].bDeleted = pr;
+                this.spTree[i].setBDeleted(pr);
             }
         }
     };

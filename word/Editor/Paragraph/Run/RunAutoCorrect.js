@@ -173,7 +173,10 @@
 	{
 		let oRun = this.Run;
 		if (oRun.GetElement(this.Pos) === this.RunItem)
+		{
+			oRun.State.ContentPos = this.Pos + 1;
 			return;
+		}
 
 		for (let nPos = 0, nCount = oRun.GetElementsCount(); nPos < nCount; ++nPos)
 		{
@@ -264,7 +267,7 @@
 		var oHistory    = oDocument.GetHistory();
 		if (2 !== arrElements.length
 			|| !arrElements[0].IsSpace()
-			|| !arrElements[1].IsText()
+			|| !this.private_CheckPrevSymbolForDoubleSpaceWithDot(arrElements[1])
 			|| !oHistory.CheckAsYouTypeAutoCorrect(arrElements[0], 1, 500))
 			return false;
 
@@ -274,23 +277,22 @@
 		oDocument.StartAction(AscDFH.historydescription_Document_AutoCorrectHyphensWithDash);
 
 		var oDot = new ParaText(46);
-		oRun.AddToContent(this.Pos + 1, oDot);
-		var oStartPos = oRunElementsBefore.GetContentPositions()[0];
-		var oEndPos   = oContentPos;
-		oContentPos.Update(this.Pos + 1, oContentPos.GetDepth());
-
-		oParagraph.RemoveSelection();
-		oParagraph.SetSelectionUse(true);
-		oParagraph.SetSelectionContentPos(oStartPos, oEndPos, false);
-		oParagraph.Remove(1);
-		oParagraph.RemoveSelection();
+		oRun.AddToContent(this.Pos, oDot);
+		oParagraph.RemoveRunElement(oRunElementsBefore.GetContentPositions()[0]);
 
 		oDocument.Recalculate();
 		oDocument.FinalizeAction();
 
-		this.RunItem = oDot;
-
 		return true;
+	};
+	CRunAutoCorrect.prototype.private_CheckPrevSymbolForDoubleSpaceWithDot = function(oItem)
+	{
+		return (oItem.IsText()
+			&& (!oItem.IsPunctuation()
+				|| 0x23 === oItem.Value
+				|| 0x24 === oItem.Value
+				|| 0x25 === oItem.Value
+				|| 0x40 === oItem.Value));
 	};
 	/**
 	 * Производим автозамену для французской пунктуации
@@ -374,15 +376,7 @@
 		oParagraph.GetPrevRunElements(oRunElementsBefore);
 		var arrElements = oRunElementsBefore.GetElements();
 		if (arrElements.length > 0)
-		{
-			var oPrevElement = arrElements[0];
-			if (para_Text === oPrevElement.Type
-				&& 45 !== oPrevElement.Value
-				&& 40 !== oPrevElement.Value
-				&& 91 !== oPrevElement.Value
-				&& 123 !== oPrevElement.Value)
-				isOpenQuote = false;
-		}
+			isOpenQuote = this.private_IsOpenQuoteAfter(arrElements[0]);
 
 		if (!isDoubleQuote && (1050 === nLang || 1060 === nLang))
 			return false;
@@ -400,6 +394,18 @@
 		this.RunItem = this.Run.GetElement(this.Pos);
 
 		return true;
+	};
+	CRunAutoCorrect.prototype.private_IsOpenQuoteAfter = function(oPrevElement)
+	{
+		// nbsp - – − ( [ {
+		return (!oPrevElement.IsText()
+			|| oPrevElement.IsNBSP()
+			|| 0x002D === oPrevElement.Value
+			|| 0x2013 === oPrevElement.Value
+			|| 0x2212 === oPrevElement.Value
+			|| 0x0028 === oPrevElement.Value
+			|| 0x005B === oPrevElement.Value
+			|| 0x007B === oPrevElement.Value);
 	};
 	CRunAutoCorrect.prototype.private_ReplaceSmartQuotes = function(nLang, isDoubleQuote, isOpenQuote)
 	{

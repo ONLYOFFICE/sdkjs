@@ -1216,6 +1216,9 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_drawPrintPreview = function (index) {
+		if (index == null) {
+			index = this.wb.printPreviewState.activePage;
+		}
 		this.wb.printPreviewState.setPage(index, true);
 		this.wb.printSheetPrintPreview(index);
 		var curPage = this.wb.printPreviewState.getPage(index);
@@ -1345,6 +1348,9 @@ var editor;
       // Шрифты загрузились, возможно стоит подождать совместное редактирование
       this.FontLoadWaitComplete = true;
         this._openDocumentEndCallback();
+        if (this.fAfterLoad) {
+          this.fAfterLoad();
+        }
       }
   };
 
@@ -2157,7 +2163,7 @@ var editor;
 
 		//история версий - возможно стоит грамотно чистить wbview, но не пересоздавать
 		var previousVersionZoom;
-		if (this.VersionHistory && this.controller) {
+		if ((this.VersionHistory || this.isOleEditor) && this.controller) {
 			var elem = document.getElementById("ws-v-scrollbar");
 			if (elem) {
 				elem.parentNode.removeChild(elem);
@@ -2224,8 +2230,8 @@ var editor;
 			this.sendEvent('asc_onError', c_oAscError.ID.OpenWarning, c_oAscError.Level.NoCritical);
 		}
 
-		if (this.VersionHistory) {
-			if (this.VersionHistory.changes) {
+		if (this.VersionHistory || this.isOleEditor) {
+			if (this.VersionHistory && this.VersionHistory.changes) {
 				this.VersionHistory.applyChanges(this);
 			}
 			this.sheetsChanged();
@@ -3309,6 +3315,77 @@ var editor;
     return ret;
   };
 
+  spreadsheet_api.prototype.asc_getSizesForOleEditor = function (oleInfo) {
+    var oleSize = this.wbModel.getOleSize() || this.wb.getWorksheet().getVisibleRange();
+    if (oleSize) {
+      var ws = this.wb.getWorksheet();
+
+      var firstRow = oleSize.r1;
+      var lastRow = oleSize.r2;
+      var firstColumn = oleSize.c1;
+      var lastColumn = oleSize.c2;
+
+      var left = ws._getColLeft(firstColumn);
+      var width = ws._getColLeft(lastColumn + 1) - left;
+      var top = ws._getRowTop(firstRow);
+      var height = ws._getRowTop(lastRow + 1) - top;
+      return {
+        height: height,
+        width: width,
+        top: top,
+        left: left
+      };
+    }
+    oleInfo = oleInfo || {};
+    return {
+      height: oleInfo.height,
+      width: oleInfo.width,
+      top: oleInfo.top,
+      left: oleInfo.left
+    };
+  }
+
+  /**
+   * Loading ole editor
+   * @param {{}} [oleObj] info from oleObject
+   * @param {function} [fResizeCallback] callback where first argument is sizes of loaded editor without borders
+   */
+  spreadsheet_api.prototype.asc_addTableOleObjectInOleEditor = function(oleObj, fResizeCallback) {
+    oleObj = oleObj || {binary: AscCommon.getEmpty()};
+    var stream = oleObj && oleObj.binary;
+    var _this = this;
+    var file = new AscCommon.OpenFileResult();
+    file.bSerFormat = AscCommon.checkStreamSignature(stream, AscCommon.c_oSerFormat.Signature);
+    file.data = stream;
+    this.isOleEditor = true;
+    this.isFromSheetEditor = oleObj.isFromSheetEditor;
+    this.asc_CloseFile();
+    this.openDocument(file);
+
+    this.fAfterLoad = function () {
+      var sizes = _this.asc_getSizesForOleEditor(oleObj);
+      fResizeCallback && fResizeCallback(sizes);
+      _this.wb.scrollToOleSize();
+    }
+    };
+  /**
+   * get binary info about changed ole object
+   * @returns {{}} binary info about oleObject
+   */
+  spreadsheet_api.prototype.asc_getBinaryInfoOleObject = function () {
+    var dataUrl = this.wb.getImageFromTableOleObject();
+    var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(this.wbModel);
+    var binaryData = oBinaryFileWriter.Write().split(';');
+    var cleanBinaryData = binaryData[binaryData.length - 1];
+    var binaryInfo = {};
+
+    binaryInfo.binary = cleanBinaryData;
+    binaryInfo.base64Image = dataUrl;
+    binaryInfo.isFromSheetEditor =this.isFromSheetEditor;
+
+    return binaryInfo;
+  }
+
   spreadsheet_api.prototype.asc_editChartDrawingObject = function(chart) {
     var ws = this.wb.getWorksheet();
     var ret = ws.objectRender.editChartDrawingObject(chart);
@@ -3353,7 +3430,7 @@ var editor;
   spreadsheet_api.prototype._addImageUrl = function(urls, obj) {
     var ws = this.wb.getWorksheet();
     if (ws) {
-      if (obj && (obj.isImageChangeUrl || obj.isShapeImageChangeUrl || obj.isTextArtChangeUrl)) {
+      if (obj && (obj.isImageChangeUrl || obj.isShapeImageChangeUrl || obj.isTextArtChangeUrl || obj.fAfterUploadOleObjectImage)) {
         ws.objectRender.editImageDrawingObject(urls[0], obj);
       } else {
         ws.objectRender.addImageDrawingObject(urls, null);
@@ -3637,6 +3714,23 @@ var editor;
   spreadsheet_api.prototype.asc_endAddShape = function() {
     this.isStartAddShape = false;
     this.handlers.trigger("asc_onEndAddShape");
+  };
+
+  spreadsheet_api.prototype.asc_doubleClickOnTableOleObject = function (obj) {
+    this.isChartEditor = true;	// Для совместного редактирования
+    this.asc_onOpenChartFrame();
+    // console.log(editor.WordControl)
+    // if(!window['IS_NATIVE_EDITOR']) {
+    //   this.WordControl.onMouseUpMainSimple();
+    // }
+    if(this.handlers.hasTrigger("asc_doubleClickOnTableOleObject"))
+    {
+      this.sendEvent("asc_doubleClickOnTableOleObject", obj);
+    }
+    else
+    {
+      this.sendEvent("asc_doubleClickOnChart", obj); // TODO: change event type
+    }
   };
 
     spreadsheet_api.prototype.asc_canEditGeometry = function () {
@@ -3973,7 +4067,7 @@ var editor;
           }
 
           if (ignoreWords[usrWords[i]] || changeWords[usrWords[i]] || usrWords[i].length === 1
-            || (isIgnoreUppercase && AscCommon.private_IsAbbreviation(usrWords[i]))) {
+            || (isIgnoreUppercase && AscCommon.IsAbbreviation(usrWords[i]))) {
             usrCorrect[i] = true;
           }
         }
@@ -4397,14 +4491,14 @@ var editor;
   };
 
   // Получить координаты активной ячейки
-  spreadsheet_api.prototype.asc_getActiveCellCoord = function() {
+  spreadsheet_api.prototype.asc_getActiveCellCoord = function(useUpRightMerge) {
     var oWorksheet = this.wb.getWorksheet();
     if(oWorksheet){
       if(oWorksheet.isSelectOnShape){
         return oWorksheet.objectRender.getContextMenuPosition();
       }
       else{
-          return oWorksheet.getActiveCellCoord();
+          return oWorksheet.getActiveCellCoord(useUpRightMerge);
       }
     }
 
@@ -4849,7 +4943,12 @@ var editor;
      return this.wbModel && this.wbModel.theme;
   };
 
-	spreadsheet_api.prototype.asc_ChangeColorScheme = function (sSchemeName) {
+  spreadsheet_api.prototype.getGraphicController = function () {
+      var ws = this.wb.getWorksheet();
+      return ws && ws.objectRender && ws.objectRender.controller;
+  };
+
+    spreadsheet_api.prototype.asc_ChangeColorScheme = function (sSchemeName) {
 		if (this.wbModel) {
 			for (var i = 0; i < this.wbModel.aWorksheets.length; ++i) {
 				var sheet = this.wbModel.aWorksheets[i];
@@ -4951,7 +5050,7 @@ var editor;
 				// Шлем update для toolbar-а, т.к. когда select в lock ячейке нужно заблокировать toolbar
 				this.wb._onWSSelectionChanged();
 			}
-            if (AscCommon.CollaborativeEditing.Is_Fast() /*&& !AscCommon.CollaborativeEditing.Is_SingleUser()*/) {
+            if (AscCommon.CollaborativeEditing.Is_Fast() && !this.isLiveViewer() /*&& !AscCommon.CollaborativeEditing.Is_SingleUser()*/) {
                 this.wb.sendCursor();
             }
 			return;
@@ -4975,7 +5074,7 @@ var editor;
             if (0 <= gap) {
                 this.asc_Save(true);
             }
-            if (AscCommon.CollaborativeEditing.Is_Fast() /*&& !AscCommon.CollaborativeEditing.Is_SingleUser()*/) {
+            if (AscCommon.CollaborativeEditing.Is_Fast() && !this.isLiveViewer()/*&& !AscCommon.CollaborativeEditing.Is_SingleUser()*/) {
                 this.wb.sendCursor();
             }
         }

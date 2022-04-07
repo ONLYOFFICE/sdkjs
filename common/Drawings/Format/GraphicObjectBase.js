@@ -547,6 +547,23 @@
         Math.abs(new_ext_x - xfrm.extX) > AscFormat.MOVE_DELTA &&  xfrm.setExtX(new_ext_x);
         Math.abs(new_ext_y - xfrm.extY) > AscFormat.MOVE_DELTA &&  xfrm.setExtY(new_ext_y);
     };
+
+    CGraphicObjectBase.prototype.checkHiddenInAnimation = function() {
+        if(AscCommonSlide.Slide && (this.parent instanceof AscCommonSlide.Slide)) {
+            var oGrObjects = this.parent.graphicObjects;
+            if(oGrObjects) {
+                if(oGrObjects.isSlideShow()) {
+                    var oAnimPlayer = oGrObjects.getAnimationPlayer();
+                    if(oAnimPlayer) {
+                        if(oAnimPlayer.isDrawingHidden(this.Get_Id())) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    };
     /**
      * Check point hit to bounds object
      * @memberof CGraphicObjectBase
@@ -555,6 +572,10 @@
         if(this.parent && (this.parent.Get_ParentTextTransform  && this.parent.Get_ParentTextTransform())) {
             return true;
         }
+        if(this.checkHiddenInAnimation && this.checkHiddenInAnimation()) {
+            return false;
+        }
+
         if(!AscFormat.canSelectDrawing(this)) {
             return false;
         }
@@ -741,10 +762,20 @@
 
     CGraphicObjectBase.prototype.assignMacro = function(sGuid)
     {
-        if(typeof sGuid === "string" && sGuid.length > 0) {
+        if(Array.isArray(this.spTree))
+        {
+            for(var nSp = 0; nSp < this.spTree.length; ++nSp)
+            {
+                this.spTree[nSp].assignMacro(sGuid);
+            }
+            return;
+        }
+        if(typeof sGuid === "string" && sGuid.length > 0)
+        {
             this.setMacro(AscFormat.MACRO_PREFIX + sGuid);
         }
-        else {
+        else
+        {
             this.setMacro(null);
         }
     };
@@ -755,22 +786,57 @@
     };
     CGraphicObjectBase.prototype.hasMacro = function()
     {
-        if(typeof this.macro === "string" && this.macro.length > 0) {
+        var sMacro = this.getMacroOwnOrGroup();
+        if(sMacro !== null) {
             return true;
         }
         return false;
     };
+    CGraphicObjectBase.prototype.getMacroOwnOrGroup = function()
+    {
+        if(Array.isArray(this.spTree))
+        {
+            if(this.spTree.length > 0)
+            {
+                var oSp = this.spTree[0];
+                var sMacro = oSp.getMacroOwnOrGroup();
+                if(!sMacro)
+                {
+                    return null;
+                }
+                for(nSp = 1; nSp < this.spTree.length; ++nSp)
+                {
+                    if(sMacro !== this.spTree[nSp].getMacroOwnOrGroup())
+                    {
+                        return null;
+                    }
+                }
+                return sMacro;
+            }
+            else
+            {
+                return null;
+            }
+        }
+        if(typeof this.macro === "string" && this.macro.length > 0)
+        {
+            return this.macro;
+        }
+        return null;
+    };
     CGraphicObjectBase.prototype.hasJSAMacro = function()
     {
-        if(typeof this.macro === "string" && this.macro.indexOf(AscFormat.MACRO_PREFIX) === 0) {
+        var sMacro = this.getMacroOwnOrGroup();
+        if(typeof sMacro === "string" && sMacro.indexOf(AscFormat.MACRO_PREFIX) === 0) {
             return true;
         }
         return false;
     };
     CGraphicObjectBase.prototype.getJSAMacroId = function()
     {
-        if(typeof this.macro === "string" && this.macro.indexOf(AscFormat.MACRO_PREFIX) === 0) {
-            return this.macro.slice(AscFormat.MACRO_PREFIX.length);
+        var sMacro = this.getMacroOwnOrGroup();
+        if(typeof sMacro === "string" && sMacro.indexOf(AscFormat.MACRO_PREFIX) === 0) {
+            return sMacro.slice(AscFormat.MACRO_PREFIX.length);
         }
         return null;
     };
@@ -849,6 +915,9 @@
             !this.isPlaceholder() &&
             this.getNoEditPoints() !== true &&
             !!(this.spPr && this.spPr.geometry);
+    };
+    CGraphicObjectBase.prototype.canEditTableOleObject = function(bReturnOle){
+        return bReturnOle ? null : false;
     };
     CGraphicObjectBase.prototype.canRotate = function() {
         if(!this.canEdit()) {
@@ -2681,6 +2750,27 @@
     CGraphicObjectBase.prototype.convertFromSmartArt = function() {
         return this;
     };
+
+    CGraphicObjectBase.prototype.getDefaultRotSA = function () {
+        if (this.isObjectInSmartArt()) {
+            var point = this.getSmartArtShapePoint();
+            if (point) {
+                var custAng = point.getCustAng();
+                if (custAng) {
+                    var defaultRot = this.spPr && this.spPr.xfrm && this.spPr.xfrm.rot || 0;
+                    if (custAng) {
+                        if (custAng > defaultRot) {
+                            defaultRot += Math.PI * 2 * Math.ceil(custAng / (Math.PI * 2));
+                        }
+                        defaultRot -= custAng;
+                        return AscFormat.normalizeRotate(defaultRot);
+                    }
+                }
+            }
+            return AscFormat.normalizeRotate(this.rot);
+        }
+    };
+
     CGraphicObjectBase.prototype.changeRot = function(dAngle, bWord) {
         if(this.spPr && this.spPr.xfrm) {
             var oXfrm = this.spPr.xfrm;
@@ -2776,7 +2866,8 @@
             var oXfrm = this.spPr.xfrm;
             oXfrm.setFlipH(bFlipH);
             if(this.isObjectInSmartArt()) {
-                //TODO
+                var point = this.getSmartArtShapePoint();
+                point && point.changeFlipH(bFlipH);
             }
         }
     };
@@ -2785,7 +2876,8 @@
             var oXfrm = this.spPr.xfrm;
             oXfrm.setFlipV(bFlipV);
             if(this.isObjectInSmartArt()) {
-                //TODO
+                var point = this.getSmartArtShapePoint();
+                point && point.changeFlipV(bFlipV);
             }
         }
     };
@@ -2822,7 +2914,8 @@
         return (this.parent && this.parent.timing) || null;
     };
     CGraphicObjectBase.prototype.drawAnimLabels = function(oGraphics) {
-        if(oGraphics.IsThumbnail === true || oGraphics.IsDemonstrationMode === true || AscCommon.IsShapeToImageConverter) {
+        if(oGraphics.IsThumbnail === true || oGraphics.IsDemonstrationMode === true 
+            || AscCommon.IsShapeToImageConverter || oGraphics.DO_NOT_DRAW_ANIM_LABEL) {
             return;
         }
         if(this.group) {
@@ -2853,6 +2946,22 @@
     
     CGraphicObjectBase.prototype.isImage = function() {
         return this.getObjectType() === AscDFH.historyitem_type_ImageShape;
+    };
+
+    CGraphicObjectBase.prototype.Is_UseInDocument = function() {
+        if(CShape.prototype.Is_UseInDocument) {
+            return CShape.prototype.Is_UseInDocument.call(this);
+        }
+        return true;
+    };
+
+    CGraphicObjectBase.prototype.GetWidth = function() {
+        if (this.spPr && this.spPr.xfrm)
+            return this.spPr.xfrm.extX;
+    };
+    CGraphicObjectBase.prototype.GetHeight = function() {
+        if (this.spPr && this.spPr.xfrm)
+            return this.spPr.xfrm.extY;
     };
 
     var ANIM_LABEL_WIDTH_PIX = 22;

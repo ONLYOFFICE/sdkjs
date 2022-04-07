@@ -307,7 +307,7 @@
 
     // create canvas
     if (null != this.element) {
-		if (!this.Api.VersionHistory) {
+		if (!this.Api.VersionHistory && !this.Api.isOleEditor) {
 			this.element.innerHTML = '<div id="ws-canvas-outer">\
 											<canvas id="ws-canvas"></canvas>\
 											<canvas id="ws-canvas-overlay"></canvas>\
@@ -522,7 +522,7 @@
 				  if (self.oSelectionInfo && self.oSelectionInfo.dataValidation) {
 					  var list = self.oSelectionInfo.dataValidation.getListValues(self.model.getActiveWs());
 					  if (list) {
-						  self.handlers.trigger("asc_onValidationListMenu", list[0], list[1]);
+						 self.handlers.trigger("asc_onValidationListMenu", list[0], list[1]);
 					  }
 					  return !!list;
 				  }
@@ -1003,6 +1003,11 @@
     this.cellEditor.destroy();
     return this;
   };
+
+	WorkbookView.prototype.scrollToOleSize = function () {
+		var ws = this.getWorksheet();
+		ws.scrollToOleSize();
+	}
 
   WorkbookView.prototype._createWorksheetView = function(wsModel) {
     return new AscCommonExcel.WorksheetView(this, wsModel, this.wsViewHandlers, this.buffers, this.stringRender, this.maxDigitWidth, this.collaborativeEditing, this.defaults.worksheetView);
@@ -1802,6 +1807,21 @@
     ws.checkProtectRangeOnEdit([new Asc.Range(activeCellRange.c1, activeCellRange.r1, activeCellRange.c1, activeCellRange.r1)], doEdit, null, needBlurFunc);
   };
 
+  /**
+   *
+   * @return { string } base64 image
+   */
+  WorkbookView.prototype.getImageFromTableOleObject = function () {
+    var worksheet = this.getWorksheet();
+    var imageBase64;
+    if (worksheet.isHaveOnlyOneChart()) {
+      imageBase64 = worksheet.createImageForChart();
+    } else {
+      imageBase64 = worksheet.createImageFromMaxRange();
+    }
+    return imageBase64;
+  }
+
   WorkbookView.prototype._checkStopCellEditorInFormulas = function() {
 	  if (this.isCellEditMode && this.isFormulaEditMode && this.cellEditor.canEnterCellRange()) {
 		  return true;
@@ -1967,6 +1987,7 @@
     }
     return ws;
   };
+
 
 	WorkbookView.prototype.drawWorksheet = function () {
 		if (-1 === this.wsActive) {
@@ -2497,7 +2518,9 @@
             this.skipHelpSelector = false;
         } else {
             if (c_oAscPopUpSelectorType.None === type) {
-                ws.setSelectionInfo("value", name, /*onlyActive*/true);
+				ws.executeWithFirstActiveCellInMerge(function () {
+					ws.setSelectionInfo("value", name, /*onlyActive*/true);
+				})
                 return;
             } else if (c_oAscPopUpSelectorType.TotalRowFunc === type) {
                 ws.setSelectionInfo("totalRowFunc", name, /*onlyActive*/true);
@@ -2760,6 +2783,10 @@
       this.dialogAbsName = (c_oAscSelectionDialogType.None !== selectionDialogType &&
           c_oAscSelectionDialogType.Function !== selectionDialogType);
   };
+
+  WorkbookView.prototype.setOleSize = function (oPr) {
+    this.model.setOleSize(oPr);
+  }
   WorkbookView.prototype.setSelectionDialogMode = function (selectionDialogType, selectRange) {
       var newSelectionDialogMode = c_oAscSelectionDialogType.None !== selectionDialogType;
 
@@ -3140,6 +3167,32 @@
 		this.changeZoom(viewZoom, true, true);
 	};
 
+  WorkbookView.prototype.getSimulatePageForOleObject = function (sizes, oRange) {
+    var page = new AscCommonExcel.CPagePrint();
+    page.indexWorksheet = 0;
+    page.pageClipRectHeight = sizes.height;
+    page.pageClipRectWidth = sizes.width;
+    page.pageGridLines = true;
+    page.pageHeight = sizes.height;
+
+    page.pageRange =  oRange.clone();
+    page.pageWidth = sizes.width;
+    page.scale = 1;
+    return page;
+  }
+  
+  WorkbookView.prototype.printForOleObject = function (ws, oRange) {
+    var sizes = ws.getRangePosition(oRange);
+    var page = this.getSimulatePageForOleObject(sizes, oRange);
+    var previewOleObjectContext = AscCommonExcel.getContext(sizes.width, sizes.height, this);
+    previewOleObjectContext.changeZoom(ws.getZoom());
+    previewOleObjectContext.DocumentRenderer = AscCommonExcel.getGraphics(previewOleObjectContext);
+    previewOleObjectContext.isPreviewOleObjectContext = true;
+		previewOleObjectContext.isNotDrawBackground = !this.Api.isFromSheetEditor;
+    ws.drawForPrint(previewOleObjectContext, page, 0, 1);
+    return previewOleObjectContext;
+  }
+
 	WorkbookView.prototype.printSheetPrintPreview = function(index) {
 		var printPreviewState = this.printPreviewState;
 		var page = printPreviewState.getPage(index);
@@ -3244,6 +3297,12 @@
   WorkbookView.prototype.scrollToTopLeftCell = function() {
     this.getWorksheet().scrollToTopLeftCell();
   };
+  WorkbookView.prototype.scrollToCell = function (row, column) {
+    this.getWorksheet().scrollToCell(row, column);
+  };
+  WorkbookView.prototype.scrollAndResizeToRange = function (r1, c1, r2, c2) {
+    this.getWorksheet().scrollAndResizeToRange(r1, c1, r2, c2);
+  }
   WorkbookView.prototype.onShowDrawingObjects = function() {
       var oWSView = this.getWorksheet();
       var oDrawingsRender;

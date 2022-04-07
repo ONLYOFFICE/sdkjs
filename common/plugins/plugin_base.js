@@ -51,7 +51,7 @@
 			return;
 
 		var _style = document.createElement('style');
-		_style.type      = 'text/css';
+		_style.type	  = 'text/css';
 
 		var _style_body = ".ih_main { margin: 0px; padding: 0px; width: 100%; height: 100%; display: inline-block; overflow: hidden; box-sizing: border-box; user-select: none; position: fixed; border: 1px solid #cfcfcf; } ";
 		_style_body += "ul { margin: 0px; padding: 0px; width: 100%; height: 100%; list-style-type: none; outline:none; } ";
@@ -491,54 +491,54 @@
 		".asc-plugin-loader" : { "color" : "text-normal" }
 	};
 
-    var g_isMouseSendEnabled = false;
-    var g_language = "";
+	var g_isMouseSendEnabled = false;
+	var g_language = "";
 
-    window.plugin_sendMessage = function sendMessage(data)
-    {
-        if (window.Asc.plugin.ie_channel)
-            window.Asc.plugin.ie_channel.postMessage(data);
-        else
-            window.parent.postMessage(data, "*");
-    };
+	window.plugin_sendMessage = function sendMessage(data)
+	{
+		if (window.Asc.plugin.ie_channel)
+			window.Asc.plugin.ie_channel.postMessage(data);
+		else
+			window.parent.postMessage(data, "*");
+	};
 
-    window.plugin_onMessage = function(event)
-    {
-        if (!window.Asc.plugin)
-            return;
+	window.plugin_onMessage = function(event)
+	{
+		if (!window.Asc.plugin)
+			return;
 
-        if (typeof(event.data) == "string")
-        {
-            var pluginData = {};
-            try
-            {
-                pluginData = JSON.parse(event.data);
-            }
-            catch(err)
-            {
-                pluginData = {};
-            }
+		if (typeof(event.data) == "string")
+		{
+			var pluginData = {};
+			try
+			{
+				pluginData = JSON.parse(event.data);
+			}
+			catch(err)
+			{
+				pluginData = {};
+			}
 
-            var type = pluginData.type;
+			var type = pluginData.type;
 
-            if (pluginData.guid != window.Asc.plugin.guid)
-            {
-                if (undefined !== pluginData.guid)
-                    return;
+			if (pluginData.guid != window.Asc.plugin.guid)
+			{
+				if (undefined !== pluginData.guid)
+					return;
 
-                switch (type)
-                {
-                    case "onExternalPluginMessage":
-                        break;
-                    default:
-                        return;
-                }
-            }
+				switch (type)
+				{
+					case "onExternalPluginMessage":
+						break;
+					default:
+						return;
+				}
+			}
 
-            if (type == "init")
-                window.Asc.plugin.info = pluginData;
+			if (type == "init")
+				window.Asc.plugin.info = pluginData;
 
-            if (undefined !== pluginData.theme)
+			if (undefined !== pluginData.theme)
 			{
 				if (!window.Asc.plugin.theme || type === "onThemeChanged")
 				{
@@ -583,102 +583,123 @@
 				}
 			}
 
-            if (!window.Asc.plugin.tr || !window.Asc.plugin.tr_init)
-            {
+			if (!window.Asc.plugin.tr || !window.Asc.plugin.tr_init)
+			{
 				window.Asc.plugin.tr_init = true;
-                window.Asc.plugin.tr = function(val) {
-                    if (!window.Asc.plugin.translateManager || !window.Asc.plugin.translateManager[val])
-                        return val;
-                    return window.Asc.plugin.translateManager[val];
-                };
-            }
+				window.Asc.plugin.tr = function(val) {
+					if (!window.Asc.plugin.translateManager || !window.Asc.plugin.translateManager[val])
+						return val;
+					return window.Asc.plugin.translateManager[val];
+				};
+			}
 
-            var newLang = "";
-            if (window.Asc.plugin.info)
-                newLang = window.Asc.plugin.info.lang;
-            if (newLang == "" || newLang != g_language)
-            {
-                g_language = newLang;
-                if (g_language == "en-EN" || g_language == "")
+			var newLang = "";
+			if (window.Asc.plugin.info)
+				newLang = window.Asc.plugin.info.lang;
+			if (newLang == "" || newLang != g_language)
+			{
+				g_language = newLang;
+				if (g_language == "en-EN" || g_language == "")
 				{
-					window.Asc.plugin.translateManager = {};
-					if (window.Asc.plugin.onTranslate)
-						window.Asc.plugin.onTranslate();
+					pluginInitTranslateManager();
 				}
 				else
 				{
 					var _client = new XMLHttpRequest();
-					_client.open("GET", "./translations/" + g_language + ".json");
+					_client.open("GET", "./translations/langs.json");
 
 					_client.onreadystatechange = function ()
 					{
 						if (_client.readyState == 4)
 						{
-						    if (_client.status == 200 || location.href.indexOf("file:") == 0)
-						    {
-                                try
-                                {
-                                    window.Asc.plugin.translateManager = JSON.parse(_client.responseText);
-                                }
-                                catch (err)
-                                {
-                                    window.Asc.plugin.translateManager = {};
-                                }
-                            }
-                            else
-                            {
-                                window.Asc.plugin.translateManager = {};
-                            }
+							if (_client.status == 200 || location.href.indexOf("file:") == 0)
+							{
+								try
+								{
+									var arr = JSON.parse(_client.responseText);
+									var fullName, shortName;
+									for (var i = 0; i < arr.length; i++)
+									{
+										var file = arr[i];
+										if (file == g_language) 
+										{
+											fullName = file;
+											break;
+										} 
+										else if (file.split('-')[0] == g_language.split('-')[0])
+										{
+											shortName = file;
+										}
+									}
 
-
-                            if (window.Asc.plugin.onTranslate)
-                                window.Asc.plugin.onTranslate();
+									if (fullName || shortName)
+									{
+										pluginGetTranslateFile( (fullName || shortName) );
+									}
+									else
+									{
+										pluginInitTranslateManager();
+									}
+								}
+								catch (error)
+								{
+									pluginGetTranslateFile(g_language);
+								}
+							}
+							else if (_client.status == 404)
+							{
+								pluginGetTranslateFile(g_language);
+							}
+							else
+							{
+								pluginInitTranslateManager();
+							}
 						}
 					};
 					_client.send();
 				}
-            }
+			}
 
-            switch (type)
-            {
-                case "init":
-                {
-                    pluginStart();
-                    window.Asc.plugin.init(window.Asc.plugin.info.data);
-                    break;
-                }
-                case "button":
-                {
-                    var _buttonId = parseInt(pluginData.button);
-                    if (!window.Asc.plugin.button && -1 == _buttonId)
+			switch (type)
+			{
+				case "init":
+				{
+					pluginStart();
+					window.Asc.plugin.init(window.Asc.plugin.info.data);
+					break;
+				}
+				case "button":
+				{
+					var _buttonId = parseInt(pluginData.button);
+					if (!window.Asc.plugin.button && -1 == _buttonId)
 						window.Asc.plugin.executeCommand("close", "");
-                    else
-                        window.Asc.plugin.button(_buttonId);
-                    break;
-                }
-                case "enableMouseEvent":
-                {
-                    g_isMouseSendEnabled = pluginData.isEnabled;
+					else
+						window.Asc.plugin.button(_buttonId);
+					break;
+				}
+				case "enableMouseEvent":
+				{
+					g_isMouseSendEnabled = pluginData.isEnabled;
 					if (window.Asc.plugin.onEnableMouseEvent)
 						window.Asc.plugin.onEnableMouseEvent(g_isMouseSendEnabled);
-                    break;
-                }
-                case "onExternalMouseUp":
-                {
-                    if (window.Asc.plugin.onExternalMouseUp)
-                        window.Asc.plugin.onExternalMouseUp();
-                    break;
-                }
-                case "onMethodReturn":
-                {
+					break;
+				}
+				case "onExternalMouseUp":
+				{
+					if (window.Asc.plugin.onExternalMouseUp)
+						window.Asc.plugin.onExternalMouseUp();
+					break;
+				}
+				case "onMethodReturn":
+				{
 					window.Asc.plugin.isWaitMethod = false;
 
 					if (window.Asc.plugin.methodCallback)
 					{
-					    var methodCallback = window.Asc.plugin.methodCallback;
-                        window.Asc.plugin.methodCallback = null;
-                        methodCallback(pluginData.methodReturnData);
-                        methodCallback = null;
+						var methodCallback = window.Asc.plugin.methodCallback;
+						window.Asc.plugin.methodCallback = null;
+						methodCallback(pluginData.methodReturnData);
+						methodCallback = null;
 					}
 					else if (window.Asc.plugin.onMethodReturn)
 					{
@@ -686,49 +707,82 @@
 					}
 
 					if (window.Asc.plugin.executeMethodStack && window.Asc.plugin.executeMethodStack.length > 0)
-                    {
-                        var obj = window.Asc.plugin.executeMethodStack.shift();
-                        window.Asc.plugin.executeMethod(obj.name, obj.params, obj.callback);
-                    }
+					{
+						var obj = window.Asc.plugin.executeMethodStack.shift();
+						window.Asc.plugin.executeMethod(obj.name, obj.params, obj.callback);
+					}
 
-                    break;
-                }
+					break;
+				}
 				case "onCommandCallback":
 				{
-                    if (window.Asc.plugin.onCallCommandCallback)
-                    {
-                        window.Asc.plugin.onCallCommandCallback();
-                        window.Asc.plugin.onCallCommandCallback = null;
-                    }
-                    else if (window.Asc.plugin.onCommandCallback)
+					if (window.Asc.plugin.onCallCommandCallback)
+					{
+						window.Asc.plugin.onCallCommandCallback();
+						window.Asc.plugin.onCallCommandCallback = null;
+					}
+					else if (window.Asc.plugin.onCommandCallback)
 						window.Asc.plugin.onCommandCallback();
 					break;
 				}
-                case "onExternalPluginMessage":
-                {
+				case "onExternalPluginMessage":
+				{
 					if (window.Asc.plugin.onExternalPluginMessage && pluginData.data && pluginData.data.type)
 						window.Asc.plugin.onExternalPluginMessage(pluginData.data);
 					break;
-                }
-                case "onEvent":
-                {
-                    if (window.Asc.plugin["event_" + pluginData.eventName])
-                        window.Asc.plugin["event_" + pluginData.eventName](pluginData.eventData);
-                    break;
-                }
-                default:
-                    break;
-            }
-        }
-    };
+				}
+				case "onEvent":
+				{
+					if (window.Asc.plugin["event_" + pluginData.eventName])
+						window.Asc.plugin["event_" + pluginData.eventName](pluginData.eventData);
+					break;
+				}
+				default:
+					break;
+			}
+		}
+	};
 
-    function pluginStart()
-    {
-        if (window.Asc.plugin.isStarted)
-            return;
+	function pluginGetTranslateFile (fileName) {
+		var _client = new XMLHttpRequest();
+		_client.open("GET", "./translations/" + fileName + ".json");
+		_client.onreadystatechange = function ()
+		{
+			if (_client.readyState == 4)
+			{
+				if (_client.status == 200 || location.href.indexOf("file:") == 0)
+				{
+					try
+					{
+						pluginInitTranslateManager( JSON.parse(_client.responseText) );
+					}
+					catch (err)
+					{
+						pluginInitTranslateManager();
+					}
+				}
 
-        window.Asc.plugin.isStarted = true;
-        window.startPluginApi();
+				if (_client.status == 404)
+					pluginInitTranslateManager();
+			}
+		};
+		_client.send();
+	}
+
+	function pluginInitTranslateManager (data)
+	{
+		window.Asc.plugin.translateManager = data || {};
+		if (window.Asc.plugin.onTranslate)
+			window.Asc.plugin.onTranslate();
+	}
+
+	function pluginStart()
+	{
+		if (window.Asc.plugin.isStarted)
+			return;
+
+		window.Asc.plugin.isStarted = true;
+		window.startPluginApi();
 
 		var zoomValue = AscCommon.checkDeviceScale();
 		AscCommon.retinaPixelRatio = zoomValue.applicationPixelRatio;
@@ -743,30 +797,30 @@
 				_frames[0].style.pointerEvents = isEnabled ? "none" : "";
 			}
 		};
-    }
+	}
 
-    window.onmousemove = function(e)
-    {
-        if (!g_isMouseSendEnabled || !window.Asc.plugin || !window.Asc.plugin.executeCommand)
-            return;
+	window.onmousemove = function(e)
+	{
+		if (!g_isMouseSendEnabled || !window.Asc.plugin || !window.Asc.plugin.executeCommand)
+			return;
 
-        var _x = (undefined === e.clientX) ? e.pageX : e.clientX;
-        var _y = (undefined === e.clientY) ? e.pageY : e.clientY;
+		var _x = (undefined === e.clientX) ? e.pageX : e.clientX;
+		var _y = (undefined === e.clientY) ? e.pageY : e.clientY;
 
-        window.Asc.plugin.executeCommand("onmousemove", JSON.stringify({ x : _x, y : _y }));
+		window.Asc.plugin.executeCommand("onmousemove", JSON.stringify({ x : _x, y : _y }));
 
-    };
-    window.onmouseup   = function(e)
-    {
-        if (!g_isMouseSendEnabled || !window.Asc.plugin || !window.Asc.plugin.executeCommand)
-            return;
+	};
+	window.onmouseup   = function(e)
+	{
+		if (!g_isMouseSendEnabled || !window.Asc.plugin || !window.Asc.plugin.executeCommand)
+			return;
 
-        var _x = (undefined === e.clientX) ? e.pageX : e.clientX;
-        var _y = (undefined === e.clientY) ? e.pageY : e.clientY;
+		var _x = (undefined === e.clientX) ? e.pageX : e.clientX;
+		var _y = (undefined === e.clientY) ? e.pageY : e.clientY;
 
-        window.Asc.plugin.executeCommand("onmouseup", JSON.stringify({ x : _x, y : _y }));
-    };
+		window.Asc.plugin.executeCommand("onmouseup", JSON.stringify({ x : _x, y : _y }));
+	};
 
-    window.plugin_sendMessage(JSON.stringify({ guid : window.Asc.plugin.guid, type : "initialize_internal" }));
+	window.plugin_sendMessage(JSON.stringify({ guid : window.Asc.plugin.guid, type : "initialize_internal" }));
 
 })(window, undefined);

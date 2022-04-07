@@ -493,6 +493,9 @@ CCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
             if ( true === editor.isChartEditor )
                 editor.sync_closeChartEditor();
 
+            if ( true === editor.isOleEditor )
+              editor.sync_closeOleEditor();
+
             // Делаем откат на 1 шаг назад и удаляем из Undo/Redo эту последнюю точку
             editor.WordControl.m_oLogicDocument.Document_Undo();
             AscCommon.History.Clear_Redo();
@@ -500,6 +503,7 @@ CCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
 
     }
     editor.isChartEditor = false;
+    editor.isOleEditor = false;
 };
 
 CCollaborativeEditing.prototype.AddPosExtChanges = function(Item, ChangeObject)

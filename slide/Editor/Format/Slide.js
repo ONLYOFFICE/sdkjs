@@ -149,7 +149,7 @@ AscDFH.drawingContentChanges[AscDFH.historyitem_SlideCommentsRemoveComment] = fu
 
 AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideSetSize              ] = AscFormat.CDrawingBaseCoordsWritable;
 AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideSetBg                ] = AscFormat.CBg;
-AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideSetTransition        ] = AscFormat.CAscSlideTransition;
+AscDFH.drawingsConstructorsMap[AscDFH.historyitem_SlideSetTransition        ] = Asc.CAscSlideTransition;
 
 function Slide(presentation, slideLayout, slideNum)
 {

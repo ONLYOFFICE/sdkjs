@@ -2448,7 +2448,15 @@ Paragraph.prototype.private_RecalculateMoveLineToNextPage = function(CurLine, Cu
 Paragraph.prototype.private_CheckNeedBeforeSpacing = function(CurPage, Parent, PageAbs, ParaPr)
 {
 	if (CurPage <= 0)
-		return true;
+	{
+		let oPrevElement = this.GetPrevDocumentElement();
+		while (oPrevElement && !oPrevElement.IsInline())
+		{
+			oPrevElement = oPrevElement.GetPrevDocumentElement();
+		}
+
+		return (!oPrevElement || oPrevElement.GetAbsolutePage(oPrevElement.GetPagesCount() - 1) >= PageAbs);
+	}
 
 	if (!this.Check_FirstPage(CurPage))
 	{
@@ -2826,6 +2834,18 @@ CParaLineRange.prototype =
         return NewRange;
     }
 };
+CParaLineRange.prototype.CorrectX = function(nX)
+{
+	let x = nX;
+
+	if (x > this.XEnd)
+		x = this.XEnd;
+
+	if (x < this.X)
+		x = this.X;
+
+	return x;
+};
 
 function CParaPage(X, Y, XLimit, YLimit, FirstLine)
 {
@@ -2937,6 +2957,7 @@ function CParagraphRecalculateStateWrap(Para)
 	this.InTable         = false;
     this.SectPr          = null; // настройки секции, к которой относится данный параграф
 	this.CondensedSpaces = false;
+	this.BalanceSBDB     = false; // BalanceSingleByteDoubleByteWidth
 
 	this.Fast            = false; // Быстрый ли пересчет
 
@@ -3072,7 +3093,8 @@ CParagraphRecalculateStateWrap.prototype =
 		this.InTable     = Paragraph.Parent.IsTableCellContent();
         this.SectPr      = null;
 
-		this.CondensedSpaces = Paragraph && Paragraph.IsCondensedSpaces();
+		this.CondensedSpaces = Paragraph.IsCondensedSpaces();
+		this.BalanceSBDB     = Paragraph.IsBalanceSingleByteDoubleByteWidth();
 
 		this.Page               = CurPage;
 		this.RunRecalcInfoLast  = (0 === CurPage ? null : Paragraph.Pages[CurPage - 1].EndInfo.RunRecalcInfo);
@@ -3664,6 +3686,40 @@ CParagraphRecalculateStateWrap.prototype.SetMathRecalcInfoLine = function(nLine)
 CParagraphRecalculateStateWrap.prototype.IsCondensedSpaces = function()
 {
 	return this.CondensedSpaces;
+};
+CParagraphRecalculateStateWrap.prototype.IsBalanceSingleByteDoubleByteWidth = function(oRun, nPos)
+{
+	if (this.BalanceSBDB)
+	{
+		let oParaPos = this.Paragraph.GetPosByElement(oRun);
+		if (!oParaPos)
+			return true;
+
+		oParaPos.Add(nPos);
+
+		let oRunElements = new CParagraphRunElements(oParaPos, 1, null);
+		this.Paragraph.GetPrevRunElements(oRunElements);
+		let arrElements = oRunElements.GetElements();
+		if (arrElements.length <= 0)
+			return true;
+
+		let oItem = arrElements[0];
+		if (!oItem || para_Text !== oItem.Type || AscCommon.isEastAsianScript(oItem.Value))
+			return true;
+
+		oParaPos.Update(nPos + 1, oParaPos.GetDepth());
+
+		oRunElements = new CParagraphRunElements(oParaPos, 1, null);
+		this.Paragraph.GetNextRunElements(oRunElements);
+		arrElements = oRunElements.GetElements();
+		if (arrElements.length <= 0)
+			return true;
+
+		oItem = arrElements[0];
+		return (!oItem || para_Text !== oItem.Type || AscCommon.isEastAsianScript(oItem.Value));
+	}
+
+	return false;
 };
 CParagraphRecalculateStateWrap.prototype.AddCondensedSpaceToRange = function(oSpace)
 {

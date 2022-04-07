@@ -1147,6 +1147,7 @@
             var mapGrObjects        = {};
             var mapSlides           = {};
             var mapLayouts          = {};
+            var mapTimings          = {};
             var bChangedLayout      = false;
             var bAddSlides          = false;
             var mapAddedSlides      = {};
@@ -1188,14 +1189,27 @@
 					|| oClass instanceof AscFormat.CGraphicFrame)
 				{
 					mapGrObjects[oClass.Get_Id()] = oClass;
+                    let oParent = oClass.parent;
+                    if(oParent && oParent.timing) 
+                    {
+                        mapTimings[oParent.timing.Get_Id()] = oParent.timing;
+                    }
 				}
 				else if (typeof AscCommonSlide !== "undefined" && AscCommonSlide.Slide && oClass instanceof AscCommonSlide.Slide)
 				{
 					mapSlides[oClass.Get_Id()] = oClass;
+                    if(oClass.timing) 
+                    {
+                        mapTimings[oClass.timing.Get_Id()] = oClass.timing;
+                    }
 				}
 				else if (typeof AscCommonSlide !== "undefined" && AscCommonSlide.SlideLayout && oClass instanceof AscCommonSlide.SlideLayout)
 				{
 					mapLayouts[oClass.Get_Id()] = oClass;
+                    if(oClass.timing) 
+                    {
+                        mapTimings[oClass.timing.Get_Id()] = oClass.timing;
+                    }
 					bChangedLayout              = true;
 				}
 				else if (typeof AscCommonSlide !== "undefined" && AscCommonSlide.CPresentation && oClass instanceof AscCommonSlide.CPresentation)
@@ -1213,6 +1227,14 @@
 				{
 					mapCommentsToDelete[oChange.New] = oClass;
 				}
+                else if(oClass.isAnimObject) 
+                {
+                    let oTiming = oClass.getTiming();
+                    if(oTiming) 
+                    {
+                        mapTimings[oTiming.Get_Id()] = oTiming;
+                    }
+                }
 			}
 
             // Создаем точку в истории. Делаем действия через обычные функции (с отключенным пересчетом), которые пишут в
@@ -1343,6 +1365,14 @@
                 oParagraph.Correct_Content(null, null, true);
             }
 
+            for(var sId in mapTimings) 
+            {
+                if(mapTimings.hasOwnProperty(sId)) 
+                {
+                    let oTiming = mapTimings[sId];
+                    oTiming.checkCorrect();
+                }
+            }
             if (oLogicDocument && oLogicDocument.IsDocumentEditor())
 			{
 				for (var sCommentId in mapCommentsToDelete)

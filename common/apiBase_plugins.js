@@ -924,20 +924,36 @@
      */
     Api.prototype["pluginMethod_ReplaceTextSmart"] = function(arrString, sParaTab, sParaNewLine)
     {
-        this.asc_canPaste();
-        this.ReplaceTextSmart(arrString, sParaTab, sParaNewLine);
-        this.asc_Recalculate(true);
-        switch (this.editorId)
-        {
-            case AscCommon.c_oEditorId.Spreadsheet:
-                this.asc_endPaste();
-                break;
-            case AscCommon.c_oEditorId.Word:
-            case AscCommon.c_oEditorId.Presentation:
-                this.WordControl.m_oLogicDocument.FinalizeAction();
-                break;
-        }
+		let guid = window.g_asc_plugins ? window.g_asc_plugins.setPluginMethodReturnAsync() : null;
+		this.incrementCounterLongAction();
 
+		function ReplaceTextSmart()
+		{
+			this.asc_canPaste();
+			this.ReplaceTextSmart(arrString, sParaTab, sParaNewLine);
+			this.asc_Recalculate(true);
+			switch (this.editorId)
+			{
+				case AscCommon.c_oEditorId.Spreadsheet:
+					this.asc_endPaste();
+					break;
+				case AscCommon.c_oEditorId.Word:
+				case AscCommon.c_oEditorId.Presentation:
+					this.WordControl.m_oLogicDocument.FinalizeAction();
+					break;
+			}
+
+			this.decrementCounterLongAction();
+
+			if (guid)
+				window.g_asc_plugins.onPluginMethodReturn(guid, true);
+		}
+
+		let sOverAll = "";
+		for (let nIndex = 0, nCount = arrString.length; nIndex < nCount; ++nIndex)
+			sOverAll += arrString[nIndex];
+
+		AscFonts.FontPickerByCharacter.checkText(sOverAll, this, ReplaceTextSmart);
         return true;
     };
 	/**

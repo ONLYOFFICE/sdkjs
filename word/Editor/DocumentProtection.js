@@ -62,6 +62,9 @@ function CDocProtect() {
 CDocProtect.prototype.isOnlyView = function () {
 	return this.edit === EDocProtect.ReadOnly;
 };
+CDocProtect.prototype.getEnforcment = function () {
+	return this.enforcment;
+};
 
 function CWriteProtection() {
 	this.algorithmName = null;

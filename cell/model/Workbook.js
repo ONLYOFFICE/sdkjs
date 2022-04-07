@@ -2094,6 +2094,9 @@
 
 		this.lastFindOptions = null;
 		this.lastFindCells = {};
+		this.oleSize = null;
+		// var range  = new Asc.Range(5, 5, 10, 10);
+		// this.oleSize = range;
 
 		//при копировании листа с одного wb на другой необходимо менять в стеке
 		// формул лист и книгу(на которые ссылаемся) - например у элементов cStrucTable
@@ -2150,12 +2153,21 @@
 			this.snapshot = this._getSnapshot();
 		}
 	};
+	Workbook.prototype.getOleSize = function () {
+		return this.oleSize;
+	}
+	Workbook.prototype.setOleSize = function (oPr) {
+		this.oleSize = oPr;
+	}
 	Workbook.prototype.initPostOpenZip=function(pivotCaches){
 		var t = this;
 		this.forEach(function (ws) {
 			ws.initPostOpenZip(pivotCaches, t.oNumFmtsOpen);
 		});
 	};
+	Workbook.prototype.isChartOleObject = function () {
+		return this.aWorksheets.length === 2;
+	}
 	Workbook.prototype.setCommonIndexObjectsFrom = function(wb) {
 		this.oStyleManager = wb.oStyleManager;
 		this.sharedStrings = wb.sharedStrings;
@@ -7496,26 +7508,12 @@
 		}
 	};
 	Worksheet.prototype.deleteTablePart = function (index, bConvertTableFormulaToRef) {
-		if(bConvertTableFormulaToRef)
-		{
-			//TODO скорее всего стоит убрать else
-			var tablePart = this.TableParts[index];
-			this.workbook.dependencyFormulas.delTableName(tablePart.DisplayName, bConvertTableFormulaToRef);
-			tablePart.removeDependencies();
+		var tablePart = this.TableParts[index];
+		this.workbook.dependencyFormulas.delTableName(tablePart.DisplayName, bConvertTableFormulaToRef);
+		tablePart.removeDependencies();
 
-			//delete table
-			this.TableParts.splice(index, 1);
-		}
-		else
-		{
-			var deleted = this.TableParts.splice(index, 1);
-			for (var delIndex = 0; delIndex < deleted.length; ++delIndex) {
-				var tablePart = deleted[delIndex];
-				this.workbook.dependencyFormulas.delTableName(tablePart.DisplayName);
-				tablePart.removeDependencies();
-			}
-		}
-
+		//delete table
+		this.TableParts.splice(index, 1);
 	};
 	Worksheet.prototype.checkPivotReportLocationForError = function(ranges, exceptPivot) {
 		for (var i = 0; i < ranges.length; ++i) {
@@ -8537,6 +8535,11 @@
 	Worksheet.prototype.getDataValidation = function (c, r) {
 		if (!this.dataValidations) {
 			return null;
+		}
+		var merged = this.getMergedByCell(r, c);
+		if (merged) {
+			r = merged.r1;
+			c = merged.c1;
 		}
 		for (var i = 0; i < this.dataValidations.elems.length; ++i) {
 			if (this.dataValidations.elems[i].contains(c, r)) {
@@ -15051,6 +15054,13 @@
 			this.setAlignHorizontal(AscCommon.align_Center);
 		if(false == this.worksheet.workbook.bUndoChanges && false == this.worksheet.workbook.bRedoChanges)
 			this.worksheet.mergeManager.add(this.bbox, 1);
+
+		//сбрасываем dataValidation кроме 1 ячейки
+		var dataValidationRanges = Asc.Range(this.bbox.c1, this.bbox.r1, this.bbox.c1, this.bbox.r1).difference(this.bbox);
+		if (dataValidationRanges) {
+			this.worksheet.clearDataValidation(dataValidationRanges, true);
+		}
+
 		History.EndTransaction();
 	};
 	Range.prototype.unmerge=function(bOnlyInRange){

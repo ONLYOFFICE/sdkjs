@@ -3627,17 +3627,18 @@ CDocumentContent.prototype.MoveCursorLeft = function(AddToSelect, Word)
 		{
 			if (true === AddToSelect)
 			{
-				// Добавляем к селекту
 				if (false === this.Content[this.Selection.EndPos].MoveCursorLeft(true, Word))
 				{
-					// Нужно перейти в конец предыдущего элемента
-					if (0 != this.Selection.EndPos)
+					if (0 !== this.Selection.EndPos)
 					{
 						this.Selection.EndPos--;
 						this.CurPos.ContentPos = this.Selection.EndPos;
 
 						var Item = this.Content[this.Selection.EndPos];
-						Item.MoveCursorLeftWithSelectionFromEnd(Word);
+						if (this.Selection.StartPos <= this.Selection.EndPos)
+							Item.MoveCursorLeft(true, Word);
+						else
+							Item.MoveCursorLeftWithSelectionFromEnd(Word);
 					}
 					else
 					{
@@ -3775,17 +3776,18 @@ CDocumentContent.prototype.MoveCursorRight = function(AddToSelect, Word, FromPas
 		{
 			if (true === AddToSelect)
 			{
-				// Добавляем к селекту
 				if (false === this.Content[this.Selection.EndPos].MoveCursorRight(true, Word))
 				{
-					// Нужно перейти в конец предыдущего элемента
-					if (this.Content.length - 1 != this.Selection.EndPos)
+					if (this.Content.length - 1 !== this.Selection.EndPos)
 					{
 						this.Selection.EndPos++;
 						this.CurPos.ContentPos = this.Selection.EndPos;
 
 						var Item = this.Content[this.Selection.EndPos];
-						Item.MoveCursorRightWithSelectionFromStart(Word);
+						if (this.Selection.StartPos >= this.Selection.EndPos)
+							Item.MoveCursorRight(true, Word);
+						else
+							Item.MoveCursorRightWithSelectionFromStart(Word);
 					}
 					else
 					{
@@ -9271,13 +9273,6 @@ CDocumentContent.prototype.GetAllTablesOnPage = function(nPageAbs, arrTables)
 	}
 
 	return arrTables;
-};
-CDocumentContent.prototype.ProcessComplexFields = function()
-{
-	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
-	{
-		this.Content[nIndex].ProcessComplexFields();
-	}
 };
 CDocumentContent.prototype.GetFramePr = function()
 {

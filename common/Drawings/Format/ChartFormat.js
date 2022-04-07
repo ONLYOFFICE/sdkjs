@@ -4037,6 +4037,9 @@
             this.setVal(oVal);
         }
         oVal.fillFromAsc(oAscSeries.Val, bUseCache);
+        if (oAscSeries.FormatCode !== "")
+            this.getNumLit().setFormatCode(oAscSeries.FormatCode);
+            
         var oAscCat = oAscSeries.Cat;
         if(oAscCat && typeof oAscCat.Formula === "string" && oAscCat.Formula.length > 0) {
             var oCat = new CCat();

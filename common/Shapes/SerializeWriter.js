@@ -2252,10 +2252,12 @@ function CBinaryFileWriter()
             oThis.WriteRecord1(7, hlinkObj, oThis.WriteHyperlink);
         }
 
-        if (rPr.HighlightColor)
-        {
+        if (rPr.HighlightColor) {
             oThis.WriteRecord1(12, rPr.HighlightColor, oThis.WriteHighlightColor);
+        } else if (rPr.HighLight && rPr.HighLight !== AscCommonWord.highlight_None) {
+            oThis.WriteRecord1(12, rPr.HighLight.ConvertToUniColor(), oThis.WriteHighlightColor);
         }
+
     };
 
     this.WriteHighlightColor = function (HighlightColor) {

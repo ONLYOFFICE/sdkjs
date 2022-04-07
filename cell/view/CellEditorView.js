@@ -198,15 +198,20 @@
 			var ceCanvasOverlay = "ce-canvas-overlay" + ceMenuEditor;
 			var ceCursor = "ce-cursor" + ceMenuEditor;
 
+			var canvasOuterEl = document.getElementById(ceCanvasOuterId);
+			if (canvasOuterEl) {
+				var parentNode = canvasOuterEl.parentNode;
+				parentNode.removeChild(canvasOuterEl);
+			}
 			t.canvasOuter = document.createElement('div');
 			t.canvasOuter.id = ceCanvasOuterId;
 			t.canvasOuter.style.position = "absolute";
 			t.canvasOuter.style.display = "none";
 			t.canvasOuter.style.zIndex = z;
-			var innerHTML = '<canvas id='+ ceCanvasId +' style="z-index: ' + (z + 1) + '"></canvas>';
-			innerHTML += '<canvas id='+ ceCanvasOverlay +' style="z-index: ' + (z + 2) + '; cursor: ' + t.defaults.cursorShape +
+			var innerHTML = '<canvas id=' + ceCanvasId + ' style="z-index: ' + (z + 1) + '"></canvas>';
+			innerHTML += '<canvas id=' + ceCanvasOverlay + ' style="z-index: ' + (z + 2) + '; cursor: ' + t.defaults.cursorShape +
 				'"></canvas>';
-			innerHTML += '<div id='+ ceCursor +' style="display: none; z-index: ' + (z + 3) + '"></div>';
+			innerHTML += '<div id=' + ceCursor + ' style="display: none; z-index: ' + (z + 3) + '"></div>';
 			t.canvasOuter.innerHTML = innerHTML;
 			this.element.appendChild(t.canvasOuter);
 
@@ -1355,6 +1360,16 @@
         widthStyle = AscCommon.AscBrowser.convertToRetinaValue(widthStyle);
         heightStyle = AscCommon.AscBrowser.convertToRetinaValue(heightStyle);
 
+		// в сафари с включенным аппаратным ускорением баг при вводе текста.
+		// видимо они кешируют по особенному текстуры, которые размером (w*h<5000)
+		// формула точная. ни пикселом меньше. больше - можно сколько угодно.
+		// нужно проверять каждое обновление сафари - и как поправят - убрать эту заглушку
+		// canvas'ы прозрачные и их увеличенный размер не влияет на результат.
+		//
+		// в новой версии сафари увеличиваем не только canvas'ы, но и дивку тоже.
+		if (AscCommon.AscBrowser.isSafariMacOs && (widthStyle * heightStyle) < 5000)
+			widthStyle = ((5000 / heightStyle) >> 0) + 1;
+
 		this.canvasOuterStyle.left = left + 'px';
 		this.canvasOuterStyle.top = top + 'px';
 		this.canvasOuterStyle.width = widthStyle + 'px';
@@ -1362,14 +1377,6 @@
 		if(!this.getMenuEditorMode()) {
 			this.canvasOuterStyle.zIndex = this.top < 0 ? -1 : z;
 		}
-
-		// в сафари с включенным аппаратным ускорением баг при вводе текста.
-		// видимо они кешируют по особенному текстуры, которые размером (w*h<5000)
-		// формула точная. ни пикселом меньше. больше - можно сколько угодно.
-		// нужно проверять каждое обновление сафари - и как поправят - убрать эту заглушку
-		// canvas'ы прозрачные и их увеличенный размер не влияет на результат.
-		if (AscCommon.AscBrowser.isSafariMacOs && (widthStyle * heightStyle) < 5000)
-			widthStyle = ((5000 / heightStyle) >> 0) + 1;
 
 		this.canvas.style.width = this.canvasOverlay.style.width = widthStyle + 'px';
 		this.canvas.style.height = this.canvasOverlay.style.height = heightStyle + 'px';

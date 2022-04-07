@@ -524,6 +524,21 @@ CComplexField.prototype.CalculateValue = function()
 
 	return sResult;
 };
+CComplexField.prototype.UpdateTIME = function(ms)
+{
+	this.private_CheckNestedComplexFields();
+	this.private_UpdateInstruction();
+
+	if (!this.Instruction
+		|| !this.BeginChar
+		|| !this.EndChar
+		|| !this.SeparateChar
+		|| (fieldtype_TIME !== this.Instruction.GetType() && fieldtype_DATE !== this.Instruction.GetType()))
+		return;
+
+	this.SelectFieldValue();
+	this.private_UpdateTIME(ms);
+};
 
 CComplexField.prototype.private_UpdateSEQ = function()
 {
@@ -1020,14 +1035,14 @@ CComplexField.prototype.private_CalculateNUMPAGES = function()
 {
 	return this.LogicDocument.GetPagesCount();
 };
-CComplexField.prototype.private_UpdateTIME = function()
+CComplexField.prototype.private_UpdateTIME = function(ms)
 {
-	var sDate = this.private_CalculateTIME();
+	var sDate = this.private_CalculateTIME(ms);
 
 	if (sDate)
 		this.LogicDocument.AddText(sDate);
 };
-CComplexField.prototype.private_CalculateTIME = function()
+CComplexField.prototype.private_CalculateTIME = function(ms)
 {
 	var nLangId = 1033;
 	var oSepChar = this.GetSeparateChar();
@@ -1044,8 +1059,17 @@ CComplexField.prototype.private_CalculateTIME = function()
 	{
 		var oCultureInfo = AscCommon.g_aCultureInfos[nLangId];
 
-		var oDateTime = new Asc.cDate();
-		sDate = oFormat.formatToWord(oDateTime.getExcelDate() + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
+		if (undefined !== ms)
+		{
+			var oDateTime = new Asc.cDate(ms);
+			sDate         = oFormat.formatToWord(oDateTime.getExcelDate() + (oDateTime.getUTCHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
+
+		}
+		else
+		{
+			let oDateTime = new Asc.cDate();
+			sDate         = oFormat.formatToWord(oDateTime.getExcelDate() + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
+		}
 	}
 
 	return sDate;

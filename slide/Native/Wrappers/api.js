@@ -3469,7 +3469,9 @@ Asc['asc_docs_api'].prototype.openDocument = function(file)
     {
         this.WordControl.m_oDrawingDocument.CheckGuiControlColors();
     }
+    window["native"]["onTokenJWT"](_api.CoAuthoringApi.get_jwt());
     window["native"]["onEndLoadingFile"](_result);
+    
     this.asc_nativeCalculateFile();
 
     this.WordControl.m_oDrawingDocument.Collaborative_TargetsUpdate(true);

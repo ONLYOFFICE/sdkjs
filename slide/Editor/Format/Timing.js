@@ -235,6 +235,16 @@
         return editor.WordControl.m_oLogicDocument;
     };
     CBaseAnimObject.prototype.isAnimObject = true;
+    CBaseAnimObject.prototype.getTiming = function() {
+        var oCurElement = this;
+        while(oCurElement && !(oCurElement instanceof CTiming)) {
+            oCurElement = oCurElement.parent;
+        }
+        if(oCurElement instanceof CTiming) {
+            return oCurElement;
+        }
+        return null;
+    };
     var TIME_NODE_STATE_IDLE = 0;
     var TIME_NODE_STATE_ACTIVE = 1;
     var TIME_NODE_STATE_FROZEN = 2;
@@ -333,7 +343,7 @@
         }
     };
     CTimeNodeBase.prototype.resetState = function() {
-        this.state = TIME_NODE_STATE_IDLE;
+        this.setState(TIME_NODE_STATE_IDLE);
         this.simpleDurationIdx = -1;
         this.resetChildrenState();
     };
@@ -354,16 +364,6 @@
             oCurElem = oCurParent;
         }
         return oCurElem;
-    };
-    CTimeNodeBase.prototype.getTiming = function() {
-        var oCurElem = this;
-        while(oCurElem.parent && oCurElem.getObjectType() !== AscDFH.historyitem_type_Timing) {
-            oCurElem = oCurElem.parent;
-        }
-        if(oCurElem.getObjectType() === AscDFH.historyitem_type_Timing) {
-            return oCurElem;
-        }
-        return null;
     };
     CTimeNodeBase.prototype.getDepth = function() {
         var nDepth = 0;
@@ -677,7 +677,7 @@
                                 return false;
                             }
                         }
-                        if(oThis.checkRepeatCondition()) {
+                        if(oThis.checkRepeatCondition(oPlayer)) {
                             return false;
                         }
                         return true;
@@ -804,7 +804,7 @@
 
         var oAttr = this.getAttributesObject();
         var sNodeType = NODE_TYPE_MAP[oAttr.nodeType];
-        sString += (nDepth + " TYPE: " + this.constructor.name + " | NODE_TYPE: " + sNodeType + " | FORMAT ID: " + oAttr.id );
+        sString += (nDepth + " TYPE: " + this.constructor.name + " | NODE_TYPE: " + sNodeType + " | FORMAT ID: " + oAttr.id + " | ID: " + this.Id);
         console.log(sString);
         var aChildren = this.getChildrenTimeNodes();
         for(var nChild = 0; nChild < aChildren.length; ++nChild) {
@@ -847,7 +847,10 @@
     CTimeNodeBase.prototype.onFrozen = function(oChild, oPlayer) {
         return this.onFinished(oChild, oPlayer);
     };
-    CTimeNodeBase.prototype.checkRepeatCondition = function() {
+    CTimeNodeBase.prototype.checkRepeatCondition = function(oPlayer) {
+        if(oPlayer && oPlayer.bDoNotRestart) {
+            return false;
+        }
         return this.repeatCount.isSpecified() && this.simpleDurationIdx + 1 < this.repeatCount.getVal() / 1000;
     };
     CTimeNodeBase.prototype.onFinished = function(oChild, oPlayer) {
@@ -866,7 +869,7 @@
                 }
             }
             if(nChild === aChildren.length) {
-                if(this.checkRepeatCondition()) {
+                if(this.checkRepeatCondition(oPlayer)) {
                     this.startSimpleDuration(++this.simpleDurationIdx, oPlayer);
                 }
             }
@@ -889,7 +892,7 @@
                 // }
             }
             else {
-                if(this.checkRepeatCondition()) {
+                if(this.checkRepeatCondition(oPlayer)) {
                     this.startSimpleDuration(++this.simpleDurationIdx, oPlayer);
                 }
                 else {
@@ -1267,6 +1270,20 @@
     CTimeNodeBase.prototype.doesHideObject = function() {
         return false;
     };
+    CTimeNodeBase.prototype.doesShowObject = function() {
+        var oParentNode = this.getParentTimeNode();
+        if(oParentNode) {
+            var oAttrObject = oParentNode.getAttributesObject();
+            if(oAttrObject) {
+                if(AscFormat.PRESET_CLASS_ENTR === oAttrObject.presetClass ||
+                    AscFormat.PRESET_CLASS_PATH === oAttrObject.presetClass||
+                    AscFormat.PRESET_CLASS_EMPH === oAttrObject.presetClass) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
     CTimeNodeBase.prototype.isAncestor = function(oNode) {
         var oCurNode = oNode;
         while(oCurNode = oCurNode.getParentTimeNode()) {
@@ -1371,6 +1388,19 @@
             }
         }
         return null;
+    };
+    CTimeNodeBase.prototype.isRemoveAfterFill = function() {
+        var oAttr = this.getAttributesObject();
+        if(oAttr) {
+            return oAttr.fill === NODE_FILL_REMOVE;
+        }
+        return false;
+    };
+    CTimeNodeBase.prototype.checkRemoveAtEnd = function() {
+        if(this.isAtEnd() && this.isRemoveAfterFill()) {
+            return true;
+        }
+        return false;
     };
 
     function CAnimationTime(val) {
@@ -2028,28 +2058,35 @@
                 return this.addAnimationToSelectedObjects(nPresetClass, nPresetId, nPresetSubtype);
             }
             else {
+                var oMapOfObjects = {};
 				var aSelectedObjects = this.parent.graphicObjects.selectedObjects;
-				if(aSelectedObjects.length > 0) {
-					this.removeSelectedEffects();
-					return this.addAnimationToSelectedObjects(nPresetClass, nPresetId, nPresetSubtype);
-				}
+                var bNeedRemoveExtra = (aSelectedObjects.length > 0);
                 var aSeqs = this.getEffectsSequences();
                 var aSeq;
                 var bNeedRebuild = false;
                 for(var nSeq = 0; nSeq < aSeqs.length; ++nSeq) {
                     aSeq = aSeqs[nSeq];
-                    for(nEffectIdx = 1; nEffectIdx < aSeq.length; ++nEffectIdx) {
+                    for(nEffectIdx = aSeq.length - 1; nEffectIdx > 0; --nEffectIdx) {
                         oEffect = aSeq[nEffectIdx];
                         if(oEffect.isSelected()) {
                             sObjectId = oEffect.getObjectId();
+                            if(bNeedRemoveExtra) {
+                                if(oMapOfObjects[sObjectId]) {
+                                    aSeq.splice(nEffectIdx, 1);
+                                    continue;
+                                }
+                                else {
+                                    oMapOfObjects[sObjectId] = true;
+                                }
+                            }
                             oNewEffect = this.createEffect(sObjectId, nPresetClass, nPresetId, nPresetSubtype);
                             if(oNewEffect) {
                                 oNewEffect.cTn.setNodeType(oEffect.cTn.nodeType);
                                 oNewEffect.cTn.changeDelay(oEffect.cTn.getDelay(true));
-                                oNewEffect.select();
-                                aSeq[nEffectIdx] = oNewEffect;
+                                oEffect.setCTn(oNewEffect.cTn.createDuplicate());
+                                oEffect.select();
                                 bNeedRebuild = true;
-                                aAddedEffects.push(oNewEffect);
+                                aAddedEffects.push(oEffect);
                             }
                         }
                     }
@@ -2332,6 +2369,11 @@
         var oTmRoot = this.getTimingRootNode();
         if(oTmRoot) {
             oTmRoot.clearChildTnLst();
+            var oCTn = oTmRoot.cTn;
+            if(oCTn) {
+                oTmRoot.setCTn(oCTn.createDuplicate());
+                oCTn.setParent(null);
+            }
         }
         for(nSeq = 0; nSeq < aSequences.length; ++nSeq) {
             aCurSequence = aSequences[nSeq];
@@ -2792,6 +2834,42 @@
             }
         }
         return bHandle ? false : null;
+    };
+    CTiming.prototype.checkCorrect = function() {
+        var oRoot;
+        if(this.tnLst) {
+            var aList = this.tnLst.list;
+            if(aList.length !== 1) {
+                this.setTnLst(null);
+                this.setBldLst(null);
+                return;
+            }
+            else {
+                oRoot = aList[0];
+                var oAttr = oRoot.getAttributesObject();
+                if(!oAttr || oAttr.nodeType !== AscFormat.NODE_TYPE_TMROOT) {
+                    this.setTnLst(null);
+                    this.setBldLst(null);
+                    return;
+                } 
+            }
+            if(oRoot) {
+                var aToRemove = [];
+                oRoot.traverseTimeNodes(function(oTimeNode) {
+                    if(oTimeNode.getDepth() === 4) {
+                        if(!oTimeNode.isCorrect()) {
+                            if(oTimeNode.parent) {
+                                aToRemove.push(oTimeNode);
+                            }
+                        }
+                    }
+                });
+                for(var nEffect = aToRemove.length - 1; nEffect > -1; --nEffect) {
+                    var oEffect = aToRemove[nEffect];
+                    oEffect.parent.onRemoveChild(oEffect);
+                }
+            }
+        }
     };
 
     changesFactory[AscDFH.historyitem_CommonTimingListAdd] = CChangeContent;
@@ -3891,6 +3969,9 @@
         if(!oTargetObject) {
             return;
         }
+        if(this.checkRemoveAtEnd()) {
+            return;
+        }
         var aAttributes = this.getAttributes();
         if(aAttributes.length < 1) {
             return;
@@ -4056,7 +4137,11 @@
             "ppt_x": oAttributes && AscFormat.isRealNumber(oAttributes["ppt_x"]) ? oAttributes["ppt_x"] : this.getOrigAttrVal("ppt_x"),
             "ppt_y": oAttributes && AscFormat.isRealNumber(oAttributes["ppt_y"]) ? oAttributes["ppt_y"] : this.getOrigAttrVal("ppt_y"),
             "ppt_w": oAttributes && AscFormat.isRealNumber(oAttributes["ppt_w"]) ? oAttributes["ppt_w"] : this.getOrigAttrVal("ppt_w"),
-            "ppt_h": oAttributes && AscFormat.isRealNumber(oAttributes["ppt_h"]) ? oAttributes["ppt_h"] : this.getOrigAttrVal("ppt_h")
+            "ppt_h": oAttributes && AscFormat.isRealNumber(oAttributes["ppt_h"]) ? oAttributes["ppt_h"] : this.getOrigAttrVal("ppt_h"),
+            "ppt_x_no_attr": !(oAttributes && AscFormat.isRealNumber(oAttributes["ppt_x"])),
+            "ppt_y_no_attr": !(oAttributes && AscFormat.isRealNumber(oAttributes["ppt_y"])),
+            "ppt_w_no_attr": !(oAttributes && AscFormat.isRealNumber(oAttributes["ppt_w"])),
+            "ppt_h_no_attr": !(oAttributes && AscFormat.isRealNumber(oAttributes["ppt_h"]))
         }
     };
     CAnim.prototype.getFormulaResult = function(sFormula, oVarMap) {
@@ -4986,11 +5071,6 @@
             oAttrObject.setRepeatCount("indefinite");
         }
         if(v === AscFormat.untilNextClick) {
-            if(oAttrObject && oAttrObject.endCondLst) {
-                oAttrObject.setEndCondLst(null);
-            }
-        }
-        else {
             if(!oAttrObject.endCondLst) {
                 oAttrObject.setEndCondLst(new CCondLst()) ;
             }
@@ -5002,6 +5082,11 @@
             var oTgt = new CTgtEl();
             oCond.setTgtEl(oTgt);
             oAttrObject.endCondLst.push(oCond);
+        }
+        else {
+            if(oAttrObject && oAttrObject.endCondLst) {
+                oAttrObject.setEndCondLst(null);
+            }
         }
     };
     CCTn.prototype.changeRewind = function(v) {
@@ -6305,6 +6390,9 @@
         if(!oTargetObject) {
             return;
         }
+        if(this.checkRemoveAtEnd()) {
+            return;
+        }
         var aAttributes = this.getAttributes();
         if(aAttributes.length < 1) {
             return;
@@ -6523,6 +6611,9 @@
     };
     CAnimEffect.prototype.calculateAttributes = function(nElapsedTime, oAttributes) {
         if(!this.filter) {
+            return;
+        }
+        if(this.checkRemoveAtEnd()) {
             return;
         }
         var fRelTime = this.getRelativeTime(nElapsedTime);
@@ -6815,6 +6906,9 @@
     CAnimMotion.prototype.calculateAttributes = function(nElapsedTime, oAttributes) {
         var oTargetObject = this.getTargetObject();
         if(!oTargetObject) {
+            return;
+        }
+        if(this.checkRemoveAtEnd()) {
             return;
         }
         var nOrigin = this.getOrigin();
@@ -7308,6 +7402,9 @@
         if(!oTargetObject) {
             return;
         }
+        if(this.checkRemoveAtEnd()) {
+            return;
+        }
         var fRelTime = this.getRelativeTime(nElapsedTime);
         var dR = null;
         if(this.to && this.from) {
@@ -7473,6 +7570,9 @@
     CAnimScale.prototype.calculateAttributes = function(nElapsedTime, oAttributes) {
         var oTargetObject = this.getTargetObject();
         if(!oTargetObject) {
+            return;
+        }
+        if(this.checkRemoveAtEnd()) {
             return;
         }
         var fRelTime = this.getRelativeTime(nElapsedTime);
@@ -7850,6 +7950,20 @@
         }
         return oRect.hit(x, y);
     };
+    CTimeNodeContainer.prototype.isCorrect = function() {
+        if(!this.cTn) {
+            return false;
+        }
+        var sObjectId = this.getObjectId();
+        var oObj = AscCommon.g_oTableId.Get_ById(sObjectId);
+        if(!oObj) {
+            return false;
+        }
+        if(!oObj.checkCorrect() || !(oObj.Is_UseInDocument && oObj.Is_UseInDocument())) {
+            return false;
+        }
+        return true;
+    };
     var ICON_TRIGGER = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTEiIGhlaWdodD0iMTQiIHZpZXdCb3g9IjAgMCAxMSAxNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTEgMEg1TDAgN0g0TDAgMTRMMTEgNUg2TDExIDBaIiBmaWxsPSIjNDQ0NDQ0Ii8+PC9zdmc+";
     
     CTimeNodeContainer.prototype.internalDrawEffectLabel = function(oGraphics) {
@@ -8158,6 +8272,15 @@
         }, this, []);
     };
     CTimeNodeContainer.prototype["asc_putDelay"] = CTimeNodeContainer.prototype.asc_putDelay;
+    CTimeNodeContainer.prototype.getUndefiniteDuration = function() {
+        if(this.cTn.endCondLst && this.cTn.endCondLst) {
+            var aCond = this.cTn.endCondLst.list;
+            if(aCond[0] &&  aCond[0].evt === COND_EVNT_ON_NEXT ) {
+                return AscFormat.untilNextClick;
+            }
+        }
+        return AscFormat.untilNextSlide;
+    };
     CTimeNodeContainer.prototype.asc_getDuration = function() {
         var nDur = 0;
         if(Array.isArray(this.merged) && this.merged.length > 0) {
@@ -8175,13 +8298,7 @@
         }
         var oTime = new CAnimationTime(nDur);
         if(oTime.isIndefinite()) {
-            if(this.cTn.endCondLst && this.cTn.endCondLst) {
-                var aCond = this.cTn.endCondLst.list;
-                if(aCond[0] &&  aCond[0].evt === COND_EVNT_ON_NEXT ) {
-                    return AscFormat.untilNextSlide;
-                }
-            }
-            return AscFormat.untilNextClick;
+            return this.getUndefiniteDuration();
         }
         else {
             return nDur;
@@ -8211,13 +8328,7 @@
             return oRepeatCount.val;
         }
         if(oRepeatCount.isIndefinite()) {
-            if(this.cTn.endCondLst && this.cTn.endCondLst) {
-                var aCond = this.cTn.endCondLst.list;
-                if(aCond[0] &&  aCond[0].evt === COND_EVNT_ON_NEXT ) {
-                    return AscFormat.untilNextSlide;
-                }
-            }
-            return AscFormat.untilNextClick;
+            return this.getUndefiniteDuration();
         }
         return 1000;
     };
@@ -8555,7 +8666,22 @@
                         }
                         else {
                             if(oThis.nextAc === NEXT_AC_SEEK) {
-                                oChild.freezeCallback(oPlayer);
+                                var bFreeze = true;
+                                oChild.traverseTimeNodes(function(oNode) {
+                                    if(!bFreeze) {
+                                        return
+                                    }
+                                    if(oNode.isAnimEffect()) {
+                                        if(oNode.asc_getRepeatCount() === AscFormat.untilNextSlide) {
+                                            bFreeze = false;
+                                        }
+                                    }
+                                })
+                                if(bFreeze) {
+                                    oPlayer.bDoNotRestart = true;
+                                    oChild.freezeCallback(oPlayer);
+                                    delete oPlayer.bDoNotRestart;
+                                }
                             }
                         }
                     }
@@ -8666,6 +8792,9 @@
         if(!this.to) {
             return;
         }
+        if(this.checkRemoveAtEnd()) {
+            return;
+        }
         this.setAttributesValue(oAttributes, this.to.getVal());
     };
     CSet.prototype.doesHideObject = function() {
@@ -8677,6 +8806,22 @@
             while(oParentNode = oCurNode.getParentTimeNode()) {
                 var oAttrObject = oParentNode.getAttributesObject();
                 if(AscFormat.PRESET_CLASS_ENTR === oAttrObject.presetClass) {
+                    return true;
+                }
+                oCurNode = oParentNode;
+            }
+        }
+        return false;
+    };
+    CSet.prototype.doesShowObject = function() {
+        var oAttributes = {};
+        this.setAttributesValue(oAttributes, this.to.getVal());
+        if(oAttributes["style.visibility"] === "hidden") {
+            var oCurNode = this;
+            var oParentNode;
+            while(oParentNode = oCurNode.getParentTimeNode()) {
+                var oAttrObject = oParentNode.getAttributesObject();
+                if(AscFormat.PRESET_CLASS_EXIT === oAttrObject.presetClass) {
                     return true;
                 }
                 oCurNode = oParentNode;
@@ -10462,6 +10607,7 @@
         this.lastFrameSandwiches = {};
         this.texturesCache = new CTexturesCache(this);
         this.hiddenObjects = {};
+        this.showObjects = {};
         this.collectHiddenObjects();
     }
     CAnimationDrawer.prototype.clearSandwiches = function() {
@@ -10606,10 +10752,18 @@
         }
         return false;
     };
+    CAnimationDrawer.prototype.checkShowObject = function(oTimeNode) {
+        if(oTimeNode.doesShowObject()) {
+            var sId = oTimeNode.getTargetObjectId();
+            if(sId !== null) {
+                this.showObjects[sId] = oTimeNode;
+            }
+        }
+    };
     CAnimationDrawer.prototype.checkHiddenObject = function(oTimeNode) {
         if(oTimeNode.doesHideObject()) {
             var sId = oTimeNode.getTargetObjectId();
-            if(sId !== null) {
+            if(sId !== null && !this.showObjects[sId]) {
                 this.hiddenObjects[oTimeNode.getTargetObjectId()] = oTimeNode;
             }
         }
@@ -10617,14 +10771,18 @@
     CAnimationDrawer.prototype.collectHiddenObjects = function() {
         var aTimings = this.player.timings;
         var oThis = this;
+        this.showObjects = {};
+        this.hiddenObjects = {};
         for(var nTiming = 0; nTiming < aTimings.length; ++nTiming) {
             var oRoot = aTimings[nTiming].getTimingRootNode();
             if(oRoot) {
                 oRoot.traverseTimeNodes(function(oTimeNode) {
+                    oThis.checkShowObject(oTimeNode);
                     oThis.checkHiddenObject(oTimeNode);
                 });
             }
         }
+        this.showObjects = {};
     };
     CAnimationDrawer.prototype.clearObjectTexture = function(sId) {
         this.texturesCache.removeTexture(sId);
@@ -10674,6 +10832,8 @@
         if(!bIsPaused) {
             this.updateTimingList();
             this.scheduleNodesStart();
+            this.animationDrawer.clearTextureCache();
+            this.animationDrawer.collectHiddenObjects();
         }
         if(this.isMainSequenceFinished()) {
             this.onMainSeqFinished();
@@ -10836,6 +10996,9 @@
     };
     CAnimationPlayer.prototype.clearObjectTexture = function(sId) {
         this.animationDrawer.clearObjectTexture(sId);
+    };
+    CAnimationPlayer.prototype.isDrawingHidden = function(sId) {
+        return this.animationDrawer.isDrawingHidden(sId);
     };
 
 
@@ -11142,7 +11305,6 @@
         this.checkOnAdd();
     };
     CAnimSandwich.prototype.checkOnAdd = function() {
-        //TODO: sort
     };
     CAnimSandwich.prototype.getDrawing = function() {
         return AscCommon.g_oTableId.Get_ById(this.drawingId);
@@ -11151,6 +11313,51 @@
         if(this.cachedAttributes) {
             return this.cachedAttributes;
         }
+
+        
+        var oEntrEffect = null, oExitEffect = null;
+        for(var nAnim = 0; nAnim < this.animations.length; ++nAnim) {
+            var oAnim = this.animations[nAnim];
+            var oEffect = oAnim.getParentTimeNode();
+            if(oEffect.isAnimEffect()) {
+                var oAttrObject = oEffect.getAttributesObject();
+                if(oAttrObject && AscFormat.PRESET_CLASS_EXIT === oAttrObject.presetClass) {
+                    oExitEffect = oEffect;
+                }
+                if(oAttrObject && AscFormat.PRESET_CLASS_ENTR === oAttrObject.presetClass) {
+                    oEntrEffect = oEffect;
+                }
+            }
+        }
+        var oEffectToDelete = null;
+        if(oEntrEffect && oExitEffect) {
+            if(oEntrEffect.isAtEnd() && !oExitEffect.isAtEnd()) {
+                oEffectToDelete = oEntrEffect;
+            }
+            if(!oEntrEffect.isAtEnd() && oExitEffect.isAtEnd()) {
+                oEffectToDelete = oExitEffect;
+            }
+            
+            if(oEntrEffect.isAtEnd() && oExitEffect.isAtEnd()) {
+                if(oEntrEffect.startTick < oExitEffect.startTick) {
+                    oEffectToDelete = oEntrEffect;
+                }
+                else {
+                    oEffectToDelete = oExitEffect;
+                }
+            }
+        }
+        if(oEffectToDelete) {
+            for(var nAnim = this.animations.length - 1; nAnim > -1; --nAnim) {
+                var oAnim = this.animations[nAnim];
+                var oEffect = oAnim.getParentTimeNode();
+                if(oEffect === oEffectToDelete) {
+                    this.animations.splice(nAnim, 1);
+                }
+            }
+        }
+
+
         this.animations.sort(function(oAnim1, oAnim2){
             if(AscFormat.isRealNumber(oAnim1.startTick) && AscFormat.isRealNumber(oAnim2.startTick)) {
                 return oAnim1.startTick - oAnim2.startTick;
@@ -11367,8 +11574,24 @@
         if(!oLastToken) {
             return null;
         }
+        if(this.checkReplaceVar(oVarMap)) {
+            this.replaceVar(oVarMap);
+        }
         oLastToken.calculate(oVarMap);
         return oLastToken.result;
+    };
+    CParseQueue.prototype.checkReplaceVar = function(oVarMap) {
+        for(var nToken = 0; nToken < this.queue.length; ++nToken) {
+            if(this.queue[nToken].checkReplaceVar(oVarMap)) {
+                return true;
+            }
+        }
+        return false;
+    };
+    CParseQueue.prototype.replaceVar = function(oVarMap) {
+        for(var nToken = 0; nToken < this.queue.length; ++nToken) {
+            this.queue[nToken].replaceVar(oVarMap);
+        }
     };
 
 
@@ -11425,6 +11648,11 @@
     CTokenBase.prototype.isOperator = function() {
         return false;
     };
+    CTokenBase.prototype.checkReplaceVar = function(oVarMap) {
+        return false;
+    };
+    CTokenBase.prototype.replaceVar = function(oVarMap) {
+    };
 
     function CConstantToken(oQueue, sValue) {
         CTokenBase.call(this, oQueue);
@@ -11449,6 +11677,17 @@
     };
     CVariableToken.prototype.setName = function(sName) {
         this.name = sName;
+    };
+    CVariableToken.prototype.checkReplaceVar = function(oVarMap) {
+        if(oVarMap[this.name + "_no_attr"] && AscFormat.isRealNumber(oVarMap["#" + this.name])) {
+            return true;
+        }
+        return false;
+    };
+    CVariableToken.prototype.replaceVar = function(oVarMap) {
+        if(AscFormat.isRealNumber(oVarMap["#" + this.name])) {
+            this.name = "#" + this.name;
+        }
     };
     function CFunctionToken(oQueue, sName) {
         CTokenBase.call(this, oQueue);

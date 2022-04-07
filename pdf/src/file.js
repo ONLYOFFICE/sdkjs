@@ -199,6 +199,10 @@
     {
         return this.nativeFile ? this.nativeFile["getStructure"]() : [];
     };
+    CFile.prototype.getDocumentInfo = function()
+    {
+        return this.nativeFile ? this.nativeFile["getDocumentInfo"]() : null;
+    };
 
     CFile.prototype.getPage = function(pageIndex, width, height, isNoUseCacheManager, backgroundColor)
     {

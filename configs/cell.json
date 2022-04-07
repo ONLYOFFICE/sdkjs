@@ -21,6 +21,7 @@
 			"cell/utils/utils.js",
 			"cell/view/HandlerList.js",
 			"common/CollaborativeEditingBase.js",
+			"cell/model/DrawingObjects/GlobalCounters.js",
 			"cell/model/CollaborativeEditing.js",
 			"common/macros.js",
 			"common/apiBase.js",
@@ -33,8 +34,9 @@
 		"common": [
 			"common/api/actionOnTimer.js",
 			"common/api/tableStylesPreviewGenerator.js",
+			"common/api/spellCheckSettings.js",
 
-			"common/downloaderfiles.js",
+		  "common/downloaderfiles.js",
 			"common/NumFormat.js",
 			"common/SerializeChart.js",
 
@@ -156,7 +158,6 @@
 			"cell/model/DrawingObjects/Graphics.js",
 			"word/Drawing/ShapeDrawer.js",
 			"cell/model/DrawingObjects/DrawingDocument.js",
-			"cell/model/DrawingObjects/GlobalCounters.js",
 			"cell/model/DrawingObjects/Format/ShapePrototype.js",
 			"cell/model/DrawingObjects/Format/ImagePrototype.js",
 			"cell/model/DrawingObjects/Format/GroupPrototype.js",

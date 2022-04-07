@@ -46,6 +46,12 @@ Asc['asc_docs_api'].prototype.asc_setAdvancedOptions = function(idOption, option
 		return;
 	}
 
+	if (this.isUseNativeViewer && this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
+	{
+		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.open(null, option.asc_getPassword());
+		return;
+	}
+
 	if (window["Asc"].c_oAscAdvancedOptionsID.TXT === idOption) {
 	    var _param = "";
         _param += ("<m_nCsvTxtEncoding>" + option.asc_getCodePage() + "</m_nCsvTxtEncoding>");

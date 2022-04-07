@@ -1884,7 +1884,7 @@ Paragraph.prototype.RecalculateMinMaxContentWidth = function(isRotated)
 Paragraph.prototype.Draw = function(CurPage, pGraphics)
 {
 	// Параграф начинается с новой страницы
-	if (this.Pages[CurPage].EndLine < 0)
+	if (!this.Pages[CurPage] || this.Pages[CurPage].EndLine < 0)
 		return;
 
 	if (pGraphics.Start_Command)
@@ -11466,7 +11466,10 @@ Paragraph.prototype.CollectDocumentStatistics = function(Stats)
 };
 Paragraph.prototype.Get_ParentTextTransform = function()
 {
-	return this.Parent.Get_ParentTextTransform();
+	if (this.Parent)
+		return this.Parent.Get_ParentTextTransform();
+
+	return null;
 };
 Paragraph.prototype.Get_ParentTextInvertTransform = function()
 {
@@ -12704,15 +12707,11 @@ Paragraph.prototype.Split = function(oNewParagraph, oContentPos, isNoDuplicate)
 		this.Content[nCurPos].SplitNoDuplicate(oContentPos, 1, oNewParagraph);
 
 		var arrNewContent = this.Content.slice(nCurPos + 1);
-		this.RemoveFromContent(nCurPos + 1, this.Content.length - nCurPos - 1, false);
-
-		// В старый параграф добавим ран с концом параграфа
-		var oEndRun = new ParaRun(this);
-		oEndRun.AddToContent(0, new ParaEnd());
-		this.AddToContent(this.Content.length, oEndRun);
-
 		oNewParagraph.ConcatContent(arrNewContent);
 		oNewParagraph.CorrectContent();
+
+		this.RemoveFromContent(nCurPos + 1, this.Content.length - nCurPos - 1, false);
+		this.CheckParaEnd();
 	}
 	else
 	{
@@ -12733,19 +12732,15 @@ Paragraph.prototype.Split = function(oNewParagraph, oContentPos, isNoDuplicate)
 		//    добавляем в начало нового параграфа.
 
 		var NewContent = this.Content.slice(nCurPos + 1);
-		this.Internal_Content_Remove2(nCurPos + 1, this.Content.length - nCurPos - 1);
-
-		// В старый параграф добавим ран с концом параграфа
-		var EndRun = new ParaRun(this);
-		EndRun.Add_ToContent(0, new ParaEnd());
-
-		this.Internal_Content_Add(this.Content.length, EndRun);
 
 		// Очищаем новый параграф и добавляем в него Right элемент и NewContent
 		oNewParagraph.Internal_Content_Remove2(0, oNewParagraph.Content.length);
 		oNewParagraph.ConcatContent(NewContent);
 		oNewParagraph.Internal_Content_Add(0, NewElement);
 		oNewParagraph.CorrectContent();
+
+		this.Internal_Content_Remove2(nCurPos + 1, this.Content.length - nCurPos - 1);
+		this.CheckParaEnd();
 	}
 
 	// Копируем все настройки в новый параграф. Делаем это после того как определили контент параграфов.
@@ -13718,6 +13713,8 @@ Paragraph.prototype.ContinueSpellCheck = function(isForceFullCheck)
 		return true;
 	}
 
+	this.SpellChecker.UpdateSettings(oLogicDocument.GetSpellCheckManager().GetSettings());
+
 	if (!this.private_CollectSpellCheckerElements(isForceFullCheck))
 		return false;
 
@@ -13884,6 +13881,11 @@ Paragraph.prototype.IgnoreMisspelledWord = function(oElement)
 	}
 };
 //----------------------------------------------------------------------------------------------------------------------
+Paragraph.prototype.CanAddSectionPr = function()
+{
+	let oParent = this.Parent;
+	return (oParent && (oParent.GetTopDocumentContent() instanceof CDocument) && !oParent.IsTableCellContent() && this.IsUseInDocument());
+};
 Paragraph.prototype.Get_SectionPr = function()
 {
 	return this.SectPr;
@@ -16463,6 +16465,11 @@ Paragraph.prototype.IsCondensedSpaces = function()
 
 	return false;
 };
+Paragraph.prototype.IsBalanceSingleByteDoubleByteWidth = function()
+{
+	let oLogicDocument = this.GetLogicDocument();
+	return (oLogicDocument && oLogicDocument.IsDocumentEditor() ? oLogicDocument.IsBalanceSingleByteDoubleByteWidth() : false);
+};
 /**
  * Выделяем слово, около которого стоит курсор
  * @returns {boolean}
@@ -18448,6 +18455,8 @@ function CParagraphDrawStateLines()
     this.VisitedHyperlink = false;
     this.Hyperlink = false;
 
+    this.UlTrailSpace = false;
+
     this.Strikeout  = new CParaDrawingRangeLines();
     this.DStrikeout = new CParaDrawingRangeLines();
     this.Underline  = new CParaDrawingRangeLines();
@@ -18482,6 +18491,13 @@ CParagraphDrawStateLines.prototype =
 
 		this.CurPos   = new CParagraphContentPos();
 		this.CurDepth = 0;
+
+
+		let oLogicDocument = this.GetLogicDocument();
+		if (oLogicDocument && oLogicDocument.IsDocumentEditor())
+		{
+			this.UlTrailSpace = oLogicDocument.IsUnderlineTrailSpace();
+		}
     },
 
     Reset_Line : function(Page, Line, Baseline, UnderlineOffset)
@@ -18536,6 +18552,10 @@ CParagraphDrawStateLines.prototype.GetSpellingErrorsCounter = function()
 CParagraphDrawStateLines.prototype.GetLogicDocument = function()
 {
 	return this.Paragraph.GetLogicDocument();
+};
+CParagraphDrawStateLines.prototype.IsUnderlineTrailSpace = function()
+{
+	return this.UlTrailSpace;
 };
 
 var g_oPDSH = new CParagraphDrawStateHighlights();

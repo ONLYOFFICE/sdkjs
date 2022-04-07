@@ -124,6 +124,7 @@ CGraphicObjects.prototype =
     getConnectorsForCheck: DrawingObjectsController.prototype.getConnectorsForCheck,
     getConnectorsForCheck2: DrawingObjectsController.prototype.getConnectorsForCheck2,
     checkDrawingHyperlinkAndMacro: DrawingObjectsController.prototype.checkDrawingHyperlinkAndMacro,
+    canEditTableOleObject: DrawingObjectsController.prototype.canEditTableOleObject,
     canEditGeometry: DrawingObjectsController.prototype.canEditGeometry,
     startEditGeometry: DrawingObjectsController.prototype.startEditGeometry,
 
@@ -294,6 +295,7 @@ CGraphicObjects.prototype =
     createImage: DrawingObjectsController.prototype.createImage,
     createOleObject: DrawingObjectsController.prototype.createOleObject,
     createTextArt: DrawingObjectsController.prototype.createTextArt,
+    getOleObject: DrawingObjectsController.prototype.getOleObject,
     getChartObject: DrawingObjectsController.prototype.getChartObject,
     getChartSpace2: DrawingObjectsController.prototype.getChartSpace2,
     CreateDocContent: DrawingObjectsController.prototype.CreateDocContent,
@@ -1576,25 +1578,31 @@ CGraphicObjects.prototype =
 
     handleOleObjectDoubleClick: function(drawing, oleObject, e, x, y, pageIndex)
     {
-		if(drawing && drawing.ParaMath){
-			editor.sync_OnConvertEquationToMath(drawing);
-		}
-        else if(false === this.document.Document_Is_SelectionLocked(changestype_Drawing_Props) || !this.document.CanEdit())
-        {
-            var pluginData = new Asc.CPluginData();
-            pluginData.setAttribute("data", oleObject.m_sData);
-            pluginData.setAttribute("guid", oleObject.m_sApplicationId);
-            pluginData.setAttribute("width", oleObject.extX);
-            pluginData.setAttribute("height", oleObject.extY);
-            pluginData.setAttribute("widthPix", oleObject.m_nPixWidth);
-            pluginData.setAttribute("heightPix", oleObject.m_nPixHeight);
-            pluginData.setAttribute("objectId", oleObject.Id);
-            editor.asc_pluginRun(oleObject.m_sApplicationId, 0, pluginData);
+        if (false === this.document.Document_Is_SelectionLocked(changestype_Drawing_Props) || !this.document.CanEdit()) {
+            if(drawing && drawing.ParaMath){
+                editor.sync_OnConvertEquationToMath(drawing);
+            }
+            else if (oleObject.canEditTableOleObject())
+            {
+                editor.asc_doubleClickOnTableOleObject(oleObject);
+            }
+            else
+            {
+                var pluginData = new Asc.CPluginData();
+                pluginData.setAttribute("data", oleObject.m_sData);
+                pluginData.setAttribute("guid", oleObject.m_sApplicationId);
+                pluginData.setAttribute("width", oleObject.extX);
+                pluginData.setAttribute("height", oleObject.extY);
+                pluginData.setAttribute("widthPix", oleObject.m_nPixWidth);
+                pluginData.setAttribute("heightPix", oleObject.m_nPixHeight);
+                pluginData.setAttribute("objectId", oleObject.Id);
+                editor.asc_pluginRun(oleObject.m_sApplicationId, 0, pluginData);
+            }
+            this.clearTrackObjects();
+            this.clearPreTrackObjects();
+            this.changeCurrentState(new AscFormat.NullState(this));
+            this.document.OnMouseUp(e, x, y, pageIndex);
         }
-        this.clearTrackObjects();
-        this.clearPreTrackObjects();
-        this.changeCurrentState(new AscFormat.NullState(this));
-        this.document.OnMouseUp(e, x, y, pageIndex);
     },
 
     startEditCurrentOleObject: function(){
@@ -2996,7 +3004,7 @@ CGraphicObjects.prototype =
                     }));
                     drawing.Set_XYForAdd(fPosX, fPosY, nearest_pos, page_num);
 
-                    sp.convertFromSmartArt();
+                    sp.convertFromSmartArt(true);
                     aDrawings.push(drawing);
                 }
                 for(j = 0; j < aDrawings.length; ++j)

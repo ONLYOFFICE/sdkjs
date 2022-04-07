@@ -221,6 +221,11 @@
 	 * */
 
 	/**
+	 * Axie position in chart.
+	 * @typedef {("top" | "bottom" | "right" | "left")} AxiePos
+	 */
+
+	/**
 	 * Class representing a base class for color types.
 	 * @constructor
 	 */
@@ -798,6 +803,7 @@
 	ApiWorksheet.prototype.GetCells = function (row, col) {
 		if (row) row--;
 		if (typeof col !== "undefined" && typeof row !== "undefined") {
+			if (col) col--;
 			return new ApiRange(this.worksheet.getRange3(row, col, row, col));
 		} else if (typeof row !== "undefined") {
 			var r = (row) ?  (row / AscCommon.gc_nMaxCol0) >> 0 : row;
@@ -2721,7 +2727,9 @@
 			return null;
 		}
 		var ws = this.range.worksheet.workbook.oApi.wb.getWorksheet(this.range.worksheet.getIndex());
-		return new ApiComment(ws.cellCommentator.getComment(this.range.bbox.c1, this.range.bbox.r1, false), ws);
+		var comment = ws.cellCommentator.getComment(this.range.bbox.c1, this.range.bbox.r1, false);
+		var res = comment ? new ApiComment(comment, ws) : null;
+		return res;
 	};
 	Object.defineProperty(ApiRange.prototype, "Comments", {
 		get: function () {
@@ -3056,6 +3064,26 @@
 		this.Drawing.setDrawingBaseCoords(nFromCol, nColOffset/36000.0, nFromRow, nRowOffset/36000.0, 0, 0, 0, 0, 0, 0, extX, extY);
 	};
 
+	/**
+	 * Gets the width of drawing. 
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @returns {EMU}
+	 */
+	ApiDrawing.prototype.GetWidth = function()
+	{
+		return private_MM2EMU(this.Drawing.GetWidth());
+	};
+	/**
+	 * Gets the height of drawing. 
+	 * @memberof ApiDrawing
+	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @returns {EMU}
+	 */
+	ApiDrawing.prototype.GetHeight = function()
+	{
+		return private_MM2EMU(this.Drawing.GetHeight());
+	};
 	/**
      * Gets the lock type of drawing.
      * @typeofeditors ["CPE"]
@@ -3788,6 +3816,39 @@
 		return this.Chart.SetLegendOutLine(oStroke.Ln);
 	};
 
+	/**
+	 * Sets number format to value axie.
+	 * Used for values axies.
+	 * @memberof ApiChart
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @param {NumFormat | String} sFormat - number format (can be custom format).
+	 * @param {AxiePos} - axie position.
+	 * @returns {boolean}
+	 */
+	ApiChart.prototype.SetAxieNumFormat = function(sFormat, sAxiePos)
+	{
+		var nAxiePos = -1;
+		switch (sAxiePos)
+		{
+			case "bottom":
+				nAxiePos = AscFormat.AX_POS_B;
+				break;
+			case "left":
+				nAxiePos = AscFormat.AX_POS_L;
+				break;
+			case "right":
+				nAxiePos = AscFormat.AX_POS_R;
+				break;
+			case "top":
+				nAxiePos = AscFormat.AX_POS_B;
+				break;
+			default:
+				return false;
+		}
+
+		return this.Chart.SetAxieNumFormat(sFormat, nAxiePos);
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiColor
@@ -4130,6 +4191,8 @@
 	ApiDrawing.prototype["GetClassType"]               =  ApiDrawing.prototype.GetClassType;
 	ApiDrawing.prototype["SetSize"]                    =  ApiDrawing.prototype.SetSize;
 	ApiDrawing.prototype["SetPosition"]                =  ApiDrawing.prototype.SetPosition;
+	ApiDrawing.prototype["GetWidth"]                   =  ApiDrawing.prototype.GetWidth;
+	ApiDrawing.prototype["GetHeight"]                  =  ApiDrawing.prototype.GetHeight;
 	ApiDrawing.prototype["GetLockValue"]               =  ApiDrawing.prototype.GetLockValue;
 	ApiDrawing.prototype["SetLockValue"]               =  ApiDrawing.prototype.SetLockValue;
 
@@ -4185,6 +4248,7 @@
 	ApiChart.prototype["SetTitleOutLine"]             =  ApiChart.prototype.SetTitleOutLine;
 	ApiChart.prototype["SetLegendFill"]               =  ApiChart.prototype.SetLegendFill;
 	ApiChart.prototype["SetLegendOutLine"]            =  ApiChart.prototype.SetLegendOutLine;
+	ApiChart.prototype["SetAxieNumFormat"]            =  ApiChart.prototype.SetAxieNumFormat;
 
 	ApiColor.prototype["GetClassType"]                 =  ApiColor.prototype.GetClassType;
 
@@ -4293,7 +4357,11 @@
 
 		return true;
 	}
-
+	function private_MM2EMU(mm)
+	{
+		return mm * 36000.0;
+	}
+	
 	function private_GetDrawingLockType(sType)
 	{
 		var nLockType = -1;

@@ -3626,7 +3626,7 @@ function CDemonstrationManager(htmlpage)
         var nShowTime = 3000;
         if(oThis.LastMoveTime !== null && (new Date()).getTime() - oThis.LastMoveTime > nShowTime)
         {
-            if(oThis.Canvas.style.cursor !== "none")
+            if(oThis.Canvas.style.cursor !== "none" && oThis.Canvas.style.cursor !== "pointer")
             {
                 oThis.Canvas.style.cursor = "none";
             }

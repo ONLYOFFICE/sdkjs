@@ -40,6 +40,7 @@
     // imports
 
     var InitClass = AscFormat.InitClass;
+    var InitClassWithoutType = AscFormat.InitClassWithoutType;
     var CBaseFormatObject = AscFormat.CBaseFormatObject;
     var oHistory = AscCommon.History;
     var CChangeBool = AscDFH.CChangesDrawingsBool;
@@ -277,8 +278,6 @@
     var Constr_type_wOff = 62;
 
     var kForInsFitFontSize = 71.12 / 360;
-
-    var ptToMm = 2.834645669291;
 
     var LayoutShapeType_outputShapeType_conn = 0;
     var LayoutShapeType_outputShapeType_none = 1;
@@ -1707,6 +1706,11 @@
       this.setParentToChild(oPr);
     }
 
+    Point.prototype.setPhldrT = function(pr) {
+      var prSet = this.getPrSet();
+      prSet && prSet.setPhldrT(pr);
+    }
+
     Point.prototype.getCxnId = function () {
       return this.cxnId;
     }
@@ -1740,6 +1744,16 @@
       if (!this.spPr) {
         this.setSpPr(new AscFormat.CSpPr());
       }
+    }
+
+    Point.prototype.changeFlipH = function (bFlipH) {
+      var prSet = this.getPrSet();
+      prSet && prSet.setCustFlipHor(bFlipH);
+    }
+
+    Point.prototype.changeFlipV = function (bFlipV) {
+      var prSet = this.getPrSet();
+      prSet && prSet.setCustFlipVert(bFlipV);
     }
 
     Point.prototype.resetUniFill = function () {
@@ -1842,12 +1856,19 @@
       return this.prSet && this.prSet.presStyleLbl;
     };
 
+    Point.prototype.getCustAng = function () {
+      var prSet = this.getPrSet();
+      if (prSet) {
+        return prSet.getCustAng();
+      }
+    };
+
 
 
     changesFactory[AscDFH.historyitem_PrSetCoherent3DOff] = CChangeBool;
     changesFactory[AscDFH.historyitem_PrSetCsCatId] = CChangeString;
     changesFactory[AscDFH.historyitem_PrSetCsTypeId] = CChangeString;
-    changesFactory[AscDFH.historyitem_PrSetCustAng] = CChangeLong;
+    changesFactory[AscDFH.historyitem_PrSetCustAng] = CChangeDouble2;
     changesFactory[AscDFH.historyitem_PrSetCustFlipHor] = CChangeBool;
     changesFactory[AscDFH.historyitem_PrSetCustFlipVert] = CChangeBool;
     changesFactory[AscDFH.historyitem_PrSetCustLinFactNeighborX] = CChangeDouble2;
@@ -2019,7 +2040,7 @@
     }
 
     PrSet.prototype.setCustAng = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PrSetCustAng, this.getCustAng(), pr));
+      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustAng, this.getCustAng(), pr));
       this.custAng = pr;
     }
 
@@ -2315,7 +2336,7 @@
       pWriter._WriteBool2(1, this.coherent3DOff);
       pWriter._WriteString2(2, this.csCatId);
       pWriter._WriteString2(3, this.csTypeId);
-      pWriter._WriteInt2(4, this.custAng ? this.custAng / AscFormat.cToRad : null);
+      pWriter._WriteInt2(4, this.custAng ? (this.custAng / AscFormat.cToRad + 0.5) >> 0 : null);
       pWriter._WriteBool2(5, this.custFlipHor);
       pWriter._WriteBool2(6, this.custFlipVert);
       pWriter._WriteInt2(7, this.custLinFactNeighborX ? this.custLinFactNeighborX * 100000 : null);
@@ -10064,7 +10085,7 @@
         return defaultColors[styleLbl];
       }
     }
-    
+
     SmartArt.prototype.getDefaultTxColorFromPoint = function (point) {
       var currentDefaultColors = this.getDefaultColorsForPoint(point);
       if (currentDefaultColors) {
@@ -10074,7 +10095,7 @@
         }
       }
     }
-    
+
     SmartArt.prototype.getSmartArtDefaultTxFill = function (shape) {
       var shapePoint = shape && shape.getSmartArtShapePoint();
       var defaultTxColorFromShape = shapePoint && this.getDefaultTxColorFromPoint(shapePoint);
@@ -10232,6 +10253,7 @@
           if (point.prSet && point.prSet.loTypeId) {
             var typeSplit = point.prSet.loTypeId.split('/');
             type = typeSplit[typeSplit.length - 1];
+            type = type.split('#')[0];
           }
         }
       });
@@ -10945,6 +10967,15 @@
     {
       var copy = new SmartArt();
       this.copy2(copy, oPr);
+      var drawing = copy.getDrawing();
+      if (drawing) {
+        for (var i = 0; i < drawing.spTree.length; i += 1) {
+          var obj = drawing.spTree[i];
+          if (obj.getObjectType() === AscDFH.historyitem_type_Shape) {
+            obj.copyTextInfoFromShapeToPoint();
+          }
+        }
+      }
       return copy;
     };
     SmartArt.prototype.copy2 = function(copy, oPr)
@@ -11559,6 +11590,810 @@
       }
     }
 
+    // Акцентируемый рисунок
+    function SmartArtAccentedPicture() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtAccentedPicture, SmartArt);
+
+    // Баланс
+    function SmartArtBalance1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBalance1, SmartArt);
+
+    // Блоки рисунков с названиями
+    function SmartArtTitledPictureBlocks() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtTitledPictureBlocks, SmartArt);
+
+    // Блоки со смещенными рисунками
+    function SmartArtPictureAccentBlocks() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPictureAccentBlocks, SmartArt);
+    // Блочный цикл
+    function SmartArtCycle5() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCycle5, SmartArt);
+
+    // Венна в столбик
+    function SmartArtVenn2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVenn2, SmartArt);
+
+    // Вертикальное уравнение
+    function SmartArtEquation2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtEquation2, SmartArt);
+
+    // Вертикальный блочный список
+    function SmartArtVList5() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVList5, SmartArt);
+
+    // Вертикальный ломаный процесс
+    function SmartArtBProcess4() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBProcess4, SmartArt);
+
+    // Вертикальный маркированный список
+    function SmartArtVList2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVList2, SmartArt);
+
+    // Вертикальный нелинейный список
+    function SmartArtVerticalCurvedList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVerticalCurvedList, SmartArt);
+
+    // Вертикальный процесс
+    function SmartArtProcess2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtProcess2, SmartArt);
+
+    // Вертикальный список
+    function SmartArtList1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtList1, SmartArt);
+
+    // Вертикальный список рисунков
+    function SmartArtVList4() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVList4, SmartArt);
+
+    // Вертикальный список с кругами
+    function SmartArtVerticalCircleList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVerticalCircleList, SmartArt);
+
+    // Вертикальный список со смещенными рисунками
+    function SmartArtVList3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVList3, SmartArt);
+
+    // Вертикальный список со стрелкой
+    function SmartArtVList6() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVList6, SmartArt);
+
+    // Вертикальный уголковый список
+    function SmartArtChevron2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtChevron2, SmartArt);
+
+    // Вертикальный уголковый список2
+    function SmartArtVerticalAccentList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVerticalAccentList, SmartArt);
+
+    // Вложенная целевая
+    function SmartArtTarget2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtTarget2, SmartArt);
+
+    // Воронка
+    function SmartArtFunnel1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtFunnel1, SmartArt);
+
+    // Восходящая стрелка
+    function SmartArtArrow2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtArrow2, SmartArt);
+
+    // Восходящая стрелка процесса
+    function SmartArtIncreasingArrowsProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtIncreasingArrowsProcess, SmartArt);
+
+    // Восходящий процесс
+    function SmartArtStepUpProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtStepUpProcess, SmartArt);
+
+    // Выноска с круглыми рисунками
+    function SmartArtCircularPictureCallout() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCircularPictureCallout, SmartArt);
+
+    // Горизонтальная иерархия
+    function SmartArtHierarchy2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHierarchy2, SmartArt);
+
+    // Горизонтальная иерархия с подписями
+    function SmartArtHierarchy5() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHierarchy5, SmartArt);
+
+    // Горизонтальная многоуровневая иерархия
+    function SmartArtHorizontalMultiLevelHierarchy() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHorizontalMultiLevelHierarchy, SmartArt);
+
+    // Горизонтальная организационная диаграмма
+    function SmartArtHorizontalOrganizationChart() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHorizontalOrganizationChart, SmartArt);
+
+    // Горизонтальный маркированный список
+    function SmartArtHList1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHList1, SmartArt);
+
+    // Горизонтальный список рисунков
+    function SmartArtPList2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPList2, SmartArt);
+
+    // Закрытый уголковый процесс
+    function SmartArtHChevron3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHChevron3, SmartArt);
+
+    // Иерархический список
+    function SmartArtHierarchy3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHierarchy3, SmartArt);
+
+    // Иерархия
+    function SmartArtHierarchy1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHierarchy1, SmartArt);
+
+    // Иерархия с круглыми рисунками
+    function SmartArtCirclePictureHierarchy() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCirclePictureHierarchy, SmartArt);
+
+    // Иерархия с подписями
+    function SmartArtHierarchy6() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHierarchy6, SmartArt);
+
+    // Инвертированная пирамида
+    function SmartArtPyramid3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPyramid3, SmartArt);
+
+    // Кластер шестиугольников
+    function SmartArtHexagonCluster() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHexagonCluster, SmartArt);
+
+    // Круг связей
+    function SmartArtCircleRelationship() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCircleRelationship, SmartArt);
+
+    // Круглая временная шкала
+    function SmartArtCircleAccentTimeline() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCircleAccentTimeline, SmartArt);
+
+    // Круглый ломаный процесс
+    function SmartArtBProcess2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBProcess2, SmartArt);
+
+    // Лента со стрелками
+    function SmartArtArrow6() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtArrow6, SmartArt);
+
+    // Линейная Венна
+    function SmartArtVenn3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVenn3, SmartArt);
+
+    // Линия рисунков
+    function SmartArtPictureLineup() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPictureLineup, SmartArt);
+
+    // Линия рисунков с названиями
+    function SmartArtTitlePictureLineup() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtTitlePictureLineup, SmartArt);
+
+    // Ломаный список рисунков с подписями
+    function SmartArtBendingPictureCaptionList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBendingPictureCaptionList, SmartArt);
+
+    // Ломаный список со смещенными рисунками
+    function SmartArtBList2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBList2, SmartArt);
+
+    // Матрица с заголовками
+    function SmartArtMatrix1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtMatrix1, SmartArt);
+
+    // Нарастающий процесс с кругами
+    function SmartArtIncreasingCircleProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtIncreasingCircleProcess, SmartArt);
+
+    // Нелинейные рисунки с блоками
+    function SmartArtBendingPictureBlocks() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBendingPictureBlocks, SmartArt);
+
+    // Нелинейные рисунки с подписями
+    function SmartArtBendingPictureCaption() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBendingPictureCaption, SmartArt);
+
+    // Нелинейные рисунки с полупрозрачным текстом
+    function SmartArtBendingPictureSemiTransparentText() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBendingPictureSemiTransparentText, SmartArt);
+
+    // Ненаправленный цикл
+    function SmartArtCycle6() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCycle6, SmartArt);
+
+    // Непрерывный блочный процесс
+    function SmartArtHProcess9() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHProcess9, SmartArt);
+
+    // Непрерывный список с рисунками
+    function SmartArtHList7() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHList7, SmartArt);
+
+    // Непрерывный цикл
+    function SmartArtCycle3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCycle3, SmartArt);
+
+    // Нисходящий блочный список
+    function SmartArtBlockDescendingList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBlockDescendingList, SmartArt);
+
+    // Нисходящий процесс
+    function SmartArtStepDownProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtStepDownProcess, SmartArt);
+
+    // Обратный список
+    function SmartArtReverseList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtReverseList, SmartArt);
+
+    // Организационная диаграмма
+    function SmartArtOrgChart1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtOrgChart1, SmartArt);
+
+    // Организационная диаграмма с именами и должностями
+    function SmartArtNameandTitleOrganizationalChart() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtNameandTitleOrganizationalChart, SmartArt);
+
+    // Переменный поток
+    function SmartArtHProcess4() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHProcess4, SmartArt);
+
+    // Пирамидальный список
+    function SmartArtPyramid2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPyramid2, SmartArt);
+
+    // Плюс и минус
+    function SmartArtPlusandMinus() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPlusandMinus, SmartArt);
+
+    // Повторяющийся ломаный процесс
+    function SmartArtBProcess3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBProcess3, SmartArt);
+
+    // Подписанные рисунки
+    function SmartArtCaptionedPictures() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCaptionedPictures, SmartArt);
+
+    // Подробный процесс
+    function SmartArtHProcess7() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHProcess7, SmartArt);
+
+    // Полосы рисунков
+    function SmartArtPictureStrips() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPictureStrips, SmartArt);
+
+    // Полукруглая организационная диаграмма
+    function SmartArtHalfCircleOrganizationChart() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHalfCircleOrganizationChart, SmartArt);
+
+    // Поэтапный процесс
+    function SmartArtPhasedProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPhasedProcess, SmartArt);
+
+    // Простая Венна
+    function SmartArtVenn1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVenn1, SmartArt);
+
+    // Простая временная шкала
+    function SmartArtHProcess11() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHProcess11, SmartArt);
+
+    // Простая круговая
+    function SmartArtChart3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtChart3, SmartArt);
+
+    // Простая матрица
+    function SmartArtMatrix3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtMatrix3, SmartArt);
+
+    // Простая пирамида
+    function SmartArtPyramid1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPyramid1, SmartArt);
+
+    // Простая радиальная
+    function SmartArtRadial1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtRadial1, SmartArt);
+
+    // Простая целевая
+    function SmartArtTarget1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtTarget1, SmartArt);
+
+    // Простой блочный список
+    function SmartArtDefault() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtDefault, SmartArt);
+
+    // Простой ломаный процесс
+    function SmartArtProcess5() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtProcess5, SmartArt);
+
+    // Простой процесс
+    function SmartArtProcess1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtProcess1, SmartArt);
+
+    // Простой уголковый процесс
+    function SmartArtChevron1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtChevron1, SmartArt);
+
+    // Простой цикл
+    function SmartArtCycle2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCycle2, SmartArt);
+
+    // Противоположные идеи
+    function SmartArtOpposingIdeas() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtOpposingIdeas, SmartArt);
+
+    // Противостоящие стрелки
+    function SmartArtArrow4() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtArrow4, SmartArt);
+
+    // Процесс от случайности к результату
+    function SmartArtRandomtoResultProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtRandomtoResultProcess, SmartArt);
+
+    // Процесс с вложенными шагами
+    function SmartArtSubStepProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtSubStepProcess, SmartArt);
+
+    // Процесс с круговой диаграммой
+    function SmartArtPieProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPieProcess, SmartArt);
+
+    // Процесс со смещением
+    function SmartArtProcess3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtProcess3, SmartArt);
+
+    // Процесс со смещенными по возрастанию рисунками
+    function SmartArtAscendingPictureAccentProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtAscendingPictureAccentProcess, SmartArt);
+
+    // Процесс со смещенными рисунками
+    function SmartArtHProcess10() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHProcess10, SmartArt);
+
+    // Радиальная Венна
+    function SmartArtRadial3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtRadial3, SmartArt);
+
+    // Радиальная циклическая
+    function SmartArtRadial6() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtRadial6, SmartArt);
+
+    // Радиальный кластер
+    function SmartArtRadialCluster() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtRadialCluster, SmartArt);
+
+    // Радиальный список
+    function SmartArtRadial2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtRadial2, SmartArt);
+
+    // Разнонаправленный цикл
+    function SmartArtCycle7() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCycle7, SmartArt);
+
+    // Расходящаяся радиальная
+    function SmartArtRadial5() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtRadial5, SmartArt);
+
+    // Расходящиеся стрелки
+    function SmartArtArrow1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtArrow1, SmartArt);
+
+    // Рисунок с текстом в рамке
+    function SmartArtFramedTextPicture() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtFramedTextPicture, SmartArt);
+
+    // Сгруппированный список
+    function SmartArtLProcess2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtLProcess2, SmartArt);
+
+    // Сегментированная пирамида
+    function SmartArtPyramid4() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPyramid4, SmartArt);
+
+    // Сегментированный процесс
+    function SmartArtProcess4() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtProcess4, SmartArt);
+
+    // Сегментированный цикл
+    function SmartArtCycle8() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCycle8, SmartArt);
+
+    // Сетка рисунков
+    function SmartArtPictureGrid() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPictureGrid, SmartArt);
+
+    // Сетчатая матрица
+    function SmartArtMatrix2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtMatrix2, SmartArt);
+
+    // Спираль рисунков
+    function SmartArtSpiralPicture() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtSpiralPicture, SmartArt);
+
+    // Список в столбик
+    function SmartArtHList9() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHList9, SmartArt);
+
+    // Список названий рисунков
+    function SmartArtPList1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPList1, SmartArt);
+
+    // Список процессов
+    function SmartArtLProcess1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtLProcess1, SmartArt);
+
+    // Список рисунков с выносками
+    function SmartArtBubblePictureList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtBubblePictureList, SmartArt);
+
+    // Список с квадратиками
+    function SmartArtSquareAccentList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtSquareAccentList, SmartArt);
+
+    // Список с линиями
+    function SmartArtLinedList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtLinedList, SmartArt);
+
+    // Список со смещенными рисунками
+    function SmartArtHList2() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHList2, SmartArt);
+
+    // Список со смещенными рисунками и заголовком
+    function SmartArtPictureAccentList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtPictureAccentList, SmartArt);
+
+    // Список со снимками
+    function SmartArtSnapshotPictureList() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtSnapshotPictureList, SmartArt);
+
+    // Стрелка непрерывного процесса
+    function SmartArtHProcess3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHProcess3, SmartArt);
+
+    // Стрелка процесса с кругами
+    function SmartArtCircleArrowProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCircleArrowProcess, SmartArt);
+
+    // Стрелки процесса
+    function SmartArtHProcess6() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHProcess6, SmartArt);
+
+    // Ступенчатый процесс
+    function SmartArtVProcess5() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtVProcess5, SmartArt);
+
+    // Сходящаяся радиальная
+    function SmartArtRadial4() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtRadial4, SmartArt);
+
+    // Сходящиеся стрелки
+    function SmartArtArrow5() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtArrow5, SmartArt);
+
+    // Табличная иерархия
+    function SmartArtHierarchy4() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHierarchy4, SmartArt);
+
+    // Табличный список
+    function SmartArtHList3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHList3, SmartArt);
+
+    // Текстовый цикл
+    function SmartArtCycle1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCycle1, SmartArt);
+
+    // Трапецевидный список
+    function SmartArtHList6() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtHList6, SmartArt);
+
+    // Убывающий процесс
+    function SmartArtDescendingProcess() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtDescendingProcess, SmartArt);
+
+    // Уголковый список
+    function SmartArtLProcess3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtLProcess3, SmartArt);
+
+    // Уравнение
+    function SmartArtEquation1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtEquation1, SmartArt);
+
+    // Уравновешивающие стрелки
+    function SmartArtArrow3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtArrow3, SmartArt);
+
+    // Целевой список
+    function SmartArtTarget3() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtTarget3, SmartArt);
+
+    // Циклическая матрица
+    function SmartArtCycle4() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtCycle4, SmartArt);
+
+    // Чередующиеся блоки рисунков
+    function SmartArtAlternatingPictureBlocks() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtAlternatingPictureBlocks, SmartArt);
+
+    // Чередующиеся круги рисунков
+    function SmartArtAlternatingPictureCircles() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtAlternatingPictureCircles, SmartArt);
+
+    // Чередующиеся шестиугольники
+    function SmartArtAlternatingHexagons() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtAlternatingHexagons, SmartArt);
+
+    // Шестеренки
+    function SmartArtGear1() {
+      SmartArt.call(this);
+    }
+    InitClassWithoutType(SmartArtGear1, SmartArt);
+
+
 
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].kForInsFitFontSize     = kForInsFitFontSize;
@@ -11657,6 +12492,5 @@
     window['AscFormat'].SmartArtTree           = SmartArtTree;
     window['AscFormat'].SmartArtNode           = SmartArtNode;
     window['AscFormat'].SmartArtNodeData       = SmartArtNodeData;
-    window['AscFormat'].ptToMm                 = ptToMm;
 
   })(window)

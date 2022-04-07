@@ -97,11 +97,15 @@ var asc_CShapeProperty = Asc.asc_CShapeProperty;
     };
     CBaseObject.prototype.Refresh_RecalcData = function (oChange) {
     };
-
-    function InitClass(fClass, fBase, nType) {
+    
+    function InitClassWithoutType(fClass, fBase) {
         fClass.prototype = Object.create(fBase.prototype);
         fClass.prototype.superclass = fBase;
         fClass.prototype.constructor = fClass;
+    }
+
+    function InitClass(fClass, fBase, nType) {
+        InitClassWithoutType(fClass, fBase);
         fClass.prototype.classType = nType;
     }
 
@@ -13232,7 +13236,7 @@ function CorrectUniColor(asc_color, unicolor, flag)
         }
         return null;
     }
-    function builder_CreateChart(nW, nH, sType, aCatNames, aSeriesNames, aSeries, nStyleIndex){
+    function builder_CreateChart(nW, nH, sType, aCatNames, aSeriesNames, aSeries, nStyleIndex, aNumFormats){
         var settings = new Asc.asc_ChartSettings();
         settings.type = ChartBuilderTypeToInternal(sType);
         var aAscSeries = [];
@@ -13263,10 +13267,13 @@ function CorrectUniColor(asc_color, unicolor, flag)
             {
                 oAscSeries.Cat = oCat;
             }
+
+            if (Array.isArray(aNumFormats) && typeof(aNumFormats[i]) === "string")
+                oAscSeries.FormatCode = aNumFormats[i];
+
             for(var j = 0; j < aData.length; ++j)
             {
-
-                oAscSeries.Val.NumCache.push({ numFormatStr: "General", isDateTimeFormat: false, val: aData[j], isHidden: false });
+                oAscSeries.Val.NumCache.push({ numFormatStr: oAscSeries.FormatCode !== "" ? null : "General", isDateTimeFormat: false, val: aData[j], isHidden: false });
             }
             aAscSeries.push(oAscSeries);
         }
@@ -14115,6 +14122,7 @@ function CorrectUniColor(asc_color, unicolor, flag)
         window['AscFormat'].CreateNoneBullet = CreateNoneBullet;
         window['AscFormat'].ChartBuilderTypeToInternal = ChartBuilderTypeToInternal;
         window['AscFormat'].InitClass = InitClass;
+        window['AscFormat'].InitClassWithoutType = InitClassWithoutType;
         window['AscFormat'].CBaseObject           = CBaseObject;
         window['AscFormat'].CBaseFormatObject = CBaseFormatObject;
         window['AscFormat'].checkRasterImageId = checkRasterImageId;

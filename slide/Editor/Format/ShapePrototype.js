@@ -495,6 +495,7 @@ CShape.prototype.recalculate = function ()
 CShape.prototype.recalculateBounds = function()
 {
     var boundsChecker = new  AscFormat.CSlideBoundsChecker();
+    boundsChecker.DO_NOT_DRAW_ANIM_LABEL = true;
     this.draw(boundsChecker);
     boundsChecker.CorrectBounds();
 

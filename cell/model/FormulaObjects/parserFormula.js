@@ -2422,7 +2422,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (row > this.rowCount || col > this.getCountElementInRow()) {
 			return new cError(cErrorType.not_available);
 		}
-		return this.array[row][col];
+		return this.array[row] && this.array[row][col] ? this.array[row][col] : new cEmpty();
 	};
 	cArray.prototype.getElement = function (index) {
 		for (var i = 0; i < this.rowCount; i++) {
@@ -2677,6 +2677,45 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		if(!res.length){
 			res = areaArr;
+		}
+
+		return res;
+	};
+	cBaseOperator.prototype.tryDoArraysOperation = function (operand1, operand2, func) {
+		//применяем в случае, если один или оба операнда area/array
+		//возвращаем либо null, либо array
+		var res = null;
+
+		var dimension1 = operand1 && operand1.getDimensions();
+		var dimension2 = operand2 && operand2.getDimensions();
+
+		if (dimension1 && dimension2) {
+			//берём наименьший размер, исключение - когда одна строка/столбец
+			var colCount = dimension1.col === 1 ? dimension2.col : (dimension2.col === 1 ? dimension1.col : Math.min(dimension1.col, dimension2.col));
+			var rowCount = dimension1.row === 1 ? dimension2.row : (dimension2.row === 1 ? dimension1.row : Math.min(dimension1.row, dimension2.row));
+
+			var matrix1, matrix2;
+			if (operand1.type === cElementType.array) {
+				matrix1 = operand1;
+			}
+			if (operand2.type === cElementType.array) {
+				matrix2 = operand2;
+			}
+			if (operand1.type === cElementType.cellsRange || operand1.type === cElementType.cellsRange3D) {
+				matrix1 = convertAreaToArray(operand1);
+			}
+			if (operand2.type === cElementType.cellsRange || operand2.type === cElementType.cellsRange3D) {
+				matrix2 = convertAreaToArray(operand2);
+			}
+
+			res = new cArray();
+			for (var iRow = 0; iRow < rowCount; iRow++, iRow < rowCount ? res.addRow() : true) {
+				for (var iCol = 0; iCol < colCount; iCol++) {
+					var elem1 = matrix1 ? matrix1.getElementRowCol(dimension1.row === 1 ? 0 : iRow, dimension1.col === 1 ? 0 : iCol) : operand1;
+					var elem2 = matrix2 ? matrix2.getElementRowCol(dimension2.row === 1 ? 0 : iRow, dimension2.col === 1 ? 0 : iCol) : operand2;
+					res.addElement(func(elem1, elem2));
+				}
+			}
 		}
 
 		return res;
@@ -3758,23 +3797,35 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cConcatSTROperator.prototype.priority = 15;
 	cConcatSTROperator.prototype.argumentsCurrent = 2;
 	cConcatSTROperator.prototype.numFormat = cNumFormatNone;
-	cConcatSTROperator.prototype.Calculate = function (arg) {
+	cConcatSTROperator.prototype.Calculate = function (arg, opt_bbox, opt_defName, ws, bIsSpecialFunction) {
 		var arg0 = arg[0], arg1 = arg[1];
+
+		var doOperation = function (_arg0, _arg1) {
+			_arg0 = _arg0.tocString();
+			_arg1 = _arg1.tocString();
+			return _arg0 instanceof cError ? _arg0 :
+				_arg1 instanceof cError ? _arg1 : new cString(_arg0.toString().concat(_arg1.toString()))
+		};
+
+		if(bIsSpecialFunction){
+			var array = this.tryDoArraysOperation(arg0, arg1, doOperation);
+			if (array) {
+				return array;
+			}
+		}
+
 		if (arg0 instanceof cArea) {
 			arg0 = arg0.cross(arguments[1]);
 		} else if (arg0 instanceof cArea3D) {
 			arg0 = arg0.cross(arguments[1], arguments[3]);
 		}
-		arg0 = arg0.tocString();
 		if (arg1 instanceof cArea) {
 			arg1 = arg1.cross(arguments[1]);
 		} else if (arg1 instanceof cArea3D) {
 			arg1 = arg1.cross(arguments[1], arguments[3]);
 		}
-		arg1 = arg1.tocString();
 
-		return arg0 instanceof cError ? arg0 :
-			arg1 instanceof cError ? arg1 : new cString(arg0.toString().concat(arg1.toString()));
+		return doOperation(arg0, arg1);
 	};
 
 	/**

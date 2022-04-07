@@ -477,6 +477,12 @@
             this.ppiY = AscCommon.AscBrowser.convertToRetinaValue(96, true);
 		}
 	};
+	
+	DrawingContext.prototype.toDataURL = function (type) {
+		type = type || 'image/png';
+		var canvas = this.getCanvas();
+		return canvas.toDataURL(type);
+	}
 
 	/**
 	 * Returns width of drawing context in current units
