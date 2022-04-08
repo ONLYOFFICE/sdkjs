@@ -848,18 +848,19 @@
 
 
 		//add common options
+		var optHeaderFooterProps = opt_objForSave && opt_objForSave.headerFooter;
 		var ws = this.wb.getWorksheet();
-		this.alignWithMargins = opt_objForSave ? opt_objForSave.alignWithMargins : ws.model.headerFooter.alignWithMargins;
-		this.differentFirst = opt_objForSave ? opt_objForSave.differentFirst : ws.model.headerFooter.differentFirst;
-		this.differentOddEven = opt_objForSave ? opt_objForSave.differentOddEven : ws.model.headerFooter.differentOddEven;
-		this.scaleWithDoc = opt_objForSave ? opt_objForSave.scaleWithDoc : ws.model.headerFooter.scaleWithDoc;
+		this.alignWithMargins = optHeaderFooterProps ? optHeaderFooterProps.alignWithMargins : ws.model.headerFooter.alignWithMargins;
+		this.differentFirst = optHeaderFooterProps ? optHeaderFooterProps.differentFirst : ws.model.headerFooter.differentFirst;
+		this.differentOddEven = optHeaderFooterProps ? optHeaderFooterProps.differentOddEven : ws.model.headerFooter.differentOddEven;
+		this.scaleWithDoc = optHeaderFooterProps ? optHeaderFooterProps.scaleWithDoc : ws.model.headerFooter.scaleWithDoc;
 
 		//сохраняем редактор ячейки
 		this.wbCellEditor = this.wb.cellEditor;
 
 		//далее создаем классы, где будем хранить fragments всех типов колонтитулов + выполнять отрисовку
 		//хранить будем в следующем виде: [c_nPageHFType.firstHeader/.../][c_nPortionLeft/.../c_nPortionRight]
-		this._createAndDrawSections(opt_objForSave);
+		this._createAndDrawSections(null, optHeaderFooterProps);
 		this._generatePresetsArr();
 
 		//лочим
@@ -1497,13 +1498,9 @@
 			return res;
 		};
 
-		if (opt_objForSave) {
-			this.sections = opt_objForSave.sections;
-		}
-
 		//header
 		var curPageHF, parser, leftFragments, centerFragments, rightFragments;
-		if(!this.sections[pageHeaderType] && !opt_objForSave) {
+		if(!this.sections[pageHeaderType]) {
 			this.sections[pageHeaderType] = [];
 
 			//создаём секции, если они уже не созданы
@@ -1511,30 +1508,43 @@
 			this.sections[pageHeaderType][c_oPortionPosition.center] = new CHeaderFooterEditorSection(pageHeaderType, c_nPortionCenterHeader, this.canvas[c_nPortionCenterHeader]);
 			this.sections[pageHeaderType][c_oPortionPosition.right] = new CHeaderFooterEditorSection(pageHeaderType, c_nPortionRightHeader, this.canvas[c_nPortionRightHeader]);
 
-			//получаем из модели необходимый нам элемент
-			curPageHF = this._getCurPageHF(pageHeaderType);
-			if(curPageHF && curPageHF.str) {
-				if(!curPageHF.parser) {
-					curPageHF.parse();
+			//в случае print preview храним временно опции в этом объекте
+			if (opt_objForSave) {
+				if(opt_objForSave.sections[pageHeaderType][c_oPortionPosition.left]) {
+					this.sections[pageHeaderType][c_oPortionPosition.left].fragments = opt_objForSave.sections[pageHeaderType][c_oPortionPosition.left].fragments;
 				}
-				parser = curPageHF.parser.portions;
-				leftFragments = getFragments(parser[0]);
-				if(null !== leftFragments) {
-					this.sections[pageHeaderType][c_oPortionPosition.left].fragments = leftFragments;
+				if(opt_objForSave.sections[pageHeaderType][c_oPortionPosition.center]) {
+					this.sections[pageHeaderType][c_oPortionPosition.center].fragments = opt_objForSave.sections[pageHeaderType][c_oPortionPosition.center].fragments;
 				}
-				centerFragments = getFragments(parser[1]);
-				if(null !== centerFragments) {
-					this.sections[pageHeaderType][c_oPortionPosition.center].fragments = centerFragments;
+				if(opt_objForSave.sections[pageHeaderType][c_oPortionPosition.right]) {
+					this.sections[pageHeaderType][c_oPortionPosition.right].fragments = opt_objForSave.sections[pageHeaderType][c_oPortionPosition.right].fragments;
 				}
-				rightFragments = getFragments(parser[2]);
-				if(null !== rightFragments) {
-					this.sections[pageHeaderType][c_oPortionPosition.right].fragments = rightFragments;
+			} else {
+				//получаем из модели необходимый нам элемент
+				curPageHF = this._getCurPageHF(pageHeaderType);
+				if(curPageHF && curPageHF.str) {
+					if(!curPageHF.parser) {
+						curPageHF.parse();
+					}
+					parser = curPageHF.parser.portions;
+					leftFragments = getFragments(parser[0]);
+					if(null !== leftFragments) {
+						this.sections[pageHeaderType][c_oPortionPosition.left].fragments = leftFragments;
+					}
+					centerFragments = getFragments(parser[1]);
+					if(null !== centerFragments) {
+						this.sections[pageHeaderType][c_oPortionPosition.center].fragments = centerFragments;
+					}
+					rightFragments = getFragments(parser[2]);
+					if(null !== rightFragments) {
+						this.sections[pageHeaderType][c_oPortionPosition.right].fragments = rightFragments;
+					}
 				}
 			}
 		}
 
 		//footer
-		if(!this.sections[pageFooterType] && !opt_objForSave) {
+		if(!this.sections[pageFooterType]) {
 			this.sections[pageFooterType] = [];
 
 			//создаём секции, если они уже не созданы
@@ -1542,24 +1552,37 @@
 			this.sections[pageFooterType][c_oPortionPosition.center] = new CHeaderFooterEditorSection(pageFooterType, c_nPortionCenterFooter, this.canvas[c_nPortionCenterFooter]);
 			this.sections[pageFooterType][c_oPortionPosition.right] = new CHeaderFooterEditorSection(pageFooterType, c_nPortionRightFooter, this.canvas[c_nPortionRightFooter]);
 
-			//получаем из модели необходимый нам элемент
-			curPageHF = this._getCurPageHF(pageFooterType);
-			if(curPageHF && curPageHF.str) {
-				if(!curPageHF.parser) {
-					curPageHF.parse();
+			//в случае print preview храним временно опции в этом объекте
+			if (opt_objForSave) {
+				if(opt_objForSave.sections[pageFooterType][c_oPortionPosition.left]) {
+					this.sections[pageFooterType][c_oPortionPosition.left].fragments = opt_objForSave.sections[pageFooterType][c_oPortionPosition.left].fragments;
 				}
-				parser = curPageHF.parser.portions;
-				leftFragments = getFragments(parser[0]);
-				if(null !== leftFragments) {
-					this.sections[pageFooterType][c_oPortionPosition.left].fragments = leftFragments;
+				if(opt_objForSave.sections[pageFooterType][c_oPortionPosition.center]) {
+					this.sections[pageFooterType][c_oPortionPosition.center].fragments = opt_objForSave.sections[pageFooterType][c_oPortionPosition.center].fragments;
 				}
-				centerFragments = getFragments(parser[1]);
-				if(null !== centerFragments) {
-					this.sections[pageFooterType][c_oPortionPosition.center].fragments = centerFragments;
+				if(opt_objForSave.sections[pageFooterType][c_oPortionPosition.right]) {
+					this.sections[pageFooterType][c_oPortionPosition.right].fragments = opt_objForSave.sections[pageFooterType][c_oPortionPosition.right].fragments;
 				}
-				rightFragments = getFragments(parser[2]);
-				if(null !== rightFragments) {
-					this.sections[pageFooterType][c_oPortionPosition.right].fragments = rightFragments;
+			} else {
+				//получаем из модели необходимый нам элемент
+				curPageHF = this._getCurPageHF(pageFooterType);
+				if(curPageHF && curPageHF.str) {
+					if(!curPageHF.parser) {
+						curPageHF.parse();
+					}
+					parser = curPageHF.parser.portions;
+					leftFragments = getFragments(parser[0]);
+					if(null !== leftFragments) {
+						this.sections[pageFooterType][c_oPortionPosition.left].fragments = leftFragments;
+					}
+					centerFragments = getFragments(parser[1]);
+					if(null !== centerFragments) {
+						this.sections[pageFooterType][c_oPortionPosition.center].fragments = centerFragments;
+					}
+					rightFragments = getFragments(parser[2]);
+					if(null !== rightFragments) {
+						this.sections[pageFooterType][c_oPortionPosition.right].fragments = rightFragments;
+					}
 				}
 			}
 		}
