@@ -702,17 +702,7 @@
 
 			if (this.isUseNativeViewer)
 			{
-				switch (this.documentFormat)
-				{
-					case "pdf":
-					case "xps":
-					case "oxps":
-					case "djvu":
-						rData["convertToOrigin"] = true;
-						break;
-					default:
-						break;
-				}
+				rData["convertToOrigin"] = '.pdf.xps.oxps.djvu';
 			}
 
 			if (versionHistory)
@@ -1335,7 +1325,7 @@
 								AscCommon.g_oDocumentUrls.init(urls);
 								var documentUrl = urls['Editor.bin'];
 								if (t.isUseNativeViewer && !documentUrl)
-									documentUrl = urls['origin.pdf'] || urls['origin.xps'] || urls['origin.oxps'] || urls['origin.djvu'];
+									documentUrl = urls['origin.' + t.documentFormat] || urls['origin.pdf'] || urls['origin.xps'] || urls['origin.oxps'] || urls['origin.djvu'];
 								if (null != documentUrl) {
 									if ('ok' === input["status"] || t.getViewMode()) {
 										t._onOpenCommand(documentUrl);
