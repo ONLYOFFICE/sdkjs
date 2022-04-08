@@ -287,7 +287,7 @@ function NativeOpenFileData(data, version, xlsx_file_path, options)
 	{
         Api = new window["Asc"]["asc_docs_api"]({});
 		if (options && options["documentLayout"] && undefined !== options["documentLayout"]["openedAt"])
-			Api.openedAt = options["documentLayout"]["openedAt"];
+			Api.setOpenedAt(options["documentLayout"]["openedAt"]);
         Api.asc_nativeOpenFile(data, version);
 	}
 	else

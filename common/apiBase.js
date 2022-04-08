@@ -802,8 +802,9 @@
 	baseEditorsApi.prototype._onNeedParams                       = function(data, opt_isPassword)
 	{
 	};
-	baseEditorsApi.prototype.asyncServerIdEndLoaded              = function()
+	baseEditorsApi.prototype.asyncServerIdEndLoaded              = function(openedAt)
 	{
+		this.setOpenedAt(openedAt);
 		// С сервером соединились, возможно стоит подождать загрузку шрифтов
 		this.ServerIdWaitComplete = true;
 		this._openDocumentEndCallback();
@@ -1129,9 +1130,9 @@
 		{
 			AscCommon.g_oIdCounter.Set_UserId('' + e);
 		};
-		this.CoAuthoringApi.onFirstLoadChangesEnd     = function()
+		this.CoAuthoringApi.onFirstLoadChangesEnd     = function(openedAt)
 		{
-			t.asyncServerIdEndLoaded();
+			t.asyncServerIdEndLoaded(openedAt);
 		};
 		this.CoAuthoringApi.onFirstConnect            = function()
 		{
@@ -1328,7 +1329,8 @@
 						switch (input["status"]) {
 							case "updateversion":
 							case "ok":
-								t.openedAt = input["openedAt"];
+								//call setOpenedAt twice in case of waitAuth
+								t.setOpenedAt(input["openedAt"]);
 								var urls = input["data"];
 								AscCommon.g_oDocumentUrls.init(urls);
 								var documentUrl = urls['Editor.bin'];
@@ -3641,6 +3643,11 @@
 		}
 	};
 
+	baseEditorsApi.prototype.setOpenedAt = function(val)
+	{
+		this.openedAt = val;
+	};
+
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
 	window['AscCommon'].baseEditorsApi = baseEditorsApi;
@@ -3676,6 +3683,7 @@
 	prot['asc_wopi_renameFile'] = prot.asc_wopi_renameFile;
 	prot['asc_setShapeNames'] = prot.asc_setShapeNames;
 	prot['asc_generateChartPreviews'] = prot.asc_generateChartPreviews;
+	prot['setOpenedAt'] = prot.setOpenedAt;
 
 	prot['asc_isCrypto'] = prot.asc_isCrypto;
 
