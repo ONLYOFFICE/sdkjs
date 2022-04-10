@@ -3568,7 +3568,12 @@
 			return;
 		}
 
-		var headerFooterModel = this.model.headerFooter;
+		//new CHeaderFooter();
+		var printPreview = this.workbook.printPreviewState.isStart() ? this.workbook.printPreviewState : null;
+		var pageOptionsMap = printPreview && printPreview.advancedOptions && printPreview.advancedOptions.pageOptionsMap;
+		var opt_headerFooter = pageOptionsMap && pageOptionsMap[this.model.index] && pageOptionsMap[this.model.index].pageSetup && pageOptionsMap[this.model.index].pageSetup.getPreviewHeaderFooter();
+
+		var headerFooterModel = opt_headerFooter ? opt_headerFooter : this.model.headerFooter;
 		//HEADER
 		var curHeader;
 		if(indexPrintPage === 0 && headerFooterModel.differentFirst) {
@@ -3584,7 +3589,7 @@
 				curHeader.parser = new AscCommonExcel.HeaderFooterParser();
 				curHeader.parser.parse(curHeader.str);
 			}
-			this._drawHeaderFooterText(drawingCtx, printPagesData, curHeader.parser, indexPrintPage, countPrintPages);
+			this._drawHeaderFooterText(drawingCtx, printPagesData, curHeader.parser, indexPrintPage, countPrintPages, false, opt_headerFooter);
 		}
 
 		//FOOTER
@@ -3602,12 +3607,12 @@
 				curFooter.parser = new AscCommonExcel.HeaderFooterParser();
 				curFooter.parser.parse(curFooter.str);
 			}
-			this._drawHeaderFooterText(drawingCtx, printPagesData, curFooter.parser, indexPrintPage, countPrintPages, true);
+			this._drawHeaderFooterText(drawingCtx, printPagesData, curFooter.parser, indexPrintPage, countPrintPages, true, opt_headerFooter);
 		}
 	};
 
 	/** Рисует текст ячейки */
-	WorksheetView.prototype._drawHeaderFooterText = function (drawingCtx, printPagesData, headerFooterParser, indexPrintPage, countPrintPages, bFooter) {
+	WorksheetView.prototype._drawHeaderFooterText = function (drawingCtx, printPagesData, headerFooterParser, indexPrintPage, countPrintPages, bFooter, opt_headerFooter) {
         //TODO нужно проверить на retina!!!
 
 		var t = this;
@@ -3639,7 +3644,8 @@
 			vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
 		}
 
-		var scaleWithDoc = this.model.headerFooter.getScaleWithDoc();
+		var hF = opt_headerFooter ? opt_headerFooter : this.model.headerFooter;
+		var scaleWithDoc = hF.getScaleWithDoc();
 		scaleWithDoc =  scaleWithDoc === null || scaleWithDoc === true
 		var printScale = scaleWithDoc ? this.getPrintScale() : 1;
 
@@ -3664,7 +3670,7 @@
 		//это стандартный маргин для случая, если alignWithMargins = true
 		//TODO необходимо перепроверить размер маргина
 		var defaultMargin = 17.8;
-		var alignWithMargins = this.model.headerFooter.getAlignWithMargins();
+		var alignWithMargins = hF.getAlignWithMargins();
 		var left =  alignWithMargins ? margins.left / vector_koef : defaultMargin / vector_koef;
 		var right = alignWithMargins ? margins.right / vector_koef : defaultMargin / vector_koef;
 		//для превью - делю на zoom
@@ -19520,9 +19526,9 @@
 		this._changePrintTitles(obj.printTitlesWidth, obj.printTitlesHeight);
 
 		//может прийти только из превью
-		if (obj.headerFooter) {
+		if (pageSetupObj.headerFooter) {
 			var tempEditor = new AscCommonExcel.CHeaderFooterEditor();
-			tempEditor.setPropsFromInterface(obj.headerFooter);
+			tempEditor.setPropsFromInterface(pageSetupObj.headerFooter);
 			tempEditor._saveToModel(this);
 		}
 

@@ -653,6 +653,21 @@
 
 		this.changed = false;
 	}
+	CHeaderFooterEditorSection.prototype.clone = function () {
+		var res = new CHeaderFooterEditorSection();
+
+		res.type = this.type;
+		res.portion = this.portion;
+		res.canvasObj = this.canvasObj;
+		if (this.fragments) {
+			res.fragments = [];
+			for (var i = 0; i < this.fragments.length; i++) {
+				res.fragments.push(this.fragments[i].clone());
+			}
+		}
+
+		return res;
+	};
 	CHeaderFooterEditorSection.prototype.setFragments = function (val) {
 		this.fragments = this.isEmptyFragments(val) ? null : val;
 	};
@@ -779,8 +794,6 @@
 	var correctCanvasDiff = 0;
 	window.Asc.g_header_footer_editor = null;
 	function CHeaderFooterEditor(idArr, width, pageType, opt_objForSave) {
-		window.Asc.g_header_footer_editor = this;
-
 		this.parentWidth = AscCommon.AscBrowser.convertToRetinaValue(this.correctCanvasWidth(width), true);
 		this.parentHeight = AscCommon.AscBrowser.convertToRetinaValue(90, true);
 		this.pageType = undefined === pageType ? asc.c_oAscHeaderFooterType.odd : pageType;//odd, even, first
@@ -804,7 +817,10 @@
 		this.differentOddEven = null;
 		this.scaleWithDoc = null;
 
-		this.init(idArr, opt_objForSave);
+		if (idArr) {
+			window.Asc.g_header_footer_editor = this;
+			this.init(idArr, opt_objForSave);
+		}
 	}
 
 	CHeaderFooterEditor.prototype.init = function (idArr, opt_objForSave) {
@@ -1159,8 +1175,21 @@
 		return null;
 	};
 
-	CHeaderFooterEditor.prototype.setPropsFromInterface = function (props) {
-		this.sections = props.sections;
+	CHeaderFooterEditor.prototype.setPropsFromInterface = function (props, doChanged) {
+		var sections = props.sections;
+		if (doChanged) {
+			var newSections = [];
+			for (var i in sections) {
+				newSections[i] = [];
+				for (var j in sections[i]) {
+					newSections[i][j] = sections[i][j] && sections[i][j].clone();
+					if (newSections[i][j]) {
+						newSections[i][j].changed = true;
+					}
+				}
+			}
+			this.sections = newSections;
+		}
 
 		this.alignWithMargins = props.alignWithMargins;
 		this.differentFirst = props.differentFirst;
@@ -1180,10 +1209,12 @@
 		return res;
 	};
 
-	CHeaderFooterEditor.prototype._saveToModel = function (ws) {
+	CHeaderFooterEditor.prototype._saveToModel = function (ws, opt_headerFooter) {
 		if (!ws) {
-			ws = this.wb.getWorksheet();
+			ws = this.wb && this.wb.getWorksheet();
 		}
+
+		var hF = opt_headerFooter ? opt_headerFooter : ws.model.headerFooter;
 
 		var isAddHistory = false;
 		for(var i = 0; i < this.sections.length; i++) {
@@ -1194,7 +1225,7 @@
 			//сначала формируем новый объект, затем доблавляем в модель и записываем в историю полученную строку
 			//возможно стоит пересмотреть(получать вначале строку) - создаём вначале парсер,
 			//добавляем туда полученные при редактировании фрагменты, затем получаем строку
-			var curHeaderFooter = this._getCurPageHF(i);
+			var curHeaderFooter = this._getCurPageHF(i, opt_headerFooter);
 			if(null === curHeaderFooter) {
 				curHeaderFooter = new Asc.CHeaderFooterData();
 			}
@@ -1217,7 +1248,7 @@
 			}
 			//нужно добавлять в историю
 			if(isChanged) {
-				if(!isAddHistory) {
+				if(!isAddHistory && !opt_headerFooter) {
 					History.Create_NewPoint();
 					History.StartTransaction();
 					isAddHistory = true;
@@ -1225,15 +1256,15 @@
 
 				curHeaderFooter.parser.assembleText();
 				//curHeaderFooter.setStr(curHeaderFooter.parser.date);
-				ws.model.headerFooter.setHeaderFooterData(curHeaderFooter.parser.date, i);
+				hF.setHeaderFooterData(curHeaderFooter.parser.date, i);
 			}
 		}
 
 		//common options
-		ws.model.headerFooter.setAlignWithMargins(this.alignWithMargins);
-		ws.model.headerFooter.setDifferentFirst(this.differentFirst);
-		ws.model.headerFooter.setDifferentOddEven(this.differentOddEven);
-		ws.model.headerFooter.setScaleWithDoc(this.scaleWithDoc);
+		hF.setAlignWithMargins(this.alignWithMargins);
+		hF.setDifferentFirst(this.differentFirst);
+		hF.setDifferentOddEven(this.differentOddEven);
+		hF.setScaleWithDoc(this.scaleWithDoc);
 
 
 		if(isAddHistory) {
@@ -1609,35 +1640,36 @@
 		return res;
 	};
 
-	CHeaderFooterEditor.prototype._getCurPageHF = function (type) {
+	CHeaderFooterEditor.prototype._getCurPageHF = function (type, opt_headerFooter) {
 		var res = null;
 		var ws = this.wb.getWorksheet();
+		var hF = opt_headerFooter ? opt_headerFooter : ws.model.headerFooter;
 
 		//TODO можно у класса CHeaderFooter реализовать данную функцию
-		if(ws.model.headerFooter) {
+		if(hF) {
 			switch (type){
 				case asc.c_oAscPageHFType.firstHeader: {
-					res = ws.model.headerFooter.firstHeader;
+					res = hF.firstHeader;
 					break;
 				}
 				case asc.c_oAscPageHFType.oddHeader: {
-					res = ws.model.headerFooter.oddHeader;
+					res = hF.oddHeader;
 					break;
 				}
 				case asc.c_oAscPageHFType.evenHeader: {
-					res = ws.model.headerFooter.evenHeader;
+					res = hF.evenHeader;
 					break;
 				}
 				case asc.c_oAscPageHFType.firstFooter: {
-					res = ws.model.headerFooter.firstFooter;
+					res = hF.firstFooter;
 					break;
 				}
 				case asc.c_oAscPageHFType.oddFooter: {
-					res = ws.model.headerFooter.oddFooter;
+					res = hF.oddFooter;
 					break;
 				}
 				case asc.c_oAscPageHFType.evenFooter: {
-					res = ws.model.headerFooter.evenFooter;
+					res = hF.evenFooter;
 					break;
 				}
 			}

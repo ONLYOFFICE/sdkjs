@@ -10773,6 +10773,9 @@ QueryTableField.prototype.clone = function() {
 		this.verticalDpi = 600;
 		this.paperUnits = 0;
 
+		//для превью передаём из интерфейса
+		this.headerFooter = null;
+
 		this.ws = ws;
 
 		return this;
@@ -10917,6 +10920,17 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 
+	asc_CPageSetup.prototype.getPreviewHeaderFooter = function () {
+		var res = null;
+		if (this.headerFooter) {
+			res = new CHeaderFooter();
+			var tempEditor = new AscCommonExcel.CHeaderFooterEditor();
+			tempEditor.setPropsFromInterface(this.headerFooter, true);
+			tempEditor._saveToModel(this, res);
+		}
+		return res;
+	};
+
 	/** @constructor */
 	//этот объект используется как в модели, так и в меню для передачи измененных опций page layout
 	//если определена ws - это означает, что этот объект лежит в модели и при изменении его свойств идёт запись в историю
@@ -10931,9 +10945,6 @@ QueryTableField.prototype.clone = function() {
 		//только для передачи из интефейса
 		this.printTitlesWidth = null;
 		this.printTitlesHeight = null;
-
-		//для превью передаём из интерфейса
-		this.headerFooter = null;
 
 		return this;
 	}
@@ -11039,12 +11050,6 @@ QueryTableField.prototype.clone = function() {
 	};
 	asc_CPageOptions.prototype.asc_getPrintTitlesHeight = function () {
 		return this.printTitlesHeight;
-	};
-	asc_CPageOptions.prototype.asc_getHeaderFooter = function () {
-		return this.headerFooter;
-	};
-	asc_CPageOptions.prototype.asc_setHeaderFooter = function (val) {
-		this.headerFooter = val;
 	};
 
 
@@ -11761,6 +11766,8 @@ QueryTableField.prototype.clone = function() {
 
 		this.pixelRatio = null;
 
+		this.advancedOptions = null;
+
 		return this;
 	}
 
@@ -11893,6 +11900,9 @@ QueryTableField.prototype.clone = function() {
 		oGraphics.m_oFontManager = AscCommon.g_fontManager;
 		this.ctx.DocumentRenderer = oGraphics;
 		this.pixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
+	};
+	CPrintPreviewState.prototype.setAdvancedOptions = function (val) {
+		this.advancedOptions = val;
 	};
 
 
