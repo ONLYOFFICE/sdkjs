@@ -3644,15 +3644,16 @@
 			vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
 		}
 
+		var _printScale = printPagesData ? printPagesData.scale : this.getPrintScale();
 		var hF = opt_headerFooter ? opt_headerFooter : this.model.headerFooter;
 		var scaleWithDoc = hF.getScaleWithDoc();
 		scaleWithDoc =  scaleWithDoc === null || scaleWithDoc === true
-		var printScale = scaleWithDoc ? this.getPrintScale() : 1;
+		var printScale = scaleWithDoc ? _printScale : 1;
 
 		//посольку в данном случае printScale уже включен в zoom, то меняем printScale
 		var isPrintPreview = this.workbook.printPreviewState && this.workbook.printPreviewState.isStart();
 		if (isPrintPreview) {
-			printScale = scaleWithDoc ? 1 : 1 / this.getPrintScale();
+			printScale = scaleWithDoc ? 1 : 1 / _printScale;
 		}
 
 
