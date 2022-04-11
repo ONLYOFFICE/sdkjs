@@ -1084,7 +1084,7 @@
 					t._saveToModel();
 				};
 				if (opt_objForSave) {
-					opt_objForSave.headerFooter = this.getPropsToInterface();
+					opt_objForSave.headerFooter = this.getPropsToInterface(opt_objForSave.headerFooter);
 				} else {
 					ws._isLockedHeaderFooter(saveCallback);
 				}
@@ -1189,6 +1189,8 @@
 				}
 			}
 			this.sections = newSections;
+		} else {
+			this.sections = sections;
 		}
 
 		this.alignWithMargins = props.alignWithMargins;
@@ -1197,9 +1199,25 @@
 		this.scaleWithDoc = props.scaleWithDoc;
 	};
 
-	CHeaderFooterEditor.prototype.getPropsToInterface = function () {
-		var res = {};
-		res.sections = this.sections;
+	CHeaderFooterEditor.prototype.getPropsToInterface = function (savedHeaderFooter) {
+		var res = savedHeaderFooter ? savedHeaderFooter : {};
+
+		//merge
+		if (this.sections) {
+			for (var i in this.sections) {
+				if (this.sections[i]) {
+					for (var j in this.sections[i]) {
+						if (!res.sections) {
+							res.sections = [];
+						}
+						if (!res.sections[i]) {
+							res.sections[i] = [];
+						}
+						res.sections[i][j] = this.sections[i][j];
+					}
+				}
+			}
+		}
 
 		res.alignWithMargins = this.alignWithMargins;
 		res.differentFirst = this.differentFirst;
