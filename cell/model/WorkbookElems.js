@@ -11768,11 +11768,25 @@ QueryTableField.prototype.clone = function() {
 
 		this.advancedOptions = null;
 
+		//опции измененного листа пока не мержу с теми, что в модели. перезатираю полностью. если будет необходимость - _pageOptionsMap использовать и при сохранении проверять что изменилось
+		//при закрытии окна с сохранением вычисляем только измененные настройки, для этого храним те настройки, которые были до открытия
+		//this._pageOptionsMap = null;
+
 		return this;
 	}
 
 	CPrintPreviewState.prototype.init = function () {
 		this.start = true;
+		/*var api = window["Asc"]["editor"];
+		this._pageOptionsMap = {};
+		for (var i = 0, length = this.wb.model.getWorksheetCount(); i < length; ++i) {
+			var wsModel = this.wb.model.getWorksheet(i);
+			var wsIndex = wsModel.getIndex();
+			var pageOptions = api.asc_getPageOptions(wsIndex, true);
+			if (pageOptions) {
+				this._pageOptionsMap[wsIndex] = pageOptions.clone();
+			}
+		}*/
 	};
 	CPrintPreviewState.prototype.isStart = function () {
 		return this.start;
@@ -11809,6 +11823,7 @@ QueryTableField.prototype.clone = function() {
 		}
 		this.realActiveSheet = null;
 		this.realZoom = null;
+		this._pageOptionsMap = null;
 	};
 	CPrintPreviewState.prototype.getPagesLength = function () {
 		return this.pages && this.pages.arrPages.length;
