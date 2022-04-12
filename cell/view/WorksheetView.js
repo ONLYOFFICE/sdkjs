@@ -4326,6 +4326,7 @@
 		var xb1, yb1, wb, hb, colLeft, colRight;
 		var txtRotX, txtRotW, clipUse = false;
 
+		var _printScale = this.getPrintScale();
 		var isPrintPreview = this.workbook.printPreviewState.isStart();
 
 		if (ct.angle) {
@@ -4400,7 +4401,6 @@
 
 			//если ранее выставлена матрица трансформации, например, в случае когда задан масштаб печати
 			//необходимо перемножить на новую матрицу, а в конце вернуть начальную
-			var _printScale = this.getPrintScale();
 			var transformMatrix;
 			if (_printScale !== 1 && drawingCtx && drawingCtx.Transform) {
 				transformMatrix = drawingCtx.Transform.CreateDublicate();
@@ -4502,98 +4502,16 @@
 		}
 
 
-		if (drawingCtx && drawingCtx.DocumentRenderer && drawingCtx.DocumentRenderer.AddHyperlink && drawingCtx.DocumentRenderer.AddLink) {
+		//внутреннии ссылки не добавляю, мс аналогично работает
+		if (drawingCtx && drawingCtx.DocumentRenderer && drawingCtx.DocumentRenderer.AddHyperlink /*&& drawingCtx.DocumentRenderer.AddLink*/) {
 			var oHyperlink = this.model.getHyperlinkByCell(row, col);
 			if (oHyperlink && oHyperlink.Hyperlink) {
 				var hyperlink = oHyperlink.Hyperlink;
 				var tooltip = oHyperlink.Tooltip;
-				drawingCtx.DocumentRenderer.AddHyperlink(textX * AscCommon.g_dKoef_pix_to_mm, textY * AscCommon.g_dKoef_pix_to_mm, textW * AscCommon.g_dKoef_pix_to_mm, h * AscCommon.g_dKoef_pix_to_mm, hyperlink, tooltip ? tooltip : hyperlink);
+				var kF = AscCommon.g_dKoef_pix_to_mm * _printScale * 100;
+				drawingCtx.DocumentRenderer.AddHyperlink(textX * kF, textY * kF, Math.min(w, textW) * kF, h * kF, hyperlink, tooltip ? tooltip : hyperlink);
 			}
 		}
-
-
-
-		/*if (pGraphics && pGraphics.AddHyperlink && pGraphics.AddLink)
-	{
-		var aHypers = PDSH.HyperCF;
-		Element     = aHypers.Get_Next();
-		while (Element)
-		{
-			var oCF = Element.Additional.HyperlinkCF;
-
-			var sValue  = oCF.GetValue();
-			var sAnchor = oCF.GetAnchor();
-
-			var _l = Element.x0;
-			var _t = Element.y0;
-			var _r = Element.x1;
-			var _b = Element.y1;
-
-			if (Math.abs(_b - _t) < 0.001 || Math.abs(_r - _l) < 0.001)
-			{
-				Element = aHypers.Get_Next();
-				continue;
-			}
-
-			var oTransform = this.Get_ParentTextTransform();
-
-			if (oTransform)
-			{
-				var x1 = oTransform.TransformPointX(_l, _t);
-				var y1 = oTransform.TransformPointY(_l, _t);
-				var x2 = oTransform.TransformPointX(_r, _t);
-				var y2 = oTransform.TransformPointY(_r, _t);
-				var x3 = oTransform.TransformPointX(_r, _b);
-				var y3 = oTransform.TransformPointY(_r, _b);
-				var x4 = oTransform.TransformPointX(_l, _b);
-				var y4 = oTransform.TransformPointY(_l, _b);
-
-				_l = Math.min(x1, x2, x3, x4);
-				_r = Math.max(x1, x2, x3, x4);
-				_t = Math.min(y1, y2, y3, y4);
-				_b = Math.max(y1, y2, y3, y4);
-			}
-
-			if (oCF.IsTopOfDocument())
-			{
-				pGraphics.AddLink(_l, _t, _r - _l, _b - _t, 0, 0, 0);
-			}
-			else if (sValue)
-			{
-				var _sValue = sAnchor ? sValue + "#" + sAnchor : sValue;
-				pGraphics.AddHyperlink(_l, _t, _r - _l, _b - _t, _sValue, _sValue);
-			}
-			else if (sAnchor)
-			{
-				var oLogicDocument = this.GetLogicDocument();
-				var oBookmark;
-				if(oLogicDocument && oLogicDocument.BookmarksManager)
-				{
-					oBookmark = oLogicDocument.BookmarksManager.GetBookmarkByName(sAnchor);
-				}
-				if (oBookmark)
-				{
-					var oBookmarkPos = oBookmark[0].GetDestinationXY();
-					if (oBookmarkPos)
-					{
-						var _dx = oBookmarkPos.X;
-						var _dy = oBookmarkPos.Y;
-
-						if (oBookmarkPos.Transform)
-						{
-							_dx = oBookmarkPos.Transform.TransformPointX(oBookmarkPos.X, oBookmarkPos.Y);
-							_dy = oBookmarkPos.Transform.TransformPointY(oBookmarkPos.X, oBookmarkPos.Y);
-						}
-
-						pGraphics.AddLink(_l, _t, _r - _l, _b - _t, _dx, _dy, oBookmarkPos.PageNum);
-					}
-				}
-			}
-
-			Element = aHypers.Get_Next();
-		}
-	}
-}*/
 
 		return null;
 	};
