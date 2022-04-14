@@ -5247,13 +5247,13 @@ _func[cElementType.cell3D] = _func[cElementType.cell];
 		if (this.allFunctionsPos) {
 			var startFuncs, endFuncs, i, j;
 			for (i = 0; i < this.allFunctionsPos.length; i++) {
-				if (this.allFunctionsPos[i].start <= start && this.allFunctionsPos[i].end >= start) {
+				if (this.allFunctionsPos[i].start + 1 <= start && this.allFunctionsPos[i].end + 1 >= start) {
 					if (!startFuncs) {
 						startFuncs = [];
 					}
 					startFuncs.push(this.allFunctionsPos[i]);
 				}
-				if (start !== end && this.allFunctionsPos[i].start <= end && this.allFunctionsPos[i].end >= end) {
+				if (start !== end && this.allFunctionsPos[i].start + 1 <= end && this.allFunctionsPos[i].end + 1 >= end) {
 					if (!endFuncs) {
 						endFuncs = [];
 					}

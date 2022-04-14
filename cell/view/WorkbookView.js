@@ -2595,10 +2595,13 @@
 				if (cellEditMode) {
 					//ищем общую функцию, в которой находится курсор
 					//если начало и конец селекта в одной функции - показываем настройки для неё, если в разных - добавляем новую
-					var activeFunction = parseResult.getActiveFunction(t.cellEditor.selectionBegin, t.cellEditor.selectionEnd);
+					var _start = t.cellEditor.selectionBegin !== -1 ? t.cellEditor.selectionBegin : t.cellEditor.cursorPos;
+					var _end = t.cellEditor.selectionEnd !== -1 ? t.cellEditor.selectionEnd : t.cellEditor.cursorPos;
+					var activeFunction = parseResult.getActiveFunction(_start, _end);
 					if (activeFunction) {
 						parseResult.activeFunction = activeFunction;
 						parseResult.argPosArr = activeFunction.args;
+						name = activeFunction.func && activeFunction.func.name;
 					}
 				}
 
@@ -2642,6 +2645,9 @@
 
 					t.cellEditor.lastRangePos = parseResult.argPosArr[0].start;
 					t.cellEditor.lastRangeLength = parseResult.argPosArr[parseResult.argPosArr.length - 1].end - parseResult.argPosArr[0].start;
+
+					t.cellEditor.selectionBegin = t.cellEditor.selectionEnd = -1;
+					t.cellEditor._cleanSelection();
 				}
 			} else {
 				t.cellEditor.insertFormula(name);
