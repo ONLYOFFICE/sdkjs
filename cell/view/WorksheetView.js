@@ -3204,6 +3204,12 @@
         }
 		if (this.workbook.printPreviewState && this.workbook.printPreviewState.isStart()) {
 			//только перерисовываю, каждый раз пересчёт - может потребовать много ресурсов
+			//если изменилось количество строк/столбцов со значениями - пересчитываю
+			//пересчёт выполянется когда пришли данные от других пользователей
+			if (this.workbook.printPreviewState.isNeedUpdate(this.model)) {
+				//возможно стоит добавить эвент об изменении количетсва страниц
+				window["Asc"]["editor"].asc_updatePrintPreview(this.workbook.printPreviewState);
+			}
 			window["Asc"]["editor"].asc_drawPrintPreview();
 			return;
 		}

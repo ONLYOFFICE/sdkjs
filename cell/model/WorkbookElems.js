@@ -11752,6 +11752,7 @@ QueryTableField.prototype.clone = function() {
 		//отслеживаем активную страницу и активный лист
 		this.activePage = null;
 		this.activeSheet = null;
+		this.sheetsProps = null;
 
 		this.start = null;
 
@@ -11922,6 +11923,29 @@ QueryTableField.prototype.clone = function() {
 	CPrintPreviewState.prototype.setAdvancedOptions = function (val) {
 		this.advancedOptions = val;
 	};
+	CPrintPreviewState.prototype.isNeedUpdate = function (ws) {
+		if (!ws) {
+			return false;
+		}
+
+		var res = true;
+		if (this.sheetsProps && this.sheetsProps[ws.index]) {
+			if (this.sheetsProps[ws.index].col >= ws.nColsCount && this.sheetsProps[ws.index].row >= ws.nRowsCount) {
+				res = false;
+			}
+		}
+		if (!this.sheetsProps) {
+			this.sheetsProps = [];
+		}
+		if (!this.sheetsProps[ws.index]) {
+			this.sheetsProps[ws.index] = {};
+		}
+		this.sheetsProps[ws.index].col = ws.nColsCount;
+		this.sheetsProps[ws.index].row = ws.nRowsCount;
+
+		return res;
+	};
+
 
 
 	//----------------------------------------------------------export----------------------------------------------------
