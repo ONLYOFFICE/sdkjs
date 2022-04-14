@@ -6630,6 +6630,7 @@
 					self.stringRender.drawingCtx.ppiX = 96;
 					self.stringRender.drawingCtx.ppiY = 96;
 					self.stringRender.drawingCtx.scaleFactor = 1;
+					self.stringRender.fontNeedUpdate = true;
 
 					widthStr = self.stringRender.measureString(str, flags, width).width;
 
