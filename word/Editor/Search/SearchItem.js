@@ -164,7 +164,8 @@
 	CSearchTextItemChar.prototype = Object.create(CSearchTextItemBase.prototype);
 	CSearchTextItemChar.prototype.IsMatch = function(oItem)
 	{
-		return (oItem.IsChar() && this.GetValue() === oItem.GetValue());
+		return ((oItem.IsChar() && this.GetValue() === oItem.GetValue())
+			|| (0x2D === this.Value && oItem.IsNonBreakingHyphen()));
 	};
 	CSearchTextItemChar.prototype.ToRunElement = function(isMathRun)
 	{
@@ -442,8 +443,7 @@
 	CSearchTextSpecialNonBreakingHyphen.prototype = Object.create(CSearchTextItemBase.prototype);
 	CSearchTextSpecialNonBreakingHyphen.prototype.IsMatch = function(oItem)
 	{
-		return ((oItem.IsChar() && 0x2D === oItem.GetValue())
-			|| oItem.IsNonBreakingHyphen()
+		return (oItem.IsNonBreakingHyphen()
 			|| oItem.IsAnySymbol());
 	};
 	CSearchTextSpecialNonBreakingHyphen.prototype.ToRunElement = function(isMathRun)

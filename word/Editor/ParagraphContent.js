@@ -751,6 +751,9 @@ ParaText.prototype.IsDigit = function()
 };
 ParaText.prototype.ToSearchElement = function(oProps)
 {
+	if (0x2D === this.Value && !this.IsSpaceAfter())
+		return new AscCommonWord.CSearchTextSpecialNonBreakingHyphen();
+
 	if (!oProps.IsMatchCase())
 		return new AscCommonWord.CSearchTextItemChar(String.fromCodePoint(this.Value).toLowerCase().codePointAt(0));
 
