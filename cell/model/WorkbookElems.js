@@ -11832,6 +11832,16 @@ QueryTableField.prototype.clone = function() {
 	CPrintPreviewState.prototype.getPagesLength = function () {
 		return this.pages && this.pages.arrPages.length;
 	};
+	CPrintPreviewState.prototype.getIndexPageByIndexSheet = function (indexSheet) {
+		if (this.pages && this.pages.arrPages.length) {
+			for (var i = 0; i < this.pages.arrPages.length; i++) {
+				if (i === this.pages.arrPages[i].indexActiveWs) {
+					return i;
+				}
+			}
+		}
+		return null;
+	};
 	CPrintPreviewState.prototype.setPage = function (index, checkZoom) {
 		this.activePage = index;
 		var page = this.getPage(this.activePage);

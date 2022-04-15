@@ -1220,11 +1220,14 @@ var editor;
 		return pagesCount ? pagesCount : 1;
 	};
 
-	spreadsheet_api.prototype.asc_drawPrintPreview = function (index) {
+	spreadsheet_api.prototype.asc_drawPrintPreview = function (index, indexSheet) {
 		if (this.wb.printPreviewState.isDrawPrintPreview) {
 			return;
 		}
 		this.wb.printPreviewState.isDrawPrintPreview = true;
+		if (indexSheet != null) {
+			index = this.wb.printPreviewState.getIndexPageByIndexSheet(indexSheet);
+		}
 		if (index == null) {
 			index = this.wb.printPreviewState.activePage;
 		}
