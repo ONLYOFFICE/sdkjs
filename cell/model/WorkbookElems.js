@@ -11835,7 +11835,7 @@ QueryTableField.prototype.clone = function() {
 	CPrintPreviewState.prototype.getIndexPageByIndexSheet = function (indexSheet) {
 		if (this.pages && this.pages.arrPages.length) {
 			for (var i = 0; i < this.pages.arrPages.length; i++) {
-				if (i === this.pages.arrPages[i].indexActiveWs) {
+				if (indexSheet === this.pages.arrPages[i].indexWorksheet) {
 					return i;
 				}
 			}
