@@ -127,7 +127,7 @@
         return this.asc_GetBlockChainData();
     };
     /**
-     * Inserts a content control containing data. The data is specified by the js code for Document Builder, or by a link to the shared document.
+     * Inserts the content control containing data. The data is specified by the js code for Document Builder, or by a link to the shared document.
      * @memberof Api
      * @typeofeditors ["CDE"]
      * @alias InsertAndReplaceContentControls
@@ -541,7 +541,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias AddContentControl
-	 * @param {ContentControlType} type - A numeric value that specifies the content control type. It can have one of the following values: 1 (block) or 2 (inline).
+	 * @param {ContentControlType} type - A numeric value that specifies the content control type. It can have one of the following values: 1 (block), 2 (inline), 3 (row) or 4 (cell).
 	 * @param {ContentControlProperties}  [commonPr = {}] - The common content control properties.
 	 * @returns {ContentControl} - A JSON object containing the data about the created content control: "Tag", "Id", "Lock" and "InternalId".
 	 * @example
@@ -735,7 +735,7 @@
 	 * Removes several OLE objects from the document by their internal IDs.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @alias RemoveContentControls
+	 * @alias RemoveOleObjects
 	 * @param {OLEObjectData[]} arrObjects An array of the identifiers which are used to work with OLE objects added to the document. Example: [{"InternalId": "5_556"}].
 	 * @return {undefined}
 	 * @example
@@ -781,7 +781,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias InsertOleObject
 	 * @param {OLEObjectData} NewObject - The new OLE object data.
-	 * @param {?boolean} bSelect - Defines if the OLE object will be selected after inserting to the document (true) or not (false).
+	 * @param {?boolean} bSelect - Defines if the OLE object will be selected after inserting into the document (true) or not (false).
 	 * @return {undefined}
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_InsertOleObject"] = function(NewObject, bSelect)
