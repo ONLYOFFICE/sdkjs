@@ -11933,14 +11933,16 @@ QueryTableField.prototype.clone = function() {
 	CPrintPreviewState.prototype.setAdvancedOptions = function (val) {
 		this.advancedOptions = val;
 	};
-	CPrintPreviewState.prototype.isNeedUpdate = function (ws) {
+	CPrintPreviewState.prototype.isNeedUpdate = function (ws, data) {
 		if (!ws) {
 			return false;
 		}
 
+		var maxCol = data ? data.col : ws.nColsCount;
+		var maxRow = data ? data.row : ws.nRowsCount;
 		var res = true;
 		if (this.sheetsProps && this.sheetsProps[ws.index]) {
-			if (this.sheetsProps[ws.index].col >= ws.nColsCount && this.sheetsProps[ws.index].row >= ws.nRowsCount) {
+			if (this.sheetsProps[ws.index].col === maxCol && this.sheetsProps[ws.index].row === maxRow) {
 				res = false;
 			}
 		}
@@ -11950,8 +11952,8 @@ QueryTableField.prototype.clone = function() {
 		if (!this.sheetsProps[ws.index]) {
 			this.sheetsProps[ws.index] = {};
 		}
-		this.sheetsProps[ws.index].col = ws.nColsCount;
-		this.sheetsProps[ws.index].row = ws.nRowsCount;
+		this.sheetsProps[ws.index].col = maxCol;
+		this.sheetsProps[ws.index].row = maxRow;
 
 		return res;
 	};

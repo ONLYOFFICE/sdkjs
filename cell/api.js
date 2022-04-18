@@ -1217,7 +1217,7 @@ var editor;
 		this.wb.printPreviewState.setPages(pages);
 		this.wb.printPreviewState.setAdvancedOptions(options && options.advancedOptions);
 		var pagesCount = pages.arrPages.length;
-		this.handlers.trigger("asc_onPrintPreviewPagesCountChanged", pagesCount ? pagesCount : 1);
+		this.handlers.trigger("asc_onPrintPreviewPagesCountChanged", pagesCount ? pagesCount : 0);
 	};
 
 	spreadsheet_api.prototype.asc_drawPrintPreview = function (index, indexSheet) {

@@ -10774,6 +10774,13 @@
 		return this.getLockedCell(activeCell.col, activeCell.row);
 	};
 
+	Worksheet.prototype.isLockedActiveCell = function () {
+		var activeCell = this.selectionRange.activeCell;
+		return this.getLockedCell(activeCell.col, activeCell.row);
+	};
+
+
+
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
 	var g_nCellOffsetXf = g_nCellOffsetFlag + 1;
