@@ -1209,7 +1209,7 @@ var editor;
 		if (pages.arrPages.length) {
 			this.asc_drawPrintPreview(0);
 		}
-		this.handlers.trigger("asc_onPrintPreviewPagesCountChanged", pages.arrPages.length);
+		return pages.arrPages.length;
 	};
 
 	spreadsheet_api.prototype.asc_updatePrintPreview = function (options) {
@@ -1217,7 +1217,7 @@ var editor;
 		this.wb.printPreviewState.setPages(pages);
 		this.wb.printPreviewState.setAdvancedOptions(options && options.advancedOptions);
 		var pagesCount = pages.arrPages.length;
-		this.handlers.trigger("asc_onPrintPreviewPagesCountChanged", pagesCount ? pagesCount : 0);
+		return pagesCount ? pagesCount : 1;
 	};
 
 	spreadsheet_api.prototype.asc_drawPrintPreview = function (index, indexSheet) {

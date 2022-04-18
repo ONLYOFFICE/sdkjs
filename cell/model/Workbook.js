@@ -2473,6 +2473,7 @@
 			this._updateWorksheetIndexes(wsActive);
 			this.dependencyFormulas.removeSheet(prepared);
 			this.dependencyFormulas.unlockRecal();
+			this.handlers.trigger("asc_onSheetDeleted", nIndex);
 			return wsActive.getIndex();
 		}
 		return -1;

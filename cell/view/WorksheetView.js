@@ -3190,11 +3190,12 @@
 			//только перерисовываю, каждый раз пересчёт - может потребовать много ресурсов
 			//если изменилось количество строк/столбцов со значениями - пересчитываю
 			//пересчёт выполянется когда пришли данные от других пользователей
+			var needUpdate;
 			if (this.workbook.printPreviewState.isNeedUpdate(this.model, this.getMaxRowColWithData())) {
 				//возможно стоит добавить эвент об изменении количетсва страниц
-				window["Asc"]["editor"].asc_updatePrintPreview(this.workbook.printPreviewState);
+				needUpdate = true;
 			}
-			window["Asc"]["editor"].asc_drawPrintPreview();
+			this.model.workbook.handlers.trigger("asc_onPrintPreviewSheetDataChanged", needUpdate);
 			return;
 		}
 		this.handlers.trigger("checkLastWork");
