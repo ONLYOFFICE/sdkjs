@@ -968,6 +968,9 @@
 	this.model.handlers.add("updateGroupData", function() {
 	  self.updateGroupData();
 	});
+	this.model.handlers.add("updatePrintPreview", function() {
+	  self.updatePrintPreview();
+	});
     this.cellCommentator = new AscCommonExcel.CCellCommentator({
       model: new WorkbookCommentsModel(this.handlers, this.model.aComments),
       collaborativeEditing: this.collaborativeEditing,
@@ -4308,6 +4311,20 @@
 		oWriter.WriteString2(rangeStr);
 		var BinaryLen = oWriter.GetCurPosition() - BinaryPos;
 		return (BinaryLen + ";" + oWriter.GetBase64Memory2(BinaryPos, BinaryLen));
+	};
+
+	WorkbookView.prototype.updatePrintPreview = function () {
+		for(var i in this.wsViews) {
+			this.wsViews[i]._recalculate();
+		}
+		if (!this.printPreviewState.isDrawPrintPreview) {
+			var needUpdate;
+			//if (this.workbook.printPreviewState.isNeedUpdate(this.model, this.getMaxRowColWithData())) {
+			//возможно стоит добавить эвент об изменении количетсва страниц
+			needUpdate = true;
+			//}
+			this.model.handlers.trigger("asc_onPrintPreviewSheetDataChanged", needUpdate);
+		}
 	};
 
 	//------------------------------------------------------------export---------------------------------------------------

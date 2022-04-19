@@ -709,7 +709,10 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 
 	if (oRedoObjectParam.bIsOn)
 		this.TurnOn();
-		
+
+	if (!bUndo) {
+		this.workbook.handlers.trigger("updatePrintPreview");
+	}
 
 	window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
 	this.workbook.handlers.trigger("toggleAutoCorrectOptions", null, true);

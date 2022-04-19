@@ -3189,14 +3189,6 @@
 			//только перерисовываю, каждый раз пересчёт - может потребовать много ресурсов
 			//если изменилось количество строк/столбцов со значениями - пересчитываю
 			//пересчёт выполянется когда пришли данные от других пользователей
-			if (!this.workbook.printPreviewState.isDrawPrintPreview) {
-				var needUpdate;
-				//if (this.workbook.printPreviewState.isNeedUpdate(this.model, this.getMaxRowColWithData())) {
-					//возможно стоит добавить эвент об изменении количетсва страниц
-					needUpdate = true;
-				//}
-				this.model.workbook.handlers.trigger("asc_onPrintPreviewSheetDataChanged", needUpdate);
-			}
 			return;
 		}
 		this._recalculate();
