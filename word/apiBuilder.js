@@ -5526,7 +5526,7 @@
 	};
 
 	/**
-	 * Returns an array with names of the all bookmarks in current document.
+	 * Returns an array with names of all bookmarks in the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {string[]}
@@ -11750,7 +11750,7 @@
 	 * @memberof ApiDrawing
 	 * @typeofeditors ["CDE"]
 	 * @param {RelFromH} [sRelativeFrom="page"] - The document element which will be taken as a countdown point for the object horizontal alignment.
-	 * @param {("left" | "right" | "center")} [sAlign="left"] - The alingment type which will be used for the object horizontal alignment.
+	 * @param {("left" | "right" | "center")} [sAlign="left"] - The alignment type which will be used for the object horizontal alignment.
 	 */
 	ApiDrawing.prototype.SetHorAlign = function(sRelativeFrom, sAlign)
 	{
@@ -14389,7 +14389,7 @@
 		return true;
 	};
 	/**
-	 * Creates a copy of a current form.
+	 * Creates a copy of the current text form.
 	 * @memberof ApiTextForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiTextForm}
@@ -14554,7 +14554,7 @@
 		return false;
 	};
 	/**
-	 * Creates a copy of a current form.
+	 * Creates a copy of the current picture form.
 	 * @memberof ApiPictureForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiPictureForm}
@@ -14684,7 +14684,7 @@
 		return (this.Sdt.IsComboBox());
 	};
 	/**
-	 * Creates a copy of a current form.
+	 * Creates a copy of the current combo box.
 	 * @memberof ApiComboBoxForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiComboBoxForm}
@@ -14769,7 +14769,7 @@
 		this.Sdt.SetCheckBoxPr(oPr);
 	};
 	/**
-	 * Creates a copy of a current form.
+	 * Creates a copy of the current checkbox.
 	 * @memberof ApiCheckBoxForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiCheckBoxForm}
