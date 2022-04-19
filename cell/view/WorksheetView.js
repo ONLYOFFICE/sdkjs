@@ -3185,19 +3185,21 @@
         if (lockDraw || this.model.workbook.bCollaborativeChanges || window['IS_NATIVE_EDITOR']) {
             return this;
         }
-		this._recalculate();
 		if (this.workbook.printPreviewState && this.workbook.printPreviewState.isStart()) {
 			//только перерисовываю, каждый раз пересчёт - может потребовать много ресурсов
 			//если изменилось количество строк/столбцов со значениями - пересчитываю
 			//пересчёт выполянется когда пришли данные от других пользователей
-			var needUpdate;
-			if (this.workbook.printPreviewState.isNeedUpdate(this.model, this.getMaxRowColWithData())) {
-				//возможно стоит добавить эвент об изменении количетсва страниц
-				needUpdate = true;
+			if (!this.workbook.printPreviewState.isDrawPrintPreview) {
+				var needUpdate;
+				//if (this.workbook.printPreviewState.isNeedUpdate(this.model, this.getMaxRowColWithData())) {
+					//возможно стоит добавить эвент об изменении количетсва страниц
+					needUpdate = true;
+				//}
+				this.model.workbook.handlers.trigger("asc_onPrintPreviewSheetDataChanged", needUpdate);
 			}
-			this.model.workbook.handlers.trigger("asc_onPrintPreviewSheetDataChanged", needUpdate);
 			return;
 		}
+		this._recalculate();
 		this.handlers.trigger("checkLastWork");
         this._clean();
         this._drawCorner();
