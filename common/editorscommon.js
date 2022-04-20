@@ -2659,6 +2659,8 @@
 			this._reset();
 		}
 
+		//TODO правки для external reference
+
 		var checkAbs = function(val1, val2) {
 			var res = null;
 			if(val1 === val2 && val1 === undefined) {
@@ -2762,6 +2764,8 @@
 			this._reset();
 		}
 
+		//TODO правки для external reference
+
 		var R1C1Mode = AscCommonExcel.g_R1C1Mode;
 		var substr = formula.substring(start_pos), match;
 		var m0, m1;
@@ -2810,6 +2814,7 @@
 	};
 	parserHelper.prototype.is3DRef = function (formula, start_pos, support_digital_start)
 	{
+		//TODO правки для external reference
 		if (this instanceof parserHelper)
 		{
 			this._reset();

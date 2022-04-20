@@ -1192,6 +1192,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		this.wsFrom = wsFrom;
 		this.wsTo = wsTo || this.wsFrom;
+		this.externalBookIndex = null;
 	}
 
 	cArea3D.prototype = Object.create(cBaseType.prototype);
@@ -1656,6 +1657,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			});
 			this.range = val;
 		}
+
+		this.externalBookIndex = null;
 	}
 
 	cRef3D.prototype = Object.create(cBaseType.prototype);

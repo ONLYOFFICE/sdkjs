@@ -9284,6 +9284,7 @@
 					}
 					var parseResult = new AscCommonExcel.ParseResult([]);
 					var newFormulaParent = new AscCommonExcel.CCellWithFormula(cell.ws, cell.nRow, cell.nCol);
+
 					var parsed = new AscCommonExcel.parserFormula(formula.v, newFormulaParent, cell.ws);
 					parsed.ca = formula.ca;
 					parsed.parse(undefined, undefined, parseResult);
