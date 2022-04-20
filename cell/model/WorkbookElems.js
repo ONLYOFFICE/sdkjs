@@ -10775,6 +10775,7 @@ QueryTableField.prototype.clone = function() {
 
 		//для превью передаём из интерфейса
 		this.headerFooter = null;
+		this.printArea = null;
 
 		this.ws = ws;
 
@@ -11290,6 +11291,15 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 
+	CHeaderFooter.prototype.clean = function() {
+		this.setFirstHeader(null);
+		this.setOddHeader(null);
+		this.setEvenHeader(null);
+		this.setFirstFooter(null);
+		this.setOddFooter(null);
+		this.setEvenFooter(null);
+	};
+
 	CHeaderFooter.prototype.init = function () {
 		if(this.evenFooter) {
 			this.evenFooter.parse();
@@ -11330,6 +11340,22 @@ QueryTableField.prototype.clone = function() {
 			this.oddHeader.getAllFonts(oFontMap);
 		}
 	};
+	CHeaderFooter.prototype.getForInterface = function () {
+		var res = null;
+		var tempEditor = new AscCommonExcel.CHeaderFooterEditor();
+		tempEditor._createAndDrawSections(Asc.c_oAscHeaderFooterType.first, null, this);
+		tempEditor._createAndDrawSections(Asc.c_oAscHeaderFooterType.odd, null, this);
+		tempEditor._createAndDrawSections(Asc.c_oAscHeaderFooterType.even, null, this);
+		tempEditor.alignWithMargins = this.alignWithMargins;
+		tempEditor.differentFirst = this.differentFirst;
+		tempEditor.differentOddEven = this.differentOddEven;
+		tempEditor.scaleWithDoc = this.scaleWithDoc;
+
+		res = tempEditor.getPropsToInterface();
+
+		return res;
+	};
+
 
 	function CHeaderFooterData(str) {
 		this.str = str;
@@ -11828,6 +11854,8 @@ QueryTableField.prototype.clone = function() {
 		this.realActiveSheet = null;
 		this.realZoom = null;
 		this._pageOptionsMap = null;
+
+		this.advancedOptions = null;
 	};
 	CPrintPreviewState.prototype.getPagesLength = function () {
 		return this.pages && this.pages.arrPages.length;

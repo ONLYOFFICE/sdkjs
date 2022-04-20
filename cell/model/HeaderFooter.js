@@ -683,6 +683,11 @@
 	};
 	CHeaderFooterEditorSection.prototype.drawText = function () {
 		var t = this;
+
+		if (!this.canvasObj || !this.canvasObj.drawingCtx) {
+			return;
+		}
+
 		this.canvasObj.drawingCtx.clear();
 
 		var drawBackground = function () {
@@ -1227,14 +1232,21 @@
 		return res;
 	};
 
-	CHeaderFooterEditor.prototype._saveToModel = function (ws, opt_headerFooter) {
+	CHeaderFooterEditor.prototype._saveToModel = function (ws, opt_headerFooter, reWrite) {
 		if (!ws) {
 			ws = this.wb && this.wb.getWorksheet();
 		}
 
 		var hF = opt_headerFooter ? opt_headerFooter : ws.model.headerFooter;
-
 		var isAddHistory = false;
+
+		if (reWrite) {
+			History.Create_NewPoint();
+			History.StartTransaction();
+			isAddHistory = true;
+			hF.clean();
+		}
+
 		for(var i = 0; i < this.sections.length; i++) {
 			if(!this.sections[i]) {
 				continue;
@@ -1243,7 +1255,7 @@
 			//сначала формируем новый объект, затем доблавляем в модель и записываем в историю полученную строку
 			//возможно стоит пересмотреть(получать вначале строку) - создаём вначале парсер,
 			//добавляем туда полученные при редактировании фрагменты, затем получаем строку
-			var curHeaderFooter = this._getCurPageHF(i, opt_headerFooter);
+			var curHeaderFooter = this._getCurPageHF(i, opt_headerFooter, ws);
 			if(null === curHeaderFooter) {
 				curHeaderFooter = new Asc.CHeaderFooterData();
 			}
@@ -1252,15 +1264,15 @@
 			}
 
 			var isChanged = false;
-			if(this.sections[i][c_oPortionPosition.left] && this.sections[i][c_oPortionPosition.left].changed) {
+			if(this.sections[i][c_oPortionPosition.left] && (this.sections[i][c_oPortionPosition.left].changed || reWrite)) {
 				curHeaderFooter.parser.portions[c_oPortionPosition.left] = this._convertFragments(this.sections[i][c_oPortionPosition.left].fragments);
 				isChanged = true;
 			}
-			if(this.sections[i][c_oPortionPosition.center] && this.sections[i][c_oPortionPosition.center].changed) {
+			if(this.sections[i][c_oPortionPosition.center] && (this.sections[i][c_oPortionPosition.center].changed || reWrite)) {
 				curHeaderFooter.parser.portions[c_oPortionPosition.center] = this._convertFragments(this.sections[i][c_oPortionPosition.center].fragments);
 				isChanged = true;
 			}
-			if(this.sections[i][c_oPortionPosition.right] && this.sections[i][c_oPortionPosition.right].changed) {
+			if(this.sections[i][c_oPortionPosition.right] && (this.sections[i][c_oPortionPosition.right].changed || reWrite)) {
 				curHeaderFooter.parser.portions[c_oPortionPosition.right] = this._convertFragments(this.sections[i][c_oPortionPosition.right].fragments);
 				isChanged = true;
 			}
@@ -1525,7 +1537,7 @@
 		return true === this.scaleWithDoc || null === this.scaleWithDoc;
 	};
 
-	CHeaderFooterEditor.prototype._createAndDrawSections = function(pageCommonType, opt_objForSave) {
+	CHeaderFooterEditor.prototype._createAndDrawSections = function(pageCommonType, opt_objForSave, opt_headerFooter) {
 		var pageHeaderType = this._getHeaderFooterType(pageCommonType);
 		var pageFooterType = this._getHeaderFooterType(pageCommonType, true);
 
@@ -1570,7 +1582,7 @@
 				}
 			} else {
 				//получаем из модели необходимый нам элемент
-				curPageHF = this._getCurPageHF(pageHeaderType);
+				curPageHF = this._getCurPageHF(pageHeaderType, opt_headerFooter);
 				if(curPageHF && curPageHF.str) {
 					if(!curPageHF.parser) {
 						curPageHF.parse();
@@ -1614,7 +1626,7 @@
 				}
 			} else {
 				//получаем из модели необходимый нам элемент
-				curPageHF = this._getCurPageHF(pageFooterType);
+				curPageHF = this._getCurPageHF(pageFooterType, opt_headerFooter);
 				if(curPageHF && curPageHF.str) {
 					if(!curPageHF.parser) {
 						curPageHF.parse();
@@ -1658,9 +1670,11 @@
 		return res;
 	};
 
-	CHeaderFooterEditor.prototype._getCurPageHF = function (type, opt_headerFooter) {
+	CHeaderFooterEditor.prototype._getCurPageHF = function (type, opt_headerFooter, ws) {
 		var res = null;
-		var ws = this.wb.getWorksheet();
+		if (!ws) {
+			ws = this.wb.getWorksheet();
+		}
 		var hF = opt_headerFooter ? opt_headerFooter : ws.model.headerFooter;
 
 		//TODO можно у класса CHeaderFooter реализовать данную функцию

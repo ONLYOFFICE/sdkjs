@@ -954,13 +954,21 @@ var editor;
       this.wb.savePagePrintOptions(arrPagesPrint);
   };
 
-  spreadsheet_api.prototype.asc_getPageOptions = function(index, initPrintTitles) {
+  spreadsheet_api.prototype.asc_getPageOptions = function(index, initPrintTitles, opt_copy) {
     var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
     var ws = this.wbModel.getWorksheet(sheetIndex);
-    if(initPrintTitles && ws.PagePrintOptions) {
-		ws.PagePrintOptions.initPrintTitles();
+    var printOptions = ws.PagePrintOptions;
+	if(initPrintTitles && printOptions) {
+		printOptions.initPrintTitles();
     }
-    return ws.PagePrintOptions;
+    if(printOptions && opt_copy) {
+		printOptions = ws.PagePrintOptions.clone(ws);
+		printOptions.pageSetup.headerFooter = ws && ws.headerFooter && ws.headerFooter.getForInterface();
+		var printArea = this.wbModel.getDefinesNames("Print_Area", ws.getId());
+		printOptions.pageSetup.printArea = printArea ? printArea.clone() : false;
+    }
+
+    return printOptions;
   };
 
   spreadsheet_api.prototype.asc_setPageOption = function (func, val, index) {
@@ -1140,8 +1148,10 @@ var editor;
     if (c_oAscFileType.PDF === fileType || c_oAscFileType.PDFA === fileType) {
       var printPagesData, pdfPrinterMemory, t = this;
       this.wb._executeWithoutZoom(function () {
+      	t.wb.printPreviewState.advancedOptions = options.advancedOptions;
         printPagesData = t.wb.calcPagesPrint(options.advancedOptions);
         pdfPrinterMemory = t.wb.printSheets(printPagesData).DocumentRenderer.Memory;
+      	t.wb.printPreviewState.advancedOptions = null;
       });
       dataContainer.data = oAdditionalData["nobase64"] ? pdfPrinterMemory.GetData() : pdfPrinterMemory.GetBase64Memory();
     } else if (this.insertDocumentUrlsData) {

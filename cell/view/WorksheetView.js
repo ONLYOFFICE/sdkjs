@@ -2383,7 +2383,14 @@
 
     WorksheetView.prototype.calcPagesPrint = function (pageOptions, printOnlySelection, indexWorksheet, arrPages, arrRanges, adjustPrint, doNotRecalc) {
 		var range, maxCell, t = this;
-		var _printArea = this.model.workbook.getDefinesNames("Print_Area", this.model.getId());
+		//в опциях может прийти другая область печати. сделано на случай, когда при совместке меняется область в модели
+		var _printArea;
+		if (pageOptions && pageOptions.pageSetup && (pageOptions.pageSetup.printArea || pageOptions.pageSetup.printArea === false) ) {
+			_printArea = pageOptions.pageSetup.printArea;
+		} else {
+			_printArea = this.model.workbook.getDefinesNames("Print_Area", this.model.getId());
+		}
+
 		var ignorePrintArea = adjustPrint ? adjustPrint.asc_getIgnorePrintArea() : null;
 		var printArea = !ignorePrintArea && _printArea;
 
@@ -3553,7 +3560,8 @@
 		}
 
 		//new CHeaderFooter();
-		var printPreview = this.workbook.printPreviewState.isStart() ? this.workbook.printPreviewState : null;
+		//при печати берём колонтитул либо из настроек печати(если есть), либо из модели 
+		var printPreview = this.workbook.printPreviewState;
 		var pageOptionsMap = printPreview && printPreview.advancedOptions && printPreview.advancedOptions.pageOptionsMap;
 		var opt_headerFooter = pageOptionsMap && pageOptionsMap[this.model.index] && pageOptionsMap[this.model.index].pageSetup && pageOptionsMap[this.model.index].pageSetup.getPreviewHeaderFooter();
 
@@ -19527,7 +19535,7 @@
 		if (pageSetupObj.headerFooter) {
 			var tempEditor = new AscCommonExcel.CHeaderFooterEditor();
 			tempEditor.setPropsFromInterface(pageSetupObj.headerFooter);
-			tempEditor._saveToModel(this);
+			tempEditor._saveToModel(this, null, true);
 		}
 
 		this.recalcPrintScale();
