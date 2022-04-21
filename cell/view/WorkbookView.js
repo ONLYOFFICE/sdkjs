@@ -3214,16 +3214,9 @@
       this._calcPagesPrintSheet(nActive, printPagesData, true, adjustPrint);
     }
 
-    if (AscCommonExcel.c_kMaxPrintPages === printPagesData.arrPages.length) {
-		if (!(isPrintPreview && this.printPreviewState.maxPagesCount)) {
-			this.handlers.trigger("asc_onError", c_oAscError.ID.PrintMaxPagesCount, c_oAscError.Level.NoCritical);
-			if (isPrintPreview) {
-				this.printPreviewState.maxPagesCount = true;
-			}
-		}
-    } else if (isPrintPreview) {
-		this.printPreviewState.maxPagesCount = null;
-	}
+    if (this.printPreviewState.isNeedShowError(AscCommonExcel.c_kMaxPrintPages === printPagesData.arrPages.length)) {
+		this.handlers.trigger("asc_onError", c_oAscError.ID.PrintMaxPagesCount, c_oAscError.Level.NoCritical);
+    }
 
     this.changeZoom(viewZoom, true, true);
 

@@ -11838,6 +11838,23 @@ QueryTableField.prototype.clone = function() {
 	CPrintPreviewState.prototype.getPage = function (index) {
 		return this.pages && this.pages.arrPages[index];
 	};
+	CPrintPreviewState.prototype.isNeedShowError = function (bMoreThenMax) {
+		var res = bMoreThenMax;
+
+		if (this.isStart()) {
+			if (bMoreThenMax) {
+				if (!this.maxPagesCount) {
+					this.maxPagesCount = true;
+				} else {
+					res = false;
+				}
+			} else {
+				this.maxPagesCount = null;
+			}
+		}
+
+		return res;
+	};
 	CPrintPreviewState.prototype.clean = function (revertZoom) {
 		//this.ctx = null;
 		this.pages = null;
