@@ -3194,7 +3194,8 @@
     var viewZoom = this.getZoom();
     this.changeZoom(1, true, true);
 
-	var nActive = this.printPreviewState.isStart() && null !== this.printPreviewState.realActiveSheet ? this.printPreviewState.realActiveSheet : this.model.getActive();
+	var isPrintPreview = this.printPreviewState.isStart();
+	var nActive = isPrintPreview && null !== this.printPreviewState.realActiveSheet ? this.printPreviewState.realActiveSheet : this.model.getActive();
 
     var printPagesData = new asc_CPrintPagesData();
     var printType = adjustPrint.asc_getPrintType();
@@ -3214,8 +3215,15 @@
     }
 
     if (AscCommonExcel.c_kMaxPrintPages === printPagesData.arrPages.length) {
-      this.handlers.trigger("asc_onError", c_oAscError.ID.PrintMaxPagesCount, c_oAscError.Level.NoCritical);
-    }
+		if (!(isPrintPreview && this.printPreviewState.maxPagesCount)) {
+			this.handlers.trigger("asc_onError", c_oAscError.ID.PrintMaxPagesCount, c_oAscError.Level.NoCritical);
+			if (isPrintPreview) {
+				this.printPreviewState.maxPagesCount = true;
+			}
+		}
+    } else if (isPrintPreview) {
+		this.printPreviewState.maxPagesCount = null;
+	}
 
     this.changeZoom(viewZoom, true, true);
 

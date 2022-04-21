@@ -11797,6 +11797,8 @@ QueryTableField.prototype.clone = function() {
 
 		//избегаем повторных вызовов, пересмотреть
 		this.isDrawPrintPreview = null;
+		//избегаем повторного отображения ошибки(максимальное количество страниц)
+		this.maxPagesCount = null;
 
 		//опции измененного листа пока не мержу с теми, что в модели. перезатираю полностью. если будет необходимость - _pageOptionsMap использовать и при сохранении проверять что изменилось
 		//при закрытии окна с сохранением вычисляем только измененные настройки, для этого храним те настройки, которые были до открытия
@@ -11856,6 +11858,7 @@ QueryTableField.prototype.clone = function() {
 		this._pageOptionsMap = null;
 
 		this.advancedOptions = null;
+		this.maxPagesCount = null;
 	};
 	CPrintPreviewState.prototype.getPagesLength = function () {
 		return this.pages && this.pages.arrPages.length;
