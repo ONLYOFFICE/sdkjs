@@ -962,7 +962,7 @@ var editor;
 		printOptions.initPrintTitles();
     }
     if(printOptions && opt_copy) {
-		printOptions = ws.PagePrintOptions.clone(ws);
+		printOptions = ws.PagePrintOptions.clone();
 		printOptions.pageSetup.headerFooter = ws && ws.headerFooter && ws.headerFooter.getForInterface();
 		var printArea = this.wbModel.getDefinesNames("Print_Area", ws.getId());
 		printOptions.pageSetup.printArea = printArea ? printArea.clone() : false;
