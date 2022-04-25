@@ -764,7 +764,7 @@
         {
             oTempPlaceholder = allDrawings[nDrawing].GetPlaceholder();
 
-            if (oTempPlaceholder.Placeholder.type === oPlaceholder.Placeholder.type)
+            if (oTempPlaceholder && oTempPlaceholder.Placeholder.type === oPlaceholder.Placeholder.type)
             {
                 if (oTempPlaceholder.Placeholder.idx && +oTempPlaceholder.Placeholder.idx > maxIndex)
                     maxIndex  = +oTempPlaceholder.Placeholder.idx;

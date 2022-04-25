@@ -6996,14 +6996,15 @@
 		if (typeof(sSepWith) !== "string" || nRefTo !== 4)
 			sSepWith = "";
 
-		var oManager = editor.asc_GetBookmarksManager();
-		var oDocument, oParaPos, sName, oldSelectionInfo;
-		for (var nBookmark = 0, nCount = oManager.asc_GetCount(); nBookmark < nCount; nBookmark++)
+		var oDocument = private_GetLogicDocument();
+		var oManager = oDocument.GetBookmarksManager();
+		var oParaPos, sName, oldSelectionInfo;
+		for (var nBookmark = 0, nCount = oManager.GetCount(); nBookmark < nCount; nBookmark++)
 		{
-			sName = oManager.asc_GetName(nBookmark);
-			if (!oManager.asc_IsInternalUseBookmark(sName) && !oManager.asc_IsHiddenBookmark(sName) && sName === sBookmarkName)
+			sName = oManager.GetName(nBookmark);
+			if (!oManager.IsInternalUseBookmark(sName) && !oManager.IsHiddenBookmark(sName) && sName === sBookmarkName)
 			{
-				oDocument = private_GetLogicDocument();
+				
 				oParaPos = this.Paragraph.GetDocumentPositionFromObject().concat(this.Paragraph.GetContentPosition(false, false));
 				oldSelectionInfo = oDocument.SaveDocumentState();
 				oDocument.RemoveSelection();
@@ -13378,6 +13379,8 @@
 			return false;
 		
 		this.Sdt.SetPlaceholderText(sText);
+		if (this.Sdt.IsEmpty())
+			this.Sdt.private_ReplaceContentWithPlaceHolder();
 		return true;
 	};
 	/**
@@ -13919,6 +13922,9 @@
 			return false;
 
 		this.Sdt.SetPlaceholderText(sText);
+		if (this.Sdt.IsEmpty())
+			this.Sdt.private_ReplaceContentWithPlaceHolder();
+
 		return true;
 	};
 
