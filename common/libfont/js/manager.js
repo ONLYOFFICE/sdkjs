@@ -111,7 +111,7 @@
                     }
 
 					// Normalize metrics for CJK fonts
-					if (_os2 && (_os2.ulUnicodeRange2 & 0x2DF00000 || _os.ulCodePageRange1 & 0x3e0000))
+					if (_os2 && (_os2.ulUnicodeRange2 & 0x2DF00000 || _os2.ulCodePageRange1 & 0x3e0000))
 					{
 						let nAscent  = font.m_lAscender;
 						let nDescent = font.m_lDescender;
