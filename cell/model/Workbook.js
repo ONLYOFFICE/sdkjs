@@ -2911,29 +2911,31 @@
 				item.Deserialize(stream);
 				aUndoRedoElems.push(item);
 			}
-			var wsViews = window["Asc"]["editor"].wb.wsViews;
+			var wsViews = window["Asc"]["editor"].wb && window["Asc"]["editor"].wb.wsViews;
 			if(oThis.oApi.collaborativeEditing.getFast()){
 				AscCommon.CollaborativeEditing.Clear_DocumentPositions();
 			}
-			for (var i in wsViews) {
-				if (isRealObject(wsViews[i]) && isRealObject(wsViews[i].objectRender) &&
-					isRealObject(wsViews[i].objectRender.controller)) {
-					wsViews[i].endEditChart();
-					if (oThis.oApi.collaborativeEditing.getFast()) {
-						var oState = wsViews[i].objectRender.saveStateBeforeLoadChanges();
-						if (oState) {
-							if (oState.Pos) {
-								AscCommon.CollaborativeEditing.Add_DocumentPosition(oState.Pos);
-							}
-							if (oState.StartPos) {
-								AscCommon.CollaborativeEditing.Add_DocumentPosition(oState.StartPos);
-							}
-							if (oState.EndPos) {
-								AscCommon.CollaborativeEditing.Add_DocumentPosition(oState.EndPos);
+			if(wsViews) {
+				for (var i in wsViews) {
+					if (isRealObject(wsViews[i]) && isRealObject(wsViews[i].objectRender) &&
+						isRealObject(wsViews[i].objectRender.controller)) {
+						wsViews[i].endEditChart();
+						if (oThis.oApi.collaborativeEditing.getFast()) {
+							var oState = wsViews[i].objectRender.saveStateBeforeLoadChanges();
+							if (oState) {
+								if (oState.Pos) {
+									AscCommon.CollaborativeEditing.Add_DocumentPosition(oState.Pos);
+								}
+								if (oState.StartPos) {
+									AscCommon.CollaborativeEditing.Add_DocumentPosition(oState.StartPos);
+								}
+								if (oState.EndPos) {
+									AscCommon.CollaborativeEditing.Add_DocumentPosition(oState.EndPos);
+								}
 							}
 						}
+						wsViews[i].objectRender.controller.resetSelection();
 					}
-					wsViews[i].objectRender.controller.resetSelection();
 				}
 			}
 			oFormulaLocaleInfo.Parse = false;
@@ -2972,20 +2974,20 @@
 			var oFontMap = this._generateFontMap();
 			window["Asc"]["editor"]._loadFonts(oFontMap, function(){
 				if(oThis.oApi.collaborativeEditing.getFast()){
-
-
-					for(var i in wsViews){
-						if(isRealObject(wsViews[i]) && isRealObject(wsViews[i].objectRender) && isRealObject(wsViews[i].objectRender.controller)){
-							var oState = wsViews[i].objectRender.getStateBeforeLoadChanges();
-							if(oState){
-								if (oState.Pos)
-									AscCommon.CollaborativeEditing.Update_DocumentPosition(oState.Pos);
-								if (oState.StartPos)
-									AscCommon.CollaborativeEditing.Update_DocumentPosition(oState.StartPos);
-								if (oState.EndPos)
-									AscCommon.CollaborativeEditing.Update_DocumentPosition(oState.EndPos);
+					if(wsViews) {
+						for(var i in wsViews){
+							if(isRealObject(wsViews[i]) && isRealObject(wsViews[i].objectRender) && isRealObject(wsViews[i].objectRender.controller)){
+								var oState = wsViews[i].objectRender.getStateBeforeLoadChanges();
+								if(oState){
+									if (oState.Pos)
+										AscCommon.CollaborativeEditing.Update_DocumentPosition(oState.Pos);
+									if (oState.StartPos)
+										AscCommon.CollaborativeEditing.Update_DocumentPosition(oState.StartPos);
+									if (oState.EndPos)
+										AscCommon.CollaborativeEditing.Update_DocumentPosition(oState.EndPos);
+								}
+								wsViews[i].objectRender.loadStateAfterLoadChanges();
 							}
-							wsViews[i].objectRender.loadStateAfterLoadChanges();
 						}
 					}
 				}
@@ -3010,12 +3012,14 @@
 
 			if(null == oRedoObjectParam)
 			{
-				var wsViews = window["Asc"]["editor"].wb.wsViews;
-				for (var i in wsViews) {
-					if (isRealObject(wsViews[i]) && isRealObject(wsViews[i].objectRender) &&
-						isRealObject(wsViews[i].objectRender.controller)) {
-						wsViews[i].endEditChart();
-						wsViews[i].objectRender.controller.resetSelection();
+				if(window["Asc"]["editor"].wb) {
+					var wsViews = window["Asc"]["editor"].wb.wsViews;
+					for (var i in wsViews) {
+						if (isRealObject(wsViews[i]) && isRealObject(wsViews[i].objectRender) &&
+							isRealObject(wsViews[i].objectRender.controller)) {
+							wsViews[i].endEditChart();
+							wsViews[i].objectRender.controller.resetSelection();
+						}
 					}
 				}
 

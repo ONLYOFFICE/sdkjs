@@ -476,13 +476,15 @@ CHistory.prototype.UndoRedoPrepare = function (oRedoObjectParam, bUndo) {
 		this.workbook.bRedoChanges = true;
 
 	if (!window["NATIVE_EDITOR_ENJINE"]) {
-		var wsViews = Asc["editor"].wb.wsViews;
-		for (var i = 0; i < wsViews.length; ++i) {
-			if (wsViews[i]) {
-				if (wsViews[i].objectRender && wsViews[i].objectRender.controller) {
-					wsViews[i].objectRender.controller.resetSelection(undefined, true);
+		if(Asc["editor"].wb) {
+			var wsViews = Asc["editor"].wb.wsViews;
+			for (var i = 0; i < wsViews.length; ++i) {
+				if (wsViews[i]) {
+					if (wsViews[i].objectRender && wsViews[i].objectRender.controller) {
+						wsViews[i].objectRender.controller.resetSelection(undefined, true);
+					}
+					wsViews[i].endEditChart();
 				}
-				wsViews[i].endEditChart();
 			}
 		}
 	}
