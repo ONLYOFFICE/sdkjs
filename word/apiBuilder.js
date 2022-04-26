@@ -9651,42 +9651,33 @@
 	 */
 	ApiTableCell.prototype.SetBackgroundColor = function(r, g, b, bNone)
 	{
-		var oUtils = Common.Utils.ThemeColor;
-		var background = new Asc.CBackground();
+		let oUnifill = new AscFormat.CUniFill();
+		oUnifill.setFill(new AscFormat.CSolidFill());
+		oUnifill.fill.setColor(new AscFormat.CUniColor());
+		oUnifill.fill.color.setColor(new AscFormat.CRGBColor());
 
-		var oAscColor;
-		if (typeof(r) == "number" && typeof(g) == "number" && typeof(b) == "number" && !bNone)
-		{
-			oAscColor = oUtils.getRgbColor(oUtils.getHexColor(r, g, b));
-			background.put_Value(0);
-			background.put_Color(oAscColor);
-		}
-		else if (bNone)
-		{
-			background.put_Value(1);
-			oAscColor = undefined;
-		}
+		if (r >=0 && g >=0 && b >=0)
+			oUnifill.fill.color.color.setColor(r, g, b);
 		else
 			return false;
 
-		background.Unifill = AscFormat.CreateUnifillFromAscColor(background.Color, 1);
 		var oNewShd = {
-			Value : background.Value,
+			Value : bNone ? Asc.c_oAscShd.Nil : Asc.c_oAscShd.Clear,
 			Color : {
-				r    : background.Color.r,
-				g    : background.Color.g,
-				b    : background.Color.b,
+				r    : r,
+				g    : g,
+				b    : b,
 				Auto : false
 			},
 
 			Fill    : {
-				r    : background.Color.r,
-				g    : background.Color.g,
-				b    : background.Color.b,
+				r    : r,
+				g    : g,
+				b    : b,
 				Auto : false
 			},
-			Unifill   : background.Unifill ? background.Unifill.createDuplicate() : undefined,
-			ThemeFill : background.Unifill ? background.Unifill.createDuplicate() : undefined
+			Unifill   : oUnifill.createDuplicate(),
+			ThemeFill : oUnifill.createDuplicate()
 		}
 
 		this.Cell.Set_Shd(oNewShd);
@@ -14133,19 +14124,34 @@
 	ApiFormBase.prototype.SetBackgroundColor = function(r, g, b, bNone)
 	{
 		var oFormPr = this.Sdt.GetFormPr().Copy();
-		var oUtils = Common.Utils.ThemeColor;
-		var oAscColor;
-		if (typeof(r) == "number" && typeof(g) == "number" && typeof(b) == "number" && !bNone)
-			oAscColor = oUtils.getRgbColor(oUtils.getHexColor(r, g, b));
-		else if (bNone)
-			oAscColor = undefined;
+		
+		let oUnifill = new AscFormat.CUniFill();
+		oUnifill.setFill(new AscFormat.CSolidFill());
+		oUnifill.fill.setColor(new AscFormat.CUniColor());
+		oUnifill.fill.color.setColor(new AscFormat.CRGBColor());
+
+		if (r >=0 && g >=0 && b >=0)
+			oUnifill.fill.color.color.setColor(r, g, b);
 		else
 			return false;
 
-		if (oAscColor)
-			oFormPr.put_Shd(true, oAscColor);
-		else
-			oFormPr.put_Shd(false);
+		oFormPr.Sdt = new CDocumentShd();
+		oFormPr.Shd.Set_FromObject({
+			Value: bNone ? Asc.c_oAscShd.Clear : Asc.c_oAscShd.Clear,
+			Color: {
+				r: r,
+				g: g,
+				b: b,
+				Auto: false
+			},
+			Fill: {
+				r: r,
+				g: g,
+				b: b,
+				Auto: false
+			},
+			Unifill: oUnifill
+		});
 
 		this.Sdt.SetFormPr(oFormPr);
 		return true;
@@ -16581,6 +16587,7 @@
 	Api.prototype.private_CreatePictureForm = function(oCC){
 		return new ApiPictureForm(oCC);
 	};
+	
 }(window, null));
 
 
