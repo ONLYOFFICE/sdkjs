@@ -2645,22 +2645,11 @@
 				//oDocRenderer.transform(oDocRenderer.m_oFullTransform.sx, oDocRenderer.m_oFullTransform.shy, oDocRenderer.m_oFullTransform.shx, oDocRenderer.m_oFullTransform.sy, 100,200)
 
 				var bGraphics = !!(oDocRenderer instanceof AscCommon.CGraphics);
-
-
-				var clipL = clipLeftShape >> 0;
-				var clipT = clipTopShape >> 0;
-				var clipR = (clipLeftShape + clipWidthShape + 0.5) >> 0;
-				var clipB = (clipTopShape + clipHeightShape + 0.5) >> 0;
-				!bGraphics && drawingCtx.AddClipRect && drawingCtx.AddClipRect(clipL, clipT, clipR - clipL, clipB - clipT);
-				if (oDocRenderer.SetBaseTransform) {
-					oDocRenderer.SetBaseTransform(oBaseTransform);
-				} else {
+				if(bGraphics) {
 					if (oDocRenderer.m_oCoordTransform) {
 						oDocRenderer.m_oCoordTransform.tx = (t.getCellLeft(0) - offsetX);
 						oDocRenderer.m_oCoordTransform.ty =  (t.getCellTop(0) - offsetY);
 					}
-				}
-				if(bGraphics) {
 					oDocRenderer.SaveGrState();
 					oDocRenderer.RestoreGrState();
 					oDocRenderer.PrintPreview = true;
@@ -2673,24 +2662,32 @@
 					var clipT = oInvertBaseTransform.TransformPointY(clipLeftShape, clipTopShape);
 					var clipR = oInvertBaseTransform.TransformPointX(clipRightShape, clipBottomShape);
 					var clipB = oInvertBaseTransform.TransformPointY(clipRightShape, clipBottomShape);
-					oDocRenderer.AddClipRect(clipL, clipT, clipR - clipL, clipB - clipT);
 					oDocRenderer.SaveGrState();
-				}
-				t.objectRender.print(drawingPrintOptions);
-				if(bGraphics) {
+					oDocRenderer.AddClipRect(clipL, clipT, clipR - clipL, clipB - clipT);
+					t.objectRender.print(drawingPrintOptions);
 					delete oDocRenderer.PrintPreview;
 					oDocRenderer.RestoreGrState();
-				}
-				if (oDocRenderer.SetBaseTransform) {
-					oDocRenderer.SetBaseTransform(oOldBaseTransform);
-				} else {
 					if (oDocRenderer.m_oCoordTransform) {
 						oDocRenderer.m_oCoordTransform.tx = oOldBaseTransform.tx * oDocRenderer.m_oCoordTransform.sx;
 						oDocRenderer.m_oCoordTransform.ty = oOldBaseTransform.ty * oDocRenderer.m_oCoordTransform.sy;
 					}
 				}
+				else {
+					var clipL = clipLeftShape >> 0;
+					var clipT = clipTopShape >> 0;
+					var clipR = (clipLeftShape + clipWidthShape + 0.5) >> 0;
+					var clipB = (clipTopShape + clipHeightShape + 0.5) >> 0;
+					drawingCtx.AddClipRect && drawingCtx.AddClipRect(clipL, clipT, clipR - clipL, clipB - clipT);
+					if (oDocRenderer.SetBaseTransform) {
+						oDocRenderer.SetBaseTransform(oBaseTransform);
+					}
+					t.objectRender.print(drawingPrintOptions);
+					if (oDocRenderer.SetBaseTransform) {
+						oDocRenderer.SetBaseTransform(oOldBaseTransform);
+					}
+					drawingCtx.RemoveClipRect && drawingCtx.RemoveClipRect();
+				}
 				t.visibleRange = tmpVisibleRange;
-				drawingCtx.RemoveClipRect && drawingCtx.RemoveClipRect();
 			};
 
 			var printScale = printPagesData.scale ? printPagesData.scale : this.getPrintScale();
@@ -2790,7 +2787,6 @@
 
 			var oWatermark = window['Asc']['editor'].watermarkDraw;
 			if(oWatermark) {
-				
 				var oDocRenderer = drawingCtx.DocumentRenderer;
 				oWatermark.zoom = 1;//this.worksheet.objectRender.zoom.current;
 				oWatermark.Generate();
