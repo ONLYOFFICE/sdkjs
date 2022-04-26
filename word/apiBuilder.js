@@ -9651,7 +9651,7 @@
 	 */
 	ApiTableCell.prototype.SetBackgroundColor = function(r, g, b, bNone)
 	{
-		var oUtils = Common.Utils.ThemeColor;
+		var oUtils = Common["Utils"]["ThemeColor"];
 		var background = new Asc.CBackground();
 
 		var oAscColor;
@@ -14133,7 +14133,7 @@
 	ApiFormBase.prototype.SetBackgroundColor = function(r, g, b, bNone)
 	{
 		var oFormPr = this.Sdt.GetFormPr().Copy();
-		var oUtils = Common.Utils.ThemeColor;
+		var oUtils = Common["Utils"]["ThemeColor"];
 		var oAscColor;
 		if (typeof(r) == "number" && typeof(g) == "number" && typeof(b) == "number" && !bNone)
 			oAscColor = oUtils.getRgbColor(oUtils.getHexColor(r, g, b));
