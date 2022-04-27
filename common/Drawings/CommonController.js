@@ -1763,6 +1763,18 @@ DrawingObjectsController.prototype =
             }
             if(object.canMove())
             {
+                if(this.isSlideShow())
+                {
+                    if(!window["AscDesktopEditor"])
+                    {
+                        return null;
+                    }
+                    var sMediaName = object.getMediaFileName();
+                    if(!sMediaName)
+                    {
+                        return null;
+                    }
+                }
                 this.checkSelectedObjectsForMove(group, pageIndex);
                 if(!isRealObject(group))
                 {
@@ -1784,10 +1796,6 @@ DrawingObjectsController.prototype =
                     group.resetInternalSelection();
                     this.updateOverlay();
                     this.changeCurrentState(new AscFormat.PreMoveInGroupState(this, group, x, y, e.ShiftKey, e.CtrlKey, object,  is_selected));
-                }
-                if(this.isSlideShow())
-                {
-                    return null;
                 }
             }
             return true;
