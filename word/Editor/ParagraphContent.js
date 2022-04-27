@@ -394,6 +394,13 @@ CRunElementBase.prototype.IsParaEnd = function()
 {
 	return false;
 };
+/**
+ * @returns {boolean}
+ */
+CRunElementBase.prototype.IsReference = function()
+{
+	return false;
+};
 
 /**
  * Класс представляющий текстовый символ
@@ -2389,6 +2396,10 @@ ParaFootnoteReference.prototype.PreDelete = function()
 		oFootnote.PreDelete();
 		oFootnote.ClearContent(true);
 	}
+};
+ParaFootnoteReference.prototype.IsReference = function()
+{
+	return true;
 };
 
 /**

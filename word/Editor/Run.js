@@ -3180,11 +3180,10 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 			else if (fontSlot === fontslot_EastAsia)
 				nRFontsFlags |= rfont_EastAsia;
 		}
-		else if (oItem.IsSpace())
+		else if (oItem.IsSpace() || oItem.IsReference())
 		{
 			nRFontsFlags |= rfont_ASCII;
 		}
-
 	}
 
 	let oMetrics = _oTextPr.GetTextMetrics(oTheme, nRFontsFlags);
