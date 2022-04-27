@@ -1120,10 +1120,7 @@ PreMoveState.prototype =
 
     onMouseMove: function(e, x, y, pageIndex)
     {
-        if(this.drawingObjects.isSlideShow())
-        {
-            return;
-        }
+
         if(!e.IsLocked)
         {
             this.onMouseUp(e, x, y, pageIndex);
@@ -1131,6 +1128,11 @@ PreMoveState.prototype =
         }
         if(Math.abs(this.startX - x) > MOVE_DELTA || Math.abs(this.startY - y) > MOVE_DELTA || pageIndex !== this.majorObject.selectStartPage)
         {
+            if(this.drawingObjects.isSlideShow())
+            {
+                this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
+                return;
+            }
             this.drawingObjects.swapTrackObjects();
             this.drawingObjects.changeCurrentState(new MoveState(this.drawingObjects, this.majorObject, this.startX, this.startY));
             this.drawingObjects.OnMouseMove(e, x, y, pageIndex);
@@ -1436,10 +1438,6 @@ PreMoveInGroupState.prototype =
 
     onMouseMove: function(e, x, y, pageIndex)
     {
-        if(this.drawingObjects.isSlideShow())
-        {
-            return;
-        }
         if(!e.IsLocked)
         {
             this.onMouseUp(e, x, y, pageIndex);
@@ -1447,6 +1445,12 @@ PreMoveInGroupState.prototype =
         }
         if(Math.abs(this.startX - x) > MOVE_DELTA || Math.abs(this.startY - y) > MOVE_DELTA || pageIndex !== this.majorObject.selectStartPage)
         {
+            if(this.drawingObjects.isSlideShow())
+            {
+
+                this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
+                return;
+            }
             this.drawingObjects.swapTrackObjects();
             this.drawingObjects.changeCurrentState(new MoveInGroupState(this.drawingObjects, this.majorObject, this.group, this.startX, this.startY));
             this.drawingObjects.OnMouseMove(e, x, y, pageIndex);

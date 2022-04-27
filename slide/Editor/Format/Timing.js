@@ -10814,6 +10814,11 @@
         if(bClick) {
             return true;
         }
+        var sMediaName = oSp.getMediaFileName();
+        if(sMediaName) {
+            if (window["AscDesktopEditor"])
+                return false;
+        }
         return this.addExternalEvent(new CExternalEvent(this.eventsProcessor, COND_EVNT_ON_NEXT, null));
     };
     CAnimationPlayer.prototype.isSpClickTrigger = function(oSp) {
