@@ -3570,12 +3570,12 @@
 	 */
 
 	/**
-	 * Condition when to scale image.
-	 * @typedef {"always" | "never" | "tooBig" | "tooSmall"} ScaleCase
+	 * Condition when to scale image
+	 * @typedef {"always" | "never" | "tooBig" | "tooSmall"} ScaleFlag
 	 */
 
 	/**
-	 * Value from 1 to 100.
+	 * Value from 0 to 100
 	 * @typedef {number} percentage
 	 */
 
@@ -14479,9 +14479,9 @@
 	 * Returns the current scaling condition of the picture form.
 	 * @memberof ApiPictureForm
 	 * @typeofeditors ["CDE"]
-	 * @returns {ScaleCase}
+	 * @returns {ScaleFlag}
 	 */
-	ApiPictureForm.prototype.GetPictureScaleCase = function()
+	ApiPictureForm.prototype.GetScaleFlag = function()
 	{
 		let sScaleFlag = "always";
 		let oPr = this.Sdt.GetPictureFormPr();
@@ -14506,14 +14506,14 @@
 	/**
 	 * Sets the condition for scaling to the current picture form.
 	 * @memberof ApiPictureForm
-	 * @param {ScaleCase} sScaleCase - Picture scaling condition: "always", "never", "tooBig" or "tooSmall".
+	 * @param {ScaleFlag} sScaleFlag - Picture scaling condition: "always", "never", "tooBig" or "tooSmall"
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiPictureForm.prototype.SetPictureScaleCase = function(sScaleCase)
+	ApiPictureForm.prototype.SetScaleFlag = function(sScaleFlag)
 	{
 		let nScaleFlag;
-		switch (sScaleCase)
+		switch (sScaleFlag)
 		{
 			case "always":
 				nScaleFlag = Asc.c_oAscPictureFormScaleFlag.Always;
@@ -14538,30 +14538,82 @@
 		return true;
 	};
 	/**
-	 * Sets the lock aspect ratio to the current picture form.
+	 * Sets the lock aspect ratio to the current picture form
 	 * @memberof ApiPictureForm
-	 * @param {percentage} xRatio - Horizontal lock aspect ratio measured in percent.
-	 * @param {percentage} yRatio - Vertical lock aspect ratio measured in percent.
+	 * @param {boolean} [isLock=true]
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
-	ApiPictureForm.prototype.SetLockAspectRatio = function(xRatio, yRatio)
+	ApiPictureForm.prototype.SetLockAspectRatio = function(isLock)
 	{
-		if (typeof(xRatio) !== "number" || typeof(yRatio) !== "number")
-			return false;
-		if (xRatio < 0 || xRatio > 100 || yRatio < 0 || yRatio > 100)
-			return false;
-		
-		xRatio = Math.floor(xRatio);
-		yRatio = Math.floor(yRatio);
-
-		var oPr = this.Sdt.GetPictureFormPr().Copy();
-		oPr.SetShiftX(xRatio / 100);
-		oPr.SetShiftY(yRatio / 100);
+		let oPr = this.Sdt.GetPictureFormPr().Copy();
+		oPr.SetConstantProportions(GetBoolParameter(isLock, false));
 		this.Sdt.SetPictureFormPr(oPr);
 		this.Sdt.UpdatePictureFormLayout();
-
 		return true;
+	};
+	/**
+	 * Gets the lock aspect ratio to the current picture form
+	 * @memberof ApiPictureForm
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiPictureForm.prototype.IsLockAspectRatio = function()
+	{
+		return this.Sdt.GetPictureFormPr().IsConstantProportions();
+	};
+	/**
+	 * Sets the position of the picture inside the form
+	 * @memberof ApiPictureForm
+	 * @param {percentage} nShiftX - horizontal position measured in percent
+	 * @param {percentage} nShiftY - vertical position measured in percent
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiPictureForm.prototype.SetPicturePosition = function(nShiftX, nShiftY)
+	{
+		let oPr = this.Sdt.GetPictureFormPr().Copy();
+		oPr.SetShiftX(Math.max(0, Math.min(100, GetNumberParameter(nShiftX, 50))) / 100);
+		oPr.SetShiftY(Math.max(0, Math.min(100, GetNumberParameter(nShiftY, 50))) / 100);
+		this.Sdt.SetPictureFormPr(oPr);
+		this.Sdt.UpdatePictureFormLayout();
+		return true;
+	};
+	/**
+	 * Gets the position of the picture inside the form
+	 * @memberof ApiPictureForm
+	 * @typeofeditors ["CDE"]
+	 * @returns {Array.<percentage>} Array of two numbers [shiftX, shiftY]
+	 */
+	ApiPictureForm.prototype.GetPicturePosition = function()
+	{
+		let oPr = this.Sdt.GetPictureFormPr();
+		return [(oPr.GetShiftX() * 100) | 0, (oPr.GetShiftY() * 100) | 0];
+	};
+	/**
+	 * Take into account border width
+	 * @memberof ApiPictureForm
+	 * @param {boolean} [isRespect=true]
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiPictureForm.prototype.SetRespectBorders = function(isRespect)
+	{
+		let oPr = this.Sdt.GetPictureFormPr().Copy();
+		oPr.SetRespectBorders(GetBoolParameter(isRespect, true));
+		this.Sdt.SetPictureFormPr(oPr);
+		this.Sdt.UpdatePictureFormLayout();
+		return true;
+	};
+	/**
+	 * Whether to take into account the width of the border
+	 * @memberof ApiPictureForm
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiPictureForm.prototype.IsRespectBorders = function()
+	{
+		return this.Sdt.GetPictureFormPr().IsRespectBorders();
 	};
 	/**
 	 * Returns an image in the base64 format from the current picture form.
@@ -15864,12 +15916,17 @@
 	ApiTextForm.prototype["SetText"]             = ApiTextForm.prototype.SetText;
 	ApiTextForm.prototype["Copy"]                = ApiTextForm.prototype.Copy;
 
-	ApiPictureForm.prototype["GetPictureScaleCase"] = ApiPictureForm.prototype.GetPictureScaleCase;
-	ApiPictureForm.prototype["SetPictureScaleCase"] = ApiPictureForm.prototype.SetPictureScaleCase;
-	ApiPictureForm.prototype["SetLockAspectRatio"]  = ApiPictureForm.prototype.SetLockAspectRatio;
-	ApiPictureForm.prototype["GetImage"]            = ApiPictureForm.prototype.GetImage;
-	ApiPictureForm.prototype["SetImage"]            = ApiPictureForm.prototype.SetImage;
-	ApiPictureForm.prototype["Copy"]                = ApiPictureForm.prototype.Copy;
+	ApiPictureForm.prototype["GetScaleFlag"]       = ApiPictureForm.prototype.GetScaleFlag;
+	ApiPictureForm.prototype["SetScaleFlag"]       = ApiPictureForm.prototype.SetScaleFlag;
+	ApiPictureForm.prototype["SetLockAspectRatio"] = ApiPictureForm.prototype.SetLockAspectRatio;
+	ApiPictureForm.prototype["IsLockAspectRatio"] = ApiPictureForm.prototype.IsLockAspectRatio;
+	ApiPictureForm.prototype["SetPicturePosition"] = ApiPictureForm.prototype.SetPicturePosition;
+	ApiPictureForm.prototype["GetPicturePosition"] = ApiPictureForm.prototype.GetPicturePosition;
+	ApiPictureForm.prototype["SetRespectBorders"] = ApiPictureForm.prototype.SetRespectBorders;
+	ApiPictureForm.prototype["IsRespectBorders"] = ApiPictureForm.prototype.IsRespectBorders;
+	ApiPictureForm.prototype["GetImage"]           = ApiPictureForm.prototype.GetImage;
+	ApiPictureForm.prototype["SetImage"]           = ApiPictureForm.prototype.SetImage;
+	ApiPictureForm.prototype["Copy"]               = ApiPictureForm.prototype.Copy;
 	
 	ApiComboBoxForm.prototype["GetListValues"]       = ApiComboBoxForm.prototype.GetListValues;
 	ApiComboBoxForm.prototype["SetListValues"]       = ApiComboBoxForm.prototype.SetListValues;
@@ -15920,6 +15977,41 @@
 	window['AscBuilder'].ApiPictureForm     = ApiPictureForm;
 	window['AscBuilder'].ApiComboBoxForm    = ApiComboBoxForm;
 	window['AscBuilder'].ApiCheckBoxForm    = ApiCheckBoxForm;
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Area for internal usage
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	function GetStringParameter(parameter, defaultValue)
+	{
+		if (undefined !== parameter && typeof(parameter) === "string" && "" !== parameter)
+			return parameter;
+
+		return defaultValue;
+	}
+	function GetBoolParameter(parameter, defaultValue)
+	{
+		if (undefined !== parameter && typeof(parameter) === "boolean")
+			return parameter;
+
+		return defaultValue;
+	}
+	function GetNumberParameter(parameter, defaultValue)
+	{
+		if (undefined !== parameter && typeof(parameter) === "number")
+			return parameter;
+
+		return defaultValue;
+	}
+	function GetArrayParameter(parameter, defaultValue)
+	{
+		if (undefined !== parameter && Array.isArray(parameter))
+			return parameter;
+
+		return defaultValue;
+	}
+	window['AscBuilder'].GetStringParameter = GetStringParameter;
+	window['AscBuilder'].GetBoolParameter   = GetBoolParameter;
+	window['AscBuilder'].GetNumberParameter = GetNumberParameter;
+	window['AscBuilder'].GetArrayParameter  = GetArrayParameter;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
