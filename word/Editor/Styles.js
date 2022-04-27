@@ -12558,10 +12558,11 @@ CTableCellPr.prototype.RemovePrChange = function()
 	delete this.ReviewInfo;
 };
 
-var rfont_ASCII    = 0x01;
-var rfont_EastAsia = 0x02;
-var rfont_CS       = 0x04;
-var rfont_HAnsi    = 0x08;
+const rfont_None     = 0x00;
+const rfont_ASCII    = 0x01;
+const rfont_EastAsia = 0x02;
+const rfont_CS       = 0x04;
+const rfont_HAnsi    = 0x08;
 
 function CRFonts()
 {

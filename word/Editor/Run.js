@@ -3167,23 +3167,7 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 	let nRFontsFlags = isMathRun ? rfont_ASCII : 0;
 	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
 	{
-		let oItem = this.Content[nPos];
-		if (oItem.IsText())
-		{
-			let fontSlot = g_font_detector.Get_FontClass(oItem.Value, Hint, lcid, bCS, bRTL);
-			if (fontSlot === fontslot_ASCII)
-				nRFontsFlags |= rfont_ASCII;
-			else if (fontSlot === fontslot_HAnsi)
-				nRFontsFlags |= rfont_HAnsi;
-			else if (fontSlot === fontslot_CS)
-				nRFontsFlags |= rfont_CS;
-			else if (fontSlot === fontslot_EastAsia)
-				nRFontsFlags |= rfont_EastAsia;
-		}
-		else if (oItem.IsSpace() || oItem.IsReference())
-		{
-			nRFontsFlags |= rfont_ASCII;
-		}
+		nRFontsFlags |= this.Content[nPos].GetFontSlot(Hint, lcid, bCS, bRTL);
 	}
 
 	let oMetrics = _oTextPr.GetTextMetrics(oTheme, nRFontsFlags);

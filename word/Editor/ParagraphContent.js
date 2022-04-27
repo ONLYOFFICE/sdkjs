@@ -401,6 +401,13 @@ CRunElementBase.prototype.IsReference = function()
 {
 	return false;
 };
+/**
+ * @returns {rfont_None}
+ */
+CRunElementBase.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_None;
+};
 
 /**
  * Класс представляющий текстовый символ
@@ -777,6 +784,20 @@ ParaText.prototype.IsText = function()
 {
 	return true;
 };
+ParaText.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	let fontSlot = g_font_detector.Get_FontClass(this.Value, nHint, nEA_lcid, isCS, isRTL);
+	if (fontSlot === fontslot_ASCII)
+		return rfont_ASCII;
+	else if (fontSlot === fontslot_HAnsi)
+		return rfont_HAnsi;
+	else if (fontSlot === fontslot_CS)
+		return rfont_CS;
+	else if (fontSlot === fontslot_EastAsia)
+		return rfont_EastAsia;
+
+	return rfont_None;
+};
 
 
 /**
@@ -958,6 +979,10 @@ ParaSpace.prototype.private_DrawGapsBackground = ParaText.prototype.private_Draw
 ParaSpace.prototype.ToSearchElement = function(oProps)
 {
 	return new CSearchTextItemChar(0x20);
+};
+ParaSpace.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
 };
 
 /**
@@ -1260,6 +1285,10 @@ ParaEnd.prototype.ToSearchElement = function(oProps)
 ParaEnd.prototype.IsParaEnd = function()
 {
 	return true;
+};
+ParaEnd.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
 };
 
 
@@ -1572,6 +1601,10 @@ ParaNewLine.prototype.ToSearchElement = function(oProps)
 	else
 		return new CSearchTextSpecialNewLine();
 };
+ParaNewLine.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
+};
 
 
 /**
@@ -1744,6 +1777,10 @@ ParaNumbering.prototype.GetSourceWidth = function()
 {
 	return this.Internal.SourceWidth;
 };
+ParaNumbering.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
+};
 
 // TODO: Реализовать табы по точке и с чертой (tab_Bar tab_Decimal)
 var tab_Bar     = Asc.c_oAscTabType.Bar;
@@ -1892,6 +1929,10 @@ ParaTab.prototype.ToSearchElement = function(oProps)
 ParaTab.prototype.IsTab = function()
 {
 	return true;
+};
+ParaTab.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
 };
 
 /**
@@ -2057,6 +2098,10 @@ ParaPageNum.prototype.SetParent = function(oParent)
 ParaPageNum.prototype.GetParent = function()
 {
 	return this.Parent;
+};
+ParaPageNum.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
 };
 
 function CPageNumRecalculateObject(Type, Widths, String, Width, Copy)
@@ -2401,6 +2446,10 @@ ParaFootnoteReference.prototype.IsReference = function()
 {
 	return true;
 };
+ParaFootnoteReference.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
+};
 
 /**
  * Класс представляющий номер сноски внутри сноски.
@@ -2733,6 +2782,12 @@ ParaPageCount.prototype.GetParent = function()
 {
 	return this.Parent;
 };
+ParaPageCount.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
+};
+
+
 /**
  * Класс представляющий ссылку на сноску
  * @param {CFootEndnote} oEndnote - Ссылка на сноску
