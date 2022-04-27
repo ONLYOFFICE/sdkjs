@@ -1761,16 +1761,13 @@ DrawingObjectsController.prototype =
                     return {objectId: (group || object).Get_Id(), cursorType: "pointer", bMarker: bInSelect};
                 }
             }
-            if(object.canMove())
+
+            var bStartMedia = !!(window["AscDesktopEditor"] && object.getMediaFileName());
+            if(object.canMove() || bStartMedia)
             {
                 if(this.isSlideShow())
                 {
-                    if(!window["AscDesktopEditor"])
-                    {
-                        return null;
-                    }
-                    var sMediaName = object.getMediaFileName();
-                    if(!sMediaName)
+                    if(!bStartMedia)
                     {
                         return null;
                     }
