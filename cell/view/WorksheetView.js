@@ -3870,20 +3870,20 @@
 			.setLineWidth(1).beginPath();
 
 		var i, d, l;
+		if (needDrawFirstVLine) {
+			ctx.lineVerPrevPx(x1, y1, y2);
+		}
 		for (i = range.c1, d = x1; i <= range.c2 && d <= x2; ++i) {
-			if (needDrawFirstVLine) {
-				ctx.lineVerPrevPx(d, y1, y2);
-			}
 			l = this._getColumnWidth(i);
 			d += l;
 			if (0 < l) {
 				ctx.lineVerPrevPx(d, y1, y2);
 			}
 		}
+		if (needDrawFirstHLine) {
+			ctx.lineHorPrevPx(x1, y1, x2);
+		}
 		for (i = range.r1, d = y1; i <= range.r2 && d <= y2; ++i) {
-			if (needDrawFirstHLine) {
-				ctx.lineHorPrevPx(x1, d, x2);
-			}
 			l = this._getRowHeight(i);
 			d += l;
 			if (0 < l) {
