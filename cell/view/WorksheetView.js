@@ -2599,7 +2599,7 @@
 						vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
 					}
 					t._drawGrid(drawingCtx, range, offsetX, offsetY, printPagesData.pageWidth / vector_koef,
-					printPagesData.pageHeight / vector_koef, printPagesData.scale);
+					printPagesData.pageHeight / vector_koef, printPagesData.scale, titleHeight, titleWidth);
 				}
 
 				//TODO временно подменяю scale. пересмотреть! подменять либо всегда, либо флаг добавить.
@@ -3821,7 +3821,7 @@
     };
 
 	/** Рисует сетку таблицы */
-	WorksheetView.prototype._drawGrid = function (drawingCtx, range, leftFieldInPx, topFieldInPx, width, height, printScale) {
+	WorksheetView.prototype._drawGrid = function (drawingCtx, range, leftFieldInPx, topFieldInPx, width, height, printScale, needDrawFirstHLine, needDrawFirstVLine) {
 		//отрисовку для режима предварительного просмотра страниц
 		//добавлено сюда потому что отрисовка проиходит одновеременно с отрисовкой сетки
 		//и отрисовка происходит в два этапа - сначала текст - до линий сетки, потом линии печати - после линий сетки
@@ -3832,6 +3832,8 @@
 		if (!drawingCtx && false === this.model.getSheetView().asc_getShowGridLines()) {
 			return;
 		}
+
+		//needDrawFirstVLine, needDrawFirstHLine - добавляю два аргумета, в дальнейшем их убрать и при отрисовке на печать всегда рисовать первый бордер(за исключением когда заголовки применены)
 
 		if (range === undefined) {
 			range = this.visibleRange;
@@ -3869,6 +3871,9 @@
 
 		var i, d, l;
 		for (i = range.c1, d = x1; i <= range.c2 && d <= x2; ++i) {
+			if (needDrawFirstVLine) {
+				ctx.lineVerPrevPx(d, y1, y2);
+			}
 			l = this._getColumnWidth(i);
 			d += l;
 			if (0 < l) {
@@ -3876,6 +3881,9 @@
 			}
 		}
 		for (i = range.r1, d = y1; i <= range.r2 && d <= y2; ++i) {
+			if (needDrawFirstHLine) {
+				ctx.lineHorPrevPx(x1, d, x2);
+			}
 			l = this._getRowHeight(i);
 			d += l;
 			if (0 < l) {
