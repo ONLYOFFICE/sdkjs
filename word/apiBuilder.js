@@ -5363,7 +5363,7 @@
 	 * Returns all existing forms in the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @returns {(ApiTextForm | ApiPictureForm | ApiComboBoxForm | ApiCheckBoxForm)[]}
+	 * @returns {ApiTextForm[] | ApiPictureForm[] | ApiComboBoxForm[] | ApiCheckBoxForm[]}
 	 */
 	ApiDocument.prototype.GetAllForms = function() 
 	{
@@ -7645,7 +7645,7 @@
 	/**
 	 * Specifies a highlighting color which is applied as a background to the contents of the current run.
 	 * @memberof ApiRun
-	 * @typeofeditors ["CDE, CPE"]
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {highlightColor} sColor - Available highlight color.
 	 * @returns {ApiTextPr}
 	 */
@@ -9685,7 +9685,7 @@
 	};
 	/**
 	 * Sets the background color to all cells in the column containing the current cell.
-	 * @memberof ApiTable
+	 * @memberof ApiTableCell
 	 * @param {byte} r - Red color component value.
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
