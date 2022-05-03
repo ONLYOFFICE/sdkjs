@@ -3918,11 +3918,8 @@ PasteProcessor.prototype =
 			if (oObjectsForDownload.aUrls.length > 0) {
 				AscCommon.sendImgUrls(oThis.api, oObjectsForDownload.aUrls, function (data) {
 					var oImageMap = {};
-
-					History.TurnOff();
 					ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
 					oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
-					History.TurnOn();
 				}, null, true);
 			} else {
 				var im_arr = [];
