@@ -2690,27 +2690,8 @@ function Binary_pPrWriter(memory, oNumIdMap, oBinaryHeaderFooterTableWriter, sav
 	};
 	this.WriteNumFmt = function(fmt)
 	{
-		var oThis = this;
-		var val;
-		switch (fmt) {
-			case Asc.c_oAscNumberingFormat.None: val = 48; break;
-			case Asc.c_oAscNumberingFormat.Bullet: val = 5; break;
-			case Asc.c_oAscNumberingFormat.Decimal: val = 13; break;
-			case Asc.c_oAscNumberingFormat.LowerRoman: val = 47; break;
-			case Asc.c_oAscNumberingFormat.UpperRoman: val = 61; break;
-			case Asc.c_oAscNumberingFormat.LowerLetter: val = 46; break;
-			case Asc.c_oAscNumberingFormat.UpperLetter: val = 60; break;
-			case Asc.c_oAscNumberingFormat.DecimalZero: val = 21; break;
-			case Asc.c_oAscNumberingFormat.DecimalEnclosedCircle: val = 14; break;
-			case Asc.c_oAscNumberingFormat.RussianLower: val = 52; break;
-			case Asc.c_oAscNumberingFormat.RussianUpper: val = 53; break;
-			case Asc.c_oAscNumberingFormat.ChineseCounting: val = 8; break;
-			case Asc.c_oAscNumberingFormat.ChineseCountingThousand: val = 9; break;
-			case Asc.c_oAscNumberingFormat.ChineseLegalSimplified: val = 10; break;
-
-			default: val = 13; break;
-		}
-		this.bs.WriteItem(c_oSerNumTypes.NumFmtVal, function(){oThis.memory.WriteByte(val);});
+		const oThis = this;
+		this.bs.WriteItem(c_oSerNumTypes.NumFmtVal, function(){oThis.memory.WriteByte(fmt);});
 	};
     this.WritePageSize = function(sectPr, oDocument)
     {
