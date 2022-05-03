@@ -4315,6 +4315,9 @@
 	};
 
 	WorkbookView.prototype.updatePrintPreview = function () {
+		if (!this.printPreviewState || !this.printPreviewState.isStart()) {
+			return;
+		}
 		for(var i in this.wsViews) {
 			this.wsViews[i]._recalculate();
 		}
