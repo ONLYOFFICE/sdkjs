@@ -13972,7 +13972,7 @@
 		{
 			sKey = sKey === "" ? undefined : sKey;
 			var oFormPr = this.Sdt.GetFormPr().Copy();
-			oFormPr && oFormPr.put_Key(sKey);
+			oFormPr && oFormPr.SetKey(sKey);
 			this.Sdt.SetFormPr(oFormPr);
 		}
 		
