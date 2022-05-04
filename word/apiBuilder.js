@@ -13972,7 +13972,7 @@
 		{
 			sKey = sKey === "" ? undefined : sKey;
 			var oFormPr = this.Sdt.GetFormPr().Copy();
-			oFormPr && oFormPr.put_Key(sKey);
+			oFormPr && oFormPr.SetKey(sKey);
 			this.Sdt.SetFormPr(oFormPr);
 		}
 		
@@ -14006,7 +14006,7 @@
 			return false;
 
 		var oFormPr = this.Sdt.GetFormPr().Copy();
-		oFormPr && oFormPr.put_HelpText(sText);
+		oFormPr && oFormPr.SetHelpText(sText);
 		
 		this.Sdt.SetFormPr(oFormPr);
 		return true;
@@ -14036,7 +14036,7 @@
 			return true;
 
 		var oFormPr = this.Sdt.GetFormPr().Copy();
-		oFormPr && oFormPr.put_Required(bRequired);
+		oFormPr && oFormPr.SetRequired(bRequired);
 
 		this.Sdt.SetFormPr(oFormPr);
 		return true;
@@ -14311,7 +14311,7 @@
 			return true;
 
 		var oPr = this.Sdt.GetTextFormPr().Copy();
-		oPr.put_AutoFit(bAutoFit);
+		oPr.SetAutoFit(bAutoFit);
 
 		this.Sdt.SetTextFormPr(oPr);
 		return true;
@@ -14343,7 +14343,7 @@
 			return true;		
 
 		var oPr = this.Sdt.GetTextFormPr().Copy();
-		oPr.put_MultiLine(bMultiline);
+		oPr.SetMultiLine(bMultiline);
 		this.Sdt.SetTextFormPr(oPr);
 
 		return true;
@@ -14448,7 +14448,7 @@
 		nCellWidth = nCellWidth > nWidthMax ? nWidthMax : nCellWidth;
 
 		var oPr = this.Sdt.GetTextFormPr().Copy();
-		oPr.put_Width(Math.floor(nCellWidth * 72 * 20 / 25.4 + 0.5));
+		oPr.SetWidth(Math.floor(nCellWidth * 72 * 20 / 25.4 + 0.5));
 
 		this.Sdt.SetTextFormPr(oPr);
 		return true;
