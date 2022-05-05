@@ -7328,4 +7328,6 @@ var editor;
   prot["asc_setActiveNamedSheetView"] = prot.asc_setActiveNamedSheetView;
   prot["asc_getActiveNamedSheetView"] = prot.asc_getActiveNamedSheetView;
 
+  prot["getPrintOptionsJson"] = prot.getPrintOptionsJson;
+
 })(window);
