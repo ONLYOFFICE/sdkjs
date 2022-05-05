@@ -444,7 +444,7 @@
     /**
      * Creates a new theme color scheme.
      * @typeofeditors ["CPE"]
-     * @memberof Api.
+     * @memberof Api
      * @param {(ApiUniColor[] | ApiRGBColor[])} arrColors - Set of colors which are referred to as a color scheme.
      * The color scheme is responsible for defining a list of twelve colors.
      * The array should contain a sequence of colors: 2 dark, 2 light, 6 primary, a color for a hyperlink and a color for the followed hyperlink.
