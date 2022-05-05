@@ -539,7 +539,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nSheet - The sheet index.
-	 * @param {boolean} [bWithFormat=false] - indicates that data will be received with the format.
+	 * @param {boolean} [bWithFormat=false] - Specifies that the data will be received with the format.
 	 * @returns {string[][]}
 	 */
 	Api.prototype.private_GetMailMergeMap = function (nSheet, bWithFormat) {
@@ -593,7 +593,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nSheet - The sheet index.
-	 * @param {boolean} [bWithFormat=false] - indicates that data will be received with the format.
+	 * @param {boolean} [bWithFormat=false] - Specifies that the data will be received with the format.
 	 * @returns {string[][]} 
 	 */
 	Api.prototype.GetMailMergeData = function(nSheet, bWithFormat) {

@@ -3561,6 +3561,7 @@
 
 	/**
 	 *
+	 * The available form types.
 	 * @typedef {"textForm" | "comboBoxForm" | "dropDownForm" | "checkBoxForm" | "radioButtonForm" | "pictureForm"} FormType
 	 */
 
@@ -3570,12 +3571,12 @@
 	 */
 
 	/**
-	 * Condition when to scale image
+	 * The condition to scale an image in the picture form.
 	 * @typedef {"always" | "never" | "tooBig" | "tooSmall"} ScaleFlag
 	 */
 
 	/**
-	 * Value from 0 to 100
+	 * Value from 0 to 100.
 	 * @typedef {number} percentage
 	 */
 
@@ -3669,6 +3670,7 @@
 	 * */
 
 	/**
+	 * The type of tick mark appearance.
 	 * @typedef {("cross" | "in" | "none" | "out")} TickMark
 	 * */
 
@@ -4894,10 +4896,10 @@
 	 * Finds and replaces the text.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {Object} oProperties The properties to find and replace.
-	 * @param {string} oProperties.searchString Search string.
-	 * @param {string} oProperties.replaceString Replacement string.
-	 * @param {string} [oProperties.matchCase=true] Case sensitive or not.
+	 * @param {Object} oProperties - The properties to find and replace.
+	 * @param {string} oProperties.searchString - Search string.
+	 * @param {string} oProperties.replaceString - Replacement string.
+	 * @param {string} [oProperties.matchCase=true] - Case sensitive or not.
 	 *
 	 */
 	ApiDocument.prototype.SearchAndReplace = function(oProperties)
@@ -5350,7 +5352,7 @@
 	};
 
 	/**
-	 * Clears all fields in the document
+	 * Clears all fields in the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 */
@@ -5399,7 +5401,7 @@
 	};
 
 	/**
-	 * Clears all forms in the document
+	 * Clears all forms in the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 */
@@ -5840,7 +5842,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {ParagraphContent} oElement - The document element which will be added at the current position. Returns false if the
 	 * oElement type is not supported by a paragraph.
-	 * @param {number} [nPos] The position where the current element will be added. If this value is not
+	 * @param {number} [nPos] - The position where the current element will be added. If this value is not
 	 * specified, then the element will be added at the end of the current paragraph.
 	 * @returns {boolean} Returns <code>false</code> if the type of <code>oElement</code> is not supported by paragraph
 	 * content.
@@ -14042,7 +14044,7 @@
 		return true;
 	};
 	/**
-	 * Checks if the current form is fixed-size
+	 * Checks if the current form is fixed size.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -14052,7 +14054,7 @@
 		return (this.GetFormType() === "pictureForm" || this.Sdt.IsFixedForm());
 	};
 	/**
-	 * Convert form to a fixed-size mode
+	 * Converts the current form to a fixed size form.
 	 * @memberof ApiFormBase
 	 * @param {twips} nWidth - The wrapper shape width measured in twentieths of a point (1/1440 of an inch).
 	 * @param {twips} nHeight - The wrapper shape height measured in twentieths of a point (1/1440 of an inch).
@@ -14068,8 +14070,8 @@
 		return true;
 	};
 	/**
-	 * Convert form to an inline mode
-	 * *Picture form can't be converted to inline mode, it's always a fixed-size object*
+	 * Converts the current form to an inline form.
+	 * *Picture form can't be converted to an inline form, it's always a fixed size object.*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -14182,10 +14184,11 @@
 		this.Sdt.ClearContentControlExt();
 	};
 	/**
-	 * Gets the shape in which the form placed.
+	 * Returns a shape in which the form is placed to control the position and size of the fixed size form frame.
+	 * The null value will be returned for the inline forms.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
-	 * @returns {?ApiShape} - returns the form in which the form placed.
+	 * @returns {?ApiShape} - returns the shape in which the form is placed.
 	 */
 	ApiFormBase.prototype.GetWrapperShape = function()
     {
@@ -14198,7 +14201,7 @@
     };
 	/**
 	 * Sets the placeholder text to the current form.
-	 * *Can't be set to checkbox or radio button*
+	 * *Can't be set to checkbox or radio button.*
 	 * @memberof ApiFormBase
 	 * @param {string} sText - The text that will be set to the current form.
 	 * @typeofeditors ["CDE"]
@@ -14232,7 +14235,7 @@
 		return false;
 	};
 	/**
-	 * Gets the text properties from the current form.
+	 * Returns the text properties from the current form.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiTextPr}  
@@ -14242,7 +14245,7 @@
 		return new ApiTextPr(this, this.Sdt.Pr.TextPr.Copy());
 	};
 	/**
-	 * Copies form (copies with shape if exist).
+	 * Copies the current form (copies with the shape if it exists).
 	 * @constructor
 	 * @returns {null | ApiTextForm| ApiCheckBoxForm | ApiComboBoxForm | ApiPictureForm}
 	 */
@@ -14287,7 +14290,7 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Checks if the text form content is autofit.
+	 * Checks if the text form content is autofit, i.e. whether the font size adjusts to the size of the fixed size form.
 	 * @memberof ApiTextForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -14297,7 +14300,7 @@
 		return this.Sdt.IsAutoFitContent();
 	};
 	/**
-	 * Specifies if the text form content should be autofit.
+	 * Specifies if the text form content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
 	 * @memberof ApiTextForm
 	 * @param {boolean} bAutoFit - Defines if the text form content is autofit (true) or not (false).
 	 * @typeofeditors ["CDE"]
@@ -14331,7 +14334,7 @@
 	 * @memberof ApiTextForm
 	 * @param {boolean} bMultiline - Defines if the current text form is multiline (true) or not (false).
 	 * @typeofeditors ["CDE"]
-	 * @returns {boolean} - return false, if the text form is not fixed.
+	 * @returns {boolean} - return false, if the text form is not fixed size.
 	 */
 	ApiTextForm.prototype.SetMultiline = function(bMultiline)
 	{
@@ -14366,7 +14369,7 @@
 	 * Sets a limit to the text form characters.
 	 * @memberof ApiTextForm
 	 * @param {number} nChars - The maximum number of characters in the text form. If this parameter is equal to -1, no limit will be set.
-	 * A limit is required to be set, if a comb of characters is applied.
+	 * A limit is required to be set if a comb of characters is applied.
 	 * Maximum value for this parameter is 1000000.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -14393,7 +14396,7 @@
 		return true;
 	};
 	/**
-	 * Checks if the text form is a comb of characters.
+	 * Checks if the text form is a comb of characters with the same cell width.
 	 * @memberof ApiTextForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -14404,7 +14407,8 @@
 		return oPr ? oPr.IsComb() : false;
 	};
 	/**
-	 * Specifies if the text form should be a comb of characters.
+	 * Specifies if the text form should be a comb of characters with the same cell width.
+	 * The maximum number of characters must be set to a positive value.
 	 * @memberof ApiTextForm
 	 * @param {boolean} bComb - Defines if the text form is a comb of characters (true) or not (false).
 	 * @typeofeditors ["CDE"]
@@ -14432,9 +14436,10 @@
 		return true;
 	};
 	/**
-	 * Sets the width of a cell to the applied comb of characters.
+	 * Sets the cell width to the applied comb of characters.
 	 * @memberof ApiTextForm
-	 * @param {mm} [nCellWidth=0] - The cell width measured in millimeters. If this parameter is equal to 0, then the width will be set automatically. Must be >= 1 and <= 558.8.
+	 * @param {mm} [nCellWidth=0] - The cell width measured in millimeters.
+	 * If this parameter is not specified or equal to 0 or less, then the width will be set automatically. Must be >= 1 and <= 558.8.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -14510,9 +14515,9 @@
 		return sScaleFlag;
 	};
 	/**
-	 * Sets the condition for scaling to the current picture form.
+	 * Sets the scaling condition to the current picture form.
 	 * @memberof ApiPictureForm
-	 * @param {ScaleFlag} sScaleFlag - Picture scaling condition: "always", "never", "tooBig" or "tooSmall"
+	 * @param {ScaleFlag} sScaleFlag - Picture scaling condition: "always", "never", "tooBig" or "tooSmall".
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -14544,9 +14549,9 @@
 		return true;
 	};
 	/**
-	 * Sets the lock aspect ratio to the current picture form
+	 * Locks the aspect ratio of the current picture form.
 	 * @memberof ApiPictureForm
-	 * @param {boolean} [isLock=true]
+	 * @param {boolean} [isLock=true] - Specifies if the aspect ratio of the current picture form will be locked (true) or not (false).
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -14559,7 +14564,7 @@
 		return true;
 	};
 	/**
-	 * Gets the lock aspect ratio to the current picture form
+	 * Checks if the aspect ratio of the current picture form is locked or not.
 	 * @memberof ApiPictureForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -14569,10 +14574,13 @@
 		return this.Sdt.GetPictureFormPr().IsConstantProportions();
 	};
 	/**
-	 * Sets the position of the picture inside the form
+	 * Sets the picture position inside the current form:
+	 * * <b>0</b> - the picture is placed on the left/top;
+	 * * <b>50</b> - the picture is placed in the center;
+	 * * <b>100</b> - the picture is placed on the right/bottom.
 	 * @memberof ApiPictureForm
-	 * @param {percentage} nShiftX - horizontal position measured in percent
-	 * @param {percentage} nShiftY - vertical position measured in percent
+	 * @param {percentage} nShiftX - Horizontal position measured in percent.
+	 * @param {percentage} nShiftY - Vertical position measured in percent.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -14586,7 +14594,7 @@
 		return true;
 	};
 	/**
-	 * Gets the position of the picture inside the form
+	 * Returns the picture position inside the current form.
 	 * @memberof ApiPictureForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {Array.<percentage>} Array of two numbers [shiftX, shiftY]
@@ -14597,9 +14605,9 @@
 		return [(oPr.GetShiftX() * 100) | 0, (oPr.GetShiftY() * 100) | 0];
 	};
 	/**
-	 * Take into account border width
+	 * Respects the form border width when scaling the image.
 	 * @memberof ApiPictureForm
-	 * @param {boolean} [isRespect=true]
+	 * @param {boolean} [isRespect=true] - Specifies if the form border width will be respected (true) or not (false).
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -14612,7 +14620,7 @@
 		return true;
 	};
 	/**
-	 * Whether to take into account the width of the border
+	 * Checks if the form border width is respected or not.
 	 * @memberof ApiPictureForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -14757,6 +14765,7 @@
 	};
 	/**
 	 * Sets the text to the current combo box.
+	 * *Available only for editable combo box forms.*
 	 * @memberof ApiComboBoxForm
 	 * @param {string} sText - The combo box text.
 	 * @typeofeditors ["CDE"]
@@ -14799,7 +14808,7 @@
 	/**
 	 * Checks the current checkbox.
 	 * @memberof ApiCheckBoxForm
-	 * @param {boolean} isChecked - Defines if the current checkbox is checked (true) or not (false).
+	 * @param {boolean} isChecked - Specifies if the current checkbox will be checked (true) or not (false).
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -14832,7 +14841,7 @@
 		return this.Sdt.IsRadioButton();
 	};
 	/**
-	 * Returns the radio group key, if the current checkbox is a radio button.
+	 * Returns the radio group key if the current checkbox is a radio button.
 	 * @memberof ApiCheckBoxForm
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
