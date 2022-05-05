@@ -5181,7 +5181,6 @@ var editor;
 		res["ignorePrintArea"] = false;
 		res["spreadsheetLayout"] = {};
 		res["spreadsheetLayout"]["sheetsProps"] = this.wbModel && this.wbModel.getPrintOptionsJson();
-		this.asc_nativePrint(undefined, undefined, res);
 		return res;
 	};
 
