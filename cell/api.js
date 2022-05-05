@@ -958,6 +958,7 @@ var editor;
     var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
     var ws = this.wbModel.getWorksheet(sheetIndex);
     var printOptions = ws.PagePrintOptions;
+	//TODO похожая инициализация в getPrintOptionsJson - сделать общую
 	if(initPrintTitles && printOptions) {
 		printOptions.initPrintTitles();
     }
@@ -5174,6 +5175,16 @@ var editor;
   spreadsheet_api.prototype.asc_nativeCalculate = function() {
   };
 
+	spreadsheet_api.prototype.getPrintOptionsJson = function() {
+		var res = {};
+		//отдельного флага для дополнительных настроек не делаю, общие опции тоже читаются, но пока не сделан мерж опций - верхние настройки перекроют внутренниие(если они заданы)
+		res["ignorePrintArea"] = false;
+		res["spreadsheetLayout"] = {};
+		res["spreadsheetLayout"]["sheetsProps"] = this.wbModel && this.wbModel.getPrintOptionsJson();
+		this.asc_nativePrint(undefined, undefined, res);
+		return res;
+	};
+
   spreadsheet_api.prototype.asc_nativePrint = function (_printer, _page, _options) {
     var _adjustPrint = (window.AscDesktopEditor_PrintOptions && window.AscDesktopEditor_PrintOptions.advancedOptions) || new Asc.asc_CAdjustPrint();
     window.AscDesktopEditor_PrintOptions = undefined;
@@ -5231,7 +5242,12 @@ var editor;
 
 	   for (var index = 0; index < this.wbModel.getWorksheetCount(); ++index) {
            ws = this.wbModel.getWorksheet(index);
-           newPrintOptions = ws.PagePrintOptions.clone();
+		   if (spreadsheetLayout && spreadsheetLayout["sheetsProps"] && spreadsheetLayout["sheetsProps"][index]) {
+			   newPrintOptions = new Asc.asc_CPageOptions();
+			   newPrintOptions.setJson(spreadsheetLayout["sheetsProps"][index]);
+		   } else {
+			   newPrintOptions = ws.PagePrintOptions.clone();
+		   }
            //regionalSettings ?
 
            var _pageSetup = newPrintOptions.pageSetup;

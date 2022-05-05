@@ -3824,6 +3824,15 @@
 		return res;
 	};
 
+	Workbook.prototype.getPrintOptionsJson = function () {
+		var res = [];
+		for(var i = 0; i < this.aWorksheets.length; ++i) {
+			res[i] = this.aWorksheets[i].getPrintOptionsJson();
+		}
+		return res;
+	};
+
+
 //-------------------------------------------------------------------------------------------------
 	var tempHelp = new ArrayBuffer(8);
 	var tempHelpUnit = new Uint8Array(tempHelp);
@@ -10779,9 +10788,23 @@
 		return this.getLockedCell(activeCell.col, activeCell.row);
 	};
 
-	Worksheet.prototype.isLockedActiveCell = function () {
-		var activeCell = this.selectionRange.activeCell;
-		return this.getLockedCell(activeCell.col, activeCell.row);
+	Worksheet.prototype.getPrintOptionsJson = function () {
+		var printProps = this.PagePrintOptions;
+		printProps.initPrintTitles();
+		printProps = printProps.clone();
+		printProps.pageSetup.headerFooter = this && this.headerFooter && this.headerFooter.getForInterface();
+		var printArea = this.workbook.getDefinesNames("Print_Area", this.getId());
+		printProps.pageSetup.printArea = printArea ? printArea.clone() : false;
+
+		printProps.printTitlesHeight = this.PagePrintOptions.printTitlesHeight;
+		printProps.printTitlesWidth = this.PagePrintOptions.printTitlesWidth;
+
+		if (this.PagePrintOptions && this.PagePrintOptions.pageSetup) {
+			printProps.pageSetup.fitToHeight = this.PagePrintOptions.pageSetup.asc_getFitToHeight();
+			printProps.pageSetup.fitToWidth = this.PagePrintOptions.pageSetup.asc_getFitToWidth();
+		}
+
+		return printProps.getJson(this);
 	};
 
 
