@@ -2318,6 +2318,16 @@
                 }
             }
             var oBodyPr = this.getBodyPr();
+            if (this.bWordShape) {
+                if(oBodyPr.textFit && oBodyPr.textFit.type === AscFormat.text_fit_Auto)
+                {
+                    if(!oPropsToSet.textFit)
+                    {
+                        oPropsToSet.textFit = new AscFormat.CTextFit();
+                    }
+                    oPropsToSet.textFit.type = AscFormat.text_fit_No;
+                }
+            }
             if (oBodyPr.wrap === AscFormat.nTWTNone) {
                 oPropsToSet.wrap = AscFormat.nTWTSquare;
             }
