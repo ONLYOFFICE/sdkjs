@@ -14164,7 +14164,7 @@
 		else
 			return false;
 
-		oFormPr.Sdt = new CDocumentShd();
+		oFormPr.Shd = new CDocumentShd();
 		oFormPr.Shd.Set_FromObject({
 			Value: bNone ? Asc.c_oAscShd.Clear : Asc.c_oAscShd.Clear,
 			Color: {
