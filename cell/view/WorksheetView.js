@@ -3571,6 +3571,10 @@
 		var pageOptionsMap = printPreview && printPreview.advancedOptions && printPreview.advancedOptions.pageOptionsMap;
 		var opt_headerFooter = pageOptionsMap && pageOptionsMap[this.model.index] && pageOptionsMap[this.model.index].pageSetup && pageOptionsMap[this.model.index].pageSetup.getPreviewHeaderFooter();
 
+		if (!opt_headerFooter) {
+			opt_headerFooter = this.workbook.getPrintHeaderFooterFromJson(this.model.index);
+		}
+
 		var headerFooterModel = opt_headerFooter ? opt_headerFooter : this.model.headerFooter;
 		//HEADER
 		var curHeader;
@@ -3645,7 +3649,7 @@
 		var _printScale = printPagesData ? printPagesData.scale : this.getPrintScale();
 		var hF = opt_headerFooter ? opt_headerFooter : this.model.headerFooter;
 		var scaleWithDoc = hF.getScaleWithDoc();
-		scaleWithDoc =  scaleWithDoc === null || scaleWithDoc === true
+		scaleWithDoc =  scaleWithDoc === null || scaleWithDoc === true;
 		var printScale = scaleWithDoc ? _printScale : 1;
 
 		//посольку в данном случае printScale уже включен в zoom, то меняем printScale

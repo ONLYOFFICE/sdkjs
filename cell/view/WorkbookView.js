@@ -281,6 +281,7 @@
     this.LastUpdateTargetTime = 0;
 
 	this.printPreviewState = new AscCommonExcel.CPrintPreviewState(this);
+	this.printOptionsJson = null;
 
     return this;
   }
@@ -4329,6 +4330,24 @@
 			//}
 			this.model.handlers.trigger("asc_onPrintPreviewSheetDataChanged", needUpdate);
 		}
+	};
+
+	WorkbookView.prototype.setPrintOptionsJson = function (val) {
+		//протаскиваю временные опции для печати
+		//из данных опций пока испольуются только колонтитулы
+		this.printOptionsJson = val;
+	};
+
+	WorkbookView.prototype.getPrintHeaderFooterFromJson = function (index) {
+		var res = null;
+		if (this.printOptionsJson) {
+			var ws = this.model.getWorksheet(index);
+			res = new Asc.CHeaderFooter(ws);
+			if (this.printOptionsJson[index] && this.printOptionsJson[index]["pageSetup"] && this.printOptionsJson[index]["pageSetup"]["headerFooter"]) {
+				res.initFromJson(this.printOptionsJson[index]["pageSetup"]["headerFooter"]);
+			}
+		}
+		return res;
 	};
 
 	//------------------------------------------------------------export---------------------------------------------------

@@ -5286,6 +5286,8 @@ var editor;
        }
     }
 
+    this.wb.setPrintOptionsJson(spreadsheetLayout && spreadsheetLayout["sheetsProps"]);
+
     var _printPagesData = this.wb.calcPagesPrint(_adjustPrint);
 
     if (undefined === _printer && _page === undefined) {
@@ -5340,6 +5342,8 @@ var editor;
     } else {
       this.wb.printSheets(_printPagesData, _printer);
     }
+
+    this.wb.setPrintOptionsJson(null);
 
     return _printer.Memory;
   };
