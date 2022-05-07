@@ -10963,50 +10963,48 @@ QueryTableField.prototype.clone = function() {
 		res["gridLines"] = this.gridLines;
 		res["headings"] = this.headings;
 		res["pageMargins"] = {};
-		res["pageMargins"] = {
-			"bottom": this.pageMargins.bottom,
-			"footer": this.pageMargins.footer,
-			"header": this.pageMargins.header,
-			"left": this.pageMargins.left,
-			"right": this.pageMargins.right,
-			"top": this.pageMargins.top
-		};
-		res["pageSetup"] = {
-			"blackAndWhite": this.pageSetup.blackAndWhite,
-			"cellComments": this.pageSetup.cellComments,
-			"copies": this.pageSetup.copies,
-			"draft": this.pageSetup.draft,
-			"errors": this.pageSetup.errors,
-			"firstPageNumber": this.pageSetup.firstPageNumber,
-			"fitToHeight": this.pageSetup.fitToHeight,
-			"fitToWidth": this.pageSetup.fitToWidth,
-			"headerFooter": this.pageSetup.headerFooter,
-			"height": this.pageSetup.height,
-			"horizontalDpi": this.pageSetup.horizontalDpi,
-			"orientation": this.pageSetup.orientation,
-			"pageOrder": this.pageSetup.pageOrder,
-			"paperUnits": this.pageSetup.paperUnits,
-			"printArea": this.pageSetup.printArea,
-			"scale": this.pageSetup.scale,
-			"useFirstPageNumber": this.pageSetup.useFirstPageNumber,
-			"usePrinterDefaults": this.pageSetup.usePrinterDefaults,
-			"verticalDpi": this.pageSetup.verticalDpi,
-			"width": this.pageSetup.width
-		};
+		res["pageMargins"]["bottom"] = this.pageMargins.bottom;
+		res["pageMargins"]["footer"] = this.pageMargins.footer;
+		res["pageMargins"]["header"] = this.pageMargins.header;
+		res["pageMargins"]["left"] = this.pageMargins.left;
+		res["pageMargins"]["right"] = this.pageMargins.right;
+		res["pageMargins"]["top"] = this.pageMargins.top;
+
+
+		res["pageSetup"] = {};
+		res["pageSetup"]["blackAndWhite"] = this.pageSetup.blackAndWhite;
+		res["pageSetup"]["cellComments"] = this.pageSetup.cellComments;
+		res["pageSetup"]["copies"] = this.pageSetup.copies;
+		res["pageSetup"]["draft"] = this.pageSetup.draft;
+		res["pageSetup"]["errors"] = this.pageSetup.errors;
+		res["pageSetup"]["firstPageNumber"] = this.pageSetup.firstPageNumber;
+		res["pageSetup"]["fitToHeight"] = this.pageSetup.fitToHeight;
+		res["pageSetup"]["fitToWidth"] = this.pageSetup.fitToWidth;
+		res["pageSetup"]["headerFooter"] = this.pageSetup.headerFooter;
+		res["pageSetup"]["height"] = this.pageSetup.height;
+		res["pageSetup"]["horizontalDpi"] = this.pageSetup.horizontalDpi;
+		res["pageSetup"]["orientation"] = this.pageSetup.orientation;
+		res["pageSetup"]["pageOrder"] = this.pageSetup.pageOrder;
+		res["pageSetup"]["paperUnits"] = this.pageSetup.paperUnits;
+		res["pageSetup"]["printArea"] = this.pageSetup.printArea;
+		res["pageSetup"]["scale"] = this.pageSetup.scale;
+		res["pageSetup"]["useFirstPageNumber"] = this.pageSetup.useFirstPageNumber;
+		res["pageSetup"]["usePrinterDefaults"] = this.pageSetup.usePrinterDefaults;
+		res["pageSetup"]["verticalDpi"] = this.pageSetup.verticalDpi;
+		res["pageSetup"]["width"] = this.pageSetup.width;
 
 		if (ws.headerFooter) {
-			res["pageSetup"]["headerFooter"] = {
-				"alignWithMargins": ws.headerFooter.alignWithMargins,
-				"differentFirst": ws.headerFooter.differentFirst,
-				"differentOddEven": ws.headerFooter.differentOddEven,
-				"evenFooter": ws.headerFooter.evenFooter && ws.headerFooter.evenFooter.getStr(),
-				"evenHeader": ws.headerFooter.evenHeader && ws.headerFooter.evenHeader.getStr(),
-				"firstFooter": ws.headerFooter.firstFooter && ws.headerFooter.firstFooter.getStr(),
-				"firstHeader": ws.headerFooter.firstHeader && ws.headerFooter.firstHeader.getStr(),
-				"oddFooter": ws.headerFooter.oddFooter && ws.headerFooter.oddFooter.getStr(),
-				"oddHeader": ws.headerFooter.oddHeader && ws.headerFooter.oddHeader.getStr(),
-				"scaleWithDoc": ws.headerFooter.scaleWithDoc
-			};
+			res["pageSetup"]["headerFooter"] = {};
+			res["pageSetup"]["headerFooter"]["alignWithMargins"] = ws.headerFooter.alignWithMargins;
+			res["pageSetup"]["headerFooter"]["differentFirst"] = ws.headerFooter.differentFirst;
+			res["pageSetup"]["headerFooter"]["differentOddEven"] = ws.headerFooter.differentOddEven;
+			res["pageSetup"]["headerFooter"]["evenFooter"] = ws.headerFooter.evenFooter;
+			res["pageSetup"]["headerFooter"]["evenHeader"] = ws.headerFooter.evenHeader;
+			res["pageSetup"]["headerFooter"]["firstFooter"] = ws.headerFooter.firstFooter;
+			res["pageSetup"]["headerFooter"]["firstHeader"] = ws.headerFooter.firstHeader;
+			res["pageSetup"]["headerFooter"]["oddFooter"] = ws.headerFooter.oddFooter;
+			res["pageSetup"]["headerFooter"]["oddHeader"] = ws.headerFooter.oddHeader;
+			res["pageSetup"]["headerFooter"]["scaleWithDoc"] = ws.headerFooter.scaleWithDoc;
 		}
 
 		res["printTitlesHeight"] = this.printTitlesHeight;
