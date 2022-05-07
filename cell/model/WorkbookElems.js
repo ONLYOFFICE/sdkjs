@@ -10998,12 +10998,12 @@ QueryTableField.prototype.clone = function() {
 			res["pageSetup"]["headerFooter"]["alignWithMargins"] = ws.headerFooter.alignWithMargins;
 			res["pageSetup"]["headerFooter"]["differentFirst"] = ws.headerFooter.differentFirst;
 			res["pageSetup"]["headerFooter"]["differentOddEven"] = ws.headerFooter.differentOddEven;
-			res["pageSetup"]["headerFooter"]["evenFooter"] = ws.headerFooter.evenFooter;
-			res["pageSetup"]["headerFooter"]["evenHeader"] = ws.headerFooter.evenHeader;
-			res["pageSetup"]["headerFooter"]["firstFooter"] = ws.headerFooter.firstFooter;
-			res["pageSetup"]["headerFooter"]["firstHeader"] = ws.headerFooter.firstHeader;
-			res["pageSetup"]["headerFooter"]["oddFooter"] = ws.headerFooter.oddFooter;
-			res["pageSetup"]["headerFooter"]["oddHeader"] = ws.headerFooter.oddHeader;
+			res["pageSetup"]["headerFooter"]["evenFooter"] = ws.headerFooter.evenFooter && ws.headerFooter.evenFooter.getStr();
+			res["pageSetup"]["headerFooter"]["evenHeader"] = ws.headerFooter.evenHeader && ws.headerFooter.evenHeader.getStr();
+			res["pageSetup"]["headerFooter"]["firstFooter"] = ws.headerFooter.firstFooter && ws.headerFooter.firstFooter.getStr();
+			res["pageSetup"]["headerFooter"]["firstHeader"] = ws.headerFooter.firstHeader && ws.headerFooter.firstHeader.getStr();
+			res["pageSetup"]["headerFooter"]["oddFooter"] = ws.headerFooter.oddFooter && ws.headerFooter.oddFooter.getStr();
+			res["pageSetup"]["headerFooter"]["oddHeader"] = ws.headerFooter.oddHeader && ws.headerFooter.oddHeader.getStr();
 			res["pageSetup"]["headerFooter"]["scaleWithDoc"] = ws.headerFooter.scaleWithDoc;
 		}
 

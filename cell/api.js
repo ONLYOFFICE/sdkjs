@@ -5178,8 +5178,8 @@ var editor;
 	spreadsheet_api.prototype.getPrintOptionsJson = function() {
 		var res = {};
 		//отдельного флага для дополнительных настроек не делаю, общие опции тоже читаются, но пока не сделан мерж опций - верхние настройки перекроют внутренниие(если они заданы)
-		res["ignorePrintArea"] = false;
 		res["spreadsheetLayout"] = {};
+		res["spreadsheetLayout"]["ignorePrintArea"] = false;
 		res["spreadsheetLayout"]["sheetsProps"] = this.wbModel && this.wbModel.getPrintOptionsJson();
 		return res;
 	};
