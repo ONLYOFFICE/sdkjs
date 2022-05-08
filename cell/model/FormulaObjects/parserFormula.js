@@ -2708,12 +2708,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				matrix2 = convertAreaToArray(operand2);
 			}
 
-			res = new cArray();
-			for (var iRow = 0; iRow < rowCount; iRow++, iRow < rowCount ? res.addRow() : true) {
-				for (var iCol = 0; iCol < colCount; iCol++) {
-					var elem1 = matrix1 ? matrix1.getElementRowCol(dimension1.row === 1 ? 0 : iRow, dimension1.col === 1 ? 0 : iCol) : operand1;
-					var elem2 = matrix2 ? matrix2.getElementRowCol(dimension2.row === 1 ? 0 : iRow, dimension2.col === 1 ? 0 : iCol) : operand2;
-					res.addElement(func(elem1, elem2));
+			if (matrix1 || matrix2) {
+				res = new cArray();
+				for (var iRow = 0; iRow < rowCount; iRow++, iRow < rowCount ? res.addRow() : true) {
+					for (var iCol = 0; iCol < colCount; iCol++) {
+						var elem1 = matrix1 ? matrix1.getElementRowCol(dimension1.row === 1 ? 0 : iRow, dimension1.col === 1 ? 0 : iCol) : operand1;
+						var elem2 = matrix2 ? matrix2.getElementRowCol(dimension2.row === 1 ? 0 : iRow, dimension2.col === 1 ? 0 : iCol) : operand2;
+						res.addElement(func(elem1, elem2));
+					}
 				}
 			}
 		}
