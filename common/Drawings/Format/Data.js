@@ -2366,7 +2366,7 @@ Because of this, the display is sometimes not correct.
     };
     PrSet.prototype.writeChildren = function(pWriter) {
       this.writeRecord2(pWriter, 0, this.presLayoutVars);
-      this.writeRecord2(pWriter, 1, this.style);
+      pWriter.WriteRecord2(1, this.style, pWriter.WriteShapeStyle);
     };
     PrSet.prototype.readAttribute = function(nType, pReader) {
       var oStream = pReader.stream;
@@ -2408,8 +2408,7 @@ Because of this, the display is sometimes not correct.
           break;
         }
         case 1: {
-          this.setStyle(new StyleData());
-          this.style.fromPPTY(pReader);
+          this.setStyle(pReader.ReadShapeStyle());
           break;
         }
         default: {
