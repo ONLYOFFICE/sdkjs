@@ -7838,11 +7838,13 @@ DrawingObjectsController.prototype =
                     if(oDocContent){
                         if (true === oSelectionState.DrawingSelection)
                         {
+							oDocContent.SetSelectionUse(true);
                             oDocContent.SetContentPosition(oSelectionState.StartPos, Depth, 0);
                             oDocContent.SetContentSelection(oSelectionState.StartPos, oSelectionState.EndPos, Depth, 0, 0);
                         }
                         else
                         {
+							oDocContent.SetSelectionUse(false);
                             oDocContent.SetContentPosition(oSelectionState.Pos, 0, 0);
                             bNeedRecalculateCurPos = true;
                         }

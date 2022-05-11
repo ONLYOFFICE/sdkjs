@@ -26349,55 +26349,51 @@ CDocument.prototype.ChangeTextCase = function(nCaseType)
 	if (!this.IsSelectionUse())
 	{
 		oState = this.SaveDocumentState(false);
-		if (!this.SelectCurrentWord())
-		{
+		this.SelectCurrentWord();
+	}
+
+	if (!this.IsSelectionUse() || !this.IsTextSelectionUse())
+	{
+		if (oState)
 			this.LoadDocumentState(oState);
-			return;
-		}
+
+		return;
 	}
 
 	if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
 	{
 		this.StartAction(AscDFH.historydescription_Document_ChangeTextCase);
 
-		if (this.IsSelectionUse())
+		var oChangeEngine = new CDocumentChangeTextCaseEngine(nCaseType);
+		var arrParagraphs = this.GetSelectedParagraphs();
+		if (oChangeEngine.ChangeType === Asc.c_oAscChangeTextCaseType.SentenceCase || oChangeEngine.ChangeType === Asc.c_oAscChangeTextCaseType.CapitalizeWords)
 		{
-			if (!this.IsTextSelectionUse())
-				return;
-
-			var oChangeEngine = new CDocumentChangeTextCaseEngine(nCaseType);
-
-			var arrParagraphs = this.GetSelectedParagraphs();
-
-			if (oChangeEngine.ChangeType === Asc.c_oAscChangeTextCaseType.SentenceCase || oChangeEngine.ChangeType === Asc.c_oAscChangeTextCaseType.CapitalizeWords)
-			{
-				for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
-				{
-					var oParagraph1 = arrParagraphs[nIndex];
-					if (!oParagraph1.Parent.IsTableCellContent())
-					{
-						oChangeEngine.isAllinTable = false;
-					}
-					oParagraph1.CheckRunContent(function(oRun)
-					{
-						oRun.CheckTextForTextCase(oChangeEngine);
-					});
-					oChangeEngine.CurrentParagraph++;
-				}
-			}
 			for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
 			{
-				oChangeEngine.Reset();
-
-				var oParagraph = arrParagraphs[nIndex];
-
-				oParagraph.CheckRunContent(function(oRun)
+				var oParagraph1 = arrParagraphs[nIndex];
+				if (!oParagraph1.Parent.IsTableCellContent())
 				{
-					oRun.ChangeTextCase(oChangeEngine);
+					oChangeEngine.isAllinTable = false;
+				}
+				oParagraph1.CheckRunContent(function(oRun)
+				{
+					oRun.CheckTextForTextCase(oChangeEngine);
 				});
-
-				oChangeEngine.FlushWord();
+				oChangeEngine.CurrentParagraph++;
 			}
+		}
+		for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
+		{
+			oChangeEngine.Reset();
+
+			var oParagraph = arrParagraphs[nIndex];
+
+			oParagraph.CheckRunContent(function(oRun)
+			{
+				oRun.ChangeTextCase(oChangeEngine);
+			});
+
+			oChangeEngine.FlushWord();
 		}
 
 		if (oState)
