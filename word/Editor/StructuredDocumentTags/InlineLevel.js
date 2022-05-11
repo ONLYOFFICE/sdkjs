@@ -2678,7 +2678,7 @@ CInlineLevelSdt.prototype.private_ConvertFormToFixed = function(nW, nH)
 	oInnerParagraph.MoveCursorToStartPos();
 	oInnerParagraph.Add(this);
 	oInnerParagraph.SetParagraphAlign(this.IsCheckBox() ? AscCommon.align_Center : AscCommon.align_Left);
-	oInnerParagraph.SetParagraphSpacing({Before : 0, After : 0, Line : 1, LineRule : AscCommon.linerule_Auto});
+	oInnerParagraph.SetParagraphSpacing({Before : 0, After : 0, Line : 1, LineRule : Asc.linerule_Auto});
 
 	var oBodyPr = oShape.getBodyPr().createDuplicate();
 
