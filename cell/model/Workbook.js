@@ -3268,6 +3268,7 @@
 		return result2 || result;
 	};
 	Workbook.prototype.findCellText2 = function (options, searchEngine) {
+		//***searchEngine
 		//убираю старую схему хранения данных для поиска
 		//сейчас храню общий массив + map для отрисовки. текущей элемент == индексу в массиве.
 		var ws = this.getActiveWs();
@@ -8614,6 +8615,7 @@
 		this.lastFindOptions = null;
 	};
 	Worksheet.prototype._findAllCells = function (options, searchEngine) {
+		//***searchEngine
 		if (true !== options.isMatchCase) {
 			options.findWhat = options.findWhat.toLowerCase();
 		}

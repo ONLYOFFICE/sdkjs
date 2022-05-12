@@ -3939,6 +3939,7 @@
 
 			// ToDo подумать, может стоит не брать ячейку из модели (а брать из кеш-а)
 			var c = this._getVisibleCell(col, row);
+			//***searchEngine
 			var findFillColor = this.handlers.trigger('selectSearchingResults') && this.workbook.inFindResults(this, row, col)/*this.model.inFindResults(row, col)*/ ? this.settings.findFillColor : null;
 			var fill = c.getFill();
 			var hasFill = fill.hasFill();
@@ -15524,6 +15525,7 @@
 			return callback(options);
 		}
 		this.model.clearFindResults();
+		//***searchEngine
 		//this.workbook.SearchEngine && this.workbook.SearchEngine.clearFindResults(options.isReplaceAll ? null : aReplaceCells);
 		return this._replaceCellsText(aReplaceCells, options, lockDraw, callback);
 	};

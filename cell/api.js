@@ -3018,7 +3018,7 @@ var editor;
         result = [ws.getCellLeftRelative(activeCell.col, 0), ws.getCellTopRelative(activeCell.row, 0)];
       }
     } else {
-
+		//***searchEngine
 		var SearchEngine = this.wb.Search(options);
 		var Id = this.wb.GetSearchElementId(!options || options.scanForward);
 
@@ -3058,6 +3058,7 @@ var editor;
     this.wb._cleanFindResults();
   };
 
+	//***searchEngine
   spreadsheet_api.prototype.sync_setSearchCurrent = function (nCurrent, nOverallCount) {
     this.sendEvent("asc_onSetSearchCurrent", nCurrent, nOverallCount);
   };
