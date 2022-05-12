@@ -3268,6 +3268,8 @@
 		return result2 || result;
 	};
 	Workbook.prototype.findCellText2 = function (options, searchEngine) {
+		//убираю старую схему хранения данных для поиска
+		//сейчас храню общий массив + map для отрисовки. текущей элемент == индексу в массиве.
 		var ws = this.getActiveWs();
 		var result = ws._findAllCells(options, searchEngine), result2 = null;
 		return;
@@ -8692,9 +8694,11 @@
 					r = c;
 					c = tmp;
 				}
-				searchEngine ? searchEngine.Add(cell) : result.add(r, c, cell);
+				searchEngine ? searchEngine.Add(r, c, cell, !options.scanByRows ? result : null) : result.add(r, c, cell);
 			}
 		}]);
+		!options.scanByRows && searchEngine && searchEngine.endAdd(result);
+
 		if (isWholeWordTrue !== null) {
 			options.isWholeWord = isWholeWordTrue;
 		}

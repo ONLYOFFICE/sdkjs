@@ -15524,6 +15524,7 @@
 			return callback(options);
 		}
 		this.model.clearFindResults();
+		//this.workbook.SearchEngine && this.workbook.SearchEngine.clearFindResults(options.isReplaceAll ? null : aReplaceCells);
 		return this._replaceCellsText(aReplaceCells, options, lockDraw, callback);
 	};
 

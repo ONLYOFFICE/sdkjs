@@ -4380,6 +4380,9 @@
 		this.Text          = "";
 		this.MatchCase     = false;
 		this.Word          = false;
+		this.scanByRows    = true;
+		this.isWholeWord = false;
+
 		//this.Pattern       = new AscCommonWord.CSearchPatternEngine();
 
 		this.Prefix        = [];
@@ -4409,15 +4412,18 @@
 		this.Text      = "";
 		this.MatchCase = false;
 		this.Word	   = false;
+		this.scanByRows    = true;
+
+		this.isWholeCell = false;
+		this.isWholeWord = false;
 	};
 	/**
 	 * @param {AscCommon.CSearchSettings} oProps
 	 */
 	CDocumentSearchExcel.prototype.Compare = function(oProps)
 	{
-		return (oProps && this.Text === oProps.GetText()
-			&& this.MatchCase === oProps.IsMatchCase()
-			&& this.Word === oProps.IsWholeWords() && this.scanByRows === oProps.scanByRows);
+		return (oProps && this.Text === oProps.GetText() && this.MatchCase === oProps.IsMatchCase() && this.Word === oProps.IsWholeWords() && this.scanByRows ===
+			oProps.scanByRows && this.isWholeWord === oProps.isWholeWord && this.isWholeCell === oProps.isWholeCell);
 	};
 	CDocumentSearchExcel.prototype.Clear = function()
 	{
@@ -4441,14 +4447,33 @@
 		this.StopTextAround();
 		this.SendClearAllTextAround();
 	};
-	CDocumentSearchExcel.prototype.Add = function(cell)
+	CDocumentSearchExcel.prototype.Add = function(r, c, cell, container)
 	{
-		this.Count++;
-		//[sheet, name, cell, value,formula]
-		this.Elements[this.Id++] = {sheet: cell.ws.sName, name: null, cell: cell.getName(), text: cell.getValueForEdit(), formula: cell.getFormula(), col: cell.nCol, row: cell.nRow};
-		var key = cell.ws.index + "-" + cell.nCol + "-" + cell.nRow;
-		this.mapFindCells[key] = true;
-		return (this.Id - 1);
+		if (container) {
+			container.add(r, c, {sheet: cell.ws.sName, name: null, cell: cell.getName(), text: cell.getValueForEdit(), formula: cell.getFormula(), col: r, row: c, index: cell.ws.index});
+		} else {
+			this.Count++;
+			//[sheet, name, cell, value,formula]
+			this.Elements[this.Id++] = cell.ws ? {sheet: cell.ws.sName, name: null, cell: cell.getName(), text: cell.getValueForEdit(), formula: cell.getFormula(), col: c, row: r, index: cell.ws.index} : cell;
+			var key = this.Elements[this.Id - 1].index + "-" + c + "-" + r;
+			this.mapFindCells[key] = true;
+
+			return (this.Id - 1);
+		}
+	};
+	CDocumentSearchExcel.prototype.endAdd = function(findResult)
+	{
+		//использую findResult для случая, если нужно искать по столбцам, а не по строкам. в дальнейшем можно избавиться от findResult и использовать временный объект
+		if (findResult && findResult.values) {
+			for (var i in findResult.values) {
+				if (!findResult.values[i]) {
+					continue;
+				}
+				for (var j in findResult.values[i]) {
+					this.Add(j, i, findResult.values[i][j]);
+				}
+			}
+		}
 	};
 	CDocumentSearchExcel.prototype.Select = function(nId, bUpdateStates)
 	{
@@ -4505,6 +4530,10 @@
 		this.Text      = oProps.GetText();
 		this.MatchCase = oProps.IsMatchCase();
 		this.Word      = oProps.IsWholeWords();
+		this.scanByRows = oProps.scanByRows;
+
+		this.isWholeCell = oProps.isWholeCell;
+		this.isWholeWord = oProps.isWholeWord;
 
 		/*var _sText = this.Text;
 		if (!this.MatchCase)
