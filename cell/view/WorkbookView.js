@@ -4318,6 +4318,9 @@
 	// Search
 	//----------------------------------------------------------------------------------------------------------------------
 	WorkbookView.prototype.Search = function (oProps) {
+		if (!this.SearchEngine) {
+			return;
+		}
 		if (this.SearchEngine.Compare(oProps)) {
 			return this.SearchEngine;
 		}
@@ -4331,8 +4334,11 @@
 		return this.SearchEngine;
 	};
 
-	WorkbookView.prototype.GetSearchElementId = function(bNext)
-	{
+	WorkbookView.prototype.GetSearchElementId = function (bNext) {
+		if (!this.SearchEngine) {
+			return;
+		}
+
 		this.SearchEngine.SetDirection(bNext);
 		return this.SearchEngine.GetNextElement();
 	};
@@ -4351,10 +4357,20 @@
 	}
 	return null;*/
 
-	WorkbookView.prototype.SelectSearchElement = function(Id)
-	{
+	WorkbookView.prototype.SelectSearchElement = function (Id) {
+		if (!this.SearchEngine) {
+			return;
+		}
 		this.SearchEngine.Select(Id, true);
 	};
+
+	WorkbookView.prototype.inFindResults = function (ws, row, col) {
+		if (!this.SearchEngine) {
+			return;
+		}
+		return this.SearchEngine.inFindResults(ws, row, col);
+	};
+
 
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
@@ -4375,6 +4391,8 @@
 		this.Direction     = true; // направление true - вперед, false - назад
 		this.ClearOnRecalc = true; // Флаг, говорящий о том, запустился ли пересчет из-за Replace
 		this.Selection     = false;
+
+		this.mapFindCells = {};
 
 		//this.Footnotes     = [];
 		//this.Endnotes      = [];
@@ -4399,7 +4417,7 @@
 	{
 		return (oProps && this.Text === oProps.GetText()
 			&& this.MatchCase === oProps.IsMatchCase()
-			&& this.Word === oProps.IsWholeWords());
+			&& this.Word === oProps.IsWholeWords() && this.scanByRows === oProps.scanByRows);
 	};
 	CDocumentSearchExcel.prototype.Clear = function()
 	{
@@ -4417,6 +4435,8 @@
 		this.CurId     = -1;
 		this.Direction = true;
 
+		this.mapFindCells = {};
+
 		this.TextAroundUpdate = true;
 		this.StopTextAround();
 		this.SendClearAllTextAround();
@@ -4426,6 +4446,8 @@
 		this.Count++;
 		//[sheet, name, cell, value,formula]
 		this.Elements[this.Id++] = {sheet: cell.ws.sName, name: null, cell: cell.getName(), text: cell.getValueForEdit(), formula: cell.getFormula(), col: cell.nCol, row: cell.nRow};
+		var key = cell.ws.index + "-" + cell.nCol + "-" + cell.nRow;
+		this.mapFindCells[key] = true;
 		return (this.Id - 1);
 	};
 	CDocumentSearchExcel.prototype.Select = function(nId, bUpdateStates)
@@ -4534,6 +4556,11 @@
 		return this.Prefix[nIndex];
 	};
 
+	CDocumentSearchExcel.prototype.inFindResults = function(ws, row, col)
+	{
+		var key = ws.model.index + "-" + col + "-" + row;
+		return this.mapFindCells && this.mapFindCells[key];
+	};
 
 	CDocumentSearchExcel.prototype.StartTextAround = function()
 	{
@@ -4617,7 +4644,7 @@
 			if (!this.Elements[nId] || undefined === this.TextArround[nId])
 				continue;
 
-			arrResult.push([nId, this.TextArround[nId]]);
+			arrResult.push([nId, this.Elements[nId].sheet, this.Elements[nId].name, this.Elements[nId].cell, this.Elements[nId].text, this.Elements[nId].formula]);
 		}
 
 		let oApi = window["Asc"]["editor"];
@@ -4631,6 +4658,12 @@
 		oApi.sync_startTextAroundSearch();
 		oApi.sync_endTextAroundSearch();
 	};
+
+	CDocumentSearchExcel.prototype.isNotEmpty = function()
+	{
+		return this.Count > 0;
+	};
+
 
 	//------------------------------------------------------------export---------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};

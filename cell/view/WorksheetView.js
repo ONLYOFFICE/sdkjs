@@ -3939,7 +3939,7 @@
 
 			// ToDo подумать, может стоит не брать ячейку из модели (а брать из кеш-а)
 			var c = this._getVisibleCell(col, row);
-			var findFillColor = this.handlers.trigger('selectSearchingResults') && this.model.inFindResults(row, col) ? this.settings.findFillColor : null;
+			var findFillColor = this.handlers.trigger('selectSearchingResults') && this.workbook.inFindResults(this, row, col)/*this.model.inFindResults(row, col)*/ ? this.settings.findFillColor : null;
 			var fill = c.getFill();
 			var hasFill = fill.hasFill();
 			var mwidth = 0, mheight = 0;

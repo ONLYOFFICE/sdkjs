@@ -3020,16 +3020,17 @@ var editor;
     } else {
 
 		var SearchEngine = this.wb.Search(options);
-		var Id = this.wb.GetSearchElementId(/*isNext*/);
+		var Id = this.wb.GetSearchElementId(!options || options.scanForward);
 
-		if (null != Id)
+		if (null != Id) {
 			this.wb.SelectSearchElement(Id);
+		}
 
 		result = SearchEngine.Count;
 
-     /* var d = this.wb.findCellText(options);
-      this.controller.scroll(d);
-      result = !!d;*/
+		/* var d = this.wb.findCellText(options);
+		 this.controller.scroll(d);
+		 result = !!d;*/
     }
 
     if (callback)
@@ -5710,9 +5711,11 @@ var editor;
 		return false;
 	};
 
-	spreadsheet_api.prototype._selectSearchingResults = function () {
+	spreadsheet_api.prototype._selectSearchingResults = function (bShow) {
 	  var ws = this.wbModel.getActiveWs();
-	  if (ws && ws.lastFindOptions) {
+	  if (!bShow) {
+		  this.wb.drawWS();
+	  } else if (ws && ws.lastFindOptions) {
 	    this.wb.drawWS();
       }
 	};

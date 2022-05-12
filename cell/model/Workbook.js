@@ -3212,7 +3212,7 @@
 	Workbook.prototype.findCellText = function (options) {
 		var ws = this.getActiveWs();
 		var result = ws.findCellText(options), result2 = null;
-		if (Asc.c_oAscSearchBy.Workbbook === options.scanOnOnlySheet) {
+		if (Asc.c_oAscSearchBy.Workbook === options.scanOnOnlySheet) {
 			// Search on workbook
 			var key = result && (result.col + "-" + result.row);
 			if (!key || (options.isEqual(this.lastFindOptions) && this.lastFindCells[key])) {
@@ -8706,7 +8706,7 @@
 		this.lastFindOptions.findRange = findRange.getBBox0().clone();
 		this.lastFindOptions.findResults = result;
 
-		if (!options.isReplaceAll && this.workbook.oApi.selectSearchingResults && (oldResults || result.isNotEmpty()) &&
+		if (!options.isReplaceAll && this.workbook.oApi.selectSearchingResults && (oldResults || result.isNotEmpty() || (searchEngine && searchEngine.isNotEmpty())) &&
 			this === this.workbook.getActiveWs()) {
 			this.workbook.handlers.trigger("drawWS");
 		}
