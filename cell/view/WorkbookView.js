@@ -4457,7 +4457,7 @@
 			//[sheet, name, cell, value,formula]
 			this.Elements[this.Id++] = cell.ws ? {sheet: cell.ws.sName, name: null, cell: cell.getName(), text: cell.getValueForEdit(), formula: cell.getFormula(), col: c, row: r, index: cell.ws.index} : cell;
 			var key = this.Elements[this.Id - 1].index + "-" + c + "-" + r;
-			this.mapFindCells[key] = true;
+			this.mapFindCells[key] = this.Id - 1;
 
 			return (this.Id - 1);
 		}
@@ -4512,6 +4512,19 @@
 		var id = this.Direction ? this.CurId + 1 : this.CurId - 1;
 		var needElem = this.Elements[id];
 		return needElem ? id : null;
+	};
+	CDocumentSearchExcel.prototype.removeFromSearchElems = function(col, row, ws)
+	{
+		var key = ws.index + "-" + col + "-" + row;
+		if (null != this.mapFindCells[key]) {
+			var id = this.mapFindCells[key];
+			if (this.Elements[id]) {
+				var oApi = window["Asc"]["editor"];
+				oApi.sync_removeTextAroundSearch(id);
+				delete this.Elements[id];
+			}
+			delete this.mapFindCells[key];
+		}
 	};
 	CDocumentSearchExcel.prototype.Replace = function(sReplaceString, Id, bRestorePos)
 	{

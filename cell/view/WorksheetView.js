@@ -3940,7 +3940,7 @@
 			// ToDo подумать, может стоит не брать ячейку из модели (а брать из кеш-а)
 			var c = this._getVisibleCell(col, row);
 			//***searchEngine
-			var findFillColor = this.handlers.trigger('selectSearchingResults') && this.workbook.inFindResults(this, row, col)/*this.model.inFindResults(row, col)*/ ? this.settings.findFillColor : null;
+			var findFillColor = this.handlers.trigger('selectSearchingResults') && undefined !== this.workbook.inFindResults(this, row, col)/*this.model.inFindResults(row, col)*/ ? this.settings.findFillColor : null;
 			var fill = c.getFill();
 			var hasFill = fill.hasFill();
 			var mwidth = 0, mheight = 0;
@@ -15603,6 +15603,11 @@
 					options.error = true;
 					t.draw(lockDraw);
 					return callback(options);
+				}
+
+				//***searchEngine
+				if (isNeedToSave && !options.isReplaceAll) {
+					t.workbook.SearchEngine.removeFromSearchElems(cell.c1, cell.r1, t.model);
 				}
 			}
 
