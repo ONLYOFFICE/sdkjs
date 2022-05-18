@@ -3273,9 +3273,6 @@
 		//сейчас храню общий массив + map для отрисовки. текущей элемент == индексу в массиве.
 		var ws = this.getActiveWs();
 		var result = ws._findAllCells(options, searchEngine), result2 = null;
-		return;
-
-
 
 		if (Asc.c_oAscSearchBy.Workbook === options.scanOnOnlySheet) {
 			// Search on workbook
@@ -3289,12 +3286,12 @@
 					if (ws.getHidden()) {
 						continue;
 					}
-					result2 = ws.findCellText(options);
+					result2 = ws.findCellText(options, searchEngine);
 					if (result2) {
 						break;
 					}
 				}
-				if (!result2) {
+				//if (!result2) {
 					// Мы дошли до конца или начала (в зависимости от направления, теперь пойдем до активного)
 					if (options.scanForward) {
 						i = 0;
@@ -3309,28 +3306,28 @@
 						if (ws.getHidden()) {
 							continue;
 						}
-						result2 = ws.findCellText(options);
-						if (result2) {
+						result2 = ws.findCellText(options, searchEngine);
+						/*if (result2) {
 							break;
-						}
+						}*/
 					}
-				}
+				//}
 
-				if (result2) {
+				/*if (result2) {
 					this.handlers.trigger('undoRedoHideSheet', i);
 					key = result2.col + "-" + result2.row;
-				}
+				}*/
 			}
 
-			if (key) {
+			/*if (key) {
 				this.lastFindOptions = options.clone();
 				this.lastFindCells[key] = true;
-			}
+			}*/
 		}
-		if (!result2 && !result) {
+		/*if (!result2 && !result) {
 			this.cleanFindResults();
 		}
-		return result2 || result;
+		return result2 || result;*/
 	};
 	//Comments
 	Workbook.prototype.getComment = function (id) {
@@ -8613,6 +8610,7 @@
 	// ----- Search -----
 	Worksheet.prototype.clearFindResults = function () {
 		this.lastFindOptions = null;
+		this.workbook.handlers.trigger("clearFindResults");
 	};
 	Worksheet.prototype._findAllCells = function (options, searchEngine) {
 		//***searchEngine
@@ -8675,7 +8673,7 @@
 			func = findRange._foreachNoEmpty;
 		}
 
-		if (this.lastFindOptions && this.lastFindOptions.findResults && options.isEqual2(this.lastFindOptions) &&
+		if (!searchEngine && this.lastFindOptions && this.lastFindOptions.findResults && options.isEqual2(this.lastFindOptions) &&
 			findRange.getBBox0().isEqual(this.lastFindOptions.findRange)) {
 			return;
 		}
@@ -8717,9 +8715,11 @@
 			this.workbook.handlers.trigger("drawWS");
 		}
 	};
-	Worksheet.prototype.findCellText = function (options) {
-		this._findAllCells(options);
-
+	Worksheet.prototype.findCellText = function (options, searchEngine) {
+		this._findAllCells(options, searchEngine);
+		if (searchEngine) {
+			return;
+		}
 		//CDocumentSearchExcel.prototype.SetCurrent
 
 		var selectionRange = options.selectionRange || this.selectionRange;

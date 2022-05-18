@@ -979,6 +979,9 @@
 	this.model.handlers.add("updateGroupData", function() {
 	  self.updateGroupData();
 	});
+  this.model.handlers.add("clearFindResults", function() {
+	  self.SearchEngine.Clear();
+  });
     this.cellCommentator = new AscCommonExcel.CCellCommentator({
       model: new WorkbookCommentsModel(this.handlers, this.model.aComments),
       collaborativeEditing: this.collaborativeEditing,
@@ -4378,11 +4381,12 @@
 	function CDocumentSearchExcel(wb)
 	{
 		this.wb = wb;
-		this.Text          = "";
+		/*this.Text          = "";
 		this.MatchCase     = false;
 		this.Word          = false;
 		this.scanByRows    = true;
-		this.isWholeWord = false;
+		this.isWholeWord = false;*/
+		this.props = null;
 
 		//this.Pattern       = new AscCommonWord.CSearchPatternEngine();
 
@@ -4410,21 +4414,21 @@
 
 	CDocumentSearchExcel.prototype.Reset = function()
 	{
-		this.Text      = "";
+		/*this.Text      = "";
 		this.MatchCase = false;
 		this.Word	   = false;
 		this.scanByRows    = true;
 
 		this.isWholeCell = false;
-		this.isWholeWord = false;
+		this.isWholeWord = false;*/
+		this.props = null;
 	};
 	/**
 	 * @param {AscCommon.CSearchSettings} oProps
 	 */
 	CDocumentSearchExcel.prototype.Compare = function(oProps)
 	{
-		return (oProps && this.Text === oProps.GetText() && this.MatchCase === oProps.IsMatchCase() && this.Word === oProps.IsWholeWords() && this.scanByRows ===
-			oProps.scanByRows && this.isWholeWord === oProps.isWholeWord && this.isWholeCell === oProps.isWholeCell);
+		return oProps && this.props && this.props.isEqual2(oProps) && this.props.scanOnOnlySheet === oProps.scanOnOnlySheet;
 	};
 	CDocumentSearchExcel.prototype.Clear = function()
 	{
@@ -4482,11 +4486,18 @@
 		if (elem)
 		{
 			var ws = this.wb.getWorksheet();
-			var range = new Asc.Range(elem.col, elem.row, elem.col, elem.row);
-			//options.findInSelection ? ws.setActiveCell(result) : ws.setSelection(range);
-			ws.setSelection(range)
+			if (elem.index !== ws.index) {
+				this.wb.model.handlers.trigger('undoRedoHideSheet', elem.index);
+				ws = this.wb.getWorksheet(elem.index);
+			}
 
-			this.SetCurrent(nId);
+			if (ws) {
+				var range = new Asc.Range(elem.col, elem.row, elem.col, elem.row);
+				//options.findInSelection ? ws.setActiveCell(result) : ws.setSelection(range);
+				ws.setSelection(range)
+
+				this.SetCurrent(nId);
+			}
 		}
 	};
 	CDocumentSearchExcel.prototype.SetCurrent = function(nId)
@@ -4541,13 +4552,7 @@
 		if (!oProps)
 			return;
 
-		this.Text      = oProps.GetText();
-		this.MatchCase = oProps.IsMatchCase();
-		this.Word      = oProps.IsWholeWords();
-		this.scanByRows = oProps.scanByRows;
-
-		this.isWholeCell = oProps.isWholeCell;
-		this.isWholeWord = oProps.isWholeWord;
+		this.props  = oProps.clone();
 
 		/*var _sText = this.Text;
 		if (!this.MatchCase)
