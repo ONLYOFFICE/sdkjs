@@ -2828,9 +2828,9 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.put_ImageBulletFromFile = function () {
 		this.asc_addImage({isImageBullet: true});
 	}
-	asc_docs_api.prototype.put_ListType = function(type, subtype, blip)
+	asc_docs_api.prototype.put_ListType = function(type, subtype, custom)
 	{
-		var blipUrl = blip instanceof Asc.asc_CFillBlip && blip.url;
+		var blipUrl = custom && custom.imageId;
 		if (blipUrl) {
 			var that = this;
 			var checkImageUrlFromServer;
@@ -2843,11 +2843,11 @@ background-repeat: no-repeat;\
 			}
 			if (checkImageUrlFromServer) {
 				blipUrl = checkImageUrlFromServer;
-				blip.url = blipUrl;
+				custom.imageId = blipUrl;
 				var isImageNotAttendInImageLoader = !this.ImageLoader.map_image_index[blipUrl];
 				if (isImageNotAttendInImageLoader) {
 					var tryToSetImageBulletAgain = function () {
-						that.put_ListType(undefined, undefined, blip);
+						that.put_ListType(type, subtype, custom);
 					}
 					this.ImageLoader.LoadImagesWithCallback([blipUrl], tryToSetImageBulletAgain);
 					return;
@@ -2855,10 +2855,10 @@ background-repeat: no-repeat;\
 			} else {
 				var changeBlipFillUrlToLocalAndTrySetImageBulletAgain = function (data) {
 					var uploadImageUrl = data[0].url;
-					blip.url = uploadImageUrl;
-					that.put_ListType(undefined, undefined, blip);
+					custom.imageId = uploadImageUrl;
+					that.put_ListType(type, subtype, custom);
 				}
-				AscCommon.sendImgUrls(this, [blipUrl], changeBlipFillUrlToLocalAndTrySetImageBulletAgain, false, false, blip.token);
+				AscCommon.sendImgUrls(this, [blipUrl], changeBlipFillUrlToLocalAndTrySetImageBulletAgain, false, false, custom.token);
 				return;
 			}
 		}
@@ -2867,7 +2867,7 @@ background-repeat: no-repeat;\
 		{
 			Type     : type,
 			SubType  : subtype,
-			Blip     : blip
+			Custom     : custom
 		};
 		var oBullet = AscFormat.fGetPresentationBulletByNumInfo(NumberInfo);
 		var sBullet = oBullet.asc_getSymbol();
@@ -7437,6 +7437,11 @@ background-repeat: no-repeat;\
 		this.CreateComponents();
 		this.WordControl.Init();
 
+		if (AscCommon.g_oTextMeasurer.SetParams)
+		{
+			AscCommon.g_oTextMeasurer.SetParams({ mode : "slide" });
+		}
+
         if (this.tmpFontRenderingMode)
         {
             this.SetFontRenderingMode(this.tmpFontRenderingMode);
@@ -7653,7 +7658,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.asc_GetSelectedText = function(bClearText, select_Pr)
 	{
-		bClearText = typeof(bClearText) === "boolean" ? bClearText : true;
+		bClearText = typeof(bClearText) === "boolean" ? bClearText : false;
 		var oPresentation = this.WordControl && this.WordControl.m_oLogicDocument;
 		if(oPresentation)
 		{
@@ -8160,11 +8165,11 @@ background-repeat: no-repeat;\
 		return this.canEdit();
 	};
 
-	asc_docs_api.prototype.SetDrawImagePreviewBulletForMenu = function(id, type)
-    {
-		if (this.WordControl.m_oDrawingDocument)
-			this.WordControl.m_oDrawingDocument.SetDrawImagePreviewBulletForMenu(id, type);
-    };
+	asc_docs_api.prototype.SetDrawImagePreviewBulletForMenu = function(drawingInfo, type)
+  {
+		var drawer = new AscCommon.CBulletPreviewDrawer(drawingInfo, type);
+		drawer.draw();
+  };
 
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                 = window['Asc'] || {};

@@ -3866,11 +3866,8 @@ PasteProcessor.prototype =
 			if (oObjectsForDownload.aUrls.length > 0) {
 				AscCommon.sendImgUrls(oThis.api, oObjectsForDownload.aUrls, function (data) {
 					var oImageMap = {};
-
-					History.TurnOff();
 					ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
 					oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
-					History.TurnOn();
 				}, null, true);
 			} else {
 				var im_arr = [];
@@ -4880,15 +4877,25 @@ PasteProcessor.prototype =
 
 			var executePastePresentation = function () {
 				//PREPARE CONTENT
+				var i, w, h;
+
 				//если не добавили даные внутрь arrShapes - удаляем пустой CShape
 				if (arrShapes.length === 1 && arrShapes[0].txBody && arrShapes[0].txBody.content && arrShapes[0].txBody.content.Content && arrShapes[0].txBody.content.Content.length === 1) {
 					var txBodyContent = arrShapes[0].txBody.content.Content[0].Content;
-					if (txBodyContent && txBodyContent.length === 2 && txBodyContent[0].Content && txBodyContent[0].Content.length === 0) {
-						arrShapes = [];
+					if (txBodyContent) {
+						for (i = 0; i < txBodyContent.length; i++) {
+							if (i === txBodyContent.length - 1) {
+								if (txBodyContent[i].Content.length === 1 && txBodyContent[i].Content[0] && para_End === txBodyContent[3].Content[0].Get_Type()) {
+									arrShapes = [];
+								}
+							}
+							if (!(txBodyContent[i].Content && txBodyContent[i].Content.length === 0)) {
+								break;
+							}
+						}
 					}
 				}
 
-				var i, w, h;
 				for (i = 0; i < arrShapes.length; ++i) {
 					shape = arrShapes[i];
 
@@ -10094,7 +10101,7 @@ PasteProcessor.prototype =
 		document.Comments.Add(oNewComment);
 
 		//посылаем событие о добавлении комментариев
-		this.api.sync_AddComment(oNewComment.Id, oNewComment.Data);
+		this.api.sync_AddComment && this.api.sync_AddComment(oNewComment.Id, oNewComment.Data);
 
 		return oNewComment.Id;
 	}

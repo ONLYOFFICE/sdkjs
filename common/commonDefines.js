@@ -2689,15 +2689,26 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		UpperRoman                   : 61,
 		VietnameseCounting           : 62,
 
-		BulletFlag   : 0x1000,
-		NumberedFlag : 0x2000,
+		BulletFlag                   : 0x1000,
+		NumberedFlag                 : 0x2000,
 
-		Ea1JpnKor             : 0x3000,
-		CircleNumWdBlack      : 0x4000,
-		Ea1JpnChsDb           : 0x5000,
-		Ea1Cht                : 0x6000,
-		CircleNumWdWhitePlain : 0x7000
+		Ea1JpnKor                    : 0x3000,
+		CircleNumWdBlack             : 0x3001,
+		Ea1JpnChsDb                  : 0x3002,
+		Ea1Cht                       : 0x3003,
+		CircleNumWdWhitePlain        : 0x3004,
 
+		CustomGreece                 : 0x4000,
+		CustomDecimalFourZero        : 0x4001,
+		CustomDecimalThreeZero       : 0x4002,
+		CustomDecimalTwoZero         : 0x4003
+	};
+
+	var c_oAscCustomNumberingFormatAssociation = {
+		'α, β, γ, ...': c_oAscNumberingFormat.CustomGreece,
+		'00001, 00002, 00003, ...': c_oAscNumberingFormat.CustomDecimalFourZero,
+		'0001, 0002, 0003, ...': c_oAscNumberingFormat.CustomDecimalThreeZero,
+		'001, 002, 003, ...': c_oAscNumberingFormat.CustomDecimalTwoZero
 	};
 
 	/** enum {number} */
@@ -4301,20 +4312,84 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 
 	window['Asc']['c_oAscNumberingFormat'] = window['Asc'].c_oAscNumberingFormat = c_oAscNumberingFormat;
 	prot = c_oAscNumberingFormat;
-	prot['None']                    = prot.None;
-	prot['Bullet']                  = prot.Bullet;
-	prot['Decimal']                 = prot.Decimal;
-	prot['LowerRoman']              = prot.LowerRoman;
-	prot['UpperRoman']              = prot.UpperRoman;
-	prot['LowerLetter']             = prot.LowerLetter;
-	prot['UpperLetter']             = prot.UpperLetter;
-	prot['DecimalZero']             = prot.DecimalZero;
-	prot['DecimalEnclosedCircle']   = prot.DecimalEnclosedCircle;
-	prot['RussianLower']            = prot.RussianLower;
-	prot['RussianUpper']            = prot.RussianUpper;
-	prot['ChineseCounting']         = prot.ChineseCounting;
-	prot['ChineseCountingThousand'] = prot.ChineseCountingThousand;
-	prot['ChineseLegalSimplified']  = prot.ChineseLegalSimplified;
+	prot['Aiueo']                        = prot.Aiueo;
+	prot['AiueoFullWidth']               = prot.AiueoFullWidth;
+	prot['ArabicAbjad']                  = prot.ArabicAbjad;
+	prot['ArabicAlpha']                  = prot.ArabicAlpha;
+	prot['BahtText']                     = prot.BahtText;
+	prot['Bullet']                       = prot.Bullet;
+	prot['CardinalText']                 = prot.CardinalText;
+	prot['Chicago']                      = prot.Chicago;
+	prot['ChineseCounting']              = prot.ChineseCounting;
+	prot['ChineseCountingThousand']      = prot.ChineseCountingThousand;
+	prot['ChineseLegalSimplified']       = prot.ChineseLegalSimplified;
+	prot['Chosung']                      = prot.Chosung;
+	prot['Custom']                       = prot.Custom;
+	prot['Decimal']                      = prot.Decimal;
+	prot['DecimalEnclosedCircle']        = prot.DecimalEnclosedCircle;
+	prot['DecimalEnclosedCircleChinese'] = prot.DecimalEnclosedCircleChinese;
+	prot['DecimalEnclosedFullstop']      = prot.DecimalEnclosedFullstop;
+	prot['DecimalEnclosedParen']         = prot.DecimalEnclosedParen;
+	prot['DecimalFullWidth']             = prot.DecimalFullWidth;
+	prot['DecimalFullWidth2']            = prot.DecimalFullWidth2;
+	prot['DecimalHalfWidth']             = prot.DecimalHalfWidth;
+	prot['DecimalZero']                  = prot.DecimalZero;
+	prot['DollarText']                   = prot.DollarText;
+	prot['Ganada']                       = prot.Ganada;
+	prot['Hebrew1']                      = prot.Hebrew1;
+	prot['Hebrew2']                      = prot.Hebrew2;
+	prot['Hex']                          = prot.Hex;
+	prot['HindiConsonants']              = prot.HindiConsonants;
+	prot['HindiCounting']                = prot.HindiCounting;
+	prot['HindiNumbers']                 = prot.HindiNumbers;
+	prot['HindiVowels']                  = prot.HindiVowels;
+	prot['IdeographDigital']             = prot.IdeographDigital;
+	prot['IdeographEnclosedCircle']      = prot.IdeographEnclosedCircle;
+	prot['IdeographLegalTraditional']    = prot.IdeographLegalTraditional;
+	prot['IdeographTraditional']         = prot.IdeographTraditional;
+	prot['IdeographZodiac']              = prot.IdeographZodiac;
+	prot['IdeographZodiacTraditional']   = prot.IdeographZodiacTraditional;
+	prot['Iroha']                        = prot.Iroha;
+	prot['IrohaFullWidth']               = prot.IrohaFullWidth;
+	prot['JapaneseCounting']             = prot.JapaneseCounting;
+	prot['JapaneseDigitalTenThousand']   = prot.JapaneseDigitalTenThousand;
+	prot['JapaneseLegal']                = prot.JapaneseLegal;
+	prot['KoreanCounting']               = prot.KoreanCounting;
+	prot['KoreanDigital']                = prot.KoreanDigital;
+	prot['KoreanDigital2']               = prot.KoreanDigital2;
+	prot['KoreanLegal']                  = prot.KoreanLegal;
+	prot['LowerLetter']                  = prot.LowerLetter;
+	prot['LowerRoman']                   = prot.LowerRoman;
+	prot['None']                         = prot.None;
+	prot['NumberInDash']                 = prot.NumberInDash;
+	prot['Ordinal']                      = prot.Ordinal;
+	prot['OrdinalText']                  = prot.OrdinalText;
+	prot['RussianLower']                 = prot.RussianLower;
+	prot['RussianUpper']                 = prot.RussianUpper;
+	prot['TaiwaneseCounting']            = prot.TaiwaneseCounting;
+	prot['TaiwaneseCountingThousand']    = prot.TaiwaneseCountingThousand;
+	prot['TaiwaneseDigital']             = prot.TaiwaneseDigital;
+	prot['ThaiCounting']                 = prot.ThaiCounting;
+	prot['ThaiLetters']                  = prot.ThaiLetters;
+	prot['ThaiNumbers']                  = prot.ThaiNumbers;
+	prot['UpperLetter']                  = prot.UpperLetter;
+	prot['UpperRoman']                   = prot.UpperRoman;
+	prot['VietnameseCounting']           = prot.VietnameseCounting;
+
+	// new presentation types
+	prot['Ea1JpnKor']                    = prot.Ea1JpnKor;
+	prot['CircleNumWdBlack']             = prot.CircleNumWdBlack;
+	prot['Ea1JpnChsDb']                  = prot.Ea1JpnChsDb;
+	prot['Ea1Cht']                       = prot.Ea1Cht;
+	prot['CircleNumWdWhitePlain']        = prot.CircleNumWdWhitePlain;
+
+	//custom types
+	prot['CustomGreece']                 = prot.CustomGreece;
+	prot['CustomDecimalFourZero']        = prot.CustomDecimalFourZero;
+	prot['CustomDecimalThreeZero']       = prot.CustomDecimalThreeZero;
+	prot['CustomDecimalTwoZero']         = prot.CustomDecimalTwoZero;
+
+	window['Asc']['c_oAscCustomNumberingFormatAssociation'] = window['Asc'].c_oAscCustomNumberingFormatAssociation = c_oAscCustomNumberingFormatAssociation;
 
 	window['Asc']['c_oAscNumberingSuff'] = window['Asc'].c_oAscNumberingSuff = c_oAscNumberingSuff;
 	prot = c_oAscNumberingSuff;

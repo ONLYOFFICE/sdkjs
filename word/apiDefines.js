@@ -735,7 +735,7 @@ c_oAscDateTimeFormat[lcid_svFI]     = [
 	"dd. mmmm yyyy",
 	"d. mm. yy",
 	"yyyy-mm-dd",
-	"d-mmm.-yy",
+	"d-mmm-yy",
 	"d/mm/yyyy",
 	"dd. mmm. yy",
 	"d/mm/yy",
@@ -750,7 +750,7 @@ c_oAscDateTimeFormat[lcid_svFI]     = [
 ];
 c_oAscDateTimeFormat[lcid_svSE]     = [
 	"yyyy-mm-dd",
-	"dddd den d mmmm yyyy",
+	"dddd 'den' d mmmm yyyy",
 	"d mmmm yyyy",
 	"dd-mm-yy",
 	"yymmdd",
@@ -759,7 +759,7 @@ c_oAscDateTimeFormat[lcid_svSE]     = [
 	"d mmm -yy",
 	"d/m/yy",
 	"mmmm yyyy",
-	"den d mmmm yyyy",
+	"'den' d mmmm yyyy",
 	"yyyy-mm-dd hh:mm",
 	"yy-mm-dd HH:mm",
 	"H.mm",

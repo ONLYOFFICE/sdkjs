@@ -119,6 +119,11 @@ var break_Line   = 0x01;
 var break_Page   = 0x02;
 var break_Column = 0x03;
 
+var break_Clear_None  = 0x00;
+var break_Clear_All   = 0x01;
+var break_Clear_Left  = 0x02;
+var break_Clear_Right = 0x03;
+
 var nbsp_charcode = 0x00A0;
 
 var nbsp_string = String.fromCharCode(0x00A0);
@@ -386,6 +391,20 @@ CRunElementBase.prototype.IsTab = function()
 CRunElementBase.prototype.IsParaEnd = function()
 {
 	return false;
+};
+/**
+ * @returns {boolean}
+ */
+CRunElementBase.prototype.IsReference = function()
+{
+	return false;
+};
+/**
+ * @returns {rfont_None}
+ */
+CRunElementBase.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_None;
 };
 /**
  * @returns {boolean}
@@ -780,6 +799,20 @@ ParaText.prototype.IsText = function()
 {
 	return true;
 };
+ParaText.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	let fontSlot = g_font_detector.Get_FontClass(this.Value, nHint, nEA_lcid, isCS, isRTL);
+	if (fontSlot === fontslot_ASCII)
+		return rfont_ASCII;
+	else if (fontSlot === fontslot_HAnsi)
+		return rfont_HAnsi;
+	else if (fontSlot === fontslot_CS)
+		return rfont_CS;
+	else if (fontSlot === fontslot_EastAsia)
+		return rfont_EastAsia;
+
+	return rfont_None;
+};
 
 
 /**
@@ -961,6 +994,10 @@ ParaSpace.prototype.private_DrawGapsBackground = ParaText.prototype.private_Draw
 ParaSpace.prototype.ToSearchElement = function(oProps)
 {
 	return new CSearchTextItemChar(0x20);
+};
+ParaSpace.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
 };
 ParaSpace.prototype.ToMathElement = function()
 {
@@ -1270,19 +1307,25 @@ ParaEnd.prototype.IsParaEnd = function()
 {
 	return true;
 };
+ParaEnd.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
+};
 
 
 /**
  * Класс представляющий разрыв строки/колонки/страницы
- * @param BreakType
+ * @param nBreakType
+ * @param nClear {break_Clear_None | break_Clear_All | break_Clear_Left | break_Clear_Right}
  * @constructor
  * @extends {CRunElementBase}
  */
-function ParaNewLine(BreakType)
+function ParaNewLine(nBreakType, nClear)
 {
 	CRunElementBase.call(this);
 
-    this.BreakType = undefined !== BreakType ? BreakType : break_Line;
+    this.BreakType = nBreakType;
+	this.Clear     = nClear ? nClear : break_Clear_None;
 
     this.Flags = {}; // специальные флаги для разных break
     this.Flags.Use = true;
@@ -1520,9 +1563,9 @@ ParaNewLine.prototype.Write_ToBinary = function(Writer)
 	Writer.WriteLong(this.BreakType);
 
 	if (break_Page === this.BreakType || break_Column === this.BreakType)
-	{
 		Writer.WriteBool(this.Flags.NewLine);
-	}
+	else
+		Writer.WriteLong(this.Clear);
 };
 ParaNewLine.prototype.Read_FromBinary = function(Reader)
 {
@@ -1530,6 +1573,8 @@ ParaNewLine.prototype.Read_FromBinary = function(Reader)
 
 	if (break_Page === this.BreakType || break_Column === this.BreakType)
 		this.Flags = {NewLine : Reader.GetBool()};
+	else
+		this.Clear = Reader.GetLong();
 };
 /**
  * Разрыв страницы или колонки?
@@ -1576,6 +1621,10 @@ ParaNewLine.prototype.ToSearchElement = function(oProps)
 		return new CSearchTextSpecialColumnBreak();
 	else
 		return new CSearchTextSpecialNewLine();
+};
+ParaNewLine.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
 };
 ParaNewLine.prototype.IsBreak = function()
 {
@@ -1753,6 +1802,10 @@ ParaNumbering.prototype.GetSourceWidth = function()
 {
 	return this.Internal.SourceWidth;
 };
+ParaNumbering.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
+};
 
 // TODO: Реализовать табы по точке и с чертой (tab_Bar tab_Decimal)
 var tab_Bar     = Asc.c_oAscTabType.Bar;
@@ -1841,6 +1894,8 @@ ParaTab.prototype.Draw = function(X, Y, Context)
 };
 ParaTab.prototype.Measure = function(Context)
 {
+	Context.SetFontSlot(fontslot_ASCII, 1);
+	
 	this.DotWidth        = Context.Measure(".").Width;
 	this.UnderscoreWidth = Context.Measure("_").Width;
 	this.HyphenWidth     = Context.Measure("-").Width * 1.5;
@@ -1899,6 +1954,10 @@ ParaTab.prototype.ToSearchElement = function(oProps)
 ParaTab.prototype.IsTab = function()
 {
 	return true;
+};
+ParaTab.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
 };
 
 /**
@@ -2064,6 +2123,10 @@ ParaPageNum.prototype.SetParent = function(oParent)
 ParaPageNum.prototype.GetParent = function()
 {
 	return this.Parent;
+};
+ParaPageNum.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
 };
 
 function CPageNumRecalculateObject(Type, Widths, String, Width, Copy)
@@ -2404,6 +2467,14 @@ ParaFootnoteReference.prototype.PreDelete = function()
 		oFootnote.ClearContent(true);
 	}
 };
+ParaFootnoteReference.prototype.IsReference = function()
+{
+	return true;
+};
+ParaFootnoteReference.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
+};
 
 /**
  * Класс представляющий номер сноски внутри сноски.
@@ -2736,6 +2807,12 @@ ParaPageCount.prototype.GetParent = function()
 {
 	return this.Parent;
 };
+ParaPageCount.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
+};
+
+
 /**
  * Класс представляющий ссылку на сноску
  * @param {CFootEndnote} oEndnote - Ссылка на сноску

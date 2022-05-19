@@ -7375,7 +7375,7 @@ function BinaryPPTYLoader()
                     _smartArt = this.ReadSmartArt();
                     var tree = _smartArt.createHierarchy();
                     tree.traverseBF(function (node) {
-                        var nodePoint = node.data && node.data.nodePoint;
+                        var nodePoint = node.data && (node.data.nodePoint || node.data.asstPoint);
                         if (nodePoint) {
                             nodePoint.setPhldrT('[' + AscCommon.translateManager.getValue('Text') + ']');
                         }
@@ -7499,8 +7499,8 @@ function BinaryPPTYLoader()
             }
             _xfrm.setChOffX(0);
             _xfrm.setChOffY(0);
-            _xfrm.setChExtX(0);
-            _xfrm.setChExtY(0);
+            _xfrm.setChExtX(_xfrm.extX);
+            _xfrm.setChExtY(_xfrm.extY);
             _smartArt.spPr.setXfrm(_xfrm);
             _xfrm.setParent(_smartArt.spPr);
             if(AscCommon.isRealObject(_nvGraphicFramePr) )

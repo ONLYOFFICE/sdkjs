@@ -4308,9 +4308,13 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
         } else {
             bRedrawAllSlides = true;
             for (key = 0; key < this.Slides.length; ++key) {
-                this.Slides[key].recalcText();
-                this.Slides[key].recalculate();
-                this.Slides[key].recalculateNotesShape();
+                var oCalcSlide = this.Slides[key];
+                if(oCalcSlide.bChangeLayout) {
+                    oCalcSlide.checkSlideTheme();
+                }
+                oCalcSlide.recalcText();
+                oCalcSlide.recalculate();
+                oCalcSlide.recalculateNotesShape();
             }
         }
     } else {
@@ -9815,102 +9819,7 @@ CPresentation.prototype.changeLayout = function (_array, MasterLayouts, layout_i
             if (!AscFormat.isRealNumber(layout_index)) {
                 layout = slide.Layout;
             }
-            slide.setLayout(layout);
-            for (var j = slide.cSld.spTree.length - 1; j > -1; --j) {
-                var shape = slide.cSld.spTree[j];
-                if (shape.isEmptyPlaceholder()) {
-                    slide.removeFromSpTreeById(shape.Get_Id());
-                } else {
-                    var oInfo = {};
-                    var hierarchy = shape.getHierarchy(undefined, oInfo);
-                    var bNoPlaceholder = true;
-                    var bNeedResetTransform = false;
-                    var oNotNullPH = null;
-                    for (var t = 0; t < hierarchy.length; ++t) {
-                        if (hierarchy[t]) {
-                            if (hierarchy[t].parent && (hierarchy[t].parent instanceof AscCommonSlide.SlideLayout)) {
-                                bNoPlaceholder = false;
-                            }
-                            if (hierarchy[t].spPr && hierarchy[t].spPr.xfrm && hierarchy[t].spPr.xfrm.isNotNull()) {
-                                bNeedResetTransform = true;
-                                oNotNullPH = hierarchy[t];
-                            }
-                        }
-                    }
-                    if (bNoPlaceholder) {
-                        if (slide.cSld.spTree[j].isEmptyPlaceholder()) {
-                            slide.removeFromSpTreeById(slide.cSld.spTree[j].Get_Id());
-                        } else {
-                            var hierarchy2 = shape.getHierarchy(undefined, undefined);
-                            for (var t = 0; t < hierarchy2.length; ++t) {
-                                if (hierarchy2[t]) {
-                                    if (hierarchy2[t].spPr && hierarchy2[t].spPr.xfrm && hierarchy2[t].spPr.xfrm.isNotNull()) {
-                                        break;
-                                    }
-                                }
-                            }
-                            if (t === hierarchy2.length) {
-                                AscFormat.CheckSpPrXfrm(shape);
-                            }
-                        }
-                    } else {
-                        if (bNeedResetTransform) {
-                            if (shape.spPr && shape.spPr.xfrm && shape.spPr.xfrm.isNotNull()) {
-                                if (shape.getObjectType() !== AscDFH.historyitem_type_GraphicFrame) {
-                                    shape.spPr.setXfrm(null);
-                                } else {
-                                    if (oNotNullPH) {
-                                        if (!shape.spPr && oNotNullPH.spPr) {
-                                            shape.setSpPr(oNotNullPH.spPr.createDuplicate());
-                                            shape.spPr.setParent(shape);
-                                        }
-                                        if (!shape.spPr.xfrm && oNotNullPH.spPr && oNotNullPH.spPr.xfrm) {
-                                            shape.spPr.setXfrm(oNotNullPH.spPr.xfrm.createDuplicate());
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                // else
-                // {
-                //     if(shape.isPlaceholder() && (!shape.spPr || !shape.spPr.xfrm || !shape.spPr.xfrm.isNotNull()))
-                //     {
-                //         var hierarchy = shape.getHierarchy();
-                //         for(var t = 0; t < hierarchy.length; ++t)
-                //         {
-                //             if(hierarchy[t] && hierarchy[t].spPr && hierarchy[t].spPr.xfrm && hierarchy[t].spPr.xfrm.isNotNull())
-                //             {
-                //                 break;
-                //             }
-                //         }
-                //         if(t === hierarchy.length)
-                //         {
-                //             AscFormat.CheckSpPrXfrm(shape);
-                //         }
-                //     }
-                // }
-            }
-            for (var j = 0; j < layout.cSld.spTree.length; ++j) {
-                if (layout.cSld.spTree[j].isPlaceholder()) {
-                    var _ph_type = layout.cSld.spTree[j].getPhType();
-                    var hf = layout.Master.hf;
-                    var bIsSpecialPh = _ph_type === AscFormat.phType_dt || _ph_type === AscFormat.phType_ftr || _ph_type === AscFormat.phType_hdr || _ph_type === AscFormat.phType_sldNum;
-                    if (!bIsSpecialPh || hf && ((_ph_type === AscFormat.phType_dt && (hf.dt !== false)) ||
-                        (_ph_type === AscFormat.phType_ftr && (hf.ftr !== false)) ||
-                        (_ph_type === AscFormat.phType_hdr && (hf.hdr !== false)) ||
-                        (_ph_type === AscFormat.phType_sldNum && (hf.sldNum !== false)))) {
-                        var matching_shape = slide.getMatchingShape(layout.cSld.spTree[j].getPlaceholderType(), layout.cSld.spTree[j].getPlaceholderIndex(), layout.cSld.spTree[j].getIsSingleBody ? layout.cSld.spTree[j].getIsSingleBody() : false);
-                        if (matching_shape == null && layout.cSld.spTree[j]) {
-                            var sp = layout.cSld.spTree[j].copy(undefined);
-                            sp.setParent(slide);
-                            !bIsSpecialPh && sp.clearContent && sp.clearContent();
-                            slide.addToSpTreeToPos(slide.cSld.spTree.length, sp)
-                        }
-                    }
-                }
-            }
+            slide.changeLayout(layout);
         }
         if (oSelectionStateState) {
             this.Slides[this.CurPage].graphicObjects.resetSelection();

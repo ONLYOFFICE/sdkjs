@@ -2118,6 +2118,7 @@ function ResizeTrackGroup(originalObject, cardDirection, parentTrack)
 
         this.trackEnd = function(bWord)
         {
+            if (this.flipH !== this.original.flipH || this.flipV !== this.original.flipV) return;
             if(!this.bIsTracked){
                 return;
             }

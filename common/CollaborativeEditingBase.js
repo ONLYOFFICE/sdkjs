@@ -178,6 +178,8 @@
         this.m_aOwnChangesIndexes = []; // Список номеров своих изменений в общем списке, которые мы можем откатить
 
         this.m_oOwnChanges        = [];
+
+		this.m_fEndLoadCallBack   = null;
     }
 
     CCollaborativeEditingBase.prototype.GetEditorApi = function()
@@ -274,12 +276,9 @@
     {
         return (0 < this.m_aChanges.length);
     };
-    CCollaborativeEditingBase.prototype.Apply_Changes = function()
+    CCollaborativeEditingBase.prototype.Apply_Changes = function(fEndCallBack)
     {
-        var OtherChanges = (this.m_aChanges.length > 0);
-
-        // Если нет чужих изменений, тогда и делать ничего не надо
-        if (true === OtherChanges)
+        if (this.m_aChanges.length > 0)
         {
             AscFonts.IsCheckSymbols = true;
             editor.WordControl.m_oLogicDocument.PauseRecalculate();
@@ -295,9 +294,14 @@
             // После того как мы приняли чужие изменения, мы должны залочить новые объекты, которые были залочены
             this.Lock_NeedLock();
             this.private_RestoreDocumentState(DocState);
-            this.OnStart_Load_Objects();
+            this.OnStart_Load_Objects(fEndCallBack);
             AscFonts.IsCheckSymbols = false;
         }
+		else
+		{
+			if (fEndCallBack)
+				fEndCallBack();
+		}
     };
     CCollaborativeEditingBase.prototype.Apply_OtherChanges = function()
     {
@@ -429,8 +433,11 @@
     };
 
 
-    CCollaborativeEditingBase.prototype.OnStart_Load_Objects = function()
+    CCollaborativeEditingBase.prototype.OnStart_Load_Objects = function(fEndCallBack)
     {
+		if (fEndCallBack)
+			this.m_fEndLoadCallBack = fEndCallBack;
+
         this.Set_GlobalLock(true);
         this.Set_GlobalLockSelection(true);
         // Вызываем функцию для загрузки необходимых элементов (новые картинки и шрифты)
@@ -447,7 +454,12 @@
     };
     CCollaborativeEditingBase.prototype.OnEnd_Load_Objects = function()
     {
-    };
+		if (this.m_fEndLoadCallBack)
+		{
+			this.m_fEndLoadCallBack();
+			this.m_fEndLoadCallBack = null;
+		}
+	};
     //-----------------------------------------------------------------------------------
     // Функции для работы с ссылками, у новых объектов
     //-----------------------------------------------------------------------------------

@@ -421,12 +421,6 @@ CHeaderFooter.prototype =
         this.Content.Draw( nPageIndex, pGraphics );
     },
 
-    // Пришло сообщение о том, что контент изменился и пересчитался
-    OnContentRecalculate : function(bChange, bForceRecalc)
-    {
-        return;
-    },
-
     OnContentReDraw : function(StartPage, EndPage)
     {
         this.DrawingDocument.ClearCachePages();

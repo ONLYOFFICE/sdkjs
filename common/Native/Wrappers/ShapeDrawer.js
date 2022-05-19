@@ -326,7 +326,10 @@ CShapeDrawer.prototype =
             var _arr = AscCommon.DashPatternPresets[this.Ln.prstDash].slice();
             for (var indexD = 0; indexD < _arr.length; indexD++)
                 _arr[indexD] *= this.StrokeWidth;
-            this.NativeGraphics && this.NativeGraphics["PD_p_dash"](_arr);
+            if (this.Graphics && this.Graphics.RENDERER_PDF_FLAG)
+                this.Graphics.p_dash(_arr);
+            else
+                this.NativeGraphics && this.NativeGraphics["PD_p_dash"](_arr);
         }
     },
     
@@ -1003,7 +1006,7 @@ CShapeDrawer.prototype =
             }
 
             var rgba = this.StrokeUniColor;
-            this.Graphics.p_width(this.StrokeWidth);
+            this.Graphics.p_width(1000 * this.StrokeWidth);
             this.Graphics.p_color(rgba.R, rgba.G, rgba.B, rgba.A);
         }
 
@@ -1076,7 +1079,7 @@ CShapeDrawer.prototype =
                     var _url64 = "";
                     try
                     {
-                        _url64 = _pattern.Canvas.toDataURL("image/png");
+                        _url64 = _pattern.toDataURL("image/png");
                     }
                     catch (err)
                     {

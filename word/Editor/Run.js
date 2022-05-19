@@ -3156,32 +3156,18 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 		_oTextPr.RFonts.SetAll("ASCW3");
 	}
 
+	let isMathRun = this.IsMathRun();
+
 	var Hint = _oTextPr.RFonts.Hint;
 	var bCS  = _oTextPr.CS;
 	var bRTL = _oTextPr.RTL;
 	var lcid = _oTextPr.Lang.EastAsia;
 
-	let nRFontsFlags = 0;
+	// TODO: Пока для формул сделаем, чтобы работало по-старому, в дальнейшем надо будет переделать на fontslot
+	let nRFontsFlags = isMathRun ? rfont_ASCII : 0;
 	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
 	{
-		let oItem = this.Content[nPos];
-		if (oItem.IsText())
-		{
-			let fontSlot = g_font_detector.Get_FontClass(oItem.Value, Hint, lcid, bCS, bRTL);
-			if (fontSlot === fontslot_ASCII)
-				nRFontsFlags |= rfont_ASCII;
-			else if (fontSlot === fontslot_HAnsi)
-				nRFontsFlags |= rfont_HAnsi;
-			else if (fontSlot === fontslot_CS)
-				nRFontsFlags |= rfont_CS;
-			else if (fontSlot === fontslot_EastAsia)
-				nRFontsFlags |= rfont_EastAsia;
-		}
-		else if (oItem.IsSpace())
-		{
-			nRFontsFlags |= rfont_ASCII;
-		}
-
+		nRFontsFlags |= this.Content[nPos].GetFontSlot(Hint, lcid, bCS, bRTL);
 	}
 
 	let oMetrics = _oTextPr.GetTextMetrics(oTheme, nRFontsFlags);
@@ -3191,9 +3177,10 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 	this.TextDescent = oMetrics.Descent;
 	this.TextAscent  = oMetrics.Ascent + oMetrics.LineGap;
 	this.TextAscent2 = oMetrics.Ascent;
+	this.YOffset     = oTextPr.Position;
 
 	var oInfoMathText;
-	if (para_Math_Run == this.Type)
+	if (isMathRun)
 	{
 		oInfoMathText = new CMathInfoTextPr({
 			TextPr      : oTextPr,
@@ -6564,7 +6551,7 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
     var nCombMax    = -1;
     if (oForm)
 	{
-		if (oForm.IsFormRequired() && PDSL.GetLogicDocument().IsHighlightRequiredFields())
+		if (oForm.IsFormRequired() && PDSL.GetLogicDocument().IsHighlightRequiredFields() && !PDSL.Graphics.isPrintMode)
 			oFormBorder = PDSL.GetLogicDocument().GetRequiredFieldsBorder();
 		else if (oForm.GetFormPr().GetBorder())
 			oFormBorder = oForm.GetFormPr().GetBorder();

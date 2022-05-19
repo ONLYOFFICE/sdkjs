@@ -674,6 +674,10 @@ FT_Stream2.prototype.Skip2 = function(_skip) {
 		return c_oSerConstants.ErrorStream;
 	return this.Seek2(this.cur + _skip);
 };
+FT_Stream2.prototype.SkipRecord = function() {
+	var _len = this.GetULong();
+	this.Skip2(_len);
+};
 
 // 1 bytes
 FT_Stream2.prototype.GetUChar = function() {

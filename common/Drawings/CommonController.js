@@ -1697,6 +1697,14 @@ DrawingObjectsController.prototype =
                 b_is_inline = false;
             }
         }
+
+        if(this.selection.geometrySelection)
+        {
+            if(this.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
+            {
+                this.selection.geometrySelection = null;
+            }
+        }
         var b_is_selected_inline = this.selectedObjects.length === 1 && (this.selectedObjects[0].parent && this.selectedObjects[0].parent.Is_Inline && this.selectedObjects[0].parent.Is_Inline());
         var oAnimPlayer = this.getAnimationPlayer();
         if(this.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
@@ -1770,11 +1778,16 @@ DrawingObjectsController.prototype =
                     return {objectId: (group || object).Get_Id(), cursorType: "pointer", bMarker: bInSelect};
                 }
             }
-            if(object.canMove())
+
+            var bStartMedia = !!(window["AscDesktopEditor"] && object.getMediaFileName());
+            if(object.canMove() || bStartMedia)
             {
                 if(this.isSlideShow())
                 {
-                    return null;
+                    if(!bStartMedia)
+                    {
+                        return null;
+                    }
                 }
                 this.checkSelectedObjectsForMove(group, pageIndex);
                 if(!isRealObject(group))
@@ -4477,6 +4490,7 @@ DrawingObjectsController.prototype =
                         checkObjectInArray(aGroups, oSmartArt.group.getMainGroup());
                     }
                     oSmartArt.checkDrawingBaseCoords();
+                    oSmartArt.checkExtentsByDocContent(true, true);
                 }
                 for(i = 0; i < objects_by_type.oleObjects.length; ++i)
                 {
@@ -7833,11 +7847,13 @@ DrawingObjectsController.prototype =
                     if(oDocContent){
                         if (true === oSelectionState.DrawingSelection)
                         {
+							oDocContent.SetSelectionUse(true);
                             oDocContent.SetContentPosition(oSelectionState.StartPos, Depth, 0);
                             oDocContent.SetContentSelection(oSelectionState.StartPos, oSelectionState.EndPos, Depth, 0, 0);
                         }
                         else
                         {
+							oDocContent.SetSelectionUse(false);
                             oDocContent.SetContentPosition(oSelectionState.Pos, 0, 0);
                             bNeedRecalculateCurPos = true;
                         }
@@ -11417,6 +11433,17 @@ function CalcLiterByLength(aAlphaBet, nLength)
                                 ListType.SubType = 8;
                                 break;
                             }
+                            default: {
+                                if (Bullet.bulletType.Char.length) {
+                                    ListType.SubType = 0x1000;
+                                    var customListType = new AscCommon.asc_CCustomListType();
+                                    customListType.type = Asc.asc_PreviewBulletType.char;
+                                    customListType.char = Bullet.bulletType.Char;
+                                    customListType.specialFont = Bullet.bulletTypeface.typeface;
+                                    ListType.Custom = customListType;
+                                }
+                                break;
+                            }
                         }
                         break;
                     }
@@ -11424,6 +11451,14 @@ function CalcLiterByLength(aAlphaBet, nLength)
                     {
                         ListType.Type    = 0;
                         ListType.SubType = undefined;
+                        var imageUrl = Bullet.getImageBulletURL();
+                        if (imageUrl) {
+                            ListType.SubType = 0x1000;
+                            var customListType = new AscCommon.asc_CCustomListType();
+                            customListType.type = Asc.asc_PreviewBulletType.image;
+                            customListType.imageId = imageUrl;
+                            ListType.Custom = customListType;
+                        }
                         break;
                     }
                     case AscFormat.BULLET_TYPE_BULLET_AUTONUM:
@@ -11485,7 +11520,7 @@ function CalcLiterByLength(aAlphaBet, nLength)
     }
 
 
-    function fGetFontByNumInfo(Type, SubType){
+    function fGetFontByNumInfo(Type, SubType, Custom){
         if(!AscFormat.isRealNumber(Type) || !AscFormat.isRealNumber(SubType))
         {
             return null;
@@ -11512,6 +11547,11 @@ function CalcLiterByLength(aAlphaBet, nLength)
                     {
                         return "Wingdings";
                     }
+                    case 0x1000:
+                    {
+                        return Custom && Custom.specialFont || null;
+                    }
+                    default: break;
                 }
             }
         }
@@ -11575,21 +11615,7 @@ function CalcLiterByLength(aAlphaBet, nLength)
         return numberingType;
     }
 
-    function fFillImageBullet(bullet, url) {
-        var buBlip = new AscFormat.CBuBlip();
-        var blip = CreateBlipFillUniFillFromUrl(url);
-        buBlip.setBlip(blip);
-        bullet.bulletType = new AscFormat.CBulletType();
-        bullet.bulletType.type = AscFormat.BULLET_TYPE_BULLET_BLIP;
-        bullet.bulletType.setBlip(buBlip);
-    }
-
-
     function fFillBullet(NumInfo, bullet) {
-        if (NumInfo.Blip) {
-            fFillImageBullet(bullet, NumInfo.Blip.url);
-            return;
-        }
         if(NumInfo.SubType < 0)
         {
             bullet.bulletType = new AscFormat.CBulletType();
@@ -11601,78 +11627,75 @@ function CalcLiterByLength(aAlphaBet, nLength)
             {
                 case 0 : /*bulletChar*/
                 {
+                    var bulletText = "";
+                    var bulletFont = "Arial";
                     switch(NumInfo.SubType)
                     {
                         case 0:
                         case 1:
                         {
-                            var bulletText = "•";
-                            bullet.bulletTypeface = new AscFormat.CBulletTypeface();
-                            bullet.bulletTypeface.type = AscFormat.BULLET_TYPE_TYPEFACE_BUFONT;
-                            bullet.bulletTypeface.typeface = "Arial";
+                            bulletText = "•";
+                            bulletFont = "Arial";
                             break;
                         }
                         case 2:
                         {
                             bulletText = "o";
-                            bullet.bulletTypeface = new AscFormat.CBulletTypeface();
-                            bullet.bulletTypeface.type = AscFormat.BULLET_TYPE_TYPEFACE_BUFONT;
-                            bullet.bulletTypeface.typeface = "Courier New";
+                            bulletFont = "Courier New";
                             break;
                         }
                         case 3:
                         {
                             bulletText = "§";
-                            bullet.bulletTypeface = new AscFormat.CBulletTypeface();
-                            bullet.bulletTypeface.type = AscFormat.BULLET_TYPE_TYPEFACE_BUFONT;
-                            bullet.bulletTypeface.typeface = "Wingdings";
+                            bulletFont = "Wingdings";
                             break;
                         }
                         case 4:
                         {
                             bulletText = String.fromCharCode( 0x0076 );
-                            bullet.bulletTypeface = new AscFormat.CBulletTypeface();
-                            bullet.bulletTypeface.type = AscFormat.BULLET_TYPE_TYPEFACE_BUFONT;
-                            bullet.bulletTypeface.typeface = "Wingdings";
+                            bulletFont = "Wingdings";
                             break;
                         }
                         case 5:
                         {
                             bulletText = String.fromCharCode( 0x00D8 );
-                            bullet.bulletTypeface = new AscFormat.CBulletTypeface();
-                            bullet.bulletTypeface.type = AscFormat.BULLET_TYPE_TYPEFACE_BUFONT;
-                            bullet.bulletTypeface.typeface = "Wingdings";
+                            bulletFont = "Wingdings";
                             break;
                         }
                         case 6:
                         {
                             bulletText = String.fromCharCode( 0x00FC );
-                            bullet.bulletTypeface = new AscFormat.CBulletTypeface();
-                            bullet.bulletTypeface.type = AscFormat.BULLET_TYPE_TYPEFACE_BUFONT;
-                            bullet.bulletTypeface.typeface = "Wingdings";
+                            bulletFont = "Wingdings";
                             break;
                         }
                         case 7:
                         {
 
                             bulletText = String.fromCharCode(119);
-                            bullet.bulletTypeface = new AscFormat.CBulletTypeface();
-                            bullet.bulletTypeface.type = AscFormat.BULLET_TYPE_TYPEFACE_BUFONT;
-                            bullet.bulletTypeface.typeface = "Wingdings";
+                            bulletFont = "Wingdings";
                             break;
                         }
                         case 8:
                         {
                             bulletText = String.fromCharCode(0x2013);
-                            bullet.bulletTypeface = new AscFormat.CBulletTypeface();
-                            bullet.bulletTypeface.type = AscFormat.BULLET_TYPE_TYPEFACE_BUFONT;
-                            bullet.bulletTypeface.typeface = "Arial";
+                            bulletFont = "Arial";
+                            break;
+                        }
+                        case 0x1000:
+                        {
+                            if (NumInfo.Custom) {
+                                if (NumInfo.Custom.char) {
+                                    bulletText = NumInfo.Custom.char;
+                                    bulletFont = NumInfo.Custom.specialFont;
+                                } else if (NumInfo.Custom.imageId) {
+                                    bullet.fillBulletImage(NumInfo.Custom.imageId);
+                                    return;
+                                }
+                            }
                             break;
                         }
                     }
-                    bullet.bulletType = new AscFormat.CBulletType();
-                    bullet.bulletType.type = AscFormat.BULLET_TYPE_BULLET_CHAR;
-                    bullet.bulletType.Char = bulletText;
+                    bullet.fillBulletFromCharAndFont(bulletText, bulletFont);
                     break;
                 }
                 case 1 : /*autonum*/
@@ -11690,7 +11713,7 @@ function CalcLiterByLength(aAlphaBet, nLength)
         }
     }
     function fGetPresentationBulletByNumInfo(NumInfo){
-        if(!AscFormat.isRealNumber(NumInfo.Type) && !AscFormat.isRealNumber(NumInfo.SubType) && !(NumInfo.Blip instanceof Asc.asc_CFillBlip))
+        if(!AscFormat.isRealNumber(NumInfo.Type) && !AscFormat.isRealNumber(NumInfo.SubType))
         {
             return null;
         }
@@ -11865,6 +11888,7 @@ function CalcLiterByLength(aAlphaBet, nLength)
         this.majorObject = majorObject;
         this.startX = startX;
         this.startY = startY;
+        this.group  = majorObject && majorObject.getMainGroup();
     }
     GeometryEditState.prototype.onMouseDown = function(e, x, y, pageIndex) {
         if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_CURSOR) {
@@ -11876,7 +11900,12 @@ function CalcLiterByLength(aAlphaBet, nLength)
         this.drawingObjects.updateOverlay();
     };
     GeometryEditState.prototype.onMouseUp = function(e, x, y, pageIndex) {
-        AscFormat.RotateState.prototype.onMouseUp.call(this, e, x, y, pageIndex);
+        if( this.majorObject && this.majorObject.group) {
+            AscFormat.MoveInGroupState.prototype.onMouseUp.call(this, e, x, y, pageIndex);
+        }
+        else {
+            AscFormat.RotateState.prototype.onMouseUp.call(this, e, x, y, pageIndex);
+        }
     };
 
     function CGeometryEditSelection(oDrawingObjects, oDrawing) {
@@ -12085,7 +12114,6 @@ function CalcLiterByLength(aAlphaBet, nLength)
 	window['AscFormat'].fGetDefaultShapeExtents = fGetDefaultShapeExtents;
 	window['AscFormat'].HitToRect = HitToRect;
 	window['AscFormat'].drawingsUpdateForeignCursor = drawingsUpdateForeignCursor;
-	window['AscFormat'].fFillImageBullet = fFillImageBullet;
 	window['AscFormat'].fSortTrackObjects = fSortTrackObjects;
 
     window['AscCommon'] = window['AscCommon'] || {};

@@ -236,7 +236,24 @@ var c_oAscError = Asc.c_oAscError;
 		if (isSaveAs === true)
 			_param += "saveas=true;";
 
-		window["AscDesktopEditor"]["LocalFileSave"](_param, (password === undefined) ? asc["editor"].currentPassword : password, docinfo);
+		// настройки для pdf
+		var printOptions = "";
+		if (isSaveAs)
+		{
+			try
+			{
+				var printOptionsObj = asc["editor"].getPrintOptionsJson();
+				printOptionsObj["documentLayout"] = { "openedAt" : editor.openedAt };
+
+				printOptions = JSON.stringify(printOptionsObj);
+			}
+			catch (e)
+			{
+				printOptions = "";
+			}
+		}
+
+		window["AscDesktopEditor"]["LocalFileSave"](_param, (password === undefined) ? asc["editor"].currentPassword : password, docinfo, 0, printOptions);
 	};
 	window["DesktopOfflineAppDocumentEndSave"] = function(error, hash, password)
 	{

@@ -521,13 +521,15 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 
 	if (undefined !== this.TextFormPr && oContentControl.IsInlineLevel())
 	{
-		var isCombChanged = (!oContentControl.Pr.TextForm || this.TextFormPr.Comb !== oContentControl.Pr.TextForm.Comb);
+		let isCombChanged = (!oContentControl.Pr.TextForm || this.TextFormPr.Comb !== oContentControl.Pr.TextForm.Comb);
+		let isMaxChanged  = (!oContentControl.Pr.TextForm || this.TextFormPr.MaxCharacters !== oContentControl.Pr.TextForm.MaxCharacters);
+
 		if (oContentControl.IsFixedForm() && isCombChanged)
 			oContentControl.UpdateFixedFormCombWidthByFormSize(this.TextFormPr);
 
 		oContentControl.SetTextFormPr(this.TextFormPr);
 
-		if (isCombChanged && this.TextFormPr.Comb)
+		if (this.TextFormPr.Comb && (isCombChanged || isMaxChanged))
 			oContentControl.TrimCombForm();
 
 		if (oContentControl.IsFixedForm() && !isCombChanged)

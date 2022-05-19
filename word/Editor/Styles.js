@@ -12562,10 +12562,11 @@ CTableCellPr.prototype.RemovePrChange = function()
 	delete this.ReviewInfo;
 };
 
-var rfont_ASCII    = 0x01;
-var rfont_EastAsia = 0x02;
-var rfont_CS       = 0x04;
-var rfont_HAnsi    = 0x08;
+const rfont_None     = 0x00;
+const rfont_ASCII    = 0x01;
+const rfont_EastAsia = 0x02;
+const rfont_CS       = 0x04;
+const rfont_HAnsi    = 0x08;
 
 function CRFonts()
 {
@@ -13743,7 +13744,7 @@ CTextPr.prototype.ReplaceThemeFonts = function(oFontScheme)
 		}
 	}
 
-	if (this.FontFamily)
+	if (this.FontFamily && oFontScheme)
 	{
 		this.FontFamily.Name  = oFontScheme.checkFont(this.FontFamily.Name);
 		this.FontFamily.Index = -1;
@@ -15113,18 +15114,6 @@ CTextMetrics.prototype.Update = function(fontName, fontSlot)
 	let _nDescent = nDescent;
 	let _nAscent  = Math.min(nAscent, nHeight - nDescent);
 	let _nLineGap = Math.max(0, nHeight - nAscent - nDescent);
-
-	if (AscCommon.IsEastAsianFont(fontName))
-	{
-		let nHeightEA = (nAscent + nDescent) * 1.3;
-		if (nHeightEA > nHeight)
-		{
-			_nHeight  = nHeightEA;
-			_nDescent = (nAscent + nDescent) * 0.15 + nDescent;
-			_nAscent  = nHeightEA - _nDescent;
-			_nLineGap = 0;
-		}
-	}
 
 	if (this.Height < _nHeight)
 		this.Height = _nHeight;
@@ -17272,7 +17261,12 @@ CParaPr.prototype.Get_PresentationBullet = function(theme, colorMap)
 			case AscFormat.BULLET_TYPE_BULLET_BLIP :
 			{
 				Bullet.m_nType = numbering_presentationnumfrmt_Blip;
-				Bullet.m_sSrc = AscCommon.getFullImageSrc2(this.Bullet.getImageBulletURL());
+
+				var imageBulletURL = this.Bullet.getImageBulletURL();
+				if (imageBulletURL)
+				{
+					Bullet.m_sSrc = AscCommon.getFullImageSrc2(imageBulletURL);
+				}
 				break;
 			}
 		}
@@ -17791,5 +17785,7 @@ g_oDocumentDefaultTableStylePr.InitDefault();
 
 var g_oDocumentDefaultFillColor   = new CDocumentColor(255, 255, 255, true);
 var g_oDocumentDefaultStrokeColor = new CDocumentColor(0, 0, 0, true);
+
+window["AscCommonWord"].DEFAULT_STYLES = new CStyles(false);
 
 // ----------------------------------------------------------------

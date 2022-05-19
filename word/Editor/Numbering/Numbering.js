@@ -320,3 +320,7 @@ CNumbering.prototype.GetText = function(sNumId, nLvl, oNumInfo, bWithoutLastLvlT
 	var oNum = this.GetNum(sNumId);
 	return oNum.GetText(nLvl, oNumInfo, bWithoutLastLvlText);
 };
+
+//---------------------------------------------------------export---------------------------------------------------
+window['AscCommonWord'] = window['AscCommonWord'] || {};
+window["AscCommonWord"].DEFAULT_NUMBERING = new CNumbering();

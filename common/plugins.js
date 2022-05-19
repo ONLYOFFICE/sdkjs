@@ -592,13 +592,11 @@
 							data:     "",
 							pushData: function (format, value)
 									  {
-										  this.data = value;
+										  this.data = value ? value.replace(/class="[a-zA-Z0-9-:;+"\/=]*/g,"") : "";
 									  }
 						};
 
 						this.api.asc_CheckCopy(text_data, 2);
-						if (text_data.data == null)
-							text_data.data = "";
 						runObject.startData.setAttribute("data", text_data.data);
 						break;
 					}
@@ -1038,7 +1036,7 @@
 				{
 					if (pluginData.getAttribute("interface"))
 					{
-						var _script = "(function(Api, window, alert, document){\r\n" + "\"use strict\"" + ";\r\n" + value.replace(/\\/g, "\\\\") + "\n})(window.g_asc_plugins.api, {}, function(){}, {});";
+						var _script = "(function(Api, window, alert, document){\r\n" + "\"use strict\"" + ";\r\n" + value + "\n})(window.g_asc_plugins.api, {}, function(){}, {});";
 						eval(_script);
 					}
 					else if (!window.g_asc_plugins.api.isLongAction() && (pluginData.getAttribute("resize") || window.g_asc_plugins.api.asc_canPaste()))
@@ -1046,7 +1044,7 @@
 						window.g_asc_plugins.api._beforeEvalCommand();
 
 						AscFonts.IsCheckSymbols = true;
-						var _script = "(function(Api, window, alert, document){\r\n" + "\"use strict\"" + ";\r\n" + value.replace(/\\/g, "\\\\") + "\n})(window.g_asc_plugins.api, {}, function(){}, {});";
+						var _script = "(function(Api, window, alert, document){\r\n" + "\"use strict\"" + ";\r\n" + value + "\n})(window.g_asc_plugins.api, {}, function(){}, {});";
 						try
 						{
 							eval(_script);
@@ -1179,9 +1177,14 @@
 
 		window.g_asc_plugins.api.asc_registerCallback('asc_onDocumentContentReady', function()
 		{
-
 			setTimeout(function()
 			{
+				if (window.g_asc_plugins.api.preSetupPlugins)
+				{
+					window.g_asc_plugins.register(window.g_asc_plugins.api.preSetupPlugins.path, window.g_asc_plugins.api.preSetupPlugins.plugins);
+					delete window.g_asc_plugins.api.preSetupPlugins;
+				}
+
 				window.g_asc_plugins.loadExtensionPlugins(window["Asc"]["extensionPlugins"]);
 			}, 10);
 

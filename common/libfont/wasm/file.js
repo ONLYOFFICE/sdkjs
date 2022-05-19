@@ -1659,7 +1659,7 @@
 
             if (fontManager.IsUseWinOS2Params && this.m_pFaceInfo.os2_version != 0xFFFF)
             {
-                if (fontManager.IsCellMode)
+                if (fontManager.Mode === AscFonts.TextMeasureMode.Cell)
                 {
                     /*
                     // что-то типо этого в экселе... пока выключаем
@@ -1706,6 +1706,19 @@
 
                         this.m_lLineHeight = (this.m_pFaceInfo.os2_usWinAscent + this.m_pFaceInfo.os2_usWinDescent);
                     }
+
+					// Normalize metrics for CJK fonts
+					if (fontManager.Mode !== AscFonts.TextMeasureMode.Slide
+						&& (this.m_pFaceInfo.os2_ulUnicodeRange2 & 0x2DF00000
+						|| this.m_pFaceInfo.os2_ulCodePageRange1 & 0x3e0000))
+					{
+						let nAscent  = this.m_lAscender;
+						let nDescent = this.m_lDescender;
+
+						this.m_lLineHeight = ((nAscent - nDescent) * 1.3) | 0;
+						this.m_lDescender  = (nDescent - (nAscent - nDescent) * 0.15) | 0;
+						this.m_lAscender   = this.m_lLineHeight + this.m_lDescender;
+					}
                 }
             }
 

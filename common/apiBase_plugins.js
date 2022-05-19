@@ -903,14 +903,14 @@
         {
             properties =
             {
-                NewLine : (prop.hasOwnProperty("NewLine")) ? prop.NewLine : true,
-                NewLineParagraph : (prop.hasOwnProperty("NewLineParagraph")) ? prop.NewLineParagraph : true,
-                Numbering : (prop.hasOwnProperty("Numbering")) ? prop.Numbering : true,
-                Math : (prop.hasOwnProperty("Math")) ? prop.Math : true,
-                TableCellSeparator: prop.TableCellSeparator,
-                TableRowSeparator: prop.TableRowSeparator,
-                ParaSeparator: prop.ParaSeparator,
-                TabSymbol: prop.TabSymbol
+                NewLine : (prop.hasOwnProperty("NewLine")) ? prop["NewLine"] : true,
+                NewLineParagraph : (prop.hasOwnProperty("NewLineParagraph")) ? prop["NewLineParagraph"] : true,
+                Numbering : (prop.hasOwnProperty("Numbering")) ? prop["Numbering"] : true,
+                Math : (prop.hasOwnProperty("Math")) ? prop["Math"] : true,
+                TableCellSeparator: prop["TableCellSeparator"],
+                TableRowSeparator: prop["TableRowSeparator"],
+                ParaSeparator: prop["ParaSeparator"],
+                TabSymbol: prop["TabSymbol"]
             }
         }
         else

@@ -1095,6 +1095,9 @@ CNumberingLvl.prototype.private_CheckSymbols = function()
 			{
 				break;
 			}
+			case Asc.c_oAscNumberingFormat.CustomDecimalTwoZero:
+			case Asc.c_oAscNumberingFormat.CustomDecimalThreeZero:
+			case Asc.c_oAscNumberingFormat.CustomDecimalFourZero:
 			case Asc.c_oAscNumberingFormat.Custom:
 			case Asc.c_oAscNumberingFormat.BahtText:
 			case Asc.c_oAscNumberingFormat.Decimal:
@@ -1105,7 +1108,41 @@ CNumberingLvl.prototype.private_CheckSymbols = function()
 				pickDecimal();
 				break;
 			}
-			case Asc.c_oAscNumberingFormat.DecimalEnclosedCircleChinese: {
+			case Asc.c_oAscNumberingFormat.CustomGreece:
+			{
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03B1);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03B2);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03B3);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03B4);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03B5);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03C3);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03C4);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03B6);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03B7);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03B8);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03B9);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03BA);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03BB);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03BC);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03BD);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03BE);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03BF);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03C0);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03DF);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03C1);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03C3);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03C4);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03C5);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03C6);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03C7);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03C8);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03C9);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x03E1);
+				AscFonts.FontPickerByCharacter.getFontBySymbol(0x002C);
+				break;
+			}
+			case Asc.c_oAscNumberingFormat.DecimalEnclosedCircleChinese:
+			{
 				pickDecimal();
 				for (var nValue = 0; nValue < 10; ++nValue)
 				{

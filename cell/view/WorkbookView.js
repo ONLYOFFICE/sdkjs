@@ -287,6 +287,7 @@
     this.LastUpdateTargetTime = 0;
 
 	this.printPreviewState = new AscCommonExcel.CPrintPreviewState(this);
+	this.printOptionsJson = null;
 
     return this;
   }
@@ -973,6 +974,9 @@
 	});
 	this.model.handlers.add("updateGroupData", function() {
 	  self.updateGroupData();
+	});
+	this.model.handlers.add("updatePrintPreview", function() {
+	  self.updatePrintPreview();
 	});
     this.cellCommentator = new AscCommonExcel.CCellCommentator({
       model: new WorkbookCommentsModel(this.handlers, this.model.aComments),
@@ -1745,7 +1749,7 @@
 
     var ws = t.getWorksheet();
     var activeCellRange = ws.getActiveCell(0, 0, false);
-    var selectionRange = ws.model.selectionRange.clone();
+    var selectionRange = ws.model.selectionRange && ws.model.selectionRange.clone();
 
     var activeWsModel = this.model.getActiveWs();
     if (activeWsModel.inPivotTable(activeCellRange)) {
@@ -3317,7 +3321,8 @@
     var viewZoom = this.getZoom();
     this.changeZoom(1, true, true);
 
-	var nActive = this.printPreviewState.isStart() && null !== this.printPreviewState.realActiveSheet ? this.printPreviewState.realActiveSheet : this.model.getActive();
+	var isPrintPreview = this.printPreviewState.isStart();
+	var nActive = isPrintPreview && null !== this.printPreviewState.realActiveSheet ? this.printPreviewState.realActiveSheet : this.model.getActive();
 
     var printPagesData = new asc_CPrintPagesData();
     var printType = adjustPrint.asc_getPrintType();
@@ -3336,8 +3341,8 @@
       this._calcPagesPrintSheet(nActive, printPagesData, true, adjustPrint);
     }
 
-    if (AscCommonExcel.c_kMaxPrintPages === printPagesData.arrPages.length) {
-      this.handlers.trigger("asc_onError", c_oAscError.ID.PrintMaxPagesCount, c_oAscError.Level.NoCritical);
+    if (this.printPreviewState.isNeedShowError(AscCommonExcel.c_kMaxPrintPages === printPagesData.arrPages.length)) {
+		this.handlers.trigger("asc_onError", c_oAscError.ID.PrintMaxPagesCount, c_oAscError.Level.NoCritical);
     }
 
     this.changeZoom(viewZoom, true, true);
@@ -4440,6 +4445,41 @@
 		oWriter.WriteString2(rangeStr);
 		var BinaryLen = oWriter.GetCurPosition() - BinaryPos;
 		return (BinaryLen + ";" + oWriter.GetBase64Memory2(BinaryPos, BinaryLen));
+	};
+
+	WorkbookView.prototype.updatePrintPreview = function () {
+		if (!this.printPreviewState || !this.printPreviewState.isStart()) {
+			return;
+		}
+		for(var i in this.wsViews) {
+			this.wsViews[i]._recalculate();
+		}
+		if (!this.printPreviewState.isDrawPrintPreview) {
+			var needUpdate;
+			//if (this.workbook.printPreviewState.isNeedUpdate(this.model, this.getMaxRowColWithData())) {
+			//возможно стоит добавить эвент об изменении количетсва страниц
+			needUpdate = true;
+			//}
+			this.model.handlers.trigger("asc_onPrintPreviewSheetDataChanged", needUpdate);
+		}
+	};
+
+	WorkbookView.prototype.setPrintOptionsJson = function (val) {
+		//протаскиваю временные опции для печати
+		//из данных опций пока испольуются только колонтитулы
+		this.printOptionsJson = val;
+	};
+
+	WorkbookView.prototype.getPrintHeaderFooterFromJson = function (index) {
+		var res = null;
+		if (this.printOptionsJson) {
+			var ws = this.model.getWorksheet(index);
+			res = new Asc.CHeaderFooter(ws);
+			if (this.printOptionsJson[index] && this.printOptionsJson[index]["pageSetup"] && this.printOptionsJson[index]["pageSetup"]["headerFooter"]) {
+				res.initFromJson(this.printOptionsJson[index]["pageSetup"]["headerFooter"]);
+			}
+		}
+		return res;
 	};
 
 	//------------------------------------------------------------export---------------------------------------------------

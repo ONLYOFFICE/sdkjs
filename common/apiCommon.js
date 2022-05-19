@@ -204,7 +204,9 @@
 		UsersCountOS  : 10,
 		ExpiredLimited: 11,
 		ConnectionsLiveOS: 12,
-		ConnectionsLive: 13
+		ConnectionsLive: 13,
+		UsersViewCount: 14,
+		UsersViewCountOS: 15
 	};
 
 	var c_oRights = {
@@ -2380,14 +2382,77 @@
 	};
 
 	/** @constructor */
+	function asc_CCustomListType(obj) {
+		this.type = null;
+
+		this.imageId = null;
+		this.token = null;
+
+		this.char = null;
+		this.specialFont = null;
+
+		this.numberingType = null;
+		if (obj) {
+			this.fillFromObject(obj);
+		}
+	}
+
+	asc_CCustomListType.prototype.fillFromObject = function (obj) {
+		if (obj.type)           this.type          = obj.type;
+		if (obj.imageId)        this.imageId       = obj.imageId;
+		if (obj.token)          this.token         = obj.token;
+		if (obj.char)           this.char          = obj.char;
+		if (obj.specialFont)    this.specialFont   = obj.specialFont;
+		if (obj.numberingType)  this.numberingType = obj.numberingType;
+	};
+	asc_CCustomListType.prototype.setType = function(pr) {
+		this.type = pr;
+	};
+	asc_CCustomListType.prototype.setImageId = function(pr) {
+		this.imageId = pr;
+	};
+	asc_CCustomListType.prototype.setToken = function(pr) {
+		this.token = pr;
+	};
+	asc_CCustomListType.prototype.setChar = function(pr) {
+		this.char = pr;
+	};
+	asc_CCustomListType.prototype.setSpecialFont = function(pr) {
+		this.specialFont = pr;
+	};
+	asc_CCustomListType.prototype.setNumberingType = function(pr) {
+		this.numberingType = pr;
+	};
+	asc_CCustomListType.prototype.getType = function() {
+		return this.type;
+	};
+	asc_CCustomListType.prototype.getImageId = function() {
+		return this.imageId;
+	};
+	asc_CCustomListType.prototype.getToken = function() {
+		return this.token;
+	};
+	asc_CCustomListType.prototype.getChar = function() {
+		return this.char;
+	};
+	asc_CCustomListType.prototype.getSpecialFont = function() {
+		return this.specialFont;
+	};
+	asc_CCustomListType.prototype.getNumberingType = function() {
+		return this.numberingType;
+	};
+
+	/** @constructor */
 	function asc_CListType(obj) {
 
 		if (obj) {
 			this.Type = (undefined == obj.Type) ? null : obj.Type;
 			this.SubType = (undefined == obj.Type) ? null : obj.SubType;
+			this.Custom = (undefined == obj.Type) ? null : new asc_CCustomListType(obj.Custom);
 		} else {
 			this.Type = null;
 			this.SubType = null;
+			this.Custom = null;
 		}
 	}
 
@@ -2396,6 +2461,10 @@
 	};
 	asc_CListType.prototype.asc_getListSubType = function () {
 		return this.SubType;
+	};
+
+	asc_CListType.prototype.asc_getListCustom = function () {
+		return this.Custom;
 	};
 
 	/** @constructor */
@@ -5867,6 +5936,8 @@
 	prot['ExpiredLimited'] = prot.ExpiredLimited;
 	prot['ConnectionsLiveOS'] = prot.ConnectionsLiveOS;
 	prot['ConnectionsLive'] = prot.ConnectionsLive;
+	prot['UsersViewCount'] = prot.UsersViewCount;
+	prot['UsersViewCountOS'] = prot.UsersViewCountOS;
 
 	window['Asc']['c_oRights'] = window['Asc'].c_oRights = c_oRights;
 	prot = c_oRights;
@@ -6168,10 +6239,26 @@
 	prot["get_Between"] = prot["asc_getBetween"] = prot.asc_getBetween;
 	prot["put_Between"] = prot["asc_putBetween"] = prot.asc_putBetween;
 
+	window["AscCommon"].asc_CCustomListType = window["Asc"]["asc_CCustomListType"] = window["Asc"].asc_CCustomListType = asc_CCustomListType;
+	prot = asc_CCustomListType.prototype;
+	prot["setType"] = prot["asc_setType"] = prot.setType;
+	prot["setImageId"] = prot["asc_setImageId"] = prot.setImageId;
+	prot["setToken"] = prot["asc_setToken"] = prot.setToken;
+	prot["setChar"] = prot["asc_setChar"] = prot.setChar;
+	prot["setSpecialFont"] = prot["asc_setSpecialFont"] = prot.setSpecialFont;
+	prot["setNumberingType"] = prot["asc_setNumberingType"] = prot.setNumberingType;
+	prot["getType"] = prot["asc_getType"] = prot.getType;
+	prot["getImageId"] = prot["asc_getImageId"] = prot.getImageId;
+	prot["getToken"] = prot["asc_getToken"] = prot.getToken;
+	prot["getChar"] = prot["asc_getChar"] = prot.getChar;
+	prot["getSpecialFont"] = prot["asc_getSpecialFont"] = prot.getSpecialFont;
+	prot["getNumberingType"] = prot["asc_getNumberingType"] = prot.getNumberingType;
+
 	window["AscCommon"].asc_CListType = asc_CListType;
 	prot = asc_CListType.prototype;
 	prot["get_ListType"] = prot["asc_getListType"] = prot.asc_getListType;
 	prot["get_ListSubType"] = prot["asc_getListSubType"] = prot.asc_getListSubType;
+	prot["get_ListCustom"] = prot["asc_getListCustom"] = prot.asc_getListCustom;
 
 	window["AscCommon"].asc_CTextFontFamily = asc_CTextFontFamily;
 	window["AscCommon"]["asc_CTextFontFamily"] = asc_CTextFontFamily;

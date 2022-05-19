@@ -489,6 +489,10 @@
         oTrigger.addTrigger(fTrigger);
         return oTrigger;
     };
+    CTimeNodeBase.prototype.isMediaCallEffect = function() {
+        var oAttributes = this.getAttributesObject();
+        return !!(oAttributes && oAttributes.presetClass === AscFormat.PRESET_CLASS_MEDIACALL);
+    };
     CTimeNodeBase.prototype.getStartTrigger = function(oPlayer) {
         var oAttributes = this.getAttributesObject();
         if(!oAttributes || !oAttributes.stCondLst) {
@@ -2068,13 +2072,14 @@
                 var bNeedRebuild = false;
                 for(var nSeq = 0; nSeq < aSeqs.length; ++nSeq) {
                     aSeq = aSeqs[nSeq];
-                    for(nEffectIdx = aSeq.length - 1; nEffectIdx > 0; --nEffectIdx) {
+                    for(nEffectIdx = 1; nEffectIdx < aSeq.length; ++nEffectIdx) {
                         oEffect = aSeq[nEffectIdx];
                         if(oEffect.isSelected()) {
                             sObjectId = oEffect.getObjectId();
                             if(bNeedRemoveExtra) {
                                 if(oMapOfObjects[sObjectId]) {
                                     aSeq.splice(nEffectIdx, 1);
+                                    nEffectIdx--;
                                     continue;
                                 }
                                 else {
@@ -7852,6 +7857,28 @@
         return [this.cBhvr];
     };
 
+    CCmd.prototype.setState = function(nState) {
+        CTimeNodeBase.prototype.setState.call(this, nState);
+        if(nState === TIME_NODE_STATE_ACTIVE) {
+            var sCmd = this.cmd;
+            if(sCmd) {
+                if(sCmd.indexOf("play") || sCmd === "resume" || sCmd === "togglePause") {
+                    var oSp = this.getTargetObject();
+                    if(oSp) {
+                        var sMediaName = oSp.getMediaFileName();
+                        if(sMediaName) {
+                            var oApi = Asc.editor || editor;
+                            if(oApi && oApi.showVideoControl) {
+                                oApi.showVideoControl(sMediaName, oSp.extX, oSp.extY, oSp.transform);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        //this.logState("SET STATE:");
+    };
+
     changesFactory[AscDFH.historyitem_TimeNodeContainerCTn] = CChangeObject;
     drawingsChangesMap[AscDFH.historyitem_TimeNodeContainerCTn] = function(oClass, value) {oClass.cTn = value;};
 
@@ -10968,6 +10995,11 @@
         var bClick = this.addExternalEvent(new CExternalEvent(this.eventsProcessor, COND_EVNT_ON_CLICK, oSp.Get_Id()));
         if(bClick) {
             return true;
+        }
+        var sMediaName = oSp.getMediaFileName();
+        if(sMediaName) {
+            if (window["AscDesktopEditor"])
+                return false;
         }
         return this.addExternalEvent(new CExternalEvent(this.eventsProcessor, COND_EVNT_ON_NEXT, null));
     };

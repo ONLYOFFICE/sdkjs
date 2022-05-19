@@ -3429,125 +3429,7 @@ function CDrawingDocument()
 		this.InlineTextInNotes = false;
 	};
 
-	this.privateGetParagraphByString = function(level, levelNum, counterCurrent, x, y, lineHeight, ctx, w, h)
-    {
-        var text = "";
-        for (var i = 0; i < level.Text.length; i++)
-        {
-            switch (level.Text[i].Type)
-            {
-                case Asc.c_oAscNumberingLvlTextType.Text:
-                    text += level.Text[i].Value;
-                    break;
-                case Asc.c_oAscNumberingLvlTextType.Num:
-                    var correctNum = 1;
-                    if (levelNum === level.Text[i].Value)
-                        correctNum = counterCurrent;
-                    text += AscCommon.IntToNumberFormat(correctNum, level.Format, level.get_OLang());
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        var api = this.m_oWordControl.m_oApi;
-
-        History.TurnOff();
-        var oldViewMode = api.isViewMode;
-        var oldMarks = api.ShowParaMarks;
-
-        api.isViewMode = true;
-        api.ShowParaMarks = false;
-
-		var oNewShape = new AscFormat.CShape();
-		oNewShape.createTextBody();
-
-        var par = oNewShape.txBody.content.GetAllParagraphs()[0];
-        par.MoveCursorToStartPos();
-
-        //par.Pr = level.ParaPr.Copy();
-		par.Pr = new CParaPr();
-        var textPr = level.TextPr.Copy();
-        textPr.FontSize = textPr.FontSizeCS = ((2 * lineHeight * 72 / 96) >> 0) / 2;
-
-        var parRun = new ParaRun(par);
-        parRun.Set_Pr(textPr);
-        parRun.AddText(text);
-        par.AddToContent(0, parRun);
-
-        par.Reset(0, 0, 1000, 1000, 0, 0, 1);
-        par.Recalculate_Page(0);
-
-        var baseLineOffset = par.Lines[0].Y;
-        var bounds = par.Get_PageBounds(0);
-
-        var parW = par.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
-        var parH = (bounds.Bottom - bounds.Top) * AscCommon.g_dKoef_mm_to_pix;
-
-        var yOffset = y - ((baseLineOffset * g_dKoef_mm_to_pix) >> 0);
-        var xOffset = x;
-        switch (level.Align)
-        {
-            case AscCommon.align_Right:
-                xOffset -= parW;
-                break;
-            case AscCommon.align_Center:
-                xOffset -= (parW >> 1);
-                break;
-            default:
-                break;
-        }
-
-        // debug: text rect:
-        //ctx.beginPath();
-        //ctx.fillStyle = "#FFFF00";
-        //ctx.fillRect(xOffset, y, parW, parH);
-        //ctx.beginPath();
-
-		var backTextWidth = parW + 4; // 4 - чтобы линия никогде не была 'совсем рядом'
-		switch (level.Suff)
-		{
-			case Asc.c_oAscNumberingSuff.Space:
-			case Asc.c_oAscNumberingSuff.None:
-				backTextWidth += 4;
-				break;
-			case Asc.c_oAscNumberingSuff.Tab:
-				break;
-			default:
-				break;
-		}
-
-        ctx.fillStyle = "#FFFFFF";
-		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
-        ctx.fillRect(Math.round(rPR * xOffset), Math.round((y - lineHeight) * rPR), Math.round(backTextWidth * rPR), Math.round((lineHeight + (lineHeight >> 1)) * rPR));
-        ctx.beginPath();
-
-        ctx.save();
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-        var graphics = new AscCommon.CGraphics();
-        graphics.init(ctx,
-			AscCommon.AscBrowser.convertToRetinaValue(w, true),
-			AscCommon.AscBrowser.convertToRetinaValue(h, true),
-			w * AscCommon.g_dKoef_pix_to_mm, h * AscCommon.g_dKoef_pix_to_mm);
-        graphics.m_oFontManager = AscCommon.g_fontManager;
-
-        graphics.m_oCoordTransform.tx = AscCommon.AscBrowser.convertToRetinaValue(xOffset, true);
-        graphics.m_oCoordTransform.ty = AscCommon.AscBrowser.convertToRetinaValue(yOffset, true);
-
-        graphics.transform(1, 0, 0, 1, 0, 0);
-
-        par.Draw(0, graphics);
-
-        ctx.restore();
-        ctx.restore();
-
-        History.TurnOn();
-        api.isViewMode = oldViewMode;
-        api.ShowParaMarks = oldMarks;
-    };
-
-	this.SetDrawImagePreviewBulletForMenu = function(id, type, props, isNoCheckFonts)
+/*	this.SetDrawImagePreviewBulletForMenu = function(id, type, props, isNoCheckFonts) TODO: For history, delete after 7.2 release
 	{
 		var text = AscCommon.translateManager.getValue("None");
 		if (!props)
@@ -3572,6 +3454,7 @@ function CDrawingDocument()
 						oLvl		= new Asc.CAscNumberingLvl(i),
 						oLvlTextPr	= new CTextPr(),
 						sLvlText	= "";
+					oLvlTextPr.Color = new AscCommonWord.CDocumentColor(0, 0, 0, false);
 					switch (i)
 					{
 						case 1:
@@ -3640,6 +3523,7 @@ function CDrawingDocument()
 					c_oAscNumberingLevel.UpperRomanDot_Right,
 					c_oAscNumberingLevel.LowerRomanDot_Right
 				];
+
 				for (var i = 0; i < arrTypes.length; i++)
 				{
 					var lvl = new CNumberingLvl();
@@ -3647,6 +3531,10 @@ function CDrawingDocument()
 					lvl.SetByType(arrTypes[i], 0);
 					lvl.FillToAscNumberingLvl(oLvl);
 					oLvl.Align = 1;
+					if(oLvl.TextPr)
+					{
+						oLvl.TextPr.Color = new AscCommonWord.CDocumentColor(0, 0, 0, false);
+					}
 					props.push(oLvl);
 				}
 			}
@@ -3880,7 +3768,7 @@ function CDrawingDocument()
 			}
 		}
 		History.TurnOn();
-	};
+	};*/
 
 	this.OnAnimPaneChanged = function(nSlideNum, oRect)
 	{

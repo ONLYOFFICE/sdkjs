@@ -1483,6 +1483,45 @@
 			}
 
 			var _colors = gradFill.colors;
+			var firstColor = null;
+			var lastColor = null;
+
+			if (_colors.length > 0)
+			{
+				if (_colors[0].pos > 0)
+				{
+					firstColor = {
+						color : {
+							RGBA : {
+								R : _colors[0].color.RGBA.R,
+								G : _colors[0].color.RGBA.G,
+								B : _colors[0].color.RGBA.B,
+								A : _colors[0].color.RGBA.A
+							}
+						},
+						pos : 0
+					};
+					_colors.unshift(firstColor);
+				}
+
+				var posLast = _colors.length - 1;
+				if (_colors[posLast].pos < 100000)
+				{
+					lastColor = {
+						color : {
+							RGBA : {
+								R : _colors[posLast].color.RGBA.R,
+								G : _colors[posLast].color.RGBA.G,
+								B : _colors[posLast].color.RGBA.B,
+								A : _colors[posLast].color.RGBA.A
+							}
+						},
+						pos : 100000
+					};
+					_colors.push(lastColor);
+				}
+			}
+
 			this.Memory.WriteByte(2);
 			this.Memory.WriteLong(_colors.length);
 
@@ -1499,6 +1538,11 @@
 				else
 					this.Memory.WriteByte(transparent);
 			}
+
+			if (firstColor)
+				_colors.shift();
+			if (lastColor)
+				_colors.pop();
 
 			this.Memory.WriteByte(AscCommon.g_nodeAttributeEnd);
 		},

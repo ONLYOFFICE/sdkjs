@@ -550,11 +550,6 @@ function CDrawingDocument()
         this.CheckTargetDraw(x, y);
     };
 
-    this.UpdateTarget2 = function(x, y, pageIndex)
-    {
-
-    };
-
     this.UpdateTargetTimer = function()
     {
     };
@@ -1595,7 +1590,7 @@ function CDrawingDocument()
         spApi.isViewMode = oldViewMode;
     };
 
-    this.SetDrawImagePreviewBulletForMenu = function(id, type, spApi, props, isNoCheckFonts)
+/*    this.SetDrawImagePreviewBulletForMenu = function(id, type, spApi, props, isNoCheckFonts) // TODO: for history, delete after 7.2 release
     {
         if (!props)
         {
@@ -1858,7 +1853,7 @@ function CDrawingDocument()
                 }
             }
         }
-    };
+    };*/
 	this.CloseFile = function ()
 	{
 		this.ClearCachePages();

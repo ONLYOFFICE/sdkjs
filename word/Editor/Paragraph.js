@@ -9624,7 +9624,8 @@ Paragraph.prototype.Add_PresentationNumbering = function(Bullet)
 			{
 				var oUndefPresentationBullet = oUndefParaPr.Bullet.getPresentationBullet(oTheme, oColorMap);
 				var oNewPresentationBullet   = oBullet2.getPresentationBullet(oTheme, oColorMap);
-				if (oUndefPresentationBullet.m_sChar === oNewPresentationBullet.m_sChar)//символы совпали. ничего выставлять не надо.
+				if (oUndefPresentationBullet.m_sChar && oUndefPresentationBullet.m_sChar === oNewPresentationBullet.m_sChar ||
+					oUndefPresentationBullet.m_sSrc && oUndefPresentationBullet.m_sSrc === oNewPresentationBullet.m_sSrc)//символы или id изображений совпали. ничего выставлять не надо.
 				{
 					this.Pr.Bullet = _OldBullet;
 					this.Set_Bullet(undefined);
@@ -9658,6 +9659,7 @@ Paragraph.prototype.Add_PresentationNumbering = function(Bullet)
 		else//тип не совпал. выставляем буллет, а также проверим нужно ли выставлять Indent.
 		{
 			this.Pr.Bullet = _OldBullet;
+			this.CompiledPr.NeedRecalc = true;
 			if(_OldBullet )
 			{
 				if(_OldBullet.bulletSize && !oBullet2.bulletSize)
@@ -9676,6 +9678,17 @@ Paragraph.prototype.Add_PresentationNumbering = function(Bullet)
 			}
 			if(!oBullet2.isEqual(this.Pr.Bullet))
 			{
+				if (NewType === numbering_presentationnumfrmt_Blip && !oBullet2.getImageBulletURL())
+				{
+					var oldUrl = this.Pr.Bullet && this.Pr.Bullet.getImageBulletURL()
+					if (oldUrl)
+					{
+						oBullet2.setImageBulletURL(oldUrl);
+					} else
+					{
+						return;
+					}
+				}
 				var bEqualBulletType = false;
 				if(oBullet2.bulletType && this.Pr.Bullet && this.Pr.Bullet.bulletType)
 				{
@@ -9688,7 +9701,7 @@ Paragraph.prototype.Add_PresentationNumbering = function(Bullet)
 					var oFirstRunPr = this.Get_FirstTextPr2();
 
 					var Indent = oFirstRunPr.FontSize*0.305954545 + 2.378363636;
-					if (NewType === numbering_presentationnumfrmt_Char)
+					if (NewType === numbering_presentationnumfrmt_Char || NewType === numbering_presentationnumfrmt_Blip)
 					{
 						this.Set_Ind({Left : LeftInd + Indent, FirstLine : -Indent}, false);
 					}
@@ -9696,7 +9709,7 @@ Paragraph.prototype.Add_PresentationNumbering = function(Bullet)
 					{
 						this.Set_Ind({FirstLine : 0, Left : LeftInd}, false);
 					}
-					else if (NewType !== numbering_presentationnumfrmt_Blip)
+					else
 					{
 						if (!IsPrNumberingSameType(NewType, UndefType))
 						{

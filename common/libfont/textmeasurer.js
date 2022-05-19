@@ -49,6 +49,11 @@
 
     CTextMeasurer.prototype =
     {
+        SetParams : function(params)
+        {
+            this.m_oManager.SetParams(params);
+        },
+
         Init : function()
         {
             this.m_oManager.Initialize();

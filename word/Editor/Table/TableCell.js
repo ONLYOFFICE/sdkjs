@@ -431,11 +431,6 @@ CTableCell.prototype =
     //-----------------------------------------------------------------------------------
     // Функции, к которым идет обращение из контента
     //-----------------------------------------------------------------------------------
-    OnContentRecalculate : function(bChange, bForceRecalc)
-    {
-        this.Row.Table.Internal_RecalculateFrom( this.Row.Index, this.Index, bChange, false );
-    },
-
     OnContentReDraw : function(StartPage, EndPage)
     {
         this.Row.Table.Parent.OnContentReDraw( StartPage, EndPage );

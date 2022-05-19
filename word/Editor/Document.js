@@ -5300,26 +5300,6 @@ CDocument.prototype.ResumeRecalculate = function()
 		this.RecalcInfo.Paused = false;
 	}
 };
-CDocument.prototype.OnContentRecalculate                     = function(bNeedRecalc, PageNum, DocumentIndex)
-{
-    if (false === bNeedRecalc)
-    {
-        var Element = this.Content[DocumentIndex];
-        // Просто перерисуем все страницы, на которых находится данный элеменет
-        for (var PageNum = Element.PageNum; PageNum < Element.PageNum + Element.Pages.length; PageNum++)
-        {
-            this.DrawingDocument.OnRecalculatePage(PageNum, this.Pages[PageNum]);
-        }
-
-        this.DrawingDocument.OnEndRecalculate(false, true);
-
-        this.Document_UpdateRulersState();
-    }
-    else
-    {
-        this.Recalculate();
-    }
-};
 CDocument.prototype.OnContentReDraw                          = function(StartPage, EndPage)
 {
     this.ReDraw(StartPage, EndPage);
@@ -5942,7 +5922,10 @@ CDocument.prototype.GetTableForPreview = function()
         for (let nIndex = 0; nIndex < nCols; ++nIndex)
             arrGrid[nIndex] = W / nCols;
 
-        let oTable = new CTable(this.GetDrawingDocument(), this, true, nRows, nCols, arrGrid, false);
+		let oDocumentContent = new CDocumentContent();
+		oDocumentContent.SetLogicDocument(this);
+
+        let oTable = new CTable(this.GetDrawingDocument(), oDocumentContent, true, nRows, nCols, arrGrid, false);
         oTable.Reset(_x_mar, _y_mar, 1000, 1000, 0, 0, 1);
         oTable.Set_Props({
             TableDefaultMargins : {Top : 0, Bottom : 0},
@@ -25040,7 +25023,7 @@ CDocument.prototype.ClearAllSpecialForms = function(isClearAllContentControls)
 	for (var nIndex = 0, nCount = arrContentControls.length; nIndex < nCount; ++nIndex)
 	{
 		var oControl = arrContentControls[nIndex];
-		if (oControl.IsInlineLevel())
+		if (oControl.IsInlineLevel() && oControl.GetParagraph())
 			arrParagraphs.push(oControl.GetParagraph());
 		else if (oControl.IsBlockLevel())
 			oControl.GetAllParagraphs({}, arrParagraphs);
@@ -25448,55 +25431,51 @@ CDocument.prototype.ChangeTextCase = function(nCaseType)
 	if (!this.IsSelectionUse())
 	{
 		oState = this.SaveDocumentState(false);
-		if (!this.SelectCurrentWord())
-		{
+		this.SelectCurrentWord();
+	}
+
+	if (!this.IsSelectionUse() || !this.IsTextSelectionUse())
+	{
+		if (oState)
 			this.LoadDocumentState(oState);
-			return;
-		}
+
+		return;
 	}
 
 	if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
 	{
 		this.StartAction(AscDFH.historydescription_Document_ChangeTextCase);
 
-		if (this.IsSelectionUse())
+		var oChangeEngine = new CDocumentChangeTextCaseEngine(nCaseType);
+		var arrParagraphs = this.GetSelectedParagraphs();
+		if (oChangeEngine.ChangeType === Asc.c_oAscChangeTextCaseType.SentenceCase || oChangeEngine.ChangeType === Asc.c_oAscChangeTextCaseType.CapitalizeWords)
 		{
-			if (!this.IsTextSelectionUse())
-				return;
-
-			var oChangeEngine = new CDocumentChangeTextCaseEngine(nCaseType);
-
-			var arrParagraphs = this.GetSelectedParagraphs();
-
-			if (oChangeEngine.ChangeType === Asc.c_oAscChangeTextCaseType.SentenceCase || oChangeEngine.ChangeType === Asc.c_oAscChangeTextCaseType.CapitalizeWords)
-			{
-				for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
-				{
-					var oParagraph1 = arrParagraphs[nIndex];
-					if (!oParagraph1.Parent.IsTableCellContent())
-					{
-						oChangeEngine.isAllinTable = false;
-					}
-					oParagraph1.CheckRunContent(function(oRun)
-					{
-						oRun.CheckTextForTextCase(oChangeEngine);
-					});
-					oChangeEngine.CurrentParagraph++;
-				}
-			}
 			for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
 			{
-				oChangeEngine.Reset();
-
-				var oParagraph = arrParagraphs[nIndex];
-
-				oParagraph.CheckRunContent(function(oRun)
+				var oParagraph1 = arrParagraphs[nIndex];
+				if (!oParagraph1.Parent.IsTableCellContent())
 				{
-					oRun.ChangeTextCase(oChangeEngine);
+					oChangeEngine.isAllinTable = false;
+				}
+				oParagraph1.CheckRunContent(function(oRun)
+				{
+					oRun.CheckTextForTextCase(oChangeEngine);
 				});
-
-				oChangeEngine.FlushWord();
+				oChangeEngine.CurrentParagraph++;
 			}
+		}
+		for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
+		{
+			oChangeEngine.Reset();
+
+			var oParagraph = arrParagraphs[nIndex];
+
+			oParagraph.CheckRunContent(function(oRun)
+			{
+				oRun.ChangeTextCase(oChangeEngine);
+			});
+
+			oChangeEngine.FlushWord();
 		}
 
 		if (oState)

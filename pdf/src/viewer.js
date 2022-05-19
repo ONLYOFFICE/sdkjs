@@ -211,8 +211,11 @@
 		this.mouseDownLinkObject = null;
 
 		this.isFocusOnThumbnails = false;
+		this.isDocumentContentReady = false;
 
-		this.isXP = ((AscCommon.AscBrowser.userAgent.indexOf("windowsXP") > -1) || (AscCommon.AscBrowser.userAgent.indexOf("chrome/49") > -1)) ? true : false;
+		this.isXP = ((AscCommon.AscBrowser.userAgent.indexOf("windowsxp") > -1) || (AscCommon.AscBrowser.userAgent.indexOf("chrome/49") > -1)) ? true : false;
+		if (!this.isXP && AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge)
+			this.isXP = true;
 
 		if (this.isXP)
 		{
@@ -262,7 +265,7 @@
 			elements += "<div id=\"id_vertical_scroll\" class=\"block_elem\" style=\"display:none;left:0px;top:0px;width:0px;height:0px;\"></div>";
 			elements += "<div id=\"id_horizontal_scroll\" class=\"block_elem\" style=\"display:none;left:0px;top:0px;width:0px;height:0px;\"></div>";
 		
-			this.parent.style.backgroundColor = this.backgroundColor;
+			//this.parent.style.backgroundColor = this.backgroundColor; <= this color from theme
 			this.parent.innerHTML = elements;
 
 			this.canvas = document.getElementById("id_viewer");
@@ -466,7 +469,7 @@
 			this.paint();
 		};
 
-		this.resize = function()
+		this.resize = function(isDisablePaint)
 		{
 			this.isFocusOnThumbnails = false;
 
@@ -571,7 +574,7 @@
 			if (this.scrollY >= this.scrollMaxY)
 				this.scrollY = this.scrollMaxY;
 
-			if (this.zoomCoordinate)
+			if (this.zoomCoordinate && this.isDocumentContentReady)
 			{
 				var newPoint = this.ConvertCoordsToCursor(this.zoomCoordinate.x, this.zoomCoordinate.y, this.zoomCoordinate.index);
 				// oldsize используется чтобы при смене ориентации экрана был небольшой скролл
@@ -591,7 +594,8 @@
 			if (this.thumbnails)
 				this.thumbnails.resize();
 
-			this.timerSync();
+			if (true !== isDisablePaint)
+				this.timerSync();
 
 			if (this.Api.WordControl.MobileTouchManager)
 				this.Api.WordControl.MobileTouchManager.Resize();
@@ -772,6 +776,20 @@
 
 			// в интерфейсе есть проблема - нужно посылать onDocumentContentReady после setAdvancedOptions
 			setTimeout(function(){
+
+				if (!_t.isStarted)
+				{
+					AscCommon.addMouseEvent(_t.canvas, "down", _t.onMouseDown);
+					AscCommon.addMouseEvent(_t.canvas, "move", _t.onMouseMove);
+					AscCommon.addMouseEvent(_t.canvas, "up", _t.onMouseUp);
+
+					_t.parent.onmousewheel = _t.onMouseWhell;
+					if (_t.parent.addEventListener)
+						_t.parent.addEventListener("DOMMouseScroll", _t.onMouseWhell, false);
+
+					_t.startTimer();
+				}
+
 				_t.sendEvent("onFileOpened");
 
 				_t.sendEvent("onPagesCount", _t.file.pages.length);
@@ -785,20 +803,7 @@
 			this.currentPage = -1;
 			this.structure = this.file.getStructure();
 
-			this.resize();
-
-			if (!this.isStarted)
-			{
-				AscCommon.addMouseEvent(this.canvas, "down", this.onMouseDown);
-				AscCommon.addMouseEvent(this.canvas, "move", this.onMouseMove);
-				AscCommon.addMouseEvent(this.canvas, "up", this.onMouseUp);
-		
-				this.parent.onmousewheel = this.onMouseWhell;
-				if (this.parent.addEventListener)
-					this.parent.addEventListener("DOMMouseScroll", this.onMouseWhell, false);
-				
-				this.startTimer();				
-			}
+			this.resize(true);
 
 			if (this.thumbnails)
 				this.thumbnails.init(this);
@@ -821,8 +826,8 @@
 		};
 		this.calculateZoomToWidth = function()
 		{
-			if (0 === this.file.pages.length)
-				return;
+			if (!this.file || !this.file.isValid())
+				return 1;
 
 			var maxWidth = 0;
 			for (let i = 0, len = this.file.pages.length; i < len; i++)
@@ -833,14 +838,14 @@
 			}
 
 			if (maxWidth < 1)
-				return;
+				return 1;
 
 			return (this.width - 2 * this.betweenPages) / maxWidth;
 		};
 		this.calculateZoomToHeight = function()
 		{
-			if (0 === this.file.pages.length)
-				return;
+			if (!this.file || !this.file.isValid())
+				return 1;
 
 			var maxHeight = 0;
 			var maxWidth = 0;
@@ -855,7 +860,7 @@
 			}
 
 			if (maxWidth < 1 || maxHeight < 1)
-				return;
+				return 1;
 
 			var zoom1 = (this.width - 2 * this.betweenPages) / maxWidth;
 			var zoom2 = (this.height - 2 * this.betweenPages) / maxHeight;
@@ -1217,7 +1222,8 @@
 		this.onMouseUp = function(e)
 		{
 			oThis.isFocusOnThumbnails = false;
-			AscCommon.stopEvent(e);
+			if (e && e.preventDefault)
+				e.preventDefault();
 
 			var mouseButton = AscCommon.getMouseButton(e || {});
 			if (mouseButton !== 0)
@@ -2295,7 +2301,7 @@
 			}
 			else if ( e.KeyCode == 80 && true === e.CtrlKey ) // Ctrl + P + ...
 			{
-				// TODO: print
+				this.Api.onPrint();
 				bRetValue = true;
 			}
 			else if ( e.KeyCode == 83 && true === e.CtrlKey ) // Ctrl + S + ...

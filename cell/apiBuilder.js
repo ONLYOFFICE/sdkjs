@@ -562,7 +562,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nSheet - The sheet index.
-	 * @param {boolean} [bWithFormat=false] - Specifies if the data will be received with the format.
+	 * @param {boolean} [bWithFormat=false] - Specifies that the data will be received with the format.
 	 * @returns {string[][]}
 	 */
 	Api.prototype.private_GetMailMergeMap = function (nSheet, bWithFormat) {
@@ -616,8 +616,8 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nSheet - The sheet index.
-	 * @param {boolean} [bWithFormat=false] - Specifies if the data will be received with the format.
-	 * @returns {string[][]}
+	 * @param {boolean} [bWithFormat=false] - Specifies that the data will be received with the format.
+	 * @returns {string[][]} 
 	 */
 	Api.prototype.GetMailMergeData = function(nSheet, bWithFormat) {
 		if (bWithFormat !== true)
@@ -2896,10 +2896,10 @@
 	 * Deletes the Range object.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {?String} shift - Specifies how to shift cells to replace the deleted cells ("up", "left").
+	 * @param {?string} shift - Specifies how to shift cells to replace the deleted cells ("up", "left").
 	 */
 	ApiRange.prototype.Delete = function(shift) {
-		if (shift && typeof shift == "string") {
+		if (shift && shift.toLocaleLowerCase) {
 			shift = shift.toLocaleLowerCase();
 		} else {
 			var bbox = this.range.bbox;
@@ -2917,10 +2917,10 @@
 	 * Inserts a cell or a range of cells into the worksheet or macro sheet and shifts other cells away to make space.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {?String} shift - Specifies which way to shift the cells ("right", "down").
+	 * @param {?string} shift - Specifies which way to shift the cells ("right", "down").
 	 */
-	 ApiRange.prototype.Insert = function(shift) {
-		if (shift && typeof Shift == "string") {
+	ApiRange.prototype.Insert = function(shift) {
+		if (shift && shift.toLocaleLowerCase) {
 			shift = shift.toLocaleLowerCase();
 		} else {
 			var bbox = this.range.bbox;

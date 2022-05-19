@@ -197,6 +197,35 @@ function CPresentationBullet()
 	this.m_sSrc = null;
 }
 
+CPresentationBullet.prototype.convertFromAscTypeToPresentation = function (nType) {
+	switch (nType) {
+			case c_oAscNumberingLevel.DecimalBracket_Right    :
+			case c_oAscNumberingLevel.DecimalBracket_Left     :
+				return numbering_presentationnumfrmt_ArabicParenR;
+			case c_oAscNumberingLevel.DecimalDot_Right        :
+			case c_oAscNumberingLevel.DecimalDot_Left         :
+				return numbering_presentationnumfrmt_ArabicPeriod;
+			case c_oAscNumberingLevel.UpperRomanDot_Right     :
+				return numbering_presentationnumfrmt_RomanUcPeriod;
+			case c_oAscNumberingLevel.UpperLetterDot_Left     :
+				return numbering_presentationnumfrmt_AlphaUcPeriod;
+			case c_oAscNumberingLevel.LowerLetterBracket_Left :
+				return numbering_presentationnumfrmt_AlphaLcParenR;
+			case c_oAscNumberingLevel.LowerLetterDot_Left     :
+				return numbering_presentationnumfrmt_AlphaLcPeriod;
+			case c_oAscNumberingLevel.LowerRomanDot_Right     :
+				return numbering_presentationnumfrmt_RomanLcPeriod;
+			case c_oAscNumberingLevel.UpperRomanBracket_Left  :
+				return numbering_presentationnumfrmt_RomanUcParenR;
+			case c_oAscNumberingLevel.LowerRomanBracket_Left  :
+				return numbering_presentationnumfrmt_RomanLcParenR;
+			case c_oAscNumberingLevel.UpperLetterBracket_Left :
+				return numbering_presentationnumfrmt_AlphaUcParenR;
+			default:
+				break;
+	}
+};
+
 CPresentationBullet.prototype.getHighlightForNumbering = function(intFormat) {
 	switch (this.m_nType) {
 		case numbering_presentationnumfrmt_AlphaLcParenBoth:
@@ -350,9 +379,10 @@ CPresentationBullet.prototype.Get_StartAt = function()
 {
 	return this.m_nStartAt;
 };
-CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Theme)
-{
+
+CPresentationBullet.prototype.getDrawingText = function (Num) {
 	var sT = "";
+	Num = Num || 1;
 	if (this.m_nType === numbering_presentationnumfrmt_Char)
 	{
 		if ( null != this.m_sChar )
@@ -365,9 +395,13 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 		var formatNum = IntToNumberFormat(Num, typeOfNum);
 		sT = this.getHighlightForNumbering(formatNum);
 	}
+	return sT;
+}
 
-	this.m_sString = sT;
+CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Theme)
+{
 	this.m_nNum = Num;
+	this.m_sString = this.getDrawingText(Num);
 	var dFontSize = FirstTextPr.FontSize;
 	if ( false === this.m_bSizeTx )
 	{
@@ -450,6 +484,7 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 	var bRTL =  this.m_oTextPr.RTL;
 	var lcid =  this.m_oTextPr.Lang.EastAsia;
 	var FontSlot;
+	var sT = this.m_sString;
 	if (sT)
 	{
 		FontSlot = g_font_detector.Get_FontClass( sT.getUnicodeIterator().value(), Hint, lcid, bCS, bRTL );

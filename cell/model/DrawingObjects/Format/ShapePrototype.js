@@ -120,13 +120,15 @@ function addToDrawings(worksheet, graphic, position, lockByDefault, anchor)
 {
 
     var drawingObjects;
-    var wsViews = Asc["editor"].wb.wsViews;
-    for(var i = 0; i < wsViews.length; ++i)
-    {
-        if(wsViews[i] && wsViews[i].model === worksheet)
+    var wsViews = Asc["editor"].wb && Asc["editor"].wb.wsViews;
+    if(wsViews) {
+        for(var i = 0; i < wsViews.length; ++i)
         {
-            drawingObjects = wsViews[i].objectRender;
-            break;
+            if(wsViews[i] && wsViews[i].model === worksheet)
+            {
+                drawingObjects = wsViews[i].objectRender;
+                break;
+            }
         }
     }
     if(!drawingObjects)

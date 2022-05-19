@@ -916,15 +916,15 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex)
 		para_drawing = this.parent;
 	}
 
-
-	if (para_drawing && para_drawing.DocumentContent)
+	let oDocumentContent = para_drawing ? para_drawing.GetDocumentContent() : null;
+	if (oDocumentContent)
 	{
         var nPageIndex = AscFormat.isRealNumber(pageIndex) ? pageIndex : para_drawing.PageNum;
 		var drawing_objects = oLogicDoc.DrawingObjects;
 
         this.SetControllerTextSelection(drawing_objects, nPageIndex);
 
-		var hdr_ftr = para_drawing.DocumentContent.IsHdrFtr(true);
+		var hdr_ftr = oDocumentContent.IsHdrFtr(true);
 		if (hdr_ftr)
 		{
 			hdr_ftr.Content.SetDocPosType(AscCommonWord.docpostype_DrawingObjects);

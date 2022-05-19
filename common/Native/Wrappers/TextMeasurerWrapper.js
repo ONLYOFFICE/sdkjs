@@ -52,6 +52,11 @@ function CTextMeasurerWrapper()
 
 CTextMeasurerWrapper.prototype =
 {
+    SetParams : function(params)
+    {
+        // TODO: set params to native engine
+    },
+
     Init : function()
     {
         this.Measurer["Initialize"](window["native"]);

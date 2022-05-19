@@ -7955,9 +7955,32 @@
 			}
             else if (c_oSerWorkbookTypes.VbaProject == type)
             {
-                this.stream.Skip2(1);//type
-                var _len = this.stream.GetULong();
-                this.oReadResult.vbaMacros = this.stream.GetBuffer(_len);
+                let _end_rec = this.stream.cur + length;
+                while (this.stream.cur < _end_rec)
+                {
+                    var _at = this.stream.GetUChar();
+                    switch (_at)
+                    {
+                        case 0:
+                        {
+                            let _len = this.stream.GetULong();
+                            this.oReadResult.vbaMacros = this.stream.GetBuffer(_len);
+                            break;
+                        }
+                        case 1:
+                        {
+                            //todo
+                            let _len = this.stream.GetULong();
+                            let xml = this.stream.GetString2LE(_len);
+                            break;
+                        }
+                        default:
+                        {
+                            this.stream.SkipRecord();
+                            break;
+                        }
+                    }
+                }
             }
 			else if (c_oSerWorkbookTypes.JsaProject == type)
 			{

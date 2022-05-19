@@ -219,7 +219,13 @@ CWordCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
     AscCommon.CollaborativeEditing.Set_GlobalLock(false);
     AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
 
-    var nPageIndex  = undefined;
+	if (this.m_fEndLoadCallBack)
+	{
+		this.m_fEndLoadCallBack();
+		this.m_fEndLoadCallBack = null;
+	}
+
+	var nPageIndex  = undefined;
     if (this.Is_Fast())
 	{
 		var oParagraph = this.m_oLogicDocument.GetCurrentParagraph();

@@ -954,13 +954,30 @@ var editor;
       this.wb.savePagePrintOptions(arrPagesPrint);
   };
 
-  spreadsheet_api.prototype.asc_getPageOptions = function(index, initPrintTitles) {
+  spreadsheet_api.prototype.asc_getPageOptions = function(index, initPrintTitles, opt_copy) {
     var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
     var ws = this.wbModel.getWorksheet(sheetIndex);
-    if(initPrintTitles && ws.PagePrintOptions) {
-		ws.PagePrintOptions.initPrintTitles();
+    var printOptions = ws.PagePrintOptions;
+	//TODO похожая инициализация в getPrintOptionsJson - сделать общую
+	if(initPrintTitles && printOptions) {
+		printOptions.initPrintTitles();
     }
-    return ws.PagePrintOptions;
+    if(printOptions && opt_copy) {
+		printOptions = ws.PagePrintOptions.clone();
+		printOptions.pageSetup.headerFooter = ws && ws.headerFooter && ws.headerFooter.getForInterface();
+		var printArea = this.wbModel.getDefinesNames("Print_Area", ws.getId());
+		printOptions.pageSetup.printArea = printArea ? printArea.clone() : false;
+
+		printOptions.printTitlesHeight = ws.PagePrintOptions.printTitlesHeight;
+		printOptions.printTitlesWidth = ws.PagePrintOptions.printTitlesWidth;
+
+		if (ws.PagePrintOptions && ws.PagePrintOptions.pageSetup) {
+			printOptions.pageSetup.fitToHeight = ws.PagePrintOptions.pageSetup.asc_getFitToHeight();
+			printOptions.pageSetup.fitToWidth = ws.PagePrintOptions.pageSetup.asc_getFitToWidth();
+		}
+    }
+
+    return printOptions;
   };
 
   spreadsheet_api.prototype.asc_setPageOption = function (func, val, index) {
@@ -1140,8 +1157,10 @@ var editor;
     if (c_oAscFileType.PDF === fileType || c_oAscFileType.PDFA === fileType) {
       var printPagesData, pdfPrinterMemory, t = this;
       this.wb._executeWithoutZoom(function () {
+      	t.wb.printPreviewState.advancedOptions = options.advancedOptions;
         printPagesData = t.wb.calcPagesPrint(options.advancedOptions);
         pdfPrinterMemory = t.wb.printSheets(printPagesData).DocumentRenderer.Memory;
+      	t.wb.printPreviewState.advancedOptions = null;
       });
       dataContainer.data = oAdditionalData["nobase64"] ? pdfPrinterMemory.GetData() : pdfPrinterMemory.GetBase64Memory();
     } else if (this.insertDocumentUrlsData) {
@@ -1201,10 +1220,12 @@ var editor;
 			}
 		}
 
+		this.wb.printPreviewState.isDrawPrintPreview = true;
 		this.wb.printPreviewState.init();
 		var pages = this.wb.calcPagesPrint(options ? options.advancedOptions : null);
 		this.wb.printPreviewState.setPages(pages);
 		this.wb.printPreviewState.setAdvancedOptions(options && options.advancedOptions);
+		this.wb.printPreviewState.isDrawPrintPreview = false;
 
 		if (pages.arrPages.length) {
 			this.asc_drawPrintPreview(0);
@@ -1213,18 +1234,22 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_updatePrintPreview = function (options) {
+		this.wb.printPreviewState.isDrawPrintPreview = true;
 		var pages = this.wb.calcPagesPrint(options.advancedOptions);
 		this.wb.printPreviewState.setPages(pages);
 		this.wb.printPreviewState.setAdvancedOptions(options && options.advancedOptions);
-		var pagesCount = pages.arrPages.length;
-		return pagesCount ? pagesCount : 1;
+		this.wb.printPreviewState.isDrawPrintPreview = false;
+		return pages.arrPages.length;
 	};
 
-	spreadsheet_api.prototype.asc_drawPrintPreview = function (index) {
+	spreadsheet_api.prototype.asc_drawPrintPreview = function (index, indexSheet) {
 		if (this.wb.printPreviewState.isDrawPrintPreview) {
 			return;
 		}
 		this.wb.printPreviewState.isDrawPrintPreview = true;
+		if (indexSheet != null) {
+			index = this.wb.printPreviewState.getIndexPageByIndexSheet(indexSheet);
+		}
 		if (index == null) {
 			index = this.wb.printPreviewState.activePage;
 		}
@@ -1237,6 +1262,7 @@ var editor;
 			indexActiveWs = this.wbModel.getActive();
 		}
 		this.handlers.trigger("asc_onPrintPreviewSheetChanged", indexActiveWs);
+		this.handlers.trigger("asc_onPrintPreviewPageChanged", index);
 		this.wb.printPreviewState.isDrawPrintPreview = false;
 	};
 
@@ -1310,6 +1336,7 @@ var editor;
    * asc_onUpdateDocumentProps                            - эвент о том, что необходимо обновить данные во вкладке layout
    * asc_onLockPrintArea/asc_onUnLockPrintArea            - эвент о локе в меню опции print area во вкладке layout
    * asc_onPrintPreviewSheetChanged                 - эвент о смене печатаемого листа при предварительной печати
+   * asc_onPrintPreviewPageChanged                  - эвент о смене печатаемой страницы при предварительной печати
    */
 
   spreadsheet_api.prototype.asc_registerCallback = function(name, callback, replaceOldCallback) {
@@ -3559,10 +3586,10 @@ var editor;
     return ws.objectRender.getSelectedDrawingObjectsCount();
   };
 
-  spreadsheet_api.prototype.SetDrawImagePreviewBulletForMenu = function(id, type)
+  spreadsheet_api.prototype.SetDrawImagePreviewBulletForMenu = function(drawingInfo, type)
   {
-    if (this.wbModel.DrawingDocument)
-      this.wbModel.DrawingDocument.SetDrawImagePreviewBulletForMenu(id, type, this);
+    var drawer = new AscCommon.CBulletPreviewDrawer(drawingInfo, type);
+    drawer.draw();
   };
 
   spreadsheet_api.prototype.asc_canEditCrop = function()
@@ -3850,7 +3877,7 @@ var editor;
     return null;
   };
   spreadsheet_api.prototype.asc_GetSelectedText = function(bClearText, select_Pr) {
-    bClearText = typeof(bClearText) === "boolean" ? bClearText : true;
+    bClearText = typeof(bClearText) === "boolean" ? bClearText : false;
     var ws = this.wb.getWorksheet();
     if (this.wb.getCellEditMode()) {
       var fragments = this.wb.cellEditor.copySelection();
@@ -4474,30 +4501,30 @@ var editor;
 		return wsView.addSparklineGroup(type, sDataRange, sLocationRange);
 	};
 
-    spreadsheet_api.prototype.asc_setListType = function (type, subtype) {
+    spreadsheet_api.prototype.asc_setListType = function (type, subtype, custom) {
       var t = this;
-        var sNeedFont = AscFormat.fGetFontByNumInfo(type, subtype);
+        var sNeedFont = AscFormat.fGetFontByNumInfo(type, subtype, custom);
       if(typeof sNeedFont === "string" && sNeedFont.length > 0){
           var t = this, fonts = {};
           fonts[sNeedFont] = 1;
-          t._loadFonts(fonts, function() {t.asc_setListType2(type, subtype);});
+          t._loadFonts(fonts, function() {t.asc_setListType2(type, subtype, custom);});
       }
       else{
           t.asc_setListType2(type, subtype);
       }
     };
-    spreadsheet_api.prototype.asc_setListType2 = function (type, subtype) {
+    spreadsheet_api.prototype.asc_setListType2 = function (type, subtype, custom) {
         var oWorksheet = this.wb.getWorksheet();
         if(oWorksheet){
             if(oWorksheet.isSelectOnShape){
-                return oWorksheet.objectRender.setListType(type, subtype);
+                return oWorksheet.objectRender.setListType(type, subtype, custom);
             }
         }
     };
 
   // Cell interface
   spreadsheet_api.prototype.asc_getCellInfo = function() {
-    return this.wb.getSelectionInfo();
+    return this.wb && this.wb.getSelectionInfo();
   };
 
   // Получить координаты активной ячейки
@@ -5244,6 +5271,15 @@ var editor;
   spreadsheet_api.prototype.asc_nativeCalculate = function() {
   };
 
+	spreadsheet_api.prototype.getPrintOptionsJson = function() {
+		var res = {};
+		//отдельного флага для дополнительных настроек не делаю, общие опции тоже читаются, но пока не сделан мерж опций - верхние настройки перекроют внутренниие(если они заданы)
+		res["spreadsheetLayout"] = {};
+		res["spreadsheetLayout"]["ignorePrintArea"] = false;
+		res["spreadsheetLayout"]["sheetsProps"] = this.wbModel && this.wbModel.getPrintOptionsJson();
+		return res;
+	};
+
   spreadsheet_api.prototype.asc_nativePrint = function (_printer, _page, _options) {
     var _adjustPrint = (window.AscDesktopEditor_PrintOptions && window.AscDesktopEditor_PrintOptions.advancedOptions) || new Asc.asc_CAdjustPrint();
     window.AscDesktopEditor_PrintOptions = undefined;
@@ -5301,7 +5337,12 @@ var editor;
 
 	   for (var index = 0; index < this.wbModel.getWorksheetCount(); ++index) {
            ws = this.wbModel.getWorksheet(index);
-           newPrintOptions = ws.PagePrintOptions.clone();
+		   if (spreadsheetLayout && spreadsheetLayout["sheetsProps"] && spreadsheetLayout["sheetsProps"][index]) {
+			   newPrintOptions = new Asc.asc_CPageOptions();
+			   newPrintOptions.setJson(spreadsheetLayout["sheetsProps"][index]);
+		   } else {
+			   newPrintOptions = ws.PagePrintOptions.clone();
+		   }
            //regionalSettings ?
 
            var _pageSetup = newPrintOptions.pageSetup;
@@ -5340,6 +5381,8 @@ var editor;
            _adjustPrint.pageOptionsMap[index] = newPrintOptions;
        }
     }
+
+    this.wb.setPrintOptionsJson(spreadsheetLayout && spreadsheetLayout["sheetsProps"]);
 
     var _printPagesData = this.wb.calcPagesPrint(_adjustPrint);
 
@@ -5395,6 +5438,8 @@ var editor;
     } else {
       this.wb.printSheets(_printPagesData, _printer);
     }
+
+    this.wb.setPrintOptionsJson(null);
 
     return _printer.Memory;
   };
@@ -7376,5 +7421,7 @@ var editor;
   prot["asc_deleteNamedSheetViews"] = prot.asc_deleteNamedSheetViews;
   prot["asc_setActiveNamedSheetView"] = prot.asc_setActiveNamedSheetView;
   prot["asc_getActiveNamedSheetView"] = prot.asc_getActiveNamedSheetView;
+
+  prot["getPrintOptionsJson"] = prot.getPrintOptionsJson;
 
 })(window);

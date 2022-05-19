@@ -541,11 +541,24 @@
             new_off_y = scale_scale_coefficients.cy * (xfrm.offY - this.group.spPr.xfrm.chOffY);
             new_ext_x = scale_scale_coefficients.cx * xfrm.extX;
             new_ext_y = scale_scale_coefficients.cy * xfrm.extY;
+            var txXfrm = this.txXfrm;
+            if (txXfrm) {
+
+                var new_tx_off_x = scale_scale_coefficients.cx * txXfrm.offX;
+                var new_tx_off_y = scale_scale_coefficients.cy * txXfrm.offY;
+                var new_tx_ext_x = scale_scale_coefficients.cx * txXfrm.extX;
+                var new_tx_ext_y = scale_scale_coefficients.cy * txXfrm.extY;
+
+                Math.abs(new_tx_off_x - txXfrm.offX) > AscFormat.MOVE_DELTA && txXfrm.setOffX(new_tx_off_x);
+                Math.abs(new_tx_off_y - txXfrm.offY) > AscFormat.MOVE_DELTA && txXfrm.setOffY(new_tx_off_y);
+                Math.abs(new_tx_ext_x - txXfrm.extX) > AscFormat.MOVE_DELTA && txXfrm.setExtX(new_tx_ext_x);
+                Math.abs(new_tx_ext_y - txXfrm.extY) > AscFormat.MOVE_DELTA && txXfrm.setExtY(new_tx_ext_y);
+            }
         }
-        Math.abs(new_off_x - xfrm.offX) > AscFormat.MOVE_DELTA &&  xfrm.setOffX(new_off_x);
-        Math.abs(new_off_y - xfrm.offY) > AscFormat.MOVE_DELTA &&  xfrm.setOffY(new_off_y);
-        Math.abs(new_ext_x - xfrm.extX) > AscFormat.MOVE_DELTA &&  xfrm.setExtX(new_ext_x);
-        Math.abs(new_ext_y - xfrm.extY) > AscFormat.MOVE_DELTA &&  xfrm.setExtY(new_ext_y);
+        Math.abs(new_off_x - xfrm.offX) > AscFormat.MOVE_DELTA && xfrm.setOffX(new_off_x);
+        Math.abs(new_off_y - xfrm.offY) > AscFormat.MOVE_DELTA && xfrm.setOffY(new_off_y);
+        Math.abs(new_ext_x - xfrm.extX) > AscFormat.MOVE_DELTA && xfrm.setExtX(new_ext_x);
+        Math.abs(new_ext_y - xfrm.extY) > AscFormat.MOVE_DELTA && xfrm.setExtY(new_ext_y);
     };
 
     CGraphicObjectBase.prototype.checkHiddenInAnimation = function() {
@@ -914,7 +927,7 @@
         return this.getObjectType() === AscDFH.historyitem_type_Shape &&
             !this.isPlaceholder() &&
             this.getNoEditPoints() !== true &&
-            !!(this.spPr && this.spPr.geometry);
+            !!(this.spPr && this.spPr.geometry) && !(this.isObjectInSmartArt()); // todo: functionality not available in microsoft for smartart shapes, but the OOX format supports it, currently blocked due to resizing blocking
     };
     CGraphicObjectBase.prototype.canEditTableOleObject = function(bReturnOle){
         return bReturnOle ? null : false;
@@ -2349,6 +2362,16 @@
                 }
             }
             var oBodyPr = this.getBodyPr();
+            if (this.bWordShape) {
+                if(oBodyPr.textFit && oBodyPr.textFit.type === AscFormat.text_fit_Auto)
+                {
+                    if(!oPropsToSet.textFit)
+                    {
+                        oPropsToSet.textFit = new AscFormat.CTextFit();
+                    }
+                    oPropsToSet.textFit.type = AscFormat.text_fit_No;
+                }
+            }
             if (oBodyPr.wrap === AscFormat.nTWTNone) {
                 oPropsToSet.wrap = AscFormat.nTWTSquare;
             }
@@ -2771,13 +2794,24 @@
         }
     };
 
+    CGraphicObjectBase.prototype.changePositionInSmartArt = function (newX, newY) {}
+
     CGraphicObjectBase.prototype.changeRot = function(dAngle, bWord) {
+        var oSmartArt;
+        if (this.isObjectInSmartArt()) {
+            oSmartArt = this.group.group;
+            if (this.extX > oSmartArt.extX || this.extY > oSmartArt.extY || this.extX > oSmartArt.extY || this.extY > oSmartArt.extX) {
+                return;
+            }
+        }
+
         if(this.spPr && this.spPr.xfrm) {
             var oXfrm = this.spPr.xfrm;
             var originalRot = oXfrm.rot || 0;
             var dRot = AscFormat.normalizeRotate(dAngle);
             oXfrm.setRot(dRot);
             if(this.isObjectInSmartArt()) {
+                oSmartArt = this.group.group;
                 var point = this.getSmartArtShapePoint();
                 if (point) {
                     var prSet = point.getPrSet();
@@ -2802,12 +2836,19 @@
                 }
                 this.recalculate();
                 var oBounds = this.bounds;
-                var oSmartArt = this.group.group;
                 var diffX = null, diffY = null;
                 var leftEdgeOfSmartArt = oSmartArt.x;
                 var topEdgeOfSmartArt = oSmartArt.y;
                 var rightEdgeOfSmartArt = oSmartArt.x + oSmartArt.extX;
                 var bottomEdgeOfSmartArt = oSmartArt.y + oSmartArt.extY;
+                if (bWord) {
+                    oBounds = {
+                        l: oBounds.l + leftEdgeOfSmartArt,
+                        r: oBounds.r + leftEdgeOfSmartArt,
+                        t: oBounds.t + topEdgeOfSmartArt,
+                        b: oBounds.b + topEdgeOfSmartArt
+                    };
+                }
                 if(oBounds.r > rightEdgeOfSmartArt) {
                     diffX = rightEdgeOfSmartArt - oBounds.r;
                 }
@@ -2820,8 +2861,6 @@
                 if(oBounds.t < topEdgeOfSmartArt) {
                     diffY = topEdgeOfSmartArt - oBounds.t;
                 }
-                var originalPosX = this.spPr.xfrm.offX;
-                var originalPosY = this.spPr.xfrm.offY;
 
                 if(diffX !== null) {
                     var newOffX = this.spPr.xfrm.offX + diffX;
@@ -2836,28 +2875,7 @@
 
                 var posX = this.spPr.xfrm.offX;
                 var posY = this.spPr.xfrm.offY;
-                var defaultExtX = this.extX;
-                var defaultExtY = this.extY;
-                if (prSet) {
-                    if (prSet.custScaleX) {
-                        defaultExtX /= prSet.custScaleX;
-                    }
-                    if (prSet.custScaleY) {
-                        defaultExtY /= prSet.custScaleY;
-                    }
-                    if (prSet.custLinFactNeighborX) {
-                        originalPosX -= (prSet.custLinFactNeighborX) * defaultExtX;
-                    }
-                    if (prSet.custLinFactNeighborY) {
-                        originalPosY -= (prSet.custLinFactNeighborY) * defaultExtY;
-                    }
-                    if (posX !== this.x) {
-                        prSet.setCustLinFactNeighborX(((posX - originalPosX) / defaultExtX));
-                    }
-                    if (posY !== this.y) {
-                        prSet.setCustLinFactNeighborY(((posY - originalPosY) / defaultExtY));
-                    }
-                }
+                this.changePositionInSmartArt(posX, posY);
             }
         }
     };

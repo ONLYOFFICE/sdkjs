@@ -299,6 +299,11 @@ ParaDrawing.prototype.GetRun = function()
 {
 	return this.Get_Run();
 };
+ParaDrawing.prototype.GetDocumentContent = function()
+{
+	let oParagraph = this.GetParagraph();
+	return (oParagraph ? oParagraph.GetParent() : null);
+};
 ParaDrawing.prototype.Get_Run = function()
 {
 	var oParagraph = this.Get_ParentParagraph();

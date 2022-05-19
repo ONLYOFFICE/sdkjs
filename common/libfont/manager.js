@@ -69,6 +69,12 @@
         };
     }
 
+    AscFonts.TextMeasureMode = {
+        Word : 0,
+        Cell : 1,
+        Slide : 2
+    };
+
     // params: { mode: "cell" };
     function CFontManager(params)
     {
@@ -93,18 +99,41 @@
 
         this.RasterMemory = null;
 
-        this.IsCellMode = (params && params.mode == "cell") ? true : false;
-        this.IsAdvanceNeedBoldFonts = this.IsCellMode;
+        this.Mode = AscFonts.TextMeasureMode.Word;
+        this.IsAdvanceNeedBoldFonts = false;
+
         this.IsUseWinOS2Params = true;
 
         this.bIsHinting = false;
         this.bIsSubpixHinting = false;
 
         this.LOAD_MODE = 40970;
+
+        this.SetParams(params);
     }
 
     CFontManager.prototype =
     {
+        SetParams : function(params)
+        {
+            if (params)
+            {
+                switch (params.mode)
+                {
+                    case "cell":
+                        this.Mode = AscFonts.TextMeasureMode.Cell;
+                        break;
+                    case "slide":
+                        this.Mode = AscFonts.TextMeasureMode.Slide;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            this.IsAdvanceNeedBoldFonts = (AscFonts.TextMeasureMode.Cell === this.Mode) ? true : false;
+        },
+
         AfterLoad : function()
         {
             if (null == this.m_pFont)

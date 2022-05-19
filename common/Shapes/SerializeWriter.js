@@ -3782,7 +3782,14 @@ function CBinaryFileWriter()
         }
         else
         {
-            nvGraphicFramePr = {};
+            if(grObj.getUniNvProps)
+            {
+                nvGraphicFramePr = grObj.getUniNvProps();
+            }
+            if(!nvGraphicFramePr)
+            {
+                nvGraphicFramePr = {};
+            }
         }
         nvGraphicFramePr.locks = grObj.locks;
         var nObjectType = grObj.getObjectType();

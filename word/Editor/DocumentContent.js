@@ -79,8 +79,6 @@ function CDocumentContent(Parent, DrawingDocument, X, Y, XLimit, YLimit, Split, 
 
     this.DrawingDocument = null;
     this.LogicDocument   = null;
-    this.Styles          = null;
-    this.Numbering       = null;
     this.DrawingObjects  = null;
 
     if ( undefined !== DrawingDocument && null !== DrawingDocument )
@@ -90,8 +88,6 @@ function CDocumentContent(Parent, DrawingDocument, X, Y, XLimit, YLimit, Split, 
         if ( undefined !== editor && true === editor.isDocumentEditor && !(bPresentation === true) && DrawingDocument.m_oLogicDocument )
         {
             this.LogicDocument   = DrawingDocument.m_oLogicDocument;
-            this.Styles          = DrawingDocument.m_oLogicDocument.Get_Styles();
-            this.Numbering       = DrawingDocument.m_oLogicDocument.Get_Numbering();
             this.DrawingObjects  = DrawingDocument.m_oLogicDocument.DrawingObjects; // Массив укзателей на все инлайновые графические объекты
         }
     }
@@ -305,7 +301,10 @@ CDocumentContent.prototype.SetParent = function(oParent)
 //-----------------------------------------------------------------------------------
 CDocumentContent.prototype.Get_PageContentStartPos = function(PageNum)
 {
-	return this.Parent.Get_PageContentStartPos(PageNum);
+	if (this.Parent)
+		return this.Parent.Get_PageContentStartPos(PageNum);
+
+	return {X : 0, Y : 0, XLimit : 210, YLimit : 297};
 };
 CDocumentContent.prototype.Get_PageContentStartPos2 = function(StartPageIndex, StartColumnIndex, ElementPageIndex, ElementIndex)
 {
@@ -316,18 +315,24 @@ CDocumentContent.prototype.Get_Theme = function()
 	if (this.Parent)
 		return this.Parent.Get_Theme();
 
-	return null;
+	if (this.LogicDocument)
+		return this.LogicDocument.GetTheme();
+
+	return AscFormat.DEFAULT_THEME;
 };
 CDocumentContent.prototype.Get_ColorMap = function()
 {
 	if (this.Parent)
 		return this.Parent.Get_ColorMap();
 
-	return null;
+	if (this.LogicDocument)
+		return this.LogicDocument.GetColorMap();
+
+	return AscFormat.DEFAULT_COLOR_MAP;
 };
 CDocumentContent.prototype.Get_PageLimits = function(nCurPage)
 {
-	if (true === this.Parent.IsCell())
+	if (this.Parent && this.Parent.IsCell())
 	{
 		var Margins = this.Parent.GetMargins();
 
@@ -345,8 +350,8 @@ CDocumentContent.prototype.Get_PageLimits = function(nCurPage)
 	}
 	else
 	{
-		if (!this.LogicDocument)
-			return {X : 0, Y : 0, XLimit : 0, YLimit : 0};
+		if (!this.Parent || !this.LogicDocument)
+			return {X : 0, Y : 0, XLimit : 210, YLimit : 297};
 
 		var nPageAbs = this.GetAbsolutePage(nCurPage);
 		var Index    = ( undefined !== this.LogicDocument.Pages[nPageAbs] ? this.LogicDocument.Pages[nPageAbs].Pos : 0 );
@@ -360,7 +365,7 @@ CDocumentContent.prototype.Get_PageLimits = function(nCurPage)
 };
 CDocumentContent.prototype.Get_PageFields = function(PageIndex, isHdrFtr)
 {
-	if (true === this.Parent.IsCell() || (undefined !== AscFormat.CShape && this.Parent instanceof AscFormat.CShape))
+	if (this.Parent && (this.Parent.IsCell() || (undefined !== AscFormat.CShape && this.Parent instanceof AscFormat.CShape)))
 	{
 		if (PageIndex < this.Pages.length && PageIndex >= 0)
 		{
@@ -373,8 +378,8 @@ CDocumentContent.prototype.Get_PageFields = function(PageIndex, isHdrFtr)
 		}
 		else
 		{
-			if (null === this.LogicDocument)
-				return {X : 0, Y : 0, XLimit : 0, YLimit : 0};
+			if (!this.LogicDocument)
+				return {X : 0, Y : 0, XLimit : 210, YLimit : 297};
 
 			var Page_abs = this.Get_AbsolutePage(PageIndex);
 			var Index    = ( undefined !== this.LogicDocument.Pages[Page_abs] ? this.LogicDocument.Pages[Page_abs].Pos : 0 );
@@ -388,8 +393,8 @@ CDocumentContent.prototype.Get_PageFields = function(PageIndex, isHdrFtr)
 	}
 	else
 	{
-		if (null === this.LogicDocument)
-			return {X : 0, Y : 0, XLimit : 0, YLimit : 0};
+		if (!this.Parent || !this.LogicDocument)
+			return {X : 0, Y : 0, XLimit : 210, YLimit : 297};
 
 		return this.LogicDocument.Get_PageFields(this.GetAbsolutePage(PageIndex), isHdrFtr);
 	}
@@ -415,16 +420,19 @@ CDocumentContent.prototype.Get_EmptyHeight = function()
  */
 CDocumentContent.prototype.CheckRange = function(X0, Y0, X1, Y1, _Y0, _Y1, X_lf, X_rf, CurPage, isInner, bMathWrap)
 {
+	if (!this.Parent)
+		return [];
+
 	if (undefined === isInner)
 		isInner = true;
 
 	if (this.IsBlockLevelSdtContent() && isInner)
 		return this.Parent.CheckRange(X0, Y0, X1, Y1, _Y0, _Y1, X_lf, X_rf, CurPage, true, bMathWrap);
 
-	if (this.LogicDocument && editor && editor.isDocumentEditor)
+	if (this.LogicDocument && this.LogicDocument.IsDocumentEditor())
 	{
 		let oDocContent = this;
-		if (this.Parent && this.Parent instanceof CBlockLevelSdt)
+		if (this.Parent instanceof CBlockLevelSdt)
 			oDocContent = this.Parent.Parent;
 
 		if (!isInner || this.IsUseInnerWrap())
@@ -451,25 +459,28 @@ CDocumentContent.prototype.Is_PointInFlowTable = function(X, Y, PageAbs)
 };
 CDocumentContent.prototype.Get_Numbering = function()
 {
-	return this.Parent.Get_Numbering();
+	return this.Get_Numbering();
 };
 CDocumentContent.prototype.GetNumbering = function()
 {
 	if (this.LogicDocument)
 		return this.LogicDocument.GetNumbering();
 
-	return this.Get_Numbering();
+	return AscCommonWord.DEFAULT_NUMBERING;
 };
-CDocumentContent.prototype.Get_Styles = function(lvl)
+CDocumentContent.prototype.Get_Styles = function(nLvl)
 {
-	if (!this.bPresentation)
-	{
-		return this.Styles;
-	}
-	else
-	{
-		return this.Parent ? this.Parent.Get_Styles(lvl) : this.LogicDocument ? this.LogicDocument.GetStyles() : null;
-	}
+	return this.GetStyles(nLvl);
+};
+CDocumentContent.prototype.GetStyles = function(nLvl)
+{
+	if (this.bPresentation && this.Parent)
+		return this.Parent.Get_Styles(nLvl);
+
+	if (this.LogicDocument)
+		return this.LogicDocument.GetStyles();
+
+	return AscCommonWord.DEFAULT_STYLES;
 };
 CDocumentContent.prototype.Get_TableStyleForPara = function()
 {
@@ -581,6 +592,9 @@ CDocumentContent.prototype.Get_NearestPos = function(CurPage, X, Y, bAnchor, Dra
 // Проверяем, описывает ли данный класс содержимое ячейки
 CDocumentContent.prototype.IsTableCellContent = function(isReturnCell)
 {
+	if (!this.Parent)
+		return isReturnCell ? null : false;
+
 	return this.Parent.IsCell(isReturnCell);
 };
 CDocumentContent.prototype.IsLastTableCellInRow = function(isSelection)
@@ -604,24 +618,33 @@ CDocumentContent.prototype.IsTableHeader = function()
 };
 CDocumentContent.prototype.IsTableFirstRowOnNewPage = function()
 {
-	if (false === this.Parent.IsCell())
+	if (!this.Parent || !this.Parent.IsCell())
 		return false;
 
 	return this.Parent.IsTableFirstRowOnNewPage();
 };
 CDocumentContent.prototype.Check_AutoFit = function()
 {
+	if (!this.Parent)
+		return false;
+
 	return this.Parent.Check_AutoFit();
 };
 // Проверяем, лежит ли данный класс в таблице
-CDocumentContent.prototype.IsInTable = function(bReturnTopTable)
+CDocumentContent.prototype.IsInTable = function(isReturnTopTable)
 {
-	return this.Parent.IsInTable(bReturnTopTable);
+	if (!this.Parent)
+		return isReturnTopTable ? null : false;
+
+	return this.Parent.IsInTable(isReturnTopTable);
 };
 // Проверяем, является ли данный класс верхним, по отношению к другим классам DocumentContent, Document
-CDocumentContent.prototype.Is_TopDocument = function(bReturnTopDocument)
+CDocumentContent.prototype.Is_TopDocument = function(isReturnTopDocument)
 {
-	return this.Parent.Is_TopDocument(bReturnTopDocument);
+	if (!this.Parent)
+		return isReturnTopDocument ? this : true;
+
+	return this.Parent.Is_TopDocument(isReturnTopDocument);
 };
 // Проверяем, используется ли данный элемент в документе
 CDocumentContent.prototype.Is_UseInDocument = function(Id)
@@ -658,16 +681,7 @@ CDocumentContent.prototype.IsHdrFtr = function(bReturnHdrFtr)
 CDocumentContent.prototype.IsFootnote = function(bReturnFootnote)
 {
 	if (this instanceof CFootEndnote)
-	{
-		if(bReturnFootnote)
-		{
-			return this;
-		}
-		else
-		{
-			return true;
-		}
-	}
+		return bReturnFootnote ? this : true;
 
 	if (this.Parent)
 		return this.Parent.IsFootnote(bReturnFootnote);
@@ -697,6 +711,9 @@ CDocumentContent.prototype.IsMovingTableBorder = function()
 };
 CDocumentContent.prototype.CheckTableCoincidence = function(Table)
 {
+	if (!this.Parent)
+		return false;
+
 	return this.Parent.CheckTableCoincidence(Table);
 };
 //-----------------------------------------------------------------------------------
@@ -1309,16 +1326,8 @@ CDocumentContent.prototype.Recalculate_Page               = function(PageIndex, 
     this.Pages[PageIndex].Bounds.Bottom = Y;
 
     if (Index >= Count)
-    {
         this.Pages[PageIndex].EndPos = Count - 1;
-        if (undefined != this.Parent.OnEndRecalculate_Page)
-            this.Parent.OnEndRecalculate_Page(true);
-    }
-    else
-    {
-        if (undefined != this.Parent.OnEndRecalculate_Page)
-            this.Parent.OnEndRecalculate_Page(false);
-    }
+
     return Result;
 };
 /**
@@ -1435,23 +1444,15 @@ CDocumentContent.prototype.PrepareRecalculateObject = function()
 };
 CDocumentContent.prototype.ReDraw = function(StartPage, EndPage)
 {
+	if (!this.Parent)
+		return;
+
 	if ("undefined" === typeof(StartPage))
 		StartPage = this.Get_StartPage_Absolute();
 	if ("undefined" === typeof(EndPage))
 		EndPage = StartPage + this.Pages.length - 1;
 
 	this.Parent.OnContentReDraw(StartPage, EndPage);
-};
-CDocumentContent.prototype.OnContentRecalculate = function(bNeedRecalc, PageNum, DocumentIndex)
-{
-	if (false === bNeedRecalc)
-	{
-		this.Parent.OnContentRecalculate(false, false);
-	}
-	else
-	{
-		this.Recalculate();
-	}
 };
 CDocumentContent.prototype.OnContentReDraw = function(StartPage, EndPage)
 {
@@ -2873,16 +2874,17 @@ CDocumentContent.prototype.Extend_ToPos                       = function(X, Y)
         var StyleId = LastPara.Style_Get();
         var NextId  = undefined;
 
+		let oStyles = this.GetStyles();
         if (undefined != StyleId)
         {
-            NextId = this.Styles.Get_Next(StyleId);
+            NextId = oStyles.Get_Next(StyleId);
 
             if (null === NextId || undefined === NextId)
                 NextId = StyleId;
         }
 
         // Простое добавление стиля, без дополнительных действий
-        if (NextId === this.Styles.Get_Default_Paragraph())
+        if (NextId === oStyles.Get_Default_Paragraph())
             NewParagraph.Style_Remove();
         else
             NewParagraph.Style_Add(NextId, true);
@@ -7364,6 +7366,9 @@ CDocumentContent.prototype.private_GetRelativePageIndex = function(CurPage)
 };
 CDocumentContent.prototype.private_GetAbsolutePageIndex = function(CurPage)
 {
+	if (!this.Parent)
+		return CurPage;
+
 	return this.Parent.Get_AbsolutePage(this.private_GetRelativePageIndex(CurPage));
 };
 CDocumentContent.prototype.Get_StartColumn = function()
@@ -7382,7 +7387,7 @@ CDocumentContent.prototype.private_GetColumnIndex = function(CurPage)
 {
 	// TODO: Разобраться здесь нужно ли данное условие. Оно появилось из-за параграфов в таблице в
 	//       основной части документа и из-за параграфов в сносках.
-	if (1 === this.ColumnsCount)
+	if (this.Parent && 1 === this.ColumnsCount)
     	return this.Parent.Get_AbsoluteColumn(this.private_GetRelativePageIndex(CurPage));
 
 	return (this.StartColumn + CurPage) - (((this.StartColumn + CurPage) / this.ColumnsCount | 0) * this.ColumnsCount);
@@ -7594,7 +7599,7 @@ CDocumentContent.prototype.Refresh_RecalcData = function(oData)
 };
 CDocumentContent.prototype.Refresh_RecalcData2 = function(nIndex, nPageRel)
 {
-	if (-1 === nIndex)
+	if (-1 === nIndex || !this.Parent)
 		return;
 
 	this.Parent.Refresh_RecalcData2(this.StartPage + nPageRel);
@@ -7791,8 +7796,6 @@ CDocumentContent.prototype.Read_FromBinary2 = function(Reader)
 			if (undefined !== editor && true === editor.isDocumentEditor)
 			{
 				this.LogicDocument  = DrawingDocument.m_oLogicDocument;
-				this.Styles         = DrawingDocument.m_oLogicDocument.Get_Styles();
-				this.Numbering      = DrawingDocument.m_oLogicDocument.Get_Numbering();
 				this.DrawingObjects = DrawingDocument.m_oLogicDocument.DrawingObjects; // Массив укзателей на все инлайновые графические объекты
 			}
 		}
@@ -8055,10 +8058,12 @@ CDocumentContent.prototype.GetPrevElementEndInfo = function(CurElement)
 	{
 		return PrevElement.GetEndInfo();
 	}
-	else
+	else if (this.Parent)
 	{
 		return this.Parent.GetPrevElementEndInfo(this);
 	}
+
+	return null;
 };
 CDocumentContent.prototype.GetTopElement = function()
 {
@@ -8477,10 +8482,12 @@ CDocumentContent.prototype.Set_ParaPropsForVerticalTextInCell = function(isVerti
 };
 CDocumentContent.prototype.Set_LogicDocument = function(oLogicDocument)
 {
-    this.LogicDocument   = oLogicDocument;
-    this.Styles          = oLogicDocument.Get_Styles();
-    this.Numbering       = oLogicDocument.Get_Numbering();
-    this.DrawingObjects  = oLogicDocument.DrawingObjects;
+	this.SetLogicDocument(oLogicDocument);
+};
+CDocumentContent.prototype.SetLogicDocument = function(oLogicDocument)
+{
+	this.LogicDocument   = oLogicDocument;
+	this.DrawingObjects  = oLogicDocument.DrawingObjects;
 };
 CDocumentContent.prototype.Get_LogicDocument = function()
 {
@@ -8579,7 +8586,7 @@ CDocumentContent.prototype.GetAllContentControls = function(arrContentControls)
 };
 CDocumentContent.prototype.GetMargins = function()
 {
-	if (this.Parent.GetMargins)
+	if (this.Parent && this.Parent.GetMargins)
 		return this.Parent.GetMargins();
 
 	return {

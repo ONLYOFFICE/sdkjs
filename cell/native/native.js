@@ -475,6 +475,7 @@ function asc_menu_ReadAscFill_grad(_params, _cursor){
                         }
                     }
                 }
+                _cursor.pos++;
                 break;
             }
             case 255:
