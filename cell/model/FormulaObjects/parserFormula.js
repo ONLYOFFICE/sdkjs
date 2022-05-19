@@ -532,6 +532,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseType.prototype.getDimensions = function () {
 		return {col: 1, row: 1};
 	};
+	cBaseType.prototype.getExternalLinkStr = function (externalLink) {
+		var wb = Asc["editor"] && Asc["editor"].wb;
+		externalLink = externalLink && wb && wb.model && wb.model.getExternalLinkByIndex(externalLink - 1);
+		if (externalLink) {
+			externalLink  = externalLink.Id;
+		}
+		return externalLink ? '[' + externalLink + ']' : "";
+	};
 
 	/*Basic types of an elements used into formulas*/
 	/**
@@ -1328,19 +1336,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var wsFrom = this.wsFrom.getName();
 		var wsTo = this.wsTo.getName();
 		var name = AscCommonExcel.g_ProcessShared && this.bbox ? this.bbox.getName() : this.value;
-
-		var wb = Asc["editor"] && Asc["editor"].wb;
-		var externalLink = this.externalLink && wb && wb.getExternalLinkByIndex(this.externalLink);
-		externalLink = externalLink ? '[' + externalLink + ']' : "";
-
-		return externalLink + parserHelp.get3DRef(wsFrom !== wsTo ? wsFrom + ':' + wsTo : wsFrom, name);
+		return this.getExternalLinkStr(this.externalLink) + parserHelp.get3DRef(wsFrom !== wsTo ? wsFrom + ':' + wsTo : wsFrom, name);
 	};
 	cArea3D.prototype.toLocaleString = function () {
 		var wsFrom = this.wsFrom.getName();
 		var wsTo = this.wsTo.getName();
 		var name = this.bbox ? this.bbox.getName() : this.value;
-		var externalLink = this.externalLink ? '[' + this.externalLink + ']' : "";
-		return externalLink + parserHelp.get3DRef(wsFrom !== wsTo ? wsFrom + ':' + wsTo : wsFrom, name);
+		return this.getExternalLinkStr(this.externalLink) + parserHelp.get3DRef(wsFrom !== wsTo ? wsFrom + ':' + wsTo : wsFrom, name);
 	};
 	cArea3D.prototype.tocNumber = function () {
 		return this.getValue()[0].tocNumber();
@@ -1735,16 +1737,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 	};
 	cRef3D.prototype.toString = function () {
-		var externalLink = this.externalLink ? '[' + this.externalLink + ']' : "";
 		if (AscCommonExcel.g_ProcessShared) {
-			return externalLink + parserHelp.get3DRef(this.ws.getName(), this.range.getName());
+			return this.getExternalLinkStr(this.externalLink) + parserHelp.get3DRef(this.ws.getName(), this.range.getName());
 		} else {
-			return externalLink + parserHelp.get3DRef(this.ws.getName(), this.value);
+			return this.getExternalLinkStr(this.externalLink) + parserHelp.get3DRef(this.ws.getName(), this.value);
 		}
 	};
 	cRef3D.prototype.toLocaleString = function () {
-		var externalLink = this.externalLink ? '[' + this.externalLink + ']' : "";
-		return externalLink + parserHelp.get3DRef(this.ws.getName(), this.range.getName());
+		return this.getExternalLinkStr(this.externalLink) + parserHelp.get3DRef(this.ws.getName(), this.range.getName());
 	};
 	cRef3D.prototype.getWS = function () {
 		return this.ws;
