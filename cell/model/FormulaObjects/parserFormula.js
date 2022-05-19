@@ -1178,7 +1178,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @constructor
 	 * @extends {cBaseType}
 	 */
-	function cArea3D(val, wsFrom, wsTo) {/*Area3D means "Sheat1!A1:E5" for example*/
+	function cArea3D(val, wsFrom, wsTo, externalLink) {/*Area3D means "Sheat1!A1:E5" for example*/
 		cBaseType.call(this, val);
 
 		this.bbox = null;
@@ -1192,7 +1192,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		this.wsFrom = wsFrom;
 		this.wsTo = wsTo || this.wsFrom;
-		this.externalBookIndex = null;
+		this.externalLink = externalLink;
 	}
 
 	cArea3D.prototype = Object.create(cBaseType.prototype);
@@ -1204,6 +1204,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (this.bbox) {
 			oRes.bbox = this.bbox.clone();
 		}
+		oRes.externalLink = this.externalLink;
 		return oRes;
 	};
 	cArea3D.prototype.wsRange = function () {
@@ -1251,6 +1252,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 
 		}
+
 		var _exclude;
 		var _r = this.range(_wsA);
 		for (i = 0; i < _r.length; i++) {
@@ -1326,13 +1328,19 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var wsFrom = this.wsFrom.getName();
 		var wsTo = this.wsTo.getName();
 		var name = AscCommonExcel.g_ProcessShared && this.bbox ? this.bbox.getName() : this.value;
-		return parserHelp.get3DRef(wsFrom !== wsTo ? wsFrom + ':' + wsTo : wsFrom, name);
+
+		var wb = Asc["editor"] && Asc["editor"].wb;
+		var externalLink = this.externalLink && wb && wb.getExternalLinkByIndex(this.externalLink);
+		externalLink = externalLink ? '[' + externalLink + ']' : "";
+
+		return externalLink + parserHelp.get3DRef(wsFrom !== wsTo ? wsFrom + ':' + wsTo : wsFrom, name);
 	};
 	cArea3D.prototype.toLocaleString = function () {
 		var wsFrom = this.wsFrom.getName();
 		var wsTo = this.wsTo.getName();
 		var name = this.bbox ? this.bbox.getName() : this.value;
-		return parserHelp.get3DRef(wsFrom !== wsTo ? wsFrom + ':' + wsTo : wsFrom, name);
+		var externalLink = this.externalLink ? '[' + this.externalLink + ']' : "";
+		return externalLink + parserHelp.get3DRef(wsFrom !== wsTo ? wsFrom + ':' + wsTo : wsFrom, name);
 	};
 	cArea3D.prototype.tocNumber = function () {
 		return this.getValue()[0].tocNumber();
@@ -1646,7 +1654,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	 * @constructor
 	 * @extends {cBaseType}
 	 */
-	function cRef3D(val, ws) {/*Ref means Sheat1!A1 for example*/
+	function cRef3D(val, ws, externalLink) {/*Ref means Sheat1!A1 for example*/
 		cBaseType.call(this, val);
 
 		this.ws = ws;
@@ -1658,7 +1666,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			this.range = val;
 		}
 
-		this.externalBookIndex = null;
+		this.externalLink = externalLink;
 	}
 
 	cRef3D.prototype = Object.create(cBaseType.prototype);
@@ -1679,6 +1687,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (this.range) {
 			oRes.range = this.range.clone(ws);
 		}
+		oRes.externalLink = this.externalLink;
 		return oRes;
 	};
 	cRef3D.prototype.getWsId = function () {
@@ -1726,14 +1735,16 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 	};
 	cRef3D.prototype.toString = function () {
+		var externalLink = this.externalLink ? '[' + this.externalLink + ']' : "";
 		if (AscCommonExcel.g_ProcessShared) {
-			return parserHelp.get3DRef(this.ws.getName(), this.range.getName());
+			return externalLink + parserHelp.get3DRef(this.ws.getName(), this.range.getName());
 		} else {
-			return parserHelp.get3DRef(this.ws.getName(), this.value);
+			return externalLink + parserHelp.get3DRef(this.ws.getName(), this.value);
 		}
 	};
 	cRef3D.prototype.toLocaleString = function () {
-		return parserHelp.get3DRef(this.ws.getName(), this.range.getName());
+		var externalLink = this.externalLink ? '[' + this.externalLink + ']' : "";
+		return externalLink + parserHelp.get3DRef(this.ws.getName(), this.range.getName());
 	};
 	cRef3D.prototype.getWS = function () {
 		return this.ws;
@@ -6334,6 +6345,7 @@ function parserFormula( formula, parent, _ws ) {
 
 				var wsF = t.wb.getWorksheetByName(_3DRefTmp[1]);
 				var wsT = (null !== _3DRefTmp[2]) ? t.wb.getWorksheetByName(_3DRefTmp[2]) : wsF;
+				var externalLink = _3DRefTmp[3];
 
 				if (!(wsF && wsT)) {
 					parseResult.setError(c_oAscError.ID.FrmlWrongReferences);
@@ -6353,7 +6365,7 @@ function parserFormula( formula, parent, _ws ) {
 						//found_operand = new cUnknownFunction(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase());
 						found_operand = new cName(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), t.ws);
 					} else {
-						found_operand = new cArea3D(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), wsF, wsT);
+						found_operand = new cArea3D(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), wsF, wsT, externalLink);
 					}
 					parseResult.addRefPos(prevCurrPos, ph.pCurrPos, t.outStack.length, found_operand);
 				} else if (parserHelp.isRef.call(ph, t.Formula, ph.pCurrPos)) {
@@ -6362,9 +6374,9 @@ function parserFormula( formula, parent, _ws ) {
 						//found_operand = new cUnknownFunction(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase());
 						found_operand = new cName(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), t.ws);
 					} else if (wsT !== wsF) {
-						found_operand = new cArea3D(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), wsF, wsT);
+						found_operand = new cArea3D(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), wsF, wsT, externalLink);
 					} else {
-						found_operand = new cRef3D(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), wsF);
+						found_operand = new cRef3D(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), wsF, null, externalLink);
 					}
 					parseResult.addRefPos(prevCurrPos, ph.pCurrPos, t.outStack.length, found_operand);
 				} else {

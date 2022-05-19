@@ -3844,6 +3844,10 @@
 		return res;
 	};
 
+	Workbook.prototype.getExternalLinkByIndex = function (index) {
+		return this.externalReferences && this.externalReferences[index];
+	};
+
 
 //-------------------------------------------------------------------------------------------------
 	var tempHelp = new ArrayBuffer(8);

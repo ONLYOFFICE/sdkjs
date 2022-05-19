@@ -2392,6 +2392,7 @@
 		rx_ref3D_quoted       = new XRegExp("^'(?<name_from>(?:''|[^\\[\\]'\\/*?:])*)(?::(?<name_to>(?:''|[^\\[\\]'\\/*?:])*))?'!"),
 		rx_ref3D_non_quoted_2 = new XRegExp("^(?<name_from>[" + str_namedRanges + "\\d][" + str_namedRanges + "\\d.]*)(:(?<name_to>[" + str_namedRanges + "\\d][" + str_namedRanges + "\\d.]*))?!", "i"),
 		rx_ref3D              = new XRegExp("^(?<name_from>[^:]+)(:(?<name_to>[^:]+))?!"),
+		rx_ref_external       = /^(\[{1}(\d*)\]{1})/,
 		rx_number             = /^ *[+-]?\d*(\d|\.)\d*([eE][+-]?\d+)?/,
 		rx_RightParentheses   = /^ *\)/,
 		rx_Comma              = /^ *[,;] */,
@@ -2813,17 +2814,24 @@
 			this._reset();
 		}
 
-		var subSTR = formula.substring(start_pos),
-			match  = XRegExp.exec(subSTR, rx_ref3D_quoted) || XRegExp.exec(subSTR, rx_ref3D_non_quoted);
+		var subSTR = formula.substring(start_pos);
+		var external = XRegExp.exec(subSTR, rx_ref_external);
+		var externalLength = 0;
+		if (external && external[2]) {
+			externalLength = external[0].length;
+			subSTR = formula.substring(start_pos + externalLength);
+			external = external[2];
+		}
+		var match  = XRegExp.exec(subSTR, rx_ref3D_quoted) || XRegExp.exec(subSTR, rx_ref3D_non_quoted);
 		if(!match && support_digital_start) {
 			match = XRegExp.exec(subSTR, rx_ref3D_non_quoted_2);
 		}
 
 		if (match != null)
 		{
-			this.pCurrPos += match[0].length;
+			this.pCurrPos += match[0].length + externalLength;
 			this.operand_str = match[1];
-			return [true, match["name_from"] ? match["name_from"].replace(/''/g, "'") : null, match["name_to"] ? match["name_to"].replace(/''/g, "'") : null];
+			return [true, match["name_from"] ? match["name_from"].replace(/''/g, "'") : null, match["name_to"] ? match["name_to"].replace(/''/g, "'") : null, external];
 		}
 		return [false, null, null];
 	};
