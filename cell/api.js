@@ -119,8 +119,8 @@ var editor;
     this.frozenPaneBorderType = Asc.c_oAscFrozenPaneBorderType.shadow;
 
 	  // Styles sizes
-      this.styleThumbnailWidth = 112;
-	  this.styleThumbnailHeight = 40;
+      this.styleThumbnailWidth = 100;
+	  this.styleThumbnailHeight = 20;
 
     this.formulasList = null;	// Список всех формул
 
