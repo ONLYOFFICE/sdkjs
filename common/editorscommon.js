@@ -2393,6 +2393,7 @@
 		rx_ref3D_non_quoted_2 = new XRegExp("^(?<name_from>[" + str_namedRanges + "\\d][" + str_namedRanges + "\\d.]*)(:(?<name_to>[" + str_namedRanges + "\\d][" + str_namedRanges + "\\d.]*))?!", "i"),
 		rx_ref3D              = new XRegExp("^(?<name_from>[^:]+)(:(?<name_to>[^:]+))?!"),
 		rx_ref_external       = /^(\[{1}(\d*)\]{1})/,
+		rx_ref_external2      = /^(\[{1}(\d*)\]{1})/,
 		rx_number             = /^ *[+-]?\d*(\d|\.)\d*([eE][+-]?\d+)?/,
 		rx_RightParentheses   = /^ *\)/,
 		rx_Comma              = /^ *[,;] */,
@@ -2426,6 +2427,39 @@
 
 		rx_table              = build_rx_table(null),
 		rx_table_local        = build_rx_table(null);
+
+	function parseExternalLink(url) {
+		//'path/[name]Sheet1'!A1
+		if (url && url[0] === "'") {
+			var path, name, startLink;
+			for (var i = url.length - 1; i >= 0; i--) {
+				if (url[i] === "!" && url[i - 1] === "'") {
+					startLink = true;
+					i--;
+					continue;
+				}
+				if (startLink) {
+					if (name) {
+						if (url[i] === "[" && (url[i - 1] === "/" || url[i - 1] === "/\/")) {
+							break;
+						} else {
+							name.end--;
+						}
+					} else {
+						if("]" === url[i]) {
+							name = {start: i, end: i};
+						}
+					}
+				}
+			}
+			if (name) {
+				path = url.substring(1, name.end - 1)
+				name = url.substring(name.end, name.start);
+				return {name: name, path: path};
+			}
+		}
+		return null;
+	}
 
 	function getUrlType(url)
 	{
@@ -2653,8 +2687,6 @@
 			this._reset();
 		}
 
-		//TODO правки для external reference
-
 		var checkAbs = function(val1, val2) {
 			var res = null;
 			if(val1 === val2 && val1 === undefined) {
@@ -2758,8 +2790,6 @@
 			this._reset();
 		}
 
-		//TODO правки для external reference
-
 		var R1C1Mode = AscCommonExcel.g_R1C1Mode;
 		var substr = formula.substring(start_pos), match;
 		var m0, m1;
@@ -2808,12 +2838,12 @@
 	};
 	parserHelper.prototype.is3DRef = function (formula, start_pos, support_digital_start)
 	{
-		//TODO правки для external reference
 		if (this instanceof parserHelper)
 		{
 			this._reset();
 		}
 
+		//проверям на [0-9] - в таком виде мы получаем ссылки при открытии.
 		var subSTR = formula.substring(start_pos);
 		var external = XRegExp.exec(subSTR, rx_ref_external);
 		var externalLength = 0;
@@ -2821,7 +2851,15 @@
 			externalLength = external[0].length;
 			subSTR = formula.substring(start_pos + externalLength);
 			external = external[2];
+		} else {
+			//1. при вводе в ячейку
+			//проверям на наличие ссылки при вводе 'C:\Users\[test.xlsx]Sheet1'!$A$1 (с обратным слэшем тоже нужно распознать) / 'https://test.net/[test.xlsx]Sheet1'!$A$1
+			//необходимо вычленить имя файла и путь к нему, затем проверить путь
+			//если путь указан, то ссылка должна быть в одинарных кавычках, если указан просто название файла в [] - в мс это означает, что данный файл открыт, при его закрытии путь проставляется
+			//пока не реализовываем с открытыми файлами, работаем только с путями
+			external = parseExternalLink(subSTR);
 		}
+
 		var match  = XRegExp.exec(subSTR, rx_ref3D_quoted) || XRegExp.exec(subSTR, rx_ref3D_non_quoted);
 		if(!match && support_digital_start) {
 			match = XRegExp.exec(subSTR, rx_ref3D_non_quoted_2);

@@ -405,7 +405,7 @@ function (window, undefined) {
 		return tokens;
 	}
 
-  
+
 /** @enum */
 var cElementType = {
 		number      : 0,
@@ -1273,9 +1273,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 
 			_r[i]._foreachNoEmpty(function (cell) {
-				if(!(excludeNestedStAg && cell.formulaParsed && cell.formulaParsed.isFoundNestedStAg())){
+				if (!(excludeNestedStAg && cell.formulaParsed && cell.formulaParsed.isFoundNestedStAg())) {
 					var checkTypeVal = checkTypeCell(cell);
-					if(!(excludeErrorsVal && CellValueType.Error === checkTypeVal.type)){
+					if (!(excludeErrorsVal && CellValueType.Error === checkTypeVal.type)) {
 						_val.push(checkTypeVal);
 					}
 				}
@@ -1303,8 +1303,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			return _val;
 		}
 
-		if(_r[0].worksheet) {
-			_r[0].worksheet._getCellNoEmpty(cell.row - 1, cell.col - 1, function(_cell) {
+		if (_r[0].worksheet) {
+			_r[0].worksheet._getCellNoEmpty(cell.row - 1, cell.col - 1, function (_cell) {
 				_val.push(checkTypeCell(_cell));
 			});
 		}
@@ -1314,9 +1314,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArea3D.prototype.getValueByRowCol = function (i, j) {
 		var r = this.getRanges(), res;
 
-		if(r[0]) {
-			r[0].worksheet._getCellNoEmpty(r[0].bbox.r1 + i, r[0].bbox.c1 + j, function(cell) {
-				if(cell) {
+		if (r[0]) {
+			r[0].worksheet._getCellNoEmpty(r[0].bbox.r1 + i, r[0].bbox.c1 + j, function (cell) {
+				if (cell) {
 					res = checkTypeCell(cell);
 				}
 			});
@@ -1415,8 +1415,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 
 		}
-		var _r = this.range(_wsA), bbox = _r[0].bbox, count = (Math.abs(bbox.c1 - bbox.c2) + 1) *
-			(Math.abs(bbox.r1 - bbox.r2) + 1);
+		var _r = this.range(_wsA), bbox = _r[0].bbox, count = (Math.abs(bbox.c1 - bbox.c2) + 1) * (Math.abs(bbox.r1 - bbox.r2) + 1);
 		count = _r.length * count;
 		for (i = 0; i < _r.length; i++) {
 			_r[i]._foreachNoEmpty(function (cell) {
@@ -1431,7 +1430,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var arr = [], r = this.getRanges(), res;
 
 		var ws = r[0] ? r[0].worksheet : null;
-		if(ws) {
+		if (ws) {
 			var oldExcludeHiddenRows = ws.bExcludeHiddenRows;
 			ws.bExcludeHiddenRows = false;
 		}
@@ -1443,9 +1442,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				}
 
 				var resValue = new cEmpty();
-				if(!(excludeNestedStAg && cell.formulaParsed && cell.formulaParsed.isFoundNestedStAg())){
+				if (!(excludeNestedStAg && cell.formulaParsed && cell.formulaParsed.isFoundNestedStAg())) {
 					var checkTypeVal = checkTypeCell(cell);
-					if(!(excludeErrorsVal && CellValueType.Error === checkTypeVal.type)){
+					if (!(excludeErrorsVal && CellValueType.Error === checkTypeVal.type)) {
 						resValue = checkTypeVal;
 					}
 				}
@@ -1479,7 +1478,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		var elem;
 		for (var i = bbox.r1; i <= bbox.r2; i++) {
-			if ( !arr.array[i - bbox.r1] ) {
+			if (!arr.array[i - bbox.r1]) {
 				arr.addRow();
 			}
 			for (var j = bbox.c1; j <= bbox.c2; j++) {
@@ -1513,7 +1512,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				arr[k][i - r1][j - c1] = res;
 			});
 		}
-		if(ws) {
+		if (ws) {
 			ws.bExcludeHiddenRows = oldExcludeHiddenRows;
 		}
 
@@ -1541,7 +1540,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArea3D.prototype.getDimensions = function () {
 		var res = null;
 		if (this.bbox) {
-			res =  {col: this.bbox.c2 - this.bbox.c1 + 1, row: this.bbox.r2 - this.bbox.r1 + 1, bbox: this.bbox};
+			res = {col: this.bbox.c2 - this.bbox.c1 + 1, row: this.bbox.r2 - this.bbox.r1 + 1, bbox: this.bbox};
 		}
 		return res;
 	};
@@ -1583,7 +1582,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			return new cError(cErrorType.bad_reference);
 		}
 		var res;
-		this.range.getLeftTopCellNoEmpty(function(cell) {
+		this.range.getLeftTopCellNoEmpty(function (cell) {
 			res = checkTypeCell(cell);
 		});
 		return res;
@@ -1616,7 +1615,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 	};
 	cRef.prototype.toLocaleString = function () {
-		if(this.range) {
+		if (this.range) {
 			return this.range.getName();
 		} else {
 			return this.value;
@@ -1714,7 +1713,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			return new cError(cErrorType.bad_reference);
 		}
 		var res;
-		_r.getLeftTopCellNoEmpty(function(cell) {
+		_r.getLeftTopCellNoEmpty(function (cell) {
 			res = checkTypeCell(cell);
 		});
 		return res;
@@ -6376,7 +6375,7 @@ function parserFormula( formula, parent, _ws ) {
 					} else if (wsT !== wsF) {
 						found_operand = new cArea3D(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), wsF, wsT, externalLink);
 					} else {
-						found_operand = new cRef3D(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), wsF, null, externalLink);
+						found_operand = new cRef3D(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), wsF, externalLink);
 					}
 					parseResult.addRefPos(prevCurrPos, ph.pCurrPos, t.outStack.length, found_operand);
 				} else {
