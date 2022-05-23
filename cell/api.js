@@ -3423,6 +3423,23 @@ var editor;
     return binaryInfo;
   }
 
+  spreadsheet_api.prototype.asc_toggleVisibleAreaOleEditor = function () {
+    this.isEditVisibleAreaOleEditor = !this.isEditVisibleAreaOleEditor;
+/*    this.isEditVisibleAreaOleEditor = true;
+    if (this.isEditVisibleAreaOleEditor) {
+      var ws = this.wb.getWorksheet();
+      ws.cleanSelection();
+      var oleSize = ws.getOleSize().range;
+      if (!oleSize) {
+       ws.setOleSizeRange(new asc.Range(0, 0, 10, 10));
+      }
+      setTimeout(function () {
+        ws._drawVisibleArea();
+      }, 0);
+
+    }*/
+  }
+
   spreadsheet_api.prototype.asc_editChartDrawingObject = function(chart) {
     var ws = this.wb.getWorksheet();
     var ret = ws.objectRender.editChartDrawingObject(chart);
@@ -7083,6 +7100,9 @@ var editor;
   prot["asc_delDefinedNames"] = prot.asc_delDefinedNames;
   prot["asc_getDefaultDefinedName"] = prot.asc_getDefaultDefinedName;
   prot["asc_checkDefinedName"] = prot.asc_checkDefinedName;
+
+  // Ole Editor
+  prot["asc_toggleVisibleAreaOleEditor"] = prot.asc_toggleVisibleAreaOleEditor;
 
   // Auto filters interface + format as table
   prot["asc_addAutoFilter"] = prot.asc_addAutoFilter;
