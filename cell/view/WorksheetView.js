@@ -6259,6 +6259,19 @@
             y2 = Math.max(y2, _y2);
         }
 
+        var oleSize = this.getOleSize().range;
+        if (oleSize) {
+          _x1 = this._getColLeft(oleSize.c1) - offsetX - 2;
+          _x2 = this._getColLeft(oleSize.c2 + 1) - offsetX + 1 + 2;
+          _y1 = this._getRowTop(oleSize.r1) - offsetY - 2;
+          _y2 = this._getRowTop(oleSize.r2 + 1) - offsetY + 1 + 2;
+
+          x1 = Math.min(x1, _x1);
+          x2 = Math.max(x2, _x2);
+          y1 = Math.min(y1, _y1);
+          y2 = Math.max(y2, _y2);
+        }
+
         if (this.collaborativeEditing.getCollaborativeEditing()) {
             var currentSheetId = this.model.getId();
 
