@@ -2923,6 +2923,7 @@
 
     History.Create_NewPoint();
     History.StartTransaction();
+    this.SearchEngine.replaceStart();
 
     options.clearFindAll();
     if (options.isReplaceAll) {
@@ -2952,6 +2953,7 @@
 		}
 
 		this.handlers.trigger("asc_onRenameCellTextEnd", options.countFindAll, options.countReplaceAll);
+		this.SearchEngine.replaceEnd();
     }
 
     History.EndTransaction();
@@ -4400,7 +4402,11 @@
 		this.ClearOnRecalc = true; // Флаг, говорящий о том, запустился ли пересчет из-за Replace
 		this.Selection     = false;
 
+		this.ReplacedId = [];
+
 		this.mapFindCells = {};
+
+		this.isReplacingText = null;
 
 		//this.Footnotes     = [];
 		//this.Endnotes      = [];
@@ -4432,6 +4438,10 @@
 	};
 	CDocumentSearchExcel.prototype.Clear = function(index)
 	{
+		if (this.isReplacingText) {
+			return;
+		}
+
 		this.Reset();
 
 		// Очищаем предыдущие элементы поиска
@@ -4454,6 +4464,10 @@
 		//this.Elements  = {};
 		this.CurId     = -1;
 		this.Direction = true;
+
+		this.ReplacedId = [];
+
+		this.isReplacingText = null;
 
 		this.TextAroundUpdate = true;
 		this.StopTextAround();
@@ -4510,8 +4524,31 @@
 	CDocumentSearchExcel.prototype.SetCurrent = function(nId)
 	{
 		this.CurId = undefined !== nId ? nId : -1;
+		let nIndex = -1 !== this.CurId ? this.GetElementIndexById(this.CurId) : -1;
 		let oApi = window["Asc"]["editor"];
-		oApi.sync_setSearchCurrent(this.CurId, this.Count);
+		oApi.sync_setSearchCurrent(nIndex, this.Count);
+	};
+	CDocumentSearchExcel.prototype.GetElementIndexById = function(nId)
+	{
+		for (let nPos = 0, nCount = this.ReplacedId.length; nPos < nCount; ++nPos)
+		{
+			if (this.ReplacedId[nPos] > nId)
+				return (nId - nPos);
+			else if (this.ReplacedId[nPos] === nId)
+				return -1;
+		}
+
+		return (nId - this.ReplacedId.length);
+	};
+	CDocumentSearchExcel.prototype.private_AddReplacedId = function(nId)
+	{
+		for (let nPos = 0, nCount = this.ReplacedId.length; nPos < nCount; ++nPos)
+		{
+			if (this.ReplacedId[nPos] > nId)
+				return this.ReplacedId.splice(nPos, 0, nId);
+		}
+
+		this.ReplacedId.push(nId);
 	};
 	CDocumentSearchExcel.prototype.ResetCurrent = function()
 	{
@@ -4543,6 +4580,42 @@
 	{
 		var id = this.Direction ? this.CurId + 1 : this.CurId - 1;
 		var needElem = this.Elements[id];
+		if (!needElem && this.Count) {
+			//лиюо следующий, либо первый
+			//нужно вернуться к первому, если такой есть
+			var i;
+			if (this.Direction) {
+				var firstElem, firstElemId;
+				for (i = 0; i < this.ReplacedId.length + this.Count; i++) {
+					if (this.Elements[i]) {
+						if (!firstElem) {
+							firstElem = this.Elements[i];
+							firstElemId = i;
+						}
+						if (i > id) {
+							needElem = this.Elements[i];
+							id = i;
+							break;
+						}
+					}
+				}
+				if (!needElem) {
+					needElem = firstElem;
+					id = firstElemId;
+				}
+			} else {
+				for (i = this.ReplacedId.length + this.Count; i >= 0; i--) {
+					if (this.Elements[i]) {
+						if (i < id) {
+							needElem = this.Elements[i];
+							id = i;
+							break;
+						}
+					}
+				}
+			}
+
+		}
 		return needElem ? id : null;
 	};
 	CDocumentSearchExcel.prototype.removeFromSearchElems = function(col, row, ws)
@@ -4556,14 +4629,20 @@
 				delete this.Elements[id];
 			}
 			delete this.mapFindCells[key];
+			this.Count--;
+			this.private_AddReplacedId(id);
 		}
 	};
 	CDocumentSearchExcel.prototype.Replace = function(sReplaceString, Id, bRestorePos)
 	{
 	};
-
-	CDocumentSearchExcel.prototype.ReplaceAll = function(NewStr, bUpdateStates)
+	CDocumentSearchExcel.prototype.replaceStart = function()
 	{
+		this.isReplacingText = true;
+	};
+	CDocumentSearchExcel.prototype.replaceEnd = function()
+	{
+		this.isReplacingText = false;
 	};
 	/**
 	 * @param {AscCommon.CSearchSettings} oProps

@@ -15569,7 +15569,7 @@
 		if (0 === aReplaceCells.length) {
 			return callback(options);
 		}
-		this.model.clearFindResults();
+		//this.model.clearFindResults();
 		//***searchEngine
 		//this.workbook.SearchEngine && this.workbook.SearchEngine.clearFindResults(options.isReplaceAll ? null : aReplaceCells);
 		return this._replaceCellsText(aReplaceCells, options, lockDraw, callback);
@@ -15651,7 +15651,7 @@
 				}
 
 				//***searchEngine
-				if (isNeedToSave && !options.isReplaceAll) {
+				if (isNeedToSave) {
 					t.workbook.SearchEngine.removeFromSearchElems(cell.c1, cell.r1, t.model);
 				}
 			}
