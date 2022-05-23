@@ -8585,7 +8585,15 @@
 			shortIdForeignSelect;
 		var dialogOtherRanges = this.getDialogOtherRanges();
 		var readyMode = !(this.getSelectionDialogMode() || this.getCellEditMode());
+    var oResDefault = {cursor: kCurDefault, target: c_oTargetType.None, col: -1, row: -1};
 
+    if (this.workbook.Api.isEditVisibleAreaOleEditor) {
+      if (x >= this.cellsLeft && y >= this.cellsTop) {
+        return {cursor: AscCommonExcel.kCurCells, target: c_oTargetType.Cells, col: -1, row: -1};
+      } else {
+        return oResDefault;
+      }
+    }
 		if (readyMode) {
 			var frozenCursor = this._isFrozenAnchor(x, y);
 			if (canEdit && frozenCursor.result) {
@@ -8667,7 +8675,6 @@
 			}
 		}
 
-		var oResDefault = {cursor: kCurDefault, target: c_oTargetType.None, col: -1, row: -1};
 		if (x >= this.headersLeft && x < this.cellsLeft && y < this.cellsTop && y >= this.headersTop) {
 			return {cursor: kCurCorner, target: c_oTargetType.Corner, col: -1, row: -1};
 		}
