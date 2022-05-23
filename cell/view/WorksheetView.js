@@ -493,6 +493,14 @@
   WorksheetView.prototype.setOleSize = function (oPr) {
     return this.workbook && this.workbook.model.setOleSize(oPr);
   };
+
+  WorksheetView.prototype.setOleSizeRange = function (oPr) {
+    return this.workbook && this.workbook.model.setOleSizeRange(oPr);
+  };
+
+  WorksheetView.prototype.setOleSizeActiveCell = function (oPr) {
+    return this.workbook && this.workbook.model.setOleSizeActiveCell(oPr);
+  };
 	WorksheetView.prototype._initWorksheetDefaultWidth = function () {
 		// Теперь рассчитываем число px
 		this.defaultColWidthChars = this.model.charCountToModelColWidth(this.model.getBaseColWidth());
@@ -534,8 +542,7 @@
 	};
 
   WorksheetView.prototype.createImageFromMaxRange = function () {
-    var range = this.getVisibleRange();
-    this.setOleSize(range);
+    var range = this.getOleSize().range;
     var drawingContext = this.printForOleObject(range);
     return drawingContext.canvas.toDataURL();
   }
@@ -9461,7 +9468,7 @@
 	};
 
   WorksheetView.prototype.scrollToOleSize = function () {
-    var oleSize = this.getOleSize();
+    var oleSize = this.getOleSize().range;
     if (oleSize) {
       this.scrollToCell(oleSize.r1, oleSize.c1);
     }

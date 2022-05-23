@@ -2155,10 +2155,25 @@
 	};
 	Workbook.prototype.getOleSize = function () {
 		return this.oleSize;
-	}
+	};
 	Workbook.prototype.setOleSize = function (oPr) {
 		this.oleSize = oPr;
-	}
+	};
+
+	Workbook.prototype.setOleSizeRange = function (range) {
+		this.getOleSize().range = range;
+	};
+
+	Workbook.prototype.setOleSizeActiveCell = function (range) {
+		this.getOleSize().activeCell = range;
+	};
+
+	Workbook.prototype.cleanOleSize = function (activeCell) {
+		activeCell = activeCell || new Asc.Range(0, 0, 0, 0);
+		this.setOleSizeRange(activeCell.clone());
+		this.setOleSizeActiveCell(activeCell.clone());
+	};
+
 	Workbook.prototype.initPostOpenZip=function(pivotCaches){
 		var t = this;
 		this.forEach(function (ws) {
