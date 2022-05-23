@@ -8610,12 +8610,15 @@
 	// ----- Search -----
 	Worksheet.prototype.clearFindResults = function () {
 		this.lastFindOptions = null;
-		this.workbook.handlers.trigger("clearFindResults");
+		this.workbook.handlers.trigger("clearFindResults", this.index);
 	};
 	Worksheet.prototype._findAllCells = function (options, searchEngine) {
 		//***searchEngine
 		if (true !== options.isMatchCase) {
 			options.findWhat = options.findWhat.toLowerCase();
+		}
+		if (options.findWhat == null) {
+			options.findWhat = "";
 		}
 
 		var findEmptyStr = options.findWhat === "";

@@ -15530,6 +15530,51 @@
 		return this._replaceCellsText(aReplaceCells, options, lockDraw, callback);
 	};
 
+	WorksheetView.prototype.replaceCellText2 = function (options, lockDraw, callback) {
+		// Очищаем результаты
+		options.countFind = 0;
+		options.countReplace = 0;
+
+
+		var t = this;
+		var cell, tmp;
+		var aReplaceCells = [];
+		if (options.isReplaceAll) {
+			//TODO нужно ли запускать ещё раз поиск?!
+			//this.model._findAllCells(options);
+
+			this.workbook.SearchEngine.forEachElementsBySheet(this.model.index, function (elem) {
+				var r = elem.row;
+				var c = elem.col;
+				/*if (!t.model.lastFindOptions.scanByRows) {
+					tmp = c;
+					c = r;
+					r = tmp;
+				}*/
+				c |= 0;
+				r |= 0;
+				aReplaceCells.push(new Asc.Range(c, r, c, r));
+			});
+		} else {
+			cell = this.workbook.SearchEngine.GetCurrentElem();
+			if (cell) {
+				// Попробуем сначала найти
+				var isEqual = this._isCellEqual(cell.col, cell.row, options);
+				if (isEqual) {
+					aReplaceCells.push(isEqual);
+				}
+			}
+		}
+
+		if (0 === aReplaceCells.length) {
+			return callback(options);
+		}
+		this.model.clearFindResults();
+		//***searchEngine
+		//this.workbook.SearchEngine && this.workbook.SearchEngine.clearFindResults(options.isReplaceAll ? null : aReplaceCells);
+		return this._replaceCellsText(aReplaceCells, options, lockDraw, callback);
+	};
+
 	WorksheetView.prototype._replaceCellsText = function (aReplaceCells, options, lockDraw, callback) {
 		var t = this;
 		if (this.model.inPivotTable(aReplaceCells)) {

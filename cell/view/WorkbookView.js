@@ -979,8 +979,8 @@
 	this.model.handlers.add("updateGroupData", function() {
 	  self.updateGroupData();
 	});
-  this.model.handlers.add("clearFindResults", function() {
-	  self.SearchEngine.Clear();
+  this.model.handlers.add("clearFindResults", function(index) {
+	  self.SearchEngine.Clear(index);
   });
     this.cellCommentator = new AscCommonExcel.CCellCommentator({
       model: new WorkbookCommentsModel(this.handlers, this.model.aComments),
@@ -2931,7 +2931,7 @@
     }
 
     var ws = this.getWorksheet();
-    ws.replaceCellText(options, false, this.fReplaceCallback);
+    ws.replaceCellText2(options, false, this.fReplaceCallback);
   };
   WorkbookView.prototype._replaceCellTextCallback = function(options) {
     if (!options.error) {
@@ -2945,10 +2945,10 @@
 
 			if (i < this.model.getWorksheetCount()) {
 				var ws = this.getWorksheet(i);
-				ws.replaceCellText(options, true, this.fReplaceCallback);
+				ws.replaceCellText2(options, true, this.fReplaceCallback);
 				return;
 			}
-      options.sheetIndex = -1;
+      		options.sheetIndex = -1;
 		}
 
 		this.handlers.trigger("asc_onRenameCellTextEnd", options.countFindAll, options.countReplaceAll);
@@ -4430,23 +4430,30 @@
 	{
 		return oProps && this.props && this.props.isEqual2(oProps) && this.props.scanOnOnlySheet === oProps.scanOnOnlySheet;
 	};
-	CDocumentSearchExcel.prototype.Clear = function()
+	CDocumentSearchExcel.prototype.Clear = function(index)
 	{
 		this.Reset();
 
 		// Очищаем предыдущие элементы поиска
-		for (var Id in this.Elements)
-		{
-			//this.Elements[Id].ClearSearchResults();
+		if (index != null) {
+			for (var Id in this.Elements) {
+				if (this.Elements[Id].index === index) {
+					var key = this.Elements[Id].index + "-" + this.Elements[Id].col + "-" + this.Elements[Id].row;
+					delete this.mapFindCells[key];
+					delete this.Elements[Id];
+				}
+				//this.Elements[Id].ClearSearchResults();
+			}
+		} else {
+			this.Elements = {};
+			this.mapFindCells = {};
 		}
 
 		this.Id        = 0;
 		this.Count     = 0;
-		this.Elements  = {};
+		//this.Elements  = {};
 		this.CurId     = -1;
 		this.Direction = true;
-
-		this.mapFindCells = {};
 
 		this.TextAroundUpdate = true;
 		this.StopTextAround();
@@ -4518,6 +4525,20 @@
 	{
 		return this.CurId;
 	};
+	CDocumentSearchExcel.prototype.GetCurrentElem = function()
+	{
+		return this.Elements && this.Elements[this.CurId];
+	};
+	CDocumentSearchExcel.prototype.forEachElementsBySheet = function(index, callback)
+	{
+		if (this.Elements) {
+			for (var i in this.Elements) {
+				if (this.Elements[i].index === index) {
+					callback(this.Elements[i]);
+				}
+			}
+		}
+	};
 	CDocumentSearchExcel.prototype.GetNextElement = function()
 	{
 		var id = this.Direction ? this.CurId + 1 : this.CurId - 1;
@@ -4553,15 +4574,8 @@
 			return;
 
 		this.props  = oProps.clone();
-
-		/*var _sText = this.Text;
-		if (!this.MatchCase)
-			_sText = this.Text.toLowerCase();
-
-		this.Pattern.Set(_sText);
-		this.private_CalculatePrefix();*/
 	};
-	CDocumentSearchExcel.prototype.IsWholeWords = function()
+	/*CDocumentSearchExcel.prototype.IsWholeWords = function()
 	{
 		return this.Word;
 	};
@@ -4569,40 +4583,20 @@
 	{
 		return this.MatchCase;
 	};
-	CDocumentSearchExcel.prototype.SetFootnotes = function(arrFootnotes)
-	{
-		this.Footnotes = arrFootnotes;
-	};
-	CDocumentSearchExcel.prototype.SetEndnotes = function(arrEndnotes)
-	{
-		this.Endnotes = arrEndnotes;
-	};
-	CDocumentSearchExcel.prototype.GetFootnotes = function()
-	{
-		return this.Footnotes;
-	};
-	CDocumentSearchExcel.prototype.GetEndnotes = function()
-	{
-		return this.Endnotes;
-	};
 	CDocumentSearchExcel.prototype.GetDirection = function()
 	{
 		return this.Direction;
-	};
+	};*/
 	CDocumentSearchExcel.prototype.SetDirection = function(bDirection)
 	{
 		if (bDirection != null) {
 			this.Direction = bDirection;
 		}
 	};
-	CDocumentSearchExcel.prototype.private_CalculatePrefix = function()
-	{
-
-	};
-	CDocumentSearchExcel.prototype.GetPrefix = function(nIndex)
+	/*CDocumentSearchExcel.prototype.GetPrefix = function(nIndex)
 	{
 		return this.Prefix[nIndex];
-	};
+	};*/
 
 	CDocumentSearchExcel.prototype.inFindResults = function(ws, row, col)
 	{
