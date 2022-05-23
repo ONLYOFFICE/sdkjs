@@ -7997,6 +7997,9 @@
         this._drawFrozenPaneLines();
         this._fixSelectionOfMergedCells();
         this._drawSelection();
+      if (this.workbook.Api.isEditVisibleAreaOleEditor) {
+        this._drawVisibleArea();
+      }
 
         if (reinitScrollY || (0 > delta && initRowsCount && this._initRowsCount())) {
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
@@ -8155,6 +8158,9 @@
         this._drawFrozenPaneLines();
         this._fixSelectionOfMergedCells();
         this._drawSelection();
+        if (this.workbook.Api.isEditVisibleAreaOleEditor) {
+          this._drawVisibleArea();
+        }
 
 		if (reinitScrollX || (0 > delta && initColsCount && this._initColsCount())) {
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
