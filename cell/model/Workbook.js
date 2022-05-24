@@ -3209,71 +3209,9 @@
 		this.lastFindOptions = null;
 		this.lastFindCells = {};
 	};
-	Workbook.prototype.findCellText = function (options) {
+	Workbook.prototype.findCellText = function (options, searchEngine) {
 		var ws = this.getActiveWs();
-		var result = ws.findCellText(options), result2 = null;
-		if (Asc.c_oAscSearchBy.Workbook === options.scanOnOnlySheet) {
-			// Search on workbook
-			var key = result && (result.col + "-" + result.row);
-			if (!key || (options.isEqual(this.lastFindOptions) && this.lastFindCells[key])) {
-				// Мы уже находили данную ячейку, попробуем на другом листе
-				var i, active = this.getActive(), start = 0, end = this.getWorksheetCount();
-				var inc = options.scanForward ? +1 : -1;
-				for (i = active + inc; i < end && i >= start; i += inc) {
-					ws = this.getWorksheet(i);
-					if (ws.getHidden()) {
-						continue;
-					}
-					result2 = ws.findCellText(options);
-					if (result2) {
-						break;
-					}
-				}
-				if (!result2) {
-					// Мы дошли до конца или начала (в зависимости от направления, теперь пойдем до активного)
-					if (options.scanForward) {
-						i = 0;
-						end = active;
-					} else {
-						i = end - 1;
-						start = active + 1;
-					}
-					inc *= -1;
-					for (; i < end && i >= start; i += inc) {
-						ws = this.getWorksheet(i);
-						if (ws.getHidden()) {
-							continue;
-						}
-						result2 = ws.findCellText(options);
-						if (result2) {
-							break;
-						}
-					}
-				}
-
-				if (result2) {
-					this.handlers.trigger('undoRedoHideSheet', i);
-					key = result2.col + "-" + result2.row;
-				}
-			}
-
-			if (key) {
-				this.lastFindOptions = options.clone();
-				this.lastFindCells[key] = true;
-			}
-		}
-		if (!result2 && !result) {
-			this.cleanFindResults();
-		}
-		return result2 || result;
-	};
-	Workbook.prototype.findCellText2 = function (options, searchEngine) {
-		//***searchEngine
-		//убираю старую схему хранения данных для поиска
-		//сейчас храню общий массив + map для отрисовки. текущей элемент == индексу в массиве.
-		var ws = this.getActiveWs();
-		var result = ws._findAllCells(options, searchEngine), result2 = null;
-
+		var result = ws.findCellText(options, searchEngine), result2 = null;
 		if (Asc.c_oAscSearchBy.Workbook === options.scanOnOnlySheet) {
 			// Search on workbook
 			var key = result && (result.col + "-" + result.row);
@@ -3291,7 +3229,7 @@
 						break;
 					}
 				}
-				//if (!result2) {
+				if (!result2 || searchEngine) {
 					// Мы дошли до конца или начала (в зависимости от направления, теперь пойдем до активного)
 					if (options.scanForward) {
 						i = 0;
@@ -3307,27 +3245,31 @@
 							continue;
 						}
 						result2 = ws.findCellText(options, searchEngine);
-						/*if (result2) {
+						if (result2 && !searchEngine) {
 							break;
-						}*/
+						}
 					}
-				//}
+				}
 
-				/*if (result2) {
+				if (result2 && !searchEngine) {
 					this.handlers.trigger('undoRedoHideSheet', i);
 					key = result2.col + "-" + result2.row;
-				}*/
+				}
 			}
 
-			/*if (key) {
+			if (key && !searchEngine) {
 				this.lastFindOptions = options.clone();
 				this.lastFindCells[key] = true;
-			}*/
+			}
 		}
-		/*if (!result2 && !result) {
+		if (searchEngine) {
+			return;
+		}
+
+		if (!result2 && !result) {
 			this.cleanFindResults();
 		}
-		return result2 || result;*/
+		return result2 || result;
 	};
 	//Comments
 	Workbook.prototype.getComment = function (id) {
