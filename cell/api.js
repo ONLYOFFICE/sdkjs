@@ -3354,42 +3354,11 @@ var editor;
     return ret;
   };
 
-  spreadsheet_api.prototype.asc_getSizesForOleEditor = function (oleInfo) {
-    var oleSize = this.wbModel.getOleSize() || this.wb.getWorksheet().getVisibleRange();
-    if (oleSize) {
-      var ws = this.wb.getWorksheet();
-
-      var firstRow = oleSize.r1;
-      var lastRow = oleSize.r2;
-      var firstColumn = oleSize.c1;
-      var lastColumn = oleSize.c2;
-
-      var left = ws._getColLeft(firstColumn);
-      var width = ws._getColLeft(lastColumn + 1) - left;
-      var top = ws._getRowTop(firstRow);
-      var height = ws._getRowTop(lastRow + 1) - top;
-      return {
-        height: height,
-        width: width,
-        top: top,
-        left: left
-      };
-    }
-    oleInfo = oleInfo || {};
-    return {
-      height: oleInfo.height,
-      width: oleInfo.width,
-      top: oleInfo.top,
-      left: oleInfo.left
-    };
-  }
-
   /**
    * Loading ole editor
    * @param {{}} [oleObj] info from oleObject
-   * @param {function} [fResizeCallback] callback where first argument is sizes of loaded editor without borders
    */
-  spreadsheet_api.prototype.asc_addTableOleObjectInOleEditor = function(oleObj, fResizeCallback) {
+  spreadsheet_api.prototype.asc_addTableOleObjectInOleEditor = function(oleObj) {
     oleObj = oleObj || {binary: AscCommon.getEmpty()};
     var stream = oleObj && oleObj.binary;
     var _this = this;
@@ -3402,8 +3371,6 @@ var editor;
     this.openDocument(file);
 
     this.fAfterLoad = function () {
-      var sizes = _this.asc_getSizesForOleEditor(oleObj);
-      fResizeCallback && fResizeCallback(sizes);
       _this.wb.scrollToOleSize();
     }
     };
