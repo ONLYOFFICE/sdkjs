@@ -10211,6 +10211,49 @@
 		return ret;
 	};
 
+  WorksheetView.prototype._drawVisibleArea = function () {
+    var selectionLineType = AscCommonExcel.selectionLineType.Selection | AscCommonExcel.selectionLineType.DashThick;
+    var range = this.getOleSize().range;
+    this._drawElements(this._drawSelectionElement, range, selectionLineType,
+      this.settings.activeCellBorderColor);
+  };
+
+  WorksheetView.prototype.changeVisibleAreaStartPoint = function (x, y) {
+    this.cleanSelection();
+    this._endSelectionShape();
+    this.endEditChart();
+
+    var newVisibleAreaRange = this._getRangeByXY(x, y);
+    var oldRange = this.getOleSize().range;
+    var ret = this._calcRangeOffset(oldRange, newVisibleAreaRange);
+    this.model.workbook.cleanOleSize(newVisibleAreaRange);
+    this._drawVisibleArea();
+    return ret;
+  };
+
+  WorksheetView.prototype.changeVisibleAreaEndPoint = function (x, y) {
+    this.cleanSelection();
+
+    var activeCell = this.getOleSize().activeCell;
+    var previousOleRange = this.getOleSize().range;
+    var newOleRange = previousOleRange.clone();
+    var currentRange;
+    if (x < this.cellsLeft && y < this.cellsTop) {
+      currentRange = this._getRangeByXY(this.cellsLeft + 1, this.cellsTop + 1);
+    } else if (x < this.cellsLeft) {
+      currentRange = this._getRangeByXY(this.cellsLeft + 1, y);
+    } else if (y < this.cellsTop) {
+      currentRange = this._getRangeByXY(x, this.cellsTop + 1);
+    } else {
+      currentRange = this._getRangeByXY(x, y);
+    }
+
+    newOleRange.assign(activeCell.c1, activeCell.r1, currentRange.c2, currentRange.r2, true);
+    this.setOleSizeRange(newOleRange);
+    this._drawVisibleArea();
+    return this._calcActiveRangeOffsetIsCoord(x, y, currentRange);
+  };
+
     // Смена селекта по нажатию правой кнопки мыши
     WorksheetView.prototype.changeSelectionStartPointRightClick = function (x, y, target) {
         var isSelectOnShape = this._endSelectionShape();

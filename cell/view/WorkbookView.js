@@ -385,6 +385,8 @@
 				  self._onScrollY.apply(self, arguments);
 			  }, "scrollX": function () {
 				  self._onScrollX.apply(self, arguments);
+			  },  "changeVisibleArea": function () {
+				  self._onChangeVisibleArea.apply(self, arguments);
 			  }, "changeSelection": function () {
 				  self._onChangeSelection.apply(self, arguments);
 			  }, "changeSelectionDone": function () {
@@ -1182,6 +1184,19 @@
       // Селектим после выставления состояния
     }
   };
+
+	WorkbookView.prototype.isInnerOfWorksheet = function (x, y) {
+		var ws = this.getWorksheet();
+		 return x >= ws.cellsLeft && y >= ws.cellsTop;
+	};
+
+	WorkbookView.prototype._onChangeVisibleArea = function (isStartPoint, dc, dr, isCtrl, callback) {
+		var ws = this.getWorksheet();
+		var d = isStartPoint ? ws.changeVisibleAreaStartPoint(dc, dr, isCtrl) :
+			ws.changeVisibleAreaEndPoint(dc, dr, isCtrl);
+
+		asc_applyFunction(callback, d);
+	};
 
     WorkbookView.prototype._onChangeSelection = function (isStartPoint, dc, dr, isCoord, isCtrl, callback) {
         if (!this._checkStopCellEditorInFormulas()) {

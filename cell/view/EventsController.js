@@ -308,6 +308,8 @@
 			// Для формулы не нужно выходить из редактирования ячейки
 			if (this.getFormulaEditMode() || this.getSelectionDialogMode()) {return true;}
 
+			if (this.view.Api.isEditVisibleAreaOleEditor) {return true;}
+
 			if (this.targetInfo && (this.targetInfo.target === AscCommonExcel.c_oTargetType.GroupRow ||
 				this.targetInfo.target === AscCommonExcel.c_oTargetType.GroupCol)) {
 				return false;
@@ -483,6 +485,55 @@
             }
 
 
+		};
+
+		/**
+		 * @param event {MouseEvent}
+		 * @param callback {Function}
+		 * @private
+		 */
+		asc_CEventsController.prototype._continueChangeVisibleArea = function (event, callback) {
+			var t = this;
+			var coord = this._getCoordinates(event);
+
+			this.handlers.trigger("changeVisibleArea", /*isStartPoint*/false, coord.x, coord.y, false,
+				function (d) {
+					t.scroll(d);
+
+					asc_applyFunction(callback);
+				});
+		};
+
+		/**
+		 *
+		 * @param event {MouseEvent}
+		 */
+		asc_CEventsController.prototype._continueChangeVisibleArea2 = function (event) {
+			var t = this;
+			var fn = function () {t._continueChangeVisibleArea2(event);};
+
+			var callback = function () {
+				if (t.isChangeVisibleAreaMode && !t.hasCursor) {
+					t.visibleAreaSelectionTimerId = window.setTimeout(fn, t.settings.scrollTimeout);
+				}
+			}
+			window.clearTimeout(t.visibleAreaSelectionTimerId);
+			window.setTimeout(function () {
+				if (t.isChangeVisibleAreaMode && !t.hasCursor) {
+					t._continueChangeVisibleArea(event, callback);
+				}
+			}, 0);
+
+		};
+
+		/**
+		 *
+		 * @param event {MouseEvent}
+		 * @param callback {Function}
+		 */
+		asc_CEventsController.prototype._startChangeVisibleArea = function (event, callback) {
+			var coord = this._getCoordinates(event);
+			this.handlers.trigger("changeVisibleArea", /*isStartPoint*/true, coord.x, coord.y, false, callback);
 		};
 
 		/**
@@ -1273,6 +1324,9 @@
 			var coord = this._getCoordinates(event);
 				
 			if (this.isSelectMode && !this.hasCursor) {this._changeSelection2(event);}
+			if (this.isChangeVisibleAreaMode && !this.hasCursor) {
+				this._continueChangeVisibleArea2(event);
+			}
 			if (this.isResizeMode && !this.hasCursor) {
 				this.isResizeModeMove = true;
 				this._resizeElement(event);
@@ -1325,6 +1379,10 @@
                 }
                 this.isUpOnCanvas = false;
 				return true;
+			}
+
+			if (this.isChangeVisibleAreaMode) {
+				this.isChangeVisibleAreaMode = false;
 			}
 
 			if (this.isSelectMode) {
@@ -1409,12 +1467,21 @@
 			asc["editor"].checkInterfaceElementBlur();
 			var ctrlKey = !AscCommon.getAltGr(event) && (event.metaKey || event.ctrlKey);
 			var coord = t._getCoordinates(event);
+			var button = AscCommon.getMouseButton(event);
 			event.isLocked = t.isMousePressed = true;
 			// Shapes
 			var graphicsInfo = t.handlers.trigger("getGraphicsInfo", coord.x, coord.y);
 			if(!graphicsInfo) {
 				// Update state for device without cursor
 				this._onMouseMove(event);
+			}
+
+			if (this.view.Api.isEditVisibleAreaOleEditor) {
+				if (button === 0 && this.view.isInnerOfWorksheet(coord.x, coord.y)) {
+					this._startChangeVisibleArea(event);
+					this.isChangeVisibleAreaMode = true;
+				}
+				return;
 			}
 
 			if (AscCommon.g_inputContext) {
@@ -1431,8 +1498,6 @@
 			if (!this.enableKeyEvents) {
 				t.handlers.trigger("canvasClick");
 			}
-
-			var button = AscCommon.getMouseButton(event);
 
 			if (asc["editor"].isStartAddShape || graphicsInfo) {
 				// При выборе диапазона не нужно выделять автофигуру
@@ -1610,6 +1675,10 @@
 			var button = AscCommon.getMouseButton(event);
 			AscCommon.global_mouseEvent.UnLockMouse();
 
+			if (this.isChangeVisibleAreaMode) {
+				this.isChangeVisibleAreaMode = false;
+			}
+
 			if (2 === button) {
 				if (this.isShapeAction) {
 					this.handlers.trigger('onContextMenu', event);
@@ -1698,6 +1767,11 @@
 				return true;
 			}
 
+			if (t.isChangeVisibleAreaMode) {
+				t._continueChangeVisibleArea(event);
+				return true;
+			}
+
 			if (t.isResizeMode) {
 				t._resizeElement(event);
 				this.isResizeModeMove = true;
@@ -1771,7 +1845,7 @@
 
 				return false;
 			}
-			if (this.isFillHandleMode || this.isMoveRangeMode || this.isMoveResizeRange) {
+			if (this.isFillHandleMode || this.isMoveRangeMode || this.isMoveResizeRange || this.isChangeVisibleAreaMode) {
 				return true;
 			}
 

@@ -128,6 +128,8 @@ var editor;
 
 	this.tmpR1C1mode = null;
 
+    this.isEditVisibleAreaOleEditor = false;
+
     this.insertDocumentUrlsData = null;
 
     this._init();
@@ -3429,15 +3431,10 @@ var editor;
     if (this.isEditVisibleAreaOleEditor) {
       var ws = this.wb.getWorksheet();
       ws.cleanSelection();
-      var oleSize = ws.getOleSize().range;
-      if (!oleSize) {
-       ws.setOleSizeRange(new asc.Range(0, 0, 10, 10));
-      }
-      setTimeout(function () {
-        ws._drawVisibleArea();
-      }, 0);
-
-    }*/
+      ws.endEditChart();
+      ws._endSelectionShape();
+      ws._drawVisibleArea();
+    }
   }
 
   spreadsheet_api.prototype.asc_editChartDrawingObject = function(chart) {
