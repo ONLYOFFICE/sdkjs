@@ -1436,6 +1436,7 @@ var editor;
 		//по идее нужно делать его полное зануление, а при открытии создавать заново. но есть функции, которые
 		//добавляются в интерфейсе и в случае с историей версий заново не добавляются
 		this.wb.removeHandlersList();
+    this.wb.removeEventListeners();
 
 		if (this.wbModel.DrawingDocument) {
 			this.wbModel.DrawingDocument.CloseFile();

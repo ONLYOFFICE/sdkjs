@@ -553,33 +553,38 @@
 		  });
 
       if (this.input && this.input.addEventListener) {
-        this.input.addEventListener("focus", function () {
-          self.input.isFocused = true;
-          if (!self.canEdit()) {
-            return;
-          }
-		  if (self.isProtectActiveCell()) {
-			  self.input.blur();
-			  self.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
-			  return;
-		  }
-          self._onStopFormatPainter();
-          self.cellEditor.callTopLineMouseup = true;
-          if (!self.getCellEditMode() && !self.controller.isFillHandleMode) {
-            var enterOptions = new AscCommonExcel.CEditorEnterOptions();
-            enterOptions.focus = true;
-            self._onEditCell(enterOptions);
-          }
-        }, false);
+	      this._inputFocusEventListener = function () {
+		      this.input.isFocused = true;
+		      if (!this.canEdit()) {
+			      return;
+		      }
+		      if (this.isProtectActiveCell()) {
+			      this.input.blur();
+			      this.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
+			      return;
+		      }
+		      this._onStopFormatPainter();
+		      this.cellEditor.callTopLineMouseup = true;
+		      if (!this.getCellEditMode() && !this.controller.isFillHandleMode) {
+			      var enterOptions = new AscCommonExcel.CEditorEnterOptions();
+			      enterOptions.focus = true;
+			      this._onEditCell(enterOptions);
+		      }
+	      }.bind(this);
 
-        this.input.addEventListener('keydown', function (event) {
-          if (self.isCellEditMode) {
-            self.handlers.trigger('asc_onInputKeyDown', event);
-            if (!event.defaultPrevented) {
-              self.cellEditor._onWindowKeyDown(event, true);
-            }
-          }
-        }, false);
+        this.input.addEventListener("focus", this._inputFocusEventListener, false);
+
+
+	      this._inputKeyDownEventListener = function (event) {
+		      if (this.isCellEditMode) {
+			      this.handlers.trigger('asc_onInputKeyDown', event);
+			      if (!event.defaultPrevented) {
+				      this.cellEditor._onWindowKeyDown(event, true);
+			      }
+		      }
+	      }.bind(this);
+
+        this.input.addEventListener('keydown', this._inputKeyDownEventListener, false);
       }
 
       this.Api.onKeyDown = function (event) {
@@ -1948,6 +1953,17 @@
 	  info.asc_setType(Asc.c_oAscNumFormatType.None);
 	  var formats = AscCommon.getFormatCells(info);
 	  this.setCellFormat(formats[prop]);
+	};
+
+	WorkbookView.prototype.removeEventListeners = function () {
+		if (this.input && this.input.removeEventListener) {
+			if (this._inputFocusEventListener) {
+				this.input.removeEventListener('focus', this._inputFocusEventListener);
+			}
+			if (this._inputKeyDownEventListener) {
+				this.input.removeEventListener('keydown', this._inputKeyDownEventListener);
+			}
+		}
 	};
 
   WorkbookView.prototype._onSelectColumnsByRange = function() {
