@@ -2095,6 +2095,10 @@
 		this.lastFindOptions = null;
 		this.lastFindCells = {};
 		this.oleSize = null;
+		this.oleSize = {
+			range: new Asc.Range(0, 0, 10, 10),
+			activeCell: new Asc.Range(0, 0, 0, 0)
+		};
 		// var range  = new Asc.Range(5, 5, 10, 10);
 		// this.oleSize = range;
 
