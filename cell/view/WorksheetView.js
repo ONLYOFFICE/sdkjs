@@ -9340,8 +9340,8 @@
         return res;
     };
 
-    WorksheetView.prototype._calcActiveRangeOffsetIsCoord = function (x, y) {
-        var ar = this._getSelection().getLast();
+    WorksheetView.prototype._calcActiveRangeOffsetIsCoord = function (x, y, range) {
+        var ar = range || this._getSelection().getLast();
         if (this.getFormulaEditMode()) {
             // Для формул нужно сделать ограничение по range (у нас хранится полный диапазон)
             if (ar.c2 >= this.nColsCount || ar.r2 >= this.nRowsCount) {
