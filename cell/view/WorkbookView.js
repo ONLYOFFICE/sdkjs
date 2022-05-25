@@ -2953,6 +2953,9 @@
 		}
 
 		this.handlers.trigger("asc_onRenameCellTextEnd", options.countFindAll, options.countReplaceAll);
+		if (options.countFindAll !== options.countReplaceAll) {
+			this.SearchEngine.SetCurrent(this.SearchEngine.CurId);
+		}
 		this.SearchEngine.replaceEnd();
     }
 

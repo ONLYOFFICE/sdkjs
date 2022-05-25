@@ -15499,24 +15499,33 @@
 			//TODO нужно ли запускать ещё раз поиск?!
 			if (!bSearchEngine) {
 				this.model._findAllCells(options);
-			}
-			var findResult = this.model.lastFindOptions.findResults.values;
-			for (var row in findResult) {
-				for (var col in findResult[row]) {
-                    var r = row;
-                    var c = col;
-					if (!this.model.lastFindOptions.scanByRows && !this.model._findAllCells(options)) {
-						tmp = c;
-						c = r;
-						r = tmp;
+
+				var findResult = this.model.lastFindOptions.findResults.values;
+				for (var row in findResult) {
+					for (var col in findResult[row]) {
+						var r = row;
+						var c = col;
+						if (!this.model.lastFindOptions.scanByRows) {
+							tmp = c;
+							c = r;
+							r = tmp;
+						}
+						c |= 0;
+						r |= 0;
+						aReplaceCells.push(new Asc.Range(c, r, c, r));
 					}
+				}
+			} else {
+				this.workbook.SearchEngine.forEachElementsBySheet(this.model.index, function (elem) {
+					var r = elem.row;
+					var c = elem.col;
 					c |= 0;
 					r |= 0;
 					aReplaceCells.push(new Asc.Range(c, r, c, r));
-				}
+				});
 			}
 		} else {
-			cell = this.model.selectionRange.activeCell;
+			cell = bSearchEngine ? this.workbook.SearchEngine.GetCurrentElem() : this.model.selectionRange.activeCell;
 			// Попробуем сначала найти
 			var isEqual = this._isCellEqual(cell.col, cell.row, options);
 			if (isEqual) {
