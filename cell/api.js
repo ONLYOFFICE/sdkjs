@@ -3397,11 +3397,18 @@ var editor;
     this.isEditVisibleAreaOleEditor = !this.isEditVisibleAreaOleEditor;
 /*    this.isEditVisibleAreaOleEditor = true;
     if (this.isEditVisibleAreaOleEditor) {
+      this.wb.setCellEditMode(false);
       var ws = this.wb.getWorksheet();
       ws.cleanSelection();
       ws.endEditChart();
       ws._endSelectionShape();
       ws._drawVisibleArea();
+    } else {
+      this.wb.setCellEditMode(true);
+      var ws = this.wb.getWorksheet();
+      ws.cleanSelection();
+      ws.endEditChart();
+      ws._endSelectionShape();
     }
   }
 
