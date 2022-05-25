@@ -4155,7 +4155,10 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	window["AscCommon"].DownloadType                = DownloadType;
 	window["AscCommon"].CellValueType               = CellValueType;
 	window["AscCommon"].c_oAscChartDefines          = c_oAscChartDefines;
-	window["AscCommon"].c_oAscStyleImage            = c_oAscStyleImage;
+	window['Asc']['c_oAscStyleImage']               = window['Asc'].c_oAscStyleImage = window["AscCommon"].c_oAscStyleImage = c_oAscStyleImage;
+	c_oAscStyleImage["Default"] = c_oAscStyleImage.Default;
+	c_oAscStyleImage["Document"] = c_oAscStyleImage.Document;
+
 	window["AscCommon"].c_oAscLineDrawingRule       = c_oAscLineDrawingRule;
 	window["AscCommon"].vertalign_Baseline          = vertalign_Baseline;
 	window["AscCommon"].vertalign_SuperScript       = vertalign_SuperScript;
