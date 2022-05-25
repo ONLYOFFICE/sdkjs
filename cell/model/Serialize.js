@@ -3352,7 +3352,8 @@
 				this.bs.WriteItem(c_oSerWorkbookTypes.WorkbookProtection, function(){oThis.WriteWorkbookProtection(oThis.wb.workbookProtection);});
             }
 			if (this.wb.oleSize && this.wb.oleSize.range) {
-				this.bs.WriteItem(c_oSerWorkbookTypes.OleSize, function () {oThis.memory.WriteString2(oThis.wb.oleSize.range.getName())});
+				var sRange = this.wb.oleSize.range.getName();
+				this.bs.WriteItem(c_oSerWorkbookTypes.OleSize, function () {oThis.memory.WriteString2(sRange)});
 			}
         };
         this.WriteWorkbookPr = function()
@@ -7959,12 +7960,14 @@
 			}
 			else if ( c_oSerWorkbookTypes.OleSize === type )
 			{
-				var sRange = this.stream.GetString2LE(length);
+				var sRange = this.stream.GetString2LE(length).replace(/[\x00\s]/g, '');
 				var parsedRange = AscCommonExcel.g_oRangeCache.getAscRange(sRange);
-				this.oWorkbook.setOleSize({
-					range: parsedRange,
-					activeCell: new Asc.Range(parsedRange.c1, parsedRange.r1, parsedRange.c1, parsedRange.r1)
-				});
+				if (parsedRange) {
+					this.oWorkbook.setOleSize({
+						range: parsedRange,
+						activeCell: new AscCommon.CellBase(parsedRange.c1, parsedRange.r1)
+					});
+				}
 			}
             else if (c_oSerWorkbookTypes.VbaProject == type)
             {

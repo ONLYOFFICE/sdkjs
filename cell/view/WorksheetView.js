@@ -498,8 +498,8 @@
     return this.workbook && this.workbook.model.setOleSizeRange(oPr);
   };
 
-  WorksheetView.prototype.setOleSizeActiveCell = function (oPr) {
-    return this.workbook && this.workbook.model.setOleSizeActiveCell(oPr);
+  WorksheetView.prototype.setOleSizeActiveCell = function (activeCell) {
+    return this.workbook && this.workbook.model.setOleSizeActiveCell(activeCell);
   };
 	WorksheetView.prototype._initWorksheetDefaultWidth = function () {
 		// Теперь рассчитываем число px

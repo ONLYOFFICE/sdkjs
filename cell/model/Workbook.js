@@ -2097,7 +2097,7 @@
 		this.oleSize = null;
 		this.oleSize = {
 			range: new Asc.Range(0, 0, 10, 10),
-			activeCell: new Asc.Range(0, 0, 0, 0)
+			activeCell: new AscCommon.CellBase(0, 0)
 		};
 		// var range  = new Asc.Range(5, 5, 10, 10);
 		// this.oleSize = range;
@@ -2168,14 +2168,14 @@
 		this.getOleSize().range = range;
 	};
 
-	Workbook.prototype.setOleSizeActiveCell = function (range) {
-		this.getOleSize().activeCell = range;
+	Workbook.prototype.setOleSizeActiveCell = function (cell) {
+		this.getOleSize().activeCell = cell;
 	};
 
 	Workbook.prototype.cleanOleSize = function (activeCell) {
-		activeCell = activeCell || new Asc.Range(0, 0, 0, 0);
-		this.setOleSizeRange(activeCell.clone());
-		this.setOleSizeActiveCell(activeCell.clone());
+		activeCell = activeCell || new AscCommon.CellBase(0, 0);
+		this.setOleSizeRange(new Asc.Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row));
+		this.setOleSizeActiveCell(activeCell);
 	};
 
 	Workbook.prototype.initPostOpenZip=function(pivotCaches){
