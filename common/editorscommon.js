@@ -2453,9 +2453,10 @@
 				}
 			}
 			if (name) {
-				path = url.substring(1, name.end - 1)
+				var fullname = url.substring(0, name.start + 1);
+				path = url.substring(1, name.end - 1);
 				name = url.substring(name.end, name.start);
-				return {name: name, path: path};
+				return {name: name, path: path, fullname: fullname};
 			}
 		}
 		return null;
@@ -2858,6 +2859,12 @@
 			//если путь указан, то ссылка должна быть в одинарных кавычках, если указан просто название файла в [] - в мс это означает, что данный файл открыт, при его закрытии путь проставляется
 			//пока не реализовываем с открытыми файлами, работаем только с путями
 			external = parseExternalLink(subSTR);
+			if (external) {
+				externalLength = external.fullname.length;
+				subSTR = formula.substring(start_pos + externalLength);
+				subSTR = subSTR.replace("'", "");
+				external = external.path + external.name;
+			}
 		}
 
 		var match  = XRegExp.exec(subSTR, rx_ref3D_quoted) || XRegExp.exec(subSTR, rx_ref3D_non_quoted);
