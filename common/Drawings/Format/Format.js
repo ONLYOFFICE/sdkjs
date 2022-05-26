@@ -854,7 +854,7 @@
 
 		function CreatePresetColor(id) {
 			var ret = new CPrstColor();
-			ret.idx = id;
+			ret.id = id;
 			return ret;
 		}
 
