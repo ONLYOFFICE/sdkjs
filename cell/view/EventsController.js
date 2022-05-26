@@ -781,6 +781,7 @@
 			var shiftKey = event.shiftKey;
 			var selectionDialogMode = this.getSelectionDialogMode();
 			var isFormulaEditMode = this.getFormulaEditMode();
+			var isChangeVisibleAreaMode = this.view.Api.isEditVisibleAreaOleEditor;
 
 			var result = true;
 
@@ -1236,9 +1237,16 @@
 			};
 
 			if ((dc !== 0 || dr !== 0) && false === t.handlers.trigger("isGlobalLockEditCell")) {
-
-				// Проверка на движение в выделенной области
-				if (selectionActivePointChanged) {
+				if (isChangeVisibleAreaMode) {
+				t.handlers.trigger("changeVisibleArea", !shiftKey, dc, dr, false, function (d) {
+						var wb = window["Asc"]["editor"].wb;
+						if (t.targetInfo) {
+							wb._onUpdateWorksheet(t.targetInfo.coordX, t.targetInfo.coordY, false);
+						}
+						t.scroll(d);
+						_checkLastTab();
+					}, true);
+				} else if (selectionActivePointChanged) { // Проверка на движение в выделенной области
 					t.handlers.trigger("selectionActivePointChanged", dc, dr, function (d) {
 						t.scroll(d);
 						_checkLastTab();

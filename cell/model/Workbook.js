@@ -2095,12 +2095,7 @@
 		this.lastFindOptions = null;
 		this.lastFindCells = {};
 		this.oleSize = null;
-		this.oleSize = {
-			range: new Asc.Range(0, 0, 10, 10),
-			activeCell: new AscCommon.CellBase(0, 0)
-		};
-		// var range  = new Asc.Range(5, 5, 10, 10);
-		// this.oleSize = range;
+		this.oleSize = new AscCommonExcel.OleSizeSelectionRange(null, new Asc.Range(0, 0, 10, 10));
 
 		//при копировании листа с одного wb на другой необходимо менять в стеке
 		// формул лист и книгу(на которые ссылаемся) - например у элементов cStrucTable
@@ -2162,20 +2157,6 @@
 	};
 	Workbook.prototype.setOleSize = function (oPr) {
 		this.oleSize = oPr;
-	};
-
-	Workbook.prototype.setOleSizeRange = function (range) {
-		this.getOleSize().range = range;
-	};
-
-	Workbook.prototype.setOleSizeActiveCell = function (cell) {
-		this.getOleSize().activeCell = cell;
-	};
-
-	Workbook.prototype.cleanOleSize = function (activeCell) {
-		activeCell = activeCell || new AscCommon.CellBase(0, 0);
-		this.setOleSizeRange(new Asc.Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row));
-		this.setOleSizeActiveCell(activeCell);
 	};
 
 	Workbook.prototype.initPostOpenZip=function(pivotCaches){
@@ -4458,6 +4439,9 @@
 		}
 	};
 	Worksheet.prototype.getSelection = function () {
+		if (this.workbook.oApi.isEditVisibleAreaOleEditor) {
+			return this.workbook.oleSize;
+		}
 		return this.copySelection || this.selectionRange;
 	};
 

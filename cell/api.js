@@ -3373,6 +3373,7 @@ var editor;
 
     this.fAfterLoad = function () {
       _this.wb.scrollToOleSize();
+      _this.asc_toggleVisibleAreaOleEditor();
     }
     };
   /**
@@ -3395,6 +3396,7 @@ var editor;
 
   spreadsheet_api.prototype.asc_toggleVisibleAreaOleEditor = function () {
     this.isEditVisibleAreaOleEditor = !this.isEditVisibleAreaOleEditor;
+    this.isEditVisibleAreaOleEditor = true;
 		var ws = this.wb.getWorksheet();
 		ws.cleanSelection();
 		ws.endEditChart();
@@ -7070,6 +7072,12 @@ var editor;
 
   // Ole Editor
   prot["asc_toggleVisibleAreaOleEditor"] = prot.asc_toggleVisibleAreaOleEditor;
+  prot["asc_addOleObjectAction"] = prot.asc_addOleObjectAction;
+  prot["asc_addTableOleObjectInOleEditor"] = prot.asc_addTableOleObjectInOleEditor;
+  prot["asc_getBinaryInfoOleObject"] = prot.asc_getBinaryInfoOleObject;
+  prot["asc_editOleObjectAction"] = prot.asc_editOleObjectAction;
+  prot["asc_doubleClickOnTableOleObject"] = prot.asc_doubleClickOnTableOleObject;
+  prot["asc_startEditCurrentOleObject"] = prot.asc_startEditCurrentOleObject;
 
   // Auto filters interface + format as table
   prot["asc_addAutoFilter"] = prot.asc_addAutoFilter;

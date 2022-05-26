@@ -494,13 +494,6 @@
     return this.workbook && this.workbook.model.setOleSize(oPr);
   };
 
-  WorksheetView.prototype.setOleSizeRange = function (oPr) {
-    return this.workbook && this.workbook.model.setOleSizeRange(oPr);
-  };
-
-  WorksheetView.prototype.setOleSizeActiveCell = function (activeCell) {
-    return this.workbook && this.workbook.model.setOleSizeActiveCell(activeCell);
-  };
 	WorksheetView.prototype._initWorksheetDefaultWidth = function () {
 		// Теперь рассчитываем число px
 		this.defaultColWidthChars = this.model.charCountToModelColWidth(this.model.getBaseColWidth());
@@ -542,7 +535,7 @@
 	};
 
   WorksheetView.prototype.createImageFromMaxRange = function () {
-    var range = this.getOleSize().range;
+    var range = this.getOleSize().getLast();
     var drawingContext = this.printForOleObject(range);
     return drawingContext.canvas.toDataURL();
   }
@@ -1730,6 +1723,9 @@
     };
 
     WorksheetView.prototype._getSelection = function () {
+			if (this.workbook.Api.isEditVisibleAreaOleEditor) {
+				return this.getOleSize();
+			}
         return this.model.selectionRange;
     };
 
@@ -5929,6 +5925,9 @@
 		if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.selectUnlockedCells)) {
 			return;
 		}
+		if (this.workbook.Api.isEditVisibleAreaOleEditor) {
+			return this._drawVisibleArea();
+		}
 
         var selectionDialogMode = this.getSelectionDialogMode();
         var dialogOtherRanges = this.getDialogOtherRanges();
@@ -6257,19 +6256,6 @@
             x2 = Math.max(x2, _x2);
             y1 = Math.min(y1, _y1);
             y2 = Math.max(y2, _y2);
-        }
-
-        var oleSize = this.getOleSize().range;
-        if (oleSize) {
-          _x1 = this._getColLeft(oleSize.c1) - offsetX - 2;
-          _x2 = this._getColLeft(oleSize.c2 + 1) - offsetX + 1 + 2;
-          _y1 = this._getRowTop(oleSize.r1) - offsetY - 2;
-          _y2 = this._getRowTop(oleSize.r2 + 1) - offsetY + 1 + 2;
-
-          x1 = Math.min(x1, _x1);
-          x2 = Math.max(x2, _x2);
-          y1 = Math.min(y1, _y1);
-          y2 = Math.max(y2, _y2);
         }
 
         if (this.collaborativeEditing.getCollaborativeEditing()) {
@@ -7997,9 +7983,6 @@
         this._drawFrozenPaneLines();
         this._fixSelectionOfMergedCells();
         this._drawSelection();
-      if (this.workbook.Api.isEditVisibleAreaOleEditor) {
-        this._drawVisibleArea();
-      }
 
         if (reinitScrollY || (0 > delta && initRowsCount && this._initRowsCount())) {
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
@@ -8158,9 +8141,6 @@
         this._drawFrozenPaneLines();
         this._fixSelectionOfMergedCells();
         this._drawSelection();
-        if (this.workbook.Api.isEditVisibleAreaOleEditor) {
-          this._drawVisibleArea();
-        }
 
 		if (reinitScrollX || (0 > delta && initColsCount && this._initColsCount())) {
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
@@ -9487,7 +9467,7 @@
 	};
 
   WorksheetView.prototype.scrollToOleSize = function () {
-    var oleSize = this.getOleSize().range;
+    var oleSize = this.getOleSize().getLast();
     if (oleSize) {
       this.scrollToCell(oleSize.r1, oleSize.c1);
     }
@@ -10213,45 +10193,48 @@
 
   WorksheetView.prototype._drawVisibleArea = function () {
     var selectionLineType = AscCommonExcel.selectionLineType.Selection | AscCommonExcel.selectionLineType.DashThick;
-    var range = this.getOleSize().range;
-    this._drawElements(this._drawSelectionElement, range, selectionLineType,
-      this.settings.activeCellBorderColor);
+    var range = this.getOleSize().getLast();
+		this._drawElements(this._drawSelectionElement, range, selectionLineType,
+			this.settings.activeCellBorderColor);
   };
 
-  WorksheetView.prototype.changeVisibleAreaStartPoint = function (x, y) {
-    this.cleanSelection();
-    this._endSelectionShape();
+  WorksheetView.prototype.changeVisibleAreaStartPoint = function (x, y, isCtrl, isRelative) {
+		this.cleanSelection();
+		this._endSelectionShape();
     this.endEditChart();
 
-    var newVisibleAreaRange = this._getRangeByXY(x, y);
-    var oldRange = this.getOleSize().range;
-    var ret = this._calcRangeOffset(oldRange, newVisibleAreaRange);
-    this.model.workbook.cleanOleSize(newVisibleAreaRange);
-    this._drawVisibleArea();
+		var activeCell = this._getSelection().activeCell.clone();
+		this._getSelection().clean();
+		var ret = {};
+
+		if (!isRelative) {
+			this._moveActiveCellToXY(x, y);
+		} else {
+			this._moveActiveCellToOffset(activeCell, x, y);
+			ret = this._calcRangeOffset();
+		}
+		this._drawSelection();
     return ret;
   };
 
-  WorksheetView.prototype.changeVisibleAreaEndPoint = function (x, y) {
-    this.cleanSelection();
+  WorksheetView.prototype.changeVisibleAreaEndPoint = function (x, y, isCtrl, isRelative) {
+		if (!isRelative) {
+			if (x < this.cellsLeft) x = this.cellsLeft + 1;
+			if (y < this.cellsTop) y = this.cellsTop + 1;
+		}
+		var isChangeSelectionShape = !isRelative ? this._endSelectionShape() : false;
+		var ar = this._getSelection().getLast();
 
-    var activeCell = this.getOleSize().activeCell;
-    var previousOleRange = this.getOleSize().range;
-    var newOleRange = previousOleRange.clone();
-    var currentRange;
-    if (x < this.cellsLeft && y < this.cellsTop) {
-      currentRange = this._getRangeByXY(this.cellsLeft + 1, this.cellsTop + 1);
-    } else if (x < this.cellsLeft) {
-      currentRange = this._getRangeByXY(this.cellsLeft + 1, y);
-    } else if (y < this.cellsTop) {
-      currentRange = this._getRangeByXY(x, this.cellsTop + 1);
-    } else {
-      currentRange = this._getRangeByXY(x, y);
-    }
-
-    newOleRange.assign(activeCell.c1, activeCell.r1, currentRange.c2, currentRange.r2, true);
-    this.setOleSizeRange(newOleRange);
-    this._drawVisibleArea();
-    return this._calcActiveRangeOffsetIsCoord(x, y, currentRange);
+		var newRange = !isRelative ? this._calcSelectionEndPointByXY(x, y) :
+			this._calcSelectionEndPointByOffset(x, y);
+		var diffRange = {c1: newRange.c1 - ar.c1, c2: newRange.c2 - ar.c2, r1: newRange.r1 - ar.r1, r2: newRange.r2 - ar.r2};
+		var isEqual = newRange.isEqual(ar);
+		if (!isEqual || isChangeSelectionShape) {
+			this.cleanSelection();
+			ar.assign2(newRange);
+			this._drawSelection();
+		}
+		return !isRelative ? this._calcActiveRangeOffsetIsCoord(x, y) : this._calcRangeOffset(undefined, diffRange);
   };
 
     // Смена селекта по нажатию правой кнопки мыши

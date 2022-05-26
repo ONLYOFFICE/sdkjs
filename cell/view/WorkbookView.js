@@ -554,6 +554,10 @@
 
       if (this.input && this.input.addEventListener) {
 	      this._inputFocusEventListener = function () {
+					if (this.Api.isEditVisibleAreaOleEditor) {
+						this.input.blur();
+						return;
+					}
 		      this.input.isFocused = true;
 		      if (!this.canEdit()) {
 			      return;
@@ -1195,10 +1199,10 @@
 		 return x >= ws.cellsLeft && y >= ws.cellsTop;
 	};
 
-	WorkbookView.prototype._onChangeVisibleArea = function (isStartPoint, dc, dr, isCtrl, callback) {
+	WorkbookView.prototype._onChangeVisibleArea = function (isStartPoint, dc, dr, isCtrl, callback, isRelative) {
 		var ws = this.getWorksheet();
-		var d = isStartPoint ? ws.changeVisibleAreaStartPoint(dc, dr, isCtrl) :
-			ws.changeVisibleAreaEndPoint(dc, dr, isCtrl);
+		var d = isStartPoint ? ws.changeVisibleAreaStartPoint(dc, dr, isCtrl, isRelative) :
+			ws.changeVisibleAreaEndPoint(dc, dr, isCtrl, isRelative);
 
 		asc_applyFunction(callback, d);
 	};
