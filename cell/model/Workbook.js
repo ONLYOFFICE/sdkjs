@@ -3844,8 +3844,26 @@
 		return res;
 	};
 
-	Workbook.prototype.getExternalLinkByIndex = function (index) {
-		return this.externalReferences && this.externalReferences[index];
+
+	//external links
+	//при открытии ждём ссылок в виде [1]Sheet1!A1:A2, но если пользователь введёт такую ссылку, то текст самой ссылки будет уже "1", а индекс самой ссылки увеличится length + 1
+	//далее отображаем в таком виде в зависимости от самой ссылки 'https://s3.amazonaws.com/xlsx/[ExternalLinksDestination.xlsx]Sheet1'!A1:A2
+	//при вводе с клавиатуры сложнее - мс пропускает ссылки в достаточно странном виде 'abracadabra1://abracadabra2:[file.abracadabra3]Sheet1'!A1:A2
+	Workbook.prototype.getExternalLinkByIndex = function (index, needSplit) {
+		var res = this.externalReferences && this.externalReferences[index];
+		if (needSplit && res) {
+			//разбиваем на имя и путь
+			//ms обрабатывает http:/https:/ftp: и любая конструкция до : -  ..test..:
+			//предполагаем, что здесь уже лежит ссылка в грамотном виде
+			//ищем последний слэш или двоеточие и разделяем на части
+			res = res.Id;
+			for (var i = res.length - 1; i >= 0; i--) {
+				if (res[i] === "/" || res[i] === ":") {
+					return {path: res.substring(0, i + 1), name: res.substring(i + 1, res.length)};
+				}
+			}
+		}
+		return res ? res.Id : null;
 	};
 
 

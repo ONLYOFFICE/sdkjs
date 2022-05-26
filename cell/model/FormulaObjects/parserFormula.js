@@ -534,11 +534,21 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cBaseType.prototype.getExternalLinkStr = function (externalLink) {
 		var wb = Asc["editor"] && Asc["editor"].wb;
-		externalLink = externalLink && wb && wb.model && wb.model.getExternalLinkByIndex(externalLink - 1);
-		if (externalLink) {
-			externalLink  = externalLink.Id;
+		externalLink = externalLink && wb && wb.model && wb.model.getExternalLinkByIndex(externalLink - 1, true);
+		var path = externalLink && externalLink.path;
+		var name = externalLink && externalLink.name;
+		var res = "";
+		if (path || name) {
+			if (path) {
+				res += path;
+			}
+			if (name) {
+				res += "[" + name + "]";
+			}
+		} else if (externalLink) {
+			res = externalLink;
 		}
-		return externalLink ? '[' + externalLink + ']' : "";
+		return res;
 	};
 
 	/*Basic types of an elements used into formulas*/
