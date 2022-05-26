@@ -3373,7 +3373,6 @@ var editor;
 
     this.fAfterLoad = function () {
       _this.wb.scrollToOleSize();
-      _this.asc_toggleVisibleAreaOleEditor();
     }
     };
   /**
@@ -3396,7 +3395,6 @@ var editor;
 
   spreadsheet_api.prototype.asc_toggleVisibleAreaOleEditor = function () {
     this.isEditVisibleAreaOleEditor = !this.isEditVisibleAreaOleEditor;
-    this.isEditVisibleAreaOleEditor = true;
 		var ws = this.wb.getWorksheet();
 		ws.cleanSelection();
 		ws.endEditChart();
