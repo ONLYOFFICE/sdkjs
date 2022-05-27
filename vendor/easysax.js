@@ -1781,3 +1781,7 @@ CT_XmlNode.prototype.toXml = function(writer, name) {
     }
     writer.WriteXmlNodeEnd(name);
 };
+
+window['AscCommon'] = window['AscCommon'] || {};
+window['AscCommon'].XmlParserContext = XmlParserContext;
+window["AscCommon"].XmlWriterContext = XmlWriterContext;

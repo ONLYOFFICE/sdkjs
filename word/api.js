@@ -1547,27 +1547,33 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.OpenDocumentFromZip = function(data)
 	{
+		BeforeOpenDocument.call(this);
+
+		let res = this.OpenDocumentFromZipNoInit(data);
+
+		AfterOpenDocument.call(this, data, data.length);
+		return res;
+	};
+	asc_docs_api.prototype.OpenDocumentFromZipNoInit = function(data)
+	{
 		if (!data) {
 			return false;
 		}
-		var xmlParserContext = new XmlParserContext();
+		let xmlParserContext = new AscCommon.XmlParserContext();
 		xmlParserContext.DrawingDocument = this.WordControl.m_oDrawingDocument;
-		var jsZipWrapper = new AscCommon.JSZipWrapper();
+		let jsZipWrapper = new AscCommon.JSZipWrapper();
 		if (!jsZipWrapper.loadSync(data)) {
 			return false;
 		}
-		BeforeOpenDocument.call(this);
 
-		var reader, openParams = {};
-		var oBinaryFileReader = new AscCommonWord.BinaryFileReader(this.WordControl.m_oLogicDocument, openParams);
+		let reader, openParams = {};
+		let oBinaryFileReader = new AscCommonWord.BinaryFileReader(this.WordControl.m_oLogicDocument, openParams);
 		oBinaryFileReader.PreLoadPrepare();
 
 		this.WordControl.m_oLogicDocument.fromZip(jsZipWrapper, xmlParserContext, oBinaryFileReader.oReadResult);
 
 		oBinaryFileReader.PostLoadPrepare(xmlParserContext);
 		jsZipWrapper.close();
-
-		AfterOpenDocument.call(this, data, data.length);
 		return true;
 	};
 	// Callbacks
@@ -11788,19 +11794,24 @@ background-repeat: no-repeat;\
 
 		g_oIdCounter.Set_Load(true);
 
-		var openParams        = {};
-		var oBinaryFileReader = new AscCommonWord.BinaryFileReader(this.WordControl.m_oLogicDocument, openParams);
-
 		if (undefined !== version)
 			AscCommon.CurFileVersion = version;
-		
-		if (oBinaryFileReader.Read(base64File))
-		{
-			g_oIdCounter.Set_Load(false);
-			this.LoadedObject = 1;
+
+		// this.isOpenOOXInBrowser = AscCommon.checkOOXMLSignature(base64File);
+		if (this.isOpenOOXInBrowser) {
+			if (!this.OpenDocumentFromZipNoInit(base64File))
+				this.sendEvent("asc_onError", c_oAscError.ID.MobileUnexpectedCharCount, c_oAscError.Level.Critical);
+		} else {
+			let openParams        = {};
+			let oBinaryFileReader = new AscCommonWord.BinaryFileReader(this.WordControl.m_oLogicDocument, openParams);
+			if (oBinaryFileReader.Read(base64File))
+			{
+				g_oIdCounter.Set_Load(false);
+				this.LoadedObject = 1;
+			}
+			else
+				this.sendEvent("asc_onError", c_oAscError.ID.MobileUnexpectedCharCount, c_oAscError.Level.Critical);
 		}
-		else
-			this.sendEvent("asc_onError", c_oAscError.ID.MobileUnexpectedCharCount, c_oAscError.Level.Critical);
 
 		if (window["NATIVE_EDITOR_ENJINE"] === true && undefined != window["native"])
 		{
@@ -11991,15 +12002,23 @@ background-repeat: no-repeat;\
 
 	window["asc_docs_api"].prototype["asc_nativeGetFileData"] = function()
 	{
-		var oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(this.WordControl.m_oLogicDocument);
-		var _memory           = oBinaryFileWriter.memory;
+		if (this.isOpenOOXInBrowser) {
+			let res;
+			this.saveDocumentToZip(this.WordControl.m_oLogicDocument, this.editorId, function(data) {
+				res = data;
+			});
+			return res || new Uint8Array(0);
+		} else {
+			var oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(this.WordControl.m_oLogicDocument);
+			var _memory           = oBinaryFileWriter.memory;
 
-		oBinaryFileWriter.Write(true);
+			oBinaryFileWriter.Write(true);
 
-		var _header = AscCommon.c_oSerFormat.Signature + ";v" + Asc.c_nVersionNoBase64 + ";" + _memory.GetCurPosition() + ";";
-		window["native"]["Save_End"](_header, _memory.GetCurPosition());
+			var _header = AscCommon.c_oSerFormat.Signature + ";v" + Asc.c_nVersionNoBase64 + ";" + _memory.GetCurPosition() + ";";
+			window["native"]["Save_End"](_header, _memory.GetCurPosition());
 
-		return _memory.ImData.data;
+			return _memory.ImData.data;
+		}
 	};
 
 	window["asc_docs_api"].prototype["asc_nativeGetHtml"] = function()
