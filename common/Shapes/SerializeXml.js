@@ -224,7 +224,7 @@
 				}
 			}
 		} else if("tbl" === name)  {
-			var _table = new CTable(reader.context.DrawingDocument, graphicFrame || null, true, 0, 0, [], true);
+			var _table = new CTable(reader.context.DrawingDocument, graphicFrame || null, false, 0, 0, [], true);
 			_table.fromDrawingML(reader);
 			if(graphicFrame) {
 				graphicFrame.setGraphicObject(_table);
