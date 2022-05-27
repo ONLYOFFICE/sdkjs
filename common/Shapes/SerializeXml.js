@@ -1128,7 +1128,9 @@
 		if(this.PPr) {
 			this.PPr.toDrawingML(writer, "a:pPr");
 		}
-		this.toDrawingMLText(writer, 0, this.Content.length - 1);
+		if(this.Content.length > 0) {
+			this.toDrawingMLText(writer, 0, this.Content.length - 1);
+		}
 		writer.WriteXmlNodeEnd("a:fld");
 	};
 	AscCommonWord.CTable.prototype.fromDrawingML = function(reader) {
