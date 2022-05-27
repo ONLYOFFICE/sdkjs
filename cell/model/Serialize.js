@@ -1442,7 +1442,31 @@
 		topLeft: 2,
 		topRight: 3
 	};
-
+    var ST_CellComments = {
+        asDisplayed: 1,
+        atEnd: 2,
+        none : 0
+    };
+    var ST_PrintError = {
+        blank: 1,
+        dash: 3,
+        displayed: 0,
+        NA: 3
+    };
+    var ST_PageOrder = {
+        downThenOver: 0,
+        overThenDown: 1
+    };
+    var ST_SortMethod = {
+        none: 1,
+        pinYin: 2,
+        stroke: 3
+    }
+    var ST_TableType = {
+        queryTable: 0,
+        worksheet: 1,
+        xml: 2
+    }
     var g_nNumsMaxId = 160;
 
     var DocumentPageSize = new function() {
@@ -11895,12 +11919,14 @@
     window["Asc"].CTableStyle = CTableStyle;
     window["Asc"].CTableStyleElement = CTableStyleElement;
     window["Asc"].CTableStyleStripe = CTableStyleStripe;
+    window["Asc"].OpenXf = OpenXf;
     window["AscCommonExcel"].BinaryFileReader = BinaryFileReader;
     window["AscCommonExcel"].BinaryFileWriter = BinaryFileWriter;
 
     window["AscCommonExcel"].BinaryTableWriter = BinaryTableWriter;
     window["AscCommonExcel"].Binary_TableReader = Binary_TableReader;
 	window["AscCommonExcel"].OpenFormula = OpenFormula;
+    window["AscCommonExcel"].StylesForWrite = StylesForWrite;
 
     window["Asc"].getBinaryOtherTableGVar = getBinaryOtherTableGVar;
     window["Asc"].ReadDefTableStyles = ReadDefTableStyles;
@@ -11921,4 +11947,12 @@
     prot['totalrowfunctionSum'] = prot.totalrowfunctionSum;
     prot['totalrowfunctionVar'] = prot.totalrowfunctionVar;
 
+    window["AscCommonExcel"].ST_CellComments = ST_CellComments;
+    window["AscCommonExcel"].ST_PrintError = ST_PrintError;
+    window["AscCommonExcel"].ST_PageOrder = ST_PageOrder;
+    window["AscCommonExcel"].EActivePane = EActivePane;
+    window["AscCommonExcel"].ST_SortMethod = ST_SortMethod;
+    window["AscCommonExcel"].ST_TableType = ST_TableType;
+    window["Asc"].g_nNumsMaxId = g_nNumsMaxId;
+    
 })(window);

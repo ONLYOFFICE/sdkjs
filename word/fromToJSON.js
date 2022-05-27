@@ -47,7 +47,10 @@
 	}
 	function private_GetDrawingDocument()
 	{
-		return editor.WordControl.m_oLogicDocument.DrawingDocument;
+		if (editor)
+			return editor.WordControl.m_oLogicDocument.DrawingDocument;
+
+		return Asc.editor.wbModel.getDrawingDocument();
 	}
 	function private_EMU2MM(EMU)
 	{
@@ -59,7 +62,10 @@
 	}
 	function private_GetLogicDocument()
 	{
-		return editor.WordControl.m_oLogicDocument;
+		if (editor)
+			return editor.WordControl.m_oLogicDocument;
+		
+		return null;
 	}
 	function private_GetStyles()
 	{
@@ -192,6 +198,8 @@
 		this.mastersMap     = {};
 		this.notesMasterMap = {};
 		this.themesMap      = {};
+		this.workbook       = null;
+		this.stylesForWrite = null;
 	}
 
     WriterToJSON.prototype.SerHlink = function(oHlink)
@@ -457,6 +465,8 @@
 
 				oResultObj = oShapeObj;
 			}
+			else if (oGraphicObj.constructor.name === "CSlicer")
+				oResultObj = this.SerSlicerDrawing(oGraphicObj)
 			else
 				oResultObj = this.SerShape(oGraphicObj, aComplexFieldsToSave);
 		}
@@ -472,6 +482,11 @@
 		oResultObj.id = oGraphicObj.Id;
 
 		return oResultObj;
+	};
+	WriterToJSON.prototype.SerSlicerDrawing = function(oSlicerDrawing)
+	{
+		var oResult = this.SerShape(oSlicerDrawing);
+		oResult["type"] = "slicer";
 	};
 	WriterToJSON.prototype.SerOleObject = function(oOleObject)
 	{
@@ -3273,9 +3288,9 @@
 
 		} : undefined) : undefined;
 
-		var oStyles = private_GetStyles();
+		var oStyles = oTable.TableStyle != null ? private_GetStyles() : null;
 		// table style
-		var oTableStyle = oTable ? oStyles.Get(oTable.TableStyle) : undefined;
+		var oTableStyle = oStyles && oTable.TableStyle != null ? oStyles.Get(oTable.TableStyle) : undefined;
 
 		return {
 			jc:         sJc,
@@ -3636,9 +3651,9 @@
 		if (!oParaPr)
 			return oParaPr;
 
-		var oStyles = private_GetStyles();
+		var oStyles = oParaPr.PStyle != null ? private_GetStyles() : null;
 		// paragraph style
-		var oParaStyle   = oParaPr.PStyle ? oStyles.Get(oParaPr.PStyle) : undefined;
+		var oParaStyle   = oParaPr.PStyle != null ? oStyles.Get(oParaPr.PStyle) : undefined;
 		
 		// horizontal align
 		var sJc = undefined;
@@ -3966,7 +3981,7 @@
 		var oNumPr           = null;
 		var oGlobalNumbering = null;
 		var oParaParent      = oPara.GetParent();
-		var oLogicDocument   = private_GetLogicDocument();
+		var oLogicDocument   = editor ? private_GetLogicDocument() : null;
 
 		if (!(oParaParent instanceof AscFormat.CDrawingDocContent) && oLogicDocument instanceof AscCommonWord.CDocument)
 		{
@@ -4023,12 +4038,15 @@
 			}
 		}
 
-		// Revisions
-		var aChanges = oLogicDocument.TrackRevisionsManager ? oLogicDocument.TrackRevisionsManager.GetElementChanges(oPara.Id) : [];
-
-		for (var nChange = 0; nChange < aChanges.length; nChange++)
+		// Revisions changes
+		if (oLogicDocument)
 		{
-			oParaObject.changes.push(this.SerRevisionChange(aChanges[nChange]));
+			var aChanges = oLogicDocument.TrackRevisionsManager ? oLogicDocument.TrackRevisionsManager.GetElementChanges(oPara.Id) : [];
+
+			for (var nChange = 0; nChange < aChanges.length; nChange++)
+			{
+				oParaObject.changes.push(this.SerRevisionChange(aChanges[nChange]));
+			}
 		}
 
 		return oParaObject;
@@ -4186,7 +4204,7 @@
 			start:     startPos,
 			end:       endPos,
 			userId:    oChange.UserId,
-			autor:     oChange.UserName,
+			author:     oChange.UserName,
 			value:     changeValue,
 			moveType:  sMoveType,
 			type:      sChangeType
@@ -4704,9 +4722,9 @@
 			footer: private_MM2Twips(oPageMargins.Footer),
 			gutter: private_MM2Twips(oPageMargins.Gutter),
 			header: private_MM2Twips(oPageMargins.Header),
-			left: private_MM2Twips(oPageMargins.Left),
-			right: private_MM2Twips(oPageMargins.Right),
-			top: private_MM2Twips(oPageMargins.Top)
+			left:   private_MM2Twips(oPageMargins.Left),
+			right:  private_MM2Twips(oPageMargins.Right),
+			top:    private_MM2Twips(oPageMargins.Top)
 		}
 	};
 	WriterToJSON.prototype.SerPageSize = function(oPageSize)
@@ -5091,7 +5109,7 @@
 
 		return {
 			userId:   oReviewInfo.UserId,
-			autor:    oReviewInfo.UserName,
+			author:    oReviewInfo.UserName,
 			date:     oReviewInfo.DateTime,
 			moveType: sMoveType,
 			prevType: sPrevType,
@@ -7362,9 +7380,9 @@
 		if (!oTextPr)
 			return oTextPr;
 		
-		var oStyles = private_GetStyles();
+		var oStyles = oTextPr.RStyle != null ? private_GetStyles() : null;
 		// run style
-		var oRunStyle = oTextPr.RStyle ? oStyles.Get(oTextPr.RStyle) : undefined;
+		var oRunStyle = oTextPr.RStyle != null ? oStyles.Get(oTextPr.RStyle) : undefined;
 		
 		var sVAlign = undefined;
 
@@ -8118,7 +8136,7 @@
 		var isStartComment = oComment.Start;
 		var oCommentObj    = {
 			id:    oComment.CommentId,
-			autor: oCommentData.Get_Name(),
+			author: oCommentData.Get_Name(),
 			text:  oCommentData.Get_Text()
 		};
 
@@ -8202,6 +8220,8 @@
 		this.notesMasterMap = {};
 		this.themesMap      = {};
 		this.drawingsMap    = {};
+		this.curWorksheet   = null;
+		this.Workbook       = null;
 	}
 
 	ReaderFromJSON.prototype.ParaRunFromJSON = function(oParsedRun, oParentPara, notCompletedFields)
@@ -8498,7 +8518,7 @@
 		}
 
 		oReviewInfo.UserId   = oParsedReviewInfo.userId;
-		oReviewInfo.UserName = oParsedReviewInfo.autor;
+		oReviewInfo.UserName = oParsedReviewInfo.author;
 		oReviewInfo.DateTime = oParsedReviewInfo.date;
 		oReviewInfo.MoveType = nMoveType;
 		oReviewInfo.PrevType = nPrevType;
@@ -8529,8 +8549,8 @@
 		}
 
 		// style 
-		var oStyle    = oPr.rStyle ? this.StyleFromJSON(oPr.rStyle) : oPr.rStyle;
-		var oStyles = private_GetStyles();
+		var oStyle  = oPr.rStyle ? this.StyleFromJSON(oPr.rStyle) : oPr.rStyle;
+		var oStyles = oStyle ? private_GetStyles() : null;
 		if (oStyle)
 		{
 			var nExistingStyle = oStyles.GetStyleIdByName(oStyle.Name);
@@ -8683,7 +8703,7 @@
 				case "commentRangeStart":
 					var CommentData = new AscCommon.CCommentData();
 					CommentData.SetText(aContent[nElm].text);
-					CommentData.SetUserName(aContent[nElm].autor);
+					CommentData.SetUserName(aContent[nElm].author);
 					Comment = new AscCommon.CComment(oDocument.Comments, CommentData);
 					oDocument.Comments.Add(Comment);
 					CommentStart = new AscCommon.ParaComment(true, Comment.Get_Id());
@@ -8773,7 +8793,7 @@
 
 		// style 
 		var oStyle    = oParsedParaPr.pStyle ? this.StyleFromJSON(oParsedParaPr.pStyle) : oParsedParaPr.pStyle;
-		var oStyles   = private_GetStyles();
+		var oStyles   = oStyle ? private_GetStyles() : null;
 		if (oStyle)
 		{
 			var nExistingStyle = oStyles.GetStyleIdByName(oStyle.Name);
@@ -9804,7 +9824,7 @@
 		oChange.put_EndPos(endPos);
 		oChange.SetMoveType(nMoveType);
 		oChange.SetUserId(oParsedChange.userId);
-		oChange.SetUserName(oParsedChange.autor);
+		oChange.SetUserName(oParsedChange.author);
 		oChange.SetDateTime(oParsedChange.date);
 
 		oDocument.TrackRevisionsManager.AddChange(oElement.GetId(), oChange);
