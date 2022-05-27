@@ -10005,7 +10005,7 @@
 			for (let i = 0; i < infoOfDrawings.length; i += 1) {
 				const drawInfo = infoOfDrawings[i];
 				const type = drawInfo.type;
-				const bullet = new CPresentationBullet();
+				const bullet = new AscCommonWord.CPresentationBullet();
 				const textPr = new CTextPr();
 				textPr.Color = g_oDocumentDefaultStrokeColor;
 				switch (type)
@@ -10308,7 +10308,7 @@
 		}
 
 		const fonts = [];
-		for (const familyName in fontsDict)
+		for (let familyName in fontsDict)
 		{
 			fonts.push(new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(familyName), 0, "", 0, null));
 		}

@@ -1503,6 +1503,13 @@
         }
         return null;
     };
+    CGraphicObjectBase.prototype.hasCustomPrompt = function(){
+        let oNvPr = this.getNvProps();
+        if(oNvPr && oNvPr.ph) {
+            return oNvPr.ph.hasCustomPrompt === true;
+        }
+        return false;
+    };
     CGraphicObjectBase.prototype.setTitle = function(sTitle){
         if(undefined === sTitle || null === sTitle){
             return;

@@ -602,3 +602,4 @@ CPresentationBullet.prototype.IsAlpha = function()
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].getAdaptedNumberingFormat = getAdaptedNumberingFormat;
+window['AscCommonWord'].CPresentationBullet = CPresentationBullet;

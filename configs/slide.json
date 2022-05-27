@@ -26,6 +26,7 @@
 			"word/apiCommon.js",
 			"slide/api.js",
 			"common/spell/spell.js",
+			"common/zlib/zlib.js",
 			"word/Editor/Table/TableLook.js"
 		],
 		"common": [
@@ -255,7 +256,6 @@
 
 			"common/Native/native_graphics.js",
 			
-			"common/zlib/zlib.js",
 			"vendor/easysax.js",
 			"common/openxml.js",
 			"common/Shapes/SerializeXml.js",

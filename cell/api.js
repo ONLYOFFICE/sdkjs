@@ -1470,7 +1470,7 @@ var editor;
 
 		var openXml = AscCommon.openXml;
 		var pivotCaches = {};
-		var xmlParserContext = new XmlParserContext();
+		var xmlParserContext = new AscCommon.XmlParserContext();
 		xmlParserContext.DrawingDocument = this.wbModel.DrawingDocument;
 		var initOpenManager = xmlParserContext.InitOpenManager = AscCommonExcel.InitOpenManager ? new AscCommonExcel.InitOpenManager(null, wb) : null;
 		var wbPart = null;

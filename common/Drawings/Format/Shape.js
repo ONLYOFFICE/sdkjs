@@ -4413,16 +4413,27 @@ CShape.prototype.getSmartArtShapePoint = function () {
                 {
                     return;
                 }
-                var text;
-                if(typeof AscCommonSlide !== "undefined" && AscCommonSlide.CNotes && this.parent instanceof AscCommonSlide.CNotes && this.nvSpPr.nvPr.ph.type === AscFormat.phType_body){
-                    text = AscCommon.translateManager.getValue("Click to add notes");
-                } else if (this.isObjectInSmartArt()) {
-                    text = AscCommon.translateManager.getValue(pointContent[0].prSet.phldrT);
-                } else {
-                    text = this.getPlaceholderName();
+                let aHierarchy = this.getHierarchy();
+                for (let nPlaceholder = 0; nPlaceholder < aHierarchy.length; ++nPlaceholder) {
+                    let oHSp = aHierarchy[nPlaceholder];
+                    if (isRealObject(oHSp) && oHSp.hasCustomPrompt()) {
+                        if(oHSp.txBody && oHSp.txBody.content) {
+                            this.txBody.content2 = oHSp.txBody.content.Copy(this.txBody, this.getDrawingDocument(), {});
+                        }
+                    }
                 }
 
+
+
                 if (!this.txBody.content2){
+                    var text;
+                    if(typeof AscCommonSlide !== "undefined" && AscCommonSlide.CNotes && this.parent instanceof AscCommonSlide.CNotes && this.nvSpPr.nvPr.ph.type === AscFormat.phType_body){
+                        text = AscCommon.translateManager.getValue("Click to add notes");
+                    } else if (this.isObjectInSmartArt()) {
+                        text = AscCommon.translateManager.getValue(pointContent[0].prSet.phldrT);
+                    } else {
+                        text = this.getPlaceholderName();
+                    }
                     this.txBody.content2 = AscFormat.CreateDocContentFromString(text, this.getDrawingDocument(), this.txBody);
                     if (this.txBody.content && this.isObjectInSmartArt()) {
                         var oContent = this.txBody.content;

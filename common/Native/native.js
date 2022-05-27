@@ -320,7 +320,7 @@ var performance = window.performance = (function(){
 (function(window, undefined){
 	function ZLib()
 	{
-		this.engine = CreateNativeZip();
+		//this.engine = CreateNativeZip();
 		this.files = {};
 	}
 	ZLib.prototype.isModuleInit = true;

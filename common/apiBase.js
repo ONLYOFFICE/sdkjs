@@ -1456,7 +1456,7 @@
 								t.setOpenedAt(input["openedAt"]);
 								var urls = input["data"];
 								AscCommon.g_oDocumentUrls.init(urls);
-								var documentUrl = urls['Editor.bin'] || urls['Editor.' + t._editorDefaultExt()];
+								var documentUrl = urls['Editor.bin'] || urls['origin.' + t._editorDefaultExt()];
 								if (t.isUseNativeViewer && !documentUrl)
 									documentUrl = urls['origin.' + t.documentFormat] || urls['origin.pdf'] || urls['origin.xps'] || urls['origin.oxps'] || urls['origin.djvu'];
 								if (null != documentUrl) {
@@ -2274,7 +2274,7 @@
 	};
 	baseEditorsApi.prototype.saveDocumentToZip  = function(model, editorType, callback)
 	{
-		var context = new XmlWriterContext(editorType);
+		var context = new AscCommon.XmlWriterContext(editorType);
 		var jsZipWrapper = new AscCommon.JSZipWrapper();
 		jsZipWrapper.create();
 		model.toZip(jsZipWrapper, context);

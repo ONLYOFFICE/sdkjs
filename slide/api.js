@@ -1574,7 +1574,7 @@ background-repeat: no-repeat;\
 		if (!data) {
 			return false;
 		}
-		var xmlParserContext = new XmlParserContext();
+		var xmlParserContext = new AscCommon.XmlParserContext();
 		xmlParserContext.DrawingDocument = this.WordControl.m_oDrawingDocument;
 		var jsZipWrapper = new AscCommon.JSZipWrapper();
 		if (!jsZipWrapper.loadSync(data)) {
