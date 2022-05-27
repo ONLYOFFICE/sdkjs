@@ -1461,9 +1461,6 @@ var editor;
 
 	spreadsheet_api.prototype.openDocumentFromZip = function (wb, data) {
 		var t = this;
-		if (t.isChartEditor) {
-			return false;
-		}
 		if (!data) {
 			return true;
 		}
