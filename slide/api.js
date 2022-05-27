@@ -1606,7 +1606,7 @@ background-repeat: no-repeat;\
 		}
 
 
-		var documentPart = doc.getPartByRelationshipType(openXml.Types.mainDocument.relationType);
+		var documentPart = doc.getPartByRelationshipType(openXml.Types.presentation.relationType);
 		var contentDocument = documentPart.getDocumentContent();
 		reader = new StaxParser(contentDocument, documentPart, xmlParserContext);
 		this.WordControl.m_oLogicDocument.fromXml(reader, true);

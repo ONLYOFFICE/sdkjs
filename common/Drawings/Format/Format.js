@@ -10720,7 +10720,7 @@
 			}
 
 			writer.WriteXmlNodeStart(name_);
-			//writer.WriteXmlNullableAttributeString("bwMode", this.bwMode);
+			writer.WriteXmlAttributeString("bwMode", "auto");
 			writer.WriteXmlAttributesEnd();
 
 			writer.WriteXmlNullable(this.xfrm, "a:xfrm");
@@ -12636,7 +12636,8 @@
 				}
 			}
 		};
-		CTextStyles.prototype.toXml = function (writer) {
+		CTextStyles.prototype.toXml = function (writer, sName) {
+
 
 			writer.WriteXmlNodeStart("p:txStyles");
 			writer.WriteXmlAttributesEnd();

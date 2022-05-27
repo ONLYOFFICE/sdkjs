@@ -375,7 +375,7 @@
         writer.WriteXmlAttributesEnd();
         this.cSld.toXml(writer);
         AscFormat.CClrMapOvr.prototype.static_WriteCrlMapAsOvr(writer, this.clrMap);
-        writer.WriteXmlNodeStart("p:notes");
+        writer.WriteXmlNodeEnd("p:notes");
     };
 
     function CreateNotes(){

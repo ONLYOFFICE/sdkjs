@@ -11856,17 +11856,6 @@ CPresentation.prototype.toZip = function(zip, context) {
 
     let oUriMap = {};
 
-    if (this.Core) {
-        let corePart = filePart.addPart(AscCommon.openXml.Types.coreFileProperties);
-        corePart.part.setDataXml(this.Core, memory);
-        memory.Seek(0);
-    }
-
-    if (this.App) {
-        let appPart = filePart.addPart(AscCommon.openXml.Types.extendedFileProperties);
-        appPart.part.setDataXml(this.App, memory);
-        memory.Seek(0);
-    }
 
     let presentationPart = filePart.addPart(AscCommon.openXml.Types.presentation);
 
@@ -11913,6 +11902,7 @@ CPresentation.prototype.toZip = function(zip, context) {
     let aThemes = [];
     let aNotesMasters = [];
     let aNotes = [];
+    let oNotesParts = {};
 
     let oAddedMap = {};
     for(let nSlide = 0; nSlide < this.Slides.length; ++nSlide) {
@@ -11953,6 +11943,7 @@ CPresentation.prototype.toZip = function(zip, context) {
         let oThemePart = presentationPart.part.addPartWithoutRels(AscCommon.openXml.Types.theme);
         oUriMap[oTheme.Id] = oThemePart.uri;
         oThemePart.setDataXml(oTheme, memory);
+        presentationPart.part.addRelationship(AscCommon.openXml.Types.theme.relationType, oThemePart.uri.replace("/ppt/", ""));
         memory.Seek(0);
     }
     for(let nSlideMaster = 0; nSlideMaster < aSlideMasters.length; ++nSlideMaster) {
@@ -11983,15 +11974,17 @@ CPresentation.prototype.toZip = function(zip, context) {
         memory.Seek(0);
         oUriMap[oNotesMaster.Id] = oNotesMasterPart.part.uri;
         oNotesMasterPart.part.addRelationship(AscCommon.openXml.Types.theme.relationType, fGetRelPath(oUriMap[oNotesMaster.Theme.Id]));
+        memory.context.addNotesMasterRel(oNotesMasterPart.rId);
     }
 
     for(let nNotes = 0; nNotes < aNotes.length; ++nNotes) {
         let oNotes = aNotes[nNotes];
-        let oNotesPart = presentationPart.part.addPart(AscCommon.openXml.Types.notesSlide);
-        oNotesPart.part.setDataXml(oNotes, memory);
+        let oNotesPart = presentationPart.part.addPartWithoutRels(AscCommon.openXml.Types.notesSlide);
+        oNotesPart.setDataXml(oNotes, memory);
         memory.Seek(0);
-        oUriMap[oNotes.Id] = oNotesPart.part.uri;
-        oNotesPart.part.addRelationship(AscCommon.openXml.Types.notesMaster.relationType, fGetRelPath(oUriMap[oNotes.Master.Id]));
+        oUriMap[oNotes.Id] = oNotesPart.uri;
+        oNotesParts[oNotes.Id] = oNotesPart;
+
     }
 
 
@@ -12002,10 +11995,34 @@ CPresentation.prototype.toZip = function(zip, context) {
         memory.Seek(0);
         memory.context.addSlideRel(slidePart.rId);
         slidePart.part.addRelationship(AscCommon.openXml.Types.slideLayout.relationType, fGetRelPath(oUriMap[oSlide.Layout.Id]));
+
+        oUriMap[oSlide.Id] = slidePart.part.uri;
+        if(oSlide.notes) {
+            let oNotes = oSlide.notes;
+            let sNotesUri = oUriMap[oNotes.Id];
+            let oNotesPart = oNotesParts[oNotes.Id];
+            if(sNotesUri && oNotesPart) {
+                slidePart.part.addRelationship(AscCommon.openXml.Types.notesSlide.relationType, fGetRelPath(sNotesUri));
+                oNotesPart.addRelationship(AscCommon.openXml.Types.slide.relationType, fGetRelPath(slidePart.part.uri));
+                oNotesPart.addRelationship(AscCommon.openXml.Types.notesMaster.relationType, fGetRelPath(oUriMap[oNotes.Master.Id]));
+            }
+        }
     }
 
+    if (this.Core) {
+        let corePart = filePart.addPart(AscCommon.openXml.Types.coreFileProperties);
+        corePart.part.setDataXml(this.Core, memory);
+        memory.Seek(0);
+    }
+
+    if (this.App) {
+        let appPart = filePart.addPart(AscCommon.openXml.Types.extendedFileProperties);
+        appPart.part.setDataXml(this.App, memory);
+        memory.Seek(0);
+    }
+
+
     presentationPart.part.setDataXml(this, memory);
-    presentationPart.part.addRelationship(AscCommon.openXml.Types.theme.relationType, oUriMap[aThemes[0].Id].replace("/ppt/", ""));
     memory.Seek(0);
 
 };
@@ -12040,7 +12057,7 @@ CPresentation.prototype.toXml = function (writer) {
     let oContext = writer.context;
     (new IdList("p:sldMasterIdLst")).writeRIdList(writer, oContext.sldMasterIdLst, "p:sldMasterId");
     (new IdList("p:notesMasterIdLst")).writeRIdList(writer, oContext.notesMasterIdLst, "p:notesMasterId");
-    (new IdList("p:handoutMasterIdLst")).writeRIdList(writer, oContext.notesMasterIdLst, "p:handoutMasterId");
+    (new IdList("p:handoutMasterIdLst")).writeRIdList(writer, oContext.handoutMasterIdLst, "p:handoutMasterId");
     //writer.WriteArray("p:embeddedFontLst", embeddedFontLst);
     (new IdList("p:sldIdLst")).writeRIdList(writer, oContext.sldIdLst, "p:sldId");
 

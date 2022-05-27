@@ -552,6 +552,14 @@
 			}
 		}
 	};
+	AscCommonWord.ParaHyperlink.prototype.toDrawingML = function(writer) {
+		for(let nIdx = 0; nIdx < this.Content.length; ++nIdx) {
+			let oElement = this.Content[nIdx];
+			if(oElement.toDrawingML) {
+				oElement.toDrawingML(writer);
+			}
+		}
+	};
 	AscCommonWord.Paragraph.prototype.toDrawingML = function(writer) {
 		writer.WriteXmlNodeStart("a:p");
 		writer.WriteXmlAttributesEnd();
@@ -620,7 +628,7 @@
 		writer.WriteXmlAttributesEnd();
 
 		if (this.Pr) {
-			this.Pr.toDrawingML(writer, "a:rPr");
+			this.Pr.toDrawingML(writer, "a:rPr", this);
 		}
 		this.toDrawingMLText(writer, nStart, nEnd);
 		writer.WriteXmlNodeEnd("a:r");
@@ -787,7 +795,7 @@
 			}
 		}
 	};
-	AscCommonWord.CTextPr.prototype.toDrawingML = function (writer, sName) {
+	AscCommonWord.CTextPr.prototype.toDrawingML = function (writer, sName, oRun) {
 		writer.WriteXmlNodeStart(sName);
 		//writer.WriteXmlAttributeString("kumimoji", kumimoji);
 		
@@ -874,13 +882,28 @@
 		if(this.RFonts.CS) 
 			writeTypeface(writer, "a:cs", this.RFonts.CS.Name);
 		//writer.Write(sym);
-		if(this.hlinkClick) {
-			this.hlinkClick.toXml(writer, "a:hlinkClick");
+
+		if(oRun) {
+			let oParaHyperlink = null;
+			if(oRun.Parent instanceof ParaHyperlink) {
+				oParaHyperlink = oRun.Parent;
+			}
+			if(oParaHyperlink) {
+				let oHyperlink = new AscFormat.CT_Hyperlink();
+				oHyperlink.id = oParaHyperlink.Value;
+				if (oParaHyperlink.tooltip) {
+					oHyperlink.tooltip = oParaHyperlink.tooltip;
+				}
+				oHyperlink.toXml(writer, "a:hlinkClick");
+			}
 		}
-	
-		if(this.hlinkMouseOver) {
-			this.hlinkMouseOver.toXml(writer, "a:hlinkMouseOver");
-		}
+		// if(this.hlinkClick) {
+		// 	this.hlinkClick.toXml(writer, "a:hlinkClick");
+		// }
+		//
+		// if(this.hlinkMouseOver) {
+		// 	this.hlinkMouseOver.toXml(writer, "a:hlinkMouseOver");
+		// }
 		//writer.Write(rtl);
 
 		writer.WriteXmlNodeEnd(sName);
@@ -1660,22 +1683,22 @@
 
 		if(oBorders.Left) {
 			let oLn = new AscFormat.CLn();
-			oLn.fromDrawingMLTableStyle(oBorders.Left);
+			oLn.fromDocumentBorder(oBorders.Left);
 			oLn.toXml(writer, "a:lnL");
 		}
 		if(oBorders.Right) {
 			let oLn = new AscFormat.CLn();
-			oLn.fromDrawingMLTableStyle(oBorders.Right);
+			oLn.fromDocumentBorder(oBorders.Right);
 			oLn.toXml(writer, "a:lnR");
 		}
 		if(oBorders.Top) {
 			let oLn = new AscFormat.CLn();
-			oLn.fromDrawingMLTableStyle(oBorders.Top);
+			oLn.fromDocumentBorder(oBorders.Top);
 			oLn.toXml(writer, "a:lnT");
 		}
 		if(oBorders.Bottom) {
 			let oLn = new AscFormat.CLn();
-			oLn.fromDrawingMLTableStyle(oBorders.Bottom);
+			oLn.fromDocumentBorder(oBorders.Bottom);
 			oLn.toXml(writer, "a:lnB");
 		}
 		if(this.Shd && this.Shd.Unifill) {
