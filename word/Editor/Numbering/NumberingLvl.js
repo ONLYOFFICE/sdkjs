@@ -723,6 +723,16 @@ CNumberingLvl.prototype.SetByFormat = function(nLvl, nType, sFormatText, nAlign)
 {
 	this.Jc      = nAlign;
 	this.SetFormat(nType);
+	this.SetLvlTextFormat(nLvl, sFormatText);
+	this.TextPr = new CTextPr();
+};
+/**
+ * Выставляем LvlText по заданному формату
+ * @param nLvl {number} 0..8
+ * @param sFormatText
+ */
+CNumberingLvl.prototype.SetLvlTextFormat = function(nLvl, sFormatText)
+{
 	this.LvlText = [];
 
 	var nLastPos = 0;
@@ -754,8 +764,21 @@ CNumberingLvl.prototype.SetByFormat = function(nLvl, nType, sFormatText, nAlign)
 		for (var nSubIndex = 0, nSubLen = sSubString.length; nSubIndex < nSubLen; ++nSubIndex)
 			this.LvlText.push(new CNumberingLvlTextString(sSubString.charAt(nSubIndex)));
 	}
-
-	this.TextPr = new CTextPr();
+};
+/**
+ * Получаем LvlText в виде строки для записи в xml
+ * @returns {string}
+ */
+CNumberingLvl.prototype.GetLvlTextFormat = function() {
+	var res = "";
+	for (var i = 0; i < this.LvlText.length; ++i) {
+		if (this.LvlText[i].IsLvl()) {
+			res += "%" + (this.LvlText[i].Value + 1)
+		} else {
+			res += this.LvlText[i].Value
+		}
+	}
+	return res;
 };
 /**
  * Собираем статистику документа о количестве слов, букв и т.д.

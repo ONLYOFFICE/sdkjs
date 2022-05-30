@@ -60,10 +60,14 @@ var g_dKoef_pt_to_mm = 25.4 / 72;
 var g_dKoef_pc_to_mm = g_dKoef_pt_to_mm / 12;
 var g_dKoef_in_to_mm = 25.4;
 var g_dKoef_twips_to_mm = g_dKoef_pt_to_mm / 20;
-var g_dKoef_emu_to_mm = 1 / 36000;
 var g_dKoef_mm_to_pt = 1 / g_dKoef_pt_to_mm;
 var g_dKoef_mm_to_twips = 1 / g_dKoef_twips_to_mm;
 var g_dKoef_mm_to_emu = 36000;
+var g_dKoef_emu_to_mm = 1 / 36000;
+var g_dKoef_emu_to_twips = g_dKoef_emu_to_mm * g_dKoef_mm_to_twips;
+var g_dKoef_twips_to_pt = 20;
+var g_dKoef_twips_to_emu = 1 / g_dKoef_emu_to_twips;
+var g_dKoef_pt_to_twips = 1 / g_dKoef_twips_to_pt;
 
 var tblwidth_Auto = 0x00;
 var tblwidth_Mm   = 0x01;
@@ -10143,6 +10147,31 @@ CDocumentColor.prototype.SetFromColor = function(oColor)
 	this.b    = undefined !== oColor.b ? oColor.b : 0;
 	this.Auto = undefined !== oColor.Auto ? oColor.Auto : false;
 };
+CDocumentColor.prototype.SetFromHexColor = function(val) {
+	this.Auto = false;
+	if ("auto" === val || "none" === val) {
+		this.Auto = true;
+	} else if (AscFormat.mapPrstColor[val]) {
+		var rgb = AscFormat.mapPrstColor[val];
+		this.r = (rgb >> 16) & 0xFF;
+		this.g = (rgb >> 8) & 0xFF;
+		this.b = rgb & 0xFF;
+	} else if (6 <= val.length || 3 === val.length) {
+		var rgba = AscCommon.RgbaHexToRGBA(val);
+		this.r = rgba.R;
+		this.g = rgba.G;
+		this.b = rgba.B;
+	} else {
+		this.Auto = true;
+	}
+};
+CDocumentColor.prototype.ToHexColor = function() {
+	if (this.Auto) {
+		return "auto";
+	} else {
+		return AscCommon.ByteToHex(this.r) + AscCommon.ByteToHex(this.g) + AscCommon.ByteToHex(this.b);
+	}
+};
 
 CDocumentColor.prototype.ConvertToUniColor = function()
 {
@@ -10851,6 +10880,26 @@ CDocumentBorder.prototype.IsNone = function()
 {
 	return (this.Value === border_None);
 };
+CDocumentBorder.prototype.setSizeIn8Point = function(val)
+{
+	if(null !== val && undefined !== val) {
+		this.Size = g_dKoef_pt_to_mm * val / 8;
+	}
+};
+CDocumentBorder.prototype.getSizeIn8Point = function()
+{
+	return undefined !== this.Size ? Math.round(8 * this.Size * g_dKoef_mm_to_pt) : undefined;
+};
+CDocumentBorder.prototype.setSpaceInPoint = function(val)
+{
+	if(null !== val && undefined !== val) {
+		this.Space = g_dKoef_pt_to_mm * val;
+	}
+};
+CDocumentBorder.prototype.getSpaceInPoint = function(val)
+{
+	return undefined !== this.Space ? Math.round(this.Space * g_dKoef_mm_to_pt) : undefined;
+};
 /**
  * Получаем рассчитанную толщину линии в зависимости от типа.
  * @returns {number}
@@ -10999,6 +11048,29 @@ CTableMeasurement.prototype.WriteToBinary = function(oWriter)
 	// Long   : Type
 	oWriter.WriteDouble(this.W);
 	oWriter.WriteLong(this.Type);
+};
+CTableMeasurement.prototype.SetValueByType = function(val)
+{
+	if (null !== val && undefined !== val) {
+		if (tblwidth_Mm == this.Type) {
+			this.W = g_dKoef_twips_to_mm * val;
+		} else if (tblwidth_Pct == this.Type) {
+			this.W = 2 * val / 100;
+		} else {
+			this.W = val;
+		}
+	}
+};
+CTableMeasurement.prototype.GetValueByType = function() {
+	var res = this.W;
+	if (null !== res && undefined !== res) {
+		if (tblwidth_Mm == this.Type) {
+			res = Math.round(AscCommonWord.g_dKoef_mm_to_twips * this.W);
+		} else if (tblwidth_Pct == this.Type) {
+			res = Math.round(100 * this.W / 2);
+		}
+	}
+	return res;
 };
 
 function CTablePr()
@@ -15203,6 +15275,28 @@ CParaTab.prototype.GetLeader = function()
 {
 	return this.Leader;
 };
+CParaTab.prototype.IsValid = function()
+{
+	return null != this.Pos && null != this.Value;
+}
+CParaTab.prototype.Correct_Content = function()
+{
+	if(null != oNewTab.Pos && null != oNewTab.Value)
+	{
+		if (4 === this.Value) {
+			oNewTab.Value = tab_Right;
+		} else if (6 === this.Value) {
+			oNewTab.Value = tab_Left;
+		} else if (tab_Bar === this.Value || tab_Decimal) {
+			oNewTab.Value = tab_Left;
+		} else if (6 === this.Value) {
+			oNewTab.Value = tab_Left;
+		}
+
+		Tabs.Add(oNewTab);
+	}
+};
+
 
 function CParaTabs()
 {
@@ -15705,6 +15799,19 @@ CParaSpacing.prototype.IsEqual = function(oSpacing)
 		&& IsEqualNullableFloatNumbers(this.BeforePct, oSpacing.BeforePct)
 		&& this.BeforeAutoSpacing === oSpacing.BeforeAutoSpacing
 		&& this.AfterAutoSpacing === oSpacing.AfterAutoSpacing);
+};
+CParaSpacing.prototype.SetLineTwips = function (val) {
+	if (null !== val && undefined !== val) {
+		if (val < 0) {
+			val = Math.abs(val);
+			this.LineRule = Asc.linerule_Exact;
+		}
+		if (Asc.linerule_Auto === this.LineRule) {
+			this.Line = val / 240;
+		} else {
+			this.Line = g_dKoef_twips_to_mm * val;
+		}
+	}
 };
 
 function CNumPr(sNumId, nLvl)
@@ -17229,7 +17336,7 @@ CParaPr.prototype.Get_PresentationBullet = function(theme, colorMap)
 		{
 			case AscFormat.BULLET_TYPE_BULLET_CHAR:
 			{
-				Bullet.m_nType = numbering_presentationnumfrmt_Char;
+				Bullet.m_nType = AscFormat.numbering_presentationnumfrmt_Char;
 				if (typeof this.Bullet.bulletType.Char === "string" && this.Bullet.bulletType.Char.length > 0)
 				{
 					Bullet.m_sChar = this.Bullet.bulletType.Char.substring(0, 1);
@@ -17260,7 +17367,7 @@ CParaPr.prototype.Get_PresentationBullet = function(theme, colorMap)
 			}
 			case AscFormat.BULLET_TYPE_BULLET_BLIP :
 			{
-				Bullet.m_nType = numbering_presentationnumfrmt_Blip;
+				Bullet.m_nType = AscFormat.numbering_presentationnumfrmt_Blip;
 
 				var imageBulletURL = this.Bullet.getImageBulletURL();
 				if (imageBulletURL)
@@ -17753,10 +17860,15 @@ window["AscCommonWord"].CDocumentShd = CDocumentShd;
 window["AscCommonWord"].g_dKoef_pt_to_mm = g_dKoef_pt_to_mm;
 window["AscCommonWord"].g_dKoef_pc_to_mm = g_dKoef_pc_to_mm;
 window["AscCommonWord"].g_dKoef_in_to_mm = g_dKoef_in_to_mm;
+window["AscCommonWord"].g_dKoef_twips_to_mm = g_dKoef_twips_to_mm;
+window["AscCommonWord"].g_dKoef_emu_to_mm = g_dKoef_emu_to_mm;
+window["AscCommonWord"].g_dKoef_emu_to_twips = g_dKoef_emu_to_twips;
 window["AscCommonWord"].g_dKoef_mm_to_twips = g_dKoef_mm_to_twips;
 window["AscCommonWord"].g_dKoef_mm_to_pt = g_dKoef_mm_to_pt;
 window["AscCommonWord"].g_dKoef_mm_to_emu = g_dKoef_mm_to_emu;
-window["AscCommonWord"].g_dKoef_emu_to_mm = g_dKoef_emu_to_mm;
+window["AscCommonWord"].g_dKoef_twips_to_pt = g_dKoef_twips_to_pt;
+window["AscCommonWord"].g_dKoef_twips_to_emu = g_dKoef_twips_to_emu;
+window["AscCommonWord"].g_dKoef_pt_to_twips = g_dKoef_pt_to_twips;
 window["AscCommonWord"].border_Single = border_Single;
 window["AscCommonWord"].Default_Tab_Stop = Default_Tab_Stop;
 window["AscCommonWord"].highlight_None = highlight_None;

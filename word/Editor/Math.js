@@ -134,6 +134,9 @@ CMathPropertiesSettings.prototype.Merge = function(Pr)
     if(Pr.brkBin !== null && Pr.brkBin !== undefined)
         this.brkBin = Pr.brkBin;
 
+    if(Pr.brkBinSub !== null && Pr.brkBinSub !== undefined)
+        this.brkBinSub = Pr.brkBinSub;
+
     if(Pr.dispDef !== null && Pr.dispDef !== undefined)
         this.dispDef = Pr.dispDef;
 	
@@ -3653,6 +3656,31 @@ ParaMath.prototype.CheckSpelling = function(oCollector, nDepth)
 
 	oCollector.FlushWord();
 };
+//----------------------------------------------------------------------------------------------------------------------
+// Search
+//----------------------------------------------------------------------------------------------------------------------
+ParaMath.prototype.Search = function(oParaSearch)
+{
+	this.Root.Search(oParaSearch);
+};
+ParaMath.prototype.AddSearchResult = function(SearchResult, Start, ContentPos, Depth)
+{
+	this.Root.AddSearchResult(SearchResult, Start, ContentPos, Depth);
+};
+ParaMath.prototype.ClearSearchResults = function()
+{
+	this.Root.ClearSearchResults();
+};
+ParaMath.prototype.RemoveSearchResult = function(oSearchResult)
+{
+	this.Root.RemoveSearchResult(oSearchResult);
+};
+ParaMath.prototype.GetSearchElementId = function(bNext, bUseContentPos, ContentPos, Depth)
+{
+	return this.Root.GetSearchElementId(bNext, bUseContentPos, ContentPos, Depth);
+};
+//----------------------------------------------------------------------------------------------------------------------
+
 
 function MatGetKoeffArgSize(FontSize, ArgSize)
 {

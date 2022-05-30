@@ -1748,7 +1748,7 @@
 
 			_readExcelBinary: function(base64, tempWorkbook, selectAllSheet) {
 				var oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
-				oBinaryFileReader.copyPasteObj.selectAllSheet = selectAllSheet;
+				oBinaryFileReader.InitOpenManager.copyPasteObj.selectAllSheet = selectAllSheet;
 				var t = this;
 				var aPastedImages;
 
@@ -1799,7 +1799,7 @@
 						
 						if (diff !== 0) {
 							AscCommonExcel.executeInR1C1Mode(false, function () {
-								var pasteRange = AscCommonExcel.g_oRangeCache.getAscRange(oBinaryFileReader.copyPasteObj.activeRange);
+								var pasteRange = AscCommonExcel.g_oRangeCache.getAscRange(oBinaryFileReader.InitOpenManager.copyPasteObj.activeRange);
 								if (pasteRange) {
 									pasteRange = pasteRange.clone();
 									if (byCol) {
@@ -1813,7 +1813,7 @@
 						}
 					}
 
-					t.activeRange = oBinaryFileReader.copyPasteObj.activeRange;
+					t.activeRange = oBinaryFileReader.InitOpenManager.copyPasteObj.activeRange;
 					
 					aPastedImages = pptx_content_loader.End_UseFullUrl();
 					pptx_content_loader.Reader.AssignConnectedObjects();

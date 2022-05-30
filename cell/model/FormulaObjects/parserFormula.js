@@ -7836,7 +7836,7 @@ function parserFormula( formula, parent, _ws ) {
 	var g_cCalcRecursion =  new CalcRecursion();
 
 	function parseNum(str) {
-		if (str.indexOf("x") > -1 || str == "" || str.match(/\s+/))//исключаем запись числа в 16-ричной форме из числа.
+		if (str.indexOf("x") > -1 || str == "" || str.match(/^\s+$/))//исключаем запись числа в 16-ричной форме из числа.
 		{
 			return false;
 		}

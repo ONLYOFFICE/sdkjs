@@ -8037,7 +8037,9 @@
                 return;
 			}
             var oContext = oGraphics.m_oContext;
-            if(!oContext) {
+            var oFullTr = oGraphics.m_oFullTransform;
+            var oT = oGraphics.m_oCoordTransform;
+            if(!oContext || !oFullTr || !oT) {
                 return;
             }
 
@@ -8057,8 +8059,7 @@
             oGraphics.p_width(0);
             oGraphics._s();
 
-            
-            var oFullTr = oGraphics.m_oFullTransform;
+
             
             var _x1 = (oFullTr.TransformPointX(0, 0)) >> 0;
             var _y1 = (oFullTr.TransformPointY(0, 0)) >> 0;
@@ -8085,7 +8086,6 @@
 
             var sObjectId = this.getObjectId();
             var oObject = AscCommon.g_oTableId.Get_ById(sObjectId);
-            var oT = oGraphics.m_oCoordTransform;
             if(this.isPartOfMainSequence()) {
                 var nIdx = this.getIndexInSequence();
                 if(AscFormat.isRealNumber(nIdx)) {

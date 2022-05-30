@@ -5196,14 +5196,15 @@
 	 */
 	ApiDocument.prototype.SearchAndReplace = function(oProperties)
 	{
-		var sSearch     = oProperties["searchString"];
-		var sReplace    = oProperties["replaceString"];
-		var isMatchCase = undefined !== oProperties["matchCase"] ? oProperties.matchCase : true;
+		let oProps = new AscCommon.CSearchSettings();
+		oProps.SetText(oProperties["searchString"]);
+		oProps.SetMatchCase(undefined !== oProperties["matchCase"] ? oProperties.matchCase : true);
 
-		var oSearchEngine = this.Document.Search(sSearch, {MatchCase : isMatchCase});
+		var oSearchEngine = this.Document.Search(oProps);
 		if (!oSearchEngine)
 			return;
 
+		var sReplace = oProperties["replaceString"];
 		this.Document.ReplaceSearchElement(sReplace, true, null, false);
 	};
 	/**
@@ -5510,10 +5511,14 @@
 	{
 		if (isMatchCase === undefined)
 			isMatchCase	= false;
-		
+
+		let oProps = new AscCommon.CSearchSettings();
+		oProps.SetText(sText);
+		oProps.SetMatchCase(isMatchCase);
+
 		var foundItems 		= [];
 		var arrApiRanges	= [];
-		var docSearchEngine	= this.Document.Search(sText, {MatchCase : isMatchCase});
+		var docSearchEngine	= this.Document.Search(oProps);
 
 		var docSearchEngineElementsLenght = 0;
 		for (var FoundId in docSearchEngine.Elements)
@@ -5537,7 +5542,7 @@
 		for (var para in foundItems)
 		{
 			var oParagraph			= new ApiParagraph(foundItems[para]);
-			var arrOfParaApiRanges	= oParagraph.Search(sText, isMatchCase);
+			var arrOfParaApiRanges	= oParagraph.Search(oProps);
 
 			for (var itemRange = 0; itemRange < arrOfParaApiRanges.length; itemRange++)	
 				arrApiRanges.push(arrOfParaApiRanges[itemRange]);
@@ -7298,17 +7303,20 @@
 		var Api				= editor; 
 		var oDocument		= Api.GetDocument();
 		var SearchEngine;
+		let oProps = new AscCommon.CSearchSettings();
+		oProps.SetText(sText);
+		oProps.SetMatchCase(!!isMatchCase);
 
-		if (!oDocument.Document.SearchEngine.Compare(sText, {MatchCase: isMatchCase}))
+		if (!oDocument.Document.SearchEngine.Compare(oProps))
 		{
-			SearchEngine		= new CDocumentSearch();
-			SearchEngine.Set(sText, {MatchCase: isMatchCase});
-			this.Paragraph.Search(sText, {MatchCase: isMatchCase}, SearchEngine, 0)
+			SearchEngine		= new AscCommonWord.CDocumentSearch();
+			SearchEngine.Set(oProps);
+			this.Paragraph.Search(SearchEngine, 0)
 		}
 		else
 		{
 			SearchEngine = oDocument.Document.SearchEngine;
-			this.Paragraph.Search(sText, {MatchCase: isMatchCase}, SearchEngine, 0)
+			this.Paragraph.Search(SearchEngine, 0)
 		}
 
 		var SearchResults	= this.Paragraph.SearchResults;

@@ -199,10 +199,13 @@ CGraphicFrame.prototype.getDocContent= function()
         return null;
 };
 
-CGraphicFrame.prototype.setSpPr= function(spPr)
+CGraphicFrame.prototype.setSpPr = function(spPr)
 {
         History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GraphicFrameSetSpPr, this.spPr, spPr));
         this.spPr = spPr;
+        if(spPr) {
+            spPr.setParent(this);
+        }
 };
 
 CGraphicFrame.prototype.setGraphicObject= function(graphicObject)
@@ -239,11 +242,11 @@ CGraphicFrame.prototype.getObjectType= function()
         return AscDFH.historyitem_type_GraphicFrame;
 };
 
-CGraphicFrame.prototype.Search = function(Str, Props, SearchEngine, Type)
+CGraphicFrame.prototype.Search = function(SearchEngine, Type)
     {
         if(this.graphicObject)
         {
-            this.graphicObject.Search(Str, Props, SearchEngine, Type);
+            this.graphicObject.Search(SearchEngine, Type);
         }
 };
 
@@ -1384,6 +1387,113 @@ CGraphicFrame.prototype.Is_ThisElementCurrent = function()
         if(this.graphicObject && this.graphicObject.Document_CreateFontMap) {
             this.graphicObject.Document_CreateFontMap(oMap);
         }
+    };
+
+    CGraphicFrame.prototype.readChildXml = function (name, reader) {
+        switch (name) {
+            case "xfrm": {
+                let xfrm = new AscFormat.CXfrm();
+                xfrm.fromXml(reader);
+                if(!this.spPr) {
+                    this.setSpPr(new AscFormat.CSpPr());
+                }
+                this.spPr.setXfrm(xfrm);
+                break;
+            }
+            case "graphic": {
+                let graphic = new AscFormat.CT_GraphicalObject(this);
+                graphic.fromXml(reader);
+                let graphicObject = graphic.GraphicData && graphic.GraphicData.graphicObject;
+                if (graphicObject) {
+                    if(!(graphicObject instanceof AscCommonWord.CTable)) {
+                        graphicObject.setBDeleted(false);
+                        graphicObject.setParent(this);
+                        this.setGraphicObject(graphicObject);
+                    }
+                }
+                break;
+            }
+            case "nvGraphicFramePr": {
+                let oPr = new AscFormat.UniNvPr();
+                oPr.fromXml(reader);
+                this.setNvSpPr(oPr);
+                this.setLocks(oPr.getLocks());
+                break;
+            }
+        }
+    };
+    CGraphicFrame.prototype.getSpTreeDrawing = function () {
+        if(this.isTable()) {
+            return this;
+        }
+        else {
+            let oGraphicObject = this.graphicObject;
+            if(oGraphicObject) {
+                let oGraphicData = oGraphicObject.GraphicData;
+                if(oGraphicData) {
+                    let oDrawing = oGraphicData.graphicObject;
+                    if(oDrawing) {
+                        return oDrawing;
+                    }
+                }
+            }
+            return null;
+        }
+    };
+    CGraphicFrame.prototype.fromXml = function(reader, name) {
+        AscFormat.CGraphicObjectBase.prototype.fromXml.call(this, reader, name);
+
+        if(this.nvGraphicFramePr) {
+            let oSpTreeDrawing = this.getSpTreeDrawing();
+            if(oSpTreeDrawing && oSpTreeDrawing !== this) {
+                if(oSpTreeDrawing.setNvSpPr) {
+                    oSpTreeDrawing.setNvSpPr(this.nvGraphicFramePr.createDuplicate());
+                }
+            }
+        }
+    };
+	CGraphicFrame.prototype.toXml = function(writer, name) {
+        let sName = name || "p:graphicFrame";
+		var context = writer.context;
+		var objectId = context.objectId++;
+		writer.WriteXmlNodeStart(sName);
+		writer.WriteXmlAttributesEnd();
+
+		var ns = StaxParser.prototype.GetNSFromNodeName(sName);
+
+
+        let oSpTreeDrawing = this.getSpTreeDrawing();
+        let oUniNvPr = oSpTreeDrawing.getUniNvProps();
+        oUniNvPr.toXmlGrFrame(writer);
+		writer.WriteXmlNullable(oSpTreeDrawing.spPr && oSpTreeDrawing.spPr.xfrm, ns + "xfrm");
+        let oGraphicObject;
+        if(this.isTable()) {
+            oGraphicObject =  new AscFormat.CT_GraphicalObject(this);
+            oGraphicObject.GraphicData = new  AscFormat.CT_GraphicalObjectData(this);
+            oGraphicObject.GraphicData.graphicObject = this.graphicObject;
+            oGraphicObject.GraphicData.Uri = "http://schemas.openxmlformats.org/drawingml/2006/table";
+        }
+        else {
+            oGraphicObject = this.graphicObject;
+        }
+		writer.WriteXmlNullable(oGraphicObject, "a:graphic");
+		writer.WriteXmlNodeEnd(sName);
+	};
+
+    CGraphicFrame.prototype.static_CreateGraphicFrameFromDrawing = function (oDrawing) {
+        let Graphic = new AscFormat.CT_GraphicalObject();
+        Graphic.Namespace = ' xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"';
+        Graphic.GraphicData = new AscFormat.CT_GraphicalObjectData();
+        if(oDrawing.getObjectType() === AscDFH.historyitem_type_ChartSpace)
+            Graphic.GraphicData.Uri = "http://schemas.openxmlformats.org/drawingml/2006/chart";
+        else
+            Graphic.GraphicData.Uri = "http://schemas.microsoft.com/office/drawing/2010/slicer";
+        Graphic.GraphicData.graphicObject = oDrawing;
+
+        let newGraphicObject = AscFormat.ExecuteNoHistory(function(){return new AscFormat.CGraphicFrame();}, this, []);
+        newGraphicObject.spPr = oDrawing.spPr;
+        newGraphicObject.graphicObject = Graphic;
+        return newGraphicObject;
     };
 
     function ConvertToWordTableBorder(oBorder) {

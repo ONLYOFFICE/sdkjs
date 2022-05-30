@@ -32,6 +32,11 @@
 
 "use strict";
 
+var footnote_ContinuationNotice  = 0;
+var footnote_ContinuationSeparator   = 1;
+var footnote_Normal = 2;
+var footnote_Separator   = 3;
+
 /**
  * Класс представляющий сноску в документе.
  * @param {CDocumentControllerBase} DocumentController

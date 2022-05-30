@@ -108,7 +108,7 @@
         this.asc_CloseFile();
 
         this.FontLoader.IsLoadDocumentFonts2 = true;
-        this.OpenDocument2(this.DocumentUrl, binaryFile);
+        this.OpenDocumentFromBin(this.DocumentUrl, binaryFile);
 
         if (fields)
             this.asc_SetBlockChainData(fields);
@@ -409,11 +409,13 @@
      */
     window["asc_docs_api"].prototype["pluginMethod_SearchAndReplace"] = function(oProperties)
     {
-        var sSearch     = oProperties["searchString"];
         var sReplace    = oProperties["replaceString"];
-        var isMatchCase = undefined !== oProperties["matchCase"] ? oProperties.matchCase : true;
 
-        var oSearchEngine = this.WordControl.m_oLogicDocument.Search(sSearch, {MatchCase : isMatchCase});
+        let oProps = new AscCommon.CSearchSettings();
+        oProps.SetText(oProperties["searchString"]);
+        oProps.SetMatchCase(undefined !== oProperties["matchCase"] ? oProperties.matchCase : true);
+
+        var oSearchEngine = this.WordControl.m_oLogicDocument.Search(oProps);
         if (!oSearchEngine)
             return;
 

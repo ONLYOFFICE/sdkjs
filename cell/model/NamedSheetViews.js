@@ -718,6 +718,7 @@
 
 	function CT_ColumnFilter() {
 		this.filter = null;
+		this.dxf = null;
 		//this.extLst
 
 		//нужно ли?
@@ -864,6 +865,8 @@
 		var res = new CT_ColumnFilter();
 		res.filter = this.filter ? this.filter.clone() : null;
 		res.colId = this.colId;
+
+		this.dxf = this.dxf ? this.dxf.clone() : null;
 
 		return res;
 	};
@@ -1096,7 +1099,7 @@
 
 		var obj;
 		if (reader.GetBool()) {
-			obj = new AscCommonExcel.FilterColumn();
+			obj = new AscCommonExcel.SortCondition();
 			obj.Read_FromBinary2(reader);
 			this.sortCondition = obj;
 		}
@@ -1129,5 +1132,6 @@
 	window["Asc"]["CT_NsvFilter"] = window['Asc'].CT_NsvFilter = CT_NsvFilter;
 	window["Asc"]["CT_ColumnFilter"] = window['Asc'].CT_ColumnFilter = CT_ColumnFilter;
 	window["Asc"]["CT_SortRule"] = window['Asc'].CT_SortRule = CT_SortRule;
+	window["Asc"]["CT_SortRules"] = window['Asc'].CT_SortRules = CT_SortRules;
 
 })(window);

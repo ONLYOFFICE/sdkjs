@@ -1446,6 +1446,18 @@ CHeaderFooter.prototype.RestartSpellCheck = function()
 {
 	this.Content.RestartSpellCheck();
 };
+//----------------------------------------------------------------------------------------------------------------------
+// CHeaderFooter
+//----------------------------------------------------------------------------------------------------------------------
+CHeaderFooter.prototype.Search = function(oSearchEngine, nType)
+{
+	this.Content.Search(oSearchEngine, nType);
+};
+CHeaderFooter.prototype.GetSearchElementId = function(bNext, bCurrent)
+{
+	return this.Content.GetSearchElementId( bNext, bCurrent );
+};
+//----------------------------------------------------------------------------------------------------------------------
 
 
 //-----------------------------------------------------------------------------------

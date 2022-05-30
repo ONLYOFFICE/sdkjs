@@ -756,6 +756,10 @@ CMathArgSize.prototype =
     {
         return this.value !== 2;
     },
+    Is_Init: function()
+    {
+        return this.value !== undefined;
+    },
     Write_ToBinary: function(Writer)
     {
         if(this.value == undefined)
@@ -974,6 +978,10 @@ function CMPrp()
 }
 CMPrp.prototype =
 {
+    Is_Empty: function() {
+        return undefined === this.sty && undefined === this.scr && undefined === this.nor && undefined === this.aln &&
+            undefined === this.brk && undefined === this.lit;
+    },
     Set_Pr: function(Pr)
     {
         if(Pr.sty !== undefined)

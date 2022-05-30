@@ -674,40 +674,39 @@ CTableRow.prototype =
         return this.Table.Get_ParentObject_or_DocumentPos(this.Table.Index);
     },
 
-    Refresh_RecalcData : function(Data)
-    {
-        var bNeedRecalc = false;
+	Refresh_RecalcData : function(Data)
+	{
+		let oTable = this.GetTable();
+		if (!oTable)
+			return;
 
-        var Type = Data.Type;
+		let isNeedRecalc = false;
+		switch (Data.Type)
+		{
+			case AscDFH.historyitem_TableRow_Before:
+			case AscDFH.historyitem_TableRow_After:
+			case AscDFH.historyitem_TableRow_CellSpacing:
+			case AscDFH.historyitem_TableRow_Height:
+			case AscDFH.historyitem_TableRow_AddCell:
+			case AscDFH.historyitem_TableRow_RemoveCell:
+			case AscDFH.historyitem_TableRow_TableHeader:
+			case AscDFH.historyitem_TableRow_Pr:
+			{
+				isNeedRecalc = true;
+				break;
+			}
+		}
 
-        switch ( Type )
-        {
-            case AscDFH.historyitem_TableRow_Before:
-            case AscDFH.historyitem_TableRow_After:
-            case AscDFH.historyitem_TableRow_CellSpacing:
-            case AscDFH.historyitem_TableRow_Height:
-            case AscDFH.historyitem_TableRow_AddCell:
-            case AscDFH.historyitem_TableRow_RemoveCell:
-            case AscDFH.historyitem_TableRow_TableHeader:
-            case AscDFH.historyitem_TableRow_Pr:
-            {
-                bNeedRecalc = true;
-                break;
-            }
-        }
+		for (let nCurCell = 0, nCellsCount = this.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+		{
+			oTable.RecalcInfo.Add_Cell(this.GetCell(nCurCell));
+		}
 
-        // Добавляем все ячейки для пересчета
-        var CellsCount = this.Get_CellsCount();
-        for ( var CurCell = 0; CurCell < CellsCount; CurCell++ )
-        {
-            this.Table.RecalcInfo.Add_Cell( this.Get_Cell(CurCell) );
-        }
+		oTable.RecalcInfo.RecalcBorders();
 
-        this.Table.RecalcInfo.RecalcBorders();
-
-        if ( true === bNeedRecalc )
-            this.Refresh_RecalcData2( 0, 0 );
-    },
+		if (isNeedRecalc)
+			this.Refresh_RecalcData2(0, 0);
+	},
 
     Refresh_RecalcData2 : function(CellIndex, Page_rel)
     {

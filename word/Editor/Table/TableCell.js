@@ -1853,6 +1853,10 @@ CTableCell.prototype =
 
     Refresh_RecalcData : function(Data)
     {
+		let oTable = this.GetTable();
+		if (!oTable)
+			return;
+
         var bNeedRecalc = false;
 
         var Type = Data.Type;
@@ -1881,7 +1885,7 @@ CTableCell.prototype =
             }
         }
 
-        this.Row.Table.RecalcInfo.RecalcBorders();
+		oTable.RecalcInfo.RecalcBorders();
 
         this.Refresh_RecalcData2( 0, 0 );
     },

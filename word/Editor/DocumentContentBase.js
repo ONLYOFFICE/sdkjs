@@ -1410,6 +1410,18 @@ CDocumentContentBase.prototype.RemoveFromContent = function(nPos, nCount, isCorr
 	this.Remove_FromContent(nPos, nCount, isCorrectContent);
 };
 /**
+ * Меняет содержимое (с записью в историю)
+ * @param {array} aContent
+ */
+CDocumentContentBase.prototype.ReplaceContent = function(aContent)
+{
+	var i = 0;
+	for (var i = 0; i < aContent.length; ++i) {
+		this.Add_ToContent(i, aContent[i]);
+	}
+	this.Remove_FromContent(i, this.Content.length - aContent.length, false);
+};
+/**
  * Получаем текущий TableOfContents, это может быть просто поле или поле вместе с оберткой Sdt
  * @param isUnique ищем с параметром Unique = true
  * @param isCheckFields Проверять ли TableOfContents, заданные через сложные поля

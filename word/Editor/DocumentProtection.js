@@ -32,12 +32,38 @@
 
 "use strict";
 
+var ECryptAlgoritmName = {
+	MD2: 1,
+	MD4: 2,
+	MD5: 3,
+	RIPEMD_128: 4,
+	RIPEMD_160: 5,
+	SHA_1: 6,
+	SHA_256: 7,
+	SHA_384: 8,
+	SHA_512: 9,
+	WHIRLPOOL: 10
+};
+
 var EDocProtect = {
 	Comments: 0,
 	Forms: 1,
 	None: 2,
 	ReadOnly: 3,
 	TrackedChanges: 4
+};
+var ECryptAlgClass = {
+	Custom: 0,
+	Hash: 1
+};
+var ECryptAlgType = {
+	Custom: 0,
+	TypeAny: 1
+};
+var ECryptProv = {
+	Custom: 0,
+	RsaAES: 1,
+	RsaFull: 2
 };
 
 function CDocProtect() {

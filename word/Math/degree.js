@@ -456,7 +456,7 @@ CDegree.prototype.ClassType = AscDFH.historyitem_type_deg;
 CDegree.prototype.kind      = MATH_DEGREE;
 CDegree.prototype.init = function(props)
 {
-    this.Fill_LogicalContent(2);
+    this.Fill_LogicalContent(2, props.content);
 
     this.setProperties(props);
     this.fillContent();
@@ -915,7 +915,7 @@ CDegreeSubSup.prototype.ClassType = AscDFH.historyitem_type_deg_subsup;
 CDegreeSubSup.prototype.kind      = MATH_DEGREESubSup;
 CDegreeSubSup.prototype.init = function(props)
 {
-    this.Fill_LogicalContent(3);
+    this.Fill_LogicalContent(3, props.content);
 
     this.setProperties(props);
     this.fillContent();

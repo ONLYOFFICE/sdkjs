@@ -225,7 +225,7 @@ CLimit.prototype.kind      = MATH_LIMIT;
 
 CLimit.prototype.init = function(props)
 {
-    this.Fill_LogicalContent(2);
+    this.Fill_LogicalContent(2, props.content);
 
     // посмотреть GetAllFonts
     this.setProperties(props);
@@ -374,7 +374,7 @@ CMathFunc.prototype.kind      = MATH_FUNCTION;
 
 CMathFunc.prototype.init = function(props)
 {
-    this.Fill_LogicalContent(2);
+    this.Fill_LogicalContent(2, props.content);
 
     this.setProperties(props);
     this.fillContent();

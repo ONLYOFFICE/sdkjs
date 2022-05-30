@@ -1638,6 +1638,18 @@
 	window['AscDFH'].historyitem_type_SmartArtNodeData       = 2098 << 16;
 	window['AscDFH'].historyitem_type_BuBlip                 = 2099 << 16;
 
+	window['AscDFH'].historyitem_type_VMLArc                 = 2099 << 16;
+	window['AscDFH'].historyitem_type_VMLCurve               = 2100 << 16;
+	window['AscDFH'].historyitem_type_VMLGroup               = 2101 << 16;
+	window['AscDFH'].historyitem_type_VMLImage               = 2102 << 16;
+	window['AscDFH'].historyitem_type_VMLLine                = 2103 << 16;
+	window['AscDFH'].historyitem_type_VMLOval                = 2104 << 16;
+	window['AscDFH'].historyitem_type_VMLPolyLine            = 2105 << 16;
+	window['AscDFH'].historyitem_type_VMLRect                = 2106 << 16;
+	window['AscDFH'].historyitem_type_VMLRoundRect           = 2107 << 16;
+	window['AscDFH'].historyitem_type_VMLShape               = 2108 << 16;
+	window['AscDFH'].historyitem_type_VMLShapeType           = 2109 << 16;
+	window['AscDFH'].historyitem_type_VMLClientData          = 2110 << 16;
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3496,6 +3508,7 @@
 	AscDFH.historyitem_IfVal = AscDFH.historyitem_type_If | 5;
 	AscDFH.historyitem_IfAddList = AscDFH.historyitem_type_If | 6;
 	AscDFH.historyitem_IfRemoveList = AscDFH.historyitem_type_If | 7;
+	AscDFH.historyitem_IfRef = AscDFH.historyitem_type_If | 8;
 
 	AscDFH.historyitem_ConstrFact = AscDFH.historyitem_type_Constr | 1;
 	AscDFH.historyitem_ConstrFor = AscDFH.historyitem_type_Constr | 2;
@@ -3855,6 +3868,8 @@
 
 	AscDFH.historyitem_CCommonDataClrListAdd    = AscDFH.historyitem_type_CCommonDataClrList | 1;
 	AscDFH.historyitem_CCommonDataClrListRemove = AscDFH.historyitem_type_CCommonDataClrList | 2;
+	AscDFH.historyitem_CCommonDataClrListHueDir = AscDFH.historyitem_type_CCommonDataClrList | 3;
+	AscDFH.historyitem_CCommonDataClrListMeth   = AscDFH.historyitem_type_CCommonDataClrList | 4;
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

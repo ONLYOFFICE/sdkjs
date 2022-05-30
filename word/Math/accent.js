@@ -508,7 +508,7 @@ CAccent.prototype.kind      = MATH_ACCENT;
 
 CAccent.prototype.init = function(props)
 {
-    this.Fill_LogicalContent(1);
+    this.Fill_LogicalContent(1, props.content);
 
     this.setProperties(props);
     this.fillContent();

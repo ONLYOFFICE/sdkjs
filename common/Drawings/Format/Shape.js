@@ -761,7 +761,7 @@ function ConvertGraphicFrameToWordTable(oGraphicFrame, oDocument){
 }
 function ConvertTableToGraphicFrame(oTable, oPresentation){
     var oGraphicFrame = new AscFormat.CGraphicFrame();
-    var oTable2 = new CTable(oPresentation.DrawingDocument, oGraphicFrame, true, 0, [].concat(oTable.TableGrid), oTable.TableGrid.length, true);
+    var oTable2 = new CTable(oPresentation.DrawingDocument, oGraphicFrame, false, 0, [].concat(oTable.TableGrid), oTable.TableGrid.length, true);
     oTable2.Reset(0, 0, 50, 100000, 0, 0, 1);
     oTable2.SetTableLayout(tbllayout_Fixed);
     oTable2.Set_Pr(oTable.Pr.Copy());
@@ -1349,6 +1349,9 @@ CShape.prototype.setModelId = function (pr) {
 CShape.prototype.setSpPr = function (spPr) {
     History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetSpPr, this.spPr, spPr));
     this.spPr = spPr;
+    if(spPr) {
+        spPr.setParent(this);
+    }
 };
 
 CShape.prototype.setStyle = function (style) {
@@ -1367,6 +1370,9 @@ CShape.prototype.setStyle = function (style) {
 CShape.prototype.setTxBody = function (txBody) {
     History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ShapeSetTxBody, this.txBody, txBody));
     this.txBody = txBody;
+    if(txBody && txBody.parent !== this) {
+        txBody.setParent(this);
+    }
 };
 
 CShape.prototype.setTextBoxContent = function (textBoxContent) {
@@ -1571,17 +1577,17 @@ CShape.prototype.GetRevisionsChangeElement = function(SearchEngine){
     }
 };
 
-CShape.prototype.Search = function (Str, Props, SearchEngine, Type) {
+CShape.prototype.Search = function (SearchEngine, Type) {
     if (this.textBoxContent) {
         var dd = this.getDrawingDocument();
         dd.StartSearchTransform(this.transformText);
-        this.textBoxContent.Search(Str, Props, SearchEngine, Type);
+        this.textBoxContent.Search(SearchEngine, Type);
         dd.EndSearchTransform();
     }
     else if (this.txBody && this.txBody.content) {
         //var dd = this.getDrawingDocument();
         //dd.StartSearchTransform(this.transformText);
-        this.txBody.content.Search(Str, Props, SearchEngine, Type);
+        this.txBody.content.Search(SearchEngine, Type);
         //dd.EndSearchTransform();
     }
 };
@@ -2246,9 +2252,21 @@ CShape.prototype.getTextRect = function () {
         b: this.extY
     };
 };
-
     CShape.prototype.checkTransformTextMatrixSmartArt = function (oMatrix, oContent, oBodyPr, bWordArtTransform, bIgnoreInsets) {
         if (this.txXfrm) {
+            var oSmartArt = this.group.group;
+            var diffX = 0;
+            var diffY = 0;
+            if (oSmartArt.group) {
+                if ((this.parent && this.parent.getObjectType() === AscDFH.historyitem_type_Slide || this.worksheet)) {
+                    var mainGroup = oSmartArt.group.getRelativePosition();
+                    diffX = mainGroup.x;
+                    diffY = mainGroup.y;
+                } else {
+                    diffX = oSmartArt.bounds.x;
+                    diffY = oSmartArt.bounds.y;
+                }
+            }
             var oRect = this.getTextRect();
             var oRectShape = new AscFormat.CShape();
             oRectShape.setBDeleted(false);
@@ -2265,8 +2283,8 @@ CShape.prototype.getTextRect = function () {
             deltaShape.spPr.setParent(deltaShape);
             deltaShape.spPr.setXfrm(new AscFormat.CXfrm());
             deltaShape.spPr.xfrm.setParent(deltaShape.spPr);
-            deltaShape.spPr.xfrm.setOffX(this.spPr.xfrm.offX);
-            deltaShape.spPr.xfrm.setOffY(this.spPr.xfrm.offY);
+            deltaShape.spPr.xfrm.setOffX(this.spPr.xfrm.offX - diffX);
+            deltaShape.spPr.xfrm.setOffY(this.spPr.xfrm.offY - diffY);
             deltaShape.spPr.xfrm.setExtX(this.spPr.xfrm.extX);
             deltaShape.spPr.xfrm.setExtY(this.spPr.xfrm.extY);
             if (deltaRot) {
@@ -4395,16 +4413,27 @@ CShape.prototype.getSmartArtShapePoint = function () {
                 {
                     return;
                 }
-                var text;
-                if(typeof AscCommonSlide !== "undefined" && AscCommonSlide.CNotes && this.parent instanceof AscCommonSlide.CNotes && this.nvSpPr.nvPr.ph.type === AscFormat.phType_body){
-                    text = AscCommon.translateManager.getValue("Click to add notes");
-                } else if (this.isObjectInSmartArt()) {
-                    text = AscCommon.translateManager.getValue(pointContent[0].prSet.phldrT);
-                } else {
-                    text = this.getPlaceholderName();
+                let aHierarchy = this.getHierarchy();
+                for (let nPlaceholder = 0; nPlaceholder < aHierarchy.length; ++nPlaceholder) {
+                    let oHSp = aHierarchy[nPlaceholder];
+                    if (isRealObject(oHSp) && oHSp.hasCustomPrompt()) {
+                        if(oHSp.txBody && oHSp.txBody.content) {
+                            this.txBody.content2 = oHSp.txBody.content.Copy(this.txBody, this.getDrawingDocument(), {});
+                        }
+                    }
                 }
 
+
+
                 if (!this.txBody.content2){
+                    var text;
+                    if(typeof AscCommonSlide !== "undefined" && AscCommonSlide.CNotes && this.parent instanceof AscCommonSlide.CNotes && this.nvSpPr.nvPr.ph.type === AscFormat.phType_body){
+                        text = AscCommon.translateManager.getValue("Click to add notes");
+                    } else if (this.isObjectInSmartArt()) {
+                        text = AscCommon.translateManager.getValue(pointContent[0].prSet.phldrT);
+                    } else {
+                        text = this.getPlaceholderName();
+                    }
                     this.txBody.content2 = AscFormat.CreateDocContentFromString(text, this.getDrawingDocument(), this.txBody);
                     if (this.txBody.content && this.isObjectInSmartArt()) {
                         var oContent = this.txBody.content;
@@ -5942,7 +5971,7 @@ CShape.prototype.getTextArtProperties = function()
 CShape.prototype.applyTextArtForm = function(sPreset)
 {
     var oBodyPr = this.getBodyPr().createDuplicate();
-    oBodyPr.prstTxWarp = AscFormat.ExecuteNoHistory(function(){return AscFormat.CreatePrstTxWarpGeometry(sPreset)}, this, []);
+    oBodyPr.prstTxWarp = AscFormat.CreatePrstTxWarpGeometry(sPreset);
     if(this.bWordShape)
     {
         this.setBodyPr(oBodyPr);
@@ -7191,6 +7220,204 @@ CShape.prototype.getColumnNumber = function(){
         }
         return AscCommon.translateManager.getValue("Shape");
     };
+    
+    CShape.prototype.readAttrXml = function(name, reader) {
+        switch (name) {
+            case "useBgFill": {
+                //this.setUseBgFill(reader.GetValueBool());
+                break;
+            }
+        }
+    };
+    CShape.prototype.readChildXml = function(name, reader) {
+        let oPr;
+        switch(name) {
+            case "nvCxnSpPr":
+            case "nvSpPr": {
+                oPr = new AscFormat.UniNvPr();
+                oPr.fromXml(reader);
+                this.setNvSpPr(oPr);
+                this.setLocks(oPr.getLocks());
+                break;
+            }
+            case "cNvSpPr": {
+                if(!this.nvSpPr) {
+                    this.setNvSpPr(new AscFormat.UniNvPr());
+                }
+                this.nvSpPr.nvUniSpPr.fromXml(reader);
+                this.setLocks(this.nvSpPr.nvUniSpPr.getLocks());
+                break;
+            }
+            case "spPr": {
+                oPr = new AscFormat.CSpPr();
+                oPr.fromXml(reader);
+                this.setSpPr(oPr);
+                break;
+            }
+            case "style": {
+                oPr = new AscFormat.CShapeStyle();
+                oPr.fromXml(reader);
+                this.setStyle(oPr);
+                break;
+            }
+            case "txBody": {
+                oPr = new AscFormat.CTextBody();
+                oPr.fromXml(reader);
+                this.setTxBody(oPr);
+                break;
+            }
+            case "txbx": {
+                let oThis = this;
+                let elem = new CT_XmlNode(function(reader, name) {
+                    if ("txbxContent" === name) {
+                        let oTxBxContent = fReadTxBoxContentXML(reader, oThis);
+                        oThis.setTextBoxContent(oTxBxContent);
+                    }
+                    return new CT_XmlNode();
+                });
+                elem.fromXml(reader);
+                break;
+            }
+            case "bodyPr": {
+                let oBodyPr = new AscFormat.CBodyPr();
+                oBodyPr.fromXml(reader);
+                this.setBodyPr(oBodyPr);
+                break;
+            }
+        }
+    };
+    CShape.prototype.toXml = function(writer, sName) {
+        let name_ = sName || "a:sp";
+
+        let oContext = writer.context;
+        if		(oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX ||
+            oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX_GLOSSARY)	name_ = "wps:wsp";
+    else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_XLSX)			name_ = "xdr:sp";
+    else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_GRAPHICS)		name_ = "a:sp";
+    else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_CHART_DRAWING)	name_ = "cdr:sp";
+    else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DIAGRAM)			name_ = "dgm:sp";
+    else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DSP_DRAWING)		name_ = "dsp:sp";
+    else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_PPTX)		name_ = "p:sp";
+
+        writer.WriteXmlNodeStart(name_);
+
+        //writer.WriteXmlNullableAttributeBool("useBgFill", this.useBgFill);
+        writer.WriteXmlNullableAttributeString("macro", this.macro);
+        writer.WriteXmlNullableAttributeString("modelId", this.modelId);
+        writer.WriteXmlNullableAttributeBool("fLocksText", this.fLocksText);
+        writer.WriteXmlAttributesEnd();
+
+        if(this.nvSpPr) {
+            if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX ||
+                oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX_GLOSSARY)
+            {
+                this.nvSpPr.cNvPr.toXml2("wps", writer);
+                this.nvSpPr.nvUniSpPr.toXmlSp(writer);
+            }
+            else
+                this.nvSpPr.toXmlSp(writer);
+        }
+
+        let bIsPresentStyle = false;
+        if (this.style &&  this.style.fillRef && (this.style.fillRef.idx !== null || this.style.fillRef.color && this.style.fillRef.color.color))
+        {
+            bIsPresentStyle = true;
+        }
+        if (writer.context.groupIndex > 1 && !bIsPresentStyle)
+        {
+            writer.context.flag += 0x02;
+        }
+        this.spPr.toXml(writer);
+        if (writer.context.groupIndex > 1 && !bIsPresentStyle)
+        {
+            writer.context.flag -= 0x02;
+        }
+        if (this.style)
+        {
+            writer.WriteXmlNullable(this.style);
+        }
+        if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX ||
+            oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX_GLOSSARY)
+        {
+            let bIsWritedBodyPr = false;
+            if (this.textBoxContent)
+            {
+                // if (this.oTextBoxId)
+                //     writer.WriteXmlString("<wps:txbx id=\"" + this.oTextBoxId + "\">");
+                // else
+                    writer.WriteXmlString("<wps:txbx>");
+                    writer.WriteXmlString("<w:txbxContent>");
+                this.textBoxContent.Content.forEach(function(item) {
+                    CDocument.prototype.toXmlDocContentElem(writer, item);
+                });
+                writer.WriteXmlString("</w:txbxContent>");
+                writer.WriteXmlString("</wps:txbx>");
+
+                if (this.bodyPr)
+                {
+                    this.bodyPr.toXml(writer, "wps");
+                    bIsWritedBodyPr = true;
+                }
+            }
+            else if (this.txBody)
+            {
+                writer.WriteXmlNullable(this.txBody, "wps:txBody");
+            }
+
+            if (!bIsWritedBodyPr)
+            {
+                writer.WriteXmlString("<wps:bodyPr rot=\"0\"><a:prstTxWarp prst=\"textNoShape\"><a:avLst/></a:prstTxWarp><a:noAutofit/></wps:bodyPr>");
+            }
+        }
+    else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_GRAPHICS)
+        {
+            writer.WriteXmlNodeStart("a:txSp");
+            writer.WriteXmlAttributesEnd();
+            writer.WriteXmlNullable(this.txBody, "a:txBody");
+            writer.WriteXmlString("<a:useSpRect/>");
+            writer.WriteXmlNodeEnd("a:txSp");
+        }
+        else
+        {
+            if (this.txBody)
+            {
+                let sTxBodyName;
+                if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_XLSX)
+                    sTxBodyName = "xdr:txBody";
+            else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_CHART_DRAWING)
+                    sTxBodyName = "cdr:txBody";
+            else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DIAGRAM)
+                    sTxBodyName = "dgm:txBody";
+            else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DSP_DRAWING)
+                    sTxBodyName = "dsp:txBody";
+            else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_PPTX)
+                    sTxBodyName = "p:txBody";
+
+
+                writer.WriteXmlNullable(this.txBody, sTxBodyName);
+            }
+        }
+
+        if (this.txXfrm && oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DSP_DRAWING)
+        {
+            this.txXfrm.toXml(writer);
+        }
+        writer.WriteXmlNodeEnd(name_);
+    };
+    function fReadTxBoxContentXML(reader, parent) {
+        var Content = [];
+        var depth = reader.GetDepth();
+        let oDrawingDoc = editor.WordControl.m_oLogicDocument.DrawingDocument;
+        let oTxBxContent = new AscCommonWord.CDocumentContent(parent, oDrawingDoc, 0, 0, 0, 20000, false, false);
+        while (reader.ReadNextSiblingNode(depth)) {
+            AscCommonWord.CDocument.prototype.fromXmlDocContentElem(reader, reader.GetNameNoNS(), Content, oDrawingDoc, oTxBxContent);
+
+        }
+        if (Content.length > 0) {
+            oTxBxContent.ReplaceContent(Content);
+        }
+        return oTxBxContent;
+    }
 
 function CreateBinaryReader(szSrc, offset, srcLen)
 {
@@ -7347,4 +7574,5 @@ function SaveRunsFormatting(aSourceContent, aCopyContent, oTheme, oColorMap, oPr
     window['AscFormat'].hitToHandles = hitToHandles;
     window['AscFormat'].pHText = pHText;
 	window['AscFormat'].DEFAULT_THEME = AscFormat.GenerateDefaultTheme(null);
+    window['AscFormat'].fReadTxBoxContentXML = fReadTxBoxContentXML;
 })(window);

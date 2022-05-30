@@ -540,6 +540,85 @@ ParaField.prototype.Update = function(isCreateHistoryPoint, isRecalculate)
 		this.Add_ToContent(0, oRun);
 	}
 };
+ParaField.prototype.GetInstr = function() {
+	let Instr = "";
+	let name;
+	switch (this.FieldType) {
+		case fieldtype_MERGEFIELD : {
+			name = "MERGEFIELD";
+			break;
+		}
+		case fieldtype_PAGE : {
+			name = "PAGE";
+			break;
+		}
+		case fieldtype_NUMPAGES : {
+			name = "NUMPAGES";
+			break;
+		}
+		case fieldtype_FORMTEXT : {
+			name = "FORMTEXT";
+			break;
+		}
+		case fieldtype_TOC : {
+			name = "TOC";
+			break;
+		}
+		case fieldtype_PAGEREF : {
+			name = "PAGEREF";
+			break;
+		}
+		case fieldtype_ASK : {
+			name = "ASK";
+			break;
+		}
+		case fieldtype_REF : {
+			name = "REF";
+			break;
+		}
+		case fieldtype_HYPERLINK : {
+			name = "HYPERLINK";
+			break;
+		}
+		case fieldtype_TIME : {
+			name = "TIME";
+			break;
+		}
+		case fieldtype_DATE : {
+			name = "DATE";
+			break;
+		}
+		case fieldtype_FORMULA : {
+			name = "FORMULA";
+			break;
+		}
+		case fieldtype_SEQ : {
+			name = "SEQ";
+			break;
+		}
+		case fieldtype_STYLEREF : {
+			name = "STYLEREF";
+			break;
+		}
+		case fieldtype_NOTEREF : {
+			name = "NOTEREF";
+			break;
+		}
+	}
+	if (name) {
+		Instr += name;
+		for (let i = 0; i < this.Arguments.length; ++i) {
+			let argument = this.Arguments[i];
+			argument = argument.replace(/(\\|")/g, "\\$1");
+			if (-1 != argument.indexOf(' ')) {
+				argument = "\"" + argument + "\"";
+			}
+			Instr += " " + argument;
+		}
+		Instr += this.Switches.join(" ")
+	}
+	return Instr;
+};
 //----------------------------------------------------------------------------------------------------------------------
 // Функции совместного редактирования
 //----------------------------------------------------------------------------------------------------------------------

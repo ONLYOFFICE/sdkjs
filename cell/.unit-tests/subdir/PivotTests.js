@@ -96,9 +96,13 @@ $(function() {
 	// };
 
 	Asc.spreadsheet_api.prototype._init = function() {
+		this._loadModules();
 	};
 	Asc.spreadsheet_api.prototype._loadFonts = function(fonts, callback) {
 		callback();
+	};
+	Asc.spreadsheet_api.prototype.onEndLoadFile = function(fonts, callback) {
+		openDocument();
 	};
 	AscCommonExcel.WorkbookView.prototype._calcMaxDigitWidth = function() {
 	};
@@ -124,9 +128,6 @@ $(function() {
 	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function() {
 	};
 
-	var CT_PivotField = Asc.CT_PivotField;
-	var c_oAscDataConsolidateFunction = Asc.c_oAscDataConsolidateFunction;
-	var sData = AscCommon.getEmpty();
 	var api = new Asc.spreadsheet_api({
 		'id-view': 'editor_sdk'
 	});
@@ -136,252 +137,264 @@ $(function() {
 		}
 	};
 	window["Asc"]["editor"] = api;
-	AscCommon.g_oTableId.init();
-	api._onEndLoadSdk();
-	api._openDocument(sData);
-	api._openOnClient();
-	api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
-	api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
-		api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
-	var wb = api.wbModel;
-	wb.handlers.add("getSelectionState", function() {
-		return null;
-	});
-	var ws = api.wbModel.aWorksheets[0];
-	api.asc_insertWorksheet(["Data"]);
-	var wsData = wb.getWorksheetByName(["Data"], 0);
+var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, reportRange, testDataRange, testDataRange2,
+	testDataRange3, testDataRange4, testDataRange5, testDataRange6, testDataRange7, testDataRangeHeader,
+	testDataRangeTable,	testDataRefreshFieldSettings, testDataRangeFilters, testDataRangeNumFormat, testDataRangeDefName,
+	testDataRangeDefNameLocal, testDataRefreshRecords, testDataRefreshStructure, testData, testData2, testData3,
+	testData4, testData5, testData6, testData7, testDataFilter, testDataNumFormat, multiElem1, multiElem2, testDataHeader,
+	testDataRecords, testDataStructure, addFormatTableOptions, defName, defNameLocal, dataRef, dataRef1Row, dataRef2,
+	dataRef3, dataRef4, dataRef5, dataRef6, dataRef7, dataRefHeader, dataRefTable, dataRefTableColumn, dataRefDefName,
+	dataRefDefNameLocal, dataRefFieldSettings, dataRefRecords, dataRefStructure, dataRefFilters, dataRefNumFormat;
 
-	var pivotStyle = "PivotStyleDark23";
-	var tableName = "Table1";
-	var defNameName = "defName";
-	var defNameLocalName = "defNameLocal";
-	var reportRange = AscCommonExcel.g_oRangeCache.getAscRange("A3");
-	var testDataRange = AscCommonExcel.g_oRangeCache.getAscRange("B2:H13");
-	var testDataRange2 = AscCommonExcel.g_oRangeCache.getAscRange("J2:P13");
-	var testDataRange3 = AscCommonExcel.g_oRangeCache.getAscRange("B15:H26");
-	var testDataRange4 = AscCommonExcel.g_oRangeCache.getAscRange("J15:P26");
-	var testDataRange5 = AscCommonExcel.g_oRangeCache.getAscRange("B28:H39");
-	var testDataRange6 = AscCommonExcel.g_oRangeCache.getAscRange("J28:P39");
-	var testDataRange7 = AscCommonExcel.g_oRangeCache.getAscRange("B41:H52");
-	var testDataRangeHeader = AscCommonExcel.g_oRangeCache.getAscRange("B54:O55");
-	var testDataRangeTable = AscCommonExcel.g_oRangeCache.getAscRange("B57:H68");
-	var testDataRefreshFieldSettings = AscCommonExcel.g_oRangeCache.getAscRange("B70:H81");
-	var testDataRangeFilters = AscCommonExcel.g_oRangeCache.getAscRange("B83:H93");
-	var testDataRangeNumFormat = AscCommonExcel.g_oRangeCache.getAscRange("B96:L107");
-	var testDataRangeDefName = AscCommonExcel.g_oRangeCache.getAscRange("J57:P68");
-	var testDataRangeDefNameLocal = AscCommonExcel.g_oRangeCache.getAscRange("R57:X68");
-	var testDataRefreshRecords = AscCommonExcel.g_oRangeCache.getAscRange("J70:P81");
-	var testDataRefreshStructure = AscCommonExcel.g_oRangeCache.getAscRange("R70:X81");
-	var testData = [
-		["Region", "Gender", "Style", "Ship date", "Units", "Price", "Cost"],
-		["East", "Boy", "Tee", "38383", "12", "11.04", "10.42"],
-		["East", "Boy", "Golf", "38383", "12", "13", "12.6"],
-		["East", "Boy", "Fancy", "38383", "12", "11.96", "11.74"],
-		["East", "Girl", "Tee", "38383", "10", "11.27", "10.56"],
-		["East", "Girl", "Golf", "38383", "10", "12.12", "11.95"],
-		["East", "Girl", "Fancy", "38383", "10", "13.74", "13.33"],
-		["West", "Boy", "Tee", "38383", "11", "11.44", "10.94"],
-		["West", "Boy", "Golf", "38383", "11", "12.63", "11.73"],
-		["West", "Boy", "Fancy", "38383", "11", "12.06", "11.51"],
-		["West", "Girl", "Tee", "38383", "15", "13.42", "13.29"],
-		["West", "Girl", "Golf", "38383", "15", "11.48", "10.67"]
-	];
-	var testData2 = [
-		["Region","Gender","Style","Ship date","Units","Price","Cost"],
-		["East","Boy","Tee","38383","12","11.05","10.42"],
-		["East","Boy","Golf","38383","12","","12.6"],
-		["East","Boy","Fancy","38383","12","11.96","11.74"],
-		["East","Girl","Tee","38383","10","","10.56"],
-		["East","Girl","Golf","38383","10","12.12","11.95"],
-		["East","Girl","Fancy","38383","10","","13.33"],
-		["West","Boy","Tee","38383","11","11.44","10.94"],
-		["West","Boy","Golf","38383","11","12.63","11.73"],
-		["West","Boy","Fancy","38383","11","12.06","11.51"],
-		["West","Girl","Tee","38383","15","13.42","13.29"],
-		["West","Girl","Golf","38383","15","11.48","10.67"]
-	];
-	var testData3 = [
-		["Region","Gender","Style","Ship date","Units","Price","Cost"],
-		["East","Boy","Tee","38383","12","11.05","10.42"],
-		["East","Boy","Golf","38383","12","q","12.6"],
-		["East","Boy","Fancy","38383","12","11.96","11.74"],
-		["East","Girl","Tee","38383","10","w","10.56"],
-		["East","Girl","Golf","38383","10","12.12","11.95"],
-		["East","Girl","Fancy","38383","10","e","13.33"],
-		["West","Boy","Tee","38383","11","11.44","10.94"],
-		["West","Boy","Golf","38383","11","12.63","11.73"],
-		["West","Boy","Fancy","38383","11","12.06","11.51"],
-		["West","Girl","Tee","38383","15","13.42","13.29"],
-		["West","Girl","Golf","38383","15","11.48","10.67"]
-	];
-	var testData4 = [
-		["Region","Gender","Style","Ship date","Units","Price","Cost"],
-		["East","Boy","Tee","38383","12","11.05","10.42"],
-		["East","Boy","Golf","38383","12","TRUE","12.6"],
-		["East","Boy","Fancy","38383","12","11.96","11.74"],
-		["East","Girl","Tee","38383","10","FALSE","10.56"],
-		["East","Girl","Golf","38383","10","12.12","11.95"],
-		["East","Girl","Fancy","38383","10","TRUE","13.33"],
-		["West","Boy","Tee","38383","11","11.44","10.94"],
-		["West","Boy","Golf","38383","11","12.63","11.73"],
-		["West","Boy","Fancy","38383","11","12.06","11.51"],
-		["West","Girl","Tee","38383","15","13.42","13.29"],
-		["West","Girl","Golf","38383","15","11.48","10.67"]
-	];
-	var testData5 = [
-		["Region","Gender","Style","Ship date","Units","Price","Cost"],
-		["East","Boy","Tee","38383","12","11.04","10.42"],
-		["East","Boy","Golf","38383","12","#N/A","12.6"],
-		["East","Boy","Fancy","38383","12","11.96","11.74"],
-		["East","Girl","Tee","38383","10","#N/A","10.56"],
-		["East","Girl","Golf","38383","10","12.12","11.95"],
-		["East","Girl","Fancy","38383","10","#N/A","13.33"],
-		["West","Boy","Tee","38383","11","11.44","10.94"],
-		["West","Boy","Golf","38383","11","12.63","11.73"],
-		["West","Boy","Fancy","38383","11","12.06","11.51"],
-		["West","Girl","Tee","38383","15","13.42","13.29"],
-		["West","Girl","Golf","38383","15","11.48","10.67"]
-	];
-	var testData6 = [
-		["Region","Gender","Style","Ship date","Units","Price","Cost"],
-		["East","Boy","Tee","38383","12","11.04","10.42"],
-		["East","Boy","Golf","38383","12",{format: "[$-409]m/d/yyyy h:mm AM/PM;@", value: new AscCommonExcel.CCellValue({number: 13})},"12.6"],
-		["East","Boy","Fancy","38383","12","11.96","11.74"],
-		["East","Girl","Tee","38383","10",{format: "[$-409]m/d/yyyy h:mm AM/PM;@", value: new AscCommonExcel.CCellValue({number: 11.27})},"10.56"],
-		["East","Girl","Golf","38383","10","12.12","11.95"],
-		["East","Girl","Fancy","38383","10",{format: "[$-409]m/d/yyyy h:mm AM/PM;@", value: new AscCommonExcel.CCellValue({number: 13.74})},"13.33"],
-		["West","Boy","Tee","38383","11","11.44","10.94"],
-		["West","Boy","Golf","38383","11","12.63","11.73"],
-		["West","Boy","Fancy","38383","11","12.06","11.51"],
-		["West","Girl","Tee","38383","15","13.42","13.29"],
-		["West","Girl","Golf","38383","15","11.48","10.67"]
-	];
-	var testData7 = [
-		["Region","Gender","Style","Ship date","Units","Price","Cost"],
-		["East","Boy","Tee","38383","12","","10.42"],
-		["East","Boy","Golf","38383","12","","12.6"],
-		["East","Boy","Fancy","38383","12","","11.74"],
-		["East","Girl","Tee","38383","10","q","10.56"],
-		["East","Girl","Golf","38383","10","","11.95"],
-		["East","Girl","Fancy","38383","10","","13.33"],
-		["West","Boy","Tee","38383","11","q","10.94"],
-		["West","Boy","Golf","38383","11","1","11.73"],
-		["West","Boy","Fancy","38383","11","","11.51"],
-		["West","Girl","Tee","38383","15","2","13.29"],
-		["West","Girl","Golf","38383","15","3","10.67"]
-	];
-	var testDataFilter = [
-		["Region","Gender","Style","Ship date","Units","Price","Cost"],
-		["East","Boy","Tee","1","1","1","10.42"],
-		["East","Boy","Golf","1","2","2","12.6"],
-		["East","Boy","Fancy","2","2","3","11.74"],
-		["East","Girl","Tee","2","3","4","10.56"],
-		["East","Girl","Golf","3","3","5","11.95"],
-		["East","Girl","Fancy","3","4","6","13.33"],
-		["West","Boy","Tee","4","4","7","10.94"],
-		["West","Boy","Golf","4","5","20","11.73"],
-		["West","Boy","Fancy","5","5","20","11.51"],
-		["West","Girl","Tee","6","6","20","13.29"]
-	];
-	var testDataNumFormat = [
-		["Text","Date","Units","Units2","Units3","Price","hasBlank","Mix","MixFormat","bool","error"],
-		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Tee"})},  {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38383})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 12})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 12})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 11.04})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.42})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.42})},                                     {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.42})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 1})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
-		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Golf"})}, {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38384})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 12})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 12})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 13})},   {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12.6 })},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12.6 })},                                     {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12.6 })},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 1})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
-		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Fancy"})},{format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38385})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 12})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 12})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 11.96})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.74})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.74})},                                     {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.74})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 1})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
-		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Tee"})},  {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38386})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 10})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 10})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 11.27})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue()},               {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "qwe"})}, {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.27})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 1})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
-		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Golf"})}, {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38387})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 10})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 10})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 12.12})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.95})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.95})},                                     {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.95})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
-		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Fancy"})},{format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38388})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 10})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 10})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 13.74})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 13.33})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 13.33})},                                     {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 13.33})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
-		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Tee"})},  {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38389})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 11})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 11})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 11.44})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.94})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.94})},                                     {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.94})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
-		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Golf"})}, {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38390})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 11})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 11})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 12.63})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.73})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.73})},                                     {format: "0.00%",                                                             value: new AscCommonExcel.CCellValue({number: 11.73})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#N/A"})}   ],
-		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Fancy"})},{format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38391})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 11})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 11})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 12.06})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.51})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.51})},                                     {format: "0.00%",                                                             value: new AscCommonExcel.CCellValue({number: 11.51})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#N/A"})}   ],
-		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Tee"})},  {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38392})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 15})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 15})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 15})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 13.42})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 13.29})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 13.29})},                                     {format: "0.00%",                                                             value: new AscCommonExcel.CCellValue({number: 13.29})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#N/A"})}   ],
-		[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Golf"})}, {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38393})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 15})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 15})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 15})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 11.48})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.67})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.67})},                                     {format: "0.00%",                                                             value: new AscCommonExcel.CCellValue({number: 10.67})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#N/A"})}   ]
-	];
-	var multiElem1 = new AscCommonExcel.CMultiTextElem();
-	multiElem1.text = "qwe";
-	var multiElem2 = new AscCommonExcel.CMultiTextElem();
-	multiElem2.text = "rty";
-	var testDataHeader = [
-		["1","qwe","TRUE","#DIV/0!","1.234567891","12345678912", {format: "0.00", value: new AscCommonExcel.CCellValue({number: 1})},{format: "$#,##0.00", value: new AscCommonExcel.CCellValue({number: 2})},{format: "dddd\\, mmmm dd\\, yyyy", value: new AscCommonExcel.CCellValue({number: 3})},{format: "0.00%", value: new AscCommonExcel.CCellValue({number: 4})},{format: "0.00E+00", value: new AscCommonExcel.CCellValue({number: 5})},{value: new AscCommonExcel.CCellValue({multiText: [multiElem1, multiElem2]})},"1","qwe"],
-		["1","1","1","1","1","1","1","1","1","1","1","1","1","1"]
-	];
-	var testDataRecords = [
-		["Region","Gender","Style","Ship date","Units","Price","Cost"],
-		["East","Boy","Tee","38383","12","11.04","10.42"],
-		["East","Boy","Golf","100000","12","13","12.6"],
-		["East","Boy","Fancy","10","12","11.96","11.74"],
-		["North","Girl","Tee","38383","10","11.27","10.56"],
-		["East","Dog","Golf","38383","10","12.12","11.95"],
-		["East","Girl","Fancy","38383","10","13.74","13.33"],
-		["West","Boy","WWW","38383","11","11.44","10.94"],
-		["West","Boy","Golf","38383","11","12.63","11.73"],
-		["West","Boy","Fancy","38383","11","12.06","11.51"],
-		["West","Girl","BBB","38383","15","13.42","13.29"],
-		["West","Girl","Golf","38383","15","11.48","10.67"]
-	];
-	var testDataStructure = [
-		["NewField","Region","Style","NewUnits","Price","Gender","Cost"],
-		["East","11.04","East","12","East","Boy","1"],
-		["East","13","East","12","East","Boy","2"],
-		["East","11.96","East","12","East","Boy","3"],
-		["East","11.27","East","10","East","Girl","4"],
-		["East","12.12","East","10","East","Girl","5"],
-		["East","13.74","East","10","East","Girl","6"],
-		["West","11.44","West","11","West","Boy","7"],
-		["West","12.63","West","11","West","Boy","8"],
-		["West","12.06","West","11","West","Boy","9"],
-		["West","13.42","West","15","West","Girl","10"],
-		["West","11.48","West","15","West","Girl","11"]
-	];
+	function openDocument(){
+		AscCommon.g_oTableId.init();
+		api._onEndLoadSdk();
+		api.isOpenOOXInBrowser = false;
+		api._openDocument(AscCommon.getEmpty());
+		api._openOnClient();
+		api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
+		api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
+			api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
+		wb = api.wbModel;
+		wb.handlers.add("getSelectionState", function() {
+			return null;
+		});
+		ws = api.wbModel.aWorksheets[0];
+		api.asc_insertWorksheet(["Data"]);
+		wsData = wb.getWorksheetByName(["Data"], 0);
 
-	fillData(wsData, testData, testDataRange);
-	fillData(wsData, testData2, testDataRange2);
-	fillData(wsData, testData3, testDataRange3);
-	fillData(wsData, testData4, testDataRange4);
-	fillData(wsData, testData5, testDataRange5);
-	fillData(wsData, testData6, testDataRange6);
-	fillData(wsData, testData7, testDataRange7);
-	fillData(wsData, testDataHeader, testDataRangeHeader);
-	fillData(wsData, testData, testDataRangeTable);
-	fillData(wsData, testDataFilter, testDataRangeFilters);
-	fillData(wsData, testDataNumFormat, testDataRangeNumFormat);
-	var addFormatTableOptions = new AscCommonExcel.AddFormatTableOptions();
-	addFormatTableOptions.asc_setRange(testDataRangeTable.getAbsName());
-	addFormatTableOptions.asc_setIsTitle(true);
-	wsData.autoFilters.addAutoFilter("TableStyleMedium2", testDataRangeTable, addFormatTableOptions);
-	fillData(wsData, testData, testDataRangeDefName);
-	var defName = new Asc.asc_CDefName();
-	defName.Name = defNameName;
-	defName.Ref = wsData.getName() + "!" + testDataRangeDefName.getAbsName();
-	api.asc_setDefinedNames(defName);
-	fillData(wsData, testData, testDataRangeDefNameLocal);
-	var defNameLocal = new Asc.asc_CDefName();
-	defNameLocal.Name = defNameLocalName;
-	defNameLocal.Ref = wsData.getName() + "!" + testDataRangeDefNameLocal.getAbsName();
-	defNameLocal.LocalSheetId = wsData.getId();
-	api.asc_setDefinedNames(defNameLocal);
-	fillData(wsData, testData, testDataRefreshFieldSettings);
-	fillData(wsData, testDataRecords, testDataRefreshRecords);
-	fillData(wsData, testDataStructure, testDataRefreshStructure);
+		pivotStyle = "PivotStyleDark23";
+		tableName = "Table1";
+		defNameName = "defName";
+		defNameLocalName = "defNameLocal";
+		reportRange = AscCommonExcel.g_oRangeCache.getAscRange("A3");
+		testDataRange = AscCommonExcel.g_oRangeCache.getAscRange("B2:H13");
+		testDataRange2 = AscCommonExcel.g_oRangeCache.getAscRange("J2:P13");
+		testDataRange3 = AscCommonExcel.g_oRangeCache.getAscRange("B15:H26");
+		testDataRange4 = AscCommonExcel.g_oRangeCache.getAscRange("J15:P26");
+		testDataRange5 = AscCommonExcel.g_oRangeCache.getAscRange("B28:H39");
+		testDataRange6 = AscCommonExcel.g_oRangeCache.getAscRange("J28:P39");
+		testDataRange7 = AscCommonExcel.g_oRangeCache.getAscRange("B41:H52");
+		testDataRangeHeader = AscCommonExcel.g_oRangeCache.getAscRange("B54:O55");
+		testDataRangeTable = AscCommonExcel.g_oRangeCache.getAscRange("B57:H68");
+		testDataRefreshFieldSettings = AscCommonExcel.g_oRangeCache.getAscRange("B70:H81");
+		testDataRangeFilters = AscCommonExcel.g_oRangeCache.getAscRange("B83:H93");
+		testDataRangeNumFormat = AscCommonExcel.g_oRangeCache.getAscRange("B96:L107");
+		testDataRangeDefName = AscCommonExcel.g_oRangeCache.getAscRange("J57:P68");
+		testDataRangeDefNameLocal = AscCommonExcel.g_oRangeCache.getAscRange("R57:X68");
+		testDataRefreshRecords = AscCommonExcel.g_oRangeCache.getAscRange("J70:P81");
+		testDataRefreshStructure = AscCommonExcel.g_oRangeCache.getAscRange("R70:X81");
+		testData = [
+			["Region", "Gender", "Style", "Ship date", "Units", "Price", "Cost"],
+			["East", "Boy", "Tee", "38383", "12", "11.04", "10.42"],
+			["East", "Boy", "Golf", "38383", "12", "13", "12.6"],
+			["East", "Boy", "Fancy", "38383", "12", "11.96", "11.74"],
+			["East", "Girl", "Tee", "38383", "10", "11.27", "10.56"],
+			["East", "Girl", "Golf", "38383", "10", "12.12", "11.95"],
+			["East", "Girl", "Fancy", "38383", "10", "13.74", "13.33"],
+			["West", "Boy", "Tee", "38383", "11", "11.44", "10.94"],
+			["West", "Boy", "Golf", "38383", "11", "12.63", "11.73"],
+			["West", "Boy", "Fancy", "38383", "11", "12.06", "11.51"],
+			["West", "Girl", "Tee", "38383", "15", "13.42", "13.29"],
+			["West", "Girl", "Golf", "38383", "15", "11.48", "10.67"]
+		];
+		testData2 = [
+			["Region","Gender","Style","Ship date","Units","Price","Cost"],
+			["East","Boy","Tee","38383","12","11.05","10.42"],
+			["East","Boy","Golf","38383","12","","12.6"],
+			["East","Boy","Fancy","38383","12","11.96","11.74"],
+			["East","Girl","Tee","38383","10","","10.56"],
+			["East","Girl","Golf","38383","10","12.12","11.95"],
+			["East","Girl","Fancy","38383","10","","13.33"],
+			["West","Boy","Tee","38383","11","11.44","10.94"],
+			["West","Boy","Golf","38383","11","12.63","11.73"],
+			["West","Boy","Fancy","38383","11","12.06","11.51"],
+			["West","Girl","Tee","38383","15","13.42","13.29"],
+			["West","Girl","Golf","38383","15","11.48","10.67"]
+		];
+		testData3 = [
+			["Region","Gender","Style","Ship date","Units","Price","Cost"],
+			["East","Boy","Tee","38383","12","11.05","10.42"],
+			["East","Boy","Golf","38383","12","q","12.6"],
+			["East","Boy","Fancy","38383","12","11.96","11.74"],
+			["East","Girl","Tee","38383","10","w","10.56"],
+			["East","Girl","Golf","38383","10","12.12","11.95"],
+			["East","Girl","Fancy","38383","10","e","13.33"],
+			["West","Boy","Tee","38383","11","11.44","10.94"],
+			["West","Boy","Golf","38383","11","12.63","11.73"],
+			["West","Boy","Fancy","38383","11","12.06","11.51"],
+			["West","Girl","Tee","38383","15","13.42","13.29"],
+			["West","Girl","Golf","38383","15","11.48","10.67"]
+		];
+		testData4 = [
+			["Region","Gender","Style","Ship date","Units","Price","Cost"],
+			["East","Boy","Tee","38383","12","11.05","10.42"],
+			["East","Boy","Golf","38383","12","TRUE","12.6"],
+			["East","Boy","Fancy","38383","12","11.96","11.74"],
+			["East","Girl","Tee","38383","10","FALSE","10.56"],
+			["East","Girl","Golf","38383","10","12.12","11.95"],
+			["East","Girl","Fancy","38383","10","TRUE","13.33"],
+			["West","Boy","Tee","38383","11","11.44","10.94"],
+			["West","Boy","Golf","38383","11","12.63","11.73"],
+			["West","Boy","Fancy","38383","11","12.06","11.51"],
+			["West","Girl","Tee","38383","15","13.42","13.29"],
+			["West","Girl","Golf","38383","15","11.48","10.67"]
+		];
+		testData5 = [
+			["Region","Gender","Style","Ship date","Units","Price","Cost"],
+			["East","Boy","Tee","38383","12","11.04","10.42"],
+			["East","Boy","Golf","38383","12","#N/A","12.6"],
+			["East","Boy","Fancy","38383","12","11.96","11.74"],
+			["East","Girl","Tee","38383","10","#N/A","10.56"],
+			["East","Girl","Golf","38383","10","12.12","11.95"],
+			["East","Girl","Fancy","38383","10","#N/A","13.33"],
+			["West","Boy","Tee","38383","11","11.44","10.94"],
+			["West","Boy","Golf","38383","11","12.63","11.73"],
+			["West","Boy","Fancy","38383","11","12.06","11.51"],
+			["West","Girl","Tee","38383","15","13.42","13.29"],
+			["West","Girl","Golf","38383","15","11.48","10.67"]
+		];
+		testData6 = [
+			["Region","Gender","Style","Ship date","Units","Price","Cost"],
+			["East","Boy","Tee","38383","12","11.04","10.42"],
+			["East","Boy","Golf","38383","12",{format: "[$-409]m/d/yyyy h:mm AM/PM;@", value: new AscCommonExcel.CCellValue({number: 13})},"12.6"],
+			["East","Boy","Fancy","38383","12","11.96","11.74"],
+			["East","Girl","Tee","38383","10",{format: "[$-409]m/d/yyyy h:mm AM/PM;@", value: new AscCommonExcel.CCellValue({number: 11.27})},"10.56"],
+			["East","Girl","Golf","38383","10","12.12","11.95"],
+			["East","Girl","Fancy","38383","10",{format: "[$-409]m/d/yyyy h:mm AM/PM;@", value: new AscCommonExcel.CCellValue({number: 13.74})},"13.33"],
+			["West","Boy","Tee","38383","11","11.44","10.94"],
+			["West","Boy","Golf","38383","11","12.63","11.73"],
+			["West","Boy","Fancy","38383","11","12.06","11.51"],
+			["West","Girl","Tee","38383","15","13.42","13.29"],
+			["West","Girl","Golf","38383","15","11.48","10.67"]
+		];
+		testData7 = [
+			["Region","Gender","Style","Ship date","Units","Price","Cost"],
+			["East","Boy","Tee","38383","12","","10.42"],
+			["East","Boy","Golf","38383","12","","12.6"],
+			["East","Boy","Fancy","38383","12","","11.74"],
+			["East","Girl","Tee","38383","10","q","10.56"],
+			["East","Girl","Golf","38383","10","","11.95"],
+			["East","Girl","Fancy","38383","10","","13.33"],
+			["West","Boy","Tee","38383","11","q","10.94"],
+			["West","Boy","Golf","38383","11","1","11.73"],
+			["West","Boy","Fancy","38383","11","","11.51"],
+			["West","Girl","Tee","38383","15","2","13.29"],
+			["West","Girl","Golf","38383","15","3","10.67"]
+		];
+		testDataFilter = [
+			["Region","Gender","Style","Ship date","Units","Price","Cost"],
+			["East","Boy","Tee","1","1","1","10.42"],
+			["East","Boy","Golf","1","2","2","12.6"],
+			["East","Boy","Fancy","2","2","3","11.74"],
+			["East","Girl","Tee","2","3","4","10.56"],
+			["East","Girl","Golf","3","3","5","11.95"],
+			["East","Girl","Fancy","3","4","6","13.33"],
+			["West","Boy","Tee","4","4","7","10.94"],
+			["West","Boy","Golf","4","5","20","11.73"],
+			["West","Boy","Fancy","5","5","20","11.51"],
+			["West","Girl","Tee","6","6","20","13.29"]
+		];
+		testDataNumFormat = [
+			["Text","Date","Units","Units2","Units3","Price","hasBlank","Mix","MixFormat","bool","error"],
+			[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Tee"})},  {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38383})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 12})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 12})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 11.04})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.42})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.42})},                                     {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.42})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 1})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
+			[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Golf"})}, {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38384})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 12})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 12})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 13})},   {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12.6 })},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12.6 })},                                     {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12.6 })},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 1})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
+			[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Fancy"})},{format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38385})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 12})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 12})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 12})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 11.96})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.74})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.74})},                                     {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.74})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 1})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
+			[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Tee"})},  {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38386})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 10})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 10})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 11.27})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue()},               {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "qwe"})}, {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.27})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 1})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
+			[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Golf"})}, {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38387})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 10})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 10})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 12.12})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.95})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.95})},                                     {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.95})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
+			[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Fancy"})},{format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38388})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 10})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 10})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 13.74})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 13.33})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 13.33})},                                     {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 13.33})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
+			[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Tee"})},  {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38389})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 11})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 11})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 11.44})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.94})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.94})},                                     {format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.94})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#DIV/0!"})}],
+			[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Golf"})}, {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38390})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 11})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 11})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 12.63})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.73})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.73})},                                     {format: "0.00%",                                                             value: new AscCommonExcel.CCellValue({number: 11.73})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#N/A"})}   ],
+			[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Fancy"})},{format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38391})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 11})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 11})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 12.06})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.51})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 11.51})},                                     {format: "0.00%",                                                             value: new AscCommonExcel.CCellValue({number: 11.51})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#N/A"})}   ],
+			[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Tee"})},  {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38392})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 15})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 15})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 15})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 13.42})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 13.29})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 13.29})},                                     {format: "0.00%",                                                             value: new AscCommonExcel.CCellValue({number: 13.29})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#N/A"})}   ],
+			[{format: "\\q\\-@", value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.String, text: "Golf"})}, {format: "mm/dd/yy;@", value: new AscCommonExcel.CCellValue({number: 38393})},{format: "0.0%", value: new AscCommonExcel.CCellValue({number: 15})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 15})},{format: "0.0E+00", value: new AscCommonExcel.CCellValue({number: 15})},{format: '"$"#,##0.0', value: new AscCommonExcel.CCellValue({number: 11.48})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.67})},{format: '_("$"* #,##0.0_);_("$"* \\(#,##0.0\\);_("$"* "-"?_);_(@_)', value: new AscCommonExcel.CCellValue({number: 10.67})},                                     {format: "0.00%",                                                             value: new AscCommonExcel.CCellValue({number: 10.67})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Bool, number: 0})},{value: new AscCommonExcel.CCellValue({type: AscCommon.CellValueType.Error, text: "#N/A"})}   ]
+		];
+		multiElem1 = new AscCommonExcel.CMultiTextElem();
+		multiElem1.text = "qwe";
+		multiElem2 = new AscCommonExcel.CMultiTextElem();
+		multiElem2.text = "rty";
+		testDataHeader = [
+			["1","qwe","TRUE","#DIV/0!","1.234567891","12345678912", {format: "0.00", value: new AscCommonExcel.CCellValue({number: 1})},{format: "$#,##0.00", value: new AscCommonExcel.CCellValue({number: 2})},{format: "dddd\\, mmmm dd\\, yyyy", value: new AscCommonExcel.CCellValue({number: 3})},{format: "0.00%", value: new AscCommonExcel.CCellValue({number: 4})},{format: "0.00E+00", value: new AscCommonExcel.CCellValue({number: 5})},{value: new AscCommonExcel.CCellValue({multiText: [multiElem1, multiElem2]})},"1","qwe"],
+			["1","1","1","1","1","1","1","1","1","1","1","1","1","1"]
+		];
+		testDataRecords = [
+			["Region","Gender","Style","Ship date","Units","Price","Cost"],
+			["East","Boy","Tee","38383","12","11.04","10.42"],
+			["East","Boy","Golf","100000","12","13","12.6"],
+			["East","Boy","Fancy","10","12","11.96","11.74"],
+			["North","Girl","Tee","38383","10","11.27","10.56"],
+			["East","Dog","Golf","38383","10","12.12","11.95"],
+			["East","Girl","Fancy","38383","10","13.74","13.33"],
+			["West","Boy","WWW","38383","11","11.44","10.94"],
+			["West","Boy","Golf","38383","11","12.63","11.73"],
+			["West","Boy","Fancy","38383","11","12.06","11.51"],
+			["West","Girl","BBB","38383","15","13.42","13.29"],
+			["West","Girl","Golf","38383","15","11.48","10.67"]
+		];
+		testDataStructure = [
+			["NewField","Region","Style","NewUnits","Price","Gender","Cost"],
+			["East","11.04","East","12","East","Boy","1"],
+			["East","13","East","12","East","Boy","2"],
+			["East","11.96","East","12","East","Boy","3"],
+			["East","11.27","East","10","East","Girl","4"],
+			["East","12.12","East","10","East","Girl","5"],
+			["East","13.74","East","10","East","Girl","6"],
+			["West","11.44","West","11","West","Boy","7"],
+			["West","12.63","West","11","West","Boy","8"],
+			["West","12.06","West","11","West","Boy","9"],
+			["West","13.42","West","15","West","Girl","10"],
+			["West","11.48","West","15","West","Girl","11"]
+		];
 
-	var dataRef = wsData.getName() + "!" + testDataRange.getName();
-	var dataRef1Row = wsData.getName() + "!" + new Asc.Range(testDataRange.c1, testDataRange.r1, testDataRange.c2, testDataRange.r1 + 1).getName();
-	var dataRef2 = wsData.getName() + "!" + testDataRange2.getName();
-	var dataRef3 = wsData.getName() + "!" + testDataRange3.getName();
-	var dataRef4 = wsData.getName() + "!" + testDataRange4.getName();
-	var dataRef5 = wsData.getName() + "!" + testDataRange5.getName();
-	var dataRef6 = wsData.getName() + "!" + testDataRange6.getName();
-	var dataRef7 = wsData.getName() + "!" + testDataRange7.getName();
-	var dataRefHeader = wsData.getName() + "!" + testDataRangeHeader.getName();
-	var dataRefTable = tableName;
-	var dataRefTableColumn = tableName + '[[Gender]:[Price]]';
-	var dataRefDefName = defNameName;
-	var dataRefDefNameLocal = wsData.getName() + "!" + defNameLocalName;
-	var dataRefFieldSettings = wsData.getName() + "!" + testDataRefreshFieldSettings.getName();
-	var dataRefRecords = wsData.getName() + "!" + testDataRefreshRecords.getName();
-	var dataRefStructure = wsData.getName() + "!" + testDataRefreshStructure.getName();
-	var dataRefFilters = wsData.getName() + "!" + testDataRangeFilters.getName();
-	var dataRefNumFormat = wsData.getName() + "!" + testDataRangeNumFormat.getName();
+		fillData(wsData, testData, testDataRange);
+		fillData(wsData, testData2, testDataRange2);
+		fillData(wsData, testData3, testDataRange3);
+		fillData(wsData, testData4, testDataRange4);
+		fillData(wsData, testData5, testDataRange5);
+		fillData(wsData, testData6, testDataRange6);
+		fillData(wsData, testData7, testDataRange7);
+		fillData(wsData, testDataHeader, testDataRangeHeader);
+		fillData(wsData, testData, testDataRangeTable);
+		fillData(wsData, testDataFilter, testDataRangeFilters);
+		fillData(wsData, testDataNumFormat, testDataRangeNumFormat);
+		addFormatTableOptions = new AscCommonExcel.AddFormatTableOptions();
+		addFormatTableOptions.asc_setRange(testDataRangeTable.getAbsName());
+		addFormatTableOptions.asc_setIsTitle(true);
+		wsData.autoFilters.addAutoFilter("TableStyleMedium2", testDataRangeTable, addFormatTableOptions);
+		fillData(wsData, testData, testDataRangeDefName);
+		defName = new Asc.asc_CDefName();
+		defName.Name = defNameName;
+		defName.Ref = wsData.getName() + "!" + testDataRangeDefName.getAbsName();
+		api.asc_setDefinedNames(defName);
+		fillData(wsData, testData, testDataRangeDefNameLocal);
+		defNameLocal = new Asc.asc_CDefName();
+		defNameLocal.Name = defNameLocalName;
+		defNameLocal.Ref = wsData.getName() + "!" + testDataRangeDefNameLocal.getAbsName();
+		defNameLocal.LocalSheetId = wsData.getId();
+		api.asc_setDefinedNames(defNameLocal);
+		fillData(wsData, testData, testDataRefreshFieldSettings);
+		fillData(wsData, testDataRecords, testDataRefreshRecords);
+		fillData(wsData, testDataStructure, testDataRefreshStructure);
+
+		dataRef = wsData.getName() + "!" + testDataRange.getName();
+		dataRef1Row = wsData.getName() + "!" + new Asc.Range(testDataRange.c1, testDataRange.r1, testDataRange.c2, testDataRange.r1 + 1).getName();
+		dataRef2 = wsData.getName() + "!" + testDataRange2.getName();
+		dataRef3 = wsData.getName() + "!" + testDataRange3.getName();
+		dataRef4 = wsData.getName() + "!" + testDataRange4.getName();
+		dataRef5 = wsData.getName() + "!" + testDataRange5.getName();
+		dataRef6 = wsData.getName() + "!" + testDataRange6.getName();
+		dataRef7 = wsData.getName() + "!" + testDataRange7.getName();
+		dataRefHeader = wsData.getName() + "!" + testDataRangeHeader.getName();
+		dataRefTable = tableName;
+		dataRefTableColumn = tableName + '[[Gender]:[Price]]';
+		dataRefDefName = defNameName;
+		dataRefDefNameLocal = wsData.getName() + "!" + defNameLocalName;
+		dataRefFieldSettings = wsData.getName() + "!" + testDataRefreshFieldSettings.getName();
+		dataRefRecords = wsData.getName() + "!" + testDataRefreshRecords.getName();
+		dataRefStructure = wsData.getName() + "!" + testDataRefreshStructure.getName();
+		dataRefFilters = wsData.getName() + "!" + testDataRangeFilters.getName();
+		dataRefNumFormat = wsData.getName() + "!" + testDataRangeNumFormat.getName();
+	}
 
 
 	function fillData(ws, data, range) {

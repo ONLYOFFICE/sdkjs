@@ -63,6 +63,13 @@ function ParaFieldChar(Type, LogicDocument)
 ParaFieldChar.prototype = Object.create(CRunElementBase.prototype);
 ParaFieldChar.prototype.constructor = ParaFieldChar;
 ParaFieldChar.prototype.Type = para_FieldChar;
+ParaFieldChar.prototype.Init = function(Type, LogicDocument)
+{
+	this.CharType = Type;
+
+	this.LogicDocument = LogicDocument;
+	this.ComplexField  = (this.CharType === fldchartype_Begin) ? new CComplexField(this.LogicDocument) : null;
+};
 ParaFieldChar.prototype.Copy = function()
 {
 	let oChar = new ParaFieldChar(this.CharType, this.LogicDocument)
@@ -147,10 +154,7 @@ ParaFieldChar.prototype.Write_ToBinary = function(Writer)
 ParaFieldChar.prototype.Read_FromBinary = function(Reader)
 {
 	// Long : CharType
-	this.CharType = Reader.GetLong();
-
-	this.LogicDocument = editor.WordControl.m_oLogicDocument;
-	this.ComplexField  = (this.CharType === fldchartype_Begin) ? new CComplexField(this.LogicDocument) : null;
+	this.Init(Reader.GetLong(), editor.WordControl.m_oLogicDocument);
 };
 ParaFieldChar.prototype.SetParent = function(oParent)
 {

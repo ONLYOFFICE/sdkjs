@@ -243,7 +243,7 @@ var c_oAscError = Asc.c_oAscError;
 			try
 			{
 				var printOptionsObj = asc["editor"].getPrintOptionsJson();
-				printOptionsObj["documentLayout"] = { "openedAt" : editor.openedAt };
+				printOptionsObj["documentLayout"] = { "openedAt" : asc["editor"].openedAt };
 
 				printOptions = JSON.stringify(printOptionsObj);
 			}

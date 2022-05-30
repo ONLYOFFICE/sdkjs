@@ -2987,7 +2987,10 @@ Because of this, the display is sometimes not correct.
         case 0xb7: oElement = new RuleLst(); break;
         case 0xb8: oElement = new SShape(); break;
         case 0xb9: oElement = new VarLst(); break;
-        default:break;
+        default: {
+          pReader.stream.SkipRecord();
+          break;
+        }
       }
       if(oElement) {
         oElement.fromPPTY(pReader);
@@ -2998,6 +3001,7 @@ Because of this, the display is sometimes not correct.
       pWriter._WriteString2(0, this.name);
       pWriter._WriteString2(1, this.styleLbl);
       pWriter._WriteString2(2, this.moveWith);
+      pWriter._WriteUChar2(3, this.chOrder);
     };
     LayoutNode.prototype.writeChildren = function(pWriter) {
       for(var nIndex = 0; nIndex < this.list.length; ++nIndex) {
@@ -3021,6 +3025,7 @@ Because of this, the display is sometimes not correct.
       if (0 === nType) this.setName(oStream.GetString2());
       else if (1 === nType) this.setStyleLbl(oStream.GetString2());
       else if (2 === nType) this.setMoveWith(oStream.GetString2());
+      else if (3 === nType) this.setChOrder(oStream.GetUChar());
 
     };
     LayoutNode.prototype.readChild = function(nType, pReader) {
@@ -3879,8 +3884,9 @@ Because of this, the display is sometimes not correct.
       var s = pReader.stream;
       switch (nType) {
         case 0: {
-          this.addToLstIf(0, new If());
-          this.if[0].fromPPTY(pReader);
+          var ifObj = new If();
+          this.addToLstIf(this.if.length, ifObj);
+          ifObj.fromPPTY(pReader);
           break;
         }
         case 1: {
@@ -3956,7 +3962,10 @@ Because of this, the display is sometimes not correct.
         case 0xb7: oElement = new RuleLst(); break;
         case 0xb8: oElement = new SShape(); break;
         case 0xb9: oElement = new VarLst(); break;
-        default:break;
+        default: {
+          pReader.stream.SkipRecord();
+          break;
+        }
       }
       if(oElement) {
         oElement.fromPPTY(pReader);
@@ -4366,6 +4375,7 @@ Because of this, the display is sometimes not correct.
 
 
     changesFactory[AscDFH.historyitem_IfArg] = CChangeString;
+    changesFactory[AscDFH.historyitem_IfRef] = CChangeString;
     changesFactory[AscDFH.historyitem_IfFunc] = CChangeLong;
     changesFactory[AscDFH.historyitem_IfName] = CChangeString;
     changesFactory[AscDFH.historyitem_IfOp] = CChangeLong;
@@ -4374,6 +4384,9 @@ Because of this, the display is sometimes not correct.
     changesFactory[AscDFH.historyitem_IfRemoveList] = CChangeContent;
     drawingsChangesMap[AscDFH.historyitem_IfArg] = function (oClass, value) {
       oClass.arg = value;
+    };
+    drawingsChangesMap[AscDFH.historyitem_IfRef] = function (oClass, value) {
+      oClass.ref = value;
     };
     drawingsChangesMap[AscDFH.historyitem_IfFunc] = function (oClass, value) {
       oClass.func = value;
@@ -4401,6 +4414,7 @@ Because of this, the display is sometimes not correct.
       this.name = null;
       this.op = null;
       this.val = null;
+      this.ref = null;
       this.list = [];
     }
 
@@ -4414,6 +4428,11 @@ Because of this, the display is sometimes not correct.
     If.prototype.setFunc = function (pr) {
       oHistory.Add(new CChangeLong(this, AscDFH.historyitem_IfFunc, this.getFunc(), pr));
       this.func = pr;
+    }
+
+    If.prototype.setRef = function (pr) {
+      oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfRef, this.getRef(), pr));
+      this.ref = pr;
     }
 
     If.prototype.setName = function (pr) {
@@ -4448,6 +4467,10 @@ Because of this, the display is sometimes not correct.
 
     If.prototype.getArg = function () {
       return this.arg;
+    }
+
+    If.prototype.getRef = function () {
+      return this.ref;
     }
 
     If.prototype.getFunc = function () {
@@ -4507,7 +4530,10 @@ Because of this, the display is sometimes not correct.
         case 0xb7: oElement = new RuleLst(); break;
         case 0xb8: oElement = new SShape(); break;
         case 0xb9: oElement = new VarLst(); break;
-        default:break;
+        default: {
+          pReader.stream.SkipRecord();
+          break;
+        }
       }
       if(oElement) {
         oElement.fromPPTY(pReader);
@@ -6415,22 +6441,13 @@ Because of this, the display is sometimes not correct.
     AnimLvl.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
     }
-    AnimLvl.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteUChar1(0, this.val !== null ? this.val : 0);
+    AnimLvl.prototype.toPPTY = function (pWriter) {
+      pWriter.WriteByteToPPTY(this.getVal() || 0);
     };
-    AnimLvl.prototype.writeChildren = function(pWriter) {
-    };
-    AnimLvl.prototype.readAttribute = function(nType, pReader) {
-      var oStream = pReader.stream;
-      if (0 === nType) {
-        var nVal = oStream.GetUChar();
-        if(nVal !== 0) {
-          this.setVal(nVal);
-        }
-      }
-    };
-    AnimLvl.prototype.readChild = function(nType, pReader) {
 
+    AnimLvl.prototype.fromPPTY = function (pReader) {
+      var val = pReader.stream.ReadByteFromPPTY();
+      this.setVal(val);
     };
 
     changesFactory[AscDFH.historyitem_AnimOneVal] = CChangeLong;
@@ -6457,22 +6474,13 @@ Because of this, the display is sometimes not correct.
     AnimOne.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
     }
-    AnimOne.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteUChar1(0, this.val !== null ? this.val : 0);
+    AnimOne.prototype.toPPTY = function (pWriter) {
+      pWriter.WriteByteToPPTY(this.getVal() || 0);
     };
-    AnimOne.prototype.writeChildren = function(pWriter) {
-    };
-    AnimOne.prototype.readAttribute = function(nType, pReader) {
-      var oStream = pReader.stream;
-      if (0 === nType) {
-        var nVal = oStream.GetUChar();
-        if(nVal !== 0) {
-          this.setVal(nVal);
-        }
-      }
-    };
-    AnimOne.prototype.readChild = function(nType, pReader) {
 
+    AnimOne.prototype.fromPPTY = function (pReader) {
+      var val = pReader.stream.ReadByteFromPPTY();
+      this.setVal(val);
     };
 
     changesFactory[AscDFH.historyitem_BulletEnabledVal] = CChangeBool;
@@ -6499,20 +6507,13 @@ Because of this, the display is sometimes not correct.
     BulletEnabled.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
     }
-    BulletEnabled.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteUChar1(0, this.val !== null ? (this.val ? 1 : 0) : 0);
+    BulletEnabled.prototype.toPPTY = function (pWriter) {
+      pWriter.WriteByteToPPTY(this.getVal() ? 1 : 0);
     };
-    BulletEnabled.prototype.writeChildren = function(pWriter) {
-    };
-    BulletEnabled.prototype.readAttribute = function(nType, pReader) {
-      var oStream = pReader.stream;
-      if (0 === nType) {
-        var nVal = oStream.GetUChar();
-        this.setVal(nVal ? true : false);
-      }
-    };
-    BulletEnabled.prototype.readChild = function(nType, pReader) {
 
+    BulletEnabled.prototype.fromPPTY = function (pReader) {
+      var val = pReader.stream.ReadByteFromPPTY();
+      this.setVal(!!val);
     };
 
     changesFactory[AscDFH.historyitem_ChMaxVal] = CChangeLong;
@@ -6540,6 +6541,16 @@ Because of this, the display is sometimes not correct.
       oCopy.setVal(this.getVal());
     }
 
+    ChMax.prototype.fromPPTY = function (pReader) {
+      var val = pReader.stream.ReadIntFromPPTY();
+      this.setVal(val);
+    }
+    
+    ChMax.prototype.toPPTY = function (pWriter) {
+      var val = this.getVal();
+      pWriter.WriteIntToPPTY(val || 0);
+    }
+
     changesFactory[AscDFH.historyitem_ChPrefVal] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_ChPrefVal] = function (oClass, value) {
       oClass.val = value;
@@ -6565,6 +6576,15 @@ Because of this, the display is sometimes not correct.
       oCopy.setVal(this.getVal());
     }
 
+    ChPref.prototype.fromPPTY = function (pReader) {
+      this.setVal(pReader.stream.ReadIntFromPPTY());
+    };
+
+    ChPref.prototype.toPPTY = function (pWriter) {
+      var val = this.getVal() || 0;
+      pWriter.WriteIntToPPTY(val);
+    };
+
     changesFactory[AscDFH.historyitem_DiagramDirectionVal] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_DiagramDirectionVal] = function (oClass, value) {
       oClass.val = value;
@@ -6589,23 +6609,16 @@ Because of this, the display is sometimes not correct.
     DiagramDirection.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
     }
-    DiagramDirection.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteUChar1(0, this.val !== null ? this.val : 0);
-    };
-    DiagramDirection.prototype.writeChildren = function(pWriter) {
-    };
-    DiagramDirection.prototype.readAttribute = function(nType, pReader) {
-      var oStream = pReader.stream;
-      if (0 === nType) {
-        var nVal = oStream.GetUChar();
-        if(nVal !== 0) {
-          this.setVal(nVal);
-        }
-      }
-    };
-    DiagramDirection.prototype.readChild = function(nType, pReader) {
 
+    DiagramDirection.prototype.toPPTY = function (pWriter) {
+      pWriter.WriteByteToPPTY(this.getVal() || 0);
     };
+
+    DiagramDirection.prototype.fromPPTY = function (pReader) {
+      var val = pReader.stream.ReadByteFromPPTY();
+      this.setVal(val);
+    };
+
 
     changesFactory[AscDFH.historyitem_HierBranchVal] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_HierBranchVal] = function (oClass, value) {
@@ -6631,22 +6644,14 @@ Because of this, the display is sometimes not correct.
     HierBranch.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
     };
-    HierBranch.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteUChar1(0, this.val !== null ? this.val : 0);
-    };
-    HierBranch.prototype.writeChildren = function(pWriter) {
-    };
-    HierBranch.prototype.readAttribute = function(nType, pReader) {
-      var oStream = pReader.stream;
-      if (0 === nType) {
-        var nVal = oStream.GetUChar();
-        if(nVal !== 0) {
-          this.setVal(nVal);
-        }
-      }
-    };
-    HierBranch.prototype.readChild = function(nType, pReader) {
 
+    HierBranch.prototype.toPPTY = function (pWriter) {
+      pWriter.WriteByteToPPTY(this.getVal() || 0);
+    };
+
+    HierBranch.prototype.fromPPTY = function (pReader) {
+      var val = pReader.stream.ReadByteFromPPTY();
+      this.setVal(val);
     };
 
     changesFactory[AscDFH.historyitem_OrgChartVal] = CChangeBool;
@@ -6673,21 +6678,16 @@ Because of this, the display is sometimes not correct.
     OrgChart.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
     }
-    OrgChart.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteUChar1(0, this.val !== null ? (this.val ? 1 : 0) : 0);
-    };
-    OrgChart.prototype.writeChildren = function(pWriter) {
-    };
-    OrgChart.prototype.readAttribute = function(nType, pReader) {
-      var oStream = pReader.stream;
-      if (0 === nType) {
-        var nVal = oStream.GetUChar();
-        this.setVal(nVal ? true : false);
-      }
-    };
-    OrgChart.prototype.readChild = function(nType, pReader) {
 
+    OrgChart.prototype.toPPTY = function (pWriter) {
+      pWriter.WriteByteToPPTY(this.getVal() ? 1 : 0);
     };
+
+    OrgChart.prototype.fromPPTY = function (pReader) {
+      var val = pReader.stream.ReadByteFromPPTY();
+      this.setVal(!!val);
+    };
+
     changesFactory[AscDFH.historyitem_ResizeHandlesVal] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_ResizeHandlesVal] = function (oClass, value) {
       oClass.val = value;
@@ -6712,22 +6712,14 @@ Because of this, the display is sometimes not correct.
     ResizeHandles.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
     }
-    ResizeHandles.prototype.privateWriteAttributes = function(pWriter) {
-      pWriter._WriteUChar1(0, this.val !== null ? this.val : 0);
-    };
-    ResizeHandles.prototype.writeChildren = function(pWriter) {
-    };
-    ResizeHandles.prototype.readAttribute = function(nType, pReader) {
-      var oStream = pReader.stream;
-      if (0 === nType) {
-        var nVal = oStream.GetUChar();
-        if(nVal !== 0) {
-          this.setVal(nVal);
-        }
-      }
-    };
-    ResizeHandles.prototype.readChild = function(nType, pReader) {
 
+    ResizeHandles.prototype.toPPTY = function (pWriter) {
+      pWriter.WriteByteToPPTY(this.getVal() || 0);
+    };
+
+    ResizeHandles.prototype.fromPPTY = function (pReader) {
+      var val = pReader.stream.ReadByteFromPPTY();
+      this.setVal(val);
     };
 
 
@@ -6828,7 +6820,10 @@ Because of this, the display is sometimes not correct.
         case 0xb7: oElement = new RuleLst(); break;
         case 0xb8: oElement = new SShape(); break;
         case 0xb9: oElement = new VarLst(); break;
-        default:break;
+        default: {
+          pReader.stream.SkipRecord();
+          break;
+        }
       }
       if(oElement) {
         oElement.fromPPTY(pReader);
@@ -7799,9 +7794,29 @@ Because of this, the display is sometimes not correct.
     function CCommonDataClrList(type, ind, item, isAdd) {
       CBaseFormatObject.call(this, type, ind, item, isAdd);
       this.list = [];
+      this.hueDir = null;
+      this.meth = null;
     }
 
     InitClass(CCommonDataClrList, CBaseFormatObject, AscDFH.historyitem_type_CCommonDataClrList);
+
+    CCommonDataClrList.prototype.setHueDir = function (pr) {
+      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CCommonDataClrListHueDir, this.getHueDir(), pr));
+      this.hueDir = pr;
+    }
+
+    CCommonDataClrList.prototype.setMeth = function (pr) {
+      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CCommonDataClrListMeth, this.getMeth(), pr));
+      this.meth = pr;
+    }
+
+    CCommonDataClrList.prototype.getHueDir = function () {
+      return this.hueDir;
+    }
+
+    CCommonDataClrList.prototype.getMeth = function () {
+      return this.meth;
+    }
 
     CCommonDataClrList.prototype.addToLst = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.list.length, Math.max(0, nIdx));
@@ -8881,9 +8896,13 @@ Because of this, the display is sometimes not correct.
       }
     };
 
+    Drawing.prototype.getResultScaleCoefficients = function() {
+      return {cx: 1, cy: 1};
+    };
+
     Drawing.prototype.setXfrmByParent = function () {
       var oXfrm = this.spPr.xfrm;
-      if (oXfrm.isZero()) {
+      if (oXfrm.isZero && oXfrm.isZero()) {
         var parent = this.group;
         if (parent && parent.spPr.xfrm) {
           oXfrm.setExtX(parent.spPr.xfrm.extX);
@@ -9886,6 +9905,7 @@ Because of this, the display is sometimes not correct.
       this.styleDef = null;
       this.parent = null;
       this.type = null;
+      this.bNeedUpdatePosition = true;
 
       this.calcGeometry = null;
     }
@@ -9899,12 +9919,21 @@ Because of this, the display is sometimes not correct.
       return 'SmartArt';
     };
 
+    SmartArt.prototype.hasSmartArt = function (bRetSmartArt) {
+      return bRetSmartArt ? this : true;
+    }
+
     SmartArt.prototype.recalculate = function () {
     var oldParaMarks = editor && editor.ShowParaMarks;
       if (oldParaMarks) {
         editor.ShowParaMarks = false;
       }
       CGroupShape.prototype.recalculate.call(this);
+      if (this.group && this.bNeedUpdatePosition) {
+        this.bNeedUpdatePosition = false;
+        var group = this.getMainGroup();
+        group.updateCoordinatesAfterInternalResize();
+      }
       if (oldParaMarks) {
         editor.ShowParaMarks = oldParaMarks;
       }
@@ -10758,7 +10787,7 @@ Because of this, the display is sometimes not correct.
 
     SmartArt.prototype.setXfrmByParent = function () {
       var oXfrm = this.spPr.xfrm;
-      if (oXfrm.isZero()) {
+      if (oXfrm.isZero && oXfrm.isZero()) {
         var parent = this.parent;
         if (parent instanceof AscCommonWord.ParaDrawing) {
           oXfrm.setExtX(parent.Extent.W);

@@ -546,7 +546,13 @@ var c_oAscPopUpSelectorType = {
 		showLockMessage: 3
 	};
 
-  
+  var c_oAscSearchBy = {
+    Workbook: 0,
+    Sheet: 1,
+    Range: 2
+  };
+
+
   //----------------------------------------------------------export----------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
   window['AscCommonExcel'].c_oAscDrawDepOptions = c_oAscDrawDepOptions;
@@ -895,6 +901,12 @@ var c_oAscPopUpSelectorType = {
   prot['notExpandAndNotShowMessage'] = prot.notExpandAndNotShowMessage;
   prot['showExpandMessage'] = prot.showExpandMessage;
   prot['showLockMessage'] = prot.showLockMessage;
+
+  window['Asc']['c_oAscSearchBy'] = window['Asc'].c_oAscSearchBy = c_oAscSearchBy;
+  prot = c_oAscSearchBy;
+  prot['Workbook'] = prot.Workbook;
+  prot['Sheet'] = prot.Sheet;
+  prot['Range'] = prot.Range;
 
 
 })(window);

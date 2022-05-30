@@ -1115,13 +1115,13 @@ var GLOBAL_PATH_COUNT = 0;
         this.nvGraphicFramePr = null;
         this.chart = null;
         this.clrMapOvr = null;
-        this.date1904 = null;
+        this.date1904 = false;
         this.externalData = null;
         this.lang = null;
         this.pivotSource = null;
         this.printSettings = null;
         this.protection = null;
-        this.roundedCorners = null;
+        this.roundedCorners = false;
         this.spPr = null;
         this.style = 2;
         this.txPr = null;
@@ -3713,6 +3713,10 @@ var GLOBAL_PATH_COUNT = 0;
     CChartSpace.prototype.setSpPr = function(spPr) {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ChartSpace_SetSpPr, this.spPr, spPr));
         this.spPr = spPr;
+
+        if(spPr) {
+            spPr.setParent(this);
+        }
         this.recalcInfo.recalculateBrush = true;
         this.recalcInfo.recalculatePen = true;
         this.addToRecalculate();
@@ -8281,10 +8285,10 @@ var GLOBAL_PATH_COUNT = 0;
             }
         }
     };
-    CChartSpace.prototype.Search = function(Str, Props, SearchEngine, Type) {
+    CChartSpace.prototype.Search = function(SearchEngine, Type) {
         var titles = this.getAllTitles();
         for(var i = 0; i < titles.length; ++i) {
-            titles[i].Search(Str, Props, SearchEngine, Type)
+            titles[i].Search(SearchEngine, Type)
         }
     };
     CChartSpace.prototype.GetSearchElementId = function(bNext, bCurrent) {

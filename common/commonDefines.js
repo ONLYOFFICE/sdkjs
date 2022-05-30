@@ -4586,7 +4586,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
     window['AscFormat'].BULLET_TYPE_BULLET_NONE = window['AscFormat']['BULLET_TYPE_BULLET_NONE'] = 0;
     window['AscFormat'].BULLET_TYPE_BULLET_CHAR = window['AscFormat']['BULLET_TYPE_BULLET_CHAR'] = 1;
     window['AscFormat'].BULLET_TYPE_BULLET_AUTONUM = window['AscFormat']['BULLET_TYPE_BULLET_AUTONUM'] = 2;
-    window['AscFormat'].BULLET_TYPE_BULLET_BLIP = window['AscFormat']['BULLET_TYPE_BULLET_BLIP'] = 3;	window['AscCommon'].c_oAscRectAlignType = c_oAscRectAlignType;
+    window['AscFormat'].BULLET_TYPE_BULLET_BLIP = window['AscFormat']['BULLET_TYPE_BULLET_BLIP'] = 3;
+	window['AscCommon'].c_oAscRectAlignType = c_oAscRectAlignType;
 	window['AscCommon'].ST_HueDir = ST_HueDir;
 	window['AscCommon'].ST_ClrAppMethod = ST_ClrAppMethod;
 	window['AscCommon'].ST_AnimLvlStr = ST_AnimLvlStr;

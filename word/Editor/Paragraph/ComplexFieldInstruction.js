@@ -1577,6 +1577,18 @@ CFieldInstructionParser.prototype.GetInstructionClass = function(sLine)
 
 	return this.Result;
 };
+CFieldInstructionParser.prototype.InitParaFieldArguments = function(Type, sLine, oParaFiles)
+{
+	this.Line   = sLine;
+	this.Pos    = 0;
+	this.Buffer = "";
+	this.Result = null;
+
+	oParaFiles.FieldType = Type;
+	oParaFiles.Arguments = this.private_ReadArguments().slice(1);
+	//todo Switches
+	oParaFiles.Switches = this.Pos < this.Line.length ? [this.Line.substring(this.Pos)] : [];
+};
 CFieldInstructionParser.prototype.private_Parse = function()
 {
 	if (!this.private_ReadNext())

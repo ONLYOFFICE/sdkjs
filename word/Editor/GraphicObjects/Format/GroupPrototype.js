@@ -203,6 +203,13 @@ CGroupShape.prototype.recalcBounds = function()
     }
 };
 
+CGroupShape.prototype.recalcSmartArtCoords = function () {
+    var oSm = this.hasSmartArt(true);
+    if (oSm) {
+        oSm.bNeedUpdatePosition = true;
+    }
+};
+
 CGroupShape.prototype.addToDrawingObjects =  CShape.prototype.addToDrawingObjects;
 CGroupShape.prototype.deleteDrawingBase = CShape.prototype.deleteDrawingBase;
 CGroupShape.prototype.addToRecalculate = CShape.prototype.addToRecalculate;
@@ -216,6 +223,7 @@ CGroupShape.prototype.handleUpdatePosition = function()
 {
     this.recalcBounds();
     this.recalcTransform();
+    this.recalcSmartArtCoords();
     this.addToRecalculate();
     for(var i = 0; i < this.spTree.length; ++i)
     {

@@ -130,6 +130,11 @@ var c_oSerShdType = {
 		ColLast: 4
 	};
 
+  var c_nodeAttribute = {
+    nodeAttributeStart: 0xFA,
+    nodeAttributeEnd: 0xFB
+  };
+
 function BinaryCommonWriter(memory)
 {
     this.memory = memory;
@@ -189,12 +194,12 @@ BinaryCommonWriter.prototype.WriteBorder = function(border)
         if (null != border.Space) {
             this.memory.WriteByte(c_oSerBorderType.SpacePoint);
             this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.writeMmToPt(border.Space);
+            this.memory.WriteLong(border.getSpaceInPoint());
         }
         if (null != border.Size) {
             this.memory.WriteByte(c_oSerBorderType.Size8Point);
             this.memory.WriteByte(c_oSerPropLenType.Long);
-            this.writeMmToPt(8 * border.Size);
+            this.memory.WriteLong(border.getSizeIn8Point());
         }
         if (null != border.Unifill || (null != border.Color && border.Color.Auto)) {
             this.memory.WriteByte(c_oSerBorderType.ColorTheme);
@@ -361,49 +366,21 @@ BinaryCommonWriter.prototype.WriteColorTheme = function(unifill, color)
 		this.memory.WriteByte(c_oSer_ColorThemeType.Auto);
 		this.memory.WriteByte(c_oSerPropLenType.Null);
 	}
-	if (null != unifill && null != unifill.fill && null != unifill.fill.color && unifill.fill.color.color instanceof AscFormat.CSchemeColor) {
-		var uniColor = unifill.fill.color;
-		if(null != uniColor.color){
-      var EThemeColor = AscCommonWord.EThemeColor;
-			var nFormatId = EThemeColor.themecolorNone;
-			switch(uniColor.color.id){
-				case 0: nFormatId = EThemeColor.themecolorAccent1;break;
-				case 1: nFormatId = EThemeColor.themecolorAccent2;break;
-				case 2: nFormatId = EThemeColor.themecolorAccent3;break;
-				case 3: nFormatId = EThemeColor.themecolorAccent4;break;
-				case 4: nFormatId = EThemeColor.themecolorAccent5;break;
-				case 5: nFormatId = EThemeColor.themecolorAccent6;break;
-				case 6: nFormatId = EThemeColor.themecolorBackground1;break;
-				case 7: nFormatId = EThemeColor.themecolorBackground2;break;
-				case 8: nFormatId = EThemeColor.themecolorDark1;break;
-				case 9: nFormatId = EThemeColor.themecolorDark2;break;
-				case 10: nFormatId = EThemeColor.themecolorFollowedHyperlink;break;
-				case 11: nFormatId = EThemeColor.themecolorHyperlink;break;
-				case 12: nFormatId = EThemeColor.themecolorLight1;break;
-				case 13: nFormatId = EThemeColor.themecolorLight2;break;
-				case 14: nFormatId = EThemeColor.themecolorNone;break;
-				case 15: nFormatId = EThemeColor.themecolorText1;break;
-				case 16: nFormatId = EThemeColor.themecolorText2;break;
-			}
-			this.memory.WriteByte(c_oSer_ColorThemeType.Color);
-			this.memory.WriteByte(c_oSerPropLenType.Byte);
-			this.memory.WriteByte(nFormatId);
-		}
-		if(null != uniColor.Mods){
-			for(var i = 0, length = uniColor.Mods.Mods.length; i < length; ++i){
-				var mod = uniColor.Mods.Mods[i];
-				if("wordTint" == mod.name){
-					this.memory.WriteByte(c_oSer_ColorThemeType.Tint);
-					this.memory.WriteByte(c_oSerPropLenType.Byte);
-					this.memory.WriteByte(Math.round(mod.val));
-				}
-				else if("wordShade" == mod.name){
-					this.memory.WriteByte(c_oSer_ColorThemeType.Shade);
-					this.memory.WriteByte(c_oSerPropLenType.Byte);
-					this.memory.WriteByte(Math.round(mod.val));
-				}
-			}
-		}
+	var obj = AscCommonWord.CreateFromThemeUnifill(unifill);
+	if (null !== obj.Color) {
+		this.memory.WriteByte(c_oSer_ColorThemeType.Color);
+		this.memory.WriteByte(c_oSerPropLenType.Byte);
+		this.memory.WriteByte(obj.Color);
+	}
+	if (null !== obj.Tint) {
+		this.memory.WriteByte(c_oSer_ColorThemeType.Tint);
+		this.memory.WriteByte(c_oSerPropLenType.Byte);
+		this.memory.WriteByte(obj.Tint);
+	}
+	if (null !== obj.Shade) {
+		this.memory.WriteByte(c_oSer_ColorThemeType.Shade);
+		this.memory.WriteByte(c_oSerPropLenType.Byte);
+		this.memory.WriteByte(obj.Shade);
 	}
 };
 BinaryCommonWriter.prototype.WriteBookmark = function(bookmark) {
@@ -673,6 +650,10 @@ FT_Stream2.prototype.Skip2 = function(_skip) {
 	if (_skip < 0)
 		return c_oSerConstants.ErrorStream;
 	return this.Seek2(this.cur + _skip);
+};
+FT_Stream2.prototype.SkipRecord = function() {
+	var _len = this.GetULong();
+	this.Skip2(_len);
 };
 
 // 1 bytes
@@ -976,6 +957,38 @@ var g_oCellAddressUtils = new CellAddressUtils();
 	CellBase.prototype.getName = function() {
 		return g_oCellAddressUtils.colnumToColstr(this.col + 1) + (this.row + 1);
 	};
+	CellBase.prototype.fromRefA1 = function(val) {
+		this.clean();
+		var index = 0;
+		var char = val.charCodeAt(index);
+		while (65 <= char && char <= 90) {//'A'<'Z'
+			this.col = 26 * this.col + char - 64;
+			char = val.charCodeAt(++index);
+		}
+		while (97 <= char && char <= 122) {//'a'<'z'
+			this.col = 26 * this.col + char - 96;
+			char = val.charCodeAt(++index);
+		}
+		while (48 <= char && char <= 57) {//'0'<'9'
+			this.row = 10 * this.row + char - 48;
+			char = val.charCodeAt(++index);
+		}
+		this.row -= 1;
+		this.col -= 1;
+		this.row = Math.min(this.row, gc_nMaxRow0);
+		this.row = Math.max(this.row, 0);
+		this.col = Math.min(this.col, gc_nMaxCol0);
+		this.col = Math.max(this.col, 0);
+	};
+	CellBase.prototype.toRefA1 = function (row, col) {
+		//TODO функция неверно работает, если кол-во столбцов превышает 26
+		var res = '';
+		do {
+			res += String.fromCharCode(col % 26 + 65);
+			col = Math.floor(col / 26);
+		} while (col > 0);
+		return res + (row + 1);
+	};
 /**
  * @constructor
  */
@@ -1259,6 +1272,47 @@ function isRealObject(obj)
       return r;
     }
 
+    this.ReadIntFromPPTY = function ()
+    {
+      var value = 0;
+      var end = this.cur + this.GetULong() + 4;
+      this.Skip2(1);
+      while (true)
+      {
+        var _at = this.GetUChar();
+        if (_at === c_nodeAttribute.nodeAttributeEnd)
+        {
+          break;
+        }
+        else if (0 === _at)
+        {
+          value = this.GetULong();
+        }
+      }
+      this.Seek2(end);
+      return value;
+    }
+    
+    this.ReadByteFromPPTY = function ()
+    {
+      var value = 0;
+      var end = this.cur + this.GetULong() + 4;
+      this.Skip2(1);
+      while (true)
+      {
+        var _at = this.GetUChar();
+        if (_at === c_nodeAttribute.nodeAttributeEnd)
+        {
+          break;
+        } else if (0 === _at)
+        {
+          value = this.GetUChar();
+        }
+      }
+      this.Seek2(end);
+      return value;
+    }
+
     this.GetLong = function()
     {
       if (this.cur + 3 >= this.size)
@@ -1476,6 +1530,6 @@ function isRealObject(obj)
   window['AscCommon'].isRealObject = isRealObject;
   window['AscCommon'].FileStream = FileStream;
 	window['AscCommon'].GetStringUtf8 = GetStringUtf8;
-  window['AscCommon'].g_nodeAttributeStart = 0xFA;
-  window['AscCommon'].g_nodeAttributeEnd = 0xFB;
+  window['AscCommon'].g_nodeAttributeStart = c_nodeAttribute.nodeAttributeStart;
+  window['AscCommon'].g_nodeAttributeEnd = c_nodeAttribute.nodeAttributeEnd;
 })(window);

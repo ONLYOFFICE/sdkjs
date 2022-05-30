@@ -522,6 +522,10 @@
             return new CGraphicBounds(xc - vc, yc - hc, xc + vc, yc + hc);
         }
     };
+
+    CGraphicObjectBase.prototype.hasSmartArt = function (bReturnSmartArt) {
+        return bReturnSmartArt ? null : false;
+    }
     /**
      * Normalize a size object in group
      * @memberof CGraphicObjectBase
@@ -861,15 +865,7 @@
             this.setLocks((~nMask) & this.locks);
         }
         else{
-            var nLocks = this.locks;
-            nLocks |= nMask;
-            if(bValue) {
-                nLocks |= (nMask << 1)
-            }
-            else {
-                nLocks &= ~(nMask << 1)
-            }
-            this.setLocks(nLocks);
+            this.setLocks(AscFormat.fUpdateLocksValue(this.locks, nMask, bValue));
         }
     };
     CGraphicObjectBase.prototype.getNoGrp = function(){
@@ -1311,6 +1307,7 @@
     CGraphicObjectBase.prototype.recalcTransform = function() {};
     CGraphicObjectBase.prototype.recalcTransformText = function() {};
     CGraphicObjectBase.prototype.recalcBounds = function() {};
+    CGraphicObjectBase.prototype.recalcSmartArtCoords = function () {};
     CGraphicObjectBase.prototype.recalcGeometry = function() {};
     CGraphicObjectBase.prototype.recalcStyle = function() {};
     CGraphicObjectBase.prototype.recalcFill = function() {};
@@ -1505,6 +1502,13 @@
             return oUniNvPr.nvPr;
         }
         return null;
+    };
+    CGraphicObjectBase.prototype.hasCustomPrompt = function(){
+        let oNvPr = this.getNvProps();
+        if(oNvPr && oNvPr.ph) {
+            return oNvPr.ph.hasCustomPrompt === true;
+        }
+        return false;
     };
     CGraphicObjectBase.prototype.setTitle = function(sTitle){
         if(undefined === sTitle || null === sTitle){

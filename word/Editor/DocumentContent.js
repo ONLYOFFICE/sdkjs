@@ -8968,6 +8968,108 @@ CDocumentContent.prototype.RestartSpellCheck = function()
 		this.Content[nIndex].RestartSpellCheck();
 	}
 };
+//----------------------------------------------------------------------------------------------------------------------
+// Search
+//----------------------------------------------------------------------------------------------------------------------
+CDocumentContent.prototype.Search = function(oSearchEngine, nType)
+{
+	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
+	{
+		this.Content[nPos].Search(oSearchEngine, nType);
+	}
+};
+CDocumentContent.prototype.GetSearchElementId = function(bNext, bCurrent)
+{
+	// Получим Id найденного элемента
+	var Id = null;
+
+	if ( true === bCurrent )
+	{
+		if ( docpostype_DrawingObjects === this.CurPos.Type )
+		{
+			var ParaDrawing = this.DrawingObjects.getMajorParaDrawing();
+
+			Id = ParaDrawing.GetSearchElementId( bNext, true );
+			if ( null != Id )
+				return Id;
+
+			ParaDrawing.GoTo_Text( true !== bNext, false );
+		}
+
+		var Pos = this.CurPos.ContentPos;
+		if ( true === this.Selection.Use && selectionflag_Common === this.Selection.Flag )
+			Pos = ( true === bNext ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : Math.min(this.Selection.StartPos, this.Selection.EndPos) );
+
+		if ( true === bNext )
+		{
+			Id = this.Content[Pos].GetSearchElementId(true, true);
+
+			if ( null != Id )
+				return Id;
+
+			Pos++;
+
+			var Count = this.Content.length;
+			while ( Pos < Count )
+			{
+				Id = this.Content[Pos].GetSearchElementId(true, false);
+				if ( null != Id )
+					return Id;
+
+				Pos++;
+			}
+		}
+		else
+		{
+			Id = this.Content[Pos].GetSearchElementId(false, true);
+
+			if ( null != Id )
+				return Id;
+
+			Pos--;
+
+			while ( Pos >= 0 )
+			{
+				Id = this.Content[Pos].GetSearchElementId(false, false);
+				if ( null != Id )
+					return Id;
+
+				Pos--;
+			}
+		}
+	}
+	else
+	{
+		var Count = this.Content.length;
+		if ( true === bNext )
+		{
+			var Pos = 0;
+			while ( Pos < Count )
+			{
+				Id = this.Content[Pos].GetSearchElementId(true, false);
+				if ( null != Id )
+					return Id;
+
+				Pos++;
+			}
+		}
+		else
+		{
+			var Pos = Count - 1;
+			while ( Pos >= 0 )
+			{
+				Id = this.Content[Pos].GetSearchElementId(false, false);
+				if ( null != Id )
+					return Id;
+
+				Pos--;
+			}
+		}
+	}
+
+	return null;
+};
+//----------------------------------------------------------------------------------------------------------------------
 
 function CDocumentContentStartState(DocContent)
 {

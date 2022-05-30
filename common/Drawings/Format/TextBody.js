@@ -548,14 +548,84 @@
         oParagraph.Set_DocumentIndex(0); //TODO: ?
         return oParagraph.Pr;
     };
+    //CTextBody.prototype.readAttrXml = function (name, reader) {
+    //};
+    CTextBody.prototype.fromXml = function(reader, bSkipFirstNode, oCellContent) {
+        this.cellContent = oCellContent;
+        this.bEmptyCell = true;
+        CBaseFormatObject.prototype.fromXml.call(this, reader, bSkipFirstNode);
+        this.cellContent = undefined;
+    };
+    CTextBody.prototype.readChildXml = function (name, reader) {
+        let oPr;
+        switch(name) {
+            case "bodyPr": {
+                oPr = new AscFormat.CBodyPr();
+                oPr.fromXml(reader);
+                this.setBodyPr(oPr);
+                break;
+            }
+            case "lstStyle": {
+                oPr = new AscFormat.TextListStyle();
+                oPr.fromXml(reader);
+                this.setLstStyle(oPr);
+                break;
+            }
+            case "p": {
+                let oDrawingDocument = reader.context.DrawingDocument;
+                let oContent;
+                if(this.cellContent) {
+                    oContent = this.cellContent;
+                    if(this.bEmptyCell) {
+                        oContent.Internal_Content_RemoveAll();
+                        this.bEmptyCell = false;
+                    }
+                }
+                else {
+                    if(!this.content) {
+                        this.setContent(new AscFormat.CDrawingDocContent(this, oDrawingDocument, 0, 0, 0, 20000));
+                        this.content.Internal_Content_RemoveAll();
+                    }
+                    oContent = this.content;
+                }
+
+	            oPr = new AscCommonWord.Paragraph(oDrawingDocument, oContent, true);
+                oPr.fromDrawingML(reader);
+                oPr.SetParent(oContent);
+                oContent.Internal_Content_Add(oContent.Content.length, oPr);
+                break;
+            }
+        }
+    };
+    CTextBody.prototype.toXml = function (writer, sName) {
+        let sName_ = sName || "a:txBody";
+        writer.WriteXmlNodeStart(sName_);
+        writer.WriteXmlAttributesEnd();
+
+        if (this.bodyPr)
+        {
+            this.bodyPr.toXml(writer, "a");
+        }
+        // if (sp3d)
+        // {
+        //     sp3d.toXml(writer);
+        // }
+        if (this.lstStyle) {
+            this.lstStyle.toXml(writer, "a:lstStyle");
+        }
+
+        let nCount = this.content.Content.length;
+        for (let i = 0; i < nCount; ++i)
+            this.content.Content[i].toDrawingML(writer);
+
+        writer.WriteXmlNodeEnd(sName_);
+    };
 
     function GetContentOneStringSizes(oContent) {
         oContent.Reset(0, 0, 20000, 20000);
         oContent.Recalculate_Page(0, true);
         return {w: oContent.Content[0].Lines[0].Ranges[0].W + 0.1, h: oContent.GetSummaryHeight() + 0.1};
     }
-
-
     function CheckNeedRecalcAutoFit(oBP1, oBP2) {
         if(AscCommon.isFileBuild()) {
             return false;

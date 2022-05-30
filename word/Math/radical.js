@@ -437,7 +437,7 @@ CRadical.prototype.kind      = MATH_RADICAL;
 CRadical.prototype.init = function(props)
 {
     this.setProperties(props);
-    this.Fill_LogicalContent(2);
+    this.Fill_LogicalContent(2, props.content);
 
     this.fillContent();
 };

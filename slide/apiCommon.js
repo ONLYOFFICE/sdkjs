@@ -35,6 +35,7 @@
 // ---------------------------------------------------------------
 function CAscSlideTransition()
 {
+    AscFormat.CBaseNoIdObject.call(this);
     this.TransitionType     = undefined;
     this.TransitionOption   = undefined;
     this.TransitionDuration = undefined;
@@ -44,6 +45,7 @@ function CAscSlideTransition()
     this.SlideAdvanceDuration       = undefined;
     this.ShowLoop                   = undefined;
 }
+AscFormat.InitClass(CAscSlideTransition, AscFormat.CBaseNoIdObject, 0);
 
 CAscSlideTransition.prototype.put_TransitionType = function(v) { this.TransitionType = v; };
 CAscSlideTransition.prototype.get_TransitionType = function() { return this.TransitionType; };
