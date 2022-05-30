@@ -11943,8 +11943,10 @@ CPresentation.prototype.toZip = function(zip, context) {
         let oThemePart = presentationPart.part.addPartWithoutRels(AscCommon.openXml.Types.theme);
         oUriMap[oTheme.Id] = oThemePart.uri;
         oThemePart.setDataXml(oTheme, memory);
-        presentationPart.part.addRelationship(AscCommon.openXml.Types.theme.relationType, oThemePart.uri.replace("/ppt/", ""));
         memory.Seek(0);
+        if(nTheme === 0) {
+            presentationPart.part.addRelationship(AscCommon.openXml.Types.theme.relationType, oThemePart.uri.replace("/ppt/", ""));
+        }
     }
     for(let nSlideMaster = 0; nSlideMaster < aSlideMasters.length; ++nSlideMaster) {
         let oSlideMaster = aSlideMasters[nSlideMaster];
