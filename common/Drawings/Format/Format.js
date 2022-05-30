@@ -12389,7 +12389,7 @@
 				reader.context.assignConnectors(this.spTree);
 			}
 		};
-		CSpTree.prototype.readChildXml = function (name, reader) {
+		CSpTree.prototype.readSpTreeElement = function(name, reader) {
 			let oSp = null;
 			switch (name) {
 				case "contentPart": {
@@ -12397,6 +12397,7 @@
 				}
 				case "cxnSp": {
 					oSp = new AscFormat.CConnectionShape();
+					oSp.fromXml(reader);
 					break;
 				}
 				case "extLst": {
@@ -12404,10 +12405,12 @@
 				}
 				case "graphicFrame": {
 					oSp = new AscFormat.CGraphicFrame();
+					oSp.fromXml(reader);
 					break;
 				}
 				case "grpSp": {
 					oSp = new AscFormat.CGroupShape();
+					oSp.fromXml(reader);
 					break;
 				}
 				case "grpSpPr": {
@@ -12418,15 +12421,40 @@
 				}
 				case "pic": {
 					oSp = new AscFormat.CImageShape();
+					oSp.fromXml(reader);
 					break;
 				}
 				case "sp": {
 					oSp = new AscFormat.CShape();
+					oSp.fromXml(reader);
+					break;
+				}
+				case "AlternateContent": {
+					let oThis = this;
+					let oNode = new CT_XmlNode(function (reader, name) {
+						if(!oSp) {
+							if(name === "Choice") {
+								let oChoiceNode = new CT_XmlNode(function(reader, name) {
+									oSp = CSpTree.prototype.readSpTreeElement.call(oThis, name, reader);
+									return true;
+								});
+								oChoiceNode.fromXml(reader);
+							}
+							else if(name === "Fallback") {
+								let oFallbackNode = new CT_XmlNode(function(reader, name) {
+									oSp = CSpTree.prototype.readSpTreeElement.call(oThis, name, reader);
+									return true;
+								});
+								oFallbackNode.fromXml(reader);
+							}
+						}
+						return true;
+					});
+					oNode.fromXml(reader);
 					break;
 				}
 			}
 			if (oSp) {
-				oSp.fromXml(reader);
 				if (name === "graphicFrame" && !(oSp.graphicObject instanceof AscCommonWord.CTable)) {
 
 					let _xfrm = oSp.spPr && oSp.spPr.xfrm;
@@ -12457,14 +12485,19 @@
 						_xfrm.setParent(oSp.spPr);
 					}
 				}
-				if (oSp) {
-					oSp.setBDeleted(false);
-					if(this.slideObject) {
-						oSp.setParent(this.slideObject);
-					}
-					this.spTree.push(oSp);
-				}
 			}
+			return oSp;
+		};
+		CSpTree.prototype.readChildXml = function (name, reader) {
+			let oSp = CSpTree.prototype.readSpTreeElement.call(this, name, reader);
+			if (oSp) {
+				oSp.setBDeleted(false);
+				if(this.slideObject) {
+					oSp.setParent(this.slideObject);
+				}
+				this.spTree.push(oSp);
+			}
+			return oSp;
 		};
 		CSpTree.prototype.toXml = function (writer) {
 			let name_;
