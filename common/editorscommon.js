@@ -347,8 +347,10 @@
 	JSZipWrapper.prototype.loadSync = function(data) {
 		if (window.nativeZlibEngine && window.nativeZlibEngine.open(data)) {
 			var files = window.nativeZlibEngine.files;
-			for (let i = 0, len = files.length; i < len; i++)
+			for (let i = 0, len = files.length; i < len; i++) {
 				this.files[files[i]] = new JSZipObjectWrapper(files[i]);
+			}
+			return true;
 		}
 		return false;
 	}
