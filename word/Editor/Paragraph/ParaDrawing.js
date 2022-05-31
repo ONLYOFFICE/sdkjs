@@ -188,10 +188,8 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 	if (this.graphicObjects)
 	{
 		this.Set_RelativeHeight(this.graphicObjects.getZIndex());
-		if (History.Is_On() && !g_oTableId.m_bTurnOff)
-		{
+		if (History.CanRegisterClasses())
 			this.graphicObjects.addGraphicObject(this);
-		}
 	}
 }
 ParaDrawing.prototype = Object.create(CRunElementBase.prototype);

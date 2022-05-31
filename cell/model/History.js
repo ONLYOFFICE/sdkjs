@@ -354,6 +354,7 @@ function CHistory()
     this.Index    = -1;
     this.Points   = [];
     this.TurnOffHistory = 0;
+	this.RegisterClasses = 0;
     this.Transaction = 0;
     this.LocalChange = false;//если true все добавленный изменения не пойдут в совместное редактирование.
 	this.RecIndex = -1;
@@ -1095,12 +1096,30 @@ CHistory.prototype.TurnOff = function()
 {
 	this.TurnOffHistory++;
 };
-
 CHistory.prototype.TurnOn = function()
 {
 	this.TurnOffHistory--;
 	if(this.TurnOffHistory < 0)
 		this.TurnOffHistory = 0;
+};
+CHistory.prototype.CanRegisterClasses = function()
+{
+	return (0 === this.TurnOffHistory || this.RegisterClasses >= this.TurnOffHistory);
+};
+CHistory.prototype.TurnOffChanges = function()
+{
+	this.TurnOffHistory++;
+	this.RegisterClasses++;
+};
+CHistory.prototype.TurnOnChanges = function()
+{
+	this.TurnOffHistory--;
+	if(this.TurnOffHistory < 0)
+		this.TurnOffHistory = 0;
+
+	this.RegisterClasses--;
+	if (this.RegisterClasses < 0)
+		this.RegisterClasses = 0;
 };
 
 CHistory.prototype.StartTransaction = function()
