@@ -3231,7 +3231,7 @@
 					var type = context.editorId === AscCommon.c_oEditorId.Word ? AscCommon.openXml.Types.imageWord : AscCommon.openXml.Types.image;
 					type = Object.assign({}, type);
 					type.filename += ext;
-					type.contentType = openXml.GetMimeType(ext);
+					type.contentType = AscCommon.openXml.GetMimeType(ext);
 					imagePart = context.part.addPart(type);
 					if (imagePart) {
 						context.imageMap[sRasterImageId] = imagePart;

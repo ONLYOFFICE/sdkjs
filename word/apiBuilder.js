@@ -3498,7 +3498,7 @@
 
 	/**
 	 * The types of elements that can be added to the paragraph structure.
-	 * @typedef {(ApiUnsupported | ApiRun | ApiInlineLvlSdt | ApiHyperlink)} ParagraphContent
+	 * @typedef {(ApiUnsupported | ApiRun | ApiInlineLvlSdt | ApiHyperlink | ApiFormBase)} ParagraphContent
 	 */
 
 	/**
@@ -3719,7 +3719,7 @@
 	 * Standard numeric format.
 	 * @typedef {("General" | "0" | "0.00" | "#,##0" | "#,##0.00" | "0%" | "0.00%" |
 	 * "0.00E+00" | "# ?/?" | "# ??/??" | "m/d/yyyy" | "d-mmm-yy" | "d-mmm" | "mmm-yy" | "h:mm AM/PM" |
-	 * | "h:mm:ss AM/PM" | "h:mm" | "h:mm:ss" | "m/d/yyyy h:mm" | "#,##0_);(#,##0)" | "#,##0_);[Red](#,##0)" | 
+	 * "h:mm:ss AM/PM" | "h:mm" | "h:mm:ss" | "m/d/yyyy h:mm" | "#,##0_);(#,##0)" | "#,##0_);[Red](#,##0)" | 
 	 * "#,##0.00_);(#,##0.00)" | "#,##0.00_);[Red](#,##0.00)" | "mm:ss" | "[h]:mm:ss" | "mm:ss.0" | "##0.0E+0" | "@")} NumFormat
 	 */
 
@@ -5988,7 +5988,7 @@
      * Returns the selected drawings.
      * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-     * @returns {(ApiShape | ApiImage | ApiChart | ApiDrawing)[]}
+     * @returns {ApiShape[] | ApiImage[] | ApiChart[] | ApiDrawing[]}
      */
 	ApiDocument.prototype.GetSelectedDrawings = function() 
 	{
@@ -6700,10 +6700,10 @@
 		return false;
 	};
 	/**
-	 * Return all font names from all elenemts inside it.
+	 * Returns all font names from all elements inside the current paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @returns {string[]} The font names used for the current paragraph.
+	 * @returns {string[]} - The font names used for the current paragraph.
 	 */
 	ApiParagraph.prototype.GetFontNames = function()
 	{
@@ -6734,7 +6734,7 @@
 	/**
 	 * Specifies a highlighting color which is applied as a background to the contents of the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE, CPE"]
+	 * @typeofeditors ["CDE", "CPE"]
 	 * @param {highlightColor} sColor - Available highlight color.
 	 * @returns {ApiParagraph} this
 	 */
@@ -7745,10 +7745,10 @@
 	};
 
 	/**
-     * Gets the paragraph position in parent.
+     * Returns the paragraph position in its parent element.
      * @memberof ApiParagraph
      * @typeofeditors ["CDE"]
-     * @returns {Number} - returns -1 if paragraph's parent doesn't exist. 
+     * @returns {Number} - returns -1 if the paragraph parent doesn't exist. 
      */
 	ApiParagraph.prototype.GetPosInParent = function()
 	{
@@ -7756,10 +7756,10 @@
 	};
 
 	/**
-     * Replaces the current paragraph by new element.
+     * Replaces the current paragraph with a new element.
      * @memberof ApiParagraph
      * @typeofeditors ["CDE"]
-     * @param {DocumentElement} oElement - element to which the paragraph will be replaced.
+     * @param {DocumentElement} oElement - The element to replace the current paragraph with.
      * @returns {boolean}
      */
 	ApiParagraph.prototype.ReplaceByElement = function(oElement)
@@ -8209,10 +8209,10 @@
 		return oTextPr;
 	};
 	/**
-	 * Return all font names from all elenemts inside it.
+	 * Returns all font names from all elements inside the current run.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @returns {string[]} The font names used for the current run.
+	 * @returns {string[]} - The font names used for the current run.
 	 */
 	ApiRun.prototype.GetFontNames = function()
 	{
@@ -9620,10 +9620,10 @@
 	};
 
 	/**
-     * Gets the table position in parent.
+     * Returns the table position in its parent element.
      * @memberof ApiTable
      * @typeofeditors ["CDE"]
-     * @returns {Number} - returns -1 if table's parent doesn't exist. 
+     * @returns {Number} - returns -1 if the table parent doesn't exist. 
      */
 	ApiTable.prototype.GetPosInParent = function()
 	{
@@ -9631,10 +9631,10 @@
 	};
  
 	/**
-	 * Replaces the current table by new element.
+	 * Replaces the current table with a new element.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
-	 * @param {DocumentElement} oElement - element to which the table will be replaced.
+	 * @param {DocumentElement} oElement - The element to replace the current table with.
 	 * @returns {boolean}
 	 */
 	ApiTable.prototype.ReplaceByElement = function(oElement)
@@ -10679,7 +10679,7 @@
 	/**
 	 * Specifies a highlighting color which is added to the text properties and applied as a background to the contents of the current run/range/paragraph.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE, CPE"]
+	 * @typeofeditors ["CDE", "CPE"]
 	 * @param {highlightColor} sColor - Available highlight color.
 	 * @returns {ApiTextPr}
 	 */
@@ -12952,7 +12952,7 @@
 	/**
 	 * Returns the width of the current drawing.
 	 * @memberof ApiDrawing
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {EMU}
 	 */
 	ApiDrawing.prototype.GetWidth = function()
@@ -12962,7 +12962,7 @@
 	/**
 	 * Returns the height of the current drawing.
 	 * @memberof ApiDrawing
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {EMU}
 	 */
 	ApiDrawing.prototype.GetHeight = function()
@@ -13633,7 +13633,7 @@
 	/**
 	 * Removes the specified series from the current chart.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {number} nSeria - The index of the chart series.
 	 * @returns {boolean}
 	 */
@@ -13645,7 +13645,7 @@
 	/**
 	 * Sets values to the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE"]
+	 * @typeofeditors ["CDE", "CPE"]
 	 * @param {number[]} aValues - The array of the data which will be set to the specified chart series.
 	 * @param {number} nSeria - The index of the chart series.
 	 * @returns {boolean}
@@ -13658,7 +13658,7 @@
 	/**
 	 * Sets the x-axis values to all chart series. It is used with the scatter charts only.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE"]
+	 * @typeofeditors ["CDE", "CPE"]
 	 * @param {string[]} aValues - The array of the data which will be set to the x-axis data points.
 	 * @returns {boolean}
 	 */
@@ -13672,7 +13672,7 @@
 	/**
 	 * Sets a name to the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE"]
+	 * @typeofeditors ["CDE", "CPE"]
 	 * @param {string} sName - The name which will be set to the specified chart series.
 	 * @param {number} nSeria - The index of the chart series.
 	 * @returns {boolean}
@@ -13685,7 +13685,7 @@
 	/**
 	 * Sets a name to the specified chart category.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE"]
+	 * @typeofeditors ["CDE", "CPE"]
 	 * @param {string} sName - The name which will be set to the specified chart category.
 	 * @param {number} nCategory - The index of the chart category.
 	 * @returns {boolean}
@@ -13698,7 +13698,7 @@
 	/**
 	 * Sets a style to the current chart by style ID.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param nStyleId - One of the styles available in the editor.
 	 * @returns {boolean}
 	 */
@@ -13722,7 +13722,7 @@
 	/**
 	 * Sets the fill to the chart plot area.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the plot area.
 	 * @returns {boolean}
 	 */
@@ -13738,7 +13738,7 @@
 	/**
 	 * Sets the outline to the chart plot area.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the plot area outline.
 	 * @returns {boolean}
 	 */
@@ -13754,7 +13754,7 @@
 	/**
 	 * Sets the fill to the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the series.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {boolean} [bAll=false] - Specifies if the fill will be applied to all series.
@@ -13771,7 +13771,7 @@
 	/**
 	 * Sets the outline to the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the series outline.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {boolean} [bAll=false] - Specifies if the outline will be applied to all series.
@@ -13788,7 +13788,7 @@
 	/**
 	 * Sets the fill to the data point in the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the data point.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {number} nDataPoint - The index of the data point in the specified chart series.
@@ -13806,7 +13806,7 @@
 	/**
 	 * Sets the outline to the data point in the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the data point outline.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {number} nDataPoint - The index of the data point in the specified chart series.
@@ -13824,7 +13824,7 @@
 	/**
 	 * Sets the fill to the marker in the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the marker.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {number} nMarker - The index of the marker in the specified chart series.
@@ -13842,7 +13842,7 @@
 	/**
 	 * Sets the outline to the marker in the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the marker outline.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {number} nMarker - The index of the marker in the specified chart series.
@@ -13860,7 +13860,7 @@
 	/**
 	 * Sets the fill to the chart title.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the title.
 	 * @returns {boolean}
 	 */
@@ -13875,7 +13875,7 @@
 	/**
 	 * Sets the outline to the chart title.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the title outline.
 	 * @returns {boolean}
 	 */
@@ -13890,7 +13890,7 @@
 	/**
 	 * Sets the fill to the chart legend.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the legend.
 	 * @returns {boolean}
 	 */
@@ -13905,7 +13905,7 @@
 	/**
 	 * Sets the outline to the chart legend.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the legend outline.
 	 * @returns {boolean}
 	 */
@@ -13952,7 +13952,7 @@
 	/**
 	 * Sets the specified numeric format to the chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, "CPE"]
+	 * @typeofeditors ["CDE", "CPE"]
 	 * @param {NumFormat | String} sFormat - Numeric format (can be custom format).
 	 * @param {Number} nSeria - Series index.
 	 * @returns {boolean}
@@ -13965,7 +13965,7 @@
 	/**
 	 * Sets the specified numeric format to the chart data point.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, "CPE"]
+	 * @typeofeditors ["CDE", "CPE"]
 	 * @param {NumFormat | String} sFormat - Numeric format (can be custom format).
 	 * @param {Number} nSeria - Series index.
 	 * @param {number} nDataPoint - The index of the data point in the specified chart series.
@@ -15184,10 +15184,10 @@
 	};
 
 	/**
-     * Gets the content control position in parent.
+     * Returns the content control position in its parent element.
      * @memberof ApiBlockLvlSdt
      * @typeofeditors ["CDE"]
-     * @returns {Number} - returns -1 if content control's parent doesn't exist. 
+     * @returns {Number} - returns -1 if the content control parent doesn't exist. 
      */
 	ApiBlockLvlSdt.prototype.GetPosInParent = function()
 	{
@@ -15195,10 +15195,10 @@
 	};
 
 	/**
-	 * Replaces the current content control by new element.
+	 * Replaces the current content control with a new element.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {DocumentElement} oElement - element to which the table will be replaced.
+	 * @param {DocumentElement} oElement - The element to replace the current content control with.
 	 * @returns {boolean}
 	 */
 	ApiBlockLvlSdt.prototype.ReplaceByElement = function(oElement)
@@ -15484,6 +15484,7 @@
 	};
 	/**
 	 * Returns the text from the current form.
+	 * *This method is used only for text and combo box forms.*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
@@ -15543,6 +15544,7 @@
 	};
 	/**
 	 * Sets the text properties to the current form.
+	 * *This method is used only for text and combo box forms.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiTextPr} oTextPr - The text properties that will be set to the current form.
@@ -15560,6 +15562,7 @@
 	};
 	/**
 	 * Returns the text properties from the current form.
+	 * *This method is used only for text and combo box forms.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiTextPr}  
@@ -15570,7 +15573,8 @@
 	};
 	/**
 	 * Copies the current form (copies with the shape if it exists).
-	 * @constructor
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE"]
 	 * @returns {null | ApiTextForm| ApiCheckBoxForm | ApiComboBoxForm | ApiPictureForm}
 	 */
 	ApiFormBase.prototype.Copy = function()

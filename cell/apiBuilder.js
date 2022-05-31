@@ -229,7 +229,7 @@
 	 * Standard numeric format.
 	 * @typedef {("General" | "0" | "0.00" | "#,##0" | "#,##0.00" | "0%" | "0.00%" |
 	 * "0.00E+00" | "# ?/?" | "# ??/??" | "m/d/yyyy" | "d-mmm-yy" | "d-mmm" | "mmm-yy" | "h:mm AM/PM" |
-	 * | "h:mm:ss AM/PM" | "h:mm" | "h:mm:ss" | "m/d/yyyy h:mm" | "#,##0_);(#,##0)" | "#,##0_);[Red](#,##0)" | 
+	 * "h:mm:ss AM/PM" | "h:mm" | "h:mm:ss" | "m/d/yyyy h:mm" | "#,##0_);(#,##0)" | "#,##0_);[Red](#,##0)" | 
 	 * "#,##0.00_);(#,##0.00)" | "#,##0.00_);[Red](#,##0.00)" | "mm:ss" | "[h]:mm:ss" | "mm:ss.0" | "##0.0E+0" | "@")} NumFormat
 	 */
 
@@ -3075,7 +3075,7 @@
 	/**
 	 * Returns the width of the current drawing.
 	 * @memberof ApiDrawing
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {EMU}
 	 */
 	ApiDrawing.prototype.GetWidth = function()
@@ -3085,7 +3085,7 @@
 	/**
 	 * Returns the height of the current drawing.
 	 * @memberof ApiDrawing
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {EMU}
 	 */
 	ApiDrawing.prototype.GetHeight = function()
@@ -3507,7 +3507,7 @@
 	/**
 	 * Sets a style to the current chart by style ID.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param nStyleId - One of the styles available in the editor.
 	 * @returns {boolean}
 	*/
@@ -3617,7 +3617,7 @@
 	/**
 	 * Removes the specified series from the current chart.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {number} nSeria - The index of the chart series.
 	 * @returns {boolean}
 	 */
@@ -3629,7 +3629,7 @@
 	/**
 	 * Sets the fill to the chart plot area.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the plot area.
 	 * @returns {boolean}
 	 */
@@ -3645,7 +3645,7 @@
 	/**
 	 * Sets the outline to the chart plot area.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the plot area outline.
 	 * @returns {boolean}
 	 */
@@ -3661,7 +3661,7 @@
 	/**
 	 * Sets the fill to the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the series.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {boolean} [bAll=false] - Specifies if the fill will be applied to all series.
@@ -3678,7 +3678,7 @@
 	/**
 	 * Sets the outline to the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the series outline.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {boolean} [bAll=false] - Specifies if the outline will be applied to all series.
@@ -3695,7 +3695,7 @@
 	/**
 	 * Sets the fill to the data point in the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the data point.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {number} nDataPoint - The index of the data point in the specified chart series.
@@ -3713,7 +3713,7 @@
 	/**
 	 * Sets the outline to the data point in the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the data point outline.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {number} nDataPoint - The index of the data point in the specified chart series.
@@ -3731,7 +3731,7 @@
 	/**
 	 * Sets the fill to the marker in the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the marker.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {number} nMarker - The index of the marker in the specified chart series.
@@ -3749,7 +3749,7 @@
 	/**
 	 * Sets the outline to the marker in the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the marker outline.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {number} nMarker - The index of the marker in the specified chart series.
@@ -3767,7 +3767,7 @@
 	/**
 	 * Sets the fill to the chart title.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the title.
 	 * @returns {boolean}
 	 */
@@ -3782,7 +3782,7 @@
 	/**
 	 * Sets the outline to the chart title.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the title outline.
 	 * @returns {boolean}
 	 */
@@ -3797,7 +3797,7 @@
 	/**
 	 * Sets the fill to the chart legend.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the legend.
 	 * @returns {boolean}
 	 */
@@ -3812,7 +3812,7 @@
 	/**
 	 * Sets the outline to the chart legend.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the legend outline.
 	 * @returns {boolean}
 	 */

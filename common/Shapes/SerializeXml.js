@@ -209,7 +209,7 @@
 
 						res.setBDeleted(false);
 						if (res.hasCharts()) {
-							let chartStylePart = chartPart.getPartByRelationshipType(openXml.Types.chartStyle.relationType);
+							let chartStylePart = chartPart.getPartByRelationshipType(AscCommon.openXml.Types.chartStyle.relationType);
 							if (chartStylePart) {
 								let chartStyleContent = chartStylePart.getDocumentContent();
 								if (chartStyleContent) {
@@ -219,7 +219,7 @@
 									res.setChartStyle(chartStyle);
 								}
 							}
-							let chartColorStylePart = chartPart.getPartByRelationshipType(openXml.Types.chartColorStyle.relationType);
+							let chartColorStylePart = chartPart.getPartByRelationshipType(AscCommon.openXml.Types.chartColorStyle.relationType);
 							if (chartColorStylePart) {
 								let chartColorStyleContent = chartColorStylePart.getDocumentContent();
 								if (chartColorStyleContent) {

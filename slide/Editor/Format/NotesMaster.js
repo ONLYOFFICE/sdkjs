@@ -231,7 +231,7 @@
     CNotesMaster.prototype.fromXml = function(reader, bSkipFirstNode) {
         AscFormat.CBaseFormatObject.prototype.fromXml.call(this, reader, bSkipFirstNode);
         //read theme
-        var oThemePart = reader.rels.getPartByRelationshipType(openXml.Types.theme.relationType);
+        var oThemePart = reader.rels.getPartByRelationshipType(AscCommon.openXml.Types.theme.relationType);
         if(oThemePart) {
             var oThemeContent = oThemePart.getDocumentContent();
             let oThemeReader = new StaxParser(oThemeContent, oThemePart, reader.context);

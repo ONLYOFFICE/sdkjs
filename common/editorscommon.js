@@ -348,7 +348,11 @@
 		if (window.nativeZlibEngine && window.nativeZlibEngine.open(data)) {
 			var files = window.nativeZlibEngine.files;
 			for (let i = 0, len = files.length; i < len; i++) {
-				this.files[files[i]] = new JSZipObjectWrapper(files[i]);
+				if (files[i].startsWith('/')) {
+					this.files[files[i].substring(1)] = new JSZipObjectWrapper(files[i].substring(1));
+				} else {
+					this.files[files[i]] = new JSZipObjectWrapper(files[i]);
+				}
 			}
 			return true;
 		}
@@ -400,7 +404,7 @@
 	JSZipObjectWrapper.prototype.sync = function(type) {
 		if (window.nativeZlibEngine) {
 			var data = window.nativeZlibEngine.getFile(this.data);
-			if ("string" === type) {
+			if ("string" === type && data) {
 				return UTF8ArrayToString(data, 0, data.length);
 			} else {
 				return data;

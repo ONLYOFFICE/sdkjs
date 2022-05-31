@@ -8613,7 +8613,7 @@ background-repeat: no-repeat;\
 			if (c_oAscFileType.DOTX === fileType) {
 				var title = this.documentTitle;
 				this.saveDocumentToZip(this.WordControl.m_oLogicDocument, AscCommon.c_oEditorId.Word, function(data) {
-					var blob = new Blob([data], {type: openXml.GetMimeType("docx")});
+					var blob = new Blob([data], {type: AscCommon.openXml.GetMimeType("docx")});
 					var link = document.createElement("a");
 					link.href = window.URL.createObjectURL(blob);
 					link.download = title;
@@ -11797,7 +11797,7 @@ background-repeat: no-repeat;\
 		if (undefined !== version)
 			AscCommon.CurFileVersion = version;
 
-		// this.isOpenOOXInBrowser = AscCommon.checkOOXMLSignature(base64File);
+		this.isOpenOOXInBrowser = AscCommon.checkOOXMLSignature(base64File);
 		if (this.isOpenOOXInBrowser) {
 			if (!this.OpenDocumentFromZipNoInit(base64File))
 				this.sendEvent("asc_onError", c_oAscError.ID.MobileUnexpectedCharCount, c_oAscError.Level.Critical);
@@ -12007,7 +12007,11 @@ background-repeat: no-repeat;\
 			this.saveDocumentToZip(this.WordControl.m_oLogicDocument, this.editorId, function(data) {
 				res = data;
 			});
-			return res || new Uint8Array(0);
+			if (res) {
+				window["native"]["Save_End"](";v10;", res.length);
+				return res;
+			}
+			return new Uint8Array(0);
 		} else {
 			var oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(this.WordControl.m_oLogicDocument);
 			var _memory           = oBinaryFileWriter.memory;
