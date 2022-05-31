@@ -9973,7 +9973,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 	};
 
 	function CT_ExternalReference() {
-		this.val = {};
+		this.val = new AscCommonExcel.externalReference();
 	}
 
 	CT_ExternalReference.prototype.fromXml = function (reader) {

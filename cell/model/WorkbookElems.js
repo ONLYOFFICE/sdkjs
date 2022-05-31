@@ -11884,6 +11884,13 @@ QueryTableField.prototype.clone = function() {
 		return this;
 	}
 
+	function externalReference() {
+		this.DefinedNames = [];
+		this.Id = null;
+		this.SheetDataSet = [];
+		this.SheetNames = [];
+		this.Type = 0;
+	}
 
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
@@ -12256,6 +12263,6 @@ QueryTableField.prototype.clone = function() {
 	window["AscCommonExcel"].CT_Connection = CT_Connection;
 	window["AscCommonExcel"].CT_Filter = CT_Filter;
 
-
+	window["AscCommonExcel"].externalReference = externalReference;
 
 })(window);

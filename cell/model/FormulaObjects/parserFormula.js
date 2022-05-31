@@ -1670,7 +1670,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		this.ws = ws;
 		this.range = null;
-		if (val && this.ws) {
+		if (val && this.ws && !externalLink) {
 			AscCommonExcel.executeInR1C1Mode(false, function () {
 				val = ws.getRange2(val);
 			});
@@ -1702,23 +1702,32 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return oRes;
 	};
 	cRef3D.prototype.getWsId = function () {
-		return this.ws.Id;
+		return this.ws && this.ws.Id;
 	};
 	cRef3D.prototype.getRange = function () {
-		if (this.ws) {
+		if (this.externalLink) {
+			//TODO обработать externalLink
+			return this.range = null;
+		} else if (this.ws) {
 			if (this.range) {
 				return this.range;
 			}
-			return this.range = this.ws.getRange2(this.value);
+			return this.range = this.ws.getRange2 ? this.ws.getRange2(this.value) : null;
 		} else {
 			return this.range = null;
 		}
 	};
 	cRef3D.prototype.isValid = function () {
-		return !!this.getRange();
+		//TODO обработать externalLink
+		return this.externalLink ? true : !!this.getRange();
 	};
 	cRef3D.prototype.getValue = function () {
 		var _r = this.getRange();
+		//TODO обработать externalLink
+		if (this.externalLink) {
+			//нужно запросить данные, либо взять из кэша
+			return;
+		}
 		if (!_r) {
 			return new cError(cErrorType.bad_reference);
 		}
@@ -1738,6 +1747,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return this.getValue().tocString();
 	};
 	cRef3D.prototype.changeSheet = function (wsLast, wsNew) {
+		//TODO обработать externalLink
+		if (this.externalLink) {
+			return;
+		}
 		if (this.ws === wsLast) {
 			this.ws = wsNew;
 			if (this.range) {
@@ -6352,9 +6365,9 @@ function parserFormula( formula, parent, _ws ) {
 					}
 				}
 
-				var wsF = t.wb.getWorksheetByName(_3DRefTmp[1]);
-				var wsT = (null !== _3DRefTmp[2]) ? t.wb.getWorksheetByName(_3DRefTmp[2]) : wsF;
 				var externalLink = _3DRefTmp[3];
+				var wsF = externalLink ? _3DRefTmp[1] : t.wb.getWorksheetByName(_3DRefTmp[1]);
+				var wsT = (null !== _3DRefTmp[2]) ? (externalLink ? _3DRefTmp[2] : t.wb.getWorksheetByName(_3DRefTmp[2])) : wsF;
 
 				if (!(wsF && wsT)) {
 					parseResult.setError(c_oAscError.ID.FrmlWrongReferences);
@@ -7451,7 +7464,7 @@ function parserFormula( formula, parent, _ws ) {
 				this.wb.dependencyFormulas.startListeningDefName(ref.value, this, ref.ws.getId());
 			} else if ((cElementType.cell === ref.type || cElementType.cell3D === ref.type ||
 				cElementType.cellsRange === ref.type) && ref.isValid()) {
-				this._buildDependenciesRef(ref.getWsId(), ref.getRange().getBBox0(), isDefName, true);
+				this._buildDependenciesRef(ref.getWsId(), ref.getRange() && ref.getRange().getBBox0(), isDefName, true);
 			} else if (cElementType.cellsRange3D === ref.type && ref.isValid()) {
 				wsR = ref.range(ref.wsRange());
 				for (var j = 0; j < wsR.length; j++) {

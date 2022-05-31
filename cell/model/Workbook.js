@@ -3848,8 +3848,11 @@
 					return {path: res.substring(0, i + 1), name: res.substring(i + 1, res.length)};
 				}
 			}
+			if (res) {
+				res = {path: "", name: res};
+			}
 		}
-		return res ? res.Id : null;
+		return res ? res : null;
 	};
 
 

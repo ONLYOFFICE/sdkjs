@@ -7520,7 +7520,7 @@
 			var res = c_oSerConstants.ReadOk;
 			var oThis = this;
 			if (c_oSerWorkbookTypes.ExternalBook == type) {
-				var externalBook = {Type: 0, Id: null, SheetNames: [], DefinedNames: [], SheetDataSet: []};
+				var externalBook = new AscCommonExcel.externalReference();
 				res = this.bcr.Read1(length, function(t, l) {
 					return oThis.ReadExternalBook(t, l, externalBook);
 				});
