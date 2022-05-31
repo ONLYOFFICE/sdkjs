@@ -419,6 +419,35 @@ function CCellObjectInfo () {
 	this.colOffPx = 0;
 	this.rowOffPx = 0;
 }
+CCellObjectInfo.prototype.fromXml = function(reader) {
+	var depth = reader.GetDepth();
+	while (reader.ReadNextSiblingNode(depth)) {
+		if ("col" === reader.GetNameNoNS()) {
+			this.col = reader.GetTextInt();
+		} else if ("colOff" === reader.GetNameNoNS()) {
+			this.colOff = reader.GetTextInt() * g_dKoef_emu_to_mm;
+		} else if ("row" === reader.GetNameNoNS()) {
+			this.row = reader.GetTextInt();
+		} else if ("rowOff" === reader.GetNameNoNS()) {
+			this.rowOff = reader.GetTextInt() * g_dKoef_emu_to_mm;
+		}
+	}
+};
+CCellObjectInfo.prototype.toXml = function(writer, name) {
+    writer.WriteXmlNodeStart(name);
+    writer.WriteXmlAttributesEnd();
+
+    writer.WriteXmlValueNumber("xdr:col", this.col);
+    writer.WriteXmlValueNumber("xdr:colOff", Math.round(this.colOff * g_dKoef_mm_to_emu));
+    writer.WriteXmlValueNumber("xdr:row", this.row);
+    writer.WriteXmlValueNumber("xdr:rowOff", Math.round(this.rowOff * g_dKoef_mm_to_emu));
+
+    writer.WriteXmlNodeEnd(name);
+};
+CCellObjectInfo.prototype.initAfterSerialize = function() {
+	this.row = Math.max(0, this.row);
+	this.row = Math.max(0, this.row);
+};
 
 /** @constructor */
 function asc_CChartBinary(chart) {
@@ -1783,6 +1812,133 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         }
         this.graphicObject.handleObject(fCallback);
     };
+	DrawingBase.prototype.fromXml = function (reader) {
+		this.readAttr(reader);
+
+		var depth = reader.GetDepth();
+		while (reader.ReadNextSiblingNode(depth)) {
+            let name = reader.GetNameNoNS();
+			if ("from" === name) {
+				this.from.fromXml(reader);
+			} else if ("to" === name) {
+                this.to.fromXml(reader);
+            } else {
+                var graphicObject = AscFormat.CGraphicObjectBase.prototype.fromXmlElem(reader, name);
+                if (graphicObject) {
+                    this.graphicObject = graphicObject;
+                }
+			}
+		}
+
+		var ws = reader.GetContext().ws;
+		this.initAfterSerialize(ws);
+	};
+    DrawingBase.prototype.toXml = function (writer, name) {
+        var editAs = null;
+        switch (this.Type) {
+            case c_oAscCellAnchorType.cellanchorTwoCell:
+                name = "xdr:twoCellAnchor";
+                switch (this.editAs) {
+                    case c_oAscCellAnchorType.cellanchorTwoCell:
+                        editAs = "twoCell";
+                        break;
+                    case c_oAscCellAnchorType.cellanchorOneCell:
+                        editAs = "oneCell";
+                        break;
+                    case c_oAscCellAnchorType.cellanchorAbsolute:
+                        editAs = "absolute";
+                        break;
+                }
+                break;
+            case c_oAscCellAnchorType.cellanchorOneCell:
+                name = "xdr:oneCellAnchor";
+                break;
+            case c_oAscCellAnchorType.cellanchorAbsolute:
+                name = "xdr:absoluteAnchor";
+                break;
+        }
+        let graphicObject = this.graphicObject;
+        switch (this.graphicObject.getObjectType()) {
+            case AscDFH.historyitem_type_ChartSpace:
+            case AscDFH.historyitem_type_SlicerView:
+                graphicObject = AscFormat.CGraphicFrame.prototype.static_CreateGraphicFrameFromDrawing(graphicObject);
+                break;
+        }
+        writer.WriteXmlNodeStart(name);
+        writer.WriteXmlNullableAttributeString("editAs", editAs);
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNullable(this.from, "xdr:from");
+        writer.WriteXmlNullable(this.to, "xdr:to");
+        AscFormat.CGraphicObjectBase.prototype.toXmlElem(writer, graphicObject, "xdr");
+        writer.WriteXmlNodeStart("xdr:clientData");
+        writer.WriteXmlAttributesEnd(true);
+        writer.WriteXmlNodeEnd(name);
+    };
+	DrawingBase.prototype.readAttr = function(reader) {
+		var name = reader.GetNameNoNS();
+		switch (name) {
+			case "twoCellAnchor":
+				this.Type = c_oAscCellAnchorType.cellanchorTwoCell;
+				break;
+			case "oneCellAnchor":
+				this.Type = c_oAscCellAnchorType.cellanchorOneCell;
+				break;
+			case "absoluteAnchor":
+				this.Type = c_oAscCellAnchorType.cellanchorAbsolute;
+				break;
+		}
+		while (reader.MoveToNextAttribute()) {
+			if ("editAs" === reader.GetNameNoNS()) {
+				var editAs = reader.GetValue();
+				switch (editAs) {
+					case "twoCell":
+						this.editAs = c_oAscCellAnchorType.cellanchorTwoCell;
+						break;
+					case "oneCell":
+						this.editAs = c_oAscCellAnchorType.cellanchorOneCell;
+						break;
+					case "absolute":
+						this.editAs = c_oAscCellAnchorType.cellanchorAbsolute;
+						break;
+				}
+			}
+		}
+	};
+	DrawingBase.prototype.initAfterSerialize = function(ws) {
+		if (this.graphicObject
+			&& !((this.graphicObject.getObjectType() === AscDFH.historyitem_type_Shape || this.graphicObject.getObjectType() === AscDFH.historyitem_type_ImageShape) && !this.graphicObject.spPr)
+			&& !AscCommon.IsHiddenObj(this.graphicObject))
+		{
+			this.graphicObject.setBDeleted(false);
+			this.from.initAfterSerialize();
+			this.to.initAfterSerialize();
+			//TODO при copy/paste в word из excel пропадает метод setDrawingBase
+			if(typeof this.graphicObject.setDrawingBase != "undefined")
+				this.graphicObject.setDrawingBase(this);
+			//TODO при copy/paste в word из excel пропадает метод setWorksheet
+			if(typeof this.graphicObject.setWorksheet != "undefined")
+				this.graphicObject.setWorksheet(ws);
+			if(!this.graphicObject.spPr)
+			{
+				this.graphicObject.setSpPr(new AscFormat.CSpPr());
+				this.graphicObject.spPr.setParent(this.graphicObject);
+			}
+			if(!this.graphicObject.spPr.xfrm)
+			{
+				this.graphicObject.spPr.setXfrm(new AscFormat.CXfrm());
+				this.graphicObject.spPr.xfrm.setParent(this.graphicObject.spPr);
+				this.graphicObject.spPr.xfrm.setOffX(0);
+				this.graphicObject.spPr.xfrm.setOffY(0);
+				this.graphicObject.spPr.xfrm.setExtX(0);
+				this.graphicObject.spPr.xfrm.setExtY(0);
+			}
+			if(this.clientData)
+			{
+				this.graphicObject.setClientData(this.clientData);
+			}
+			ws.Drawings.push(this);
+		}
+	};
     //}
 
     //-----------------------------------------------------------------------------------
@@ -3467,7 +3623,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                                     oGraphicObject.extY = oldExtY;
                                     aObjectsForCheck.push({object: drawingObject, coords:  drawingObject._getGraphicObjectCoords()});
                             }
-                        } else if (oGraphicObject.isSmartArtObject()) { // fixme: this is a crutch for resizing columns and rows, fix after normal recalculate smartart
+                        } else if (oGraphicObject.hasSmartArt && oGraphicObject.hasSmartArt()) { // fixme: this is a crutch for resizing columns and rows, fix after normal recalculate smartart
                             if (oGraphicObject.spPr.xfrm.isZeroCh()) {
                                 oGraphicObject.updateCoordinatesAfterInternalResize();
                             }
@@ -3530,7 +3686,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                             oC.Pos.X, oC.Pos.Y, oC.ext.cx, oC.ext.cy);
                     }
                     oGraphicObject.handleUpdateExtents();
-                    if (oGraphicObject.isSmartArtObject()) {
+                    if (oGraphicObject.hasSmartArt && oGraphicObject.hasSmartArt()) {
                         oGraphicObject.checkExtentsByDocContent(true, true);
                     }
                     oGraphicObject.recalculate();

@@ -289,7 +289,12 @@
 	this.printPreviewState = new AscCommonExcel.CPrintPreviewState(this);
 	this.printOptionsJson = null;
 
-    return this;
+	this.SearchEngine = null;
+	if (typeof CDocumentSearchExcel !== "undefined") {
+		this.SearchEngine = new CDocumentSearchExcel(this);
+	}
+
+	return this;
   }
 
   WorkbookView.prototype._init = function(fontRenderingMode) {
@@ -977,6 +982,10 @@
 	});
 	this.model.handlers.add("updatePrintPreview", function() {
 	  self.updatePrintPreview();
+	});
+	this.model.handlers.add("clearFindResults", function(index) {
+  		if (self.SearchEngine)
+			self.SearchEngine.Clear(index);
 	});
     this.cellCommentator = new AscCommonExcel.CCellCommentator({
       model: new WorkbookCommentsModel(this.handlers, this.model.aComments),
@@ -3015,6 +3024,7 @@
 
     History.Create_NewPoint();
     History.StartTransaction();
+    this.SearchEngine.replaceStart();
 
     options.clearFindAll();
     if (options.isReplaceAll) {
@@ -3023,12 +3033,12 @@
     }
 
     var ws = this.getWorksheet();
-    ws.replaceCellText(options, false, this.fReplaceCallback);
+    ws.replaceCellText(options, false, this.fReplaceCallback, true);
   };
   WorkbookView.prototype._replaceCellTextCallback = function(options) {
     if (!options.error) {
 		options.updateFindAll();
-		if (!options.scanOnOnlySheet && options.isReplaceAll) {
+		if (Asc.c_oAscSearchBy.Workbook === options.scanOnOnlySheet && options.isReplaceAll) {
 			// Замена на всей книге
 			var i = ++options.sheetIndex;
 			if (this.model.getActive() === i) {
@@ -3037,13 +3047,17 @@
 
 			if (i < this.model.getWorksheetCount()) {
 				var ws = this.getWorksheet(i);
-				ws.replaceCellText(options, true, this.fReplaceCallback);
+				ws.replaceCellText(options, true, this.fReplaceCallback, true);
 				return;
 			}
-      options.sheetIndex = -1;
+      		options.sheetIndex = -1;
 		}
 
 		this.handlers.trigger("asc_onRenameCellTextEnd", options.countFindAll, options.countReplaceAll);
+		if (options.countFindAll !== options.countReplaceAll) {
+			this.SearchEngine.SetCurrent(this.SearchEngine.CurId);
+		}
+		this.SearchEngine.replaceEnd();
     }
 
     History.EndTransaction();
@@ -4480,6 +4494,397 @@
 			}
 		}
 		return res;
+	};
+
+	//***searchEngine
+	//----------------------------------------------------------------------------------------------------------------------
+	// Search
+	//----------------------------------------------------------------------------------------------------------------------
+	WorkbookView.prototype.Search = function (oProps) {
+		if (!this.SearchEngine) {
+			return;
+		}
+		if (this.SearchEngine.Compare(oProps)) {
+			return this.SearchEngine;
+		}
+
+		this.SearchEngine.Clear();
+		this.SearchEngine.Set(oProps);
+
+		//далее дёргаем в CDocumentSearchExcel -> Add
+		this.model.findCellText(oProps, this.SearchEngine);
+		return this.SearchEngine;
+	};
+
+	WorkbookView.prototype.GetSearchElementId = function (bNext) {
+		if (!this.SearchEngine) {
+			return;
+		}
+
+		this.SearchEngine.SetDirection(bNext);
+		return this.SearchEngine.GetNextElement();
+	};
+
+
+	/*this.closeCellEditor();
+	 // Для поиска эта переменная не нужна (но она может остаться от replace)
+	 options.selectionRange = null;
+	 var result = this.model.findCellText(options);
+	 if (result) {
+	 var ws = this.getWorksheet();
+	 var range = new Asc.Range(result.col, result.row, result.col, result.row);
+	 options.findInSelection ? ws.setActiveCell(result) : ws.setSelection(range);
+	 return true;
+	 }
+	 return null;*/
+
+	WorkbookView.prototype.SelectSearchElement = function (Id) {
+		if (!this.SearchEngine) {
+			return;
+		}
+		this.SearchEngine.Select(Id, true);
+	};
+
+	WorkbookView.prototype.inFindResults = function (ws, row, col) {
+		if (!this.SearchEngine) {
+			return;
+		}
+		return this.SearchEngine.inFindResults(ws, row, col);
+	};
+
+
+	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
+	function CDocumentSearchExcel(wb) {
+		this.wb = wb;
+		this.props = null;
+		//this.Pattern       = new AscCommonWord.CSearchPatternEngine();
+
+		this.Id = 0;
+		this.Count = 0;
+		this.Elements = {};
+		this.CurId = -1;
+		this.Direction = true; // направление true - вперед, false - назад
+
+		//this.ClearOnRecalc = true; // Флаг, говорящий о том, запустился ли пересчет из-за Replace
+
+		this.ReplacedId = [];
+		this.mapFindCells = {};
+		this.isReplacingText = null;
+	}
+
+	CDocumentSearchExcel.prototype.Reset = function () {
+		this.props = null;
+	};
+	/**
+	 * @param {AscCommon.CSearchSettings} oProps
+	 */
+	CDocumentSearchExcel.prototype.Compare = function (oProps) {
+		return oProps && this.props && this.props.isEqual2(oProps) && this.props.scanOnOnlySheet === oProps.scanOnOnlySheet;
+	};
+	CDocumentSearchExcel.prototype.Clear = function (index) {
+		if (this.isReplacingText) {
+			return;
+		}
+
+		this.Reset();
+
+		// Очищаем предыдущие элементы поиска
+		if (index != null) {
+			for (var Id in this.Elements) {
+				if (this.Elements[Id].index === index) {
+					var key = this.Elements[Id].index + "-" + this.Elements[Id].col + "-" + this.Elements[Id].row;
+					delete this.mapFindCells[key];
+					delete this.Elements[Id];
+				}
+			}
+		} else {
+			this.Elements = {};
+			this.mapFindCells = {};
+		}
+
+		this.Id = 0;
+		this.Count = 0;
+		//this.Elements  = {};
+		this.CurId = -1;
+		this.Direction = true;
+
+		this.ReplacedId = [];
+
+		this.isReplacingText = null;
+
+		this.TextAroundUpdate = true;
+		this.StopTextAround();
+		this.SendClearAllTextAround();
+	};
+	CDocumentSearchExcel.prototype.Add = function (r, c, cell, container) {
+		if (container) {
+			container.add(r, c,
+				{sheet: cell.ws.sName, name: null, cell: cell.getName(), text: cell.getValueForEdit(), formula: cell.getFormula(), col: r, row: c, index: cell.ws.index});
+		} else {
+			this.Count++;
+			//[sheet, name, cell, value,formula]
+			this.Elements[this.Id++] =
+				cell.ws ? {sheet: cell.ws.sName, name: null, cell: cell.getName(), text: cell.getValueForEdit(), formula: cell.getFormula(), col: c, row: r, index: cell.ws.index} :
+					cell;
+			var key = this.Elements[this.Id - 1].index + "-" + c + "-" + r;
+			this.mapFindCells[key] = this.Id - 1;
+
+			return (this.Id - 1);
+		}
+	};
+	CDocumentSearchExcel.prototype.endAdd = function (findResult) {
+		//использую findResult для случая, если нужно искать по столбцам, а не по строкам. в дальнейшем можно избавиться от findResult и использовать временный объект
+		if (findResult && findResult.values) {
+			for (var i in findResult.values) {
+				if (!findResult.values[i]) {
+					continue;
+				}
+				for (var j in findResult.values[i]) {
+					this.Add(j, i, findResult.values[i][j]);
+				}
+			}
+		}
+	};
+	CDocumentSearchExcel.prototype.Select = function (nId) {
+		var elem = this.Elements[nId];
+		if (elem) {
+			var ws = this.wb.getWorksheet();
+			if (elem.index !== ws.index) {
+				this.wb.model.handlers.trigger('undoRedoHideSheet', elem.index);
+				ws = this.wb.getWorksheet(elem.index);
+			}
+
+			if (ws) {
+				var range = new Asc.Range(elem.col, elem.row, elem.col, elem.row);
+				//options.findInSelection ? ws.setActiveCell(result) : ws.setSelection(range);
+				ws.setSelection(range)
+
+				this.SetCurrent(nId);
+			}
+		}
+	};
+	CDocumentSearchExcel.prototype.SetCurrent = function (nId) {
+		this.CurId = undefined !== nId ? nId : -1;
+		let nIndex = -1 !== this.CurId ? this.GetElementIndexById(this.CurId) : -1;
+		let oApi = window["Asc"]["editor"];
+		oApi.sync_setSearchCurrent(nIndex, this.Count);
+	};
+	CDocumentSearchExcel.prototype.GetElementIndexById = function (nId) {
+		for (let nPos = 0, nCount = this.ReplacedId.length; nPos < nCount; ++nPos) {
+			if (this.ReplacedId[nPos] > nId) {
+				return (nId - nPos);
+			} else if (this.ReplacedId[nPos] === nId) {
+				return -1;
+			}
+		}
+
+		return (nId - this.ReplacedId.length);
+	};
+	CDocumentSearchExcel.prototype.private_AddReplacedId = function (nId) {
+		for (let nPos = 0, nCount = this.ReplacedId.length; nPos < nCount; ++nPos) {
+			if (this.ReplacedId[nPos] > nId) {
+				return this.ReplacedId.splice(nPos, 0, nId);
+			}
+		}
+
+		this.ReplacedId.push(nId);
+	};
+	CDocumentSearchExcel.prototype.ResetCurrent = function () {
+		this.SetCurrent(-1);
+	};
+	CDocumentSearchExcel.prototype.GetCount = function () {
+		return this.Count;
+	};
+	CDocumentSearchExcel.prototype.GetCurrent = function () {
+		return this.CurId;
+	};
+	CDocumentSearchExcel.prototype.GetCurrentElem = function () {
+		return this.Elements && this.Elements[this.CurId];
+	};
+	CDocumentSearchExcel.prototype.forEachElementsBySheet = function (index, callback) {
+		if (this.Elements) {
+			for (var i in this.Elements) {
+				if (this.Elements[i].index === index) {
+					callback(this.Elements[i]);
+				}
+			}
+		}
+	};
+	CDocumentSearchExcel.prototype.GetNextElement = function () {
+		var id = this.Direction ? this.CurId + 1 : this.CurId - 1;
+		var needElem = this.Elements[id];
+		if (!needElem && this.Count) {
+			//лиюо следующий, либо первый
+			//нужно вернуться к первому, если такой есть
+			var i;
+			if (this.Direction) {
+				var firstElem, firstElemId;
+				for (i = 0; i < this.ReplacedId.length + this.Count; i++) {
+					if (this.Elements[i]) {
+						if (!firstElem) {
+							firstElem = this.Elements[i];
+							firstElemId = i;
+						}
+						if (i > id) {
+							needElem = this.Elements[i];
+							id = i;
+							break;
+						}
+					}
+				}
+				if (!needElem) {
+					needElem = firstElem;
+					id = firstElemId;
+				}
+			} else {
+				for (i = this.ReplacedId.length + this.Count; i >= 0; i--) {
+					if (this.Elements[i]) {
+						if (i < id) {
+							needElem = this.Elements[i];
+							id = i;
+							break;
+						}
+					}
+				}
+			}
+
+		}
+		return needElem ? id : null;
+	};
+	CDocumentSearchExcel.prototype.removeFromSearchElems = function (col, row, ws) {
+		var key = ws.index + "-" + col + "-" + row;
+		if (null != this.mapFindCells[key]) {
+			var id = this.mapFindCells[key];
+			if (this.Elements[id]) {
+				var oApi = window["Asc"]["editor"];
+				oApi.sync_removeTextAroundSearch(id);
+				delete this.Elements[id];
+			}
+			delete this.mapFindCells[key];
+			this.Count--;
+			this.private_AddReplacedId(id);
+		}
+	};
+	CDocumentSearchExcel.prototype.Replace = function (sReplaceString, Id, bRestorePos) {
+	};
+	CDocumentSearchExcel.prototype.replaceStart = function () {
+		this.isReplacingText = true;
+	};
+	CDocumentSearchExcel.prototype.replaceEnd = function () {
+		this.isReplacingText = false;
+	};
+	/**
+	 * @param {AscCommon.CSearchSettings} oProps
+	 */
+	CDocumentSearchExcel.prototype.Set = function (oProps) {
+		if (!oProps) {
+			return;
+		}
+
+		this.props = oProps.clone();
+	};
+	CDocumentSearchExcel.prototype.SetDirection = function (bDirection) {
+		if (bDirection != null) {
+			this.Direction = bDirection;
+		}
+	};
+	CDocumentSearchExcel.prototype.inFindResults = function (ws, row, col) {
+		var key = ws.model.index + "-" + col + "-" + row;
+		return this.mapFindCells && this.mapFindCells[key];
+	};
+
+	CDocumentSearchExcel.prototype.StartTextAround = function () {
+		if (!this.TextAroundUpdate) {
+			return this.SendAllTextAround();
+		}
+
+		this.TextAroundUpdate = false;
+		this.StopTextAround();
+
+		this.TextAroundId = 0;
+
+		let oApi = window["Asc"]["editor"];
+		oApi.sync_startTextAroundSearch();
+
+		let oThis = this;
+		this.TextAroundTimer = setTimeout(function () {
+			oThis.ContinueGetTextAround()
+		}, 20);
+
+		this.TextArround = [];
+	};
+	CDocumentSearchExcel.prototype.ContinueGetTextAround = function () {
+		let arrResult = [];
+
+		let nStartTime = performance.now();
+		while (performance.now() - nStartTime < 20) {
+			if (this.TextAroundId >= this.Id) {
+				break;
+			}
+
+			let sId = this.TextAroundId++;
+
+			if (!this.Elements[sId]) {
+				continue;
+			}
+
+			let sText = this.Elements[sId].text;
+			this.TextArround[sId] = sText;
+			//[id, sheet, name, cell, value,formula]
+			arrResult.push([sId, this.Elements[sId].sheet, this.Elements[sId].name, this.Elements[sId].cell, sText, this.Elements[sId].formula]);
+		}
+
+		let oApi = window["Asc"]["editor"];
+		oApi.sync_getTextAroundSearchPack(arrResult);
+
+		let oThis = this;
+		if (this.TextAroundId >= 0 && this.TextAroundId < this.Id) {
+			this.TextAroundTimer = setTimeout(function () {
+				oThis.ContinueGetTextAround();
+			}, 20);
+		} else {
+			this.TextAroundId = -1;
+			this.TextAroundTimer = null;
+			oApi.sync_endTextAroundSearch();
+		}
+	};
+	CDocumentSearchExcel.prototype.StopTextAround = function () {
+		if (this.TextAroundTimer) {
+			let oApi = window["Asc"]["editor"];
+			clearTimeout(this.TextAroundTimer);
+			oApi.sync_endTextAroundSearch();
+		}
+
+		this.TextAroundTimer = null;
+		this.TextAroundId = -1;
+	};
+	CDocumentSearchExcel.prototype.SendAllTextAround = function () {
+		if (this.TextAroundTimer) {
+			return;
+		}
+
+		let arrResult = [];
+		for (let nId = 0; nId < this.Id; ++nId) {
+			if (!this.Elements[nId] || undefined === this.TextArround[nId]) {
+				continue;
+			}
+
+			arrResult.push([nId, this.Elements[nId].sheet, this.Elements[nId].name, this.Elements[nId].cell, this.Elements[nId].text, this.Elements[nId].formula]);
+		}
+
+		let oApi = window["Asc"]["editor"];
+		oApi.sync_startTextAroundSearch();
+		oApi.sync_getTextAroundSearchPack(arrResult);
+		oApi.sync_endTextAroundSearch();
+	};
+	CDocumentSearchExcel.prototype.SendClearAllTextAround = function () {
+		let oApi = window["Asc"]["editor"];
+		oApi.sync_startTextAroundSearch();
+		oApi.sync_endTextAroundSearch();
+	};
+
+	CDocumentSearchExcel.prototype.isNotEmpty = function () {
+		return this.Count > 0;
 	};
 
 	//------------------------------------------------------------export---------------------------------------------------

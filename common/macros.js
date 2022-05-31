@@ -101,12 +101,13 @@ function (window, undefined)
 				if (true !== obj["macrosArray"][i]["autostart"])
 					continue;
 
-                var script = "(function(){ var Api = window.g_asc_plugins.api;\n" + obj["macrosArray"][i]["value"] + "\n})();";
-                eval(script);
+				var script = "(function(Api, window, alert, document, XMLHttpRequest){\n" + "\"use strict\"" + ";\n" + obj["macrosArray"][i]["value"] + "\n})(window.g_asc_plugins.api, {}, function(){}, {}," + customXMLHttpRequest.toString() + ");";
+				eval(script);
 			}
 		}
 		catch (err)
 		{
+			console.error(err);
 		}
 	};
 	CDocumentMacros.prototype.run = function(sGuid)
@@ -120,7 +121,7 @@ function (window, undefined)
 			{
 				if (sGuid === obj["macrosArray"][i]["guid"])
 				{
-					var script = "(function(){ var Api = window.g_asc_plugins.api;\n" + obj["macrosArray"][i]["value"] + "\n})();";
+					var script = "(function(Api, window, alert, document, XMLHttpRequest){\n" + "\"use strict\"" + ";\n" + obj["macrosArray"][i]["value"] + "\n})(window.g_asc_plugins.api, {}, function(){}, {}," + customXMLHttpRequest.toString() + ");";
 					eval(script);
 					break;
 				}
@@ -128,6 +129,7 @@ function (window, undefined)
 		}
 		catch (err)
 		{
+			console.error(err);
 		}
 	};
 	CDocumentMacros.prototype.getGuidByName = function(sName)
@@ -231,6 +233,135 @@ function (window, undefined)
 	CChangesDocumentMacrosData.prototype.private_SetValue = function(Value)
 	{
 		this.Class.Data = Value;
+	};
+
+	function customXMLHttpRequest() {
+		this._headers = [];
+		var t = this;
+
+		this.open = function(method, url, async, user, password) {
+			this._url = url;
+			this._method = method;
+			this._async = async;
+			this._user = user;
+			this._password = password;
+		};
+
+		this.setRequestHeader = function(name, value) {
+			this._headers.push({name: name, value: value});
+		};
+
+		this.send = function(body) {
+			setTimeout(function() {
+				window.g_asc_plugins.api.asc_getUserPermissionToMakeRequestFromMacros(t._url, sendRequest);		
+				function sendRequest (permission) {
+					if (permission) {
+						var xhr = new XMLHttpRequest();
+
+						if (t.timeout)
+							xhr.timeout = t.timeout;
+
+						if (t.responseType)
+							xhr.responseType = t.responseType;
+
+						if ( t.hasOwnProperty('withCredentials') )
+							xhr.withCredentials = t.withCredentials;
+
+						xhr.open(t._method, t._url, t._async, t._user, t._password);
+
+						t._headers.forEach(function(el) {
+							xhr.setRequestHeader(el.name, el.value);
+						});
+
+						xhr.onload = function() {
+							t.status = xhr.status;
+							t.statusText = xhr.statusText;
+							t.response = xhr.response;
+							t.responseText = xhr.responseText;
+							t.responseURL = xhr.responseURL;
+							t.responseXML = xhr.responseXML;
+							t.onload &&	t.onload();
+						};
+
+						xhr.onprogress = function(event) {
+							t.onprogress && t.onprogress(event);
+						};
+
+						xhr.onreadystatechange = function() {
+							t.readyState = this.readyState;
+							t.onreadystatechange && t.onreadystatechange();
+						};
+
+						xhr.onerror = function(error) {
+							t.onerror && t.onerror(error || "User doesn't allow this request.");
+						};
+
+						xhr.ontimeout = function(event) {
+							t.ontimeout && t.ontimeout(event);
+						};
+
+						xhr.onloadstart = function(event) {
+							t.onloadstart && t.onloadstart(event);
+						};
+
+						xhr.onloadend = function(event) {
+							t.onloadend && t.onloadend(event);
+						};
+
+						xhr.onabort = function(event) {
+							t.onabort && t.onabort(event);
+						};
+
+						if (typeof t.upload == 'object') {
+							xhr.upload.onabort = function(event) {
+								t.upload.onabort && t.upload.onabort(event);
+							};
+
+							xhr.upload.onerror = function(event) {
+								t.upload.onerror && t.upload.onerror(event);
+							};
+
+							xhr.upload.onload = function(event) {
+								t.upload.onload && t.upload.onload(event);
+							};
+
+							xhr.upload.onloadend = function(event) {
+								t.upload.onloadend && t.upload.onloadend(event);
+							};
+
+							xhr.upload.onloadstart = function(event) {
+								t.upload.onloadstart && t.upload.onloadstart(event);
+							};
+
+							xhr.upload.onprogress = function(event) {
+								t.upload.onprogress && t.upload.onprogress(event);
+							};
+
+							xhr.upload.ontimeout = function(event) {
+								t.upload.ontimeout && t.upload.ontimeout(event);
+							};
+						}
+
+						t.getResponseHeader = function(name) {
+							return xhr.getResponseHeader(name);
+						};
+
+						t.getAllResponseHeaders = function() {
+							return xhr.getAllResponseHeaders();
+						};
+
+						t.abort = function() {
+							xhr.abort();
+						}
+
+						xhr.send(body || null);
+
+					} else if (t.onerror)  {
+						t.onerror("User doesn't allow this request.");
+					}
+				}
+			});
+		};
 	};
 
 	window['AscCommon'] = window['AscCommon'] || {};

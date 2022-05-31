@@ -1766,6 +1766,8 @@ function CDocumentSettings()
 	this.CompatibilityMode    = AscCommon.document_compatibility_mode_Current;
 	this.SdtSettings          = new CSdtGlobalSettings();
 	this.SpecialFormsSettings = new CSpecialFormsGlobalSettings();
+	this.WriteProtection = undefined;
+	this.DocumentProtection = undefined;
 
 	this.ListSeparator  = undefined;
 	this.DecimalSymbol  = undefined;
@@ -1957,8 +1959,8 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 
     // Класс для работы с поиском и заменой в документе
     this.SearchEngine = null;
-    if (typeof CDocumentSearch !== "undefined")
-        this.SearchEngine = new CDocumentSearch();
+    if (typeof AscCommonWord.CDocumentSearch !== "undefined")
+        this.SearchEngine = new AscCommonWord.CDocumentSearch(this);
 
     // Параграфы, в которых есть ошибки в орфографии (объект с ключом - Id параграфа)
     this.Spelling = new AscCommonWord.CDocumentSpellChecker();
@@ -9091,7 +9093,7 @@ CDocument.prototype.OnKeyDown = function(e)
 
     // Сбрасываем текущий элемент в поиске
     if (this.SearchEngine.Count > 0)
-        this.SearchEngine.Reset_Current();
+        this.SearchEngine.ResetCurrent();
 
     var bUpdateSelection = true;
     var bRetValue        = keydownresult_PreventNothing;
@@ -10398,7 +10400,7 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 
 	// Сбрасываем текущий элемент в поиске
 	if (this.SearchEngine.Count > 0)
-		this.SearchEngine.Reset_Current();
+		this.SearchEngine.ResetCurrent();
 
 	this.CurPos.CC = null;
 
@@ -14664,9 +14666,13 @@ CDocument.prototype.private_MoveCursorPageUp = function(StartX, StartY, AddToSel
 };
 CDocument.prototype.private_ProcessTemplateReplacement = function(TemplateReplacementData)
 {
+	let oProps = new AscCommon.CSearchSettings();
+	oProps.SetMatchCase(true);
+
 	for (var Id in TemplateReplacementData)
 	{
-		this.Search(Id, {MatchCase : true}, false);
+		oProps.SetText(Id);
+		this.Search(oProps, false);
 		this.SearchEngine.ReplaceAll(TemplateReplacementData[Id], false);
 	}
 };
@@ -25427,7 +25433,7 @@ CDocument.prototype.GetDecimalSymbol = function()
  */
 CDocument.prototype.ChangeTextCase = function(nCaseType)
 {
-	var oState = null;
+	let oState = null;
 	if (!this.IsSelectionUse())
 	{
 		oState = this.SaveDocumentState(false);
@@ -25446,37 +25452,8 @@ CDocument.prototype.ChangeTextCase = function(nCaseType)
 	{
 		this.StartAction(AscDFH.historydescription_Document_ChangeTextCase);
 
-		var oChangeEngine = new CDocumentChangeTextCaseEngine(nCaseType);
-		var arrParagraphs = this.GetSelectedParagraphs();
-		if (oChangeEngine.ChangeType === Asc.c_oAscChangeTextCaseType.SentenceCase || oChangeEngine.ChangeType === Asc.c_oAscChangeTextCaseType.CapitalizeWords)
-		{
-			for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
-			{
-				var oParagraph1 = arrParagraphs[nIndex];
-				if (!oParagraph1.Parent.IsTableCellContent())
-				{
-					oChangeEngine.isAllinTable = false;
-				}
-				oParagraph1.CheckRunContent(function(oRun)
-				{
-					oRun.CheckTextForTextCase(oChangeEngine);
-				});
-				oChangeEngine.CurrentParagraph++;
-			}
-		}
-		for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
-		{
-			oChangeEngine.Reset();
-
-			var oParagraph = arrParagraphs[nIndex];
-
-			oParagraph.CheckRunContent(function(oRun)
-			{
-				oRun.ChangeTextCase(oChangeEngine);
-			});
-
-			oChangeEngine.FlushWord();
-		}
+		let oChangeEngine = new AscCommonWord.CChangeTextCaseEngine(nCaseType);
+		oChangeEngine.ProcessParagraphs(this.GetSelectedParagraphs());
 
 		if (oState)
 			this.LoadDocumentState(oState);
@@ -26109,6 +26086,394 @@ CDocument.prototype.TurnOnSpellCheck = function()
 CDocument.prototype.GetSpellCheckManager = function()
 {
 	return this.Spelling;
+};
+//----------------------------------------------------------------------------------------------------------------------
+// Search
+//----------------------------------------------------------------------------------------------------------------------
+CDocument.prototype.Search = function(oProps, bDraw)
+{
+	//let nStartTime = performance.now();
+
+	if (this.SearchEngine.Compare(oProps))
+		return this.SearchEngine;
+
+	this.SearchEngine.Clear();
+	this.SearchEngine.Set(oProps);
+
+	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+	{
+		this.Content[nIndex].Search(this.SearchEngine, search_Common);
+	}
+
+	this.SectionsInfo.Search(this.SearchEngine);
+
+	var arrFootnotes = this.GetFootnotesList(null, null);
+	this.SearchEngine.SetFootnotes(arrFootnotes);
+	for (var nIndex = 0, nCount = arrFootnotes.length; nIndex < nCount; ++nIndex)
+	{
+		arrFootnotes[nIndex].Search(this.SearchEngine, search_Footnote);
+	}
+
+	var arrEndnotes = this.GetEndnotesList(null, null);
+	this.SearchEngine.SetEndnotes(arrEndnotes);
+	for (var nIndex = 0, nCount = arrEndnotes.length; nIndex < nCount; ++nIndex)
+	{
+		arrEndnotes[nIndex].Search(this.SearchEngine, search_Endnote);
+	}
+
+	if (false !== bDraw)
+		this.Redraw(-1, -1);
+
+	//console.log("Search logic: " + ((performance.now() - nStartTime) / 1000) + " s");
+
+	return this.SearchEngine;
+};
+CDocument.prototype.SelectSearchElement = function(Id)
+{
+	this.RemoveSelection();
+	this.SearchEngine.Select(Id, true);
+	this.RecalculateCurPos();
+
+	this.Document_UpdateInterfaceState();
+	this.Document_UpdateSelectionState();
+	this.Document_UpdateRulersState();
+};
+CDocument.prototype.ReplaceSearchElement = function(NewStr, bAll, Id, bInterfaceEvent)
+{
+	var bResult = false;
+
+	var oState = this.SaveDocumentState();
+
+	var arrReplaceId = [];
+	if (bAll)
+	{
+		if (this.StartSelectionLockCheck())
+		{
+			for (var sElementId in this.SearchEngine.Elements)
+			{
+				this.SelectSearchElement(sElementId);
+				if (!this.ProcessSelectionLockCheck(AscCommon.changestype_Paragraph_Content, true))
+					arrReplaceId.push(sElementId);
+			}
+
+			if (this.EndSelectionLockCheck())
+				arrReplaceId.length = 0;
+		}
+	}
+	else
+	{
+		this.SelectSearchElement(Id);
+
+		if (this.StartSelectionLockCheck())
+		{
+			this.ProcessSelectionLockCheck(AscCommon.changestype_Paragraph_Content);
+			if (!this.EndSelectionLockCheck())
+				arrReplaceId.push(Id);
+		}
+	}
+
+	var nOverallCount  = this.SearchEngine.Count;
+	var nReplacedCount = arrReplaceId.length;
+
+	if (nReplacedCount > 0)
+	{
+		this.StartAction(bAll ? AscDFH.historydescription_Document_ReplaceAll : AscDFH.historydescription_Document_ReplaceSingle);
+
+		for (var nIndex = 0; nIndex < nReplacedCount; ++nIndex)
+		{
+			this.SearchEngine.Replace(NewStr, arrReplaceId[nIndex], false);
+		}
+
+		// Если остались элементы поиска, тогда не очищаем текущий поиск
+		if (this.SearchEngine.Count)
+			this.SearchEngine.ClearOnRecalc = false;
+
+		this.Recalculate(true);
+		this.SearchEngine.ClearOnRecalc = true;
+		this.FinalizeAction();
+	}
+
+	if (bAll && false !== bInterfaceEvent)
+		this.Api.sync_ReplaceAllCallback(nReplacedCount, nOverallCount);
+
+	if (nReplacedCount)
+		bResult = true;
+
+	this.LoadDocumentState(oState);
+
+	this.Document_UpdateInterfaceState();
+	this.Document_UpdateSelectionState();
+	this.Document_UpdateRulersState();
+
+	return bResult;
+};
+CDocument.prototype.GetSearchElementId = function(bNext)
+{
+	var Id = null;
+
+	this.SearchEngine.SetDirection(bNext);
+
+	if (docpostype_DrawingObjects === this.CurPos.Type)
+	{
+		var ParaDrawing = this.DrawingObjects.getMajorParaDrawing();
+
+		Id = ParaDrawing.GetSearchElementId(bNext, true);
+		if (null != Id)
+			return Id;
+
+		this.DrawingObjects.resetSelection();
+		ParaDrawing.GoTo_Text(true !== bNext, false);
+	}
+
+	if (docpostype_Content === this.CurPos.Type)
+	{
+		Id = this.private_GetSearchIdInMainDocument(true);
+
+		if (null === Id)
+			Id = this.private_GetSearchIdInFootnotes(false);
+
+		if (null === Id)
+			Id = this.private_GetSearchIdInEndnotes(false);
+
+		if (null === Id)
+			Id = this.private_GetSearchIdInHdrFtr(false);
+
+		if (null === Id)
+			Id = this.private_GetSearchIdInMainDocument(false);
+	}
+	else if (docpostype_HdrFtr === this.CurPos.Type)
+	{
+		Id = this.private_GetSearchIdInHdrFtr(true);
+
+		if (null === Id)
+			Id = this.private_GetSearchIdInMainDocument(false);
+
+		if (null === Id)
+			Id = this.private_GetSearchIdInFootnotes(false);
+
+		if (null === Id)
+			Id = this.private_GetSearchIdInEndnotes(false);
+
+		if (null === Id)
+			Id = this.private_GetSearchIdInHdrFtr(false);
+	}
+	else if (docpostype_Footnotes === this.CurPos.Type)
+	{
+		Id = this.private_GetSearchIdInFootnotes(true);
+
+		if (null === Id)
+			Id = this.private_GetSearchIdInEndnotes(false);
+
+		if (null === Id)
+			Id = this.private_GetSearchIdInHdrFtr(false);
+
+		if (null === Id)
+			Id = this.private_GetSearchIdInMainDocument(false);
+
+		if (null === Id)
+			Id = this.private_GetSearchIdInFootnotes(false);
+	}
+	else if (docpostype_Endnotes === this.CurPos.Type)
+	{
+		Id = this.private_GetSearchIdInEndnotes(true);
+
+		if (null === Id)
+			Id = this.private_GetSearchIdInHdrFtr(false);
+
+		if (null === Id)
+			Id = this.private_GetSearchIdInMainDocument(false);
+
+		if (null === Id)
+			Id = this.private_GetSearchIdInFootnotes(false);
+
+		if (null === Id)
+			Id = this.private_GetSearchIdInEndnotes(false);
+	}
+
+	return Id;
+};
+CDocument.prototype.HighlightSearchResults = function(bSelection)
+{
+	var OldValue = this.SearchEngine.Selection;
+	if ( OldValue === bSelection )
+		return;
+
+	this.SearchEngine.Selection = bSelection;
+	this.DrawingDocument.ClearCachePages();
+	this.DrawingDocument.FirePaint();
+};
+CDocument.prototype.IsHighlightSearchResults = function()
+{
+	return this.SearchEngine.Selection;
+};
+CDocument.prototype.private_GetSearchIdInMainDocument = function(isCurrent)
+{
+	var Id    = null;
+	var bNext = this.SearchEngine.GetDirection();
+	var Pos   = this.CurPos.ContentPos;
+	if (true === this.Selection.Use && selectionflag_Common === this.Selection.Flag)
+		Pos = bNext ? Math.max(this.Selection.StartPos, this.Selection.EndPos) : Math.min(this.Selection.StartPos, this.Selection.EndPos);
+
+	if (true !== isCurrent)
+		Pos = bNext ? 0 : this.Content.length - 1;
+
+	if (true === bNext)
+	{
+		Id = this.Content[Pos].GetSearchElementId(true, isCurrent);
+
+		if (null != Id)
+			return Id;
+
+		Pos++;
+
+		var Count = this.Content.length;
+		while (Pos < Count)
+		{
+			Id = this.Content[Pos].GetSearchElementId(true, false);
+
+			if (null != Id)
+				return Id;
+
+			Pos++;
+		}
+	}
+	else
+	{
+		Id = this.Content[Pos].GetSearchElementId(false, isCurrent);
+
+		if (null != Id)
+			return Id;
+
+		Pos--;
+
+		while (Pos >= 0)
+		{
+			Id = this.Content[Pos].GetSearchElementId(false, false);
+
+			if (null != Id)
+				return Id;
+
+			Pos--;
+		}
+	}
+
+	return Id;
+};
+CDocument.prototype.private_GetSearchIdInHdrFtr = function(isCurrent)
+{
+	return this.SectionsInfo.GetSearchElementId(this.SearchEngine.GetDirection(), isCurrent ? this.HdrFtr.CurHdrFtr : null);
+};
+CDocument.prototype.private_GetSearchIdInFootnotes = function(isCurrent)
+{
+	var bNext        = this.SearchEngine.GetDirection();
+	var oCurFootnote = this.Footnotes.CurFootnote;
+
+	var arrFootnotes = this.SearchEngine.GetFootnotes();
+	var nCurPos      = -1;
+	var nCount       = arrFootnotes.length;
+
+	if (nCount <= 0)
+		return null;
+
+	if (isCurrent)
+	{
+		for (var nIndex = 0; nIndex < nCount; ++nIndex)
+		{
+			if (arrFootnotes[nIndex] === oCurFootnote)
+			{
+				nCurPos = nIndex;
+				break;
+			}
+		}
+	}
+
+	if (-1 === nCurPos)
+	{
+		nCurPos      = bNext ? 0 : nCount - 1;
+		oCurFootnote = arrFootnotes[nCurPos];
+		isCurrent    = false;
+	}
+
+	var Id = oCurFootnote.GetSearchElementId(bNext, isCurrent);
+	if (null !== Id)
+		return Id;
+
+	if (true === bNext)
+	{
+		for (var nIndex = nCurPos + 1; nIndex < nCount; ++nIndex)
+		{
+			Id = arrFootnotes[nIndex].GetSearchElementId(bNext, false);
+			if (null != Id)
+				return Id;
+		}
+	}
+	else
+	{
+		for (var nIndex = nCurPos - 1; nIndex >= 0; --nIndex)
+		{
+			Id = arrFootnotes[nIndex].GetSearchElementId(bNext, false);
+			if (null != Id)
+				return Id;
+		}
+	}
+
+	return null;
+};
+CDocument.prototype.private_GetSearchIdInEndnotes = function(isCurrent)
+{
+	var bNext       = this.SearchEngine.GetDirection();
+	var oCurEndnote = this.Endnotes.CurEndnote;
+
+	var arrEndnotes = this.SearchEngine.GetEndnotes();
+	var nCurPos     = -1;
+	var nCount      = arrEndnotes.length;
+
+	if (nCount <= 0)
+		return null;
+
+	if (isCurrent)
+	{
+		for (var nIndex = 0; nIndex < nCount; ++nIndex)
+		{
+			if (arrEndnotes[nIndex] === oCurEndnote)
+			{
+				nCurPos = nIndex;
+				break;
+			}
+		}
+	}
+
+	if (-1 === nCurPos)
+	{
+		nCurPos     = bNext ? 0 : nCount - 1;
+		oCurEndnote = arrEndnotes[nCurPos];
+		isCurrent   = false;
+	}
+
+	var Id = oCurEndnote.GetSearchElementId(bNext, isCurrent);
+	if (null !== Id)
+		return Id;
+
+	if (true === bNext)
+	{
+		for (var nIndex = nCurPos + 1; nIndex < nCount; ++nIndex)
+		{
+			Id = arrEndnotes[nIndex].GetSearchElementId(bNext, false);
+			if (null != Id)
+				return Id;
+		}
+	}
+	else
+	{
+		for (var nIndex = nCurPos - 1; nIndex >= 0; --nIndex)
+		{
+			Id = arrEndnotes[nIndex].GetSearchElementId(bNext, false);
+			if (null != Id)
+				return Id;
+		}
+	}
+
+	return null;
 };
 //----------------------------------------------------------------------------------------------------------------------
 CDocument.prototype.SetupBeforeNativePrint = function(layoutOptions, oGraphics)
@@ -26786,6 +27151,139 @@ CDocumentSectionsInfo.prototype.RestartSpellCheck = function()
 			SectPr.FooterDefault.RestartSpellCheck();
 	}
 };
+//----------------------------------------------------------------------------------------------------------------------
+// Search
+//----------------------------------------------------------------------------------------------------------------------
+CDocumentSectionsInfo.prototype.Search = function(oSearchEngine)
+{
+	var bEvenOdd = EvenAndOddHeaders;
+	for (var nIndex = 0, nCount = this.Elements.length; nIndex < nCount; ++nIndex)
+	{
+		var oSectPr = this.Elements[nIndex].SectPr;
+		var bFirst  = oSectPr.Get_TitlePage();
+
+		if (oSectPr.HeaderFirst && true === bFirst)
+			oSectPr.HeaderFirst.Search(oSearchEngine, search_Header);
+
+		if (oSectPr.HeaderEven && true === bEvenOdd)
+			oSectPr.HeaderEven.Search(oSearchEngine, search_Header);
+
+		if (oSectPr.HeaderDefault)
+			oSectPr.HeaderDefault.Search(oSearchEngine, search_Header);
+
+		if (oSectPr.FooterFirst && true === bFirst)
+			oSectPr.FooterFirst.Search(oSearchEngine, search_Footer);
+
+		if (oSectPr.FooterEven && true === bEvenOdd)
+			oSectPr.FooterEven.Search(oSearchEngine, search_Footer);
+
+		if (oSectPr.FooterDefault)
+			oSectPr.FooterDefault.Search(oSearchEngine, search_Footer);
+	}
+};
+CDocumentSectionsInfo.prototype.GetSearchElementId = function(bNext, CurHdrFtr)
+{
+	var HdrFtrs = [];
+	var CurPos  = -1;
+
+	var bEvenOdd = EvenAndOddHeaders;
+	var Count    = this.Elements.length;
+	for (var Index = 0; Index < Count; Index++)
+	{
+		var SectPr = this.Elements[Index].SectPr;
+		var bFirst = SectPr.Get_TitlePage();
+
+		if (null != SectPr.HeaderFirst && true === bFirst)
+		{
+			HdrFtrs.push(SectPr.HeaderFirst);
+
+			if (CurHdrFtr === SectPr.HeaderFirst)
+				CurPos = HdrFtrs.length - 1;
+		}
+
+		if (null != SectPr.HeaderEven && true === bEvenOdd)
+		{
+			HdrFtrs.push(SectPr.HeaderEven);
+
+			if (CurHdrFtr === SectPr.HeaderEven)
+				CurPos = HdrFtrs.length - 1;
+		}
+
+		if (null != SectPr.HeaderDefault)
+		{
+			HdrFtrs.push(SectPr.HeaderDefault);
+
+			if (CurHdrFtr === SectPr.HeaderDefault)
+				CurPos = HdrFtrs.length - 1;
+		}
+
+		if (null != SectPr.FooterFirst && true === bFirst)
+		{
+			HdrFtrs.push(SectPr.FooterFirst);
+
+			if (CurHdrFtr === SectPr.FooterFirst)
+				CurPos = HdrFtrs.length - 1;
+		}
+
+		if (null != SectPr.FooterEven && true === bEvenOdd)
+		{
+			HdrFtrs.push(SectPr.FooterEven);
+
+			if (CurHdrFtr === SectPr.FooterEven)
+				CurPos = HdrFtrs.length - 1;
+		}
+
+		if (null != SectPr.FooterDefault)
+		{
+			HdrFtrs.push(SectPr.FooterDefault);
+
+			if (CurHdrFtr === SectPr.FooterDefault)
+				CurPos = HdrFtrs.length - 1;
+		}
+	}
+
+	var Count = HdrFtrs.length;
+
+	var isCurrent = true;
+	if (-1 === CurPos)
+	{
+		isCurrent = false;
+		CurPos    = bNext ? 0 : HdrFtrs.length - 1;
+		if (HdrFtrs[CurPos])
+			CurHdrFtr = HdrFtrs[CurPos];
+	}
+
+	if (CurPos >= 0 && CurPos <= HdrFtrs.length - 1)
+	{
+		var Id = CurHdrFtr.GetSearchElementId(bNext, isCurrent);
+		if (null != Id)
+			return Id;
+
+		if (true === bNext)
+		{
+			for (var Index = CurPos + 1; Index < Count; Index++)
+			{
+				Id = HdrFtrs[Index].GetSearchElementId(bNext, false);
+
+				if (null != Id)
+					return Id;
+			}
+		}
+		else
+		{
+			for (var Index = CurPos - 1; Index >= 0; Index--)
+			{
+				Id = HdrFtrs[Index].GetSearchElementId(bNext, false);
+
+				if (null != Id)
+					return Id;
+			}
+		}
+	}
+
+	return null;
+};
+//----------------------------------------------------------------------------------------------------------------------
 
 function CDocumentSectionsInfoElement(SectPr, Index)
 {
@@ -28677,231 +29175,6 @@ CDocumentLineNumbersInfo.prototype.private_Update = function()
 	{
 		this.Widths[nDigit] = g_oTextMeasurer.MeasureCode(0x0030 + nDigit).Width;
 	}
-};
-
-/**
- * Класс для изменения регистра выделенного текста
- * @param {Asc.c_oAscChangeTextCaseType} nType
- */
-function CDocumentChangeTextCaseEngine(nType)
-{
-	this.ChangeType    = nType;
-	this.StartSentence = true;
-	this.WordBuffer    = [];
-	this.currentSentence = "";
-	this.word = "";
-	this.lineWords = 0;
-    this.SentenceSettings = [];
-    this.flag = 0;
-    this.GlobalSettings = true;
-    this.CurrentParagraph = 0;
-    this.isAllinTable = true;
-}
-CDocumentChangeTextCaseEngine.prototype.Reset = function()
-{
-	this.StartSentence = true;
-	this.WordBuffer    = [];
-	this.currentSentence = "";
-	this.word = "";
-	//this.SentenceSettings = [];
-	//this.flag = 0;
-	this.lineWords = 0;
-};
-CDocumentChangeTextCaseEngine.prototype.FlushWord = function()
-{
-	var sCurrentWord  = "";
-	var bNeddToChange = true;
-	var bIsAllUpper   = true;
-	var bIsAllLower   = true;
-	var bIsProperName = true;
-
-	for (var nIndex = 0, nCount = this.WordBuffer.length; nIndex < nCount; ++nIndex)
-	{
-		var nCharCode   = this.WordBuffer[nIndex].Run.GetElement(this.WordBuffer[nIndex].Pos).Value;
-		var nLowerCode = String.fromCharCode(nCharCode).toLowerCase().charCodeAt(0);
-		var nUpperCode = String.fromCharCode(nCharCode).toUpperCase().charCodeAt(0);
-
-		if (nIndex === 0 && nCharCode === nLowerCode)
-			bIsProperName = false;
-		if (nCharCode === nLowerCode)
-			bIsAllUpper = false;
-		if (nCharCode === nUpperCode)
-		{
-			bIsAllLower = false;
-			if (nIndex !== 0)
-				bIsProperName = false;
-		}
-		sCurrentWord += String.fromCharCode(nCharCode);
-	}
-
-	if (sCurrentWord)
-	{
-		if (bIsProperName)
-		{
-			bNeddToChange = false;
-		}
-		else if (bIsAllUpper)
-		{
-			bNeddToChange = false;
-		}
-		else if (bIsAllLower)
-		{
-			bNeddToChange = false;
-		}
-		else 
-		{
-			bNeddToChange = true;
-		}
-	}
-	var bFlagForCheck = false;
-	var nCaseType = this.ChangeType;
-	if (this.SentenceSettings[0] && this.SentenceSettings[0].wordCount)
-	{
-		for (var nIndex = 0, nCount = this.WordBuffer.length; nIndex < nCount; ++nIndex)
-		{
-			if (!this.WordBuffer[nIndex].Change)
-				continue;
-			bFlagForCheck = true;
-
-			var oRun      = this.WordBuffer[nIndex].Run;
-			var nInRunPos = this.WordBuffer[nIndex].Pos;
-
-			var nCharCode  = oRun.GetElement(nInRunPos).Value;
-			var nLowerCode = String.fromCharCode(nCharCode).toLowerCase().charCodeAt(0);
-			var nUpperCode = String.fromCharCode(nCharCode).toUpperCase().charCodeAt(0);
-
-			if (nLowerCode !== nCharCode || nUpperCode !== nCharCode)
-			{
-				if (nLowerCode === nCharCode
-					&& ((Asc.c_oAscChangeTextCaseType.SentenceCase === nCaseType && (this.StartSentence && 0 === nIndex))
-						|| Asc.c_oAscChangeTextCaseType.ToggleCase === nCaseType
-						|| Asc.c_oAscChangeTextCaseType.UpperCase === nCaseType
-						|| (Asc.c_oAscChangeTextCaseType.CapitalizeWords === nCaseType && 0 === nIndex)))
-				{
-					oRun.AddToContent(nInRunPos, new ParaText(nUpperCode), false);
-					oRun.RemoveFromContent(nInRunPos + 1, 1, false);
-				}
-				else if (nUpperCode === nCharCode
-					&& (Asc.c_oAscChangeTextCaseType.ToggleCase === nCaseType
-						|| Asc.c_oAscChangeTextCaseType.LowerCase === nCaseType
-						|| (Asc.c_oAscChangeTextCaseType.CapitalizeWords === nCaseType && 0 !== nIndex && bNeddToChange)
-						|| (Asc.c_oAscChangeTextCaseType.CapitalizeWords === nCaseType && this.SentenceSettings[0].allFirst === true && this.SentenceSettings[0].sentenceMistakes === true && !this.SentenceSettings[0].allUpperWithoutFirst && 0 !== nIndex)
-						|| (Asc.c_oAscChangeTextCaseType.SentenceCase === nCaseType && this.GlobalSettings === true && this.isAllinTable === false && !(this.StartSentence && 0 === nIndex))
-						|| (Asc.c_oAscChangeTextCaseType.SentenceCase === nCaseType && this.isAllinTable === true && this.SentenceSettings[0].allFirst === true && this.SentenceSettings[0].sentenceMistakes === true && !this.SentenceSettings[0].allUpperWithoutFirst && !(this.StartSentence && 0 === nIndex))
-						|| (Asc.c_oAscChangeTextCaseType.SentenceCase === nCaseType && bNeddToChange && !(this.StartSentence && 0 === nIndex))
-						))
-				{
-					oRun.AddToContent(nInRunPos, new ParaText(nLowerCode), false);
-					oRun.RemoveFromContent(nInRunPos + 1, 1, false);
-				}
-			}
-		}
-	}
-	if (this.WordBuffer.length > 0 && bFlagForCheck && (Asc.c_oAscChangeTextCaseType.CapitalizeWords === nCaseType || Asc.c_oAscChangeTextCaseType.SentenceCase === nCaseType))
-	{
-		this.lineWords++;
-		if (this.SentenceSettings[0] && this.SentenceSettings[0].wordCount)
-		{
-			if (this.lineWords === this.SentenceSettings[0].wordCount)
-			{
-				this.SentenceSettings.splice(0, 1);
-				this.lineWords = 0;
-			}
-		}
-	}
-	if (this.WordBuffer.length > 0)
-		this.StartSentence = false;
-
-	this.WordBuffer = [];
-};
-CDocumentChangeTextCaseEngine.prototype.AddLetter = function(oRun, nInRunPos, isChange)
-{
-	this.WordBuffer.push({
-		Run    : oRun,
-		Pos    : nInRunPos,
-		Change : isChange
-	});
-};
-CDocumentChangeTextCaseEngine.prototype.SetStartSentence = function(isStart)
-{
-	this.StartSentence = isStart;
-};
-CDocumentChangeTextCaseEngine.prototype.GetCaseType = function()
-{
-	return this.ChangeType;
-};
-CDocumentChangeTextCaseEngine.prototype.CheckEachWord = function(sElement)
-{
-	var el1 = sElement.slice(1);
-	if (sElement[0] === sElement[0].toUpperCase() && el1 === el1.toLowerCase())
-	{
-		return true;
-	}
-	if (sElement === sElement.toUpperCase())
-	{
-		return true;
-	}
-	if (sElement === sElement.toLowerCase())
-	{
-		return true;
-	}
-	return false;
-};
-CDocumentChangeTextCaseEngine.prototype.CheckWords = function(oEngine)
-{
-	var sett = {
-		allFirst: true,
-		sentenceMistakes: true,
-		allUpperWithoutFirst: true,
-		wordCount: 0
-	};
-	var wordsInSentece = oEngine.currentSentence.split(/[\-\ \|]/);
-	
-	for (var k = 0; k < wordsInSentece.length; k++)
-	{
-		if (wordsInSentece[k] === "")
-		{
-			wordsInSentece.splice(k, 1);
-			k--;
-		}
-	}
-	sett.wordCount = wordsInSentece.length;
-	if (wordsInSentece.length !== 0)
-	{
-		for (var j = 0; j < wordsInSentece.length; j++)
-		{
-			if (wordsInSentece[j][0] !== wordsInSentece[j][0].toUpperCase())
-			{
-				sett.allFirst = false;
-			}
-			if (!this.CheckEachWord(wordsInSentece[j]))
-			{
-				sett.sentenceMistakes = false;
-			}
-			if (oEngine.CurrentParagraph === 0)
-			{
-				if (sett.allFirst === false || sett.sentenceMistakes === false)
-				{
-					oEngine.GlobalSettings = false;
-				}
-			}
-			if (wordsInSentece.length > 1 && j >= 1)
-			{
-				if (wordsInSentece[j] !== wordsInSentece[j].toUpperCase())
-				{
-					sett.allUpperWithoutFirst = false;
-				}
-			}
-		}
-		var elem1 = wordsInSentece[0].slice(1);
-		if (!(wordsInSentece[0][0] === wordsInSentece[0][0].toUpperCase() && elem1 === elem1.toLowerCase()))
-		{
-			sett.allUpperWithoutFirst = false;
-		}
-		oEngine.SentenceSettings[oEngine.flag] = sett;
-		oEngine.flag++;
-	}
-	  oEngine.currentSentence = "";
 };
 
 //-------------------------------------------------------------export---------------------------------------------------

@@ -184,7 +184,7 @@
 			if (this.widget.addEventListener) {
 				// https://developer.mozilla.org/en-US/docs/Web/Reference/Events/wheel
 				// detect available wheel event
-				var nameWheelEvent = "onwheel" in document.createElement("div") ? "wheel" :	// Modern browsers support "wheel"
+				var nameWheelEvent = (!AscCommon.AscBrowser.isMacOs && "onwheel" in document.createElement("div")) ? "wheel" :	// Modern browsers support "wheel"
 					document.onmousewheel !== undefined ? "mousewheel" : 				// Webkit and IE support at least "mousewheel"
 						"DOMMouseScroll";												// let's assume that remaining browsers are older Firefox
 

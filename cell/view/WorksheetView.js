@@ -4058,7 +4058,8 @@
 
 			// ToDo подумать, может стоит не брать ячейку из модели (а брать из кеш-а)
 			var c = this._getVisibleCell(col, row);
-			var findFillColor = this.handlers.trigger('selectSearchingResults') && this.model.inFindResults(row, col) ? this.settings.findFillColor : null;
+			//***searchEngine
+			var findFillColor = this.handlers.trigger('selectSearchingResults') && undefined !== this.workbook.inFindResults(this, row, col)/*this.model.inFindResults(row, col)*/ ? this.settings.findFillColor : null;
 			var fill = c.getFill();
 			var hasFill = fill.hasFill();
 			var mwidth = 0, mheight = 0;
@@ -13897,6 +13898,9 @@
 
 				} else {
 					rangeStyle.val = newVal.getValue();
+					if (rangeStyle.val && newVal.getType() === CellValueType.Number) {
+						rangeStyle.val = rangeStyle.val.replace(AscCommon.FormulaSeparators.digitSeparatorDef, AscCommon.FormulaSeparators.digitSeparator);
+					}
 				}
 			}
 
@@ -15615,7 +15619,7 @@
 		var c = ar.col;
 		var r = ar.row;
 		var merge = this.model.getMergedByCell(r, c);
-		options.findInSelection = options.scanOnOnlySheet &&
+		options.findInSelection = Asc.c_oAscSearchBy.Sheet === options.scanOnOnlySheet &&
 			!(selectionRange.isSingleRange() && (lastRange.isOneCell() || lastRange.isEqual(merge)));
 
 		var minC, minR, maxC, maxR;
@@ -15705,7 +15709,7 @@
 		return null;
 	};
 
-	WorksheetView.prototype.replaceCellText = function (options, lockDraw, callback) {
+	WorksheetView.prototype.replaceCellText = function (options, lockDraw, callback, bSearchEngine) {
 		// Очищаем результаты
 		options.countFind = 0;
 		options.countReplace = 0;
@@ -15713,24 +15717,36 @@
 		var cell, tmp;
 		var aReplaceCells = [];
 		if (options.isReplaceAll) {
-			this.model._findAllCells(options);
-			var findResult = this.model.lastFindOptions.findResults.values;
-			for (var row in findResult) {
-				for (var col in findResult[row]) {
-                    var r = row;
-                    var c = col;
-					if (!this.model.lastFindOptions.scanByRows) {
-						tmp = c;
-						c = r;
-						r = tmp;
+			//TODO нужно ли запускать ещё раз поиск?!
+			if (!bSearchEngine) {
+				this.model._findAllCells(options);
+
+				var findResult = this.model.lastFindOptions.findResults.values;
+				for (var row in findResult) {
+					for (var col in findResult[row]) {
+						var r = row;
+						var c = col;
+						if (!this.model.lastFindOptions.scanByRows) {
+							tmp = c;
+							c = r;
+							r = tmp;
+						}
+						c |= 0;
+						r |= 0;
+						aReplaceCells.push(new Asc.Range(c, r, c, r));
 					}
+				}
+			} else {
+				this.workbook.SearchEngine.forEachElementsBySheet(this.model.index, function (elem) {
+					var r = elem.row;
+					var c = elem.col;
 					c |= 0;
 					r |= 0;
 					aReplaceCells.push(new Asc.Range(c, r, c, r));
-				}
+				});
 			}
 		} else {
-			cell = this.model.selectionRange.activeCell;
+			cell = bSearchEngine ? this.workbook.SearchEngine.GetCurrentElem() : this.model.selectionRange.activeCell;
 			// Попробуем сначала найти
 			var isEqual = this._isCellEqual(cell.col, cell.row, options);
 			if (isEqual) {
@@ -15742,9 +15758,10 @@
 			return callback(options);
 		}
 		this.model.clearFindResults();
+		//***searchEngine
+		//this.workbook.SearchEngine && this.workbook.SearchEngine.clearFindResults(options.isReplaceAll ? null : aReplaceCells);
 		return this._replaceCellsText(aReplaceCells, options, lockDraw, callback);
 	};
-
 	WorksheetView.prototype._replaceCellsText = function (aReplaceCells, options, lockDraw, callback) {
 		var t = this;
 		if (this.model.inPivotTable(aReplaceCells)) {
@@ -15818,6 +15835,11 @@
 					options.error = true;
 					t.draw(lockDraw);
 					return callback(options);
+				}
+
+				//***searchEngine
+				if (isNeedToSave) {
+					t.workbook.SearchEngine.removeFromSearchElems(cell.c1, cell.r1, t.model);
 				}
 			}
 

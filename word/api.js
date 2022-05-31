@@ -625,7 +625,20 @@
 				else if (_current["Script"] !== undefined)
 				{
 					// insert/replace script
-					var _script = "(function(){ var Api = window.g_asc_plugins.api;\n" + _current["Script"] + "\n})();";
+					function customXMLHttpRequest() {
+				
+						this.open = function() {
+							console.error("XMLHttpRequest doesn't allow this.");
+						};
+
+						this.setRequestHeader = function() {};
+				
+						this.send = function() {
+							this.onerror && this.onerror("XMLHttpRequest doesn't allow this.");
+						};
+					};
+
+					var _script = "(function(Api, window, alert, document, XMLHttpRequest){ \n" + "\"use strict\"" + ";\n" + _current["Script"] + "\n})(window.g_asc_plugins.api, {}, function(){}, {}," + customXMLHttpRequest.toString() + ");";
 					eval(_script);
 
 					if (c_oAscSdtLevelType.Block === _blockStd.GetContentControlType())
@@ -1475,7 +1488,7 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.setTargetType(type);
 	};
 
-	asc_docs_api.prototype.OpenDocument2 = function(url, gObject)
+	function BeforeOpenDocument()
 	{
 		this.InitEditor();
 		this.DocumentType   = 2;
@@ -1483,28 +1496,23 @@ background-repeat: no-repeat;\
 
 		g_oIdCounter.Set_Load(true);
 		AscFonts.IsCheckSymbols = true;
+	};
+	function AfterOpenDocument(data, size)
+	{
+		if (History && History.Update_FileDescription)
+			History.Update_FileDescription(data, size);
 
-		var openParams        = {checkFileSize : /*this.isMobileVersion*/false, charCount : 0, parCount : 0};
-		var oBinaryFileReader = new AscCommonWord.BinaryFileReader(this.WordControl.m_oLogicDocument, openParams);
-		if (oBinaryFileReader.Read(gObject))
-		{
-			if (History && History.Update_FileDescription)
-				History.Update_FileDescription(oBinaryFileReader.stream);
+		g_oIdCounter.Set_Load(false);
+		this.LoadedObject = 1;
 
-			g_oIdCounter.Set_Load(false);
-			this.LoadedObject = 1;
+		// проверяем какие шрифты нужны
+		var StylesPainter = new AscCommonWord.CStylesPainter();
+		StylesPainter.CheckStylesNames(this, this.LoadedObjectDS);
 
-			// проверяем какие шрифты нужны
-            var StylesPainter = new AscCommonWord.CStylesPainter();
-            StylesPainter.CheckStylesNames(this, this.LoadedObjectDS);
+		this.WordControl.m_oDrawingDocument.CheckFontNeeds();
+		AscCommon.pptx_content_loader.CheckImagesNeeds(this.WordControl.m_oLogicDocument);
 
-			this.WordControl.m_oDrawingDocument.CheckFontNeeds();
-			AscCommon.pptx_content_loader.CheckImagesNeeds(this.WordControl.m_oLogicDocument);
-
-			this.FontLoader.LoadDocumentFonts(this.WordControl.m_oLogicDocument.Fonts, false);
-		}
-		else
-			editor.sendEvent("asc_onError", c_oAscError.ID.MobileUnexpectedCharCount, c_oAscError.Level.Critical);
+		this.FontLoader.LoadDocumentFonts(this.WordControl.m_oLogicDocument.Fonts, false);
 
 		AscFonts.IsCheckSymbols = false;
 
@@ -1524,6 +1532,49 @@ background-repeat: no-repeat;\
 			PasteElementsId.PASTE_ELEMENT_ID     = "wrd_pastebin";
 			PasteElementsId.ELEMENT_DISPAY_STYLE = "none";
 		}
+	};
+	asc_docs_api.prototype.OpenDocumentFromBin = function(url, gObject)
+	{
+		BeforeOpenDocument.call(this);
+
+		var openParams        = {};
+		var oBinaryFileReader = new AscCommonWord.BinaryFileReader(this.WordControl.m_oLogicDocument, openParams);
+		if (!oBinaryFileReader.Read(gObject))
+			editor.sendEvent("asc_onError", c_oAscError.ID.MobileUnexpectedCharCount, c_oAscError.Level.Critical);
+
+		AfterOpenDocument.call(this, oBinaryFileReader.stream.data, oBinaryFileReader.stream.size);
+		return true;
+	};
+	asc_docs_api.prototype.OpenDocumentFromZip = function(data)
+	{
+		BeforeOpenDocument.call(this);
+
+		let res = this.OpenDocumentFromZipNoInit(data);
+
+		AfterOpenDocument.call(this, data, data.length);
+		return res;
+	};
+	asc_docs_api.prototype.OpenDocumentFromZipNoInit = function(data)
+	{
+		if (!data) {
+			return false;
+		}
+		let xmlParserContext = new AscCommon.XmlParserContext();
+		xmlParserContext.DrawingDocument = this.WordControl.m_oDrawingDocument;
+		let jsZipWrapper = new AscCommon.JSZipWrapper();
+		if (!jsZipWrapper.loadSync(data)) {
+			return false;
+		}
+
+		let reader, openParams = {};
+		let oBinaryFileReader = new AscCommonWord.BinaryFileReader(this.WordControl.m_oLogicDocument, openParams);
+		oBinaryFileReader.PreLoadPrepare();
+
+		this.WordControl.m_oLogicDocument.fromZip(jsZipWrapper, xmlParserContext, oBinaryFileReader.oReadResult);
+
+		oBinaryFileReader.PostLoadPrepare(xmlParserContext);
+		jsZipWrapper.close();
+		return true;
 	};
 	// Callbacks
 	/* все имена callback'оф начинаются с On. Пока сделаны:
@@ -3161,19 +3212,18 @@ background-repeat: no-repeat;\
 			this.WordControl.OnUpdateOverlay();
 		}
 	};
-
-	asc_docs_api.prototype.asc_findText = function(text, isNext, isMatchCase, callback)
+	asc_docs_api.prototype.asc_findText = function(oProps, isNext, callback)
 	{
 		var result = 0;
 		var isAsync = false;
 		if (null != this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
 		{
-			isAsync = (true === this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.findText(text, isMatchCase, isNext, callback)) ? true : false;
+			isAsync = (true === this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.findText(oProps.GetText(), oProps.IsMatchCase(), isNext, callback)) ? true : false;
 			result = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.SearchResults.Count;
 		}
 		else
 		{
-			var SearchEngine = editor.WordControl.m_oLogicDocument.Search(text, {MatchCase: isMatchCase});
+			var SearchEngine = editor.WordControl.m_oLogicDocument.Search(oProps);
 
 			var Id = this.WordControl.m_oLogicDocument.GetSearchElementId(isNext);
 
@@ -3185,10 +3235,10 @@ background-repeat: no-repeat;\
 
 		if (!isAsync && callback)
 			callback(result);
+
 		return result;
 	};
-
-	asc_docs_api.prototype.asc_replaceText = function(text, replaceWith, isReplaceAll, isMatchCase)
+	asc_docs_api.prototype.asc_replaceText = function(oProps, replaceWith, isReplaceAll)
 	{
 		if (this.asc_GetErrorForReplaceString(replaceWith))
 			return false;
@@ -3196,7 +3246,7 @@ background-repeat: no-repeat;\
 		if (null == this.WordControl.m_oLogicDocument)
 			return false;
 
-		this.WordControl.m_oLogicDocument.Search(text, {MatchCase : isMatchCase});
+		this.WordControl.m_oLogicDocument.Search(oProps);
 
 		if (true === isReplaceAll)
 			this.WordControl.m_oLogicDocument.ReplaceSearchElement(replaceWith, true, -1);
@@ -3218,7 +3268,6 @@ background-repeat: no-repeat;\
 			return false;
 		}
 	};
-
 	asc_docs_api.prototype.asc_GetErrorForReplaceString = function(sString)
 	{
 		return (new AscCommonWord.CSearchPatternEngine()).GetErrorForReplaceString(sString);
@@ -3240,7 +3289,6 @@ background-repeat: no-repeat;\
 		}
 		this.WordControl.m_oLogicDocument.HighlightSearchResults(bShow);
 	};
-
 	asc_docs_api.prototype.asc_isSelectSearchingResults = function()
 	{
 		if (null != this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
@@ -3249,15 +3297,49 @@ background-repeat: no-repeat;\
 		}
 		return this.WordControl.m_oLogicDocument.IsHighlightSearchResults();
 	};
-
 	asc_docs_api.prototype.sync_ReplaceAllCallback = function(ReplaceCount, OverallCount)
 	{
 		this.sendEvent("asc_onReplaceAll", OverallCount, ReplaceCount);
 	};
-
 	asc_docs_api.prototype.sync_SearchEndCallback = function()
 	{
 		this.sendEvent("asc_onSearchEnd");
+	};
+	asc_docs_api.prototype.sync_setSearchCurrent = function(nCurrent, nOverallCount)
+	{
+		this.sendEvent("asc_onSetSearchCurrent", nCurrent, nOverallCount);
+	};
+	asc_docs_api.prototype.asc_StartTextAroundSearch = function()
+	{
+		let oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument || !oLogicDocument.SearchEngine)
+			return;
+
+		oLogicDocument.SearchEngine.StartTextAround();
+	};
+	asc_docs_api.prototype.asc_SelectSearchElement = function(sId)
+	{
+		let oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument || !oLogicDocument.SearchEngine)
+			return;
+
+		oLogicDocument.SelectSearchElement(sId);
+	};
+	asc_docs_api.prototype.sync_startTextAroundSearch = function()
+	{
+		this.sendEvent("asc_onStartTextAroundSearch");
+	};
+	asc_docs_api.prototype.sync_endTextAroundSearch = function()
+	{
+		this.sendEvent("asc_onEndTextAroundSearch");
+	};
+	asc_docs_api.prototype.sync_getTextAroundSearchPack = function(arrElements)
+	{
+		this.sendEvent("asc_onGetTextAroundSearchPack", arrElements);
+	};
+	asc_docs_api.prototype.sync_removeTextAroundSearch = function(sId)
+	{
+		this.sendEvent("asc_onRemoveTextAroundSearch", [sId]);
 	};
 	/*----------------------------------------------------------------*/
 	/*functions for working with font*/
@@ -7766,10 +7848,15 @@ background-repeat: no-repeat;\
 		}
 
 		if (file.bSerFormat)
-			this.OpenDocument2(file.url, file.data);
+		{
+			this.OpenDocumentFromBin(file.url, file.data);
+		}
 		else
 		{
-			if (this.isUseNativeViewer)
+			this.isOpenOOXInBrowser = AscCommon.checkOOXMLSignature(file.data);
+			if (this.isOpenOOXInBrowser)
+				this.OpenDocumentFromZip(file.data);
+			else if (this.isUseNativeViewer)
 				this.OpenDocument3(file.url, file.data);
 			else
 				this.OpenDocument(file.url, file.data);
@@ -8523,6 +8610,22 @@ background-repeat: no-repeat;\
 		}
 		else
 		{
+			if (c_oAscFileType.DOTX === fileType) {
+				var title = this.documentTitle;
+				this.saveDocumentToZip(this.WordControl.m_oLogicDocument, AscCommon.c_oEditorId.Word, function(data) {
+					var blob = new Blob([data], {type: openXml.GetMimeType("docx")});
+					var link = document.createElement("a");
+					link.href = window.URL.createObjectURL(blob);
+					link.download = title;
+					link.click();
+				});
+				if (actionType)
+				{
+					this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, actionType);
+				}
+				return true;
+			}
+
 			if (options.advancedOptions instanceof Asc.asc_CTextOptions)
 			{
 				oAdditionalData["codepage"] = options.advancedOptions.asc_getCodePage();
@@ -11691,19 +11794,24 @@ background-repeat: no-repeat;\
 
 		g_oIdCounter.Set_Load(true);
 
-		var openParams        = {checkFileSize : /*this.isMobileVersion*/false, charCount : 0, parCount : 0};
-		var oBinaryFileReader = new AscCommonWord.BinaryFileReader(this.WordControl.m_oLogicDocument, openParams);
-
 		if (undefined !== version)
 			AscCommon.CurFileVersion = version;
-		
-		if (oBinaryFileReader.Read(base64File))
-		{
-			g_oIdCounter.Set_Load(false);
-			this.LoadedObject = 1;
+
+		// this.isOpenOOXInBrowser = AscCommon.checkOOXMLSignature(base64File);
+		if (this.isOpenOOXInBrowser) {
+			if (!this.OpenDocumentFromZipNoInit(base64File))
+				this.sendEvent("asc_onError", c_oAscError.ID.MobileUnexpectedCharCount, c_oAscError.Level.Critical);
+		} else {
+			let openParams        = {};
+			let oBinaryFileReader = new AscCommonWord.BinaryFileReader(this.WordControl.m_oLogicDocument, openParams);
+			if (oBinaryFileReader.Read(base64File))
+			{
+				g_oIdCounter.Set_Load(false);
+				this.LoadedObject = 1;
+			}
+			else
+				this.sendEvent("asc_onError", c_oAscError.ID.MobileUnexpectedCharCount, c_oAscError.Level.Critical);
 		}
-		else
-			this.sendEvent("asc_onError", c_oAscError.ID.MobileUnexpectedCharCount, c_oAscError.Level.Critical);
 
 		if (window["NATIVE_EDITOR_ENJINE"] === true && undefined != window["native"])
 		{
@@ -11894,15 +12002,23 @@ background-repeat: no-repeat;\
 
 	window["asc_docs_api"].prototype["asc_nativeGetFileData"] = function()
 	{
-		var oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(this.WordControl.m_oLogicDocument);
-		var _memory           = oBinaryFileWriter.memory;
+		if (this.isOpenOOXInBrowser) {
+			let res;
+			this.saveDocumentToZip(this.WordControl.m_oLogicDocument, this.editorId, function(data) {
+				res = data;
+			});
+			return res || new Uint8Array(0);
+		} else {
+			var oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(this.WordControl.m_oLogicDocument);
+			var _memory           = oBinaryFileWriter.memory;
 
-		oBinaryFileWriter.Write(true);
+			oBinaryFileWriter.Write(true);
 
-		var _header = AscCommon.c_oSerFormat.Signature + ";v" + Asc.c_nVersionNoBase64 + ";" + _memory.GetCurPosition() + ";";
-		window["native"]["Save_End"](_header, _memory.GetCurPosition());
+			var _header = AscCommon.c_oSerFormat.Signature + ";v" + Asc.c_nVersionNoBase64 + ";" + _memory.GetCurPosition() + ";";
+			window["native"]["Save_End"](_header, _memory.GetCurPosition());
 
-		return _memory.ImData.data;
+			return _memory.ImData.data;
+		}
 	};
 
 	window["asc_docs_api"].prototype["asc_nativeGetHtml"] = function()
@@ -12502,7 +12618,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['InitEditor']                                = asc_docs_api.prototype.InitEditor;
 	asc_docs_api.prototype['InitViewer']                                = asc_docs_api.prototype.InitViewer;
 	asc_docs_api.prototype['OpenDocument']                              = asc_docs_api.prototype.OpenDocument;
-	asc_docs_api.prototype['OpenDocument2']                             = asc_docs_api.prototype.OpenDocument2;
+	asc_docs_api.prototype['OpenDocumentFromBin']                       = asc_docs_api.prototype.OpenDocumentFromBin;
+	asc_docs_api.prototype['OpenDocumentFromZip']                       = asc_docs_api.prototype.OpenDocumentFromZip;
 	asc_docs_api.prototype['asc_getDocumentName']                       = asc_docs_api.prototype.asc_getDocumentName;
 	asc_docs_api.prototype['asc_getAppProps']                           = asc_docs_api.prototype.asc_getAppProps;
 	asc_docs_api.prototype['asc_getCoreProps']                          = asc_docs_api.prototype.asc_getCoreProps;
@@ -12592,6 +12709,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_replaceText']                           = asc_docs_api.prototype.asc_replaceText;
 	asc_docs_api.prototype['asc_GetErrorForReplaceString']              = asc_docs_api.prototype.asc_GetErrorForReplaceString;
 	asc_docs_api.prototype['asc_isSelectSearchingResults']              = asc_docs_api.prototype.asc_isSelectSearchingResults;
+	asc_docs_api.prototype['asc_StartTextAroundSearch']                 = asc_docs_api.prototype.asc_StartTextAroundSearch;
+	asc_docs_api.prototype['asc_SelectSearchElement']                   = asc_docs_api.prototype.asc_SelectSearchElement;
 	asc_docs_api.prototype['sync_ReplaceAllCallback']                   = asc_docs_api.prototype.sync_ReplaceAllCallback;
 	asc_docs_api.prototype['sync_SearchEndCallback']                    = asc_docs_api.prototype.sync_SearchEndCallback;
 	asc_docs_api.prototype['put_TextPrFontName']                        = asc_docs_api.prototype.put_TextPrFontName;

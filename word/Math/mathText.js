@@ -1014,10 +1014,10 @@ CMathText.prototype.ToSearchElement = function(oProps)
 	if (undefined === nCodePoint || null === nCodePoint)
 		return null;
 
-	if (oProps.MatchCase)
-		return new CSearchTextItemChar(String.fromCodePoint(nCodePoint).toLowerCase().codePointAt(0));
+	if (oProps.IsMatchCase())
+		return new AscCommonWord.CSearchTextItemChar(String.fromCodePoint(nCodePoint).toLowerCase().codePointAt(0));
 
-	return new CSearchTextItemChar(nCodePoint);
+	return new AscCommonWord.CSearchTextItemChar(nCodePoint);
 };
 /*CMathText.prototype.Recalculate_Reset = function(StartRange, StartLine, PRS)
 {

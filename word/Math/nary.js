@@ -39,7 +39,7 @@
 function CMathNaryPr()
 {
     this.chr     = undefined;
-    this.chrType = NARY_INTEGRAL;
+    this.chrType = undefined;
     this.grow    = false;
     this.limLoc  = undefined;
     this.subHide = false;
@@ -191,7 +191,7 @@ CNary.prototype.kind      = MATH_NARY;
   
 CNary.prototype.init = function(props)
 {
-    this.Fill_LogicalContent(3);
+    this.Fill_LogicalContent(3, props.content);
 
     this.setProperties(props);
     this.fillContent();
@@ -455,7 +455,7 @@ CNary.prototype.getSign = function(chrCode, chrType)
 };
 CNary.prototype.setCtrPrp = function(txtPrp)
 {
-    this.CtrPrp.Merge(txtPrp); // only runPrp for paragraph
+    CMathBase.prototype.setCtrPrp.call(this, txtPrp);// only runPrp for paragraph
     //this.RunPrp.setTxtPrp(txtPrp);
 
     if(this.elements.length > 0 && !this.elements[0][0].IsJustDraw())

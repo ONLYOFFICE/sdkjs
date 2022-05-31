@@ -911,11 +911,7 @@ TextArtPreviewManager.prototype.getShapeByPrst = function(prst)
 	oContent.SetApplyToAll(false);
 
 	var oBodypr = oShape.getBodyPr().createDuplicate();
-	oBodypr.prstTxWarp = AscFormat.ExecuteNoHistory(
-		function()
-		{
-			return AscFormat.CreatePrstTxWarpGeometry(prst)
-		}, []);
+	oBodypr.prstTxWarp = AscFormat.CreatePrstTxWarpGeometry(prst);
 	oBodypr.lIns = 2.54;
 	oBodypr.tIns = 2.54;
 	oBodypr.rIns = 2.54;

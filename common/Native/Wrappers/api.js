@@ -5449,7 +5449,11 @@ Asc['asc_docs_api'].prototype.SetDocumentModified = function(bValue)
 // find -------------------------------------------------------------------------------------------------
 Asc['asc_docs_api'].prototype.asc_findText = function(text, isNext, isMatchCase, callback)
 {
-    var SearchEngine = editor.WordControl.m_oLogicDocument.Search( text, { MatchCase : isMatchCase } );
+	let oProps = AscCommon.CSearchSettings();
+	oProps.SetText(text);
+	oProps.SetMatchCase(isMatchCase);
+
+    var SearchEngine = editor.WordControl.m_oLogicDocument.Search(oProps);
 
     var Id = this.WordControl.m_oLogicDocument.GetSearchElementId( isNext );
 
@@ -5458,12 +5462,17 @@ Asc['asc_docs_api'].prototype.asc_findText = function(text, isNext, isMatchCase,
 
     if (callback)
         callback(SearchEngine.Count);
+
     return SearchEngine.Count;
 };
 
 Asc['asc_docs_api'].prototype.asc_replaceText = function(text, replaceWith, isReplaceAll, isMatchCase)
 {
-    this.WordControl.m_oLogicDocument.Search( text, { MatchCase : isMatchCase } );
+	let oProps = AscCommon.CSearchSettings();
+	oProps.SetText(text);
+	oProps.SetMatchCase(isMatchCase);
+
+    this.WordControl.m_oLogicDocument.Search(oProps);
 
     if ( true === isReplaceAll )
     {

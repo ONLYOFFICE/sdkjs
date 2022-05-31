@@ -63,6 +63,44 @@ var FORMULA_TYPE_MULT_DIV = 0,
     FORMULA_TYPE_VALUE = 15,
     FORMULA_TYPE_MIN = 16;
 
+var MAP_FMLA_TO_TYPE = {};
+    MAP_FMLA_TO_TYPE["*/"] = FORMULA_TYPE_MULT_DIV;
+    MAP_FMLA_TO_TYPE["+-"] = FORMULA_TYPE_PLUS_MINUS;
+    MAP_FMLA_TO_TYPE["+/"] = FORMULA_TYPE_PLUS_DIV;
+    MAP_FMLA_TO_TYPE["?:"] = FORMULA_TYPE_IF_ELSE;
+    MAP_FMLA_TO_TYPE["abs"] = FORMULA_TYPE_ABS;
+    MAP_FMLA_TO_TYPE["at2"] = FORMULA_TYPE_AT2;
+    MAP_FMLA_TO_TYPE["cat2"] = FORMULA_TYPE_CAT2;
+    MAP_FMLA_TO_TYPE["cos"] = FORMULA_TYPE_COS;
+    MAP_FMLA_TO_TYPE["max"] = FORMULA_TYPE_MAX;
+    MAP_FMLA_TO_TYPE["min"] = FORMULA_TYPE_MIN;
+    MAP_FMLA_TO_TYPE["mod"] = FORMULA_TYPE_MOD;
+    MAP_FMLA_TO_TYPE["pin"] = FORMULA_TYPE_PIN;
+    MAP_FMLA_TO_TYPE["sat2"] = FORMULA_TYPE_SAT2;
+    MAP_FMLA_TO_TYPE["sin"] = FORMULA_TYPE_SIN;
+    MAP_FMLA_TO_TYPE["sqrt"] = FORMULA_TYPE_SQRT;
+    MAP_FMLA_TO_TYPE["tan"] = FORMULA_TYPE_TAN;
+    MAP_FMLA_TO_TYPE["val"] = FORMULA_TYPE_VALUE;
+
+
+    var MAP_TYPE_TO_FMLA = {};
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_MULT_DIV] =   "*/";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_PLUS_MINUS] =   "+-";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_PLUS_DIV] =   "+/";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_IF_ELSE] =   "?:";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_ABS] =   "abs";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_AT2] =   "at2";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_CAT2] =   "cat2";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_COS] =   "cos";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_MAX] =   "max";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_MIN] =   "min";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_MOD] =   "mod";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_PIN] =   "pin";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_SAT2] =   "sat2";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_SIN] =   "sin";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_SQRT] =   "sqrt";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_TAN] =   "tan";
+    MAP_TYPE_TO_FMLA[FORMULA_TYPE_VALUE] =   "val";
 
 var cToRad = Math.PI/(60000*180);
 var cToDeg = 1/cToRad;
@@ -113,6 +151,9 @@ function SAt2(x, y, z)
 {
     return  x*(Math.sin(Math.atan2(z, y)));
 }
+
+
+
 
 function CalculateGuideValue(name, formula, x, y, z, gdLst)
 {
@@ -791,65 +832,39 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
     AscDFH.changesFactory[AscDFH.historyitem_GeometrySetParent] = AscDFH.CChangesDrawingsObject;
     AscDFH.drawingContentChanges[AscDFH.historyitem_GeometryAddPath] = function(oClass){return oClass.pathLst;};
 
-function Geometry()
-{
-    this.gdLstInfo      = [];
-    this.gdLst          = {};
-    this.avLst          = {};
-
-    this.cnxLstInfo     = [];
-    this.cnxLst         = [];
-
-    this.ahXYLstInfo    = [];
-    this.ahXYLst        = [];
-
-    this.ahPolarLstInfo = [];
-    this.ahPolarLst     = [];
-    this.pathLst        = [];
-    this.preset = null;
-    this.rectS = null;
-
-    this.parent = null;
-
-    this.bDrawSmart = false;
-
-
-    this.Id = AscCommon.g_oIdCounter.Get_NewId();
-    AscCommon.g_oTableId.Add(this, this.Id);
-}
-
-Geometry.prototype=
-{
-    Get_Id: function()
+    function Geometry()
     {
-        return this.Id;
-    },
+        AscFormat.CBaseFormatObject.call(this);
+        this.gdLstInfo      = [];
+        this.gdLst          = {};
+        this.avLst          = {};
 
-    getObjectType: function()
-    {
-        return AscDFH.historyitem_type_Geometry;
-    },
+        this.cnxLstInfo     = [];
+        this.cnxLst         = [];
 
-    Write_ToBinary2: function(w)
-    {
-        w.WriteLong(this.getObjectType());
-        w.WriteString2(this.Get_Id());
-    },
+        this.ahXYLstInfo    = [];
+        this.ahXYLst        = [];
 
-    Read_FromBinary2: function(r)
-    {
-        this.Id = r.GetString2();
-    },
+        this.ahPolarLstInfo = [];
+        this.ahPolarLst     = [];
+        this.pathLst        = [];
+        this.preset = null;
+        this.rectS = null;
 
-    Refresh_RecalcData: function(data)
+        this.parent = null;
+
+        this.bDrawSmart = false;
+    }
+    AscFormat.InitClass(Geometry, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_Geometry);
+    Geometry.prototype.Refresh_RecalcData = function(data)
     {
         if(this.parent && this.parent.handleUpdateGeometry)
         {
             this.parent.handleUpdateGeometry();
         }
-    },
+    };
 
-    isEmpty: function()
+    Geometry.prototype.isEmpty = function()
     {
         if(this.pathLst.length === 0)
             return true;
@@ -858,9 +873,9 @@ Geometry.prototype=
             return this.pathLst[0].ArrPathCommandInfo.length === 0;
         }
         return false;
-    },
+    };
 
-    createDuplicate: function()
+    Geometry.prototype.createDuplicate = function()
     {
         var g = new Geometry();
         for(var i = 0; i < this.gdLstInfo.length; ++i)
@@ -897,21 +912,21 @@ Geometry.prototype=
             g.AddRect(this.rectS.l, this.rectS.t, this.rectS.r, this.rectS.b);
         }
         return g;
-    },
+    };
 
-    setParent: function(pr)
+    Geometry.prototype.setParent = function(pr)
     {
         History.CanAddChanges() && History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GeometrySetParent, this.parent, pr));
         this.parent = pr;
-    },
+    };
 
-    setPreset: function(preset)
+    Geometry.prototype.setPreset = function(preset)
     {
         History.CanAddChanges() && History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_GeometrySetPreset, this.preset, preset));
         this.preset = preset;
-    },
+    };
 
-    AddAdj: function(name, formula, x)
+    Geometry.prototype.AddAdj = function(name, formula, x)
     {
         var OldValue = null;
         if(this.gdLst[name] !== null && this.gdLst[name] !== undefined){
@@ -932,18 +947,18 @@ Geometry.prototype=
         }
         this.gdLst[name] = dVal;
         this.avLst[name] = true;
-    },
+    };
 
-    setAdjValue: function(name, val)
+    Geometry.prototype.setAdjValue = function(name, val)
     {
         this.AddAdj(name, 15, val + "");
         if(this.parent && this.parent.handleUpdateGeometry)
         {
             this.parent.handleUpdateGeometry();
         }
-    },
+    };
 
-    CheckCorrect: function(){
+    Geometry.prototype.CheckCorrect = function(){
         if(!this.parent){
             return false;
         }
@@ -951,9 +966,9 @@ Geometry.prototype=
             return false;
         }
         return true;
-    },
+    };
 
-    AddGuide: function(name, formula, x, y, z)
+    Geometry.prototype.AddGuide = function(name, formula, x, y, z)
     {
         History.CanAddChanges() && History.Add(new CChangesGeometryAddGuide(this, name, formula, x, y, z));
         this.gdLstInfo.push(
@@ -964,9 +979,9 @@ Geometry.prototype=
                 y: y,
                 z: z
             });
-    },
+    };
 
-    AddCnx: function(ang, x, y)
+    Geometry.prototype.AddCnx = function(ang, x, y)
     {
         History.CanAddChanges() && History.Add(new CChangesGeometryAddCnx(this, ang, x, y));
         this.cnxLstInfo.push(
@@ -975,9 +990,9 @@ Geometry.prototype=
                 x:x,
                 y:y
             });
-    },
+    };
 
-    AddHandleXY: function(gdRefX, minX, maxX, gdRefY, minY, maxY, posX, posY)
+    Geometry.prototype.AddHandleXY = function(gdRefX, minX, maxX, gdRefY, minY, maxY, posX, posY)
     {
         History.CanAddChanges() && History.Add(new CChangesGeometryAddHandleXY(this, gdRefX, minX, maxX, gdRefY, minY, maxY, posX, posY));
         this.ahXYLstInfo.push(
@@ -993,9 +1008,9 @@ Geometry.prototype=
                 posX:posX,
                 posY:posY
             });
-    },
+    };
 
-    AddHandlePolar: function(gdRefAng, minAng, maxAng, gdRefR, minR, maxR, posX, posY)
+    Geometry.prototype.AddHandlePolar = function(gdRefAng, minAng, maxAng, gdRefR, minR, maxR, posX, posY)
     {
         History.CanAddChanges() && History.Add(new CChangesGeometryAddHandlePolar(this, gdRefR, minR, maxR, gdRefAng, minAng, maxAng, posX, posY));
         this.ahPolarLstInfo.push(
@@ -1011,15 +1026,15 @@ Geometry.prototype=
                 posX:posX,
                 posY:posY
             })
-    },
+    };
 
-    AddPath: function(pr)
+    Geometry.prototype.AddPath = function(pr)
     {
         History.CanAddChanges() && History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_GeometryAddPath, this.pathLst.length, [pr], true));
         this.pathLst.push(pr);
-    },
+    };
 
-    AddPathCommand: function(command, x1, y1, x2, y2, x3, y3)
+    Geometry.prototype.AddPathCommand = function(command, x1, y1, x2, y2, x3, y3)
     {
         switch(command)
         {
@@ -1065,9 +1080,9 @@ Geometry.prototype=
                 break;
             }
         }
-    },
+    };
 
-    AddRect: function(l, t, r, b)
+    Geometry.prototype.AddRect = function(l, t, r, b)
     {
         History.CanAddChanges() && History.Add(new CChangesGeometryAddRect(this, l, t, r, b));
         this.rectS = {};
@@ -1075,9 +1090,9 @@ Geometry.prototype=
         this.rectS.t = t;
         this.rectS.r = r;
         this.rectS.b = b;
-    },
+    };
 
-    findConnector: function(x, y, distanse){
+    Geometry.prototype.findConnector = function(x, y, distanse){
         var dx, dy;
         for(var i = 0; i < this.cnxLst.length; i++)
         {
@@ -1090,10 +1105,9 @@ Geometry.prototype=
             }
         }
         return null;
-    },
+    };
 
-
-    drawConnectors: function(overlay, transform){
+    Geometry.prototype.drawConnectors = function(overlay, transform){
 
         var dOldAlpha;
 
@@ -1111,9 +1125,9 @@ Geometry.prototype=
             oGraphics.put_GlobalAlpha(true, dOldAlpha);
         }
 
-    },
+    };
 
-    Recalculate: function(w, h, bResetPathsInfo)
+    Geometry.prototype.Recalculate = function(w, h, bResetPathsInfo)
     {
         this.gdLst["_3cd4"]= 16200000;
         this.gdLst["_3cd8"]= 8100000;
@@ -1206,9 +1220,9 @@ Geometry.prototype=
             delete this.ahXYLstInfo;
             delete this.ahPolarLstInfo;
         }
-    },
+    };
 
-    getMaxPathPolygonLength: function()
+    Geometry.prototype.getMaxPathPolygonLength = function()
     {
         var aByPaths = this.getArrayPolygonsByPaths(AscFormat.PATH_DIV_EPSILON);
 
@@ -1222,8 +1236,9 @@ Geometry.prototype=
             }
         }
         return dLength;
-    },
-    getMinPathPolygonLength: function()
+    };
+
+    Geometry.prototype.getMinPathPolygonLength = function()
     {
         var aByPaths = this.getArrayPolygonsByPaths(AscFormat.PATH_DIV_EPSILON);
 
@@ -1237,9 +1252,9 @@ Geometry.prototype=
             }
         }
         return dLength;
-    },
+    };
 
-    draw: function(shape_drawer)
+    Geometry.prototype.draw = function(shape_drawer)
     {
         if(shape_drawer.Graphics && shape_drawer.Graphics.bDrawSmart || this.bDrawSmart)
         {
@@ -1248,21 +1263,21 @@ Geometry.prototype=
         }
         for (var i=0, n=this.pathLst.length; i<n;++i)
             this.pathLst[i].draw(shape_drawer, i);
-    },
+    };
 
-    drawSmart: function(shape_drawer)
+    Geometry.prototype.drawSmart = function(shape_drawer)
     {
         for (var i=0, n=this.pathLst.length; i<n;++i)
             this.pathLst[i].drawSmart(shape_drawer);
-    },
+    };
 
-    check_bounds: function(checker)
+    Geometry.prototype.check_bounds = function(checker)
     {
         for(var i=0, n=this.pathLst.length; i<n;++i)
             this.pathLst[i].check_bounds(checker, this);
-    },
+    };
 
-    drawAdjustments: function(drawingDocument, transform, bTextWarp)
+    Geometry.prototype.drawAdjustments = function(drawingDocument, transform, bTextWarp)
     {
         var oApi = Asc.editor || editor;
         var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
@@ -1280,9 +1295,9 @@ Geometry.prototype=
         _adj_count = _adjustments.length;
         for(_adj_index = 0; _adj_index < _adj_count; ++_adj_index)
             drawingDocument.DrawAdjustment(transform, _adjustments[_adj_index].posX, _adjustments[_adj_index].posY, bTextWarp);
-    },
+    };
 
-    canFill: function()
+    Geometry.prototype.canFill = function()
     {
         if(this.preset === "line")
             return false;
@@ -1292,9 +1307,9 @@ Geometry.prototype=
                 return true;
         }
         return  false;
-    },
+    };
 
-    hitInInnerArea: function(canvasContext, x, y)
+    Geometry.prototype.hitInInnerArea = function(canvasContext, x, y)
     {
         var _path_list = this.pathLst;
         var _path_count = _path_list.length;
@@ -1305,9 +1320,9 @@ Geometry.prototype=
                 return true;
         }
         return false;
-    },
+    };
 
-    hitInPath: function(canvasContext, x, y, oAddingPoint)
+    Geometry.prototype.hitInPath = function(canvasContext, x, y, oAddingPoint)
     {
         var _path_list = this.pathLst;
         var _path_count = _path_list.length;
@@ -1318,9 +1333,9 @@ Geometry.prototype=
                 return true;
         }
         return false;
-    },
+    };
 
-    hitToAdj: function(x, y, distanse)
+    Geometry.prototype.hitToAdj = function(x, y, distanse)
     {
         var dx, dy;
         for(var i=0; i<this.ahXYLst.length; i++)
@@ -1345,15 +1360,14 @@ Geometry.prototype=
             }
         }
         return {hit: false, adjPolarFlag: null, adjNum: null};
-    },
+    };
 
-    getArrayPolygonsByPaths: function(epsilon)
+    Geometry.prototype.getArrayPolygonsByPaths = function(epsilon)
     {
         return GetArrayPolygonsByPaths(epsilon, this.pathLst);
-    },
+    };
 
-
-    getArrayPolygons: function(epsilon)
+    Geometry.prototype.getArrayPolygons = function(epsilon)
     {
         var used_epsilon;
         if(typeof epsilon !== "number" || isNaN(epsilon))
@@ -1489,15 +1503,14 @@ Geometry.prototype=
             }
         }
         return arr_polygons;
-    },
+    };
 
-
-    getBounds: function()
+    Geometry.prototype.getBounds = function()
     {
 
-    },
+    };
 
-    getNewWHByTextRect: function(dTextWidth, dTextHeight, dGeometryWidth, dGeometryHeight)
+    Geometry.prototype.getNewWHByTextRect = function(dTextWidth, dTextHeight, dGeometryWidth, dGeometryHeight)
     {
         var dDelta = 0;
         var dWi = dTextWidth, dHi = dTextHeight, dWNext, dHNext;
@@ -1544,31 +1557,546 @@ Geometry.prototype=
             while(dDelta > EPSILON_TEXT_AUTOFIT && iter_Count < MAX_ITER_COUNT);
             return {W: dWi, H: dGeometryHeight, bError: dDelta > EPSILON_TEXT_AUTOFIT};
         }
-    },
+    };
 
-    checkBetweenPolygons: function(oBoundsController, oPolygonWrapper1, oPolygonWrapper2) {
+    Geometry.prototype.checkBetweenPolygons = function(oBoundsController, oPolygonWrapper1, oPolygonWrapper2) {
         var aPathLst = this.pathLst;
         for(var i = 0; i < aPathLst.length; ++i)
         {
             aPathLst[i].checkBetweenPolygons(oBoundsController, oPolygonWrapper1, oPolygonWrapper2);
         }
-    },
-    checkByPolygon: function(oPolygon, bFlag, XLimit, ContentHeight, dKoeff, oBounds) {
+    };
+
+    Geometry.prototype.checkByPolygon = function(oPolygon, bFlag, XLimit, ContentHeight, dKoeff, oBounds) {
         var aPathLst = this.pathLst;
         for(var i = 0; i < aPathLst.length; ++i)
         {
             aPathLst[i].checkByPolygon(oPolygon, bFlag, XLimit, ContentHeight, dKoeff, oBounds);
         }
-    },
+    };
 
-    transform: function (oTransform, dKoeff) {
+    Geometry.prototype.transform = function (oTransform, dKoeff) {
         var aPathLst = this.pathLst;
         for(var i = 0; i < aPathLst.length; ++i)
         {
             aPathLst[i].transform(oTransform, dKoeff);
         }
+    };
+    Geometry.prototype.readAttrXml = function (name, reader) {
+        switch (name) {
+            case "prst": {
+                this.setPreset(reader.GetValue());
+                if(this.bWrap) {
+                    AscFormat.CreatePrstTxWarpGeometry(this.preset, this);
+                }
+                else {
+                    AscFormat.CreateGeometry(this.preset, this);
+                }
+                break;
+            }
+        }
+    };
+    Geometry.prototype.readChildXml = function (name, reader) {
+        switch (name) {
+            case "ahLst": {
+                let oAhLst = new CAhLst(this);
+                oAhLst.fromXml(reader);
+                break;
+            }
+            case "avLst": {
+                let oAvLst = new CAvLst(this, true);
+                oAvLst.fromXml(reader);
+                break;
+            }
+            case "cxnLst": {
+                let oCxnLst = new CCxnLst(this);
+                oCxnLst.fromXml(reader);
+                break;
+            }
+            case "gdLst": {
+                let oAvLst = new CAvLst(this, false);
+                oAvLst.fromXml(reader);
+                break;
+            }
+            case "pathLst": {
+                let oPathLst = new CPathLst(this);
+                oPathLst.fromXml(reader);
+                break;
+            }
+            case "rect": {
+                let oAvLst = new CAvLst(this);
+                oAvLst.fromXml(reader);
+                break;
+            }
+        }
+    };
+    Geometry.prototype.writeAvLst = function(writer) {
+        let bEmptyLst = true;
+        let name = "a:avLst";
+        let oLst = this.avLst;
+        for(let sKey in oLst) {
+            if(oLst.hasOwnProperty(sKey) && oLst[sKey]) {
+                bEmptyLst = false;
+                break;
+            }
+        }
+        if (bEmptyLst)
+            writer.WriteXmlString("<" + name + "/>");
+        else {
+            writer.WriteXmlNodeStart(name);
+            writer.WriteXmlAttributesEnd();
+            for(let sKey in oLst) {
+                if(oLst.hasOwnProperty(sKey)) {
+                    let nAdj = this.gdLst[sKey];
+                    if(AscFormat.isRealNumber(nAdj)) {
+                        let oGd = {name: sKey, formula: FORMULA_TYPE_VALUE, x: '' + nAdj, y: undefined, z: undefined};
+                        CGuide.prototype.toXml(writer, oGd);
+                    }
+                }
+            }
+            writer.WriteXmlNodeEnd(name);
+        }
+    };
+    Geometry.prototype.writeGdLst = function(writer) {
+        let bEmptyLst = true;
+        let name = "a:gdLst";
+        for(let nGd = 0; nGd < this.gdLstInfo.length; ++nGd) {
+            let oGd = this.gdLstInfo[nGd];
+            if(!this.avLst[oGd.name]) {
+                bEmptyLst = false;
+                break;
+            }
+        }
+
+        if (bEmptyLst)
+            writer.WriteXmlString("<" + name + "/>");
+        else {
+            writer.WriteXmlNodeStart(name);
+            writer.WriteXmlAttributesEnd();
+            for(let nGd = 0; nGd < this.gdLstInfo.length; ++nGd) {
+                let oGd = this.gdLstInfo[nGd];
+                if(!this.avLst[oGd.name]) {
+                    CGuide.prototype.toXml(writer, oGd);
+                }
+            }
+            writer.WriteXmlNodeEnd(name);
+        }
+    };
+    Geometry.prototype.writeAhLst = function(writer) {
+        let bEmptyLst = true;
+        let name = "a:ahLst";
+        bEmptyLst = this.ahXYLstInfo.length === 0 && this.ahPolarLstInfo.length === 0;
+        if(bEmptyLst) {
+            writer.WriteXmlString("<" + name + "/>");
+        }
+        else {
+
+            writer.WriteXmlNodeStart(name);
+            writer.WriteXmlAttributesEnd();
+            for(let nAh = 0; nAh < this.ahXYLstInfo.length; ++nAh) {
+                CAhXY.prototype.toXml(writer, this.ahXYLstInfo[nAh]);
+            }
+            for(let nAh = 0; nAh < this.ahPolarLstInfo.length; ++nAh) {
+                CAhPolar.prototype.toXml(writer, this.ahPolarLstInfo[nAh]);
+            }
+            writer.WriteXmlNodeEnd(name);
+        }
+    };
+    Geometry.prototype.writeCxnLst = function(writer) {
+        let name = "a:cxnLst";
+        if(this.cnxLstInfo.length === 0) {
+            writer.WriteXmlString("<" + name + "/>");
+        }
+        else {
+
+            writer.WriteXmlNodeStart(name);
+            writer.WriteXmlAttributesEnd();
+            for(let nCxn = 0; nCxn < this.cnxLstInfo.length; ++nCxn) {
+                CCxn.prototype.toXml(writer, this.cnxLstInfo[nCxn]);
+            }
+            writer.WriteXmlNodeEnd(name);
+        }
+    };
+    Geometry.prototype.writeRect = function(writer) {
+        if(!this.rectS) {
+            writer.WriteXmlString("<a:rect l=\"0\" t=\"0\" r=\"r\" b=\"b\"/>");
+        }
+        else {
+            let l = this.rectS.l || 0;
+            let t = this.rectS.t || 0;
+            let r = this.rectS.r || 0;
+            let b = this.rectS.b || 0;
+            writer.WriteXmlString("<a:rect l=\"" + l + "\" t=\"" + t +"\" r=\"" + r + "\" b=\"" + b +"\"/>");
+        }
+    };
+    Geometry.prototype.writePathLst = function(writer) {
+        let name = "a:pathLst";
+        if(this.pathLst.length === 0) {
+            writer.WriteXmlString("<" + name + "/>");
+        }
+        else {
+            writer.WriteXmlNodeStart(name);
+            writer.WriteXmlAttributesEnd();
+            for(let nPath = 0; nPath < this.pathLst.length; ++nPath) {
+                this.pathLst[nPath].toXml(writer);
+            }
+            writer.WriteXmlNodeEnd(name);
+        }
+    };
+    Geometry.prototype.toXml = function (writer, sName) {
+        if(this.preset !== null && this.preset !== "") {
+            let sName_ = sName || "a:prstGeom";
+            writer.WriteXmlNodeStart(sName_);
+
+            writer.WriteXmlNullableAttributeString("prst", this.preset);
+            writer.WriteXmlAttributesEnd();
+            this.writeAvLst(writer);
+            writer.WriteXmlNodeEnd(sName_);
+        }
+        else {
+            writer.WriteXmlNodeStart("a:custGeom");
+            writer.WriteXmlAttributesEnd();
+            this.writeAvLst(writer);
+            this.writeGdLst(writer);
+            this.writeAhLst(writer);
+            this.writeCxnLst(writer);
+            this.writeRect(writer);
+            this.writePathLst(writer);
+
+            writer.WriteXmlNodeEnd("a:custGeom");
+        }
+    };
+
+
+    function CAvLst(oGeometry, bAdjustments) {
+        AscFormat.CBaseNoIdObject.call(this);
+        this.bAdjustments = bAdjustments;
+        this.geometry = oGeometry;
     }
-};
+    AscFormat.InitClass(CAvLst, AscFormat.CBaseNoIdObject, 0);
+    CAvLst.prototype.readAttrXml = function (name, reader) {
+    };
+    CAvLst.prototype.readChildXml = function (name, reader) {
+        switch (name) {
+            case "gd": {
+                let oGd = new CGuide(this.geometry, this.bAdjustments);
+                oGd.fromXml(reader);
+                break;
+            }
+        }
+    };
+
+    function CAhLst(oGeometry) {
+        AscFormat.CBaseNoIdObject.call(this);
+        this.geometry = oGeometry;
+    }
+    AscFormat.InitClass(CAhLst, AscFormat.CBaseNoIdObject, 0);
+    CAhLst.prototype.readAttrXml = function (name, reader) {
+    };
+    CAhLst.prototype.readChildXml = function (name, reader) {
+        switch (name) {
+            case "ahPolar": {
+                let oAh = new CAhPolar(this.geometry);
+                oAh.fromXml(reader);
+                break;
+            }
+            case "ahXY": {
+                let oAh = new CAhXY(this.geometry);
+                oAh.fromXml(reader);
+                break;
+            }
+        }
+    };
+    function CCxnLst(oGeometry) {
+        AscFormat.CBaseNoIdObject.call(this);
+        this.geometry = oGeometry;
+    }
+    AscFormat.InitClass(CCxnLst, AscFormat.CBaseNoIdObject, 0);
+    CCxnLst.prototype.readAttrXml = function (name, reader) {
+    };
+    CCxnLst.prototype.readChildXml = function (name, reader) {
+        switch (name) {
+            case "cxn": {
+                let oCxn = new CCxn(this.geometry);
+                oCxn.fromXml(reader);
+                break;
+            }
+        }
+    };
+    function CPathLst(oGeometry) {
+        AscFormat.CBaseNoIdObject.call(this);
+        this.geometry = oGeometry;
+    }
+    AscFormat.InitClass(CPathLst, AscFormat.CBaseNoIdObject, 0);
+    CPathLst.prototype.readAttrXml = function (name, reader) {
+    };
+    CPathLst.prototype.readChildXml = function (name, reader) {
+        switch (name) {
+            case "path": {
+                let oPath = new AscFormat.Path(this.geometry);
+                oPath.fromXml(reader);
+                this.geometry.AddPath(oPath);
+                break;
+            }
+        }
+    };
+
+    function CPos() {
+        AscFormat.CBaseNoIdObject.call(this);
+        this.x = null;
+        this.y = null;
+    }
+    AscFormat.InitClass(CPos, AscFormat.CBaseNoIdObject, 0);
+    CPos.prototype.readAttrXml = function (name, reader) {
+        switch (name) {
+            case "x": {
+                this.x = reader.GetValue();
+                break;
+            }
+            case "y": {
+                this.y = reader.GetValue();
+                break;
+            }
+        }
+    };
+    CPos.prototype.readChildXml = function (name, reader) {
+    };
+    CPos.prototype.toXml = function (writer, name, posX, posY) {
+        writer.WriteXmlNodeStart(name);
+        writer.WriteXmlNullableAttributeString("x", posX);
+        writer.WriteXmlNullableAttributeString("y", posY);
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNodeEnd(name);
+    };
+    function CAhPolar(oGeometry) {
+        AscFormat.CBaseNoIdObject.call(this);
+        this.geometry = oGeometry;
+        this.pos = null;
+        this.gdRefAng = null;
+        this.gdRefR = null;
+        this.maxAng = null;
+        this.maxR = null;
+        this.minAng = null;
+        this.minR = null;
+    }
+    AscFormat.InitClass(CAhPolar, AscFormat.CBaseNoIdObject, 0);
+    CAhPolar.prototype.fromXml = function (reader) {
+        AscFormat.CBaseNoIdObject.prototype.fromXml.call(this, reader);
+        this.geometry.AddHandlePolar(this.gdRefAng, this.minAng, this.maxAng, this.gdRefR, this.minR, this.maxR, this.pos.x, this.pos.y);
+    };
+    CAhPolar.prototype.readAttrXml = function (name, reader) {
+        switch (name) {
+            case "gdRefAng": {
+                this.gdRefAng = reader.GetValue();
+                break;
+            }
+            case "gdRefR": {
+                this.gdRefR = reader.GetValue();
+                break;
+            }
+            case "maxAng": {
+                this.maxAng = reader.GetValue();
+                break;
+            }
+            case "maxR": {
+                this.maxR = reader.GetValue();
+                break;
+            }
+            case "minAng": {
+                this.minAng = reader.GetValue();
+                break;
+            }
+            case "minR": {
+                this.minR = reader.GetValue();
+                break;
+            }
+        }
+    };
+    CAhPolar.prototype.readChildXml = function (name, reader) {
+        switch (name) {
+            case "pos": {
+                this.pos = new CPos();
+                this.pos.fromXml(reader);
+                break;
+            }
+        }
+    };
+    CAhPolar.prototype.toXml = function (writer, oAh) {
+        writer.WriteXmlNodeStart("a:ahPolar");
+        writer.WriteXmlNullableAttributeString("gdRefR", oAh.gdRefR);
+        writer.WriteXmlNullableAttributeString("minR", oAh.minR);
+        writer.WriteXmlNullableAttributeString("maxR", oAh.maxR);
+        writer.WriteXmlNullableAttributeString("gdRefAng", oAh.gdRefAng);
+        writer.WriteXmlNullableAttributeString("minAng", oAh.minAng);
+        writer.WriteXmlNullableAttributeString("maxAng", oAh.maxAng);
+        writer.WriteXmlAttributesEnd();
+        CPos.prototype.toXml(writer, "a:pos", oAh.posX, oAh.posY);
+        writer.WriteXmlNodeEnd("a:ahPolar");
+    };
+
+    function CCxn(oGeometry) {
+        AscFormat.CBaseNoIdObject.call(this);
+        this.geometry = oGeometry;
+        this.pos = null;
+        this.ang = null;
+    }
+    AscFormat.InitClass(CCxn, AscFormat.CBaseNoIdObject, 0);
+    CCxn.prototype.fromXml = function (reader) {
+        AscFormat.CBaseNoIdObject.prototype.fromXml.call(this, reader);
+        this.geometry.AddCnx(this.ang, this.pos.x, this.pos.y);
+    };
+    CCxn.prototype.readAttrXml = function (name, reader) {
+        switch (name) {
+            case "ang": {
+                this.ang = reader.GetValue();
+                break;
+            }
+        }
+    };
+    CCxn.prototype.readChildXml = function (name, reader) {
+        switch (name) {
+            case "pos": {
+                this.pos = new CPos();
+                this.pos.fromXml(reader);
+                break;
+            }
+        }
+    };
+    CCxn.prototype.toXml = function (writer, oCxn) {
+        writer.WriteXmlNodeStart("a:cxn");
+        writer.WriteXmlNullableAttributeString("ang", oCxn.ang);
+        writer.WriteXmlAttributesEnd();
+        CPos.prototype.toXml(writer,"a:pos", oCxn.x, oCxn.y)
+        writer.WriteXmlNodeEnd("a:cxn");
+    };
+
+    function CAhXY(oGeometry) {
+        AscFormat.CBaseNoIdObject.call(this);
+        this.geometry = oGeometry;
+        this.pos = null;
+        this.gdRefX = null;
+        this.gdRefY = null;
+        this.maxX = null;
+        this.maxY = null;
+        this.minX = null;
+        this.minY = null;
+    }
+    AscFormat.InitClass(CAhXY, AscFormat.CBaseNoIdObject, 0);
+    CAhXY.prototype.fromXml = function (reader) {
+        AscFormat.CBaseNoIdObject.prototype.fromXml.call(this, reader);
+        this.geometry.AddHandlePolar(this.gdRefX, this.minX, this.maxX, this.gdRefY, this.minY, this.maxY, this.pos.x, this.pos.y);
+    };
+    CAhXY.prototype.readAttrXml = function (name, reader) {
+        switch (name) {
+            case "gdRefX": {
+                this.gdRefX = reader.GetValue();
+                break;
+            }
+            case "minX": {
+                this.minX = reader.GetValue();
+                break;
+            }
+            case "maxX": {
+                this.maxX = reader.GetValue();
+                break;
+            }
+            case "minY": {
+                this.minY = reader.GetValue();
+                break;
+            }
+            case "maxY": {
+                this.maxY = reader.GetValue();
+                break;
+            }
+            case "gdRefY": {
+                this.gdRefY = reader.GetValue();
+                break;
+            }
+        }
+    };
+    CAhXY.prototype.readChildXml = function (name, reader) {
+        switch (name) {
+            case "pos": {
+                this.pos = new CPos();
+                this.pos.fromXml(reader);
+                break;
+            }
+        }
+    };
+    CAhXY.prototype.toXml = function (writer, oAh) {
+        writer.WriteXmlNodeStart("a:ahXY");
+        writer.WriteXmlNullableAttributeString("gdRefX", oAh.gdRefX);
+        writer.WriteXmlNullableAttributeString("minX", oAh.minX);
+        writer.WriteXmlNullableAttributeString("maxX", oAh.maxX);
+        writer.WriteXmlNullableAttributeString("gdRefY", oAh.gdRefY);
+        writer.WriteXmlNullableAttributeString("minY", oAh.minY);
+        writer.WriteXmlNullableAttributeString("maxY", oAh.maxY);
+        writer.WriteXmlAttributesEnd();
+        CPos.prototype.toXml(writer,"a:pos", oAh.posX, oAh.posY);
+        writer.WriteXmlNodeEnd("a:ahXY");
+    };
+
+    function CGuide(oGeometry, bAdj) {
+        AscFormat.CBaseNoIdObject.call(this);
+        this.geometry = oGeometry;
+        this.bAdj = bAdj;
+        this.fmla = null;
+        this.name = null;
+        this.x = null;
+        this.y = null;
+        this.z = null;
+    }
+    AscFormat.InitClass(CGuide, AscFormat.CBaseNoIdObject, 0);
+    CGuide.prototype.fromXml = function (reader) {
+        AscFormat.CBaseNoIdObject.prototype.fromXml.call(this, reader);
+        if(AscFormat.isRealNumber(this.fmla) && this.name) {
+            if(this.bAdj) {
+                this.geometry.AddAdj(this.name, this.fmla, this.x);
+            }
+            else {
+                this.geometry.AddGuide(this.name, this.fmla, this.x, this.y, this.z);
+            }
+        }
+    };
+    CGuide.prototype.readAttrXml = function (name, reader) {
+        switch (name) {
+            case "fmla" : {
+                let sVal = reader.GetValue();
+                let aStr = sVal.split(" ");
+                this.fmla = MAP_FMLA_TO_TYPE[aStr[0]];
+                if(AscFormat.isRealNumber(this.fmla)) {
+                    this.x = aStr[1];
+                    this.y = aStr[2];
+                    this.z = aStr[3];
+                }
+                break;
+            }
+            case "name" : {
+                this.name = reader.GetValue();
+                break;
+            }
+        }
+    };
+    CGuide.prototype.toXml = function(writer, oGd) {
+        let sFmla = MAP_TYPE_TO_FMLA[oGd.formula];
+        if(sFmla) {
+            writer.WriteXmlNodeStart("a:gd");
+            writer.WriteXmlNullableAttributeString("name", oGd.name);
+            let sFmlaVal = sFmla;
+            if(oGd.x) {
+                sFmlaVal += (" " + oGd.x);
+            }
+            if(oGd.y) {
+                sFmlaVal += (" " + oGd.y);
+            }
+            if(oGd.z) {
+                sFmlaVal += (" " + oGd.z);
+            }
+            writer.WriteXmlAttributeString("fmla", sFmlaVal);
+            writer.WriteXmlAttributesEnd(true);
+        }
+    };
+
 
 
 
@@ -1676,6 +2204,7 @@ function ComparisonEdgeByTopPoint(graphEdge1, graphEdge2)
     window['AscFormat'].Geometry = Geometry;
     window['AscFormat'].GraphEdge = GraphEdge;
     window['AscFormat'].PathAccumulator = PathAccumulator;
+    window['AscFormat'].CGeomPt = CPos;
 
     window['AscFormat'].EPSILON_TEXT_AUTOFIT = EPSILON_TEXT_AUTOFIT;
     window['AscFormat'].MAX_ITER_COUNT = MAX_ITER_COUNT;

@@ -320,6 +320,14 @@ CNumbering.prototype.GetText = function(sNumId, nLvl, oNumInfo, bWithoutLastLvlT
 	var oNum = this.GetNum(sNumId);
 	return oNum.GetText(nLvl, oNumInfo, bWithoutLastLvlText);
 };
+/**
+ * Проверяем, есть ли обьекты на которые можно ссылаться
+ * @returns {boolean}
+ */
+CNumbering.prototype.IsEmpty = function()
+{
+	return 0 === Object.keys(this.Num).length;
+};
 
 //---------------------------------------------------------export---------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

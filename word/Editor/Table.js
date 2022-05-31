@@ -8569,6 +8569,17 @@ CTable.prototype.Set_PositionH = function(RelativeFrom, Align, Value)
 	this.PositionH.Align        = Align;
 	this.PositionH.Value        = Value;
 };
+CTable.prototype.Get_PositionHValueInTwips = function() {
+	var res;
+	if(this.PositionH && null !== this.PositionH.Value && undefined !== this.PositionH.Value) {
+		res = Math.round(AscCommonWord.g_dKoef_mm_to_twips * this.PositionH.Value);
+		//0 is a special value(left align)
+		if (0 === res) {
+			res = 1;
+		}
+	}
+	return res;
+};
 CTable.prototype.Set_PositionV = function(RelativeFrom, Align, Value)
 {
 	History.Add(new CChangesTablePositionV(this,
@@ -8586,6 +8597,17 @@ CTable.prototype.Set_PositionV = function(RelativeFrom, Align, Value)
 	this.PositionV.RelativeFrom = RelativeFrom;
 	this.PositionV.Align        = Align;
 	this.PositionV.Value        = Value;
+};
+CTable.prototype.Get_PositionVValueInTwips = function() {
+	var res;
+	if(this.PositionV && null !== this.PositionV.Value && undefined !== this.PositionV.Value) {
+		res = Math.round(AscCommonWord.g_dKoef_mm_to_twips * this.PositionV.Value);
+		//0 is a special value(c_oAscVAnchor.Text)
+		if (0 === res) {
+			res = 1;
+		}
+	}
+	return res;
 };
 CTable.prototype.Set_Distance = function(L, T, R, B)
 {
@@ -19174,6 +19196,117 @@ CTable.prototype.RestartSpellCheck = function()
 		}
 	}
 };
+//----------------------------------------------------------------------------------------------------------------------
+// Search
+//----------------------------------------------------------------------------------------------------------------------
+CTable.prototype.Search = function(oSearchEngine, nType)
+{
+	for (var nCurRow = 0, nRowsCount = this.GetRowsCount(); nCurRow < nRowsCount; ++nCurRow)
+	{
+		var oRow = this.GetRow(nCurRow);
+		for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+		{
+			oRow.GetCell(nCurCell).GetContent().Search(oSearchEngine, nType);
+		}
+	}
+};
+CTable.prototype.GetSearchElementId = function(bNext, bCurrent)
+{
+	if ( true === bCurrent )
+	{
+		var Id = null;
+		var CurRow  = 0;
+		var CurCell = 0;
+		if ( true === this.Selection.Use && table_Selection_Cell === this.Selection.Type )
+		{
+			var Pos = ( true === bNext ? this.Selection.Data[this.Selection.Data.length - 1] : this.Selection.Data[0] );
+			CurRow  = Pos.Row;
+			CurCell = Pos.CurCell;
+		}
+		else
+		{
+			Id = this.CurCell.Content.GetSearchElementId(bNext, true);
+			if ( Id != null )
+				return Id;
+
+			CurRow  = this.CurCell.Row.Index;
+			CurCell = this.CurCell.Index;
+		}
+
+		var Rows_Count = this.Content.length;
+		if ( true === bNext )
+		{
+			for ( var _CurRow = CurRow; _CurRow < Rows_Count; _CurRow++ )
+			{
+				var Row = this.Content[_CurRow];
+				var Cells_Count = Row.Get_CellsCount();
+				var StartCell = ( _CurRow === CurRow ? CurCell + 1 : 0 );
+				for ( var _CurCell = StartCell; _CurCell < Cells_Count; _CurCell++ )
+				{
+					var Cell = Row.Get_Cell(_CurCell);
+					Id = Cell.Content.GetSearchElementId( true, false );
+					if ( null != Id )
+						return Id;
+				}
+			}
+		}
+		else
+		{
+			for ( var _CurRow = CurRow; _CurRow >= 0; _CurRow-- )
+			{
+				var Row = this.Content[_CurRow];
+				var Cells_Count = Row.Get_CellsCount();
+				var StartCell = ( _CurRow === CurRow ? CurCell - 1 : Cells_Count - 1 );
+				for ( var _CurCell = StartCell; _CurCell >= 0; _CurCell-- )
+				{
+					var Cell = Row.Get_Cell(_CurCell);
+					Id = Cell.Content.GetSearchElementId( false, false );
+					if ( null != Id )
+						return Id;
+				}
+			}
+
+		}
+	}
+	else
+	{
+		var Rows_Count = this.Content.length;
+		if ( true === bNext )
+		{
+			for ( var _CurRow = 0; _CurRow < Rows_Count; _CurRow++ )
+			{
+				var Row = this.Content[_CurRow];
+				var Cells_Count = Row.Get_CellsCount();
+				for ( var _CurCell = 0; _CurCell < Cells_Count; _CurCell++ )
+				{
+					var Cell = Row.Get_Cell(_CurCell);
+					Id = Cell.Content.GetSearchElementId( true, false );
+					if ( null != Id )
+						return Id;
+				}
+			}
+		}
+		else
+		{
+			for ( var _CurRow = Rows_Count - 1; _CurRow >= 0; _CurRow-- )
+			{
+				var Row = this.Content[_CurRow];
+				var Cells_Count = Row.Get_CellsCount();
+				for ( var _CurCell = Cells_Count - 1; _CurCell >= 0; _CurCell-- )
+				{
+					var Cell = Row.Get_Cell(_CurCell);
+					Id = Cell.Content.GetSearchElementId( false, false );
+					if ( null != Id )
+						return Id;
+				}
+			}
+
+		}
+	}
+
+	return Id;
+};
+//----------------------------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------------------------
 // Класс  CTableAnchorPosition

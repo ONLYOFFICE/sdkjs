@@ -238,7 +238,7 @@ CBorderBox.prototype.ClassType = AscDFH.historyitem_type_borderBox;
 CBorderBox.prototype.kind      = MATH_BORDER_BOX;
 CBorderBox.prototype.init = function(props)
 {
-    this.Fill_LogicalContent(1);
+    this.Fill_LogicalContent(1, props.content);
 
     this.setProperties(props);
     this.fillContent();
@@ -798,7 +798,7 @@ CBox.prototype.ClassType = AscDFH.historyitem_type_box;
 CBox.prototype.kind      = MATH_BOX;
 CBox.prototype.init = function(props)
 {
-    this.Fill_LogicalContent(1);
+    this.Fill_LogicalContent(1, props.content);
 
     this.setProperties(props);
     this.fillContent();
@@ -1015,7 +1015,7 @@ CBar.prototype.ClassType = AscDFH.historyitem_type_bar;
 CBar.prototype.kind      = MATH_BAR;
 CBar.prototype.init = function(props)
 {
-    this.Fill_LogicalContent(1);
+    this.Fill_LogicalContent(1, props.content);
 
     this.setProperties(props);
     this.fillContent();
@@ -1215,7 +1215,7 @@ CPhantom.prototype.ClassType = AscDFH.historyitem_type_phant;
 CPhantom.prototype.kind      = MATH_PHANTOM;
 CPhantom.prototype.init = function(props)
 {
-    this.Fill_LogicalContent(1);
+    this.Fill_LogicalContent(1, props.content);
 
     this.setProperties(props);
     this.fillContent();

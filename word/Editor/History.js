@@ -100,11 +100,8 @@ CHistory.prototype =
         return this.UserSaveMode;
     },
 
-    Update_FileDescription : function(oStream)
+    Update_FileDescription : function(pData, nSize)
     {
-        var pData = oStream.data;
-        var nSize = oStream.size;
-
         this.FileCheckSum = AscCommon.g_oCRC32.Calculate_ByByteArray(pData, nSize);
         this.FileSize     = nSize;
     },

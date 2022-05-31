@@ -3005,6 +3005,10 @@ CGraphicObjects.prototype =
                     drawing.Set_XYForAdd(fPosX, fPosY, nearest_pos, page_num);
 
                     sp.convertFromSmartArt(true);
+                    var oSm = sp.hasSmartArt && sp.hasSmartArt(true);
+                    if (oSm && oSm.group) {
+                        oSm.group.updateCoordinatesAfterInternalResize();
+                    }
                     aDrawings.push(drawing);
                 }
                 for(j = 0; j < aDrawings.length; ++j)

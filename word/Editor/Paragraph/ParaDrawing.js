@@ -906,11 +906,11 @@ ParaDrawing.prototype.Get_Bounds = function()
 	return {Left : X - this.EffectExtent.L - InsL, Top : Y - this.EffectExtent.T - InsT, Bottom : Y + H + this.EffectExtent.B +  InsB, Right : X + W + this.EffectExtent.R + InsR};
 
 };
-ParaDrawing.prototype.Search = function(Str, Props, SearchEngine, Type)
+ParaDrawing.prototype.Search = function(SearchEngine, Type)
 {
 	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.Search === "function")
 	{
-		this.GraphicObj.Search(Str, Props, SearchEngine, Type)
+		this.GraphicObj.Search(SearchEngine, Type)
 	}
 };
 ParaDrawing.prototype.Set_Props = function(Props)
@@ -3267,7 +3267,7 @@ ParaDrawing.prototype.IsComparable = function(oDrawing)
 ParaDrawing.prototype.ToSearchElement = function(oProps)
 {
 	if (this.IsInline())
-		return new CSearchTextSpecialGraphicObject();
+		return new AscCommonWord.CSearchTextSpecialGraphicObject();
 
 	return null;
 };

@@ -184,6 +184,8 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
 
     this.CollPrChange = false;
 
+	this.ParaId = null;//for comment xml serialization
+
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
     g_oTableId.Add( this, this.Id );
     if(bFromPresentation === true && History.Is_On())
@@ -9615,12 +9617,12 @@ Paragraph.prototype.Add_PresentationNumbering = function(Bullet)
 		var oColorMap = this.Get_ColorMap();
 		var oUndefParaPr = this.Get_CompiledPr2(false).ParaPr;
 		var NewType      = oBullet2.getBulletType();
-		var UndefType    = oUndefParaPr.Bullet ? oUndefParaPr.Bullet.getBulletType(oTheme, oColorMap) : numbering_presentationnumfrmt_None;
+		var UndefType    = oUndefParaPr.Bullet ? oUndefParaPr.Bullet.getBulletType(oTheme, oColorMap) : AscFormat.numbering_presentationnumfrmt_None;
 		var LeftInd;
 
 		if (NewType === UndefType)
 		{
-			if (NewType === numbering_presentationnumfrmt_Char || NewType === numbering_presentationnumfrmt_Blip)//буллеты
+			if (NewType === AscFormat.numbering_presentationnumfrmt_Char || NewType === AscFormat.numbering_presentationnumfrmt_Blip)//буллеты
 			{
 				var oUndefPresentationBullet = oUndefParaPr.Bullet.getPresentationBullet(oTheme, oColorMap);
 				var oNewPresentationBullet   = oBullet2.getPresentationBullet(oTheme, oColorMap);
@@ -9678,7 +9680,7 @@ Paragraph.prototype.Add_PresentationNumbering = function(Bullet)
 			}
 			if(!oBullet2.isEqual(this.Pr.Bullet))
 			{
-				if (NewType === numbering_presentationnumfrmt_Blip && !oBullet2.getImageBulletURL())
+				if (NewType === AscFormat.numbering_presentationnumfrmt_Blip && !oBullet2.getImageBulletURL())
 				{
 					var oldUrl = this.Pr.Bullet && this.Pr.Bullet.getImageBulletURL()
 					if (oldUrl)
@@ -9701,11 +9703,11 @@ Paragraph.prototype.Add_PresentationNumbering = function(Bullet)
 					var oFirstRunPr = this.Get_FirstTextPr2();
 
 					var Indent = oFirstRunPr.FontSize*0.305954545 + 2.378363636;
-					if (NewType === numbering_presentationnumfrmt_Char || NewType === numbering_presentationnumfrmt_Blip)
+					if (NewType === AscFormat.numbering_presentationnumfrmt_Char || NewType === AscFormat.numbering_presentationnumfrmt_Blip)
 					{
 						this.Set_Ind({Left : LeftInd + Indent, FirstLine : -Indent}, false);
 					}
-					else if (NewType === numbering_presentationnumfrmt_None)
+					else if (NewType === AscFormat.numbering_presentationnumfrmt_None)
 					{
 						this.Set_Ind({FirstLine : 0, Left : LeftInd}, false);
 					}
@@ -13978,12 +13980,212 @@ Paragraph.prototype.IgnoreMisspelledWord = function(oElement)
 		}
 	}
 };
-//----------------------------------------------------------------------------------------------------------------------
 Paragraph.prototype.CanAddSectionPr = function()
 {
 	let oParent = this.Parent;
 	return (oParent && (oParent.GetTopDocumentContent() instanceof CDocument) && !oParent.IsTableCellContent() && this.IsUseInDocument());
 };
+//----------------------------------------------------------------------------------------------------------------------
+// Search
+//----------------------------------------------------------------------------------------------------------------------
+Paragraph.prototype.Search = function(oSearchEngine, nType)
+{
+	var oParaSearch = new AscCommonWord.CParagraphSearch(this, oSearchEngine, nType);
+	for (var nPos = 0, nContentLen = this.Content.length; nPos < nContentLen; ++nPos)
+	{
+		this.Content[nPos].Search(oParaSearch);
+	}
+};
+Paragraph.prototype.GetSearchElementId = function(bNext, bCurrent)
+{
+	// Определим позицию, начиная с которой мы будем искать ближайший найденный элемент
+	var ContentPos = null;
+
+	if ( true === bCurrent )
+	{
+		if ( true === this.Selection.Use )
+		{
+			var SSelContentPos = this.Get_ParaContentPos( true, true );
+			var ESelContentPos = this.Get_ParaContentPos( true, false );
+
+			if ( SSelContentPos.Compare( ESelContentPos ) > 0 )
+			{
+				var Temp = ESelContentPos;
+				ESelContentPos = SSelContentPos;
+				SSelContentPos = Temp;
+			}
+
+			if ( true === bNext )
+				ContentPos = ESelContentPos;
+			else
+				ContentPos = SSelContentPos;
+		}
+		else
+			ContentPos = this.Get_ParaContentPos( false, false );
+	}
+	else
+	{
+		if ( true === bNext )
+			ContentPos = this.Get_StartPos();
+		else
+			ContentPos = this.Get_EndPos( false );
+	}
+
+	// Производим поиск ближайшего элемента
+	if ( true === bNext )
+	{
+		var StartPos = ContentPos.Get(0);
+		var ContentLen = this.Content.length;
+
+		for ( var CurPos = StartPos; CurPos < ContentLen; CurPos++ )
+		{
+			var ElementId = this.Content[CurPos].GetSearchElementId( true, CurPos === StartPos, ContentPos, 1 );
+			if ( null !== ElementId )
+				return ElementId;
+		}
+	}
+	else
+	{
+		var StartPos = ContentPos.Get(0);
+		var ContentLen = this.Content.length;
+
+		for ( var CurPos = StartPos; CurPos >= 0; CurPos-- )
+		{
+			var ElementId = this.Content[CurPos].GetSearchElementId( false, CurPos === StartPos, ContentPos, 1 );
+			if ( null !== ElementId )
+				return ElementId;
+		}
+	}
+
+	return null;
+};
+Paragraph.prototype.AddSearchResult = function(nId, oStartPos, oEndPos, nType)
+{
+	if (!oStartPos || !oEndPos)
+		return;
+
+	var oSearchResult = new AscCommonWord.CParagraphSearchElement(oStartPos, oEndPos, nType, nId);
+	this.SearchResults[nId] = oSearchResult;
+	oSearchResult.RegisterClass(true, this);
+	oSearchResult.RegisterClass(false, this);
+
+	this.Content[oStartPos.Get(0)].AddSearchResult(oSearchResult, true, oStartPos, 1);
+	this.Content[oEndPos.Get(0)].AddSearchResult(oSearchResult, false, oEndPos, 1);
+};
+Paragraph.prototype.ClearSearchResults = function()
+{
+	for (var Id in this.SearchResults)
+	{
+		var SearchResult = this.SearchResults[Id];
+
+		for (var Pos = 1, ClassesCount = SearchResult.ClassesS.length; Pos < ClassesCount; Pos++)
+		{
+			SearchResult.ClassesS[Pos].ClearSearchResults();
+		}
+
+		for (var Pos = 1, ClassesCount = SearchResult.ClassesE.length; Pos < ClassesCount; Pos++)
+		{
+			SearchResult.ClassesE[Pos].ClearSearchResults();
+		}
+	}
+
+	this.SearchResults = {};
+};
+Paragraph.prototype.RemoveSearchResult = function(Id)
+{
+	var oSearchResult = this.SearchResults[Id];
+	if (oSearchResult)
+	{
+		var ClassesCount = oSearchResult.ClassesS.length;
+		for (var Pos = 1; Pos < ClassesCount; Pos++)
+		{
+			oSearchResult.ClassesS[Pos].RemoveSearchResult(oSearchResult);
+		}
+
+		var ClassesCount = oSearchResult.ClassesE.length;
+		for (var Pos = 1; Pos < ClassesCount; Pos++)
+		{
+			oSearchResult.ClassesE[Pos].RemoveSearchResult(oSearchResult);
+		}
+
+		delete this.SearchResults[Id];
+	}
+};
+Paragraph.prototype.GetTextAroundSearchResult = function(nId)
+{
+	if (!this.SearchResults[nId])
+		return null;
+
+	const nMaxLen = 100;
+
+	let oStartPos = this.SearchResults[nId].StartPos;
+	let oEndPos   = this.SearchResults[nId].EndPos;
+
+	let oState = this.SaveSelectionState();
+
+	this.Selection.Use   = true;
+	this.Selection.Start = false;
+	this.SetSelectionContentPos(oStartPos, oEndPos);
+	let sTargetText = this.GetSelectedText(false, {Numbering : false});
+
+	this.LoadSelectionState(oState);
+
+	let sResult;
+	if (sTargetText.length >= nMaxLen)
+	{
+		sResult = "\<b\>";
+		sResult += sTargetText.substr(0, nMaxLen - 1);
+		sResult += "\</b\>...";
+	}
+	else
+	{
+		let nExtraCount = nMaxLen - sTargetText.length;
+		let oRunElementsAfter  = new CParagraphRunElements(oEndPos, nExtraCount, [para_Text, para_Space, para_Tab]);
+		let oRunElementsBefore = new CParagraphRunElements(oStartPos, nExtraCount, [para_Text, para_Space, para_Tab]);
+
+		this.GetNextRunElements(oRunElementsAfter);
+		this.GetPrevRunElements(oRunElementsBefore);
+
+		var nExtraCount_2 = (nExtraCount / 2) | 0;
+
+		let arrAfter  = oRunElementsAfter.GetElements();
+		let arrBefore = oRunElementsBefore.GetElements();
+
+		let nBeforeCount = arrBefore.length;
+		let nAfterCount  = arrAfter.length;
+		if (nBeforeCount >= nExtraCount_2 && nAfterCount >= nExtraCount_2)
+		{
+			nBeforeCount = nExtraCount_2;
+			nAfterCount  = nExtraCount_2;
+		}
+		else if (nBeforeCount < nExtraCount_2)
+		{
+			nAfterCount = Math.min(arrAfter.length, nExtraCount - arrBefore.length);
+		}
+		else if (nAfterCount < nExtraCount_2)
+		{
+			nBeforeCount = Math.min(arrBefore.length, nExtraCount - arrAfter.length);
+		}
+
+		sResult = "";
+		for (let nPos = nBeforeCount - 1;  nPos >= 0; --nPos)
+		{
+			let oItem = arrBefore[nPos];
+			sResult += para_Text === oItem.Type ? String.fromCodePoint(oItem.Value) : " ";
+		}
+
+		sResult += "\<b\>" + sTargetText + "\</b\>";
+
+		for (let nPos = 0; nPos < nAfterCount; ++nPos)
+		{
+			let oItem = arrAfter[nPos];
+			sResult += para_Text === oItem.Type ? String.fromCodePoint(oItem.Value) : " ";
+		}
+	}
+
+	return sResult;
+};
+//----------------------------------------------------------------------------------------------------------------------
 Paragraph.prototype.Get_SectionPr = function()
 {
 	return this.SectPr;

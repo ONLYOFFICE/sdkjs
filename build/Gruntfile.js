@@ -427,7 +427,8 @@ module.exports = function(grunt) {
 								'libfont/js/fonts.*',
 								'libfont/wasm/fonts.*',
 								'spell/spell/*',
-								'hash/hash/*'
+								'hash/hash/*',
+								'zlib/engine/*'
 							],
 							dest: path.join(deploy, 'common')
 						},

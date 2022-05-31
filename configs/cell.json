@@ -29,6 +29,7 @@
 			"word/apiCommon.js",
 			"cell/api.js",
 			"common/spell/spell.js",
+			"common/zlib/zlib.js",
 			"word/Editor/Table/TableLook.js"
 		],
 		"common": [
@@ -67,10 +68,11 @@
 
 			"common/Drawings/CommonController.js",
 			"common/Drawings/States.js",
-			"common/Drawings/Format/CreateGeometry.js",
 			"common/Drawings/DrawingsChanges.js",
-			"common/Drawings/Format/Geometry.js",
 			"common/Drawings/Format/Format.js",
+			"common/Drawings/Format/VML.js",
+			"common/Drawings/Format/CreateGeometry.js",
+			"common/Drawings/Format/Geometry.js",
 			"common/Drawings/Format/GraphicObjectBase.js",
 			"common/Drawings/Format/Shape.js",
 			"common/Drawings/Format/CnxShape.js",
@@ -111,9 +113,6 @@
 			"common/Scrolls/mobileTouchManagerBase.js",
 
 			"common/wordcopypaste.js",
-
-			"vendor/easysax.js",
-			"common/openxml.js",
 
 			"common/intervalTree.js",
 
@@ -210,6 +209,7 @@
 			"word/Editor/HeaderFooter.js",
 			"word/Editor/DocumentContentBase.js",
 			"word/Editor/Document.js",
+			"word/Editor/ChangeCase.js",
 			"word/Editor/SelectedContent.js",
 			"word/Editor/DocumentOutline.js",
 			"word/Editor/DocumentChanges.js",
@@ -273,7 +273,15 @@
 			"common/Drawings/Format/DrawingContent.js",
 			"common/plugins.js",
 
-			"common/Native/native_graphics.js"
+			"common/Native/native_graphics.js",
+			
+			"vendor/easysax.js",
+			"common/openxml.js",
+			"common/Shapes/SerializeXml.js",
+			"common/SerializeChartXml.js",
+			"common/SerializeMathXml.js",
+			"cell/model/SerializeXml.js",
+			"word/Editor/SerializeXmlAssets.js"
 		],
 		"desktop": {
 			"min": [

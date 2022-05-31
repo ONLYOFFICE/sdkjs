@@ -1589,7 +1589,7 @@ function ResizeTrackGroup(originalObject, cardDirection, parentTrack)
 
         this.resize = function(kd1, kd2, ShiftKey)
         {
-            if (this.originalObject instanceof AscFormat.SmartArt) {
+            if (this.originalObject.hasSmartArt && this.originalObject.hasSmartArt()) {
                 if (this.bAspect === false) {
                     return;
                 }

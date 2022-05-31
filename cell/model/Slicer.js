@@ -246,8 +246,10 @@
 		}
 		s.Seek2(_end_pos);
 	};
-	function CT_slicers() {
+	function CT_slicers(opt_ws) {
 		this.slicer = [];
+
+		this._ws = opt_ws;
 		return this;
 	}
 	CT_slicers.prototype.toStream = function (s) {

@@ -44,58 +44,14 @@ var IntToNumberFormat = window["AscCommon"].IntToNumberFormat;
 
 var kHeightImageBullet = 1 / 4.043478260869565;
 
-var numbering_presentationnumfrmt_AlphaLcParenBoth = 0;
-var numbering_presentationnumfrmt_AlphaLcParenR = 1;
-var numbering_presentationnumfrmt_AlphaLcPeriod = 2;
-var numbering_presentationnumfrmt_AlphaUcParenBoth = 3;
-var numbering_presentationnumfrmt_AlphaUcParenR = 4;
-var numbering_presentationnumfrmt_AlphaUcPeriod = 5;
-var numbering_presentationnumfrmt_Arabic1Minus = 6;
-var numbering_presentationnumfrmt_Arabic2Minus = 7;
-var numbering_presentationnumfrmt_ArabicDbPeriod = 8;
-var numbering_presentationnumfrmt_ArabicDbPlain = 9;
-var numbering_presentationnumfrmt_ArabicParenBoth = 10;
-var numbering_presentationnumfrmt_ArabicParenR = 11;
-var numbering_presentationnumfrmt_ArabicPeriod = 12;
-var numbering_presentationnumfrmt_ArabicPlain = 13;
-var numbering_presentationnumfrmt_CircleNumDbPlain = 14;
-var numbering_presentationnumfrmt_CircleNumWdBlackPlain = 15;
-var numbering_presentationnumfrmt_CircleNumWdWhitePlain = 16;
-var numbering_presentationnumfrmt_Ea1ChsPeriod = 17;
-var numbering_presentationnumfrmt_Ea1ChsPlain = 18;
-var numbering_presentationnumfrmt_Ea1ChtPeriod = 19;
-var numbering_presentationnumfrmt_Ea1ChtPlain = 20;
-var numbering_presentationnumfrmt_Ea1JpnChsDbPeriod = 21;
-var numbering_presentationnumfrmt_Ea1JpnKorPeriod = 22;
-var numbering_presentationnumfrmt_Ea1JpnKorPlain = 23;
-var numbering_presentationnumfrmt_Hebrew2Minus = 24;
-var numbering_presentationnumfrmt_HindiAlpha1Period = 25;
-var numbering_presentationnumfrmt_HindiAlphaPeriod = 26;
-var numbering_presentationnumfrmt_HindiNumParenR = 27;
-var numbering_presentationnumfrmt_HindiNumPeriod = 28;
-var numbering_presentationnumfrmt_RomanLcParenBoth = 29;
-var numbering_presentationnumfrmt_RomanLcParenR = 30;
-var numbering_presentationnumfrmt_RomanLcPeriod = 31;
-var numbering_presentationnumfrmt_RomanUcParenBoth = 32;
-var numbering_presentationnumfrmt_RomanUcParenR = 33;
-var numbering_presentationnumfrmt_RomanUcPeriod = 34;
-var numbering_presentationnumfrmt_ThaiAlphaParenBoth = 35;
-var numbering_presentationnumfrmt_ThaiAlphaParenR = 36;
-var numbering_presentationnumfrmt_ThaiAlphaPeriod = 37;
-var numbering_presentationnumfrmt_ThaiNumParenBoth = 38;
-var numbering_presentationnumfrmt_ThaiNumParenR = 39;
-var numbering_presentationnumfrmt_ThaiNumPeriod = 40;
 
-var numbering_presentationnumfrmt_None          =     100;
-var numbering_presentationnumfrmt_Char          =     101;
-var numbering_presentationnumfrmt_Blip          =     102;
 
 function IsAlphaPrNumbering(nType)
 {
 	if(AscFormat.isRealNumber(nType))
 	{
-		return nType >= numbering_presentationnumfrmt_AlphaLcParenBoth &&
-				nType <= numbering_presentationnumfrmt_AlphaUcPeriod;
+		return nType >= AscFormat.numbering_presentationnumfrmt_AlphaLcParenBoth &&
+				nType <= AscFormat.numbering_presentationnumfrmt_AlphaUcPeriod;
 	}
 	return false;
 }
@@ -103,8 +59,8 @@ function IsArabicPrNumbering(nType)
 {
 	if(AscFormat.isRealNumber(nType))
 	{
-		return nType >= numbering_presentationnumfrmt_Arabic1Minus &&
-			nType <= numbering_presentationnumfrmt_ArabicPlain;
+		return nType >= AscFormat.numbering_presentationnumfrmt_Arabic1Minus &&
+			nType <= AscFormat.numbering_presentationnumfrmt_ArabicPlain;
 	}
 	return false;
 }
@@ -112,8 +68,8 @@ function IsCirclePrNumbering(nType)
 {
 	if(AscFormat.isRealNumber(nType))
 	{
-		return nType >= numbering_presentationnumfrmt_CircleNumDbPlain &&
-			nType <= numbering_presentationnumfrmt_CircleNumWdWhitePlain;
+		return nType >= AscFormat.numbering_presentationnumfrmt_CircleNumDbPlain &&
+			nType <= AscFormat.numbering_presentationnumfrmt_CircleNumWdWhitePlain;
 	}
 	return false;
 }
@@ -121,23 +77,23 @@ function IsEaPrNumbering(nType)
 {
 	if(AscFormat.isRealNumber(nType))
 	{
-		return nType >= numbering_presentationnumfrmt_Ea1ChsPeriod &&
-			nType <= numbering_presentationnumfrmt_Ea1JpnKorPlain;
+		return nType >= AscFormat.numbering_presentationnumfrmt_Ea1ChsPeriod &&
+			nType <= AscFormat.numbering_presentationnumfrmt_Ea1JpnKorPlain;
 	}
 	return false;
 }
 
 function IsHebrewPrNumbering(nType)
 {
-	return nType === numbering_presentationnumfrmt_Hebrew2Minus;
+	return nType === AscFormat.numbering_presentationnumfrmt_Hebrew2Minus;
 }
 
 function IsHindiPrNumbering(nType)
 {
 	if(AscFormat.isRealNumber(nType))
 	{
-		return nType >= numbering_presentationnumfrmt_HindiAlpha1Period &&
-			nType <= numbering_presentationnumfrmt_HindiNumPeriod;
+		return nType >= AscFormat.numbering_presentationnumfrmt_HindiAlpha1Period &&
+			nType <= AscFormat.numbering_presentationnumfrmt_HindiNumPeriod;
 	}
 	return false;
 }
@@ -145,8 +101,8 @@ function IsRomanPrNumbering(nType)
 {
 	if(AscFormat.isRealNumber(nType))
 	{
-		return nType >= numbering_presentationnumfrmt_RomanLcParenBoth &&
-			nType <= numbering_presentationnumfrmt_RomanUcPeriod;
+		return nType >= AscFormat.numbering_presentationnumfrmt_RomanLcParenBoth &&
+			nType <= AscFormat.numbering_presentationnumfrmt_RomanUcPeriod;
 	}
 	return false;
 }
@@ -154,8 +110,8 @@ function IsThaiPrNumbering(nType)
 {
 	if(AscFormat.isRealNumber(nType))
 	{
-		return nType >= numbering_presentationnumfrmt_ThaiAlphaParenBoth &&
-			nType <= numbering_presentationnumfrmt_ThaiNumPeriod;
+		return nType >= AscFormat.numbering_presentationnumfrmt_ThaiAlphaParenBoth &&
+			nType <= AscFormat.numbering_presentationnumfrmt_ThaiNumPeriod;
 	}
 	return false;
 }
@@ -175,7 +131,7 @@ function IsPrNumberingSameType(nType1, nType2)
 // Класс для работы с нумерацией в презентациях
 function CPresentationBullet()
 {
-	this.m_nType    = numbering_presentationnumfrmt_None;  // Тип
+	this.m_nType    = AscFormat.numbering_presentationnumfrmt_None;  // Тип
 	this.m_nStartAt = null;                                // Стартовое значение для нумерованных списков
 	this.m_sChar    = null;                                // Значение для символьных списков
 
@@ -201,26 +157,26 @@ CPresentationBullet.prototype.convertFromAscTypeToPresentation = function (nType
 	switch (nType) {
 			case c_oAscNumberingLevel.DecimalBracket_Right    :
 			case c_oAscNumberingLevel.DecimalBracket_Left     :
-				return numbering_presentationnumfrmt_ArabicParenR;
+				return AscFormat.numbering_presentationnumfrmt_ArabicParenR;
 			case c_oAscNumberingLevel.DecimalDot_Right        :
 			case c_oAscNumberingLevel.DecimalDot_Left         :
-				return numbering_presentationnumfrmt_ArabicPeriod;
+				return AscFormat.numbering_presentationnumfrmt_ArabicPeriod;
 			case c_oAscNumberingLevel.UpperRomanDot_Right     :
-				return numbering_presentationnumfrmt_RomanUcPeriod;
+				return AscFormat.numbering_presentationnumfrmt_RomanUcPeriod;
 			case c_oAscNumberingLevel.UpperLetterDot_Left     :
-				return numbering_presentationnumfrmt_AlphaUcPeriod;
+				return AscFormat.numbering_presentationnumfrmt_AlphaUcPeriod;
 			case c_oAscNumberingLevel.LowerLetterBracket_Left :
-				return numbering_presentationnumfrmt_AlphaLcParenR;
+				return AscFormat.numbering_presentationnumfrmt_AlphaLcParenR;
 			case c_oAscNumberingLevel.LowerLetterDot_Left     :
-				return numbering_presentationnumfrmt_AlphaLcPeriod;
+				return AscFormat.numbering_presentationnumfrmt_AlphaLcPeriod;
 			case c_oAscNumberingLevel.LowerRomanDot_Right     :
-				return numbering_presentationnumfrmt_RomanLcPeriod;
+				return AscFormat.numbering_presentationnumfrmt_RomanLcPeriod;
 			case c_oAscNumberingLevel.UpperRomanBracket_Left  :
-				return numbering_presentationnumfrmt_RomanUcParenR;
+				return AscFormat.numbering_presentationnumfrmt_RomanUcParenR;
 			case c_oAscNumberingLevel.LowerRomanBracket_Left  :
-				return numbering_presentationnumfrmt_RomanLcParenR;
+				return AscFormat.numbering_presentationnumfrmt_RomanLcParenR;
 			case c_oAscNumberingLevel.UpperLetterBracket_Left :
-				return numbering_presentationnumfrmt_AlphaUcParenR;
+				return AscFormat.numbering_presentationnumfrmt_AlphaUcParenR;
 			default:
 				break;
 	}
@@ -228,53 +184,53 @@ CPresentationBullet.prototype.convertFromAscTypeToPresentation = function (nType
 
 CPresentationBullet.prototype.getHighlightForNumbering = function(intFormat) {
 	switch (this.m_nType) {
-		case numbering_presentationnumfrmt_AlphaLcParenBoth:
-		case numbering_presentationnumfrmt_AlphaUcParenBoth:
-		case numbering_presentationnumfrmt_ArabicParenBoth:
-		case numbering_presentationnumfrmt_RomanLcParenBoth:
-		case numbering_presentationnumfrmt_RomanUcParenBoth:
-		case numbering_presentationnumfrmt_ThaiAlphaParenBoth:
-		case numbering_presentationnumfrmt_ThaiNumParenBoth:
+		case AscFormat.numbering_presentationnumfrmt_AlphaLcParenBoth:
+		case AscFormat.numbering_presentationnumfrmt_AlphaUcParenBoth:
+		case AscFormat.numbering_presentationnumfrmt_ArabicParenBoth:
+		case AscFormat.numbering_presentationnumfrmt_RomanLcParenBoth:
+		case AscFormat.numbering_presentationnumfrmt_RomanUcParenBoth:
+		case AscFormat.numbering_presentationnumfrmt_ThaiAlphaParenBoth:
+		case AscFormat.numbering_presentationnumfrmt_ThaiNumParenBoth:
 			return '(' + intFormat + ')';
-		case numbering_presentationnumfrmt_AlphaLcParenR:
-		case numbering_presentationnumfrmt_AlphaUcParenR:
-		case numbering_presentationnumfrmt_ArabicParenR:
-		case numbering_presentationnumfrmt_HindiNumParenR:
-		case numbering_presentationnumfrmt_RomanLcParenR:
-		case numbering_presentationnumfrmt_RomanUcParenR:
-		case numbering_presentationnumfrmt_ThaiAlphaParenR:
-		case numbering_presentationnumfrmt_ThaiNumParenR:
+		case AscFormat.numbering_presentationnumfrmt_AlphaLcParenR:
+		case AscFormat.numbering_presentationnumfrmt_AlphaUcParenR:
+		case AscFormat.numbering_presentationnumfrmt_ArabicParenR:
+		case AscFormat.numbering_presentationnumfrmt_HindiNumParenR:
+		case AscFormat.numbering_presentationnumfrmt_RomanLcParenR:
+		case AscFormat.numbering_presentationnumfrmt_RomanUcParenR:
+		case AscFormat.numbering_presentationnumfrmt_ThaiAlphaParenR:
+		case AscFormat.numbering_presentationnumfrmt_ThaiNumParenR:
 			return '' + intFormat + ')';
-		case numbering_presentationnumfrmt_AlphaLcPeriod:
-		case numbering_presentationnumfrmt_AlphaUcPeriod:
-		case numbering_presentationnumfrmt_ArabicDbPeriod:
-		case numbering_presentationnumfrmt_ArabicPeriod:
-		case numbering_presentationnumfrmt_Ea1ChsPeriod:
-		case numbering_presentationnumfrmt_Ea1ChtPeriod:
-		case numbering_presentationnumfrmt_Ea1JpnChsDbPeriod:
-		case numbering_presentationnumfrmt_Ea1JpnKorPeriod:
-		case numbering_presentationnumfrmt_HindiAlpha1Period:
-		case numbering_presentationnumfrmt_HindiAlphaPeriod:
-		case numbering_presentationnumfrmt_HindiNumPeriod:
-		case numbering_presentationnumfrmt_RomanLcPeriod:
-		case numbering_presentationnumfrmt_RomanUcPeriod:
-		case numbering_presentationnumfrmt_ThaiAlphaPeriod:
-		case numbering_presentationnumfrmt_ThaiNumPeriod:
+		case AscFormat.numbering_presentationnumfrmt_AlphaLcPeriod:
+		case AscFormat.numbering_presentationnumfrmt_AlphaUcPeriod:
+		case AscFormat.numbering_presentationnumfrmt_ArabicDbPeriod:
+		case AscFormat.numbering_presentationnumfrmt_ArabicPeriod:
+		case AscFormat.numbering_presentationnumfrmt_Ea1ChsPeriod:
+		case AscFormat.numbering_presentationnumfrmt_Ea1ChtPeriod:
+		case AscFormat.numbering_presentationnumfrmt_Ea1JpnChsDbPeriod:
+		case AscFormat.numbering_presentationnumfrmt_Ea1JpnKorPeriod:
+		case AscFormat.numbering_presentationnumfrmt_HindiAlpha1Period:
+		case AscFormat.numbering_presentationnumfrmt_HindiAlphaPeriod:
+		case AscFormat.numbering_presentationnumfrmt_HindiNumPeriod:
+		case AscFormat.numbering_presentationnumfrmt_RomanLcPeriod:
+		case AscFormat.numbering_presentationnumfrmt_RomanUcPeriod:
+		case AscFormat.numbering_presentationnumfrmt_ThaiAlphaPeriod:
+		case AscFormat.numbering_presentationnumfrmt_ThaiNumPeriod:
 			return '' + intFormat + '.';
-		case numbering_presentationnumfrmt_Arabic1Minus:
-		case numbering_presentationnumfrmt_Arabic2Minus:
-		case numbering_presentationnumfrmt_Hebrew2Minus:
+		case AscFormat.numbering_presentationnumfrmt_Arabic1Minus:
+		case AscFormat.numbering_presentationnumfrmt_Arabic2Minus:
+		case AscFormat.numbering_presentationnumfrmt_Hebrew2Minus:
 			return '' + intFormat + '-';
-		case numbering_presentationnumfrmt_ArabicDbPlain:
-		case numbering_presentationnumfrmt_ArabicPlain:
-		case numbering_presentationnumfrmt_CircleNumDbPlain:
-		case numbering_presentationnumfrmt_CircleNumWdBlackPlain:
-		case numbering_presentationnumfrmt_CircleNumWdWhitePlain:
-		case numbering_presentationnumfrmt_Ea1ChsPlain:
-		case numbering_presentationnumfrmt_Ea1ChtPlain:
-		case numbering_presentationnumfrmt_Ea1JpnKorPlain:
-		case numbering_presentationnumfrmt_Char:
-		case numbering_presentationnumfrmt_None:
+		case AscFormat.numbering_presentationnumfrmt_ArabicDbPlain:
+		case AscFormat.numbering_presentationnumfrmt_ArabicPlain:
+		case AscFormat.numbering_presentationnumfrmt_CircleNumDbPlain:
+		case AscFormat.numbering_presentationnumfrmt_CircleNumWdBlackPlain:
+		case AscFormat.numbering_presentationnumfrmt_CircleNumWdWhitePlain:
+		case AscFormat.numbering_presentationnumfrmt_Ea1ChsPlain:
+		case AscFormat.numbering_presentationnumfrmt_Ea1ChtPlain:
+		case AscFormat.numbering_presentationnumfrmt_Ea1JpnKorPlain:
+		case AscFormat.numbering_presentationnumfrmt_Char:
+		case AscFormat.numbering_presentationnumfrmt_None:
 		default:
 			return '' + intFormat;
 	}
@@ -282,90 +238,90 @@ CPresentationBullet.prototype.getHighlightForNumbering = function(intFormat) {
 
 function getAdaptedNumberingFormat(nType) {
 	switch (nType) {
-		case numbering_presentationnumfrmt_AlphaLcParenBoth:
-		case numbering_presentationnumfrmt_AlphaLcParenR:
-		case numbering_presentationnumfrmt_AlphaLcPeriod:
+		case AscFormat.numbering_presentationnumfrmt_AlphaLcParenBoth:
+		case AscFormat.numbering_presentationnumfrmt_AlphaLcParenR:
+		case AscFormat.numbering_presentationnumfrmt_AlphaLcPeriod:
 			return Asc.c_oAscNumberingFormat.LowerLetter;
 
-		case numbering_presentationnumfrmt_AlphaUcParenBoth:
-		case numbering_presentationnumfrmt_AlphaUcParenR:
-		case numbering_presentationnumfrmt_AlphaUcPeriod:
+		case AscFormat.numbering_presentationnumfrmt_AlphaUcParenBoth:
+		case AscFormat.numbering_presentationnumfrmt_AlphaUcParenR:
+		case AscFormat.numbering_presentationnumfrmt_AlphaUcPeriod:
 			return Asc.c_oAscNumberingFormat.UpperLetter;
 
-		case numbering_presentationnumfrmt_Arabic1Minus:
+		case AscFormat.numbering_presentationnumfrmt_Arabic1Minus:
 			return Asc.c_oAscNumberingFormat.ArabicAlpha;
 
-		case numbering_presentationnumfrmt_Arabic2Minus:
+		case AscFormat.numbering_presentationnumfrmt_Arabic2Minus:
 			return Asc.c_oAscNumberingFormat.ArabicAbjad;
 
-		case numbering_presentationnumfrmt_ArabicDbPeriod:
-		case numbering_presentationnumfrmt_ArabicDbPlain:
+		case AscFormat.numbering_presentationnumfrmt_ArabicDbPeriod:
+		case AscFormat.numbering_presentationnumfrmt_ArabicDbPlain:
 			return Asc.c_oAscNumberingFormat.DecimalFullWidth;
 
-		case numbering_presentationnumfrmt_ArabicParenBoth:
-		case numbering_presentationnumfrmt_ArabicParenR:
-		case numbering_presentationnumfrmt_ArabicPeriod:
-		case numbering_presentationnumfrmt_ArabicPlain:
+		case AscFormat.numbering_presentationnumfrmt_ArabicParenBoth:
+		case AscFormat.numbering_presentationnumfrmt_ArabicParenR:
+		case AscFormat.numbering_presentationnumfrmt_ArabicPeriod:
+		case AscFormat.numbering_presentationnumfrmt_ArabicPlain:
 			return Asc.c_oAscNumberingFormat.Decimal;
 
-		case numbering_presentationnumfrmt_CircleNumDbPlain:
+		case AscFormat.numbering_presentationnumfrmt_CircleNumDbPlain:
 			return Asc.c_oAscNumberingFormat.DecimalEnclosedCircle;
 
-		case numbering_presentationnumfrmt_Ea1ChsPeriod:
-		case numbering_presentationnumfrmt_Ea1ChsPlain:
+		case AscFormat.numbering_presentationnumfrmt_Ea1ChsPeriod:
+		case AscFormat.numbering_presentationnumfrmt_Ea1ChsPlain:
 			return Asc.c_oAscNumberingFormat.ChineseCounting;
 
-		case numbering_presentationnumfrmt_Hebrew2Minus:
+		case AscFormat.numbering_presentationnumfrmt_Hebrew2Minus:
 			return Asc.c_oAscNumberingFormat.Hebrew2;
 
-		case numbering_presentationnumfrmt_HindiAlpha1Period:
+		case AscFormat.numbering_presentationnumfrmt_HindiAlpha1Period:
 			return Asc.c_oAscNumberingFormat.HindiConsonants;
 
-		case numbering_presentationnumfrmt_HindiAlphaPeriod:
+		case AscFormat.numbering_presentationnumfrmt_HindiAlphaPeriod:
 			return Asc.c_oAscNumberingFormat.HindiVowels;
 
-		case numbering_presentationnumfrmt_HindiNumParenR:
-		case numbering_presentationnumfrmt_HindiNumPeriod:
+		case AscFormat.numbering_presentationnumfrmt_HindiNumParenR:
+		case AscFormat.numbering_presentationnumfrmt_HindiNumPeriod:
 			return Asc.c_oAscNumberingFormat.HindiNumbers;
 
-		case numbering_presentationnumfrmt_RomanLcParenBoth:
-		case numbering_presentationnumfrmt_RomanLcParenR:
-		case numbering_presentationnumfrmt_RomanLcPeriod:
+		case AscFormat.numbering_presentationnumfrmt_RomanLcParenBoth:
+		case AscFormat.numbering_presentationnumfrmt_RomanLcParenR:
+		case AscFormat.numbering_presentationnumfrmt_RomanLcPeriod:
 			return Asc.c_oAscNumberingFormat.LowerRoman;
 
-		case numbering_presentationnumfrmt_RomanUcParenBoth:
-		case numbering_presentationnumfrmt_RomanUcParenR:
-		case numbering_presentationnumfrmt_RomanUcPeriod:
+		case AscFormat.numbering_presentationnumfrmt_RomanUcParenBoth:
+		case AscFormat.numbering_presentationnumfrmt_RomanUcParenR:
+		case AscFormat.numbering_presentationnumfrmt_RomanUcPeriod:
 			return Asc.c_oAscNumberingFormat.UpperRoman;
 
-		case numbering_presentationnumfrmt_ThaiAlphaParenBoth:
-		case numbering_presentationnumfrmt_ThaiAlphaParenR:
-		case numbering_presentationnumfrmt_ThaiAlphaPeriod:
+		case AscFormat.numbering_presentationnumfrmt_ThaiAlphaParenBoth:
+		case AscFormat.numbering_presentationnumfrmt_ThaiAlphaParenR:
+		case AscFormat.numbering_presentationnumfrmt_ThaiAlphaPeriod:
 			return Asc.c_oAscNumberingFormat.ThaiLetters;
 
-		case numbering_presentationnumfrmt_ThaiNumParenBoth:
-		case numbering_presentationnumfrmt_ThaiNumParenR:
-		case numbering_presentationnumfrmt_ThaiNumPeriod:
+		case AscFormat.numbering_presentationnumfrmt_ThaiNumParenBoth:
+		case AscFormat.numbering_presentationnumfrmt_ThaiNumParenR:
+		case AscFormat.numbering_presentationnumfrmt_ThaiNumPeriod:
 			return Asc.c_oAscNumberingFormat.ThaiNumbers;
 
-		case numbering_presentationnumfrmt_Ea1ChtPeriod:
-		case numbering_presentationnumfrmt_Ea1ChtPlain:
+		case AscFormat.numbering_presentationnumfrmt_Ea1ChtPeriod:
+		case AscFormat.numbering_presentationnumfrmt_Ea1ChtPlain:
 			break;
 
-		case numbering_presentationnumfrmt_Ea1JpnChsDbPeriod:
+		case AscFormat.numbering_presentationnumfrmt_Ea1JpnChsDbPeriod:
 			break;
 
-		case numbering_presentationnumfrmt_CircleNumWdBlackPlain:
+		case AscFormat.numbering_presentationnumfrmt_CircleNumWdBlackPlain:
 			break;
 
-		case numbering_presentationnumfrmt_CircleNumWdWhitePlain: // TODO: new break type
+		case AscFormat.numbering_presentationnumfrmt_CircleNumWdWhitePlain: // TODO: new break type
 			break;
 
-		case numbering_presentationnumfrmt_Ea1JpnKorPeriod:
-		case numbering_presentationnumfrmt_Ea1JpnKorPlain:
+		case AscFormat.numbering_presentationnumfrmt_Ea1JpnKorPeriod:
+		case AscFormat.numbering_presentationnumfrmt_Ea1JpnKorPlain:
 			break;
 
-		case numbering_presentationnumfrmt_None:
+		case AscFormat.numbering_presentationnumfrmt_None:
 		default:
 			return Asc.c_oAscNumberingFormat.None;
 	}
@@ -383,13 +339,13 @@ CPresentationBullet.prototype.Get_StartAt = function()
 CPresentationBullet.prototype.getDrawingText = function (Num) {
 	var sT = "";
 	Num = Num || 1;
-	if (this.m_nType === numbering_presentationnumfrmt_Char)
+	if (this.m_nType === AscFormat.numbering_presentationnumfrmt_Char)
 	{
 		if ( null != this.m_sChar )
 		{
 			sT = this.m_sChar;
 		}
-	} else if (this.m_nType !== numbering_presentationnumfrmt_Blip)
+	} else if (this.m_nType !== AscFormat.numbering_presentationnumfrmt_Blip)
 	{
 		var typeOfNum = getAdaptedNumberingFormat(this.m_nType);
 		var formatNum = IntToNumberFormat(Num, typeOfNum);
@@ -468,7 +424,7 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 	FirstTextPr_.Merge(TextPr_);
 	this.m_oTextPr = FirstTextPr_;
 
-	if (this.m_nType === numbering_presentationnumfrmt_Blip)
+	if (this.m_nType === AscFormat.numbering_presentationnumfrmt_Blip)
 	{
 		var sizes = AscCommon.getSourceImageSize(this.m_sSrc);
 		var x_height = this.m_oTextPr.FontSize * kHeightImageBullet;
@@ -546,7 +502,7 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 	if (this.IsErrorInNumeration())
 		return;
 
-	if (this.m_nType === numbering_presentationnumfrmt_Blip)
+	if (this.m_nType === AscFormat.numbering_presentationnumfrmt_Blip)
 	{
 		var sizes = AscCommon.getSourceImageSize(this.m_sSrc);
 		var x_height = this.m_oTextPr.FontSize * kHeightImageBullet;
@@ -630,12 +586,12 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 };
 CPresentationBullet.prototype.IsNumbered = function()
 {
-	return this.m_nType >= numbering_presentationnumfrmt_AlphaLcParenBoth
-		&& this.m_nType <= numbering_presentationnumfrmt_ThaiNumPeriod;
+	return this.m_nType >= AscFormat.numbering_presentationnumfrmt_AlphaLcParenBoth
+		&& this.m_nType <= AscFormat.numbering_presentationnumfrmt_ThaiNumPeriod;
 };
 CPresentationBullet.prototype.IsNone = function()
 {
-	return this.m_nType === numbering_presentationnumfrmt_None;
+	return this.m_nType === AscFormat.numbering_presentationnumfrmt_None;
 };
 CPresentationBullet.prototype.IsAlpha = function()
 {
@@ -646,3 +602,4 @@ CPresentationBullet.prototype.IsAlpha = function()
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].getAdaptedNumberingFormat = getAdaptedNumberingFormat;
+window['AscCommonWord'].CPresentationBullet = CPresentationBullet;

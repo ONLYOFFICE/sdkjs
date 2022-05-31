@@ -127,226 +127,6 @@ function shiftSort(a, b, offset)
 function createRgbColor(r, g, b) {
 	return new RgbColor((r << 16) + (g << 8) + b);
 }
-function FromXml_ST_DynamicFilterType(val) {
-	var res = -1;
-	if ("null" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.nullType;
-	} else if ("aboveAverage" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.aboveAverage;
-	} else if ("belowAverage" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.belowAverage;
-	} else if ("tomorrow" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.tomorrow;
-	} else if ("today" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.today;
-	} else if ("yesterday" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.yesterday;
-	} else if ("nextWeek" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.nextWeek;
-	} else if ("thisWeek" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.thisWeek;
-	} else if ("lastWeek" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.lastWeek;
-	} else if ("nextMonth" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.nextMonth;
-	} else if ("thisMonth" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.thisMonth;
-	} else if ("lastMonth" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.lastMonth;
-	} else if ("nextQuarter" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.nextQuarter;
-	} else if ("thisQuarter" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.thisQuarter;
-	} else if ("lastQuarter" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.lastQuarter;
-	} else if ("nextYear" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.nextYear;
-	} else if ("thisYear" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.thisYear;
-	} else if ("lastYear" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.lastYear;
-	} else if ("yearToDate" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.yearToDate;
-	} else if ("Q1" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.q1;
-	} else if ("Q2" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.q2;
-	} else if ("Q3" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.q3;
-	} else if ("Q4" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.q4;
-	} else if ("M1" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.m1;
-	} else if ("M2" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.m2;
-	} else if ("M3" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.m3;
-	} else if ("M4" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.m4;
-	} else if ("M5" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.m5;
-	} else if ("M6" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.m6;
-	} else if ("M7" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.m7;
-	} else if ("M8" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.m8;
-	} else if ("M9" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.m9;
-	} else if ("M10" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.m10;
-	} else if ("M11" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.m11;
-	} else if ("M12" === val) {
-		res = Asc.c_oAscDynamicAutoFilter.m12;
-	}
-	return res;
-}
-function ToXml_ST_DynamicFilterType(val) {
-	var res = "";
-	if (Asc.c_oAscDynamicAutoFilter.nullType === val){
-		res = "null";
-	} else if (Asc.c_oAscDynamicAutoFilter.aboveAverage === val) {
-		res = "aboveAverage";
-	} else if (Asc.c_oAscDynamicAutoFilter.belowAverage === val) {
-		res = "belowAverage";
-	} else if (Asc.c_oAscDynamicAutoFilter.tomorrow === val) {
-		res = "tomorrow";
-	} else if (Asc.c_oAscDynamicAutoFilter.today === val) {
-		res = "today";
-	} else if (Asc.c_oAscDynamicAutoFilter.yesterday === val) {
-		res = "yesterday";
-	} else if (Asc.c_oAscDynamicAutoFilter.nextWeek === val) {
-		res = "nextWeek";
-	} else if (Asc.c_oAscDynamicAutoFilter.thisWeek === val) {
-		res = "thisWeek";
-	} else if (Asc.c_oAscDynamicAutoFilter.lastWeek === val) {
-		res = "lastWeek";
-	} else if (Asc.c_oAscDynamicAutoFilter.nextMonth === val) {
-		res = "nextMonth";
-	} else if (Asc.c_oAscDynamicAutoFilter.thisMonth === val) {
-		res = "thisMonth";
-	} else if (Asc.c_oAscDynamicAutoFilter.lastMonth === val) {
-		res = "lastMonth";
-	} else if (Asc.c_oAscDynamicAutoFilter.nextQuarter === val) {
-		res = "nextQuarter";
-	} else if (Asc.c_oAscDynamicAutoFilter.thisQuarter === val) {
-		res = "thisQuarter";
-	} else if (Asc.c_oAscDynamicAutoFilter.lastQuarter === val) {
-		res = "lastQuarter";
-	} else if (Asc.c_oAscDynamicAutoFilter.nextYear === val) {
-		res = "nextYear";
-	} else if (Asc.c_oAscDynamicAutoFilter.thisYear === val) {
-		res = "thisYear";
-	} else if (Asc.c_oAscDynamicAutoFilter.lastYear === val) {
-		res = "lastYear";
-	} else if (Asc.c_oAscDynamicAutoFilter.yearToDate === val) {
-		res = "yearToDate";
-	} else if (Asc.c_oAscDynamicAutoFilter.q1 === val) {
-		res = "Q1";
-	} else if (Asc.c_oAscDynamicAutoFilter.q2 === val) {
-		res = "Q2";
-	} else if (Asc.c_oAscDynamicAutoFilter.q3 === val) {
-		res = "Q3";
-	} else if (Asc.c_oAscDynamicAutoFilter.q4 === val) {
-		res = "Q4";
-	} else if (Asc.c_oAscDynamicAutoFilter.m1 === val) {
-		res = "M1";
-	} else if (Asc.c_oAscDynamicAutoFilter.m2 === val) {
-		res = "M2";
-	} else if (Asc.c_oAscDynamicAutoFilter.m3 === val) {
-		res = "M3";
-	} else if (Asc.c_oAscDynamicAutoFilter.m4 === val) {
-		res = "M4";
-	} else if (Asc.c_oAscDynamicAutoFilter.m5 === val) {
-		res = "M5";
-	} else if (Asc.c_oAscDynamicAutoFilter.m6 === val) {
-		res = "M6";
-	} else if (Asc.c_oAscDynamicAutoFilter.m7 === val) {
-		res = "M7";
-	} else if (Asc.c_oAscDynamicAutoFilter.m8 === val) {
-		res = "M8";
-	} else if (Asc.c_oAscDynamicAutoFilter.m9 === val) {
-		res = "M9";
-	} else if (Asc.c_oAscDynamicAutoFilter.m10 === val) {
-		res = "M10";
-	} else if (Asc.c_oAscDynamicAutoFilter.m11 === val) {
-		res = "M11";
-	} else if (Asc.c_oAscDynamicAutoFilter.m12 === val) {
-		res = "M12";
-	}
-	return res;
-}
-function FromXml_ST_FilterOperator(val) {
-	var res = -1;
-	if ("equal" === val) {
-		res = Asc.c_oAscCustomAutoFilter.equals;
-	} else if ("lessThan" === val) {
-		res = Asc.c_oAscCustomAutoFilter.isLessThan;
-	} else if ("lessThanOrEqual" === val) {
-		res = Asc.c_oAscCustomAutoFilter.isLessThanOrEqualTo;
-	} else if ("notEqual" === val) {
-		res = Asc.c_oAscCustomAutoFilter.doesNotEqual;
-	} else if ("greaterThanOrEqual" === val) {
-		res = Asc.c_oAscCustomAutoFilter.isGreaterThanOrEqualTo;
-	} else if ("greaterThan" === val) {
-		res = Asc.c_oAscCustomAutoFilter.isGreaterThan;
-	}
-	return res;
-}
-function ToXml_ST_FilterOperator(val) {
-	var res = "";
-	if (Asc.c_oAscCustomAutoFilter.equals === val) {
-		res = "equal";
-	} else if (Asc.c_oAscCustomAutoFilter.isLessThan === val) {
-		res = "lessThan";
-	} else if (Asc.c_oAscCustomAutoFilter.isLessThanOrEqualTo === val) {
-		res = "lessThanOrEqual";
-	} else if (Asc.c_oAscCustomAutoFilter.doesNotEqual === val) {
-		res = "notEqual";
-	} else if (Asc.c_oAscCustomAutoFilter.isGreaterThanOrEqualTo === val) {
-		res = "greaterThanOrEqual";
-	} else if (Asc.c_oAscCustomAutoFilter.isGreaterThan === val) {
-		res = "greaterThan";
-	}
-	return res;
-}
-
-function FromXml_ST_DateTimeGrouping(val) {
-	var res = -1;
-	if ("year" === val) {
-		res = Asc.EDateTimeGroup.datetimegroupYear;
-	} else if ("month" === val) {
-		res = Asc.EDateTimeGroup.datetimegroupMonth;
-	} else if ("day" === val) {
-		res = Asc.EDateTimeGroup.datetimegroupDay;
-	} else if ("hour" === val) {
-		res = Asc.EDateTimeGroup.datetimegroupHour;
-	} else if ("minute" === val) {
-		res = Asc.EDateTimeGroup.datetimegroupMinute;
-	} else if ("second" === val) {
-		res = Asc.EDateTimeGroup.datetimegroupSecond;
-	}
-	return res;
-}
-function ToXml_ST_DateTimeGrouping(val) {
-	var res = "";
-	if (Asc.EDateTimeGroup.datetimegroupYear === val) {
-		res = "year";
-	} else if (Asc.EDateTimeGroup.datetimegroupMonth === val) {
-		res = "month";
-	} else if (Asc.EDateTimeGroup.datetimegroupDay === val) {
-		res = "day";
-	} else if (Asc.EDateTimeGroup.datetimegroupHour === val) {
-		res = "hour";
-	} else if (Asc.EDateTimeGroup.datetimegroupMinute === val) {
-		res = "minute";
-	} else if (Asc.EDateTimeGroup.datetimegroupSecond === val) {
-		res = "second";
-	}
-	return res;
-}
-
 var g_oRgbColorProperties = {
 		rgb : 0
 	};
@@ -1434,16 +1214,6 @@ var g_oFontProperties = {
 		}
 	}
 
-	function FromXml_ST_GradientType(val) {
-		var res = -1;
-		if ("linear" === val) {
-			res = Asc.c_oAscFillGradType.GRAD_LINEAR;
-		} else if ("path" === val) {
-			res = Asc.c_oAscFillGradType.GRAD_PATH;
-		}
-		return res;
-	}
-
 	function FromXml_ST_PatternType(val) {
 		var res = -1;
 		if ("none" === val) {
@@ -1486,6 +1256,48 @@ var g_oFontProperties = {
 			res = c_oAscPatternType.Gray0625;
 		}
 		return res;
+	}
+	function ToXml_ST_PatternType(val) {
+		switch (val) {
+			case c_oAscPatternType.None:
+				return 'none';
+			case c_oAscPatternType.Solid:
+				return 'solid';
+			case c_oAscPatternType.MediumGray:
+				return 'mediumGray';
+			case c_oAscPatternType.DarkGray:
+				return 'darkGray';
+			case c_oAscPatternType.LightGray:
+				return 'lightGray';
+			case c_oAscPatternType.DarkHorizontal:
+				return 'darkHorizontal';
+			case c_oAscPatternType.DarkVertical:
+				return 'darkVertical';
+			case c_oAscPatternType.DarkDown:
+				return 'darkDown';
+			case c_oAscPatternType.DarkUp:
+				return 'darkUp';
+			case c_oAscPatternType.DarkGrid:
+				return 'darkGrid';
+			case c_oAscPatternType.DarkTrellis:
+				return 'darkTrellis';
+			case c_oAscPatternType.LightHorizontal:
+				return 'lightHorizontal';
+			case c_oAscPatternType.LightVertical:
+				return 'lightVertical';
+			case c_oAscPatternType.LightDown:
+				return 'lightDown';
+			case c_oAscPatternType.LightUp:
+				return 'lightUp';
+			case c_oAscPatternType.LightGrid:
+				return 'lightGrid';
+			case c_oAscPatternType.LightTrellis:
+				return 'lightTrellis';
+			case c_oAscPatternType.Gray125:
+				return 'gray125';
+			case c_oAscPatternType.Gray0625:
+				return 'gray0625';
+		}
 	}
 
 	function GradientFill() {
@@ -1609,7 +1421,7 @@ var g_oFontProperties = {
 			var val;
 			val = vals["type"];
 			if (undefined !== val) {
-				val = FromXml_ST_GradientType(val);
+				val = AscCommonExcel.FromXml_ST_GradientType(val);
 				if (-1 !== val) {
 					this.type = val;
 				}
@@ -2151,6 +1963,57 @@ var g_oFontProperties = {
 		}
 		return res;
 	}
+
+	function ToXml_ST_BorderStyle(val) {
+		var res = null;
+		switch (val) {
+			case  AscCommon.c_oAscBorderStyles.DashDot:
+				res = "dashDot";
+				break;
+			case  AscCommon.c_oAscBorderStyles.DashDotDot:
+				res = "dashDotDot";
+				break;
+			case  AscCommon.c_oAscBorderStyles.Dashed:
+				res = "dashed";
+				break;
+			case  AscCommon.c_oAscBorderStyles.Dotted:
+				res = "dotted";
+				break;
+			case  AscCommon.c_oAscBorderStyles.Double:
+				res = "double";
+				break;
+			case  AscCommon.c_oAscBorderStyles.Hair:
+				res = "hair";
+				break;
+			case  AscCommon.c_oAscBorderStyles.Medium:
+				res = "medium";
+				break;
+			case  AscCommon.c_oAscBorderStyles.MediumDashDot:
+				res = "mediumDashDot";
+				break;
+			case  AscCommon.c_oAscBorderStyles.MediumDashDotDot:
+				res = "mediumDashDotDot";
+				break;
+			case  AscCommon.c_oAscBorderStyles.MediumDashed:
+				res = "mediumDashed";
+				break;
+			case  AscCommon.c_oAscBorderStyles.None:
+				//res = "none";
+				break;
+			case  AscCommon.c_oAscBorderStyles.SlantDashDot:
+				res = "slantDashDot";
+				break;
+			case  AscCommon.c_oAscBorderStyles.Thick:
+				res = "thick";
+				break;
+			case  AscCommon.c_oAscBorderStyles.Thin:
+				res = "thin";
+				break;
+		}
+		return res;
+	}
+
+
 
 	var g_oBorderPropProperties = {
 		s: 0, c: 1
@@ -3351,45 +3214,6 @@ var g_oBorderProperties = {
 		this.num = new AscCommonExcel.Num({f:val});
 	};
 
-
-	function FromXml_ST_HorizontalAlignment(val) {
-		var res = -1;
-		if ("general" === val) {
-			res = -1;
-		} else if ("left" === val) {
-			res = AscCommon.align_Left;
-		} else if ("center" === val) {
-			res = AscCommon.align_Center;
-		} else if ("right" === val) {
-			res = AscCommon.align_Right;
-		} else if ("fill" === val) {
-			res = AscCommon.align_Justify;
-		} else if ("justify" === val) {
-			res = AscCommon.align_Justify;
-		} else if ("centerContinuous" === val) {
-			res = AscCommon.align_Center;
-		} else if ("distributed" === val) {
-			res = AscCommon.align_Justify;
-		}
-		return res;
-	}
-
-	function FromXml_ST_VerticalAlignment(val) {
-		var res = -1;
-		if ("top" === val) {
-			res = Asc.c_oAscVAlign.Top;
-		} else if ("center" === val) {
-			res = Asc.c_oAscVAlign.Center;
-		} else if ("bottom" === val) {
-			res = Asc.c_oAscVAlign.Bottom;
-		} else if ("justify" === val) {
-			res = Asc.c_oAscVAlign.Just;
-		} else if ("distributed" === val) {
-			res = Asc.c_oAscVAlign.Dist;
-		}
-		return res;
-	}
-
 	var g_oAlignProperties = {
 		hor: 0,
 		indent: 1,
@@ -3605,14 +3429,14 @@ var g_oBorderProperties = {
 			var val;
 			val = vals["horizontal"];
 			if (undefined !== val) {
-				val = FromXml_ST_HorizontalAlignment(val);
+				val = AscCommonExcel.FromXml_ST_HorizontalAlignment(val);
 				if (-1 !== val) {
 					this.hor = val;
 				}
 			}
 			val = vals["vertical"];
 			if (undefined !== val) {
-				val = FromXml_ST_VerticalAlignment(val);
+				val = AscCommonExcel.FromXml_ST_VerticalAlignment(val);
 				if (-1 !== val) {
 					this.ver = val;
 				}
@@ -4918,6 +4742,8 @@ StyleManager.prototype =
 		this.outlineLevel = 0;
 		this.flags = g_nRowFlag_init;
 		this._hasChanged = false;
+
+		this._tempCell = new AscCommonExcel.Cell(worksheet);
 	}
 	Row.prototype.clear = function () {
 		this.index = null;
@@ -5412,6 +5238,26 @@ StyleManager.prototype =
 		stream.WriteByte(0);
 		stream.WriteULong(0);
 		stream.XlsbEndRecord();
+	};
+	Row.prototype.onStartNode = function(elem, attr, uq, tagend, getStrNode) {
+		var attrVals;
+		if ('c' === elem) {
+			this._tempCell.clear();
+			if (this._tempCell.readAttributes) {
+				this._tempCell.readAttributes(attr, uq);
+			}
+			return this._tempCell;
+		}
+		return this;
+	};
+	Row.prototype.onEndNode = function(prevContext, elem) {
+		var res = true;
+		if ('c' === elem) {
+			this._tempCell.saveContent();
+		} else {
+			res = false;
+		}
+		return res;
 	};
 
 	function getStringFromMultiText(multiText) {
@@ -7620,19 +7466,6 @@ function RangeDataManagerElem(bbox, data)
 		}
 		return newContext;
 	};
-	AutoFilter.prototype.toXml = function(writer, name) {
-		writer.WriteXmlNodeStart(name);
-		if (null !== this.Ref) {
-			writer.WriteXmlAttributeStringEncode("ref", this.Ref.getName());
-		}
-		writer.WriteXmlNodeEnd(name, true);
-		for (var i = 0; i < this.FilterColumns.length; ++i) {
-			var elem = this.FilterColumns[i];
-			elem.toXml(writer, "filterColumn");
-		}
-		//todo sortState
-		writer.WriteXmlNodeEnd(name);
-	};
 	AutoFilter.prototype.deleteFilterColumn = function(index) {
 		if (this.FilterColumns && this.FilterColumns[index]) {
 			this.FilterColumns.splice(index, 1)
@@ -8465,32 +8298,6 @@ function RangeDataManagerElem(bbox, data)
 		}
 		return newContext;
 	};
-	FilterColumn.prototype.toXml = function(writer, name) {
-		writer.WriteXmlNodeStart(name);
-		if (null !== this.colId) {
-			writer.WriteXmlAttributeNumber("colId", this.ColId);
-		}
-		if (true !== this.ShowButton) {
-			writer.WriteXmlAttributeBool("showButton", this.ShowButton);
-		}
-		writer.WriteXmlNodeEnd(name, true);
-		if (null !== this.ColorFilter) {
-			this.ColorFilter.toXml(writer, "colorFilter");
-		}
-		if (null !== this.CustomFiltersObj) {
-			this.CustomFiltersObj.toXml(writer, "customFilters");
-		}
-		if (null !== this.DynamicFilter) {
-			this.DynamicFilter.toXml(writer, "dynamicFilter");
-		}
-		if (null !== this.Filters) {
-			this.Filters.toXml(writer, "filters");
-		}
-		if (null !== this.Top10) {
-			this.Top10.toXml(writer, "top10");
-		}
-		writer.WriteXmlNodeEnd(name);
-	};
 
 	function CT_Filter() {
 		//Attributes
@@ -8505,13 +8312,6 @@ function RangeDataManagerElem(bbox, data)
 				this.Val = AscCommon.unleakString(uq(val));
 			}
 		}
-	};
-	CT_Filter.prototype.toXml = function(writer, name) {
-		writer.WriteXmlNodeStart(name);
-		if (null !== this.Val) {
-			writer.WriteXmlAttributeStringEncode("val", this.Val);
-		}
-		writer.WriteXmlNodeEnd(name, true, true);
 	};
 
 	/** @constructor */
@@ -8730,25 +8530,7 @@ function RangeDataManagerElem(bbox, data)
 		}
 		return newContext;
 	};
-	Filters.prototype.toXml = function(writer, name) {
-		writer.WriteXmlNodeStart(name);
-		if (null !== this.Blank) {
-			writer.WriteXmlAttributeBool("blank", this.Blank);
-		}
-		writer.WriteXmlNodeEnd(name, true);
-		for (var val in this.Values) {
-			var filter = new CT_Filter();
-			filter.Val = val;
-			filter.toXml(writer, "filter");
-		}
-		for (var i = 0; i < this.Dates.length; ++i) {
-			var elem = this.Dates[i];
-			var dateGroupItem = new AscCommonExcel.DateGroupItem();
-			dateGroupItem.convertRangeToDateGroupItem(elem);
-			dateGroupItem.toXml(writer, "dateGroupItem");
-		}
-		writer.WriteXmlNodeEnd(name);
-	};
+
 
 /** @constructor */
 function Filter() {
@@ -8865,37 +8647,12 @@ DateGroupItem.prototype.readAttributes = function(attr, uq) {
 		}
 		val = vals["dateTimeGrouping"];
 		if (undefined !== val) {
-			val = FromXml_ST_DateTimeGrouping(val);
+			val = AscCommonExcel.FromXml_ST_DateTimeGrouping(val);
 			if (-1 !== val) {
 				this.DateTimeGrouping = val;
 			}
 		}
 	}
-};
-DateGroupItem.prototype.toXml = function(writer, name) {
-	writer.WriteXmlNodeStart(name);
-	if (null !== this.Year) {
-		writer.WriteXmlAttributeNumber("year", this.Year);
-	}
-	if (null !== this.Month) {
-		writer.WriteXmlAttributeNumber("month", this.Month);
-	}
-	if (null !== this.Day) {
-		writer.WriteXmlAttributeNumber("day", this.Day);
-	}
-	if (null !== this.Hour) {
-		writer.WriteXmlAttributeNumber("hour", this.Hour);
-	}
-	if (null !== this.Minute) {
-		writer.WriteXmlAttributeNumber("minute", this.Minute);
-	}
-	if (null !== this.Second) {
-		writer.WriteXmlAttributeNumber("second", this.Second);
-	}
-	if (null !== this.DateTimeGrouping) {
-		writer.WriteXmlAttributeStringEncode("dateTimeGrouping", ToXml_ST_DateTimeGrouping(this.DateTimeGrouping));
-	}
-	writer.WriteXmlNodeEnd(name, true, true);
 };
 
 var g_oCustomFilters = {
@@ -9026,20 +8783,6 @@ CustomFilters.prototype.onStartNode = function(elem, attr, uq) {
 		newContext = null;
 	}
 	return newContext;
-};
-CustomFilters.prototype.toXml = function(writer, name) {
-	writer.WriteXmlNodeStart(name);
-	if (false !== this.And) {
-		writer.WriteXmlAttributeBool("and", this.And);
-	}
-	writer.WriteXmlNodeEnd(name, true);
-	if (this.CustomFilters) {
-		for (var i = 0; i < this.CustomFilters.length; ++i) {
-			var elem = this.CustomFilters[i];
-			elem.toXml(writer, "customFilter");
-		}
-	}
-	writer.WriteXmlNodeEnd(name);
 };
 CustomFilters.prototype.changeForInterface = function () {
 	var res = this.clone();
@@ -9314,7 +9057,7 @@ CustomFilter.prototype.readAttributes = function(attr, uq) {
 		var val;
 		val = vals["operator"];
 		if (undefined !== val) {
-			val = FromXml_ST_FilterOperator(val);
+			val = AscCommonExcel.FromXml_ST_FilterOperator(val);
 			if (-1 !== val) {
 				this.Operator = val;
 			}
@@ -9324,16 +9067,6 @@ CustomFilter.prototype.readAttributes = function(attr, uq) {
 			this.Val = AscCommon.unleakString(uq(val));
 		}
 	}
-};
-CustomFilter.prototype.toXml = function(writer, name) {
-	writer.WriteXmlNodeStart(name);
-	if (null !== this.Operator) {
-		writer.WriteXmlAttributeStringEncode("operator", ToXml_ST_FilterOperator(this.Operator));
-	}
-	if (null !== this.Val) {
-		writer.WriteXmlAttributeStringEncode("val", this.Val);
-	}
-	writer.WriteXmlNodeEnd(name, true, true);
 };
 CustomFilter.prototype.Write_ToBinary2 = function(writer) {
 	if (null != this.Operator) {
@@ -9499,7 +9232,7 @@ DynamicFilter.prototype.readAttributes = function(attr, uq) {
 		var val;
 		val = vals["type"];
 		if (undefined !== val) {
-			val = FromXml_ST_DynamicFilterType(val);
+			val = AscCommonExcel.FromXml_ST_DynamicFilterType(val);
 			if (-1 !== val) {
 				this.Type = val;
 			}
@@ -9513,19 +9246,6 @@ DynamicFilter.prototype.readAttributes = function(attr, uq) {
 			this.MaxVal = val - 0;
 		}
 	}
-};
-DynamicFilter.prototype.toXml = function(writer, name) {
-	writer.WriteXmlNodeStart(name);
-	if (null !== this.Type) {
-		writer.WriteXmlAttributeStringEncode("type", ToXml_ST_DynamicFilterType(this.Type));
-	}
-	if (null !== this.Val) {
-		writer.WriteXmlAttributeNumber("val", this.Val);
-	}
-	if (null !== this.MaxVal) {
-		writer.WriteXmlAttributeNumber("maxVal", this.MaxVal);
-	}
-	writer.WriteXmlNodeEnd(name, true, true);
 };
 DynamicFilter.prototype.Write_ToBinary2 = function(writer) {
 	if (null !== this.Type) {
@@ -9735,18 +9455,6 @@ ColorFilter.prototype.readAttributes = function(attr, uq) {
 		}
 	}
 };
-ColorFilter.prototype.toXml = function(writer, name) {
-	writer.WriteXmlNodeStart(name);
-	//todo
-	// if (null !== this.dxfId) {
-	// 	writer.WriteXmlAttributeNumber("dxfId", this.dxfId);
-	// }
-	if (null !== this.CellColor) {
-		writer.WriteXmlAttributeBool("cellColor", this.CellColor);
-	}
-	writer.WriteXmlNodeEnd(name, true, true);
-};
-
 ColorFilter.prototype.Write_ToBinary2 = function(writer) {
 	if (null !== this.CellColor) {
 		writer.WriteBool(true);
@@ -9959,22 +9667,6 @@ Top10.prototype.readAttributes = function(attr, uq) {
 			this.FilterVal = val - 0;
 		}
 	}
-};
-Top10.prototype.toXml = function(writer, name) {
-	writer.WriteXmlNodeStart(name);
-	if (true !== this.Top) {
-		writer.WriteXmlAttributeBool("top", this.Top);
-	}
-	if (false !== this.Percent) {
-		writer.WriteXmlAttributeBool("percent", this.Percent);
-	}
-	if (null !== this.Val) {
-		writer.WriteXmlAttributeNumber("val", this.Val);
-	}
-	if (null !== this.FilterVal) {
-		writer.WriteXmlAttributeNumber("filterVal", this.FilterVal);
-	}
-	writer.WriteXmlNodeEnd(name, true, true);
 };
 Top10.prototype.Write_ToBinary2 = function(w) {
 	if (null !== this.FilterVal) {
@@ -12160,6 +11852,38 @@ QueryTableField.prototype.clone = function() {
 	};
 
 
+	function CT_Connection() {
+		this.dbPr = null;//CT_DbPr
+		this.olapPr = null;//CT_OlapPr
+		this.webPr = null;//CT_WebPr
+		this.textPr = null;//CT_TextPr
+		this.parameters = null;//CT_Parameters
+		this.extLst = null;//CT_ExtensionList
+
+		this.id = null;//xsd:unsignedInt
+		this.sourceFile = null;//s:ST_Xstring
+		this.odcFile = null;//s:ST_Xstring
+		this.keepAlive = null;//xsd:boolean
+		this.interval = null;//xsd:unsignedInt
+		this.name = null;//s:ST_Xstring
+		this.description = null;//s:ST_Xstring
+		this.type = null;//xsd:unsignedInt
+		this.reconnectionMethod = null;//xsd:unsignedInt
+		this.refreshedVersion = null;//xsd:unsignedByte
+		this.minRefreshableVersion = null;//xsd:unsignedByte
+		this.savePassword = null;//xsd:boolean
+		this.new = null;//xsd:boolean
+		this.deleted = null;//xsd:boolean
+		this.onlyUseConnectionFile = null;//xsd:boolean
+		this.background = null;//xsd:boolean
+		this.refreshOnLoad = null;//xsd:boolean
+		this.saveData = null;//xsd:boolean
+		this.credentials = null;//ST_CredMethod
+		this.singleSignOnId = null;//s:ST_Xstring
+
+		return this;
+	}
+
 
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
@@ -12521,5 +12245,17 @@ QueryTableField.prototype.clone = function() {
 	prot["asc_getName"] = prot.asc_getName;
 
 	window["AscCommonExcel"].CPrintPreviewState = CPrintPreviewState;
+
+	window["AscCommonExcel"].FromXml_ST_PatternType         = FromXml_ST_PatternType;
+
+	window["AscCommonExcel"].ToXml_ST_PatternType           = ToXml_ST_PatternType;
+	window["AscCommonExcel"].FromXml_ST_BorderStyle         = FromXml_ST_BorderStyle;
+	window["AscCommonExcel"].ToXml_ST_BorderStyle           = ToXml_ST_BorderStyle;
+
+
+	window["AscCommonExcel"].CT_Connection = CT_Connection;
+	window["AscCommonExcel"].CT_Filter = CT_Filter;
+
+
 
 })(window);

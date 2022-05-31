@@ -8013,6 +8013,14 @@ ParaRun.prototype.IsSelectedToEnd = function()
 
 	return (Math.max(this.Selection.StartPos, this.Selection.EndPos) === this.Content.length);
 };
+ParaRun.prototype.GetSelectionStartPos = function()
+{
+	return (this.Selection.StartPos > this.Selection.EndPos ? this.Selection.EndPos : this.Selection.StartPos);
+};
+ParaRun.prototype.GetSelectionEndPos = function()
+{
+	return (this.Selection.StartPos > this.Selection.EndPos ? this.Selection.StartPos : this.Selection.EndPos);
+};
 
 ParaRun.prototype.SkipAnchorsAtSelectionStart = function(Direction)
 {
@@ -12535,173 +12543,6 @@ ParaRun.prototype.ConvertFootnoteType = function(isToFootnote, oStyles, oFootnot
 		}
 	}
 };
-ParaRun.prototype.CheckTextForTextCase = function(oEngine)
-{
-    var nStartPos = 0;
-	var nEndPos   = -1;
-
-	if (this.Selection.Use)
-	{
-		nStartPos = this.Selection.StartPos;
-		nEndPos   = this.Selection.EndPos;
-		if (nStartPos > nEndPos)
-		{
-			var nTemp = nStartPos;
-			nStartPos = nEndPos;
-			nEndPos   = nTemp;
-		}
-	}
-
-    for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
-	{
-		var oItem = this.Content[nPos];
-		if (para_Text === oItem.Type)
-		{
-			if (oItem.IsDot())
-			{
-                oEngine.currentSentence += oEngine.word;
-                oEngine.currentSentence += " ";
-                oEngine.word = "";
-                oEngine.CheckWords(oEngine);
-			}
-			else
-			{
-				if (!oItem.IsPunctuation())
-				{
-                    if (nPos >= nStartPos && nPos < nEndPos)
-                    {
-                        var nCharCode  = oItem.Value;
-                        var nLowerCode = String.fromCharCode(nCharCode).toLowerCase().charCodeAt(0);
-                        var nUpperCode = String.fromCharCode(nCharCode).toUpperCase().charCodeAt(0);
-
-                        if (AscCommon.IsSpace(nCharCode))
-                            oEngine.word += " ";
-                        if (nLowerCode !== nCharCode || nUpperCode !== nCharCode || oItem.IsNumber())
-                            oEngine.word += String.fromCharCode(nCharCode);
-                    }
-				}
-				else
-				{
-                    oEngine.currentSentence += oEngine.word;
-                    oEngine.currentSentence += " ";
-                    oEngine.word = "";
-                    oEngine.CheckWords(oEngine);
-				}
-			}
-		}
-		else
-		{
-            oEngine.currentSentence += oEngine.word;
-            oEngine.currentSentence += " ";
-            oEngine.word = "";
-
-			if (para_Tab !== oItem.Type && para_Space !== oItem.Type)
-                oEngine.CheckWords(oEngine);
-
-            if (para_End === oItem.Type && oEngine.SentenceSettings.length === 0)
-                oEngine.GlobalSettings = false;
-		}
-	}
-};
-ParaRun.prototype.ChangeTextCase = function(oEngine)
-{
-	var nCaseType = oEngine.GetCaseType();
-	if (Asc.c_oAscChangeTextCaseType.SentenceCase === nCaseType || Asc.c_oAscChangeTextCaseType.CapitalizeWords === nCaseType)
-	{
-		var nStartPos = 0;
-		var nEndPos   = -1;
-
-		if (this.Selection.Use)
-		{
-			nStartPos = this.Selection.StartPos;
-			nEndPos   = this.Selection.EndPos;
-			if (nStartPos > nEndPos)
-			{
-				var nTemp = nStartPos;
-				nStartPos = nEndPos;
-				nEndPos   = nTemp;
-			}
-		}
-		for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
-		{
-			var oItem = this.Content[nPos];
-			if (para_Text === oItem.Type)
-			{
-				if (oItem.IsDot())
-				{
-                    oEngine.FlushWord();
-                    oEngine.SetStartSentence(true);
-				}
-				else
-				{
-					if (!oItem.IsPunctuation())
-					{
-                        if (!AscCommon.IsSpace(oItem.Value))
-						    oEngine.AddLetter(this, nPos, nPos >= nStartPos && nPos < nEndPos);
-                        else
-                            oEngine.FlushWord();  
-					}
-					else
-					{
-						oEngine.FlushWord();
-						if (oItem.Value === 33 || oItem.Value === 63 || oItem.Value === 46)
-							oEngine.SetStartSentence(true);
-						else
-							oEngine.SetStartSentence(false);
-					}
-				}
-			}
-			else
-			{
-				oEngine.FlushWord();
-
-				if (para_Tab !== oItem.Type && para_Space !== oItem.Type)
-					oEngine.SetStartSentence(false);
-			}
-		}
-	}
-	else
-	{
-		var nStartPos = 0;
-		var nEndPos   = -1;
-
-		if (this.Selection.Use)
-		{
-			nStartPos = this.Selection.StartPos;
-			nEndPos   = this.Selection.EndPos;
-			if (nStartPos > nEndPos)
-			{
-				var nTemp = nStartPos;
-				nStartPos = nEndPos;
-				nEndPos   = nTemp;
-			}
-		}
-		for (var nPos = nStartPos; nPos < nEndPos; ++nPos)
-		{
-			var oItem = this.Content[nPos];
-			if (para_Text === oItem.Type)
-			{
-				var nCharCode  = oItem.Value;
-				var nLowerCode = String.fromCharCode(nCharCode).toLowerCase().charCodeAt(0);
-				var nUpperCode = String.fromCharCode(nCharCode).toUpperCase().charCodeAt(0);
-
-				if (nLowerCode !== nCharCode || nUpperCode !== nCharCode)
-				{
-					if (nLowerCode === nCharCode && (Asc.c_oAscChangeTextCaseType.ToggleCase === nCaseType || Asc.c_oAscChangeTextCaseType.UpperCase === nCaseType))
-					{
-						this.AddToContent(nPos, new ParaText(nUpperCode), false);
-						this.RemoveFromContent(nPos + 1, 1, false);
-					}
-					else if (nUpperCode === nCharCode && (Asc.c_oAscChangeTextCaseType.ToggleCase === nCaseType || Asc.c_oAscChangeTextCaseType.LowerCase === nCaseType))
-					{
-						this.AddToContent(nPos, new ParaText(nLowerCode), false);
-						this.RemoveFromContent(nPos + 1, 1, false);
-					}
-				}
-			}
-		}
-	}
-};
 ParaRun.prototype.FindNextFillingForm = function(isNext, isCurrent, isStart)
 {
 	var nCurPos = this.Selection.Use === true ? this.Selection.EndPos : this.State.ContentPos;
@@ -12969,6 +12810,207 @@ ParaRun.prototype.GetSelectedDrawingObjectsInText = function(arrDrawings)
 
 	return arrDrawings;
 };
+
+// Search
+//----------------------------------------------------------------------------------------------------------------------
+ParaRun.prototype.Search = function(ParaSearch)
+{
+	this.SearchMarks = [];
+
+	var Para         = ParaSearch.Paragraph;
+	var SearchEngine = ParaSearch.SearchEngine;
+	var Type         = ParaSearch.Type;
+	let isWholeWords = SearchEngine.IsWholeWords();
+
+	for (var nPos = 0, nContentLen = this.Content.length; nPos < nContentLen; ++nPos)
+	{
+		var oItem = this.Content[nPos];
+		if (para_Drawing === oItem.Type)
+			oItem.Search(SearchEngine, Type);
+
+		while (ParaSearch.SearchIndex > 0 && !ParaSearch.Check(ParaSearch.SearchIndex, oItem))
+		{
+			if (isWholeWords)
+			{
+				ParaSearch.SearchIndex = 0;
+			}
+			else
+			{
+
+				ParaSearch.SearchIndex = ParaSearch.GetPrefix(ParaSearch.SearchIndex - 1);
+				if (0 === ParaSearch.SearchIndex)
+				{
+					ParaSearch.Reset();
+					break;
+				}
+				else if (ParaSearch.Check(ParaSearch.SearchIndex, oItem))
+				{
+					ParaSearch.StartPos = ParaSearch.StartPosBuf.shift();
+					break;
+				}
+			}
+		}
+
+		if (ParaSearch.Check(ParaSearch.SearchIndex, oItem))
+		{
+			if (0 === ParaSearch.SearchIndex)
+			{
+				if (isWholeWords)
+				{
+					var oPrevElement = this.GetPrevRunElement(nPos);
+					if (!oPrevElement || (!oPrevElement.IsLetter() && !oPrevElement.IsDigit()))
+						ParaSearch.StartPos = {Run : this, Pos : nPos};
+				}
+				else
+				{
+					ParaSearch.StartPos = {Run : this, Pos : nPos};
+				}
+			}
+
+			if (0 !== ParaSearch.GetPrefix(ParaSearch.SearchIndex))
+				ParaSearch.StartPosBuf.push({Run : this, Pos : nPos});
+
+			ParaSearch.SearchIndex++;
+
+			if (ParaSearch.CheckSearchEnd())
+			{
+				if (ParaSearch.StartPos)
+				{
+					var isAdd = false;
+					if (isWholeWords)
+					{
+						var oNextElement = this.GetNextRunElement(nPos + 1);
+						if (!oNextElement || (!oNextElement.IsLetter() && !oNextElement.IsDigit()))
+							isAdd = true;
+					}
+					else
+					{
+						isAdd = true;
+					}
+
+					if (isAdd)
+					{
+						Para.AddSearchResult(
+							SearchEngine.Add(Para),
+							ParaSearch.StartPos.Run.GetParagraphContentPosFromObject(ParaSearch.StartPos.Pos),
+							this.GetParagraphContentPosFromObject(nPos + 1),
+							Type
+						);
+					}
+				}
+
+				ParaSearch.Reset();
+			}
+		}
+	}
+};
+ParaRun.prototype.AddSearchResult = function(oSearchResult, isStart, oContentPos, nDepth)
+{
+	oSearchResult.RegisterClass(isStart, this);
+	this.SearchMarks.push(new AscCommonWord.CParagraphSearchMark(oSearchResult, isStart, nDepth));
+};
+ParaRun.prototype.ClearSearchResults = function()
+{
+	this.SearchMarks = [];
+};
+ParaRun.prototype.RemoveSearchResult = function(oSearchResult)
+{
+	for (var nIndex = 0, nMarksCount = this.SearchMarks.length; nIndex < nMarksCount; ++nIndex)
+	{
+		var oMark = this.SearchMarks[nIndex];
+		if (oSearchResult === oMark.SearchResult)
+		{
+			this.SearchMarks.splice(nIndex, 1);
+			nIndex--;
+			nMarksCount--;
+		}
+	}
+};
+ParaRun.prototype.GetSearchElementId = function(bNext, bUseContentPos, ContentPos, Depth)
+{
+	var StartPos = 0;
+
+	if ( true === bUseContentPos )
+	{
+		StartPos = ContentPos.Get( Depth );
+	}
+	else
+	{
+		if ( true === bNext )
+		{
+			StartPos = 0;
+		}
+		else
+		{
+			StartPos = this.Content.length;
+		}
+	}
+
+	var NearElementId = null;
+
+	if ( true === bNext )
+	{
+		var NearPos = this.Content.length;
+
+		var SearchMarksCount = this.SearchMarks.length;
+		for ( var SPos = 0; SPos < SearchMarksCount; SPos++)
+		{
+			var Mark = this.SearchMarks[SPos];
+			var MarkPos = Mark.SearchResult.StartPos.Get(Mark.Depth);
+
+			if (Mark.SearchResult.ClassesS.length > 0 && this === Mark.SearchResult.ClassesS[Mark.SearchResult.ClassesS.length - 1] && MarkPos >= StartPos && MarkPos < NearPos)
+			{
+				NearElementId = Mark.SearchResult.Id;
+				NearPos       = MarkPos;
+			}
+		}
+
+		for ( var CurPos = StartPos; CurPos < NearPos; CurPos++ )
+		{
+			var Item = this.Content[CurPos];
+			if ( para_Drawing === Item.Type )
+			{
+				var TempElementId = Item.GetSearchElementId( true, false );
+				if ( null != TempElementId )
+					return TempElementId;
+			}
+		}
+	}
+	else
+	{
+		var NearPos = -1;
+
+		var SearchMarksCount = this.SearchMarks.length;
+		for ( var SPos = 0; SPos < SearchMarksCount; SPos++)
+		{
+			var Mark = this.SearchMarks[SPos];
+			var MarkPos = Mark.SearchResult.StartPos.Get(Mark.Depth);
+
+			if (Mark.SearchResult.ClassesS.length > 0 && this === Mark.SearchResult.ClassesS[Mark.SearchResult.ClassesS.length - 1] && MarkPos < StartPos && MarkPos > NearPos)
+			{
+				NearElementId = Mark.SearchResult.Id;
+				NearPos       = MarkPos;
+			}
+		}
+
+		StartPos = Math.min( this.Content.length - 1, StartPos - 1 );
+		for ( var CurPos = StartPos; CurPos > NearPos; CurPos-- )
+		{
+			var Item = this.Content[CurPos];
+			if ( para_Drawing === Item.Type )
+			{
+				var TempElementId = Item.GetSearchElementId( false, false );
+				if ( null != TempElementId )
+					return TempElementId;
+			}
+		}
+
+	}
+
+	return NearElementId;
+};
+//----------------------------------------------------------------------------------------------------------------------
+
 
 function CParaRunStartState(Run)
 {

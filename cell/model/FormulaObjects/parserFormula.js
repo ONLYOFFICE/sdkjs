@@ -7714,8 +7714,7 @@ function parserFormula( formula, parent, _ws ) {
 
 			//сделано для формул массива
 			//внутри массива может лежать ссылка на диапазон(например, функция index возвращает area/ref)
-			if (val && (cElementType.cellsRange === val.type || cElementType.cellsRange3D === val.type ||
-				cElementType.array === val.type || cElementType.cell === val.type ||
+			if (val && (cElementType.cellsRange === val.type || cElementType.cellsRange3D === val.type || cElementType.array === val.type || cElementType.cell === val.type ||
 				cElementType.cell3D === val.type)) {
 				val = this.simplifyRefType(val, opt_ws, opt_row, opt_col);
 			}
@@ -7730,10 +7729,13 @@ function parserFormula( formula, parent, _ws ) {
 						var colCount = bbox.c2 - bbox.c1 + 1;
 						row = 1 === rowCount ? 0 : opt_row - ref.r1;
 						col = 1 === colCount ? 0 : opt_col - ref.c1;
-						val = val.getValueByRowCol(row, col);
+						if (row > rowCount - 1 || col > colCount - 1) {
+							val = null;
+						} else {
+							val = val.getValueByRowCol(row, col);
+						}
 						if (!val) {
-							val =
-								new window['AscCommonExcel'].cError(window['AscCommonExcel'].cErrorType.not_available);
+							val = new window['AscCommonExcel'].cError(window['AscCommonExcel'].cErrorType.not_available);
 						}
 					} else {
 						val = new window['AscCommonExcel'].cError(window['AscCommonExcel'].cErrorType.not_available);
@@ -7750,7 +7752,7 @@ function parserFormula( formula, parent, _ws ) {
 		}
 		return val;
 	};
-	parserFormula.prototype.convertTo3DRefs = function(bboxFrom) {
+	parserFormula.prototype.convertTo3DRefs = function (bboxFrom) {
 		var elem, bbox;
 		for (var i = 0; i < this.outStack.length; i++) {
 			elem = this.outStack[i];
@@ -7762,12 +7764,11 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		}
 	};
-	parserFormula.prototype.hasRelativeRefs = function() {
+	parserFormula.prototype.hasRelativeRefs = function () {
 		var elem;
 		for (var i = 0; i < this.outStack.length; i++) {
 			elem = this.outStack[i];
-			if ((elem.type === cElementType.cell || elem.type === cElementType.cellsRange ||
-				elem.type === cElementType.cell3D || elem.type === cElementType.cellsRange3D) &&
+			if ((elem.type === cElementType.cell || elem.type === cElementType.cellsRange || elem.type === cElementType.cell3D || elem.type === cElementType.cellsRange3D) &&
 				!elem.getBBox0().isAbsAll()) {
 				return true;
 			}
@@ -7775,7 +7776,7 @@ function parserFormula( formula, parent, _ws ) {
 		return false;
 	};
 
-	parserFormula.prototype.getFormulaHyperlink = function() {
+	parserFormula.prototype.getFormulaHyperlink = function () {
 		for (var i = 0; i < this.outStack.length; i++) {
 			if (this.outStack[i] && this.outStack[i].name === "HYPERLINK") {
 				return true;
@@ -7783,14 +7784,14 @@ function parserFormula( formula, parent, _ws ) {
 		}
 		return false;
 	};
-	parserFormula.prototype.getOutsideFunctions = function() {
+	parserFormula.prototype.getOutsideFunctions = function () {
 		var res;
 		var funcArr = [];
 		var depth = 0;
 		for (var i = 0; i < this.outStack.length; i++) {
 			var elem = this.outStack[i];
 			if (cElementType.func === elem.type) {
-				if(depth === 0) {
+				if (depth === 0) {
 					funcArr.push(elem);
 				}
 				depth++;
@@ -7806,10 +7807,11 @@ function parserFormula( formula, parent, _ws ) {
 		this.isForceBacktracking = false;
 		this.isProcessRecursion = false;
 	}
+
 	//for chrome63(real maximum call stack size is 12575) MAXRECURSION that cause excaption is 783
 	//by measurement: stack size in doctrenderer is one fourth smaller than chrome
 	CalcRecursion.prototype.MAXRECURSION = 300;
-	CalcRecursion.prototype.incLevel = function() {
+	CalcRecursion.prototype.incLevel = function () {
 		if (this.getIsForceBacktracking()) {
 			return false;
 		}
@@ -7821,16 +7823,16 @@ function parserFormula( formula, parent, _ws ) {
 		}
 		return res;
 	};
-	CalcRecursion.prototype.decLevel = function() {
+	CalcRecursion.prototype.decLevel = function () {
 		this.level--;
 	};
-	CalcRecursion.prototype.getLevel = function() {
+	CalcRecursion.prototype.getLevel = function () {
 		return this.level;
 	};
-	CalcRecursion.prototype.insert = function(val) {
+	CalcRecursion.prototype.insert = function (val) {
 		this.elemsPart.push(val);
 	};
-	CalcRecursion.prototype.foreachInReverse = function(callback) {
+	CalcRecursion.prototype.foreachInReverse = function (callback) {
 		for (var i = this.elems.length - 1; i >= 0; --i) {
 			var elemsPart = this.elems[i];
 			for (var j = 0; j < elemsPart.length; ++j) {
@@ -7841,26 +7843,26 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		}
 	};
-	CalcRecursion.prototype.setIsForceBacktracking = function(val) {
+	CalcRecursion.prototype.setIsForceBacktracking = function (val) {
 		if (!this.isForceBacktracking) {
 			this.elemsPart = [];
 			this.elems.push(this.elemsPart);
 		}
 		this.isForceBacktracking = val;
 	};
-	CalcRecursion.prototype.getIsForceBacktracking = function() {
+	CalcRecursion.prototype.getIsForceBacktracking = function () {
 		return this.isForceBacktracking;
 	};
-	CalcRecursion.prototype.setIsProcessRecursion = function(val) {
+	CalcRecursion.prototype.setIsProcessRecursion = function (val) {
 		this.isProcessRecursion = val;
 	};
-	CalcRecursion.prototype.getIsProcessRecursion = function() {
+	CalcRecursion.prototype.getIsProcessRecursion = function () {
 		return this.isProcessRecursion;
 	};
 	var g_cCalcRecursion =  new CalcRecursion();
 
 	function parseNum(str) {
-		if (str.indexOf("x") > -1 || str == "" || str.match(/\s+/))//исключаем запись числа в 16-ричной форме из числа.
+		if (str.indexOf("x") > -1 || str == "" || str.match(/^\s+$/))//исключаем запись числа в 16-ричной форме из числа.
 		{
 			return false;
 		}

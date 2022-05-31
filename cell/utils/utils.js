@@ -2942,7 +2942,7 @@
 			this.isWholeCell = false;
 			this.isWholeWord = false;
 			this.isSpellCheck = false;		    // изменение вызванное в проверке орфографии
-			this.scanOnOnlySheet = true;				// искать только на листе/в книге
+			this.scanOnOnlySheet = Asc.c_oAscSearchBy.Sheet;				// искать только на листе/в книге c_oAscSearchBy
 			this.lookIn = Asc.c_oAscFindLookIn.Formulas;	// искать в формулах/значениях/примечаниях
 
 			this.findRegExp = null;
@@ -2961,6 +2961,8 @@
 			this.countReplaceAll = 0;
 			this.sheetIndex = -1;
 			this.error = false;
+
+			this.specificRange = null;
 		}
 
 		asc_CFindOptions.prototype.clone = function () {
@@ -2976,6 +2978,7 @@
 			result.scanOnOnlySheet = this.scanOnOnlySheet;
 			result.lookIn = this.lookIn;
 
+
 			result.replaceWith = this.replaceWith;
 			result.isReplaceAll = this.isReplaceAll;
 
@@ -2989,6 +2992,8 @@
 			result.countReplaceAll = this.countReplaceAll;
 			result.sheetIndex = this.sheetIndex;
 			result.error = this.error;
+
+			result.specificRange = this.specificRange;
 			return result;
 		};
 
@@ -3010,6 +3015,15 @@
 			this.countFindAll += this.countFind;
 			this.countReplaceAll += this.countReplace;
 		};
+		asc_CFindOptions.prototype.GetText = function () {
+			return this.findWhat;
+		};
+		asc_CFindOptions.prototype.IsMatchCase = function () {
+			return this.isMatchCase;
+		};
+		asc_CFindOptions.prototype.IsWholeWords = function () {
+			return this.isWholeWord;
+		};
 
 		asc_CFindOptions.prototype.asc_setFindWhat = function (val) {this.findWhat = val;};
 		asc_CFindOptions.prototype.asc_setScanByRows = function (val) {this.scanByRows = val;};
@@ -3022,6 +3036,7 @@
 		asc_CFindOptions.prototype.asc_setLookIn = function (val) {this.lookIn = val;};
 		asc_CFindOptions.prototype.asc_setReplaceWith = function (val) {this.replaceWith = val;};
 		asc_CFindOptions.prototype.asc_setIsReplaceAll = function (val) {this.isReplaceAll = val;};
+		asc_CFindOptions.prototype.asc_setSpecificRange = function (val) {this.specificRange = val;};
 
 		/** @constructor */
 		function findResults() {
