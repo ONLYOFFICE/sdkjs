@@ -34,230 +34,221 @@
 
 (function (window, undefined)
 {
-    window['AscFonts'] = window['AscFonts'] || {};
+	window['AscFonts'] = window['AscFonts'] || {};
 
-    window['AscFonts'].isEngineReady = false;
-    window['AscFonts'].api = null;
-    window['AscFonts'].onSuccess = null;
-    window['AscFonts'].onError = null;
-    window['AscFonts'].maxLoadingIndex = 5; // engine, file, manager, wasm, sdk-manager
-    window['AscFonts'].curLoadingIndex = 0;
+	window['AscFonts'].isEngineReady = false;
+	window['AscFonts'].api = null;
+	window['AscFonts'].onSuccess = null;
+	window['AscFonts'].onError = null;
+	window['AscFonts'].maxLoadingIndex = 5; // engine, file, manager, wasm, sdk-manager
+	window['AscFonts'].curLoadingIndex = 0;
 
-    window['AscFonts'].allocate = function(size)
-    {
-        if (typeof(Uint8Array) != 'undefined' && !window.opera)
-            return new Uint8Array(size);
-
-        var arr = new Array(size);
-        for (var i=0;i<size;i++)
-            arr[i] = 0;
-        return arr;
-    };
-    window['AscFonts'].allocateData = function(size)
-    {
-        return { data : window['AscFonts'].allocate(size) };
-    };
-
-    window['AscFonts'].onLoadModule = function()
+	window['AscFonts'].allocate = function(size)
 	{
-	    if (window['AscFonts'].isEngineReady)
-	        return;
+		if (typeof(Uint8Array) != 'undefined' && !window.opera)
+			return new Uint8Array(size);
+
+		var arr = new Array(size);
+		for (var i=0;i<size;i++)
+			arr[i] = 0;
+		return arr;
+	};
+	window['AscFonts'].allocateData = function(size)
+	{
+		return { data : window['AscFonts'].allocate(size) };
+	};
+
+	window['AscFonts'].onLoadModule = function()
+	{
+		if (window['AscFonts'].isEngineReady)
+			return;
 
 		++window['AscFonts'].curLoadingIndex;
 
-		if (window['AscFonts'].curLoadingIndex == window['AscFonts'].maxLoadingIndex)
+		if (window['AscFonts'].curLoadingIndex === window['AscFonts'].maxLoadingIndex)
 		{
 			if (window['AscFonts'].api)
 			{
-                window['AscFonts'].isEngineReady = true;
-                window['AscFonts'].onSuccess.call(window['AscFonts'].api);
+				window['AscFonts'].isEngineReady = true;
+				window['AscFonts'].onSuccess.call(window['AscFonts'].api);
 			}
 
 			delete window['AscFonts'].curLoadingIndex;
-            delete window['AscFonts'].maxLoadingIndex;
-            delete window['AscFonts'].api;
-            delete window['AscFonts'].onSuccess;
-            delete window['AscFonts'].onError;
+			delete window['AscFonts'].maxLoadingIndex;
+			delete window['AscFonts'].api;
+			delete window['AscFonts'].onSuccess;
+			delete window['AscFonts'].onError;
 		}
 	};
 
-    window['AscFonts'].load = function(api, onSuccess, onError)
-    {
-        window['AscFonts'].api = api;
-        window['AscFonts'].onSuccess = onSuccess;
-        window['AscFonts'].onError = onError;
+	window['AscFonts'].load = function(api, onSuccess, onError)
+	{
+		window['AscFonts'].api = api;
+		window['AscFonts'].onSuccess = onSuccess;
+		window['AscFonts'].onError = onError;
 
-        if (window["NATIVE_EDITOR_ENJINE"] === true || window["IS_NATIVE_EDITOR"] === true || window["Native"] !== undefined)
-        {
-            window['AscFonts'].isEngineReady = true;
-            window['AscFonts'].onSuccess.call(window['AscFonts'].api);
-
-            delete window['AscFonts'].curLoadingIndex;
-            delete window['AscFonts'].maxLoadingIndex;
-            delete window['AscFonts'].api;
-            delete window['AscFonts'].onSuccess;
-            delete window['AscFonts'].onError;
-            return;
-        }
-
-        var url = "../../../../sdkjs/common/libfont";
-        var useWasm = false;
-        var webAsmObj = window["WebAssembly"];
-        if (typeof webAsmObj === "object")
+		if (window["NATIVE_EDITOR_ENJINE"] === true || window["IS_NATIVE_EDITOR"] === true || window["Native"] !== undefined)
 		{
-            if (typeof webAsmObj["Memory"] === "function")
+			window['AscFonts'].isEngineReady = true;
+			window['AscFonts'].onSuccess.call(window['AscFonts'].api);
+
+			delete window['AscFonts'].curLoadingIndex;
+			delete window['AscFonts'].maxLoadingIndex;
+			delete window['AscFonts'].api;
+			delete window['AscFonts'].onSuccess;
+			delete window['AscFonts'].onError;
+			return;
+		}
+
+		var url = "../../../../sdkjs/common/libfont/engine/";
+		var useWasm = false;
+		var webAsmObj = window["WebAssembly"];
+		if (typeof webAsmObj === "object")
+		{
+			if (typeof webAsmObj["Memory"] === "function")
 			{
 				if ((typeof webAsmObj["instantiateStreaming"] === "function") || (typeof webAsmObj["instantiate"] === "function"))
 					useWasm = true;
 			}
 		}
 
-        // отключаем wasm для мобильных
-        if (useWasm && (AscCommon.AscBrowser.isAppleDevices || AscCommon.AscBrowser.isAndroid))
-            useWasm = false;
+		// отключаем wasm для мобильных
+		if (useWasm && (AscCommon.AscBrowser.isAppleDevices || AscCommon.AscBrowser.isAndroid))
+			useWasm = false;
 
-		useWasm ? (url += "/wasm") : (url += "/js");
-		if (!useWasm)
-            window['AscFonts'].onLoadModule();
-
+		var engine_name_ext = useWasm ? ".js" : "_ie.js";
 		var _onSuccess = function(){
 		};
 		var _onError = function(){
-            window['AscFonts'].onError();
+			window['AscFonts'].onError();
 		};
 
-        if (window['AscNotLoadAllScript'])
-        {
-            AscCommon.loadScript(url + "/engine.js", _onSuccess, _onError);
-            AscCommon.loadScript(url + "/file.js", _onSuccess, _onError);
-            AscCommon.loadScript(url + "/manager.js", _onSuccess, _onError);
-        }
-        else
-        {
-            AscCommon.loadScript(url + "/fonts.js", _onSuccess, _onError);
-        }
-    };
-
-    function FontStream(data, size)
-    {
-        this.data = data;
-        this.size = size;
-    }
-
-    window['AscFonts'].FontStream = FontStream;
-
-    window['AscFonts'].FT_Common = {
-        UintToInt : function(v)
-        {
-            return (v>2147483647)?v-4294967296:v;
-        },
-        UShort_To_Short : function(v)
-        {
-            return (v>32767)?v-65536:v;
-        },
-        IntToUInt : function(v)
-        {
-            return (v<0)?v+4294967296:v;
-        },
-        Short_To_UShort : function(v)
-        {
-            return (v<0)?v+65536:v;
-        },
-        memset : function(d,v,s)
-        {
-            for (var i=0;i<s;i++)
-                d[i]=v;
-        }
-    };
-
-    function CPointer()
-    {
-        this.obj    = null;
-        this.data   = null;
-        this.pos    = 0;
-    }
-
-    function FT_Memory()
-    {
-        this.canvas = document.createElement('canvas');
-        this.canvas.width = 1;
-        this.canvas.height = 1;
-        this.ctx    = this.canvas.getContext('2d');
-
-        this.Alloc = function(size)
-        {
-            var p = new CPointer();
-            p.obj = this.ctx.createImageData(1,parseInt((size + 3) / 4));
-            p.data = p.obj.data;
-            p.pos = 0;
-            return p;
-        };
-        this.AllocHeap = function()
-        {
-            // TODO: нужно посмотреть, как эта память будет использоваться.
-            // нужно ли здесь делать стек, либо все время от нуля делать??
-        };
-        this.CreateStream = function(size)
-        {
-            var _size = parseInt((size + 3) / 4);
-            var obj = this.ctx.createImageData(1,_size);
-            return new FontStream(obj.data,_size);
-        };
-    }
-
-    window['AscFonts'].FT_Memory = FT_Memory;
-    window['AscFonts'].g_memory = new FT_Memory();
-
-    function CRasterMemory()
-    {
-        this.width = 0;
-        this.height = 0;
-        this.pitch = 0;
-
-        this.m_oBuffer = null;
-        this.CheckSize = function(w, h)
-        {
-            if (this.width < (w + 1) || this.height < (h + 1))
-            {
-                this.width = Math.max(this.width, w + 1);
-                this.pitch = 4 * this.width;
-                this.height = Math.max(this.height, h + 1);
-
-                this.m_oBuffer = null;
-                this.m_oBuffer = window['AscFonts'].g_memory.ctx.createImageData(this.width, this.height);
-            }
-        };
-    }
-
-    window['AscFonts'].raster_memory = new CRasterMemory();
-
-    window['AscFonts'].registeredFontManagers = [];
-
-	window['AscFonts'].getDefaultBlitting = function()
-    {
-        var isUseMap = false;
-        if (AscCommon.AscBrowser.isAndroidNativeApp)
-            isUseMap = true;
-        else if (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isArm)
-            isUseMap = true;
-        return isUseMap;
-    };
-	window['AscFonts'].setDefaultBlitting = function(value)
-	{
-	    var defaultValue = window['AscFonts'].getDefaultBlitting();
-	    var newValue = value ? defaultValue : !defaultValue;
-	    if (window['AscFonts'].use_map_blitting === newValue)
-	        return;
-
-        window['AscFonts'].use_map_blitting = newValue;
-		var arrManagers = window['AscFonts'].registeredFontManagers;
-	    for (var i = 0, count = arrManagers.length; i < count; i++)
-        {
-            arrManagers[i].ClearFontsRasterCache();
-            arrManagers[i].InitializeRasterMemory();
-        }
+		if (window['AscNotLoadAllScript'])
+		{
+			AscCommon.loadScript(url + "common.js", _onSuccess, _onError);
+			AscCommon.loadScript(url + "engine" + engine_name_ext, _onSuccess, _onError);
+			AscCommon.loadScript(url + "file.js", _onSuccess, _onError);
+			AscCommon.loadScript(url + "manager.js", _onSuccess, _onError);
+		}
+		else
+		{
+			AscCommon.loadScript(url + "fonts" + engine_name_ext, _onSuccess, _onError);
+		}
 	};
 
-    window['AscFonts'].use_map_blitting = window['AscFonts'].getDefaultBlitting();
+	function FontStream(data, size)
+	{
+		this.data = data;
+		this.size = size;
+	}
+
+	window['AscFonts'].FontStream = FontStream;
+
+	window['AscFonts'].FT_Common = {
+		UintToInt : function(v)
+		{
+			return (v>2147483647)?v-4294967296:v;
+		},
+		UShort_To_Short : function(v)
+		{
+			return (v>32767)?v-65536:v;
+		},
+		IntToUInt : function(v)
+		{
+			return (v<0)?v+4294967296:v;
+		},
+		Short_To_UShort : function(v)
+		{
+			return (v<0)?v+65536:v;
+		}
+	};
+
+	function CPointer()
+	{
+		this.obj    = null;
+		this.data   = null;
+		this.pos    = 0;
+	}
+
+	function FT_Memory()
+	{
+		this.canvas = document.createElement('canvas');
+		this.canvas.width = 1;
+		this.canvas.height = 1;
+		this.ctx    = this.canvas.getContext('2d');
+
+		this.Alloc = function(size)
+		{
+			var p = new CPointer();
+			p.obj = this.ctx.createImageData(1, ((size + 3) >> 2));
+			p.data = p.obj.data;
+			p.pos = 0;
+			return p;
+		};
+		this.AllocHeap = function()
+		{
+			// TODO: нужно посмотреть, как эта память будет использоваться.
+			// нужно ли здесь делать стек, либо все время от нуля делать??
+		};
+		this.CreateStream = function(size)
+		{
+			var _size = ((size + 3) >> 2);
+			var obj = this.ctx.createImageData(1, _size);
+			return new FontStream(obj.data, _size);
+		};
+	}
+
+	window['AscFonts'].FT_Memory = FT_Memory;
+	window['AscFonts'].g_memory = new FT_Memory();
+
+	// память для растеризации буквы
+	function CRasterMemory()
+	{
+		this.width = 0;
+		this.height = 0;
+		this.pitch = 0;
+
+		this.m_oBuffer = null;
+		this.CheckSize = function(w, h)
+		{
+			if (this.width < (w + 1) || this.height < (h + 1))
+			{
+				this.width = Math.max(this.width, w + 1);
+				this.pitch = 4 * this.width;
+				this.height = Math.max(this.height, h + 1);
+
+				this.m_oBuffer = null;
+				this.m_oBuffer = window['AscFonts'].g_memory.ctx.createImageData(this.width, this.height);
+			}
+		};
+	}
+	window['AscFonts'].raster_memory = new CRasterMemory();
+
+	window['AscFonts'].registeredFontManagers = [];
+	window['AscFonts'].getDefaultBlitting = function()
+	{
+		var isUseMap = false;
+		if (AscCommon.AscBrowser.isAndroidNativeApp)
+			isUseMap = true;
+		else if (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isArm)
+			isUseMap = true;
+		return isUseMap;
+	};
+	window['AscFonts'].setDefaultBlitting = function(value)
+	{
+		var defaultValue = window['AscFonts'].getDefaultBlitting();
+		var newValue = value ? defaultValue : !defaultValue;
+		if (window['AscFonts'].use_map_blitting === newValue)
+			return;
+
+		window['AscFonts'].use_map_blitting = newValue;
+		var arrManagers = window['AscFonts'].registeredFontManagers;
+		for (var i = 0, count = arrManagers.length; i < count; i++)
+		{
+			arrManagers[i].ClearFontsRasterCache();
+			arrManagers[i].InitializeRasterMemory();
+		}
+	};
+	window['AscFonts'].use_map_blitting = window['AscFonts'].getDefaultBlitting();
 
 })(window, undefined);

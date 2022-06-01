@@ -34,53 +34,53 @@
 
 (function(window, undefined) {
 
-    var AscFonts = window['AscFonts'];
+	var AscFonts = window['AscFonts'];
 
-    function CFontManagerEngine()
-    {
-        this.library = AscFonts.CreateLibrary();
-        this.manager = null;
+	function CFontManagerEngine()
+	{
+		this.library = AscFonts.CreateLibrary();
+		this.manager = null;
 
-        this.openFont = function(stream, faceindex)
-        {
-            var face = AscFonts.FT_Open_Face(this.library, stream, faceindex);
-            if (!face)
-                return null;
+		this.openFont = function(stream, faceindex)
+		{
+			var face = AscFonts.FT_Open_Face(this.library, stream, faceindex);
+			if (!face)
+				return null;
 
-            var font = new AscFonts.CFontFile();
-            font.SetFace(face, this.manager);
+			var font = new AscFonts.CFontFile();
+			font.SetFace(face, this.manager);
 
-            if (!font.IsSuccess())
-            {
-                font = null;
-                face = null;
-                return null;
-            }
+			if (!font.IsSuccess())
+			{
+				font = null;
+				face = null;
+				return null;
+			}
 
-            return font;
-        };
+			return font;
+		};
 
-        this.setHintsProps = function(bIsHinting, bIsSubpixHinting)
-        {
-            var REND_MODE_SUBPIX = (bIsHinting && bIsSubpixHinting) ? AscFonts.TT_INTERPRETER_VERSION_40 : AscFonts.TT_INTERPRETER_VERSION_35;
-            this.manager.LOAD_MODE = bIsHinting ? AscFonts.LOAD_MODE_HINTING : AscFonts.LOAD_MODE_DEFAULT;
+		this.setHintsProps = function(bIsHinting, bIsSubpixHinting)
+		{
+			var REND_MODE_SUBPIX = (bIsHinting && bIsSubpixHinting) ? AscFonts.TT_INTERPRETER_VERSION_40 : AscFonts.TT_INTERPRETER_VERSION_35;
+			this.manager.LOAD_MODE = bIsHinting ? AscFonts.LOAD_MODE_HINTING : AscFonts.LOAD_MODE_DEFAULT;
 
-            AscFonts.FT_Set_TrueType_HintProp(this.library, REND_MODE_SUBPIX);
-        };
-    }
+			AscFonts.FT_Set_TrueType_HintProp(this.library, REND_MODE_SUBPIX);
+		};
+	}
 
-    window['AscFonts'].engine_Create = function(fontManager)
-    {
-        var engine = new CFontManagerEngine();
-        engine.manager = fontManager;
-        engine.setHintsProps(fontManager.bIsHinting, fontManager.bIsSubpixHinting);
-        fontManager._engine = engine;
-        AscFonts.initVariables();
-    };
+	window['AscFonts'].engine_Create = function(fontManager)
+	{
+		var engine = new CFontManagerEngine();
+		engine.manager = fontManager;
+		engine.setHintsProps(fontManager.bIsHinting, fontManager.bIsSubpixHinting);
+		fontManager._engine = engine;
+		AscFonts.initVariables();
+	};
 
-    window['AscFonts'].engine_Destroy = function(fontManager)
-    {
-    };
+	window['AscFonts'].engine_Destroy = function(fontManager)
+	{
+	};
 
-    window['AscFonts'].onLoadModule();
+	window['AscFonts'].onLoadModule();
 })(window);
