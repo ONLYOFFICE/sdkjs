@@ -6010,10 +6010,8 @@ function BinaryPPTYLoader()
         _stream.size = oStream.size;
         var boMathr = new Binary_oMathReader(_stream, oReadResult, null);
         var oMathPara = new ParaMath();
-        var oParStruct = new OpenParStruct(oParagraph, oParagraph);
-        oParStruct.cur.pos = oParagraph.Content.length - 1;
         boMathr.bcr.Read1(length2, function(t, l){
-            return boMathr.ReadMathArg(t,l,oMathPara.Root,oParStruct);
+            return boMathr.ReadMathArg(t,l,oMathPara.Root,oParagraph);
         });
         oMathPara.Root.Correct_Content(true);
         return oMathPara;
@@ -10399,21 +10397,19 @@ function BinaryPPTYLoader()
 								_stream.size = s.size;
 								var parContentOld = par.Content.length;
 
-								var oParStruct = new OpenParStruct(par, par);
-                                oParStruct.cur.pos = par.Content.length - 1;
 								var oReadResult = new AscCommonWord.DocReadResult(null);
 								var boMathr = new Binary_oMathReader(_stream, oReadResult, null);
 								var nDocLength = _stream.GetULongLE();
 								if (AscFormat.PARRUN_TYPE_MATHPARA == _type) {
 									var props = {};
 									boMathr.bcr.Read1(nDocLength, function(t, l){
-										return boMathr.ReadMathOMathPara(t,l,oParStruct, props);
+										return boMathr.ReadMathOMathPara(t,l,par, props);
 									});
 								} else {
 									var oMath = new ParaMath();
-									oParStruct.addToContent(oMath);
+                                    par.AddToContentEnd(oMath);
 									boMathr.bcr.Read1(nDocLength, function(t, l){
-										return boMathr.ReadMathArg(t,l,oMath.Root,oParStruct);
+										return boMathr.ReadMathArg(t,l,oMath.Root,par);
 									});
 									oMath.Root.Correct_Content(true);
 								}

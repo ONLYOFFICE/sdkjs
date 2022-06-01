@@ -1412,7 +1412,7 @@
 	};
 //Paragraph
 	CParagraphContentWithParagraphLikeContent.prototype.fromXmlElem = function (reader, name) {
-		let paragraph = this.GetParagraph && this.GetParagraph() || this;
+		let paragraph = this.GetParagraph();
 		let elem, context = reader.context;
 		switch (name) {
 			case "bdo":
@@ -1501,6 +1501,7 @@
 				elem = new AscCommon.CT_OMathPara();
 				elem.fromXml(reader);
 				if (elem.OMath) {
+					elem.OMath.Correct_Content(true);
 					this.AddToContent(this.GetElementsCount(), elem.OMath);
 				}
 				break;
@@ -1514,9 +1515,14 @@
 				elem = new ParaRun(paragraph, false);
 				elem.fromXml(reader);
 				this.AddToContent(this.GetElementsCount(), elem);
+				//todo
+				// if (run.GetElementsCount() > Asc.c_dMaxParaRunContentLength && !(oParStruct.cur instanceof CInlineLevelSdt && oParStruct.cur.IsForm())) {
+				// 	this.oReadResult.runsToSplit.push(run);
+				// }
 				break;
 			case "sdt" : {
 				elem = new AscCommonWord.CInlineLevelSdt();
+				elem.RemoveFromContent(0, elem.GetElementsCount());
 				elem.SetParagraph(paragraph);
 				elem.fromXml(reader);
 				if (elem.IsEmpty())
@@ -2513,15 +2519,11 @@
 							this.Set_MathPr(mrPr);
 							continue;
 						} else if ("a:rPr" === fullName) {
-							let textPr = new CTextPr();
-							textPr.fromDrawingML(reader);
-							this.Set_Pr(textPr);
+							this.Pr.fromDrawingML(reader);
 							continue;
 						}
 					}
-					var textPr = new CTextPr();
-					textPr.fromXml(reader);
-					this.Set_Pr(textPr);
+					this.Pr.fromXml(reader);
 					break;
 				case "ruby":
 					break;
@@ -5624,14 +5626,6 @@
 			run.AddText(text, -1);
 			paragraph.AddToContent(paragraph.GetElementsCount(), run);
 			return paragraph;
-		};
-		CCommentData.prototype.WriteTextToRunReference = function(paragraph) {
-			let run = new ParaRun(paragraph, false);
-			run.Add_ToContent(0, new ParaPageNum());
-			run.Pr.RFonts.SetAll('Arial');
-			run.Pr.FontSize = 11;
-			run.AddText(text, -1);
-			return run;
 		};
 		CCommentData.prototype.WriteToXml = function(ct_comment, paraIdParent, context, ct_comments, ct_people, ct_commentsExt, ct_commentsIds, ct_commentsExtensible) {
 			let id = context.commentIdIndex++;
