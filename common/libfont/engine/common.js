@@ -3272,4 +3272,6 @@
         return _hb_ucd_sc_map[index];
     };
 
+	window['AscFonts'].onLoadModule();
+
 })(window, undefined);

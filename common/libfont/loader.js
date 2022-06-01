@@ -40,7 +40,7 @@
 	window['AscFonts'].api = null;
 	window['AscFonts'].onSuccess = null;
 	window['AscFonts'].onError = null;
-	window['AscFonts'].maxLoadingIndex = 5; // engine, file, manager, wasm, sdk-manager
+	window['AscFonts'].maxLoadingIndex = 6; // engine { engine (1+1), file, manager, common }, sdk-manager { manager }
 	window['AscFonts'].curLoadingIndex = 0;
 
 	window['AscFonts'].allocate = function(size)
