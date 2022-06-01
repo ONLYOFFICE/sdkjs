@@ -63,9 +63,9 @@ Module.HP_FontFree = function()
 	// GC
 }
 
-Module.CreateNativeStream = function(typedArray)
+Module.CreateNativeStream = function(stream)
 {
-	return { asc_marker: true, data: typedArray, len: typedArray.size};
+	return { asc_marker: true, data: stream.data, len: stream.size};
 };
 
 function CReturnObject()
@@ -90,7 +90,7 @@ Module.GetFaceInfo = function(face, reader)
 	}
 
 	g_return_obj.error = 0;
-	reader.init(data, 0, data.size);
+	reader.init(data, 0, data.length);
 	return g_return_obj;
 };
 
@@ -108,8 +108,8 @@ Module.FT_Get_Glyph_Measure_Params = function(face, vector_worker, reader)
 		return g_return_obj_count;
 	}
 
-	reader.init(new Uint8Array(data, 0, data.size));
-	g_return_obj_count.count = data.size;
+	reader.init(new Uint8Array(data, 0, data.length));
+	g_return_obj_count.count = data.length;
 	g_return_obj_count.error = 0;
 	return g_return_obj_count;
 };
@@ -124,11 +124,11 @@ Module.FT_Get_Glyph_Render_Params = function(face, render_mode, reader)
 	}
 
 	g_return_obj.error = 0;
-	reader.init(data, 0, data.size);
+	reader.init(data, 0, data.length);
 	return g_return_obj;
 };
 
-AscFonts.FT_Get_Glyph_Render_Buffer = function(face, rasterInfo)
+Module.FT_Get_Glyph_Render_Buffer = function(face, rasterInfo)
 {
 	return g_native_engine["FT_Get_Glyph_Render_Buffer"](face, rasterInfo.pitch * rasterInfo.rows);
 };
@@ -150,7 +150,7 @@ Module.HP_ShapeText = function(fontFile, text, features, script, direction, lang
 		return g_return_obj_count;
 	}
 
-	reader.init(new Uint8Array(data, 0, data.size));
+	reader.init(new Uint8Array(data, 0, data.length));
 	let len = reader.readUInt();
 	let fontPointer = reader.readPointer64(); // just skip
 
@@ -167,7 +167,7 @@ Module.hb_cache_languages = {};
 	AscFonts.FT_Set_TrueType_HintProp = Module.FT_Set_TrueType_HintProp;
 
 	// Create stream from typed array
-	// Module.CreateNativeStream(typed_array);
+	// Module.CreateNativeStream(stream);
 	AscFonts.CreateNativeStreamByIndex = function(stream_index)
 	{
 		let stream = AscFonts.g_fonts_streams[stream_index];
@@ -180,14 +180,14 @@ Module.hb_cache_languages = {};
 	function CBinaryReader(data, start, size)
 	{
 		this.data = data;
-		this.pos = start;
-		this.limit = start + size;
+		this.pos = (undefined === start) ? 0 : start;
+		this.limit = this.pos + ((undefined === size) ? data.length : size);
 	}
 	CBinaryReader.prototype.init = function(data, start, size)
 	{
 		this.data = data;
-		this.pos = start;
-		this.limit = start + size;
+		this.pos = (undefined === start) ? 0 : start;
+		this.limit = this.pos + ((undefined === size) ? data.length : size);
 	}
 	CBinaryReader.prototype.readInt = function()
 	{

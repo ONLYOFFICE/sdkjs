@@ -388,11 +388,11 @@ Module.FT_GetFaceMaxAdvanceX = Module["_ASC_FT_GetFaceMaxAdvanceX"];
 Module.FT_Done_Face = Module["_FT_Done_Face"];
 Module.HP_FontFree = Module["_ASC_HP_FontFree"];
 
-Module.CreateNativeStream = function(typedArray)
+Module.CreateNativeStream = function(stream)
 {
-	var fontStreamPointer = Module["_ASC_FT_Malloc"](typedArray.size);
-	Module["HEAP8"].set(typedArray.data, fontStreamPointer);
-	return { asc_marker: true, data: fontStreamPointer, len: typedArray.size};
+	var fontStreamPointer = Module["_ASC_FT_Malloc"](stream.size);
+	Module["HEAP8"].set(stream.data, fontStreamPointer);
+	return { asc_marker: true, data: fontStreamPointer, len: stream.size};
 };
 
 function CReturnObject()
@@ -467,7 +467,7 @@ Module.FT_Get_Glyph_Render_Params = function(face, render_mode, reader)
 	return g_return_obj;
 };
 
-AscFonts.FT_Get_Glyph_Render_Buffer = function(face, rasterInfo)
+Module.FT_Get_Glyph_Render_Buffer = function(face, rasterInfo)
 {
 	var pointer = Module["_ASC_FT_Get_Glyph_Render_Buffer"](face);
 	return new Uint8Array(Module["HEAP8"].buffer, pointer, rasterInfo.pitch * rasterInfo.rows);
@@ -511,7 +511,7 @@ Module.hb_cache_languages = {};
 	AscFonts.FT_Set_TrueType_HintProp = Module.FT_Set_TrueType_HintProp;
 
 	// Create stream from typed array
-	// Module.CreateNativeStream(typed_array);
+	// Module.CreateNativeStream(stream);
 	AscFonts.CreateNativeStreamByIndex = function(stream_index)
 	{
 		let stream = AscFonts.g_fonts_streams[stream_index];
@@ -524,14 +524,14 @@ Module.hb_cache_languages = {};
 	function CBinaryReader(data, start, size)
 	{
 		this.data = data;
-		this.pos = start;
-		this.limit = start + size;
+		this.pos = (undefined === start) ? 0 : start;
+		this.limit = this.pos + ((undefined === size) ? data.length : size);
 	}
 	CBinaryReader.prototype.init = function(data, start, size)
 	{
 		this.data = data;
-		this.pos = start;
-		this.limit = start + size;
+		this.pos = (undefined === start) ? 0 : start;
+		this.limit = this.pos + ((undefined === size) ? data.length : size);
 	}
 	CBinaryReader.prototype.readInt = function()
 	{
