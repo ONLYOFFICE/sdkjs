@@ -3274,7 +3274,7 @@
             }
 			if (this.wb.oleSize) {
 				var sRange = this.wb.oleSize.getName();
-				this.bs.WriteItem(c_oSerWorkbookTypes.OleSize, function () {oThis.memory.WriteString2(sRange)});
+				this.bs.WriteItem(c_oSerWorkbookTypes.OleSize, function () {oThis.memory.WriteString3(sRange)});
 			}
         };
         this.WriteWorkbookPr = function()
@@ -7306,7 +7306,7 @@
 			}
 			else if ( c_oSerWorkbookTypes.OleSize === type )
 			{
-				var sRange = this.stream.GetString2LE(length).replace(/[\x00\s]/g, '');
+				var sRange = this.stream.GetString2LE(length);
 				var parsedRange = AscCommonExcel.g_oRangeCache.getAscRange(sRange);
 				if (parsedRange) {
 					this.oWorkbook.setOleSize(new AscCommonExcel.OleSizeSelectionRange(null, parsedRange));
