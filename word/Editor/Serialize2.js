@@ -8321,7 +8321,9 @@ function BinaryFileReader(doc, openParams)
 				}
 			}
 		}
-		this.Document.ReplaceContent(this.oReadResult.DocumentContent);
+		if (this.oReadResult.DocumentContent.length > 0) {
+			this.Document.ReplaceContent(this.oReadResult.DocumentContent);
+		}
 		this.PostLoadPrepareCorrectContent(this.Document.Content);
 		// for(var i = 0, length = this.oReadResult.aPostOpenStyleNumCallbacks.length; i < length; ++i)
 			// this.oReadResult.aPostOpenStyleNumCallbacks[i].call();

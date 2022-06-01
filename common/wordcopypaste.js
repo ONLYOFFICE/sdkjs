@@ -6091,7 +6091,7 @@ PasteProcessor.prototype =
 
 		return {
 			workbook: tempWorkbook,
-			activeRange: oBinaryFileReader.copyPasteObj.activeRange,
+			activeRange: oBinaryFileReader.InitOpenManager && oBinaryFileReader.InitOpenManager.copyPasteObj && oBinaryFileReader.InitOpenManager.copyPasteObj.activeRange,
 			arrImages: arrImages,
 			pDrawings: pDrawings
 		};
