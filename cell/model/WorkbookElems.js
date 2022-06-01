@@ -11890,6 +11890,8 @@ QueryTableField.prototype.clone = function() {
 		this.SheetDataSet = [];
 		this.SheetNames = [];
 		this.Type = 0;
+
+		this.worksheets = {};
 	}
 
 	//----------------------------------------------------------export----------------------------------------------------

@@ -3831,7 +3831,7 @@
 	};
 
 
-	//external links
+	//*****external links*****
 	//при открытии ждём ссылок в виде [1]Sheet1!A1:A2, но если пользователь введёт такую ссылку, то текст самой ссылки будет уже "1", а индекс самой ссылки увеличится length + 1
 	//далее отображаем в таком виде в зависимости от самой ссылки 'https://s3.amazonaws.com/xlsx/[ExternalLinksDestination.xlsx]Sheet1'!A1:A2
 	//при вводе с клавиатуры сложнее - мс пропускает ссылки в достаточно странном виде 'abracadabra1://abracadabra2:[file.abracadabra3]Sheet1'!A1:A2
@@ -3854,6 +3854,56 @@
 		}
 		return res ? res : null;
 	};
+
+	Workbook.prototype.getExternalWorksheetByIndex = function (index, sheet) {
+		var extarnalLink = this.getExternalLinkByIndex(index);
+		if (extarnalLink) {
+			if (extarnalLink.worksheets && extarnalLink.worksheets[sheet]) {
+				return extarnalLink.worksheets[sheet];
+			}
+			for (var i = 0; i < extarnalLink.SheetNames.length; i++) {
+				if (extarnalLink.SheetNames[i] === sheet) {
+					var wb = this.getTemporaryExternalWb();
+					extarnalLink.worksheets[sheet] = new Worksheet(wb);
+					return extarnalLink.worksheets[sheet];
+				}
+			}
+		}
+		return null;
+	};
+
+	Workbook.prototype.getTemporaryExternalWb = function () {
+		for (var i = 0; i < this.externalReferences.length; i++) {
+			if (this.externalReferences[i].worksheets) {
+				for (var j in this.externalReferences[i].worksheets) {
+					if (this.externalReferences[i].worksheets[j]) {
+						return this.externalReferences[i].worksheets[j].workbook;
+					}
+				}
+			}
+		}
+		return new Workbook();
+	};
+
+	Workbook.prototype.updateExternalReferences = function () {
+		//TODO нужно отдельно декстоп обработать
+		var aUpdateExternalLinks = [];
+		for (var i = 0; i < this.externalReferences.length; i++) {
+			if (this.externalReferences[i].SheetNames) {
+				for (var j = 0; j < this.externalReferences[i].SheetNames.length; j++) {
+					aUpdateExternalLinks.push({});
+				}
+			}
+		}
+
+		var callback = function (aUpdateData) {
+			//данные добавляем во временные листы в externalReferences -> worksheets
+
+		};
+
+		//updateExternalLinks(aUpdateExternalLinks, callback);
+	};
+
 
 
 //-------------------------------------------------------------------------------------------------

@@ -1670,7 +1670,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		this.ws = ws;
 		this.range = null;
-		if (val && this.ws && !externalLink) {
+		if (val && this.ws) {
 			AscCommonExcel.executeInR1C1Mode(false, function () {
 				val = ws.getRange2(val);
 			});
@@ -1705,10 +1705,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return this.ws && this.ws.Id;
 	};
 	cRef3D.prototype.getRange = function () {
-		if (this.externalLink) {
-			//TODO обработать externalLink
-			return this.range = null;
-		} else if (this.ws) {
+		if (this.ws) {
 			if (this.range) {
 				return this.range;
 			}
@@ -1718,16 +1715,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 	};
 	cRef3D.prototype.isValid = function () {
-		//TODO обработать externalLink
-		return this.externalLink ? true : !!this.getRange();
+		return !!this.getRange();
 	};
 	cRef3D.prototype.getValue = function () {
 		var _r = this.getRange();
-		//TODO обработать externalLink
-		if (this.externalLink) {
-			//нужно запросить данные, либо взять из кэша
-			return;
-		}
 		if (!_r) {
 			return new cError(cErrorType.bad_reference);
 		}
@@ -6365,9 +6356,15 @@ function parserFormula( formula, parent, _ws ) {
 					}
 				}
 
+				var wsF, wsT;
 				var externalLink = _3DRefTmp[3];
-				var wsF = externalLink ? _3DRefTmp[1] : t.wb.getWorksheetByName(_3DRefTmp[1]);
-				var wsT = (null !== _3DRefTmp[2]) ? (externalLink ? _3DRefTmp[2] : t.wb.getWorksheetByName(_3DRefTmp[2])) : wsF;
+				if (externalLink) {
+					wsF = t.wb.getExternalWorksheetByIndex(externalLink - 1, _3DRefTmp[1]);
+					wsT = wsF;
+				} else {
+					wsF = t.wb.getWorksheetByName(_3DRefTmp[1]);
+					wsT = (null !== _3DRefTmp[2]) ? t.wb.getWorksheetByName(_3DRefTmp[2]) : wsF;
+				}
 
 				if (!(wsF && wsT)) {
 					parseResult.setError(c_oAscError.ID.FrmlWrongReferences);
