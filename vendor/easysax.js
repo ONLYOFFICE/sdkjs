@@ -1717,6 +1717,12 @@ XmlWriterContext.prototype.addNotesMasterRel = function(sRel) {
 XmlWriterContext.prototype.clearSlideLayoutRels = function() {
     this.sldLayoutIdLst.length = 0;
 };
+XmlWriterContext.prototype.getSlideMastersCount = function() {
+    return this.sldMasterIdLst.length;
+};
+XmlWriterContext.prototype.getSlidesCount = function() {
+    return this.sldIdLst.length;
+};
 function CT_XmlNode(opt_elemReader) {
     this.attributes = {};
     this.attributes = {};

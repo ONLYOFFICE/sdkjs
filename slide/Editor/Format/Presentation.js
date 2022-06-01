@@ -2795,14 +2795,12 @@ CSlideSize.prototype.GetWidthMM = function() {
 CSlideSize.prototype.GetHeightMM = function() {
     return this.GetHeightEMU() / g_dKoef_mm_to_emu;
 };
-
 CSlideSize.prototype.GetSizeType = function () {
     if(AscFormat.isRealNumber(this.type)) {
         return this.type;
     }
     return Asc.c_oAscSlideSZType.SzCustom;
 };
-
 CSlideSize.prototype.readAttrXml = function(name, reader) {
     switch (name) {
         case "cx": {
@@ -2885,6 +2883,11 @@ CSlideSize.prototype.readAttrXml = function(name, reader) {
         }
     }
 };
+CSlideSize.prototype.toXml = function (writer, name) {
+    writer.WriteXmlNodeStart(name);
+    this.writeAttrXmlImpl(writer);
+    writer.WriteXmlAttributesEnd(true);
+};
 CSlideSize.prototype.writeAttrXmlImpl = function(writer) {
     writer.WriteXmlNullableAttributeInt("cx", this.cx);
     writer.WriteXmlNullableAttributeInt("cy", this.cy);
@@ -2961,7 +2964,6 @@ CSlideSize.prototype.writeAttrXmlImpl = function(writer) {
         }
     }
 };
-
 
 let CONFORMANCE_STRICT = 0;
 let CONFORMANCE_TRANSITIONAL = 1;
@@ -4021,6 +4023,9 @@ CPresentation.prototype.GetSlide = function(nIndex) {
         return this.Slides[nIndex];
     }
     return null;
+};
+CPresentation.prototype.GetSlidesCount = function(nIndex) {
+    return this.Slides.length;
 };
 CPresentation.prototype.GetCurrentSlide = function() {
     return this.GetSlide(this.CurPage);
@@ -11851,6 +11856,7 @@ CPresentation.prototype.toZip = function(zip, context) {
     let memory = new AscCommon.CMemory();
     memory.context = context;
     context.document = this;
+    context.presentation = this;
 
     let filePart = new AscCommon.openXml.OpenXmlPackage(zip, memory);
 
@@ -12186,25 +12192,28 @@ IdList.prototype.toXml = function(writer) {
     }
     writer.WriteXmlNodeEnd(this.name);
 };
-let MIN_SLD_MASTER_ID = 2147483649;
-let MIN_SLD_ID = 256;
-let MIN_SLD_LAYOUT_ID = 2147483649;
+let MIN_SLD_MASTER_ID = 0x80000000;
+let MIN_SLD_ID = 0xFF;
+let MIN_SLD_LAYOUT_ID = 0x80000000;
 IdList.prototype.fillFromRIdList = function(aRId, sEntryName) {
-    let nCounter = null;
+    let nConterBase = null;
     if(sEntryName === "p:sldMasterId") {
-        nCounter = MIN_SLD_MASTER_ID;
+        nConterBase = MIN_SLD_MASTER_ID;
     }
     else if(sEntryName === "p:sldId") {
-        nCounter = MIN_SLD_ID;
+        nConterBase = MIN_SLD_ID;
     }
     else if(sEntryName === "p:sldLayoutId") {
-        nCounter = MIN_SLD_LAYOUT_ID;
+        nConterBase = MIN_SLD_LAYOUT_ID;
     }
     for(let nItem = 0; nItem < aRId.length; ++nItem) {
         let oItem = new IdEntry(sEntryName);
-        oItem.rId = aRId[nItem];
-        if(nCounter !== null) {
-            oItem.id = nCounter++;
+        let sRID = aRId[nItem];
+        oItem.rId = sRID;
+        if(nConterBase !== null) {
+
+            let nIdx = parseInt(sRID.slice("rId".length));
+            oItem.id = nConterBase + nIdx;
         }
         this.list.push(oItem);
     }

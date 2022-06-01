@@ -1332,8 +1332,7 @@
 			let sValAttrName = sAttrNamespace + "val";
 			writer.WriteXmlNodeStart(sName);
 			writer.WriteXmlNullableAttributeUInt(sValAttrName, this.val);
-			writer.WriteXmlAttributesEnd();
-			writer.WriteXmlNodeEnd(sName);
+			writer.WriteXmlAttributesEnd(true);
 		};
 
 		var cd16 = 1.0 / 6.0;
@@ -5617,14 +5616,12 @@
 				sAttrNamespace = sNodeNamespace;
 			} else
 				sNodeNamespace = ("a:");
-			writer.WriteXmlNodeStart(sNodeNamespace + ("lin"));
+			writer.WriteXmlNodeStart(sNodeNamespace + "lin");
 
 
-			writer.WriteXmlNullableAttributeInt(sAttrNamespace + ("ang"), this.angle);
-			writer.WriteXmlNullableAttributeBool(sAttrNamespace + ("scaled"), this.scale);
-			writer.WriteXmlAttributesEnd();
-
-			writer.WriteXmlNodeEnd(sNodeNamespace + ("lin"));
+			writer.WriteXmlNullableAttributeInt(sAttrNamespace + "ang", this.angle);
+			writer.WriteXmlNullableAttributeBool(sAttrNamespace + "scaled", this.scale);
+			writer.WriteXmlAttributesEnd(true);
 		};
 
 		function GradPath() {
@@ -6862,24 +6859,6 @@
 			if (!fill)
 				return;
 			fill.toXml(writer, ns);
-			return;
-			switch (fill.type) {
-				case c_oAscFill.FILL_TYPE_NOFILL:
-					break;
-				case c_oAscFill.FILL_TYPE_GRP:
-					break;
-				case c_oAscFill.FILL_TYPE_GRAD:
-					break;
-				case c_oAscFill.FILL_TYPE_PATT:
-					break;
-				case c_oAscFill.FILL_TYPE_BLIP:
-					fill.toXml(writer, "xdr:blipFill");
-					break;
-				case c_oAscFill.FILL_TYPE_SOLID:
-					break;
-				default:
-					break;
-			}
 		};
 
 
@@ -8217,7 +8196,7 @@
 			CBaseFormatObject.call(this);
 			this.id = 0;
 			this.name = "";
-			this.isHidden = false;
+			this.isHidden = null;
 			this.descr = null;
 			this.title = null;
 
@@ -8402,12 +8381,17 @@
 			writer.WriteXmlNullableAttributeBool("hidden", this.isHidden);
 			if (this.title) writer.WriteXmlNullableAttributeStringEncode("title", this.title);
 
-			writer.WriteXmlAttributesEnd();
 
-			writer.WriteXmlNullable(this.hlinkClick);
-			writer.WriteXmlNullable(this.hlinkHover);
+			if(this.hlinkClick || this.hlinkHover) {
+				writer.WriteXmlAttributesEnd();
+				writer.WriteXmlNullable(this.hlinkClick);
+				writer.WriteXmlNullable(this.hlinkHover);
 
-			writer.WriteXmlNodeEnd(sName);
+				writer.WriteXmlNodeEnd(sName);
+			}
+			else {
+				writer.WriteXmlAttributesEnd(true);
+			}
 		};
 
 
@@ -8475,8 +8459,8 @@
 
 		function NvPr() {
 			CBaseFormatObject.call(this);
-			this.isPhoto = false;
-			this.userDrawn = false;
+			this.isPhoto = null;
+			this.userDrawn = null;
 			this.ph = null;
 			this.unimedia = null;
 		}
@@ -8570,7 +8554,7 @@
 
 		function Ph() {
 			CBaseFormatObject.call(this);
-			this.hasCustomPrompt = false;
+			this.hasCustomPrompt = null;
 			this.idx = null;
 			this.orient = null;
 			this.sz = null;
@@ -12545,7 +12529,7 @@
 			}
 			else {
 				if(writer.context.groupIndex === 0) {
-					writer.WriteXmlString("<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\" hidden=\"0\"/><p:cNvGrpSpPr/><p:nvPr isPhoto=\"0\" userDrawn=\"0\"/></p:nvGrpSpPr><p:grpSpPr bwMode=\"auto\"><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"0\" cy=\"0\"/><a:chOff x=\"0\" y=\"0\"/><a:chExt cx=\"0\" cy=\"0\"/></a:xfrm></p:grpSpPr>")
+					writer.WriteXmlString("<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr /></p:nvGrpSpPr><p:grpSpPr bwMode=\"auto\"><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"0\" cy=\"0\"/><a:chOff x=\"0\" y=\"0\"/><a:chExt cx=\"0\" cy=\"0\"/></a:xfrm></p:grpSpPr>")
 				}
 			}
 
@@ -16020,6 +16004,20 @@
 				return oCopy;
 			}, this, []);
 		};
+		CCore.prototype.writeDate = function(writer, sName, oDate, sDefault) {
+			let sToWrite;
+			if(oDate) {
+				sToWrite = oDate.toISOString().slice(0, 19) + 'Z'
+			}
+			else {
+				sToWrite = sDefault;
+			}
+			writer.WriteXmlNodeStart(sName);
+			writer.WriteXmlAttributeString("xsi:type", "dcterms:W3CDTF");
+			writer.WriteXmlAttributesEnd();
+			writer.WriteXmlString(sToWrite);
+			writer.WriteXmlNodeEnd(sName);
+		}
 		CCore.prototype.readChildXml = function (name, reader) {
 			switch (name) {
 				case "category": {
@@ -16084,7 +16082,7 @@
 				}
 			}
 		};
-		CCore.prototype.toXml = function (writer) {
+		CCore.prototype.toXmlImpl = function(writer) {
 
 			writer.WriteXmlString(AscCommonWord.g_sXmlHeader);
 			writer.WriteXmlNodeStart("cp:coreProperties");
@@ -16110,23 +16108,39 @@
 			if (this.lastPrinted && this.lastPrinted.length > 0) {
 				writer.WriteXmlNullableValueString("cp:lastPrinted", this.lastPrinted);
 			}
-			if (this.created && this.created.length > 0) {
-				writer.WriteXmlNodeStart("dcterms:created xsi:type=\"dcterms:W3CDTF\"");
-				writer.WriteXmlAttributesEnd();
-				writer.WriteXmlStringEncode(this.created);
-				writer.WriteXmlNodeEnd("dcterms:created");
-			}
-			if (this.modified && this.modified.length > 0) {
-				writer.WriteXmlNodeStart("dcterms:modified xsi:type=\"dcterms:W3CDTF\"");
-				writer.WriteXmlAttributesEnd();
-				writer.WriteXmlStringEncode(this.modified);
-				writer.WriteXmlNodeEnd("dcterms:modified");
-			}
+			this.writeDate(writer, "dcterms:created", this.created, DEFAULT_CREATED);
+			this.writeDate(writer, "dcterms:modified", this.modified, DEFAULT_MODIFIED);
 			writer.WriteXmlNullableValueString("cp:category", this.category);
 			writer.WriteXmlNullableValueString("cp:contentStatus", this.contentStatus);
 			writer.WriteXmlNullableValueString("cp:version", this.version);
 
 			writer.WriteXmlNodeEnd("cp:coreProperties");
+		};
+		CCore.prototype.toXml = function (writer) {
+			let oContext = writer.context;
+			if(oContext.presentation) {
+				let oCore = this.copy();
+				oCore.setRequiredDefaultsPresentationEditor();
+				oCore.toXmlImpl(writer);
+				return;
+			}
+			this.toXmlImpl(writer);
+		};
+		CCore.prototype.createDefaultPresentationEditor = function() {
+			this.lastModifiedBy = "";
+		};
+
+		let DEFAULT_CREATED = "CREATED";
+		let DEFAULT_CREATOR = "CREATOR";
+		let DEFAULT_LAST_MODIFIED_BY = "CREATOR";
+		let DEFAULT_MODIFIED = "MODIFIED";
+		CCore.prototype.setRequiredDefaultsPresentationEditor = function() {
+			if(!this.creator) {
+				this.creator = DEFAULT_CREATOR;
+			}
+			if(!this.lastModifiedBy) {
+				this.lastModifiedBy = DEFAULT_LAST_MODIFIED_BY;
+			}
 		};
 
 
@@ -16165,6 +16179,22 @@
 		prot["asc_putVersion"] = prot.asc_putVersion;
 
 
+		function PartTitle() {
+			CBaseNoIdObject.call(this);
+			this.title = null;
+		}
+		InitClass(PartTitle, CBaseNoIdObject, 0);
+		PartTitle.prototype.fromXml = function (reader) {
+			this.title = reader.GetTextDecodeXml();
+		}
+		PartTitle.prototype.toXml = function (writer) {
+			if(this.title !== null) {
+				writer.WriteXmlString("<vt:lpstr>");
+				writer.WriteXmlStringEncode(this.title);
+				writer.WriteXmlString("</vt:lpstr>");
+			}
+		}
+
 		function CApp() {
 			CBaseNoIdObject.call(this);
 			this.Template = null;
@@ -16196,6 +16226,53 @@
 		}
 
 		InitClass(CApp, CBaseNoIdObject, 0);
+		CApp.prototype.getAppName = function() {
+			return "@@AppName/@@Version";
+		};
+		CApp.prototype.setRequiredDefaults = function() {
+			this.AppVersion = this.getAppName();
+		};
+		CApp.prototype.createDefaultPresentationEditor = function(nCountSlides, nCountThemes) {
+			this.TotalTime = 0;
+			this.Words = 0;
+			this.setRequiredDefaults();
+			this.PresentationFormat = "On-screen Show (4:3)";
+			this.Paragraphs = 0;
+			this.Slides = nCountSlides;
+			this.Notes = nCountSlides;
+			this.HiddenSlides = 0;
+			this.MMClips = 2;
+			this.ScaleCrop = false;
+
+			this.HeadingPairs.push(new CVariant());
+			this.HeadingPairs[0].type = c_oVariantTypes.vtLpstr;
+			this.HeadingPairs[0].strContent = "Theme";
+			this.HeadingPairs.push(new CVariant());
+			this.HeadingPairs[1].type = c_oVariantTypes.vtI4;
+			this.HeadingPairs[1].iContent = nCountThemes;
+			this.HeadingPairs.push(new CVariant());
+			this.HeadingPairs[2].type = c_oVariantTypes.vtLpstr;
+			this.HeadingPairs[2].strContent = "Slide Titles";
+			this.HeadingPairs.push(new CVariant());
+			this.HeadingPairs[3].type = c_oVariantTypes.vtI4;
+			this.HeadingPairs[3].iContent = nCountSlides;
+
+			for (let i = 0; i < nCountThemes; ++i) {
+				let s = "Theme " + ( i + 1);
+				this.TitlesOfParts.push(new PartTitle());
+				this.TitlesOfParts[i].title = s;
+			}
+
+			for (let i = 0; i < nCountSlides; ++i) {
+				let s = "Slide " + (i + 1);
+				this.TitlesOfParts.push( new PartTitle());
+				this.TitlesOfParts[nCountThemes + i].title = s;
+			}
+
+			this.LinksUpToDate = false;
+			this.SharedDoc = false;
+			this.HyperlinksChanged = false;
+		};
 		CApp.prototype.fromStream = function (s) {
 			var _type = s.GetUChar();
 			var _len = s.GetULong();
@@ -16530,7 +16607,85 @@
 				}
 			}
 		};
+
 		CApp.prototype.toXml = function (writer) {
+			let oContext = writer.context;
+			if(oContext.presentation) {
+				let oAppToWrite = new CApp();
+				oAppToWrite.createDefaultPresentationEditor(oContext.getSlidesCount(), oContext.getSlideMastersCount());
+				oAppToWrite.toDrawingML(writer);
+			}
+			else {
+				this.toXmlInternal(writer);
+			}
+		};
+		CApp.prototype.toDrawingML = function(writer) {
+			writer.WriteXmlString(AscCommonWord.g_sXmlHeader);
+			writer.WriteXmlNodeStart("Properties");
+			writer.WriteXmlNullableAttributeString("xmlns", "http://schemas.openxmlformats.org/officeDocument/2006/extended-properties");
+			writer.WriteXmlNullableAttributeString("xmlns:vt", "http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes");
+			writer.WriteXmlAttributesEnd();
+
+			writer.WriteXmlNullableValueString("Template", this.Template);
+			writer.WriteXmlNullableValueUInt("TotalTime", this.TotalTime);
+			writer.WriteXmlNullableValueUInt("Pages", this.Pages);
+			writer.WriteXmlNullableValueUInt("Words", this.Words);
+			writer.WriteXmlNullableValueUInt("Characters", this.Characters);
+			writer.WriteXmlNullableValueUInt("CharactersWithSpaces", this.CharactersWithSpaces);
+			writer.WriteXmlNullableValueString("Application", this.Application);
+			writer.WriteXmlNullableValueInt("DocSecurity", this.DocSecurity);
+			writer.WriteXmlNullableValueString("PresentationFormat", this.PresentationFormat);
+			writer.WriteXmlNullableValueUInt("Lines", this.Lines);
+			writer.WriteXmlNullableValueUInt("Paragraphs", this.Paragraphs);
+			writer.WriteXmlNullableValueUInt("Slides", this.Slides);
+			writer.WriteXmlNullableValueUInt("Notes", this.Notes);
+			writer.WriteXmlNullableValueUInt("HiddenSlides", this.HiddenSlides);
+			writer.WriteXmlNullableValueInt("MMClips", this.MMClips);
+			if (this.ScaleCrop !== null) {
+				writer.WriteXmlString("<ScaleCrop>");
+				writer.WriteXmlString(this.ScaleCrop ? "true" : "false");
+				writer.WriteXmlString("</ScaleCrop>");
+			}
+
+			writer.WriteXmlNodeStart("HeadingPairs");
+			writer.WriteXmlAttributesEnd();
+
+			writer.WriteXmlNodeStart("vt:vector");
+			
+			writer.WriteXmlNullableAttributeUInt("size", this.HeadingPairs.length);
+			writer.WriteXmlNullableAttributeString("baseType",  "variant");
+			writer.WriteXmlAttributesEnd();
+
+			writer.WriteXmlArray(this.HeadingPairs, "vt:variant");
+
+			writer.WriteXmlNodeEnd("vt:vector");
+			writer.WriteXmlNodeEnd("HeadingPairs");
+
+			writer.WriteXmlNodeStart("TitlesOfParts");
+			writer.WriteXmlAttributesEnd();
+
+			writer.WriteXmlNodeStart("vt:vector");
+			
+			writer.WriteXmlNullableAttributeUInt("size", this.TitlesOfParts.length);
+			writer.WriteXmlNullableAttributeString("baseType", "lpstr");
+			writer.WriteXmlAttributesEnd();
+
+			writer.WriteXmlArray(this.TitlesOfParts, "vt:variant");
+
+			writer.WriteXmlNodeEnd("vt:vector");
+			writer.WriteXmlNodeEnd("TitlesOfParts");
+
+			writer.WriteXmlNullableValueString("Manager", this.Manager);
+			writer.WriteXmlNullableValueString("Company", this.Company);
+			writer.WriteXmlNullableValueString("LinksUpToDate", this.LinksUpToDate);
+			writer.WriteXmlNullableValueString("SharedDoc", this.SharedDoc);
+			writer.WriteXmlNullableValueString("HyperlinkBase", this.HyperlinkBase);
+			writer.WriteXmlNullableValueString("HyperlinksChanged", this.HyperlinksChanged);
+			writer.WriteXmlNullableValueString("AppVersion", this.AppVersion);
+
+			writer.WriteXmlNodeEnd("Properties");
+		};
+		CApp.prototype.toXmlInternal = function (writer) {
 
 			writer.WriteXmlString(AscCommonWord.g_sXmlHeader);
 			writer.WriteXmlNodeStart("Properties");
@@ -16539,9 +16694,7 @@
 			writer.WriteXmlNullableAttributeString("xmlns:vt", "http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes");
 			writer.WriteXmlAttributesEnd();
 			writer.WriteXmlString("<Application>");
-			writer.WriteXmlStringEncode("@@AppName");
-			writer.WriteXmlString("/");
-			writer.WriteXmlStringEncode("@@Version");
+			writer.WriteXmlStringEncode(this.getAppName());
 			writer.WriteXmlString("</Application>");
 
 			if (this.Characters !== null) {
