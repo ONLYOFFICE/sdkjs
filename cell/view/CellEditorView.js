@@ -158,6 +158,7 @@
 
 		this.objAutoComplete = {};
 		this.sAutoComplete = null;
+		this.eventListeners = [];
 
 		/** @type RegExp */
 		this.rangeChars = ["=", "-", "+", "*", "/", "(", "{", "<", ">", "^", "!", "&", ":", " ", "."];
@@ -233,40 +234,55 @@
 
 		// bind event handlers
 		if (t.canvasOuter && t.canvasOuter.addEventListener) {
-			t.canvasOuter.addEventListener("mousedown", function () {
+			var eventInfo = new AscCommon.CEventListenerInfo(t.canvasOuter, "mousedown", function () {
 				return t._onMouseDown.apply(t, arguments);
 			}, false);
-			t.canvasOuter.addEventListener("mouseup", function () {
+			t.eventListeners.push(eventInfo);
+
+			eventInfo = new AscCommon.CEventListenerInfo(t.canvasOuter, "mouseup", function () {
 				return t._onMouseUp.apply(t, arguments);
 			}, false);
-			t.canvasOuter.addEventListener("mousemove", function () {
+			t.eventListeners.push(eventInfo);
+
+			eventInfo = new AscCommon.CEventListenerInfo(t.canvasOuter, "mousemove", function () {
 				return t._onMouseMove.apply(t, arguments);
 			}, false);
-			t.canvasOuter.addEventListener("mouseleave", function () {
+			t.eventListeners.push(eventInfo);
+
+			eventInfo = new AscCommon.CEventListenerInfo(t.canvasOuter, "mouseleave", function () {
 				return t._onMouseLeave.apply(t, arguments);
 			}, false);
+			t.eventListeners.push(eventInfo);
 		}
 
 		// check input, it may have zero len, for mobile version
 		if (t.input && t.input.addEventListener) {
-			t.input.addEventListener("focus", function () {
+			eventInfo = new AscCommon.CEventListenerInfo(t.input, "focus", function () {
 				return t.isOpened ? t._topLineGotFocus.apply(t, arguments) : true;
 			}, false);
-			t.input.addEventListener("mousedown", function () {
+			t.eventListeners.push(eventInfo);
+
+			eventInfo = new AscCommon.CEventListenerInfo(t.input, "mousedown", function () {
 				return t.isOpened ? (t.callTopLineMouseup = true) : true;
 			}, false);
-			t.input.addEventListener("mouseup", function () {
+			t.eventListeners.push(eventInfo);
+
+			eventInfo = new AscCommon.CEventListenerInfo(t.input, "mouseup", function () {
 				return t.isOpened ? t._topLineMouseUp.apply(t, arguments) : true;
 			}, false);
-			t.input.addEventListener("input", function () {
+			t.eventListeners.push(eventInfo);
+
+			eventInfo = new AscCommon.CEventListenerInfo(t.input, "input", function () {
 				return t._onInputTextArea.apply(t, arguments);
 			}, false);
+			t.eventListeners.push(eventInfo);
 
 			// Не поддерживаем drop на верхнюю строку
-			t.input.addEventListener("drop", function (e) {
+			eventInfo = new AscCommon.CEventListenerInfo(t.input, "drop", function (e) {
 				e.preventDefault();
 				return false;
 			}, false);
+			t.eventListeners.push(eventInfo);
 		}
 
 		this.fKeyMouseUp = function () {
@@ -275,9 +291,23 @@
 		this.fKeyMouseMove = function () {
 			return t._onWindowMouseMove.apply(t, arguments);
 		};
+
+		t.addEventListeners();
 	};
 
 	CellEditor.prototype.destroy = function () {
+	};
+
+	CellEditor.prototype.removeEventListeners = function () {
+		this.eventListeners.forEach(function (eventInfo) {
+			eventInfo.listeningElement.removeEventListener(eventInfo.eventName, eventInfo.listener);
+		});
+	};
+
+	CellEditor.prototype.addEventListeners = function () {
+		this.eventListeners.forEach(function (eventInfo) {
+			eventInfo.listeningElement.addEventListener(eventInfo.eventName, eventInfo.listener, eventInfo.useCapture);
+		});
 	};
 
 	/**

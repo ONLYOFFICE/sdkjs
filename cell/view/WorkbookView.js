@@ -224,6 +224,9 @@
     // Константы для подстановке формулы (что не нужно добавлять скобки)
     this.arrExcludeFormulas = [];
 
+		// Информация об установленных прослушивателях, для их последующего удаления
+		this.eventListeners = [];
+
     this.fReplaceCallback = null;	// Callback для замены текста
 
     // Фонт, который выставлен в DrawingContext, он должен быть один на все DrawingContext-ы
@@ -558,43 +561,41 @@
 		  });
 
       if (this.input && this.input.addEventListener) {
-	      this._inputFocusEventListener = function () {
+				var eventInfo = new AscCommon.CEventListenerInfo(this.input, "focus", function () {
 					if (this.Api.isEditVisibleAreaOleEditor) {
 						this.input.blur();
 						return;
 					}
-		      this.input.isFocused = true;
-		      if (!this.canEdit()) {
-			      return;
-		      }
-		      if (this.isProtectActiveCell()) {
-			      this.input.blur();
-			      this.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
-			      return;
-		      }
-		      this._onStopFormatPainter();
-		      this.cellEditor.callTopLineMouseup = true;
-		      if (!this.getCellEditMode() && !this.controller.isFillHandleMode) {
-			      var enterOptions = new AscCommonExcel.CEditorEnterOptions();
-			      enterOptions.focus = true;
-			      this._onEditCell(enterOptions);
-		      }
-	      }.bind(this);
+					this.input.isFocused = true;
+					if (!this.canEdit()) {
+						return;
+					}
+					if (this.isProtectActiveCell()) {
+						this.input.blur();
+						this.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
+						return;
+					}
+					this._onStopFormatPainter();
+					this.cellEditor.callTopLineMouseup = true;
+					if (!this.getCellEditMode() && !this.controller.isFillHandleMode) {
+						var enterOptions = new AscCommonExcel.CEditorEnterOptions();
+						enterOptions.focus = true;
+						this._onEditCell(enterOptions);
+					}
+				}.bind(this), false);
+				this.eventListeners.push(eventInfo);
 
-        this.input.addEventListener("focus", this._inputFocusEventListener, false);
 
-
-	      this._inputKeyDownEventListener = function (event) {
-		      if (this.isCellEditMode) {
-			      this.handlers.trigger('asc_onInputKeyDown', event);
-			      if (!event.defaultPrevented) {
-				      this.cellEditor._onWindowKeyDown(event, true);
-			      }
-		      }
-	      }.bind(this);
-
-        this.input.addEventListener('keydown', this._inputKeyDownEventListener, false);
-      }
+				eventInfo = new AscCommon.CEventListenerInfo(this.input, "keydown", function (event) {
+					if (this.isCellEditMode) {
+						this.handlers.trigger('asc_onInputKeyDown', event);
+						if (!event.defaultPrevented) {
+							this.cellEditor._onWindowKeyDown(event, true);
+						}
+					}
+				}.bind(this), false);
+				this.eventListeners.push(eventInfo);
+			}
 
       this.Api.onKeyDown = function (event) {
         self.controller._onWindowKeyDown(event);
@@ -1018,7 +1019,7 @@
     this.fReplaceCallback = function() {
       self._replaceCellTextCallback.apply(self, arguments);
     };
-
+		this.addEventListeners();
     return this;
   };
 
@@ -1969,14 +1970,15 @@
 	};
 
 	WorkbookView.prototype.removeEventListeners = function () {
-		if (this.input && this.input.removeEventListener) {
-			if (this._inputFocusEventListener) {
-				this.input.removeEventListener('focus', this._inputFocusEventListener);
-			}
-			if (this._inputKeyDownEventListener) {
-				this.input.removeEventListener('keydown', this._inputKeyDownEventListener);
-			}
-		}
+		this.eventListeners.forEach(function (eventInfo) {
+			eventInfo.listeningElement.removeEventListener(eventInfo.eventName, eventInfo.listener);
+		});
+	};
+
+	WorkbookView.prototype.addEventListeners = function () {
+		this.eventListeners.forEach(function (eventInfo) {
+			eventInfo.listeningElement.addEventListener(eventInfo.eventName, eventInfo.listener, eventInfo.useCapture);
+		});
 	};
 
   WorkbookView.prototype._onSelectColumnsByRange = function() {
