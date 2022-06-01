@@ -5923,9 +5923,6 @@
 		if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.selectUnlockedCells)) {
 			return;
 		}
-		if (this.workbook.Api.isEditVisibleAreaOleEditor) {
-			return this._drawVisibleArea();
-		}
 
         var selectionDialogMode = this.getSelectionDialogMode();
         var dialogOtherRanges = this.getDialogOtherRanges();
@@ -5956,6 +5953,14 @@
 				}
 			}
 		}
+
+	    if (this.workbook.Api.isShowVisibleAreaOleEditor || this.workbook.Api.isEditVisibleAreaOleEditor) {
+		    this._drawVisibleArea();
+		    if (this.workbook.Api.isEditVisibleAreaOleEditor) {
+			    ctx.restore();
+			    return;
+		    }
+	    }
 
 		if(this.viewPrintLines) {
 			this._drawPrintArea();
