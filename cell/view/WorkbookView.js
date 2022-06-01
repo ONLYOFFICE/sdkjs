@@ -1582,7 +1582,14 @@
 
   WorkbookView.prototype._onMoveResizeRangeHandle = function(x, y, target, callback) {
     var ws = this.getWorksheet();
-    var d = ws.changeSelectionMoveResizeRangeHandle(x, y, target, this.cellEditor);
+		var d;
+
+		if (this.Api.isEditVisibleAreaOleEditor && target.isOleRange) {
+			d = ws.changeSelectionMoveResizeVisibleAreaHandle(x, y, target);
+		} else {
+			d = ws.changeSelectionMoveResizeRangeHandle(x, y, target, this.cellEditor);
+		}
+
     asc_applyFunction(callback, d);
   };
 

@@ -1486,8 +1486,13 @@
 
 			if (this.view.Api.isEditVisibleAreaOleEditor) {
 				if (button === 0 && this.view.isInnerOfWorksheet(coord.x, coord.y)) {
-					this._startChangeVisibleArea(event);
-					this.isChangeVisibleAreaMode = true;
+					if (this.targetInfo && this.targetInfo.target === c_oTargetType.MoveResizeRange) {
+						t._moveResizeRangeHandle(event, t.targetInfo);
+						t.isMoveResizeRange = true;
+					} else {
+						this._startChangeVisibleArea(event);
+						this.isChangeVisibleAreaMode = true;
+					}
 				}
 				return;
 			}
