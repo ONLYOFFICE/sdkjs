@@ -4174,19 +4174,41 @@ var editor;
     return binaryInfo;
   }
 
-  spreadsheet_api.prototype.asc_toggleVisibleAreaOleEditor = function () {
-    this.isEditVisibleAreaOleEditor = !this.isEditVisibleAreaOleEditor;
+	spreadsheet_api.prototype.asc_toggleChangeVisibleAreaOleEditor = function (bForceValue) {
 		var ws = this.wb.getWorksheet();
 		ws.cleanSelection();
 		ws.endEditChart();
 		ws._endSelectionShape();
-    if (this.isEditVisibleAreaOleEditor) {
-      this.wb.setCellEditMode(false);
-      ws._drawSelection();
-    } else {
-      this.wb.setCellEditMode(true);
-    }
-  }
+		if (typeof bForceValue === 'boolean') {
+			this.isEditVisibleAreaOleEditor = bForceValue;
+		} else {
+			this.isEditVisibleAreaOleEditor = !this.isEditVisibleAreaOleEditor;
+		}
+		if (this.isEditVisibleAreaOleEditor) {
+			this.wb.setCellEditMode(false);
+		}
+		ws._drawSelection();
+	};
+
+	spreadsheet_api.prototype.asc_toggleShowVisibleAreaOleEditor = function (bForceValue) {
+		var newValue;
+		if (typeof bForceValue === 'boolean') {
+			newValue = bForceValue;
+		} else {
+			newValue = !this.isShowVisibleAreaOleEditor;
+		}
+		var ws = this.wb.getWorksheet();
+		ws.cleanSelection();
+		if (newValue) {
+			this.isShowVisibleAreaOleEditor = newValue;
+			ws.cleanSelection();
+			ws._drawSelection();
+		} else {
+			ws.cleanSelection();
+			this.isShowVisibleAreaOleEditor = newValue;
+			ws._drawSelection();
+		}
+	};
 
   spreadsheet_api.prototype.asc_editChartDrawingObject = function(chart) {
     var ws = this.wb.getWorksheet();
@@ -7864,7 +7886,8 @@ var editor;
   prot["asc_checkDefinedName"] = prot.asc_checkDefinedName;
 
   // Ole Editor
-  prot["asc_toggleVisibleAreaOleEditor"] = prot.asc_toggleVisibleAreaOleEditor;
+	prot["asc_toggleChangeVisibleAreaOleEditor"] = prot.asc_toggleChangeVisibleAreaOleEditor;
+	prot["asc_toggleShowVisibleAreaOleEditor"] = prot.asc_toggleShowVisibleAreaOleEditor;
   prot["asc_addOleObjectAction"] = prot.asc_addOleObjectAction;
   prot["asc_addTableOleObjectInOleEditor"] = prot.asc_addTableOleObjectInOleEditor;
   prot["asc_getBinaryInfoOleObject"] = prot.asc_getBinaryInfoOleObject;
