@@ -730,27 +730,22 @@
 	Api.prototype.FromJSON = function(sMessage)
 	{
 		var oReader = new AscCommon.ReaderFromJSON();
-		oReader.Workbook = Asc.editor.wbModel;
+		oReader.Workbook = this.wbModel;
 		
+		var oActiveSheet = this.GetActiveSheet().worksheet;
 		var oParsedObj  = JSON.parse(sMessage);
-		var oReturnObj = null;
+		var oReadedObj = null;
 
 		switch (oParsedObj.type)
 		{
 			case "worksheet":
-				oReturnObj = new ApiWorksheet(oReader.WorksheetFromJSON(oParsedObj, this.wbModel));
-				oReturnObj.worksheet.initPostOpen(this.wbModel.wsHandlers, {});
-				this.wbModel.aWorksheets.push(oReturnObj.worksheet);
-				this.wbModel.aWorksheetsById[oReturnObj.worksheet.getId()] = oReturnObj.worksheet;
-				this.wbModel._updateWorksheetIndexes(oReturnObj.worksheet);
-				var nOldActive = this.wbModel.wsActive;
-				this.wbModel.setActive(oReturnObj.worksheet.index);
-				this.wb.updateWorksheetByModel();
-				this.wb.showWorksheet();
-				this.wbModel.setActive(nOldActive);
+				oReadedObj = new ApiWorksheet(oReader.WorksheetFromJSON(oParsedObj, this.wbModel));
+				this.wbModel.pushWorksheet2();
+				//this.wbModel.pushWorksheet2();
+				break;
 		}
 
-		return oReturnObj;
+		return oReadedObj;
 	};
 
 	/**

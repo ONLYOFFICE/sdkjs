@@ -2251,6 +2251,65 @@
 	Workbook.prototype.getWorksheetCount=function(){
 		return this.aWorksheets.length;
 	};
+	Workbook.prototype.pushWorksheet=function(oNewWorksheet){
+		History.StartTransaction();
+
+		this.dependencyFormulas.lockRecal();
+		History.Create_NewPoint();
+		History.TurnOff();
+
+		var wsActive = this.getActiveWs();
+		oNewWorksheet.initPostOpen(this.wsHandlers, {});
+
+		this.aWorksheets.push(oNewWorksheet);
+		this.aWorksheetsById[oNewWorksheet.getId()] = oNewWorksheet;
+		this._updateWorksheetIndexes(wsActive);
+		History.TurnOn();
+		this._insertWorksheetFormula(oNewWorksheet.index);
+
+		this.dependencyFormulas.unlockRecal();
+
+		this.oApi.wb.updateWorksheetByModel();
+		this.oApi.wb.showWorksheet();
+		this.oApi.sheetsChanged();
+
+		History.EndTransaction();
+		return oNewWorksheet;
+	};
+	Workbook.prototype.pushWorksheet2=function(){
+		History.Create_NewPoint();
+		History.StartTransaction();
+
+		this.dependencyFormulas.lockRecal();
+		History.TurnOff();
+
+		var wsActive = this.getActiveWs();
+		var oNewWorksheet = new Worksheet(this, this.aWorksheets.length);
+		oNewWorksheet.initPostOpen(this.wsHandlers, {});
+
+		var indexBefore = this.aWorksheets.length;
+		this.aWorksheets.push(oNewWorksheet);
+		this.aWorksheetsById[oNewWorksheet.getId()] = oNewWorksheet;
+		this._updateWorksheetIndexes(wsActive);
+		History.TurnOn();
+		this._insertWorksheetFormula(oNewWorksheet.index);
+
+		History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_SheetAdd, null, null, new UndoRedoData_SheetAdd(indexBefore, oNewWorksheet.getName(), null, oNewWorksheet.getId()));
+		History.SetSheetUndo(wsActive.getId());
+		History.SetSheetRedo(oNewWorksheet.getId());
+
+		this.dependencyFormulas.unlockRecal();
+
+		this.setActive(oNewWorksheet.index);
+		this.oApi.wb.updateWorksheetByModel();
+		this.oApi.wb.showWorksheet();
+
+		History.EndTransaction();
+
+		this.oApi.sheetsChanged();
+		
+		return oNewWorksheet;
+	};
 	Workbook.prototype.createWorksheet=function(indexBefore, sName, sId){
 		this.dependencyFormulas.lockRecal();
 		History.Create_NewPoint();

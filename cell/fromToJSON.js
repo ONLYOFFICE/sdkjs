@@ -217,7 +217,7 @@
 
 		var aDrawings = [];
 		for (var nDrawing = 0; nDrawing < oWorksheet.Drawings.length; nDrawing++)
-			aDrawings.push(this.SerDrawingExcel(oWorksheet.Drawings[nDrawing]));
+			aDrawings.push(this.SerDrawingExcell(oWorksheet.Drawings[nDrawing]));
 
 		var aHyperlinks = [];
 		var aWorksheetLinks = oWorksheet.hyperlinkManager.getAll();
@@ -266,7 +266,7 @@
 
 		return oSheet;
 	};
-	WriterToJSON.prototype.SerDrawingExcel = function(oDrawingExcel)
+	WriterToJSON.prototype.SerDrawingExcell = function(oDrawingExcel)
 	{
 		var nTypeToWrite = oDrawingExcel.Type;
 		if(oDrawingExcel.graphicObject.getObjectType() === AscDFH.historyitem_type_OleObject)
@@ -3346,14 +3346,14 @@
 		var aFilterColumns = [];
 		if (oAutoFilter.FilterColumns)
 		{
-			for (var nFilterCol = 0; nFilterCol < oAutoFilter.FilterColumns.length; nFilterCol)
+			for (var nFilterCol = 0; nFilterCol < oAutoFilter.FilterColumns.length; nFilterCol++)
 				aFilterColumns.push(this.SerFilterColumn(oAutoFilter.FilterColumns[nFilterCol]));
 		}
 		
 		return {
-			"filterColumn": aFilterColumns,
-			"sortState":    this.SerSortState(oAutoFilter.SortState),
-			"ref":          this.SerRef(oAutoFilter.Ref)
+			"filterColumn": aFilterColumns.length > 0 ? aFilterColumns : undefined,
+			"sortState":    oAutoFilter.SortState != null ? this.SerSortState(oAutoFilter.SortState) : undefined,
+			"ref":          oAutoFilter.Ref != null ? this.SerRef(oAutoFilter.Ref) : undefined
 		}
 	};
 	WriterToJSON.prototype.SerFilterColumn = function(oFilterColumn) // CT_ColumnFilter
@@ -3362,11 +3362,11 @@
 			return oFilterColumn;
 
 		return {
-			"colorFilter":   this.SerColorFilter(oFilterColumn.ColorFilter),
-			"customFilters": this.SerCustomFilters(oFilterColumn.CustomFiltersObj),
-			"dynamicFilter": this.SerDynamicFilter(oFilterColumn.DynamicFilter),
-			"filters":       this.SerFilters(oFilterColumn.Filters),
-			"top10":         this.SerTop10(oFilterColumn.Top10),
+			"colorFilter":   oFilterColumn.ColorFilter != null ? this.SerColorFilter(oFilterColumn.ColorFilter) : undefined,
+			"customFilters": oFilterColumn.CustomFiltersObj != null ? this.SerCustomFilters(oFilterColumn.CustomFiltersObj) : undefined,
+			"dynamicFilter": oFilterColumn.DynamicFilter != null ? this.SerDynamicFilter(oFilterColumn.DynamicFilter) : undefined,
+			"filters":       oFilterColumn.Filters != null ? this.SerFilters(oFilterColumn.Filters) : undefined,
+			"top10":         oFilterColumn.Top10 != null ? this.SerTop10(oFilterColumn.Top10) : undefined,
 			"colId":         oFilterColumn.ColId != null ? oFilterColumn.ColId : undefined,
 			"showButton":    oFilterColumn.ShowButton != null ? oFilterColumn.ShowButton : undefined
 		}
@@ -3538,8 +3538,8 @@
 		this.curWorksheet = oWorksheet;
 
 		// worksheet props
-		oWorksheet.sName = oParsedSheet["name"];
-		oWorksheet.bHidden = oParsedSheet["hidden"] === "hidden" ? true : false;
+		oWorksheet.setName(oParsedSheet["name"] + "1");
+		oWorksheet.setHidden(oParsedSheet["hidden"] === "hidden" ? true : false);
 
 		if (oParsedSheet["cols"] != null)
 			this.ColsFromJSON(oParsedSheet["cols"], oWorksheet);
@@ -3689,7 +3689,7 @@
 	{
 		var aTempCols = [];
 		for (var nCol = 0; nCol < oParsedCols.length; nCol++)
-			aTempCols.push(this.ColFromJSON(oParsedCols[nCol]));
+			aTempCols.push(this.ColFromJSON(oParsedCols[nCol], oWorksheet));
 
 		//если есть стиль последней колонки, назначаем его стилем всей таблицы и убираем из колонок
 		var oAllCol = null;
@@ -3718,12 +3718,12 @@
 			}
 		}
 	};
-	ReaderFromJSON.prototype.ColFromJSON = function(oParsedCol)
+	ReaderFromJSON.prototype.ColFromJSON = function(oParsedCol, oWorksheet)
 	{
 		var oTempCol = {
 			Max: null,
 			Min: null,
-			col: new AscCommonExcel.Col(oWorksheet, 0)
+			col: new AscCommonExcel.Col(oWorksheet || this.curWorksheet, 0)
 		}
 
 		var oXfs = oParsedCol["xfs"] ? this.CellXfsFromJSON(oParsedCol["xfs"]) : null;
@@ -3924,10 +3924,13 @@
 
 		if (oParsed["clientData"])
 			oDrawing.clientData = this.ClientDataFromJSON(oParsed["clientData"]);
-
+				
 		var oGraphicObj = this.GraphicObjFromJSON(oParsed["graphic"]);
 		oDrawing.graphicObject = oGraphicObj;
 		oGraphicObj.setDrawingBase(oDrawing);
+
+		if (oDrawing.clientData)
+			oDrawing.graphicObject.setClientData(oDrawing.clientData);
 
 		if(false != oFlags.from && false != oFlags.to){
 			oDrawing.Type = AscCommon.c_oAscCellAnchorType.cellanchorTwoCell;
@@ -3959,18 +3962,16 @@
 	};
 	ReaderFromJSON.prototype.FromToObjFromJSON = function(oParsed, oFromTo) // CCellObjectInfo
 	{
-		oFromTo.col = oParsed["col"];
-		if(oFromTo.col < 0)
-		{
+		if (oFromTo.col < 0)
 			oFromTo.col = 0;
-		}
-		oFromTo.colOff =  oParsed["colOff"];
-		oFromTo.row = oParsed["row"];
-		if(oFromTo.row < 0)
-		{
+		if (oFromTo.row < 0)
 			oFromTo.row = 0;
-		}
-		oFromTo.rowOff = oParsed["rowOff"];
+		
+		oFromTo.row = oParsed["row"];
+		oFromTo.col = oParsed["col"];
+		
+		oFromTo.rowOff = private_EMU2MM(oParsed["rowOff"]);
+		oFromTo.colOff = private_EMU2MM(oParsed["colOff"]);
 	};
 	ReaderFromJSON.prototype.ClientDataFromJSON = function(oParsed)
 	{
@@ -3988,7 +3989,7 @@
 
 		if (oParsed["ref"] != null)
 			oAutoFilter.setStringRef(oParsed["ref"]);
-		if (oParsed["filterColumn"].length > 0)
+		if (oParsed["filterColumn"] != null)
 			oAutoFilter.FilterColumns = this.FilterColumnsFromJSON(oParsed["filterColumn"]);
 		if (oParsed["sortState"] != null)
 			oAutoFilter.SortState = this.SortStateFromJSON(oParsed["sortState"]);
@@ -4009,7 +4010,7 @@
 
 		if (oParsed["colId"] != null)
 			oFilterColumn.ColId = oParsed["colId"];
-		if (oParsed["filters"].length > 0)
+		if (oParsed["filters"] != null)
 		{
 			oFilterColumn.Filters = this.FiltersFromJSON(oParsed["filters"]);
 			oFilterColumn.Filters.sortDate();
@@ -6215,7 +6216,7 @@
 	ReaderFromJSON.prototype.SlicerCachePivotTableFromJSON = function(oParsed, oWorksheet)
 	{
 		// to do (check sheetId, tapIdOpen)
-		var oTable = new CT_slicerCachePivotTable();
+		var oTable = new Asc.CT_slicerCachePivotTable();
 		
 		oTable.sheetId = oWorksheet.Id;
 		if (oParsed["name"] != null)
@@ -7208,11 +7209,11 @@
 		var oItem = new Asc.CT_tabularSlicerCacheItem();
 
 		if (oParsed["x"] != null)
-            oCache.x = oParsed["x"];
+            oItem.x = oParsed["x"];
 		if (oParsed["s"] != null)
-            oCache.s = oParsed["s"];
+            oItem.s = oParsed["s"];
 		if (oParsed["nd"] != null)
-            oCache.nd = oParsed["nd"];
+            oItem.nd = oParsed["nd"];
 
 		return oItem;
 	};
