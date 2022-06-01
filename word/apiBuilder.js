@@ -254,15 +254,49 @@
 
 	CMarkdownConverter.prototype.WrapInSymbol = function(sText, sSyblols, sWrapType)
 	{
+		var nFirstNonSpaceChar = sText.search(/\S/);
+		var nSpaceCharsCountOnEnd = 0;
+		if (nFirstNonSpaceChar !== - 1)
+			nSpaceCharsCountOnEnd = sText.slice(nFirstNonSpaceChar).length - sText.slice(nFirstNonSpaceChar).trim().length;
+		else
+			nSpaceCharsCountOnEnd = sText.length - sText.slice(nFirstNonSpaceChar).trim().length;
+
 		switch (sWrapType)
 		{
 			case 'open':
-				return sSyblols + sText
+				// пробелов нет в начале
+				if (nFirstNonSpaceChar === 0)
+					return sSyblols + sText
+				// строка из пробелов
+				else if (nFirstNonSpaceChar === -1)
+					return sText + sSyblols
+				// в начале строки есть пробелы
+				else if (nFirstNonSpaceChar !== -1)
+					return sText.slice(0, nFirstNonSpaceChar) + sSyblols + sText.slice(nFirstNonSpaceChar);
 			case 'close':
-				return sText + sSyblols;
+				// пробелов нет в конце
+				if (nSpaceCharsCountOnEnd === 0)
+					return sText + sSyblols;
+				// строка из пробелов
+				else if (nFirstNonSpaceChar === -1)
+					return sSyblols + sText;
+				// в конце строки есть пробелы
+				else if (nSpaceCharsCountOnEnd !== 0)
+					return sText.slice(0, sText.length - nSpaceCharsCountOnEnd) + sSyblols + sText.slice(sText.length - nSpaceCharsCountOnEnd);
 			case 'wholly':
 			default:
-				return sSyblols + sText + sSyblols;
+				// пробелов нет в начале и нет в конце
+				if (nFirstNonSpaceChar === 0 && nSpaceCharsCountOnEnd === 0)
+					return sSyblols + sText + sSyblols;
+				// пробелов нет в начале и есть в конце
+				else if (nFirstNonSpaceChar === 0 && nSpaceCharsCountOnEnd !== 0)
+					return sSyblols + sText.slice(0, sText.length - nSpaceCharsCountOnEnd) + sSyblols + sText.slice(sText.length - nSpaceCharsCountOnEnd);
+				// пробелы есть в начале и нет в конце
+				else if (nFirstNonSpaceChar !== 0 && nSpaceCharsCountOnEnd === 0)
+					return sText.slice(0, nFirstNonSpaceChar) + sSyblols + sText.slice(nFirstNonSpaceChar) + sSyblols;
+				// пробелы есть в начале и есть в конце
+				else if (nFirstNonSpaceChar !== 0 && nSpaceCharsCountOnEnd !== 0)
+					return sText.slice(0, nFirstNonSpaceChar) + sSyblols + sText.slice(nFirstNonSpaceChar, sText.length - nSpaceCharsCountOnEnd) + sSyblols + sText.slice(sText.length - nSpaceCharsCountOnEnd);
 		}
 	};
 	CMarkdownConverter.prototype.WrapInTag = function(sText, sHtmlTag, sWrapType, sStyle)
@@ -904,8 +938,8 @@
 			}
 		}
 
-		if (sOutputText === '' && hasPicture === false)
-			return '';
+		if (sOutputText.trim() === "" && hasPicture === false)
+			return sOutputText;
 
 		if (!this.isCodeBlock)
 		{
@@ -914,11 +948,11 @@
 			if (private_isMonospaceFont(oTextPr.FontFamily.Name))
 			{
 				oRunNext     = oRun.private_GetNextInParent();
-				while (oRunNext && oRunNext.Run.GetText() === '')
+				while (oRunNext && oRunNext.Run.GetText().trim() === '')
 					oRunNext = oRunNext.private_GetNextInParent();
 
 				oRunPrev     = oRun.private_GetPreviousInParent();
-				while (oRunPrev && oRunPrev.Run.GetText() === '')
+				while (oRunPrev && oRunPrev.Run.GetText().trim() === '')
 					oRunPrev = oRunPrev.private_GetPreviousInParent();
 
 				var isCodeNextRun = IsHaveCodeRun(oRunNext);
@@ -946,11 +980,11 @@
 			else
 			{
 				oRunNext     = oRun.private_GetNextInParent();
-				while (oRunNext && oRunNext.Run.GetText() === '')
+				while (oRunNext && oRunNext.Run.GetText().trim() === '')
 					oRunNext = oRunNext.private_GetNextInParent();
 
 				oRunPrev     = oRun.private_GetPreviousInParent();
-				while (oRunPrev && oRunPrev.Run.GetText() === '')
+				while (oRunPrev && oRunPrev.Run.GetText().trim() === '')
 					oRunPrev = oRunPrev.private_GetPreviousInParent();
 
 				var isBoldNextRun   = IsBold(oRunNext);
@@ -995,7 +1029,7 @@
 						{
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Strikeout, 'open');
 							if (!isStrikeoutNextRun || !isEqualTxPr.call(this, oRun, oRunNext) || sVertAlgnNextRun)
-								sOutputText = this.WrapInTag(sOutputText, this.MdSymbols.Strikeout, 'close');
+								sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Strikeout, 'close');
 						}
 						else if (!isStrikeoutNextRun || !isEqualTxPr.call(this, oRun, oRunNext) || sVertAlgnNextRun)
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Strikeout, 'close');
@@ -1024,7 +1058,7 @@
 						{
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Bold, 'open');
 							if (!isBoldNextRun || !isEqualTxPr.call(this, oRun, oRunNext) || sVertAlgnNextRun)
-								sOutputText = this.WrapInTag(sOutputText, this.MdSymbols.Bold, 'close');
+								sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Bold, 'close');
 						}
 						else if (!isBoldNextRun || !isEqualTxPr.call(this, oRun, oRunNext) || sVertAlgnNextRun)
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Bold, 'close');
@@ -1054,7 +1088,7 @@
 						{
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Italic, 'open');
 							if (!isItalicNextRun || !isEqualTxPr.call(this, oRun, oRunNext) || sVertAlgnNextRun)
-								sOutputText = this.WrapInTag(sOutputText, this.MdSymbols.Italic, 'close');
+								sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Italic, 'close');
 						}
 						else if (!isItalicNextRun || !isEqualTxPr.call(this, oRun, oRunNext) || sVertAlgnNextRun)
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Italic, 'close');
@@ -5219,16 +5253,117 @@
 		var arrControls = this.Document.GetAllContentControls();
 		for (var nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
 		{
-			var oControl = arrControls[nIndex];
-
-			if (oControl instanceof CBlockLevelSdt)
-				arrResult.push(new ApiBlockLvlSdt(oControl));
-			else if (oControl instanceof CInlineLevelSdt)
-				arrResult.push(new ApiInlineLvlSdt(oControl));
+			let oControl = ToApiContentControl(arrControls[nIndex]);
+			if (oControl)
+				arrResult.push(oControl);
 		}
 
 		return arrResult;
 	};
+	/**
+	 * Returns a list of all tags that are used for all content controls in the document
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {String[]}
+	 */
+	ApiDocument.prototype.GetTagsOfAllContentControls = function()
+	{
+		let oTags       = {};
+		let arrResult   = [];
+		let arrControls = this.Document.GetAllContentControls();
+		for (let nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
+		{
+			let oControl = arrControls[nIndex];
+			let sTag = oControl.GetTag();
+
+			if (sTag && !oTags[sTag])
+			{
+				oTags[sTag] = 1;
+				arrResult.push(sTag);
+			}
+		}
+
+		return arrResult;
+	};
+	/**
+	 * Returns a list of all tags that are used for all special forms in the document
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {String[]}
+	 */
+	ApiDocument.prototype.GetTagsOfAllForms = function()
+	{
+		let oTags       = {};
+		let arrResult   = [];
+		let arrControls = this.Document.GetAllContentControls();
+		for (let nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
+		{
+			let oControl = arrControls[nIndex];
+			if (oControl.IsForm())
+			{
+				let sTag = oControl.GetTag();
+
+				if (sTag && !oTags[sTag])
+				{
+					oTags[sTag] = 1;
+					arrResult.push(sTag);
+				}
+			}
+		}
+
+		return arrResult;
+	};
+	/**
+	 * Returns a list of all the content controls in the document with specified tag name
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @param sTag {string}
+	 * @returns {ApiBlockLvlSdt[] | ApiInlineLvlSdt[]}
+	 */
+	ApiDocument.prototype.GetContentControlsByTag = function(sTag)
+	{
+		let _sTag = GetStringParameter(sTag, "");
+		if (!_sTag)
+			return [];
+
+		let arrResult   = [];
+		let arrControls = this.Document.GetAllContentControls();
+		for (let nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
+		{
+			let oControl    = arrControls[nIndex];
+			let oApiControl = ToApiContentControl(oControl);
+			if (_sTag === oControl.GetTag() && oApiControl)
+				arrResult.push(oApiControl);
+		}
+
+		return arrResult;
+	};
+	/**
+	 * Returns a list of all the special forms in the document with specified tag name
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @param sTag {string}
+	 * @returns {ApiBlockLvlSdt[] | ApiInlineLvlSdt[]}
+	 */
+	ApiDocument.prototype.GetFormsByTag = function(sTag)
+	{
+		let _sTag = GetStringParameter(sTag, "");
+		if (!_sTag)
+			return [];
+
+		let arrResult   = [];
+		let arrControls = this.Document.GetAllContentControls();
+		for (let nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
+		{
+			let oControl = arrControls[nIndex];
+			let oForm    = ToApiForm(oControl);
+			if (oControl.IsForm() && _sTag === oControl.GetTag() && oForm)
+				arrResult.push(oForm);
+		}
+
+		return arrResult;
+	};
+
 	/**
 	 * Sets the change tracking mode.
 	 * @memberof ApiDocument
@@ -5647,18 +5782,8 @@
 	};
 
 	/**
-	 * Clears all fields in the document.
-	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
-	 */
-	ApiDocument.prototype.ClearAllFields = function()
-	{
-		this.Document.ClearAllSpecialForms(true);
-	};
-
-	/**
 	 * Updates all tables of contents in the current document.
-	 * @memberof Api
+	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} [bOnlyPageNumbers=false] - Specifies that only page numbers will be updated.
 	 */
@@ -5714,7 +5839,7 @@
 	};
 	/**
 	 * Updates all tables of figures in the current document.
-	 * @memberof Api
+	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} [bOnlyPageNumbers=false] - Specifies that only page numbers will be updated.
 	 */
@@ -5802,29 +5927,14 @@
 	{
 		var aForms = [];
 		var allControls = this.Document.GetAllContentControls();
-		var oTemp;
 		for (var nElm = 0; nElm < allControls.length; nElm++)
 		{
-			if (allControls[nElm].IsForm())
+			let oControl = allControls[nElm];
+			if (oControl.IsForm())
 			{
-				oTemp = new ApiFormBase(allControls[nElm]);
-				switch (oTemp.GetFormType())
-				{
-					case "textForm":
-						aForms.push(new ApiTextForm(allControls[nElm]));
-						break;
-					case "comboBoxForm":
-					case "dropDownForm":
-						aForms.push(new ApiComboBoxForm(allControls[nElm]));
-						break;
-					case "radioButtonForm":
-					case "checkBoxForm":
-						aForms.push(new ApiCheckBoxForm(allControls[nElm]));
-						break;
-					case "pictureForm":
-						aForms.push(new ApiPictureForm(allControls[nElm]));
-						break;
-				}
+				let oForm = ToApiForm(oControl);
+				if (oForm)
+					aForms.push(oForm);
 			}
 		}
 
@@ -5836,7 +5946,7 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 */
-	ApiDocument.prototype.ClearAllFields = function(bOnlyForms)
+	ApiDocument.prototype.ClearAllFields = function()
 	{
 		this.Document.ClearAllSpecialForms(false);
 	};
@@ -6984,8 +7094,9 @@
 
 		for (var Index = 0; Index < ContentControls.length; Index++)
 		{
-			if (ContentControls[Index] instanceof CInlineLevelSdt)
-				arrApiContentControls.push(new ApiInlineLvlSdt(ContentControls[Index]));
+			let oControl = ToApiContentControl(ContentControls[Index]);
+			if (oControl)
+				arrApiContentControls.push(oControl);
 		} 
 
 		return arrApiContentControls;
@@ -14830,12 +14941,9 @@
 
 		for (var Index = 0, nCount = arrContentControls.length; Index < nCount; Index++)
 		{
-			var oControl = arrContentControls[Index];
-
-			if (oControl instanceof CBlockLevelSdt)
-				arrApiContentControls.push(new ApiBlockLvlSdt(oControl));
-			else if (oControl instanceof CInlineLevelSdt)
-				arrApiContentControls.push(new ApiInlineLvlSdt(oControl));
+			let oControl = ToApiContentControl(arrContentControls[Index]);
+			if (oControl)
+				arrApiContentControls.push(oControl);
 		}
 
 		return arrApiContentControls;
@@ -16781,6 +16889,10 @@
 	ApiDocument.prototype["InsertWatermark"]             = ApiDocument.prototype.InsertWatermark;
 	ApiDocument.prototype["SearchAndReplace"]            = ApiDocument.prototype.SearchAndReplace;
 	ApiDocument.prototype["GetAllContentControls"]       = ApiDocument.prototype.GetAllContentControls;
+	ApiDocument.prototype["GetTagsOfAllContentControls"] = ApiDocument.prototype.GetTagsOfAllContentControls;
+	ApiDocument.prototype["GetTagsOfAllForms"]           = ApiDocument.prototype.GetTagsOfAllForms;
+	ApiDocument.prototype["GetContentControlsByTag"]     = ApiDocument.prototype.GetContentControlsByTag;
+	ApiDocument.prototype["GetFormsByTag"]               = ApiDocument.prototype.GetFormsByTag;
 	ApiDocument.prototype["SetTrackRevisions"]           = ApiDocument.prototype.SetTrackRevisions;
 	ApiDocument.prototype["IsTrackRevisions"]            = ApiDocument.prototype.IsTrackRevisions;
 	ApiDocument.prototype["GetRange"]                    = ApiDocument.prototype.GetRange;
@@ -16800,8 +16912,6 @@
 	ApiDocument.prototype["Search"]                      = ApiDocument.prototype.Search;
 	ApiDocument.prototype["ToMarkdown"]                  = ApiDocument.prototype.ToMarkdown;
 	ApiDocument.prototype["ToHtml"]                      = ApiDocument.prototype.ToHtml;
-	ApiDocument.prototype["ClearAllFields"]              = ApiDocument.prototype.ClearAllFields;
-	ApiDocument.prototype["GetAllForms"]                 = ApiDocument.prototype.GetAllForms;
 	ApiDocument.prototype["ClearAllForms"]               = ApiDocument.prototype.ClearAllForms;
 	ApiDocument.prototype["SetFormsHighlight"]           = ApiDocument.prototype.SetFormsHighlight;
 	ApiDocument.prototype["GetAllNumberedParagraphs"]    = ApiDocument.prototype.GetAllNumberedParagraphs;
@@ -17494,6 +17604,35 @@
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	function ToApiForm(oForm)
+	{
+		if (!oForm)
+			return null;
+
+		if (oForm.IsTextForm())
+			return new ApiTextForm(oForm);
+		else if (oForm.IsComboBox() || oForm.IsDropDownList())
+			return new ApiComboBoxForm(oForm);
+		else if (oForm.IsRadioButton() || oForm.IsCheckBox())
+			return new ApiCheckBoxForm(oForm);
+		else if (oForm.IsPictureForm())
+			return new ApiPictureForm(oForm);
+
+		return null;
+	}
+	function ToApiContentControl(oControl)
+	{
+		if (!oControl)
+			return null;
+
+		if (oControl instanceof CBlockLevelSdt)
+			return (new ApiBlockLvlSdt(oControl));
+		else if (oControl instanceof CInlineLevelSdt)
+			return (new ApiInlineLvlSdt(oControl));
+
+		return null;
+	}
+
 	function private_GetDrawingDocument()
 	{
 		return editor.WordControl.m_oLogicDocument.DrawingDocument;
