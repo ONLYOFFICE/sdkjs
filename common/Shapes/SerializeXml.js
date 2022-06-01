@@ -164,18 +164,30 @@
 			res = res.graphicObject;
 		} else if ("AlternateContent" === name) {
 			let elem = new CT_XmlNode(function(reader, name) {
-				if ("Choice" === name) {
-					let elem = new CT_XmlNode(function(reader, name) {
-						if ("graphicFrame" === name) {
-							res = new AscFormat.CGraphicFrame();
-							res.fromXml(reader);
-							res = res.graphicObject;
-						}
-						return new CT_XmlNode();
-					});
-					elem.fromXml(reader);
-					return elem;
+				let oThis = this;
+				if(!res) {
+					if ("Choice" === name) {
+						let elem = new CT_XmlNode(function(reader, name) {
+							if(!res) {
+								res = window['AscFormat'].CGraphicObjectBase.prototype.fromXmlElem.call(oThis, reader, name, graphicFrame);
+							}
+							return true;
+						});
+						elem.fromXml(reader);
+						return elem;
+					}
+					else if("Fallback" === name) {
+						let elem = new CT_XmlNode(function(reader, name) {
+							if(!res) {
+								res = window['AscFormat'].CGraphicObjectBase.prototype.fromXmlElem.call(oThis, reader, name, graphicFrame);
+							}
+							return true;
+						});
+						elem.fromXml(reader);
+						return elem;
+					}
 				}
+				return true;
 			});
 			elem.fromXml(reader);
 		}  else if ("slicer" === name) {
@@ -197,7 +209,7 @@
 
 						res.setBDeleted(false);
 						if (res.hasCharts()) {
-							let chartStylePart = chartPart.getPartByRelationshipType(openXml.Types.chartStyle.relationType);
+							let chartStylePart = chartPart.getPartByRelationshipType(AscCommon.openXml.Types.chartStyle.relationType);
 							if (chartStylePart) {
 								let chartStyleContent = chartStylePart.getDocumentContent();
 								if (chartStyleContent) {
@@ -207,7 +219,7 @@
 									res.setChartStyle(chartStyle);
 								}
 							}
-							let chartColorStylePart = chartPart.getPartByRelationshipType(openXml.Types.chartColorStyle.relationType);
+							let chartColorStylePart = chartPart.getPartByRelationshipType(AscCommon.openXml.Types.chartColorStyle.relationType);
 							if (chartColorStylePart) {
 								let chartColorStyleContent = chartColorStylePart.getDocumentContent();
 								if (chartColorStyleContent) {
@@ -549,6 +561,22 @@
 					}
 					break;
 				}
+				case "m": {
+					let oThis = this;
+					let oMathNode = new CT_XmlNode(function (reader, name) {
+						switch (name) {
+							case "oMath":
+								CParagraphContentWithParagraphLikeContent.prototype.fromXmlElem.call(oThis, reader, name);
+								break;
+							case "oMathPara":
+								CParagraphContentWithParagraphLikeContent.prototype.fromXmlElem.call(oThis, reader, name);
+								break;
+						}
+						return true;
+					});
+					oMathNode.fromXml(reader);
+					break;
+				}
 			}
 		}
 	};
@@ -556,9 +584,39 @@
 		for(let nIdx = 0; nIdx < this.Content.length; ++nIdx) {
 			let oElement = this.Content[nIdx];
 			if(oElement.toDrawingML) {
-				oElement.toDrawingML(writer);
+				oElement.toDrawingML(writer, nIdx, this.Paragraph);
 			}
 		}
+	};
+	ParaMath.prototype.toDrawingML = function(writer, index, paragraph) {
+		writer.WriteXmlNodeStart("mc:AlternateContent");
+		writer.WriteXmlAttributeString("xmlns:mc", "http://schemas.openxmlformats.org/markup-compatibility/2006");
+		writer.WriteXmlAttributeString("xmlns:m", "http://schemas.openxmlformats.org/officeDocument/2006/math");
+		writer.WriteXmlAttributesEnd();
+
+		writer.WriteXmlNodeStart("mc:Choice");
+		writer.WriteXmlAttributeString("xmlns:a14", "http://schemas.microsoft.com/office/drawing/2010/main");
+		writer.WriteXmlAttributeString("Requires", "a14");
+		writer.WriteXmlAttributesEnd();
+
+		writer.WriteXmlNodeStart("a14:m");
+		writer.WriteXmlAttributesEnd();
+		if (paragraph.CheckMathPara(index)) {
+			let mathPara = new AscCommon.CT_OMathPara();
+			mathPara.setMath(this);
+			mathPara.toXml(writer, "m:oMathPara");
+		} else {
+			this.toXml(writer, "m:oMath");
+		}
+		writer.WriteXmlNodeEnd("a14:m");
+
+		writer.WriteXmlNodeEnd("mc:Choice");
+
+
+		writer.WriteXmlNodeStart("mc:Fallback");
+		writer.WriteXmlAttributesEnd(true);
+
+		writer.WriteXmlNodeEnd("mc:AlternateContent");
 	};
 	AscCommonWord.Paragraph.prototype.toDrawingML = function(writer) {
 		writer.WriteXmlNodeStart("a:p");
@@ -570,7 +628,9 @@
 
 		let nCount = this.Content.length;
 		for (let i = 0; i < nCount; ++i)
-			this.Content[i].toDrawingML(writer);
+			if(this.Content[i].toDrawingML) {
+				this.Content[i].toDrawingML(writer, i, this);
+			}
 
 		if(this.TextPr && this.TextPr.Value) {
 			this.TextPr.Value.toDrawingML(writer, "a:endParaRPr")

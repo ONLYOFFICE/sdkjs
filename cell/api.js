@@ -1185,7 +1185,7 @@ var editor;
 		if (c_oAscFileType.XLTX === fileType) {
 			var title = this.documentTitle;
 			this.saveDocumentToZip(this.wb.model, AscCommon.c_oEditorId.Spreadsheet, function(data) {
-				var blob = new Blob([data], {type: openXml.GetMimeType("xlsx")});
+				var blob = new Blob([data], {type: AscCommon.openXml.GetMimeType("xlsx")});
 				var link = document.createElement("a");
 				link.href = window.URL.createObjectURL(blob);
 				link.download = title;

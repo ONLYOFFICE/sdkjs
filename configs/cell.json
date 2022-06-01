@@ -281,6 +281,7 @@
 			"common/SerializeChartXml.js",
 			"common/SerializeMathXml.js",
 			"cell/model/SerializeXml.js",
+			"word/Editor/SerializeXml.js",
 			"word/Editor/SerializeXmlAssets.js"
 		],
 		"desktop": {

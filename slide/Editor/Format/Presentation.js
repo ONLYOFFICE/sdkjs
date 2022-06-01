@@ -11793,7 +11793,7 @@ CPresentation.prototype.readChildXml = function(name, reader) {
             oIdLst.fromXml(reader);
             aList = oIdLst.readList(reader, function(oObjectReader){
                 let oSlide = new AscCommonSlide.Slide(oPresentation);
-                let oRel = oObjectReader.rels.getPartByRelationshipType(openXml.Types.slideLayout.relationType);
+                let oRel = oObjectReader.rels.getPartByRelationshipType(AscCommon.openXml.Types.slideLayout.relationType);
                 if(!oRel) {
                     return null;
                 }

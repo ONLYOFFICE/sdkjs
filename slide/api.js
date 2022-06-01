@@ -1574,6 +1574,7 @@ background-repeat: no-repeat;\
 		if (!data) {
 			return false;
 		}
+		var openXml = AscCommon.openXml;
 		var xmlParserContext = new AscCommon.XmlParserContext();
 		xmlParserContext.DrawingDocument = this.WordControl.m_oDrawingDocument;
 		var jsZipWrapper = new AscCommon.JSZipWrapper();
@@ -7688,7 +7689,7 @@ background-repeat: no-repeat;\
 				var title = this.documentTitle;
 				this.saveDocumentToZip(this.WordControl.m_oLogicDocument, AscCommon.c_oEditorId.Presentation,
 					function(data) {
-						var blob = new Blob([data], {type: openXml.GetMimeType("pptx")});
+						var blob = new Blob([data], {type: AscCommon.openXml.GetMimeType("pptx")});
 						var link = document.createElement("a");
 						link.href = window.URL.createObjectURL(blob);
 						link.download = title;

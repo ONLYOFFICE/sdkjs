@@ -33,6 +33,7 @@
 "use strict";
 
 (function(window, undefined) {
+	let openXml = AscCommon.openXml;
 	let CT_BoolW = window['AscCommon'].CT_BoolW;
 	let CT_StringW = window['AscCommon'].CT_StringW;
 	let CT_IntW = window['AscCommon'].CT_IntW;
@@ -2553,8 +2554,12 @@
 		}
 	};
 	ParaRun.prototype.toXml = function(writer, name) {
-		let footnoteIdToIndex = writer.context.docSaveParams.footnoteIdToIndex;
-		let endnoteIdToIndex = writer.context.docSaveParams.endnoteIdToIndex;
+		let footnoteIdToIndex;
+		let endnoteIdToIndex;
+		if(writer.context.docSaveParams) {
+			footnoteIdToIndex = writer.context.docSaveParams.footnoteIdToIndex;
+			endnoteIdToIndex = writer.context.docSaveParams.endnoteIdToIndex;
+		}
 		let index;
 		writer.WriteXmlNodeStart(name);
 		writer.WriteXmlAttributesEnd();
@@ -2566,7 +2571,7 @@
 			if (this.Paragraph.bFromDocument) {
 				this.Pr.toXml(writer, "w:rPr");
 			} else {
-				// this.Pr.toXml(writer, "a:rPr");
+				this.Pr.toDrawingML(writer, "a:rPr");
 			}
 		}
 		let textNs = para_Math_Run !== this.Type ? "w:" : "m:";
@@ -2575,7 +2580,7 @@
 
 		let sCurText = "";
 		let sCurInstrText = "";
-		for (var i = 0; i < this.Content.length; ++i)
+		for (let i = 0; i < this.Content.length; ++i)
 		{
 			var item = this.Content[i];
 			if (para_Text === item.Type || para_Space === item.Type) {
@@ -2595,6 +2600,13 @@
 					} else {
 						sCurText += AscCommon.encodeSurrogateChar(item.Value);
 					}
+					break;
+				case para_Math_Ampersand:
+					sCurText += "&";
+					break;
+				case para_Math_BreakOperator:
+				case para_Math_Text:
+					sCurText += AscCommon.encodeSurrogateChar(item.value);
 					break;
 				case para_Space:
 					sCurText += AscCommon.encodeSurrogateChar(item.Value);
@@ -4619,422 +4631,434 @@
 			writer.WriteXmlNodeEnd(name);
 		}
 	};
-	CWrapPolygon.prototype.readAttr = function(reader) {
-		while (reader.MoveToNextAttribute()) {
-			switch (reader.GetNameNoNS()) {
-				case "edited": {
-					this.setEdited(reader.GetValueBool());
-					break;
+	if(typeof CWrapPolygon !== "undefined") {
+
+		CWrapPolygon.prototype.readAttr = function(reader) {
+			while (reader.MoveToNextAttribute()) {
+				switch (reader.GetNameNoNS()) {
+					case "edited": {
+						this.setEdited(reader.GetValueBool());
+						break;
+					}
 				}
 			}
-		}
-	};
-	CWrapPolygon.prototype.fromXml = function(reader) {
-		this.readAttr(reader);
-		var elem, depth = reader.GetDepth();
-		var points = [];
-		while (reader.ReadNextSiblingNode(depth)) {
-			switch (reader.GetNameNoNS()) {
-				case "start" : {
-					elem = new CT_XmlNode();
-					elem.fromXml(reader);
-					points.unshift({x: parseInt(elem.attributes["x"]), y: parseInt(elem.attributes["y"])});
-					break;
-				}
-				case "lineTo" : {
-					elem = new CT_XmlNode();
-					elem.fromXml(reader);
-					points.push({x: parseInt(elem.attributes["x"]), y: parseInt(elem.attributes["y"])});
-					break;
+		};
+		CWrapPolygon.prototype.fromXml = function(reader) {
+			this.readAttr(reader);
+			var elem, depth = reader.GetDepth();
+			var points = [];
+			while (reader.ReadNextSiblingNode(depth)) {
+				switch (reader.GetNameNoNS()) {
+					case "start" : {
+						elem = new CT_XmlNode();
+						elem.fromXml(reader);
+						points.unshift({x: parseInt(elem.attributes["x"]), y: parseInt(elem.attributes["y"])});
+						break;
+					}
+					case "lineTo" : {
+						elem = new CT_XmlNode();
+						elem.fromXml(reader);
+						points.push({x: parseInt(elem.attributes["x"]), y: parseInt(elem.attributes["y"])});
+						break;
+					}
 				}
 			}
-		}
-		this.setArrRelPoints(points);
-	};
-	CWrapPolygon.prototype.toXml = function(writer, name) {
-		var elem;
-		writer.WriteXmlNodeStart(name);
-		//всегда пишем Edited == true потому что наш контур отличается от word.
-		writer.WriteXmlNullableAttributeBool("edited", true);
-		writer.WriteXmlAttributesEnd();
-		if (this.relativeArrPoints.length > 0) {
-			elem = new CT_XmlNode();
-			elem.attributes["x"] = this.relativeArrPoints[0].x;
-			elem.attributes["y"] = this.relativeArrPoints[0].y;
-			writer.WriteXmlNullable(elem, "wp:start");
-			for (var i = 1; i < this.relativeArrPoints.length; ++i) {
+			this.setArrRelPoints(points);
+		};
+		CWrapPolygon.prototype.toXml = function(writer, name) {
+			var elem;
+			writer.WriteXmlNodeStart(name);
+			//всегда пишем Edited == true потому что наш контур отличается от word.
+			writer.WriteXmlNullableAttributeBool("edited", true);
+			writer.WriteXmlAttributesEnd();
+			if (this.relativeArrPoints.length > 0) {
 				elem = new CT_XmlNode();
-				elem.attributes["x"] = this.relativeArrPoints[i].x;
-				elem.attributes["y"] = this.relativeArrPoints[i].y;
-				writer.WriteXmlNullable(elem, "wp:lineTo");
-			}
-		}
-		writer.WriteXmlNodeEnd(name);
-	};
-	CPolygonPoint.prototype.readAttr = function(reader) {
-		while (reader.MoveToNextAttribute()) {
-			switch (reader.GetNameNoNS()) {
-				case "x": {
-					this.x = AscCommon.universalMeasureToMm(reader.GetValue(), AscCommonWord.g_dKoef_emu_to_mm, this.x);
-					break;
-				}
-				case "y": {
-					this.y = AscCommon.universalMeasureToMm(reader.GetValue(), AscCommonWord.g_dKoef_emu_to_mm, this.y);
-					break;
+				elem.attributes["x"] = this.relativeArrPoints[0].x;
+				elem.attributes["y"] = this.relativeArrPoints[0].y;
+				writer.WriteXmlNullable(elem, "wp:start");
+				for (var i = 1; i < this.relativeArrPoints.length; ++i) {
+					elem = new CT_XmlNode();
+					elem.attributes["x"] = this.relativeArrPoints[i].x;
+					elem.attributes["y"] = this.relativeArrPoints[i].y;
+					writer.WriteXmlNullable(elem, "wp:lineTo");
 				}
 			}
-		}
-	};
-	CPolygonPoint.prototype.fromXml = function(reader) {
-		this.readAttr(reader);
-		reader.ReadTillEnd();
-	};
-	CPolygonPoint.prototype.toXml = function(writer, name) {
-		writer.WriteXmlNodeStart(name);
-		writer.WriteXmlNullableAttributeIntWithKoef("x", this.x, AscCommonWord.g_dKoef_mm_to_emu);
-		writer.WriteXmlNullableAttributeIntWithKoef("y", this.y, AscCommonWord.g_dKoef_mm_to_emu);
-		writer.WriteXmlAttributesEnd(true);
-	};
+			writer.WriteXmlNodeEnd(name);
+		};
+		CPolygonPoint.prototype.readAttr = function(reader) {
+			while (reader.MoveToNextAttribute()) {
+				switch (reader.GetNameNoNS()) {
+					case "x": {
+						this.x = AscCommon.universalMeasureToMm(reader.GetValue(), AscCommonWord.g_dKoef_emu_to_mm, this.x);
+						break;
+					}
+					case "y": {
+						this.y = AscCommon.universalMeasureToMm(reader.GetValue(), AscCommonWord.g_dKoef_emu_to_mm, this.y);
+						break;
+					}
+				}
+			}
+		};
+		CPolygonPoint.prototype.fromXml = function(reader) {
+			this.readAttr(reader);
+			reader.ReadTillEnd();
+		};
+		CPolygonPoint.prototype.toXml = function(writer, name) {
+			writer.WriteXmlNodeStart(name);
+			writer.WriteXmlNullableAttributeIntWithKoef("x", this.x, AscCommonWord.g_dKoef_mm_to_emu);
+			writer.WriteXmlNullableAttributeIntWithKoef("y", this.y, AscCommonWord.g_dKoef_mm_to_emu);
+			writer.WriteXmlAttributesEnd(true);
+		};
+	}
 //settings
-	CDocumentSettings.prototype.fromXml = function(reader, doc) {
-		let name;
-		if (!reader.ReadNextNode()) {
-			return;
-		}
-		name = reader.GetNameNoNS();
-		if ("settings" !== name) {
+	if(typeof CDocumentSettings !== "undefined") {
+		CDocumentSettings.prototype.fromXml = function(reader, doc) {
+			let name;
 			if (!reader.ReadNextNode()) {
 				return;
 			}
-		}
-		name = reader.GetNameNoNS();
-		if ("settings" !== name) {
-			return;
-		}
-
-		let elem, depth = reader.GetDepth();
-		while (reader.ReadNextSiblingNode(depth)) {
-			switch (reader.GetNameNoNS()) {
-				case "writeProtection" : {
-					this.WriteProtection = new CDocProtect();
-					this.WriteProtection.fromXml(reader);
-					break;
-				}
-				case "mirrorMargins" : {
-					this.MirrorMargins = CT_BoolW.prototype.toVal(reader, this.MirrorMargins);
-					break;
-				}
-				case "gutterAtTop" : {
-					this.GutterAtTop = CT_BoolW.prototype.toVal(reader, this.GutterAtTop);
-					break;
-				}
-				case "trackRevisions" : {
-					this.TrackRevisions = CT_BoolW.prototype.toVal(reader, this.TrackRevisions);
-					break;
-				}
-				case "documentProtection" : {
-					this.DocumentProtection = new CDocProtect();
-					this.DocumentProtection.fromXml(reader);
-					break;
-				}
-				case "defaultTabStop" : {
-					let def = reader.context.oReadResult.defaultTabStop;
-					reader.context.oReadResult.defaultTabStop = AscCommon.universalMeasureToMm(CT_StringW.prototype.toVal(reader, def), AscCommonWord.g_dKoef_twips_to_mm, def);
-					break;
-				}
-				case "footnotePr" : {
-					if (doc) {
-						doc.Footnotes.FootnotePr.fromXml(reader, true);
-					}
-					break;
-				}
-				case "endnotePr" : {
-					if (doc) {
-						doc.Endnotes.EndnotePr.fromXml(reader, true);
-					}
-					break;
-				}
-				case "compat" : {
-					this.fromXmlCompat(reader);
-					break;
-				}
-				case "mathPr" : {
-					elem = new CMathPropertiesSettings();
-					elem.fromXml(reader);
-					this.MathSettings.SetPr(elem);
-					break;
-				}
-				case "clrSchemeMapping" : {
-					if (doc) {
-						elem = new AscFormat.ClrMap();
-						elem.fromXmlWord(reader);
-					}
-					break;
-				}
-				case "decimalSymbol" : {
-					this.DecimalSymbol = CT_StringW.prototype.toVal(reader, this.DecimalSymbol);
-					break;
-				}
-				case "listSeparator" : {
-					this.ListSeparator = CT_StringW.prototype.toVal(reader, this.ListSeparator);
-					break;
+			name = reader.GetNameNoNS();
+			if ("settings" !== name) {
+				if (!reader.ReadNextNode()) {
+					return;
 				}
 			}
-		}
-	};
-	CDocumentSettings.prototype.toXml = function(writer) {
-		let name = 'w:settings';
-		let doc = writer.context.document;
+			name = reader.GetNameNoNS();
+			if ("settings" !== name) {
+				return;
+			}
 
-		writer.WriteXmlString(AscCommonWord.g_sXmlHeader);
-		writer.WriteXmlNodeStart(name);
-		writer.WriteXmlString(AscCommonWord.g_sXmlSettingsNamespaces);
-		writer.WriteXmlAttributesEnd();
-		writer.WriteXmlNullable(this.WriteProtection, "w:writeProtection");
-		writer.WriteXmlNullable(CT_BoolW.prototype.fromVal(this.MirrorMargins), "w:mirrorMargins");
-		writer.WriteXmlNullable(CT_BoolW.prototype.fromVal(this.GutterAtTop), "w:gutterAtTop");
-		writer.WriteXmlNullable(CT_BoolW.prototype.fromVal(this.TrackRevisions), "w:trackRevisions");
-		writer.WriteXmlNullable(this.DocumentProtection, "w:documentProtection");
-		writer.WriteXmlNullable(CT_UIntW.prototype.fromVal(AscCommonWord.Default_Tab_Stop, g_dKoef_mm_to_twips), "w:defaultTabStop");
-		if (doc) {
-			doc.Footnotes.FootnotePr.toXml(writer, "w:footnotePr", true, doc.Footnotes);
-			doc.Endnotes.EndnotePr.toXml(writer, "w:endnotePr", false, doc.Endnotes);
-		}
-		this.toXmlCompat(writer, "w:compat");
-		if (this.MathSettings && this.MathSettings.GetPr) {
-			writer.WriteXmlNullable(this.MathSettings.GetPr(), "w:mathPr");
-		}
-		if (doc) {
-			doc.clrSchemeMap.toXmlWord(writer, "w:clrSchemeMapping");
-		}
-		writer.WriteXmlNullable(CT_StringW.prototype.fromVal(this.DecimalSymbol), "w:decimalSymbol");
-		writer.WriteXmlNullable(CT_StringW.prototype.fromVal(this.ListSeparator), "w:listSeparator");
-		writer.WriteXmlNodeEnd(name);
-	};
-	CDocumentSettings.prototype.fromXmlCompat = function(reader) {
-		let elem, depth = reader.GetDepth();
-		while (reader.ReadNextSiblingNode(depth)) {
-			switch (reader.GetNameNoNS()) {
-				case "splitPageBreakAndParaMark" : {
-					this.SplitPageBreakAndParaMark = CT_BoolW.prototype.toVal(reader, this.SplitPageBreakAndParaMark);
-					break;
-				}
-				case "doNotExpandShiftReturn" : {
-					this.DoNotExpandShiftReturn = CT_BoolW.prototype.toVal(reader, this.DoNotExpandShiftReturn);
-					break;
-				}
-				case "balanceSingleByteDoubleByteWidth" : {
-					this.BalanceSingleByteDoubleByteWidth = CT_BoolW.prototype.toVal(reader, this.BalanceSingleByteDoubleByteWidth);
-					break;
-				}
-				case "ulTrailSpace" : {
-					this.UlTrailSpace = CT_BoolW.prototype.toVal(reader, this.UlTrailSpace);
-					break;
-				}
-				case "useFELayout" : {
-					this.UseFELayout = CT_BoolW.prototype.toVal(reader, this.UseFELayout);
-					break;
-				}
-				case "compatSetting" : {
-					elem = new CT_CompatSetting();
-					elem.fromXml(reader);
-					if ("compatibilityMode" === elem.name && "http://schemas.microsoft.com/office/word" === elem.uri) {
-						this.CompatibilityMode = parseInt(elem.val);
+			let elem, depth = reader.GetDepth();
+			while (reader.ReadNextSiblingNode(depth)) {
+				switch (reader.GetNameNoNS()) {
+					case "writeProtection" : {
+						this.WriteProtection = new CDocProtect();
+						this.WriteProtection.fromXml(reader);
+						break;
 					}
-					break;
+					case "mirrorMargins" : {
+						this.MirrorMargins = CT_BoolW.prototype.toVal(reader, this.MirrorMargins);
+						break;
+					}
+					case "gutterAtTop" : {
+						this.GutterAtTop = CT_BoolW.prototype.toVal(reader, this.GutterAtTop);
+						break;
+					}
+					case "trackRevisions" : {
+						this.TrackRevisions = CT_BoolW.prototype.toVal(reader, this.TrackRevisions);
+						break;
+					}
+					case "documentProtection" : {
+						this.DocumentProtection = new CDocProtect();
+						this.DocumentProtection.fromXml(reader);
+						break;
+					}
+					case "defaultTabStop" : {
+						let def = reader.context.oReadResult.defaultTabStop;
+						reader.context.oReadResult.defaultTabStop = AscCommon.universalMeasureToMm(CT_StringW.prototype.toVal(reader, def), AscCommonWord.g_dKoef_twips_to_mm, def);
+						break;
+					}
+					case "footnotePr" : {
+						if (doc) {
+							doc.Footnotes.FootnotePr.fromXml(reader, true);
+						}
+						break;
+					}
+					case "endnotePr" : {
+						if (doc) {
+							doc.Endnotes.EndnotePr.fromXml(reader, true);
+						}
+						break;
+					}
+					case "compat" : {
+						this.fromXmlCompat(reader);
+						break;
+					}
+					case "mathPr" : {
+						elem = new CMathPropertiesSettings();
+						elem.fromXml(reader);
+						this.MathSettings.SetPr(elem);
+						break;
+					}
+					case "clrSchemeMapping" : {
+						if (doc) {
+							elem = new AscFormat.ClrMap();
+							elem.fromXmlWord(reader);
+						}
+						break;
+					}
+					case "decimalSymbol" : {
+						this.DecimalSymbol = CT_StringW.prototype.toVal(reader, this.DecimalSymbol);
+						break;
+					}
+					case "listSeparator" : {
+						this.ListSeparator = CT_StringW.prototype.toVal(reader, this.ListSeparator);
+						break;
+					}
 				}
 			}
-		}
-	};
-	CDocumentSettings.prototype.toXmlCompat = function(writer, name) {
-		let CompatibilityMode = false === writer.context.docSaveParams.isCompatible ? AscCommon.document_compatibility_mode_Word15 : this.CompatibilityMode;
-		writer.WriteXmlNodeStart(name);
-		writer.WriteXmlAttributesEnd();
-		writer.WriteXmlNullable(CT_BoolW.prototype.fromVal(this.SplitPageBreakAndParaMark), "w:splitPageBreakAndParaMark");
-		writer.WriteXmlNullable(CT_BoolW.prototype.fromVal(this.DoNotExpandShiftReturn), "w:doNotExpandShiftReturn");
-		writer.WriteXmlNullable(CT_BoolW.prototype.fromVal(this.BalanceSingleByteDoubleByteWidth), "w:balanceSingleByteDoubleByteWidth");
-		writer.WriteXmlNullable(CT_BoolW.prototype.fromVal(this.UlTrailSpace), "w:ulTrailSpace");
-		writer.WriteXmlNullable(CT_BoolW.prototype.fromVal(this.UseFELayout), "w:useFELayout");
-		CT_CompatSetting.prototype.toXmlValues(writer, "w:compatSetting", "compatibilityMode", "http://schemas.microsoft.com/office/word", CompatibilityMode.toString());
-		CT_CompatSetting.prototype.toXmlValues(writer, "w:compatSetting", "overrideTableStyleFontSizeAndJustification", "http://schemas.microsoft.com/office/word", "1");
-		CT_CompatSetting.prototype.toXmlValues(writer, "w:compatSetting", "enableOpenTypeFeatures", "http://schemas.microsoft.com/office/word", "1");
-		CT_CompatSetting.prototype.toXmlValues(writer, "w:compatSetting", "doNotFlipMirrorIndents", "http://schemas.microsoft.com/office/word", "1");
-		writer.WriteXmlNodeEnd(name);
-	};
-	CDocProtect.prototype.readAttr = function(reader) {
-		while (reader.MoveToNextAttribute()) {
-			switch (reader.GetNameNoNS()) {
-				case "algorithmName": {
-					this.algorithmName = fromXml_ST_CryptAlgoritmName(reader.GetValueDecodeXml(), this.algorithmName);
-					break;
-				}
-				case "algIdExt": {
-					this.algIdExt = reader.GetValueDecodeXml();
-					break;
-				}
-				case "algIdExtSource": {
-					this.algIdExtSource = reader.GetValueDecodeXml();
-					break;
-				}
-				case "cryptProviderType": {
-					this.cryptProviderType = fromXml_ST_CryptProvType(reader.GetValueDecodeXml(), this.cryptProviderType);
-					break;
-				}
-				case "cryptProvider": {
-					this.cryptProvider = reader.GetValueDecodeXml();
-					break;
-				}
-				case "cryptProviderTypeExt": {
-					this.cryptProviderTypeExt = reader.GetValueDecodeXml();
-					break;
-				}
-				case "cryptProviderTypeExtSource": {
-					this.cryptProviderTypeExtSource = reader.GetValueDecodeXml();
-					break;
-				}
-				case "cryptAlgorithmSid": {
-					this.cryptAlgorithmSid = reader.GetValueInt(this.cryptAlgorithmSid);
-					break;
-				}
-				case "cryptAlgorithmType": {
-					this.cryptAlgorithmType = fromXml_ST_CryptAlgType(reader.GetValueDecodeXml(), this.cryptAlgorithmType);
-					break;
-				}
-				case "cryptAlgorithmClass": {
-					this.cryptAlgorithmClass = fromXml_ST_CryptAlgClass(reader.GetValueDecodeXml(), this.cryptAlgorithmClass);
-					break;
-				}
-				case "edit": {
-					this.edit = fromXml_ST_DocProtect(reader.GetValueDecodeXml(), this.edit);
-					break;
-				}
-				case "enforcement": {
-					this.enforcement = reader.GetValueBool();
-					break;
-				}
-				case "formatting": {
-					this.formatting = reader.GetValueBool();
-					break;
-				}
-				case "hashValue":
-				case "hash": {
-					this.hashValue = reader.GetValueDecodeXml();
-					break;
-				}
-				case "recommended": {
-					this.recommended = reader.GetValueBool();
-					break;
-				}
-				case "salt":
-				case "saltValue": {
-					this.saltValue = reader.GetValueDecodeXml();
-					break;
-				}
-				case "cryptSpinCount":
-				case "spinCount": {
-					this.spinCount = reader.GetValueInt(this.SpinCount);
-					break;
-				}
-			}
-		}
-	};
-	CDocProtect.prototype.fromXml = function(reader) {
-		this.readAttr(reader);
-		reader.ReadTillEnd();
-	};
-	CDocProtect.prototype.toXml = function(writer, name) {
-		writer.WriteXmlNodeStart(name);
-		writer.WriteXmlNullableAttributeBool("w:recommended", this.formatting);
-		writer.WriteXmlNullableAttributeStringEncode("w:edit", toXml_ST_DocProtect(this.edit));
-		writer.WriteXmlNullableAttributeBool("w:enforcement", this.enforcement);
-		writer.WriteXmlNullableAttributeBool("w:formatting", this.formatting);
-		if(null !== this.cryptProviderType) {
-			writer.WriteXmlNullableAttributeStringEncode("w:cryptProviderType", toXml_ST_CryptProvType(this.cryptProviderType));
-			writer.WriteXmlNullableAttributeStringEncode("w:algIdExt", this.algIdExt);
-			writer.WriteXmlNullableAttributeStringEncode("w:algIdExtSource", this.algIdExtSource);
-			writer.WriteXmlNullableAttributeStringEncode("w:cryptAlgorithmClass", toXml_ST_CryptAlgClass(this.cryptAlgorithmClass));
-			writer.WriteXmlNullableAttributeStringEncode("w:cryptAlgorithmType", toXml_ST_CryptAlgType(this.cryptAlgorithmType));
-			writer.WriteXmlNullableAttributeInt("w:cryptAlgorithmSid", this.cryptAlgorithmSid);
-			writer.WriteXmlNullableAttributeStringEncode("w:cryptProvider", this.cryptProvider);
-			writer.WriteXmlNullableAttributeStringEncode("w:cryptProviderTypeExt", this.cryptProviderTypeExt);
-			writer.WriteXmlNullableAttributeStringEncode("w:cryptProviderTypeExtSource", this.cryptProviderTypeExtSource);
+		};
+		CDocumentSettings.prototype.toXml = function(writer) {
+			let name = 'w:settings';
+			let doc = writer.context.document;
 
-			writer.WriteXmlNullableAttributeInt("w:cryptSpinCount", this.spinCount);
-			writer.WriteXmlNullableAttributeStringEncode("w:hash", this.hashValue);
-			writer.WriteXmlNullableAttributeStringEncode("w:salt", this.saltValue);
-		} else {
-			writer.WriteXmlNullableAttributeStringEncode("w:algorithmName", toXml_ST_CryptAlgoritmName(this.algorithmName));
-			writer.WriteXmlNullableAttributeStringEncode("w:hashValue", this.hashValue);
-			writer.WriteXmlNullableAttributeStringEncode("w:saltValue", this.saltValue);
-			writer.WriteXmlNullableAttributeInt("w:spinCount", this.spinCount);
-		}
-		writer.WriteXmlAttributesEnd(true);
-	};
+			writer.WriteXmlString(AscCommonWord.g_sXmlHeader);
+			writer.WriteXmlNodeStart(name);
+			writer.WriteXmlString(AscCommonWord.g_sXmlSettingsNamespaces);
+			writer.WriteXmlAttributesEnd();
+			writer.WriteXmlNullable(this.WriteProtection, "w:writeProtection");
+			writer.WriteXmlNullable(CT_BoolW.prototype.fromVal(this.MirrorMargins), "w:mirrorMargins");
+			writer.WriteXmlNullable(CT_BoolW.prototype.fromVal(this.GutterAtTop), "w:gutterAtTop");
+			writer.WriteXmlNullable(CT_BoolW.prototype.fromVal(this.TrackRevisions), "w:trackRevisions");
+			writer.WriteXmlNullable(this.DocumentProtection, "w:documentProtection");
+			writer.WriteXmlNullable(CT_UIntW.prototype.fromVal(AscCommonWord.Default_Tab_Stop, g_dKoef_mm_to_twips), "w:defaultTabStop");
+			if (doc) {
+				doc.Footnotes.FootnotePr.toXml(writer, "w:footnotePr", true, doc.Footnotes);
+				doc.Endnotes.EndnotePr.toXml(writer, "w:endnotePr", false, doc.Endnotes);
+			}
+			this.toXmlCompat(writer, "w:compat");
+			if (this.MathSettings && this.MathSettings.GetPr) {
+				writer.WriteXmlNullable(this.MathSettings.GetPr(), "w:mathPr");
+			}
+			if (doc) {
+				doc.clrSchemeMap.toXmlWord(writer, "w:clrSchemeMapping");
+			}
+			writer.WriteXmlNullable(CT_StringW.prototype.fromVal(this.DecimalSymbol), "w:decimalSymbol");
+			writer.WriteXmlNullable(CT_StringW.prototype.fromVal(this.ListSeparator), "w:listSeparator");
+			writer.WriteXmlNodeEnd(name);
+		};
+		CDocumentSettings.prototype.fromXmlCompat = function(reader) {
+			let elem, depth = reader.GetDepth();
+			while (reader.ReadNextSiblingNode(depth)) {
+				switch (reader.GetNameNoNS()) {
+					case "splitPageBreakAndParaMark" : {
+						this.SplitPageBreakAndParaMark = CT_BoolW.prototype.toVal(reader, this.SplitPageBreakAndParaMark);
+						break;
+					}
+					case "doNotExpandShiftReturn" : {
+						this.DoNotExpandShiftReturn = CT_BoolW.prototype.toVal(reader, this.DoNotExpandShiftReturn);
+						break;
+					}
+					case "balanceSingleByteDoubleByteWidth" : {
+						this.BalanceSingleByteDoubleByteWidth = CT_BoolW.prototype.toVal(reader, this.BalanceSingleByteDoubleByteWidth);
+						break;
+					}
+					case "ulTrailSpace" : {
+						this.UlTrailSpace = CT_BoolW.prototype.toVal(reader, this.UlTrailSpace);
+						break;
+					}
+					case "useFELayout" : {
+						this.UseFELayout = CT_BoolW.prototype.toVal(reader, this.UseFELayout);
+						break;
+					}
+					case "compatSetting" : {
+						elem = new CT_CompatSetting();
+						elem.fromXml(reader);
+						if ("compatibilityMode" === elem.name && "http://schemas.microsoft.com/office/word" === elem.uri) {
+							this.CompatibilityMode = parseInt(elem.val);
+						}
+						break;
+					}
+				}
+			}
+		};
+		CDocumentSettings.prototype.toXmlCompat = function(writer, name) {
+			let CompatibilityMode = false === writer.context.docSaveParams.isCompatible ? AscCommon.document_compatibility_mode_Word15 : this.CompatibilityMode;
+			writer.WriteXmlNodeStart(name);
+			writer.WriteXmlAttributesEnd();
+			writer.WriteXmlNullable(CT_BoolW.prototype.fromVal(this.SplitPageBreakAndParaMark), "w:splitPageBreakAndParaMark");
+			writer.WriteXmlNullable(CT_BoolW.prototype.fromVal(this.DoNotExpandShiftReturn), "w:doNotExpandShiftReturn");
+			writer.WriteXmlNullable(CT_BoolW.prototype.fromVal(this.BalanceSingleByteDoubleByteWidth), "w:balanceSingleByteDoubleByteWidth");
+			writer.WriteXmlNullable(CT_BoolW.prototype.fromVal(this.UlTrailSpace), "w:ulTrailSpace");
+			writer.WriteXmlNullable(CT_BoolW.prototype.fromVal(this.UseFELayout), "w:useFELayout");
+			CT_CompatSetting.prototype.toXmlValues(writer, "w:compatSetting", "compatibilityMode", "http://schemas.microsoft.com/office/word", CompatibilityMode.toString());
+			CT_CompatSetting.prototype.toXmlValues(writer, "w:compatSetting", "overrideTableStyleFontSizeAndJustification", "http://schemas.microsoft.com/office/word", "1");
+			CT_CompatSetting.prototype.toXmlValues(writer, "w:compatSetting", "enableOpenTypeFeatures", "http://schemas.microsoft.com/office/word", "1");
+			CT_CompatSetting.prototype.toXmlValues(writer, "w:compatSetting", "doNotFlipMirrorIndents", "http://schemas.microsoft.com/office/word", "1");
+			writer.WriteXmlNodeEnd(name);
+		};
+	}
+	if(typeof CDocProtect !== "undefined") {
+		CDocProtect.prototype.readAttr = function(reader) {
+			while (reader.MoveToNextAttribute()) {
+				switch (reader.GetNameNoNS()) {
+					case "algorithmName": {
+						this.algorithmName = fromXml_ST_CryptAlgoritmName(reader.GetValueDecodeXml(), this.algorithmName);
+						break;
+					}
+					case "algIdExt": {
+						this.algIdExt = reader.GetValueDecodeXml();
+						break;
+					}
+					case "algIdExtSource": {
+						this.algIdExtSource = reader.GetValueDecodeXml();
+						break;
+					}
+					case "cryptProviderType": {
+						this.cryptProviderType = fromXml_ST_CryptProvType(reader.GetValueDecodeXml(), this.cryptProviderType);
+						break;
+					}
+					case "cryptProvider": {
+						this.cryptProvider = reader.GetValueDecodeXml();
+						break;
+					}
+					case "cryptProviderTypeExt": {
+						this.cryptProviderTypeExt = reader.GetValueDecodeXml();
+						break;
+					}
+					case "cryptProviderTypeExtSource": {
+						this.cryptProviderTypeExtSource = reader.GetValueDecodeXml();
+						break;
+					}
+					case "cryptAlgorithmSid": {
+						this.cryptAlgorithmSid = reader.GetValueInt(this.cryptAlgorithmSid);
+						break;
+					}
+					case "cryptAlgorithmType": {
+						this.cryptAlgorithmType = fromXml_ST_CryptAlgType(reader.GetValueDecodeXml(), this.cryptAlgorithmType);
+						break;
+					}
+					case "cryptAlgorithmClass": {
+						this.cryptAlgorithmClass = fromXml_ST_CryptAlgClass(reader.GetValueDecodeXml(), this.cryptAlgorithmClass);
+						break;
+					}
+					case "edit": {
+						this.edit = fromXml_ST_DocProtect(reader.GetValueDecodeXml(), this.edit);
+						break;
+					}
+					case "enforcement": {
+						this.enforcement = reader.GetValueBool();
+						break;
+					}
+					case "formatting": {
+						this.formatting = reader.GetValueBool();
+						break;
+					}
+					case "hashValue":
+					case "hash": {
+						this.hashValue = reader.GetValueDecodeXml();
+						break;
+					}
+					case "recommended": {
+						this.recommended = reader.GetValueBool();
+						break;
+					}
+					case "salt":
+					case "saltValue": {
+						this.saltValue = reader.GetValueDecodeXml();
+						break;
+					}
+					case "cryptSpinCount":
+					case "spinCount": {
+						this.spinCount = reader.GetValueInt(this.SpinCount);
+						break;
+					}
+				}
+			}
+		};
+		CDocProtect.prototype.fromXml = function(reader) {
+			this.readAttr(reader);
+			reader.ReadTillEnd();
+		};
+		CDocProtect.prototype.toXml = function(writer, name) {
+			writer.WriteXmlNodeStart(name);
+			writer.WriteXmlNullableAttributeBool("w:recommended", this.formatting);
+			writer.WriteXmlNullableAttributeStringEncode("w:edit", toXml_ST_DocProtect(this.edit));
+			writer.WriteXmlNullableAttributeBool("w:enforcement", this.enforcement);
+			writer.WriteXmlNullableAttributeBool("w:formatting", this.formatting);
+			if(null !== this.cryptProviderType) {
+				writer.WriteXmlNullableAttributeStringEncode("w:cryptProviderType", toXml_ST_CryptProvType(this.cryptProviderType));
+				writer.WriteXmlNullableAttributeStringEncode("w:algIdExt", this.algIdExt);
+				writer.WriteXmlNullableAttributeStringEncode("w:algIdExtSource", this.algIdExtSource);
+				writer.WriteXmlNullableAttributeStringEncode("w:cryptAlgorithmClass", toXml_ST_CryptAlgClass(this.cryptAlgorithmClass));
+				writer.WriteXmlNullableAttributeStringEncode("w:cryptAlgorithmType", toXml_ST_CryptAlgType(this.cryptAlgorithmType));
+				writer.WriteXmlNullableAttributeInt("w:cryptAlgorithmSid", this.cryptAlgorithmSid);
+				writer.WriteXmlNullableAttributeStringEncode("w:cryptProvider", this.cryptProvider);
+				writer.WriteXmlNullableAttributeStringEncode("w:cryptProviderTypeExt", this.cryptProviderTypeExt);
+				writer.WriteXmlNullableAttributeStringEncode("w:cryptProviderTypeExtSource", this.cryptProviderTypeExtSource);
+
+				writer.WriteXmlNullableAttributeInt("w:cryptSpinCount", this.spinCount);
+				writer.WriteXmlNullableAttributeStringEncode("w:hash", this.hashValue);
+				writer.WriteXmlNullableAttributeStringEncode("w:salt", this.saltValue);
+			} else {
+				writer.WriteXmlNullableAttributeStringEncode("w:algorithmName", toXml_ST_CryptAlgoritmName(this.algorithmName));
+				writer.WriteXmlNullableAttributeStringEncode("w:hashValue", this.hashValue);
+				writer.WriteXmlNullableAttributeStringEncode("w:saltValue", this.saltValue);
+				writer.WriteXmlNullableAttributeInt("w:spinCount", this.spinCount);
+			}
+			writer.WriteXmlAttributesEnd(true);
+		};
+	}
 //sdt
-	CBlockLevelSdt.prototype.fromXml = function (reader) {
-		let elem, depth = reader.GetDepth();
-		while (reader.ReadNextSiblingNode(depth)) {
-			switch (reader.GetNameNoNS()) {
-				case "sdtPr" : {
-					this.Pr.fromXml(reader);
-					break;
-				}
-				case "sdtEndPr" : {
-					break;
-				}
-				case "sdtContent" : {
-					var Content = [];
-					CDocument.prototype.fromXmlDocContent(reader, Content, this.LogicDocument.Get_DrawingDocument(), this.Content);
-					if (Content.length > 0) {
-						this.Content.ReplaceContent(Content);
+	if(typeof CBlockLevelSdt !== "undefined") {
+		CBlockLevelSdt.prototype.fromXml = function (reader) {
+			let elem, depth = reader.GetDepth();
+			while (reader.ReadNextSiblingNode(depth)) {
+				switch (reader.GetNameNoNS()) {
+					case "sdtPr" : {
+						this.Pr.fromXml(reader);
+						break;
 					}
-					break;
+					case "sdtEndPr" : {
+						break;
+					}
+					case "sdtContent" : {
+						var Content = [];
+						CDocument.prototype.fromXmlDocContent(reader, Content, this.LogicDocument.Get_DrawingDocument(), this.Content);
+						if (Content.length > 0) {
+							this.Content.ReplaceContent(Content);
+						}
+						break;
+					}
 				}
 			}
-		}
-	};
-	CBlockLevelSdt.prototype.toXml = function (writer, name) {
-		writer.WriteXmlNodeStart(name);
-		writer.WriteXmlAttributesEnd();
-		writer.WriteXmlNullable(this.Pr, "w:sdtPr");
-		// writer.WriteXmlArray(this.SdtEndPr, "w:sdtEndPr");
-		writer.WriteXmlNodeStart("w:sdtContent");
-		writer.WriteXmlAttributesEnd();
-		this.Content.Content.forEach(function(item) {
-			CDocument.prototype.toXmlDocContentElem(writer, item);
-		});
-		writer.WriteXmlNodeEnd("w:sdtContent");
-		writer.WriteXmlNodeEnd(name);
-	};
-	CInlineLevelSdt.prototype.fromXml = function (reader) {
-		let elem, depth = reader.GetDepth();
-		while (reader.ReadNextSiblingNode(depth)) {
-			switch (reader.GetNameNoNS()) {
-				case "sdtPr" : {
-					this.Pr.fromXml(reader);
-					break;
-				}
-				case "sdtEndPr" : {
-					break;
-				}
-				case "sdtContent" : {
-					CParagraphContentWithParagraphLikeContent.prototype.fromXml.call(this, reader);
-					break;
+		};
+		CBlockLevelSdt.prototype.toXml = function (writer, name) {
+			writer.WriteXmlNodeStart(name);
+			writer.WriteXmlAttributesEnd();
+			writer.WriteXmlNullable(this.Pr, "w:sdtPr");
+			// writer.WriteXmlArray(this.SdtEndPr, "w:sdtEndPr");
+			writer.WriteXmlNodeStart("w:sdtContent");
+			writer.WriteXmlAttributesEnd();
+			this.Content.Content.forEach(function(item) {
+				CDocument.prototype.toXmlDocContentElem(writer, item);
+			});
+			writer.WriteXmlNodeEnd("w:sdtContent");
+			writer.WriteXmlNodeEnd(name);
+		};
+	}
+
+	if(typeof CInlineLevelSdt !== "undefined") {
+		CInlineLevelSdt.prototype.fromXml = function (reader) {
+			let elem, depth = reader.GetDepth();
+			while (reader.ReadNextSiblingNode(depth)) {
+				switch (reader.GetNameNoNS()) {
+					case "sdtPr" : {
+						this.Pr.fromXml(reader);
+						break;
+					}
+					case "sdtEndPr" : {
+						break;
+					}
+					case "sdtContent" : {
+						CParagraphContentWithParagraphLikeContent.prototype.fromXml.call(this, reader);
+						break;
+					}
 				}
 			}
-		}
-	};
-	CInlineLevelSdt.prototype.toXml = function (writer, name) {
-		writer.WriteXmlNodeStart(name);
-		writer.WriteXmlAttributesEnd();
-		writer.WriteXmlNullable(this.Pr, "w:sdtPr");
-		// writer.WriteXmlArray(this.SdtEndPr, "w:sdtEndPr");
-		writer.WriteXmlNodeStart("w:sdtContent");
-		writer.WriteXmlAttributesEnd();
-		CParagraphContentWithParagraphLikeContent.prototype.toXml.call(this, writer);
-		writer.WriteXmlNodeEnd("w:sdtContent");
-		writer.WriteXmlNodeEnd(name);
-	};
+		};
+		CInlineLevelSdt.prototype.toXml = function (writer, name) {
+			writer.WriteXmlNodeStart(name);
+			writer.WriteXmlAttributesEnd();
+			writer.WriteXmlNullable(this.Pr, "w:sdtPr");
+			// writer.WriteXmlArray(this.SdtEndPr, "w:sdtEndPr");
+			writer.WriteXmlNodeStart("w:sdtContent");
+			writer.WriteXmlAttributesEnd();
+			CParagraphContentWithParagraphLikeContent.prototype.toXml.call(this, writer);
+			writer.WriteXmlNodeEnd("w:sdtContent");
+			writer.WriteXmlNodeEnd(name);
+		};
+	}
 	function CT_SdtRow(table) {
 		this.table = table;
 		return this;
@@ -5455,200 +5479,204 @@
 		writer.WriteXmlNodeEnd(name);
 	};
 //comments
-	CComments.prototype.ReadFromXml = function(documentPart, context) {
-		let reader, ct_comments, ct_people, ct_commentsExt, ct_commentsIds, ct_commentsExtensible;
-		let commentsPart = documentPart.getPartByRelationshipType(openXml.Types.wordComments.relationType);
-		if (commentsPart) {
-			let commentsContent = commentsPart.getDocumentContent();
-			reader = new StaxParser(commentsContent, commentsPart, context);
-			ct_comments = new CT_Comments();
-			ct_comments.fromXml(reader);
-		}
-		let peoplePart = documentPart.getPartByRelationshipType(openXml.Types.wordPeople.relationType);
-		if (peoplePart) {
-			let peopleContent = peoplePart.getDocumentContent();
-			reader = new StaxParser(peopleContent, peoplePart, context);
-			ct_people = new CT_People();
-			ct_people.fromXml(reader);
-		}
-		let commentsExtendedPart = documentPart.getPartByRelationshipType(openXml.Types.wordCommentsExtended.relationType);
-		if (commentsExtendedPart) {
-			let commentsExtendedContent = commentsExtendedPart.getDocumentContent();
-			reader = new StaxParser(commentsExtendedContent, commentsExtendedPart, context);
-			ct_commentsExt = new CT_CommentsEx();
-			ct_commentsExt.fromXml(reader);
-		}
-		let commentsIdsPart = documentPart.getPartByRelationshipType(openXml.Types.wordCommentsIds.relationType);
-		if (commentsIdsPart) {
-			let commentsIdsContent = commentsIdsPart.getDocumentContent();
-			reader = new StaxParser(commentsIdsContent, commentsIdsPart, context);
-			ct_commentsIds = new CT_CommentsIds();
-			ct_commentsIds.fromXml(reader);
-		}
-		let commentsExtensiblePart = documentPart.getPartByRelationshipType(openXml.Types.wordCommentsExtensible.relationType);
-		if (commentsExtensiblePart) {
-			let commentsExtensibleContent = commentsExtensiblePart.getDocumentContent();
-			reader = new StaxParser(commentsExtensibleContent, commentsExtensiblePart, context);
-			ct_commentsExtensible = new CT_CommentsExtensible();
-			ct_commentsExtensible.fromXml(reader);
-		}
+	if(typeof CComments !== "undefined") {
+		CComments.prototype.ReadFromXml = function(documentPart, context) {
+			let reader, ct_comments, ct_people, ct_commentsExt, ct_commentsIds, ct_commentsExtensible;
+			let commentsPart = documentPart.getPartByRelationshipType(openXml.Types.wordComments.relationType);
+			if (commentsPart) {
+				let commentsContent = commentsPart.getDocumentContent();
+				reader = new StaxParser(commentsContent, commentsPart, context);
+				ct_comments = new CT_Comments();
+				ct_comments.fromXml(reader);
+			}
+			let peoplePart = documentPart.getPartByRelationshipType(openXml.Types.wordPeople.relationType);
+			if (peoplePart) {
+				let peopleContent = peoplePart.getDocumentContent();
+				reader = new StaxParser(peopleContent, peoplePart, context);
+				ct_people = new CT_People();
+				ct_people.fromXml(reader);
+			}
+			let commentsExtendedPart = documentPart.getPartByRelationshipType(openXml.Types.wordCommentsExtended.relationType);
+			if (commentsExtendedPart) {
+				let commentsExtendedContent = commentsExtendedPart.getDocumentContent();
+				reader = new StaxParser(commentsExtendedContent, commentsExtendedPart, context);
+				ct_commentsExt = new CT_CommentsEx();
+				ct_commentsExt.fromXml(reader);
+			}
+			let commentsIdsPart = documentPart.getPartByRelationshipType(openXml.Types.wordCommentsIds.relationType);
+			if (commentsIdsPart) {
+				let commentsIdsContent = commentsIdsPart.getDocumentContent();
+				reader = new StaxParser(commentsIdsContent, commentsIdsPart, context);
+				ct_commentsIds = new CT_CommentsIds();
+				ct_commentsIds.fromXml(reader);
+			}
+			let commentsExtensiblePart = documentPart.getPartByRelationshipType(openXml.Types.wordCommentsExtensible.relationType);
+			if (commentsExtensiblePart) {
+				let commentsExtensibleContent = commentsExtensiblePart.getDocumentContent();
+				reader = new StaxParser(commentsExtensibleContent, commentsExtensiblePart, context);
+				ct_commentsExtensible = new CT_CommentsExtensible();
+				ct_commentsExtensible.fromXml(reader);
+			}
 
-		if (ct_comments) {
-			if (ct_commentsExt) {
-				ct_comments.initReplies(ct_commentsExt);
-			}
-			for (let i = 0; i < ct_comments.comment.length; ++i) {
-				let ct_comment = ct_comments.comment[i];
-				let commentData = new AscCommon.CCommentData();
-				commentData.ReadFromXml(ct_comment, ct_people, ct_commentsExt, ct_commentsIds, ct_commentsExtensible);
-				let oNewComment = new AscCommon.CComment(this, commentData);
-				this.Add(oNewComment);
-				context.commentDataById[ct_comment.id] = oNewComment;
-			}
-		}
-	};
-	CComments.prototype.WriteToXml = function(memory, docPart) {
-		let ct_comments = new CT_Comments();
-		let ct_people = new CT_People();
-		let ct_commentsExt = new CT_CommentsEx();
-		let ct_commentsIds = new CT_CommentsIds();
-		let ct_commentsExtensible = new CT_CommentsExtensible();
-		//todo document commments
-		for(let i in this.m_arrCommentsById) {
-			if(this.m_arrCommentsById.hasOwnProperty(i)) {
-				let oComment = this.m_arrCommentsById[i];
-				if (oComment.IsGlobalComment()) {
-				} else {
+			if (ct_comments) {
+				if (ct_commentsExt) {
+					ct_comments.initReplies(ct_commentsExt);
 				}
-				let ct_comment = new CT_Comment();
-				ct_comments.comment.push(ct_comment);
-				oComment.Data.WriteToXml(ct_comment, null, memory.context, ct_comments, ct_people, ct_commentsExt, ct_commentsIds, ct_commentsExtensible);
-				memory.context.commentDataById[oComment.Get_Id()] = ct_comment;
+				for (let i = 0; i < ct_comments.comment.length; ++i) {
+					let ct_comment = ct_comments.comment[i];
+					let commentData = new AscCommon.CCommentData();
+					commentData.ReadFromXml(ct_comment, ct_people, ct_commentsExt, ct_commentsIds, ct_commentsExtensible);
+					let oNewComment = new AscCommon.CComment(this, commentData);
+					this.Add(oNewComment);
+					context.commentDataById[ct_comment.id] = oNewComment;
+				}
 			}
-		}
-		if (0 === ct_comments.comment.length) {
-			return;
-		}
-		let commentsPart = docPart.part.addPart(AscCommon.openXml.Types.wordComments);
-		commentsPart.part.setDataXml(ct_comments, memory);
-		memory.Seek(0);
+		};
+		CComments.prototype.WriteToXml = function(memory, docPart) {
+			let ct_comments = new CT_Comments();
+			let ct_people = new CT_People();
+			let ct_commentsExt = new CT_CommentsEx();
+			let ct_commentsIds = new CT_CommentsIds();
+			let ct_commentsExtensible = new CT_CommentsExtensible();
+			//todo document commments
+			for(let i in this.m_arrCommentsById) {
+				if(this.m_arrCommentsById.hasOwnProperty(i)) {
+					let oComment = this.m_arrCommentsById[i];
+					if (oComment.IsGlobalComment()) {
+					} else {
+					}
+					let ct_comment = new CT_Comment();
+					ct_comments.comment.push(ct_comment);
+					oComment.Data.WriteToXml(ct_comment, null, memory.context, ct_comments, ct_people, ct_commentsExt, ct_commentsIds, ct_commentsExtensible);
+					memory.context.commentDataById[oComment.Get_Id()] = ct_comment;
+				}
+			}
+			if (0 === ct_comments.comment.length) {
+				return;
+			}
+			let commentsPart = docPart.part.addPart(AscCommon.openXml.Types.wordComments);
+			commentsPart.part.setDataXml(ct_comments, memory);
+			memory.Seek(0);
 
-		let peoplePart = docPart.part.addPart(AscCommon.openXml.Types.wordPeople);
-		peoplePart.part.setDataXml(ct_people, memory);
-		memory.Seek(0);
+			let peoplePart = docPart.part.addPart(AscCommon.openXml.Types.wordPeople);
+			peoplePart.part.setDataXml(ct_people, memory);
+			memory.Seek(0);
 
-		let commentsExtendedPart = docPart.part.addPart(AscCommon.openXml.Types.wordCommentsExtended);
-		commentsExtendedPart.part.setDataXml(ct_commentsExt, memory);
-		memory.Seek(0);
+			let commentsExtendedPart = docPart.part.addPart(AscCommon.openXml.Types.wordCommentsExtended);
+			commentsExtendedPart.part.setDataXml(ct_commentsExt, memory);
+			memory.Seek(0);
 
-		let commentsIdsPart = docPart.part.addPart(AscCommon.openXml.Types.wordCommentsIds);
-		commentsIdsPart.part.setDataXml(ct_commentsIds, memory);
-		memory.Seek(0);
+			let commentsIdsPart = docPart.part.addPart(AscCommon.openXml.Types.wordCommentsIds);
+			commentsIdsPart.part.setDataXml(ct_commentsIds, memory);
+			memory.Seek(0);
 
-		let commentsExtensiblePart = docPart.part.addPart(AscCommon.openXml.Types.wordCommentsExtensible);
-		commentsExtensiblePart.part.setDataXml(ct_commentsExtensible, memory);
-		memory.Seek(0);
-	};
-	CCommentData.prototype.ReadFromXml = function(ct_comment, ct_people, ct_commentsExt, ct_commentsIds, ct_commentsExtensible) {
-		let paraId = ct_comment.paraId;
-		let durableId = ct_commentsIds && ct_commentsIds.commentId[paraId];
-		let commentsExt = ct_commentsExt && ct_commentsExt.commentEx[paraId];
-		let commentExtensible = ct_commentsExtensible && ct_commentsExtensible.commentExtensible[durableId];
-		let presenceInfo = ct_people && ct_people.person[ct_comment.author];
+			let commentsExtensiblePart = docPart.part.addPart(AscCommon.openXml.Types.wordCommentsExtensible);
+			commentsExtensiblePart.part.setDataXml(ct_commentsExtensible, memory);
+			memory.Seek(0);
+		};
+	}
+	if(typeof CCommentData !== "undefined") {
+		CCommentData.prototype.ReadFromXml = function(ct_comment, ct_people, ct_commentsExt, ct_commentsIds, ct_commentsExtensible) {
+			let paraId = ct_comment.paraId;
+			let durableId = ct_commentsIds && ct_commentsIds.commentId[paraId];
+			let commentsExt = ct_commentsExt && ct_commentsExt.commentEx[paraId];
+			let commentExtensible = ct_commentsExtensible && ct_commentsExtensible.commentExtensible[durableId];
+			let presenceInfo = ct_people && ct_people.person[ct_comment.author];
 
-		ct_comment.content.SelectAll();
-		let text = ct_comment.content.GetSelectedText(true);
+			ct_comment.content.SelectAll();
+			let text = ct_comment.content.GetSelectedText(true);
 
-		this.m_sText = text || this.m_sText;
-		this.m_sTime = ct_comment.date || this.m_sTime;
-		this.m_sOOTime  = (commentExtensible && commentExtensible.dateUtc) || this.m_sOOTime;
-		this.m_sUserId = (presenceInfo && presenceInfo.userId) || this.m_sUserId;
-		this.m_sProviderId = (presenceInfo && presenceInfo.providerId) || this.m_sProviderId;
-		this.m_sUserName = ct_comment.author || this.m_sUserName;
-		this.m_sInitials = ct_comment.initials || this.m_sInitials;
-		this.m_sQuoteText = "QuoteText";
-		this.m_bSolved = (commentsExt && commentsExt.done) || this.m_bSolved;
-		this.m_nDurableId = durableId || this.m_nDurableId;
-		this.m_sUserData = "";//todo
-		for (let i = 0; i < ct_comment.replies.length; ++i) {
-			let commentData = new AscCommon.CCommentData();
-			commentData.ReadFromXml(ct_comment.replies[i], ct_people, ct_commentsExt, ct_commentsIds, ct_commentsExtensible);
-			this.m_aReplies.push(commentData);
-		}
-	};
-	CCommentData.prototype.WriteTextToParagraph = function(text, paraId, documentContent) {
-		let Spacing = new CParaSpacing();
-		Spacing.LineRule = Asc.linerule_Auto;
-		Spacing.Line = 1;
-		Spacing.After = 0;
-		Spacing.Before = 0;
-		let Ind = new CParaInd();
-		Ind.firstLine = 0;
-		Ind.Left = 0;
-		Ind.Right = 0;
-		let paragraph = new Paragraph(documentContent.DrawingDocument, documentContent);
-		paragraph.ParaId = paraId;
-		paragraph.Pr.Spacing = Spacing;
-		paragraph.Pr.Ind = Ind;
-		paragraph.Pr.Jc = AscCommon.align_Left;
-		let run = new ParaRun(paragraph, false);
-		run.Pr.RFonts.SetAll('Arial');
-		run.Pr.FontSize = 11;
-		run.AddText(text, -1);
-		paragraph.AddToContent(paragraph.GetElementsCount(), run);
-		return paragraph;
-	};
-	CCommentData.prototype.WriteTextToRunReference = function(paragraph) {
-		let run = new ParaRun(paragraph, false);
-		run.Add_ToContent(0, new ParaPageNum());
-		run.Pr.RFonts.SetAll('Arial');
-		run.Pr.FontSize = 11;
-		run.AddText(text, -1);
-		return run;
-	};
-	CCommentData.prototype.WriteToXml = function(ct_comment, paraIdParent, context, ct_comments, ct_people, ct_commentsExt, ct_commentsIds, ct_commentsExtensible) {
-		let id = context.commentIdIndex++;
-		let paraId = context.paraIdIndex++;
-		let durableId = this.m_nDurableId || 1;
-		let presenceInfo = ct_people.person[this.m_sUserName];
-		if(!presenceInfo) {
-			presenceInfo = new CT_PresenceInfo();
-			ct_people.person[this.m_sUserName] = presenceInfo;
-		}
-		let commentsExt = ct_commentsExt.commentEx[paraId];
-		if(!commentsExt) {
-			commentsExt = new CT_CommentEx();
-			ct_commentsExt.commentEx[paraId] = commentsExt;
-		}
-		let commentExtensible = ct_commentsExtensible.commentExtensible[durableId];
-		if(!commentExtensible) {
-			commentExtensible = new CT_CommentExtensible();
-			ct_commentsExtensible.commentExtensible[durableId] = commentExtensible;
-		}
+			this.m_sText = text || this.m_sText;
+			this.m_sTime = ct_comment.date || this.m_sTime;
+			this.m_sOOTime  = (commentExtensible && commentExtensible.dateUtc) || this.m_sOOTime;
+			this.m_sUserId = (presenceInfo && presenceInfo.userId) || this.m_sUserId;
+			this.m_sProviderId = (presenceInfo && presenceInfo.providerId) || this.m_sProviderId;
+			this.m_sUserName = ct_comment.author || this.m_sUserName;
+			this.m_sInitials = ct_comment.initials || this.m_sInitials;
+			this.m_sQuoteText = "QuoteText";
+			this.m_bSolved = (commentsExt && commentsExt.done) || this.m_bSolved;
+			this.m_nDurableId = durableId || this.m_nDurableId;
+			this.m_sUserData = "";//todo
+			for (let i = 0; i < ct_comment.replies.length; ++i) {
+				let commentData = new AscCommon.CCommentData();
+				commentData.ReadFromXml(ct_comment.replies[i], ct_people, ct_commentsExt, ct_commentsIds, ct_commentsExtensible);
+				this.m_aReplies.push(commentData);
+			}
+		};
+		CCommentData.prototype.WriteTextToParagraph = function(text, paraId, documentContent) {
+			let Spacing = new CParaSpacing();
+			Spacing.LineRule = Asc.linerule_Auto;
+			Spacing.Line = 1;
+			Spacing.After = 0;
+			Spacing.Before = 0;
+			let Ind = new CParaInd();
+			Ind.firstLine = 0;
+			Ind.Left = 0;
+			Ind.Right = 0;
+			let paragraph = new Paragraph(documentContent.DrawingDocument, documentContent);
+			paragraph.ParaId = paraId;
+			paragraph.Pr.Spacing = Spacing;
+			paragraph.Pr.Ind = Ind;
+			paragraph.Pr.Jc = AscCommon.align_Left;
+			let run = new ParaRun(paragraph, false);
+			run.Pr.RFonts.SetAll('Arial');
+			run.Pr.FontSize = 11;
+			run.AddText(text, -1);
+			paragraph.AddToContent(paragraph.GetElementsCount(), run);
+			return paragraph;
+		};
+		CCommentData.prototype.WriteTextToRunReference = function(paragraph) {
+			let run = new ParaRun(paragraph, false);
+			run.Add_ToContent(0, new ParaPageNum());
+			run.Pr.RFonts.SetAll('Arial');
+			run.Pr.FontSize = 11;
+			run.AddText(text, -1);
+			return run;
+		};
+		CCommentData.prototype.WriteToXml = function(ct_comment, paraIdParent, context, ct_comments, ct_people, ct_commentsExt, ct_commentsIds, ct_commentsExtensible) {
+			let id = context.commentIdIndex++;
+			let paraId = context.paraIdIndex++;
+			let durableId = this.m_nDurableId || 1;
+			let presenceInfo = ct_people.person[this.m_sUserName];
+			if(!presenceInfo) {
+				presenceInfo = new CT_PresenceInfo();
+				ct_people.person[this.m_sUserName] = presenceInfo;
+			}
+			let commentsExt = ct_commentsExt.commentEx[paraId];
+			if(!commentsExt) {
+				commentsExt = new CT_CommentEx();
+				ct_commentsExt.commentEx[paraId] = commentsExt;
+			}
+			let commentExtensible = ct_commentsExtensible.commentExtensible[durableId];
+			if(!commentExtensible) {
+				commentExtensible = new CT_CommentExtensible();
+				ct_commentsExtensible.commentExtensible[durableId] = commentExtensible;
+			}
 
-		ct_comment.author = this.m_sUserName;
-		ct_comment.id = id;
-		ct_comment.date = parseInt(this.m_sTime);
-		ct_comment.initials = this.m_sInitials;
-		//todo newline
-		ct_comment.content.Content[0] = this.WriteTextToParagraph(this.m_sText, paraId, ct_comment.content);
+			ct_comment.author = this.m_sUserName;
+			ct_comment.id = id;
+			ct_comment.date = parseInt(this.m_sTime);
+			ct_comment.initials = this.m_sInitials;
+			//todo newline
+			ct_comment.content.Content[0] = this.WriteTextToParagraph(this.m_sText, paraId, ct_comment.content);
 
-		presenceInfo.userId = this.m_sUserId;
-		presenceInfo.providerId = this.m_sProviderId;
-		commentsExt.paraId = paraId;
-		commentsExt.paraIdParent = paraIdParent;
-		commentsExt.done = this.m_bSolved;
-		ct_commentsIds.commentId[paraId] = durableId;
-		commentExtensible.durableId = durableId;
-		commentExtensible.dateUtc = parseInt(this.m_sOOTime);
+			presenceInfo.userId = this.m_sUserId;
+			presenceInfo.providerId = this.m_sProviderId;
+			commentsExt.paraId = paraId;
+			commentsExt.paraIdParent = paraIdParent;
+			commentsExt.done = this.m_bSolved;
+			ct_commentsIds.commentId[paraId] = durableId;
+			commentExtensible.durableId = durableId;
+			commentExtensible.dateUtc = parseInt(this.m_sOOTime);
 
-		for (let i = 0; i < this.m_aReplies.length; ++i) {
-			let ct_reply = new CT_Comment();
-			ct_comment.replies.push(ct_reply);
-			ct_comments.comment.push(ct_reply);
-			this.m_aReplies[i].WriteToXml(ct_reply, paraId, context, ct_comments, ct_people, ct_commentsExt, ct_commentsIds, ct_commentsExtensible);
-		}
-	};
+			for (let i = 0; i < this.m_aReplies.length; ++i) {
+				let ct_reply = new CT_Comment();
+				ct_comment.replies.push(ct_reply);
+				ct_comments.comment.push(ct_reply);
+				this.m_aReplies[i].WriteToXml(ct_reply, paraId, context, ct_comments, ct_people, ct_commentsExt, ct_commentsIds, ct_commentsExtensible);
+			}
+		};
+	}
 	function CT_Comment() {
 		this.id = null;
 		this.author = null;
