@@ -6170,6 +6170,7 @@
         var y2 = -Number.MAX_VALUE;
         var _x1, _x2, _y1, _y2;
         var i;
+			var arnIntersection;
 
         if (this.topLeftFrozenCell) {
             var cFrozen = this.topLeftFrozenCell.getCol0();
@@ -6306,7 +6307,7 @@
 
         if (this.oOtherRanges) {
             this.oOtherRanges.ranges.forEach(function (item) {
-                var arnIntersection = item.intersectionSimple(range);
+                arnIntersection = item.intersectionSimple(range);
                 if (arnIntersection) {
                     _x1 = t._getColLeft(arnIntersection.c1) - offsetX - 3;
                     _x2 = arnIntersection.c2 > t.nColsCount ? width : t._getColLeft(arnIntersection.c2 + 1) - offsetX + 1 + 2;
@@ -6321,8 +6322,27 @@
             });
         }
 
+			if (this.workbook.Api.isShowVisibleAreaOleEditor || this.workbook.Api.isEditVisibleAreaOleEditor) {
+
+				var oleRange = this.getOleSize().getLast();
+				arnIntersection = oleRange.intersectionSimple(range);
+				// Координаты для видимой области оле-объекта
+				if (arnIntersection) {
+					_x1 = t._getColLeft(oleRange.c1) - offsetX - 3;
+					_x2 = oleRange.c2 > t.nColsCount ? width : t._getColLeft(oleRange.c2 + 1) - offsetX + 1 + 2;
+					_y1 = t._getRowTop(oleRange.r1) - offsetY - 3;
+					_y2 = oleRange.r2 > t.nRowsCount ? height : t._getRowTop(oleRange.r2 + 1) - offsetY + 1 + 2;
+
+					// Выбираем наибольший range для очистки
+					x1 = Math.min(x1, _x1);
+					x2 = Math.max(x2, _x2);
+					y1 = Math.min(y1, _y1);
+					y2 = Math.max(y2, _y2);
+				}
+			}
+
         if (null !== this.activeMoveRange) {
-			var arnIntersection = this.activeMoveRange.intersectionSimple(range);
+			arnIntersection = this.activeMoveRange.intersectionSimple(range);
 			if (arnIntersection) {
 				// Координаты для перемещения диапазона
 				_x1 = this._getColLeft(arnIntersection.c1) - offsetX - 2;
@@ -10192,12 +10212,15 @@
 		return ret;
 	};
 
-  WorksheetView.prototype._drawVisibleArea = function () {
-    var selectionLineType = AscCommonExcel.selectionLineType.Selection | AscCommonExcel.selectionLineType.DashThick;
-    var range = this.getOleSize().getLast();
+	WorksheetView.prototype._drawVisibleArea = function () {
+		var selectionLineType = AscCommonExcel.selectionLineType.DashThick;
+		if (this.workbook.Api.isEditVisibleAreaOleEditor) {
+			selectionLineType |= AscCommonExcel.selectionLineType.Resize;
+		}
+		var range = this.getOleSize().getLast();
 		this._drawElements(this._drawSelectionElement, range, selectionLineType,
-			this.settings.activeCellBorderColor);
-  };
+			AscCommonExcel.c_oAscVisibleAreaOleEditorBorderColor);
+	};
 
   WorksheetView.prototype.changeVisibleAreaStartPoint = function (x, y, isCtrl, isRelative) {
 		this.cleanSelection();
