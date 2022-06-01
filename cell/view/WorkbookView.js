@@ -1586,6 +1586,10 @@
     asc_applyFunction(callback, d);
   };
 
+	WorkbookView.prototype.getOleSize = function () {
+		return this.model.getOleSize();
+	};
+
   WorkbookView.prototype._onMoveResizeRangeHandleDone = function() {
     var ws = this.getWorksheet();
     ws.applyMoveResizeRangeHandle();

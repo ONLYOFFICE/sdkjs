@@ -4425,9 +4425,6 @@
 		}
 	};
 	Worksheet.prototype.getSelection = function () {
-		if (this.workbook.oApi.isEditVisibleAreaOleEditor) {
-			return this.workbook.oleSize;
-		}
 		return this.copySelection || this.selectionRange;
 	};
 

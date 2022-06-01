@@ -1723,9 +1723,6 @@
     };
 
     WorksheetView.prototype._getSelection = function () {
-			if (this.workbook.Api.isEditVisibleAreaOleEditor) {
-				return this.getOleSize();
-			}
         return this.model.selectionRange;
     };
 
@@ -9079,9 +9076,9 @@
 		return oResDefault;
 	};
 
-    WorksheetView.prototype._fixSelectionOfMergedCells = function (fixedRange, onlyCells) {
+    WorksheetView.prototype._fixSelectionOfMergedCells = function (fixedRange, onlyCells, customSelection) {
         var selection;
-        var ar = fixedRange ? fixedRange : ((selection = this._getSelection()) ? selection.getLast() : null);
+        var ar = fixedRange ? fixedRange : ((selection = customSelection || this._getSelection()) ? selection.getLast() : null);
         if (!ar || (onlyCells && c_oAscSelectionType.RangeCells !== ar.getType() && !this.getFormulaEditMode())) {
         	return;
 		}
@@ -9203,8 +9200,8 @@
 		return new asc_Range(c1, r1, c2, r2);
     };
 
-	WorksheetView.prototype._moveActiveCellToXY = function (x, y) {
-		var selection = this._getSelection();
+	WorksheetView.prototype._moveActiveCellToXY = function (x, y, customSelection) {
+		var selection = customSelection || this._getSelection();
 		var ar = selection.getLast();
 		var range = this._getRangeByXY(x, y);
 
@@ -9235,11 +9232,12 @@
 		}
 		selection.setActiveCell(r, c);
 		var valid = !this.getFormulaEditMode() && selection.validActiveCell();
-		this._fixSelectionOfMergedCells(null, valid);
+		this._fixSelectionOfMergedCells(null, valid, customSelection);
 	};
 
-    WorksheetView.prototype._moveActiveCellToOffset = function (activeCell, dc, dr) {
-        var ar = this._getSelection().getLast();
+    WorksheetView.prototype._moveActiveCellToOffset = function (activeCell, dc, dr, customSelection) {
+			var selection = customSelection || this._getSelection();
+        var ar = selection.getLast();
         var mc = this.model.getMergedByCell(activeCell.row, activeCell.col);
         var c = mc ? (dc < 0 ? mc.c1 : dc > 0 ? Math.min(mc.c2, this.nColsCount - 1 - dc) : activeCell.col) :
           activeCell.col;
@@ -9247,9 +9245,9 @@
           activeCell.row;
         var p = this._calcCellPosition(c, r, dc, dr);
         ar.assign(p.col, p.row, p.col, p.row);
-        this.model.selectionRange.setActiveCell(p.row, p.col);
-        this._fixSelectionOfHiddenCells(dc >= 0 ? +1 : -1, dr >= 0 ? +1 : -1);
-        this._fixSelectionOfMergedCells();
+        selection.setActiveCell(p.row, p.col);
+        this._fixSelectionOfHiddenCells(dc >= 0 ? +1 : -1, dr >= 0 ? +1 : -1, ar);
+        this._fixSelectionOfMergedCells(undefined, undefined, customSelection);
     };
 
     // Движение активной ячейки в выделенной области
@@ -9265,10 +9263,11 @@
         });
     };
 
-	WorksheetView.prototype._calcSelectionEndPointByXY = function (x, y, keepType) {
-		var activeCell = this._getSelection().activeCell;
+	WorksheetView.prototype._calcSelectionEndPointByXY = function (x, y, keepType, customSelection) {
+		var originalSelection = customSelection || this._getSelection();
+		var activeCell = originalSelection.activeCell;
 		var range = this._getRangeByXY(x, y);
-		var selection = this._getSelection().clone();
+		var selection = originalSelection.clone();
 		var res = keepType ? selection.getLast() : range.clone();
 		var type = res.getType();
 
@@ -9283,19 +9282,19 @@
 		}
 
 		selection.getLast().assign2(res);
-		this._fixSelectionOfMergedCells(res, selection.validActiveCell());
+		this._fixSelectionOfMergedCells(res, selection.validActiveCell(), customSelection);
 		return res;
 	};
 
-    WorksheetView.prototype._calcSelectionEndPointByOffset = function (dc, dr) {
-        var selection = this._getSelection();
+    WorksheetView.prototype._calcSelectionEndPointByOffset = function (dc, dr, customSelection) {
+        var selection = customSelection || this._getSelection();
         var ar = selection.getLast();
         var activeCell = selection.activeCell;
         var c1, r1, c2, r2, tmp;
         var indivisibleCell = ar.clone(true);
         indivisibleCell.c1 = activeCell.col;
         indivisibleCell.c2 = activeCell.col;
-        this._fixSelectionOfMergedCells(indivisibleCell);
+        this._fixSelectionOfMergedCells(indivisibleCell, customSelection);
 
         tmp = asc.getEndValueRange(dc, ar.c1, ar.c2, indivisibleCell.c1, indivisibleCell.c2);
         c1 = tmp.x1;
@@ -9303,7 +9302,7 @@
         indivisibleCell = ar.clone(true);
         indivisibleCell.r1 = activeCell.row;
         indivisibleCell.r2 = activeCell.row;
-        this._fixSelectionOfMergedCells(indivisibleCell);
+        this._fixSelectionOfMergedCells(indivisibleCell, customSelection);
 
         tmp = asc.getEndValueRange(dr, ar.r1, ar.r2, indivisibleCell.r1, indivisibleCell.r2);
 
@@ -9315,11 +9314,11 @@
         dc = Math.sign(dc);
         dr = Math.sign(dr);
 
-		this._fixSelectionOfMergedCells(res);
+		this._fixSelectionOfMergedCells(res, customSelection);
 		while (ar.isEqual(res)) {
 			p2 = this._calcCellPosition(c2, r2, dc, dr);
 			res.assign(c1, r1, c2 = p2.col, r2 = p2.row, true);
-			this._fixSelectionOfMergedCells(res);
+			this._fixSelectionOfMergedCells(res, customSelection);
             if (p1.col === p2.col && p1.row === p2.row) {
 				break;
 			}
@@ -9341,8 +9340,9 @@
         return res;
     };
 
-    WorksheetView.prototype._calcActiveRangeOffsetIsCoord = function (x, y, range) {
-        var ar = range || this._getSelection().getLast();
+    WorksheetView.prototype._calcActiveRangeOffsetIsCoord = function (x, y, customSelection) {
+	      var originalSelection = customSelection || this._getSelection();
+	      var ar = originalSelection.getLast();
         if (this.getFormulaEditMode()) {
             // Для формул нужно сделать ограничение по range (у нас хранится полный диапазон)
             if (ar.c2 >= this.nColsCount || ar.r2 >= this.nRowsCount) {
@@ -10222,35 +10222,36 @@
 			AscCommonExcel.c_oAscVisibleAreaOleEditorBorderColor);
 	};
 
-  WorksheetView.prototype.changeVisibleAreaStartPoint = function (x, y, isCtrl, isRelative) {
+	WorksheetView.prototype.changeVisibleAreaStartPoint = function (x, y, isCtrl, isRelative) {
 		this.cleanSelection();
 		this._endSelectionShape();
-    this.endEditChart();
-
-		var activeCell = this._getSelection().activeCell.clone();
-		this._getSelection().clean();
+		this.endEditChart();
+		var oleSize = this.getOleSize();
+		var activeCell = oleSize.activeCell.clone();
+		oleSize.clean();
 		var ret = {};
 
 		if (!isRelative) {
-			this._moveActiveCellToXY(x, y);
+			this._moveActiveCellToXY(x, y, oleSize);
 		} else {
-			this._moveActiveCellToOffset(activeCell, x, y);
-			ret = this._calcRangeOffset();
+			this._moveActiveCellToOffset(activeCell, x, y, oleSize);
+			ret = this._calcRangeOffset(oleSize.getLast());
 		}
 		this._drawSelection();
-    return ret;
-  };
+		return ret;
+	};
 
-  WorksheetView.prototype.changeVisibleAreaEndPoint = function (x, y, isCtrl, isRelative) {
+	WorksheetView.prototype.changeVisibleAreaEndPoint = function (x, y, isCtrl, isRelative) {
 		if (!isRelative) {
 			if (x < this.cellsLeft) x = this.cellsLeft + 1;
 			if (y < this.cellsTop) y = this.cellsTop + 1;
 		}
 		var isChangeSelectionShape = !isRelative ? this._endSelectionShape() : false;
-		var ar = this._getSelection().getLast();
+		var oleSize = this.getOleSize();
+		var ar = oleSize.getLast();
 
-		var newRange = !isRelative ? this._calcSelectionEndPointByXY(x, y) :
-			this._calcSelectionEndPointByOffset(x, y);
+		var newRange = !isRelative ? this._calcSelectionEndPointByXY(x, y, undefined, oleSize) :
+			this._calcSelectionEndPointByOffset(x, y, oleSize);
 		var diffRange = {c1: newRange.c1 - ar.c1, c2: newRange.c2 - ar.c2, r1: newRange.r1 - ar.r1, r2: newRange.r2 - ar.r2};
 		var isEqual = newRange.isEqual(ar);
 		if (!isEqual || isChangeSelectionShape) {
@@ -10258,8 +10259,8 @@
 			ar.assign2(newRange);
 			this._drawSelection();
 		}
-		return !isRelative ? this._calcActiveRangeOffsetIsCoord(x, y) : this._calcRangeOffset(undefined, diffRange);
-  };
+		return !isRelative ? this._calcActiveRangeOffsetIsCoord(x, y, oleSize) : this._calcRangeOffset(oleSize.getLast(), diffRange);
+	};
 
     // Смена селекта по нажатию правой кнопки мыши
     WorksheetView.prototype.changeSelectionStartPointRightClick = function (x, y, target) {
