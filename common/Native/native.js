@@ -31,7 +31,7 @@
  */
 
 var editor = undefined;
-var window = {};
+var window = ("undefined" === typeof window) ? {} : window;
 var navigator = {};
 navigator.userAgent = "chrome";
 window.navigator = navigator;
@@ -307,7 +307,8 @@ var setInterval = window.setInterval = function() {};
 var console = {
 	log: function (param) { window.native.ConsoleLog(param); },
 	time: function (param) {},
-	timeEnd: function (param) {}
+	timeEnd: function (param) {},
+	warn: function() {}
 };
 
 var performance = window.performance = (function(){
