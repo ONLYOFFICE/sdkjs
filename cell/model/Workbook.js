@@ -2028,8 +2028,9 @@
 		this.lastFindOptions = null;
 		this.lastFindCells = {};
 		this.oleSize = null;
-		// var range  = new Asc.Range(5, 5, 10, 10);
-		// this.oleSize = range;
+		if (oApi && oApi.isOleEditor) {
+			this.oleSize = new AscCommonExcel.OleSizeSelectionRange(null, new Asc.Range(0, 0, 10, 10));
+		}
 
 		//при копировании листа с одного wb на другой необходимо менять в стеке
 		// формул лист и книгу(на которые ссылаемся) - например у элементов cStrucTable
@@ -2088,10 +2089,11 @@
 	};
 	Workbook.prototype.getOleSize = function () {
 		return this.oleSize;
-	}
+	};
 	Workbook.prototype.setOleSize = function (oPr) {
 		this.oleSize = oPr;
-	}
+	};
+
 	Workbook.prototype.initPostOpenZip=function(pivotCaches, xmlParserContext){
 		var t = this;
 		this.forEach(function (ws) {

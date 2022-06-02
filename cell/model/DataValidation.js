@@ -1185,7 +1185,7 @@
 			}
 		}
 		if (_row !== null && _col !== null) {
-			var selectionRange = ws.selectionRange;
+			var selectionRange = ws.getSelection();
 			var activeCell = selectionRange.activeCell;
 			res = new AscCommon.CellBase(activeCell.row - _row, activeCell.col - _col);
 		}

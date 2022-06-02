@@ -683,18 +683,11 @@
 						var binaryDataOfSheet = AscCommon.Base64.decode(oleBinary.binary);
 						var sizes = AscCommon.getSourceImageSize(blipUrl);
 						var mmExtX, mmExtY, adaptSizeHeight, adaptSizeWidth;
-						if (window["Asc"]["spreadsheet_api"] && this instanceof window["Asc"]["spreadsheet_api"]) {
-							adaptSizeWidth = (sizes.width || 0);
-							adaptSizeHeight = (sizes.height || 0);
-							mmExtY = adaptSizeHeight * AscCommon.g_dKoef_pix_to_mm;
-							mmExtX = adaptSizeWidth * AscCommon.g_dKoef_pix_to_mm;
-						} else {
-							mmExtX = selectedOleObject.spPr.xfrm.extX;
-							var koef = (mmExtX / sizes.width) || 0;
-							mmExtY = sizes.height * koef;
-							adaptSizeHeight = mmExtY * AscCommon.g_dKoef_mm_to_pix;
-							adaptSizeWidth = mmExtX * AscCommon.g_dKoef_mm_to_pix;
-						}
+						adaptSizeWidth = (sizes.width || 0);
+						adaptSizeHeight = (sizes.height || 0);
+						mmExtY = adaptSizeHeight * AscCommon.g_dKoef_pix_to_mm;
+						mmExtX = adaptSizeWidth * AscCommon.g_dKoef_pix_to_mm;
+
 						this.asc_editOleObjectAction(false, selectedOleObject, blipUrl, binaryDataOfSheet, mmExtX, mmExtY, adaptSizeWidth, adaptSizeHeight);
 					}
 				}
@@ -2700,8 +2693,7 @@
     // Builder
 	baseEditorsApi.prototype.asc_nativeInitBuilder = function()
 	{
-		// Disable history for builder
-		AscCommon.History.TurnOff();
+		AscCommon.History.TurnOffChanges();
 		this.asc_setDocInfo(new Asc.asc_CDocInfo());
 	};
 	baseEditorsApi.prototype.asc_SetSilentMode     = function()
@@ -3882,6 +3874,8 @@
 	prot['asc_wopi_renameFile'] = prot.asc_wopi_renameFile;
 	prot['asc_setShapeNames'] = prot.asc_setShapeNames;
 	prot['asc_generateChartPreviews'] = prot.asc_generateChartPreviews;
+	prot['asc_addTableOleObject'] = prot.asc_addTableOleObject;
+	prot['asc_editTableOleObject'] = prot.asc_editTableOleObject;
 	prot['setOpenedAt'] = prot.setOpenedAt;
 
 	prot['asc_isCrypto'] = prot.asc_isCrypto;

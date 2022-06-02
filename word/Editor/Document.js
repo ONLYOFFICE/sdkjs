@@ -3054,6 +3054,8 @@ CDocument.prototype.RecalculateAllAtOnce = function(isFromStart, nPagesCount)
 {
 	//var nStartTime = new Date().getTime();
 
+	let isUseRecursion = this.FullRecalc.UseRecursion;
+
 	this.FullRecalc.UseRecursion = false;
 	this.FullRecalc.Continue     = false;
 
@@ -3082,7 +3084,7 @@ CDocument.prototype.RecalculateAllAtOnce = function(isFromStart, nPagesCount)
 			break;
 	}
 
-	this.FullRecalc.UseRecursion = false;
+	this.FullRecalc.UseRecursion = isUseRecursion;
 
 	//console.log("RecalcTime: " + ((new Date().getTime() - nStartTime) / 1000));
 };

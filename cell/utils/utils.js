@@ -1153,7 +1153,7 @@
 			});
 		};
 		SelectionRange.prototype.clone = function (worksheet) {
-			var res = new SelectionRange();
+			var res = new this.constructor();
 			res.ranges = this.ranges.map(function (range) {
 				return range.clone();
 			});
@@ -1211,7 +1211,7 @@
 			}
 		};
 		SelectionRange.prototype.getUnion = function () {
-			var result = new SelectionRange(this.worksheet);
+			var result = new this.constructor(this.worksheet);
 			var unionRanges = function (ranges, res) {
 				for (var i = 0; i < ranges.length; ++i) {
 					if (0 === i) {
@@ -1225,7 +1225,7 @@
 
 			var isUnion = true, resultTmp;
 			while (isUnion && !result.isSingleRange()) {
-				resultTmp = new SelectionRange(this.worksheet);
+				resultTmp = new this.constructor(this.worksheet);
 				unionRanges(result.ranges, resultTmp);
 				isUnion = result.ranges.length !== resultTmp.ranges.length;
 				result = resultTmp;
@@ -1434,6 +1434,35 @@
 			return res;
 		};
 
+		/**
+		 *
+		 * @param ws
+		 * @param range
+		 * @constructor
+		 * @extends {SelectionRange}
+		 */
+		function OleSizeSelectionRange(ws, range) {
+			SelectionRange.call(this, ws);
+			if (range) {
+				this.ranges = [range];
+				this.activeCell = new AscCommon.CellBase(range.r1, range.c1);
+			}
+		}
+		OleSizeSelectionRange.prototype = Object.create(SelectionRange.prototype);
+		OleSizeSelectionRange.prototype.constructor = OleSizeSelectionRange;
+
+		OleSizeSelectionRange.prototype.validActiveCell = function () {
+			return true;
+		};
+		OleSizeSelectionRange.prototype.clean = function () {
+			this.ranges = [new Range(0, 0, 10, 10)];
+			this.activeCellId = 0;
+			this.activeCell.clean();
+		};
+		OleSizeSelectionRange.prototype.getName = function () {
+			var range = this.getLast();
+			return range.getName();
+		};
     /**
      *
      * @constructor
@@ -3490,6 +3519,7 @@
 		window["Asc"].Range = Range;
 		window["AscCommonExcel"].Range3D = Range3D;
 		window["AscCommonExcel"].SelectionRange = SelectionRange;
+		window["AscCommonExcel"].OleSizeSelectionRange = OleSizeSelectionRange;
 		window["AscCommonExcel"].ActiveRange = ActiveRange;
 		window["AscCommonExcel"].FormulaRange = FormulaRange;
 		window["AscCommonExcel"].MultiplyRange = MultiplyRange;

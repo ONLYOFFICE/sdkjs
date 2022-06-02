@@ -9915,6 +9915,13 @@
 
 	var g_oIdCounter = new CIdCounter();
 
+	function CEventListenerInfo(listeningElement, eventName, listener, useCapture) {
+		this.eventName = eventName;
+		this.listener = listener;
+		this.listeningElement = listeningElement;
+		this.useCapture = useCapture;
+	}
+
 	const asc_PreviewBulletType = {
 		text: 0,
 		char: 1,
@@ -12955,6 +12962,8 @@
 	window["AscCommon"].isEmptyObject = isEmptyObject;
 
 	window["AscCommon"].getSourceImageSize = getSourceImageSize;
+
+	window["AscCommon"].CEventListenerInfo = CEventListenerInfo;
 
 	window["AscCommon"].CBulletPreviewDrawer = window["AscCommon"]["CBulletPreviewDrawer"] = CBulletPreviewDrawer;
 

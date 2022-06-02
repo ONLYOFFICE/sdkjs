@@ -234,7 +234,8 @@
         SlicerCaches: 18,
         SlicerCachesExt: 19,
         SlicerCache: 20,
-        WorkbookProtection: 21
+        WorkbookProtection: 21,
+        OleSize: 22
     };
     /** @enum */
     var c_oSerWorkbookPrTypes =
@@ -3271,6 +3272,10 @@
 			if (this.wb.workbookProtection) {
 				this.bs.WriteItem(c_oSerWorkbookTypes.WorkbookProtection, function(){oThis.WriteWorkbookProtection(oThis.wb.workbookProtection);});
             }
+			if (this.wb.oleSize) {
+				var sRange = this.wb.oleSize.getName();
+				this.bs.WriteItem(c_oSerWorkbookTypes.OleSize, function () {oThis.memory.WriteString3(sRange)});
+			}
         };
         this.WriteWorkbookPr = function()
         {
@@ -7298,6 +7303,14 @@
 				res = this.bcr.Read1(length, function(t,l){
 					return oThis.ReadExternalReferences(t,l);
 				});
+			}
+			else if ( c_oSerWorkbookTypes.OleSize === type )
+			{
+				var sRange = this.stream.GetString2LE(length);
+				var parsedRange = AscCommonExcel.g_oRangeCache.getAscRange(sRange);
+				if (parsedRange) {
+					this.oWorkbook.setOleSize(new AscCommonExcel.OleSizeSelectionRange(null, parsedRange));
+				}
 			}
             else if (c_oSerWorkbookTypes.VbaProject == type)
             {

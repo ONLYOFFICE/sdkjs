@@ -325,6 +325,27 @@ CRevisionsChange.prototype.IsParaPrChange = function()
 {
 	return (c_oAscRevisionsChangeType.ParaPr === this.Type);
 };
+CRevisionsChange.prototype.CheckHitByParagraphContentPos = function(oParagraph, oContentPos)
+{
+	if (this.IsComplexChange())
+	{
+		for (let nIndex = 0, nCount = this.SimpleChanges.length; nIndex < nCount; ++nIndex)
+		{
+			let oChange = this.SimpleChanges[nIndex];
+			if (oChange.GetElement() === oParagraph
+				&& oContentPos.Compare(oChange.StartPos) >= 0
+				&& oContentPos.Compare(oChange.EndPos) <= 0)
+				return true;
+		}
+		return false;
+	}
+	else
+	{
+		return (this.GetElement() === oParagraph
+			&& oContentPos.Compare(this.StartPos) >= 0
+			&& oContentPos.Compare(this.EndPos) <= 0);
+	}
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 CRevisionsChange.prototype['get_UserId'] = CRevisionsChange.prototype.GetUserId;

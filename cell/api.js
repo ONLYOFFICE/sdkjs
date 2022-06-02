@@ -128,6 +128,8 @@ var editor;
 
 	this.tmpR1C1mode = null;
 
+    this.isEditVisibleAreaOleEditor = false;
+
     this.insertDocumentUrlsData = null;
 
     this._init();
@@ -1453,6 +1455,13 @@ var editor;
 		//по идее нужно делать его полное зануление, а при открытии создавать заново. но есть функции, которые
 		//добавляются в интерфейсе и в случае с историей версий заново не добавляются
 		this.wb.removeHandlersList();
+		if (this.isOleEditor) {
+			this.wb.removeEventListeners();
+			var cellEditor = this.wb.cellEditor;
+			if (this.wb.cellEditor) {
+				cellEditor.removeEventListeners();
+			}
+		}
 
 		if (this.wbModel.DrawingDocument) {
 			this.wbModel.DrawingDocument.CloseFile();
@@ -4127,42 +4136,11 @@ var editor;
     return ret;
   };
 
-  spreadsheet_api.prototype.asc_getSizesForOleEditor = function (oleInfo) {
-    var oleSize = this.wbModel.getOleSize() || this.wb.getWorksheet().getVisibleRange();
-    if (oleSize) {
-      var ws = this.wb.getWorksheet();
-
-      var firstRow = oleSize.r1;
-      var lastRow = oleSize.r2;
-      var firstColumn = oleSize.c1;
-      var lastColumn = oleSize.c2;
-
-      var left = ws._getColLeft(firstColumn);
-      var width = ws._getColLeft(lastColumn + 1) - left;
-      var top = ws._getRowTop(firstRow);
-      var height = ws._getRowTop(lastRow + 1) - top;
-      return {
-        height: height,
-        width: width,
-        top: top,
-        left: left
-      };
-    }
-    oleInfo = oleInfo || {};
-    return {
-      height: oleInfo.height,
-      width: oleInfo.width,
-      top: oleInfo.top,
-      left: oleInfo.left
-    };
-  }
-
   /**
    * Loading ole editor
    * @param {{}} [oleObj] info from oleObject
-   * @param {function} [fResizeCallback] callback where first argument is sizes of loaded editor without borders
    */
-  spreadsheet_api.prototype.asc_addTableOleObjectInOleEditor = function(oleObj, fResizeCallback) {
+  spreadsheet_api.prototype.asc_addTableOleObjectInOleEditor = function(oleObj) {
     oleObj = oleObj || {binary: AscCommon.getEmpty()};
     var stream = oleObj && oleObj.binary;
     var _this = this;
@@ -4175,8 +4153,6 @@ var editor;
     this.openDocument(file);
 
     this.fAfterLoad = function () {
-      var sizes = _this.asc_getSizesForOleEditor(oleObj);
-      fResizeCallback && fResizeCallback(sizes);
       _this.wb.scrollToOleSize();
     }
     };
@@ -4197,6 +4173,42 @@ var editor;
 
     return binaryInfo;
   }
+
+	spreadsheet_api.prototype.asc_toggleChangeVisibleAreaOleEditor = function (bForceValue) {
+		var ws = this.wb.getWorksheet();
+		ws.cleanSelection();
+		ws.endEditChart();
+		ws._endSelectionShape();
+		if (typeof bForceValue === 'boolean') {
+			this.isEditVisibleAreaOleEditor = bForceValue;
+		} else {
+			this.isEditVisibleAreaOleEditor = !this.isEditVisibleAreaOleEditor;
+		}
+		if (this.isEditVisibleAreaOleEditor) {
+			this.wb.setCellEditMode(false);
+		}
+		ws._drawSelection();
+	};
+
+	spreadsheet_api.prototype.asc_toggleShowVisibleAreaOleEditor = function (bForceValue) {
+		var newValue;
+		if (typeof bForceValue === 'boolean') {
+			newValue = bForceValue;
+		} else {
+			newValue = !this.isShowVisibleAreaOleEditor;
+		}
+		var ws = this.wb.getWorksheet();
+		ws.cleanSelection();
+		if (newValue) {
+			this.isShowVisibleAreaOleEditor = newValue;
+			ws.cleanSelection();
+			ws._drawSelection();
+		} else {
+			ws.cleanSelection();
+			this.isShowVisibleAreaOleEditor = newValue;
+			ws._drawSelection();
+		}
+	};
 
   spreadsheet_api.prototype.asc_editChartDrawingObject = function(chart) {
     var ws = this.wb.getWorksheet();
@@ -7872,6 +7884,16 @@ var editor;
   prot["asc_delDefinedNames"] = prot.asc_delDefinedNames;
   prot["asc_getDefaultDefinedName"] = prot.asc_getDefaultDefinedName;
   prot["asc_checkDefinedName"] = prot.asc_checkDefinedName;
+
+  // Ole Editor
+	prot["asc_toggleChangeVisibleAreaOleEditor"] = prot.asc_toggleChangeVisibleAreaOleEditor;
+	prot["asc_toggleShowVisibleAreaOleEditor"] = prot.asc_toggleShowVisibleAreaOleEditor;
+  prot["asc_addOleObjectAction"] = prot.asc_addOleObjectAction;
+  prot["asc_addTableOleObjectInOleEditor"] = prot.asc_addTableOleObjectInOleEditor;
+  prot["asc_getBinaryInfoOleObject"] = prot.asc_getBinaryInfoOleObject;
+  prot["asc_editOleObjectAction"] = prot.asc_editOleObjectAction;
+  prot["asc_doubleClickOnTableOleObject"] = prot.asc_doubleClickOnTableOleObject;
+  prot["asc_startEditCurrentOleObject"] = prot.asc_startEditCurrentOleObject;
 
   // Auto filters interface + format as table
   prot["asc_addAutoFilter"] = prot.asc_addAutoFilter;

@@ -1703,14 +1703,15 @@ CInlineLevelSdt.prototype.private_UpdatePictureContent = function(_nW, _nH)
 
 	if (!oDrawing)
 	{
-		var oDrawingObjects = this.Paragraph && this.Paragraph.LogicDocument ? this.Paragraph.LogicDocument.DrawingObjects : null;
+		let oLogicDocument = this.GetLogicDocument();
+		let oDrawingObjects = oLogicDocument ? oLogicDocument.GetDrawingObjects() : null;
 		if (!oDrawingObjects)
 			return;
 
 		var nW = _nW ? _nW : 50;
 		var nH = _nH ? _nH : 50;
 
-		oDrawing   = new ParaDrawing(nW, nH, null, oDrawingObjects, this.Paragraph.LogicDocument, null);
+		oDrawing   = new ParaDrawing(nW, nH, null, oDrawingObjects, oLogicDocument, null);
 		var oImage = oDrawingObjects.createImage(AscCommon.g_sWordPlaceholderImage, 0, 0, nW, nH);
 		oImage.setParent(oDrawing);
 		oDrawing.Set_GraphicObject(oImage);
@@ -3161,7 +3162,7 @@ CInlineLevelSdt.prototype.TrimCombForm = function()
 
 	let oRun = this.MakeSingleRunElement(false);
 	if (oRun.GetElementsCount() > nMax)
-		oRun.RemoveFromContent(nMax, oRun.GetElementsCount() - nMax);
+		oRun.RemoveFromContent(nMax, oRun.GetElementsCount() - nMax, true);
 };
 
 //--------------------------------------------------------export--------------------------------------------------------
