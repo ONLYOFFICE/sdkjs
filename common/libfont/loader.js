@@ -58,7 +58,7 @@
 		return { data : window['AscFonts'].allocate(size) };
 	};
 
-	window['AscFonts'].onLoadModule = function()
+	window['AscFonts']['onLoadModule'] = function()
 	{
 		++window['AscFonts'].curLoadingIndex;
 
