@@ -67,7 +67,7 @@
 			onLoadFontsModule(window, undefined);
 
 			window['AscFonts'].isEngineReady = true;
-			window['AscFonts'].onSuccess.call(window['AscFonts'].api);
+			window['AscFonts'].onSuccess && window['AscFonts'].onSuccess.call(window['AscFonts'].api);
 
 			delete window['AscFonts'].curLoadingIndex;
 			delete window['AscFonts'].maxLoadingIndex;
