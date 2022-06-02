@@ -126,9 +126,6 @@
 	};
 
 	var raster_memory = AscFonts.raster_memory;
-	AscFonts.initVariables = function()
-	{
-	};
 
 	var FONT_ITALIC_ANGLE 	= 0.3090169943749;
 	var REND_MODE 			= AscFonts.FT_Render_Mode.FT_RENDER_MODE_NORMAL;
@@ -1809,6 +1806,19 @@
 		}
 	}
 
+	CFontFile.prototype["GetFace"] = function()
+	{
+		return this.m_pFace;
+	};
+	CFontFile.prototype["GetHBFont"] = function()
+	{
+		return this.m_pHBFont;
+	};
+	CFontFile.prototype["SetHBFont"] = function(font)
+	{
+		this.m_pHBFont = font;
+	};
+
 	function CFontLoaderBySymbol()
 	{
 		this.FontFiles = {};
@@ -1900,5 +1910,4 @@
 
 	window['AscFonts'].EGlyphState = EGlyphState;
 	window['AscFonts'].CFontFile = CFontFile;
-	window['AscFonts'].onLoadModule();
 })(window);

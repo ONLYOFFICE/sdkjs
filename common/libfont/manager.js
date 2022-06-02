@@ -34,6 +34,44 @@
 
 (function(window, undefined) {
 
+	function CFontManagerEngine()
+	{
+		this.library = AscFonts.FT_CreateLibrary();
+		this.manager = null;
+
+		this.openFont = function(stream, faceindex)
+		{
+			var face = AscFonts.FT_Open_Face(this.library, stream, faceindex);
+			if (!face)
+				return null;
+
+			var font = new AscFonts.CFontFile();
+			font.SetFace(face, this.manager);
+
+			if (!font.IsSuccess())
+			{
+				font = null;
+				face = null;
+				return null;
+			}
+
+			return font;
+		};
+
+		this.setHintsProps = function(bIsHinting, bIsSubpixHinting)
+		{
+			var REND_MODE_SUBPIX = (bIsHinting && bIsSubpixHinting) ? AscFonts.TT_INTERPRETER_VERSION_40 : AscFonts.TT_INTERPRETER_VERSION_35;
+			this.manager.LOAD_MODE = bIsHinting ? AscFonts.LOAD_MODE_HINTING : AscFonts.LOAD_MODE_DEFAULT;
+
+			AscFonts.FT_Set_TrueType_HintProp(this.library, REND_MODE_SUBPIX);
+		};
+
+		this.destroy = function()
+		{
+			AscFonts.FT_Done_Library(this.library);
+		};
+	}
+
 	function CFontFilesCache()
 	{
 		this.m_lMaxSize = 1000;
@@ -43,7 +81,11 @@
 		this.LoadFontFile = function(stream_index, name, faceindex, fontManager)
 		{
 			if (!fontManager._engine)
-				AscFonts.engine_Create(fontManager);
+			{
+				fontManager._engine = new CFontManagerEngine();
+				fontManager._engine.manager = fontManager;
+				fontManager._engine.setHintsProps(fontManager.bIsHinting, fontManager.bIsSubpixHinting);
+			}
 
 			// correct native stream
 			if (AscFonts.CreateNativeStreamByIndex)
@@ -540,5 +582,4 @@
 
 	window['AscFonts'].CFontManager = CFontManager;
 	window['AscFonts'].CFontFilesCache = CFontFilesCache;
-	window['AscFonts'].onLoadModule();
 })(window);

@@ -40,7 +40,7 @@
 	window['AscFonts'].api = null;
 	window['AscFonts'].onSuccess = null;
 	window['AscFonts'].onError = null;
-	window['AscFonts'].maxLoadingIndex = 6; // engine { engine (1+1), file, manager, common }, sdk-manager { manager }
+	window['AscFonts'].maxLoadingIndex = 2; // engine (1+1)
 	window['AscFonts'].curLoadingIndex = 0;
 
 	window['AscFonts'].allocate = function(size)
@@ -60,18 +60,14 @@
 
 	window['AscFonts'].onLoadModule = function()
 	{
-		if (window['AscFonts'].isEngineReady)
-			return;
-
 		++window['AscFonts'].curLoadingIndex;
 
 		if (window['AscFonts'].curLoadingIndex === window['AscFonts'].maxLoadingIndex)
 		{
-			if (window['AscFonts'].api)
-			{
-				window['AscFonts'].isEngineReady = true;
-				window['AscFonts'].onSuccess.call(window['AscFonts'].api);
-			}
+			onLoadFontsModule(window, undefined);
+
+			window['AscFonts'].isEngineReady = true;
+			window['AscFonts'].onSuccess.call(window['AscFonts'].api);
 
 			delete window['AscFonts'].curLoadingIndex;
 			delete window['AscFonts'].maxLoadingIndex;
@@ -88,17 +84,7 @@
 		window['AscFonts'].onError = onError;
 
 		if (window["NATIVE_EDITOR_ENJINE"] === true || window["IS_NATIVE_EDITOR"] === true || window["Native"] !== undefined)
-		{
-			window['AscFonts'].isEngineReady = true;
-			window['AscFonts'].onSuccess.call(window['AscFonts'].api);
-
-			delete window['AscFonts'].curLoadingIndex;
-			delete window['AscFonts'].maxLoadingIndex;
-			delete window['AscFonts'].api;
-			delete window['AscFonts'].onSuccess;
-			delete window['AscFonts'].onError;
 			return;
-		}
 
 		var url = "../../../../sdkjs/common/libfont/engine/";
 		var useWasm = false;
@@ -123,17 +109,7 @@
 			window['AscFonts'].onError();
 		};
 
-		if (window['AscNotLoadAllScript'])
-		{
-			AscCommon.loadScript(url + "common.js", _onSuccess, _onError);
-			AscCommon.loadScript(url + "engine" + engine_name_ext, _onSuccess, _onError);
-			AscCommon.loadScript(url + "file.js", _onSuccess, _onError);
-			AscCommon.loadScript(url + "manager.js", _onSuccess, _onError);
-		}
-		else
-		{
-			AscCommon.loadScript(url + "fonts" + engine_name_ext, _onSuccess, _onError);
-		}
+		AscCommon.loadScript(url + "fonts" + engine_name_ext, _onSuccess, _onError);
 	};
 
 	function FontStream(data, size)

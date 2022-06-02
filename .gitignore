@@ -2,7 +2,6 @@
 build/node_modules
 build/$weak$.js
 common/AllFonts.js
-common/libfont/engine/fonts*.js
 common/Images/fonts_thumbnail*
 common/Images/themes_thumbnail*
 slide/themes/theme*
