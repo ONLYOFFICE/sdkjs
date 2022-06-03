@@ -11209,13 +11209,17 @@ QueryTableField.prototype.clone = function() {
 		return this;
 	}
 
-	CHeaderFooterData.prototype.clone = function() {
+	CHeaderFooterData.prototype.clone = function () {
 		var oRes = new CHeaderFooterData();
 		oRes.str = this.str;
 		return oRes;
 	};
-	CHeaderFooterData.prototype.getStr = function () { return this.str; };
-	CHeaderFooterData.prototype.setStr = function (val) { this.str = val; };
+	CHeaderFooterData.prototype.getStr = function () {
+		return this.str;
+	};
+	CHeaderFooterData.prototype.setStr = function (val) {
+		this.str = val;
+	};
 	CHeaderFooterData.prototype.parse = function () {
 		var parser = new window["AscCommonExcel"].HeaderFooterParser();
 		parser.parse(this.str);
@@ -11223,7 +11227,7 @@ QueryTableField.prototype.clone = function() {
 		return parser;
 	};
 	CHeaderFooterData.prototype.getAllFonts = function (oFontMap) {
-		if(this.parser) {
+		if (this.parser) {
 			this.parser.getAllFonts(oFontMap);
 		}
 	};
@@ -11271,7 +11275,7 @@ QueryTableField.prototype.clone = function() {
 	CSortProperties.prototype.asc_setHasHeaders = function (val) {
 		var oldVal = !!this.hasHeaders;
 		if (this._newSelection && oldVal !== val) {
-			if(val) {
+			if (val) {
 				this._newSelection.r1++;
 			} else {
 				this._newSelection.r1--;
@@ -11302,24 +11306,24 @@ QueryTableField.prototype.clone = function() {
 		var selection = this._newSelection;
 		var j;
 
-		if(saveIndexes && this.sortList && this.sortList.length) {
+		if (saveIndexes && this.sortList && this.sortList.length) {
 			var newSortList = [];
-			for(j in this.sortList) {
+			for (j in this.sortList) {
 				newSortList[j] = this.getNameColumnByIndex(parseInt(j), selection);
 			}
 			this.sortList = newSortList;
 		} else {
 			this.sortList = [];
-			if(this.columnSort) {
-				for(j = selection.c1; j <= selection.c2; j++) {
-					if(j - selection.c1 >= maxCount) {
+			if (this.columnSort) {
+				for (j = selection.c1; j <= selection.c2; j++) {
+					if (j - selection.c1 >= maxCount) {
 						break;
 					}
 					this.sortList.push(this.getNameColumnByIndex(j - selection.c1, selection));
 				}
 			} else {
-				for(j = selection.r1; j <= selection.r2; j++) {
-					if(j - selection.r1 >= maxCount) {
+				for (j = selection.r1; j <= selection.r2; j++) {
+					if (j - selection.r1 >= maxCount) {
 						break;
 					}
 					this.sortList.push(this.getNameColumnByIndex(j - selection.r1, selection));
@@ -11327,9 +11331,9 @@ QueryTableField.prototype.clone = function() {
 			}
 		}
 
-		if(this.levels) {
-			for(var i = 0; i < this.levels.length; i++) {
-				if(!this.sortList[this.levels[i].index]) {
+		if (this.levels) {
+			for (var i = 0; i < this.levels.length; i++) {
+				if (!this.sortList[this.levels[i].index]) {
 					this.sortList[this.levels[i].index] = this.getNameColumnByIndex(this.levels[i].index, selection);
 				}
 			}
@@ -11346,11 +11350,11 @@ QueryTableField.prototype.clone = function() {
 	};
 	CSortProperties.prototype.getNameColumnByIndex = function (index, parentRef) {
 		var t = this;
-		var _generateName = function(index) {
+		var _generateName = function (index) {
 			var base = t.columnSort ? AscCommon.translateManager.getValue("Column") : AscCommon.translateManager.getValue("Row");
 			var text = t.columnSort ? t._ws._getColumnTitle(index) : t._ws._getRowTitle(index);
 			text = base + " " + text;
-			if(t.hasHeaders) {
+			if (t.hasHeaders) {
 				text = "(" + text + ")";
 			}
 			return text;
@@ -11360,15 +11364,15 @@ QueryTableField.prototype.clone = function() {
 		var row = this.columnSort ? parentRef.r1 : index + parentRef.r1;
 		var col = !this.columnSort ? parentRef.c1 : index + parentRef.c1;
 		//TODO проверить в 1 строке как должно работать
-		if(this.hasHeaders) {
-			if(this.columnSort) {
+		if (this.hasHeaders) {
+			if (this.columnSort) {
 				row--;
 			} else {
 				col--;
 			}
 		}
 
-		if(!this.hasHeaders) {
+		if (!this.hasHeaders) {
 			return _generateName(this.columnSort ? col : row);
 		} else {
 			var cell = t._ws.model.getCell3(row, col);
@@ -11389,7 +11393,7 @@ QueryTableField.prototype.clone = function() {
 
 		var levelInfo;
 		var rangeInfo = t._ws.model.getRowColColors(range, !this.columnSort, true);
-		if(rangeInfo) {
+		if (rangeInfo) {
 			levelInfo = new CSortLevelInfo();
 			levelInfo.colorsFill = rangeInfo.colors;
 			levelInfo.colorsFont = rangeInfo.fontColors;
@@ -11488,6 +11492,7 @@ QueryTableField.prototype.clone = function() {
 
 		return this;
 	}
+
 	CRemoveDuplicatesProps.prototype.asc_getHasHeaders = function () {
 		return this.hasHeaders;
 	};
@@ -11497,7 +11502,7 @@ QueryTableField.prototype.clone = function() {
 	CRemoveDuplicatesProps.prototype.asc_setHasHeaders = function (val) {
 		var oldVal = !!this.hasHeaders;
 		if (this._newSelection && oldVal !== val) {
-			if(val) {
+			if (val) {
 				this._newSelection.r1++;
 			} else {
 				this._newSelection.r1--;
@@ -11515,14 +11520,14 @@ QueryTableField.prototype.clone = function() {
 		var selection = this._newSelection;
 		var j, elem;
 
-		if(this.columnList && this.columnList.length) {
-			for(j in this.columnList) {
+		if (this.columnList && this.columnList.length) {
+			for (j in this.columnList) {
 				this.columnList[j].asc_setVal(this.getNameColumnByIndex(parseInt(j)));
 			}
 		} else {
 			this.columnList = [];
-			for(j = selection.c1; j <= selection.c2; j++) {
-				if(j - selection.c1 >= maxCount) {
+			for (j = selection.c1; j <= selection.c2; j++) {
+				if (j - selection.c1 >= maxCount) {
 					break;
 				}
 				elem = new window["AscCommonExcel"].AutoFiltersOptionsElements();
@@ -11534,7 +11539,7 @@ QueryTableField.prototype.clone = function() {
 	};
 	CRemoveDuplicatesProps.prototype.getNameColumnByIndex = function (index) {
 		var t = this;
-		var _generateName = function(index) {
+		var _generateName = function (index) {
 			var base = AscCommon.translateManager.getValue("Column");
 			var text = t._ws._getColumnTitle(index);
 			text = base + " " + text;
@@ -11544,7 +11549,7 @@ QueryTableField.prototype.clone = function() {
 		var row = this._newSelection.r1;
 		var col = index + this._newSelection.c1;
 
-		if(!this.hasHeaders) {
+		if (!this.hasHeaders) {
 			return _generateName(col);
 		} else {
 			var cell = t._ws.model.getCell3(row - 1, col);
@@ -11582,8 +11587,7 @@ QueryTableField.prototype.clone = function() {
 	}
 
 	CFunctionInfo.prototype._init = function (name) {
-		var f = AscCommonExcel.cFormulaFunctionLocalized ?
-			AscCommonExcel.cFormulaFunctionLocalized[name] : AscCommonExcel.cFormulaFunction[name];
+		var f = AscCommonExcel.cFormulaFunctionLocalized ? AscCommonExcel.cFormulaFunctionLocalized[name] : AscCommonExcel.cFormulaFunction[name];
 		if (f) {
 			this.name = name;
 			this.argumentsMin = f.prototype.argumentsMin;

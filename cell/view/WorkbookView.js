@@ -4465,7 +4465,7 @@
 		if (!this.printPreviewState || !this.printPreviewState.isStart()) {
 			return;
 		}
-		for(var i in this.wsViews) {
+		for (var i in this.wsViews) {
 			this.wsViews[i]._recalculate();
 		}
 		if (!this.printPreviewState.isDrawPrintPreview) {
@@ -4550,6 +4550,21 @@
 			return;
 		}
 		return this.SearchEngine.inFindResults(ws, row, col);
+	};
+
+	//external reference
+	WorkbookView.prototype.updateExternalReferences = function (data) {
+		//после того как данные с сервара пришли - обновляем + добавляем в историю - только для совместного редактирования
+		//у всех пользователей должна быть одинаковая структура
+		this.model.updateExternalReference(data);
+	};
+
+	WorkbookView.prototype.removeExternalReferences = function (arr) {
+		this.model.removeExternalReferences(arr);
+	};
+
+	WorkbookView.prototype.addExternalReferences = function (arr) {
+		this.model.addExternalReferences(arr);
 	};
 
 

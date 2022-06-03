@@ -3904,6 +3904,14 @@
 		//updateExternalLinks(aUpdateExternalLinks, callback);
 	};
 
+	Workbook.prototype.removeExternalReferences = function (arr) {
+
+	};
+
+	Workbook.prototype.addExternalReferences = function (arr) {
+
+	};
+
 
 
 //-------------------------------------------------------------------------------------------------
