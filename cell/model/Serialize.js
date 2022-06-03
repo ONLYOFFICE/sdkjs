@@ -7520,7 +7520,7 @@
 			var res = c_oSerConstants.ReadOk;
 			var oThis = this;
 			if (c_oSerWorkbookTypes.ExternalBook == type) {
-				var externalBook = new AscCommonExcel.externalReference();
+				var externalBook = new AscCommonExcel.ExternalReference();
 				res = this.bcr.Read1(length, function(t, l) {
 					return oThis.ReadExternalBook(t, l, externalBook);
 				});
@@ -7598,7 +7598,7 @@
 			var res = c_oSerConstants.ReadOk;
 			var oThis = this;
 			if (c_oSer_ExternalLinkTypes.SheetData == type) {
-				var sheetData = {SheetId: null, RefreshError: null, Row: []};
+				var sheetData = new AscCommonExcel.ExternalSheetDataSet();
 				res = this.bcr.Read1(length, function(t, l) {
 					return oThis.ReadExternalSheetData(t, l, sheetData);
 				});
@@ -7616,7 +7616,7 @@
 			} else if (c_oSer_ExternalLinkTypes.SheetDataRefreshError == type) {
 				sheetData.RefreshError = this.stream.GetBool();
 			} else if (c_oSer_ExternalLinkTypes.SheetDataRow == type) {
-				var row = {R: null, Cell: []};
+				var row = new AscCommonExcel.ExternalRow();
 				res = this.bcr.Read1(length, function(t, l) {
 					return oThis.ReadExternalRow(t, l, row);
 				});
@@ -7632,7 +7632,7 @@
 			if (c_oSer_ExternalLinkTypes.SheetDataRowR == type) {
 				row.R = this.stream.GetULongLE();
 			} else if (c_oSer_ExternalLinkTypes.SheetDataRowCell == type) {
-				var cell = {Ref: null, CellType: null, CellValue: null};
+				var cell = new AscCommonExcel.ExternalCell();
 				res = this.bcr.Read1(length, function(t, l) {
 					return oThis.ReadExternalCell(t, l, cell);
 				});

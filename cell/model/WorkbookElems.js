@@ -11884,7 +11884,8 @@ QueryTableField.prototype.clone = function() {
 		return this;
 	}
 
-	function externalReference() {
+	//external reference
+	function ExternalReference() {
 		this.DefinedNames = [];
 		this.Id = null;
 		this.SheetDataSet = [];
@@ -11893,6 +11894,123 @@ QueryTableField.prototype.clone = function() {
 
 		this.worksheets = {};
 	}
+
+	function ExternalSheetDataSet() {
+		this.SheetId = null;
+		this.RefreshError = null;
+		this.Row = [];
+	}
+
+	ExternalSheetDataSet.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.SheetId = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.RefreshError = r.GetLong();
+		}
+
+		var length = r.GetLong();
+		for (var i = 0; i < length; ++i) {
+			var row = new ExternalRow();
+			row.Read_FromBinary2(r);
+			if(!this.Row) {
+				this.Row = [];
+			}
+			this.Row.push(row);
+		}
+	};
+	ExternalSheetDataSet.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.SheetId) {
+			w.WriteLong(this.SheetId);
+		} else {
+			w.WriteBool(false);
+		}
+
+		if (null != this.RefreshError) {
+			w.WriteLong(this.RefreshError);
+		} else {
+			w.WriteBool(false);
+		}
+
+		w.WriteLong(this.Row ? this.Row.length : 0);
+		if (this.Row) {
+			for (var i = 0; i < this.Row.length; ++i) {
+				this.Row[i].Write_ToBinary2(w);
+			}
+		}
+	};
+
+	function ExternalRow() {
+		this.R = null;
+		this.Cell = [];
+	}
+
+	ExternalRow.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.SheetId = r.GetLong();
+		}
+
+		var length = r.GetLong();
+		for (var i = 0; i < length; ++i) {
+			var row = new ExternalCell();
+			row.Read_FromBinary2(r);
+			if(!this.Row) {
+				this.Row = [];
+			}
+			this.Row.push(row);
+		}
+	};
+	ExternalRow.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.R) {
+			w.WriteLong(this.R);
+		} else {
+			w.WriteBool(false);
+		}
+
+		w.WriteLong(this.Cell ? this.Cell.length : 0);
+		if (this.Cell) {
+			for (var i = 0; i < this.Cell.length; ++i) {
+				this.Cell[i].Write_ToBinary2(w);
+			}
+		}
+	};
+
+	function ExternalCell() {
+		this.Ref = null;
+		this.CellType = null;
+		this.CellValue = null;
+	}
+
+	ExternalCell.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.Ref = r.GetString2();
+		}
+		if (r.GetBool()) {
+			this.CellType = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.CellValue = r.GetString2();
+		}
+	};
+	ExternalCell.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.Ref) {
+			w.WriteString2(this.Ref);
+		} else {
+			w.WriteBool(false);
+		}
+
+		if (null != this.CellType) {
+			w.WriteLong(this.CellType);
+		} else {
+			w.WriteBool(false);
+		}
+
+		if (null != this.CellValue) {
+			w.WriteString2(this.CellValue);
+		} else {
+			w.WriteBool(false);
+		}
+	};
 
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
@@ -12265,6 +12383,10 @@ QueryTableField.prototype.clone = function() {
 	window["AscCommonExcel"].CT_Connection = CT_Connection;
 	window["AscCommonExcel"].CT_Filter = CT_Filter;
 
-	window["AscCommonExcel"].externalReference = externalReference;
+	window["AscCommonExcel"].ExternalReference = ExternalReference;
+	window["AscCommonExcel"].ExternalSheetDataSet = ExternalSheetDataSet;
+	window["AscCommonExcel"].ExternalRow = ExternalRow;
+	window["AscCommonExcel"].ExternalCell = ExternalCell;
+
 
 })(window);
