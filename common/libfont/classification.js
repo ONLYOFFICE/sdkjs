@@ -44,461 +44,461 @@ var fonthint_CS       = 0x01;
 var fonthint_EastAsia = 0x02;
 
 (function(){
-    function CDetectFontUse()
-    {
-        this.DetectData     = null;
+	function CDetectFontUse()
+	{
+		this.DetectData     = null;
 
-        this.TableChunkLen  = 65536;
-        this.TableChunks    = 4;
+		this.TableChunkLen  = 65536;
+		this.TableChunks    = 4;
 
-        this.TableChunkMain     = 0;
-        this.TableChunkHintEA   = this.TableChunkLen;
-        this.TableChunkHintZH   = 2 * this.TableChunkLen;
-        this.TableChunkHintEACS = 3 * this.TableChunkLen;
+		this.TableChunkMain     = 0;
+		this.TableChunkHintEA   = this.TableChunkLen;
+		this.TableChunkHintZH   = 2 * this.TableChunkLen;
+		this.TableChunkHintEACS = 3 * this.TableChunkLen;
 
-        this.Init = function()
-        {
-            this.DetectData = AscFonts.allocate(this.TableChunkLen * this.TableChunks);
-            var _data = this.DetectData;
-            var i, j;
+		this.Init = function()
+		{
+			this.DetectData = AscFonts.allocate(this.TableChunkLen * this.TableChunks);
+			var _data = this.DetectData;
+			var i, j;
 
-            // ********************** 1st table *********************** //
-            j = 0;
-            for (i = 0x0000; i <= 0x007F; i++)
-            {
-                _data[i + j] = fontslot_ASCII;
-            }
-            for (i = 0x00A0; i <= 0x04FF; i++)
-            {
-                _data[i + j] = fontslot_HAnsi;
-            }
-            for (i = 0x0590; i <= 0x07BF; i++)
-            {
-                _data[i + j] = fontslot_ASCII;
-            }
-            for (i = 0x1100; i <= 0x11FF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0x1E00; i <= 0x1EFF; i++)
-            {
-                _data[i + j] = fontslot_HAnsi;
-            }
-            for (i = 0x1F00; i <= 0x27BF; i++)
-            {
-                _data[i + j] = fontslot_HAnsi;
-            }
-            for (i = 0x2E80; i <= 0x319F; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0x3200; i <= 0x4D8F; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0x4E00; i <= 0x9FAF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xA000; i <= 0xA4CF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xAC00; i <= 0xD7AF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xD800; i <= 0xDFFF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xE000; i <= 0xF8FF; i++)
-            {
-                _data[i + j] = fontslot_HAnsi;
-            }
-            for (i = 0xF900; i <= 0xFAFF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xFB00; i <= 0xFB1C; i++)
-            {
-                _data[i + j] = fontslot_HAnsi;
-            }
-            for (i = 0xFB1D; i <= 0xFDFF; i++)
-            {
-                _data[i + j] = fontslot_ASCII;
-            }
-            for (i = 0xFE30; i <= 0xFE6F; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xFE70; i <= 0xFEFE; i++)
-            {
-                _data[i + j] = fontslot_ASCII;
-            }
-            for (i = 0xFF00; i <= 0xFFEF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
+			// ********************** 1st table *********************** //
+			j = 0;
+			for (i = 0x0000; i <= 0x007F; i++)
+			{
+				_data[i + j] = fontslot_ASCII;
+			}
+			for (i = 0x00A0; i <= 0x04FF; i++)
+			{
+				_data[i + j] = fontslot_HAnsi;
+			}
+			for (i = 0x0590; i <= 0x07BF; i++)
+			{
+				_data[i + j] = fontslot_ASCII;
+			}
+			for (i = 0x1100; i <= 0x11FF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0x1E00; i <= 0x1EFF; i++)
+			{
+				_data[i + j] = fontslot_HAnsi;
+			}
+			for (i = 0x1F00; i <= 0x27BF; i++)
+			{
+				_data[i + j] = fontslot_HAnsi;
+			}
+			for (i = 0x2E80; i <= 0x319F; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0x3200; i <= 0x4D8F; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0x4E00; i <= 0x9FAF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xA000; i <= 0xA4CF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xAC00; i <= 0xD7AF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xD800; i <= 0xDFFF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xE000; i <= 0xF8FF; i++)
+			{
+				_data[i + j] = fontslot_HAnsi;
+			}
+			for (i = 0xF900; i <= 0xFAFF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xFB00; i <= 0xFB1C; i++)
+			{
+				_data[i + j] = fontslot_HAnsi;
+			}
+			for (i = 0xFB1D; i <= 0xFDFF; i++)
+			{
+				_data[i + j] = fontslot_ASCII;
+			}
+			for (i = 0xFE30; i <= 0xFE6F; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xFE70; i <= 0xFEFE; i++)
+			{
+				_data[i + j] = fontslot_ASCII;
+			}
+			for (i = 0xFF00; i <= 0xFFEF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
 
-            // ********************** 2nd table *********************** //
-            j = this.TableChunkHintEA;
-            for (i = 0x0000; i <= 0x007F; i++)
-            {
-                _data[i + j] = fontslot_ASCII;
-            }
-            for (i = 0x00A0; i <= 0x04FF; i++)
-            {
-                _data[i + j] = fontslot_HAnsi;
-            }
-            _data[0xA1 + j] = fontslot_EastAsia;
-            _data[0xA4 + j] = fontslot_EastAsia;
-            _data[0xA7 + j] = fontslot_EastAsia;
-            _data[0xA8 + j] = fontslot_EastAsia;
-            _data[0xAA + j] = fontslot_EastAsia;
-            _data[0xAD + j] = fontslot_EastAsia;
-            _data[0xAF + j] = fontslot_EastAsia;
-            _data[0xB0 + j] = fontslot_EastAsia;
-            _data[0xB1 + j] = fontslot_EastAsia;
-            _data[0xB2 + j] = fontslot_EastAsia;
-            _data[0xB3 + j] = fontslot_EastAsia;
-            _data[0xB4 + j] = fontslot_EastAsia;
-            _data[0xB6 + j] = fontslot_EastAsia;
-            _data[0xB7 + j] = fontslot_EastAsia;
-            _data[0xB8 + j] = fontslot_EastAsia;
-            _data[0xB9 + j] = fontslot_EastAsia;
-            _data[0xBA + j] = fontslot_EastAsia;
-            _data[0xBC + j] = fontslot_EastAsia;
-            _data[0xBD + j] = fontslot_EastAsia;
-            _data[0xBE + j] = fontslot_EastAsia;
-            _data[0xBF + j] = fontslot_EastAsia;
-            _data[0xD7 + j] = fontslot_EastAsia;
-            _data[0xF7 + j] = fontslot_EastAsia;
+			// ********************** 2nd table *********************** //
+			j = this.TableChunkHintEA;
+			for (i = 0x0000; i <= 0x007F; i++)
+			{
+				_data[i + j] = fontslot_ASCII;
+			}
+			for (i = 0x00A0; i <= 0x04FF; i++)
+			{
+				_data[i + j] = fontslot_HAnsi;
+			}
+			_data[0xA1 + j] = fontslot_EastAsia;
+			_data[0xA4 + j] = fontslot_EastAsia;
+			_data[0xA7 + j] = fontslot_EastAsia;
+			_data[0xA8 + j] = fontslot_EastAsia;
+			_data[0xAA + j] = fontslot_EastAsia;
+			_data[0xAD + j] = fontslot_EastAsia;
+			_data[0xAF + j] = fontslot_EastAsia;
+			_data[0xB0 + j] = fontslot_EastAsia;
+			_data[0xB1 + j] = fontslot_EastAsia;
+			_data[0xB2 + j] = fontslot_EastAsia;
+			_data[0xB3 + j] = fontslot_EastAsia;
+			_data[0xB4 + j] = fontslot_EastAsia;
+			_data[0xB6 + j] = fontslot_EastAsia;
+			_data[0xB7 + j] = fontslot_EastAsia;
+			_data[0xB8 + j] = fontslot_EastAsia;
+			_data[0xB9 + j] = fontslot_EastAsia;
+			_data[0xBA + j] = fontslot_EastAsia;
+			_data[0xBC + j] = fontslot_EastAsia;
+			_data[0xBD + j] = fontslot_EastAsia;
+			_data[0xBE + j] = fontslot_EastAsia;
+			_data[0xBF + j] = fontslot_EastAsia;
+			_data[0xD7 + j] = fontslot_EastAsia;
+			_data[0xF7 + j] = fontslot_EastAsia;
 
-            for (i = 0x02B0; i <= 0x04FF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0x0590; i <= 0x07BF; i++)
-            {
-                _data[i + j] = fontslot_ASCII;
-            }
-            for (i = 0x1100; i <= 0x11FF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0x1E00; i <= 0x1EFF; i++)
-            {
-                _data[i + j] = fontslot_HAnsi;
-            }
-            for (i = 0x1F00; i <= 0x1FFF; i++)
-            {
-                _data[i + j] = fontslot_HAnsi;
-            }
-            for (i = 0x2000; i <= 0x27BF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0x2E80; i <= 0x319F; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0x3200; i <= 0x4D8F; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0x4E00; i <= 0x9FAF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xA000; i <= 0xA4CF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xAC00; i <= 0xD7AF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xD800; i <= 0xDFFF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xE000; i <= 0xF8FF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xF900; i <= 0xFAFF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xFB00; i <= 0xFB1C; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xFB1D; i <= 0xFDFF; i++)
-            {
-                _data[i + j] = fontslot_ASCII;
-            }
-            for (i = 0xFE30; i <= 0xFE6F; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xFE70; i <= 0xFEFE; i++)
-            {
-                _data[i + j] = fontslot_ASCII;
-            }
-            for (i = 0xFF00; i <= 0xFFEF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
+			for (i = 0x02B0; i <= 0x04FF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0x0590; i <= 0x07BF; i++)
+			{
+				_data[i + j] = fontslot_ASCII;
+			}
+			for (i = 0x1100; i <= 0x11FF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0x1E00; i <= 0x1EFF; i++)
+			{
+				_data[i + j] = fontslot_HAnsi;
+			}
+			for (i = 0x1F00; i <= 0x1FFF; i++)
+			{
+				_data[i + j] = fontslot_HAnsi;
+			}
+			for (i = 0x2000; i <= 0x27BF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0x2E80; i <= 0x319F; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0x3200; i <= 0x4D8F; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0x4E00; i <= 0x9FAF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xA000; i <= 0xA4CF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xAC00; i <= 0xD7AF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xD800; i <= 0xDFFF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xE000; i <= 0xF8FF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xF900; i <= 0xFAFF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xFB00; i <= 0xFB1C; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xFB1D; i <= 0xFDFF; i++)
+			{
+				_data[i + j] = fontslot_ASCII;
+			}
+			for (i = 0xFE30; i <= 0xFE6F; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xFE70; i <= 0xFEFE; i++)
+			{
+				_data[i + j] = fontslot_ASCII;
+			}
+			for (i = 0xFF00; i <= 0xFFEF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
 
-            // ********************** 3rd table *********************** //
-            j = this.TableChunkHintZH;
-            for (i = 0x0000; i <= 0x007F; i++)
-            {
-                _data[i + j] = fontslot_ASCII;
-            }
-            for (i = 0x00A0; i <= 0x00FF; i++)
-            {
-                _data[i + j] = fontslot_HAnsi;
-            }
-            _data[0xA1 + j] = fontslot_EastAsia;
-            _data[0xA4 + j] = fontslot_EastAsia;
-            _data[0xA7 + j] = fontslot_EastAsia;
-            _data[0xA8 + j] = fontslot_EastAsia;
-            _data[0xAA + j] = fontslot_EastAsia;
-            _data[0xAD + j] = fontslot_EastAsia;
-            _data[0xAF + j] = fontslot_EastAsia;
-            _data[0xB0 + j] = fontslot_EastAsia;
-            _data[0xB1 + j] = fontslot_EastAsia;
-            _data[0xB2 + j] = fontslot_EastAsia;
-            _data[0xB3 + j] = fontslot_EastAsia;
-            _data[0xB4 + j] = fontslot_EastAsia;
-            _data[0xB6 + j] = fontslot_EastAsia;
-            _data[0xB7 + j] = fontslot_EastAsia;
-            _data[0xB8 + j] = fontslot_EastAsia;
-            _data[0xB9 + j] = fontslot_EastAsia;
-            _data[0xBA + j] = fontslot_EastAsia;
-            _data[0xBC + j] = fontslot_EastAsia;
-            _data[0xBD + j] = fontslot_EastAsia;
-            _data[0xBE + j] = fontslot_EastAsia;
-            _data[0xBF + j] = fontslot_EastAsia;
-            _data[0xD7 + j] = fontslot_EastAsia;
-            _data[0xF7 + j] = fontslot_EastAsia;
+			// ********************** 3rd table *********************** //
+			j = this.TableChunkHintZH;
+			for (i = 0x0000; i <= 0x007F; i++)
+			{
+				_data[i + j] = fontslot_ASCII;
+			}
+			for (i = 0x00A0; i <= 0x00FF; i++)
+			{
+				_data[i + j] = fontslot_HAnsi;
+			}
+			_data[0xA1 + j] = fontslot_EastAsia;
+			_data[0xA4 + j] = fontslot_EastAsia;
+			_data[0xA7 + j] = fontslot_EastAsia;
+			_data[0xA8 + j] = fontslot_EastAsia;
+			_data[0xAA + j] = fontslot_EastAsia;
+			_data[0xAD + j] = fontslot_EastAsia;
+			_data[0xAF + j] = fontslot_EastAsia;
+			_data[0xB0 + j] = fontslot_EastAsia;
+			_data[0xB1 + j] = fontslot_EastAsia;
+			_data[0xB2 + j] = fontslot_EastAsia;
+			_data[0xB3 + j] = fontslot_EastAsia;
+			_data[0xB4 + j] = fontslot_EastAsia;
+			_data[0xB6 + j] = fontslot_EastAsia;
+			_data[0xB7 + j] = fontslot_EastAsia;
+			_data[0xB8 + j] = fontslot_EastAsia;
+			_data[0xB9 + j] = fontslot_EastAsia;
+			_data[0xBA + j] = fontslot_EastAsia;
+			_data[0xBC + j] = fontslot_EastAsia;
+			_data[0xBD + j] = fontslot_EastAsia;
+			_data[0xBE + j] = fontslot_EastAsia;
+			_data[0xBF + j] = fontslot_EastAsia;
+			_data[0xD7 + j] = fontslot_EastAsia;
+			_data[0xF7 + j] = fontslot_EastAsia;
 
-            _data[0xE0 + j] = fontslot_EastAsia;
-            _data[0xE1 + j] = fontslot_EastAsia;
-            _data[0xE8 + j] = fontslot_EastAsia;
-            _data[0xE9 + j] = fontslot_EastAsia;
-            _data[0xEA + j] = fontslot_EastAsia;
-            _data[0xEC + j] = fontslot_EastAsia;
-            _data[0xED + j] = fontslot_EastAsia;
-            _data[0xF2 + j] = fontslot_EastAsia;
-            _data[0xF3 + j] = fontslot_EastAsia;
-            _data[0xF9 + j] = fontslot_EastAsia;
-            _data[0xFA + j] = fontslot_EastAsia;
-            _data[0xFC + j] = fontslot_EastAsia;
+			_data[0xE0 + j] = fontslot_EastAsia;
+			_data[0xE1 + j] = fontslot_EastAsia;
+			_data[0xE8 + j] = fontslot_EastAsia;
+			_data[0xE9 + j] = fontslot_EastAsia;
+			_data[0xEA + j] = fontslot_EastAsia;
+			_data[0xEC + j] = fontslot_EastAsia;
+			_data[0xED + j] = fontslot_EastAsia;
+			_data[0xF2 + j] = fontslot_EastAsia;
+			_data[0xF3 + j] = fontslot_EastAsia;
+			_data[0xF9 + j] = fontslot_EastAsia;
+			_data[0xFA + j] = fontslot_EastAsia;
+			_data[0xFC + j] = fontslot_EastAsia;
 
-            for (i = 0x0100; i <= 0x02AF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0x02B0; i <= 0x04FF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0x0590; i <= 0x07BF; i++)
-            {
-                _data[i + j] = fontslot_ASCII;
-            }
-            for (i = 0x1100; i <= 0x11FF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0x1E00; i <= 0x1EFF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0x1F00; i <= 0x1FFF; i++)
-            {
-                _data[i + j] = fontslot_HAnsi;
-            }
-            for (i = 0x2000; i <= 0x27BF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0x2E80; i <= 0x319F; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0x3200; i <= 0x4D8F; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0x4E00; i <= 0x9FAF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xA000; i <= 0xA4CF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xAC00; i <= 0xD7AF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xD800; i <= 0xDFFF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xE000; i <= 0xF8FF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xF900; i <= 0xFAFF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xFB00; i <= 0xFB1C; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xFB1D; i <= 0xFDFF; i++)
-            {
-                _data[i + j] = fontslot_ASCII;
-            }
-            for (i = 0xFE30; i <= 0xFE6F; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xFE70; i <= 0xFEFE; i++)
-            {
-                _data[i + j] = fontslot_ASCII;
-            }
-            for (i = 0xFF00; i <= 0xFFEF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
+			for (i = 0x0100; i <= 0x02AF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0x02B0; i <= 0x04FF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0x0590; i <= 0x07BF; i++)
+			{
+				_data[i + j] = fontslot_ASCII;
+			}
+			for (i = 0x1100; i <= 0x11FF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0x1E00; i <= 0x1EFF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0x1F00; i <= 0x1FFF; i++)
+			{
+				_data[i + j] = fontslot_HAnsi;
+			}
+			for (i = 0x2000; i <= 0x27BF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0x2E80; i <= 0x319F; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0x3200; i <= 0x4D8F; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0x4E00; i <= 0x9FAF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xA000; i <= 0xA4CF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xAC00; i <= 0xD7AF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xD800; i <= 0xDFFF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xE000; i <= 0xF8FF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xF900; i <= 0xFAFF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xFB00; i <= 0xFB1C; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xFB1D; i <= 0xFDFF; i++)
+			{
+				_data[i + j] = fontslot_ASCII;
+			}
+			for (i = 0xFE30; i <= 0xFE6F; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xFE70; i <= 0xFEFE; i++)
+			{
+				_data[i + j] = fontslot_ASCII;
+			}
+			for (i = 0xFF00; i <= 0xFFEF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
 
-            // ********************** 4rd table *********************** //
-            j = this.TableChunkHintEACS;
-            for (i = 0x0000; i <= 0x007F; i++)
-            {
-                _data[i + j] = fontslot_ASCII;
-            }
-            for (i = 0x00A0; i <= 0x00FF; i++)
-            {
-                _data[i + j] = fontslot_HAnsi;
-            }
-            _data[0xA1 + j] = fontslot_EastAsia;
-            _data[0xA4 + j] = fontslot_EastAsia;
-            _data[0xA7 + j] = fontslot_EastAsia;
-            _data[0xA8 + j] = fontslot_EastAsia;
-            _data[0xAA + j] = fontslot_EastAsia;
-            _data[0xAD + j] = fontslot_EastAsia;
-            _data[0xAF + j] = fontslot_EastAsia;
-            _data[0xB0 + j] = fontslot_EastAsia;
-            _data[0xB1 + j] = fontslot_EastAsia;
-            _data[0xB2 + j] = fontslot_EastAsia;
-            _data[0xB3 + j] = fontslot_EastAsia;
-            _data[0xB4 + j] = fontslot_EastAsia;
-            _data[0xB6 + j] = fontslot_EastAsia;
-            _data[0xB7 + j] = fontslot_EastAsia;
-            _data[0xB8 + j] = fontslot_EastAsia;
-            _data[0xB9 + j] = fontslot_EastAsia;
-            _data[0xBA + j] = fontslot_EastAsia;
-            _data[0xBC + j] = fontslot_EastAsia;
-            _data[0xBD + j] = fontslot_EastAsia;
-            _data[0xBE + j] = fontslot_EastAsia;
-            _data[0xBF + j] = fontslot_EastAsia;
-            _data[0xD7 + j] = fontslot_EastAsia;
-            _data[0xF7 + j] = fontslot_EastAsia;
+			// ********************** 4rd table *********************** //
+			j = this.TableChunkHintEACS;
+			for (i = 0x0000; i <= 0x007F; i++)
+			{
+				_data[i + j] = fontslot_ASCII;
+			}
+			for (i = 0x00A0; i <= 0x00FF; i++)
+			{
+				_data[i + j] = fontslot_HAnsi;
+			}
+			_data[0xA1 + j] = fontslot_EastAsia;
+			_data[0xA4 + j] = fontslot_EastAsia;
+			_data[0xA7 + j] = fontslot_EastAsia;
+			_data[0xA8 + j] = fontslot_EastAsia;
+			_data[0xAA + j] = fontslot_EastAsia;
+			_data[0xAD + j] = fontslot_EastAsia;
+			_data[0xAF + j] = fontslot_EastAsia;
+			_data[0xB0 + j] = fontslot_EastAsia;
+			_data[0xB1 + j] = fontslot_EastAsia;
+			_data[0xB2 + j] = fontslot_EastAsia;
+			_data[0xB3 + j] = fontslot_EastAsia;
+			_data[0xB4 + j] = fontslot_EastAsia;
+			_data[0xB6 + j] = fontslot_EastAsia;
+			_data[0xB7 + j] = fontslot_EastAsia;
+			_data[0xB8 + j] = fontslot_EastAsia;
+			_data[0xB9 + j] = fontslot_EastAsia;
+			_data[0xBA + j] = fontslot_EastAsia;
+			_data[0xBC + j] = fontslot_EastAsia;
+			_data[0xBD + j] = fontslot_EastAsia;
+			_data[0xBE + j] = fontslot_EastAsia;
+			_data[0xBF + j] = fontslot_EastAsia;
+			_data[0xD7 + j] = fontslot_EastAsia;
+			_data[0xF7 + j] = fontslot_EastAsia;
 
-            for (i = 0x0100; i <= 0x02AF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0x02B0; i <= 0x04FF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0x0590; i <= 0x07BF; i++)
-            {
-                _data[i + j] = fontslot_ASCII;
-            }
-            for (i = 0x1100; i <= 0x11FF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0x1E00; i <= 0x1EFF; i++)
-            {
-                _data[i + j] = fontslot_HAnsi;
-            }
-            for (i = 0x1F00; i <= 0x1FFF; i++)
-            {
-                _data[i + j] = fontslot_HAnsi;
-            }
-            for (i = 0x2000; i <= 0x27BF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0x2E80; i <= 0x319F; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0x3200; i <= 0x4D8F; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0x4E00; i <= 0x9FAF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xA000; i <= 0xA4CF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xAC00; i <= 0xD7AF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xD800; i <= 0xDFFF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xE000; i <= 0xF8FF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xF900; i <= 0xFAFF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xFB00; i <= 0xFB1C; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xFB1D; i <= 0xFDFF; i++)
-            {
-                _data[i + j] = fontslot_ASCII;
-            }
-            for (i = 0xFE30; i <= 0xFE6F; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-            for (i = 0xFE70; i <= 0xFEFE; i++)
-            {
-                _data[i + j] = fontslot_ASCII;
-            }
-            for (i = 0xFF00; i <= 0xFFEF; i++)
-            {
-                _data[i + j] = fontslot_EastAsia;
-            }
-        }
+			for (i = 0x0100; i <= 0x02AF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0x02B0; i <= 0x04FF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0x0590; i <= 0x07BF; i++)
+			{
+				_data[i + j] = fontslot_ASCII;
+			}
+			for (i = 0x1100; i <= 0x11FF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0x1E00; i <= 0x1EFF; i++)
+			{
+				_data[i + j] = fontslot_HAnsi;
+			}
+			for (i = 0x1F00; i <= 0x1FFF; i++)
+			{
+				_data[i + j] = fontslot_HAnsi;
+			}
+			for (i = 0x2000; i <= 0x27BF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0x2E80; i <= 0x319F; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0x3200; i <= 0x4D8F; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0x4E00; i <= 0x9FAF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xA000; i <= 0xA4CF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xAC00; i <= 0xD7AF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xD800; i <= 0xDFFF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xE000; i <= 0xF8FF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xF900; i <= 0xFAFF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xFB00; i <= 0xFB1C; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xFB1D; i <= 0xFDFF; i++)
+			{
+				_data[i + j] = fontslot_ASCII;
+			}
+			for (i = 0xFE30; i <= 0xFE6F; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+			for (i = 0xFE70; i <= 0xFEFE; i++)
+			{
+				_data[i + j] = fontslot_ASCII;
+			}
+			for (i = 0xFF00; i <= 0xFFEF; i++)
+			{
+				_data[i + j] = fontslot_EastAsia;
+			}
+		}
 
-        this.Get_FontClass = function(nUnicode, nHint, nEastAsia_lcid, bCS, bRTL)
-        {
-            var _glyph_slot = fontslot_ASCII;
+		this.Get_FontClass = function(nUnicode, nHint, nEastAsia_lcid, bCS, bRTL)
+		{
+			var _glyph_slot = fontslot_ASCII;
 			if (nUnicode > 0xFFFF)
 			{
 				if ((nUnicode >= 0x20000 && nUnicode <= 0x2A6DF) ||
@@ -514,30 +514,30 @@ var fonthint_EastAsia = 0x02;
 				{
 					_glyph_slot = fontslot_HAnsi;
 				}
-			}			
-            else if (nHint != fonthint_EastAsia)
-            {
-                _glyph_slot = this.DetectData[nUnicode];
-            }
-            else
-            {
-                if (nEastAsia_lcid == lcid_zh)
-                    _glyph_slot = this.DetectData[this.TableChunkHintZH + nUnicode];
-                else
-                    _glyph_slot = this.DetectData[this.TableChunkHintEA + nUnicode];
+			}
+			else if (nHint != fonthint_EastAsia)
+			{
+				_glyph_slot = this.DetectData[nUnicode];
+			}
+			else
+			{
+				if (nEastAsia_lcid == lcid_zh)
+					_glyph_slot = this.DetectData[this.TableChunkHintZH + nUnicode];
+				else
+					_glyph_slot = this.DetectData[this.TableChunkHintEA + nUnicode];
 
-                if (_glyph_slot == fontslot_EastAsia)
-                    return _glyph_slot;
-            }
+				if (_glyph_slot == fontslot_EastAsia)
+					return _glyph_slot;
+			}
 
-            if (bCS || bRTL)
-                return fontslot_CS;
+			if (bCS || bRTL)
+				return fontslot_CS;
 
-            return _glyph_slot ? _glyph_slot : fontslot_ASCII;
-        }
-    }
+			return _glyph_slot ? _glyph_slot : fontslot_ASCII;
+		}
+	}
 
-    window.CDetectFontUse = CDetectFontUse;
+	window.CDetectFontUse = CDetectFontUse;
 	window.CDetectFontUse;
 })();
 

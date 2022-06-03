@@ -673,7 +673,9 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
         writer.WriteXmlAttributeString("xmlns:m", "http://schemas.openxmlformats.org/officeDocument/2006/math");
         writer.WriteXmlAttributeString("xmlns:w", "http://schemas.openxmlformats.org/wordprocessingml/2006/main");
 
-        writer.WriteXmlNullableAttributeString("matchingName", this.matchingName);
+        if(typeof this.matchingName === "string" && this.matchingName.length > 0) {
+            writer.WriteXmlAttributeString("matchingName", this.matchingName);
+        }
         writer.WriteXmlNullableAttributeBool("preserve", this.preserve);
         writer.WriteXmlNullableAttributeBool("showMasterPhAnim", this.showMasterPhAnim);
         writer.WriteXmlNullableAttributeBool("showMasterSp", this.showMasterSp);

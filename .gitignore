@@ -1,8 +1,6 @@
 .idea/
 build/node_modules
 build/$weak$.js
-common/libfont/engine/fonts.js
-common/libfont/engine/fonts_ie.js
 common/AllFonts.js
 common/Images/fonts_thumbnail*
 common/Images/themes_thumbnail*

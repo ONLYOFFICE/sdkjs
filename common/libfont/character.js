@@ -69,7 +69,7 @@
 			if (!fonts)
 				return;
 
-            var index = 0;
+			var index = 0;
 			var count = fonts.length / 3;
 			for (var i = 0; i < count; i++)
 			{
@@ -86,7 +86,7 @@
 			delete window["__fonts_ranges"];
 		},
 
-        getRangeBySymbol : function(_char, _array)
+		getRangeBySymbol : function(_char, _array)
 		{
 			// search range by symbol
 			var _start = 0;
@@ -140,56 +140,56 @@
 			if (_range != null)
 			{
 				this.LastRange = _range;
-                return _range.Name;
-            }
+				return _range.Name;
+			}
 
 			_range = this.getRangeBySymbol(_char, this.Ranges);
 			if (!_range)
 				return "";
 
-            this.UsedRanges.push(_range);
-            this.LastRange = _range;
+			this.UsedRanges.push(_range);
+			this.LastRange = _range;
 
-            if (!this.FontsByRange[_range.Name])
+			if (!this.FontsByRange[_range.Name])
 			{
 				this.FontsByRange[_range.Name] = _range.Name;
-                this.FontsByRangeCount++;
-            }
+				this.FontsByRangeCount++;
+			}
 
-            return _range.Name;
+			return _range.Name;
 		},
 
 		getFontsByString : function(_text)
 		{
-            if (!this.IsUseNoSquaresMode)
-                return false;
+			if (!this.IsUseNoSquaresMode)
+				return false;
 
-            if (!_text)
-            	return false;
+			if (!_text)
+				return false;
 
 			var oldCount = this.FontsByRangeCount;
-            for (var i = _text.getUnicodeIterator(); i.check(); i.next())
-            {
-                AscFonts.FontPickerByCharacter.getFontBySymbol(i.value());
-            }
-            return (this.FontsByRangeCount != oldCount);
+			for (var i = _text.getUnicodeIterator(); i.check(); i.next())
+			{
+				AscFonts.FontPickerByCharacter.getFontBySymbol(i.value());
+			}
+			return (this.FontsByRangeCount != oldCount);
 		},
 
-        getFontsByString2 : function(_array)
-        {
-            if (!this.IsUseNoSquaresMode)
-                return false;
+		getFontsByString2 : function(_array)
+		{
+			if (!this.IsUseNoSquaresMode)
+				return false;
 
 			if (!_array)
 				return false;
 
-            var oldCount = this.FontsByRangeCount;
-            for (var i = 0; i < _array.length; ++i)
-            {
-                AscFonts.FontPickerByCharacter.getFontBySymbol(_array[i]);
-            }
-            return (this.FontsByRangeCount != oldCount);
-        },
+			var oldCount = this.FontsByRangeCount;
+			for (var i = 0; i < _array.length; ++i)
+			{
+				AscFonts.FontPickerByCharacter.getFontBySymbol(_array[i]);
+			}
+			return (this.FontsByRangeCount != oldCount);
+		},
 
 		isExtendFonts : function()
 		{
@@ -198,11 +198,11 @@
 
 		extendFonts : function(fonts, isNoRealExtend)
 		{
-            if (this.ExtendFontsByRangeCount == this.FontsByRangeCount)
-            	return;
+			if (this.ExtendFontsByRangeCount == this.FontsByRangeCount)
+				return;
 
-            var isFound;
-            for (var i in this.FontsByRange)
+			var isFound;
+			for (var i in this.FontsByRange)
 			{
 				isFound = false;
 				for (var j in fonts)
@@ -325,8 +325,8 @@
 		}
 	};
 
-    window['AscFonts'] = window['AscFonts'] || {};
-    window['AscFonts'].IsCheckSymbols = false;
-    window['AscFonts'].FontPickerByCharacter = new CFontByCharacter();
+	window['AscFonts'] = window['AscFonts'] || {};
+	window['AscFonts'].IsCheckSymbols = false;
+	window['AscFonts'].FontPickerByCharacter = new CFontByCharacter();
 
 })(window);

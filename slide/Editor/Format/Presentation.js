@@ -2795,14 +2795,12 @@ CSlideSize.prototype.GetWidthMM = function() {
 CSlideSize.prototype.GetHeightMM = function() {
     return this.GetHeightEMU() / g_dKoef_mm_to_emu;
 };
-
 CSlideSize.prototype.GetSizeType = function () {
     if(AscFormat.isRealNumber(this.type)) {
         return this.type;
     }
     return Asc.c_oAscSlideSZType.SzCustom;
 };
-
 CSlideSize.prototype.readAttrXml = function(name, reader) {
     switch (name) {
         case "cx": {
@@ -2885,6 +2883,11 @@ CSlideSize.prototype.readAttrXml = function(name, reader) {
         }
     }
 };
+CSlideSize.prototype.toXml = function (writer, name) {
+    writer.WriteXmlNodeStart(name);
+    this.writeAttrXmlImpl(writer);
+    writer.WriteXmlAttributesEnd(true);
+};
 CSlideSize.prototype.writeAttrXmlImpl = function(writer) {
     writer.WriteXmlNullableAttributeInt("cx", this.cx);
     writer.WriteXmlNullableAttributeInt("cy", this.cy);
@@ -2961,7 +2964,6 @@ CSlideSize.prototype.writeAttrXmlImpl = function(writer) {
         }
     }
 };
-
 
 let CONFORMANCE_STRICT = 0;
 let CONFORMANCE_TRANSITIONAL = 1;
@@ -4021,6 +4023,9 @@ CPresentation.prototype.GetSlide = function(nIndex) {
         return this.Slides[nIndex];
     }
     return null;
+};
+CPresentation.prototype.GetSlidesCount = function(nIndex) {
+    return this.Slides.length;
 };
 CPresentation.prototype.GetCurrentSlide = function() {
     return this.GetSlide(this.CurPage);
@@ -11851,6 +11856,7 @@ CPresentation.prototype.toZip = function(zip, context) {
     let memory = new AscCommon.CMemory();
     memory.context = context;
     context.document = this;
+    context.presentation = this;
 
     let filePart = new AscCommon.openXml.OpenXmlPackage(zip, memory);
 
@@ -11943,9 +11949,13 @@ CPresentation.prototype.toZip = function(zip, context) {
         let oThemePart = presentationPart.part.addPartWithoutRels(AscCommon.openXml.Types.theme);
         oUriMap[oTheme.Id] = oThemePart.uri;
         oThemePart.setDataXml(oTheme, memory);
-        presentationPart.part.addRelationship(AscCommon.openXml.Types.theme.relationType, oThemePart.uri.replace("/ppt/", ""));
         memory.Seek(0);
+        if(nTheme === 0) {
+            presentationPart.part.addRelationship(AscCommon.openXml.Types.theme.relationType, oThemePart.uri.replace("/ppt/", ""));
+        }
     }
+    let aMastersRId = [];
+    let nLayoutsCount = 0;
     for(let nSlideMaster = 0; nSlideMaster < aSlideMasters.length; ++nSlideMaster) {
         let oSlideMaster = aSlideMasters[nSlideMaster];
         let masterSlidePart = presentationPart.part.addPart(AscCommon.openXml.Types.slideMaster);
@@ -11966,7 +11976,10 @@ CPresentation.prototype.toZip = function(zip, context) {
         context.clearSlideLayoutRels();
         masterSlidePart.part.addRelationship(AscCommon.openXml.Types.theme.relationType, fGetRelPath(oUriMap[oSlideMaster.Theme.Id]));
         memory.context.addSlideMasterRel(masterSlidePart.rId);
+        aMastersRId.push({rId: masterSlidePart.rId, id: "" + (AscFormat.MIN_SLD_MASTER_ID + nLayoutsCount)});
+        nLayoutsCount += (aSlideLayouts.length + 1);
     }
+    context.aMastersRId = aMastersRId;
     for(let nNotesMaster = 0; nNotesMaster < aNotesMasters.length; ++nNotesMaster) {
         let oNotesMaster = aNotesMasters[nNotesMaster];
         let oNotesMasterPart = presentationPart.part.addPart(AscCommon.openXml.Types.notesMaster);
@@ -12055,11 +12068,24 @@ CPresentation.prototype.toXml = function (writer) {
     writer.WriteXmlAttributesEnd();
 
     let oContext = writer.context;
-    (new IdList("p:sldMasterIdLst")).writeRIdList(writer, oContext.sldMasterIdLst, "p:sldMasterId");
-    (new IdList("p:notesMasterIdLst")).writeRIdList(writer, oContext.notesMasterIdLst, "p:notesMasterId");
-    (new IdList("p:handoutMasterIdLst")).writeRIdList(writer, oContext.handoutMasterIdLst, "p:handoutMasterId");
+    (new IdList("p:sldMasterIdLst")).writeRIdList(writer, oContext.aMastersRId, "p:sldMasterId");
+    let aNotesMastersId = [];
+    for(let nIdx = 0; nIdx < oContext.notesMasterIdLst.length; ++nIdx) {
+        aNotesMastersId.push({rId: oContext.notesMasterIdLst[nIdx]});
+    }
+    (new IdList("p:notesMasterIdLst")).writeRIdList(writer, aNotesMastersId, "p:notesMasterId");
+    let aHandoutMastersId = [];
+    for(let nIdx = 0; nIdx < oContext.handoutMasterIdLst.length; ++nIdx) {
+        aHandoutMastersId.push({rId: oContext.handoutMasterIdLst[nIdx]});
+    }
+    (new IdList("p:handoutMasterIdLst")).writeRIdList(writer, aHandoutMastersId, "p:handoutMasterId");
     //writer.WriteArray("p:embeddedFontLst", embeddedFontLst);
-    (new IdList("p:sldIdLst")).writeRIdList(writer, oContext.sldIdLst, "p:sldId");
+
+    let aSlideId = [];
+    for(let nIdx = 0; nIdx < oContext.sldIdLst.length; ++nIdx) {
+        aSlideId.push({rId: oContext.sldIdLst[nIdx], id: AscFormat.MIN_SLD_ID + nIdx + 1});
+    }
+    (new IdList("p:sldIdLst")).writeRIdList(writer, aSlideId, "p:sldId");
 
     writer.WriteXmlNullable(this.sldSz, "p:sldSz");
     CSlideSize.prototype.static_CreateNotesSize().toXml(writer, "p:notesSz");
@@ -12184,32 +12210,25 @@ IdList.prototype.toXml = function(writer) {
     }
     writer.WriteXmlNodeEnd(this.name);
 };
-let MIN_SLD_MASTER_ID = 2147483649;
-let MIN_SLD_ID = 256;
-let MIN_SLD_LAYOUT_ID = 2147483649;
+let MIN_SLD_MASTER_ID = 0x80000000;
+let MIN_SLD_ID = 0xFF;
+let MIN_SLD_LAYOUT_ID = 0x80000000;
+
+AscFormat.MIN_SLD_MASTER_ID = MIN_SLD_MASTER_ID;
+AscFormat.MIN_SLD_ID = MIN_SLD_ID;
+AscFormat.MIN_SLD_LAYOUT_ID = MIN_SLD_LAYOUT_ID;
 IdList.prototype.fillFromRIdList = function(aRId, sEntryName) {
-    let nCounter = null;
-    if(sEntryName === "p:sldMasterId") {
-        nCounter = MIN_SLD_MASTER_ID;
-    }
-    else if(sEntryName === "p:sldId") {
-        nCounter = MIN_SLD_ID;
-    }
-    else if(sEntryName === "p:sldLayoutId") {
-        nCounter = MIN_SLD_LAYOUT_ID;
-    }
     for(let nItem = 0; nItem < aRId.length; ++nItem) {
         let oItem = new IdEntry(sEntryName);
-        oItem.rId = aRId[nItem];
-        if(nCounter !== null) {
-            oItem.id = nCounter++;
-        }
+        let oRID = aRId[nItem];
+        oItem.rId = oRID.rId;
+        oItem.id = oRID.id;
         this.list.push(oItem);
     }
 };
-IdList.prototype.writeRIdList = function(writer, aRId, sEntryName) {
+IdList.prototype.writeRIdList = function(writer, aRId, sEntryName, nCounterBase) {
     if(aRId.length > 0) {
-        this.fillFromRIdList(aRId, sEntryName);
+        this.fillFromRIdList(aRId, sEntryName, nCounterBase);
         this.toXml(writer);
     }
 };

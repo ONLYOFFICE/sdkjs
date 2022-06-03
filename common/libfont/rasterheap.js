@@ -34,338 +34,326 @@
 
 (function(window, undefined) {
 
-    function CRasterHeapLineFree()
-    {
-        this.Y      = 0;
-        this.Height = 0;
-    }
+	function CRasterHeapLineFree()
+	{
+		this.Y      = 0;
+		this.Height = 0;
+	}
 
-    function CRasterDataInfo()
-    {
-        this.Chunk = null;
-        this.Line = null;
-        this.Index = 0;
-    }
+	function CRasterDataInfo()
+	{
+		this.Chunk = null;
+		this.Line = null;
+		this.Index = 0;
+	}
 
-    function CRasterHeapLine()
-    {
-        this.Y = 0;
-        this.Height = 0;
-        this.Count = 0;
-        this.CountBusy = 0;
-        this.Images = null;
-        this.Index = 0;
-    }
-    CRasterHeapLine.prototype =
-    {
-        CreatePlaces : function(width, height, widthLine)
-        {
-            this.Height = height;
-            this.Count = (widthLine / width) >> 0;
+	function CRasterHeapLine()
+	{
+		this.Y = 0;
+		this.Height = 0;
+		this.Count = 0;
+		this.CountBusy = 0;
+		this.Images = null;
+		this.Index = 0;
+	}
+	CRasterHeapLine.prototype.CreatePlaces = function(width, height, widthLine)
+	{
+		this.Height = height;
+		this.Count = (widthLine / width) >> 0;
 
-            var _size = this.Count;
-            var arr = null;
-            if (typeof(Int8Array) != 'undefined' && !window.opera)
-                arr = new Int8Array(_size);
-            else
-                arr = new Array(_size);
+		var _size = this.Count;
+		var arr = null;
+		if (typeof(Int8Array) != 'undefined' && !window.opera)
+			arr = new Int8Array(_size);
+		else
+			arr = new Array(_size);
 
-            for (var i=0;i<_size;i++)
-                arr[i] = 0;
+		for (var i=0;i<_size;i++)
+			arr[i] = 0;
 
-            this.Images = arr;
-        },
+		this.Images = arr;
+	};
 
-        Alloc : function()
-        {
-            if (this.Count == this.CountBusy)
-                return -1;
+	CRasterHeapLine.prototype.Alloc = function()
+	{
+		if (this.Count == this.CountBusy)
+			return -1;
 
-            var arr = this.Images;
-            if (arr[this.CountBusy] == 0)
-            {
-                arr[this.CountBusy] = 1;
-                this.CountBusy += 1;
-                return this.CountBusy - 1;
-            }
+		var arr = this.Images;
+		if (arr[this.CountBusy] == 0)
+		{
+			arr[this.CountBusy] = 1;
+			this.CountBusy += 1;
+			return this.CountBusy - 1;
+		}
 
-            var _len = this.Count;
-            for (var i = 0; i < _len; i++)
-            {
-                if (arr[i] == 0)
-                {
-                    arr[i] = 1;
-                    this.CountBusy += 1;
-                    return i;
-                }
-            }
-            return -1;
-        },
+		var _len = this.Count;
+		for (var i = 0; i < _len; i++)
+		{
+			if (arr[i] == 0)
+			{
+				arr[i] = 1;
+				this.CountBusy += 1;
+				return i;
+			}
+		}
+		return -1;
+	};
 
-        Free : function(index)
-        {
-            if (this.Images[index] == 1)
-            {
-                this.Images[index] = 0;
-                this.CountBusy -= 1;
-            }
-            return this.CountBusy;
-        }
-    };
+	CRasterHeapLine.prototype.Free = function(index)
+	{
+		if (this.Images[index] == 1)
+		{
+			this.Images[index] = 0;
+			this.CountBusy -= 1;
+		}
+		return this.CountBusy;
+	};
 
-    function CRasterHeapChuck()
-    {
-        this.CanvasImage    = null;
-        this.CanvasCtx      = null;
+	function CRasterHeapChuck()
+	{
+		this.CanvasImage    = null;
+		this.CanvasCtx      = null;
 
-        this.Width  = 0;
-        this.Height = 0;
+		this.Width  = 0;
+		this.Height = 0;
 
-        this.LinesFree = [];
-        this.LinesBusy = [];
+		this.LinesFree = [];
+		this.LinesBusy = [];
 
-        this.CurLine = null;
+		this.CurLine = null;
 
-        this.FindOnlyEqualHeight = false;
-    }
-    CRasterHeapChuck.prototype =
-    {
-        Create : function(width, height)
-        {
-            this.Width  = width;
-            this.Height = height;
+		this.FindOnlyEqualHeight = false;
+	}
+	CRasterHeapChuck.prototype.Create = function(width, height)
+	{
+		this.Width  = width;
+		this.Height = height;
 
-            this.CanvasImage = document.createElement('canvas');
-            this.CanvasImage.width  = width;
-            this.CanvasImage.height = height;
+		this.CanvasImage = document.createElement('canvas');
+		this.CanvasImage.width  = width;
+		this.CanvasImage.height = height;
 
-            this.CanvasCtx = this.CanvasImage.getContext('2d');
-            this.CanvasCtx.globalCompositeOperation = "source-atop";
+		this.CanvasCtx = this.CanvasImage.getContext('2d');
+		this.CanvasCtx.globalCompositeOperation = "source-atop";
 
-            var _freeLine = new CRasterHeapLineFree();
-            _freeLine.Y         = 0;
-            _freeLine.Height    = this.Height;
-            this.LinesFree[0]   = _freeLine;
-        },
+		var _freeLine = new CRasterHeapLineFree();
+		_freeLine.Y         = 0;
+		_freeLine.Height    = this.Height;
+		this.LinesFree[0]   = _freeLine;
+	};
+	CRasterHeapChuck.prototype.Clear = function()
+	{
+		this.LinesBusy.splice(0, this.LinesBusy.length);
+		this.LinesFree.splice(0, this.LinesFree.length);
 
-        Clear : function()
-        {
-            this.LinesBusy.splice(0, this.LinesBusy.length);
-            this.LinesFree.splice(0, this.LinesFree.length);
+		var _freeLine = new CRasterHeapLineFree();
+		_freeLine.Y         = 0;
+		_freeLine.Height    = this.Height;
+		this.LinesFree[0]   = _freeLine;
+	};
+	CRasterHeapChuck.prototype.Alloc = function(width, height)
+	{
+		var _need_height = Math.max(width, height);
+		var _busy_len = this.LinesBusy.length;
+		for (var i = 0; i < _busy_len; i++)
+		{
+			var _line = this.LinesBusy[i];
+			if (_line.Height >= _need_height)
+			{
+				var _index = _line.Alloc();
+				if (-1 != _index)
+				{
+					var _ret = new CRasterDataInfo();
+					_ret.Chunk = this;
+					_ret.Line = _line;
+					_ret.Index = _index;
+					return _ret;
+				}
+			}
+		}
 
-            var _freeLine = new CRasterHeapLineFree();
-            _freeLine.Y         = 0;
-            _freeLine.Height    = this.Height;
-            this.LinesFree[0]   = _freeLine;
-        },
+		// линию не нашли. Начинаем искать из свободной памяти
+		// ищем 3/2 от нужного размера. и параллельно 1
+		var _need_height1 = (3 * _need_height) >> 1;
+		if (this.FindOnlyEqualHeight)
+			_need_height1 = _need_height;
 
-        Alloc : function(width, height)
-        {
-            var _need_height = Math.max(width, height);
-            var _busy_len = this.LinesBusy.length;
-            for (var i = 0; i < _busy_len; i++)
-            {
-                var _line = this.LinesBusy[i];
-                if (_line.Height >= _need_height)
-                {
-                    var _index = _line.Alloc();
-                    if (-1 != _index)
-                    {
-                        var _ret = new CRasterDataInfo();
-                        _ret.Chunk = this;
-                        _ret.Line = _line;
-                        _ret.Index = _index;
-                        return _ret;
-                    }
-                }
-            }
+		var _free_len = this.LinesFree.length;
+		var _index_found_koef1 = -1;
+		for (var i = 0; i < _free_len; i++)
+		{
+			var _line = this.LinesFree[i];
+			if (_line.Height >= _need_height1)
+			{
+				// нашли
+				var _new_line = new CRasterHeapLine();
+				_new_line.CreatePlaces(_need_height1, _need_height1, this.Width);
+				_new_line.Y = _line.Y;
+				_new_line.Index = this.LinesBusy.length;
+				this.LinesBusy.push(_new_line);
 
-            // линию не нашли. Начинаем искать из свободной памяти
-            // ищем 3/2 от нужного размера. и параллельно 1
-            var _need_height1 = (3 * _need_height) >> 1;
-            if (this.FindOnlyEqualHeight)
-                _need_height1 = _need_height;
+				_line.Y += _need_height1;
+				_line.Height -= _need_height1;
 
-            var _free_len = this.LinesFree.length;
-            var _index_found_koef1 = -1;
-            for (var i = 0; i < _free_len; i++)
-            {
-                var _line = this.LinesFree[i];
-                if (_line.Height >= _need_height1)
-                {
-                    // нашли
-                    var _new_line = new CRasterHeapLine();
-                    _new_line.CreatePlaces(_need_height1, _need_height1, this.Width);
-                    _new_line.Y = _line.Y;
-                    _new_line.Index = this.LinesBusy.length;
-                    this.LinesBusy.push(_new_line);
+				if (_line.Height == 0)
+					this.LinesFree.splice(i, 1);
 
-                    _line.Y += _need_height1;
-                    _line.Height -= _need_height1;
+				var _ret = new CRasterDataInfo();
+				_ret.Chunk = this;
+				_ret.Line = _new_line;
+				_ret.Index = _new_line.Alloc();
+				return _ret;
+			}
+			else if (_line.Height >= _need_height && -1 == _index_found_koef1)
+			{
+				_index_found_koef1 = i;
+			}
+		}
 
-                    if (_line.Height == 0)
-                        this.LinesFree.splice(i, 1);
+		// 3/2 не нашли. если нашли для 1, то выделяем там
+		if (-1 != _index_found_koef1)
+		{
+			var _line = this.LinesFree[_index_found_koef1];
 
-                    var _ret = new CRasterDataInfo();
-                    _ret.Chunk = this;
-                    _ret.Line = _new_line;
-                    _ret.Index = _new_line.Alloc();
-                    return _ret;
-                }
-                else if (_line.Height >= _need_height && -1 == _index_found_koef1)
-                {
-                    _index_found_koef1 = i;
-                }
-            }
+			var _new_line = new CRasterHeapLine();
+			_new_line.CreatePlaces(_need_height, _need_height, this.Width);
+			_new_line.Y = _line.Y;
+			_new_line.Index = this.LinesBusy.length;
+			this.LinesBusy.push(_new_line);
 
-            // 3/2 не нашли. если нашли для 1, то выделяем там
-            if (-1 != _index_found_koef1)
-            {
-                var _line = this.LinesFree[_index_found_koef1];
+			_line.Y += _need_height;
+			_line.Height -= _need_height;
 
-                var _new_line = new CRasterHeapLine();
-                _new_line.CreatePlaces(_need_height, _need_height, this.Width);
-                _new_line.Y = _line.Y;
-                _new_line.Index = this.LinesBusy.length;
-                this.LinesBusy.push(_new_line);
+			if (_line.Height == 0)
+				this.LinesFree.splice(i, 1);
 
-                _line.Y += _need_height;
-                _line.Height -= _need_height;
+			var _ret = new CRasterDataInfo();
+			_ret.Chunk = this;
+			_ret.Line = _new_line;
+			_ret.Index = _new_line.Alloc();
+			return _ret;
+		}
 
-                if (_line.Height == 0)
-                    this.LinesFree.splice(i, 1);
+		// не нашли.
+		return null;
+	};
+	CRasterHeapChuck.prototype.Free = function(obj)
+	{
+		var _refs = obj.Line.Free(obj.Index);
+		if (_refs == 0)
+		{
+			// нужно удалить линию и перебить всем оставшимся индексы
 
-                var _ret = new CRasterDataInfo();
-                _ret.Chunk = this;
-                _ret.Line = _new_line;
-                _ret.Index = _new_line.Alloc();
-                return _ret;
-            }
+			var _line = obj.Line;
+			this.LinesBusy.splice(_line.Index, 1);
 
-            // не нашли.
-            return null;
-        },
+			var _lines_busy = this.LinesBusy;
+			var _busy_len = _lines_busy.length;
+			for (var i = _line.Index; i < _busy_len; i++)
+				_lines_busy[i].Index = i;
 
-        Free : function(obj)
-        {
-            var _refs = obj.Line.Free(obj.Index);
-            if (_refs == 0)
-            {
-                // нужно удалить линию и перебить всем оставшимся индексы
+			// теперь нужно поправить linesfree
+			var y1 = _line.Y;
+			var y2 = _line.Y + _line.Height;
+			var _lines_free = this.LinesFree;
+			var _free_len = _lines_free.length;
 
-                var _line = obj.Line;
-                this.LinesBusy.splice(_line.Index, 1);
+			var _ind_prev = -1;
+			var _ind_next = -1;
+			for (var i = 0; i < _free_len; i++)
+			{
+				var _line_f = _lines_free[i];
+				if (-1 == _ind_prev)
+				{
+					if (y1 == (_line_f.Y + _line_f.Height))
+						_ind_prev = i;
+				}
+				else if (-1 == _ind_next)
+				{
+					if (y2 == _line_f.Y)
+						_ind_next = i;
+				}
+				else
+				{
+					break;
+				}
+			}
 
-                var _lines_busy = this.LinesBusy;
-                var _busy_len = _lines_busy.length;
-                for (var i = _line.Index; i < _busy_len; i++)
-                    _lines_busy[i].Index = i;
+			// нашли прилегаюую свободную память. теперь нужно их склеить, или создать новую
+			if (-1 != _ind_prev && -1 != _ind_next)
+			{
+				_lines_free[_ind_prev].Height += (_line.Height + _lines_free[_ind_next].Height);
+				_lines_free.splice(_ind_next, 1);
+			}
+			else if (-1 != _ind_prev)
+			{
+				_lines_free[_ind_prev].Height += _line.Height;
+			}
+			else if (-1 != _ind_next)
+			{
+				_lines_free[_ind_next].Y -= _line.Height;
+				_lines_free[_ind_next].Height += _line.Height;
+			}
+			else
+			{
+				var _new_line = new CRasterHeapLineFree();
+				_new_line.Y = _line.Y;
+				_new_line.Height = _line.Height;
+				_lines_free.push(_new_line);
+			}
+			_line = null;
+		}
+	};
 
-                // теперь нужно поправить linesfree
-                var y1 = _line.Y;
-                var y2 = _line.Y + _line.Height;
-                var _lines_free = this.LinesFree;
-                var _free_len = _lines_free.length;
+	function CRasterHeapTotal(_size)
+	{
+		this.ChunkHeapSize = (undefined === _size) ? 3000 : _size; // 4 * 3000 * 3000 = 36Mb
+		this.Chunks = [];
+	}
+	CRasterHeapTotal.prototype.Clear = function()
+	{
+		var _len = this.Chunks.length;
+		for (var i = 0; i < _len; i++)
+		{
+			this.Chunks[i].Clear();
+		}
 
-                var _ind_prev = -1;
-                var _ind_next = -1;
-                for (var i = 0; i < _free_len; i++)
-                {
-                    var _line_f = _lines_free[i];
-                    if (-1 == _ind_prev)
-                    {
-                        if (y1 == (_line_f.Y + _line_f.Height))
-                            _ind_prev = i;
-                    }
-                    else if (-1 == _ind_next)
-                    {
-                        if (y2 == _line_f.Y)
-                            _ind_next = i;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
+		// теперь наверное удалим и память лишнюю
+		if (_len > 1)
+			this.Chunks.splice(1, _len - 1);
+	};
 
-                // нашли прилегаюую свободную память. теперь нужно их склеить, или создать новую
-                if (-1 != _ind_prev && -1 != _ind_next)
-                {
-                    _lines_free[_ind_prev].Height += (_line.Height + _lines_free[_ind_next].Height);
-                    _lines_free.splice(_ind_next, 1);
-                }
-                else if (-1 != _ind_prev)
-                {
-                    _lines_free[_ind_prev].Height += _line.Height;
-                }
-                else if (-1 != _ind_next)
-                {
-                    _lines_free[_ind_next].Y -= _line.Height;
-                    _lines_free[_ind_next].Height += _line.Height;
-                }
-                else
-                {
-                    var _new_line = new CRasterHeapLineFree();
-                    _new_line.Y = _line.Y;
-                    _new_line.Height = _line.Height;
-                    _lines_free.push(_new_line);
-                }
-                _line = null;
-            }
-        }
-    };
+	CRasterHeapTotal.prototype.Alloc = function(width, height)
+	{
+		var _len = this.Chunks.length;
+		for (var i = 0; i < _len; i++)
+		{
+			var _ret = this.Chunks[i].Alloc(width, height);
+			if (null != _ret)
+				return _ret;
+		}
+		this.HeapAlloc(this.ChunkHeapSize, this.ChunkHeapSize);
+		return this.Chunks[_len].Alloc(width, height);
+	};
 
-    function CRasterHeapTotal(_size)
-    {
-        this.ChunkHeapSize = (undefined === _size) ? 3000 : _size; // 4 * 3000 * 3000 = 36Mb
-        this.Chunks = [];
-    }
-    CRasterHeapTotal.prototype =
-    {
-        Clear : function()
-        {
-            var _len = this.Chunks.length;
-            for (var i = 0; i < _len; i++)
-            {
-                this.Chunks[i].Clear();
-            }
+	CRasterHeapTotal.prototype.HeapAlloc = function(width, height)
+	{
+		var _chunk = new CRasterHeapChuck();
+		_chunk.Create(width, height);
+		this.Chunks[this.Chunks.length] = _chunk;
+	};
 
-            // теперь наверное удалим и память лишнюю
-            if (_len > 1)
-                this.Chunks.splice(1, _len - 1);
-        },
+	CRasterHeapTotal.prototype.CreateFirstChuck = function(_w, _h)
+	{
+		if (0 == this.Chunks.length)
+		{
+			this.Chunks[0] = new CRasterHeapChuck();
+			this.Chunks[0].Create((undefined == _w) ? this.ChunkHeapSize : _w, (undefined == _h) ? this.ChunkHeapSize : _h);
+		}
+	};
 
-        Alloc : function(width, height)
-        {
-            var _len = this.Chunks.length;
-            for (var i = 0; i < _len; i++)
-            {
-                var _ret = this.Chunks[i].Alloc(width, height);
-                if (null != _ret)
-                    return _ret;
-            }
-            this.HeapAlloc(this.ChunkHeapSize, this.ChunkHeapSize);
-            return this.Chunks[_len].Alloc(width, height);
-        },
-
-        HeapAlloc : function(width, height)
-        {
-            var _chunk = new CRasterHeapChuck();
-            _chunk.Create(width, height);
-            this.Chunks[this.Chunks.length] = _chunk;
-        },
-
-        CreateFirstChuck : function(_w, _h)
-        {
-            if (0 == this.Chunks.length)
-            {
-                this.Chunks[0] = new CRasterHeapChuck();
-                this.Chunks[0].Create((undefined == _w) ? this.ChunkHeapSize : _w, (undefined == _h) ? this.ChunkHeapSize : _h);
-            }
-        }
-    };
-
-    window['AscFonts'] = window['AscFonts'] || {};
-    window['AscFonts'].CRasterHeapTotal = CRasterHeapTotal;
+	window['AscFonts'] = window['AscFonts'] || {};
+	window['AscFonts'].CRasterHeapTotal = CRasterHeapTotal;
 
 })(window, undefined);

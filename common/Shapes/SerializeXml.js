@@ -907,7 +907,7 @@
         if (AscCommon.vertalign_SubScript === this.VertAlign) {
 			writer.WriteXmlAttributeInt("baseline", -25000);
 		}
-        else if (AscCommon.vertalign_SuperScript == this.VertAlign) {
+        else if (AscCommon.vertalign_SuperScript === this.VertAlign) {
 			writer.WriteXmlAttributeInt("baseline", 30000);
 		}
 
@@ -918,36 +918,44 @@
 		//writer.WriteXmlAttributeString("smtId", smtId);
 		//writer.WriteXmlAttributeString("bmk", bmk);
 
-		writer.WriteXmlAttributesEnd();
-
-		if(this.TextOutline) {
-			this.TextOutline.toXml(writer, "a:ln");
-		}
-		if(this.Unifill) {
-			this.Unifill.toXml(writer);
-		}
-		//EffectList.toXmlWriter(writer);
-		if(this.HighlightColor) {
-			writer.WriteXmlNodeStart("a:highlight");
-			writer.WriteXmlAttributesEnd();
-			this.HighlightColor.toXml(writer);
-			writer.WriteXmlNodeEnd("a:highlight");
-		}
-		//writer.Write(uFill);
-		//writer.Write(uFillTx);
-		if(this.RFonts.Ascii) 
-			writeTypeface(writer, "a:latin", this.RFonts.Ascii.Name);
-		if(this.RFonts.EastAsia)
-			writeTypeface(writer, "a:ea", this.RFonts.EastAsia.Name);
-		if(this.RFonts.CS) 
-			writeTypeface(writer, "a:cs", this.RFonts.CS.Name);
-		//writer.Write(sym);
-
+		let oParaHyperlink = null;
 		if(oRun) {
-			let oParaHyperlink = null;
 			if(oRun.Parent instanceof ParaHyperlink) {
 				oParaHyperlink = oRun.Parent;
 			}
+		}
+		if(this.TextOutline || this.Unifill || this.HighlightColor ||
+			(this.RFonts.Ascii && this.RFonts.Ascii.Name) ||
+			(this.RFonts.EastAsia && this.RFonts.EastAsia.Name) ||
+			(this.RFonts.CS && this.RFonts.CS.Name) ||
+			oParaHyperlink) {
+
+			writer.WriteXmlAttributesEnd();
+
+			if(this.TextOutline) {
+				this.TextOutline.toXml(writer, "a:ln");
+			}
+			if(this.Unifill) {
+				this.Unifill.toXml(writer);
+			}
+			//EffectList.toXmlWriter(writer);
+			if(this.HighlightColor) {
+				writer.WriteXmlNodeStart("a:highlight");
+				writer.WriteXmlAttributesEnd();
+				this.HighlightColor.toXml(writer);
+				writer.WriteXmlNodeEnd("a:highlight");
+			}
+			//writer.Write(uFill);
+			//writer.Write(uFillTx);
+			if(this.RFonts.Ascii)
+				writeTypeface(writer, "a:latin", this.RFonts.Ascii.Name);
+			if(this.RFonts.EastAsia)
+				writeTypeface(writer, "a:ea", this.RFonts.EastAsia.Name);
+			if(this.RFonts.CS)
+				writeTypeface(writer, "a:cs", this.RFonts.CS.Name);
+			//writer.Write(sym);
+
+
 			if(oParaHyperlink) {
 				let oHyperlink = new AscFormat.CT_Hyperlink();
 				oHyperlink.id = oParaHyperlink.Value;
@@ -956,17 +964,20 @@
 				}
 				oHyperlink.toXml(writer, "a:hlinkClick");
 			}
-		}
-		// if(this.hlinkClick) {
-		// 	this.hlinkClick.toXml(writer, "a:hlinkClick");
-		// }
-		//
-		// if(this.hlinkMouseOver) {
-		// 	this.hlinkMouseOver.toXml(writer, "a:hlinkMouseOver");
-		// }
-		//writer.Write(rtl);
+			// if(this.hlinkClick) {
+			// 	this.hlinkClick.toXml(writer, "a:hlinkClick");
+			// }
+			//
+			// if(this.hlinkMouseOver) {
+			// 	this.hlinkMouseOver.toXml(writer, "a:hlinkMouseOver");
+			// }
+			//writer.Write(rtl);
 
-		writer.WriteXmlNodeEnd(sName);
+			writer.WriteXmlNodeEnd(sName);
+		}
+		else {
+			writer.WriteXmlAttributesEnd(true);
+		}
 	};
 	AscCommonWord.CParaPr.prototype.fromDrawingML = function (reader) {
 		let sName;
@@ -1092,7 +1103,7 @@
 		
 		if(this.Ind) {
 			if(this.Ind.FirstLine !== null && this.Ind.FirstLine !== undefined) {
-				writer.WriteXmlAttributeInt("indent", this.Ind.FirstLine * 36000 + 0.5 >> 0);
+				writer.WriteXmlAttributeInt("indent", (this.Ind.FirstLine * 36000 + 0.5) >> 0);
 			}
 		}
 		if(this.Jc !== undefined && this.Jc !== null) {
@@ -1191,6 +1202,9 @@
 		if(this.Content.length > 0) {
 			this.toDrawingMLText(writer, 0, this.Content.length - 1);
 		}
+		else {
+			writer.WriteXmlString("<a:t></a:t>");
+		}
 		writer.WriteXmlNodeEnd("a:fld");
 	};
 	AscCommonWord.CTable.prototype.fromDrawingML = function(reader) {
@@ -1250,8 +1264,7 @@
 		for (let nGridCol = 0; nGridCol < this.TableGrid.length; ++nGridCol) {
 			writer.WriteXmlNodeStart("a:gridCol");
 			writer.WriteXmlAttributeUInt("w", this.TableGrid[nGridCol] * 36000 >> 0);
-			writer.WriteXmlAttributesEnd();
-			writer.WriteXmlNodeEnd("a:gridCol");
+			writer.WriteXmlAttributesEnd(true);
 		}
 		writer.WriteXmlString("</a:tblGrid>");
 		let oTableRowGrid = AscCommon.GenerateTableWriteGrid(this);
@@ -1839,11 +1852,16 @@
 	};
 	CParaTabs.prototype.toDrawingML = function(writer) {
 		writer.WriteXmlNodeStart("a:tabLst");
-		writer.WriteXmlAttributesEnd();
-		for(let nIdx = 0; nIdx < this.Tabs.length; ++nIdx) {
-			this.Tabs[nIdx].toDrawingML(writer);
+		if(this.Tabs.length > 0) {
+			writer.WriteXmlAttributesEnd();
+			for(let nIdx = 0; nIdx < this.Tabs.length; ++nIdx) {
+				this.Tabs[nIdx].toDrawingML(writer);
+			}
+			writer.WriteXmlNodeEnd("a:tabLst");
 		}
-		writer.WriteXmlNodeEnd("a:tabLst");
+		else {
+			writer.WriteXmlAttributesEnd(true);
+		}
 	};
 	CParaTab.prototype.fromDrawingML = function(reader) {
 		let sName;
@@ -1881,8 +1899,7 @@
 		}
 		writer.WriteXmlAttributeString("algn", sAlign );
 		writer.WriteXmlAttributeString("pos", this.Pos * 36000 + 0.5 >> 0 );
-		writer.WriteXmlAttributesEnd();
-		writer.WriteXmlNodeEnd("a:tab");
+		writer.WriteXmlAttributesEnd(true);
 	};
 	CStyles.prototype.fromDrawingML = function(reader) {
 		if (!reader.ReadNextNode()) {
@@ -2320,14 +2337,12 @@
 		if(oSpacing.valPct !== undefined && oSpacing.valPct !== null) {
 			writer.WriteXmlNodeStart("a:spcPct");
 			writer.WriteXmlAttributeString("val", (oSpacing.valPct * 100000 + 0.5 >> 0) + "");
-			writer.WriteXmlAttributesEnd();
-			writer.WriteXmlNodeEnd("a:spcPct");
+			writer.WriteXmlAttributesEnd(true);
 		}
 		else if(oSpacing.val !== undefined && oSpacing.val !== null) {
 			writer.WriteXmlNodeStart("a:spcPts");
 			writer.WriteXmlAttributeString("val", (oSpacing.val / SPACING_SCALE + 0.5 >> 0) + "");
-			writer.WriteXmlAttributesEnd();
-			writer.WriteXmlNodeEnd("a:spcPts");
+			writer.WriteXmlAttributesEnd(true);
 		}
  		writer.WriteXmlNodeEnd(sName);
 	}
@@ -2366,10 +2381,7 @@
 	}
 	function writeTypeface(writer, sName, sFont) {
 		if(typeof sFont === "string") {
-			writer.WriteXmlNodeStart(sName);
-			writer.WriteXmlAttributeString("typeface", sFont);
-			writer.WriteXmlAttributesEnd();
-			writer.WriteXmlNodeEnd(sName);
+			AscFormat.FontCollection.prototype.writeFont(writer, sName, sFont)
 		}
 	}
 	function readHighlightColor(reader) {

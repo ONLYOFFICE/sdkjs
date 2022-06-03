@@ -2693,8 +2693,7 @@
     // Builder
 	baseEditorsApi.prototype.asc_nativeInitBuilder = function()
 	{
-		// Disable history for builder
-		AscCommon.History.TurnOff();
+		AscCommon.History.TurnOffChanges();
 		this.asc_setDocInfo(new Asc.asc_CDocInfo());
 	};
 	baseEditorsApi.prototype.asc_SetSilentMode     = function()

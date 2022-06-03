@@ -83,7 +83,6 @@ module.exports = function(grunt) {
 	}
 
 	function CConfig(pathConfigs) {
-		this.fonts = null;
 		this.externs = null;
 		this.word = null;
 		this.cell = null;
@@ -123,14 +122,13 @@ module.exports = function(grunt) {
 			mergeProps(this[name], option);			
 		}
 		
-		appendOption.call(this, 'fonts');
 		appendOption.call(this, 'externs');
 		appendOption.call(this, 'word');
 		appendOption.call(this, 'cell');
 		appendOption.call(this, 'slide');
 	};
 	CConfig.prototype.valid = function () {
-		return this.fonts && this.externs && this.word && this.cell && this.slide;
+		return this.externs && this.word && this.cell && this.slide;
 	};
 
 	function getExterns(config) {
@@ -211,8 +209,6 @@ module.exports = function(grunt) {
 			banner: '(function(window, undefined) {',
 			footer: '})(window);'
 		};
-		const fontsWasmTmp = 'fonts-wasm-tmp.js';
-		const fontsJsTmp = 'fonts-js-tmp.js';
 		const sdkMinTmp = 'sdk-min-tmp.js';
 		const sdkAllTmp = 'sdk-all-tmp.js';
 		const sdkWordTmp = 'sdk-word-tmp.js';
@@ -230,14 +226,6 @@ module.exports = function(grunt) {
 
 		grunt.initConfig({
 			concat: {
-				wasm: {
-					src: configs.fonts['wasm'],
-					dest: fontsWasmTmp
-				},
-				js: {
-					src: configs.fonts['js'],
-					dest: fontsJsTmp
-				},
 				wordsdkmin: {
 					options: optionsSdkMin,
 					src: getFilesMin(configWord),
@@ -288,11 +276,9 @@ module.exports = function(grunt) {
 							'--rewrite_polyfills=true', '--jscomp_off=checkVars',
 							'--warning_level=QUIET', '--compilation_level=' + level,
 							'--module=polyfill:1:', '--js=' + emptyJs,
-							'--module=fontswasm:1:polyfill', '--js=' + fontsWasmTmp,
-							'--module=fontsjs:1:fontswasm', '--js=' + fontsJsTmp,
-							'--module=word:1:fontswasm', '--js=' + sdkWordTmp,
-							'--module=cell:1:fontswasm', '--js=' + sdkCellTmp,
-							'--module=slide:1:fontswasm', '--js=' + sdkSlideTmp)
+							'--module=word:1:polyfill', '--js=' + sdkWordTmp,
+							'--module=cell:1:polyfill', '--js=' + sdkCellTmp,
+							'--module=slide:1:polyfill', '--js=' + sdkSlideTmp)
 					}
 				}
 			},
@@ -303,8 +289,6 @@ module.exports = function(grunt) {
 					},
 					src: [
 						emptyJs,
-						fontsWasmTmp,
-						fontsJsTmp,
 						sdkMinTmp,
 						sdkAllTmp,
 						sdkWordTmp,
@@ -319,14 +303,11 @@ module.exports = function(grunt) {
 	grunt.registerTask('license', 'Add license', function () {
 		const appCopyright = "Copyright (C) Ascensio System SIA 2012-" + grunt.template.today('yyyy') +". All rights reserved";
 		const publisherUrl = "https://www.onlyoffice.com/";
-		const fonts = '../common/libfont/';
 		const deploy = '../deploy/sdkjs/';
 		const word = path.join(deploy, 'word');
 		const cell = path.join(deploy, 'cell');
 		const slide = path.join(deploy, 'slide');
 		const polyfill = 'polyfill.js';
-		const fontsWasm = 'fontswasm.js';
-		const fontsJs = 'fontsjs.js';
 		const wordJs = 'word.js';
 		const cellJs = 'cell.js';
 		const slideJs = 'slide.js';
@@ -353,8 +334,6 @@ module.exports = function(grunt) {
 
 		const concatSdk = {files:{}};
 		const concatSdkFiles = concatSdk['files'];
-		concatSdkFiles[fontsWasm] = [license, fontsWasm];
-		concatSdkFiles[fontsJs] = [license, fontsJs];
 		concatSdkFiles[getSdkPath(true, word)] = [license, polyfill, getSdkPath(true, word)];
 		concatSdkFiles[getSdkPath(false, word)] = [license, getSdkPath(false, word)];
 		concatSdkFiles[getSdkPath(true, cell)] = [license, polyfill, getSdkPath(true, cell)];
@@ -399,8 +378,6 @@ module.exports = function(grunt) {
 						]
 					},
 					files: [
-						{src: [fontsWasm], dest: path.join(fonts, 'engine', 'fonts.js')},
-						{src: [fontsJs], dest: path.join(fonts, 'engine', 'fonts_ie.js')},
 						{expand: true, flatten: true, src: [getSdkPath(true, word), getSdkPath(false, word)], dest: word + '/'},
 						{expand: true, flatten: true, src: [getSdkPath(true, cell), getSdkPath(false, cell)], dest: cell + '/'},
 						{expand: true, flatten: true, src: [getSdkPath(true, slide), getSdkPath(false, slide)], dest: slide + '/'}
@@ -423,7 +400,7 @@ module.exports = function(grunt) {
 								'Images/reporter/*',
 								'Images/icons/*',
 								'Native/*.js',
-								'libfont/engine/fonts*',
+								'libfont/engine/*',
 								'spell/spell/*',
 								'hash/hash/*',
 								'zlib/engine/*'
@@ -458,8 +435,6 @@ module.exports = function(grunt) {
 					},
 					src: [
 						polyfill,
-						fontsWasm,
-						fontsJs,
 						wordJs,
 						cellJs,
 						slideJs

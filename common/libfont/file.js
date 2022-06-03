@@ -34,10 +34,10 @@
 
 (function (window, undefined)
 {
-    //window.measureTime = 0;
-    //window.rasterTime = 0;
+	//window.measureTime = 0;
+	//window.rasterTime = 0;
 	var AscFonts = window['AscFonts'];
-    var AscCommon = window['AscCommon'];
+	var AscCommon = window['AscCommon'];
 
 	AscFonts.FT_Load_Mode = {
 		FT_LOAD_DEFAULT                     : 0,
@@ -70,26 +70,26 @@
 		FT_RENDER_MODE_MAX		: 5
 	};
 
-	function _ft_load_target(val) { return (val & 15) << 16; }
+	function FT_LOAD_TARGET(val) { return (val & 15) << 16; }
 
 	AscFonts.FT_Load_Target_Mode = {
-		FT_LOAD_TARGET_NORMAL 	: _ft_load_target(AscFonts.FT_Render_Mode.FT_RENDER_MODE_NORMAL),
-		FT_LOAD_TARGET_LIGHT	: _ft_load_target(AscFonts.FT_Render_Mode.FT_RENDER_MODE_LIGHT),
-		FT_LOAD_TARGET_MONO		: _ft_load_target(AscFonts.FT_Render_Mode.FT_RENDER_MODE_MONO),
-		FT_LOAD_TARGET_LCD		: _ft_load_target(AscFonts.FT_Render_Mode.FT_RENDER_MODE_LCD),
-		FT_LOAD_TARGET_LCD_V	: _ft_load_target(AscFonts.FT_Render_Mode.FT_RENDER_MODE_LCD_V)
+		FT_LOAD_TARGET_NORMAL 	: FT_LOAD_TARGET(AscFonts.FT_Render_Mode.FT_RENDER_MODE_NORMAL),
+		FT_LOAD_TARGET_LIGHT	: FT_LOAD_TARGET(AscFonts.FT_Render_Mode.FT_RENDER_MODE_LIGHT),
+		FT_LOAD_TARGET_MONO		: FT_LOAD_TARGET(AscFonts.FT_Render_Mode.FT_RENDER_MODE_MONO),
+		FT_LOAD_TARGET_LCD		: FT_LOAD_TARGET(AscFonts.FT_Render_Mode.FT_RENDER_MODE_LCD),
+		FT_LOAD_TARGET_LCD_V	: FT_LOAD_TARGET(AscFonts.FT_Render_Mode.FT_RENDER_MODE_LCD_V)
 	};
 
 	AscFonts.LOAD_MODE_DEFAULT =
 		AscFonts.FT_Load_Mode.FT_LOAD_DEFAULT 		|
-        AscFonts.FT_Load_Mode.FT_LOAD_NO_HINTING 	|
-        AscFonts.FT_Load_Mode.FT_LOAD_LINEAR_DESIGN |
-        AscFonts.FT_Load_Mode.FT_LOAD_NO_AUTOHINT;
+		AscFonts.FT_Load_Mode.FT_LOAD_NO_HINTING 	|
+		AscFonts.FT_Load_Mode.FT_LOAD_LINEAR_DESIGN |
+		AscFonts.FT_Load_Mode.FT_LOAD_NO_AUTOHINT;
 
-    AscFonts.LOAD_MODE_HINTING =
-        AscFonts.FT_Load_Mode.FT_LOAD_DEFAULT 		|
-        AscFonts.FT_Load_Mode.FT_LOAD_LINEAR_DESIGN |
-        AscFonts.FT_Load_Mode.FT_LOAD_NO_AUTOHINT;
+	AscFonts.LOAD_MODE_HINTING =
+		AscFonts.FT_Load_Mode.FT_LOAD_DEFAULT 		|
+		AscFonts.FT_Load_Mode.FT_LOAD_LINEAR_DESIGN |
+		AscFonts.FT_Load_Mode.FT_LOAD_NO_AUTOHINT;
 
 	AscFonts.isUseBitmapStrikes = function(symbol)
 	{
@@ -125,16 +125,9 @@
 		return false;
 	};
 
-    var raster_memory = AscFonts.raster_memory;
-    AscFonts.initVariables = function()
-	{
-	};
+	var raster_memory = AscFonts.raster_memory;
 
 	var FONT_ITALIC_ANGLE 	= 0.3090169943749;
-	var FT_ENCODING_UNICODE = 1970170211;
-	var FT_ENCODING_NONE 	= 0;
-	var FT_ENCODING_MS_SYMBOL 	= 1937337698;
-	var FT_ENCODING_APPLE_ROMAN = 1634889070;
 	var REND_MODE 			= AscFonts.FT_Render_Mode.FT_RENDER_MODE_NORMAL;
 
 	var EGlyphState =
@@ -262,104 +255,104 @@
 		// not used (old devices)
 		checkColorAppleDevices : function(r, g, b, w, h)
 		{
-            if ((r == this.R) && (g == this.G) && (b == this.B))
-                return;
+			if ((r == this.R) && (g == this.G) && (b == this.B))
+				return;
 
-            this.R = r;
-            this.G = g;
-            this.B = b;
+			this.R = r;
+			this.G = g;
+			this.B = b;
+			
+			// full repaint
+			this.TempImage = document.createElement("canvas");
+			this.TempImage.width = w;
+			this.TempImage.height = h;
+			var ctxD = this.TempImage.getContext("2d");
+			var pixDst = null;
 
-            // full repaint
-            this.TempImage = document.createElement("canvas");
-            this.TempImage.width = w;
-            this.TempImage.height = h;
-            var ctxD = this.TempImage.getContext("2d");
-            var pixDst = null;
+			if (this.m_oCanvas != null)
+			{
+				pixDst = this.m_oContext.getImageData(0, 0, w, h);
+				var dataPx = pixDst.data;
 
-            if (this.m_oCanvas != null)
-            {
-                pixDst = this.m_oContext.getImageData(0, 0, w, h);
-                var dataPx = pixDst.data;
+				var cur = 0;
+				var cnt = w * h;
+				for (var i = 0; i < cnt; i++)
+				{
+					dataPx[cur++] = r;
+					dataPx[cur++] = g;
+					dataPx[cur++] = b;
+					cur++;
+				}
+			}
+			else
+			{
+				var _raster = this.RasterData;
+				var _x = _raster.Line.Height * _raster.Index;
+				var _y = _raster.Line.Y;
 
-                var cur = 0;
-                var cnt = w * h;
-                for (var i = 0; i < cnt; i++)
-                {
-                    dataPx[cur++] = r;
-                    dataPx[cur++] = g;
-                    dataPx[cur++] = b;
-                    cur++;
-                }
-            }
-            else
-            {
-                var _raster = this.RasterData;
-                var _x = _raster.Line.Height * _raster.Index;
-                var _y = _raster.Line.Y;
+				pixDst = _raster.Chunk.CanvasCtx.getImageData(_x, _y, w, h);
+				var dataPx = pixDst.data;
 
-                pixDst = _raster.Chunk.CanvasCtx.getImageData(_x, _y, w, h);
-                var dataPx = pixDst.data;
+				var cur = 0;
+				var cnt = w * h;
+				for (var i = 0; i < cnt; i++)
+				{
+					dataPx[cur++] = r;
+					dataPx[cur++] = g;
+					dataPx[cur++] = b;
+					cur++;
+				}
+			}
 
-                var cur = 0;
-                var cnt = w * h;
-                for (var i = 0; i < cnt; i++)
-                {
-                    dataPx[cur++] = r;
-                    dataPx[cur++] = g;
-                    dataPx[cur++] = b;
-                    cur++;
-                }
-            }
-
-            ctxD.putImageData(pixDst, 0, 0, 0, 0, w, h);
+			ctxD.putImageData(pixDst, 0, 0, 0, 0, w, h);
 		},
 
 		checkColorMozillaLinux : function(r, g, b, w, h)
 		{
-            if ((r == this.R) && (g == this.G) && (b == this.B))
-                return;
+			if ((r == this.R) && (g == this.G) && (b == this.B))
+				return;
 
-            this.R = r;
-            this.G = g;
-            this.B = b;
+			this.R = r;
+			this.G = g;
+			this.B = b;
 
-            if (this.m_oCanvas != null)
-            {
-                this.m_oContext.fillStyle = (this.R == 0xFF && this.G == 0xFF && this.B == 0xFF) ? "rgb(255,255,254)" : "rgb(" + this.R + "," + this.G + "," + this.B + ")";
-                this.m_oContext.fillRect(0, 0, w, h);
-            }
-            else
-            {
-                var _raster = this.RasterData;
-                _raster.Chunk.CanvasCtx.fillStyle = (this.R == 0xFF && this.G == 0xFF && this.B == 0xFF) ? "rgb(255,255,254)" : "rgb(" + this.R + "," + this.G + "," + this.B + ")";
-                var _x = _raster.Line.Height * _raster.Index;
-                var _y = _raster.Line.Y;
-                this.RasterData.Chunk.CanvasCtx.fillRect(_x, _y, w, h);
-            }
+			if (this.m_oCanvas != null)
+			{
+				this.m_oContext.fillStyle = (this.R == 0xFF && this.G == 0xFF && this.B == 0xFF) ? "rgb(255,255,254)" : "rgb(" + this.R + "," + this.G + "," + this.B + ")";
+				this.m_oContext.fillRect(0, 0, w, h);
+			}
+			else
+			{
+				var _raster = this.RasterData;
+				_raster.Chunk.CanvasCtx.fillStyle = (this.R == 0xFF && this.G == 0xFF && this.B == 0xFF) ? "rgb(255,255,254)" : "rgb(" + this.R + "," + this.G + "," + this.B + ")";
+				var _x = _raster.Line.Height * _raster.Index;
+				var _y = _raster.Line.Y;
+				this.RasterData.Chunk.CanvasCtx.fillRect(_x, _y, w, h);
+			}
 		},
 
 		checkColorNormal : function(r, g, b, w, h)
 		{
-            if ((r == this.R) && (g == this.G) && (b == this.B))
-                return;
+			if ((r == this.R) && (g == this.G) && (b == this.B))
+				return;
 
-            this.R = r;
-            this.G = g;
-            this.B = b;
+			this.R = r;
+			this.G = g;
+			this.B = b;
 
-            if (this.m_oCanvas != null)
-            {
-                this.m_oContext.fillStyle = "rgb(" + this.R + "," + this.G + "," + this.B + ")";
-                this.m_oContext.fillRect(0, 0, w, h);
-            }
-            else
-            {
-                var _raster = this.RasterData;
-                _raster.Chunk.CanvasCtx.fillStyle = "rgb(" + this.R + "," + this.G + "," + this.B + ")";
-                var _x = _raster.Line.Height * _raster.Index;
-                var _y = _raster.Line.Y;
-                this.RasterData.Chunk.CanvasCtx.fillRect(_x, _y, w, h);
-            }
+			if (this.m_oCanvas != null)
+			{
+				this.m_oContext.fillStyle = "rgb(" + this.R + "," + this.G + "," + this.B + ")";
+				this.m_oContext.fillRect(0, 0, w, h);
+			}
+			else
+			{
+				var _raster = this.RasterData;
+				_raster.Chunk.CanvasCtx.fillStyle = "rgb(" + this.R + "," + this.G + "," + this.B + ")";
+				var _x = _raster.Line.Height * _raster.Index;
+				var _y = _raster.Line.Y;
+				this.RasterData.Chunk.CanvasCtx.fillRect(_x, _y, w, h);
+			}
 		},
 
 		checkColor : undefined,
@@ -379,7 +372,7 @@
 		}
 	};
 
-    CGlyphData.prototype.checkColor = (AscCommon.AscBrowser.isMozilla && AscCommon.AscBrowser.isLinuxOS) ? CGlyphData.prototype.checkColorMozillaLinux : CGlyphData.prototype.checkColorNormal;
+	CGlyphData.prototype.checkColor = (AscCommon.AscBrowser.isMozilla && AscCommon.AscBrowser.isLinuxOS) ? CGlyphData.prototype.checkColorMozillaLinux : CGlyphData.prototype.checkColorNormal;
 
 	function CGlyphBitmap()
 	{
@@ -419,8 +412,8 @@
 
 			if (true)
 			{
-                if (this.nWidth > 0 && this.nHeight > 0)
-                	ctx.putImageData(raster_memory.m_oBuffer, _x, _y, 0, 0, this.nWidth, this.nHeight);
+				if (this.nWidth > 0 && this.nHeight > 0)
+					ctx.putImageData(raster_memory.m_oBuffer, _x, _y, 0, 0, this.nWidth, this.nHeight);
 			}
 			else
 			{
@@ -640,21 +633,21 @@
 
 		},
 
-        _move_to: function(x, y, worker)
-        {
-            if (this.NeedClosed)
-            {
-                worker._z();
-                this.NeedClosed = false;
-            }
+		_move_to: function(x, y, worker)
+		{
+			if (this.NeedClosed)
+			{
+				worker._z();
+				this.NeedClosed = false;
+			}
 
-            this.CurX = this.X + this.KoefX * (x / 64.0);
-            this.CurY = this.Y - this.KoefY * (y / 64.0);
+			this.CurX = this.X + this.KoefX * (x / 64.0);
+			this.CurY = this.Y - this.KoefY * (y / 64.0);
 
-            worker._m(this.CurX, this.CurY);
+			worker._m(this.CurX, this.CurY);
 
-            return 0;
-        },
+			return 0;
+		},
 
 		move_to: function (to, worker)
 		{
@@ -672,10 +665,10 @@
 			return 0;
 		},
 
-        line_to: function (to, worker)
-        {
-            return this._line_to(to.x, to.y, worker);
-        },
+		line_to: function (to, worker)
+		{
+			return this._line_to(to.x, to.y, worker);
+		},
 
 		_conic_to: function (control_x, control_y, to_x, to_y, worker)
 		{
@@ -708,10 +701,10 @@
 			return 0;
 		},
 
-        conic_to: function (control, to, worker)
-        {
-            return this._conic_to(control.x, control.y, to.x, to.y, worker);
-        },
+		conic_to: function (control, to, worker)
+		{
+			return this._conic_to(control.x, control.y, to.x, to.y, worker);
+		},
 
 		_cubic_to: function (control1_x, control1_y, control2_x, control2_y, to_x, to_y, worker)
 		{
@@ -730,10 +723,10 @@
 			return 0;
 		},
 
-        cubic_to: function (control1, control2, to, worker)
-        {
-            return this._cubic_to(control1.x, control1.y, control2.x, control2.y, to.x, to.y, worker);
-        },
+		cubic_to: function (control1, control2, to, worker)
+		{
+			return this._cubic_to(control1.x, control1.y, control2.x, control2.y, to.x, to.y, worker);
+		},
 
 		end: function (worker)
 		{
@@ -776,7 +769,7 @@
 
 		this.m_bStringGID = false;
 
-        this.m_nNum_charmaps = 0;
+		this.m_nNum_charmaps = 0;
 
 		this.m_lAscender = 0;
 		this.m_lDescender = 0;
@@ -790,9 +783,9 @@
 		this.HintsSupport = true;
 		this.HintsSubpixelSupport = true;
 
-        this.m_bIsTransform = true; // !IsIdentity matrix transform
+		this.m_bIsTransform = true; // !IsIdentity matrix transform
 
-        this.fixed_sizes = undefined;
+		this.fixed_sizes = undefined;
 
 		this.Picker = new CFontLoaderBySymbol();
 
@@ -988,14 +981,14 @@
 
 		this.GetGIDByUnicode = function(glyph)
 		{
-            var unGID = AscFonts.FT_SetCMapForCharCode(this.m_pFace, glyph);
-            if (unGID > 0)
-            	return unGID;
+			var unGID = AscFonts.FT_SetCMapForCharCode(this.m_pFace, glyph);
+			if (unGID > 0)
+				return unGID;
 
-            if (-1 != this.m_nSymbolic && glyph < 0xF000)
-                unGID = AscFonts.FT_SetCMapForCharCode(this.m_pFace, glyph + 0xF000);
+			if (-1 != this.m_nSymbolic && glyph < 0xF000)
+				unGID = AscFonts.FT_SetCMapForCharCode(this.m_pFace, glyph + 0xF000);
 
-            return unGID;
+			return unGID;
 		};
 
 		this.ShapeText = function(text, features, script, direction, language)
@@ -1065,14 +1058,14 @@
 
 		this.CacheGlyph = function(glyph_index_or_unicode, isRaster, isRasterDistances, workerVector, workerVectorX, workerVectorY, isFromPicker)
 		{
-            var oSizes = new CFontCacheSizes();
-            oSizes.ushUnicode = glyph_index_or_unicode;
+			var oSizes = new CFontCacheSizes();
+			oSizes.ushUnicode = glyph_index_or_unicode;
 
-            var nUnicodeForHintTest = this.m_bStringGID ? 0 : glyph_index_or_unicode;
+			var nUnicodeForHintTest = this.m_bStringGID ? 0 : glyph_index_or_unicode;
 
-            var unGID = this.m_bStringGID ? glyph_index_or_unicode : AscFonts.FT_SetCMapForCharCode(this.m_pFace, glyph_index_or_unicode);
+			var unGID = this.m_bStringGID ? glyph_index_or_unicode : AscFonts.FT_SetCMapForCharCode(this.m_pFace, glyph_index_or_unicode);
 
-            if (unGID <= 0 && !this.m_bStringGID)
+			if (unGID <= 0 && !this.m_bStringGID)
 			{
 				if (-1 != this.m_nSymbolic && glyph_index_or_unicode < 0xF000)
 					unGID = AscFonts.FT_SetCMapForCharCode(this.m_pFace, glyph_index_or_unicode + 0xF000);
@@ -1080,8 +1073,8 @@
 
 			if (unGID <= 0)
 			{
-                if (isFromPicker === true)
-                	return null;
+				if (isFromPicker === true)
+					return null;
 
 				if (!this.m_bStringGID && this.Picker)
 				{
@@ -1099,9 +1092,9 @@
 				else
 				{
 					oSizes.eState = EGlyphState.glyphstateMiss;
-                    oSizes.ushGID = -1;
-                    oSizes.fAdvanceX = (AscFonts.FT_GetFaceMaxAdvanceX(this.m_pFace) >> 6) / 2.0;
-                    return oSizes;
+					oSizes.ushGID = -1;
+					oSizes.fAdvanceX = (AscFonts.FT_GetFaceMaxAdvanceX(this.m_pFace) >> 6) / 2.0;
+					return oSizes;
 				}
 			}
 			else
@@ -1109,10 +1102,10 @@
 				oSizes.eState = EGlyphState.glyphstateNormal;
 			}
 
-            oSizes.ushGID = unGID;
-            oSizes.nCMapIndex = 0; // TODO:???
+			oSizes.ushGID = unGID;
+			oSizes.nCMapIndex = 0; // TODO:???
 
-            //var measure_time_start = performance.now();
+			//var measure_time_start = performance.now();
 
 			var load_mode = this.GetCharLoadMode(nUnicodeForHintTest);
 
@@ -1126,53 +1119,53 @@
 					load_mode |= AscFonts.FT_Load_Mode.FT_LOAD_NO_BITMAP;
 			}
 
-            if (this.FT_Load_Glyph_Wrapper(this.m_pFace, unGID, load_mode))
-            {
+			if (this.FT_Load_Glyph_Wrapper(this.m_pFace, unGID, load_mode))
+			{
 				oSizes.fAdvanceX = (AscFonts.FT_GetFaceMaxAdvanceX(this.m_pFace) >> 6) / 2.0;
 				return oSizes;
 			}
 
-            var _painter = null;
-            if (undefined !== workerVector)
-            {
-                _painter = new CGlyphVectorPainter();
-                _painter.KoefX = 25.4 / this.m_unHorDpi;
-                _painter.KoefY = 25.4 / this.m_unVerDpi;
+			var _painter = null;
+			if (undefined !== workerVector)
+			{
+				_painter = new CGlyphVectorPainter();
+				_painter.KoefX = 25.4 / this.m_unHorDpi;
+				_painter.KoefY = 25.4 / this.m_unVerDpi;
 
-                if (workerVectorX !== undefined)
-                    _painter.X = workerVectorX;
-                if (workerVectorY !== undefined)
-                    _painter.Y = workerVectorY;
-            }
+				if (workerVectorX !== undefined)
+					_painter.X = workerVectorX;
+				if (workerVectorY !== undefined)
+					_painter.Y = workerVectorY;
+			}
 
-            var measureInfo = AscFonts.FT_Glyph_Get_Measure(this.m_pFace, workerVector, _painter);
-            if ((null == measureInfo) || (undefined !== workerVector))
-                return oSizes;
+			var measureInfo = AscFonts.FT_Glyph_Get_Measure(this.m_pFace, workerVector, _painter);
+			if ((null == measureInfo) || (undefined !== workerVector))
+				return oSizes;
 
-            //window.measureTime += (performance.now() - measure_time_start);
+			//window.measureTime += (performance.now() - measure_time_start);
 
-            var isDisableNeedBold = ((this.m_pFaceInfo.os2_version != 0xFFFF) && (this.m_pFaceInfo.os2_usWeightClass >= 800)) ? true : false;
-            oSizes.fAdvanceX = (measureInfo.linearHoriAdvance * this.m_dUnitsKoef / this.m_lUnits_Per_Em);
-            if (this.m_bNeedDoBold && this.m_oFontManager.IsAdvanceNeedBoldFonts && !isDisableNeedBold)
+			var isDisableNeedBold = ((this.m_pFaceInfo.os2_version != 0xFFFF) && (this.m_pFaceInfo.os2_usWeightClass >= 800)) ? true : false;
+			oSizes.fAdvanceX = (measureInfo.linearHoriAdvance * this.m_dUnitsKoef / this.m_lUnits_Per_Em);
+			if (this.m_bNeedDoBold && this.m_oFontManager.IsAdvanceNeedBoldFonts && !isDisableNeedBold)
 				oSizes.fAdvanceX += 1;
 
-            oSizes.oBBox.fMinX = (measureInfo.bbox_xMin >> 6);
-            oSizes.oBBox.fMaxX = (measureInfo.bbox_xMax >> 6);
-            oSizes.oBBox.fMinY = (measureInfo.bbox_yMin >> 6);
-            oSizes.oBBox.fMaxY = (measureInfo.bbox_yMax >> 6);
+			oSizes.oBBox.fMinX = (measureInfo.bbox_xMin >> 6);
+			oSizes.oBBox.fMaxX = (measureInfo.bbox_xMax >> 6);
+			oSizes.oBBox.fMinY = (measureInfo.bbox_yMin >> 6);
+			oSizes.oBBox.fMaxY = (measureInfo.bbox_yMax >> 6);
 
-            var dstM = oSizes.oMetrics;
+			var dstM = oSizes.oMetrics;
 
-            dstM.fWidth 		= (measureInfo.width >> 6);
-            dstM.fHeight 		= (measureInfo.height >> 6);
-            dstM.fHoriBearingX 	= (measureInfo.horiBearingX >> 6);
-            dstM.fHoriBearingY 	= (measureInfo.horiBearingY >> 6);
-            dstM.fHoriAdvance 	= (measureInfo.horiAdvance >> 6);
-            dstM.fVertBearingX 	= (measureInfo.vertBearingX >> 6);
-            dstM.fVertBearingY 	= (measureInfo.vertBearingY >> 6);
-            dstM.fVertAdvance 	= (measureInfo.vertAdvance >> 6);
+			dstM.fWidth 		= (measureInfo.width >> 6);
+			dstM.fHeight 		= (measureInfo.height >> 6);
+			dstM.fHoriBearingX 	= (measureInfo.horiBearingX >> 6);
+			dstM.fHoriBearingY 	= (measureInfo.horiBearingY >> 6);
+			dstM.fHoriAdvance 	= (measureInfo.horiAdvance >> 6);
+			dstM.fVertBearingX 	= (measureInfo.vertBearingX >> 6);
+			dstM.fVertBearingY 	= (measureInfo.vertBearingY >> 6);
+			dstM.fVertAdvance 	= (measureInfo.vertAdvance >> 6);
 
-            if (isFromPicker && (0 == dstM.fHoriAdvance && 0 == measureInfo.width))
+			if (isFromPicker && (0 == dstM.fHoriAdvance && 0 == measureInfo.width))
 			{
 				if (this.m_bStringGID)
 					return null;
@@ -1190,28 +1183,28 @@
 				return null;
 			}
 
-            if (!isRaster)
-            {
-            	if (isRasterDistances)
+			if (!isRaster)
+			{
+				if (isRasterDistances)
 				{
-                    var rasterInfo = AscFonts.FT_Glyph_Get_Raster(this.m_pFace, REND_MODE);
-                    if (rasterInfo)
-                    {
-                    	var rasterBitmap = AscFonts.FT_Get_Glyph_Render_Buffer(this.m_pFace, rasterInfo, false);
-                    	oSizes.oBBox.rasterDistances = get_raster_bounds(rasterBitmap.data, rasterBitmap.width, rasterBitmap.rows, rasterBitmap.pitch);
-                    }
+					var rasterInfo = AscFonts.FT_Glyph_Get_Raster(this.m_pFace, REND_MODE);
+					if (rasterInfo)
+					{
+						var rasterBitmap = AscFonts.FT_Get_Glyph_Render_Buffer(this.m_pFace, rasterInfo, false);
+						oSizes.oBBox.rasterDistances = get_raster_bounds(rasterBitmap.data, rasterBitmap.width, rasterBitmap.rows, rasterBitmap.pitch);
+					}
 				}
-                return oSizes;
-            }
+				return oSizes;
+			}
 
-            //measure_time_start = performance.now();
+			//measure_time_start = performance.now();
 
-            oSizes.bBitmap = true;
-            var rasterInfo = AscFonts.FT_Glyph_Get_Raster(this.m_pFace, REND_MODE);
-            if (!rasterInfo || rasterInfo.pitch == 0)
-            	return oSizes;
+			oSizes.bBitmap = true;
+			var rasterInfo = AscFonts.FT_Glyph_Get_Raster(this.m_pFace, REND_MODE);
+			if (!rasterInfo || rasterInfo.pitch == 0)
+				return oSizes;
 
-            //window.rasterTime += (performance.now() - measure_time_start);
+			//window.rasterTime += (performance.now() - measure_time_start);
 
 			oSizes.oBitmap = new CGlyphBitmap();
 			oSizes.oBitmap.nX = rasterInfo.left;
@@ -1219,11 +1212,11 @@
 			oSizes.oBitmap.nWidth = rasterInfo.width;
 			oSizes.oBitmap.nHeight = rasterInfo.rows;
 
-            var rasterBitmap = AscFonts.FT_Get_Glyph_Render_Buffer(this.m_pFace, rasterInfo, true);
+			var rasterBitmap = AscFonts.FT_Get_Glyph_Render_Buffer(this.m_pFace, rasterInfo, true);
 
 			if (this.m_bNeedDoBold && this.m_bAntiAliasing && !isDisableNeedBold)
 			{
-                oSizes.oBitmap.nWidth++;
+				oSizes.oBitmap.nWidth++;
 
 				var _width_im = oSizes.oBitmap.nWidth;
 				var _height = oSizes.oBitmap.nHeight;
@@ -1269,7 +1262,7 @@
 
 			// Сначала мы все рассчитываем исходя только из матрицы шрифта FontMatrix
 			if (this.m_bIsTransform)
-                this.UpdateMatrix();
+				this.UpdateMatrix();
 
 			var _cache_array = (this.m_bStringGID === false) ? this.m_arrCacheSizes : this.m_arrCacheSizesGid;
 
@@ -1282,8 +1275,8 @@
 				if (undefined == charSymbolObj)
 				{
 					_cache_array[ushUnicode] = this.CacheGlyph(ushUnicode, false);
-                    charSymbolObj = _cache_array[ushUnicode];
-                }
+					charSymbolObj = _cache_array[ushUnicode];
+				}
 
 				var unGID = charSymbolObj.ushGID;
 				var eState = charSymbolObj.eState;
@@ -1307,7 +1300,7 @@
 				else // if ( glyphstateNormal == eState )
 				{
 					pString.SetState(nIndex, EGlyphState.glyphstateNormal);
-                    // kerning face!!!
+					// kerning face!!!
 				}
 
 				/*
@@ -1355,8 +1348,8 @@
 			if (pString.GetLength() <= 0)
 				return true;
 
-            if (this.m_bIsTransform)
-                this.UpdateMatrix();
+			if (this.m_bIsTransform)
+				this.UpdateMatrix();
 
 			var unPrevGID = 0;
 			var fPenX = 0, fPenY = 0;
@@ -1369,11 +1362,11 @@
 				var ushUnicode = pCurGlyph.lUnicode;
 
 				var charSymbolObj = _cache_array[ushUnicode];
-                if (undefined == charSymbolObj || null == charSymbolObj.oBitmap)
-                {
-                    _cache_array[ushUnicode] = this.CacheGlyph(ushUnicode, true);
-                    charSymbolObj = _cache_array[ushUnicode];
-                }
+				if (undefined == charSymbolObj || null == charSymbolObj.oBitmap)
+				{
+					_cache_array[ushUnicode] = this.CacheGlyph(ushUnicode, true);
+					charSymbolObj = _cache_array[ushUnicode];
+				}
 
 				var nCMapIndex = charSymbolObj.nCMapIndex;
 				var unGID = charSymbolObj.ushGID;
@@ -1393,12 +1386,12 @@
 				else if (EGlyphState.glyphstateDefault == eState)
 				{
 					pString.SetState(nIndex, EGlyphState.glyphstateDefault);
-                    // kerning face!!!
+					// kerning face!!!
 				}
 				else
 				{
 					pString.SetState(nIndex, EGlyphState.glyphstateNormal);
-                    // kerning face!!!
+					// kerning face!!!
 				}
 
 				/*
@@ -1429,7 +1422,7 @@
 
 				pString.SetStartPoint(nIndex, fXX, fYY);
 
-                pCurGlyph.oMetrics = charSymbolObj.oMetrics;
+				pCurGlyph.oMetrics = charSymbolObj.oMetrics;
 				pString.SetBBox(nIndex, charSymbolObj.oBBox.fMinX, charSymbolObj.oBBox.fMaxY, charSymbolObj.oBBox.fMaxX, charSymbolObj.oBBox.fMinY);
 				fPenX += charSymbolObj.fAdvanceX + this.m_fCharSpacing;
 
@@ -1446,23 +1439,23 @@
 		this.GetString2C = function(pString)
 		{
 			// Сначала мы все рассчитываем исходя только из матрицы шрифта FontMatrix
-            if (this.m_bIsTransform)
-                this.UpdateMatrix();
+			if (this.m_bIsTransform)
+				this.UpdateMatrix();
 
 			var pCurGlyph = pString.m_pGlyphsBuffer[0];
 			var ushUnicode = pCurGlyph.lUnicode;
 
 			var _cache_array = (this.m_bStringGID === false) ? this.m_arrCacheSizes : this.m_arrCacheSizesGid;
 
-            var charSymbolObj = _cache_array[ushUnicode];
-            if (undefined == charSymbolObj || (null == charSymbolObj.oBitmap && charSymbolObj.bBitmap === false))
-            {
-                _cache_array[ushUnicode] = this.CacheGlyph(ushUnicode, true);
-                charSymbolObj = _cache_array[ushUnicode];
-            }
+			var charSymbolObj = _cache_array[ushUnicode];
+			if (undefined == charSymbolObj || (null == charSymbolObj.oBitmap && charSymbolObj.bBitmap === false))
+			{
+				_cache_array[ushUnicode] = this.CacheGlyph(ushUnicode, true);
+				charSymbolObj = _cache_array[ushUnicode];
+			}
 
-            if (!charSymbolObj)
-            	return;
+			if (!charSymbolObj)
+				return;
 
 			var eState = charSymbolObj.eState;
 			pCurGlyph.eState = charSymbolObj.eState;
@@ -1479,13 +1472,13 @@
 			}
 
 			// кернинга нету пока.
-            var fX = pString.m_fX;
-            var fY = pString.m_fY;
-            var _m = pString.m_arrCTM;
+			var fX = pString.m_fX;
+			var fY = pString.m_fY;
+			var _m = pString.m_arrCTM;
 
-            // Начальную точку рассчитываем сразу исходя из глобальной матрицы
-            pCurGlyph.fX = (_m[4] + fX * _m[0] + fY * _m[2] - pString.m_fX);
-            pCurGlyph.fY = (_m[5] + fX * _m[1] + fY * _m[3] - pString.m_fY);
+			// Начальную точку рассчитываем сразу исходя из глобальной матрицы
+			pCurGlyph.fX = (_m[4] + fX * _m[0] + fY * _m[2] - pString.m_fX);
+			pCurGlyph.fY = (_m[5] + fX * _m[1] + fY * _m[3] - pString.m_fY);
 
 			//pString.SetMetrics(nIndex, charSymbolObj.oMetrics.fWidth, charSymbolObj.oMetrics.fHeight, charSymbolObj.oMetrics.fHoriAdvance, charSymbolObj.oMetrics.fHoriBearingX, charSymbolObj.oMetrics.fHoriBearingY, charSymbolObj.oMetrics.fVertAdvance, charSymbolObj.oMetrics.fVertBearingX, charSymbolObj.oMetrics.fVertBearingY);
 			pCurGlyph.oMetrics = charSymbolObj.oMetrics;
@@ -1500,8 +1493,8 @@
 			pCurGlyph.bBitmap = charSymbolObj.bBitmap;
 			pCurGlyph.oBitmap = charSymbolObj.oBitmap;
 
-            pString.m_fEndX = charSymbolObj.fAdvanceX + this.m_fCharSpacing + pString.m_fX;
-            pString.m_fEndY = pString.m_fY;
+			pString.m_fEndX = charSymbolObj.fAdvanceX + this.m_fCharSpacing + pString.m_fX;
+			pString.m_fEndY = pString.m_fY;
 		};
 
 		this.GetChar = function(lUnicode, is_raster_distances)
@@ -1510,19 +1503,19 @@
 			var ushUnicode = lUnicode;
 
 			// Сначала мы все рассчитываем исходя только из матрицы шрифта FontMatrix
-            if (this.m_bIsTransform)
-                this.UpdateMatrix();
+			if (this.m_bIsTransform)
+				this.UpdateMatrix();
 
 			var _cache_array = (this.m_bStringGID === false) ? this.m_arrCacheSizes : this.m_arrCacheSizesGid;
 
-            var charSymbolObj = _cache_array[ushUnicode];
-            if (undefined == charSymbolObj)
-            {
-                _cache_array[ushUnicode] = this.CacheGlyph(ushUnicode, false, is_raster_distances);
-                charSymbolObj = _cache_array[ushUnicode];
-            }
+			var charSymbolObj = _cache_array[ushUnicode];
+			if (undefined == charSymbolObj)
+			{
+				_cache_array[ushUnicode] = this.CacheGlyph(ushUnicode, false, is_raster_distances);
+				charSymbolObj = _cache_array[ushUnicode];
+			}
 
-            return charSymbolObj;
+			return charSymbolObj;
 		};
 
 		this.GetCharPath = function(lUnicode, worker, x, y)
@@ -1534,35 +1527,35 @@
 			var ushUnicode = lUnicode;
 
 			// Сначала мы все рассчитываем исходя только из матрицы шрифта FontMatrix
-            if (this.m_bIsTransform)
-                this.UpdateMatrix();
+			if (this.m_bIsTransform)
+				this.UpdateMatrix();
 
-            // no really cashe
-            this.CacheGlyph(ushUnicode, false, false, worker, x, y);
+			// no really cashe
+			this.CacheGlyph(ushUnicode, false, false, worker, x, y);
 		};
 
-        this.GetStringPath = function(string, worker)
-        {
-            var _len = string.GetLength();
-            if (_len <= 0)
-                return true;
+		this.GetStringPath = function(string, worker)
+		{
+			var _len = string.GetLength();
+			if (_len <= 0)
+				return true;
 
-            for (var nIndex = 0; nIndex < _len; ++nIndex)
-            {
-                var _glyph = string.m_pGlyphsBuffer[nIndex];
-                var _x = string.m_fX + 25.4 * _glyph.fX / this.m_unHorDpi;
-                var _y = string.m_fY + 25.4 * _glyph.fY / this.m_unVerDpi;
+			for (var nIndex = 0; nIndex < _len; ++nIndex)
+			{
+				var _glyph = string.m_pGlyphsBuffer[nIndex];
+				var _x = string.m_fX + 25.4 * _glyph.fX / this.m_unHorDpi;
+				var _y = string.m_fY + 25.4 * _glyph.fY / this.m_unVerDpi;
 
-                worker._s();
-                this.GetCharPath(_glyph.lUnicode, worker, _x, _y);
-                worker.df();
-                worker._e();
-            }
-        };
+				worker._s();
+				this.GetCharPath(_glyph.lUnicode, worker, _x, _y);
+				worker.df();
+				worker._e();
+			}
+		};
 
 		this.GetCharLoadMode = function(code)
-        {
-        	if (this.HintsSupport && this.HintsSubpixelSupport)
+		{
+			if (this.HintsSupport && this.HintsSubpixelSupport)
 			{
 				// -----------------------------------------------------------------
 				// заглушки
@@ -1572,137 +1565,137 @@
 				return this.m_oFontManager.LOAD_MODE;
 			}
 			return AscFonts.LOAD_MODE_DEFAULT;
-        };
+		};
 
-        this.GetKerning = function(unPrevGID, unGID)
-        {
-            var delta = AscFonts.FT_GetKerningX(this.m_pFace, unPrevGID, unGID);
-            return (delta >> 6);
-        };
+		this.GetKerning = function(unPrevGID, unGID)
+		{
+			var delta = AscFonts.FT_GetKerningX(this.m_pFace, unPrevGID, unGID);
+			return (delta >> 6);
+		};
 
-        this.SetStringGID = function(bGID)
-        {
-            if (this.m_bStringGID == bGID)
-                return;
+		this.SetStringGID = function(bGID)
+		{
+			if (this.m_bStringGID == bGID)
+				return;
 
-            this.m_bStringGID = bGID;
-        };
+			this.m_bStringGID = bGID;
+		};
 
-        this.GetStringGID = function()
-        {
-            return this.m_bStringGID;
-        };
+		this.GetStringGID = function()
+		{
+			return this.m_bStringGID;
+		};
 
-        this.SetCharSpacing = function(fCharSpacing)
-        {
-            this.m_fCharSpacing = fCharSpacing;
-        };
+		this.SetCharSpacing = function(fCharSpacing)
+		{
+			this.m_fCharSpacing = fCharSpacing;
+		};
 
-        this.GetCharSpacing = function()
-        {
-            return this.m_fCharSpacing;
-        };
+		this.GetCharSpacing = function()
+		{
+			return this.m_fCharSpacing;
+		};
 
-        this.GetStyleName = function()
-        {
-            return this.m_pFaceInfo.style_name;
-        };
+		this.GetStyleName = function()
+		{
+			return this.m_pFaceInfo.style_name;
+		};
 
-        this.UpdateStyles = function(bBold, bItalic)
-        {
-            var sStyle = this.GetStyleName();
+		this.UpdateStyles = function(bBold, bItalic)
+		{
+			var sStyle = this.GetStyleName();
 
-            // Смотрим какой стиль у исходного шрифта
-            var bSrcBold = (-1 != sStyle.indexOf("Bold"));
-            var bSrcItalic = (-1 != sStyle.indexOf("Italic"));
+			// Смотрим какой стиль у исходного шрифта
+			var bSrcBold = (-1 != sStyle.indexOf("Bold"));
+			var bSrcItalic = (-1 != sStyle.indexOf("Italic"));
 
-            this.SetNeedBold(bBold && !bSrcBold);
-            this.SetNeedItalic(bItalic && !bSrcItalic);
-        };
+			this.SetNeedBold(bBold && !bSrcBold);
+			this.SetNeedItalic(bItalic && !bSrcItalic);
+		};
 
-        this.IsBold = function()
-        {
-        	if (this.m_bNeedDoBold)
-        		return true;
+		this.IsBold = function()
+		{
+			if (this.m_bNeedDoBold)
+				return true;
 
-        	return (-1 != this.m_pFaceInfo.style_name.indexOf("Bold")) ? true : false;
-        };
+			return (-1 != this.m_pFaceInfo.style_name.indexOf("Bold")) ? true : false;
+		};
 
-        this.IsItalic = function()
-        {
-            if (this.m_bNeedDoItalic)
-                return true;
+		this.IsItalic = function()
+		{
+			if (this.m_bNeedDoItalic)
+				return true;
 
-            return (-1 != this.m_pFaceInfo.style_name.indexOf("Italic")) ? true : false;
-        };
+			return (-1 != this.m_pFaceInfo.style_name.indexOf("Italic")) ? true : false;
+		};
 
-        this.SetNeedItalic = function(value)
-        {
-            if (this.m_bNeedDoItalic != value)
-            {
-                this.ClearCache();
-                this.m_bNeedDoItalic = value;
-                this.ResetFontMatrix();
-            }
-        };
+		this.SetNeedItalic = function(value)
+		{
+			if (this.m_bNeedDoItalic != value)
+			{
+				this.ClearCache();
+				this.m_bNeedDoItalic = value;
+				this.ResetFontMatrix();
+			}
+		};
 
-        this.SetNeedBold = function(value)
-        {
-            if (this.m_bNeedDoBold != value)
-            {
-                this.ClearCache();
-                this.m_bNeedDoBold = value;
-            }
-        };
+		this.SetNeedBold = function(value)
+		{
+			if (this.m_bNeedDoBold != value)
+			{
+				this.ClearCache();
+				this.m_bNeedDoBold = value;
+			}
+		};
 
-        this.IsSuccess = function()
-        {
-            return (0 == this.m_nError);
-        };
+		this.IsSuccess = function()
+		{
+			return (0 == this.m_nError);
+		};
 
-        this.GetAscender = function()
-        {
-            return this.m_lAscender;
-        };
+		this.GetAscender = function()
+		{
+			return this.m_lAscender;
+		};
 
-        this.GetDescender = function()
-        {
-            return this.m_lDescender;
-        };
+		this.GetDescender = function()
+		{
+			return this.m_lDescender;
+		};
 
-        this.GetHeight = function()
-        {
-            return this.m_lLineHeight;
-        };
+		this.GetHeight = function()
+		{
+			return this.m_lLineHeight;
+		};
 
-        this.Units_Per_Em = function()
-        {
-            return this.m_lUnits_Per_Em;
-        };
+		this.Units_Per_Em = function()
+		{
+			return this.m_lUnits_Per_Em;
+		};
 
-        this.CheckHintsSupport = function()
-        {
-            this.HintsSupport = true;
-            this.HintsSubpixelSupport = true;
-        };
+		this.CheckHintsSupport = function()
+		{
+			this.HintsSupport = true;
+			this.HintsSubpixelSupport = true;
+		};
 
-        this.cellGetMetrics = function()
-        {
-            var face = this.m_pFaceInfo;
-            var ret = [];
-            ret.push(face.units_per_EM);
-            if (face.os2_version != 0xFFFF)
-            {
-                ret.push(face.os2_usWinAscent);
-                ret.push(-face.os2_usWinDescent);
-            }
-            else
-            {
-                ret.push(face.header_yMax);
-                ret.push(face.header_yMin);
-            }
-            return ret;
-        };
+		this.cellGetMetrics = function()
+		{
+			var face = this.m_pFaceInfo;
+			var ret = [];
+			ret.push(face.units_per_EM);
+			if (face.os2_version != 0xFFFF)
+			{
+				ret.push(face.os2_usWinAscent);
+				ret.push(-face.os2_usWinDescent);
+			}
+			else
+			{
+				ret.push(face.header_yMax);
+				ret.push(face.header_yMin);
+			}
+			return ret;
+		};
 
 		this.GetLimitsY = function()
 		{
@@ -1712,66 +1705,66 @@
 			};
 		};
 
-        this.SetFace = function(face, fontManager)
+		this.SetFace = function(face, fontManager)
 		{
 			this.m_pFace = face;
 			this.m_pFaceInfo = new AscFonts.CFaceInfo();
 			this.m_pFaceInfo.load(this.m_pFace);
 
-            this.m_lUnits_Per_Em 	= this.m_pFaceInfo.units_per_EM;
-            this.m_lAscender 		= this.m_pFaceInfo.ascender;
-            this.m_lDescender 		= this.m_pFaceInfo.descender;
-            this.m_lLineHeight 		= this.m_pFaceInfo.height;
+			this.m_lUnits_Per_Em 	= this.m_pFaceInfo.units_per_EM;
+			this.m_lAscender 		= this.m_pFaceInfo.ascender;
+			this.m_lDescender 		= this.m_pFaceInfo.descender;
+			this.m_lLineHeight 		= this.m_pFaceInfo.height;
 
-            if (fontManager.IsUseWinOS2Params && this.m_pFaceInfo.os2_version != 0xFFFF)
-            {
-                if (fontManager.Mode === AscFonts.TextMeasureMode.Cell)
-                {
-                    /*
-                    // что-то типо этого в экселе... пока выключаем
-                    var _addidive = (0.15 * font.m_lLineHeight) >> 0;
-                    font.m_lAscender += ((_addidive + 1) >> 1);
-                    font.m_lDescender -= (_addidive >> 1);
-                    font.m_lLineHeight += _addidive;
-                    */
+			if (fontManager.IsUseWinOS2Params && this.m_pFaceInfo.os2_version != 0xFFFF)
+			{
+				if (fontManager.Mode === AscFonts.TextMeasureMode.Cell)
+				{
+					/*
+					// что-то типо этого в экселе... пока выключаем
+					var _addidive = (0.15 * font.m_lLineHeight) >> 0;
+					font.m_lAscender += ((_addidive + 1) >> 1);
+					font.m_lDescender -= (_addidive >> 1);
+					font.m_lLineHeight += _addidive;
+					*/
 
-                    var _winAscent = this.m_pFaceInfo.os2_usWinAscent;
-                    var _winDescent = -this.m_pFaceInfo.os2_usWinDescent;
+					var _winAscent = this.m_pFaceInfo.os2_usWinAscent;
+					var _winDescent = -this.m_pFaceInfo.os2_usWinDescent;
 
-                    // experimantal: for cjk fonts lineheight *= 1.3
-                    if ((this.m_pFaceInfo.os2_ulUnicodeRange2 & 0x2DF00000) != 0)
-                    {
-                        var _addidive = (0.3 * (_winAscent - _winDescent)) >> 0;
-                        _winAscent += ((_addidive + 1) >> 1);
-                        _winDescent -= (_addidive >> 1);
-                    }
+					// experimantal: for cjk fonts lineheight *= 1.3
+					if ((this.m_pFaceInfo.os2_ulUnicodeRange2 & 0x2DF00000) != 0)
+					{
+						var _addidive = (0.3 * (_winAscent - _winDescent)) >> 0;
+						_winAscent += ((_addidive + 1) >> 1);
+						_winDescent -= (_addidive >> 1);
+					}
 
-                    // TODO:
-                    // https://www.microsoft.com/typography/otspec/recom.htm - hhea, not typo!!!
-                    if (this.m_pFaceInfo.height < (_winAscent - _winDescent))
-                    {
-                        this.m_lAscender = _winAscent;
-                        this.m_lDescender = _winDescent;
-                        this.m_lLineHeight = _winAscent - _winDescent;
-                    }
-                }
-                else
-                {
-                    var bIsUseTypeAttack = ((this.m_pFaceInfo.os2_fsSelection & 128) == 128) ? true : false;
-                    if (bIsUseTypeAttack)
-                    {
-                        this.m_lAscender  = this.m_pFaceInfo.os2_sTypoAscender;
-                        this.m_lDescender = this.m_pFaceInfo.os2_sTypoDescender;
+					// TODO:
+					// https://www.microsoft.com/typography/otspec/recom.htm - hhea, not typo!!!
+					if (this.m_pFaceInfo.height < (_winAscent - _winDescent))
+					{
+						this.m_lAscender = _winAscent;
+						this.m_lDescender = _winDescent;
+						this.m_lLineHeight = _winAscent - _winDescent;
+					}
+				}
+				else
+				{
+					var bIsUseTypeAttack = ((this.m_pFaceInfo.os2_fsSelection & 128) == 128) ? true : false;
+					if (bIsUseTypeAttack)
+					{
+						this.m_lAscender  = this.m_pFaceInfo.os2_sTypoAscender;
+						this.m_lDescender = this.m_pFaceInfo.os2_sTypoDescender;
 
-                        this.m_lLineHeight = (this.m_pFaceInfo.os2_sTypoAscender - this.m_pFaceInfo.os2_sTypoDescender + this.m_pFaceInfo.os2_sTypoLineGap);
-                    }
-                    else if (false)
-                    {
-                        this.m_lAscender  = this.m_pFaceInfo.os2_usWinAscent;
-                        this.m_lDescender = -this.m_pFaceInfo.os2_usWinDescent;
+						this.m_lLineHeight = (this.m_pFaceInfo.os2_sTypoAscender - this.m_pFaceInfo.os2_sTypoDescender + this.m_pFaceInfo.os2_sTypoLineGap);
+					}
+					else if (false)
+					{
+						this.m_lAscender  = this.m_pFaceInfo.os2_usWinAscent;
+						this.m_lDescender = -this.m_pFaceInfo.os2_usWinDescent;
 
-                        this.m_lLineHeight = (this.m_pFaceInfo.os2_usWinAscent + this.m_pFaceInfo.os2_usWinDescent);
-                    }
+						this.m_lLineHeight = (this.m_pFaceInfo.os2_usWinAscent + this.m_pFaceInfo.os2_usWinDescent);
+					}
 
 					// Normalize metrics for CJK fonts
 					if (fontManager.Mode !== AscFonts.TextMeasureMode.Slide
@@ -1785,33 +1778,46 @@
 						this.m_lDescender  = (nDescent - (nAscent - nDescent) * 0.15) | 0;
 						this.m_lAscender   = this.m_lLineHeight + this.m_lDescender;
 					}
-                }
-            }
+				}
+			}
 
-            this.m_nNum_charmaps = this.m_pFaceInfo.num_charmaps;
-            this.m_nDefaultChar = this.m_pFaceInfo.os2_usDefaultChar;
+			this.m_nNum_charmaps = this.m_pFaceInfo.num_charmaps;
+			this.m_nDefaultChar = this.m_pFaceInfo.os2_usDefaultChar;
 
-            this.m_nSymbolic = this.m_pFaceInfo.os2_nSymbolic;
-            this.m_nError = AscFonts.FT_Set_Char_Size(face, 0, this.m_fSize * 64, 0, 0);
+			this.m_nSymbolic = this.m_pFaceInfo.os2_nSymbolic;
+			this.m_nError = AscFonts.FT_Set_Char_Size(face, 0, this.m_fSize * 64, 0, 0);
 
-            this.ResetTextMatrix();
-            this.ResetFontMatrix();
+			this.ResetTextMatrix();
+			this.ResetFontMatrix();
 
-            if (true === fontManager.m_bUseKerning)
-            {
-                this.m_bUseKerning = ((this.m_pFaceInfo.face_flags & 64) != 0 ? true : false);
-            }
+			if (true === fontManager.m_bUseKerning)
+			{
+				this.m_bUseKerning = ((this.m_pFaceInfo.face_flags & 64) != 0 ? true : false);
+			}
 
-            if (0 != this.m_pFaceInfo.monochromeSizes.length)
+			if (0 != this.m_pFaceInfo.monochromeSizes.length)
 			{
 				this.fixed_sizes = [];
 				for (var i = this.m_pFaceInfo.monochromeSizes.length - 1; i >= 0; i--)
 				{
-                    this.fixed_sizes[this.m_pFaceInfo.monochromeSizes[i] >> 6] = true;
+					this.fixed_sizes[this.m_pFaceInfo.monochromeSizes[i] >> 6] = true;
 				}
 			}
-        }
+		}
 	}
+
+	CFontFile.prototype["GetFace"] = function()
+	{
+		return this.m_pFace;
+	};
+	CFontFile.prototype["GetHBFont"] = function()
+	{
+		return this.m_pHBFont;
+	};
+	CFontFile.prototype["SetHBFont"] = function(font)
+	{
+		this.m_pHBFont = font;
+	};
 
 	function CFontLoaderBySymbol()
 	{
@@ -1878,31 +1884,30 @@
 			if (!_fontFilePick)
 				return null;
 
-            return _fontFilePick.CacheGlyph(symbol, isRaster, isRasterDistances, workerVector, workerVectorX, workerVectorY, true);
+			return _fontFilePick.CacheGlyph(symbol, isRaster, isRasterDistances, workerVector, workerVectorX, workerVectorY, true);
 		};
 
 		this.ClearCache = function()
 		{
 			if (this.FontClearCache_checker)
 				return;
-            this.FontClearCache_checker = true;
+			this.FontClearCache_checker = true;
 			for (var font in this.FontFiles)
 				this.FontFiles[font].ClearCache();
-            delete this.FontClearCache_checker;
+			delete this.FontClearCache_checker;
 		};
 
 		this.ClearCacheNoAttack = function()
 		{
-            if (this.FontClearCacheNoAttack_checker)
-                return;
-            this.FontClearCacheNoAttack_checker = true;
-            for (var font in this.FontFiles)
-                this.FontFiles[font].ClearCacheNoAttack();
-            delete this.FontClearCacheNoAttack_checker;
+			if (this.FontClearCacheNoAttack_checker)
+				return;
+			this.FontClearCacheNoAttack_checker = true;
+			for (var font in this.FontFiles)
+				this.FontFiles[font].ClearCacheNoAttack();
+			delete this.FontClearCacheNoAttack_checker;
 		};
 	}
 
 	window['AscFonts'].EGlyphState = EGlyphState;
 	window['AscFonts'].CFontFile = CFontFile;
-    window['AscFonts'].onLoadModule();
 })(window);
