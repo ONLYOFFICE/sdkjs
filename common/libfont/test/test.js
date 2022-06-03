@@ -55,15 +55,19 @@ AscCommon.loadScript = function(url, onSuccess, onError)
     // Fire the loading
     document.head.appendChild(script);
 };
-AscFonts.onLoadModule = function()
+
+window.onLoadFontsModuleOld = window.onLoadFontsModule;
+window.onLoadFontsModule = function(window, undefined) 
 {
+    onLoadFontsModuleOld(window, undefined);
+
     AscFonts.g_fontManagerMeasurer = new AscFonts.CFontManager();
     AscFonts.g_fontManagerMeasurer.Initialize();
 
     AscFonts.g_fontManagerRenderer = new AscFonts.CFontManager();
     AscFonts.g_fontManagerRenderer.Initialize();
     AscFonts.g_fontManagerRenderer.SetHintsProps(true, true);
-};
+}
 
 AscCommon.isLeadingSurrogateChar = function(nCharCode)
 {
