@@ -16230,7 +16230,33 @@
 			return "@@AppName/@@Version";
 		};
 		CApp.prototype.setRequiredDefaults = function() {
-			this.AppVersion = this.getAppName();
+			this.Application = this.getAppName();
+		};
+		CApp.prototype.merge = function(oOtherApp) {
+			oOtherApp.Template !== null && (this.Template = oOtherApp.Template);
+			oOtherApp.TotalTime !== null && (this.TotalTime = oOtherApp.TotalTime);
+			oOtherApp.Words !== null && (this.Words = oOtherApp.Words);
+			oOtherApp.Application !== null && (this.Application = oOtherApp.Application);
+			oOtherApp.PresentationFormat !== null && (this.PresentationFormat = oOtherApp.PresentationFormat);
+			oOtherApp.Paragraphs !== null && (this.Paragraphs = oOtherApp.Paragraphs);
+			//oOtherApp.Slides !== null && (this.Slides = oOtherApp.Slides);
+			//oOtherApp.Notes !== null && (this.Notes = oOtherApp.Notes);
+			oOtherApp.HiddenSlides !== null && (this.HiddenSlides = oOtherApp.HiddenSlides);
+			oOtherApp.MMClips !== null && (this.MMClips = oOtherApp.MMClips);
+			oOtherApp.ScaleCrop !== null && (this.ScaleCrop = oOtherApp.ScaleCrop);
+			oOtherApp.Company !== null && (this.Company = oOtherApp.Company);
+			oOtherApp.LinksUpToDate !== null && (this.LinksUpToDate = oOtherApp.LinksUpToDate);
+			oOtherApp.SharedDoc !== null && (this.SharedDoc = oOtherApp.SharedDoc);
+			oOtherApp.HyperlinksChanged !== null && (this.HyperlinksChanged = oOtherApp.HyperlinksChanged);
+			oOtherApp.AppVersion !== null && (this.AppVersion = oOtherApp.AppVersion);
+
+			oOtherApp.Characters !== null && (this.Characters = oOtherApp.Characters);
+			oOtherApp.CharactersWithSpaces !== null && (this.CharactersWithSpaces = oOtherApp.CharactersWithSpaces);
+			oOtherApp.DocSecurity !== null && (this.DocSecurity = oOtherApp.DocSecurity);
+			oOtherApp.HyperlinkBase !== null && (this.HyperlinkBase = oOtherApp.HyperlinkBase);
+			oOtherApp.Lines !== null && (this.Lines = oOtherApp.Lines);
+			oOtherApp.Manager !== null && (this.Manager = oOtherApp.Manager);
+			oOtherApp.Pages !== null && (this.Pages = oOtherApp.Pages);
 		};
 		CApp.prototype.createDefaultPresentationEditor = function(nCountSlides, nCountThemes) {
 			this.TotalTime = 0;
@@ -16613,6 +16639,7 @@
 			if(oContext.presentation) {
 				let oAppToWrite = new CApp();
 				oAppToWrite.createDefaultPresentationEditor(oContext.getSlidesCount(), oContext.getSlideMastersCount());
+				oAppToWrite.merge(this);
 				oAppToWrite.toDrawingML(writer);
 			}
 			else {

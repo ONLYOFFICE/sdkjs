@@ -588,7 +588,12 @@ MasterSlide.prototype.toXml = function(writer) {
     writer.WriteXmlNullable(this.clrMap, "p:clrMap");
     writer.WriteXmlNullable(this.transition, "p:transition");
     let oContext = writer.context;
-    (new IdList("p:sldLayoutIdLst")).writeRIdList(writer, oContext.sldLayoutIdLst, "p:sldLayoutId");
+    let aRId = [];
+    for(let nId = 0; nId < oContext.sldLayoutIdLst.length; ++nId) {
+        aRId.push({rId: oContext.sldLayoutIdLst[nId], id: AscFormat.MIN_SLD_MASTER_ID + oContext.sldLayoutsCount + nId + 1})
+    }
+    oContext.sldLayoutsCount += (oContext.sldLayoutIdLst.length + 1);
+    (new IdList("p:sldLayoutIdLst")).writeRIdList(writer, aRId, "p:sldLayoutId");
     writer.WriteXmlNullable(this.timing, "p:timing");
     writer.WriteXmlNullable(this.hf, "p:hf");
     writer.WriteXmlNullable(this.txStyles, "p:txStyles");

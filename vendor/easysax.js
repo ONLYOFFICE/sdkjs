@@ -1689,6 +1689,7 @@ function XmlWriterContext(editorId){
     this.presentation = null;
     this.sldMasterIdLst = [];
     this.sldLayoutIdLst = [];
+    this.sldLayoutsCount = 0;
     this.notesMasterIdLst = [];
     this.handoutMasterIdLst = [];
     this.sldIdLst = [];
