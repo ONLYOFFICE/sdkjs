@@ -2008,7 +2008,6 @@ NumFormat.prototype =
 									
 								}
 							}
-							this.flagForLetersFormat = false;
 							var el = item.Lid.toLowerCase().split('-');
 							el = this.checkUpperAndLowerLoceles(el);
 							var defaultSecondPart = gc_oDefaultLocales[el[0]];
@@ -2022,7 +2021,6 @@ NumFormat.prototype =
 									this.LCID = Asc.g_oLcidNameToIdMap[defaultSecondPart];
 							}
 							if(this.LCID != null && this.LCID != 0) {
-								this.flagForLetersFormat = true;
 								if (item.currentEra != null)
 									this.bCurrentEraYear = item.currentEra;
 							}
@@ -2667,6 +2665,9 @@ NumFormat.prototype =
 			era = 'e';
 			dayOfWeek = 'a';
 		}
+
+		var bUseLettersFormat = true; // Флаг для написания формата цифрами или словами
+
         var nDecLength = this.aDecFormat.length;
         var nDecIndex = 0;
         var nFracLength = this.aFracFormat.length;
@@ -2735,14 +2736,34 @@ NumFormat.prototype =
             {
                 if(null != item.CurrencyString || null != item.Lid)
                 {
-					if(this.flagForLetersFormat == true)
-						res += "x16r2:formatCode16=";
+					var idToName = Asc.g_oLcidIdToNameMap[parseInt(item.Lid, 16)];
+					var nameToId = Asc.g_oLcidNameToIdMap[item.Lid];
+					var currentLid = "";
+					if (idToName != null || nameToId != null) {
+						if (bUseLettersFormat == true && nameToId != null && !Number.isNaN(nameToId)) {
+							// Пишем в буквенном формате
+							currentLid = Asc.g_oLcidIdToNameMap[nameToId];
+						} else if (bUseLettersFormat == true && idToName != null && !Number.isNaN(idToName)) {
+							// Пишем в буквенном
+							currentLid = idToName;
+						} else if (bUseLettersFormat == false && nameToId != null && !Number.isNaN(nameToId)) {
+							// Пивем в числовом формате
+							nameToId = nameToId.toString(16);
+							currentLid = nameToId;
+						} else if (bUseLettersFormat == false & idToName != null && !Number.isNaN(idToName)) {
+							// Пишем в числовом формате
+							currentLid = Asc.g_oLcidNameToIdMap[idToName].toString(16);
+						} else {
+							// Пишем как раньше по дефолту
+							currentLid = item.Lid;
+						}
+					}
                     res += "[$";
                     if(null != item.CurrencyString)
                         res += item.CurrencyString;
-					if (null != item.Lid) {
+					if (null != currentLid) {
 						res += "-";
-						res += item.Lid;
+						res += currentLid;
 					}
                     res += "]";
                 }
