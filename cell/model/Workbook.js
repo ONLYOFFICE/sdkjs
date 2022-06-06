@@ -10414,7 +10414,7 @@
 				if (!this.aProtectedRanges[i].contains(data.col, data.row)) {
 					continue;
 				}
-				if ((!this.aProtectedRanges[i].asc_isPassword() || this.aProtectedRanges[i]._isEnterPassword)) {
+				if (!this.aProtectedRanges[i].asc_isPassword() || this.aProtectedRanges[i]._isEnterPassword) {
 					callback && callback(true);
 					return;
 				} else if (this.aProtectedRanges[i].asc_isPassword()) {
