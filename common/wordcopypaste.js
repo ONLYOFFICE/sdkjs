@@ -6934,7 +6934,7 @@ PasteProcessor.prototype =
 
 					if (null == NumId && this.pasteInExcel !== true && !this.oMsoHeadStylesListMap[listId]) {
 						this.oMsoHeadStylesListMap[listId] = this._findElemFromMsoHeadStyle("@list", listName);
-						var _msoNum = this._tryGenerateNumberingFromMsoStyle(this.oMsoHeadStylesListMap[listId]);
+						var _msoNum = this._tryGenerateNumberingFromMsoStyle(this.oMsoHeadStylesListMap[listId], node);
 						if (_msoNum) {
 							NumId = _msoNum.GetId();
 						}
@@ -7519,7 +7519,7 @@ PasteProcessor.prototype =
 
 		return {type: resType, startPos: startPos};
 	},
-	_tryGenerateNumberingFromMsoStyle: function (aNumbering) {
+	_tryGenerateNumberingFromMsoStyle: function (aNumbering, node) {
 		//TODO mso-level-style-link - пока не парсил ссылку на стиль
 		/*@list l0:level1
 		{mso-level-style-link:"Р—Р°РіРѕР»РѕРІРѕРє 1";
@@ -7691,7 +7691,7 @@ PasteProcessor.prototype =
 
 				//text properties
 				if (nType !== Asc.c_oAscNumberingFormat.Bullet) {
-					var rPr = this._read_rPr_mso_numbering(curNumbering, msoLinkStyles);
+					var rPr = this._read_rPr_mso_numbering(curNumbering, msoLinkStyles, node);
 					if (rPr) {
 						res.SetTextPr(i-1, rPr);
 					}
@@ -7700,7 +7700,7 @@ PasteProcessor.prototype =
 		}
 		return res;
 	},
-	_read_rPr_mso_numbering: function (numberingProps, msoLinkStyles) {
+	_read_rPr_mso_numbering: function (numberingProps, msoLinkStyles, node) {
 
 		//пример того, что должно лежать в numberingProps:
 		/*	mso-list-template-ids:-1656974294;}
@@ -7821,8 +7821,7 @@ PasteProcessor.prototype =
 		if (text_decoration) {
 			if (-1 !== text_decoration.indexOf("underline")) {
 				underline = true;
-			} else if (-1 !== text_decoration.indexOf("none") && node.parentElement &&
-				node.parentElement.nodeName.toLowerCase() === "a") {
+			} else if (-1 !== text_decoration.indexOf("none") && node && node.parentElement && node.parentElement.nodeName && node.parentElement.nodeName.toLowerCase() === "a") {
 				underline = false;
 			}
 
