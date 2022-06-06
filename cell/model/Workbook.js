@@ -10411,10 +10411,13 @@
 		if (this.aProtectedRanges && this.aProtectedRanges.length) {
 			var aCheckHash = [];
 			for (var i = 0; i < this.aProtectedRanges.length; i++) {
-				if (!this.aProtectedRanges[i].asc_isPassword() || this.aProtectedRanges[i]._isEnterPassword) {
+				if (!this.aProtectedRanges[i].contains(data.col, data.row)) {
+					continue;
+				}
+				if ((!this.aProtectedRanges[i].asc_isPassword() || this.aProtectedRanges[i]._isEnterPassword)) {
 					callback && callback(true);
 					return;
-				} else if (this.aProtectedRanges[i].asc_isPassword() && this.aProtectedRanges[i].contains(data.col, data.row)) {
+				} else if (this.aProtectedRanges[i].asc_isPassword()) {
 					aCheckHash.push({
 						password: val,
 						salt: this.aProtectedRanges[i].saltValue,
