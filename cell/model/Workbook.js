@@ -10410,6 +10410,7 @@
 		var t = this;
 		if (this.aProtectedRanges && this.aProtectedRanges.length) {
 			var aCheckHash = [];
+			var checkRanges = [];
 			for (var i = 0; i < this.aProtectedRanges.length; i++) {
 				if (!this.aProtectedRanges[i].contains(data.col, data.row)) {
 					continue;
@@ -10418,6 +10419,7 @@
 					callback && callback(true);
 					return;
 				} else if (this.aProtectedRanges[i].asc_isPassword()) {
+					checkRanges.push(this.aProtectedRanges[i]);
 					aCheckHash.push({
 						password: val,
 						salt: this.aProtectedRanges[i].saltValue,
@@ -10429,8 +10431,8 @@
 			if (aCheckHash && aCheckHash.length) {
 				AscCommon.calculateProtectHash(aCheckHash, function (aHash) {
 					for (var i = 0; i < aHash.length; i++) {
-						if (aHash[i] === t.aProtectedRanges[i].hashValue) {
-							t.aProtectedRanges[i]._isEnterPassword = true;
+						if (aHash[i] === checkRanges[i].hashValue) {
+							checkRanges[i]._isEnterPassword = true;
 							callback && callback(true);
 							return;
 						}
