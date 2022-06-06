@@ -808,7 +808,7 @@ Because of this, the display is sometimes not correct.
     InitClass(DiagramData, CBaseFormatObject, AscDFH.historyitem_type_DiagramData);
 
     DiagramData.prototype.setDataModel = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DiagramDataDataModel, this.getDataModel(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DiagramDataDataModel, this.getDataModel(), oPr));
       this.dataModel = oPr;
       this.setParentToChild(oPr);
     }
@@ -880,31 +880,31 @@ Because of this, the display is sometimes not correct.
     InitClass(DataModel, CBaseFormatObject, AscDFH.historyitem_type_DataModel);
 
     DataModel.prototype.setBg = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DataModelBg, this.getBg(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DataModelBg, this.getBg(), oPr));
       this.bg = oPr;
       this.setParentToChild(oPr);
     }
 
     DataModel.prototype.setCxnLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DataModelCxnLst, this.getCxnLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DataModelCxnLst, this.getCxnLst(), oPr));
       this.cxnLst = oPr;
       this.setParentToChild(oPr);
     }
 
     DataModel.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DataModelExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DataModelExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     DataModel.prototype.setPtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DataModelPtLst, this.getPtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DataModelPtLst, this.getPtLst(), oPr));
       this.ptLst = oPr;
       this.setParentToChild(oPr);
     }
 
     DataModel.prototype.setWhole = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DataModelWhole, this.getWhole(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_DataModelWhole, this.getWhole(), oPr));
       this.whole = oPr;
       this.setParentToChild(oPr);
     }
@@ -1007,16 +1007,16 @@ Because of this, the display is sometimes not correct.
 
     CCommonDataList.prototype.addToLst = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.list.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_CCommonDataListAdd, nInsertIdx, [oPr], true));
-      this.list.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_CCommonDataListAdd, nInsertIdx, [oPr], true));
+      nInsertIdx === this.list.length ? this.list.push(oPr) : this.list.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     CCommonDataList.prototype.removeFromLst = function (nIdx) {
       if (nIdx > -1 && nIdx < this.list.length) {
         this.list[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_CCommonDataListRemove, nIdx, [this.list[nIdx]], false));
-        this.list.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_CCommonDataListRemove, nIdx, [this.list[nIdx]], false));
+        nIdx === this.list.length - 1 ? this.list.pop() : this.list.splice(nIdx, 1);
       }
     };
 
@@ -1149,52 +1149,52 @@ Because of this, the display is sometimes not correct.
     InitClass(Cxn, CBaseFormatObject, AscDFH.historyitem_type_Cxn);
 
     Cxn.prototype.setDestId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnDestId, this.getDestId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnDestId, this.getDestId(), pr));
       this.destId = pr;
     }
 
     Cxn.prototype.setDestOrd = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnDestOrd, this.getDestOrd(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnDestOrd, this.getDestOrd(), pr));
       this.destOrd = pr;
     }
 
     Cxn.prototype.setModelId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnModelId, this.getModelId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnModelId, this.getModelId(), pr));
       this.modelId = pr;
     }
 
     Cxn.prototype.setParTransId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnParTransId, this.getParTransId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnParTransId, this.getParTransId(), pr));
       this.parTransId = pr;
     }
 
     Cxn.prototype.setPresId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnPresId, this.getPresId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnPresId, this.getPresId(), pr));
       this.presId = pr;
     }
 
     Cxn.prototype.setSibTransId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnSibTransId, this.getSibTransId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnSibTransId, this.getSibTransId(), pr));
       this.sibTransId = pr;
     }
 
     Cxn.prototype.setSrcId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnSrcId, this.getSrcId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnSrcId, this.getSrcId(), pr));
       this.srcId = pr;
     }
 
     Cxn.prototype.setSrcOrd = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnSrcOrd, this.getSrcOrd(), pr)); // TODO: srcord, type is long maybe
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnSrcOrd, this.getSrcOrd(), pr)); // TODO: srcord, type is long maybe
       this.srcOrd = pr;
     }
 
     Cxn.prototype.setType = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnType, this.getType(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnType, this.getType(), pr));
       this.type = pr;
     }
 
     Cxn.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CxnExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CxnExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
@@ -1319,7 +1319,7 @@ Because of this, the display is sometimes not correct.
     InitClass(Ext, CBaseFormatObject, AscDFH.historyitem_type_Ext);
 
     Ext.prototype.setUri = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ExtUri, this.getUri(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ExtUri, this.getUri(), pr));
       this.uri = pr;
     }
 
@@ -1354,13 +1354,13 @@ Because of this, the display is sometimes not correct.
 
 
     BgFormat.prototype.setFill = function (oPr) {
-      oHistory.Add(new CChangeObjectNoId(this, AscDFH.historyitem_BgFormatFill, this.getFill(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObjectNoId(this, AscDFH.historyitem_BgFormatFill, this.getFill(), oPr));
       this.fill = oPr;
       this.handleUpdateFill();
     }
 
     BgFormat.prototype.setEffect = function (oPr) {
-      oHistory.Add(new CChangeObjectNoId(this, AscDFH.historyitem_BgFormatEffect, this.getEffect(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObjectNoId(this, AscDFH.historyitem_BgFormatEffect, this.getEffect(), oPr));
       this.effect = oPr;
       this.setParentToChild(oPr);
     }
@@ -1474,13 +1474,13 @@ Because of this, the display is sometimes not correct.
     InitClass(Whole, CBaseFormatObject, AscDFH.historyitem_type_Whole);
 
     Whole.prototype.setEffect = function (oPr) {
-      oHistory.Add(new CChangeObjectNoId(this, AscDFH.historyitem_WholeEffect, this.getEffect(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObjectNoId(this, AscDFH.historyitem_WholeEffect, this.getEffect(), oPr));
       this.effect = oPr;
       this.setParentToChild(oPr);
     }
 
     Whole.prototype.setLn = function (oPr) {
-      oHistory.Add(new CChangeObjectNoId(this, AscDFH.historyitem_WholeLn, this.getLn(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObjectNoId(this, AscDFH.historyitem_WholeLn, this.getLn(), oPr));
       this.ln = oPr;
       this.setParentToChild(oPr);
     }
@@ -1641,12 +1641,12 @@ Because of this, the display is sometimes not correct.
     };
 
     Point.prototype.setCxnId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PointCxnId, this.getCxnId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PointCxnId, this.getCxnId(), pr));
       this.cxnId = pr;
     }
 
     Point.prototype.setModelId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PointModelId, this.getModelId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PointModelId, this.getModelId(), pr));
       this.modelId = pr;
 
     }
@@ -1680,30 +1680,30 @@ Because of this, the display is sometimes not correct.
     }
 
     Point.prototype.setType = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PointType, this.getType(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PointType, this.getType(), pr));
       this.type = pr;
     }
 
     Point.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PointExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PointExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     Point.prototype.setPrSet = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PointPrSet, this.getPrSet(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PointPrSet, this.getPrSet(), oPr));
       this.prSet = oPr;
       this.setParentToChild(oPr);
     }
 
     Point.prototype.setSpPr = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PointSpPr, this.getSpPr(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PointSpPr, this.getSpPr(), oPr));
       this.spPr = oPr;
       this.setParentToChild(oPr);
     }
 
     Point.prototype.setT = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PointT, this.getT(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PointT, this.getT(), oPr));
       this.t = oPr;
       this.setParentToChild(oPr);
     }
@@ -2027,152 +2027,152 @@ Because of this, the display is sometimes not correct.
 
 
     PrSet.prototype.setCoherent3DOff = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCoherent3DOff, this.getCoherent3DOff(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCoherent3DOff, this.getCoherent3DOff(), pr));
       this.coherent3DOff = pr;
     }
 
     PrSet.prototype.setCsCatId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetCsCatId, this.getCsCatId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetCsCatId, this.getCsCatId(), pr));
       this.csCatId = pr;
     }
 
     PrSet.prototype.setCsTypeId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetCsTypeId, this.getCsTypeId(), pr))
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetCsTypeId, this.getCsTypeId(), pr))
       this.csTypeId = pr;
     }
 
     PrSet.prototype.setCustAng = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustAng, this.getCustAng(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustAng, this.getCustAng(), pr));
       this.custAng = pr;
     }
 
     PrSet.prototype.setCustFlipHor = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCustFlipHor, this.getCustFlipHor(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCustFlipHor, this.getCustFlipHor(), pr));
       this.custFlipHor = pr;
     }
 
     PrSet.prototype.setCustFlipVert = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCustFlipVert, this.getCustFlipVert(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCustFlipVert, this.getCustFlipVert(), pr));
       this.custFlipVert = pr;
     }
 
     PrSet.prototype.setCustLinFactNeighborX = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustLinFactNeighborX, this.getCustLinFactNeighborX(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustLinFactNeighborX, this.getCustLinFactNeighborX(), pr));
       this.custLinFactNeighborX = pr;
     }
 
     PrSet.prototype.setCustLinFactNeighborY = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustLinFactNeighborY, this.getCustLinFactNeighborY(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustLinFactNeighborY, this.getCustLinFactNeighborY(), pr));
       this.custLinFactNeighborY = pr;
     }
 
     PrSet.prototype.setCustLinFactX = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustLinFactX, this.getCustLinFactX(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustLinFactX, this.getCustLinFactX(), pr));
       this.custLinFactX = pr;
     }
 
     PrSet.prototype.setCustLinFactY = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustLinFactY, this.getCustLinFactY(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustLinFactY, this.getCustLinFactY(), pr));
       this.custLinFactY = pr;
     }
 
     PrSet.prototype.setCustRadScaleInc = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustRadScaleInc, this.getCustRadScaleInc(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustRadScaleInc, this.getCustRadScaleInc(), pr));
       this.custRadScaleInc = pr;
     }
 
     PrSet.prototype.setCustRadScaleRad = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustRadScaleRad, this.getCustRadScaleRad(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustRadScaleRad, this.getCustRadScaleRad(), pr));
       this.custRadScaleRad = pr;
     }
 
     PrSet.prototype.setCustScaleX = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustScaleX, this.getCustScaleX(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustScaleX, this.getCustScaleX(), pr));
       this.custScaleX = pr;
     }
 
     PrSet.prototype.setCustScaleY = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustScaleY, this.getCustScaleY(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustScaleY, this.getCustScaleY(), pr));
       this.custScaleY = pr;
     }
 
     PrSet.prototype.setCustSzX = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PrSetCustSzX, this.getCustSzX(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PrSetCustSzX, this.getCustSzX(), pr));
       this.custSzX = pr;
     }
 
     PrSet.prototype.setCustSzY = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PrSetCustSzY, this.getCustSzY(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PrSetCustSzY, this.getCustSzY(), pr));
       this.custSzY = pr;
     }
 
     PrSet.prototype.setCustT = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCustT, this.getCustT(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCustT, this.getCustT(), pr));
       this.custT = pr;
     }
 
     PrSet.prototype.setLoCatId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetLoCatId, this.getLoCatId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetLoCatId, this.getLoCatId(), pr));
       this.loCatId = pr;
     }
 
     PrSet.prototype.setLoTypeId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetLoTypeId, this.getLoTypeId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetLoTypeId, this.getLoTypeId(), pr));
       this.loTypeId = pr;
     }
 
     PrSet.prototype.setPhldr = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetPhldr, this.getPhldr(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetPhldr, this.getPhldr(), pr));
       this.phldr = pr;
     }
 
     PrSet.prototype.setPhldrT = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetPhldrT, this.getPhldrT(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetPhldrT, this.getPhldrT(), pr));
       this.phldrT = pr;
     }
 
     PrSet.prototype.setPresAssocID = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetPresAssocID, this.getPresAssocID(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetPresAssocID, this.getPresAssocID(), pr));
       this.presAssocID = pr;
     }
 
     PrSet.prototype.setPresName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetPresName, this.getPresName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetPresName, this.getPresName(), pr));
       this.presName = pr;
     }
     PrSet.prototype.setPresStyleCnt = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PrSetPresStyleCnt, this.getPresStyleCnt(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PrSetPresStyleCnt, this.getPresStyleCnt(), pr));
       this.presStyleCnt = pr;
     }
 
     PrSet.prototype.setPresStyleIdx = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PrSetPresStyleIdx, this.getPresStyleIdx(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PrSetPresStyleIdx, this.getPresStyleIdx(), pr));
       this.presStyleIdx = pr;
     }
 
     PrSet.prototype.setPresStyleLbl = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetPresStyleLbl, this.getPresStyleLbl(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetPresStyleLbl, this.getPresStyleLbl(), pr));
       this.presStyleLbl = pr;
     }
 
     PrSet.prototype.setQsCatId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetQsCatId, this.getQsCatId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetQsCatId, this.getQsCatId(), pr));
       this.qsCatId = pr;
     }
 
     PrSet.prototype.setQsTypeId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetQsTypeId, this.getQsTypeId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetQsTypeId, this.getQsTypeId(), pr));
       this.qsTypeId = pr;
     }
 
     PrSet.prototype.setStyle = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PrSetStyle, this.getStyle(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PrSetStyle, this.getStyle(), oPr));
       this.style = oPr;
       this.setParentToChild(oPr);
     }
 
     PrSet.prototype.setPresLayoutVars = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PrSetPresLayoutVars, this.getPresLayoutVars(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PrSetPresLayoutVars, this.getPresLayoutVars(), oPr));
       this.presLayoutVars = oPr;
       this.setParentToChild(oPr);
     }
@@ -2487,64 +2487,64 @@ Because of this, the display is sometimes not correct.
     InitClass(LayoutDef, CBaseFormatObject, AscDFH.historyitem_type_LayoutDef);
 
     LayoutDef.prototype.setDefStyle = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefDefStyle, this.getDefStyle(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefDefStyle, this.getDefStyle(), pr));
       this.defStyle = pr;
     }
 
     LayoutDef.prototype.setMinVer = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefMinVer, this.getMinVer(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefMinVer, this.getMinVer(), pr));
       this.minVer = pr;
     }
 
     LayoutDef.prototype.setUniqueId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefUniqueId, this.getUniqueId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefUniqueId, this.getUniqueId(), pr));
       this.uniqueId = pr;
     }
 
     LayoutDef.prototype.setCatLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefCatLst, this.getCatLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefCatLst, this.getCatLst(), oPr));
       this.catLst = oPr;
       this.setParentToChild(oPr);
     }
 
     LayoutDef.prototype.setClrData = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefClrData, this.getClrData(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefClrData, this.getClrData(), oPr));
       this.clrData = oPr;
       this.setParentToChild(oPr);
     }
 
     LayoutDef.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     LayoutDef.prototype.setLayoutNode = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefLayoutNode, this.getLayoutNode(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefLayoutNode, this.getLayoutNode(), oPr));
       this.layoutNode = oPr;
       this.setParentToChild(oPr);
     }
 
     LayoutDef.prototype.setSampData = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefSampData, this.getSampData(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefSampData, this.getSampData(), oPr));
       this.sampData = oPr;
       this.setParentToChild(oPr);
     }
 
     LayoutDef.prototype.setStyleData = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefStyleData, this.getStyleData(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefStyleData, this.getStyleData(), oPr));
       this.styleData = oPr;
       this.setParentToChild(oPr);
     }
 
     LayoutDef.prototype.setTitle = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefTitle, this.getTitle(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefTitle, this.getTitle(), oPr));
       this.title = oPr;
       this.setParentToChild(oPr);
     };
 
     LayoutDef.prototype.setDesc = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefDesc, this.getDesc(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefDesc, this.getDesc(), oPr));
       this.desc = oPr;
       this.setParentToChild(oPr);
     };
@@ -2739,12 +2739,12 @@ Because of this, the display is sometimes not correct.
     InitClass(SCat, CBaseFormatObject, AscDFH.historyitem_type_SCat);
 
     SCat.prototype.setPri = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_SCatPri, this.getPri(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_SCatPri, this.getPri(), pr));
       this.pri = pr;
     }
 
     SCat.prototype.setType = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_SCatType, this.getType(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_SCatType, this.getType(), pr));
       this.type = pr;
     }
 
@@ -2794,12 +2794,12 @@ Because of this, the display is sometimes not correct.
     InitClass(ClrData, CBaseFormatObject, AscDFH.historyitem_type_ClrData);
 
     ClrData.prototype.setUseDef = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_ClrDataUseDef, this.getUseDef(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_ClrDataUseDef, this.getUseDef(), pr));
       this.useDef = pr;
     }
 
     ClrData.prototype.setDataModel = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ClrDataDataModel, this.getDataModel(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ClrDataDataModel, this.getDataModel(), oPr));
       this.dataModel = oPr;
       this.setParentToChild(oPr);
     }
@@ -2866,12 +2866,12 @@ Because of this, the display is sometimes not correct.
     InitClass(Desc, CBaseFormatObject, AscDFH.historyitem_type_Desc);
 
     Desc.prototype.setLang = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_DescLang, this.getLang(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_DescLang, this.getLang(), pr));
       this.lang = pr;
     }
 
     Desc.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_DescVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_DescVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -2931,22 +2931,22 @@ Because of this, the display is sometimes not correct.
     InitClass(LayoutNode, CCommonDataList, AscDFH.historyitem_type_LayoutNode);
 
     LayoutNode.prototype.setChOrder = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_LayoutNodeChOrder, this.getChOrder(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_LayoutNodeChOrder, this.getChOrder(), pr));
       this.chOrder = pr;
     }
 
     LayoutNode.prototype.setMoveWith = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutNodeMoveWith, this.getMoveWith(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutNodeMoveWith, this.getMoveWith(), pr));
       this.moveWith = pr;
     }
 
     LayoutNode.prototype.setName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutNodeName, this.getName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutNodeName, this.getName(), pr));
       this.name = pr;
     }
 
     LayoutNode.prototype.setStyleLbl = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutNodeStyleLbl, this.getStyleLbl(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutNodeStyleLbl, this.getStyleLbl(), pr));
       this.styleLbl = pr;
     }
 
@@ -3104,33 +3104,33 @@ Because of this, the display is sometimes not correct.
     InitClass(Alg, CBaseFormatObject, AscDFH.historyitem_type_Alg);
 
     Alg.prototype.setRev = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AlgRev, this.getRev(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AlgRev, this.getRev(), pr));
       this.rev = pr;
     }
 
     Alg.prototype.setType = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AlgType, this.getType(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AlgType, this.getType(), pr));
       this.type = pr;
     }
 
     Alg.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AlgExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_AlgExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     Alg.prototype.addToLstParam = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.param.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_AlgAddParam, nInsertIdx, [oPr], true));
-      this.param.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_AlgAddParam, nInsertIdx, [oPr], true));
+      nInsertIdx === this.param.length ? this.param.push(oPr) : this.param.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     Alg.prototype.removeFromLstParam = function (nIdx) {
       if (nIdx > -1 && nIdx < this.param.length) {
         this.param[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_AlgRemoveParam, nIdx, [this.param[nIdx]], false));
-        this.param.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_AlgRemoveParam, nIdx, [this.param[nIdx]], false));
+        nIdx === this.param.length - 1 ? this.param.pop() : this.param.splice(nIdx, 1);
       }
     };
 
@@ -3374,182 +3374,182 @@ Because of this, the display is sometimes not correct.
     InitClass(ParameterVal, CBaseFormatObject, AscDFH.historyitem_type_ParameterVal);
 
     ParameterVal.prototype.setArrowheadStyle = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValArrowheadStyle, this.getArrowheadStyle(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValArrowheadStyle, this.getArrowheadStyle(), pr));
       this.arrowheadStyle = pr;
     }
 
     ParameterVal.prototype.setAutoTextRotation = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValAutoTextRotation, this.getAutoTextRotation(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValAutoTextRotation, this.getAutoTextRotation(), pr));
       this.autoTextRotation = pr;
     }
 
     ParameterVal.prototype.setBendPoint = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValBendPoint, this.getBendPoint(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValBendPoint, this.getBendPoint(), pr));
       this.bendPoint = pr;
     }
 
     ParameterVal.prototype.setBreakpoint = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValBreakpoint, this.getBreakpoint(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValBreakpoint, this.getBreakpoint(), pr));
       this.breakpoint = pr;
     }
 
     ParameterVal.prototype.setCenterShapeMapping = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValCenterShapeMapping, this.getCenterShapeMapping(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValCenterShapeMapping, this.getCenterShapeMapping(), pr));
       this.centerShapeMapping = pr;
     }
 
     ParameterVal.prototype.setChildAlignment = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValChildAlignment, this.getChildAlignment(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValChildAlignment, this.getChildAlignment(), pr));
       this.childAlignment = pr;
     }
 
     ParameterVal.prototype.setChildDirection = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValChildDirection, this.getChildDirection(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValChildDirection, this.getChildDirection(), pr));
       this.childDirection = pr;
     }
 
     ParameterVal.prototype.setConnectorDimension = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValConnectorDimension, this.getConnectorDimension(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValConnectorDimension, this.getConnectorDimension(), pr));
       this.connectorDimension = pr;
     }
 
     ParameterVal.prototype.setConnectorPoint = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValConnectorPoint, this.getConnectorPoint(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValConnectorPoint, this.getConnectorPoint(), pr));
       this.connectorPoint = pr;
     }
 
     ParameterVal.prototype.setConnectorRouting = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValConnectorRouting, this.getConnectorRouting(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValConnectorRouting, this.getConnectorRouting(), pr));
       this.connectorRouting = pr;
     }
 
     ParameterVal.prototype.setContinueDirection = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValContinueDirection, this.getContinueDirection(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValContinueDirection, this.getContinueDirection(), pr));
       this.continueDirection = pr;
     }
 
     ParameterVal.prototype.setDiagramHorizontalAlignment = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValDiagramHorizontalAlignment, this.getDiagramHorizontalAlignment(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValDiagramHorizontalAlignment, this.getDiagramHorizontalAlignment(), pr));
       this.diagramHorizontalAlignment = pr;
     }
 
     ParameterVal.prototype.setDiagramTextAlignment = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValDiagramTextAlignment, this.getDiagramTextAlignment(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValDiagramTextAlignment, this.getDiagramTextAlignment(), pr));
       this.diagramTextAlignment = pr;
     }
 
     ParameterVal.prototype.setFallbackDimension = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValFallbackDimension, this.getFallbackDimension(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValFallbackDimension, this.getFallbackDimension(), pr));
       this.fallbackDimension = pr;
     }
 
     ParameterVal.prototype.setFlowDirection = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValFlowDirection, this.getFlowDirection(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValFlowDirection, this.getFlowDirection(), pr));
       this.flowDirection = pr;
     }
 
     ParameterVal.prototype.setGrowDirection = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValGrowDirection, this.getGrowDirection(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValGrowDirection, this.getGrowDirection(), pr));
       this.growDirection = pr;
     }
 
     ParameterVal.prototype.setHierarchyAlignment = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValHierarchyAlignment, this.getHierarchyAlignment(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValHierarchyAlignment, this.getHierarchyAlignment(), pr));
       this.hierarchyAlignment = pr;
     }
 
     ParameterVal.prototype.setLinearDirection = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValLinearDirection, this.getLinearDirection(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValLinearDirection, this.getLinearDirection(), pr));
       this.linearDirection = pr;
     }
 
     ParameterVal.prototype.setNodeHorizontalAlignment = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValNodeHorizontalAlignment, this.getNodeHorizontalAlignment(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValNodeHorizontalAlignment, this.getNodeHorizontalAlignment(), pr));
       this.nodeHorizontalAlignment = pr;
     }
 
     ParameterVal.prototype.setNodeVerticalAlignment = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValNodeVerticalAlignment, this.getNodeVerticalAlignment(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValNodeVerticalAlignment, this.getNodeVerticalAlignment(), pr));
       this.nodeVerticalAlignment = pr;
     }
 
     ParameterVal.prototype.setOffset = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValOffset, this.getOffset(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValOffset, this.getOffset(), pr));
       this.offset = pr;
     }
 
     ParameterVal.prototype.setPyramidAccentPosition = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValPyramidAccentPosition, this.getPyramidAccentPosition(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValPyramidAccentPosition, this.getPyramidAccentPosition(), pr));
       this.pyramidAccentPosition = pr;
     }
 
     ParameterVal.prototype.setPyramidAccentTextMargin = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValPyramidAccentTextMargin, this.getPyramidAccentTextMargin(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValPyramidAccentTextMargin, this.getPyramidAccentTextMargin(), pr));
       this.pyramidAccentTextMargin = pr;
     }
 
     ParameterVal.prototype.setRotationPath = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValRotationPath, this.getRotationPath(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValRotationPath, this.getRotationPath(), pr));
       this.rotationPath = pr;
     }
 
     ParameterVal.prototype.setSecondaryChildAlignment = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValSecondaryChildAlignment, this.getSecondaryChildAlignment(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValSecondaryChildAlignment, this.getSecondaryChildAlignment(), pr));
       this.secondaryChildAlignment = pr;
     }
 
     ParameterVal.prototype.setSecondaryLinearDirection = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValSecondaryLinearDirection, this.getSecondaryLinearDirection(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValSecondaryLinearDirection, this.getSecondaryLinearDirection(), pr));
       this.secondaryLinearDirection = pr;
     }
 
     ParameterVal.prototype.setStartingElement = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValStartingElement, this.getStartingElement(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValStartingElement, this.getStartingElement(), pr));
       this.startingElement = pr;
     }
 
     ParameterVal.prototype.setTextAnchorHorizontal = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValTextAnchorHorizontal, this.getTextAnchorHorizontal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValTextAnchorHorizontal, this.getTextAnchorHorizontal(), pr));
       this.textAnchorHorizontal = pr;
     }
 
     ParameterVal.prototype.setTextAnchorVertical = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValTextAnchorVertical, this.getTextAnchorVertical(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValTextAnchorVertical, this.getTextAnchorVertical(), pr));
       this.textAnchorVertical = pr;
     }
 
     ParameterVal.prototype.setTextBlockDirection = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValTextBlockDirection, this.getTextBlockDirection(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValTextBlockDirection, this.getTextBlockDirection(), pr));
       this.textBlockDirection = pr;
     }
 
     ParameterVal.prototype.setTextDirection = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValTextDirection, this.getTextDirection(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValTextDirection, this.getTextDirection(), pr));
       this.textDirection = pr;
     }
 
     ParameterVal.prototype.setVerticalAlignment = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValVerticalAlignment, this.getVerticalAlignment(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValVerticalAlignment, this.getVerticalAlignment(), pr));
       this.verticalAlignment = pr;
     }
 
     ParameterVal.prototype.setBool = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_ParameterValBool, this.getBool(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_ParameterValBool, this.getBool(), pr));
       this.bool = pr;
     }
 
     ParameterVal.prototype.setDouble = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_ParameterValDouble, this.getDouble(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_ParameterValDouble, this.getDouble(), pr));
       this.double = pr;
     }
 
     ParameterVal.prototype.setInt = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValInt, this.getInt(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValInt, this.getInt(), pr));
       this.int = pr;
     }
 
     ParameterVal.prototype.setStr = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ParameterValStr, this.getStr(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ParameterValStr, this.getStr(), pr));
       this.str = pr;
     }
 
@@ -3755,12 +3755,12 @@ Because of this, the display is sometimes not correct.
     InitClass(Param, CBaseFormatObject, AscDFH.historyitem_type_Param);
 
     Param.prototype.setType = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParamType, this.getType(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParamType, this.getType(), pr));
       this.type = pr;
     }
 
     Param.prototype.setVal = function (oPr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ParamVal, this.getVal(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ParamVal, this.getVal(), oPr));
       this.val = oPr;
     }
 
@@ -3820,28 +3820,28 @@ Because of this, the display is sometimes not correct.
     InitClass(Choose, CBaseFormatObject, AscDFH.historyitem_type_Choose);
 
     Choose.prototype.setName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ChooseName, this.getName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ChooseName, this.getName(), pr));
       this.name = pr;
     }
 
     Choose.prototype.setElse = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ChooseElse, this.getElse(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ChooseElse, this.getElse(), oPr));
       this.else = oPr;
       this.setParentToChild(oPr);
     }
 
     Choose.prototype.addToLstIf = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.if.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ChooseAddToLstIf, nInsertIdx, [oPr], true));
-      this.if.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ChooseAddToLstIf, nInsertIdx, [oPr], true));
+      nInsertIdx === this.if.length ? this.if.push(oPr) : this.if.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     }
 
     Choose.prototype.removeFromLstIf = function (nIdx) {
       if (nIdx > -1 && nIdx < this.if.length) {
         this.if[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ChooseRemoveFromLstIf, nIdx, [this.if[nIdx]], false));
-        this.if.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ChooseRemoveFromLstIf, nIdx, [this.if[nIdx]], false));
+        nIdx === this.if.length - 1 ? this.if.pop() : this.if.splice(nIdx, 1);
       }
     }
 
@@ -3935,7 +3935,7 @@ Because of this, the display is sometimes not correct.
     InitClass(Else, CCommonDataList, AscDFH.historyitem_type_Else);
 
     Else.prototype.setName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ElseName, this.getName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ElseName, this.getName(), pr));
       this.name = pr;
     }
 
@@ -4083,91 +4083,91 @@ Because of this, the display is sometimes not correct.
 
     IteratorAttributes.prototype.addToLstAxis = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.axis.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IteratorAttributesAddAxis, nInsertIdx, [oPr], true));
-      this.axis.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IteratorAttributesAddAxis, nInsertIdx, [oPr], true));
+      nInsertIdx === this.axis.length ? this.axis.push(oPr) : this.axis.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     IteratorAttributes.prototype.removeFromLstAxis = function (nIdx) {
       if (nIdx > -1 && nIdx < this.axis.length) {
         this.axis[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IteratorAttributesRemoveAxis, nIdx, [this.axis[nIdx]], false));
-        this.axis.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IteratorAttributesRemoveAxis, nIdx, [this.axis[nIdx]], false));
+        nIdx === this.axis.length - 1 ? this.axis.pop() : this.axis.splice(nIdx, 1);
       }
     };
 
     IteratorAttributes.prototype.addToLstCnt = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.cnt.length, Math.max(0, nIdx));
-      oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesAddCnt, nInsertIdx, [oPr], true));
-      this.cnt.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesAddCnt, nInsertIdx, [oPr], true));
+      nInsertIdx === this.cnt.length ? this.cnt.push(oPr) : this.cnt.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     IteratorAttributes.prototype.removeFromLstCnt = function (nIdx) {
       if (nIdx > -1 && nIdx < this.cnt.length) {
         this.cnt[nIdx].setParent(null);
-        oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesRemoveCnt, nIdx, [this.cnt[nIdx]], false));
-        this.cnt.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesRemoveCnt, nIdx, [this.cnt[nIdx]], false));
+        nIdx === this.cnt.length - 1 ? this.cnt.pop() : this.cnt.splice(nIdx, 1);
       }
     };
 
     IteratorAttributes.prototype.addToLstHideLastTrans = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.hideLastTrans.length, Math.max(0, nIdx));
-      oHistory.Add(new AscDFH.CChangesDrawingsContentBool(this, AscDFH.historyitem_IteratorAttributesAddHideLastTrans, nInsertIdx, [oPr], true));
-      this.hideLastTrans.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new AscDFH.CChangesDrawingsContentBool(this, AscDFH.historyitem_IteratorAttributesAddHideLastTrans, nInsertIdx, [oPr], true));
+      nInsertIdx === this.hideLastTrans.length ? this.hideLastTrans.push(oPr) : this.hideLastTrans.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     IteratorAttributes.prototype.removeFromLstHideLastTrans = function (nIdx) {
       if (nIdx > -1 && nIdx < this.hideLastTrans.length) {
         this.hideLastTrans[nIdx].setParent(null);
-        oHistory.Add(new AscDFH.CChangesDrawingsContentBool(this, AscDFH.historyitem_IteratorAttributesRemoveHideLastTrans, nIdx, [this.hideLastTrans[nIdx]], false));
-        this.hideLastTrans.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new AscDFH.CChangesDrawingsContentBool(this, AscDFH.historyitem_IteratorAttributesRemoveHideLastTrans, nIdx, [this.hideLastTrans[nIdx]], false));
+        nIdx === this.hideLastTrans.length - 1 ? this.hideLastTrans.pop() : this.hideLastTrans.splice(nIdx, 1);
       }
     };
 
     IteratorAttributes.prototype.addToLstPtType = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.ptType.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IteratorAttributesAddPtType, nInsertIdx, [oPr], true));
-      this.ptType.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IteratorAttributesAddPtType, nInsertIdx, [oPr], true));
+      nInsertIdx === this.ptType.length ? this.ptType.push(oPr) : this.ptType.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     IteratorAttributes.prototype.removeFromLstPtType = function (nIdx) {
       if (nIdx > -1 && nIdx < this.ptType.length) {
         this.ptType[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IteratorAttributesRemovePtType, nIdx, [this.ptType[nIdx]], false));
-        this.ptType.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IteratorAttributesRemovePtType, nIdx, [this.ptType[nIdx]], false));
+        nIdx === this.ptType.length - 1 ? this.ptType.pop() : this.ptType.splice(nIdx, 1);
       }
     };
 
     IteratorAttributes.prototype.addToLstSt = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.st.length, Math.max(0, nIdx));
-      oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesAddSt, nInsertIdx, [oPr], true));
-      this.st.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesAddSt, nInsertIdx, [oPr], true));
+      nInsertIdx === this.st.length ? this.st.push(oPr) : this.st.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     IteratorAttributes.prototype.removeFromLstSt = function (nIdx) {
       if (nIdx > -1 && nIdx < this.st.length) {
         this.st[nIdx].setParent(null);
-        oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesRemoveSt, nIdx, [this.st[nIdx]], false));
-        this.st.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesRemoveSt, nIdx, [this.st[nIdx]], false));
+        nIdx === this.st.length - 1 ? this.st.pop() : this.st.splice(nIdx, 1);
       }
     };
 
     IteratorAttributes.prototype.addToLstStep = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.step.length, Math.max(0, nIdx));
-      oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesAddStep, nInsertIdx, [oPr], true));
-      this.step.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesAddStep, nInsertIdx, [oPr], true));
+      nInsertIdx === this.step.length ? this.step.push(oPr) : this.step.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     IteratorAttributes.prototype.removeFromLstStep = function (nIdx) {
       if (nIdx > -1 && nIdx < this.step.length) {
         this.step[nIdx].setParent(null);
-        oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesRemoveStep, nIdx, [this.step[nIdx]], false));
-        this.step.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new AscDFH.CChangesDrawingsContentLong(this, AscDFH.historyitem_IteratorAttributesRemoveStep, nIdx, [this.step[nIdx]], false));
+        nIdx === this.step.length - 1 ? this.step.pop() : this.step.splice(nIdx, 1);
       }
     };
 
@@ -4213,7 +4213,7 @@ Because of this, the display is sometimes not correct.
     InitClass(AxisType, CBaseFormatObject, AscDFH.historyitem_type_AxisType);
 
     AxisType.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AxisTypeVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AxisTypeVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -4238,7 +4238,7 @@ Because of this, the display is sometimes not correct.
     InitClass(ElementType, CBaseFormatObject, AscDFH.historyitem_type_ElementType);
 
     ElementType.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ElementTypeVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ElementTypeVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -4293,37 +4293,37 @@ Because of this, the display is sometimes not correct.
     InitClass(FunctionValue, CBaseFormatObject, AscDFH.historyitem_type_FunctionValue);
 
     FunctionValue.prototype.setAnimLvlStr = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueAnimLvlStr, this.getAnimLvlStr(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueAnimLvlStr, this.getAnimLvlStr(), pr));
       this.animLvlStr = pr;
     }
 
     FunctionValue.prototype.setAnimOneStr = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueAnimOneStr, this.getAnimOneStr(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueAnimOneStr, this.getAnimOneStr(), pr));
       this.animOneStr = pr;
     }
 
     FunctionValue.prototype.setDirection = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueDirection, this.getDirection(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueDirection, this.getDirection(), pr));
       this.direction = pr;
     }
 
     FunctionValue.prototype.setHierBranchStyle = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueHierBranchStyle, this.getHierBranchStyle(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueHierBranchStyle, this.getHierBranchStyle(), pr));
       this.hierBranchStyle = pr;
     }
 
     FunctionValue.prototype.setResizeHandlesStr = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueResizeHandlesStr, this.getResizeHandlesStr(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueResizeHandlesStr, this.getResizeHandlesStr(), pr));
       this.resizeHandlesStr = pr;
     }
 
     FunctionValue.prototype.setBool = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_FunctionValueBool, this.getBool(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_FunctionValueBool, this.getBool(), pr));
       this.bool = pr;
     }
 
     FunctionValue.prototype.setInt = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueInt, this.getInt(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueInt, this.getInt(), pr));
       this.int = pr;
     }
 
@@ -4421,47 +4421,47 @@ Because of this, the display is sometimes not correct.
     InitClass(If, IteratorAttributes, AscDFH.historyitem_type_If);
 
     If.prototype.setArg = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfArg, this.getArg(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfArg, this.getArg(), pr));
       this.arg = pr;
     }
 
     If.prototype.setFunc = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_IfFunc, this.getFunc(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_IfFunc, this.getFunc(), pr));
       this.func = pr;
     }
 
     If.prototype.setRef = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfRef, this.getRef(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfRef, this.getRef(), pr));
       this.ref = pr;
     }
 
     If.prototype.setName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfName, this.getName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfName, this.getName(), pr));
       this.name = pr;
     }
 
     If.prototype.setOp = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_IfOp, this.getOp(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_IfOp, this.getOp(), pr));
       this.op = pr;
     }
 
     If.prototype.setVal = function (oPr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfVal, this.getVal(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfVal, this.getVal(), oPr));
       this.val = oPr;
     }
 
     If.prototype.addToLstList = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.list.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IfAddList, nInsertIdx, [oPr], true));
-      this.list.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IfAddList, nInsertIdx, [oPr], true));
+      nInsertIdx === this.list.length ? this.list.push(oPr) : this.list.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     If.prototype.removeFromLstList = function (nIdx) {
       if (nIdx > -1 && nIdx < this.list.length) {
         this.list[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IfRemoveList, nIdx, [this.list[nIdx]], false));
-        this.list.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IfRemoveList, nIdx, [this.list[nIdx]], false));
+        nIdx === this.list.length - 1 ? this.list.pop() : this.list.splice(nIdx, 1);
       }
     };
 
@@ -4918,64 +4918,64 @@ Because of this, the display is sometimes not correct.
     InitClass(Constr, CBaseFormatObject, AscDFH.historyitem_type_Constr);
 
     Constr.prototype.setFact = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_ConstrFact, this.getFact(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_ConstrFact, this.getFact(), pr));
       this.fact = pr;
     }
 
     Constr.prototype.setFor = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrFor, this.getFor(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrFor, this.getFor(), pr));
       this.for = pr;
     }
 
     Constr.prototype.setForName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ConstrForName, this.getForName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ConstrForName, this.getForName(), pr));
       this.forName = pr;
     }
 
     Constr.prototype.setOp = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrOp, this.getOp(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrOp, this.getOp(), pr));
       this.op = pr;
     }
 
     Constr.prototype.setPtType = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ConstrPtType, this.getPtType(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ConstrPtType, this.getPtType(), oPr));
       this.ptType = oPr;
       this.setParentToChild(oPr);
     }
 
     Constr.prototype.setRefFor = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrRefFor, this.getRefFor(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrRefFor, this.getRefFor(), pr));
       this.refFor = pr;
     }
 
     Constr.prototype.setRefForName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ConstrRefForName, this.getRefForName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ConstrRefForName, this.getRefForName(), pr));
       this.refForName = pr;
     }
 
     Constr.prototype.setRefPtType = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ConstrRefPtType, this.getRefPtType(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ConstrRefPtType, this.getRefPtType(), oPr));
       this.refPtType = oPr;
       this.setParentToChild(oPr);
     }
 
     Constr.prototype.setRefType = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrRefType, this.getRefType(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrRefType, this.getRefType(), pr));
       this.refType = pr;
     }
 
     Constr.prototype.setType = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrType, this.getType(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrType, this.getType(), pr));
       this.type = pr;
     }
 
     Constr.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_ConstrVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_ConstrVal, this.getVal(), pr));
       this.val = pr;
     }
 
     Constr.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ConstrExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ConstrExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
@@ -5630,7 +5630,7 @@ Because of this, the display is sometimes not correct.
     InitClass(PresOf, IteratorAttributes, AscDFH.historyitem_type_PresOf);
 
     PresOf.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PresOfExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PresOfExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
@@ -5778,43 +5778,43 @@ Because of this, the display is sometimes not correct.
     InitClass(Rule, CBaseFormatObject, AscDFH.historyitem_type_Rule);
 
     Rule.prototype.setFact = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_RuleFact, this.getFact(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_RuleFact, this.getFact(), pr));
       this.fact = pr;
     }
 
     Rule.prototype.setFor = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_RuleFor, this.getFor(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_RuleFor, this.getFor(), pr));
       this.for = pr;
     }
 
     Rule.prototype.setForName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_RuleForName, this.getForName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_RuleForName, this.getForName(), pr));
       this.forName = pr;
     }
 
     Rule.prototype.setMax = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_RuleMax, this.getMax(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_RuleMax, this.getMax(), pr));
       this.max = pr;
     }
 
     Rule.prototype.setType = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_RuleType, this.getType(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_RuleType, this.getType(), pr));
       this.type = pr;
     }
 
     Rule.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_RuleVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_RuleVal, this.getVal(), pr));
       this.val = pr;
     }
 
     Rule.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_RuleExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_RuleExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     Rule.prototype.setPtType = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_RulePtType, this.getPtType(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_RulePtType, this.getPtType(), oPr));
       this.ptType = oPr;
       this.setParentToChild(oPr);
     }
@@ -5948,48 +5948,48 @@ Because of this, the display is sometimes not correct.
     InitClass(SShape, CBaseFormatObject, AscDFH.historyitem_type_SShape);
 
     SShape.prototype.setBlip = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_SShapeBlip, this.getBlip(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_SShapeBlip, this.getBlip(), pr));
       this.blip = pr;
     }
 
     SShape.prototype.setBlipPhldr = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_SShapeBlipPhldr, this.getBlipPhldr(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_SShapeBlipPhldr, this.getBlipPhldr(), pr));
       this.blipPhldr = pr;
     }
 
     SShape.prototype.setHideGeom = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_SShapeHideGeom, this.getHideGeom(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_SShapeHideGeom, this.getHideGeom(), pr));
       this.hideGeom = pr;
     }
 
     SShape.prototype.setLkTxEntry = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_SShapeLkTxEntry, this.getLkTxEntry(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_SShapeLkTxEntry, this.getLkTxEntry(), pr));
       this.lkTxEntry = pr;
     }
 
     SShape.prototype.setRot = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_SShapeRot, this.getRot(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_SShapeRot, this.getRot(), pr));
       this.rot = pr;
     }
 
     SShape.prototype.setType = function (oPr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_SShapeType, this.getType(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_SShapeType, this.getType(), oPr));
       this.type = oPr;
     }
 
     SShape.prototype.setZOrderOff = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_SShapeZOrderOff, this.getZOrderOff(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_SShapeZOrderOff, this.getZOrderOff(), pr));
       this.zOrderOff = pr;
     }
 
     SShape.prototype.setAdjLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SShapeAdjLst, this.getAdjLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SShapeAdjLst, this.getAdjLst(), oPr));
       this.adjLst = oPr;
       this.setParentToChild(oPr);
     }
 
     SShape.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SShapeExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SShapeExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
@@ -6119,12 +6119,12 @@ Because of this, the display is sometimes not correct.
     InitClass(Adj, CBaseFormatObject, AscDFH.historyitem_type_Adj);
 
     Adj.prototype.setIdx = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AdjIdx, this.getIdx(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AdjIdx, this.getIdx(), pr));
       this.idx = pr;
     }
 
     Adj.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_AdjVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_AdjVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -6209,55 +6209,55 @@ Because of this, the display is sometimes not correct.
     InitClass(VarLst, CBaseFormatObject, AscDFH.historyitem_type_VarLst);
 
     VarLst.prototype.setAnimLvl = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstAnimLvl, this.getAnimLvl(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstAnimLvl, this.getAnimLvl(), oPr));
       this.animLvl = oPr;
       this.setParentToChild(oPr);
     }
 
     VarLst.prototype.setAnimOne = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstAnimOne, this.getAnimOne(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstAnimOne, this.getAnimOne(), oPr));
       this.animOne = oPr;
       this.setParentToChild(oPr);
     }
 
     VarLst.prototype.setBulletEnabled = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstBulletEnabled, this.getBulletEnabled(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstBulletEnabled, this.getBulletEnabled(), oPr));
       this.bulletEnabled = oPr;
       this.setParentToChild(oPr);
     }
 
     VarLst.prototype.setChMax = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstChMax, this.getChMax(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstChMax, this.getChMax(), oPr));
       this.chMax = oPr;
       this.setParentToChild(oPr);
     }
 
     VarLst.prototype.setChPref = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstChPref, this.getChPref(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstChPref, this.getChPref(), oPr));
       this.chPref = oPr;
       this.setParentToChild(oPr);
     }
 
     VarLst.prototype.setDir = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstDir, this.getDir(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstDir, this.getDir(), oPr));
       this.dir = oPr;
       this.setParentToChild(oPr);
     }
 
     VarLst.prototype.setHierBranch = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstHierBranch, this.getHierBranch(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstHierBranch, this.getHierBranch(), oPr));
       this.hierBranch = oPr;
       this.setParentToChild(oPr);
     }
 
     VarLst.prototype.setOrgChart = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstOrgChart, this.getOrgChart(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstOrgChart, this.getOrgChart(), oPr));
       this.orgChart = oPr;
       this.setParentToChild(oPr);
     }
 
     VarLst.prototype.setResizeHandles = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstResizeHandles, this.getResizeHandles(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstResizeHandles, this.getResizeHandles(), oPr));
       this.resizeHandles = oPr;
       this.setParentToChild(oPr);
     }
@@ -6430,7 +6430,7 @@ Because of this, the display is sometimes not correct.
     InitClass(AnimLvl, CBaseFormatObject, AscDFH.historyitem_type_AnimLvl);
 
     AnimLvl.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AnimLvlVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AnimLvlVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -6463,7 +6463,7 @@ Because of this, the display is sometimes not correct.
     InitClass(AnimOne, CBaseFormatObject, AscDFH.historyitem_type_AnimOne);
 
     AnimOne.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AnimOneVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AnimOneVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -6496,7 +6496,7 @@ Because of this, the display is sometimes not correct.
     InitClass(BulletEnabled, CBaseFormatObject, AscDFH.historyitem_type_BulletEnabled);
 
     BulletEnabled.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_BulletEnabledVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_BulletEnabledVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -6529,7 +6529,7 @@ Because of this, the display is sometimes not correct.
     InitClass(ChMax, CBaseFormatObject, AscDFH.historyitem_type_ChMax);
 
     ChMax.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ChMaxVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ChMaxVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -6564,7 +6564,7 @@ Because of this, the display is sometimes not correct.
     InitClass(ChPref, CBaseFormatObject, AscDFH.historyitem_type_ChPref);
 
     ChPref.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ChPrefVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ChPrefVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -6598,7 +6598,7 @@ Because of this, the display is sometimes not correct.
     InitClass(DiagramDirection, CBaseFormatObject, AscDFH.historyitem_type_DiagramDirection);
 
     DiagramDirection.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_DiagramDirectionVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_DiagramDirectionVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -6633,7 +6633,7 @@ Because of this, the display is sometimes not correct.
     InitClass(HierBranch, CBaseFormatObject, AscDFH.historyitem_type_HierBranch);
 
     HierBranch.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_HierBranchVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_HierBranchVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -6667,7 +6667,7 @@ Because of this, the display is sometimes not correct.
     InitClass(OrgChart, CBaseFormatObject, AscDFH.historyitem_type_OrgChart);
 
     OrgChart.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_OrgChartVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_OrgChartVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -6701,7 +6701,7 @@ Because of this, the display is sometimes not correct.
     InitClass(ResizeHandles, CBaseFormatObject, AscDFH.historyitem_type_ResizeHandles);
 
     ResizeHandles.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ResizeHandlesVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ResizeHandlesVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -6750,27 +6750,27 @@ Because of this, the display is sometimes not correct.
     InitClass(ForEach, IteratorAttributes, AscDFH.historyitem_type_ForEach);
 
     ForEach.prototype.setName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ForEachName, this.getName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ForEachName, this.getName(), pr));
       this.name = pr;
     }
 
     ForEach.prototype.setRef = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ForEachRef, this.getRef(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ForEachRef, this.getRef(), pr));
       this.ref = pr;
     }
 
     ForEach.prototype.addToLstList = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.list.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ForEachAddList, nInsertIdx, [oPr], true));
-      this.list.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ForEachAddList, nInsertIdx, [oPr], true));
+      nInsertIdx === this.list.length ? this.list.push(oPr) : this.list.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     ForEach.prototype.removeFromLstList = function (nIdx) {
       if (nIdx > -1 && nIdx < this.list.length) {
         this.list[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ForEachRemoveList, nIdx, [this.list[nIdx]], false));
-        this.list.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ForEachRemoveList, nIdx, [this.list[nIdx]], false));
+        nIdx === this.list.length - 1 ? this.list.pop() : this.list.splice(nIdx, 1);
       }
     };
 
@@ -6925,12 +6925,12 @@ Because of this, the display is sometimes not correct.
     InitClass(SampData, CBaseFormatObject, AscDFH.historyitem_type_SampData);
 
     SampData.prototype.setUseDef = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_SampDataUseDef, this.getUseDef(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_SampDataUseDef, this.getUseDef(), pr));
       this.useDef = pr;
     }
 
     SampData.prototype.setDataModel = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SampDataDataModel, this.getDataModel(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SampDataDataModel, this.getDataModel(), oPr));
       this.dataModel = oPr;
       this.setParentToChild(oPr);
     }
@@ -6997,12 +6997,12 @@ Because of this, the display is sometimes not correct.
     InitClass(StyleData, CBaseFormatObject, AscDFH.historyitem_type_StyleData);
 
     StyleData.prototype.setUseDef = function (pr) {
-      oHistory.Add(new CChangeBool(this, AscDFH.historyitem_StyleDataUseDef, this.getUseDef(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_StyleDataUseDef, this.getUseDef(), pr));
       this.useDef = pr;
     }
 
     StyleData.prototype.setDataModel = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDataDataModel, this.getDataModel(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDataDataModel, this.getDataModel(), oPr));
       this.dataModel = oPr;
       this.setParentToChild(oPr);
     }
@@ -7070,12 +7070,12 @@ Because of this, the display is sometimes not correct.
     InitClass(DiagramTitle, CBaseFormatObject, AscDFH.historyitem_type_DiagramTitle);
 
     DiagramTitle.prototype.setLang = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_DiagramTitleLang, this.getLang(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_DiagramTitleLang, this.getLang(), pr));
       this.lang = pr;
     }
 
     DiagramTitle.prototype.setVal = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_DiagramTitleVal, this.getVal(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_DiagramTitleVal, this.getVal(), pr));
       this.val = pr;
     }
 
@@ -7171,64 +7171,64 @@ Because of this, the display is sometimes not correct.
     InitClass(LayoutDefHdr, CBaseFormatObject, AscDFH.historyitem_type_LayoutDefHdr);
 
     LayoutDefHdr.prototype.setDefStyle = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefHdrDefStyle, this.getDefStyle(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefHdrDefStyle, this.getDefStyle(), pr));
       this.defStyle = pr;
     }
 
     LayoutDefHdr.prototype.setMinVer = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefHdrMinVer, this.getMinVer(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefHdrMinVer, this.getMinVer(), pr));
       this.minVer = pr;
     }
 
     LayoutDefHdr.prototype.setResId = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_LayoutDefHdrResId, this.getResId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_LayoutDefHdrResId, this.getResId(), pr));
       this.resId = pr;
     }
 
     LayoutDefHdr.prototype.setUniqueId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefHdrUniqueId, this.getUniqueId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefHdrUniqueId, this.getUniqueId(), pr));
       this.uniqueId = pr;
     }
 
     LayoutDefHdr.prototype.setCatLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefHdrCatLst, this.getCatLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefHdrCatLst, this.getCatLst(), oPr));
       this.catLst = oPr;
       this.setParentToChild(oPr);
     }
 
     LayoutDefHdr.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefHdrExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefHdrExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     LayoutDefHdr.prototype.addToLstTitle = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.title.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_LayoutDefHdrAddTitle, nInsertIdx, [oPr], true));
-      this.title.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_LayoutDefHdrAddTitle, nInsertIdx, [oPr], true));
+      nInsertIdx === this.title.length ? this.title.push(oPr) : this.title.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     LayoutDefHdr.prototype.removeFromLstTitle = function (nIdx) {
       if (nIdx > -1 && nIdx < this.title.length) {
         this.title[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_LayoutDefHdrRemoveTitle, nIdx, [this.title[nIdx]], false));
-        this.title.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_LayoutDefHdrRemoveTitle, nIdx, [this.title[nIdx]], false));
+        nIdx === this.title.length - 1 ? this.title.pop() : this.title.splice(nIdx, 1);
       }
     };
 
     LayoutDefHdr.prototype.addToLstDesc = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.desc.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_LayoutDefHdrAddDesc, nInsertIdx, [oPr], true));
-      this.desc.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_LayoutDefHdrAddDesc, nInsertIdx, [oPr], true));
+      nInsertIdx === this.desc.length ? this.desc.push(oPr) : this.desc.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     LayoutDefHdr.prototype.removeFromLstDesc = function (nIdx) {
       if (nIdx > -1 && nIdx < this.desc.length) {
         this.desc[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_LayoutDefHdrRemoveDesc, nIdx, [this.desc[nIdx]], false));
-        this.desc.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_LayoutDefHdrRemoveDesc, nIdx, [this.desc[nIdx]], false));
+        nIdx === this.desc.length - 1 ? this.desc.pop() : this.desc.splice(nIdx, 1);
       }
     };
 
@@ -7303,22 +7303,22 @@ Because of this, the display is sometimes not correct.
     InitClass(RelIds, CBaseFormatObject, AscDFH.historyitem_type_RelIds);
 
     RelIds.prototype.setCs = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_RelIdsCs, this.getCs(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_RelIdsCs, this.getCs(), pr));
       this.cs = pr;
     }
 
     RelIds.prototype.setDm = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_RelIdsDm, this.getDm(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_RelIdsDm, this.getDm(), pr));
       this.dm = pr;
     }
 
     RelIds.prototype.setLo = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_RelIdsLo, this.getLo(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_RelIdsLo, this.getLo(), pr));
       this.lo = pr;
     }
 
     RelIds.prototype.setQs = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_RelIdsQs, this.getQs(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_RelIdsQs, this.getQs(), pr));
       this.qs = pr;
     }
 
@@ -7424,43 +7424,43 @@ Because of this, the display is sometimes not correct.
     InitClass(ColorsDef, CBaseFormatObject, AscDFH.historyitem_type_ColorsDef);
 
     ColorsDef.prototype.setMinVer = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorsDefMinVer, this.getMinVer(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorsDefMinVer, this.getMinVer(), pr));
       this.minVer = pr;
     }
 
     ColorsDef.prototype.setUniqueId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorsDefUniqueId, this.getUniqueId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorsDefUniqueId, this.getUniqueId(), pr));
       this.uniqueId = pr;
     }
 
     ColorsDef.prototype.setCatLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefCatLst, this.getCatLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefCatLst, this.getCatLst(), oPr));
       this.catLst = oPr;
       this.setParentToChild(oPr);
     }
 
     ColorsDef.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     ColorsDef.prototype.setDesc = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefDesc, this.getDesc(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefDesc, this.getDesc(), oPr));
       this.desc = oPr;
       this.setParentToChild(oPr);
     };
 
     ColorsDef.prototype.setTitle = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefTitle, this.getTitle(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefTitle, this.getTitle(), oPr));
       this.title = oPr;
       this.setParentToChild(oPr);
     };
 
     ColorsDef.prototype.addToLstStyleLbl = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.styleLbl.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangesDrawingsContentStyleLbl(this, AscDFH.historyitem_ColorsDefAddStyleLbl, nInsertIdx, [oPr], true));
-      this.styleLbl.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangesDrawingsContentStyleLbl(this, AscDFH.historyitem_ColorsDefAddStyleLbl, nInsertIdx, [oPr], true));
+      nInsertIdx === this.styleLbl.length ? this.styleLbl.push(oPr) : this.styleLbl.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
       this.styleLblByName[oPr.name] = oPr;
     };
@@ -7468,8 +7468,8 @@ Because of this, the display is sometimes not correct.
     ColorsDef.prototype.removeFromLstStyleLbl = function (nIdx) {
       if (nIdx > -1 && nIdx < this.styleLbl.length) {
         this.styleLbl[nIdx].setParent(null);
-        oHistory.Add(new CChangesDrawingsContentStyleLbl(this, AscDFH.historyitem_ColorsDefRemoveStyleLbl, nIdx, [this.styleLbl[nIdx]], false));
-        var deleteObj = this.styleLbl.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangesDrawingsContentStyleLbl(this, AscDFH.historyitem_ColorsDefRemoveStyleLbl, nIdx, [this.styleLbl[nIdx]], false));
+        var deleteObj = nIdx === this.styleLbl.length - 1 ? this.styleLbl.pop() : this.styleLbl.splice(nIdx, 1);
         delete this.styleLblByName[deleteObj[0].name];
       }
     };
@@ -7618,48 +7618,48 @@ Because of this, the display is sometimes not correct.
     InitClass(ColorDefStyleLbl, CBaseFormatObject, AscDFH.historyitem_type_ColorDefStyleLbl);
 
     ColorDefStyleLbl.prototype.setName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorDefStyleLblName, this.getName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorDefStyleLblName, this.getName(), pr));
       this.name = pr;
     }
 
     ColorDefStyleLbl.prototype.setEffectClrLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblEffectClrLst, this.getEffectClrLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblEffectClrLst, this.getEffectClrLst(), oPr));
       this.effectClrLst = oPr;
       this.setParentToChild(oPr);
     }
 
     ColorDefStyleLbl.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     ColorDefStyleLbl.prototype.setFillClrLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblFillClrLst, this.getFillClrLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblFillClrLst, this.getFillClrLst(), oPr));
       this.fillClrLst = oPr;
       this.setParentToChild(oPr);
     }
 
     ColorDefStyleLbl.prototype.setLinClrLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblLinClrLst, this.getLinClrLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblLinClrLst, this.getLinClrLst(), oPr));
       this.linClrLst = oPr;
       this.setParentToChild(oPr);
     }
 
     ColorDefStyleLbl.prototype.setTxEffectClrLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblTxEffectClrLst, this.getTxEffectClrLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblTxEffectClrLst, this.getTxEffectClrLst(), oPr));
       this.txEffectClrLst = oPr;
       this.setParentToChild(oPr);
     }
 
     ColorDefStyleLbl.prototype.setTxFillClrLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblTxFillClrLst, this.getTxFillClrLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblTxFillClrLst, this.getTxFillClrLst(), oPr));
       this.txFillClrLst = oPr;
       this.setParentToChild(oPr);
     }
 
     ColorDefStyleLbl.prototype.setTxLinClrLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblTxLinClrLst, this.getTxLinClrLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorDefStyleLblTxLinClrLst, this.getTxLinClrLst(), oPr));
       this.txLinClrLst = oPr;
       this.setParentToChild(oPr);
     }
@@ -7801,12 +7801,12 @@ Because of this, the display is sometimes not correct.
     InitClass(CCommonDataClrList, CBaseFormatObject, AscDFH.historyitem_type_CCommonDataClrList);
 
     CCommonDataClrList.prototype.setHueDir = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CCommonDataClrListHueDir, this.getHueDir(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CCommonDataClrListHueDir, this.getHueDir(), pr));
       this.hueDir = pr;
     }
 
     CCommonDataClrList.prototype.setMeth = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CCommonDataClrListMeth, this.getMeth(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CCommonDataClrListMeth, this.getMeth(), pr));
       this.meth = pr;
     }
 
@@ -7820,15 +7820,15 @@ Because of this, the display is sometimes not correct.
 
     CCommonDataClrList.prototype.addToLst = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.list.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangesContentNoId(this, AscDFH.historyitem_CCommonDataClrListAdd, nInsertIdx, [oPr], true));
-      this.list.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangesContentNoId(this, AscDFH.historyitem_CCommonDataClrListAdd, nInsertIdx, [oPr], true));
+      nInsertIdx === this.list.length ? this.list.push(oPr) : this.list.splice(nInsertIdx, 0, oPr);
     };
 
     CCommonDataClrList.prototype.removeFromLst = function (nIdx) {
       if (nIdx > -1 && nIdx < this.list.length) {
         this.list[nIdx].setParent(null);
-        oHistory.Add(new CChangesContentNoId(this, AscDFH.historyitem_CCommonDataClrListRemove, nIdx, [this.list[nIdx]], false));
-        this.list.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangesContentNoId(this, AscDFH.historyitem_CCommonDataClrListRemove, nIdx, [this.list[nIdx]], false));
+        nIdx === this.list.length - 1 ? this.list.pop() : this.list.splice(nIdx, 1);
       }
     };
 
@@ -7888,12 +7888,12 @@ Because of this, the display is sometimes not correct.
     InitClass(ClrLst, CCommonDataClrList, AscDFH.historyitem_type_ClrLst);
 
     ClrLst.prototype.setHueDir = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ClrLstHueDir, this.getHueDir(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ClrLstHueDir, this.getHueDir(), pr));
       this.hueDir = pr;
     }
 
     ClrLst.prototype.setMeth = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ClrLstMeth, this.getMeth(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ClrLstMeth, this.getMeth(), pr));
       this.meth = pr;
     }
 
@@ -8008,59 +8008,59 @@ Because of this, the display is sometimes not correct.
     InitClass(ColorsDefHdr, CBaseFormatObject, AscDFH.historyitem_type_ColorsDefHdr);
 
     ColorsDefHdr.prototype.setMinVer = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorsDefHdrMinVer, this.getMinVer(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorsDefHdrMinVer, this.getMinVer(), pr));
       this.minVer = pr;
     }
 
     ColorsDefHdr.prototype.setResId = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ColorsDefHdrResId, this.getResId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ColorsDefHdrResId, this.getResId(), pr));
       this.resId = pr;
     }
 
     ColorsDefHdr.prototype.setUniqueId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorsDefHdrUniqueId, this.getUniqueId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ColorsDefHdrUniqueId, this.getUniqueId(), pr));
       this.uniqueId = pr;
     }
 
     ColorsDefHdr.prototype.setCatLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefHdrCatLst, this.getCatLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefHdrCatLst, this.getCatLst(), oPr));
       this.catLst = oPr;
       this.setParentToChild(oPr);
     }
 
     ColorsDefHdr.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefHdrExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ColorsDefHdrExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     ColorsDefHdr.prototype.addToLstTitle = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.title.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ColorsDefHdrAddTitle, nInsertIdx, [oPr], true));
-      this.title.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ColorsDefHdrAddTitle, nInsertIdx, [oPr], true));
+      nInsertIdx === this.title.length ? this.title.push(oPr) : this.title.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     ColorsDefHdr.prototype.removeFromLstTitle = function (nIdx) {
       if (nIdx > -1 && nIdx < this.title.length) {
         this.title[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ColorsDefHdrRemoveTitle, nIdx, [this.title[nIdx]], false));
-        this.title.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ColorsDefHdrRemoveTitle, nIdx, [this.title[nIdx]], false));
+        nIdx === this.title.length - 1 ? this.title.pop() : this.title.splice(nIdx, 1);
       }
     };
 
     ColorsDefHdr.prototype.addToLstDesc = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.desc.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ColorsDefHdrAddDesc, nInsertIdx, [oPr], true));
-      this.desc.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ColorsDefHdrAddDesc, nInsertIdx, [oPr], true));
+      nInsertIdx === this.desc.length ? this.desc.push(oPr) : this.desc.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     ColorsDefHdr.prototype.removeFromLstDesc = function (nIdx) {
       if (nIdx > -1 && nIdx < this.desc.length) {
         this.desc[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ColorsDefHdrRemoveDesc, nIdx, [this.desc[nIdx]], false));
-        this.desc.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ColorsDefHdrRemoveDesc, nIdx, [this.desc[nIdx]], false));
+        nIdx === this.desc.length - 1 ? this.desc.pop() : this.desc.splice(nIdx, 1);
       }
     };
 
@@ -8155,57 +8155,57 @@ Because of this, the display is sometimes not correct.
     InitClass(StyleDef, CBaseFormatObject, AscDFH.historyitem_type_StyleDef);
 
     StyleDef.prototype.setMinVer = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefMinVer, this.getMinVer(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefMinVer, this.getMinVer(), pr));
       this.minVer = pr;
     }
 
     StyleDef.prototype.setUniqueId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefUniqueId, this.getUniqueId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefUniqueId, this.getUniqueId(), pr));
       this.uniqueId = pr;
     }
 
     StyleDef.prototype.setCatLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefCatLst, this.getCatLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefCatLst, this.getCatLst(), oPr));
       this.catLst = oPr;
       this.setParentToChild(oPr);
     }
 
     StyleDef.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     StyleDef.prototype.setScene3d = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefScene3d, this.getScene3d(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefScene3d, this.getScene3d(), oPr));
       this.scene3d = oPr;
       this.setParentToChild(oPr);
     }
 
     StyleDef.prototype.setTitle = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefTitle, this.getTitle(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefTitle, this.getTitle(), oPr));
       this.title = oPr;
       this.setParentToChild(oPr);
     }
 
     StyleDef.prototype.setDesc = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefDesc, this.getDesc(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefDesc, this.getDesc(), oPr));
       this.desc = oPr;
       this.setParentToChild(oPr);
     }
 
     StyleDef.prototype.addToLstStyleLbl = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.styleLbl.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefAddStyleLbl, nInsertIdx, [oPr], true));
-      this.styleLbl.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefAddStyleLbl, nInsertIdx, [oPr], true));
+      nInsertIdx === this.styleLbl.length ? this.styleLbl.push(oPr) : this.styleLbl.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     StyleDef.prototype.removeFromLstStyleLbl = function (nIdx) {
       if (nIdx > -1 && nIdx < this.styleLbl.length) {
         this.styleLbl[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefRemoveStyleLbl, nIdx, [this.styleLbl[nIdx]], false));
-        this.styleLbl.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefRemoveStyleLbl, nIdx, [this.styleLbl[nIdx]], false));
+        nIdx === this.styleLbl.length - 1 ? this.styleLbl.pop() : this.styleLbl.splice(nIdx, 1);
       }
     };
 
@@ -8354,25 +8354,25 @@ Because of this, the display is sometimes not correct.
     InitClass(Scene3d, CBaseFormatObject, AscDFH.historyitem_type_Scene3d);
 
     Scene3d.prototype.setBackdrop = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Scene3dBackdrop, this.getBackdrop(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Scene3dBackdrop, this.getBackdrop(), oPr));
       this.backdrop = oPr;
       this.setParentToChild(oPr);
     }
 
     Scene3d.prototype.setCamera = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Scene3dCamera, this.getCamera(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Scene3dCamera, this.getCamera(), oPr));
       this.camera = oPr;
       this.setParentToChild(oPr);
     }
 
     Scene3d.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Scene3dExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Scene3dExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     Scene3d.prototype.setLightRig = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Scene3dLightRig, this.getLightRig(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Scene3dLightRig, this.getLightRig(), oPr));
       this.lightRig = oPr;
       this.setParentToChild(oPr);
     }
@@ -8478,36 +8478,36 @@ Because of this, the display is sometimes not correct.
     InitClass(StyleDefStyleLbl, CBaseFormatObject, AscDFH.historyitem_type_StyleDefStyleLbl);
 
     StyleDefStyleLbl.prototype.setName = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefStyleLblName, this.getName(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefStyleLblName, this.getName(), pr));
       this.name = pr;
     }
 
     StyleDefStyleLbl.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefStyleLblExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefStyleLblExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     StyleDefStyleLbl.prototype.setScene3d = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefStyleLblScene3d, this.getScene3d(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefStyleLblScene3d, this.getScene3d(), oPr));
       this.scene3d = oPr;
       this.setParentToChild(oPr);
     }
 
     StyleDefStyleLbl.prototype.setSp3d = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefStyleLblSp3d, this.getSp3d(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefStyleLblSp3d, this.getSp3d(), oPr));
       this.sp3d = oPr;
       this.setParentToChild(oPr);
     }
 
     StyleDefStyleLbl.prototype.setStyle = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefStyleLblStyle, this.getStyle(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefStyleLblStyle, this.getStyle(), oPr));
       this.style = oPr;
       // this.setParentToChild(oPr); TODO: fix set Parent
     }
 
     StyleDefStyleLbl.prototype.setTxPr = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefStyleLblTxPr, this.getTxPr(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefStyleLblTxPr, this.getTxPr(), oPr));
       this.txPr = oPr;
       this.setParentToChild(oPr);
     }
@@ -8627,25 +8627,25 @@ Because of this, the display is sometimes not correct.
     InitClass(Backdrop, CBaseFormatObject, AscDFH.historyitem_type_Backdrop);
 
     Backdrop.prototype.setAnchor = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropAnchor, this.getAnchor(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropAnchor, this.getAnchor(), oPr));
       this.anchor = oPr;
       this.setParentToChild(oPr);
     }
 
     Backdrop.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     Backdrop.prototype.setNorm = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropNorm, this.getNorm(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropNorm, this.getNorm(), oPr));
       this.norm = oPr;
       this.setParentToChild(oPr);
     }
 
     Backdrop.prototype.setUp = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropUp, this.getUp(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_BackdropUp, this.getUp(), oPr));
       this.up = oPr;
       this.setParentToChild(oPr);
     }
@@ -8725,12 +8725,12 @@ Because of this, the display is sometimes not correct.
     InitClass(Coordinate, CBaseFormatObject, AscDFH.historyitem_type_Coordinate);
 
     Coordinate.prototype.setCoordinateUnqualified = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CoordinateCoordinateUnqualified, this.getCoordinateUnqualified(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CoordinateCoordinateUnqualified, this.getCoordinateUnqualified(), pr));
       this.coordinateUnqualified = pr;
     }
 
     Coordinate.prototype.setUniversalMeasure = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CoordinateUniversalMeasure, this.getUniversalMeasure(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CoordinateUniversalMeasure, this.getUniversalMeasure(), pr));
       this.universalMeasure = pr;
     }
 
@@ -8770,17 +8770,17 @@ Because of this, the display is sometimes not correct.
     InitClass(BackdropAnchor, CBaseFormatObject, AscDFH.historyitem_type_BackdropAnchor);
 
     BackdropAnchor.prototype.setX = function (oPr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropAnchorX, this.getX(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropAnchorX, this.getX(), oPr));
       this.x = oPr;
     }
 
     BackdropAnchor.prototype.setY = function (oPr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropAnchorY, this.getY(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropAnchorY, this.getY(), oPr));
       this.y = oPr;
     }
 
     BackdropAnchor.prototype.setZ = function (oPr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropAnchorZ, this.getZ(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropAnchorZ, this.getZ(), oPr));
       this.z = oPr;
     }
 
@@ -8949,17 +8949,17 @@ Because of this, the display is sometimes not correct.
     InitClass(BackdropNorm, CBaseFormatObject, AscDFH.historyitem_type_BackdropNorm);
 
     BackdropNorm.prototype.setDx = function (oPr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropNormDx, this.getDx(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropNormDx, this.getDx(), oPr));
       this.dx = oPr;
     }
 
     BackdropNorm.prototype.setDy = function (oPr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropNormDy, this.getDy(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropNormDy, this.getDy(), oPr));
       this.dy = oPr;
     }
 
     BackdropNorm.prototype.setDz = function (oPr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropNormDz, this.getDz(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropNormDz, this.getDz(), oPr));
       this.dz = oPr;
     }
 
@@ -9011,17 +9011,17 @@ Because of this, the display is sometimes not correct.
     InitClass(BackdropUp, CBaseFormatObject, AscDFH.historyitem_type_BackdropUp);
 
     BackdropUp.prototype.setDx = function (oPr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropUpDx, this.getDx(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropUpDx, this.getDx(), oPr));
       this.dx = oPr;
     }
 
     BackdropUp.prototype.setDy = function (oPr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropUpDy, this.getDy(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropUpDy, this.getDy(), oPr));
       this.dy = oPr;
     }
 
     BackdropUp.prototype.setDz = function (oPr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropUpDz, this.getDz(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropUpDz, this.getDz(), oPr));
       this.dz = oPr;
     }
 
@@ -9077,22 +9077,22 @@ Because of this, the display is sometimes not correct.
     InitClass(Camera, CBaseFormatObject, AscDFH.historyitem_type_Camera);
 
     Camera.prototype.setFov = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_CameraFov, this.getFov(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_CameraFov, this.getFov(), pr));
       this.fov = pr;
     }
 
     Camera.prototype.setPrst = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CameraPrst, this.getPrst(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CameraPrst, this.getPrst(), pr));
       this.prst = pr;
     }
 
     Camera.prototype.setZoom = function (pr) {
-      oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_CameraZoom, this.getZoom(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_CameraZoom, this.getZoom(), pr));
       this.zoom = pr;
     }
 
     Camera.prototype.setRot = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CameraRot, this.getRot(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_CameraRot, this.getRot(), oPr));
       this.rot = oPr;
       this.setParentToChild(oPr);
     }
@@ -9177,17 +9177,17 @@ Because of this, the display is sometimes not correct.
     InitClass(Rot, CBaseFormatObject, AscDFH.historyitem_type_Rot);
 
     Rot.prototype.setLat = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_RotLat, this.getLat(), pr))
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_RotLat, this.getLat(), pr))
       this.lat = pr;
     }
 
     Rot.prototype.setLon = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_RotLon, this.getLon(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_RotLon, this.getLon(), pr));
       this.lon = pr;
     }
 
     Rot.prototype.setRev = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_RotRev, this.getRev(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_RotRev, this.getRev(), pr));
       this.rev = pr;
     }
 
@@ -9246,17 +9246,17 @@ Because of this, the display is sometimes not correct.
     InitClass(LightRig, CBaseFormatObject, AscDFH.historyitem_type_LightRig);
 
     LightRig.prototype.setDir = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_LightRigDir, this.getDir(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_LightRigDir, this.getDir(), pr));
       this.dir = pr;
     }
 
     LightRig.prototype.setRig = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_LightRigRig, this.getRig(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_LightRigRig, this.getRig(), pr));
       this.rig = pr;
     }
 
     LightRig.prototype.setRot = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LightRigRot, this.getRot(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LightRigRot, this.getRot(), oPr));
       this.rot = oPr;
       this.setParentToChild(oPr);
     }
@@ -9364,51 +9364,51 @@ Because of this, the display is sometimes not correct.
     InitClass(Sp3d, CBaseFormatObject, AscDFH.historyitem_type_Sp3d);
 
     Sp3d.prototype.setContourW = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_Sp3dContourW, this.getContourW(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_Sp3dContourW, this.getContourW(), pr));
       this.contourW = pr;
     }
 
     Sp3d.prototype.setExtrusionH = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_Sp3dExtrusionH, this.getExtrusionH(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_Sp3dExtrusionH, this.getExtrusionH(), pr));
       this.extrusionH = pr;
     }
 
     Sp3d.prototype.setPrstMaterial = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_Sp3dPrstMaterial, this.getPrstMaterial(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_Sp3dPrstMaterial, this.getPrstMaterial(), pr));
       this.prstMaterial = pr;
     }
 
     Sp3d.prototype.setZ = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dZ, this.getZ(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dZ, this.getZ(), oPr));
       this.z = oPr;
     }
 
     Sp3d.prototype.setBevelB = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dBevelB, this.getBevelB(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dBevelB, this.getBevelB(), oPr));
       this.bevelB = oPr;
       this.setParentToChild(oPr);
     }
 
     Sp3d.prototype.setBevelT = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dBevelT, this.getBevelT(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dBevelT, this.getBevelT(), oPr));
       this.bevelT = oPr;
       this.setParentToChild(oPr);
     }
 
     Sp3d.prototype.setContourClr = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dContourClr, this.getContourClr(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dContourClr, this.getContourClr(), oPr));
       this.contourClr = oPr;
       this.setParentToChild(oPr);
     }
 
     Sp3d.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     Sp3d.prototype.setExtrusionClr = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dExtrusionClr, this.getExtrusionClr(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_Sp3dExtrusionClr, this.getExtrusionClr(), oPr));
       this.extrusionClr = oPr;
       this.setParentToChild(oPr);
     }
@@ -9486,7 +9486,7 @@ Because of this, the display is sometimes not correct.
     InitClass(ContourClr, CBaseFormatObject, AscDFH.historyitem_type_ContourClr);
 
     ContourClr.prototype.setColor = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ContourClrColor, this.getColor(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ContourClrColor, this.getColor(), oPr));
       this.color = oPr;
       this.setParentToChild(oPr);
     }
@@ -9514,7 +9514,7 @@ Because of this, the display is sometimes not correct.
     InitClass(ExtrusionClr, CBaseFormatObject, AscDFH.historyitem_type_ExtrusionClr);
 
     ExtrusionClr.prototype.setColor = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ExtrusionClrColor, this.getColor(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ExtrusionClrColor, this.getColor(), oPr));
       this.color = oPr;
       this.setParentToChild(oPr);
     }
@@ -9552,17 +9552,17 @@ Because of this, the display is sometimes not correct.
     InitClass(Bevel, CBaseFormatObject, AscDFH.historyitem_type_Bevel);
 
     Bevel.prototype.setH = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BevelH, this.getH(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BevelH, this.getH(), pr));
       this.h = pr;
     }
 
     Bevel.prototype.setPrst = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BevelPrst, this.getPrst(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BevelPrst, this.getPrst(), pr));
       this.prst = pr;
     }
 
     Bevel.prototype.setW = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BevelW, this.getW(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BevelW, this.getW(), pr));
       this.w = pr;
     }
 
@@ -9615,13 +9615,13 @@ Because of this, the display is sometimes not correct.
     InitClass(TxPr, CBaseFormatObject, AscDFH.historyitem_type_TxPr);
 
     TxPr.prototype.setFlatTx = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TxPrFlatTx, this.getFlatTx(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TxPrFlatTx, this.getFlatTx(), oPr));
       this.flatTx = oPr;
       this.setParentToChild(oPr);
     }
 
     TxPr.prototype.setSp3d = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TxPrSp3d, this.getSp3d(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_TxPrSp3d, this.getSp3d(), oPr));
       this.sp3d = oPr;
       this.setParentToChild(oPr);
     }
@@ -9656,7 +9656,7 @@ Because of this, the display is sometimes not correct.
     InitClass(FlatTx, CBaseFormatObject, AscDFH.historyitem_type_FlatTx);
 
     FlatTx.prototype.setZ = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_FlatTxZ, this.getZ(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_FlatTxZ, this.getZ(), oPr));
       this.z = oPr;
     }
 
@@ -9727,59 +9727,59 @@ Because of this, the display is sometimes not correct.
     InitClass(StyleDefHdr, CBaseFormatObject, AscDFH.historyitem_type_StyleDefHdr);
 
     StyleDefHdr.prototype.setMinVer = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefHdrMinVer, this.getMinVer(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefHdrMinVer, this.getMinVer(), pr));
       this.minVer = pr;
     }
 
     StyleDefHdr.prototype.setResId = function (pr) {
-      oHistory.Add(new CChangeLong(this, AscDFH.historyitem_StyleDefHdrResId, this.getResId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_StyleDefHdrResId, this.getResId(), pr));
       this.resId = pr;
     }
 
     StyleDefHdr.prototype.setUniqueId = function (pr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefHdrUniqueId, this.getUniqueId(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_StyleDefHdrUniqueId, this.getUniqueId(), pr));
       this.uniqueId = pr;
     }
 
     StyleDefHdr.prototype.setCatLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefHdrCatLst, this.getCatLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefHdrCatLst, this.getCatLst(), oPr));
       this.catLst = oPr;
       this.setParentToChild(oPr);
     }
 
     StyleDefHdr.prototype.setExtLst = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefHdrExtLst, this.getExtLst(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_StyleDefHdrExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
     }
 
     StyleDefHdr.prototype.addToLstDesc = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.desc.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefHdrAddDesc, nInsertIdx, [oPr], true));
-      this.desc.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefHdrAddDesc, nInsertIdx, [oPr], true));
+      nInsertIdx === this.desc.length ? this.desc.push(oPr) : this.desc.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     StyleDefHdr.prototype.removeFromLstDesc = function (nIdx) {
       if (nIdx > -1 && nIdx < this.desc.length) {
         this.desc[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefHdrRemoveDesc, nIdx, [this.desc[nIdx]], false));
-        this.desc.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefHdrRemoveDesc, nIdx, [this.desc[nIdx]], false));
+        nIdx === this.desc.length - 1 ? this.desc.pop() : this.desc.splice(nIdx, 1);
       }
     };
 
     StyleDefHdr.prototype.addToLstList = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.list.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefHdrAddList, nInsertIdx, [oPr], true));
-      this.list.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefHdrAddList, nInsertIdx, [oPr], true));
+      nInsertIdx === this.list.length ? this.list.push(oPr) : this.list.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     };
 
     StyleDefHdr.prototype.removeFromLstList = function (nIdx) {
       if (nIdx > -1 && nIdx < this.list.length) {
         this.list[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefHdrRemoveList, nIdx, [this.list[nIdx]], false));
-        this.list.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_StyleDefHdrRemoveList, nIdx, [this.list[nIdx]], false));
+        nIdx === this.list.length - 1 ? this.list.pop() : this.list.splice(nIdx, 1);
       }
     };
 
@@ -9847,23 +9847,23 @@ Because of this, the display is sometimes not correct.
     InitClass(ShapeSmartArtInfo, CBaseFormatObject, AscDFH.historyitem_type_ShapeSmartArtInfo);
 
     ShapeSmartArtInfo.prototype.setShapePoint = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ShapeSmartArtInfoShapePoint, this.shapePoint, oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ShapeSmartArtInfoShapePoint, this.shapePoint, oPr));
       this.shapePoint = oPr;
       this.setParentToChild(oPr);
     }
 
     ShapeSmartArtInfo.prototype.addToLstContentPoint = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.contentPoint.length, Math.max(0, nIdx));
-      oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ShapeSmartArtInfoAddLstContentPoint, nInsertIdx, [oPr], true));
-      this.contentPoint.splice(nInsertIdx, 0, oPr);
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ShapeSmartArtInfoAddLstContentPoint, nInsertIdx, [oPr], true));
+      nInsertIdx === this.contentPoint.length ? this.contentPoint.push(oPr) : this.contentPoint.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
     }
 
     ShapeSmartArtInfo.prototype.removeFromLstContentPoint = function (nIdx) {
       if (nIdx > -1 && nIdx < this.contentPoint.length) {
         this.contentPoint[nIdx].setParent(null);
-        oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ShapeSmartArtInfoRemoveLstContentPoint, nIdx, [this.contentPoint[nIdx]], false));
-        this.contentPoint.splice(nIdx, 1);
+        oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ShapeSmartArtInfoRemoveLstContentPoint, nIdx, [this.contentPoint[nIdx]], false));
+        nIdx === this.contentPoint.length - 1 ? this.contentPoint.pop() : this.contentPoint.splice(nIdx, 1);
       }
     }
 
@@ -10500,36 +10500,36 @@ Because of this, the display is sometimes not correct.
 
 
     SmartArt.prototype.setParent = function (parent) {
-      History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SmartArtParent, this.parent, parent));
+      oHistory.CanAddChanges() && oHistory.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SmartArtParent, this.parent, parent));
       this.parent = parent;
     };
     SmartArt.prototype.setColorsDef = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtColorsDef, this.getColorsDef(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtColorsDef, this.getColorsDef(), oPr));
       this.colorsDef = oPr;
       oPr.setParent(this);
     };
     SmartArt.prototype.setType = function (oPr) {
-      oHistory.Add(new CChangeString(this, AscDFH.historyitem_SmartArtType, this.type, oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_SmartArtType, this.type, oPr));
       this.type = oPr;
     };
 
     SmartArt.prototype.setDrawing = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtDrawing, this.getDrawing(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtDrawing, this.getDrawing(), oPr));
       this.drawing = oPr;
       oPr.setParent(this);
     };
     SmartArt.prototype.setLayoutDef = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtLayoutDef, this.getLayoutDef(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtLayoutDef, this.getLayoutDef(), oPr));
       this.layoutDef = oPr;
       oPr.setParent(this);
     };
     SmartArt.prototype.setDataModel = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtDataModel, this.getDataModel(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtDataModel, this.getDataModel(), oPr));
       this.dataModel = oPr;
       oPr.setParent(this);
     };
     SmartArt.prototype.setStyleDef = function (oPr) {
-      oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtStyleDef, this.getStyleDef(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtStyleDef, this.getStyleDef(), oPr));
       this.styleDef = oPr;
       oPr.setParent(this);
     };
@@ -11190,7 +11190,7 @@ Because of this, the display is sometimes not correct.
 
     SmartArtNode.prototype.addToLstChildren = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.children.length, Math.max(0, nIdx));
-      this.children.splice(nInsertIdx, 0, oPr);
+      nInsertIdx === this.children.length ? this.children.push(oPr) : this.children.splice(nInsertIdx, 0, oPr);
       oPr.depth = this.depth + 1;
       oPr.setParent(this);
     }
@@ -11198,7 +11198,7 @@ Because of this, the display is sometimes not correct.
     SmartArtNode.prototype.removeFromLstChildren = function (nIdx) {
       if (nIdx > -1 && nIdx < this.children.length) {
         this.children[nIdx].setParent(null);
-        this.children.splice(nIdx, 1);
+        nIdx === this.children.length - 1 ? this.children.pop() : this.children.splice(nIdx, 1);
       }
     }
 
@@ -11437,17 +11437,17 @@ Because of this, the display is sometimes not correct.
 
     SmartArtNodeData.prototype.addToLstSibPoint = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.sibPoint.length, Math.max(0, nIdx));
-      this.sibPoint.splice(nInsertIdx, 0, oPr);
+      nInsertIdx === this.sibPoint.length ? this.sibPoint.push(oPr) : this.sibPoint.splice(nInsertIdx, 0, oPr);
     }
 
     SmartArtNodeData.prototype.addToLstNormPoint = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.normPoint.length, Math.max(0, nIdx));
-      this.normPoint.splice(nInsertIdx, 0, oPr);
+      nInsertIdx === this.normPoint.length ? this.normPoint.push(oPr) : this.normPoint.splice(nInsertIdx, 0, oPr);
     }
 
     SmartArtNodeData.prototype.addToLstParPoint = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.parPoint.length, Math.max(0, nIdx));
-      this.parPoint.splice(nInsertIdx, 0, oPr);
+      nInsertIdx === this.parPoint.length ? this.parPoint.push(oPr) : this.parPoint.splice(nInsertIdx, 0, oPr);
     }
 
     SmartArtNodeData.prototype.setDocPoint = function (oPr) {
@@ -11456,7 +11456,7 @@ Because of this, the display is sometimes not correct.
 
     SmartArtNodeData.prototype.addToLstAsstPoint = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.asstPoint.length, Math.max(0, nIdx));
-      this.asstPoint.splice(nInsertIdx, 0, oPr);
+      nInsertIdx === this.asstPoint.length ? this.asstPoint.push(oPr) : this.asstPoint.splice(nInsertIdx, 0, oPr);
     }
 
     SmartArtNodeData.prototype.setAsstPoint = function (oPr) {
@@ -11539,25 +11539,25 @@ Because of this, the display is sometimes not correct.
 
     SmartArtNodeData.prototype.addToLstShapes = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.shapes.length, Math.max(0, nIdx));
-      this.shapes.splice(nInsertIdx, 0, oPr);
+      nInsertIdx === this.shapes.length ? this.shapes.push(oPr) : this.shapes.splice(nInsertIdx, 0, oPr);
     }
 
     SmartArtNodeData.prototype.removeFromLstShapes = function (nIdx) {
       if (nIdx > -1 && nIdx < this.shapes.length) {
         this.shapes[nIdx].setParent(null);
-        this.shapes.splice(nIdx, 1);
+        nIdx === this.shapes.length - 1 ? this.shapes.pop() : this.shapes.splice(nIdx, 1);
       }
     }
 
     SmartArtNodeData.prototype.addToLstPresPoint = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.presPoint.length, Math.max(0, nIdx));
-      this.presPoint.splice(nInsertIdx, 0, oPr);
+      nInsertIdx === this.presPoint.length ? this.presPoint.push(oPr) : this.presPoint.splice(nInsertIdx, 0, oPr);
     }
 
     SmartArtNodeData.prototype.removeFromLstPresPoint = function (nIdx) {
       if (nIdx > -1 && nIdx < this.presPoint.length) {
         this.presPoint[nIdx].setParent(null);
-        this.presPoint.splice(nIdx, 1);
+        nIdx === this.presPoint.length - 1 ? this.presPoint.pop() : this.presPoint.splice(nIdx, 1);
       }
     }
 
