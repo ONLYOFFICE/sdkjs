@@ -5576,12 +5576,6 @@ FontStyleUnderline:  4,
 FontStyleStrikeout:  8
 };
 
-function CFontManager()
-{
-    this.m_oLibrary = {};
-    this.Initialize = function(){};
-}
-
 function CStylesPainter()
 {
     this.STYLE_THUMBNAIL_WIDTH  = AscCommon.GlobalSkin.STYLE_THUMBNAIL_WIDTH;
@@ -6224,8 +6218,6 @@ function initSpellCheckApi() {
 
 function NativeOpenFile3(_params, documentInfo)
 {
-    window["CreateMainTextMeasurerWrapper"]();
-
     window.g_file_path = "native_open_file";
     window.NATIVE_DOCUMENT_TYPE = window["native"]["GetEditorType"]();
     var doc_bin = window["native"]["GetFileString"](window.g_file_path);

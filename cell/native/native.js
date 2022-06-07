@@ -2755,8 +2755,6 @@ function OfflineEditor () {
 
         window['AscFormat'].DrawingArea.prototype.drawSelection = function(drawingDocument) {
             
-            AscCommon.g_oTextMeasurer.Flush();
-            
             var canvas = this.worksheet.objectRender.getDrawingCanvas();
             var shapeCtx = canvas.shapeCtx;
             var shapeOverlayCtx = canvas.shapeOverlayCtx;
@@ -2999,8 +2997,6 @@ function OfflineEditor () {
             }
             
             window["native"]["SwitchMemoryLayer"]();
-            
-            AscCommon.g_oTextMeasurer.Flush();
             
             this.objectRender.showDrawingObjectsEx();
             
@@ -4427,14 +4423,10 @@ var _s = new OfflineEditor();
 
 window["native"]["offline_of"] = function(arg) {_s.openFile(arg);}
 window["native"]["offline_stz"] = function(v) {_s.zoom = v; _api.asc_setZoom(v);}
-window["native"]["offline_ds"] = function(x, y, width, height, ratio, istoplayer) {
-    AscCommon.g_oTextMeasurer.Flush();
-    
+window["native"]["offline_ds"] = function(x, y, width, height, ratio, istoplayer) {    
     _s.drawSheet(x, y, width, height, ratio, istoplayer);
 }
 window["native"]["offline_dh"] = function(x, y, width, height, ratio, type) {
-    AscCommon.g_oTextMeasurer.Flush();
-    
     _s.drawHeader(x, y, width, height, type, ratio);
 }
 
@@ -4730,8 +4722,6 @@ window["native"]["offline_complete_cell"] = function(x, y) {return _s.getNearCel
 window["native"]["offline_keyboard_down"] = function(inputKeys) {
     var wb = _api.wb;
     var ws = _api.wb.getWorksheet();
-    
-    AscCommon.g_oTextMeasurer.Flush();
     
     var isFormulaEditMode = wb.isFormulaEditMode;
     wb.isFormulaEditMode = false;
@@ -5409,17 +5399,13 @@ window["native"]["offline_apply_event"] = function(type,params) {
             // document interface
             
         case 3: // ASC_MENU_EVENT_TYPE_UNDO
-        {
-            AscCommon.g_oTextMeasurer.Flush();
-            
+        {   
             _api.asc_Undo();
             _s.asc_WriteAllWorksheets(true);
             break;
         }
         case 4: // ASC_MENU_EVENT_TYPE_REDO
         {
-            AscCommon.g_oTextMeasurer.Flush();
-            
             _api.asc_Redo();
             _s.asc_WriteAllWorksheets(true);
             break;

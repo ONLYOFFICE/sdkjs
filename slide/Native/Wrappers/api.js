@@ -54,7 +54,6 @@ var FontStyle =
     FontStyleStrikeout:  8
 };
 
-window["use_native_fonts_only"] = true;
 // -------------------------------------------------
 
 // declarate unused methods and objects
@@ -2789,7 +2788,6 @@ function initSpellCheckApi() {
 }
 
 function NativeOpenFileP(_params, documentInfo){
-    window["CreateMainTextMeasurerWrapper"]();
     window.g_file_path = "native_open_file";
     window.NATIVE_DOCUMENT_TYPE = window["native"]["GetEditorType"]();
     var doc_bin = window["native"]["GetFileString"](window.g_file_path);

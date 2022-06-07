@@ -816,9 +816,6 @@ DrawingArea.prototype.reinitRanges = function() {
 };
 
 DrawingArea.prototype.drawSelection = function(drawingDocument) {
-	if (window["IS_NATIVE_EDITOR"]) {
-		AscCommon.g_oTextMeasurer.Flush();
-	}
 	var oWS = this.worksheet;
     var canvas = oWS.objectRender.getDrawingCanvas();
     var shapeCtx = canvas.shapeCtx;
