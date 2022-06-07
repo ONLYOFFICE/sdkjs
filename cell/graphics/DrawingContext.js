@@ -928,7 +928,7 @@
 
 		if (window["IS_NATIVE_EDITOR"]) {
 			var fontInfo = AscFonts.g_fontApplication.GetFontInfo(this.font.getName(), fontStyle, this.LastFontOriginInfo);
-			fontInfo = GetLoadInfoForMeasurer(fontInfo, fontStyle);
+			fontInfo = AscCommon.GetLoadInfoForMeasurer(fontInfo, fontStyle);
 
 			var flag = 0;
 			if (fontInfo.NeedBold) {
@@ -947,8 +947,7 @@
 			if (!angle) {
 				window["native"]["PD_LoadFont"](fontInfo.Path, fontInfo.FaceIndex, this.font.getSize(), flag);
 			}
-			AscCommon.g_oTextMeasurer.Flush();
-			fontInfo = g_oTextMeasurer.Measurer["LoadFont"](fontInfo.Path, fontInfo.FaceIndex, this.font.getSize(), flag);
+
 			if (angle) {
 				this.fmgrGraphics[1].init(fontInfo);
 			} else {

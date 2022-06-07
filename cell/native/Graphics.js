@@ -789,7 +789,7 @@ CGraphics.prototype =
             oFontStyle = AscFonts.FontStyle.FontStyleBoldItalic;
 
         var _fontinfo = AscFonts.g_fontApplication.GetFontInfo(font.FontFamily.Name, oFontStyle, this.LastFontOriginInfo);
-        var _info = GetLoadInfoForMeasurer(_fontinfo, oFontStyle);
+        var _info = AscCommon.GetLoadInfoForMeasurer(_fontinfo, oFontStyle);
 
         this.m_oLastFont.SetUpName = font.FontFamily.Name;
         this.m_oLastFont.SetUpSize = font.FontSize;
@@ -800,8 +800,6 @@ CGraphics.prototype =
         if (_info.NeedItalic)   flag |= 0x02;
         if (_info.SrcBold)      flag |= 0x04;
         if (_info.SrcItalic)    flag |= 0x08;
-
-        g_oTextMeasurer.Measurer["LoadFont"](_info.Path, _info.FaceIndex, font.FontSize, flag);
 
         this.Native["PD_LoadFont"](_info.Path, _info.FaceIndex, font.FontSize, flag);
     },
@@ -875,15 +873,13 @@ CGraphics.prototype =
             _lastFont.SetUpStyle = _style;
 
             var _fontinfo = AscFonts.g_fontApplication.GetFontInfo(_lastFont.SetUpName, _lastFont.SetUpStyle, this.LastFontOriginInfo);
-            var _info = GetLoadInfoForMeasurer(_fontinfo, _lastFont.SetUpStyle);
+            var _info = AscCommon.GetLoadInfoForMeasurer(_fontinfo, _lastFont.SetUpStyle);
 
             var flag = 0;
             if (_info.NeedBold)     flag |= 0x01;
             if (_info.NeedItalic)   flag |= 0x02;
             if (_info.SrcBold)      flag |= 0x04;
             if (_info.SrcItalic)    flag |= 0x08;
-
-            g_oTextMeasurer.Measurer["LoadFont"](_info.Path, _info.FaceIndex, _lastFont.SetUpSize, flag);
 
             this.Native["PD_LoadFont"](_info.Path, _info.FaceIndex, _lastFont.SetUpSize, flag);
         }

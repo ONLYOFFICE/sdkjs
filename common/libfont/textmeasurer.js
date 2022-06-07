@@ -384,8 +384,154 @@
 	var g_oTextMeasurer = new CTextMeasurer();
 	g_oTextMeasurer.Init();
 
+	function GetLoadInfoForMeasurer(info, lStyle)
+	{
+		// подбираем шрифт по стилю
+		var sReturnName = info.Name;
+		var bNeedBold   = false;
+		var bNeedItalic = false;
+
+		var index       = -1;
+		var faceIndex   = 0;
+
+		var bSrcItalic  = false;
+		var bSrcBold    = false;
+
+		switch (lStyle)
+		{
+			case AscFonts.FontStyle.FontStyleBoldItalic:
+			{
+				bSrcItalic  = true;
+				bSrcBold    = true;
+
+				bNeedBold   = true;
+				bNeedItalic = true;
+				if (-1 != info.indexBI)
+				{
+					index = info.indexBI;
+					faceIndex = info.faceIndexBI;
+					bNeedBold   = false;
+					bNeedItalic = false;
+				}
+				else if (-1 != info.indexB)
+				{
+					index = info.indexB;
+					faceIndex = info.faceIndexB;
+					bNeedBold = false;
+				}
+				else if (-1 != info.indexI)
+				{
+					index = info.indexI;
+					faceIndex = info.faceIndexI;
+					bNeedItalic = false;
+				}
+				else
+				{
+					index = info.indexR;
+					faceIndex = info.faceIndexR;
+				}
+				break;
+			}
+			case AscFonts.FontStyle.FontStyleBold:
+			{
+				bSrcBold    = true;
+
+				bNeedBold   = true;
+				bNeedItalic = false;
+				if (-1 != info.indexB)
+				{
+					index = info.indexB;
+					faceIndex = info.faceIndexB;
+					bNeedBold = false;
+				}
+				else if (-1 != info.indexR)
+				{
+					index = info.indexR;
+					faceIndex = info.faceIndexR;
+				}
+				else if (-1 != info.indexBI)
+				{
+					index = info.indexBI;
+					faceIndex = info.faceIndexBI;
+					bNeedBold = false;
+				}
+				else
+				{
+					index = info.indexI;
+					faceIndex = info.faceIndexI;
+				}
+				break;
+			}
+			case AscFonts.FontStyle.FontStyleItalic:
+			{
+				bSrcItalic  = true;
+
+				bNeedBold   = false;
+				bNeedItalic = true;
+				if (-1 != info.indexI)
+				{
+					index = info.indexI;
+					faceIndex = info.faceIndexI;
+					bNeedItalic = false;
+				}
+				else if (-1 != info.indexR)
+				{
+					index = info.indexR;
+					faceIndex = info.faceIndexR;
+				}
+				else if (-1 != info.indexBI)
+				{
+					index = info.indexBI;
+					faceIndex = info.faceIndexBI;
+					bNeedItalic = false;
+				}
+				else
+				{
+					index = info.indexB;
+					faceIndex = info.faceIndexB;
+				}
+				break;
+			}
+			case AscFonts.FontStyle.FontStyleRegular:
+			{
+				bNeedBold   = false;
+				bNeedItalic = false;
+				if (-1 != info.indexR)
+				{
+					index = info.indexR;
+					faceIndex = info.faceIndexR;
+				}
+				else if (-1 != info.indexI)
+				{
+					index = info.indexI;
+					faceIndex = info.faceIndexI;
+				}
+				else if (-1 != info.indexB)
+				{
+					index = info.indexB;
+					faceIndex = info.faceIndexB;
+				}
+				else
+				{
+					index = info.indexBI;
+					faceIndex = info.faceIndexBI;
+				}
+			}
+		}
+
+		return {
+			Path        : AscFonts.g_font_files[index].Id,
+			FaceIndex   : faceIndex,
+			NeedBold    : bNeedBold,
+			NeedItalic  : bNeedItalic,
+			SrcBold     : bSrcBold,
+			SrcItalic   : bSrcItalic
+		};
+	}
+
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].CTextMeasurer = CTextMeasurer;
 	window['AscCommon'].g_oTextMeasurer = g_oTextMeasurer;
+	window['AscCommon'].GetLoadInfoForMeasurer = GetLoadInfoForMeasurer;
 })(window);
