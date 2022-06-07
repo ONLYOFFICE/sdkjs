@@ -554,6 +554,11 @@ var c_oAscPopUpSelectorType = {
     Range: 2
   };
 
+  var c_oAscExternalReferenceType = {
+    referenceData: 1,
+    link: 2,
+    path: 3
+  };
 
   //----------------------------------------------------------export----------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
@@ -911,5 +916,10 @@ var c_oAscPopUpSelectorType = {
   prot['Sheet'] = prot.Sheet;
   prot['Range'] = prot.Range;
 
+  window['Asc']['c_oAscExternalReferenceType'] = window['Asc'].c_oAscExternalReferenceType = c_oAscExternalReferenceType;
+  prot = c_oAscExternalReferenceType;
+  prot['referenceData'] = prot.referenceData;
+  prot['link'] = prot.link;
+  prot['path'] = prot.path;
 
 })(window);

@@ -11903,12 +11903,15 @@ QueryTableField.prototype.clone = function() {
 		return new asc_externalReference();
 	};
 
-	function asc_externalReference() {
-
+	function asc_CExternalReference() {
+		this.type = null;
+		this.data = null;
 	}
-
-	ExternalReference.prototype.getAscLink = function () {
-		return null;
+	asc_CExternalReference.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CExternalReference.prototype.asc_getData = function () {
+		return this.data;
 	};
 
 
@@ -12387,6 +12390,12 @@ QueryTableField.prototype.clone = function() {
 	prot["asc_getFormulaResult"] = prot.asc_getFormulaResult;
 	prot["asc_getFunctionResult"] = prot.asc_getFunctionResult;
 	prot["asc_getName"] = prot.asc_getName;
+
+	window["Asc"]["asc_CExternalReference"] = window["Asc"].asc_CExternalReference = asc_CExternalReference;
+	prot = asc_CExternalReference.prototype;
+	prot["asc_getType"] = prot.asc_getType;
+	prot["asc_getData"] = prot.asc_getData;
+
 
 	window["AscCommonExcel"].CPrintPreviewState = CPrintPreviewState;
 
