@@ -8418,13 +8418,25 @@ $( function () {
         ws.getRange2( "B203" ).setValue( "89" );
         ws.getRange2( "B204" ).setValue( "79" );
 
+		ws.getRange2( "C202" ).setValue( "234" );
+		ws.getRange2( "C203" ).setValue( "4" );
+
+		var a;
         oParser = new parserFormula( "FREQUENCY(A202:A210,B202:B204)", "A201", ws );
         assert.ok( oParser.parse() );
-        var a = oParser.calculate();
-        assert.strictEqual( a.getElement( 0 ).getValue(), 1 );
-        assert.strictEqual( a.getElement( 1 ).getValue(), 2 );
-        assert.strictEqual( a.getElement( 2 ).getValue(), 4 );
-        assert.strictEqual( a.getElement( 3 ).getValue(), 2 );
+        a = oParser.calculate();
+        assert.strictEqual( a.getElementRowCol(0, 0).getValue(), 1 );
+        assert.strictEqual( a.getElementRowCol(1, 0).getValue(), 2 );
+        assert.strictEqual( a.getElementRowCol(2, 0).getValue(), 4 );
+        assert.strictEqual( a.getElementRowCol(3, 0).getValue(), 2 );
+
+		oParser = new parserFormula( "FREQUENCY(A202:C202,A203:C203)", "A201", ws );
+		assert.ok( oParser.parse() );
+		a = oParser.calculate();
+		assert.strictEqual( a.getElementRowCol(0, 0).getValue(), 0 );
+		assert.strictEqual( a.getElementRowCol(1, 0).getValue(), 2 );
+		assert.strictEqual( a.getElementRowCol(2, 0).getValue(), 0 );
+		assert.strictEqual( a.getElementRowCol(3, 0).getValue(), 1 );
     } );
 
     QUnit.test("Test: \"GAMMALN\"", function (assert) {

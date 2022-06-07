@@ -2028,8 +2028,9 @@
 		this.lastFindOptions = null;
 		this.lastFindCells = {};
 		this.oleSize = null;
-		// var range  = new Asc.Range(5, 5, 10, 10);
-		// this.oleSize = range;
+		if (oApi && oApi.isOleEditor) {
+			this.oleSize = new AscCommonExcel.OleSizeSelectionRange(null, new Asc.Range(0, 0, 10, 10));
+		}
 
 		//при копировании листа с одного wb на другой необходимо менять в стеке
 		// формул лист и книгу(на которые ссылаемся) - например у элементов cStrucTable
@@ -2088,10 +2089,11 @@
 	};
 	Workbook.prototype.getOleSize = function () {
 		return this.oleSize;
-	}
+	};
 	Workbook.prototype.setOleSize = function (oPr) {
 		this.oleSize = oPr;
-	}
+	};
+
 	Workbook.prototype.initPostOpenZip=function(pivotCaches, xmlParserContext){
 		var t = this;
 		this.forEach(function (ws) {
@@ -10491,11 +10493,16 @@
 		var t = this;
 		if (this.aProtectedRanges && this.aProtectedRanges.length) {
 			var aCheckHash = [];
+			var checkRanges = [];
 			for (var i = 0; i < this.aProtectedRanges.length; i++) {
+				if (!this.aProtectedRanges[i].contains(data.col, data.row)) {
+					continue;
+				}
 				if (!this.aProtectedRanges[i].asc_isPassword() || this.aProtectedRanges[i]._isEnterPassword) {
 					callback && callback(true);
 					return;
-				} else if (this.aProtectedRanges[i].asc_isPassword() && this.aProtectedRanges[i].contains(data.col, data.row)) {
+				} else if (this.aProtectedRanges[i].asc_isPassword()) {
+					checkRanges.push(this.aProtectedRanges[i]);
 					aCheckHash.push({
 						password: val,
 						salt: this.aProtectedRanges[i].saltValue,
@@ -10507,8 +10514,8 @@
 			if (aCheckHash && aCheckHash.length) {
 				AscCommon.calculateProtectHash(aCheckHash, function (aHash) {
 					for (var i = 0; i < aHash.length; i++) {
-						if (aHash[i] === t.aProtectedRanges[i].hashValue) {
-							t.aProtectedRanges[i]._isEnterPassword = true;
+						if (aHash[i] === checkRanges[i].hashValue) {
+							checkRanges[i]._isEnterPassword = true;
 							callback && callback(true);
 							return;
 						}

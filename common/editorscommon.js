@@ -345,18 +345,13 @@
 	}
 
 	JSZipWrapper.prototype.loadSync = function(data) {
-		var res = false;
-		var files;
 		if (window.nativeZlibEngine && window.nativeZlibEngine.open(data)) {
-			files = window.nativeZlibEngine.files;
-		}
-		if (window["native"]) {
-			files = window["native"]["ZipOpen"](data);
-		}
-		if (files) {
-			for (var path in files) {
-				if (files.hasOwnProperty(path)) {
-					this.files[path] = new JSZipObjectWrapper(path);
+			var files = window.nativeZlibEngine.files;
+			for (let i = 0, len = files.length; i < len; i++) {
+				if (files[i].startsWith('/')) {
+					this.files[files[i].substring(1)] = new JSZipObjectWrapper(files[i].substring(1));
+				} else {
+					this.files[files[i]] = new JSZipObjectWrapper(files[i]);
 				}
 			}
 			return true;
@@ -371,67 +366,36 @@
 				if (!window.nativeZlibEngine.open(data)) {
 					reject(new Error("Failed archive"));
 				}
-				var files = window.nativeZlibEngine.files;
-
-				if (null != files) {
-					for (var _path in files) {
-						t.files[_path] = new JSZipObjectWrapper(_path);
-					}
+				let files = window.nativeZlibEngine.files;
+				if (0 !== files.length) {
+					for (let i = 0, len = files.length; i < len; i++)
+						this.files[files[i]] = new JSZipObjectWrapper(files[i]);
 					resolve(t);
-				}
-				else {
+				} else {
 					reject(new Error("Failed archive"));
 				}
 			});
 		}
 
-		if (window["native"]) {
-			return new Promise(function(resolve, reject) {
-
-				var retFiles = null;
-				if (options && options["base64"] === true)
-					retFiles = window["native"]["ZipOpenBase64"](data);
-				else
-					retFiles = window["native"]["ZipOpen"](data);
-
-				if (null != retFiles)
-				{
-					for (var id in retFiles) {
-						t.files[id] = new JSZipObjectWrapper(retFiles[id]);
-					}
-
-					resolve(t);
-				}
-				else
-				{
-					reject(new Error("Failed archive"));
-				}
-
-			});
-		}
 		return Promise.reject();
 	};
 	JSZipWrapper.prototype.create = function() {
-		return window.nativeZlibEngine.create();
+		return window.nativeZlibEngine ? window.nativeZlibEngine.create() : false;
 	};
 	JSZipWrapper.prototype.save = function() {
-		return window.nativeZlibEngine.save();
+		return window.nativeZlibEngine ? window.nativeZlibEngine.save() : null;
 	};
 	JSZipWrapper.prototype.getFile = function() {
-		return window.nativeZlibEngine.getFile.apply(window.nativeZlibEngine, arguments);
+		return window.nativeZlibEngine ? window.nativeZlibEngine.getFile.apply(window.nativeZlibEngine, arguments) : null;
 	};
 	JSZipWrapper.prototype.addFile = function() {
-		return window.nativeZlibEngine.addFile.apply(window.nativeZlibEngine, arguments);
+		return window.nativeZlibEngine ? window.nativeZlibEngine.addFile.apply(window.nativeZlibEngine, arguments) : false;
 	};
 	JSZipWrapper.prototype.removeFile = function() {
-		return window.nativeZlibEngine.removeFile.apply(window.nativeZlibEngine, arguments);
+		return window.nativeZlibEngine ? window.nativeZlibEngine.removeFile.apply(window.nativeZlibEngine, arguments) : false;
 	};
 	JSZipWrapper.prototype.close = function() {
-		if (window.nativeZlibEngine) {
-			window.nativeZlibEngine.close();
-		}
-		if (window["native"])
-			window["native"]["ZipClose"]();
+		return window.nativeZlibEngine ? window.nativeZlibEngine.close() : false;
 	};
 
 	function JSZipObjectWrapper(data) {
@@ -440,21 +404,12 @@
 	JSZipObjectWrapper.prototype.sync = function(type) {
 		if (window.nativeZlibEngine) {
 			var data = window.nativeZlibEngine.getFile(this.data);
-			if ("string" === type) {
+			if ("string" === type && data) {
 				return UTF8ArrayToString(data, 0, data.length);
 			} else {
 				return data;
 			}
 		}
-
-		if (window["native"]) {
-			if ("string" === type) {
-				return window["native"]["ZipFileAsString"](this.data);
-			} else {
-				return window["native"]["ZipFileAsBinary"](this.data);
-			}
-		}
-
 		return null;
 	};
 	JSZipObjectWrapper.prototype.async = function(type) {
@@ -470,27 +425,7 @@
 				}
 			});
 		}
-
-		if (window["native"]) {
-			var t = this;
-
-			return new Promise(function(resolve, reject) {
-
-				var ret = window["native"]["ZipFileAsString"](t.data);
-
-				if (null != ret)
-				{
-					resolve(ret);
-				}
-				else
-				{
-					reject(new Error("Failed file in archive"));
-				}
-
-			});
-		}
-
-		return this.data.async(type);
+		return null;
 	};
 
 	function getBaseUrl()
@@ -812,6 +747,10 @@
 		return false;
 	}
 	function checkOOXMLSignature(stream, Signature) {
+		if(!(stream && stream.length > 4 && 0x50 === stream[0] && 0x4b === stream[1] && 0x03 === stream[2] && 0x04 === stream[3])) {
+			//Local file header signature = 0x04034b50 (PK♥♦ or "PK\3\4")
+			return false;
+		}
 		let jsZipWrapper = new AscCommon.JSZipWrapper();
 		if(!jsZipWrapper.loadSync(stream)) {
 			return false;
@@ -9139,6 +9078,28 @@
 	 * @param nValue
 	 * @returns {string}
 	 */
+	function Int16ToHex(nValue)
+	{
+		return nValue.toString(16).padStart(4, "0").toUpperCase();
+	}
+	/**
+	 * Переводим числовое значение в Hex строку
+	 * @param nValue
+	 * @returns {string}
+	 */
+	function Int16ToHexOrNull(nValue)
+	{
+		if(null === nValue || undefined === nValue) {
+			return nValue;
+		} else {
+			return Int16ToHex(nValue);
+		}
+	}
+	/**
+	 * Переводим числовое значение в Hex строку
+	 * @param nValue
+	 * @returns {string}
+	 */
 	function ByteToHex(nValue)
 	{
 		return nValue.toString(16).padStart(2, "0").toUpperCase();
@@ -10037,6 +9998,13 @@
 	}
 
 	var g_oIdCounter = new CIdCounter();
+
+	function CEventListenerInfo(listeningElement, eventName, listener, useCapture) {
+		this.eventName = eventName;
+		this.listener = listener;
+		this.listeningElement = listeningElement;
+		this.useCapture = useCapture;
+	}
 
 	const asc_PreviewBulletType = {
 		text: 0,
@@ -13032,6 +13000,8 @@
 	window["AscCommon"].IntToHex = IntToHex;
 	window["AscCommon"].Int32ToHex = Int32ToHex;
 	window["AscCommon"].Int32ToHexOrNull = Int32ToHexOrNull;
+	window["AscCommon"].Int16ToHex = Int16ToHex;
+	window["AscCommon"].Int16ToHexOrNull = Int16ToHexOrNull;
 	window["AscCommon"].ByteToHex = ByteToHex;
 	window["AscCommon"].IsDigit = IsDigit;
 	window["AscCommon"].IsLetter = IsLetter;
@@ -13078,6 +13048,8 @@
 	window["AscCommon"].isEmptyObject = isEmptyObject;
 
 	window["AscCommon"].getSourceImageSize = getSourceImageSize;
+
+	window["AscCommon"].CEventListenerInfo = CEventListenerInfo;
 
 	window["AscCommon"].CBulletPreviewDrawer = window["AscCommon"]["CBulletPreviewDrawer"] = CBulletPreviewDrawer;
 

@@ -965,6 +965,10 @@ Paragraph.prototype.Add_ToContent = function(Pos, Item)
 {
 	this.Internal_Content_Add(Pos, Item);
 };
+Paragraph.prototype.AddToContentToEnd = function(Item)
+{
+	this.Internal_Content_Add(this.GetElementsCount(), Item);
+};
 Paragraph.prototype.AddToContent = function(nPos, oItem)
 {
 	this.Add_ToContent(nPos, oItem);
@@ -11832,9 +11836,7 @@ Paragraph.prototype.private_GetReviewChangeForHover = function(X, Y, CurPage, oC
 	var oCurChange    = oTrackManager.GetCurrentChange();
 	if (isInText
 		&& oCurChange
-		&& this === oTrackManager.GetCurrentChangeElement()
-		&& oContentPos.Compare(oCurChange.get_StartPos()) >= 0
-		&& oContentPos.Compare(oCurChange.get_EndPos()) <= 0)
+		&& oCurChange.CheckHitByParagraphContentPos(this, oContentPos))
 	{
 		return oCurChange;
 	}
@@ -16669,6 +16671,10 @@ Paragraph.prototype.GetLastParagraph = function()
 	return this;
 };
 Paragraph.prototype.GetFirstParagraph = function()
+{
+	return this;
+};
+Paragraph.prototype.GetParagraph = function()
 {
 	return this;
 };

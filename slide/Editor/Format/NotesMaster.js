@@ -231,7 +231,7 @@
     CNotesMaster.prototype.fromXml = function(reader, bSkipFirstNode) {
         AscFormat.CBaseFormatObject.prototype.fromXml.call(this, reader, bSkipFirstNode);
         //read theme
-        var oThemePart = reader.rels.getPartByRelationshipType(openXml.Types.theme.relationType);
+        var oThemePart = reader.rels.getPartByRelationshipType(AscCommon.openXml.Types.theme.relationType);
         if(oThemePart) {
             var oThemeContent = oThemePart.getDocumentContent();
             let oThemeReader = new StaxParser(oThemeContent, oThemePart, reader.context);
@@ -271,6 +271,12 @@
                 this.setHF(oHF);
                 break;
             }
+            case "notesStyle": {
+                let oTxStyles = new AscFormat.TextListStyle();
+                oTxStyles.fromXml(reader);
+                this.setNotesStyle(oTxStyles);
+                break;
+            }
         }
     };
     CNotesMaster.prototype.toXml = function(writer) {
@@ -283,7 +289,7 @@
         this.cSld.toXml(writer);
         writer.WriteXmlNullable(this.clrMap, "p:clrMap");
         writer.WriteXmlNullable(this.hf, "p:hf");
-        //writer.WriteXmlNullable(this.notesStyle);
+        writer.WriteXmlNullable(this.txStyles, "p:notesStyle");
         writer.WriteXmlNodeEnd("p:notesMaster");
     };
 

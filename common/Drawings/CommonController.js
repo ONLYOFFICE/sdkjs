@@ -7830,8 +7830,13 @@ DrawingObjectsController.prototype =
             var oDrawingSelectionState = oSelectionState.DrawingsSelectionState;
             if(oDrawingSelectionState.textObject)
             {
+                var mainGroup;
+                if (oDrawingSelectionState.textObject.group)
+                {
+                    mainGroup = oDrawingSelectionState.textObject.group.getMainGroup();
+                }
                 if(oDrawingSelectionState.textObject.Is_UseInDocument()
-                    && (!oDrawingSelectionState.textObject.group || oDrawingSelectionState.textObject.group === this)
+                    && (!mainGroup || mainGroup === this)
                 && (!bSlide || oDrawingSelectionState.textObject.parent === this.drawingObjects))
                 {
                     this.selectObject(oDrawingSelectionState.textObject, bDocument ? (oDrawingSelectionState.textObject.parent ? oDrawingSelectionState.textObject.parent.PageNum : nPageIndex) : nPageIndex);

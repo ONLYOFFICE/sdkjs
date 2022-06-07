@@ -31,7 +31,7 @@
  */
 
 var editor = undefined;
-var window = {};
+var window = ("undefined" === typeof window) ? {} : window;
 var navigator = {};
 navigator.userAgent = "chrome";
 window.navigator = navigator;
@@ -307,7 +307,8 @@ var setInterval = window.setInterval = function() {};
 var console = {
 	log: function (param) { window.native.ConsoleLog(param); },
 	time: function (param) {},
-	timeEnd: function (param) {}
+	timeEnd: function (param) {},
+	warn: function() {}
 };
 
 var performance = window.performance = (function(){
@@ -316,42 +317,3 @@ var performance = window.performance = (function(){
 		now : function() { return Date.now() - basePerformanceOffset; }
 	};
 })();
-
-(function(window, undefined){
-	function ZLib()
-	{
-		//this.engine = CreateNativeZip();
-		this.files = {};
-	}
-	ZLib.prototype.isModuleInit = true;
-	ZLib.prototype.open = function(buf)
-	{
-		return this.engine.open((undefined !== buf.byteLength) ? new Uint8Array(buf) : buf);
-	};
-	ZLib.prototype.create = function()
-	{
-		return this.engine.create();
-	};
-	ZLib.prototype.save = function()
-	{
-		return this.engine.save();
-	};
-	ZLib.prototype.getFile = function(path)
-	{
-		return this.engine.getFile(path);
-	};
-	ZLib.prototype.addFile = function(path, data)
-	{
-		return this.engine.addFile(path, (undefined !== data.byteLength) ? new Uint8Array(data) : data);
-	};
-	ZLib.prototype.removeFile = function(path)
-	{
-		return this.engine.removeFile(path);
-	};
-	ZLib.prototype.close = function()
-	{
-		return this.engine.close();
-	};
-
-	window.nativeZlibEngine = new ZLib();
-})(window, undefined);

@@ -50,9 +50,94 @@
 
 	window["AscCommon"].zlib_load = function(onSuccess, onError)
 	{
-		window["ZLibModule_onLoad"] = onSuccess;
+		window["ZLibModule_onLoad"] = function()
+		{
+			function ZLib()
+			{
+				this.engine = window["NATIVE_EDITOR_ENJINE"] ? CreateNativeZip() : window.nativeZlibEngine;
+				this.files = [];
+			}
+			/**
+			 * Open archive from bytes
+			 * @param {Uint8Array | ArrayBuffer} buf
+			 * @returns {boolean} success or not
+			 */
+			ZLib.prototype.open = function(buf)
+			{
+				if (window["NATIVE_EDITOR_ENJINE"])
+				{
+					this.files = this.engine["open"]((undefined !== buf.byteLength) ? new Uint8Array(buf) : buf);
+					if (!this.files)
+						this.files = [];
+				}
+				else
+				{
+					if (this.engine.open(buf))
+						this.files = this.engine["getPaths"]();
+				}
+				return (this.files.length > 0) ? true : false;
+			};
+			/**
+			 * Create new archive
+			 * @returns {boolean} success or not
+			 */
+			ZLib.prototype.create = function()
+			{
+				return this.engine["create"]();
+			};
+			/**
+			 * Save archive from current files
+			 * @returns {Uint8Array | null} zip-archive bytes, or null if error
+			 */
+			ZLib.prototype.save = function()
+			{
+				return this.engine["save"]();
+			};
+			/**
+			 * Get uncomressed file from archive
+			 * @param {string} path
+			 * @returns {Uint8Array | null} bytes of uncompressed data, or null if error
+			 */
+			ZLib.prototype.getFile = function(path)
+			{
+				return this.engine["getFile"](path);
+			};
+			/**
+			 * Add uncomressed file to archive
+			 * @param {string} path
+			 * @param {Uint8Array | ArrayBuffer} new file in archive
+			 * @returns {boolean} success or not
+			 */
+			ZLib.prototype.addFile = function(path, data)
+			{
+				return this.engine["addFile"](path, (undefined !== data.byteLength) ? new Uint8Array(data) : data);
+			};
+			/**
+			 * Remove file from archive
+			 * @param {string} path
+			 * @returns {boolean} success or not
+			 */
+			ZLib.prototype.removeFile = function(path)
+			{
+				return this.engine["removeFile"](path);
+			};
+			/**
+			 * Close & remove all used memory in archive
+			 * @returns {undefined}
+			 */
+			ZLib.prototype.close = function()
+			{
+				return this.engine["close"]();
+			};
+
+			window.nativeZlibEngine = new ZLib();
+			onSuccess();
+		};
+
 		AscCommon.loadScript(scriptSrc, function(){}, onError);
+
+		if (window["NATIVE_EDITOR_ENJINE"] === true)
+			window["ZLibModule_onLoad"]();
 	};
 
 })(window, undefined);
-

@@ -906,7 +906,8 @@ CGraphicFrame.prototype.draw = function(graphics)
             this.drawLocks(this.transform, graphics);
             graphics.RestoreGrState();
         }
-        this.drawAnimLabels && this.drawAnimLabels(graphics);
+        graphics.SetIntegerGrid(true);
+        graphics.reset();
 };
 
 CGraphicFrame.prototype.Select = function()

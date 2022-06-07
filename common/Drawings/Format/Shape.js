@@ -761,7 +761,7 @@ function ConvertGraphicFrameToWordTable(oGraphicFrame, oDocument){
 }
 function ConvertTableToGraphicFrame(oTable, oPresentation){
     var oGraphicFrame = new AscFormat.CGraphicFrame();
-    var oTable2 = new CTable(oPresentation.DrawingDocument, oGraphicFrame, true, 0, [].concat(oTable.TableGrid), oTable.TableGrid.length, true);
+    var oTable2 = new CTable(oPresentation.DrawingDocument, oGraphicFrame, false, 0, [].concat(oTable.TableGrid), oTable.TableGrid.length, true);
     oTable2.Reset(0, 0, 50, 100000, 0, 0, 1);
     oTable2.SetTableLayout(tbllayout_Fixed);
     oTable2.Set_Pr(oTable.Pr.Copy());
@@ -7245,7 +7245,7 @@ CShape.prototype.getColumnNumber = function(){
                     this.setNvSpPr(new AscFormat.UniNvPr());
                 }
                 this.nvSpPr.nvUniSpPr.fromXml(reader);
-                this.setLocks(this.nvSpPr.nvUniSpPr.getLocks());
+                this.setLocks(this.nvSpPr.getLocks());
                 break;
             }
             case "spPr": {

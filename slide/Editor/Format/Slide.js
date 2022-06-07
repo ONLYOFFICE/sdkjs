@@ -1939,19 +1939,19 @@ Slide.prototype.readCommentXml = function(reader) {
     Slide.prototype.fromXml = function(reader, bSkipFirstNode) {
         AscFormat.CBaseFormatObject.prototype.fromXml.call(this, reader, bSkipFirstNode);
         //read notes
-        let oNotesPart = reader.rels.getPartByRelationshipType(openXml.Types.notesSlide.relationType);
+        let oNotesPart = reader.rels.getPartByRelationshipType(AscCommon.openXml.Types.notesSlide.relationType);
         if(oNotesPart) {
             let oNotesContent = oNotesPart.getDocumentContent();
             let oNotesReader = new StaxParser(oNotesContent, oNotesPart, reader.context);
             let oNotes = new AscCommonSlide.CNotes();
             oNotes.fromXml(oNotesReader, true);
-            let oRel = oNotesReader.rels.getPartByRelationshipType(openXml.Types.notesMaster.relationType);
+            let oRel = oNotesReader.rels.getPartByRelationshipType(AscCommon.openXml.Types.notesMaster.relationType);
             if(oRel) {
                 oNotes.masterTarget = oRel.uri;
                 this.setNotes(oNotes);
             }
         }
-        let oCommentsPart = reader.rels.getPartByRelationshipType(openXml.Types.slideComments.relationType);
+        let oCommentsPart = reader.rels.getPartByRelationshipType(AscCommon.openXml.Types.slideComments.relationType);
         if(oCommentsPart) {
             let oCommentsPartContent = oCommentsPart.getDocumentContent();
             if(oCommentsPartContent) {

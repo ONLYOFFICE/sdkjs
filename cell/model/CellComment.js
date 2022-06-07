@@ -386,6 +386,10 @@ function (window, undefined) {
 			this.sText = this.sText.slice(prefix.length);
 		}
 	};
+	asc_CCommentData.prototype.isValidThreadComment = function () {
+		//CT_ThreadedComment.personId, CT_ThreadedComment.id, CT_Person.id also required but they generated
+		return !!this.sUserName;
+	};
 
 /** @constructor */
 function CCellCommentator(currentSheet) {

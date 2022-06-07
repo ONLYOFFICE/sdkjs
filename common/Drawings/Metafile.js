@@ -885,15 +885,15 @@
 			while (pCur < pEnd)
 			{
 				var code = val.charCodeAt(pCur++);
+				if (code >= 0xD800 && code <= 0xDFFF && pCur < pEnd)
+				{
+					code = 0x10000 + (((code & 0x3FF) << 10) | (0x03FF & val.charCodeAt(pCur++)));
+				}
 				this.WriteXmlCharCode(code);
 			}
 		};
 		this.WriteXmlCharCode = function(code)
 		{
-			if (code >= 0xD800 && code <= 0xDFFF && pCur < pEnd)
-			{
-				code = 0x10000 + (((code & 0x3FF) << 10) | (0x03FF & val.charCodeAt(pCur++)));
-			}
 			switch (code)
 			{
 				case 0x26:

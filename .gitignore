@@ -1,12 +1,7 @@
 .idea/
 build/node_modules
 build/$weak$.js
-common/libfont/wasm/build/emsdk
-common/libfont/wasm/build/freetype*
-common/libfont/wasm/build/fonts.*
 common/AllFonts.js
-common/libfont/js/fonts.js
-common/libfont/wasm/fonts.js
 common/Images/fonts_thumbnail*
 common/Images/themes_thumbnail*
 slide/themes/theme*

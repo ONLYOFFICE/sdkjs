@@ -8613,7 +8613,7 @@ background-repeat: no-repeat;\
 			if (c_oAscFileType.DOTX === fileType) {
 				var title = this.documentTitle;
 				this.saveDocumentToZip(this.WordControl.m_oLogicDocument, AscCommon.c_oEditorId.Word, function(data) {
-					var blob = new Blob([data], {type: openXml.GetMimeType("docx")});
+					var blob = new Blob([data], {type: AscCommon.openXml.GetMimeType("docx")});
 					var link = document.createElement("a");
 					link.href = window.URL.createObjectURL(blob);
 					link.download = title;
@@ -11463,7 +11463,15 @@ background-repeat: no-repeat;\
 		bClearText = typeof(bClearText) === "boolean" ? bClearText : false;
 		var oLogicDocument = this.private_GetLogicDocument();
 		if (!oLogicDocument)
-			return null;
+		{
+			if (this.isDocumentRenderer())
+			{
+				var textObj = {Text : ""};
+				this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Copy(textObj);
+				return textObj.Text;
+			}
+			return "";
+		}
 
 		return oLogicDocument.GetSelectedText(bClearText, select_Pr);
 	};
@@ -11797,21 +11805,19 @@ background-repeat: no-repeat;\
 		if (undefined !== version)
 			AscCommon.CurFileVersion = version;
 
-		// this.isOpenOOXInBrowser = AscCommon.checkOOXMLSignature(base64File);
+		//this.isOpenOOXInBrowser = AscCommon.checkOOXMLSignature(base64File);
 		if (this.isOpenOOXInBrowser) {
 			if (!this.OpenDocumentFromZipNoInit(base64File))
 				this.sendEvent("asc_onError", c_oAscError.ID.MobileUnexpectedCharCount, c_oAscError.Level.Critical);
 		} else {
 			let openParams        = {};
 			let oBinaryFileReader = new AscCommonWord.BinaryFileReader(this.WordControl.m_oLogicDocument, openParams);
-			if (oBinaryFileReader.Read(base64File))
-			{
-				g_oIdCounter.Set_Load(false);
-				this.LoadedObject = 1;
-			}
-			else
+			if (!oBinaryFileReader.Read(base64File))
 				this.sendEvent("asc_onError", c_oAscError.ID.MobileUnexpectedCharCount, c_oAscError.Level.Critical);
 		}
+
+		g_oIdCounter.Set_Load(false);
+		this.LoadedObject = 1;
 
 		if (window["NATIVE_EDITOR_ENJINE"] === true && undefined != window["native"])
 		{
@@ -12007,7 +12013,11 @@ background-repeat: no-repeat;\
 			this.saveDocumentToZip(this.WordControl.m_oLogicDocument, this.editorId, function(data) {
 				res = data;
 			});
-			return res || new Uint8Array(0);
+			if (res) {
+				window["native"]["Save_End"](";v10;", res.length);
+				return res;
+			}
+			return new Uint8Array(0);
 		} else {
 			var oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(this.WordControl.m_oLogicDocument);
 			var _memory           = oBinaryFileWriter.memory;
@@ -13084,6 +13094,9 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_nativeInitBuilder"]                     = asc_docs_api.prototype.asc_nativeInitBuilder;
 	asc_docs_api.prototype["asc_SetSilentMode"]                         = asc_docs_api.prototype.asc_SetSilentMode;
 	asc_docs_api.prototype["asc_startEditCurrentOleObject"]             = asc_docs_api.prototype.asc_startEditCurrentOleObject;
+	asc_docs_api.prototype["asc_doubleClickOnTableOleObject"]           = asc_docs_api.prototype.asc_doubleClickOnTableOleObject;
+	asc_docs_api.prototype["asc_editOleObjectAction"]                   = asc_docs_api.prototype.asc_editOleObjectAction;
+	asc_docs_api.prototype["asc_addOleObjectAction"]                    = asc_docs_api.prototype.asc_addOleObjectAction;
 	asc_docs_api.prototype["asc_InputClearKeyboardElement"]             = asc_docs_api.prototype.asc_InputClearKeyboardElement;
 	asc_docs_api.prototype["asc_SpecialPaste"]                          = asc_docs_api.prototype.asc_SpecialPaste;
 

@@ -16,6 +16,7 @@
 			"common/TableId.js",
 			"common/TableIdChanges.js",
 			"common/AdvancedOptions.js",
+			"common/libfont/engine.js",
 			"common/libfont/loader.js",
 			"cell/apiDefines.js",
 			"cell/utils/utils.js",
@@ -37,16 +38,18 @@
 			"common/api/tableStylesPreviewGenerator.js",
 			"common/api/spellCheckSettings.js",
 
-		  "common/downloaderfiles.js",
+			"common/downloaderfiles.js",
 			"common/NumFormat.js",
 			"common/SerializeChart.js",
 
+			"common/libfont/common.js",
 			"common/libfont/map.js",
 			"common/libfont/rasterheap.js",
 			"common/libfont/glyphstring.js",
 			"common/libfont/character.js",
-			"common/libfont/manager.js",
 			"common/libfont/classification.js",
+			"common/libfont/file.js",
+			"common/libfont/manager.js",
 
 			"common/stringserialize.js",
 			"common/random.js",
@@ -281,6 +284,7 @@
 			"common/SerializeChartXml.js",
 			"common/SerializeMathXml.js",
 			"cell/model/SerializeXml.js",
+			"word/Editor/SerializeXml.js",
 			"word/Editor/SerializeXmlAssets.js"
 		],
 		"desktop": {

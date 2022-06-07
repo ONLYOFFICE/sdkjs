@@ -1689,6 +1689,7 @@ function XmlWriterContext(editorId){
     this.presentation = null;
     this.sldMasterIdLst = [];
     this.sldLayoutIdLst = [];
+    this.sldLayoutsCount = 0;
     this.notesMasterIdLst = [];
     this.handoutMasterIdLst = [];
     this.sldIdLst = [];
@@ -1711,8 +1712,17 @@ XmlWriterContext.prototype.addSlideLayoutRel = function(sRel) {
 XmlWriterContext.prototype.addSlideMasterRel = function(sRel) {
     this.sldMasterIdLst.push(sRel);
 };
+XmlWriterContext.prototype.addNotesMasterRel = function(sRel) {
+    this.notesMasterIdLst.push(sRel);
+};
 XmlWriterContext.prototype.clearSlideLayoutRels = function() {
     this.sldLayoutIdLst.length = 0;
+};
+XmlWriterContext.prototype.getSlideMastersCount = function() {
+    return this.sldMasterIdLst.length;
+};
+XmlWriterContext.prototype.getSlidesCount = function() {
+    return this.sldIdLst.length;
 };
 function CT_XmlNode(opt_elemReader) {
     this.attributes = {};
@@ -1781,6 +1791,7 @@ CT_XmlNode.prototype.toXml = function(writer, name) {
     }
     writer.WriteXmlNodeEnd(name);
 };
+window.StaxParser = StaxParser;
 
 window['AscCommon'] = window['AscCommon'] || {};
 window['AscCommon'].XmlParserContext = XmlParserContext;

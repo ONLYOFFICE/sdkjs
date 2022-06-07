@@ -254,15 +254,49 @@
 
 	CMarkdownConverter.prototype.WrapInSymbol = function(sText, sSyblols, sWrapType)
 	{
+		var nFirstNonSpaceChar = sText.search(/\S/);
+		var nSpaceCharsCountOnEnd = 0;
+		if (nFirstNonSpaceChar !== - 1)
+			nSpaceCharsCountOnEnd = sText.slice(nFirstNonSpaceChar).length - sText.slice(nFirstNonSpaceChar).trim().length;
+		else
+			nSpaceCharsCountOnEnd = sText.length - sText.slice(nFirstNonSpaceChar).trim().length;
+
 		switch (sWrapType)
 		{
 			case 'open':
-				return sSyblols + sText
+				// пробелов нет в начале
+				if (nFirstNonSpaceChar === 0)
+					return sSyblols + sText
+				// строка из пробелов
+				else if (nFirstNonSpaceChar === -1)
+					return sText + sSyblols
+				// в начале строки есть пробелы
+				else if (nFirstNonSpaceChar !== -1)
+					return sText.slice(0, nFirstNonSpaceChar) + sSyblols + sText.slice(nFirstNonSpaceChar);
 			case 'close':
-				return sText + sSyblols;
+				// пробелов нет в конце
+				if (nSpaceCharsCountOnEnd === 0)
+					return sText + sSyblols;
+				// строка из пробелов
+				else if (nFirstNonSpaceChar === -1)
+					return sSyblols + sText;
+				// в конце строки есть пробелы
+				else if (nSpaceCharsCountOnEnd !== 0)
+					return sText.slice(0, sText.length - nSpaceCharsCountOnEnd) + sSyblols + sText.slice(sText.length - nSpaceCharsCountOnEnd);
 			case 'wholly':
 			default:
-				return sSyblols + sText + sSyblols;
+				// пробелов нет в начале и нет в конце
+				if (nFirstNonSpaceChar === 0 && nSpaceCharsCountOnEnd === 0)
+					return sSyblols + sText + sSyblols;
+				// пробелов нет в начале и есть в конце
+				else if (nFirstNonSpaceChar === 0 && nSpaceCharsCountOnEnd !== 0)
+					return sSyblols + sText.slice(0, sText.length - nSpaceCharsCountOnEnd) + sSyblols + sText.slice(sText.length - nSpaceCharsCountOnEnd);
+				// пробелы есть в начале и нет в конце
+				else if (nFirstNonSpaceChar !== 0 && nSpaceCharsCountOnEnd === 0)
+					return sText.slice(0, nFirstNonSpaceChar) + sSyblols + sText.slice(nFirstNonSpaceChar) + sSyblols;
+				// пробелы есть в начале и есть в конце
+				else if (nFirstNonSpaceChar !== 0 && nSpaceCharsCountOnEnd !== 0)
+					return sText.slice(0, nFirstNonSpaceChar) + sSyblols + sText.slice(nFirstNonSpaceChar, sText.length - nSpaceCharsCountOnEnd) + sSyblols + sText.slice(sText.length - nSpaceCharsCountOnEnd);
 		}
 	};
 	CMarkdownConverter.prototype.WrapInTag = function(sText, sHtmlTag, sWrapType, sStyle)
@@ -904,8 +938,8 @@
 			}
 		}
 
-		if (sOutputText === '' && hasPicture === false)
-			return '';
+		if (sOutputText.trim() === "" && hasPicture === false)
+			return sOutputText;
 
 		if (!this.isCodeBlock)
 		{
@@ -914,11 +948,11 @@
 			if (private_isMonospaceFont(oTextPr.FontFamily.Name))
 			{
 				oRunNext     = oRun.private_GetNextInParent();
-				while (oRunNext && oRunNext.Run.GetText() === '')
+				while (oRunNext && oRunNext.Run.GetText().trim() === '')
 					oRunNext = oRunNext.private_GetNextInParent();
 
 				oRunPrev     = oRun.private_GetPreviousInParent();
-				while (oRunPrev && oRunPrev.Run.GetText() === '')
+				while (oRunPrev && oRunPrev.Run.GetText().trim() === '')
 					oRunPrev = oRunPrev.private_GetPreviousInParent();
 
 				var isCodeNextRun = IsHaveCodeRun(oRunNext);
@@ -946,11 +980,11 @@
 			else
 			{
 				oRunNext     = oRun.private_GetNextInParent();
-				while (oRunNext && oRunNext.Run.GetText() === '')
+				while (oRunNext && oRunNext.Run.GetText().trim() === '')
 					oRunNext = oRunNext.private_GetNextInParent();
 
 				oRunPrev     = oRun.private_GetPreviousInParent();
-				while (oRunPrev && oRunPrev.Run.GetText() === '')
+				while (oRunPrev && oRunPrev.Run.GetText().trim() === '')
 					oRunPrev = oRunPrev.private_GetPreviousInParent();
 
 				var isBoldNextRun   = IsBold(oRunNext);
@@ -995,7 +1029,7 @@
 						{
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Strikeout, 'open');
 							if (!isStrikeoutNextRun || !isEqualTxPr.call(this, oRun, oRunNext) || sVertAlgnNextRun)
-								sOutputText = this.WrapInTag(sOutputText, this.MdSymbols.Strikeout, 'close');
+								sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Strikeout, 'close');
 						}
 						else if (!isStrikeoutNextRun || !isEqualTxPr.call(this, oRun, oRunNext) || sVertAlgnNextRun)
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Strikeout, 'close');
@@ -1024,7 +1058,7 @@
 						{
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Bold, 'open');
 							if (!isBoldNextRun || !isEqualTxPr.call(this, oRun, oRunNext) || sVertAlgnNextRun)
-								sOutputText = this.WrapInTag(sOutputText, this.MdSymbols.Bold, 'close');
+								sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Bold, 'close');
 						}
 						else if (!isBoldNextRun || !isEqualTxPr.call(this, oRun, oRunNext) || sVertAlgnNextRun)
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Bold, 'close');
@@ -1054,7 +1088,7 @@
 						{
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Italic, 'open');
 							if (!isItalicNextRun || !isEqualTxPr.call(this, oRun, oRunNext) || sVertAlgnNextRun)
-								sOutputText = this.WrapInTag(sOutputText, this.MdSymbols.Italic, 'close');
+								sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Italic, 'close');
 						}
 						else if (!isItalicNextRun || !isEqualTxPr.call(this, oRun, oRunNext) || sVertAlgnNextRun)
 							sOutputText = this.WrapInSymbol(sOutputText, this.MdSymbols.Italic, 'close');
@@ -3498,7 +3532,7 @@
 
 	/**
 	 * The types of elements that can be added to the paragraph structure.
-	 * @typedef {(ApiUnsupported | ApiRun | ApiInlineLvlSdt | ApiHyperlink)} ParagraphContent
+	 * @typedef {(ApiUnsupported | ApiRun | ApiInlineLvlSdt | ApiHyperlink | ApiFormBase)} ParagraphContent
 	 */
 
 	/**
@@ -3719,7 +3753,7 @@
 	 * Standard numeric format.
 	 * @typedef {("General" | "0" | "0.00" | "#,##0" | "#,##0.00" | "0%" | "0.00%" |
 	 * "0.00E+00" | "# ?/?" | "# ??/??" | "m/d/yyyy" | "d-mmm-yy" | "d-mmm" | "mmm-yy" | "h:mm AM/PM" |
-	 * | "h:mm:ss AM/PM" | "h:mm" | "h:mm:ss" | "m/d/yyyy h:mm" | "#,##0_);(#,##0)" | "#,##0_);[Red](#,##0)" | 
+	 * "h:mm:ss AM/PM" | "h:mm" | "h:mm:ss" | "m/d/yyyy h:mm" | "#,##0_);(#,##0)" | "#,##0_);[Red](#,##0)" | 
 	 * "#,##0.00_);(#,##0.00)" | "#,##0.00_);[Red](#,##0.00)" | "mm:ss" | "[h]:mm:ss" | "mm:ss.0" | "##0.0E+0" | "@")} NumFormat
 	 */
 
@@ -5219,16 +5253,117 @@
 		var arrControls = this.Document.GetAllContentControls();
 		for (var nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
 		{
-			var oControl = arrControls[nIndex];
-
-			if (oControl instanceof CBlockLevelSdt)
-				arrResult.push(new ApiBlockLvlSdt(oControl));
-			else if (oControl instanceof CInlineLevelSdt)
-				arrResult.push(new ApiInlineLvlSdt(oControl));
+			let oControl = ToApiContentControl(arrControls[nIndex]);
+			if (oControl)
+				arrResult.push(oControl);
 		}
 
 		return arrResult;
 	};
+	/**
+	 * Returns a list of all tags that are used for all content controls in the document
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {String[]}
+	 */
+	ApiDocument.prototype.GetTagsOfAllContentControls = function()
+	{
+		let oTags       = {};
+		let arrResult   = [];
+		let arrControls = this.Document.GetAllContentControls();
+		for (let nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
+		{
+			let oControl = arrControls[nIndex];
+			let sTag = oControl.GetTag();
+
+			if (sTag && !oTags[sTag])
+			{
+				oTags[sTag] = 1;
+				arrResult.push(sTag);
+			}
+		}
+
+		return arrResult;
+	};
+	/**
+	 * Returns a list of all tags that are used for all special forms in the document
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {String[]}
+	 */
+	ApiDocument.prototype.GetTagsOfAllForms = function()
+	{
+		let oTags       = {};
+		let arrResult   = [];
+		let arrControls = this.Document.GetAllContentControls();
+		for (let nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
+		{
+			let oControl = arrControls[nIndex];
+			if (oControl.IsForm())
+			{
+				let sTag = oControl.GetTag();
+
+				if (sTag && !oTags[sTag])
+				{
+					oTags[sTag] = 1;
+					arrResult.push(sTag);
+				}
+			}
+		}
+
+		return arrResult;
+	};
+	/**
+	 * Returns a list of all the content controls in the document with specified tag name
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @param sTag {string}
+	 * @returns {ApiBlockLvlSdt[] | ApiInlineLvlSdt[]}
+	 */
+	ApiDocument.prototype.GetContentControlsByTag = function(sTag)
+	{
+		let _sTag = GetStringParameter(sTag, "");
+		if (!_sTag)
+			return [];
+
+		let arrResult   = [];
+		let arrControls = this.Document.GetAllContentControls();
+		for (let nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
+		{
+			let oControl    = arrControls[nIndex];
+			let oApiControl = ToApiContentControl(oControl);
+			if (_sTag === oControl.GetTag() && oApiControl)
+				arrResult.push(oApiControl);
+		}
+
+		return arrResult;
+	};
+	/**
+	 * Returns a list of all the special forms in the document with specified tag name
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @param sTag {string}
+	 * @returns {ApiBlockLvlSdt[] | ApiInlineLvlSdt[]}
+	 */
+	ApiDocument.prototype.GetFormsByTag = function(sTag)
+	{
+		let _sTag = GetStringParameter(sTag, "");
+		if (!_sTag)
+			return [];
+
+		let arrResult   = [];
+		let arrControls = this.Document.GetAllContentControls();
+		for (let nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
+		{
+			let oControl = arrControls[nIndex];
+			let oForm    = ToApiForm(oControl);
+			if (oControl.IsForm() && _sTag === oControl.GetTag() && oForm)
+				arrResult.push(oForm);
+		}
+
+		return arrResult;
+	};
+
 	/**
 	 * Sets the change tracking mode.
 	 * @memberof ApiDocument
@@ -5647,18 +5782,8 @@
 	};
 
 	/**
-	 * Clears all fields in the document.
-	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
-	 */
-	ApiDocument.prototype.ClearAllFields = function()
-	{
-		this.Document.ClearAllSpecialForms(true);
-	};
-
-	/**
 	 * Updates all tables of contents in the current document.
-	 * @memberof Api
+	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} [bOnlyPageNumbers=false] - Specifies that only page numbers will be updated.
 	 */
@@ -5714,7 +5839,7 @@
 	};
 	/**
 	 * Updates all tables of figures in the current document.
-	 * @memberof Api
+	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {boolean} [bOnlyPageNumbers=false] - Specifies that only page numbers will be updated.
 	 */
@@ -5802,29 +5927,14 @@
 	{
 		var aForms = [];
 		var allControls = this.Document.GetAllContentControls();
-		var oTemp;
 		for (var nElm = 0; nElm < allControls.length; nElm++)
 		{
-			if (allControls[nElm].IsForm())
+			let oControl = allControls[nElm];
+			if (oControl.IsForm())
 			{
-				oTemp = new ApiFormBase(allControls[nElm]);
-				switch (oTemp.GetFormType())
-				{
-					case "textForm":
-						aForms.push(new ApiTextForm(allControls[nElm]));
-						break;
-					case "comboBoxForm":
-					case "dropDownForm":
-						aForms.push(new ApiComboBoxForm(allControls[nElm]));
-						break;
-					case "radioButtonForm":
-					case "checkBoxForm":
-						aForms.push(new ApiCheckBoxForm(allControls[nElm]));
-						break;
-					case "pictureForm":
-						aForms.push(new ApiPictureForm(allControls[nElm]));
-						break;
-				}
+				let oForm = ToApiForm(oControl);
+				if (oForm)
+					aForms.push(oForm);
 			}
 		}
 
@@ -5836,7 +5946,7 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 */
-	ApiDocument.prototype.ClearAllFields = function(bOnlyForms)
+	ApiDocument.prototype.ClearAllFields = function()
 	{
 		this.Document.ClearAllSpecialForms(false);
 	};
@@ -5988,7 +6098,7 @@
      * Returns the selected drawings.
      * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-     * @returns {(ApiShape | ApiImage | ApiChart | ApiDrawing)[]}
+     * @returns {ApiShape[] | ApiImage[] | ApiChart[] | ApiDrawing[]}
      */
 	ApiDocument.prototype.GetSelectedDrawings = function() 
 	{
@@ -6700,10 +6810,10 @@
 		return false;
 	};
 	/**
-	 * Return all font names from all elenemts inside it.
+	 * Returns all font names from all elements inside the current paragraph.
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
-	 * @returns {string[]} The font names used for the current paragraph.
+	 * @returns {string[]} - The font names used for the current paragraph.
 	 */
 	ApiParagraph.prototype.GetFontNames = function()
 	{
@@ -6734,7 +6844,7 @@
 	/**
 	 * Specifies a highlighting color which is applied as a background to the contents of the current paragraph.
 	 * @memberof ApiParagraph
-	 * @typeofeditors ["CDE, CPE"]
+	 * @typeofeditors ["CDE", "CPE"]
 	 * @param {highlightColor} sColor - Available highlight color.
 	 * @returns {ApiParagraph} this
 	 */
@@ -6984,8 +7094,9 @@
 
 		for (var Index = 0; Index < ContentControls.length; Index++)
 		{
-			if (ContentControls[Index] instanceof CInlineLevelSdt)
-				arrApiContentControls.push(new ApiInlineLvlSdt(ContentControls[Index]));
+			let oControl = ToApiContentControl(ContentControls[Index]);
+			if (oControl)
+				arrApiContentControls.push(oControl);
 		} 
 
 		return arrApiContentControls;
@@ -7745,10 +7856,10 @@
 	};
 
 	/**
-     * Gets the paragraph position in parent.
+     * Returns the paragraph position in its parent element.
      * @memberof ApiParagraph
      * @typeofeditors ["CDE"]
-     * @returns {Number} - returns -1 if paragraph's parent doesn't exist. 
+     * @returns {Number} - returns -1 if the paragraph parent doesn't exist. 
      */
 	ApiParagraph.prototype.GetPosInParent = function()
 	{
@@ -7756,10 +7867,10 @@
 	};
 
 	/**
-     * Replaces the current paragraph by new element.
+     * Replaces the current paragraph with a new element.
      * @memberof ApiParagraph
      * @typeofeditors ["CDE"]
-     * @param {DocumentElement} oElement - element to which the paragraph will be replaced.
+     * @param {DocumentElement} oElement - The element to replace the current paragraph with.
      * @returns {boolean}
      */
 	ApiParagraph.prototype.ReplaceByElement = function(oElement)
@@ -8209,10 +8320,10 @@
 		return oTextPr;
 	};
 	/**
-	 * Return all font names from all elenemts inside it.
+	 * Returns all font names from all elements inside the current run.
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @returns {string[]} The font names used for the current run.
+	 * @returns {string[]} - The font names used for the current run.
 	 */
 	ApiRun.prototype.GetFontNames = function()
 	{
@@ -9620,10 +9731,10 @@
 	};
 
 	/**
-     * Gets the table position in parent.
+     * Returns the table position in its parent element.
      * @memberof ApiTable
      * @typeofeditors ["CDE"]
-     * @returns {Number} - returns -1 if table's parent doesn't exist. 
+     * @returns {Number} - returns -1 if the table parent doesn't exist. 
      */
 	ApiTable.prototype.GetPosInParent = function()
 	{
@@ -9631,10 +9742,10 @@
 	};
  
 	/**
-	 * Replaces the current table by new element.
+	 * Replaces the current table with a new element.
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
-	 * @param {DocumentElement} oElement - element to which the table will be replaced.
+	 * @param {DocumentElement} oElement - The element to replace the current table with.
 	 * @returns {boolean}
 	 */
 	ApiTable.prototype.ReplaceByElement = function(oElement)
@@ -10679,7 +10790,7 @@
 	/**
 	 * Specifies a highlighting color which is added to the text properties and applied as a background to the contents of the current run/range/paragraph.
 	 * @memberof ApiTextPr
-	 * @typeofeditors ["CDE, CPE"]
+	 * @typeofeditors ["CDE", "CPE"]
 	 * @param {highlightColor} sColor - Available highlight color.
 	 * @returns {ApiTextPr}
 	 */
@@ -12952,7 +13063,7 @@
 	/**
 	 * Returns the width of the current drawing.
 	 * @memberof ApiDrawing
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {EMU}
 	 */
 	ApiDrawing.prototype.GetWidth = function()
@@ -12962,7 +13073,7 @@
 	/**
 	 * Returns the height of the current drawing.
 	 * @memberof ApiDrawing
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {EMU}
 	 */
 	ApiDrawing.prototype.GetHeight = function()
@@ -13633,7 +13744,7 @@
 	/**
 	 * Removes the specified series from the current chart.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {number} nSeria - The index of the chart series.
 	 * @returns {boolean}
 	 */
@@ -13645,7 +13756,7 @@
 	/**
 	 * Sets values to the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE"]
+	 * @typeofeditors ["CDE", "CPE"]
 	 * @param {number[]} aValues - The array of the data which will be set to the specified chart series.
 	 * @param {number} nSeria - The index of the chart series.
 	 * @returns {boolean}
@@ -13658,7 +13769,7 @@
 	/**
 	 * Sets the x-axis values to all chart series. It is used with the scatter charts only.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE"]
+	 * @typeofeditors ["CDE", "CPE"]
 	 * @param {string[]} aValues - The array of the data which will be set to the x-axis data points.
 	 * @returns {boolean}
 	 */
@@ -13672,7 +13783,7 @@
 	/**
 	 * Sets a name to the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE"]
+	 * @typeofeditors ["CDE", "CPE"]
 	 * @param {string} sName - The name which will be set to the specified chart series.
 	 * @param {number} nSeria - The index of the chart series.
 	 * @returns {boolean}
@@ -13685,7 +13796,7 @@
 	/**
 	 * Sets a name to the specified chart category.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE"]
+	 * @typeofeditors ["CDE", "CPE"]
 	 * @param {string} sName - The name which will be set to the specified chart category.
 	 * @param {number} nCategory - The index of the chart category.
 	 * @returns {boolean}
@@ -13698,7 +13809,7 @@
 	/**
 	 * Sets a style to the current chart by style ID.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param nStyleId - One of the styles available in the editor.
 	 * @returns {boolean}
 	 */
@@ -13722,7 +13833,7 @@
 	/**
 	 * Sets the fill to the chart plot area.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the plot area.
 	 * @returns {boolean}
 	 */
@@ -13738,7 +13849,7 @@
 	/**
 	 * Sets the outline to the chart plot area.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the plot area outline.
 	 * @returns {boolean}
 	 */
@@ -13754,7 +13865,7 @@
 	/**
 	 * Sets the fill to the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the series.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {boolean} [bAll=false] - Specifies if the fill will be applied to all series.
@@ -13771,7 +13882,7 @@
 	/**
 	 * Sets the outline to the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the series outline.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {boolean} [bAll=false] - Specifies if the outline will be applied to all series.
@@ -13788,7 +13899,7 @@
 	/**
 	 * Sets the fill to the data point in the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the data point.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {number} nDataPoint - The index of the data point in the specified chart series.
@@ -13806,7 +13917,7 @@
 	/**
 	 * Sets the outline to the data point in the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the data point outline.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {number} nDataPoint - The index of the data point in the specified chart series.
@@ -13824,7 +13935,7 @@
 	/**
 	 * Sets the fill to the marker in the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the marker.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {number} nMarker - The index of the marker in the specified chart series.
@@ -13842,7 +13953,7 @@
 	/**
 	 * Sets the outline to the marker in the specified chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the marker outline.
 	 * @param {number} nSeries - The index of the chart series.
 	 * @param {number} nMarker - The index of the marker in the specified chart series.
@@ -13860,7 +13971,7 @@
 	/**
 	 * Sets the fill to the chart title.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the title.
 	 * @returns {boolean}
 	 */
@@ -13875,7 +13986,7 @@
 	/**
 	 * Sets the outline to the chart title.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the title outline.
 	 * @returns {boolean}
 	 */
@@ -13890,7 +14001,7 @@
 	/**
 	 * Sets the fill to the chart legend.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiFill} oFill - The fill type used to fill the legend.
 	 * @returns {boolean}
 	 */
@@ -13905,7 +14016,7 @@
 	/**
 	 * Sets the outline to the chart legend.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param {ApiStroke} oStroke - The stroke used to create the legend outline.
 	 * @returns {boolean}
 	 */
@@ -13952,7 +14063,7 @@
 	/**
 	 * Sets the specified numeric format to the chart series.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, "CPE"]
+	 * @typeofeditors ["CDE", "CPE"]
 	 * @param {NumFormat | String} sFormat - Numeric format (can be custom format).
 	 * @param {Number} nSeria - Series index.
 	 * @returns {boolean}
@@ -13965,7 +14076,7 @@
 	/**
 	 * Sets the specified numeric format to the chart data point.
 	 * @memberof ApiChart
-	 * @typeofeditors ["CDE, "CPE"]
+	 * @typeofeditors ["CDE", "CPE"]
 	 * @param {NumFormat | String} sFormat - Numeric format (can be custom format).
 	 * @param {Number} nSeria - Series index.
 	 * @param {number} nDataPoint - The index of the data point in the specified chart series.
@@ -14830,12 +14941,9 @@
 
 		for (var Index = 0, nCount = arrContentControls.length; Index < nCount; Index++)
 		{
-			var oControl = arrContentControls[Index];
-
-			if (oControl instanceof CBlockLevelSdt)
-				arrApiContentControls.push(new ApiBlockLvlSdt(oControl));
-			else if (oControl instanceof CInlineLevelSdt)
-				arrApiContentControls.push(new ApiInlineLvlSdt(oControl));
+			let oControl = ToApiContentControl(arrContentControls[Index]);
+			if (oControl)
+				arrApiContentControls.push(oControl);
 		}
 
 		return arrApiContentControls;
@@ -15184,10 +15292,10 @@
 	};
 
 	/**
-     * Gets the content control position in parent.
+     * Returns the content control position in its parent element.
      * @memberof ApiBlockLvlSdt
      * @typeofeditors ["CDE"]
-     * @returns {Number} - returns -1 if content control's parent doesn't exist. 
+     * @returns {Number} - returns -1 if the content control parent doesn't exist. 
      */
 	ApiBlockLvlSdt.prototype.GetPosInParent = function()
 	{
@@ -15195,10 +15303,10 @@
 	};
 
 	/**
-	 * Replaces the current content control by new element.
+	 * Replaces the current content control with a new element.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @param {DocumentElement} oElement - element to which the table will be replaced.
+	 * @param {DocumentElement} oElement - The element to replace the current content control with.
 	 * @returns {boolean}
 	 */
 	ApiBlockLvlSdt.prototype.ReplaceByElement = function(oElement)
@@ -15484,6 +15592,7 @@
 	};
 	/**
 	 * Returns the text from the current form.
+	 * *This method is used only for text and combo box forms.*
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
@@ -15543,6 +15652,7 @@
 	};
 	/**
 	 * Sets the text properties to the current form.
+	 * *This method is used only for text and combo box forms.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiTextPr} oTextPr - The text properties that will be set to the current form.
@@ -15560,6 +15670,7 @@
 	};
 	/**
 	 * Returns the text properties from the current form.
+	 * *This method is used only for text and combo box forms.
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
 	 * @return {ApiTextPr}  
@@ -15570,7 +15681,8 @@
 	};
 	/**
 	 * Copies the current form (copies with the shape if it exists).
-	 * @constructor
+	 * @memberof ApiFormBase
+	 * @typeofeditors ["CDE"]
 	 * @returns {null | ApiTextForm| ApiCheckBoxForm | ApiComboBoxForm | ApiPictureForm}
 	 */
 	ApiFormBase.prototype.Copy = function()
@@ -16777,6 +16889,10 @@
 	ApiDocument.prototype["InsertWatermark"]             = ApiDocument.prototype.InsertWatermark;
 	ApiDocument.prototype["SearchAndReplace"]            = ApiDocument.prototype.SearchAndReplace;
 	ApiDocument.prototype["GetAllContentControls"]       = ApiDocument.prototype.GetAllContentControls;
+	ApiDocument.prototype["GetTagsOfAllContentControls"] = ApiDocument.prototype.GetTagsOfAllContentControls;
+	ApiDocument.prototype["GetTagsOfAllForms"]           = ApiDocument.prototype.GetTagsOfAllForms;
+	ApiDocument.prototype["GetContentControlsByTag"]     = ApiDocument.prototype.GetContentControlsByTag;
+	ApiDocument.prototype["GetFormsByTag"]               = ApiDocument.prototype.GetFormsByTag;
 	ApiDocument.prototype["SetTrackRevisions"]           = ApiDocument.prototype.SetTrackRevisions;
 	ApiDocument.prototype["IsTrackRevisions"]            = ApiDocument.prototype.IsTrackRevisions;
 	ApiDocument.prototype["GetRange"]                    = ApiDocument.prototype.GetRange;
@@ -16796,8 +16912,6 @@
 	ApiDocument.prototype["Search"]                      = ApiDocument.prototype.Search;
 	ApiDocument.prototype["ToMarkdown"]                  = ApiDocument.prototype.ToMarkdown;
 	ApiDocument.prototype["ToHtml"]                      = ApiDocument.prototype.ToHtml;
-	ApiDocument.prototype["ClearAllFields"]              = ApiDocument.prototype.ClearAllFields;
-	ApiDocument.prototype["GetAllForms"]                 = ApiDocument.prototype.GetAllForms;
 	ApiDocument.prototype["ClearAllForms"]               = ApiDocument.prototype.ClearAllForms;
 	ApiDocument.prototype["SetFormsHighlight"]           = ApiDocument.prototype.SetFormsHighlight;
 	ApiDocument.prototype["GetAllNumberedParagraphs"]    = ApiDocument.prototype.GetAllNumberedParagraphs;
@@ -17490,6 +17604,35 @@
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	function ToApiForm(oForm)
+	{
+		if (!oForm)
+			return null;
+
+		if (oForm.IsTextForm())
+			return new ApiTextForm(oForm);
+		else if (oForm.IsComboBox() || oForm.IsDropDownList())
+			return new ApiComboBoxForm(oForm);
+		else if (oForm.IsRadioButton() || oForm.IsCheckBox())
+			return new ApiCheckBoxForm(oForm);
+		else if (oForm.IsPictureForm())
+			return new ApiPictureForm(oForm);
+
+		return null;
+	}
+	function ToApiContentControl(oControl)
+	{
+		if (!oControl)
+			return null;
+
+		if (oControl instanceof CBlockLevelSdt)
+			return (new ApiBlockLvlSdt(oControl));
+		else if (oControl instanceof CInlineLevelSdt)
+			return (new ApiInlineLvlSdt(oControl));
+
+		return null;
+	}
+
 	function private_GetDrawingDocument()
 	{
 		return editor.WordControl.m_oLogicDocument.DrawingDocument;

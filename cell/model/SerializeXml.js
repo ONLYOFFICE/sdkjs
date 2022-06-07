@@ -1783,7 +1783,7 @@
 				}
 
 				var saveThreadedComments = true;
-				if (saveThreadedComments/*pCommentItem.pThreadedComment*/) {
+				if (saveThreadedComments && pCommentItem.isValidThreadComment()/*pCommentItem.pThreadedComment*/) {
 					if (null === pThreadedComments) {
 						pThreadedComments = new CT_CThreadedComments();
 					}
@@ -1826,7 +1826,7 @@
 					}
 				}
 
-				if (null !== pCommentItem.m_sAuthor) {
+				if (undefined !== pCommentItem.m_sAuthor) {
 					var sAuthor = pCommentItem.m_sAuthor;
 					var pFind;
 					for (var j = 0; j < mapByAuthors.length; j++) {

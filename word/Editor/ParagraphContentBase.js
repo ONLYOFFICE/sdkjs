@@ -2478,6 +2478,10 @@ CParagraphContentWithParagraphLikeContent.prototype.AddToContent = function(nPos
 {
 	return this.Add_ToContent(nPos, oItem, isUpdatePositions);
 };
+CParagraphContentWithParagraphLikeContent.prototype.AddToContentToEnd = function(oItem, isUpdatePositions)
+{
+	return this.Add_ToContent(this.GetElementsCount(), oItem, isUpdatePositions);
+};
 CParagraphContentWithParagraphLikeContent.prototype.RemoveFromContent = function(nPos, nCount, isUpdatePositions)
 {
 	return this.Remove_FromContent(nPos, nCount, isUpdatePositions);
