@@ -2055,8 +2055,26 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
             var _w = _params[_current.pos++];
             var _h = _params[_current.pos++];
             var _pageNum = _params[_current.pos++];
+            var _additionalParams = _params[_current.pos++];
+            var _posX = _params[_current.pos++];
+            var _posY = _params[_current.pos++];
+            var _wrapType = _params[_current.pos++];
 
             this.AddImageUrlNative(_src, _w, _h, _pageNum);
+            break;
+        }
+        case 401: // ASC_MENU_EVENT_TYPE_INSERT_SCREEN_IMAGE
+        {
+            var _src = _params[_current.pos++];
+            var _w = _params[_current.pos++];
+            var _h = _params[_current.pos++];
+            var _pageNum = _params[_current.pos++];
+            var _additionalParams = _params[_current.pos++];
+            var _posX = _params[_current.pos++];
+            var _posY = _params[_current.pos++];
+            var _wrapType = _params[_current.pos++];
+
+            this.AddImageUrlAtPosNative(_src, _w, _h, _pageNum, _posX, _posY, _wrapType);
             break;
         }
         case 53: // ASC_MENU_EVENT_TYPE_INSERT_SHAPE
@@ -5164,6 +5182,10 @@ Asc['asc_docs_api'].prototype.AddImageUrlNative = function(url, _w, _h, _pageNum
     this.WordControl.m_oLogicDocument.AddInlineImage(wI, hI, url);
 	this.WordControl.m_oLogicDocument.Recalculate();
 	this.WordControl.m_oLogicDocument.FinalizeAction();
+};
+Asc['asc_docs_api'].prototype.AddImageUrlAtPosNative = function(url, _w, _h, _pageNum, _posX, _posY, _wrapType)
+{
+    _api.AddImageToPage(url, _pageNum, _posX, _posY, _w, _h, _wrapType);
 };
 Asc['asc_docs_api'].prototype.SetContentControlPictureUrlNative = function(sUrl, sId)
 {
