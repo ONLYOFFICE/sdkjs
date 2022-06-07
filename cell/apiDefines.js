@@ -555,9 +555,9 @@ var c_oAscPopUpSelectorType = {
   };
 
   var c_oAscExternalReferenceType = {
-    referenceData: 1,
-    link: 2,
-    path: 3
+    referenceData: 0,
+    link: 1,
+    path: 2
   };
 
   //----------------------------------------------------------export----------------------------------------------------

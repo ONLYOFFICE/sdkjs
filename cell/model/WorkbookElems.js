@@ -11900,7 +11900,10 @@ QueryTableField.prototype.clone = function() {
 	}
 
 	ExternalReference.prototype.getAscLink = function () {
-		return new asc_CExternalReference();
+		var res = new asc_CExternalReference();
+		res.type = Asc.c_oAscExternalReferenceType.path;
+		res.data = this.Id;
+		return res;
 	};
 
 	function asc_CExternalReference() {
