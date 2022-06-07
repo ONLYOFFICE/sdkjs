@@ -520,6 +520,18 @@
 			return this.contains(range.c1, range.r1) && this.contains(range.c2, range.r2);
 		};
 
+		Range.prototype.containsRanges = function (ranges) {
+			if (ranges && ranges.length) {
+				for (var i = 0; i < ranges.length; i++) {
+					if (!this.containsRange(ranges[i])) {
+						return false;
+					}
+				}
+				return true;
+			}
+			return false;
+		};
+
 		Range.prototype.containsFirstLineRange = function (range) {
 			return this.contains(range.c1, range.r1) && this.contains(range.c2, range.r1);
 		};
