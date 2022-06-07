@@ -282,9 +282,9 @@
 			"common": []
 		},
 		"mobile": [
+			"common/libfont/engine/fonts_native.js",
 			"common/Charts/ChartStyles.js",
 			"common/Native/Wrappers/HtmlPage.js",
-			"common/Native/Wrappers/TextMeasurerWrapper.js",
 			"common/Native/Wrappers/DrawingStream.js",
 			"common/Native/Wrappers/ShapeDrawer.js",
 			"common/Native/Wrappers/Overlay.js",
@@ -292,17 +292,13 @@
 			"common/Native/Wrappers/api.js"
 		],
 		"exclude_mobile": [
-			"common/Overlay.js",
-			"word/Drawing/ShapeDrawer.js",
-			"word/Drawing/DrawingDocument.js",
-			"common/libfont/rasterheap.js",
-			"common/libfont/glyphstring.js",
-			"common/libfont/manager.js",
-			"common/libfont/textmeasurer.js",
 			"vendor/iscroll.js",
 			"common/Scrolls/mobileTouchManagerBase.js",
+			"common/Overlay.js",
 			"word/Drawing/mobileTouchManager.js",
-			"word/Drawing/HtmlPage.js"
+			"word/Drawing/HtmlPage.js",
+			"word/Drawing/ShapeDrawer.js",
+			"word/Drawing/DrawingDocument.js"
 		]
 	}
 }
