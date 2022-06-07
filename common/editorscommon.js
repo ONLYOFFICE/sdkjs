@@ -9974,7 +9974,7 @@
 				const drawInfo = infoOfDrawings[i];
 				const type = drawInfo.type;
 				const bullet = new AscCommonWord.CPresentationBullet();
-				const textPr = new CTextPr();
+				const textPr = new AscCommonWord.CTextPr();
 				textPr.Color = g_oDocumentDefaultStrokeColor;
 				switch (type)
 				{
@@ -10167,9 +10167,9 @@
 		oNewShape.createTextBody();
 		const par = oNewShape.txBody.content.GetAllParagraphs()[0];
 		par.MoveCursorToStartPos();
-		par.Pr = new CParaPr();
+		par.Pr = new AscCommonWord.CParaPr();
 
-		const parRun = new ParaRun(par);
+		const parRun = new AscCommonWord.ParaRun(par);
 		const textPr = lvl.textPr.Copy();
 		textPr.FontSize = ((2 * line_distance * 72 / 96) >> 0) / 2;
 		parRun.Set_Pr(textPr);
@@ -10206,11 +10206,11 @@
 		par.MoveCursorToStartPos();
 
 		//par.Pr = level.ParaPr.Copy();
-		par.Pr = new CParaPr();
+		par.Pr = new AscCommonWord.CParaPr();
 		textPr = textPr.Copy();
 		textPr.FontSize = textPr.FontSizeCS = ((2 * lineHeight * 72 / 96) >> 0) / 2;
 
-		const parRun = new ParaRun(par);
+		const parRun = new AscCommonWord.ParaRun(par);
 		parRun.Set_Pr(textPr);
 		parRun.AddText(text);
 		par.AddToContent(0, parRun);
