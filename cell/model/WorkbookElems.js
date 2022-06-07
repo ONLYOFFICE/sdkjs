@@ -11899,6 +11899,19 @@ QueryTableField.prototype.clone = function() {
 		this.worksheets = {};
 	}
 
+	ExternalReference.prototype.getAscLink = function () {
+		return new asc_externalReference();
+	};
+
+	function asc_externalReference() {
+
+	}
+
+	ExternalReference.prototype.getAscLink = function () {
+		return null;
+	};
+
+
 	function ExternalSheetDataSet() {
 		this.SheetId = null;
 		this.RefreshError = null;

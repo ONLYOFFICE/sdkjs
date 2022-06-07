@@ -16425,6 +16425,27 @@
 					}
 
 					var bRes = t._saveCellValueAfterEdit(c, val, flags, /*isNotHistory*/false, /*lockDraw*/false);
+					var externalReferences = [];
+					t.model._getCell(c.bbox.r1, c.bbox.c1, function (cell) {
+						if (cell && cell.isFormula()) {
+							var fP = cell.formulaParsed;
+							if (fP) {
+								for (var i = 0; i < fP.outStack.length; i++) {
+									if ((AscCommonExcel.cElementType.cellsRange3D === fP.outStack[i].type || AscCommonExcel.cElementType.cell3D === fP.outStack[i].type) && fP.outStack[i].externalLink) {
+										var eR = t.model.workbook.getExternalLinkByIndex(fP.outStack[i].externalLink - 1);
+										externalReferences.push(eR.getAscLink());
+									}
+								}
+							}
+						}
+					});
+
+					if (externalReferences && externalReferences.length) {
+						t.model.workbook.handlers.trigger("asc_onUpdateExternalReference", externalReferences, function (data) {
+							t.model.workbook.updateExternalReferences(data);
+						});
+					}
+
 					if (callback) {
 						return callback(bRes);
 					} else {
