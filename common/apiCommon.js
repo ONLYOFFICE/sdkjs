@@ -4653,6 +4653,9 @@
 		this.EncryptedInfo;
 		this.IsEnabledPlugins = true;
         this.IsEnabledMacroses = true;
+
+		//for external reference
+		this.ReferenceData = null;
 	}
 
 	prot = asc_CDocInfo.prototype;
@@ -4784,6 +4787,9 @@
 	};
 	prot.put_CoEditingMode = prot.asc_putCoEditingMode = function (v) {
 		this.coEditingMode = v;
+	};
+	prot.put_ReferenceData = prot.asc_putReferenceData = function (v) {
+		this.ReferenceData = v;
 	};
 
 	function COpenProgress() {
@@ -6814,6 +6820,7 @@
     prot["put_IsEnabledMacroses"] = prot["asc_putIsEnabledMacroses"] = prot.asc_putIsEnabledMacroses;
 	prot["get_CoEditingMode"] = prot["asc_getCoEditingMode"] = prot.asc_getCoEditingMode;
 	prot["put_CoEditingMode"] = prot["asc_putCoEditingMode"] = prot.asc_putCoEditingMode;
+	prot["put_ReferenceData"] = prot["asc_putReferenceData"] = prot.asc_putReferenceData;
 
 	window["AscCommon"].COpenProgress = COpenProgress;
 	prot = COpenProgress.prototype;
