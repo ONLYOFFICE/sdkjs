@@ -1092,6 +1092,10 @@
 				}
 
 				if (isSO || ul) {
+
+					if (angle && window["IS_NATIVE_EDITOR"])
+						ctx.nativeTextDecorationTransform(true);
+
 					x2 = x1 + dw;
 					fsz = prop.font.getSize();
 					lw = asc_round(fsz * ppiy / 72 / 18) || 1;
@@ -1109,6 +1113,9 @@
 						ctx.lineHor(x1, y - dy, x2 + 1/*px*/); // ToDo вопрос тут
 					}
 					ctx.stroke();
+
+					if (angle && window["IS_NATIVE_EDITOR"])
+						ctx.nativeTextDecorationTransform(false);
 				}
 
 				return dw;

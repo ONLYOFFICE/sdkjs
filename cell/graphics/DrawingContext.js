@@ -856,6 +856,15 @@
 		return res;
 	};
 
+	DrawingContext.prototype.nativeTextDecorationTransform = function(isStart)
+	{
+		// текст рисуется с трансформом, а strikeout/underline - без (матрица применяется ДО отрисовщика)
+		if (isStart)
+			window["native"]["PD_transform"](this._im.sx, this._im.shy, this._im.shx, this._im.sy, this._im.tx, this._im.ty);
+		else
+			window["native"]["PD_transform"](this._mt.sx, this._mt.shy, this._mt.shx, this._mt.sy, this._mt.tx, this._mt.ty);
+	};
+
 	/**
 	 *
 	 * @param font
