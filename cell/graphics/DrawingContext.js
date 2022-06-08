@@ -867,14 +867,6 @@
 		var r;
 		this.font.assign(font);
 
-		if (window["IS_NATIVE_EDITOR"]) {
-			this.font.fs = this.font.getSize() * this.scaleFactor * 96.0 / 25.4;
-			// this.font.fs = this.font.getSize() * 2.54 * this.scaleFactor * this.deviceDPI / 72.0;
-
-			// this.font.fs = this.font.getSize() * 2.54 * this.scaleFactor *
-			//     this.deviceScale * this.deviceDPI / 96.0 * (96.0 / (this.deviceDPI * this.deviceScale));
-		}
-
 		var italic = this.font.getItalic();
 		var bold = this.font.getBold();
 		var fontStyle;
@@ -907,7 +899,8 @@
 			}
 
 			// выставляем шрифт и отрисовщику...
-			window["native"]["PD_LoadFont"](fontInfo.Path, fontInfo.FaceIndex, this.font.getSize(), flag);
+			var drawFontSize = this.font.getSize() * this.scaleFactor * 96.0 / 25.4;
+			window["native"]["PD_LoadFont"](fontInfo.Path, fontInfo.FaceIndex, drawFontSize, flag);
 
 			// на отрисовке ячейки трансформ выставляется/сбрасывается. так что тут - только если есть angle
 			if (angle)
@@ -1006,7 +999,7 @@
 			if (window["IS_NATIVE_EDITOR"]) {
 				window["native"]["PD_FillText"](_x, _y, code);
 				// убрать это!!! все сдвиги ДОЛЖНЫ быть вщять из измерятеля/шейпера
-				_x += asc_round(this.measureChar(undefined, 3, code).width);
+				_x += asc_round((this.measureChar(undefined, 3, code).width) * this.scaleFactor * 96.0 / 25.4);
 			} else {
 				_x = asc_round(manager.LoadString4C(code, _x, _y));
 				pGlyph = manager.m_oGlyphString.m_pGlyphsBuffer[0];
