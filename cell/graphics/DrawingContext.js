@@ -906,10 +906,14 @@
 				flag |= 0x08;
 			}
 
+			// выставляем шрифт и отрисовщику...
 			window["native"]["PD_LoadFont"](fontInfo.Path, fontInfo.FaceIndex, this.font.getSize(), flag);
+
+			// на отрисовке ячейки трансформ выставляется/сбрасывается. так что тут - только если есть angle
 			if (angle)
 				window["native"]["PD_transform"](this._mt.sx, this._mt.shy, this._mt.shx, this._mt.sy, this._mt.tx, this._mt.ty);
 
+			// ...и измерятелю
 			AscFonts.g_fontApplication.LoadFont(this.font.getName(), AscCommon.g_font_loader, this.fmgrGraphics[3],
 				this.font.getSize(), fontStyle, this.ppiX, this.ppiY);
 			
@@ -1001,6 +1005,8 @@
 			code = 0xA0 === code ? 0x20 : code;
 			if (window["IS_NATIVE_EDITOR"]) {
 				window["native"]["PD_FillText"](_x, _y, code);
+				// убрать это!!! все сдвиги ДОЛЖНЫ быть вщять из измерятеля/шейпера
+				_x += asc_round(this.measureChar(undefined, 3, code).width);
 			} else {
 				_x = asc_round(manager.LoadString4C(code, _x, _y));
 				pGlyph = manager.m_oGlyphString.m_pGlyphsBuffer[0];
