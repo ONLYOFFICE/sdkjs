@@ -2505,9 +2505,9 @@
 
 	function parseExternalLink(url) {
 		//'path/[name]Sheet1'!A1
+		var path, name, startLink, i;
 		if (url && url[0] === "'") {
-			var path, name, startLink;
-			for (var i = url.length - 1; i >= 0; i--) {
+			for (i = url.length - 1; i >= 0; i--) {
 				if (url[i] === "!" && url[i - 1] === "'") {
 					startLink = true;
 					i--;
@@ -2533,7 +2533,14 @@
 				name = url.substring(name.end, name.start);
 				return {name: name, path: path, fullname: fullname};
 			}
+		} else if (url && url[0] === "[") { // [name]Sheet1!A1
+			for (i = 1; i < url.length; i++) {
+				if (url[i] === "]") {
+					return {name: url.substring(1, i), path: "", fullname:  url.substring(0, i + 1)};
+				}
+			}
 		}
+
 		return null;
 	}
 

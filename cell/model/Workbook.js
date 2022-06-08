@@ -3857,8 +3857,56 @@
 		return res ? res : null;
 	};
 
+	Workbook.prototype.getExternalLinkByName = function (name) {
+		for (var i = 0; i < this.externalReferences.length; i++) {
+			if (this.externalReferences[i].Id === name) {
+				return this.externalReferences[i];
+			}
+		}
+	};
+
+	Workbook.prototype.getExternalWorksheet = function (val, sheet) {
+		var extarnalLink = window['AscCommon'].isNumber(val) ? this.getExternalLinkByIndex(val - 1) : this.getExternalLinkByName(val);
+		if (extarnalLink) {
+			if (extarnalLink.worksheets && extarnalLink.worksheets[sheet]) {
+				return extarnalLink.worksheets[sheet];
+			}
+			for (var i = 0; i < extarnalLink.SheetNames.length; i++) {
+				if (extarnalLink.SheetNames[i] === sheet) {
+					var wb = this.getTemporaryExternalWb();
+					extarnalLink.worksheets[sheet] = new Worksheet(wb);
+					extarnalLink.worksheets[sheet].sName = sheet;
+					return extarnalLink.worksheets[sheet];
+				}
+			}
+		}
+		return null;
+	};
+
+
+
+
+
+
 	Workbook.prototype.getExternalWorksheetByIndex = function (index, sheet) {
 		var extarnalLink = this.getExternalLinkByIndex(index);
+		if (extarnalLink) {
+			if (extarnalLink.worksheets && extarnalLink.worksheets[sheet]) {
+				return extarnalLink.worksheets[sheet];
+			}
+			for (var i = 0; i < extarnalLink.SheetNames.length; i++) {
+				if (extarnalLink.SheetNames[i] === sheet) {
+					var wb = this.getTemporaryExternalWb();
+					extarnalLink.worksheets[sheet] = new Worksheet(wb);
+					return extarnalLink.worksheets[sheet];
+				}
+			}
+		}
+		return null;
+	};
+
+	Workbook.prototype.getExternalWorksheetByName = function (name, sheet) {
+		var extarnalLink = this.getExternalLinkByName(name);
 		if (extarnalLink) {
 			if (extarnalLink.worksheets && extarnalLink.worksheets[sheet]) {
 				return extarnalLink.worksheets[sheet];

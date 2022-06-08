@@ -6360,7 +6360,7 @@ function parserFormula( formula, parent, _ws ) {
 				var wsF, wsT;
 				var externalLink = _3DRefTmp[3];
 				if (externalLink) {
-					wsF = t.wb.getExternalWorksheetByIndex(externalLink - 1, _3DRefTmp[1]);
+					wsF = t.wb.getExternalWorksheet(externalLink, _3DRefTmp[1]);
 					wsT = wsF;
 				} else {
 					wsF = t.wb.getWorksheetByName(_3DRefTmp[1]);
