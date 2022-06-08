@@ -2295,6 +2295,143 @@ var editor;
 		return true;
 	};
 
+
+	spreadsheet_api.prototype.openDocumentFromZip2 = function (wb, data) {
+		if (!data) {
+			return null;
+		}
+
+		var res = [];
+
+		var openXml = AscCommon.openXml;
+
+		var xmlParserContext = new AscCommon.XmlParserContext();
+		xmlParserContext.DrawingDocument = this.wbModel.DrawingDocument;
+		var initOpenManager = xmlParserContext.InitOpenManager = AscCommonExcel.InitOpenManager ? new AscCommonExcel.InitOpenManager(null, wb) : null;
+		var wbPart = null;
+		var wbXml = null;
+		var jsZipWrapper = new AscCommon.JSZipWrapper();
+		if (!jsZipWrapper.loadSync(data)) {
+			return false;
+		}
+		xmlParserContext.zip = jsZipWrapper;
+		var doc = new openXml.OpenXmlPackage(jsZipWrapper, null);
+
+		//workbook
+		wbPart = doc.getPartByRelationshipType(openXml.Types.workbook.relationType);
+		var contentWorkbook = wbPart.getDocumentContent();
+		AscCommonExcel.executeInR1C1Mode(false, function () {
+			wbXml = new AscCommonExcel.CT_Workbook();
+			var reader = new StaxParser(contentWorkbook, wbPart, xmlParserContext);
+			wbXml.fromXml(reader, {"sheets" : 1});
+		});
+
+		//sheets
+		if (wbXml.sheets) {
+			var wsParts = [];
+
+			wbXml.sheets.forEach(function (wbSheetXml) {
+				//TODO нужно отсеять только необходимые листы
+				if (null !== wbSheetXml.id && wbSheetXml.name) {
+					var wsPart = wbPart.getPartById(wbSheetXml.id);
+					wsParts.push({wsPart: wsPart, id: wbSheetXml.id, name: wbSheetXml.name, bHidden: wbSheetXml.bHidden, sheetId: wbSheetXml.sheetId});
+				}
+			});
+
+			wsParts.forEach(function (wbSheetXml) {
+				//TODO нужно отсеять только необходимые дипапазоны
+				if (null !== wbSheetXml.id && wbSheetXml.name) {
+					var wsPart = wbSheetXml.wsPart;
+					var contentSheetXml = wsPart && wsPart.getDocumentContent();
+					if (contentSheetXml) {
+						var ws = new AscCommonExcel.Worksheet(wb, wb.aWorksheets.length);
+						ws.sName = wbSheetXml.name;
+						if (null !== wbSheetXml.bHidden) {
+							ws.bHidden = wbSheetXml.bHidden;
+						}
+						//var wsView = new AscCommonExcel.asc_CSheetViewSettings();
+						//wsView.pane = new AscCommonExcel.asc_CPane();
+						//ws.sheetViews.push(wsView);
+						if (contentSheetXml) {
+							AscCommonExcel.executeInR1C1Mode(false, function () {
+								var reader = new StaxParser(contentSheetXml, wsPart, xmlParserContext);
+								ws.fromXml(reader);
+							});
+						}
+						res.push(ws);
+					}
+				}
+			});
+		}
+
+		var readSheetDataExternal = function (bNoBuildDep) {
+			for (var i = 0; i < xmlParserContext.InitOpenManager.oReadResult.sheetData.length; ++i) {
+				var sheetDataElem = xmlParserContext.InitOpenManager.oReadResult.sheetData[i];
+				var ws = sheetDataElem.ws;
+
+				var tmp = {
+					pos: null,
+					len: null,
+					bNoBuildDep: bNoBuildDep,
+					ws: ws,
+					row: new AscCommonExcel.Row(ws),
+					cell: new AscCommonExcel.Cell(ws),
+					formula: new AscCommonExcel.OpenFormula(),
+					sharedFormulas: {},
+					prevFormulas: {},
+					siFormulas: {},
+					prevRow: -1,
+					prevCol: -1,
+					formulaArray: []
+				};
+
+
+				var sheetData = new AscCommonExcel.CT_SheetData();
+				xmlParserContext.InitOpenManager.tmp = tmp;
+
+				sheetDataElem.reader.setState(sheetDataElem.state);
+				//TODO пересмотреть фунцию fromXml
+				sheetData.fromXml2(sheetDataElem.reader);
+
+				if (!bNoBuildDep) {
+					//TODO возможно стоит делать это в worksheet после полного чтения
+					//***array-formula***
+					//добавление ко всем ячейкам массива головной формулы
+					for (var j = 0; j < tmp.formulaArray.length; j++) {
+						var curFormula = tmp.formulaArray[j];
+						var ref = curFormula.ref;
+						if (ref) {
+							var rangeFormulaArray = tmp.ws.getRange3(ref.r1, ref.c1, ref.r2, ref.c2);
+							rangeFormulaArray._foreach(function (cell) {
+								cell.setFormulaInternal(curFormula);
+								if (curFormula.ca || cell.isNullTextString()) {
+									tmp.ws.workbook.dependencyFormulas.addToChangedCell(cell);
+								}
+							});
+						}
+					}
+					for (var nCol in tmp.prevFormulas) {
+						if (tmp.prevFormulas.hasOwnProperty(nCol)) {
+							var prevFormula = tmp.prevFormulas[nCol];
+							if (!tmp.siFormulas[prevFormula.parsed.getListenerId()]) {
+								prevFormula.parsed.buildDependencies();
+							}
+						}
+					}
+					for (var listenerId in tmp.siFormulas) {
+						if (tmp.siFormulas.hasOwnProperty(listenerId)) {
+							tmp.siFormulas[listenerId].buildDependencies();
+						}
+					}
+				}
+			}
+		};
+
+		readSheetDataExternal(true);
+
+		return res;
+	};
+
   // Эвент о пришедщих изменениях
   spreadsheet_api.prototype.syncCollaborativeChanges = function() {
     // Для быстрого сохранения уведомлять не нужно.

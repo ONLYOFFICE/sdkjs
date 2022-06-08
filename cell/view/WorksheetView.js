@@ -16442,7 +16442,36 @@
 
 					if (externalReferences && externalReferences.length) {
 						t.model.workbook.handlers.trigger("asc_onUpdateExternalReference", externalReferences, function (data) {
-							t.model.workbook.updateExternalReferences(data);
+							if (data) {
+								var sFileUrl = data[0].url;
+								var oResult = new AscCommon.OpenFileResult();
+								AscCommon.loadFileContent(sFileUrl, function (httpRequest) {
+									//получаем url к папке с файлом
+									var url, nError;
+									var nIndex = sFileUrl.lastIndexOf("/");
+									url = (-1 !== nIndex) ? sFileUrl.substring(0, nIndex + 1) : sFileUrl;
+									if (httpRequest)
+									{
+										var stream = AscCommon.initStreamFromResponse(httpRequest);
+										if (stream) {
+											//oResult.bSerFormat = AscCommon.checkStreamSignature(stream/*, Signature*/);
+											oResult.data = stream;
+										} else {
+											nError = c_oAscError.ID.Unknown;
+										}
+									}
+									else
+									{
+										nError = c_oAscError.ID.DownloadError;
+									}
+									//bEndLoadFile = true;
+
+									window["Asc"]["editor"].openDocumentFromZip2(t.model.workbook, oResult.data)
+
+								}, "arraybuffer");
+
+								//t.model.workbook.updateExternalReferences(data);
+							}
 						});
 					}
 
