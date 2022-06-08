@@ -2297,6 +2297,7 @@ var editor;
 
 
 	spreadsheet_api.prototype.openDocumentFromZip2 = function (wb, data) {
+		//TODO зачитать sharedStrings
 		if (!data) {
 			return null;
 		}

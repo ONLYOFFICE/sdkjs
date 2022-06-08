@@ -3868,6 +3868,9 @@
 	Workbook.prototype.getExternalWorksheet = function (val, sheet) {
 		var extarnalLink = window['AscCommon'].isNumber(val) ? this.getExternalLinkByIndex(val - 1) : this.getExternalLinkByName(val);
 		if (extarnalLink) {
+			if (null == sheet) {
+				return extarnalLink;
+			}
 			if (extarnalLink.worksheets && extarnalLink.worksheets[sheet]) {
 				return extarnalLink.worksheets[sheet];
 			}
