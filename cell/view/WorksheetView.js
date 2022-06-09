@@ -8528,15 +8528,15 @@
 			} : null;
 	};
 
-	WorksheetView.prototype._hitCursorTableSelectionChange = function (vr, x, y, row, col, offsetX, offsetY) {
+	WorksheetView.prototype._hitCursorTableSelectionChange = function (x, y, row, col) {
 		var i, l, res, range, t = this;
 		var tables = this.model.TableParts;
 
 		var _checkPos = function (_r1, _c1, isRow, isCol) {
-			var x1 = t._getColLeft(_c1) - offsetX;
-			var y1 = t._getRowTop(_r1) - offsetY;
-			var x2 = t._getColLeft(_c1 + 1) - offsetX;
-			var y2 = t._getRowTop(_r1 + 1) - offsetY;
+			var x1 = t._getColLeft(_c1);
+			var y1 = t._getRowTop(_r1);
+			var x2 = t._getColLeft(_c1 + 1);
+			var y2 = t._getRowTop(_r1 + 1);
 			var height = y2 - y1;
 			var width = x2 - x1;
 			var _x2, _y2;
@@ -8859,21 +8859,6 @@
             if (res) {
                 return res;
             }
-
-            this._drawElements(function (_vr, _offsetX, _offsetY) {
-                if (r === undefined) {
-                    r = this._findRowUnderCursor(y, true);
-                }
-                if (c === undefined) {
-                    c = this._findColUnderCursor(x, true);
-                }
-                if (r != null && c != null) {
-                    return (null === (res = this._hitCursorTableSelectionChange(_vr, x, y, r.row, c.col, _offsetX, _offsetY)));
-                }
-            });
-            if (res) {
-                return res;
-            }
         }
 
 		if (x > this.cellsLeft && y > this.cellsTop) {
@@ -9009,6 +8994,9 @@
 							res = {cursor: kCurAutoFilter, target: c_oTargetType.FilterObject, col: c.col, row: r.row, idTableTotal: {id: isTableTotal.index, colId: isTableTotal.colIndex}};
 						} else if (!pivotButton) {
 							res = this.af_checkCursor(_offsetX, _offsetY, r.row, c.col);
+							if (!res) {
+								res = this._hitCursorTableSelectionChange(_offsetX, _offsetY, r.row, c.col);
+							}
 						}
 					}
 					return (null === res);
