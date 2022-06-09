@@ -4615,6 +4615,56 @@
 		this.model.addExternalReferences(arr);
 	};
 
+	WorkbookView.prototype.doUpdateExternalReference = function (externalReferences, callback) {
+		var t = this;
+		var requests = [];
+
+		if (externalReferences && externalReferences.length) {
+			t._getExternalReferenceData(externalReferences, function (data) {
+				//создаём запросы
+				t._getLoadFileRequestsFromReferenceData(data, requests);
+
+				//выполняем запросы
+				if (requests && requests.length) {
+					Promise.all(requests)
+						.then(function (values) {
+							for (var i = 0; i < values.length; i++) {
+								var updatedData = window["Asc"]["editor"].openDocumentFromZip2(t.model, values[i]);
+							}
+						});
+				}
+			});
+		}
+	};
+
+	WorkbookView.prototype._getExternalReferenceData = function (externalReferences, callback) {
+		if (externalReferences) {
+			this.model.handlers.trigger("asc_onUpdateExternalReference", externalReferences, callback);
+		}
+	};
+
+	WorkbookView.prototype._getLoadFileRequestsFromReferenceData = function (data, requests) {
+		if (!requests) {
+			return;
+		}
+		for (var i = 0; i < data.length; i++) {
+			if (data && data[i] && !data[i].error) {
+				var promise = new Promise(function (resolve, reject) {
+					var sFileUrl = data[i].url;
+					AscCommon.loadFileContent(sFileUrl, function (httpRequest) {
+						if (httpRequest) {
+							var stream = AscCommon.initStreamFromResponse(httpRequest);
+							resolve(stream);
+						}
+					}, "arraybuffer");
+				});
+
+				requests.push(promise);
+			}
+		}
+	};
+
+
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
 	function CDocumentSearchExcel(wb) {

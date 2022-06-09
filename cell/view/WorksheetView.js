@@ -16425,57 +16425,8 @@
 					}
 
 					var bRes = t._saveCellValueAfterEdit(c, val, flags, /*isNotHistory*/false, /*lockDraw*/false);
-					var externalReferences = [];
-					t.model._getCell(c.bbox.r1, c.bbox.c1, function (cell) {
-						if (cell && cell.isFormula()) {
-							var fP = cell.formulaParsed;
-							if (fP) {
-								for (var i = 0; i < fP.outStack.length; i++) {
-									if ((AscCommonExcel.cElementType.cellsRange3D === fP.outStack[i].type || AscCommonExcel.cElementType.cell3D === fP.outStack[i].type) && fP.outStack[i].externalLink) {
-										var eR = t.model.workbook.getExternalWorksheet(fP.outStack[i].externalLink);
-										if (eR) {
-											externalReferences.push(eR.getAscLink());
-										}
-									}
-								}
-							}
-						}
-					});
 
-					if (externalReferences && externalReferences.length) {
-						t.model.workbook.handlers.trigger("asc_onUpdateExternalReference", externalReferences, function (data) {
-							if (data && data[0] && !data[0].error) {
-								var sFileUrl = data[0].url;
-								var oResult = new AscCommon.OpenFileResult();
-								AscCommon.loadFileContent(sFileUrl, function (httpRequest) {
-									//получаем url к папке с файлом
-									var url, nError;
-									var nIndex = sFileUrl.lastIndexOf("/");
-									url = (-1 !== nIndex) ? sFileUrl.substring(0, nIndex + 1) : sFileUrl;
-									if (httpRequest)
-									{
-										var stream = AscCommon.initStreamFromResponse(httpRequest);
-										if (stream) {
-											//oResult.bSerFormat = AscCommon.checkStreamSignature(stream/*, Signature*/);
-											oResult.data = stream;
-										} else {
-											nError = c_oAscError.ID.Unknown;
-										}
-									}
-									else
-									{
-										nError = c_oAscError.ID.DownloadError;
-									}
-									//bEndLoadFile = true;
-
-									window["Asc"]["editor"].openDocumentFromZip2(t.model.workbook, oResult.data)
-
-								}, "arraybuffer");
-
-								//t.model.workbook.updateExternalReferences(data);
-							}
-						});
-					}
+					t.updateExternalReferenceByCell(c);
 
 					if (callback) {
 						return callback(bRes);
@@ -23661,6 +23612,31 @@
 
 		return {row: maxRow, col: maxCol};
 	};
+
+
+	WorksheetView.prototype.updateExternalReferenceByCell = function (c) {
+		var t = this;
+		var externalReferences = [];
+		t.model._getCell(c.bbox.r1, c.bbox.c1, function (cell) {
+			if (cell && cell.isFormula()) {
+				var fP = cell.formulaParsed;
+				if (fP) {
+					for (var i = 0; i < fP.outStack.length; i++) {
+						if ((AscCommonExcel.cElementType.cellsRange3D === fP.outStack[i].type || AscCommonExcel.cElementType.cell3D === fP.outStack[i].type) && fP.outStack[i].externalLink) {
+							var eR = t.model.workbook.getExternalWorksheet(fP.outStack[i].externalLink);
+							if (eR) {
+								externalReferences.push(eR.getAscLink());
+							}
+						}
+					}
+				}
+			}
+		});
+
+		this.workbook.doUpdateExternalReference(externalReferences);
+	};
+
+
 	
 
 	//------------------------------------------------------------export---------------------------------------------------
