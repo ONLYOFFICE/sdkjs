@@ -11899,16 +11899,29 @@ QueryTableField.prototype.clone = function() {
 		this.worksheets = {};
 	}
 
+	ExternalReference.prototype.updateData = function (arr) {
+		for (var i = 0; i < arr.length; i++) {
+			//если есть this.worksheets, если нет - проверить и обработать
+			if (this.worksheets && this.worksheets[arr[i].sName]) {
+				delete this.worksheets[arr[i].sName];
+				this.worksheets[arr[i].sName] = arr[i];
+			}
+		}
+	};
+
 	ExternalReference.prototype.getAscLink = function () {
 		var res = new asc_CExternalReference();
 		res.type = Asc.c_oAscExternalReferenceType.path;
 		res.data = this.Id;
+		res.externalReference = this;
 		return res;
 	};
 
 	function asc_CExternalReference() {
 		this.type = null;
 		this.data = null;
+
+		this.externalReference = null;
 	}
 	asc_CExternalReference.prototype.asc_getType = function () {
 		return this.type;

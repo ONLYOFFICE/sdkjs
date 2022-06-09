@@ -4615,21 +4615,35 @@
 		this.model.addExternalReferences(arr);
 	};
 
+	//external requests
 	WorkbookView.prototype.doUpdateExternalReference = function (externalReferences, callback) {
 		var t = this;
 		var requests = [];
 
+		//для теста - несколько запросов
+		/*for (var i = 0; i < this.model.externalReferences.length; i++) {
+			externalReferences.push(this.model.externalReferences[i].getAscLink());
+		}*/
+
 		if (externalReferences && externalReferences.length) {
+			//получаем ссылку на файл через asc_onUpdateExternalReference
 			t._getExternalReferenceData(externalReferences, function (data) {
 				//создаём запросы
 				t._getLoadFileRequestsFromReferenceData(data, requests);
 
-				//выполняем запросы
+				//выполняем запросы на получение файлов
 				if (requests && requests.length) {
 					Promise.all(requests)
 						.then(function (values) {
 							for (var i = 0; i < values.length; i++) {
-								var updatedData = window["Asc"]["editor"].openDocumentFromZip2(t.model, values[i]);
+								if (values[i]) {
+									//TODO если внутри не zip, отправляем на конвертацию в xlsx, далее повторно обрабатываем - позже реализовать
+									var updatedData = window["Asc"]["editor"].openDocumentFromZip2(t.model, values[i]);
+									if (updatedData) {
+										//соответствие по массиву externalReferences, по индексу
+										externalReferences[i] && externalReferences[i].externalReference && externalReferences[i].externalReference.updateData(updatedData);
+									}
+								}
 							}
 						});
 				}
@@ -4647,20 +4661,27 @@
 		if (!requests) {
 			return;
 		}
+		//чтобы потом понять что нужно обновлять, сохраняю сооветсвие, количество запросов соответсвует количеству externalReferences
+		//для этого создаю на все Promise, и если data[i].error -> возвращаю null
 		for (var i = 0; i < data.length; i++) {
-			if (data && data[i] && !data[i].error) {
-				var promise = new Promise(function (resolve, reject) {
-					var sFileUrl = data[i].url;
+			var promise = new Promise(function (resolve, reject) {
+				var sFileUrl = data && data[i] && !data[i].error ? data[i].url : null;
+				if (sFileUrl) {
 					AscCommon.loadFileContent(sFileUrl, function (httpRequest) {
 						if (httpRequest) {
 							var stream = AscCommon.initStreamFromResponse(httpRequest);
 							resolve(stream);
+						} else {
+							//reject - не вызываю, чтобы выполнились все запросы
+							resolve(null);
 						}
 					}, "arraybuffer");
-				});
+				} else {
+					resolve(null);
+				}
+			});
 
-				requests.push(promise);
-			}
+			requests.push(promise);
 		}
 	};
 

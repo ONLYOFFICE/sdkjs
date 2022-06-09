@@ -3865,6 +3865,14 @@
 		}
 	};
 
+	Workbook.prototype.getExternalLinkIndexByName = function (name) {
+		for (var i = 0; i < this.externalReferences.length; i++) {
+			if (this.externalReferences[i].Id === name) {
+				return i + 1;
+			}
+		}
+	};
+
 	Workbook.prototype.getExternalWorksheet = function (val, sheet) {
 		var extarnalLink = window['AscCommon'].isNumber(val) ? this.getExternalLinkByIndex(val - 1) : this.getExternalLinkByName(val);
 		if (extarnalLink) {
