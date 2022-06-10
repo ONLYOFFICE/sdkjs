@@ -2130,7 +2130,7 @@
 		}
 
 		//connections
-		if (this.connections) {
+		if (this.connections && !Array.isArray(this.connections)) {
 			memory.WriteXmlString(this.connections);
 			var connectionsData = memory.GetDataUint8();
 			var connectionsPart = wbPart.part.addPart(AscCommon.openXml.Types.connections);
@@ -2142,8 +2142,6 @@
 		if (this.customXmls) {
 			for (var i = 0; i < this.customXmls.length; i++) {
 				if (this.customXmls[i].item) {
-
-
 					/*var customXmlPart = wbPart.part.addPart(AscCommon.openXml.Types.customXml);
 					customXmlPart.part.setData(this.customXmls[i].item);
 					memory.Seek(0);
@@ -2599,7 +2597,6 @@
 
 		writer.WriteXmlNullableAttributeBool("date1904", this.val.Date1904);
 		writer.WriteXmlNullableAttributeBool("dateCompatibility", this.val.DateCompatibility);
-		writer.WriteXmlNullableAttributeBool("hidePivotFieldList", this.val.HidePivotFieldList);
 		writer.WriteXmlNullableAttributeBool("hidePivotFieldList", this.val.HidePivotFieldList);
 		writer.WriteXmlNullableAttributeBool("showPivotChartFilter", this.val.ShowPivotChartFilter);
 		writer.WriteXmlAttributesEnd();
@@ -3751,6 +3748,7 @@
 				type = "s";
 				if (formulaToWrite) {
 					text = this.text;
+					type = "str";
 				} else {
 					var textIndex = this.getTextIndex();
 					if (null !== textIndex) {
@@ -9723,8 +9721,9 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 				writer.WritingValNode(childns, "vertAlign", val);
 			}
 		}
-		if (this.scheme != null) {
-			writer.WritingValNode(childns, "scheme", ToXml_ST_FontScheme(this.scheme));
+		var scheme = ToXml_ST_FontScheme(this.scheme);
+		if (scheme !== null) {
+			writer.WritingValNode(childns, "scheme", scheme);
 		}
 
 		writer.WriteXmlNodeEnd(ns + name);
