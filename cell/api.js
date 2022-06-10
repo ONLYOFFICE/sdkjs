@@ -1748,9 +1748,9 @@ var editor;
 			//TODO проверить когда несколько ссылок на customXml
 			var customXmlPart = wbPart.getPartByRelationshipType(openXml.Types.customXml.relationType);
 			if (customXmlPart) {
-				var customXml = customXmlPart.getDocumentContent(true);
+				var customXml = customXmlPart.getDocumentContent("string");
 				var customXmlPropsPart = customXmlPart.getPartByRelationshipType(openXml.Types.customXmlProps.relationType);
-				var customXmlProps = customXmlPropsPart && customXmlPropsPart.getDocumentContent(true);
+				var customXmlProps = customXmlPropsPart && customXmlPropsPart.getDocumentContent("string");
 
 				//в бинарник не будем писать, для совместимости оставляю поля, добавляю ещё новые
 				var custom = {Uri: [], ItemId: null, Content: null, item: customXml, itemProps: customXmlProps};
