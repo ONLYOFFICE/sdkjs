@@ -13343,6 +13343,10 @@
 		var arn = pasteInRange ? pasteInRange.clone() : t.model.selectionRange.getLast().clone();
 		var arrFormula = [];
 
+		var specialPasteHelper = window['AscCommon'].g_specialPasteHelper;
+		var specialPasteProps = specialPasteHelper.specialPasteProps;
+		var isPastingLink = specialPasteProps && specialPasteProps.property === Asc.c_oSpecialPasteProps.link;
+
 		var pasteRange = AscCommonExcel.g_clipboardExcel.pasteProcessor.activeRange;
 		var activeCellsPasteFragment;
 		if (typeof pasteRange === "string") {
@@ -13350,11 +13354,13 @@
 				activeCellsPasteFragment = AscCommonExcel.g_oRangeCache.getAscRange(pasteRange);
 			});
 		} else {
-			activeCellsPasteFragment = pasteRange
+			activeCellsPasteFragment = pasteRange;
 		}
 
-		var specialPasteHelper = window['AscCommon'].g_specialPasteHelper;
-		var specialPasteProps = specialPasteHelper.specialPasteProps;
+		if (isPastingLink && !isCheckSelection) {
+			activeCellsPasteFragment.r2 = activeCellsPasteFragment.r1 + (arn.r2 - arn.r1);
+			activeCellsPasteFragment.c2 = activeCellsPasteFragment.c1 + (arn.c2 - arn.c1);
+		}
 
 		var countPasteRow = activeCellsPasteFragment.r2 - activeCellsPasteFragment.r1 + 1;
 		var countPasteCol = activeCellsPasteFragment.c2 - activeCellsPasteFragment.c1 + 1;
@@ -13651,18 +13657,24 @@
 
 		var colsWidth = {};
 		var pastedFormulaArray = [];
-		var putInsertedCellIntoRange = function (nRow, nCol, pasteRow, pasteCol, rowDiff, colDiff, range, newVal, curMerge, transposeRange) {
+		var putInsertedCellIntoRange = function (toRow, toCol, fromRow, fromCol, rowDiff, colDiff, range, newVal, curMerge, transposeRange) {
 			var pastedRangeProps = {};
+
+			if (specialPasteProps && specialPasteProps.property === Asc.c_oSpecialPasteProps.link) {
+				t._pasteCellLink(toRow, toCol, fromRow, fromCol);
+				return;
+			}
+
 			//range может далее изменится в связи с наличием мерженных ячеек, firstRange - не меняется(ему делаем setValue, как первой ячейке в диапазоне мерженных)
 			var firstRange = range.clone();
 
 			//****paste comments****
 			if (specialPasteProps.comment && val.aComments && val.aComments.length) {
-				addComments(pasteRow, pasteCol, val.aComments);
+				addComments(fromRow, fromCol, val.aComments);
 			}
 
 			//merge
-			checkMerge(range, curMerge, nRow, nCol, rowDiff, colDiff, pastedRangeProps);
+			checkMerge(range, curMerge, toRow, toCol, rowDiff, colDiff, pastedRangeProps);
 
 			//set style
 			if (!isOneMerge) {
@@ -13699,7 +13711,7 @@
 				}
 				if (pastedRangeProps.offsetLast && pastedRangeProps.offsetLast.col > 0 && curMerge && fullBorders) {
 					//для мерженных ячеек, правая границу
-					var endMergeCell = val.getCell3(pasteRow, curMerge.c2);
+					var endMergeCell = val.getCell3(fromRow, curMerge.c2);
 					var fullBordersEndMergeCell = endMergeCell.getBorderFull();
 					if (fullBordersEndMergeCell && fullBordersEndMergeCell.r) {
 						fullBorders.r = fullBordersEndMergeCell.r;
@@ -13728,7 +13740,7 @@
 				pastedRangeProps.locked = newVal.getLocked();
 			}
 
-			var tableDxf = getTableDxf(pasteRow, pasteCol, newVal);
+			var tableDxf = getTableDxf(fromRow, fromCol, newVal);
 			if (tableDxf && tableDxf.blocalArea) {
 				pastedRangeProps.tableDxfLocal = tableDxf.dxf;
 			} else if (tableDxf) {
@@ -13736,14 +13748,14 @@
 			}
 
 
-			if (undefined === colsWidth[nCol]) {
-				colsWidth[nCol] = val._getCol(pasteCol);
+			if (undefined === colsWidth[toCol]) {
+				colsWidth[toCol] = val._getCol(fromCol);
 			}
 			pastedRangeProps.colsWidth = colsWidth;
 
 			//***array-formula***
 			var fromCell;
-			val._getCell(pasteRow, pasteCol, function (cell) {
+			val._getCell(fromRow, fromCol, function (cell) {
 				fromCell = cell;
 				var _formulaArrayRef = cell.formulaParsed && cell.formulaParsed.getArrayFormulaRef();
 				if (_formulaArrayRef) {
@@ -14369,6 +14381,13 @@
 			rangeStyle.hyperlinkObj.Ref = range;
 			range.setHyperlink(rangeStyle.hyperlinkObj, true);
 		}
+	};
+
+	WorksheetView.prototype._pasteCellLink = function (toRow, toCol, fromRow, fromCol) {
+		//toRow/toCol - то, куда необходимо вставить
+		//fromRow, fromCol - диапазон самой ссылки
+		//определяем, в этот же документ вставляем или нет
+		//_checkPastedInOriginalDoc
 	};
 
 	WorksheetView.prototype.showSpecialPasteOptions = function (options/*, range, positionShapeContent*/) {
