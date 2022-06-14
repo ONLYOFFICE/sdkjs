@@ -12386,7 +12386,7 @@
 						t._isLockedCells(checkRange, /*subType*/null, _pasteCallback);
 					});
 				} else {
-					_pasteCallback(true);
+					t._isLockedCells(checkRange, /*subType*/null, _pasteCallback);
 				}
 			});
 		} else {
@@ -12832,6 +12832,21 @@
 				}
 				return _res;
 			};
+			var isAllowPasteLink = function () {
+				var _res = false;
+				var api = window["Asc"]["editor"];
+				//wb.Core.title -> DocInfo.ReferenceData.fileId
+				//wb.Core.category -> DocInfo.ReferenceData.portalName
+				if (pasteInfo.wb && pasteInfo.wb.Core && pasteInfo.wb.Core.title && pasteInfo.wb.Core.category) {
+					//работаем внутри одного портала
+					//если разные документу, то вставляем ссылку на другой документ, если один и тот же, то вставляем обычную ссылку
+					if (api.DocInfo && api.DocInfo.ReferenceData && pasteInfo.wb.Core.category === api.DocInfo.ReferenceData.portalName) {
+						_res = true;
+					}
+				}
+
+				return _res;
+			};
 
 			if (!(pasteInfo && pasteInfo.originalSelectBeforePaste && pasteInfo.originalSelectBeforePaste.ranges && pasteInfo.originalSelectBeforePaste.ranges.length === 1) && this.isMultiSelect()) {
 				window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
@@ -12846,7 +12861,11 @@
 						[sProps.paste, sProps.pasteOnlyFormula, sProps.formulaNumberFormat, sProps.formulaAllFormatting,
 							sProps.formulaWithoutBorders, sProps.formulaColumnWidth, sProps.pasteOnlyValues,
 							sProps.valueNumberFormat, sProps.valueAllFormating, sProps.pasteOnlyFormating, sProps.comments,
-							sProps.columnWidth/*, sProps.link*/];
+							sProps.columnWidth];
+
+					if (isAllowPasteLink()) {
+						allowedSpecialPasteProps.push(sProps.link);
+					}
 					if (!isTablePasted) {
 						//add transpose property
 						allowedSpecialPasteProps.push(sProps.transpose);
@@ -13273,7 +13292,7 @@
 			if (_row % pastedRow === 0 && pastedCol === 1) {
 				return true;
 			}
-			return true;
+
 			return false;
 		};
 
@@ -13291,7 +13310,21 @@
 		var res;
 		if (isCheckSelection) {
 			for (i = 0; i < selectRanges.length; i++) {
-				var _selection = this._pasteFromBinary(val, isCheckSelection, tablesMap, selectRanges[i]);
+				//если всталвляем ссылки, то в случае если изначально была выделена только 1 ячейка - подбираем диапазон вставки, в случае нескольких -
+				//оставляем первоначальный диапазон
+				var prop = window['AscCommon'].g_specialPasteHelper && window['AscCommon'].g_specialPasteHelper.specialPasteProps &&
+					window['AscCommon'].g_specialPasteHelper.specialPasteProps.property;
+				var _selection;
+				if (prop === Asc.c_oSpecialPasteProps.link) {
+					if (!selectRanges[i].isOneCell()) {
+						_selection = selectRanges[i].clone();
+					} else {
+						_selection = this._pasteFromBinary(val, isCheckSelection, tablesMap, selectRanges[i]);
+					}
+				} else {
+					_selection = this._pasteFromBinary(val, isCheckSelection, tablesMap, selectRanges[i]);
+				}
+
 				if (!res) {
 					res = [];
 				}
@@ -13388,35 +13421,32 @@
 			}
 		}
 
-        var rowDiff = arn.r1 - activeCellsPasteFragment.r1;
-        var colDiff = arn.c1 - activeCellsPasteFragment.c1;
-        var newPasteRange = new Asc.Range(arn.c1 - colDiff, arn.r1 - rowDiff, arn.c2 - colDiff, arn.r2 - rowDiff);
-        //если вставляем в мерженную ячейку, диапазон которой больше или меньше, но не равен выделенной области
-        if (isMergedFirstCell && isMergedFirstCell.isEqual(arn) && cMax - arn.c1 === (firstValuesCol + 1) &&
-          rMax - arn.r1 === (firstValuesRow + 1) && !newPasteRange.isEqual(activeCellsPasteFragment)) {
-            isOneMerge = true;
-            rMax = arn.r2 + 1;
-            cMax = arn.c2 + 1;
-        } else if (arn.c2 >= cMax - 1 && arn.r2 >= rMax - 1) {
-            //если область кратная куску вставки
-            var widthArea = arn.c2 - arn.c1 + 1;
-            var heightArea = getOpenRowsCount(arn);
-            var widthPasteFr = cMax - arn.c1;
-            var heightPasteFr = rMax - arn.r1;
-            //если кратны, то обрабатываем
-            if (widthArea % widthPasteFr === 0 && heightArea % heightPasteFr === 0) {
+		var rowDiff = arn.r1 - activeCellsPasteFragment.r1;
+		var colDiff = arn.c1 - activeCellsPasteFragment.c1;
+		var newPasteRange = new Asc.Range(arn.c1 - colDiff, arn.r1 - rowDiff, arn.c2 - colDiff, arn.r2 - rowDiff);
+		//если вставляем в мерженную ячейку, диапазон которой больше или меньше, но не равен выделенной области
+		if (isMergedFirstCell && isMergedFirstCell.isEqual(arn) && cMax - arn.c1 === (firstValuesCol + 1) && rMax - arn.r1 === (firstValuesRow + 1) &&
+			!newPasteRange.isEqual(activeCellsPasteFragment)) {
+			isOneMerge = true;
+			rMax = arn.r2 + 1;
+			cMax = arn.c2 + 1;
+		} else if (arn.c2 >= cMax - 1 && arn.r2 >= rMax - 1) {
+			//если область кратная куску вставки
+			var widthArea = arn.c2 - arn.c1 + 1;
+			var heightArea = getOpenRowsCount(arn);
+			var widthPasteFr = cMax - arn.c1;
+			var heightPasteFr = rMax - arn.r1;
+			//если кратны, то обрабатываем
+			if (widthArea % widthPasteFr === 0 && heightArea % heightPasteFr === 0) {
 				//Для случая, когда выделен весь диапазон, запрещаю множественную вставку
-				if (arn.getType() !== window["Asc"].c_oAscSelectionType.RangeMax && arn.getType() !== window["Asc"].c_oAscSelectionType.RangeCol && arn.getType() !== window["Asc"].c_oAscSelectionType.RangeRow) {
+				if (arn.getType() !== window["Asc"].c_oAscSelectionType.RangeMax && arn.getType() !== window["Asc"].c_oAscSelectionType.RangeCol && arn.getType() !==
+					window["Asc"].c_oAscSelectionType.RangeRow) {
 					isMultiple = true;
 					if (!AscCommonExcel.g_clipboardExcel.pasteProcessor.multipleSettings) {
 						AscCommonExcel.g_clipboardExcel.pasteProcessor.multipleSettings = [];
 					}
 					AscCommonExcel.g_clipboardExcel.pasteProcessor.multipleSettings.push({
-						w: widthArea,
-						h: heightArea,
-						pasteW: widthPasteFr,
-						pasteH: heightPasteFr,
-						pasteInRange: pasteInRange
+						w: widthArea, h: heightArea, pasteW: widthPasteFr, pasteH: heightPasteFr, pasteInRange: pasteInRange
 					});
 				}
 			} else if (firstCell.hasMerged() !== null)//в противном случае ошибка
@@ -13440,8 +13470,7 @@
 							if (isCheckSelection) {
 								return arn;
 							} else {
-								this.handlers.trigger("onErrorEvent", c_oAscError.ID.PastInMergeAreaError,
-									c_oAscError.Level.NoCritical);
+								this.handlers.trigger("onErrorEvent", c_oAscError.ID.PastInMergeAreaError, c_oAscError.Level.NoCritical);
 								return;
 							}
 						}
@@ -13542,19 +13571,11 @@
 
 					pastedRangeProps.offsetLast = new AscCommon.CellBase(offsetRow, offsetCol);
 					if (specialPasteProps.transpose) {
-						mergeArr.push(new Asc.Range(
-							curMerge.c1 + arn.c1 - activeCellsPasteFragment.r1 + colDiff,
-							curMerge.r1 + arn.r1 - activeCellsPasteFragment.c1 + rowDiff,
-							curMerge.c2 + arn.c1 - activeCellsPasteFragment.r1 + colDiff,
-							curMerge.r2 + arn.r1 - activeCellsPasteFragment.c1 + rowDiff
-						));
+						mergeArr.push(new Asc.Range(curMerge.c1 + arn.c1 - activeCellsPasteFragment.r1 + colDiff, curMerge.r1 + arn.r1 - activeCellsPasteFragment.c1 + rowDiff,
+							curMerge.c2 + arn.c1 - activeCellsPasteFragment.r1 + colDiff, curMerge.r2 + arn.r1 - activeCellsPasteFragment.c1 + rowDiff));
 					} else {
-						mergeArr.push(new Asc.Range(
-							curMerge.c1 + arn.c1 - activeCellsPasteFragment.c1 + colDiff,
-							curMerge.r1 + arn.r1 - activeCellsPasteFragment.r1 + rowDiff,
-							curMerge.c2 + arn.c1 - activeCellsPasteFragment.c1 + colDiff,
-							curMerge.r2 + arn.r1 - activeCellsPasteFragment.r1 + rowDiff
-						));
+						mergeArr.push(new Asc.Range(curMerge.c1 + arn.c1 - activeCellsPasteFragment.c1 + colDiff, curMerge.r1 + arn.r1 - activeCellsPasteFragment.r1 + rowDiff,
+							curMerge.c2 + arn.c1 - activeCellsPasteFragment.c1 + colDiff, curMerge.r2 + arn.r1 - activeCellsPasteFragment.r1 + rowDiff));
 					}
 				}
 			} else {
