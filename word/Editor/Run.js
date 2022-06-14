@@ -3626,9 +3626,17 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                             {
 								if (!PRS.TryCondenseSpaces(SpaceLen + WordLen + LetterLen, WordLen + LetterLen, X, XEnd))
 								{
-									// Слово не убирается в отрезке. Переносим слово в следующий отрезок
-									MoveToLBP = true;
-									NewRange  = true;
+                                    if (AscCommon.isEastAsianScript(Item.Value) && Item.CanBeAtBeginOfLine()) 
+                                    {
+                                        NewRange = true;
+                                        RangeEndPos = Pos;
+                                    } 
+                                    else 
+                                    {
+                                        // Слово не убирается в отрезке. Переносим слово в следующий отрезок
+                                        MoveToLBP = true;
+                                        NewRange  = true;
+                                    }
 								}
                             }
                         }
@@ -3650,6 +3658,10 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 								TextOnLine = true;
                                 SpaceLen = 0;
                                 WordLen = 0;
+                            }
+                            if (AscCommon.isEastAsianScript(Item.Value) && Item.CanBeAtBeginOfLine()) 
+                            {
+                                PRS.Set_LineBreakPos(Pos, FirstItemOnLine);
                             }
                         }
                     }
