@@ -1182,22 +1182,26 @@ var editor;
       oAdditionalData["codepage"] = AscCommon.c_oAscCodePageUtf8;
       dataContainer.data = last.data;
     } else {
+		var t = this;
 		if (c_oAscFileType.XLTX === fileType) {
 			var title = this.documentTitle;
-			this.saveDocumentToZip(this.wb.model, AscCommon.c_oEditorId.Spreadsheet, function(data) {
-				if (!data) {
-					return;
+			AscCommonExcel.executeInR1C1Mode(false, function () {
+				t.saveDocumentToZip(t.wb.model, AscCommon.c_oEditorId.Spreadsheet, function(data) {
+					if (!data) {
+						return;
+					}
+					var blob = new Blob([data], {type: AscCommon.openXml.GetMimeType("xlsx")});
+					var link = document.createElement("a");
+					link.href = window.URL.createObjectURL(blob);
+					link.download = title;
+					link.click();
+				});
+				if (actionType)
+				{
+					t.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, actionType);
 				}
-				var blob = new Blob([data], {type: AscCommon.openXml.GetMimeType("xlsx")});
-				var link = document.createElement("a");
-				link.href = window.URL.createObjectURL(blob);
-				link.download = title;
-				link.click();
 			});
-			if (actionType)
-			{
-				this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, actionType);
-			}
+
 			return true;
 		}
 
