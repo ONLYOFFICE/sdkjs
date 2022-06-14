@@ -17898,6 +17898,8 @@ g_oDocumentDefaultTableStylePr.InitDefault();
 var g_oDocumentDefaultFillColor   = new CDocumentColor(255, 255, 255, true);
 var g_oDocumentDefaultStrokeColor = new CDocumentColor(0, 0, 0, true);
 
-window["AscCommonWord"].DEFAULT_STYLES = new CStyles(false);
+window["AscCommonWord"].DEFAULT_STYLES                = new CStyles(false);
+window["AscCommonWord"].g_oDocumentDefaultFillColor   = g_oDocumentDefaultFillColor;
+window["AscCommonWord"].g_oDocumentDefaultStrokeColor = g_oDocumentDefaultStrokeColor;
 
 // ----------------------------------------------------------------

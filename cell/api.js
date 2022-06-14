@@ -4149,14 +4149,14 @@ var editor;
    * @param {{}} [oleObj] info from oleObject
    */
   spreadsheet_api.prototype.asc_addTableOleObjectInOleEditor = function(oleObj) {
-    oleObj = oleObj || {binary: AscCommon.getEmpty()};
-    var stream = oleObj && oleObj.binary;
+    oleObj = oleObj || {"binary": AscCommon.getEmpty()};
+    var stream = oleObj["binary"];
     var _this = this;
     var file = new AscCommon.OpenFileResult();
     file.bSerFormat = AscCommon.checkStreamSignature(stream, AscCommon.c_oSerFormat.Signature);
     file.data = stream;
     this.isOleEditor = true;
-    this.isFromSheetEditor = oleObj.isFromSheetEditor;
+    this.isFromSheetEditor = oleObj["isFromSheetEditor"];
     this.asc_CloseFile();
     this.openDocument(file);
 
@@ -4175,9 +4175,9 @@ var editor;
     var cleanBinaryData = binaryData[binaryData.length - 1];
     var binaryInfo = {};
 
-    binaryInfo.binary = cleanBinaryData;
-    binaryInfo.base64Image = dataUrl;
-    binaryInfo.isFromSheetEditor =this.isFromSheetEditor;
+    binaryInfo["binary"] = cleanBinaryData;
+    binaryInfo["base64Image"] = dataUrl;
+    binaryInfo["isFromSheetEditor"] =this.isFromSheetEditor;
 
     return binaryInfo;
   }

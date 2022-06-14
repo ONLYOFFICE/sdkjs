@@ -52,6 +52,7 @@
 	var languages = window['Asc'].g_oLcidIdToNameMap;
 	var availableIdeographLanguages = window['Asc'].availableIdeographLanguages;
 	var availableBidiLanguages = window['Asc'].availableBidiLanguages;
+	const fontslot_ASCII    = 0x01;
 
 	String.prototype.sentenceCase = function ()
 	{
@@ -9882,15 +9883,15 @@
 		AscFormat.ExecuteNoHistory(function () {
 			for (let i = 0; i < infoOfDrawings.length; i += 1) {
 				const drawInfo = infoOfDrawings[i];
-				const type = drawInfo.type;
+				const type = drawInfo["type"];
 				const bullet = new AscCommonWord.CPresentationBullet();
 				const textPr = new AscCommonWord.CTextPr();
-				textPr.Color = g_oDocumentDefaultStrokeColor;
+				textPr.Color = AscCommonWord.g_oDocumentDefaultStrokeColor;
 				switch (type)
 				{
 					case asc_PreviewBulletType.text:
 					{
-						const value = drawInfo.text;
+						const value = drawInfo["text"];
 						const bulletText = AscCommon.translateManager.getValue(value);
 						bullet.m_nType = AscFormat.numbering_presentationnumfrmt_Char;
 						bullet.m_sChar = bulletText;
@@ -9901,8 +9902,8 @@
 					}
 					case asc_PreviewBulletType.char:
 					{
-						const bulletText	= drawInfo.char;
-						const fontName = drawInfo.specialFont || AscFonts.FontPickerByCharacter.getFontBySymbol(drawInfo.Char.getUnicodeIterator().value());
+						const bulletText	= drawInfo["char"];
+						const fontName = drawInfo["specialFont"] || AscFonts.FontPickerByCharacter.getFontBySymbol(bulletText.getUnicodeIterator().value());
 						textPr.RFonts.SetAll(fontName);
 						bullet.m_nType = AscFormat.numbering_presentationnumfrmt_Char;
 						bullet.m_sChar = bulletText;
@@ -9911,7 +9912,7 @@
 					}
 					case asc_PreviewBulletType.image:
 					{
-						const fullImageSrc = getFullImageSrc2(drawInfo.imageId);
+						const fullImageSrc = getFullImageSrc2(drawInfo["imageId"]);
 						bullet.m_nType = AscFormat.numbering_presentationnumfrmt_Blip;
 						bullet.m_sSrc = fullImageSrc;
 						arrayOfBullets.push({bullet: bullet, textPr: textPr});
@@ -9919,7 +9920,7 @@
 					}
 					case asc_PreviewBulletType.number:
 					{
-						const typeOfNumbering = drawInfo.numberingType;
+						const typeOfNumbering = drawInfo["numberingType"];
 						bullet.m_nType = bullet.convertFromAscTypeToPresentation(typeOfNumbering);
 						textPr.RFonts.SetAll('Arial');
 						arrayOfBullets.push({bullet: bullet, textPr: textPr});
@@ -9938,6 +9939,7 @@
 	}
 
 	CBulletPreviewDrawer.prototype.getClearCanvasForPreview = function (divId) {
+		if (!divId) return;
 		const divElement = document.getElementById(divId);
 		const width_px = divElement.clientWidth;
 		const height_px = divElement.clientHeight;
@@ -9983,9 +9985,9 @@
 			formatBullet.drawSquareImage(divId, 0.125);
 		} else {
 			const text = bullet.getDrawingText();
-			g_oTextMeasurer.SetTextPr(textPr);
-			g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
-			const oInfo = g_oTextMeasurer.Measure2Code(text.getUnicodeIterator().value());
+			AscCommon.g_oTextMeasurer.SetTextPr(textPr);
+			AscCommon.g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
+			const oInfo = AscCommon.g_oTextMeasurer.Measure2Code(text.getUnicodeIterator().value());
 
 			const x = (width_px >> 1) - Math.round((oInfo.WidthG / 2 + oInfo.rasterOffsetX) * AscCommon.g_dKoef_mm_to_pix);
 			const y = (width_px >> 1) + Math.round((oInfo.Height / 2 + (oInfo.Ascent - oInfo.Height + oInfo.rasterOffsetY)) * AscCommon.g_dKoef_mm_to_pix);
@@ -10219,11 +10221,11 @@
 			for (let i = 0; i < this.infoOfDrawings.length; i++)
 			{
 				const drawingInfo = this.infoOfDrawings[i];
-				const id = drawingInfo.divId;
+				const id = drawingInfo["divId"];
 				const currentBullet = this.arrayOfBullets[i];
 				if (this.type === 0)
 				{
-					if (drawingInfo.type === asc_PreviewBulletType.text)
+					if (drawingInfo["type"] === asc_PreviewBulletType.text)
 					{
 						this.drawNoneTextPreview(id, currentBullet);
 					}
@@ -10234,7 +10236,7 @@
 				}
 				else if (this.type === 1)
 				{
-					if (drawingInfo.type === asc_PreviewBulletType.text)
+					if (drawingInfo["type"] === asc_PreviewBulletType.text)
 					{
 						this.drawNoneTextPreview(id, currentBullet);
 					}
