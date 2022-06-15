@@ -2258,6 +2258,10 @@
 	{
 		return AscCommon.getUrlType(url);
 	};
+	baseEditorsApi.prototype.asc_prepareUrl = function(url)
+	{
+		return AscCommon.prepareUrl(url);
+	};
 
 	baseEditorsApi.prototype.openDocument  = function(file)
 	{

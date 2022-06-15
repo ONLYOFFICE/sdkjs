@@ -1961,7 +1961,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	var c_oAscUrlType         = {
 		Invalid : 0,
 		Http    : 1,
-		Email   : 2
+		Email   : 2,
+		Unsafe   : 3
 	};
 
 	var c_oAscCellTextDirection = {

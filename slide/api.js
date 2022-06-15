@@ -8813,6 +8813,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_SetFastCollaborative']            = asc_docs_api.prototype.asc_SetFastCollaborative;
 	asc_docs_api.prototype['asc_isOffline']                       = asc_docs_api.prototype.asc_isOffline;
 	asc_docs_api.prototype['asc_getUrlType']                      = asc_docs_api.prototype.asc_getUrlType;
+	asc_docs_api.prototype['asc_prepareUrl']                      = asc_docs_api.prototype.asc_prepareUrl;
 	asc_docs_api.prototype['asc_getSessionToken']                 = asc_docs_api.prototype.asc_getSessionToken;
 	asc_docs_api.prototype["asc_setInterfaceDrawImagePlaceShape"] = asc_docs_api.prototype.asc_setInterfaceDrawImagePlaceShape;
 	asc_docs_api.prototype["asc_nativeInitBuilder"]               = asc_docs_api.prototype.asc_nativeInitBuilder;

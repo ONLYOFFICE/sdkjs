@@ -667,7 +667,7 @@
 		if (oRun.IsInHyperlink())
 			return false;
 
-		if (/(^(((http|https|ftp):\/\/)|(mailto:)|(www.)))|@/i.test(sText))
+		if (AscCommon.rx_allowedProtocols.test(sText) || /^(www.)|@/i.test(sText))
 		{
 			// Удаляем концевые пробелы и переводы строки перед проверкой гиперссылок
 			sText = sText.replace(/\s+$/, '');

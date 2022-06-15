@@ -2404,6 +2404,7 @@
 		ipRe                  = /^(((https?)|(ftps?)):\/\/)?([\-\wа-яё]*:?[\-\wа-яё]*@)?(((1[0-9]{2}|2[0-4][0-9]|25[0-5]|[1-9][0-9]|[0-9])\.){3}(1[0-9]{2}|2[0-4][0-9]|25[0-5]|[1-9][0-9]|[0-9]))(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?/i,
 		hostnameRe            = /^(((https?)|(ftps?)):\/\/)?([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+\.)+[\wа-яё\-]{2,}(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
 		localRe               = /^(((https?)|(ftps?)):\/\/)([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+)(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
+		rx_allowedProtocols      = /(^((https?|ftps?|file|tessa):\/\/)|(mailto:)).*/i,
 
 		rx_table              = build_rx_table(null),
 		rx_table_local        = build_rx_table(null);
@@ -2415,15 +2416,20 @@
 		var isvalid = checkvalue.strongMatch(hostnameRe);
 		!isvalid && (isvalid = checkvalue.strongMatch(ipRe));
 		!isvalid && (isvalid = checkvalue.strongMatch(localRe));
-		isEmail = checkvalue.strongMatch(emailRe);
-		!isvalid && (isvalid = isEmail);
-
-		return isvalid ? (isEmail ? AscCommon.c_oAscUrlType.Email : AscCommon.c_oAscUrlType.Http) : AscCommon.c_oAscUrlType.Invalid;
+		if (isvalid) {
+			return AscCommon.c_oAscUrlType.Http;
+		} else if (checkvalue.strongMatch(emailRe)) {
+			return AscCommon.c_oAscUrlType.Email;
+		} else if (checkvalue.strongMatch(rx_allowedProtocols)) {
+			return AscCommon.c_oAscUrlType.Unsafe;
+		} else {
+			return AscCommon.c_oAscUrlType.Invalid
+		}
 	}
 
 	function prepareUrl(url, type)
 	{
-		if (!/(((^https?)|(^ftp)):\/\/)|(^mailto:)/i.test(url))
+		if (!rx_allowedProtocols.test(url))
 		{
 			url = ( (AscCommon.c_oAscUrlType.Email == type) ? 'mailto:' : 'http://' ) + url;
 		}
@@ -12887,6 +12893,7 @@
 	window["AscCommon"].rx_space = rx_space;
 	window["AscCommon"].rx_defName = rx_defName;
 	window["AscCommon"].rx_r1c1DefError = rx_r1c1DefError;
+	window["AscCommon"].rx_allowedProtocols = rx_allowedProtocols;
 
 	window["AscCommon"].kCurFormatPainterWord = kCurFormatPainterWord;
 	window["AscCommon"].parserHelp = parserHelp;

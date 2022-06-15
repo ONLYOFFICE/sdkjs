@@ -12342,7 +12342,7 @@
 		}
 	};
 	Cell.prototype._autoformatHyperlink = function(val){
-		if (/(^(((http|https|ftp):\/\/)|(mailto:)|(www.)))|@/i.test(val)) {
+		if (AscCommon.rx_allowedProtocols.test(val) || /^(www.)|@/i.test(val)) {
 			// Удаляем концевые пробелы и переводы строки перед проверкой гиперссылок
 			val = val.replace(/\s+$/, '');
 			var typeHyp = AscCommon.getUrlType(val);

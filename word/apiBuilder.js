@@ -1533,7 +1533,7 @@
 		var hyperlinkPr	= new Asc.CHyperlinkProperty();
 		var urlType		= AscCommon.getUrlType(sLink);
 
-		if (!/(((^https?)|(^ftp)):\/\/)|(^mailto:)/i.test(sLink))
+		if (!AscCommon.rx_allowedProtocols.test(sLink))
 			sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
 
 		sLink = sLink.replace(new RegExp("%20",'g')," ");
@@ -2990,7 +2990,7 @@
 		if (sLink !== "")
 		{
 			urlType		= AscCommon.getUrlType(sLink);
-			if (!/(((^https?)|(^ftp)):\/\/)|(^mailto:)/i.test(sLink))
+			if (!AscCommon.rx_allowedProtocols.test(sLink))
 				sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
 			sLink = sLink.replace(new RegExp("%20",'g')," ");
 		}
@@ -6600,7 +6600,7 @@
 		var oHyperlink;
 
 		this.Paragraph.SelectAll(1);
-		if (!/(((^https?)|(^ftp)):\/\/)|(^mailto:)/i.test(sLink))
+		if (!AscCommon.rx_allowedProtocols.test(sLink))
 			sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
 
 		sLink = sLink.replace(new RegExp("%20",'g')," ");
@@ -8113,7 +8113,7 @@
 		var oHyperlink;
 		var hyperlinkPr	= new Asc.CHyperlinkProperty();
 		var urlType		= AscCommon.getUrlType(sLink);
-		if (!/(((^https?)|(^ftp)):\/\/)|(^mailto:)/i.test(sLink))
+		if (!AscCommon.rx_allowedProtocols.test(sLink))
 			sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
 		sLink = sLink.replace(new RegExp("%20",'g')," ");
 		hyperlinkPr.put_Value(sLink);
