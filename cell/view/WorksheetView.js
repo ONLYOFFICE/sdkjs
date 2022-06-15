@@ -13100,8 +13100,7 @@
 							if (isCheckSelection) {
 								return arn;
 							} else {
-								this.handlers.trigger("onErrorEvent", c_oAscError.ID.PastInMergeAreaError,
-									c_oAscError.Level.NoCritical);
+								this.handlers.trigger("onErrorEvent", c_oAscError.ID.PastInMergeAreaError, c_oAscError.Level.NoCritical);
 								return;
 							}
 						}
@@ -13223,7 +13222,7 @@
 				oldDecimalSep = AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator;
 				AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator = specialPasteProps.advancedOptions.numberDecimalSeparator;
 			}
-			var _numberDecimalSeparator = specialPasteProps.advancedOptions.numberGroupSeparator;
+			_numberDecimalSeparator = specialPasteProps.advancedOptions.numberGroupSeparator;
 			if (_numberDecimalSeparator && isNaN(_numberDecimalSeparator)) {
 				oldGroupSep = AscCommon.g_oDefaultCultureInfo.NumberGroupSeparator;
 				AscCommon.g_oDefaultCultureInfo.NumberGroupSeparator = specialPasteProps.advancedOptions.numberGroupSeparator;
@@ -13661,7 +13660,7 @@
 			var pastedRangeProps = {};
 
 			if (specialPasteProps && specialPasteProps.property === Asc.c_oSpecialPasteProps.link) {
-				t._pasteCellLink(toRow, toCol, fromRow, fromCol);
+				t._pasteCellLink(range, fromRow, fromCol, arrFormula, val.workbook);
 				return;
 			}
 
@@ -14082,7 +14081,8 @@
 				if (pastedFormula && !isOneMerge) {
 
 					var offset, arrayOffset;
-					var arrayFormulaRef = needOperation === null && formulaProps.cell && formulaProps.cell.formulaParsed ? formulaProps.cell.formulaParsed.getArrayFormulaRef() : null;
+					var arrayFormulaRef = needOperation === null && formulaProps.cell && formulaProps.cell.formulaParsed ? formulaProps.cell.formulaParsed.getArrayFormulaRef() :
+						null;
 					var cellAddress = new AscCommon.CellAddress(sId);
 					if (specialPasteProps.transpose && transposeRange) {
 						//для transpose необходимо брать offset перевернутого range
@@ -14256,8 +14256,7 @@
 		if (rangeStyle.font && specialPasteProps.font) {
 			var font = rangeStyle.font;
 			//если вставляем форматированную таблицу с параметров values + all formating
-			if (specialPasteProps.format && !specialPasteProps.formatTable && rangeStyle.tableDxf &&
-				rangeStyle.tableDxf.font) {
+			if (specialPasteProps.format && !specialPasteProps.formatTable && rangeStyle.tableDxf && rangeStyle.tableDxf.font) {
 				font = rangeStyle.tableDxf.font.merge(rangeStyle.font);
 			}
 			range.setFont(font);
@@ -14291,11 +14290,9 @@
 		} else if (null != rangeStyle.val && specialPasteProps.val) {
 			//TODO возможно стоит всегда вызывать setValueData и тип выставлять в зависимости от val
 			if (rangeStyle.val[0] === "'") {
-				range.setValueData(
-					new AscCommonExcel.UndoRedoData_CellValueData(null, new AscCommonExcel.CCellValue({
-						text: rangeStyle.val,
-						type: CellValueType.String
-					})));
+				range.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, new AscCommonExcel.CCellValue({
+					text: rangeStyle.val, type: CellValueType.String
+				})));
 			} else {
 				range.setValue(rangeStyle.val, null, null, undefined, pasteOnlyText);
 			}
@@ -14383,11 +14380,38 @@
 		}
 	};
 
-	WorksheetView.prototype._pasteCellLink = function (toRow, toCol, fromRow, fromCol) {
-		//toRow/toCol - то, куда необходимо вставить
+	WorksheetView.prototype._pasteCellLink = function (range, fromRow, fromCol, arrFormula, pastedWb) {
+		//range - то, куда необходимо вставить
 		//fromRow, fromCol - диапазон самой ссылки
 		//определяем, в этот же документ вставляем или нет
-		//_checkPastedInOriginalDoc
+
+		//вставляем в этот же документ. но исходный лист уже мог измениться/удалиться и тп
+		//TODO просмотреть все эти случаи, ms desktop и online ведут себя по-разному
+		//сейчас сравниваю по имени
+		var sameDoc = pastedWb && AscCommonExcel.g_clipboardExcel && AscCommonExcel.g_clipboardExcel.pasteProcessor && AscCommonExcel.g_clipboardExcel.pasteProcessor._checkPastedInOriginalDoc(pastedWb);
+		var sameSheet = sameDoc && pastedWb.aWorksheets[0].sName === this.model.sName;
+		var externalSheetSameWb;
+		if (!sameSheet && sameDoc) {
+			var sName = pastedWb.aWorksheets[0].sName;
+			for (var i = 0; i < this.model.workbook.aWorksheets.length; i++) {
+				if (this.model.workbook.aWorksheets[i].sName === sName) {
+					externalSheetSameWb = sName;
+				}
+			}
+		}
+
+		var formulaRange = new Asc.Range(fromCol, fromRow, fromCol, fromRow);
+		var sFromula;
+		if (sameSheet) {
+			sFromula = formulaRange.getName();
+		} else if (externalSheetSameWb) {
+			sFromula = externalSheetSameWb + "!" + formulaRange.getName();
+		} else {
+			//либо добавить новую книгу в external или найти ту, которая уже есть
+			//sFromula = "!" + formulaRange.getName();
+		}
+
+		arrFormula.push({range: range, val: "=" + sFromula});
 	};
 
 	WorksheetView.prototype.showSpecialPasteOptions = function (options/*, range, positionShapeContent*/) {
