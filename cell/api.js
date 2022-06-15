@@ -5349,9 +5349,14 @@ var editor;
 		  this.wb.cellEditor.options.menuEditor;
   };
 
-  spreadsheet_api.prototype.asc_getActiveRangeStr = function(referenceType, opt_getActiveCell) {
+  spreadsheet_api.prototype.asc_getActiveRangeStr = function(referenceType, opt_getActiveCell, opt_ignore_r1c1) {
   	var ws = this.wb.getWorksheet();
   	var res = null;
+  	var tmpR1C1;
+  	if (opt_ignore_r1c1) {
+		tmpR1C1 = AscCommonExcel.g_R1C1Mode;
+		AscCommonExcel.g_R1C1Mode = false;
+  	}
   	if (ws && ws.model && ws.model.selectionRange) {
   		var range;
   		if (opt_getActiveCell) {
@@ -5364,6 +5369,9 @@ var editor;
 
 		res = range.getName(referenceType);
 	}
+  	if (opt_ignore_r1c1) {
+		AscCommonExcel.g_R1C1Mode = tmpR1C1;
+  	}
 	return res;
   };
 
@@ -7733,6 +7741,11 @@ var editor;
 
 		ws.handlers.trigger("selectionChanged");
 		ws.handlers.trigger("selectionMathInfoChanged", ws.getSelectionMathInfo());
+	};
+
+	ApiWorksheet.prototype.GetActiveCell = function () {
+		var cell = this.worksheet.selectionRange.activeCell;
+		return new ApiRange(this.worksheet.getCell3(cell.row, cell.col));
 	};
 
   /*
