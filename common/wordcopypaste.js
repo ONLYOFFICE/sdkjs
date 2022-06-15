@@ -9463,16 +9463,16 @@ PasteProcessor.prototype =
 		};
 
 		var parseChildNodes = function () {
-			var sChildNodeName;
+			var sChildNodeName, bIsBlockChild, value, href, title;
 			if (bPresentation) {
-				var sChildNodeName = child.nodeName.toLowerCase();
+				sChildNodeName = child.nodeName.toLowerCase();
 				if (!(Node.ELEMENT_NODE === nodeType || Node.TEXT_NODE === nodeType) || sChildNodeName === "style" ||
 					sChildNodeName === "#comment" || sChildNodeName === "script") {
 					return;
 				}
 				//попускам элеметы состоящие только из \t,\n,\r
 				if (Node.TEXT_NODE === child.nodeType) {
-					var value = child.nodeValue;
+					value = child.nodeValue;
 					if (!value) {
 						return;
 					}
@@ -9482,7 +9482,7 @@ PasteProcessor.prototype =
 					}
 				}
 				sChildNodeName = child.nodeName.toLowerCase();
-				var bIsBlockChild = oThis._IsBlockElem(sChildNodeName);
+				bIsBlockChild = oThis._IsBlockElem(sChildNodeName);
 				if (bRoot) {
 					oThis.bInBlock = false;
 				}
@@ -9494,7 +9494,7 @@ PasteProcessor.prototype =
 				var bHyperlink = false;
 				var isPasteHyperlink = null;
 				if ("a" === sChildNodeName) {
-					var href = child.href;
+					href = child.href;
 					if (null != href) {
 						/*var sDecoded;
 						//decodeURI может выдавать malformed exception, потому что наш сайт в utf8, а некоторые сайты могут кодировать url в своей кодировке(например windows-1251)
@@ -9505,7 +9505,7 @@ PasteProcessor.prototype =
 						}
 						href = sDecoded;*/
 						bHyperlink = true;
-						var title = child.getAttribute("title");
+						title = child.getAttribute("title");
 
 						oThis.oDocument = shape.txBody.content;
 
@@ -9612,7 +9612,7 @@ PasteProcessor.prototype =
 
 				//попускам элеметы состоящие только из \t,\n,\r
 				if (Node.TEXT_NODE === child.nodeType) {
-					var value = child.nodeValue;
+					value = child.nodeValue;
 					if (!value) {
 						return;
 					}
@@ -9626,7 +9626,7 @@ PasteProcessor.prototype =
 						return;
 					}
 				}
-				var bIsBlockChild = oThis._IsBlockElem(sChildNodeName);
+				bIsBlockChild = oThis._IsBlockElem(sChildNodeName);
 				if (bRoot) {
 					oThis.bInBlock = false;
 				}
@@ -9639,7 +9639,7 @@ PasteProcessor.prototype =
 				var oHyperlink = null;
 			
 				if ("a" === sChildNodeName) {
-					var href = child.href;
+					href = child.href;
 					if (null != href) {
 						
 						/*var sDecoded;
@@ -9655,11 +9655,11 @@ PasteProcessor.prototype =
 							// если да, то создаём сноску и добавляем в контент
 							// если нет, значит создаём гиперссылку
 							var sStr = href.split("#");
-							var sText;
-							if (-1 !== sStr[1].indexOf("_ftnref")) {
+							var sText, oAddedRun;
+							if (sStr[1] && -1 !== sStr[1].indexOf("_ftnref")) {
 							}
 							// обычная сноска
-							else if (-1 !== sStr[1].indexOf("_ftn")) {
+							else if (sStr[1] && -1 !== sStr[1].indexOf("_ftn")) {
 								sText = child.innerText;
 								// проверяем, является ли название сноски кастомной или нет
 								if (sText[0] === "[" && sText[sText.length - 1] === "]") {
@@ -9668,7 +9668,7 @@ PasteProcessor.prototype =
 								bAddParagraph = oThis._Decide_AddParagraph(child, pPr, bAddParagraph);
 								var oFootnote = oThis.oLogicDocument.Footnotes.CreateFootnote();
 								oFootnote.AddDefaultFootnoteContent(sText);
-								var oAddedRun = new ParaRun(oThis.oCurPar, false);
+								oAddedRun = new ParaRun(oThis.oCurPar, false);
 								oAddedRun.SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultFootnoteReference());
 								if (sText) {
 									oAddedRun.AddToContent(0, new AscWord.CRunFootnoteReference(oFootnote));
@@ -9682,10 +9682,10 @@ PasteProcessor.prototype =
 									oThis.AddedFootEndNotes[sStr[1].replace("_", "")] = oFootnote;
 								}
 							}
-							else if (-1 !== sStr[1].indexOf("_ednref")) {
+							else if (sStr[1] && -1 !== sStr[1].indexOf("_ednref")) {
 							}
 							// концевая сноска
-							else if (-1 !== sStr[1].indexOf("_edn")) {
+							else if (sStr[1] && -1 !== sStr[1].indexOf("_edn")) {
 								sText = child.innerText;
 								// проверяем, является ли название сноски кастомной или нет
 								if (sText[0] === "[" && sText[sText.length - 1] === "]") {
@@ -9694,7 +9694,7 @@ PasteProcessor.prototype =
 								bAddParagraph = oThis._Decide_AddParagraph(child, pPr, bAddParagraph);
 								var oEndnote = oThis.oLogicDocument.Endnotes.CreateEndnote();
 								oEndnote.AddDefaultEndnoteContent(sText);
-								var oAddedRun = new ParaRun(oThis.oCurPar, false);
+								oAddedRun = new ParaRun(oThis.oCurPar, false);
 								oAddedRun.SetRStyle(oThis.oLogicDocument.GetStyles().GetDefaultEndnoteReference());
 								if (sText) {
 									oAddedRun.AddToContent(0, new AscWord.CRunEndnoteReference(oEndnote));
@@ -9709,7 +9709,7 @@ PasteProcessor.prototype =
 								}
 							}
 							else {
-								var title = child.getAttribute("title");
+								title = child.getAttribute("title");
 
 								bAddParagraph = oThis._Decide_AddParagraph(child, pPr, bAddParagraph);
 								oHyperlink = new ParaHyperlink();
