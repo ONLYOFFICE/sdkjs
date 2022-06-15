@@ -11896,6 +11896,10 @@ QueryTableField.prototype.clone = function() {
 		this.SheetNames = [];
 		this.Type = 0;
 
+		//дополнительная информация, которая приходит при copy/paste
+		//необходимо её добавлять в ooxml
+		this.referenceData = null;
+
 		this.worksheets = {};
 	}
 

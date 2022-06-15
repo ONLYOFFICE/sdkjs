@@ -3973,6 +3973,16 @@
 
 	};
 
+	Workbook.prototype.getExternalLinkByReferenceData = function (referenceData) {
+		for (var i = 0; i < this.externalReferences.length; i++) {
+			if (this.externalReferences[i].referenceData) {
+				if (this.externalReferences[i].referenceData.fileId === referenceData.fileId && this.externalReferences[i].referenceData.portalName === referenceData.portalName) {
+					return {index: i, val: this.externalReferences};
+				}
+			}
+		}
+		return null;
+	};
 
 
 //-------------------------------------------------------------------------------------------------
