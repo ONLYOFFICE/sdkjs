@@ -40,7 +40,6 @@ jobs:
            npm install -g grunt-cli
            npm install --prefix build
            grunt --level=WHITESPACE_ONLY --base build --gruntfile build/Gruntfile.js
-           docker pull onlyofficeqa/doc-builder-testing:next-release
            docker run -v $PWD/deploy/sdkjs/common:/opt/onlyoffice/documentbuilder/sdkjs/common \
                       -v $PWD/deploy/sdkjs/word:/opt/onlyoffice/documentbuilder/sdkjs/word \
                       -v $PWD/deploy/sdkjs/cell:/opt/onlyoffice/documentbuilder/sdkjs/cell \
