@@ -7743,11 +7743,6 @@ var editor;
 		ws.handlers.trigger("selectionMathInfoChanged", ws.getSelectionMathInfo());
 	};
 
-	ApiWorksheet.prototype.GetActiveCell = function () {
-		var cell = this.worksheet.selectionRange.activeCell;
-		return new ApiRange(this.worksheet.getCell3(cell.row, cell.col));
-	};
-
   /*
    * Export
    * -----------------------------------------------------------------------------
