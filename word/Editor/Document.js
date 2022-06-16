@@ -17777,12 +17777,12 @@ CDocument.prototype.AddFootnote = function(sText, aContent)
 			if (Array.isArray(aContent) && aContent.length > 0)
 			{
 				oFootnote.AddContent(aContent);
-				oFootnote.AddDefaultFootnoteContent(sText);
 				oFootnote.SetApplyToAll(true);
 				oFootnote.SetParagraphStyle("footnote text");
 				oFootnote.SetApplyToAll(false);
 			}
 
+			oFootnote.AddDefaultFootnoteContent(sText);
 			if (true === this.IsSelectionUse())
 			{
 				this.MoveCursorRight(false, false, false);
@@ -18021,12 +18021,12 @@ CDocument.prototype.AddEndnote = function(sText, aContent)
 			if (Array.isArray(aContent) && aContent.length > 0)
 			{
 				oEndnote.AddContent(aContent);
-				oEndnote.AddDefaultEndnoteContent(sText);
 				oEndnote.SetApplyToAll(true);
 				oEndnote.SetParagraphStyle("endnote text");
 				oEndnote.SetApplyToAll(false);
 			}
 
+			oEndnote.AddDefaultEndnoteContent(sText);
 			if (true === this.IsSelectionUse())
 			{
 				this.MoveCursorRight(false, false, false);
