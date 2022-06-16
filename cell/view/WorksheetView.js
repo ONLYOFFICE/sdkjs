@@ -13666,30 +13666,47 @@
 		var _getPasteLinkIndex = function () {
 			var pastedWb = val.workbook;
 			var linkInfo = t._getPastedLinkInfo(pastedWb);
+			pasteLinkIndex = null;
 			if (linkInfo) {
 				if (linkInfo.type === -1) {
-					return linkInfo.data;
+					pasteLinkIndex = linkInfo.index;
+					pasteSheetLinkName = linkInfo.sheet;
 				} else if (linkInfo.type === -2) {
 					//добавляем
-					var referenceData = pastedWb && pastedWb.Core && {fileId: pastedWb.Core.contentStatus, portalName: pastedWb.Core.category};
+					var referenceData = pastedWb && pastedWb.Core && {
+						fileId: pastedWb.Core.contentStatus,
+						portalName: pastedWb.Core.category
+					};
 					var name = pastedWb.Core.title;
 
-					
+					var newExternalReference = new AscCommonExcel.ExternalReference();
+					newExternalReference.referenceData = referenceData;
+					newExternalReference.Id = name;
+
+					t.model.workbook.addExternalReferences([newExternalReference]);
+
+					pasteLinkIndex = t.model.workbook.getExternalLinkIndexByName(name);
+					if (pasteLinkIndex != null) {
+						pasteSheetLinkName = pastedWb.aWorksheets[0].sName;
+					}
+				} else if (linkInfo.type === 1) {
+					pasteSheetLinkName = linkInfo.sheet;
 				}
 			}
 		};
 
-		var pasteLinkIndex;
+		var pasteLinkIndex = -1;
+		var pasteSheetLinkName = null;
 		var colsWidth = {};
 		var pastedFormulaArray = [];
 		var putInsertedCellIntoRange = function (toRow, toCol, fromRow, fromCol, rowDiff, colDiff, range, newVal, curMerge, transposeRange) {
 			var pastedRangeProps = {};
 
 			if (specialPasteProps && specialPasteProps.property === Asc.c_oSpecialPasteProps.link) {
-				if (!pasteLinkIndex) {
-					pasteLinkIndex = _getPasteLinkIndex();
+				if (-1 === pasteLinkIndex) {
+					_getPasteLinkIndex();
 				}
-				t._pasteCellLink(range, fromRow, fromCol, arrFormula, val.workbook);
+				t._pasteCellLink(range, fromRow, fromCol, arrFormula, pasteSheetLinkName, pasteLinkIndex);
 				return;
 			}
 
@@ -14409,56 +14426,18 @@
 		}
 	};
 
-	WorksheetView.prototype._pasteCellLink = function (range, fromRow, fromCol, arrFormula, pastedWb) {
-		//range - то, куда необходимо вставить
-		//fromRow, fromCol - диапазон самой ссылки
-		//определяем, в этот же документ вставляем или нет
-
-		//вставляем в этот же документ. но исходный лист уже мог измениться/удалиться и тп
-		//TODO просмотреть все эти случаи, ms desktop и online ведут себя по-разному
-		//сейчас сравниваю по имени
-		var sameDoc = pastedWb && AscCommonExcel.g_clipboardExcel && AscCommonExcel.g_clipboardExcel.pasteProcessor && AscCommonExcel.g_clipboardExcel.pasteProcessor._checkPastedInOriginalDoc(pastedWb);
-		var sameSheet = sameDoc && pastedWb.aWorksheets[0].sName === this.model.sName;
-		var externalSheetSameWb;
-		if (!sameSheet && sameDoc) {
-			var sName = pastedWb.aWorksheets[0].sName;
-			for (var i = 0; i < this.model.workbook.aWorksheets.length; i++) {
-				if (this.model.workbook.aWorksheets[i].sName === sName) {
-					externalSheetSameWb = sName;
-				}
-			}
-		}
-
+	WorksheetView.prototype._pasteCellLink = function (range, fromRow, fromCol, arrFormula, sheetName, pastelink) {
 		var formulaRange = new Asc.Range(fromCol, fromRow, fromCol, fromRow);
 		var sFromula;
-		if (sameSheet) {
-			sFromula = formulaRange.getName();
-		} else if (externalSheetSameWb) {
-			sFromula = externalSheetSameWb + "!" + formulaRange.getName();
+
+		if (pastelink != null) {
+			sFromula = "[" + pastelink + "]" + sheetName + "!" + formulaRange.getName();
 		} else {
-			//TODO кавычки '[Book1]#REF'!N8
-			//либо добавить новую книгу в external или найти ту, которая уже есть
-			//sFromula = "!" + formulaRange.getName();
-
-			//сначала ищем по дополнительной информации
-			//fileId -> contentStatus, portalName -> category
-			var index = null;
-			var referenceData = pastedWb && pastedWb.Core && {fileId: pastedWb.Core.contentStatus, portalName: pastedWb.Core.category};
-			var externalReference = referenceData && this.model.workbook.getExternalLinkByReferenceData(referenceData);
-			if (!externalReference) {
-				//потом пробуем по имени найти
-				externalReference = pastedWb && pastedWb.Core && this.model.workbook.getExternalLinkIndexByName(pastedWb.Core.title);
-			}
-
-			//если всё-таки не нашли, то добавляем новый external reference
-			if (!externalReference) {
-
+			//вставляем в этот же документ
+			if (sheetName) {
+				sFromula = sheetName + "!" + formulaRange.getName();
 			} else {
-				index = externalReference.index;
-			}
-
-			if (index !== null) {
-				sFromula = "[" + index + "]" + "!" + formulaRange.getName();
+				sFromula = formulaRange.getName();
 			}
 		}
 
@@ -14474,7 +14453,8 @@
 		//-1 - вставляем в другую книгу и сслыка на неё уже есть
 		//-2 - вставляем в другую книгу и ссылки на неё ешё нет
 		var type = null;
-		var data = null;
+		var index = null;
+		var sheet = null;
 		if (pastedWb) {
 			//вставляем в этот же документ. но исходный лист уже мог измениться/удалиться и тп
 			//TODO просмотреть все эти случаи, ms desktop и online ведут себя по-разному
@@ -14496,13 +14476,14 @@
 				type = 0;
 			} else if (externalSheetSameWb) {
 				type = 1;
-				data = externalSheetSameWb;
+				sheet = externalSheetSameWb;
 			} else {
 				//сначала ищем по дополнительной информации
 				//fileId -> contentStatus, portalName -> category
 				var referenceData = pastedWb && pastedWb.Core && {fileId: pastedWb.Core.contentStatus, portalName: pastedWb.Core.category};
 				var externalReference = referenceData && this.model.workbook.getExternalLinkByReferenceData(referenceData);
-				if (!externalReference) {
+				externalReference = externalReference && externalReference.index;
+				if (null == externalReference) {
 					//потом пробуем по имени найти
 					externalReference = pastedWb && pastedWb.Core && this.model.workbook.getExternalLinkIndexByName(pastedWb.Core.title);
 				}
@@ -14512,12 +14493,13 @@
 					type = -2;
 				} else {
 					type = -1;
-					data = externalReference;
+					index = externalReference;
+					sheet = pastedWb.aWorksheets[0].sName;
 				}
 			}
 		}
 
-		return type !== null ? {type: type, data: data} : null;
+		return type !== null ? {type: type, index: index, sheet: sheet} : null;
 	};
 
 	WorksheetView.prototype.showSpecialPasteOptions = function (options/*, range, positionShapeContent*/) {

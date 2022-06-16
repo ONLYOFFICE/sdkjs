@@ -3871,6 +3871,7 @@
 				return i + 1;
 			}
 		}
+		return null;
 	};
 
 	Workbook.prototype.getExternalWorksheet = function (val, sheet) {
@@ -3970,7 +3971,13 @@
 	};
 
 	Workbook.prototype.addExternalReferences = function (arr) {
-
+		if (arr) {
+			for (var i = 0; i < arr.length; i++) {
+				this.externalReferences.push(arr[i]);
+				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
+					null, null, new UndoRedoData_FromTo(null, arr[i]));
+			}
+		}
 	};
 
 	Workbook.prototype.getExternalLinkByReferenceData = function (referenceData) {

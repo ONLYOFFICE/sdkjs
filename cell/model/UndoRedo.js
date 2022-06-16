@@ -2441,6 +2441,24 @@ function (window, undefined) {
 				wrapper.readData(worksheetSource);
 				worksheetSource.fromWorksheetSource(worksheetSource, true);
 			}
+		} else if (AscCH.historyitem_Workbook_ChangeExternalReference === Type) {
+			var from = bUndo ? Data.from : Data.to;
+			var to = bUndo ? Data.to : Data.from;
+			var externalReferenceIndex;
+
+			if (from && !to) {//удаление
+				wb.externalReferences.push(from);
+			} else if (!from && to) { //добавление
+				externalReferenceIndex = wb.getExternalLinkIndexByName(to.Id);
+				if (externalReferenceIndex !== null) {
+					wb.externalReferences.splice(externalReferenceIndex - 1, 1);
+				}
+			} else if (from && to) { //изменение
+				externalReferenceIndex = wb.getExternalLinkIndexByName(to.Id);
+				if (externalReferenceIndex !== null) {
+					wb.externalReferences[externalReferenceIndex - 1] = from;
+				}
+			}
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {
