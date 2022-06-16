@@ -1877,7 +1877,7 @@
 					}*/
 					//BinaryCommentReader::addThreadedComment(pCommentItem.text, pThreadedComment, mapPersonList);
 
-					pNewComment.generateText(pCommentItem, personList);
+					//pNewComment.generateText(pCommentItem, personList);
 
 
 					pThreadedComments.arr.push(pThreadedComment);
@@ -1889,6 +1889,10 @@
 						}
 						pThreadedComments.arr.push(pThreadedComment.m_arrReplies[i]);
 					}
+				} else {
+					pNewComment.generateText(pCommentItem, personList);
+					pNewComment.uid = AscCommon.CreateGUID();
+					pNewComment.authorId = 0;
 				}
 
 				if (undefined !== pCommentItem.m_sAuthor) {
