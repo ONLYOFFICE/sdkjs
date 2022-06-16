@@ -7868,6 +7868,8 @@ var editor;
   prot["asc_replaceText"] = prot.asc_replaceText;
   prot["asc_endFindText"] = prot.asc_endFindText;
   prot["asc_findCell"] = prot.asc_findCell;
+  prot["asc_StartTextAroundSearch"] = prot.asc_StartTextAroundSearch;
+  prot["asc_SelectSearchElement"] = prot.asc_SelectSearchElement;
   prot["asc_closeCellEditor"] = prot.asc_closeCellEditor;
   prot["asc_StartMoveSheet"] = prot.asc_StartMoveSheet;
   prot["asc_EndMoveSheet"] = prot.asc_EndMoveSheet;
