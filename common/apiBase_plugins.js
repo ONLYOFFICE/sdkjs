@@ -991,4 +991,71 @@
 		}
 		this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, opts);
 	};
+	/**
+    * Returns all installed plugins.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @alias GetInstalledPlugins
+     * @returns {[]} - Array of all installed plugins.
+     */
+	Api.prototype["pluginMethod_GetInstalledPlugins"] = function()
+	{
+		/* 
+			формат объекта 
+			{
+				url: url на конфиг (хотя по факту он не нужен, так как конфиг есть в этом объекте и в нутри маркетплейса тоже),
+				guid: guid плагина,
+				canRemoved: флаг, может ли быть удалён плагин или нет (true/false),
+				obj: конфиг установленного плагина (от туда берется версия и сравнивается с текущей для проверки обновлений)
+			}
+		*/
+		return "pluginMethod_GetInstalledPlugins";
+	};
+	/**
+    * Remove plugin with such guid.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @param {string} [guid] - The guid of plugins for removing.
+     * @alias RemovePlugin
+     * @returns {object} - Object with result.
+     */
+	Api.prototype["pluginMethod_RemovePlugin"] = function(guid)
+	{
+		return {
+			type : "Removed",
+			guid : guid
+		}
+	};
+	/**
+    * Install plugin with by url to config.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @param {string} [url] - The url to plugin config for installing.
+     * @alias pluginMethod_InstallPlugin
+     * @returns {object} - Object with result.
+	 * 
+     */
+	Api.prototype["pluginMethod_InstallPlugin"] = function(url, guid)
+	{
+		return {
+			type : "Installed",
+			guid : guid
+		}
+	};
+	/**
+    * Update plugin with by url to config.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @param {string} [url] - The url to plugin config for updating.
+     * @alias pluginMethod_UpdatePlugin
+     * @returns {object} - Object with result.
+	 * 
+     */
+	Api.prototype["pluginMethod_UpdatePlugin"] = function(url, guid)
+	{
+		return {
+			type : "Updated",
+			guid : guid
+		}
+	};
 })(window);
