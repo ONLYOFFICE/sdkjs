@@ -6176,6 +6176,35 @@
 		return false;
 	};
 
+	/**
+	 * Adds footnote for selected text (or current position if selection doesn't exist).
+	 * @memberof ApiDocument
+	 * @param {DocumentElement[]} [arrContent=undefined] - An array of elements to insert to footnote (optional).
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiDocument.prototype.AddFootnote = function(arrContent)
+	{
+		for (var nElm = 0; nElm < arrContent.length; nElm++)
+			arrContent[nElm] = arrContent[nElm].private_GetImpl();
+
+		return this.Document.AddFootnote(undefined, arrContent);
+	};
+
+	/**
+	 * Adds endnote for selected text (or current position if selection doesn't exist).
+	 * @memberof ApiDocument
+	 * @param {DocumentElement[]} [arrContent=undefined] - An array of elements to insert to endnote (optional).
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiDocument.prototype.AddEndnote = function(arrContent)
+	{
+		for (var nElm = 0; nElm < arrContent.length; nElm++)
+			arrContent[nElm] = arrContent[nElm].private_GetImpl();
+
+		return this.Document.AddEndnote(undefined, arrContent);
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiParagraph
@@ -16920,6 +16949,8 @@
 	ApiDocument.prototype["GetEndNotesFirstParagraphs"]  = ApiDocument.prototype.GetEndNotesFirstParagraphs;
 	ApiDocument.prototype["GetAllCaptionParagraphs"]     = ApiDocument.prototype.GetAllCaptionParagraphs;
 	ApiDocument.prototype["GetAllBookmarksNames"]        = ApiDocument.prototype.GetAllBookmarksNames;
+	ApiDocument.prototype["AddFootnote"]                 = ApiDocument.prototype.AddFootnote;
+	ApiDocument.prototype["AddEndnote"]                  = ApiDocument.prototype.AddEndnote;
 	
 	ApiDocument.prototype["GetSelectedDrawings"]         = ApiDocument.prototype.GetSelectedDrawings;
 	ApiDocument.prototype["ReplaceDrawing"]              = ApiDocument.prototype.ReplaceDrawing;
