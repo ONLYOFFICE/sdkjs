@@ -11781,7 +11781,7 @@ QueryTableField.prototype.clone = function() {
 			kF = canvasWidth / width;
 		}
 
-		kF *= (height * kF) / (height * kF + canvasTopPadding)
+		kF *= (height * kF) / (height * kF + canvasTopPadding);
 
 		var isChangeForZoom;
 		var trueZoom = kF * AscCommon.AscBrowser.retinaPixelRatio;
@@ -11920,6 +11920,17 @@ QueryTableField.prototype.clone = function() {
 		res.externalReference = this;
 		return res;
 	};
+
+	ExternalReference.prototype.addSheetName = function (name, generateDefaultStructure) {
+		this.SheetNames.push(name);
+		if (generateDefaultStructure) {
+			var externalSheetDataSet = new ExternalSheetDataSet();
+			externalSheetDataSet.SheetId = this.SheetNames.length - 1;
+			this.SheetDataSet.push(externalSheetDataSet);
+
+		}
+	};
+
 
 	function asc_CExternalReference() {
 		this.type = null;

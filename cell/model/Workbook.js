@@ -3895,11 +3895,6 @@
 		return null;
 	};
 
-
-
-
-
-
 	Workbook.prototype.getExternalWorksheetByIndex = function (index, sheet) {
 		var extarnalLink = this.getExternalLinkByIndex(index);
 		if (extarnalLink) {
@@ -3984,7 +3979,7 @@
 		for (var i = 0; i < this.externalReferences.length; i++) {
 			if (this.externalReferences[i].referenceData) {
 				if (this.externalReferences[i].referenceData.fileId === referenceData.fileId && this.externalReferences[i].referenceData.portalName === referenceData.portalName) {
-					return {index: i, val: this.externalReferences};
+					return {index: i + 1, val: this.externalReferences};
 				}
 			}
 		}

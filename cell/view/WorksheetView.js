@@ -13679,16 +13679,19 @@
 					};
 					var name = pastedWb.Core.title;
 
+					var pastedSheetName = pastedWb.aWorksheets[0].sName;
 					var newExternalReference = new AscCommonExcel.ExternalReference();
 					newExternalReference.referenceData = referenceData;
 					newExternalReference.Id = name;
+					newExternalReference.addSheetName(pastedSheetName, true);
 
 					t.model.workbook.addExternalReferences([newExternalReference]);
 
 					pasteLinkIndex = t.model.workbook.getExternalLinkIndexByName(name);
 					if (pasteLinkIndex != null) {
-						pasteSheetLinkName = pastedWb.aWorksheets[0].sName;
+						pasteSheetLinkName = pastedSheetName;
 					}
+
 				} else if (linkInfo.type === 1) {
 					pasteSheetLinkName = linkInfo.sheet;
 				}
@@ -14426,12 +14429,12 @@
 		}
 	};
 
-	WorksheetView.prototype._pasteCellLink = function (range, fromRow, fromCol, arrFormula, sheetName, pastelink) {
+	WorksheetView.prototype._pasteCellLink = function (range, fromRow, fromCol, arrFormula, sheetName, pasteLink) {
 		var formulaRange = new Asc.Range(fromCol, fromRow, fromCol, fromRow);
 		var sFromula;
 
-		if (pastelink != null) {
-			sFromula = "[" + pastelink + "]" + sheetName + "!" + formulaRange.getName();
+		if (pasteLink != null) {
+			sFromula = "[" + pasteLink + "]" + sheetName + "!" + formulaRange.getName();
 		} else {
 			//вставляем в этот же документ
 			if (sheetName) {
