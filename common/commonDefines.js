@@ -4221,6 +4221,11 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	window["AscCommon"].c_oAscMaxFormulaReferenceLength = c_oAscMaxFormulaReferenceLength;
 	window["AscCommon"].c_oAscMaxTableColumnTextLength = c_oAscMaxTableColumnTextLength;
 
+	prot =  window["AscCommon"]["c_oAscUrlType"] = window["AscCommon"].c_oAscUrlType = c_oAscUrlType;
+	prot["Invalid"] = prot.Invalid;
+	prot["Http"] = prot.Http;
+	prot["Email"] = prot.Email;
+	prot["Unsafe"] = prot.Unsafe;
 
 	window["AscCommon"].locktype_None   = locktype_None;
 	window["AscCommon"].locktype_Mine   = locktype_Mine;
