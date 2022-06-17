@@ -13366,8 +13366,10 @@
 		}
 
 		if (isPastingLink && !isCheckSelection) {
-			activeCellsPasteFragment.r2 = activeCellsPasteFragment.r1 + (arn.r2 - arn.r1);
-			activeCellsPasteFragment.c2 = activeCellsPasteFragment.c1 + (arn.c2 - arn.c1);
+			if (!activeCellsPasteFragment.isOneCell()) {
+				activeCellsPasteFragment.r2 = activeCellsPasteFragment.r1 + (arn.r2 - arn.r1);
+				activeCellsPasteFragment.c2 = activeCellsPasteFragment.c1 + (arn.c2 - arn.c1);
+			}
 		}
 
 		var countPasteRow = activeCellsPasteFragment.r2 - activeCellsPasteFragment.r1 + 1;
@@ -13668,9 +13670,12 @@
 			var linkInfo = t._getPastedLinkInfo(pastedWb);
 			pasteLinkIndex = null;
 			if (linkInfo) {
+				console.log("r1: " + activeCellsPasteFragment.r1 + " c1: " + activeCellsPasteFragment.c1 + " r2: " + activeCellsPasteFragment.r2 + " c2: " + activeCellsPasteFragment.c2)
 				if (linkInfo.type === -1) {
 					pasteLinkIndex = linkInfo.index;
 					pasteSheetLinkName = linkInfo.sheet;
+					//необходимо положить нужные данные в SheetDataSet
+
 				} else if (linkInfo.type === -2) {
 					//добавляем
 					var referenceData = pastedWb && pastedWb.Core && {
@@ -13683,7 +13688,12 @@
 					var newExternalReference = new AscCommonExcel.ExternalReference();
 					newExternalReference.referenceData = referenceData;
 					newExternalReference.Id = name;
-					newExternalReference.addSheetName(pastedSheetName, true);
+					//newExternalReference.addSheetName(pastedSheetName, true);
+
+					//необходимо взять данные с листа. если лист ещё не создан, то взять этот лист и положить в ExternalReferences
+					//+ положить нужные данные в SheetDataSet
+					//вставляемый фрагмент - ориентируюсь на activeCellsPasteFragment
+					newExternalReference.addSheet(pastedWb.aWorksheets[0], [activeCellsPasteFragment]);
 
 					t.model.workbook.addExternalReferences([newExternalReference]);
 
@@ -13705,7 +13715,7 @@
 		var putInsertedCellIntoRange = function (toRow, toCol, fromRow, fromCol, rowDiff, colDiff, range, newVal, curMerge, transposeRange) {
 			var pastedRangeProps = {};
 
-			if (specialPasteProps && specialPasteProps.property === Asc.c_oSpecialPasteProps.link) {
+			if (isPastingLink) {
 				if (-1 === pasteLinkIndex) {
 					_getPasteLinkIndex();
 				}

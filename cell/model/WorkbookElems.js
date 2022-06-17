@@ -11931,6 +11931,58 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 
+	ExternalReference.prototype.addSheet = function (sheet, ranges) {
+		//добавляем нужные данные из вставляемого листа в SheetDataSet
+		var sheetName = sheet && sheet.sName;
+		if (sheetName && null === this.getSheetByName(sheetName)) {
+			//делаем init и формируем на основании данных из SheetDataSet
+			//добавляем в this.worksheets
+			this.SheetNames.push(sheetName);
+
+			//формируем SheetDataSet
+			var externalSheetDataSet = new ExternalSheetDataSet();
+			externalSheetDataSet.SheetId = this.SheetNames.length - 1;
+			this.SheetDataSet.push(externalSheetDataSet);
+			externalSheetDataSet.initFromSheet(sheet, ranges);
+
+			//из SheetDataSet данные добавляем во временный лист, который хранится в worksheets
+			this.initWorksheetFromSheetDataSet(sheetName);
+		}
+	};
+
+	ExternalReference.prototype.initWorksheetFromSheetDataSet = function (sheetName) {
+		var sheetDataSetIndex = this.getSheetByName(sheetName);
+		if (null !== sheetDataSetIndex) {
+			var sheetDataSet = this.SheetDataSet[sheetDataSetIndex];
+			var wb = new AscCommonExcel.Workbook();
+			var ws = new AscCommonExcel.Worksheet(wb);
+			this.worksheets[sheetName] = ws;
+
+			//клонируем все данные из SheetDataSet в данный темповый Worksheet
+			for (var i = 0; i < sheetDataSet.Row.length; i++) {
+				if (!sheetDataSet.Row[i] || !sheetDataSet.Row[i].Cell) {
+					continue;
+				}
+				for (var j = 0; j < sheetDataSet.Row[i].Cell.length; j++) {
+					// this.Ref = null;
+					// this.CellType = null;
+					// this.CellValue = null;
+
+				}
+			}
+		}
+	};
+
+	ExternalReference.prototype.getSheetByName = function (val) {
+		for (var i = 0; i < this.SheetNames.length; i++) {
+			//если есть this.worksheets, если нет - проверить и обработать
+			if (this.SheetNames[i] === val) {
+				return i;
+			}
+		}
+		return null;
+	};
+
 
 	function asc_CExternalReference() {
 		this.type = null;
@@ -11990,6 +12042,34 @@ QueryTableField.prototype.clone = function() {
 			}
 		}
 	};
+	ExternalSheetDataSet.prototype.initFromSheet = function(sheet, ranges) {
+		if (sheet && ranges) {
+			var t = this;
+
+			var addedRowMap = [];
+			for (var i = 0; i < ranges.length; i++) {
+				var range = sheet.getRange3(ranges[i].r1, ranges[i].c1, ranges[i].r2, ranges[i].c2);
+				range._foreachNoEmpty(function (cell) {
+					if (!addedRowMap[cell.nRow]) {
+						var row = new ExternalRow();
+						row.R = cell.nRow + 1;
+						t.Row.push(row);
+						addedRowMap[cell.nRow] = {index: t.Row.length - 1, cells: []};
+					}
+					if (addedRowMap[cell.nRow].cells && !addedRowMap[cell.nRow].cells[cell.nCol]) {
+						var externalCell = new ExternalCell();
+						externalCell.initFromCell(cell);
+
+						var index = addedRowMap[cell.nRow].index;
+						t.Row[index].Cell.push(externalCell);
+						addedRowMap[cell.nRow].cells[cell.nCol] = 1;
+					}
+				});
+			}
+		}
+	};
+
+
 
 	function ExternalRow() {
 		this.R = null;
@@ -12062,6 +12142,16 @@ QueryTableField.prototype.clone = function() {
 			w.WriteBool(false);
 		}
 	};
+	ExternalCell.prototype.initFromCell = function(cell) {
+		if (cell) {
+			AscCommonExcel.executeInR1C1Mode(false, function () {
+				this.Ref = cell.getName();
+			});
+			//this.CellType = null;
+			this.CellValue = cell.getValue();
+		}
+	};
+
 
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
