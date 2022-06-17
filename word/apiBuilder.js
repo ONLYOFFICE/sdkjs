@@ -1536,7 +1536,7 @@
 		if (!AscCommon.rx_allowedProtocols.test(sLink))
 			sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
 
-		sLink = sLink.replace(new RegExp("%20",'g')," ");
+		sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
 		hyperlinkPr.put_Value(sLink);
 		hyperlinkPr.put_ToolTip(sScreenTipText);
 		hyperlinkPr.put_Bookmark(null);
@@ -2992,7 +2992,7 @@
 			urlType		= AscCommon.getUrlType(sLink);
 			if (!AscCommon.rx_allowedProtocols.test(sLink))
 				sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
-			sLink = sLink.replace(new RegExp("%20",'g')," ");
+			sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
 		}
 		
 		this.ParaHyperlink.SetValue(sLink);
@@ -6603,7 +6603,7 @@
 		if (!AscCommon.rx_allowedProtocols.test(sLink))
 			sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
 
-		sLink = sLink.replace(new RegExp("%20",'g')," ");
+		sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
 		hyperlinkPr.put_Value(sLink);
 		hyperlinkPr.put_ToolTip(sScreenTipText);
 		hyperlinkPr.put_Bookmark(null);
@@ -8115,7 +8115,7 @@
 		var urlType		= AscCommon.getUrlType(sLink);
 		if (!AscCommon.rx_allowedProtocols.test(sLink))
 			sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
-		sLink = sLink.replace(new RegExp("%20",'g')," ");
+		sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
 		hyperlinkPr.put_Value(sLink);
 		hyperlinkPr.put_ToolTip(sScreenTipText);
 		hyperlinkPr.put_Bookmark(null);
