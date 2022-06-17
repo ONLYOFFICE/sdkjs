@@ -10072,9 +10072,16 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 			//здесь пишем externalLink[]
 			var oExternalReference = new CT_ExternalReference();
 			oExternalReference.val = externalReference;
+
 			var wsPart = context.part.addPart(AscCommon.openXml.Types.externalWorkbook);
+			var rId = wsPart.part.addRelationship("http://schemas.openxmlformats.org/officeDocument/2006/relationships/externalLinkPath", externalReference.Id, "External");
+			var trueId = externalReference.Id;
+			externalReference.Id = rId;
+
 			//внутри дёргается toXml
 			wsPart.part.setDataXml(oExternalReference, writer);
+
+			externalReference.Id = trueId;
 			ids.push(wsPart.rId);
 		});
 
