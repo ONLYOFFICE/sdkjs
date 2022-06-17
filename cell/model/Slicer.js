@@ -3127,6 +3127,7 @@
 	window['Asc']['CT_slicerCacheDefinition'] = window['Asc'].CT_slicerCacheDefinition = CT_slicerCacheDefinition;
 	window['Asc']['CT_slicerCacheData'] = window['Asc'].CT_slicerCacheData = CT_slicerCacheData;
 	window['Asc']['CT_slicerCachePivotTable'] = window['Asc'].CT_slicerCachePivotTable = CT_slicerCachePivotTable;
+	window['Asc']['CT_slicer'] = window['Asc'].CT_slicer = CT_slicer;
 	window['Asc']['CT_olapSlicerCacheItem'] = window['Asc'].CT_olapSlicerCacheItem = CT_olapSlicerCacheItem;
 	window['Asc']['CT_olapSlicerCacheRange'] = window['Asc'].CT_olapSlicerCacheRange = CT_olapSlicerCacheRange;
 	window['Asc']['CT_olapSlicerCacheLevelData'] = window['Asc'].CT_olapSlicerCacheLevelData = CT_olapSlicerCacheLevelData;
@@ -3138,6 +3139,8 @@
 	window['Asc']['CT_slicerStyles'] = window['Asc'].CT_slicerStyles = CT_slicerStyles;
 	window['Asc']['CT_slicerStyle'] = window['Asc'].CT_slicerStyle = CT_slicerStyle;
 	window['Asc']['CT_slicerStyleElement'] = window['Asc'].CT_slicerStyleElement = CT_slicerStyleElement;
+	window['Asc']['CT_slicerCacheHideNoData'] = window['Asc'].CT_slicerCacheHideNoData = CT_slicerCacheHideNoData;
+	window['Asc']['CT_slicerCacheOlapLevelName'] = window['Asc'].CT_slicerCacheOlapLevelName = CT_slicerCacheOlapLevelName;
 
 	window['Asc']['ST_olapSlicerCacheSortOrder'] = window['AscCommonExcel'].ST_olapSlicerCacheSortOrder = ST_olapSlicerCacheSortOrder;
 	prot = ST_olapSlicerCacheSortOrder;
