@@ -10141,9 +10141,9 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 		writer.WriteXmlString(("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"));
 		writer.WriteXmlString(("<externalLink xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"));
 
-		if (this.val && this.val.externalBook) {
+		if (this.val) {
 			var externalBook = new CT_ExternalBook();
-			externalBook.val = this.val.externalBook;
+			externalBook.val = this.val;
 			externalBook.toXml(writer);
 		}
 		/*if (m_oExternalBook.IsInit())
@@ -10209,9 +10209,10 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 
 		writer.WriteXmlString("<externalBook");
 		if (this.val.Id) {
-			writer.WriteXmlString("\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"");
+			writer.WriteXmlString(" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"");
 			writer.WriteXmlString(" r:id=\"");
 			writer.WriteXmlString(this.val.Id);
+			writer.WriteXmlString("\"");
 		}
 		writer.WriteXmlString(">");
 
@@ -10516,19 +10517,18 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 	CT_ExternalCell.prototype.toXml = function (writer) {
 		writer.WriteXmlString("<cell");
 		writer.WriteXmlNullableAttributeString("r", this.val.Ref);
-		writer.WriteXmlNullableAttributeString("t", this.val.CellType);
+		writer.WriteXmlNullableAttributeString("t", ToXml_ST_CellValueType(this.val.CellType));
 		//writer.WriteXmlNullableAttributeNumber("vm", this.vm);
 		writer.WriteXmlString(">");
 
 		if (this.val.CellValue) {
 			writer.WriteXmlString("<v");
 			writer.WriteXmlString(">");
-			writer.WriteXmlString(ToXml_ST_CellValueType(this.val.CellValue));
+			writer.WriteXmlString(this.val.CellValue);
 			writer.WriteXmlString("</v>");
 		}
 
 		writer.WriteXmlString("</cell>");
-
 	};
 
 
