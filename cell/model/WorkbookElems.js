@@ -11939,6 +11939,9 @@ QueryTableField.prototype.clone = function() {
 			//добавляем в this.worksheets
 			this.SheetNames.push(sheetName);
 
+			//TODO при копипасте есть нюанас - те данные, которые не были скопированы из исходного документа, подхватить не сможем
+			//либо вставку менять - и делать не так как мс(в случае ссылки вставляеть всегда диапазон, равный скопированному). сейчас - если выделили больше, то подхватиться этот диапазон.
+
 			//формируем SheetDataSet
 			var externalSheetDataSet = new ExternalSheetDataSet();
 			externalSheetDataSet.SheetId = this.SheetNames.length - 1;
@@ -11964,10 +11967,18 @@ QueryTableField.prototype.clone = function() {
 					continue;
 				}
 				for (var j = 0; j < sheetDataSet.Row[i].Cell.length; j++) {
+					if (! sheetDataSet.Row[i].Cell[j]) {
+						continue;
+					}
 					// this.Ref = null;
 					// this.CellType = null;
 					// this.CellValue = null;
-
+					AscFormat.ExecuteNoHistory(function(){
+						AscCommonExcel.executeInR1C1Mode(false, function () {
+							var range = ws.getRange2(sheetDataSet.Row[i].Cell[j].Ref);
+							range.setValue(sheetDataSet.Row[i].Cell[j].CellValue);
+						});
+					});
 				}
 			}
 		}
@@ -12144,10 +12155,14 @@ QueryTableField.prototype.clone = function() {
 	};
 	ExternalCell.prototype.initFromCell = function(cell) {
 		if (cell) {
+			var t = this;
 			AscCommonExcel.executeInR1C1Mode(false, function () {
-				this.Ref = cell.getName();
+				t.Ref = cell.getName();
 			});
+
+			//TODO проставлять тип! ST_CellType
 			//this.CellType = null;
+
 			this.CellValue = cell.getValue();
 		}
 	};

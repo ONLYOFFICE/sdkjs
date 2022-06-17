@@ -532,9 +532,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseType.prototype.getDimensions = function () {
 		return {col: 1, row: 1};
 	};
-	cBaseType.prototype.getExternalLinkStr = function (externalLink) {
+	cBaseType.prototype.getExternalLinkStr = function (externalLink, locale) {
 		var wb = Asc["editor"] && Asc["editor"].wb;
-		externalLink = externalLink && wb && wb.model && wb.model.getExternalLinkByIndex(externalLink - 1, true);
+
+		var index = externalLink;
+		externalLink = externalLink && wb && wb.model && wb.model.getExternalLinkByIndex(index - 1, true);
+		if (externalLink && !locale) {
+			return "[" + index + "]";
+		}
 		var path = externalLink && externalLink.path;
 		var name = externalLink && externalLink.name;
 		var res = "";
@@ -1352,7 +1357,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var wsFrom = this.wsFrom.getName();
 		var wsTo = this.wsTo.getName();
 		var name = this.bbox ? this.bbox.getName() : this.value;
-		return this.getExternalLinkStr(this.externalLink) + parserHelp.get3DRef(wsFrom !== wsTo ? wsFrom + ':' + wsTo : wsFrom, name);
+		return this.getExternalLinkStr(this.externalLink, true) + parserHelp.get3DRef(wsFrom !== wsTo ? wsFrom + ':' + wsTo : wsFrom, name);
 	};
 	cArea3D.prototype.tocNumber = function () {
 		return this.getValue()[0].tocNumber();
@@ -1757,7 +1762,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 	};
 	cRef3D.prototype.toLocaleString = function () {
-		return this.getExternalLinkStr(this.externalLink) + parserHelp.get3DRef(this.ws.getName(), this.range.getName());
+		return this.getExternalLinkStr(this.externalLink, true) + parserHelp.get3DRef(this.ws.getName(), this.range.getName());
 	};
 	cRef3D.prototype.getWS = function () {
 		return this.ws;
