@@ -1788,6 +1788,63 @@
 		return res;
 	}
 
+	function FromXml_ST_CellValueType(val) {
+		var res = undefined;
+		switch (val) {
+			case "s":
+				res = CellValueType.String;
+				break;
+			case "str":
+				res = CellValueType.String;
+				break;
+			case "n":
+				res = CellValueType.Number;
+				break;
+			case "e":
+				res = CellValueType.Error;
+				break;
+			case "b":
+				res =  CellValueType.Bool;
+				break;
+			case "inlineStr":
+				res = CellValueType.String;
+				break;
+			case "d":
+				res = CellValueType.String;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_CellValueType(val) {
+		var res = undefined;
+		switch (val) {
+			case CellValueType.String:
+				res = "s";
+				break;
+			/*case CellValueType.String:
+				res = "str";
+				break;*/
+			case CellValueType.Number:
+				res = "n";
+				break;
+			case CellValueType.Error:
+				res = "e";
+				break;
+			case CellValueType.Bool:
+				res =   "b";
+				break;
+			/*case "inlineStr":
+				res = CellValueType.String;
+				break;
+			case "d":
+				res = CellValueType.String;
+				break;*/
+		}
+		return res;
+	}
+
+
 
 	//additional functions
 	function prepareCommentsToWrite(m_mapComments, personList) {
@@ -3705,28 +3762,9 @@
 				}
 			} else if ("t" === reader.GetName()) {
 				val = reader.GetValue();
-				switch (val) {
-					case "s":
-						this.type = CellValueType.String;
-						break;
-					case "str":
-						this.type = CellValueType.String;
-						break;
-					case "n":
-						this.type = CellValueType.Number;
-						break;
-					case "e":
-						this.type = CellValueType.Error;
-						break;
-					case "b":
-						this.type = CellValueType.Bool;
-						break;
-					case "inlineStr":
-						this.type = CellValueType.String;
-						break;
-					case "d":
-						this.type = CellValueType.String;
-						break;
+				var type = FromXml_ST_CellValueType(val);
+				if (type != null) {
+					this.type = type;
 				}
 			}
 		}
@@ -3743,6 +3781,7 @@
 		var text = null;
 		var number = null;
 		var type = null;
+		//TODO ToXml_ST_CellValueType
 		switch (this.type) {
 			case CellValueType.String:
 				type = "s";
@@ -10466,7 +10505,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 				this.val.Ref = val;
 			} else if ("t" === reader.GetName()) {
 				val = reader.GetValue();
-				this.val.CellType = val;
+				this.val.CellType = FromXml_ST_CellValueType(val);
 			} else if ("vm" === reader.GetName()) {
 				/*val = reader.GetValue();
 				this.val.CellType = val;*/
@@ -10484,7 +10523,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 		if (this.val.CellValue) {
 			writer.WriteXmlString("<v");
 			writer.WriteXmlString(">");
-			writer.WriteXmlString(this.val.CellValue);
+			writer.WriteXmlString(ToXml_ST_CellValueType(this.val.CellValue));
 			writer.WriteXmlString("</v>");
 		}
 
