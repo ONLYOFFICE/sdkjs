@@ -3521,7 +3521,7 @@
 		return sColumn + (oRefCell.row + 1);
 	};
 	
-	ReaderFromJSON.prototype.WorksheetFromJSON = function(oParsedSheet, oWorkbook)
+	ReaderFromJSON.prototype.WorksheetFromJSON = function(oParsedSheet, oWorkbook, oWorksheet)
 	{
 		if (this.StyleObject == null)
 		{
@@ -3534,7 +3534,8 @@
 			this.aDxfs = oStyleObject.aDxfs;
 		}
 
-		var oWorksheet = new AscCommonExcel.Worksheet(oWorkbook, oWorkbook.aWorksheets.length);
+		if (!oWorksheet)
+			oWorksheet = new AscCommonExcel.Worksheet(oWorkbook, oWorkbook.aWorksheets.length);
 		this.curWorksheet = oWorksheet;
 
 		// worksheet props
@@ -4507,9 +4508,15 @@
 	};
 	ReaderFromJSON.prototype.TablePartsFromJSON = function(aParsed, oWorksheet)
 	{
-		var aResult = [];
+		var aResult = [], oTable;
 		for (var nTable = 0; nTable < aParsed.length; nTable++)
-			aResult.push(this.TablePartFromJSON(aParsed[nTable], oWorksheet));
+		{
+			oTable = this.TablePartFromJSON(aParsed[nTable], oWorksheet);
+			if(null != oTable.Ref && null != oTable.DisplayName)
+			 	oWorksheet.workbook.dependencyFormulas.addTableName(oWorksheet, oTable, true);
+
+			aResult.push(oTable);
+		}
 		
 		return aResult;
 	};

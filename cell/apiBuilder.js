@@ -732,16 +732,14 @@
 		var oReader = new AscCommon.ReaderFromJSON();
 		oReader.Workbook = this.wbModel;
 		
-		var oActiveSheet = this.GetActiveSheet().worksheet;
 		var oParsedObj  = JSON.parse(sMessage);
 		var oReadedObj = null;
 
 		switch (oParsedObj.type)
 		{
 			case "worksheet":
-				oReadedObj = new ApiWorksheet(oReader.WorksheetFromJSON(oParsedObj, this.wbModel));
-				this.wbModel.pushWorksheet2();
-				//this.wbModel.pushWorksheet2();
+				oReadedObj = new ApiWorksheet(oReader.WorksheetFromJSON(oParsedObj, this.wbModel, this.wbModel.pushWorksheet()));
+				//this.wbModel.pushWorksheet(oReadedObj.worksheet);
 				break;
 		}
 
