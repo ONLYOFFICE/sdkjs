@@ -6179,31 +6179,31 @@
 	/**
 	 * Adds footnote for selected text (or current position if selection doesn't exist).
 	 * @memberof ApiDocument
-	 * @param {DocumentElement[]} [arrContent=undefined] - An array of elements to insert to footnote (optional).
 	 * @typeofeditors ["CDE"]
-	 * @returns {boolean}
+	 * @returns {?ApiDocumentContent}
 	 */
-	ApiDocument.prototype.AddFootnote = function(arrContent)
+	ApiDocument.prototype.AddFootnote = function()
 	{
-		for (var nElm = 0; nElm < arrContent.length; nElm++)
-			arrContent[nElm] = arrContent[nElm].private_GetImpl();
+		let oResult = this.Document.AddFootnote();
+		if (!oResult)
+			return null;
 
-		return this.Document.AddFootnote(undefined, arrContent);
+		return new ApiDocumentContent(oResult);
 	};
 
 	/**
 	 * Adds endnote for selected text (or current position if selection doesn't exist).
 	 * @memberof ApiDocument
-	 * @param {DocumentElement[]} [arrContent=undefined] - An array of elements to insert to endnote (optional).
 	 * @typeofeditors ["CDE"]
-	 * @returns {boolean}
+	 * @returns {?ApiDocumentContent}
 	 */
-	ApiDocument.prototype.AddEndnote = function(arrContent)
+	ApiDocument.prototype.AddEndnote = function()
 	{
-		for (var nElm = 0; nElm < arrContent.length; nElm++)
-			arrContent[nElm] = arrContent[nElm].private_GetImpl();
+		let oResult = this.Document.AddEndnote();
+		if (!oResult)
+			return null;
 
-		return this.Document.AddEndnote(undefined, arrContent);
+		return new ApiDocumentContent(oResult);
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	//

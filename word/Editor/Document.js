@@ -17757,31 +17757,24 @@ CDocument.prototype.GotoFootnotesOnPage = function(nPageIndex)
 
 	return true;
 };
-CDocument.prototype.AddFootnote = function(sText, aContent)
+CDocument.prototype.AddFootnote = function(sText)
 {
 	var nDocPosType = this.GetDocPosType();
 	if (docpostype_Content !== nDocPosType && docpostype_Footnotes !== nDocPosType)
-		return false;
+		return null;
 
 	var oInfo = this.GetSelectedElementsInfo();
 	if (oInfo.GetMath())
-		return false;
+		return null;
 
 	if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
 	{
+		let oFootnote = null;
 		this.StartAction(AscDFH.historydescription_Document_AddFootnote);
 
 		if (docpostype_Content === nDocPosType)
 		{
-			var oFootnote = this.Footnotes.CreateFootnote();
-			if (Array.isArray(aContent) && aContent.length > 0)
-			{
-				oFootnote.AddContent(aContent);
-				oFootnote.SetApplyToAll(true);
-				oFootnote.SetParagraphStyle("footnote text");
-				oFootnote.SetApplyToAll(false);
-			}
-
+			oFootnote = this.Footnotes.CreateFootnote();
 			oFootnote.AddDefaultFootnoteContent(sText);
 			if (true === this.IsSelectionUse())
 			{
@@ -17804,10 +17797,10 @@ CDocument.prototype.AddFootnote = function(sText, aContent)
 		}
 		this.FinalizeAction();
 
-		return true;
+		return oFootnote;
 	}
 	
-	return false;
+	return null;
 };
 CDocument.prototype.RemoveAllFootnotes = function(bRemoveFootnotes, bRemoveEndnotes)
 {
@@ -18001,32 +17994,26 @@ CDocument.prototype.GetEndnotesList = function(oFirstEndnote, oLastEndnote)
 
 	return arrEndnotes;
 };
-CDocument.prototype.AddEndnote = function(sText, aContent)
+CDocument.prototype.AddEndnote = function(sText)
 {
 	var nDocPosType = this.GetDocPosType();
 	if (docpostype_Content !== nDocPosType && docpostype_Endnotes !== nDocPosType)
-		return false;
+		return null;
 
 	var oInfo = this.GetSelectedElementsInfo();
 	if (oInfo.GetMath())
-		return false;
+		return null;
 
 	if (!this.IsSelectionLocked(changestype_Paragraph_Content))
 	{
+		let oEndnote = null;
 		this.StartAction(AscDFH.historydescription_Document_AddEndnote);
 
 		if (docpostype_Content === nDocPosType)
 		{
-			var oEndnote = this.Endnotes.CreateEndnote();
-			if (Array.isArray(aContent) && aContent.length > 0)
-			{
-				oEndnote.AddContent(aContent);
-				oEndnote.SetApplyToAll(true);
-				oEndnote.SetParagraphStyle("endnote text");
-				oEndnote.SetApplyToAll(false);
-			}
-
+			oEndnote = this.Endnotes.CreateEndnote();
 			oEndnote.AddDefaultEndnoteContent(sText);
+
 			if (true === this.IsSelectionUse())
 			{
 				this.MoveCursorRight(false, false, false);
@@ -18049,10 +18036,10 @@ CDocument.prototype.AddEndnote = function(sText, aContent)
 		this.Recalculate();
 		this.FinalizeAction();
 
-		return true;
+		return oEndnote;
 	}
 
-	return false;
+	return null;
 };
 CDocument.prototype.GotoEndnote = function(isNext)
 {
