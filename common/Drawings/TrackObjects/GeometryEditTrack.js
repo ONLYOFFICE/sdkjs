@@ -356,21 +356,23 @@
             }
             this.overlayGeometry.pathLst.length = 1;
             var oDrawPath = this.overlayGeometry.pathLst[0];
-            oDrawPath.ArrPathCommand.length = 0;
-            oDrawPath.stroke = true;
-            if(prevPoint) {
-                oDrawPath.ArrPathCommand.push({id:AscFormat.moveTo, X: prevPoint.X, Y: prevPoint.Y});
-                if(arrPathCommand[gmEditPoint.pathC1]) {
-                    oDrawPath.ArrPathCommand.push(arrPathCommand[gmEditPoint.pathC1]);
+            if(oDrawPath) {
+                oDrawPath.ArrPathCommand.length = 0;
+                oDrawPath.stroke = true;
+                if(prevPoint) {
+                    oDrawPath.ArrPathCommand.push({id:AscFormat.moveTo, X: prevPoint.X, Y: prevPoint.Y});
+                    if(arrPathCommand[gmEditPoint.pathC1]) {
+                        oDrawPath.ArrPathCommand.push(arrPathCommand[gmEditPoint.pathC1]);
+                    }
+                    if(arrPathCommand[gmEditPoint.pathC2]) {
+                        oDrawPath.ArrPathCommand.push(arrPathCommand[gmEditPoint.pathC2]);
+                    }
                 }
-                if(arrPathCommand[gmEditPoint.pathC2]) {
-                    oDrawPath.ArrPathCommand.push(arrPathCommand[gmEditPoint.pathC2]);
-                }
-            }
-            else {
-                oDrawPath.ArrPathCommand.push({id:AscFormat.moveTo, X: gmEditPoint.X, Y: gmEditPoint.Y});
-                if(arrPathCommand[gmEditPoint.pathC2]) {
-                    oDrawPath.ArrPathCommand.push(arrPathCommand[gmEditPoint.pathC2]);
+                else {
+                    oDrawPath.ArrPathCommand.push({id:AscFormat.moveTo, X: gmEditPoint.X, Y: gmEditPoint.Y});
+                    if(arrPathCommand[gmEditPoint.pathC2]) {
+                        oDrawPath.ArrPathCommand.push(arrPathCommand[gmEditPoint.pathC2]);
+                    }
                 }
             }
         }, this, []);

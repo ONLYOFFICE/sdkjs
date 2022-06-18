@@ -2104,13 +2104,18 @@
 			var context = xmlParserContext;
 			for (var path in context.imageMap) {
 				if (context.imageMap.hasOwnProperty(path)) {
-					var data = context.zip.files[path].sync('uint8array');
-					var blob = new Blob([data], {type: "image/png"});
-					var url = window.URL.createObjectURL(blob);
-					AscCommon.g_oDocumentUrls.addImageUrl(path, url);
-					context.imageMap[path].forEach(function(blipFill) {
-						AscCommon.pptx_content_loader.Reader.initAfterBlipFill(path, blipFill);
-					});
+					var data = context.zip.getFile(path);
+					if (data) {
+						if (!window["NATIVE_EDITOR_ENJINE"]) {
+							let mime = AscCommon.openXml.GetMimeType(AscCommon.GetFileExtension(path));
+							let blob = new Blob([data], {type: mime});
+							let url = window.URL.createObjectURL(blob);
+							AscCommon.g_oDocumentUrls.addImageUrl(path, url);
+						}
+						context.imageMap[path].forEach(function(blipFill) {
+							AscCommon.pptx_content_loader.Reader.initAfterBlipFill(path, blipFill);
+						});
+					}
 				}
 			}
 		}
@@ -12337,7 +12342,7 @@
 		}
 	};
 	Cell.prototype._autoformatHyperlink = function(val){
-		if (/(^(((http|https|ftp):\/\/)|(mailto:)|(www.)))|@/i.test(val)) {
+		if (AscCommon.rx_allowedProtocols.test(val) || /^(www.)|@/i.test(val)) {
 			// Удаляем концевые пробелы и переводы строки перед проверкой гиперссылок
 			val = val.replace(/\s+$/, '');
 			var typeHyp = AscCommon.getUrlType(val);

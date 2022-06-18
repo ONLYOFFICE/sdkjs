@@ -512,7 +512,7 @@
 			switch(name) {
 				case "br": {
 					let oRun = new AscCommonWord.ParaRun(this, false);
-					oRun.AddToContent( 0, new ParaNewLine(AscCommonWord.break_Line));
+					oRun.AddToContent( 0, new AscWord.CRunBreak(AscWord.break_Line));
 					this.AddToContent(EndPos++, oRun);
 					oRun.fromDrawingML(reader);//Read run properties
 					break;

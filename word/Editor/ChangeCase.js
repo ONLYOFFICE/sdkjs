@@ -59,6 +59,7 @@
 	/**
 	 * Класс для изменения регистра выделенного текста
 	 * @param {Asc.c_oAscChangeTextCaseType} nType
+	 * @constructor
 	 */
 	function CChangeTextCaseEngine(nType)
 	{
@@ -185,7 +186,7 @@
 						|| Asc.c_oAscChangeTextCaseType.UpperCase === nCaseType
 						|| (Asc.c_oAscChangeTextCaseType.CapitalizeWords === nCaseType && 0 === nIndex)))
 					{
-						oRun.AddToContent(nInRunPos, new ParaText(nUpperCode), false);
+						oRun.AddToContent(nInRunPos, new AscWord.CRunText(nUpperCode), false);
 						oRun.RemoveFromContent(nInRunPos + 1, 1, false);
 					}
 					else if (nUpperCode === nCharCode
@@ -198,7 +199,7 @@
 							|| (Asc.c_oAscChangeTextCaseType.SentenceCase === nCaseType && bNeddToChange && !(this.StartSentence && 0 === nIndex))
 						))
 					{
-						oRun.AddToContent(nInRunPos, new ParaText(nLowerCode), false);
+						oRun.AddToContent(nInRunPos, new AscWord.CRunText(nLowerCode), false);
 						oRun.RemoveFromContent(nInRunPos + 1, 1, false);
 					}
 				}
@@ -477,12 +478,12 @@
 			{
 				if (nLowerCode === nCharCode && (Asc.c_oAscChangeTextCaseType.ToggleCase === this.ChangeType || Asc.c_oAscChangeTextCaseType.UpperCase === this.ChangeType))
 				{
-					oRun.AddToContent(nPos, new ParaText(nUpperCode), false);
+					oRun.AddToContent(nPos, new AscWord.CRunText(nUpperCode), false);
 					oRun.RemoveFromContent(nPos + 1, 1, false);
 				}
 				else if (nUpperCode === nCharCode && (Asc.c_oAscChangeTextCaseType.ToggleCase === this.ChangeType || Asc.c_oAscChangeTextCaseType.LowerCase === this.ChangeType))
 				{
-					oRun.AddToContent(nPos, new ParaText(nLowerCode), false);
+					oRun.AddToContent(nPos, new AscWord.CRunText(nLowerCode), false);
 					oRun.RemoveFromContent(nPos + 1, 1, false);
 				}
 			}

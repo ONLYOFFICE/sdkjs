@@ -837,7 +837,7 @@ CShape.prototype.recalculateContent = function()
 
 CShape.prototype.Get_ColorMap = function()
 {
-    return AscFormat.DEFAULT_COLOR_MAP;
+    return AscFormat.GetDefaultColorMap();
 };
 
 CShape.prototype.getStyles = function(index)

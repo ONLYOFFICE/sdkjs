@@ -66,12 +66,12 @@ CMathSize.prototype.Set = function(size)
 };
 
 /**
- * @extends {CRunElementBase}
+ * @extends {AscWord.CRunElementBase}
  * @constructor
  */
 function CMathBaseText()
 {
-    CRunElementBase.call(this);
+	AscWord.CRunElementBase.call(this);
 
     this.Type           = null;
     this.bJDraw         = false;
@@ -86,14 +86,14 @@ function CMathBaseText()
     this.Flags          = 0;
     this.size           = new CMathSize();
     this.Width          = 0; // special for Run размер буквы без Gaps
-                             // в действительности это поле не должно использоваться, нужно использовать функциии Get_Width, Get_Width_2 ,Get_WidthVisible
+                             // в действительности это поле не должно использоваться, нужно использовать функциии GetWidth, Get_Width_2 ,GetWidthVisible
 
     this.pos = new CMathPosition();
 
     this.GapLeft        = 0;
     this.GapRight       = 0;
 }
-CMathBaseText.prototype = Object.create(CRunElementBase.prototype);
+CMathBaseText.prototype = Object.create(AscWord.CRunElementBase.prototype);
 CMathBaseText.prototype.constructor = CMathBaseText;
 CMathBaseText.prototype.Get_Width = function() // работаем через функцию, т.к. поля  GapLeft и GapRight могут измениться из-за изменения переноса, а пересчет (Measure) в этом случае не прийдет
 {
@@ -105,13 +105,13 @@ CMathBaseText.prototype.Get_Width = function() // работаем через ф
     if(this.bEmptyGapRight == false)
         Width += this.GapRight;
 
-    return (Width*TEXTWIDTH_DIVIDER) | 0;
+    return (Width * AscWord.TEXTWIDTH_DIVIDER) | 0;
 };
 CMathBaseText.prototype.Get_Width2 = function() // работаем через функцию, т.к. поля  GapLeft и GapRight могут измениться из-за изменения переноса, а пересчет (Measure) в этом случае не прийдет
 {
-    return ( (this.size.width + this.GapLeft + this.GapRight)* TEXTWIDTH_DIVIDER ) | 0;
+    return ( (this.size.width + this.GapLeft + this.GapRight)* AscWord.TEXTWIDTH_DIVIDER ) | 0;
 };
-CMathBaseText.prototype.Get_WidthVisible = function()
+CMathBaseText.prototype.GetWidthVisible = function()
 {
     var Width = this.size.width;
 
@@ -798,7 +798,7 @@ CMathText.prototype.Measure = function(oMeasure, TextPr, InfoMathText)
     this.size.height = height;
     this.size.ascent = ascent;
 
-    this.Width = (this.size.width * TEXTWIDTH_DIVIDER) | 0;
+    this.Width = (this.size.width * AscWord.TEXTWIDTH_DIVIDER) | 0;
 
 };
 CMathText.prototype.PreRecalc = function(Parent, ParaMath)
@@ -1078,7 +1078,7 @@ CMathAmp.prototype.Measure = function(oMeasure, TextPr, InfoMathText)
         this.size.ascent  = this.AmpText.size.ascent;
     }
 
-    this.Width = (this.size.width * TEXTWIDTH_DIVIDER) | 0;
+    this.Width = (this.size.width * AscWord.TEXTWIDTH_DIVIDER) | 0;
 };
 CMathAmp.prototype.PreRecalc = function(Parent, ParaMath, ArgSize, RPI)
 {
@@ -1118,7 +1118,7 @@ CMathAmp.prototype.Draw = function(x, y, pGraphics, InfoTextPr)
         this.AmpText.Draw(x + this.GapLeft, y, pGraphics, InfoTextPr);
     else if(editor.ShowParaMarks) // показать метки выравнивания, если включена отметка о знаках параграфа
     {
-        var X  = x + this.pos.x + this.Get_WidthVisible(),
+        var X  = x + this.pos.x + this.GetWidthVisible(),
             Y  = y + this.pos.y,
             Y2 = y + this.pos.y - this.AmpText.size.height;
 

@@ -41,11 +41,11 @@
  * Класс представляющий собой настройки текста (сейчас используется как настройка текста для конца параграфа)
  * @param oProps
  * @constructor
- * @extends {CRunElementBase}
+ * @extends {AscWord.CRunElementBase}
  */
 function ParaTextPr(oProps)
 {
-	CRunElementBase.call(this);
+	AscWord.CRunElementBase.call(this);
 
 	this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
@@ -64,7 +64,7 @@ function ParaTextPr(oProps)
 	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
 	g_oTableId.Add(this, this.Id);
 }
-ParaTextPr.prototype = Object.create(CRunElementBase.prototype);
+ParaTextPr.prototype = Object.create(AscWord.CRunElementBase.prototype);
 ParaTextPr.prototype.constructor = ParaTextPr;
 
 ParaTextPr.prototype.Type = para_TextPr;
@@ -77,10 +77,6 @@ ParaTextPr.prototype.Copy = function()
 	var ParaTextPr_new = new ParaTextPr();
 	ParaTextPr_new.Set_Value(this.Value);
 	return ParaTextPr_new;
-};
-ParaTextPr.prototype.Is_RealContent = function()
-{
-	return true;
 };
 ParaTextPr.prototype.CanAddNumbering = function()
 {

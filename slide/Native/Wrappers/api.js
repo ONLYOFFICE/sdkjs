@@ -41,7 +41,6 @@ var _internalStorage = {};
 // endsectionPr -----------------------------------------------------------------------------------------
 
 window['SockJS'] = createSockJS();
-window['JSZipUtils'] = JSZipUtils();
 
 // font engine -------------------------------------
 var FontStyle =
@@ -2788,9 +2787,7 @@ function initSpellCheckApi() {
 }
 
 function NativeOpenFileP(_params, documentInfo){
-    window.g_file_path = "native_open_file";
     window.NATIVE_DOCUMENT_TYPE = window["native"]["GetEditorType"]();
-    var doc_bin = window["native"]["GetFileString"](window.g_file_path);
     if ("presentation" !== window.NATIVE_DOCUMENT_TYPE){
         return;
     }
@@ -2911,6 +2908,7 @@ function NativeOpenFileP(_params, documentInfo){
             if (callback) callback.call(me);
         });
     } else {
+        var doc_bin = window["native"]["GetFileString"]("native_open_file");
         _api["asc_nativeOpenFile"](doc_bin);
         _api.documentId = "1";
         _api.WordControl.m_oDrawingDocument.AfterLoad();

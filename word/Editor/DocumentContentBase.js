@@ -544,7 +544,7 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 					if (oElement.IsTable())
 						oElement.RemoveTableRow();
 					else
-						oElement.Remove(1, true, bRemoveOnlySelection, bOnTextAdd);
+						oElement.Remove(Count, true, bRemoveOnlySelection, bOnTextAdd);
 				}
 			}
 

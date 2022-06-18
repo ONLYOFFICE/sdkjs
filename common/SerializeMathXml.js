@@ -146,6 +146,7 @@
 	};
 	CMathContent.prototype.fromXml = function(reader) {
 		let elem, depth = reader.GetDepth();
+		let oReadResult = reader.context.oReadResult;
 		while (reader.ReadNextSiblingNode(depth)) {
 			elem = null;
 			let name = reader.GetNameNoNS();
@@ -255,7 +256,7 @@
 					break;
 				}
 				case "ctrlPr" : {
-					this.setCtrPrp(CMathBase.prototype.fromXmlCtrlPr(reader));
+					this.setCtrPrp(CMathBase.prototype.fromXmlCtrlPr.call(this, reader, null));
 					break;
 				}
 				case "r" : {
@@ -263,6 +264,60 @@
 					elem.fromXml(reader);
 					break;
 				}
+				case "del": {
+					if (oReadResult.checkReadRevisions()) {
+						let trackChange = new CT_TrackChange();
+						trackChange.paragraphContent = this;
+						let startPos = this.GetElementsCount();
+						trackChange.fromXml(reader);
+						let endPos = this.GetElementsCount();
+						for (let i = startPos; i < endPos; ++i) {
+							oReadResult.setNestedReviewType(this.GetElement(i), reviewtype_Remove, trackChange.ReviewInfo);
+						}
+					}
+					break;
+				}
+				case "ins": {
+					let trackChange = new CT_TrackChange();
+					trackChange.paragraphContent = this;
+					let startPos = this.GetElementsCount();
+					trackChange.fromXml(reader);
+					let endPos = this.GetElementsCount();
+					if (oReadResult.checkReadRevisions()) {
+						for (let i = startPos; i < endPos; ++i) {
+							oReadResult.setNestedReviewType(this.GetElement(i), reviewtype_Add, trackChange.ReviewInfo);
+						}
+					}
+					break;
+				}
+				// case "bookmarkStart" : {
+				// 	elem = new CParagraphBookmark(true);
+				// 	elem.fromXml(reader);
+				// 	oReadResult.addBookmarkStart(this, elem, true);
+				// 	break;
+				// }
+				// case "bookmarkEnd" : {
+				// 	elem = new CParagraphBookmark(false);
+				// 	elem.fromXml(reader);
+				// 	oReadResult.addBookmarkEnd(this, elem, true);
+				// 	break;
+				// }
+				// case "moveFromRangeStart" : {
+				// 	oReadResult.readMoveRangeStartXml(oReadResult, reader, this, true);
+				// 	break;
+				// }
+				// case "moveFromRangeEnd" : {
+				// 	oReadResult.readMoveRangeEndXml(oReadResult, reader, this, true);
+				// 	break;
+				// }
+				// case "moveToRangeStart" : {
+				// 	oReadResult.readMoveRangeStartXml(oReadResult, reader, this, false);
+				// 	break;
+				// }
+				// case "moveToRangeEnd" : {
+				// 	oReadResult.readMoveRangeEndXml(oReadResult, reader, this, true);
+				// 	break;
+				// }
 				//todo
 				// case "customXml" : {
 				// 	elem = new CT_CustomXmlRun();
@@ -310,42 +365,6 @@
 				// 	elem = new CT_Perm();
 				// 	elem.fromXml(reader);
 				// 	this.permEnd.push(elem);
-				// 	break;
-				// }
-				// case "bookmarkStart" : {
-				// 	elem = new CT_Bookmark();
-				// 	elem.fromXml(reader);
-				// 	this.bookmarkStart.push(elem);
-				// 	break;
-				// }
-				// case "bookmarkEnd" : {
-				// 	elem = new CT_MarkupRange();
-				// 	elem.fromXml(reader);
-				// 	this.bookmarkEnd.push(elem);
-				// 	break;
-				// }
-				// case "moveFromRangeStart" : {
-				// 	elem = new CT_MoveBookmark();
-				// 	elem.fromXml(reader);
-				// 	this.moveFromRangeStart.push(elem);
-				// 	break;
-				// }
-				// case "moveFromRangeEnd" : {
-				// 	elem = new CT_MarkupRange();
-				// 	elem.fromXml(reader);
-				// 	this.moveFromRangeEnd.push(elem);
-				// 	break;
-				// }
-				// case "moveToRangeStart" : {
-				// 	elem = new CT_MoveBookmark();
-				// 	elem.fromXml(reader);
-				// 	this.moveToRangeStart.push(elem);
-				// 	break;
-				// }
-				// case "moveToRangeEnd" : {
-				// 	elem = new CT_MarkupRange();
-				// 	elem.fromXml(reader);
-				// 	this.moveToRangeEnd.push(elem);
 				// 	break;
 				// }
 				// case "commentRangeStart" : {
@@ -406,18 +425,6 @@
 				// 	elem = new CT_Markup();
 				// 	elem.fromXml(reader);
 				// 	this.customXmlMoveToRangeEnd.push(elem);
-				// 	break;
-				// }
-				// case "ins" : {
-				// 	elem = new CT_RunTrackChange();
-				// 	elem.fromXml(reader);
-				// 	this.ins.push(elem);
-				// 	break;
-				// }
-				// case "del" : {
-				// 	elem = new CT_RunTrackChange();
-				// 	elem.fromXml(reader);
-				// 	this.del.push(elem);
 				// 	break;
 				// }
 				// case "moveFrom" : {
@@ -537,24 +544,42 @@
 		}
 		writer.WriteXmlNodeEnd(name);
 	};
-	CMathBase.prototype.fromXmlCtrlPr = function(reader) {
-		let elem, depth = reader.GetDepth();
+	CMathBase.prototype.fromXmlCtrlPr = function(reader, mathElem) {
+		let elem, rPr, depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			//todo if another ns
 			switch (reader.GetName()) {
 				case "a:rPr" : {
-					elem = new CTextPr();
-					elem.fromDrawingML(reader);
+					rPr = new CTextPr();
+					rPr.fromDrawingML(reader);
 					break;
 				}
 				case "w:rPr" : {
-					elem = new CTextPr();
-					elem.fromXml(reader);
+					rPr = new CTextPr();
+					rPr.fromXml(reader);
+					break;
+				}
+				case "w:ins" : {
+					if(mathElem) {
+						elem = new CT_TrackChange();
+						elem.fromXml(reader);
+						mathElem.SetReviewTypeWithInfo(reviewtype_Add, elem.ReviewInfo, false);
+					}
+					break;
+				}
+				case "w:del" : {
+					if(mathElem) {
+						elem = new CT_TrackChange();
+						elem.fromXml(reader);
+						if (reader.context.oReadResult.checkReadRevisions()) {
+							mathElem.SetReviewTypeWithInfo(reviewtype_Remove, elem.ReviewInfo, false);
+						}
+					}
 					break;
 				}
 			}
 		}
-		return elem;
+		return rPr;
 	};
 	CMathBase.prototype.toXmlCtrlPr = function (writer, name, mathElem) {
 		writer.WriteXmlNodeStart(name);
@@ -564,6 +589,11 @@
 		} else {
 			//todo
 			// writer.WriteXmlNullable(mathElem.CtrPrp, "a:rPr");
+		}
+		if (mathElem.ReviewInfo && reviewtype_Common !== mathElem.GetReviewType()) {
+			let trackChange = new CT_TrackChange(writer.context.docSaveParams.trackRevisionId++, mathElem.ReviewInfo);
+			let ReviewType = mathElem.GetReviewType();
+			trackChange.toXml(writer, reviewtype_Remove === mathElem.GetReviewType() ? "w:del" : "w:ins")
 		}
 		writer.WriteXmlNodeEnd(name);
 	};
@@ -612,7 +642,7 @@
 		writer.WriteXmlNullable(CT_BoolM.prototype.fromVal(this.aln), "m:aln");
 		writer.WriteXmlNodeEnd(name);
 	};
-	CMathAccentPr.prototype.fromXml = function (reader) {
+	CMathAccentPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
@@ -621,7 +651,7 @@
 					break;
 				}
 				case "ctrlPr" : {
-					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr(reader);
+					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
 			}
@@ -640,7 +670,7 @@
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "accPr" : {
-					props.fromXml(reader);
+					props.fromXml(reader, this);
 					break;
 				}
 				case "e" : {
@@ -669,7 +699,7 @@
 					break;
 				}
 				case "ctrlPr" : {
-					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr(reader);
+					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
 			}
@@ -688,7 +718,7 @@
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "barPr" : {
-					props.fromXml(reader);
+					props.fromXml(reader, this);
 					break;
 				}
 				case "e" : {
@@ -727,7 +757,7 @@
 		writer.WriteXmlNullable(CT_UIntM.prototype.fromVal(this.alnAt), "m:alnAt");
 		writer.WriteXmlAttributesEnd(true);
 	};
-	CMathBoxPr.prototype.fromXml = function (reader) {
+	CMathBoxPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
@@ -753,7 +783,7 @@
 					break;
 				}
 				case "ctrlPr" : {
-					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr(reader);
+					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
 			}
@@ -776,7 +806,7 @@
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "boxPr" : {
-					props.fromXml(reader);
+					props.fromXml(reader, this);
 					break;
 				}
 				case "e" : {
@@ -796,7 +826,7 @@
 		writer.WriteXmlNullable(this.getBase(), "m:e");
 		writer.WriteXmlNodeEnd(name);
 	};
-	CMathBorderBoxPr.prototype.fromXml = function (reader) {
+	CMathBorderBoxPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
@@ -833,7 +863,7 @@
 					break;
 				}
 				case "ctrlPr" : {
-					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr(reader);
+					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
 			}
@@ -859,7 +889,7 @@
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "borderBoxPr" : {
-					props.fromXml(reader);
+					props.fromXml(reader, this);
 					break;
 				}
 				case "e" : {
@@ -879,7 +909,7 @@
 		writer.WriteXmlNullable(this.getBase(), "m:e");
 		writer.WriteXmlNodeEnd(name);
 	};
-	CMathDelimiterPr.prototype.fromXml = function (reader) {
+	CMathDelimiterPr.prototype.fromXml = function (reader, mathElem) {
 		let  depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
@@ -904,7 +934,7 @@
 					break;
 				}
 				case "ctrlPr" : {
-					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr(reader);
+					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
 			}
@@ -928,7 +958,7 @@
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "dPr" : {
-					props.fromXml(reader);
+					props.fromXml(reader, this);
 					break;
 				}
 				case "e" : {
@@ -950,7 +980,7 @@
 		}
 		writer.WriteXmlNodeEnd(name);
 	};
-	CMathEqArrPr.prototype.fromXml = function (reader) {
+	CMathEqArrPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
@@ -975,7 +1005,7 @@
 					break;
 				}
 				case "ctrlPr" : {
-					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr(reader);
+					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
 			}
@@ -999,7 +1029,7 @@
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "eqArrPr" : {
-					props.fromXml(reader);
+					props.fromXml(reader, this);
 					break;
 				}
 				case "e" : {
@@ -1022,7 +1052,7 @@
 		}
 		writer.WriteXmlNodeEnd(name);
 	};
-	CMathFractionPr.prototype.fromXml = function (reader) {
+	CMathFractionPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
@@ -1031,7 +1061,7 @@
 					break;
 				}
 				case "ctrlPr" : {
-					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr(reader);
+					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
 			}
@@ -1051,7 +1081,7 @@
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "fPr" : {
-					props.fromXml(reader);
+					props.fromXml(reader, this);
 					break;
 				}
 				case "num" : {
@@ -1078,12 +1108,12 @@
 		writer.WriteXmlNullable(this.getDenominator(), "m:den");
 		writer.WriteXmlNodeEnd(name);
 	};
-	CMathBasePr.prototype.fromXml = function (reader) {
+	CMathBasePr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "ctrlPr" : {
-					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr(reader);
+					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
 			}
@@ -1102,7 +1132,7 @@
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "funcPr" : {
-					props.fromXml(reader);
+					props.fromXml(reader, this);
 					break;
 				}
 				case "fName" : {
@@ -1129,7 +1159,7 @@
 		writer.WriteXmlNullable(this.getArgument(), "m:e");
 		writer.WriteXmlNodeEnd(name);
 	};
-	CMathGroupChrPr.prototype.fromXml = function (reader) {
+	CMathGroupChrPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
@@ -1146,7 +1176,7 @@
 					break;
 				}
 				case "ctrlPr" : {
-					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr(reader);
+					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
 			}
@@ -1168,7 +1198,7 @@
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "groupChrPr" : {
-					props.fromXml(reader);
+					props.fromXml(reader, this);
 					break;
 				}
 				case "e" : {
@@ -1188,12 +1218,12 @@
 		writer.WriteXmlNullable(this.getBase(), "m:e");
 		writer.WriteXmlNodeEnd(name);
 	};
-	CMathLimitPr.prototype.fromXml = function (reader) {
+	CMathLimitPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "ctrlPr" : {
-					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr(reader);
+					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
 			}
@@ -1212,7 +1242,7 @@
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "limLowPr" : {
-					props.fromXml(reader);
+					props.fromXml(reader, this);
 					break;
 				}
 				case "e" : {
@@ -1239,7 +1269,7 @@
 		writer.WriteXmlNullable(this.getIterator(), "m:lim");
 		writer.WriteXmlNodeEnd(name);
 	};
-	CMathMatrixPr.prototype.fromXml = function (reader) {
+	CMathMatrixPr.prototype.fromXml = function (reader, mathElem) {
 		let t = this;
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
@@ -1291,7 +1321,7 @@
 					break;
 				}
 				case "ctrlPr" : {
-					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr(reader);
+					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
 			}
@@ -1337,7 +1367,7 @@
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "mPr" : {
-					props.fromXml(reader);
+					props.fromXml(reader, this);
 					break;
 				}
 				case "mr" : {
@@ -1368,7 +1398,7 @@
 		}
 		writer.WriteXmlNodeEnd(name);
 	};
-	CMathNaryPr.prototype.fromXml = function (reader) {
+	CMathNaryPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
@@ -1393,7 +1423,7 @@
 					break;
 				}
 				case "ctrlPr" : {
-					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr(reader);
+					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
 			}
@@ -1417,7 +1447,7 @@
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "naryPr" : {
-					props.fromXml(reader);
+					props.fromXml(reader, this);
 					break;
 				}
 				case "sub" : {
@@ -1451,7 +1481,7 @@
 		writer.WriteXmlNullable(this.getBase(), "m:e");
 		writer.WriteXmlNodeEnd(name);
 	};
-	CMathPhantomPr.prototype.fromXml = function (reader) {
+	CMathPhantomPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
@@ -1476,7 +1506,7 @@
 					break;
 				}
 				case "ctrlPr" : {
-					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr(reader);
+					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
 			}
@@ -1500,7 +1530,7 @@
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "phantPr" : {
-					props.fromXml(reader);
+					props.fromXml(reader, this);
 					break;
 				}
 				case "e" : {
@@ -1520,7 +1550,7 @@
 		writer.WriteXmlNullable(this.getBase(), "m:e");
 		writer.WriteXmlNodeEnd(name);
 	};
-	CMathRadicalPr.prototype.fromXml = function (reader) {
+	CMathRadicalPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
@@ -1529,7 +1559,7 @@
 					break;
 				}
 				case "ctrlPr" : {
-					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr(reader);
+					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
 			}
@@ -1549,7 +1579,7 @@
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "radPr" : {
-					props.fromXml(reader);
+					props.fromXml(reader, this);
 					break;
 				}
 				case "deg" : {
@@ -1576,7 +1606,7 @@
 		writer.WriteXmlNullable(this.getBase(), "m:e");
 		writer.WriteXmlNodeEnd(name);
 	};
-	CMathDegreeSubSupPr.prototype.fromXml = function (reader) {
+	CMathDegreeSubSupPr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
@@ -1585,7 +1615,7 @@
 					break;
 				}
 				case "ctrlPr" : {
-					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr(reader);
+					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
 			}
@@ -1609,7 +1639,7 @@
 			switch (reader.GetNameNoNS()) {
 				case "sPrePr" :
 				case "sSubSupPr" : {
-					props.fromXml(reader);
+					props.fromXml(reader, this);
 					break;
 				}
 				case "e" : {
@@ -1648,12 +1678,12 @@
 		writer.WriteXmlNullable(this.getUpperIterator(), "m:sup");
 		writer.WriteXmlNodeEnd(name);
 	};
-	CMathDegreePr.prototype.fromXml = function (reader) {
+	CMathDegreePr.prototype.fromXml = function (reader, mathElem) {
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "ctrlPr" : {
-					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr(reader);
+					this.ctrPrp = CMathBase.prototype.fromXmlCtrlPr.call(this, reader, mathElem);
 					break;
 				}
 			}
@@ -1674,7 +1704,7 @@
 			switch (reader.GetNameNoNS()) {
 				case "sSubPr" :
 				case "sSupPr" : {
-					props.fromXml(reader);
+					props.fromXml(reader, this);
 					break;
 				}
 				case "e" : {
@@ -1821,6 +1851,121 @@
 		writer.WriteXmlNullable(CT_BoolM.prototype.fromVal(this.wrapRight), "m:wrapRight");
 		writer.WriteXmlNullable(CT_StringM.prototype.fromVal(toXml_ST_LimLoc(this.intLim)), "m:intLim");
 		writer.WriteXmlNullable(CT_StringM.prototype.fromVal(toXml_ST_LimLoc(this.naryLim)), "m:naryLim");
+		writer.WriteXmlNodeEnd(name);
+	};
+	
+	function CT_TrackChange(id, ReviewInfo) {
+		this.id = id;
+		this.ReviewInfo = ReviewInfo || new CReviewInfo();
+		this.paragraphContent = undefined;
+		this.run = undefined;
+		this.writeCallback = undefined;
+		this.runContent = undefined;
+		this.pPrChange = undefined;
+		this.rPrChange = undefined;
+		this.tblPrChange = undefined;
+		this.tblGridChange = undefined;
+		this.trPrChange = undefined;
+		this.tcPrChange = undefined;
+		this.sectPrChange = undefined;
+		this.VMerge = undefined;
+		this.VMergeOrigin = undefined;
+		return this;
+	}
+	CT_TrackChange.prototype.readAttr = function(reader) {
+		while (reader.MoveToNextAttribute()) {
+			switch (reader.GetNameNoNS()) {
+				case "id": {
+					this.id = reader.GetValueInt(this.id);
+					break;
+				}
+				case "author": {
+					this.ReviewInfo.UserName = reader.GetValueDecodeXml();
+					break;
+				}
+				case "date": {
+					let dateStr = reader.GetValueDecodeXml();
+					let dateMs = AscCommon.getTimeISO8601(dateStr);
+					if (isNaN(dateMs)) {
+						dateMs = new Date().getTime();
+					}
+					this.ReviewInfo.DateTime = dateMs;
+					break;
+				}
+				case "oouserid": {
+					this.ReviewInfo.UserId = reader.GetValueDecodeXml();
+					break;
+				}
+			}
+		}
+	};
+	CT_TrackChange.prototype.fromXml = function(reader) {
+		this.readAttr(reader);
+		if (this.run) {
+			this.run.fromXml(reader);
+			return;
+		}
+		let depth = reader.GetDepth();
+		while (reader.ReadNextSiblingNode(depth)) {
+			let name = reader.GetNameNoNS();
+			switch (name) {
+				case "rPr": {
+					this.rPrChange = new CTextPr();
+					this.rPrChange.fromXml(reader);
+					break;
+				}
+				case "pPr": {
+					this.pPrChange = new CParaPr();
+					break;
+				}
+				case "tcPr": {
+					this.tcPrChange = new CTableCellPr();
+					this.tcPrChange.fromXml(reader);
+					break;
+				}
+				case "trPr": {
+					this.trPrChange = new CTableRowPr();
+					this.trPrChange.fromXml(reader);
+					break;
+				}
+				case "tblGrid": {
+					this.tblGridChange = new AscCommonWord.CT_TblGrid();
+					this.tblGridChange.fromXml(reader);
+					//todo
+					break;
+				}
+				case "tblPr": {
+					this.tblPrChange = new CTablePr();
+					this.tblPrChange.fromXml(reader);
+					break;
+				}
+				default:
+					if (this.paragraphContent) {
+						CParagraphContentWithParagraphLikeContent.prototype.fromXmlElem.call(this.paragraphContent, reader, name);
+					}
+					break;
+			}
+		}
+	};
+	CT_TrackChange.prototype.toXml = function(writer, name) {
+		writer.WriteXmlNodeStart(name);
+		writer.WriteXmlNullableAttributeInt("w:id", this.id);
+		if (this.ReviewInfo) {
+			let dateUtc = this.ReviewInfo.DateTime ? new Date(this.ReviewInfo.DateTime).toISOString().slice(0, 19) + 'Z' : null;
+			writer.WriteXmlNonEmptyAttributeStringEncode("w:author", this.ReviewInfo.UserName);
+			writer.WriteXmlNullableAttributeString("w:date", dateUtc);
+			writer.WriteXmlNonEmptyAttributeStringEncode("oouserid", this.ReviewInfo.UserId);
+		}
+		writer.WriteXmlAttributesEnd();
+		writer.WriteXmlNullable(this.rPrChange, "w:rPr");
+		writer.WriteXmlNullable(this.pPrChange, "w:pPr");
+		writer.WriteXmlNullable(this.tcPrChange, "w:tcPr");
+		writer.WriteXmlNullable(this.trPrChange, "w:trPr");
+		writer.WriteXmlNullable(this.tblGridChange, "w:tblGrid");
+		writer.WriteXmlNullable(this.tblPrChange, "w:tblPr");
+		if (this.writeCallback) {
+			this.writeCallback();
+		}
 		writer.WriteXmlNodeEnd(name);
 	};
 
@@ -2111,4 +2256,6 @@
 
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].CT_OMathPara = CT_OMathPara;
+	window['AscCommonWord'] = window['AscCommonWord'] || {};
+	window['AscCommonWord'].CT_TrackChange = CT_TrackChange;
 })(window);

@@ -5749,11 +5749,11 @@ function CDrawingDocument()
 						oParaTabs.Add(new CParaTab(tab_Right, wMm - 2 - wMmOffset, nTabLeader));
 						oParagraph.SetParagraphTabs(oParaTabs);
 
-						oRun.AddToContent(-1, new ParaTab());
+						oRun.AddToContent(-1, new AscWord.CRunTab());
 					}
 					else
 					{
-						oRun.AddToContent(-1, new ParaSpace());
+						oRun.AddToContent(-1, new AscWord.CRunSpace());
 					}
 
 					oRun.AddText("" + nPageIndex);
@@ -5956,11 +5956,11 @@ function CDrawingDocument()
 							oParaTabs.Add(new CParaTab(tab_Right, mmW - 4 - wMmOffset, prop.TabLeader));
 							oParagraph.SetParagraphTabs(oParaTabs);
 
-							oRun.AddToContent(-1, new ParaTab());
+							oRun.AddToContent(-1, new AscWord.CRunTab());
 						}
 						else
 						{
-							oRun.AddToContent(-1, new ParaSpace());
+							oRun.AddToContent(-1, new AscWord.CRunSpace());
 						}
 
 						oRun.AddText("" + prop.Pages[nCurrentLevel - 1]);
@@ -6163,11 +6163,11 @@ function CDrawingDocument()
 					oParaTabs.Add(new CParaTab(tab_Right, wMm - 2 - wMmOffset, nTabLeader));
 					oParagraph.SetParagraphTabs(oParaTabs);
 
-					oRun.AddToContent(-1, new ParaTab());
+					oRun.AddToContent(-1, new AscWord.CRunTab());
 				}
 				else
 				{
-					oRun.AddToContent(-1, new ParaSpace());
+					oRun.AddToContent(-1, new AscWord.CRunSpace());
 				}
 				oRun.AddText("" + nPageIndex);
 				nPageIndex += 2;

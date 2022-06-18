@@ -578,7 +578,7 @@
 		var oPr;
 		if (checkBoxPr)
 		{
-			oPr = new AscCommon.CSdtCheckBoxPr()
+			oPr = new AscWord.CSdtCheckBoxPr()
 			if (checkBoxPr["Checked"])
 				oPr.SetChecked(checkBoxPr["Checked"]);
 			if (checkBoxPr["CheckedSymbol"])
@@ -629,7 +629,7 @@
 		var oPr;
 		if (List)
 		{
-			oPr = new AscCommon.CSdtComboBoxPr();
+			oPr = new AscWord.CSdtComboBoxPr();
 			List.forEach(function(el) {
 				oPr.AddItem(el.Display, el.Value);
 			});
@@ -673,7 +673,7 @@
 		var oPr;
 		if (datePickerPr)
 		{
-			oPr = new AscCommon.CSdtDatePickerPr();
+			oPr = new AscWord.CSdtDatePickerPr();
 			if (datePickerPr.Date)
 				oPr.SetFullDate(datePickerPr.Date);
 			if (datePickerPr.DateFormat)

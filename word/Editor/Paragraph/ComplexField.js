@@ -43,7 +43,7 @@ var fldchartype_End      = 2;
 
 function ParaFieldChar(Type, LogicDocument)
 {
-	CRunElementBase.call(this);
+	AscWord.CRunElementBase.call(this);
 
 	this.LogicDocument = LogicDocument;
 	this.Use           = true;
@@ -60,7 +60,7 @@ function ParaFieldChar(Type, LogicDocument)
 	this.String        = "";
 	this.NumValue      = null;
 }
-ParaFieldChar.prototype = Object.create(CRunElementBase.prototype);
+ParaFieldChar.prototype = Object.create(AscWord.CRunElementBase.prototype);
 ParaFieldChar.prototype.constructor = ParaFieldChar;
 ParaFieldChar.prototype.Type = para_FieldChar;
 ParaFieldChar.prototype.Init = function(Type, LogicDocument)
@@ -221,7 +221,7 @@ ParaFieldChar.prototype.private_UpdateWidth = function()
 		RealWidth += this.NumWidths[Char];
 	}
 
-	RealWidth = (RealWidth * TEXTWIDTH_DIVIDER) | 0;
+	RealWidth = (RealWidth * AscWord.TEXTWIDTH_DIVIDER) | 0;
 
 	this.Width        = RealWidth;
 	this.WidthVisible = RealWidth;
@@ -236,7 +236,7 @@ ParaFieldChar.prototype.IsNeedSaveRecalculateObject = function()
 };
 ParaFieldChar.prototype.SaveRecalculateObject = function(Copy)
 {
-	return new CPageNumRecalculateObject(this.Type, this.Widths, this.String, this.Width, Copy);
+	return new AscWord.CPageNumRecalculateObject(this.Type, this.Widths, this.String, this.Width, Copy);
 };
 ParaFieldChar.prototype.LoadRecalculateObject = function(RecalcObj)
 {
@@ -276,7 +276,7 @@ ParaFieldChar.prototype.PreDelete = function()
  */
 function ParaInstrText(nCharCode)
 {
-	CRunElementBase.call(this);
+	AscWord.CRunElementBase.call(this);
 
 	this.Value        = (undefined !== nCharCode ? nCharCode : 0x00);
 	this.Width        = 0x00000000 | 0;
@@ -284,7 +284,7 @@ function ParaInstrText(nCharCode)
 	this.Run          = null;
 	this.Replacement  = null; // Используется, когда InstrText идет в неположенном месте и должно восприниматься как обычный текст
 }
-ParaInstrText.prototype = Object.create(CRunElementBase.prototype);
+ParaInstrText.prototype = Object.create(AscWord.CRunElementBase.prototype);
 ParaInstrText.prototype.constructor = ParaInstrText;
 ParaInstrText.prototype.Type = para_InstrText;
 ParaInstrText.prototype.Copy = function()
@@ -879,13 +879,13 @@ CComplexField.prototype.private_UpdateTOC = function()
 
 				if (Asc.c_oAscNumberingSuff.Space === nNumSuff)
 				{
-					oNumTabRun.Add_ToContent(0, new ParaSpace());
+					oNumTabRun.Add_ToContent(0, new AscWord.CRunSpace());
 					oContainer.Add_ToContent(1, oNumTabRun);
 					nContainerPos++;
 				}
 				else if (Asc.c_oAscNumberingSuff.Tab === nNumSuff)
 				{
-					oNumTabRun.Add_ToContent(0, new ParaTab());
+					oNumTabRun.Add_ToContent(0, new AscWord.CRunTab());
 					isAddTabForNumbering = true;
 					oContainer.Add_ToContent(1, oNumTabRun);
 					nContainerPos++;
@@ -923,7 +923,7 @@ CComplexField.prototype.private_UpdateTOC = function()
 			{
 				var oSeparatorRun = new ParaRun(oPara, false);
 				if (!sSeparator || "" === sSeparator)
-					oSeparatorRun.AddToContent(0, new ParaTab());
+					oSeparatorRun.AddToContent(0, new AscWord.CRunTab());
 				else
 					oSeparatorRun.AddText(sSeparator.charAt(0));
 

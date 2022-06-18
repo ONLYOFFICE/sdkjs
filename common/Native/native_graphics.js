@@ -273,6 +273,12 @@ CNativeGraphics.prototype =
             this.m_oGrFonts = this.m_oTextPr.RFonts;
         }
     },
+
+    SetFontInternal : function(name, size, style)
+    {
+        this.Native["SetFont"](name, -1, size, style);
+    },
+
     SetFontSlot : function(slot, fontSizeKoef)
     {
         var _lastFont = {FontFamily : {Name : "Arial", Index : -1}, FontSize : 16, Italic : true, Bold : true};

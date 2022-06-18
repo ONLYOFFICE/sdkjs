@@ -3265,7 +3265,8 @@
                 if (this.wb.aComments.length > 0) {
                     this.bs.WriteItem(c_oSerWorkbookTypes.Comments, function() {oThis.WriteComments(oThis.wb.aComments);});
                 }
-				if (this.wb.connections) {
+                //TODO при чтении на клиенте - здесь строка, не пишем пока
+				if (this.wb.connections && Array.isArray(oThis.wb.connections)) {
 					this.bs.WriteItem(c_oSerWorkbookTypes.Connections, function() {oThis.memory.WriteBuffer(oThis.wb.connections, 0, oThis.wb.connections.length)});
 				}
 			}
@@ -10710,13 +10711,15 @@
         var oBinaryFileReader = new AscCommonExcel.BinaryFileReader();
         oBinaryFileReader.getbase64DecodedData2(stylesZip, 0, stream, 0);
 
-		var jsZipWrapper = new AscCommon.JSZipWrapper();
-        if(jsZipWrapper.loadSync(new Uint8Array(pointer.data))) {
-            var content = jsZipWrapper.files["presetTableStyles.xml"].sync("string");
-            jsZipWrapper.close();
-            var stylesXml = new CT_PresetTableStyles(wb.TableStyles.DefaultStyles, wb.TableStyles.DefaultStylesPivot);
-            new AscCommon.openXml.SaxParserBase().parse(content, stylesXml);
-            wb.TableStyles.concatStyles();
+        if (window.nativeZlibEngine && window.nativeZlibEngine.open(new Uint8Array(pointer.data))) {
+            let contentBytes = window.nativeZlibEngine.getFile("presetTableStyles.xml");
+            if (contentBytes) {
+                let content = AscCommon.UTF8ArrayToString(contentBytes, 0, contentBytes.length);
+                window.nativeZlibEngine.close();
+                var stylesXml = new CT_PresetTableStyles(wb.TableStyles.DefaultStyles, wb.TableStyles.DefaultStylesPivot);
+                new AscCommon.openXml.SaxParserBase().parse(content, stylesXml);
+                wb.TableStyles.concatStyles();
+            }
         }
     }
     function ReadDefCellStyles(wb, oOutput)

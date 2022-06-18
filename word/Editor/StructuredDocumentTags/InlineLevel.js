@@ -98,14 +98,40 @@ CInlineLevelSdt.prototype.Add = function(Item)
 	if (this.IsTextForm())
 	{
 		if (para_Tab === Item.Type)
-			return CParagraphContentWithParagraphLikeContent.prototype.Add.call(this, new ParaSpace());
+			return CParagraphContentWithParagraphLikeContent.prototype.Add.call(this, new AscWord.CRunSpace());
 		else if (Item.Type !== para_Text && Item.Type !== para_Space)
 			return;
 
 		oTextFormRun = this.MakeSingleRunElement(false);
 
-		if (this.Pr.TextForm.MaxCharacters > 0 && oTextFormRun.GetElementsCount() >= this.Pr.TextForm.MaxCharacters)
-			return;
+		if (this.Pr.TextForm.MaxCharacters > 0)
+		{
+			if (!(Item instanceof AscWord.CRunText) && !(Item instanceof AscWord.CRunSpace))
+				return;
+
+			let nNewCodePoint = Item.IsText() ? Item.GetCodePoint() : 0x20;
+
+			let nInsertPos    = oTextFormRun.State.ContentPos;
+			let arrCodePoints = [];
+			for (let nPos = 0, nCount = oTextFormRun.Content.length; nPos < nCount; ++nPos)
+			{
+				let oItem = oTextFormRun.Content[nPos];
+
+				if (nPos === nInsertPos)
+					arrCodePoints.push(nNewCodePoint);
+
+				if (oItem.IsText())
+					arrCodePoints.push(oItem.GetCodePoint());
+				else if (oItem.IsSpace())
+					arrCodePoints.push(0x20);
+			}
+
+			if (nInsertPos === oTextFormRun.Content.length)
+				arrCodePoints.push(nNewCodePoint);
+
+			if (AscWord.GraphemesCounter.GetCount(arrCodePoints, oTextFormRun.Get_CompiledPr(false)) > this.Pr.TextForm.MaxCharacters)
+				return;
+		}
 	}
 
 	CParagraphContentWithParagraphLikeContent.prototype.Add.apply(this, arguments);
@@ -1085,7 +1111,7 @@ CInlineLevelSdt.prototype.private_ReplaceContentWithPlaceHolder = function(isSel
 	var isUseSelection = this.IsSelectionUse();
 
 	this.private_FillPlaceholderContent();
-	this.TrimCombForm();
+	this.TrimTextForm();
 
 	if (false !== isSelect)
 		this.SelectContentControl();
@@ -1115,7 +1141,7 @@ CInlineLevelSdt.prototype.private_FillPlaceholderContent = function()
 		}
 		else
 		{
-			// TODO: Последний Run с ParaEnd не добавляем
+			// TODO: Последний Run с ParagraphMark не добавляем
 			for (var nPos = 0, nCount = oFirstParagraph.Content.length; nPos < nCount - 1; ++nPos)
 			{
 				this.AddToContent(0, oFirstParagraph.Content[nPos].Copy());
@@ -1756,7 +1782,7 @@ CInlineLevelSdt.prototype.IsPictureForm = function()
 };
 /**
  * Выставляем настройк для формы с картинкой
- * @param oPr {CSdtPictureFormPr}
+ * @param oPr {AscWord.CSdtPictureFormPr}
  */
 CInlineLevelSdt.prototype.SetPictureFormPr = function(oPr)
 {
@@ -1769,7 +1795,7 @@ CInlineLevelSdt.prototype.SetPictureFormPr = function(oPr)
 };
 /**
  * Получаем настройки для картиночной формы
- * @returns {?CSdtPictureFormPr}
+ * @returns {?AscWord.CSdtPictureFormPr}
  */
 CInlineLevelSdt.prototype.GetPictureFormPr = function()
 {
@@ -1784,7 +1810,7 @@ CInlineLevelSdt.prototype.IsComboBox = function()
 	return (undefined !== this.Pr.ComboBox);
 };
 /**
- * @param oPr {CSdtComboBoxPr}
+ * @param oPr {AscWord.CSdtComboBoxPr}
  */
 CInlineLevelSdt.prototype.SetComboBoxPr = function(oPr)
 {
@@ -1796,7 +1822,7 @@ CInlineLevelSdt.prototype.SetComboBoxPr = function(oPr)
 	}
 };
 /**
- * @returns {?CSdtComboBoxPr}
+ * @returns {?AscWord.CSdtComboBoxPr}
  */
 CInlineLevelSdt.prototype.GetComboBoxPr = function()
 {
@@ -1811,7 +1837,7 @@ CInlineLevelSdt.prototype.IsDropDownList = function()
 	return (undefined !== this.Pr.DropDown);
 };
 /**
- * @param oPr {CSdtComboBoxPr}
+ * @param oPr {AscWord.CSdtComboBoxPr}
  */
 CInlineLevelSdt.prototype.SetDropDownListPr = function(oPr)
 {
@@ -1823,7 +1849,7 @@ CInlineLevelSdt.prototype.SetDropDownListPr = function(oPr)
 	}
 };
 /**
- * @returns {?CSdtComboBoxPr}
+ * @returns {?AscWord.CSdtComboBoxPr}
  */
 CInlineLevelSdt.prototype.GetDropDownListPr = function()
 {
@@ -1831,7 +1857,7 @@ CInlineLevelSdt.prototype.GetDropDownListPr = function()
 };
 /**
  * Применяем к данному контейнеру настройки того, что это специальный контйенер для поля со списком
- * @param oPr {CSdtComboBoxPr}
+ * @param oPr {AscWord.CSdtComboBoxPr}
  */
 CInlineLevelSdt.prototype.ApplyComboBoxPr = function(oPr)
 {
@@ -1844,7 +1870,7 @@ CInlineLevelSdt.prototype.ApplyComboBoxPr = function(oPr)
 };
 /**
  * Применяем к данному контейнеру настройки того, что это специальный контейнер для выпадающего списка
- * @param oPr {CSdtComboBoxPr}
+ * @param oPr {AscWord.CSdtComboBoxPr}
  */
 CInlineLevelSdt.prototype.ApplyDropDownListPr = function(oPr)
 {
@@ -1951,7 +1977,7 @@ CInlineLevelSdt.prototype.IsDatePicker = function()
 	return (undefined !== this.Pr.Date);
 };
 /**
- * @param oPr {CSdtDatePickerPr}
+ * @param oPr {AscWord.CSdtDatePickerPr}
  */
 CInlineLevelSdt.prototype.SetDatePickerPr = function(oPr)
 {
@@ -1963,7 +1989,7 @@ CInlineLevelSdt.prototype.SetDatePickerPr = function(oPr)
 	}
 };
 /**
- * @returns {?CSdtDatePickerPr}
+ * @returns {?AscWord.CSdtDatePickerPr}
  */
 CInlineLevelSdt.prototype.GetDatePickerPr = function()
 {
@@ -1971,7 +1997,7 @@ CInlineLevelSdt.prototype.GetDatePickerPr = function()
 };
 /**
  * Применяем к данному контейнеру настройки того, что это специальный контйенер для даты
- * @param oPr {CSdtDatePickerPr}
+ * @param oPr {AscWord.CSdtDatePickerPr}
  */
 CInlineLevelSdt.prototype.ApplyDatePickerPr = function(oPr)
 {
@@ -2073,7 +2099,7 @@ CInlineLevelSdt.prototype.GetTextFormPr = function()
 };
 /**
  * Применяем к данному контейнеру настройки того, что это специальный контйенер для даты
- * @param oPr {CSdtDatePickerPr}
+ * @param oPr {AscWord.CSdtDatePickerPr}
  */
 CInlineLevelSdt.prototype.ApplyTextFormPr = function(oPr)
 {
@@ -2646,6 +2672,16 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function(nW, nH)
 	if (this.IsAutoFitContent())
 		oLogicDocument.CheckFormAutoFit(this);
 
+	let oTextFormPr;
+	if (this.IsTextForm()
+		&& (oTextFormPr = this.GetTextFormPr())
+		&& oTextFormPr.IsComb())
+	{
+		let oNewPr = oTextFormPr.Copy();
+		oNewPr.SetWidthRule(Asc.CombFormWidthRule.Exact);
+		this.SetTextFormPr(oNewPr);
+	}
+
 	return oParaDrawing;
 };
 CInlineLevelSdt.prototype.private_ConvertFormToFixed = function(nW, nH)
@@ -2789,6 +2825,9 @@ CInlineLevelSdt.prototype.ConvertFormToInline = function()
 		oNewTextPr.SetMultiLine(false);
 		this.SetTextFormPr(oNewTextPr);
 	}
+
+	let oInlineRun = this.MakeSingleRunElement(false);
+	oInlineRun.RecalcMeasure();
 
 	return this;
 };
@@ -3149,10 +3188,10 @@ CInlineLevelSdt.prototype.MoveCursorOutsideForm = function(isBefore)
 		this.MoveCursorOutsideElement(isBefore);
 	}
 };
-CInlineLevelSdt.prototype.TrimCombForm = function()
+CInlineLevelSdt.prototype.TrimTextForm = function()
 {
 	let oTextFormPr = this.GetTextFormPr();
-	if (!oTextFormPr || !oTextFormPr.IsComb())
+	if (!oTextFormPr || oTextFormPr.GetMaxCharacters() <= 0)
 		return;
 
 	if (this.IsPlaceHolder())
@@ -3162,7 +3201,56 @@ CInlineLevelSdt.prototype.TrimCombForm = function()
 
 	let oRun = this.MakeSingleRunElement(false);
 	if (oRun.GetElementsCount() > nMax)
-		oRun.RemoveFromContent(nMax, oRun.GetElementsCount() - nMax, true);
+	{
+		let arrCodePoints = [];
+		for (let nPos = 0, nCount = oRun.GetElementsCount(); nPos < nCount; ++nPos)
+		{
+			let oItem = oRun.GetElement(nPos);
+			if (!oItem.IsText() && !oItem.IsSpace())
+				continue;
+
+			arrCodePoints.push(oItem.GetCodePoint());
+		}
+
+		let arrNewCodePoints = AscWord.GraphemesCounter.Trim(arrCodePoints, nMax, oRun.Get_CompiledPr(false));
+
+		let isNeedReplace = false;
+		if (arrNewCodePoints.length !== arrCodePoints.length)
+		{
+			isNeedReplace = true;
+		}
+		else
+		{
+			for (let nPos = 0, nCount = arrCodePoints.length; nPos < nCount; ++nPos)
+			{
+				if (arrCodePoints[nPos] !== arrNewCodePoints[nPos])
+				{
+					isNeedReplace = true;
+					break;
+				}
+			}
+		}
+
+		if (isNeedReplace)
+		{
+			let nCursorPos      = oRun.State.ContentPos;
+			let nSelectionStart = oRun.Selection.StartPos;
+			let nSelectionEnd   = oRun.Selection.EndPos;
+
+
+			oRun.RemoveFromContent(0, oRun.GetElementsCount(), true);
+			for (let nPos = 0, nCount = arrNewCodePoints.length; nPos < nCount; ++nPos)
+			{
+				let nCodePoint = arrNewCodePoints[nPos];
+				oRun.AddToContent(nPos, AscCommon.IsSpace(nCodePoint) ? new AscWord.CRunSpace(nCodePoint) : new AscWord.CRunText(nCodePoint), true);
+			}
+
+			let nRunLen = oRun.GetElementsCount();
+			oRun.State.ContentPos   = Math.min(nRunLen, Math.max(0, nCursorPos));
+			oRun.Selection.StartPos = Math.min(nRunLen, Math.max(0, nSelectionStart));
+			oRun.Selection.EndPos   = Math.min(nRunLen, Math.max(0, nSelectionEnd));
+		}
+	}
 };
 
 //--------------------------------------------------------export--------------------------------------------------------

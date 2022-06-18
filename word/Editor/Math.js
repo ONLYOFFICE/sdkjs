@@ -2273,7 +2273,7 @@ ParaMath.prototype.private_RecalculateRoot = function(PRS, ParaPr, Depth)
 
         var WidthLine = PRS.X - PRS.XRange + PRS.SpaceLen + PRS.WordLen;
 
-        var bFirstItem =  PRS.FirstItemOnLine == true && true === Para.Internal_Check_Ranges(ParaLine, ParaRange);
+        var bFirstItem =  PRS.FirstItemOnLine == true && true === Para.IsSingleRangeOnLine(ParaLine, ParaRange);
         if(bFirstItem && PRS.X + PRS.SpaceLen + PRS.WordLen > PRS.XEnd)
         {
             PRS.bMathWordLarge = true;
@@ -2617,7 +2617,7 @@ ParaMath.prototype.ConvertToInlineMode = function()
 	if (!oAfterItem || !oAfterItem.IsSpace())
 	{
 		let oRun = new ParaRun(oParagraph, false);
-		oRun.Add(new ParaSpace());
+		oRun.Add(new AscWord.CRunSpace());
 		oParent.AddToContent(nPosInParent + 1, oRun);
 	}
 
@@ -2625,7 +2625,7 @@ ParaMath.prototype.ConvertToInlineMode = function()
 	if (oBeforeItem && oBeforeItem.IsText())
 	{
 		let oRun = new ParaRun(oParagraph, false);
-		oRun.Add(new ParaSpace());
+		oRun.Add(new AscWord.CRunSpace());
 		oParent.AddToContent(nPosInParent, oRun);
 	}
 
@@ -2665,7 +2665,7 @@ ParaMath.prototype.ConvertToDisplayMode = function()
 	if (oAfterItem && !oAfterItem.IsParaEnd())
 	{
 		let oRun = new ParaRun(oParagraph, false);
-		oRun.Add(new ParaNewLine(break_Line));
+		oRun.Add(new AscWord.CRunBreak(AscWord.break_Line));
 		oParent.AddToContent(nPosInParent + 1, oRun);
 	}
 
@@ -2673,7 +2673,7 @@ ParaMath.prototype.ConvertToDisplayMode = function()
 	if (oBeforeItem || oParagraph.HaveNumbering())
 	{
 		let oRun = new ParaRun(oParagraph, false);
-		oRun.Add(new ParaNewLine(break_Line));
+		oRun.Add(new AscWord.CRunBreak(AscWord.break_Line));
 		oParent.AddToContent(nPosInParent, oRun);
 	}
 

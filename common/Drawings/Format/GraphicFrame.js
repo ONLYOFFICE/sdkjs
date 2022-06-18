@@ -1430,12 +1430,17 @@ CGraphicFrame.prototype.Is_ThisElementCurrent = function()
         else {
             let oGraphicObject = this.graphicObject;
             if(oGraphicObject) {
-                let oGraphicData = oGraphicObject.GraphicData;
-                if(oGraphicData) {
-                    let oDrawing = oGraphicData.graphicObject;
-                    if(oDrawing) {
-                        return oDrawing;
+                if(oGraphicObject instanceof AscFormat.CT_GraphicalObject) {
+                    let oGraphicData = oGraphicObject.GraphicData;
+                    if(oGraphicData) {
+                        let oDrawing = oGraphicData.graphicObject;
+                        if(oDrawing) {
+                            return oDrawing;
+                        }
                     }
+                }
+                else {
+                    return oGraphicObject;
                 }
             }
             return null;
@@ -1464,9 +1469,13 @@ CGraphicFrame.prototype.Is_ThisElementCurrent = function()
 
 
         let oSpTreeDrawing = this.getSpTreeDrawing();
-        let oUniNvPr = oSpTreeDrawing.getUniNvProps();
-        oUniNvPr.toXmlGrFrame(writer);
-		writer.WriteXmlNullable(oSpTreeDrawing.spPr && oSpTreeDrawing.spPr.xfrm, ns + "xfrm");
+        if(oSpTreeDrawing) {
+            let oUniNvPr = oSpTreeDrawing.getUniNvProps();
+            if(oUniNvPr) {
+                oUniNvPr.toXmlGrFrame(writer);
+            }
+            writer.WriteXmlNullable(oSpTreeDrawing.spPr && oSpTreeDrawing.spPr.xfrm, ns + "xfrm");
+        }
         let oGraphicObject;
         if(this.isTable()) {
             oGraphicObject =  new AscFormat.CT_GraphicalObject(this);

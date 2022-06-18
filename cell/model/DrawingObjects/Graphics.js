@@ -900,6 +900,50 @@ CGraphics.prototype =
         //    this.m_oTransform.sy,this.m_oTransform.tx,this.m_oTransform.ty);
     },
 
+    SetFontInternal : function(name, size, style)
+    {
+        var _lastFont     = this.IsUseFonts2 ? this.m_oLastFont2 : this.m_oLastFont;
+        var _font_manager = this.IsUseFonts2 ? this.m_oFontManager2 : this.m_oFontManager;
+
+        _lastFont.Name = name;
+        _lastFont.Size = size;
+
+        if (_lastFont.Name != _lastFont.SetUpName || _lastFont.Size != _lastFont.SetUpSize || style != _lastFont.SetUpStyle || !_font_manager.m_pFont)
+        {
+            _lastFont.SetUpName = _lastFont.Name;
+            _lastFont.SetUpSize = _lastFont.Size;
+            _lastFont.SetUpStyle = style;
+
+            g_fontApplication.LoadFont(_lastFont.SetUpName, AscCommon.g_font_loader, _font_manager, _lastFont.SetUpSize, _lastFont.SetUpStyle, this.m_dDpiX, this.m_dDpiY, this.m_oTransform, this.LastFontOriginInfo);
+
+            var _mD = _lastFont.SetUpMatrix;
+            var _mS = this.m_oTransform;
+            _mD.sx = _mS.sx;
+            _mD.sy = _mS.sy;
+            _mD.shx = _mS.shx;
+            _mD.shy = _mS.shy;
+            _mD.tx = _mS.tx;
+            _mD.ty = _mS.ty;
+        }
+        else
+        {
+            var _mD = _lastFont.SetUpMatrix;
+            var _mS = this.m_oTransform;
+
+            if (_mD.sx != _mS.sx || _mD.sy != _mS.sy || _mD.shx != _mS.shx || _mD.shy != _mS.shy || _mD.tx != _mS.tx || _mD.ty != _mS.ty)
+            {
+                _mD.sx = _mS.sx;
+                _mD.sy = _mS.sy;
+                _mD.shx = _mS.shx;
+                _mD.shy = _mS.shy;
+                _mD.tx = _mS.tx;
+                _mD.ty = _mS.ty;
+
+                _font_manager.SetTextMatrix(_mD.sx,_mD.shy,_mD.shx,_mD.sy,_mD.tx,_mD.ty);
+            }
+        }
+    },
+
     GetTextPr : function()
     {
         return this.m_oTextPr;
@@ -1100,7 +1144,7 @@ CGraphics.prototype =
         }
     },
 
-    tg : function(text,x,y)
+    tg : function(text,x,y,codepoints)
     {
         if (this.m_bIsBreak)
             return;
@@ -1112,7 +1156,7 @@ CGraphics.prototype =
 
         try
         {
-            _font_manager.LoadString3C(text,_x,_y);
+            _font_manager.LoadString3C(text,_x,_y,codepoints);
         }
         catch(err)
         {

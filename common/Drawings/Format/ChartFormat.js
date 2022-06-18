@@ -2976,7 +2976,7 @@
                 return this.series.Get_ColorMap();
             }
         }
-        return AscFormat.DEFAULT_COLOR_MAP;
+        return AscFormat.GetDefaultColorMap();
     };
     CDLbl.prototype.Get_AbsolutePage = function() {
         if(this.chart && this.chart.Get_AbsolutePage) {

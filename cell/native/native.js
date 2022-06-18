@@ -3460,7 +3460,6 @@ function OfflineEditor () {
         deviceScale = window["native"]["GetDeviceScale"]();
         sdkCheck = settings["sdkCheck"];
 
-        window.g_file_path = "native_open_file";
         window.NATIVE_DOCUMENT_TYPE = "";
 
         var translations = this.initSettings["translations"];

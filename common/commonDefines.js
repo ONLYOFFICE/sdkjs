@@ -1961,7 +1961,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	var c_oAscUrlType         = {
 		Invalid : 0,
 		Http    : 1,
-		Email   : 2
+		Email   : 2,
+		Unsafe   : 3
 	};
 
 	var c_oAscCellTextDirection = {
@@ -3333,6 +3334,38 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		Simple   : 3
 	};
 
+	const LigaturesFlags = {
+		Standard     : 0x01, //AscFonts.HB_FEATURE.HB_FEATURE_TYPE_LIGATURES_STANDARD,
+		Contextual   : 0x02, //AscFonts.HB_FEATURE.HB_FEATURE_TYPE_LIGATURES_CONTEXTUAL,
+		Historical   : 0x04, //AscFonts.HB_FEATURE.HB_FEATURE_TYPE_LIGATURES_HISTORICAL,
+		Discretional : 0x08  //AscFonts.HB_FEATURE.HB_FEATURE_TYPE_LIGATURES_DISCRETIONARY
+	};
+
+	const LigaturesType = {
+		None                             : 0x00,
+		Standard                         : LigaturesFlags.Standard,
+		Contextual                       : LigaturesFlags.Contextual,
+		Historical                       : LigaturesFlags.Historical,
+		Discretional                     : LigaturesFlags.Discretional,
+		StandardContextual               : LigaturesFlags.Standard | LigaturesFlags.Contextual,
+		StandardHistorical               : LigaturesFlags.Standard | LigaturesFlags.Historical,
+		ContextualHistorical             : LigaturesFlags.Contextual | LigaturesFlags.Historical,
+		StandardDiscretional             : LigaturesFlags.Standard | LigaturesFlags.Discretional,
+		ContextualDiscretional           : LigaturesFlags.Contextual | LigaturesFlags.Discretional,
+		HistoricalDiscretional           : LigaturesFlags.Historical | LigaturesFlags.Discretional,
+		StandardContextualHistorical     : LigaturesFlags.Standard | LigaturesFlags.Contextual | LigaturesFlags.Historical,
+		StandardContextualDiscretional   : LigaturesFlags.Standard | LigaturesFlags.Contextual | LigaturesFlags.Discretional,
+		StandardHistoricalDiscretional   : LigaturesFlags.Standard | LigaturesFlags.Historical | LigaturesFlags.Discretional,
+		ContextualHistoricalDiscretional : LigaturesFlags.Contextual | LigaturesFlags.Historical | LigaturesFlags.Discretional,
+		All                              : LigaturesFlags.Standard | LigaturesFlags.Contextual | LigaturesFlags.Historical | LigaturesFlags.Discretional
+	};
+
+	const CombFormWidthRule = {
+		Auto    : 0,
+		AtLeast : 1,
+		Exact   : 2
+	};
+
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
 	window['Asc']                          = window['Asc'] || {};
@@ -4194,6 +4227,11 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	window["AscCommon"].c_oAscMaxFormulaReferenceLength = c_oAscMaxFormulaReferenceLength;
 	window["AscCommon"].c_oAscMaxTableColumnTextLength = c_oAscMaxTableColumnTextLength;
 
+	prot =  window["AscCommon"]["c_oAscUrlType"] = window["AscCommon"].c_oAscUrlType = c_oAscUrlType;
+	prot["Invalid"] = prot.Invalid;
+	prot["Http"] = prot.Http;
+	prot["Email"] = prot.Email;
+	prot["Unsafe"] = prot.Unsafe;
 
 	window["AscCommon"].locktype_None   = locktype_None;
 	window["AscCommon"].locktype_Mine   = locktype_Mine;
@@ -4616,5 +4654,28 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	window['AscCommon'].ST_TLAnimateEffectTransition = ST_TLAnimateEffectTransition;
 	window['AscCommon'].c_oAscOleObjectTypes = c_oAscOleObjectTypes;
 	window['AscCommon'].ST_CxnType = ST_CxnType;
-	
-	})(window);
+
+	prot = window['Asc']['LigaturesType'] = window['Asc'].LigaturesType = LigaturesType;
+	prot['None']                             = prot.None;
+	prot['Standard']                         = prot.Standard;
+	prot['Contextual']                       = prot.Contextual;
+	prot['Historical']                       = prot.Historical;
+	prot['Discretional']                     = prot.Discretional;
+	prot['StandardContextual']               = prot.StandardContextual;
+	prot['StandardHistorical']               = prot.StandardHistorical;
+	prot['ContextualHistorical']             = prot.ContextualHistorical;
+	prot['StandardDiscretional']             = prot.StandardDiscretional;
+	prot['ContextualDiscretional']           = prot.ContextualDiscretional;
+	prot['HistoricalDiscretional']           = prot.HistoricalDiscretional;
+	prot['StandardContextualHistorical']     = prot.StandardContextualHistorical;
+	prot['StandardContextualDiscretional']   = prot.StandardContextualDiscretional;
+	prot['StandardHistoricalDiscretional']   = prot.StandardHistoricalDiscretional;
+	prot['ContextualHistoricalDiscretional'] = prot.ContextualHistoricalDiscretional;
+	prot['All']                              = prot.All;
+
+	prot = window['Asc']['CombFormWidthRule'] = window['Asc'].CombFormWidthRule = CombFormWidthRule;
+	prot['Auto']    = prot.Auto;
+	prot['AtLeast'] = prot.AtLeast;
+	prot['Exact']   = prot.Exact;
+
+})(window);
