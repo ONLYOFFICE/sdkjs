@@ -5627,12 +5627,34 @@
 	function CPlugin()
 	{
 		this.name    = "";
+		this.nameLocale = {};
 		this.guid    = "";
 		this.baseUrl = "";
 		this.minVersion = "";
+		this.version = "";
 
 		this.variations = [];
 	}
+
+	CPlugin.prototype.getIntVersion = function()
+	{
+		if (!this.version)
+			return 0;
+		let arrayVersion = this.version.split(".");
+
+		while (arrayVersion.length < 3)
+			arrayVersion.push("0");
+
+		try
+		{
+			let intVer = parseInt(arrayVersion[0]) * 10000 + parseInt(arrayVersion[1]) * 100 + parseInt(arrayVersion[2]);
+			return intVer;
+		}
+		catch (e)
+		{
+		}
+		return 0;
+	};
 
 	CPlugin.prototype["get_Name"]    = function()
 	{
@@ -5641,6 +5663,14 @@
 	CPlugin.prototype["set_Name"]    = function(value)
 	{
 		this.name = value;
+	};
+	CPlugin.prototype["get_NameLocale"]    = function()
+	{
+		return this.nameLocale;
+	};
+	CPlugin.prototype["set_NameLocale"]    = function(value)
+	{
+		this.nameLocale = value;
 	};
 	CPlugin.prototype["get_Guid"]    = function()
 	{
@@ -5666,6 +5696,14 @@
 	{
 		this.minVersion = value;
 	};
+	CPlugin.prototype["get_Version"] = function()
+	{
+		return this.version;
+	};
+	CPlugin.prototype["set_Version"] = function(value)
+	{
+		this.version = value;
+	};
 
 	CPlugin.prototype["get_Variations"] = function()
 	{
@@ -5680,7 +5718,9 @@
 	{
 		var _object           = {};
 		_object["name"]       = this.name;
+		_object["nameLocale"] = this.nameLocale;
 		_object["guid"]       = this.guid;
+		_object["version"]    = this.version;
 		_object["baseUrl"]    = this.baseUrl;
 		_object["variations"] = [];
 		for (var i = 0; i < this.variations.length; i++)
@@ -5695,6 +5735,7 @@
 		this.guid       = (_object["guid"] != null) ? _object["guid"] : this.guid;
 		this.baseUrl    = (_object["baseUrl"] != null) ? _object["baseUrl"] : this.baseUrl;
 		this.minVersion = (_object["minVersion"] != null) ? _object["minVersion"] : this.minVersion;
+		this.version    = (_object["version"] != null) ? _object["version"] : this.version;
 		this.variations = [];
 		for (var i = 0; i < _object["variations"].length; i++)
 		{

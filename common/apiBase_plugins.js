@@ -991,6 +991,79 @@
 		}
 		this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, opts);
 	};
+
+	function getLocalStorageItem(key)
+	{
+		try
+		{
+			return JSON.parse(window.localStorage.getItem(key));
+		}
+		catch (e)
+		{
+			return null;
+		}
+	}
+	function setLocalStorageItem(key, value)
+	{
+		try
+		{
+			window.localStorage.setItem(key, JSON.stringify(value));
+			return true;
+		}
+		catch (e)
+		{
+		}
+		return false;
+	}
+	function loadPluginConfig(url, callback)
+	{
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET', url, true);
+		xhr.responseType = 'json';
+		xhr.overrideMimeType("application/json");
+
+		xhr.onload = function()
+		{
+			if (this.status == 200)
+			{
+				try
+				{
+					callback(JSON.parse(this.responseText));
+				}
+				catch (e)
+				{
+					callback(null);
+				}
+			}
+		};
+		xhr.onerror = function() { callback(null); };
+		xhr.send(null);
+	}
+
+	function loadPluginConfigCallback(guidStore, config, loadFuncName)
+	{
+		if (!config)
+		{
+			return window.g_asc_plugins.onPluginMethodReturn(guidStore, {
+				"type" : loadFuncName,
+				"guid" : ""
+			});
+		}
+
+		window.g_asc_plugins.loadExtensionPlugins([config]);
+
+		let currentInstalledPlugins = getLocalStorageItem("asc_plugins_installed");
+		if (!currentInstalledPlugins)
+			currentInstalledPlugins = {};
+		currentInstalledPlugins[config["guid"]] = config;
+		setLocalStorageItem("asc_plugins_installed", currentInstalledPlugins);
+
+		return window.g_asc_plugins.onPluginMethodReturn(guidStore, {
+			"type" : loadFuncName,
+			"guid" : config["guid"]
+		});
+	}
+
 	/**
     * Returns all installed plugins.
      * @memberof Api
@@ -1000,16 +1073,30 @@
      */
 	Api.prototype["pluginMethod_GetInstalledPlugins"] = function()
 	{
-		/* 
+		/*
 			формат объекта 
 			{
-				url: url на конфиг (хотя по факту он не нужен, так как конфиг есть в этом объекте и в нутри маркетплейса тоже),
+				url: url на конфиг (хотя по факту он не нужен, так как конфиг есть в этом объекте и внутри маркетплейса тоже),
 				guid: guid плагина,
 				canRemoved: флаг, может ли быть удалён плагин или нет (true/false),
 				obj: конфиг установленного плагина (от туда берется версия и сравнивается с текущей для проверки обновлений)
 			}
 		*/
-		return "pluginMethod_GetInstalledPlugins";
+
+		let pluginsArray = window.g_asc_plugins.plugins;
+		let returnArray = [];
+
+		for (let i = 0, len = pluginsArray.length; i < len; i++)
+		{
+			returnArray.push({
+				"url" : "",
+				"guid" : pluginsArray[i].guid,
+				"canRemoved" : true,
+				"obj" : pluginsArray[i].serialize()
+			});
+		}
+
+		return returnArray;
 	};
 	/**
     * Remove plugin with such guid.
@@ -1021,10 +1108,33 @@
      */
 	Api.prototype["pluginMethod_RemovePlugin"] = function(guid)
 	{
+		let pluginsArray = window.g_asc_plugins.plugins;
+		let removedGuid = "";
+		for (let i = 0, len = pluginsArray.length; i < len; i++)
+		{
+			if (guid === pluginsArray[i].guid)
+			{
+				pluginsArray.splice(i, 1);
+				removedGuid = guid;
+				break;
+			}
+		}
+
+		if ("" !== removedGuid)
+		{
+			let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+			if (!currentRemovedPlugins)
+				currentRemovedPlugins = {};
+			currentRemovedPlugins[guid] = true;
+			setLocalStorageItem("asc_plugins_removed", currentRemovedPlugins);
+		}
+
 		return {
 			type : "Removed",
-			guid : guid
-		}
+			guid : removedGuid
+		};
+
+		window.g_asc_plugins.updateInterface();
 	};
 	/**
     * Install plugin with by url to config.
@@ -1035,12 +1145,10 @@
      * @returns {object} - Object with result.
 	 * 
      */
-	Api.prototype["pluginMethod_InstallPlugin"] = function(url, guid)
+	Api.prototype["pluginMethod_InstallPlugin"] = function(config)
 	{
-		return {
-			type : "Installed",
-			guid : guid
-		}
+		var guidStore = window.g_asc_plugins.setPluginMethodReturnAsync();
+		loadPluginConfigCallback(guidStore, config, "Installed");
 	};
 	/**
     * Update plugin with by url to config.
@@ -1053,9 +1161,7 @@
      */
 	Api.prototype["pluginMethod_UpdatePlugin"] = function(url, guid)
 	{
-		return {
-			type : "Updated",
-			guid : guid
-		}
+		var guidStore = window.g_asc_plugins.setPluginMethodReturnAsync();
+		loadPluginConfigCallback(guidStore, config, "Updated");
 	};
 })(window);

@@ -679,7 +679,7 @@
 
 			var _map = {};
 			for (var i = 0; i < this.plugins.length; i++)
-				_map[this.plugins[i].guid] = true;
+				_map[this.plugins[i].guid] = this.plugins[i].getIntVersion();
 
 			var _new = [];
 			for (var i = 0; i < _plugins.length; i++)
@@ -687,14 +687,34 @@
 				var _p = new Asc.CPlugin();
 				_p["deserialize"](_plugins[i]);
 
-				if (_map[_p.guid] === true)
-					continue;
+				if (_map[_p.guid] !== undefined)
+				{
+					if (_map[_p.guid] < _p.getIntVersion())
+					{
+						// нужно обновить
+						for (var i = 0; i < this.plugins.length; i++)
+						{
+							if (this.plugins[i].guid === _p.guid)
+								this.plugins.splice(i, 1);
+						}
+					}
+					else
+					{
+						continue;
+					}
+				}
+
 
 				_new.push(_p);
 			}
 
 			this.register(this.path, _new);
 
+			this.updateInterface();
+		},
+
+		updateInterface : function()
+		{
 			var _pluginsInstall = {"url" : this.path, "pluginsData" : []};
 			for (var i = 0; i < this.plugins.length; i++)
 			{
