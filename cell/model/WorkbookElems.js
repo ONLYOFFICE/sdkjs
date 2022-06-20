@@ -12280,7 +12280,20 @@ QueryTableField.prototype.clone = function() {
 			});
 
 			this.CellValue = cell.getValue();
-			this.CellType = cell.getType();
+
+			var cellValueType = null;
+			switch (cell.getType()) {
+				case CellValueType.String:
+					cellValueType = Asc.ECellTypeType.celltypeStr;
+					break;
+				case CellValueType.Bool:
+					cellValueType = Asc.ECellTypeType.celltypeBool;
+					break;
+				case CellValueType.Error:
+					cellValueType = Asc.ECellTypeType.celltypeError;
+					break;
+			}
+			this.CellType = cellValueType;
 		}
 	};
 
