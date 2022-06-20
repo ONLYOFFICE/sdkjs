@@ -1083,7 +1083,6 @@
 			}
 		*/
 
-		// в списке не хватало системных плагинов
 		let pluginsArray = window.g_asc_plugins.plugins.concat(window.g_asc_plugins.systemPlugins);
 		let returnArray = [];
 
@@ -1109,33 +1108,7 @@
      */
 	Api.prototype["pluginMethod_RemovePlugin"] = function(guid)
 	{
-		// в списке не хватало системных плагинов
-		let pluginsArray = window.g_asc_plugins.plugins;//.concat(window.g_asc_plugins.systemPlugins);
-		let systemPlugins = window.g_asc_plugins.systemPlugins;
-		let removedGuid = "";
-		// иначе при повторной установке он считался как установленный
-		delete(window.g_asc_plugins.pluginsMap[guid]);
-		for (let i = 0, len = pluginsArray.length; i < len; i++)
-		{
-			if (guid === pluginsArray[i].guid)
-			{
-				pluginsArray.splice(i, 1);
-				removedGuid = guid;
-				break;
-			}
-		}
-
-		for (let i = 0, len = systemPlugins.length; i < len; i++)
-		{
-			if (guid === systemPlugins[i].guid)
-			{
-				systemPlugins.splice(i, 1);
-				delete(window.g_asc_plugins.runnedPluginsMap[guid]);
-				document.getElementById('iframe_' + guid).remove();
-				removedGuid = guid;
-				break;
-			}
-		}
+		let removedGuid = window.g_asc_plugins.unregister(guid) ? guid : "";
 
 		if ("" !== removedGuid)
 		{

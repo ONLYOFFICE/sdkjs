@@ -131,6 +131,33 @@
 			}
 		},
 
+		unregister : function(guid)
+		{
+			if (!!this.pluginsMap[guid])
+				return false;
+
+			this.close(guid);
+
+			if (this.pluginsMap[guid])
+				delete this.pluginsMap[guid];
+
+			let currentArray = this.plugins;
+			for (let indexArray = 0; indexArray < 2; indexArray++)
+			{
+				for (let i = 0, len = currentArray.length; i < len; i++)
+				{
+					if (guid === currentArray[i].guid)
+					{
+						currentArray.splice(i, 1);
+						break;
+					}
+				}
+				currentArray = this.systemPlugins;
+			}
+
+			return true;
+		},
+
 		register : function(basePath, plugins)
 		{
 			this.path = basePath;
