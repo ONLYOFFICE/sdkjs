@@ -11898,10 +11898,16 @@ QueryTableField.prototype.clone = function() {
 
 		//дополнительная информация, которая приходит при copy/paste
 		//необходимо её добавлять в ooxml
+		//fileId
+		//portalName
 		this.referenceData = null;
 
 		this.worksheets = {};
 	}
+
+	ExternalReference.prototype.getType = function() {
+		return AscCommonExcel.UndoRedoDataTypes.externalReference;
+	};
 
 	ExternalReference.prototype.Read_FromBinary2 = function(r) {
 		//TODO DefinedName
@@ -11922,7 +11928,7 @@ QueryTableField.prototype.clone = function() {
 
 		length = r.GetLong();
 		for (i = 0; i < length; ++i) {
-			var sheetDataSet = new SheetDataSet();
+			var sheetDataSet = new ExternalSheetDataSet();
 			sheetDataSet.Read_FromBinary2(r);
 			if(!this.SheetDataSet) {
 				this.SheetDataSet = [];
@@ -11933,8 +11939,7 @@ QueryTableField.prototype.clone = function() {
 		//TODO SheetName
 		length = r.GetLong();
 		for (i = 0; i < length; ++i) {
-			var sheetName = new SheetName();
-			sheetName.Read_FromBinary2(r);
+			var sheetName = r.GetString2();
 			if(!this.SheetNames) {
 				this.SheetNames = [];
 			}
@@ -11946,7 +11951,13 @@ QueryTableField.prototype.clone = function() {
 		}
 
 		if (r.GetBool()) {
-			this.referenceData = r.GetString2();
+			this.referenceData = {};
+			if (r.GetBool()) {
+				this.referenceData.fileId = r.GetString2();
+			}
+			if (r.GetBool()) {
+				this.referenceData.portalName = r.GetString2();
+			}
 		}
 	};
 	ExternalReference.prototype.Write_ToBinary2 = function(w) {
@@ -11959,6 +11970,7 @@ QueryTableField.prototype.clone = function() {
 		}
 
 		if (null != this.Id) {
+			w.WriteBool(true);
 			w.WriteString2(this.Id);
 		} else {
 			w.WriteBool(false);
@@ -11974,18 +11986,31 @@ QueryTableField.prototype.clone = function() {
 		w.WriteLong(this.SheetNames ? this.SheetNames.length : 0);
 		if (this.SheetNames) {
 			for (i = 0; i < this.SheetNames.length; ++i) {
-				this.SheetNames[i].Write_ToBinary2(w);
+				w.WriteString2(this.SheetNames[i]);
 			}
 		}
 
 		if (null != this.Type) {
+			w.WriteBool(true);
 			w.WriteLong(this.Type);
 		} else {
 			w.WriteBool(false);
 		}
 
 		if (null != this.referenceData) {
-			w.WriteString2(this.referenceData);
+			w.WriteBool(true);
+			if (null != this.referenceData.fileId) {
+				w.WriteBool(true);
+				w.WriteString2(this.referenceData.fileId);
+			} else {
+				w.WriteBool(false);
+			}
+			if (null != this.referenceData.portalName) {
+				w.WriteBool(true);
+				w.WriteString2(this.referenceData.portalName);
+			} else {
+				w.WriteBool(false);
+			}
 		} else {
 			w.WriteBool(false);
 		}
@@ -12123,12 +12148,14 @@ QueryTableField.prototype.clone = function() {
 	};
 	ExternalSheetDataSet.prototype.Write_ToBinary2 = function(w) {
 		if (null != this.SheetId) {
+			w.WriteBool(true);
 			w.WriteLong(this.SheetId);
 		} else {
 			w.WriteBool(false);
 		}
 
 		if (null != this.RefreshError) {
+			w.WriteBool(true);
 			w.WriteLong(this.RefreshError);
 		} else {
 			w.WriteBool(false);
@@ -12177,7 +12204,7 @@ QueryTableField.prototype.clone = function() {
 
 	ExternalRow.prototype.Read_FromBinary2 = function(r) {
 		if (r.GetBool()) {
-			this.SheetId = r.GetLong();
+			this.R = r.GetLong();
 		}
 
 		var length = r.GetLong();
@@ -12192,6 +12219,7 @@ QueryTableField.prototype.clone = function() {
 	};
 	ExternalRow.prototype.Write_ToBinary2 = function(w) {
 		if (null != this.R) {
+			w.WriteBool(true);
 			w.WriteLong(this.R);
 		} else {
 			w.WriteBool(false);
@@ -12224,18 +12252,21 @@ QueryTableField.prototype.clone = function() {
 	};
 	ExternalCell.prototype.Write_ToBinary2 = function(w) {
 		if (null != this.Ref) {
+			w.WriteBool(true);
 			w.WriteString2(this.Ref);
 		} else {
 			w.WriteBool(false);
 		}
 
 		if (null != this.CellType) {
+			w.WriteBool(true);
 			w.WriteLong(this.CellType);
 		} else {
 			w.WriteBool(false);
 		}
 
 		if (null != this.CellValue) {
+			w.WriteBool(true);
 			w.WriteString2(this.CellValue);
 		} else {
 			w.WriteBool(false);

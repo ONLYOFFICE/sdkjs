@@ -447,6 +447,8 @@ function (window, undefined) {
 		this.ProtectedRangeData = 160;
 		this.ProtectedRangeDataInner = 161;
 
+		this.externalReference = 170;
+
 		this.Create = function (nType) {
 			switch (nType) {
 				case this.ValueMultiTextElem:
@@ -644,6 +646,8 @@ function (window, undefined) {
 					return new AscCommonExcel.UndoRedoData_ProtectedRange();
 				case this.ProtectedRangeDataInner:
 					return new Asc.CProtectedRange();
+				case this.externalReference:
+					return new AscCommonExcel.ExternalReference();
 			}
 			return null;
 		};
