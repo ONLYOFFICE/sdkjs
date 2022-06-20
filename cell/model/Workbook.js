@@ -3883,12 +3883,14 @@
 			if (extarnalLink.worksheets && extarnalLink.worksheets[sheet]) {
 				return extarnalLink.worksheets[sheet];
 			}
-			for (var i = 0; i < extarnalLink.SheetNames.length; i++) {
-				if (extarnalLink.SheetNames[i] === sheet) {
-					var wb = this.getTemporaryExternalWb();
-					extarnalLink.worksheets[sheet] = new Worksheet(wb);
-					extarnalLink.worksheets[sheet].sName = sheet;
-					return extarnalLink.worksheets[sheet];
+			if (extarnalLink.SheetNames) {
+				for (var i = 0; i < extarnalLink.SheetNames.length; i++) {
+					if (extarnalLink.SheetNames[i] === sheet) {
+						var wb = this.getTemporaryExternalWb();
+						extarnalLink.worksheets[sheet] = new Worksheet(wb);
+						extarnalLink.worksheets[sheet].sName = sheet;
+						return extarnalLink.worksheets[sheet];
+					}
 				}
 			}
 		}
@@ -3901,11 +3903,13 @@
 			if (extarnalLink.worksheets && extarnalLink.worksheets[sheet]) {
 				return extarnalLink.worksheets[sheet];
 			}
-			for (var i = 0; i < extarnalLink.SheetNames.length; i++) {
-				if (extarnalLink.SheetNames[i] === sheet) {
-					var wb = this.getTemporaryExternalWb();
-					extarnalLink.worksheets[sheet] = new Worksheet(wb);
-					return extarnalLink.worksheets[sheet];
+			if (extarnalLink.SheetNames) {
+				for (var i = 0; i < extarnalLink.SheetNames.length; i++) {
+					if (extarnalLink.SheetNames[i] === sheet) {
+						var wb = this.getTemporaryExternalWb();
+						extarnalLink.worksheets[sheet] = new Worksheet(wb);
+						return extarnalLink.worksheets[sheet];
+					}
 				}
 			}
 		}
@@ -3918,11 +3922,13 @@
 			if (extarnalLink.worksheets && extarnalLink.worksheets[sheet]) {
 				return extarnalLink.worksheets[sheet];
 			}
-			for (var i = 0; i < extarnalLink.SheetNames.length; i++) {
-				if (extarnalLink.SheetNames[i] === sheet) {
-					var wb = this.getTemporaryExternalWb();
-					extarnalLink.worksheets[sheet] = new Worksheet(wb);
-					return extarnalLink.worksheets[sheet];
+			if (extarnalLink.SheetNames) {
+				for (var i = 0; i < extarnalLink.SheetNames.length; i++) {
+					if (extarnalLink.SheetNames[i] === sheet) {
+						var wb = this.getTemporaryExternalWb();
+						extarnalLink.worksheets[sheet] = new Worksheet(wb);
+						return extarnalLink.worksheets[sheet];
+					}
 				}
 			}
 		}

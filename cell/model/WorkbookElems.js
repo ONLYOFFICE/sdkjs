@@ -11903,6 +11903,94 @@ QueryTableField.prototype.clone = function() {
 		this.worksheets = {};
 	}
 
+	ExternalReference.prototype.Read_FromBinary2 = function(r) {
+		//TODO DefinedName
+		var i;
+		var length = r.GetLong();
+		for (i = 0; i < length; ++i) {
+			var definedName = new DefinedName();
+			definedName.Read_FromBinary2(r);
+			if(!this.DefinedNames) {
+				this.DefinedNames = [];
+			}
+			this.DefinedNames.push(definedName);
+		}
+
+		if (r.GetBool()) {
+			this.Id = r.GetString2();
+		}
+
+		length = r.GetLong();
+		for (i = 0; i < length; ++i) {
+			var sheetDataSet = new SheetDataSet();
+			sheetDataSet.Read_FromBinary2(r);
+			if(!this.SheetDataSet) {
+				this.SheetDataSet = [];
+			}
+			this.SheetDataSet.push(sheetDataSet);
+		}
+
+		//TODO SheetName
+		length = r.GetLong();
+		for (i = 0; i < length; ++i) {
+			var sheetName = new SheetName();
+			sheetName.Read_FromBinary2(r);
+			if(!this.SheetNames) {
+				this.SheetNames = [];
+			}
+			this.SheetNames.push(sheetName);
+		}
+
+		if (r.GetBool()) {
+			this.Type = r.GetLong();
+		}
+
+		if (r.GetBool()) {
+			this.referenceData = r.GetString2();
+		}
+	};
+	ExternalReference.prototype.Write_ToBinary2 = function(w) {
+		var i;
+		w.WriteLong(this.DefinedNames ? this.DefinedNames.length : 0);
+		if (this.DefinedNames) {
+			for (i = 0; i < this.DefinedNames.length; ++i) {
+				this.DefinedNames[i].Write_ToBinary2(w);
+			}
+		}
+
+		if (null != this.Id) {
+			w.WriteString2(this.Id);
+		} else {
+			w.WriteBool(false);
+		}
+
+		w.WriteLong(this.SheetDataSet ? this.SheetDataSet.length : 0);
+		if (this.SheetDataSet) {
+			for (i = 0; i < this.SheetDataSet.length; ++i) {
+				this.SheetDataSet[i].Write_ToBinary2(w);
+			}
+		}
+
+		w.WriteLong(this.SheetNames ? this.SheetNames.length : 0);
+		if (this.SheetNames) {
+			for (i = 0; i < this.SheetNames.length; ++i) {
+				this.SheetNames[i].Write_ToBinary2(w);
+			}
+		}
+
+		if (null != this.Type) {
+			w.WriteLong(this.Type);
+		} else {
+			w.WriteBool(false);
+		}
+
+		if (null != this.referenceData) {
+			w.WriteString2(this.referenceData);
+		} else {
+			w.WriteBool(false);
+		}
+	};
+
 	ExternalReference.prototype.updateData = function (arr) {
 		for (var i = 0; i < arr.length; i++) {
 			//если есть this.worksheets, если нет - проверить и обработать
@@ -12160,10 +12248,8 @@ QueryTableField.prototype.clone = function() {
 				t.Ref = cell.getName();
 			});
 
-			//TODO проставлять тип! ST_CellType
-			//this.CellType = null;
-
 			this.CellValue = cell.getValue();
+			this.CellType = cell.getType();
 		}
 	};
 
