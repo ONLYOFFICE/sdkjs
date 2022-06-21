@@ -12019,9 +12019,19 @@ QueryTableField.prototype.clone = function() {
 	ExternalReference.prototype.updateData = function (arr) {
 		for (var i = 0; i < arr.length; i++) {
 			//если есть this.worksheets, если нет - проверить и обработать
-			if (this.worksheets && this.worksheets[arr[i].sName]) {
-				delete this.worksheets[arr[i].sName];
-				this.worksheets[arr[i].sName] = arr[i];
+			var sheetName = arr[i].sName;
+			if (this.worksheets && this.worksheets[sheetName]) {
+				//меняем лист
+				this.worksheets[sheetName] = arr[i];
+
+				//обновляем данные в SheetDataSet
+				var index = this.getSheetByName(sheetName);
+				if (index != null) {
+					var externalSheetDataSet = this.SheetDataSet[index];
+					if (externalSheetDataSet) {
+						externalSheetDataSet.updateFromSheet(arr[i]);
+					}
+				}
 			}
 		}
 	};
@@ -12059,12 +12069,20 @@ QueryTableField.prototype.clone = function() {
 			var externalSheetDataSet = new ExternalSheetDataSet();
 			externalSheetDataSet.SheetId = this.SheetNames.length - 1;
 			this.SheetDataSet.push(externalSheetDataSet);
-			externalSheetDataSet.initFromSheet(sheet, ranges);
 
-			//из SheetDataSet данные добавляем во временный лист, который хранится в worksheets
-			this.initWorksheetFromSheetDataSet(sheetName);
+			this.updateSheetData(sheetName, sheet, ranges);
 		}
 	};
+
+	ExternalReference.prototype.updateSheetData = function (sheetName, sheet, ranges) {
+		var index = this.getSheetByName(sheetName);
+		var externalSheetDataSet = this.SheetDataSet[index];
+		externalSheetDataSet.initFromSheet(sheet, ranges);
+
+		//из SheetDataSet данные добавляем во временный лист, который хранится в worksheets
+		this.initWorksheetFromSheetDataSet(sheetName);
+	};
+
 
 	ExternalReference.prototype.initWorksheetFromSheetDataSet = function (sheetName) {
 		var sheetDataSetIndex = this.getSheetByName(sheetName);
@@ -12195,6 +12213,30 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 
+	ExternalSheetDataSet.prototype.updateFromSheet = function(sheet) {
+		if (sheet) {
+			var t = this;
+
+			//TODO пока обновлю ячейки по одной, в дальнейшем нужно объединить ячейки в диапазоны
+			for (var i = 0; i < this.Row.length; i++) {
+				var row = this.Row[i];
+				if (!row) {
+					continue;
+				}
+				for (var j = 0; j < this.Row[i].Cell.length; j++) {
+					var externalCell = this.Row[i].Cell[j];
+					if (!externalCell) {
+						continue;
+					}
+					var range = sheet.getRange2(externalCell.Ref);
+					range._foreachNoEmpty(function (cell) {
+						externalCell.initFromCell(cell, true);
+					});
+				}
+			}
+		}
+	};
+
 
 
 	function ExternalRow() {
@@ -12234,7 +12276,7 @@ QueryTableField.prototype.clone = function() {
 	};
 
 	function ExternalCell() {
-		this.Ref = null;
+		this.Ref = null;//храним в строке, в будущем перевести в row/col
 		this.CellType = null;
 		this.CellValue = null;
 	}
@@ -12272,12 +12314,14 @@ QueryTableField.prototype.clone = function() {
 			w.WriteBool(false);
 		}
 	};
-	ExternalCell.prototype.initFromCell = function(cell) {
+	ExternalCell.prototype.initFromCell = function(cell, bUpdate) {
 		if (cell) {
 			var t = this;
-			AscCommonExcel.executeInR1C1Mode(false, function () {
-				t.Ref = cell.getName();
-			});
+			if (!bUpdate) {
+				AscCommonExcel.executeInR1C1Mode(false, function () {
+					t.Ref = cell.getName();
+				});
+			}
 
 			this.CellValue = cell.getValue();
 

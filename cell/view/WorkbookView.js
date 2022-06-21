@@ -4645,6 +4645,10 @@
 									}
 								}
 							}
+
+							//TODO ВРЕМЕННО ПЕРЕСЧИТЫВАЕМ ВСЕ ФОРМУЛЫ. сделать пересчёт только нужных
+							//кроме пересчёта нужно изменить ссылку на лист во всех диапазорнах, которые используют данную ссылку
+							window["Asc"]["editor"].asc_calculate();
 						});
 				}
 			});
@@ -4685,7 +4689,20 @@
 		}
 	};
 
+	WorkbookView.prototype.updateExternalReferenceByIndexes = function (aIndexes) {
+		var t = this;
+		var externalReferences = [];
+		if (aIndexes) {
+			for (var i = 0; i < aIndexes.length; i++) {
+				var eR = this.model.externalReferences[i];
+				if (eR) {
+					externalReferences.push(eR.getAscLink());
+				}
+			}
+		}
 
+		this.doUpdateExternalReference(externalReferences);
+	};
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
 	function CDocumentSearchExcel(wb) {

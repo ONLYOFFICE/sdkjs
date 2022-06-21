@@ -13675,7 +13675,10 @@
 					pasteLinkIndex = linkInfo.index;
 					pasteSheetLinkName = linkInfo.sheet;
 					//необходимо положить нужные данные в SheetDataSet
-
+					var modelExternalReference = t.model.workbook.externalReferences[pasteLinkIndex - 1];
+					if (modelExternalReference) {
+						modelExternalReference.updateSheetData(pasteSheetLinkName, pastedWb.aWorksheets[0], [activeCellsPasteFragment]);
+					}
 				} else if (linkInfo.type === -2) {
 					//добавляем
 					var referenceData = pastedWb && pastedWb.Core && {
