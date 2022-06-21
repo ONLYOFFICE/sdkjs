@@ -133,7 +133,7 @@
 
 		unregister : function(guid)
 		{
-			if (!!this.pluginsMap[guid])
+			if (!this.pluginsMap[guid])
 				return false;
 
 			this.close(guid);
@@ -158,7 +158,7 @@
 			return true;
 		},
 
-		register : function(basePath, plugins, isDisableRun)
+		register : function(basePath, plugins, isDelayRun)
 		{
 			this.path = basePath;
 
