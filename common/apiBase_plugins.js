@@ -1015,42 +1015,18 @@
 		}
 		return false;
 	}
-	function loadPluginConfig(url, callback)
-	{
-		var xhr = new XMLHttpRequest();
-		xhr.open('GET', url, true);
-		xhr.responseType = 'json';
-		xhr.overrideMimeType("application/json");
 
-		xhr.onload = function()
-		{
-			if (this.status == 200)
-			{
-				try
-				{
-					callback(JSON.parse(this.responseText));
-				}
-				catch (e)
-				{
-					callback(null);
-				}
-			}
-		};
-		xhr.onerror = function() { callback(null); };
-		xhr.send(null);
-	}
-
-	function loadPluginConfigCallback(guidStore, config, loadFuncName)
+	function installPlugin(config, loadFuncName)
 	{
 		if (!config)
 		{
-			return window.g_asc_plugins.onPluginMethodReturn(guidStore, {
+			return {
 				"type" : loadFuncName,
 				"guid" : ""
-			});
+			};
 		}
 
-		window.g_asc_plugins.loadExtensionPlugins([config]);
+		window.g_asc_plugins.loadExtensionPlugins([config], true);
 
 		let currentInstalledPlugins = getLocalStorageItem("asc_plugins_installed");
 		if (!currentInstalledPlugins)
@@ -1058,10 +1034,10 @@
 		currentInstalledPlugins[config["guid"]] = config;
 		setLocalStorageItem("asc_plugins_installed", currentInstalledPlugins);
 
-		return window.g_asc_plugins.onPluginMethodReturn(guidStore, {
+		return {
 			"type" : loadFuncName,
 			"guid" : config["guid"]
-		});
+		};
 	}
 
 	/**
@@ -1137,8 +1113,7 @@
      */
 	Api.prototype["pluginMethod_InstallPlugin"] = function(config)
 	{
-		var guidStore = window.g_asc_plugins.setPluginMethodReturnAsync();
-		loadPluginConfigCallback(guidStore, config, "Installed");
+		return installPlugin(config, "Installed");
 	};
 	/**
     * Update plugin with by url to config.
@@ -1151,7 +1126,6 @@
      */
 	Api.prototype["pluginMethod_UpdatePlugin"] = function(url, guid)
 	{
-		var guidStore = window.g_asc_plugins.setPluginMethodReturnAsync();
-		loadPluginConfigCallback(guidStore, config, "Updated");
+		return installPlugin(config, "Updated");
 	};
 })(window);

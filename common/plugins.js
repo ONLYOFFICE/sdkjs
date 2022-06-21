@@ -158,7 +158,7 @@
 			return true;
 		},
 
-		register : function(basePath, plugins)
+		register : function(basePath, plugins, isDisableRun)
 		{
 			this.path = basePath;
 
@@ -198,7 +198,14 @@
 
 				if (isSystem)
 				{
-					this.run(guid, 0, "");
+					if (!isDelayRun)
+						this.run(guid, 0, "");
+					else
+					{
+						setTimeout(function(){
+							window.g_asc_plugins.run(guid, 0, "");
+						}, 100);
+					}
 				}
 			}
 		},
@@ -477,9 +484,10 @@
                 this.api.WordControl.m_oTimerScrollSelect = -1;
 		    }
 
+			var urlParams = "?lang=" + this.language + "&theme-type=" + AscCommon.GlobalSkin.type;
 			if (plugin.variations[runObject.currentVariation].isVisual && runObject.startData.getAttribute("resize") !== true)
 			{
-				this.api.sendEvent("asc_onPluginShow", plugin, runObject.currentVariation, runObject.frameId, "?lang=" + this.language);
+				this.api.sendEvent("asc_onPluginShow", plugin, runObject.currentVariation, runObject.frameId, urlParams);
 				this.sendsToInterface[plugin.guid] = true;
 			}
 			else
@@ -488,7 +496,7 @@
 				ifr.name           = runObject.frameId;
 				ifr.id             = runObject.frameId;
 				var _add           = plugin.baseUrl == "" ? this.path : plugin.baseUrl;
-				ifr.src            = _add + plugin.variations[runObject.currentVariation].url + "?lang=" + this.language;
+				ifr.src            = _add + plugin.variations[runObject.currentVariation].url + urlParams;
 				ifr.style.position = (AscCommon.AscBrowser.isIE || AscCommon.AscBrowser.isMozilla) ? 'fixed' : "absolute";
 				ifr.style.top      = '-100px';
 				ifr.style.left     = '0px';
@@ -699,7 +707,7 @@
                 pluginData.setAttribute("userName", this.api.User.userName);
             }
 		},
-		loadExtensionPlugins : function(_plugins)
+		loadExtensionPlugins : function(_plugins, isDelayRun)
 		{
 			if (!_plugins || _plugins.length < 1)
 				return;
@@ -735,7 +743,7 @@
 				_new.push(_p);
 			}
 
-			this.register(this.path, _new);
+			this.register(this.path, _new, isDelayRun);
 
 			this.updateInterface();
 		},
