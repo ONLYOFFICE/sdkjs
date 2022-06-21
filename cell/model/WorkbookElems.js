@@ -12017,19 +12017,25 @@ QueryTableField.prototype.clone = function() {
 	};
 
 	ExternalReference.prototype.updateData = function (arr) {
+		var t = this;
 		for (var i = 0; i < arr.length; i++) {
 			//если есть this.worksheets, если нет - проверить и обработать
 			var sheetName = arr[i].sName;
 			if (this.worksheets && this.worksheets[sheetName]) {
 				//меняем лист
-				this.worksheets[sheetName] = arr[i];
+				AscFormat.ExecuteNoHistory(function(){
+					AscCommonExcel.executeInR1C1Mode(false, function () {
+						t.worksheets[sheetName].copyFrom(arr[i], t.worksheets[sheetName].sName);
+					});
+				});
+				//this.worksheets[sheetName] = arr[i];
 
 				//обновляем данные в SheetDataSet
 				var index = this.getSheetByName(sheetName);
 				if (index != null) {
 					var externalSheetDataSet = this.SheetDataSet[index];
 					if (externalSheetDataSet) {
-						externalSheetDataSet.updateFromSheet(arr[i]);
+						externalSheetDataSet.updateFromSheet(t.worksheets[sheetName]);
 					}
 				}
 			}
@@ -12050,8 +12056,18 @@ QueryTableField.prototype.clone = function() {
 			var externalSheetDataSet = new ExternalSheetDataSet();
 			externalSheetDataSet.SheetId = this.SheetNames.length - 1;
 			this.SheetDataSet.push(externalSheetDataSet);
-
 		}
+	};
+
+	ExternalReference.prototype.getSheetDataSetByName = function (name) {
+		if (this.SheetNames) {
+			for (var i = 0; i < this.SheetNames.length; i++) {
+				if (this.SheetNames[i] === name) {
+					return this.SheetDataSet[i];
+				}
+			}
+		}
+		return null;
 	};
 
 	ExternalReference.prototype.addSheet = function (sheet, ranges) {
@@ -12060,15 +12076,10 @@ QueryTableField.prototype.clone = function() {
 		if (sheetName && null === this.getSheetByName(sheetName)) {
 			//делаем init и формируем на основании данных из SheetDataSet
 			//добавляем в this.worksheets
-			this.SheetNames.push(sheetName);
+			this.addSheetName(sheetName, true);
 
 			//TODO при копипасте есть нюанас - те данные, которые не были скопированы из исходного документа, подхватить не сможем
 			//либо вставку менять - и делать не так как мс(в случае ссылки вставляеть всегда диапазон, равный скопированному). сейчас - если выделили больше, то подхватиться этот диапазон.
-
-			//формируем SheetDataSet
-			var externalSheetDataSet = new ExternalSheetDataSet();
-			externalSheetDataSet.SheetId = this.SheetNames.length - 1;
-			this.SheetDataSet.push(externalSheetDataSet);
 
 			this.updateSheetData(sheetName, sheet, ranges);
 		}
@@ -12077,6 +12088,10 @@ QueryTableField.prototype.clone = function() {
 	ExternalReference.prototype.updateSheetData = function (sheetName, sheet, ranges) {
 		var index = this.getSheetByName(sheetName);
 		var externalSheetDataSet = this.SheetDataSet[index];
+		if (!externalSheetDataSet) {
+			this.addSheetName(sheetName, true);
+			externalSheetDataSet = this.getSheetDataSetByName(sheetName);
+		}
 		externalSheetDataSet.initFromSheet(sheet, ranges);
 
 		//из SheetDataSet данные добавляем во временный лист, который хранится в worksheets
@@ -12087,10 +12102,17 @@ QueryTableField.prototype.clone = function() {
 	ExternalReference.prototype.initWorksheetFromSheetDataSet = function (sheetName) {
 		var sheetDataSetIndex = this.getSheetByName(sheetName);
 		if (null !== sheetDataSetIndex) {
+
 			var sheetDataSet = this.SheetDataSet[sheetDataSetIndex];
-			var wb = new AscCommonExcel.Workbook();
-			var ws = new AscCommonExcel.Worksheet(wb);
-			this.worksheets[sheetName] = ws;
+			var ws = this.worksheets[sheetName];
+			if (!this.worksheets[sheetName]) {
+				var wb = new AscCommonExcel.Workbook();
+				var ws = new AscCommonExcel.Worksheet(wb);
+				ws.sName = sheetName;
+
+				this.worksheets[sheetName] = ws;
+			}
+
 
 			//клонируем все данные из SheetDataSet в данный темповый Worksheet
 			for (var i = 0; i < sheetDataSet.Row.length; i++) {
@@ -12231,6 +12253,10 @@ QueryTableField.prototype.clone = function() {
 					var range = sheet.getRange2(externalCell.Ref);
 					range._foreachNoEmpty(function (cell) {
 						externalCell.initFromCell(cell, true);
+
+						var api_sheet = Asc['editor'];
+						var wb = api_sheet.wbModel;
+						wb.dependencyFormulas.addToChangedCell(cell);
 					});
 				}
 			}

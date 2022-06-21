@@ -5529,7 +5529,7 @@ var editor;
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
 
-  	this.asc_updateExternalReference([0]);
+  	this.asc_updateExternalReference([0,1,2]);
   	return;
 
 
