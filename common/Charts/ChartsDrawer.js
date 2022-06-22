@@ -6007,7 +6007,7 @@ drawBarChart.prototype = {
 
 	_calculateDLbl: function (chartSpace, ser, val, bLayout, serIdx) {
 		var point = this.cChartDrawer.getIdxPoint(this.chart.series[ser], val);
-		if (!this.paths.series[serIdx][val] || !point || !point.compiledDlb) {
+		if (!this.paths || !this.paths.series || !this.paths.series[serIdx] || !this.paths.series[serIdx][val] || !point || !point.compiledDlb) {
 			return;
 		}
 
@@ -8959,9 +8959,9 @@ drawHBarChart.prototype = {
 
 	_calculateDLbl: function (chartSpace, ser, val, bLayout, serIdx) {
 		var point = this.cChartDrawer.getIdxPoint(this.chart.series[ser], val);
-		var path = this.paths.series[serIdx][val];
+		var path = this.paths && this.paths.series && this.paths.series[serIdx] && this.paths.series[serIdx][val];
 
-		if(!point) {
+		if(!point || !path) {
 			return;
 		}
 
@@ -11550,7 +11550,7 @@ drawDoughnutChart.prototype = {
 	},
 
 	_calculateDLbl: function (chartSpace, ser, val) {
-		if (!AscFormat.isRealNumber(this.paths.series[ser][val])) {
+		if (!this.paths || !this.paths.series || !this.paths.series[ser] || !AscFormat.isRealNumber(this.paths.series[ser][val])) {
 			return;
 		}
 
@@ -11763,7 +11763,6 @@ drawRadarChart.prototype = {
 		}
 
 		var point = numCache.pts[val];
-		var path;
 
 		var oCommand, oPath;
 		if (this.paths.series) {
@@ -12270,7 +12269,7 @@ drawScatterChart.prototype = {
 			return;
 		}
 
-		if (this.paths.points) {
+		if (this.paths && this.paths.points) {
 			if (this.paths.points[ser] && this.paths.points[ser][val]) {
 				var oPath = this.cChartSpace.GetPath(this.paths.points[ser][val].path);
 				path = oPath.getCommandByIndex(0);
@@ -12735,7 +12734,7 @@ drawBubbleChart.prototype = {
 
 		var path;
 
-		if (this.paths.points) {
+		if (this.paths && this.paths.points) {
 			if (this.paths.points[ser] && this.paths.points[ser][val]) {
 				var oPath = this.cChartSpace.GetPath(this.paths.points[ser][val].path);
 				path = oPath.getCommandByIndex(0);
