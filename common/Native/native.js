@@ -31,7 +31,7 @@
  */
 
 var editor = undefined;
-var window = {};
+var window = ("undefined" === typeof window) ? {} : window;
 var navigator = {};
 navigator.userAgent = "chrome";
 window.navigator = navigator;
@@ -110,8 +110,8 @@ function native_context2d(parent)
 
 	this.globalAlpha = 0;
 	this.globalCompositeOperation = "";
-	this.fillStyle = "";
-	this.strokeStyle = "";
+	this.fillStyle = "#000000";
+	this.strokeStyle = "#000000";
 
 	this.lineWidth = 0;
 	this.lineCap = 0;
@@ -286,6 +286,8 @@ function NativeOpenFileData(data, version, xlsx_file_path, options)
 	if (window.NATIVE_DOCUMENT_TYPE == "presentation" || window.NATIVE_DOCUMENT_TYPE == "document")
 	{
         Api = new window["Asc"]["asc_docs_api"]({});
+		if (options && options["documentLayout"] && undefined !== options["documentLayout"]["openedAt"])
+			Api.setOpenedAt(options["documentLayout"]["openedAt"]);
         Api.asc_nativeOpenFile(data, version);
 	}
 	else
@@ -305,6 +307,13 @@ var setInterval = window.setInterval = function() {};
 var console = {
 	log: function (param) { window.native.ConsoleLog(param); },
 	time: function (param) {},
-	timeEnd: function (param) {}
+	timeEnd: function (param) {},
+	warn: function() {}
 };
 
+var performance = window.performance = (function(){
+	var basePerformanceOffset = Date.now();
+	return {
+		now : function() { return Date.now() - basePerformanceOffset; }
+	};
+})();

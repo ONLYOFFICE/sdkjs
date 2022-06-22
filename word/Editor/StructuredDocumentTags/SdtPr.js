@@ -521,11 +521,16 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 
 	if (undefined !== this.TextFormPr && oContentControl.IsInlineLevel())
 	{
-		var isCombChanged = (!oContentControl.Pr.TextForm || this.TextFormPr.Comb !== oContentControl.Pr.TextForm.Comb);
+		let isCombChanged = (!oContentControl.Pr.TextForm || this.TextFormPr.Comb !== oContentControl.Pr.TextForm.Comb);
+		let isMaxChanged  = (!oContentControl.Pr.TextForm || this.TextFormPr.MaxCharacters !== oContentControl.Pr.TextForm.MaxCharacters);
+
 		if (oContentControl.IsFixedForm() && isCombChanged)
 			oContentControl.UpdateFixedFormCombWidthByFormSize(this.TextFormPr);
 
 		oContentControl.SetTextFormPr(this.TextFormPr);
+
+		if (this.TextFormPr.Comb && (isCombChanged || isMaxChanged))
+			oContentControl.TrimCombForm();
 
 		if (oContentControl.IsFixedForm() && !isCombChanged)
 			oContentControl.UpdateFixedFormSizeByCombWidth();
@@ -766,7 +771,7 @@ CSpecialFormsGlobalSettings.prototype.Copy = function()
  */
 CSpecialFormsGlobalSettings.prototype.IsDefault = function()
 {
-	return (undefined === this.Highlight);
+	return (undefined === this.Highlight || (!this.Highlight.IsAuto() && this.Highlight.IsEqualRGB({r : 201, g: 200, b : 255})));
 };
 CSpecialFormsGlobalSettings.prototype.Write_ToBinary = function(oWriter)
 {
@@ -1229,7 +1234,7 @@ function CSdtTextFormPr(nMax, isComb, nWidth, nSymbol, sFont, oCombBorder)
 	this.CombPlaceholderSymbol = nSymbol;
 	this.CombPlaceholderFont   = sFont;
 	this.CombBorder            = undefined !== oCombBorder ? oCombBorder.Copy() : undefined;
-	this.MultiLine             = true;
+	this.MultiLine             = false;
 	this.AutoFit               = false;
 }
 CSdtTextFormPr.prototype.Copy = function()
@@ -1249,7 +1254,8 @@ CSdtTextFormPr.prototype.Copy = function()
 };
 CSdtTextFormPr.prototype.IsEqual = function(oOther)
 {
-	return (this.MaxCharacters === oOther.MaxCharacters
+	return (oOther
+		&& this.MaxCharacters === oOther.MaxCharacters
 		&& this.Comb === oOther.Comb
 		&& this.Width === oOther.Width
 		&& this.CombPlaceholderSymbol === oOther.CombPlaceholderSymbol
@@ -1333,7 +1339,10 @@ CSdtTextFormPr.prototype.GetMaxCharacters = function()
 };
 CSdtTextFormPr.prototype.SetMaxCharacters = function(nMax)
 {
-	this.MaxCharacters = nMax;
+	if (undefined === nMax || null === nMax || nMax <= 0)
+		this.MaxCharacters = -1;
+	else
+		this.MaxCharacters = nMax | 0;
 };
 CSdtTextFormPr.prototype.GetComb = function()
 {
@@ -1404,6 +1413,9 @@ CSdtTextFormPr.prototype.SetMultiLine = function(isMultiLine)
 };
 CSdtTextFormPr.prototype.GetAutoFit = function()
 {
+	if (this.Comb)
+		return false;
+
 	return this.AutoFit;
 };
 CSdtTextFormPr.prototype.SetAutoFit = function(isAutoFit)
@@ -1440,7 +1452,8 @@ CSdtFormPr.prototype.Copy = function()
 };
 CSdtFormPr.prototype.IsEqual = function(oOther)
 {
-	return (this.Key === oOther.Key
+	return (oOther
+		&& this.Key === oOther.Key
 		&& this.Label === oOther.Label
 		&& this.HelpText === oOther.HelpText
 		&& this.Required === oOther.Required
@@ -1593,7 +1606,7 @@ CSdtFormPr.prototype.SetAscBorder = function(oAscBorder)
 		this.Border.Set_FromObject(oAscBorder);
 	}
 };
-CSdtFormPr.prototype.SetShd = function()
+CSdtFormPr.prototype.GetShd = function()
 {
 	return this.Shd;
 };
@@ -1604,16 +1617,39 @@ CSdtFormPr.prototype.GetAscShd = function()
 
 	return (new Asc.asc_CParagraphShd(this.Shd));
 };
-CSdtFormPr.prototype.SetAscShd = function(oAscShd)
+CSdtFormPr.prototype.SetAscShd = function(isShd, oAscColor)
 {
-	if (!oAscShd)
+	if (!isShd || !oAscColor)
 	{
 		this.Shd = undefined;
 	}
 	else
 	{
+		var oUnifill        = new AscFormat.CUniFill();
+		oUnifill.fill       = new AscFormat.CSolidFill();
+		oUnifill.fill.color = AscFormat.CorrectUniColor(oAscColor, oUnifill.fill.color, 1);
+
+		var oLogicDocument = editor.WordControl.m_oLogicDocument;
+		if (oLogicDocument && oLogicDocument.IsDocumentEditor())
+			oUnifill.check(oLogicDocument.GetTheme(), oLogicDocument.GetColorMap());
+
 		this.Shd = new CDocumentShd();
-		this.Shd.Set_FromObject(oAscShd);
+		this.Shd.Set_FromObject({
+			Value: Asc.c_oAscShd.Clear,
+			Color: {
+				r: oAscColor.asc_getR(),
+				g: oAscColor.asc_getG(),
+				b: oAscColor.asc_getB(),
+				Auto: false
+			},
+			Fill: {
+				r: oAscColor.asc_getR(),
+				g: oAscColor.asc_getG(),
+				b: oAscColor.asc_getB(),
+				Auto: false
+			},
+			Unifill: oUnifill
+		});
 	}
 };
 
@@ -1639,7 +1675,12 @@ CSdtPictureFormPr.prototype.Copy = function()
 };
 CSdtPictureFormPr.prototype.IsEqual = function(oOther)
 {
-	return (this.ScaleFlag === oOther.ScaleFlag && this.Proportions === oOther.Proportions && this.Borders === oOther.Borders && Math.abs(this.ShiftX - oOther.ShiftX) < 0.001 && Math.abs(this.ShiftY - oOther.ShiftY) < 0.001);
+	return (oOther
+		&& this.ScaleFlag === oOther.ScaleFlag
+		&& this.Proportions === oOther.Proportions
+		&& this.Borders === oOther.Borders
+		&& Math.abs(this.ShiftX - oOther.ShiftX) < 0.001
+		&& Math.abs(this.ShiftY - oOther.ShiftY) < 0.001);
 };
 CSdtPictureFormPr.prototype.WriteToBinary = function(oWriter)
 {

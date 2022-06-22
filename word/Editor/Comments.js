@@ -35,12 +35,13 @@
  * @param {Window} window
  * @param {undefined} undefined
  */
-    function (window, undefined) {
+function(window, undefined)
+{
 
-// Import
-var g_oTableId = AscCommon.g_oTableId;
-var History = AscCommon.History;
-
+	/**
+	 * Класс для работы с данными комментария
+	 * @constructor
+	 */
 function CCommentData()
 {
     this.m_sText      = "";
@@ -234,12 +235,12 @@ function CCommentData()
         this.m_sUserName = Reader.GetString2();
 		this.m_sInitials = Reader.GetString2();
 
-		if ( true != Reader.GetBool() )
+		if (!Reader.GetBool())
 			this.m_nDurableId = Reader.GetULong();
 		else
 			this.m_nDurableId = null;
-        var bNullQuote = Reader.GetBool();
-        if ( true != bNullQuote  )
+
+        if (!Reader.GetBool())
             this.m_sQuoteText = Reader.GetString2();
         else
             this.m_sQuoteText = null;
@@ -388,298 +389,359 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
     this.InvertTransform = InvertTransform;
 }
 
-var comment_type_Common = 1; // Комментарий к обычному тексу
-var comment_type_HdrFtr = 2; // Комментарий к колонтитулу
+	var comment_type_Common = 1; // Комментарий к обычному тексу
+	var comment_type_HdrFtr = 2; // Комментарий к колонтитулу
 
-function CComment(Parent, Data)
-{
-    this.Id     = AscCommon.g_oIdCounter.Get_NewId();
+	/**
+	 * Класс для работы с комментарием
+	 * @param Parent
+	 * @param Data
+	 * @constructor
+	 */
+	function CComment(Parent, Data)
+	{
+		this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
-    this.Parent = Parent;
-    this.Data   = Data;
+		this.Parent = Parent;
+		this.Data   = Data;
 
-    this.m_oTypeInfo =
-    {
-        Type : comment_type_Common,
-        Data : null
-    };
+		this.m_oTypeInfo = {
+			Type : comment_type_Common,
+			Data : null
+		};
 
-    this.StartId = null; // Id объекта, в содержимом которого идет начало комментария
-    this.EndId   = null; // Id объекта, в содержимом которого идет конец комментария
+		this.RangeStart = null; // Id начала комментария
+		this.RangeEnd   = null; // Id конца комментария
+		this.Reference  = null; // Id ссылки на комментарий
+		this.Position   = -1;   // Позиция комментария в общем списке
 
-    this.m_oStartInfo =
-    {
-        X       : 0,
-        Y       : 0,
-        H       : 0,
-        PageNum : 0
-    };
+		this.m_oStartInfo = {
+			X : 0,
+			Y : 0,
+			H : 0,
+			PageNum : 0
+		};
 
-    this.Lock = new AscCommon.CLock(); // Зажат ли комментарий другим пользователем
-    if ( false === AscCommon.g_oIdCounter.m_bLoad )
-    {
-        this.Lock.Set_Type( AscCommon.locktype_Mine, false );
-        AscCommon.CollaborativeEditing.Add_Unlock2( this );
-    }
+		this.Lock = new AscCommon.CLock(); // Зажат ли комментарий другим пользователем
+		if (false === AscCommon.g_oIdCounter.m_bLoad)
+		{
+			this.Lock.Set_Type(AscCommon.locktype_Mine, false);
+			AscCommon.CollaborativeEditing.Add_Unlock2(this);
+		}
 
-    this.Copy = function()
-    {
-        return new CComment(this.Parent, this.Data.Copy());
-    };
+		// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
+		AscCommon.g_oTableId.Add(this, this.Id);
+	}
+	CComment.prototype.Copy = function()
+	{
+		return new CComment(this.Parent, this.Data.Copy());
+	};
+	CComment.prototype.SetRangeStart = function(sId)
+	{
+		if (sId !== this.RangeStart)
+		{
+			AscCommon.History.Add(new CChangesCommentRangeStart(this, this.RangeStart, sId));
+			this.RangeStart = sId;
+			this.UpdatePosition();
+		}
+	};
+	CComment.prototype.GetRangeStart = function()
+	{
+		return this.RangeStart;
+	};
+	CComment.prototype.SetRangeEnd = function(sId)
+	{
+		if (sId !== this.RangeEnd)
+		{
+			AscCommon.History.Add(new CChangesCommentRangeEnd(this, this.RangeEnd, sId));
+			this.RangeEnd = sId;
+		}
+	};
+	CComment.prototype.GetRangeEnd = function()
+	{
+		return this.RangeEnd;
+	};
+	CComment.prototype.SetRangeMark = function(oMark)
+	{
+		if (!oMark)
+			return;
 
-    this.Set_StartId = function(ObjId)
-    {
-        this.StartId = ObjId;
-    };
-
-    this.Set_EndId = function(ObjId)
-    {
-        this.EndId = ObjId;
-    };
-
-    this.Set_StartInfo = function(PageNum, X, Y, H)
-    {
-        this.m_oStartInfo.X       = X;
-        this.m_oStartInfo.Y       = Y;
-        this.m_oStartInfo.H       = H;
-        this.m_oStartInfo.PageNum = PageNum;
-    };
-
-	this.Set_Data = function(Data)
+		if (oMark.IsCommentStart())
+			this.SetRangeStart(oMark.GetId());
+		else
+			this.SetRangeEnd(oMark.GetId());
+	};
+	CComment.prototype.UpdatePosition = function()
+	{
+		var oLogicDocument = this.private_GetLogicDocument();
+		if (oLogicDocument)
+			oLogicDocument.UpdateCommentPosition(this);
+	};
+	CComment.prototype.Set_StartInfo = function(PageNum, X, Y, H)
+	{
+		this.m_oStartInfo.X       = X;
+		this.m_oStartInfo.Y       = Y;
+		this.m_oStartInfo.H       = H;
+		this.m_oStartInfo.PageNum = PageNum;
+	};
+	CComment.prototype.Set_Data = function(Data)
 	{
 		this.SetData(Data);
 	};
-
-    this.Remove_Marks = function()
-    {
-        var ObjStart = g_oTableId.Get_ById(this.StartId);
-        var ObjEnd   = g_oTableId.Get_ById(this.EndId);
-
-        if ( ObjStart === ObjEnd )
-        {
-            if ( null != ObjStart )
-                ObjStart.RemoveCommentMarks( this.Id );
-        }
-        else
-        {
-            if ( null != ObjStart )
-                ObjStart.RemoveCommentMarks( this.Id );
-
-            if ( null != ObjEnd )
-                ObjEnd.RemoveCommentMarks( this.Id );
-        }
-    };
-
-    this.Set_TypeInfo = function(Type, Data)
-    {
-        var New =
-        {
-            Type : Type,
-            Data : Data
-        };
-
-        History.Add(new CChangesCommentTypeInfo(this, this.m_oTypeInfo, New));
-
-        this.m_oTypeInfo = New;
-
-        if ( comment_type_HdrFtr === Type )
-        {
-            // Проставим начальные значения страниц (это текущий номер страницы, на котором произошло добавление комментария)
-            var PageNum = Data.Content.Get_StartPage_Absolute();
-            this.m_oStartInfo.PageNum = PageNum;
-        }
-    };
-
-    this.Get_TypeInfo = function()
-    {
-        return this.m_oTypeInfo;
-    };
-//-----------------------------------------------------------------------------------
-// Undo/Redo функции
-//-----------------------------------------------------------------------------------
-    this.Refresh_RecalcData = function(Data)
-    {
-        // Ничего не делаем (если что просто будет перерисовка)
-    };
-//-----------------------------------------------------------------------------------
-// Функции для работы с совместным редактированием
-//-----------------------------------------------------------------------------------
-    this.Get_Id = function()
-    {
-        return this.Id;
-    };
-
-    this.Write_ToBinary2 = function(Writer)
-    {
-        Writer.WriteLong( AscDFH.historyitem_type_Comment );
-
-        // String   : Id
-        // Variable : Data
-        // Long     : m_oTypeInfo.Type
-        //          : m_oTypeInfo.Data
-        //    Если comment_type_HdrFtr
-        //    String : Id колонтитула
-
-        Writer.WriteString2( this.Id );
-        this.Data.Write_ToBinary2(Writer);
-        Writer.WriteLong( this.m_oTypeInfo.Type );
-
-        if ( comment_type_HdrFtr === this.m_oTypeInfo.Type )
-            Writer.WriteString2( this.m_oTypeInfo.Data.Get_Id() );
-    };
-
-    this.Read_FromBinary2 = function(Reader)
-    {
-        // String   : Id
-        // Variable : Data
-        // Long     : m_oTypeInfo.Type
-        //          : m_oTypeInfo.Data
-        //    Если comment_type_HdrFtr
-        //    String : Id колонтитула
-
-        this.Id = Reader.GetString2();
-        this.Data = new CCommentData();
-        this.Data.Read_FromBinary2(Reader);
-        this.m_oTypeInfo.Type = Reader.GetLong();
-        if ( comment_type_HdrFtr === this.m_oTypeInfo.Type )
-            this.m_oTypeInfo.Data = g_oTableId.Get_ById( Reader.GetString2() );
-    };
-
-    this.Check_MergeData = function(arrAllParagraphs)
-    {
-        // Проверяем, не удалили ли мы параграф, к которому был сделан данный комментарий
-        // Делаем это в самом конце, а не сразу, чтобы заполнились данные о начальном и
-        // конечном параграфах.
-
-		this.Set_StartId(null);
-		this.Set_EndId(null);
-
-		var bStartSet = false, bEndSet = false;
-        for (var nIndex = 0, nCount = arrAllParagraphs.length; nIndex < nCount; ++nIndex)
-		{
-			var oPara   = arrAllParagraphs[nIndex];
-			var oResult = oPara.CheckCommentStartEnd(this.Id);
-			if (true === oResult.Start)
-			{
-				this.Set_StartId(oPara.Get_Id());
-				bStartSet = true;
-			}
-
-			if (true === oResult.End)
-			{
-				this.Set_EndId(oPara.Get_Id());
-				bEndSet = true;
-			}
-
-			if (bStartSet && bEndSet)
-				break;
-		}
-
-		var bUse = true;
-		if (null != this.StartId)
-		{
-			var ObjStart = g_oTableId.Get_ById(this.StartId);
-
-			if (true != ObjStart.Is_UseInDocument())
-				bUse = false;
-		}
-
-		if (true === bUse && null != this.EndId)
-		{
-			var ObjEnd = g_oTableId.Get_ById(this.EndId);
-
-			if (true != ObjEnd.Is_UseInDocument())
-				bUse = false;
-		}
-
-        if ( false === bUse )
-            editor.WordControl.m_oLogicDocument.RemoveComment( this.Id, true, false );
-    };
-
-    // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-    g_oTableId.Add( this, this.Id );
-}
-CComment.prototype.GetId = function()
-{
-	return this.Id;
-};
-CComment.prototype.GetData = function()
-{
-	return this.Data;
-};
-CComment.prototype.SetData = function(oData)
-{
-	History.Add(new CChangesCommentChange(this, this.Data, oData));
-	this.Data = oData;
-};
-CComment.prototype.GetUserName = function()
-{
-	if (this.Data)
-		return this.Data.GetUserName();
-
-	return "";
-};
-CComment.prototype.IsSolved = function()
-{
-	if (this.Data)
-		return this.Data.IsSolved();
-
-	return false;
-};
-CComment.prototype.IsGlobalComment = function()
-{
-	return (!this.Data || null === this.Data.GetQuoteText());
-};
-CComment.prototype.GetDurableId = function()
-{
-	if (this.Data)
-		return this.Data.m_nDurableId;
-
-	return -1;
-};
-CComment.prototype.CreateNewCommentsGuid = function()
-{
-	this.Data && this.Data.CreateNewCommentsGuid();
-};
-/**
- * Является ли текущий пользователем автором комментария
- * @returns {boolean}
- */
-CComment.prototype.IsCurrentUser = function()
-{
-	var oEditor = editor;
-	if (oEditor && oEditor.DocInfo && this.Data)
+	CComment.prototype.RemoveMarks = function()
 	{
-		var sUserId = oEditor.DocInfo.get_UserId();
-		return (sUserId === this.Data.m_sUserId);
-	}
+		var oMark = AscCommon.g_oTableId.Get_ById(this.RangeStart);
+		if (oMark)
+			oMark.RemoveMark();
 
-	return true;
-};
-CComment.prototype.MoveCursorToStart = function()
-{
-	var oStartPara = g_oTableId.Get_ById(this.StartId);
-	if (oStartPara && (oStartPara instanceof Paragraph))
+		oMark = AscCommon.g_oTableId.Get_ById(this.RangeEnd);
+		if (oMark)
+			oMark.RemoveMark();
+	};
+	CComment.prototype.Set_TypeInfo = function(Type, Data)
 	{
-		oStartPara.MoveCursorToCommentMark(this.Id);
-	}
-};
+		var New = {
+			Type : Type,
+			Data : Data
+		};
 
-var comments_NoComment        = 0;
-var comments_NonActiveComment = 1;
-var comments_ActiveComment    = 2;
+		AscCommon.History.Add(new CChangesCommentTypeInfo(this, this.m_oTypeInfo, New));
 
-function CComments()
+		this.m_oTypeInfo = New;
+
+		if (comment_type_HdrFtr === Type)
+		{
+			// Проставим начальные значения страниц (это текущий номер страницы, на котором произошло добавление комментария)
+			this.m_oStartInfo.PageNum = Data.Content.Get_StartPage_Absolute();
+		}
+	};
+	CComment.prototype.Get_TypeInfo = function()
+	{
+		return this.m_oTypeInfo;
+	};
+	//------------------------------------------------------------------------------------------------------------------
+	// Undo/Redo функции
+	//------------------------------------------------------------------------------------------------------------------
+	CComment.prototype.Refresh_RecalcData = function(Data)
+	{
+		// Ничего не делаем (если что просто будет перерисовка)
+	};
+	//------------------------------------------------------------------------------------------------------------------
+	// Функции для работы с совместным редактированием
+	//------------------------------------------------------------------------------------------------------------------
+	CComment.prototype.Get_Id = function()
+	{
+		return this.Id;
+	};
+	CComment.prototype.Write_ToBinary2 = function(Writer)
+	{
+		Writer.WriteLong(AscDFH.historyitem_type_Comment);
+
+		// String   : Id
+		// Variable : Data
+		// Long     : m_oTypeInfo.Type
+		//          : m_oTypeInfo.Data
+		//    Если comment_type_HdrFtr
+		//    String : Id колонтитула
+		// Long     : Flags
+		//        1 : RangeStart
+		//        2 : RangeEnd
+		//        3 : Reference
+
+		Writer.WriteString2(this.Id);
+		this.Data.Write_ToBinary2(Writer);
+		Writer.WriteLong(this.m_oTypeInfo.Type);
+
+		if (comment_type_HdrFtr === this.m_oTypeInfo.Type)
+			Writer.WriteString2(this.m_oTypeInfo.Data.Get_Id());
+
+		var nFlagsPos = Writer.GetCurPosition();
+		Writer.Skip(4);
+		var nFlags = 0;
+
+		if (this.RangeStart)
+		{
+			Writer.WriteString2(this.RangeStart);
+			nFlags |= 1;
+		}
+
+		if (this.RangeEnd)
+		{
+			Writer.WriteString2(this.RangeEnd);
+			nFlags |= 2;
+		}
+
+		if (this.Reference)
+		{
+			Writer.WriteString2(this.Reference);
+			nFlags |= 4;
+		}
+
+		var nCurPos = Writer.GetCurPosition();
+		Writer.Seek(nFlagsPos);
+		Writer.WriteLong(nFlags);
+		Writer.Seek(nCurPos);
+	};
+	CComment.prototype.Read_FromBinary2 = function(Reader)
+	{
+		// String   : Id
+		// Variable : Data
+		// Long     : m_oTypeInfo.Type
+		//          : m_oTypeInfo.Data
+		//    Если comment_type_HdrFtr
+		//    String : Id колонтитула
+		// Long     : Flags
+		//        1 : RangeStart
+		//        2 : RangeEnd
+		//        3 : Reference
+
+		this.Id   = Reader.GetString2();
+		this.Data = new CCommentData();
+		this.Data.Read_FromBinary2(Reader);
+		this.m_oTypeInfo.Type = Reader.GetLong();
+		if (comment_type_HdrFtr === this.m_oTypeInfo.Type)
+			this.m_oTypeInfo.Data = AscCommon.g_oTableId.Get_ById(Reader.GetString2());
+
+		if (editor && editor.WordControl.m_oLogicDocument)
+			this.Parent = editor.WordControl.m_oLogicDocument.Comments;
+
+		var nFlags = Reader.GetLong();
+		if (nFlags & 1)
+			this.RangeStart = Reader.GetString2();
+
+		if (nFlags & 2)
+			this.RangeEnd = Reader.GetString2();
+
+		if (nFlags & 4)
+			this.Reference = Reader.GetString2();
+	};
+	CComment.prototype.GetId = function()
+	{
+		return this.Id;
+	};
+	CComment.prototype.GetData = function()
+	{
+		return this.Data;
+	};
+	CComment.prototype.SetData = function(oData)
+	{
+		AscCommon.History.Add(new CChangesCommentChange(this, this.Data, oData));
+		this.Data = oData;
+	};
+	CComment.prototype.GetUserName = function()
+	{
+		if (this.Data)
+			return this.Data.GetUserName();
+
+		return "";
+	};
+	CComment.prototype.IsQuoted = function()
+	{
+		return (this.Data && null !== this.Data.GetQuoteText());
+	};
+	CComment.prototype.IsSolved = function()
+	{
+		if (this.Data)
+			return this.Data.IsSolved();
+
+		return false;
+	};
+	CComment.prototype.IsGlobalComment = function()
+	{
+		return (!this.Data || null === this.Data.GetQuoteText());
+	};
+	CComment.prototype.GetDurableId = function()
+	{
+		if (this.Data)
+			return this.Data.m_nDurableId;
+
+		return -1;
+	};
+	CComment.prototype.CreateNewCommentsGuid = function()
+	{
+		this.Data && this.Data.CreateNewCommentsGuid();
+	};
+	/**
+	 * Является ли текущий пользователем автором комментария
+	 * @returns {boolean}
+	 */
+	CComment.prototype.IsCurrentUser = function()
+	{
+		var oEditor = editor;
+		if (oEditor && oEditor.DocInfo && this.Data)
+		{
+			var sUserId = oEditor.DocInfo.get_UserId();
+			return (sUserId === this.Data.m_sUserId);
+		}
+
+		return true;
+	};
+	CComment.prototype.MoveCursorToStart = function()
+	{
+		var oRangeStart = AscCommon.g_oTableId.Get_ById(this.RangeStart);
+		if (oRangeStart)
+			oRangeStart.MoveCursorToMark();
+	};
+	CComment.prototype.SetPosition = function(nPos)
+	{
+		if (this.Position !== nPos)
+		{
+			this.Position = nPos;
+			return true;
+		}
+
+		return false;
+	};
+	CComment.prototype.GetPosition = function()
+	{
+		return this.Position;
+	};
+	/**
+	 * Получаем позицию внутри документа
+	 * returns {?Array}
+	 */
+	CComment.prototype.GetDocumentPosition = function()
+	{
+		var oMark = AscCommon.g_oTableId.Get_ById(this.RangeStart);
+
+		if (!oMark || !oMark.Is_UseInDocument())
+			return null;
+
+		return oMark.GetDocumentPositionFromObject();
+	};
+	CComment.prototype.private_GetLogicDocument = function()
+	{
+		if (this.Parent)
+			return this.Parent.LogicDocument;
+
+		return null;
+	};
+
+	var comments_NoComment        = 0;
+	var comments_NonActiveComment = 1;
+	var comments_ActiveComment    = 2;
+
+	/**
+	 * Класс для работы с комментариями документов
+	 * oLogicDocument {CDocument}
+	 * @constructor
+	 */
+	function CComments(oLogicDocument)
 {
-    this.Id     = AscCommon.g_oIdCounter.Get_NewId();
+    this.Id = AscCommon.g_oIdCounter.Get_NewId();
+
+	this.LogicDocument = oLogicDocument;
 
     this.m_bUse       = false; // Используются ли комментарии
 	this.m_bUseSolved = false; // Использовать ли разрешенные комментарии
 
-    this.m_aComments    = {};    // ассоциативный  массив
-    this.m_sCurrent     = null;  // текущий комментарий
+    this.m_arrCommentsById = {};    // ассоциативный  массив
+    this.m_sCurrent        = null;  // текущий комментарий
+	this.m_arrComments     = [];    // Массив
 
     this.Pages = [];
+
+    this.MarksToCheck = []; // Для ситуаций, когда мы создаем сначала ParaComment и только потом Comment (например, во время открытия)
 
     this.Get_Id = function()
     {
@@ -696,36 +758,12 @@ function CComments()
         return this.m_bUse;
     };
 
-	this.Add = function(Comment)
-	{
-		var Id = Comment.Get_Id();
-
-		History.Add(new CChangesCommentsAdd(this, Id, Comment));
-		this.m_aComments[Id] = Comment;
-	};
-
     this.Get_ById = function(Id)
     {
-        if ( "undefined" != typeof(this.m_aComments[Id]) )
-            return this.m_aComments[Id];
+        if ( "undefined" != typeof(this.m_arrCommentsById[Id]) )
+            return this.m_arrCommentsById[Id];
 
         return null;
-    };
-
-    this.Remove_ById = function(Id)
-    {
-        if ( "undefined" != typeof(this.m_aComments[Id]) )
-        {
-            History.Add(new CChangesCommentsRemove(this, Id, this.m_aComments[Id]));
-
-            // Сначала удаляем комментарий из списка комментариев, чтобы данная функция не зацикливалась на вызове Remove_Marks
-            var Comment = this.m_aComments[Id];
-            delete this.m_aComments[Id];
-            Comment.Remove_Marks();
-            return true;
-        }
-
-        return false;
     };
 
     this.Reset_Drawing = function(PageNum)
@@ -769,15 +807,7 @@ function CComments()
 
     this.Check_MergeData = function()
     {
-    	var arrAllParagraphs = null;
-
-        for (var Id in this.m_aComments)
-        {
-        	if (!arrAllParagraphs && editor && editor.WordControl.m_oLogicDocument)
-        		arrAllParagraphs = editor.WordControl.m_oLogicDocument.GetAllParagraphs({All : true});
-
-            this.m_aComments[Id].Check_MergeData(arrAllParagraphs);
-        }
+    	this.UpdateAll();
     };
 
 //-----------------------------------------------------------------------------------
@@ -789,151 +819,334 @@ function CComments()
     };
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-    g_oTableId.Add( this, this.Id );
+	AscCommon.g_oTableId.Add( this, this.Id );
 }
-CComments.prototype.GetByXY = function(PageNum, X, Y)
-{
-	var Page = this.Pages[PageNum], _X, _Y;
-	if (undefined !== Page)
+	CComments.prototype.GetById = function(sId)
 	{
-		var Count = Page.length;
-		for (var Pos = 0; Pos < Count; Pos++)
-		{
-			var DrawingRect = Page[Pos];
-			if (!DrawingRect.InvertTransform)
-			{
-				_X = X;
-				_Y = Y;
-			}
-			else
-			{
-				_X = DrawingRect.InvertTransform.TransformPointX(X, Y);
-				_Y = DrawingRect.InvertTransform.TransformPointY(X, Y);
-			}
-			if (_X >= DrawingRect.X && _X <= DrawingRect.X + DrawingRect.W && _Y >= DrawingRect.Y && _Y <= DrawingRect.Y + DrawingRect.H)
-			{
-				var arrComments = [];
-				for (var nCommentIndex = 0, nCommentsCount = DrawingRect.CommentId.length; nCommentIndex < nCommentsCount; ++nCommentIndex)
-				{
-					var oComment = this.Get_ById(DrawingRect.CommentId[nCommentIndex]);
-					if (oComment)
-						arrComments.push(oComment);
-				}
+		if (this.m_arrCommentsById[sId])
+			return this.m_arrCommentsById[sId];
 
-				return arrComments;
+		return null;
+	};
+	CComments.prototype.Add = function(oComment)
+	{
+		var sId = oComment.GetId();
+
+		AscCommon.History.Add(new CChangesCommentsAdd(this, sId, oComment));
+		this.m_arrCommentsById[sId] = oComment;
+
+		if (this.LogicDocument)
+			this.LogicDocument.UpdateCommentPosition(oComment);
+	};
+	CComments.prototype.Remove_ById = function(sId)
+	{
+		if (this.m_arrCommentsById[sId])
+		{
+			AscCommon.History.Add(new CChangesCommentsRemove(this, sId, this.m_arrCommentsById[sId]));
+
+			// Сначала удаляем комментарий из списка комментариев, чтобы данная функция не зацикливалась на вызове RemoveMarks
+			var oComment = this.m_arrCommentsById[sId];
+			delete this.m_arrCommentsById[sId];
+			oComment.RemoveMarks();
+
+			if (this.LogicDocument)
+				this.LogicDocument.UpdateCommentPosition(oComment);
+
+			return true;
+		}
+
+		return false;
+	};
+	CComments.prototype.GetByXY                     = function(PageNum, X, Y)
+	{
+		var Page = this.Pages[PageNum], _X, _Y;
+		if (undefined !== Page)
+		{
+			var Count = Page.length;
+			for (var Pos = 0; Pos < Count; Pos++)
+			{
+				var DrawingRect = Page[Pos];
+				if (!DrawingRect.InvertTransform)
+				{
+					_X = X;
+					_Y = Y;
+				}
+				else
+				{
+					_X = DrawingRect.InvertTransform.TransformPointX(X, Y);
+					_Y = DrawingRect.InvertTransform.TransformPointY(X, Y);
+				}
+				if (_X >= DrawingRect.X && _X <= DrawingRect.X + DrawingRect.W && _Y >= DrawingRect.Y && _Y <= DrawingRect.Y + DrawingRect.H)
+				{
+					var arrComments = [];
+					for (var nCommentIndex = 0, nCommentsCount = DrawingRect.CommentId.length; nCommentIndex < nCommentsCount; ++nCommentIndex)
+					{
+						var oComment = this.Get_ById(DrawingRect.CommentId[nCommentIndex]);
+						if (oComment)
+							arrComments.push(oComment);
+					}
+
+					return arrComments;
+				}
 			}
 		}
-	}
 
-	return [];
-};
-CComments.prototype.GetByRect = function(nPageIndex, nX, nY, nW, nH)
-{
-	var oPage = this.Pages[nPageIndex];
-	var nX1, nX2, nY1, nY2;
-
-	if (oPage)
+		return [];
+	};
+	CComments.prototype.GetByRect                   = function(nPageIndex, nX, nY, nW, nH)
 	{
-		for (var nIndex = 0, nCount = oPage.length; nIndex < nCount; ++nIndex)
+		var oPage = this.Pages[nPageIndex];
+		var nX1, nX2, nY1, nY2;
+
+		if (oPage)
 		{
-			var oDrawingRect = oPage[nIndex];
+			for (var nIndex = 0, nCount = oPage.length; nIndex < nCount; ++nIndex)
+			{
+				var oDrawingRect = oPage[nIndex];
 
-			if (!oDrawingRect.InvertTransform)
-			{
-				nX1 = nX;
-				nY1 = nY;
-				nX2 = nX + nW;
-				nY2 = nY + nH;
-			}
-			else
-			{
-				nX1 = oDrawingRect.InvertTransform.TransformPointX(nX, nY);
-				nY1 = oDrawingRect.InvertTransform.TransformPointY(nX, nY);
-				nX2 = oDrawingRect.InvertTransform.TransformPointX(nX + nW, nY + nH);
-				nY2 = oDrawingRect.InvertTransform.TransformPointY(nX + nW, nY + nH);
-			}
-
-			if (nX1 > nX2)
-			{
-				var nTemp = nX2;
-				nX2       = nX1;
-				nX1       = nTemp;
-			}
-
-			if (nY1 > nY2)
-			{
-				var nTemp = nY2;
-				nY2       = nY1;
-				nY1       = nTemp;
-			}
-
-			if (Math.max(nX1, oDrawingRect.X) < Math.min(nX2, oDrawingRect.X + oDrawingRect.W)
-				&& Math.max(nY1, oDrawingRect.Y) < Math.min(nY2, oDrawingRect.Y + oDrawingRect.H))
-			{
-				var arrComments = [];
-				for (var nCommentIndex = 0, nCommentsCount = oDrawingRect.CommentId.length; nCommentIndex < nCommentsCount; ++nCommentIndex)
+				if (!oDrawingRect.InvertTransform)
 				{
-					var oComment = this.Get_ById(oDrawingRect.CommentId[nCommentIndex]);
-					if (oComment)
-						arrComments.push(oComment);
+					nX1 = nX;
+					nY1 = nY;
+					nX2 = nX + nW;
+					nY2 = nY + nH;
+				}
+				else
+				{
+					nX1 = oDrawingRect.InvertTransform.TransformPointX(nX, nY);
+					nY1 = oDrawingRect.InvertTransform.TransformPointY(nX, nY);
+					nX2 = oDrawingRect.InvertTransform.TransformPointX(nX + nW, nY + nH);
+					nY2 = oDrawingRect.InvertTransform.TransformPointY(nX + nW, nY + nH);
 				}
 
-				return arrComments;
+				if (nX1 > nX2)
+				{
+					var nTemp = nX2;
+					nX2       = nX1;
+					nX1       = nTemp;
+				}
+
+				if (nY1 > nY2)
+				{
+					var nTemp = nY2;
+					nY2       = nY1;
+					nY1       = nTemp;
+				}
+
+				if (Math.max(nX1, oDrawingRect.X) < Math.min(nX2, oDrawingRect.X + oDrawingRect.W)
+					&& Math.max(nY1, oDrawingRect.Y) < Math.min(nY2, oDrawingRect.Y + oDrawingRect.H))
+				{
+					var arrComments = [];
+					for (var nCommentIndex = 0, nCommentsCount = oDrawingRect.CommentId.length; nCommentIndex < nCommentsCount; ++nCommentIndex)
+					{
+						var oComment = this.Get_ById(oDrawingRect.CommentId[nCommentIndex]);
+						if (oComment)
+							arrComments.push(oComment);
+					}
+
+					return arrComments;
+				}
 			}
 		}
-	}
 
-	return [];
-};
-CComments.prototype.GetAllComments = function()
-{
-	return this.m_aComments;
-};
-CComments.prototype.SetUseSolved = function(isUse)
-{
-	this.m_bUseSolved = isUse;
-};
-CComments.prototype.IsUseSolved = function()
-{
-	return this.m_bUseSolved;
-};
-CComments.prototype.GetCommentIdByGuid = function(sGuid)
-{
-	var nDurableId = parseInt(sGuid, 16);
-	for (var sId in this.m_aComments)
+		return [];
+	};
+	CComments.prototype.GetAllComments              = function()
 	{
-		if (this.m_aComments[sId].GetDurableId() === nDurableId)
-			return sId;
-	}
-
-	return "";
-};
-CComments.prototype.Document_Is_SelectionLocked = function(Id)
-{
-	if (Id instanceof Array)
+		return this.m_arrCommentsById;
+	};
+	CComments.prototype.SetUseSolved                = function(isUse)
 	{
-		for (var nIndex = 0, nCount = Id.length; nIndex < nCount; ++nIndex)
+		this.m_bUseSolved = isUse;
+	};
+	CComments.prototype.IsUseSolved                 = function()
+	{
+		return this.m_bUseSolved;
+	};
+	CComments.prototype.GetCommentIdByGuid          = function(sGuid)
+	{
+		var nDurableId = parseInt(sGuid, 16);
+		for (var sId in this.m_arrCommentsById)
 		{
-			var sId = Id[nIndex];
-			var oComment = this.Get_ById(sId);
+			if (this.m_arrCommentsById[sId].GetDurableId() === nDurableId)
+				return sId;
+		}
+
+		return "";
+	};
+	CComments.prototype.Document_Is_SelectionLocked = function(Id)
+	{
+		if (Id instanceof Array)
+		{
+			for (var nIndex = 0, nCount = Id.length; nIndex < nCount; ++nIndex)
+			{
+				var sId      = Id[nIndex];
+				var oComment = this.Get_ById(sId);
+				if (oComment)
+					oComment.Lock.Check(oComment.GetId());
+			}
+		}
+		else
+		{
+			var oComment = this.Get_ById(Id);
 			if (oComment)
 				oComment.Lock.Check(oComment.GetId());
 		}
-	}
-	else
+	};
+	CComments.prototype.GetById                     = function(sId)
 	{
-		var oComment = this.Get_ById(Id);
-		if (oComment)
-			oComment.Lock.Check(oComment.GetId());
-	}
-};
-CComments.prototype.GetById = function(sId)
-{
-	if (this.m_aComments[sId])
-		return this.m_aComments[sId];
+		if (this.m_arrCommentsById[sId])
+			return this.m_arrCommentsById[sId];
 
-	return null;
-};
+		return null;
+	};
+	CComments.prototype.UpdateCommentPosition = function(oComment, oChangedComments)
+	{
+		if (!oChangedComments)
+			oChangedComments = {};
+
+		var sId = oComment.GetId();
+		if (this.m_arrCommentsById[sId])
+			this.private_UpdateCommentPosition(oComment, oChangedComments);
+		else
+			this.private_RemoveCommentPosition(oComment, oChangedComments);
+
+		return oChangedComments;
+	};
+	CComments.prototype.private_UpdateCommentPosition = function(oComment, oChangedComments)
+	{
+		if (!oChangedComments)
+			oChangedComments = {};
+
+		if (!oComment.IsQuoted())
+		{
+			if (oComment !== this.m_arrComments[this.m_arrComments.length - 1])
+			{
+				for (var nIndex = 0, nCount = this.m_arrComments.length; nIndex < nCount; ++nIndex)
+				{
+					if (oComment === this.m_arrComments[nIndex])
+					{
+						this.m_arrComments.splice(nIndex, 1);
+						break;
+					}
+				}
+
+				this.m_arrComments.push(oComment);
+			}
+
+			oComment.SetPosition(this.m_arrComments.length - 1);
+			oChangedComments[oComment.GetId()] = this.m_arrComments.length - 1;
+
+			return oChangedComments;
+		}
+
+		var oCommentPos = oComment.GetDocumentPosition();
+		if (!oCommentPos)
+			return oChangedComments;
+
+		var isAdded = false;
+		for (var nIndex = 0, nCount = this.m_arrComments.length; nIndex < nCount; ++nIndex)
+		{
+			var oCurComment = this.m_arrComments[nIndex];
+			if (oComment === oCurComment)
+			{
+				if (nIndex === nCount - 1)
+					this.m_arrComments.pop();
+				else
+					this.m_arrComments.splice(nIndex, 1);
+
+				nCount--;
+				nIndex--;
+				continue;
+			}
+
+			if (!isAdded && (!oCurComment.IsQuoted() || AscCommonWord.CompareDocumentPositions(oCommentPos, oCurComment.GetDocumentPosition()) < 0))
+			{
+				this.m_arrComments.splice(nIndex, 0, oComment);
+				isAdded = true;
+				nCount++;
+			}
+
+			if (this.m_arrComments[nIndex].SetPosition(nIndex))
+				oChangedComments[this.m_arrComments[nIndex].GetId()] = nIndex;
+		}
+
+		if (!isAdded)
+		{
+			this.m_arrComments.push(oComment);
+			oComment.SetPosition(this.m_arrComments.length - 1);
+			oChangedComments[oComment.GetId()] = this.m_arrComments.length - 1;
+		}
+
+		return oChangedComments;
+	};
+	CComments.prototype.private_RemoveCommentPosition = function(oComment, oChangedComments)
+	{
+		if (!oChangedComments)
+			oChangedComments = {};
+
+		for (var nIndex = 0, nCount = this.m_arrComments.length; nIndex < nCount; ++nIndex)
+		{
+			var oCurComment = this.m_arrComments[nIndex];
+			if (oComment === oCurComment)
+			{
+				if (nIndex === nCount - 1)
+					this.m_arrComments.pop();
+				else
+					this.m_arrComments.splice(nIndex, 1);
+
+				nCount--;
+				nIndex--;
+				continue;
+			}
+
+			if (this.m_arrComments[nIndex].SetPosition(nIndex))
+				oChangedComments[this.m_arrComments[nIndex].GetId()] = nIndex;
+		}
+
+		oComment.SetPosition(-1);
+		oChangedComments[oComment.GetId()] = -1;
+	};
+	CComments.prototype.UpdateAll = function()
+	{
+		this.CheckMarks();
+
+		var oChangedComments = {};
+		for (var sId in this.m_arrCommentsById)
+		{
+			this.private_UpdateCommentPosition(this.m_arrCommentsById[sId], oChangedComments);
+		}
+
+		this.LogicDocument.GetApi().sync_ChangeCommentLogicalPosition(oChangedComments, this.GetCommentsPositionsCount());
+	};
+	/**
+	 * Получаем количество комментариев, у которых есть логическая позиция в документе
+	 * @returns {number}
+	 */
+	CComments.prototype.GetCommentsPositionsCount = function()
+	{
+		return this.m_arrComments.length;
+	};
+	CComments.prototype.AddMarkToCheck = function(oMark)
+	{
+		this.MarksToCheck.push(oMark);
+	};
+	CComments.prototype.CheckMarks = function()
+	{
+		for (var nIndex = 0, nCount = this.MarksToCheck.length; nIndex < nCount; ++nIndex)
+		{
+			var oMark      = this.MarksToCheck[nIndex];
+			var sCommentId = oMark.GetCommentId();
+			var oComment   = this.Get_ById(sCommentId);
+			var oParagraph = oMark.GetParagraph();
+			if (oComment && oParagraph)
+			{
+				oComment.SetRangeMark(oMark);
+			}
+		}
+
+		this.MarksToCheck.length = 0;
+	};
 
 /**
  * Класс для элемента начала/конца комментария в параграфе
@@ -959,7 +1172,7 @@ function ParaComment(Start, Id)
     this.LinesLength = 0;
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-    g_oTableId.Add( this, this.Id );
+	AscCommon.g_oTableId.Add( this, this.Id );
 }
 
 ParaComment.prototype = Object.create(CParagraphContentBase.prototype);
@@ -1007,14 +1220,7 @@ ParaComment.prototype.Recalculate_Range_Spaces = function(PRSA, CurLine, CurRang
 	{
 		// Заглушка для повторяющегося заголовка в таблицах
 		if (true === this.Start)
-		{
-			Comment.Set_StartId(Para.Get_Id());
 			Comment.Set_StartInfo(Page, X, Y, H);
-		}
-		else
-		{
-			Comment.Set_EndId(Para.Get_Id());
-		}
 	}
 };
 ParaComment.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)
@@ -1033,8 +1239,7 @@ ParaComment.prototype.RecalculateEndInfo = function(oPRSI)
 };
 ParaComment.prototype.SaveRecalculateObject = function(Copy)
 {
-	var RecalcObj = new CRunRecalculateObject(this.StartLine, this.StartRange);
-	return RecalcObj;
+	return new CRunRecalculateObject(this.StartLine, this.StartRange);
 };
 ParaComment.prototype.LoadRecalculateObject = function(RecalcObj, Parent)
 {
@@ -1096,7 +1301,7 @@ ParaComment.prototype.SetCommentId = function(sCommentId)
 {
 	if (this.CommentId !== sCommentId)
 	{
-		History.Add(new CChangesParaCommentCommentId(this, this.CommentId, sCommentId));
+		AscCommon.History.Add(new CChangesParaCommentCommentId(this, this.CommentId, sCommentId));
 		this.CommentId = sCommentId;
 	}
 };
@@ -1107,6 +1312,44 @@ ParaComment.prototype.GetCommentId = function()
 ParaComment.prototype.IsCommentStart = function()
 {
 	return this.Start;
+};
+ParaComment.prototype.SetParagraph = function(oParagraph)
+{
+	this.Paragraph = oParagraph;
+
+	var oLogicDocument = oParagraph.GetLogicDocument();
+	if (oLogicDocument)
+	{
+		// Сразу не проставляем связь ParaMark->Comment, т.к. во время копирования
+		// создаются копии ParaComment, которые ломают эту связь, т.к. для них
+		// еще не создан свой комментарий и они пока "привязаны" к старому
+		var oDocComments = oLogicDocument.Comments;
+		oDocComments.AddMarkToCheck(this);
+	}
+};
+ParaComment.prototype.Is_UseInDocument = function()
+{
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph)
+		return false;
+
+	return oParagraph.Is_UseInDocument();
+}
+ParaComment.prototype.RemoveMark = function()
+{
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph)
+		return;
+
+	return oParagraph.RemoveElement(this);
+};
+ParaComment.prototype.MoveCursorToMark = function()
+{
+	var oParagraph = this.GetParagraph();
+	if (!oParagraph)
+		return;
+
+	oParagraph.MoveCursorToCommentMark(this.CommentId);
 };
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};

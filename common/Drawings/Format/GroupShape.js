@@ -104,6 +104,27 @@ function CGroupShape()
             }
         }
     };
+    CGroupShape.prototype.getRelativePosition = function (obj) {
+        let result = obj || {x: 0, y: 0};
+        result.x += this.x;
+        result.y += this.y;
+        if (this.group) {
+            this.group.getRelativePosition(result);
+        }
+        return result;
+    };
+    CGroupShape.prototype.hasSmartArt = function (bRetSmartArt) {
+        let hasSmartArt = false;
+        for (let i = 0; i < this.spTree.length; i += 1) {
+            if (hasSmartArt) {
+                return hasSmartArt;
+            }
+            if (this.spTree[i].hasSmartArt) {
+                hasSmartArt = this.spTree[i].hasSmartArt(bRetSmartArt);
+            }
+        }
+        return hasSmartArt;
+    };
 
     CGroupShape.prototype.documentGetAllFontNames = function(allFonts)
     {
@@ -140,7 +161,7 @@ function CGroupShape()
 
     CGroupShape.prototype.setBDeleted2 = function(pr)
     {
-        this.bDeleted = pr;
+        this.setBDeleted(pr);
         for(var i = 0; i < this.spTree.length; ++i)
         {
             if(this.spTree[i].setBDeleted2)
@@ -149,7 +170,7 @@ function CGroupShape()
             }
             else
             {
-                this.spTree[i].bDeleted = pr;
+                this.spTree[i].setBDeleted(pr);
             }
         }
     };
@@ -208,6 +229,9 @@ function CGroupShape()
     {
         History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GroupShapeSetSpPr, this.spPr, pr));
         this.spPr = pr;
+        if(pr) {
+            pr.setParent(this);
+        }
     };
 
     CGroupShape.prototype.addToSpTree = function(pos, item)
@@ -216,6 +240,9 @@ function CGroupShape()
             pos = this.spTree.length;
         History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_GroupShapeAddToSpTree, pos, [item], true));
         this.handleUpdateSpTree();
+        if(item.group !== this) {
+            item.setGroup(this);
+        }
         this.spTree.splice(pos, 0, item);
     };
 
@@ -296,7 +323,7 @@ function CGroupShape()
         for(var i = 0; i < this.spTree.length; ++i)
         {
             var _copy;
-            if(this.spTree[i].getObjectType() === AscDFH.historyitem_type_GroupShape) {
+            if(this.spTree[i].isGroupObject()) {
                 _copy = this.spTree[i].copy(oPr);
             }
             else{
@@ -407,10 +434,6 @@ function CGroupShape()
         return false;
     };
 
-    CGroupShape.prototype.isImage = function()
-    {
-        return false;
-    };
 
     CGroupShape.prototype.isChart = function()
     {
@@ -715,6 +738,9 @@ function CGroupShape()
     {
         object.select(this, pageIndex);
     };
+    CGroupShape.prototype.onChangeDrawingsSelection = function()
+    {
+    };
 
     CGroupShape.prototype.recalculate = function()
     {
@@ -899,14 +925,14 @@ function CGroupShape()
         }
     };
 
-    CGroupShape.prototype.checkExtentsByDocContent = function()
+    CGroupShape.prototype.checkExtentsByDocContent = function(bForce, bNeedRecalc)
     {
         var bRet = false;
         for(var i = 0; i < this.spTree.length; ++i)
         {
             if(typeof this.spTree[i].checkExtentsByDocContent === "function")
             {
-                if(this.spTree[i].checkExtentsByDocContent())
+                if(this.spTree[i].checkExtentsByDocContent(bForce, bNeedRecalc))
                 {
                     bRet = true;
                 }
@@ -1194,14 +1220,14 @@ function CGroupShape()
         }
     };
 
-    CGroupShape.prototype.Search  = function(Str, Props, SearchEngine, Type)
+    CGroupShape.prototype.Search  = function(SearchEngine, Type)
     {
         var Len = this.arrGraphicObjects.length;
         for(var i = 0; i < Len; ++i)
         {
             if(this.arrGraphicObjects[i].Search)
             {
-                this.arrGraphicObjects[i].Search(Str, Props, SearchEngine, Type);
+                this.arrGraphicObjects[i].Search(SearchEngine, Type);
             }
         }
     };
@@ -1547,7 +1573,7 @@ function CGroupShape()
             xfrm  = sp.spPr.xfrm;
             rot = xfrm.rot == null ? 0 : xfrm.rot;
 
-            if(AscFormat.checkNormalRotate(rot))
+            if(AscFormat.checkNormalRotate(rot)) //  || (this.getName && this.getName() === 'Drawing')
             {
                 cur_min_x = xfrm.offX;
                 cur_min_y = xfrm.offY;
@@ -1715,11 +1741,11 @@ function CGroupShape()
         this.nvGrpSpPr = pr;
     };
 
-    CGroupShape.prototype.Restart_CheckSpelling = function()
+    CGroupShape.prototype.RestartSpellCheck = function()
     {
         for(var i = 0; i < this.spTree.length; ++i)
         {
-            this.spTree[i].Restart_CheckSpelling && this.spTree[i].Restart_CheckSpelling();
+            this.spTree[i].RestartSpellCheck && this.spTree[i].RestartSpellCheck();
         }
     };
 
@@ -1731,7 +1757,7 @@ function CGroupShape()
         var arrDrawings = [];
         for(i = this.spTree.length - 1;  i > -1; --i)
         {
-            if(this.spTree[i].getObjectType() === AscDFH.historyitem_type_GroupShape)
+            if(this.spTree[i].isGroupObject())
             {
                 this.spTree[i].bringToFront();
             }
@@ -1751,7 +1777,7 @@ function CGroupShape()
         var i;
         for(i = this.spTree.length-1; i > -1; --i)
         {
-            if(this.spTree[i].getObjectType() === AscDFH.historyitem_type_GroupShape)
+            if(this.spTree[i].isGroupObject())
             {
                 this.spTree[i].bringForward();
             }
@@ -1768,7 +1794,7 @@ function CGroupShape()
         var i, arrDrawings = [];
         for(i = this.spTree.length-1; i > -1; --i)
         {
-            if(this.spTree[i].getObjectType() === AscDFH.historyitem_type_GroupShape)
+            if(this.spTree[i].isGroupObject())
             {
                 this.spTree[i].sendToBack();
             }
@@ -1789,7 +1815,7 @@ function CGroupShape()
         var i;
         for(i = 0; i < this.spTree.length; ++i)
         {
-            if(this.spTree[i].getObjectType() === AscDFH.historyitem_type_GroupShape)
+            if(this.spTree[i].isGroupObject())
             {
                 this.spTree[i].bringBackward();
             }
@@ -1873,7 +1899,6 @@ function CGroupShape()
         }
     };
 
-
     CGroupShape.prototype.getCopyWithSourceFormatting = function(oIdMap){
         var oPr = new AscFormat.CCopyObjectProperties();
         oPr.idMap = oIdMap;
@@ -1899,6 +1924,13 @@ function CGroupShape()
     {
         for(var i = 0; i < this.spTree.length; ++i){
             this.spTree[i].GetAllSeqFieldsByType(sType, aFields)
+        }
+    };
+    CGroupShape.prototype.createPlaceholderControl = function(aControls)
+    {
+        for(var i = 0; i < this.spTree.length; ++i)
+        {
+            this.spTree[i].createPlaceholderControl(aControls);
         }
     };
     CGroupShape.prototype.onSlicerUpdate = function(sName)
@@ -1948,6 +1980,93 @@ function CGroupShape()
         fCallback(this);
         for(var nSp = 0; nSp < this.spTree.length; ++nSp) {
             this.spTree[nSp].handleObject(fCallback);
+        }
+    };
+
+    //for bug 52775. remove in the next version
+    CGroupShape.prototype.applySmartArtTextStyle = function() {
+        for(var nSp = 0; nSp < this.spTree.length; ++nSp) {
+            this.spTree[nSp].applySmartArtTextStyle();
+        }
+    };
+    CGroupShape.prototype.getTypeName = function() {
+        return AscCommon.translateManager.getValue("Group");
+    };
+    CGroupShape.prototype.GetAllOleObjects = function(sPluginId, arrObjects) {
+        for(let nSp = 0; nSp < this.spTree.length; ++nSp) {
+            this.spTree[nSp].GetAllOleObjects(sPluginId, arrObjects);
+        }
+    };
+
+
+    CGroupShape.prototype.readChildXml = function (name, reader) {
+        let res;
+        if( "cxnSp" === name) {
+            res = new AscFormat.CConnectionShape();
+            res.setBDeleted(false);
+            res.fromXml(reader);
+            this.addToSpTree(null, res);
+        }
+        else if("grpSp" === name || "wgp" === name) {
+            res = new AscFormat.CGroupShape();
+            res.setBDeleted(false);
+            res.fromXml(reader);
+            this.addToSpTree(null, res);
+        }
+        else if("sp" === name || "wsp" === name) {
+            res = new AscFormat.CShape();
+            res.setBDeleted(false);
+			res.setWordShape("wsp" === name);
+            res.fromXml(reader);
+            this.addToSpTree(null, res);
+        }
+        else if ("pic" === name) {
+            res = new AscFormat.CImageShape();
+            res.setBDeleted(false);
+            res.fromXml(reader);
+            this.addToSpTree(null, res);
+        } else if ("graphicFrame" === name) {
+            res = new AscFormat.CGraphicFrame();
+            res.fromXml(reader);
+            res = res.graphicObject;
+            res && this.addToSpTree(null, res);
+        } else if ("grpSpPr" === name) {
+            res = new AscFormat.CSpPr();
+            res.fromXml(reader);
+            this.setSpPr(res);
+        } else if ("nvGrpSpPr" === name) {
+            res = new AscFormat.UniNvPr();
+            res.fromXml(reader);
+            this.setNvSpPr(res);
+            this.setLocks(res.getLocks());
+        }
+    };
+    CGroupShape.prototype.fromXml = function(reader) {
+        AscFormat.CGraphicObjectBase.prototype.fromXml.call(this, reader);
+        this.checkXfrm();
+    };
+    CGroupShape.prototype.toXml = function (writer) {
+        writer.context.groupIndex++;
+        AscFormat.CSpTree.prototype.toXml.call(this, writer, true);
+        writer.context.groupIndex--;
+    };
+    CGroupShape.prototype.checkXfrm = function () {
+        if(!this.spPr){
+            return;
+        }
+        if(!this.spPr.xfrm && this.spTree.length > 0){
+            var oXfrm = new AscFormat.CXfrm();
+            oXfrm.setOffX(0);
+            oXfrm.setOffY(0);
+            oXfrm.setChOffX(0);
+            oXfrm.setChOffY(0);
+            oXfrm.setExtX(50);
+            oXfrm.setExtY(50);
+            oXfrm.setChExtX(50);
+            oXfrm.setChExtY(50);
+            this.spPr.setXfrm(oXfrm);
+            this.updateCoordinatesAfterInternalResize();
+            this.spPr.xfrm.setParent(this.spPr);
         }
     };
 

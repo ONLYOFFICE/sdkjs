@@ -248,6 +248,13 @@ function MoveShapeImageTrack(originalObject)
         {
             return;
         }
+
+        if(this.originalObject.animMotionTrack) 
+        {
+            this.originalObject.updateAnimation(this.x, this.y, this.originalObject.extX, this.originalObject.extY, this.originalObject.rot);
+            return;
+        }
+
         if(bWord)
         {
             if(this.originalObject.selectStartPage !== this.pageIndex)
@@ -309,6 +316,39 @@ function MoveShapeImageTrack(originalObject)
                 this.y = 0;
             }
         }
+        if (this.originalObject.isObjectInSmartArt()) {
+            var _rot = this.originalObject.rot;
+            var isNormalRotate = AscFormat.checkNormalRotate(_rot);
+            if (isNormalRotate) {
+                var l = this.x;
+                var t = this.y;
+                var b = t + this.originalObject.extY;
+                var r = l + this.originalObject.extX;
+            } else {
+                l = this.x + (this.originalObject.extX - this.originalObject.extY) / 2;
+                t = this.y + (this.originalObject.extY - this.originalObject.extX) / 2;
+                b = t + this.originalObject.extX;
+                r = l + this.originalObject.extY;
+            }
+            var oSmartArt = this.originalObject.group && this.originalObject.group.group;
+            if (oSmartArt.extX < (r - l) || oSmartArt.extY < (b - t)) {
+                return;
+            }
+
+            if (l < 0) {
+                this.x = this.x - l;
+            }
+            if (t < 0) {
+                this.y = this.y - t + 0.00001; // TODO: fix this
+            }
+            if (oSmartArt.extX < r) {
+                this.x = this.x - (r - oSmartArt.extX);
+            }
+            if (oSmartArt.extY < b) {
+                this.y = this.y - (b - oSmartArt.extY);
+            }
+            this.originalObject.changePositionInSmartArt(this.x, this.y);
+        }
         var _xfrm = this.originalObject.spPr.xfrm;
         var _x = _xfrm.offX;
         var _y = _xfrm.offY;
@@ -316,16 +356,24 @@ function MoveShapeImageTrack(originalObject)
         {
             AscFormat.ExecuteNoHistory(
                 function () {
-                    this.originalObject.spPr.xfrm.setOffX(this.x/scale_coefficients.cx + ch_off_x);
-                    this.originalObject.spPr.xfrm.setOffY(this.y/scale_coefficients.cy + ch_off_y);
+                    _xfrm.setOffX(this.x/scale_coefficients.cx + ch_off_x);
+                    _xfrm.setOffY(this.y/scale_coefficients.cy + ch_off_y);
                 },
                 this, []
             );
         }
         else
         {
-            this.originalObject.spPr.xfrm.setOffX(this.x/scale_coefficients.cx + ch_off_x);
-            this.originalObject.spPr.xfrm.setOffY(this.y/scale_coefficients.cy + ch_off_y);
+            _xfrm.setOffX(this.x/scale_coefficients.cx + ch_off_x);
+            _xfrm.setOffY(this.y/scale_coefficients.cy + ch_off_y);
+            if (this.originalObject.txXfrm) {
+                var previousTxXfrmX = this.originalObject.txXfrm.offX;
+                var previousTxXfrmY = this.originalObject.txXfrm.offY;
+                var currentXfrmX = _xfrm.offX;
+                var currentXfrmY = _xfrm.offY;
+                this.originalObject.txXfrm.setOffX( currentXfrmX + (previousTxXfrmX - _x));
+                this.originalObject.txXfrm.setOffY( currentXfrmY + (previousTxXfrmY - _y));
+            }
         }
 
         if(this.originalObject.getObjectType() === AscDFH.historyitem_type_Cnx){
@@ -374,10 +422,10 @@ function MoveShapeImageTrack(originalObject)
         if(this.originalObject.isCrop)
         {
             AscFormat.ExecuteNoHistory(
-                function () {
-                    this.originalObject.checkDrawingBaseCoords();
-                },
-                this, []
+              function () {
+                  this.originalObject.checkDrawingBaseCoords();
+              },
+              this, []
             );
             this.originalObject.transform = this.transform;
             this.originalObject.invertTransform = AscCommon.global_MatrixTransformer.Invert(this.transform);
@@ -568,7 +616,7 @@ function MoveComment(comment)
         }
         return Flags;
     };
-    
+
     this.draw = function(overlay)
     {
         var Flags = this.getFlags();
@@ -583,7 +631,7 @@ function MoveComment(comment)
         }
         this.comment.setPosition(this.x, this.y);
     };
-    
+
     this.getBounds = function()
     {
         var dd = editor.WordControl.m_oDrawingDocument;
@@ -685,7 +733,7 @@ function MoveChartObjectTrack(oObject, oChartSpace)
         oObjectToSet.layout.setX(fLayoutX);
         oObjectToSet.layout.setY(fLayoutY);
     };
-    
+
     this.getBounds = function ()
     {
         var boundsChecker = new  AscFormat.CSlideBoundsChecker();

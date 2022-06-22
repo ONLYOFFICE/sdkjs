@@ -39,6 +39,7 @@
      */
 function (window, undefined) {
 
+    var spreadsheetApplicationId = 'Excel.Sheet.12';
 
         function COleSize(w, h){
             this.w = w;
@@ -114,8 +115,6 @@ function (window, undefined) {
         this.m_sApplicationId = null;
         this.m_nPixWidth = null;
         this.m_nPixHeight = null;
-        this.m_fDefaultSizeX = null;
-        this.m_fDefaultSizeY = null;
         this.m_sObjectFile = null;//ole object name in OOX
         this.m_nOleType = null;
         this.m_aBinaryData = null;
@@ -138,6 +137,9 @@ function (window, undefined) {
     {
         AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ImageShapeSetApplicationId, this.m_sApplicationId, sApplicationId));
         this.m_sApplicationId = sApplicationId;
+        if (this.m_sApplicationId === spreadsheetApplicationId) {
+            this.setOleType(AscCommon.c_oAscOleObjectTypes.spreadsheet);
+        }
     };
     COleObject.prototype.setPixSizes = function(nPixWidth, nPixHeight)
     {
@@ -217,12 +219,6 @@ function (window, undefined) {
 
 
     COleObject.prototype.handleUpdateExtents = function(){
-        if(!AscFormat.isRealNumber(this.m_fDefaultSizeX) || !AscFormat.isRealNumber(this.m_fDefaultSizeY)){
-            if(this.spPr && this.spPr.xfrm && AscFormat.isRealNumber(this.spPr.xfrm.extX) && AscFormat.isRealNumber(this.spPr.xfrm.extY) && this.spPr.xfrm.extX > 0 && this.spPr.xfrm.extY > 0){
-                this.m_fDefaultSizeX = this.spPr.xfrm.extX;
-                this.m_fDefaultSizeY = this.spPr.xfrm.extY;
-            }
-        }
         AscFormat.CImageShape.prototype.handleUpdateExtents.call(this, []);
     };
     COleObject.prototype.checkTypeCorrect = function(){
@@ -315,7 +311,7 @@ function (window, undefined) {
         oBodyPr.anchorCtr = false;
         oBodyPr.forceAA = false;
         oBodyPr.compatLnSpc = true;
-        oBodyPr.prstTxWarp = AscFormat.ExecuteNoHistory(function(){return AscFormat.CreatePrstTxWarpGeometry("textNoShape");}, this, []);
+        oBodyPr.prstTxWarp = AscFormat.CreatePrstTxWarpGeometry("textNoShape");
         oBodyPr.textFit = new AscFormat.CTextFit();
         oBodyPr.textFit.type = AscFormat.text_fit_Auto;
         oShape.txBody.setBodyPr(oBodyPr);
@@ -346,10 +342,140 @@ function (window, undefined) {
         if(this.selected) {
             var nSelectStartPage = this.selectStartPage;
             this.deselect(oController);
-            oShape.select(oController, nSelectStartPage)
+            oShape.select(oController, nSelectStartPage);
         }
         return oShape;
     };
-        window['AscFormat'] = window['AscFormat'] || {};
-        window['AscFormat'].COleObject = COleObject;
+
+    COleObject.prototype.editExternal = function(Data, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight) {
+        if(typeof Data === "string" && this.m_sData !== Data) {
+            this.setData(Data);
+        }
+        if (Data instanceof Uint8Array) {
+            this.setBinaryData(Data)
+        }
+        if(typeof sImageUrl  === "string" &&
+            (!this.blipFill || this.blipFill.RasterImageId !== sImageUrl)) {
+            var _blipFill           = new AscFormat.CBlipFill();
+            _blipFill.RasterImageId = sImageUrl;
+            this.setBlipFill(_blipFill);
+        }
+        if(this.m_nPixWidth !== nPixWidth || this.m_nPixHeight !== nPixHeight) {
+            this.setPixSizes(nPixWidth, nPixHeight);
+        }
+        var fWidth_ = fWidth;
+        var fHeight_ = fHeight;
+        if(!AscFormat.isRealNumber(fWidth_) || !AscFormat.isRealNumber(fHeight_)) {
+            var oImagePr = new Asc.asc_CImgProperty();
+            oImagePr.asc_putImageUrl(sImageUrl);
+            var oApi = editor || Asc.editor;
+            var oSize = oImagePr.asc_getOriginSize(oApi);
+            if(oSize.IsCorrect) {
+                fWidth_ = oSize.Width;
+                fHeight_ = oSize.Height;
+            }
+        }
+        if(AscFormat.isRealNumber(fWidth_) && AscFormat.isRealNumber(fHeight_)) {
+            var oXfrm = this.spPr && this.spPr.xfrm;
+            if(oXfrm) {
+                if(!AscFormat.fApproxEqual(oXfrm.extX, fWidth_) ||
+                    !AscFormat.fApproxEqual(oXfrm.extY, fHeight_)) {
+                    oXfrm.setExtX(fWidth_);
+                    oXfrm.setExtY(fHeight_);
+                    if(!this.group) {
+                        if(this.drawingBase) {
+                            this.checkDrawingBaseCoords();
+                        }
+                        if(this.parent && this.parent.CheckWH) {
+                            this.parent.CheckWH();
+                        }
+                    }
+                }
+            }
+        }
+    };
+    COleObject.prototype.GetAllOleObjects = function(sPluginId, arrObjects) {
+        if(typeof sPluginId === "string" && sPluginId.length > 0) {
+            if(sPluginId === this.m_sApplicationId) {
+                arrObjects.push(this);
+            }
+        }
+        else {
+            arrObjects.push(this);
+        }
+    };
+    COleObject.prototype.getDataObject = function() {
+        var dWidth = 0, dHeight = 0;
+        if(this.parent && this.parent.Extent) {
+            var oExtent = this.parent.Extent;
+            dWidth = oExtent.W;
+            dHeight = oExtent.H;
+        }
+        else {
+            if(this.spPr && this.spPr.xfrm) {
+                var oXfrm = this.spPr.xfrm;
+                dWidth = oXfrm.extX;
+                dHeight = oXfrm.extY;
+            }
+        }
+        var oBlipFill = this.blipFill;
+        var oParaDrawing;
+        var oParaDrawingChild = this;
+        if(this.group) {
+            oParaDrawingChild = this.getMainGroup();
+        }
+        if(AscCommonWord.ParaDrawing &&
+            oParaDrawingChild.parent &&
+            oParaDrawingChild.parent instanceof AscCommonWord.ParaDrawing) {
+            oParaDrawing = oParaDrawingChild.parent;
+        }
+        return {
+            "Data": this.m_sData,
+            "ApplicationId": this.m_sApplicationId,
+            "ImageData": oBlipFill ? oBlipFill.getBase64RasterImageId(false) : "",
+            "Width": dWidth,
+            "Height": dHeight,
+            "WidthPix": this.m_nPixWidth,
+            "HeightPix": this.m_nPixHeight,
+            "InternalId": this.Id,
+            "ParaDrawingId": oParaDrawing ? oParaDrawing.Id : ""
+        }
+    };
+
+    COleObject.prototype.canEditTableOleObject = function(bReturnOle) {
+        var canEdit = this.m_aBinaryData &&
+          (this.m_nOleType === AscCommon.c_oAscOleObjectTypes.spreadsheet || this.m_sApplicationId === spreadsheetApplicationId);
+        if (bReturnOle) {
+            return canEdit ? this : null;
+        }
+        return !!canEdit;
+    };
+
+    function asc_putBinaryDataToFrameFromTableOleObject(oleObject)
+    {
+        if (oleObject instanceof AscFormat.COleObject) {
+            var dataSize = oleObject.m_aBinaryData.length;
+            var data = AscCommon.Base64.encode(oleObject.m_aBinaryData);
+            return {
+                binary: "XLSY;v2;" + dataSize  + ";" + data,
+                left: oleObject.x,
+                top: oleObject.y,
+                width: oleObject.extX,
+                height: oleObject.extY,
+                isFromSheetEditor: !!oleObject.worksheet,
+            };
+        }
+        return {
+            binary: null,
+            left: 0,
+            top: 0,
+            width: 0,
+            height: 0
+        };
+    };
+    window['Asc'] = window['Asc'] || {};
+    window['AscFormat'] = window['AscFormat'] || {};
+    window['AscFormat'].COleObject = COleObject;
+    window['Asc'].asc_putBinaryDataToFrameFromTableOleObject = asc_putBinaryDataToFrameFromTableOleObject;
+
 })(window);

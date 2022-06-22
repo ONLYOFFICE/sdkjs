@@ -293,11 +293,12 @@ ObjectToDraw.prototype =
             var oComment = AscCommon.g_oTableId.Get_ById(this.Comment.Additional.CommentId);
             if(oComment)
             {
-                var Para = AscCommon.g_oTableId.Get_ById( oComment.StartId );
+
                 if( editor && editor.WordControl && editor.WordControl.m_oLogicDocument && editor.WordControl.m_oLogicDocument.Comments &&
                     (graphics instanceof AscCommon.CGraphics) && ( editor.WordControl.m_oLogicDocument.Comments.Is_Use() && true != editor.isViewMode))
                 {
-                    if(this.Comment.Additional.CommentId === editor.WordControl.m_oLogicDocument.Comments.Get_CurrentId())
+                    var oComments = editor.WordControl.m_oLogicDocument.Comments;
+                    if(this.Comment.Additional.CommentId === oComments.Get_CurrentId())
                     {
                         this.brush = AscFormat.G_O_ACTIVE_COMMENT_BRUSH;
                     }
@@ -306,7 +307,10 @@ ObjectToDraw.prototype =
                         this.brush = AscFormat.G_O_NO_ACTIVE_COMMENT_BRUSH;
                     }
                     var oComm = this.Comment;
-                    Para && editor.WordControl.m_oLogicDocument.Comments.Add_DrawingRect(oComm.x0, oComm.y0, oComm.x1 - oComm.x0, oComm.y1 - oComm.y0, graphics.PageNum, this.Comment.Additional.CommentId, global_MatrixTransformer.Invert(oTransform));
+                    if(!graphics.IsSlideBoundsCheckerType && !AscCommon.IsShapeToImageConverter) 
+                    {
+                        oComments.Add_DrawingRect(oComm.x0, oComm.y0, oComm.x1 - oComm.x0, oComm.y1 - oComm.y0, graphics.PageNum, this.Comment.Additional.CommentId, global_MatrixTransformer.Invert(oTransform));
+                    }
                 }
             }
         }
@@ -425,13 +429,20 @@ function RotateTrackShapeImage(originalObject)
 
     };
 
-    this.trackEnd = function()
+    this.trackEnd = function(bWord)
     {
-        if(!this.bIsTracked){
+        if(!this.bIsTracked)
+        {
+            return;
+        }
+        if(this.originalObject.animMotionTrack) 
+        {
+            this.originalObject.updateAnimation(this.originalObject.x, this.originalObject.y, 
+                this.originalObject.extX, this.originalObject.extY, this.angle);
             return;
         }
         AscFormat.CheckSpPrXfrm(this.originalObject);
-        this.originalObject.spPr.xfrm.setRot(this.angle);
+        this.originalObject.changeRot(this.angle, bWord);
     };
 
     this.getBounds = function()

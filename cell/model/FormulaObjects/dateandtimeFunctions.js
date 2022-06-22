@@ -489,7 +489,12 @@
 		}
 
 		dt.setUTCHours(0, 0, 0);
-		var startOfYear = new cDate(Date.UTC(dt.getUTCFullYear(), 0, 1));
+		var utcFullYear = dt.getUTCFullYear();
+		if (type) {
+			//если это исключение не обработать, то будет бесконечная рекурсия
+			utcFullYear = Date.prototype.getUTCFullYear.call(dt);
+		}
+		var startOfYear = new cDate(Date.UTC(utcFullYear, 0, 1));
 		var endOfYear = new cDate(dt);
 		endOfYear.setUTCMonth(11);
 		endOfYear.setUTCDate(31);
@@ -1570,7 +1575,7 @@
 	cNOW.prototype.Calculate = function () {
 		var d = new cDate();
 		var res =
-			new cNumber(d.getExcelDate() + (d.getHours() * 60 * 60 + d.getMinutes() * 60 + d.getSeconds()) / c_sPerDay);
+			new cNumber(d.getExcelDate(true) + (d.getHours() * 60 * 60 + d.getMinutes() * 60 + d.getSeconds()) / c_sPerDay);
 		res.numFormat = 22;
 		return res;
 	};
@@ -1774,7 +1779,7 @@
 	cTODAY.prototype.ca = true;
 	cTODAY.prototype.argumentsType = null;
 	cTODAY.prototype.Calculate = function () {
-		var res = new cNumber(new cDate().getExcelDate());
+		var res = new cNumber(new cDate().getExcelDate(true));
 		res.numFormat = 14;
 		return res;
 	};

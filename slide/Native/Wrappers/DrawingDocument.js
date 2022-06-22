@@ -161,12 +161,16 @@ function CDrawingDocument()
     this.m_lCurrentRendererPage = -1;
     this.m_oDocRenderer         = null;
 
-    this.isCreatedDefaultTableStyles = false;
-
 	this.CollaborativeTargets            = [];
 	this.CollaborativeTargetsUpdateTasks = [];
 
     this.MathTrack = new AscCommon.CMathTrack();
+
+
+    this.TableStylesLastTheme = null;
+    this.TableStylesLastColorScheme = null;
+    this.TableStylesLastColorMap = null;
+    this.TableStylesLastLook = null;
 }
 
 CDrawingDocument.prototype.Notes_GetWidth = function()
@@ -900,50 +904,54 @@ CDrawingDocument.prototype.InitGuiCanvasTextArt = function(div_id)
 {
 };
 
-CDrawingDocument.prototype.CheckTableStyles = function()
-{   
+CDrawingDocument.prototype.CheckTableStyles = function(oTableLook)
+{
     var logicDoc = this.m_oWordControl.m_oLogicDocument;
-    var _dst_styles = [];
-
-    // NOTE: need check
-
-    var page_w_mm = 90 * 2.54 / (72.0 / 96.0);
-    var page_h_mm = 70 * 2.54 / (72.0 / 96.0);
-    var page_w_px = 90 * 2;
-    var page_h_px = 70 * 2;
-
-    var stream = global_memory_stream_menu;
-    var graphics = new CDrawingStream();
-
-    this.Native["DD_PrepareNativeDraw"]();
-
-    AscCommon.History.TurnOff();
-    AscCommon.g_oTableId.m_bTurnOff = true;
-
-    for (var i = 0; i < logicDoc.TablesForInterface.length; i++)
+    var isChanged = logicDoc.CheckNeedUpdateTableStyles(oTableLook);
+    if(!isChanged)
     {
-        this.Native["DD_StartNativeDraw"](page_w_px, page_h_px, page_w_mm, page_h_mm);
-        
-        logicDoc.TablesForInterface[i].graphicObject.Draw(0, graphics);
+        return;
+    }
+    var oPreviewGenerator =  new AscCommon.CTableStylesPreviewGenerator(logicDoc);
+    var dScale = 2;//TODO
+    var page_w_mm = 297;
+    var page_h_mm = 210;
+    var page_w_px = TABLE_STYLE_WIDTH_PIX;
+    var page_h_px = TABLE_STYLE_HEIGHT_PIX;
+    var oStream = global_memory_stream_menu;
+    var oGraphics = new CDrawingStream();
+    var oNative = this.Native;
+    oPreviewGenerator.GetAllPreviewsNative(false, oGraphics, oStream, oNative, page_w_mm, page_h_mm, page_w_px, page_h_px);
+};
+CDrawingDocument.prototype.CheckTableStylesDefault = function ()
+{
+    var tableLook = this.GetTableLook(true);
+    return this.CheckTableStyles(tableLook);
+};
+CDrawingDocument.prototype.GetTableStylesPreviews = function(bUseDefault)
+{
+    return [];
+};
+CDrawingDocument.prototype.GetTableLook = function(isDefault)
+{
+    let oTableLook;
 
-        stream["ClearNoAttack"]();
-
-        stream["WriteByte"](2);
-        stream["WriteString2"]("" + logicDoc.TablesForInterface[i].graphicObject.TableStyle);
-
-        this.Native["DD_EndNativeDraw"](stream);
-        graphics.ClearParams();
+    if (isDefault)
+    {
+        oTableLook = new AscCommon.CTableLook();
+        oTableLook.SetDefault();
+    }
+    else
+    {
+        oTableLook = this.TableStylesLastLook;
     }
 
-    AscCommon.g_oTableId.m_bTurnOff = false;
-    AscCommon.History.TurnOn();
+    return oTableLook;
+};
 
-    stream["ClearNoAttack"]();
-    stream["WriteByte"](3);
-
-    this.Native["DD_EndNativeDraw"](stream);
-
-    this.isCreatedDefaultTableStyles = true;
+CDrawingDocument.prototype.GetTableStylesPreviews = function()
+{
+    return [];
 };
 
 CDrawingDocument.prototype.CheckThemes = function(){   
@@ -1730,7 +1738,7 @@ CDrawingDocument.prototype.OnCheckMouseDown = function(e)
     }
 
     return 0;
-}
+};
 
 
 CDrawingDocument.prototype.OnKeyboardEvent = function(_params){
@@ -1770,6 +1778,9 @@ CDrawingDocument.prototype.OnKeyboardEvent = function(_params){
 };
 
 
+CDrawingDocument.prototype.OnAnimPaneChanged = function(nSlideNum, oRect)
+{
+};
 
 function DrawBackground(graphics, unifill, w, h)
 {

@@ -149,7 +149,7 @@
 
         this.isKeyPressOnUp = AscCommon.AscBrowser.isAppleDevices; // keyPress может приходить ДО oncompositionstart, а это проблема.
 		this.keyPressOnUpCodes = [];
-		this.isKeyPressOnUpStackedMode = false;
+		this.isKeyPressOnUpStackedMode = this.isKeyPressOnUp;
 
 		this.isHardCheckKeyboard = AscCommon.AscBrowser.isSailfish;
 	}
@@ -164,14 +164,6 @@
 		init : function(target_id, parent_id)
 		{
 			this.TargetId   = target_id;
-
-			var oHtmlParent = null;
-
-			var oHtmlTarget = document.getElementById(this.TargetId);
-			if (undefined == parent_id)
-				oHtmlParent = oHtmlTarget.parentNode;
-			else
-				oHtmlParent = document.getElementById(parent_id);
 
 			this.HtmlDiv                  = document.createElement("div");
 			this.HtmlDiv.id               = "area_id_parent";
@@ -221,27 +213,7 @@
 
 			this.HtmlDiv.appendChild(this.HtmlArea);
 
-			if (true)
-			{
-				// нужен еще один родитель. чтобы скроллился он, а не oHtmlParent
-				var oHtmlDivScrollable              = document.createElement("div");
-				oHtmlDivScrollable.id 				= "area_id_main";
-				oHtmlDivScrollable.setAttribute("style", "background:transparent;border:none;position:absolute;padding:0px;margin:0px;z-index:0;pointer-events:none;");
-
-				var parentStyle                   = getComputedStyle(oHtmlParent);
-				oHtmlDivScrollable.style.left     = parentStyle.left;
-				oHtmlDivScrollable.style.top      = parentStyle.top;
-				oHtmlDivScrollable.style.width    = parentStyle.width;
-				oHtmlDivScrollable.style.height   = parentStyle.height;
-				oHtmlDivScrollable.style.overflow = "hidden";
-
-				oHtmlDivScrollable.appendChild(this.HtmlDiv);
-				oHtmlParent.parentNode.appendChild(oHtmlDivScrollable);
-			}
-			else
-			{
-				oHtmlParent.appendChild(this.HtmlDiv);
-			}
+			this.appendInputToCanvas(parent_id);
 
 			// events:
 			var oThis                   = this;
@@ -328,6 +300,29 @@
 			}
 		},
 
+		appendInputToCanvas: function (parent_id) {
+			var oHtmlParent = null;
+
+			var oHtmlTarget = document.getElementById(this.TargetId);
+			if (undefined == parent_id)
+				oHtmlParent = oHtmlTarget.parentNode;
+			else
+				oHtmlParent = document.getElementById(parent_id);
+
+			// нужен еще один родитель. чтобы скроллился он, а не oHtmlParent
+			var oHtmlDivScrollable = document.createElement("div");
+			oHtmlDivScrollable.id = "area_id_main";
+			oHtmlDivScrollable.setAttribute("style", "background:transparent;border:none;position:absolute;padding:0px;margin:0px;z-index:0;pointer-events:none;");
+			var parentStyle = getComputedStyle(oHtmlParent);
+			oHtmlDivScrollable.style.left = parentStyle.left;
+			oHtmlDivScrollable.style.top = parentStyle.top;
+			oHtmlDivScrollable.style.width = parentStyle.width;
+			oHtmlDivScrollable.style.height = parentStyle.height;
+			oHtmlDivScrollable.style.overflow = "hidden";
+			oHtmlDivScrollable.appendChild(this.HtmlDiv);
+			oHtmlParent.parentNode.appendChild(oHtmlDivScrollable);
+		},
+
 		onResize : function(_editorContainerId)
 		{
 			var _elem          = document.getElementById("area_id_main");
@@ -399,7 +394,7 @@
 			if (this.Api.asc_IsFocus() && !AscCommon.g_clipboardBase.IsFocus() && !AscCommon.g_clipboardBase.IsWorking())
 			{
 				if (document.activeElement != this.HtmlArea)
-					this.HtmlArea.focus();
+					focusHtmlElement(this.HtmlArea);
 			}
 		},
 
@@ -447,6 +442,7 @@
 				which : code,
 				keyCode : code,
 				code : "",
+				emulated: true,
 
 				preventDefault : function() {},
 				stopPropagation : function() {}
@@ -468,7 +464,7 @@
 			}
 
 			if (isFromFocus !== true)
-				this.HtmlArea.focus();
+				focusHtmlElement(this.HtmlArea);
 
 			this.TextBeforeComposition = "";
 			this.Text = "";
@@ -809,8 +805,8 @@
 						{
 							// ie тепряет фокус
 							setTimeout(function(){
-                                window['AscCommon'].g_inputContext.clear();
-                                window['AscCommon'].g_inputContext.HtmlArea.focus();
+								window['AscCommon'].g_inputContext.clear();
+								focusHtmlElement(window['AscCommon'].g_inputContext.HtmlArea);
 							}, 0);
 						}
 						else
@@ -1241,16 +1237,18 @@
 
 			var ret = this.Api.onKeyPress(e);
 
-			switch (e.which)
-			{
-				case 46: // delete
+			if (e.key === "Delete" || e.code === "Delete") {
+				switch (e.which)
 				{
-					AscCommon.stopEvent(e);
-					this.clear();
-					return false;
+					case 46: // delete
+					{
+						AscCommon.stopEvent(e);
+						this.clear();
+						return false;
+					}
+					default:
+						break;
 				}
-				default:
-					break;
 			}
 
 			this.keyPressInput += String.fromCharCode(e.which);
@@ -1467,7 +1465,7 @@
 			            return;
 			    }
 
-				this.HtmlArea.focus();
+				focusHtmlElement(this.HtmlArea);
 			}
 		},
 
@@ -1702,14 +1700,26 @@
 
 			var _elem = t.nativeFocusElement;
 			t.nativeFocusElementNoRemoveOnElementFocus = true; // ie focus async
-			AscCommon.AscBrowser.isMozilla ? setTimeout(function(){ t.HtmlArea.focus(); }, 0) : t.HtmlArea.focus();
+			AscCommon.AscBrowser.isMozilla ? setTimeout(function(){ focusHtmlElement(t.HtmlArea); }, 0) : focusHtmlElement(t.HtmlArea);
 			t.nativeFocusElement = _elem;
 			t.Api.asc_enableKeyEvents(true, true);
 		}, true);
 
 		// send focus
 		if (!api.isMobileVersion && !api.isEmbedVersion)
-			window['AscCommon'].g_inputContext.HtmlArea.focus();
+			focusHtmlElement(window['AscCommon'].g_inputContext.HtmlArea);
+	};
+
+	function focusHtmlElement(element)
+	{
+		element.focus();
+		/*
+		var api = window['AscCommon'].g_inputContext.Api;
+		if (api.isMobileVersion)
+			element.focus();
+		else
+			element.focus({ "preventScroll" : true });
+		*/
 	};
 
 	window["SetInputDebugMode"] = function()

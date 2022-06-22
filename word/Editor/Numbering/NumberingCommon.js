@@ -70,6 +70,23 @@ var c_oAscNumberingLevel = {
 	UpperLetterBracket_Left : 0x200C
 };
 
+window["Asc"]["asc_oAscNumberingLevel"]           = window["Asc"].c_oAscNumberingLevel = c_oAscNumberingLevel;
+c_oAscNumberingLevel["None"]                    = c_oAscNumberingLevel.None;
+c_oAscNumberingLevel["Bullet"]                  = c_oAscNumberingLevel.Bullet;
+c_oAscNumberingLevel["Numbered"]                = c_oAscNumberingLevel.Numbered;
+c_oAscNumberingLevel["DecimalBracket_Right"]    = c_oAscNumberingLevel.DecimalBracket_Right;
+c_oAscNumberingLevel["DecimalBracket_Left"]     = c_oAscNumberingLevel.DecimalBracket_Left;
+c_oAscNumberingLevel["DecimalDot_Right"]        = c_oAscNumberingLevel.DecimalDot_Right;
+c_oAscNumberingLevel["DecimalDot_Left"]         = c_oAscNumberingLevel.DecimalDot_Left;
+c_oAscNumberingLevel["UpperRomanDot_Right"]     = c_oAscNumberingLevel.UpperRomanDot_Right;
+c_oAscNumberingLevel["UpperLetterDot_Left"]     = c_oAscNumberingLevel.UpperLetterDot_Left;
+c_oAscNumberingLevel["LowerLetterBracket_Left"] = c_oAscNumberingLevel.LowerLetterBracket_Left;
+c_oAscNumberingLevel["LowerLetterDot_Left"]     = c_oAscNumberingLevel.LowerLetterDot_Left;
+c_oAscNumberingLevel["LowerRomanDot_Right"]     = c_oAscNumberingLevel.LowerRomanDot_Right;
+c_oAscNumberingLevel["UpperRomanBracket_Left"]  = c_oAscNumberingLevel.UpperRomanBracket_Left;
+c_oAscNumberingLevel["LowerRomanBracket_Left"]  = c_oAscNumberingLevel.LowerRomanBracket_Left;
+c_oAscNumberingLevel["UpperLetterBracket_Left"] = c_oAscNumberingLevel.UpperLetterBracket_Left;
+
 // Преобразовываем число в буквенную строку :
 //  1 -> a
 //  2 -> b

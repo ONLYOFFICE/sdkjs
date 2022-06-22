@@ -33,6 +33,7 @@
 $(function () {
 
 	Asc.spreadsheet_api.prototype._init = function () {
+		this._loadModules();
 	};
 	Asc.spreadsheet_api.prototype._loadFonts = function (fonts, callback) {
 		callback();
@@ -63,14 +64,17 @@ $(function () {
 	};
 
 
-	var sData = AscCommon.getEmpty();
 	var api = new Asc.spreadsheet_api({
 		'id-view': 'editor_sdk'
 	});
+	api.FontLoader = {
+		LoadDocumentFonts: function() {}
+	};
 	window["Asc"]["editor"] = api;
 	AscCommon.g_oTableId.init();
 	api._onEndLoadSdk();
-	api._openDocument(sData);
+	api.isOpenOOXInBrowser = false;
+	api._openDocument(AscCommon.getEmpty());
 	api._openOnClient();
 	api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
 	api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,

@@ -2284,6 +2284,15 @@ CAutoshapeTrack.prototype =
 //        ctx.beginPath();
     },
 
+
+    DrawGeomEditPoint: function(matrix, gmEditPoint)
+    {
+    },
+
+    DrawGeometryEdit: function (matrix, pathLst, gmEditList, gmEditPoint, oBounds)
+    {
+    },
+
     DrawEditWrapPointsPolygon : function(points, matrix)
     {
         if (!matrix)
@@ -2548,7 +2557,8 @@ CAutoshapeTrack.prototype =
     {
         this.Native["PD_drawFlowAnchor"](x, y);
 
-//        if (!window.g_flow_anchor || !window.g_flow_anchor.asc_complete || (!editor || !editor.ShowParaMarks))
+//        var _flow_anchor = (AscCommon.OverlayRasterIcons && AscCommon.OverlayRasterIcons.Anchor) ? AscCommon.OverlayRasterIcons.Anchor.get() : undefined;
+//        if (!_flow_anchor || (!editor || !editor.ShowParaMarks))
 //            return;
 //
 //        var overlay = this.m_oOverlay;
@@ -2577,7 +2587,7 @@ CAutoshapeTrack.prototype =
 //
 //        ctx.setTransform(1,0,0,1,0,0);
 //
-//        ctx.drawImage(window.g_flow_anchor, __x, __y);
+//        ctx.drawImage(_flow_anchor, __x, __y);
 //        ctx.globalAlpha = _oldAlpha;
     }
 };

@@ -52,12 +52,16 @@
 			this.callback = null;
 			
 			this.isGetTextFromUrl = null;
+			this.isPdfPrint = false;
+
+			this.textParams = null;
 		}
 
 		asc_CDownloadOptions.prototype.asc_setFileType = function (fileType) {this.fileType = fileType;};
 		asc_CDownloadOptions.prototype.asc_setIsDownloadEvent = function (isDownloadEvent) {this.isDownloadEvent = isDownloadEvent;};
 		asc_CDownloadOptions.prototype.asc_setAdvancedOptions = function (advancedOptions) {this.advancedOptions = advancedOptions;};
 		asc_CDownloadOptions.prototype.asc_setCompatible = function (compatible) {this.compatible = compatible;};
+		asc_CDownloadOptions.prototype.asc_setTextParams = function (textParams) {this.textParams = textParams;};
 
 		/** @constructor */
 		function asc_CAdvancedOptions(opt) {
@@ -82,6 +86,8 @@
 			this.codePage = codepage;
 			this.delimiter = delimiter;
 			this.delimiterChar = delimiterChar;
+
+			this.textQualifier = null;
 
 			this.numberDecimalSeparator = null;
 			this.numberGroupSeparator = null;
@@ -116,6 +122,12 @@
 
 			return arr;
 		};
+		asc_CTextOptions.prototype.asc_setTextQualifier = function(v){this.textQualifier = v;};
+		asc_CTextOptions.prototype.asc_getTextQualifier = function(){return this.textQualifier;};
+		asc_CTextOptions.prototype.asc_getTextQualifierArr = function () {
+			return ["\"", "'", null];
+		};
+
 
 		/** @constructor */
 		function asc_CDRMAdvancedOptions(password){
@@ -173,6 +185,14 @@
 			return AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[this.name] : this.name;
 		};
 
+		/** @constructor */
+		function asc_CTextParams(association){
+			this.association = association;
+		}
+		asc_CTextParams.prototype.asc_getAssociation = function () {
+			return this.association;
+		};
+
 		//----------------------------------------------------------export----------------------------------------------------
 		var prot;
 		window['Asc'] = window['Asc'] || {};
@@ -184,6 +204,7 @@
 		prot["asc_setIsDownloadEvent"] = prot.asc_setIsDownloadEvent;
 		prot["asc_setAdvancedOptions"] = prot.asc_setAdvancedOptions;
 		prot["asc_setCompatible"] = prot.asc_setCompatible;
+		prot["asc_setTextParams"] = prot.asc_setTextParams;
 
 		window["AscCommon"].asc_CAdvancedOptions = asc_CAdvancedOptions;
 		prot = asc_CAdvancedOptions.prototype;
@@ -201,6 +222,8 @@
 		prot["asc_setCodePage"] = prot.asc_setCodePage;
 		prot["asc_setNumberDecimalSeparator"] = prot.asc_setNumberDecimalSeparator;
 		prot["asc_setNumberGroupSeparator"] = prot.asc_setNumberGroupSeparator;
+		prot["asc_setTextQualifier"] = prot.asc_setTextQualifier;
+		prot["asc_getTextQualifier"] = prot.asc_getTextQualifier;
 		
 		window["Asc"].asc_CDRMAdvancedOptions = window["Asc"]["asc_CDRMAdvancedOptions"] = asc_CDRMAdvancedOptions;
 		prot = asc_CDRMAdvancedOptions.prototype;
@@ -231,5 +254,10 @@
 		prot = asc_CFormula.prototype;
 		prot["asc_getName"]				= prot.asc_getName;
 		prot["asc_getLocaleName"]	= prot.asc_getLocaleName;
+
+		window["AscCommon"].asc_CTextParams = window["AscCommon"]["asc_CTextParams"] = asc_CTextParams;
+		prot = asc_CTextParams.prototype;
+		prot["asc_getAssociation"]				= prot.asc_getAssociation;
+
 	}
 )(window);

@@ -41,29 +41,20 @@ var History = AscCommon.History;
 //-----------------------------------------------------------------------------------
 // Класс работающий с одним колонтитулом
 //-----------------------------------------------------------------------------------
-function CHeaderFooter(Parent, LogicDocument, DrawingDocument, Type)
+function CHeaderFooter(Parent, oLogicDocument, DrawingDocument, Type)
 {
     this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
     this.Parent          = Parent;
     this.DrawingDocument = DrawingDocument;
-    this.LogicDocument   = LogicDocument;
+    this.LogicDocument   = oLogicDocument;
 
-    // Содержимое колонтитула
-
-    if ( "undefined" != typeof(LogicDocument) && null != LogicDocument )
-    {
-        if ( Type === hdrftr_Header )
-        {
-            this.Content = new CDocumentContent( this, DrawingDocument, 0, 0, 0, 0, false, true );
-            this.Content.Content[0].Style_Add( this.Get_Styles().Get_Default_Header() );
-        }
-        else
-        {
-            this.Content = new CDocumentContent( this, DrawingDocument, 0, 0, 0, 0, false, true );
-            this.Content.Content[0].Style_Add( this.Get_Styles().Get_Default_Footer() );
-        }
-    }
+    if (oLogicDocument)
+	{
+		let sStyleId = Type === hdrftr_Header ? oLogicDocument.GetStyles().Get_Default_Header() : oLogicDocument.GetStyles().Get_Default_Footer();
+		this.Content = new CDocumentContent(this, DrawingDocument, 0, 0, 0, 0, false, true);
+		this.Content.Content[0].SetParagraphStyleById(sStyleId);
+	}
 
     this.Type = Type;
 
@@ -74,7 +65,8 @@ function CHeaderFooter(Parent, LogicDocument, DrawingDocument, Type)
 		PageNumInfo   : {}, // Объект с ключом - номером страницы, значением - информация о нумерации
 		SectPr        : {}, // Объект с ключом - номером страницы и полем - ссылкой на секцию
 		LastPage      : -1, // Номер страницы, которая была пересчитана последней
-		RequestedPage : -1  // Страница, которую хотели сделать текущей, но не смогли, т.к. она была не пересчитана
+		RequestedPage : -1, // Страница, которую хотели сделать текущей, но не смогли, т.к. она была не пересчитана
+		InProgress    : false // Запущен ли в данны момент пересчет данного колонтитула
 	};
 
 	this.PageCountElements = [];
@@ -113,6 +105,9 @@ CHeaderFooter.prototype =
 
     Set_Page : function(Page_abs)
     {
+    	if (this.IsRecalculateInProgress())
+    		return;
+
     	if (Page_abs > this.RecalcInfo.LastPage)
 		{
 			this.RecalcInfo.RequestedPage = Page_abs;
@@ -137,6 +132,16 @@ CHeaderFooter.prototype =
         }        
     },
 
+	SetPage : function(nPageAbs)
+	{
+		this.Set_Page(nPageAbs);
+	},
+
+	GetPage : function()
+	{
+		return this.RecalcInfo.CurPage;
+	},
+
 	Is_NeedRecalculate : function(PageAbs)
 	{
 		var PageNumInfo = this.LogicDocument.Get_SectionPageNumInfo(PageAbs);
@@ -147,9 +152,29 @@ CHeaderFooter.prototype =
 		return true;
 	},
 
+	OnStartRecalculate : function()
+	{
+		this.RecalcInfo.InProgress = true;
+	},
+
+	OnEndRecalculate : function()
+	{
+		this.RecalcInfo.InProgress = false;
+	},
+
+	IsRecalculateInProgress : function()
+	{
+		return this.RecalcInfo.InProgress;
+	},
+
     Recalculate : function(Page_abs, SectPr)
     {
-        // Логика пересчета колонтитулов следующая:
+		if (this.IsRecalculateInProgress())
+			return;
+
+		this.OnStartRecalculate();
+
+		// Логика пересчета колонтитулов следующая:
         // 1. При пересчете страницы каждый раз пересчитывается колонтитул (всмысле заходим в функцию Recalculate,т.е. сюда)
         // 2. Далее мы смотрим, нужно ли вообще пересчитывать данную страницу RecalcInfo.NeedRecalc[Page_abs] если это значение
         //    не false, тогда пересчитывать нужно, а если нет, тогда выходим
@@ -177,6 +202,7 @@ CHeaderFooter.prototype =
         this.Content.PrepareRecalculateObject();
 
 		this.Clear_PageCountElements();
+		this.LogicDocument.GetDrawingObjects().resetHdrFtrDrawingArrays(Page_abs);
 
         var CurPage = 0;
         var RecalcResult = recalcresult2_NextPage;
@@ -276,18 +302,27 @@ CHeaderFooter.prototype =
             this.Content.LoadRecalculateObject( RecalcObj );
         }
 
+        this.OnEndRecalculate();
+
         return bChanges;
     },
     
-    Recalculate2 : function(Page_abs)
+    RecalculateContent : function(nPageAbs)
     {
-        this.Content.Set_StartPage( Page_abs );
-        this.Content.PrepareRecalculateObject();
+		if (this.IsRecalculateInProgress())
+			return;
 
-        var CurPage = 0;
-        var RecalcResult = recalcresult2_NextPage;
-        while ( recalcresult2_End != RecalcResult  )
-            RecalcResult = this.Content.Recalculate_Page( CurPage++, true );
+		this.OnStartRecalculate();
+
+		this.Content.Set_StartPage(nPageAbs);
+		this.Content.PrepareRecalculateObject();
+
+		var nCurPage      = 0;
+		var nRecalcResult = recalcresult2_NextPage;
+		while (recalcresult2_End !== nRecalcResult)
+			nRecalcResult = this.Content.Recalculate_Page(nCurPage++, true);
+
+		this.OnEndRecalculate();
     },
 
     Reset_RecalculateCache : function()
@@ -384,12 +419,6 @@ CHeaderFooter.prototype =
     Draw : function(nPageIndex, pGraphics)
     {
         this.Content.Draw( nPageIndex, pGraphics );
-    },
-
-    // Пришло сообщение о том, что контент изменился и пересчитался
-    OnContentRecalculate : function(bChange, bForceRecalc)
-    {
-        return;
     },
 
     OnContentReDraw : function(StartPage, EndPage)
@@ -992,6 +1021,9 @@ CHeaderFooter.prototype =
 
 	DrawSelectionOnPage : function(CurPage)
     {
+    	if (CurPage !== this.GetPage())
+    		return;
+
         return this.Content.DrawSelectionOnPage(0, true, true);
     },
 
@@ -1286,6 +1318,28 @@ CHeaderFooter.prototype =
 		return this.Content.CanAddComment();
 	}
 };
+CHeaderFooter.prototype.UpdateContentToDefaults = function()
+{
+	this.Content.ClearContent(true);
+	let oParagraph     = this.Content.GetElement(0);
+	let oLogicDocument = this.LogicDocument;
+	if (!oLogicDocument || !oParagraph || !oParagraph.IsParagraph())
+		return;
+
+	let sStyleId = this.Type === hdrftr_Header ? oLogicDocument.GetStyles().Get_Default_Header() : oLogicDocument.GetStyles().Get_Default_Footer();
+	oParagraph.SetParagraphStyleById(sStyleId);
+};
+CHeaderFooter.prototype.GetSectionIndex = function()
+{
+	if (!this.LogicDocument)
+		return -1;
+
+	return this.LogicDocument.SectionsInfo.Find_ByHdrFtr(this);
+};
+CHeaderFooter.prototype.GetSectionPr = function()
+{
+	return this.Get_SectPr();
+};
 CHeaderFooter.prototype.Get_SectPr = function()
 {
     if (this.LogicDocument)
@@ -1388,6 +1442,23 @@ CHeaderFooter.prototype.GetAllTablesOnPage = function(nPageAbs, arrTables)
 	this.Set_Page(nPageAbs);
 	return this.Content.GetAllTablesOnPage(nPageAbs, arrTables);
 };
+CHeaderFooter.prototype.RestartSpellCheck = function()
+{
+	this.Content.RestartSpellCheck();
+};
+//----------------------------------------------------------------------------------------------------------------------
+// CHeaderFooter
+//----------------------------------------------------------------------------------------------------------------------
+CHeaderFooter.prototype.Search = function(oSearchEngine, nType)
+{
+	this.Content.Search(oSearchEngine, nType);
+};
+CHeaderFooter.prototype.GetSearchElementId = function(bNext, bCurrent)
+{
+	return this.Content.GetSearchElementId( bNext, bCurrent );
+};
+//----------------------------------------------------------------------------------------------------------------------
+
 
 //-----------------------------------------------------------------------------------
 // Класс для работы с колонтитулами
@@ -1640,7 +1711,7 @@ CHeaderFooterController.prototype =
                 var YLimit = SectPr.GetPageHeight();
 
                 Footer.Reset( X, Y, XLimit, YLimit );
-                Footer.Recalculate2(PageIndex);
+                Footer.RecalculateContent(PageIndex);
 
                 var SummaryHeight = Footer.Content.GetSummaryHeight();
                 Y = Math.max( 2 * YLimit / 3, YLimit - SectPr.GetPageMarginFooter() - SummaryHeight );
@@ -2228,7 +2299,7 @@ CHeaderFooterController.prototype =
 
 	DrawSelectionOnPage : function(CurPage)
 	{
-		if (null != this.CurHdrFtr)
+		if (this.CurHdrFtr)
 			return this.CurHdrFtr.DrawSelectionOnPage(CurPage);
 	},
 
@@ -2442,7 +2513,10 @@ CHeaderFooterController.prototype =
 
 	GetCurrentParagraph : function(bIgnoreSelection, arrSelectedParagraphs, oPr)
 	{
-		return this.CurHdrFtr.GetCurrentParagraph(bIgnoreSelection, arrSelectedParagraphs, oPr);
+		if (this.CurHdrFtr)
+			return this.CurHdrFtr.GetCurrentParagraph(bIgnoreSelection, arrSelectedParagraphs, oPr);
+
+		return null;
 	},
 
 	GetCurrentTablesStack : function(arrTables)
@@ -2703,6 +2777,11 @@ CHeaderFooterController.prototype.Set_CurHdrFtr = function(HdrFtr)
 
     this.CurHdrFtr = HdrFtr;
 };
+CHeaderFooterController.prototype.GetHdrFtr = function(nPageAbs, isHeader)
+{
+	let oPage = this.Pages[nPageAbs];
+	return oPage ? (isHeader ? oPage.Header : oPage.Footer) : null;
+};
 CHeaderFooterController.prototype.RecalculatePageCountUpdate = function(nPageAbs, nPageCount)
 {
 	var oPage = this.Pages[nPageAbs];
@@ -2823,6 +2902,12 @@ CHeaderFooterController.prototype.GetAllTablesOnPage = function(nPageAbs, arrTab
 
 	return arrTables;
 };
+CHeaderFooterController.prototype.CollectSelectedReviewChanges = function(oTrackManager)
+{
+	if (this.CurHdrFtr)
+		this.CurHdrFtr.GetContent().CollectSelectedReviewChanges(oTrackManager);
+};
+
 
 
 function CHdrFtrPage()

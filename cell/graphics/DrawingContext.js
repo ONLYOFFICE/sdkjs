@@ -384,33 +384,6 @@
 	NativeContext.prototype.getImageData = function (sx,sy,sw,sh) {};
 	NativeContext.prototype.putImageData = function (image_data,dx,dy,dirtyX,dirtyY,dirtyWidth,dirtyHeight) {};
 
-	function NativeFontManager() {
-		this.m_lUnits_Per_Em = 0;
-		this.m_lAscender = 0;
-		this.m_lDescender = 0;
-		this.m_lLineHeight = 0;
-	}
-
-	NativeFontManager.prototype.init = function (fontInfo) {
-		this.m_lUnits_Per_Em = fontInfo[3];
-		this.m_lAscender = fontInfo[0];
-		this.m_lDescender = fontInfo[2];
-		this.m_lLineHeight = fontInfo[2];
-	};
-	NativeFontManager.prototype.MeasureChar = function (lUnicode) {
-		var bounds = g_oTextMeasurer.Measurer["GetDrawingBox"](lUnicode);
-		return {
-			fAdvanceX: bounds[0], oBBox: {
-				fMinX: bounds[1], fMaxX: bounds[2], fMinY: bounds[3], fMaxY: bounds[4]
-			}
-		};
-	};
-	NativeFontManager.prototype.SetTextMatrix = function (fA, fB, fC, fD, fE, fF) {
-		window["native"]["PD_transform"](fA, fB, fC, fD, fE, fF);
-	};
-
-
-
 	/**
 	 * Emulates scalable canvas context
 	 * -----------------------------------------------------------------------------
@@ -447,9 +420,6 @@
 		this.changeUnits(undefined !== settings.units ? settings.units : this.units);
 
 		this.fmgrGraphics = undefined !== settings.fmgrGraphics ? settings.fmgrGraphics : null;
-		if (window["IS_NATIVE_EDITOR"]) {
-			this.fmgrGraphics = [new NativeFontManager(), new NativeFontManager(), new NativeFontManager(), new NativeFontManager()];
-		}
 
 		if (null === this.fmgrGraphics) {
 			throw "Can not set graphics in DrawingContext";
@@ -477,6 +447,12 @@
             this.ppiY = AscCommon.AscBrowser.convertToRetinaValue(96, true);
 		}
 	};
+	
+	DrawingContext.prototype.toDataURL = function (type) {
+		type = type || 'image/png';
+		var canvas = this.getCanvas();
+		return canvas.toDataURL(type);
+	}
 
 	/**
 	 * Returns width of drawing context in current units
@@ -870,22 +846,23 @@
 		res.descender = factor * d;
 		res.lineGap = factor * (fm.m_lLineHeight - fm.m_lAscender - d);
 
-		var face;
-		if (window["IS_NATIVE_EDITOR"]) {
-			face = g_oTextMeasurer.Measurer['GetFace']();
-			res.nat_scale = face[0];
-			res.nat_y1 = face[1];
-			res.nat_y2 = face[2];
-		} else {
-			var faceMetrics = fm.m_pFont.cellGetMetrics();
-            res.nat_scale = faceMetrics[0];
-            res.nat_y1 = faceMetrics[1];
-            res.nat_y2 = faceMetrics[2];
-		}
+		var faceMetrics = fm.m_pFont.cellGetMetrics();
+		res.nat_scale = faceMetrics[0];
+		res.nat_y1 = faceMetrics[1];
+		res.nat_y2 = faceMetrics[2];
 
 		res.nat_y1 *= r2;
 		res.nat_y2 *= r2;
 		return res;
+	};
+
+	DrawingContext.prototype.nativeTextDecorationTransform = function(isStart)
+	{
+		// текст рисуется с трансформом, а strikeout/underline - без (матрица применяется ДО отрисовщика)
+		if (isStart)
+			window["native"]["PD_transform"](this._im.sx, this._im.shy, this._im.shx, this._im.sy, this._im.tx, this._im.ty);
+		else
+			window["native"]["PD_transform"](this._mt.sx, this._mt.shy, this._mt.shx, this._mt.sy, this._mt.tx, this._mt.ty);
 	};
 
 	/**
@@ -898,14 +875,6 @@
 
 		var r;
 		this.font.assign(font);
-
-		if (window["IS_NATIVE_EDITOR"]) {
-			this.font.fs = this.font.getSize() * this.scaleFactor * 96.0 / 25.4;
-			// this.font.fs = this.font.getSize() * 2.54 * this.scaleFactor * this.deviceDPI / 72.0;
-
-			// this.font.fs = this.font.getSize() * 2.54 * this.scaleFactor *
-			//     this.deviceScale * this.deviceDPI / 96.0 * (96.0 / (this.deviceDPI * this.deviceScale));
-		}
 
 		var italic = this.font.getItalic();
 		var bold = this.font.getBold();
@@ -922,7 +891,7 @@
 
 		if (window["IS_NATIVE_EDITOR"]) {
 			var fontInfo = AscFonts.g_fontApplication.GetFontInfo(this.font.getName(), fontStyle, this.LastFontOriginInfo);
-			fontInfo = GetLoadInfoForMeasurer(fontInfo, fontStyle);
+			fontInfo = AscCommon.GetLoadInfoForMeasurer(fontInfo, fontStyle);
 
 			var flag = 0;
 			if (fontInfo.NeedBold) {
@@ -938,18 +907,19 @@
 				flag |= 0x08;
 			}
 
-			if (!angle) {
-				window["native"]["PD_LoadFont"](fontInfo.Path, fontInfo.FaceIndex, this.font.getSize(), flag);
-			}
-			AscCommon.g_oTextMeasurer.Flush();
-			fontInfo = g_oTextMeasurer.Measurer["LoadFont"](fontInfo.Path, fontInfo.FaceIndex, this.font.getSize(), flag);
-			if (angle) {
-				this.fmgrGraphics[1].init(fontInfo);
-			} else {
-				this.fmgrGraphics[0].init(fontInfo);
-				this.fmgrGraphics[3].init(fontInfo);
-			}
-			r = true;
+			// выставляем шрифт и отрисовщику...
+			var drawFontSize = this.font.getSize() * this.scaleFactor * 96.0 / 25.4;
+			window["native"]["PD_LoadFont"](fontInfo.Path, fontInfo.FaceIndex, drawFontSize, flag);
+
+			// на отрисовке ячейки трансформ выставляется/сбрасывается. так что тут - только если есть angle
+			if (angle)
+				window["native"]["PD_transform"](this._mt.sx, this._mt.shy, this._mt.shx, this._mt.sy, this._mt.tx, this._mt.ty);
+
+			// ...и измерятелю
+			AscFonts.g_fontApplication.LoadFont(this.font.getName(), AscCommon.g_font_loader, this.fmgrGraphics[3],
+				this.font.getSize(), fontStyle, this.ppiX, this.ppiY);
+			
+			return this;
 		} else {
 			if (angle) {
 				r = AscFonts.g_fontApplication.LoadFont(this.font.getName(), AscCommon.g_font_loader, this.fmgrGraphics[1],
@@ -979,8 +949,8 @@
 	 * @param {Number} units  Units (0 = px, 1 = pt, 2 = in, 3 = mm)
 	 * @return {TextMetrics}  Returns the char dimension
 	 */
-	DrawingContext.prototype.measureChar = function (text, units) {
-		return this.measureText(text.charAt(0), units);
+	DrawingContext.prototype.measureChar = function (text, units, code) {
+		return this.measureText(text ? text.charAt(0) : null, units, [code]);
 	};
 
 	/**
@@ -989,12 +959,13 @@
 	 * @param {Number} units  Units (0 = px, 1 = pt, 2 = in, 3 = mm)
 	 * @return {TextMetrics}  Returns the dimension of string {width: w, height: h}
 	 */
-	DrawingContext.prototype.measureText = function (text, units) {
+	DrawingContext.prototype.measureText = function (text, units, aCodes) {
 		var code;
 		var fm = this.fmgrGraphics[3];
 		var r = getCvtRatio(0/*px*/, units >= 0 && units <= 3 ? units : this.units, this.ppiX);
-		for (var tmp, w = 0, w2 = 0, i = 0; i < text.length; ++i) {
-			code = text.charCodeAt(i);
+		var textLength = aCodes ? aCodes.length : text.length;
+		for (var tmp, w = 0, w2 = 0, i = 0; i < textLength; ++i) {
+			code = aCodes ? aCodes[i] : text.charCodeAt(i);
 			// Replace Non-breaking space(0xA0) with White-space(0x20)
 			tmp = fm.MeasureChar(0xA0 === code ? 0x20 : code);
 			w += asc_round(tmp.fAdvanceX); // ToDo скачет при wrap в ячейке и zoom
@@ -1031,16 +1002,13 @@
 
 		var length = text.length;
 		for (var i = 0; i < length; ++i) {
-			code = text.charCodeAt(i);
+			code = text.charCodeAt ? text.charCodeAt(i) : text[i];
 			// Replace Non-breaking space(0xA0) with White-space(0x20)
 			code = 0xA0 === code ? 0x20 : code;
 			if (window["IS_NATIVE_EDITOR"]) {
-				//TODO: cache
-				// if (null != this.LastFontOriginInfo.Replace)
-				//   code = g_fontApplication.GetReplaceGlyph(code, this.LastFontOriginInfo.Replace);
-
 				window["native"]["PD_FillText"](_x, _y, code);
-				_x += Asc.round(g_oTextMeasurer.Measurer["MeasureChar"](code));
+				// убрать это!!! все сдвиги ДОЛЖНЫ быть вщять из измерятеля/шейпера
+				_x += asc_round((this.measureChar(undefined, 3, code).width) * this.scaleFactor * 96.0 / 25.4);
 			} else {
 				_x = asc_round(manager.LoadString4C(code, _x, _y));
 				pGlyph = manager.m_oGlyphString.m_pGlyphsBuffer[0];
@@ -1054,6 +1022,11 @@
 
 		return this;
 	};
+
+	DrawingContext.prototype.fillTextCode = function (text, x, y, maxWidth, charWidths, angle) {
+		return this.fillText(text, x, y, maxWidth, charWidths, angle);
+	};
+
 
 	// Path methods
 

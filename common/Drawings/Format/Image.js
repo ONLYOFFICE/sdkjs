@@ -108,6 +108,10 @@ CImageShape.prototype.setSpPr = function(pr)
 {
     History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetSpPr, this.spPr, pr));
     this.spPr = pr;
+
+    if(pr) {
+        pr.setParent(this);
+    }
 };
 
 CImageShape.prototype.setBlipFill = function(pr)
@@ -382,9 +386,9 @@ CImageShape.prototype.recalculatePen = function()
     CShape.prototype.recalculatePen.call(this);
     if(this.pen)
     {
-        if(AscFormat.isRealNumber(this.pen.w)){
-            this.pen.w *= 2;
-        }
+        // if(AscFormat.isRealNumber(this.pen.w)){
+        //     this.pen.w *= 2;
+        // }
        // if(!this.pen.Fill){
        //     this.pen = null;
        // }
@@ -677,8 +681,7 @@ CImageShape.prototype.draw = function(graphics, transform)
                 sImageId = AscCommon.getFullImageSrc2(sImageId);
                 var _img = oApi.ImageLoader.map_image_index[sImageId];
                 if ((_img && _img.Status === AscFonts.ImageLoadStatus.Loading) || (_img && _img.Image) || true === graphics.IsSlideBoundsCheckerType || true == graphics.RENDERER_PDF_FLAG){
-                    this.brush = new AscFormat.CUniFill();
-                    this.brush.fill = this.blipFill;
+					this.brush = CreateBrushFromBlipFill(this.blipFill);
                     this.pen = null;
                 }
                 else{
@@ -687,15 +690,13 @@ CImageShape.prototype.draw = function(graphics, transform)
             }
         }
         else{
-            this.brush = new AscFormat.CUniFill();
-            this.brush.fill = this.blipFill;
+            this.brush = CreateBrushFromBlipFill(this.blipFill);
             this.pen = null;
         }
     }
     else{
-        this.brush = new AscFormat.CUniFill();
-        this.brush.fill = this.blipFill;
-        this.pen = null;
+        this.brush = CreateBrushFromBlipFill(this.blipFill);
+        //this.pen = null;
     }
 
     shape_drawer.fromShape2(this, graphics, this.calcGeometry);
@@ -717,6 +718,7 @@ CImageShape.prototype.draw = function(graphics, transform)
     }
     graphics.reset();
     graphics.SetIntegerGrid(true);
+    this.drawAnimLabels && this.drawAnimLabels(graphics);
 };
 
 
@@ -760,6 +762,9 @@ CImageShape.prototype.hit = CShape.prototype.hit;
 
 CImageShape.prototype.drawAdjustments = function(drawingDocument)
 {
+    if(!this.canChangeAdjustments()) {
+        return;
+    }
     if (this.calcGeometry) {
         this.calcGeometry.drawAdjustments(drawingDocument, this.transform, false);
     }
@@ -836,6 +841,172 @@ CImageShape.prototype.checkTypeCorrect = function()
 CImageShape.prototype.Load_LinkData = function(linkData)
 {
 };
+
+    CImageShape.prototype.getTypeName = function() {
+        return AscCommon.translateManager.getValue("Picture");
+    };
+	
+	
+	function CreateBrushFromBlipFill(oBlipFill) {
+		if(!oBlipFill) {
+			return null;
+		}
+		var oBrush = new AscFormat.CUniFill();
+		oBrush.fill = oBlipFill;
+		if(Array.isArray(oBlipFill.Effects)) {
+			for(var nEffect = 0; nEffect < oBlipFill.Effects.length; ++nEffect) {
+				var oEffect = oBlipFill.Effects[nEffect];
+				if (oEffect && oEffect instanceof AscFormat.CAlphaModFix && AscFormat.isRealNumber(oEffect.amt)) {
+					oBrush.setTransparent(255 * oEffect.amt / 100000);
+					break;
+				}
+			}
+		}
+		return oBrush;
+	}
+
+
+
+    CImageShape.prototype.readChildXml = function (name, reader) {
+        switch (name) {
+            case "blipFill": {
+                var uni_fill = new AscFormat.CUniFill();
+                uni_fill.fromXml(reader, "blipFill");
+                this.setBlipFill(uni_fill.fill);
+                break;
+            }
+            case "spPr": {
+                var spPr = new AscFormat.CSpPr();
+                spPr.setParent(this);
+                spPr.fromXml(reader);
+                this.setSpPr(spPr);
+                break;
+            }
+            case "nvPicPr": {
+                let prop = new AscFormat.UniNvPr();
+                prop.fromXml(reader);
+                this.setNvPicPr(prop);
+                this.setLocks(prop.getLocks());
+                break;
+            }
+            case "style": {
+                let prop = new AscFormat.CShapeStyle();
+                prop.fromXml(reader);
+                this.setStyle(prop);
+                break;
+            }
+        }
+    };
+    CImageShape.prototype.writeChildren = function (writer) {
+        //TODO:Implement in children
+    };
+    
+
+	CImageShape.prototype.toXml = function(writer, name) {
+        let namespace_ = "a";
+        let bOle = false;
+        let oContext = writer.context;
+        
+        if		(oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_XLSX)			namespace_ = "xdr";
+        else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX ||
+                 oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX_GLOSSARY)	namespace_ = "pic";
+        else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_GRAPHICS)		namespace_ = "a";
+        else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_CHART_DRAWING)	namespace_ = "cdr";
+        else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_PPTX)		namespace_ = "p";
+
+        if (oContext.docType !== AscFormat.XMLWRITER_DOC_TYPE_XLSX &&
+            oContext.docType !== AscFormat.XMLWRITER_DOC_TYPE_DOCX &&
+            oContext.docType !== AscFormat.XMLWRITER_DOC_TYPE_DOCX_GLOSSARY)
+        {
+            if(this.getObjectType() === AscDFH.historyitem_type_OleObject)
+            {
+                bOle = true;
+                writer.WriteXmlString("<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id=\"0\" name=\"\"/><p:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" noChangeAspect=\"1\"/></p:cNvGraphicFramePr><p:nvPr><p:extLst><p:ext uri=\"{D42A27DB-BD31-4B8C-83A1-F6EECF244321}\"><p14:modId xmlns:p14=\"http://schemas.microsoft.com/office/powerpoint/2010/main\" val=\"2157879785\"/></p:ext></p:extLst></p:nvPr></p:nvGraphicFramePr>");
+                if(this.spPr.xfrm)
+                {
+                    let oldNamespace = this.spPr.xfrm.m_ns;
+                    this.spPr.xfrm.m_ns = "p";
+                    this.spPr.xfrm.toXml(writer);
+                    this.spPr.xfrm.m_ns = oldNamespace;
+                }
+                writer.WriteXmlString("<a:graphic><a:graphicData uri=\"http://schemas.openxmlformats.org/presentationml/2006/ole\">");
+
+                writer.WriteXmlNodeStart("p:oleObj");
+                writer.WriteXmlAttributeString("name", "oleObj");
+                // if(oleObject->m_oId.IsInit())
+                // {
+                //     writer.WriteAttribute2("r:id", oleObject->m_oId->get());
+                // }
+
+                let nCoeffPixToEmu = 635 * 20 * 3 / 4;
+                if(this.m_nPixWidth !== null)
+                {
+                    writer.WriteXmlAttributeInt("imgW", (nCoeffPixToEmu * this.m_nPixWidth + 0.5) >> 0); //twips to emu
+                }
+                if(this.m_nPixHeight !== null)
+                {
+                    writer.WriteXmlAttributeInt("imgH", (nCoeffPixToEmu * this.m_nPixHeight + 0.5) >> 0); //twips to emu
+                }
+                writer.WriteXmlNullableAttributeString("progId", this.m_sApplicationId);
+                writer.WriteXmlAttributesEnd();
+
+                writer.WriteString("<p:embed/>");
+            }
+        }
+        writer.WriteXmlNodeStart(namespace_ + ":pic");
+
+        if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX ||
+            oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX_GLOSSARY)
+        {
+            writer.WriteXmlAttributeString("xmlns:pic", "http://schemas.openxmlformats.org/drawingml/2006/picture");
+        }
+        writer.WriteXmlAttributesEnd();
+
+        if(this.nvPicPr) {
+            if(this.nvPicPr.nvUniSpPr) {
+                this.nvPicPr.nvUniSpPr.locks = this.locks;
+            }
+            this.nvPicPr.toXmlPic(writer);
+            if(this.nvPicPr.nvUniSpPr) {
+                this.nvPicPr.nvUniSpPr.locks = null;
+            }
+        }
+
+        this.blipFill.toXml(writer, namespace_);
+
+        writer.context.flag = 1;
+        this.spPr.toXml(writer);
+        writer.context.flag = 0;
+        
+        writer.WriteXmlNullable(this.style);
+
+        writer.WriteXmlNodeEnd(namespace_ + ":pic");
+        
+        if (oContext.docType !== AscFormat.XMLWRITER_DOC_TYPE_XLSX &&
+            oContext.docType !== AscFormat.XMLWRITER_DOC_TYPE_DOCX &&
+            oContext.docType !== AscFormat.XMLWRITER_DOC_TYPE_DOCX_GLOSSARY)
+        {
+            if(bOle)
+            {
+                writer.WriteString("</p:oleObj></a:graphicData></a:graphic></p:graphicFrame>");
+            }
+        }
+
+		// var context = writer.context;
+		// var objectId = context.objectId++;
+		// writer.WriteXmlNodeStart(name);
+		// writer.WriteXmlAttributesEnd();
+        //
+		// var ns = StaxParser.prototype.GetNSFromNodeName(name);
+        //
+		// writer.WriteXmlString('<'+ns+'nvPicPr>');
+		// writer.WriteXmlString('<'+ns+'cNvPr id="' + objectId + '" name="Picture ' + objectId + '"/>');
+		// writer.WriteXmlString('<'+ns+'cNvPicPr><a:picLocks noChangeAspect="1"/></'+ns+'cNvPicPr></'+ns+'nvPicPr>');
+		// writer.WriteXmlNullable(this.blipFill, ns + "blipFill");
+		// writer.WriteXmlNullable(this.spPr, ns + "spPr");
+        //
+		// writer.WriteXmlNodeEnd(name);
+	};
 
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};

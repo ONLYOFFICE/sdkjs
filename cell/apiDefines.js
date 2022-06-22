@@ -342,6 +342,8 @@ var c_oAscFormulaRangeBorderColor = [
   new CColor(55, 127, 158)
 ];
 
+var c_oAscVisibleAreaOleEditorBorderColor = new CColor(32, 139, 255);
+
   var selectionLineType = {
     None        : 0,
     Selection   : 1,
@@ -380,7 +382,13 @@ var c_oAscPopUpSelectorType = {
   Range: 2,
   Table: 3,
   Slicer: 4,
-  TotalRowFunc: 5
+  TotalRowFunc: 5,
+  TableColumnName: 6,
+  TableThisRow: 7,
+  TableAll: 8,
+  TableData: 9,
+  TableHeaders: 10,
+  TableTotals: 11
 };
   /** @enum */
   var c_oSerFormat = {
@@ -540,7 +548,13 @@ var c_oAscPopUpSelectorType = {
 		showLockMessage: 3
 	};
 
-  
+  var c_oAscSearchBy = {
+    Workbook: 0,
+    Sheet: 1,
+    Range: 2
+  };
+
+
   //----------------------------------------------------------export----------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
   window['AscCommonExcel'].c_oAscDrawDepOptions = c_oAscDrawDepOptions;
@@ -559,6 +573,7 @@ var c_oAscPopUpSelectorType = {
   window['AscCommonExcel'].c_oAscCoAuthoringDottedWidth = c_oAscCoAuthoringDottedWidth;
   window['AscCommonExcel'].c_oAscCoAuthoringDottedDistance = c_oAscCoAuthoringDottedDistance;
   window['AscCommonExcel'].c_oAscFormulaRangeBorderColor = c_oAscFormulaRangeBorderColor;
+  window['AscCommonExcel'].c_oAscVisibleAreaOleEditorBorderColor = c_oAscVisibleAreaOleEditorBorderColor;
   window['AscCommonExcel'].selectionLineType = selectionLineType;
   window['AscCommonExcel'].c_oAscLockNameFrozenPane = c_oAscLockNameFrozenPane;
   window['AscCommonExcel'].c_oAscLockNameTabColor = c_oAscLockNameTabColor;
@@ -746,6 +761,13 @@ var c_oAscPopUpSelectorType = {
   prot['Table'] = prot.Table;
   prot['Slicer'] = prot.Slicer;
   prot['TotalRowFunc'] = prot.TotalRowFunc;
+  prot['TableColumnName'] = prot.TableColumnName;
+  prot['TableThisRow'] = prot.TableThisRow;
+  prot['TableAll'] = prot.TableAll;
+  prot['TableData'] = prot.TableData;
+  prot['TableHeaders'] = prot.TableHeaders;
+  prot['TableTotals'] = prot.TableTotals;
+
   window['Asc']['c_oAscSparklineType'] = window['Asc'].c_oAscSparklineType = c_oAscSparklineType;
   prot = c_oAscSparklineType;
   prot['Line'] = prot.Line;
@@ -882,6 +904,12 @@ var c_oAscPopUpSelectorType = {
   prot['notExpandAndNotShowMessage'] = prot.notExpandAndNotShowMessage;
   prot['showExpandMessage'] = prot.showExpandMessage;
   prot['showLockMessage'] = prot.showLockMessage;
+
+  window['Asc']['c_oAscSearchBy'] = window['Asc'].c_oAscSearchBy = c_oAscSearchBy;
+  prot = c_oAscSearchBy;
+  prot['Workbook'] = prot.Workbook;
+  prot['Sheet'] = prot.Sheet;
+  prot['Range'] = prot.Range;
 
 
 })(window);

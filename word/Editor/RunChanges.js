@@ -38,50 +38,54 @@
  * Time: 12:56
  */
 
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_AddItem]           = CChangesRunAddItem;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RemoveItem]        = CChangesRunRemoveItem;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Bold]              = CChangesRunBold;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Italic]            = CChangesRunItalic;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Strikeout]         = CChangesRunStrikeout;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Underline]         = CChangesRunUnderline;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_FontFamily]        = undefined; // obsolete
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_FontSize]          = CChangesRunFontSize;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Color]             = CChangesRunColor;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_VertAlign]         = CChangesRunVertAlign;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_HighLight]         = CChangesRunHighLight;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_HighlightColor]    = CChangesRunHighlightColor;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RStyle]            = CChangesRunRStyle;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Spacing]           = CChangesRunSpacing;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_DStrikeout]        = CChangesRunDStrikeout;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Caps]              = CChangesRunCaps;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_SmallCaps]         = CChangesRunSmallCaps;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Position]          = CChangesRunPosition;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Value]             = undefined; // obsolete
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RFonts]            = CChangesRunRFonts;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Lang]              = CChangesRunLang;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RFonts_Ascii]      = CChangesRunRFontsAscii;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RFonts_HAnsi]      = CChangesRunRFontsHAnsi;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RFonts_CS]         = CChangesRunRFontsCS;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RFonts_EastAsia]   = CChangesRunRFontsEastAsia;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RFonts_Hint]       = CChangesRunRFontsHint;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Lang_Bidi]         = CChangesRunLangBidi;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Lang_EastAsia]     = CChangesRunLangEastAsia;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Lang_Val]          = CChangesRunLangVal;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_TextPr]            = CChangesRunTextPr;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Unifill]           = CChangesRunUnifill;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Shd]               = CChangesRunShd;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_MathStyle]         = CChangesRunMathStyle;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_MathPrp]           = CChangesRunMathPrp;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_ReviewType]        = CChangesRunReviewType;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_PrChange]          = CChangesRunPrChange;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_TextFill]          = CChangesRunTextFill;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_TextOutline]       = CChangesRunTextOutline;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_PrReviewInfo]      = CChangesRunPrReviewInfo;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_ContentReviewInfo] = CChangesRunContentReviewInfo;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_OnStartSplit]      = CChangesRunOnStartSplit;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_OnEndSplit]        = CChangesRunOnEndSplit;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_MathAlnAt]         = CChangesRunMathAlnAt;
-AscDFH.changesFactory[AscDFH.historyitem_ParaRun_MathForcedBreak]   = CChangesRunMathForcedBreak;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_AddItem]               = CChangesRunAddItem;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RemoveItem]            = CChangesRunRemoveItem;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Bold]                  = CChangesRunBold;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Italic]                = CChangesRunItalic;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Strikeout]             = CChangesRunStrikeout;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Underline]             = CChangesRunUnderline;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_FontFamily]            = undefined; // obsolete
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_FontSize]              = CChangesRunFontSize;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Color]                 = CChangesRunColor;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_VertAlign]             = CChangesRunVertAlign;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_HighLight]             = CChangesRunHighLight;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_HighlightColor]        = CChangesRunHighlightColor;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RStyle]                = CChangesRunRStyle;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Spacing]               = CChangesRunSpacing;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_DStrikeout]            = CChangesRunDStrikeout;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Caps]                  = CChangesRunCaps;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_SmallCaps]             = CChangesRunSmallCaps;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Position]              = CChangesRunPosition;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Value]                 = undefined; // obsolete
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RFonts]                = CChangesRunRFonts;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Lang]                  = CChangesRunLang;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RFonts_Ascii]          = CChangesRunRFontsAscii;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RFonts_HAnsi]          = CChangesRunRFontsHAnsi;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RFonts_CS]             = CChangesRunRFontsCS;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RFonts_EastAsia]       = CChangesRunRFontsEastAsia;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RFonts_Hint]           = CChangesRunRFontsHint;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Lang_Bidi]             = CChangesRunLangBidi;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Lang_EastAsia]         = CChangesRunLangEastAsia;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Lang_Val]              = CChangesRunLangVal;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_TextPr]                = CChangesRunTextPr;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Unifill]               = CChangesRunUnifill;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Shd]                   = CChangesRunShd;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_MathStyle]             = CChangesRunMathStyle;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_MathPrp]               = CChangesRunMathPrp;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_ReviewType]            = CChangesRunReviewType;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_PrChange]              = CChangesRunPrChange;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_TextFill]              = CChangesRunTextFill;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_TextOutline]           = CChangesRunTextOutline;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_PrReviewInfo]          = CChangesRunPrReviewInfo;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_ContentReviewInfo]     = CChangesRunContentReviewInfo;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_OnStartSplit]          = CChangesRunOnStartSplit;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_OnEndSplit]            = CChangesRunOnEndSplit;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_MathAlnAt]             = CChangesRunMathAlnAt;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_MathForcedBreak]       = CChangesRunMathForcedBreak;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RFonts_Ascii_Theme]    = CChangesRunRFontsAsciiTheme;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RFonts_HAnsi_Theme]    = CChangesRunRFontsHAnsiTheme;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RFonts_CS_Theme]       = CChangesRunRFontsCSTheme;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RFonts_EastAsia_Theme] = CChangesRunRFontsEastAsiaTheme;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
@@ -116,7 +120,11 @@ AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_RFonts]            = [
 	AscDFH.historyitem_ParaRun_RFonts_HAnsi,
 	AscDFH.historyitem_ParaRun_RFonts_CS,
 	AscDFH.historyitem_ParaRun_RFonts_EastAsia,
-	AscDFH.historyitem_ParaRun_RFonts_Hint
+	AscDFH.historyitem_ParaRun_RFonts_Hint,
+	AscDFH.historyitem_ParaRun_RFonts_Ascii_Theme,
+	AscDFH.historyitem_ParaRun_RFonts_HAnsi_Theme,
+	AscDFH.historyitem_ParaRun_RFonts_CS_Theme,
+	AscDFH.historyitem_ParaRun_RFonts_EastAsia_Theme
 ];
 AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_Lang]              = [
 	AscDFH.historyitem_ParaRun_TextPr,
@@ -165,7 +173,11 @@ AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_TextPr]            = [
 	AscDFH.historyitem_ParaRun_PrChange,
 	AscDFH.historyitem_ParaRun_TextFill,
 	AscDFH.historyitem_ParaRun_TextOutline,
-	AscDFH.historyitem_ParaRun_PrReviewInfo
+	AscDFH.historyitem_ParaRun_PrReviewInfo,
+	AscDFH.historyitem_ParaRun_RFonts_Ascii_Theme,
+	AscDFH.historyitem_ParaRun_RFonts_HAnsi_Theme,
+	AscDFH.historyitem_ParaRun_RFonts_CS_Theme,
+	AscDFH.historyitem_ParaRun_RFonts_EastAsia_Theme
 ];
 AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_Unifill]           = [AscDFH.historyitem_ParaRun_TextPr, AscDFH.historyitem_ParaRun_Unifill];
 AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_Shd]               = [AscDFH.historyitem_ParaRun_TextPr, AscDFH.historyitem_ParaRun_Shd];
@@ -211,6 +223,13 @@ AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_MathForcedBreak]   = [
 	AscDFH.historyitem_ParaRun_MathAlnAt,
 	AscDFH.historyitem_ParaRun_MathForcedBreak
 ];
+
+AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_RFonts_Ascii_Theme]      = [AscDFH.historyitem_ParaRun_TextPr, AscDFH.historyitem_ParaRun_RFonts, AscDFH.historyitem_ParaRun_RFonts_Ascii_Theme];
+AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_RFonts_HAnsi_Theme]      = [AscDFH.historyitem_ParaRun_TextPr, AscDFH.historyitem_ParaRun_RFonts, AscDFH.historyitem_ParaRun_RFonts_HAnsi_Theme];
+AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_RFonts_CS_Theme]         = [AscDFH.historyitem_ParaRun_TextPr, AscDFH.historyitem_ParaRun_RFonts, AscDFH.historyitem_ParaRun_RFonts_CS_Theme];
+AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_RFonts_EastAsia_Theme]   = [AscDFH.historyitem_ParaRun_TextPr, AscDFH.historyitem_ParaRun_RFonts, AscDFH.historyitem_ParaRun_RFonts_EastAsia_Theme];
+
+
 
 /**
  * Общая функция объединения изменений, которые зависят только от себя и AscDFH.historyitem_ParaRun_TextPr
@@ -2605,4 +2624,134 @@ CChangesRunMathForcedBreak.prototype.Merge = function(oChange)
 		this.alnAt = oChange.New;
 
 	return true;
+};
+/**
+ * Базовый класс для изменений ссылок на шрифт из темы
+ * @constructor
+ */
+function CChangesRunRFontsThemeBase()
+{}
+CChangesRunRFontsThemeBase.prototype.WriteToBinary = function(oWriter)
+{
+	// Long  : Flag
+	// 1-bit : Подсвечивать ли данные изменения
+	// 2-bit : Is undefined New ?
+	// 3-bit : Is undefined Old ?
+	// String : New
+	// String : Old
+
+	var nFlags = 0;
+
+	if (false !== this.Color)
+		nFlags |= 1;
+
+	if (undefined === this.New)
+		nFlags |= 2;
+
+	if (undefined === this.Old)
+		nFlags |= 4;
+
+	oWriter.WriteLong(nFlags);
+
+	if (undefined !== this.New)
+		oWriter.WriteString2(this.New);
+
+	if (undefined !== this.Old)
+		oWriter.WriteString2(this.Old);
+};
+CChangesRunRFontsThemeBase.prototype.ReadFromBinary = function(oReader)
+{
+	// Long  : Flag
+	// 1-bit : Подсвечивать ли данные изменения
+	// 2-bit : Is undefined New ?
+	// 3-bit : Is undefined Old ?
+	// String : New
+	// String : Old
+
+	var nFlags = oReader.GetLong();
+	this.Color = !!(nFlags & 1);
+	this.New   = !!(nFlags & 2) ? undefined : oReader.GetString2();
+	this.Old   = !!(nFlags & 4) ? undefined : oReader.GetString2();
+};
+CChangesRunRFontsThemeBase.prototype.private_SetRFontsValue = function(sValue)
+{
+};
+CChangesRunRFontsThemeBase.prototype.private_SetValue = function(sValue)
+{
+	var oRun = this.Class;
+	this.private_SetRFontsValue(sValue);
+	oRun.Recalc_CompiledPr(true);
+	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
+};
+CChangesRunRFontsThemeBase.prototype.Load = function(Color)
+{
+	this.Redo();
+
+	if (this.Color && Color)
+		this.Class.private_AddCollPrChangeOther(Color);
+};
+CChangesRunRFontsThemeBase.prototype.Merge = private_ParaRunChangesOnMergeRFontsTextPr;
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesRunRFontsAsciiTheme(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+}
+CChangesRunRFontsAsciiTheme.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesRunRFontsAsciiTheme.prototype.constructor = CChangesRunRFontsAsciiTheme;
+AscCommon.ExtendPrototype(CChangesRunRFontsAsciiTheme, CChangesRunRFontsThemeBase);
+CChangesRunRFontsAsciiTheme.prototype.Type = AscDFH.historyitem_ParaRun_RFonts_Ascii_Theme;
+CChangesRunRFontsAsciiTheme.prototype.private_SetRFontsValue = function(sValue)
+{
+	this.Class.Pr.RFonts.AsciiTheme = sValue;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesRunRFontsHAnsiTheme(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+}
+CChangesRunRFontsHAnsiTheme.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesRunRFontsHAnsiTheme.prototype.constructor = CChangesRunRFontsHAnsiTheme;
+AscCommon.ExtendPrototype(CChangesRunRFontsHAnsiTheme, CChangesRunRFontsThemeBase);
+CChangesRunRFontsHAnsiTheme.prototype.Type = AscDFH.historyitem_ParaRun_RFonts_HAnsi_Theme;
+CChangesRunRFontsHAnsiTheme.prototype.private_SetRFontsValue = function(sValue)
+{
+	this.Class.Pr.RFonts.HAnsiTheme = sValue;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesRunRFontsCSTheme(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+}
+CChangesRunRFontsCSTheme.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesRunRFontsCSTheme.prototype.constructor = CChangesRunRFontsCSTheme;
+CChangesRunRFontsCSTheme.prototype.Type = AscDFH.historyitem_ParaRun_RFonts_CS_Theme;
+AscCommon.ExtendPrototype(CChangesRunRFontsCSTheme, CChangesRunRFontsThemeBase);
+CChangesRunRFontsCSTheme.prototype.private_SetRFontsValue = function(sValue)
+{
+	this.Class.Pr.RFonts.CSTheme = sValue;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesRunRFontsEastAsiaTheme(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+}
+CChangesRunRFontsEastAsiaTheme.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesRunRFontsEastAsiaTheme.prototype.constructor = CChangesRunRFontsEastAsiaTheme;
+CChangesRunRFontsEastAsiaTheme.prototype.Type = AscDFH.historyitem_ParaRun_RFonts_EastAsia_Theme;
+AscCommon.ExtendPrototype(CChangesRunRFontsEastAsiaTheme, CChangesRunRFontsThemeBase);
+CChangesRunRFontsEastAsiaTheme.prototype.private_SetRFontsValue = function(sValue)
+{
+	this.Class.Pr.RFonts.EastAsiaTheme = sValue;
 };

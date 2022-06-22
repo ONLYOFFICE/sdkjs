@@ -59,7 +59,8 @@ DrawingObjectsController.prototype.fitImagesToSlide = function()
         for(var i = 0; i < aSelectedObjects.length; ++i)
         {
             var oDrawing = aSelectedObjects[i];
-            if(oDrawing.getObjectType() === AscDFH.historyitem_type_ImageShape)
+            if(oDrawing.getObjectType() === AscDFH.historyitem_type_ImageShape ||
+                oDrawing.getObjectType() === AscDFH.historyitem_type_OleObject)
             {
                 var sImageId = oDrawing.getImageUrl();
                 if(typeof sImageId === "string")
@@ -136,7 +137,7 @@ DrawingObjectsController.prototype.getColorMap = function()
             }
         }
     }
-    return AscFormat.G_O_DEFAULT_COLOR_MAP;
+    return AscFormat.DEFAULT_COLOR_MAP;
 };
 
 
@@ -148,6 +149,10 @@ DrawingObjectsController.prototype.handleOleObjectDoubleClick = function(drawing
     {
         if(oleObject.m_oMathObject) {
             editor.sendEvent("asc_onConvertEquationToMath", oleObject);
+        }
+        else if (oleObject.canEditTableOleObject())
+        {
+            editor.asc_doubleClickOnTableOleObject(oleObject);
         }
         else {
             var pluginData = new Asc.CPluginData();

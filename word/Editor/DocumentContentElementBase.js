@@ -461,7 +461,7 @@ CDocumentContentElementBase.prototype.AddInlineImage = function(W, H, Img, Chart
 CDocumentContentElementBase.prototype.AddImages = function(aImages)
 {
 };
-CDocumentContentElementBase.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId)
+CDocumentContentElementBase.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect)
 {
 };
 CDocumentContentElementBase.prototype.AddSignatureLine = function(oSignatureDrawing)
@@ -1238,6 +1238,10 @@ CDocumentContentElementBase.prototype.UpdateLineNumbersInfo = function(){};
  * @param oEngine {CTextToTableEngine}
  */
 CDocumentContentElementBase.prototype.CalculateTextToTable = function(oEngine){};
+/**
+ * @param arrChanges
+ */
+CDocumentContentElementBase.prototype.GetSelectedReviewChanges = function(arrChanges, oTrackChanges) {return arrChanges ? arrChanges : [];};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

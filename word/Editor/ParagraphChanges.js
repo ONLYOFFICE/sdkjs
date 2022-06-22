@@ -77,6 +77,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Paragraph_OutlineLvl]                = 
 AscDFH.changesFactory[AscDFH.historyitem_Paragraph_DefaultTabSize]            = CChangesParagraphDefaultTabSize;
 AscDFH.changesFactory[AscDFH.historyitem_Paragraph_SuppressLineNumbers]       = CChangesParagraphSuppressLineNumbers;
 AscDFH.changesFactory[AscDFH.historyitem_Paragraph_Shd_Fill]                  = CChangesParagraphShdFill;
+AscDFH.changesFactory[AscDFH.historyitem_Paragraph_Shd_ThemeFill]             = CChangesParagraphShdThemeFill;
 
 function private_ParagraphChangesOnLoadPr(oColor)
 {
@@ -89,7 +90,7 @@ function private_ParagraphChangesOnLoadPr(oColor)
 function private_ParagraphChangesOnSetValue(oParagraph)
 {
 	oParagraph.RecalcInfo.Set_Type_0(pararecalc_0_All);
-	oParagraph.RecalcInfo.Set_Type_0_Spell(pararecalc_0_Spell_All);
+	oParagraph.RecalcInfo.NeedSpellCheck();
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -187,6 +188,7 @@ AscDFH.changesRelationMap[AscDFH.historyitem_Paragraph_Shd]                     
 	AscDFH.historyitem_Paragraph_Shd_Color,
 	AscDFH.historyitem_Paragraph_Shd_Unifill,
 	AscDFH.historyitem_Paragraph_Shd_Fill,
+	AscDFH.historyitem_Paragraph_Shd_ThemeFill,
 	AscDFH.historyitem_Paragraph_Shd,
 	AscDFH.historyitem_Paragraph_Pr
 ];
@@ -244,6 +246,7 @@ AscDFH.changesRelationMap[AscDFH.historyitem_Paragraph_Pr]                      
 	AscDFH.historyitem_Paragraph_Shd_Color,
 	AscDFH.historyitem_Paragraph_Shd_Unifill,
 	AscDFH.historyitem_Paragraph_Shd_Fill,
+	AscDFH.historyitem_Paragraph_Shd_ThemeFill,
 	AscDFH.historyitem_Paragraph_Shd,
 	AscDFH.historyitem_Paragraph_WidowControl,
 	AscDFH.historyitem_Paragraph_Tabs,
@@ -295,6 +298,11 @@ AscDFH.changesRelationMap[AscDFH.historyitem_Paragraph_SuppressLineNumbers]     
 ];
 AscDFH.changesRelationMap[AscDFH.historyitem_Paragraph_Shd_Fill]                  = [
 	AscDFH.historyitem_Paragraph_Shd_Fill,
+	AscDFH.historyitem_Paragraph_Shd,
+	AscDFH.historyitem_Paragraph_Pr
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_Paragraph_Shd_ThemeFill]               = [
+	AscDFH.historyitem_Paragraph_Shd_ThemeFill,
 	AscDFH.historyitem_Paragraph_Shd,
 	AscDFH.historyitem_Paragraph_Pr
 ];
@@ -392,20 +400,16 @@ CChangesParagraphAddItem.prototype.Load = function(Color)
 		{
 			if (para_Comment === Element.Type)
 			{
-				var Comment = AscCommon.g_oTableId.Get_ById(Element.CommentId);
-
-				// При копировании не всегда сразу заполняется правильно CommentId
-				if (null != Comment && Comment instanceof AscCommon.CComment)
-				{
-					if (true === Element.Start)
-						Comment.Set_StartId(oParagraph.Get_Id());
-					else
-						Comment.Set_EndId(oParagraph.Get_Id());
-				}
+				var oComment = AscCommon.g_oTableId.Get_ById(Element.CommentId);
+				if (oComment instanceof AscCommon.CComment)
+					oComment.UpdatePosition();
 			}
 
 			if (Element.SetParagraph)
 				Element.SetParagraph(oParagraph);
+
+			if (Element.SetParent)
+				Element.SetParent(oParagraph);
 
 			oParagraph.Content.splice(Pos, 0, Element);
 			oParagraph.private_UpdateSelectionPosOnAdd(Pos, 1);
@@ -2010,6 +2014,40 @@ CChangesParagraphShdFill.prototype.private_SetValue = function(Value)
 CChangesParagraphShdFill.prototype.Merge = private_ParagraphChangesOnMergeShdPr;
 CChangesParagraphShdFill.prototype.Load = private_ParagraphChangesOnLoadPr;
 CChangesParagraphShdFill.prototype.IsNeedRecalculate = function()
+{
+	return false;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseObjectProperty}
+ */
+function CChangesParagraphShdThemeFill(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseObjectProperty.call(this, Class, Old, New, Color);
+}
+CChangesParagraphShdThemeFill.prototype = Object.create(AscDFH.CChangesBaseObjectProperty.prototype);
+CChangesParagraphShdThemeFill.prototype.constructor = CChangesParagraphShdThemeFill;
+CChangesParagraphShdThemeFill.prototype.Type = AscDFH.historyitem_Paragraph_Shd_ThemeFill;
+CChangesParagraphShdThemeFill.prototype.private_CreateObject = function()
+{
+	return new AscFormat.CUniFill();
+};
+CChangesParagraphShdThemeFill.prototype.private_SetValue = function(Value)
+{
+	var oParagraph = this.Class;
+
+	if (undefined === oParagraph.Pr.Shd)
+		oParagraph.Pr.Shd = new CDocumentShd();
+
+	oParagraph.Pr.Shd.ThemeFill = Value;
+
+	oParagraph.CompiledPr.NeedRecalc = true;
+	oParagraph.private_UpdateTrackRevisionOnChangeParaPr(false);
+	private_ParagraphChangesOnSetValue(this.Class);
+};
+CChangesParagraphShdThemeFill.prototype.Merge = private_ParagraphChangesOnMergeShdPr;
+CChangesParagraphShdThemeFill.prototype.Load = private_ParagraphChangesOnLoadPr;
+CChangesParagraphShdThemeFill.prototype.IsNeedRecalculate = function()
 {
 	return false;
 };

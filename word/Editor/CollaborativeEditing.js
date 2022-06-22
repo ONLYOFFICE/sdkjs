@@ -169,10 +169,7 @@ CWordCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, Addition
     }
 
     if (false !== IsUpdateInterface)
-    {
-        // Обновляем интерфейс
-        editor.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
-    }
+        editor.WordControl.m_oLogicDocument.UpdateInterface(undefined, true);
 
     // TODO: Пока у нас обнуляется история на сохранении нужно обновлять Undo/Redo
     editor.WordControl.m_oLogicDocument.Document_UpdateUndoRedoState();
@@ -222,7 +219,13 @@ CWordCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
     AscCommon.CollaborativeEditing.Set_GlobalLock(false);
     AscCommon.CollaborativeEditing.Set_GlobalLockSelection(false);
 
-    var nPageIndex  = undefined;
+	if (this.m_fEndLoadCallBack)
+	{
+		this.m_fEndLoadCallBack();
+		this.m_fEndLoadCallBack = null;
+	}
+
+	var nPageIndex  = undefined;
     if (this.Is_Fast())
 	{
 		var oParagraph = this.m_oLogicDocument.GetCurrentParagraph();
@@ -368,12 +371,16 @@ CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
             if (true === oEditor.isChartEditor)
                 oEditor.sync_closeChartEditor();
 
+          if (true === oEditor.isOleEditor)
+            oEditor.sync_closeOleEditor();
+
             // Делаем откат на 1 шаг назад и удаляем из Undo/Redo эту последнюю точку
             oEditor.WordControl.m_oLogicDocument.Document_Undo();
             AscCommon.History.Clear_Redo();
         }
 
         oEditor.isChartEditor = false;
+        oEditor.isOleEditor = false;
     }
 };
 CWordCollaborativeEditing.prototype.AddContentControlForSkippingOnCheckEditingLock = function(oContentControl)

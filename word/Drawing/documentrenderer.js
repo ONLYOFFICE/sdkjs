@@ -31,9 +31,6 @@
  */
 
 "use strict";
-var g_memory = AscFonts.g_memory;
-var DecodeBase64Char = AscFonts.DecodeBase64Char;
-var b64_decode = AscFonts.b64_decode;
 
 function CPageMeta()
 {
@@ -194,108 +191,17 @@ function CStream(data, size)
 
 function CreateDocumentData(szSrc)
 {
-    var isBase64 = false;
+	var isBase64 = false;
 	if (typeof(szSrc) == "string" || szSrc instanceof String){
 		isBase64 = true;
 	}
 
 	var stream = null;
 	if (!isBase64)
-    {
-		stream = new CStream(szSrc, szSrc.length);
-		return stream;
-    }
+		return new CStream(szSrc, szSrc.length);
 
-    var srcLen = szSrc.length;
-    var nWritten = 0;
-
-    var index = 0;
-    var dst_len = "";
-    while (true)
-    {
-        var _c = szSrc.charCodeAt(index);
-        if (_c == ";".charCodeAt(0))
-            break;
-
-        dst_len += String.fromCharCode(_c);
-        index++;
-    }
-
-    index++;
-    var dstLen = parseInt(dst_len);
-
-    if (0 == dstLen)
-        return null;
-
-    var pointer = g_memory.Alloc(dstLen);
-    stream = new CStream(pointer.data, dstLen);
-    stream.obj = pointer.obj;
-
-    var dstPx = stream.data;
-
-    if (window.chrome)
-    {
-        while (index < srcLen)
-        {
-            var dwCurr = 0;
-            var i;
-            var nBits = 0;
-            for (i=0; i<4; i++)
-            {
-                if (index >= srcLen)
-                    break;
-                var nCh = DecodeBase64Char(szSrc.charCodeAt(index++));
-                if (nCh == -1)
-                {
-                    i--;
-                    continue;
-                }
-                dwCurr <<= 6;
-                dwCurr |= nCh;
-                nBits += 6;
-            }
-
-            dwCurr <<= 24-nBits;
-            for (i=0; i<nBits/8; i++)
-            {
-                dstPx[nWritten++] = ((dwCurr & 0x00ff0000) >>> 16);
-                dwCurr <<= 8;
-            }
-        }
-    }
-    else
-    {
-        var p = b64_decode;
-        while (index < srcLen)
-        {
-            var dwCurr = 0;
-            var i;
-            var nBits = 0;
-            for (i=0; i<4; i++)
-            {
-                if (index >= srcLen)
-                    break;
-                var nCh = p[szSrc.charCodeAt(index++)];
-                if (nCh == undefined)
-                {
-                    i--;
-                    continue;
-                }
-                dwCurr <<= 6;
-                dwCurr |= nCh;
-                nBits += 6;
-            }
-
-            dwCurr <<= 24-nBits;
-            for (i=0; i<nBits/8; i++)
-            {
-                dstPx[nWritten++] = ((dwCurr & 0x00ff0000) >>> 16);
-                dwCurr <<= 8;
-            }
-        }
-    }
-
-    return stream;
+	var memoryData = AscCommon.Base64.decode(szSrc, true);
+	return new CStream(memoryData, memoryData.length);
 }
 
 function CDrawingObject(metaDoc)
@@ -551,7 +457,7 @@ CDocMeta.prototype =
             g.SetIntegerGrid(true);
 
             var _url = window["AscDesktopEditor"]["NativeViewerGetPageUrl"](obj.Page, g.m_lWidthPix, g.m_lHeightPix,
-                editor.WordControl.m_oDrawingDocument.m_lDrawingFirst, editor.WordControl.m_oDrawingDocument.m_lDrawingEnd);
+                editor.WordControl.m_oDrawingDocument.m_lDrawingFirst, editor.WordControl.m_oDrawingDocument.m_lDrawingEnd, editor.isDarkMode);
 
             if (_url == "")
             {

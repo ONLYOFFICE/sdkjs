@@ -113,6 +113,18 @@ CGraphicFrame.prototype.Is_DrawingShape = function(bRetShape)
         }
         return false;
 };
+CGraphicFrame.prototype.IsTableFirstRowOnNewPage = function()
+{
+    return false;
+};
+CGraphicFrame.prototype.IsBlockLevelSdtContent = function()
+{
+    return false;
+};
+CGraphicFrame.prototype.IsBlockLevelSdtFirstOnNewPage = function()
+{
+    return false;
+};
 
 CGraphicFrame.prototype.handleUpdatePosition= function()
     {
@@ -187,10 +199,13 @@ CGraphicFrame.prototype.getDocContent= function()
         return null;
 };
 
-CGraphicFrame.prototype.setSpPr= function(spPr)
+CGraphicFrame.prototype.setSpPr = function(spPr)
 {
         History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_GraphicFrameSetSpPr, this.spPr, spPr));
         this.spPr = spPr;
+        if(spPr) {
+            spPr.setParent(this);
+        }
 };
 
 CGraphicFrame.prototype.setGraphicObject= function(graphicObject)
@@ -227,11 +242,11 @@ CGraphicFrame.prototype.getObjectType= function()
         return AscDFH.historyitem_type_GraphicFrame;
 };
 
-CGraphicFrame.prototype.Search = function(Str, Props, SearchEngine, Type)
+CGraphicFrame.prototype.Search = function(SearchEngine, Type)
     {
         if(this.graphicObject)
         {
-            this.graphicObject.Search(Str, Props, SearchEngine, Type);
+            this.graphicObject.Search(SearchEngine, Type);
         }
 };
 
@@ -476,11 +491,6 @@ CGraphicFrame.prototype.isShape = function()
         return false;
 };
 
-CGraphicFrame.prototype.isImage = function()
-    {
-        return false;
-};
-
 CGraphicFrame.prototype.isGroup = function()
     {
         return false;
@@ -494,6 +504,15 @@ CGraphicFrame.prototype.isChart = function()
 CGraphicFrame.prototype.isTable = function()
     {
         return this.graphicObject instanceof CTable;
+};
+
+CGraphicFrame.prototype.getTypeName = function() 
+{
+    if(this.isTable()) 
+    {
+        return AscCommon.translateManager.getValue("Table");
+    }
+    return AscFormat.CGraphicObjectBase.prototype.getTypeName.call(this)
 };
 
 CGraphicFrame.prototype.CanAddHyperlink = function(bCheck)
@@ -660,6 +679,37 @@ CGraphicFrame.prototype.IsHdrFtr = function(bool)
 
 	return false;
 };
+CGraphicFrame.prototype.resize = function(extX, extY)
+{
+    var newExtX = AscFormat.isRealNumber(extX) ? extX : this.extX;
+    var newExtY = AscFormat.isRealNumber(extY) ? extY : this.extY;
+    if(!AscFormat.fApproxEqual(newExtX, this.extX) || !AscFormat.fApproxEqual(newExtY, this.extY)) 
+    {
+        this.graphicObject.Resize(newExtX, newExtY);
+        this.recalculateTable();
+        this.recalculateSizes();
+        return true;
+    }
+    return false;
+};
+CGraphicFrame.prototype.setFrameTransform = function(oPr)
+{
+    var bResult = this.resize(oPr.FrameWidth, oPr.FrameHeight);
+    var newX = AscFormat.isRealNumber(oPr.FrameX) ? oPr.FrameX : this.x;
+    var newY = AscFormat.isRealNumber(oPr.FrameY) ? oPr.FrameY : this.y;
+    this.setNoChangeAspect(oPr.FrameLockAspect ? true : undefined);
+    if(!AscFormat.fApproxEqual(newX, this.x) || !AscFormat.fApproxEqual(newY, this.y)) 
+    {
+        AscFormat.CheckSpPrXfrm(this, true);
+        var xfrm = this.spPr.xfrm;
+        xfrm.setOffX(newX);
+        xfrm.setOffY(newY);
+        bResult = true;
+        this.recalculate();
+    }
+    return bResult;
+};
+
 CGraphicFrame.prototype.IsFootnote = function(bReturnFootnote)
 {
 	if (bReturnFootnote)
@@ -856,6 +906,8 @@ CGraphicFrame.prototype.draw = function(graphics)
             this.drawLocks(this.transform, graphics);
             graphics.RestoreGrState();
         }
+        graphics.SetIntegerGrid(true);
+        graphics.reset();
 };
 
 CGraphicFrame.prototype.Select = function()
@@ -1057,7 +1109,54 @@ CGraphicFrame.prototype.setWordFlag = function(bPresentation, Document)
             }
         }
 };
+CGraphicFrame.prototype.getWordTable = function()
+{
+    if(!this.graphicObject) 
+    {
+        return null;
+    }
+    var bOldBDeleted = this.bDeleted;
+    this.bDeleted = true;
+    this.setWordFlag(false);
+    var oTable = this.graphicObject.Copy();
+    oTable.Set_TableStyle2(undefined);
+    this.setWordFlag(true);
+    this.bDeleted = bOldBDeleted;
+    var aRows = oTable.Content;
+    var aCells;
+    var nRow, nCell;
+    var oRow, oCell;
+    var oShd;
+    for(nRow = 0; nRow < aRows.length; ++nRow) 
+    {
+        oRow = aRows[nRow];
+        aCells = oRow.Content;
+        for(nCell = 0; nCell < aCells.length; ++nCell) 
+        {
+            oCell = aCells[nCell];
+            if(oCell.Pr) 
+            {
+                if(oCell.Pr.Shd) 
+                {
+                    oShd = oCell.Pr.Shd;
+                    oCell.Set_Shd(ConvertToWordTableShd(oShd));
+                }
+                
+                if(oCell.Pr.TableCellBorders) 
+                {
+                    var oBorders = oCell.Pr.TableCellBorders;
+                     // 0 - Top, 1 - Right, 2- Bottom, 3- Left
+                    oCell.Set_Border(ConvertToWordTableBorder(oBorders.Top), 0);
+                    oCell.Set_Border(ConvertToWordTableBorder(oBorders.Right), 1);
+                    oCell.Set_Border(ConvertToWordTableBorder(oBorders.Bottom), 2);
+                    oCell.Set_Border(ConvertToWordTableBorder(oBorders.Left), 3);
+                }
+            }
+        }
+    }
+    return oTable;
 
+};
 CGraphicFrame.prototype.Get_Styles = function(level)
     {
         if(AscFormat.isRealNumber(level))
@@ -1207,16 +1306,16 @@ CGraphicFrame.prototype.Is_ThisElementCurrent = function()
                                 var oCellPr = new CTableCellPr();
                                 if(oPr2.TableBorders){
                                     if(i === 0){
-                                        if(oPr2.TableBorders.Top){
+                                        if(oPr2.TableBorders.Top && oPr2.TableBorders.Top.Color){
                                             oCellPr.TableCellBorders.Top = oPr2.TableBorders.Top.Copy();
                                         }
                                     }
                                     if(i === oCopyTable.Content.length - 1){
-                                        if(oPr2.TableBorders.Bottom){
+                                        if(oPr2.TableBorders.Bottom && oPr2.TableBorders.Bottom.Color){
                                             oCellPr.TableCellBorders.Bottom = oPr2.TableBorders.Bottom.Copy();
                                         }
                                     }
-                                    if(oPr2.TableBorders.InsideH){
+                                    if(oPr2.TableBorders.InsideH && oPr2.TableBorders.InsideH.Color){
                                         if(i !== 0){
                                             oCellPr.TableCellBorders.Top = oPr2.TableBorders.InsideH.Copy();
                                         }
@@ -1225,16 +1324,16 @@ CGraphicFrame.prototype.Is_ThisElementCurrent = function()
                                         }
                                     }
                                     if(j === 0){
-                                        if(oPr2.TableBorders.Left){
+                                        if(oPr2.TableBorders.Left && oPr2.TableBorders.Left.Color){
                                             oCellPr.TableCellBorders.Left = oPr2.TableBorders.Left.Copy();
                                         }
                                     }
                                     if(j === aSourceCells.length - 1){
-                                        if(oPr2.TableBorders.Right){
+                                        if(oPr2.TableBorders.Right && oPr2.TableBorders.Right.Color){
                                             oCellPr.TableCellBorders.Right = oPr2.TableBorders.Right.Copy();
                                         }
                                     }
-                                    if(oPr2.TableBorders.InsideV){
+                                    if(oPr2.TableBorders.InsideV && oPr2.TableBorders.InsideV.Color){
                                         if(j !== 0){
                                             oCellPr.TableCellBorders.Left = oPr2.TableBorders.InsideV.Copy();
                                         }
@@ -1290,6 +1389,187 @@ CGraphicFrame.prototype.Is_ThisElementCurrent = function()
             this.graphicObject.Document_CreateFontMap(oMap);
         }
     };
+
+    CGraphicFrame.prototype.readChildXml = function (name, reader) {
+        switch (name) {
+            case "xfrm": {
+                let xfrm = new AscFormat.CXfrm();
+                xfrm.fromXml(reader);
+                if(!this.spPr) {
+                    this.setSpPr(new AscFormat.CSpPr());
+                }
+                this.spPr.setXfrm(xfrm);
+                break;
+            }
+            case "graphic": {
+                let graphic = new AscFormat.CT_GraphicalObject(this);
+                graphic.fromXml(reader);
+                let graphicObject = graphic.GraphicData && graphic.GraphicData.graphicObject;
+                if (graphicObject) {
+                    if(!(graphicObject instanceof AscCommonWord.CTable)) {
+                        graphicObject.setBDeleted(false);
+                        graphicObject.setParent(this);
+                        this.setGraphicObject(graphicObject);
+                    }
+                }
+                break;
+            }
+            case "nvGraphicFramePr": {
+                let oPr = new AscFormat.UniNvPr();
+                oPr.fromXml(reader);
+                this.setNvSpPr(oPr);
+                this.setLocks(oPr.getLocks());
+                break;
+            }
+        }
+    };
+    CGraphicFrame.prototype.getSpTreeDrawing = function () {
+        if(this.isTable()) {
+            return this;
+        }
+        else {
+            let oGraphicObject = this.graphicObject;
+            if(oGraphicObject) {
+                let oGraphicData = oGraphicObject.GraphicData;
+                if(oGraphicData) {
+                    let oDrawing = oGraphicData.graphicObject;
+                    if(oDrawing) {
+                        return oDrawing;
+                    }
+                }
+            }
+            return null;
+        }
+    };
+    CGraphicFrame.prototype.fromXml = function(reader, name) {
+        AscFormat.CGraphicObjectBase.prototype.fromXml.call(this, reader, name);
+
+        if(this.nvGraphicFramePr) {
+            let oSpTreeDrawing = this.getSpTreeDrawing();
+            if(oSpTreeDrawing && oSpTreeDrawing !== this) {
+                if(oSpTreeDrawing.setNvSpPr) {
+                    oSpTreeDrawing.setNvSpPr(this.nvGraphicFramePr.createDuplicate());
+                }
+            }
+        }
+    };
+	CGraphicFrame.prototype.toXml = function(writer, name) {
+        let sName = name || "p:graphicFrame";
+		var context = writer.context;
+		var objectId = context.objectId++;
+		writer.WriteXmlNodeStart(sName);
+		writer.WriteXmlAttributesEnd();
+
+		var ns = AscCommon.StaxParser.prototype.GetNSFromNodeName(sName);
+
+
+        let oSpTreeDrawing = this.getSpTreeDrawing();
+        let oUniNvPr = oSpTreeDrawing.getUniNvProps();
+        oUniNvPr.toXmlGrFrame(writer);
+		writer.WriteXmlNullable(oSpTreeDrawing.spPr && oSpTreeDrawing.spPr.xfrm, ns + "xfrm");
+        let oGraphicObject;
+        if(this.isTable()) {
+            oGraphicObject =  new AscFormat.CT_GraphicalObject(this);
+            oGraphicObject.GraphicData = new  AscFormat.CT_GraphicalObjectData(this);
+            oGraphicObject.GraphicData.graphicObject = this.graphicObject;
+            oGraphicObject.GraphicData.Uri = "http://schemas.openxmlformats.org/drawingml/2006/table";
+        }
+        else {
+            oGraphicObject = this.graphicObject;
+        }
+		writer.WriteXmlNullable(oGraphicObject, "a:graphic");
+		writer.WriteXmlNodeEnd(sName);
+	};
+
+    CGraphicFrame.prototype.static_CreateGraphicFrameFromDrawing = function (oDrawing) {
+        let Graphic = new AscFormat.CT_GraphicalObject();
+        Graphic.Namespace = ' xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"';
+        Graphic.GraphicData = new AscFormat.CT_GraphicalObjectData();
+        if(oDrawing.getObjectType() === AscDFH.historyitem_type_ChartSpace)
+            Graphic.GraphicData.Uri = "http://schemas.openxmlformats.org/drawingml/2006/chart";
+        else
+            Graphic.GraphicData.Uri = "http://schemas.microsoft.com/office/drawing/2010/slicer";
+        Graphic.GraphicData.graphicObject = oDrawing;
+
+        let newGraphicObject = AscFormat.ExecuteNoHistory(function(){return new AscFormat.CGraphicFrame();}, this, []);
+        newGraphicObject.spPr = oDrawing.spPr;
+        newGraphicObject.graphicObject = Graphic;
+        return newGraphicObject;
+    };
+
+    function ConvertToWordTableBorder(oBorder) {
+        if(!oBorder) {
+            return undefined;
+        }
+        var oFill = oBorder.Unifill;
+        if(!oFill) {
+            return oBorder;
+        }
+        var oNewBorder;
+        var oRGBA;
+        if(oFill.isSolidFillRGB()) {
+            if(oFill.fill.color.color) {
+                oRGBA = oFill.fill.color.color.RGBA;
+            }
+        }
+        
+        oNewBorder = oBorder.Copy();
+        oNewBorder.Unifill = undefined;
+        if(oRGBA) {
+            oNewBorder.Color = new AscCommonWord.CDocumentColor(oRGBA.R, oRGBA.G, oRGBA.B, false);
+        }
+        else {
+            oNewBorder.Color = new AscCommonWord.CDocumentColor(0, 0, 0, false);
+        }
+        return oNewBorder;
+     }
+    function ConvertToWordTableShd(oShd) {
+        if(!oShd) {
+            return undefined;
+        }
+        var oFill = oShd.Unifill;
+        if(!oFill) {
+            return oShd;
+        }
+        var oNewShd;
+        var oCopyFill;
+        if(oFill) {
+            if(oFill.isSolidFillRGB()) {
+                var oRGBA;
+                if(oFill.fill.color.color) {
+                    oRGBA = oFill.fill.color.color.RGBA;
+                    if(oRGBA) {
+                        oNewShd = new AscCommonWord.CDocumentShd();
+                        
+                        oCopyFill = oFill.createDuplicate();
+                        oNewShd.Set_FromObject({
+                            Value      : Asc.c_oAscShd.Clear,
+                            Color : {
+                                r: oRGBA.R,
+                                g: oRGBA.G,
+                                b: oRGBA.B,
+                                Auto: false
+                            },
+                            ThemeColor : oCopyFill,
+                            ThemeFill  : oCopyFill
+                        });
+                        return oNewShd;
+                    }
+                }
+            }
+            if(oFill.isSolidFillScheme()) {
+                oNewShd = new AscCommonWord.CDocumentShd();
+                oCopyFill = oFill.createDuplicate();
+                oNewShd.Set_FromObject({
+                    Value      : Asc.c_oAscShd.Clear,
+                    ThemeColor : oCopyFill,
+                    ThemeFill  : oCopyFill
+                });
+                return oNewShd;
+            }
+        }
+        return undefined;
+    }
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].CGraphicFrame = CGraphicFrame;

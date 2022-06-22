@@ -139,7 +139,8 @@
 	jwtError: 4006,
 	drop: 4007,
 	updateVersion: 4008,
-	noCache: 4009
+	noCache: 4009,
+	restore: 4010
   };
   
 	var c_oAscServerCommandErrors = {
@@ -178,6 +179,9 @@
 			code = Asc.c_oAscError.ID.UserDrop;
 		} else if (c_oCloseCode.updateVersion === opt_closeCode) {
 			code = Asc.c_oAscError.ID.UpdateVersion;
+		} else if (c_oCloseCode.restore === opt_closeCode) {
+			//todo unique error code
+			code = Asc.c_oAscError.ID.SessionToken;
 		}
 		return code;
 	}

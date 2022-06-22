@@ -255,6 +255,31 @@
 })(window);
 
 /*
+	OVERLAY ICONS
+ */
+(function(window, undefined){
+
+	/**
+	 * @constructor
+	 * @extends {AscCommon.BaseImageCtrl}
+	 */
+	function OverlayRasterIcon()
+	{
+		AscCommon.BaseImageCtrl.call(this);
+		this.baseUrl = "../../../../sdkjs/common/Images/icons";
+	}
+	OverlayRasterIcon.prototype = Object.create(AscCommon.BaseImageCtrl.prototype);
+	OverlayRasterIcon.prototype.constructor = OverlayRasterIcon;
+
+	AscCommon.OverlayRasterIcon = OverlayRasterIcon;
+
+	AscCommon.OverlayRasterIcons = {};
+	AscCommon.OverlayRasterIcons.Anchor = new OverlayRasterIcon();
+	AscCommon.OverlayRasterIcons.Anchor.load(0, "anchor");
+
+})(window);
+
+/*
     PLACEHOLDERS
  */
 (function(window, undefined){
@@ -825,6 +850,19 @@
 		In 		: 1
 	};
 
+	// показ диалогов в мобильной версии должен быть только по клику
+	function _sendEventToApi(api, obj, x, y, isclick)
+	{
+		if (!api.isMobileVersion || isclick || obj["type"] !== Asc.c_oAscContentControlSpecificType.Picture || !obj["isForm"])
+		{
+			api.sendEvent("asc_onShowContentControlsActions", obj, x, y);
+			return;
+		}
+		api.setHandlerOnClick(function(){
+			api.sendEvent("asc_onShowContentControlsActions", obj, x, y);
+		});
+	}
+
 	function CCIcons()
 	{
 		/**
@@ -1366,6 +1404,7 @@
 			"obj" : this.base,
 			"type" : this.type,
 			"button" : button,
+			"isForm" : this.isForm,
 			"pr" : this.base.GetContentControlPr ? this.base.GetContentControlPr() : null
 		}
 	};
@@ -1559,7 +1598,7 @@
 							{
 								_geom = _object.rects[j];
 
-								if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
+								if (_geom.Page < _pageStart || _geom.Page > _pageEnd)
 									continue;
 
 								_drawingPage = _pages[_geom.Page].drawingPage;
@@ -1586,7 +1625,7 @@
 							for (var j = 0; j < _object.paths.length; j++)
 							{
 								_geom = _object.paths[j];
-								if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
+								if (_geom.Page < _pageStart || _geom.Page > _pageEnd)
 									continue;
 
 								_drawingPage = _pages[_geom.Page].drawingPage;
@@ -1627,7 +1666,7 @@
 							{
 								_geom = _object.rects[j];
 
-								if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
+								if (_geom.Page < _pageStart || _geom.Page > _pageEnd)
 									continue;
 
 								_drawingPage = _pages[_geom.Page].drawingPage;
@@ -1676,7 +1715,7 @@
 							for (var j = 0; j < _object.paths.length; j++)
 							{
 								_geom = _object.paths[j];
-								if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
+								if (_geom.Page < _pageStart || _geom.Page > _pageEnd)
 									continue;
 
 								_drawingPage = _pages[_geom.Page].drawingPage;
@@ -1718,7 +1757,7 @@
 						{
 							_geom = _object.rects[j];
 
-							if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
+							if (_geom.Page < _pageStart || _geom.Page > _pageEnd)
 								continue;
 
 							_drawingPage = _pages[_geom.Page].drawingPage;
@@ -1740,7 +1779,7 @@
 						for (var j = 0; j < _object.paths.length; j++)
 						{
 							_geom = _object.paths[j];
-							if (_geom.Page < _pageStart || _geom.Page > this._pageEnd)
+							if (_geom.Page < _pageStart || _geom.Page > _pageEnd)
 								continue;
 
 							_drawingPage = _pages[_geom.Page].drawingPage;
@@ -1805,14 +1844,6 @@
 									ctx.fillStyle = (1 == this.ContentControlObjectState) ? AscCommon.GlobalSkin.ContentControlsAnchorActive : AscCommon.GlobalSkin.ContentControlsBack;
 									ctx.fill();
 									ctx.beginPath();
-
-									if (1 == this.ContentControlObjectState)
-									{
-										ctx.fillStyle = AscCommon.GlobalSkin.ContentControlsAnchorActive;
-										ctx.rect(_x, _y, Math.round(15 * rPR), Math.round(20 * rPR));
-										ctx.fill();
-										ctx.beginPath();
-									}
 
 									var cx = _x - 0.5 * Math.round(rPR) + Math.round(5 * rPR);
 									var cy = _y - 0.5 * Math.round(rPR) + Math.round(5 * rPR);
@@ -2018,14 +2049,6 @@
 									ctx.fillStyle = (1 == this.ContentControlObjectState) ? AscCommon.GlobalSkin.ContentControlsAnchorActive : AscCommon.GlobalSkin.ContentControlsBack;
 									ctx.fill();
 									ctx.beginPath();
-
-									if (1 == this.ContentControlObjectState)
-									{
-										ctx.fillStyle = AscCommon.GlobalSkin.ContentControlsAnchorActive;
-										ctx.rect(_x, _y, scaleX_15, scaleY_20);
-										ctx.fill();
-										ctx.beginPath();
-									}
 
 									var cx1 = _x + 5 / _koefX;
 									var cy1 = _y + 5 / _koefY;
@@ -2418,7 +2441,7 @@
 								}
 
 								var posOnScreen = this.document.ConvertCoordsToCursorWR(xCC, yCC, _object.Pos.Page);
-								oWordControl.m_oApi.sendEvent("asc_onShowContentControlsActions", _object.GetButtonObj(-1), posOnScreen.X, posOnScreen.Y);
+								_sendEventToApi(oWordControl.m_oApi, _object.GetButtonObj(-1), posOnScreen.X, posOnScreen.Y);
 							}
 
 							oWordControl.ShowOverlay();
@@ -2486,6 +2509,9 @@
 								{
 									_object.ActiveButtonIndex = indexButton;
 
+									xCC += _object.OffsetX;
+									yCC += _object.OffsetY;
+
 									if (_object.transform)
 									{
 										var tmp = _object.transform.TransformPointX(xCC, yCC);
@@ -2494,7 +2520,7 @@
 									}
 
 									var posOnScreen = this.document.ConvertCoordsToCursorWR(xCC, yCC, _object.Pos.Page);
-									oWordControl.m_oApi.sendEvent("asc_onShowContentControlsActions", _object.GetButtonObj(indexButton), posOnScreen.X, posOnScreen.Y);
+									_sendEventToApi(oWordControl.m_oApi, _object.GetButtonObj(indexButton), posOnScreen.X, posOnScreen.Y);
 								}
 
 								oWordControl.ShowOverlay();
@@ -2550,7 +2576,7 @@
 								}
 
 								var posOnScreen = this.document.ConvertCoordsToCursorWR(xCC, yCC, rectCombo.Page);
-								oWordControl.m_oApi.sendEvent("asc_onShowContentControlsActions", _object.GetButtonObj(indexB), posOnScreen.X, posOnScreen.Y);
+								_sendEventToApi(oWordControl.m_oApi, _object.GetButtonObj(indexB), posOnScreen.X, posOnScreen.Y);
 							}
 
 							oWordControl.ShowOverlay();
@@ -3387,10 +3413,10 @@
 						// draw move rect
 						_x1 = ((drPage.left + koefX * (this.rectMove.x + object.OffsetX)) * rPR) >> 0;
 						_y1 = ((drPage.top + koefY * (this.rectMove.y + object.OffsetY)) * rPR) >> 0;
-						_x2 = ((drPage.left + koefX * (this.rectMove.x + this.rectMove.w + object.OffsetX)) * rPR) >> 0;
+						_x2 = 1 + ((drPage.left + koefX * (this.rectMove.x + this.rectMove.w + object.OffsetX)) * rPR) >> 0;
 						_y2 = _y1;
 						_x3 = _x2;
-						_y3 = ((drPage.top + koefY * (this.rectMove.y + this.rectMove.h + object.OffsetY)) * rPR) >> 0;
+						_y3 = 1 + ((drPage.top + koefY * (this.rectMove.y + this.rectMove.h + object.OffsetY)) * rPR) >> 0;
 						_x4 = _x1;
 						_y4 = _y3;
 

@@ -39,28 +39,12 @@ var CShape = AscFormat.CShape;
 
 var History = AscCommon.History;
 
-var G_O_DEFAULT_COLOR_MAP = AscFormat.GenerateDefaultColorMap();
-
-CShape.prototype.setDrawingObjects = function(drawingObjects)
-{
-};
 
 
     CShape.prototype.getEditorType = function()
     {
         return 0;
     };
-CShape.prototype.setDrawingBase = function(drawingBase)
-{
-    this.drawingBase = drawingBase;
-    if(Array.isArray(this.spTree))
-    {
-        for(var i = 0; i < this.spTree.length; ++i)
-        {
-            this.spTree[i].setDrawingBase(drawingBase);
-        }
-    }
-};
 
 CShape.prototype.Get_Numbering =  function()
 {
@@ -108,6 +92,9 @@ CShape.prototype.getDrawingObjectsController = function()
 
 CShape.prototype.hitInTextRect = function (x, y)
 {
+    if(!AscFormat.canSelectDrawing(this)) {
+        return false;
+    }
     var oController = this.getDrawingObjectsController && this.getDrawingObjectsController();
     if(oController && (AscFormat.getTargetTextObject(oController) === this || (oController.curState.startTargetTextObject === this)))
     {
@@ -133,13 +120,15 @@ function addToDrawings(worksheet, graphic, position, lockByDefault, anchor)
 {
 
     var drawingObjects;
-    var wsViews = Asc["editor"].wb.wsViews;
-    for(var i = 0; i < wsViews.length; ++i)
-    {
-        if(wsViews[i] && wsViews[i].model === worksheet)
+    var wsViews = Asc["editor"].wb && Asc["editor"].wb.wsViews;
+    if(wsViews) {
+        for(var i = 0; i < wsViews.length; ++i)
         {
-            drawingObjects = wsViews[i].objectRender;
-            break;
+            if(wsViews[i] && wsViews[i].model === worksheet)
+            {
+                drawingObjects = wsViews[i].objectRender;
+                break;
+            }
         }
     }
     if(!drawingObjects)
@@ -540,6 +529,7 @@ CShape.prototype.setRecalculateInfo = function()
     this.recalcInfo =
     {
         recalculateContent:        true,
+        recalculateContent2:        true,
         recalculateBrush:          true,
         recalculatePen:            true,
         recalculateTransform:      true,
@@ -565,6 +555,7 @@ CShape.prototype.setRecalculateInfo = function()
 CShape.prototype.recalcContent = function()
 {
     this.recalcInfo.recalculateContent = true;
+    this.recalcInfo.recalculateContent2 = true;
 };
 
 CShape.prototype.getDrawingDocument = function()
@@ -712,6 +703,7 @@ CShape.prototype.getParentObjects = function ()
 CShape.prototype.recalcText = function()
 {
     this.recalcInfo.recalculateContent = true;
+    this.recalcInfo.recalculateContent2 = true;
     this.recalcInfo.recalculateTransformText = true;
 };
 
@@ -748,6 +740,10 @@ CShape.prototype.recalculate = function ()
         if (this.recalcInfo.recalculateContent) {
             this.recalcInfo.oContentMetrics = this.recalculateContent();
             this.recalcInfo.recalculateContent = false;
+        }
+        if (this.recalcInfo.recalculateContent2) {
+            this.recalculateContent2();
+            this.recalcInfo.recalculateContent2 = false;
         }
 
         if (this.recalcInfo.recalculateTransformText) {
@@ -841,7 +837,7 @@ CShape.prototype.recalculateContent = function()
 
 CShape.prototype.Get_ColorMap = function()
 {
-    return G_O_DEFAULT_COLOR_MAP;
+    return AscFormat.DEFAULT_COLOR_MAP;
 };
 
 CShape.prototype.getStyles = function(index)
@@ -858,24 +854,10 @@ CShape.prototype.Get_Worksheet = function()
 
     CShape.prototype.Set_CurrentElement = function()
     {
-
         var drawing_objects = this.getDrawingObjectsController();
         if(drawing_objects)
         {
-            drawing_objects.resetSelection(true);
-            if(this.group)
-            {
-                var main_group = this.group.getMainGroup();
-                drawing_objects.selectObject(main_group, 0);
-                main_group.selectObject(this, 0);
-                main_group.selection.textSelection = this;
-                drawing_objects.selection.groupSelection = main_group;
-            }
-            else
-            {
-                drawing_objects.selectObject(this, 0);
-                drawing_objects.selection.textSelection = this;
-            }
+            this.SetControllerTextSelection(drawing_objects, 0);
         }
     };
 
@@ -892,9 +874,26 @@ AscFormat.CTextBody.prototype.getDrawingDocument = function()
     }
     return null;
 };
+    AscFormat.CTextBody.prototype.checkCurrentPlaceholder = function()
+    {
+        var oCurController;
+        var oApi = Asc.editor;
+        if(oApi)
+        {
+            var ws = oApi.wb.getWorksheet();
+            var oParaPr;
+            if (ws && ws.objectRender && ws.objectRender.controller) {
+                oCurController = ws.objectRender.controller;
+            }
+        }
+        if(oCurController)
+        {
+            return oCurController.getTargetDocContent() === this.content;
+        }
+        return false;
+    };
 
     //------------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
-    window['AscFormat'].G_O_DEFAULT_COLOR_MAP = G_O_DEFAULT_COLOR_MAP;
     window['AscFormat'].addToDrawings = addToDrawings;
 })(window);

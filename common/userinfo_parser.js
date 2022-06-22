@@ -36,7 +36,8 @@
         username = '',
         _reviewPermissions,
         reviewGroups,
-        commentGroups;
+        commentGroups,
+        userInfoGroups;
 
     var _intersection = function (arr1, arr2) {
         if (arr1 && arr2) {
@@ -46,16 +47,6 @@
             }
         }
         return false;
-    };
-
-    var _getParsedGroups = function(username) {
-        if (parse && username) {
-            var idx = username.indexOf(separator),
-                groups = (idx>-1) ? username.substring(0, idx).split(',') : [];
-            for (var i=0; i<groups.length; i++)
-                groups[i] = groups[i].trim();
-            return groups;
-        }
     };
 
     var UserInfoParser  = {
@@ -80,13 +71,23 @@
             return (parse && username) ? username.substring(username.indexOf(separator)+1) : username;
         },
 
+        getParsedGroups: function(username) {
+            if (parse && username) {
+                var idx = username.indexOf(separator),
+                    groups = (idx>-1) ? username.substring(0, idx).split(',') : [];
+                for (var i=0; i<groups.length; i++)
+                    groups[i] = groups[i].trim();
+                return groups;
+            }
+        },
+
         setReviewPermissions: function(groups, permissions) {
             if (groups) {
                 if  (typeof groups == 'object' && groups.length>=0)
                     reviewGroups = groups;
             } else if (permissions) { // old version of review permissions
                 var arr = [],
-                    arrgroups  =  _getParsedGroups(username);
+                    arrgroups  =  this.getParsedGroups(username);
                 arrgroups && arrgroups.forEach(function(group) {
                     var item = permissions[group.trim()];
                     item && (arr = arr.concat(item));
@@ -106,10 +107,23 @@
             }
         },
 
+        setUserInfoPermissions: function(groups) {
+            if (groups) {
+                if  (typeof groups == 'object' && groups.length>=0)
+                    userInfoGroups = groups;
+            }
+        },
+
+        getCommentPermissions: function(permission) {
+            if (parse && commentGroups) {
+                return commentGroups[permission];
+            }
+        },
+
         canEditReview: function(username) {
             if (!parse || !reviewGroups) return true;
 
-            var groups = _getParsedGroups(username);
+            var groups = this.getParsedGroups(username);
             groups && (groups.length==0) && (groups = [""]);
             return _intersection(reviewGroups, groups);
         },
@@ -117,7 +131,7 @@
         canViewComment: function(username) {
             if (!parse || !commentGroups || !commentGroups.view) return true;
 
-            var groups = _getParsedGroups(username);
+            var groups = this.getParsedGroups(username);
             groups && (groups.length==0) && (groups = [""]);
             return _intersection(commentGroups.view, groups);
         },
@@ -125,7 +139,7 @@
         canEditComment: function(username) {
             if (!parse || !commentGroups || !commentGroups.edit) return true;
 
-            var groups = _getParsedGroups(username);
+            var groups = this.getParsedGroups(username);
             groups && (groups.length==0) && (groups = [""]);
             return _intersection(commentGroups.edit, groups);
         },
@@ -133,9 +147,17 @@
         canDeleteComment: function(username) {
             if (!parse || !commentGroups || !commentGroups.remove) return true;
 
-            var groups = _getParsedGroups(username);
+            var groups = this.getParsedGroups(username);
             groups && (groups.length==0) && (groups = [""]);
             return _intersection(commentGroups.remove, groups);
+        },
+
+        isUserVisible: function(username) {
+            if (!parse || !userInfoGroups) return true;
+
+            var groups = this.getParsedGroups(username);
+            groups && (groups.length==0) && (groups = [""]);
+            return _intersection(userInfoGroups, groups);
         }
     }
 
@@ -148,9 +170,13 @@
     UserInfoParser['getParsedName'] = UserInfoParser.getParsedName;
     UserInfoParser['setReviewPermissions'] = UserInfoParser.setReviewPermissions;
     UserInfoParser['setCommentPermissions'] = UserInfoParser.setCommentPermissions;
+    UserInfoParser['setUserInfoPermissions'] = UserInfoParser.setUserInfoPermissions;
     UserInfoParser['canEditReview'] = UserInfoParser.canEditReview;
     UserInfoParser['canViewComment'] = UserInfoParser.canViewComment;
     UserInfoParser['canEditComment'] = UserInfoParser.canEditComment;
     UserInfoParser['canDeleteComment'] = UserInfoParser.canDeleteComment;
+    UserInfoParser['isUserVisible'] = UserInfoParser.isUserVisible;
+    UserInfoParser['getParsedGroups'] = UserInfoParser.getParsedGroups;
+    UserInfoParser['getCommentPermissions'] = UserInfoParser.getCommentPermissions;
 
 })(window);

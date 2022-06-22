@@ -390,7 +390,7 @@ ParaComment.prototype =
         Classes.push(this);
     },
 
-    Get_PosByDrawing : function(Id, ContentPos, Depth)
+    GetPosByDrawing : function(Id, ContentPos, Depth)
     {
         return false;
     },
@@ -655,24 +655,31 @@ CWriteCommentData.prototype =
 
 function CCommentAuthor()
 {
+    AscFormat.CBaseNoIdObject.call(this);
     this.Name = "";
     this.Id = 0;
     this.LastId = 0;
     this.Initials = "";
 }
-CCommentAuthor.prototype =
-{
-    Calculate : function()
+AscFormat.InitClass(CCommentAuthor, AscFormat.CBaseNoIdObject, 0);
+CCommentAuthor.prototype.Calculate = function() {
+    var arr = this.Name.split(" ");
+    this.Initials = "";
+    for (var i = 0; i < arr.length; i++)
     {
-        var arr = this.Name.split(" ");
-        this.Initials = "";
-        for (var i = 0; i < arr.length; i++)
-        {
-            if (arr[i].length > 0)
-                this.Initials += (arr[i].substring(0, 1));
-        }
+        if (arr[i].length > 0)
+            this.Initials += (arr[i].substring(0, 1));
     }
 };
+    CCommentAuthor.prototype.toXml = function(writer) {
+        writer.WriteXmlNodeStart("p:cmAuthor");
+        writer.WriteXmlAttributeInt("id", this.Id);
+        writer.WriteXmlAttributeString("name", this.Name);
+        writer.WriteXmlAttributeString("initials", this.Initials);
+        writer.WriteXmlAttributeInt("lastIdx", this.LastId);
+        writer.WriteXmlAttributeInt("clrIdx", this.Id - 1);
+        writer.WriteXmlAttributesEnd(true);
+    };
 
 
 function CCommentData()
@@ -1201,7 +1208,7 @@ CComment.prototype =
         this.Data = Data;
     },
 
-    Remove_Marks: function()
+    RemoveMarks: function()
     {
         var Para_start = g_oTableId.Get_ById(this.m_oStartInfo.ParaId);
         var Para_end   = g_oTableId.Get_ById(this.m_oEndInfo.ParaId);

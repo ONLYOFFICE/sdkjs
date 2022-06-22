@@ -142,8 +142,15 @@
 		if (!_controller.IsSelectionUse() && _elementsCount > 0)
 			_mode = AscCommon.MobileTouchContextMenuType.Target;
 
-		if (_controller.GetSelectionBounds())
+		var selectionBounds = this.LogicDocument.GetSelectionBounds();
+		var eps = 0.0001;
+		if (selectionBounds && selectionBounds.Start && selectionBounds.End &&
+			(Math.abs(selectionBounds.Start.X - selectionBounds.End.X) > eps) &&
+			(Math.abs(selectionBounds.Start.W) > eps) &&
+			(Math.abs(selectionBounds.End.W) > eps))
+		{
 			_mode = AscCommon.MobileTouchContextMenuType.Select;
+		}
 
 		if (_mode == AscCommon.MobileTouchContextMenuType.Slide && _controller.getSelectedObjectsBounds())
 			_mode = AscCommon.MobileTouchContextMenuType.Object;

@@ -39,74 +39,89 @@ window.startPluginApi = function() {
 	 */
 
 	/**
-	 * Object for translations
-	 * example: { "en" : "name", "ru" : "имя" }
+	 * Translations for the text field. The object keys are the two letter language codes (ru, de, it, etc.) and the values are the button label translation for each language.
+	 * Example: { "en" : "name", "ru" : "имя" }
 	 * @typedef { Object.<string, string> } localeTranslate
 	 */
 
 	/**
-	 * EditorType
+	 * The editors which the plugin is available for:
+	 * * **"word"** - text document editor,
+	 * * **"cell"** - spreadsheet editor,
+	 * * **"slide"** - presentation editor.
 	 * @typedef {("word" | "cell" | "slide")} editorType
 	 * */
 
 	/**
-	 * Variation init data type
-	 * @typedef {("none" | "text" | "ole" | "html")} initDataType
+	 * The data type selected in the editor and sent to the plugin:
+	 * * **"text"** - the text data,
+	 * * **"html"** - HTML formatted code,
+	 * * **"ole"** - OLE object data,
+	 * * **"desktop"** - the desktop editor data,
+	 * * **"destop-external"** - the main page data of the desktop app (system messages),
+	 * * **"none"** - no data will be send to the plugin from the editor.
+	 * @typedef {("text" | "html" | "ole" | "desktop" | "destop-external" | "none")} initDataType
 	 * */
 
 	/**
+	 * The skinnable plugin button used in the plugin interface (used for visual plugins with their own window only, i.e. isVisual == true && isInsideMode == false).
 	 * @typedef { Object } variationButton
-	 * @property {string} text Label
-	 * @property {boolean} [primary] Is button use primary css style
-	 * @proverty {boolean} [isViewer] Is button shown in viewer mode
-	 * @property {localeTranslate} [textLocale] Translations for text field
+	 * @property {string} text - The label which is displayed on the button.
+	 * @property {boolean} [primary] - Defines if the button is primary or not. The primary flag affects the button skin only.
+	 * @proverty {boolean} [isViewer] - Defines if the button is shown in the viewer mode only or not.
+	 * @property {localeTranslate} [textLocale] - Translations for the text field. The object keys are the two letter language codes (ru, de, it, etc.) and the values are the button label translation for each language.
 	 */
 
 	/**
+	 * Plugin variations, or subplugins, that are created inside the origin plugin.
 	 * @typedef { Object } variation
-	 * @description Why would one plugin might need some variations? The answer is simple enough: the plugin can not only perform some actions but also contain some settings, or 'About' window, or something like that. For example, translation plugin: the plugin itself does not need a visual window for translation as it can be done just pressing a single button, but its settings (the translation direction) and 'About' window must be visual. So we will need to have at least two plugin variations (translation itself and settings), or three, in case we want to add an 'About' window with the information about the plugin and its authors or the software used for the plugin creation.
+	 * @description Plugin variations can be created for the following purposes:
+	 * * to perform the main plugin actions,
+	 * * to contain plugin settings,
+	 * * to display an About window, etc.
+	 * For example, the Translation plugin: the plugin itself does not need a visual window for translation as it can be done just pressing a single button, but its settings (the translation direction) and an 'About' window must be visual. So we will need to have at least two plugin variations (translation itself and settings), or three, in case we want to add an 'About' window with the information about the plugin and its authors or the software used for the plugin creation.
 	 *
-	 * @property {string} description Name
-	 * @property {localeTranslate} [descriptionName] Translations for description field
+	 * @property {string} description - The description, i.e. what describes your plugin the best way.
+	 * @property {localeTranslate} [descriptionLocale] - Translations for the description field. The object keys are the two letter language codes (ru, de, it, etc.) and the values are the plugin description translation for each language.
 	 *
-	 * @property {string} url Plugin entry point, i.e. HTML file which connects the plugin.js (the base file needed for work with plugins) file and launches the plugin code.
+	 * @property {string} url - Plugin entry point, i.e. an HTML file which connects the plugin.js file (the base file needed for work with plugins) and launches the plugin code.
 	 *
-	 * @proverty {string[]} icons Plugin icon image files used in the editors: for common screens and with doubled resolution for retina screens.
+	 * @proverty {string[]} icons - Plugin icon image files used in the editors. There can be several scaling types for plugin icons: 100%, 125%, 150%, 175%, 200%, etc.
 	 *
-	 * @property {boolean} isViewer=false Specifies if the plugin is available when the document is available in viewer mode only or not.
-	 * @property {editorType[]} EditorsSupport=Array.<string>("word","cell","slide") The editors which the plugin is available for ("word" - text document editor, "cell" - spreadsheet editor, "slide" - presentation editor).
+	 * @property {boolean} [isViewer=false] - Specifies if the plugin is working when the document is available in the viewer mode only or not.
+	 * @property {editorType[]} [EditorsSupport=Array.<string>("word","cell","slide")] - The editors which the plugin is available for ("word" - text document editor, "cell" - spreadsheet editor, "slide" - presentation editor).
 	 *
-	 * @property {boolean} isVisual Specifies if the plugin is visual (will open a window for some action, or introduce some additions to the editor panel interface) or non-visual (will provide a button (or buttons) which is going to apply some transformations or manipulations to the document).
-	 * @property {boolean} isModal Specifies if the opened plugin window is modal (used for visual plugins only, and if isInsideMode is not true).
-	 * @property {boolean} isInsideMode Specifies if the plugin must be displayed inside the editor panel instead of its own window.
-	 * @property {boolean} [isSystem] Specifies if the plugin is not displayed in the editor interface and is started in background with the server (or desktop editors start) not interfering with the other plugins, so that they can work simultaneously.
-	 * @property {boolean} [isDisplayedInViewer] Specifies if the plugin will be displayed in viewer mode as well as in editor mode (isDisplayedInViewer == true) or in the editor mode only (isDisplayedInViewer == false).
+	 * @property {boolean} isVisual - Specifies if the plugin is visual (will open a window for some action, or introduce some additions to the editor panel interface) or non-visual (will provide a button (or buttons) which is going to apply some transformations or manipulations to the document).
+	 * @property {boolean} isModal - Specifies if the opened plugin window is modal (used for visual plugins only, and if isInsideMode is not true).
+	 * @property {boolean} isInsideMode - Specifies if the plugin must be displayed inside the editor panel instead of its own window.
+	 * @property {boolean} isSystem - Specifies if the plugin is not displayed in the editor interface and is started in the background with the server (or desktop editors start) not interfering with the other plugins, so that they can work simultaneously.
+	 * @property {boolean} isDisplayedInViewer - Specifies if the plugin will be displayed in the viewer mode as well as in the editor mode (isDisplayedInViewer == true) or in the editor mode only (isDisplayedInViewer == false).
 	 *
-	 * @property {boolean} [initOnSelectionChanged] Specifies if the plugin watches the text selection events in the editor window.
+	 * @property {boolean} initOnSelectionChanged - Specifies if the plugin watches the text selection events in the editor window.
  	 *
-	 * @property {boolean} [isUpdateOleOnResize] Specifies if the OLE object must be redrawn when resized in the editor using the vector object draw type or not (used for OLE objects only, i.e. initDataType == "ole").
+	 * @property {boolean} isUpdateOleOnResize - Specifies if an OLE object must be redrawn when resized in the editor using the vector object draw type or not (used for OLE objects only, i.e. initDataType == "ole").
 	 *
-	 * @property {initDataType} initDataType The data type selected in the editor and sent to the plugin: "text" - the text data, "html" - HTML formatted code, "ole" - OLE object data, "none" - no data will be send to the plugin from the editor.
-	 * @property {string} initData Is always equal to "" - this is the data which is sent from the editor to the plugin at the plugin start (e.g. if initDataType == "text", the plugin will receive the selected text when run).
+	 * @property {initDataType} initDataType - The data type selected in the editor and sent to the plugin: "text" - the text data, "html" - HTML formatted code, "ole" - OLE object data, "desktop" - the desktop editor data, "destop-external" - the main page data of the desktop app (system messages), "none" - no data will be send to the plugin from the editor.
+	 * @property {string} initData - Is usually equal to "" - this is the data which is sent from the editor to the plugin at the plugin start (e.g. if initDataType == "text", the plugin will receive the selected text when run). It may also be equal to encryption in the encryption plugins.
 	 *
-	 * @property {number[]} [size] Size of the plugin window
+	 * @property {number[]} [size] - Plugin window size.
 	 *
-	 * @property {variationButton[]} [buttons] Buttons
+	 * @property {variationButton[]} [buttons] - The list of skinnable plugin buttons used in the plugin interface (used for visual plugins with their own window only, i.e. isVisual == true && isInsideMode == false).
 	 *
-	 * @property {string[]} events Events
+	 * @property {string[]} events - Plugin events.
 	 */
 
 
 	/**
 	 * @typedef {Object} Config
-	 * @property {string} basePath="" Path to the plugin. All the other paths are calculated relative to this path. In case the plugin is installed on the server, an additional parameter (path to the plugins) is added there. If baseUrl == "" the path to all plugins will be used.
-	 * @property {string} guid Plugin identifier. It <b>must<b> be of the asc.{UUID} type.
-	 * @property {string} [minVersion] The minimum supported editors version.
+	 * @property {string} [basePath=""] - Path to the plugin. All the other paths are calculated relative to this path. In case the plugin is installed on the server, an additional parameter (path to the plugins) is added there. If baseUrl == "", the path to all plugins will be used.
+	 * @property {string} guid - Plugin identifier. It must be of the asc.{UUID} type.
+	 * @property {string} minVersion - The minimum supported editors version.
 	 *
-	 * @property {string} name Plugin name which will be visible at the plugin toolbar.
-	 * @property {localeTranslate} [nameLocale] Translations for name field
+	 * @property {string} name - Plugin name which will be visible at the plugin toolbar.
+	 * @property {localeTranslate} [nameLocale] - Translations for the name field. The object keys are the two letter language codes (ru, de, it, etc.) and the values are the plugin name translation for each language.
 	 *
-	 * @property {variation[]} variations Plugin variations or "subplugins"
+	 * @property {variation[]} variations - Plugin variations, or subplugins, that are created inside the origin plugin.
 	 */
 
 	/***********************************************************************
@@ -129,7 +144,8 @@ window.startPluginApi = function() {
 	 * @event Plugin#init
 	 * @memberof Plugin
 	 * @alias init
-	 * @param {string} text
+	 * @description The function called when the plugin is launched. It defines the data sent to the plugin describing what actions are to be performed and how they must be performed.
+	 * @param {string} text - Defines the data parameter that depends on the initDataType setting specified in the config.json file.
 	 */
 
 	/**
@@ -137,8 +153,8 @@ window.startPluginApi = function() {
 	 * @event Plugin#button
 	 * @memberof Plugin
 	 * @alias button
-	 * @description The method invokes pressing of a button in a window with a plugin. The button is an index in the list (see config.json).
-	 * @param {number} buttonIndex
+	 * @description The function called when any of the plugin buttons is clicked. It defines the buttons used with the plugin and the plugin behavior when they are clicked.
+	 * @param {number} buttonIndex - Defines the button index in the buttons array of the config.json file. If id == -1, then the plugin considers that the Close window cross button has been clicked or its operation has been somehow interrupted.
 	 */
 
 	/**
@@ -146,6 +162,7 @@ window.startPluginApi = function() {
 	 * @event Plugin#event_onTargetPositionChanged
 	 * @memberof Plugin
 	 * @alias event_onTargetPositionChanged
+	 * @description The function called when the target position in the editor is changed.
 	 */
 
 	/**
@@ -153,6 +170,7 @@ window.startPluginApi = function() {
 	 * @event Plugin#event_onDocumentContentReady
 	 * @memberof Plugin
 	 * @alias event_onDocumentContentReady
+	 * @description The function called when the document is completely loaded.
 	 */
 
 	/**
@@ -160,6 +178,8 @@ window.startPluginApi = function() {
 	 * @event Plugin#event_onClick
 	 * @memberof Plugin
 	 * @alias event_onClick
+	 * @description The function called when the user clicks on the element.
+	 * @param {boolean} isSelectionUse - Defines if the selection is used or not.
 	 */
 
 	/**
@@ -167,6 +187,8 @@ window.startPluginApi = function() {
 	 * @event Plugin#event_inputHelper_onSelectItem
 	 * @memberof Plugin
 	 * @alias event_inputHelper_onSelectItem
+	 * @description The function called when the user is trying to select an item from the input helper.
+	 * @param {object} item - Defines the selected item: "text" - the item text, "id" - the item index.
 	 */
 
 	/**
@@ -174,6 +196,7 @@ window.startPluginApi = function() {
 	 * @event Plugin#event_onInputHelperClear
 	 * @memberof Plugin
 	 * @alias event_onInputHelperClear
+	 * @description The function called when the user is trying to clear the text and the input helper disappears.
 	 */
 
 	/**
@@ -181,6 +204,8 @@ window.startPluginApi = function() {
 	 * @event Plugin#event_onInputHelperInput
 	 * @memberof Plugin
 	 * @alias event_onInputHelperInput
+	 * @description The function called when the user is trying to input the text and the input helper appears.
+	 * @param {object} data - Defines the text which the user inputs: "add" - defines if the text is added to the current text (true) or this is the beginning of the text (false), "text" - the text which the user inputs.
 	 */
 
 	/**
@@ -188,6 +213,7 @@ window.startPluginApi = function() {
 	 * @event Plugin#onTranslate
 	 * @memberof Plugin
 	 * @alias onTranslate
+	 * @description The function called right after the plugin startup or later in case the plugin language is changed.
 	 */
 
     /**
@@ -195,8 +221,8 @@ window.startPluginApi = function() {
      * @event Plugin#onEnableMouseEvent
      * @memberof Plugin
      * @alias onEnableMouseEvent
-	 * @description The method turns off/on mouse/touchpad events.
-	 * @param {boolean} isEnabled
+	 * @description The function called to turn the mouse or touchpad events on/off.
+	 * @param {boolean} isEnabled - Defines if the mouse or touchpad is enabled (true) or not (false).
      */
 
     /**
@@ -204,7 +230,7 @@ window.startPluginApi = function() {
      * @event Plugin#onExternalMouseUp
      * @memberof Plugin
      * @alias onExternalMouseUp
-	 * @description The method indicates that the mouse/touchpad event was completed outside the plugin while started inside the plugin.
+	 * @description The function called when the mouse button is released outside the plugin iframe.
      */
 
     /**
@@ -212,8 +238,8 @@ window.startPluginApi = function() {
      * @event Plugin#onExternalPluginMessage
      * @memberof Plugin
      * @alias onExternalPluginMessage
-     * @description The method shows the editor integrator message (see externallistener plugin).
-     * @param {Object} data
+     * @description The function called to show the editor integrator message.
+     * @param {Object} data - Defines the editor integrator message: "type" - the message type, "text" - the message text.
      */
 
 
@@ -228,16 +254,22 @@ window.startPluginApi = function() {
 	 * @memberof Plugin
 	 * @alias executeCommand
 	 * @deprecated Please use callCommand method.
-	 * @description THE METHOD IS OBSOLETE. Use window.Asc.plugin.callCommand which runs the code from "data" string parameter.
-     * After the code is executed, callback is called. If callback === undefined,
-	 * then window.Asc.plugin.onCommandCallback is called in case it is implemented in the plugin.
-	 * Script in the "data" variable is a builder script (see documentation LINK).
-	 * Сurrently, it is allowed to insert content created with the help of builder methods
-	 * only with InsertContent method, for the plugin not to handle images/fonts loading (as they are handled in the editor asynchronously).
-	 * In the future this restriction will be eliminated.
-	 * @param {string} type "close" or "command"
-     * @param {string} data Script code
-     * @param {Function} callback
+	 * @description Defines the method used to send the data back to the editor.
+	 * This method is deprecated, please use the callCommand method which runs the code from the data string parameter.
+	 * Now this method is mainly used to work with the OLE objects or close the plugin without any other commands.
+	 * It is also retained for using with text so that the previous versions of the plugin remain compatible.
+	 * The callback is the result that the command returns. It is an optional parameter. In case it is missing, the window.Asc.plugin.onCommandCallback function will be used to return the result of the command execution.
+	 * The second parameter is the JavaScript code for working with ONLYOFFICE Document Builder API 
+	 * that allows the plugin to send structured data inserted to the resulting document file (formatted paragraphs, tables, text parts and separate words, etc.).
+	 * ONLYOFFICE Document Builder commands can be only used to create content and insert it to the document editor
+	 * (using the Api.GetDocument().InsertContent(...)). This limitation exists due to the co-editing feature in the online editors.
+	 * If it is necessary to create a plugin for the desktop editors to work with local files, no such limitation is applied.
+	 * @param {string} type - Defines the type of the command. The "close" is used to close the plugin window after executing the function in the data parameter.
+	 * The "command" is used to execute the command and leave the window open waiting for the next command.
+     * @param {string} data - Defines the command written in JavaScript code which purpose is to form the structured data which can be inserted to the resulting document file
+	 * (formatted paragraphs, tables, text parts and separate words, etc.). Then the data is sent to the editors.
+	 * The command must be compatible with ONLYOFFICE Document Builder syntax.
+     * @param {Function} callback - The result that the method returns.
 	 */
 	Plugin.executeCommand = function(type, data, callback)
     {
@@ -262,12 +294,11 @@ window.startPluginApi = function() {
 	 * executeMethod
 	 * @memberof Plugin
 	 * @alias executeMethod
-	 * @description The function calls the editor method.
-	 * After execution of the function, callback with a parameter is called - the value returned by the method. If callback === undefined,
-	 * then window.Asc.plugin.onMethodReturn with a parameter is called - the value returned by the method in case it is implemented in the plugin.
-	 * @param {string} name Name of the method
-	 * @param {Array} params Array with calling parameters
-     * @param {Function} callback Callback function
+	 * @description Defines the method used to execute certain editor methods using the plugin.
+	 * The callback is the result that the method returns. It is an optional parameter. In case it is missing, the window.Asc.plugin.onMethodReturn function will be used to return the result of the method execution.
+	 * @param {string} name - The name of the specific method that must be executed.
+	 * @param {Array} params - The arguments that the method in use has (if it has any).
+     * @param {Function} callback - The result that the method returns.
 	 */
 	Plugin.executeMethod = function(name, params, callback)
     {
@@ -304,14 +335,13 @@ window.startPluginApi = function() {
 	 * resizeWindow (only for visual modal plugins)
 	 * @memberof Plugin
 	 * @alias resizeWindow
-	 * @description The funcion is intended for visual modal plugins -
-	 * it changes the window size updating the minimum/maximum sizes
-	 * @param {number} width New width of the window
-     * @param {number} height New height of the window
-     * @param {number} minW New min-width of the window
-     * @param {number} minH New min-height of the window
-     * @param {number} maxW New max-width of the window
-	 * @param {number} maxH New max-height of the window
+	 * @description Defines the method used to change the window size updating the minimum/maximum sizes.
+	 * @param {number} width - The window width.
+     * @param {number} height - The window height.
+     * @param {number} minW - The window minimum width.
+     * @param {number} minH - The window minimum height.
+     * @param {number} maxW - The window maximum width.
+	 * @param {number} maxH - The window maximum height.
 	 */
 	Plugin.resizeWindow = function(width, height, minW, minH, maxW, maxH)
     {
@@ -341,23 +371,23 @@ window.startPluginApi = function() {
 	 * callCommand
 	 * @memberof Plugin
 	 * @alias callCommand
-	 * @description The method performs the "func" function.
-     * After that callback is called. If callback === undefined,
-     * then window.Asc.plugin.onCommandCallback is called, in case it is executed in the plugin
-     * if isClose === true, then after the plugin is executed, it will close.
-     * if isCalc === false, then the editor will not recalculate the document (use this parameter carefully -
-     * only when you are sure that your edits will not require document recalculation)
-     * Code in the "func" function is a builder script (see documentation LINK)
-     * Currently, it is allowed to insert content created with the help of builder methods
-     * only with InsertContent method, for the plugin not to handle images/fonts loading (as they are run in the editor asynchronously)
-     * In the future this restriction will be eliminated
-     *
-     * Note: in the "func" code it is not allowed to use external plugin variables.
-     * If it is necessary, you need to export the variable in Asc.scope object, and use it the function code
-	 * @param {Function} func Function to call
-	 * @param {boolean} isClose
-     * @param {boolean} isCalc
-	 * @param {Function} callback Callback function
+	 * @description Defines the method used to send the data back to the editor.
+	 * It replaces the executeCommand method when working with texts in order to simplify the syntax of the script that is necessary to pass to the editors using ONLYOFFICE Document Builder API.
+	 * It allows the plugin to send structured data that can be inserted to the resulting document file (formatted paragraphs, tables, text parts and separate words, etc.).
+	 * The callback is the result that the command returns. It is an optional parameter. In case it is missing, the window.Asc.plugin.onCommandCallback function will be used to return the result of the command execution.
+     * ONLYOFFICE Document Builder commands can be only used to create content and insert it to the document editor (using the Api.GetDocument().InsertContent(...)).
+	 * This limitation exists due to the co-editing feature in the online editors. If it is necessary to create a plugin for desktop editors to work with local files, no such limitation is applied.
+     * This method is executed in its own context isolated from other JavaScript data. If some parameters or other data need to be passed to this method, use Asc.scope object.
+	 * @param {Function} func - Defines the command written in JavaScript which purpose is to form structured data which can be inserted to the resulting document file
+	 * (formatted paragraphs, tables, text parts and separate words, etc.). Then the data is sent to the editors.
+	 * The command must be compatible with ONLYOFFICE Document Builder syntax.
+	 * @param {boolean} isClose - Defines whether the plugin window must be closed after the code is executed or left open waiting for another command or action.
+	 * The true value is used to close the plugin window after executing the function in the func parameter.
+	 * The false value is used to execute the command and leave the window open waiting for the next command.
+     * @param {boolean} isCalc - Defines whether the document will be recalculated or not.
+	 * The true value is used to recalculate the document after executing the function in the func parameter.
+	 * The false value will not recalculate the document (use it only when your edits surely will not require document recalculation).
+	 * @param {Function} callback - The result that the method returns.
 	 */
 	Plugin.callCommand = function(func, isClose, isCalc, callback)
     {
@@ -371,12 +401,12 @@ window.startPluginApi = function() {
 	 * callModule
 	 * @memberof Plugin
 	 * @alias callModule
-	 * @description The function executes a remotely located script following a link.
-	 * After the execution callback is called, if it is not undefined.
-	 * If isClose === true, then after execution the plugin will close.
-	 * @param {string} url Url to resource code
-	 * @param {Function} callback Callback function
-	 * @param {boolean} isClose
+	 * @description Defines the method used to execute a remotely located script following a link.
+	 * @param {string} url - The resource code url.
+	 * @param {Function} callback - The result that the method returns.
+	 * @param {boolean} isClose - Defines whether the plugin window must be closed after the code is executed or left open waiting for another action.
+	 * The true value is used to close the plugin window after executing a remotely located script.
+	 * The false value is used to execute the code and leave the window open waiting for the next action.
 	 */
 	Plugin.callModule = function(url, callback, isClose)
     {
@@ -401,10 +431,9 @@ window.startPluginApi = function() {
 	 * loadModule
 	 * @memberof Plugin
 	 * @alias loadModule
-	 * @description The function allows to load a text resource located remotely on a link.
-	 * After the execution callback is called with resource content if it is not undefined.
-     * @param {string} url Url to resource code
-	 * @param {Function} callback Callback function
+	 * @description Defines the method used to load a remotely located text resource.
+     * @param {string} url - The resource code url.
+	 * @param {Function} callback - The result that the method returns.
 	 */
 	Plugin.loadModule = function(url, callback)
     {
@@ -427,8 +456,9 @@ window.startPluginApi = function() {
 
 	/**
 	 * @typedef {Object} InputHelperItem
-	 * @property {string} id
-	 * @property {string} text
+	 * @description Defines the input helper item.
+	 * @property {string} id - The item index.
+	 * @property {string} text - The item text.
 	 */
 
 	/**
@@ -442,12 +472,14 @@ window.startPluginApi = function() {
 	 * @function createWindow
 	 * @memberof InputHelper
 	 * @alias createWindow
+	 * @description The function called to create an input helper window.
 	 */
 
 	/**
 	 * @function getItems
 	 * @memberof InputHelper
 	 * @alias getItems
+	 * @description The function called to return an array of the InputHelperItem objects that contain all the items from the input helper.
 	 * @return {InputHelperItem[]}
 	 */
 
@@ -455,28 +487,32 @@ window.startPluginApi = function() {
 	 * @function setItems
 	 * @memberof InputHelper
 	 * @alias setItems
-	 * @param {InputHelperItem[]}
+	 * @description The function called to set the items to the input helper.
+	 * @param {InputHelperItem[]} - Defines an array of the InputHelperItem objects which contain all the items for the input helper.
 	 */
 
 	/**
 	 * @function show
 	 * @memberof InputHelper
 	 * @alias show
-	 * @param {number} width
-	 * @param {number} height
-	 * @param {boolean} isCaptureKeyboard
+	 * @description The function called to show an input helper.
+	 * @param {number} width - The input helper window width measured in millimeters.
+	 * @param {number} height - The input helper window height measured in millimeters.
+	 * @param {boolean} isCaptureKeyboard - Defines if the keyboard is caught (true) or not (false).
 	 */
 
 	/**
 	 * @function unShow
 	 * @memberof InputHelper
 	 * @alias unShow
+	 * @description The function called to hide an input helper.
 	 */
 
 	/**
 	 * @function getScrollSizes
 	 * @memberof InputHelper
 	 * @alias getScrollSizes
+	 * @description The function called to get the sizes of the input helper scrolled window. Returns an object with width and height parameters.
 	 * @return {number}
 	 */
 
@@ -484,6 +520,7 @@ window.startPluginApi = function() {
 	 * createInputHelper
 	 * @memberof Plugin
 	 * @alias createInputHelper
+	 * @description Defines the method used to create an input helper - a window that appears and disappears when you type text. Its location is tied to the cursor.
 	 */
 	Plugin.createInputHelper = function()
     {
@@ -493,6 +530,7 @@ window.startPluginApi = function() {
 	 * getInputHelper
 	 * @memberof Plugin
 	 * @alias getInputHelper
+	 * @description Defines the method used to get the InputHelper object.
 	 * @return {InputHelper} Input helper object
 	 */
 	Plugin.getInputHelper = function()

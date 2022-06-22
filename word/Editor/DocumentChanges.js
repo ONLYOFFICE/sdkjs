@@ -96,6 +96,8 @@ CChangesDocumentAddItem.prototype.Undo = function()
 			oDocument.SectionsInfo.Update_OnRemove(Pos, 1);
 		}
 
+		oDocument.private_UpdateSelectionPosOnRemove(Pos, 1);
+
 		if (Pos > 0)
 		{
 			if (Pos <= oDocument.Content.length - 1)
@@ -129,6 +131,8 @@ CChangesDocumentAddItem.prototype.Redo = function()
 		{
 			oDocument.SectionsInfo.Update_OnAdd(Pos, [Element]);
 		}
+
+		oDocument.private_UpdateSelectionPosOnAdd(Pos, 1);
 
 		if (Pos > 0)
 		{
@@ -204,6 +208,7 @@ CChangesDocumentAddItem.prototype.Load = function(Color)
 			oDocument.private_ReindexContent(Pos);
 
 			AscCommon.CollaborativeEditing.Update_DocumentPositionsOnAdd(oDocument, Pos);
+			oDocument.private_UpdateSelectionPosOnAdd(Pos, 1);
 
 			if (Element.IsParagraph())
 			{
@@ -251,6 +256,7 @@ CChangesDocumentRemoveItem.prototype.Undo = function()
         oDocument.SectionsInfo.Update_OnAdd(this.Pos, this.Items);
 	}
 
+	oDocument.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
 
 	var nStartIndex = Math.max(this.Pos - 1, 0);
 	var nEndIndex   = Math.min(oDocument.Content.length - 1, this.Pos + this.Items.length + 1);
@@ -281,6 +287,7 @@ CChangesDocumentRemoveItem.prototype.Redo = function()
         oDocument.SectionsInfo.Update_OnRemove(this.Pos, this.Items.length);
 	}
 
+	oDocument.private_UpdateSelectionPosOnRemove(this.Pos, this.Items.length);
 
 	var Pos = this.Pos;
 	if (Pos > 0)
@@ -322,6 +329,7 @@ CChangesDocumentRemoveItem.prototype.Load = function(Color)
 		var Elements = oDocument.Content.splice(Pos, 1);
 		oDocument.private_RecalculateNumbering(Elements);
 		AscCommon.CollaborativeEditing.Update_DocumentPositionsOnRemove(oDocument, Pos, 1);
+		oDocument.private_UpdateSelectionPosOnRemove(Pos, 1);
 
 		for (var nElementIndex = 0; nElementIndex < Elements.length; ++nElementIndex)
 		{
@@ -467,15 +475,15 @@ CChangesDocumentDefaultLanguage.prototype.constructor = CChangesDocumentDefaultL
 CChangesDocumentDefaultLanguage.prototype.Type = AscDFH.historyitem_Document_DefaultLanguage;
 CChangesDocumentDefaultLanguage.prototype.Undo = function()
 {
-	var oDocument = this.Class;
+	let oDocument = this.Class;
 	oDocument.Styles.Default.TextPr.Lang.Val = this.Old;
-	oDocument.Restart_CheckSpelling();
+	oDocument.RestartSpellCheck();
 };
 CChangesDocumentDefaultLanguage.prototype.Redo = function()
 {
-	var oDocument = this.Class;
+	let oDocument = this.Class;
 	oDocument.Styles.Default.TextPr.Lang.Val = this.New;
-	oDocument.Restart_CheckSpelling();
+	oDocument.RestartSpellCheck();
 };
 CChangesDocumentDefaultLanguage.prototype.WriteToBinary = function(Writer)
 {

@@ -68,6 +68,9 @@ CSdtBase.prototype.SetPlaceholderText = function(sText)
 	if (!sText)
 		return this.SetPlaceholder(undefined);
 
+	if (sText === this.GetPlaceholderText())
+		return;
+
 	var oLogicDocument = this.GetLogicDocument();
 	var oGlossary      = oLogicDocument.GetGlossaryDocument();
 
@@ -331,7 +334,7 @@ CSdtBase.prototype.IsCheckBoxChecked = function()
  * Копируем placeholder
  * @return {string}
  */
-CSdtBase.prototype.private_CopyPlaceholder = function()
+CSdtBase.prototype.private_CopyPlaceholder = function(oPr)
 {
 	var oLogicDocument = this.GetLogicDocument();
 	if (!oLogicDocument || !this.Pr.Placeholder)
@@ -348,9 +351,22 @@ CSdtBase.prototype.private_CopyPlaceholder = function()
 	}
 	else
 	{
-		var oCopyName = oGlossary.GetNewName();
-		oGlossary.AddDocPart(oDocPart.Copy(oCopyName));
-		return oCopyName;
+		var sCopyName;
+		if(oPr && oPr.Comparison && oPr.Comparison.originalDocument) 
+		{
+			var oPrGlossary = oPr.Comparison.originalDocument.GetGlossaryDocument();
+			sCopyName = oPrGlossary.GetNewName();
+			oDocPart.Glossary = oPrGlossary;
+			oGlossary.AddDocPart(oDocPart.Copy(sCopyName));
+			oDocPart.Glossary = oGlossary;
+			return sCopyName;
+		}
+		else 
+		{
+			sCopyName = oGlossary.GetNewName();
+			oGlossary.AddDocPart(oDocPart.Copy(sCopyName));
+			return sCopyName;
+		}
 	}
 };
 /**
@@ -408,8 +424,23 @@ CSdtBase.prototype.ClearContentControlExt = function()
 	}
 	else if (this.IsPicture())
 	{
-		this.ReplaceContentWithPlaceHolder();
-		this.ApplyPicturePr(true);
+		if (this.IsPlaceHolder())
+			return;
+
+		var arrDrawings = this.GetAllDrawingObjects();
+		if (arrDrawings.length > 0 && arrDrawings[0].IsPicture())
+		{
+			var nW = arrDrawings[0].Extent.W;
+			var nH = arrDrawings[0].Extent.H;
+
+			this.ReplaceContentWithPlaceHolder();
+			this.ApplyPicturePr(true, nW, nH);
+		}
+		else
+		{
+			this.ReplaceContentWithPlaceHolder();
+			this.ApplyPicturePr(true);
+		}
 	}
 	else
 	{

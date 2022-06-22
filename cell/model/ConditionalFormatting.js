@@ -151,6 +151,71 @@
 		}
 		return res;
 	};
+	CConditionalFormattingRule.prototype.merge = function (oRule) {
+		if (this.aboveAverage === true) {
+			this.aboveAverage = oRule.aboveAverage;
+		}
+		if (this.activePresent === false) {
+			this.activePresent = oRule.activePresent;
+		}
+		if (this.bottom === false) {
+			this.bottom = oRule.bottom;
+		}
+		//TODO merge
+		if (this.dxf === null) {
+			this.dxf = oRule.dxf;
+		}
+		if (this.equalAverage === false) {
+			this.equalAverage = oRule.equalAverage;
+		}
+		if (this.operator === null) {
+			this.operator = oRule.operator;
+		}
+		if (this.percent === false) {
+			this.percent = oRule.percent;
+		}
+		if (this.priority === null) {
+			this.priority = oRule.priority;
+		}
+		if (this.rank === null) {
+			this.rank = oRule.rank;
+		}
+		if (this.stdDev === null) {
+			this.stdDev = oRule.stdDev;
+		}
+		if (this.stopIfTrue === false) {
+			this.stopIfTrue = oRule.stopIfTrue;
+		}
+		if (this.text === null) {
+			this.text = oRule.text;
+		}
+		if (this.timePeriod === null) {
+			this.timePeriod = oRule.timePeriod;
+		}
+		if (this.type === null) {
+			this.type = oRule.type;
+		}
+
+		if (this.aRuleElements && this.aRuleElements.length === 0) {
+			this.aRuleElements = oRule.aRuleElements;
+		} else if (this.aRuleElements && oRule.aRuleElements && this.aRuleElements.length === oRule.aRuleElements.length) {
+			for (var i = 0; i < this.aRuleElements.length; i++) {
+				this.aRuleElements[i].merge(oRule.aRuleElements[i]);
+			}
+		}
+
+		//this.aRuleElements = [];
+
+		if (this.pivot === false) {
+			this.pivot = oRule.pivot;
+		}
+		if (this.ranges === null) {
+			this.ranges = oRule.ranges;
+		}
+		if (this.isLock === null) {
+			this.isLock = oRule.isLock;
+		}
+	};
 	CConditionalFormattingRule.prototype.Write_ToBinary2 = function (writer) {
 		//for wrapper
 		//writer.WriteLong(this.getObjectType());
@@ -1381,6 +1446,24 @@
 		}
 		return res;
 	};
+	CColorScale.prototype.merge = function (obj) {
+		if (this.aCFVOs.length === 0) {
+			this.aCFVOs = obj.aCFVOs;
+		} else if (this.aCFVOs.length === obj.aCFVOs.length) {
+			for (var i = 0; i < this.aCFVOs.length; i++) {
+				this.aCFVOs[i].merge(obj.aCFVOs[i]);
+			}
+		}
+
+		if (this.aColors && this.aColors.length === 0) {
+			this.aColors = obj.aColors;
+		} else if (this.aColors && obj.aColors && this.aColors.length === obj.aColors.length) {
+			for (var i = 0; i < this.aColors.length; i++) {
+				//TODO
+				//this.aCFVOs[i].merge(obj.aCFVOs[i]);
+			}
+		}
+	};
 	CColorScale.prototype.applyPreset = function (styleIndex) {
 		var presetStyles = conditionalFormattingPresets[Asc.c_oAscCFRuleTypeSettings.colorScale][styleIndex];
 		for (var i = 0; i < presetStyles.length; i++) {
@@ -1559,6 +1642,57 @@
 			res.AxisColor = this.AxisColor.clone();
 		}
 		return res;
+	};
+	CDataBar.prototype.merge = function (obj) {
+		//сравниваю по дефолтовым величинам
+		if (this.MaxLength === 90) {
+			this.MaxLength = obj.MaxLength;
+		}
+		if (this.MinLength === 10) {
+			this.MinLength = obj.MinLength;
+		}
+		if (this.ShowValue === true) {
+			this.ShowValue = obj.ShowValue;
+		}
+		if (this.AxisPosition === AscCommonExcel.EDataBarAxisPosition.automatic) {
+			this.AxisPosition = obj.AxisPosition;
+		}
+		if (this.Gradient === true) {
+			this.Gradient = obj.Gradient;
+		}
+		if (this.Direction === AscCommonExcel.EDataBarDirection.context) {
+			this.Direction = obj.Direction;
+		}
+		if (this.NegativeBarColorSameAsPositive === false) {
+			this.NegativeBarColorSameAsPositive = obj.NegativeBarColorSameAsPositive;
+		}
+		if (this.NegativeBarBorderColorSameAsPositive === true) {
+			this.NegativeBarBorderColorSameAsPositive = obj.NegativeBarBorderColorSameAsPositive;
+		}
+
+		if (this.aCFVOs.length === 0) {
+			this.aCFVOs = obj.aCFVOs;
+		} else if (this.aCFVOs.length === obj.aCFVOs.length) {
+			for (var i = 0; i < this.aCFVOs.length; i++) {
+				this.aCFVOs[i].merge(obj.aCFVOs[i]);
+			}
+		}
+
+		if (this.Color === null) {
+			this.Color = obj.Color;
+		}
+		if (this.NegativeColor === null) {
+			this.NegativeColor = obj.NegativeColor;
+		}
+		if (this.BorderColor === null) {
+			this.BorderColor = obj.BorderColor;
+		}
+		if (this.NegativeBorderColor === null) {
+			this.NegativeBorderColor = obj.NegativeBorderColor;
+		}
+		if (this.AxisColor === null) {
+			this.AxisColor = obj.AxisColor;
+		}
 	};
 	CDataBar.prototype.isEqual = function (elem) {
 		var _compareColors = function (_color1, _color2) {
@@ -1973,6 +2107,12 @@
 	CFormulaCF.prototype.asc_setText = function (val) {
 		this.Text = val;
 	};
+	CFormulaCF.prototype.isExtended = function () {
+		//if ((m_arrFormula[i].IsInit()) && m_arrFormula[i]->isExtended())
+		//TODO в x2t условие, которое  в нашем случае не получится использовать, мы не храним этот флаг
+		//m_arrFormula[i]->isExtended() -> return (m_sNodeName == L"xm:f");
+		return true;
+	};
 
 	function CIconSet() {
 		this.IconSet = EIconSetType.Traffic3Lights1;
@@ -2004,6 +2144,38 @@
 			}
 		}
 		return res;
+	};
+	CIconSet.prototype.merge = function (obj) {
+		//сравниваю по дефолтовым величинам
+		if (this.IconSet === EIconSetType.Traffic3Lights1) {
+			this.IconSet = obj.IconSet;
+		}
+		if (this.Percent === true) {
+			this.Percent = obj.Percent;
+		}
+		if (this.Reverse === false) {
+			this.Reverse = obj.Reverse;
+		}
+		if (this.ShowValue === true) {
+			this.ShowValue = obj.ShowValue;
+		}
+
+		if (this.aCFVOs && this.aCFVOs.length === 0) {
+			this.aCFVOs = obj.aCFVOs;
+		} else if (this.aCFVOs && obj.aCFVOs && this.aCFVOs.length === obj.aCFVOs.length) {
+			for (var i = 0; i < this.aCFVOs.length; i++) {
+				this.aCFVOs[i].merge(obj.aCFVOs[i]);
+			}
+		}
+
+		if (this.aIconSets.length === 0) {
+			this.aIconSets = obj.aIconSets;
+		} else if (this.aIconSets.length === obj.aIconSets.length) {
+			for (var i = 0; i < this.aIconSets.length; i++) {
+				this.aIconSets[i].merge(obj.aIconSets[i]);
+			}
+		}
+
 	};
 	CIconSet.prototype.isEqual = function (elem) {
 		if (this.IconSet === elem.IconSet && this.Percent === elem.Percent && this.Reverse === elem.Reverse &&
@@ -2203,6 +2375,24 @@
 		res.formula = this.formula ? this.formula.clone() : null;
 		return res;
 	};
+	CConditionalFormatValueObject.prototype.merge = function (obj) {
+		//сравниваю по дефолтовым величинам
+		if (this.Gte === true) {
+			this.Gte = obj.Gte;
+		}
+		if (obj.Type !== null) {
+			this.Type = obj.Type;
+		}
+		if (this.Val === null) {
+			this.Val = obj.Val;
+		}
+		if (this.formulaParent === null) {
+			this.formulaParent = obj.formulaParent;
+		}
+		if (this.formula === null) {
+			this.formula = obj.formula;
+		}
+	};
 	CConditionalFormatValueObject.prototype.Write_ToBinary2 = function (writer) {
 		if (null != this.Gte) {
 			writer.WriteBool(true);
@@ -2272,6 +2462,15 @@
 		res.IconSet = this.IconSet;
 		res.IconId = this.IconId;
 		return res;
+	};
+	CConditionalFormatIconSet.prototype.merge = function (obj) {
+		//сравниваю по дефолтовым величинам
+		if (this.IconSet === null) {
+			this.IconSet = obj.IconSet;
+		}
+		if (this.IconId === null) {
+			this.IconId = obj.IconId;
+		}
 	};
 	CConditionalFormatIconSet.prototype.isEqual = function (val) {
 		return this.IconSet === val.IconSet && this.IconId === val.IconId;

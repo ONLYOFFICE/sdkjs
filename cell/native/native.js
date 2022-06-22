@@ -165,6 +165,104 @@ function asc_menu_WriteColor(_type, _color, _stream) {
     _stream["WriteByte"](255);
 }
 
+// UNICOLOR
+function asc_menu_ReadUniColor(_params, _cursor) {
+    var _color = new AscFormat.CUniColor();
+    var _continue = true;
+    while (_continue)
+    {
+        var _attr = _params[_cursor.pos++];
+        switch (_attr)
+        {
+            case 0:
+            {
+                _color.color = new AscFormat.CPrstColor();
+                _color.color.type = _params[_cursor.pos++];
+                _color.color.id = _params[_cursor.pos++];
+                _color.color.RGBA = {
+                    R: _params[_cursor.pos++],
+                    G: _params[_cursor.pos++],
+                    B: _params[_cursor.pos++],
+                    A: _params[_cursor.pos++],
+                    needRecalc: _params[_cursor.pos++]
+                };
+                break;
+            }
+            case 1:
+            {
+                var _count = _params[_cursor.pos++];
+                for (var i = 0; i < _count; i++)
+                {
+                    var _mod = new AscFormat.CColorMod();
+                    _mod.name = _params[_cursor.pos++];
+                    _mod.val = _params[_cursor.pos++];
+                    _color.Mods.push(_mod);
+                }
+                break;
+            }
+            case 2:
+            {
+                _color.RGBA = {
+                    R: _params[_cursor.pos++],
+                    G: _params[_cursor.pos++],
+                    B: _params[_cursor.pos++],
+                    A: _params[_cursor.pos++]
+                }
+                break;
+            }
+            case 255:
+            default:
+            {
+                _continue = false;
+                break;
+            }
+        }
+    }
+    return _color;
+}
+
+function asc_menu_WriteUniColor(_type, _color, _stream) {
+    if (!_color)
+        return;
+
+    _stream["WriteByte"](_type);
+
+    if (_color.color !== undefined && _color.color !== null)
+    {
+        _stream["WriteByte"](0);
+        _stream["WriteLong"](_color.color.type);
+        _stream["WriteStringA"](_color.color.id);
+        _stream["WriteByte"](_color.color.RGBA.R);
+        _stream["WriteByte"](_color.color.RGBA.G);
+        _stream["WriteByte"](_color.color.RGBA.B);
+        _stream["WriteByte"](_color.color.RGBA.A);
+        _stream["WriteBool"](_color.color.RGBA.needRecalc);
+    }
+    if (_color.Mods !== undefined && _color.Mods !== null)
+    {
+        _stream["WriteByte"](1);
+
+        var _len = _color.Mods.length;
+        _stream["WriteLong"](_len);
+
+        for (var i = 0; i < _len; i++)
+        {
+            _stream["WriteStringA"](_color.Mods[i].name);
+            _stream["WriteLong"](_color.Mods[i].val);
+        }
+    }
+    if (_color.RGBA !== undefined && _color.RGBA !== null)
+    {
+        _stream["WriteByte"](2);
+        _stream["WriteByte"](_color.RGBA.R);
+        _stream["WriteByte"](_color.RGBA.G);
+        _stream["WriteByte"](_color.RGBA.B);
+        _stream["WriteByte"](_color.RGBA.A);
+    }
+
+    _stream["WriteByte"](255);
+}
+
 function asc_menu_WriteMath(oMath, s){
     s["WriteLong"](oMath.Type);
     s["WriteLong"](oMath.Action);
@@ -377,6 +475,7 @@ function asc_menu_ReadAscFill_grad(_params, _cursor){
                         }
                     }
                 }
+                _cursor.pos++;
                 break;
             }
             case 255:
@@ -675,6 +774,11 @@ function asc_menu_ReadAscStroke(_params, _cursor){
                 _stroke.canChangeArrows = _params[_cursor.pos++];
                 break;
             }
+            case 10:
+            {
+                _stroke.prstDash = _params[_cursor.pos++];
+                break;
+            }
             case 255:
             default:
             {
@@ -741,10 +845,113 @@ function asc_menu_WriteAscStroke(_type, _stroke, _stream){
         _stream["WriteByte"](9);
         _stream["WriteBool"](_stroke.canChangeArrows);
     }
+    if (_stroke.prstDash !== undefined && _stroke.prstDash !== null)
+    {
+        _stream["WriteByte"](10);
+        _stream["WriteLong"](_stroke.prstDash);
+    }
     
     _stream["WriteByte"](255);
-    
 }
+
+function asc_menu_ReadAscShadow(_params, _cursor) {
+    var _shadow = new Asc.asc_CShadowProperty();
+
+    var _continue = true;
+    while (_continue)
+    {
+        var _attr = _params[_cursor.pos++];
+
+        switch (_attr)
+        {
+            case 0:
+            {
+                _shadow.color = asc_menu_ReadUniColor(_params, _cursor);
+                break;
+            }
+            case 1:
+            {
+                _shadow.algn = _params[_cursor.pos++];
+                break;
+            }
+            case 2:
+            {
+                _shadow.blurRad = _params[_cursor.pos++];
+                break;
+            }
+            case 3:
+            {
+                _shadow.dir = _params[_cursor.pos++];
+                break;
+            }
+            case 4:
+            {
+                _shadow.dist = _params[_cursor.pos++];
+                break;
+            }
+            case 5:
+            {
+                _shadow.rotWithShape = _params[_cursor.pos++];
+                break;
+            }
+            case 6:
+            {
+                if (!_params[_cursor.pos++]) {
+                    return null;
+                }
+                break;
+            }
+            case 255:
+            default:
+            {
+                _continue = false;
+                break;
+            }
+        }
+    }
+
+    return _shadow;
+}
+
+function asc_menu_WriteAscShadow(_type, _shadow, _stream) {
+    if (!_shadow)
+        return;
+
+    _stream["WriteByte"](_type);
+
+    asc_menu_WriteUniColor(0, _shadow.color, _stream);
+
+    if (_shadow.algn !== undefined && _shadow.algn !== null)
+    {
+        _stream["WriteByte"](1);
+        _stream["WriteLong"](_shadow.algn);
+    }
+    if (_shadow.blurRad !== undefined && _shadow.blurRad !== null)
+    {
+        _stream["WriteByte"](2);
+        _stream["WriteLong"](_shadow.blurRad);
+    }
+    if (_shadow.dir !== undefined && _shadow.dir !== null)
+    {
+        _stream["WriteByte"](3);
+        _stream["WriteLong"](_shadow.dir);
+    }
+    if (_shadow.dist !== undefined && _shadow.dist !== null)
+    {
+        _stream["WriteByte"](4);
+        _stream["WriteLong"](_shadow.dist);
+    }
+    if (_shadow.rotWithShape !== undefined && _shadow.rotWithShape !== null)
+    {
+        _stream["WriteByte"](5);
+        _stream["WriteBool"](_shadow.dist);
+    }
+    _stream["WriteByte"](6);
+    _stream["WriteBool"](true);
+
+    _stream["WriteByte"](255);
+}
+
 function asc_menu_ReadPaddings(_params, _cursor){
     var _paddings = new Asc.asc_CPaddings();
     var _continue = true;
@@ -985,6 +1192,11 @@ function asc_menu_ReadShapePr(_params, _cursor){
                 _settings.bFromGroup = _params[_cursor.pos++];
                 break;
             }
+            case 8:
+            {
+                _settings.shadow = asc_menu_ReadAscShadow(_params, _cursor);
+                break;
+            }
             case 255:
             default:
             {
@@ -1028,9 +1240,14 @@ function asc_menu_WriteShapePr(_type, _shapePr, _stream){
         _stream["WriteByte"](7);
         _stream["WriteBool"](_shapePr.bFromGroup);
     }
-    
+    if (_shapePr.shadow !== undefined && _shapePr.shadow !== null)
+    {
+        asc_menu_WriteAscShadow(8, _shapePr.shadow, _stream);
+    }
+
     _stream["WriteByte"](255);
 }
+
 function asc_menu_WriteImagePr(_imagePr, _stream){
     if (_imagePr.CanBeFlow !== undefined && _imagePr.CanBeFlow !== null)
     {
@@ -2538,8 +2755,6 @@ function OfflineEditor () {
 
         window['AscFormat'].DrawingArea.prototype.drawSelection = function(drawingDocument) {
             
-            AscCommon.g_oTextMeasurer.Flush();
-            
             var canvas = this.worksheet.objectRender.getDrawingCanvas();
             var shapeCtx = canvas.shapeCtx;
             var shapeOverlayCtx = canvas.shapeOverlayCtx;
@@ -2782,8 +2997,6 @@ function OfflineEditor () {
             }
             
             window["native"]["SwitchMemoryLayer"]();
-            
-            AscCommon.g_oTextMeasurer.Flush();
             
             this.objectRender.showDrawingObjectsEx();
             
@@ -3353,7 +3566,8 @@ function OfflineEditor () {
             	}
             };
 
-            _api.asc_nativeOpenFile(window["native"]["GetFileString"](), undefined, true, window["native"]["GetXlsxPath"]()).then(thenCallback, thenCallback);
+            _api.asc_nativeOpenFile(window["native"]["GetFileString"](), undefined, true, window["native"]["GetXlsxPath"]());
+            thenCallback();
            
             // TODO: Implement frozen places
             // TODO: Implement Text Art Styles
@@ -3522,8 +3736,12 @@ function OfflineEditor () {
                                   
         _api.asc_registerCallback("asc_onSendThemeColors", onApiSendThemeColors);
 
-        // Comments
+        // Common
+        _api.asc_registerCallback('asc_onStartAction', onApiLongActionBegin);
+        _api.asc_registerCallback('asc_onEndAction', onApiLongActionEnd);
+        _api.asc_registerCallback('asc_onError', onApiError);
 
+        // Comments
         _api.asc_registerCallback("asc_onAddComment", onApiAddComment);
         _api.asc_registerCallback("asc_onAddComments", onApiAddComments);
         _api.asc_registerCallback("asc_onRemoveComment", onApiRemoveComment);
@@ -4167,15 +4385,8 @@ function OfflineEditor () {
         AscCommon.ChartPreviewManager.prototype.clearPreviews = function() {window["native"]["ClearCacheChartStyles"]();};
         AscCommon.ChartPreviewManager.prototype.createChartPreview = function(_graphics, type, styleIndex) {
             return AscFormat.ExecuteNoHistory(function(){
-                                              
-                                              if(!this.chartsByTypes[type])
-                                              this.chartsByTypes[type] = this.getChartByType(type);
-                                              
-                                              var chart_space = this.chartsByTypes[type];
-                                                chart_space.applyChartStyleByIds(AscCommon.g_oChartStyles[type][styleIndex]);
-                                              chart_space.recalcInfo.recalculateReferences = false;
-                                              chart_space.recalculate();
 
+                                              var chart_space = this.checkChartForPreview(type, AscCommon.g_oChartStyles[type][styleIndex]);
                                               window["native"]["BeginDrawStyle"](AscCommon.c_oAscStyleImage.Default, type + '');
 
                                               chart_space.draw(_graphics);
@@ -4212,14 +4423,10 @@ var _s = new OfflineEditor();
 
 window["native"]["offline_of"] = function(arg) {_s.openFile(arg);}
 window["native"]["offline_stz"] = function(v) {_s.zoom = v; _api.asc_setZoom(v);}
-window["native"]["offline_ds"] = function(x, y, width, height, ratio, istoplayer) {
-    AscCommon.g_oTextMeasurer.Flush();
-    
+window["native"]["offline_ds"] = function(x, y, width, height, ratio, istoplayer) {    
     _s.drawSheet(x, y, width, height, ratio, istoplayer);
 }
 window["native"]["offline_dh"] = function(x, y, width, height, ratio, type) {
-    AscCommon.g_oTextMeasurer.Flush();
-    
     _s.drawHeader(x, y, width, height, type, ratio);
 }
 
@@ -4516,8 +4723,6 @@ window["native"]["offline_keyboard_down"] = function(inputKeys) {
     var wb = _api.wb;
     var ws = _api.wb.getWorksheet();
     
-    AscCommon.g_oTextMeasurer.Flush();
-    
     var isFormulaEditMode = wb.isFormulaEditMode;
     wb.isFormulaEditMode = false;
     
@@ -4549,6 +4754,18 @@ window["native"]["offline_keyboard_down"] = function(inputKeys) {
                 ws.objectRender.controller.updateSelectionState();
                 ws.objectRender.controller.drawingObjects.sendGraphicObjectProps();
                 
+            } else if (9 === operationCode ) {  // Select cell
+
+                if (37 === codeKey) {       // LEFT
+                    wb._onChangeSelection(false, -1, 0, false);
+                } else if (39 === codeKey) {     // RIGHT
+                    wb._onChangeSelection(false, 1, 0, false);
+                } else if (38 === codeKey) {          // UP
+                    wb._onChangeSelection(false, 0, -1, false);
+                } else if (40 === codeKey) {     // DOWN
+                    wb._onChangeSelection(false, 0, 1, false);
+                }
+
             } else {
                 
                 if (8 === codeKey || 13 === codeKey || 27 == codeKey) {
@@ -4561,19 +4778,19 @@ window["native"]["offline_keyboard_down"] = function(inputKeys) {
                     window.AscDisableTextSelection = true;
                 }
             }
-        }
-        else if (37 === codeKey)      // LEFT
+        } else if (37 === codeKey) {      // LEFT
             wb._onChangeSelection(true, -1, 0, false);
-        else if (39 === codeKey)     // RIGHT
+        } else if (39 === codeKey) {     // RIGHT
             wb._onChangeSelection(true, 1, 0, false);
-        if (38 === codeKey)          // UP
+        } else if (38 === codeKey) {          // UP
             wb._onChangeSelection(true, 0, -1, false);
-        else if (40 === codeKey)     // DOWN
+        } else if (40 === codeKey) {     // DOWN
             wb._onChangeSelection(true, 0, 1, false);
-        else if (9 === codeKey)     // TAB
+        } else if (9 === codeKey) {     // TAB
             wb._onChangeSelection(true, -1, 0, false);
-        else if (13 === codeKey)     // ENTER
+        } else if (13 === codeKey) {     // ENTER
             wb._onChangeSelection(true, 0, 1, false);
+        }
     }
 
     wb.isFormulaEditMode = isFormulaEditMode;
@@ -5182,17 +5399,13 @@ window["native"]["offline_apply_event"] = function(type,params) {
             // document interface
             
         case 3: // ASC_MENU_EVENT_TYPE_UNDO
-        {
-            AscCommon.g_oTextMeasurer.Flush();
-            
+        {   
             _api.asc_Undo();
             _s.asc_WriteAllWorksheets(true);
             break;
         }
         case 4: // ASC_MENU_EVENT_TYPE_REDO
         {
-            AscCommon.g_oTextMeasurer.Flush();
-            
             _api.asc_Redo();
             _s.asc_WriteAllWorksheets(true);
             break;
@@ -5358,11 +5571,33 @@ window["native"]["offline_apply_event"] = function(type,params) {
             
         case 12: // ASC_MENU_EVENT_TYPE_TABLESTYLES
         {
-            var props = asc_ReadFormatTableInfo(params, _current);
-            // console.log(JSON.stringify(props));
-            
+            var props, retinaPixelRatio;
+
+            while (_continue)
+            {
+                _attr = params[_current.pos++];
+                switch (_attr) {
+                    case 0:
+                    {
+                        props = asc_ReadFormatTableInfo(params, _current);
+                        break;
+                    }
+                    case 1:
+                    {
+                        retinaPixelRatio = params[_current.pos++];
+                        break;
+                    }
+                    case 255:
+                    default:
+                    {
+                        _continue = false;
+                        break;
+                    }
+                }
+            }
+
             AscCommon.AscBrowser.isRetina = true;
-            AscCommon.AscBrowser.retinaPixelRatio = 2.0;
+            AscCommon.AscBrowser.retinaPixelRatio = retinaPixelRatio;
   
             window["native"]["SetStylesType"](1);
             _api.wb.getTableStyles(props);
@@ -5444,10 +5679,13 @@ window["native"]["offline_apply_event"] = function(type,params) {
         }
         case 201: // ASC_MENU_EVENT_TYPE_DOCUMENT_CHARTSTYLES
         {
+            var chartPreviewsType = parseInt(params[0]);
+            var retinaPixelRatio = params[1];
+
             AscCommon.AscBrowser.isRetina = true;
-            AscCommon.AscBrowser.retinaPixelRatio = 2.0;
-  
-            _api.chartPreviewManager.getChartPreviews(parseInt(params));
+            AscCommon.AscBrowser.retinaPixelRatio = retinaPixelRatio;
+
+            _api.chartPreviewManager.getChartPreviews(chartPreviewsType);
 
             AscCommon.AscBrowser.isRetina = false;
             AscCommon.AscBrowser.retinaPixelRatio = 1.0;
@@ -5926,9 +6164,11 @@ window["native"]["offline_apply_event"] = function(type,params) {
         }
             
         case 2405: // ASC_SPREADSHEETS_EVENT_TYPE_CELL_STYLES
-        {                    
+        {
+            var retinaPixelRatio = params[0];
+
             AscCommon.AscBrowser.isRetina = true;
-            AscCommon.AscBrowser.retinaPixelRatio = 2.0;
+            AscCommon.AscBrowser.retinaPixelRatio = retinaPixelRatio;
            
             window["native"]["SetStylesType"](0);
             _api.wb.getCellStyles(92, 48);
@@ -6229,7 +6469,32 @@ window["native"]["offline_apply_event"] = function(type,params) {
             
             break;
         }
-            
+
+        case 21002: // ASC_COAUTH_EVENT_TYPE_REPLACE_URL_IMAGE
+        {
+            var urls = JSON.parse(params[0]);
+            AscCommon.g_oDocumentUrls.addUrls(urls);
+            var firstUrl;
+            for (var i in urls) {
+                if (urls.hasOwnProperty(i)) {
+                    firstUrl = urls[i];
+                    break;
+                }
+            }
+
+            var _src = firstUrl;
+
+            var imageProp = new Asc.asc_CImgProperty();
+            imageProp.ImageUrl = _src;
+
+            var ws = _api.wb.getWorksheet();
+            if (ws && ws.objectRender && ws.objectRender.controller) {
+                ws.objectRender.controller.setGraphicObjectProps(imageProp);
+            }
+
+            break;
+        }
+
         case 22000: // ASC_MENU_EVENT_TYPE_ADVANCED_OPTIONS
         {
             var obj = JSON.parse(params);
@@ -6561,6 +6826,31 @@ function readSDKReplies (data) {
     return replies;
 }
 
+function onApiLongActionBegin(type, id) {
+    var info = {
+        "type" : type,
+        "id" : id
+    };
+    postDataAsJSONString(info, 26102); // ASC_MENU_EVENT_TYPE_LONGACTION_BEGIN
+}
+
+function onApiLongActionEnd(type, id) {
+    var info = {
+        "type" : type,
+        "id" : id
+    };
+    postDataAsJSONString(info, 26103); // ASC_MENU_EVENT_TYPE_LONGACTION_END
+}
+
+function onApiError(id, level, errData) {
+    var info = {
+        "level" : level,
+        "id" : id
+        // "errData" : JSON.prune(errData, 4)
+    };
+    postDataAsJSONString(info, 26104); // ASC_MENU_EVENT_TYPE_API_ERROR
+}
+
 function onApiAddComment(id, data) {
     setTimeout(function () {
         var comment = readSDKComment(id, data) || {};
@@ -6841,38 +7131,36 @@ window["Asc"]["spreadsheet_api"].prototype.openDocument = function(file) {
                //console.log("JS - openDocument()");
                
                t._openDocument(file.data);
-               
+
                var thenCallback = function() {
+               Asc.ReadDefTableStyles(t.wbModel);
                t.wb = new AscCommonExcel.WorkbookView(t.wbModel, t.controller, t.handlers,
                                                       window["_null_object"], window["_null_object"], t,
                                                       t.collaborativeEditing, t.fontRenderingMode);
-               };
-               
-               t.openDocumentFromZip(t.wbModel, window["native"]["GetXlsxPath"]()).then(thenCallback, thenCallback);
-               
+
                if (!sdkCheck) {
-               
+
                //console.log("OPEN FILE ONLINE");
-               
+
                t.wb.showWorksheet(undefined, true);
-               
+
                var ws = t.wb.getWorksheet();
                window["native"]["onEndLoadingFile"](ws.headersWidth, ws.headersHeight);
-               
+
                _s.asc_WriteAllWorksheets(true);
                _s.asc_WriteCurrentCell();
-               
+
                return;
                }
-               
+
                t.asc_CheckGuiControlColors();
                t.sendColorThemes(_api.wbModel.theme);
                t.asc_ApplyColorScheme(false);
-               
+
                t.sendStandartTextures();
-               
+
                //console.log("JS - applyFirstLoadChanges() before");
-               
+
                t._applyPreOpenLocks();
                // Применяем пришедшие при открытии изменения
                t._applyFirstLoadChanges();
@@ -6880,45 +7168,82 @@ window["Asc"]["spreadsheet_api"].prototype.openDocument = function(file) {
                t.goTo();
 
                t.isDocumentLoadComplete = true;
-               
+
                // Меняем тип состояния (на никакое)
                t.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.None;
-               
+
                // Были ошибки при открытии, посылаем предупреждение
                if (0 < t.wbModel.openErrors.length) {
                t.sendEvent('asc_onError', c_oAscError.ID.OpenWarning, c_oAscError.Level.NoCritical);
                }
-               
+
                //console.log("JS - applyFirstLoadChanges() after");
-               
+
                setTimeout(function() {
-                          
+
                           t.wb.showWorksheet(undefined, true);
                           //console.log("JS - showWorksheet()");
-                          
+
                           var ws = t.wb.getWorksheet();
                           //console.log("JS - getWorksheet()");
-                          
-                          window["native"]["onEndLoadingFile"](ws.headersWidth, ws.headersHeight);
-                          //console.log("JS - onEndLoadingFile()");
-                          
+
+                window["native"]["onTokenJWT"](_api.CoAuthoringApi.get_jwt());
+                window["native"]["onEndLoadingFile"](ws.headersWidth, ws.headersHeight);
+                //console.log("JS - onEndLoadingFile()");
+
                           _s.asc_WriteAllWorksheets(true);
                           _s.asc_WriteCurrentCell();
-                          
+
                           setInterval(function() {
-                                      
+
                                       _api._autoSave();
-                                      
+
                                       testLockedObjects();
-                                      
+
                                       }, 100);
-                          
+
                           //console.log("JS - openDocument()");
-                          
+
                           }, 5);
-               
+        };
+
+        t.openDocumentFromZip(t.wbModel, window["native"]["GetXlsxPath"]());
+        thenCallback();
+
                }, 5);
 };
+
+// The helper function, called from the native application,
+// returns information about the document as a JSON string.
+window["Asc"]["spreadsheet_api"].prototype["asc_nativeGetCoreProps"] = function() {
+    var props = (_api) ? _api.asc_getCoreProps() : null,
+        value;
+
+    if (props) {
+        var coreProps = {};
+        coreProps["asc_getModified"] = props.asc_getModified();
+
+        value = props.asc_getLastModifiedBy();
+        if (value)
+        coreProps["asc_getLastModifiedBy"] = AscCommon.UserInfoParser.getParsedName(value);
+
+        coreProps["asc_getTitle"] = props.asc_getTitle();
+        coreProps["asc_getSubject"] = props.asc_getSubject();
+        coreProps["asc_getDescription"] = props.asc_getDescription();
+
+        var authors = [];
+        value = props.asc_getCreator();//"123\"\"\"\<\>,456";
+        value && value.split(/\s*[,;]\s*/).forEach(function (item) {
+            authors.push(item);
+        });
+
+        coreProps["asc_getCreator"] = authors;
+
+        return coreProps;
+    }
+
+    return {};
+}
 
 window["AscCommon"].getFullImageSrc2 = function (src) {
     
@@ -6938,3 +7263,168 @@ window["AscCommon"].getFullImageSrc2 = function (src) {
     
     return src;
 }
+
+// // JSON.prune : a function to stringify any object without overflow
+// // two additional optional parameters :
+// //   - the maximal depth (default : 6)
+// //   - the maximal length of arrays (default : 50)
+// // You can also pass an "options" object.
+// // examples :
+// //   var json = JSON.prune(window)
+// //   var arr = Array.apply(0,Array(1000)); var json = JSON.prune(arr, 4, 20)
+// //   var json = JSON.prune(window.location, {inheritedProperties:true})
+// // Web site : http://dystroy.org/JSON.prune/
+// // JSON.prune on github : https://github.com/Canop/JSON.prune
+// // This was discussed here : http://stackoverflow.com/q/13861254/263525
+// // The code is based on Douglas Crockford's code : https://github.com/douglascrockford/JSON-js/blob/master/json2.js
+// // No effort was done to support old browsers. JSON.prune will fail on IE8.
+// (function () {
+// 	'use strict';
+
+// 	var DEFAULT_MAX_DEPTH = 6;
+// 	var DEFAULT_ARRAY_MAX_LENGTH = 50;
+// 	var DEFAULT_PRUNED_VALUE = '"-pruned-"';
+// 	var seen; // Same variable used for all stringifications
+// 	var iterator; // either forEachEnumerableOwnProperty, forEachEnumerableProperty or forEachProperty
+
+// 	// iterates on enumerable own properties (default behavior)
+// 	var forEachEnumerableOwnProperty = function(obj, callback) {
+// 		for (var k in obj) {
+// 			if (Object.prototype.hasOwnProperty.call(obj, k)) callback(k);
+// 		}
+// 	};
+// 	// iterates on enumerable properties
+// 	var forEachEnumerableProperty = function(obj, callback) {
+// 		for (var k in obj) callback(k);
+// 	};
+// 	// iterates on properties, even non enumerable and inherited ones
+// 	// This is dangerous
+// 	var forEachProperty = function(obj, callback, excluded) {
+// 		if (obj==null) return;
+// 		excluded = excluded || {};
+// 		Object.getOwnPropertyNames(obj).forEach(function(k){
+// 			if (!excluded[k]) {
+// 				callback(k);
+// 				excluded[k] = true;
+// 			}
+// 		});
+// 		forEachProperty(Object.getPrototypeOf(obj), callback, excluded);
+// 	};
+
+// 	Object.defineProperty(Date.prototype, "toPrunedJSON", {value:Date.prototype.toJSON});
+
+// 	var	cx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
+// 		escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
+// 		meta = {	// table of character substitutions
+// 			'\b': '\\b',
+// 			'\t': '\\t',
+// 			'\n': '\\n',
+// 			'\f': '\\f',
+// 			'\r': '\\r',
+// 			'"' : '\\"',
+// 			'\\': '\\\\'
+// 		};
+
+// 	function quote(string) {
+// 		escapable.lastIndex = 0;
+// 		return escapable.test(string) ? '"' + string.replace(escapable, function (a) {
+// 			var c = meta[a];
+// 			return typeof c === 'string'
+// 				? c
+// 				: '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+// 		}) + '"' : '"' + string + '"';
+// 	}
+
+
+// 	var prune = function (value, depthDecr, arrayMaxLength) {
+// 		var prunedString = DEFAULT_PRUNED_VALUE;
+// 		var replacer;
+// 		if (typeof depthDecr == "object") {
+// 			var options = depthDecr;
+// 			depthDecr = options.depthDecr;
+// 			arrayMaxLength = options.arrayMaxLength;
+// 			iterator = options.iterator || forEachEnumerableOwnProperty;
+// 			if (options.allProperties) iterator = forEachProperty;
+// 			else if (options.inheritedProperties) iterator = forEachEnumerableProperty
+// 			if ("prunedString" in options) {
+// 				prunedString = options.prunedString;
+// 			}
+// 			if (options.replacer) {
+// 				replacer = options.replacer;
+// 			}
+// 		} else {
+// 			iterator = forEachEnumerableOwnProperty;
+// 		}
+// 		seen = [];
+// 		depthDecr = depthDecr || DEFAULT_MAX_DEPTH;
+// 		arrayMaxLength = arrayMaxLength || DEFAULT_ARRAY_MAX_LENGTH;
+// 		function str(key, holder, depthDecr) {
+// 			var i, k, v, length, partial, value = holder[key];
+
+// 			if (value && typeof value === 'object' && typeof value.toPrunedJSON === 'function') {
+// 				value = value.toPrunedJSON(key);
+// 			}
+// 			if (value && typeof value.toJSON === 'function') {
+// 				value = value.toJSON();
+// 			}
+
+// 			switch (typeof value) {
+// 			case 'string':
+// 				return quote(value);
+// 			case 'number':
+// 				return isFinite(value) ? String(value) : 'null';
+// 			case 'boolean':
+// 			case 'null':
+// 				return String(value);
+// 			case 'object':
+// 				if (!value) {
+// 					return 'null';
+// 				}
+// 				if (depthDecr<=0 || seen.indexOf(value)!==-1) {
+// 					if (replacer) {
+// 						var replacement = replacer(value, prunedString, true);
+// 						return replacement===undefined ? undefined : ''+replacement;
+// 					}
+// 					return prunedString;
+// 				}
+// 				seen.push(value);
+// 				partial = [];
+// 				if (Object.prototype.toString.apply(value) === '[object Array]') {
+// 					length = Math.min(value.length, arrayMaxLength);
+// 					for (i = 0; i < length; i += 1) {
+// 						partial[i] = str(i, value, depthDecr-1) || 'null';
+// 					}
+// 					v = '[' + partial.join(',') + ']';
+// 					if (replacer && value.length>arrayMaxLength) return replacer(value, v, false);
+// 					return v;
+// 				}
+// 				if (value instanceof RegExp) {
+// 					return quote(value.toString());
+// 				}
+// 				iterator(value, function(k) {
+// 					try {
+// 						v = str(k, value, depthDecr-1);
+// 						if (v) partial.push(quote(k) + ':' + v);
+// 					} catch (e) {
+// 						// this try/catch due to forbidden accessors on some objects
+// 					}
+// 				});
+// 				return '{' + partial.join(',') + '}';
+// 			case 'function':
+// 			case 'undefined':
+// 				return replacer ? replacer(value, undefined, false) : undefined;
+// 			}
+// 		}
+// 		return str('', {'': value}, depthDecr);
+// 	};
+
+// 	prune.log = function() {
+// 		console.log.apply(console, Array.prototype.map.call(arguments, function(v) {
+// 			return JSON.parse(JSON.prune(v));
+// 		}));
+// 	};
+// 	prune.forEachProperty = forEachProperty; // you might want to also assign it to Object.forEachProperty
+
+// 	if (typeof module !== "undefined") module.exports = prune;
+// 	else JSON.prune = prune;
+// }());

@@ -240,6 +240,28 @@
 			{
 				this.Clips[i].ToRenderer(renderer);
 			}
+		},
+
+		Apply : function(parent)
+		{
+			for (var i = 0, len = this.Clips.length; i < len; i++)
+			{
+				parent.transform3(this.Clips[i].Transform);
+				parent.SetIntegerGrid(this.Clips[i].IsIntegerGrid);
+
+				var _r = this.Clips[i].Rect;
+
+				parent.StartClipPath();
+
+				parent._s();
+				parent._m(_r.x, _r.y);
+				parent._l(_r.x + _r.w, _r.y);
+				parent._l(_r.x + _r.w, _r.y + _r.h);
+				parent._l(_r.x, _r.y + _r.h);
+				parent._l(_r.x, _r.y);
+
+				parent.EndClipPath();
+			}
 		}
 	};
 
@@ -348,7 +370,7 @@
 				return;
 
 			var _state = this.States[_ind];
-			if (_state.Type == gr_state_state)
+			if (_state.Type === gr_state_state)
 			{
 				if (this.Clips.length > 0)
 				{
@@ -357,33 +379,8 @@
 
 					for (var i = 0; i <= _ind; i++)
 					{
-						var _s = this.States[i];
-
-						if (_s.Type == gr_state_state)
-						{
-							var _c = _s.Clips;
-							var _l = _c.length;
-
-							for (var j = 0; j < _l; j++)
-							{
-								this.Parent.transform3(_c[j].Transform);
-								this.Parent.SetIntegerGrid(_c[j].IsIntegerGrid);
-
-								var _r = _c[j].Rect;
-								//this.Parent.AddClipRect(_r.x, _r.y, _r.w, _r.h);
-
-								this.Parent.StartClipPath();
-
-								this.Parent._s();
-								this.Parent._m(_r.x, _r.y);
-								this.Parent._l(_r.x + _r.w, _r.y);
-								this.Parent._l(_r.x + _r.w, _r.y + _r.h);
-								this.Parent._l(_r.x, _r.y + _r.h);
-								this.Parent._l(_r.x, _r.y);
-
-								this.Parent.EndClipPath();
-							}
-						}
+						if (this.States[i].Type === gr_state_state)
+							this.States[i].Apply(this.Parent);
 					}
 				}
 
@@ -393,6 +390,41 @@
 				this.Parent.transform3(_state.Transform);
 				this.Parent.SetIntegerGrid(_state.IsIntegerGrid);
 			}
+		},
+
+		RemoveLastClip : function()
+		{
+			// цель - убрать примененные this.Clips
+			if (this.Clips.length === 0)
+				return;
+
+			this.lastState = new CGrState_State();
+			this.lastState.Init(this.Parent.m_oTransform, !!this.Parent.m_bIntegerGrid, this.Clips);
+
+			this.Parent.RemoveClip();
+			for (var i = 0, len = this.States.length; i < len; i++)
+			{
+				if (this.States[i].Type === gr_state_state)
+					this.States[i].Apply(this.Parent);
+			}
+
+			this.Clips = [];
+			this.Parent.transform3(this.lastState.Transform);
+			this.Parent.SetIntegerGrid(this.lastState.IsIntegerGrid);
+		},
+		RestoreLastClip : function()
+		{
+			// цель - вернуть примененные this.lastState.Clips
+			if (!this.lastState)
+				return;
+
+			this.lastState.Apply(this.Parent);
+
+			this.Clips = this.lastState.Clips;
+			this.Parent.transform3(this.lastState.Transform);
+			this.Parent.SetIntegerGrid(this.lastState.IsIntegerGrid);
+
+			this.lastState = null;
 		},
 
 		Save : function()
@@ -447,81 +479,6 @@
 		}
 	};
 
-	var g_stringBase64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	var g_arrayBase64  = [];
-	for (var index64 = 0; index64 < g_stringBase64.length; index64++)
-	{
-		g_arrayBase64.push(g_stringBase64.charAt(index64));
-	}
-
-	function Base64Encode(srcData, nSrcLen, nOffset)
-	{
-		if ("undefined" === typeof(nOffset))
-			nOffset = 0;
-
-		var nWritten = 0;
-		var nLen1    = (((nSrcLen / 3) >> 0) * 4);
-		var nLen2    = (nLen1 / 76) >> 0;
-		var nLen3    = 19;
-		var srcInd   = 0;
-		var dstStr   = [];
-
-		var _s = "";
-		for (var i = 0; i <= nLen2; i++)
-		{
-			if (i == nLen2)
-				nLen3 = ((nLen1 % 76) / 4) >> 0;
-
-			for (var j = 0; j < nLen3; j++)
-			{
-				var dwCurr = 0;
-				for (var n = 0; n < 3; n++)
-				{
-					dwCurr |= srcData[srcInd++ + nOffset];
-					dwCurr <<= 8;
-				}
-
-				_s = "";
-				for (var k = 0; k < 4; k++)
-				{
-					var b = (dwCurr >>> 26) & 0xFF;
-					_s += g_arrayBase64[b];
-					dwCurr <<= 6;
-					dwCurr &= 0xFFFFFFFF;
-				}
-				dstStr.push(_s);
-			}
-		}
-		nLen2 = (nSrcLen % 3 != 0) ? (nSrcLen % 3 + 1) : 0;
-		if (nLen2)
-		{
-			var dwCurr = 0;
-			for (var n = 0; n < 3; n++)
-			{
-				if (n < (nSrcLen % 3))
-					dwCurr |= srcData[srcInd++ + nOffset];
-				dwCurr <<= 8;
-			}
-
-			_s = "";
-			for (var k = 0; k < nLen2; k++)
-			{
-				var b = (dwCurr >>> 26) & 0xFF;
-				_s += g_arrayBase64[b];
-				dwCurr <<= 6;
-			}
-
-			nLen3 = (nLen2 != 0) ? 4 - nLen2 : 0;
-			for (var j = 0; j < nLen3; j++)
-			{
-				_s += '=';
-			}
-			dstStr.push(_s);
-		}
-
-		return dstStr.join("");
-	}
-
 	function CMemory(bIsNoInit)
 	{
 		this.Init = function()
@@ -538,6 +495,8 @@
 		this.data   = null;
 		this.len    = 0;
 		this.pos    = 0;
+
+		this.context = null;
 
 		if (true !== bIsNoInit)
 			this.Init();
@@ -574,11 +533,11 @@
 		}
 		this.GetBase64Memory    = function()
 		{
-			return Base64Encode(this.data, this.pos, 0);
+			return AscCommon.Base64.encode(this.data, 0, this.pos);
 		}
 		this.GetBase64Memory2   = function(nPos, nLen)
 		{
-			return Base64Encode(this.data, nLen, nPos);
+			return AscCommon.Base64.encode(this.data, nPos, nLen);
 		}
 		this.GetData   = function(nPos, nLen)
 		{
@@ -594,6 +553,16 @@
 			for (var i = 0; i < len; i++)
 				res[i] = this.data[i];
 			return res;
+		}
+		this.GetDataUint8   = function(pos, len)
+		{
+			if (undefined === pos) {
+				pos = 0;
+			}
+			if (undefined === len) {
+				len = this.GetCurPosition() - pos;
+			}
+			return this.data.slice(pos, pos + len);
 		}
 		this.GetCurPosition     = function()
 		{
@@ -824,6 +793,17 @@
 				this.data[this.pos++] = (c >>> 8) & 0xFF;
 			}
 		}
+		this.WriteStringA = function(text)
+		{
+			var count = text.length & 0xFFFF;
+			this.WriteULong(count);
+			this.CheckSize(count);
+			for (var i=0;i<count;i++)
+			{
+				var c = text.charCodeAt(i) & 0xFF;
+				this.data[this.pos++] = c;
+			}
+		};
 		this.ClearNoAttack      = function()
 		{
 			this.pos = 0;
@@ -909,89 +889,110 @@
 				{
 					code = 0x10000 + (((code & 0x3FF) << 10) | (0x03FF & val.charCodeAt(pCur++)));
 				}
-				switch (code)
-				{
-					case 0x26:
-						//&
-						this.WriteUtf8Char(0x26);
-						this.WriteUtf8Char(0x61);
-						this.WriteUtf8Char(0x6d);
-						this.WriteUtf8Char(0x70);
-						this.WriteUtf8Char(0x3b);
-						break;
-					case 0x27:
-						//'
-						this.WriteUtf8Char(0x26);
-						this.WriteUtf8Char(0x61);
-						this.WriteUtf8Char(0x70);
-						this.WriteUtf8Char(0x6f);
-						this.WriteUtf8Char(0x73);
-						this.WriteUtf8Char(0x3b);
-						break;
-					case 0x3c:
-						//<
-						this.WriteUtf8Char(0x26);
-						this.WriteUtf8Char(0x6c);
-						this.WriteUtf8Char(0x74);
-						this.WriteUtf8Char(0x3b);
-						break;
-					case 0x3e:
-						//>
-						this.WriteUtf8Char(0x26);
-						this.WriteUtf8Char(0x67);
-						this.WriteUtf8Char(0x74);
-						this.WriteUtf8Char(0x3b);
-						break;
-					case 0x22:
-						//"
-						this.WriteUtf8Char(0x26);
-						this.WriteUtf8Char(0x71);
-						this.WriteUtf8Char(0x75);
-						this.WriteUtf8Char(0x6f);
-						this.WriteUtf8Char(0x74);
-						this.WriteUtf8Char(0x3b);
-						break;
-					default:
-						this.WriteUtf8Char(code);
-						break;
-				}
+				this.WriteXmlCharCode(code);
+			}
+		};
+		this.WriteXmlCharCode = function(code)
+		{
+			switch (code)
+			{
+				case 0x26:
+					//&
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x61);
+					this.WriteUtf8Char(0x6d);
+					this.WriteUtf8Char(0x70);
+					this.WriteUtf8Char(0x3b);
+					break;
+				case 0x27:
+					//'
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x61);
+					this.WriteUtf8Char(0x70);
+					this.WriteUtf8Char(0x6f);
+					this.WriteUtf8Char(0x73);
+					this.WriteUtf8Char(0x3b);
+					break;
+				case 0x3c:
+					//<
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x6c);
+					this.WriteUtf8Char(0x74);
+					this.WriteUtf8Char(0x3b);
+					break;
+				case 0x3e:
+					//>
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x67);
+					this.WriteUtf8Char(0x74);
+					this.WriteUtf8Char(0x3b);
+					break;
+				case 0x22:
+					//"
+					this.WriteUtf8Char(0x26);
+					this.WriteUtf8Char(0x71);
+					this.WriteUtf8Char(0x75);
+					this.WriteUtf8Char(0x6f);
+					this.WriteUtf8Char(0x74);
+					this.WriteUtf8Char(0x3b);
+					break;
+				default:
+					this.WriteUtf8Char(code);
+					break;
 			}
 		};
 		this.WriteXmlBool = function(val)
 		{
 			this.WriteXmlString(val ? '1' : '0');
 		};
+		this.WriteXmlByte = function(val)
+		{
+			this.WriteXmlInt(val);
+		};
+		this.WriteXmlSByte = function(val)
+		{
+			this.WriteXmlInt(val);
+		};
+		this.WriteXmlInt = function(val)
+		{
+			this.WriteXmlString(val.toFixed(0));
+		};
+		this.WriteXmlUInt = function(val)
+		{
+			this.WriteXmlInt(val);
+		};
+		this.WriteXmlInt64 = function(val)
+		{
+			this.WriteXmlInt(val);
+		};
+		this.WriteXmlUInt64 = function(val)
+		{
+			this.WriteXmlInt(val);
+		};
+		this.WriteXmlDouble = function(val)
+		{
+			this.WriteXmlNumber(val);
+		};
 		this.WriteXmlNumber = function(val)
 		{
 			this.WriteXmlString(val.toString());
 		};
-		this.WriteXmlNodeStart = function(name, isClose)
+		this.WriteXmlNodeStart = function(name)
 		{
 			this.WriteUtf8Char(0x3c);
 			this.WriteXmlString(name);
-			if(isClose)
-			{
-				this.WriteUtf8Char(0x3e);
-			}
 		};
-		this.WriteXmlNodeEnd = function(name, isEmpty, isEnd)
+		this.WriteXmlNodeEnd = function(name)
 		{
-			if (isEmpty)
-			{
-				if (isEnd)
-					this.WriteUtf8Char(0x2f);
-				this.WriteUtf8Char(0x3e);
-			}
-			else
-			{
-				this.WriteUtf8Char(0x3c);
+			this.WriteUtf8Char(0x3c);
+			this.WriteUtf8Char(0x2f);
+			this.WriteXmlString(name);
+			this.WriteUtf8Char(0x3e);
+		};
+		this.WriteXmlAttributesEnd = function(isEnd)
+		{
+			if (isEnd)
 				this.WriteUtf8Char(0x2f);
-				this.WriteXmlString(name);
-				this.WriteUtf8Char(0x3e);
-			}
-		};
-		this.WriteXmlAttributesEnd = function(name)
-		{
 			this.WriteUtf8Char(0x3e);
 		};
 		this.WriteXmlAttributeString = function(name, val)
@@ -1000,7 +1001,7 @@
 			this.WriteXmlString(name);
 			this.WriteUtf8Char(0x3d);
 			this.WriteUtf8Char(0x22);
-			this.WriteXmlString(val);
+			this.WriteXmlString(val.toString());
 			this.WriteUtf8Char(0x22);
 		};
 		this.WriteXmlAttributeStringEncode = function(name, val)
@@ -1009,16 +1010,310 @@
 			this.WriteXmlString(name);
 			this.WriteUtf8Char(0x3d);
 			this.WriteUtf8Char(0x22);
-			this.WriteXmlStringEncode(val);
+			this.WriteXmlStringEncode(val.toString());
 			this.WriteUtf8Char(0x22);
 		};
 		this.WriteXmlAttributeBool = function(name, val)
 		{
 			this.WriteXmlAttributeString(name, val ? '1' : '0');
 		};
+		this.WriteXmlAttributeByte = function(name, val)
+		{
+			this.WriteXmlAttributeInt(name, val);
+		};
+		this.WriteXmlAttributeSByte = function(name, val)
+		{
+			this.WriteXmlAttributeInt(name, val);
+		};
+		this.WriteXmlAttributeInt = function(name, val)
+		{
+			this.WriteXmlAttributeString(name, val.toFixed(0));
+		};
+		this.WriteXmlAttributeUInt = function(name, val)
+		{
+			this.WriteXmlAttributeInt(name, val);
+		};
+		this.WriteXmlAttributeInt64 = function(name, val)
+		{
+			this.WriteXmlAttributeInt(name, val);
+		};
+		this.WriteXmlAttributeUInt64 = function(name, val)
+		{
+			this.WriteXmlAttributeInt(name, val);
+		};
+		this.WriteXmlAttributeDouble = function(name, val)
+		{
+			this.WriteXmlAttributeNumber(name, val);
+		};
 		this.WriteXmlAttributeNumber = function(name, val)
 		{
 			this.WriteXmlAttributeString(name, val.toString());
+		};
+		this.WriteXmlNullable = function(val, name)
+		{
+			if (val) {
+				val.toXml(this, name);
+			}
+		};
+		//пересмотреть, куча аргументов
+		this.WriteXmlArray = function(val, name, opt_parentName, needWriteCount, ns, childns)
+		{
+			if (!ns) {
+				ns = "";
+			}
+			if (!childns) {
+				childns = "";
+			}
+			if(val && val.length > 0) {
+				if(opt_parentName) {
+					this.WriteXmlNodeStart(ns + opt_parentName);
+					if (needWriteCount) {
+						this.WriteXmlNullableAttributeNumber("count", val.length);
+					}
+					this.WriteXmlAttributesEnd();
+				}
+				val.forEach(function(elem, index){
+					elem.toXml(this, name, childns, childns, index);
+				}, this);
+				if(opt_parentName) {
+					this.WriteXmlNodeEnd(ns + opt_parentName);
+				}
+			}
+		};
+		this.WriteXmlNullableAttributeString = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeString(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeStringEncode = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeStringEncode(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeBool = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeBool(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeBool2 = function(name, val)
+		{
+			//добавлюя по аналогии с x2t
+			if (null !== val && undefined !== val) {
+				this.WriteXmlNullableAttributeString(name, val ? "1": "0")
+			}
+		};
+		this.WriteXmlNullableAttributeByte = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeByte(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeSByte = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeSByte(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeInt = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeInt(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeUInt = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeUInt(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeInt64 = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeInt64(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeUInt64 = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeUInt64(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeDouble = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeDouble(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeNumber = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeNumber(name, val)
+			}
+		};
+		this.WriteXmlNullableAttributeIntWithKoef = function(name, val, koef)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeInt(name, val * koef)
+			}
+		};
+		this.WriteXmlNullableAttributeUIntWithKoef = function(name, val, koef)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlAttributeUInt(name, val * koef)
+			}
+		};
+		this.WriteXmlAttributeBoolIfTrue = function(name, val)
+		{
+			if (val) {
+				this.WriteXmlAttributeBool(name, val)
+			}
+		};
+		this.WriteXmlValueString = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlString(val.toString());
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlValueStringEncode = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributeString("xml:space", "preserve");
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlStringEncode(val.toString());
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlValueBool = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlBool(val);
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlValueByte = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlByte(val);
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlValueSByte = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlSByte(val);
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlValueInt = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlInt(val);
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlValueUInt = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlUInt(val);
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlValueInt64 = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlInt64(val);
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlValueUInt64 = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlUInt64(val);
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlValueDouble = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlDouble(val);
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlValueNumber = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlNumber(val);
+			this.WriteXmlNodeEnd(name);
+		};
+		this.WriteXmlNullableValueString = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueString(name, val)
+			}
+		};
+		this.WriteXmlNullableValueStringEncode = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueStringEncode(name, val)
+			}
+		};
+		this.WriteXmlNullableValueBool = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueBool(name, val)
+			}
+		};
+		this.WriteXmlNullableValueByte = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueByte(name, val)
+			}
+		};
+		this.WriteXmlNullableValueSByte = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueSByte(name, val)
+			}
+		};
+		this.WriteXmlNullableValueInt = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueInt(name, val)
+			}
+		};
+		this.WriteXmlNullableValueUInt = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueUInt(name, val)
+			}
+		};
+		this.WriteXmlNullableValueInt64 = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueInt64(name, val)
+			}
+		};
+		this.WriteXmlNullableValueUInt64 = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueUInt64(name, val)
+			}
+		};
+		this.WriteXmlNullableValueDouble = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueDouble(name, val)
+			}
+		};
+		this.WriteXmlNullableValueNumber = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueNumber(name, val)
+			}
 		};
 		this.XlsbStartRecord = function(type, len) {
 			//Type
@@ -1043,6 +1338,24 @@
 			}
 		};
 		this.XlsbEndRecord = function() {
+		};
+		//все аргументы сохраняю как в x2t, ns - префикс пока не использую
+		this.WritingValNode = function(ns, name, val) {
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributeString("val", val);
+			this.WriteXmlAttributesEnd(true);
+		};
+		this.WritingValNodeEncodeXml = function(ns, name, val) {
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlNullableAttributeStringEncode("val", val);
+			this.WriteXmlAttributesEnd(true);
+		};
+		this.WritingValNodeIf = function(ns, name, cond, val) {
+			this.WriteXmlNodeStart(name);
+			if (cond) {
+				this.WriteXmlAttributeString("val", val);
+			}
+			this.WriteXmlAttributesEnd(true);
 		};
 	}
 
@@ -1257,7 +1570,7 @@
 
 		this.FillTextCode = function(glyph)
 		{
-			if (this.LastPickFont.GetGIDByUnicode(glyph))
+			if (this.LastPickFont && this.LastPickFont.GetGIDByUnicode(glyph))
 			{
 				if (this.LastPickFontName != this.LastPickFontNameOrigin)
 				{
@@ -1515,6 +1828,45 @@
 			}
 
 			var _colors = gradFill.colors;
+			var firstColor = null;
+			var lastColor = null;
+
+			if (_colors.length > 0)
+			{
+				if (_colors[0].pos > 0)
+				{
+					firstColor = {
+						color : {
+							RGBA : {
+								R : _colors[0].color.RGBA.R,
+								G : _colors[0].color.RGBA.G,
+								B : _colors[0].color.RGBA.B,
+								A : _colors[0].color.RGBA.A
+							}
+						},
+						pos : 0
+					};
+					_colors.unshift(firstColor);
+				}
+
+				var posLast = _colors.length - 1;
+				if (_colors[posLast].pos < 100000)
+				{
+					lastColor = {
+						color : {
+							RGBA : {
+								R : _colors[posLast].color.RGBA.R,
+								G : _colors[posLast].color.RGBA.G,
+								B : _colors[posLast].color.RGBA.B,
+								A : _colors[posLast].color.RGBA.A
+							}
+						},
+						pos : 100000
+					};
+					_colors.push(lastColor);
+				}
+			}
+
 			this.Memory.WriteByte(2);
 			this.Memory.WriteLong(_colors.length);
 
@@ -1531,6 +1883,11 @@
 				else
 					this.Memory.WriteByte(transparent);
 			}
+
+			if (firstColor)
+				_colors.shift();
+			if (lastColor)
+				_colors.pop();
 
 			this.Memory.WriteByte(AscCommon.g_nodeAttributeEnd);
 		},
@@ -2002,7 +2359,7 @@
 				nFlag |= (1 << 3);
 
 			// 7-ой и 8-ой биты зарезервированы для бордера
-			var oBorder = oForm.GetTextFormPr() ? oForm.GetTextFormPr().CombBorder : null;
+			var oBorder = oFormPr.GetBorder();
 			if (oBorder && !oBorder.IsNone())
 			{
 				nFlag |= (1 << 6);
@@ -2016,6 +2373,25 @@
 				this.Memory.WriteByte(0x255);
 			}
 
+			var oParagraph = oForm.GetParagraph();
+
+			var oShd = oFormPr.GetShd();
+			if (oParagraph && oShd && !oShd.IsNil())
+			{
+				nFlag |= (1 << 9);
+
+				var oColor = oShd.GetSimpleColor(oParagraph.GetTheme(), oParagraph.GetColorMap());
+				this.Memory.WriteByte(oColor.r);
+				this.Memory.WriteByte(oColor.g);
+				this.Memory.WriteByte(oColor.b);
+				this.Memory.WriteByte(0x255);
+			}
+
+			if (oParagraph && AscCommon.align_Left !== oParagraph.GetParagraphAlign())
+			{
+				nFlag |= (1 << 10);
+				this.Memory.WriteByte(oParagraph.GetParagraphAlign());
+			}
 
 			// 0 - Unknown
 			// 1 - Text
@@ -2043,6 +2419,19 @@
 					nFlag |= (1 << 22);
 					this.Memory.WriteString(sValue);
 				}
+
+				if (oTextFormPr.MultiLine && oForm.IsFixedForm())
+					nFlag |= (1 << 23);
+
+				if (oTextFormPr.AutoFit)
+					nFlag |= (1 << 24);
+
+				var sPlaceHolderText = oForm.GetPlaceholderText();
+				if (sPlaceHolderText)
+				{
+					nFlag |= (1 << 25);
+					this.Memory.WriteString(sPlaceHolderText);
+				}
 			}
 			else if (oForm.IsComboBox() || oForm.IsDropDownList())
 			{
@@ -2051,7 +2440,7 @@
 
 				var oFormPr = isComboBox ? oForm.GetComboBoxPr() : oForm.GetDropDownListPr();
 
-				if (!isComboBox)
+				if (isComboBox)
 					nFlag |= (1 << 20);
 
 				var sValue         = oForm.GetSelectedText(true);
@@ -2091,6 +2480,13 @@
 					nFlag |= (1 << 22);
 					this.Memory.WriteString(sValue);
 				}
+
+				var sPlaceHolderText = oForm.GetPlaceholderText();
+				if (sPlaceHolderText)
+				{
+					nFlag |= (1 << 23);
+					this.Memory.WriteString(sPlaceHolderText);
+				}
 			}
 			else if (oForm.IsCheckBox())
 			{
@@ -2101,10 +2497,28 @@
 				if (oCheckBoxPr.GetChecked())
 					nFlag |= (1 << 20);
 
-				this.Memory.WriteLong(oCheckBoxPr.GetCheckedSymbol());
-				this.Memory.WriteString(oCheckBoxPr.GetCheckedFont());
-				this.Memory.WriteLong(oCheckBoxPr.GetUncheckedSymbol());
-				this.Memory.WriteString(oCheckBoxPr.GetUncheckedFont());
+				var nCheckedSymbol   = oCheckBoxPr.GetCheckedSymbol();
+				var nUncheckedSymbol = oCheckBoxPr.GetUncheckedSymbol();
+
+				var nType = 0x0000;
+				if (0x2611 === nCheckedSymbol && 0x2610 === nUncheckedSymbol)
+					nType = 0x0001;
+				else if (0x25C9 === nCheckedSymbol && 0x25CB === nUncheckedSymbol)
+					nType = 0x0002;
+
+				var sCheckedFont = oCheckBoxPr.GetCheckedFont();
+				if (AscCommon.IsAscFontSupport(sCheckedFont, nCheckedSymbol))
+					sCheckedFont = "ASCW3";
+
+				var sUncheckedFont = oCheckBoxPr.GetUncheckedFont();
+				if (AscCommon.IsAscFontSupport(sUncheckedFont, nUncheckedSymbol))
+					sUncheckedFont = "ASCW3";
+
+				this.Memory.WriteLong(nType);
+				this.Memory.WriteLong(nCheckedSymbol);
+				this.Memory.WriteString(sCheckedFont);
+				this.Memory.WriteLong(nUncheckedSymbol);
+				this.Memory.WriteString(sUncheckedFont);
 
 				var sGroupName = oCheckBoxPr.GetGroupKey();
 				if (sGroupName)
@@ -2116,7 +2530,44 @@
 			else if (oForm.IsPicture())
 			{
 				this.Memory.WriteLong(4);
-				// TODO: Параметры для картиночной формы
+
+				var oPicturePr = oForm.GetPictureFormPr();
+
+				if (oPicturePr.IsConstantProportions())
+					nFlag |= (1 << 20);
+
+				if (oPicturePr.IsRespectBorders())
+					nFlag |= (1 << 21);
+
+				nFlag |= ((oPicturePr.GetScaleFlag() & 0xF) << 24);
+				this.Memory.WriteLong(oPicturePr.GetShiftX() * 1000);
+				this.Memory.WriteLong(oPicturePr.GetShiftY() * 1000);
+
+				if (!oForm.IsPlaceHolder())
+				{
+					var arrDrawings = oForm.GetAllDrawingObjects();
+					if (arrDrawings.length > 0 && arrDrawings[0].IsPicture() && arrDrawings[0].GraphicObj.blipFill)
+					{
+						var isLocalUse = true;
+						if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"] && window["AscDesktopEditor"]["IsFilePrinting"])
+							isLocalUse = ((!window["AscDesktopEditor"]["IsLocalFile"]()) && window["AscDesktopEditor"]["IsFilePrinting"]()) ? false : true;
+
+						if (window["AscDesktopEditor"] && !isLocalUse)
+						{
+							if ((undefined !== window["AscDesktopEditor"]["CryptoMode"]) && (0 < window["AscDesktopEditor"]["CryptoMode"]))
+								isLocalUse = true;
+						}
+
+						var src = AscCommon.getFullImageSrc2(arrDrawings[0].GraphicObj.blipFill.RasterImageId);
+
+						var srcLocal = AscCommon.g_oDocumentUrls.getLocal(src);
+						if (srcLocal && isLocalUse)
+							src = srcLocal;
+
+						nFlag |= (1 << 22);
+						this.Memory.WriteString(src);
+					}
+				}
 			}
 			else
 			{
@@ -2161,6 +2612,8 @@
 		this.UseOriginImageUrl = false;
 
         this.FontPicker = null;
+
+        this.isPrintMode = false;
 	}
 
 	CDocumentRenderer.prototype =
@@ -2818,6 +3271,21 @@
 			this.m_oBaseTransform = _t;
 		},
 
+		RemoveLastClip : function()
+		{
+			var _t                = this.m_oBaseTransform;
+			this.m_oBaseTransform = null;
+			this.GrState.RemoveLastClip();
+			this.m_oBaseTransform = _t;
+		},
+		RestoreLastClip : function()
+		{
+			var _t                = this.m_oBaseTransform;
+			this.m_oBaseTransform = null;
+			this.GrState.RestoreLastClip();
+			this.m_oBaseTransform = _t;
+		},
+
 		StartClipPath : function()
 		{
 			this.private_removeVectors();
@@ -3276,6 +3744,27 @@
 			m1.ty  = m.ty;
 		}
 
+		this.Reflect = function (matrix, isHorizontal, isVertical) {
+			var m = new CMatrixL();
+			m.shx = 0;
+			m.sy  = 1;
+			m.tx  = 0;
+			m.ty  = 0;
+			m.sx  = 1;
+			m.shy = 0;
+			if (isHorizontal && isVertical) {
+				m.sx  = -1;
+				m.sy = -1;
+			}	else if (isHorizontal) {
+				m.sx  = -1;
+			} else if (isVertical) {
+				m.sy = -1;
+			} else {
+				return;
+			}
+			this.MultiplyAppend(matrix, m);
+		}
+
 		this.CreateDublicateM = function(matrix)
 		{
 			var m = new CMatrixL();
@@ -3537,7 +4026,6 @@
 	window['AscCommon'].CGrRFonts                = CGrRFonts;
 	window['AscCommon'].CFontSetup               = CFontSetup;
 	window['AscCommon'].CGrState                 = CGrState;
-	window['AscCommon'].Base64Encode             = Base64Encode;
 	window['AscCommon'].CMemory                  = CMemory;
 	window['AscCommon'].CDocumentRenderer        = CDocumentRenderer;
 	window['AscCommon'].MATRIX_ORDER_PREPEND     = MATRIX_ORDER_PREPEND;

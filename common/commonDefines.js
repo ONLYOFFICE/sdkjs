@@ -32,6 +32,399 @@
 
 "use strict";
 
+var lcid_unknown = 0x0000; // Unknown
+var lcid_ar = 0x0001; // Arabic
+var lcid_bg = 0x0002; // Bulgarian
+var lcid_ca = 0x0003; // Catalan
+var lcid_zhHans = 0x0004; // Chinese, Han (Simplified variant)
+var lcid_cs = 0x0005; // Czech
+var lcid_da = 0x0006; // Danish
+var lcid_de = 0x0007; // German
+var lcid_el = 0x0008; // Modern Greek (1453-)
+var lcid_en = 0x0009; // English
+var lcid_es = 0x000a; // Spanish
+var lcid_fi = 0x000b; // Finnish
+var lcid_fr = 0x000c; // French
+var lcid_he = 0x000d; // Hebrew
+var lcid_hu = 0x000e; // Hungarian
+var lcid_is = 0x000f; // Icelandic
+var lcid_it = 0x0010; // Italian
+var lcid_ja = 0x0011; // Japanese
+var lcid_ko = 0x0012; // Korean
+var lcid_nl = 0x0013; // Dutch
+var lcid_no = 0x0014; // Norwegian
+var lcid_pl = 0x0015; // Polish
+var lcid_pt = 0x0016; // Portuguese
+var lcid_rm = 0x0017; // Romansh
+var lcid_ro = 0x0018; // Romanian
+var lcid_ru = 0x0019; // Russian
+var lcid_hr = 0x001a; // Croatian
+var lcid_sk = 0x001b; // Slovak
+var lcid_sq = 0x001c; // Albanian
+var lcid_sv = 0x001d; // Swedish
+var lcid_th = 0x001e; // Thai
+var lcid_tr = 0x001f; // Turkish
+var lcid_ur = 0x0020; // Urdu
+var lcid_id = 0x0021; // Indonesian
+var lcid_uk = 0x0022; // Ukrainian
+var lcid_be = 0x0023; // Belarusian
+var lcid_sl = 0x0024; // Slovenian
+var lcid_et = 0x0025; // Estonian
+var lcid_lv = 0x0026; // Latvian
+var lcid_lt = 0x0027; // Lithuanian
+var lcid_tg = 0x0028; // Tajik
+var lcid_fa = 0x0029; // Persian
+var lcid_vi = 0x002a; // Vietnamese
+var lcid_hy = 0x002b; // Armenian
+var lcid_az = 0x002c; // Azerbaijani
+var lcid_eu = 0x002d; // Basque
+var lcid_hsb = 0x002e; // Upper Sorbian
+var lcid_mk = 0x002f; // Macedonian
+var lcid_tn = 0x0032; // Tswana
+var lcid_xh = 0x0034; // Xhosa
+var lcid_zu = 0x0035; // Zulu
+var lcid_af = 0x0036; // Afrikaans
+var lcid_ka = 0x0037; // Georgian
+var lcid_fo = 0x0038; // Faroese
+var lcid_hi = 0x0039; // Hindi
+var lcid_mt = 0x003a; // Maltese
+var lcid_se = 0x003b; // Northern Sami
+var lcid_ga = 0x003c; // Irish
+var lcid_ms = 0x003e; // Malay (macrolanguage)
+var lcid_kk = 0x003f; // Kazakh
+var lcid_ky = 0x0040; // Kirghiz
+var lcid_sw = 0x0041; // Swahili (macrolanguage)
+var lcid_tk = 0x0042; // Turkmen
+var lcid_uz = 0x0043; // Uzbek
+var lcid_tt = 0x0044; // Tatar
+var lcid_bn = 0x0045; // Bengali
+var lcid_pa = 0x0046; // Panjabi
+var lcid_gu = 0x0047; // Gujarati
+var lcid_or = 0x0048; // Oriya
+var lcid_ta = 0x0049; // Tamil
+var lcid_te = 0x004a; // Telugu
+var lcid_kn = 0x004b; // Kannada
+var lcid_ml = 0x004c; // Malayalam
+var lcid_as = 0x004d; // Assamese
+var lcid_mr = 0x004e; // Marathi
+var lcid_sa = 0x004f; // Sanskrit
+var lcid_mn = 0x0050; // Mongolian
+var lcid_bo = 0x0051; // Tibetan
+var lcid_cy = 0x0052; // Welsh
+var lcid_km = 0x0053; // Central Khmer
+var lcid_lo = 0x0054; // Lao
+var lcid_gl = 0x0056; // Galician
+var lcid_kok = 0x0057; // Konkani (macrolanguage)
+var lcid_syr = 0x005a; // Syriac
+var lcid_si = 0x005b; // Sinhala
+var lcid_iu = 0x005d; // Inuktitut
+var lcid_am = 0x005e; // Amharic
+var lcid_tzm = 0x005f; // Central Atlas Tamazight
+var lcid_ne = 0x0061; // Nepali
+var lcid_fy = 0x0062; // Western Frisian
+var lcid_ps = 0x0063; // Pushto
+var lcid_fil = 0x0064; // Filipino
+var lcid_dv = 0x0065; // Dhivehi
+var lcid_ha = 0x0068; // Hausa
+var lcid_yo = 0x006a; // Yoruba
+var lcid_quz = 0x006b; // Cusco Quechua
+var lcid_nso = 0x006c; // Pedi
+var lcid_ba = 0x006d; // Bashkir
+var lcid_lb = 0x006e; // Luxembourgish
+var lcid_kl = 0x006f; // Kalaallisut
+var lcid_ig = 0x0070; // Igbo
+var lcid_ii = 0x0078; // Sichuan Yi
+var lcid_arn = 0x007a; // Mapudungun
+var lcid_moh = 0x007c; // Mohawk
+var lcid_br = 0x007e; // Breton
+var lcid_ug = 0x0080; // Uighur
+var lcid_mi = 0x0081; // Maori
+var lcid_oc = 0x0082; // Occitan (post 1500)
+var lcid_co = 0x0083; // Corsican
+var lcid_gsw = 0x0084; // Swiss German
+var lcid_sah = 0x0085; // Yakut
+var lcid_qut = 0x0086; //
+var lcid_rw = 0x0087; // Kinyarwanda
+var lcid_wo = 0x0088; // Wolof
+var lcid_prs = 0x008c; // Dari
+var lcid_gd = 0x0091; // Scottish Gaelic
+var lcid_arSA = 0x0401; // Arabic, Saudi Arabia
+var lcid_bgBG = 0x0402; // Bulgarian, Bulgaria
+var lcid_caES = 0x0403; // Catalan, Spain
+var lcid_zhTW = 0x0404; // Chinese, Taiwan, Province of China
+var lcid_csCZ = 0x0405; // Czech, Czech Republic
+var lcid_daDK = 0x0406; // Danish, Denmark
+var lcid_deDE = 0x0407; // German, Germany
+var lcid_elGR = 0x0408; // Modern Greek (1453-), Greece
+var lcid_enUS = 0x0409; // English, United States
+var lcid_esES_tradnl = 0x040a; // Spanish
+var lcid_fiFI = 0x040b; // Finnish, Finland
+var lcid_frFR = 0x040c; // French, France
+var lcid_heIL = 0x040d; // Hebrew, Israel
+var lcid_huHU = 0x040e; // Hungarian, Hungary
+var lcid_isIS = 0x040f; // Icelandic, Iceland
+var lcid_itIT = 0x0410; // Italian, Italy
+var lcid_jaJP = 0x0411; // Japanese, Japan
+var lcid_koKR = 0x0412; // Korean, Republic of Korea
+var lcid_nlNL = 0x0413; // Dutch, Netherlands
+var lcid_nbNO = 0x0414; // Norwegian Bokmal, Norway
+var lcid_plPL = 0x0415; // Polish, Poland
+var lcid_ptBR = 0x0416; // Portuguese, Brazil
+var lcid_rmCH = 0x0417; // Romansh, Switzerland
+var lcid_roRO = 0x0418; // Romanian, Romania
+var lcid_ruRU = 0x0419; // Russian, Russian Federation
+var lcid_hrHR = 0x041a; // Croatian, Croatia
+var lcid_skSK = 0x041b; // Slovak, Slovakia
+var lcid_sqAL = 0x041c; // Albanian, Albania
+var lcid_svSE = 0x041d; // Swedish, Sweden
+var lcid_thTH = 0x041e; // Thai, Thailand
+var lcid_trTR = 0x041f; // Turkish, Turkey
+var lcid_urPK = 0x0420; // Urdu, Pakistan
+var lcid_idID = 0x0421; // Indonesian, Indonesia
+var lcid_ukUA = 0x0422; // Ukrainian, Ukraine
+var lcid_beBY = 0x0423; // Belarusian, Belarus
+var lcid_slSI = 0x0424; // Slovenian, Slovenia
+var lcid_etEE = 0x0425; // Estonian, Estonia
+var lcid_lvLV = 0x0426; // Latvian, Latvia
+var lcid_ltLT = 0x0427; // Lithuanian, Lithuania
+var lcid_tgCyrlTJ = 0x0428; // Tajik, Cyrillic, Tajikistan
+var lcid_faIR = 0x0429; // Persian, Islamic Republic of Iran
+var lcid_viVN = 0x042a; // Vietnamese, Viet Nam
+var lcid_hyAM = 0x042b; // Armenian, Armenia
+var lcid_azLatnAZ = 0x042c; // Azerbaijani, Latin, Azerbaijan
+var lcid_euES = 0x042d; // Basque, Spain
+var lcid_wenDE = 0x042e; // Sorbian languages, Germany
+var lcid_mkMK = 0x042f; // Macedonian, The Former Yugoslav Republic of Macedonia
+var lcid_stZA = 0x0430; // Southern Sotho, South Africa
+var lcid_tsZA = 0x0431; // Tsonga, South Africa
+var lcid_tnZA = 0x0432; // Tswana, South Africa
+var lcid_venZA = 0x0433; // South Africa
+var lcid_xhZA = 0x0434; // Xhosa, South Africa
+var lcid_zuZA = 0x0435; // Zulu, South Africa
+var lcid_afZA = 0x0436; // Afrikaans, South Africa
+var lcid_kaGE = 0x0437; // Georgian, Georgia
+var lcid_foFO = 0x0438; // Faroese, Faroe Islands
+var lcid_hiIN = 0x0439; // Hindi, India
+var lcid_mtMT = 0x043a; // Maltese, Malta
+var lcid_seNO = 0x043b; // Northern Sami, Norway
+var lcid_msMY = 0x043e; // Malay (macrolanguage), Malaysia
+var lcid_kkKZ = 0x043f; // Kazakh, Kazakhstan
+var lcid_kyKG = 0x0440; // Kirghiz, Kyrgyzstan
+var lcid_swKE = 0x0441; // Swahili (macrolanguage), Kenya
+var lcid_tkTM = 0x0442; // Turkmen, Turkmenistan
+var lcid_uzLatnUZ = 0x0443; // Uzbek, Latin, Uzbekistan
+var lcid_ttRU = 0x0444; // Tatar, Russian Federation
+var lcid_bnIN = 0x0445; // Bengali, India
+var lcid_paIN = 0x0446; // Panjabi, India
+var lcid_guIN = 0x0447; // Gujarati, India
+var lcid_orIN = 0x0448; // Oriya, India
+var lcid_taIN = 0x0449; // Tamil, India
+var lcid_teIN = 0x044a; // Telugu, India
+var lcid_knIN = 0x044b; // Kannada, India
+var lcid_mlIN = 0x044c; // Malayalam, India
+var lcid_asIN = 0x044d; // Assamese, India
+var lcid_mrIN = 0x044e; // Marathi, India
+var lcid_saIN = 0x044f; // Sanskrit, India
+var lcid_mnMN = 0x0450; // Mongolian, Mongolia
+var lcid_boCN = 0x0451; // Tibetan, China
+var lcid_cyGB = 0x0452; // Welsh, United Kingdom
+var lcid_kmKH = 0x0453; // Central Khmer, Cambodia
+var lcid_loLA = 0x0454; // Lao, Lao People's Democratic Republic
+var lcid_myMM = 0x0455; // Burmese, Myanmar
+var lcid_glES = 0x0456; // Galician, Spain
+var lcid_kokIN = 0x0457; // Konkani (macrolanguage), India
+var lcid_mni = 0x0458; // Manipuri
+var lcid_sdIN = 0x0459; // Sindhi, India
+var lcid_syrSY = 0x045a; // Syriac, Syrian Arab Republic
+var lcid_siLK = 0x045b; // Sinhala, Sri Lanka
+var lcid_chrUS = 0x045c; // Cherokee, United States
+var lcid_iuCansCA = 0x045d; // Inuktitut, Unified Canadian Aboriginal Syllabics, Canada
+var lcid_amET = 0x045e; // Amharic, Ethiopia
+var lcid_tmz = 0x045f; // Tamanaku
+var lcid_neNP = 0x0461; // Nepali, Nepal
+var lcid_fyNL = 0x0462; // Western Frisian, Netherlands
+var lcid_psAF = 0x0463; // Pushto, Afghanistan
+var lcid_filPH = 0x0464; // Filipino, Philippines
+var lcid_dvMV = 0x0465; // Dhivehi, Maldives
+var lcid_binNG = 0x0466; // Bini, Nigeria
+var lcid_fuvNG = 0x0467; // Nigerian Fulfulde, Nigeria
+var lcid_haLatnNG = 0x0468; // Hausa, Latin, Nigeria
+var lcid_ibbNG = 0x0469; // Ibibio, Nigeria
+var lcid_yoNG = 0x046a; // Yoruba, Nigeria
+var lcid_quzBO = 0x046b; // Cusco Quechua, Bolivia
+var lcid_nsoZA = 0x046c; // Pedi, South Africa
+var lcid_baRU = 0x046d; // Bashkir, Russian Federation
+var lcid_lbLU = 0x046e; // Luxembourgish, Luxembourg
+var lcid_klGL = 0x046f; // Kalaallisut, Greenland
+var lcid_igNG = 0x0470; // Igbo, Nigeria
+var lcid_krNG = 0x0471; // Kanuri, Nigeria
+var lcid_gazET = 0x0472; // West Central Oromo, Ethiopia
+var lcid_tiER = 0x0473; // Tigrinya, Eritrea
+var lcid_gnPY = 0x0474; // Guarani, Paraguay
+var lcid_hawUS = 0x0475; // Hawaiian, United States
+var lcid_soSO = 0x0477; // Somali, Somalia
+var lcid_iiCN = 0x0478; // Sichuan Yi, China
+var lcid_papAN = 0x0479; // Papiamento, Netherlands Antilles
+var lcid_arnCL = 0x047a; // Mapudungun, Chile
+var lcid_mohCA = 0x047c; // Mohawk, Canada
+var lcid_brFR = 0x047e; // Breton, France
+var lcid_ugCN = 0x0480; // Uighur, China
+var lcid_miNZ = 0x0481; // Maori, New Zealand
+var lcid_ocFR = 0x0482; // Occitan (post 1500), France
+var lcid_coFR = 0x0483; // Corsican, France
+var lcid_gswFR = 0x0484; // Swiss German, France
+var lcid_sahRU = 0x0485; // Yakut, Russian Federation
+var lcid_qutGT = 0x0486; // Guatemala
+var lcid_rwRW = 0x0487; // Kinyarwanda, Rwanda
+var lcid_woSN = 0x0488; // Wolof, Senegal
+var lcid_prsAF = 0x048c; // Dari, Afghanistan
+var lcid_pltMG = 0x048d; // Plateau Malagasy, Madagascar
+var lcid_gdGB = 0x0491; // Scottish Gaelic, United Kingdom
+var lcid_arIQ = 0x0801; // Arabic, Iraq
+var lcid_zhCN = 0x0804; // Chinese, China
+var lcid_deCH = 0x0807; // German, Switzerland
+var lcid_enGB = 0x0809; // English, United Kingdom
+var lcid_esMX = 0x080a; // Spanish, Mexico
+var lcid_frBE = 0x080c; // French, Belgium
+var lcid_itCH = 0x0810; // Italian, Switzerland
+var lcid_nlBE = 0x0813; // Dutch, Belgium
+var lcid_nnNO = 0x0814; // Norwegian Nynorsk, Norway
+var lcid_ptPT = 0x0816; // Portuguese, Portugal
+var lcid_roMO = 0x0818; // Romanian, Macao
+var lcid_ruMO = 0x0819; // Russian, Macao
+var lcid_srLatnCS = 0x081a; // Serbian, Latin, Serbia and Montenegro
+var lcid_svFI = 0x081d; // Swedish, Finland
+var lcid_urIN = 0x0820; // Urdu, India
+var lcid_azCyrlAZ = 0x082c; // Azerbaijani, Cyrillic, Azerbaijan
+var lcid_dsbDE = 0x082e; // Lower Sorbian, Germany
+var lcid_seSE = 0x083b; // Northern Sami, Sweden
+var lcid_gaIE = 0x083c; // Irish, Ireland
+var lcid_msBN = 0x083e; // Malay (macrolanguage), Brunei Darussalam
+var lcid_uzCyrlUZ = 0x0843; // Uzbek, Cyrillic, Uzbekistan
+var lcid_bnBD = 0x0845; // Bengali, Bangladesh
+var lcid_paPK = 0x0846; // Panjabi, Pakistan
+var lcid_mnMongCN = 0x0850; // Mongolian, Mongolian, China
+var lcid_boBT = 0x0851; // Tibetan, Bhutan
+var lcid_sdPK = 0x0859; // Sindhi, Pakistan
+var lcid_iuLatnCA = 0x085d; // Inuktitut, Latin, Canada
+var lcid_tzmLatnDZ = 0x085f; // Central Atlas Tamazight, Latin, Algeria
+var lcid_neIN = 0x0861; // Nepali, India
+var lcid_quzEC = 0x086b; // Cusco Quechua, Ecuador
+var lcid_tiET = 0x0873; // Tigrinya, Ethiopia
+var lcid_arEG = 0x0c01; // Arabic, Egypt
+var lcid_zhHK = 0x0c04; // Chinese, Hong Kong
+var lcid_deAT = 0x0c07; // German, Austria
+var lcid_enAU = 0x0c09; // English, Australia
+var lcid_esES = 0x0c0a; // Spanish, Spain
+var lcid_frCA = 0x0c0c; // French, Canada
+var lcid_srCyrlCS = 0x0c1a; // Serbian, Cyrillic, Serbia and Montenegro
+var lcid_seFI = 0x0c3b; // Northern Sami, Finland
+var lcid_tmzMA = 0x0c5f; // Tamanaku, Morocco
+var lcid_quzPE = 0x0c6b; // Cusco Quechua, Peru
+var lcid_arLY = 0x1001; // Arabic, Libyan Arab Jamahiriya
+var lcid_zhSG = 0x1004; // Chinese, Singapore
+var lcid_deLU = 0x1007; // German, Luxembourg
+var lcid_enCA = 0x1009; // English, Canada
+var lcid_esGT = 0x100a; // Spanish, Guatemala
+var lcid_frCH = 0x100c; // French, Switzerland
+var lcid_hrBA = 0x101a; // Croatian, Bosnia and Herzegovina
+var lcid_smjNO = 0x103b; // Lule Sami, Norway
+var lcid_arDZ = 0x1401; // Arabic, Algeria
+var lcid_zhMO = 0x1404; // Chinese, Macao
+var lcid_deLI = 0x1407; // German, Liechtenstein
+var lcid_enNZ = 0x1409; // English, New Zealand
+var lcid_esCR = 0x140a; // Spanish, Costa Rica
+var lcid_frLU = 0x140c; // French, Luxembourg
+var lcid_bsLatnBA = 0x141a; // Bosnian, Latin, Bosnia and Herzegovina
+var lcid_smjSE = 0x143b; // Lule Sami, Sweden
+var lcid_arMA = 0x1801; // Arabic, Morocco
+var lcid_enIE = 0x1809; // English, Ireland
+var lcid_esPA = 0x180a; // Spanish, Panama
+var lcid_frMC = 0x180c; // French, Monaco
+var lcid_srLatnBA = 0x181a; // Serbian, Latin, Bosnia and Herzegovina
+var lcid_smaNO = 0x183b; // Southern Sami, Norway
+var lcid_arTN = 0x1c01; // Arabic, Tunisia
+var lcid_enZA = 0x1c09; // English, South Africa
+var lcid_esDO = 0x1c0a; // Spanish, Dominican Republic
+var lcid_frWest = 0x1c0c; // French
+var lcid_srCyrlBA = 0x1c1a; // Serbian, Cyrillic, Bosnia and Herzegovina
+var lcid_smaSE = 0x1c3b; // Southern Sami, Sweden
+var lcid_arOM = 0x2001; // Arabic, Oman
+var lcid_enJM = 0x2009; // English, Jamaica
+var lcid_esVE = 0x200a; // Spanish, Venezuela
+var lcid_frRE = 0x200c; // French, Reunion
+var lcid_bsCyrlBA = 0x201a; // Bosnian, Cyrillic, Bosnia and Herzegovina
+var lcid_smsFI = 0x203b; // Skolt Sami, Finland
+var lcid_arYE = 0x2401; // Arabic, Yemen
+var lcid_enCB = 0x2409; // English
+var lcid_esCO = 0x240a; // Spanish, Colombia
+var lcid_frCG = 0x240c; // French, Congo
+var lcid_srLatnRS = 0x241a; // Serbian, Latin, Serbia
+var lcid_smnFI = 0x243b; // Inari Sami, Finland
+var lcid_arSY = 0x2801; // Arabic, Syrian Arab Republic
+var lcid_enBZ = 0x2809; // English, Belize
+var lcid_esPE = 0x280a; // Spanish, Peru
+var lcid_frSN = 0x280c; // French, Senegal
+var lcid_srCyrlRS = 0x281a; // Serbian, Cyrillic, Serbia
+var lcid_arJO = 0x2c01; // Arabic, Jordan
+var lcid_enTT = 0x2c09; // English, Trinidad and Tobago
+var lcid_esAR = 0x2c0a; // Spanish, Argentina
+var lcid_frCM = 0x2c0c; // French, Cameroon
+var lcid_srLatnME = 0x2c1a; // Serbian, Latin, Montenegro
+var lcid_arLB = 0x3001; // Arabic, Lebanon
+var lcid_enZW = 0x3009; // English, Zimbabwe
+var lcid_esEC = 0x300a; // Spanish, Ecuador
+var lcid_frCI = 0x300c; // French, Cote d'Ivoire
+var lcid_srCyrlME = 0x301a; // Serbian, Cyrillic, Montenegro
+var lcid_arKW = 0x3401; // Arabic, Kuwait
+var lcid_enPH = 0x3409; // English, Philippines
+var lcid_esCL = 0x340a; // Spanish, Chile
+var lcid_frML = 0x340c; // French, Mali
+var lcid_arAE = 0x3801; // Arabic, United Arab Emirates
+var lcid_enID = 0x3809; // English, Indonesia
+var lcid_esUY = 0x380a; // Spanish, Uruguay
+var lcid_frMA = 0x380c; // French, Morocco
+var lcid_arBH = 0x3c01; // Arabic, Bahrain
+var lcid_enHK = 0x3c09; // English, Hong Kong
+var lcid_esPY = 0x3c0a; // Spanish, Paraguay
+var lcid_frHT = 0x3c0c; // French, Haiti
+var lcid_arQA = 0x4001; // Arabic, Qatar
+var lcid_enIN = 0x4009; // English, India
+var lcid_esBO = 0x400a; // Spanish, Bolivia
+var lcid_enMY = 0x4409; // English, Malaysia
+var lcid_esSV = 0x440a; // Spanish, El Salvador
+var lcid_enSG = 0x4809; // English, Singapore
+var lcid_esHN = 0x480a; // Spanish, Honduras
+var lcid_esNI = 0x4c0a; // Spanish, Nicaragua
+var lcid_esPR = 0x500a; // Spanish, Puerto Rico
+var lcid_esUS = 0x540a; // Spanish, United States
+var lcid_bsCyrl = 0x641a; // Bosnian, Cyrillic
+var lcid_bsLatn = 0x681a; // Bosnian, Latin
+var lcid_srCyrl = 0x6c1a; // Serbian, Cyrillic
+var lcid_srLatn = 0x701a; // Serbian, Latin
+var lcid_smn = 0x703b; // Inari Sami
+var lcid_azCyrl = 0x742c; // Azerbaijani, Cyrillic
+var lcid_sms = 0x743b; // Skolt Sami
+var lcid_zh = 0x7804; // Chinese
+var lcid_nn = 0x7814; // Norwegian Nynorsk
+var lcid_bs = 0x781a; // Bosnian
+var lcid_azLatn = 0x782c; // Azerbaijani, Latin
+var lcid_sma = 0x783b; // Southern Sami
+var lcid_uzCyrl = 0x7843; // Uzbek, Cyrillic
+var lcid_mnCyrl = 0x7850; // Mongolian, Cyrillic
+var lcid_iuCans = 0x785d; // Inuktitut, Unified Canadian Aboriginal Syllabics
+var lcid_zhHant = 0x7c04; // Chinese, Han (Traditional variant)
+var lcid_nb = 0x7c14; // Norwegian Bokmal
+var lcid_sr = 0x7c1a; // Serbian
+var lcid_tgCyrl = 0x7c28; // Tajik, Cyrillic
+var lcid_dsb = 0x7c2e; // Lower Sorbian
+var lcid_smj = 0x7c3b; // Lule Sami
+var lcid_uzLatn = 0x7c43; // Uzbek, Latin
+var lcid_mnMong = 0x7c50; // Mongolian, Mongolian
+var lcid_iuLatn = 0x7c5d; // Inuktitut, Latin
+var lcid_tzmLatn = 0x7c5f; // Central Atlas Tamazight, Latin
+var lcid_haLatn = 0x7c68; // Hausa, Latin
+
 (/**
  * @param {Window} window
  * @param {undefined} undefined
@@ -40,7 +433,7 @@
 {
 	var g_cCharDelimiter      = String.fromCharCode(5);
 	var g_cGeneralFormat      = 'General';
-	var FONT_THUMBNAIL_HEIGHT = 28;
+	var FONT_THUMBNAIL_HEIGHT = (window["AscDesktopEditor"] && window["AscDesktopEditor"]["GetFontThumbnailHeight"]) ? window["AscDesktopEditor"]["GetFontThumbnailHeight"]() : 28;
 	var c_oAscMaxColumnWidth  = 255;
 	var c_oAscMaxRowHeight    = 409.5;
 	var c_nMaxConversionTime  = 900000;//depends on config
@@ -48,14 +441,15 @@
 	var c_nMaxDownloadTitleLen= 255;
 	var c_nVersionNoBase64 = 10;
 	var c_dMaxParaRunContentLength = 256;
-	var c_rUneditableTypes = /^(?:(pdf|djvu|xps))$/;
 	var c_nMaxHyperlinkLength = 2083;
 
 	//files type for Saving & DownloadAs
 	var c_oAscFileType = {
 		UNKNOWN : 0,
 		PDF     : 0x0201,
-		PDFA    : 0x0901,
+		PDFA    : 0x0209,
+		DJVU    : 0x0203,
+		XPS     : 0x0204,
 		HTML    : 0x0803,
 
 		// Word
@@ -64,6 +458,7 @@
 		ODT  : 0x0043,
 		RTF  : 0x0044,
 		TXT  : 0x0045,
+		HTML_TODO  : 0x0046,
 		MHT  : 0x0047,
 		EPUB : 0x0048,
 		FB2  : 0x0049,
@@ -73,6 +468,12 @@
 		DOTM : 0x004d,
 		FODT : 0x004e,
 		OTT  : 0x004f,
+		DOC_FLAT  : 0x0050,
+		DOCX_FLAT  : 0x0051,
+		HTML_IN_CONTAINER  : 0x0052,
+		DOCX_PACKAGE  : 0x0054,
+		OFORM  : 0x0055,
+		DOCXF  : 0x0056,
 		DOCY : 0x1001,
 		CANVAS_WORD : 0x2001,
 		JSON : 0x0808,	// Для mail-merge
@@ -85,8 +486,11 @@
 		XLSM : 0x0105,
 		XLTX : 0x0106,
 		XLTM : 0x0107,
-		FODS : 0x0108,
-		OTS  : 0x0109,
+		XLSB : 0x0108,
+		FODS : 0x0109,
+		OTS  : 0x010a,
+		XLSX_FLAT  : 0x010b,
+		XLSX_PACKAGE  : 0x010c,
 		XLSY : 0x1002,
 
 		// PowerPoint
@@ -100,8 +504,10 @@
 		POTM : 0x0088,
 		FODP : 0x0089,
 		OTP  : 0x008a,
+		PPTX_PACKAGE  : 0x008b,
 
 		//image
+		IMG  : 0x0400,
 		JPG  : 0x0401,
 		TIFF : 0x0402,
 		TGA  : 0x0403,
@@ -115,6 +521,13 @@
 		RAS  : 0x040b,
 		PSD  : 0x040c,
 		ICO  : 0x040d
+	};
+
+	var c_oAscTextAssociation = {
+		BlockChar : 0,
+		BlockLine : 1,
+		PlainLine : 2,
+		PlainParagraph : 3
 	};
 
 	var c_oAscError = {
@@ -281,6 +694,9 @@
 
 			Password : -1000,
 
+			ComplexFieldEmptyTOC : -1101,
+			ComplexFieldNoTOC    : -1102,
+
 			SecondaryAxis: 1001,
 			ComboSeriesError: 1002,
 
@@ -300,7 +716,10 @@
 			ChangeOnProtectedSheet: 1030,
 			PasswordIsNotCorrect: 1031,
 			DeleteColumnContainsLockedCell: 1032,
-			DeleteRowContainsLockedCell: 1033
+			DeleteRowContainsLockedCell: 1033,
+			CannotUseCommandProtectedSheet: 1034,
+
+			FillAllRowsWarning: 1040
 		}
 	};
 
@@ -432,7 +851,9 @@
 		Chart          : 8,
 		Math           : 9,
 		MailMerge      : 10,
-		ContentControl : 11
+		ContentControl : 11,
+		Animation      : 12,
+		Text           : 13 // viewer
 	};
 
 	var c_oAscLineDrawingRule = {
@@ -448,6 +869,7 @@
 	var align_Center  = 2;
 	var align_Justify = 3;
 	var align_Distributed = 4;
+	var align_CenterContinuous = 5;
 
 
 	var linerule_AtLeast = 0x00;
@@ -737,6 +1159,637 @@
 		Paragraph     : 0x06,
 		TopMargin     : 0x07
 	};
+
+	var c_oAscRectAlignType = {
+		b:   0,
+		bl:  1,
+		br:  2,
+		ctr: 3,
+		l:   4,
+		r:   5,
+		t:   6,
+		tl:  7,
+		tr:  8
+	};
+
+	var ST_HueDir = {
+		Ccw: 0,
+		Cw:  1
+	};
+
+	var ST_ClrAppMethod = {
+		cycle:  0,
+		repeat: 1,
+		span:   2
+	}
+
+	var ST_AnimLvlStr = {
+		ctr:  0,
+		lvl:  1,
+		none: 2
+	}
+
+	var ST_AnimOneStr = {
+		branch: 0,
+		none:   1,
+		one:    2
+	}
+
+	var ST_Direction = {
+		norm: 0,
+		rev:  1
+	}
+	
+	var ST_HierBranchStyle = {
+		hang: 0,
+		init: 1,
+		l:    2,
+		r:    3,
+		std:  4
+	}
+
+	var ST_ResizeHandlesStr = {
+		exact: 0,
+		rel:   1
+	}
+
+	var ST_PtType = {
+		node:     0,
+		asst:     1,
+		doc:      2,
+		pres:     3,
+		parTrans: 4,
+		sibTrans: 5
+	}
+
+	var ST_ChildOrderType = {
+		b: 0,
+		t: 1	
+	}
+
+	var ST_AlgorithmType = {
+		composite: 0,
+		conn:      1,
+		cycle:     2,
+		hierChild: 3,
+		hierRoot:  4,
+		pyra:      5,
+		lin:       6,
+		sp:        7,
+		tx:        8,
+		snake:     9
+	}
+
+	var ST_ConstraintRelationship = {
+		self: 0,
+		ch:   1,
+		des:  2
+	}
+
+	var ST_BoolOperator = {
+		none: 0,
+		equ:  1,
+		gte:  2,
+		lte:  3
+	} 
+
+	var ST_ElementType = {
+		all:      0,
+		doc:      1,
+		node:     2,
+		norm:     3,
+		nonNorm:  4,
+		asst:     5,
+		nonAsst:  6,
+		parTrans: 7,
+		pres:     8,
+		sibTrans: 9
+	}
+
+	var ST_ConstraintType = {
+		alignOff: 1,
+		b: 5,
+		begMarg: 2,
+		begPad: 4,
+		bendDist: 3,
+		bMarg: 6,
+		bOff: 7,
+		connDist: 12,
+		ctrX: 8,
+		ctrXOff: 9,
+		ctrY: 10,
+		ctrYOff: 11,
+		diam: 13,
+		endMarg: 14,
+		endPad: 15,
+		h: 16,
+		hArH: 17,
+		hOff: 63, // TODO: add to constr type in x2t
+		l: 18,
+		lMarg: 19,
+		lOff: 20,
+		none: 0,
+		primFontSz: 24,
+		pyraAcctRatio: 25,
+		r: 21,
+		rMarg: 22,
+		rOff: 23,
+		secFontSz: 26,
+		secSibSp: 28,
+		sibSp: 27,
+		sp: 29,
+		stemThick: 30,
+		t: 31,
+		tMarg: 32,
+		tOff: 33,
+		userA: 34,
+		userB: 35,
+		userC: 36,
+		userD: 37,
+		userE: 38,
+		userF: 39,
+		userG: 40,
+		userH: 41,
+		userI: 42,
+		userJ: 43,
+		userK: 44,
+		userL: 45,
+		userM: 46,
+		userN: 47,
+		userO: 48,
+		userP: 49,
+		userQ: 50,
+		userR: 51,
+		userS: 52,
+		userT: 53,
+		userU: 54,
+		userV: 55,
+		userW: 56,
+		userX: 57,
+		userY: 58,
+		userZ: 59,
+		w: 60,
+		wArH: 61,
+		wOff: 62
+	}
+
+	var ST_VariableType = {
+		animLvl:       0,
+		animOne:       1,
+		bulEnabled:    2,
+		chMax:         3,
+		chPref:        4,
+		dir:           5,
+		hierBranch:    6,
+		none:          7,
+		orgChart:      8,
+		resizeHandles: 9
+	}
+	
+	var ST_AxisType = {
+		ancst: 6,
+		ancstOrSelf: 7,
+		ch: 2,
+		des: 3,
+		desOrSelf: 4,
+		follow: 10,
+		followSib: 8,
+		none: 0,
+		par: 5,
+		preced: 11,
+		precedSib: 9,
+		root: 12,
+		self: 1
+	}
+
+	var ST_FunctionType = {
+		cnt: 0,
+		depth: 6,
+		maxDepth: 7,
+		pos: 1,
+		posEven: 3,
+		posOdd: 4,
+		revPos: 2,
+		var: 5
+	}
+
+	var ST_FunctionOperator = {
+		equ: 0,
+		gt: 2,
+		gte: 4,
+		lt: 3,
+		lte: 5,
+		neq: 1
+	}
+
+	var ST_LayoutShapeType = {
+		conn: 0,
+		none: 1,
+		accentBorderCallout1: 2,
+		accentBorderCallout2: 3,
+		accentBorderCallout3: 4,
+		accentCallout1: 5,
+		accentCallout2: 6,
+		accentCallout3: 7,
+		actionButtonBackPrevious: 8,
+		actionButtonBeginning: 9,
+		actionButtonBlank: 10,
+		actionButtonDocument: 11,
+		actionButtonEnd: 12,
+		actionButtonForwardNext: 13,
+		actionButtonHelp: 14,
+		actionButtonHome: 15,
+		actionButtonInformation: 16,
+		actionButtonMovie: 17,
+		actionButtonReturn: 18,
+		actionButtonSound: 19,
+		arc: 20,
+		bentArrow: 21,
+		bentConnector2: 22,
+		bentConnector3: 23,
+		bentConnector4: 24,
+		bentConnector5: 25,
+		bentUpArrow: 26,
+		bevel: 27,
+		blockArc: 28,
+		borderCallout1: 29,
+		borderCallout2: 30,
+		borderCallout3: 31,
+		bracePair: 32,
+		bracketPair: 33,
+		callout1: 34,
+		callout2: 35,
+		callout3: 36,
+		can: 37,
+		chartPlus: 38,
+		chartStar: 39,
+		chartX: 40,
+		chevron: 41,
+		chord: 42,
+		circularArrow: 43,
+		cloud: 44,
+		cloudCallout: 45,
+		corner: 46,
+		cornerTabs: 47,
+		cube: 48,
+		curvedConnector2: 49,
+		curvedConnector3: 50,
+		curvedConnector4: 51,
+		curvedConnector5: 52,
+		curvedDownArrow: 53,
+		curvedLeftArrow: 54,
+		curvedRightArrow: 55,
+		curvedUpArrow: 56,
+		decagon: 57,
+		diagStripe: 58,
+		diamond: 59,
+		dodecagon: 60,
+		donut: 61,
+		doubleWave: 62,
+		downArrow: 63,
+		downArrowCallout: 64,
+		ellipse: 65,
+		ellipseRibbon: 66,
+		ellipseRibbon2: 67,
+		flowChartAlternateProcess: 68,
+		flowChartCollate: 69,
+		flowChartConnector: 70,
+		flowChartDecision: 71,
+		flowChartDelay: 72,
+		flowChartDisplay: 73,
+		flowChartDocument: 74,
+		flowChartExtract: 75,
+		flowChartInputOutput: 76,
+		flowChartInternalStorage: 77,
+		flowChartMagneticDisk: 78,
+		flowChartMagneticDrum: 79,
+		flowChartMagneticTape: 80,
+		flowChartManualInput: 81,
+		flowChartManualOperation: 82,
+		flowChartMerge: 83,
+		flowChartMultidocument: 84,
+		flowChartOfflineStorage: 85,
+		flowChartOffpageConnector: 86,
+		flowChartOnlineStorage: 87,
+		flowChartOr: 88,
+		flowChartPredefinedProcess: 89,
+		flowChartPreparation: 90,
+		flowChartProcess: 91,
+		flowChartPunchedCard: 92,
+		flowChartPunchedTape: 93,
+		flowChartSort: 94,
+		flowChartSummingJunction: 95,
+		flowChartTerminator: 96,
+		foldedCorner: 97,
+		frame: 98,
+		funnel: 99,
+		gear6: 100,
+		gear9: 101,
+		halfFrame: 102,
+		heart: 103,
+		heptagon: 104,
+		hexagon: 105,
+		homePlate: 106,
+		horizontalScroll: 107,
+		irregularSeal1: 108,
+		irregularSeal2: 109,
+		leftArrow: 110,
+		leftArrowCallout: 111,
+		leftBrace: 112,
+		leftBracket: 113,
+		leftCircularArrow: 114,
+		leftRightArrow: 115,
+		leftRightArrowCallout: 116,
+		leftRightCircularArrow: 117,
+		leftRightRibbon: 118,
+		leftRightUpArrow: 119,
+		leftUpArrow: 120,
+		lightningBolt: 121,
+		line: 122,
+		lineInv: 123,
+		mathDivide: 124,
+		mathEqual: 125,
+		mathMinus: 126,
+		mathMultiply: 127,
+		mathNotEqual: 128,
+		mathPlus: 129,
+		moon: 130,
+		nonIsoscelesTrapezoid: 131,
+		noSmoking: 132,
+		notchedRightArrow: 133,
+		octagon: 134,
+		parallelogram: 135,
+		pentagon: 136,
+		pie: 137,
+		pieWedge: 138,
+		plaque: 139,
+		plaqueTabs: 140,
+		plus: 141,
+		quadArrow: 142,
+		quadArrowCallout: 143,
+		rect: 144,
+		ribbon: 145,
+		ribbon2: 146,
+		rightArrow: 147,
+		rightArrowCallout: 148,
+		rightBrace: 149,
+		rightBracket: 150,
+		round1Rect: 151,
+		round2DiagRect: 152,
+		round2SameRect: 153,
+		roundRect: 154,
+		rtTriangle: 155,
+		smileyFace: 156,
+		snip1Rect: 157,
+		snip2DiagRect: 158,
+		snip2SameRect: 159,
+		snipRoundRect: 160,
+		squareTabs: 161,
+		star10: 162,
+		star12: 163,
+		star16: 164,
+		star24: 165,
+		star32: 166,
+		star4: 167,
+		star5: 168,
+		star6: 169,
+		star7: 170,
+		star8: 171,
+		straightConnector1: 172,
+		stripedRightArrow: 173,
+		sun: 174,
+		swooshArrow: 175,
+		teardrop: 176,
+		trapezoid: 177,
+		triangle: 178,
+		upArrow: 179,
+		upArrowCallout: 180,
+		upDownArrow: 181,
+		upDownArrowCallout: 182,
+		uturnArrow: 183,
+		verticalScroll: 184,
+		wave: 185,
+		wedgeEllipseCallout: 186,
+		wedgeRectCallout: 187,
+		wedgeRoundRectCallout: 188
+	}
+
+
+	var ST_ParameterId = {
+		alignTx: 0,
+		ar: 1,
+		autoTxRot: 2,
+		begPts: 3,
+		begSty: 4,
+		bendPt: 5,
+		bkpt: 6,
+		bkPtFixedVal: 7,
+		chAlign: 8,
+		chDir: 9,
+		connRout: 10,
+		contDir: 11,
+		ctrShpMap: 12,
+		dim: 13,
+		dstNode: 14,
+		endPts: 15,
+		endSty: 16,
+		fallback: 17,
+		flowDir: 18,
+		grDir: 19,
+		hierAlign: 20,
+		horzAlign: 21,
+		linDir: 22,
+		lnSpAfChP: 23,
+		lnSpAfParP: 24,
+		lnSpCh: 25,
+		lnSpPar: 26,
+		nodeHorzAlign: 27,
+		nodeVertAlign: 28,
+		off: 29,
+		parTxLTRAlign: 30,
+		parTxRTLAlign: 31,
+		pyraAcctBkgdNode: 32,
+		pyraAcctPos: 33,
+		pyraAcctTxMar: 34,
+		pyraAcctTxNode: 35,
+		pyraLvlNode: 36,
+		rotPath: 37,
+		rtShortDist: 38,
+		secChAlign: 39,
+		secLinDir: 40,
+		shpTxLTRAlignCh: 41,
+		shpTxRTLAlignCh: 42,
+		spanAng: 43,
+		srcNode: 44,
+		stAng: 45,
+		stBulletLvl: 46,
+		stElem: 47,
+		txAnchorHorz: 48,
+		txAnchorHorzCh: 49,
+		txAnchorVert: 50,
+		txAnchorVertCh: 51,
+		txBlDir: 52,
+		txDir: 53,
+		vertAlign: 54
+	}
+
+	var ST_PresetCameraType = {
+		isometricBottomDown: 0,
+		isometricBottomUp: 1,
+		isometricLeftDown: 2,
+		isometricLeftUp: 3,
+		isometricOffAxis1Left: 4,
+		isometricOffAxis1Right: 5,
+		isometricOffAxis1Top: 6,
+		isometricOffAxis2Left: 7,
+		isometricOffAxis2Right: 8,
+		isometricOffAxis2Top: 9,
+		isometricOffAxis3Bottom: 10,
+		isometricOffAxis3Left: 11,
+		isometricOffAxis3Right: 12,
+		isometricOffAxis4Bottom: 13,
+		isometricOffAxis4Left: 14,
+		isometricOffAxis4Right: 15,
+		isometricRightDown: 16,
+		isometricRightUp: 17,
+		isometricTopDown: 18,
+		isometricTopUp: 19,
+		legacyObliqueBottom: 20,
+		legacyObliqueBottomLeft: 21,
+		legacyObliqueBottomRight: 22,
+		legacyObliqueFront: 23,
+		legacyObliqueLeft: 24,
+		legacyObliqueRight: 25,
+		legacyObliqueTop: 26,
+		legacyObliqueTopLeft: 27,
+		legacyObliqueTopRight: 28,
+		legacyPerspectiveBottom: 29,
+		legacyPerspectiveBottomLeft: 30,
+		legacyPerspectiveBottomRight: 31,
+		legacyPerspectiveFront: 32,
+		legacyPerspectiveLeft: 33,
+		legacyPerspectiveRight: 34,
+		legacyPerspectiveTop: 35,
+		legacyPerspectiveTopLeft: 36,
+		legacyPerspectiveTopRight: 37,
+		obliqueBottom: 38,
+		obliqueBottomLeft: 39,
+		obliqueBottomRight: 40,
+		obliqueLeft: 41,
+		obliqueRight: 42,
+		obliqueTop: 43,
+		obliqueTopLeft: 44,
+		obliqueTopRight: 45,
+		orthographicFront: 46,
+		perspectiveAbove: 47,
+		perspectiveAboveLeftFacing: 48,
+		perspectiveAboveRightFacing: 49,
+		perspectiveBelow: 50,
+		perspectiveContrastingLeftFacing: 51,
+		perspectiveContrastingRightFacing: 52,
+		perspectiveFront: 53,
+		perspectiveHeroicExtremeLeftFacing: 54,
+		perspectiveHeroicExtremeRightFacing: 55,
+		perspectiveHeroicLeftFacing: 56,
+		perspectiveHeroicRightFacing: 57,
+		perspectiveLeft: 58,
+		perspectiveRelaxed: 59,
+		perspectiveRelaxedModerately: 60,
+		perspectiveRight: 61
+	}
+
+	var ST_LightRigDirection = {
+		b: 0,
+		bl: 1,
+		br: 2,
+		l: 3,
+		r: 4,
+		t: 5,
+		tl: 6,
+		tr: 7
+	}
+
+	var ST_LightRigType = {
+		balanced: 0,
+		brightRoom: 1,
+		chilly: 2,
+		contrasting: 3,
+		flat: 4,
+		flood: 5,
+		freezing: 6,
+		glow: 7,
+		harsh: 8,
+		legacyFlat1: 9,
+		legacyFlat2: 10,
+		legacyFlat3: 11,
+		legacyFlat4: 12,
+		legacyHarsh1: 13,
+		legacyHarsh2: 14,
+		legacyHarsh3: 15,
+		legacyHarsh4: 16,
+		legacyNormal1: 17,
+		legacyNormal2: 18,
+		legacyNormal3: 19,
+		legacyNormal4: 20,
+		morning: 21,
+		soft: 22,
+		sunrise: 23,
+		sunset: 24,
+		threePt: 25,
+		twoPt: 26
+	}
+
+	var ST_BevelPresetType = {
+		angle: 0,
+		artDeco: 1,
+		circle: 2,
+		convex: 3,
+		coolSlant: 4,
+		cross: 5,
+		divot: 6,
+		hardEdge: 7,
+		relaxedInset: 8,
+		riblet: 9,
+		slope: 10,
+		softRound: 11
+	}
+
+	var ST_TLAnimateEffectTransition = {
+		in:   0,
+		out:  1,
+		none: 2
+	}
+
+	var ST_PresetMaterialType = {
+		clear: 0,
+		dkEdge: 1,
+		flat: 2,
+		legacyMatte: 3,
+		legacyMetal: 4,
+		legacyPlastic: 5,
+		legacyWireframe: 6,
+		matte: 7,
+		metal: 8,
+		plastic: 9,
+		powder: 10,
+		softEdge: 11,
+		softmetal: 12,
+		translucentPowder: 13,
+		warmMatte: 14
+	}
+
+	var ST_CxnType = {
+		parOf: 0,
+		presOf: 1,
+		presParOf: 2,
+		unknownRelationShip: 3
+	}
+	
+	var c_oAscOleObjectTypes = {
+		document:    1,
+		spreadsheet: 2,
+		formula:     4
+	}
 
 	// image wrap style
 	var c_oAscWrapStyle = {
@@ -1279,6 +2332,7 @@
 	var changestype_SlideHide                 = 75;
 	var changestype_CorePr                    = 76;
 	var changestype_Document_Settings         = 77; // Изменение общих настроек документа Document.Settings
+	var changestype_Timing                    = 78; // Изменение общих настроек документа Document.Settings
 
 	var changestype_2_InlineObjectMove       = 1; // Передвигаем объект в заданную позцию (проверяем место, в которое пытаемся передвинуть)
 	var changestype_2_HdrFtr                 = 2; // Изменения с колонтитулом
@@ -1571,24 +2625,90 @@
 
 	/** @enum {number} */
 	var c_oAscNumberingFormat = {
-		None                  : 0x0000,
-		Bullet                : 0x1001,
-		Decimal               : 0x2002,
-		LowerRoman            : 0x2003,
-		UpperRoman            : 0x2004,
-		LowerLetter           : 0x2005,
-		UpperLetter           : 0x2006,
-		DecimalZero           : 0x2007,
-		DecimalEnclosedCircle : 0x2008,
-		RussianLower          : 0x2009,
-		RussianUpper          : 0x200a,
+		Aiueo                        :  0,
+		AiueoFullWidth               :  1,
+		ArabicAbjad                  :  2,
+		ArabicAlpha                  :  3,
+		BahtText                     :  4,
+		Bullet                       :  5,
+		CardinalText                 :  6,
+		Chicago                      :  7,
+		ChineseCounting              :  8,
+		ChineseCountingThousand      :  9,
+		ChineseLegalSimplified       : 10,
+		Chosung                      : 11,
+		Custom                       : 12,
+		Decimal                      : 13,
+		DecimalEnclosedCircle        : 14,
+		DecimalEnclosedCircleChinese : 15,
+		DecimalEnclosedFullstop      : 16,
+		DecimalEnclosedParen         : 17,
+		DecimalFullWidth             : 18,
+		DecimalFullWidth2            : 19,
+		DecimalHalfWidth             : 20,
+		DecimalZero                  : 21,
+		DollarText                   : 22,
+		Ganada                       : 23,
+		Hebrew1                      : 24,
+		Hebrew2                      : 25,
+		Hex                          : 26,
+		HindiConsonants              : 27,
+		HindiCounting                : 28,
+		HindiNumbers                 : 29,
+		HindiVowels                  : 30,
+		IdeographDigital             : 31,
+		IdeographEnclosedCircle      : 32,
+		IdeographLegalTraditional    : 33,
+		IdeographTraditional         : 34,
+		IdeographZodiac              : 35,
+		IdeographZodiacTraditional   : 36,
+		Iroha                        : 37,
+		IrohaFullWidth               : 38,
+		JapaneseCounting             : 39,
+		JapaneseDigitalTenThousand   : 40,
+		JapaneseLegal                : 41,
+		KoreanCounting               : 42,
+		KoreanDigital                : 43,
+		KoreanDigital2               : 44,
+		KoreanLegal                  : 45,
+		LowerLetter                  : 46,
+		LowerRoman                   : 47,
+		None                         : 48,
+		NumberInDash                 : 49,
+		Ordinal                      : 50,
+		OrdinalText                  : 51,
+		RussianLower                 : 52,
+		RussianUpper                 : 53,
+		TaiwaneseCounting            : 54,
+		TaiwaneseCountingThousand    : 55,
+		TaiwaneseDigital             : 56,
+		ThaiCounting                 : 57,
+		ThaiLetters                  : 58,
+		ThaiNumbers                  : 59,
+		UpperLetter                  : 60,
+		UpperRoman                   : 61,
+		VietnameseCounting           : 62,
 
-		ChineseCounting         : 0x2101,
-		ChineseCountingThousand : 0x2102,
-		ChineseLegalSimplified  : 0x2103,
+		BulletFlag                   : 0x1000,
+		NumberedFlag                 : 0x2000,
 
-		BulletFlag   : 0x1000,
-		NumberedFlag : 0x2000
+		Ea1JpnKor                    : 0x3000,
+		CircleNumWdBlack             : 0x3001,
+		Ea1JpnChsDb                  : 0x3002,
+		Ea1Cht                       : 0x3003,
+		CircleNumWdWhitePlain        : 0x3004,
+
+		CustomGreece                 : 0x4000,
+		CustomDecimalFourZero        : 0x4001,
+		CustomDecimalThreeZero       : 0x4002,
+		CustomDecimalTwoZero         : 0x4003
+	};
+
+	var c_oAscCustomNumberingFormatAssociation = {
+		'α, β, γ, ...': c_oAscNumberingFormat.CustomGreece,
+		'00001, 00002, 00003, ...': c_oAscNumberingFormat.CustomDecimalFourZero,
+		'0001, 0002, 0003, ...': c_oAscNumberingFormat.CustomDecimalThreeZero,
+		'001, 002, 003, ...': c_oAscNumberingFormat.CustomDecimalTwoZero
 	};
 
 	/** enum {number} */
@@ -2153,7 +3273,9 @@
 		g_oLcidNameToIdMap[name] = id;
 		g_oLcidIdToNameMap[id] = name;
 	}
-
+	var availableIdeographLanguages = ['zh-CN', 'vi-VN', 'ko-KR', 'ja-JP', 'zh-Hans', 'zh-TW', 'zh-CN', 'zh-HK', 'zh-SG',
+		'zh-MO', 'zh-Hant', 'zh'];
+	var availableBidiLanguages = [];
 	var document_compatibility_mode_Word11 = 11;
 	var document_compatibility_mode_Word12 = 12;
 	var document_compatibility_mode_Word14 = 14;
@@ -2222,21 +3344,25 @@
 	window['Asc']['c_nMaxDownloadTitleLen'] = window['Asc'].c_nMaxDownloadTitleLen = c_nMaxDownloadTitleLen;
 	window['Asc']['c_nVersionNoBase64'] = window['Asc'].c_nVersionNoBase64 = c_nVersionNoBase64;
 	window['Asc']['c_dMaxParaRunContentLength'] = window['Asc'].c_dMaxParaRunContentLength = c_dMaxParaRunContentLength;
-	window['Asc']['c_rUneditableTypes'] = window['Asc'].c_rUneditableTypes = c_rUneditableTypes;
 	window['Asc']['c_nMaxHyperlinkLength'] = window['Asc'].c_nMaxHyperlinkLength = c_nMaxHyperlinkLength;
 	window['Asc']['c_oAscFileType'] = window['Asc'].c_oAscFileType = c_oAscFileType;
 	window['Asc'].g_oLcidNameToIdMap = g_oLcidNameToIdMap;
+	window['Asc'].availableIdeographLanguages = availableIdeographLanguages;
+	window['Asc'].availableBidiLanguages = availableBidiLanguages;
 	window['Asc'].g_oLcidIdToNameMap = g_oLcidIdToNameMap;
 	prot                         = c_oAscFileType;
 	prot['UNKNOWN']              = prot.UNKNOWN;
 	prot['PDF']                  = prot.PDF;
 	prot['PDFA']                 = prot.PDFA;
+	prot['DJVU']                 = prot.DJVU;
+	prot['XPS']                  = prot.XPS;
 	prot['HTML']                 = prot.HTML;
 	prot['DOCX']                 = prot.DOCX;
 	prot['DOC']                  = prot.DOC;
 	prot['ODT']                  = prot.ODT;
 	prot['RTF']                  = prot.RTF;
 	prot['TXT']                  = prot.TXT;
+	prot['HTML_TODO']                = prot.HTML_TODO;
 	prot['MHT']                  = prot.MHT;
 	prot['EPUB']                 = prot.EPUB;
 	prot['FB2']                  = prot.FB2;
@@ -2246,6 +3372,12 @@
 	prot['DOTM']                 = prot.DOTM;
 	prot['FODT']                 = prot.FODT;
 	prot['OTT']                  = prot.OTT;
+	prot['DOC_FLAT']             = prot.DOC_FLAT;
+	prot['DOCX_FLAT']            = prot.DOCX_FLAT;
+	prot['HTML_IN_CONTAINER']    = prot.HTML_IN_CONTAINER;
+	prot['DOCX_PACKAGE']         = prot.DOCX_PACKAGE;
+	prot['OFORM']                = prot.OFORM;
+	prot['DOCXF']                = prot.DOCXF;
 	prot['DOCY']                 = prot.DOCY;
 	prot['JSON']                 = prot.JSON;
 	prot['XLSX']                 = prot.XLSX;
@@ -2255,8 +3387,11 @@
 	prot['XLSM']                 = prot.XLSM;
 	prot['XLTX']                 = prot.XLTX;
 	prot['XLTM']                 = prot.XLTM;
+	prot['XLSB']                 = prot.XLSB;
 	prot['FODS']                 = prot.FODS;
 	prot['OTS']                  = prot.OTS;
+	prot['XLSX_FLAT']            = prot.XLSX_FLAT;
+	prot['XLSX_PACKAGE']         = prot.XLSX_PACKAGE;
 	prot['XLSY']                 = prot.XLSY;
 	prot['PPTX']                 = prot.PPTX;
 	prot['PPT']                  = prot.PPT;
@@ -2268,6 +3403,29 @@
 	prot['POTM']                 = prot.POTM;
 	prot['FODP']                 = prot.FODP;
 	prot['OTP']                  = prot.OTP;
+	prot['PPTX_PACKAGE']         = prot.PPTX_PACKAGE;
+
+	prot['JPG']                  = prot.JPG;
+	prot['TIFF']                 = prot.TIFF;
+	prot['TGA']                  = prot.TGA;
+	prot['GIF']                  = prot.GIF;
+	prot['PNG']                  = prot.PNG;
+	prot['EMF']                  = prot.EMF;
+	prot['WMF']                  = prot.WMF;
+	prot['BMP']                  = prot.BMP;
+	prot['CR2']                  = prot.CR2;
+	prot['PCX']                  = prot.PCX;
+	prot['RAS']                  = prot.RAS;
+	prot['PSD']                  = prot.PSD;
+	prot['ICO']                  = prot.ICO;
+
+	window['Asc']['c_oAscTextAssociation'] = window['Asc'].c_oAscTextAssociation = c_oAscTextAssociation;
+	prot = c_oAscTextAssociation;
+	prot['BlockChar'] = prot.BlockChar;
+	prot['BlockLine'] = prot.BlockLine;
+	prot['PlainLine'] = prot.PlainLine;
+	prot['PlainParagraph'] = prot.PlainParagraph;
+
 	window['Asc']['c_oAscError'] = window['Asc'].c_oAscError = c_oAscError;
 	prot                                     = c_oAscError;
 	prot['Level']                            = prot.Level;
@@ -2382,6 +3540,8 @@
 	prot['LargeRangeWarning']                = prot.LargeRangeWarning;
 	prot['LockedEditView']                   = prot.LockedEditView;
 	prot['Password']                         = prot.Password;
+	prot['ComplexFieldEmptyTOC']             = prot.ComplexFieldEmptyTOC;
+	prot['ComplexFieldNoTOC']                = prot.ComplexFieldNoTOC;
 	prot['SecondaryAxis']                    = prot.SecondaryAxis;
 	prot['ComboSeriesError']                 = prot.ComboSeriesError;
 
@@ -2408,6 +3568,9 @@
 	prot['PasswordIsNotCorrect']             = prot.PasswordIsNotCorrect;
 	prot['DeleteColumnContainsLockedCell']   = prot.DeleteColumnContainsLockedCell;
 	prot['DeleteRowContainsLockedCell']      = prot.DeleteRowContainsLockedCell;
+	prot['FillAllRowsWarning']               = prot.FillAllRowsWarning;
+	prot['CannotUseCommandProtectedSheet']   = prot.CannotUseCommandProtectedSheet;
+
 
 
 	window['Asc']['c_oAscAsyncAction']       = window['Asc'].c_oAscAsyncAction = c_oAscAsyncAction;
@@ -2460,7 +3623,7 @@
 	prot['Fraction']                         = prot.Fraction;
 	prot['Text']                             = prot.Text;
 	prot['Custom']                           = prot.Custom;
-	window['Asc']['c_oAscDrawingLayerType']  = c_oAscDrawingLayerType;
+	window['Asc']['c_oAscDrawingLayerType']  = window['Asc'].c_oAscDrawingLayerType  = c_oAscDrawingLayerType;
 	prot                                     = c_oAscDrawingLayerType;
 	prot['BringToFront']                     = prot.BringToFront;
 	prot['SendToBack']                       = prot.SendToBack;
@@ -2479,6 +3642,9 @@
 	prot['Chart']                     = prot.Chart;
 	prot['Math']                      = prot.Math;
 	prot['MailMerge']                 = prot.MailMerge;
+	prot['ContentControl']            = prot.ContentControl;
+	prot['Animation']                 = prot.Animation;
+	prot['Text']                      = prot.Text;
 	window['Asc']['linerule_AtLeast'] = window['Asc'].linerule_AtLeast = linerule_AtLeast;
 	window['Asc']['linerule_Auto'] = window['Asc'].linerule_Auto = linerule_Auto;
 	window['Asc']['linerule_Exact'] = window['Asc'].linerule_Exact = linerule_Exact;
@@ -3070,6 +4236,7 @@
 	window["AscCommon"].changestype_SlideHide                 = changestype_SlideHide;
 	window["AscCommon"].changestype_CorePr                    = changestype_CorePr;
 	window["AscCommon"].changestype_Document_Settings         = changestype_Document_Settings;
+	window["AscCommon"].changestype_Timing                    = changestype_Timing;
 
 	window["AscCommon"].changestype_2_InlineObjectMove        = changestype_2_InlineObjectMove;
 	window["AscCommon"].changestype_2_HdrFtr                  = changestype_2_HdrFtr;
@@ -3097,6 +4264,7 @@
 	window['AscCommon']['align_Center'] = window['AscCommon'].align_Center = align_Center;
 	window['AscCommon']['align_Justify'] = window['AscCommon'].align_Justify = align_Justify;
 	window['AscCommon']['align_Distributed'] = window['AscCommon'].align_Distributed = align_Distributed;
+	window['AscCommon']['align_CenterContinuous'] = window['AscCommon'].align_CenterContinuous = align_CenterContinuous;
 
 
 	window["AscCommon"]["c_oAscFormatPainterState"]    = c_oAscFormatPainterState;
@@ -3144,20 +4312,84 @@
 
 	window['Asc']['c_oAscNumberingFormat'] = window['Asc'].c_oAscNumberingFormat = c_oAscNumberingFormat;
 	prot = c_oAscNumberingFormat;
-	prot['None']                    = prot.None;
-	prot['Bullet']                  = prot.Bullet;
-	prot['Decimal']                 = prot.Decimal;
-	prot['LowerRoman']              = prot.LowerRoman;
-	prot['UpperRoman']              = prot.UpperRoman;
-	prot['LowerLetter']             = prot.LowerLetter;
-	prot['UpperLetter']             = prot.UpperLetter;
-	prot['DecimalZero']             = prot.DecimalZero;
-	prot['DecimalEnclosedCircle']   = prot.DecimalEnclosedCircle;
-	prot['RussianLower']            = prot.RussianLower;
-	prot['RussianUpper']            = prot.RussianUpper;
-	prot['ChineseCounting']         = prot.ChineseCounting;
-	prot['ChineseCountingThousand'] = prot.ChineseCountingThousand;
-	prot['ChineseLegalSimplified']  = prot.ChineseLegalSimplified;
+	prot['Aiueo']                        = prot.Aiueo;
+	prot['AiueoFullWidth']               = prot.AiueoFullWidth;
+	prot['ArabicAbjad']                  = prot.ArabicAbjad;
+	prot['ArabicAlpha']                  = prot.ArabicAlpha;
+	prot['BahtText']                     = prot.BahtText;
+	prot['Bullet']                       = prot.Bullet;
+	prot['CardinalText']                 = prot.CardinalText;
+	prot['Chicago']                      = prot.Chicago;
+	prot['ChineseCounting']              = prot.ChineseCounting;
+	prot['ChineseCountingThousand']      = prot.ChineseCountingThousand;
+	prot['ChineseLegalSimplified']       = prot.ChineseLegalSimplified;
+	prot['Chosung']                      = prot.Chosung;
+	prot['Custom']                       = prot.Custom;
+	prot['Decimal']                      = prot.Decimal;
+	prot['DecimalEnclosedCircle']        = prot.DecimalEnclosedCircle;
+	prot['DecimalEnclosedCircleChinese'] = prot.DecimalEnclosedCircleChinese;
+	prot['DecimalEnclosedFullstop']      = prot.DecimalEnclosedFullstop;
+	prot['DecimalEnclosedParen']         = prot.DecimalEnclosedParen;
+	prot['DecimalFullWidth']             = prot.DecimalFullWidth;
+	prot['DecimalFullWidth2']            = prot.DecimalFullWidth2;
+	prot['DecimalHalfWidth']             = prot.DecimalHalfWidth;
+	prot['DecimalZero']                  = prot.DecimalZero;
+	prot['DollarText']                   = prot.DollarText;
+	prot['Ganada']                       = prot.Ganada;
+	prot['Hebrew1']                      = prot.Hebrew1;
+	prot['Hebrew2']                      = prot.Hebrew2;
+	prot['Hex']                          = prot.Hex;
+	prot['HindiConsonants']              = prot.HindiConsonants;
+	prot['HindiCounting']                = prot.HindiCounting;
+	prot['HindiNumbers']                 = prot.HindiNumbers;
+	prot['HindiVowels']                  = prot.HindiVowels;
+	prot['IdeographDigital']             = prot.IdeographDigital;
+	prot['IdeographEnclosedCircle']      = prot.IdeographEnclosedCircle;
+	prot['IdeographLegalTraditional']    = prot.IdeographLegalTraditional;
+	prot['IdeographTraditional']         = prot.IdeographTraditional;
+	prot['IdeographZodiac']              = prot.IdeographZodiac;
+	prot['IdeographZodiacTraditional']   = prot.IdeographZodiacTraditional;
+	prot['Iroha']                        = prot.Iroha;
+	prot['IrohaFullWidth']               = prot.IrohaFullWidth;
+	prot['JapaneseCounting']             = prot.JapaneseCounting;
+	prot['JapaneseDigitalTenThousand']   = prot.JapaneseDigitalTenThousand;
+	prot['JapaneseLegal']                = prot.JapaneseLegal;
+	prot['KoreanCounting']               = prot.KoreanCounting;
+	prot['KoreanDigital']                = prot.KoreanDigital;
+	prot['KoreanDigital2']               = prot.KoreanDigital2;
+	prot['KoreanLegal']                  = prot.KoreanLegal;
+	prot['LowerLetter']                  = prot.LowerLetter;
+	prot['LowerRoman']                   = prot.LowerRoman;
+	prot['None']                         = prot.None;
+	prot['NumberInDash']                 = prot.NumberInDash;
+	prot['Ordinal']                      = prot.Ordinal;
+	prot['OrdinalText']                  = prot.OrdinalText;
+	prot['RussianLower']                 = prot.RussianLower;
+	prot['RussianUpper']                 = prot.RussianUpper;
+	prot['TaiwaneseCounting']            = prot.TaiwaneseCounting;
+	prot['TaiwaneseCountingThousand']    = prot.TaiwaneseCountingThousand;
+	prot['TaiwaneseDigital']             = prot.TaiwaneseDigital;
+	prot['ThaiCounting']                 = prot.ThaiCounting;
+	prot['ThaiLetters']                  = prot.ThaiLetters;
+	prot['ThaiNumbers']                  = prot.ThaiNumbers;
+	prot['UpperLetter']                  = prot.UpperLetter;
+	prot['UpperRoman']                   = prot.UpperRoman;
+	prot['VietnameseCounting']           = prot.VietnameseCounting;
+
+	// new presentation types
+	prot['Ea1JpnKor']                    = prot.Ea1JpnKor;
+	prot['CircleNumWdBlack']             = prot.CircleNumWdBlack;
+	prot['Ea1JpnChsDb']                  = prot.Ea1JpnChsDb;
+	prot['Ea1Cht']                       = prot.Ea1Cht;
+	prot['CircleNumWdWhitePlain']        = prot.CircleNumWdWhitePlain;
+
+	//custom types
+	prot['CustomGreece']                 = prot.CustomGreece;
+	prot['CustomDecimalFourZero']        = prot.CustomDecimalFourZero;
+	prot['CustomDecimalThreeZero']       = prot.CustomDecimalThreeZero;
+	prot['CustomDecimalTwoZero']         = prot.CustomDecimalTwoZero;
+
+	window['Asc']['c_oAscCustomNumberingFormatAssociation'] = window['Asc'].c_oAscCustomNumberingFormatAssociation = c_oAscCustomNumberingFormatAssociation;
 
 	window['Asc']['c_oAscNumberingSuff'] = window['Asc'].c_oAscNumberingSuff = c_oAscNumberingSuff;
 	prot = c_oAscNumberingSuff;
@@ -3340,4 +4572,49 @@
 	prot['Original'] = prot.Original;
 	prot['Simple']   = prot.Simple;
 
-})(window);
+	window['AscFormat'] = window['AscFormat'] || {};
+
+	window['AscFormat'].text_fit_No         = window['AscFormat']['text_fit_No']         = 0;
+    window['AscFormat'].text_fit_Auto       = window['AscFormat']['text_fit_Auto']       = 1;
+    window['AscFormat'].text_fit_NormAuto   = window['AscFormat']['text_fit_NormAuto']   = 2;
+
+	//Overflow Types
+    window['AscFormat'].nOTClip = window['AscFormat']['nOTClip'] = 0;
+    window['AscFormat'].nOTEllipsis = window['AscFormat']['nOTEllipsis'] = 1;
+	window['AscFormat'].nOTOwerflow = window['AscFormat']['nOTOwerflow'] = 2;
+
+    window['AscFormat'].BULLET_TYPE_BULLET_NONE = window['AscFormat']['BULLET_TYPE_BULLET_NONE'] = 0;
+    window['AscFormat'].BULLET_TYPE_BULLET_CHAR = window['AscFormat']['BULLET_TYPE_BULLET_CHAR'] = 1;
+    window['AscFormat'].BULLET_TYPE_BULLET_AUTONUM = window['AscFormat']['BULLET_TYPE_BULLET_AUTONUM'] = 2;
+    window['AscFormat'].BULLET_TYPE_BULLET_BLIP = window['AscFormat']['BULLET_TYPE_BULLET_BLIP'] = 3;
+	window['AscCommon'].c_oAscRectAlignType = c_oAscRectAlignType;
+	window['AscCommon'].ST_HueDir = ST_HueDir;
+	window['AscCommon'].ST_ClrAppMethod = ST_ClrAppMethod;
+	window['AscCommon'].ST_AnimLvlStr = ST_AnimLvlStr;
+	window['AscCommon'].ST_AnimOneStr = ST_AnimOneStr;
+	window['AscCommon'].ST_Direction = ST_Direction;
+	window['AscCommon'].ST_HierBranchStyle = ST_HierBranchStyle;
+	window['AscCommon'].ST_ResizeHandlesStr = ST_ResizeHandlesStr;
+	window['AscCommon'].ST_PtType = ST_PtType;
+	window['AscCommon'].ST_ChildOrderType = ST_ChildOrderType;
+	window['AscCommon'].ST_AlgorithmType = ST_AlgorithmType;
+	window['AscCommon'].ST_ConstraintRelationship = ST_ConstraintRelationship;
+	window['AscCommon'].ST_BoolOperator = ST_BoolOperator;
+	window['AscCommon'].ST_ElementType = ST_ElementType;
+	window['AscCommon'].ST_ConstraintType = ST_ConstraintType;
+	window['AscCommon'].ST_VariableType = ST_VariableType;
+	window['AscCommon'].ST_AxisType = ST_AxisType;
+	window['AscCommon'].ST_FunctionType = ST_FunctionType;
+	window['AscCommon'].ST_FunctionOperator = ST_FunctionOperator;
+	window['AscCommon'].ST_LayoutShapeType = ST_LayoutShapeType;
+	window['AscCommon'].ST_ParameterId = ST_ParameterId;
+	window['AscCommon'].ST_PresetCameraType = ST_PresetCameraType;
+	window['AscCommon'].ST_LightRigDirection = ST_LightRigDirection;
+	window['AscCommon'].ST_LightRigType = ST_LightRigType;
+	window['AscCommon'].ST_BevelPresetType = ST_BevelPresetType;
+	window['AscCommon'].ST_PresetMaterialType = ST_PresetMaterialType;
+	window['AscCommon'].ST_TLAnimateEffectTransition = ST_TLAnimateEffectTransition;
+	window['AscCommon'].c_oAscOleObjectTypes = c_oAscOleObjectTypes;
+	window['AscCommon'].ST_CxnType = ST_CxnType;
+	
+	})(window);

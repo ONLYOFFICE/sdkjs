@@ -3941,13 +3941,6 @@
 			arg1 = arg1.cross(arguments[1]);
 		}
 
-		if (arg0 instanceof cError) {
-			return arg0;
-		}
-		if (arg1 instanceof cError) {
-			return arg1;
-		}
-
 		if (arg0 instanceof cRef || arg0 instanceof cRef3D) {
 			arg0 = arg0.getValue();
 			if (arg0 instanceof cError) {
@@ -3972,6 +3965,13 @@
 			}
 		} else {
 			arg1 = arg1.tocNumber();
+		}
+
+		if (arg0 instanceof cError) {
+			return arg0;
+		}
+		if (arg1 instanceof cError) {
+			return arg1;
 		}
 
 		if (arg0 instanceof cArray && arg1 instanceof cArray) {
@@ -4035,6 +4035,7 @@
 	cROUNDDOWN.prototype.argumentsType = [argType.number, argType.number];
 	cROUNDDOWN.prototype.Calculate = function (arg) {
 		function rounddownHelper(number, num_digits) {
+			num_digits = Math.sign(num_digits) * Math.floor(Math.abs(num_digits));
 			if (num_digits > AscCommonExcel.cExcelMaxExponent) {
 				if (Math.abs(number) >= 1e-100 || num_digits <= 98303) { // The values are obtained experimentally
 					return new cNumber(number);
@@ -4065,13 +4066,6 @@
 			arg1 = arg1.cross(arguments[1]);
 		}
 
-		if (arg0 instanceof cError) {
-			return arg0;
-		}
-		if (arg1 instanceof cError) {
-			return arg1;
-		}
-
 		if (arg0 instanceof cRef || arg0 instanceof cRef3D) {
 			arg0 = arg0.getValue();
 			if (arg0 instanceof cError) {
@@ -4096,6 +4090,13 @@
 			}
 		} else {
 			arg1 = arg1.tocNumber();
+		}
+
+		if (arg0 instanceof cError) {
+			return arg0;
+		}
+		if (arg1 instanceof cError) {
+			return arg1;
 		}
 
 		if (arg0 instanceof cArray && arg1 instanceof cArray) {
@@ -4158,6 +4159,7 @@
 	cROUNDUP.prototype.argumentsType = [argType.number, argType.number];
 	cROUNDUP.prototype.Calculate = function (arg) {
 		function roundupHelper(number, num_digits) {
+			num_digits = Math.sign(num_digits) * Math.floor(Math.abs(num_digits));
 			if (num_digits > AscCommonExcel.cExcelMaxExponent) {
 				if (Math.abs(number) >= 1e-100 || num_digits <= 98303) { // The values are obtained experimentally
 					return new cNumber(number);
@@ -4188,13 +4190,6 @@
 			arg1 = arg1.cross(arguments[1]);
 		}
 
-		if (arg0 instanceof cError) {
-			return arg0;
-		}
-		if (arg1 instanceof cError) {
-			return arg1;
-		}
-
 		if (arg0 instanceof cRef || arg0 instanceof cRef3D) {
 			arg0 = arg0.getValue();
 			if (arg0 instanceof cError) {
@@ -4219,6 +4214,13 @@
 			}
 		} else {
 			arg1 = arg1.tocNumber();
+		}
+
+		if (arg0 instanceof cError) {
+			return arg0;
+		}
+		if (arg1 instanceof cError) {
+			return arg1;
 		}
 
 		if (arg0 instanceof cArray && arg1 instanceof cArray) {
@@ -5042,6 +5044,15 @@
 				return new cError(cErrorType.wrong_value_type);
 			}
 
+			//в кэш кладём истинное значение для поиска, а не весь диапазон
+			if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
+				arg2 = arg2.cross(arguments[1]);
+			} else if (cElementType.array === arg2.type) {
+				arg2 = arg2.getElementRowCol(0, 0);
+			}
+
+			arg2 = arg2.tocString();
+
 			parent = cacheElem;
 			cacheElem = getMatrixFromCache(arg1, arg2, cacheElem);
 
@@ -5057,14 +5068,6 @@
 						return new cError(cErrorType.wrong_value_type);
 					}
 				}
-
-				if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
-					arg2 = arg2.cross(arguments[1]);
-				} else if (cElementType.array === arg2.type) {
-					arg2 = arg2.getElementRowCol(0, 0);
-				}
-
-				arg2 = arg2.tocString();
 
 				if (cElementType.string !== arg2.type) {
 					return new cError(cErrorType.wrong_value_type);

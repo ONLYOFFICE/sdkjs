@@ -101,7 +101,7 @@ CBlockLevelSdt.prototype.Copy = function(Parent, DrawingDocument, oPr)
 		oNew.private_ReplaceContentWithPlaceHolder();
 
 	oNew.SetShowingPlcHdr(this.Pr.ShowingPlcHdr);
-	oNew.SetPlaceholder(this.private_CopyPlaceholder());
+	oNew.SetPlaceholder(this.private_CopyPlaceholder(oPr));
 	oNew.SetContentControlEquation(this.Pr.Equation);
 	oNew.SetContentControlTemporary(this.Pr.Temporary);
 
@@ -522,10 +522,10 @@ CBlockLevelSdt.prototype.AddSignatureLine = function(oSignatureDrawing)
 	this.private_ReplacePlaceHolderWithContent();
 	this.Content.AddSignatureLine(oSignatureDrawing);
 };
-CBlockLevelSdt.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId)
+CBlockLevelSdt.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect)
 {
 	this.private_ReplacePlaceHolderWithContent();
-	this.Content.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId);
+	this.Content.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect);
 };
 CBlockLevelSdt.prototype.AddTextArt = function(nStyle)
 {
@@ -692,7 +692,7 @@ CBlockLevelSdt.prototype.GetSelectedContent = function(oSelectedContent)
 {
 	if (this.Content.IsSelectedAll() || this.IsPlaceHolder())
 	{
-		oSelectedContent.Add(new CSelectedElement(this.Copy(this.Parent)));
+		oSelectedContent.Add(new AscCommonWord.CSelectedElement(this.Copy(this.Parent)));
 	}
 	else
 	{
@@ -875,14 +875,15 @@ CBlockLevelSdt.prototype.GetBoundingPolygonFirstLineH = function()
 	return 0;
 };
 /**
- * Специальная функция для мобильных версий, возвращает правую среднюю точку границы
- * @return {{X:number, Y:number, Page:number, Transform:object}}
+ * Функция возвращает рект, содержащий все отрезки данного контрола
+ * @return {{X:number, Y:number, W:number, H:number, Page:number, Transform:object}}
  */
-CBlockLevelSdt.prototype.GetBoundingPolygonAnchorPoint = function()
+CBlockLevelSdt.prototype.GetBoundingRect = function()
 {
-	var nR  = 0;
-	var nT = -1;
-	var nB = -1;
+	var nL = null;
+	var nR = null;
+	var nT = null;
+	var nB = null;
 
 	var nCurPage = -1;
 	for (var nPageIndex = 0, nPagesCount = this.GetPagesCount(); nPageIndex < nPagesCount; ++nPageIndex)
@@ -897,20 +898,32 @@ CBlockLevelSdt.prototype.GetBoundingPolygonAnchorPoint = function()
 
 		var oBounds = this.Content.GetContentBounds(nPageIndex);
 
-		if (nR < oBounds.Right)
+		if (null === nL || nL > oBounds.Left)
+			nL = oBounds.Left;
+
+		if (null === nR || nR < oBounds.Right)
 			nR = oBounds.Right;
 
-		if (-1 === nT || nT > oBounds.Top)
+		if (null === nT || nT > oBounds.Top)
 			nT = oBounds.Top;
 
-		if (-1 === nB || nB < oBounds.Bottom)
+		if (null === nB || nB < oBounds.Bottom)
 			nB = oBounds.Bottom;
 	}
-	var nPageAbs = this.GetAbsolutePage(nCurPage);
 
-	return {X : nR, Y : (nT + nB) / 2, Page : nPageAbs, Transform : this.Get_ParentTextTransform()};
+	if (-1 === nCurPage || null === nL || null === nT || null === nR || null === nB)
+		return {X : 0, Y : 0, W : 0, H : 0, Page : -1, Transform : null};
+
+	return {
+		X         : nL,
+		Y         : nT,
+		W         : nR - nL,
+		H         : nB - nT,
+		Page      : this.GetAbsolutePage(nCurPage),
+		Transform : this.Get_ParentTextTransform()
+	};
 };
-CBlockLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCurPage)
+CBlockLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCurPage, isCheckHit)
 {
 	if (!this.IsRecalculated() || !this.LogicDocument)
 		return;
@@ -964,7 +977,7 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCur
 			}
 		}
 
-		if (!isHit)
+		if (false !== isCheckHit && !isHit)
 			return;
 
 		var sHelpText = "";
@@ -1155,6 +1168,8 @@ CBlockLevelSdt.prototype.Is_UseInDocument = function(Id)
 {
 	if (Id === this.Content.GetId() && this.Parent)
 		return this.Parent.Is_UseInDocument(this.GetId());
+	else if (this.Parent && this.Parent.Is_UseInDocument)
+		return this.Parent.Is_UseInDocument(this.Get_Id());
 
 	return false;
 };
@@ -1563,10 +1578,22 @@ CBlockLevelSdt.prototype.GetContentControlPr = function()
 	oPr.FillFromContentControl(this);
 	return oPr;
 };
-CBlockLevelSdt.prototype.Restart_CheckSpelling = function()
+CBlockLevelSdt.prototype.RestartSpellCheck = function()
 {
-	this.Content.Restart_CheckSpelling();
+	this.Content.RestartSpellCheck();
 };
+//----------------------------------------------------------------------------------------------------------------------
+// Search
+//----------------------------------------------------------------------------------------------------------------------
+CBlockLevelSdt.prototype.Search = function(oSearchEngine, nType)
+{
+	this.Content.Search(oSearchEngine, nType);
+};
+CBlockLevelSdt.prototype.GetSearchElementId = function(bNext, bCurrent)
+{
+	return this.Content.GetSearchElementId(bNext, bCurrent);
+};
+//----------------------------------------------------------------------------------------------------------------------
 CBlockLevelSdt.prototype.ClearContentControl = function()
 {
 	var oParagraph = new Paragraph(this.LogicDocument.Get_DrawingDocument(), this.Content);
@@ -1864,7 +1891,7 @@ CBlockLevelSdt.prototype.ToggleCheckBox = function(isChecked)
 		return;
 
 	var oLogicDocument = this.GetLogicDocument();
-	if (oLogicDocument || this.IsRadioButton() || this.GetFormKey())
+	if (oLogicDocument && (this.IsRadioButton() || this.GetFormKey()))
 		oLogicDocument.OnChangeForm(this.IsRadioButton() ? this.Pr.CheckBox.GroupKey : this.GetFormKey(), this);
 
 	if (undefined === isChecked && this.IsRadioButton() && true === this.Pr.CheckBox.Checked)
@@ -2579,6 +2606,10 @@ CBlockLevelSdt.prototype.CheckHitInContentControlByXY = function(X, Y, nPageAbs)
 CBlockLevelSdt.prototype.CalculateTextToTable = function(oEngine)
 {
 	this.Content.CalculateTextToTable(oEngine);
+};
+CBlockLevelSdt.prototype.CollectSelectedReviewChanges = function(oTrackManager)
+{
+	return this.Content.CollectSelectedReviewChanges(oTrackManager);
 };
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

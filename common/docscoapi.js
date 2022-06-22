@@ -129,8 +129,8 @@
       this._CoAuthoringApi.onWarning = function(e) {
         t.callback_OnWarning(e);
       };
-      this._CoAuthoringApi.onFirstLoadChangesEnd = function() {
-        t.callback_OnFirstLoadChangesEnd();
+      this._CoAuthoringApi.onFirstLoadChangesEnd = function(openedAt) {
+        t.callback_OnFirstLoadChangesEnd(openedAt);
       };
       this._CoAuthoringApi.onConnectionStateChanged = function(e) {
         t.callback_OnConnectionStateChanged(e);
@@ -329,6 +329,13 @@
     }
     return null;
   };
+
+  CDocsCoApi.prototype.getParticipantName = function(userId) {
+    if (this._CoAuthoringApi && this._onlineWork) {
+      return this._CoAuthoringApi.getParticipantName(userId);
+    }
+    return "";
+  };
   
   CDocsCoApi.prototype.get_indexUser = function() {
     if (this._CoAuthoringApi && this._onlineWork) {
@@ -483,9 +490,9 @@
     }
   };
 
-  CDocsCoApi.prototype.callback_OnFirstLoadChangesEnd = function() {
+  CDocsCoApi.prototype.callback_OnFirstLoadChangesEnd = function(openedAt) {
     if (this.onFirstLoadChangesEnd) {
-      this.onFirstLoadChangesEnd();
+      this.onFirstLoadChangesEnd(openedAt);
     }
   };
 
@@ -671,9 +678,11 @@
     this.jwtSession = undefined;
     this.encrypted = undefined;
     this.IsAnonymousUser = undefined;
+    this.coEditingMode = undefined;
     this._isViewer = false;
     this._isReSaveAfterAuth = false;	// Флаг для сохранения после повторной авторизации (для разрыва соединения во время сохранения)
     this._lockBuffer = [];
+    this._saveChangesChunks = [];
     this._authChanges = [];
     this._authOtherChanges = [];
   }
@@ -713,6 +722,12 @@
 
   DocsCoApi.prototype.getUserConnectionId = function() {
     return this._userId;
+  };
+
+  DocsCoApi.prototype.getParticipantName = function(userId) {
+  	if (this._participants[userId])
+      return this._participants[userId].asc_getUserName();
+    return "";
   };
 
   DocsCoApi.prototype.getLocks = function() {
@@ -1174,6 +1189,16 @@
       }
       return;
     }
+    if (!data["endSaveChanges"]) {
+      this._saveChangesChunks.push(data["changes"]);
+      return;
+    } else if(this._saveChangesChunks.length > 0){
+      this._saveChangesChunks.push(data["changes"]);
+      var newChanges = [];
+      data["changes"] = newChanges.concat.apply(newChanges, this._saveChangesChunks);
+      this._saveChangesChunks = [];
+    }
+
     if (!useEncryption && AscCommon.EncryptionWorker && AscCommon.EncryptionWorker.isInit())
       return AscCommon.EncryptionWorker.sendChanges(this, data, AscCommon.EncryptionMessageType.Decrypt);
     if (data["locks"]) {
@@ -1559,7 +1584,7 @@
       this._updateAuthChanges();
       // Посылать нужно всегда, т.к. на это рассчитываем при открытии
       if (this.onFirstLoadChangesEnd) {
-        this.onFirstLoadChangesEnd();
+        this.onFirstLoadChangesEnd(data['openedAt']);
       }
 
       //Apply prebuffered
@@ -1616,6 +1641,7 @@
 	this.jwtOpen = docInfo.get_Token();
     this.encrypted = docInfo.get_Encrypted();
     this.IsAnonymousUser = docInfo.get_IsAnonymousUser();
+    this.coEditingMode = docInfo.asc_getCoEditingMode();
 
     this.setDocId(docid);
     this._initSocksJs();
@@ -1670,6 +1696,8 @@
       'permissions': this.permissions,
       'encrypted': this.encrypted,
       'IsAnonymousUser': this.IsAnonymousUser,
+      'timezoneOffset': (new Date()).getTimezoneOffset(),
+      'coEditingMode': this.coEditingMode,
       'jwtOpen': this.jwtOpen,
       'jwtSession': this.jwtSession
     });

@@ -922,6 +922,10 @@
 						var textLowerCase = text.toLowerCase();
 
 						var isDateTimeFormat = cell.getNumFormat().isDateTimeFormat() && cell.getType() === window["AscCommon"].CellValueType.Number;
+						if (isDateTimeFormat) {
+							isDateTimeFormat = cell.getNumFormat().getType() === Asc.c_oAscNumFormatType.Data;
+						}
+
 						var dataValue = isDateTimeFormat ? AscCommon.NumFormat.prototype.parseDate(val) : null;
 
 						//check duplicate value
@@ -2012,6 +2016,9 @@
 
 				if (tablePart) {
 					//change TableParts
+					if (tablePart.QueryTable) {
+						tablePart.cleanQueryTables();
+					}
 					changeFilter(tablePart);
 				}
 				return redrawTablesArr;
@@ -2794,6 +2801,7 @@
 
 				var bAddHistoryPoint = true, clearRange, _range;
 				var undoData = val !== undefined ? !val : undefined;
+				var updateRange = tablePart.Ref && tablePart.Ref.clone();
 
 				switch (optionType) {
 					case c_oAscChangeTableStyleInfo.columnBanded: {
@@ -2936,7 +2944,7 @@
 
 				if (bAddHistoryPoint) {
 					this._addHistoryObj({val: undoData, newFilterRef: tablePart.Ref.clone()}, AscCH.historyitem_AutoFilter_ChangeTableInfo,
-						{activeCells: tablePart.Ref.clone(), type: optionType, val: val, displayName: tableName});
+						{activeCells: tablePart.Ref.clone(), type: optionType, val: val, displayName: tableName}, null, updateRange);
 				}
 
 				this._cleanStyleTable(tablePart.Ref);
@@ -4624,6 +4632,9 @@
 					var textLowerCase = text.toLowerCase();
 
 					isDateTimeFormat = cell.getNumFormat().isDateTimeFormat() && cell.getType() === window["AscCommon"].CellValueType.Number;
+					if (isDateTimeFormat) {
+						isDateTimeFormat = cell.getNumFormat().getType() === Asc.c_oAscNumFormatType.Data;
+					}
 
 					if (isDateTimeFormat) {
 						dataValue = AscCommon.NumFormat.prototype.parseDate(val);
@@ -5987,22 +5998,35 @@
 				return [filterArr, otherArr];
 			},
 
-			containInFilter: function(row, checkApplyFilter) {
+			containInFilter: function(row, checkApplyFilter, checkNamedSheetView, ignoreHeader) {
 				var ws = this.worksheet;
 				var tables = ws.TableParts;
 				var autoFilter = ws.AutoFilter;
+				var t = this;
+
+				var activeNamedSheetView = checkNamedSheetView && ws.getActiveNamedSheetViewId() !== null
+				var _isApplyFilter = function (_filter) {
+					if (activeNamedSheetView) {
+						var nsvFilter = ws.getNvsFilterByTableName(_filter.DisplayName);
+						return nsvFilter && nsvFilter.isApplyAutoFilter();
+					} else {
+						return _filter.isApplyAutoFilter();
+					}
+				};
+
+				var headerDiff = ignoreHeader ? 1 : 0;
 				if (tables) {
 					for (var i = 0; i < tables.length; i++) {
 						var tableFilter = tables[i].AutoFilter;
-						if (tableFilter && (!checkApplyFilter || (checkApplyFilter && tableFilter.isApplyAutoFilter()))) {
-							if (row >= tables[i].Ref.r1 && row <= tables[i].Ref.r2) {
+						if (tableFilter && (!checkApplyFilter || (checkApplyFilter && _isApplyFilter(tables[i])))) {
+							if (row >= tables[i].Ref.r1 + headerDiff && row <= tables[i].Ref.r2) {
 								return true;
 							}
 						}
 					}
 				}
-				if (autoFilter && (!checkApplyFilter || (checkApplyFilter && autoFilter.isApplyAutoFilter()))) {
-					if (row >= autoFilter.Ref.r1 && row <= autoFilter.Ref.r2) {
+				if (autoFilter && (!checkApplyFilter || (checkApplyFilter && _isApplyFilter(autoFilter)))) {
+					if (row >= autoFilter.Ref.r1 + headerDiff && row <= autoFilter.Ref.r2) {
 						return true;
 					}
 				}

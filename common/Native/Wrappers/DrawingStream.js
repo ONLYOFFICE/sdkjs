@@ -956,7 +956,7 @@ CDrawingStream.prototype =
             oFontStyle = AscFonts.FontStyle.FontStyleBoldItalic;
 
         var _fontinfo = AscFonts.g_fontApplication.GetFontInfo(font.FontFamily.Name, oFontStyle, this.LastFontOriginInfo);
-        var _info = GetLoadInfoForMeasurer(_fontinfo, oFontStyle);
+        var _info = AscCommon.GetLoadInfoForMeasurer(_fontinfo, oFontStyle);
 
         var flag = 0;
         if (_info.NeedBold)     flag |= 0x01;
@@ -1045,7 +1045,7 @@ CDrawingStream.prototype =
             _lastFont.SetUpStyle = _style;
 
             var _fontinfo = AscFonts.g_fontApplication.GetFontInfo(_lastFont.SetUpName, _lastFont.SetUpStyle, this.LastFontOriginInfo);
-            var _info = GetLoadInfoForMeasurer(_fontinfo, _lastFont.SetUpStyle);
+            var _info = AscCommon.GetLoadInfoForMeasurer(_fontinfo, _lastFont.SetUpStyle);
 
             var flag = 0;
             if (_info.NeedBold)     flag |= 0x01;

@@ -69,9 +69,9 @@ CLogicDocumentController.prototype.AddImages = function(aImages)
 {
 	this.LogicDocument.controller_AddImages(aImages);
 };
-CLogicDocumentController.prototype.AddOleObject = function(nW, nH, nWidthPix, nHeightPix, oImage, oData, sApplicationId)
+CLogicDocumentController.prototype.AddOleObject = function(nW, nH, nWidthPix, nHeightPix, oImage, oData, sApplicationId, bSelect)
 {
-	this.LogicDocument.controller_AddOleObject(nW, nH, nWidthPix, nHeightPix, oImage, oData, sApplicationId);
+	this.LogicDocument.controller_AddOleObject(nW, nH, nWidthPix, nHeightPix, oImage, oData, sApplicationId, bSelect);
 };
 CLogicDocumentController.prototype.AddTextArt = function(nStyle)
 {
@@ -454,4 +454,8 @@ CLogicDocumentController.prototype.IsTableCellSelection = function()
 CLogicDocumentController.prototype.IsSelectionLocked = function(CheckType)
 {
 	this.LogicDocument.controller_IsSelectionLocked(CheckType);
+};
+CLogicDocumentController.prototype.CollectSelectedReviewChanges = function(oTrackManager)
+{
+	return this.LogicDocument.controller_CollectSelectedReviewChanges(oTrackManager);
 };

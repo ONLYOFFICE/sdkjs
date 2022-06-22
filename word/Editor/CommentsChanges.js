@@ -37,8 +37,10 @@
  * Time: 15:59
  */
 
-AscDFH.changesFactory[AscDFH.historyitem_Comment_Change]   = CChangesCommentChange;
-AscDFH.changesFactory[AscDFH.historyitem_Comment_TypeInfo] = CChangesCommentTypeInfo;
+AscDFH.changesFactory[AscDFH.historyitem_Comment_Change]     = CChangesCommentChange;
+AscDFH.changesFactory[AscDFH.historyitem_Comment_TypeInfo]   = CChangesCommentTypeInfo;
+AscDFH.changesFactory[AscDFH.historyitem_Comment_RangeStart] = CChangesCommentRangeStart;
+AscDFH.changesFactory[AscDFH.historyitem_Comment_RangeEnd]   = CChangesCommentRangeEnd;
 
 AscDFH.changesFactory[AscDFH.historyitem_Comments_Add]    = CChangesCommentsAdd;
 AscDFH.changesFactory[AscDFH.historyitem_Comments_Remove] = CChangesCommentsRemove;
@@ -48,16 +50,20 @@ AscDFH.changesFactory[AscDFH.historyitem_ParaComment_CommentId] = CChangesParaCo
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
 //----------------------------------------------------------------------------------------------------------------------
-AscDFH.changesRelationMap[AscDFH.historyitem_Comment_Change]        = [AscDFH.historyitem_Comment_Change];
-AscDFH.changesRelationMap[AscDFH.historyitem_Comment_TypeInfo]      = [AscDFH.historyitem_Comment_TypeInfo];
-AscDFH.changesRelationMap[AscDFH.historyitem_Comments_Add]          = [
+AscDFH.changesRelationMap[AscDFH.historyitem_Comment_Change]     = [AscDFH.historyitem_Comment_Change];
+AscDFH.changesRelationMap[AscDFH.historyitem_Comment_TypeInfo]   = [AscDFH.historyitem_Comment_TypeInfo];
+AscDFH.changesRelationMap[AscDFH.historyitem_Comment_RangeStart] = [AscDFH.historyitem_Comment_RangeStart];
+AscDFH.changesRelationMap[AscDFH.historyitem_Comment_RangeEnd]   = [AscDFH.historyitem_Comment_RangeEnd];
+
+AscDFH.changesRelationMap[AscDFH.historyitem_Comments_Add]    = [
 	AscDFH.historyitem_Comments_Add,
 	AscDFH.historyitem_Comments_Remove
 ];
-AscDFH.changesRelationMap[AscDFH.historyitem_Comments_Remove]       = [
+AscDFH.changesRelationMap[AscDFH.historyitem_Comments_Remove] = [
 	AscDFH.historyitem_Comments_Add,
 	AscDFH.historyitem_Comments_Remove
 ];
+
 AscDFH.changesRelationMap[AscDFH.historyitem_ParaComment_CommentId] = [AscDFH.historyitem_ParaComment_CommentId];
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -148,6 +154,36 @@ CChangesCommentTypeInfo.prototype.private_SetValue = function(Value)
 };
 /**
  * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesCommentRangeStart(Class, Old, New)
+{
+	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New);
+}
+CChangesCommentRangeStart.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesCommentRangeStart.prototype.constructor = CChangesCommentRangeStart;
+CChangesCommentRangeStart.prototype.Type = AscDFH.historyitem_Comment_RangeStart;
+CChangesCommentRangeStart.prototype.private_SetValue = function(Value)
+{
+	this.Class.RangeStart = Value;
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesCommentRangeEnd(Class, Old, New)
+{
+	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New);
+}
+CChangesCommentRangeEnd.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesCommentRangeEnd.prototype.constructor = CChangesCommentRangeEnd;
+CChangesCommentRangeEnd.prototype.Type = AscDFH.historyitem_Comment_RangeEnd;
+CChangesCommentRangeEnd.prototype.private_SetValue = function(Value)
+{
+	this.Class.RangeEnd = Value;
+};
+/**
+ * @constructor
  * @extends {AscDFH.CChangesBase}
  */
 function CChangesCommentsAdd(Class, Id, Comment)
@@ -162,14 +198,21 @@ CChangesCommentsAdd.prototype.constructor = CChangesCommentsAdd;
 CChangesCommentsAdd.prototype.Type = AscDFH.historyitem_Comments_Add;
 CChangesCommentsAdd.prototype.Undo = function()
 {
-	var oComments = this.Class;
-	delete oComments.m_aComments[this.Id];
-	editor.sync_RemoveComment(this.Id);
+	var oComment = this.Class.m_arrCommentsById[this.Id];
+	if (oComment)
+	{
+		delete this.Class.m_arrCommentsById[this.Id];
+		var oChangedComments = this.Class.UpdateCommentPosition(oComment);
+		editor.sync_RemoveComment(this.Id);
+		editor.sync_ChangeCommentLogicalPosition(oChangedComments, this.Class.GetCommentsPositionsCount());
+	}
 };
 CChangesCommentsAdd.prototype.Redo = function()
 {
-	this.Class.m_aComments[this.Id] = this.Comment;
+	this.Class.m_arrCommentsById[this.Id] = this.Comment;
+	var oChangedComments = this.Class.UpdateCommentPosition(this.Comment);
 	editor.sync_AddComment(this.Id, this.Comment.Data);
+	editor.sync_ChangeCommentLogicalPosition(oChangedComments, this.Class.GetCommentsPositionsCount());
 };
 CChangesCommentsAdd.prototype.WriteToBinary = function(Writer)
 {
@@ -212,13 +255,21 @@ CChangesCommentsRemove.prototype.constructor = CChangesCommentsRemove;
 CChangesCommentsRemove.prototype.Type = AscDFH.historyitem_Comments_Remove;
 CChangesCommentsRemove.prototype.Undo = function()
 {
-	this.Class.m_aComments[this.Id] = this.Comment;
+	this.Class.m_arrCommentsById[this.Id] = this.Comment;
+	var oChangedComments = this.Class.UpdateCommentPosition(this.Comment);
 	editor.sync_AddComment(this.Id, this.Comment.Data);
+	editor.sync_ChangeCommentLogicalPosition(oChangedComments, this.Class.GetCommentsPositionsCount());
 };
 CChangesCommentsRemove.prototype.Redo = function()
 {
-	delete this.Class.m_aComments[this.Id];
-	editor.sync_RemoveComment(this.Id);
+	var oComment = this.Class.m_arrCommentsById[this.Id];
+	if (oComment)
+	{
+		delete this.Class.m_arrCommentsById[this.Id];
+		var oChangedComments = this.Class.UpdateCommentPosition(oComment);
+		editor.sync_RemoveComment(this.Id);
+		editor.sync_ChangeCommentLogicalPosition(oChangedComments, this.Class.GetCommentsPositionsCount());
+	}
 };
 CChangesCommentsRemove.prototype.WriteToBinary = function(Writer)
 {
@@ -279,12 +330,14 @@ CChangesParaCommentCommentId.prototype.Load = function()
 {
 	this.Redo();
 
-	var Comment = AscCommon.g_oTableId.Get_ById(this.New);
-	if (null !== this.Class.Paragraph && null !== Comment && Comment instanceof AscCommon.CComment)
-	{
-		if (true === this.Class.Start)
-			Comment.Set_StartId(this.Class.Paragraph.Get_Id());
-		else
-			Comment.Set_EndId(this.Class.Paragraph.Get_Id());
-	}
+	var oComment = AscCommon.g_oTableId.Get_ById(this.New);
+	if (oComment instanceof AscCommon.CComment)
+		oComment.UpdatePosition();
+};
+CChangesParaCommentCommentId.prototype.CreateReverseChange = function()
+{
+	// Давать откатывать это действие нельзя. Поэтому мы создаем действие, которое ничего не делает,
+	// но сохраняет CommentId для удаления, потому что все комментарии, которые откатываются по этому действию,
+	// должны быть удалены
+	return new CChangesParaCommentCommentId(this.Class, this.New, this.New);
 };

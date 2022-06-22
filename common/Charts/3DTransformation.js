@@ -357,11 +357,19 @@ Processor3D.prototype._recalculateCameraDiff = function () {
 Processor3D.prototype.calculateZPositionValAxis = function () {
 	var result = 0;
 	if (!this.view3D.getRAngAx()) {
-		var angleOyAbs = Math.abs(this.angleOy);
-		if ((angleOyAbs >= Math.PI / 2 && angleOyAbs < Math.PI) || (angleOyAbs >= 3 * Math.PI / 2 && angleOyAbs < 2 * Math.PI))
-			result = this.depthPerspective;
+		result = this.orientationCatAx !== ORIENTATION_MIN_MAX ? this.depthPerspective : 0;
+		if (this.chartsDrawer.calcProp.type !== AscFormat.c_oChartTypes.HBar) {
+			var angleOyAbs = Math.abs(this.angleOy);
+			if ((angleOyAbs >= Math.PI / 2 && angleOyAbs < Math.PI) || (angleOyAbs >= 3 * Math.PI / 2 && angleOyAbs < 2 * Math.PI))
+				result = this.orientationCatAx !== ORIENTATION_MIN_MAX ? 0 : this.depthPerspective;
+		} else {
+			if (this.orientationCatAx !== ORIENTATION_MIN_MAX) {
+				result = Math.cos(this.angleOy) > 0 ? this.depthPerspective : 0;
+			} else {
+				result = Math.cos(this.angleOy) > 0 ? 0 : this.depthPerspective;
+			}
+		}
 	} else if (this.chartsDrawer.calcProp.type !== AscFormat.c_oChartTypes.HBar && this.orientationCatAx !== ORIENTATION_MIN_MAX && this.depthPerspective !== undefined) {
-		//if(this.chartSpace.chart.plotArea.valAx && this.chartSpace.chart.plotArea.valAx.yPoints && this.chartSpace.chart.plotArea.catAx.posY === this.chartSpace.chart.plotArea.valAx.yPoints[0].pos)
 		result = this.depthPerspective;
 	} else if (this.chartsDrawer.calcProp.type === AscFormat.c_oChartTypes.HBar && this.orientationCatAx !== ORIENTATION_MIN_MAX && this.depthPerspective !== undefined) {
 		//if(this.chartSpace.chart.plotArea.valAx && this.chartSpace.chart.plotArea.valAx.yPoints && this.chartSpace.chart.plotArea.catAx.posY === this.chartSpace.chart.plotArea.valAx.yPoints[0].pos)
@@ -374,7 +382,11 @@ Processor3D.prototype.calculateZPositionValAxis = function () {
 Processor3D.prototype.calculateZPositionCatAxis = function () {
 	var result = 0;
 	if (!this.view3D.getRAngAx()) {
-		result = Math.cos(this.angleOy) > 0 ? 0 : this.depthPerspective;
+		if (this.chartsDrawer.calcProp.type === AscFormat.c_oChartTypes.HBar && this.orientationValAx !== ORIENTATION_MIN_MAX) {
+			result = Math.cos(this.angleOy) > 0 ? this.depthPerspective : 0;
+		} else {
+			result = Math.cos(this.angleOy) > 0 ? 0 : this.depthPerspective;
+		}
 	} else if (this.chartsDrawer.calcProp.type !== AscFormat.c_oChartTypes.HBar && this.orientationValAx !== ORIENTATION_MIN_MAX && this.depthPerspective !== undefined) {
 		if (this.chartSpace.chart.plotArea.valAx && this.chartSpace.chart.plotArea.valAx.yPoints && this.chartSpace.chart.plotArea.catAx.posY === this.chartSpace.chart.plotArea.valAx.yPoints[0].pos)
 			result = this.depthPerspective;
@@ -383,6 +395,12 @@ Processor3D.prototype.calculateZPositionCatAxis = function () {
 	}
 
 	return result;
+};
+	
+Processor3D.prototype.calculateXPositionSerAxis = function () {
+	if (!this.view3D.getRAngAx()) {
+		return Math.sin(this.angleOy) > 0;
+	}
 };
 
 Processor3D.prototype.calculateFloorPosition = function () {
@@ -2447,20 +2465,7 @@ CSortFaces.prototype =
 
 		if (startIndexes.length === 0) {
 			//TODO сделано для графиков типа stacked, когда пересечения найдены всех параллалеп.
-			var minZ = parallelepipeds[0].z;
-			var minZArray = [];
-			for (var i = 0; i < parallelepipeds.length; i++) {
-				if (parallelepipeds[i].z < minZ) {
-					minZ = parallelepipeds[i].z;
-					minZArray = [];
-				}
-
-				if (minZ === parallelepipeds[i].z) {
-					minZArray.push({index: parseInt(i)});
-				}
-			}
-
-			startIndexes = minZArray.reverse();
+			return this._getSortZIndexArray(parallelepipeds);
 		}
 
 		var g = revIntersections;
@@ -2509,8 +2514,22 @@ CSortFaces.prototype =
 			res.push({nextIndex: index});
 			addIndexes[index] = 1;
 		}
+		if (res.length < parallelepipeds.length) {
+			return this._getSortZIndexArray(parallelepipeds);
+		}
 
 		return res.reverse();
+	},
+
+	_getSortZIndexArray: function (arr) {
+		arr.sort(function sortArr(a, b) {
+			return b.z - a.z;
+		});
+		var result = [];
+		for (var i = 0; i < arr.length; i++) {
+			result.push({ nextIndex: i });
+		}
+		return result;
 	},
 
 	_getIntersectionsParallelepipeds: function (parallelepipeds) {
@@ -2528,6 +2547,9 @@ CSortFaces.prototype =
 
 			for (var m = 0; m < parallelepipeds.length; m++) {
 				if (m === i || usuallyIntersect[i] === m || usuallyIntersectRev[i] === m) {
+					continue;
+				}
+				if (parallelepipeds[m].isValZero && this.cChartDrawer.calcProp.subType !== "normal") {
 					continue;
 				}
 

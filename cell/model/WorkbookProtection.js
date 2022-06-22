@@ -52,13 +52,158 @@
 	 this.pivotTables = true;
 	 this.selectUnlockedCells = false;*/
 
+	var c_oSerProtectedAlgorithmNameTypes = {
+		MD2: 1,
+		MD4: 2,
+		MD5: 3,
+		RIPEMD_128: 4,
+		RIPEMD_160: 5,
+		SHA_1: 6,
+		SHA_256: 7,
+		SHA_384: 8,
+		SHA_512: 9,
+		WHIRLPOOL: 10
+	};
+
+	function fromModelAlgoritmName(alg) {
+		switch (alg) {
+			case c_oSerProtectedAlgorithmNameTypes.MD2 :
+				alg = AscCommon.HashAlgs.MD2;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.MD4 :
+				alg = AscCommon.HashAlgs.MD4;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.MD5 :
+				alg = AscCommon.HashAlgs.MD5;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.RIPEMD_160 :
+				alg = AscCommon.HashAlgs.RMD160;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.SHA_1 :
+				alg = AscCommon.HashAlgs.SHA1;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.SHA_256 :
+				alg = AscCommon.HashAlgs.SHA256;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.SHA_384 :
+				alg = AscCommon.HashAlgs.SHA384;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.SHA_512 :
+				alg = AscCommon.HashAlgs.SHA512;
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.WHIRLPOOL :
+				alg = AscCommon.HashAlgs.WHIRLPOOL;
+				break;
+			default:
+				alg = AscCommon.HashAlgs.SHA256;
+		}
+		return alg;
+	}
+
+	function FromXml_ST_AlgorithmName(str) {
+		var alg = null;
+		switch (str) {
+			case "MD2" :
+				alg = c_oSerProtectedAlgorithmNameTypes.MD2;
+				break;
+			case "MD4" :
+				alg = c_oSerProtectedAlgorithmNameTypes.MD4;
+				break;
+			case "MD5" :
+				alg = c_oSerProtectedAlgorithmNameTypes.MD5;
+				break;
+			case "RIPEMD-128" :
+				alg = c_oSerProtectedAlgorithmNameTypes.RIPEMD_128;
+				break;
+			case "RIPEMD-160" :
+				alg = c_oSerProtectedAlgorithmNameTypes.RIPEMD_160;
+				break;
+			case "SHA-1" :
+				alg = c_oSerProtectedAlgorithmNameTypes.SHA1;
+				break;
+			case "SHA-256" :
+				alg = c_oSerProtectedAlgorithmNameTypes.SHA_256;
+				break;
+			case "SHA-384" :
+				alg = c_oSerProtectedAlgorithmNameTypes.SHA_384;
+				break;
+			case "SHA-512" :
+				alg = c_oSerProtectedAlgorithmNameTypes.SHA_512;
+				break;
+			case "WHIRLPOOL" :
+				alg = c_oSerProtectedAlgorithmNameTypes.WHIRLPOOL;
+				break;
+		}
+		return alg;
+	}
+
+	function ToXml_ST_AlgorithmName(alg) {
+		var str = null;
+		switch (alg) {
+			case  c_oSerProtectedAlgorithmNameTypes.MD2:
+				str = "MD2";
+				break;
+			case  c_oSerProtectedAlgorithmNameTypes.MD4:
+				str = "MD4";
+				break;
+			case  c_oSerProtectedAlgorithmNameTypes.MD5:
+				str = "MD5";
+				break;
+			case  c_oSerProtectedAlgorithmNameTypes.RIPEMD_128:
+				str = "RIPEMD-128";
+				break;
+			case  c_oSerProtectedAlgorithmNameTypes.RIPEMD_160:
+				str = "RIPEMD-160";
+				break;
+			case  c_oSerProtectedAlgorithmNameTypes.SHA1:
+				str = "SHA-1";
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.SHA_256 :
+				str = "SHA-256";
+				break;
+			case c_oSerProtectedAlgorithmNameTypes.SHA_384 :
+				str = "SHA-384";
+				break;
+			case  c_oSerProtectedAlgorithmNameTypes.SHA_512:
+				str = "SHA-512";
+				break;
+			case  c_oSerProtectedAlgorithmNameTypes.WHIRLPOOL:
+				str = "WHIRLPOOL";
+				break;
+		}
+		return str;
+	}
+
+
+	function generateHashParams() {
+		return {spinCount: 100000, saltValue: AscCommon.randomBytes(16).base64(), algorithmName: c_oSerProtectedAlgorithmNameTypes.SHA_512};
+	}
+
+	function getPasswordHash(password, getString) {
+		var nResult = null;
+		if (password.length) {
+			nResult = 0;
+			for (var i = password.length - 1; i >= 0; i--) {
+				nResult = ((nResult >> 14) & 0x01) | ((nResult << 1) & 0x7FFF);
+				nResult ^= password.charCodeAt(i);
+			}
+
+			nResult = ((nResult >> 14) & 0x01) | ((nResult << 1) & 0x7FFF);
+			nResult ^= ((0x8000) | ('N'.charCodeAt(0) << 8) | ('K'.charCodeAt(0)));
+			nResult ^= password.length;
+		}
+
+		return getString && nResult ? nResult.toString(16) : nResult;
+	}
+
 	function CSheetProtection(ws) {
 		this.algorithmName = null;
 		this.hashValue = null;
 		this.saltValue = null;
 		this.spinCount = null;
+		this.password = null;
 
-		this.sheet = true;
+		this.sheet = false;
 		this.objects = false;
 		this.scenarios = false;
 		this.formatCells = true;
@@ -76,6 +221,7 @@
 		this.selectUnlockedCells = false;
 
 		this._ws = ws;
+		this.temporaryPassword = null;
 
 		return this;
 	}
@@ -87,6 +233,7 @@
 		res.hashValue = this.hashValue;
 		res.saltValue = this.saltValue;
 		res.spinCount = this.spinCount;
+		res.password = this.password;
 
 		res.sheet = this.sheet;
 		res.objects = this.objects;
@@ -114,8 +261,9 @@
 		this.hashValue = null;
 		this.saltValue = null;
 		this.spinCount = null;
+		this.password = null;
 
-		this.sheet = true;
+		this.sheet = false;
 		this.objects = false;
 		this.scenarios = false;
 		this.formatCells = true;
@@ -138,8 +286,9 @@
 		this.hashValue = null;
 		this.saltValue = null;
 		this.spinCount = null;
+		this.password = null;
 
-		this.sheet = true;
+		this.sheet = false;
 		this.objects = true;
 		this.scenarios = true;
 		this.formatCells = true;
@@ -157,11 +306,23 @@
 		this.selectUnlockedCells = false;
 	};
 
+	CSheetProtection.prototype.isDefault = function () {
+		if (this.algorithmName === null && this.hashValue === null && this.saltValue === null && this.spinCount === null) {
+			if (this.sheet === false && this.objects === true && this.scenarios === true && this.formatColumns === true && this.formatRows === true && this.insertColumns ===
+				true && this.insertRows === true && this.deleteRows === true && this.selectLockedCells === false && this.sort === true && this.autoFilter === true &&
+				this.pivotTables === true && this.selectUnlockedCells === false && this.password === null) {
+				return true;
+			}
+		}
+		return false;
+	};
+
 	CSheetProtection.prototype.set = function (val, addToHistory, ws) {
 		this.algorithmName = this.checkProperty(this.algorithmName, val.algorithmName, AscCH.historyitem_Protected_SetAlgorithmName, ws, addToHistory);
 		this.hashValue = this.checkProperty(this.hashValue, val.hashValue, AscCH.historyitem_Protected_SetHashValue, ws, addToHistory);
 		this.saltValue = this.checkProperty(this.saltValue, val.saltValue, AscCH.historyitem_Protected_SetSaltValue, ws, addToHistory);
 		this.spinCount = this.checkProperty(this.spinCount, val.spinCount, AscCH.historyitem_Protected_SetSpinCount, ws, addToHistory);
+		this.password = this.checkProperty(this.password, val.password, AscCH.historyitem_Protected_SetPassword, ws, addToHistory);
 
 		this.sheet = this.checkProperty(this.sheet, val.sheet, AscCH.historyitem_Protected_SetSheet, ws, addToHistory);
 		this.objects = this.checkProperty(this.objects, val.objects, AscCH.historyitem_Protected_SetObjects, ws, addToHistory);
@@ -205,7 +366,7 @@
 
 		if (null != this.algorithmName) {
 			w.WriteBool(true);
-			w.WriteString2(this.algorithmName);
+			w.WriteLong(this.algorithmName);
 		} else {
 			w.WriteBool(false);
 		}
@@ -233,6 +394,13 @@
 			w.WriteBool(false);
 		}
 
+		if (null != this.password) {
+			w.WriteBool(true);
+			w.WriteString2(this.password);
+		} else {
+			w.WriteBool(false);
+		}
+
 		_writeBool(this.sheet);
 		_writeBool(this.objects);
 		_writeBool(this.scenarios);
@@ -252,7 +420,7 @@
 
 	CSheetProtection.prototype.Read_FromBinary2 = function(r) {
 		if (r.GetBool()) {
-			this.algorithmName = r.GetString2();
+			this.algorithmName = r.GetLong();
 		}
 		if (r.GetBool()) {
 			this.hashValue = r.GetString2();
@@ -262,6 +430,9 @@
 		}
 		if (r.GetBool()) {
 			this.spinCount = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.password = r.GetString2();
 		}
 
 		if (r.GetBool()) {
@@ -388,6 +559,31 @@
 	CSheetProtection.prototype.setSheet = function (val) {
 		this.sheet = val;
 	};
+	CSheetProtection.prototype.setPasswordXL = function (val) {
+		this.password = val;
+	};
+	CSheetProtection.prototype.getPasswordXL = function () {
+		return this.password;
+	};
+	CSheetProtection.prototype.isPasswordXL = function () {
+		return this.password != null;
+	};
+
+	CSheetProtection.prototype.asc_setSheet = function (password, callback) {
+		//просталяю временный пароль, аспинхронная проверка пароля в asc_setProtectedSheet
+		this.setSheet(!this.sheet);
+		if (this.sheet && password) {
+			var hashParams = generateHashParams();
+			this.saltValue = hashParams.saltValue;
+			this.spinCount = hashParams.spinCount;
+			this.algorithmName = hashParams.algorithmName;
+		}
+		this.temporaryPassword = password;
+		if (callback) {
+			callback(this);
+		}
+	};
+
 	CSheetProtection.prototype.setObjects = function (val) {
 		this.objects = val;
 	};
@@ -441,7 +637,7 @@
 		this.spinCount = "test";
 	};
 	CSheetProtection.prototype.asc_isPassword = function () {
-		return this.algorithmName != null;
+		return this.algorithmName != null || this.password != null;
 	};
 
 	function CWorkbookProtection(wb) {
@@ -458,7 +654,10 @@
 		this.workbookSaltValue = null;
 		this.workbookSpinCount = null;
 
+		this.workbookPassword = null;
+
 		this._wb = wb;
+		this.temporaryPassword = null;
 
 		return this;
 	}
@@ -480,6 +679,8 @@
 		res.workbookSaltValue = this.workbookSaltValue;
 		res.workbookSpinCount = this.workbookSpinCount;
 
+		res.workbookPassword = this.workbookPassword;
+
 		return res;
 	};
 
@@ -497,6 +698,8 @@
 		this.workbookHashValue = this.checkProperty(this.workbookHashValue, val.workbookHashValue, AscCH.historyitem_Protected_SetWorkbookHashValue, addToHistory);
 		this.workbookSaltValue = this.checkProperty(this.workbookSaltValue, val.workbookSaltValue, AscCH.historyitem_Protected_SetWorkbookSaltValue, addToHistory);
 		this.workbookSpinCount = this.checkProperty(this.workbookSpinCount, val.workbookSpinCount, AscCH.historyitem_Protected_SetWorkbookSpinCount, addToHistory);
+
+		this.workbookPassword = this.checkProperty(this.workbookPassword, val.workbookPassword, AscCH.historyitem_Protected_SetPassword, addToHistory);
 	};
 
 	CWorkbookProtection.prototype.checkProperty = function (propOld, propNew, type, addToHistory) {
@@ -542,7 +745,7 @@
 		 </xsd:complexType>*/
 		if (null != this.revisionsAlgorithmName) {
 			w.WriteBool(true);
-			w.WriteString2(this.revisionsAlgorithmName);
+			w.WriteLong(this.revisionsAlgorithmName);
 		} else {
 			w.WriteBool(false);
 		}
@@ -567,7 +770,7 @@
 
 		if (null != this.workbookAlgorithmName) {
 			w.WriteBool(true);
-			w.WriteString2(this.workbookAlgorithmName);
+			w.WriteLong(this.workbookAlgorithmName);
 		} else {
 			w.WriteBool(false);
 		}
@@ -589,6 +792,12 @@
 		} else {
 			w.WriteBool(false);
 		}
+		if (null != this.workbookPassword) {
+			w.WriteBool(true);
+			w.WriteString2(this.workbookPassword);
+		} else {
+			w.WriteBool(false);
+		}
 	};
 
 	CWorkbookProtection.prototype.Read_FromBinary2 = function(r) {
@@ -603,7 +812,7 @@
 		}
 
 		if (r.GetBool()) {
-			this.revisionsAlgorithmName = r.GetString2();
+			this.revisionsAlgorithmName = r.GetLong();
 		}
 		if (r.GetBool()) {
 			this.revisionsHashValue = r.GetString2();
@@ -616,7 +825,7 @@
 		}
 
 		if (r.GetBool()) {
-			this.workbookAlgorithmName = r.GetString2();
+			this.workbookAlgorithmName = r.GetLong();
 		}
 		if (r.GetBool()) {
 			this.workbookHashValue = r.GetString2();
@@ -626,6 +835,10 @@
 		}
 		if (r.GetBool()) {
 			this.workbookSpinCount = r.GetLong();
+		}
+
+		if (r.GetBool()) {
+			this.workbookPassword = r.GetString2();
 		}
 	};
 
@@ -659,8 +872,22 @@
 	CWorkbookProtection.prototype.asc_getWorkbookSpinCount = function () {
 		return this.workbookSaltValue;
 	};
+	CWorkbookProtection.prototype.asc_setLockStructure = function (password, callback) {
+		//просталяю временный пароль, аспинхронная проверка пароля в asc_setProtectedWorkbook
+		this.setLockStructure(!this.lockStructure);
 
-	CWorkbookProtection.prototype.asc_setLockStructure = function (val) {
+		if (this.lockStructure && password) {
+			var hashParams = generateHashParams();
+			this.workbookSaltValue = hashParams.saltValue;
+			this.workbookSpinCount = hashParams.spinCount;
+			this.workbookAlgorithmName = hashParams.algorithmName;
+		}
+		this.temporaryPassword = password;
+		if (callback) {
+			callback(this);
+		}
+	};
+	CWorkbookProtection.prototype.setLockStructure = function (val) {
 		this.lockStructure = val;
 	};
 	CWorkbookProtection.prototype.asc_setLockWindows = function (val) {
@@ -700,7 +927,16 @@
 		this.workbookSaltValue = "test";
 	};
 	CWorkbookProtection.prototype.asc_isPassword = function (val) {
-		return this.workbookAlgorithmName != null;
+		return this.workbookAlgorithmName != null || this.workbookPassword != null;
+	};
+	CWorkbookProtection.prototype.setPasswordXL = function (val) {
+		this.workbookPassword = val;
+	};
+	CWorkbookProtection.prototype.getPasswordXL = function () {
+		return this.workbookPassword;
+	};
+	CWorkbookProtection.prototype.isPasswordXL = function () {
+		return this.workbookPassword != null;
 	};
 
 
@@ -713,12 +949,16 @@
 		this.saltValue = null;
 		this.spinCount = null;
 
+		//пока прогоняю только на запись/чтение xml
+		this.securityDescriptors = null;
+
 		this._ws = ws;
 		this.isLock = null;
 
 		this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
 		this._isEnterPassword = null;
+		this.temporaryPassword = null;
 
 		return this;
 	}
@@ -746,9 +986,8 @@
 	};
 
 	CProtectedRange.prototype.set = function (val, addToHistory, ws) {
-
-		//this.sqref = null;
-		//historyitem_Protected_SetSqRef
+		
+		this.cleanTemp();
 
 		this.name = this.checkProperty(this.name, val.name, AscCH.historyitem_Protected_SetName, ws, addToHistory);
 		this.algorithmName = this.checkProperty(this.algorithmName, val.algorithmName, AscCH.historyitem_Protected_SetAlgorithmName, ws, addToHistory);
@@ -772,6 +1011,11 @@
 		if (this.sqref && val.sqref && !compareElements(this.sqref, val.sqref)) {
 			this.setSqref(val.sqref, ws, true);
 		}
+	};
+
+	CProtectedRange.prototype.cleanTemp = function () {
+		this._isEnterPassword = null;
+		//this.temporaryPassword = null;
 	};
 
 	CProtectedRange.prototype.checkProperty = function (propOld, propNew, type, ws, addToHistory) {
@@ -900,7 +1144,7 @@
 
 		if (null != this.algorithmName) {
 			w.WriteBool(true);
-			w.WriteString2(this.algorithmName);
+			w.WriteLong(this.algorithmName);
 		} else {
 			w.WriteBool(false);
 		}
@@ -943,7 +1187,7 @@
 		}
 
 		if (r.GetBool()) {
-			this.algorithmName = r.GetString2();
+			this.algorithmName = r.GetLong();
 		}
 		if (r.GetBool()) {
 			this.hashValue = r.GetString2();
@@ -1071,10 +1315,14 @@
 		this.spinCount = val;
 	};
 	CProtectedRange.prototype.asc_setPassword = function (val) {
+		if (val) {
+			var hashParams = generateHashParams();
+			this.saltValue = hashParams.saltValue;
+			this.spinCount = hashParams.spinCount;
+			this.algorithmName = hashParams.algorithmName;
+		}
 		//генерируем хэш
-		this.algorithmName = "test";
-		this.saltValue = "test";
-		this.workbookSaltValue = "test";
+		this.temporaryPassword = val;
 	};
 	CProtectedRange.prototype.asc_isPassword = function () {
 		return this.algorithmName != null;
@@ -1082,8 +1330,14 @@
 	CProtectedRange.prototype.asc_getIsLock = function () {
 		return this.isLock;
 	};
-	CProtectedRange.prototype.asc_checkPassword = function (val) {
-		return true;
+	CProtectedRange.prototype.asc_checkPassword = function (val, callback) {
+		var checkHash = {password: val, salt: this.saltValue, spinCount: this.spinCount, alg: fromModelAlgoritmName(this.algorithmName)};
+		AscCommon.calculateProtectHash([checkHash], function (hash) {
+			callback(hash && hash[0] === this.hashValue);
+		});
+	};
+	CProtectedRange.prototype.asc_getId = function () {
+		return this.Id;
 	};
 	CProtectedRange.prototype.isUserEnteredPassword = function () {
 		return this._isEnterPassword;
@@ -1118,7 +1372,7 @@
 	prot["asc_getPivotTables"] = prot.getPivotTables;
 	prot["asc_getSelectUnlockedCells"] = prot.getSelectUnlockedCells;
 	prot["asc_setSpinCount"] = prot.setSpinCount;
-	prot["asc_setSheet"] = prot.setSheet;
+	prot["asc_setSheet"] = prot.asc_setSheet;
 	prot["asc_setObjects"] = prot.setObjects;
 	prot["asc_setScenarios"] = prot.setScenarios;
 	prot["asc_setFormatCells"] = prot.setFormatCells;
@@ -1164,7 +1418,7 @@
 	prot["asc_setPassword"] = prot.asc_setPassword;
 	prot["asc_isPassword"] = prot.asc_isPassword;
 
-	window["Asc"].CProtectedRange = CProtectedRange;
+	window["Asc"]["CProtectedRange"] = window["Asc"].CProtectedRange = CProtectedRange;
 	prot = CProtectedRange.prototype;
 	prot["asc_getSqref"] = prot.asc_getSqref;
 	prot["asc_getName"] = prot.asc_getName;
@@ -1183,5 +1437,11 @@
 	prot["asc_isPassword"] = prot.asc_isPassword;
 	prot["asc_getIsLock"] = prot.asc_getIsLock;
 	prot["asc_checkPassword"] = prot.asc_checkPassword;
+	prot["asc_getId"] = prot.asc_getId;
+
+	window["AscCommonExcel"].fromModelAlgoritmName = fromModelAlgoritmName;
+	window["AscCommonExcel"].getPasswordHash = getPasswordHash;
+	window["AscCommonExcel"].FromXml_ST_AlgorithmName = FromXml_ST_AlgorithmName;
+	window["AscCommonExcel"].ToXml_ST_AlgorithmName   = ToXml_ST_AlgorithmName;
 
 })(window);

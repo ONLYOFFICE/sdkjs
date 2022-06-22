@@ -1553,6 +1553,10 @@ function (window, undefined) {
 		if (cElementType.error === arg0Val.type) {
 			return arg0;
 		}
+		//TODO не тестировал на hlookup/x - поэтому поставил условия
+		if (!opt_xlookup && false === this.bHor && cElementType.empty === arg0Val.type) {
+			return new cError(cErrorType.not_available);
+		}
 
 		//TODO hlookup не правильно работает если первый агумент массив - раскомментировать тесты для hlookup
 		var found = false;
@@ -1662,9 +1666,7 @@ function (window, undefined) {
 		var cacheElem = this.cacheId[sRangeName];
 		if (!cacheElem) {
 			cacheElem = {elements: [], results: {}};
-			range._foreachNoEmpty(function (cell, r, c) {
-				cacheElem.elements.push({v: checkTypeCell(cell), i: (_this.bHor ? c : r)});
-			});
+			this.generateElements(range, cacheElem);
 			this.cacheId[sRangeName] = cacheElem;
 			var cacheRange = this.cacheRanges[wsId];
 			if (!cacheRange) {
@@ -1840,6 +1842,179 @@ function (window, undefined) {
 		this.cacheId = {};
 		this.cacheRanges = {};
 	};
+	VHLOOKUPCache.prototype.generateElements = function (range, cacheElem) {
+		var _this = this;
+
+		//сильного прироста не получил, пока оставляю прежнюю обработку, подумать на счёт разбития диапазонов
+		range._foreachNoEmpty(function (cell, r, c) {
+			cacheElem.elements.push({v: checkTypeCell(cell), i: (_this.bHor ? c : r)});
+		});
+		return;
+
+		//попытка оптимизации фукнции. если находим диапазон, который полностью перекрывает текущий или пересекаемся с текущим - тогда данные из кэша берём и не обращаемся к модели
+		//флаг - получаем из кэша только первый элемент
+		var bFast = true;
+		if (range && cacheElem) {
+			//ищем пересечения с уже имеющимися диапазонами
+			var elementsIntervals = [];
+			var addByIntervals = function (_elem, isIntersection) {
+				if (elementsIntervals && elementsIntervals.length) {
+					for (var k = 0; k < elementsIntervals.length; k++) {
+						if (elementsIntervals[k].bbox.containsRange(_elem)) {
+							return;
+						} else if (_elem.bbox.containsRange(elementsIntervals[k].bbox)) {
+							elementsIntervals.splice(k, 1);
+							elementsIntervals.push(_elem);
+							return;
+						}
+					}
+				}
+
+				elementsIntervals.push(_elem);
+			};
+
+			var ws = range.getWorksheet();
+			if (ws) {
+				var rangeData = this.getRangeDataBySheetId(ws.Id);
+				if (rangeData) {
+					var interval, elem, intersection;
+					if (bFast) {
+						interval = rangeData.getFirst(range.bbox);
+						if (interval) {
+							elem = interval;
+							if (elem.bbox.containsRange(range.bbox)) {
+								//диапазон в кэшэ полностью перекрывает новый
+								//формируем новый массив из того, которые в кэше
+								if (elem.data && elem.data.elements) {
+									cacheElem.elements = elem.data.slice(_this.bHor ? range.bbox.c1 - elem.bbox.c1 : range.bbox.r1 - elem.bbox.r1, _this.bHor ? elem.bbox.c2 - range.bbox.c2 : elem.bbox.r2 - range.bbox.r2);
+									return;
+								}
+							} else /*if (range.bbox.containsRange(elem.bbox))*/{
+								//ищем пересечение
+								intersection = elem.bbox.intersection(range.bbox);
+								addByIntervals({bbox: intersection, elements: elem.data.elements.slice(_this.bHor ? intersection.c1 - elem.bbox.c1 : intersection.r1 - elem.bbox.r1, _this.bHor ? elem.bbox.c2 - intersection.c1 : elem.bbox.r2 - intersection.r1)});
+							}
+						}
+					} else {
+						var intervals = rangeData.tree && rangeData.tree.searchNodes(range.bbox);
+						if (intervals && intervals.length) {
+							for (var i = 0; i < intervals.length; i++) {
+								interval = intervals[i];
+								elem = interval.data;
+								if (elem.bbox.isIntersect(range.bbox)) {
+									if (elem.bbox.containsRange(range.bbox)) {
+										//диапазон в кэшэ полностью перекрывает новый
+										//формируем новый массив из того, которые в кэше
+										if (elem.data && elem.data.elements) {
+											cacheElem.elements = elem.data.slice(_this.bHor ? range.bbox.c1 - elem.bbox.c1 : range.bbox.r1 - elem.bbox.r1,
+												_this.bHor ? elem.bbox.c2 - range.bbox.c2 : elem.bbox.r2 - range.bbox.r2);
+											return;
+										}
+									} else /*if (range.bbox.containsRange(elem.bbox))*/{
+										//ищем пересечение
+										intersection = elem.bbox.intersection(range.bbox);
+										addByIntervals({
+											bbox: intersection,
+											elements: elem.data.elements.slice(_this.bHor ? intersection.c1 - elem.bbox.c1 : intersection.r1 - elem.bbox.r1,
+												_this.bHor ? elem.bbox.c2 - intersection.c1 : elem.bbox.r2 - intersection.r1)
+										});
+									}
+								}
+							}
+						}
+
+					}
+				}
+			}
+
+			var addElemsFromWs = function (_range) {
+				_range._foreachNoEmpty(function (cell, r, c) {
+					cacheElem.elements.push({v: checkTypeCell(cell), i: (_this.bHor ? c : r)});
+				});
+			};
+
+			if (elementsIntervals && elementsIntervals.length) {
+				//сортируем по порядку
+				elementsIntervals.sort(function (a, b) {
+					return _this.bHor ? b.c1 - a.c1 : b.r1 - a.r1;
+				});
+
+				//проходимся по всем диапазонам, заполняем "окна"
+				for (var j = 0; j < elementsIntervals.length; j++) {
+					var lastCacheElem = cacheElem.elements[cacheElem.elements.length - 1];
+					var elemIndex = elementsIntervals[j].elements[0].i;
+
+					//если в cacheElem ещё ничего не добавлено или индекс следующего элемента из интервала не соответвует индексу + 1 элемента из кэша
+					var cacheIndex = lastCacheElem && lastCacheElem.i;
+					if (!lastCacheElem || elemIndex !== lastCacheElem.i + 1) {
+						var r1, c1, r2, c2;
+						if (!lastCacheElem) {
+							if (!_this.bHor && range.bbox.r1 === elemIndex || _this.bHor && range.bbox.c1 === elemIndex) {
+								//начало диапазонов совпадает
+								cacheElem.elements = cacheElem.elements.concat(elementsIntervals[j].elements);
+								if (j === elementsIntervals.length - 1) {
+									lastCacheElem = cacheElem.elements[cacheElem.elements.length - 1];
+									cacheIndex = lastCacheElem && lastCacheElem.i;
+
+									if (!(!_this.bHor && range.bbox.r1 === cacheIndex || _this.bHor && range.bbox.c1 === cacheIndex)) {
+										//берём последние элементы
+										r1 = !_this.bHor ? cacheIndex + 1 : range.bbox.r1;
+										c1 = _this.bHor ? cacheIndex + 1 : range.bbox.c1;
+
+										r2 = range.bbox.r2;
+										c2 =  range.bbox.c2;
+
+										addElemsFromWs(ws.getRange3(r1, c1, r2, c2));
+									}
+								}
+							} else {
+								//берём от начала range до начала первого интервала
+								r1 = range.bbox.r1;
+								c1 = range.bbox.c1;
+
+								r2 = !_this.bHor ? elemIndex - 1: range.bbox.r2;
+								c2 = _this.bHor ? elemIndex - 1 : range.bbox.c2;
+
+								addElemsFromWs(ws.getRange3(r1, c1, r2, c2));
+								j--;
+							}
+
+						} else {
+							//берём от конца последнего элемента из кэша до начала интервала
+							r1 = !_this.bHor ? cacheIndex + 1 : range.bbox.r1;
+							c1 = _this.bHor ? cacheIndex + 1 : range.bbox.c1;
+
+							r2 = !_this.bHor ? elemIndex - 1: range.bbox.r2;
+							c2 = _this.bHor ? elemIndex - 1 : range.bbox.c2;
+
+							addElemsFromWs(ws.getRange3(r1, c1, r2, c2));
+							j--;
+						}
+					} else {
+						cacheElem.elements = cacheElem.elements.concat(elementsIntervals[j].elements);
+						if (j === elementsIntervals.length - 1) {
+							//берём последние элементы
+							r1 = !_this.bHor ? cacheIndex + 1 : range.bbox.r1;
+							c1 = _this.bHor ? cacheIndex + 1 : range.bbox.c1;
+
+							r2 = range.bbox.r2;
+							c2 =  range.bbox.c2;
+
+							addElemsFromWs(ws.getRange3(r1, c1, r2, c2));
+						}
+					}
+				}
+			} else {
+				addElemsFromWs(range);
+			}
+		}
+	};
+	VHLOOKUPCache.prototype.getRangeDataBySheetId = function (id) {
+		return this.cacheRanges[id];
+	};
+
+
+
 
 	function MatchCache() {
 		this.cacheId = {};
@@ -2229,6 +2404,8 @@ function (window, undefined) {
 				var _startRange = 0;
 				if (dimensions2.bbox) {
 					_startRange = bVertical ? dimensions2.bbox.r1 : dimensions2.bbox.c1;
+				} else if (dimensions1.bbox) {
+					_startRange = bVertical ? dimensions1.bbox.r1 : dimensions1.bbox.c1;
 				}
 
 				if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {

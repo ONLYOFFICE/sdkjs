@@ -653,12 +653,27 @@
 
 		this.changed = false;
 	}
+	CHeaderFooterEditorSection.prototype.clone = function () {
+		var res = new CHeaderFooterEditorSection();
+
+		res.type = this.type;
+		res.portion = this.portion;
+		res.canvasObj = this.canvasObj;
+		if (this.fragments) {
+			res.fragments = [];
+			for (var i = 0; i < this.fragments.length; i++) {
+				res.fragments.push(this.fragments[i].clone());
+			}
+		}
+
+		return res;
+	};
 	CHeaderFooterEditorSection.prototype.setFragments = function (val) {
 		this.fragments = this.isEmptyFragments(val) ? null : val;
 	};
 	CHeaderFooterEditorSection.prototype.isEmptyFragments = function (val) {
 		var res = false;
-		if(val && val.length === 1 && val[0].text === "") {
+		if(val && val.length === 1 && val[0].getFragmentText() === "") {
 			res = true;
 		}
 		return res;
@@ -668,6 +683,11 @@
 	};
 	CHeaderFooterEditorSection.prototype.drawText = function () {
 		var t = this;
+
+		if (!this.canvasObj || !this.canvasObj.drawingCtx) {
+			return;
+		}
+
 		this.canvasObj.drawingCtx.clear();
 
 		var drawBackground = function () {
@@ -693,6 +713,9 @@
 		cellFlags.wrapText = true;
 		cellFlags.textAlign = this.getAlign();
 
+		//не зависит от зума страницы
+		var realZoom = ws.stringRender.drawingCtx.getZoom()
+		ws.stringRender.drawingCtx.changeZoom(1);
 
 		var cellEditorWidth = width - 2 * wb.defaults.worksheetView.cells.padding + 1 + 2 * correctCanvasDiff;
 		ws.stringRender.setString(this.fragments, cellFlags);
@@ -702,6 +725,8 @@
 
 		drawBackground();
 		ws.stringRender.render(drawingCtx, wb.defaults.worksheetView.cells.padding, 0, cellEditorWidth, ws.settings.activeCellBorderColor);
+
+		ws.stringRender.drawingCtx.changeZoom(realZoom)
 	};
 	CHeaderFooterEditorSection.prototype.getElem = function () {
 		return document.getElementById(this.canvasObj.idParent);
@@ -773,9 +798,7 @@
 
 	var correctCanvasDiff = 0;
 	window.Asc.g_header_footer_editor = null;
-	function CHeaderFooterEditor(idArr, width, pageType) {
-		window.Asc.g_header_footer_editor = this;
-
+	function CHeaderFooterEditor(idArr, width, pageType, opt_objForSave) {
 		this.parentWidth = AscCommon.AscBrowser.convertToRetinaValue(this.correctCanvasWidth(width), true);
 		this.parentHeight = AscCommon.AscBrowser.convertToRetinaValue(90, true);
 		this.pageType = undefined === pageType ? asc.c_oAscHeaderFooterType.odd : pageType;//odd, even, first
@@ -799,10 +822,13 @@
 		this.differentOddEven = null;
 		this.scaleWithDoc = null;
 
-		this.init(idArr);
+		if (idArr) {
+			window.Asc.g_header_footer_editor = this;
+			this.init(idArr, opt_objForSave);
+		}
 	}
 
-	CHeaderFooterEditor.prototype.init = function (idArr) {
+	CHeaderFooterEditor.prototype.init = function (idArr, opt_objForSave) {
 		//создаем 6 канвы(+ добавляем их в дом структуру внутрь элемента от меню) + 3 drawingCtx, необходимые для отрисовки 3 поля
 		//делается это только 1 раз при инициализации класса
 		//потом эти 6 канвы используются для отрисовки всех first/odd/even
@@ -843,18 +869,19 @@
 
 
 		//add common options
+		var optHeaderFooterProps = opt_objForSave && opt_objForSave.headerFooter;
 		var ws = this.wb.getWorksheet();
-		this.alignWithMargins = ws.model.headerFooter.alignWithMargins;
-		this.differentFirst = ws.model.headerFooter.differentFirst;
-		this.differentOddEven = ws.model.headerFooter.differentOddEven;
-		this.scaleWithDoc = ws.model.headerFooter.scaleWithDoc;
+		this.alignWithMargins = optHeaderFooterProps ? optHeaderFooterProps.alignWithMargins : ws.model.headerFooter.alignWithMargins;
+		this.differentFirst = optHeaderFooterProps ? optHeaderFooterProps.differentFirst : ws.model.headerFooter.differentFirst;
+		this.differentOddEven = optHeaderFooterProps ? optHeaderFooterProps.differentOddEven : ws.model.headerFooter.differentOddEven;
+		this.scaleWithDoc = optHeaderFooterProps ? optHeaderFooterProps.scaleWithDoc : ws.model.headerFooter.scaleWithDoc;
 
 		//сохраняем редактор ячейки
 		this.wbCellEditor = this.wb.cellEditor;
 
 		//далее создаем классы, где будем хранить fragments всех типов колонтитулов + выполнять отрисовку
 		//хранить будем в следующем виде: [c_nPageHFType.firstHeader/.../][c_nPortionLeft/.../c_nPortionRight]
-		this._createAndDrawSections();
+		this._createAndDrawSections(null, optHeaderFooterProps);
 		this._generatePresetsArr();
 
 		//лочим
@@ -992,7 +1019,7 @@
 		if (!fragments) {
 			fragments = [];
 			var tempFragment = new AscCommonExcel.Fragment();
-			tempFragment.text = "";
+			tempFragment.setFragmentText("");
 			tempFragment.format = new AscCommonExcel.Font();
 			fragments.push(tempFragment);
 		}
@@ -1042,7 +1069,7 @@
 		return true;
 	};
 
-	CHeaderFooterEditor.prototype.destroy = function (bSave) {
+	CHeaderFooterEditor.prototype.destroy = function (bSave, opt_objForSave) {
 		//возвращаем cellEditor у wb
 		var t = this;
 		var api = window["Asc"]["editor"];
@@ -1061,7 +1088,11 @@
 					}
 					t._saveToModel();
 				};
-				ws._isLockedHeaderFooter(saveCallback);
+				if (opt_objForSave) {
+					opt_objForSave.headerFooter = this.getPropsToInterface(opt_objForSave.headerFooter);
+				} else {
+					ws._isLockedHeaderFooter(saveCallback);
+				}
 			} else {
 				return checkError;
 			}
@@ -1149,10 +1180,73 @@
 		return null;
 	};
 
-	CHeaderFooterEditor.prototype._saveToModel = function () {
-		var ws = this.wb.getWorksheet();
+	CHeaderFooterEditor.prototype.setPropsFromInterface = function (props, doChanged) {
+		var sections = props.sections;
+		if (doChanged) {
+			var newSections = [];
+			for (var i in sections) {
+				newSections[i] = [];
+				for (var j in sections[i]) {
+					newSections[i][j] = sections[i][j] && sections[i][j].clone();
+					if (newSections[i][j]) {
+						newSections[i][j].changed = true;
+					}
+				}
+			}
+			this.sections = newSections;
+		} else {
+			this.sections = sections;
+		}
 
+		this.alignWithMargins = props.alignWithMargins;
+		this.differentFirst = props.differentFirst;
+		this.differentOddEven = props.differentOddEven;
+		this.scaleWithDoc = props.scaleWithDoc;
+	};
+
+	CHeaderFooterEditor.prototype.getPropsToInterface = function (savedHeaderFooter) {
+		var res = savedHeaderFooter ? savedHeaderFooter : {};
+
+		//merge
+		if (this.sections) {
+			for (var i in this.sections) {
+				if (this.sections[i]) {
+					for (var j in this.sections[i]) {
+						if (!res.sections) {
+							res.sections = [];
+						}
+						if (!res.sections[i]) {
+							res.sections[i] = [];
+						}
+						res.sections[i][j] = this.sections[i][j];
+					}
+				}
+			}
+		}
+
+		res.alignWithMargins = this.alignWithMargins;
+		res.differentFirst = this.differentFirst;
+		res.differentOddEven = this.differentOddEven;
+		res.scaleWithDoc = this.scaleWithDoc;
+
+		return res;
+	};
+
+	CHeaderFooterEditor.prototype._saveToModel = function (ws, opt_headerFooter, reWrite) {
+		if (!ws) {
+			ws = this.wb && this.wb.getWorksheet();
+		}
+
+		var hF = opt_headerFooter ? opt_headerFooter : ws.model.headerFooter;
 		var isAddHistory = false;
+
+		if (reWrite) {
+			History.Create_NewPoint();
+			History.StartTransaction();
+			isAddHistory = true;
+			hF.clean();
+		}
+
 		for(var i = 0; i < this.sections.length; i++) {
 			if(!this.sections[i]) {
 				continue;
@@ -1161,7 +1255,7 @@
 			//сначала формируем новый объект, затем доблавляем в модель и записываем в историю полученную строку
 			//возможно стоит пересмотреть(получать вначале строку) - создаём вначале парсер,
 			//добавляем туда полученные при редактировании фрагменты, затем получаем строку
-			var curHeaderFooter = this._getCurPageHF(i);
+			var curHeaderFooter = this._getCurPageHF(i, opt_headerFooter, ws);
 			if(null === curHeaderFooter) {
 				curHeaderFooter = new Asc.CHeaderFooterData();
 			}
@@ -1170,21 +1264,21 @@
 			}
 
 			var isChanged = false;
-			if(this.sections[i][c_oPortionPosition.left] && this.sections[i][c_oPortionPosition.left].changed) {
+			if(this.sections[i][c_oPortionPosition.left] && (this.sections[i][c_oPortionPosition.left].changed || reWrite)) {
 				curHeaderFooter.parser.portions[c_oPortionPosition.left] = this._convertFragments(this.sections[i][c_oPortionPosition.left].fragments);
 				isChanged = true;
 			}
-			if(this.sections[i][c_oPortionPosition.center] && this.sections[i][c_oPortionPosition.center].changed) {
+			if(this.sections[i][c_oPortionPosition.center] && (this.sections[i][c_oPortionPosition.center].changed || reWrite)) {
 				curHeaderFooter.parser.portions[c_oPortionPosition.center] = this._convertFragments(this.sections[i][c_oPortionPosition.center].fragments);
 				isChanged = true;
 			}
-			if(this.sections[i][c_oPortionPosition.right] && this.sections[i][c_oPortionPosition.right].changed) {
+			if(this.sections[i][c_oPortionPosition.right] && (this.sections[i][c_oPortionPosition.right].changed || reWrite)) {
 				curHeaderFooter.parser.portions[c_oPortionPosition.right] = this._convertFragments(this.sections[i][c_oPortionPosition.right].fragments);
 				isChanged = true;
 			}
 			//нужно добавлять в историю
 			if(isChanged) {
-				if(!isAddHistory) {
+				if(!isAddHistory && !opt_headerFooter) {
 					History.Create_NewPoint();
 					History.StartTransaction();
 					isAddHistory = true;
@@ -1192,15 +1286,15 @@
 
 				curHeaderFooter.parser.assembleText();
 				//curHeaderFooter.setStr(curHeaderFooter.parser.date);
-				ws.model.headerFooter.setHeaderFooterData(curHeaderFooter.parser.date, i);
+				hF.setHeaderFooterData(curHeaderFooter.parser.date, i);
 			}
 		}
 
 		//common options
-		ws.model.headerFooter.setAlignWithMargins(this.alignWithMargins);
-		ws.model.headerFooter.setDifferentFirst(this.differentFirst);
-		ws.model.headerFooter.setDifferentOddEven(this.differentOddEven);
-		ws.model.headerFooter.setScaleWithDoc(this.scaleWithDoc);
+		hF.setAlignWithMargins(this.alignWithMargins);
+		hF.setDifferentFirst(this.differentFirst);
+		hF.setDifferentOddEven(this.differentOddEven);
+		hF.setScaleWithDoc(this.scaleWithDoc);
 
 
 		if(isAddHistory) {
@@ -1443,7 +1537,7 @@
 		return true === this.scaleWithDoc || null === this.scaleWithDoc;
 	};
 
-	CHeaderFooterEditor.prototype._createAndDrawSections = function(pageCommonType) {
+	CHeaderFooterEditor.prototype._createAndDrawSections = function(pageCommonType, opt_objForSave, opt_headerFooter) {
 		var pageHeaderType = this._getHeaderFooterType(pageCommonType);
 		var pageFooterType = this._getHeaderFooterType(pageCommonType, true);
 
@@ -1457,7 +1551,7 @@
 				var text = asc_typeof(curProps.text) === "string" ? curProps.text : convertFieldToMenuText(curProps.text.field);
 				if(null !== text) {
 					var tempFragment = new AscCommonExcel.Fragment();
-					tempFragment.text = text;
+					tempFragment.setFragmentText(text);
 					tempFragment.format = curProps.format;
 					res.push(tempFragment);
 				}
@@ -1475,24 +1569,37 @@
 			this.sections[pageHeaderType][c_oPortionPosition.center] = new CHeaderFooterEditorSection(pageHeaderType, c_nPortionCenterHeader, this.canvas[c_nPortionCenterHeader]);
 			this.sections[pageHeaderType][c_oPortionPosition.right] = new CHeaderFooterEditorSection(pageHeaderType, c_nPortionRightHeader, this.canvas[c_nPortionRightHeader]);
 
-			//получаем из модели необходимый нам элемент
-			curPageHF = this._getCurPageHF(pageHeaderType);
-			if(curPageHF && curPageHF.str) {
-				if(!curPageHF.parser) {
-					curPageHF.parse();
+			//в случае print preview храним временно опции в этом объекте
+			if (opt_objForSave) {
+				if(opt_objForSave.sections[pageHeaderType][c_oPortionPosition.left]) {
+					this.sections[pageHeaderType][c_oPortionPosition.left].fragments = opt_objForSave.sections[pageHeaderType][c_oPortionPosition.left].fragments;
 				}
-				parser = curPageHF.parser.portions;
-				leftFragments = getFragments(parser[0]);
-				if(null !== leftFragments) {
-					this.sections[pageHeaderType][c_oPortionPosition.left].fragments = leftFragments;
+				if(opt_objForSave.sections[pageHeaderType][c_oPortionPosition.center]) {
+					this.sections[pageHeaderType][c_oPortionPosition.center].fragments = opt_objForSave.sections[pageHeaderType][c_oPortionPosition.center].fragments;
 				}
-				centerFragments = getFragments(parser[1]);
-				if(null !== centerFragments) {
-					this.sections[pageHeaderType][c_oPortionPosition.center].fragments = centerFragments;
+				if(opt_objForSave.sections[pageHeaderType][c_oPortionPosition.right]) {
+					this.sections[pageHeaderType][c_oPortionPosition.right].fragments = opt_objForSave.sections[pageHeaderType][c_oPortionPosition.right].fragments;
 				}
-				rightFragments = getFragments(parser[2]);
-				if(null !== rightFragments) {
-					this.sections[pageHeaderType][c_oPortionPosition.right].fragments = rightFragments;
+			} else {
+				//получаем из модели необходимый нам элемент
+				curPageHF = this._getCurPageHF(pageHeaderType, opt_headerFooter);
+				if(curPageHF && curPageHF.str) {
+					if(!curPageHF.parser) {
+						curPageHF.parse();
+					}
+					parser = curPageHF.parser.portions;
+					leftFragments = getFragments(parser[0]);
+					if(null !== leftFragments) {
+						this.sections[pageHeaderType][c_oPortionPosition.left].fragments = leftFragments;
+					}
+					centerFragments = getFragments(parser[1]);
+					if(null !== centerFragments) {
+						this.sections[pageHeaderType][c_oPortionPosition.center].fragments = centerFragments;
+					}
+					rightFragments = getFragments(parser[2]);
+					if(null !== rightFragments) {
+						this.sections[pageHeaderType][c_oPortionPosition.right].fragments = rightFragments;
+					}
 				}
 			}
 		}
@@ -1506,24 +1613,37 @@
 			this.sections[pageFooterType][c_oPortionPosition.center] = new CHeaderFooterEditorSection(pageFooterType, c_nPortionCenterFooter, this.canvas[c_nPortionCenterFooter]);
 			this.sections[pageFooterType][c_oPortionPosition.right] = new CHeaderFooterEditorSection(pageFooterType, c_nPortionRightFooter, this.canvas[c_nPortionRightFooter]);
 
-			//получаем из модели необходимый нам элемент
-			curPageHF = this._getCurPageHF(pageFooterType);
-			if(curPageHF && curPageHF.str) {
-				if(!curPageHF.parser) {
-					curPageHF.parse();
+			//в случае print preview храним временно опции в этом объекте
+			if (opt_objForSave) {
+				if(opt_objForSave.sections[pageFooterType][c_oPortionPosition.left]) {
+					this.sections[pageFooterType][c_oPortionPosition.left].fragments = opt_objForSave.sections[pageFooterType][c_oPortionPosition.left].fragments;
 				}
-				parser = curPageHF.parser.portions;
-				leftFragments = getFragments(parser[0]);
-				if(null !== leftFragments) {
-					this.sections[pageFooterType][c_oPortionPosition.left].fragments = leftFragments;
+				if(opt_objForSave.sections[pageFooterType][c_oPortionPosition.center]) {
+					this.sections[pageFooterType][c_oPortionPosition.center].fragments = opt_objForSave.sections[pageFooterType][c_oPortionPosition.center].fragments;
 				}
-				centerFragments = getFragments(parser[1]);
-				if(null !== centerFragments) {
-					this.sections[pageFooterType][c_oPortionPosition.center].fragments = centerFragments;
+				if(opt_objForSave.sections[pageFooterType][c_oPortionPosition.right]) {
+					this.sections[pageFooterType][c_oPortionPosition.right].fragments = opt_objForSave.sections[pageFooterType][c_oPortionPosition.right].fragments;
 				}
-				rightFragments = getFragments(parser[2]);
-				if(null !== rightFragments) {
-					this.sections[pageFooterType][c_oPortionPosition.right].fragments = rightFragments;
+			} else {
+				//получаем из модели необходимый нам элемент
+				curPageHF = this._getCurPageHF(pageFooterType, opt_headerFooter);
+				if(curPageHF && curPageHF.str) {
+					if(!curPageHF.parser) {
+						curPageHF.parse();
+					}
+					parser = curPageHF.parser.portions;
+					leftFragments = getFragments(parser[0]);
+					if(null !== leftFragments) {
+						this.sections[pageFooterType][c_oPortionPosition.left].fragments = leftFragments;
+					}
+					centerFragments = getFragments(parser[1]);
+					if(null !== centerFragments) {
+						this.sections[pageFooterType][c_oPortionPosition.center].fragments = centerFragments;
+					}
+					rightFragments = getFragments(parser[2]);
+					if(null !== rightFragments) {
+						this.sections[pageFooterType][c_oPortionPosition.right].fragments = rightFragments;
+					}
 				}
 			}
 		}
@@ -1550,35 +1670,38 @@
 		return res;
 	};
 
-	CHeaderFooterEditor.prototype._getCurPageHF = function (type) {
+	CHeaderFooterEditor.prototype._getCurPageHF = function (type, opt_headerFooter, ws) {
 		var res = null;
-		var ws = this.wb.getWorksheet();
+		if (!ws) {
+			ws = this.wb.getWorksheet();
+		}
+		var hF = opt_headerFooter ? opt_headerFooter : ws.model.headerFooter;
 
 		//TODO можно у класса CHeaderFooter реализовать данную функцию
-		if(ws.model.headerFooter) {
+		if(hF) {
 			switch (type){
 				case asc.c_oAscPageHFType.firstHeader: {
-					res = ws.model.headerFooter.firstHeader;
+					res = hF.firstHeader;
 					break;
 				}
 				case asc.c_oAscPageHFType.oddHeader: {
-					res = ws.model.headerFooter.oddHeader;
+					res = hF.oddHeader;
 					break;
 				}
 				case asc.c_oAscPageHFType.evenHeader: {
-					res = ws.model.headerFooter.evenHeader;
+					res = hF.evenHeader;
 					break;
 				}
 				case asc.c_oAscPageHFType.firstFooter: {
-					res = ws.model.headerFooter.firstFooter;
+					res = hF.firstFooter;
 					break;
 				}
 				case asc.c_oAscPageHFType.oddFooter: {
-					res = ws.model.headerFooter.oddFooter;
+					res = hF.oddFooter;
 					break;
 				}
 				case asc.c_oAscPageHFType.evenFooter: {
-					res = ws.model.headerFooter.evenFooter;
+					res = hF.evenFooter;
 					break;
 				}
 			}
@@ -1621,8 +1744,8 @@
 		var bToken, text, symbol, startToken, tokenText, tokenFormat;
 		for(var j = 0; j < fragments.length; j++) {
 			text = "";
-			for(var n = 0; n < fragments[j].text.length; n++) {
-				symbol = fragments[j].text[n];
+			for(var n = 0; n < fragments[j].getFragmentText().length; n++) {
+				symbol = fragments[j].getFragmentText()[n];
 				if(symbol !== "&") {
 					text += symbol;
 				}
@@ -1675,7 +1798,7 @@
 								break;
 							}
 							default: {
-								if("" !== text && j ===  fragments.length - 1 && n === fragments[j].text.length - 1) {
+								if("" !== text && j ===  fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
 									res.push({text: text, format: fragments[j].format});
 									text = "";
 								}
@@ -1688,7 +1811,7 @@
 						tokenText += symbol;
 					}
 
-					if("" !== text && j ===  fragments.length - 1 && n === fragments[j].text.length - 1) {
+					if("" !== text && j ===  fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
 						res.push({text: text, format: fragments[j].format});
 					}
 				} else if(bToken) {
@@ -1757,7 +1880,7 @@
 								break;
 							}
 							default: {
-								if("" !== text && j ===  fragments.length - 1 && n === fragments[j].text.length - 1) {
+								if("" !== text && j ===  fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
 									res.push({text: text, format: fragments[j].format});
 									text = "";
 								}
@@ -1766,7 +1889,7 @@
 						}
 						bToken = false;
 					}
-				} else if("" !== text && n === fragments[j].text.length - 1) {
+				} else if("" !== text && n === fragments[j].getFragmentText().length - 1) {
 					res.push({text: text, format: fragments[j].format});
 				}
 			}
@@ -1776,7 +1899,7 @@
 
 	CHeaderFooterEditor.prototype._getFragments = function(text, format) {
 		var tempFragment = new AscCommonExcel.Fragment();
-		tempFragment.text = text;
+		tempFragment.setFragmentText(text);
 		tempFragment.format = format;
 		return tempFragment;
 	};

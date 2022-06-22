@@ -144,7 +144,9 @@ function CGraphics()
 
     this.endGlobalAlphaColor = null;
     this.isDarkMode = false;
-    this.isShapeDraw = false;
+
+    this.shapeDrawCounter = 0;
+    this.isFormDraw = 0;
 }
 
 CGraphics.prototype =
@@ -247,7 +249,7 @@ CGraphics.prototype =
         this.isDarkMode = true;
         function _darkColor(_this, _func) {
             return function(r, g, b, a) {
-                if (_this.isDarkMode && !this.isShapeDraw && AscCommon.darkModeCheckColor(r, g, b))
+                if (_this.isDarkMode && AscCommon.darkModeCheckColor(r, g, b))
                     _func.call(_this, 255 - r, 255 - g, 255 - b, a);
                 else
                     _func.call(_this, r, g, b, a);
@@ -263,7 +265,11 @@ CGraphics.prototype =
 		this.isDarkMode = true;
 		function _darkColor(_this, _func) {
 			return function(r, g, b, a) {
-				if (_this.isDarkMode && !this.isShapeDraw && AscCommon.darkModeCheckColor2(r, g, b))
+			    var isCorrect = _this.isDarkMode;
+			    if (isCorrect && 0 !== this.shapeDrawCounter)
+			        if (!(1 === this.shapeDrawCounter && this.isFormDraw)) //форму первого уровня не корректируем
+			            isCorrect = false;
+				if (isCorrect && AscCommon.darkModeCheckColor2(r, g, b))
 					_func.call(_this, 255 - r, 255 - g, 255 - b, a);
 				else
 					_func.call(_this, r, g, b, a);
@@ -279,7 +285,11 @@ CGraphics.prototype =
 		this.isDarkMode = true;
 		function _darkColor(_this, _func) {
 			return function(r, g, b, a) {
-				if (_this.isDarkMode && !this.isShapeDraw)
+                var isCorrect = _this.isDarkMode;
+                if (isCorrect && 0 !== this.shapeDrawCounter)
+                    if (!(1 === this.shapeDrawCounter && this.isFormDraw)) //форму первого уровня не корректируем
+                        isCorrect = false;
+				if (isCorrect)
 				{
 					var c = AscCommon.darkModeCorrectColor2(r, g, b);
 					_func.call(_this, c.R, c.G, c.B, a);
@@ -823,7 +833,6 @@ CGraphics.prototype =
             this.drawImage2(nativeImage,x,y,w,h,alpha,srcRect);
             return;
         }
-
         var _img = editor.ImageLoader.map_image_index[img];
         if (_img != undefined && _img.Status == AscFonts.ImageLoadStatus.Loading)
         {
@@ -1491,7 +1500,7 @@ CGraphics.prototype =
         var _ctx = this.m_oContext;
         _ctx.beginPath();
         _ctx.fillStyle = "#E1E1E1";
-        _ctx.strokeStyle = GlobalSkin.RulerOutline;
+        _ctx.strokeStyle = this.isDarkMode ? "#E1E1E1" : GlobalSkin.RulerOutline;
         this.m_bBrushColorInit = false;
         this.m_bPenColorInit = false;
 
@@ -1548,7 +1557,7 @@ CGraphics.prototype =
         var _ctx = this.m_oContext;
         _ctx.beginPath();
         _ctx.fillStyle = "#E1E1E1";
-        _ctx.strokeStyle = GlobalSkin.RulerOutline;
+        _ctx.strokeStyle = this.isDarkMode ? "#E1E1E1" : GlobalSkin.RulerOutline;
         this.m_bBrushColorInit = false;
         this.m_bPenColorInit = false;
 
@@ -1589,6 +1598,8 @@ CGraphics.prototype =
 
     DrawHeaderEdit : function(yPos, lock_type, sectionNum, bIsRepeat, type)
     {
+        this.StartDrawShape();
+
         var _y = this.m_oFullTransform.TransformPointY(0,yPos);
         _y = (_y >> 0) + 0.5;
         var _x = 0;
@@ -1613,10 +1624,15 @@ CGraphics.prototype =
             case locktype_None:
             case locktype_Mine:
             {
-                //this.p_color(155, 187, 277, 255);
-                //ctx.lineWidth = 2;
-                // GlobalSkin.RulerOutline
-                this.p_color(0xBB, 0xBE, 0xC2, 255);
+                if (!this.isDarkMode)
+                {
+                    var c = AscCommon.RgbaHexToRGBA(GlobalSkin.RulerOutline);
+                    this.p_color(c.R, c.G, c.B, 255);
+                }
+                else
+                {
+                    ctx.strokeStyle = "#E1E1E1";
+                }
                 ctx.lineWidth = _lineWidth;
                 break;
             }
@@ -1683,10 +1699,14 @@ CGraphics.prototype =
 
         if (false == bIsNoIntGrid)
             this.SetIntegerGrid(false);
+
+        this.EndDrawShape();
     },
 
     DrawFooterEdit : function(yPos, lock_type, sectionNum, bIsRepeat, type)
     {
+        this.StartDrawShape();
+
         var _y = this.m_oFullTransform.TransformPointY(0,yPos);
         _y = (_y >> 0) + 0.5;
         var _x = 0;
@@ -1707,10 +1727,8 @@ CGraphics.prototype =
             case locktype_None:
             case locktype_Mine:
             {
-                //this.p_color(155, 187, 277, 255);
-                //ctx.lineWidth = 2;
-                // GlobalSkin.RulerOutline
-                this.p_color(0xBB, 0xBE, 0xC2, 255);
+                var c = AscCommon.RgbaHexToRGBA(GlobalSkin.RulerOutline);
+                this.p_color(c.R, c.G, c.B, 255);
                 ctx.lineWidth = _lineWidth;
                 break;
             }
@@ -1779,6 +1797,8 @@ CGraphics.prototype =
 
         if (false == bIsNoIntGrid)
             this.SetIntegerGrid(false);
+
+        this.EndDrawShape();
     },
 
     DrawLockParagraph : function(lock_type, x, y1, y2)
@@ -2597,7 +2617,8 @@ CGraphics.prototype =
 
     drawFlowAnchor : function(x, y)
     {
-        if (!AscCommon.g_flow_anchor || !AscCommon.g_flow_anchor.asc_complete || (!editor || !editor.ShowParaMarks))
+        var _flow_anchor = (AscCommon.OverlayRasterIcons && AscCommon.OverlayRasterIcons.Anchor) ? AscCommon.OverlayRasterIcons.Anchor.get() : undefined;
+        if (!_flow_anchor || (!editor || !editor.ShowParaMarks))
             return;
 
         if (false === this.m_bIntegerGrid)
@@ -2608,7 +2629,7 @@ CGraphics.prototype =
         var _x = this.m_oFullTransform.TransformPointX(x,y) >> 0;
         var _y = this.m_oFullTransform.TransformPointY(x,y) >> 0;
 
-        this.m_oContext.drawImage(AscCommon.g_flow_anchor, _x, _y);
+        this.m_oContext.drawImage(_flow_anchor, _x, _y);
 
         if (false === this.m_bIntegerGrid)
         {
@@ -2651,6 +2672,15 @@ CGraphics.prototype =
     RestoreGrState : function()
     {
         this.GrState.RestoreGrState();
+    },
+
+    RemoveLastClip : function()
+    {
+        this.GrState.RemoveLastClip();
+    },
+    RestoreLastClip : function()
+    {
+        this.GrState.RestoreLastClip();
     },
 
     StartClipPath : function()
@@ -2841,9 +2871,8 @@ CGraphics.prototype =
         }
     },
 
-    CheckUseFonts2 : function(_transform)
+    CheckUseFonts2 : function(_transform, isForm)
     {
-        this.isShapeDraw = true;
         if (!global_MatrixTransformer.IsIdentity2(_transform))
         {
             if (!AscCommon.g_fontManager2)
@@ -2863,7 +2892,6 @@ CGraphics.prototype =
 
     UncheckUseFonts2 : function()
     {
-		this.isShapeDraw = false;
         this.IsUseFonts2 = false;
     },
 
@@ -2995,6 +3023,17 @@ CGraphics.prototype =
 
         if (!_old)
             this.SetIntegerGrid(false);
+    },
+
+    StartDrawShape : function(type, isForm)
+    {
+        this.shapeDrawCounter++;
+        this.isFormDraw = isForm;
+    },
+    EndDrawShape : function()
+    {
+        this.isFormDraw = false;
+        this.shapeDrawCounter--;
     }
 };
 

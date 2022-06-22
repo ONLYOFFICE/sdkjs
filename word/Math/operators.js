@@ -3113,7 +3113,12 @@ function CMathDelimiterPr()
 
     this.column     = 0;
 }
-
+CMathDelimiterPr.prototype.initByContent = function(content) {
+    if (!content) {
+        return;
+    }
+    this.column = content.length;
+};
 CMathDelimiterPr.prototype.Set_Column = function(Value)
 {
     this.column = Value;
@@ -3309,8 +3314,9 @@ CDelimiter.prototype.kind      = MATH_DELIMITER;
 CDelimiter.prototype.init = function(props)
 {
     this.setProperties(props);
+    this.Pr.initByContent(props.content);
 
-    this.Fill_LogicalContent(this.getColumnsCount());
+    this.Fill_LogicalContent(this.getColumnsCount(), props.content);
 
     this.fillContent();
 };
@@ -4326,7 +4332,7 @@ CGroupCharacter.prototype.ClassType = AscDFH.historyitem_type_groupChr;
 CGroupCharacter.prototype.kind      = MATH_GROUP_CHARACTER;
 CGroupCharacter.prototype.init = function(props)
 {
-    this.Fill_LogicalContent(1);
+    this.Fill_LogicalContent(1, props.content);
 
     this.setProperties(props);
     this.fillContent();

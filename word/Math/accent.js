@@ -155,9 +155,6 @@ CAccentCircumflex.prototype.drawPath = function(pGraphics, XX, YY)
     pGraphics._l(XX[6], YY[6]);
     pGraphics._l(XX[7], YY[7]);
     pGraphics._l(XX[8], YY[8]);
-    pGraphics._l(XX[9], YY[9]);
-    pGraphics._l(XX[10], YY[10]);
-    pGraphics._l(XX[11], YY[11]);
 };
 
 /**
@@ -511,7 +508,7 @@ CAccent.prototype.kind      = MATH_ACCENT;
 
 CAccent.prototype.init = function(props)
 {
-    this.Fill_LogicalContent(1);
+    this.Fill_LogicalContent(1, props.content);
 
     this.setProperties(props);
     this.fillContent();

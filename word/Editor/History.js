@@ -68,8 +68,9 @@ function CHistory(Document)
 		Update       : true
 	};
 
-	this.TurnOffHistory = 0;
-    this.MinorChanges   = false; // Данный параметр нужен, чтобы определить влияют ли добавленные изменения на пересчет
+	this.TurnOffHistory  = 0;
+	this.RegisterClasses = 0;
+    this.MinorChanges    = false; // Данный параметр нужен, чтобы определить влияют ли добавленные изменения на пересчет
 
     this.BinaryWriter = new AscCommon.CMemory();
 
@@ -100,11 +101,8 @@ CHistory.prototype =
         return this.UserSaveMode;
     },
 
-    Update_FileDescription : function(oStream)
+    Update_FileDescription : function(pData, nSize)
     {
-        var pData = oStream.data;
-        var nSize = oStream.size;
-
         this.FileCheckSum = AscCommon.g_oCRC32.Calculate_ByByteArray(pData, nSize);
         this.FileSize     = nSize;
     },
@@ -797,18 +795,6 @@ CHistory.prototype =
         return true;
     },
 
-    TurnOff : function()
-    {
-		this.TurnOffHistory++;
-    },
-
-    TurnOn : function()
-    {
-		this.TurnOffHistory--;
-		if(this.TurnOffHistory < 0)
-			this.TurnOffHistory = 0;
-    },
-
 	/** @returns {boolean} */
     Is_On : function()
     {
@@ -989,14 +975,43 @@ CHistory.prototype =
         }
     }
 };
-/**
- * Проверяем, можно ли добавить изменение
- * @returns {boolean}
- */
-CHistory.prototype.CanAddChanges = function()
-{
-	return (0 === this.TurnOffHistory && this.Index >= 0);
-};
+	/**
+	 * Проверяем, можно ли добавить изменение
+	 * @returns {boolean}
+	 */
+	CHistory.prototype.CanAddChanges = function()
+	{
+		return (0 === this.TurnOffHistory && this.Index >= 0);
+	};
+	CHistory.prototype.CanRegisterClasses = function()
+	{
+		return (0 === this.TurnOffHistory || this.RegisterClasses >= this.TurnOffHistory);
+	};
+	CHistory.prototype.TurnOff = function()
+	{
+		this.TurnOffHistory++;
+	};
+	CHistory.prototype.TurnOn = function()
+	{
+		this.TurnOffHistory--;
+		if(this.TurnOffHistory < 0)
+			this.TurnOffHistory = 0;
+	};
+	CHistory.prototype.TurnOffChanges = function()
+	{
+		this.TurnOffHistory++;
+		this.RegisterClasses++;
+	};
+	CHistory.prototype.TurnOnChanges = function()
+	{
+		this.TurnOffHistory--;
+		if(this.TurnOffHistory < 0)
+			this.TurnOffHistory = 0;
+
+		this.RegisterClasses--;
+		if (this.RegisterClasses < 0)
+			this.RegisterClasses = 0;
+	};
 CHistory.prototype.ClearAdditional = function()
 {
 	if (this.Index >= 0)
@@ -1277,7 +1292,63 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 
 		return arrChanges;
 	};
+	/**
+	 * Проверяем перед автозаменой, что действие совершается во время набора
+	 * @param oLastElement - последний элемент, добавленный перед автозаменой
+	 * @param nHistoryActions - количество точек предществующих автозамене
+	 * @param [nMaxTimeDelay=0] - если задано, то максимальное значение времени, которое прошло с момента последнего действия
+	 * @returns {boolean}
+	 */
+	CHistory.prototype.CheckAsYouTypeAutoCorrect = function(oLastElement, nHistoryActions, nMaxTimeDelay)
+	{
+		// В nHistoryActions задано количество точек, которые предществовали автозамене, т.е.
+		// выполнялись действия, которые и вызывали автозамену в итоге. Нам надо проверить предыдущую точку до заданных
+		// Если в там происходило добавление заданного элемента, значит у нас был набор текста
 
+		if (this.Index < nHistoryActions)
+			return false;
+
+		var nCurIndex = this.Index - nHistoryActions;
+		while (this.private_IsPointDoAutoCorrect(nCurIndex) && nCurIndex > 0)
+			nCurIndex--;
+
+		if (nCurIndex < 0)
+			return false;
+
+		var oPoint = this.Points[nCurIndex];
+
+		if (nMaxTimeDelay && (new Date().getTime() - oPoint.Time) > nMaxTimeDelay)
+			return false;
+
+		var nItemsCount = oPoint.Items.length;
+		if ((AscDFH.historydescription_Document_AddLetter === oPoint.Description
+			|| AscDFH.historydescription_Document_AddLetterUnion === oPoint.Description
+			|| AscDFH.historydescription_Document_SpaceButton === oPoint.Description
+			|| AscDFH.historydescription_Presentation_ParagraphAdd === oPoint.Description)
+			&& nItemsCount > 0)
+		{
+			var oChange = oPoint.Items[nItemsCount - 1].Data;
+			if (!oChange || !oChange.IsContentChange())
+				return false;
+
+			var nChangeItemsCount = oChange.GetItemsCount();
+			return (nChangeItemsCount > 0 && AscDFH.historyitem_ParaRun_AddItem === oChange.GetType() && oChange.GetItem(nChangeItemsCount - 1) === oLastElement);
+		}
+
+		return false;
+	};
+	CHistory.prototype.private_IsPointDoAutoCorrect = function(nPointIndex)
+	{
+		if (nPointIndex < 0 || nPointIndex >= this.Points.length)
+			return false;
+
+		var nDescription = this.Points[nPointIndex].Description;
+
+		return (AscDFH.historydescription_Document_AutoCorrectCommon === nDescription
+			|| AscDFH.historydescription_Document_AutoCorrectFirstLetterOfSentence === nDescription
+			|| AscDFH.historydescription_Document_AutoCorrectHyphensWithDash === nDescription
+			|| AscDFH.historydescription_Document_AutoCorrectSmartQuotes === nDescription);
+	};
 
 	//----------------------------------------------------------export--------------------------------------------------
 	window['AscCommon']          = window['AscCommon'] || {};

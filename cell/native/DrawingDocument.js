@@ -270,20 +270,9 @@ function CTextMeasurer()
 
 function CTableOutlineDr()
 {
-    var image_64 = "u7u7/7u7u/+7u7v/u7u7/7u7u/+7u7v/u7u7/7u7u/+7u7v/u7u7/7u7u/+7u7v/u7u7/7u7u//6+vr/+vr6//r6+v/6+vr/+vr6//r6+v/6+vr/+vr6//r6+v/6+vr/+vr6/4+Pj/+7u7v/9vb2//b29v/39/f/9/f3//f39/83aMT/9/f3//f39//39/f/9/f3//f39/+Pj4//u7u7//Ly8v/y8vL/8vLy//Pz8/83aMT/N2jE/zdoxP/z8/P/8/Pz//Pz8//z8/P/j4+P/7u7u//u7u7/7u7u/+7u7v/u7u7/7u7u/zdoxP/u7u7/7u7u/+7u7v/u7u7/7u7u/4+Pj/+7u7v/6Ojo/+jo6P83aMT/6enp/+np6f83aMT/6enp/+np6f83aMT/6enp/+np6f+Pj4//u7u7/+Pj4/83aMT/N2jE/zdoxP83aMT/N2jE/zdoxP83aMT/N2jE/zdoxP/k5OT/j4+P/7u7u//o6Oj/6Ojo/zdoxP/o6Oj/6Ojo/zdoxP/o6Oj/6Ojo/zdoxP/o6Oj/6Ojo/4+Pj/+7u7v/7e3t/+3t7f/t7e3/7e3t/+3t7f83aMT/7e3t/+zs7P/s7Oz/7Ozs/+zs7P+Pj4//u7u7//Ly8v/y8vL/8vLy//Ly8v83aMT/N2jE/zdoxP/x8fH/8fHx//Hx8f/x8fH/j4+P/7u7u//19fX/9fX1//X19f/19fX/9fX1/zdoxP/19fX/9fX1//X19f/19fX/9fX1/4+Pj/+7u7v/+fn5//n5+f/5+fn/+fn5//n5+f/5+fn/+fn5//n5+f/5+fn/+fn5//j4+P+Pj4//u7u7/4+Pj/+Pj4//j4+P/4+Pj/+Pj4//j4+P/4+Pj/+Pj4//j4+P/4+Pj/+Pj4//j4+P/w==";
-
     this.image = document.createElement('canvas');
     this.image.width  = 13;
     this.image.height = 13;
-
-    var ctx = this.image.getContext('2d');
-    var _data = ctx.createImageData(13, 13);
-
-    AscFonts.DecodeBase64(_data, image_64);
-    ctx.putImageData(_data, 0, 0);
-
-    _data = null;
-    image_64 = null;
 
     this.TableOutline = null;
     this.Counter = 0;
@@ -2479,99 +2468,6 @@ function CDrawingDocument()
 
         this.CheckTargetDraw(x, y);
     };
-    this.UpdateTarget2 = function(x, y, pageIndex)
-    {
-        //TODO:
-
-//        if (pageIndex >= this.m_arrPages.length)
-//            return;
-//
-//        this.m_oWordControl.m_oLogicDocument.Set_TargetPos( x, y, pageIndex );
-//
-//        var bIsPageChanged = false;
-//        if (this.m_lCurrentPage != pageIndex)
-//        {
-//            this.m_lCurrentPage = pageIndex;
-//            this.m_oWordControl.SetCurrentPage2();
-//            this.m_oWordControl.OnScroll();
-//            bIsPageChanged = true;
-//        }
-//
-//        this.m_dTargetX = x;
-//        this.m_dTargetY = y;
-//        this.m_lTargetPage = pageIndex;
-//
-//        var pos = this.ConvertCoordsToCursor(x, y, this.m_lCurrentPage);
-//
-//        if (true == pos.Error && (false == bIsPageChanged))
-//            return;
-//
-//        // смотрим, виден ли курсор на экране
-//        var boxX = 0;
-//        var boxY = 0;
-//        var boxR = this.m_oWordControl.m_oEditor.HtmlElement.width;
-//        var boxB = this.m_oWordControl.m_oEditor.HtmlElement.height;
-//
-//        /*
-//        if (true == this.m_oWordControl.m_bIsRuler)
-//        {
-//            boxX += Number(5 * g_dKoef_mm_to_pix);
-//            boxY += Number(7 * g_dKoef_mm_to_pix);
-//            boxR += Number(5 * g_dKoef_mm_to_pix);
-//            boxB += Number(7 * g_dKoef_mm_to_pix);
-//        }
-//        */
-//
-//        var nValueScrollHor = 0;
-//        if (pos.X < boxX)
-//        {
-//            //nValueScrollHor = boxX - pos.X;
-//            //nValueScrollHor = pos.X;
-//            nValueScrollHor = this.m_oWordControl.GetHorizontalScrollTo(x - 5, pageIndex);
-//        }
-//        if (pos.X > boxR)
-//        {
-//            //nValueScrollHor = boxR - pos.X;
-//            //nValueScrollHor = pos.X + this.m_oWordControl.m_oEditor.HtmlElement.width;
-//            var _mem = x + 5 - g_dKoef_pix_to_mm * this.m_oWordControl.m_oEditor.HtmlElement.width * 100 / this.m_oWordControl.m_nZoomValue;
-//            nValueScrollHor = this.m_oWordControl.GetHorizontalScrollTo(_mem, pageIndex);
-//        }
-//
-//        var nValueScrollVer = 0;
-//        if (pos.Y < boxY)
-//        {
-//            //nValueScrollVer = boxY - pos.Y;
-//            //nValueScrollVer = pos.Y;
-//            nValueScrollVer = this.m_oWordControl.GetVerticalScrollTo(y - 5, pageIndex);
-//        }
-//        if (pos.Y > boxB)
-//        {
-//            //nValueScrollVer = boxB - pos.Y;
-//            //nValueScrollHor = pos.Y + this.m_oWordControl.m_oEditor.HtmlElement.height;
-//            var _mem = y + this.m_dTargetSize + 5 - g_dKoef_pix_to_mm * this.m_oWordControl.m_oEditor.HtmlElement.height * 100 / this.m_oWordControl.m_nZoomValue;
-//            nValueScrollVer = this.m_oWordControl.GetVerticalScrollTo(_mem, pageIndex);
-//        }
-//
-//        var isNeedScroll = false;
-//        if (0 != nValueScrollHor)
-//        {
-//            isNeedScroll = true;
-//            var temp = nValueScrollHor * this.m_oWordControl.m_dScrollX_max / (this.m_oWordControl.m_dDocumentWidth - this.m_oWordControl.m_oEditor.HtmlElement.width);
-//            this.m_oWordControl.m_oScrollHorApi.scrollToX(parseInt(temp), false);
-//        }
-//        if (0 != nValueScrollVer)
-//        {
-//            isNeedScroll = true;
-//            var temp = nValueScrollVer * this.m_oWordControl.m_dScrollY_max / (this.m_oWordControl.m_dDocumentHeight - this.m_oWordControl.m_oEditor.HtmlElement.height);
-//            this.m_oWordControl.m_oScrollVerApi.scrollToY(parseInt(temp), false);
-//        }
-//
-//        if (true == isNeedScroll)
-//        {
-//            this.m_oWordControl.OnScroll();
-//            return;
-//        }
-    };
 
     this.UpdateTargetTimer = function() {};
 
@@ -3502,60 +3398,21 @@ function CDrawingDocument()
 //        if (!this.m_oWordControl.m_oApi.asc_checkNeedCallback("asc_onInitTableTemplates"))
 //            return;
 
-        var bIsChanged = false;
-        if (null == this.TableStylesLastLook)
-        {
-            this.TableStylesLastLook = new Asc.CTablePropLook();
+        let isChanged = false;
 
-            this.TableStylesLastLook.FirstCol = tableLook.FirstCol;
-            this.TableStylesLastLook.FirstRow = tableLook.FirstRow;
-            this.TableStylesLastLook.LastCol  = tableLook.LastCol;
-            this.TableStylesLastLook.LastRow  = tableLook.LastRow;
-            this.TableStylesLastLook.BandHor  = tableLook.BandHor;
-            this.TableStylesLastLook.BandVer  = tableLook.BandVer;
-            bIsChanged = true;
-        }
-        else
-        {
-            if (this.TableStylesLastLook.FirstCol != tableLook.FirstCol)
-            {
-                this.TableStylesLastLook.FirstCol = tableLook.FirstCol;
-                bIsChanged = true;
-            }
-            if (this.TableStylesLastLook.FirstRow != tableLook.FirstRow)
-            {
-                this.TableStylesLastLook.FirstRow = tableLook.FirstRow;
-                bIsChanged = true;
-            }
-            if (this.TableStylesLastLook.LastCol != tableLook.LastCol)
-            {
-                this.TableStylesLastLook.LastCol = tableLook.LastCol;
-                bIsChanged = true;
-            }
-            if (this.TableStylesLastLook.LastRow != tableLook.LastRow)
-            {
-                this.TableStylesLastLook.LastRow = tableLook.LastRow;
-                bIsChanged = true;
-            }
-            if (this.TableStylesLastLook.BandHor != tableLook.BandHor)
-            {
-                this.TableStylesLastLook.BandHor = tableLook.BandHor;
-                bIsChanged = true;
-            }
-            if (this.TableStylesLastLook.BandVer != tableLook.BandVer)
-            {
-                this.TableStylesLastLook.BandVer = tableLook.BandVer;
-                bIsChanged = true;
-            }
-        }
+		if (!this.TableStylesLastLook || !this.TableStylesLastLook.IsEqual(tableLook))
+		{
+			this.TableStylesLastLook = tableLook.Copy();
+			isChanged = true;
+		}
 
-        if (!bIsChanged)
+        if (!isChanged)
             return;
 
         var logicDoc = this.m_oWordControl.m_oLogicDocument;
         var _dst_styles = [];
 
-        var _styles = logicDoc.Styles.Get_AllTableStyles();
+        var _styles = logicDoc.Styles.GetAllTableStyles();
         var _styles_len = _styles.length;
 
         if (_styles_len == 0)
@@ -3586,13 +3443,10 @@ function CDrawingDocument()
         AscCommon.History.TurnOff();
         for (var i1 = 0; i1 < _styles_len; i1++)
         {
-            var i = _styles[i1];
-            var _style = logicDoc.Styles.Style[i];
+            let _style =  _styles[i1];
+			let i = _style.GetId();
 
-            if (!_style || _style.Type != styletype_Table)
-                continue;
-
-            var table = new CTable(this, logicDoc, true, Rows, Cols, Grid);
+			var table = new CTable(this, logicDoc, true, Rows, Cols, Grid);
             table.Set_Props({TableStyle : i, TableLook : tableLook});
 
             for (var j = 0; j < Rows; j++)
@@ -3620,6 +3474,27 @@ function CDrawingDocument()
         AscCommon.History.TurnOn();
 
         this.m_oWordControl.m_oApi.sync_InitEditorTableStyles(_dst_styles);
+    };
+
+    this.GetTableStylesPreviews = function()
+    {
+        return [];
+    };
+    this.GetTableLook = function(isDefault)
+    {
+        let oTableLook;
+
+        if (isDefault)
+        {
+            oTableLook = new AscCommon.CTableLook();
+            oTableLook.SetDefault();
+        }
+        else
+        {
+            oTableLook = this.TableStylesLastLook;
+        }
+
+        return oTableLook;
     };
 
     this.IsMobileVersion = function()

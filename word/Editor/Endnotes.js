@@ -378,15 +378,23 @@ CEndnotesController.prototype.GetEndnoteNumberOnPage = function(nPageAbs, nColum
 	return 1;
 };
 /**
- * Сбрасываем рассчетные данный для заданной страницы.
- * @param {number} nPageIndex
- * @param {CSectionPr} oSectPr
+ * Сбрасываем расчетные данные с заданного места
+ * @param nPageIndex
+ * @param nSectionIndex
+ * @param nColumnIndex
  */
-CEndnotesController.prototype.Reset = function(nPageIndex, oSectPr)
+CEndnotesController.prototype.Reset = function(nPageIndex, nSectionIndex, nColumnIndex)
 {
-	this.Pages.length = nPageIndex;
-	if (!this.Pages[nPageIndex])
-		this.Pages[nPageIndex] = new CEndnotePage();
+	if (0 === nSectionIndex && 0 === nColumnIndex)
+	{
+		this.Pages.length = nPageIndex;
+		if (!this.Pages[nPageIndex])
+			this.Pages[nPageIndex] = new CEndnotePage();
+	}
+	else
+	{
+		this.Pages[nPageIndex].ResetColumn(nSectionIndex, nColumnIndex);
+	}
 };
 /**
  * Регистрируем сноски на заданной странице
@@ -637,6 +645,14 @@ CEndnotesController.prototype.private_UpdateSection = function(oSectPr, nSection
 	}
 
 	return this.Sections[nSectionIndex];
+};
+CEndnotesController.prototype.GetLastSectionIndexOnPage = function(nPageAbs)
+{
+	var oPage = this.Pages[nPageAbs];
+	if (oPage && oPage.Sections.length)
+		return oPage.Sections[oPage.Sections.length - 1];
+
+	return -1;
 };
 /**
  * Отрисовываем сноски на заданной странице.
@@ -1118,10 +1134,18 @@ CEndnotesController.prototype.private_GetEndnoteOnPageByXY = function(X, Y, nPag
 			}
 		}
 
-		if (!oColumn)
+		if (!oColumn || oColumn.Elements.length <= 0)
 			continue;
 
-		for (var nIndex = oColumn.Elements.length - 1; nIndex >= 0; --nIndex)
+		var nStartPos = oColumn.Elements.length - 1;
+		if (nStartPos > 0)
+		{
+			var oEndnote = oColumn.Elements[nStartPos];
+			if (oEndnote.IsEmptyPage(oEndnote.GetElementPageIndex(nPageAbs, nColumnIndex)))
+				nStartPos--;
+		}
+
+		for (var nIndex = nStartPos; nIndex >= 0; --nIndex)
 		{
 			var oEndnote = oColumn.Elements[nIndex];
 
@@ -1309,7 +1333,7 @@ CEndnotesController.prototype.private_GetNextEndnote = function(oEndnote)
 CEndnotesController.prototype.private_GetDirection = function(oEndote1, oEndnote2)
 {
 	// Предполагается, что эти сноски обязательно есть в документе
-	if (oEndote1 == oEndnote2)
+	if (oEndote1 === oEndnote2)
 		return 0;
 
 	var arrList = this.LogicDocument.GetEndnotesList(null, null);
@@ -1439,12 +1463,12 @@ CEndnotesController.prototype.AddImages = function(aImages)
 
 	return this.CurEndnote.AddImages(aImages);
 };
-CEndnotesController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId)
+CEndnotesController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect)
 {
 	if (false === this.private_CheckEndnotesSelectionBeforeAction())
 		return false;
 
-	return this.CurEndnote.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId);
+	return this.CurEndnote.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect);
 };
 CEndnotesController.prototype.AddTextArt = function(nStyle)
 {
@@ -3392,6 +3416,20 @@ CEndnotesController.prototype.FindNextFillingForm = function(isNext, isCurrent)
 
 	return null;
 };
+CEndnotesController.prototype.CollectSelectedReviewChanges = function(oTrackManager)
+{
+	if (this.Selection.Use)
+	{
+		for (var sId in this.Selection.Endnotes)
+		{
+			this.Selection.Endnotes[sId].CollectSelectedReviewChanges(oTrackManager);
+		}
+	}
+	else if (this.CurEndnote)
+	{
+		this.CurEndnote.CollectSelectedReviewChanges(oTrackManager);
+	}
+};
 
 /**
  * Класс регистрирующий концевые сноски на странице
@@ -3400,14 +3438,36 @@ CEndnotesController.prototype.FindNextFillingForm = function(isNext, isCurrent)
  */
 function CEndnotePage()
 {
-	this.Endnotes = [];
-	this.Sections = [];
-	this.Continue = false; // Сноски на данной странице не закончились и переносятся на следующую
+	this.Endnotes    = [];
+	this.Sections    = [];
+	this.Continue    = false; // Сноски на данной странице не закончились и переносятся на следующую
+	this.EndnotesPos = [];    // Логическая позиция на странице (номер секции на странице и номер колонки)
+	this.CurSection  = 0;
+	this.CurColumn   = 0;
 }
 CEndnotePage.prototype.Reset = function()
 {
-	this.Endnotes = [];
-	this.Sections = [];
+	this.Endnotes    = [];
+	this.Sections    = [];
+	this.EndnotesPos = [];
+	this.CurSection  = 0;
+	this.CurColumn   = 0;
+};
+CEndnotePage.prototype.ResetColumn = function(nSectionIndex, nColumnIndex)
+{
+	this.CurSection = nSectionIndex;
+	this.CurColumn  = nColumnIndex;
+
+	for (var nEndnoteIndex = 0, nEndnotesCount = this.Endnotes.length; nEndnoteIndex < nEndnotesCount; ++nEndnoteIndex)
+	{
+		if ((this.EndnotesPos[nEndnoteIndex].Section === nSectionIndex && this.EndnotesPos[nEndnoteIndex].Column >= nColumnIndex)
+			|| (this.EndnotesPos[nEndnoteIndex].Section > nSectionIndex))
+		{
+			this.Endnotes.length = nEndnoteIndex;
+			this.EndnotesPos.length = nEndnoteIndex;
+			return;
+		}
+	}
 };
 CEndnotePage.prototype.AddEndnotes = function(arrEndnotes)
 {
@@ -3426,11 +3486,15 @@ CEndnotePage.prototype.AddEndnotes = function(arrEndnotes)
 			{
 				nStartPos = nEndnoteIndex + 1;
 				isNeedAdd = false;
+				this.EndnotesPos[nEndnoteIndex] = {Section : this.CurSection, Column : this.CurColumn};
 			}
 		}
 
 		if (isNeedAdd)
+		{
 			this.Endnotes.push(oEndnote);
+			this.EndnotesPos.push({Section : this.CurSection, Column : this.CurColumn});
+		}
 	}
 };
 CEndnotePage.prototype.AddSection = function(nSectionIndex)

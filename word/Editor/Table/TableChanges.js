@@ -859,7 +859,7 @@ CChangesTableTableLook.prototype.private_SetValue = function(Value)
 };
 CChangesTableTableLook.prototype.private_CreateObject = function()
 {
-	return new CTableLook();
+	return new AscCommon.CTableLook();
 };
 /**
  * @constructor
@@ -1212,9 +1212,15 @@ CChangesTablePr.prototype.private_CreateObject = function()
 CChangesTablePr.prototype.private_SetValue = function(Value)
 {
 	var oTable = this.Class;
+
+	var isHavePrChange = oTable.HavePrChange();
+
 	oTable.Pr = Value;
 	oTable.Recalc_CompiledPr2();
 	oTable.private_UpdateTableGrid();
+
+	if (isHavePrChange || oTable.HavePrChange())
+		oTable.UpdateTrackRevisions();
 };
 CChangesTablePr.prototype.Merge = function(oChange)
 {
@@ -1441,6 +1447,7 @@ CChangesTableTableGridChange.prototype.private_SetValue = function(Value)
 {
 	var oTable = this.Class;
 	oTable.TableGridChange = Value;
+	oTable.UpdateTrackRevisions();
 };
 /**
  * @constructor

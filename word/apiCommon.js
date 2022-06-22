@@ -228,90 +228,6 @@
 	CTablePositionV.prototype['get_Value'] = CTablePositionV.prototype.get_Value;
 	CTablePositionV.prototype['put_Value'] = CTablePositionV.prototype.put_Value;
 
-// ---------------------------------------------------------------
-	function CTablePropLook(obj)
-	{
-		this.FirstCol = false;
-		this.FirstRow = false;
-		this.LastCol = false;
-		this.LastRow = false;
-		this.BandHor = false;
-		this.BandVer = false;
-
-		if (obj)
-		{
-			this.FirstCol = ( undefined === obj.m_bFirst_Col ? false : obj.m_bFirst_Col );
-			this.FirstRow = ( undefined === obj.m_bFirst_Row ? false : obj.m_bFirst_Row );
-			this.LastCol = ( undefined === obj.m_bLast_Col ? false : obj.m_bLast_Col );
-			this.LastRow = ( undefined === obj.m_bLast_Row ? false : obj.m_bLast_Row );
-			this.BandHor = ( undefined === obj.m_bBand_Hor ? false : obj.m_bBand_Hor );
-			this.BandVer = ( undefined === obj.m_bBand_Ver ? false : obj.m_bBand_Ver );
-		}
-	}
-
-	CTablePropLook.prototype.get_FirstCol = function ()
-	{
-		return this.FirstCol;
-	};
-	CTablePropLook.prototype.put_FirstCol = function (v)
-	{
-		this.FirstCol = v;
-	};
-	CTablePropLook.prototype.get_FirstRow = function ()
-	{
-		return this.FirstRow;
-	};
-	CTablePropLook.prototype.put_FirstRow = function (v)
-	{
-		this.FirstRow = v;
-	};
-	CTablePropLook.prototype.get_LastCol = function ()
-	{
-		return this.LastCol;
-	};
-	CTablePropLook.prototype.put_LastCol = function (v)
-	{
-		this.LastCol = v;
-	};
-	CTablePropLook.prototype.get_LastRow = function ()
-	{
-		return this.LastRow;
-	};
-	CTablePropLook.prototype.put_LastRow = function (v)
-	{
-		this.LastRow = v;
-	};
-	CTablePropLook.prototype.get_BandHor = function ()
-	{
-		return this.BandHor;
-	};
-	CTablePropLook.prototype.put_BandHor = function (v)
-	{
-		this.BandHor = v;
-	};
-	CTablePropLook.prototype.get_BandVer = function ()
-	{
-		return this.BandVer;
-	};
-	CTablePropLook.prototype.put_BandVer = function (v)
-	{
-		this.BandVer = v;
-	};
-
-	window['Asc']['CTablePropLook'] = window['Asc'].CTablePropLook = CTablePropLook;
-	CTablePropLook.prototype['get_FirstCol'] = CTablePropLook.prototype.get_FirstCol;
-	CTablePropLook.prototype['put_FirstCol'] = CTablePropLook.prototype.put_FirstCol;
-	CTablePropLook.prototype['get_FirstRow'] = CTablePropLook.prototype.get_FirstRow;
-	CTablePropLook.prototype['put_FirstRow'] = CTablePropLook.prototype.put_FirstRow;
-	CTablePropLook.prototype['get_LastCol'] = CTablePropLook.prototype.get_LastCol;
-	CTablePropLook.prototype['put_LastCol'] = CTablePropLook.prototype.put_LastCol;
-	CTablePropLook.prototype['get_LastRow'] = CTablePropLook.prototype.get_LastRow;
-	CTablePropLook.prototype['put_LastRow'] = CTablePropLook.prototype.put_LastRow;
-	CTablePropLook.prototype['get_BandHor'] = CTablePropLook.prototype.get_BandHor;
-	CTablePropLook.prototype['put_BandHor'] = CTablePropLook.prototype.put_BandHor;
-	CTablePropLook.prototype['get_BandVer'] = CTablePropLook.prototype.get_BandVer;
-	CTablePropLook.prototype['put_BandVer'] = CTablePropLook.prototype.put_BandVer;
-
 	/*
 	 {
 	 TableWidth   : null - галочка убрана, либо заданное значение в мм
@@ -501,7 +417,7 @@
 
 			this.ForSelectedCells = (undefined != tblProp.ForSelectedCells) ? tblProp.ForSelectedCells : true;
 			this.TableStyle = (undefined != tblProp.TableStyle) ? tblProp.TableStyle : null;
-			this.TableLook = (undefined != tblProp.TableLook) ? new CTablePropLook(tblProp.TableLook) : null;
+			this.TableLook = (undefined != tblProp.TableLook) ? tblProp.TableLook.Copy() : null;
 			this.RowsInHeader = (undefined !== tblProp.RowsInHeader) ? tblProp.RowsInHeader : false;
 			this.CellsVAlign = (undefined != tblProp.CellsVAlign) ? tblProp.CellsVAlign : c_oAscVertAlignJc.Top;
 			this.AllowOverlap = (undefined != tblProp.AllowOverlap) ? tblProp.AllowOverlap : undefined;
@@ -517,6 +433,12 @@
 
 			this.ColumnWidth = tblProp.ColumnWidth;
 			this.RowHeight   = tblProp.RowHeight;
+
+			this.FrameWidth = tblProp.FrameWidth;
+			this.FrameHeight = tblProp.FrameHeight;
+			this.FrameX = tblProp.FrameX;
+			this.FrameY = tblProp.FrameY;
+			this.FrameLockAspect = tblProp.FrameLockAspect;
 		}
 		else
 		{
@@ -553,6 +475,46 @@
 	CTableProp.prototype.put_Width = function (v)
 	{
 		this.TableWidth = v;
+	};
+	CTableProp.prototype.get_FrameWidth = function ()
+	{
+		return this.FrameWidth;
+	};
+	CTableProp.prototype.put_FrameWidth = function (v)
+	{
+		this.FrameWidth = v;
+	};
+	CTableProp.prototype.get_FrameHeight = function ()
+	{
+		return this.FrameHeight;
+	};
+	CTableProp.prototype.put_FrameHeight = function (v)
+	{
+		this.FrameHeight = v;
+	};
+	CTableProp.prototype.get_FrameX = function ()
+	{
+		return this.FrameX;
+	};
+	CTableProp.prototype.put_FrameX = function (v)
+	{
+		this.FrameX = v;
+	};
+	CTableProp.prototype.get_FrameY = function ()
+	{
+		return this.FrameY;
+	};
+	CTableProp.prototype.put_FrameY = function (v)
+	{
+		this.FrameY = v;
+	};
+	CTableProp.prototype.get_FrameLockAspect = function ()
+	{
+		return this.FrameLockAspect;
+	};
+	CTableProp.prototype.put_FrameLockAspect = function (v)
+	{
+		this.FrameLockAspect = v;
 	};
 	CTableProp.prototype.get_Spacing = function ()
 	{
@@ -880,6 +842,16 @@
 	CTableProp.prototype['put_ColumnWidth'] = CTableProp.prototype.put_ColumnWidth;
 	CTableProp.prototype['get_RowHeight'] = CTableProp.prototype.get_RowHeight;
 	CTableProp.prototype['put_RowHeight'] = CTableProp.prototype.put_RowHeight;
+	CTableProp.prototype['get_FrameWidth'] = CTableProp.prototype.get_FrameWidth;
+	CTableProp.prototype['put_FrameWidth'] = CTableProp.prototype.put_FrameWidth;
+	CTableProp.prototype['get_FrameHeight'] = CTableProp.prototype.get_FrameHeight;
+	CTableProp.prototype['put_FrameHeight'] = CTableProp.prototype.put_FrameHeight;
+	CTableProp.prototype['get_FrameX'] = CTableProp.prototype.get_FrameX;
+	CTableProp.prototype['put_FrameX'] = CTableProp.prototype.put_FrameX;
+	CTableProp.prototype['get_FrameY'] = CTableProp.prototype.get_FrameY;
+	CTableProp.prototype['put_FrameY'] = CTableProp.prototype.put_FrameY;
+	CTableProp.prototype['get_FrameLockAspect'] = CTableProp.prototype.get_FrameLockAspect;
+	CTableProp.prototype['put_FrameLockAspect'] = CTableProp.prototype.put_FrameLockAspect;
 
 // ---------------------------------------------------------------
 	function CBorders(obj)
@@ -1850,6 +1822,10 @@
 	{
 		this.PStyle = sStyleId;
 	};
+	CAscNumberingLvl.prototype.get_OLang = function()
+	{
+		return this.TextPr && this.TextPr.Lang;
+	};
 	window['Asc']['CAscNumberingLvl'] = window['Asc'].CAscNumberingLvl = CAscNumberingLvl;
 	CAscNumberingLvl.prototype['get_LvlNum']  = CAscNumberingLvl.prototype.get_LvlNum;
 	CAscNumberingLvl.prototype['get_Format']  = CAscNumberingLvl.prototype.get_Format;
@@ -1868,6 +1844,7 @@
 	CAscNumberingLvl.prototype['put_Align']   = CAscNumberingLvl.prototype.put_Align;
 	CAscNumberingLvl.prototype['get_PStyle']  = CAscNumberingLvl.prototype.get_PStyle;
 	CAscNumberingLvl.prototype['put_PStyle']  = CAscNumberingLvl.prototype.put_PStyle;
+	CAscNumberingLvl.prototype['get_OLang']   = CAscNumberingLvl.prototype.get_OLang;
 
 
 	function CAscWatermarkProperties()
@@ -2153,26 +2130,7 @@
 	};
 	CAscDateTime.prototype.get_FormatsExamples = function()
 	{
-		// TODO: Сдесь форматы для английского языка, надо добавить остальные
-		return [
-			"M/d/yyyy",
-			"dddd, MMMM d, yyyy",
-			"MMMM d, yyyy",
-			"M/d/yy",
-			"yyyy-MM-dd",
-			"d-MMM-yy",
-			"M.d.yyyy",
-			"MMM. d, yy",
-			"d MMMM yyyy",
-			"MMMM yy",
-			"MMM-yy",
-			"M/d/yyyy h:mm am/pm",
-			"M/d/yyyy h:mm:ss am/pm",
-			"h:mm am/pm",
-			"h:mm:ss am/pm",
-			"HH:mm",
-			"HH:mm:ss"
-		];
+		return Asc.c_oAscDateTimeFormat[this.Lang] ? Asc.c_oAscDateTimeFormat[this.Lang] : Asc.c_oAscDateTimeFormat[lcid_enUS];
 	};
 	CAscDateTime.prototype.get_String = function(sFormat, sDate, nLangId)
 	{
@@ -2328,7 +2286,7 @@
 
 	/**
 	* Класс для настроек конвертации текста в таблицу
-	* oSelectedContent {CSelectedContent}
+	* oSelectedContent {AscCommonWord.CSelectedContent}
 	* @constructor
 	*/
 	function CAscTextToTableProperties(oSelectedContent)

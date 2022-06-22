@@ -448,6 +448,7 @@ CDocumentContentBase.prototype.GetNumberingInfo = function(oNumberingEngine, oPa
 };
 CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeElement, bRemoveOnlySelection, bOnTextAdd, isWord)
 {
+	let oLogicDocument = this.GetLogicDocument();
 	if (this.CurPos.ContentPos < 0)
 		return false;
 
@@ -528,7 +529,6 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 				else
 				{
 					// В остальных ситуация мы не отслеживаем изменения
-					var oLogicDocument = this.GetLogicDocument();
 					var isLocalTrackRevisions = oLogicDocument.GetLocalTrackRevisions();
 					oLogicDocument.SetLocalTrackRevisions(false);
 					this.Content[StartPos].RemoveTableCells();
@@ -641,7 +641,18 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 
 					if (!isRemoveOnDrag)
 					{
-						if (type_Paragraph === StartType && type_Paragraph === EndType && true === bOnTextAdd)
+						if (oLogicDocument
+							&& oLogicDocument.ConcatParagraphsOnRemove
+							&& StartPos < this.Content.length - 1
+							&& this.Content[StartPos].IsParagraph()
+							&& this.Content[StartPos + 1].IsParagraph())
+						{
+							this.CurPos.ContentPos = StartPos + 1;
+							this.Content[StartPos + 1].ConcatBefore(this.Content[StartPos], 0);
+							this.RemoveFromContent(StartPos, 1);
+							this.CurPos.ContentPos = StartPos;
+						}
+						else if (type_Paragraph === StartType && type_Paragraph === EndType && true === bOnTextAdd)
 						{
 							// Встаем в конец параграфа и удаляем 1 элемент (чтобы соединить параграфы)
 							this.Content[StartPos].MoveCursorToEndPos(false, false);
@@ -687,12 +698,23 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 					{
 						this.Internal_Content_Remove(StartPos + 1, EndPos - StartPos);
 
-						if (type_Table == StartType)
+						if (type_Table === StartType)
 						{
 							// У нас обязательно есть элемент после таблицы (либо снова таблица, либо параграф)
 							// Встаем в начало следующего элемента.
 							this.CurPos.ContentPos = StartPos + 1;
 							this.Content[StartPos + 1].MoveCursorToStartPos(false);
+						}
+						else if (oLogicDocument
+							&& oLogicDocument.ConcatParagraphsOnRemove
+							&& StartPos < this.Content.length - 1
+							&& this.Content[StartPos].IsParagraph()
+							&& this.Content[StartPos + 1].IsParagraph())
+						{
+							this.CurPos.ContentPos = StartPos + 1;
+							this.Content[StartPos + 1].ConcatBefore(this.Content[StartPos], 0);
+							this.RemoveFromContent(StartPos, 1);
+							this.CurPos.ContentPos = StartPos;
 						}
 						else
 						{
@@ -1030,7 +1052,6 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 		{
 			if (false === this.Content[nCurContentPos].Remove(Count, isRemoveWholeElement, false, false, isWord))
 			{
-				var oLogicDocument = this.GetLogicDocument();
 				if (oLogicDocument && true === oLogicDocument.IsFillingFormMode())
 				{
 					if (Count < 0 && nCurContentPos > 0)
@@ -1387,6 +1408,18 @@ CDocumentContentBase.prototype.RemoveFromContent = function(nPos, nCount, isCorr
 		nCount = 1;
 
 	this.Remove_FromContent(nPos, nCount, isCorrectContent);
+};
+/**
+ * Меняет содержимое (с записью в историю)
+ * @param {array} aContent
+ */
+CDocumentContentBase.prototype.ReplaceContent = function(aContent)
+{
+	var i = 0;
+	for (var i = 0; i < aContent.length; ++i) {
+		this.Add_ToContent(i, aContent[i]);
+	}
+	this.Remove_FromContent(i, this.Content.length - aContent.length, false);
 };
 /**
  * Получаем текущий TableOfContents, это может быть просто поле или поле вместе с оберткой Sdt
@@ -1794,6 +1827,36 @@ CDocumentContentBase.prototype.ConcatParagraphs = function(nPosition, isUseConca
 	return false;
 };
 /**
+ * Специальная функция удаления параграфа во время приема/отклонения изменений
+ * @param {number} nPosition
+ */
+CDocumentContentBase.prototype.RemoveParagraphForReview = function(nPosition)
+{
+	if (nPosition >= this.Content.length
+		|| nPosition < 0
+		|| !this.Content[nPosition].IsParagraph())
+		return;
+
+	if (nPosition >= this.Content.length - 1)
+	{
+		if (1 === this.Content.length)
+		{
+			if (this.IsBlockLevelSdtContent())
+				this.GetParent().ReplaceContentWithPlaceHolder();
+			else
+				this.RemoveFromContent(0, 1, true);
+		}
+		else
+		{
+			this.RemoveFromContent(nPosition, 1);
+		}
+	}
+	else
+	{
+		this.ConcatParagraphs(nPosition, true);
+	}
+};
+/**
  * Пробегаемся по все ранам с заданной функцией
  * @param fCheck - функция проверки содержимого рана
  * @returns {boolean}
@@ -1897,7 +1960,7 @@ CDocumentContentBase.prototype.private_AcceptRevisionChanges = function(nType, b
 								&& oTrackMove.GetUserId() === oReviewInfo.GetUserId())))
 					{
 						oElement.SetReviewType(reviewtype_Common);
-						this.ConcatParagraphs(nCurPos, true);
+						this.RemoveParagraphForReview(nCurPos);
 					}
 				}
 				else if (oElement.IsTable())
@@ -1987,7 +2050,7 @@ CDocumentContentBase.prototype.private_RejectRevisionChanges = function(nType, b
 								&& oTrackMove.GetUserId() === oReviewInfo.GetUserId())))
 					{
 						oElement.SetReviewType(reviewtype_Common);
-						this.ConcatParagraphs(nCurPos, true);
+						this.RemoveParagraphForReview(nCurPos);
 					}
 					else if (reviewtype_Remove === nReviewType
 						&& (undefined === nType
@@ -2029,35 +2092,6 @@ CDocumentContentBase.prototype.private_RejectRevisionChanges = function(nType, b
 CDocumentContentBase.prototype.IsCalculatingContinuousSectionBottomLine = function()
 {
 	return false;
-};
-/**
- * Проверяем содержимое, которые мы вставляем, в зависимости от места куда оно вставляется
- * @param oSelectedContent {CSelectedContent}
- * @param oAnchorPos {NearestPos}
- */
-CDocumentContentBase.prototype.private_CheckSelectedContentBeforePaste = function(oSelectedContent, oAnchorPos)
-{
-	var oParagraph = oAnchorPos.Paragraph;
-
-	// Если мы вставляем в специальный контент контрол, тогда производим простую вставку текста
-	var oParaState = oParagraph.SaveSelectionState();
-	oParagraph.RemoveSelection();
-	oParagraph.Set_ParaContentPos(oAnchorPos.ContentPos, false, -1, -1, false);
-	var arrContentControls = oParagraph.GetSelectedContentControls();
-	oParagraph.LoadSelectionState(oParaState);
-
-	for (var nIndex = 0, nCount = arrContentControls.length; nIndex < nCount; ++nIndex)
-	{
-		if (arrContentControls[nIndex].IsComboBox() || arrContentControls[nIndex].IsDropDownList())
-		{
-			oSelectedContent.ConvertToText();
-			break;
-		}
-	}
-	if(this.bPresentation)
-	{
-		oSelectedContent.ConvertToPresentation(this);
-	}
 };
 /**
  * Проверяем, начинается ли заданная страница с заданного элемента
@@ -2228,4 +2262,31 @@ CDocumentContentBase.prototype.IsEmptyParagraphAfterTableInTableCell = function(
 };
 CDocumentContentBase.prototype.SetThisElementCurrent = function(isUpdateStates)
 {
+};
+
+/**
+ * Method for getting all
+ * @param {string} sPluginId - id of plugin which can edit those ole-objects, if it's not specified return all ole-objects
+ * @param {Array} arrObjects - create array if not specified
+ * @returns {Array}
+ */
+CDocumentContentBase.prototype.GetAllOleObjects = function(sPluginId, arrObjects)
+{
+	if (Array.isArray(arrObjects))
+	{
+		arrObjects = [];
+	}
+	let arrDrawings = this.GetAllDrawingObjects([]);
+	for(let nDrawing = 0; nDrawing < arrDrawings.length; ++nDrawing)
+	{
+		arrDrawings[nDrawing].GetAllOleObjects(sPluginId, arrObjects)
+	}
+	return arrObjects;
+};
+CDocumentContentBase.prototype.ProcessComplexFields = function()
+{
+	for (let nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+	{
+		this.Content[nIndex].ProcessComplexFields();
+	}
 };

@@ -57,6 +57,7 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
     }
     var selected_objects = group ? group.selectedObjects : drawingObjectsController.getSelectedObjects();
     var oCropSelection = drawingObjectsController.selection.cropSelection ? drawingObjectsController.selection.cropSelection : null;
+    var oGeometryEditSelection = drawingObjectsController.selection.geometrySelection ? drawingObjectsController.selection.geometrySelection : null;
     var tx, ty, t, hit_to_handles;
     var ret = null;
     var drawing = null;
@@ -166,7 +167,7 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
                 ty = y;
             }
             
-            if(selected_objects[0].canChangeAdjustments())
+            if(selected_objects[0].canChangeAdjustments() && !oGeometryEditSelection)
             {
                 var hit_to_adj = selected_objects[0].hitToAdjustment(tx, ty);
                 if(hit_to_adj.hit)
@@ -206,7 +207,7 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
             if(!ret)
             {
                 hit_to_handles = selected_objects[i].hitToHandles(tx, ty);
-                if(hit_to_handles > -1)
+                if(hit_to_handles > -1 && !oGeometryEditSelection)
                 {
 
                     if(window["IS_NATIVE_EDITOR"] && e.ClickCount > 1)
@@ -220,6 +221,15 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
                     drawing = selected_objects[i];
                     break;
                 }
+            }
+        }
+    }
+
+    if(!ret) {
+        if(oGeometryEditSelection) {
+            ret = oGeometryEditSelection.handle(drawingObjectsController, e, x, y);
+            if(ret) {
+                return ret;
             }
         }
     }
@@ -247,7 +257,7 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
             if(!ret)
             {
 
-                if(selected_objects[i].hitInBoundingRect(tx, ty))
+                if(selected_objects[i].hitInBoundingRect(tx, ty) && !oGeometryEditSelection)
                 {
                     if(window["IS_NATIVE_EDITOR"])
                     {
@@ -321,6 +331,7 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
                 break;
             }
             case AscDFH.historyitem_type_GroupShape:
+            case AscDFH.historyitem_type_SmartArt:
             {
                 ret = handleGroup(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord);
                 break;
@@ -414,7 +425,7 @@ function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pag
     var hit_in_inner_area = drawing.hitInInnerArea && drawing.hitInInnerArea(x, y);
     var hit_in_path = drawing.hitInPath && drawing.hitInPath(x, y);
     var hit_in_text_rect = drawing.hitInTextRect && drawing.hitInTextRect(x, y);
-    if(hit_in_inner_area || hit_in_path)
+    if(hit_in_inner_area || hit_in_path || hit_in_text_rect)
     {
         if(drawingObjectsController.checkDrawingHyperlinkAndMacro){
             var ret =  drawingObjectsController.checkDrawingHyperlinkAndMacro(drawing, e, hit_in_text_rect, x, y, pageIndex);
@@ -516,7 +527,7 @@ function handleShapeImageInGroup(drawingObjectsController, drawing, shape, e, x,
     var hit_in_path = shape.hitInPath && shape.hitInPath(x, y);
     var hit_in_text_rect = shape.hitInTextRect && shape.hitInTextRect(x, y);
     var ret;
-    if(hit_in_inner_area || hit_in_path)
+    if(hit_in_inner_area || hit_in_path || hit_in_text_rect)
     {
         if(drawingObjectsController.checkDrawingHyperlinkAndMacro){
             var ret =  drawingObjectsController.checkDrawingHyperlinkAndMacro(shape, e, hit_in_text_rect, x, y, pageIndex);
@@ -1268,9 +1279,15 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
         return false;
     }
     var ret = false, i, title, hit_to_handles;
+
+    var oApi = drawingObjectsController.getEditorApi();
     var bIsMobileVersion = oApi && oApi.isMobileVersion;
     if(drawing.hit(x, y))
     {
+        if(drawingObjectsController.isObjectsProtected() && drawing.getProtectionLocked())
+        {
+            return false;
+        }
         var bClickFlag =  !window["IS_NATIVE_EDITOR"] && (drawingObjectsController.handleEventMode === AscFormat.HANDLE_EVENT_MODE_CURSOR || e.ClickCount < 2);
         var selector = group ? group : drawingObjectsController;
         var legend = drawing.getLegend();
@@ -1565,14 +1582,18 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
         }
 
         var chart_titles = drawing.getAllTitles();
-        var oApi = editor || Asc['editor'];
         for(i = 0; i < chart_titles.length; ++i)
         {
             title = chart_titles[i];
             var hit_in_inner_area = title.hitInInnerArea(x, y);
             var hit_in_path = title.hitInPath(x, y);
             var hit_in_text_rect = title.hitInTextRect(x, y);
-            if((hit_in_inner_area && (!hit_in_text_rect || drawing.selection.title !== title) || (hit_in_path && bIsMobileVersion !== true)) || (drawing.selection.title === title && title.hitInBoundingRect(x, y) )&& !window["NATIVE_EDITOR_ENJINE"])
+
+            var bMobileEditor = window["IS_NATIVE_EDITOR"] || bIsMobileVersion;
+            var bSameTitle = (drawing.selection.title === title);
+            if((hit_in_inner_area && (!hit_in_text_rect || !bSameTitle) ||
+                (hit_in_path && !bMobileEditor)) ||
+                (bSameTitle && title.hitInBoundingRect(x, y) && (!bMobileEditor || !hit_in_text_rect)))
             {
 
                 var selector = group ? group : drawingObjectsController;
@@ -1976,6 +1997,7 @@ function handleInlineObjects(drawingObjectsController, drawingArr, e, x, y, page
                 break;
             }
             case AscDFH.historyitem_type_GroupShape:
+            case AscDFH.historyitem_type_SmartArt:
             {
                 ret = handleGroup(drawing, drawingObjectsController, e, x, y, null, pageIndex, bWord);
                 if(ret)
@@ -1993,11 +2015,12 @@ function handleMouseUpPreMoveState(drawingObjects, e, x, y, pageIndex, bWord)
     state.drawingObjects.clearPreTrackObjects();
     state.drawingObjects.changeCurrentState(new AscFormat.NullState(state.drawingObjects));
     var bHandle = false;
-    if(!state.shift && !state.ctrl && state.bInside && state.majorObjectIsSelected && e.Button !== AscCommon.g_mouse_button_right)
+    if(!state.shift && /*!state.ctrl &&*/ state.bInside && state.majorObjectIsSelected && e.Button !== AscCommon.g_mouse_button_right)
     {
         switch (state.majorObject.getObjectType())
         {
             case AscDFH.historyitem_type_GroupShape:
+            case AscDFH.historyitem_type_SmartArt:
             {
                 state.drawingObjects.checkChartTextSelection();
                 state.drawingObjects.resetSelection();
@@ -2039,9 +2062,7 @@ function handleMouseUpPreMoveState(drawingObjects, e, x, y, pageIndex, bWord)
     }
     if(!bHandle)
     {
-
-
-        if(e.CtrlKey && state.majorObjectIsSelected)
+        if(e.CtrlKey && state.majorObjectIsSelected && !state.bGroupSelection)
         {
             drawingObjects.deselectObject(state.majorObject);
             state.drawingObjects.drawingObjects && state.drawingObjects.drawingObjects.sendGraphicObjectProps &&  state.drawingObjects.drawingObjects.sendGraphicObjectProps();

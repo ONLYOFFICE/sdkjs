@@ -367,13 +367,8 @@ CChartSpace.prototype.recalculate = function()
 
         if(this.recalcInfo.recalculateAxisVal)
         {
-            if(AscFormat.CChartsDrawer.prototype._isSwitchCurrent3DChart(this)){
-                //old variant
-                this.recalculateAxis();
-            }
-            else{
-                this.recalculateAxes();
-            }
+            
+            this.recalculateAxes();
             this.recalcInfo.recalculateAxisVal = false;
             bCheckLabels = true;
         }

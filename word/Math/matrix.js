@@ -144,6 +144,26 @@ CMathMatrixPr.prototype.Set_FromObject = function(Obj)
 
     return nColumnsCount;
 };
+CMathMatrixPr.prototype.initByContent = function(mrs)
+{
+    if (!mrs) {
+        return;
+    }
+    //create props by content, important  before creation matrix
+    let rowMax = mrs.length;
+    let colMax = 0;
+    for (let i = 0; i < mrs.length; ++i) {
+        colMax = Math.max(colMax, mrs[i].length);
+    }
+    this.row = rowMax;
+    var colMaxMc = 0;
+    for (var i = 0; i < this.mcs.length; ++i) {
+        colMaxMc += this.mcs[i].count;
+    }
+    if (colMaxMc < colMax) {
+        this.mcs.push({count: colMax - colMaxMc, mcJc: MCJC_CENTER});
+    }
+};
 CMathMatrixPr.prototype.Copy = function()
 {
     var NewPr = new CMathMatrixPr();
@@ -654,14 +674,29 @@ CMathMatrix.prototype.kind      = MATH_MATRIX;
 CMathMatrix.prototype.init = function(props)
 {
     this.setProperties(props);
-    this.column = this.Pr.Get_ColumnsCount();
+	this.Pr.initByContent(props.mrs);
+
+	this.column = this.Pr.Get_ColumnsCount();
+	if (props.mrs) {
+		props.content = this.flatContent(props.mrs, this.column);
+	}
 
     var nRowsCount = this.getRowsCount();
     var nColsCount = this.getColsCount();
 
-    this.Fill_LogicalContent(nRowsCount * nColsCount);
+    this.Fill_LogicalContent(nRowsCount * nColsCount, props.content);
 
     this.fillContent();
+};
+CMathMatrix.prototype.flatContent = function(content, cols) {
+    let res = [];
+    for (let i = 0; i < content.length; ++i) {
+        let row = content[i];
+        for (let j = 0; j < row.length; ++j) {
+            res[i * cols + j] = row[j];
+        }
+    }
+    return res;
 };
 CMathMatrix.prototype.setPosition = function(pos, PosInfo)
 {
@@ -1227,6 +1262,13 @@ function CMathEqArrPr()
 
     this.row     = 1;
 }
+CMathEqArrPr.prototype.initByContent = function(content)
+{
+	if(!content) {
+		return;
+	}
+	this.row = content.length;
+};
 CMathEqArrPr.prototype.Set_FromObject = function(Obj)
 {
     if(undefined !== Obj.maxDist && null !== Obj.maxDist)
@@ -1333,12 +1375,23 @@ CEqArray.prototype.kind      = MATH_EQ_ARRAY;
 
 CEqArray.prototype.init = function(props)
 {
-    var nRowsCount = props.row;
+	this.setProperties(props);
+	this.Pr.initByContent(props.content);
 
-    this.Fill_LogicalContent(nRowsCount);
+    var nRowsCount = this.Pr.row;
+    this.Fill_LogicalContent(nRowsCount, props.content);
 
-    this.setProperties(props);
     this.fillContent();
+};
+CEqArray.prototype.initPostOpen = function(mcJc) {
+	if (mcJc) {
+		for (var j = 0; j < this.Content.length; j++) {
+			var oContentElem = this.Content[j];
+			if (oContentElem.Content.length == 0)
+				oContentElem.SetPlaceholder();
+		}
+		this.setJustificationForConversion(mcJc);
+	}
 };
 CEqArray.prototype.fillContent = function()
 {

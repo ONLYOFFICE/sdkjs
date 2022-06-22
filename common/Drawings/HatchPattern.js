@@ -780,7 +780,7 @@ CHatchBrush.prototype =
         if (this.Canvas)
             return this.Canvas.toDataURL("image/png");
 
-        return "data:onlyoffice_hatch," + AscCommon.Base64Encode(this.Data, 4 * HATCH_TX_SIZE * HATCH_TX_SIZE);
+        return "data:onlyoffice_hatch," + AscCommon.Base64.encode(this.Data, 0, 4 * HATCH_TX_SIZE * HATCH_TX_SIZE);
     }
 };
 

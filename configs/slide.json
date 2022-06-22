@@ -16,6 +16,7 @@
 			"common/TableId.js",
 			"common/TableIdChanges.js",
 			"common/AdvancedOptions.js",
+			"common/libfont/engine.js",
 			"common/libfont/loader.js",
 			"slide/apiDefines.js",
 			"common/CollaborativeEditingBase.js",
@@ -25,19 +26,30 @@
 			"common/apiBase_plugins.js",
 			"word/apiCommon.js",
 			"slide/api.js",
-			"common/spell/spell.js"
+			"common/spell/spell.js",
+			"common/zlib/zlib.js",
+			"word/Editor/Table/TableLook.js"
 		],
-		"common": [			
+		"common": [
+			"common/api/actionOnTimer.js",
+			"common/api/tableStylesPreviewGenerator.js",
+			"common/api/spellCheckSettings.js",
+
 			"common/downloaderfiles.js",
 			"common/NumFormat.js",
 			"common/SerializeChart.js",
 
+			"common/libfont/common.js",
 			"common/libfont/map.js",
 			"common/libfont/rasterheap.js",
 			"common/libfont/glyphstring.js",
 			"common/libfont/character.js",
-			"common/libfont/manager.js",
 			"common/libfont/classification.js",
+			"common/libfont/file.js",
+			"common/libfont/manager.js",
+
+			"common/stringserialize.js",
+			"common/random.js",
 
 			"common/Drawings/Metafile.js",
 			"common/libfont/textmeasurer.js",
@@ -55,10 +67,11 @@
 
 			"common/Drawings/CommonController.js",
 			"common/Drawings/States.js",
-			"common/Drawings/Format/CreateGeometry.js",
 			"common/Drawings/DrawingsChanges.js",
-			"common/Drawings/Format/Geometry.js",
 			"common/Drawings/Format/Format.js",
+			"common/Drawings/Format/VML.js",
+			"common/Drawings/Format/CreateGeometry.js",
+			"common/Drawings/Format/Geometry.js",
 			"common/Drawings/Format/GraphicObjectBase.js",
 			"common/Drawings/Format/Shape.js",
 			"common/Drawings/Format/CnxShape.js",
@@ -66,6 +79,7 @@
 			"common/Drawings/Format/Path.js",
 			"common/Drawings/Format/Image.js",
 			"common/Drawings/Format/GroupShape.js",
+			"common/Drawings/Format/Data.js",
 			"common/Drawings/Format/ChartSpace.js",
 			"common/Drawings/Format/ChartFormat.js",
 			"common/Drawings/Format/TextBody.js",
@@ -81,6 +95,7 @@
 			"common/Drawings/TrackObjects/PolyLine.js",
 			"common/Drawings/TrackObjects/ResizeTracks.js",
 			"common/Drawings/TrackObjects/RotateTracks.js",
+			"common/Drawings/TrackObjects/GeometryEditTrack.js",
 			"common/Drawings/TrackObjects/Spline.js",
 			"common/Drawings/TrackObjects/ConnectorTrack.js",
 			"common/Drawings/DrawingObjectsHandlers.js",
@@ -167,6 +182,7 @@
 			"word/Editor/Field.js",
 			"word/Editor/FieldChanges.js",
 			"word/Editor/Run.js",
+			"word/Editor/Paragraph/Run/RunAutoCorrect.js",
 			"word/Editor/PresentationField.js",
 			"word/Editor/RunChanges.js",
 			"word/Math/mathTypes.js",
@@ -188,6 +204,8 @@
 			"word/Editor/Paragraph_Recalculate.js",
 			"word/Editor/DocumentContentBase.js",
 			"word/Editor/Document.js",
+			"word/Editor/ChangeCase.js",
+			"word/Editor/SelectedContent.js",
 			"word/Editor/DocumentOutline.js",
 			"word/Editor/DocumentChanges.js",
 			"word/Editor/DocumentContent.js",
@@ -199,7 +217,10 @@
 			"word/Editor/HeaderFooter.js",
 			"word/Editor/Math.js",
 			"word/Editor/MathChanges.js",
-			"word/Editor/Spelling.js",
+			"word/Editor/SpellChecker/DocumentSpellChecker.js",
+			"word/Editor/SpellChecker/ParagraphCollector.js",
+			"word/Editor/SpellChecker/ParagraphSpellChecker.js",
+			"word/Editor/SpellChecker/ParagraphSpellCheckerElement.js",
 			"word/Editor/FootEndNote.js",
 			"word/Editor/Footnotes.js",
 			"word/Editor/FootnotesChanges.js",
@@ -210,7 +231,11 @@
 			"word/Editor/StructuredDocumentTags/InlineLevel.js",
 			"word/Editor/StructuredDocumentTags/SdtPr.js",
 			"word/Editor/StructuredDocumentTags/SdtPrChanges.js",
-			"word/Editor/Search.js",
+			"common/api/searchSettings.js",
+			"word/Editor/Search/DocumentSearch.js",
+			"word/Editor/Search/ParagraphSearch.js",
+			"word/Editor/Search/SearchItem.js",
+			"word/Editor/Search/Pattern.js",
 			"word/Editor/GlossaryDocument.js",
 			"word/Editor/GlossaryDocumentChanges.js",
 
@@ -222,14 +247,25 @@
 
 			"word/apiBuilder.js",
 			"slide/apiBuilder.js",
+			"word/fromToJSON.js",
+			"slide/fromToJSON.js",
+
 			"common/versionHistory.js",
 			"common/clipboard_base.js",
 			"common/text_input.js",
 			"common/Drawings/Format/OleObject.js",
 			"common/Drawings/Format/DrawingContent.js",
 			"common/plugins.js",
+
+			"common/Native/native_graphics.js",
 			
-			"common/Native/native_graphics.js"
+			"vendor/easysax.js",
+			"common/openxml.js",
+			"common/Shapes/SerializeXml.js",
+			"common/SerializeChartXml.js",
+			"common/SerializeMathXml.js",
+			"word/Editor/SerializeXml.js",
+			"word/Editor/SerializeXmlAssets.js"
 		],
 		"desktop": {
 			"min": [
@@ -247,8 +283,8 @@
 			"common": []
 		},
 		"mobile": [
+			"common/libfont/engine/fonts_native.js",
 			"common/Charts/ChartStyles.js",
-			"common/Native/Wrappers/TextMeasurerWrapper.js",
 			"common/Native/Wrappers/DrawingStream.js",
 			"common/Native/Wrappers/ShapeDrawer.js",
 			"common/Native/Wrappers/Overlay.js",
@@ -258,14 +294,11 @@
 			"slide/Native/Wrappers/native.js"
 		],
 		"exclude_mobile": [
-			"word/Drawing/ShapeDrawer.js",
+			"vendor/iscroll.js",
 			"common/Overlay.js",
+			"word/Drawing/ShapeDrawer.js",
 			"slide/Drawing/HtmlPage.js",
-			"slide/Drawing/DrawingDocument.js",
-			"common/libfont/rasterheap.js",
-			"common/libfont/glyphstring.js",
-			"common/libfont/manager.js",
-			"common/libfont/textmeasurer.js"
+			"slide/Drawing/DrawingDocument.js"
 		]
 	}
 }

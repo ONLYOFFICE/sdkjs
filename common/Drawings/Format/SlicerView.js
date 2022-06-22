@@ -141,9 +141,7 @@
                 zoom = window.Asc.editor.asc_getZoom();
             }
             vector_koef = 25.4 / (ppiX * zoom);
-            if (AscCommon.AscBrowser.isRetina) {
-                vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
-            }
+            vector_koef /= AscCommon.AscBrowser.retinaPixelRatio;
         }
         return vector_koef;
     }
@@ -1197,6 +1195,24 @@
     };
     CSlicer.prototype.getAllSlicerViews = function(aSlicerView) {
         aSlicerView.push(this);
+    };
+    CSlicer.prototype.readAttrXml = function (name, reader) {
+        switch (name) {
+            case "name": {
+                this.setName(reader.GetValue());
+                break;
+            }
+        }
+    };
+    CSlicer.prototype.toXml = function (writer) {
+        //writer.WriteXmlString("<sle:slicer xmlns:sle=\"http://schemas.microsoft.com/office/drawing/2010/slicer\" name=\"" + this.name + "\"/>");
+
+
+        writer.WriteXmlNodeStart("sle:slicer");
+        writer.WriteXmlString(" xmlns:sle=\"http://schemas.microsoft.com/office/drawing/2010/slicer\"");
+        writer.WriteXmlNullableAttributeStringEncode("name", this.name);
+        writer.WriteXmlAttributesEnd(true);
+
     };
 
     function CHeader(slicer) {

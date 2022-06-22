@@ -48,7 +48,6 @@ var CCommentAuthor;
 var PresentationSelectedContent;
 var DrawingCopyObject;
 
-var GetLoadInfoForMeasurer;
 var RULER_OBJECT_TYPE_PARAGRAPH;
 var RULER_OBJECT_TYPE_HEADER;
 var RULER_OBJECT_TYPE_FOOTER;

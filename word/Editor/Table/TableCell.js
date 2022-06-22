@@ -299,10 +299,10 @@ CTableCell.prototype =
         }
 
         // Совместим настройки с настройками для групп строк. Сначала группы строк, потом группы колонок.
-        if ( true === TableLook.Is_BandHor() )
+        if ( true === TableLook.IsBandHor() )
         {
             var RowBandSize = TablePr.TablePr.TableStyleRowBandSize;
-            var __RowIndex  = ( true != TableLook.Is_FirstRow() ? RowIndex : RowIndex - 1 );
+            var __RowIndex  = ( true != TableLook.IsFirstRow() ? RowIndex : RowIndex - 1 );
             var _RowIndex = ( 1 != RowBandSize ? Math.floor( __RowIndex / RowBandSize ) : __RowIndex );
             var TableBandStyle = null;
             if ( 0 === _RowIndex % 2 )
@@ -317,11 +317,11 @@ CTableCell.prototype =
 
 		// Совместим с настройками для групп колонок
 		// Согласно спецификации DOCX, совмещать надо всегда. Word проверяет наличие первой колонки не только
-		// через флаг TableLook.Is_FirstCol(), но и самим наличием непустого стиля для первой колонки.
-		if (true === TableLook.Is_BandVer())
+		// через флаг TableLook.IsFirstCol(), но и самим наличием непустого стиля для первой колонки.
+		if (true === TableLook.IsBandVer())
 		{
 			var bFirstCol = false;
-			if (true === TableLook.Is_FirstCol())
+			if (true === TableLook.IsFirstCol())
 			{
 				var oTableStyle = this.Get_Styles().Get(this.Row.Table.Get_TableStyle());
 				if (oTableStyle && styletype_Table === oTableStyle.Get_Type() && oTableStyle.TableFirstCol)
@@ -352,7 +352,7 @@ CTableCell.prototype =
 
 
         // Совместим настройки с настройками для последней колонки
-        if ( true === TableLook.Is_LastCol() && this.Row.Get_CellsCount() - 1 === CellIndex )
+        if ( true === TableLook.IsLastCol() && this.Row.Get_CellsCount() - 1 === CellIndex )
         {
             CellPr.Merge( TablePr.TableLastCol.TableCellPr );
             TextPr.Merge( TablePr.TableLastCol.TextPr );
@@ -360,7 +360,7 @@ CTableCell.prototype =
         }
 
         // Совместим настройки с настройками для первой колонки
-        if ( true === TableLook.Is_FirstCol() && 0 === CellIndex )
+        if ( true === TableLook.IsFirstCol() && 0 === CellIndex )
         {
             CellPr.Merge( TablePr.TableFirstCol.TableCellPr );
             TextPr.Merge( TablePr.TableFirstCol.TextPr );
@@ -368,7 +368,7 @@ CTableCell.prototype =
         }
 
         // Совместим настройки с настройками для последней строки
-        if ( true === TableLook.Is_LastRow() && Table.Content.length - 1 === RowIndex )
+        if ( true === TableLook.IsLastRow() && Table.Content.length - 1 === RowIndex )
         {
             CellPr.Merge( TablePr.TableLastRow.TableCellPr );
             TextPr.Merge( TablePr.TableLastRow.TextPr );
@@ -376,7 +376,7 @@ CTableCell.prototype =
         }
 
         // Совместим настройки с настройками для первой строки
-        if ( true === TableLook.Is_FirstRow() && ( 0 === RowIndex || true === this.Row.Pr.TableHeader )  )
+        if ( true === TableLook.IsFirstRow() && ( 0 === RowIndex || true === this.Row.Pr.TableHeader )  )
         {
             CellPr.Merge( TablePr.TableFirstRow.TableCellPr );
             TextPr.Merge( TablePr.TableFirstRow.TextPr );
@@ -384,7 +384,7 @@ CTableCell.prototype =
         }
 
         // Совместим настройки с настройками для правой нижней ячейки
-        if ( this.Row.Get_CellsCount() - 1 === CellIndex && Table.Content.length - 1 === RowIndex && (!Table.bPresentation || true === TableLook.Is_LastRow() && true === TableLook.Is_LastCol()))
+        if ( this.Row.Get_CellsCount() - 1 === CellIndex && Table.Content.length - 1 === RowIndex && (!Table.bPresentation || true === TableLook.IsLastRow() && true === TableLook.IsLastCol()))
         {
             CellPr.Merge( TablePr.TableBRCell.TableCellPr );
             TextPr.Merge( TablePr.TableBRCell.TextPr );
@@ -392,7 +392,7 @@ CTableCell.prototype =
         }
 
         // Совместим настройки с настройками для левой нижней ячейки
-        if ( 0 === CellIndex && Table.Content.length - 1 === RowIndex && (!Table.bPresentation || true === TableLook.Is_LastRow() && true === TableLook.Is_FirstCol()))
+        if ( 0 === CellIndex && Table.Content.length - 1 === RowIndex && (!Table.bPresentation || true === TableLook.IsLastRow() && true === TableLook.IsFirstCol()))
         {
             CellPr.Merge( TablePr.TableBLCell.TableCellPr );
             TextPr.Merge( TablePr.TableBLCell.TextPr );
@@ -400,7 +400,7 @@ CTableCell.prototype =
         }
 
         // Совместим настройки с настройками для правой верхней ячейки
-        if ( this.Row.Get_CellsCount() - 1 === CellIndex && 0 === RowIndex && (!Table.bPresentation || true === TableLook.Is_FirstRow() && true === TableLook.Is_LastCol()) )
+        if ( this.Row.Get_CellsCount() - 1 === CellIndex && 0 === RowIndex && (!Table.bPresentation || true === TableLook.IsFirstRow() && true === TableLook.IsLastCol()) )
         {
             CellPr.Merge( TablePr.TableTRCell.TableCellPr );
             TextPr.Merge( TablePr.TableTRCell.TextPr );
@@ -408,7 +408,7 @@ CTableCell.prototype =
         }
 
         // Совместим настройки с настройками для левой верхней ячейки
-        if ( 0 === CellIndex && 0 === RowIndex && (!Table.bPresentation || true === TableLook.Is_FirstRow() && true === TableLook.Is_FirstCol()))
+        if ( 0 === CellIndex && 0 === RowIndex && (!Table.bPresentation || true === TableLook.IsFirstRow() && true === TableLook.IsFirstCol()))
         {
             CellPr.Merge( TablePr.TableTLCell.TableCellPr );
             TextPr.Merge( TablePr.TableTLCell.TextPr );
@@ -431,11 +431,6 @@ CTableCell.prototype =
     //-----------------------------------------------------------------------------------
     // Функции, к которым идет обращение из контента
     //-----------------------------------------------------------------------------------
-    OnContentRecalculate : function(bChange, bForceRecalc)
-    {
-        this.Row.Table.Internal_RecalculateFrom( this.Row.Index, this.Index, bChange, false );
-    },
-
     OnContentReDraw : function(StartPage, EndPage)
     {
         this.Row.Table.Parent.OnContentReDraw( StartPage, EndPage );
@@ -1019,7 +1014,7 @@ CTableCell.prototype =
 		return oResult;
 	},
 
-    Content_Shift : function(CurPage, dX, dY)
+	ShiftCell : function(CurPage, dX, dY)
     {
         if (true === this.IsVerticalText())
         {
@@ -1037,9 +1032,30 @@ CTableCell.prototype =
         }
         else
         {
-            this.Content.Shift(CurPage, dX, dY);
+        	this.ShiftCellContent(CurPage, dX, dY);
         }
     },
+
+	ShiftCellContent : function(nCurPage, nShiftX, nShiftY)
+	{
+		this.Content.Shift(nCurPage, nShiftX, nShiftY);
+
+		var arrDrawings = this.Content.GetAllDrawingObjects();
+		for (var nIndex = 0, nCount = arrDrawings.length; nIndex < nCount; ++nIndex)
+		{
+			var _nShiftX = 0, _nShiftY = 0;
+			var oDrawing = arrDrawings[nIndex];
+			if (!oDrawing.IsInline() && oDrawing.IsLayoutInCell())
+			{
+				if (!oDrawing.IsMoveWithTextHorizontally())
+					_nShiftX = nShiftX;
+				if (!oDrawing.IsMoveWithTextVertically())
+					_nShiftY = nShiftY;
+
+				oDrawing.Shift(_nShiftX, _nShiftY);
+			}
+		}
+	},
 
     private_GetTextDirectionTransform : function()
     {
@@ -1146,10 +1162,11 @@ CTableCell.prototype =
 		{
 			// TODO: переделать здесь на нармальное выставление настроек
 			this.Set_Shd({
-				Value   : OtherPr.Shd.Value,
-				Color   : OtherPr.Shd.Color ? {r : OtherPr.Shd.Color.r, g : OtherPr.Shd.Color.g, b : OtherPr.Shd.Color.b} : undefined,
-				Fill    : OtherPr.Shd.Fill ? {r : OtherPr.Shd.Fill.r, g : OtherPr.Shd.Fill.g, b : OtherPr.Shd.Fill.b} : undefined,
-				Unifill : OtherPr.Shd.Unifill ? OtherPr.Shd.Unifill.createDuplicate() : undefined
+				Value    : OtherPr.Shd.Value,
+				Color    : OtherPr.Shd.Color ? {r : OtherPr.Shd.Color.r, g : OtherPr.Shd.Color.g, b : OtherPr.Shd.Color.b} : undefined,
+				Fill     : OtherPr.Shd.Fill ? {r : OtherPr.Shd.Fill.r, g : OtherPr.Shd.Fill.g, b : OtherPr.Shd.Fill.b} : undefined,
+				Unifill  : OtherPr.Shd.Unifill ? OtherPr.Shd.Unifill.createDuplicate() : undefined,
+                ThemeFill: OtherPr.Shd.ThemeFill ? OtherPr.Shd.ThemeFill.createDuplicate() : undefined
 			});
 		}
 
@@ -1836,6 +1853,10 @@ CTableCell.prototype =
 
     Refresh_RecalcData : function(Data)
     {
+		let oTable = this.GetTable();
+		if (!oTable)
+			return;
+
         var bNeedRecalc = false;
 
         var Type = Data.Type;
@@ -1864,7 +1885,7 @@ CTableCell.prototype =
             }
         }
 
-        this.Row.Table.RecalcInfo.RecalcBorders();
+		oTable.RecalcInfo.RecalcBorders();
 
         this.Refresh_RecalcData2( 0, 0 );
     },

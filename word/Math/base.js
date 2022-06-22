@@ -1512,11 +1512,18 @@ CMathBase.prototype.LoadRecalculateObject = function(RecalcObj)
 		CParagraphContentWithParagraphLikeContent.prototype.LoadRecalculateObject.call(this, RecalcObj);
 
 };
-CMathBase.prototype.Fill_LogicalContent = function(nCount)
+CMathBase.prototype.Fill_LogicalContent = function(nCount, opt_content)
 {
+    if (!opt_content) {
+        opt_content = [];
+    }
     for (var nIndex = 0; nIndex < nCount; nIndex++)
     {
-        this.Content[nIndex] = new CMathContent();
+        let elem = opt_content[nIndex];
+        if (!elem) {
+            elem = new CMathContent();
+        }
+        this.Content[nIndex] = elem;
         this.Content[nIndex].ParentElement = this;
         this.Content[nIndex].Parent        = this;
     }
@@ -1896,6 +1903,21 @@ CMathBase.prototype.Select_MathContent = function(MathContent)
             break;
         }
     }
+};
+CMathBase.prototype.SetCurrentMathContent = function(oMathContent)
+{
+	for (let nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
+	{
+		if (this.Content[nPos] === oMathContent)
+		{
+			this.CurPos = nPos;
+
+			if (null !== this.Parent)
+				this.Parent.SetCurrentElement(this);
+
+			break;
+		}
+	}
 };
 CMathBase.prototype.Draw_HighLights = function(PDSH, bAll)
 {
@@ -2974,6 +2996,18 @@ CMathBase.prototype.Refresh_ContentChanges = function()
 {
 	this.m_oContentChanges.Refresh();
 };
+CMathBase.prototype.ConvertStrToOperator= function(text)
+{
+    var aUnicode = AscCommon.convertUTF16toUnicode(text);
+    return (aUnicode.length <= 0 ? OPERATOR_EMPTY : aUnicode[0]);
+};
+CMathBase.prototype.ConvertOperatorToStr = function(operator)
+{
+    if (null == operator) {
+        return operator;
+    }
+    return OPERATOR_EMPTY === operator ? "" : AscCommon.convertUnicodeToUTF16([operator]);
+};
 
 function CMathBasePr()
 {
@@ -3205,12 +3239,12 @@ CEmptyRunRecalculateObject.prototype =
 
     },
 
-    Save_RunContent : function(Run, Copy)
+    SaveRunContent : function(Run, Copy)
     {
 
     },
 
-    Load_RunContent : function(Run)
+    LoadRunContent : function(Run)
     {
 
     },

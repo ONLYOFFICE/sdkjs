@@ -32,7 +32,7 @@
 
 "use strict";
 
-(function(window) {
+(function(window, undefined) {
 	var openXml = {};
 
 	function SaxParserBase() {
@@ -45,28 +45,28 @@
 	SaxParserBase.prototype.onError = function(msg) {
 		throw new Error(msg);
 	};
-	SaxParserBase.prototype.onStartNode = function(elem, attr, uq, tagend, getStrNode) {
+	SaxParserBase.prototype.onStartNode = function(elem, getAttrs, isTagEnd, getStringNode) {
 		this.depth++;
 		if (!this.isSkip()) {
 			var newContext;
 			if (this.context.onStartNode) {
-				newContext = this.context.onStartNode.apply(this.context, arguments);
+				newContext = this.context.onStartNode.call(this.context, elem, getAttrs, EasySAXParser.entityDecode, isTagEnd, getStringNode);
 				if (!newContext) {
 					this.skip();
 				}
 			}
-			if (!this.isSkip() && !tagend) {
+			if (!this.isSkip() && !isTagEnd) {
 				this.context = newContext ? newContext : this.context;
 				this.contextStack.push(this.context);
 			}
 		}
 	};
-	SaxParserBase.prototype.onTextNode = function(text, uq) {
+	SaxParserBase.prototype.onTextNode = function(text) {
 		if (this.context && this.context.onTextNode) {
-			this.context.onTextNode.apply(this.context, arguments);
+			this.context.onTextNode.call(this.context, text, EasySAXParser.entityDecode);
 		}
 	};
-	SaxParserBase.prototype.onEndNode = function(elem, uq, tagstart, getStrNode) {
+	SaxParserBase.prototype.onEndNode = function(elem, isTagStart, getStringNode) {
 		this.depth--;
 		var isSkip = this.isSkip();
 		if (isSkip && this.depth <= this.depthSkip) {
@@ -74,12 +74,12 @@
 		}
 		if (!isSkip){
 			var prevContext = this.context;
-			if(!tagstart){
+			if(!isTagStart){
 				this.contextStack.pop();
 				this.context = this.contextStack[this.contextStack.length - 1];
 			}
 			if (this.context && this.context.onEndNode) {
-				this.context.onEndNode(prevContext, elem, uq, tagstart, getStrNode);
+				this.context.onEndNode.call(this.context, prevContext, elem, EasySAXParser.entityDecode, isTagStart, getStringNode);
 			}
 		}
 	};
@@ -92,7 +92,7 @@
 	SaxParserBase.prototype.parse = function(xml, context) {
 		var t = this;
 		this.context = context;
-		var parser = new EasySAXParser();
+		var parser = new EasySAXParser({'autoEntity': false});
 		parser.on('error', function() {
 			t.onError.apply(t, arguments);
 		});
@@ -107,6 +107,7 @@
 		});
 		parser.parse(xml);
 	};
+
 	openXml.SaxParserBase = SaxParserBase;
 	openXml.SaxParserDataTransfer = {};
 
@@ -129,197 +130,229 @@
 		}
 		return this;
 	};
-	function RelsReader(pkg, part){
+	ContentTypes.prototype.toXml = function(writer) {
+		writer.WriteXmlString("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
+		writer.WriteXmlNodeStart("Types");
+		writer.WriteXmlString(" xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"");
+		writer.WriteXmlAttributesEnd();
+		for (var ext in this.Defaults) {
+			if (this.Defaults.hasOwnProperty(ext)) {
+				writer.WriteXmlNodeStart("Default");
+				writer.WriteXmlAttributeStringEncode("Extension", ext);
+				writer.WriteXmlAttributeStringEncode("ContentType", this.Defaults[ext]);
+				writer.WriteXmlAttributesEnd(true);
+			}
+		}
+		for (var partName in this.Overrides) {
+			if (this.Overrides.hasOwnProperty(partName)) {
+				writer.WriteXmlNodeStart("Override");
+				writer.WriteXmlAttributeStringEncode("PartName", partName);
+				writer.WriteXmlAttributeStringEncode("ContentType", this.Overrides[partName]);
+				writer.WriteXmlAttributesEnd(true);
+			}
+		}
+		writer.WriteXmlNodeEnd("Types");
+	};
+	ContentTypes.prototype.add = function(partName, contentType) {
+		var exti = partName.lastIndexOf(".");
+		var ext = partName.substring(exti + 1);
+		var res = !(this.Overrides[partName] && this.Defaults[ext]);
+		if (contentType) {
+			this.Overrides[partName] = contentType;
+		}
+		if (!this.Defaults[ext]) {
+			var mime = openXml.GetMimeType(ext);
+			this.Defaults[ext] = mime;
+		}
+		return res;
+	};
+	function Rels(pkg, part){
 		this.pkg = pkg;
 		this.part = part;
 		this.rels = [];
+		this.nextRId = 1;
 	}
 
-	RelsReader.prototype.onStartNode = function(elem, attr, uq, tagend, getStrNode) {
+	Rels.prototype.onStartNode = function(elem, attr, uq, tagend, getStrNode) {
 		var attrVals;
 		if ('Relationships' === elem) {
 		} else if ('Relationship' === elem) {
 			if (attr()) {
 				attrVals = attr();
-				var targetMode = null;
-				var tm = attrVals["TargetMode"];
-				if (tm) {
-					targetMode = tm;
-				}
-				var theRel = new openXml.OpenXmlRelationship(this.pkg, this.part, attrVals["Id"], attrVals["Type"],
+				var rId = attrVals["Id"] || "";
+				var targetMode = attrVals["TargetMode"] || null;
+				var theRel = new openXml.OpenXmlRelationship(this.pkg, this.part, rId, attrVals["Type"],
 					attrVals["Target"], targetMode);
 				this.rels.push(theRel);
+				if (rId.startsWith("rId")) {
+					this.nextRId = Math.max(this.nextRId, parseInt(rId.substring("rId".length)) + 1 || 1);
+				}
 			}
 		}
 		return this;
 	};
+	Rels.prototype.toXml = function(writer) {
+		writer.WriteXmlString("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
+		writer.WriteXmlNodeStart("Relationships");
+		writer.WriteXmlString(" xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"");
+		writer.WriteXmlAttributesEnd();
+		this.rels.forEach(function(elem){
+			elem.toXml(writer, "Relationship");
+		});
+		writer.WriteXmlNodeEnd("Relationships");
+	};
+	Rels.prototype.getNextRId = function() {
+		return "rId" + (this.nextRId++);
+	};
+
 
 	/******************************** OpenXmlPackage ********************************/
 	function openFromZip(zip, pkg) {
-		var relsData = [];
+		var ctf = zip.files["[Content_Types].xml"];
+		if (ctf) {
+			new SaxParserBase().parse(ctf.sync("string"), pkg.cntTypes);
+		}
 		for (var f in zip.files) {
-			var zipFile = zip.files[f];
-			if (!f.endsWith("/")) {
-				var f2 = f;
-				if (f !== "[Content_Types].xml") {
-					f2 = "/" + f;
-				}
-				var newPart = new openXml.OpenXmlPart(pkg, f2, null, null, zipFile);
-				pkg.parts[f2] = newPart;
-				if (f.endsWith(".rels")) {
-					var uri = getPartUriOfRelsPart(newPart);
-					relsData.push([uri, newPart]);
+			if (zip.files.hasOwnProperty(f)) {
+				if (!f.endsWith("/")) {
+					var f2 = f;
+					var contentType = null;
+					if (f !== "[Content_Types].xml") {
+						f2 = "/" + f;
+						contentType = pkg.getContentType(f2);
+					}
+					pkg.parts[f2] = new openXml.OpenXmlPart(pkg, f2, contentType);
 				}
 			}
 		}
-		var ctf = pkg.parts["[Content_Types].xml"];
-		if (ctf === null) {
-			throw "Invalid Open XML document: no [Content_Types].xml";
-		}
-		var promises = [];
-		promises.push(ctf.data.async("string"));
-		for (var i = 0; i < relsData.length; ++i) {
-			promises.push(relsData[i][1].data.async("string"));
-		}
-		return Promise.all(promises).then(function(res) {
-			new SaxParserBase().parse(res[0], pkg.cntTypes);
-			for (var part in pkg.parts) {
-				if (part === "[Content_Types].xml") {
-					continue;
-				}
-				var ct = pkg.getContentType(part);
-				var thisPart = pkg.parts[part];
-				thisPart.contentType = ct;
-				if (ct !== undefined && ct.endsWith("xml")) {
-					thisPart.partType = "xml";
-				} else {
-					thisPart.partType = "binary";
-				}
-			}
-			for (var i = 0; i < relsData.length; ++i) {
-				var uri = relsData[i][0];
-				var part = pkg.parts[uri];
-				var relsReader;
-				if (part) {
-					relsReader = new RelsReader(null, part);
-				} else if ('/' === uri) {
-					relsReader = new RelsReader(pkg, null);
-				}
-				new SaxParserBase().parse(res[i + 1], relsReader);
-				relsData[i][1].rels = relsReader.rels;
-			}
-		});
 	}
 
-	openXml.OpenXmlPackage = function() {
-		this.rels = null;
+	openXml.OpenXmlPackage = function(zip, xmlWriter) {
+		this.zip = zip;
+		this.xmlWriter = xmlWriter;
 		this.parts = {};
 		this.cntTypes = new ContentTypes();
-	}
+		this.fileNameIndexes = {};
 
-	openXml.OpenXmlPackage.prototype.openFromZip = function(documentToOpen) {
-		return openFromZip(documentToOpen, this);
-	}
+		openFromZip(this.zip, this);
+	};
 
-	openXml.OpenXmlPackage.prototype.getRelationships = function() {
-		var rootRelationshipsPart = this.getPartByUri("/_rels/.rels");
-		rootRelationshipsPart.rels;
-	}
-
-	openXml.OpenXmlPackage.prototype.getRelationship = function(rId) {
-		var rels = this.getRelationships();
-		for (var i = 0; i < rels.length; ++i) {
-			var rel = rels[i];
-			if (rel.relationshipId === rId) {
-				return rel;
+	openXml.OpenXmlPackage.prototype.removePart = function (uri) {
+		var removePart = this.parts[uri];
+		if(removePart) {
+			delete this.parts[uri];
+			this.zip.removeFile(removePart.getUriRelative());
+		}
+		return removePart;
+	};
+	openXml.OpenXmlPackage.prototype.generateNextFilename = function (type) {
+		if (-1 === type.filename.indexOf("[N]")) {
+			return type.filename;
+		} else {
+			var nextIndex = 1;
+			if (!this.fileNameIndexes[type.relationType]) {
+				this.fileNameIndexes[type.relationType] = nextIndex + 1;
+			} else {
+				nextIndex = this.fileNameIndexes[type.relationType]++;
+			}
+			return type.filename.replace(/\[N\]/g, nextIndex.toString());
+		}
+	};
+	openXml.OpenXmlPackage.prototype.generateTargetByType = function (type) {
+		if (type.dir) {
+			return type.dir + "/" + this.generateNextFilename(type);
+		} else {
+			return this.generateNextFilename(type);
+		}
+	};
+	openXml.OpenXmlPackage.prototype.generateUriByType = function (target, base) {
+		var baseSplit = base.split('/');
+		baseSplit.pop();
+		var targetSplit = target.split('/');
+		for (var i = 0; i < targetSplit.length; ++i) {
+			if ('..' === targetSplit[i]) {
+				baseSplit.pop();
+			} else {
+				baseSplit.push(targetSplit[i]);
 			}
 		}
-		return rel;
-	}
+		return baseSplit.join('/');
+	};
+	openXml.OpenXmlPackage.prototype.addPartWithoutRels = function (uri, contentType) {
+		//add part
+		var newPart = new openXml.OpenXmlPart(this, uri, contentType);
+		this.parts[uri] = newPart;
+		// update [Content_Types].xml
+		var changed = this.cntTypes.add(uri, contentType);
+		if(changed) {
+			this.zip.removeFile("[Content_Types].xml");
+			this.zip.addFile("[Content_Types].xml", this.getXmlBytes(this.getRootPart(), this.cntTypes, this.xmlWriter));
+		}
+		return newPart;
+	};
+	openXml.OpenXmlPackage.prototype.addPart = function (type) {
+		return this.getRootPart().addPart(type);
+	};
+	openXml.OpenXmlPackage.prototype.addRelationship = function (relationshipType, target, targetMode) {
+		return this.getRootPart().addRelationship(relationshipType, target, targetMode);
+	};
 
 	openXml.OpenXmlPackage.prototype.getParts = function() {
 		var parts = [];
 		for (var part in this.parts) {
-			if (this.parts[part].contentType !== openXml.contentTypes.relationships && part !== "[Content_Types].xml") {
+			if (this.parts[part].contentType !== openXml.Types.relationships.contentType && part !== "[Content_Types].xml") {
 				parts.push(this.parts[part]);
 			}
 		}
 		return parts;
-	}
+	};
+
+	openXml.OpenXmlPackage.prototype.getRootPart = function() {
+		return new openXml.OpenXmlPart(this, "/", openXml.Types.relationships.contentType);
+	};
+	openXml.OpenXmlPackage.prototype.getRels = function() {
+		return this.getRootPart().getRels();
+	};
+	openXml.OpenXmlPackage.prototype.getRelationships = function() {
+		return this.getRootPart().getRelationships();
+	};
+
+	openXml.OpenXmlPackage.prototype.getRelationship = function(rId) {
+		return this.getRootPart().getRelationship(rId);
+	};
 
 	openXml.OpenXmlPackage.prototype.getRelationshipsByRelationshipType = function(relationshipType) {
-		var rootRelationshipsPart = this.getPartByUri("/_rels/.rels");
-		var rels = [];
-		for (var i = 0; i < rootRelationshipsPart.rels.length; ++i) {
-			var rel = rootRelationshipsPart.rels[i];
-			if (rel.relationshipType === relationshipType) {
-				rels.push(rel);
-			}
-		}
-		return rels;
-	}
+		return this.getRootPart().getRelationshipsByRelationshipType(relationshipType);
+	};
 
 	openXml.OpenXmlPackage.prototype.getPartsByRelationshipType = function(relationshipType) {
-		var rels = this.getRelationshipsByRelationshipType(relationshipType);
-		var parts = [];
-		for (var i = 0; i < rels.length; ++i) {
-			var part = this.getPartByUri(rels[i].targetFullName);
-			parts.push(part);
-		}
-		return parts;
-	}
+		return this.getRootPart().getPartsByRelationshipType(relationshipType);
+	};
 
 	openXml.OpenXmlPackage.prototype.getPartByRelationshipType = function(relationshipType) {
-		var parts = this.getPartsByRelationshipType(relationshipType);
-		if (parts.length < 1) {
-			return null;
-		}
-		return parts[0];
-	}
+		return this.getRootPart().getPartByRelationshipType(relationshipType);
+	};
 
 	openXml.OpenXmlPackage.prototype.getRelationshipsByContentType = function(contentType) {
-		var rootRelationshipsPart = this.getPartByUri("/_rels/.rels");
-		if (rootRelationshipsPart) {
-			var allRels = rootRelationshipsPart.rels;
-			var rels = [];
-			for (var i = 0; i < allRels.length; ++i) {
-				if (allRels[i].targetMode === "External") {
-					continue;
-				}
-				var ct = this.getContentType(allRels[i].targetFullName);
-				if (ct !== contentType) {
-					continue;
-				}
-				rels.push(allRels[i]);
-			}
-			return rels;
-		}
-		return [];
-	}
+		return this.getRootPart().getRelationshipsByContentType(contentType);
+	};
 
 	openXml.OpenXmlPackage.prototype.getPartsByContentType = function(contentType) {
-		var rels = this.getRelationshipsByContentType(contentType);
-		var parts = [];
-		for (var i = 0; i < rels.length; ++i) {
-			var part = this.getPartByUri(rels[i].targetFullName);
-			parts.push(part);
-		}
-		return parts;
+		return this.getRootPart().getPartsByContentType(contentType);
 	};
 
 	openXml.OpenXmlPackage.prototype.getRelationshipById = function(rId) {
-		return this.getRelationship(rId);
-	}
+		return this.getRootPart().getRelationshipById(rId);
+	};
 
 	openXml.OpenXmlPackage.prototype.getPartById = function(rId) {
-		var rel = this.getRelationship(rId);
-		return rel ? this.getPartByUri(rel.targetFullName) : null;
-	}
+		return this.getRootPart().getPartById(rId);
+	};
 
 	openXml.OpenXmlPackage.prototype.getPartByUri = function(uri) {
 		var part = this.parts[uri];
 		return part;
-	}
+	};
 
 	openXml.OpenXmlPackage.prototype.getContentType = function(uri) {
 		var ct = this.cntTypes.Overrides[uri];
@@ -330,25 +363,73 @@
 		}
 		return ct;
 	};
+	openXml.OpenXmlPackage.prototype.getXmlBytes = function(part, data, writer) {
+		var oldPart = writer.context.part;
+		writer.context.part = part;
+		var oldPos = writer.GetCurPosition();
+		data.toXml(writer);
+		var pos = writer.GetCurPosition();
+		var res = writer.GetDataUint8(oldPos, pos - oldPos);
+
+		writer.Seek(oldPos);
+		writer.context.part = oldPart;
+		return res;
+	};
 
 	/*********** OpenXmlPart ***********/
 
-	openXml.OpenXmlPart = function(pkg, uri, contentType, partType, data) {
+	openXml.OpenXmlPart = function(pkg, uri, contentType) {
 		this.pkg = pkg;      // reference to the parent package
 		this.uri = uri;      // the part is also indexed by uri in the package
 		this.contentType = contentType;
-		this.partType = partType;
-		if (uri === "[Content_Types].xml") {
-			partType = "xml";
-		}
-		this.data = data;
 	};
 
-	openXml.OpenXmlPart.prototype.getDocumentContent = function() {
-		if (this.partType === 'xml') {
-			return this.data.async("string");
+	openXml.OpenXmlPart.prototype.getUriRelative = function() {
+		return this.uri.substring(1);
+	};
+	openXml.OpenXmlPart.prototype.getDocumentContent = function(type) {
+		type = type || "string";
+		var data = this.pkg.zip.getFile(this.getUriRelative());
+		if (!data) {
+			data = new Uint8Array(0);
 		}
-		return "";
+		if ("string" === type) {
+			return AscCommon.UTF8ArrayToString(data, 0, data.length);
+		} else {
+			return data;
+		}
+	};
+	openXml.OpenXmlPart.prototype.addPart = function (type) {
+		var target = this.pkg.generateTargetByType(type);
+		var uri = this.pkg.generateUriByType(target, this.uri);
+		var newPart = this.pkg.addPartWithoutRels(uri, type.contentType);
+		//update rels
+		var rId = this.addRelationship(type.relationType, target);
+		return {part: newPart, rId: rId};
+	};
+	openXml.OpenXmlPart.prototype.addPartWithoutRels = function (type) {
+		var target = this.pkg.generateTargetByType(type);
+		var uri = this.pkg.generateUriByType(target, this.uri);
+		return this.pkg.addPartWithoutRels(uri, type.contentType);
+	};
+	openXml.OpenXmlPart.prototype.setData = function (data) {
+		this.pkg.zip.addFile(this.getUriRelative(), data);
+	};
+	openXml.OpenXmlPart.prototype.setDataXml = function (xmlObj, writer) {
+		writer.context.clearCurrentPartImageMap();
+		var data = this.pkg.getXmlBytes(this, xmlObj, writer);
+		this.pkg.zip.addFile(this.getUriRelative(), data);
+	};
+	openXml.OpenXmlPart.prototype.addRelationship = function (relationshipType, target, targetMode) {
+		var relsFilename = getRelsPartUriOfPart(this);
+		var rels = this.getRels();
+		var rId = rels.getNextRId();
+		var newRel = new openXml.OpenXmlRelationship(rels.pkg, rels.part, rId, relationshipType, target, targetMode);
+		rels.rels.push(newRel);
+		this.pkg.removePart(relsFilename);
+		var relsPart = this.pkg.addPartWithoutRels(relsFilename, null);
+		relsPart.setData(this.pkg.getXmlBytes(relsPart, rels, this.pkg.xmlWriter));
+		return rId;
 	};
 
 	function getRelsPartUriOfPart(part) {
@@ -373,13 +454,16 @@
 		return relsPart;
 	}
 
-	// returns all relationships
-	openXml.OpenXmlPart.prototype.getRelationships = function() {
+	openXml.OpenXmlPart.prototype.getRels = function() {
+		var relsPackage = new Rels(null, this);
 		var relsPart = getRelsPartOfPart(this);
-		if (relsPart) {
-			return relsPart.rels;
+		if(relsPart) {
+			new SaxParserBase().parse(relsPart.getDocumentContent(), relsPackage);
 		}
-		return [];
+		return relsPackage;
+	}
+	openXml.OpenXmlPart.prototype.getRelationships = function() {
+		return this.getRels().rels;
 	}
 
 	openXml.OpenXmlPart.prototype.getRelationship = function(rId) {
@@ -398,23 +482,17 @@
 		var parts = [];
 		var rels = this.getRelationships();
 		for (var i = 0; i < rels.length; ++i) {
-			if (rels[i].targetMode === "Internal") {
-				var part = this.pkg.getPartByUri(rels[i].targetFullName);
-				parts.push(part);
-			}
+			var part = this.pkg.getPartByUri(rels[i].targetFullName);
+			parts.push(part);
 		}
 		return parts;
 	}
 
 	openXml.OpenXmlPart.prototype.getRelationshipsByRelationshipType = function(relationshipType) {
-		var rels = [];
-		var allRels = this.getRelationships();
-		for (var i = 0; i < allRels.length; ++i) {
-			if (allRels[i].relationshipType === relationshipType) {
-				rels.push(allRels[i]);
-			}
-		}
-		return rels;
+		var rels = this.getRelationships();
+		return rels.filter(function (rel) {
+			return rel.relationshipType === relationshipType;
+		});
 	}
 
 	// returns all related parts of the source part with the given relationship type
@@ -437,17 +515,10 @@
 	}
 
 	openXml.OpenXmlPart.prototype.getRelationshipsByContentType = function(contentType) {
-		var rels = [];
-		var allRels = this.getRelationships();
-		for (var i = 0; i < allRels.length; ++i) {
-			if (allRels[i].targetMode === "Internal") {
-				var ct = this.pkg.getContentType(allRels[i].targetFullName);
-				if (ct === contentType) {
-					rels.push(allRels[i]);
-				}
-			}
-		}
-		return rels;
+		var rels = this.getRelationships();
+		return rels.filter(function (rel) {
+			return this.getContentType(rel.targetFullName) === contentType;
+		});
 	}
 
 	openXml.OpenXmlPart.prototype.getPartsByContentType = function(contentType) {
@@ -499,7 +570,7 @@
 				workingCurrentPath = this.fromPart.uri.substring(0, slashIndex) + "/";
 			}
 		}
-		if (targetMode === "External") {
+		if (targetMode === openXml.TargetMode.external) {
 			this.targetFullName = this.target;
 			return;
 		}
@@ -515,183 +586,197 @@
 			workingTarget = workingTarget.substring(3);
 		}
 
-		this.targetFullName = workingCurrentPath + workingTarget;
+		if (workingTarget.startsWith("/")) {
+			this.targetFullName = workingTarget;
+		} else {
+			this.targetFullName = workingCurrentPath + workingTarget;
+		}
 	}
+	openXml.OpenXmlRelationship.prototype.toXml = function(writer, name) {
+		writer.WriteXmlNodeStart(name);
+		if (this.relationshipId) {
+			writer.WriteXmlAttributeStringEncode("Id", this.relationshipId);
+		}
+		if (this.relationshipType) {
+			writer.WriteXmlAttributeString("Type", this.relationshipType);
+		}
+		if (this.target) {
+			writer.WriteXmlAttributeStringEncode("Target", this.target);
+		}
+		if (this.targetMode && this.targetMode !== openXml.TargetMode.internal) {
+			writer.WriteXmlAttributeString("TargetMode", this.targetMode);
+		}
+		writer.WriteXmlAttributesEnd(true);
+	};
 
+	openXml.MimeTypes = {
+		"bmp": "image/bmp",
+		"gif": "image/gif",
+		"png": "image/png",
+		"tif": "image/tiff",
+		"tiff": "image/tiff",
+		"jpeg": "image/jpeg",
+		"jpg": "image/jpeg",
+		"jpe": "image/jpeg",
+		"jfif": "image/jpeg",
+		"rels": "application/vnd.openxmlformats-package.relationships+xml",
+		"bin": "application/vnd.openxmlformats-officedocument.oleObject",
+		"xml": "application/xml",
+		"emf": "image/x-emf",
+		"emz": "image/x-emz",
+		"wmf": "image/x-wmf",
+		"svg": "image/svg+xml",
+		"svm": "image/svm",
+		"wdp": "image/vnd.ms-photo",
+		"wav": "audio/wav",
+		"wma": "audio/x-wma",
+		"m4a": "audio/unknown",
+		"mp3": "audio/mpeg",
+		"mp4": "video/unknown",
+		"mov": "video/unknown",
+		"m4v": "video/unknown",
+		"mkv": "video/unknown",
+		"avi": "video/avi",
+		"flv": "video/x-flv",
+		"wmv": "video/x-wmv",
+		"webm": "video/webm",
+		"xls": "application/vnd.ms-excel",
+		"xlsm": "application/vnd.ms-excel.sheet.macroEnabled.12",
+		"xlsb": "application/vnd.ms-excel.sheet.binary.macroEnabled.12",
+		"xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+		"ppt": "application/vnd.ms-powerpoint",
+		"pptm": "application/vnd.ms-powerpoint.presentation.macroEnabled.12",
+		"pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+		"sldm": "application/vnd.ms-powerpoint.slide.macroEnabled.12",
+		"sldx": "application/vnd.openxmlformats-officedocument.presentationml.slide",
+		"doc": "application/msword",
+		"docm": "application/vnd.ms-word.document.macroEnabled.12",
+		"docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+		"vml": "application/vnd.openxmlformats-officedocument.vmlDrawing",
+		"vsd": "application/vnd.visio",
+		"vsdx": "application/vnd.ms-visio.drawing"
+	};
+	openXml.GetMimeType = function(ext) {
+		return openXml.MimeTypes[ext] || "application/octet-stream";
+	};
 	/******************************** OpenXmlRelationship ********************************/
+	openXml.Types = {
+		calculationChain: {dir: "", filename: "calcChain.xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.calcChain+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/calcChain"},
+		cellMetadata: {dir: "", filename: "cellMetadata.xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheetMetadata+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sheetMetadata"},
+		chart: {dir: "../charts", filename: "chart[N].xml", contentType: "application/vnd.openxmlformats-officedocument.drawingml.chart+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart"},
+		chartWord: {dir: "charts", filename: "chart[N].xml", contentType: "application/vnd.openxmlformats-officedocument.drawingml.chart+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart"},
+		chartColorStyle: {dir: "", filename: "color[N].xml", contentType: "application/vnd.ms-office.chartcolorstyle+xml", relationType: "http://schemas.microsoft.com/office/2011/relationships/chartColorStyle"},
+		chartDrawing: {dir: "", filename: "chartDrawing.xml", contentType: "application/vnd.openxmlformats-officedocument.drawingml.chartshapes+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/chartUserShapes"},
+		chartsheet: {dir: "chartsheets", filename: "sheet[N].xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.chartsheet+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/chartsheet"},
+		chartStyle: {dir: "", filename: "style[N].xml", contentType: "application/vnd.ms-office.chartstyle+xml", relationType: "http://schemas.microsoft.com/office/2011/relationships/chartStyle"},
+		commentAuthors: {dir: "", filename: "commentAuthors.xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.commentAuthors+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/commentAuthors"},
+		connections: {dir: "", filename: "connections.xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.connections+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/connections"},
+		coreFileProperties: {dir: "docProps", filename: "core.xml", contentType: "application/vnd.openxmlformats-package.core-properties+xml", relationType: "http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties"},
+		customFileProperties: {dir: "docProps", filename: "custom.xml", contentType: "application/vnd.openxmlformats-officedocument.custom-properties+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/custom-properties"},
+		customization: {dir: "", filename: "customization.xml", contentType: "application/vnd.ms-word.keyMapCustomizations+xml", relationType: "http://schemas.microsoft.com/office/2006/relationships/keyMapCustomizations"},
+		customProperty: {dir: "", filename: "customProperty.xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.customProperty", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/customProperty"},
+		customXmlProperties: {dir: "", filename: "customXmlProperties.xml", contentType: "application/vnd.openxmlformats-officedocument.customXmlProperties+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/customXmlProps"},
+		diagramColors: {dir: "", filename: "diagramColors.xml", contentType: "application/vnd.openxmlformats-officedocument.drawingml.diagramColors+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramColors"},
+		diagramData: {dir: "", filename: "diagramData.xml", contentType: "application/vnd.openxmlformats-officedocument.drawingml.diagramData+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramData"},
+		diagramLayoutDefinition: {dir: "", filename: "diagramLayoutDefinition.xml", contentType: "application/vnd.openxmlformats-officedocument.drawingml.diagramLayout+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramLayout"},
+		diagramPersistLayout: {dir: "", filename: "diagramPersistLayout.xml", contentType: "application/vnd.ms-office.drawingml.diagramDrawing+xml", relationType: "http://schemas.microsoft.com/office/2007/relationships/diagramDrawing"},
+		diagramStyle: {dir: "", filename: "diagramStyle.xml", contentType: "application/vnd.openxmlformats-officedocument.drawingml.diagramStyle+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramQuickStyle"},
+		dialogsheet: {dir: "", filename: "dialogsheet.xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.dialogsheet+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/dialogsheet"},
+		digitalSignatureOrigin: {dir: "", filename: "digitalSignatureOrigin.xml", contentType: "application/vnd.openxmlformats-package.digital-signature-origin", relationType: "http://schemas.openxmlformats.org/package/2006/relationships/digital-signature/origin"},
+		documentSettings: {dir: "", filename: "settings.xml", contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings"},
+		drawings: {dir: "../drawings", filename: "drawing[N].xml", contentType: "application/vnd.openxmlformats-officedocument.drawing+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing"},
+		endnotes: {dir: "", filename: "endnotes.xml", contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.endnotes+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/endnotes"},
+		excelAttachedToolbars: {dir: "", filename: "excelAttachedToolbars.xml", contentType: "application/vnd.ms-excel.attachedToolbars", relationType: "http://schemas.microsoft.com/office/2006/relationships/attachedToolbars"},
+		extendedFileProperties: {dir: "docProps", filename: "app.xml", contentType: "application/vnd.openxmlformats-officedocument.extended-properties+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties"},
+		externalWorkbook: {dir: "externalLinks", filename: "externalLink[N].xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.externalLink+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/externalLink"},
+		fontData: {dir: "", filename: "fontData.xml", contentType: "application/x-fontdata"},
+		fontTable: {dir: "", filename: "fontTable.xml", contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.fontTable+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/fontTable"},
+		footer: {dir: "", filename: "footer[N].xml", contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer"},
+		footnotes: {dir: "", filename: "footnotes.xml", contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.footnotes+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footnotes"},
+		gif: {dir: "", filename: "gif.xml", contentType: "image/gif"},
+		glossaryDocument: {dir: "glossary", filename: "document.xml", contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document.glossary+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/glossaryDocument"},
+		handoutMaster: {dir: "", filename: "handoutMaster.xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.handoutMaster+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/handoutMaster"},
+		header: {dir: "", filename: "header[N].xml", contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/header"},
+		jpeg: {dir: "", filename: "jpeg.xml", contentType: "image/jpeg"},
+		mainDocument: {dir: "word", filename: "document.xml", contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"},
+		notesMaster: {dir: "notesMasters", filename: "notesMaster[N].xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.notesMaster+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesMaster"},
+		notesSlide: {dir: "notesSlides", filename: "notesSlide[N].xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.notesSlide+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesSlide"},
+		numbering: {dir: "", filename: "numbering.xml", contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering"},
+		pict: {dir: "", filename: "pict.xml", contentType: "image/pict"},
+		pivotTable: {dir: "../pivotTables", filename: "pivotTable[N].xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotTable+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/pivotTable"},
+		pivotTableCacheDefinition: {dir: "../pivotCache", filename: "pivotCacheDefinition[N].xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotCacheDefinition+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/pivotCacheDefinition"},
+		pivotTableCacheDefinitionWorkbook: {dir: "pivotCache", filename: "pivotCacheDefinition[N].xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotCacheDefinition+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/pivotCacheDefinition"},
+		pivotTableCacheRecords: {dir: "", filename: "pivotCacheRecords[N].xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotCacheRecords+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/pivotCacheRecords"},
+		png: {dir: "", filename: "png.xml", contentType: "image/png"},
+		presentation: {dir: "ppt", filename: "presentation.xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"},
+		presentationProperties: {dir: "", filename: "presProps.xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.presProps+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/presProps"},
+		presentationTemplate: {dir: "", filename: "presentationTemplate.xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.template.main+xml"},
+		queryTable: {dir: "../queryTables", filename: "queryTable[N].xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.queryTable+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/queryTable"},
+		relationships: {dir: "_rels", filename: ".rels", contentType: "application/vnd.openxmlformats-package.relationships+xml"},
+		ribbonAndBackstageCustomizations: {dir: "", filename: "ribbonAndBackstageCustomizations.xml", contentType: "http://schemas.microsoft.com/office/2009/07/customui", relationType: "http://schemas.microsoft.com/office/2007/relationships/ui/extensibility"},
+		sharedStringTable: {dir: "", filename: "sharedStrings.xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"},
+		singleCellTable: {dir: "", filename: "singleCellTable.xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.tableSingleCells+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/tableSingleCells"},
+		slicerCache: {dir: "slicerCaches", filename: "slicerCache[N].xml", contentType: "application/vnd.ms-excel.slicerCache+xml", relationType: "http://schemas.microsoft.com/office/2007/relationships/slicerCache"},
+		slicers: {dir: "../slicers", filename: "slicer[N].xml", contentType: "application/vnd.ms-excel.slicer+xml", relationType: "http://schemas.microsoft.com/office/2007/relationships/slicer"},
+		slide: {dir: "slides", filename: "slide[N].xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.slide+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide"},
+		slideComments: {dir: "comments", filename: "slideComments.xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.comments+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments"},
+		slideLayout: {dir: "slideLayouts", filename: "slideLayout[N].xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout"},
+		slideMaster: {dir: "slideMasters", filename: "slideMaster[N].xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster"},
+		slideShow: {dir: "", filename: "slideShow.xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.slideshow.main+xml"},
+		slideSyncData: {dir: "", filename: "slideSyncData.xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.slideUpdateInfo+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideUpdateInfo"},
+		styles: {dir: "", filename: "styles.xml", contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"},
+		tableDefinition: {dir: "../tables", filename: "table[N].xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.table+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/table"},
+		tableStyles: {dir: "", filename: "tableStyles.xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.tableStyles+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/tableStyles"},
+		theme: {dir: "theme", filename: "theme[N].xml", contentType: "application/vnd.openxmlformats-officedocument.theme+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme"},
+		themeOverride: {dir: "", filename: "themeOverride.xml", contentType: "application/vnd.openxmlformats-officedocument.themeOverride+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/themeOverride"},
+		tiff: {dir: "", filename: "tiff.xml", contentType: "image/tiff"},
+		trueTypeFont: {dir: "", filename: "trueTypeFont.xml", contentType: "application/x-font-ttf"},
+		userDefinedTags: {dir: "", filename: "userDefinedTags.xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.tags+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/tags"},
+		viewProperties: {dir: "", filename: "viewProps.xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.viewProps+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/viewProps"},
+		vmlDrawing: {dir: "../drawings", filename: "vmlDrawing[N].vml", contentType: "application/vnd.openxmlformats-officedocument.vmlDrawing", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/vmlDrawing"},
+		volatileDependencies: {dir: "", filename: "volatileDependencies.xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.volatileDependencies+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/volatileDependencies"},
+		webSettings: {dir: "", filename: "webSettings.xml", contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.webSettings+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/webSettings"},
+		wordAttachedToolbars: {dir: "", filename: "wordAttachedToolbars.xml", contentType: "application/vnd.ms-word.attachedToolbars", relationType: "http://schemas.microsoft.com/office/2006/relationships/attachedToolbars"},
+		wordComments: {dir: "", filename: "comments.xml", contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments"},
+		wordCommentsExtended: {dir: "", filename: "commentsExtended.xml", contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.commentsExtended+xml", relationType: "http://schemas.microsoft.com/office/2011/relationships/commentsExtended"},
+		wordCommentsExtensible: {dir: "", filename: "commentsExtensible.xml", contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.commentsExtensible+xml", relationType: "http://schemas.microsoft.com/office/2018/08/relationships/commentsExtensible"},
+		wordCommentsIds: {dir: "", filename: "commentsIds.xml", contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.commentsIds+xml", relationType: "http://schemas.microsoft.com/office/2016/09/relationships/commentsIds"},
+		wordPeople: {dir: "", filename: "people.xml", contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.people+xml", relationType: "http://schemas.microsoft.com/office/2011/relationships/people"},
+		wordprocessingTemplate: {dir: "", filename: "wordprocessingTemplate.xml", contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.template.main+xml"},
+		workbook: {dir: "xl", filename: "workbook.xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"},
+		workbookRevisionHeader: {dir: "", filename: "workbookRevisionHeader.xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.revisionHeaders+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/revisionHeaders"},
+		workbookRevisionLog: {dir: "", filename: "workbookRevisionLog.xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.revisionLog+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/revisionLog"},
+		workbookStyles: {dir: "", filename: "styles.xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"},
+		workbookTemplate: {dir: "", filename: "workbookTemplate.xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.template.main+xml"},
+		workbookUserData: {dir: "", filename: "workbookUserData.xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.userNames+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/usernames"},
+		worksheet: {dir: "worksheets", filename: "sheet[N].xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"},
+		worksheetComments: {dir: "..", filename: "comments[N].xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.comments+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments"},
+		worksheetSortMap: {dir: "", filename: "worksheetSortMap.xml", contentType: "application/vnd.ms-excel.wsSortMap+xml", relationType: "http://schemas.microsoft.com/office/2006/relationships/wsSortMap"},
+		xmlSignature: {dir: "", filename: "xmlSignature.xml", contentType: "application/vnd.openxmlformats-package.digital-signature-xmlsignature+xml", relationType: "http://schemas.openxmlformats.org/package/2006/relationships/digital-signature/signature"},
+		hyperlink: {dir: "", filename: "", contentType: "", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"},
 
-	// ********************* content types ***********************
-	openXml.contentTypes = {
-		calculationChain: "application/vnd.openxmlformats-officedocument.spreadsheetml.calcChain+xml",
-		cellMetadata: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheetMetadata+xml",
-		chart: "application/vnd.openxmlformats-officedocument.drawingml.chart+xml",
-		chartColorStyle: "application/vnd.ms-office.chartcolorstyle+xml",
-		chartDrawing: "application/vnd.openxmlformats-officedocument.drawingml.chartshapes+xml",
-		chartsheet: "application/vnd.openxmlformats-officedocument.spreadsheetml.chartsheet+xml",
-		chartStyle: "application/vnd.ms-office.chartstyle+xml",
-		commentAuthors: "application/vnd.openxmlformats-officedocument.presentationml.commentAuthors+xml",
-		connections: "application/vnd.openxmlformats-officedocument.spreadsheetml.connections+xml",
-		coreFileProperties: "application/vnd.openxmlformats-package.core-properties+xml",
-		customFileProperties: "application/vnd.openxmlformats-officedocument.custom-properties+xml",
-		customization: "application/vnd.ms-word.keyMapCustomizations+xml",
-		customProperty: "application/vnd.openxmlformats-officedocument.spreadsheetml.customProperty",
-		customXmlProperties: "application/vnd.openxmlformats-officedocument.customXmlProperties+xml",
-		diagramColors: "application/vnd.openxmlformats-officedocument.drawingml.diagramColors+xml",
-		diagramData: "application/vnd.openxmlformats-officedocument.drawingml.diagramData+xml",
-		diagramLayoutDefinition: "application/vnd.openxmlformats-officedocument.drawingml.diagramLayout+xml",
-		diagramPersistLayout: "application/vnd.ms-office.drawingml.diagramDrawing+xml",
-		diagramStyle: "application/vnd.openxmlformats-officedocument.drawingml.diagramStyle+xml",
-		dialogsheet: "application/vnd.openxmlformats-officedocument.spreadsheetml.dialogsheet+xml",
-		digitalSignatureOrigin: "application/vnd.openxmlformats-package.digital-signature-origin",
-		documentSettings: "application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml",
-		drawings: "application/vnd.openxmlformats-officedocument.drawing+xml",
-		endnotes: "application/vnd.openxmlformats-officedocument.wordprocessingml.endnotes+xml",
-		excelAttachedToolbars: "application/vnd.ms-excel.attachedToolbars",
-		extendedFileProperties: "application/vnd.openxmlformats-officedocument.extended-properties+xml",
-		externalWorkbook: "application/vnd.openxmlformats-officedocument.spreadsheetml.externalLink+xml",
-		fontData: "application/x-fontdata",
-		fontTable: "application/vnd.openxmlformats-officedocument.wordprocessingml.fontTable+xml",
-		footer: "application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml",
-		footnotes: "application/vnd.openxmlformats-officedocument.wordprocessingml.footnotes+xml",
-		gif: "image/gif",
-		glossaryDocument: "application/vnd.openxmlformats-officedocument.wordprocessingml.document.glossary+xml",
-		handoutMaster: "application/vnd.openxmlformats-officedocument.presentationml.handoutMaster+xml",
-		header: "application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml",
-		jpeg: "image/jpeg",
-		mainDocument: "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
-		notesMaster: "application/vnd.openxmlformats-officedocument.presentationml.notesMaster+xml",
-		notesSlide: "application/vnd.openxmlformats-officedocument.presentationml.notesSlide+xml",
-		numberingDefinitions: "application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml",
-		pict: "image/pict",
-		pivotTable: "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotTable+xml",
-		pivotTableCacheDefinition: "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotCacheDefinition+xml",
-		pivotTableCacheRecords: "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotCacheRecords+xml",
-		png: "image/png",
-		presentation: "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml",
-		presentationProperties: "application/vnd.openxmlformats-officedocument.presentationml.presProps+xml",
-		presentationTemplate: "application/vnd.openxmlformats-officedocument.presentationml.template.main+xml",
-		queryTable: "application/vnd.openxmlformats-officedocument.spreadsheetml.queryTable+xml",
-		relationships: "application/vnd.openxmlformats-package.relationships+xml",
-		ribbonAndBackstageCustomizations: "http://schemas.microsoft.com/office/2009/07/customui",
-		sharedStringTable: "application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml",
-		singleCellTable: "application/vnd.openxmlformats-officedocument.spreadsheetml.tableSingleCells+xml",
-		slicerCache: "application/vnd.openxmlformats-officedocument.spreadsheetml.slicerCache+xml",
-		slicers: "application/vnd.openxmlformats-officedocument.spreadsheetml.slicer+xml",
-		slide: "application/vnd.openxmlformats-officedocument.presentationml.slide+xml",
-		slideComments: "application/vnd.openxmlformats-officedocument.presentationml.comments+xml",
-		slideLayout: "application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml",
-		slideMaster: "application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml",
-		slideShow: "application/vnd.openxmlformats-officedocument.presentationml.slideshow.main+xml",
-		slideSyncData: "application/vnd.openxmlformats-officedocument.presentationml.slideUpdateInfo+xml",
-		styles: "application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml",
-		tableDefinition: "application/vnd.openxmlformats-officedocument.spreadsheetml.table+xml",
-		tableStyles: "application/vnd.openxmlformats-officedocument.presentationml.tableStyles+xml",
-		theme: "application/vnd.openxmlformats-officedocument.theme+xml",
-		themeOverride: "application/vnd.openxmlformats-officedocument.themeOverride+xml",
-		tiff: "image/tiff",
-		trueTypeFont: "application/x-font-ttf",
-		userDefinedTags: "application/vnd.openxmlformats-officedocument.presentationml.tags+xml",
-		viewProperties: "application/vnd.openxmlformats-officedocument.presentationml.viewProps+xml",
-		vmlDrawing: "application/vnd.openxmlformats-officedocument.vmlDrawing",
-		volatileDependencies: "application/vnd.openxmlformats-officedocument.spreadsheetml.volatileDependencies+xml",
-		webSettings: "application/vnd.openxmlformats-officedocument.wordprocessingml.webSettings+xml",
-		wordAttachedToolbars: "application/vnd.ms-word.attachedToolbars",
-		wordprocessingComments: "application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml",
-		wordprocessingTemplate: "application/vnd.openxmlformats-officedocument.wordprocessingml.template.main+xml",
-		workbook: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml",
-		workbookRevisionHeader: "application/vnd.openxmlformats-officedocument.spreadsheetml.revisionHeaders+xml",
-		workbookRevisionLog: "application/vnd.openxmlformats-officedocument.spreadsheetml.revisionLog+xml",
-		workbookStyles: "application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml",
-		workbookTemplate: "application/vnd.openxmlformats-officedocument.spreadsheetml.template.main+xml",
-		workbookUserData: "application/vnd.openxmlformats-officedocument.spreadsheetml.userNames+xml",
-		worksheet: "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml",
-		worksheetComments: "application/vnd.openxmlformats-officedocument.spreadsheetml.comments+xml",
-		worksheetSortMap: "application/vnd.ms-excel.wsSortMap+xml",
-		xmlSignature: "application/vnd.openxmlformats-package.digital-signature-xmlsignature+xml",
+		threadedComment: {dir: "../threadedComments", filename: "threadedComment[N].xml", contentType: "application/vnd.ms-excel.threadedcomments+xml", relationType: "http://schemas.microsoft.com/office/2017/10/relationships/threadedComment"},
+		person: {dir: "../persons", filename: "person.xml", contentType: "application/vnd.ms-excel.person+xml", relationType: "http://schemas.microsoft.com/office/2017/10/relationships/person"},
+		ctrlProp: {dir: "../ctrlProps", filename: "ctrlProp[N].xml", contentType: "application/vnd.ms-excel.controlproperties+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/ctrlProp"},
+		namedSheetViews: {dir: "../namedSheetViews", filename: "namedSheetView[N].xml", contentType: "application/vnd.ms-excel.namedsheetviews+xml", relationType: "http://schemas.microsoft.com/office/2019/04/relationships/namedSheetView"},
+		workbookComment: {dir: "", filename: "workbookComments.bin", contentType: "application/octet-stream", relationType: "http://schemas.onlyoffice.com/workbookComments"},
+
+		jsaProject: {dir: "", filename: "jsaProject.bin", contentType: "application/octet-stream", relationType: "http://schemas.onlyoffice.com/jsaProject"},
+		vbaProject: {dir: "", filename: "vbaProject.bin", contentType: "application/octet-stream", relationType: "http://schemas.microsoft.com/office/2006/relationships/vbaProject"},
+
+
+		customXml: {dir: "../customXml", filename: "item[N].xml", /*contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.table+xml",*/ relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/customXml"},
+		customXmlProps: {dir: "", filename: "itemProps[N].xml", contentType: "application/vnd.openxmlformats-officedocument.customXmlProperties+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/customXmlProps"},
+
+		//todo
+		image: {dir: "../media", filename: "image[N].", contentType: "image/jpeg", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"},
+		imageWord: {dir: "media", filename: "image[N].", contentType: "image/jpeg", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"}
+	};
+	openXml.TargetMode = {
+		internal: "Internal",
+		external: "External"
 	};
 
-	// *********** relationship types ***********
-	openXml.relationshipTypes = {
-		alternativeFormatImport: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/aFChunk",
-		calculationChain: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/calcChain",
-		cellMetadata: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sheetMetadata",
-		chart: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart",
-		chartColorStyle: "http://schemas.microsoft.com/office/2011/relationships/chartColorStyle",
-		chartDrawing: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/chartUserShapes",
-		chartsheet: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/chartsheet",
-		chartStyle: "http://schemas.microsoft.com/office/2011/relationships/chartStyle",
-		commentAuthors: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/commentAuthors",
-		connections: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/connections",
-		coreFileProperties: "http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties",
-		customFileProperties: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/custom-properties",
-		customization: "http://schemas.microsoft.com/office/2006/relationships/keyMapCustomizations",
-		customProperty: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/customProperty",
-		customXml: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/customXml",
-		customXmlMappings: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/xmlMaps",
-		customXmlProperties: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/customXmlProps",
-		diagramColors: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramColors",
-		diagramData: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramData",
-		diagramLayoutDefinition: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramLayout",
-		diagramPersistLayout: "http://schemas.microsoft.com/office/2007/relationships/diagramDrawing",
-		diagramStyle: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramQuickStyle",
-		dialogsheet: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/dialogsheet",
-		digitalSignatureOrigin: "http://schemas.openxmlformats.org/package/2006/relationships/digital-signature/origin",
-		documentSettings: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings",
-		drawings: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing",
-		endnotes: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/endnotes",
-		excelAttachedToolbars: "http://schemas.microsoft.com/office/2006/relationships/attachedToolbars",
-		extendedFileProperties: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties",
-		externalWorkbook: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/externalLink",
-		font: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/font",
-		fontTable: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/fontTable",
-		footer: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer",
-		footnotes: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footnotes",
-		glossaryDocument: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/glossaryDocument",
-		handoutMaster: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/handoutMaster",
-		header: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/header",
-		image: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image",
-		mainDocument: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument",
-		notesSlide: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesSlide",
-		numberingDefinitions: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering",
-		pivotTable: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/pivotTable",
-		pivotTableCacheDefinition: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/pivotCacheDefinition",
-		pivotTableCacheRecords: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/pivotCacheRecords",
-		presentation: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument",
-		presentationProperties: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/presProps",
-		queryTable: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/queryTable",
-		ribbonAndBackstageCustomizations: "http://schemas.microsoft.com/office/2007/relationships/ui/extensibility",
-		sharedStringTable: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings",
-		singleCellTable: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/tableSingleCells",
-		slide: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide",
-		slideComments: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments",
-		slideLayout: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout",
-		slideMaster: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster",
-		slideSyncData: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideUpdateInfo",
-		styles: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles",
-		tableDefinition: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/table",
-		tableStyles: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/tableStyles",
-		theme: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme",
-		themeOverride: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/themeOverride",
-		thumbnail: "http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail",
-		userDefinedTags: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/tags",
-		viewProperties: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/viewProps",
-		vmlDrawing: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/vmlDrawing",
-		volatileDependencies: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/volatileDependencies",
-		webSettings: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/webSettings",
-		wordAttachedToolbars: "http://schemas.microsoft.com/office/2006/relationships/attachedToolbars",
-		wordprocessingComments: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments",
-		workbook: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument",
-		workbookRevisionHeader: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/revisionHeaders",
-		workbookRevisionLog: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/revisionLog",
-		workbookStyles: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles",
-		workbookUserData: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/usernames",
-		worksheet: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet",
-		worksheetComments: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments",
-		worksheetSortMap: "http://schemas.microsoft.com/office/2006/relationships/wsSortMap",
-		xmlSignature: "http://schemas.openxmlformats.org/package/2006/relationships/digital-signature/signature",
-	};
-
-	window.openXml = openXml;
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].openXml = openXml;

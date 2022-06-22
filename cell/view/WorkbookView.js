@@ -98,19 +98,25 @@
 					border: this.getCColor(AscCommon.GlobalSkin.Border),
 					color: this.getCColor(AscCommon.GlobalSkin.Color),
 					backgroundDark: this.getCColor(AscCommon.GlobalSkin.BackgroundDark),
-					colorDark: this.getCColor(AscCommon.GlobalSkin.ColorDark)
+					colorDark: this.getCColor(AscCommon.GlobalSkin.ColorDark),
+					colorFiltering: this.getCColor(AscCommon.GlobalSkin.ColorFiltering),
+					colorDarkFiltering: this.getCColor(AscCommon.GlobalSkin.ColorDarkFiltering)
 				}, { // kHeaderActive
 					background: this.getCColor(AscCommon.GlobalSkin.BackgroundActive),
 					border: this.getCColor(AscCommon.GlobalSkin.BorderActive),
 					color: this.getCColor(AscCommon.GlobalSkin.ColorActive),
 					backgroundDark: this.getCColor(AscCommon.GlobalSkin.BackgroundDarkActive),
-					colorDark: this.getCColor(AscCommon.GlobalSkin.ColorDarkActive)
+					colorDark: this.getCColor(AscCommon.GlobalSkin.ColorDarkActive),
+					colorFiltering: this.getCColor(AscCommon.GlobalSkin.ColorFiltering),
+					colorDarkFiltering: this.getCColor(AscCommon.GlobalSkin.ColorDarkFiltering)
 				}, { // kHeaderHighlighted
 					background: this.getCColor(AscCommon.GlobalSkin.BackgroundHighlighted),
 					border: this.getCColor(AscCommon.GlobalSkin.BorderHighlighted),
 					color: this.getCColor(AscCommon.GlobalSkin.ColorHighlighted),
 					backgroundDark: this.getCColor(AscCommon.GlobalSkin.BackgroundDarkHighlighted),
-					colorDark: this.getCColor(AscCommon.GlobalSkin.ColorDarkHighlighted)
+					colorDark: this.getCColor(AscCommon.GlobalSkin.ColorDarkHighlighted),
+					colorFiltering: this.getCColor(AscCommon.GlobalSkin.ColorFiltering),
+					colorDarkFiltering: this.getCColor(AscCommon.GlobalSkin.ColorDarkFiltering)
 				}];
 		};
 		this.header = {
@@ -218,6 +224,9 @@
     // Константы для подстановке формулы (что не нужно добавлять скобки)
     this.arrExcludeFormulas = [];
 
+		// Информация об установленных прослушивателях, для их последующего удаления
+		this.eventListeners = [];
+
     this.fReplaceCallback = null;	// Callback для замены текста
 
     // Фонт, который выставлен в DrawingContext, он должен быть один на все DrawingContext-ы
@@ -280,7 +289,15 @@
     this.NeedUpdateTargetForCollaboration = true;
     this.LastUpdateTargetTime = 0;
 
-    return this;
+	this.printPreviewState = new AscCommonExcel.CPrintPreviewState(this);
+	this.printOptionsJson = null;
+
+	this.SearchEngine = null;
+	if (typeof CDocumentSearchExcel !== "undefined") {
+		this.SearchEngine = new CDocumentSearchExcel(this);
+	}
+
+	return this;
   }
 
   WorkbookView.prototype._init = function(fontRenderingMode) {
@@ -299,14 +316,16 @@
 
     // create canvas
     if (null != this.element) {
-      this.element.innerHTML = '<div id="ws-canvas-outer">\
+		if (!this.Api.VersionHistory && !this.Api.isOleEditor) {
+			this.element.innerHTML = '<div id="ws-canvas-outer">\
 											<canvas id="ws-canvas"></canvas>\
 											<canvas id="ws-canvas-overlay"></canvas>\
 											<canvas id="ws-canvas-graphic"></canvas>\
 											<canvas id="ws-canvas-graphic-overlay"></canvas>\
-											<canvas id="id_target_cursor" class="block_elem" width="1" height="1"\
-												style="width:2px;height:13px;display:none;z-index:9;"></canvas>\
+											<div id="id_target_cursor" class="block_elem" width="1" height="1"\
+												style="width:2px;height:13px;display:none;z-index:9;"></div>\
 										</div>';
+		}
 
       this.canvas = document.getElementById("ws-canvas");
       this.canvasOverlay = document.getElementById("ws-canvas-overlay");
@@ -374,6 +393,8 @@
 				  self._onScrollY.apply(self, arguments);
 			  }, "scrollX": function () {
 				  self._onScrollX.apply(self, arguments);
+			  },  "changeVisibleArea": function () {
+				  self._onChangeVisibleArea.apply(self, arguments);
 			  }, "changeSelection": function () {
 				  self._onChangeSelection.apply(self, arguments);
 			  }, "changeSelectionDone": function () {
@@ -512,7 +533,7 @@
 				  if (self.oSelectionInfo && self.oSelectionInfo.dataValidation) {
 					  var list = self.oSelectionInfo.dataValidation.getListValues(self.model.getActiveWs());
 					  if (list) {
-						  self.handlers.trigger("asc_onValidationListMenu", list[0], list[1]);
+						 self.handlers.trigger("asc_onValidationListMenu", list[0], list[1]);
 					  }
 					  return !!list;
 				  }
@@ -540,29 +561,41 @@
 		  });
 
       if (this.input && this.input.addEventListener) {
-        this.input.addEventListener("focus", function () {
-          self.input.isFocused = true;
-          if (!self.canEdit()) {
-            return;
-          }
-          self._onStopFormatPainter();
-          self.cellEditor.callTopLineMouseup = true;
-          if (!self.getCellEditMode() && !self.controller.isFillHandleMode) {
-            var enterOptions = new AscCommonExcel.CEditorEnterOptions();
-            enterOptions.focus = true;
-            self._onEditCell(enterOptions);
-          }
-        }, false);
+				var eventInfo = new AscCommon.CEventListenerInfo(this.input, "focus", function () {
+					if (this.Api.isEditVisibleAreaOleEditor) {
+						this.input.blur();
+						return;
+					}
+					this.input.isFocused = true;
+					if (!this.canEdit()) {
+						return;
+					}
+					if (this.isProtectActiveCell()) {
+						this.input.blur();
+						this.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
+						return;
+					}
+					this._onStopFormatPainter();
+					this.cellEditor.callTopLineMouseup = true;
+					if (!this.getCellEditMode() && !this.controller.isFillHandleMode) {
+						var enterOptions = new AscCommonExcel.CEditorEnterOptions();
+						enterOptions.focus = true;
+						this._onEditCell(enterOptions);
+					}
+				}.bind(this), false);
+				this.eventListeners.push(eventInfo);
 
-        this.input.addEventListener('keydown', function (event) {
-          if (self.isCellEditMode) {
-            self.handlers.trigger('asc_onInputKeyDown', event);
-            if (!event.defaultPrevented) {
-              self.cellEditor._onWindowKeyDown(event, true);
-            }
-          }
-        }, false);
-      }
+
+				eventInfo = new AscCommon.CEventListenerInfo(this.input, "keydown", function (event) {
+					if (this.isCellEditMode) {
+						this.handlers.trigger('asc_onInputKeyDown', event);
+						if (!event.defaultPrevented) {
+							this.cellEditor._onWindowKeyDown(event, true);
+						}
+					}
+				}.bind(this), false);
+				this.eventListeners.push(eventInfo);
+			}
 
       this.Api.onKeyDown = function (event) {
         self.controller._onWindowKeyDown(event);
@@ -748,6 +781,8 @@
 				  self.controller._onWindowKeyDown.apply(self.controller, arguments);
 			  }, "canEdit": function () {
 				  return self.canEdit();
+			  }, "isProtectActiveCell": function () {
+				  return self.isProtectActiveCell();
 			  }, "getFormulaRanges": function () {
 			      return self.isActive() ? self.getWorksheet().oOtherRanges : null;
 			  }, "isActive": function () {
@@ -957,6 +992,13 @@
 	this.model.handlers.add("updateGroupData", function() {
 	  self.updateGroupData();
 	});
+	this.model.handlers.add("updatePrintPreview", function() {
+	  self.updatePrintPreview();
+	});
+	this.model.handlers.add("clearFindResults", function(index) {
+  		if (self.SearchEngine)
+			self.SearchEngine.Clear(index);
+	});
     this.cellCommentator = new AscCommonExcel.CCellCommentator({
       model: new WorkbookCommentsModel(this.handlers, this.model.aComments),
       collaborativeEditing: this.collaborativeEditing,
@@ -977,7 +1019,7 @@
     this.fReplaceCallback = function() {
       self._replaceCellTextCallback.apply(self, arguments);
     };
-
+		this.addEventListeners();
     return this;
   };
 
@@ -986,6 +1028,11 @@
     this.cellEditor.destroy();
     return this;
   };
+
+	WorkbookView.prototype.scrollToOleSize = function () {
+		var ws = this.getWorksheet();
+		ws.scrollToOleSize();
+	}
 
   WorkbookView.prototype._createWorksheetView = function(wsModel) {
     return new AscCommonExcel.WorksheetView(this, wsModel, this.wsViewHandlers, this.buffers, this.stringRender, this.maxDigitWidth, this.collaborativeEditing, this.defaults.worksheetView);
@@ -1034,6 +1081,9 @@
     if (this.selectionDialogMode) {
       return false;
     }
+	if(this.Api && this.Api.noCreatePoint) {
+		return false;
+	}
     var ws = this.getWorksheet();
     this.oSelectionInfo = ws.getSelectionInfo();
     this.lastSendInfoRange = ws.model.selectionRange.clone();
@@ -1153,6 +1203,19 @@
       // Селектим после выставления состояния
     }
   };
+
+	WorkbookView.prototype.isInnerOfWorksheet = function (x, y) {
+		var ws = this.getWorksheet();
+		 return x >= ws.cellsLeft && y >= ws.cellsTop;
+	};
+
+	WorkbookView.prototype._onChangeVisibleArea = function (isStartPoint, dc, dr, isCtrl, callback, isRelative) {
+		var ws = this.getWorksheet();
+		var d = isStartPoint ? ws.changeVisibleAreaStartPoint(dc, dr, isCtrl, isRelative) :
+			ws.changeVisibleAreaEndPoint(dc, dr, isCtrl, isRelative);
+
+		asc_applyFunction(callback, d);
+	};
 
     WorkbookView.prototype._onChangeSelection = function (isStartPoint, dc, dr, isCoord, isCtrl, callback) {
         if (!this._checkStopCellEditorInFormulas()) {
@@ -1519,9 +1582,20 @@
 
   WorkbookView.prototype._onMoveResizeRangeHandle = function(x, y, target, callback) {
     var ws = this.getWorksheet();
-    var d = ws.changeSelectionMoveResizeRangeHandle(x, y, target, this.cellEditor);
+		var d;
+
+		if (this.Api.isEditVisibleAreaOleEditor && target.isOleRange) {
+			d = ws.changeSelectionMoveResizeVisibleAreaHandle(x, y, target);
+		} else {
+			d = ws.changeSelectionMoveResizeRangeHandle(x, y, target, this.cellEditor);
+		}
+
     asc_applyFunction(callback, d);
   };
+
+	WorkbookView.prototype.getOleSize = function () {
+		return this.model.getOleSize();
+	};
 
   WorkbookView.prototype._onMoveResizeRangeHandleDone = function() {
     var ws = this.getWorksheet();
@@ -1574,7 +1648,7 @@
     }
   };
   WorkbookView.prototype._onPivotCollapseClick = function(idPivotCollapse) {
-    if (!idPivotCollapse) {
+    if (!idPivotCollapse || idPivotCollapse.hidden) {
       return;
     }
     var pivotTable = this.model.getPivotTableById(idPivotCollapse.id);
@@ -1720,15 +1794,21 @@
 
     var ws = t.getWorksheet();
     var activeCellRange = ws.getActiveCell(0, 0, false);
-    var selectionRange = ws.model.selectionRange.clone();
+    var selectionRange = ws.model.selectionRange && ws.model.selectionRange.clone();
 
     var activeWsModel = this.model.getActiveWs();
     if (activeWsModel.inPivotTable(activeCellRange)) {
+		if (t.input.isFocused) {
+			t.input.blur();
+		}
 		this.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot, c_oAscError.Level.NoCritical);
 		return;
 	}
 
     var editFunction = function() {
+      if (needBlur) {
+		  t.input && t.input.focus();
+	  }
       t.setCellEditMode(true);
       t.hideSpecialPasteButton();
       ws.openCellEditor(t.cellEditor, enterOptions, selectionRange);
@@ -1737,7 +1817,7 @@
       t.Api.cleanSpelling(true);
 
       t.updateTargetForCollaboration();
-      t.sendCursor();
+      t.sendCursor(true);
 
       asc_applyFunction(callback, true);
     };
@@ -1765,8 +1845,31 @@
 		}
 	};
 
-    ws.checkProtectRangeOnEdit([new Asc.Range(activeCellRange.c1, activeCellRange.r1, activeCellRange.c1, activeCellRange.r1)], doEdit);
+	var needBlur = false;
+	var needBlurFunc;
+	if (t.input && t.input.isFocused) {
+		needBlurFunc = function () {
+			t.input && t.input.blur();
+			needBlur = true;
+		}
+	}
+    ws.checkProtectRangeOnEdit([new Asc.Range(activeCellRange.c1, activeCellRange.r1, activeCellRange.c1, activeCellRange.r1)], doEdit, null, needBlurFunc);
   };
+
+  /**
+   *
+   * @return { string } base64 image
+   */
+  WorkbookView.prototype.getImageFromTableOleObject = function () {
+    var worksheet = this.getWorksheet();
+    var imageBase64;
+    if (worksheet.isHaveOnlyOneChart()) {
+      imageBase64 = worksheet.createImageForChart();
+    } else {
+      imageBase64 = worksheet.createImageFromMaxRange();
+    }
+    return imageBase64;
+  }
 
   WorkbookView.prototype._checkStopCellEditorInFormulas = function() {
 	  if (this.isCellEditMode && this.isFormulaEditMode && this.cellEditor.canEnterCellRange()) {
@@ -1807,7 +1910,21 @@
   };
 
   WorkbookView.prototype._onEmpty = function() {
-    this.getWorksheet().emptySelection(c_oAscCleanOptions.Text);
+	  var ws = this.getWorksheet();
+	  if (ws) {
+		  var doDelete = function (success) {
+			  if (success) {
+				  ws.emptySelection(c_oAscCleanOptions.Text);
+			  }
+		  };
+		  var selection = ws._getSelection();
+		  var ranges = selection && selection.ranges;
+		  if (!ws.objectRender.selectedGraphicObjectsExists()) {
+			  ws.checkProtectRangeOnEdit(ranges, doDelete);
+		  } else {
+			  doDelete(true);
+		  }
+	  }
   };
 
   WorkbookView.prototype._onShowNextPrevWorksheet = function(direction) {
@@ -1863,6 +1980,18 @@
 	  this.setCellFormat(formats[prop]);
 	};
 
+	WorkbookView.prototype.removeEventListeners = function () {
+		this.eventListeners.forEach(function (eventInfo) {
+			eventInfo.listeningElement.removeEventListener(eventInfo.eventName, eventInfo.listener);
+		});
+	};
+
+	WorkbookView.prototype.addEventListeners = function () {
+		this.eventListeners.forEach(function (eventInfo) {
+			eventInfo.listeningElement.addEventListener(eventInfo.eventName, eventInfo.listener, eventInfo.useCapture);
+		});
+	};
+
   WorkbookView.prototype._onSelectColumnsByRange = function() {
     this.getWorksheet()._selectColumnsByRange();
   };
@@ -1888,7 +2017,7 @@
   	return AscCommonExcel.generateCellStyles(width, height, this);
   };
   WorkbookView.prototype.getSlicerStyles = function() {
-      return AscCommonExcel.generateSlicerStyles(36, 49, this);
+      return AscCommonExcel.generateSlicerStyles(36, 48, this);
   };
 
   WorkbookView.prototype.getWorksheetById = function(id, onlyExist) {
@@ -1919,6 +2048,7 @@
     }
     return ws;
   };
+
 
 	WorkbookView.prototype.drawWorksheet = function () {
 		if (-1 === this.wsActive) {
@@ -2142,8 +2272,17 @@
   WorkbookView.prototype.getCellEditMode = function() {
 	  return this.isCellEditMode;
   };
+
 	WorkbookView.prototype.canEdit = function() {
 		return this.Api.canEdit();
+	};
+
+	WorkbookView.prototype.isProtectActiveCell = function() {
+		var ws = this.getWorksheet();
+		if (!ws) {
+			return false;
+		}
+		return ws.isProtectActiveCell();
 	};
 
     WorkbookView.prototype.getDialogSheetName = function () {
@@ -2199,7 +2338,7 @@
     return this.drawingCtx.getZoom();
   };
 
-  WorkbookView.prototype.changeZoom = function(factor) {
+  WorkbookView.prototype.changeZoom = function(factor, changeZoomOnPrint, doNotDraw) {
   	if (factor === this.getZoom()) {
       return;
     }
@@ -2209,8 +2348,9 @@
     this.buffers.mainGraphic.changeZoom(factor);
     this.buffers.overlayGraphic.changeZoom(factor);
     if (!factor) {
-    	this.cellEditor.changeZoom(factor);
-	}
+      this.cellEditor.changeZoom(factor);
+    }
+
     // Нужно сбросить кэш букв
     var i, length;
     for (i = 0, length = this.fmgrGraphics.length; i < length; ++i)
@@ -2227,7 +2367,7 @@
 
     if (!factor) {
 		this.wsMustDraw = true;
-		this._calcMaxDigitWidth();
+		//this._calcMaxDigitWidth();
 	}
 
     var item;
@@ -2238,10 +2378,11 @@
       if (!factor) {
       	item._initWorksheetDefaultWidth();
 	  }
-      item.changeZoom(/*isDraw*/i == activeIndex);
+	  //changeZoomOnPrint - добавляю, поскольку при конвертации файлов есть проблемы. проверить, возможно отрисовка тоже не нужна
+      item.changeZoom(/*isDraw*/i == activeIndex, changeZoomOnPrint);
       this._reInitGraphics();
       item.objectRender.changeZoom(this.drawingCtx.scaleFactor);
-      if (i == activeIndex && factor) {
+      if (i == activeIndex && factor && !doNotDraw) {
         item.draw();
         //ToDo item.drawDepCells();
       }
@@ -2285,8 +2426,38 @@
 		if (this.skipHelpSelector) {
 			return;
 		}
+
+		var _getInnerTable = function (_sFullTable, tableName) {
+			var _bracketCount = 0;
+			var res = null;
+			for (var j = tableName.length; j < _sFullTable.length; j++) {
+				if (_sFullTable[j] === "[") {
+					_bracketCount++;
+					if (!res) {
+						res = "";
+					}
+				} else if (_sFullTable[j] === "]") {
+					_bracketCount--;
+					res = null;
+					if (_bracketCount <= 0) {
+						break;
+					}
+				} else {
+					if (_bracketCount > 0) {
+						if (!res) {
+							res = "";
+						}
+						res += _sFullTable[j];
+					} else {
+						res = null;
+					}
+				}
+			}
+			return res;
+		};
+
 		// ToDo для ускорения можно завести объект, куда класть результаты поиска по формулам и второй раз не искать.
-		var i, arrResult = [], defNamesList, defName, defNameStr;
+		var i, arrResult = [], defNamesList, defName, defNameStr, _lastFNameLength, _type;
 		if (fName) {
 			fName = fName.toUpperCase();
 			for (i = 0; i < this.formulasList.length; ++i) {
@@ -2304,13 +2475,61 @@
 				}
 
 				if (0 === defNameStr.toLowerCase().indexOf(fName)) {
-					var _type = c_oAscPopUpSelectorType.Range;
+					_type = c_oAscPopUpSelectorType.Range;
 					if (defName.type === Asc.c_oAscDefNameType.slicer) {
 						_type = c_oAscPopUpSelectorType.Slicer;
 					} else if (defName.type === Asc.c_oAscDefNameType.table) {
 						_type = c_oAscPopUpSelectorType.Table;
 					}
 					arrResult.push(new AscCommonExcel.asc_CCompleteMenu(defNameStr, _type));
+				} else if (defName.type === Asc.c_oAscDefNameType.table && 0 === fName.indexOf(defNameStr.toLowerCase())) {
+					if (-1 !== fName.indexOf("[")) {
+						var tableNameParse = fName.split("[");
+						if (tableNameParse[0] && 0 === defNameStr.toLowerCase().indexOf(tableNameParse[0])) {
+							//ищем совпадения по названию столбцов
+							var table = this.model.getTableByName(defNameStr);
+							if (table) {
+								var sTableInner = _getInnerTable(fName, defNameStr.toLowerCase());
+								if (null !== sTableInner) {
+									var _str, j;
+									for (j = 0; j < table.TableColumns.length; j++) {
+										_str = table.TableColumns[j].Name;
+										_type = c_oAscPopUpSelectorType.TableColumnName;
+										if (sTableInner === "" || 0 === _str.toLowerCase().indexOf(sTableInner)) {
+											arrResult.push(new AscCommonExcel.asc_CCompleteMenu(_str, _type));
+										}
+									}
+
+									if (AscCommon.cStrucTableLocalColumns) {
+										for (j in AscCommon.cStrucTableLocalColumns) {
+											_str = AscCommon.cStrucTableLocalColumns[j];
+											if (j === "h") {
+												_str = "#" + _str;
+												_type = c_oAscPopUpSelectorType.TableHeaders;
+											} else if (j === "d") {
+												_str = "#" + _str;
+												_type = c_oAscPopUpSelectorType.TableData;
+											} else if (j === "a") {
+												_str = "#" + _str;
+												_type = c_oAscPopUpSelectorType.TableAll;
+											} else if (j === "tr") {
+												_str = "@" + " - " + _str;
+												_type = c_oAscPopUpSelectorType.TableThisRow;
+											} else if (j === "t") {
+												_str = "#" + _str;
+												_type = c_oAscPopUpSelectorType.TableTotals;
+											}
+											if (sTableInner === "" || (0 === _str.toLocaleLowerCase().indexOf(sTableInner) && _type !== c_oAscPopUpSelectorType.TableThisRow)) {
+												arrResult.push(new AscCommonExcel.asc_CCompleteMenu(_str, _type));
+											}
+										}
+									}
+									fPos += defNameStr.length + (fName.length - defNameStr.length - sTableInner.length);
+									_lastFNameLength = sTableInner.length;
+								}
+							}
+						}
+					}
 				}
 			}
 		}
@@ -2318,7 +2537,7 @@
 			this.handlers.trigger('asc_onFormulaCompleteMenu', arrResult, this.cellEditor.calculateOffset(fPos));
 
 			this.lastFPos = fPos;
-			this.lastFNameLength = fName.length;
+			this.lastFNameLength = _lastFNameLength !== undefined ? _lastFNameLength : fName.length;
 		} else {
 			this.handlers.trigger('asc_onFormulaCompleteMenu', null);
 
@@ -2350,7 +2569,7 @@
                 }
                 tmp = this.cellEditor.skipTLUpdate;
                 this.cellEditor.skipTLUpdate = false;
-                this.cellEditor.replaceText(this.lastFPos, this.lastFNameLength, name);
+                this.cellEditor.replaceText(this.lastFPos, this.lastFNameLength, type === c_oAscPopUpSelectorType.TableThisRow ? "@" : name);
                 this.cellEditor.skipTLUpdate = tmp;
             } else if (false === this.cellEditor.insertFormula(name, isNotFunction)) {
                 // Не смогли вставить формулу, закроем редактор, с сохранением текста
@@ -2360,7 +2579,9 @@
             this.skipHelpSelector = false;
         } else {
             if (c_oAscPopUpSelectorType.None === type) {
-                ws.setSelectionInfo("value", name, /*onlyActive*/true);
+				ws.executeWithFirstActiveCellInMerge(function () {
+					ws.setSelectionInfo("value", name, /*onlyActive*/true);
+				})
                 return;
             } else if (c_oAscPopUpSelectorType.TotalRowFunc === type) {
                 ws.setSelectionInfo("totalRowFunc", name, /*onlyActive*/true);
@@ -2419,15 +2640,84 @@
             }
         };
 
-        var addFunction = function (name) {
+		var ws = this.getActiveWS();
+        var addFunction = function (name, cellEditMode) {
         	t.setWizardMode(true);
 			if (doCleanCellContent || !t.cellEditor.isFormula()) {
                 t.cellEditor.selectionBegin = 0;
                 t.cellEditor.selectionEnd = t.cellEditor.textRender.getEndOfText();
             }
-			t.cellEditor.insertFormula(name);
+
+			var res;
+			if (!name && t.cellEditor._formula && t.cellEditor._parseResult) {
+				var parseResult = t.cellEditor._parseResult;
+				name = parseResult.activeFunction && parseResult.activeFunction.func && parseResult.activeFunction.func.name;
+
+				if (cellEditMode) {
+					//ищем общую функцию, в которой находится курсор
+					//если начало и конец селекта в одной функции - показываем настройки для неё, если в разных - добавляем новую
+					var _start = t.cellEditor.selectionBegin !== -1 ? t.cellEditor.selectionBegin : t.cellEditor.cursorPos;
+					var _end = t.cellEditor.selectionEnd !== -1 ? t.cellEditor.selectionEnd : t.cellEditor.cursorPos;
+					var activeFunction = parseResult.getActiveFunction(_start, _end);
+					if (activeFunction) {
+						parseResult.activeFunction = activeFunction;
+						parseResult.argPosArr = activeFunction.args;
+						name = activeFunction.func && activeFunction.func.name;
+					}
+				}
+
+				if (name) {
+					res = new AscCommonExcel.CFunctionInfo(name)
+
+					//получаем массив аргументов
+					res.argumentsValue = parseResult.getArgumentsValue(t.cellEditor._formula.Formula);
+					if (res.argumentsValue) {
+						var argumentsType = parseResult.activeFunction.func.argumentsType;
+						res.argumentsResult = [];
+						for (var i = 0; i < res.argumentsValue.length; i++) {
+							var argType = null;
+							if (argumentsType) {
+								if (typeof argumentsType[i] == 'object') {
+									argType = argumentsType[i][0];
+								} else if (i > argumentsType.length - 1) {
+									var lastArgType = argumentsType[argumentsType.length - 1];
+									if (typeof lastArgType == 'object') {
+										argType = lastArgType[(i - (argumentsType.length - 1)) % lastArgType.length]
+									}
+								} else {
+									argType = argumentsType[i];
+								}
+							}
+							//вычисляем результат каждого аргумента
+							var argCalc = ws.calculateWizardFormula(res.argumentsValue[i], argType);
+							res.argumentsResult[i] = argCalc.str;
+						}
+					}
+
+					//get result
+					var sArguments = res.argumentsValue.join(AscCommon.FormulaSeparators.functionArgumentSeparator);
+					if (argCalc.obj && argCalc.obj.type !== AscCommonExcel.cElementType.error) {
+						var funcCalc = ws.calculateWizardFormula(name + '(' + sArguments + ')');
+						res.functionResult = funcCalc.str;
+						if (funcCalc.obj && funcCalc.obj.type !== AscCommonExcel.cElementType.error) {
+							res.formulaResult = ws.calculateWizardFormula(t.cellEditor._formula).str;
+						}
+					}
+
+					t.cellEditor.lastRangePos = parseResult.argPosArr[0].start;
+					t.cellEditor.lastRangeLength = parseResult.argPosArr[parseResult.argPosArr.length - 1].end - parseResult.argPosArr[0].start;
+
+					t.cellEditor.selectionBegin = t.cellEditor.selectionEnd = -1;
+					t.cellEditor._cleanSelection();
+				}
+			} else {
+				t.cellEditor.insertFormula(name);
+			}
+
 			// ToDo send info from selection
-			var res = name ? new AscCommonExcel.CFunctionInfo(name) : null;
+			if (!res) {
+				res = name ? new AscCommonExcel.CFunctionInfo(name) : null;
+			}
 			t.handlers.trigger("asc_onSendFunctionWizardInfo", res);
         };
 
@@ -2439,7 +2729,7 @@
             return;
         }
 
-        addFunction(name);
+        addFunction(name, true);
     };
 
     WorkbookView.prototype.canEnterWizardRange = function (char) {
@@ -2478,8 +2768,10 @@
   };
 
    WorkbookView.prototype.checkCopyToClipboard = function(_clipboard, _formats) {
-    var t = this, ws;
-    ws = t.getWorksheet();
+    if(this.isProtectedFromCut()) {
+      return false;
+    }
+    var ws = this.getWorksheet();
     g_clipboardExcel.checkCopyToClipboard(ws, _clipboard, _formats);
   };
 
@@ -2515,18 +2807,43 @@
 			this.handlers.trigger("hideSpecialPasteOptions");
 		//}
 	};
-
+  WorkbookView.prototype.isProtectedFromCut = function() {
+    var ws = this.getWorksheet();
+    if (ws && ws.model && ws.model.getSheetProtection() && AscCommon.g_clipboardBase.bCut) {
+      if(ws.isSelectOnShape) {
+        if(ws.objectRender && ws.objectRender.controller) {
+          var oController = ws.objectRender.controller;
+          if(oController.isProtectedFromCut()) {
+            return true;
+          }
+        }
+      } else {
+        var selection = ws._getSelection();
+        var selectionRanges = selection ? selection.ranges : null;
+        if (selectionRanges && ws.model.isIntersectLockedRanges(selectionRanges)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
 	WorkbookView.prototype.selectionCut = function () {
 		if (this.getCellEditMode()) {
 			this.cellEditor.cutSelection();
 		} else {
-			if (this.getWorksheet().isNeedSelectionCut()) {
-				this.getWorksheet().emptySelection(c_oAscCleanOptions.All, true);
+			var ws = this.getWorksheet();
+      if(this.isProtectedFromCut()) {
+        this.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
+        return false;
+      }
+
+			if (ws.isNeedSelectionCut()) {
+				ws.emptySelection(c_oAscCleanOptions.All, true);
 			} else {
 				//в данном случае не вырезаем, а записываем
-				if(false === this.getWorksheet().isMultiSelect()) {
-					this.cutIdSheet = this.getWorksheet().model.Id;
-					this.getWorksheet().cutRange = this.getWorksheet().model.selectionRange.getLast();
+				if(false === ws.isMultiSelect()) {
+					this.cutIdSheet = ws.model.Id;
+					ws.cutRange = ws.model.selectionRange.getLast();
 				}
 			}
 		}
@@ -2596,6 +2913,10 @@
       this.dialogAbsName = (c_oAscSelectionDialogType.None !== selectionDialogType &&
           c_oAscSelectionDialogType.Function !== selectionDialogType);
   };
+
+  WorkbookView.prototype.setOleSize = function (oPr) {
+    this.model.setOleSize(oPr);
+  }
   WorkbookView.prototype.setSelectionDialogMode = function (selectionDialogType, selectRange) {
       var newSelectionDialogMode = c_oAscSelectionDialogType.None !== selectionDialogType;
 
@@ -2747,10 +3068,11 @@
   	if (!options.isMatchCase) {
   		options.findWhat = options.findWhat.toLowerCase();
   	}
-  	options.findRegExp = AscCommonExcel.getFindRegExp(options.findWhat, options);
+  	options.findRegExp = AscCommonExcel.getFindRegExp(options.findWhat, options, true);
 
     History.Create_NewPoint();
     History.StartTransaction();
+    this.SearchEngine.replaceStart();
 
     options.clearFindAll();
     if (options.isReplaceAll) {
@@ -2759,12 +3081,12 @@
     }
 
     var ws = this.getWorksheet();
-    ws.replaceCellText(options, false, this.fReplaceCallback);
+    ws.replaceCellText(options, false, this.fReplaceCallback, true);
   };
   WorkbookView.prototype._replaceCellTextCallback = function(options) {
     if (!options.error) {
 		options.updateFindAll();
-		if (!options.scanOnOnlySheet && options.isReplaceAll) {
+		if (Asc.c_oAscSearchBy.Workbook === options.scanOnOnlySheet && options.isReplaceAll) {
 			// Замена на всей книге
 			var i = ++options.sheetIndex;
 			if (this.model.getActive() === i) {
@@ -2773,13 +3095,17 @@
 
 			if (i < this.model.getWorksheetCount()) {
 				var ws = this.getWorksheet(i);
-				ws.replaceCellText(options, true, this.fReplaceCallback);
+				ws.replaceCellText(options, true, this.fReplaceCallback, true);
 				return;
 			}
-      options.sheetIndex = -1;
+      		options.sheetIndex = -1;
 		}
 
 		this.handlers.trigger("asc_onRenameCellTextEnd", options.countFindAll, options.countReplaceAll);
+		if (options.countFindAll !== options.countReplaceAll) {
+			this.SearchEngine.SetCurrent(this.SearchEngine.CurId);
+		}
+		this.SearchEngine.replaceEnd();
     }
 
     History.EndTransaction();
@@ -2920,36 +3246,125 @@
 
   // Печать
   WorkbookView.prototype.printSheets = function(printPagesData, pdfDocRenderer) {
-    //change zoom on default
-    var viewZoom = this.getZoom();
-    this.changeZoom(1);
+	  var pdfPrinter;
+	  var t = this;
+	  this._executeWithoutZoom(function () {
+		  pdfPrinter = new AscCommonExcel.CPdfPrinter(t.fmgrGraphics[3], t.m_oFont);
+		  if (pdfDocRenderer) {
+			  pdfPrinter.DocumentRenderer = pdfDocRenderer;
+		  }
+		  var ws;
+		  if (0 === printPagesData.arrPages.length) {
+			  // Печать пустой страницы
+			  ws = t.getWorksheet();
+			  ws.drawForPrint(pdfPrinter, null);
+		  } else {
+			  var indexWorksheet = -1;
+			  var indexWorksheetTmp = -1;
+			  for (var i = 0; i < printPagesData.arrPages.length; ++i) {
+				  indexWorksheetTmp = printPagesData.arrPages[i].indexWorksheet;
+				  if (indexWorksheetTmp !== indexWorksheet) {
+					  ws = t.getWorksheet(indexWorksheetTmp);
+					  indexWorksheet = indexWorksheetTmp;
+				  }
+				  ws.drawForPrint(pdfPrinter, printPagesData.arrPages[i], i, printPagesData.arrPages.length);
+			  }
+		  }
+	  });
 
-  	var pdfPrinter = new AscCommonExcel.CPdfPrinter(this.fmgrGraphics[3], this.m_oFont);
-  	if (pdfDocRenderer) {
-		pdfPrinter.DocumentRenderer = pdfDocRenderer;
-	}
-    var ws;
-    if (0 === printPagesData.arrPages.length) {
-      // Печать пустой страницы
-      ws = this.getWorksheet();
-      ws.drawForPrint(pdfPrinter, null);
-    } else {
-      var indexWorksheet = -1;
-      var indexWorksheetTmp = -1;
-      for (var i = 0; i < printPagesData.arrPages.length; ++i) {
-        indexWorksheetTmp = printPagesData.arrPages[i].indexWorksheet;
-        if (indexWorksheetTmp !== indexWorksheet) {
-          ws = this.getWorksheet(indexWorksheetTmp);
-          indexWorksheet = indexWorksheetTmp;
-        }
-        ws.drawForPrint(pdfPrinter, printPagesData.arrPages[i], i, printPagesData.arrPages.length);
-      }
-    }
-
-    this.changeZoom(viewZoom);
-
-    return pdfPrinter;
+	  return pdfPrinter;
   };
+
+	WorkbookView.prototype._executeWithoutZoom = function (runFunction) {
+		//TODO есть проблемы при отрисовке(не связано с печатью). сначала меняем zoom редактора,
+		// потом системный(открываем при системном зуме != 100%)
+
+		//change zoom on default
+		var trueRetinaPixelRatio = AscCommon.AscBrowser.retinaPixelRatio;
+		var viewZoom = this.getZoom();
+		if (viewZoom === 1 && trueRetinaPixelRatio === 1) {
+			runFunction();
+			return;
+		}
+
+		AscCommon.AscBrowser.retinaPixelRatio = 1;
+		//приходится несколько раз выполнять действия, чтобы ppi выставился правильно
+		//если не делать init, то не сбросится ppi от системного зума - смотри функцию DrawingContext.prototype.changeZoom
+		if (viewZoom !== 1) {
+			this.changeZoom(1, true, true);
+		}
+		this.changeZoom(null, true, true);
+
+		runFunction();
+
+		AscCommon.AscBrowser.retinaPixelRatio = trueRetinaPixelRatio;
+		this.changeZoom(null, true, true);
+		this.changeZoom(viewZoom, true, true);
+	};
+
+  WorkbookView.prototype.getSimulatePageForOleObject = function (sizes, oRange) {
+    var page = new AscCommonExcel.CPagePrint();
+    page.indexWorksheet = 0;
+    page.pageClipRectHeight = sizes.height;
+    page.pageClipRectWidth = sizes.width;
+    page.pageGridLines = true;
+    page.pageHeight = sizes.height;
+
+    page.pageRange =  oRange.clone();
+    page.pageWidth = sizes.width;
+    page.scale = 1;
+    return page;
+  }
+  
+  WorkbookView.prototype.printForOleObject = function (ws, oRange) {
+    var sizes = ws.getRangePosition(oRange);
+    var page = this.getSimulatePageForOleObject(sizes, oRange);
+    var previewOleObjectContext = AscCommonExcel.getContext(sizes.width, sizes.height, this);
+    previewOleObjectContext.changeZoom(ws.getZoom());
+    previewOleObjectContext.DocumentRenderer = AscCommonExcel.getGraphics(previewOleObjectContext);
+    previewOleObjectContext.isPreviewOleObjectContext = true;
+		previewOleObjectContext.isNotDrawBackground = !this.Api.isFromSheetEditor;
+    ws.drawForPrint(previewOleObjectContext, page, 0, 1);
+    return previewOleObjectContext;
+  }
+
+	WorkbookView.prototype.printSheetPrintPreview = function(index) {
+		var printPreviewState = this.printPreviewState;
+		var page = printPreviewState.getPage(index);
+		var printPreviewContext = printPreviewState.getCtx();
+
+		if (page) {
+			page = page.clone();
+		}
+
+		var kF = printPreviewState.pageZoom * AscCommon.AscBrowser.retinaPixelRatio;
+		//TODO 1 -
+		if (page) {
+			page.leftFieldInPx = Math.floor(page.leftFieldInPx * kF)  - 1;
+			page.pageClipRectHeight = Math.ceil(page.pageClipRectHeight * kF);
+			page.pageClipRectLeft = Math.floor(page.pageClipRectLeft * kF);
+			page.pageClipRectTop = Math.floor(page.pageClipRectTop * kF);
+			page.pageClipRectWidth = Math.ceil(page.pageClipRectWidth * kF);
+			page.topFieldInPx = Math.floor(page.topFieldInPx * kF) - 1;
+
+			page.titleWidth = Math.floor(page.titleWidth * kF);
+			page.titleHeight = Math.floor(page.titleHeight * kF);
+		}
+
+		printPreviewContext.clear();
+		printPreviewContext.setFillStyle( this.defaults.worksheetView.cells.defaultState.background )
+			.fillRect( 0, 0, printPreviewContext.getWidth(), printPreviewContext.getHeight() );
+
+		var ws;
+		if (!page) {
+			// Печать пустой страницы
+			ws = this.getWorksheet();
+			ws.drawForPrint(printPreviewContext, null);
+		} else {
+			ws = this.getWorksheet(page.indexWorksheet);
+			ws.drawForPrint(printPreviewContext, page, index, printPreviewState.getPagesLength());
+		}
+	};
 
   WorkbookView.prototype._calcPagesPrintSheet = function (index, printPagesData, onlySelection, adjustPrint) {
   	var ws = this.model.getWorksheet(index);
@@ -2966,12 +3381,15 @@
 	}
 
     var viewZoom = this.getZoom();
-    this.changeZoom(1);
+    this.changeZoom(1, true, true);
+
+	var isPrintPreview = this.printPreviewState.isStart();
+	var nActive = isPrintPreview && null !== this.printPreviewState.realActiveSheet ? this.printPreviewState.realActiveSheet : this.model.getActive();
 
     var printPagesData = new asc_CPrintPagesData();
     var printType = adjustPrint.asc_getPrintType();
     if (printType === Asc.c_oAscPrintType.ActiveSheets) {
-      this._calcPagesPrintSheet(this.model.getActive(), printPagesData, false, adjustPrint);
+      this._calcPagesPrintSheet(nActive, printPagesData, false, adjustPrint);
     } else if (printType === Asc.c_oAscPrintType.EntireWorkbook) {
       // Колличество листов
       var countWorksheets = this.model.getWorksheetCount();
@@ -2982,14 +3400,14 @@
       	this._calcPagesPrintSheet(i, printPagesData, false, adjustPrint);
       }
     } else if (printType === Asc.c_oAscPrintType.Selection) {
-      this._calcPagesPrintSheet(this.model.getActive(), printPagesData, true, adjustPrint);
+      this._calcPagesPrintSheet(nActive, printPagesData, true, adjustPrint);
     }
 
-    if (AscCommonExcel.c_kMaxPrintPages === printPagesData.arrPages.length) {
-      this.handlers.trigger("asc_onError", c_oAscError.ID.PrintMaxPagesCount, c_oAscError.Level.NoCritical);
+    if (this.printPreviewState.isNeedShowError(AscCommonExcel.c_kMaxPrintPages === printPagesData.arrPages.length)) {
+		this.handlers.trigger("asc_onError", c_oAscError.ID.PrintMaxPagesCount, c_oAscError.Level.NoCritical);
     }
 
-    this.changeZoom(viewZoom);
+    this.changeZoom(viewZoom, true, true);
 
     return printPagesData;
   };
@@ -3015,6 +3433,12 @@
   WorkbookView.prototype.scrollToTopLeftCell = function() {
     this.getWorksheet().scrollToTopLeftCell();
   };
+  WorkbookView.prototype.scrollToCell = function (row, column) {
+    this.getWorksheet().scrollToCell(row, column);
+  };
+  WorkbookView.prototype.scrollAndResizeToRange = function (r1, c1, r2, c2) {
+    this.getWorksheet().scrollAndResizeToRange(r1, c1, r2, c2);
+  }
   WorkbookView.prototype.onShowDrawingObjects = function() {
       var oWSView = this.getWorksheet();
       var oDrawingsRender;
@@ -3203,23 +3627,43 @@
   };
 
   WorkbookView.prototype._calcMaxDigitWidth = function () {
-    // set default worksheet header font for calculations
-    this.buffers.main.setFont(AscCommonExcel.g_oDefaultFormat.Font);
-    // Измеряем в pt
-    this.stringRender.measureString("0123456789", new AscCommonExcel.CellFlags());
+	  var t = this;
+	  this.executeDefaultDpi(function () {
+		  // set default worksheet header font for calculations
+		  t.buffers.main.setFont(AscCommonExcel.g_oDefaultFormat.Font);
+		  // Измеряем в pt
+		  t.stringRender.measureString("0123456789", new AscCommonExcel.CellFlags());
 
-    // Переводим в px и приводим к целому (int)
-    this.model.maxDigitWidth = this.maxDigitWidth = this.stringRender.getWidestCharWidth();
-    // Проверка для Calibri 11 должно быть this.maxDigitWidth = 7
+		  // Переводим в px и приводим к целому (int)
+		  t.model.maxDigitWidth = t.maxDigitWidth = t.stringRender.getWidestCharWidth();
+		  // Проверка для Calibri 11 должно быть this.maxDigitWidth = 7
 
-    if (!this.maxDigitWidth) {
-      throw new Error("Error: can't measure text string");
-    }
+		  if (!t.maxDigitWidth) {
+			  throw new Error("Error: can't measure text string");
+		  }
 
-    // Padding рассчитывается исходя из maxDigitWidth (http://social.msdn.microsoft.com/Forums/en-US/9a6a9785-66ad-4b6b-bb9f-74429381bd72/margin-padding-in-cell-excel?forum=os_binaryfile)
-    this.defaults.worksheetView.cells.padding = Math.max(asc.ceil(this.maxDigitWidth / 4), 2);
-    this.model.paddingPlusBorder = 2 * this.defaults.worksheetView.cells.padding + 1;
+		  // Padding рассчитывается исходя из maxDigitWidth (http://social.msdn.microsoft.com/Forums/en-US/9a6a9785-66ad-4b6b-bb9f-74429381bd72/margin-padding-in-cell-excel?forum=os_binaryfile)
+		  t.defaults.worksheetView.cells.padding = Math.max(asc.ceil(t.maxDigitWidth / 4), 2);
+		  t.model.paddingPlusBorder = 2 * t.defaults.worksheetView.cells.padding + 1;
+	  })
   };
+
+	WorkbookView.prototype.executeDefaultDpi = function (runFunction) {
+		var truePPIX = this.drawingCtx.ppiX;
+		var truePPIY = this.drawingCtx.ppiY;
+		var retinaPixelRatio = AscBrowser.retinaPixelRatio;
+
+		this.drawingCtx.ppiY = 96;
+		this.drawingCtx.ppiX = 96;
+		AscBrowser.retinaPixelRatio = 1;
+
+		runFunction();
+
+		this.drawingCtx.ppiY = truePPIY;
+		this.drawingCtx.ppiX = truePPIX;
+		AscBrowser.retinaPixelRatio = retinaPixelRatio;
+	};
+
 
 	WorkbookView.prototype.getPivotMergeStyle = function (sheetMergedStyles, range, style, pivot) {
 		var styleInfo = pivot.asc_getStyleInfo();
@@ -3651,11 +4095,16 @@
 			}
 		};
 
+		//разом лочу и настройки и колонтитулы. будут проблема - можно раъединить
 		var lockInfoArr = [];
 		var lockInfo;
 		for(var i in arrPagesPrint) {
 			lockInfo = this.getWorksheet(parseInt(i)).getLayoutLockInfo();
 			lockInfoArr.push(lockInfo);
+			if (arrPagesPrint[i].pageSetup && arrPagesPrint[i].pageSetup.headerFooter) {
+				lockInfo = this.getWorksheet(parseInt(i)).getHeaderFooterLockInfo();
+				lockInfoArr.push(lockInfo);
+			}
 		}
 
 		if(viewMode) {
@@ -3891,16 +4340,20 @@
 
 	WorkbookView.prototype.executeWithCurrentTopLeftCell = function (runFunction) {
 		var i, oWS;
-		var aTrueTopLeftCell = [];
-		for(i = 0; i < this.wsViews.length; i++) {
+		var aTrueTopLeftCell = {};
+		for(i in this.wsViews) {
 			oWS = this.wsViews[i];
-			aTrueTopLeftCell.push(oWS.model.getTopLeftCell());
-			oWS.model.setTopLeftCell(oWS.getCurrentTopLeftCell());
+			if (oWS) {
+				aTrueTopLeftCell[i] = oWS.model.getTopLeftCell();
+				oWS.model.setTopLeftCell(oWS.getCurrentTopLeftCell());
+			}
 		}
 		runFunction();
-		for(i = 0; i < this.wsViews.length; i++) {
+		for(i in this.wsViews) {
 			oWS = this.wsViews[i];
-			oWS.model.setTopLeftCell(aTrueTopLeftCell[i]);
+			if (oWS) {
+				oWS.model.setTopLeftCell(aTrueTopLeftCell[i]);
+			}
 		}
 	};
 	WorkbookView.prototype.convertEquationToMath = function (oEquation, isAll) {
@@ -3919,9 +4372,9 @@
 		}
 	};
 
-	WorkbookView.prototype.sendCursor = function () {
+	WorkbookView.prototype.sendCursor = function (needSend) {
 		var CurTime = new Date().getTime();
-		if (true === this.NeedUpdateTargetForCollaboration && (CurTime - this.LastUpdateTargetTime > 1000))
+		if (needSend || (true === this.NeedUpdateTargetForCollaboration && (CurTime - this.LastUpdateTargetTime > 1000)))
 		{
 			this.NeedUpdateTargetForCollaboration = false;
 			var HaveChanges = History.Have_Changes(true);
@@ -3967,16 +4420,16 @@
 		}
 		AscFormat.drawingsUpdateForeignCursor(oDrawingsController, Asc.editor.wbModel.DrawingDocument, sDrawingData, UserId, Show, UserShortId);
 
-		if (sDrawingData) {
+		var selectionInfo = aCursorInfo[1];
+		if (sDrawingData || !selectionInfo) {
 			this.getWorksheet().cleanSelection();
 			this.collaborativeEditing.Remove_ForeignCursor(UserId);
 			this.getWorksheet()._drawSelection();
 			return;
 		}
 
-		var selectionInfo = aCursorInfo[1];
 		var Changes = new AscCommon.CCollaborativeChanges();
-		var Reader = Changes.GetStream(selectionInfo, 0, selectionInfo.length);
+		var Reader = Changes.GetStream(selectionInfo);
 
 		var sheetId = Reader.GetString2();
 		var isEdit = Reader.GetBool();
@@ -4019,13 +4472,15 @@
 		this.getWorksheet()._drawSelection();
 	};
 	WorkbookView.prototype.getCursorInfo = function () {
-		var sSelectionInfo = this.getCursorInfoBinary();
+		var sSelectionInfo = "";
 		var sDrawingData = "";
 		var oWsView = this.getWorksheet();
 		if (oWsView && oWsView.isSelectOnShape) {
 			if (oWsView.objectRender) {
 				sDrawingData = oWsView.objectRender.getDocumentPositionBinary();
 			}
+		} else {
+			sSelectionInfo = this.getCursorInfoBinary();
 		}
 		return sDrawingData + "," + sSelectionInfo;
 	};
@@ -4052,6 +4507,432 @@
 		oWriter.WriteString2(rangeStr);
 		var BinaryLen = oWriter.GetCurPosition() - BinaryPos;
 		return (BinaryLen + ";" + oWriter.GetBase64Memory2(BinaryPos, BinaryLen));
+	};
+
+	WorkbookView.prototype.updatePrintPreview = function () {
+		if (!this.printPreviewState || !this.printPreviewState.isStart()) {
+			return;
+		}
+		for(var i in this.wsViews) {
+			this.wsViews[i]._recalculate();
+		}
+		if (!this.printPreviewState.isDrawPrintPreview) {
+			var needUpdate;
+			//if (this.workbook.printPreviewState.isNeedUpdate(this.model, this.getMaxRowColWithData())) {
+			//возможно стоит добавить эвент об изменении количетсва страниц
+			needUpdate = true;
+			//}
+			this.model.handlers.trigger("asc_onPrintPreviewSheetDataChanged", needUpdate);
+		}
+	};
+
+	WorkbookView.prototype.setPrintOptionsJson = function (val) {
+		//протаскиваю временные опции для печати
+		//из данных опций пока испольуются только колонтитулы
+		this.printOptionsJson = val;
+	};
+
+	WorkbookView.prototype.getPrintHeaderFooterFromJson = function (index) {
+		var res = null;
+		if (this.printOptionsJson) {
+			var ws = this.model.getWorksheet(index);
+			res = new Asc.CHeaderFooter(ws);
+			if (this.printOptionsJson[index] && this.printOptionsJson[index]["pageSetup"] && this.printOptionsJson[index]["pageSetup"]["headerFooter"]) {
+				res.initFromJson(this.printOptionsJson[index]["pageSetup"]["headerFooter"]);
+			}
+		}
+		return res;
+	};
+
+	//***searchEngine
+	//----------------------------------------------------------------------------------------------------------------------
+	// Search
+	//----------------------------------------------------------------------------------------------------------------------
+	WorkbookView.prototype.Search = function (oProps) {
+		if (!this.SearchEngine) {
+			return;
+		}
+		if (this.SearchEngine.Compare(oProps)) {
+			return this.SearchEngine;
+		}
+
+		this.SearchEngine.Clear();
+		this.SearchEngine.Set(oProps);
+
+		//далее дёргаем в CDocumentSearchExcel -> Add
+		this.model.findCellText(oProps, this.SearchEngine);
+		return this.SearchEngine;
+	};
+
+	WorkbookView.prototype.GetSearchElementId = function (bNext) {
+		if (!this.SearchEngine) {
+			return;
+		}
+
+		this.SearchEngine.SetDirection(bNext);
+		return this.SearchEngine.GetNextElement();
+	};
+
+
+	/*this.closeCellEditor();
+	 // Для поиска эта переменная не нужна (но она может остаться от replace)
+	 options.selectionRange = null;
+	 var result = this.model.findCellText(options);
+	 if (result) {
+	 var ws = this.getWorksheet();
+	 var range = new Asc.Range(result.col, result.row, result.col, result.row);
+	 options.findInSelection ? ws.setActiveCell(result) : ws.setSelection(range);
+	 return true;
+	 }
+	 return null;*/
+
+	WorkbookView.prototype.SelectSearchElement = function (Id) {
+		if (!this.SearchEngine) {
+			return;
+		}
+		this.SearchEngine.Select(Id, true);
+	};
+
+	WorkbookView.prototype.inFindResults = function (ws, row, col) {
+		if (!this.SearchEngine) {
+			return;
+		}
+		return this.SearchEngine.inFindResults(ws, row, col);
+	};
+
+
+	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
+	function CDocumentSearchExcel(wb) {
+		this.wb = wb;
+		this.props = null;
+		//this.Pattern       = new AscCommonWord.CSearchPatternEngine();
+
+		this.Id = 0;
+		this.Count = 0;
+		this.Elements = {};
+		this.CurId = -1;
+		this.Direction = true; // направление true - вперед, false - назад
+
+		//this.ClearOnRecalc = true; // Флаг, говорящий о том, запустился ли пересчет из-за Replace
+
+		this.ReplacedId = [];
+		this.mapFindCells = {};
+		this.isReplacingText = null;
+	}
+
+	CDocumentSearchExcel.prototype.Reset = function () {
+		this.props = null;
+	};
+	/**
+	 * @param {AscCommon.CSearchSettings} oProps
+	 */
+	CDocumentSearchExcel.prototype.Compare = function (oProps) {
+		return oProps && this.props && this.props.isEqual2(oProps) && this.props.scanOnOnlySheet === oProps.scanOnOnlySheet;
+	};
+	CDocumentSearchExcel.prototype.Clear = function (index) {
+		if (this.isReplacingText) {
+			return;
+		}
+
+		this.Reset();
+
+		// Очищаем предыдущие элементы поиска
+		if (index != null) {
+			for (var Id in this.Elements) {
+				if (this.Elements[Id].index === index) {
+					var key = this.Elements[Id].index + "-" + this.Elements[Id].col + "-" + this.Elements[Id].row;
+					delete this.mapFindCells[key];
+					delete this.Elements[Id];
+				}
+			}
+		} else {
+			this.Elements = {};
+			this.mapFindCells = {};
+		}
+
+		this.Id = 0;
+		this.Count = 0;
+		//this.Elements  = {};
+		this.CurId = -1;
+		this.Direction = true;
+
+		this.ReplacedId = [];
+
+		this.isReplacingText = null;
+
+		this.TextAroundUpdate = true;
+		this.StopTextAround();
+		this.SendClearAllTextAround();
+	};
+	CDocumentSearchExcel.prototype.Add = function (r, c, cell, container) {
+		if (container) {
+			container.add(r, c,
+				{sheet: cell.ws.sName, name: null, cell: cell.getName(), text: cell.getValueForEdit(), formula: cell.getFormula(), col: r, row: c, index: cell.ws.index});
+		} else {
+			this.Count++;
+			//[sheet, name, cell, value,formula]
+			this.Elements[this.Id++] =
+				cell.ws ? {sheet: cell.ws.sName, name: null, cell: cell.getName(), text: cell.getValueForEdit(), formula: cell.getFormula(), col: c, row: r, index: cell.ws.index} :
+					cell;
+			var key = this.Elements[this.Id - 1].index + "-" + c + "-" + r;
+			this.mapFindCells[key] = this.Id - 1;
+
+			return (this.Id - 1);
+		}
+	};
+	CDocumentSearchExcel.prototype.endAdd = function (findResult) {
+		//использую findResult для случая, если нужно искать по столбцам, а не по строкам. в дальнейшем можно избавиться от findResult и использовать временный объект
+		if (findResult && findResult.values) {
+			for (var i in findResult.values) {
+				if (!findResult.values[i]) {
+					continue;
+				}
+				for (var j in findResult.values[i]) {
+					this.Add(j, i, findResult.values[i][j]);
+				}
+			}
+		}
+	};
+	CDocumentSearchExcel.prototype.Select = function (nId) {
+		var elem = this.Elements[nId];
+		if (elem) {
+			var ws = this.wb.getWorksheet();
+			if (elem.index !== ws.index) {
+				this.wb.model.handlers.trigger('undoRedoHideSheet', elem.index);
+				ws = this.wb.getWorksheet(elem.index);
+			}
+
+			if (ws) {
+				var range = new Asc.Range(elem.col, elem.row, elem.col, elem.row);
+				//options.findInSelection ? ws.setActiveCell(result) : ws.setSelection(range);
+				ws.setSelection(range)
+
+				this.SetCurrent(nId);
+			}
+		}
+	};
+	CDocumentSearchExcel.prototype.SetCurrent = function (nId) {
+		this.CurId = undefined !== nId ? nId : -1;
+		let nIndex = -1 !== this.CurId ? this.GetElementIndexById(this.CurId) : -1;
+		let oApi = window["Asc"]["editor"];
+		oApi.sync_setSearchCurrent(nIndex, this.Count);
+	};
+	CDocumentSearchExcel.prototype.GetElementIndexById = function (nId) {
+		for (let nPos = 0, nCount = this.ReplacedId.length; nPos < nCount; ++nPos) {
+			if (this.ReplacedId[nPos] > nId) {
+				return (nId - nPos);
+			} else if (this.ReplacedId[nPos] === nId) {
+				return -1;
+			}
+		}
+
+		return (nId - this.ReplacedId.length);
+	};
+	CDocumentSearchExcel.prototype.private_AddReplacedId = function (nId) {
+		for (let nPos = 0, nCount = this.ReplacedId.length; nPos < nCount; ++nPos) {
+			if (this.ReplacedId[nPos] > nId) {
+				return this.ReplacedId.splice(nPos, 0, nId);
+			}
+		}
+
+		this.ReplacedId.push(nId);
+	};
+	CDocumentSearchExcel.prototype.ResetCurrent = function () {
+		this.SetCurrent(-1);
+	};
+	CDocumentSearchExcel.prototype.GetCount = function () {
+		return this.Count;
+	};
+	CDocumentSearchExcel.prototype.GetCurrent = function () {
+		return this.CurId;
+	};
+	CDocumentSearchExcel.prototype.GetCurrentElem = function () {
+		return this.Elements && this.Elements[this.CurId];
+	};
+	CDocumentSearchExcel.prototype.forEachElementsBySheet = function (index, callback) {
+		if (this.Elements) {
+			for (var i in this.Elements) {
+				if (this.Elements[i].index === index) {
+					callback(this.Elements[i]);
+				}
+			}
+		}
+	};
+	CDocumentSearchExcel.prototype.GetNextElement = function () {
+		var id = this.Direction ? this.CurId + 1 : this.CurId - 1;
+		var needElem = this.Elements[id];
+		if (!needElem && this.Count) {
+			//лиюо следующий, либо первый
+			//нужно вернуться к первому, если такой есть
+			var i;
+			if (this.Direction) {
+				var firstElem, firstElemId;
+				for (i = 0; i < this.ReplacedId.length + this.Count; i++) {
+					if (this.Elements[i]) {
+						if (!firstElem) {
+							firstElem = this.Elements[i];
+							firstElemId = i;
+						}
+						if (i > id) {
+							needElem = this.Elements[i];
+							id = i;
+							break;
+						}
+					}
+				}
+				if (!needElem) {
+					needElem = firstElem;
+					id = firstElemId;
+				}
+			} else {
+				for (i = this.ReplacedId.length + this.Count; i >= 0; i--) {
+					if (this.Elements[i]) {
+						if (i < id) {
+							needElem = this.Elements[i];
+							id = i;
+							break;
+						}
+					}
+				}
+			}
+
+		}
+		return needElem ? id : null;
+	};
+	CDocumentSearchExcel.prototype.removeFromSearchElems = function (col, row, ws) {
+		var key = ws.index + "-" + col + "-" + row;
+		if (null != this.mapFindCells[key]) {
+			var id = this.mapFindCells[key];
+			if (this.Elements[id]) {
+				var oApi = window["Asc"]["editor"];
+				oApi.sync_removeTextAroundSearch(id);
+				delete this.Elements[id];
+			}
+			delete this.mapFindCells[key];
+			this.Count--;
+			this.private_AddReplacedId(id);
+		}
+	};
+	CDocumentSearchExcel.prototype.Replace = function (sReplaceString, Id, bRestorePos) {
+	};
+	CDocumentSearchExcel.prototype.replaceStart = function () {
+		this.isReplacingText = true;
+	};
+	CDocumentSearchExcel.prototype.replaceEnd = function () {
+		this.isReplacingText = false;
+	};
+	/**
+	 * @param {AscCommon.CSearchSettings} oProps
+	 */
+	CDocumentSearchExcel.prototype.Set = function (oProps) {
+		if (!oProps) {
+			return;
+		}
+
+		this.props = oProps.clone();
+	};
+	CDocumentSearchExcel.prototype.SetDirection = function (bDirection) {
+		if (bDirection != null) {
+			this.Direction = bDirection;
+		}
+	};
+	CDocumentSearchExcel.prototype.inFindResults = function (ws, row, col) {
+		var key = ws.model.index + "-" + col + "-" + row;
+		return this.mapFindCells && this.mapFindCells[key];
+	};
+
+	CDocumentSearchExcel.prototype.StartTextAround = function () {
+		if (!this.TextAroundUpdate) {
+			return this.SendAllTextAround();
+		}
+
+		this.TextAroundUpdate = false;
+		this.StopTextAround();
+
+		this.TextAroundId = 0;
+
+		let oApi = window["Asc"]["editor"];
+		oApi.sync_startTextAroundSearch();
+
+		let oThis = this;
+		this.TextAroundTimer = setTimeout(function () {
+			oThis.ContinueGetTextAround()
+		}, 20);
+
+		this.TextArround = [];
+	};
+	CDocumentSearchExcel.prototype.ContinueGetTextAround = function () {
+		let arrResult = [];
+
+		let nStartTime = performance.now();
+		while (performance.now() - nStartTime < 20) {
+			if (this.TextAroundId >= this.Id) {
+				break;
+			}
+
+			let sId = this.TextAroundId++;
+
+			if (!this.Elements[sId]) {
+				continue;
+			}
+
+			let sText = this.Elements[sId].text;
+			this.TextArround[sId] = sText;
+			//[id, sheet, name, cell, value,formula]
+			arrResult.push([sId, this.Elements[sId].sheet, this.Elements[sId].name, this.Elements[sId].cell, sText, this.Elements[sId].formula]);
+		}
+
+		let oApi = window["Asc"]["editor"];
+		oApi.sync_getTextAroundSearchPack(arrResult);
+
+		let oThis = this;
+		if (this.TextAroundId >= 0 && this.TextAroundId < this.Id) {
+			this.TextAroundTimer = setTimeout(function () {
+				oThis.ContinueGetTextAround();
+			}, 20);
+		} else {
+			this.TextAroundId = -1;
+			this.TextAroundTimer = null;
+			oApi.sync_endTextAroundSearch();
+		}
+	};
+	CDocumentSearchExcel.prototype.StopTextAround = function () {
+		if (this.TextAroundTimer) {
+			let oApi = window["Asc"]["editor"];
+			clearTimeout(this.TextAroundTimer);
+			oApi.sync_endTextAroundSearch();
+		}
+
+		this.TextAroundTimer = null;
+		this.TextAroundId = -1;
+	};
+	CDocumentSearchExcel.prototype.SendAllTextAround = function () {
+		if (this.TextAroundTimer) {
+			return;
+		}
+
+		let arrResult = [];
+		for (let nId = 0; nId < this.Id; ++nId) {
+			if (!this.Elements[nId] || undefined === this.TextArround[nId]) {
+				continue;
+			}
+
+			arrResult.push([nId, this.Elements[nId].sheet, this.Elements[nId].name, this.Elements[nId].cell, this.Elements[nId].text, this.Elements[nId].formula]);
+		}
+
+		let oApi = window["Asc"]["editor"];
+		oApi.sync_startTextAroundSearch();
+		oApi.sync_getTextAroundSearchPack(arrResult);
+		oApi.sync_endTextAroundSearch();
+	};
+	CDocumentSearchExcel.prototype.SendClearAllTextAround = function () {
+		let oApi = window["Asc"]["editor"];
+		oApi.sync_startTextAroundSearch();
+		oApi.sync_endTextAroundSearch();
+	};
+
+	CDocumentSearchExcel.prototype.isNotEmpty = function () {
+		return this.Count > 0;
 	};
 
 	//------------------------------------------------------------export---------------------------------------------------

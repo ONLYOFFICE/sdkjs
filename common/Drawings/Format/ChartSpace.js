@@ -82,6 +82,9 @@ var GLOBAL_PATH_COUNT = 0;
     var DISP_BLANKS_AS_SPAN = 1;
     var DISP_BLANKS_AS_ZERO = 2;
 
+
+    var DEFAULT_LBLS_DISTANCE = 10.0 * (25.4 / 72);///TODO
+
     function checkVerticalTitle(title) {
         return false;
     }
@@ -366,6 +369,7 @@ var GLOBAL_PATH_COUNT = 0;
     var CChangesDrawingsString = AscDFH.CChangesDrawingsString;
     var CChangesDrawingsObject = AscDFH.CChangesDrawingsObject;
     var CChangesDrawingsObjectNoId = AscDFH.CChangesDrawingsObjectNoId;
+    var CChangesDrawingsContent = AscDFH.CChangesDrawingsContent;
 
 
     var drawingsChangesMap = window['AscDFH'].drawingsChangesMap;
@@ -388,9 +392,17 @@ var GLOBAL_PATH_COUNT = 0;
     AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetStyle] = CChangesDrawingsLong;
     AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetTxPr] = CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetGroup] = CChangesDrawingsObject;
+
+    AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_AddUserShape] = CChangesDrawingsContent;
+    AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_RemoveUserShape] = CChangesDrawingsContent;
     AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_ChartStyle] = CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_ChartColors] = CChangesDrawingsObjectNoId;
 
+
+    AscDFH.drawingContentChanges[AscDFH.historyitem_ChartSpace_RemoveUserShape] =
+        AscDFH.drawingContentChanges[AscDFH.historyitem_ChartSpace_AddUserShape] = function(oClass) {
+        return oClass.userShapes;
+    };
 
     function CheckParagraphTextPr(oParagraph, oTextPr) {
         var oParaPr = oParagraph.Pr.Copy();
@@ -575,6 +587,9 @@ var GLOBAL_PATH_COUNT = 0;
         this.aLabels = [];
         this.maxMinWidth = -1.0;
 
+        this.bRotated = false;
+        this.align = true;
+
         this.chartSpace = oChartSpace;
         this.axis = oAxis;
         this.count = 0;
@@ -677,6 +692,8 @@ var GLOBAL_PATH_COUNT = 0;
         }
     };
     CLabelsBox.prototype.layoutHorNormal = function(fAxisY, fDistance, fXStart, fInterval, bOnTickMark, fForceContentWidth) {
+        this.bRotated = false;
+        this.align = (fDistance >= 0);
         var fMaxHeight = 0.0;
         var fCurX = bOnTickMark ? fXStart - fInterval / 2.0 : fXStart;
         if(fInterval < 0.0) {
@@ -747,7 +764,8 @@ var GLOBAL_PATH_COUNT = 0;
         }
     };
     CLabelsBox.prototype.layoutHorRotated = function(fAxisY, fDistance, fXStart, fXEnd, fInterval, bOnTickMark) {
-
+        this.bRotated = true;
+        this.align = (fDistance >= 0);
         var bTickLblSkip = AscFormat.isRealNumber(this.axis.tickLblSkip);
         if(bTickLblSkip) {
             this.layoutHorRotated2(this.aLabels, fAxisY, fDistance, fXStart, fInterval, bOnTickMark);
@@ -798,6 +816,8 @@ var GLOBAL_PATH_COUNT = 0;
 
     };
     CLabelsBox.prototype.layoutHorRotated2 = function(aLabels, fAxisY, fDistance, fXStart, fInterval, bOnTickMark) {
+        this.bRotated = true;
+        this.align = (fDistance >= 0);
         var i;
         var fMaxHeight = 0.0;
         var fCurX = bOnTickMark ? fXStart : fXStart + fInterval / 2.0;
@@ -867,15 +887,23 @@ var GLOBAL_PATH_COUNT = 0;
     };
     CLabelsBox.prototype.layoutVertNormal = function(fAxisX, fDistance, fYStart, fInterval, bOnTickMark, fMaxBlockWidth) {
         var fCurY = bOnTickMark ? fYStart : fYStart + fInterval / 2.0;
-
+        this.bRotated = false;
+        this.align = (fDistance < 0);
         var fDistance_ = Math.abs(fDistance);
         var oTransform, oContent, oLabel, fMinY = fYStart, fMaxY = fYStart + fInterval * (this.aLabels.length - 1), fY, i;
         var fMaxContentWidth = 0.0, oSize;
         var fLabelHeight = 0.0;
+        var oCompiledPr = null;
         for(i = 0; i < this.aLabels.length; ++i) {
             oLabel = this.aLabels[i];
             if(oLabel) {
+                if(oCompiledPr) {
+                    oLabel.tx.rich.content.Content[0].CompiledPr = oCompiledPr;
+                }
                 oSize = oLabel.tx.rich.getContentOneStringSizes();
+                if(!oCompiledPr) {
+                    oCompiledPr = oLabel.tx.rich.content.Content[0].CompiledPr;
+                }
                 fLabelHeight = oSize.h;
                 break;
             }
@@ -902,7 +930,13 @@ var GLOBAL_PATH_COUNT = 0;
                 oContent.SetApplyToAll(true);
                 oContent.SetParagraphAlign(AscCommon.align_Left);
                 oContent.SetApplyToAll(false);
+                if(oCompiledPr) {
+                    oLabel.tx.rich.content.Content[0].CompiledPr = oCompiledPr;
+                }
                 oSize = oLabel.tx.rich.getContentOneStringSizes();
+                if(!oCompiledPr) {
+                    oCompiledPr = oLabel.tx.rich.content.Content[0].CompiledPr;
+                }
                 if(oSize.w + fDistance_ > fMaxBlockWidth) {
                     break;
                 }
@@ -929,7 +963,7 @@ var GLOBAL_PATH_COUNT = 0;
             }
             fCurY += fInterval;
         }
-
+        oCompiledPr = null;
         if(i < this.aLabels.length) {
             var fMaxMinWidth = this.checkMaxMinWidth();
             fMaxContentWidth = 0.0;
@@ -949,6 +983,13 @@ var GLOBAL_PATH_COUNT = 0;
                     }
                     if(fContentWidth > fMaxContentWidth) {
                         fMaxContentWidth = fContentWidth;
+                    }
+                    if(oCompiledPr) {
+                        oContent.Content[0].CompiledPr = oCompiledPr;
+                    }
+                    oSize = oLabel.tx.rich.getContentOneStringSizes();
+                    if(!oCompiledPr) {
+                        oCompiledPr = oContent.Content[0].CompiledPr;
                     }
                     oContent.Reset(0, 0, fContentWidth, 20000);//выставляем большую ширину чтобы текст расчитался в одну строку.
                     oContent.Recalculate_Page(0, true);
@@ -1038,6 +1079,7 @@ var GLOBAL_PATH_COUNT = 0;
             }
             else {
                 oLabelsBox.layoutHorRotated(fY, fDistance, fXStart, fXEnd, fInterval, bOnTickMark_);
+
             }
         }
     }
@@ -1073,13 +1115,13 @@ var GLOBAL_PATH_COUNT = 0;
         this.nvGraphicFramePr = null;
         this.chart = null;
         this.clrMapOvr = null;
-        this.date1904 = null;
+        this.date1904 = false;
         this.externalData = null;
         this.lang = null;
         this.pivotSource = null;
         this.printSettings = null;
         this.protection = null;
-        this.roundedCorners = null;
+        this.roundedCorners = false;
         this.spPr = null;
         this.style = 2;
         this.txPr = null;
@@ -3671,6 +3713,10 @@ var GLOBAL_PATH_COUNT = 0;
     CChartSpace.prototype.setSpPr = function(spPr) {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ChartSpace_SetSpPr, this.spPr, spPr));
         this.spPr = spPr;
+
+        if(spPr) {
+            spPr.setParent(this);
+        }
         this.recalcInfo.recalculateBrush = true;
         this.recalcInfo.recalculatePen = true;
         this.addToRecalculate();
@@ -3701,15 +3747,18 @@ var GLOBAL_PATH_COUNT = 0;
     CChartSpace.prototype.isShape = function() {
         return false;
     };
-    CChartSpace.prototype.isImage = function() {
-        return false;
-    };
     CChartSpace.prototype.isGroup = function() {
         return false;
     };
     CChartSpace.prototype.setGroup = function(group) {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ChartSpace_SetGroup, this.group, group));
         this.group = group;
+    };
+    CChartSpace.prototype.hasCharts = function() {
+        if(this.chart && this.chart.plotArea && this.chart.plotArea.charts.length > 0) {
+            return true;
+        }
+        return false;
     };
     CChartSpace.prototype.getRangeObjectStr = function() {
         var oDataRange = this.getDataRefs();
@@ -3808,6 +3857,18 @@ var GLOBAL_PATH_COUNT = 0;
     };
     CChartSpace.prototype.getAxisCrossType = function(oAxis) {
         if(oAxis.getObjectType() === AscDFH.historyitem_type_ValAx) {
+            return AscFormat.CROSS_BETWEEN_MID_CAT;
+        }
+        if(oAxis.getObjectType() === AscDFH.historyitem_type_SerAx) {
+            var oChart = this.chart.plotArea.getChartsForAxis(oAxis)[0];
+            if(oChart) {
+                if(oChart.getObjectType() === AscDFH.historyitem_type_SurfaceChart) {
+                    return AscFormat.CROSS_BETWEEN_MID_CAT;
+                }
+                else {
+                    return AscFormat.CROSS_BETWEEN_BETWEEN;
+                }
+            }
             return AscFormat.CROSS_BETWEEN_MID_CAT;
         }
         var oCrossAxis = oAxis.crossAx;
@@ -4241,8 +4302,14 @@ var GLOBAL_PATH_COUNT = 0;
                 }
                 break;
             }
-            case AscDFH.historyitem_type_SerAx:
-            {
+            case AscDFH.historyitem_type_SerAx: {
+                var aAllSeries = this.getAllSeries();
+                oAxis.scale = [];
+                for(var nSer = 0; nSer < aAllSeries.length; ++nSer) {
+                    aStrings.push(aAllSeries[nSer].getSeriesName());
+                    oAxis.scale.push(aAllSeries[nSer].idx);
+                }
+
                 break;
             }
         }
@@ -4265,7 +4332,20 @@ var GLOBAL_PATH_COUNT = 0;
         oAxisGrid.nCount = nIntervalsCount;
         oAxisGrid.bOnTickMark = bOnTickMark;
         oAxisGrid.aStrings = aStrings;
-        if(oAxis.axPos === AscFormat.AX_POS_B || oAxis.axPos === AscFormat.AX_POS_T) {
+        if(oAxis.getObjectType() === AscDFH.historyitem_type_SerAx) {
+            this.checkPrecalculateChartObject();
+            var dDepth = this.getDepthPerspective();
+            fInterval = dDepth / nIntervalsCount;
+            if(nOrientation === AscFormat.ORIENTATION_MIN_MAX) {
+                oAxisGrid.fStart = 0;
+                oAxisGrid.fStride = fInterval;
+            }
+            else {
+                oAxisGrid.fStart = dDepth;
+                oAxisGrid.fStride = -fInterval;
+            }
+        }
+        else if(oAxis.axPos === AscFormat.AX_POS_B || oAxis.axPos === AscFormat.AX_POS_T) {
 
             oAxisGrid.nType = 0;
             fInterval = oRect.w / nIntervalsCount;
@@ -4291,6 +4371,14 @@ var GLOBAL_PATH_COUNT = 0;
                 oAxisGrid.fStride = fInterval;
             }
         }
+    };
+    CChartSpace.prototype.getDepthPerspective = function() {
+        var oProcessor3D = this.chartObj && this.chartObj.processor3D;
+        var dDepth = 0;
+        if(oProcessor3D && AscFormat.isRealNumber(oProcessor3D.depthPerspective)) {
+            dDepth = oProcessor3D.depthPerspective;
+        }
+        return dDepth;
     };
     CChartSpace.prototype.recalculateAxesSet = function(aAxesSet, oRect, oBaseRect, nIndex, fForceContentWidth) {
         var oCorrectedRect = null;
@@ -4318,7 +4406,7 @@ var GLOBAL_PATH_COUNT = 0;
             }
             var fCrossValue;
             var fAxisPos;
-            var fDistance = 10.0 * (25.4 / 72);///TODO
+            var fDistance = DEFAULT_LBLS_DISTANCE;
             var nLabelsPos;
             var bLabelsExtremePosition = false;
             var bOnTickMark = oCurAxis.grid.bOnTickMark;
@@ -4364,6 +4452,7 @@ var GLOBAL_PATH_COUNT = 0;
                         if(!oCrossGrid.bOnTickMark) {
                             fCrossValue -= 1;
                         }
+                        break;
                     }
                     default:
                     { //includes AutoZero
@@ -4434,8 +4523,10 @@ var GLOBAL_PATH_COUNT = 0;
             oCurAxis.labels = oLabelsBox;
             oCurAxis.posX = null;
             oCurAxis.posY = null;
+            oCurAxis.nullPos = null;
             oCurAxis.xPoints = null;
             oCurAxis.yPoints = null;
+            oCurAxis.zPoints = null;
             var aPoints = null;
             if(oCurAxis.getObjectType() === AscDFH.historyitem_type_SerAx) {
                 //TODO
@@ -4522,6 +4613,14 @@ var GLOBAL_PATH_COUNT = 0;
                         val: oCurAxis.scale[j],
                         pos: oCurAxis.grid.fStart + j * oCurAxis.grid.fStride + fStartSeriesPos
                     })
+                }
+                if(aPoints.length > 1) {
+                    var fNullPos;
+                    var oP1 = aPoints[0];
+                    var oP2 = aPoints[aPoints.length - 1];
+                    var fAK = (oP1.pos - oP2.pos) / (oP1.val - oP2.val);
+                    var fBK = oP1.pos - fAK*oP1.val;
+                    oCurAxis.nullPos = fBK;
                 }
             }
             if(oLabelsBox) {
@@ -4649,6 +4748,7 @@ var GLOBAL_PATH_COUNT = 0;
                 oCurAxis.posX = null;
                 oCurAxis.xPoints = null;
                 oCurAxis.yPoints = null;
+                oCurAxis.zPoints = null;
             }
             if(this.bEmptySeries) {
                 return;
@@ -4703,24 +4803,55 @@ var GLOBAL_PATH_COUNT = 0;
                 }
             }
             var aAllAxes = [];//array of axes sets
+            var aSeriesAxes = [];
+            var dSeriesLabelsWidth = 0;
+            var oSetAxis;
             while(aAxes.length > 0) {
                 oCurAxis = aAxes.splice(0, 1)[0];
-                aCurAxesSet = [];
-                aCurAxesSet.push(oCurAxis);
-                for(i = aAxes.length - 1; i > -1; --i) {
-                    oCurAxis2 = aAxes[i];
-                    for(j = 0; j < aCurAxesSet.length; ++j) {
-                        if(aCurAxesSet[j].crossAx === oCurAxis2 || oCurAxis2.crossAx === aCurAxesSet[j]) {
-                            aCurAxesSet.push(oCurAxis2);
+                if(oCurAxis.getObjectType() !== AscDFH.historyitem_type_SerAx) {
+                    aCurAxesSet = [];
+                    aCurAxesSet.push(oCurAxis);
+                    for(i = aAxes.length - 1; i > -1; --i) {
+                        oCurAxis2 = aAxes[i];
+                        if(oCurAxis2.getObjectType() !== AscDFH.historyitem_type_SerAx) {
+                            for(j = aCurAxesSet.length - 1; j > -1; --j) {
+                                oSetAxis = aCurAxesSet[j];
+                        if(oSetAxis.crossAx !== oSetAxis && oSetAxis.crossAx === oCurAxis2 ||
+                            oCurAxis2.crossAx !== oCurAxis2 && oCurAxis2.crossAx === oSetAxis) {
+                                    aCurAxesSet.push(oCurAxis2);
+                                }
+                            }
                         }
                     }
+                    if(aCurAxesSet.length > 1) {
+                        aAllAxes.push(aCurAxesSet);
+                    }
                 }
-                if(aCurAxesSet.length > 1) {
-                    aAllAxes.push(aCurAxesSet);
+                else {
+                    aSeriesAxes.push(oCurAxis);
+                    this.calculateAxisGrid(oCurAxis);
+                    oCurAxis.labels = null;
+                    var nLabelsPos = c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO;
+                    if(oCurAxis.bDelete) {
+                        nLabelsPos = c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE;
+                    }
+                    else {
+                        if(null !== oCurAxis.tickLblPos) {
+                            nLabelsPos = oCurAxis.tickLblPos;
+                        }
+                        else {
+                            nLabelsPos = c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO;
+                        }
+                    }
+                    if(nLabelsPos !== c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE) {
+                        var oLabelsBox = new CLabelsBox(oCurAxis.grid.aStrings, oCurAxis, this);
+                        oCurAxis.labels = oLabelsBox;
+                        dSeriesLabelsWidth = oLabelsBox.maxMinWidth;
+                    }
                 }
             }
             var oSize = this.getChartSizes();
-            var oRect = new CRect(oSize.startX, oSize.startY, oSize.w, oSize.h);
+            var oRect = new CRect(oSize.startX, oSize.startY, oSize.w - dSeriesLabelsWidth, oSize.h);
             var oBaseRect = oRect;
             var aRects = [];
             for(i = 0; i < aAllAxes.length; ++i) {
@@ -4728,8 +4859,6 @@ var GLOBAL_PATH_COUNT = 0;
                 aRects.push(this.recalculateAxesSet(aCurAxesSet, oRect, oBaseRect, 0));
             }
             if(aRects.length > 1) {
-
-
                 oRect = aRects[0].copy();
                 for(i = 1; i < aRects.length; ++i) {
                     if(!oRect.intersection(aRects[i])) {
@@ -4813,7 +4942,7 @@ var GLOBAL_PATH_COUNT = 0;
                 }
             }
             aAxes = oPlotArea.axId;
-            var oCheckAxis;
+            var oHorAxis;
             for(i = 0; i < aAxes.length; ++i) {
                 oCurAxis = aAxes[i];
                 var bHorizontal = (oCurAxis.axPos === AscFormat.AX_POS_T || oCurAxis.axPos === AscFormat.AX_POS_B);
@@ -4824,6 +4953,48 @@ var GLOBAL_PATH_COUNT = 0;
                     }
                     else {
                         oCurAxis.yPoints = oReplaceAxis.yPoints;
+                    }
+                }
+                if(bHorizontal && oCurAxis.getObjectType() !== AscDFH.historyitem_type_SerAx) {
+                    oHorAxis = oCurAxis;
+                }
+            }
+            if(oHorAxis) {
+                for(var nSerAx = 0; nSerAx < aSeriesAxes.length; ++nSerAx) {
+                    var oSerAx = aSeriesAxes[nSerAx];
+                    var oGrid = oHorAxis.grid;
+                    oSerAx.posX = oGrid.fStart + oGrid.fStride*(oGrid.nCount);
+                    oSerAx.posY = oHorAxis.posY;
+                    oSerAx.zPoints = [];
+                    var aAllSeries = this.getAllSeries();
+                    this.recalculateChart();
+                    this.calculateAxisGrid(oSerAx);
+
+
+                    var nOrientation = oSerAx.scaling && AscFormat.isRealNumber(oSerAx.scaling.orientation) ? oSerAx.scaling.orientation : AscFormat.ORIENTATION_MIN_MAX;
+                    var nCrossType = this.getAxisCrossType(oSerAx);
+                    var bOnTickMark = ((nCrossType === AscFormat.CROSS_BETWEEN_MID_CAT) && (aAllSeries.length > 1));
+                    var nIntervalsCount = bOnTickMark ? (aAllSeries.length - 1) : (aAllSeries.length);
+                    oGrid = oSerAx.grid;
+                    var dDepth = this.getDepthPerspective();
+                    var fStart, fStride;
+                    if(nOrientation === AscFormat.ORIENTATION_MIN_MAX) {
+                        fStart = 0;
+                        fStride = dDepth/nIntervalsCount;
+                    }
+                    else {
+                        fStart = dDepth;
+                        fStride = -dDepth/nIntervalsCount;
+                    }
+                    var nSer;
+                    var fAdd = bOnTickMark ? 0 : fStride/2;
+                    for(nSer = 0; nSer < aAllSeries.length; ++nSer) {
+                        oSerAx.zPoints.push({val: aAllSeries[nSer].idx, pos: fStart + fStride*nSer + fAdd});
+                    }
+                    if(oSerAx.labels) {
+                        var oLabelsBox = oSerAx.labels;
+                        var fDistance = DEFAULT_LBLS_DISTANCE;
+                        oSerAx.labels.layoutHorNormal(oSerAx.posY, fDistance, oSerAx.posX, 0, oSerAx.grid.bOnTickMark, 2000);
                     }
                 }
             }
@@ -4837,3670 +5008,19 @@ var GLOBAL_PATH_COUNT = 0;
             AscCommon.global_MatrixTransformer.TranslateAppend(this.chart.plotArea.localTransform, oChartSize.startX, oChartSize.startY);
         }
     };
-    CChartSpace.prototype.recalculateAxis = function() {
-        if(this.chart && this.chart.plotArea && this.chart.plotArea.charts[0]) {
-            this.cachedCanvas = null;
-            var b_checkEmpty = this.checkEmptySeries();
-            this.bEmptySeries = b_checkEmpty;
-
-            var plot_area = this.chart.plotArea;
-            var chart_object = plot_area.chart;
-            var i;
-            var chart_type = chart_object.getObjectType();
-            var bWithoutLabels = false;
-            if(plot_area.layout && plot_area.layout.layoutTarget === AscFormat.LAYOUT_TARGET_INNER) {
-                bWithoutLabels = true;
+    CChartSpace.prototype.distributeValues = function(aVals) {
+        if(Array.isArray(aVals) && aVals.length > 2) {
+            var fStride = (aVals[aVals.length - 1] - aVals[0])/(aVals.length - 1);
+            for(var nVal = 1; nVal < aVals.length - 1; ++nVal) {
+                aVals[nVal] = aVals[0] + fStride*nVal;
             }
-
-            this.plotAreaRect = null;
-            var rect;
-            var bCorrectedLayoutRect = false;
-            if(b_checkEmpty) {
-                if(chart_type === AscDFH.historyitem_type_ScatterChart) {
-                    var x_ax, y_ax;
-                    y_ax = this.chart.plotArea.valAx;
-                    x_ax = this.chart.plotArea.catAx;
-                    y_ax.labels = null;
-                    x_ax.labels = null;
-
-                    y_ax.posX = null;
-                    x_ax.posY = null;
-                    y_ax.posY = null;
-                    x_ax.posX = null;
-
-
-                    y_ax.xPoints = null;
-                    x_ax.yPoints = null;
-                    y_ax.yPoints = null;
-                    x_ax.xPoints = null;
-                }
-                else if(chart_type !== AscDFH.historyitem_type_BarChart && (chart_type !== AscDFH.historyitem_type_PieChart && chart_type !== AscDFH.historyitem_type_DoughnutChart)
-                    || (chart_type === AscDFH.historyitem_type_BarChart && chart_object.barDir !== AscFormat.BAR_DIR_BAR)) {
-                    var cat_ax, val_ax;
-                    val_ax = this.chart.plotArea.valAx;
-                    cat_ax = this.chart.plotArea.catAx;
-                    if(val_ax && cat_ax) {
-                        val_ax.labels = null;
-                        cat_ax.labels = null;
-
-                        val_ax.posX = null;
-                        cat_ax.posY = null;
-                        val_ax.posY = null;
-                        cat_ax.posX = null;
-
-                        val_ax.xPoints = null;
-                        cat_ax.yPoints = null;
-                        val_ax.yPoints = null;
-                        cat_ax.xPoints = null;
-                        val_ax.transformYPoints = null;
-                        cat_ax.transformXPoints = null;
-                        val_ax.transformXPoints = null;
-                        cat_ax.transformYPoints = null;
-                    }
-                }
-                else if(chart_type === AscDFH.historyitem_type_BarChart && chart_object.barDir === AscFormat.BAR_DIR_BAR) {
-                    var cat_ax, val_ax;
-                    var axis_by_types = chart_object.getAxisByTypes();
-                    cat_ax = axis_by_types.catAx[0];
-                    val_ax = axis_by_types.valAx[0];
-                    if(cat_ax && val_ax) {
-                        val_ax.labels = null;
-                        cat_ax.labels = null;
-
-                        val_ax.posX = null;
-                        cat_ax.posY = null;
-                        val_ax.posY = null;
-                        cat_ax.posX = null;
-
-                        val_ax.xPoints = null;
-                        cat_ax.yPoints = null;
-                        val_ax.yPoints = null;
-                        cat_ax.xPoints = null;
-                        val_ax.transformYPoints = null;
-                        cat_ax.transformXPoints = null;
-                        val_ax.transformXPoints = null;
-                        cat_ax.transformYPoints = null;
-                    }
-                }
-                return;
-            }
-
-            var bNeedReflect = this.getNeedReflect();
-            if(chart_type === AscDFH.historyitem_type_ScatterChart) {
-                var x_ax, y_ax;
-                y_ax = this.chart.plotArea.valAx;
-                x_ax = this.chart.plotArea.catAx;
-                if(x_ax && y_ax) {
-                    /*new recalc*/
-                    y_ax.labels = null;
-                    x_ax.labels = null;
-                    y_ax.posX = null;
-                    x_ax.posY = null;
-                    y_ax.posY = null;
-                    x_ax.posX = null;
-
-                    y_ax.xPoints = null;
-                    x_ax.yPoints = null;
-                    y_ax.yPoints = null;
-                    x_ax.xPoints = null;
-                    var sizes = this.getChartSizes();
-                    rect = {x: sizes.startX, y: sizes.startY, w: sizes.w, h: sizes.h};
-                    var arr_val = this.getValAxisValues();
-                    var arr_strings = [];
-                    var multiplier;
-                    if(y_ax.dispUnits)
-                        multiplier = y_ax.dispUnits.getMultiplier();
-                    else
-                        multiplier = 1;
-                    var num_fmt = y_ax.numFmt;
-                    if(num_fmt && typeof num_fmt.formatCode === "string" /*&& !(num_fmt.formatCode === "General")*/) {
-                        var num_format = oNumFormatCache.get(num_fmt.formatCode);
-                        for(i = 0; i < arr_val.length; ++i) {
-                            var calc_value = arr_val[i] * multiplier;
-                            var rich_value = num_format.formatToChart(calc_value);
-                            arr_strings.push(rich_value);
-                        }
-                    }
-                    else {
-                        for(i = 0; i < arr_val.length; ++i) {
-                            var calc_value = arr_val[i] * multiplier;
-                            arr_strings.push(calc_value + "");
-                        }
-                    }
-
-                    //расчитаем подписи для вертикальной оси найдем ширину максимальной и возьмем её удвоенную за ширину подписей верт оси
-                    var left_align_labels = true;
-                    y_ax.labels = new AscFormat.CValAxisLabels(this, y_ax);
-                    y_ax.yPoints = [];
-                    var max_width = 0;
-                    for(i = 0; i < arr_strings.length; ++i) {
-                        var dlbl = new AscFormat.CDLbl();
-                        dlbl.parent = y_ax;
-                        dlbl.chart = this;
-                        dlbl.spPr = y_ax.spPr;
-                        dlbl.txPr = y_ax.txPr;
-                        dlbl.tx = new AscFormat.CChartText();
-                        dlbl.tx.setChart(this);
-                        dlbl.tx.rich = AscFormat.CreateTextBodyFromString(arr_strings[i], this.getDrawingDocument(), dlbl);
-                        if(i > 0) {
-                            dlbl.lastStyleObject = y_ax.labels.aLabels[0].lastStyleObject;
-                        }
-                        var oRecalculateByMaxWord = dlbl.tx.rich.recalculateByMaxWord();
-                        var cur_width = oRecalculateByMaxWord.w;
-                        if(i === arr_strings.length - 1) {
-                            rect.y += oRecalculateByMaxWord.h / 2;
-                        }
-                        if(cur_width > max_width)
-                            max_width = cur_width;
-                        y_ax.labels.aLabels.push(dlbl);
-                    }
-
-
-                    //пока расстояние между подписями и краем блока с подписями берем размер шрифта.
-                    var hor_gap = y_ax.labels.aLabels[0].tx.rich.content.Content[0].CompiledPr.Pr.TextPr.FontSize * (25.4 / 72);
-                    y_ax.labels.extX = max_width + hor_gap;
-
-                    /*расчитаем надписи в блоке для горизонтальной оси*/
-                    var arr_x_val = this.getXValAxisValues();
-                    var num_fmt = x_ax.numFmt;
-                    var string_pts = [];
-                    if(num_fmt && typeof num_fmt.formatCode === "string" /*&& !(num_fmt.formatCode === "General")*/) {
-                        var num_format = oNumFormatCache.get(num_fmt.formatCode);
-                        for(i = 0; i < arr_x_val.length; ++i) {
-                            var calc_value = arr_x_val[i] * multiplier;
-                            var rich_value = num_format.formatToChart(calc_value);
-                            string_pts.push({val: rich_value});
-                        }
-                    }
-                    else {
-                        for(i = 0; i < arr_x_val.length; ++i) {
-                            var calc_value = arr_x_val[i] * multiplier;
-                            string_pts.push({val: calc_value + ""});
-                        }
-                    }
-
-                    x_ax.labels = new AscFormat.CValAxisLabels(this, x_ax);
-                    var bottom_align_labels = true;
-                    var max_height = 0;
-                    for(i = 0; i < string_pts.length; ++i) {
-                        var dlbl = new AscFormat.CDLbl();
-                        dlbl.parent = x_ax;
-                        dlbl.chart = this;
-                        dlbl.spPr = x_ax.spPr;
-                        dlbl.txPr = x_ax.txPr;
-                        dlbl.tx = new AscFormat.CChartText();
-                        dlbl.tx.setChart(this);
-                        dlbl.tx.rich = AscFormat.CreateTextBodyFromString(string_pts[i].val.replace(oNonSpaceRegExp, ' '), this.getDrawingDocument(), dlbl);
-                        if(x_ax.labels.aLabels[0]) {
-                            dlbl.lastStyleObject = x_ax.labels.aLabels[0].lastStyleObject;
-                        }
-
-                        var oWH = dlbl.tx.rich.recalculateByMaxWord();
-                        var cur_height = oWH.h;
-                        if(cur_height > max_height)
-                            max_height = cur_height;
-                        if(i === string_pts.length - 1) {
-                            rect.w -= oWH.w / 2;
-                        }
-                        x_ax.labels.aLabels.push(dlbl);
-                    }
-                    var vert_gap = x_ax.labels.aLabels[0].tx.rich.content.Content[0].CompiledPr.Pr.TextPr.FontSize * (25.4 / 72);
-                    x_ax.labels.extY = max_height + vert_gap;
-
-
-                    /*расчитаем позицию блока с подпиясями вертикальной оси*/
-                    var x_ax_orientation = isRealObject(x_ax.scaling) && AscFormat.isRealNumber(x_ax.scaling.orientation) ? x_ax.scaling.orientation : AscFormat.ORIENTATION_MIN_MAX;
-                    var crosses;//точка на горизонтальной оси где её пересекает вертикальная
-                    if(y_ax.crosses === AscFormat.CROSSES_AUTO_ZERO) {
-                        if(arr_x_val[0] <= 0 && arr_x_val[arr_x_val.length - 1] >= 0)
-                            crosses = 0;
-                        else if(arr_x_val[0] > 0)
-                            crosses = arr_x_val[0];
-                        else
-                            crosses = arr_x_val[arr_x_val.length - 1];
-                    }
-                    else if(y_ax.crosses === AscFormat.CROSSES_MAX)
-                        crosses = arr_x_val[arr_x_val.length - 1];
-                    else if(y_ax.crosses === AscFormat.CROSSES_MIN)
-                        crosses = arr_x_val[0];
-                    else if(AscFormat.isRealNumber(y_ax.crossesAt) && arr_val[0] <= y_ax.crossesAt && arr_val[arr_val.length - 1] >= y_ax.crossesAt) {
-                        crosses = y_ax.crossesAt;
-                    }
-                    else {
-                        //в кайнем случае ведем себя как с AUTO_ZERO
-                        if(arr_x_val[0] <= 0 && arr_x_val[arr_x_val.length - 1] >= 0)
-                            crosses = 0;
-                        else if(arr_x_val[0] > 0)
-                            crosses = arr_x_val[0];
-                        else
-                            crosses = arr_x_val[arr_x_val.length - 1];
-                    }
-
-
-                    var hor_interval_width = checkFiniteNumber(rect.w / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                    var vert_interval_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                    var arr_x_points = [], arr_y_points = [];
-                    var labels_pos = y_ax.tickLblPos;
-
-                    var first_hor_label_half_width = (x_ax.tickLblPos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE || x_ax.bDelete) ? 0 : x_ax.labels.aLabels[0].tx.rich.content.XLimit / 2;
-                    var last_hor_label_half_width = (x_ax.tickLblPos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE || x_ax.bDelete) ? 0 : x_ax.labels.aLabels[x_ax.labels.aLabels.length - 1].tx.rich.content.XLimit / 2;
-                    var left_gap = 0, right_gap = 0;
-                    if(x_ax_orientation === AscFormat.ORIENTATION_MIN_MAX) {
-                        switch(labels_pos) {
-                            case c_oAscTickLabelsPos.TICK_LABEL_POSITION_HIGH:
-                            {
-                                left_align_labels = false;
-
-                                if(bNeedReflect) {
-                                    right_gap = Math.max(last_hor_label_half_width, 0);
-                                }
-                                else {
-                                    right_gap = Math.max(last_hor_label_half_width, y_ax.labels.extX);
-                                }
-                                if(!bWithoutLabels) {
-                                    hor_interval_width = checkFiniteNumber((rect.w - right_gap - first_hor_label_half_width) / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                    for(i = 0; i < arr_x_val.length; ++i) {
-                                        arr_x_points[i] = rect.x + first_hor_label_half_width + hor_interval_width * (arr_x_val[i] - arr_x_val[0]);
-                                    }
-                                    y_ax.labels.x = rect.x + first_hor_label_half_width + hor_interval_width * (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]);
-                                    y_ax.posX = rect.x + first_hor_label_half_width + (crosses - arr_x_val[0]) * hor_interval_width;
-                                }
-                                else {
-                                    hor_interval_width = checkFiniteNumber(rect.w / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                    for(i = 0; i < arr_x_val.length; ++i) {
-                                        arr_x_points[i] = rect.x + hor_interval_width * (arr_x_val[i] - arr_x_val[0]);
-                                    }
-                                    y_ax.labels.x = rect.x + hor_interval_width * (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]);
-                                    y_ax.posX = rect.x + (crosses - arr_x_val[0]) * hor_interval_width;
-
-                                    if(y_ax.labels.x < 0 && !bNeedReflect) {
-                                        rect.x -= y_ax.labels.x;
-                                        rect.w += y_ax.labels.x;
-                                        bCorrectedLayoutRect = true;
-                                    }
-                                    if(y_ax.labels.x + y_ax.labels.extX > this.extX && !bNeedReflect) {
-                                        rect.w -= (y_ax.labels.x + y_ax.labels.extX - this.extX);
-                                        bCorrectedLayoutRect = true;
-                                    }
-                                    if(bCorrectedLayoutRect) {
-                                        hor_interval_width = checkFiniteNumber(rect.w / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                        for(i = 0; i < arr_x_val.length; ++i) {
-                                            arr_x_points[i] = rect.x + hor_interval_width * (arr_x_val[i] - arr_x_val[0]);
-                                        }
-                                        y_ax.labels.x = rect.x + hor_interval_width * (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]);
-                                        y_ax.posX = rect.x + (crosses - arr_x_val[0]) * hor_interval_width;
-                                    }
-                                }
-                                break;
-                            }
-                            case c_oAscTickLabelsPos.TICK_LABEL_POSITION_LOW:
-                            {
-                                if(bNeedReflect) {
-                                    left_gap = Math.max(first_hor_label_half_width, 0);
-                                }
-                                else {
-                                    left_gap = Math.max(first_hor_label_half_width, y_ax.labels.extX);
-                                }
-
-                                if(!bWithoutLabels) {
-                                    hor_interval_width = checkFiniteNumber((rect.w - left_gap - last_hor_label_half_width) / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                    for(i = 0; i < arr_x_val.length; ++i) {
-                                        arr_x_points[i] = rect.x + left_gap + hor_interval_width * (arr_x_val[i] - arr_x_val[0]);
-                                    }
-                                    y_ax.labels.x = rect.x - y_ax.labels.extX;
-                                    y_ax.posX = rect.x + (crosses - arr_x_val[0]) * hor_interval_width;
-                                }
-                                else {
-                                    hor_interval_width = checkFiniteNumber(rect.w / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                    for(i = 0; i < arr_x_val.length; ++i) {
-                                        arr_x_points[i] = rect.x + hor_interval_width * (arr_x_val[i] - arr_x_val[0]);
-                                    }
-                                    y_ax.labels.x = rect.x - y_ax.labels.extX;
-                                    y_ax.posX = rect.x + (crosses - arr_x_val[0]) * hor_interval_width;
-
-
-                                    if(y_ax.labels.x < 0 && !bNeedReflect) {
-                                        rect.x -= y_ax.labels.x;
-                                        rect.w += y_ax.labels.x;
-                                        bCorrectedLayoutRect = true;
-                                    }
-                                    if(y_ax.labels.x + y_ax.labels.extX > this.extX && !bNeedReflect) {
-                                        rect.w -= (y_ax.labels.x + y_ax.labels.extX - this.extX);
-                                        bCorrectedLayoutRect = true;
-                                    }
-                                    if(bCorrectedLayoutRect) {
-                                        hor_interval_width = checkFiniteNumber(rect.w / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                        for(i = 0; i < arr_x_val.length; ++i) {
-                                            arr_x_points[i] = rect.x + hor_interval_width * (arr_x_val[i] - arr_x_val[0]);
-                                        }
-                                        y_ax.labels.x = rect.x - y_ax.labels.extX;
-                                        y_ax.posX = rect.x + (crosses - arr_x_val[0]) * hor_interval_width;
-                                    }
-
-                                }
-
-                                break;
-                            }
-                            case c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE:
-                            {
-                                if(!bWithoutLabels) {
-                                    y_ax.labels = null;
-                                    hor_interval_width = checkFiniteNumber((rect.w - first_hor_label_half_width - last_hor_label_half_width) / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                    for(i = 0; i < arr_x_val.length; ++i) {
-                                        arr_x_points[i] = rect.x + first_hor_label_half_width + hor_interval_width * (arr_x_val[i] - arr_x_val[0]);
-                                    }
-                                    y_ax.posX = rect.x + first_hor_label_half_width + hor_interval_width * (crosses - arr_x_val[0]);
-                                }
-                                else {
-                                    y_ax.labels = null;
-                                    hor_interval_width = checkFiniteNumber(rect.w / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                    for(i = 0; i < arr_x_val.length; ++i) {
-                                        arr_x_points[i] = rect.x + first_hor_label_half_width + hor_interval_width * (arr_x_val[i] - arr_x_val[0]);
-                                    }
-                                    y_ax.posX = rect.x + hor_interval_width * (crosses - arr_x_val[0]);
-                                }
-                                break;
-                            }
-                            default :
-                            {//c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO рядом с осью
-                                if(y_ax.crosses === AscFormat.CROSSES_MAX) {
-                                    left_align_labels = false;
-                                    if(bNeedReflect) {
-                                        right_gap = Math.max(right_gap, 0);
-                                    }
-                                    else {
-                                        right_gap = Math.max(right_gap, y_ax.labels.extX);
-                                    }
-
-                                    if(!bWithoutLabels) {
-                                        y_ax.labels.x = rect.x + rect.w - right_gap;
-                                        y_ax.posX = rect.x + rect.w - right_gap;
-                                        hor_interval_width = checkFiniteNumber((rect.w - right_gap - first_hor_label_half_width) / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                        for(i = 0; i < arr_x_val.length; ++i) {
-                                            arr_x_points[i] = rect.x + first_hor_label_half_width + hor_interval_width * (arr_x_val[i] - arr_x_val[0]);
-                                        }
-                                    }
-                                    else {
-
-                                        y_ax.labels.x = rect.x + rect.w;
-                                        y_ax.posX = rect.x + rect.w;
-                                        hor_interval_width = checkFiniteNumber(rect.w / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                        for(i = 0; i < arr_x_val.length; ++i) {
-                                            arr_x_points[i] = rect.x + hor_interval_width * (arr_x_val[i] - arr_x_val[0]);
-                                        }
-
-                                        if(y_ax.labels.x < 0 && !bNeedReflect) {
-                                            rect.x -= y_ax.labels.x;
-                                            rect.w += y_ax.labels.x;
-                                            bCorrectedLayoutRect = true;
-                                        }
-                                        if(y_ax.labels.x + y_ax.labels.extX > this.extX && !bNeedReflect) {
-                                            rect.w -= (y_ax.labels.x + y_ax.labels.extX - this.extX);
-                                            bCorrectedLayoutRect = true;
-                                        }
-                                        if(bCorrectedLayoutRect) {
-                                            y_ax.labels.x = rect.x + rect.w;
-                                            y_ax.posX = rect.x + rect.w;
-                                            hor_interval_width = checkFiniteNumber(rect.w / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                            for(i = 0; i < arr_x_val.length; ++i) {
-                                                arr_x_points[i] = rect.x + hor_interval_width * (arr_x_val[i] - arr_x_val[0]);
-                                            }
-                                        }
-
-                                    }
-                                }
-                                else {
-
-                                    if(!bWithoutLabels) {
-                                        hor_interval_width = checkFiniteNumber((rect.w - first_hor_label_half_width - last_hor_label_half_width) / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                        if(!bNeedReflect && first_hor_label_half_width + (crosses - arr_x_val[0]) * hor_interval_width < y_ax.labels.extX) {
-                                            hor_interval_width = checkFiniteNumber((rect.w - y_ax.labels.extX - last_hor_label_half_width) / (arr_x_val[arr_x_val.length - 1] - crosses));
-                                        }
-                                        y_ax.posX = rect.x + rect.w - last_hor_label_half_width - (arr_x_val[arr_x_val.length - 1] - crosses) * hor_interval_width;
-                                        for(i = 0; i < arr_x_val.length; ++i) {
-                                            arr_x_points[i] = y_ax.posX + (arr_x_val[i] - crosses) * hor_interval_width;
-                                        }
-                                        y_ax.labels.x = y_ax.posX - y_ax.labels.extX;
-                                    }
-                                    else {
-                                        hor_interval_width = checkFiniteNumber(rect.w / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                        y_ax.posX = rect.x + rect.w - (arr_x_val[arr_x_val.length - 1] - crosses) * hor_interval_width;
-                                        for(i = 0; i < arr_x_val.length; ++i) {
-                                            arr_x_points[i] = y_ax.posX + (arr_x_val[i] - crosses) * hor_interval_width;
-                                        }
-                                        y_ax.labels.x = y_ax.posX - y_ax.labels.extX;
-
-                                        if(y_ax.labels.x < 0 && !bNeedReflect) {
-                                            rect.x -= y_ax.labels.x;
-                                            rect.w += y_ax.labels.x;
-                                            bCorrectedLayoutRect = true;
-                                        }
-                                        if(y_ax.labels.x + y_ax.labels.extX > this.extX && !bNeedReflect) {
-                                            rect.w -= (y_ax.labels.x + y_ax.labels.extX - this.extX);
-                                            bCorrectedLayoutRect = true;
-                                        }
-                                        if(bCorrectedLayoutRect) {
-                                            hor_interval_width = checkFiniteNumber(rect.w / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                            y_ax.posX = rect.x + rect.w - (arr_x_val[arr_x_val.length - 1] - crosses) * hor_interval_width;
-                                            for(i = 0; i < arr_x_val.length; ++i) {
-                                                arr_x_points[i] = y_ax.posX + (arr_x_val[i] - crosses) * hor_interval_width;
-                                            }
-                                            y_ax.labels.x = y_ax.posX - y_ax.labels.extX;
-                                        }
-
-                                    }
-                                }
-                                break;
-                            }
-                        }
-                    }
-                    else {
-                        switch(labels_pos) {
-                            case c_oAscTickLabelsPos.TICK_LABEL_POSITION_HIGH:
-                            {
-                                if(bNeedReflect) {
-                                    left_gap = Math.max(0, last_hor_label_half_width);
-                                }
-                                else {
-                                    left_gap = Math.max(y_ax.labels.extX, last_hor_label_half_width);
-                                }
-                                if(!bWithoutLabels) {
-                                    hor_interval_width = checkFiniteNumber((rect.w - left_gap - first_hor_label_half_width) / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-
-                                    y_ax.posX = rect.x + rect.w - (crosses - arr_x_val[0]) * hor_interval_width - first_hor_label_half_width;
-                                    for(i = 0; i < arr_x_val.length; ++i) {
-                                        arr_x_points[i] = y_ax.posX - (arr_x_val[i] - crosses) * hor_interval_width;
-                                    }
-                                    y_ax.labels.x = y_ax.posX - (arr_x_val[arr_x_val.length - 1] - crosses) * hor_interval_width - y_ax.labels.extX;
-                                }
-                                else {
-                                    hor_interval_width = checkFiniteNumber(rect.w / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-
-                                    y_ax.posX = rect.x + rect.w - (crosses - arr_x_val[0]) * hor_interval_width;
-                                    for(i = 0; i < arr_x_val.length; ++i) {
-                                        arr_x_points[i] = y_ax.posX - (arr_x_val[i] - crosses) * hor_interval_width;
-                                    }
-                                    y_ax.labels.x = y_ax.posX - (arr_x_val[arr_x_val.length - 1] - crosses) * hor_interval_width - y_ax.labels.extX;
-
-                                    if(y_ax.labels.x < 0 && !bNeedReflect) {
-                                        rect.x -= y_ax.labels.x;
-                                        rect.w += y_ax.labels.x;
-                                        bCorrectedLayoutRect = true;
-                                    }
-                                    if(y_ax.labels.x + y_ax.labels.extX > this.extX && !bNeedReflect) {
-                                        rect.w -= (y_ax.labels.x + y_ax.labels.extX - this.extX);
-                                        bCorrectedLayoutRect = true;
-                                    }
-                                    if(bCorrectedLayoutRect) {
-                                        hor_interval_width = checkFiniteNumber(rect.w / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-
-                                        y_ax.posX = rect.x + rect.w - (crosses - arr_x_val[0]) * hor_interval_width;
-                                        for(i = 0; i < arr_x_val.length; ++i) {
-                                            arr_x_points[i] = y_ax.posX - (arr_x_val[i] - crosses) * hor_interval_width;
-                                        }
-                                        y_ax.labels.x = y_ax.posX - (arr_x_val[arr_x_val.length - 1] - crosses) * hor_interval_width - y_ax.labels.extX;
-                                    }
-
-
-                                }
-                                break;
-                            }
-                            case c_oAscTickLabelsPos.TICK_LABEL_POSITION_LOW:
-                            {
-                                left_align_labels = false;
-
-                                if(bNeedReflect) {
-                                    right_gap = Math.max(0, first_hor_label_half_width);
-                                }
-                                else {
-                                    right_gap = Math.max(y_ax.labels.extX, first_hor_label_half_width);
-                                }
-
-                                if(!bWithoutLabels) {
-                                    hor_interval_width = checkFiniteNumber((rect.w - right_gap - last_hor_label_half_width) / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                    y_ax.posX = rect.x + rect.w - right_gap - (crosses - arr_x_val[0]) * hor_interval_width;
-                                    for(i = 0; i < arr_x_val.length; ++i) {
-                                        arr_x_points[i] = y_ax.posX - (arr_x_val[i] - crosses) * hor_interval_width;
-                                    }
-                                    y_ax.labels.x = rect.x + rect.w - right_gap;
-                                }
-                                else {
-                                    hor_interval_width = checkFiniteNumber(rect.w / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                    y_ax.posX = rect.x + rect.w - (crosses - arr_x_val[0]) * hor_interval_width;
-                                    for(i = 0; i < arr_x_val.length; ++i) {
-                                        arr_x_points[i] = y_ax.posX - (arr_x_val[i] - crosses) * hor_interval_width;
-                                    }
-                                    y_ax.labels.x = rect.x + rect.w;
-
-                                    if(y_ax.labels.x < 0 && !bNeedReflect) {
-                                        rect.x -= y_ax.labels.x;
-                                        rect.w += y_ax.labels.x;
-                                        bCorrectedLayoutRect = true;
-                                    }
-                                    if(y_ax.labels.x + y_ax.labels.extX > this.extX && !bNeedReflect) {
-                                        rect.w -= (y_ax.labels.x + y_ax.labels.extX - this.extX);
-                                        bCorrectedLayoutRect = true;
-                                    }
-                                    if(bCorrectedLayoutRect) {
-                                        hor_interval_width = checkFiniteNumber(rect.w / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                        y_ax.posX = rect.x + rect.w - (crosses - arr_x_val[0]) * hor_interval_width;
-                                        for(i = 0; i < arr_x_val.length; ++i) {
-                                            arr_x_points[i] = y_ax.posX - (arr_x_val[i] - crosses) * hor_interval_width;
-                                        }
-                                        y_ax.labels.x = rect.x + rect.w;
-                                    }
-
-                                }
-                                break;
-                            }
-                            case c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE:
-                            {
-                                y_ax.labels = null;
-
-                                if(!bWithoutLabels) {
-                                    hor_interval_width = checkFiniteNumber((rect.w - first_hor_label_half_width - last_hor_label_half_width) / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                    y_ax.posX = rect.x + rect.w - first_hor_label_half_width - (crosses - arr_x_val[0]) * hor_interval_width;
-                                    for(i = 0; i < arr_x_val.length; ++i) {
-                                        arr_x_points[i] = y_ax.posX - (arr_x_val[i] - crosses) * hor_interval_width;
-                                    }
-                                }
-                                else {
-                                    hor_interval_width = checkFiniteNumber(rect.w / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                    y_ax.posX = rect.x + rect.w - (crosses - arr_x_val[0]) * hor_interval_width;
-                                    for(i = 0; i < arr_x_val.length; ++i) {
-                                        arr_x_points[i] = y_ax.posX - (arr_x_val[i] - crosses) * hor_interval_width;
-                                    }
-                                }
-                                break;
-                            }
-                            default :
-                            {//c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO рядом с осью
-
-                                if(y_ax.crosses === AscFormat.CROSSES_MAX) {
-                                    if(bNeedReflect) {
-                                        left_gap = Math.max(0, last_hor_label_half_width);
-                                    }
-                                    else {
-                                        left_gap = Math.max(y_ax.labels.extX, last_hor_label_half_width);
-                                    }
-                                    if(!bWithoutLabels) {
-                                        hor_interval_width = checkFiniteNumber((rect.w - left_gap - first_hor_label_half_width) / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                        y_ax.posX = rect.x + rect.w - first_hor_label_half_width - (crosses - arr_x_val[0]) * hor_interval_width;
-                                        y_ax.labels.x = y_ax.posX - ((arr_x_val[arr_x_val.length - 1] - crosses) * hor_interval_width) - y_ax.labels.extX;
-                                    }
-                                    else {
-                                        hor_interval_width = checkFiniteNumber(rect.w / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                        y_ax.posX = rect.x + rect.w - (crosses - arr_x_val[0]) * hor_interval_width;
-                                        y_ax.labels.x = y_ax.posX - ((arr_x_val[arr_x_val.length - 1] - crosses) * hor_interval_width) - y_ax.labels.extX;
-
-
-                                        if(y_ax.labels.x < 0 && !bNeedReflect) {
-                                            rect.x -= y_ax.labels.x;
-                                            rect.w += y_ax.labels.x;
-                                            bCorrectedLayoutRect = true;
-                                        }
-                                        if(y_ax.labels.x + y_ax.labels.extX > this.extX && !bNeedReflect) {
-                                            rect.w -= (y_ax.labels.x + y_ax.labels.extX - this.extX);
-                                            bCorrectedLayoutRect = true;
-                                        }
-                                        if(bCorrectedLayoutRect) {
-                                            hor_interval_width = checkFiniteNumber(rect.w / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                            y_ax.posX = rect.x + rect.w - (crosses - arr_x_val[0]) * hor_interval_width;
-                                            y_ax.labels.x = y_ax.posX - ((arr_x_val[arr_x_val.length - 1] - crosses) * hor_interval_width) - y_ax.labels.extX;
-                                        }
-
-                                    }
-                                }
-                                else {
-                                    left_align_labels = false;
-                                    if(!bWithoutLabels) {
-                                        hor_interval_width = checkFiniteNumber((rect.w - first_hor_label_half_width - last_hor_label_half_width) / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                        if(!bNeedReflect && first_hor_label_half_width + (crosses - arr_x_val[0]) * hor_interval_width < y_ax.labels.extX) {
-                                            hor_interval_width = checkFiniteNumber((rect.w - y_ax.labels.extX - last_hor_label_half_width) / (arr_x_val[arr_x_val.length - 1] - crosses));
-                                        }
-                                        left_align_labels = false;
-                                        y_ax.posX = rect.x + last_hor_label_half_width + hor_interval_width * (arr_x_val[arr_x_val.length - 1] - crosses);
-                                        y_ax.labels.x = y_ax.posX;
-                                    }
-                                    else {
-                                        hor_interval_width = checkFiniteNumber(rect.w / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                        left_align_labels = false;
-                                        y_ax.posX = rect.x + hor_interval_width * (arr_x_val[arr_x_val.length - 1] - crosses);
-                                        y_ax.labels.x = y_ax.posX;
-
-
-                                        if(y_ax.labels.x < 0 && !bNeedReflect) {
-                                            rect.x -= y_ax.labels.x;
-                                            rect.w += y_ax.labels.x;
-                                            bCorrectedLayoutRect = true;
-                                        }
-                                        if(y_ax.labels.x + y_ax.labels.extX > this.extX && !bNeedReflect) {
-                                            rect.w -= (y_ax.labels.x + y_ax.labels.extX - this.extX);
-                                            bCorrectedLayoutRect = true;
-                                        }
-                                        if(bCorrectedLayoutRect) {
-                                            hor_interval_width = checkFiniteNumber(rect.w / (arr_x_val[arr_x_val.length - 1] - arr_x_val[0]));
-                                            left_align_labels = false;
-                                            y_ax.posX = rect.x + hor_interval_width * (arr_x_val[arr_x_val.length - 1] - crosses);
-                                            y_ax.labels.x = y_ax.posX;
-                                        }
-
-                                    }
-                                }
-                                for(i = 0; i < arr_x_val.length; ++i) {
-                                    arr_x_points[i] = y_ax.posX - (arr_x_val[i] - crosses) * hor_interval_width;
-                                }
-                                break;
-                            }
-                        }
-                    }
-                    x_ax.interval = hor_interval_width;
-
-                    /*рассчитаем позицию блока с подписями горизонтальной оси*/
-                    var y_ax_orientation = isRealObject(y_ax.scaling) && AscFormat.isRealNumber(y_ax.scaling.orientation) ? y_ax.scaling.orientation : AscFormat.ORIENTATION_MIN_MAX;
-                    var crosses_x;
-                    if(x_ax.crosses === AscFormat.CROSSES_AUTO_ZERO) {
-                        if(arr_val[0] <= 0 && arr_val[arr_val.length - 1] >= 0) {
-                            crosses_x = 0;
-                        }
-                        else if(arr_val[0] > 0)
-                            crosses_x = arr_val[0];
-                        else
-                            crosses_x = arr_val[arr_val.length - 1];
-                    }
-                    else if(x_ax.crosses === AscFormat.CROSSES_MAX) {
-                        crosses_x = arr_val[arr_val.length - 1];
-                    }
-                    else if(x_ax.crosses === AscFormat.CROSSES_MIN) {
-                        crosses_x = arr_val[0];
-                    }
-                    else if(AscFormat.isRealNumber(x_ax.crossesAt) && arr_val[0] <= x_ax.crossesAt && arr_val[arr_val.length - 1] >= x_ax.crossesAt) {
-                        crosses_x = x_ax.crossesAt;
-                    }
-                    else {   //как с AUTO_ZERO
-                        if(arr_val[0] <= 0 && arr_val[arr_val.length - 1] >= 0) {
-                            crosses_x = 0;
-                        }
-                        else if(arr_val[0] > 0)
-                            crosses_x = arr_val[0];
-                        else
-                            crosses_x = arr_val[arr_val.length - 1];
-                    }
-
-                    var tick_labels_pos_x = x_ax.tickLblPos;
-
-                    var first_vert_label_half_height = 0; //TODO (y_ax.tickLblPos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE || y_ax.bDelete) ? 0 :  y_ax.labels.aLabels[0].tx.rich.content.GetSummaryHeight()/2;
-                    var last_vert_label_half_height = 0; //(y_ax.tickLblPos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE || y_ax.bDelete) ? 0 :  y_ax.labels.aLabels[0].tx.rich.content.GetSummaryHeight()/2;
-
-                    var bottom_gap = 0, top_height = 0;
-                    if(y_ax_orientation === AscFormat.ORIENTATION_MIN_MAX) {
-                        switch(tick_labels_pos_x) {
-                            case c_oAscTickLabelsPos.TICK_LABEL_POSITION_HIGH:
-                            {
-                                bottom_align_labels = false;
-                                var bottom_start_point = rect.y + rect.h - first_vert_label_half_height;
-
-
-                                top_height = Math.max(x_ax.labels.extY, last_vert_label_half_height);
-                                if(!bWithoutLabels) {
-                                    vert_interval_height = checkFiniteNumber((rect.h - top_height - first_vert_label_half_height) / (arr_val[arr_val.length - 1] - arr_val[0]));
-
-                                    x_ax.labels.y = bottom_start_point - (arr_val[arr_val.length - 1] - arr_val[0]) * vert_interval_height - x_ax.labels.extY;
-
-                                    for(i = 0; i < arr_val.length; ++i) {
-                                        arr_y_points[i] = bottom_start_point - (arr_val[i] - arr_val[0]) * vert_interval_height;
-                                    }
-                                    x_ax.posY = bottom_start_point - (crosses_x - arr_val[0]) * vert_interval_height;
-                                }
-                                else {
-                                    vert_interval_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-
-                                    x_ax.labels.y = rect.y + rect.h - (arr_val[arr_val.length - 1] - arr_val[0]) * vert_interval_height - x_ax.labels.extY;
-
-                                    for(i = 0; i < arr_val.length; ++i) {
-                                        arr_y_points[i] = rect.y + rect.h - (arr_val[i] - arr_val[0]) * vert_interval_height;
-                                    }
-                                    x_ax.posY = rect.y + rect.h - (crosses_x - arr_val[0]) * vert_interval_height;
-
-                                    var bCheckXLabels = false;
-                                    if(x_ax.labels.y < 0) {
-                                        bCheckXLabels = true;
-                                        rect.y -= x_ax.labels.y;
-                                        rect.h -= x_ax.labels.h;
-                                    }
-                                    if(x_ax.labels.y + x_ax.labels.extY > this.extY) {
-                                        bCheckXLabels = true;
-                                        rect.h -= (x_ax.labels.y + x_ax.labels.extY - this.extY)
-                                    }
-                                    if(bCheckXLabels) {
-                                        vert_interval_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                        x_ax.labels.y = rect.y + rect.h - (arr_val[arr_val.length - 1] - arr_val[0]) * vert_interval_height - x_ax.labels.extY;
-                                        for(i = 0; i < arr_val.length; ++i) {
-                                            arr_y_points[i] = rect.y + rect.h - (arr_val[i] - arr_val[0]) * vert_interval_height;
-                                        }
-                                        x_ax.posY = rect.y + rect.h - (crosses_x - arr_val[0]) * vert_interval_height;
-                                    }
-                                }
-                                break;
-                            }
-                            case c_oAscTickLabelsPos.TICK_LABEL_POSITION_LOW:
-                            {
-                                bottom_gap = Math.max(x_ax.labels.extY, first_vert_label_half_height);
-                                if(!bWithoutLabels) {
-                                    x_ax.labels.y = rect.y + rect.h - bottom_gap;
-                                    vert_interval_height = checkFiniteNumber((rect.h - bottom_gap - last_vert_label_half_height) / (arr_val[arr_val.length - 1] - arr_val[0]));
-
-                                    for(i = 0; i < arr_val.length; ++i) {
-                                        arr_y_points[i] = rect.y + rect.h - bottom_gap - (arr_val[i] - arr_val[0]) * vert_interval_height;
-                                    }
-                                    x_ax.posY = rect.y + rect.h - bottom_gap - (crosses_x - arr_val[0]) * vert_interval_height;
-                                }
-                                else {
-                                    x_ax.labels.y = rect.y + rect.h;
-                                    vert_interval_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-
-                                    for(i = 0; i < arr_val.length; ++i) {
-                                        arr_y_points[i] = rect.y + rect.h - (arr_val[i] - arr_val[0]) * vert_interval_height;
-                                    }
-                                    x_ax.posY = rect.y + rect.h - (crosses_x - arr_val[0]) * vert_interval_height;
-
-                                    var bCheckXLabels = false;
-                                    if(x_ax.labels.y < 0) {
-                                        bCheckXLabels = true;
-                                        rect.y -= x_ax.labels.y;
-                                        rect.h -= x_ax.labels.h;
-                                    }
-                                    if(x_ax.labels.y + x_ax.labels.extY > this.extY) {
-                                        bCheckXLabels = true;
-                                        rect.h -= (x_ax.labels.y + x_ax.labels.extY - this.extY)
-                                    }
-                                    if(bCheckXLabels) {
-
-                                        x_ax.labels.y = rect.y + rect.h;
-                                        vert_interval_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-
-                                        for(i = 0; i < arr_val.length; ++i) {
-                                            arr_y_points[i] = rect.y + rect.h - (arr_val[i] - arr_val[0]) * vert_interval_height;
-                                        }
-                                        x_ax.posY = rect.y + rect.h - (crosses_x - arr_val[0]) * vert_interval_height;
-                                    }
-                                }
-                                break;
-                            }
-                            case c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE:
-                            {
-                                x_ax.labels = null;
-                                if(!bWithoutLabels) {
-                                    vert_interval_height = checkFiniteNumber((rect.h - first_vert_label_half_height - last_vert_label_half_height) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                    for(i = 0; i < arr_val.length; ++i) {
-                                        arr_y_points[i] = rect.y + rect.h - first_vert_label_half_height - (arr_val[i] - arr_val[0]) * vert_interval_height;
-                                    }
-                                    x_ax.posY = rect.y + rect.h - first_vert_label_half_height - (crosses_x - arr_val[0]) * vert_interval_height;
-                                }
-                                else {
-                                    vert_interval_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                    for(i = 0; i < arr_val.length; ++i) {
-                                        arr_y_points[i] = rect.y + rect.h - (arr_val[i] - arr_val[0]) * vert_interval_height;
-                                    }
-                                    x_ax.posY = rect.y + rect.h - (crosses_x - arr_val[0]) * vert_interval_height;
-                                }
-                                break;
-                            }
-                            default :
-                            {//c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO рядом с осью
-                                if(x_ax.crosses === AscFormat.CROSSES_MAX) {
-                                    bottom_align_labels = false;
-                                    top_height = Math.max(x_ax.labels.extY, last_vert_label_half_height);
-
-
-                                    if(!bWithoutLabels) {
-                                        vert_interval_height = checkFiniteNumber((rect.h - top_height - first_vert_label_half_height) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                        for(i = 0; i < arr_val.length; ++i) {
-                                            arr_y_points[i] = rect.y + rect.h - first_vert_label_half_height - (arr_val[i] - arr_val[0]) * vert_interval_height;
-                                        }
-                                        x_ax.posY = rect.y + rect.h - first_vert_label_half_height - (arr_val[arr_val.length - 1] - arr_val[0]) * vert_interval_height;
-                                        x_ax.labels.y = x_ax.posY - x_ax.labels.extY;
-                                    }
-                                    else {
-                                        vert_interval_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                        for(i = 0; i < arr_val.length; ++i) {
-                                            arr_y_points[i] = rect.y + rect.h - (arr_val[i] - arr_val[0]) * vert_interval_height;
-                                        }
-                                        x_ax.posY = rect.y + rect.h - (arr_val[arr_val.length - 1] - arr_val[0]) * vert_interval_height;
-                                        x_ax.labels.y = x_ax.posY - x_ax.labels.extY;
-
-
-                                        var bCheckXLabels = false;
-                                        if(x_ax.labels.y < 0) {
-                                            bCheckXLabels = true;
-                                            rect.y -= x_ax.labels.y;
-                                            rect.h -= x_ax.labels.h;
-                                        }
-                                        if(x_ax.labels.y + x_ax.labels.extY > this.extY) {
-                                            bCheckXLabels = true;
-                                            rect.h -= (x_ax.labels.y + x_ax.labels.extY - this.extY)
-                                        }
-                                        if(bCheckXLabels) {
-                                            vert_interval_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                            for(i = 0; i < arr_val.length; ++i) {
-                                                arr_y_points[i] = rect.y + rect.h - (arr_val[i] - arr_val[0]) * vert_interval_height;
-                                            }
-                                            x_ax.posY = rect.y + rect.h - (arr_val[arr_val.length - 1] - arr_val[0]) * vert_interval_height;
-                                            x_ax.labels.y = x_ax.posY - x_ax.labels.extY;
-                                        }
-
-                                    }
-                                }
-                                else {
-                                    if(!bWithoutLabels) {
-                                        vert_interval_height = checkFiniteNumber((rect.h - first_vert_label_half_height - last_vert_label_half_height) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                        if(first_vert_label_half_height + (crosses_x - arr_val[0]) * vert_interval_height < x_ax.labels.extY) {
-                                            vert_interval_height = checkFiniteNumber((rect.h - x_ax.labels.extY - last_vert_label_half_height) / (arr_val[arr_val.length - 1] - crosses_x));
-                                        }
-
-                                        x_ax.posY = rect.y + last_vert_label_half_height + (arr_val[arr_val.length - 1] - crosses_x) * vert_interval_height;
-                                        x_ax.labels.y = x_ax.posY;
-                                        for(i = 0; i < arr_val.length; ++i) {
-                                            arr_y_points[i] = x_ax.posY - (arr_val[i] - crosses_x) * vert_interval_height;
-                                        }
-                                    }
-                                    else {
-                                        vert_interval_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-
-
-                                        x_ax.posY = rect.y + (arr_val[arr_val.length - 1] - crosses_x) * vert_interval_height;
-                                        x_ax.labels.y = x_ax.posY;
-                                        for(i = 0; i < arr_val.length; ++i) {
-                                            arr_y_points[i] = x_ax.posY - (arr_val[i] - crosses_x) * vert_interval_height;
-                                        }
-
-
-                                        var bCheckXLabels = false;
-                                        if(x_ax.labels.y < 0) {
-                                            bCheckXLabels = true;
-                                            rect.y -= x_ax.labels.y;
-                                            rect.h -= x_ax.labels.h;
-                                        }
-                                        if(x_ax.labels.y + x_ax.labels.extY > this.extY) {
-                                            bCheckXLabels = true;
-                                            rect.h -= (x_ax.labels.y + x_ax.labels.extY - this.extY)
-                                        }
-                                        if(bCheckXLabels) {
-                                            vert_interval_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                            x_ax.posY = rect.y + (arr_val[arr_val.length - 1] - crosses_x) * vert_interval_height;
-                                            x_ax.labels.y = x_ax.posY;
-                                            for(i = 0; i < arr_val.length; ++i) {
-                                                arr_y_points[i] = x_ax.posY - (arr_val[i] - crosses_x) * vert_interval_height;
-                                            }
-                                        }
-
-                                    }
-                                }
-                                break;
-                            }
-                        }
-                    }
-                    else {
-                        switch(tick_labels_pos_x) {
-                            case c_oAscTickLabelsPos.TICK_LABEL_POSITION_HIGH:
-                            {
-                                bottom_gap = Math.max(last_vert_label_half_height, x_ax.labels.extY);
-                                if(!bWithoutLabels) {
-                                    vert_interval_height = checkFiniteNumber((rect.h - bottom_gap - first_vert_label_half_height) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                    x_ax.posY = rect.y + first_vert_label_half_height + (crosses_x - arr_val[0]) * vert_interval_height;
-                                    for(i = 0; i < arr_val.length; ++i) {
-                                        arr_y_points[i] = x_ax.posY + vert_interval_height * (arr_val[i] - crosses_x);
-                                    }
-                                    x_ax.labels.y = x_ax.posY + vert_interval_height * (arr_val[arr_val.length - 1] - crosses_x);
-                                }
-                                else {
-                                    vert_interval_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                    x_ax.posY = rect.y + (crosses_x - arr_val[0]) * vert_interval_height;
-                                    for(i = 0; i < arr_val.length; ++i) {
-                                        arr_y_points[i] = x_ax.posY + vert_interval_height * (arr_val[i] - crosses_x);
-                                    }
-                                    x_ax.labels.y = x_ax.posY + vert_interval_height * (arr_val[arr_val.length - 1] - crosses_x);
-
-
-                                    var bCheckXLabels = false;
-                                    if(x_ax.labels.y < 0) {
-                                        bCheckXLabels = true;
-                                        rect.y -= x_ax.labels.y;
-                                        rect.h -= x_ax.labels.h;
-                                    }
-                                    if(x_ax.labels.y + x_ax.labels.extY > this.extY) {
-                                        bCheckXLabels = true;
-                                        rect.h -= (x_ax.labels.y + x_ax.labels.extY - this.extY)
-                                    }
-                                    if(bCheckXLabels) {
-                                        vert_interval_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                        x_ax.posY = rect.y + (crosses_x - arr_val[0]) * vert_interval_height;
-                                        for(i = 0; i < arr_val.length; ++i) {
-                                            arr_y_points[i] = x_ax.posY + vert_interval_height * (arr_val[i] - crosses_x);
-                                        }
-                                        x_ax.labels.y = x_ax.posY + vert_interval_height * (arr_val[arr_val.length - 1] - crosses_x);
-                                    }
-
-                                }
-                                break;
-                            }
-                            case c_oAscTickLabelsPos.TICK_LABEL_POSITION_LOW:
-                            {
-                                top_height = Math.max(x_ax.labels.extY, first_vert_label_half_height);
-
-                                bottom_align_labels = false;
-                                if(!bWithoutLabels) {
-                                    vert_interval_height = checkFiniteNumber((rect.h - top_height - last_vert_label_half_height) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                    x_ax.posY = rect.y + top_height + (crosses_x - arr_val[0]) * vert_interval_height;
-                                    for(i = 0; i < arr_val.length; ++i) {
-                                        arr_y_points[i] = rect.y + top_height + vert_interval_height * (arr_val[i] - arr_val[0]);
-                                    }
-                                    x_ax.labels.y = rect.y + top_height - x_ax.labels.extY;
-                                }
-                                else {
-                                    vert_interval_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                    x_ax.posY = rect.y + (crosses_x - arr_val[0]) * vert_interval_height;
-                                    for(i = 0; i < arr_val.length; ++i) {
-                                        arr_y_points[i] = rect.y + vert_interval_height * (arr_val[i] - arr_val[0]);
-                                    }
-                                    x_ax.labels.y = rect.y - x_ax.labels.extY;
-
-
-                                    var bCheckXLabels = false;
-                                    if(x_ax.labels.y < 0) {
-                                        bCheckXLabels = true;
-                                        rect.y -= x_ax.labels.y;
-                                        rect.h -= x_ax.labels.h;
-                                    }
-                                    if(x_ax.labels.y + x_ax.labels.extY > this.extY) {
-                                        bCheckXLabels = true;
-                                        rect.h -= (x_ax.labels.y + x_ax.labels.extY - this.extY)
-                                    }
-                                    if(bCheckXLabels) {
-                                        vert_interval_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                        x_ax.posY = rect.y + (crosses_x - arr_val[0]) * vert_interval_height;
-                                        for(i = 0; i < arr_val.length; ++i) {
-                                            arr_y_points[i] = rect.y + vert_interval_height * (arr_val[i] - arr_val[0]);
-                                        }
-                                        x_ax.labels.y = rect.y - x_ax.labels.extY;
-                                    }
-                                }
-                                break;
-                            }
-                            case c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE:
-                            {
-                                x_ax.labels = null;
-                                if(!bWithoutLabels) {
-                                    vert_interval_height = checkFiniteNumber((rect.h - first_vert_label_half_height - last_vert_label_half_height) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                    x_ax.posY = rect.y + first_vert_label_half_height + (crosses_x - arr_val[0]) * vert_interval_height;
-                                    for(i = 0; i < arr_val.length; ++i) {
-                                        arr_y_points[i] = rect.y + first_vert_label_half_height + vert_interval_height * (arr_val[i] - arr_val[0]);
-                                    }
-                                }
-                                else {
-                                    vert_interval_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                    x_ax.posY = rect.y + (crosses_x - arr_val[0]) * vert_interval_height;
-                                    for(i = 0; i < arr_val.length; ++i) {
-                                        arr_y_points[i] = rect.y + vert_interval_height * (arr_val[i] - arr_val[0]);
-                                    }
-                                }
-                                break;
-                            }
-                            default :
-                            {//c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO рядом с осью
-                                if(x_ax.crosses === AscFormat.CROSSES_MAX) {
-                                    bottom_gap = Math.max(x_ax.labels.extY, last_vert_label_half_height);
-
-
-                                    if(!bWithoutLabels) {
-                                        vert_interval_height = checkFiniteNumber((rect.h - bottom_gap - first_vert_label_half_height) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                        x_ax.posY = rect.y + first_vert_label_half_height + (crosses_x - arr_val[0]) * vert_interval_height;
-                                        for(i = 0; i < arr_val.length; ++i) {
-                                            arr_y_points[i] = rect.y + first_vert_label_half_height + vert_interval_height * (arr_val[i] - arr_val[0]);
-                                        }
-                                        x_ax.labels.y = rect.y + rect.extY - bottom_gap;
-                                    }
-                                    else {
-                                        vert_interval_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                        x_ax.posY = rect.y + (crosses_x - arr_val[0]) * vert_interval_height;
-                                        for(i = 0; i < arr_val.length; ++i) {
-                                            arr_y_points[i] = rect.y + vert_interval_height * (arr_val[i] - arr_val[0]);
-                                        }
-                                        x_ax.labels.y = rect.y + rect.extY;
-
-
-                                        var bCheckXLabels = false;
-                                        if(x_ax.labels.y < 0) {
-                                            bCheckXLabels = true;
-                                            rect.y -= x_ax.labels.y;
-                                            rect.h -= x_ax.labels.h;
-                                        }
-                                        if(x_ax.labels.y + x_ax.labels.extY > this.extY) {
-                                            bCheckXLabels = true;
-                                            rect.h -= (x_ax.labels.y + x_ax.labels.extY - this.extY)
-                                        }
-                                        if(bCheckXLabels) {
-                                            vert_interval_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                            x_ax.posY = rect.y + (crosses_x - arr_val[0]) * vert_interval_height;
-                                            for(i = 0; i < arr_val.length; ++i) {
-                                                arr_y_points[i] = rect.y + vert_interval_height * (arr_val[i] - arr_val[0]);
-                                            }
-                                            x_ax.labels.y = rect.y + rect.extY;
-                                        }
-                                    }
-                                }
-                                else {
-                                    bottom_align_labels = false;
-
-                                    if(!bWithoutLabels) {
-
-                                        vert_interval_height = checkFiniteNumber((rect.h - last_vert_label_half_height - first_vert_label_half_height) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                        if(first_vert_label_half_height + (crosses_x - arr_val[0]) * vert_interval_height < x_ax.labels.extY) {
-                                            x_ax.posY = rect.y + x_ax.labels.extY;
-                                            vert_interval_height = checkFiniteNumber((rect.h - x_ax.labels.extY - last_vert_label_half_height) / (arr_val[arr_val.length - 1] - crosses_x));
-                                        }
-                                        else {
-                                            x_ax.posY = rect.y + rect.h - vert_interval_height * (arr_val[arr_val.length - 1] - crosses_x) - last_vert_label_half_height;
-                                        }
-                                        x_ax.labels.y = x_ax.posY - x_ax.labels.extY;
-                                        for(i = 0; i < arr_val.length; ++i) {
-                                            arr_y_points[i] = x_ax.posY + vert_interval_height * (arr_val[i] - crosses_x);
-                                        }
-                                    }
-                                    else {
-                                        vert_interval_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                        x_ax.posY = rect.y + rect.h - vert_interval_height * (arr_val[arr_val.length - 1] - crosses_x);
-                                        x_ax.labels.y = x_ax.posY - x_ax.labels.extY;
-                                        for(i = 0; i < arr_val.length; ++i) {
-                                            arr_y_points[i] = x_ax.posY + vert_interval_height * (arr_val[i] - crosses_x);
-                                        }
-
-                                        var bCheckXLabels = false;
-                                        if(x_ax.labels.y < 0) {
-                                            bCheckXLabels = true;
-                                            rect.y -= x_ax.labels.y;
-                                            rect.h -= x_ax.labels.h;
-                                        }
-                                        if(x_ax.labels.y + x_ax.labels.extY > this.extY) {
-                                            bCheckXLabels = true;
-                                            rect.h -= (x_ax.labels.y + x_ax.labels.extY - this.extY)
-                                        }
-                                        if(bCheckXLabels) {
-                                            vert_interval_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                            x_ax.posY = rect.y + rect.h - vert_interval_height * (arr_val[arr_val.length - 1] - crosses_x);
-                                            x_ax.labels.y = x_ax.posY - x_ax.labels.extY;
-                                            for(i = 0; i < arr_val.length; ++i) {
-                                                arr_y_points[i] = x_ax.posY + vert_interval_height * (arr_val[i] - crosses_x);
-                                            }
-                                        }
-                                    }
-                                }
-                                break;
-                            }
-                        }
-                    }
-                    y_ax.interval = vert_interval_height;
-
-                    y_ax.yPoints = [];
-                    for(i = 0; i < arr_val.length; ++i) {
-                        y_ax.yPoints.push({pos: arr_y_points[i], val: arr_val[i]});
-                    }
-
-
-                    x_ax.xPoints = [];
-                    for(i = 0; i < arr_x_val.length; ++i) {
-                        x_ax.xPoints.push({pos: arr_x_points[i], val: arr_x_val[i]});
-                    }
-
-                    var arr_labels;
-                    var text_transform;
-                    var local_text_transform;
-                    if(x_ax.bDelete) {
-                        x_ax.labels = null;
-                    }
-                    if(y_ax.bDelete) {
-                        y_ax.labels = null;
-                    }
-                    if(x_ax.labels) {
-                        arr_labels = x_ax.labels.aLabels;
-                        x_ax.labels.align = bottom_align_labels;
-                        if(bottom_align_labels) {
-                            var top_line = x_ax.labels.y + vert_gap;
-                            for(i = 0; i < arr_labels.length; ++i) {
-                                if(arr_labels[i]) {
-                                    arr_labels[i].txBody = arr_labels[i].tx.rich;
-                                    text_transform = arr_labels[i].transformText;
-
-
-                                    text_transform.Reset();
-                                    global_MatrixTransformer.TranslateAppend(text_transform, arr_x_points[i] - arr_labels[i].tx.rich.content.XLimit / 2, top_line);
-                                    // global_MatrixTransformer.MultiplyAppend(text_transform, this.getTransformMatrix());
-
-
-                                    local_text_transform = arr_labels[i].localTransformText;
-                                    local_text_transform.Reset();
-                                    global_MatrixTransformer.TranslateAppend(local_text_transform, arr_x_points[i] - arr_labels[i].tx.rich.content.XLimit / 2, top_line);
-                                }
-                            }
-                        }
-                        else {
-                            for(i = 0; i < arr_labels.length; ++i) {
-                                if(arr_labels[i]) {
-                                    arr_labels[i].txBody = arr_labels[i].tx.rich;
-                                    text_transform = arr_labels[i].transformText;
-                                    text_transform.Reset();
-                                    global_MatrixTransformer.TranslateAppend(text_transform, arr_x_points[i] - arr_labels[i].tx.rich.content.XLimit / 2, x_ax.labels.y + x_ax.labels.extY - vert_gap - arr_labels[i].tx.rich.content.GetSummaryHeight());
-                                    //  global_MatrixTransformer.MultiplyAppend(text_transform, this.getTransformMatrix());
-
-                                    local_text_transform = arr_labels[i].localTransformText;
-                                    local_text_transform.Reset();
-                                    global_MatrixTransformer.TranslateAppend(local_text_transform, arr_x_points[i] - arr_labels[i].tx.rich.content.XLimit / 2, x_ax.labels.y + x_ax.labels.extY - vert_gap - arr_labels[i].tx.rich.content.GetSummaryHeight());
-
-                                }
-                            }
-                        }
-                    }
-
-
-                    if(y_ax.labels) {
-                        if(bNeedReflect) {
-                            if(left_align_labels) {
-                                left_align_labels = false;
-                                y_ax.labels.x += y_ax.labels.extX;
-                            }
-                            else {
-                                left_align_labels = true;
-                                y_ax.labels.x -= y_ax.labels.extX;
-                            }
-                        }
-                        y_ax.labels.align = left_align_labels;
-                        arr_labels = y_ax.labels.aLabels;
-                        if(left_align_labels) {
-                            for(i = 0; i < arr_labels.length; ++i) {
-                                if(arr_labels[i]) {
-                                    arr_labels[i].txBody = arr_labels[i].tx.rich;
-                                    text_transform = arr_labels[i].transformText;
-                                    text_transform.Reset();
-                                    global_MatrixTransformer.TranslateAppend(text_transform, y_ax.labels.x + y_ax.labels.extX - hor_gap - arr_labels[i].tx.rich.content.XLimit, arr_y_points[i] - arr_labels[i].tx.rich.content.GetSummaryHeight() / 2);
-                                    //     global_MatrixTransformer.MultiplyAppend(text_transform, this.getTransformMatrix());
-
-                                    local_text_transform = arr_labels[i].localTransformText;
-                                    local_text_transform.Reset();
-                                    global_MatrixTransformer.TranslateAppend(local_text_transform, y_ax.labels.x + y_ax.labels.extX - hor_gap - arr_labels[i].tx.rich.content.XLimit, arr_y_points[i] - arr_labels[i].tx.rich.content.GetSummaryHeight() / 2);
-                                }
-                            }
-                        }
-                        else {
-                            for(i = 0; i < arr_labels.length; ++i) {
-                                if(arr_labels[i]) {
-                                    arr_labels[i].txBody = arr_labels[i].tx.rich;
-                                    text_transform = arr_labels[i].transformText;
-                                    text_transform.Reset();
-                                    global_MatrixTransformer.TranslateAppend(text_transform, y_ax.labels.x + hor_gap, arr_y_points[i] - arr_labels[i].tx.rich.content.GetSummaryHeight() / 2);
-                                    //     global_MatrixTransformer.MultiplyAppend(text_transform, this.getTransformMatrix());
-
-                                    local_text_transform = arr_labels[i].transformText;
-                                    local_text_transform.Reset();
-                                    global_MatrixTransformer.TranslateAppend(local_text_transform, y_ax.labels.x + hor_gap, arr_y_points[i] - arr_labels[i].tx.rich.content.GetSummaryHeight() / 2);
-
-                                }
-                            }
-                        }
-                    }
-
-                    if(y_ax.labels) {
-                        if(y_ax_orientation === AscFormat.ORIENTATION_MIN_MAX) {
-                            var t = y_ax.labels.aLabels[y_ax.labels.aLabels.length - 1].tx.rich.content.GetSummaryHeight() / 2;
-                            y_ax.labels.y = arr_y_points[arr_y_points.length - 1] - t;
-                            y_ax.labels.extY = arr_y_points[0] - arr_y_points[arr_y_points.length - 1] + t + y_ax.labels.aLabels[0].tx.rich.content.GetSummaryHeight() / 2;
-                        }
-                        else {
-                            var t = y_ax.labels.aLabels[0].tx.rich.content.GetSummaryHeight() / 2;
-                            y_ax.labels.y = arr_y_points[0] - t;
-                            y_ax.labels.extY = arr_y_points[arr_y_points.length - 1] - arr_y_points[0] + t + y_ax.labels.aLabels[y_ax.labels.aLabels.length - 1].tx.rich.content.GetSummaryHeight() / 2;
-                        }
-                    }
-
-                    if(x_ax.labels) {
-                        if(x_ax_orientation === AscFormat.ORIENTATION_MIN_MAX) {
-                            var t = x_ax.labels.aLabels[0].tx.rich.content.XLimit / 2;
-                            x_ax.labels.x = arr_x_points[0] - t;
-                            x_ax.labels.extX = arr_x_points[arr_x_points.length - 1] + x_ax.labels.aLabels[x_ax.labels.aLabels.length - 1].tx.rich.content.XLimit / 2 - x_ax.labels.x;
-                        }
-                        else {
-                            var t = x_ax.labels.aLabels[x_ax.labels.aLabels.length - 1].tx.rich.content.XLimit / 2;
-                            x_ax.labels.x = arr_x_points[arr_x_points.length - 1] - t;
-                            x_ax.labels.extX = arr_x_points[0] + x_ax.labels.aLabels[0].tx.rich.content.XLimit / 2 - x_ax.labels.x;
-                        }
-                    }
-                    /*new recalc*/
-                }
-            }
-            else if(chart_type !== AscDFH.historyitem_type_BarChart && (chart_type !== AscDFH.historyitem_type_PieChart && chart_type !== AscDFH.historyitem_type_DoughnutChart)
-                || (chart_type === AscDFH.historyitem_type_BarChart && chart_object.barDir !== AscFormat.BAR_DIR_BAR)) {
-                var cat_ax, val_ax, ser_ax;
-                val_ax = this.chart.plotArea.valAx;
-                cat_ax = this.chart.plotArea.catAx;
-                ser_ax = this.chart.plotArea.serAx;
-                if(val_ax && cat_ax) {
-                    val_ax.labels = null;
-                    cat_ax.labels = null;
-                    if(ser_ax) {
-                        ser_ax.labels = null;
-                        ser_ax.posY = null;
-                        ser_ax.posX = null;
-                        ser_ax.xPoints = null;
-                        ser_ax.yPoints = null;
-                    }
-
-                    val_ax.posX = null;
-                    cat_ax.posY = null;
-                    val_ax.posY = null;
-                    cat_ax.posX = null;
-
-                    val_ax.xPoints = null;
-                    cat_ax.yPoints = null;
-                    val_ax.yPoints = null;
-                    cat_ax.xPoints = null;
-                    var sizes = this.getChartSizes();
-                    rect = {x: sizes.startX, y: sizes.startY, w: sizes.w, h: sizes.h};
-                    var arr_val = this.getValAxisValues();
-                    //Получим строки для оси значений с учетом формата и единиц
-                    var arr_strings = [];
-                    var multiplier;
-                    if(val_ax.dispUnits)
-                        multiplier = val_ax.dispUnits.getMultiplier();
-                    else
-                        multiplier = 1;
-                    var num_fmt = val_ax.numFmt;
-                    if(num_fmt && typeof num_fmt.formatCode === "string" /*&& !(num_fmt.formatCode === "General")*/) {
-                        var num_format = oNumFormatCache.get(num_fmt.formatCode);
-                        for(i = 0; i < arr_val.length; ++i) {
-                            var calc_value = arr_val[i] * multiplier;
-                            var rich_value = num_format.formatToChart(calc_value);
-                            arr_strings.push(rich_value);
-                        }
-                    }
-                    else {
-                        for(i = 0; i < arr_val.length; ++i) {
-                            var calc_value = arr_val[i] * multiplier;
-                            arr_strings.push(calc_value + "");
-                        }
-                    }
-
-
-                    /*если у нас шкала логарифмическая то будем вместо полученных значений использовать логарифм*/
-
-                    val_ax.labels = new AscFormat.CValAxisLabels(this, val_ax);
-                    var max_width = 0;
-                    val_ax.yPoints = [];
-
-                    var max_val_labels_text_height = 0;
-                    var lastStyleObject = null;
-                    for(i = 0; i < arr_strings.length; ++i) {
-                        var dlbl = new AscFormat.CDLbl();
-                        if(lastStyleObject) {
-                            dlbl.lastStyleObject = lastStyleObject;
-                        }
-                        dlbl.parent = val_ax;
-                        dlbl.chart = this;
-                        dlbl.spPr = val_ax.spPr;
-                        dlbl.txPr = val_ax.txPr;
-                        dlbl.tx = new AscFormat.CChartText();
-                        dlbl.tx.setChart(this);
-                        dlbl.tx.rich = AscFormat.CreateTextBodyFromString(arr_strings[i], this.getDrawingDocument(), dlbl);
-                        var t = dlbl.tx.rich.recalculateByMaxWord();
-                        if(!lastStyleObject) {
-                            lastStyleObject = dlbl.lastStyleObject;
-                        }
-                        var cur_width = t.w;
-                        if(cur_width > max_width)
-                            max_width = cur_width;
-                        if(t.h > max_val_labels_text_height)
-                            max_val_labels_text_height = t.h;
-                        val_ax.labels.aLabels.push(dlbl);
-                        val_ax.yPoints.push({val: arr_val[i], pos: null});
-
-                    }
-                    var val_axis_labels_gap = val_ax.labels.aLabels[0].tx.rich.content.Content[0].CompiledPr.Pr.TextPr.FontSize * 25.4 / 72;
-                    val_ax.labels.extX = max_width + val_axis_labels_gap;
-
-                    //расчитаем подписи для горизонтальной оси
-                    var ser = chart_object.series[0];
-                    var string_pts = [], pts_len = 0;
-
-                    /*string_pts  pts_len*/
-                    if(ser && ser.cat) {
-                        var lit, b_num_lit = true;
-                        lit = ser.cat.getLit();
-                        if(lit) {
-                            b_num_lit = (lit.getObjectType() === AscDFH.historyitem_type_NumLit);
-                            var lit_format = null, pt_format = null;
-                            if(b_num_lit && typeof lit.formatCode === "string" && lit.formatCode.length > 0) {
-                                lit_format = oNumFormatCache.get(lit.formatCode);
-                            }
-                            pts_len = lit.ptCount;
-                            for(i = 0; i < pts_len; ++i) {
-                                var pt = lit.getPtByIndex(i);
-                                if(pt) {
-                                    var str_pt;
-                                    if(b_num_lit) {
-                                        if(typeof pt.formatCode === "string" && pt.formatCode.length > 0) {
-                                            pt_format = oNumFormatCache.get(pt.formatCode);
-                                            if(pt_format) {
-                                                str_pt = pt_format.formatToChart(pt.val);
-                                            }
-                                            else {
-                                                str_pt = pt.val;
-                                            }
-                                        }
-                                        else if(lit_format) {
-                                            str_pt = lit_format.formatToChart(pt.val);
-                                        }
-                                        else {
-                                            str_pt = pt.val;
-                                        }
-                                    }
-                                    else {
-                                        str_pt = pt.val;
-                                    }
-                                    string_pts.push({val: str_pt + ""});
-                                }
-                                else {
-                                    string_pts.push({val: /*i + */""});
-                                }
-                            }
-                        }
-                    }
-
-
-                    var cross_between = this.getValAxisCrossType();
-
-                    if(cross_between === null) {
-                        cross_between = AscFormat.CROSS_BETWEEN_BETWEEN;
-                    }
-                    //if(string_pts.length === 0)
-                    {
-                        pts_len = 0;
-                        for(i = 0; i < chart_object.series.length; ++i) {
-                            var cur_pts = null;
-                            ser = chart_object.series[i];
-                            if(ser.val) {
-                                if(ser.val.numRef && ser.val.numRef.numCache)
-                                    cur_pts = ser.val.numRef.numCache;
-                                else if(ser.val.numLit)
-                                    cur_pts = ser.val.numLit;
-                                if(cur_pts) {
-                                    pts_len = Math.max(pts_len, cur_pts.ptCount);
-                                }
-                            }
-                        }
-                        if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT && pts_len < 2) {
-                            pts_len = 2;
-                        }
-                        if(pts_len > string_pts.length) {
-                            for(i = string_pts.length; i < pts_len; ++i) {
-                                string_pts.push({val: i + 1 + ""});
-                            }
-                        }
-                        else {
-                            string_pts.splice(pts_len, string_pts.length - pts_len);
-                        }
-                    }
-
-
-                    /*---------------------расчет позиции блока с подписями вертикальной оси-----------------------------------------------------------------------------*/
-                    //расчитаем ширину интервала без учета горизонтальной оси;
-                    var crosses;//номер категории в которой вертикалная ось пересекает горизонтальную;
-                    if(val_ax.crosses === AscFormat.CROSSES_AUTO_ZERO || val_ax.crosses === AscFormat.CROSSES_MIN)
-                        crosses = 1;
-                    else if(val_ax.crosses === AscFormat.CROSSES_MAX)
-                        crosses = string_pts.length;
-                    else if(AscFormat.isRealNumber(val_ax.crossesAt)) {
-                        if(val_ax.crossesAt <= string_pts.length + 1 && val_ax.crossesAt > 0)
-                            crosses = val_ax.crossesAt;
-                        else if(val_ax.crossesAt <= 0)
-                            crosses = 1;
-                        else
-                            crosses = string_pts.length;
-                    }
-                    else
-                        crosses = 1;
-
-                    cat_ax.maxCatVal = string_pts.length;
-
-                    var cat_ax_orientation = cat_ax.scaling && AscFormat.isRealNumber(cat_ax.scaling.orientation) ? cat_ax.scaling.orientation : AscFormat.ORIENTATION_MIN_MAX;
-                    var point_width = rect.w / string_pts.length;
-                    var labels_pos = val_ax.tickLblPos;
-                    if(val_ax.bDelete) {
-                        labels_pos = c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE;
-                    }
-                    // if(string_pts.length === 1)
-                    // {
-                    //     cross_between = AscFormat.CROSS_BETWEEN_BETWEEN;
-                    // }
-                    var left_val_ax_labels_align = true;//приленгание подписей оси значений к левому краю.
-
-                    var intervals_count = cross_between === AscFormat.CROSS_BETWEEN_MID_CAT ? string_pts.length - 1 : string_pts.length;
-                    var point_interval = rect.w / intervals_count;//интервал между точками. Зависит от crossBetween, а также будет потом корректироваться в зависимости от подписей вертикальной и горизонтальной оси.
-
-                    if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT)
-                        point_interval = checkFiniteNumber(rect.w / (string_pts.length - 1));
-                    else
-                        point_interval = checkFiniteNumber(rect.w / string_pts.length);
-
-                    var left_points_width, right_point_width;
-                    var arr_cat_labels_points = [];//массив середин подписей горизонтальной оси; i-й элемент - x-координата центра подписи категории с номером i;
-                    if(cat_ax_orientation === AscFormat.ORIENTATION_MIN_MAX) {
-                        if(labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO || !AscFormat.isRealNumber(labels_pos)) //подписи рядом с осью
-                        {
-                            if(val_ax.crosses === AscFormat.CROSSES_MAX) {
-                                left_val_ax_labels_align = false;
-                                if(!bWithoutLabels) {
-                                    val_ax.labels.x = rect.x + rect.w - val_ax.labels.extX;
-                                    if(!bNeedReflect) {
-                                        point_interval = checkFiniteNumber((rect.w - val_ax.labels.extX) / intervals_count);
-                                    }
-                                    else {
-                                        point_interval = checkFiniteNumber(rect.w / intervals_count);
-                                    }
-                                    val_ax.posX = val_ax.labels.x;
-                                    if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = rect.x + point_interval * i;
-                                    }
-                                    else {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = point_interval / 2 + rect.x + point_interval * i;
-                                    }
-                                }
-                                else {
-                                    val_ax.labels.x = rect.x + rect.w;
-                                    if(val_ax.labels.x < 0 && !bNeedReflect) {
-                                        rect.x -= val_ax.labels.x;
-                                        rect.w += val_ax.labels.x;
-                                        val_ax.labels.x = 0;
-                                        bCorrectedLayoutRect = true;
-                                    }
-                                    if(rect.x + rect.w > this.extX) {
-                                        rect.w -= (rect.x + rect.w - this.extX);
-                                        bCorrectedLayoutRect = true;
-                                    }
-
-                                    point_interval = checkFiniteNumber(rect.w / intervals_count);
-                                    val_ax.posX = val_ax.labels.x;
-                                    if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = rect.x + point_interval * i;
-                                    }
-                                    else {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = point_interval / 2 + rect.x + point_interval * i;
-                                    }
-                                }
-                            }
-                            else {
-                                left_points_width = point_interval * (crosses - 1);//общая ширина левых точек если считать что точки занимают все пространство
-                                if(!bWithoutLabels) {
-                                    if(!bNeedReflect && left_points_width < val_ax.labels.extX)//подписи верт. оси выходят за пределы области построения
-                                    {
-                                        var right_intervals_count = intervals_count - (crosses - 1);//количесво интервалов правее вертикальной оси
-                                        //скорректируем point_interval, поделив расстояние, которое осталось справа от подписей осей на количество интервалов справа
-                                        point_interval = checkFiniteNumber((rect.w - val_ax.labels.extX) / right_intervals_count);
-                                        val_ax.labels.x = rect.x;
-                                        var start_point = val_ax.labels.x + val_ax.labels.extX - (crosses - 1) * point_interval;//x-координата точки, где начинается собственно область диаграммы
-                                        if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                            for(i = 0; i < string_pts.length; ++i)
-                                                arr_cat_labels_points[i] = start_point + point_interval * i;
-                                        }
-                                        else {
-                                            for(i = 0; i < string_pts.length; ++i)
-                                                arr_cat_labels_points[i] = point_interval / 2 + start_point + point_interval * i;
-                                        }
-                                    }
-                                    else {
-                                        val_ax.labels.x = rect.x + left_points_width - val_ax.labels.extX;
-                                        if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                            for(i = 0; i < string_pts.length; ++i)
-                                                arr_cat_labels_points[i] = rect.x + point_interval * i;
-                                        }
-                                        else {
-                                            for(i = 0; i < string_pts.length; ++i)
-                                                arr_cat_labels_points[i] = point_interval / 2 + rect.x + point_interval * i;
-                                        }
-
-                                    }
-                                    val_ax.posX = val_ax.labels.x + val_ax.labels.extX;
-                                }
-                                else {
-                                    val_ax.labels.x = rect.x + left_points_width - val_ax.labels.extX;
-                                    if(val_ax.labels.x < 0 && !bNeedReflect) {
-                                        rect.x -= val_ax.labels.x;
-                                        rect.w += val_ax.labels.x;
-                                        val_ax.labels.x = 0;
-                                        bCorrectedLayoutRect = true;
-                                    }
-                                    if(rect.x + rect.w > this.extX) {
-                                        rect.w -= (rect.x + rect.w - this.extX);
-                                        bCorrectedLayoutRect = true;
-                                    }
-
-                                    point_interval = checkFiniteNumber(rect.w / intervals_count);
-
-                                    if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = rect.x + point_interval * i;
-                                    }
-                                    else {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = point_interval / 2 + rect.x + point_interval * i;
-                                    }
-                                    val_ax.posX = val_ax.labels.x + val_ax.labels.extX;
-                                }
-                            }
-                        }
-                        else if(labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_LOW)//подписи слева от области построения
-                        {
-                            if(!bNeedReflect) {
-                                point_interval = checkFiniteNumber((rect.w - val_ax.labels.extX) / intervals_count);
-                            }
-                            else {
-                                point_interval = checkFiniteNumber(rect.w / intervals_count);
-                            }
-                            val_ax.labels.x = rect.x;
-                            if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                if(!bNeedReflect) {
-                                    for(i = 0; i < string_pts.length; ++i)
-                                        arr_cat_labels_points[i] = rect.x + val_ax.labels.extX + point_interval * i;
-                                }
-                                else {
-                                    for(i = 0; i < string_pts.length; ++i)
-                                        arr_cat_labels_points[i] = rect.x + point_interval * i;
-                                }
-                            }
-                            else {
-                                if(!bNeedReflect) {
-                                    for(i = 0; i < string_pts.length; ++i)
-                                        arr_cat_labels_points[i] = rect.x + val_ax.labels.extX + point_interval / 2 + point_interval * i;
-                                }
-                                else {
-                                    for(i = 0; i < string_pts.length; ++i)
-                                        arr_cat_labels_points[i] = rect.x + point_interval / 2 + point_interval * i;
-                                }
-                            }
-                            val_ax.posX = val_ax.labels.x + val_ax.labels.extX + point_interval * (crosses - 1);
-                        }
-                        else if(labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_HIGH)//подписи справа от области построения
-                        {
-                            if(!bNeedReflect) {
-                                point_interval = checkFiniteNumber((rect.w - val_ax.labels.extX) / intervals_count);
-                            }
-                            else {
-                                point_interval = checkFiniteNumber(rect.w / intervals_count);
-                            }
-
-                            val_ax.labels.x = rect.x + rect.w - val_ax.labels.extX;
-                            left_val_ax_labels_align = false;
-                            if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = rect.x + point_interval * i;
-                            }
-                            else {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = point_interval / 2 + rect.x + point_interval * i;
-                            }
-                            val_ax.posX = rect.x + point_interval * (crosses - 1);
-                        }
-                        else {
-                            val_ax.labels = null;
-                            if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = rect.x + point_interval * i;
-                            }
-                            else {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = point_interval / 2 + rect.x + point_interval * i;
-                            }
-                            val_ax.posX = rect.x + point_interval * (crosses - 1);
-                        }
-                    }
-                    else {//то же самое, только зеркально отраженное
-                        if(labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO || !AscFormat.isRealNumber(labels_pos)) //подписи рядом с осью
-                        {
-                            if(val_ax.crosses === AscFormat.CROSSES_MAX) {
-                                if(!bWithoutLabels) {
-                                    val_ax.labels.x = rect.x;
-                                    if(!bNeedReflect) {
-                                        point_interval = checkFiniteNumber((rect.w - val_ax.labels.extX) / intervals_count);
-                                    }
-                                    else {
-                                        point_interval = checkFiniteNumber(rect.w / intervals_count);
-                                    }
-                                    if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = rect.x + rect.w - point_interval * i;
-                                    }
-                                    else {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = rect.x + rect.w - point_interval / 2 - point_interval * i;
-                                    }
-                                    if(!bNeedReflect) {
-                                        val_ax.posX = val_ax.labels.x + val_ax.labels.extX;
-                                    }
-                                    else {
-                                        val_ax.posX = val_ax.labels.x;
-                                    }
-                                }
-                                else {
-                                    val_ax.labels.x = rect.x - val_ax.labels.extX;
-                                    if(val_ax.labels.x < 0 && !bNeedReflect) {
-                                        rect.x -= val_ax.labels.x;
-                                        rect.w += val_ax.labels.x;
-                                        val_ax.labels.x = 0;
-                                        bCorrectedLayoutRect = true;
-                                    }
-                                    if(rect.x + rect.w > this.extX) {
-                                        rect.w -= (rect.x + rect.w - this.extX);
-                                        bCorrectedLayoutRect = true;
-                                    }
-
-                                    point_interval = checkFiniteNumber(rect.w / intervals_count);
-                                    if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = rect.x + rect.w - point_interval * i;
-                                    }
-                                    else {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = rect.x + rect.w - point_interval / 2 - point_interval * i;
-                                    }
-                                    if(!bNeedReflect) {
-                                        val_ax.posX = val_ax.labels.x + val_ax.labels.extX;
-                                    }
-                                    else {
-                                        val_ax.posX = val_ax.labels.x;
-                                    }
-                                }
-
-                            }
-                            else {
-                                left_val_ax_labels_align = false;
-                                right_point_width = point_interval * (crosses - 1);
-                                if(!bNeedReflect && right_point_width < val_ax.labels.extX && !bWithoutLabels) {
-                                    val_ax.labels.x = rect.x + rect.w - val_ax.labels.extX;
-                                    var left_points_interval_count = intervals_count - (crosses - 1);
-                                    point_interval = checkFiniteNumber(checkFiniteNumber((val_ax.labels.x - rect.x) / left_points_interval_count));
-                                    var start_point_right = rect.x + point_interval * intervals_count;
-                                    if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = start_point_right - point_interval * i;
-                                    }
-                                    else {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = start_point_right - point_interval / 2 - point_interval * i;
-                                    }
-                                }
-                                else {
-                                    val_ax.labels.x = rect.x + rect.w - right_point_width;
-                                    if(val_ax.labels.x < 0 && !bNeedReflect) {
-                                        rect.x -= val_ax.labels.x;
-                                        rect.w += val_ax.labels.x;
-                                        val_ax.labels.x = 0;
-                                        bCorrectedLayoutRect = true;
-                                    }
-                                    if(rect.x + rect.w > this.extX) {
-                                        rect.w -= (rect.x + rect.w - this.extX);
-                                        bCorrectedLayoutRect = true;
-                                    }
-
-                                    point_interval = checkFiniteNumber(rect.w / intervals_count);
-                                    if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = rect.x + rect.w - point_interval * i;
-                                    }
-                                    else {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = rect.x + rect.w - point_interval / 2 - point_interval * i;
-                                    }
-                                }
-                                val_ax.posX = val_ax.labels.x;
-                            }
-                        }
-                        else if(labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_LOW)//подписи справа от области построения
-                        {
-                            left_val_ax_labels_align = false;
-                            if(!bNeedReflect && !bWithoutLabels) {
-                                point_interval = checkFiniteNumber((rect.w - val_ax.labels.extX) / intervals_count);
-                            }
-                            else {
-                                point_interval = checkFiniteNumber(rect.w / intervals_count);
-                            }
-                            if(!bWithoutLabels) {
-                                val_ax.labels.x = rect.x + rect.w - val_ax.labels.extX;
-
-                                if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                    for(i = 0; i < string_pts.length; ++i)
-                                        arr_cat_labels_points[i] = val_ax.labels.x - point_interval * i;
-                                }
-                                else {
-                                    for(i = 0; i < string_pts.length; ++i)
-                                        arr_cat_labels_points[i] = val_ax.labels.x - point_interval / 2 - point_interval * i;
-                                }
-                                if(!bNeedReflect) {
-                                    val_ax.posX = rect.x + rect.w - point_interval * (crosses - 1) - val_ax.labels.extX;
-                                }
-                                else {
-                                    val_ax.posX = rect.x + rect.w - point_interval * (crosses - 1);
-                                }
-
-                            }
-                            else {
-                                val_ax.labels.x = rect.x + rect.w;
-
-                                if(val_ax.labels.x < 0 && !bNeedReflect) {
-                                    rect.x -= val_ax.labels.x;
-                                    rect.w += val_ax.labels.x;
-                                    val_ax.labels.x = 0;
-                                    bCorrectedLayoutRect = true;
-                                }
-                                if(rect.x + rect.w > this.extX) {
-                                    rect.w -= (rect.x + rect.w - this.extX);
-                                    bCorrectedLayoutRect = true;
-                                }
-
-                                point_interval = checkFiniteNumber(rect.w / intervals_count);
-
-
-                                if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                    for(i = 0; i < string_pts.length; ++i)
-                                        arr_cat_labels_points[i] = val_ax.labels.x - point_interval * i;
-                                }
-                                else {
-                                    for(i = 0; i < string_pts.length; ++i)
-                                        arr_cat_labels_points[i] = val_ax.labels.x - point_interval / 2 - point_interval * i;
-                                }
-                                if(!bNeedReflect) {
-                                    val_ax.posX = rect.x + rect.w - point_interval * (crosses - 1) - val_ax.labels.extX;
-                                }
-                                else {
-                                    val_ax.posX = rect.x + rect.w - point_interval * (crosses - 1);
-                                }
-                            }
-
-                        }
-                        else if(labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_HIGH)//подписи слева от области построения
-                        {
-                            if(!bNeedReflect && !bWithoutLabels) {
-                                point_interval = checkFiniteNumber((rect.w - val_ax.labels.extX) / intervals_count);
-                            }
-                            else {
-                                point_interval = checkFiniteNumber(rect.w / intervals_count);
-                            }
-                            if(!bWithoutLabels) {
-                                val_ax.labels.x = rect.x;
-
-                                if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                    for(i = 0; i < string_pts.length; ++i)
-                                        arr_cat_labels_points[i] = rect.x + rect.w - point_interval * i;
-                                }
-                                else {
-                                    for(i = 0; i < string_pts.length; ++i)
-                                        arr_cat_labels_points[i] = rect.x + rect.w - point_interval / 2 - point_interval * i;
-                                }
-                                val_ax.posX = rect.x + rect.w - point_interval * (crosses - 1);
-                            }
-                            else {
-                                val_ax.labels.x = rect.x - val_ax.labels.extX;
-                                if(val_ax.labels.x < 0 && !bNeedReflect) {
-                                    rect.x -= val_ax.labels.x;
-                                    rect.w += val_ax.labels.x;
-                                    val_ax.labels.x = 0;
-                                    bCorrectedLayoutRect = true;
-                                }
-                                if(rect.x + rect.w > this.extX) {
-                                    rect.w -= (rect.x + rect.w - this.extX);
-                                    bCorrectedLayoutRect = true;
-                                }
-
-                                point_interval = checkFiniteNumber(rect.w / intervals_count);
-                                if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                    for(i = 0; i < string_pts.length; ++i)
-                                        arr_cat_labels_points[i] = rect.x + rect.w - point_interval * i;
-                                }
-                                else {
-                                    for(i = 0; i < string_pts.length; ++i)
-                                        arr_cat_labels_points[i] = rect.x + rect.w - point_interval / 2 - point_interval * i;
-                                }
-                                val_ax.posX = rect.x + rect.w - point_interval * (crosses - 1);
-                            }
-                        }
-                        else {
-                            val_ax.labels = null;
-                            if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = rect.x + rect.w - point_interval * i;
-                            }
-                            else {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = rect.x + rect.w - point_interval / 2 - point_interval * i;
-                            }
-                            val_ax.posX = rect.x + rect.w - point_interval * (crosses - 1);
-                        }
-                    }
-
-                    cat_ax.interval = point_interval;
-
-                    var diagram_width = point_interval * intervals_count;//размер области с самой диаграммой позже будет корректироватся;
-
-
-                    var bTickSkip = AscFormat.isRealNumber(cat_ax.tickLblSkip);
-                    var tick_lbl_skip = AscFormat.isRealNumber(cat_ax.tickLblSkip) ? cat_ax.tickLblSkip : 1;
-                    var max_cat_label_width = diagram_width / string_pts.length; // максимальная ширина подписи горизонтальной оси;
-
-
-                    cat_ax.labels = null;
-                    var b_rotated = false;//флаг означает, что водписи не уместились в отведенное для них пространство и их пришлось перевернуть.
-                    //проверим умещаются ли подписи горизонтальной оси в point_interval
-                    if(c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE !== cat_ax.tickLblPos && !(cat_ax.bDelete === true)) //будем корректировать вертикальные подписи только если есть горизонтальные
-                    {
-                        cat_ax.labels = new AscFormat.CValAxisLabels(this, cat_ax);
-
-                        var max_min_width = 0;
-                        var max_max_width = 0;
-                        var arr_max_contents = [];
-                        var fMaxContentStringH = 0;
-                        for(i = 0; i < string_pts.length; ++i) {
-                            var dlbl = null;
-                            if(i % tick_lbl_skip === 0) {
-                                dlbl = new AscFormat.CDLbl();
-                                dlbl.parent = cat_ax;
-                                dlbl.chart = this;
-                                dlbl.spPr = cat_ax.spPr;
-                                dlbl.txPr = cat_ax.txPr;
-                                dlbl.tx = new AscFormat.CChartText();
-                                dlbl.tx.setChart(this);
-                                dlbl.tx.rich = AscFormat.CreateTextBodyFromString(string_pts[i].val.replace(oNonSpaceRegExp, ' '), this.getDrawingDocument(), dlbl);
-                                //dlbl.recalculate();
-
-                                var content = dlbl.tx.rich.content;
-                                content.SetApplyToAll(true);
-                                content.SetParagraphAlign(AscCommon.align_Center);
-                                content.SetApplyToAll(false);
-                                dlbl.txBody = dlbl.tx.rich;
-                                if(cat_ax.labels.aLabels.length > 0) {
-                                    dlbl.lastStyleObject = cat_ax.labels.aLabels[0].lastStyleObject;
-                                }
-                                var min_max = dlbl.tx.rich.content.RecalculateMinMaxContentWidth();
-                                var max_min_content_width = min_max.Min;
-                                if(max_min_content_width > max_min_width)
-                                    max_min_width = max_min_content_width;
-                                if(min_max.Max > max_max_width)
-                                    max_max_width = min_max.Max;
-                                if(dlbl.tx.rich.content.Content[0].Content[0].TextHeight > fMaxContentStringH) {
-                                    fMaxContentStringH = dlbl.tx.rich.content.Content[0].Content[0].TextHeight;
-                                }
-                            }
-                            cat_ax.labels.aLabels.push(dlbl);
-                        }
-
-                        fMaxContentStringH *= 1;
-                        var stake_offset = AscFormat.isRealNumber(cat_ax.lblOffset) ? cat_ax.lblOffset / 100 : 1;
-                        var labels_offset = cat_ax.labels.aLabels[0].tx.rich.content.Content[0].CompiledPr.Pr.TextPr.FontSize * (25.4 / 72) * stake_offset;
-                        if(max_min_width < max_cat_label_width)//значит текст каждой из точек умещается в point_width
-                        {
-                            var max_height = 0;
-                            for(i = 0; i < cat_ax.labels.aLabels.length; ++i) {
-                                if(cat_ax.labels.aLabels[i]) {
-                                    var content = cat_ax.labels.aLabels[i].tx.rich.content;
-                                    content.Reset(0, 0, max_cat_label_width, 20000);
-                                    content.Recalculate_Page(0, true);
-                                    var cur_height = content.GetSummaryHeight();
-                                    if(cur_height > max_height)
-                                        max_height = cur_height;
-                                }
-                            }
-
-                            cat_ax.labels.extY = max_height + labels_offset;
-                            if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) //корректируем позиции центров подписей горизонтальной оси, положение  вертикальной оси и её подписей
-                            {
-                                var left_gap_point, right_gap_point;
-                                if(cat_ax_orientation === AscFormat.ORIENTATION_MIN_MAX) {
-                                    var first_label_left_gap = cat_ax.labels.aLabels[0].tx.rich.getMaxContentWidth(max_cat_label_width) / 2;//на сколько вправа выходит первая подпись
-                                    var last_labels_right_gap = cat_ax.labels.aLabels[cat_ax.labels.aLabels.length - 1] ? cat_ax.labels.aLabels[cat_ax.labels.aLabels.length - 1].tx.rich.getMaxContentWidth(max_cat_label_width) / 2 : 0;
-
-                                    //смотрим, выходит ли подпись первой категориии выходит за пределы области построения
-                                    left_gap_point = arr_cat_labels_points[0] - first_label_left_gap;
-                                    if(rect.x > left_gap_point && !bWithoutLabels) {
-                                        if(val_ax.labels)//скорректируем позицию подписей вертикальной оси, если они есть
-                                        {
-                                            val_ax.labels.x = rect.x + (val_ax.labels.x - left_gap_point) * checkFiniteNumber((rect.w / (rect.x + rect.w - left_gap_point)));
-                                        }
-                                        //скорректируем point_interval
-                                        point_interval *= checkFiniteNumber((rect.w / (rect.x + rect.w - left_gap_point)));
-                                        //скорректируем arr_cat_labels_points
-                                        for(i = 0; i < arr_cat_labels_points.length; ++i) {
-                                            arr_cat_labels_points[i] = rect.x + (arr_cat_labels_points[i] - left_gap_point) * checkFiniteNumber((rect.w / (rect.x + rect.w - left_gap_point)));
-                                        }
-                                        //скорректируем позицию вертикальной оси
-                                        val_ax.posX = rect.x + (val_ax.posX - left_gap_point) * checkFiniteNumber((rect.w / (rect.x + rect.w - left_gap_point)));
-                                    }
-
-                                    //смотри выходит ли подпись последней категории за пределы области построения
-                                    right_gap_point = arr_cat_labels_points[arr_cat_labels_points.length - 1] + last_labels_right_gap;
-                                    if(right_gap_point > rect.x + rect.w && !bWithoutLabels) {
-                                        if(val_ax.labels)//скорректируем позицию подписей вертикальной оси
-                                        {
-                                            val_ax.labels.x = rect.x + (val_ax.labels.x - rect.x) * checkFiniteNumber((rect.w / (right_gap_point - rect.x)));
-                                        }
-                                        //скорректируем point_interval
-                                        point_interval *= checkFiniteNumber((rect.w / (right_gap_point - rect.x)));
-                                        for(i = 0; i < arr_cat_labels_points.length; ++i) {
-                                            arr_cat_labels_points[i] = rect.x + (arr_cat_labels_points[i] - rect.x) * checkFiniteNumber((rect.w / (right_gap_point - rect.x)));
-                                        }
-                                        //скорректируем позицию вертикальной оси
-                                        val_ax.posX = rect.x + (val_ax.posX - rect.x) * checkFiniteNumber((rect.w / (right_gap_point - rect.x)));
-
-                                    }
-                                }
-                                else {
-                                    var last_label_left_gap = cat_ax.labels.aLabels[cat_ax.labels.aLabels.length - 1] ? cat_ax.labels.aLabels[cat_ax.labels.aLabels.length - 1].tx.rich.getMaxContentWidth(max_cat_label_width) / 2 : 0;
-                                    var first_label_right_gap = cat_ax.labels.aLabels[0].tx.rich.getMaxContentWidth(max_cat_label_width) / 2;
-                                    left_gap_point = arr_cat_labels_points[arr_cat_labels_points.length - 1] - last_label_left_gap;
-                                    right_gap_point = arr_cat_labels_points[0] + first_label_right_gap;
-                                    if(rect.x > left_gap_point && !bWithoutLabels) {
-                                        if(val_ax.labels)//скорректируем позицию подписей вертикальной оси, если они есть
-                                        {
-                                            val_ax.labels.x = rect.x + (val_ax.labels.x - left_gap_point) * checkFiniteNumber((rect.w / (rect.x + rect.w - left_gap_point)));
-                                        }
-                                        //скорректируем point_interval
-                                        point_interval *= checkFiniteNumber((rect.w / (rect.x + rect.w - left_gap_point)));
-                                        //скорректируем arr_cat_labels_points
-                                        for(i = 0; i < arr_cat_labels_points.length; ++i) {
-                                            arr_cat_labels_points[i] = rect.x + (arr_cat_labels_points[i] - left_gap_point) * checkFiniteNumber((rect.w / (rect.x + rect.w - left_gap_point)));
-                                        }
-
-                                        //скорректируем позицию вертикальной оси
-                                        val_ax.posX = rect.x + (val_ax.posX - left_gap_point) * checkFiniteNumber((rect.w / (rect.x + rect.w - left_gap_point)));
-                                    }
-                                    if(right_gap_point > rect.x + rect.w && !bWithoutLabels) {
-                                        if(val_ax.labels)//скорректируем позицию подписей вертикальной оси
-                                        {
-                                            val_ax.labels.x = rect.x + (val_ax.labels.x - rect.x) * checkFiniteNumber((rect.w / (right_gap_point - rect.x)));
-                                        }
-                                        //скорректируем point_interval
-                                        point_interval *= checkFiniteNumber((rect.w / (right_gap_point - rect.x)));
-                                        for(i = 0; i < arr_cat_labels_points.length; ++i) {
-                                            arr_cat_labels_points[i] = rect.x + (arr_cat_labels_points[i] - rect.x) * checkFiniteNumber((rect.w / (right_gap_point - rect.x)));
-                                        }
-                                        //скорректируем позицию вертикальной оси
-                                        val_ax.posX = rect.x + (val_ax.posX - rect.x) * checkFiniteNumber((rect.w / (right_gap_point - rect.x)));
-                                    }
-                                }
-                            }
-                        }
-                        else {
-                            b_rotated = true;
-                            //пока сделаем без обрезки
-                            var arr_left_points = [];
-                            var arr_right_points = [];
-
-                            var max_rotated_height = 0;
-                            cat_ax.labels.bRotated = true;
-                            var nMaxCount = 1;
-                            var nLblCount = 0;
-                            var nCount = 0;
-                            var nSkip = 1;
-                            if(!bTickSkip && fMaxContentStringH > 0) {
-                                nMaxCount = diagram_width / fMaxContentStringH;
-                                nSkip = Math.max(1, ((cat_ax.labels.aLabels.length / nMaxCount + 1) >> 0));
-                            }
-                            else {
-                                bTickSkip = true;
-                            }
-                            //смотрим на сколько подписи горизонтальной оси выходят влево за пределы области построения
-                            for(i = 0; i < cat_ax.labels.aLabels.length; ++i) {
-                                if(cat_ax.labels.aLabels[i]) {
-                                    if(i % nSkip !== 0) {
-                                        cat_ax.labels.aLabels[i] = null;
-                                        arr_left_points[i] = arr_cat_labels_points[i];
-                                        arr_right_points[i] = arr_cat_labels_points[i];
-                                        nCount++;
-                                        continue;
-                                    }
-                                    //сначала расчитаем высоту и ширину подписи так чтобы она умещалась в одну строку
-                                    var wh = cat_ax.labels.aLabels[i].tx.rich.getContentOneStringSizes();
-                                    arr_left_points[i] = arr_cat_labels_points[i] - (wh.w * Math.cos(Math.PI / 4) + wh.h * Math.sin(Math.PI / 4) - wh.h * Math.sin(Math.PI / 4) / 2);//вычитаем из точки привязки ширину получившейся подписи
-                                    arr_right_points[i] = arr_cat_labels_points[i] + wh.h * Math.sin(Math.PI / 4) / 2;
-                                    var h2 = wh.w * Math.sin(Math.PI / 4) + wh.h * Math.cos(Math.PI / 4);
-                                    if(h2 > max_rotated_height)
-                                        max_rotated_height = h2;
-
-                                    nLblCount++;
-                                    nCount++;
-                                    cat_ax.labels.aLabels[i].widthForTransform = wh.w;
-                                }
-                                else {//подписи нет
-                                    arr_left_points[i] = arr_cat_labels_points[i];
-                                    arr_right_points[i] = arr_cat_labels_points[i];
-                                }
-                            }
-
-                            cat_ax.labels.extY = max_rotated_height + labels_offset;
-                            //
-                            left_gap_point = Math.max(0, Math.min.apply(Math, arr_left_points));
-                            right_gap_point = Math.max(0, Math.max.apply(Math, arr_right_points));
-
-                            if(!bWithoutLabels) {
-                                if(AscFormat.ORIENTATION_MIN_MAX === cat_ax_orientation) {
-                                    if(rect.x > left_gap_point) {
-                                        if(val_ax.labels)//скорректируем позицию подписей вертикальной оси, если они есть
-                                        {
-                                            val_ax.labels.x = rect.x + (val_ax.labels.x - left_gap_point) * checkFiniteNumber((rect.w / (rect.x + rect.w - left_gap_point)));
-                                        }
-                                        //скорректируем point_interval
-                                        point_interval *= checkFiniteNumber(rect.w / (rect.x + rect.w - left_gap_point));
-                                        //скорректируем arr_cat_labels_points
-                                        for(i = 0; i < arr_cat_labels_points.length; ++i) {
-                                            arr_cat_labels_points[i] = rect.x + (arr_cat_labels_points[i] - left_gap_point) * checkFiniteNumber((rect.w / (rect.x + rect.w - left_gap_point)));
-                                        }
-
-                                        //скорректируем позицию вертикальной оси
-                                        val_ax.posX = rect.x + (val_ax.posX - left_gap_point) * checkFiniteNumber((rect.w / (rect.x + rect.w - left_gap_point)));
-                                    }
-                                    //смотри выходит ли подпись последней категории за пределы области построения
-                                    if(right_gap_point > rect.x + rect.w) {
-                                        if(val_ax.labels)//скорректируем позицию подписей вертикальной оси
-                                        {
-                                            val_ax.labels.x = rect.x + (val_ax.labels.x - rect.x) * checkFiniteNumber((rect.w / (right_gap_point - rect.x)));
-                                        }
-                                        //скорректируем point_interval
-                                        point_interval *= checkFiniteNumber((right_gap_point - rect.x) / (rect.x + rect.w - rect.x));
-                                        for(i = 0; i < arr_cat_labels_points.length; ++i) {
-                                            arr_cat_labels_points[i] = rect.x + (arr_cat_labels_points[i] - rect.x) * checkFiniteNumber((rect.w / (right_gap_point - rect.x)));
-                                        }
-
-
-                                        //скорректируем позицию вертикальной оси
-                                        val_ax.posX = rect.x + (val_ax.posX - rect.x) * checkFiniteNumber((rect.w / (right_gap_point - rect.x)));
-                                    }
-                                }
-                                else {
-                                    if(rect.x > left_gap_point) {
-                                        if(val_ax.labels)//скорректируем позицию подписей вертикальной оси, если они есть
-                                        {
-                                            val_ax.labels.x = rect.x + (val_ax.labels.x - left_gap_point) * checkFiniteNumber((rect.w / (rect.x + rect.w - left_gap_point)));
-                                        }
-                                        //скорректируем point_interval
-                                        point_interval *= (rect.w) / checkFiniteNumber((rect.x + rect.w - left_gap_point));
-                                        //скорректируем arr_cat_labels_points
-                                        for(i = 0; i < arr_cat_labels_points.length; ++i) {
-                                            arr_cat_labels_points[i] = rect.x + (arr_cat_labels_points[i] - left_gap_point) * checkFiniteNumber((rect.w / (rect.x + rect.w - left_gap_point)));
-                                        }
-
-                                        //скорректируем позицию вертикальной оси
-                                        val_ax.posX = rect.x + (val_ax.posX - left_gap_point) * checkFiniteNumber((rect.w / (rect.x + rect.w - left_gap_point)));
-                                    }
-                                    if(right_gap_point > rect.x + rect.w) {
-                                        if(val_ax.labels)//скорректируем позицию подписей вертикальной оси
-                                        {
-                                            val_ax.labels.x = rect.x + (val_ax.labels.x - rect.x) * checkFiniteNumber((rect.w / (right_gap_point - rect.x)));
-                                        }
-                                        //скорректируем point_interval
-                                        point_interval *= checkFiniteNumber((right_gap_point - rect.x) / (rect.x + rect.w - rect.x));
-                                        for(i = 0; i < arr_cat_labels_points.length; ++i) {
-                                            arr_cat_labels_points[i] = rect.x + (arr_cat_labels_points[i] - rect.x) * checkFiniteNumber((rect.w / (right_gap_point - rect.x)));
-                                        }
-
-                                        //скорректируем позицию вертикальной оси
-                                        val_ax.posX = rect.x + (val_ax.posX - rect.x) * checkFiniteNumber((rect.w / (right_gap_point - rect.x)));
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-
-                    //series axis
-                    if(ser_ax) {
-                        if(c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE !== ser_ax.tickLblPos && !(ser_ax.bDelete === true)) {
-                            var arr_series_labels_str = [];
-                            var aSeries = chart_object.series;
-                            for(var i = 0; i < aSeries.length; ++i) {
-                                if(aSeries[i].getSeriesName) {
-                                    arr_series_labels_str.push(aSeries[i].getSeriesName());
-                                }
-                                else {
-                                    arr_series_labels_str.push('Series ' + (i + 1));
-                                }
-                            }
-                            ser_ax.labels = new AscFormat.CValAxisLabels(this, ser_ax);
-                            tick_lbl_skip = AscFormat.isRealNumber(ser_ax.tickLblSkip) ? ser_ax.tickLblSkip : 1;
-
-                            var lastStyleObject = null;
-                            max_val_labels_text_height = 0;
-                            max_width = 0;
-                            for(i = 0; i < arr_series_labels_str.length; ++i) {
-                                var dlbl = null;
-                                if(i % tick_lbl_skip === 0) {
-                                    var dlbl = new AscFormat.CDLbl();
-                                    if(lastStyleObject) {
-                                        dlbl.lastStyleObject = lastStyleObject;
-                                    }
-                                    dlbl.parent = val_ax;
-                                    dlbl.chart = this;
-                                    dlbl.spPr = val_ax.spPr;
-                                    dlbl.txPr = val_ax.txPr;
-                                    dlbl.tx = new AscFormat.CChartText();
-                                    dlbl.tx.setChart(this);
-                                    dlbl.tx.rich = AscFormat.CreateTextBodyFromString(arr_series_labels_str[i], this.getDrawingDocument(), dlbl);
-                                    var t = dlbl.tx.rich.recalculateByMaxWord();
-                                    if(!lastStyleObject) {
-                                        lastStyleObject = dlbl.lastStyleObject;
-                                    }
-                                    var cur_width = t.w;
-                                    if(cur_width > max_width)
-                                        max_width = cur_width;
-                                    if(t.h > max_val_labels_text_height)
-                                        max_val_labels_text_height = t.h;
-                                    ser_ax.labels.aLabels.push(dlbl);
-                                }
-                            }
-
-                            var ser_axis_labels_gap = ser_ax.labels.aLabels[0].tx.rich.content.Content[0].CompiledPr.Pr.TextPr.FontSize * 25.4 / 72;
-                            ser_ax.labels.extX = max_width + ser_axis_labels_gap;
-                            ser_ax.labels.extY = max_val_labels_text_height;
-                        }
-                        else {
-                            ser_ax.labels = null;
-                        }
-                    }
-
-                    //расчет позиции блока с подписями горизонтальной оси
-                    var cat_labels_align_bottom = true;
-                    /*-----------------------------------------------------------------------*/
-                    var crosses_val_ax;//значение на ветикальной оси в котором её пересекает горизонтальная
-
-                    if(cat_ax.crosses === AscFormat.CROSSES_AUTO_ZERO) {
-                        if(arr_val[0] <= 0 && arr_val[arr_val.length - 1] >= 0)
-                            crosses_val_ax = 0;
-                        else if(arr_val[arr_val.length - 1] < 0)
-                            crosses_val_ax = arr_val[arr_val.length - 1];
-                        else
-                            crosses_val_ax = arr_val[0];
-                    }
-                    else if(cat_ax.crosses === AscFormat.CROSSES_MIN) {
-                        crosses_val_ax = arr_val[0];
-                    }
-                    else if(cat_ax.crosses === AscFormat.CROSSES_MAX) {
-                        crosses_val_ax = arr_val[arr_val.length - 1];
-                    }
-                    else if(AscFormat.isRealNumber(cat_ax.crossesAt) && cat_ax.crossesAt >= arr_val[0] && cat_ax.crossesAt <= arr_val[arr_val.length - 1]) {
-                        //сделаем провеку на попадание в интервал
-                        if(cat_ax.crossesAt >= arr_val[0] && cat_ax.crossesAt <= arr_val[arr_val.length - 1])
-                            crosses_val_ax = cat_ax.crossesAt;
-                    }
-                    else { //ведем себя как в случае (cat_ax.crosses === AscFormat.CROSSES_AUTO_ZERO)
-                        if(arr_val[0] <= 0 && arr_val[arr_val.length - 1] >= 0)
-                            crosses_val_ax = 0;
-                        else if(arr_val[arr_val.length - 1] < 0)
-                            crosses_val_ax = arr_val[arr_val.length - 1];
-                        else
-                            crosses_val_ax = arr_val[0];
-                    }
-                    var val_ax_orientation = val_ax.scaling && AscFormat.isRealNumber(val_ax.scaling.orientation) ? val_ax.scaling.orientation : AscFormat.ORIENTATION_MIN_MAX;
-                    var hor_labels_pos = cat_ax.tickLblPos;
-
-                    var arr_val_labels_points = [];//массив середин подписей вертикальной оси; i-й элемент - y-координата центра подписи i-огто значения;
-                    var top_val_axis_gap, bottom_val_axis_gap;
-                    var first_val_axis_label_half_height = 0; //TODO  (val_ax.bDelete || val_ax.tickLblPos ===c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE) ? 0 :val_ax.labels.aLabels[0].tx.rich.content.GetSummaryHeight()/2;
-                    var last_val_axis_label_half_height = 0; //TODO (val_ax.bDelete || val_ax.tickLblPos ===c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE) ? 0 : val_ax.labels.aLabels[val_ax.labels.aLabels.length-1].tx.rich.content.GetSummaryHeight()/2;
-
-                    var unit_height;
-                    if(!bWithoutLabels) {
-                        unit_height = checkFiniteNumber((rect.h - first_val_axis_label_half_height - last_val_axis_label_half_height) / (arr_val[arr_val.length - 1] - arr_val[0]));//высота единицы измерения на вертикальной оси
-                    }
-                    else {
-                        unit_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                    }
-
-
-                    var cat_ax_ext_y = cat_ax.labels ? cat_ax.labels.extY : 0;
-                    if(val_ax_orientation === AscFormat.ORIENTATION_MIN_MAX) {
-                        if(hor_labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO || !AscFormat.isRealNumber(hor_labels_pos)) {
-                            if(cat_ax.crosses === AscFormat.CROSSES_MAX) {
-                                cat_labels_align_bottom = false;
-                                top_val_axis_gap = Math.max(last_val_axis_label_half_height, cat_ax_ext_y);
-                                if(!bWithoutLabels) {
-                                    unit_height = checkFiniteNumber((rect.h - top_val_axis_gap - first_val_axis_label_half_height) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                    cat_labels_align_bottom = false;//в данном случае подписи будут выравниваться по верхнему краю блока с подписями
-                                    cat_ax.posY = rect.y + rect.h - first_val_axis_label_half_height - (crosses_val_ax - arr_val[0]) * unit_height;
-                                    if(cat_ax.labels)
-                                        cat_ax.labels.y = cat_ax.posY - cat_ax_ext_y;
-                                }
-                                else {
-
-                                    unit_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                    cat_labels_align_bottom = false;//в данном случае подписи будут выравниваться по верхнему краю блока с подписями
-                                    cat_ax.posY = rect.y + rect.h - (crosses_val_ax - arr_val[0]) * unit_height;
-                                    if(cat_ax.labels) {
-                                        cat_ax.labels.y = cat_ax.posY - cat_ax_ext_y;
-
-                                        if(true) {
-                                            var bCorrectedCat = false;
-                                            if(cat_ax.labels.y < 0) {
-                                                rect.y -= cat_ax.labels.y;
-                                                rect.h += cat_ax.labels.y;
-                                                cat_ax.labels.y = 0;
-                                                bCorrectedCat = true;
-                                            }
-                                            if(cat_ax.labels.y + cat_ax.labels.extY > this.extY) {
-                                                rect.h -= (cat_ax.labels.y + cat_ax.labels.extY - this.extY);
-                                                bCorrectedCat = true;
-                                            }
-                                            if(bCorrectedCat) {
-                                                unit_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                                cat_labels_align_bottom = false;//в данном случае подписи будут выравниваться по верхнему краю блока с подписями
-                                                cat_ax.posY = rect.y + rect.h - (crosses_val_ax - arr_val[0]) * unit_height;
-                                            }
-                                        }
-                                    }
-
-                                }
-                            }
-                            else {
-                                if(!bWithoutLabels) {
-                                    var bottom_points_height = first_val_axis_label_half_height + (crosses_val_ax - arr_val[0]) * unit_height;//высота области под горизонтальной осью
-                                    if(bottom_points_height < cat_ax_ext_y) {
-                                        unit_height = checkFiniteNumber((rect.h - last_val_axis_label_half_height - cat_ax_ext_y) / (arr_val[arr_val.length - 1] - crosses_val_ax));
-                                    }
-                                    cat_ax.posY = rect.y + last_val_axis_label_half_height + (arr_val[arr_val.length - 1] - crosses_val_ax) * unit_height;
-                                    if(cat_ax.labels)
-                                        cat_ax.labels.y = cat_ax.posY;
-                                }
-                                else {
-                                    cat_ax.posY = rect.y + (arr_val[arr_val.length - 1] - crosses_val_ax) * unit_height;
-                                    if(cat_ax.labels) {
-                                        cat_ax.labels.y = cat_ax.posY;
-
-                                        if(true) {
-                                            var bCorrectedCat = false;
-                                            if(cat_ax.labels.y < 0) {
-                                                rect.y -= cat_ax.labels.y;
-                                                rect.h += cat_ax.labels.y;
-                                                cat_ax.labels.y = 0;
-                                                bCorrectedCat = true;
-                                            }
-                                            if(cat_ax.labels.y + cat_ax.labels.extY > this.extY) {
-                                                rect.h -= (cat_ax.labels.y + cat_ax.labels.extY - this.extY);
-                                                bCorrectedCat = true;
-                                            }
-                                            if(bCorrectedCat) {
-                                                unit_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                                cat_ax.posY = rect.y + (arr_val[arr_val.length - 1] - crosses_val_ax) * unit_height;
-                                                cat_ax.labels.y = cat_ax.posY;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            for(i = 0; i < arr_val.length; ++i)
-                                arr_val_labels_points[i] = cat_ax.posY - (arr_val[i] - crosses_val_ax) * unit_height;
-                        }
-                        else if(hor_labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_LOW) {
-                            if(!bWithoutLabels) {
-                                bottom_val_axis_gap = Math.max(cat_ax_ext_y, first_val_axis_label_half_height);
-                                unit_height = checkFiniteNumber((rect.h - bottom_val_axis_gap - last_val_axis_label_half_height) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                cat_ax.posY = rect.y + last_val_axis_label_half_height + (arr_val[arr_val.length - 1] - crosses_val_ax) * unit_height;
-                                if(cat_ax.labels)
-                                    cat_ax.labels.y = rect.y + rect.h - bottom_val_axis_gap;
-                                for(i = 0; i < arr_val.length; ++i)
-                                    arr_val_labels_points[i] = cat_ax.posY - (arr_val[i] - crosses_val_ax) * unit_height;
-                            }
-                            else {
-                                unit_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                cat_ax.posY = rect.y + (arr_val[arr_val.length - 1] - crosses_val_ax) * unit_height;
-                                if(cat_ax.labels) {
-                                    cat_ax.labels.y = rect.y + rect.h;
-                                    if(true) {
-                                        var bCorrectedCat = false;
-                                        if(cat_ax.labels.y < 0) {
-                                            rect.y -= cat_ax.labels.y;
-                                            rect.h += cat_ax.labels.y;
-                                            cat_ax.labels.y = 0;
-                                            bCorrectedCat = true;
-                                        }
-                                        if(cat_ax.labels.y + cat_ax.labels.extY > this.extY) {
-                                            rect.h -= (cat_ax.labels.y + cat_ax.labels.extY - this.extY);
-                                            bCorrectedCat = true;
-                                        }
-                                        if(bCorrectedCat) {
-                                            unit_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                            cat_ax.posY = rect.y + (arr_val[arr_val.length - 1] - crosses_val_ax) * unit_height;
-                                            cat_ax.labels.y = rect.y + rect.h;
-                                        }
-                                    }
-                                }
-                                for(i = 0; i < arr_val.length; ++i)
-                                    arr_val_labels_points[i] = cat_ax.posY - (arr_val[i] - crosses_val_ax) * unit_height;
-                            }
-                        }
-                        else if(hor_labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_HIGH) {
-                            if(!bWithoutLabels) {
-                                top_val_axis_gap = Math.max(last_val_axis_label_half_height, cat_ax_ext_y);
-                                unit_height = checkFiniteNumber((rect.h - top_val_axis_gap - first_val_axis_label_half_height) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                cat_labels_align_bottom = false;//в данном случае подписи будут выравниваться по верхнему краю блока с подписями
-                                cat_ax.posY = rect.y + rect.h - first_val_axis_label_half_height - (crosses_val_ax - arr_val[0]) * unit_height;
-                                if(cat_ax.labels)
-                                    cat_ax.labels.y = rect.y + top_val_axis_gap - cat_ax_ext_y;
-                                for(i = 0; i < arr_val.length; ++i)
-                                    arr_val_labels_points[i] = cat_ax.posY - (arr_val[i] - crosses_val_ax) * unit_height;
-                            }
-                            else {
-                                unit_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                cat_labels_align_bottom = false;//в данном случае подписи будут выравниваться по верхнему краю блока с подписями
-                                cat_ax.posY = rect.y + rect.h - (crosses_val_ax - arr_val[0]) * unit_height;
-                                if(cat_ax.labels) {
-                                    cat_ax.labels.y = rect.y - cat_ax_ext_y;
-                                    if(true) {
-                                        var bCorrectedCat = false;
-                                        if(cat_ax.labels.y < 0) {
-                                            rect.y -= cat_ax.labels.y;
-                                            rect.h += cat_ax.labels.y;
-                                            cat_ax.labels.y = 0;
-                                            bCorrectedCat = true;
-                                        }
-                                        if(cat_ax.labels.y + cat_ax.labels.extY > this.extY) {
-                                            rect.h -= (cat_ax.labels.y + cat_ax.labels.extY - this.extY);
-                                            bCorrectedCat = true;
-                                        }
-                                        if(bCorrectedCat) {
-                                            unit_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                            cat_ax.posY = rect.y + rect.h - (crosses_val_ax - arr_val[0]) * unit_height;
-                                            cat_ax.labels.y = rect.y - cat_ax_ext_y;
-                                        }
-                                    }
-                                }
-
-                                for(i = 0; i < arr_val.length; ++i)
-                                    arr_val_labels_points[i] = cat_ax.posY - (arr_val[i] - crosses_val_ax) * unit_height;
-                            }
-                        }
-                        else {
-                            //подписей осей нет
-                            cat_ax.labels = null;
-                            if(!bWithoutLabels) {
-                                for(i = 0; i < arr_val.length; ++i)
-                                    arr_val_labels_points[i] = rect.y + rect.h - first_val_axis_label_half_height - (arr_val[i] - arr_val[0]) * unit_height;
-                                cat_ax.posY = rect.y + rect.h - first_val_axis_label_half_height - (crosses_val_ax - arr_val[0]) * unit_height;
-                            }
-                            else {
-                                for(i = 0; i < arr_val.length; ++i)
-                                    arr_val_labels_points[i] = rect.y + rect.h - (arr_val[i] - arr_val[0]) * unit_height;
-                                cat_ax.posY = rect.y + rect.h - (crosses_val_ax - arr_val[0]) * unit_height;
-                            }
-                        }
-                    }
-                    else {//зеркально отражаем
-                        if(hor_labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO || !AscFormat.isRealNumber(hor_labels_pos)) {
-                            if(cat_ax.crosses === AscFormat.CROSSES_MAX) {
-                                if(!bWithoutLabels) {
-                                    bottom_val_axis_gap = Math.max(cat_ax_ext_y, last_val_axis_label_half_height);
-                                    unit_height = checkFiniteNumber((rect.h - bottom_val_axis_gap - first_val_axis_label_half_height) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                    cat_ax.posY = rect.y + first_val_axis_label_half_height + (crosses_val_ax - arr_val[0]) * unit_height;
-                                    if(cat_ax.labels)
-                                        cat_ax.labels.y = rect.y + rect.h - bottom_val_axis_gap;
-                                }
-                                else {
-
-                                    unit_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                    cat_ax.posY = rect.y + (crosses_val_ax - arr_val[0]) * unit_height;
-                                    if(cat_ax.labels) {
-                                        cat_ax.labels.y = rect.y + rect.h;
-                                        if(true) {
-                                            var bCorrectedCat = false;
-                                            if(cat_ax.labels.y < 0) {
-                                                rect.y -= cat_ax.labels.y;
-                                                rect.h += cat_ax.labels.y;
-                                                cat_ax.labels.y = 0;
-                                                bCorrectedCat = true;
-                                            }
-                                            if(cat_ax.labels.y + cat_ax.labels.extY > this.extY) {
-                                                rect.h -= (cat_ax.labels.y + cat_ax.labels.extY - this.extY);
-                                                bCorrectedCat = true;
-                                            }
-                                            if(bCorrectedCat) {
-                                                unit_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                                cat_ax.posY = rect.y + (crosses_val_ax - arr_val[0]) * unit_height;
-                                                cat_ax.labels.y = rect.y + rect.h;
-                                            }
-                                        }
-                                    }
-
-                                }
-                            }
-                            else {
-                                cat_labels_align_bottom = false;
-                                if(!bWithoutLabels) {
-                                    var top_points_height = first_val_axis_label_half_height + (crosses_val_ax - arr_val[0]) * unit_height;
-                                    if(top_points_height < cat_ax_ext_y) {
-                                        unit_height = checkFiniteNumber((rect.h - cat_ax_ext_y - last_val_axis_label_half_height) / (arr_val[arr_val.length - 1] - crosses_val_ax));
-                                    }
-                                    cat_ax.posY = rect.y + rect.h - last_val_axis_label_half_height - (arr_val[arr_val.length - 1] - crosses_val_ax) * unit_height;
-                                    if(cat_ax.labels)
-                                        cat_ax.labels.y = cat_ax.posY - cat_ax_ext_y;
-                                }
-                                else {
-                                    cat_ax.posY = rect.y + rect.h - (arr_val[arr_val.length - 1] - crosses_val_ax) * unit_height;
-                                    if(cat_ax.labels) {
-                                        cat_ax.labels.y = cat_ax.posY - cat_ax_ext_y;
-                                        if(true) {
-                                            var bCorrectedCat = false;
-                                            if(cat_ax.labels.y < 0) {
-                                                rect.y -= cat_ax.labels.y;
-                                                rect.h += cat_ax.labels.y;
-                                                cat_ax.labels.y = 0;
-                                                bCorrectedCat = true;
-                                            }
-                                            if(cat_ax.labels.y + cat_ax.labels.extY > this.extY) {
-                                                rect.h -= (cat_ax.labels.y + cat_ax.labels.extY - this.extY);
-                                                bCorrectedCat = true;
-                                            }
-                                            if(bCorrectedCat) {
-                                                unit_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                                cat_ax.posY = rect.y + rect.h - (arr_val[arr_val.length - 1] - crosses_val_ax) * unit_height;
-                                                cat_ax.labels.y = cat_ax.posY - cat_ax_ext_y;
-                                            }
-                                        }
-                                    }
-
-                                }
-                            }
-                            for(i = 0; i < arr_val.length; ++i)
-                                arr_val_labels_points[i] = cat_ax.posY + (arr_val[i] - crosses_val_ax) * unit_height;
-                        }
-                        else if(hor_labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_LOW) {
-                            cat_labels_align_bottom = false;
-                            if(!bWithoutLabels) {
-                                top_val_axis_gap = Math.max(first_val_axis_label_half_height, cat_ax_ext_y);
-                                unit_height = checkFiniteNumber((rect.h - top_val_axis_gap - last_val_axis_label_half_height) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                cat_ax.posY = rect.y + rect.h - last_val_axis_label_half_height - (arr_val[arr_val.length - 1] - crosses_val_ax) * unit_height;
-
-
-                                for(i = 0; i < arr_val.length; ++i)
-                                    arr_val_labels_points[i] = cat_ax.posY + (arr_val[i] - crosses_val_ax) * unit_height;
-                                if(cat_ax.labels)
-                                    cat_ax.labels.y = cat_ax.posY + (arr_val[0] - crosses_val_ax) * unit_height - cat_ax_ext_y;
-                            }
-                            else {
-                                unit_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                cat_ax.posY = rect.y + rect.h - (arr_val[arr_val.length - 1] - crosses_val_ax) * unit_height;
-
-
-                                for(i = 0; i < arr_val.length; ++i)
-                                    arr_val_labels_points[i] = cat_ax.posY + (arr_val[i] - crosses_val_ax) * unit_height;
-                                if(cat_ax.labels) {
-                                    cat_ax.labels.y = cat_ax.posY + (arr_val[0] - crosses_val_ax) * unit_height - cat_ax_ext_y;
-                                    if(true) {
-                                        var bCorrectedCat = false;
-                                        if(cat_ax.labels.y < 0) {
-                                            rect.y -= cat_ax.labels.y;
-                                            rect.h += cat_ax.labels.y;
-                                            cat_ax.labels.y = 0;
-                                            bCorrectedCat = true;
-                                        }
-                                        if(cat_ax.labels.y + cat_ax.labels.extY > this.extY) {
-                                            rect.h -= (cat_ax.labels.y + cat_ax.labels.extY - this.extY);
-                                            bCorrectedCat = true;
-                                        }
-                                        if(bCorrectedCat) {
-                                            unit_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                            cat_ax.posY = rect.y + rect.h - (arr_val[arr_val.length - 1] - crosses_val_ax) * unit_height;
-
-                                            for(i = 0; i < arr_val.length; ++i)
-                                                arr_val_labels_points[i] = cat_ax.posY + (arr_val[i] - crosses_val_ax) * unit_height;
-                                            cat_ax.labels.y = cat_ax.posY + (arr_val[0] - crosses_val_ax) * unit_height - cat_ax_ext_y;
-                                        }
-                                    }
-                                }
-
-                            }
-                        }
-                        else if(hor_labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_HIGH) {
-
-                            if(!bWithoutLabels) {
-                                bottom_val_axis_gap = Math.max(cat_ax_ext_y, last_val_axis_label_half_height);
-                                unit_height = checkFiniteNumber((rect.h - bottom_val_axis_gap - first_val_axis_label_half_height) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                cat_ax.posY = rect.y + first_val_axis_label_half_height + (crosses_val_ax - arr_val[0]) * unit_height;
-                                for(i = 0; i < arr_val.length; ++i)
-                                    arr_val_labels_points[i] = cat_ax.posY + (arr_val[i] - crosses_val_ax) * unit_height;
-                                if(cat_ax.labels)
-                                    cat_ax.labels.y = rect.y + rect.h - bottom_val_axis_gap;
-                            }
-                            else {
-
-                                unit_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                cat_ax.posY = rect.y + (crosses_val_ax - arr_val[0]) * unit_height;
-                                for(i = 0; i < arr_val.length; ++i)
-                                    arr_val_labels_points[i] = cat_ax.posY + (arr_val[i] - crosses_val_ax) * unit_height;
-                                if(cat_ax.labels) {
-                                    cat_ax.labels.y = rect.y + rect.h;
-                                    if(true) {
-                                        var bCorrectedCat = false;
-                                        if(cat_ax.labels.y < 0) {
-                                            rect.y -= cat_ax.labels.y;
-                                            rect.h += cat_ax.labels.y;
-                                            cat_ax.labels.y = 0;
-                                            bCorrectedCat = true;
-                                        }
-                                        if(cat_ax.labels.y + cat_ax.labels.extY > this.extY) {
-                                            rect.h -= (cat_ax.labels.y + cat_ax.labels.extY - this.extY);
-                                            bCorrectedCat = true;
-                                        }
-                                        if(bCorrectedCat) {
-                                            unit_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                            cat_ax.posY = rect.y + (crosses_val_ax - arr_val[0]) * unit_height;
-                                            for(i = 0; i < arr_val.length; ++i)
-                                                arr_val_labels_points[i] = cat_ax.posY + (arr_val[i] - crosses_val_ax) * unit_height;
-                                            cat_ax.labels.y = rect.y + rect.h;
-                                        }
-                                    }
-                                }
-
-                            }
-                        }
-                        else {//подписей осей нет
-                            cat_ax.labels = null;
-                            if(!bWithoutLabels) {
-                                unit_height = checkFiniteNumber((rect.h - last_val_axis_label_half_height - first_val_axis_label_half_height) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                for(i = 0; i < arr_val.length; ++i)
-                                    arr_val_labels_points[i] = rect.y + first_val_axis_label_half_height + (arr_val[i] - arr_val[0]) * unit_height;
-                            }
-                            else {
-                                unit_height = checkFiniteNumber(rect.h / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                for(i = 0; i < arr_val.length; ++i)
-                                    arr_val_labels_points[i] = rect.y + (arr_val[i] - arr_val[0]) * unit_height;
-                            }
-                        }
-                    }
-
-                    cat_ax.interval = unit_height;
-                    //запишем в оси необходимую информацию для отрисовщика plotArea  и выставим окончательные позиции для подписей
-                    var arr_labels, transform_text, local_text_transform;
-                    if(val_ax.labels) {
-                        if(bNeedReflect) {
-                            if(left_val_ax_labels_align) {
-                                left_val_ax_labels_align = false;
-                                val_ax.labels.x += val_ax.labels.extX;
-                            }
-                            else {
-                                left_val_ax_labels_align = true;
-                                val_ax.labels.x -= val_ax.labels.extX;
-                            }
-                        }
-                        val_ax.labels.align = left_val_ax_labels_align;
-                        val_ax.labels.y = Math.min.apply(Math, arr_val_labels_points) - max_val_labels_text_height / 2;
-                        val_ax.labels.extY = Math.max.apply(Math, arr_val_labels_points) - Math.min.apply(Math, arr_val_labels_points) + max_val_labels_text_height;
-                        arr_labels = val_ax.labels.aLabels;
-                        if(left_val_ax_labels_align) {
-                            for(i = 0; i < arr_labels.length; ++i) {
-                                arr_labels[i].txBody = arr_labels[i].tx.rich;
-                                transform_text = arr_labels[i].transformText;
-                                transform_text.Reset();
-                                global_MatrixTransformer.TranslateAppend(transform_text, val_ax.labels.x + val_ax.labels.extX - val_axis_labels_gap - arr_labels[i].tx.rich.content.XLimit, arr_val_labels_points[i] - val_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight() / 2);
-                                //  global_MatrixTransformer.MultiplyAppend(transform_text, this.getTransformMatrix());
-
-                                local_text_transform = arr_labels[i].localTransformText;
-                                local_text_transform.Reset();
-                                global_MatrixTransformer.TranslateAppend(local_text_transform, val_ax.labels.x + val_ax.labels.extX - val_axis_labels_gap - arr_labels[i].tx.rich.content.XLimit, arr_val_labels_points[i] - val_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight() / 2);
-
-
-                            }
-                        }
-                        else {
-                            var left_line = val_ax.labels.x + val_axis_labels_gap;
-                            for(i = 0; i < arr_labels.length; ++i) {
-                                arr_labels[i].txBody = arr_labels[i].tx.rich;
-                                transform_text = arr_labels[i].transformText;
-                                transform_text.Reset();
-                                global_MatrixTransformer.TranslateAppend(transform_text, left_line, arr_val_labels_points[i] - val_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight() / 2);
-                                //  global_MatrixTransformer.MultiplyAppend(transform_text, this.getTransformMatrix());
-
-                                local_text_transform = arr_labels[i].localTransformText;
-                                local_text_transform.Reset();
-                                global_MatrixTransformer.TranslateAppend(local_text_transform, left_line, arr_val_labels_points[i] - val_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight() / 2);
-
-                            }
-                        }
-                    }
-                    val_ax.yPoints = [];
-                    for(i = 0; i < arr_val_labels_points.length; ++i) {
-                        val_ax.yPoints[i] = {val: arr_val[i], pos: arr_val_labels_points[i]};
-                    }
-                    cat_ax.xPoints = [];
-                    for(i = 0; i < arr_cat_labels_points.length; ++i) {
-                        cat_ax.xPoints[i] = {val: i + 1, pos: arr_cat_labels_points[i]};
-                    }
-                    if(cat_ax.labels) {
-                        cat_ax.labels.align = cat_labels_align_bottom;
-                        if(!b_rotated)//подписи не повернутые
-                        {
-                            if(cat_ax_orientation === AscFormat.ORIENTATION_MIN_MAX) {
-                                cat_ax.labels.x = arr_cat_labels_points[0] - max_cat_label_width / 2;
-                            }
-                            else {
-                                cat_ax.labels.x = arr_cat_labels_points[arr_cat_labels_points.length - 1] - max_cat_label_width / 2;
-                            }
-                            cat_ax.labels.extX = arr_cat_labels_points[arr_cat_labels_points.length - 1] + max_cat_label_width / 2 - cat_ax.labels.x;
-                            if(cat_labels_align_bottom) {
-                                for(i = 0; i < cat_ax.labels.aLabels.length; ++i) {
-                                    if(cat_ax.labels.aLabels[i]) {
-                                        var label_text_transform = cat_ax.labels.aLabels[i].transformText;
-                                        label_text_transform.Reset();
-                                        global_MatrixTransformer.TranslateAppend(label_text_transform, arr_cat_labels_points[i] - max_cat_label_width / 2, cat_ax.labels.y + labels_offset);
-                                        //   global_MatrixTransformer.MultiplyAppend(label_text_transform, this.getTransformMatrix());
-
-                                        local_text_transform = cat_ax.labels.aLabels[i].localTransformText;
-                                        local_text_transform.Reset();
-                                        global_MatrixTransformer.TranslateAppend(local_text_transform, arr_cat_labels_points[i] - max_cat_label_width / 2, cat_ax.labels.y + labels_offset);
-
-                                    }
-                                }
-                            }
-                            else {
-                                for(i = 0; i < cat_ax.labels.aLabels.length; ++i) {
-                                    if(cat_ax.labels.aLabels[i]) {
-                                        var label_text_transform = cat_ax.labels.aLabels[i].transformText;
-                                        label_text_transform.Reset();
-                                        global_MatrixTransformer.TranslateAppend(label_text_transform, arr_cat_labels_points[i] - max_cat_label_width / 2, cat_ax.labels.y + cat_ax.labels.extY - labels_offset - cat_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight());
-                                        //  global_MatrixTransformer.MultiplyAppend(label_text_transform, this.getTransformMatrix());
-
-                                        local_text_transform = cat_ax.labels.aLabels[i].localTransformText;
-                                        local_text_transform.Reset();
-                                        global_MatrixTransformer.TranslateAppend(local_text_transform, arr_cat_labels_points[i] - max_cat_label_width / 2, cat_ax.labels.y + cat_ax.labels.extY - labels_offset - cat_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight());
-
-                                    }
-                                }
-                            }
-                        }
-                        else {
-                            var left_x, right_x;
-                            var w2, h2, x1, xc, yc, y0;
-                            if(cat_labels_align_bottom) {
-                                for(i = 0; i < cat_ax.labels.aLabels.length; ++i) {
-                                    if(cat_ax.labels.aLabels[i]) {
-                                        var label_text_transform = cat_ax.labels.aLabels[i].transformText;
-                                        cat_ax.labels.aLabels[i].tx.rich.content.SetApplyToAll(true);
-                                        cat_ax.labels.aLabels[i].tx.rich.content.SetParagraphAlign(AscCommon.align_Left);
-                                        cat_ax.labels.aLabels[i].tx.rich.content.SetApplyToAll(false);
-                                        var wh = cat_ax.labels.aLabels[i].tx.rich.getContentOneStringSizes();//Todo: не расчитывать больше контент
-                                        w2 = wh.w * Math.cos(Math.PI / 4) + wh.h * Math.sin(Math.PI / 4);
-                                        h2 = wh.w * Math.sin(Math.PI / 4) + wh.h * Math.cos(Math.PI / 4);
-                                        x1 = arr_cat_labels_points[i] + wh.h * Math.sin(Math.PI / 4);
-
-                                        y0 = cat_ax.labels.y + labels_offset;
-
-                                        xc = x1 - w2 / 2;
-                                        yc = y0 + h2 / 2;
-                                        label_text_transform.Reset();
-                                        global_MatrixTransformer.TranslateAppend(label_text_transform, -wh.w / 2, -wh.h / 2);
-                                        global_MatrixTransformer.RotateRadAppend(label_text_transform, Math.PI / 4);//TODO
-                                        global_MatrixTransformer.TranslateAppend(label_text_transform, xc, yc);
-                                        global_MatrixTransformer.MultiplyAppend(label_text_transform, this.transform);
-                                        if(!AscFormat.isRealNumber(left_x)) {
-                                            left_x = xc - w2 / 2;
-                                            right_x = xc + w2 / 2;
-                                        }
-                                        else {
-                                            if(xc - w2 / 2 < left_x)
-                                                left_x = xc - w2 / 2;
-                                            if(xc + w2 / 2 > right_x)
-                                                right_x = xc + w2 / 2;
-                                        }
-
-                                        local_text_transform = cat_ax.labels.aLabels[i].localTransformText;
-                                        local_text_transform.Reset();
-                                        global_MatrixTransformer.TranslateAppend(local_text_transform, -wh.w / 2, -wh.h / 2);
-                                        global_MatrixTransformer.RotateRadAppend(local_text_transform, Math.PI / 4);//TODO
-                                        global_MatrixTransformer.TranslateAppend(local_text_transform, xc, yc);
-                                    }
-                                }
-                            }
-                            else {
-                                for(i = 0; i < cat_ax.labels.aLabels.length; ++i) {
-                                    if(cat_ax.labels.aLabels[i]) {
-                                        var label_text_transform = cat_ax.labels.aLabels[i].transformText;
-                                        cat_ax.labels.aLabels[i].tx.rich.content.SetApplyToAll(true);
-                                        cat_ax.labels.aLabels[i].tx.rich.content.SetParagraphAlign(AscCommon.align_Left);
-                                        cat_ax.labels.aLabels[i].tx.rich.content.SetApplyToAll(false);
-                                        var wh = cat_ax.labels.aLabels[i].tx.rich.getContentOneStringSizes();//Todo: не расчитывать больше контент
-                                        w2 = wh.w * Math.cos(Math.PI / 4) + wh.h * Math.sin(Math.PI / 4);
-                                        h2 = wh.w * Math.sin(Math.PI / 4) + wh.h * Math.cos(Math.PI / 4);
-                                        x1 = arr_cat_labels_points[i] - wh.h * Math.sin(Math.PI / 4);
-
-                                        y0 = cat_ax.labels.y + cat_ax.labels.extY - labels_offset;
-
-                                        xc = x1 + w2 / 2;
-                                        yc = y0 - h2 / 2;
-                                        label_text_transform.Reset();
-                                        global_MatrixTransformer.TranslateAppend(label_text_transform, -wh.w / 2, -wh.h / 2);
-                                        global_MatrixTransformer.RotateRadAppend(label_text_transform, Math.PI / 4);//TODO
-                                        global_MatrixTransformer.TranslateAppend(label_text_transform, xc, yc);
-                                        global_MatrixTransformer.MultiplyAppend(label_text_transform, this.transform);
-
-                                        if(!AscFormat.isRealNumber(left_x)) {
-                                            left_x = xc - w2 / 2;
-                                            right_x = xc + w2 / 2;
-                                        }
-                                        else {
-                                            if(xc - w2 / 2 < left_x)
-                                                left_x = xc - w2 / 2;
-                                            if(xc + w2 / 2 > right_x)
-                                                right_x = xc + w2 / 2;
-                                        }
-
-                                        local_text_transform = cat_ax.labels.aLabels[i].localTransformText;
-                                        local_text_transform.Reset();
-                                        global_MatrixTransformer.TranslateAppend(local_text_transform, -wh.w / 2, -wh.h / 2);
-                                        global_MatrixTransformer.RotateRadAppend(local_text_transform, Math.PI / 4);//TODO
-                                        global_MatrixTransformer.TranslateAppend(local_text_transform, xc, yc);
-                                    }
-                                }
-                            }
-                            cat_ax.labels.x = left_x;
-                            cat_ax.labels.extX = right_x - left_x;
-                        }
-                    }
-                    cat_ax.xPoints.sort(function(a, b) {
-                        return a.val - b.val
-                    });
-                    val_ax.yPoints.sort(function(a, b) {
-                        return a.val - b.val
-                    });
-                }
-                else {
-                    this.bEmptySeries = true;
-                }
-            }
-            else if(chart_type === AscDFH.historyitem_type_BarChart && chart_object.barDir === AscFormat.BAR_DIR_BAR) {
-                var cat_ax, val_ax;
-                var axis_by_types = chart_object.getAxisByTypes();
-                cat_ax = axis_by_types.catAx[0];
-                val_ax = axis_by_types.valAx[0];
-                if(cat_ax && val_ax) {
-                    /*---------------------new version---------------------------------------*/
-                    val_ax.labels = null;
-                    cat_ax.labels = null;
-
-                    val_ax.posX = null;
-                    cat_ax.posY = null;
-                    val_ax.posY = null;
-                    cat_ax.posX = null;
-
-                    val_ax.xPoints = null;
-                    cat_ax.yPoints = null;
-                    val_ax.yPoints = null;
-                    cat_ax.xPoints = null;
-
-
-                    val_ax.transformYPoints = null;
-                    cat_ax.transformXPoints = null;
-                    val_ax.transformXPoints = null;
-                    cat_ax.transformYPoints = null;
-                    var sizes = this.getChartSizes();
-                    rect = {x: sizes.startX, y: sizes.startY, w: sizes.w, h: sizes.h};
-                    var arr_val = this.getValAxisValues();
-                    //Получим строки для оси значений с учетом формата и единиц
-                    var arr_strings = [];
-                    var multiplier;
-                    if(val_ax.dispUnits)
-                        multiplier = val_ax.dispUnits.getMultiplier();
-                    else
-                        multiplier = 1;
-                    var num_fmt = val_ax.numFmt;
-                    if(num_fmt && typeof num_fmt.formatCode === "string" /*&& !(num_fmt.formatCode === "General")*/) {
-                        var num_format = oNumFormatCache.get(num_fmt.formatCode);
-                        for(i = 0; i < arr_val.length; ++i) {
-                            var calc_value = arr_val[i] * multiplier;
-                            var rich_value = num_format.formatToChart(calc_value);
-                            arr_strings.push(rich_value);
-                        }
-                    }
-                    else {
-                        for(i = 0; i < arr_val.length; ++i) {
-                            var calc_value = arr_val[i] * multiplier;
-                            arr_strings.push(calc_value + "");
-                        }
-                    }
-
-
-                    //расчитаем подписи горизонтальной оси значений
-                    val_ax.labels = new AscFormat.CValAxisLabels(this, val_ax);
-                    var max_height = 0;
-                    val_ax.xPoints = [];
-                    var max_val_ax_label_width = 0;
-                    for(i = 0; i < arr_strings.length; ++i) {
-                        var dlbl = new AscFormat.CDLbl();
-                        dlbl.parent = val_ax;
-                        dlbl.chart = this;
-                        dlbl.spPr = val_ax.spPr;
-                        dlbl.txPr = val_ax.txPr;
-                        dlbl.tx = new AscFormat.CChartText();
-                        dlbl.tx.setChart(this);
-                        dlbl.tx.rich = AscFormat.CreateTextBodyFromString(arr_strings[i], this.getDrawingDocument(), dlbl);
-                        dlbl.txBody = dlbl.tx.rich;
-                        if(val_ax.labels.aLabels[0]) {
-                            dlbl.lastStyleObject = val_ax.labels.aLabels[0].lastStyleObject;
-                        }
-                        var t = dlbl.tx.rich.recalculateByMaxWord();
-                        var h = t.h;
-                        if(t.w > max_val_ax_label_width)
-                            max_val_ax_label_width = t.w;
-                        if(h > max_height)
-                            max_height = h;
-                        val_ax.labels.aLabels.push(dlbl);
-                        val_ax.xPoints.push({val: arr_val[i], pos: null});
-                    }
-
-                    var val_axis_labels_gap = val_ax.labels.aLabels[0].tx.rich.content.Content[0].CompiledPr.Pr.TextPr.FontSize * 25.4 / 72;
-                    val_ax.labels.extY = max_height + val_axis_labels_gap;
-
-                    //расчитаем подписи для горизонтальной оси
-                    var ser = chart_object.series[0];
-                    var string_pts = [], pts_len = 0;
-
-                    /*string_pts  pts_len*/
-                    if(ser && ser.cat) {
-                        var lit, b_num_lit = true;
-                        lit = ser.cat.getLit();
-                        if(lit) {
-                            b_num_lit = (lit.getObjectType() === AscDFH.historyitem_type_NumLit);
-                            var lit_format = null, pt_format = null;
-                            if(b_num_lit && typeof lit.formatCode === "string" && lit.formatCode.length > 0) {
-                                lit_format = oNumFormatCache.get(lit.formatCode);
-                            }
-                            pts_len = lit.ptCount;
-                            for(i = 0; i < pts_len; ++i) {
-                                var pt = lit.getPtByIndex(i);
-                                if(pt) {
-                                    var str_pt;
-                                    if(b_num_lit) {
-                                        if(typeof pt.formatCode === "string" && pt.formatCode.length > 0) {
-                                            pt_format = oNumFormatCache.get(pt.formatCode);
-                                            if(pt_format) {
-                                                str_pt = pt_format.formatToChart(pt.val);
-                                            }
-                                            else {
-                                                str_pt = pt.val;
-                                            }
-                                        }
-                                        else if(lit_format) {
-                                            str_pt = lit_format.formatToChart(pt.val);
-                                        }
-                                        else {
-                                            str_pt = pt.val;
-                                        }
-                                    }
-                                    else {
-                                        str_pt = pt.val;
-                                    }
-                                    string_pts.push({val: str_pt + ""});
-                                }
-                                else {
-                                    string_pts.push({val: i + ""});
-                                }
-                            }
-                        }
-                    }
-                    //if(string_pts.length === 0)
-                    {
-                        pts_len = 0;
-                        for(i = 0; i < chart_object.series.length; ++i) {
-                            var cur_pts = null;
-                            ser = chart_object.series[i];
-                            if(ser.val) {
-                                if(ser.val.numRef && ser.val.numRef.numCache)
-                                    cur_pts = ser.val.numRef.numCache;
-                                else if(ser.val.numLit)
-                                    cur_pts = ser.val.numLit;
-                                if(cur_pts) {
-                                    pts_len = Math.max(pts_len, cur_pts.ptCount);
-                                }
-                            }
-                        }
-                        if(pts_len > string_pts.length) {
-                            for(i = string_pts.length; i < pts_len; ++i) {
-                                string_pts.push({val: i + 1 + ""});
-                            }
-                        }
-                        else {
-                            string_pts.splice(pts_len, string_pts.length - pts_len);
-                        }
-                    }
-                    /*---------------------расчет позиции блока с подписями вертикальной оси-----------------------------------------------------------------------------*/
-                    //расчитаем ширину интервала без учета горизонтальной оси;
-                    var crosses;//номер категории в которой вертикалная ось пересекает горизонтальную;
-                    if(val_ax.crosses === AscFormat.CROSSES_AUTO_ZERO || val_ax.crosses === AscFormat.CROSSES_MIN)
-                        crosses = 1;
-                    else if(val_ax.crosses === AscFormat.CROSSES_MAX)
-                        crosses = string_pts.length;
-                    else if(AscFormat.isRealNumber(val_ax.crossesAt)) {
-                        if(val_ax.crossesAt <= string_pts.length + 1 && val_ax.crossesAt > 0)
-                            crosses = val_ax.crossesAt;
-                        else if(val_ax.crossesAt <= 0)
-                            crosses = 1;
-                        else
-                            crosses = string_pts.length;
-                    }
-                    else
-                        crosses = 1;
-
-
-                    cat_ax.maxCatVal = string_pts.length;
-
-                    var cat_ax_orientation = cat_ax.scaling && AscFormat.isRealNumber(cat_ax.scaling.orientation) ? cat_ax.scaling.orientation : AscFormat.ORIENTATION_MIN_MAX;
-                    var labels_pos = val_ax.tickLblPos;
-                    var cross_between = this.getValAxisCrossType();
-                    if(cross_between === null) {
-                        cross_between = AscFormat.CROSS_BETWEEN_BETWEEN;
-                    }
-
-
-                    var bottom_val_ax_labels_align = true;//приленгание подписей оси значений к левому краю.
-
-                    var intervals_count = cross_between === AscFormat.CROSS_BETWEEN_MID_CAT ? string_pts.length - 1 : string_pts.length;
-                    var point_interval = rect.h / intervals_count;//интервал между точками. Зависит от crossBetween, а также будет потом корректироваться в зависимости от подписей вертикальной и горизонтальной оси.
-
-
-                    var bottom_points_height, top_point_height;
-                    var arr_cat_labels_points = [];//массив середин подписей горизонтальной оси; i-й элемент - x-координата центра подписи категории с номером i;
-                    if(cat_ax_orientation === AscFormat.ORIENTATION_MIN_MAX) {
-                        if(labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE || val_ax.bDelete === true) {
-                            val_ax.labels = null;
-                            if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = rect.y + rect.h - point_interval * i;
-                            }
-                            else {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = rect.y + rect.h - (point_interval / 2 + point_interval * i);
-                            }
-                            val_ax.posY = rect.y + rect.h - point_interval * (crosses - 1);
-                        }
-                        else if(labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO || !AscFormat.isRealNumber(labels_pos)) //подписи рядом с осью
-                        {
-                            if(val_ax.crosses === AscFormat.CROSSES_MAX) {
-                                if(!bWithoutLabels) {
-                                    val_ax.labels.y = rect.y;
-                                    point_interval = checkFiniteNumber((rect.h - val_ax.labels.extY) / intervals_count);
-                                }
-                                else {
-                                    val_ax.labels.y = rect.y - val_ax.labels.extY;
-                                }
-                                bottom_val_ax_labels_align = false;
-                                val_ax.posY = val_ax.labels.y + val_ax.labels.extY;
-                                if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                    for(i = 0; i < string_pts.length; ++i)
-                                        arr_cat_labels_points[i] = rect.y + rect.h - point_interval * i;
-                                }
-                                else {
-                                    for(i = 0; i < string_pts.length; ++i)
-                                        arr_cat_labels_points[i] = point_interval / 2 + rect.y + rect.h - point_interval * i;
-                                }
-                            }
-                            else {
-                                bottom_points_height = point_interval * (crosses - 1);//общая ширина левых точек если считать что точки занимают все пространство
-                                if(bottom_points_height < val_ax.labels.extY && !bWithoutLabels)//подписи верт. оси выходят за пределы области построения
-                                {
-                                    var top_intervals_count = intervals_count - (crosses - 1);//количесво интервалов выше горизонтальной оси
-                                    //скорректируем point_interval, поделив расстояние, которое осталось справа от подписей осей на количество интервалов справа
-                                    point_interval = checkFiniteNumber((rect.h - val_ax.labels.extY) / top_intervals_count);
-                                    val_ax.labels.y = rect.y + rect.h - val_ax.labels.extY;
-                                    var start_point = val_ax.labels.y + (crosses - 1) * point_interval;//y-координата точки низа области постоения
-
-                                    if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = start_point - point_interval * i;
-                                    }
-                                    else {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = start_point - point_interval / 2 - point_interval * i;
-                                    }
-                                }
-                                else {
-                                    val_ax.labels.y = rect.y + rect.h - bottom_points_height;
-                                    if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = rect.y + rect.h - point_interval * i;
-                                    }
-                                    else {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = rect.y + rect.h - (point_interval / 2 + point_interval * i);
-                                    }
-                                }
-                                val_ax.posY = val_ax.labels.y;
-                            }
-                        }
-                        else if(labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_LOW)//подписи снизу от области построения
-                        {
-                            if(!bWithoutLabels) {
-                                point_interval = checkFiniteNumber((rect.h - val_ax.labels.extY) / intervals_count);
-                                val_ax.labels.y = rect.y + rect.h - val_ax.labels.extY;
-                            }
-                            else {
-                                val_ax.labels.y = rect.y + rect.h;
-                            }
-                            if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = val_ax.labels.y - point_interval * i;
-                            }
-                            else {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = rect.y + rect.h - val_ax.labels.extY - point_interval / 2 - point_interval * i;
-                            }
-                            val_ax.posY = val_ax.labels.y - point_interval * (crosses - 1);
-                        }
-                        else if(labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_HIGH)//подписи сверху от области построения
-                        {
-                            if(!bWithoutLabels) {
-                                point_interval = checkFiniteNumber((rect.h - val_ax.labels.extY) / intervals_count);
-                                val_ax.labels.y = rect.y;
-                            }
-                            else {
-                                val_ax.labels.y = rect.y - val_ax.labels.extY;
-                            }
-                            point_interval = checkFiniteNumber((rect.h - val_ax.labels.extY) / intervals_count);
-                            val_ax.labels.y = rect.y;
-                            bottom_val_ax_labels_align = false;
-                            if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = rect.y + rect.h - point_interval * i;
-                            }
-                            else {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = rect.y + rect.h - (point_interval / 2 + point_interval * i);
-                            }
-                            val_ax.posY = rect.y + rect.h - point_interval * (crosses - 1);
-                        }
-                        else {
-                            val_ax.labels = null;
-                            if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = rect.y + rect.h - point_interval * i;
-                            }
-                            else {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = rect.y + rect.h - (point_interval / 2 + point_interval * i);
-                            }
-                            val_ax.posY = rect.y + rect.h - point_interval * (crosses - 1);
-                        }
-                    }
-                    else {//то же самое, только зеркально отраженное
-                        if(labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE || val_ax.bDelete === true) {
-                            val_ax.labels = null;
-                            if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = rect.y + point_interval * i;
-                            }
-                            else {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = rect.y + point_interval / 2 + point_interval * i;
-                            }
-                            val_ax.posY = rect.y + point_interval * (crosses - 1);
-                        }
-                        else if(labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO || !AscFormat.isRealNumber(labels_pos)) //подписи рядом с осью
-                        {
-                            if(val_ax.crosses === AscFormat.CROSSES_MAX) {
-                                if(!bWithoutLabels) {
-                                    val_ax.labels.y = rect.y + rect.h - val_ax.labels.extY;
-                                    point_interval = checkFiniteNumber((rect.h - val_ax.labels.extY) / intervals_count);
-                                }
-                                else {
-                                    val_ax.labels.y = rect.y + rect.h;
-                                }
-                                if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                    for(i = 0; i < string_pts.length; ++i)
-                                        arr_cat_labels_points[i] = rect.y + point_interval * i;
-                                }
-                                else {
-                                    for(i = 0; i < string_pts.length; ++i)
-                                        arr_cat_labels_points[i] = rect.y + point_interval / 2 + point_interval * i;
-                                }
-                                val_ax.posY = val_ax.labels.y;
-                            }
-                            else {
-                                bottom_val_ax_labels_align = false;
-                                top_point_height = point_interval * (crosses - 1);
-                                if(top_point_height < val_ax.labels.extY && !bWithoutLabels) {
-                                    val_ax.labels.y = rect.y;
-                                    var bottom_points_interval_count = intervals_count - (crosses - 1);
-                                    point_interval = checkFiniteNumber((rect.h - val_ax.labels.extY) / bottom_points_interval_count);
-                                    var start_point_bottom = rect.y + rect.h - point_interval * intervals_count;
-                                    if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = start_point_bottom + point_interval * i;
-                                    }
-                                    else {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = start_point_bottom + point_interval / 2 + point_interval * i;
-                                    }
-                                }
-                                else {
-                                    val_ax.labels.y = rect.y + point_interval * (crosses - 1) - val_ax.labels.extY;
-                                    if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = rect.y + point_interval * i;
-                                    }
-                                    else {
-                                        for(i = 0; i < string_pts.length; ++i)
-                                            arr_cat_labels_points[i] = rect.y + point_interval / 2 + point_interval * i;
-                                    }
-                                }
-                                val_ax.posY = val_ax.labels.y + val_ax.labels.extY;
-                            }
-                        }
-                        else if(labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_LOW)//подписи сверху от области построения
-                        {
-                            bottom_val_ax_labels_align = false;
-                            if(!bWithoutLabels) {
-                                point_interval = checkFiniteNumber((rect.h - val_ax.labels.extY) / intervals_count);
-                                val_ax.labels.y = rect.y;
-                            }
-                            else {
-                                val_ax.labels.y = rect.y - val_ax.labels.extY;
-                            }
-                            if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = val_ax.labels.y + val_ax.labels.extY + point_interval * i;
-                            }
-                            else {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = val_ax.labels.y + val_ax.labels.extY + point_interval / 2 + point_interval * i;
-                            }
-                            val_ax.posY = rect.y + val_ax.labels.extY + point_interval * (crosses - 1);
-                        }
-                        else if(labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_HIGH)//подписи снизу от области построения
-                        {
-                            if(!bWithoutLabels) {
-                                point_interval = checkFiniteNumber((rect.h - val_ax.labels.extY) / intervals_count);
-                                val_ax.labels.y = rect.y + rect.h - val_ax.labels.extY;
-                            }
-                            else {
-                                val_ax.labels.y = rect.y + rect.h;
-                            }
-                            if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = rect.y + point_interval * i;
-                            }
-                            else {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = rect.y + point_interval / 2 + point_interval * i;
-                            }
-                            val_ax.posY = rect.y + point_interval * (crosses - 1);
-                        }
-                        else {
-                            val_ax.labels = null;
-                            if(cross_between === AscFormat.CROSS_BETWEEN_MID_CAT) {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = rect.y + point_interval * i;
-                            }
-                            else {
-                                for(i = 0; i < string_pts.length; ++i)
-                                    arr_cat_labels_points[i] = rect.y + point_interval / 2 + point_interval * i;
-                            }
-                            val_ax.posY = rect.y + point_interval * (crosses - 1);
-                        }
-                    }
-
-                    cat_ax.interval = point_interval;
-
-                    var diagram_height = point_interval * intervals_count;//размер области с самой диаграммой позже будет корректироватся;
-                    var max_cat_label_height = diagram_height / string_pts.length; // максимальная высота подписи горизонтальной оси;
-
-                    cat_ax.labels = null;
-                    var max_cat_labels_block_width = rect.w / 2;
-                    if(c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE !== cat_ax.tickLblPos && !(cat_ax.bDelete === true)) //будем корректировать вертикальные подписи только если есть горизонтальные
-                    {
-                        cat_ax.labels = new AscFormat.CValAxisLabels(this, cat_ax);
-                        var tick_lbl_skip = AscFormat.isRealNumber(cat_ax.tickLblSkip) ? cat_ax.tickLblSkip : (string_pts.length < SKIP_LBL_LIMIT ? 1 : Math.floor(string_pts.length / SKIP_LBL_LIMIT));
-                        var max_min_width = 0;
-                        var max_max_width = 0;
-                        var max_content_width = 0;
-                        var arr_min_max_min = [];
-                        for(i = 0; i < string_pts.length; ++i) {
-                            var dlbl = null;
-                            if(i % tick_lbl_skip === 0) {
-                                dlbl = new AscFormat.CDLbl();
-                                dlbl.parent = cat_ax;
-                                dlbl.chart = this;
-                                dlbl.spPr = cat_ax.spPr;
-                                dlbl.txPr = cat_ax.txPr;
-                                dlbl.tx = new AscFormat.CChartText();
-                                dlbl.tx.setChart(this);
-                                dlbl.tx.rich = AscFormat.CreateTextBodyFromString(string_pts[i].val.replace(oNonSpaceRegExp, ' '), this.getDrawingDocument(), dlbl);
-                                if(cat_ax.labels.aLabels[0]) {
-                                    dlbl.lastStyleObject = cat_ax.labels.aLabels[0].lastStyleObject;
-                                }
-                                dlbl.tx.rich.content.SetApplyToAll(true);
-                                dlbl.tx.rich.content.SetParagraphAlign(AscCommon.align_Center);
-                                dlbl.tx.rich.content.SetApplyToAll(false);
-                                var min_max = dlbl.tx.rich.content.RecalculateMinMaxContentWidth();
-                                var max_min_content_width = min_max.Min;
-                                if(min_max.Max > max_max_width)
-                                    max_max_width = min_max.Max;
-
-                                if(min_max.Min > max_min_width)
-                                    max_min_width = min_max.Min;
-
-                                arr_min_max_min[i] = min_max.Min;
-
-                                dlbl.getMaxWidth = function() {
-                                    return 20000
-                                };
-                                dlbl.recalcInfo.recalculatePen = false;
-                                dlbl.recalcInfo.recalculateBrush = false;
-                                dlbl.recalculate();
-                                delete dlbl.getMaxWidth;
-                                if(dlbl.tx.rich.content.XLimit > max_content_width)
-                                    max_content_width = dlbl.tx.rich.content.XLimit;
-                            }
-                            cat_ax.labels.aLabels.push(dlbl);
-                        }
-                        var stake_offset = AscFormat.isRealNumber(cat_ax.lblOffset) ? cat_ax.lblOffset / 100 : 1;
-                        var labels_offset = cat_ax.labels.aLabels[0].tx.rich.content.Content[0].CompiledPr.Pr.TextPr.FontSize * (25.4 / 72) * stake_offset;
-                        //сначала посмотрим убираются ли в максимальную допустимую ширину подписей подписи расчитанные в одну строку
-
-                        var width_flag;
-                        if(max_content_width + labels_offset < max_cat_labels_block_width) {
-                            width_flag = 0;
-                            cat_ax.labels.extX = max_content_width + labels_offset;
-                        }
-                        else if(max_min_width + labels_offset < max_cat_labels_block_width)//ситуация, когда возможно разместить подписи без переноса слов
-                        {
-                            width_flag = 1;
-                            cat_ax.labels.extX = max_min_width + labels_offset;
-                        }
-                        else //выставляем максимально возможную ширину
-                        {
-                            width_flag = 2;
-                            cat_ax.labels.extX = max_cat_labels_block_width;
-                        }
-                    }
-                    var cat_labels_align_left = true;//выравнивание подписей в блоке сподписями по левому краю(т. е. зазор находится справа)
-                    /*-----------------------------------------------------------------------*/
-                    var crosses_val_ax;//значение на горизонтальной оси значений в котором её пересекает горизонтальная
-                    if(cat_ax.crosses === AscFormat.CROSSES_AUTO_ZERO) {
-                        if(arr_val[0] <= 0 && arr_val[arr_val.length - 1] >= 0)
-                            crosses_val_ax = 0;
-                        else if(arr_val[arr_val.length - 1] < 0)
-                            crosses_val_ax = arr_val[arr_val.length - 1];
-                        else
-                            crosses_val_ax = arr_val[0];
-                    }
-                    else if(cat_ax.crosses === AscFormat.CROSSES_MIN) {
-                        crosses_val_ax = arr_val[0];
-                    }
-                    else if(cat_ax.crosses === AscFormat.CROSSES_MAX) {
-                        crosses_val_ax = arr_val[arr_val.length - 1];
-                    }
-                    else if(AscFormat.isRealNumber(cat_ax.crossesAt) && cat_ax.crossesAt >= arr_val[0] && cat_ax.crossesAt <= arr_val[arr_val.length - 1]) {
-                        //сделаем провеку на попадание в интервал
-                        if(cat_ax.crossesAt >= arr_val[0] && cat_ax.crossesAt <= arr_val[arr_val.length - 1])
-                            crosses_val_ax = cat_ax.crossesAt;
-                    }
-                    else { //ведем себя как в случае (cat_ax.crosses === AscFormat.CROSSES_AUTO_ZERO)
-                        if(arr_val[0] <= 0 && arr_val[arr_val.length - 1] >= 0)
-                            crosses_val_ax = 0;
-                        else if(arr_val[arr_val.length - 1] < 0)
-                            crosses_val_ax = arr_val[arr_val.length - 1];
-                        else
-                            crosses_val_ax = arr_val[0];
-                    }
-                    var val_ax_orientation = val_ax.scaling && AscFormat.isRealNumber(val_ax.scaling.orientation) ? val_ax.scaling.orientation : AscFormat.ORIENTATION_MIN_MAX;
-                    var hor_labels_pos = cat_ax.tickLblPos;
-
-
-                    var first_val_lbl_half_width = (val_ax.tickLblPos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE || val_ax.bDelete) ? 0 : val_ax.labels.aLabels[0].tx.rich.content.XLimit / 2;
-                    var last_val_lbl_half_width = (val_ax.tickLblPos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE || val_ax.bDelete) ? 0 : val_ax.labels.aLabels[val_ax.labels.aLabels.length - 1].tx.rich.content.XLimit / 2;
-                    var right_gap, left_gap;
-
-                    var arr_val_labels_points = [];//массив середин подписей вертикальной оси; i-й элемент - x-координата центра подписи i-огто значения;
-                    var unit_width = checkFiniteNumber((rect.w - first_val_lbl_half_width - last_val_lbl_half_width) / (arr_val[arr_val.length - 1] - arr_val[0]));//ширина единицы измерения на вертикальной оси
-                    var cat_ax_ext_x = cat_ax.labels && !bWithoutLabels ? cat_ax.labels.extX : 0;
-                    if(val_ax_orientation === AscFormat.ORIENTATION_MIN_MAX) {
-                        if(hor_labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO || !AscFormat.isRealNumber(hor_labels_pos)) {
-                            if(cat_ax.crosses === AscFormat.CROSSES_MAX) {
-                                if(!bNeedReflect) {
-                                    right_gap = Math.max(last_val_lbl_half_width, cat_ax_ext_x);
-                                }
-                                else {
-                                    right_gap = Math.max(last_val_lbl_half_width, 0);
-                                }
-                                cat_labels_align_left = false;//в данном случае подписи будут выравниваться по верхнему краю блока с подписями
-                                if(cat_ax.labels)
-                                    cat_ax.labels.x = rect.x + rect.w - right_gap;
-                                unit_width = checkFiniteNumber((rect.w - right_gap - first_val_lbl_half_width) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                cat_ax.posX = rect.x + first_val_lbl_half_width + (crosses_val_ax - arr_val[0]) * unit_width;
-                            }
-                            else {
-                                if(!bNeedReflect && (crosses_val_ax - arr_val[0]) * unit_width + first_val_lbl_half_width < cat_ax_ext_x) {
-                                    unit_width = checkFiniteNumber((rect.w - cat_ax_ext_x - last_val_lbl_half_width) / (arr_val[arr_val.length - 1] - crosses_val_ax));
-                                }
-                                cat_ax.posX = rect.x + rect.w - last_val_lbl_half_width - (arr_val[arr_val.length - 1] - crosses_val_ax) * unit_width;
-                                if(cat_ax.labels)
-                                    cat_ax.labels.x = cat_ax.posX - cat_ax.labels.extX;
-                            }
-                            for(i = 0; i < arr_val.length; ++i)
-                                arr_val_labels_points[i] = cat_ax.posX + (arr_val[i] - crosses_val_ax) * unit_width;
-                        }
-                        else if(hor_labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_LOW) {
-                            if(!bNeedReflect) {
-                                left_gap = Math.max(first_val_lbl_half_width, cat_ax_ext_x);
-                            }
-                            else {
-                                left_gap = Math.max(first_val_lbl_half_width, 0);
-                            }
-
-
-                            unit_width = checkFiniteNumber((rect.w - left_gap - last_val_lbl_half_width) / (arr_val[arr_val.length - 1] - arr_val[0]));
-
-                            cat_ax.posX = rect.x + rect.w - (arr_val[arr_val.length - 1] - crosses_val_ax ) * unit_width - last_val_lbl_half_width;
-
-                            for(i = 0; i < arr_val.length; ++i)
-                                arr_val_labels_points[i] = cat_ax.posX + (arr_val[i] - crosses_val_ax) * unit_width;
-                            if(cat_ax.labels)
-                                cat_ax.labels.x = cat_ax.posX + (arr_val[i] - crosses_val_ax) * unit_width - cat_ax.labels.extX;
-                        }
-                        else if(hor_labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_HIGH) {
-                            cat_labels_align_left = false;
-
-                            if(!bNeedReflect) {
-                                right_gap = Math.max(last_val_lbl_half_width, cat_ax_ext_x);
-                            }
-                            else {
-                                right_gap = Math.max(last_val_lbl_half_width, 0);
-                            }
-
-                            unit_width = checkFiniteNumber((rect.w - right_gap - first_val_lbl_half_width) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                            cat_ax.posX = rect.x + first_val_lbl_half_width + (crosses_val_ax - arr_val[0]) * unit_width;
-
-                            for(i = 0; i < arr_val.length; ++i)
-                                arr_val_labels_points[i] = cat_ax.posX + (arr_val[i] - crosses_val_ax) * unit_width;
-                        }
-                        else {
-                            //подписей осей нет
-                            cat_ax.labels = null;
-                            unit_width = checkFiniteNumber((rect.w - last_val_lbl_half_width - first_val_lbl_half_width) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                            cat_ax.posX = rect.x + first_val_lbl_half_width + (crosses_val_ax - arr_val[0]) * unit_width;
-                            for(i = 0; i < arr_val.length; ++i)
-                                arr_val_labels_points[i] = cat_ax.posX + (arr_val[i] - crosses_val_ax) * unit_width;
-                        }
-                    }
-                    else {//зеркально отражаем
-                        if(hor_labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO || !AscFormat.isRealNumber(hor_labels_pos)) {
-                            if(cat_ax.crosses === AscFormat.CROSSES_MAX) {
-                                if(!bNeedReflect) {
-                                    left_gap = Math.max(cat_ax_ext_x, last_val_lbl_half_width);
-                                }
-                                else {
-                                    left_gap = Math.max(0, last_val_lbl_half_width);
-                                }
-                                unit_width = checkFiniteNumber((rect.w - left_gap - first_val_lbl_half_width) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                cat_ax.posX = rect.x + rect.w - first_val_lbl_half_width - (crosses_val_ax - arr_val[0]) * unit_width;
-                                if(cat_ax.labels)
-                                    cat_ax.labels.x = cat_ax.posX - cat_ax.labels.extX;
-                            }
-                            else {
-                                cat_labels_align_left = false;
-                                if(!bNeedReflect && first_val_lbl_half_width < cat_ax_ext_x) {
-                                    unit_width = checkFiniteNumber((rect.w - cat_ax_ext_x - last_val_lbl_half_width) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                                }
-                                cat_ax.posX = rect.x + last_val_lbl_half_width + (arr_val[arr_val.length - 1] - crosses_val_ax) * unit_width;
-                                if(cat_ax.labels)
-                                    cat_ax.labels.x = cat_ax.posX;
-                            }
-                            for(i = 0; i < arr_val.length; ++i)
-                                arr_val_labels_points[i] = cat_ax.posX - (arr_val[i] - crosses_val_ax) * unit_width;
-                        }
-                        else if(hor_labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_LOW) {
-                            cat_labels_align_left = false;
-                            if(!bNeedReflect) {
-                                right_gap = Math.max(first_val_lbl_half_width, cat_ax_ext_x);
-                            }
-                            else {
-                                right_gap = Math.max(first_val_lbl_half_width, 0);
-                            }
-
-                            unit_width = checkFiniteNumber((rect.w - last_val_lbl_half_width - right_gap) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                            cat_ax.posX = rect.x + last_val_lbl_half_width + (arr_val[arr_val.length - 1] - crosses_val_ax) * crosses_val_ax;
-                            if(cat_ax.labels)
-                                cat_ax.labels.x = cat_ax.posX - (arr_val[0] - crosses_val_ax) * unit_width;
-                            for(i = 0; i < arr_val.length; ++i)
-                                arr_val_labels_points[i] = cat_ax.posX - (arr_val[i] - crosses_val_ax) * unit_width;
-
-                        }
-                        else if(hor_labels_pos === c_oAscTickLabelsPos.TICK_LABEL_POSITION_HIGH) {
-                            if(!bNeedReflect) {
-                                left_gap = Math.max(cat_ax_ext_x, last_val_lbl_half_width);
-                            }
-                            else {
-                                left_gap = Math.max(0, last_val_lbl_half_width);
-                            }
-
-                            unit_width = checkFiniteNumber((rect.w - left_gap - first_val_lbl_half_width) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                            cat_ax.posX = rect.x + rect.w - first_val_lbl_half_width - (crosses_val_ax - arr_val[0]) * unit_width;
-                            if(cat_ax.labels)
-                                cat_ax.labels.x = cat_ax.posX - (arr_val[arr_val.length - 1] - crosses_val_ax) * unit_width - cat_ax.labels.extX;
-                            for(i = 0; i < arr_val.length; ++i)
-                                arr_val_labels_points[i] = cat_ax.posX - (arr_val[i] - crosses_val_ax) * unit_width;
-                        }
-                        else {//подписей осей нет
-                            cat_ax.labels = null;
-                            unit_width = checkFiniteNumber((rect.w - last_val_lbl_half_width - first_val_lbl_half_width) / (arr_val[arr_val.length - 1] - arr_val[0]));
-                            cat_ax.posX = rect.x + rect.w - first_val_lbl_half_width - (crosses_val_ax - arr_val[0]) * unit_width;
-                            for(i = 0; i < arr_val.length; ++i)
-                                arr_val_labels_points[i] = cat_ax.posX - (arr_val[i] - crosses_val_ax) * unit_width;
-                        }
-                    }
-                    val_ax.interval = unit_width;
-                    //запишем в оси необходимую информацию для отрисовщика plotArea  и выставим окончательные позиции для подписей
-                    var local_transform_text;
-                    if(val_ax.labels) {
-                        val_ax.labels.x = Math.min.apply(Math, arr_val_labels_points) - max_val_ax_label_width / 2;
-                        val_ax.labels.extX = Math.max.apply(Math, arr_val_labels_points) - Math.min.apply(Math, arr_val_labels_points) + max_val_ax_label_width;
-                        //val_axis_labels_gap - вертикальный зазор
-
-                        val_ax.labels.align = bottom_val_ax_labels_align;
-                        if(bottom_val_ax_labels_align) {
-                            var y_pos = val_ax.labels.y + val_axis_labels_gap;
-                            for(i = 0; i < val_ax.labels.aLabels.length; ++i) {
-                                var text_transform = val_ax.labels.aLabels[i].transformText;
-                                text_transform.Reset();
-                                global_MatrixTransformer.TranslateAppend(text_transform, arr_val_labels_points[i] - val_ax.labels.aLabels[i].tx.rich.content.XLimit / 2, y_pos);
-                                // global_MatrixTransformer.MultiplyAppend(text_transform, this.getTransformMatrix());
-
-                                var local_transform_text = val_ax.labels.aLabels[i].localTransformText;
-                                local_transform_text.Reset();
-                                global_MatrixTransformer.TranslateAppend(local_transform_text, arr_val_labels_points[i] - val_ax.labels.aLabels[i].tx.rich.content.XLimit / 2, y_pos);
-                            }
-                        }
-                        else {
-                            for(i = 0; i < val_ax.labels.aLabels.length; ++i) {
-                                var text_transform = val_ax.labels.aLabels[i].transformText;
-                                text_transform.Reset();
-                                global_MatrixTransformer.TranslateAppend(text_transform, arr_val_labels_points[i] - val_ax.labels.aLabels[i].tx.rich.content.XLimit / 2, val_ax.labels.y + val_ax.labels.extY - val_axis_labels_gap - val_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight());
-                                //    global_MatrixTransformer.MultiplyAppend(text_transform, this.getTransformMatrix());
-
-
-                                var local_transform_text = val_ax.labels.aLabels[i].localTransformText;
-                                local_transform_text.Reset();
-                                global_MatrixTransformer.TranslateAppend(local_transform_text, arr_val_labels_points[i] - val_ax.labels.aLabels[i].tx.rich.content.XLimit / 2, val_ax.labels.y + val_ax.labels.extY - val_axis_labels_gap - val_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight());
-                            }
-                        }
-                    }
-                    val_ax.xPoints = [];
-
-
-                    for(i = 0; i < arr_val_labels_points.length; ++i) {
-                        val_ax.xPoints[i] = {val: arr_val[i], pos: arr_val_labels_points[i]};
-                    }
-
-                    cat_ax.yPoints = [];
-                    for(i = 0; i < arr_cat_labels_points.length; ++i) {
-                        cat_ax.yPoints[i] = {val: i + 1, pos: arr_cat_labels_points[i]};
-                    }
-                    if(cat_ax.labels) {
-                        cat_ax.labels.y = rect.y;
-                        cat_ax.labels.extY = point_interval * intervals_count;
-
-                        if(bNeedReflect) {
-                            if(cat_labels_align_left) {
-                                cat_labels_align_left = false;
-                                cat_ax.labels.x += cat_ax.labels.extX;
-                            }
-                            else {
-                                cat_labels_align_left = true;
-                                cat_ax.labels.x -= cat_ax.labels.extX;
-                            }
-                        }
-                        if(cat_labels_align_left) {
-
-
-                            if(width_flag === 0) {
-                                for(i = 0; i < cat_ax.labels.aLabels.length; ++i) {
-                                    if(cat_ax.labels.aLabels[i]) {
-                                        var transform_text = cat_ax.labels.aLabels[i].transformText;
-                                        transform_text.Reset();
-                                        global_MatrixTransformer.TranslateAppend(transform_text, cat_ax.labels.x + cat_ax.labels.extX - cat_ax.labels.aLabels[i].tx.rich.content.XLimit - labels_offset, arr_cat_labels_points[i] - cat_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight() / 2);
-                                        //     global_MatrixTransformer.MultiplyAppend(transform_text, this.getTransformMatrix());
-
-                                        local_transform_text = cat_ax.labels.aLabels[i].localTransformText;
-                                        local_transform_text.Reset();
-                                        global_MatrixTransformer.TranslateAppend(local_transform_text, cat_ax.labels.x + cat_ax.labels.extX - cat_ax.labels.aLabels[i].tx.rich.content.XLimit - labels_offset, arr_cat_labels_points[i] - cat_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight() / 2);
-
-                                    }
-                                }
-                            }
-                            else if(width_flag === 1) {
-                                for(i = 0; i < cat_ax.labels.aLabels.length; ++i) {
-                                    if(cat_ax.labels.aLabels[i]) {
-                                        cat_ax.labels.aLabels[i].tx.rich.content.Reset(0, 0, arr_min_max_min[i], 20000);
-                                        cat_ax.labels.aLabels[i].tx.rich.content.Recalculate_Page(0, true);
-
-                                        var transform_text = cat_ax.labels.aLabels[i].transformText;
-                                        transform_text.Reset();
-                                        global_MatrixTransformer.TranslateAppend(transform_text, cat_ax.labels.x + cat_ax.labels.extX - cat_ax.labels.aLabels[i].tx.rich.content.XLimit - labels_offset, arr_cat_labels_points[i] - cat_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight() / 2);
-                                        //  global_MatrixTransformer.MultiplyAppend(transform_text, this.getTransformMatrix());
-
-                                        local_transform_text = cat_ax.labels.aLabels[i].localTransformText;
-                                        local_transform_text.Reset();
-                                        global_MatrixTransformer.TranslateAppend(local_transform_text, cat_ax.labels.x + cat_ax.labels.extX - cat_ax.labels.aLabels[i].tx.rich.content.XLimit - labels_offset, arr_cat_labels_points[i] - cat_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight() / 2);
-
-                                    }
-                                }
-                            }
-                            else {
-                                for(i = 0; i < cat_ax.labels.aLabels.length; ++i) {
-                                    if(cat_ax.labels.aLabels[i]) {
-                                        cat_ax.labels.aLabels[i].tx.rich.content.Reset(0, 0, cat_ax.labels.extX - labels_offset, 20000);
-                                        cat_ax.labels.aLabels[i].tx.rich.content.Recalculate_Page(0, true);
-
-                                        var transform_text = cat_ax.labels.aLabels[i].transformText;
-                                        transform_text.Reset();
-                                        global_MatrixTransformer.TranslateAppend(transform_text, cat_ax.labels.x + cat_ax.labels.extX - cat_ax.labels.aLabels[i].tx.rich.content.XLimit - labels_offset, arr_cat_labels_points[i] - cat_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight() / 2);
-                                        //  global_MatrixTransformer.MultiplyAppend(transform_text, this.getTransformMatrix());
-
-                                        local_text_transform = cat_ax.labels.aLabels[i].localTransformText;
-                                        local_text_transform.Reset();
-                                        global_MatrixTransformer.TranslateAppend(local_text_transform, cat_ax.labels.x + cat_ax.labels.extX - cat_ax.labels.aLabels[i].tx.rich.content.XLimit - labels_offset, arr_cat_labels_points[i] - cat_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight() / 2);
-
-                                    }
-                                }
-                            }
-
-
-                            /*for(i = 0; i < cat_ax.labels.aLabels.length; ++i)
-                             {
-                             if(cat_ax.labels.aLabels[i])
-                             {
-                             cat_ax.labels.aLabels[i].tx.rich.content.SetApplyToAll(true);
-                             cat_ax.labels.aLabels[i].tx.rich.content.SetParagraphAlign(align_Center);
-                             cat_ax.labels.aLabels[i].tx.rich.content.SetApplyToAll(false);
-                             cat_ax.labels.aLabels[i].tx.rich.content.Reset(0, 0, cat_ax.labels.extX - labels_offset, 2000);
-                             cat_ax.labels.aLabels[i].tx.rich.content.Recalculate_Page(0, true);
-                             cat_ax.labels.aLabels[i].setPosition(cat_ax.labels.x, arr_cat_labels_points[i] - cat_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight()/2);
-                             }
-                             }    */
-                        }
-                        else {
-                            if(width_flag === 0) {
-                                for(i = 0; i < cat_ax.labels.aLabels.length; ++i) {
-                                    if(cat_ax.labels.aLabels[i]) {
-                                        var transform_text = cat_ax.labels.aLabels[i].transformText;
-                                        transform_text.Reset();
-                                        global_MatrixTransformer.TranslateAppend(transform_text, cat_ax.labels.x + labels_offset, arr_cat_labels_points[i] - cat_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight() / 2);
-                                        //   global_MatrixTransformer.MultiplyAppend(transform_text, this.getTransformMatrix());
-
-                                        local_text_transform = cat_ax.labels.aLabels[i].localTransformText;
-                                        local_text_transform.Reset();
-                                        global_MatrixTransformer.TranslateAppend(local_text_transform, cat_ax.labels.x + labels_offset, arr_cat_labels_points[i] - cat_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight() / 2);
-
-                                    }
-                                }
-                            }
-                            else if(width_flag === 1) {
-                                for(i = 0; i < cat_ax.labels.aLabels.length; ++i) {
-                                    if(cat_ax.labels.aLabels[i]) {
-                                        cat_ax.labels.aLabels[i].tx.rich.content.Reset(0, 0, arr_min_max_min[i], 20000);
-                                        cat_ax.labels.aLabels[i].tx.rich.content.Recalculate_Page(0, true);
-
-                                        var transform_text = cat_ax.labels.aLabels[i].transformText;
-                                        transform_text.Reset();
-                                        global_MatrixTransformer.TranslateAppend(transform_text, cat_ax.labels.x + labels_offset, arr_cat_labels_points[i] - cat_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight() / 2);
-                                        //  global_MatrixTransformer.MultiplyAppend(transform_text, this.getTransformMatrix());
-
-                                        local_text_transform = cat_ax.labels.aLabels[i].localTransformText;
-                                        local_text_transform.Reset();
-                                        global_MatrixTransformer.TranslateAppend(local_text_transform, cat_ax.labels.x + labels_offset, arr_cat_labels_points[i] - cat_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight() / 2);
-
-                                    }
-                                }
-                            }
-                            else {
-                                for(i = 0; i < cat_ax.labels.aLabels.length; ++i) {
-                                    if(cat_ax.labels.aLabels[i]) {
-                                        cat_ax.labels.aLabels[i].tx.rich.content.Reset(0, 0, cat_ax.labels.extX - labels_offset, 20000);
-                                        cat_ax.labels.aLabels[i].tx.rich.content.Recalculate_Page(0, true);
-                                        var transform_text = cat_ax.labels.aLabels[i].transformText;
-                                        transform_text.Reset();
-                                        global_MatrixTransformer.TranslateAppend(transform_text, cat_ax.labels.x + labels_offset, arr_cat_labels_points[i] - cat_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight() / 2);
-                                        //  global_MatrixTransformer.MultiplyAppend(transform_text, this.getTransformMatrix());
-
-                                        local_text_transform = cat_ax.labels.aLabels[i].localTransformText;
-                                        local_text_transform.Reset();
-                                        global_MatrixTransformer.TranslateAppend(local_text_transform, cat_ax.labels.x + labels_offset, arr_cat_labels_points[i] - cat_ax.labels.aLabels[i].tx.rich.content.GetSummaryHeight() / 2);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    cat_ax.yPoints.sort(function(a, b) {
-                        return a.val - b.val
-                    });
-                    val_ax.xPoints.sort(function(a, b) {
-                        return a.val - b.val
-                    });
-                }
-                else {
-                    this.bEmptySeries = true;
-                }
-            }
-            this.plotAreaRect = rect;
         }
     };
     CChartSpace.prototype.checkAxisLabelsTransform = function() {
         if(this.chart && this.chart.plotArea && this.chart.plotArea.charts[0] && this.chart.plotArea.charts[0].getAxisByTypes) {
             var oAxisByTypes = this.chart.plotArea.charts[0].getAxisByTypes();
             var oCatAx = oAxisByTypes.catAx[0], oValAx = oAxisByTypes.valAx[0], deltaX, deltaY, i, oAxisLabels, oLabel, oNewPos;
+            var oSerAx = oAxisByTypes.serAx[0];
             var oProcessor3D = this.chartObj && this.chartObj.processor3D;
             var aXPoints = [], aYPoints = [];
             if(oCatAx && oValAx && oProcessor3D) {
@@ -8521,12 +5041,14 @@ var GLOBAL_PATH_COUNT = 0;
                             dPosY2 = oAxisLabels.y + oAxisLabels.extY;
                         }
                         var fBottomLabels = -100;
+                        var fHalfWidth;
                         if(!oAxisLabels.bRotated) {
                             for(i = 0; i < oAxisLabels.aLabels.length; ++i) {
                                 oLabel = oAxisLabels.aLabels[i];
                                 if(oLabel) {
                                     var oCPosLabelX;
-                                    oCPosLabelX = oLabel.localTransformText.TransformPointX(oLabel.txBody.content.XLimit / 2, 0);
+                                    fHalfWidth = oLabel.tx.rich.content.XLimit / 2;
+                                    oCPosLabelX = oLabel.localTransformText.TransformPointX(fHalfWidth, 0);
                                     oNewPos = oProcessor3D.convertAndTurnPoint(oCPosLabelX * this.chartObj.calcProp.pxToMM, dPosY, dZPositionCatAxis);
                                     oLabel.setPosition2(oNewPos.x / this.chartObj.calcProp.pxToMM + oLabel.localTransformText.tx - oCPosLabelX, oLabel.localTransformText.ty - dPosY2 + oNewPos.y / this.chartObj.calcProp.pxToMM);
                                     var fBottomContent = oLabel.y + oLabel.tx.rich.content.GetSummaryHeight();
@@ -8545,7 +5067,7 @@ var GLOBAL_PATH_COUNT = 0;
                                     if(oAxisLabels.aLabels[i]) {
                                         oLabel = oAxisLabels.aLabels[i];
                                         var wh = {
-                                            w: oLabel.widthForTransform,
+                                            w: oLabel.tx.rich.content.XLimit,
                                             h: oLabel.tx.rich.content.GetSummaryHeight()
                                         }, w2, h2, x1, y0, xc, yc;
                                         w2 = wh.w * Math.cos(Math.PI / 4) + wh.h * Math.sin(Math.PI / 4);
@@ -8578,7 +5100,7 @@ var GLOBAL_PATH_COUNT = 0;
                                     if(oAxisLabels.aLabels[i]) {
                                         oLabel = oAxisLabels.aLabels[i];
                                         var wh = {
-                                            w: oLabel.widthForTransform,
+                                            w: oLabel.tx.rich.content.XLimit,
                                             h: oLabel.tx.rich.content.GetSummaryHeight()
                                         }, w2, h2, x1, y0, xc, yc;
                                         w2 = wh.w * Math.cos(Math.PI / 4) + wh.h * Math.sin(Math.PI / 4);
@@ -8625,12 +5147,11 @@ var GLOBAL_PATH_COUNT = 0;
                         var dPosX, dPosX2;
                         if(!oAxisLabels.align) {
                             dPosX2 = oAxisLabels.x;
-                            dPosX = oAxisLabels.x * this.chartObj.calcProp.pxToMM;
                         }
                         else {
                             dPosX2 = oAxisLabels.x + oAxisLabels.extX;
-                            dPosX = (oAxisLabels.x + oAxisLabels.extX) * this.chartObj.calcProp.pxToMM;
                         }
+                        dPosX = dPosX2 * this.chartObj.calcProp.pxToMM;
                         aXPoints.length = 0;
                         aYPoints.length = 0;
                         for(i = 0; i < oAxisLabels.aLabels.length; ++i) {
@@ -8640,7 +5161,7 @@ var GLOBAL_PATH_COUNT = 0;
                                 oLabel.setPosition2(oLabel.localTransformText.tx - dPosX2 + oNewPos.x / this.chartObj.calcProp.pxToMM, oNewPos.y / this.chartObj.calcProp.pxToMM);
                                 aXPoints.push(oLabel.x);
                                 aYPoints.push(oLabel.y);
-                                aXPoints.push(oLabel.x + oLabel.txBody.content.XLimit);
+                                aXPoints.push(oLabel.x + oLabel.tx.rich.getContentWidth());
                                 aYPoints.push(oLabel.y + oLabel.txBody.content.GetSummaryHeight());
                             }
                         }
@@ -8651,10 +5172,48 @@ var GLOBAL_PATH_COUNT = 0;
                             oAxisLabels.extY = Math.max.apply(Math, aYPoints) - oAxisLabels.y;
                         }
                     }
+                    if(oSerAx) {
+                        var dPosX, dPosX2;
+                        dPosX2 = oSerAx.posX;
+                        dPosX = dPosX2 * this.chartObj.calcProp.pxToMM;
+
+                        var dPosY, dPosY2
+
+                        dPosY2 = oSerAx.posY;
+                        dPosY = dPosY2 * this.chartObj.calcProp.pxToMM;
+
+                        oAxisLabels = oSerAx.labels;
+                        if(oAxisLabels) {
+                            aXPoints.length = 0;
+                            aYPoints.length = 0;
+                            for(i = 0; i < oAxisLabels.aLabels.length; ++i) {
+                                oLabel = oAxisLabels.aLabels[i];
+                                if(oLabel) {
+                                    var oPt =  oSerAx.zPoints[i];
+                                    if(oPt) {
+                                        oNewPos = oProcessor3D.convertAndTurnPoint(dPosX, dPosY, oPt.pos);
+                                        oLabel.setPosition2(oLabel.localTransformText.tx - dPosX2 + oNewPos.x / this.chartObj.calcProp.pxToMM + oLabel.tx.rich.getContentWidth() / 2 + DEFAULT_LBLS_DISTANCE,
+                                        oNewPos.y / this.chartObj.calcProp.pxToMM - oLabel.txBody.content.GetSummaryHeight()/2);
+                                        aXPoints.push(oLabel.x);
+                                        aYPoints.push(oLabel.y);
+                                        aXPoints.push(oLabel.x + oLabel.tx.rich.getContentWidth());
+                                        aYPoints.push(oLabel.y + oLabel.txBody.content.GetSummaryHeight());
+                                    }
+                                }
+                            }
+                            if(aXPoints.length > 0 && aYPoints.length > 0) {
+                                oAxisLabels.x = Math.min.apply(Math, aXPoints);
+                                oAxisLabels.y = Math.min.apply(Math, aYPoints);
+                                oAxisLabels.extX = Math.max.apply(Math, aXPoints) - oAxisLabels.x;
+                                oAxisLabels.extY = Math.max.apply(Math, aYPoints) - oAxisLabels.y;
+                            }
+                        }
+                    }
                 }
                 else if(((oCatAx.axPos === AscFormat.AX_POS_L || oCatAx.axPos === AscFormat.AX_POS_R) && oCatAx.yPoints) &&
                     ((oValAx.axPos === AscFormat.AX_POS_T || oValAx.axPos === AscFormat.AX_POS_B) && oValAx.xPoints)) {
                     oAxisLabels = oValAx.labels;
+
 
                     if(oAxisLabels) {
                         var dZPositionValAxis = oProcessor3D.calculateZPositionValAxis();
@@ -8668,21 +5227,23 @@ var GLOBAL_PATH_COUNT = 0;
                             dPosY2 = oAxisLabels.y + oAxisLabels.extY;
                         }
 
+                        aXPoints.length = 0;
+                        aYPoints.length = 0;
                         for(i = 0; i < oAxisLabels.aLabels.length; ++i) {
                             oLabel = oAxisLabels.aLabels[i];
                             if(oLabel) {
-
-                                var oCPosLabelX = oLabel.localTransformText.TransformPointX(oLabel.txBody.content.XLimit / 2, 0);
-                                var oCPosLabelY = oLabel.localTransformText.TransformPointY(oLabel.txBody.content.XLimit / 2, 0);
+                                var oCPosLabelX;
+                                fHalfWidth = oLabel.tx.rich.content.XLimit / 2;
+                                oCPosLabelX = oLabel.localTransformText.TransformPointX(fHalfWidth, 0);
                                 oNewPos = oProcessor3D.convertAndTurnPoint(oCPosLabelX * this.chartObj.calcProp.pxToMM, dPosY, dZPositionValAxis);
-
                                 oLabel.setPosition2(oNewPos.x / this.chartObj.calcProp.pxToMM + oLabel.localTransformText.tx - oCPosLabelX, oLabel.localTransformText.ty - dPosY2 + oNewPos.y / this.chartObj.calcProp.pxToMM);
-
-
-                                //oNewPos = oProcessor3D.convertAndTurnPoint(oLabel.localTransformText.tx*this.chartObj.calcProp.pxToMM, oLabel.localTransformText.ty*this.chartObj.calcProp.pxToMM, dZPositionValAxis);;
-                                //oLabel.setPosition2(oNewPos.x/this.chartObj.calcProp.pxToMM, oNewPos.y/this.chartObj.calcProp.pxToMM);
+                                aXPoints.push(oLabel.x);
+                                aYPoints.push(oLabel.y);
+                                aXPoints.push(oLabel.x + oLabel.tx.rich.getContentWidth());
+                                aYPoints.push(oLabel.y + oLabel.txBody.content.GetSummaryHeight());
                             }
                         }
+
                         oNewPos = oProcessor3D.convertAndTurnPoint(oAxisLabels.x * this.chartObj.calcProp.pxToMM, oAxisLabels.y * this.chartObj.calcProp.pxToMM, dZPositionValAxis);
                         aXPoints.push(oNewPos.x / this.chartObj.calcProp.pxToMM);
                         aYPoints.push(oNewPos.y / this.chartObj.calcProp.pxToMM);
@@ -8707,26 +5268,24 @@ var GLOBAL_PATH_COUNT = 0;
                     aXPoints.length = 0;
                     aYPoints.length = 0;
                     if(oAxisLabels) {
-                        var dZPositionCatAxis = oProcessor3D.calculateZPositionCatAxis();
+                        var dZPositionValAxis = oProcessor3D.calculateZPositionValAxis();
                         var dPosX, dPosX2;
                         if(oAxisLabels.align) {
                             dPosX2 = oAxisLabels.x;
-                            dPosX = oAxisLabels.x * this.chartObj.calcProp.pxToMM;
                         }
                         else {
                             dPosX2 = oAxisLabels.x + oAxisLabels.extX;
-                            dPosX = (oAxisLabels.x + oAxisLabels.extX) * this.chartObj.calcProp.pxToMM;
                         }
-
+                        dPosX = dPosX2 * this.chartObj.calcProp.pxToMM;
                         for(i = 0; i < oAxisLabels.aLabels.length; ++i) {
                             oLabel = oAxisLabels.aLabels[i];
 
                             if(oLabel) {
-                                oNewPos = oProcessor3D.convertAndTurnPoint(dPosX, oLabel.localTransformText.ty * this.chartObj.calcProp.pxToMM, dZPositionCatAxis);
+                                oNewPos = oProcessor3D.convertAndTurnPoint(dPosX, oLabel.localTransformText.ty * this.chartObj.calcProp.pxToMM, dZPositionValAxis);
                                 oLabel.setPosition2(oLabel.localTransformText.tx - dPosX2 + oNewPos.x / this.chartObj.calcProp.pxToMM, oNewPos.y / this.chartObj.calcProp.pxToMM);
                                 aXPoints.push(oLabel.x);
                                 aYPoints.push(oLabel.y);
-                                aXPoints.push(oLabel.x + oLabel.txBody.content.XLimit);
+                                aXPoints.push(oLabel.x + oLabel.txBody.getContentWidth());
                                 aYPoints.push(oLabel.y + oLabel.txBody.content.GetSummaryHeight());
                             }
                         }
@@ -11479,8 +8038,11 @@ var GLOBAL_PATH_COUNT = 0;
             }
         }
     };
+    CChartSpace.prototype.createImage = function () {
+        return this.drawingBase.createImage();
+    }
     CChartSpace.prototype.checkDrawingCache = function(graphics) {
-        if(window["NATIVE_EDITOR_ENJINE"] || graphics.RENDERER_PDF_FLAG || this.isSparkline) {
+        if(window["NATIVE_EDITOR_ENJINE"] || graphics.RENDERER_PDF_FLAG || this.isSparkline || this.bPreview || graphics.PrintPreview) {
             return false;
         }
         if(graphics.IsSlideBoundsCheckerType) {
@@ -11723,10 +8285,10 @@ var GLOBAL_PATH_COUNT = 0;
             }
         }
     };
-    CChartSpace.prototype.Search = function(Str, Props, SearchEngine, Type) {
+    CChartSpace.prototype.Search = function(SearchEngine, Type) {
         var titles = this.getAllTitles();
         for(var i = 0; i < titles.length; ++i) {
-            titles[i].Search(Str, Props, SearchEngine, Type)
+            titles[i].Search(SearchEngine, Type)
         }
     };
     CChartSpace.prototype.GetSearchElementId = function(bNext, bCurrent) {
@@ -12154,7 +8716,795 @@ var GLOBAL_PATH_COUNT = 0;
             this.resetToChartStyle();
         }
     };
+    CChartSpace.prototype.getTypeName = function() {
+        return AscCommon.translateManager.getValue("Chart");
+    };
+    CChartSpace.prototype.getAllAxes = function() {
+        var oChart = this.chart;
+        if(oChart) {
+            var oPlotArea = oChart.plotArea;
+            if(oPlotArea) {
+                return oPlotArea.axId;
+            }
+        }
+        return [];
+    };
+    CChartSpace.prototype.correctAxes = function() {
+        var aAxes = this.getAllAxes();
+        for(var nAx1 = 0; nAx1 < aAxes.length; ++nAx1) {
+            var oAx1 = aAxes[nAx1];
+            if(oAx1.crossAx === oAx1) {
+                for(var nAx2 = 0; nAx2 < aAxes.length; ++nAx2) {
+                    var oAx2 = aAxes[nAx2];
+                    if(oAx2 !== oAx1 && oAx2.crossAx === oAx1) {
+                        oAx1.setCrossAx(oAx2);
+                        break;
+                    }
+                }
+            }
+        }
+    };
+    CChartSpace.prototype.SetValuesToDataPoints = function(aData, nSeria)
+    {
+        if (editor.editorId === AscCommon.c_oEditorId.Spreadsheet)
+            return false;
 
+        var oSeria, isOkey;
+		var allSeries = this.getAllSeries();
+
+		for (var nCurSeria = 0; nCurSeria < allSeries.length; nCurSeria++)
+		{
+            if (allSeries[nCurSeria].idx === nSeria)
+            {
+                oSeria = allSeries[nCurSeria];
+                break;
+            }
+		}
+
+        if (!oSeria)
+            return false;
+
+        var oVal = this.isScatterChartType() ? oSeria.yVal : oSeria.val;
+        if (oVal && oVal.numRef && oVal.numRef.numCache)
+        {
+            var oPt, nValue;
+            for (var nPt = 0; nPt < aData.length; nPt++)
+            {
+                nValue = aData[nPt];
+                if (typeof(nValue) !== "number")
+                    continue;
+
+                oPt = oVal.numRef.numCache.pts[nPt];
+                if (oPt)
+                {
+                    oPt.setVal(nValue);
+                    isOkey = true;
+                }
+                else
+                    break;
+            }
+        }
+
+        if (isOkey)
+        {
+            this.onDataUpdate();
+            return true;
+        }
+
+        return false;
+    };
+    CChartSpace.prototype.SetXValuesToDataPoints = function(aData)
+    {
+        if (editor.editorId === AscCommon.c_oEditorId.Spreadsheet)
+            return false;
+
+        var oSeria, isOkey;
+		var allSeries = this.getAllSeries();
+
+		for (var nSeria = 0; nSeria < allSeries.length; nSeria++)
+		{
+            oSeria = allSeries[nSeria];
+            var oVal = oSeria.xVal;
+            if (oVal && oVal.strRef && oVal.strRef.strCache)
+            {
+                var oPt, value;
+                for (var nPt = 0; nPt < aData.length; nPt++)
+                {
+                    value = aData[nPt];
+                    if (typeof(value) === "number")
+                        value = String(value);
+
+                    if (typeof(value) !== "string")
+                        continue;
+
+                    oPt = oVal.strRef.strCache.pts[nPt];
+                    if (oPt)
+                    {
+                        oPt.setVal(value);
+                        isOkey = true;
+                    }
+                    else
+                        break;
+                }
+            }
+		}
+
+        if (isOkey)
+        {
+            this.onDataUpdate();
+            return true;
+        }
+
+        return false;
+    };
+    CChartSpace.prototype.SetSeriaValues = function(sRange, nSeria)
+    {
+        var oSeria;
+		var allSeries = this.getAllSeries();
+
+        if (typeof(sRange) !== "string" || sRange === "")
+            return false;
+
+		for (var nCurSeria = 0; nCurSeria < allSeries.length; nCurSeria++)
+		{
+            if (allSeries[nCurSeria].idx === nSeria)
+            {
+                oSeria = allSeries[nCurSeria];
+                break;
+            }
+		}
+
+        if (!oSeria)
+            return false;
+
+        if (Asc.editor && Asc.editor.editorId === AscCommon.c_oEditorId.Spreadsheet)
+        {
+            if (oSeria.asc_IsValidValues(sRange) !== 0)
+                return false;
+            oSeria.asc_setValues(sRange);
+            return true;
+        }
+        // пока только для Spreadsheet
+        return false;
+    };
+    CChartSpace.prototype.SetSeriaXValues = function(sRange, nSeria)
+    {
+        var oSeria;
+		var allSeries = this.getAllSeries();
+
+        if (typeof(sRange) !== "string" || sRange === "")
+            return false;
+
+		for (var nCurSeria = 0; nCurSeria < allSeries.length; nCurSeria++)
+		{
+            if (allSeries[nCurSeria].idx === nSeria)
+            {
+                oSeria = allSeries[nCurSeria];
+                break;
+            }
+		}
+
+        if (!oSeria)
+            return false;
+
+        if (Asc.editor && Asc.editor.editorId === AscCommon.c_oEditorId.Spreadsheet)
+        {
+            if (oSeria.asc_IsValidXValues(sRange) !== 0)
+                return false;
+            oSeria.asc_setXValues(sRange);
+            return true;
+        }
+        // пока только для Spreadsheet
+        return false;
+    };
+    CChartSpace.prototype.SetSeriaName = function(sName, nSeria)
+    {
+        var allSeries = this.getAllSeries();
+        var oSeria;
+
+		for (var nCurSeria = 0; nCurSeria < allSeries.length; nCurSeria++)
+		{
+            if (allSeries[nCurSeria].idx === nSeria)
+            {
+                oSeria = allSeries[nCurSeria];
+                break;
+            }
+		}
+
+        if (!oSeria || typeof(sName) !== "string")
+            return false;
+
+        if (Asc.editor && Asc.editor.editorId === AscCommon.c_oEditorId.Spreadsheet)
+        {
+            if (oSeria.asc_IsValidName(sName) !== 0)
+                return false;
+            oSeria.asc_setName(sName);
+            return true;
+        }
+
+        var oTx = oSeria.tx;
+        if (oTx && oTx.strRef && oTx.strRef.strCache)
+        {
+            var oPt;
+            oPt = oTx.strRef.strCache.pts[0];
+            if (!oPt)
+                return false;
+            oPt.setVal(sName);
+        }
+        return true;
+    };
+    CChartSpace.prototype.SetCatName = function(sName, nCategory)
+    {
+        if (Asc.editor && Asc.editor.editorId === AscCommon.c_oEditorId.Spreadsheet)
+            return false;
+
+        var oSeria, oCat, oPt, isOkey;
+        if (typeof(sName) !== "string")
+            return false;
+
+        var allSeries = this.getAllSeries();
+
+        for (var nCurSeries = 0; nCurSeries < allSeries.length; nCurSeries++)
+        {
+            oSeria = allSeries[nCurSeries];
+            oCat = oSeria.cat;
+            if (oCat && oCat.strRef && oCat.strRef.strCache)
+            {
+                for (var nPt = 0; nPt < oCat.strRef.strCache.pts.length; nPt++)
+                {
+                    oPt = oCat.strRef.strCache.pts[nPt];
+                    if (oPt.idx === nCategory)
+                    {
+                        oPt.setVal(sName);
+                        isOkey = true;
+                    }
+                }
+            }
+        }
+
+        if (isOkey)
+            return true;
+
+        return false;
+    };
+    CChartSpace.prototype.SetCatFormula = function(sRange)
+    {
+        if (typeof(sRange) !== "string")
+            return false;
+
+        if (Asc.editor && Asc.editor.editorId === AscCommon.c_oEditorId.Spreadsheet)
+        {
+            var isValid = AscFormat.ExecuteNoHistory(function(){
+                var oCat = new AscFormat.CCat();
+                return oCat.setValues(sRange).getError();
+            }, this, []);
+
+            if (isValid === 0)
+            {
+                this.setCatFormula(sRange);
+                return true;
+            }
+        }
+
+        // пока только для Spreadsheet
+        return false;
+    };
+    CChartSpace.prototype.RemoveSeria = function(nSeria)
+    {
+        var oSeria;
+		var allSeries = this.getAllSeries();
+
+		for (var nCurSeria = 0; nCurSeria < allSeries.length; nCurSeria++)
+		{
+            if (allSeries[nCurSeria].idx === nSeria)
+            {
+                oSeria = allSeries[nCurSeria];
+                break;
+            }
+		}
+
+        if (!oSeria)
+            return false;
+
+        oSeria.asc_Remove();
+        return true;
+    };
+
+    CChartSpace.prototype.SetPlotAreaFill = function(oFill)
+	{
+		if (!this.chart.plotArea.spPr)
+		{
+			this.chart.plotArea.setSpPr(new AscFormat.CSpPr());
+			this.chart.plotArea.spPr.setParent(this.chart.plotArea);
+		}
+
+		this.chart.plotArea.spPr.setFill(oFill);
+	};
+    CChartSpace.prototype.SetPlotAreaOutLine = function(oLn)
+	{
+		if (!this.chart.plotArea.spPr)
+		{
+			this.chart.plotArea.setSpPr(new AscFormat.CSpPr());
+			this.chart.plotArea.spPr.setParent(this.chart.plotArea);
+		}
+
+		this.chart.plotArea.spPr.setLn(oLn);
+	};
+    CChartSpace.prototype.SetSeriesFill = function(oFill, nSeries, bAll)
+	{
+        var allSeries = this.getAllSeries();
+		var oSeries, isOk;
+        for (var nCurSeries = 0; nCurSeries < allSeries.length; nCurSeries++)
+        {
+            oSeries = allSeries[nCurSeries];
+            if (!bAll && oSeries.idx !== nSeries)
+                continue;
+
+            if (!oSeries.spPr)
+            {
+                oSeries.setSpPr(new AscFormat.CSpPr());
+                oSeries.spPr.setParent(oSeries);
+            }
+
+            oSeries.spPr.setFill(oFill);
+            if (Array.isArray(oSeries.dPt))
+            {
+                for (var i = 0; i < oSeries.dPt.length; ++i)
+                {
+                    if (oSeries.dPt[i].spPr)
+                    {
+                        oSeries.dPt[i].spPr.setFill(oFill.createDuplicate());
+                    }
+                }
+            }
+
+            isOk = true;
+            if (isOk && !bAll)
+                return true;
+        }
+
+		if (isOk)
+			return true;
+
+		return false;
+	};
+    CChartSpace.prototype.SetSeriesOutLine = function(oLn, nSeries, bAll)
+	{
+		var allSeries = this.getAllSeries();
+		var oSeries, isOk;
+        for (var nCurSeries = 0; nCurSeries < allSeries.length; nCurSeries++)
+        {
+            oSeries = allSeries[nCurSeries];
+            if (!bAll && oSeries.idx !== nSeries)
+                continue;
+
+            if (!oSeries.spPr)
+            {
+                oSeries.setSpPr(new AscFormat.CSpPr());
+                oSeries.spPr.setParent(oSeries);
+            }
+
+            oSeries.spPr.setLn(oLn);
+            if (Array.isArray(oSeries.dPt))
+            {
+                for (var i = 0; i < oSeries.dPt.length; ++i)
+                {
+                    if (oSeries.dPt[i].spPr)
+                    {
+                        oSeries.dPt[i].spPr.setLn(oLn.createDuplicate());
+                    }
+                }
+            }
+
+            isOk = true;
+            if (isOk && !bAll)
+                return true;
+        }
+
+
+		if (isOk)
+			return true;
+
+		return false;
+	};
+    CChartSpace.prototype.SetDataPointFill = function(oFill, nSeries, nDataPoint, bAllSeries)
+	{
+        var allSeries = this.getAllSeries();
+		var oDataPoint, oSeries, isOk;
+		for (var nCurSeries = 0; nCurSeries < allSeries.length; nCurSeries++)
+        {
+            oSeries = allSeries[nCurSeries];
+            if (!bAllSeries && oSeries.idx !== nSeries)
+                continue;
+
+            var pts = oSeries.getNumPts();
+            if (nDataPoint >= pts.length || nDataPoint < 0)
+                continue;
+
+            oDataPoint = oSeries.dPt[nDataPoint];
+            if(!oDataPoint)
+            {
+                oDataPoint = new AscFormat.CDPt();
+                oDataPoint.setIdx(nDataPoint);
+                oSeries.addDPt(oDataPoint);
+                if(!oDataPoint.spPr)
+                {
+                    oDataPoint.setSpPr(new AscFormat.CSpPr());
+                    oDataPoint.spPr.setParent(oDataPoint);
+                }
+            }
+            oDataPoint.spPr.setFill(oFill);
+
+            isOk = true;
+            if (isOk && !bAllSeries)
+                return true;
+		}
+
+		if (isOk)
+			return true;
+
+		return false;
+	};
+    CChartSpace.prototype.SetDataPointOutLine = function(oLn, nSeries, nDataPoint, bAllSeries)
+	{
+        var allSeries = this.getAllSeries();
+		var oDataPoint, oSeries, isOk;
+		for (var nCurSeries = 0; nCurSeries < allSeries.length; nCurSeries++)
+        {
+            oSeries = allSeries[nCurSeries];
+            if (!bAllSeries && oSeries.idx !== nSeries)
+                continue;
+
+            var pts = oSeries.getNumPts();
+            if (nDataPoint >= pts.length || nDataPoint < 0)
+                continue;
+
+            oDataPoint = oSeries.dPt[nDataPoint];
+            if(!oDataPoint)
+            {
+                oDataPoint = new AscFormat.CDPt();
+                oDataPoint.setIdx(nDataPoint);
+                oSeries.addDPt(oDataPoint);
+                if(!oDataPoint.spPr)
+                {
+                    oDataPoint.setSpPr(new AscFormat.CSpPr());
+                    oDataPoint.spPr.setParent(oDataPoint);
+                }
+            }
+            oDataPoint.spPr.setLn(oLn);
+
+            isOk = true;
+            if (isOk && !bAllSeries)
+                return true;
+		}
+
+		if (isOk)
+			return true;
+
+		return false;
+	};
+    CChartSpace.prototype.SetMarkerFill = function(oFill, nSeries, nMarker, bAllMarkers)
+	{
+        var allSeries = this.getAllSeries();
+		var oDataPoint, oSeries;
+		for (var nCurSeries = 0; nCurSeries < allSeries.length; nCurSeries++)
+        {
+            if (allSeries[nCurSeries].idx === nSeries)
+            {
+                oSeries = allSeries[nCurSeries];
+                break;
+            }
+		}
+
+		if (!oSeries)
+			return false;
+
+		if (bAllMarkers)
+		{
+			if (oSeries.marker)
+			{
+				if(!oSeries.marker.spPr)
+				{
+					oSeries.marker.setSpPr(new AscFormat.CSpPr());
+					oSeries.marker.spPr.setParent(oSeries.marker);
+				}
+				oSeries.marker.spPr.setFill(oFill);
+				if(Array.isArray(oSeries.dPt))
+				{
+					for(var i = 0; i < oSeries.dPt.length; ++i)
+					{
+						if(oSeries.dPt[i].marker && oSeries.dPt[i].marker.spPr)
+							oSeries.dPt[i].marker.spPr.setFill(oFill.createDuplicate());
+					}
+				}
+				return true;
+			}
+		}
+		else
+		{
+			var pts = oSeries.getNumPts();
+			var oPt;
+			for (var nPt = 0; nPt < pts.length; nPt++)
+			{
+				if (pts[nPt].idx === nMarker)
+				{
+					oPt = pts[nPt]; 
+					break;
+				}
+			}
+
+			if (!oPt)
+				return false;
+
+			if(Array.isArray(oSeries.dPt))
+			{
+				for(var k = 0; k < oSeries.dPt.length; ++k)
+				{
+					if(oSeries.dPt[k].idx === nMarker)
+					{
+						oDataPoint = oSeries.dPt[k];
+						break;
+					}
+				}
+			}
+
+			if(!oDataPoint)
+			{
+				oDataPoint = new AscFormat.CDPt();
+				oDataPoint.setIdx(nMarker);
+				oSeries.addDPt(oDataPoint);
+			}
+
+			if(oPt.compiledMarker)
+			{
+				oDataPoint.setMarker(oPt.compiledMarker.createDuplicate());
+				if(!oDataPoint.marker.spPr)
+				{
+					oDataPoint.marker.setSpPr(new AscFormat.CSpPr());
+					oDataPoint.marker.spPr.setParent(oDataPoint.marker);
+				}
+				oDataPoint.marker.spPr.setFill(oFill);
+				return true;
+			}
+		}
+
+		return false;
+	};
+    CChartSpace.prototype.SetMarkerOutLine = function(oLn, nSeries, nMarker, bAllMarkers)
+	{
+        var allSeries = this.getAllSeries();
+		var oDataPoint, oSeries;
+		for (var nCurSeries = 0; nCurSeries < allSeries.length; nCurSeries++)
+        {
+            if (allSeries[nCurSeries].idx === nSeries)
+            {
+                oSeries = allSeries[nCurSeries];
+                break;
+            }
+		}
+
+		if (!oSeries)
+			return false;
+
+		if (bAllMarkers)
+		{
+			if (oSeries.marker)
+			{
+				if(!oSeries.marker.spPr)
+				{
+					oSeries.marker.setSpPr(new AscFormat.CSpPr());
+					oSeries.marker.spPr.setParent(oSeries.marker);
+				}
+				oSeries.marker.spPr.setLn(oLn);
+				if(Array.isArray(oSeries.dPt))
+				{
+					for(var i = 0; i < oSeries.dPt.length; ++i)
+					{
+						if(oSeries.dPt[i].marker && oSeries.dPt[i].marker.spPr)
+							oSeries.dPt[i].marker.spPr.setLn(oLn.createDuplicate());
+					}
+				}
+				return true;
+			}
+		}
+		else
+		{
+			var pts = oSeries.getNumPts();
+			var oPt;
+			for (var nPt = 0; nPt < pts.length; nPt++)
+			{
+				if (pts[nPt].idx === nMarker)
+				{
+					oPt = pts[nPt]; 
+					break;
+				}
+			}
+
+			if (!oPt)
+				return false;
+
+			if(Array.isArray(oSeries.dPt))
+			{
+				for(var k = 0; k < oSeries.dPt.length; ++k)
+				{
+					if(oSeries.dPt[k].idx === nMarker)
+					{
+						oDataPoint = oSeries.dPt[k];
+						break;
+					}
+				}
+			}
+
+			if(!oDataPoint)
+			{
+				oDataPoint = new AscFormat.CDPt();
+				oDataPoint.setIdx(nMarker);
+				oSeries.addDPt(oDataPoint);
+			}
+
+			if(oPt.compiledMarker)
+			{
+				oDataPoint.setMarker(oPt.compiledMarker.createDuplicate());
+				if(!oDataPoint.marker.spPr)
+				{
+					oDataPoint.marker.setSpPr(new AscFormat.CSpPr());
+					oDataPoint.marker.spPr.setParent(oDataPoint.marker);
+				}
+				oDataPoint.marker.spPr.setLn(oLn);
+				return true;
+			}
+		}
+
+		return false;
+	};
+    CChartSpace.prototype.SetTitleFill = function(oFill)
+	{
+		if (this.chart.title)
+		{
+			if (!this.chart.title.spPr)
+			{
+                this.chart.title.setSpPr(new AscFormat.CSpPr());
+                this.chart.title.spPr.setParent(this.chart.title);
+            }
+
+			this.chart.title.spPr.setFill(oFill);
+			return true;
+		}
+
+		return false;
+	};
+    CChartSpace.prototype.SetTitleOutLine = function(oLn)
+	{
+		if (this.chart.title)
+		{
+			if (!this.chart.title.spPr)
+			{
+				this.chart.title.setSpPr(new AscFormat.CSpPr());
+				this.chart.title.spPr.setParent(this.chart.title);
+			}
+
+			this.chart.title.spPr.setLn(oLn);
+			return true;
+		}
+
+		return false;
+	};
+    CChartSpace.prototype.SetLegendFill = function(oFill)
+	{
+		if (this.chart.legend)
+		{
+			if (!this.chart.legend.spPr)
+			{
+				this.chart.legend.setSpPr(new AscFormat.CSpPr());
+				this.chart.legend.spPr.setParent(this.chart.legend);
+			}
+
+			this.chart.legend.spPr.setFill(oFill);
+			return true;
+		}
+
+		return false;
+	};
+    CChartSpace.prototype.SetLegendOutLine = function(oLn)
+	{
+		if (this.chart.legend)
+		{
+			if (!this.chart.legend.spPr)
+			{
+				this.chart.legend.setSpPr(new AscFormat.CSpPr());
+				this.chart.legend.spPr.setParent(this.chart.legend);
+			}
+
+			this.chart.legend.spPr.setLn(oLn);
+			return true;
+		}
+
+		return false;
+	};
+    
+    CChartSpace.prototype.SetAxieNumFormat = function(sNumFormat, nAxiePos)
+	{
+        if (this.chart.plotArea.axId)
+        {
+            var oAxie;
+            for (var nAxie = 0; nAxie < this.chart.plotArea.axId.length; nAxie++)
+            {
+                oAxie = this.chart.plotArea.axId[nAxie];
+                if (oAxie instanceof AscFormat.CValAx && oAxie.axPos === nAxiePos)
+                {
+                    oAxie.numFmt.setFormatCode(sNumFormat);
+                    if (sNumFormat !== "General")
+                        oAxie.numFmt.setSourceLinked(false);
+                    else
+                        oAxie.numFmt.setSourceLinked(true);
+
+                    return true;
+                }
+            }
+
+        }
+        return false;
+	};
+
+    CChartSpace.prototype.SetSeriaNumFormat = function(sNumFormat, nSeria)
+	{
+        if (Asc.editor && Asc.editor.editorId === AscCommon.c_oEditorId.Spreadsheet)
+            return false;
+
+        var allSeries = this.getAllSeries();
+        var oSeria;
+
+		for (var nCurSeria = 0; nCurSeria < allSeries.length; nCurSeria++)
+		{
+            if (allSeries[nCurSeria].idx === nSeria)
+            {
+                oSeria = allSeries[nCurSeria];
+                break;
+            }
+		}
+
+        if (!oSeria || typeof(sNumFormat) !== "string")
+            return false;
+
+        var oNumLit = oSeria.getNumLit();
+        oNumLit.setFormatCode(sNumFormat);
+
+        for (var nPt = 0; nPt < oNumLit.pts.length; nPt++)
+            oNumLit.pts[nPt].setFormatCode(null);
+
+        return true;
+    };
+
+    CChartSpace.prototype.SetDataPointNumFormat = function(sFormat, nSeria, nDataPoint, bAllSeries)
+	{
+        if (Asc.editor && Asc.editor.editorId === AscCommon.c_oEditorId.Spreadsheet)
+            return false;
+
+        var allSeries = this.getAllSeries();
+		var oSeries, isOk;
+		for (var nCurSeries = 0; nCurSeries < allSeries.length; nCurSeries++)
+        {
+            oSeries = allSeries[nCurSeries];
+            if (!bAllSeries && oSeries.idx !== nSeria)
+                continue;
+
+            var pts = oSeries.getNumPts();
+            if (nDataPoint >= pts.length || nDataPoint < 0)
+                continue;
+
+            pts[nDataPoint].setFormatCode(sFormat);
+            isOk = true;
+
+            if (isOk && !bAllSeries)
+                return true;
+		}
+
+        if (isOk)
+		    return true;
+
+        return false;
+    };
+    
     function CAdditionalStyleData() {
         this.dLbls = null;
         this.catAx = null;
@@ -12585,6 +9935,24 @@ var GLOBAL_PATH_COUNT = 0;
         val_ax.setCrossBetween(AscFormat.CROSS_BETWEEN_BETWEEN);
         scaling = val_ax.scaling;
         scaling.setOrientation(AscFormat.ORIENTATION_MIN_MAX);
+        if(bDepth) {
+            var oSerAx = new AscFormat.CSerAx();
+            oSerAx.setAxId(++AscFormat.Ax_Counter.GLOBAL_AX_ID_COUNTER);
+            var oSerScaling = new AscFormat.CScaling();
+            oSerScaling.setOrientation(AscFormat.ORIENTATION_MIN_MAX);
+            oSerAx.setScaling(oSerScaling);
+            oSerAx.setDelete(false);
+            oSerAx.setAxPos(AscFormat.AX_POS_B);
+            oSerAx.setMajorTickMark(c_oAscTickMark.TICK_MARK_OUT);
+            oSerAx.setMinorTickMark(c_oAscTickMark.TICK_MARK_NONE);
+            oSerAx.setTickLblPos(c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO);
+            oSerAx.setCrossAx(cat_ax);
+            oSerAx.setCrosses(AscFormat.CROSSES_AUTO_ZERO);
+
+            plot_area.addAxis(oSerAx);
+            bar_chart.addAxId(oSerAx);
+
+        }
         if(asc_series.length > 1) {
             chart.setLegend(new AscFormat.CLegend());
             var legend = chart.legend;
@@ -13309,6 +10677,8 @@ var GLOBAL_PATH_COUNT = 0;
                 break;
             }
             case AscDFH.historyitem_type_GroupShape:
+            case AscDFH.historyitem_type_SmartArt:
+            case AscDFH.historyitem_type_Drawing:
             {
                 for(var i = 0; i < sp.spTree.length; ++i) {
                     checkBlipFillRasterImages(sp.spTree[i]);

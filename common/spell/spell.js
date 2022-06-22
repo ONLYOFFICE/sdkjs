@@ -34,7 +34,6 @@
 
 function CSpellchecker(settings)
 {
-	this.api = settings.api;
 	this.useWasm = false;
 	var webAsmObj = window["WebAssembly"];
 	if (typeof webAsmObj === "object")
@@ -101,6 +100,7 @@ function CSpellchecker(settings)
 		"1044" : "nb_NO",
 		"1043" : "nl_NL",
 		"2068" : "nn_NO",
+		"1154" : "oc_FR",
 		"1045" : "pl_PL",
 		"1046" : "pt_BR",
 		"2070" : "pt_PT",
@@ -136,6 +136,8 @@ function CSpellchecker(settings)
 		this.worker = null;
 	};
 
+	this.restartCallback = function() { console.log("restart"); }
+
 	this.restart = function()
 	{
 		this.stop();
@@ -145,7 +147,17 @@ function CSpellchecker(settings)
 
 		if (this.isUseSharedWorker)
 		{
-			this.worker = new SharedWorker(worker_src, "onlyoffice-spellchecker");
+			try
+			{
+				// may be security errors
+				this.worker = new SharedWorker(worker_src, "onlyoffice-spellchecker");
+			}
+			catch (err)
+			{
+				this.isUseSharedWorker = false;
+				return this.restart();
+			}
+
 			this.worker.creator = this;
 			this.worker.onerror = function() {
 				var creator = this.creator;
@@ -158,19 +170,23 @@ function CSpellchecker(settings)
 		{
 			this.worker = new Worker(worker_src);
 
-			/*
-			// TODO:
 			var _t = this;
+
+			// для "обычного воркера" - обрабатываем ошибку, чтобы он не влиял на работу редактора
+			// и если ошибка из wasm модуля - то просто попробуем js версию - и рестартанем
 			this.worker.onerror = function(e) {
-				AscCommon.stopEvent(e);
+				if (e.preventDefault)
+					e.preventDefault();
+				if (e.stopPropagation)
+					e.stopPropagation();
+				
 				if (_t.useWasm)
 				{
 					_t.useWasm = false;
 					_t.restart();
-					_t.api.restartSpellChecker();
+					_t.restartCallback && _t.restartCallback();
 				}
 			};
-			*/
 
 			this._start(this.worker);
 		}

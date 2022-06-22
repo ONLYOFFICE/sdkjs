@@ -60,11 +60,26 @@ var Y_Top_Margin    = 20;  // 2   cm
 var X_Right_Field  = Page_Width - X_Right_Margin;
 var Y_Bottom_Field = Page_Height - Y_Bottom_Margin;
 
+var HIDDEN_PANE_HEIGHT = 1;
+
+var HEADER_HEIGHT = 45 * g_dKoef_pix_to_mm;
+var TIMELINE_HEIGHT = 36 * g_dKoef_pix_to_mm;
+var TIMELINE_LEFT_MARGIN = 14 * g_dKoef_pix_to_mm;
+var TIMELINE_LIST_RIGHT_MARGIN = 23 * g_dKoef_pix_to_mm;
+var TIMELINE_HEADER_RIGHT_MARGIN = 18 * g_dKoef_pix_to_mm;
+
+AscCommon.HIDDEN_PANE_HEIGHT = HIDDEN_PANE_HEIGHT;
+AscCommon.TIMELINE_HEIGHT = TIMELINE_HEIGHT;
+AscCommon.TIMELINE_LEFT_MARGIN = TIMELINE_LEFT_MARGIN;
+AscCommon.TIMELINE_LIST_RIGHT_MARGIN = TIMELINE_LIST_RIGHT_MARGIN;
+AscCommon.TIMELINE_HEADER_RIGHT_MARGIN = TIMELINE_HEADER_RIGHT_MARGIN;
+
 function CEditorPage(api)
 {
 	// ------------------------------------------------------------------
 	this.Name           = "";
 	this.IsSupportNotes = true;
+	this.IsSupportAnimPane = false;
 
 	this.EditorType = "presentations";
 
@@ -134,6 +149,7 @@ function CEditorPage(api)
 	this.m_oScrollVer_   = null;
 	this.m_oScrollThumb_ = null;
 	this.m_oScrollNotes_ = null;
+	this.m_oScrollAnim_  = null;
 	this.m_nVerticalSlideChangeOnScrollInterval = 300; // AscCommon.AscBrowser.isMacOs ? 300 : 0; // как часто можно менять слайды при вертикальном скролле
 	this.m_nVerticalSlideChangeOnScrollLast = -1;
     this.m_nVerticalSlideChangeOnScrollEnabled = false;
@@ -152,7 +168,7 @@ function CEditorPage(api)
 	this.m_bDocumentPlaceChangedEnabled = false;
 
 	this.m_nZoomValue = 100;
-	this.zoom_values  = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200];
+	this.zoom_values  = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 320, 340, 360, 380, 400, 425, 450, 475, 500];
 	this.m_nZoomType  = 2; // 0 - custom, 1 - fitToWodth, 2 - fitToPage
 
 	this.m_oBoundsController = new AscFormat.CBoundsController();
@@ -398,15 +414,19 @@ function CEditorPage(api)
 
 		this.Splitter1Pos    = 67.5;
         this.Splitter1PosSetUp = this.Splitter1Pos;
-		this.Splitter2Pos    = (this.IsSupportNotes === true) ? 11 : 0;
+		this.Splitter2Pos    = (this.IsSupportNotes === true && this.m_oApi.isEmbedVersion !== true) ? 11 : 0;
+		this.Splitter3Pos = 0;//top of animation pane
 
 		this.OldSplitter1Pos = this.Splitter1Pos;
 		this.OldSplitter2Pos = this.Splitter2Pos;
+		this.OldSplitter3Pos = this.Splitter3Pos;
 
 		this.Splitter1PosMin = 20;
 		this.Splitter1PosMax = 80;
 		this.Splitter2PosMin = 10;
 		this.Splitter2PosMax = 100;
+		this.Splitter3PosMin = 0;//10;
+		this.Splitter3PosMax = 0;//100;
 
 		if (this.m_oApi.isReporterMode)
 		{
@@ -545,11 +565,15 @@ function CEditorPage(api)
 		this.m_oMainContent.AddControl(this.m_oScrollHor);
 		// -------------
 
+		this.m_oBottomPanesContainer = CreateControlContainer("id_bottom_pannels_container");
+		this.m_oBottomPanesContainer.Bounds.SetParams(0, 0, 0, 1000, true, true, true, false, -1, this.Splitter2Pos);
+		this.m_oBottomPanesContainer.Anchor = (g_anchor_left | g_anchor_right | g_anchor_bottom);
+		this.m_oMainParent.AddControl(this.m_oBottomPanesContainer);
 		// notes ----
 		this.m_oNotesContainer = CreateControlContainer("id_panel_notes");
-		this.m_oNotesContainer.Bounds.SetParams(0, 0, g_dKoef_pix_to_mm, 1000, true, true, true, false, -1, this.Splitter2Pos);
-		this.m_oNotesContainer.Anchor = (g_anchor_left | g_anchor_right | g_anchor_bottom);
-		this.m_oMainParent.AddControl(this.m_oNotesContainer);
+		this.m_oNotesContainer.Bounds.SetParams(0, 0, g_dKoef_pix_to_mm, 1000, true, false, true, false, -1, -1);
+		this.m_oNotesContainer.Anchor = (g_anchor_left | g_anchor_right | g_anchor_top);
+		this.m_oBottomPanesContainer.AddControl(this.m_oNotesContainer);
 
 		this.m_oNotes = CreateControl("id_notes");
 		this.m_oNotes.Bounds.SetParams(0, 0, ScrollWidthMm, 1000, false, false, true, false, -1, -1);
@@ -571,6 +595,53 @@ function CEditorPage(api)
 			this.m_oNotesContainer.HtmlElement.style.display = "none";
 		}
 
+		//animation pane
+
+		this.m_oAnimationPaneContainer = CreateControlContainer("id_panel_animation");
+		this.m_oAnimationPaneContainer.Bounds.SetParams(0, 0, 1000, 1000, false, false, false, false, -1, -1);
+		this.m_oAnimationPaneContainer.Anchor = (g_anchor_left | g_anchor_right | g_anchor_bottom);
+		this.m_oBottomPanesContainer.AddControl(this.m_oAnimationPaneContainer);
+
+		this.m_oAnimPaneHeaderContainer = CreateControlContainer("id_anim_header");
+		this.m_oAnimPaneHeaderContainer.Bounds.SetParams(0, 0, 1000, HEADER_HEIGHT, true, false, false, true, -1, HEADER_HEIGHT);
+		this.m_oAnimPaneHeaderContainer.Anchor = (g_anchor_left | g_anchor_right | g_anchor_top);
+		this.m_oAnimationPaneContainer.AddControl(this.m_oAnimPaneHeaderContainer);
+
+		this.m_oAnimPaneHeader = CreateControl("id_anim_header_canvas");
+		this.m_oAnimPaneHeader.Bounds.SetParams(0, 0, 1000, 1000, false, false, false, false, -1, -1);
+		this.m_oAnimPaneHeader.Anchor = (g_anchor_left | g_anchor_right | g_anchor_top | g_anchor_bottom);
+		this.m_oAnimPaneHeaderContainer.AddControl(this.m_oAnimPaneHeader);
+
+		this.m_oAnimPaneListContainer = CreateControlContainer("id_anim_list_container");
+		this.m_oAnimPaneListContainer.Bounds.SetParams(TIMELINE_LEFT_MARGIN, HEADER_HEIGHT, TIMELINE_LIST_RIGHT_MARGIN, TIMELINE_HEIGHT, true, true, true, true, -1, -1);
+		this.m_oAnimPaneListContainer.Anchor = (g_anchor_left | g_anchor_right | g_anchor_top | g_anchor_bottom);
+		this.m_oAnimationPaneContainer.AddControl(this.m_oAnimPaneListContainer);
+
+		this.m_oAnimPaneList = CreateControl("id_anim_list_canvas");
+		this.m_oAnimPaneList.Bounds.SetParams(0, 0, 1000, 1000, false, false, false, false, -1, -1);
+		this.m_oAnimPaneList.Anchor = (g_anchor_left | g_anchor_right | g_anchor_top | g_anchor_bottom);
+		this.m_oAnimPaneListContainer.AddControl(this.m_oAnimPaneList);
+
+		this.m_oAnimPaneList_scroll = CreateControl("id_anim_list_scroll");
+		this.m_oAnimPaneList_scroll.Bounds.SetParams(0, 0, 1000, 1000, false, false, false, false, ScrollWidthMm, -1);
+		this.m_oAnimPaneList_scroll.Anchor = (g_anchor_top | g_anchor_right | g_anchor_bottom);
+		this.m_oAnimPaneListContainer.AddControl(this.m_oAnimPaneList_scroll);
+
+		this.m_oAnimPaneTimelineContainer = CreateControlContainer("id_anim_timeline_container");
+		this.m_oAnimPaneTimelineContainer.Bounds.SetParams(0, 0, 1000, 1000, false, false, false, false, -1, TIMELINE_HEIGHT);
+		this.m_oAnimPaneTimelineContainer.Anchor = (g_anchor_left | g_anchor_right| g_anchor_bottom);
+		this.m_oAnimationPaneContainer.AddControl(this.m_oAnimPaneTimelineContainer);
+
+		this.m_oAnimPaneTimeline = CreateControl("id_anim_timeline_canvas");
+		this.m_oAnimPaneTimeline.Bounds.SetParams(0, 0, 1000, 1000, false, false, false, false, -1, -1);
+		this.m_oAnimPaneTimeline.Anchor = (g_anchor_left | g_anchor_right | g_anchor_top | g_anchor_bottom);
+		this.m_oAnimPaneTimelineContainer.AddControl(this.m_oAnimPaneTimeline);
+
+
+		if(!this.IsSupportAnimPane)
+		{
+			this.m_oAnimationPaneContainer.HtmlElement.style.display = "none";
+		}
 		// ----------
 
 		this.m_oMainView = CreateControlContainer("id_main_view");
@@ -915,7 +986,9 @@ function CEditorPage(api)
 		{
 			this.m_oNotes.HtmlElement.style.backgroundColor = GlobalSkin.BackgroundColor;
 			this.m_oNotesContainer.HtmlElement.style.backgroundColor = GlobalSkin.BackgroundColor;
-			this.m_oNotesContainer.HtmlElement.style.borderTop = ("1px solid " + GlobalSkin.BorderSplitterColor);
+			this.m_oBottomPanesContainer.HtmlElement.style.borderTop = ("1px solid " + GlobalSkin.BorderSplitterColor);
+			this.m_oBottomPanesContainer.HtmlElement.style.backgroundColor = GlobalSkin.BackgroundColor;
+			this.m_oAnimationPaneContainer.HtmlElement.style.borderTop = ("1px solid " + GlobalSkin.BorderSplitterColor);
 		}
 
 		this.m_oOverlayApi.m_oControl  = this.m_oOverlay;
@@ -934,6 +1007,12 @@ function CEditorPage(api)
 
 		this.m_oNotesApi = new CNotesDrawer(this);
 		this.m_oNotesApi.Init();
+
+		if(this.IsSupportAnimPane)
+		{
+			this.m_oAnimPaneApi = new CAnimationPaneDrawer(this, this.m_oAnimationPaneContainer.HtmlElement);
+			this.m_oAnimPaneApi.Init();
+		}
 
 		if (this.m_oApi.isReporterMode)
 			this.m_oApi.StartDemonstration(this.Name, 0);
@@ -979,6 +1058,9 @@ function CEditorPage(api)
             case "id_notes_overlay":
 			case "id_thumbnails_background":
 			case "id_thumbnails":
+			case "id_anim_header_canvas":
+			case "id_anim_list_canvas":
+			case "id_anim_timeline_canvas":
             	return true;
 			default:
 				break;
@@ -1080,10 +1162,8 @@ function CEditorPage(api)
 		if (this.m_oApi.isMobileVersion)
 		{
 			var _t = this;
-			document.addEventListener && document.addEventListener("transitionend", function() {
-				if (_t.Y === 0)
-					_t.OnResize();
-			}, false);
+			document.addEventListener && document.addEventListener("transitionend", function() { _t.OnResize(false);  }, false);
+			document.addEventListener && document.addEventListener("transitioncancel", function() { _t.OnResize(false); }, false);
 		}
 
 		this.initEvents2MobileAdvances();
@@ -1359,6 +1439,9 @@ function CEditorPage(api)
 
 		if (this.IsSupportNotes && this.m_oNotesApi)
 			this.m_oNotesApi.OnResize();
+
+		if (this.m_oAnimPaneApi)
+			this.m_oAnimPaneApi.OnResize();
 	};
 
 	this.zoom_Out = function()
@@ -1798,44 +1881,95 @@ function CEditorPage(api)
 			oWordControl.onMouseMove2();
 	};
 
-	this.createSplitterDiv = function(bIsVert)
+	this.createSplitterElement = function()
 	{
 		var Splitter            = document.createElement("div");
 		Splitter.id             = "splitter_id";
 		Splitter.style.position = "absolute";
-
 		// skin
 		//Splitter.style.backgroundColor = "#000000";
 		//Splitter.style.backgroundImage = "url(Images/splitter.png)";
 		Splitter.style.backgroundImage = "url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAOwgAADsIBFShKgAAAABh0RVh0U29mdHdhcmUAUGFpbnQuTkVUIHYzLjMxN4N3hgAAAB9JREFUGFdj+P//PwsDAwOQ+m8PooEYwQELwmRwqgAAbXwhnmjs9sgAAAAASUVORK5CYII=)";
-
-		if (bIsVert)
-		{
-			Splitter.style.left   = parseInt(this.Splitter1Pos * g_dKoef_mm_to_pix) + "px";
-			Splitter.style.top    = "0px";
-			Splitter.style.width  = parseInt(GlobalSkin.SplitterWidthMM * g_dKoef_mm_to_pix) + "px";
-			Splitter.style.height = this.Height + "px";
-			this.SplitterType     = 1;
-
-			Splitter.style.backgroundRepeat = "repeat-y";
-		}
-		else
-		{
-			Splitter.style.left   = parseInt((this.Splitter1Pos + GlobalSkin.SplitterWidthMM) * g_dKoef_mm_to_pix) + "px";
-			Splitter.style.top    = (this.Height - parseInt((this.Splitter2Pos + GlobalSkin.SplitterWidthMM) * g_dKoef_mm_to_pix) + 1) + "px";
-			Splitter.style.width  = this.Width - parseInt((this.Splitter1Pos + GlobalSkin.SplitterWidthMM) * g_dKoef_mm_to_pix) + "px";
-			Splitter.style.height = parseInt(GlobalSkin.SplitterWidthMM * g_dKoef_mm_to_pix) + "px";
-			this.SplitterType     = 2;
-
-			Splitter.style.backgroundRepeat = "repeat-x";
-		}
-
 		Splitter.style.overflow = 'hidden';
 		Splitter.style.zIndex   = 1000;
 		Splitter.setAttribute("contentEditable", false);
+		return Splitter;
+	};
+	this.setVerticalSplitter = function(Splitter, dXPos)
+	{
+		Splitter.style.left   = parseInt(dXPos * g_dKoef_mm_to_pix) + "px";
+		Splitter.style.top    = "0px";
+		Splitter.style.width  = parseInt(GlobalSkin.SplitterWidthMM * g_dKoef_mm_to_pix) + "px";
+		Splitter.style.height = this.Height + "px";
+		Splitter.style.backgroundRepeat = "repeat-y";
+	};
+	this.setHorizontalSplitter = function(Splitter, dYPos)
+	{
+		Splitter.style.left   = parseInt((this.Splitter1Pos + GlobalSkin.SplitterWidthMM) * g_dKoef_mm_to_pix) + "px";
+		Splitter.style.top    = (this.Height - parseInt((dYPos + GlobalSkin.SplitterWidthMM) * g_dKoef_mm_to_pix) + 1) + "px";
+		Splitter.style.width  = this.Width - parseInt((this.Splitter1Pos + GlobalSkin.SplitterWidthMM) * g_dKoef_mm_to_pix) + "px";
+		Splitter.style.height = parseInt(GlobalSkin.SplitterWidthMM * g_dKoef_mm_to_pix) + "px";
+		Splitter.style.backgroundRepeat = "repeat-x";
+	};
 
+	this.createSplitterDiv = function(nIdx)
+	{
+		var Splitter = this.createSplitterElement();
 		this.SplitterDiv = Splitter;
+		this.SplitterType = nIdx;
+		if (nIdx === 1)
+		{
+			this.setVerticalSplitter(Splitter, this.Splitter1Pos);
+		}
+		else if(nIdx === 2)
+		{
+			this.setHorizontalSplitter(Splitter, this.Splitter2Pos);
+		}
+		else if(nIdx === 3)
+		{
+			this.setHorizontalSplitter(Splitter, this.Splitter3Pos);
+		}
 		this.m_oBody.HtmlElement.appendChild(this.SplitterDiv);
+	};
+
+	this.hitToSplitter = function()
+	{
+		var oWordControl = oThis;
+
+		var x1 = oWordControl.Splitter1Pos * g_dKoef_mm_to_pix;
+		var x2 = (oWordControl.Splitter1Pos + GlobalSkin.SplitterWidthMM) * g_dKoef_mm_to_pix;
+
+		var _x = global_mouseEvent.X - oWordControl.X;
+		var _y = global_mouseEvent.Y - oWordControl.Y;
+
+		if (_x >= x1 && _x <= x2 && _y >= 0 && _y <= oWordControl.Height && (oThis.IsUseNullThumbnailsSplitter || (oThis.Splitter1Pos != 0)))
+		{
+			return 1;
+		}
+		else if (_x >= x2 && _x <= oWordControl.Width)
+		{
+
+			var y1 = oWordControl.Height - ((oWordControl.Splitter2Pos + GlobalSkin.SplitterWidthMM) * g_dKoef_mm_to_pix);
+			var y2 = oWordControl.Height - (oWordControl.Splitter2Pos * g_dKoef_mm_to_pix);
+
+			if(_y >= y1 && _y <= y2)
+			{
+				return 2;
+			}
+			else
+			{
+				if(oThis.IsAnimPaneShown())
+				{
+					y1 = oWordControl.Height - ((oWordControl.Splitter3Pos + GlobalSkin.SplitterWidthMM) * g_dKoef_mm_to_pix);
+					y2 = oWordControl.Height - (oWordControl.Splitter3Pos * g_dKoef_mm_to_pix);
+					if(_y >= y1 && _y <= y2)
+					{
+						return 3;
+					}
+				}
+			}
+		}
+		return 0;
 	};
 
 	this.onBodyMouseDown = function(e)
@@ -1857,32 +1991,24 @@ function CEditorPage(api)
 		global_mouseEvent.LockMouse();
 
 		var oWordControl = oThis;
-
-		var x1 = oWordControl.Splitter1Pos * g_dKoef_mm_to_pix;
-		var x2 = (oWordControl.Splitter1Pos + GlobalSkin.SplitterWidthMM) * g_dKoef_mm_to_pix;
-		var y1 = oWordControl.Height - ((oWordControl.Splitter2Pos + GlobalSkin.SplitterWidthMM) * g_dKoef_mm_to_pix);
-		var y2 = oWordControl.Height - (oWordControl.Splitter2Pos * g_dKoef_mm_to_pix);
-
-		var _x = global_mouseEvent.X - oWordControl.X;
-		var _y = global_mouseEvent.Y - oWordControl.Y;
-
-		if (_x >= x1 && _x <= x2 && _y >= 0 && _y <= oWordControl.Height && (oThis.IsUseNullThumbnailsSplitter || (oThis.Splitter1Pos != 0)))
+		var nSplitter = oThis.hitToSplitter();
+		if(nSplitter > 0)
 		{
-			oWordControl.m_oBody.HtmlElement.style.cursor = "w-resize";
-			oWordControl.createSplitterDiv(true);
-			_isCatch = true;
-		}
-		else if (_x >= x2 && _x <= oWordControl.Width && _y >= y1 && _y <= y2)
-		{
-			oWordControl.m_oBody.HtmlElement.style.cursor = "s-resize";
-			oWordControl.createSplitterDiv(false);
+			if(nSplitter === 1)
+			{
+				oWordControl.m_oBody.HtmlElement.style.cursor = "w-resize";
+			}
+			else
+			{
+				oWordControl.m_oBody.HtmlElement.style.cursor = "s-resize";
+			}
+			oWordControl.createSplitterDiv(nSplitter);
 			_isCatch = true;
 		}
 		else
 		{
 			oWordControl.m_oBody.HtmlElement.style.cursor = "default";
 		}
-
 		if (_isCatch)
 		{
 			if (oWordControl.m_oMainParent && oWordControl.m_oMainParent.HtmlElement)
@@ -1903,28 +2029,20 @@ function CEditorPage(api)
 		AscCommon.check_MouseMoveEvent(e, true);
 
 		var oWordControl = oThis;
-
 		if (null == oWordControl.SplitterDiv)
 		{
-			var x1 = oWordControl.Splitter1Pos * g_dKoef_mm_to_pix;
-			var x2 = (oWordControl.Splitter1Pos + GlobalSkin.SplitterWidthMM) * g_dKoef_mm_to_pix;
-			var y1 = oWordControl.Height - ((oWordControl.Splitter2Pos + GlobalSkin.SplitterWidthMM) * g_dKoef_mm_to_pix);
-			var y2 = oWordControl.Height - (oWordControl.Splitter2Pos * g_dKoef_mm_to_pix);
-
-			var _x = global_mouseEvent.X - oWordControl.X;
-			var _y = global_mouseEvent.Y - oWordControl.Y;
-
-			if (_x >= x1 && _x <= x2 && _y >= 0 && _y <= oWordControl.Height)
+			var nSplitter = oThis.hitToSplitter();
+			if(nSplitter === 0)
+			{
+				oWordControl.m_oBody.HtmlElement.style.cursor = "default";
+			}
+			else if(nSplitter === 1)
 			{
 				oWordControl.m_oBody.HtmlElement.style.cursor = "w-resize";
 			}
-			else if (_x >= x2 && _x <= oWordControl.Width && _y >= y1 && _y <= y2)
-			{
-				oWordControl.m_oBody.HtmlElement.style.cursor = "s-resize";
-			}
 			else
 			{
-				oWordControl.m_oBody.HtmlElement.style.cursor = "default";
+				oWordControl.m_oBody.HtmlElement.style.cursor = "s-resize";
 			}
 		}
 		else
@@ -1981,6 +2099,7 @@ function CEditorPage(api)
 	{
 		this.OldSplitter1Pos = this.Splitter1Pos;
 		this.OldSplitter2Pos = this.Splitter2Pos;
+		this.OldSplitter3Pos = this.Splitter3Pos;
 
 		this.m_oThumbnailsContainer.Bounds.R    = this.Splitter1Pos;
 		this.m_oThumbnailsContainer.Bounds.AbsW = this.Splitter1Pos;
@@ -1998,7 +2117,7 @@ function CEditorPage(api)
 			this.m_oMainContent.Bounds.B = GlobalSkin.SupportNotes ? this.Splitter2Pos + GlobalSkin.SplitterWidthMM : 1000;
 			this.m_oMainContent.Bounds.isAbsB = GlobalSkin.SupportNotes;
 
-			this.m_oNotesContainer.Bounds.AbsH = this.Splitter2Pos;
+			this.UpdateBottomControlsParams();
 
 			this.m_oThumbnailsContainer.HtmlElement.style.display = "block";
 			this.m_oThumbnailsSplit.HtmlElement.style.display = "block";
@@ -2010,7 +2129,7 @@ function CEditorPage(api)
 			this.m_oMainContent.Bounds.B = GlobalSkin.SupportNotes ? this.Splitter2Pos + GlobalSkin.SplitterWidthMM : 1000;
 			this.m_oMainContent.Bounds.isAbsB = GlobalSkin.SupportNotes;
 
-			this.m_oNotesContainer.Bounds.AbsH = this.Splitter2Pos;
+			this.UpdateBottomControlsParams();
 
 			this.m_oThumbnailsContainer.HtmlElement.style.display = "none";
 			this.m_oThumbnailsSplit.HtmlElement.style.display = "none";
@@ -2071,12 +2190,26 @@ function CEditorPage(api)
 					oWordControl.m_oApi.syncOnThumbnailsShow();
 				}
 			}
-			else
+			else if(oWordControl.SplitterType == 2)
 			{
 				var _posY = (oWordControl.Height - _y) * g_dKoef_pix_to_mm - GlobalSkin.SplitterWidthMM;
 				if (Math.abs(oWordControl.Splitter2Pos - _posY) > 1)
 				{
-					oWordControl.Splitter2Pos = _posY;
+					oWordControl.SetSplitter2Pos(_posY);
+					oWordControl.OnResizeSplitter();
+					oWordControl.m_oApi.syncOnNotesShow();
+					if(oWordControl.m_oLogicDocument)
+					{
+						oWordControl.m_oLogicDocument.CheckNotesShow();
+					}
+				}
+			}
+			else if(oWordControl.SplitterType == 3)
+			{
+				var _posY = (oWordControl.Height - _y) * g_dKoef_pix_to_mm - GlobalSkin.SplitterWidthMM;
+				if (Math.abs(oWordControl.Splitter3Pos - _posY) > 1)
+				{
+					oWordControl.SetSplitter3Pos(_posY);
 					oWordControl.OnResizeSplitter();
 					oWordControl.m_oApi.syncOnNotesShow();
 					if(oWordControl.m_oLogicDocument)
@@ -2242,9 +2375,11 @@ function CEditorPage(api)
 
 		if (oWordControl.m_oDrawingDocument.InlineTextTrackEnabled)
 		{
-			var pos2 = oWordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page, undefined, true);
-			if (pos2.Y > oWordControl.m_oNotesContainer.AbsolutePosition.T * g_dKoef_mm_to_pix)
-				return;
+			if (oWordControl.m_oLogicDocument.IsFocusOnNotes()) {
+				var pos2 = oWordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page, undefined, true);
+				if (pos2.Y > oWordControl.m_oNotesContainer.AbsolutePosition.T * g_dKoef_mm_to_pix)
+					return;
+			}
 		}
 
 		oWordControl.StartUpdateOverlay();
@@ -2334,9 +2469,11 @@ function CEditorPage(api)
 
 		if (oWordControl.m_oDrawingDocument.InlineTextTrackEnabled)
 		{
-			var pos2 = oWordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page, undefined, true);
-			if (pos2.Y > oWordControl.m_oNotesContainer.AbsolutePosition.T * g_dKoef_mm_to_pix)
-				return;
+			if (oWordControl.m_oLogicDocument.IsFocusOnNotes()) {
+				var pos2 = oWordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page, undefined, true);
+				if (pos2.Y > oWordControl.m_oNotesContainer.AbsolutePosition.T * g_dKoef_mm_to_pix)
+					return;
+			}
 		}
 
 		oWordControl.StartUpdateOverlay();
@@ -2572,7 +2709,7 @@ function CEditorPage(api)
 			return;
 		}
 
-		if (oWordControl.IsFocus === false)
+		if (oWordControl.IsFocus === false && e.emulated !== true)
 			return;
 
 		if (oWordControl.m_oApi.isLongAction() || oWordControl.m_bIsMouseLock === true)
@@ -2608,7 +2745,7 @@ function CEditorPage(api)
 			oWordControl.m_oDrawingDocument.TransitionSlide.End(true);
 
 		var oWordControl = oThis;
-		if (false === oWordControl.m_oApi.bInit_word_control || oWordControl.IsFocus === false || oWordControl.m_oApi.isLongAction() || oWordControl.m_bIsMouseLock === true)
+		if (false === oWordControl.m_oApi.bInit_word_control || oWordControl.IsFocus === false && e.emulated !== true || oWordControl.m_oApi.isLongAction() || oWordControl.m_bIsMouseLock === true)
 			return;
 
 		AscCommon.check_KeyboardEvent(e);
@@ -3049,6 +3186,32 @@ function CEditorPage(api)
 		this.OnResize();
 	};
 
+	this.UpdateBottomControlsParams = function()
+	{
+		this.m_oBottomPanesContainer.Bounds.AbsH = this.Splitter2Pos;
+		this.m_oNotesContainer.Bounds.AbsH = this.GetNotesHeight();
+		if (!this.IsNotesShown())
+		{
+			this.m_oNotes.HtmlElement.style.display = "none";
+			this.m_oNotes_scroll.HtmlElement.style.display = "none";
+		}
+		else
+		{
+			this.m_oNotes.HtmlElement.style.display = "block";
+			this.m_oNotes_scroll.HtmlElement.style.display = "block";
+		}
+
+		this.m_oAnimationPaneContainer.Bounds.AbsH = this.GetAnimPaneHeight();
+		if (!this.IsAnimPaneShown())
+		{
+			this.m_oAnimationPaneContainer.HtmlElement.style.display = "none";
+		}
+		else
+		{
+			this.m_oAnimationPaneContainer.HtmlElement.style.display = "block";
+		}
+	};
+
 	this.OnResize = function(isAttack)
 	{
 		AscCommon.AscBrowser.checkZoom();
@@ -3092,24 +3255,14 @@ function CEditorPage(api)
 			var _min = 30 * g_dKoef_mm_to_pix;
 			if (_pos < _min && !isDesktopVersion)
 			{
-				this.Splitter2Pos = (this.Height - _min) / g_dKoef_mm_to_pix;
+				this.SetSplitter2Pos((this.Height - _min) / g_dKoef_mm_to_pix);
 				if (this.Splitter2Pos < this.Splitter2PosMin)
 					this.Splitter2Pos = 1;
 
-				if (this.Splitter2Pos <= 1)
-				{
-					this.m_oNotes.HtmlElement.style.display = "none";
-					this.m_oNotes_scroll.HtmlElement.style.display = "none";
-				}
-				else
-				{
-					this.m_oNotes.HtmlElement.style.display = "block";
-					this.m_oNotes_scroll.HtmlElement.style.display = "block";
-				}
+				this.UpdateBottomControlsParams();
 
 				this.m_oMainContent.Bounds.B = this.Splitter2Pos + GlobalSkin.SplitterWidthMM;
 				this.m_oMainContent.Bounds.isAbsB = true;
-				this.m_oNotesContainer.Bounds.AbsH = this.Splitter2Pos;
 			}
 		}
 
@@ -3170,8 +3323,11 @@ function CEditorPage(api)
 		if (this.MobileTouchManager)
 			this.MobileTouchManager.Resize_After();
 
-		if (this.IsSupportNotes && this.m_oNotesApi)
+		if (this.IsSupportNotes && this.m_oNotesApi && this.m_oApi.isDocumentLoadComplete/* asc_setSkin => OnResize before fonts loaded => crash on Notes.OnResize() */)
 			this.m_oNotesApi.OnResize();
+
+		if (this.m_oAnimPaneApi)
+			this.m_oAnimPaneApi.OnResize();
 
 		this.FullRulersUpdate();
 
@@ -3364,6 +3520,9 @@ function CEditorPage(api)
 
 		if (this.IsSupportNotes && this.m_oNotesApi)
 			this.m_oNotesApi.OnResize();
+
+		if (this.m_oAnimPaneApi)
+			this.m_oAnimPaneApi.OnResize();
 
 		this.FullRulersUpdate();
 	};
@@ -3748,7 +3907,7 @@ function CEditorPage(api)
 			_c.m_nCurrentTimeClearCache = 0;
 			_c.m_oDrawingDocument.CheckFontCache();
 		}
-        oThis.m_oLogicDocument.ContinueCheckSpelling();
+        oThis.m_oLogicDocument.ContinueSpellCheck();
 	};
 	this.OnScroll       = function()
 	{
@@ -4013,6 +4172,9 @@ function CEditorPage(api)
 		if (oWordControl.IsSupportNotes && oWordControl.m_oNotesApi)
 			oWordControl.m_oNotesApi.CheckPaint();
 
+		if (oWordControl.m_oAnimPaneApi)
+			oWordControl.m_oAnimPaneApi.CheckPaint();
+
 		if (null != oWordControl.m_oLogicDocument)
 		{
 			oWordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
@@ -4030,7 +4192,10 @@ function CEditorPage(api)
 		}
 
 		oWordControl.m_oDrawingDocument.Collaborative_TargetsUpdate(isRepaint);
-
+		if (oThis.DemonstrationManager.Mode && !oThis.m_oApi.isReporterMode)
+		{
+			oThis.DemonstrationManager.CheckHideCursor();
+		}
 		oWordControl.m_nPaintTimerId = setTimeout(oWordControl.onTimerScroll, oWordControl.m_nTimerScrollInterval);
 		//window.requestAnimationFrame(oWordControl.onTimerScroll);
 	};
@@ -4292,6 +4457,9 @@ function CEditorPage(api)
 
 			if (this.IsSupportNotes && this.m_oNotesApi)
 				this.m_oNotesApi.OnRecalculateNote(-1, 0, 0);
+
+			if (this.m_oAnimPaneApi)
+				this.m_oAnimPaneApi.OnAnimPaneChanged(-1, null);
 		}
 
 		if (this.m_oDrawingDocument.TransitionSlide.IsPlaying())
@@ -4313,7 +4481,14 @@ function CEditorPage(api)
 		{
 			var _curPage = this.m_oLogicDocument.CurPage;
 			if (_curPage >= 0)
-				this.m_oNotesApi.OnRecalculateNote(_curPage, this.m_oLogicDocument.Slides[_curPage].NotesWidth, this.m_oLogicDocument.Slides[_curPage].getNotesHeight());
+			{
+				var oSlide = this.m_oLogicDocument.Slides[_curPage];
+				this.m_oNotesApi.OnRecalculateNote(_curPage, oSlide.NotesWidth, oSlide.getNotesHeight());
+				if(this.m_oAnimPaneApi)
+				{
+					this.m_oAnimPaneApi.OnAnimPaneChanged(_curPage, null);
+				}
+			}
 		}
 
 		// теперь пошлем все шаблоны первой темы
@@ -4415,6 +4590,76 @@ function CEditorPage(api)
 	this.GetMainContentBounds = function()
 	{
 		return this.m_oMainParent.AbsolutePosition;
+	};
+
+
+	this.GetAnimPaneHeight = function()
+	{
+		return this.Splitter3Pos;
+	};
+	this.GetNotesHeight = function()
+	{
+		return this.Splitter2Pos - this.Splitter3Pos;
+	};
+
+	this.IsBottomPaneShown = function()
+	{
+		return this.Splitter2Pos > HIDDEN_PANE_HEIGHT;
+	};
+
+	this.IsNotesShown = function()
+	{
+		if(!this.IsBottomPaneShown())
+		{
+			return false;
+		}
+		return this.GetNotesHeight() > HIDDEN_PANE_HEIGHT;
+	};
+
+	this.IsAnimPaneShown = function()
+	{
+		if(!this.IsBottomPaneShown())
+		{
+			return false;
+		}
+		return this.GetAnimPaneHeight() > 0;
+	};
+	this.SetSplitter3Pos = function(dPos)
+	{
+		var dDiff = this.Splitter2Pos - this.Splitter3Pos;
+		this.Splitter3Pos = dPos;
+		this.Splitter2Pos = this.Splitter3Pos + dDiff;
+	};
+	this.SetSplitter2Pos = function(dPos)
+	{
+		this.Splitter2Pos = Math.max(this.Splitter3Pos + HIDDEN_PANE_HEIGHT, dPos);
+	};
+
+	this.ShowNotes = function (bShow)
+	{
+		if(this.IsNotesShown() === bShow)
+		{
+			return;
+		}
+		if(bShow)
+		{
+			this.Splitter2Pos = this.OldSplitter2Pos;
+			if (this.Splitter2Pos <= 1)
+				this.Splitter2Pos = 11;
+			this.OnResizeSplitter();
+		}
+		else
+		{
+			var old = this.OldSplitter2Pos;
+			this.Splitter2Pos = 0;
+			this.OnResizeSplitter();
+			this.OldSplitter2Pos = old;
+			this.m_oLogicDocument.CheckNotesShow();
+		}
+	};
+	this.ShowAnimPane = function (bShow)
+	{
+		//TODO
 	};
 }
 

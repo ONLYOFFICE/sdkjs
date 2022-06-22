@@ -358,6 +358,13 @@ Paragraph.prototype.RecalculateFastRunRange = function(oParaPos)
     var CurLine  = PrevLine;
     var CurRange = PrevRange;
 
+    // TODO: Для включения данной проверки нужно пробегаться по строке и пересчитывать Line.Info
+    // var arrLinesMetrics = [];
+    // for (var nLineIndex = 0; nLineIndex <= NextLine - CurLine; ++nLineIndex)
+	// {
+	// 	arrLinesMetrics.push(this.Lines[CurLine + nLineIndex].Metrics.Copy());
+	// }
+
     var Result;
     while ( ( CurLine < NextLine ) || ( CurLine === NextLine && CurRange <= NextRange ) )
     {
@@ -380,11 +387,23 @@ Paragraph.prototype.RecalculateFastRunRange = function(oParaPos)
         }
     }
 
+    // var oParaPr = this.Get_CompiledPr2(false).ParaPr;
+	// var oPRS    = this.m_oPRSW;
+	// for (var nLineIndex = PrevLine; nLineIndex <= NextLine; ++nLineIndex)
+	// {
+	// 	oPRS.Reset_Line();
+	// 	this.Lines[nLineIndex].Metrics.Reset();
+	// 	this.private_RecalculateLineMetrics(nLineIndex, oParaPos.Page, oPRS, oParaPr);
+	//
+	// 	if (!this.Lines[nLineIndex].Metrics.IsEqual(arrLinesMetrics[nLineIndex - PrevLine]))
+	// 		return null;
+	// }
+
     // Во время пересчета сбрасываем привязку курсора к строке.
     this.CurPos.Line  = -1;
     this.CurPos.Range = -1;
 
-    this.Internal_CheckSpelling();
+    this.RequestSpellCheck();
 	this.SetIsRecalculated(true);
 
 	//console.log("Recalc Fast Range");
@@ -413,7 +432,7 @@ Paragraph.prototype.Recalculate_Page = function(CurPage)
 
     this.FontMap.NeedRecalc = true;
 
-    this.Internal_CheckSpelling();
+    this.RequestSpellCheck();
     this.RecalculateEndInfo();
 
     var RecalcResult = this.private_RecalculatePage( CurPage );
@@ -794,8 +813,8 @@ Paragraph.prototype.private_RecalculatePageXY          = function(CurLine, CurPa
     //       сразу с рамки. Надо бы не разбивать в данной ситуации рамку на страницы, а просто новую страницу начать
     //       с нее на уровне DocumentContent.
 
-    var XStart, YStart, XLimit, YLimit;
-    if ( 0 === CurPage || ( undefined != this.Get_FramePr() && this.LogicDocument === this.Parent ) )
+    var XStart, YStart, XLimit, YLimit, oFramePr;
+	if (0 === CurPage || ((oFramePr = this.Get_FramePr()) && !oFramePr.IsInline() && this.LogicDocument === this.Parent))
     {
         XStart = this.X;
         YStart = this.Y;
@@ -1245,18 +1264,14 @@ Paragraph.prototype.private_RecalculateLineMetrics     = function(CurLine, CurPa
 		{
 			// TODO: Как только переделаем para_End переделать тут
 
-			// Выставляем настройки для символа параграфа
-			var EndTextPr = this.Get_CompiledPr2(false).TextPr.Copy();
-			EndTextPr.Merge(this.TextPr.Value);
-            EndTextPr.CheckFontScale();
-			g_oTextMeasurer.SetTextPr(EndTextPr, this.Get_Theme());
-			g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+			let oTextPr = this.Get_CompiledPr2(false).TextPr.Copy();
+			oTextPr.Merge(this.TextPr.Value);
+			oTextPr.CheckFontScale();
 
-			// Запрашиваем текущие метрики шрифта, под TextAscent мы будем понимать ascent + linegap(которые записаны в шрифте)
-			var EndTextHeight  = g_oTextMeasurer.GetHeight();
-			var EndTextDescent = Math.abs(g_oTextMeasurer.GetDescender());
-			var EndTextAscent  = EndTextHeight - EndTextDescent;
-			var EndTextAscent2 = g_oTextMeasurer.GetAscender();
+            let oMetrics = oTextPr.GetTextMetrics(this.GetTheme(), rfont_ASCII);
+			let EndTextDescent = oMetrics.Descent;
+			let EndTextAscent  = oMetrics.Ascent + oMetrics.LineGap;
+			let EndTextAscent2 = oMetrics.Ascent;
 
 			PRS.LineTextAscent  = EndTextAscent;
 			PRS.LineTextAscent2 = EndTextAscent2;
@@ -1306,7 +1321,25 @@ Paragraph.prototype.private_RecalculateLinePosition    = function(CurLine, CurPa
     var BaseLineOffset = 0;
     if (CurLine === this.Pages[CurPage].FirstLine)
     {
-        BaseLineOffset = this.Lines[CurLine].Metrics.Ascent;
+    	var oForm = null;
+    	if (this.IsInFixedForm() && (oForm = this.GetInnerForm()) && oForm.IsMultiLineForm() && oForm.IsTextForm())
+		{
+			var oRun = oForm.GetElement(0);
+			if (oRun && oRun instanceof ParaRun)
+			{
+				// Адобовский вариант отступа первой строки для многострочных форм
+				var oTextPr = oRun.Get_CompiledTextPr(false);
+				g_oTextMeasurer.SetTextPr(oTextPr, this.GetTheme());
+				g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
+				var oLimits = g_oTextMeasurer.GetLimitsY();
+				var nBBoxH  = oLimits.max - oLimits.min + 2 * 25.4 / 72;
+
+				if (this.Lines[CurLine].Metrics.Ascent < nBBoxH)
+					this.Lines[CurLine].Metrics.Ascent = nBBoxH;
+			}
+		}
+
+    	BaseLineOffset = this.Lines[CurLine].Metrics.Ascent;
 
         if (this.Check_FirstPage(CurPage, true))
 		{
@@ -1605,7 +1638,7 @@ Paragraph.prototype.private_RecalculateLineCheckRanges = function(CurLine, CurPa
 	}
 	else
 	{
-		PageFields = this.Parent.Get_ColumnFields ? this.Parent.Get_ColumnFields(this.Get_Index(), this.Get_AbsoluteColumn(CurPage), this.GetAbsolutePage(CurPage)) : this.Parent.Get_PageFields(this.private_GetRelativePageIndex(CurPage));
+		PageFields = this.Parent.Get_ColumnFields ? this.Parent.Get_ColumnFields(this.Get_Index(), this.Get_AbsoluteColumn(CurPage), this.GetAbsolutePage(CurPage)) : this.Parent.Get_PageFields(this.private_GetRelativePageIndex(CurPage), this.Parent.IsHdrFtr());
 	}
 
     var Ranges = PRS.Ranges;
@@ -2411,7 +2444,15 @@ Paragraph.prototype.private_RecalculateMoveLineToNextPage = function(CurLine, Cu
 Paragraph.prototype.private_CheckNeedBeforeSpacing = function(CurPage, Parent, PageAbs, ParaPr)
 {
 	if (CurPage <= 0)
-		return true;
+	{
+		let oPrevElement = this.GetPrevDocumentElement();
+		while (oPrevElement && !oPrevElement.IsInline())
+		{
+			oPrevElement = oPrevElement.GetPrevDocumentElement();
+		}
+
+		return (!oPrevElement || oPrevElement.GetAbsolutePage(oPrevElement.GetPagesCount() - 1) >= PageAbs);
+	}
 
 	if (!this.Check_FirstPage(CurPage))
 	{
@@ -2720,6 +2761,37 @@ CParaLineMetrics.prototype =
         return LineGap;
     }
 };
+CParaLineMetrics.prototype.Copy = function()
+{
+	var oMetrics = new CParaLineMetrics();
+
+	oMetrics.Ascent      = this.Ascent;
+	oMetrics.Descent     = this.Descent;
+	oMetrics.TextAscent  = this.TextAscent;
+	oMetrics.TextAscent2 = this.TextAscent2;
+	oMetrics.TextDescent = this.TextDescent;
+	oMetrics.LineGap     = this.LineGap;
+
+	return oMetrics;
+};
+CParaLineMetrics.prototype.IsEqual = function(oMetrics)
+{
+	return (Math.abs(oMetrics.Ascent - this.Ascent) < 0.001
+		&& Math.abs(oMetrics.Descent - this.Descent) < 0.001
+		&& Math.abs(oMetrics.TextAscent - this.TextAscent) < 0.001
+		&& Math.abs(oMetrics.TextAscent2 - this.TextAscent2) < 0.001
+		&& Math.abs(oMetrics.TextDescent - this.TextDescent) < 0.001
+		&& Math.abs(oMetrics.LineGap - this.LineGap) < 0.001);
+};
+CParaLineMetrics.prototype.Reset = function()
+{
+	this.Ascent      = 0;
+	this.Descent     = 0;
+	this.TextAscent  = 0;
+	this.TextAscent2 = 0;
+	this.TextDescent = 0;
+	this.LineGap     = 0;
+};
 
 function CParaLineRange(X, XEnd)
 {
@@ -2757,6 +2829,18 @@ CParaLineRange.prototype =
 
         return NewRange;
     }
+};
+CParaLineRange.prototype.CorrectX = function(nX)
+{
+	let x = nX;
+
+	if (x > this.XEnd)
+		x = this.XEnd;
+
+	if (x < this.X)
+		x = this.X;
+
+	return x;
 };
 
 function CParaPage(X, Y, XLimit, YLimit, FirstLine)
@@ -2869,6 +2953,7 @@ function CParagraphRecalculateStateWrap(Para)
 	this.InTable         = false;
     this.SectPr          = null; // настройки секции, к которой относится данный параграф
 	this.CondensedSpaces = false;
+	this.BalanceSBDB     = false; // BalanceSingleByteDoubleByteWidth
 
 	this.Fast            = false; // Быстрый ли пересчет
 
@@ -3004,7 +3089,8 @@ CParagraphRecalculateStateWrap.prototype =
 		this.InTable     = Paragraph.Parent.IsTableCellContent();
         this.SectPr      = null;
 
-		this.CondensedSpaces = Paragraph && Paragraph.IsCondensedSpaces();
+		this.CondensedSpaces = Paragraph.IsCondensedSpaces();
+		this.BalanceSBDB     = Paragraph.IsBalanceSingleByteDoubleByteWidth();
 
 		this.Page               = CurPage;
 		this.RunRecalcInfoLast  = (0 === CurPage ? null : Paragraph.Pages[CurPage - 1].EndInfo.RunRecalcInfo);
@@ -3596,6 +3682,40 @@ CParagraphRecalculateStateWrap.prototype.SetMathRecalcInfoLine = function(nLine)
 CParagraphRecalculateStateWrap.prototype.IsCondensedSpaces = function()
 {
 	return this.CondensedSpaces;
+};
+CParagraphRecalculateStateWrap.prototype.IsBalanceSingleByteDoubleByteWidth = function(oRun, nPos)
+{
+	if (this.BalanceSBDB)
+	{
+		let oParaPos = this.Paragraph.GetPosByElement(oRun);
+		if (!oParaPos)
+			return true;
+
+		oParaPos.Add(nPos);
+
+		let oRunElements = new CParagraphRunElements(oParaPos, 1, null);
+		this.Paragraph.GetPrevRunElements(oRunElements);
+		let arrElements = oRunElements.GetElements();
+		if (arrElements.length <= 0)
+			return true;
+
+		let oItem = arrElements[0];
+		if (!oItem || para_Text !== oItem.Type || AscCommon.isEastAsianScript(oItem.Value))
+			return true;
+
+		oParaPos.Update(nPos + 1, oParaPos.GetDepth());
+
+		oRunElements = new CParagraphRunElements(oParaPos, 1, null);
+		this.Paragraph.GetNextRunElements(oRunElements);
+		arrElements = oRunElements.GetElements();
+		if (arrElements.length <= 0)
+			return true;
+
+		oItem = arrElements[0];
+		return (!oItem || para_Text !== oItem.Type || AscCommon.isEastAsianScript(oItem.Value));
+	}
+
+	return false;
 };
 CParagraphRecalculateStateWrap.prototype.AddCondensedSpaceToRange = function(oSpace)
 {

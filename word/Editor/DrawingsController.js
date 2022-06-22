@@ -110,9 +110,9 @@ CDrawingsController.prototype.AddSignatureLine = function(oSignatureDrawing)
 {
 	return this.DrawingObjects.addSignatureLine(oSignatureDrawing);
 };
-CDrawingsController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId)
+CDrawingsController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect)
 {
-	this.DrawingObjects.addOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId);
+	this.DrawingObjects.addOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect);
 };
 CDrawingsController.prototype.AddTextArt = function(nStyle)
 {
@@ -147,6 +147,18 @@ CDrawingsController.prototype.AddToParagraph = function(oItem, bRecalculate)
 };
 CDrawingsController.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord)
 {
+	var oDrawing = this.DrawingObjects.getMajorParaDrawing();
+	if (oDrawing && oDrawing.IsForm() && this.LogicDocument.IsFillingFormMode())
+	{
+		var oForm = oDrawing.GetInnerForm();
+		if (oForm && oForm.IsPicture())
+		{
+			oForm.ClearContentControlExt();
+			oForm.SelectContentControl();
+			return;
+		}
+	}
+
 	return this.DrawingObjects.remove(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord);
 };
 CDrawingsController.prototype.GetCursorPosXY = function()
@@ -356,12 +368,20 @@ CDrawingsController.prototype.GetDirectTextPr = function()
 };
 CDrawingsController.prototype.RemoveSelection = function(bNoCheckDrawing)
 {
-	var ParaDrawing = this.DrawingObjects.getMajorParaDrawing();
-	if (ParaDrawing)
+	var oParaDrawing = this.DrawingObjects.getMajorParaDrawing();
+	this.DrawingObjects.resetSelection(undefined, bNoCheckDrawing);
+	if (oParaDrawing)
 	{
-		ParaDrawing.GoTo_Text(undefined, false);
+		var oInnerForm = null;
+		if (oParaDrawing.IsForm() && (oInnerForm = oParaDrawing.GetInnerForm()) && oInnerForm.IsPicture())
+		{
+			var arrDrawings = oInnerForm.GetAllDrawingObjects();
+			if (arrDrawings.length)
+				oParaDrawing = arrDrawings[0];
+		}
+
+		oParaDrawing.GoTo_Text(undefined, false);
 	}
-	return this.DrawingObjects.resetSelection(undefined, bNoCheckDrawing);
 };
 CDrawingsController.prototype.IsSelectionEmpty = function(bCheckHidden)
 {
@@ -457,8 +477,11 @@ CDrawingsController.prototype.GetSelectedElementsInfo = function(oInfo)
 	if (oParaDrawing && oParaDrawing.IsForm())
 	{
 		var oInnerForm = oParaDrawing.GetInnerForm();
-		if (oInnerForm)
+		if (oInnerForm && oInnerForm !== oInfo.GetInlineLevelSdt())
+		{
 			oInfo.SetInlineLevelSdt(oInnerForm);
+			oInfo.SetFixedFormShape(true);
+		}
 	}
 
 };
@@ -574,7 +597,7 @@ CDrawingsController.prototype.AddComment = function(Comment)
 		if (null != ParaDrawing)
 		{
 			var Paragraph = ParaDrawing.Parent;
-			Paragraph.AddCommentToObject(Comment, ParaDrawing.Get_Id());
+			Paragraph.AddCommentToDrawingObject(Comment, ParaDrawing.Get_Id());
 		}
 	}
 	else
@@ -628,14 +651,7 @@ CDrawingsController.prototype.RestoreDocumentStateAfterLoadChanges = function(St
 };
 CDrawingsController.prototype.GetColumnSize = function()
 {
-	// TODO: Переделать
-	var _w = Math.max(1, AscCommon.Page_Width - (AscCommon.X_Left_Margin + AscCommon.X_Right_Margin));
-	var _h = Math.max(1, AscCommon.Page_Height - (AscCommon.Y_Top_Margin + AscCommon.Y_Bottom_Margin));
-
-	return {
-		W : AscCommon.Page_Width - (AscCommon.X_Left_Margin + AscCommon.X_Right_Margin),
-		H : AscCommon.Page_Height - (AscCommon.Y_Top_Margin + AscCommon.Y_Bottom_Margin)
-	};
+	return this.DrawingObjects.getColumnSize();
 };
 CDrawingsController.prototype.GetCurrentSectionPr = function()
 {
@@ -679,4 +695,10 @@ CDrawingsController.prototype.IsSelectionLocked = function(nCheckType)
 	var oContentControl = this.private_GetParentContentControl();
 	if (oContentControl)
 		oContentControl.Document_Is_SelectionLocked(nCheckType);
+};
+CDrawingsController.prototype.CollectSelectedReviewChanges = function(oTrackManager)
+{
+	var oTargetDocContent = this.DrawingObjects.getTargetDocContent();
+	if (oTargetDocContent && oTargetDocContent.CollectSelectedReviewChanges)
+		oTargetDocContent.CollectSelectedReviewChanges(oTrackManager);
 };

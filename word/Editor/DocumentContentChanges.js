@@ -73,6 +73,7 @@ CChangesDocumentContentAddItem.prototype.Undo = function()
 		var Elements = oDocument.Content.splice(Pos, 1);
 		oDocument.private_RecalculateNumbering(Elements);
 		oDocument.private_ReindexContent(Pos);
+		oDocument.private_UpdateSelectionPosOnRemove(Pos, 1);
 
 		if (Pos > 0)
 		{
@@ -103,6 +104,7 @@ CChangesDocumentContentAddItem.prototype.Redo = function()
 		oDocument.Content.splice(Pos, 0, Element);
 		oDocument.private_RecalculateNumbering([Element]);
 		oDocument.private_ReindexContent(Pos);
+		oDocument.private_UpdateSelectionPosOnAdd(Pos, 1);
 
 		if (Pos > 0)
 		{
@@ -216,6 +218,8 @@ CChangesDocumentContentRemoveItem.prototype.Undo = function()
 	oDocument.private_ReindexContent(this.Pos);
 	oDocument.Content = Array_start.concat(this.Items, Array_end);
 
+	oDocument.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
+
 	var nStartIndex = Math.max(this.Pos - 1, 0);
 	var nEndIndex   = Math.min(oDocument.Content.length - 1, this.Pos + this.Items.length + 1);
 	for (var nIndex = nStartIndex; nIndex <= nEndIndex; ++nIndex)
@@ -243,6 +247,7 @@ CChangesDocumentContentRemoveItem.prototype.Redo = function()
 	var Elements = oDocument.Content.splice(this.Pos, this.Items.length);
 	oDocument.private_RecalculateNumbering(Elements);
 	oDocument.private_ReindexContent(this.Pos);
+	oDocument.private_UpdateSelectionPosOnRemove(this.Pos, this.Items.length);
 
 	var Pos = this.Pos;
 	if (Pos > 0)

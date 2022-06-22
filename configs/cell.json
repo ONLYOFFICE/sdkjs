@@ -16,30 +16,44 @@
 			"common/TableId.js",
 			"common/TableIdChanges.js",
 			"common/AdvancedOptions.js",
+			"common/libfont/engine.js",
 			"common/libfont/loader.js",
 			"cell/apiDefines.js",
 			"cell/utils/utils.js",
 			"cell/view/HandlerList.js",
 			"common/CollaborativeEditingBase.js",
+			"cell/model/DrawingObjects/GlobalCounters.js",
 			"cell/model/CollaborativeEditing.js",
 			"common/macros.js",
 			"common/apiBase.js",
 			"common/apiBase_plugins.js",
 			"word/apiCommon.js",
 			"cell/api.js",
-			"common/spell/spell.js"
+			"common/spell/spell.js",
+			"common/zlib/zlib.js",
+			"word/Editor/Table/TableLook.js"
 		],
-		"common": [			
+		"common": [
+			"common/api/actionOnTimer.js",
+			"common/api/tableStylesPreviewGenerator.js",
+			"common/api/spellCheckSettings.js",
+
 			"common/downloaderfiles.js",
 			"common/NumFormat.js",
 			"common/SerializeChart.js",
 
+			"common/libfont/common.js",
 			"common/libfont/map.js",
 			"common/libfont/rasterheap.js",
 			"common/libfont/glyphstring.js",
 			"common/libfont/character.js",
-			"common/libfont/manager.js",
 			"common/libfont/classification.js",
+			"common/libfont/file.js",
+			"common/libfont/manager.js",
+
+			"common/stringserialize.js",
+			"common/random.js",
+			"common/hash/hash.js",
 
 			"common/Drawings/Metafile.js",
 			"common/libfont/textmeasurer.js",
@@ -57,20 +71,21 @@
 
 			"common/Drawings/CommonController.js",
 			"common/Drawings/States.js",
-			"common/Drawings/Format/CreateGeometry.js",
 			"common/Drawings/DrawingsChanges.js",
-			"common/Drawings/Format/Geometry.js",
 			"common/Drawings/Format/Format.js",
+			"common/Drawings/Format/VML.js",
+			"common/Drawings/Format/CreateGeometry.js",
+			"common/Drawings/Format/Geometry.js",
 			"common/Drawings/Format/GraphicObjectBase.js",
 			"common/Drawings/Format/Shape.js",
 			"common/Drawings/Format/CnxShape.js",
 			"common/Drawings/Format/Path.js",
 			"common/Drawings/Format/Image.js",
 			"common/Drawings/Format/GroupShape.js",
+			"common/Drawings/Format/Data.js",
 			"common/Drawings/Format/ChartSpace.js",
 			"common/Drawings/Format/ChartFormat.js",
 			"common/Drawings/Format/TextBody.js",
-			"common/Drawings/Format/GraphicFrame.js",
 			"common/Charts/charts.js",
 			"common/Charts/DrawingArea.js",
 			"common/Charts/DrawingObjects.js",
@@ -82,6 +97,7 @@
 			"common/Drawings/TrackObjects/PolyLine.js",
 			"common/Drawings/TrackObjects/ResizeTracks.js",
 			"common/Drawings/TrackObjects/RotateTracks.js",
+			"common/Drawings/TrackObjects/GeometryEditTrack.js",
 			"common/Drawings/TrackObjects/Spline.js",
 			"common/Drawings/TrackObjects/ConnectorTrack.js",
 			"common/Drawings/DrawingObjectsHandlers.js",
@@ -100,9 +116,6 @@
 			"common/Scrolls/mobileTouchManagerBase.js",
 
 			"common/wordcopypaste.js",
-
-			"vendor/easysax.js",
-			"common/openxml.js",
 
 			"common/intervalTree.js",
 
@@ -147,11 +160,11 @@
 			"cell/model/DrawingObjects/Graphics.js",
 			"word/Drawing/ShapeDrawer.js",
 			"cell/model/DrawingObjects/DrawingDocument.js",
-			"cell/model/DrawingObjects/GlobalCounters.js",
 			"cell/model/DrawingObjects/Format/ShapePrototype.js",
 			"cell/model/DrawingObjects/Format/ImagePrototype.js",
 			"cell/model/DrawingObjects/Format/GroupPrototype.js",
 			"cell/model/DrawingObjects/Format/ChartSpacePrototype.js",
+			"common/Drawings/Format/GraphicFrame.js",
 			"common/Drawings/Format/LockedCanvas.js",
 			"common/Drawings/Format/SlicerView.js",
 			"cell/model/PivotTables.js",
@@ -178,6 +191,7 @@
 			"word/Editor/Field.js",
 			"word/Editor/FieldChanges.js",
 			"word/Editor/Run.js",
+			"word/Editor/Paragraph/Run/RunAutoCorrect.js",
 			"word/Editor/PresentationField.js",
 			"word/Editor/RunChanges.js",
 			"word/Editor/Math.js",
@@ -198,6 +212,8 @@
 			"word/Editor/HeaderFooter.js",
 			"word/Editor/DocumentContentBase.js",
 			"word/Editor/Document.js",
+			"word/Editor/ChangeCase.js",
+			"word/Editor/SelectedContent.js",
 			"word/Editor/DocumentOutline.js",
 			"word/Editor/DocumentChanges.js",
 			"word/Editor/DocumentContent.js",
@@ -220,7 +236,10 @@
 			"word/Editor/StructuredDocumentTags/SdtPr.js",
 			"word/Editor/StructuredDocumentTags/SdtPrChanges.js",
 			"word/Editor/Serialize2.js",
-			"word/Editor/Spelling.js",
+			"word/Editor/SpellChecker/DocumentSpellChecker.js",
+			"word/Editor/SpellChecker/ParagraphCollector.js",
+			"word/Editor/SpellChecker/ParagraphSpellChecker.js",
+			"word/Editor/SpellChecker/ParagraphSpellCheckerElement.js",
 			"word/Editor/FootEndNote.js",
 			"word/Editor/Footnotes.js",
 			"word/Editor/FootnotesChanges.js",
@@ -247,6 +266,8 @@
 			"word/apiBuilder.js",
 			"slide/apiBuilder.js",
 			"cell/apiBuilder.js",
+			"word/fromToJSON.js",
+			"cell/fromToJSON.js",
 
 			"common/versionHistory.js",
 			"common/clipboard_base.js",
@@ -254,8 +275,17 @@
 			"common/Drawings/Format/OleObject.js",
 			"common/Drawings/Format/DrawingContent.js",
 			"common/plugins.js",
+
+			"common/Native/native_graphics.js",
 			
-			"common/Native/native_graphics.js"
+			"vendor/easysax.js",
+			"common/openxml.js",
+			"common/Shapes/SerializeXml.js",
+			"common/SerializeChartXml.js",
+			"common/SerializeMathXml.js",
+			"cell/model/SerializeXml.js",
+			"word/Editor/SerializeXml.js",
+			"word/Editor/SerializeXmlAssets.js"
 		],
 		"desktop": {
 			"min": [
@@ -273,6 +303,7 @@
 			"common": []
 		},
 		"mobile": [
+			"common/libfont/engine/fonts_native.js",
 			"common/Charts/ChartStyles.js",
 			"common/Native/Wrappers/TextMeasurerWrapper.js",
 			"common/Native/Wrappers/DrawingStream.js",
@@ -283,17 +314,13 @@
 			"cell/native/native.js"
 		],
 		"exclude_mobile": [
+			"vendor/iscroll.js",
 			"common/Overlay.js",
 			"common/Controls.js",
+			"common/Scrolls/mobileTouchManagerBase.js",
 			"word/Drawing/ShapeDrawer.js",
 			"cell/model/DrawingObjects/DrawingDocument.js",
-			"common/libfont/rasterheap.js",
-			"common/libfont/glyphstring.js",
-			"common/libfont/manager.js",
-			"common/libfont/textmeasurer.js",
 			"cell/model/DrawingObjects/Graphics.js",
-			"vendor/iscroll.js",
-			"common/Scrolls/mobileTouchManagerBase.js",
 			"cell/view/mobileTouch.js"
 		]
 	}

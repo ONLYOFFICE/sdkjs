@@ -410,3 +410,150 @@ CTextToTableEngine.prototype.GetContentControl = function()
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
+
+(function(window, undefined)
+{
+	function private_CheckDrawingDocumentPosition(oDocPos)
+	{
+		var oShape = null;
+		if (oDocPos[0].Class instanceof AscCommonWord.CDocumentContent && (oShape = oDocPos[0].Class.Is_DrawingShape(true)) && oShape.parent instanceof AscCommonWord.ParaDrawing)
+		{
+			var oDrawingDocPos = oShape.parent.GetDocumentPositionFromObject();
+			if (!oDrawingDocPos || !oDrawingDocPos.length)
+				return oDocPos;
+
+			return oDrawingDocPos.concat(oDocPos);
+		}
+
+		return oDocPos;
+	}
+	function private_GetTopDocumentPosition(oDocPos)
+	{
+		var oClass = oDocPos[0].Class;
+		if (oClass instanceof AscCommonWord.CDocument)
+			return 0;
+		else if (!(oClass instanceof AscCommonWord.CDocumentContent))
+			return 0xFF;
+		if (oClass.IsFootnote() && oClass.GetParent() instanceof CFootnotesController)
+			return 1;
+		else if (oClass.IsFootnote() && oClass.GetParent() instanceof CEndnotesController)
+			return 2;
+		else if (oClass.IsHdrFtr())
+			return 3;
+
+		return 0xFF;
+	}
+	function private_CompareDocumentPositions(oDocPos1, oDocPos2)
+	{
+		for (var nIndex = 0, nCount = oDocPos1.length; nIndex < nCount; ++nIndex)
+		{
+			if (oDocPos2.length <= nIndex)
+				return 1;
+
+			if (oDocPos1[nIndex].Position < oDocPos2[nIndex].Position)
+				return -1;
+			else if (oDocPos1[nIndex].Position > oDocPos2[nIndex].Position)
+				return 1;
+		}
+
+		return 0;
+	}
+	function private_GetNoteReferencePosition(oDocPos)
+	{
+		var oClass = oDocPos[0].Class;
+		if (!(oClass instanceof CFootEndnote))
+			return oDocPos;
+
+		var oRef = oClass.GetRef();
+		if (!oRef)
+			return oDocPos;
+
+		var oRun = oRef.GetRun();
+		if (!oRun)
+			return oDocPos;
+
+		var oRunDocPos = oRun.GetDocumentPositionFromObject();
+		var nInRunPos = oRun.GetElementPosition(oRef);
+		if (!oRunDocPos || -1 === nInRunPos)
+			return oDocPos;
+
+		oRunDocPos.push({Class : oRun, Position : nInRunPos});
+		return oRunDocPos;
+	}
+	function private_GetSectionHeaderIndex(oHeader)
+	{
+		var oSection = oHeader.GetSectionPr();
+		if (!oSection)
+			return -1;
+
+		if (oHeader === oSection.Get_Header_First())
+			return 0;
+		else if (oHeader === oSection.Get_Footer_First())
+			return 1;
+		else if (oHeader === oSection.Get_Header_Default())
+			return 2;
+		else if (oHeader === oSection.Get_Footer_Default())
+			return 3;
+		else if (oHeader === oSection.Get_Header_Even())
+			return 4;
+		else if (oHeader === oSection.Get_Footer_Even())
+			return 5;
+
+		return -1;
+	}
+	function private_CompareHdrFtrPosition(oDocPos1, oDocPos2)
+	{
+		var oHeader1 = oDocPos1[0].Class.IsHdrFtr(true);
+		var oHeader2 = oDocPos2[0].Class.IsHdrFtr(true);
+
+		if (!oHeader1 || !oHeader2 || oHeader1 === oHeader2)
+			return 0;
+
+		var nSectionIndex1 = oHeader1.GetSectionIndex();
+		var nSectionIndex2 = oHeader2.GetSectionIndex();
+
+		if (nSectionIndex1 < nSectionIndex2)
+			return -1;
+		else if (nSectionIndex1 > nSectionIndex2)
+			return 1;
+
+		return (private_GetSectionHeaderIndex(oHeader1) < private_GetSectionHeaderIndex(oHeader2) ? -1 : 1);
+	}
+	function CompareDocumentPositions(oDocPos1, oDocPos2)
+	{
+		if (!oDocPos1 || !oDocPos2 || !oDocPos1.length || !oDocPos2.length)
+			return 0;
+
+		oDocPos1 = private_CheckDrawingDocumentPosition(oDocPos1);
+		oDocPos2 = private_CheckDrawingDocumentPosition(oDocPos2);
+
+		var nTopPos1 = private_GetTopDocumentPosition(oDocPos1);
+		var nTopPos2 = private_GetTopDocumentPosition(oDocPos2);
+
+		if (nTopPos1 !== nTopPos2)
+			return (nTopPos1 < nTopPos2 ? -1 : 1);
+
+		if (oDocPos1[0].Class !== oDocPos2[0].Class)
+		{
+			if (1 === nTopPos1 || 2 === nTopPos2)
+			{
+				oDocPos1 = private_GetNoteReferencePosition(oDocPos1);
+				oDocPos2 = private_GetNoteReferencePosition(oDocPos2);
+			}
+			else if (3 === nTopPos1)
+			{
+				return private_CompareHdrFtrPosition(oDocPos1, oDocPos2);
+			}
+		}
+
+		if (oDocPos1[0].Class !== oDocPos2[0].Class)
+			return 0;
+
+		return private_CompareDocumentPositions(oDocPos1, oDocPos2);
+	}
+
+	//--------------------------------------------------------export----------------------------------------------------
+	window['AscCommonWord'] = window['AscCommonWord'] || {};
+	window['AscCommonWord'].CompareDocumentPositions = CompareDocumentPositions;
+
+})(window);

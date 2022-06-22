@@ -119,22 +119,15 @@ var break_Line   = 0x01;
 var break_Page   = 0x02;
 var break_Column = 0x03;
 
+var break_Clear_None  = 0x00;
+var break_Clear_All   = 0x01;
+var break_Clear_Left  = 0x02;
+var break_Clear_Right = 0x03;
+
 var nbsp_charcode = 0x00A0;
 
 var nbsp_string = String.fromCharCode(0x00A0);
 var sp_string   = String.fromCharCode(0x0032);
-
-var g_aNumber     = [];
-g_aNumber[0x0030] = 1;
-g_aNumber[0x0031] = 1;
-g_aNumber[0x0032] = 1;
-g_aNumber[0x0033] = 1;
-g_aNumber[0x0034] = 1;
-g_aNumber[0x0035] = 1;
-g_aNumber[0x0036] = 1;
-g_aNumber[0x0037] = 1;
-g_aNumber[0x0038] = 1;
-g_aNumber[0x0039] = 1;
 
 // Suitable Run content for the paragraph simple changes
 var g_oSRCFPSC             = [];
@@ -170,15 +163,6 @@ var PARATEXT_FLAGS_NON_SPACEAFTER         = PARATEXT_FLAGS_MASK ^ PARATEXT_FLAGS
 var PARATEXT_FLAGS_NON_CAPITALS           = PARATEXT_FLAGS_MASK ^ PARATEXT_FLAGS_CAPITALS;
 
 var TEXTWIDTH_DIVIDER = 16384;
-
-var AUTOCORRECT_FLAGS_NONE                  = 0x00000000;
-var AUTOCORRECT_FLAGS_ALL                   = 0xFFFFFFFF;
-var AUTOCORRECT_FLAGS_FRENCH_PUNCTUATION    = 0x00000001;
-var AUTOCORRECT_FLAGS_SMART_QUOTES          = 0x00000002;
-var AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH      = 0x00000004;
-var AUTOCORRECT_FLAGS_HYPERLINK             = 0x00000008;
-var AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE = 0x00000010;
-var AUTOCORRECT_FLAGS_NUMBERING             = 0x00000020;
 
 /**
  * Базовый класс для элементов, лежащих внутри рана.
@@ -222,7 +206,7 @@ CRunElementBase.prototype.Is_RealContent   = function()
 {
 	return true;
 };
-CRunElementBase.prototype.Can_AddNumbering = function()
+CRunElementBase.prototype.CanAddNumbering  = function()
 {
 	return true;
 };
@@ -272,7 +256,7 @@ CRunElementBase.prototype.CanBeAtEndOfLine = function()
  */
 CRunElementBase.prototype.GetAutoCorrectFlags = function()
 {
-	return AUTOCORRECT_FLAGS_NONE;
+	return AscCommonWord.AUTOCORRECT_FLAGS_NONE;
 };
 /**
  * Является ли данный элемент символом пунктуации
@@ -338,6 +322,98 @@ CRunElementBase.prototype.IsLetter = function()
 {
 	return false;
 };
+/**
+ * Нужно ли сохранять данные этого элемента при сохранении состояния пересчета
+ * @returns {boolean}
+ */
+CRunElementBase.prototype.IsNeedSaveRecalculateObject = function()
+{
+	return false;
+};
+/**
+ * Является ли данный элемент цифрой
+ * @returns {boolean}
+ */
+CRunElementBase.prototype.IsDigit = function()
+{
+	return false;
+};
+/**
+ * Является ли данный элемент пробельным символом
+ * @returns {boolean}
+ */
+CRunElementBase.prototype.IsSpace = function()
+{
+	return false;
+};
+/**
+ * Преобразуем в элемент для поиска
+ * @returns {?CSearchTextItemBase}
+ */
+CRunElementBase.prototype.ToSearchElement = function(oProps)
+{
+	return null;
+};
+/**
+ * Преобразуем в элемент матиматического рана
+ * @returns {?CMathBaseText}
+ */
+CRunElementBase.prototype.ToMathElement = function()
+{
+	return null;
+};
+/**
+ * Является ли данный элемент автофигурой
+ * @returns {boolean}
+ */
+CRunElementBase.prototype.IsDrawing = function()
+{
+	return false;
+};
+/**
+ * Является ли данный элемент текстовым элементом (но не пробелом и не табом)
+ * @returns {boolean}
+ */
+CRunElementBase.prototype.IsText = function()
+{
+	return false;
+};
+/**
+ * @returns {boolean}
+ */
+CRunElementBase.prototype.IsTab = function()
+{
+	return false;
+};
+/**
+ * @returns {boolean}
+ */
+CRunElementBase.prototype.IsParaEnd = function()
+{
+	return false;
+};
+/**
+ * @returns {boolean}
+ */
+CRunElementBase.prototype.IsReference = function()
+{
+	return false;
+};
+/**
+ * @returns {rfont_None}
+ */
+CRunElementBase.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_None;
+};
+/**
+ * @returns {boolean}
+ */
+CRunElementBase.prototype.IsBreak = function()
+{
+	return false;
+};
+
 
 /**
  * Класс представляющий текстовый символ
@@ -397,7 +473,7 @@ ParaText.prototype.Draw = function(X, Y, Context, PDSE, oTextPr)
 
 	var ResultCharCode = (this.Flags & PARATEXT_FLAGS_CAPITALS ? (String.fromCharCode(CharCode).toUpperCase()).charCodeAt(0) : CharCode);
 
-	if (true !== this.Is_NBSP())
+	if (true !== this.IsNBSP())
 		Context.FillTextCode(X, Y, ResultCharCode);
 	else if (editor && editor.ShowParaMarks)
 		Context.FillText(X, Y, String.fromCharCode(0x00B0));
@@ -474,7 +550,7 @@ ParaText.prototype.Is_RealContent = function()
 {
 	return true;
 };
-ParaText.prototype.Can_AddNumbering = function()
+ParaText.prototype.CanAddNumbering = function()
 {
 	return true;
 };
@@ -486,10 +562,6 @@ ParaText.prototype.IsEqual = function(oElement)
 {
 	return (oElement.Type === this.Type && this.Value === oElement.Value);
 };
-ParaText.prototype.Is_NBSP = function()
-{
-	return (this.Value === nbsp_charcode);
-};
 ParaText.prototype.IsNBSP = function()
 {
 	return (this.Value === nbsp_charcode);
@@ -498,12 +570,9 @@ ParaText.prototype.IsPunctuation = function()
 {
 	return !!(undefined !== AscCommon.g_aPunctuation[this.Value]);
 };
-ParaText.prototype.Is_Number = function()
+ParaText.prototype.IsNumber = function()
 {
-	if (1 === g_aNumber[this.Value])
-		return true;
-
-	return false;
+	return this.IsDigit();
 };
 ParaText.prototype.Is_SpecialSymbol = function()
 {
@@ -571,14 +640,14 @@ ParaText.prototype.private_IsSpaceAfter = function()
 };
 ParaText.prototype.CanBeAtBeginOfLine = function()
 {
-	if (this.Is_NBSP())
+	if (this.IsNBSP())
 		return false;
 
 	return (!(AscCommon.g_aPunctuation[this.Value] & AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_BEGIN));
 };
 ParaText.prototype.CanBeAtEndOfLine = function()
 {
-	if (this.Is_NBSP())
+	if (this.IsNBSP())
 		return false;
 
 	return (!(AscCommon.g_aPunctuation[this.Value] & AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_END));
@@ -599,13 +668,13 @@ ParaText.prototype.GetAutoCorrectFlags = function()
 		|| 58 === this.Value
 		|| 59 === this.Value
 		|| 63 === this.Value)
-		return AUTOCORRECT_FLAGS_ALL;
+		return AscCommonWord.AUTOCORRECT_FLAGS_ALL;
 
 	// /,\,@  - исключения, на них мы не должны стартовать атозамену первой буквы предложения
-	if ((this.IsPunctuation() || this.Is_Number()) && 92 !== this.Value && 47 !== this.Value && 64 !== this.Value)
-		return AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE | AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH;
+	if ((this.IsPunctuation() || this.IsNumber()) && 92 !== this.Value && 47 !== this.Value && 64 !== this.Value)
+		return AscCommonWord.AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE | AscCommonWord.AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH;
 
-	return AUTOCORRECT_FLAGS_NONE;
+	return AscCommonWord.AUTOCORRECT_FLAGS_NONE;
 };
 ParaText.prototype.IsDiacriticalSymbol = function()
 {
@@ -701,7 +770,48 @@ ParaText.prototype.private_DrawGapsBackground = function(X, Y, oContext, PDSE, o
 };
 ParaText.prototype.IsLetter = function()
 {
-	return (!this.IsPunctuation() && !this.Is_Number() && !this.IsNBSP());
+	return (!this.IsPunctuation() && !this.IsNumber() && !this.IsNBSP());
+};
+ParaText.prototype.IsDigit = function()
+{
+	return AscCommon.IsDigit(this.Value);
+};
+ParaText.prototype.ToSearchElement = function(oProps)
+{
+	if (0x2D === this.Value && !this.IsSpaceAfter())
+		return new AscCommonWord.CSearchTextSpecialNonBreakingHyphen();
+
+	if (!oProps.IsMatchCase())
+		return new AscCommonWord.CSearchTextItemChar(String.fromCodePoint(this.Value).toLowerCase().codePointAt(0));
+
+	return new AscCommonWord.CSearchTextItemChar(this.Value);
+};
+ParaText.prototype.ToMathElement = function()
+{
+	if (38 === this.Value)
+		return new CMathAmp();
+
+	let oText = new CMathText();
+	oText.add(this.Value);
+	return oText;
+};
+ParaText.prototype.IsText = function()
+{
+	return true;
+};
+ParaText.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	let fontSlot = g_font_detector.Get_FontClass(this.Value, nHint, nEA_lcid, isCS, isRTL);
+	if (fontSlot === fontslot_ASCII)
+		return rfont_ASCII;
+	else if (fontSlot === fontslot_HAnsi)
+		return rfont_HAnsi;
+	else if (fontSlot === fontslot_CS)
+		return rfont_CS;
+	else if (fontSlot === fontslot_EastAsia)
+		return rfont_EastAsia;
+
+	return rfont_None;
 };
 
 
@@ -728,6 +838,10 @@ ParaSpace.prototype = Object.create(CRunElementBase.prototype);
 ParaSpace.prototype.constructor = ParaSpace;
 
 ParaSpace.prototype.Type = para_Space;
+ParaSpace.prototype.IsSpace = function()
+{
+	return true;
+};
 ParaSpace.prototype.Draw = function(X, Y, Context, PDSE, oTextPr)
 {
 	if (undefined !== editor && editor.ShowParaMarks)
@@ -770,6 +884,21 @@ ParaSpace.prototype.Measure = function(Context, TextPr)
 	var ResultWidth  = (Math.max((Temp + TextPr.Spacing), 0) * 16384) | 0;
 	this.Width       = ResultWidth;
 	this.WidthOrigin = ResultWidth;
+
+	if (Math.abs(Temp) > 0.001)
+	{
+		let nEnKoef;
+		if (g_oTextMeasurer.m_oManager && g_oTextMeasurer.m_oManager.m_pFont && 0 !== g_oTextMeasurer.m_oManager.m_pFont.GetGIDByUnicode(0x2002))
+			nEnKoef = Context.MeasureCode(0x2002).Width / Temp;
+		else
+			nEnKoef = TextPr.FontSize / 72 * 25.4 / 2 / Temp;
+
+		this.WidthEn = (ResultWidth * nEnKoef) | 0;
+	}
+	else
+	{
+		this.WidthEn = ResultWidth;
+	}
 
 	if (0x2003 === this.Value || 0x2002 === this.Value)
 		this.SpaceGap = Math.max((Temp - Context.MeasureCode(0x00B0).Width) / 2, 0);
@@ -815,7 +944,7 @@ ParaSpace.prototype.Is_RealContent = function()
 {
 	return true;
 };
-ParaSpace.prototype.Can_AddNumbering = function()
+ParaSpace.prototype.CanAddNumbering = function()
 {
 	return true;
 };
@@ -837,7 +966,7 @@ ParaSpace.prototype.Read_FromBinary = function(Reader)
 };
 ParaSpace.prototype.GetAutoCorrectFlags = function()
 {
-	return AUTOCORRECT_FLAGS_ALL;
+	return AscCommonWord.AUTOCORRECT_FLAGS_ALL;
 };
 ParaSpace.prototype.SetCondensedWidth = function(nKoef)
 {
@@ -846,6 +975,10 @@ ParaSpace.prototype.SetCondensedWidth = function(nKoef)
 ParaSpace.prototype.ResetCondensedWidth = function()
 {
 	this.Width = this.WidthOrigin;
+};
+ParaSpace.prototype.BalanceSingleByteDoubleByteWidth = function()
+{
+	this.Width = this.WidthEn;
 };
 ParaSpace.prototype.SetGaps = function(nLeftGap, nRightGap)
 {
@@ -858,7 +991,20 @@ ParaSpace.prototype.SetGaps = function(nLeftGap, nRightGap)
 ParaSpace.prototype.ResetGapBackground = ParaText.prototype.ResetGapBackground;
 ParaSpace.prototype.SetGapBackground = ParaText.prototype.SetGapBackground;
 ParaSpace.prototype.private_DrawGapsBackground = ParaText.prototype.private_DrawGapsBackground;
-
+ParaSpace.prototype.ToSearchElement = function(oProps)
+{
+	return new AscCommonWord.CSearchTextItemChar(0x20);
+};
+ParaSpace.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
+};
+ParaSpace.prototype.ToMathElement = function()
+{
+	let oSpace = new CMathText();
+	oSpace.add(0x0032);
+	return oSpace;
+};
 
 /**
  * Класс представляющий символ
@@ -956,7 +1102,7 @@ ParaSym.prototype.Is_RealContent = function()
 {
 	return true;
 };
-ParaSym.prototype.Can_AddNumbering = function()
+ParaSym.prototype.CanAddNumbering = function()
 {
 	return true;
 };
@@ -1131,7 +1277,7 @@ ParaEnd.prototype.Is_RealContent = function()
 {
 	return true;
 };
-ParaEnd.prototype.Can_AddNumbering = function()
+ParaEnd.prototype.CanAddNumbering = function()
 {
 	return true;
 };
@@ -1149,22 +1295,37 @@ ParaEnd.prototype.Read_FromBinary = function(Reader)
 };
 ParaEnd.prototype.GetAutoCorrectFlags = function()
 {
-	return (AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE
-		| AUTOCORRECT_FLAGS_HYPERLINK
-		| AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH);
+	return (AscCommonWord.AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE
+		| AscCommonWord.AUTOCORRECT_FLAGS_HYPERLINK
+		| AscCommonWord.AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH);
 };
+ParaEnd.prototype.ToSearchElement = function(oProps)
+{
+	return new AscCommonWord.CSearchTextSpecialParaEnd();
+};
+ParaEnd.prototype.IsParaEnd = function()
+{
+	return true;
+};
+ParaEnd.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
+};
+
 
 /**
  * Класс представляющий разрыв строки/колонки/страницы
- * @param BreakType
+ * @param nBreakType
+ * @param nClear {break_Clear_None | break_Clear_All | break_Clear_Left | break_Clear_Right}
  * @constructor
  * @extends {CRunElementBase}
  */
-function ParaNewLine(BreakType)
+function ParaNewLine(nBreakType, nClear)
 {
 	CRunElementBase.call(this);
 
-    this.BreakType = BreakType;
+    this.BreakType = nBreakType;
+	this.Clear     = nClear ? nClear : break_Clear_None;
 
     this.Flags = {}; // специальные флаги для разных break
     this.Flags.Use = true;
@@ -1366,7 +1527,7 @@ ParaNewLine.prototype.Is_RealContent = function()
 {
 	return true;
 };
-ParaNewLine.prototype.Can_AddNumbering = function()
+ParaNewLine.prototype.CanAddNumbering = function()
 {
 	if (break_Line === this.BreakType)
 		return true;
@@ -1402,9 +1563,9 @@ ParaNewLine.prototype.Write_ToBinary = function(Writer)
 	Writer.WriteLong(this.BreakType);
 
 	if (break_Page === this.BreakType || break_Column === this.BreakType)
-	{
 		Writer.WriteBool(this.Flags.NewLine);
-	}
+	else
+		Writer.WriteLong(this.Clear);
 };
 ParaNewLine.prototype.Read_FromBinary = function(Reader)
 {
@@ -1412,6 +1573,8 @@ ParaNewLine.prototype.Read_FromBinary = function(Reader)
 
 	if (break_Page === this.BreakType || break_Column === this.BreakType)
 		this.Flags = {NewLine : Reader.GetBool()};
+	else
+		this.Clear = Reader.GetLong();
 };
 /**
  * Разрыв страницы или колонки?
@@ -1447,8 +1610,25 @@ ParaNewLine.prototype.IsLineBreak = function()
 };
 ParaNewLine.prototype.GetAutoCorrectFlags = function()
 {
-	return (AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE
-		| AUTOCORRECT_FLAGS_HYPERLINK);
+	return (AscCommonWord.AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE
+		| AscCommonWord.AUTOCORRECT_FLAGS_HYPERLINK);
+};
+ParaNewLine.prototype.ToSearchElement = function(oProps)
+{
+	if (break_Page === this.BreakType)
+		return new AscCommonWord.CSearchTextSpecialPageBreak();
+	else if (break_Column === this.BreakType)
+		return new AscCommonWord.CSearchTextSpecialColumnBreak();
+	else
+		return new AscCommonWord.CSearchTextSpecialLineBreak();
+};
+ParaNewLine.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
+};
+ParaNewLine.prototype.IsBreak = function()
+{
+	return true;
 };
 
 
@@ -1578,7 +1758,7 @@ ParaNumbering.prototype.Is_RealContent = function()
 {
 	return true;
 };
-ParaNumbering.prototype.Can_AddNumbering = function()
+ParaNumbering.prototype.CanAddNumbering = function()
 {
 	return false;
 };
@@ -1622,12 +1802,16 @@ ParaNumbering.prototype.GetSourceWidth = function()
 {
 	return this.Internal.SourceWidth;
 };
+ParaNumbering.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
+};
 
 // TODO: Реализовать табы по точке и с чертой (tab_Bar tab_Decimal)
 var tab_Bar     = Asc.c_oAscTabType.Bar;
 var tab_Center  = Asc.c_oAscTabType.Center;
 var tab_Clear   = Asc.c_oAscTabType.Clear;
-var tab_Decimal = Asc.c_oAscTabType.Decimail;
+var tab_Decimal = Asc.c_oAscTabType.Decimal;
 var tab_Num     = Asc.c_oAscTabType.Num;
 var tab_Right   = Asc.c_oAscTabType.Right;
 var tab_Left    = Asc.c_oAscTabType.Left;
@@ -1710,6 +1894,8 @@ ParaTab.prototype.Draw = function(X, Y, Context)
 };
 ParaTab.prototype.Measure = function(Context)
 {
+	Context.SetFontSlot(fontslot_ASCII, 1);
+	
 	this.DotWidth        = Context.Measure(".").Width;
 	this.UnderscoreWidth = Context.Measure("_").Width;
 	this.HyphenWidth     = Context.Measure("-").Width * 1.5;
@@ -1738,7 +1924,41 @@ ParaTab.prototype.Copy = function()
 {
 	return new ParaTab();
 };
-
+ParaTab.prototype.IsNeedSaveRecalculateObject = function()
+{
+	return true;
+};
+ParaTab.prototype.SaveRecalculateObject = function()
+{
+	return {
+		Width        : this.Width,
+		WidthVisible : this.WidthVisible
+	};
+};
+ParaTab.prototype.LoadRecalculateObject = function(RecalcObj)
+{
+	this.Width        = RecalcObj.Width;
+	this.WidthVisible = RecalcObj.WidthVisible;
+};
+ParaTab.prototype.PrepareRecalculateObject = function()
+{
+};
+ParaTab.prototype.GetAutoCorrectFlags = function()
+{
+	return AscCommonWord.AUTOCORRECT_FLAGS_ALL;
+};
+ParaTab.prototype.ToSearchElement = function(oProps)
+{
+	return new AscCommonWord.CSearchTextSpecialTab();
+};
+ParaTab.prototype.IsTab = function()
+{
+	return true;
+};
+ParaTab.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
+};
 
 /**
  * Класс представляющий элемент номер страницы
@@ -1826,6 +2046,10 @@ ParaPageNum.prototype.Set_Page = function(PageNum)
 	this.Width        = RealWidth;
 	this.WidthVisible = RealWidth;
 };
+ParaPageNum.prototype.IsNeedSaveRecalculateObject = function()
+{
+	return true;
+};
 ParaPageNum.prototype.SaveRecalculateObject = function(Copy)
 {
 	return new CPageNumRecalculateObject(this.Type, this.Widths, this.String, this.Width, Copy);
@@ -1856,7 +2080,7 @@ ParaPageNum.prototype.Is_RealContent = function()
 {
 	return true;
 };
-ParaPageNum.prototype.Can_AddNumbering = function()
+ParaPageNum.prototype.CanAddNumbering = function()
 {
 	return true;
 };
@@ -1899,6 +2123,10 @@ ParaPageNum.prototype.SetParent = function(oParent)
 ParaPageNum.prototype.GetParent = function()
 {
 	return this.Parent;
+};
+ParaPageNum.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
 };
 
 function CPageNumRecalculateObject(Type, Widths, String, Width, Copy)
@@ -1954,7 +2182,7 @@ ParaPresentationNumbering.prototype.Is_RealContent = function()
 {
 	return true;
 };
-ParaPresentationNumbering.prototype.Can_AddNumbering = function()
+ParaPresentationNumbering.prototype.CanAddNumbering = function()
 {
 	return false;
 };
@@ -2226,6 +2454,27 @@ ParaFootnoteReference.prototype.GetRun = function()
 {
 	return this.Run;
 };
+ParaFootnoteReference.prototype.ToSearchElement = function(oProps)
+{
+	return new AscCommonWord.CSearchTextSpecialFootnoteMark();
+};
+ParaFootnoteReference.prototype.PreDelete = function()
+{
+	var oFootnote = this.Footnote;
+	if (oFootnote)
+	{
+		oFootnote.PreDelete();
+		oFootnote.ClearContent(true);
+	}
+};
+ParaFootnoteReference.prototype.IsReference = function()
+{
+	return true;
+};
+ParaFootnoteReference.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
+};
 
 /**
  * Класс представляющий номер сноски внутри сноски.
@@ -2279,6 +2528,9 @@ ParaFootnoteRef.prototype.UpdateNumber = function(oFootnote)
 		this.NumFormat = Asc.c_oAscNumberingFormat.Decimal;
 		this.private_Measure();
 	}
+};
+ParaFootnoteRef.prototype.PreDelete = function()
+{
 };
 
 /**
@@ -2335,6 +2587,10 @@ ParaSeparator.prototype.UpdateWidth = function(PRS)
 	this.Width        = nWidth;
 	this.WidthVisible = nWidth;
 };
+ParaSeparator.prototype.IsNeedSaveRecalculateObject = function()
+{
+	return true;
+};
 ParaSeparator.prototype.SaveRecalculateObject = function(isCopy)
 {
 	return {
@@ -2346,7 +2602,7 @@ ParaSeparator.prototype.LoadRecalculateObject = function(oRecalcObj)
 	this.Width        = oRecalcObj.Width;
 	this.WidthVisible = oRecalcObj.Width;
 };
-ParaSeparator.PrepareRecalculateObject = function()
+ParaSeparator.prototype.PrepareRecalculateObject = function()
 {
 };
 
@@ -2404,6 +2660,10 @@ ParaContinuationSeparator.prototype.UpdateWidth = function(PRS)
 	this.Width        = nWidth;
 	this.WidthVisible = nWidth;
 };
+ParaContinuationSeparator.prototype.IsNeedSaveRecalculateObject = function()
+{
+	return true;
+};
 ParaContinuationSeparator.prototype.SaveRecalculateObject = function(isCopy)
 {
 	return {
@@ -2415,7 +2675,7 @@ ParaContinuationSeparator.prototype.LoadRecalculateObject = function(oRecalcObj)
 	this.Width        = oRecalcObj.Width;
 	this.WidthVisible = oRecalcObj.Width;
 };
-ParaContinuationSeparator.PrepareRecalculateObject = function()
+ParaContinuationSeparator.prototype.PrepareRecalculateObject = function()
 {
 };
 
@@ -2449,7 +2709,7 @@ ParaPageCount.prototype.Is_RealContent = function()
 {
 	return true;
 };
-ParaPageCount.prototype.Can_AddNumbering = function()
+ParaPageCount.prototype.CanAddNumbering = function()
 {
 	return true;
 };
@@ -2547,6 +2807,12 @@ ParaPageCount.prototype.GetParent = function()
 {
 	return this.Parent;
 };
+ParaPageCount.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+{
+	return rfont_ASCII;
+};
+
+
 /**
  * Класс представляющий ссылку на сноску
  * @param {CFootEndnote} oEndnote - Ссылка на сноску
@@ -2622,6 +2888,11 @@ ParaEndnoteReference.prototype.UpdateNumber = function(PRS, isKeepNumber)
 		this.private_Measure();
 	}
 };
+ParaEndnoteReference.prototype.ToSearchElement = function(oProps)
+{
+	return new AscCommonWord.CSearchTextSpecialEndnoteMark();
+};
+
 
 /**
  * Класс представляющий номер сноски внутри сноски.
@@ -2675,6 +2946,9 @@ ParaEndnoteRef.prototype.UpdateNumber = function(oEndnote)
 		this.NumFormat = Asc.c_oAscNumberingFormat.Decimal;
 		this.private_Measure();
 	}
+};
+ParaEndnoteRef.prototype.PreDelete = function()
+{
 };
 
 function ParagraphContent_Read_FromBinary(Reader)

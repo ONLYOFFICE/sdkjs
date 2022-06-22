@@ -113,18 +113,9 @@ CGroupShape.prototype.recalcBounds = function()
 
 CGroupShape.prototype.addToDrawingObjects =  CShape.prototype.addToDrawingObjects;
 CGroupShape.prototype.getDrawingObjectsController =  CShape.prototype.getDrawingObjectsController;
-CGroupShape.prototype.setDrawingObjects = function(drawingObjects)
-{
-    this.drawingObjects = drawingObjects;
-    for(var i = 0; i < this.spTree.length; ++i)
-    {
-        this.spTree[i].setDrawingObjects(drawingObjects);
-    }
-};
 
 
 
-CGroupShape.prototype.setDrawingBase = CShape.prototype.setDrawingBase;
 CGroupShape.prototype.deleteDrawingBase = CShape.prototype.deleteDrawingBase;
 CGroupShape.prototype.addToRecalculate = CShape.prototype.addToRecalculate;
 CGroupShape.prototype.convertPixToMM = CShape.prototype.convertPixToMM;
@@ -184,6 +175,7 @@ CGroupShape.prototype.recalculateBounds = function()
 CGroupShape.prototype.getRotateAngle = CShape.prototype.getRotateAngle;
 CGroupShape.prototype.handleUpdatePosition = function()
 {
+    this.recalcBounds();
     this.recalcTransform();
     this.addToRecalculate();
     for(var i = 0; i < this.spTree.length; ++i)
@@ -193,7 +185,6 @@ CGroupShape.prototype.handleUpdatePosition = function()
             this.spTree[i].handleUpdatePosition();
         }
     }
-    this.addToRecalculate();
 };
 CGroupShape.prototype.handleUpdateExtents = function()
 {

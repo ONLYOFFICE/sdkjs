@@ -123,26 +123,26 @@ AscFonts.CFontFileLoader.prototype.LoadFontAsync = function(basePath, _callback,
 		oThis.Status = 0;
 
 		var fontStreams = AscFonts.g_fonts_streams;
+		var __font_data_idx = fontStreams.length;
 		if (this.response)
 		{
-			var __font_data_idx = fontStreams.length;
 			var _uintData = new Uint8Array(this.response);
 			fontStreams[__font_data_idx] = new AscFonts.FontStream(_uintData, _uintData.length);
-			oThis.SetStreamIndex(__font_data_idx);
 		}
 		else
 		{
-			var __font_data_idx = fontStreams.length;
 			fontStreams[__font_data_idx] = AscFonts.CreateFontData3(this.responseText);
-			oThis.SetStreamIndex(__font_data_idx);
-
-			if (null != oThis.callback)
-				oThis.callback();
 		}
+
+		oThis.SetStreamIndex(__font_data_idx);
+
+		if (null != oThis.callback)
+			oThis.callback();
 	};
 
 	xhr.send(null);
 };
+AscFonts.CFontFileLoader.prototype["LoadFontAsync"] = AscFonts.CFontFileLoader.prototype.LoadFontAsync;
 
 window["DesktopOfflineAppDocumentEndLoad"] = function(_url, _data, _len)
 {
@@ -155,15 +155,29 @@ window["DesktopOfflineAppDocumentEndLoad"] = function(_url, _data, _len)
 		AscCommon.g_oDocumentUrls.documentUrl = "file://" + AscCommon.g_oDocumentUrls.documentUrl;
 	}
 
+	editor.setOpenedAt(Date.now());
 	AscCommon.g_oIdCounter.m_sUserId = window["AscDesktopEditor"]["CheckUserId"]();
-	if (_data == "")
+	if (_data === "")
 	{
         editor.sendEvent("asc_onError", c_oAscError.ID.ConvertationOpenError, c_oAscError.Level.Critical);
 		return;
 	}
 
+	var binaryArray = undefined;
+	if (0 === _data.indexOf("binary_content://"))
+	{
+		var bufferArray = window["AscDesktopEditor"]["GetOpenedFile"](_data);
+		if (bufferArray)
+			binaryArray = new Uint8Array(bufferArray);
+		else
+		{
+			editor.sendEvent("asc_onError", c_oAscError.ID.ConvertationOpenError, c_oAscError.Level.Critical);
+			return;
+		}
+	}
+
 	var file = new AscCommon.OpenFileResult();
-	file.data = getBinaryArray(_data, _len);
+	file.data = binaryArray ? binaryArray : getBinaryArray(_data, _len);
 	file.bSerFormat = AscCommon.checkStreamSignature(file.data, AscCommon.c_oSerFormat.Signature);
 	file.url = _url;
 	editor.openDocument(file);
@@ -657,40 +671,7 @@ window["DesktopAfterOpen"] = function(_api)
 
 function getBinaryArray(_data, _len)
 {
-	var _array = new Uint8Array(_len);
-	var _index = 0;
-	var _written = 0;
-
-	var _data_len = _data.length;
-	while (_index < _data_len)
-	{
-		var dwCurr = 0;
-		var i;
-		var nBits = 0;
-		for (i=0; i<4; i++)
-		{
-			if (_index >= _data_len)
-				break;
-			var nCh = DecodeBase64Char(_data.charCodeAt(_index++));
-			if (nCh == -1)
-			{
-				i--;
-				continue;
-			}
-			dwCurr <<= 6;
-			dwCurr |= nCh;
-			nBits += 6;
-		}
-
-		dwCurr <<= 24-nBits;
-		for (i=0; i<nBits/8; i++)
-		{
-			_array[_written++] = ((dwCurr & 0x00ff0000) >>> 16);
-			dwCurr <<= 8;
-		}
-	}
-
-	return _array;
+	return AscCommon.Base64.decode(_data, false, _len);
 }
 
 // encryption ----------------------------------

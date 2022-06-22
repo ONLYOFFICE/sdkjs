@@ -1457,12 +1457,12 @@ CFootnotesController.prototype.AddSignatureLine = function(oSignatureDrawing)
 
 	return this.CurFootnote.AddSignatureLine(oSignatureDrawing);
 };
-CFootnotesController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId)
+CFootnotesController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect)
 {
 	if (false === this.private_CheckFootnotesSelectionBeforeAction())
 		return false;
 
-	return this.CurFootnote.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId);
+	return this.CurFootnote.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect);
 };
 CFootnotesController.prototype.EditChart = function(Chart)
 {
@@ -3477,6 +3477,20 @@ CFootnotesController.prototype.FindNextFillingForm = function(isNext, isCurrent)
 	}
 
 	return null;
+};
+CFootnotesController.prototype.CollectSelectedReviewChanges = function(oTrackManager)
+{
+	if (this.Selection.Use)
+	{
+		for (var sId in this.Selection.Footnotes)
+		{
+			this.Selection.Footnotes[sId].CollectSelectedReviewChanges(oTrackManager);
+		}
+	}
+	else if (this.CurFootnote)
+	{
+		this.CurFootnote.CollectSelectedReviewChanges(oTrackManager);
+	}
 };
 
 

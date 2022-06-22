@@ -49,6 +49,7 @@ var c_oAscTickLabelsPos = Asc.c_oAscTickLabelsPos;
 var fChartSize = 75;
 
 function ChartPreviewManager() {
+	AscCommon.CActionOnTimerBase.call(this);
 	this.previewGroups = [];
 	this.chartsByTypes = [];
 
@@ -56,7 +57,79 @@ function ChartPreviewManager() {
 	this.CHART_PREVIEW_HEIGHT_PIX = 50;
 
 	this._canvas_charts = null;
+
+
+	this.FirstActionOnTimer = true;
+	this.Index = -1;
+	this.ChartType = -1;
+	this.StylesIndexes = [];
+	this.Buffer = [];
 }
+ChartPreviewManager.prototype = Object.create(AscCommon.CActionOnTimerBase.prototype);
+ChartPreviewManager.prototype.constructor = ChartPreviewManager;
+
+	ChartPreviewManager.prototype.GetApi = function() {
+		return Asc.editor || editor;
+	};
+	ChartPreviewManager.prototype.OnBegin = function(nChartType, arrId) {
+		var aStyles = AscCommon.g_oChartStyles[nChartType];
+		if(!Array.isArray(aStyles)) {
+			this.GetApi().sendEvent("asc_onBeginChartStylesPreview", 0);
+			return;
+		}
+		this.ChartType = nChartType;
+		this.Index = 0;
+		var nStyle;
+
+		this.StylesIndexes.length = 0;
+		if(!Array.isArray(arrId)) {
+			for(nStyle = 0; nStyle < aStyles.length; ++nStyle) {
+				this.StylesIndexes.push(nStyle);
+			}
+		}
+		else {
+			var nId;
+			for(nId = 0; nId < arrId.length; ++nId) {
+				this.StylesIndexes.push(arrId[nId] - 1);
+			}
+			for(nStyle = 0; nStyle < aStyles.length; ++nStyle) {
+				for(nId = 0; nId < arrId.length; ++nId) {
+					if(nStyle === (arrId[nId] - 1)) {
+						break;
+					}
+				}
+				if(nId === arrId.length) {
+					this.StylesIndexes.push(nStyle);
+				}
+			}
+		}
+		this.GetApi().sendEvent("asc_onBeginChartStylesPreview", aStyles.length);
+	};
+	ChartPreviewManager.prototype.OnEnd = function() {
+		this.GetApi().sendEvent("asc_onEndChartStylesPreview");
+	};
+	ChartPreviewManager.prototype.IsContinue = function() {
+		return (this.Index < this.StylesIndexes.length);
+	};
+	ChartPreviewManager.prototype.DoAction = function() {
+		let aStyles = AscCommon.g_oChartStyles[this.ChartType];
+		if(aStyles) {
+			var oStyle = aStyles[this.StylesIndexes[this.Index]]
+			if(oStyle) {
+				let graphics = this._getGraphics();
+				this.createChartPreview(graphics, this.ChartType, oStyle);
+				let oPreview = new AscCommon.CStyleImage();
+				oPreview.name = this.StylesIndexes[this.Index] + 1;
+				oPreview.image = this._canvas_charts.toDataURL("image/png");
+				this.Buffer.push(oPreview);
+			}
+		}
+		this.Index++;
+	};
+	ChartPreviewManager.prototype.OnEndTimer = function() {
+		this.GetApi().sendEvent("asc_onAddChartStylesPreview", this.Buffer);
+		this.Buffer = [];
+	};
 
 ChartPreviewManager.prototype.getAscChartSeriesDefault = function(type) {
 	function createItem(value) {
@@ -299,7 +372,6 @@ ChartPreviewManager.prototype.getAscChartSeriesDefault = function(type) {
 	}
 	return series;
 };
-
 ChartPreviewManager.prototype.getChartByType = function(type)
 {
 	return AscFormat.ExecuteNoHistory(function()
@@ -436,14 +508,21 @@ ChartPreviewManager.prototype.clearPreviews = function()
 {
 	this.previewGroups.length = 0;
 };
+
+ChartPreviewManager.prototype.checkChartForPreview = function (type, aStyle) {
+	return AscFormat.ExecuteNoHistory(function() {
+		if (!this.chartsByTypes[type]) {
+			this.chartsByTypes[type] = this.getChartByType(type);
+		}
+		var chart_space = this.chartsByTypes[type];
+		chart_space.applyChartStyleByIds(aStyle);
+		chart_space.recalcInfo.recalculateReferences = false;
+		chart_space.recalculate();
+		return chart_space;
+	}, this, []);
+};
 ChartPreviewManager.prototype.createChartPreview = function(graphics, type, aStyle) {
-	if (!this.chartsByTypes[type]) {
-		this.chartsByTypes[type] = this.getChartByType(type);
-	}
-	var chart_space = this.chartsByTypes[type];
-	chart_space.applyChartStyleByIds(aStyle);
-	chart_space.recalcInfo.recalculateReferences = false;
-	chart_space.recalculate();
+	var chart_space = this.checkChartForPreview(type, aStyle);
 	graphics.save();
 	chart_space.draw(graphics);
 	graphics.restore();
@@ -472,20 +551,75 @@ ChartPreviewManager.prototype._getGraphics = function() {
 	return graphics;
 };
 
-ChartPreviewManager.prototype.getChartPreviews = function(chartType) {
+ChartPreviewManager.prototype.getChartPreviews = function(chartType, arrId, bEmpty) {
+
+	var aStyles;
+	var nIdx, chartStyle, graphics;
+	var arrPreviews;
+	if(bEmpty) {
+		arrPreviews = [];
+		aStyles = AscCommon.g_oChartStyles[chartType];
+		if(Array.isArray(aStyles)) {
+			graphics = this._getGraphics();
+			for (nIdx = 0; nIdx < aStyles.length; ++nIdx) {
+				chartStyle = new AscCommon.CStyleImage();
+				chartStyle.name = nIdx + 1;
+				chartStyle.image = null;
+				arrPreviews.push(chartStyle);
+			}
+		}
+		return arrPreviews;
+	}
+	if(Array.isArray(arrId)) {
+		arrPreviews = [];
+		aStyles = AscCommon.g_oChartStyles[chartType];
+		if(Array.isArray(aStyles)) {
+			graphics = this._getGraphics();
+			for (nIdx = 0; nIdx < arrId.length; ++nIdx) {
+				var oStyle = aStyles[arrId[nIdx] - 1];
+				if(oStyle) {
+					this.createChartPreview(graphics, chartType, oStyle);
+
+					chartStyle = new AscCommon.CStyleImage();
+					chartStyle.name = arrId[nIdx];
+					chartStyle.image = this._canvas_charts.toDataURL("image/png");
+					arrPreviews.push(chartStyle);
+				}
+			}
+		}
+		return arrPreviews;
+	}
 	if (AscFormat.isRealNumber(chartType)) {
+
+
 		if (!this._isCachedChartStyles(chartType)) {
-			var aStyles = AscCommon.g_oChartStyles[chartType];
+			aStyles = AscCommon.g_oChartStyles[chartType];
 			if (Array.isArray(aStyles)) {
 				AscFormat.ExecuteNoHistory(function () {
-					var graphics = this._getGraphics();
-					for (var i = 0; i < aStyles.length; ++i) {
-						this.createChartPreview(graphics, chartType, aStyles[i]);
-						if (!window["IS_NATIVE_EDITOR"]) {
-							var chartStyle = new AscCommon.CStyleImage();
-							chartStyle.name = i + 1;
-							chartStyle.image = this._canvas_charts.toDataURL("image/png");
-							this.previewGroups[chartType].push(chartStyle);
+					graphics = this._getGraphics();
+					if(Array.isArray(arrId)) {
+						var arrPreviews = [];
+						for (nIdx = 0; nIdx < arrId.length; ++nIdx) {
+							if(aStyles[arrId[nIdx]]) {
+								this.createChartPreview(graphics, chartType, aStyles[arrId[nIdx]]);
+
+								chartStyle = new AscCommon.CStyleImage();
+								chartStyle.name = nIdx + 1;
+								chartStyle.image = this._canvas_charts.toDataURL("image/png");
+								arrPreviews.push(chartStyle);
+							}
+						}
+						return arrPreviews;
+					}
+					else {
+						for (nIdx = 0; nIdx < aStyles.length; ++nIdx) {
+							this.createChartPreview(graphics, chartType, aStyles[nIdx]);
+							if (!window["IS_NATIVE_EDITOR"]) {
+								chartStyle = new AscCommon.CStyleImage();
+								chartStyle.name = nIdx + 1;
+								chartStyle.image = this._canvas_charts.toDataURL("image/png");
+								this.previewGroups[chartType].push(chartStyle);
+							}
 						}
 					}
 				}, this, []);
@@ -777,11 +911,7 @@ TextArtPreviewManager.prototype.getShapeByPrst = function(prst)
 	oContent.SetApplyToAll(false);
 
 	var oBodypr = oShape.getBodyPr().createDuplicate();
-	oBodypr.prstTxWarp = AscFormat.ExecuteNoHistory(
-		function()
-		{
-			return AscFormat.CreatePrstTxWarpGeometry(prst)
-		}, []);
+	oBodypr.prstTxWarp = AscFormat.CreatePrstTxWarpGeometry(prst);
 	oBodypr.lIns = 2.54;
 	oBodypr.tIns = 2.54;
 	oBodypr.rIns = 2.54;

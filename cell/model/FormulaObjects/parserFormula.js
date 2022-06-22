@@ -529,6 +529,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return [localStr, localStrWithoutSheet];
 	};
+	cBaseType.prototype.getDimensions = function () {
+		return {col: 1, row: 1};
+	};
 
 	/*Basic types of an elements used into formulas*/
 	/**
@@ -2419,10 +2422,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (row > this.rowCount || col > this.getCountElementInRow()) {
 			return new cError(cErrorType.not_available);
 		}
-		return this.array[row][col];
+		return this.array[row] && this.array[row][col] ? this.array[row][col] : new cEmpty();
 	};
 	cArray.prototype.getElement = function (index) {
 		for (var i = 0; i < this.rowCount; i++) {
+			//TODO length
 			if (index > this.countElementInRow[i].length) {
 				index -= this.countElementInRow[i].length;
 			} else {
@@ -2674,6 +2678,47 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		if(!res.length){
 			res = areaArr;
+		}
+
+		return res;
+	};
+	cBaseOperator.prototype.tryDoArraysOperation = function (operand1, operand2, func) {
+		//применяем в случае, если один или оба операнда area/array
+		//возвращаем либо null, либо array
+		var res = null;
+
+		var dimension1 = operand1 && operand1.getDimensions();
+		var dimension2 = operand2 && operand2.getDimensions();
+
+		if (dimension1 && dimension2) {
+			//берём наименьший размер, исключение - когда одна строка/столбец
+			var colCount = dimension1.col === 1 ? dimension2.col : (dimension2.col === 1 ? dimension1.col : Math.min(dimension1.col, dimension2.col));
+			var rowCount = dimension1.row === 1 ? dimension2.row : (dimension2.row === 1 ? dimension1.row : Math.min(dimension1.row, dimension2.row));
+
+			var matrix1, matrix2;
+			if (operand1.type === cElementType.array) {
+				matrix1 = operand1;
+			}
+			if (operand2.type === cElementType.array) {
+				matrix2 = operand2;
+			}
+			if (operand1.type === cElementType.cellsRange || operand1.type === cElementType.cellsRange3D) {
+				matrix1 = convertAreaToArray(operand1);
+			}
+			if (operand2.type === cElementType.cellsRange || operand2.type === cElementType.cellsRange3D) {
+				matrix2 = convertAreaToArray(operand2);
+			}
+
+			if (matrix1 || matrix2) {
+				res = new cArray();
+				for (var iRow = 0; iRow < rowCount; iRow++, iRow < rowCount ? res.addRow() : true) {
+					for (var iCol = 0; iCol < colCount; iCol++) {
+						var elem1 = matrix1 ? matrix1.getElementRowCol(dimension1.row === 1 ? 0 : iRow, dimension1.col === 1 ? 0 : iCol) : operand1;
+						var elem2 = matrix2 ? matrix2.getElementRowCol(dimension2.row === 1 ? 0 : iRow, dimension2.col === 1 ? 0 : iCol) : operand2;
+						res.addElement(func(elem1, elem2));
+					}
+				}
+			}
 		}
 
 		return res;
@@ -3755,23 +3800,35 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cConcatSTROperator.prototype.priority = 15;
 	cConcatSTROperator.prototype.argumentsCurrent = 2;
 	cConcatSTROperator.prototype.numFormat = cNumFormatNone;
-	cConcatSTROperator.prototype.Calculate = function (arg) {
+	cConcatSTROperator.prototype.Calculate = function (arg, opt_bbox, opt_defName, ws, bIsSpecialFunction) {
 		var arg0 = arg[0], arg1 = arg[1];
+
+		var doOperation = function (_arg0, _arg1) {
+			_arg0 = _arg0.tocString();
+			_arg1 = _arg1.tocString();
+			return _arg0 instanceof cError ? _arg0 :
+				_arg1 instanceof cError ? _arg1 : new cString(_arg0.toString().concat(_arg1.toString()))
+		};
+
+		if(bIsSpecialFunction){
+			var array = this.tryDoArraysOperation(arg0, arg1, doOperation);
+			if (array) {
+				return array;
+			}
+		}
+
 		if (arg0 instanceof cArea) {
 			arg0 = arg0.cross(arguments[1]);
 		} else if (arg0 instanceof cArea3D) {
 			arg0 = arg0.cross(arguments[1], arguments[3]);
 		}
-		arg0 = arg0.tocString();
 		if (arg1 instanceof cArea) {
 			arg1 = arg1.cross(arguments[1]);
 		} else if (arg1 instanceof cArea3D) {
 			arg1 = arg1.cross(arguments[1], arguments[3]);
 		}
-		arg1 = arg1.tocString();
 
-		return arg0 instanceof cError ? arg0 :
-			arg1 instanceof cError ? arg1 : new cString(arg0.toString().concat(arg1.toString()));
+		return doOperation(arg0, arg1);
 	};
 
 	/**
@@ -5175,6 +5232,71 @@ _func[cElementType.cell3D] = _func[cElementType.cell];
 		return null;
 	};
 
+	ParseResult.prototype.getArgumentsValue = function(sFormula) {
+		var res = null;
+		if (sFormula && this.argPosArr) {
+			for (var i = 0; i < this.argPosArr.length; i++) {
+				if (!res) {
+					res = [];
+				}
+				res.push(sFormula.substring(this.argPosArr[i].start - 1, this.argPosArr[i].end - 1));
+			}
+		}
+		return res;
+	};
+
+	ParseResult.prototype.getActiveFunction = function(start, end) {
+		var res = null;
+		if (this.allFunctionsPos) {
+			var startFuncs, endFuncs, i, j;
+			for (i = 0; i < this.allFunctionsPos.length; i++) {
+				if (this.allFunctionsPos[i].start + 1 <= start && this.allFunctionsPos[i].end + 1 >= start) {
+					if (!startFuncs) {
+						startFuncs = [];
+					}
+					startFuncs.push(this.allFunctionsPos[i]);
+				}
+				if (start !== end && this.allFunctionsPos[i].start + 1 <= end && this.allFunctionsPos[i].end + 1 >= end) {
+					if (!endFuncs) {
+						endFuncs = [];
+					}
+					endFuncs.push(this.allFunctionsPos[i]);
+				}
+			}
+
+			if (startFuncs) {
+				var commonFuncs;
+				if (start === end) {
+					commonFuncs = startFuncs;
+				} else if (endFuncs) {
+					//ищем самую внутреннюю функцию, где находится и начало и конец диапазона
+					for (i = 0; i < startFuncs.length; i++) {
+						for (j = 0; j < endFuncs.length; j++) {
+							if (startFuncs[i] === endFuncs[j]) {
+								if (!commonFuncs) {
+									commonFuncs = [];
+								}
+								commonFuncs.push(startFuncs[i]);
+								break;
+							}
+						}
+					}
+				}
+
+				//ищем самую внутреннюю функцию
+				if (commonFuncs) {
+					res = commonFuncs[0];
+					for (i = 1; i < commonFuncs.length; i++) {
+						if (commonFuncs[i].start >= res.start && commonFuncs[i].end <= res.end) {
+							res = commonFuncs[i];
+						}
+					}
+				}
+			}
+
+		}
+		return res;
+	};
 
 	var g_defParseResult = new ParseResult(undefined, undefined);
 
@@ -5762,7 +5884,7 @@ function parserFormula( formula, parent, _ws ) {
 			referenceCount += weight;
 			if (referenceCount > AscCommon.c_oAscMaxFormulaReferenceLength) {
 				parseResult.setError(c_oAscError.ID.FrmlMaxReference);
-				if(!ignoreErrors) {
+				if (!ignoreErrors) {
 					t.outStack = [];
 					return false;
 				}
@@ -5770,7 +5892,7 @@ function parserFormula( formula, parent, _ws ) {
 			return true;
 		};
 
-		var parseOperators = function(){
+		var parseOperators = function () {
 			wasLeftParentheses = false;
 			wasRigthParentheses = false;
 			var found_operator = null;
@@ -5809,7 +5931,7 @@ function parserFormula( formula, parent, _ws ) {
 						found_operator = cFormulaOperators[ph.operand_str].prototype;
 						parseResult.operand_expected = true;
 					} else {
-						if(ignoreErrors) {
+						if (ignoreErrors) {
 							return true;
 						} else {
 							parseResult.setError(c_oAscError.ID.FrmlWrongOperator);
@@ -5820,11 +5942,8 @@ function parserFormula( formula, parent, _ws ) {
 				}
 			}
 
-			while (0 !== elemArr.length && (
-				found_operator.rightAssociative ?
-					( found_operator.priority < elemArr[elemArr.length - 1].priority ) :
-					( found_operator.priority <= elemArr[elemArr.length - 1].priority )
-			)) {
+			while (0 !== elemArr.length && (found_operator.rightAssociative ? (found_operator.priority < elemArr[elemArr.length - 1].priority) :
+					(found_operator.priority <= elemArr[elemArr.length - 1].priority))) {
 				t.outStack.push(elemArr.pop());
 			}
 			elemArr.push(found_operator);
@@ -5833,7 +5952,7 @@ function parserFormula( formula, parent, _ws ) {
 			return true;
 		};
 
-		var parseLeftParentheses = function(){
+		var parseLeftParentheses = function () {
 			if (wasRigthParentheses || found_operand) {
 				elemArr.push(new cMultOperator());
 			}
@@ -5846,9 +5965,9 @@ function parserFormula( formula, parent, _ws ) {
 			leftParentArgumentsCurrentArr[elemArr.length - 1] = 1;
 			parseResult.argPos = 1;
 
-			if(startSumproduct){
+			if (startSumproduct) {
 				counterSumproduct++;
-				if(1 === counterSumproduct){
+				if (1 === counterSumproduct) {
 					t.outStack.push(cSpecialOperandStart.prototype);
 				}
 			}
@@ -5857,14 +5976,13 @@ function parserFormula( formula, parent, _ws ) {
 			argPosArrMap[currentFuncLevel] = [{start: ph.pCurrPos + 1}];
 		};
 
-		var parseRightParentheses = function(){
+		var parseRightParentheses = function () {
 
 			parseResult.addElem(cFormulaOperators[ph.operand_str].prototype);
 			wasRigthParentheses = true;
 			var top_elem = null;
 			var top_elem_arg_count = 0;
-			if (0 !== elemArr.length && ( (top_elem = elemArr[elemArr.length - 1]).name === '(' ) &&
-				parseResult.operand_expected) {
+			if (0 !== elemArr.length && ((top_elem = elemArr[elemArr.length - 1]).name === '(') && parseResult.operand_expected) {
 				top_elem_arg_count = leftParentArgumentsCurrentArr[elemArr.length - 1];
 				if (top_elem_arg_count > 1) {
 					t.outStack.push(new cEmpty());
@@ -5873,8 +5991,7 @@ function parserFormula( formula, parent, _ws ) {
 					top_elem_arg_count = leftParentArgumentsCurrentArr[elemArr.length - 1];
 				}
 			} else {
-				while (0 !== elemArr.length &&
-				!((top_elem = elemArr[elemArr.length - 1]).name === '(' )) {
+				while (0 !== elemArr.length && !((top_elem = elemArr[elemArr.length - 1]).name === '(')) {
 					if (top_elem.name in cFormulaOperators && parseResult.operand_expected) {
 						parseResult.setError(c_oAscError.ID.FrmlOperandExpected);
 						t.outStack = [];
@@ -5887,7 +6004,7 @@ function parserFormula( formula, parent, _ws ) {
 
 			if ((0 === elemArr.length || null === top_elem)) {
 				parseResult.setError(c_oAscError.ID.FrmlWrongCountParentheses);
-				if(!ignoreErrors) {
+				if (!ignoreErrors) {
 					t.outStack = [];
 					return false;
 				}
@@ -5895,17 +6012,17 @@ function parserFormula( formula, parent, _ws ) {
 
 			var p = top_elem, func, bError = false;
 			elemArr.pop();
-			if (0 !== elemArr.length && ( func = elemArr[elemArr.length - 1] ).type === cElementType.func) {
+			if (0 !== elemArr.length && (func = elemArr[elemArr.length - 1]).type === cElementType.func) {
 				p = elemArr.pop();
 				if (top_elem_arg_count > func.argumentsMax) {
 					parseResult.setError(c_oAscError.ID.FrmlWrongMaxArgument);
-					if(!ignoreErrors) {
+					if (!ignoreErrors) {
 						t.outStack = [];
 						return false;
 					}
 				} else {
 					if (top_elem_arg_count >= func.argumentsMin) {
-						t.outStack.push(null !== startArrayArg && startArrayArg < currentFuncLevel  ? - top_elem_arg_count : top_elem_arg_count);
+						t.outStack.push(null !== startArrayArg && startArrayArg < currentFuncLevel ? -top_elem_arg_count : top_elem_arg_count);
 						if (!func.checkArguments(top_elem_arg_count)) {
 							bError = true;
 						}
@@ -5915,24 +6032,24 @@ function parserFormula( formula, parent, _ws ) {
 
 					if (bError) {
 						parseResult.setError(c_oAscError.ID.FrmlWrongCountArgument);
-						if(!ignoreErrors) {
+						if (!ignoreErrors) {
 							t.outStack = [];
 							return false;
 						}
 					}
 				}
 				parseResult.argPos = leftParentArgumentsCurrentArr[elemArr.length - 1];
-			} else if(wasLeftParentheses && 0 === top_elem_arg_count && elemArr[elemArr.length - 1] /*&& " " === elemArr[elemArr.length - 1].name*/) {
+			} else if (wasLeftParentheses && 0 === top_elem_arg_count && elemArr[elemArr.length - 1] /*&& " " === elemArr[elemArr.length - 1].name*/) {
 				//intersection with empty range
 				parseResult.setError(c_oAscError.ID.FrmlAnotherParsingError);
-				if(!ignoreErrors) {
+				if (!ignoreErrors) {
 					t.outStack = [];
 					return false;
 				}
 			} else {
 				if (wasLeftParentheses && (!elemArr[elemArr.length - 1] || '(' === elemArr[elemArr.length - 1].name)) {
 					parseResult.setError(c_oAscError.ID.FrmlAnotherParsingError);
-					if(!ignoreErrors) {
+					if (!ignoreErrors) {
 						t.outStack = [];
 						return false;
 					}
@@ -5946,9 +6063,9 @@ function parserFormula( formula, parent, _ws ) {
 			parseResult.operand_expected = false;
 			wasLeftParentheses = false;
 
-			if(startSumproduct){
+			if (startSumproduct) {
 				counterSumproduct--;
-				if(counterSumproduct < 1){
+				if (counterSumproduct < 1) {
 					startSumproduct = false;
 					t.outStack.push(cSpecialOperandEnd.prototype);
 				}
@@ -5956,7 +6073,7 @@ function parserFormula( formula, parent, _ws ) {
 
 			if (func && func.type === cElementType.func) {
 				if (needCalcArgPos) {
-					if(needFuncLevel > 0) {
+					if (needFuncLevel > 0) {
 						needFuncLevel--;
 					}
 					if (!parseResult.activeFunction && levelFuncMap[currentFuncLevel] && levelFuncMap[currentFuncLevel].startPos <= activePos && activePos <= ph.pCurrPos) {
@@ -5968,21 +6085,27 @@ function parserFormula( formula, parent, _ws ) {
 				if (_argPos && _argPos[_argPos.length - 1] && undefined === _argPos[_argPos.length - 1].end) {
 					_argPos[_argPos.length - 1].end = ph.pCurrPos;
 				}
+
+				if (!parseResult.allFunctionsPos) {
+					parseResult.allFunctionsPos = [];
+				}
+				parseResult.allFunctionsPos.push({func: levelFuncMap[currentFuncLevel].func, start: levelFuncMap[currentFuncLevel].startPos, end: ph.pCurrPos, args: _argPos});
+
 				currentFuncLevel--;
 			}
 
 			return true;
 		};
 
-		var parseCommaAndArgumentsUnion = function(){
+		var parseCommaAndArgumentsUnion = function () {
 			wasLeftParentheses = false;
 			wasRigthParentheses = false;
 			var stackLength = elemArr.length, top_elem = null, top_elem_arg_pos;
 
-			if (elemArr.length !== 0 && elemArr[stackLength - 1].name === "(" && ((!elemArr[stackLength - 2]) ||
-				(elemArr[stackLength - 2] && elemArr[stackLength - 2].type !== cElementType.func))) {
+			if (elemArr.length !== 0 && elemArr[stackLength - 1].name === "(" &&
+				((!elemArr[stackLength - 2]) || (elemArr[stackLength - 2] && elemArr[stackLength - 2].type !== cElementType.func))) {
 				parseResult.setError(c_oAscError.ID.FrmlWrongOperator);
-				if(!ignoreErrors) {
+				if (!ignoreErrors) {
 					t.outStack = [];
 					return false;
 				}
@@ -6008,7 +6131,7 @@ function parserFormula( formula, parent, _ws ) {
 
 			if (parseResult.operand_expected) {
 				parseResult.setError(c_oAscError.ID.FrmlWrongOperator);
-				if(!ignoreErrors) {
+				if (!ignoreErrors) {
 					t.outStack = [];
 					return false;
 				}
@@ -6017,7 +6140,7 @@ function parserFormula( formula, parent, _ws ) {
 			//TODO заглушка для парсинга множественного диапазона в _xlnm.Print_Area. необходимо сделать общий парсинг подобного содержимого
 			if (!wasLeftParentheses && !(t.parent && t.parent instanceof window['AscCommonExcel'].DefName /*&& t.parent.name === "_xlnm.Print_Area"*/)) {
 				parseResult.setError(c_oAscError.ID.FrmlWrongCountParentheses);
-				if(!ignoreErrors) {
+				if (!ignoreErrors) {
 					t.outStack = [];
 					return false;
 				}
@@ -6057,18 +6180,16 @@ function parserFormula( formula, parent, _ws ) {
 			return true;
 		};
 
-		var parseArray = function(){
+		var parseArray = function () {
 			if (!_checkReferenceCount(2)) {
 				return false;
 			}
 			wasLeftParentheses = false;
 			wasRigthParentheses = false;
 			var arr = new cArray(), operator = {isOperator: false, operatorName: ""};
-			while (ph.pCurrPos < t.Formula.length &&
-			!parserHelp.isRightBrace.call(ph, t.Formula, ph.pCurrPos)) {
+			while (ph.pCurrPos < t.Formula.length && !parserHelp.isRightBrace.call(ph, t.Formula, ph.pCurrPos)) {
 				if (parserHelp.isArraySeparator.call(ph, t.Formula, ph.pCurrPos, digitDelim)) {
-					if (ph.operand_str === (digitDelim ? FormulaSeparators.arrayRowSeparator :
-							FormulaSeparators.arrayRowSeparatorDef)) {
+					if (ph.operand_str === (digitDelim ? FormulaSeparators.arrayRowSeparator : FormulaSeparators.arrayRowSeparatorDef)) {
 						arr.addRow();
 					}
 				} else if (parserHelp.isBoolean.call(ph, t.Formula, ph.pCurrPos, local)) {
@@ -6138,7 +6259,7 @@ function parserFormula( formula, parent, _ws ) {
 			if (!arr.isValidArray()) {
 				/*размер массива не согласован*/
 				parseResult.setError(c_oAscError.ID.FrmlAnotherParsingError);
-				if(!ignoreErrors) {
+				if (!ignoreErrors) {
 					t.outStack = [];
 					return false;
 				}
@@ -6148,7 +6269,7 @@ function parserFormula( formula, parent, _ws ) {
 			return true;
 		};
 
-		var parseOperands = function(){
+		var parseOperands = function () {
 			found_operand = null;
 
 			if (wasRigthParentheses) {
@@ -6157,7 +6278,7 @@ function parserFormula( formula, parent, _ws ) {
 
 			if (!parseResult.operand_expected) {
 				parseResult.setError(c_oAscError.ID.FrmlWrongOperator);
-				if(!ignoreErrors) {
+				if (!ignoreErrors) {
 					t.outStack = [];
 					return false;
 				}
@@ -6175,12 +6296,12 @@ function parserFormula( formula, parent, _ws ) {
 			/* Strings */ else if (parserHelp.isString.call(ph, t.Formula, ph.pCurrPos)) {
 				if (ph.operand_str.length > g_nFormulaStringMaxLength) {
 					parseResult.setError(c_oAscError.ID.FrmlMaxTextLength);
-					if(!ignoreErrors) {
+					if (!ignoreErrors) {
 						t.outStack = [];
 						return false;
 					}
 				}
-				if (!_checkReferenceCount(ph.operand_str.length*0.25 + 0.5)) {
+				if (!_checkReferenceCount(ph.operand_str.length * 0.25 + 0.5)) {
 					return false;
 				}
 				found_operand = new cString(ph.operand_str);
@@ -6193,8 +6314,7 @@ function parserFormula( formula, parent, _ws ) {
 				found_operand = new cError(ph.operand_str);
 			}
 
-			/* Referens to 3D area: Sheet1:Sheet3!A1:B3, Sheet1:Sheet3!B3, Sheet1!B3*/ else if ((_3DRefTmp =
-					parserHelp.is3DRef.call(ph, t.Formula, ph.pCurrPos))[0]) {
+			/* Referens to 3D area: Sheet1:Sheet3!A1:B3, Sheet1:Sheet3!B3, Sheet1!B3*/ else if ((_3DRefTmp = parserHelp.is3DRef.call(ph, t.Formula, ph.pCurrPos))[0]) {
 
 				t.is3D = true;
 
@@ -6215,7 +6335,7 @@ function parserFormula( formula, parent, _ws ) {
 
 				if (!(wsF && wsT)) {
 					parseResult.setError(c_oAscError.ID.FrmlWrongReferences);
-					if(!ignoreErrors) {
+					if (!ignoreErrors) {
 						t.outStack = [];
 						return false;
 					}
@@ -6226,7 +6346,7 @@ function parserFormula( formula, parent, _ws ) {
 				}
 
 				if (parserHelp.isArea.call(ph, t.Formula, ph.pCurrPos)) {
-					if(!(wsF && wsT)) {
+					if (!(wsF && wsT)) {
 						//for edit formula mode
 						//found_operand = new cUnknownFunction(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase());
 						found_operand = new cName(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), t.ws);
@@ -6235,7 +6355,7 @@ function parserFormula( formula, parent, _ws ) {
 					}
 					parseResult.addRefPos(prevCurrPos, ph.pCurrPos, t.outStack.length, found_operand);
 				} else if (parserHelp.isRef.call(ph, t.Formula, ph.pCurrPos)) {
-					if(!(wsF && wsT)) {
+					if (!(wsF && wsT)) {
 						//for edit formula mode
 						//found_operand = new cUnknownFunction(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase());
 						found_operand = new cName(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), t.ws);
@@ -6265,16 +6385,14 @@ function parserFormula( formula, parent, _ws ) {
 				}
 				found_operand = new cRef(ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase(), t.ws);
 				parseResult.addRefPos(ph.pCurrPos - ph.operand_str.length, ph.pCurrPos, t.outStack.length, found_operand);
-			}
-
-			else if (_tableTMP = parserHelp.isTable.call(ph, t.Formula, ph.pCurrPos, local)) {
+			} else if (_tableTMP = parserHelp.isTable.call(ph, t.Formula, ph.pCurrPos, local)) {
 				found_operand = cStrucTable.prototype.createFromVal(_tableTMP, t.wb, t.ws, tablesMap);
 
 				//todo undo delete column
 				if (found_operand.type === cElementType.error) {
 					/*используется неверный именованный диапазон или таблица*/
 					parseResult.setError(c_oAscError.ID.FrmlAnotherParsingError);
-					if(!ignoreErrors) {
+					if (!ignoreErrors) {
 						t.outStack = [];
 						return false;
 					}
@@ -6291,10 +6409,10 @@ function parserFormula( formula, parent, _ws ) {
 
 			/* Referens to DefinedNames */ else if (parserHelp.isName.call(ph, t.Formula, ph.pCurrPos)) {
 
-				if (ph.operand_str.length > g_nFormulaStringMaxLength) {
+				if (ph.operand_str.length > g_nFormulaStringMaxLength || !AscCommon.rx_r1c1DefError.test(ph.operand_str)) {
 					//TODO стоит добавить новую ошибку
 					parseResult.setError(c_oAscError.ID.FrmlWrongOperator);
-					if(!ignoreErrors) {
+					if (!ignoreErrors) {
 						t.outStack = [];
 						return false;
 					}
@@ -6308,12 +6426,12 @@ function parserFormula( formula, parent, _ws ) {
 				var defName;
 				var sDefNameOperand = ph.operand_str.replace(rx_sDefNamePref, "");
 				var tryTranslate = AscCommonExcel.tryTranslateToPrintArea(sDefNameOperand);
-				if(tryTranslate) {
+				if (tryTranslate) {
 					found_operand = new cName(tryTranslate, t.ws);
 					defName = found_operand.getDefName();
 				}
 				//TODO возможно здесь нужно else ставить
-				if(!defName) {
+				if (!defName) {
 					found_operand = new cName(sDefNameOperand, t.ws);
 					defName = found_operand.getDefName();
 				}
@@ -6336,7 +6454,7 @@ function parserFormula( formula, parent, _ws ) {
 					found_operand = new cNumber(_number);
 				} else {
 					parseResult.setError(c_oAscError.ID.FrmlAnotherParsingError);
-					if(!ignoreErrors) {
+					if (!ignoreErrors) {
 						t.outStack = [];
 						return false;
 					}
@@ -6356,7 +6474,7 @@ function parserFormula( formula, parent, _ws ) {
 					found_operator = cAllFormulaFunction[operandStr].prototype;
 				} else {
 					found_operator = new cUnknownFunction(operandStr);
-					found_operator.isXLFN = ( ph.operand_str.indexOf("_xlfn.") === 0 );
+					found_operator.isXLFN = (ph.operand_str.indexOf("_xlfn.") === 0);
 				}
 
 				if (found_operator !== null) {
@@ -6369,7 +6487,7 @@ function parserFormula( formula, parent, _ws ) {
 					}
 					elemArr.push(found_operator);
 					parseResult.addElem(found_operator);
-					if("SUMPRODUCT" === found_operator.name){
+					if ("SUMPRODUCT" === found_operator.name) {
 						startSumproduct = true;
 					}
 
@@ -6394,7 +6512,7 @@ function parserFormula( formula, parent, _ws ) {
 
 				} else {
 					parseResult.setError(c_oAscError.ID.FrmlWrongFunctionName);
-					if(!ignoreErrors) {
+					if (!ignoreErrors) {
 						t.outStack = [];
 						return false;
 					}
@@ -6433,12 +6551,19 @@ function parserFormula( formula, parent, _ws ) {
 					parseResult.activeFunction = {func: levelFuncMap[currentFuncLevel].func, start: levelFuncMap[currentFuncLevel].startPos, end: ph.pCurrPos + 1};
 					parseResult.argPosArr = argPosArrMap[currentFuncLevel];
 				}
-				if (undefined === parseResult.activeArgumentPos && argFuncMap[currentFuncLevel] && argFuncMap[currentFuncLevel].startPos <= activePos && activePos <= ph.pCurrPos + 1) {
+				if (undefined === parseResult.activeArgumentPos && argFuncMap[currentFuncLevel] && argFuncMap[currentFuncLevel].startPos <= activePos && activePos <= ph.pCurrPos +
+					1) {
 					parseResult.activeArgumentPos = argFuncMap[currentFuncLevel].count;
 				}
 				var _argPos = argPosArrMap[currentFuncLevel];
 				if (_argPos && _argPos[_argPos.length - 1] && undefined === _argPos[_argPos.length - 1].end) {
 					_argPos[_argPos.length - 1].end = ph.pCurrPos;
+				}
+				if (levelFuncMap[currentFuncLevel]) {
+					if (!parseResult.allFunctionsPos) {
+						parseResult.allFunctionsPos = [];
+					}
+					parseResult.allFunctionsPos.push({func: levelFuncMap[currentFuncLevel].func, start: levelFuncMap[currentFuncLevel].startPos, end: ph.pCurrPos, args: _argPos});
 				}
 			}
 		};
@@ -6447,14 +6572,14 @@ function parserFormula( formula, parent, _ws ) {
 			ph.operand_str = this.Formula[ph.pCurrPos];
 
 			//TODO сделать так, чтобы добавлялся особый элемент - перенос строки и учитывался при сборке!!!!
-			if(ph.operand_str=="\n") {
+			if (ph.operand_str == "\n") {
 				ph.pCurrPos++;
 				continue;
 			}
 
 			/* Operators*/
 			if (parserHelp.isOperator.call(ph, this.Formula, ph.pCurrPos) || parserHelp.isNextPtg.call(ph, this.Formula, ph.pCurrPos)) {
-				if(!parseOperators()){
+				if (!parseOperators()) {
 					if (ignoreErrors) {
 						setArgInfo();
 					}
@@ -6465,35 +6590,35 @@ function parserFormula( formula, parent, _ws ) {
 
 				//TODO протестировать
 				//если осталось только закрыть скобки за функции с нулевым количеством аргументов
-				if(ph.pCurrPos === this.Formula.length){
-					if(elemArr[elemArr.length - 2] && 0 === elemArr[elemArr.length - 2].argumentsMax){
+				if (ph.pCurrPos === this.Formula.length) {
+					if (elemArr[elemArr.length - 2] && 0 === elemArr[elemArr.length - 2].argumentsMax) {
 						parseResult.operand_expected = false;
 					}
 				}
 
 			}/* Right Parentheses */ else if (parserHelp.isRightParentheses.call(ph, this.Formula, ph.pCurrPos)) {
-				if(!parseRightParentheses()){
+				if (!parseRightParentheses()) {
 					if (ignoreErrors) {
 						setArgInfo();
 					}
 					return false;
 				}
 			}/*Comma & arguments union*/ else if (parserHelp.isComma.call(ph, this.Formula, ph.pCurrPos)) {
-				if(!parseCommaAndArgumentsUnion()){
+				if (!parseCommaAndArgumentsUnion()) {
 					if (ignoreErrors) {
 						setArgInfo();
 					}
 					return false;
 				}
 			}/* Array */ else if (parserHelp.isLeftBrace.call(ph, this.Formula, ph.pCurrPos)) {
-				if(!parseArray()){
+				if (!parseArray()) {
 					if (ignoreErrors) {
 						setArgInfo();
 					}
 					return false;
 				}
 			}/* Operands*/ else {
-				if(!parseOperands()){
+				if (!parseOperands()) {
 					if (ignoreErrors) {
 						setArgInfo();
 					}
@@ -6986,6 +7111,7 @@ function parserFormula( formula, parent, _ws ) {
 	parserFormula.prototype.canShiftShared = function(bHor) {
 		if (this.shared && this.shared.isOneDimension() && !(bHor ^ this.shared.isHor())) {
 			//cut off formulas with absolute reference. it is shifted unexpectedly
+			//todo transform base formula
 			var elem;
 			var bboxElem;
 			for (var i = 0; i < this.outStack.length; i++) {
@@ -6994,10 +7120,16 @@ function parserFormula( formula, parent, _ws ) {
 				if (elem.type === cElementType.cell || elem.type === cElementType.cellsRange ||
 					elem.type === cElementType.cell3D) {
 					if (elem.isValid()) {
+						if (elem.getWS() !== this.getWs()) {
+							return false;
+						}
 						bboxElem = elem.getRange().getBBox0();
 					}
 				} else if (elem.type === cElementType.cellsRange3D) {
 					if (elem.isValid()) {
+						if (!(elem.isSingleSheet() && this.getWs() === elem.wsFrom)) {
+							return false;
+						}
 						bboxElem = elem.getBBox0();
 					}
 				}
@@ -7172,8 +7304,8 @@ function parserFormula( formula, parent, _ws ) {
 	};
 
 	/* Сборка функции в инфиксную форму */
-	parserFormula.prototype.assembleLocale = function (locale, digitDelim) {
-		if (this.outStack.length === 1 && this.outStack[this.outStack.length - 1] instanceof cError) {
+	parserFormula.prototype.assembleLocale = function (locale, digitDelim, rFormula) {
+		if (!rFormula && this.outStack.length === 1 && this.outStack[this.outStack.length - 1] instanceof cError) {
 			return this.Formula;
 		}
 
@@ -7538,6 +7670,10 @@ function parserFormula( formula, parent, _ws ) {
 	parserFormula.prototype.simplifyRefType = function (val, opt_ws, opt_row, opt_col) {
 		var ref = this.getArrayFormulaRef(), row, col;
 
+		if (val == null) {
+			return;
+		}
+
 		if (cElementType.cell === val.type || cElementType.cell3D === val.type) {
 			val = val.getValue();
 			if (cElementType.empty === val.type && opt_ws) {
@@ -7559,8 +7695,7 @@ function parserFormula( formula, parent, _ws ) {
 
 			//сделано для формул массива
 			//внутри массива может лежать ссылка на диапазон(например, функция index возвращает area/ref)
-			if (val && (cElementType.cellsRange === val.type || cElementType.cellsRange3D === val.type ||
-				cElementType.array === val.type || cElementType.cell === val.type ||
+			if (val && (cElementType.cellsRange === val.type || cElementType.cellsRange3D === val.type || cElementType.array === val.type || cElementType.cell === val.type ||
 				cElementType.cell3D === val.type)) {
 				val = this.simplifyRefType(val, opt_ws, opt_row, opt_col);
 			}
@@ -7575,10 +7710,13 @@ function parserFormula( formula, parent, _ws ) {
 						var colCount = bbox.c2 - bbox.c1 + 1;
 						row = 1 === rowCount ? 0 : opt_row - ref.r1;
 						col = 1 === colCount ? 0 : opt_col - ref.c1;
-						val = val.getValueByRowCol(row, col);
+						if (row > rowCount - 1 || col > colCount - 1) {
+							val = null;
+						} else {
+							val = val.getValueByRowCol(row, col);
+						}
 						if (!val) {
-							val =
-								new window['AscCommonExcel'].cError(window['AscCommonExcel'].cErrorType.not_available);
+							val = new window['AscCommonExcel'].cError(window['AscCommonExcel'].cErrorType.not_available);
 						}
 					} else {
 						val = new window['AscCommonExcel'].cError(window['AscCommonExcel'].cErrorType.not_available);
@@ -7595,7 +7733,7 @@ function parserFormula( formula, parent, _ws ) {
 		}
 		return val;
 	};
-	parserFormula.prototype.convertTo3DRefs = function(bboxFrom) {
+	parserFormula.prototype.convertTo3DRefs = function (bboxFrom) {
 		var elem, bbox;
 		for (var i = 0; i < this.outStack.length; i++) {
 			elem = this.outStack[i];
@@ -7607,12 +7745,11 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		}
 	};
-	parserFormula.prototype.hasRelativeRefs = function() {
+	parserFormula.prototype.hasRelativeRefs = function () {
 		var elem;
 		for (var i = 0; i < this.outStack.length; i++) {
 			elem = this.outStack[i];
-			if ((elem.type === cElementType.cell || elem.type === cElementType.cellsRange ||
-				elem.type === cElementType.cell3D || elem.type === cElementType.cellsRange3D) &&
+			if ((elem.type === cElementType.cell || elem.type === cElementType.cellsRange || elem.type === cElementType.cell3D || elem.type === cElementType.cellsRange3D) &&
 				!elem.getBBox0().isAbsAll()) {
 				return true;
 			}
@@ -7620,7 +7757,7 @@ function parserFormula( formula, parent, _ws ) {
 		return false;
 	};
 
-	parserFormula.prototype.getFormulaHyperlink = function() {
+	parserFormula.prototype.getFormulaHyperlink = function () {
 		for (var i = 0; i < this.outStack.length; i++) {
 			if (this.outStack[i] && this.outStack[i].name === "HYPERLINK") {
 				return true;
@@ -7628,14 +7765,14 @@ function parserFormula( formula, parent, _ws ) {
 		}
 		return false;
 	};
-	parserFormula.prototype.getOutsideFunctions = function() {
+	parserFormula.prototype.getOutsideFunctions = function () {
 		var res;
 		var funcArr = [];
 		var depth = 0;
 		for (var i = 0; i < this.outStack.length; i++) {
 			var elem = this.outStack[i];
 			if (cElementType.func === elem.type) {
-				if(depth === 0) {
+				if (depth === 0) {
 					funcArr.push(elem);
 				}
 				depth++;
@@ -7651,10 +7788,11 @@ function parserFormula( formula, parent, _ws ) {
 		this.isForceBacktracking = false;
 		this.isProcessRecursion = false;
 	}
+
 	//for chrome63(real maximum call stack size is 12575) MAXRECURSION that cause excaption is 783
 	//by measurement: stack size in doctrenderer is one fourth smaller than chrome
 	CalcRecursion.prototype.MAXRECURSION = 300;
-	CalcRecursion.prototype.incLevel = function() {
+	CalcRecursion.prototype.incLevel = function () {
 		if (this.getIsForceBacktracking()) {
 			return false;
 		}
@@ -7666,16 +7804,16 @@ function parserFormula( formula, parent, _ws ) {
 		}
 		return res;
 	};
-	CalcRecursion.prototype.decLevel = function() {
+	CalcRecursion.prototype.decLevel = function () {
 		this.level--;
 	};
-	CalcRecursion.prototype.getLevel = function() {
+	CalcRecursion.prototype.getLevel = function () {
 		return this.level;
 	};
-	CalcRecursion.prototype.insert = function(val) {
+	CalcRecursion.prototype.insert = function (val) {
 		this.elemsPart.push(val);
 	};
-	CalcRecursion.prototype.foreachInReverse = function(callback) {
+	CalcRecursion.prototype.foreachInReverse = function (callback) {
 		for (var i = this.elems.length - 1; i >= 0; --i) {
 			var elemsPart = this.elems[i];
 			for (var j = 0; j < elemsPart.length; ++j) {
@@ -7686,26 +7824,26 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		}
 	};
-	CalcRecursion.prototype.setIsForceBacktracking = function(val) {
+	CalcRecursion.prototype.setIsForceBacktracking = function (val) {
 		if (!this.isForceBacktracking) {
 			this.elemsPart = [];
 			this.elems.push(this.elemsPart);
 		}
 		this.isForceBacktracking = val;
 	};
-	CalcRecursion.prototype.getIsForceBacktracking = function() {
+	CalcRecursion.prototype.getIsForceBacktracking = function () {
 		return this.isForceBacktracking;
 	};
-	CalcRecursion.prototype.setIsProcessRecursion = function(val) {
+	CalcRecursion.prototype.setIsProcessRecursion = function (val) {
 		this.isProcessRecursion = val;
 	};
-	CalcRecursion.prototype.getIsProcessRecursion = function() {
+	CalcRecursion.prototype.getIsProcessRecursion = function () {
 		return this.isProcessRecursion;
 	};
 	var g_cCalcRecursion =  new CalcRecursion();
 
 	function parseNum(str) {
-		if (str.indexOf("x") > -1 || str == "" || str.match(/\s+/))//исключаем запись числа в 16-ричной форме из числа.
+		if (str.indexOf("x") > -1 || str == "" || str.match(/^\s+$/))//исключаем запись числа в 16-ричной форме из числа.
 		{
 			return false;
 		}

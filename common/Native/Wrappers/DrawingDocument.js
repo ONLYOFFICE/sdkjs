@@ -856,6 +856,7 @@ CDrawingDocument.prototype =
         this.TargetPos.X = x;
         this.TargetPos.Y = y;
         this.TargetPos.Page = pageIndex;
+        this.m_lCurrentPage = pageIndex;
 
         this.LogicDocument.Set_TargetPos(x, y, pageIndex);
         this.UpdateTargetCheck = true;
@@ -1996,9 +1997,6 @@ CDrawingDocument.prototype =
     {
         check_KeyboardEvent(e);
 
-        if (this.IsFreezePage(this.m_lCurrentPage))
-            return;
-
         this.StartUpdateOverlay();
 
         this.IsKeyDownButNoPress = true;
@@ -2019,9 +2017,6 @@ CDrawingDocument.prototype =
         if (false === this.bIsUseKeyPress)
             return;
 
-        if (this.IsFreezePage(this.m_lCurrentPage))
-            return;
-
         check_KeyboardEvent(e);
 
         this.StartUpdateOverlay();
@@ -2032,9 +2027,6 @@ CDrawingDocument.prototype =
 
     OnKeyboardEvent : function(_params)
     {
-        if (this.IsFreezePage(this.m_lCurrentPage))
-            return;
-
         var _len = _params.length / 4;
 
         //this.LogicDocument.TurnOff_Recalculate();
@@ -2118,13 +2110,8 @@ CDrawingDocument.prototype =
 
     CheckTableStylesOne : function()
     {
-        var _tableLook = new Asc.CTablePropLook(undefined);
-
-        _tableLook.FirstRow = true;
-        _tableLook.BandHor = true;
-        _tableLook.FirstCol = true;
-
-        this.CheckTableStyles(_tableLook);
+    	let oTableLook = new AscCommon.CTableLook(true, true, false, false, true, false);
+        this.CheckTableStyles(oTableLook);
 
         this.TableStylesSendOne = true;
     },
@@ -2149,151 +2136,50 @@ CDrawingDocument.prototype =
          	return;
          */
 
-        var bIsChanged = false;
-        if (null == this.TableStylesLastLook)
-        {
-            this.TableStylesLastLook = new Asc.CTablePropLook();
+		let isChanged = false;
 
-            this.TableStylesLastLook.FirstCol = tableLook.FirstCol;
-            this.TableStylesLastLook.FirstRow = tableLook.FirstRow;
-            this.TableStylesLastLook.LastCol = tableLook.LastCol;
-            this.TableStylesLastLook.LastRow = tableLook.LastRow;
-            this.TableStylesLastLook.BandHor = tableLook.BandHor;
-            this.TableStylesLastLook.BandVer = tableLook.BandVer;
-            bIsChanged = true;
+		if (!this.TableStylesLastLook || !this.TableStylesLastLook.IsEqual(tableLook))
+		{
+			this.TableStylesLastLook = tableLook.Copy();
+			isChanged = true;
+		}
+
+		if (!isChanged)
+			return;
+
+        var logicDoc = this.m_oWordControl.m_oLogicDocument;
+        var oPreviewGenerator = new AscCommon.CTableStylesPreviewGenerator(logicDoc);
+        var dScale = 2;
+        var _w_px = TABLE_STYLE_WIDTH_PIX;
+        var _h_px = TABLE_STYLE_HEIGHT_PIX;
+        var _pageW = 297;
+        var _pageH = 210;
+        var oStream = global_memory_stream_menu;
+        var oGraphics = new CDrawingStream();
+        var oNative = this.Native;
+        oPreviewGenerator.GetAllPreviewsNative(false, oGraphics, oStream, oNative, _pageW, _pageH, _w_px, _h_px);
+    },
+
+    GetTableStylesPreviews : function(bUseDefault)
+    {
+        return [];
+    },
+
+    GetTableLook : function(isDefault)
+    {
+        let oTableLook;
+
+        if (isDefault)
+        {
+            oTableLook = new AscCommon.CTableLook();
+            oTableLook.SetDefault();
         }
         else
         {
-            if (this.TableStylesLastLook.FirstCol != tableLook.FirstCol)
-            {
-                this.TableStylesLastLook.FirstCol = tableLook.FirstCol;
-                bIsChanged = true;
-            }
-            if (this.TableStylesLastLook.FirstRow != tableLook.FirstRow)
-            {
-                this.TableStylesLastLook.FirstRow = tableLook.FirstRow;
-                bIsChanged = true;
-            }
-            if (this.TableStylesLastLook.LastCol != tableLook.LastCol)
-            {
-                this.TableStylesLastLook.LastCol = tableLook.LastCol;
-                bIsChanged = true;
-            }
-            if (this.TableStylesLastLook.LastRow != tableLook.LastRow)
-            {
-                this.TableStylesLastLook.LastRow = tableLook.LastRow;
-                bIsChanged = true;
-            }
-            if (this.TableStylesLastLook.BandHor != tableLook.BandHor)
-            {
-                this.TableStylesLastLook.BandHor = tableLook.BandHor;
-                bIsChanged = true;
-            }
-            if (this.TableStylesLastLook.BandVer != tableLook.BandVer)
-            {
-                this.TableStylesLastLook.BandVer = tableLook.BandVer;
-                bIsChanged = true;
-            }
+            oTableLook = this.TableStylesLastLook;
         }
 
-        if (!bIsChanged)
-            return;
-
-        var logicDoc = this.m_oWordControl.m_oLogicDocument;
-
-        var _styles = logicDoc.Styles.Get_AllTableStyles();
-        var _styles_len = _styles.length;
-
-        if (_styles_len == 0)
-            return;
-
-        var _x_mar = 10;
-        var _y_mar = 10;
-        var _r_mar = 10;
-        var _b_mar = 10;
-        var _pageW = 297;
-        var _pageH = 210;
-
-        var W = (_pageW - _x_mar - _r_mar);
-        var H = (_pageH - _y_mar - _b_mar);
-
-        var _stream = global_memory_stream_menu;
-        var _graphics = new CDrawingStream();
-
-        this.Native["DD_PrepareNativeDraw"]();
-
-        var Rows = 5;
-
-        AscCommon.History.TurnOff();
-        AscCommon.g_oTableId.m_bTurnOff = true;
-        for (var i1 = 0; i1 < _styles_len; i1++)
-        {
-            var i = _styles[i1];
-            var _style = logicDoc.Styles.Style[i];
-
-            if (!_style || _style.Type != styletype_Table)
-                continue;
-
-            if (_table_styles == null)
-            {
-                var Cols = 5;
-
-                var Grid = [];
-                for (var ii = 0; ii < Cols; ii++)
-                    Grid[ii] = W / Cols;
-
-                _table_styles = new CTable(this, logicDoc, true, Rows, Cols, Grid);
-				_table_styles.Reset(_x_mar, _y_mar, 1000, 1000, 0, 0, 1);
-                _table_styles.Set_Props({TableStyle : i, TableLook : tableLook, TableLayout : c_oAscTableLayout.Fixed});
-
-                for (var j = 0; j < Rows; j++)
-                    _table_styles.Content[j].Set_Height(H / Rows, Asc.linerule_AtLeast);
-            }
-            else
-            {
-                _table_styles.Set_Props({TableStyle : i, TableLook : tableLook, TableLayout : c_oAscTableLayout.Fixed, CellSelect : false});
-                _table_styles.Recalc_CompiledPr2();
-
-                for (var j = 0; j < Rows; j++)
-                    _table_styles.Content[j].Set_Height(H / Rows, Asc.linerule_AtLeast);
-            }
-
-
-            _table_styles.Recalculate_Page(0);
-
-            var _w_px = TABLE_STYLE_WIDTH_PIX;
-            var _h_px = TABLE_STYLE_HEIGHT_PIX;
-
-            if (AscCommon.AscBrowser.isRetina)
-            {
-                _w_px *= 2;
-                _h_px *= 2;
-            }
-
-            this.Native["DD_StartNativeDraw"](_w_px, _h_px, _pageW, _pageH);
-
-            var _old_mode = editor.isViewMode;
-            editor.isViewMode = true;
-            editor.isShowTableEmptyLineAttack = true;
-            _table_styles.Draw(0, _graphics);
-            editor.isShowTableEmptyLineAttack = false;
-            editor.isViewMode = _old_mode;
-
-            _stream["ClearNoAttack"]();
-
-            _stream["WriteByte"](2);
-            _stream["WriteString2"]("" + i);
-
-            this.Native["DD_EndNativeDraw"](_stream);
-            _graphics.ClearParams();
-        }
-        AscCommon.g_oTableId.m_bTurnOff = false;
-        AscCommon.History.TurnOn();
-
-        _stream["ClearNoAttack"]();
-        _stream["WriteByte"](3);
-
-        this.Native["DD_EndNativeDraw"](_stream);
+        return oTableLook;
     },
 
     CheckGuiControlColors : function ()
@@ -3000,7 +2886,7 @@ CDrawingDocument.prototype =
   	},
   	Collaborative_RemoveTarget : function (_id)
   	{
-      //this.Native["collaborativeRemoveTarget"](_id);
+        this.Native["collaborativeRemoveTarget"](_id);
 
  		for (var i = 0; i < this.CollaborativeTargets.length; i++)
   		{
