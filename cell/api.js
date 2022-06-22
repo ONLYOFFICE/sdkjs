@@ -5978,6 +5978,7 @@ var editor;
 		AscCommon.build_local_rx(oLocalizedData ? oLocalizedData["LocalFormulaOperands"] : null);
 		if (this.wb) {
 			this.wb.initFormulasList();
+			this.wb._onWSSelectionChanged()
 		}
 		if (this.wbModel) {
 			this.wbModel.rebuildColors();
