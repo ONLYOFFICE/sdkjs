@@ -2327,6 +2327,17 @@ var editor;
 			wbXml.fromXml(reader, {"sheets" : 1});
 		});
 
+		//sharedString
+		var sharedStringPart = wbPart.getPartByRelationshipType(openXml.Types.sharedStringTable.relationType);
+		if (sharedStringPart) {
+			var contentSharedStrings = sharedStringPart.getDocumentContent();
+			if (contentSharedStrings) {
+				var sharedStrings = new AscCommonExcel.CT_SharedStrings();
+				var reader = new StaxParser(contentSharedStrings, sharedStringPart, xmlParserContext);
+				sharedStrings.fromXml(reader);
+			}
+		}
+
 		//sheets
 		if (wbXml.sheets) {
 			var wsParts = [];

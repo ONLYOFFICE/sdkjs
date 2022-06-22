@@ -12147,6 +12147,20 @@ QueryTableField.prototype.clone = function() {
 		return null;
 	};
 
+	ExternalReference.prototype.getWb = function () {
+		if (this.worksheets) {
+			for (var i in this.worksheets) {
+				//если есть this.worksheets, если нет - проверить и обработать
+				if (this.worksheets[i]) {
+					return this.worksheets[i].workbook;
+				}
+			}
+		}
+
+		return null;
+	};
+
+
 
 	function asc_CExternalReference() {
 		this.type = null;

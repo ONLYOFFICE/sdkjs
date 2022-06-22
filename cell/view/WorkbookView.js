@@ -4638,10 +4638,18 @@
 							for (var i = 0; i < values.length; i++) {
 								if (values[i]) {
 									//TODO если внутри не zip, отправляем на конвертацию в xlsx, далее повторно обрабатываем - позже реализовать
-									var updatedData = window["Asc"]["editor"].openDocumentFromZip2(t.model, values[i]);
+
+									//соответствие по массиву externalReferences, по индексу
+									var eR = externalReferences[i] && externalReferences[i].externalReference && externalReferences[i].externalReference;
+
+									//использую общий wb для externalReferences. поскольку внутри
+									//хранится sharedStrings, возмжно придтся использовать для каждого листа свою книгу
+									//необходимо проверить, ссылкой на 2 листа одной книги
+									var wb = eR.getWb();
+
+									var updatedData = window["Asc"]["editor"].openDocumentFromZip2(wb ? wb : t.model, values[i]);
 									if (updatedData) {
-										//соответствие по массиву externalReferences, по индексу
-										externalReferences[i] && externalReferences[i].externalReference && externalReferences[i].externalReference.updateData(updatedData);
+										eR && eR.updateData(updatedData);
 									}
 								}
 							}
