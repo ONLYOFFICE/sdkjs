@@ -179,7 +179,7 @@
 					// заменяем новым
 					for (var j = 0; j < this.plugins.length; j++)
 					{
-						if (this.plugins[j].guid == guid)
+						if (this.plugins[j].guid === guid && this.plugins[j].getIntVersion() < plugins[i].getIntVersion())
 						{
 							this.plugins[j] = plugins[i];
 							break;
@@ -510,8 +510,14 @@
 
 				if (runObject.startData.getAttribute("resize") !== true)
 				{
+					var isSystem = false;
+					if (plugin.variations && plugin.variations[runObject.currentVariation].isSystem)
+						isSystem = true;
+
 					this.api.sendEvent("asc_onPluginShow", plugin, runObject.currentVariation);
-					this.sendsToInterface[plugin.guid] = true;
+
+					if (!isSystem)
+						this.sendsToInterface[plugin.guid] = true;
 				}
 			}
 
@@ -707,10 +713,10 @@
                 pluginData.setAttribute("userName", this.api.User.userName);
             }
 		},
-		loadExtensionPlugins : function(_plugins, isDelayRun)
+		loadExtensionPlugins : function(_plugins, isDelayRun, isNoUpdateInterface)
 		{
 			if (!_plugins || _plugins.length < 1)
-				return;
+				return false;
 
 			var _map = {};
 			for (var i = 0; i < this.plugins.length; i++)
@@ -730,7 +736,11 @@
 						for (var i = 0; i < this.plugins.length; i++)
 						{
 							if (this.plugins[i].guid === _p.guid)
+							{
+								if (this.pluginsMap[_p.guid])
+									delete this.pluginsMap[_p.guid];
 								this.plugins.splice(i, 1);
+							}
 						}
 					}
 					else
@@ -743,9 +753,17 @@
 				_new.push(_p);
 			}
 
-			this.register(this.path, _new, isDelayRun);
+			if (_new.length > 0)
+			{
+				this.register(this.path, _new, isDelayRun);
 
-			this.updateInterface();
+				if (true !== isNoUpdateInterface)
+					this.updateInterface();
+
+				return true;
+			}
+
+			return false;
 		},
 
 		updateInterface : function()
@@ -1367,9 +1385,10 @@
 				{
 					window.g_asc_plugins.register(window.g_asc_plugins.api.preSetupPlugins.path, window.g_asc_plugins.api.preSetupPlugins.plugins);
 					delete window.g_asc_plugins.api.preSetupPlugins;
+
+					window.g_asc_plugins.api.checkInstalledPlugins();
 				}
 
-				window.g_asc_plugins.loadExtensionPlugins(window["Asc"]["extensionPlugins"]);
 			}, 10);
 
 		});

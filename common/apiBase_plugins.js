@@ -1034,11 +1034,81 @@
 		currentInstalledPlugins[config["guid"]] = config;
 		setLocalStorageItem("asc_plugins_installed", currentInstalledPlugins);
 
+		let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+		if (currentRemovedPlugins && currentRemovedPlugins[config["guid"]])
+		{
+			delete currentRemovedPlugins[config["guid"]];
+			setLocalStorageItem("asc_plugins_removed", currentRemovedPlugins);
+		}
+
 		return {
 			"type" : loadFuncName,
 			"guid" : config["guid"]
 		};
 	}
+
+	Api.prototype.checkInstalledPlugins = function()
+	{
+		if (this.disableCheckInstalledPlugins)
+			return;
+
+		let arrayPlugins = [];
+
+		let currentInstalledPlugins = getLocalStorageItem("asc_plugins_installed");
+		if (currentInstalledPlugins)
+		{
+			for (let item in currentInstalledPlugins)
+			{
+				if (currentInstalledPlugins[item]["guid"])
+					arrayPlugins.push(currentInstalledPlugins[item]);
+			}
+		}
+
+		if (window["Asc"]["extensionPlugins"] && window["Asc"]["extensionPlugins"].length)
+		{
+			let arrayExtensions = window["Asc"]["extensionPlugins"];
+			for (let i = 0, len = arrayExtensions.length; i < len; i++)
+				arrayPlugins.push(arrayExtensions[i]);
+		}
+
+		let isInstalledPresent = window.g_asc_plugins.loadExtensionPlugins(arrayPlugins, undefined, true);
+
+		let isRemovedPresent = false;
+		let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+
+		if (currentRemovedPlugins)
+		{
+			for (let guid in currentRemovedPlugins)
+			{
+				if (guid)
+				{
+					if (window.g_asc_plugins.unregister(guid))
+						isRemovedPresent = true;
+				}
+			}
+		}
+
+		// этот метод может быть вызван из интерфейса - нужен таймаут для web-apps
+		if (isRemovedPresent || isInstalledPresent) {
+
+			setTimeout(function () {
+
+				// в принципе можно не удалять, так как если ничего не поменялось - то не зайдем второй раз сюда.
+				// но зачем еще раз парсить
+				window.g_asc_plugins.api.disableCheckInstalledPlugins = true;
+
+				if (isRemovedPresent)
+					window.g_asc_plugins.api.sendEvent("asc_onPluginsReset");
+
+				if (isInstalledPresent || isRemovedPresent)
+					window.g_asc_plugins.updateInterface();
+
+				delete window.g_asc_plugins.api.disableCheckInstalledPlugins;
+
+			}, 10);
+
+		}
+	};
 
 	/**
     * Returns all installed plugins.
@@ -1093,14 +1163,22 @@
 				currentRemovedPlugins = {};
 			currentRemovedPlugins[guid] = true;
 			setLocalStorageItem("asc_plugins_removed", currentRemovedPlugins);
+
+			let currentInstalledPlugins = getLocalStorageItem("asc_plugins_installed");
+			if (currentInstalledPlugins && currentInstalledPlugins[removedGuid])
+			{
+				delete currentInstalledPlugins[removedGuid];
+				setLocalStorageItem("asc_plugins_installed", currentInstalledPlugins);
+			}
+
+			this.sendEvent("asc_onPluginsReset");
+			window.g_asc_plugins.updateInterface();
 		}
 
 		return {
 			type : "Removed",
 			guid : removedGuid
 		};
-
-		window.g_asc_plugins.updateInterface();
 	};
 	/**
     * Install plugin with by url to config.

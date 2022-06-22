@@ -5722,6 +5722,15 @@
 		_object["guid"]       = this.guid;
 		_object["version"]    = this.version;
 		_object["baseUrl"]    = this.baseUrl;
+		_object["minVersion"] = this.minVersion;
+
+		if (this.group)
+		{
+			_object["group"] = {};
+			_object["group"]["name"] = this.group.name;
+			_object["group"]["rank"] = this.group.rank;
+		}
+
 		_object["variations"] = [];
 		for (var i = 0; i < this.variations.length; i++)
 		{
@@ -5732,10 +5741,33 @@
 	CPlugin.prototype["deserialize"] = function(_object)
 	{
 		this.name       = (_object["name"] != null) ? _object["name"] : this.name;
+		this.nameLocale = (_object["nameLocale"] != null) ? _object["nameLocale"] : this.nameLocale;
 		this.guid       = (_object["guid"] != null) ? _object["guid"] : this.guid;
+		this.version    = (_object["version"] != null) ? _object["version"] : this.version;
 		this.baseUrl    = (_object["baseUrl"] != null) ? _object["baseUrl"] : this.baseUrl;
 		this.minVersion = (_object["minVersion"] != null) ? _object["minVersion"] : this.minVersion;
-		this.version    = (_object["version"] != null) ? _object["version"] : this.version;
+
+		if (true)
+		{
+			// удалим этот if, как передем на просто прокидку объекта в интерфейсе
+			if (_object["groupName"] || _object["groupRank"])
+				this.group = {};
+
+			if (_object["groupName"])
+				this.group.name = _object["groupName"];
+			if (_object["groupRank"])
+				this.group.rank = _object["groupRank"];
+		}
+
+		if (_object["group"])
+		{
+			this.group = {};
+			this.group.name = (_object["group"]["name"] != null) ? _object["group"]["name"] : "";
+			this.group.rank = (_object["group"]["rank"] != null) ? _object["group"]["rank"] : 0;
+		}
+
+
+		this.group      = (_object["group"] != null) ? _object["group"] : this.group;
 		this.variations = [];
 		for (var i = 0; i < _object["variations"].length; i++)
 		{
