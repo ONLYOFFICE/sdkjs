@@ -3838,7 +3838,7 @@
 		var ws;
 		if (sRange) {
 			if (-1 !== sRange.indexOf("!")) {
-				var is3DRef = AscCommon.parserHelp.parse3DRef(item);
+				var is3DRef = AscCommon.parserHelp.parse3DRef(sRange);
 				if (is3DRef) {
 					range = is3DRef.range;
 					ws = this.getWorksheetByName(range.sheet);
