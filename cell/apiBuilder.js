@@ -3942,7 +3942,7 @@
 		if (typeof(sData) !== "string" || sData === "")
 			return false;
 
-		this.OleObject.setData(sData);
+		this.Drawing.setData(sData);
 		return true;
 	};
 
@@ -3954,8 +3954,8 @@
 	 */
 	ApiOleObject.prototype.GetData = function()
 	{
-		if (typeof(this.OleObject.m_sData) === "string")
-			return this.OleObject.m_sData;
+		if (typeof(this.Drawing.m_sData) === "string")
+			return this.Drawing.m_sData;
 		
 		return "";
 	};
@@ -3972,7 +3972,7 @@
 		if (typeof(sAppId) !== "string" || sAppId === "")
 			return false;
 
-		this.OleObject.setApplicationId(sAppId);
+		this.Drawing.setApplicationId(sAppId);
 		return true;
 	};
 
@@ -3984,8 +3984,8 @@
 	 */
 	ApiOleObject.prototype.GetApplicationId = function()
 	{
-		if (typeof(this.OleObject.m_sApplicationId) === "string")
-			return this.OleObject.m_sApplicationId;
+		if (typeof(this.Drawing.m_sApplicationId) === "string")
+			return this.Drawing.m_sApplicationId;
 		
 		return "";
 	};
