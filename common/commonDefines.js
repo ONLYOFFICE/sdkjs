@@ -3334,7 +3334,19 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		Simple   : 3
 	};
 
-	const LigaturesFlags = {
+	var cryptoAlgorithmName = {
+        Unknown: 0,
+        MD2: 1,
+        MD4: 2,
+        MD5: 3,
+        RIPEMD128: 4,
+        RIPEMD160: 5,
+        SHA1: 6,
+        SHA256: 7,
+        SHA384: 8,
+        SHA512: 9,
+        WHIRLPOOL: 10
+    };	const LigaturesFlags = {
 		Standard     : 0x01, //AscFonts.HB_FEATURE.HB_FEATURE_TYPE_LIGATURES_STANDARD,
 		Contextual   : 0x02, //AscFonts.HB_FEATURE.HB_FEATURE_TYPE_LIGATURES_CONTEXTUAL,
 		Historical   : 0x04, //AscFonts.HB_FEATURE.HB_FEATURE_TYPE_LIGATURES_HISTORICAL,
@@ -3365,7 +3377,6 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		AtLeast : 1,
 		Exact   : 2
 	};
-
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
 	window['Asc']                          = window['Asc'] || {};
@@ -4654,7 +4665,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	window['AscCommon'].ST_TLAnimateEffectTransition = ST_TLAnimateEffectTransition;
 	window['AscCommon'].c_oAscOleObjectTypes = c_oAscOleObjectTypes;
 	window['AscCommon'].ST_CxnType = ST_CxnType;
-
+	window['AscCommon'].cryptoAlgorithmName = cryptoAlgorithmName;
+	
 	prot = window['Asc']['LigaturesType'] = window['Asc'].LigaturesType = LigaturesType;
 	prot['None']                             = prot.None;
 	prot['Standard']                         = prot.Standard;
@@ -4677,5 +4689,4 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['Auto']    = prot.Auto;
 	prot['AtLeast'] = prot.AtLeast;
 	prot['Exact']   = prot.Exact;
-
-})(window);
+	})(window);

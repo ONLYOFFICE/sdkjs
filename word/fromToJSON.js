@@ -47,7 +47,10 @@
 	}
 	function private_GetDrawingDocument()
 	{
-		return editor.WordControl.m_oLogicDocument.DrawingDocument;
+		if (editor)
+			return editor.WordControl.m_oLogicDocument.DrawingDocument;
+
+		return Asc.editor.wbModel.getDrawingDocument();
 	}
 	function private_EMU2MM(EMU)
 	{
@@ -59,7 +62,10 @@
 	}
 	function private_GetLogicDocument()
 	{
-		return editor.WordControl.m_oLogicDocument;
+		if (editor)
+			return editor.WordControl.m_oLogicDocument;
+		
+		return null;
 	}
 	function private_GetStyles()
 	{
@@ -192,6 +198,8 @@
 		this.mastersMap     = {};
 		this.notesMasterMap = {};
 		this.themesMap      = {};
+		this.workbook       = null;
+		this.stylesForWrite = null;
 	}
 
     WriterToJSON.prototype.SerHlink = function(oHlink)
@@ -200,14 +208,14 @@
 			return oHlink;
 		
 		return {
-			action:         oHlink.action,
-			endSnd:         oHlink.endSnd,
-			highlightClick: oHlink.highlightClick,
-			history:        oHlink.history,
-			id:             oHlink.id,
-			invalidUrl:     oHlink.invalidUrl,
-			tgtFrame:       oHlink.tgtFrame,
-			tooltip:        oHlink.tooltip
+			"action":         oHlink.action,
+			"endSnd":         oHlink.endSnd,
+			"highlightClick": oHlink.highlightClick,
+			"history":        oHlink.history,
+			"id":             oHlink.id,
+			"invalidUrl":     oHlink.invalidUrl,
+			"tgtFrame":       oHlink.tgtFrame,
+			"tooltip":        oHlink.tooltip
 		}
 	};
 	WriterToJSON.prototype.SerExternalData = function(oExtData)
@@ -216,8 +224,8 @@
 			return oExtData;
 		
 		return {
-			autoUpdate: oExtData.autoUpdate,
-			id:         oExtData.id
+			"autoUpdate": oExtData.autoUpdate,
+			"id":         oExtData.id
 		}
 	};
 	WriterToJSON.prototype.SerProtection = function(oProtection)
@@ -226,11 +234,11 @@
 			return oProtection;
 		
 		return {
-			chartObject:   oProtection.chartObject,
-			data:          oProtection.data,
-			formatting:    oProtection.formatting,
-			selection:     oProtection.selection,
-			userInterface: oProtection.userInterface
+			"chartObject":   oProtection.chartObject,
+			"data":          oProtection.data,
+			"formatting":    oProtection.formatting,
+			"selection":     oProtection.selection,
+			"userInterface": oProtection.userInterface
 		}
 	};
 	WriterToJSON.prototype.SerPivotSource = function(oPivotSource)
@@ -239,8 +247,8 @@
 			return oPivotSource;
 		
 		return {
-			fmtId: oPivotSource.fmtId,
-			name:  oPivotSource.name
+			"fmtId": oPivotSource.fmtId,
+			"name":  oPivotSource.name
 		}
 	};
 	WriterToJSON.prototype.SerSimplePos = function(oSimplePos)
@@ -249,9 +257,9 @@
 			return oSimplePos;
 		
 		return {
-			x:   private_MM2EMU(oSimplePos.X),
-			y:   private_MM2EMU(oSimplePos.Y),
-			use: oSimplePos.Use
+			"x":   private_MM2EMU(oSimplePos.X),
+			"y":   private_MM2EMU(oSimplePos.Y),
+			"use": oSimplePos.Use
 		}
 	};
 	WriterToJSON.prototype.SerPositionV = function(oPosV)
@@ -320,10 +328,10 @@
 		var posOffset = oPosV.Align ? undefined : (oPosV.Percent ? oPosV.Value : private_MM2EMU(oPosV.Value));
 
 		return {
-			align:        sVerAlign,
-			relativeFrom: sRelFromV,
-			posOffset:    posOffset,
-			percent:      oPosV.Percent
+			"align":        sVerAlign,
+			"relativeFrom": sRelFromV,
+			"posOffset":    posOffset,
+			"percent":      oPosV.Percent
 		}
 	};
 	WriterToJSON.prototype.SerPositionH = function(oPosH)
@@ -389,10 +397,10 @@
 		var posOffSet =  oPosH.Align ? undefined : (oPosH.Percent ? oPosH.Value : private_MM2EMU(oPosH.Value));
 
 		return {
-			align:        sHorAlign,
-			relativeFrom: sRelFromH,
-			posOffset:    posOffSet,
-			percent:      oPosH.Percent
+			"align":        sHorAlign,
+			"relativeFrom": sRelFromH,
+			"posOffset":    posOffSet,
+			"percent":      oPosH.Percent
 		}
 	};
 	WriterToJSON.prototype.SerExtent = function(oExtent)
@@ -401,8 +409,8 @@
 			return oExtent;
 
 		return {
-			cy: private_MM2EMU(oExtent.H),
-			cx: private_MM2EMU(oExtent.W)
+			"cy": private_MM2EMU(oExtent.H),
+			"cx": private_MM2EMU(oExtent.W)
 		}
 	};
 	WriterToJSON.prototype.SerEffectExtent = function(oEffExt)
@@ -411,10 +419,10 @@
 			return oEffExt;
 
 		return {
-			b: oEffExt.B,
-			l: oEffExt.L,
-			r: oEffExt.R,
-			t: oEffExt.T
+			"b": oEffExt.B,
+			"l": oEffExt.L,
+			"r": oEffExt.R,
+			"t": oEffExt.T
 		}
 	};
 	WriterToJSON.prototype.GetWrapStrType = function(nType)
@@ -453,10 +461,12 @@
 			if (oGraphicObj.constructor.name === "CConnectionShape")
 			{
 				var oShapeObj = this.SerShape(oGraphicObj, aComplexFieldsToSave);
-				oShapeObj.type = "connectShape";
+				oShapeObj["type"] = "connectShape";
 
 				oResultObj = oShapeObj;
 			}
+			else if (oGraphicObj.constructor.name === "CSlicer")
+				oResultObj = this.SerSlicerDrawing(oGraphicObj)
 			else
 				oResultObj = this.SerShape(oGraphicObj, aComplexFieldsToSave);
 		}
@@ -469,54 +479,62 @@
 		else if (oGraphicObj instanceof AscFormat.CGroupShape && oGraphicObj.constructor.name === "CGroupShape")
 			oResultObj = this.SerGroupShape(oGraphicObj);
 		
-		oResultObj.id = oGraphicObj.Id;
+		oResultObj["id"] = oGraphicObj.Id;
 
 		return oResultObj;
+	};
+	WriterToJSON.prototype.SerSlicerDrawing = function(oSlicerDrawing)
+	{
+		var oResult = this.SerShape(oSlicerDrawing);
+		oResult["name"] = oSlicerDrawing.name != null ? oSlicerDrawing.name : undefined;
+		oResult["type"] = "slicer";
+
+		return oResult;
 	};
 	WriterToJSON.prototype.SerOleObject = function(oOleObject)
 	{
 		var oResult  = this.SerImage(oOleObject);
 
-		oResult.appId = oOleObject.m_sApplicationId;
-		oResult.data  = oOleObject.m_sData;
+		oResult["appId"] = oOleObject.m_sApplicationId;
+		oResult["data"]  = oOleObject.m_sData;
 
-		oResult.dxaOrig = private_Px2Twips(oOleObject.m_nPixWidth);
-		oResult.dyaOrig = private_Px2Twips(oOleObject.m_nPixHeight);
+		oResult["dxaOrig"] = private_Px2Twips(oOleObject.m_nPixWidth);
+		oResult["dyaOrig"] = private_Px2Twips(oOleObject.m_nPixHeight);
 
-		oResult.objFile    = oOleObject.m_sObjectFile;
-		oResult.oleType    = To_XML_OleObj_Type(oOleObject.m_nOleType);
-		oResult.binaryData = oOleObject.m_aBinaryData;
-		oResult.mathObj    = this.SerParaMath(oOleObject.m_oMathObject);
+		oResult["objFile"]    = oOleObject.m_sObjectFile;
+		oResult["oleType"]    = To_XML_OleObj_Type(oOleObject.m_nOleType);
+		oResult["binaryData"] = oOleObject.m_aBinaryData;
+		oResult["mathObj"]    = this.SerParaMath(oOleObject.m_oMathObject);
 
-		oResult.type = "oleObject";
+		oResult["type"] = "oleObject";
         return oResult;
 	};
 	WriterToJSON.prototype.SerLockedCanvas = function(oLockedCanvas)
 	{
 		var oResult  = this.SerDrawing(oLockedCanvas);
-        oResult.type = "lockedCanvas";
+        oResult["type"] = "lockedCanvas";
 
         return oResult;
 	};
 	WriterToJSON.prototype.SerGroupShape = function(oGroupShape)
     {
         var oResult  = this.SerDrawing(oGroupShape);
-        oResult.type = "groupShape";
+        oResult["type"] = "groupShape";
 
         return oResult;
     };
 	WriterToJSON.prototype.SerSmartArt = function(oSmartArt)
 	{
 		return {
-			colorsDef: this.SerColorsDef(oSmartArt.colorsDef),
-			dataModel: this.SerData(oSmartArt.dataModel, "diagramData"),
-			layoutDef: this.SerLayoutDef(oSmartArt.layoutDef),
-			styleDef:  this.SerStyleDef(oSmartArt.styleDef),
-			drawing:   this.SerDrawing(oSmartArt.drawing),
-			nvGrpSpPr: this.SerUniNvPr(oSmartArt.nvGrpSpPr),
-			spPr:      this.SerSpPr(oSmartArt.spPr),
-			type:      "smartArt",
-			artType:   oSmartArt.type
+			"colorsDef": this.SerColorsDef(oSmartArt.colorsDef),
+			"dataModel": this.SerData(oSmartArt.dataModel, "diagramData"),
+			"layoutDef": this.SerLayoutDef(oSmartArt.layoutDef),
+			"styleDef":  this.SerStyleDef(oSmartArt.styleDef),
+			"drawing":   this.SerDrawing(oSmartArt.drawing),
+			"nvGrpSpPr": this.SerUniNvPr(oSmartArt.nvGrpSpPr),
+			"spPr":      this.SerSpPr(oSmartArt.spPr),
+			"type":      "smartArt",
+			"artType":   oSmartArt.type
 		}
 	};
 	WriterToJSON.prototype.SerStyleDef = function(oStyleDef)
@@ -529,13 +547,13 @@
 			aStyleLbl.push(this.SerDefStyleLbl(oStyleDef.styleLbl[nStyle]));
 
 		return {
-			catLst:     this.SerCatLst(oStyleDef.catLst),
-			desc:       this.SerDesc(oStyleDef.desc, "desc"),
-			scene3d:    this.SerScene3d(oStyleDef.scene3d),
-			styleLbl:   aStyleLbl,
-			minVer:     oStyleDef.minVer,
-			title:      this.SerDesc(oStyleDef.title, "diagramTitle"),
-			uniqueId:   oStyleDef.uniqueId
+			"catLst":     this.SerCatLst(oStyleDef.catLst),
+			"desc":       this.SerDesc(oStyleDef.desc, "desc"),
+			"scene3d":    this.SerScene3d(oStyleDef.scene3d),
+			"styleLbl":   aStyleLbl,
+			"minVer":     oStyleDef.minVer,
+			"title":      this.SerDesc(oStyleDef.title, "diagramTitle"),
+			"uniqueId":   oStyleDef.uniqueId
 		}
 	};
 	WriterToJSON.prototype.SerDefStyleLbl = function(oDefStyleLbl)
@@ -544,11 +562,11 @@
 			return oDefStyleLbl;
 
 		return {
-			scene3d: this.SerScene3d(oDefStyleLbl.scene3d),
-			sp3d:    this.SerSp3D(oDefStyleLbl.sp3d),
-			style:   this.SerSpStyle(oDefStyleLbl.style),
-			txPr:    this.SerTxPr(oDefStyleLbl.txPr),
-			name:    oDefStyleLbl.name
+			"scene3d": this.SerScene3d(oDefStyleLbl.scene3d),
+			"sp3d":    this.SerSp3D(oDefStyleLbl.sp3d),
+			"style":   this.SerSpStyle(oDefStyleLbl.style),
+			"txPr":    this.SerTxPr(oDefStyleLbl.txPr),
+			"name":    oDefStyleLbl.name
 		}
 	};
 	WriterToJSON.prototype.SerSp3D = function(oSp3D)
@@ -557,14 +575,14 @@
 			return oSp3D;
 
 		return {
-			bevelB:       this.SerBevel(oSp3D.bevelB),
-			bevelT:       this.SerBevel(oSp3D.bevelT),
-			contourClr:   this.SerContourClr(oSp3D.contourClr),
-			extrusionClr: this.SerExtrusionClr(oSp3D.extrusionClr),
-			contourW:     oSp3D.contourW,
-			extrusionH:   oSp3D.extrusionH,
-			prstMaterial: To_XML_ST_PresetMaterialType(oSp3D.prstMaterial),
-			z:            oSp3D.z
+			"bevelB":       this.SerBevel(oSp3D.bevelB),
+			"bevelT":       this.SerBevel(oSp3D.bevelT),
+			"contourClr":   this.SerContourClr(oSp3D.contourClr),
+			"extrusionClr": this.SerExtrusionClr(oSp3D.extrusionClr),
+			"contourW":     oSp3D.contourW,
+			"extrusionH":   oSp3D.extrusionH,
+			"prstMaterial": To_XML_ST_PresetMaterialType(oSp3D.prstMaterial),
+			"z":            oSp3D.z
 		}
 	};
 	WriterToJSON.prototype.SerExtrusionClr = function(oExtrusionClr)
@@ -573,7 +591,7 @@
 			return oExtrusionClr;
 
 		return {
-			color: this.SerColor(oExtrusionClr.color)
+			"color": this.SerColor(oExtrusionClr.color)
 		}
 	};
 	WriterToJSON.prototype.SerContourClr = function(oContourClr)
@@ -582,7 +600,7 @@
 			return oContourClr;
 
 		return {
-			color: this.SerColor(oContourClr.color)
+			"color": this.SerColor(oContourClr.color)
 		}
 	};
 	WriterToJSON.prototype.SerBevel = function(oBevel)
@@ -591,9 +609,9 @@
 			return oBevel;
 
 		return {
-			h:    oBevel.h,
-			prst: To_XML_ST_BevelPresetType(oBevel.prst),
-			w:    oBevel.w
+			"h":    oBevel.h,
+			"prst": To_XML_ST_BevelPresetType(oBevel.prst),
+			"w":    oBevel.w
 		}
 	};
 	WriterToJSON.prototype.SerScene3d = function(oScene3d)
@@ -602,9 +620,9 @@
 			return oScene3d;
 
 		return {
-			backdrop: this.SerBackdrop(oScene3d.backdrop),
-			camera:   this.SerCamera(oScene3d.camera),
-			lightRig: this.SerLightRig(oScene3d.lightRig)
+			"backdrop": this.SerBackdrop(oScene3d.backdrop),
+			"camera":   this.SerCamera(oScene3d.camera),
+			"lightRig": this.SerLightRig(oScene3d.lightRig)
 		}
 	};
 	WriterToJSON.prototype.SerLightRig = function(oLightRig)
@@ -613,9 +631,9 @@
 			return oLightRig;
 
 		return {
-			rot: this.SerCameraRot(oLightRig.rot),
-			dir: To_XML_ST_LightRigDirection(oLightRig.dir),
-			rig: To_XML_ST_LightRigType(oLightRig.rig)
+			"rot": this.SerCameraRot(oLightRig.rot),
+			"dir": To_XML_ST_LightRigDirection(oLightRig.dir),
+			"rig": To_XML_ST_LightRigType(oLightRig.rig)
 		}
 	};
 	WriterToJSON.prototype.SerCamera = function(oCamera)
@@ -624,10 +642,10 @@
 			return oCamera;
 
 		return {
-			rot:  this.SerCameraRot(oCamera.rot),
-			fov:  oCamera.fov,
-			prst: To_XML_ST_PresetCameraType(oCamera.prst),
-			zoom: oCamera.zoom
+			"rot":  this.SerCameraRot(oCamera.rot),
+			"fov":  oCamera.fov,
+			"prst": To_XML_ST_PresetCameraType(oCamera.prst),
+			"zoom": oCamera.zoom
 		}
 	};
 	WriterToJSON.prototype.SerCameraRot = function(oCameraRot)
@@ -636,9 +654,9 @@
 			return oCameraRot;
 
 		return {
-			lat: oCameraRot.lat,
-			lon: oCameraRot.lon,
-			rev: oCameraRot.rev
+			"lat": oCameraRot.lat,
+			"lon": oCameraRot.lon,
+			"rev": oCameraRot.rev
 		}
 	};
 	WriterToJSON.prototype.SerBackdrop = function(oBackdrop)
@@ -647,20 +665,20 @@
 			return oBackdrop;
 
 		return {
-			anchor: { // function BackdropAnchor() 
-				x: oBackdrop.anchor.x,
-				y: oBackdrop.anchor.y,
-				z: oBackdrop.anchor.z
+			"anchor": { // function BackdropAnchor() 
+				"x": oBackdrop.anchor.x,
+				"y": oBackdrop.anchor.y,
+				"z": oBackdrop.anchor.z
 			},
-			norm: { // function BackdropNorm() 
-				dx: oBackdrop.norm.dx,
-				dy: oBackdrop.norm.dy,
-				dz: oBackdrop.norm.dz
+			"norm": { // function BackdropNorm() 
+				"dx": oBackdrop.norm.dx,
+				"dy": oBackdrop.norm.dy,
+				"dz": oBackdrop.norm.dz
 			},
-			up: { // function BackdropUp() 
-				dx: oBackdrop.up.dx,
-				dy: oBackdrop.up.dy,
-				dz: oBackdrop.up.dz
+			"up": { // function BackdropUp() 
+				"dx": oBackdrop.up.dx,
+				"dy": oBackdrop.up.dy,
+				"dz": oBackdrop.up.dz
 			}
 		}
 	};
@@ -670,16 +688,16 @@
 			return oLayoutDef;
 
 		return {
-			catLst:     this.SerCatLst(oLayoutDef.catLst),
-			clrData:    this.SerData(oLayoutDef.clrData, "clrData"),
-			defStyle:   oLayoutDef.defStyle,
-			desc:       this.SerDesc(oLayoutDef.desc, "desc"),
-			layoutNode: this.SerLayoutNode(oLayoutDef.layoutNode),
-			minVer:     oLayoutDef.minVer,
-			sampData:   this.SerData(oLayoutDef.sampData, "sampData"),
-			styleData:  this.SerData(oLayoutDef.styleData, "styleData"),
-			title:      this.SerDesc(oLayoutDef.title, "diagramTitle"),
-			uniqueId:   oLayoutDef.uniqueId
+			"catLst":     this.SerCatLst(oLayoutDef.catLst),
+			"clrData":    this.SerData(oLayoutDef.clrData, "clrData"),
+			"defStyle":   oLayoutDef.defStyle,
+			"desc":       this.SerDesc(oLayoutDef.desc, "desc"),
+			"layoutNode": this.SerLayoutNode(oLayoutDef.layoutNode),
+			"minVer":     oLayoutDef.minVer,
+			"sampData":   this.SerData(oLayoutDef.sampData, "sampData"),
+			"styleData":  this.SerData(oLayoutDef.styleData, "styleData"),
+			"title":      this.SerDesc(oLayoutDef.title, "diagramTitle"),
+			"uniqueId":   oLayoutDef.uniqueId
 		}
 	};
 	WriterToJSON.prototype.SerLayoutNode = function(oLayoutNode)
@@ -692,12 +710,12 @@
 			aItems.push(this.SerNodeItem(oLayoutNode.list[nItem]));
 
 		return {
-			chOrder:  To_XML_ST_ChildOrderType(oLayoutNode.chOrder),
-			moveWith: oLayoutNode.moveWith,
-			name:     oLayoutNode.name,
-			styleLbl: oLayoutNode.styleLbl,
-			list:     aItems,
-			objType:  "layoutNode"
+			"chOrder":  To_XML_ST_ChildOrderType(oLayoutNode.chOrder),
+			"moveWith": oLayoutNode.moveWith,
+			"name":     oLayoutNode.name,
+			"styleLbl": oLayoutNode.styleLbl,
+			"list":     aItems,
+			"objType":  "layoutNode"
 		}
 	};
 	WriterToJSON.prototype.SerNodeItem = function(oNodeItem)
@@ -724,15 +742,15 @@
 	WriterToJSON.prototype.SerSShape = function(oSShape)
 	{
 		return {
-			blip:      oSShape.blip,
-			blipPhldr: oSShape.blipPhldr,
-			hideGeom:  oSShape.hideGeom,
-			lkTxEntry: oSShape.lkTxEntry,
-			rot:       oSShape.rot,
-			type:      oSShape.type,
-			zOrderOff: oSShape.zOrderOff,
-			adjLst:    this.SerAdjLst(oSShape.adjLst),
-			objType:   "sshape"
+			"blip":      oSShape.blip,
+			"blipPhldr": oSShape.blipPhldr,
+			"hideGeom":  oSShape.hideGeom,
+			"lkTxEntry": oSShape.lkTxEntry,
+			"rot":       oSShape.rot,
+			"type":      oSShape.type,
+			"zOrderOff": oSShape.zOrderOff,
+			"adjLst":    this.SerAdjLst(oSShape.adjLst),
+			"objType":   "sshape"
 		}
 	};
 	WriterToJSON.prototype.SerAdjLst = function(oSerAdjLst)
@@ -742,14 +760,14 @@
 			aSerAdjLst.push(this.SerAdj(oSerAdjLst.list[nRule]));
 
 		return {
-			list: aSerAdjLst
+			"list": aSerAdjLst
 		};
 	};
 	WriterToJSON.prototype.SerAdj = function(oSerAdj)
 	{
 		return {
-			idx: oSerAdj.idx,
-			val: oSerAdj.val
+			"idx": oSerAdj.idx,
+			"val": oSerAdj.val
 		};
 	};
 	WriterToJSON.prototype.SerRuleLst = function(oRuleLst)
@@ -759,26 +777,26 @@
 			aRuleLst.push(this.SerRule(oRuleLst.list[nRule]));
 
 		return {
-			list:    aRuleLst,
-			objType: "ruleLst"
+			"list":    aRuleLst,
+			"objType": "ruleLst"
 		};
 	};
 	WriterToJSON.prototype.SerRule = function(oRule)
 	{
 		return {
-			fact:    isNaN(oRule.fact) ? "NaN" : oRule.fact,
-			for:     To_XML_ST_ConstraintRelationship(oRule.for),
-			forName: oRule.forName,
-			max:     isNaN(oRule.max) ? "NaN" : oRule.max,
-			ptType:  this.SerBaseFormatObj(oRule.ptType, "element"),
-			type:    To_XML_ST_ConstraintType(oRule.type),
-			val:     oRule.val
+			"fact":    isNaN(oRule.fact) ? "NaN" : oRule.fact,
+			"for":     To_XML_ST_ConstraintRelationship(oRule.for),
+			"forName": oRule.forName,
+			"max":     isNaN(oRule.max) ? "NaN" : oRule.max,
+			"ptType":  this.SerBaseFormatObj(oRule.ptType, "element"),
+			"type":    To_XML_ST_ConstraintType(oRule.type),
+			"val":     oRule.val
 		}
 	};
 	WriterToJSON.prototype.SerPresOf = function(oPresOf)
 	{
 		var oResult        = this.SerIteratorAttributes(oPresOf);
-		oResult.objType = "presOf";
+		oResult["objType"] = "presOf";
 
 		return oResult;
 	};
@@ -790,10 +808,10 @@
 
 		var oResult = this.SerIteratorAttributes(oForEach);
 
-		oResult.list    = aNodeItems;
-		oResult.name    = oForEach.name;
-		oResult.ref     = oForEach.ref;
-		oResult.objType = "forEach";
+		oResult["list"]    = aNodeItems;
+		oResult["name"]    = oForEach.name;
+		oResult["ref"]     = oForEach.ref;
+		oResult["objType"] = "forEach";
 
 		return oResult;
 	};
@@ -804,10 +822,10 @@
 			aIf.push(this.SerIf(oChoose.if[nIf]));
 
 		return {
-			name:    oChoose.name,
-			if:      aIf,
-			else:    this.SerElse(oChoose.else),
-			objType: "choose"
+			"name":    oChoose.name,
+			"if":      aIf,
+			"else":    this.SerElse(oChoose.else),
+			"objType": "choose"
 		}
 	};
 	WriterToJSON.prototype.SerIf = function(oIf)
@@ -818,12 +836,12 @@
 
 		var oResult = this.SerIteratorAttributes(oIf);
 
-		oResult.list = aNodeItems;
-		oResult.arg  = oIf.arg;
-		oResult.func = To_XML_ST_FunctionType(oIf.func);
-		oResult.name = oIf.name;
-		oResult.op   = To_XML_ST_FunctionOperator(oIf.op);
-		oResult.val  = oIf.val;
+		oResult["list"] = aNodeItems;
+		oResult["arg"]  = oIf.arg;
+		oResult["func"] = To_XML_ST_FunctionType(oIf.func);
+		oResult["name"] = oIf.name;
+		oResult["op"]   = To_XML_ST_FunctionOperator(oIf.op);
+		oResult["val"]  = oIf.val;
 
 		return oResult;
 	};
@@ -834,8 +852,8 @@
 			aNodeItems.push(this.SerNodeItem(oElse.list[nItem]));
 
 		return {
-			list: aNodeItems,
-			name: oElse.name
+			"list": aNodeItems,
+			"name": oElse.name
 		}
 	};
 	WriterToJSON.prototype.SerIteratorAttributes = function(oIteratorAttributes)
@@ -865,12 +883,12 @@
 			aStep.push(oIteratorAttributes.step[nStep]);
 			
 		return {
-			axis:          aAxis,
-			cnt:           aCnt,
-			hideLastTrans: aHideLastTrans,
-			ptType:        aPtTypes,
-			st:            aSt,
-			step:          aStep
+			"axis":          aAxis,
+			"cnt":           aCnt,
+			"hideLastTrans": aHideLastTrans,
+			"ptType":        aPtTypes,
+			"st":            aSt,
+			"step":          aStep
 		}
 	};
 	WriterToJSON.prototype.SerConstrLst = function(oConstrLst)
@@ -880,25 +898,25 @@
 			aContsLst.push(this.SerConstr(oConstrLst.list[nItem]));
 
 		return {
-			list:    aContsLst,
-			objType: "constrLst"
+			"list":    aContsLst,
+			"objType": "constrLst"
 		}
 	};
 	WriterToJSON.prototype.SerConstr = function(oConstr)
 	{
 		return {
-			fact:       oConstr.fact,
-			for:        To_XML_ST_ConstraintRelationship(oConstr.for),
-			forName:    oConstr.forName,
-			op:         To_XML_ST_BoolOperator(oConstr.op),
-			ptType:     this.SerBaseFormatObj(oConstr.ptType, "element"),
-			refFor:     To_XML_ST_ConstraintRelationship(oConstr.refFor),
-			refForName: oConstr.refForName,
-			refPtType:  this.SerBaseFormatObj(oConstr.refPtType, "element"),
-			refType:    To_XML_ST_ConstraintType(oConstr.refType),
-			type:       To_XML_ST_ConstraintType(oConstr.type),
-			val:        oConstr.val,
-			objType:    "constrLst"
+			"fact":       oConstr.fact,
+			"for":        To_XML_ST_ConstraintRelationship(oConstr.for),
+			"forName":    oConstr.forName,
+			"op":         To_XML_ST_BoolOperator(oConstr.op),
+			"ptType":     this.SerBaseFormatObj(oConstr.ptType, "element"),
+			"refFor":     To_XML_ST_ConstraintRelationship(oConstr.refFor),
+			"refForName": oConstr.refForName,
+			"refPtType":  this.SerBaseFormatObj(oConstr.refPtType, "element"),
+			"refType":    To_XML_ST_ConstraintType(oConstr.refType),
+			"type":       To_XML_ST_ConstraintType(oConstr.type),
+			"val":        oConstr.val,
+			"objType":    "constrLst"
 		}
 	};
 	WriterToJSON.prototype.SerAlg = function(oAlg)
@@ -908,17 +926,17 @@
 			aParams.push(this.SerAlgParam(oAlg.param[nParam]));
 
 		return {
-			param:   aParams,
-			rev:     oAlg.rev,
-			type:    To_XML_ST_AlgorithmType(oAlg.type),
-			objType: "alg"
+			"param":   aParams,
+			"rev":     oAlg.rev,
+			"type":    To_XML_ST_AlgorithmType(oAlg.type),
+			"objType": "alg"
 		}
 	};
 	WriterToJSON.prototype.SerAlgParam = function(oAlgParam)
 	{
 		return {
-			type: To_XML_ST_ParameterId(oAlgParam.type),
-			val:  oAlgParam.val
+			"type": To_XML_ST_ParameterId(oAlgParam.type),
+			"val":  oAlgParam.val
 		}
 	};
 	WriterToJSON.prototype.SerData = function(oData, sType)
@@ -927,8 +945,8 @@
 			return oData;
 
 		var oResult = {
-			dataModel: this.SerDataModel(oData.dataModel),
-			type:      sType
+			"dataModel": this.SerDataModel(oData.dataModel),
+			"type":      sType
 		}
 		
 		switch (sType)
@@ -938,7 +956,7 @@
 			case "styleData":
 			case "clrData":
 			case "sampData":
-				oResult.useDef = oData.useDef;
+				oResult["useDef"] = oData.useDef;
 				break;
 		} 
 
@@ -950,10 +968,10 @@
 			return oDataModel;
 
 		return {
-			bg:     this.SerBgFormat(oDataModel.bg),
-			cxnLst: this.SerCxnLst(oDataModel.cxnLst),
-			ptLst:  this.SerPtLst(oDataModel.ptLst),
-			whole:  this.SerWhole(oDataModel.whole)
+			"bg":     this.SerBgFormat(oDataModel.bg),
+			"cxnLst": this.SerCxnLst(oDataModel.cxnLst),
+			"ptLst":  this.SerPtLst(oDataModel.ptLst),
+			"whole":  this.SerWhole(oDataModel.whole)
 		}
 	};
 	WriterToJSON.prototype.SerWhole = function(oWhole)
@@ -962,9 +980,9 @@
 			return oWhole;
 
 		return {
-			effectLst: oWhole.effect ? this.SerEffectLst(oWhole.effect.EffectLst) : oWhole.effect,
-			effectDag: oWhole.effect ? this.SerEffectDag(oWhole.effect.EffectDag) : oWhole.effect,
-			ln: this.SerLn(oWhole.ln)
+			"effectLst": oWhole.effect ? this.SerEffectLst(oWhole.effect.EffectLst) : oWhole.effect,
+			"effectDag": oWhole.effect ? this.SerEffectDag(oWhole.effect.EffectDag) : oWhole.effect,
+			"ln": this.SerLn(oWhole.ln)
 		}
 	};
 	WriterToJSON.prototype.SerPtLst = function(oPtLst)
@@ -977,18 +995,18 @@
 			aPtLst.push(this.SerPt(oPtLst.list[nItem]));
 			
 		return {
-			list: aPtLst
+			"list": aPtLst
 		}
 	};
 	WriterToJSON.prototype.SerPt = function(oPt)
 	{
 		return {
-			prSet:   this.SerPtPrSet(oPt.prSet),
-			spPr:    this.SerSpPr(oPt.spPr),
-			t:       this.SerTxPr(oPt.t),
-			cxnId:   oPt.cxnId,
-			modelId: oPt.modelId,
-			type:    To_XML_ST_PtType(oPt.type)
+			"prSet":   this.SerPtPrSet(oPt.prSet),
+			"spPr":    this.SerSpPr(oPt.spPr),
+			"t":       this.SerTxPr(oPt.t),
+			"cxnId":   oPt.cxnId,
+			"modelId": oPt.modelId,
+			"type":    To_XML_ST_PtType(oPt.type)
 		}
 	};
 	WriterToJSON.prototype.SerPtPrSet = function(oPtPrSet)
@@ -997,36 +1015,36 @@
 			return oPtPrSet;
 
 		return {
-			coherent3DOff:        oPtPrSet.coherent3DOff,
-			csCatId:              oPtPrSet.csCatId,
-			csTypeId:             oPtPrSet.csTypeId,
-			custAng:              oPtPrSet.custAng,
-			custFlipHor:          oPtPrSet.custFlipHor,
-			custFlipVert:         oPtPrSet.custFlipVert,
-			custLinFactNeighborX: oPtPrSet.custLinFactNeighborX,
-			custLinFactNeighborY: oPtPrSet.custLinFactNeighborY,
-			custLinFactX:         oPtPrSet.custLinFactX,
-			custLinFactY:         oPtPrSet.custLinFactY,
-			custRadScaleInc:      oPtPrSet.custRadScaleInc,
-			custRadScaleRad:      oPtPrSet.custRadScaleRad,
-			custScaleX:           oPtPrSet.custScaleX,
-			custScaleY:           oPtPrSet.custScaleY,
-			custSzX:              oPtPrSet.custSzX,
-			custSzY:              oPtPrSet.custSzY,
-			custT:                oPtPrSet.custT,
-			loCatId:              oPtPrSet.loCatId,
-			loTypeId:             oPtPrSet.loTypeId,
-			phldr:                oPtPrSet.phldr,
-			phldrT:               oPtPrSet.phldrT,
-			presAssocID:          oPtPrSet.presAssocID,
-			presLayoutVars:       this.SerNodeItem(oPtPrSet.presLayoutVars),
-			presName:             oPtPrSet.presName,
-			presStyleCnt:         oPtPrSet.presStyleCnt,
-			presStyleIdx:         oPtPrSet.presStyleIdx,
-			presStyleLbl:         oPtPrSet.presStyleLbl,
-			qsCatId:              oPtPrSet.qsCatId,
-			qsTypeId:             oPtPrSet.qsTypeId,
-			style:                this.SerData(oPtPrSet.style, "styleData")
+			"coherent3DOff":        oPtPrSet.coherent3DOff,
+			"csCatId":              oPtPrSet.csCatId,
+			"csTypeId":             oPtPrSet.csTypeId,
+			"custAng":              oPtPrSet.custAng,
+			"custFlipHor":          oPtPrSet.custFlipHor,
+			"custFlipVert":         oPtPrSet.custFlipVert,
+			"custLinFactNeighborX": oPtPrSet.custLinFactNeighborX,
+			"custLinFactNeighborY": oPtPrSet.custLinFactNeighborY,
+			"custLinFactX":         oPtPrSet.custLinFactX,
+			"custLinFactY":         oPtPrSet.custLinFactY,
+			"custRadScaleInc":      oPtPrSet.custRadScaleInc,
+			"custRadScaleRad":      oPtPrSet.custRadScaleRad,
+			"custScaleX":           oPtPrSet.custScaleX,
+			"custScaleY":           oPtPrSet.custScaleY,
+			"custSzX":              oPtPrSet.custSzX,
+			"custSzY":              oPtPrSet.custSzY,
+			"custT":                oPtPrSet.custT,
+			"loCatId":              oPtPrSet.loCatId,
+			"loTypeId":             oPtPrSet.loTypeId,
+			"phldr":                oPtPrSet.phldr,
+			"phldrT":               oPtPrSet.phldrT,
+			"presAssocID":          oPtPrSet.presAssocID,
+			"presLayoutVars":       this.SerNodeItem(oPtPrSet.presLayoutVars),
+			"presName":             oPtPrSet.presName,
+			"presStyleCnt":         oPtPrSet.presStyleCnt,
+			"presStyleIdx":         oPtPrSet.presStyleIdx,
+			"presStyleLbl":         oPtPrSet.presStyleLbl,
+			"qsCatId":              oPtPrSet.qsCatId,
+			"qsTypeId":             oPtPrSet.qsTypeId,
+			"style":                this.SerData(oPtPrSet.style, "styleData")
 		}
 	};
 	WriterToJSON.prototype.SerVarLst = function(oPresLayoutVars)
@@ -1035,16 +1053,16 @@
 			return oPresLayoutVars;
 
 		return {
-			animLvl:       this.SerBaseFormatObj(oPresLayoutVars.animLvl, "animLvl"),
-			animOne:       this.SerBaseFormatObj(oPresLayoutVars.animOne, "animOne"),
-			bulletEnabled: this.SerBaseFormatObj(oPresLayoutVars.bulletEnabled, "bulletEnabled"),
-			chMax:         this.SerBaseFormatObj(oPresLayoutVars.chMax, "chMax"),
-			chPref:        this.SerBaseFormatObj(oPresLayoutVars.chPref, "chPref"),
-			dir:           this.SerBaseFormatObj(oPresLayoutVars.dir, "dir"),
-			hierBranch:    this.SerBaseFormatObj(oPresLayoutVars.hierBranch, "hierBranch"),
-			orgChart:      this.SerBaseFormatObj(oPresLayoutVars.orgChart, "orgChart"),
-			resizeHandles: this.SerBaseFormatObj(oPresLayoutVars.resizeHandles, "resizeHandles"),
-			objType:       "varLst"
+			"animLvl":       this.SerBaseFormatObj(oPresLayoutVars.animLvl, "animLvl"),
+			"animOne":       this.SerBaseFormatObj(oPresLayoutVars.animOne, "animOne"),
+			"bulletEnabled": this.SerBaseFormatObj(oPresLayoutVars.bulletEnabled, "bulletEnabled"),
+			"chMax":         this.SerBaseFormatObj(oPresLayoutVars.chMax, "chMax"),
+			"chPref":        this.SerBaseFormatObj(oPresLayoutVars.chPref, "chPref"),
+			"dir":           this.SerBaseFormatObj(oPresLayoutVars.dir, "dir"),
+			"hierBranch":    this.SerBaseFormatObj(oPresLayoutVars.hierBranch, "hierBranch"),
+			"orgChart":      this.SerBaseFormatObj(oPresLayoutVars.orgChart, "orgChart"),
+			"resizeHandles": this.SerBaseFormatObj(oPresLayoutVars.resizeHandles, "resizeHandles"),
+			"objType":       "varLst"
 		}
 	};
 	WriterToJSON.prototype.SerBaseFormatObj = function(oBaseFormatObj, sType)
@@ -1053,36 +1071,36 @@
 			return oBaseFormatObj;
 
 		var oResult = {
-			type: sType
+			"type": sType
 		};
 		switch (sType)
 		{
 			case "animLvl":
-				oResult.val = To_XML_ST_AnimLvlStr(oBaseFormatObj.val);
+				oResult["val"] = To_XML_ST_AnimLvlStr(oBaseFormatObj.val);
 				break;
 			case "animOne":
-				oResult.val = To_XML_ST_AnimOneStr(oBaseFormatObj.val);
+				oResult["val"] = To_XML_ST_AnimOneStr(oBaseFormatObj.val);
 				break;
 			case "bulletEnabled":
 			case "chMax":
 			case "chPref":
 			case "orgChart":
-				oResult.val = oBaseFormatObj.val;
+				oResult["val"] = oBaseFormatObj.val;
 				break;
 			case "dir":
-				oResult.val = To_XML_ST_Direction(oBaseFormatObj.val)
+				oResult["val"] = To_XML_ST_Direction(oBaseFormatObj.val)
 				break;
 			case "hierBranch":
-				oResult.val = To_XML_ST_HierBranchStyle(oBaseFormatObj.val);
+				oResult["val"] = To_XML_ST_HierBranchStyle(oBaseFormatObj.val);
 				break;
 			case "resizeHandles":
-				oResult.val = To_XML_ST_ResizeHandlesStr(oBaseFormatObj.val);
+				oResult["val"] = To_XML_ST_ResizeHandlesStr(oBaseFormatObj.val);
 				break;
 			case "element":
-				oResult.val = To_XML_ST_ElementType(oBaseFormatObj.val);
+				oResult["val"] = To_XML_ST_ElementType(oBaseFormatObj.val);
 				break;
 			case "axie":
-				oResult.val = To_XML_ST_AxisType(oBaseFormatObj.val);
+				oResult["val"] = To_XML_ST_AxisType(oBaseFormatObj.val);
 				break;
 		} 
 
@@ -1098,21 +1116,21 @@
 			aCxnLst.push(this.SerCxn(oCxnLst.list[nItem]));
 			
 		return {
-			list: aCxnLst
+			"list": aCxnLst
 		}
 	};
 	WriterToJSON.prototype.SerCxn = function(oCxn)
 	{
 		return {
-			destId:     oCxn.destId,
-			destOrd:    oCxn.destOrd,
-			modelId:    oCxn.modelId,
-			parTransId: oCxn.parTransId,
-			presId:     oCxn.presId,
-			sibTransId: oCxn.sibTransId,
-			srcId:      oCxn.srcId,
-			srcOrd:     oCxn.srcOrd,
-			type:       oCxn.type
+			"destId":     oCxn.destId,
+			"destOrd":    oCxn.destOrd,
+			"modelId":    oCxn.modelId,
+			"parTransId": oCxn.parTransId,
+			"presId":     oCxn.presId,
+			"sibTransId": oCxn.sibTransId,
+			"srcId":      oCxn.srcId,
+			"srcOrd":     oCxn.srcOrd,
+			"type":       oCxn.type
 		}
 	};
 	WriterToJSON.prototype.SerBgFormat = function(oBgFormat)
@@ -1121,9 +1139,9 @@
 			return oBgFormat;
 
 		return {
-			effectLst: oBgFormat.effect ? this.SerEffectLst(oBgFormat.effect.EffectLst) : oBgFormat.effect,
-			effectDag: oBgFormat.effect ? this.SerEffectDag(oBgFormat.effect.EffectDag) : oBgFormat.effect,
-			fill: this.SerFill(oBgFormat.fill)
+			"effectLst": oBgFormat.effect ? this.SerEffectLst(oBgFormat.effect.EffectLst) : oBgFormat.effect,
+			"effectDag": oBgFormat.effect ? this.SerEffectDag(oBgFormat.effect.EffectDag) : oBgFormat.effect,
+			"fill": this.SerFill(oBgFormat.fill)
 		}
 	};
 	WriterToJSON.prototype.SerColorsDef = function(oColorsDef)
@@ -1136,12 +1154,12 @@
 			aStyleLbl.push(this.SerColorDefStyleLbl(oColorsDef.styleLbl[nStyle]));
 
 		return {
-			catLst:   this.SerCatLst(oColorsDef.catLst),
-			desc:     this.SerDesc(oColorsDef.desc, "desc"),
-			styleLbl: aStyleLbl,
-			title:    this.SerDesc(oColorsDef.title, "diagramTitle"),
-			minVer:   oColorsDef.minVer,
-			uniqueId: oColorsDef.uniqueId
+			"catLst":   this.SerCatLst(oColorsDef.catLst),
+			"desc":     this.SerDesc(oColorsDef.desc, "desc"),
+			"styleLbl": aStyleLbl,
+			"title":    this.SerDesc(oColorsDef.title, "diagramTitle"),
+			"minVer":   oColorsDef.minVer,
+			"uniqueId": oColorsDef.uniqueId
 		}
 	};
 	WriterToJSON.prototype.SerColorDefStyleLbl = function(oStyleLbl)
@@ -1150,13 +1168,13 @@
 			return oStyleLbl;
 
 		return {
-			effectClrLst:   this.SerClrLst(oStyleLbl.effectClrLst, "effectClrLst"),
-			fillClrLst:     this.SerClrLst(oStyleLbl.fillClrLst, "fillClrLst"),
-			linClrLst:      this.SerClrLst(oStyleLbl.linClrLst, "linClrLst"),
-			txEffectClrLst: this.SerClrLst(oStyleLbl.txEffectClrLst, "txEffectClrLst"),
-			txFillClrLst:   this.SerClrLst(oStyleLbl.txFillClrLst, "txFillClrLst"),
-			txLinClrLst:    this.SerClrLst(oStyleLbl.txLinClrLst, "txLinClrLst"),
-			name:           oStyleLbl.name
+			"effectClrLst":   this.SerClrLst(oStyleLbl.effectClrLst, "effectClrLst"),
+			"fillClrLst":     this.SerClrLst(oStyleLbl.fillClrLst, "fillClrLst"),
+			"linClrLst":      this.SerClrLst(oStyleLbl.linClrLst, "linClrLst"),
+			"txEffectClrLst": this.SerClrLst(oStyleLbl.txEffectClrLst, "txEffectClrLst"),
+			"txFillClrLst":   this.SerClrLst(oStyleLbl.txFillClrLst, "txFillClrLst"),
+			"txLinClrLst":    this.SerClrLst(oStyleLbl.txLinClrLst, "txLinClrLst"),
+			"name":           oStyleLbl.name
 		}
 	};
 	WriterToJSON.prototype.SerClrLst = function(oClrLst, sType)
@@ -1169,10 +1187,10 @@
 			aColors.push(this.SerColor(oClrLst.list[nColor]));
 
 		return {
-			list:   aColors,
-			hueDir: To_XML_ST_HueDir(oClrLst.hueDir),
-			meth:   To_XML_ST_ClrAppMethod(oClrLst.meth),
-			type:   sType
+			"list":   aColors,
+			"hueDir": To_XML_ST_HueDir(oClrLst.hueDir),
+			"meth":   To_XML_ST_ClrAppMethod(oClrLst.meth),
+			"type":   sType
 		}
 	};
 	WriterToJSON.prototype.SerDesc = function(oDesc, sType)
@@ -1181,9 +1199,9 @@
 			return oDesc;
 
 		return {
-			lang: oDesc.lang,
-			val:  oDesc.val,
-			type: sType
+			"lang": oDesc.lang,
+			"val":  oDesc.val,
+			"type": sType
 		}
 	};
 	WriterToJSON.prototype.SerCatLst = function(oCatLst)
@@ -1196,14 +1214,14 @@
 			aCatLst.push(this.SerSCat(oCatLst.list[nCat]));
 
 		return {
-			list: aCatLst
+			"list": aCatLst
 		}
 	};
 	WriterToJSON.prototype.SerSCat = function(oSCat)
 	{
 		return {
-			pri:  oSCat.pri,
-			type: oSCat.type
+			"pri":  oSCat.pri,
+			"type": oSCat.type
 		}
 	};
 	WriterToJSON.prototype.SerDrawing = function(oDrawing)
@@ -1213,18 +1231,18 @@
 			aSpTree.push(this.SerGraphicObject(oDrawing.spTree[nDrawing]));
 
 		return {
-			spTree: aSpTree,
-			spPr:   this.SerSpPr(oDrawing.spPr),
-			type:   "drawing"
+			"spTree": aSpTree,
+			"spPr":   this.SerSpPr(oDrawing.spPr),
+			"type":   "drawing"
 		}
 	};
 	WriterToJSON.prototype.SerGraphicFrame = function(oGraphicFrame)
 	{
 		return {
-			graphic:          this.SerTable(oGraphicFrame.graphicObject),
-			nvGraphicFramePr: this.SerUniNvPr(oGraphicFrame.nvGraphicFramePr),
-			spPr:             this.SerSpPr(oGraphicFrame.spPr),
-			type:             "graphicFrame"
+			"graphic":          this.SerTable(oGraphicFrame.graphicObject),
+			"nvGraphicFramePr": this.SerUniNvPr(oGraphicFrame.nvGraphicFramePr),
+			"spPr":             this.SerSpPr(oGraphicFrame.spPr),
+			"type":             "graphicFrame"
 		}
 	};
 	WriterToJSON.prototype.SerCNvPr = function(oCNvPr)
@@ -1233,13 +1251,13 @@
 			return null;
 		
 		return {
-			hlinkClick: this.SerHlink(oCNvPr.hlinkClick),
-			hlinkHover: this.SerHlink(oCNvPr.hlinkHover),
-			descr:      oCNvPr.descr,
-			hidden:     oCNvPr.isHidden,
-			id:         oCNvPr.id,
-			name:       oCNvPr.name,
-			title:      oCNvPr.title
+			"hlinkClick": this.SerHlink(oCNvPr.hlinkClick),
+			"hlinkHover": this.SerHlink(oCNvPr.hlinkHover),
+			"descr":      oCNvPr.descr,
+			"hidden":     oCNvPr.isHidden,
+			"id":         oCNvPr.id,
+			"name":       oCNvPr.name,
+			"title":      oCNvPr.title
 		}
 	};
 	WriterToJSON.prototype.SerNvPr = function(oNvPr)
@@ -1248,10 +1266,10 @@
 			return oNvPr;
 
 		return {
-			isPhoto:   oNvPr.isPhoto,
-			ph:        this.SerPlaceholder(oNvPr.ph),
-			unimedia:  this.SerUniMedia(oNvPr.unimedia),
-			userDrawn: oNvPr.userDrawn
+			"isPhoto":   oNvPr.isPhoto,
+			"ph":        this.SerPlaceholder(oNvPr.ph),
+			"unimedia":  this.SerUniMedia(oNvPr.unimedia),
+			"userDrawn": oNvPr.userDrawn
 		}
 	};
 	WriterToJSON.prototype.SerPlaceholder = function(oPh)
@@ -1278,11 +1296,11 @@
 		}
 
 		return {
-			hasCustomPrompt: oPh.hasCustomPrompt,
-			idx:             oPh.idx,
-			orient:          sOrient,
-			sz:              sPhSz,
-			type:            this.GetStrPhType(oPh.type)
+			"hasCustomPrompt": oPh.hasCustomPrompt,
+			"idx":             oPh.idx,
+			"orient":          sOrient,
+			"sz":              sPhSz,
+			"type":            this.GetStrPhType(oPh.type)
 		}
 	};
 	WriterToJSON.prototype.SerUniMedia = function(oUniMedia)
@@ -1291,8 +1309,8 @@
 			return oUniMedia;
 
 		return {
-			type:  oUniMedia.type,
-			media: oUniMedia.media
+			"type":  oUniMedia.type,
+			"media": oUniMedia.media
 		}
 	};
 	WriterToJSON.prototype.GetStrPhType = function(nType)
@@ -1342,16 +1360,16 @@
 		for (var nItem = 0; nItem < oNumLit.pts.length; nItem++)
 		{
 			arrResultPts.push({
-				v:          oNumLit.pts[nItem].val,
-				formatCode: oNumLit.pts[nItem].formatCode,
-				idx:        oNumLit.pts[nItem].idx
+				"v":          oNumLit.pts[nItem].val,
+				"formatCode": oNumLit.pts[nItem].formatCode,
+				"idx":        oNumLit.pts[nItem].idx
 			});
 		}
 
 		return {
-			formatCode: oNumLit.formatCode,
-			pt:         arrResultPts,
-			ptCount:    oNumLit.ptCount
+			"formatCode": oNumLit.formatCode,
+			"pt":         arrResultPts,
+			"ptCount":    oNumLit.ptCount
 		}
 	};
 	WriterToJSON.prototype.SerStrLit = function(oStrLit)
@@ -1363,14 +1381,14 @@
 		for (var nItem = 0; nItem < oStrLit.pts.length; nItem++)
 		{
 			arrResultPts.push({
-				v:   oStrLit.pts[nItem].val,
-				idx: oStrLit.pts[nItem].idx,
+				"v":   oStrLit.pts[nItem].val,
+				"idx": oStrLit.pts[nItem].idx,
 			});
 		}
 
 		return {
-			pt:         arrResultPts,
-			ptCount:    oStrLit.ptCount
+			"pt":         arrResultPts,
+			"ptCount":    oStrLit.ptCount
 		}
 	};
 	WriterToJSON.prototype.SerErrBars = function(oErrBars)
@@ -1415,14 +1433,14 @@
 		}
 
 		return {
-			errBarType: sErrBarType,
-			errDir:     sErrDir,
-			errValType: sErrValType,
-			minus:      this.SerMinusPlus(oErrBars.minus),
-			noEndCap:   oErrBars.noEndCap,
-			plus:       this.SerMinusPlus(oErrBars.plus),
-			spPr:       this.SerSpPr(oErrBars.spPr),
-			val:        oErrBars.val
+			"errBarType": sErrBarType,
+			"errDir":     sErrDir,
+			"errValType": sErrValType,
+			"minus":      this.SerMinusPlus(oErrBars.minus),
+			"noEndCap":   oErrBars.noEndCap,
+			"plus":       this.SerMinusPlus(oErrBars.plus),
+			"spPr":       this.SerSpPr(oErrBars.spPr),
+			"val":        oErrBars.val
 		}
 	};
 	WriterToJSON.prototype.SerMinusPlus = function(oMinusPlus)
@@ -1431,8 +1449,8 @@
 			return oMinusPlus;
 
 		return {
-			numLit: this.SerNumLit(oMinusPlus.numLit),
-			numRef: this.SerNumRef(oMinusPlus.numRef)
+			"numLit": this.SerNumLit(oMinusPlus.numLit),
+			"numRef": this.SerNumRef(oMinusPlus.numRef)
 		} 
 	};
 	WriterToJSON.prototype.SerDataPoints = function(arrDpts)
@@ -1442,13 +1460,13 @@
 		for (var nItem = 0; nItem < arrDpts.length; nItem++)
 		{
 			arrResultDataPoints.push({
-				bubble3D:         arrDpts[nItem].bubble3D,
-				explosion:        arrDpts[nItem].explosion,
-				idx:              arrDpts[nItem].idx,
-				invertIfNegative: arrDpts[nItem].invertIfNegative,
-				marker:           this.SerMarker(arrDpts[nItem].marker),
-				pictureOptions:   this.SerPicOptions(arrDpts[nItem].pictureOptions),
-				spPr:             this.SerSpPr(arrDpts[nItem].spPr)
+				"bubble3D":         arrDpts[nItem].bubble3D,
+				"explosion":        arrDpts[nItem].explosion,
+				"idx":              arrDpts[nItem].idx,
+				"invertIfNegative": arrDpts[nItem].invertIfNegative,
+				"marker":           this.SerMarker(arrDpts[nItem].marker),
+				"pictureOptions":   this.SerPicOptions(arrDpts[nItem].pictureOptions),
+				"spPr":             this.SerSpPr(arrDpts[nItem].spPr)
 			});
 		}
 
@@ -1460,8 +1478,8 @@
 			return oRef;
 		
 		return {
-			f:                oRef.f,
-			multiLvlStrCache: this.SerMultiLvlStrCache(oRef.multiLvlStrCache)
+			"f":                oRef.f,
+			"multiLvlStrCache": this.SerMultiLvlStrCache(oRef.multiLvlStrCache)
 		}
 	};
 	WriterToJSON.prototype.SerMultiLvlStrCache = function(oCache)
@@ -1475,8 +1493,8 @@
 			arrLvl.push(this.SerStrLit(oCache.lvl[nLvl]));
 		
 		return {
-			lvl:     arrLvl,
-			ptCount: oCache.ptCount
+			"lvl":     arrLvl,
+			"ptCount": oCache.ptCount
 		}
 	};
 	WriterToJSON.prototype.SerTrendline = function(oTrendLine)
@@ -1508,17 +1526,17 @@
 		}
 		
 		return {
-			backward:      oTrendLine.backward,
-			dispEq:        oTrendLine.dispEq,
-			dispRSqr:      oTrendLine.dispRSqr,
-			forward:       oTrendLine.forward,
-			intercept:     oTrendLine.intercept,
-			name:          oTrendLine.name,
-			order:         oTrendLine.order,
-			period:        oTrendLine.period,
-			spPr:          this.SerSpPr(oTrendLine.spPr),
-			trendlineLbl:  this.SerDlbl(oTrendLine.trendlineLbl),
-			trendlineType: sTrendlineType
+			"backward":      oTrendLine.backward,
+			"dispEq":        oTrendLine.dispEq,
+			"dispRSqr":      oTrendLine.dispRSqr,
+			"forward":       oTrendLine.forward,
+			"intercept":     oTrendLine.intercept,
+			"name":          oTrendLine.name,
+			"order":         oTrendLine.order,
+			"period":        oTrendLine.period,
+			"spPr":          this.SerSpPr(oTrendLine.spPr),
+			"trendlineLbl":  this.SerDlbl(oTrendLine.trendlineLbl),
+			"trendlineType": sTrendlineType
 		}
 	};
 	WriterToJSON.prototype.SerPicOptions = function(oPicOptions)
@@ -1527,11 +1545,11 @@
 			return oPicOptions;
 
 		return {
-			applyToEnd:       oPicOptions.applyToEnd,
-			applyToFront:     oPicOptions.applyToFront,
-			applyToSides:     oPicOptions.applyToSides,
-			pictureFormat:    oPicOptions.pictureFormat,
-			pictureStackUnit: oPicOptions.pictureStackUnit
+			"applyToEnd":       oPicOptions.applyToEnd,
+			"applyToFront":     oPicOptions.applyToFront,
+			"applyToSides":     oPicOptions.applyToSides,
+			"pictureFormat":    oPicOptions.pictureFormat,
+			"pictureStackUnit": oPicOptions.pictureStackUnit
 		};
 	};
 	WriterToJSON.prototype.SerBarSeries = function(arrSeries)
@@ -1563,19 +1581,19 @@
 					break;
 			}
 			arrResultSeries.push({
-				cat:              this.SerCat(arrSeries[nItem].cat),
-				dLbls:            this.SerDLbls(arrSeries[nItem].dLbls),
-				dPt:              this.SerDataPoints(arrSeries[nItem].dPt),
-				errBars:          this.SerErrBars(arrSeries[nItem].errBars),
-				idx:              arrSeries[nItem].idx,
-				invertIfNegative: arrSeries[nItem].invertIfNegative,
-				order:            arrSeries[nItem].order,
-				pictureOptions:   this.SerPicOptions(arrSeries[nItem].pictureOptions),
-				shape:            sShapeType,
-				spPr:             this.SerSpPr(arrSeries[nItem].spPr),
-				trendline:        this.SerTrendline(arrSeries[nItem].trendline),
-				tx:               this.SerSerTx(arrSeries[nItem].tx),
-				val:              this.SerYVAL(arrSeries[nItem].val)
+				"cat":              this.SerCat(arrSeries[nItem].cat),
+				"dLbls":            this.SerDLbls(arrSeries[nItem].dLbls),
+				"dPt":              this.SerDataPoints(arrSeries[nItem].dPt),
+				"errBars":          this.SerErrBars(arrSeries[nItem].errBars),
+				"idx":              arrSeries[nItem].idx,
+				"invertIfNegative": arrSeries[nItem].invertIfNegative,
+				"order":            arrSeries[nItem].order,
+				"pictureOptions":   this.SerPicOptions(arrSeries[nItem].pictureOptions),
+				"shape":            sShapeType,
+				"spPr":             this.SerSpPr(arrSeries[nItem].spPr),
+				"trendline":        this.SerTrendline(arrSeries[nItem].trendline),
+				"tx":               this.SerSerTx(arrSeries[nItem].tx),
+				"val":              this.SerYVAL(arrSeries[nItem].val)
 			});
 		}
 
@@ -1584,8 +1602,8 @@
 	WriterToJSON.prototype.SerYVAL = function(oVal)
 	{
 		return {
-			numLit: this.SerNumLit(oVal.numLit),
-			numRef: this.SerNumRef(oVal.numRef)
+			"numLit": this.SerNumLit(oVal.numLit),
+			"numRef": this.SerNumRef(oVal.numRef)
 		}
 	};
 	WriterToJSON.prototype.SerCat = function(oCat)
@@ -1594,11 +1612,11 @@
 			return oCat;
 
 		return {
-			multiLvlStrRef: this.SerMultiLvlStrRef(oCat.multiLvlStrRef),
-			numLit:         this.SerNumLit(oCat.numLit),
-			numRef:         this.SerNumRef(oCat.numRef),
-			strLit:         this.SerStrLit(oCat.strLit),
-			strRef:         this.SerStrRef(oCat.strRef)
+			"multiLvlStrRef": this.SerMultiLvlStrRef(oCat.multiLvlStrRef),
+			"numLit":         this.SerNumLit(oCat.numLit),
+			"numRef":         this.SerNumRef(oCat.numRef),
+			"strLit":         this.SerStrLit(oCat.strLit),
+			"strRef":         this.SerStrRef(oCat.strRef)
 		}
 	};
 	WriterToJSON.prototype.SerStrRef = function(oStrRef)
@@ -1610,16 +1628,16 @@
 		for (var nItem = 0; nItem < oStrRef.strCache.pts.length; nItem++)
 		{
 			arrResultPts.push({
-				v:   oStrRef.strCache.pts[nItem].val,
-				idx: oStrRef.strCache.pts[nItem].idx
+				"v":   oStrRef.strCache.pts[nItem].val,
+				"idx": oStrRef.strCache.pts[nItem].idx
 			});
 		}
 
 		return {
-			f: oStrRef.f,
-			strCache: {
-				ptCount: oStrRef.strCache.ptCount,
-				pt:      arrResultPts
+			"f": oStrRef.f,
+			"strCache": {
+				"ptCount": oStrRef.strCache.ptCount,
+				"pt":      arrResultPts
 			}
 		}
 	};
@@ -1629,8 +1647,8 @@
 			return oNumRef;
 
 		return {
-			f: oNumRef.f,
-			numCache: this.SerNumLit(oNumRef.numCache)
+			"f": oNumRef.f,
+			"numCache": this.SerNumLit(oNumRef.numCache)
 		}
 	};
 	WriterToJSON.prototype.SerGeometry = function(oGeometry)
@@ -1643,16 +1661,16 @@
 		for (var nItem = 0; nItem < oGeometry.ahPolarLstInfo.length; nItem++)
 		{
 			arrAhPolarResult.push({
-				pos: {
-					x: oGeometry.ahPolarLstInfo[nItem].posX,
-					y: oGeometry.ahPolarLstInfo[nItem].posY
+				"pos": {
+					"x": oGeometry.ahPolarLstInfo[nItem].posX,
+					"y": oGeometry.ahPolarLstInfo[nItem].posY
 				},
-				gdRefAng: oGeometry.ahPolarLstInfo[nItem].gdRefAng,
-				gdRefR: oGeometry.ahPolarLstInfo[nItem].gdRefR,
-				maxAng: oGeometry.ahPolarLstInfo[nItem].maxAng,
-				maxR: oGeometry.ahPolarLstInfo[nItem].maxR,
-				minAng: oGeometry.ahPolarLstInfo[nItem].minAng,
-				minR: oGeometry.ahPolarLstInfo[nItem].minR
+				"gdRefAng": oGeometry.ahPolarLstInfo[nItem].gdRefAng,
+				"gdRefR": oGeometry.ahPolarLstInfo[nItem].gdRefR,
+				"maxAng": oGeometry.ahPolarLstInfo[nItem].maxAng,
+				"maxR": oGeometry.ahPolarLstInfo[nItem].maxR,
+				"minAng": oGeometry.ahPolarLstInfo[nItem].minAng,
+				"minR": oGeometry.ahPolarLstInfo[nItem].minR
 			});
 		}
 
@@ -1661,25 +1679,25 @@
 		for (nItem = 0; nItem < oGeometry.ahXYLstInfo.length; nItem++)
 		{
 			arrAhXYResult.push({
-				pos: {
-					x: oGeometry.ahXYLstInfo[nItem].posX,
-					y: oGeometry.ahXYLstInfo[nItem].posY
+				"pos": {
+					"x": oGeometry.ahXYLstInfo[nItem].posX,
+					"y": oGeometry.ahXYLstInfo[nItem].posY
 				},
-				gdRefX: oGeometry.ahXYLstInfo[nItem].gdRefX,
-				gdRefY: oGeometry.ahXYLstInfo[nItem].gdRefY,
-				maxX: oGeometry.ahXYLstInfo[nItem].maxX,
-				maxY: oGeometry.ahXYLstInfo[nItem].maxY,
-				minX: oGeometry.ahXYLstInfo[nItem].minX,
-				minY: oGeometry.ahXYLstInfo[nItem].minY
+				"gdRefX": oGeometry.ahXYLstInfo[nItem].gdRefX,
+				"gdRefY": oGeometry.ahXYLstInfo[nItem].gdRefY,
+				"maxX": oGeometry.ahXYLstInfo[nItem].maxX,
+				"maxY": oGeometry.ahXYLstInfo[nItem].maxY,
+				"minX": oGeometry.ahXYLstInfo[nItem].minX,
+				"minY": oGeometry.ahXYLstInfo[nItem].minY
 			});
 		}
 
-		// Av
+		// Av // to do 
 		var oAvResult      = {};
 		for (var key in oGeometry.avLst)
 			oAvResult[key] = oGeometry.avLst[key]
 
-		// adj
+		// adj // to do ключи
 		var oAdjLst = {};
 		for (key in oAvResult)
 		{
@@ -1692,11 +1710,11 @@
 		for (nItem = 0; nItem < oGeometry.cnxLstInfo.length; nItem++)
 		{
 			arrCxnResult.push({
-				pos: {
-					x: oGeometry.cnxLstInfo[nItem].x,
-					y: oGeometry.cnxLstInfo[nItem].y
+				"pos": {
+					"x": oGeometry.cnxLstInfo[nItem].x,
+					"y": oGeometry.cnxLstInfo[nItem].y
 				},
-				ang: oGeometry.cnxLstInfo[nItem].ang
+				"ang": oGeometry.cnxLstInfo[nItem].ang
 			});
 		}
 
@@ -1705,11 +1723,11 @@
 		for (nItem = 0; nItem < oGeometry.gdLstInfo.length; nItem++)
 		{
 			arrGdResult.push({
-				fmla: this.GetFormulaStrType(oGeometry.gdLstInfo[nItem].formula),
-				x:    oGeometry.gdLstInfo[nItem].x,
-				y:    oGeometry.gdLstInfo[nItem].y,
-				z:    oGeometry.gdLstInfo[nItem].z,
-				name: oGeometry.gdLstInfo[nItem].name
+				"fmla": this.GetFormulaStrType(oGeometry.gdLstInfo[nItem].formula),
+				"x":    oGeometry.gdLstInfo[nItem].x,
+				"y":    oGeometry.gdLstInfo[nItem].y,
+				"z":    oGeometry.gdLstInfo[nItem].z,
+				"name": oGeometry.gdLstInfo[nItem].name
 			});
 		}
 
@@ -1719,17 +1737,17 @@
 			arrPathResult.push(this.SerGeomPath(oGeometry.pathLst[nItem]));
 
 		return {
-			ahLst: {
-				ahPolar: arrAhPolarResult,
-				ahXY:    arrAhXYResult
+			"ahLst": {
+				"ahPolar": arrAhPolarResult,
+				"ahXY":    arrAhXYResult
 			},
-			avLst:   oAvResult,
-			adjLst:  oAdjLst,
-			cnxLst:  arrCxnResult,
-			gdLst:   arrGdResult,
-			pathLst: arrPathResult,
-			rect:    oGeometry.rectS,
-			preset:  oGeometry.preset
+			"avLst":   oAvResult,
+			"adjLst":  oAdjLst,
+			"cnxLst":  arrCxnResult,
+			"gdLst":   arrGdResult,
+			"pathLst": arrPathResult,
+			"rect":    oGeometry.rectS,
+			"preset":  oGeometry.preset
 		}
 	};
 	WriterToJSON.prototype.SerGeomPath = function(oPath)
@@ -1745,26 +1763,27 @@
 			switch (oPath.ArrPathCommandInfo[nCommand].id)
 			{
 				case 0:
-					oCommand.id =  "moveTo";
+					oCommand["id"] =  "moveTo";
 					break;
 				case 1:
-					oCommand.id =  "lnTo";
+					oCommand["id"] =  "lnTo";
 					break;
 				case 2:
-					oCommand.id =  "arcTo";
+					oCommand["id"] =  "arcTo";
 					break;
 				case 3:
-					oCommand.id =  "cubicBezTo";
+					oCommand["id"] =  "cubicBezTo";
 					break;
 				case 4:
-					oCommand.id =  "quadBezTo";
+					oCommand["id"] =  "quadBezTo";
 					break;
 				case 5:
-					oCommand.id =  "close";
+					oCommand["id"] =  "close";
 					break;
 			}
-			if (oCommand.id !== "arcTo" && oCommand.id !== "close")
-				oCommand.pt = {};
+			if (oCommand["id"] !== "arcTo" && oCommand["id"] !== "close")
+				oCommand["pt"] = {};
+			// to do arrObjKeys
 			for (var nKey = 0; nKey < arrObjKeys.length; nKey++)
 			{
 				if (arrObjKeys[nKey] === "id")
@@ -1779,12 +1798,12 @@
 		}
 
 		return {
-			commands:    arrCommands,
-			extrusionOk: oPath.extrusionOk,
-			fill:        oPath.fill,
-			h:           oPath.pathH,
-			stroke:      oPath.stroke,
-			w:           oPath.pathW
+			"commands":    arrCommands,
+			"extrusionOk": oPath.extrusionOk,
+			"fill":        oPath.fill,
+			"h":           oPath.pathH,
+			"stroke":      oPath.stroke,
+			"w":           oPath.pathW
 		}
 	};
 	WriterToJSON.prototype.GetFormulaStrType = function(nFormulaType)
@@ -1856,14 +1875,14 @@
 		var oEffectDag = oSpPr.effectProps ? this.SerEffectDag(oSpPr.effectProps.EffectDag) : oSpPr.effectProps;
 		
 		return {
-			custGeom:  this.SerGeometry(oSpPr.geometry),
-			effectDag: oEffectDag,
-			effectLst: oEffectLst,
-			ln: this.SerLn(oSpPr.ln),
+			"custGeom":  this.SerGeometry(oSpPr.geometry),
+			"effectDag": oEffectDag,
+			"effectLst": oEffectLst,
+			"ln": this.SerLn(oSpPr.ln),
 
-			fill:   this.SerFill(oSpPr.Fill),
-			xfrm:   this.SerXfrm(oSpPr.xfrm),
-			bwMode: oSpPr.bwMode
+			"fill":   this.SerFill(oSpPr.Fill),
+			"xfrm":   this.SerXfrm(oSpPr.xfrm),
+			"bwMode": oSpPr.bwMode
 		}
 	};
 	WriterToJSON.prototype.SerXfrm = function(oXfrm)
@@ -1872,22 +1891,22 @@
 			return oXfrm;
 
 		return {
-			ext: {
-				cx: oXfrm.extX ? private_MM2EMU(oXfrm.extX) : oXfrm.extX,
-				cy: oXfrm.extY ? private_MM2EMU(oXfrm.extY) : oXfrm.extY
+			"ext": {
+				"cx": oXfrm.extX ? private_MM2EMU(oXfrm.extX) : oXfrm.extX,
+				"cy": oXfrm.extY ? private_MM2EMU(oXfrm.extY) : oXfrm.extY
 			},
-			off: {
-				x: oXfrm.offX ? private_MM2EMU(oXfrm.offX) : oXfrm.offX,
-				y: oXfrm.offY ? private_MM2EMU(oXfrm.offY) : oXfrm.offY
+			"off": {
+				"x": oXfrm.offX ? private_MM2EMU(oXfrm.offX) : oXfrm.offX,
+				"y": oXfrm.offY ? private_MM2EMU(oXfrm.offY) : oXfrm.offY
 			},
-			flipH: oXfrm.flipH,
-			flipV: oXfrm.flipV,
-			rot: oXfrm.rot,
+			"flipH": oXfrm.flipH,
+			"flipV": oXfrm.flipV,
+			"rot": oXfrm.rot,
 
-			chOffX: oXfrm.chOffX ? private_MM2EMU(oXfrm.chOffX) : oXfrm.chOffX,
-    		chOffY: oXfrm.chOffY ? private_MM2EMU(oXfrm.chOffY) : oXfrm.chOffY,
-    		chExtX: oXfrm.chExtX ? private_MM2EMU(oXfrm.chExtX) : oXfrm.chExtX,
-   			chExtY: oXfrm.chExtY ? private_MM2EMU(oXfrm.chExtY) : oXfrm.chExtY
+			"chOffX": oXfrm.chOffX ? private_MM2EMU(oXfrm.chOffX) : oXfrm.chOffX,
+    		"chOffY": oXfrm.chOffY ? private_MM2EMU(oXfrm.chOffY) : oXfrm.chOffY,
+    		"chExtX": oXfrm.chExtX ? private_MM2EMU(oXfrm.chExtX) : oXfrm.chExtX,
+   			"chExtY": oXfrm.chExtY ? private_MM2EMU(oXfrm.chExtY) : oXfrm.chExtY
 		}
 	};
 	WriterToJSON.prototype.SerLn = function(oLn)
@@ -1930,20 +1949,16 @@
 		}
 		
 		return {
-			fill:     this.SerFill(oLn.Fill),
-			lineJoin: this.SerLineJoin(oLn.Join),
-			
-			algn:     sAlgnType,
-			cap:      sCapType,
-			cmpd:     sCmpdType,
-			w:        oLn.w,
-
-			headEnd:  this.SerEndArrow(oLn.headEnd),
-
-			prstDash: this.GetPenDashStrType(oLn.prstDash),
-
-			tailEnd:  this.SerEndArrow(oLn.tailEnd),
-			type:     "stroke"
+			"fill":     this.SerFill(oLn.Fill),
+			"lineJoin": this.SerLineJoin(oLn.Join),
+			"algn":     sAlgnType,
+			"cap":      sCapType,
+			"cmpd":     sCmpdType,
+			"w":        oLn.w,
+			"headEnd":  this.SerEndArrow(oLn.headEnd),
+			"prstDash": this.GetPenDashStrType(oLn.prstDash),
+			"tailEnd":  this.SerEndArrow(oLn.tailEnd),
+			"type":     "stroke"
 		}
 	};
 	WriterToJSON.prototype.SerLineJoin = function(oLine)
@@ -1969,8 +1984,8 @@
 		}
 
 		return {
-			type: sType,
-			lim:  oLine.limit
+			"type": sType,
+			"lim":  oLine.limit
 		}
 	};
 	WriterToJSON.prototype.SerEndArrow = function(oArrow)
@@ -2030,9 +2045,9 @@
 		}
 		
 		return {
-			len:  sLineEndSize,
-			type: sType,
-			w:    sLineEndWidth
+			"len":  sLineEndSize,
+			"type": sType,
+			"w":    sLineEndWidth
 		}
 	};
 	WriterToJSON.prototype.SerEffectLst = function(oEffectLst)
@@ -2041,14 +2056,14 @@
 			return oEffectLst;
 		
 		return {
-			blur:        this.SerEffect(oEffectLst.blur),
-			fillOverlay: this.SerEffect(oEffectLst.fillOverlay),
-			glow:        this.SerEffect(oEffectLst.glow),
-			innerShdw:   this.SerEffect(oEffectLst.innerShdw),
-			outerShdw:   this.SerEffect(oEffectLst.outerShdw),
-			prstShdw:    this.SerEffect(oEffectLst.prstShdw),
-			reflection:  this.SerEffect(oEffectLst.reflection),
-			softEdge:    this.SerEffect(oEffectLst.softEdge)
+			"blur":        this.SerEffect(oEffectLst.blur),
+			"fillOverlay": this.SerEffect(oEffectLst.fillOverlay),
+			"glow":        this.SerEffect(oEffectLst.glow),
+			"innerShdw":   this.SerEffect(oEffectLst.innerShdw),
+			"outerShdw":   this.SerEffect(oEffectLst.outerShdw),
+			"prstShdw":    this.SerEffect(oEffectLst.prstShdw),
+			"reflection":  this.SerEffect(oEffectLst.reflection),
+			"softEdge":    this.SerEffect(oEffectLst.softEdge)
 		}
 	};
 	WriterToJSON.prototype.SerEffectDag = function(oEffectDag)
@@ -2059,9 +2074,9 @@
 		var arrEffectLst = this.SerEffects(oEffectDag.effectList);
 		
 		return {
-			effectList: arrEffectLst,
-			name:       oEffectDag.name,
-			type:       oEffectDag.type
+			"effectList": arrEffectLst,
+			"name":       oEffectDag.name,
+			"type":       oEffectDag.type
 		}
 	};
 	WriterToJSON.prototype.SerEffects = function(arrEffects)
@@ -2080,62 +2095,62 @@
 		if (oEffect instanceof AscFormat.CAlphaBiLevel)
 		{
 			oElm = {
-				thresh: oEffect.tresh,
-				type:   "alphaBiLvl"
+				"thresh": oEffect.tresh,
+				"type":   "alphaBiLvl"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CAlphaCeiling)
 		{
 			oElm = {
-				type: "alphaCeiling"
+				"type": "alphaCeiling"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CAlphaFloor)
 		{
 			oElm = {
-				type: "alphaFloor"
+				"type": "alphaFloor"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CAlphaInv)
 		{
 			oElm = {
-				color: this.SerColor(oEffect.unicolor),
-				type:  "alphaInv"
+				"color": this.SerColor(oEffect.unicolor),
+				"type":  "alphaInv"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CAlphaMod)
 		{
 			oElm = {
-				cont: this.SerEffectDag(oEffect.cont),
-				type: "alphaMod"
+				"cont": this.SerEffectDag(oEffect.cont),
+				"type": "alphaMod"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CAlphaModFix)
 		{
 			oElm = {
-				amt:  oEffect.amt,
-				type: "alphaModFix"
+				"amt":  oEffect.amt,
+				"type": "alphaModFix"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CAlphaOutset)
 		{
 			oElm = {
-				rad:  oEffect.rad,
-				type: "alphaOutset"
+				"rad":  oEffect.rad,
+				"type": "alphaOutset"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CAlphaRepl)
 		{
 			oElm = {
-				a:     oEffect.a,
-				type: "alphaRepl"
+				"a":     oEffect.a,
+				"type": "alphaRepl"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CBiLevel)
 		{
 			oElm = {
-				thresh: oEffect.thresh,
-				type:   "biLvl"
+				"thresh": oEffect.thresh,
+				"type":   "biLvl"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CBlend)
@@ -2143,40 +2158,40 @@
 			sBlendType = To_XML_ST_BlendMode(oEffect.blend);
 
 			oElm = {
-				cont:  this.SerEffectDag(oEffect.cont),
-				blend: sBlendType,
-				type:  "blend"
+				"cont":  this.SerEffectDag(oEffect.cont),
+				"blend": sBlendType,
+				"type":  "blend"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CBlur)
 		{
 			oElm = {
-				grow: oEffect.grow,
-				rad:  oEffect.rad,
-				type: "blur"
+				"grow": oEffect.grow,
+				"rad":  oEffect.rad,
+				"type": "blur"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CClrChange)
 		{
 			oElm = {
-				clrFrom: this.SerColor(oEffect.clrFrom),
-				clrTo:   this.SerColor(oEffect.clrTo),
-				useA:    oEffect.useA,
-				type:    "clrChange"
+				"clrFrom": this.SerColor(oEffect.clrFrom),
+				"clrTo":   this.SerColor(oEffect.clrTo),
+				"useA":    oEffect.useA,
+				"type":    "clrChange"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CClrRepl)
 		{
 			oElm = {
-				color: this.SerColor(oEffect.color),
-				type:  "clrRepl"
+				"color": this.SerColor(oEffect.color),
+				"type":  "clrRepl"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CEffectContainer)
 		{
 			oElm = {
-				cont: this.SerEffectDag(oEffect),
-				type: "effCont"
+				"cont": this.SerEffectDag(oEffect),
+				"type": "effCont"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CDuotone)
@@ -2186,22 +2201,22 @@
 				arrColors.push(this.SerColor(oEffect.colors[nColor]));
 
 			oElm = {
-				colors: arrColors,
-				type:   "duotone"
+				"colors": arrColors,
+				"type":   "duotone"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CEffectElement)
 		{
 			oElm = {
-				ref:  oEffect.ref,
-				type: "effect"
+				"ref":  oEffect.ref,
+				"type": "effect"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CFillEffect)
 		{
 			oElm = {
-				fill: this.SerFill(oEffect.fill),
-				type: "fill"
+				"fill": this.SerFill(oEffect.fill),
+				"type": "fill"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CFillOverlay)
@@ -2209,66 +2224,66 @@
 			sBlendType = To_XML_ST_BlendMode(oEffect.blend);
 
 			oElm = {
-				fill:  this.SerFill(oEffect.fill),
-				blend: sBlendType,
-				type:  "fillOvrl"
+				"fill":  this.SerFill(oEffect.fill),
+				"blend": sBlendType,
+				"type":  "fillOvrl"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CGlow)
 		{
 			oElm = {
-				color: this.SerColor(oEffect.color),
-				rad:   oEffect.rad,
-				type:  "glow"
+				"color": this.SerColor(oEffect.color),
+				"rad":   oEffect.rad,
+				"type":  "glow"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CGrayscl)
 		{
 			oElm = {
-				type: "gray"
+				"type": "gray"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CHslEffect)
 		{
 			oElm = {
-				hue:  oEffect.h,
-				lum:  oEffect.l,
-				sat:  oEffect.s,
-				type: "hsl"
+				"hue":  oEffect.h,
+				"lum":  oEffect.l,
+				"sat":  oEffect.s,
+				"type": "hsl"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CInnerShdw)
 		{
 			oElm = {
-				color:   this.SerColor(oEffect.color),
-				blurRad: oEffect.blurRad,
-				dir:     oEffect.dir,
-				dist:    oEffect.dist,
-				type:    "innerShdw"
+				"color":   this.SerColor(oEffect.color),
+				"blurRad": oEffect.blurRad,
+				"dir":     oEffect.dir,
+				"dist":    oEffect.dist,
+				"type":    "innerShdw"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CLumEffect)
 		{
 			oElm = {
-				bright:   oEffect.bright,
-				contrast: oEffect.contrast,
-				type:     "lum"
+				"bright":   oEffect.bright,
+				"contrast": oEffect.contrast,
+				"type":     "lum"
 			}
 		}
 		else if (oEffect instanceof AscFormat.COuterShdw)
 		{
 			oElm = {
-				color:        this.SerColor(oEffect.color),
-				algn:         GetRectAlgnStrType(oEffect.algn),
-				blurRad:      oEffect.blurRad,
-				dir:          oEffect.dir,
-				dist:         oEffect.dist,
-				kx:           oEffect.kx,
-				ky:           oEffect.ky,
-				rotWithShape: oEffect.rotWithShape,
-				sx:           oEffect.sx,
-				sy:           oEffect.sy,
-				type:         "outerShdw"
+				"color":        this.SerColor(oEffect.color),
+				"algn":         GetRectAlgnStrType(oEffect.algn),
+				"blurRad":      oEffect.blurRad,
+				"dir":          oEffect.dir,
+				"dist":         oEffect.dist,
+				"kx":           oEffect.kx,
+				"ky":           oEffect.ky,
+				"rotWithShape": oEffect.rotWithShape,
+				"sx":           oEffect.sx,
+				"sy":           oEffect.sy,
+				"type":         "outerShdw"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CPrstShdw)
@@ -2339,66 +2354,66 @@
 			}
 
 			oElm = {
-				color: this.SerColor(oEffect.color),
-				dir:   oEffect.dir,
-				dist:  oEffect.dis,
-				prst:  sPrstType,
-				type:  "prstShdw"
+				"color": this.SerColor(oEffect.color),
+				"dir":   oEffect.dir,
+				"dist":  oEffect.dis,
+				"prst":  sPrstType,
+				"type":  "prstShdw"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CReflection)
 		{
 			oElm = {
-				algn:         GetRectAlgnStrType(oEffect.algn),
-				blurRad:      oEffect.blurRad,
-				dir:          oEffect.dir,
-				dist:         oEffect.dist,
-				endA:         oEffect.endA,
-				endPos:       oEffect.endPos,
-				fadeDir:      oEffect.fadeDir,
-				kx:           oEffect.kx,
-				ky:           oEffect.ky,
-				rotWithShape: oEffect.rotWithShape,
-				stA:          oEffect.stA,
-				stPos:        oEffect.stPos,
-				sx:           oEffect.sx,
-				sy:           oEffect.sy,
-				type: "reflection"
+				"algn":         GetRectAlgnStrType(oEffect.algn),
+				"blurRad":      oEffect.blurRad,
+				"dir":          oEffect.dir,
+				"dist":         oEffect.dist,
+				"endA":         oEffect.endA,
+				"endPos":       oEffect.endPos,
+				"fadeDir":      oEffect.fadeDir,
+				"kx":           oEffect.kx,
+				"ky":           oEffect.ky,
+				"rotWithShape": oEffect.rotWithShape,
+				"stA":          oEffect.stA,
+				"stPos":        oEffect.stPos,
+				"sx":           oEffect.sx,
+				"sy":           oEffect.sy,
+				"type": "reflection"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CRelOff)
 		{
 			oElm = {
-				tx:   oEffect.tx,
-				ty:   oEffect.ty,
-				type: "relOff"
+				"tx":   oEffect.tx,
+				"ty":   oEffect.ty,
+				"type": "relOff"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CSoftEdge)
 		{
 			oElm = {
-				rad:  oEffect.rad,
-				type: "softEdge"
+				"rad":  oEffect.rad,
+				"type": "softEdge"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CTintEffect)
 		{
 			oElm = {
-				amt: oEffect.amt,
-				hue: oEffect.hue,
-				type: "tint"
+				"amt": oEffect.amt,
+				"hue": oEffect.hue,
+				"type": "tint"
 			}
 		}
 		else if (oEffect instanceof AscFormat.CXfrmEffect)
 		{
 			oElm = {
-				kx: oEffect.kx,
-				ky: oEffect.ky,
-				sx: oEffect.sx,
-				sy: oEffect.sy,
-				tx: oEffect.tx,
-				ty: oEffect.ty,
-				type: "xfrm"
+				"kx": oEffect.kx,
+				"ky": oEffect.ky,
+				"sx": oEffect.sx,
+				"sy": oEffect.sy,
+				"tx": oEffect.tx,
+				"ty": oEffect.ty,
+				"type": "xfrm"
 			}
 		}
 
@@ -2416,13 +2431,13 @@
 			{
 				case Asc.c_oAscFill.FILL_TYPE_NONE:
 					oFillObj = {
-						type: "none"
+						"type": "none"
 					}
 					break;
 				case Asc.c_oAscFill.FILL_TYPE_SOLID:
 					oFillObj = {
-						color: this.SerColor(oFill.fill.color),
-						type: "solid"
+						"color": this.SerColor(oFill.fill.color),
+						"type": "solid"
 					}
 					break;
 				case Asc.c_oAscFill.FILL_TYPE_BLIP:
@@ -2430,7 +2445,7 @@
 					break;
 				case Asc.c_oAscFill.FILL_TYPE_NOFILL:
 					oFillObj = {
-						type: "noFill"
+						"type": "noFill"
 					}
 					break;
 				case Asc.c_oAscFill.FILL_TYPE_GRAD:
@@ -2441,7 +2456,7 @@
 					break;
 				case Asc.c_oAscFill.FILL_TYPE_GRP:
 					oFillObj = {
-						type: "grp"
+						"type": "grp"
 					};
 					break;
 			}
@@ -2474,10 +2489,10 @@
 		}
 		
 		return {
-			fill:        oFillObj,
-			transparent: oFill.transparent,
-			type:        "fill",
-			fillType:    sFillType
+			"fill":        oFillObj,
+			"transparent": oFill.transparent,
+			"type":        "fill",
+			"fillType":    sFillType
 		}
 	};
 	WriterToJSON.prototype.SerShd = function(oShd)
@@ -2486,25 +2501,25 @@
 			return oShd;
 
 		return {
-			val: oShd.Value,
-			color: oShd.Color ? {
-				auto: oShd.Color.Auto,
-				r:    oShd.Color.r,
-				g:    oShd.Color.g,
-				b:    oShd.Color.b
+			"val": oShd.Value,
+			"color": oShd.Color ? {
+				"auto": oShd.Color.Auto,
+				"r":    oShd.Color.r,
+				"g":    oShd.Color.g,
+				"b":    oShd.Color.b
 			} : oShd.Color,
-			fill: oShd.Fill ? {
-				auto: oShd.Fill.Auto,
-				r:    oShd.Fill.r,
-				g:    oShd.Fill.g,
-				b:    oShd.Fill.b
+			"fill": oShd.Fill ? {
+				"auto": oShd.Fill.Auto,
+				"r":    oShd.Fill.r,
+				"g":    oShd.Fill.g,
+				"b":    oShd.Fill.b
 			} : oShd.Fill,
-			fillRef: oShd.FillRef ? {
-				idx:   oShd.FillRef.idx,
-				color: this.SerColor(oShd.FillRef.Color)
+			"fillRef": oShd.FillRef ? {
+				"idx":   oShd.FillRef.idx,
+				"color": this.SerColor(oShd.FillRef.Color)
 			} : oShd.FillRef,
-			themeColor: this.SerFill(oShd.Unifill), // Unifill
-			themeFill:  this.SerFill(oShd.themeFill)
+			"themeColor": this.SerFill(oShd.Unifill), // Unifill
+			"themeFill":  this.SerFill(oShd.themeFill)
 		}
 	};
 	WriterToJSON.prototype.SerColor = function(oColor)
@@ -2513,10 +2528,10 @@
 			return oColor;
 
 		var oRGBA = oColor.RGBA ? {
-			red:   oColor.RGBA.R,
-			green: oColor.RGBA.G,
-			blue:  oColor.RGBA.B,
-			alpha: oColor.RGBA.A 
+			"red":   oColor.RGBA.R,
+			"green": oColor.RGBA.G,
+			"blue":  oColor.RGBA.B,
+			"alpha": oColor.RGBA.A 
 		} : oColor.RGBA;
 
 		var oColorObj  = null;
@@ -2528,20 +2543,20 @@
 				case Asc.c_oAscColor.COLOR_TYPE_NONE:
 					oColorType = "none";
 					oColorObj  = {
-						type: oColorType
+						"type": oColorType
 					}
 					break;
 				case Asc.c_oAscColor.COLOR_TYPE_SRGB:
 				{
 					oColorType = "srgb";
 					oColorObj  = {
-						rgba: {
-							red:   oColor.color.RGBA.R,
-							green:  oColor.color.RGBA.G,
-							blue:  oColor.color.RGBA.B,
-							alpha: oColor.color.RGBA.A 
+						"rgba": {
+							"red":   oColor.color.RGBA.R,
+							"green":  oColor.color.RGBA.G,
+							"blue":  oColor.color.RGBA.B,
+							"alpha": oColor.color.RGBA.A 
 						},
-						type: oColorType
+						"type": oColorType
 					}
 					break;
 				}
@@ -2549,14 +2564,14 @@
 				{
 					oColorType = "prst";
 					oColorObj  = {
-						rgba: {
-							red:   oColor.color.RGBA.R,
-							green:  oColor.color.RGBA.G,
-							blue:  oColor.color.RGBA.B,
-							alpha: oColor.color.RGBA.A 
+						"rgba": {
+							"red":   oColor.color.RGBA.R,
+							"green":  oColor.color.RGBA.G,
+							"blue":  oColor.color.RGBA.B,
+							"alpha": oColor.color.RGBA.A 
 						},
-						id:   oColor.color.id,
-						type: oColorType
+						"id":   oColor.color.id,
+						"type": oColorType
 					}
 					break;
 				}
@@ -2564,14 +2579,14 @@
 				{
 					oColorType = "scheme";
 					oColorObj  = {
-						rgba: {
-							red:   oColor.color.RGBA.R,
-							green:  oColor.color.RGBA.G,
-							blue:  oColor.color.RGBA.B,
-							alpha: oColor.color.RGBA.A 
+						"rgba": {
+							"red":   oColor.color.RGBA.R,
+							"green":  oColor.color.RGBA.G,
+							"blue":  oColor.color.RGBA.B,
+							"alpha": oColor.color.RGBA.A 
 						},
-						id:   oColor.color.id,
-						type: oColorType
+						"id":   oColor.color.id,
+						"type": oColorType
 					}
 					break;
 				}
@@ -2579,14 +2594,14 @@
 				{
 					oColorType = "sys";
 					oColorObj  = {
-						rgba: {
-							red:   oColor.color.RGBA.R,
-							green: oColor.color.RGBA.G,
-							blue:  oColor.color.RGBA.B,
-							alpha: oColor.color.RGBA.A 
+						"rgba": {
+							"red":   oColor.color.RGBA.R,
+							"green": oColor.color.RGBA.G,
+							"blue":  oColor.color.RGBA.B,
+							"alpha": oColor.color.RGBA.A 
 						},
-						id:   oColor.color.id,
-						type: oColorType
+						"id":   oColor.color.id,
+						"type": oColorType
 					}
 					break;
 				}
@@ -2594,9 +2609,9 @@
 				{
 					oColorType = "style";
 					oColorObj  = {
-						auto: oColor.color.bAuto,
-						val:  oColor.color.val,
-						type: oColorType
+						"auto": oColor.color.bAuto,
+						"val":  oColor.color.val,
+						"type": oColorType
 					}
 					break;
 				}
@@ -2604,10 +2619,10 @@
 		}
 		
 		return {
-			rgba:  oRGBA,
-			color: oColorObj,
-			mods:  this.SerColorModifiers(oColor.Mods),
-			type:  "uniColor"
+			"rgba":  oRGBA,
+			"color": oColorObj,
+			"mods":  this.SerColorModifiers(oColor.Mods),
+			"type":  "uniColor"
 		}
 	};
 	WriterToJSON.prototype.SerColorModifiers = function(oColorModifiers)
@@ -2619,8 +2634,8 @@
 		for (var nMod = 0; nMod < oColorModifiers.Mods.length; nMod++)
 		{
 			arrColorMods.push({
-				name: oColorModifiers.Mods[nMod].name,
-				val:  oColorModifiers.Mods[nMod].val
+				"name": oColorModifiers.Mods[nMod].name,
+				"val":  oColorModifiers.Mods[nMod].val
 			});
 		}
 
@@ -2653,25 +2668,25 @@
 		}
 
 		return {
-			gsLst: arrGsLst,
+			"gsLst": arrGsLst,
 
-			lin:   oGradFill.lin ? {
-				ang:    oGradFill.lin.angle,
-				scaled: oGradFill.lin.scale
+			"lin":   oGradFill.lin ? {
+				"ang":    oGradFill.lin.angle,
+				"scaled": oGradFill.lin.scale
 			} : oGradFill.lin,
 
-			path: oGradFill.path ? {
-				path: sPathShadeType,
-				fillToRect: oGradFill.path.rect ? {
-					b: oGradFill.path.rect.b,
-					l: oGradFill.path.rect.l,
-					r: oGradFill.path.rect.r,
-					t: oGradFill.path.rect.t
+			"path": oGradFill.path ? {
+				"path": sPathShadeType,
+				"fillToRect": oGradFill.path.rect ? {
+					"b": oGradFill.path.rect.b,
+					"l": oGradFill.path.rect.l,
+					"r": oGradFill.path.rect.r,
+					"t": oGradFill.path.rect.t
 				} : oGradFill.path.rect
 			} : oGradFill.path,
 
-			rotWithShape: oGradFill.rotateWithShape,
-			type: "gradFill"
+			"rotWithShape": oGradFill.rotateWithShape,
+			"type": "gradFill"
 		}
 	};
 	WriterToJSON.prototype.SerGradStop = function(oGradStop)
@@ -2680,9 +2695,9 @@
 			return oGradStop;
 
 		return {
-			color: this.SerColor(oGradStop.color),
-			pos:   oGradStop.pos,
-			type:  "gradStop"
+			"color": this.SerColor(oGradStop.color),
+			"pos":   oGradStop.pos,
+			"type":  "gradStop"
 		}
 	};
 	WriterToJSON.prototype.SerPattFill = function(oPattFill)
@@ -2691,10 +2706,10 @@
 			return oPattFill;
 
 		return {
-			bgClr: oPattFill.bgClr ? this.SerColor(oPattFill.bgClr) : oPattFill.bgClr,
-			fgClr: oPattFill.fgClr ? this.SerColor(oPattFill.fgClr) : oPattFill.fgClr,
-			prst:  this.GetPresetStrType(oPattFill.ftype),
-			type: "pattFill"
+			"bgClr": oPattFill.bgClr ? this.SerColor(oPattFill.bgClr) : oPattFill.bgClr,
+			"fgClr": oPattFill.fgClr ? this.SerColor(oPattFill.fgClr) : oPattFill.fgClr,
+			"prst":  this.GetPresetStrType(oPattFill.ftype),
+			"type": "pattFill"
 		}
 	};
 	WriterToJSON.prototype.GetPresetStrType = function(nType)
@@ -2817,9 +2832,9 @@
 			return oTxPr;
 
 		return {
-			bodyPr:   this.SerBodyPr(oTxPr.bodyPr),
-			lstStyle: this.SerLstStyle(oTxPr.lstStyle),
-			content:  this.SerDrawingDocContent(oTxPr.content, undefined, undefined, undefined, true)
+			"bodyPr":   this.SerBodyPr(oTxPr.bodyPr),
+			"lstStyle": this.SerLstStyle(oTxPr.lstStyle),
+			"content":  this.SerDrawingDocContent(oTxPr.content, undefined, undefined, undefined, true)
 		}
 	};
 	WriterToJSON.prototype.SerBodyPr = function(oBodyPr)
@@ -2910,28 +2925,28 @@
 		}
 
 		return {
-			flatTx:           oBodyPr.flatTx != null ? private_MM2EMU(oBodyPr.flatTx) : oBodyPr.flatTx,
-			normAutofit:      this.SerTextFit(oBodyPr.textFit),
-			prstTxWarp:       this.SerGeometry(oBodyPr.prstTxWarp),
-			anchor:           sAnchorType,
-			anchorCtr:        oBodyPr.anchorCtr,
-			bIns:             typeof(oBodyPr.bIns) === "number" ? private_MM2EMU(oBodyPr.bIns) : oBodyPr.bIns,
-			compatLnSpc:      oBodyPr.compatLnSpc,
-			forceAA:          oBodyPr.forceAA,
-			fromWordArt:      oBodyPr.fromWordArt,
-			horzOverflow:     sHorzOverflow,
-			lIns:             typeof(oBodyPr.lIns) === "number" ? private_MM2EMU(oBodyPr.lIns) : oBodyPr.lIns,
-			numCol:           oBodyPr.numCol,
-			rIns:             typeof(oBodyPr.rIns) === "number" ? private_MM2EMU(oBodyPr.rIns) : oBodyPr.rIns,
-			rot:              oBodyPr.rot,
-			rtlCol:           oBodyPr.rtlCol,
-			spcCol:           typeof(oBodyPr.spcCol) === "number" ? private_MM2EMU(oBodyPr.spcCol) : oBodyPr.spcCol,
-			spcFirstLastPara: oBodyPr.spcFirstLastPara,
-			tIns:             typeof(oBodyPr.tIns) === "number" ? private_MM2EMU(oBodyPr.tIns) : oBodyPr.tIns,
-			upright:          oBodyPr.upright,
-			vert:             sVertType,
-			vertOverflow:     sVertOverflow,
-			wrap:             sWrapType
+			"flatTx":           oBodyPr.flatTx != null ? private_MM2EMU(oBodyPr.flatTx) : oBodyPr.flatTx,
+			"normAutofit":      this.SerTextFit(oBodyPr.textFit),
+			"prstTxWarp":       this.SerGeometry(oBodyPr.prstTxWarp),
+			"anchor":           sAnchorType,
+			"anchorCtr":        oBodyPr.anchorCtr,
+			"bIns":             typeof(oBodyPr.bIns) === "number" ? private_MM2EMU(oBodyPr.bIns) : oBodyPr.bIns,
+			"compatLnSpc":      oBodyPr.compatLnSpc,
+			"forceAA":          oBodyPr.forceAA,
+			"fromWordArt":      oBodyPr.fromWordArt,
+			"horzOverflow":     sHorzOverflow,
+			"lIns":             typeof(oBodyPr.lIns) === "number" ? private_MM2EMU(oBodyPr.lIns) : oBodyPr.lIns,
+			"numCol":           oBodyPr.numCol,
+			"rIns":             typeof(oBodyPr.rIns) === "number" ? private_MM2EMU(oBodyPr.rIns) : oBodyPr.rIns,
+			"rot":              oBodyPr.rot,
+			"rtlCol":           oBodyPr.rtlCol,
+			"spcCol":           typeof(oBodyPr.spcCol) === "number" ? private_MM2EMU(oBodyPr.spcCol) : oBodyPr.spcCol,
+			"spcFirstLastPara": oBodyPr.spcFirstLastPara,
+			"tIns":             typeof(oBodyPr.tIns) === "number" ? private_MM2EMU(oBodyPr.tIns) : oBodyPr.tIns,
+			"upright":          oBodyPr.upright,
+			"vert":             sVertType,
+			"vertOverflow":     sVertOverflow,
+			"wrap":             sWrapType
 		}
 	};
 	WriterToJSON.prototype.SerTextFit = function(oTextFit)
@@ -2940,9 +2955,9 @@
 			return oTextFit;
 
 		return {
-			type:           oTextFit.type,
-			fontScale:      oTextFit.fontScale,
-			lnSpcReduction: oTextFit.lnSpcReduction
+			"type":           oTextFit.type,
+			"fontScale":      oTextFit.fontScale,
+			"lnSpcReduction": oTextFit.lnSpcReduction
 		}
 	};
 	WriterToJSON.prototype.SerLstStyle = function(oListStyle)
@@ -3056,41 +3071,41 @@
 
 		// Style Conditional Table Formatting Properties
 		var oTblStylesPr = oStyleWithFullPr.TableBand1Horz ? {
-			band1Horz:  this.SerTableStylePr(oStyleWithFullPr.TableBand1Horz, "bandedRow"),
-			band1Vert:  this.SerTableStylePr(oStyleWithFullPr.TableBand1Vert, "bandedColumn"),
-			band2Horz:  this.SerTableStylePr(oStyleWithFullPr.TableBand2Horz, "bandedRowEven"),
-			band2Vert:  this.SerTableStylePr(oStyleWithFullPr.TableBand2Vert, "bandedColumnEven"),
-			firstCol:   this.SerTableStylePr(oStyleWithFullPr.TableFirstCol, "firstColumn"),
-			firstRow:   this.SerTableStylePr(oStyleWithFullPr.TableFirstRow, "firstRow"),
-			lastCol:    this.SerTableStylePr(oStyleWithFullPr.TableLastCol, "lastColumn"),
-			lastRow:    this.SerTableStylePr(oStyleWithFullPr.TableLastRow, "lastRow"),
-			neCell:     this.SerTableStylePr(oStyleWithFullPr.TableTRCell, "topRightCell"),
-			nwCell:     this.SerTableStylePr(oStyleWithFullPr.TableTLCell, "topLeftCell"),
-			seCell:     this.SerTableStylePr(oStyleWithFullPr.TableBRCell, "bottomRightCell"),
-			swCell:     this.SerTableStylePr(oStyleWithFullPr.TableBLCell, "bottomLeftCell"),
-			wholeTable: this.SerTableStylePr(oStyleWithFullPr.TableWholeTable, "wholeTable")
+			"band1Horz":  this.SerTableStylePr(oStyleWithFullPr.TableBand1Horz, "bandedRow"),
+			"band1Vert":  this.SerTableStylePr(oStyleWithFullPr.TableBand1Vert, "bandedColumn"),
+			"band2Horz":  this.SerTableStylePr(oStyleWithFullPr.TableBand2Horz, "bandedRowEven"),
+			"band2Vert":  this.SerTableStylePr(oStyleWithFullPr.TableBand2Vert, "bandedColumnEven"),
+			"firstCol":   this.SerTableStylePr(oStyleWithFullPr.TableFirstCol, "firstColumn"),
+			"firstRow":   this.SerTableStylePr(oStyleWithFullPr.TableFirstRow, "firstRow"),
+			"lastCol":    this.SerTableStylePr(oStyleWithFullPr.TableLastCol, "lastColumn"),
+			"lastRow":    this.SerTableStylePr(oStyleWithFullPr.TableLastRow, "lastRow"),
+			"neCell":     this.SerTableStylePr(oStyleWithFullPr.TableTRCell, "topRightCell"),
+			"nwCell":     this.SerTableStylePr(oStyleWithFullPr.TableTLCell, "topLeftCell"),
+			"seCell":     this.SerTableStylePr(oStyleWithFullPr.TableBRCell, "bottomRightCell"),
+			"swCell":     this.SerTableStylePr(oStyleWithFullPr.TableBLCell, "bottomLeftCell"),
+			"wholeTable": this.SerTableStylePr(oStyleWithFullPr.TableWholeTable, "wholeTable")
 		} : oStyleWithFullPr.TableBand1Horz;
 
 		return {
-			basedOn:        oStyleWithFullPr.BasedOn,
-			hidden:         oStyleWithFullPr.hidden,
-			link:           oStyleWithFullPr.Link,
-			name:           oStyleWithFullPr.Name,
-			next:           oStyleWithFullPr.Next,
-			pPr:            this.SerParaPr(oStyleWithFullPr.ParaPr),
-			qFormat:        oStyleWithFullPr.qFormat,
-			rPr:            this.SerTextPr(oStyleWithFullPr.TextPr),
-			semiHidden:     oStyleWithFullPr.semiHidden,
-			tblPr:          this.SerTablePr(oStyleWithFullPr.TablePr),
-			tblStylePr:     oTblStylesPr,
-			tcPr:           this.SerTableCellPr(oStyleWithFullPr.TableCellPr),
-			trPr:           this.SerTableRowPr(oStyleWithFullPr.TableRowPr),
-			uiPriority:     oStyleWithFullPr.uiPriority,
-			unhideWhenUsed: oStyleWithFullPr.unhideWhenUsed,
-			customStyle:    oStyleWithFullPr.Custom,
-			styleId:        oStyleWithFullPr.Id,
-			styleType:      sStyleType,
-			type:           "style"
+			"basedOn":        oStyleWithFullPr.BasedOn,
+			"hidden":         oStyleWithFullPr.hidden,
+			"link":           oStyleWithFullPr.Link,
+			"name":           oStyleWithFullPr.Name,
+			"next":           oStyleWithFullPr.Next,
+			"pPr":            this.SerParaPr(oStyleWithFullPr.ParaPr),
+			"qFormat":        oStyleWithFullPr.qFormat,
+			"rPr":            this.SerTextPr(oStyleWithFullPr.TextPr),
+			"semiHidden":     oStyleWithFullPr.semiHidden,
+			"tblPr":          this.SerTablePr(oStyleWithFullPr.TablePr),
+			"tblStylePr":     oTblStylesPr,
+			"tcPr":           this.SerTableCellPr(oStyleWithFullPr.TableCellPr),
+			"trPr":           this.SerTableRowPr(oStyleWithFullPr.TableRowPr),
+			"uiPriority":     oStyleWithFullPr.uiPriority,
+			"unhideWhenUsed": oStyleWithFullPr.unhideWhenUsed,
+			"customStyle":    oStyleWithFullPr.Custom,
+			"styleId":        oStyleWithFullPr.Id,
+			"styleType":      sStyleType,
+			"type":           "style"
 		}
 	};
 	WriterToJSON.prototype.SerTableStylePr = function(oPr, sStyleType)
@@ -3099,13 +3114,13 @@
 			return oPr;
 
 		return {
-			pPr:       this.SerParaPr(oPr.ParaPr),
-			rPr:       this.SerTextPr(oPr.TextPr),
-			tblPr:     this.SerTablePr(oPr.TablePr, null),
-			tcPr:      this.SerTableCellPr(oPr.TableCellPr),
-			trPr:      this.SerTableRowPr(oPr.TableRowPr),
-			styleType: sStyleType,
-			type:      "tableStyle"
+			"pPr":       this.SerParaPr(oPr.ParaPr),
+			"rPr":       this.SerTextPr(oPr.TextPr),
+			"tblPr":     this.SerTablePr(oPr.TablePr, null),
+			"tcPr":      this.SerTableCellPr(oPr.TableCellPr),
+			"trPr":      this.SerTableRowPr(oPr.TableRowPr),
+			"styleType": sStyleType,
+			"type":      "tableStyle"
 		}
 	};
 	WriterToJSON.prototype.SerTableMeasurement = function(oMeasurement)
@@ -3117,23 +3132,23 @@
 		{
 			case tblwidth_Auto:
 				return {
-					type: "auto",
-					w:    0
+					"type": "auto",
+					"w":    0
 				};
 			case tblwidth_Mm:
 				return {
-					type: "dxa",
-					w:    private_MM2Twips(oMeasurement.W)
+					"type": "dxa",
+					"w":    private_MM2Twips(oMeasurement.W)
 				};
 			case tblwidth_Nil:
 				return {
-					type: "nil",
-					w:    0
+					"type": "nil",
+					"w":    0
 				};
 			case tblwidth_Pct:
 				return {
-					type: "pct",
-					w:    oMeasurement.W
+					"type": "pct",
+					"w":    oMeasurement.W
 				};
 		}
 
@@ -3163,12 +3178,12 @@
 
 		// table look
 		var oTableLook = oTable ? (oTable.TableLook ? {
-			firstColumn: oTable.TableLook.m_bFirst_Col,
-			firstRow:    oTable.TableLook.m_bFirst_Row,
-			lastColumn:  oTable.TableLook.m_bLast_Col,
-			lastRow:     oTable.TableLook.m_bLast_Row,
-			noHBand:     !oTable.TableLook.m_bBand_Hor,
-			noVBand:     !oTable.TableLook.m_bBand_Ver
+			"firstColumn": oTable.TableLook.m_bFirst_Col,
+			"firstRow":    oTable.TableLook.m_bFirst_Row,
+			"lastColumn":  oTable.TableLook.m_bLast_Col,
+			"lastRow":     oTable.TableLook.m_bLast_Row,
+			"noHBand":     !oTable.TableLook.m_bBand_Hor,
+			"noVBand":     !oTable.TableLook.m_bBand_Ver
 		} : undefined) : undefined;
 		
 		// anchorH
@@ -3260,60 +3275,60 @@
 
 		// tablePosPr
 		var oTblPosPr = oTable ? (oTable.PositionH && oTable.PositionV ? {
-			horzAnchor:     sHorAnchor,
-			vertAnchor:     sVerAnchor,
-			tblpXSpec:      sHorAlign,
-			tblpYSpec:      sVerAlign,
-			tblpX:          private_MM2Twips(oTable.PositionH.Value),
-			tblpY:          private_MM2Twips(oTable.PositionV.Value),
-			bottomFromText: private_MM2Twips(oTable.Distance.B),
-			leftFromText:   private_MM2Twips(oTable.Distance.L),
-			rightFromText:  private_MM2Twips(oTable.Distance.R),
-			topFromText:    private_MM2Twips(oTable.Distance.T)
+			"horzAnchor":     sHorAnchor,
+			"vertAnchor":     sVerAnchor,
+			"tblpXSpec":      sHorAlign,
+			"tblpYSpec":      sVerAlign,
+			"tblpX":          private_MM2Twips(oTable.PositionH.Value),
+			"tblpY":          private_MM2Twips(oTable.PositionV.Value),
+			"bottomFromText": private_MM2Twips(oTable.Distance.B),
+			"leftFromText":   private_MM2Twips(oTable.Distance.L),
+			"rightFromText":  private_MM2Twips(oTable.Distance.R),
+			"topFromText":    private_MM2Twips(oTable.Distance.T)
 
 		} : undefined) : undefined;
 
-		var oStyles = private_GetStyles();
+		var oStyles = oTable.TableStyle != null ? private_GetStyles() : null;
 		// table style
-		var oTableStyle = oTable ? oStyles.Get(oTable.TableStyle) : undefined;
+		var oTableStyle = oStyles && oTable.TableStyle != null ? oStyles.Get(oTable.TableStyle) : undefined;
 
 		return {
-			jc:         sJc,
-			shd:        this.SerShd(oPr.Shd),
+			"jc":         sJc,
+			"shd":        this.SerShd(oPr.Shd),
 
-			tblBorders: {
-				bottom:  this.SerBorder(oPr.TableBorders.Bottom),
-				end:     this.SerBorder(oPr.TableBorders.Right),
-				insideH: this.SerBorder(oPr.TableBorders.InsideH),
-				insideV: this.SerBorder(oPr.TableBorders.InsideV),
-				start:   this.SerBorder(oPr.TableBorders.Left),
-				top:     this.SerBorder(oPr.TableBorders.Top)
+			"tblBorders": {
+				"bottom":  this.SerBorder(oPr.TableBorders.Bottom),
+				"end":     this.SerBorder(oPr.TableBorders.Right),
+				"insideH": this.SerBorder(oPr.TableBorders.InsideH),
+				"insideV": this.SerBorder(oPr.TableBorders.InsideV),
+				"start":   this.SerBorder(oPr.TableBorders.Left),
+				"top":     this.SerBorder(oPr.TableBorders.Top)
 			},
-			tblCaption: oPr.TableCaption,
+			"tblCaption": oPr.TableCaption,
 
-			tblCellMar: oPr.TableCellMar ? {
-				bottom: this.SerTableMeasurement(oPr.TableCellMar.Bottom),
-				left:   this.SerTableMeasurement(oPr.TableCellMar.Left),
-				right:  this.SerTableMeasurement(oPr.TableCellMar.Right),
-				top:    this.SerTableMeasurement(oPr.TableCellMar.Top)
+			"tblCellMar": oPr.TableCellMar ? {
+				"bottom": this.SerTableMeasurement(oPr.TableCellMar.Bottom),
+				"left":   this.SerTableMeasurement(oPr.TableCellMar.Left),
+				"right":  this.SerTableMeasurement(oPr.TableCellMar.Right),
+				"top":    this.SerTableMeasurement(oPr.TableCellMar.Top)
 			} : oPr.TableCellMar,
 
-			tblCellSpacing:      oPr.TableCellMar.TableCellSpacing ? private_MM2Twips(oPr.TableCellMar.TableCellSpacing) : oPr.TableCellMar.TableCellSpacing,
-			tblDescription:      oPr.TableDescription,
-			tblInd:              oPr.TableInd ? private_MM2Twips(oPr.TableInd) : oPr.TableInd,
-			tblLayout:           sLayoutType,
-			tblLook:             oTableLook,
-			tblOverlap:          sOverlapType,
-			tblpPr:              oTblPosPr,
-			tblPrChange:         this.SerTablePr(oPr.PrChange),
-			tblStyle:            oTableStyle ? this.SerStyle(oTableStyle) : oTableStyle,
-			tblStyleColBandSize: oPr.TableStyleColBandSize,
-			tblStyleRowBandSize: oPr.TableStyleRowBandSize,
-			tblW:                this.SerTableMeasurement(oPr.TableW),
-			inline:              isInline,
+			"tblCellSpacing":      oPr.TableCellMar.TableCellSpacing ? private_MM2Twips(oPr.TableCellMar.TableCellSpacing) : oPr.TableCellMar.TableCellSpacing,
+			"tblDescription":      oPr.TableDescription,
+			"tblInd":              oPr.TableInd ? private_MM2Twips(oPr.TableInd) : oPr.TableInd,
+			"tblLayout":           sLayoutType,
+			"tblLook":             oTableLook,
+			"tblOverlap":          sOverlapType,
+			"tblpPr":              oTblPosPr,
+			"tblPrChange":         this.SerTablePr(oPr.PrChange),
+			"tblStyle":            oTableStyle ? this.SerStyle(oTableStyle) : oTableStyle,
+			"tblStyleColBandSize": oPr.TableStyleColBandSize,
+			"tblStyleRowBandSize": oPr.TableStyleRowBandSize,
+			"tblW":                this.SerTableMeasurement(oPr.TableW),
+			"inline":              isInline,
 
-			reviewInfo: this.SerReviewInfo(oPr.ReviewInfo),
-			type:       "tablePr"
+			"reviewInfo": this.SerReviewInfo(oPr.ReviewInfo),
+			"type":       "tablePr"
 		}
 	};
 	WriterToJSON.prototype.SerTable = function(oTable, aComplexFieldsToSave, oMapCommentsInfo)
@@ -3323,30 +3338,30 @@
 
 		var oLogicDocument = private_GetLogicDocument();
 		var oTableObj = {
-			bPresentation: oTable.bPresentation,
-			tblGrid: [],
-			tblPr:   this.SerTablePr(oTable.Pr, oTable),
-			content: [],
-			changes: [],
+			"bPresentation": oTable.bPresentation,
+			"tblGrid": [],
+			"tblPr":   this.SerTablePr(oTable.Pr, oTable),
+			"content": [],
+			"changes": [],
 			//tableMarkup: this.SerTableMarkup(oTable.Markup),
-			type:    "table"
+			"type":    "table"
 		}
 
 		for (var nGrid = 0; nGrid < oTable.TableGrid.length; nGrid++)
-			oTableObj.tblGrid.push({
-				w:    private_MM2Twips(oTable.TableGrid[nGrid]),
-				type: "gridCol"
+			oTableObj["tblGrid"].push({
+				"w":    private_MM2Twips(oTable.TableGrid[nGrid]),
+				"type": "gridCol"
 			});
 
 		for (var nRow = 0; nRow < oTable.Content.length; nRow++)
-			oTableObj.content.push(this.SerTableRow(oTable.Content[nRow], aComplexFieldsToSave, oMapCommentsInfo));
+			oTableObj["content"].push(this.SerTableRow(oTable.Content[nRow], aComplexFieldsToSave, oMapCommentsInfo));
 
 		// Revisions
 		var aChanges = oLogicDocument.TrackRevisionsManager ? oLogicDocument.TrackRevisionsManager.GetElementChanges(oTable.Id) : [];
 
 		for (var nChange = 0; nChange < aChanges.length; nChange++)
 		{
-			oTableObj.changes.push(this.SerRevisionChange(aChanges[nChange]));
+			oTableObj["changes"].push(this.SerRevisionChange(aChanges[nChange]));
 		}
 
 		return oTableObj;	
@@ -3357,19 +3372,19 @@
 			return oMarkup;
 
 		return {
-			cols:   oMarkup.Cols,
-			curCol: oMarkup.CurCol,
-			curRow: oMarkup.CurRow,
-			internal: {
-				cellIndex: oMarkup.Internal.CellIndex,
-				pageNum:   oMarkup.Internal.PageNum,
-				rowIndex:  oMarkup.Internal.RowIndex
+			"cols":   oMarkup.Cols,
+			"curCol": oMarkup.CurCol,
+			"curRow": oMarkup.CurRow,
+			"internal": {
+				"cellIndex": oMarkup.Internal.CellIndex,
+				"pageNum":   oMarkup.Internal.PageNum,
+				"rowIndex":  oMarkup.Internal.RowIndex
 			},
-			margins:    oMarkup.Margins,
-			rows:       oMarkup.Rows,
-			transformX: oMarkup.TransformX,
-			transformY: oMarkup.TransformY,
-			x:          oMarkup.X
+			"margins":    oMarkup.Margins,
+			"rows":       oMarkup.Rows,
+			"transformX": oMarkup.TransformX,
+			"transformY": oMarkup.TransformY,
+			"x":          oMarkup.X
 		}
 	};
 	WriterToJSON.prototype.SerTableCellPr = function(oPr)
@@ -3423,31 +3438,31 @@
 		}
 
 		return {
-			gridSpan: oPr.GridSpan,
-			hMerge:   sHMerge,
-			noWrap:   oPr.NoWrap,
-			shd:      this.SerShd(oPr.Shd),
+			"gridSpan": oPr.GridSpan,
+			"hMerge":   sHMerge,
+			"noWrap":   oPr.NoWrap,
+			"shd":      this.SerShd(oPr.Shd),
 
-			tcBorders: {
-				bottom:  this.SerBorder(oPr.TableCellBorders.Bottom),
-				end:     this.SerBorder(oPr.TableCellBorders.Right),
-				start:   this.SerBorder(oPr.TableCellBorders.Left),
-				top:     this.SerBorder(oPr.TableCellBorders.Top)
+			"tcBorders": {
+				"bottom":  this.SerBorder(oPr.TableCellBorders.Bottom),
+				"end":     this.SerBorder(oPr.TableCellBorders.Right),
+				"start":   this.SerBorder(oPr.TableCellBorders.Left),
+				"top":     this.SerBorder(oPr.TableCellBorders.Top)
 			},
 
-			tcMar: oPr.TableCellMar ? {
-				bottom: this.SerTableMeasurement(oPr.TableCellMar.Bottom),
-				left:   this.SerTableMeasurement(oPr.TableCellMar.Left),
-				right:  this.SerTableMeasurement(oPr.TableCellMar.Right),
-				top:    this.SerTableMeasurement(oPr.TableCellMar.Top),
+			"tcMar": oPr.TableCellMar ? {
+				"bottom": this.SerTableMeasurement(oPr.TableCellMar.Bottom),
+				"left":   this.SerTableMeasurement(oPr.TableCellMar.Left),
+				"right":  this.SerTableMeasurement(oPr.TableCellMar.Right),
+				"top":    this.SerTableMeasurement(oPr.TableCellMar.Top),
 			} : oPr.TableCellMar,
 
-			tcPrChange:    this.SerTableCellPr(oPr.PrChange),
-			tcW:           this.SerTableMeasurement(oPr.TableCellW),
-			textDirection: sTextDir,
-			vAlign:        sVAlign,
-			vMerge:        sVMerge,
-			type:          "tableCellPr"
+			"tcPrChange":    this.SerTableCellPr(oPr.PrChange),
+			"tcW":           this.SerTableMeasurement(oPr.TableCellW),
+			"textDirection": sTextDir,
+			"vAlign":        sVAlign,
+			"vMerge":        sVMerge,
+			"type":          "tableCellPr"
 		}
 	};
 	WriterToJSON.prototype.SerTableCell = function(oCell, aComplexFieldsToSave, oMapCommentsInfo)
@@ -3456,10 +3471,10 @@
 			return oCell;
 
 		return {
-			content: this.SerDocContent(oCell.Content, aComplexFieldsToSave, oMapCommentsInfo),
-			tcPr:    this.SerTableCellPr(oCell.Pr),
-			id:      oCell.Id,
-			type:    "tblCell"
+			"content": this.SerDocContent(oCell.Content, aComplexFieldsToSave, oMapCommentsInfo),
+			"tcPr":    this.SerTableCellPr(oCell.Pr),
+			"id":      oCell.Id,
+			"type":    "tblCell"
 		}
 	};
 	WriterToJSON.prototype.SerTableRow = function(oRow, aComplexFieldsToSave, oMapCommentsInfo)
@@ -3482,16 +3497,16 @@
 		}
 
 		var oRowObj = {
-			content: [],
-			reviewInfo: this.SerReviewInfo(oRow.ReviewInfo),
-			reviewType: sReviewType,
-			trPr:    this.SerTableRowPr(oRow.Pr),
-			type:    "tblRow"
+			"content": [],
+			"reviewInfo": this.SerReviewInfo(oRow.ReviewInfo),
+			"reviewType": sReviewType,
+			"trPr":    this.SerTableRowPr(oRow.Pr),
+			"type":    "tblRow"
 		}
 		
 		for (var nCell = 0; nCell < oRow.Content.length; nCell++)
 		{
-			oRowObj.content.push(this.SerTableCell(oRow.Content[nCell], aComplexFieldsToSave, oMapCommentsInfo));
+			oRowObj["content"].push(this.SerTableCell(oRow.Content[nCell], aComplexFieldsToSave, oMapCommentsInfo));
 		}
 
 		return oRowObj;
@@ -3527,37 +3542,37 @@
 			{
 				case linerule_AtLeast:
 					oRowHeight = {
-						val:   private_MM2Twips(oPr.Height.Value),
-						hRule: "atLeast"
+						"val":   private_MM2Twips(oPr.Height.Value),
+						"hRule": "atLeast"
 					};
 					break;
 				case linerule_Auto:
 					oRowHeight = {
-						val:   oPr.Height.Value,
-						hRule: "auto"
+						"val":   oPr.Height.Value,
+						"hRule": "auto"
 					};
 					break;
 				case linerule_Exact:
 					oRowHeight = {
-						val:   private_MM2Twips(oPr.Height.Value),
-						hRule: "exact"
+						"val":   private_MM2Twips(oPr.Height.Value),
+						"hRule": "exact"
 					};
 					break;
 			}
 		}
 
 		return {
-			cantSplit:      oPr.CantSplit,
-			gridAfter:      oPr.GridAfter,
-			gridBefore:     oPr.GridBefore,
-			jc:             sRowJc,
-			tblCellSpacing: oPr.TableCellSpacing ? private_MM2Twips(oPr.TableCellSpacing) : oPr.TableCellSpacing,
-			tblHeader:      oPr.TableHeader,
-			trHeight:       oRowHeight,
-			trPrChange:     this.SerTableRowPr(oPr.PrChange),
-			wAfter:         this.SerTableMeasurement(oPr.WAfter),
-			wBefore:        this.SerTableMeasurement(oPr.WBefore),
-			type:           "tableRowPr"
+			"cantSplit":      oPr.CantSplit,
+			"gridAfter":      oPr.GridAfter,
+			"gridBefore":     oPr.GridBefore,
+			"jc":             sRowJc,
+			"tblCellSpacing": oPr.TableCellSpacing ? private_MM2Twips(oPr.TableCellSpacing) : oPr.TableCellSpacing,
+			"tblHeader":      oPr.TableHeader,
+			"trHeight":       oRowHeight,
+			"trPrChange":     this.SerTableRowPr(oPr.PrChange),
+			"wAfter":         this.SerTableMeasurement(oPr.WAfter),
+			"wBefore":        this.SerTableMeasurement(oPr.WBefore),
+			"type":           "tableRowPr"
 		}
 	};
 	WriterToJSON.prototype.SerBorder = function(oBorder)
@@ -3570,37 +3585,37 @@
 			sBorderType = "single";
 
 		return {
-			color: oBorder.Color ? {
-				auto: oBorder.Color.Auto,
-				r:    oBorder.Color.r,
-				g:    oBorder.Color.g,
-				b:    oBorder.Color.b
+			"color": oBorder.Color ? {
+				"auto": oBorder.Color.Auto,
+				"r":    oBorder.Color.r,
+				"g":    oBorder.Color.g,
+				"b":    oBorder.Color.b
 			} : oBorder.Color,
 
-			lineRef: oBorder.LineRef ? {
-				idx:   oBorder.LineRef.idx,
-				color: this.SerColor(oBorder.LineRef.Color)
+			"lineRef": oBorder.LineRef ? {
+				"idx":   oBorder.LineRef.idx,
+				"color": this.SerColor(oBorder.LineRef.Color)
 			} : oBorder.LineRef,
 
-			sz:         private_MM2Twips(oBorder.Size),
-			space:      private_MM2Twips(oBorder.Space),
-			themeColor: this.SerFill(oBorder.Unifill),
-			value:      sBorderType
+			"sz":         private_MM2Twips(oBorder.Size),
+			"space":      private_MM2Twips(oBorder.Space),
+			"themeColor": this.SerFill(oBorder.Unifill),
+			"value":      sBorderType
 		}
 	};
 	WriterToJSON.prototype.SerDocContent = function(oDocContent, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo, bAllCompFields)
 	{
 		return {
-			bPresentation: oDocContent.bPresentation,
-			content:       this.SerContent(oDocContent.Content, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo, bAllCompFields),
-			type:          "docContent"
+			"bPresentation": oDocContent.bPresentation,
+			"content":       this.SerContent(oDocContent.Content, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo, bAllCompFields),
+			"type":          "docContent"
 		}
 	};
 	WriterToJSON.prototype.SerDrawingDocContent = function(oDocContent, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo, bAllCompFields)
 	{
 		return {
-			content: this.SerContent(oDocContent.Content, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo, bAllCompFields),
-			type:    "drawingDocContent"
+			"content": this.SerContent(oDocContent.Content, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo, bAllCompFields),
+			"type":    "drawingDocContent"
 		}
 	};
 	WriterToJSON.prototype.SerContent = function(aContent, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo, bAllCompFields)
@@ -3636,9 +3651,9 @@
 		if (!oParaPr)
 			return oParaPr;
 
-		var oStyles = private_GetStyles();
+		var oStyles = oParaPr.PStyle != null ? private_GetStyles() : null;
 		// paragraph style
-		var oParaStyle   = oParaPr.PStyle ? oStyles.Get(oParaPr.PStyle) : undefined;
+		var oParaStyle   = oParaPr.PStyle != null ? oStyles.Get(oParaPr.PStyle) : undefined;
 		
 		// horizontal align
 		var sJc = undefined;
@@ -3662,36 +3677,36 @@
 		}
 
 		return {
-			contextualSpacing: oParaPr.ContextualSpacing,
-			framePr:           this.SerFramePr(oParaPr.FramePr),
-			ind:               this.SerParaInd(oParaPr.Ind),
-			jc:                sJc,
-			keepLines:         oParaPr.KeepLines,
-			keepNext:          oParaPr.KeepNext,
-			numPr:             this.SerNumPr(oParaPr.NumPr),
-			outlineLvl:        oParaPr.OutlineLvl,
-			pageBreakBefore:   oParaPr.PageBreakBefore,
-			defaultRunPr:      this.SerTextPr(oParaPr.DefaultRunPr),
-			lvl:               oParaPr.Lvl,
-			defTabSz:          oParaPr.DefaultTab != undefined ? private_MM2EMU(oParaPr.DefaultTab) : oParaPr.DefaultTab,
+			"contextualSpacing": oParaPr.ContextualSpacing,
+			"framePr":           this.SerFramePr(oParaPr.FramePr),
+			"ind":               this.SerParaInd(oParaPr.Ind),
+			"jc":                sJc,
+			"keepLines":         oParaPr.KeepLines,
+			"keepNext":          oParaPr.KeepNext,
+			"numPr":             this.SerNumPr(oParaPr.NumPr),
+			"outlineLvl":        oParaPr.OutlineLvl,
+			"pageBreakBefore":   oParaPr.PageBreakBefore,
+			"defaultRunPr":      this.SerTextPr(oParaPr.DefaultRunPr),
+			"lvl":               oParaPr.Lvl,
+			"defTabSz":          oParaPr.DefaultTab != undefined ? private_MM2EMU(oParaPr.DefaultTab) : oParaPr.DefaultTab,
 
-			pBdr: oParaPr.Brd ? 
+			"pBdr": oParaPr.Brd ? 
 			{
-				between: this.SerBorder(oParaPr.Brd.Between),
-				bottom:  this.SerBorder(oParaPr.Brd.Bottom),
-				left:    this.SerBorder(oParaPr.Brd.Left),
-				right:   this.SerBorder(oParaPr.Brd.Right),
-				top:     this.SerBorder(oParaPr.Brd.Top)
+				"between": this.SerBorder(oParaPr.Brd.Between),
+				"bottom":  this.SerBorder(oParaPr.Brd.Bottom),
+				"left":    this.SerBorder(oParaPr.Brd.Left),
+				"right":   this.SerBorder(oParaPr.Brd.Right),
+				"top":     this.SerBorder(oParaPr.Brd.Top)
 			} : oParaPr.Brd,
 
-			pPrChange:    this.SerParaPr(oParaPr.PrChange),
-			pStyle:       this.SerStyle(oParaStyle),
-			shd:          this.SerShd(oParaPr.Shd),
-			spacing:      this.SerParaSpacing(oParaPr.Spacing),
-			tabs:         this.SerTabs(oParaPr.Tabs),
-			widowControl: oParaPr.WidowControl,
-			bullet:       this.SerBullet(oParaPr.Bullet),
-			type:         "paraPr"
+			"pPrChange":    this.SerParaPr(oParaPr.PrChange),
+			"pStyle":       this.SerStyle(oParaStyle),
+			"shd":          this.SerShd(oParaPr.Shd),
+			"spacing":      this.SerParaSpacing(oParaPr.Spacing),
+			"tabs":         this.SerTabs(oParaPr.Tabs),
+			"widowControl": oParaPr.WidowControl,
+			"bullet":       this.SerBullet(oParaPr.Bullet),
+			"type":         "paraPr"
 		}
 	};
 	WriterToJSON.prototype.SerFramePr = function(oFramePr)
@@ -3822,20 +3837,20 @@
 		}
 
 		return {
-			dropCap: sDropCapType,
-			h:       typeof(oFramePr.H) === "number" ? private_MM2Twips(oFramePr.H) : oFramePr.H,
-			hAnchor: sHAnchor,
-			hRule:   sLineRule,
-			hSpace:  typeof(oFramePr.HSpace) === "number" ? private_MM2Twips(oFramePr.HSpace) : oFramePr.HSpace,
-			lines:   oFramePr.Lines,
-			vAnchor: sVAnchor,
-			vSpace:  typeof(oFramePr.VSpace) === "number" ? private_MM2Twips(oFramePr.VSpace) : oFramePr.VSpace,
-			w:       typeof(oFramePr.W) === "number" ? private_MM2Twips(oFramePr.W) : oFramePr.W,
-			wrap:    sWrapType,
-			x:       typeof(oFramePr.X) === "number" ? private_MM2Twips(oFramePr.X) : oFramePr.X,
-			xAlign:  sXAlign,
-			y:       typeof(oFramePr.Y) === "number" ? private_MM2Twips(oFramePr.Y) : oFramePr.Y,
-			yAlign:  sYAlign
+			"dropCap": sDropCapType,
+			"h":       typeof(oFramePr.H) === "number" ? private_MM2Twips(oFramePr.H) : oFramePr.H,
+			"hAnchor": sHAnchor,
+			"hRule":   sLineRule,
+			"hSpace":  typeof(oFramePr.HSpace) === "number" ? private_MM2Twips(oFramePr.HSpace) : oFramePr.HSpace,
+			"lines":   oFramePr.Lines,
+			"vAnchor": sVAnchor,
+			"vSpace":  typeof(oFramePr.VSpace) === "number" ? private_MM2Twips(oFramePr.VSpace) : oFramePr.VSpace,
+			"w":       typeof(oFramePr.W) === "number" ? private_MM2Twips(oFramePr.W) : oFramePr.W,
+			"wrap":    sWrapType,
+			"x":       typeof(oFramePr.X) === "number" ? private_MM2Twips(oFramePr.X) : oFramePr.X,
+			"xAlign":  sXAlign,
+			"y":       typeof(oFramePr.Y) === "number" ? private_MM2Twips(oFramePr.Y) : oFramePr.Y,
+			"yAlign":  sYAlign
 		}
 	};
 	WriterToJSON.prototype.SerParaInd = function(oParaInd)
@@ -3844,9 +3859,9 @@
 			return oParaInd;
 		
 		return {
-			left:      oParaInd.Left != undefined ? private_MM2Twips(oParaInd.Left)      : oParaInd.Left,
-			right:     oParaInd.Right != undefined ? private_MM2Twips(oParaInd.Right)     : oParaInd.Right,
-			firstLine: oParaInd.FirstLine != undefined ? private_MM2Twips(oParaInd.FirstLine) : oParaInd.FirstLine
+			"left":      oParaInd.Left != undefined ? private_MM2Twips(oParaInd.Left)      : oParaInd.Left,
+			"right":     oParaInd.Right != undefined ? private_MM2Twips(oParaInd.Right)     : oParaInd.Right,
+			"firstLine": oParaInd.FirstLine != undefined ? private_MM2Twips(oParaInd.FirstLine) : oParaInd.FirstLine
 		}
 	};
 	WriterToJSON.prototype.SerNumPr = function(oNumPr)
@@ -3855,8 +3870,8 @@
 			return oNumPr;
 
 		return {
-			ilvl:  oNumPr.Lvl,
-			numId: oNumPr.NumId
+			"ilvl":  oNumPr.Lvl,
+			"numId": oNumPr.NumId
 		}
 	};
 	WriterToJSON.prototype.SerParaSpacing = function(oParaSpacing)
@@ -3866,31 +3881,31 @@
 		
 		// spacing
 		var oSpacing = {
-			before:            oParaSpacing.Before ? private_MM2Twips(oParaSpacing.Before) : oParaSpacing.Before,
-			beforePct:         oParaSpacing.BeforePct,
-			beforeAutoSpacing: oParaSpacing.BeforeAutoSpacing !== undefined ? (oParaSpacing.BeforeAutoSpacing === true ? "on" : "off") : oParaSpacing.BeforeAutoSpacing,
-			after:             oParaSpacing.After ? private_MM2Twips(oParaSpacing.After) : oParaSpacing.After,
-			afterPct:          oParaSpacing.AfterPct,
-			afterAutoSpacing:  oParaSpacing.AfterAutoSpacing !== undefined ? (oParaSpacing.AfterAutoSpacing === true ? "on" : "off") : oParaSpacing.AfterAutoSpacing
+			"before":            oParaSpacing.Before ? private_MM2Twips(oParaSpacing.Before) : oParaSpacing.Before,
+			"beforePct":         oParaSpacing.BeforePct,
+			"beforeAutoSpacing": oParaSpacing.BeforeAutoSpacing !== undefined ? (oParaSpacing.BeforeAutoSpacing === true ? "on" : "off") : oParaSpacing.BeforeAutoSpacing,
+			"after":             oParaSpacing.After ? private_MM2Twips(oParaSpacing.After) : oParaSpacing.After,
+			"afterPct":          oParaSpacing.AfterPct,
+			"afterAutoSpacing":  oParaSpacing.AfterAutoSpacing !== undefined ? (oParaSpacing.AfterAutoSpacing === true ? "on" : "off") : oParaSpacing.AfterAutoSpacing
 		};
 
 		switch (oParaSpacing.LineRule)
 		{
 			case linerule_AtLeast:
-				oSpacing.lineRule = "atLeast";
-				oSpacing.line     = private_MM2Twips(oParaSpacing.Line)
+				oSpacing["lineRule"] = "atLeast";
+				oSpacing["line"]     = private_MM2Twips(oParaSpacing.Line)
 				break;
 			case linerule_Auto:
-				oSpacing.lineRule = "auto";
-				oSpacing.line     = private_MM2Twips(oParaSpacing.Line)
+				oSpacing["lineRule"] = "auto";
+				oSpacing["line"]     = private_MM2Twips(oParaSpacing.Line)
 				break;
 			case linerule_Exact:
-				oSpacing.lineRule = "exact";
-				oSpacing.line     = private_MM2Twips(oParaSpacing.Line)
+				oSpacing["lineRule"] = "exact";
+				oSpacing["line"]     = private_MM2Twips(oParaSpacing.Line)
 				break;
 			default:
-				oSpacing.lineRule = undefined;
-				oSpacing.line     = undefined;
+				oSpacing["lineRule"] = undefined;
+				oSpacing["line"]     = undefined;
 				break;
 		}
 
@@ -3908,18 +3923,18 @@
 			oMapBookmarksInfo = this.GetMapBookmarksInfo(oSdt.Content.Content, oMapBookmarksInfo);
 
 		return {
-			sdtPr: this.SerSdtPr(oSdt.Pr),
-			sdtContent: this.SerDocContent(oSdt.Content, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo),
-			type: "blockLvlSdt"
+			"sdtPr": this.SerSdtPr(oSdt.Pr),
+			"sdtContent": this.SerDocContent(oSdt.Content, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo),
+			"type": "blockLvlSdt"
 		}
 	};
 	WriterToJSON.prototype.SerInlineLvlSdt = function(oSdt, aComplexFieldsToSave)
 	{
 		var oInlineSdt = 
 		{
-			sdtPr: this.SerSdtPr(oSdt.Pr),
-			content: [],
-			type: "inlineLvlSdt"
+			"sdtPr": this.SerSdtPr(oSdt.Pr),
+			"content": [],
+			"type": "inlineLvlSdt"
 		}
 
 		var TempElm = null;
@@ -3928,11 +3943,11 @@
 			TempElm = oSdt.Content[nElm];
 
 			if (TempElm instanceof AscCommonWord.ParaRun)
-				oInlineSdt.content.push(this.SerParaRun(TempElm, aComplexFieldsToSave));
+				oInlineSdt["content"].push(this.SerParaRun(TempElm, aComplexFieldsToSave));
 			else if (TempElm instanceof AscCommonWord.ParaHyperlink)
-				oInlineSdt.content.push(this.SerHyperlink(TempElm, aComplexFieldsToSave));
+				oInlineSdt["content"].push(this.SerHyperlink(TempElm, aComplexFieldsToSave));
 			else if (TempElm instanceof AscCommonWord.CInlineLevelSdt)
-				oInlineSdt.content.push(this.SerInlineLvlSdt(TempElm, aComplexFieldsToSave));
+				oInlineSdt["content"].push(this.SerInlineLvlSdt(TempElm, aComplexFieldsToSave));
 		}
 
 		return oInlineSdt;
@@ -3940,12 +3955,12 @@
 	WriterToJSON.prototype.SerParagraph = function(oPara, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo)
 	{
 		var oParaObject = {
-			bFromDocument: oPara.bFromDocument,
-			pPr:           this.SerParaPr(oPara.Pr),
-			rPr:           this.SerTextPr(oPara.TextPr.Value),
-			content:       [],
-			changes:       [],
-			type:          "paragraph"
+			"bFromDocument": oPara.bFromDocument,
+			"pPr":           this.SerParaPr(oPara.Pr),
+			"rPr":           this.SerTextPr(oPara.TextPr.Value),
+			"content":       [],
+			"changes":       [],
+			"type":          "paragraph"
 		};
 		
 		if (!oMapCommentsInfo)
@@ -3957,7 +3972,7 @@
 		if (!aComplexFieldsToSave)
 			aComplexFieldsToSave = this.GetComplexFieldsToSave([oPara]);
 
-		oParaObject.pPr.sectPr = this.SerSectionPr(oPara.SectPr);
+		oParaObject["pPr"]["sectPr"] = this.SerSectionPr(oPara.SectPr);
 
 		var oTempElm    = null;
 		var oTempResult = null;
@@ -3966,7 +3981,7 @@
 		var oNumPr           = null;
 		var oGlobalNumbering = null;
 		var oParaParent      = oPara.GetParent();
-		var oLogicDocument   = private_GetLogicDocument();
+		var oLogicDocument   = editor ? private_GetLogicDocument() : null;
 
 		if (!(oParaParent instanceof AscFormat.CDrawingDocContent) && oLogicDocument instanceof AscCommonWord.CDocument)
 		{
@@ -3979,7 +3994,7 @@
 			oNum = oGlobalNumbering.GetNum(oNumPr.NumId);
 
 		if (oNum)
-			oParaObject.numbering = this.SerNumbering(oNum);
+			oParaObject["numbering"] = this.SerNumbering(oNum);
 
 		for (var nElm = 0; nElm < oPara.Content.length; nElm++)
 		{
@@ -3989,46 +4004,49 @@
 			{
 				var oRunObject = this.SerParaRun(oTempElm, aComplexFieldsToSave);
 				//if (oRunObject.content.length !== 0)
-				oParaObject.content.push(oRunObject);
+				oParaObject["content"].push(oRunObject);
 			}
 			else if (oTempElm instanceof AscCommonWord.ParaMath)
-				oParaObject.content.push(this.SerParaMath(oTempElm));
+				oParaObject["content"].push(this.SerParaMath(oTempElm));
 			else if (oTempElm instanceof AscCommonWord.ParaHyperlink)
-				oParaObject.content.push(this.SerHyperlink(oTempElm));
+				oParaObject["content"].push(this.SerHyperlink(oTempElm));
 			else if (oTempElm instanceof AscCommon.ParaComment)
 			{
 				oTempResult = this.SerParaComment(oTempElm, oMapCommentsInfo);
 				if (oTempResult)
-					oParaObject.content.push(oTempResult);
+					oParaObject["content"].push(oTempResult);
 			}
 			else if (AscCommonWord.CParagraphBookmark && oTempElm instanceof AscCommonWord.CParagraphBookmark)
 			{
 				oTempResult = this.SerParaBookmark(oTempElm, oMapBookmarksInfo);
 				if (oTempResult)
-					oParaObject.content.push(oTempResult);
+					oParaObject["content"].push(oTempResult);
 			}
 			else if (oTempElm instanceof AscCommonWord.CInlineLevelSdt)
 			{
 				var oSdt = this.SerInlineLvlSdt(oTempElm, aComplexFieldsToSave);
 				if (oSdt)
-					oParaObject.content.push(oSdt);
+					oParaObject["content"].push(oSdt);
 			}
 			else if (oTempElm instanceof AscCommon.CParaRevisionMove)
 			{
-				oParaObject.content.push(this.SerRevisionMove(oTempElm));
+				oParaObject["content"].push(this.SerRevisionMove(oTempElm));
 			}
 			else if (oTempElm instanceof AscCommonWord.CPresentationField && oTempElm.FieldType && oTempElm.Guid)
 			{
-				oParaObject.content.push(this.SerPresField(oTempElm));
+				oParaObject["content"].push(this.SerPresField(oTempElm));
 			}
 		}
 
-		// Revisions
-		var aChanges = oLogicDocument.TrackRevisionsManager ? oLogicDocument.TrackRevisionsManager.GetElementChanges(oPara.Id) : [];
-
-		for (var nChange = 0; nChange < aChanges.length; nChange++)
+		// Revisions changes
+		if (oLogicDocument)
 		{
-			oParaObject.changes.push(this.SerRevisionChange(aChanges[nChange]));
+			var aChanges = oLogicDocument.TrackRevisionsManager ? oLogicDocument.TrackRevisionsManager.GetElementChanges(oPara.Id) : [];
+
+			for (var nChange = 0; nChange < aChanges.length; nChange++)
+			{
+				oParaObject["changes"].push(this.SerRevisionChange(aChanges[nChange]));
+			}
 		}
 
 		return oParaObject;
@@ -4037,8 +4055,8 @@
 	{
 		var oPresFieldObj = this.SerParaRun(oPresField);
 
-		oPresFieldObj.type = "presField";
-		oPresFieldObj.fldType = oPresField.FieldType;
+		oPresFieldObj["type"] = "presField";
+		oPresFieldObj["fldType"] = oPresField.FieldType;
 
 		return oPresFieldObj;
 	};
@@ -4049,14 +4067,14 @@
 		var oMapBookmarksInfo    = this.GetMapBookmarksInfo(oFootEndnote.Content, []);
 
 		var oFootEndnoteObj = {
-			content:          [],
-			customMarkFollow: oFootEndnote.customMarkFollow,
-			hint:             oFootEndnote.Hint,
-			id:               oFootEndnote.Id,
-			number:           oFootEndnote.Number,
-			columnsCount:     oFootEndnote.ColumnsCount,
-			sectPr:           this.SerSectionPr(oFootEndnote.SectPr),
-			type:             oFootEndnote.parent instanceof CFootnotesController ? "footnote" : "endnote"
+			"content":          [],
+			"customMarkFollow": oFootEndnote.customMarkFollow,
+			"hint":             oFootEndnote.Hint,
+			"id":               oFootEndnote.Id,
+			"number":           oFootEndnote.Number,
+			"columnsCount":     oFootEndnote.ColumnsCount,
+			"sectPr":           this.SerSectionPr(oFootEndnote.SectPr),
+			"type":             oFootEndnote.parent instanceof CFootnotesController ? "footnote" : "endnote"
 		};
 
 		var TempElm = null;
@@ -4065,11 +4083,11 @@
 			TempElm = oFootEndnote.Content[nElm];
 
 			if (TempElm instanceof AscCommonWord.Paragraph)
-				oFootEndnoteObj.content.push(this.SerParagraph(TempElm, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo));
+				oFootEndnoteObj["content"].push(this.SerParagraph(TempElm, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo));
 			else if (TempElm instanceof AscCommonWord.CTable)
-				oFootEndnoteObj.content.push(this.SerTable(TempElm, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo));
+				oFootEndnoteObj["content"].push(this.SerTable(TempElm, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo));
 			else if (TempElm instanceof AscCommonWord.CBlockLevelSdt)
-				oFootEndnoteObj.content.push(this.SerBlockLvlSdt(TempElm, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo));
+				oFootEndnoteObj["content"].push(this.SerBlockLvlSdt(TempElm, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo));
 		}
 
 		return oFootEndnoteObj;
@@ -4080,12 +4098,12 @@
 			return oMove;
 
 		return {
-			start:      oMove.Start,
-			id:         oMove.Id,
-			from:       oMove.From,
-			name:       oMove.Name,
-			reviewInfo: this.SerReviewInfo(oMove.ReviewInfo),
-			type:       "revisionMove"
+			"start":      oMove.Start,
+			"id":         oMove.Id,
+			"from":       oMove.From,
+			"name":       oMove.Name,
+			"reviewInfo": this.SerReviewInfo(oMove.ReviewInfo),
+			"type":       "revisionMove"
 		}
 	};
 	WriterToJSON.prototype.SerRevisionChange = function(oChange)
@@ -4161,9 +4179,9 @@
 		if (oChange.StartPos instanceof CParagraphContentPos)
 		{
 			startPos = {
-				data:         oChange.StartPos.Data,
-				death:        oChange.StartPos.Depth,
-				bPlaceholder: oChange.StartPos.bPlaceholder
+				"data":         oChange.StartPos.Data,
+				"death":        oChange.StartPos.Depth,
+				"bPlaceholder": oChange.StartPos.bPlaceholder
 			}
 		}
 		else
@@ -4173,33 +4191,33 @@
 		if (oChange.EndPos instanceof CParagraphContentPos)
 		{
 			endPos = {
-				data:         oChange.EndPos.Data,
-				death:        oChange.EndPos.Depth,
-				bPlaceholder: oChange.EndPos.bPlaceholder
+				"data":         oChange.EndPos.Data,
+				"death":        oChange.EndPos.Depth,
+				"bPlaceholder": oChange.EndPos.bPlaceholder
 			}
 		}
 		else
 			endPos = oChange.EndPos;
 
 		return {
-			date:      oChange.DateTime,
-			start:     startPos,
-			end:       endPos,
-			userId:    oChange.UserId,
-			autor:     oChange.UserName,
-			value:     changeValue,
-			moveType:  sMoveType,
-			type:      sChangeType
+			"date":      oChange.DateTime,
+			"start":     startPos,
+			"end":       endPos,
+			"userId":    oChange.UserId,
+			"author":     oChange.UserName,
+			"value":     changeValue,
+			"moveType":  sMoveType,
+			"type":      sChangeType
 		}
 	};
 	WriterToJSON.prototype.SerDocument = function(oDocument)
 	{
 		var oDocObject = {
-			content: [],
-			hdrFtr:  [],
-			sectPr:  this.SerSectionPr(oDocument.SectPr),
-			changes: [],
-			type:    "document"
+			"content": [],
+			"hdrFtr":  [],
+			"sectPr":  this.SerSectionPr(oDocument.SectPr),
+			"changes": [],
+			"type":    "document"
 		};
 
 		var aComplexFieldsToSave = this.GetComplexFieldsToSave(oDocument.Content);
@@ -4231,22 +4249,22 @@
 			aExtraClrSchemeLst.push(this.SerExtraClrScheme(oTheme.extraClrSchemeLst[nElm]));
 
 		var oThemeObj = {
-			custClrLst: this.SerColorMapOvr(oTheme.clrMap), // ??? maybe not supported
-			name:       oTheme.name,
-			objectDefaults: {
-				lnDef: this.SerDefSpDefinition(oTheme.lnDef), // AscFormat.DefaultShapeDefinition
-				spDef: this.SerDefSpDefinition(oTheme.spDef),
-				txDef: this.SerDefSpDefinition(oTheme.txDef)
+			"custClrLst": this.SerColorMapOvr(oTheme.clrMap), // ??? maybe not supported
+			"name":       oTheme.name,
+			"objectDefaults": {
+				"lnDef": this.SerDefSpDefinition(oTheme.lnDef), // AscFormat.DefaultShapeDefinition
+				"spDef": this.SerDefSpDefinition(oTheme.spDef),
+				"txDef": this.SerDefSpDefinition(oTheme.txDef)
 			},
-			themeElements: {
-				clrScheme:  this.SerClrScheme(oTheme.themeElements.clrScheme),
-				fmtScheme:  this.SerFmtScheme(oTheme.themeElements.fmtScheme),
-				fontScheme: this.SerFontScheme(oTheme.themeElements.fontScheme)
+			"themeElements": {
+				"clrScheme":  this.SerClrScheme(oTheme.themeElements.clrScheme),
+				"fmtScheme":  this.SerFmtScheme(oTheme.themeElements.fmtScheme),
+				"fontScheme": this.SerFontScheme(oTheme.themeElements.fontScheme)
 			},
 
-			extraClrSchemeLst: aExtraClrSchemeLst, // AscFormat.ExtraClrScheme:
-			isThemeOverride:   oTheme.isThemeOverride,
-			id:                oTheme.Id
+			"extraClrSchemeLst": aExtraClrSchemeLst, // AscFormat.ExtraClrScheme:
+			"isThemeOverride":   oTheme.isThemeOverride,
+			"id":                oTheme.Id
 		}
 
 		// мамим, чтобы не записывать несколько раз
@@ -4260,20 +4278,20 @@
 			return oClrScheme;
 
 		return {
-			name:     oClrScheme.name,
-			dk1:      this.SerColor(oClrScheme.colors[0]),
-			lt1:      this.SerColor(oClrScheme.colors[1]),
-			dk2:      this.SerColor(oClrScheme.colors[2]),
-			lt2:      this.SerColor(oClrScheme.colors[3]),
-			accent1:  this.SerColor(oClrScheme.colors[4]),
-			accent2:  this.SerColor(oClrScheme.colors[5]),
-			accent3:  this.SerColor(oClrScheme.colors[8]),
-			accent4:  this.SerColor(oClrScheme.colors[9]),
-			accent5:  this.SerColor(oClrScheme.colors[10]),
-			accent6:  this.SerColor(oClrScheme.colors[11]),
-			hlink:    this.SerColor(oClrScheme.colors[12]),
-			folHlink: this.SerColor(oClrScheme.colors[13]),
-			type:     "clrScheme"
+			"name":     oClrScheme.name,
+			"dk1":      this.SerColor(oClrScheme.colors[0]),
+			"lt1":      this.SerColor(oClrScheme.colors[1]),
+			"dk2":      this.SerColor(oClrScheme.colors[2]),
+			"lt2":      this.SerColor(oClrScheme.colors[3]),
+			"accent1":  this.SerColor(oClrScheme.colors[4]),
+			"accent2":  this.SerColor(oClrScheme.colors[5]),
+			"accent3":  this.SerColor(oClrScheme.colors[8]),
+			"accent4":  this.SerColor(oClrScheme.colors[9]),
+			"accent5":  this.SerColor(oClrScheme.colors[10]),
+			"accent6":  this.SerColor(oClrScheme.colors[11]),
+			"hlink":    this.SerColor(oClrScheme.colors[12]),
+			"folHlink": this.SerColor(oClrScheme.colors[13]),
+			"type":     "clrScheme"
 		}
 	};
 	WriterToJSON.prototype.SerFmtScheme = function(oFmtScheme)
@@ -4296,11 +4314,11 @@
 			aLnStyleLst.push(this.SerLn(oFmtScheme.lnStyleLst[nLn]));
 
 		return {
-			name:           oFmtScheme.name,
-			bgFillStyleLst: aBgFillStyleLst,
-			fillStyleLst:   aFillStyleLst,
-			lnStyleLst:     aLnStyleLst,
-			type:           "fmtScheme"
+			"name":           oFmtScheme.name,
+			"bgFillStyleLst": aBgFillStyleLst,
+			"fillStyleLst":   aFillStyleLst,
+			"lnStyleLst":     aLnStyleLst,
+			"type":           "fmtScheme"
 		}
 	};
 	WriterToJSON.prototype.SerFontScheme = function(oFontScheme)
@@ -4309,10 +4327,10 @@
 			return oFontScheme;
 
 		return {
-			name:      oFontScheme.name,
-			majorFont: this.SerFontCollection(oFontScheme.majorFont),
-			minorFont: this.SerFontCollection(oFontScheme.minorFont),
-			type:      "fontScheme"
+			"name":      oFontScheme.name,
+			"majorFont": this.SerFontCollection(oFontScheme.majorFont),
+			"minorFont": this.SerFontCollection(oFontScheme.minorFont),
+			"type":      "fontScheme"
 		}
 	};
 	WriterToJSON.prototype.SerFontCollection = function(oFontCollection)
@@ -4321,9 +4339,9 @@
 			return oFontCollection;
 
 		return {
-			cs:    oFontCollection.cs,
-			ea:    oFontCollection.ea,
-			latin: oFontCollection.latin
+			"cs":    oFontCollection.cs,
+			"ea":    oFontCollection.ea,
+			"latin": oFontCollection.latin
 		}
 	};
 	WriterToJSON.prototype.SerExtraClrScheme = function(oExtraClrScheme)
@@ -4332,8 +4350,8 @@
 			return oExtraClrScheme;
 
 		return {
-			clrMap:    this.SerColorMapOvr(oExtraClrScheme.clrMap),
-			clrScheme: this.SerClrScheme(oExtraClrScheme.clrScheme)
+			"clrMap":    this.SerColorMapOvr(oExtraClrScheme.clrMap),
+			"clrScheme": this.SerClrScheme(oExtraClrScheme.clrScheme)
 		}
 	};
 	WriterToJSON.prototype.SerDefSpDefinition = function(oDefinition)
@@ -4342,74 +4360,55 @@
 			return oDefinition;
 
 		return {
-			bodyPr:   this.SerBodyPr(oDefinition.bodyPr),
-			lstStyle: this.SerLstStyle(oDefinition.lstStyle),
-			spPr:     this.SerSpPr(oDefinition.spPr),
-			style:    this.SerSpStyle(oDefinition.style)
+			"bodyPr":   this.SerBodyPr(oDefinition.bodyPr),
+			"lstStyle": this.SerLstStyle(oDefinition.lstStyle),
+			"spPr":     this.SerSpPr(oDefinition.spPr),
+			"style":    this.SerSpStyle(oDefinition.style)
 		}
 	};
 	ReaderFromJSON.prototype.ThemeFromJSON = function(oParsedTheme)
 	{
 		var oTheme = new AscFormat.CTheme();
-		for (var nElm = 0; nElm < oParsedTheme.extraClrSchemeLst.length; nElm++)
-			oTheme.addExtraClrSceme(this.ExtraClrSchemeFromJSON(oParsedTheme.extraClrSchemeLst[nElm]));
+		for (var nElm = 0; nElm < oParsedTheme["extraClrSchemeLst"].length; nElm++)
+			oTheme.addExtraClrSceme(this.ExtraClrSchemeFromJSON(oParsedTheme["extraClrSchemeLst"][nElm]));
 
-		oTheme.setName(oParsedTheme.name);
-		oParsedTheme.objectDefaults.lnDef && oTheme.setLnDef(this.DefSpDefinitionFromJSON(oParsedTheme.objectDefaults.lnDef));
-		oParsedTheme.objectDefaults.spDef && oTheme.setSpDef(this.DefSpDefinitionFromJSON(oParsedTheme.objectDefaults.spDef));
-		oParsedTheme.objectDefaults.txDef && oTheme.setTxDef(this.DefSpDefinitionFromJSON(oParsedTheme.objectDefaults.txDef));
-		oParsedTheme.themeElements.clrScheme && oTheme.setColorScheme(this.ClrSchemeFromJSON(oParsedTheme.themeElements.clrScheme));
-		oParsedTheme.themeElements.fmtScheme && oTheme.setFormatScheme(this.FmtSchemeFromJSON(oParsedTheme.themeElements.fmtScheme));
-		oParsedTheme.themeElements.fontScheme && oTheme.setFontScheme(this.FontSchemeFromJSON(oParsedTheme.themeElements.fontScheme));
-		oTheme.setIsThemeOverride(oParsedTheme.isThemeOverride);
+		oTheme.setName(oParsedTheme["name"]);
+		oParsedTheme["objectDefaults"]["lnDef"] && oTheme.setLnDef(this.DefSpDefinitionFromJSON(oParsedTheme["objectDefaults"]["lnDef"]));
+		oParsedTheme["objectDefaults"]["spDef"] && oTheme.setSpDef(this.DefSpDefinitionFromJSON(oParsedTheme["objectDefaults"]["spDef"]));
+		oParsedTheme["objectDefaults"]["txDef"] && oTheme.setTxDef(this.DefSpDefinitionFromJSON(oParsedTheme["objectDefaults"]["txDef"]));
+		oParsedTheme["themeElements"]["clrScheme"] && oTheme.setColorScheme(this.ClrSchemeFromJSON(oParsedTheme["themeElements"]["clrScheme"]));
+		oParsedTheme["themeElements"]["fmtScheme"] && oTheme.setFormatScheme(this.FmtSchemeFromJSON(oParsedTheme["themeElements"]["fmtScheme"]));
+		oParsedTheme["themeElements"]["fontScheme"] && oTheme.setFontScheme(this.FontSchemeFromJSON(oParsedTheme["themeElements"]["fontScheme"]));
+		oTheme.setIsThemeOverride(oParsedTheme["isThemeOverride"]);
 
-		this.themesMap[oParsedTheme.Id] = oTheme;
-
-		return oTheme;
-	};
-	ReaderFromJSON.prototype.ThemeFromJSON = function(oParsedTheme)
-	{
-		var oTheme = new AscFormat.CTheme();
-		for (var nElm = 0; nElm < oParsedTheme.extraClrSchemeLst.length; nElm++)
-			oTheme.addExtraClrSceme(this.ExtraClrSchemeFromJSON(oParsedTheme.extraClrSchemeLst[nElm]));
-
-		oTheme.setName(oParsedTheme.name);
-		oParsedTheme.objectDefaults.lnDef && oTheme.setLnDef(this.DefSpDefinitionFromJSON(oParsedTheme.objectDefaults.lnDef));
-		oParsedTheme.objectDefaults.spDef && oTheme.setSpDef(this.DefSpDefinitionFromJSON(oParsedTheme.objectDefaults.spDef));
-		oParsedTheme.objectDefaults.txDef && oTheme.setTxDef(this.DefSpDefinitionFromJSON(oParsedTheme.objectDefaults.txDef));
-		oParsedTheme.themeElements.clrScheme && oTheme.setColorScheme(this.ClrSchemeFromJSON(oParsedTheme.themeElements.clrScheme));
-		oParsedTheme.themeElements.fmtScheme && oTheme.setFormatScheme(this.FmtSchemeFromJSON(oParsedTheme.themeElements.fmtScheme));
-		oParsedTheme.themeElements.fontScheme && oTheme.setFontScheme(this.FontSchemeFromJSON(oParsedTheme.themeElements.fontScheme));
-		oTheme.setIsThemeOverride(oParsedTheme.isThemeOverride);
-
-		this.themesMap[oParsedTheme.Id] = oTheme;
+		this.themesMap[oParsedTheme["id"]] = oTheme;
 
 		return oTheme;
 	};
 	ReaderFromJSON.prototype.ExtraClrSchemeFromJSON = function(oParsedExtrClrScheme)
 	{
 		var oExtraClrScheme = new AscFormat.ExtraClrScheme();
-		oParsedExtrClrScheme.clrMap && oExtraClrScheme.setClrMap(this.ColorMapOvrFromJSON(oParsedExtrClrScheme.clrMap));
-		oParsedExtrClrScheme.clrScheme && oExtraClrScheme.setClrScheme(this.ClrSchemeFromJSON(oParsedExtrClrScheme.clrScheme));
+		oParsedExtrClrScheme["clrMap"] && oExtraClrScheme.setClrMap(this.ColorMapOvrFromJSON(oParsedExtrClrScheme["clrMap"]));
+		oParsedExtrClrScheme["clrScheme"] && oExtraClrScheme.setClrScheme(this.ClrSchemeFromJSON(oParsedExtrClrScheme["clrScheme"]));
 
 		return oExtraClrScheme;
 	};
 	ReaderFromJSON.prototype.ClrSchemeFromJSON = function(oParsedClrScheme)
 	{
 		var oClrScheme = new AscFormat.ClrScheme();
-		oClrScheme.setName(oParsedClrScheme.name);
-		oParsedClrScheme.dk1 && oClrScheme.addColor(0, this.ColorFromJSON(oParsedClrScheme.dk1));
-		oParsedClrScheme.lt1 && oClrScheme.addColor(1, this.ColorFromJSON(oParsedClrScheme.lt1));
-		oParsedClrScheme.dk2 && oClrScheme.addColor(2, this.ColorFromJSON(oParsedClrScheme.dk2));
-		oParsedClrScheme.lt2 && oClrScheme.addColor(3, this.ColorFromJSON(oParsedClrScheme.lt2));
-		oParsedClrScheme.accent1 && oClrScheme.addColor(4, this.ColorFromJSON(oParsedClrScheme.accent1));
-		oParsedClrScheme.accent2 && oClrScheme.addColor(5, this.ColorFromJSON(oParsedClrScheme.accent2));
-		oParsedClrScheme.accent3 && oClrScheme.addColor(8, this.ColorFromJSON(oParsedClrScheme.accent3));
-		oParsedClrScheme.accent4 && oClrScheme.addColor(9, this.ColorFromJSON(oParsedClrScheme.accent4));
-		oParsedClrScheme.accent5 && oClrScheme.addColor(10, this.ColorFromJSON(oParsedClrScheme.accent5));
-		oParsedClrScheme.accent6 && oClrScheme.addColor(11, this.ColorFromJSON(oParsedClrScheme.accent6));
-		oParsedClrScheme.hlink && oClrScheme.addColor(12, this.ColorFromJSON(oParsedClrScheme.hlink));
-		oParsedClrScheme.folHlink && oClrScheme.addColor(13, this.ColorFromJSON(oParsedClrScheme.folHlink));
+		oClrScheme.setName(oParsedClrScheme["name"]);
+		oParsedClrScheme["dk1"] && oClrScheme.addColor(0, this.ColorFromJSON(oParsedClrScheme["dk1"]));
+		oParsedClrScheme["lt1"] && oClrScheme.addColor(1, this.ColorFromJSON(oParsedClrScheme["lt1"]));
+		oParsedClrScheme["dk2"] && oClrScheme.addColor(2, this.ColorFromJSON(oParsedClrScheme["dk2"]));
+		oParsedClrScheme["lt2"] && oClrScheme.addColor(3, this.ColorFromJSON(oParsedClrScheme["lt2"]));
+		oParsedClrScheme["accent1"] && oClrScheme.addColor(4, this.ColorFromJSON(oParsedClrScheme["accent1"]));
+		oParsedClrScheme["accent2"] && oClrScheme.addColor(5, this.ColorFromJSON(oParsedClrScheme["accent2"]));
+		oParsedClrScheme["accent3"] && oClrScheme.addColor(8, this.ColorFromJSON(oParsedClrScheme["accent3"]));
+		oParsedClrScheme["accent4"] && oClrScheme.addColor(9, this.ColorFromJSON(oParsedClrScheme["accent4"]));
+		oParsedClrScheme["accent5"] && oClrScheme.addColor(10, this.ColorFromJSON(oParsedClrScheme["accent5"]));
+		oParsedClrScheme["accent6"] && oClrScheme.addColor(11, this.ColorFromJSON(oParsedClrScheme["accent6"]));
+		oParsedClrScheme["hlink"] && oClrScheme.addColor(12, this.ColorFromJSON(oParsedClrScheme["hlink"]));
+		oParsedClrScheme["folHlink"] && oClrScheme.addColor(13, this.ColorFromJSON(oParsedClrScheme["folHlink"]));
 
 		return oClrScheme;
 	};
@@ -4417,26 +4416,26 @@
 	{
 		var oFmtScheme = new AscFormat.FmtScheme();
 
-		for (var nBgFill = 0; nBgFill < oParsedFmtScheme.bgFillStyleLst.length; nBgFill++)
-			oFmtScheme.addBgFillToStyleLst(this.FillFromJSON(oParsedFmtScheme.bgFillStyleLst[nBgFill]));
+		for (var nBgFill = 0; nBgFill < oParsedFmtScheme["bgFillStyleLst"].length; nBgFill++)
+			oFmtScheme.addBgFillToStyleLst(this.FillFromJSON(oParsedFmtScheme["bgFillStyleLst"][nBgFill]));
 
-		for (var nFill = 0; nFill < oParsedFmtScheme.fillStyleLst.length; nFill++)
-			oFmtScheme.addFillToStyleLst(this.FillFromJSON(oParsedFmtScheme.fillStyleLst[nFill]));
+		for (var nFill = 0; nFill < oParsedFmtScheme["fillStyleLst"].length; nFill++)
+			oFmtScheme.addFillToStyleLst(this.FillFromJSON(oParsedFmtScheme["fillStyleLst"][nFill]));
 		
-		for (nFill = 0; nFill < oParsedFmtScheme.lnStyleLst.length; nFill++)
-			oFmtScheme.addLnToStyleLst(this.LnFromJSON(oParsedFmtScheme.lnStyleLst[nFill]));
+		for (nFill = 0; nFill < oParsedFmtScheme["lnStyleLst"].length; nFill++)
+			oFmtScheme.addLnToStyleLst(this.LnFromJSON(oParsedFmtScheme["lnStyleLst"][nFill]));
 
-		oParsedFmtScheme.name && oFmtScheme.setName(oParsedFmtScheme.name);
+		oParsedFmtScheme["name"] && oFmtScheme.setName(oParsedFmtScheme["name"]);
 
 		return oFmtScheme;
 	};
 	ReaderFromJSON.prototype.FontSchemeFromJSON = function(oParsedFntScheme)
 	{
 		var oFontScheme = new AscFormat.FontScheme();
-		this.FontCollectionFromJSON(oParsedFntScheme.majorFont, "major", oFontScheme);
-		this.FontCollectionFromJSON(oParsedFntScheme.minorFont, "minor", oFontScheme);
+		this.FontCollectionFromJSON(oParsedFntScheme["majorFont"], "major", oFontScheme);
+		this.FontCollectionFromJSON(oParsedFntScheme["minorFont"], "minor", oFontScheme);
 
-		oParsedFntScheme.name && oFontScheme.setName(oParsedFntScheme.name);
+		oParsedFntScheme["name"] && oFontScheme.setName(oParsedFntScheme["name"]);
 
 		return oFontScheme;
 	};
@@ -4444,24 +4443,24 @@
 	{
 		if (sType === "major")
 		{
-			oParentFntScheme.majorFont.setLatin(oParsedFntColl.latin);
-			oParentFntScheme.majorFont.setEA(oParsedFntColl.ea);
-			oParentFntScheme.majorFont.setCS(oParsedFntColl.cs);
+			oParentFntScheme.majorFont.setLatin(oParsedFntColl["latin"]);
+			oParentFntScheme.majorFont.setEA(oParsedFntColl["ea"]);
+			oParentFntScheme.majorFont.setCS(oParsedFntColl["cs"]);
 		}
 		if (sType === "minor")
 		{
-			oParentFntScheme.minorFont.setLatin(oParsedFntColl.latin);
-			oParentFntScheme.minorFont.setEA(oParsedFntColl.ea);
-			oParentFntScheme.minorFont.setCS(oParsedFntColl.cs);
+			oParentFntScheme.minorFont.setLatin(oParsedFntColl["latin"]);
+			oParentFntScheme.minorFont.setEA(oParsedFntColl["ea"]);
+			oParentFntScheme.minorFont.setCS(oParsedFntColl["cs"]);
 		}
 	};
 	ReaderFromJSON.prototype.DefSpDefinitionFromJSON = function(oParsedDefSpDef)
 	{
 		var oDefSpDefinition = new AscFormat.DefaultShapeDefinition();
-		oParsedDefSpDef.bodyPr   && oDefSpDefinition.setBodyPr(this.BodyPrFromJSON(oParsedDefSpDef.bodyPr));
-		oParsedDefSpDef.lstStyle && oDefSpDefinition.setLstStyle(this.LstStyleFromJSON(oParsedDefSpDef.lstStyle));
-		oParsedDefSpDef.spPr     && oDefSpDefinition.setSpPr(this.SpPrFromJSON(oParsedDefSpDef.spPr));
-		oParsedDefSpDef.style    && oDefSpDefinition.setStyle(this.SpStyleFromJSON(oParsedDefSpDef.style));
+		oParsedDefSpDef["bodyPr"]   && oDefSpDefinition.setBodyPr(this.BodyPrFromJSON(oParsedDefSpDef["bodyPr"]));
+		oParsedDefSpDef["lstStyle"] && oDefSpDefinition.setLstStyle(this.LstStyleFromJSON(oParsedDefSpDef["lstStyle"]));
+		oParsedDefSpDef["spPr"]     && oDefSpDefinition.setSpPr(this.SpPrFromJSON(oParsedDefSpDef["spPr"]));
+		oParsedDefSpDef["style"]    && oDefSpDefinition.setStyle(this.SpStyleFromJSON(oParsedDefSpDef["style"]));
 
 		return oDefSpDefinition;
 	};
@@ -4471,8 +4470,8 @@
 			return oHdr;
 
 		return {
-			content: this.SerDocContent(oHdr.Content, undefined, undefined, undefined, true),
-			type: "hdr"
+			"content": this.SerDocContent(oHdr.Content, undefined, undefined, undefined, true),
+			"type": "hdr"
 		}
 	};
 	WriterToJSON.prototype.SerFooter = function(oFtr)
@@ -4481,8 +4480,8 @@
 			return oFtr;
 
 		return {
-			content: this.SerDocContent(oFtr.Content, undefined, undefined, undefined, true),
-			type: "ftr"
+			"content": this.SerDocContent(oFtr.Content, undefined, undefined, undefined, true),
+			"type": "ftr"
 		}
 	};
 	WriterToJSON.prototype.SerSectionPr = function(oSectionPr)
@@ -4510,30 +4509,30 @@
 				break;
 		}
 		var oFooterReference = {
-			first:   oSectionPr.FooterFirst   ? this.SerFooter(oSectionPr.FooterFirst)   : oSectionPr.FooterFirst,
-			default: oSectionPr.FooterDefault ? this.SerFooter(oSectionPr.FooterDefault) : oSectionPr.FooterDefault,
-			even:    oSectionPr.FooterEven    ? this.SerFooter(oSectionPr.FooterEven)    : oSectionPr.FooterEven,
+			"first":   oSectionPr.FooterFirst   ? this.SerFooter(oSectionPr.FooterFirst)   : oSectionPr.FooterFirst,
+			"default": oSectionPr.FooterDefault ? this.SerFooter(oSectionPr.FooterDefault) : oSectionPr.FooterDefault,
+			"even":    oSectionPr.FooterEven    ? this.SerFooter(oSectionPr.FooterEven)    : oSectionPr.FooterEven,
 		};
 		var oHeaderReference = {
-			first:   oSectionPr.HeaderFirst   ? this.SerHeader(oSectionPr.HeaderFirst)   : oSectionPr.HeaderFirst,
-			default: oSectionPr.HeaderDefault ? this.SerHeader(oSectionPr.HeaderDefault) : oSectionPr.HeaderDefault,
-			even:    oSectionPr.HeaderEven    ? this.SerHeader(oSectionPr.HeaderEven)    : oSectionPr.HeaderEven,
+			"first":   oSectionPr.HeaderFirst   ? this.SerHeader(oSectionPr.HeaderFirst)   : oSectionPr.HeaderFirst,
+			"default": oSectionPr.HeaderDefault ? this.SerHeader(oSectionPr.HeaderDefault) : oSectionPr.HeaderDefault,
+			"even":    oSectionPr.HeaderEven    ? this.SerHeader(oSectionPr.HeaderEven)    : oSectionPr.HeaderEven,
 		}
 
 		return {
-			cols:            this.SerSectionColumns(oSectionPr.Columns),
-			endnotePr:       this.SerEndNotePr(oSectionPr.EndnotePr),
-			footerReference: oFooterReference,
-			footnotePr:      this.SerFootnotePr(oSectionPr.FootnotePr),
-			headerReference: oHeaderReference,
-			lnNumType:       this.SerLnNumType(oSectionPr.LnNumType),
-			pgBorders:       this.SerPageBorders(oSectionPr.Borders),
-			pgMar:           this.SerPageMargins(oSectionPr.PageMargins),
+			"cols":            this.SerSectionColumns(oSectionPr.Columns),
+			"endnotePr":       this.SerEndNotePr(oSectionPr.EndnotePr),
+			"footerReference": oFooterReference,
+			"footnotePr":      this.SerFootnotePr(oSectionPr.FootnotePr),
+			"headerReference": oHeaderReference,
+			"lnNumType":       this.SerLnNumType(oSectionPr.LnNumType),
+			"pgBorders":       this.SerPageBorders(oSectionPr.Borders),
+			"pgMar":           this.SerPageMargins(oSectionPr.PageMargins),
 			//pgNumType:       oSectionPr.PageNumType.Start,
-			pgSz:            this.SerPageSize(oSectionPr.PageSize),
-			rtlGutter:       oSectionPr.GutterRTL,
-			titlePg:         oSectionPr.TitlePage,
-			type:            sSectionType
+			"pgSz":            this.SerPageSize(oSectionPr.PageSize),
+			"rtlGutter":       oSectionPr.GutterRTL,
+			"titlePg":         oSectionPr.TitlePage,
+			"type":            sSectionType
 		}
 	};
 	WriterToJSON.prototype.SerSectionColumns = function(oSectColumns)
@@ -4546,11 +4545,11 @@
 			aCols.push(this.SerSectionCol(oSectColumns.Cols[nCol]));
 
 		return {
-			col:        aCols,
-			equalWidth: oSectColumns.EqualWidth,
-			num:        oSectColumns.Num,
-			sep:        oSectColumns.Sep,
-			space:      private_MM2Twips(oSectColumns.Space)
+			"col":        aCols,
+			"equalWidth": oSectColumns.EqualWidth,
+			"num":        oSectColumns.Num,
+			"sep":        oSectColumns.Sep,
+			"space":      private_MM2Twips(oSectColumns.Space)
 		}
 	};
 	WriterToJSON.prototype.SerSectionCol = function(oSectionCol)
@@ -4559,8 +4558,8 @@
 			return oSectionCol;
 
 		return {
-			space: private_MM2Twips(oSectionCol.Space),
-			w:     private_MM2Twips(oSectionCol.W)
+			"space": private_MM2Twips(oSectionCol.Space),
+			"w":     private_MM2Twips(oSectionCol.W)
 		}
 	};
 	WriterToJSON.prototype.SerEndNotePr = function(oEndNotePr)
@@ -4593,10 +4592,10 @@
 				break;
 		}
 		return {
-			numFmt:     To_XML_c_oAscNumberingFormat(oEndNotePr.NumFormat),
-			numRestart: sNumRestart,
-			numStart:   oEndNotePr.NumStart,
-			pos:        sEndPos
+			"numFmt":     To_XML_c_oAscNumberingFormat(oEndNotePr.NumFormat),
+			"numRestart": sNumRestart,
+			"numStart":   oEndNotePr.NumStart,
+			"pos":        sEndPos
 		}
 	};
 	WriterToJSON.prototype.SerFootnotePr = function(oFootnotePr)
@@ -4635,10 +4634,10 @@
 				break;
 		}
 		return {
-			numFmt:     To_XML_c_oAscNumberingFormat(oFootnotePr.NumFormat),
-			numRestart: sNumRestart,
-			numStart:   oFootnotePr.NumStart,
-			pos:        sEndPos
+			"numFmt":     To_XML_c_oAscNumberingFormat(oFootnotePr.NumFormat),
+			"numRestart": sNumRestart,
+			"numStart":   oFootnotePr.NumStart,
+			"pos":        sEndPos
 		}
 	};
 	WriterToJSON.prototype.SerLnNumType = function(oLnNumType)
@@ -4660,10 +4659,10 @@
 				break;
 		}
 		return {
-			countBy:  oLnNumType.CountBy,
-			distance: private_MM2Twips(oLnNumType.Distance),
-			start:    oLnNumType.Start,
-			restart:  sRestartType
+			"countBy":  oLnNumType.CountBy,
+			"distance": private_MM2Twips(oLnNumType.Distance),
+			"start":    oLnNumType.Start,
+			"restart":  sRestartType
 		}
 	};
 	WriterToJSON.prototype.SerPageBorders = function(oPageBorders)
@@ -4685,13 +4684,13 @@
 				break;
 		}
 		return {
-			bottom:     this.SerBorder(oPageBorders.Bottom),
-			left:       this.SerBorder(oPageBorders.Left),
-			right:      this.SerBorder(oPageBorders.Right),
-			top:        this.SerBorder(oPageBorders.Top),
-			display:    sDisplayType,
-			offsetFrom: private_MM2Twips(oPageBorders.OffsetFrom),
-			zOrder:     oPageBorders.ZOrder === section_borders_ZOrderFront ? "front" : "back"
+			"bottom":     this.SerBorder(oPageBorders.Bottom),
+			"left":       this.SerBorder(oPageBorders.Left),
+			"right":      this.SerBorder(oPageBorders.Right),
+			"top":        this.SerBorder(oPageBorders.Top),
+			"display":    sDisplayType,
+			"offsetFrom": private_MM2Twips(oPageBorders.OffsetFrom),
+			"zOrder":     oPageBorders.ZOrder === section_borders_ZOrderFront ? "front" : "back"
 		}
 	};
 	WriterToJSON.prototype.SerPageMargins = function(oPageMargins)
@@ -4700,13 +4699,13 @@
 			return oPageMargins;
 
 		return {
-			bottom: private_MM2Twips(oPageMargins.Bottom),
-			footer: private_MM2Twips(oPageMargins.Footer),
-			gutter: private_MM2Twips(oPageMargins.Gutter),
-			header: private_MM2Twips(oPageMargins.Header),
-			left: private_MM2Twips(oPageMargins.Left),
-			right: private_MM2Twips(oPageMargins.Right),
-			top: private_MM2Twips(oPageMargins.Top)
+			"bottom": private_MM2Twips(oPageMargins.Bottom),
+			"footer": private_MM2Twips(oPageMargins.Footer),
+			"gutter": private_MM2Twips(oPageMargins.Gutter),
+			"header": private_MM2Twips(oPageMargins.Header),
+			"left":   private_MM2Twips(oPageMargins.Left),
+			"right":  private_MM2Twips(oPageMargins.Right),
+			"top":    private_MM2Twips(oPageMargins.Top)
 		}
 	};
 	WriterToJSON.prototype.SerPageSize = function(oPageSize)
@@ -4733,11 +4732,11 @@
 	WriterToJSON.prototype.SerHyperlink = function(oHyperlink, aComplexFieldsToSave)
 	{
 		var oLinkObject = {
-			anchor:  oHyperlink.Anchor  ? oHyperlink.Anchor  : undefined,
-			tooltip: oHyperlink.ToolTip ? oHyperlink.ToolTip : undefined,
-			value:   oHyperlink.Value   ? oHyperlink.Value   : undefined,
-			content: [],
-			type:    "hyperlink"
+			"anchor":  oHyperlink.Anchor  ? oHyperlink.Anchor  : undefined,
+			"tooltip": oHyperlink.ToolTip ? oHyperlink.ToolTip : undefined,
+			"value":   oHyperlink.Value   ? oHyperlink.Value   : undefined,
+			"content": [],
+			"type":    "hyperlink"
 		};
 
 		if (!aComplexFieldsToSave)
@@ -4749,9 +4748,9 @@
 			oTempElm = oHyperlink.Content[nElm];
 			
 			if (oTempElm instanceof AscCommonWord.ParaRun)
-				oLinkObject.content.push(this.SerParaRun(oTempElm, aComplexFieldsToSave));
+				oLinkObject["content"].push(this.SerParaRun(oTempElm, aComplexFieldsToSave));
 			else if (oTempElm instanceof AscCommonWord.CInlineLevelSdt)
-				oLinkObject.content.push(this.SerInlineLvlSdt(oTempElm, aComplexFieldsToSave));
+				oLinkObject["content"].push(this.SerInlineLvlSdt(oTempElm, aComplexFieldsToSave));
 					
 		}
 
@@ -4774,17 +4773,17 @@
 		}
 
 		var oRunObject = {
-			rPr:        this.SerTextPr(oRun.Pr),
-			content:    [],
-			footnotes:  [],
-			endnotes:   [],
-			reviewInfo: this.SerReviewInfo(oRun.ReviewInfo),
-			reviewType: sReviewType,
-			type:       "run"
+			"rPr":        this.SerTextPr(oRun.Pr),
+			"content":    [],
+			"footnotes":  [],
+			"endnotes":   [],
+			"reviewInfo": this.SerReviewInfo(oRun.ReviewInfo),
+			"reviewType": sReviewType,
+			"type":       "run"
 		}
 		
 		if (oRun.IsMathRun())
-			oRunObject.type = "mathRun";
+			oRunObject["type"] = "mathRun";
 
 		if (!aComplexFieldsToSave)
 		{
@@ -4792,7 +4791,7 @@
 		}
 			
 		if (oRun.Type === para_Math_Run)
-			oRunObject.mathPr = oRun.MathPrp;
+			oRunObject["mathPr"] = oRun.MathPrp;
 
 		function SerPageNum(oPageNum)
 		{
@@ -4826,26 +4825,26 @@
 				if (oItem.IsBegin())
 				{
 					aResult.push({
-						type:        "fldChar",
-						fldCharType: "begin"
+						"type":        "fldChar",
+						"fldCharType": "begin"
 					});
 					aResult.push({
-						type:  "instrText",
-						instr: sInstuction
+						"type":  "instrText",
+						"instr": sInstuction
 					});
 				}
 				else if (oItem.IsSeparate())
 				{
 					aResult.push({
-						type:        "fldChar",
-						fldCharType: "separate"
+						"type":        "fldChar",
+						"fldCharType": "separate"
 					});
 				}
 				else if (oItem.IsEnd())
 				{
 					aResult.push({
-						type:        "fldChar",
-						fldCharType: "end"
+						"type":        "fldChar",
+						"fldCharType": "end"
 					});
 				}
 			}
@@ -4856,19 +4855,19 @@
 		{
 			var arrComplexFieldRuns = [];
 			var oFldCharBegin = {
-				type:        "fldChar",
-				fldCharType: "begin"
+				"type":        "fldChar",
+				"fldCharType": "begin"
 			}
 			var oFldCharSep   = {
-				type:        "fldChar",
-				fldCharType: "separate"
+				"type":        "fldChar",
+				"fldCharType": "separate"
 			}
 			var oFldCharEnd   = {
-				type:        "fldChar",
-				fldCharType: "end"
+				"type":        "fldChar",
+				"fldCharType": "end"
 			}
 			var oInstrText    = {
-				type: "instrText"
+				"type": "instrText"
 			}
 
 			var sResultOfField = "";
@@ -4900,8 +4899,8 @@
 				sBreakType = "column";
 
 			return {
-				type: "break",
-				breakType: sBreakType
+				"type": "break",
+				"breakType": sBreakType
 			}
 		}
 		var ContentLen        = oRun.Content.length;
@@ -4916,25 +4915,25 @@
 			switch (ItemType)
 			{
 				case para_PageNum:
-					sTempRunText !== "" && oRunObject.content.push(sTempRunText);
-					oRunObject.content.push(SerPageNum(Item));
+					sTempRunText !== "" && oRunObject["content"].push(sTempRunText);
+					oRunObject["content"].push(SerPageNum(Item));
 					sTempRunText = '';
 					break;
 				case para_PageCount:
-					sTempRunText !== "" && oRunObject.content.push(sTempRunText);
-					oRunObject.content = oRunObject.content.concat(SerPageCount(Item));
+					sTempRunText !== "" && oRunObject["content"].push(sTempRunText);
+					oRunObject["content"] = oRunObject["content"].concat(SerPageCount(Item));
 					sTempRunText = '';
 					break;
 				case para_Drawing:
 				{
-					sTempRunText !== "" && oRunObject.content.push(sTempRunText);
-					oRunObject.content.push(this.SerParaDrawing(Item));
+					sTempRunText !== "" && oRunObject["content"].push(sTempRunText);
+					oRunObject["content"].push(this.SerParaDrawing(Item));
 					sTempRunText = '';
 					break;
 				}
 				case para_End:
 				{
-					oRunObject.type = "endRun";
+					oRunObject["type"] = "endRun";
 					break;
 				}
 				case para_Text:
@@ -4945,13 +4944,13 @@
 				case para_Math_BreakOperator:
 				case para_Math_Placeholder:
 				case para_Math_Text:
-					sTempRunText !== "" && oRunObject.content.push(sTempRunText);
-					oRunObject.content.push(this.SerMathText(Item));
+					sTempRunText !== "" && oRunObject["content"].push(sTempRunText);
+					oRunObject["content"].push(this.SerMathText(Item));
 					sTempRunText = '';
 					break;
 				case para_NewLine:
-					sTempRunText !== "" && oRunObject.content.push(sTempRunText);
-					oRunObject.content.push(SerParaNewLine(Item));
+					sTempRunText !== "" && oRunObject["content"].push(sTempRunText);
+					oRunObject["content"].push(SerParaNewLine(Item));
 					sTempRunText = '';
 					break;
 				case para_Space:
@@ -4960,9 +4959,9 @@
 					break;
 				}
 				case para_Tab:
-					sTempRunText !== "" && oRunObject.content.push(sTempRunText);
-					oRunObject.content.push({
-						type: "tab"
+					sTempRunText !== "" && oRunObject["content"].push(sTempRunText);
+					oRunObject["content"].push({
+						"type": "tab"
 					});
 					sTempRunText = '';
 					break;
@@ -4980,27 +4979,27 @@
 						if (private_checkRelativePos(oCurStartPos, oTempStartPos) === 0 && private_checkRelativePos(oCurEndPos, oTempEndPos) === 0)
 						{
 							allowAddCompField = true;
-							oRunObject.content = oRunObject.content.concat(SerCompFieldContent(oRun.Content));
+							oRunObject["content"] = oRunObject["content"].concat(SerCompFieldContent(oRun.Content));
 							break;
 						}
 					}
 					break;
 				case para_RevisionMove:
-					oRunObject.content.push(this.SerRevisionMove(Item));
+					oRunObject["content"].push(this.SerRevisionMove(Item));
 					break;
 				case para_FootnoteReference:
-					oRunObject.content.push(this.SerParaFootEndNoteRef(Item));
-					oRunObject.footnotes.push(this.SerFootEndnote(Item.Footnote));
+					oRunObject["content"].push(this.SerParaFootEndNoteRef(Item));
+					oRunObject["footnotes"].push(this.SerFootEndnote(Item.Footnote));
 					break;
 				case para_FootnoteRef:
-					oRunObject.content.push(this.SerParaFootEndNoteRef(Item));
+					oRunObject["content"].push(this.SerParaFootEndNoteRef(Item));
 					break;
 				case para_EndnoteReference:
-					oRunObject.content.push(this.SerParaFootEndNoteRef(Item));
-					oRunObject.endnotes.push(this.SerFootEndnote(Item.Footnote));
+					oRunObject["content"].push(this.SerParaFootEndNoteRef(Item));
+					oRunObject["endnotes"].push(this.SerFootEndnote(Item.Footnote));
 					break;
 				case para_EndnoteRef:
-					oRunObject.content.push(this.SerParaFootEndNoteRef(Item));
+					oRunObject["content"].push(this.SerParaFootEndNoteRef(Item));
 					break;
 			}
 
@@ -5008,15 +5007,15 @@
 				break;
 		}
 		if (ContentLen !== 0)
-			sTempRunText !== "" && oRunObject.content.push(sTempRunText);
+			sTempRunText !== "" && oRunObject["content"].push(sTempRunText);
 
 		return oRunObject;
 	};
 	WriterToJSON.prototype.SerMathText = function(oMathText)
 	{
 		return {
-			value: oMathText.value,
-			type: "mathTxt"
+			"value": oMathText.value,
+			"type": "mathTxt"
 		}
 	};
 	WriterToJSON.prototype.SerParaFootEndNoteRef = function(oFootnoteRef)
@@ -5042,11 +5041,12 @@
 		}
 
 		return {
-			customMark: oFootnoteRef.CustomMark,
-			footnote:   oFootnoteRef.Footnote.Id,
-			numFormat:  oFootnoteRef.NumFormat,
-			number:     oFootnoteRef.Number,
-			type:       sType
+
+			"customMark": oFootnoteRef.CustomMark,
+			"footnote":   oFootnoteRef.Footnote.Id,
+			"numFormat":  oFootnoteRef.NumFormat,
+			"number":     oFootnoteRef.Number,
+			"type":       sType
 		}
 	};
 	WriterToJSON.prototype.SerReviewInfo = function(oReviewInfo)
@@ -5085,37 +5085,37 @@
 		}
 
 		return {
-			userId:   oReviewInfo.UserId,
-			autor:    oReviewInfo.UserName,
-			date:     oReviewInfo.DateTime,
-			moveType: sMoveType,
-			prevType: sPrevType,
-			prevInfo: this.SerReviewInfo(oReviewInfo.PrevInfo)
+			"userId":   oReviewInfo.UserId,
+			"author":   oReviewInfo.UserName,
+			"date":     oReviewInfo.DateTime,
+			"moveType": sMoveType,
+			"prevType": sPrevType,
+			"prevInfo": this.SerReviewInfo(oReviewInfo.PrevInfo)
 		}
 	};
 	WriterToJSON.prototype.SerParaDrawing = function(oDrawing, aComplexFieldsToSave)
 	{
 		return {
-			docPr:          this.SerCNvPr(oDrawing.docPr),
-			effectExtent:   this.SerEffectExtent(oDrawing.EffectExtent),
-			extent:         this.SerExtent(oDrawing.Extent),
-			graphic:        this.SerGraphicObject(oDrawing.GraphicObj, aComplexFieldsToSave),
-			positionH:      this.SerPositionH(oDrawing.PositionH),
-			positionV:      this.SerPositionV(oDrawing.PositionV),
-			simplePos:      this.SerSimplePos(oDrawing.SimplePos),
-			distB:          oDrawing.Distance ? private_MM2EMU(oDrawing.Distance.B) : oDrawing.Distance,
-			distL:          oDrawing.Distance ? private_MM2EMU(oDrawing.Distance.L) : oDrawing.Distance,
-			distR:          oDrawing.Distance ? private_MM2EMU(oDrawing.Distance.R) : oDrawing.Distance,
-			distT:          oDrawing.Distance ? private_MM2EMU(oDrawing.Distance.T) : oDrawing.Distance,
-			allowOverlap:   oDrawing.AllowOverlap,
-			behindDoc:      oDrawing.behindDoc,
-			hidden:         oDrawing.Hidden,
-			layoutInCell:   oDrawing.LayoutInCell,
-			locked:         oDrawing.Locked,
-			relativeHeight: oDrawing.RelativeHeight,
-			wrapType:       this.GetWrapStrType(oDrawing.wrappingType),
-			drawingType:    oDrawing.DrawingType === drawing_Inline ? "inline" : "anchor",
-			type:           "paraDrawing"
+			"docPr":          this.SerCNvPr(oDrawing.docPr),
+			"effectExtent":   this.SerEffectExtent(oDrawing.EffectExtent),
+			"extent":         this.SerExtent(oDrawing.Extent),
+			"graphic":        this.SerGraphicObject(oDrawing.GraphicObj, aComplexFieldsToSave),
+			"positionH":      this.SerPositionH(oDrawing.PositionH),
+			"positionV":      this.SerPositionV(oDrawing.PositionV),
+			"simplePos":      this.SerSimplePos(oDrawing.SimplePos),
+			"distB":          oDrawing.Distance ? private_MM2EMU(oDrawing.Distance.B) : oDrawing.Distance,
+			"distL":          oDrawing.Distance ? private_MM2EMU(oDrawing.Distance.L) : oDrawing.Distance,
+			"distR":          oDrawing.Distance ? private_MM2EMU(oDrawing.Distance.R) : oDrawing.Distance,
+			"distT":          oDrawing.Distance ? private_MM2EMU(oDrawing.Distance.T) : oDrawing.Distance,
+			"allowOverlap":   oDrawing.AllowOverlap,
+			"behindDoc":      oDrawing.behindDoc,
+			"hidden":         oDrawing.Hidden,
+			"layoutInCell":   oDrawing.LayoutInCell,
+			"locked":         oDrawing.Locked,
+			"relativeHeight": oDrawing.RelativeHeight,
+			"wrapType":       this.GetWrapStrType(oDrawing.wrappingType),
+			"drawingType":    oDrawing.DrawingType === drawing_Inline ? "inline" : "anchor",
+			"type":           "paraDrawing"
 		};
 	};
 	WriterToJSON.prototype.GetAllParaComplexFields = function(oPara)
@@ -5228,9 +5228,9 @@
 						oMap[aParaComments[nComment].Comment.CommentId] = {};
 
 					if (aParaComments[nComment].Comment.Start)
-						oMap[aParaComments[nComment].Comment.CommentId].Start = true;
+						oMap[aParaComments[nComment].Comment.CommentId]["Start"] = true;
 					else
-						oMap[aParaComments[nComment].Comment.CommentId].End = true;
+						oMap[aParaComments[nComment].Comment.CommentId]["End"] = true;
 				}
 			}
 			if (oElm instanceof AscCommonWord.CTable)
@@ -5285,9 +5285,9 @@
 						oMap[oElm.Content[nItem].BookmarkId] = {};
 
 					if (oElm.Content[nItem].Start)
-						oMap[oElm.Content[nItem].BookmarkId].Start = true;
+						oMap[oElm.Content[nItem].BookmarkId]["Start"] = true;
 					else
-						oMap[oElm.Content[nItem].BookmarkId].End = true;
+						oMap[oElm.Content[nItem].BookmarkId]["End"] = true;
 				}
 			}
 			if (oElm instanceof AscCommonWord.CTable)
@@ -5360,25 +5360,25 @@
 		for (var nOvrd = 0; nOvrd < oNum.LvlOverride.length; nOvrd++)
 		{
 			arrLvlOverride.push({
-				lvl:           this.SerNumLvl(oNum.LvlOverride[nOvrd], oNum.LvlOverride[nOvrd].Lvl),
-				startOverride: oNum.LvlOverride[nOvrd].StartOverride,
-				ilvl:          oNum.LvlOverride[nOvrd].Lvl
+				"lvl":           this.SerNumLvl(oNum.LvlOverride[nOvrd], oNum.LvlOverride[nOvrd].Lvl),
+				"startOverride": oNum.LvlOverride[nOvrd].StartOverride,
+				"ilvl":          oNum.LvlOverride[nOvrd].Lvl
 			});
 		}
 		
 		return {
-			abstractNum: {
-				lvl:           arrNumLvls,
-				numStyleLink:  abtrNumb.NumStyleLink,
-				styleLink:     abtrNumb.StyleLink,
-				abstractNumId: abtrNumb.Id
+			"abstractNum": {
+				"lvl":           arrNumLvls,
+				"numStyleLink":  abtrNumb.NumStyleLink,
+				"styleLink":     abtrNumb.StyleLink,
+				"abstractNumId": abtrNumb.Id
 			},
-			num: {
-				abstractNumId: oNum.AbstractNumId,
-				lvlOverride:   arrLvlOverride,
-				numId:         oNum.Id
+			"num": {
+				"abstractNumId": oNum.AbstractNumId,
+				"lvlOverride":   arrLvlOverride,
+				"numId":         oNum.Id
 			},
-			type: "numbering"
+			"type": "numbering"
 		}
 	};
 	WriterToJSON.prototype.SerNumLvl = function(oLvl, nLvl)
@@ -5434,26 +5434,26 @@
 			oLvlText.numValue = oLvl.LvlText[0].Value;
 
 		return {
-			isLgl: oLvl.IsLgl,
+			"isLgl": oLvl.IsLgl,
 
-			legacy: oLvl.Legacy ? {
-				legacy:       oLvl.Legacy.Legacy,
-				legacyIndent: oLvl.Legacy.Indent,
-				legacySpace:  oLvl.Legacy.Space
+			"legacy": oLvl.Legacy ? {
+				"legacy":       oLvl.Legacy.Legacy,
+				"legacyIndent": oLvl.Legacy.Indent,
+				"legacySpace":  oLvl.Legacy.Space
 			} : oLvl.Legacy,
 
-			lvlJc:   sJc,
-			lvlText: oLvlText,
-			numFmt:  {
-				val: sFormatType
+			"lvlJc":   sJc,
+			"lvlText": oLvlText,
+			"numFmt":  {
+				"val": sFormatType
 			},
-			pPr:     this.SerParaPr(oLvl.ParaPr),
-			pStyle:  this.SerStyle(oStyle),
-			rPr:     this.SerTextPr(oLvl.TextPr),
-			restart: oLvl.Restart,
-			start:   oLvl.Start,
-			suff:    sSuffType,
-			ilvl:    nLvl
+			"pPr":     this.SerParaPr(oLvl.ParaPr),
+			"pStyle":  this.SerStyle(oStyle),
+			"rPr":     this.SerTextPr(oLvl.TextPr),
+			"restart": oLvl.Restart,
+			"start":   oLvl.Start,
+			"suff":    sSuffType,
+			"ilvl":    nLvl
 		}
 	};
 	WriterToJSON.prototype.SerTabs = function(oTabs)
@@ -5462,15 +5462,15 @@
 			return oTabs;
 			
 		var oTabsObj = {
-			tabs: []
+			"tabs": []
 		};
 
 		for (var nTab = 0; nTab < oTabs.Tabs.length; nTab++)
 		{
-			oTabsObj.tabs.push({
-				val:    oTabs.Tabs[nTab].Value,
-				pos:    private_MM2Twips(oTabs.Tabs[nTab].Pos),
-				leader: oTabs.Tabs[nTab].Leader
+			oTabsObj["tabs"].push({
+				"val":    oTabs.Tabs[nTab].Value,
+				"pos":    private_MM2Twips(oTabs.Tabs[nTab].Pos),
+				"leader": oTabs.Tabs[nTab].Leader
 			});
 		}
 
@@ -5482,8 +5482,8 @@
 			return oTx;
 
 		return {
-			strRef: this.SerStrRef(oTx.strRef),
-			v:      oTx.val
+			"strRef": this.SerStrRef(oTx.strRef),
+			"v":      oTx.val
 		}
 	};
 	WriterToJSON.prototype.SerChartTx = function(oTx)
@@ -5492,8 +5492,8 @@
 			return oTx;
 
 		return {
-			strRef: this.SerStrRef(oTx.strRef),
-			rich:   this.SerTxPr(oTx.rich)
+			"strRef": this.SerStrRef(oTx.strRef),
+			"rich":   this.SerTxPr(oTx.rich)
 		}
 	};
 	WriterToJSON.prototype.SerScaling = function(oScaling)
@@ -5503,10 +5503,10 @@
 		
 		var sOrientType = oScaling.orientation === AscFormat.ORIENTATION_MAX_MIN ? "maxMin" : "minMax"; 
 		return {
-			logBase:     oScaling.logBase,
-			max:         oScaling.max,
-			min:         oScaling.min,
-			orientation: sOrientType
+			"logBase":     oScaling.logBase,
+			"max":         oScaling.max,
+			"min":         oScaling.min,
+			"orientation": sOrientType
 		}
 	};
 	WriterToJSON.prototype.SerNumFmt = function(oNumFmt)
@@ -5515,8 +5515,8 @@
 			return oNumFmt;
 		
 		return {
-			formatCode:   oNumFmt.formatCode,
-			sourceLinked: oNumFmt.sourceLinked
+			"formatCode":   oNumFmt.formatCode,
+			"sourceLinked": oNumFmt.sourceLinked
 		}
 	};
 	WriterToJSON.prototype.SerDispUnits = function(oDispUnits)
@@ -5562,9 +5562,9 @@
 				break;
 		}
 		return {
-			builtInUnit:  sBuiltInUnit,
-			custUnit:     oDispUnits.custUnit,
-			dispUnitsLbl: this.SerDlbl(oDispUnits.dispUnitsLbl)
+			"builtInUnit":  sBuiltInUnit,
+			"custUnit":     oDispUnits.custUnit,
+			"dispUnitsLbl": this.SerDlbl(oDispUnits.dispUnitsLbl)
 		}
 	};
 	WriterToJSON.prototype.SerValAx = function(oValAx)
@@ -5575,28 +5575,28 @@
 		var sCrossBetweenType = oValAx.crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN ? "between" : "micCat";
 		
 		return {
-			axId:           oValAx.axId,
-			axPos:          this.GetAxPosStrType(oValAx.axPos),
-			crossAx:        oValAx.crossAx.axId,
-			crossBetween:   sCrossBetweenType,
-			crosses:        this.GetCrossesStrType(oValAx.crosses),
-			crossesAt:      oValAx.crossesAt,
-			delete:         oValAx.bDelete,
-			dispUnits:      this.SerDispUnits(oValAx.dispUnits),
-			extLst:         oValAx.extLst, /// ???
-			majorGridlines: this.SerSpPr(oValAx.majorGridlines),
-			majorTickMark:  this.GetTickMarkStrType(oValAx.majorTickMark),
-			majorUnit:      oValAx.majorUnit,
-			minorGridlines: this.SerSpPr(oValAx.minorGridlines),
-			minorTickMark:  this.GetTickMarkStrType(oValAx.minorTickMark),
-			minorUnit:      oValAx.minorUnit,
-			numFmt:         this.SerNumFmt(oValAx.numFmt),
-			scaling:        this.SerScaling(oValAx.scaling),
-			spPr:           this.SerSpPr(oValAx.spPr),
-			tickLblPos:     this.GetTickLabelStrPos(oValAx.tickLblPos),
-			title:          this.SerTitle(oValAx.title),
-			txPr:           this.SerTxPr(oValAx.txPr),
-			type:           "valAx"
+			"axId":           oValAx.axId,
+			"axPos":          this.GetAxPosStrType(oValAx.axPos),
+			"crossAx":        oValAx.crossAx.axId,
+			"crossBetween":   sCrossBetweenType,
+			"crosses":        this.GetCrossesStrType(oValAx.crosses),
+			"crossesAt":      oValAx.crossesAt,
+			"delete":         oValAx.bDelete,
+			"dispUnits":      this.SerDispUnits(oValAx.dispUnits),
+			"extLst":         oValAx.extLst, /// ???
+			"majorGridlines": this.SerSpPr(oValAx.majorGridlines),
+			"majorTickMark":  this.GetTickMarkStrType(oValAx.majorTickMark),
+			"majorUnit":      oValAx.majorUnit,
+			"minorGridlines": this.SerSpPr(oValAx.minorGridlines),
+			"minorTickMark":  this.GetTickMarkStrType(oValAx.minorTickMark),
+			"minorUnit":      oValAx.minorUnit,
+			"numFmt":         this.SerNumFmt(oValAx.numFmt),
+			"scaling":        this.SerScaling(oValAx.scaling),
+			"spPr":           this.SerSpPr(oValAx.spPr),
+			"tickLblPos":     this.GetTickLabelStrPos(oValAx.tickLblPos),
+			"title":          this.SerTitle(oValAx.title),
+			"txPr":           this.SerTxPr(oValAx.txPr),
+			"type":           "valAx"
 		}
 	};
 	WriterToJSON.prototype.GetAxPosStrType = function(nType)
@@ -5663,15 +5663,15 @@
 			arrAxId.push(this.SerAxis(oPlotArea.axId[nAx]))
 
 		return {
-			axId:     arrAxId,
-			charts:   this.SerCharts(oPlotArea.charts),
-			catAx:    oPlotArea.catAx ? oPlotArea.catAx.axId : oPlotArea.catAx,
-			dateAx:   oPlotArea.dateAx ? oPlotArea.dateAx.axId : oPlotArea.dateAx,
-			valAx:    oPlotArea.valAx ? oPlotArea.valAx.axId : oPlotArea.valAx,
-			serAx:    oPlotArea.serAx ? oPlotArea.serAx.axId : oPlotArea.serAx,
-			dTable:   this.SerDataTable(oPlotArea.dTable),
-			layout:   this.SerLayout(oPlotArea.layout),
-			spPr:     this.SerSpPr(oPlotArea.spPr)
+			"axId":     arrAxId,
+			"charts":   this.SerCharts(oPlotArea.charts),
+			"catAx":    oPlotArea.catAx ? oPlotArea.catAx.axId : oPlotArea.catAx,
+			"dateAx":   oPlotArea.dateAx ? oPlotArea.dateAx.axId : oPlotArea.dateAx,
+			"valAx":    oPlotArea.valAx ? oPlotArea.valAx.axId : oPlotArea.valAx,
+			"serAx":    oPlotArea.serAx ? oPlotArea.serAx.axId : oPlotArea.serAx,
+			"dTable":   this.SerDataTable(oPlotArea.dTable),
+			"layout":   this.SerLayout(oPlotArea.layout),
+			"spPr":     this.SerSpPr(oPlotArea.spPr)
 		}
 	};
 	WriterToJSON.prototype.SerDataTable = function(oData)
@@ -5680,12 +5680,12 @@
 			return oData;
 
 		return {
-			showHorzBorder: oData.showHorzBorder,
-			showKeys:       oData.showKeys,
-			showOutline:    oData.showOutline,
-			showVertBorder: oData.showVertBorder,
-			spPr:           this.SerSpPr(oData.spPr),
-			txPr:           this.SerTxPr(oData.txPr)
+			"showHorzBorder": oData.showHorzBorder,
+			"showKeys":       oData.showKeys,
+			"showOutline":    oData.showOutline,
+			"showVertBorder": oData.showVertBorder,
+			"spPr":           this.SerSpPr(oData.spPr),
+			"txPr":           this.SerTxPr(oData.txPr)
 		};
 	};
 	WriterToJSON.prototype.SerSerAx = function(oSerAx)
@@ -5694,26 +5694,26 @@
 			return oSerAx;
 
 		return {
-			axId:           oSerAx.axId,
-			axPos:          this.GetAxPosStrType(oSerAx.axPos),
-			crossAx:        oSerAx.crossAx.axId,
-			crosses:        this.GetCrossesStrType(oSerAx.crosses),
-			crossesAt:      oSerAx.crossesAt,
-			delete:         oSerAx.bDelete,
-			extLst:         oSerAx.extLst, /// ?
-			majorGridlines: this.SerSpPr(oSerAx.majorGridlines),
-			majorTickMark:  this.GetTickMarkStrType(oSerAx.majorTickMark),
-			minorGridlines: this.SerSpPr(oSerAx.minorGridlines),
-			minorTickMark:  this.GetTickMarkStrType(oSerAx.minorTickMark),
-			numFmt:         this.SerNumFmt(oSerAx.numFmt),
-			scaling:        this.SerScaling(oSerAx.scaling),
-			spPr:           this.SerSpPr(oSerAx.spPr),
-			tickLblPos:     this.GetTickLabelStrPos(oSerAx.tickLblPos),
-			tickLblSkip:    oSerAx.tickLblSkip,
-			tickMarkSkip:   oSerAx.tickMarkSkip,
-			title:          this.SerTitle(oSerAx.title),
-			txPr:           this.SerTxPr(oSerAx.txPr),
-			type:           "serAx"
+			"axId":           oSerAx.axId,
+			"axPos":          this.GetAxPosStrType(oSerAx.axPos),
+			"crossAx":        oSerAx.crossAx.axId,
+			"crosses":        this.GetCrossesStrType(oSerAx.crosses),
+			"crossesAt":      oSerAx.crossesAt,
+			"delete":         oSerAx.bDelete,
+			"extLst":         oSerAx.extLst, /// ?
+			"majorGridlines": this.SerSpPr(oSerAx.majorGridlines),
+			"majorTickMark":  this.GetTickMarkStrType(oSerAx.majorTickMark),
+			"minorGridlines": this.SerSpPr(oSerAx.minorGridlines),
+			"minorTickMark":  this.GetTickMarkStrType(oSerAx.minorTickMark),
+			"numFmt":         this.SerNumFmt(oSerAx.numFmt),
+			"scaling":        this.SerScaling(oSerAx.scaling),
+			"spPr":           this.SerSpPr(oSerAx.spPr),
+			"tickLblPos":     this.GetTickLabelStrPos(oSerAx.tickLblPos),
+			"tickLblSkip":    oSerAx.tickLblSkip,
+			"tickMarkSkip":   oSerAx.tickMarkSkip,
+			"title":          this.SerTitle(oSerAx.title),
+			"txPr":           this.SerTxPr(oSerAx.txPr),
+			"type":           "serAx"
 		}
 	};
 	WriterToJSON.prototype.SerCatAx = function(oCatAx)
@@ -5736,30 +5736,30 @@
 		}
 
 		return {
-			auto:           oCatAx.auto,
-			axId:           oCatAx.axId,
-			axPos:          this.GetAxPosStrType(oCatAx.axPos),
-			crossAx:        oCatAx.crossAx.axId,
-			crosses:        this.GetCrossesStrType(oCatAx.crosses),
-			crossesAt:      oCatAx.crossesAt,
-			delete:         oCatAx.bDelete,
-			extLst:         oCatAx.extLst, /// ?
-			lblAlgn:        sLblAlgn,
-			lblOffset:      oCatAx.lblOffset,
-			majorGridlines: this.SerSpPr(oCatAx.majorGridlines),
-			majorTickMark:  this.GetTickMarkStrType(oCatAx.majorTickMark),
-			minorGridlines: this.SerSpPr(oCatAx.minorGridlines),
-			minorTickMark:  this.GetTickMarkStrType(oCatAx.minorTickMark),
-			noMultiLvlLbl:  oCatAx.noMultiLvlLbl,
-			numFmt:         this.SerNumFmt(oCatAx.numFmt),
-			scaling:        this.SerScaling(oCatAx.scaling),
-			spPr:           this.SerSpPr(oCatAx.spPr),
-			tickLblPos:     this.GetTickLabelStrPos(oCatAx.tickLblPos),
-			tickLblSkip:    oCatAx.tickLblSkip,
-			tickMarkSkip:   oCatAx.tickMarkSkip,
-			title:          this.SerTitle(oCatAx.title),
-			txPr:           this.SerTxPr(oCatAx.txPr),
-			type:           "catAx"
+			"auto":           oCatAx.auto,
+			"axId":           oCatAx.axId,
+			"axPos":          this.GetAxPosStrType(oCatAx.axPos),
+			"crossAx":        oCatAx.crossAx.axId,
+			"crosses":        this.GetCrossesStrType(oCatAx.crosses),
+			"crossesAt":      oCatAx.crossesAt,
+			"delete":         oCatAx.bDelete,
+			"extLst":         oCatAx.extLst, /// ?
+			"lblAlgn":        sLblAlgn,
+			"lblOffset":      oCatAx.lblOffset,
+			"majorGridlines": this.SerSpPr(oCatAx.majorGridlines),
+			"majorTickMark":  this.GetTickMarkStrType(oCatAx.majorTickMark),
+			"minorGridlines": this.SerSpPr(oCatAx.minorGridlines),
+			"minorTickMark":  this.GetTickMarkStrType(oCatAx.minorTickMark),
+			"noMultiLvlLbl":  oCatAx.noMultiLvlLbl,
+			"numFmt":         this.SerNumFmt(oCatAx.numFmt),
+			"scaling":        this.SerScaling(oCatAx.scaling),
+			"spPr":           this.SerSpPr(oCatAx.spPr),
+			"tickLblPos":     this.GetTickLabelStrPos(oCatAx.tickLblPos),
+			"tickLblSkip":    oCatAx.tickLblSkip,
+			"tickMarkSkip":   oCatAx.tickMarkSkip,
+			"title":          this.SerTitle(oCatAx.title),
+			"txPr":           this.SerTxPr(oCatAx.txPr),
+			"type":           "catAx"
 		}
 	};
 	WriterToJSON.prototype.SerDateAx = function(oDateAx)
@@ -5768,31 +5768,31 @@
 			return oDateAx;
 
 		return {
-			auto:           oDateAx.auto,
-			axId:           oDateAx.axId,
-			axPos:          this.GetAxPosStrType(oDateAx.axPos),
-			baseTimeUnit:   this.GetTimeUnitStrType(oDateAx.baseTimeUnit),
-			crossAx:        oDateAx.crossAx ? oDateAx.crossAx.axId : oDateAx.crossAx,
-			crosses:        this.GetCrossesStrType(oDateAx.crosses),
-			crossesAt:      oDateAx.crossesAt,
-			delete:         oDateAx.bDelete,
-			extLst:         oDateAx.extLst,
-			lblOffset:      oDateAx.lblOffset,
-			majorGridlines: this.SerSpPr(oDateAx.majorGridlines),
-			majorTickMark:  this.GetTickMarkStrType(oDateAx.majorTickMark),
-			majorTimeUnit:  this.GetTimeUnitStrType(oDateAx.majorTimeUnit),
-			majorUnit:      oDateAx.majorUnit,
-			minorGridlines: this.SerSpPr(oDateAx.minorGridlines),
-			minorTickMark:  this.GetTickMarkStrType(oDateAx.minorTickMark),
-			minorTimeUnit:  this.GetTimeUnitStrType(oDateAx.minorTimeUnit),
-			minorUnit:      oDateAx.minorUnit,
-			numFmt:         this.SerNumFmt(oDateAx.numFmt),
-			scaling:        this.SerScaling(oDateAx.scaling),
-			spPr:           this.SerSpPr(oDateAx.spPr),
-			tickLblPos:     this.GetTickLabelStrPos(oDateAx.tickLblPos),
-			title:          this.SerTitle(oDateAx.title),
-			txPr:           this.SerTxPr(oDateAx.txPr),
-			type:           "dateAx"
+			"auto":           oDateAx.auto,
+			"axId":           oDateAx.axId,
+			"axPos":          this.GetAxPosStrType(oDateAx.axPos),
+			"baseTimeUnit":   this.GetTimeUnitStrType(oDateAx.baseTimeUnit),
+			"crossAx":        oDateAx.crossAx ? oDateAx.crossAx.axId : oDateAx.crossAx,
+			"crosses":        this.GetCrossesStrType(oDateAx.crosses),
+			"crossesAt":      oDateAx.crossesAt,
+			"delete":         oDateAx.bDelete,
+			"extLst":         oDateAx.extLst,
+			"lblOffset":      oDateAx.lblOffset,
+			"majorGridlines": this.SerSpPr(oDateAx.majorGridlines),
+			"majorTickMark":  this.GetTickMarkStrType(oDateAx.majorTickMark),
+			"majorTimeUnit":  this.GetTimeUnitStrType(oDateAx.majorTimeUnit),
+			"majorUnit":      oDateAx.majorUnit,
+			"minorGridlines": this.SerSpPr(oDateAx.minorGridlines),
+			"minorTickMark":  this.GetTickMarkStrType(oDateAx.minorTickMark),
+			"minorTimeUnit":  this.GetTimeUnitStrType(oDateAx.minorTimeUnit),
+			"minorUnit":      oDateAx.minorUnit,
+			"numFmt":         this.SerNumFmt(oDateAx.numFmt),
+			"scaling":        this.SerScaling(oDateAx.scaling),
+			"spPr":           this.SerSpPr(oDateAx.spPr),
+			"tickLblPos":     this.GetTickLabelStrPos(oDateAx.tickLblPos),
+			"title":          this.SerTitle(oDateAx.title),
+			"txPr":           this.SerTxPr(oDateAx.txPr),
+			"type":           "dateAx"
 		}
 	};
 	WriterToJSON.prototype.GetCrossesStrType = function(nType)
@@ -5859,15 +5859,15 @@
 			return oLayout;
 		
 		return {
-			h:            oLayout.h,
-			hMode:        oLayout.hMode != undefined ? (oLayout.hMode === AscFormat.LAYOUT_MODE_EDGE ? "edge" : "factor") : oLayout.hMode,
-			layoutTarget: oLayout.layoutTarget != undefined ? (oLayout.layoutTarget === AscFormat.LAYOUT_TARGET_INNER ? "inner" : "outer") : oLayout.layoutTarget,
-			w:            oLayout.w,
-			wMode:        oLayout.wMode != undefined ? (oLayout.wMode === AscFormat.LAYOUT_MODE_EDGE ? "edge" : "factor") : oLayout.wMode,
-			x:            oLayout.x,
-			xMode:        oLayout.xMode != undefined ? (oLayout.xMode === AscFormat.LAYOUT_MODE_EDGE ? "edge" : "factor") : oLayout.xMode,
-			y:            oLayout.y,
-			yMode:        oLayout.yMode != undefined ? (oLayout.yMode === AscFormat.LAYOUT_MODE_EDGE ? "edge" : "factor") : oLayout.yMode
+			"h":            oLayout.h,
+			"hMode":        oLayout.hMode != undefined ? (oLayout.hMode === AscFormat.LAYOUT_MODE_EDGE ? "edge" : "factor") : oLayout.hMode,
+			"layoutTarget": oLayout.layoutTarget != undefined ? (oLayout.layoutTarget === AscFormat.LAYOUT_TARGET_INNER ? "inner" : "outer") : oLayout.layoutTarget,
+			"w":            oLayout.w,
+			"wMode":        oLayout.wMode != undefined ? (oLayout.wMode === AscFormat.LAYOUT_MODE_EDGE ? "edge" : "factor") : oLayout.wMode,
+			"x":            oLayout.x,
+			"xMode":        oLayout.xMode != undefined ? (oLayout.xMode === AscFormat.LAYOUT_MODE_EDGE ? "edge" : "factor") : oLayout.xMode,
+			"y":            oLayout.y,
+			"yMode":        oLayout.yMode != undefined ? (oLayout.yMode === AscFormat.LAYOUT_MODE_EDGE ? "edge" : "factor") : oLayout.yMode
 		}
 	};
 	WriterToJSON.prototype.SerDlbl = function(oDlbl)
@@ -5909,21 +5909,21 @@
 		}
 
 		return {
-			delete:         oDlbl.bDelete,
-			dLblPos:        sDLblPos,
-			idx:            oDlbl.idx,
-			layout:         this.SerLayout(oDlbl.layout),
-			numFmt:         this.SerNumFmt(oDlbl.numFmt),
-			separator:      oDlbl.separator,
-			showBubbleSize: oDlbl.showBubbleSize,
-			showCatName:    oDlbl.showCatName,
-			showLegendKey:  oDlbl.showLegendKey,
-			showPercent:    oDlbl.showPercent,
-			showSerName:    oDlbl.showSerName,
-			showVal:        oDlbl.showVal,
-			spPr:           this.SerSpPr(oDlbl.spPr),
-			txPr:           this.SerTxPr(oDlbl.txPr),
-			tx:             this.SerChartTx(oDlbl.tx)
+			"delete":         oDlbl.bDelete,
+			"dLblPos":        sDLblPos,
+			"idx":            oDlbl.idx,
+			"layout":         this.SerLayout(oDlbl.layout),
+			"numFmt":         this.SerNumFmt(oDlbl.numFmt),
+			"separator":      oDlbl.separator,
+			"showBubbleSize": oDlbl.showBubbleSize,
+			"showCatName":    oDlbl.showCatName,
+			"showLegendKey":  oDlbl.showLegendKey,
+			"showPercent":    oDlbl.showPercent,
+			"showSerName":    oDlbl.showSerName,
+			"showVal":        oDlbl.showVal,
+			"spPr":           this.SerSpPr(oDlbl.spPr),
+			"txPr":           this.SerTxPr(oDlbl.txPr),
+			"tx":             this.SerChartTx(oDlbl.tx)
 		}
 	};
 	WriterToJSON.prototype.SerDLbls = function(dLbls)
@@ -5970,21 +5970,21 @@
 			arrDlbl.push(this.SerDlbl(dLbls.dLbl[nDlbl]));
 
 		return {
-			delete:          dLbls.bDelete,
-			dLbl:            arrDlbl,
-			dLblPos:         sDLblPos,
-			leaderLines:     this.SerSpPr(dLbls.leaderLines),
-			numFmt:          this.SerNumFmt(dLbls.numFmt),
-			separator:       dLbls.separator,
-			showBubbleSize:  dLbls.showBubbleSize,
-			showCatName:     dLbls.showCatName,
-			showLeaderLines: dLbls.showLeaderLines,
-			showLegendKey:   dLbls.showLegendKey,
-			showPercent:     dLbls.showPercent,
-			showSerName:     dLbls.showSerName,
-			showVal:         dLbls.showVal,
-			spPr:            this.SerSpPr(dLbls.spPr),
-			txPr:            this.SerTxPr(dLbls.txPr)
+			"delete":          dLbls.bDelete,
+			"dLbl":            arrDlbl,
+			"dLblPos":         sDLblPos,
+			"leaderLines":     this.SerSpPr(dLbls.leaderLines),
+			"numFmt":          this.SerNumFmt(dLbls.numFmt),
+			"separator":       dLbls.separator,
+			"showBubbleSize":  dLbls.showBubbleSize,
+			"showCatName":     dLbls.showCatName,
+			"showLeaderLines": dLbls.showLeaderLines,
+			"showLegendKey":   dLbls.showLegendKey,
+			"showPercent":     dLbls.showPercent,
+			"showSerName":     dLbls.showSerName,
+			"showVal":         dLbls.showVal,
+			"spPr":            this.SerSpPr(dLbls.spPr),
+			"txPr":            this.SerTxPr(dLbls.txPr)
 		}
 	};
 	WriterToJSON.prototype.SerCharts = function(arrBarCharts)
@@ -6049,12 +6049,12 @@
 	WriterToJSON.prototype.SerDoughnutChart = function(oDoughnutChart)
 	{
 		return {
-			dLbls:         this.SerDLbls(oDoughnutChart.dLbls),
-			firstSliceAng: oDoughnutChart.firstSliceAng,
-			holeSize:      oDoughnutChart.holeSize,
-			ser:           this.SerPieSeries(oDoughnutChart.series),
-			varyColors:    oDoughnutChart.varyColors,
-			type:          "doughnutChart"
+			"dLbls":         this.SerDLbls(oDoughnutChart.dLbls),
+			"firstSliceAng": oDoughnutChart.firstSliceAng,
+			"holeSize":      oDoughnutChart.holeSize,
+			"ser":           this.SerPieSeries(oDoughnutChart.series),
+			"varyColors":    oDoughnutChart.varyColors,
+			"type":          "doughnutChart"
 		}
 	};
 	WriterToJSON.prototype.SerRadarChart = function(oRadarChart)
@@ -6078,12 +6078,12 @@
 			arrAxId.push(oRadarChart.axId[nAxis].axId);
 
 		return {
-			axId:         arrAxId,
-			dLbls:        this.SerDLbls(oRadarChart.dLbls),
-			radarStyle:   sRadarStyle,
-			ser:          this.SerRadarSeries(oRadarChart.series),
-			varyColors:   oRadarChart.varyColors,
-			type:         "radarChart"
+			"axId":         arrAxId,
+			"dLbls":        this.SerDLbls(oRadarChart.dLbls),
+			"radarStyle":   sRadarStyle,
+			"ser":          this.SerRadarSeries(oRadarChart.series),
+			"varyColors":   oRadarChart.varyColors,
+			"type":         "radarChart"
 		}
 	};
 	WriterToJSON.prototype.SerRadarSeries = function(arrRadarSeries)
@@ -6093,15 +6093,15 @@
 		for (var nItem = 0; nItem < arrRadarSeries.length; nItem++)
 		{
 			arrResultSeries.push({
-				cat:              this.SerCat(arrRadarSeries[nItem].cat),
-				dLbls:            this.SerDLbls(arrRadarSeries[nItem].dLbls),
-				dPt:              this.SerDataPoints(arrRadarSeries[nItem].dPt),
-				idx:              arrRadarSeries[nItem].idx,
-				marker:           this.SerMarker(arrRadarSeries[nItem].marker),
-				order:            arrRadarSeries[nItem].order,
-				spPr:             this.SerSpPr(arrRadarSeries[nItem].spPr),
-				tx:               this.SerSerTx(arrRadarSeries[nItem].tx),
-				val:              this.SerYVAL(arrRadarSeries[nItem].val)
+				"cat":              this.SerCat(arrRadarSeries[nItem].cat),
+				"dLbls":            this.SerDLbls(arrRadarSeries[nItem].dLbls),
+				"dPt":              this.SerDataPoints(arrRadarSeries[nItem].dPt),
+				"idx":              arrRadarSeries[nItem].idx,
+				"marker":           this.SerMarker(arrRadarSeries[nItem].marker),
+				"order":            arrRadarSeries[nItem].order,
+				"spPr":             this.SerSpPr(arrRadarSeries[nItem].spPr),
+				"tx":               this.SerSerTx(arrRadarSeries[nItem].tx),
+				"val":              this.SerYVAL(arrRadarSeries[nItem].val)
 			});
 		}
 
@@ -6114,11 +6114,11 @@
 			arrAxId.push(oSurfaceChart.axId[nAxis].axId);
 
 		return {
-			axId:           arrAxId,
-			bandFmts:       this.SerBandFmts(oSurfaceChart.bandFmts),
-			ser:            this.SerSurfaceSeries(oSurfaceChart.series),
-			wireframe:      oSurfaceChart.wireframe,
-			type:           "surfaceChart"
+			"axId":           arrAxId,
+			"bandFmts":       this.SerBandFmts(oSurfaceChart.bandFmts),
+			"ser":            this.SerSurfaceSeries(oSurfaceChart.series),
+			"wireframe":      oSurfaceChart.wireframe,
+			"type":           "surfaceChart"
 		}
 	};
 	WriterToJSON.prototype.SerSurfaceSeries = function(arrSurfaceSeries)
@@ -6128,12 +6128,12 @@
 		for (var nItem = 0; nItem < arrSurfaceSeries.length; nItem++)
 		{
 			arrResultSeries.push({
-				cat:              this.SerCat(arrSurfaceSeries[nItem].cat),
-				idx:              arrSurfaceSeries[nItem].idx,
-				order:            arrSurfaceSeries[nItem].order,
-				spPr:             this.SerSpPr(arrSurfaceSeries[nItem].spPr),
-				tx:               this.SerSerTx(arrSurfaceSeries[nItem].tx),
-				val:              this.SerYVAL(arrSurfaceSeries[nItem].val)
+				"cat":              this.SerCat(arrSurfaceSeries[nItem].cat),
+				"idx":              arrSurfaceSeries[nItem].idx,
+				"order":            arrSurfaceSeries[nItem].order,
+				"spPr":             this.SerSpPr(arrSurfaceSeries[nItem].spPr),
+				"tx":               this.SerSerTx(arrSurfaceSeries[nItem].tx),
+				"val":              this.SerYVAL(arrSurfaceSeries[nItem].val)
 			});
 		}
 
@@ -6146,8 +6146,8 @@
 		for (var nBand = 0; nBand < arrBandFmts.length; nBand++)
 		{
 			arrResult.push({
-				idx:  arrBandFmts[nBand].idx,
-				spPr: this.SerSpPr(arrBandFmts[nBand.spPr])
+				"idx":  arrBandFmts[nBand].idx,
+				"spPr": this.SerSpPr(arrBandFmts[nBand.spPr])
 			});
 		}
 
@@ -6162,15 +6162,15 @@
 		var sSizeRepresents = oBubbleChart.sizeRepresents === AscFormat.SIZE_REPRESENTS_AREA ? "area" : "w";
 		
 		return {
-			axId:           arrAxId,
-			bubble3D:       oBubbleChart.bubble3D,
-			bubbleScale:    oBubbleChart.bubbleScale,
-			dLbls:          this.SerDLbls(oBubbleChart.dLbls),
-			ser:            this.SerBubbleSeries(oBubbleChart.series),
-			showNegBubbles: oBubbleChart.showNegBubbles,
-			sizeRepresents: sSizeRepresents,
-			varyColors:     oBubbleChart.varyColors,
-			type:           "bubbleChart"
+			"axId":           arrAxId,
+			"bubble3D":       oBubbleChart.bubble3D,
+			"bubbleScale":    oBubbleChart.bubbleScale,
+			"dLbls":          this.SerDLbls(oBubbleChart.dLbls),
+			"ser":            this.SerBubbleSeries(oBubbleChart.series),
+			"showNegBubbles": oBubbleChart.showNegBubbles,
+			"sizeRepresents": sSizeRepresents,
+			"varyColors":     oBubbleChart.varyColors,
+			"type":           "bubbleChart"
 		}
 	};
 	WriterToJSON.prototype.SerBubbleSeries = function(arrBubbleSeries)
@@ -6180,19 +6180,19 @@
 		for (var nItem = 0; nItem < arrBubbleSeries.length; nItem++)
 		{
 			arrResultSeries.push({
-				bubble3D:         arrBubbleSeries.bubble3D,
-				bubbleSize:       this.SerYVAL(arrBubbleSeries[nItem].bubbleSize),
-				dLbls:            this.SerDLbls(arrBubbleSeries[nItem].dLbls),
-				dPt:              this.SerDataPoints(arrBubbleSeries[nItem].dPt),
-				errBars:          this.SerErrBars(arrBubbleSeries[nItem].errBars),
-				idx:              arrBubbleSeries[nItem].idx,
-				invertIfNegative: arrBubbleSeries[nItem].invertIfNegative,
-				order:            arrBubbleSeries[nItem].order,
-				spPr:             this.SerSpPr(arrBubbleSeries[nItem].spPr),
-				trendline:        this.SerTrendline(arrBubbleSeries[nItem].trendline),
-				tx:               this.SerSerTx(arrBubbleSeries[nItem].tx),
-				xVal:             this.SerCat(arrBubbleSeries[nItem].xVal),
-				yVal:             this.SerYVAL(arrBubbleSeries[nItem].yVal)
+				"bubble3D":         arrBubbleSeries.bubble3D,
+				"bubbleSize":       this.SerYVAL(arrBubbleSeries[nItem].bubbleSize),
+				"dLbls":            this.SerDLbls(arrBubbleSeries[nItem].dLbls),
+				"dPt":              this.SerDataPoints(arrBubbleSeries[nItem].dPt),
+				"errBars":          this.SerErrBars(arrBubbleSeries[nItem].errBars),
+				"idx":              arrBubbleSeries[nItem].idx,
+				"invertIfNegative": arrBubbleSeries[nItem].invertIfNegative,
+				"order":            arrBubbleSeries[nItem].order,
+				"spPr":             this.SerSpPr(arrBubbleSeries[nItem].spPr),
+				"trendline":        this.SerTrendline(arrBubbleSeries[nItem].trendline),
+				"tx":               this.SerSerTx(arrBubbleSeries[nItem].tx),
+				"xVal":             this.SerCat(arrBubbleSeries[nItem].xVal),
+				"yVal":             this.SerYVAL(arrBubbleSeries[nItem].yVal)
 			});
 		}
 
@@ -6228,11 +6228,11 @@
 			arrAxId.push(oScatterChart.axId[nAxis].axId);
 
 		return {
-			axId:         arrAxId,
-			dLbls:        this.SerDLbls(oScatterChart.dLbls),
-			scatterStyle: sScatterStyle,
-			ser:          this.SerScatterSeries(oScatterChart.series),
-			type:         "scatterChart"
+			"axId":         arrAxId,
+			"dLbls":        this.SerDLbls(oScatterChart.dLbls),
+			"scatterStyle": sScatterStyle,
+			"ser":          this.SerScatterSeries(oScatterChart.series),
+			"type":         "scatterChart"
 		}
 	};
 	WriterToJSON.prototype.SerScatterSeries = function(arrScatterSeries)
@@ -6242,18 +6242,18 @@
 		for (var nItem = 0; nItem < arrScatterSeries.length; nItem++)
 		{
 			arrResultSeries.push({
-				dLbls:            this.SerDLbls(arrScatterSeries[nItem].dLbls),
-				dPt:              this.SerDataPoints(arrScatterSeries[nItem].dPt),
-				errBars:          this.SerErrBars(arrScatterSeries[nItem].errBars),
-				idx:              arrScatterSeries[nItem].idx,
-				marker:           this.SerMarker(arrScatterSeries[nItem].marker),
-				order:            arrScatterSeries[nItem].order,
-				smooth:           arrScatterSeries[nItem].smooth,
-				spPr:             this.SerSpPr(arrScatterSeries[nItem].spPr),
-				trendline:        this.SerTrendline(arrScatterSeries[nItem].trendline),
-				tx:               this.SerSerTx(arrScatterSeries[nItem].tx),
-				xVal:             this.SerCat(arrScatterSeries[nItem].xVal),
-				yVal:             this.SerYVAL(arrScatterSeries[nItem].yVal)
+				"dLbls":            this.SerDLbls(arrScatterSeries[nItem].dLbls),
+				"dPt":              this.SerDataPoints(arrScatterSeries[nItem].dPt),
+				"errBars":          this.SerErrBars(arrScatterSeries[nItem].errBars),
+				"idx":              arrScatterSeries[nItem].idx,
+				"marker":           this.SerMarker(arrScatterSeries[nItem].marker),
+				"order":            arrScatterSeries[nItem].order,
+				"smooth":           arrScatterSeries[nItem].smooth,
+				"spPr":             this.SerSpPr(arrScatterSeries[nItem].spPr),
+				"trendline":        this.SerTrendline(arrScatterSeries[nItem].trendline),
+				"tx":               this.SerSerTx(arrScatterSeries[nItem].tx),
+				"xVal":             this.SerCat(arrScatterSeries[nItem].xVal),
+				"yVal":             this.SerYVAL(arrScatterSeries[nItem].yVal)
 			});
 		}
 
@@ -6266,13 +6266,13 @@
 			arrAxId.push(oStockChart.axId[nAxis].axId);
 
 		return {
-			axId:       arrAxId,
-			dLbls:      this.SerDLbls(oStockChart.dLbls),
-			dropLines:  this.SerSpPr(oStockChart.dropLines),
-			hiLowLines: this.SerSpPr(oStockChart.hiLowLines),
-			ser:        this.SerLineSeries(oStockChart.series),
-			upDownBars: this.SerUpDownBars(oStockChart.upDownBars),
-			type:       "stockChart"
+			"axId":       arrAxId,
+			"dLbls":      this.SerDLbls(oStockChart.dLbls),
+			"dropLines":  this.SerSpPr(oStockChart.dropLines),
+			"hiLowLines": this.SerSpPr(oStockChart.hiLowLines),
+			"ser":        this.SerLineSeries(oStockChart.series),
+			"upDownBars": this.SerUpDownBars(oStockChart.upDownBars),
+			"type":       "stockChart"
 		}
 	};
 	WriterToJSON.prototype.SerStockSeries = function(arrStockSeries)
@@ -6282,18 +6282,18 @@
 		for (var nItem = 0; nItem < arrStockSeries.length; nItem++)
 		{
 			arrResultSeries.push({
-				cat:              this.SerCat(arrStockSeries[nItem].cat),
-				dLbls:            this.SerDLbls(arrStockSeries[nItem].dLbls),
-				dPt:              this.SerDataPoints(arrStockSeries[nItem].dPt),
-				errBars:          this.SerErrBars(arrStockSeries[nItem].errBars),
-				idx:              arrStockSeries[nItem].idx,
-				marker:           this.SerMarker(arrStockSeries[nItem].marker),
-				order:            arrStockSeries[nItem].order,
-				smooth:           arrStockSeries[nItem].smooth,
-				spPr:             this.SerSpPr(arrStockSeries[nItem].spPr),
-				trendline:        this.SerTrendline(arrStockSeries[nItem].trendline),
-				tx:               this.SerSerTx(arrStockSeries[nItem].tx),
-				val:              this.SerYVAL(arrStockSeries[nItem].val)
+				"cat":              this.SerCat(arrStockSeries[nItem].cat),
+				"dLbls":            this.SerDLbls(arrStockSeries[nItem].dLbls),
+				"dPt":              this.SerDataPoints(arrStockSeries[nItem].dPt),
+				"errBars":          this.SerErrBars(arrStockSeries[nItem].errBars),
+				"idx":              arrStockSeries[nItem].idx,
+				"marker":           this.SerMarker(arrStockSeries[nItem].marker),
+				"order":            arrStockSeries[nItem].order,
+				"smooth":           arrStockSeries[nItem].smooth,
+				"spPr":             this.SerSpPr(arrStockSeries[nItem].spPr),
+				"trendline":        this.SerTrendline(arrStockSeries[nItem].trendline),
+				"tx":               this.SerSerTx(arrStockSeries[nItem].tx),
+				"val":              this.SerYVAL(arrStockSeries[nItem].val)
 			});
 		}
 
@@ -6321,13 +6321,13 @@
 			arrAxId.push(oAreaChart.axId[nAxis].axId);
 
 		return {
-			axId:       arrAxId,
-			dLbls:      this.SerDLbls(oAreaChart.dLbls),
-			dropLines:  this.SerSpPr(oAreaChart.dropLines),
-			grouping:   sGroupingType,
-			ser:        this.SerAreaSeries(oAreaChart.series),
-			varyColors: oAreaChart.varyColors,
-			type:       "areaChart"
+			"axId":       arrAxId,
+			"dLbls":      this.SerDLbls(oAreaChart.dLbls),
+			"dropLines":  this.SerSpPr(oAreaChart.dropLines),
+			"grouping":   sGroupingType,
+			"ser":        this.SerAreaSeries(oAreaChart.series),
+			"varyColors": oAreaChart.varyColors,
+			"type":       "areaChart"
 		}
 	};
 	WriterToJSON.prototype.SerAreaSeries = function(arrAreaSeries)
@@ -6337,17 +6337,17 @@
 		for (var nItem = 0; nItem < arrAreaSeries.length; nItem++)
 		{
 			arrResultSeries.push({
-				cat:              this.SerCat(arrAreaSeries[nItem].cat),
-				dLbls:            this.SerDLbls(arrAreaSeries[nItem].dLbls),
-				dPt:              this.SerDataPoints(arrAreaSeries[nItem].dPt),
-				errBars:          this.SerErrBars(arrAreaSeries[nItem].errBars),
-				idx:              arrAreaSeries[nItem].idx,
-				order:            arrAreaSeries[nItem].order,
-				pictureOptions:   this.SerPicOptions(arrAreaSeries[nItem].pictureOptions),
-				spPr:             this.SerSpPr(arrAreaSeries[nItem].spPr),
-				trendline:        this.SerTrendline(arrAreaSeries[nItem].trendline),
-				tx:               this.SerSerTx(arrAreaSeries[nItem].tx),
-				val:              this.SerYVAL(arrAreaSeries[nItem].val)
+				"cat":              this.SerCat(arrAreaSeries[nItem].cat),
+				"dLbls":            this.SerDLbls(arrAreaSeries[nItem].dLbls),
+				"dPt":              this.SerDataPoints(arrAreaSeries[nItem].dPt),
+				"errBars":          this.SerErrBars(arrAreaSeries[nItem].errBars),
+				"idx":              arrAreaSeries[nItem].idx,
+				"order":            arrAreaSeries[nItem].order,
+				"pictureOptions":   this.SerPicOptions(arrAreaSeries[nItem].pictureOptions),
+				"spPr":             this.SerSpPr(arrAreaSeries[nItem].spPr),
+				"trendline":        this.SerTrendline(arrAreaSeries[nItem].trendline),
+				"tx":               this.SerSerTx(arrAreaSeries[nItem].tx),
+				"val":              this.SerYVAL(arrAreaSeries[nItem].val)
 			});
 		}
 
@@ -6356,12 +6356,12 @@
 	WriterToJSON.prototype.SerPieChart = function(oPieChart)
 	{
 		return {
-			b3D:           oPieChart.b3D,
-			firstSliceAng: oPieChart.firstSliceAng,
-			dLbls:         this.SerDLbls(oPieChart.dLbls),
-			ser:           this.SerPieSeries(oPieChart.series),
-			varyColors:    oPieChart.varyColors,
-			type:          "pieChart"
+			"b3D":           oPieChart.b3D,
+			"firstSliceAng": oPieChart.firstSliceAng,
+			"dLbls":         this.SerDLbls(oPieChart.dLbls),
+			"ser":           this.SerPieSeries(oPieChart.series),
+			"varyColors":    oPieChart.varyColors,
+			"type":          "pieChart"
 		}
 	};
 	WriterToJSON.prototype.SerPieSeries = function(arrPieSeries)
@@ -6371,15 +6371,15 @@
 		for (var nItem = 0; nItem < arrPieSeries.length; nItem++)
 		{
 			arrResultSeries.push({
-				cat:              this.SerCat(arrPieSeries[nItem].cat),
-				dLbls:            this.SerDLbls(arrPieSeries[nItem].dLbls),
-				dPt:              this.SerDataPoints(arrPieSeries[nItem].dPt),
-				explosion:        arrPieSeries[nItem].explosion,
-				idx:              arrPieSeries[nItem].idx,
-				order:            arrPieSeries[nItem].order,
-				spPr:             this.SerSpPr(arrPieSeries[nItem].spPr),
-				tx:               this.SerSerTx(arrPieSeries[nItem].tx),
-				val:              this.SerYVAL(arrPieSeries[nItem].val)
+				"cat":              this.SerCat(arrPieSeries[nItem].cat),
+				"dLbls":            this.SerDLbls(arrPieSeries[nItem].dLbls),
+				"dPt":              this.SerDataPoints(arrPieSeries[nItem].dPt),
+				"explosion":        arrPieSeries[nItem].explosion,
+				"idx":              arrPieSeries[nItem].idx,
+				"order":            arrPieSeries[nItem].order,
+				"spPr":             this.SerSpPr(arrPieSeries[nItem].spPr),
+				"tx":               this.SerSerTx(arrPieSeries[nItem].tx),
+				"val":              this.SerYVAL(arrPieSeries[nItem].val)
 			});
 		}
 
@@ -6411,17 +6411,17 @@
 			arrAxId.push(oBarChart.axId[nAxis].axId);
 
 		return {
-			b3D:        oBarChart.b3D,
-			axId:       arrAxId,
-			barDir:     sBarDirType,
-			dLbls:      this.SerDLbls(oBarChart.dLbls),
-			gapWidth:   oBarChart.gapWidth,
-			grouping:   sGroupingType,
-			overlap:    oBarChart.overlap,
-			serLines:   this.SerSpPr(oBarChart.serLines),
-			ser:        this.SerBarSeries(oBarChart.series),
-			varyColors: oBarChart.varyColors,
-			type:       "barChart"
+			"b3D":        oBarChart.b3D,
+			"axId":       arrAxId,
+			"barDir":     sBarDirType,
+			"dLbls":      this.SerDLbls(oBarChart.dLbls),
+			"gapWidth":   oBarChart.gapWidth,
+			"grouping":   sGroupingType,
+			"overlap":    oBarChart.overlap,
+			"serLines":   this.SerSpPr(oBarChart.serLines),
+			"ser":        this.SerBarSeries(oBarChart.series),
+			"varyColors": oBarChart.varyColors,
+			"type":       "barChart"
 		}
 	};
 	WriterToJSON.prototype.SerLineChart = function(oLineChart)
@@ -6446,18 +6446,18 @@
 			arrAxId.push(oLineChart.axId[nAxis].axId);
 
 		return {
-			b3D:        oLineChart.b3D,
-			axId:       arrAxId,
-			dLbls:      this.SerDLbls(oLineChart.dLbls),
-			dropLines:  this.SerSpPr(oLineChart.dropLines),
-			grouping:   sGroupingType,
-			hiLowLines: this.SerSpPr(oLineChart.hiLowLines),
-			marker:     oLineChart.marker,
-			ser:        this.SerLineSeries(oLineChart.series),
-			smooth:     oLineChart.smooth,
-			upDownBars: this.SerUpDownBars(oLineChart.upDownBars),
-			varyColors: oLineChart.varyColors,
-			type:       "lineChart"
+			"b3D":        oLineChart.b3D,
+			"axId":       arrAxId,
+			"dLbls":      this.SerDLbls(oLineChart.dLbls),
+			"dropLines":  this.SerSpPr(oLineChart.dropLines),
+			"grouping":   sGroupingType,
+			"hiLowLines": this.SerSpPr(oLineChart.hiLowLines),
+			"marker":     oLineChart.marker,
+			"ser":        this.SerLineSeries(oLineChart.series),
+			"smooth":     oLineChart.smooth,
+			"upDownBars": this.SerUpDownBars(oLineChart.upDownBars),
+			"varyColors": oLineChart.varyColors,
+			"type":       "lineChart"
 		}
 	};
 	WriterToJSON.prototype.SerUpDownBars = function(oUpDownBars)
@@ -6466,9 +6466,9 @@
 			return oUpDownBars;
 
 		return {
-			downBars: this.SerSpPr(oUpDownBars.downBars),
-			gapWidth: oUpDownBars.gapWidth,
-			upBars:   this.SerSpPr(oUpDownBars.upBars)
+			"downBars": this.SerSpPr(oUpDownBars.downBars),
+			"gapWidth": oUpDownBars.gapWidth,
+			"upBars":   this.SerSpPr(oUpDownBars.upBars)
 		}
 	};
 	WriterToJSON.prototype.SerLineSeries = function(arrLineSeries)
@@ -6478,18 +6478,18 @@
 		for (var nItem = 0; nItem < arrLineSeries.length; nItem++)
 		{
 			arrResultSeries.push({
-				cat:              this.SerCat(arrLineSeries[nItem].cat),
-				dLbls:            this.SerDLbls(arrLineSeries[nItem].dLbls),
-				dPt:              this.SerDataPoints(arrLineSeries[nItem].dPt),
-				errBars:          this.SerErrBars(arrLineSeries[nItem].errBars),
-				idx:              arrLineSeries[nItem].idx,
-				marker:           this.SerMarker(arrLineSeries[nItem].marker),
-				order:            arrLineSeries[nItem].order,
-				smooth:           arrLineSeries[nItem].smooth,
-				spPr:             this.SerSpPr(arrLineSeries[nItem].spPr),
-				trendline:        this.SerTrendline(arrLineSeries[nItem].trendline),
-				tx:               this.SerSerTx(arrLineSeries[nItem].tx),
-				val:              this.SerYVAL(arrLineSeries[nItem].val)
+				"cat":              this.SerCat(arrLineSeries[nItem].cat),
+				"dLbls":            this.SerDLbls(arrLineSeries[nItem].dLbls),
+				"dPt":              this.SerDataPoints(arrLineSeries[nItem].dPt),
+				"errBars":          this.SerErrBars(arrLineSeries[nItem].errBars),
+				"idx":              arrLineSeries[nItem].idx,
+				"marker":           this.SerMarker(arrLineSeries[nItem].marker),
+				"order":            arrLineSeries[nItem].order,
+				"smooth":           arrLineSeries[nItem].smooth,
+				"spPr":             this.SerSpPr(arrLineSeries[nItem].spPr),
+				"trendline":        this.SerTrendline(arrLineSeries[nItem].trendline),
+				"tx":               this.SerSerTx(arrLineSeries[nItem].tx),
+				"val":              this.SerYVAL(arrLineSeries[nItem].val)
 			});
 		}
 
@@ -6501,11 +6501,11 @@
 			return oTitle;
 		
 		return {
-			layout:  this.SerLayout(oTitle.layout),
-			overlay: oTitle.overlay,
-			spPr:    this.SerSpPr(oTitle.spPr),
-			tx:      this.SerChartTx(oTitle.tx),
-			txPr:    this.SerTxPr(oTitle.txPr)
+			"layout":  this.SerLayout(oTitle.layout),
+			"overlay": oTitle.overlay,
+			"spPr":    this.SerSpPr(oTitle.spPr),
+			"tx":      this.SerChartTx(oTitle.tx),
+			"txPr":    this.SerTxPr(oTitle.txPr)
 		}
 	};
 	WriterToJSON.prototype.SerPrintSettings = function(oPrintSettings)
@@ -6514,9 +6514,9 @@
 			return oPrintSettings;
 
 		return {
-			headerFooter: this.SerHeaderFooterChart(oPrintSettings.headerFooter),
-			pageMargins:  this.SerPageMarginsChart(oPrintSettings.pageMargins),
-			pageSetup:    this.SerPageSetup(oPrintSettings.pageSetup)
+			"headerFooter": this.SerHeaderFooterChart(oPrintSettings.headerFooter),
+			"pageMargins":  this.SerPageMarginsChart(oPrintSettings.pageMargins),
+			"pageSetup":    this.SerPageSetup(oPrintSettings.pageSetup)
 		}
 	};
 	WriterToJSON.prototype.SerPageMarginsChart = function(oPageMarginsChart)
@@ -6525,12 +6525,12 @@
 			return oPageMarginsChart;
 
 		return {
-			b:      oPageMarginsChart.b,
-			footer: oPageMarginsChart.footer,
-			header: oPageMarginsChart.header,
-			l:      oPageMarginsChart.l,
-			r:      oPageMarginsChart.r,
-			t:      oPageMarginsChart.t,
+			"b":      oPageMarginsChart.b,
+			"footer": oPageMarginsChart.footer,
+			"header": oPageMarginsChart.header,
+			"l":      oPageMarginsChart.l,
+			"r":      oPageMarginsChart.r,
+			"t":      oPageMarginsChart.t,
 		}
 	};
 	WriterToJSON.prototype.SerPageSetup = function(oPageSetup)
@@ -6553,17 +6553,17 @@
 		}
 
 		return {
-			blackAndWhite:    oPageSetup.blackAndWhite,
-			copies:           oPageSetup.copies,
-			draft:            oPageSetup.draft,
-			firstPageNumber:  oPageSetup.firstPageNumber,
-			horizontalDpi:    oPageSetup.horizontalDpi,
-			orientation:      sOrientType,
-			paperHeight:      oPageSetup.paperHeight,
-			paperSize:        oPageSetup.paperSize,
-			paperWidth:       oPageSetup.paperWidth,
-			useFirstPageNumb: oPageSetup.useFirstPageNumb,
-			verticalDpi:      oPageSetup.verticalDpi
+			"blackAndWhite":    oPageSetup.blackAndWhite,
+			"copies":           oPageSetup.copies,
+			"draft":            oPageSetup.draft,
+			"firstPageNumber":  oPageSetup.firstPageNumber,
+			"horizontalDpi":    oPageSetup.horizontalDpi,
+			"orientation":      sOrientType,
+			"paperHeight":      oPageSetup.paperHeight,
+			"paperSize":        oPageSetup.paperSize,
+			"paperWidth":       oPageSetup.paperWidth,
+			"useFirstPageNumb": oPageSetup.useFirstPageNumb,
+			"verticalDpi":      oPageSetup.verticalDpi
 		}
 	};
 	WriterToJSON.prototype.SerHeaderFooterChart = function(oHeaderFooter)
@@ -6572,15 +6572,15 @@
 			return oHeaderFooter;
 
 		return	{
-			evenFooter:       oHeaderFooter.evenFooter,
-			evenHeader:       oHeaderFooter.evenHeader,
-			firstFooter:      oHeaderFooter.firstFooter,
-			firstHeader:      oHeaderFooter.firstHeader,
-			oddFooter:        oHeaderFooter.oddFooter,
-			oddHeader:        oHeaderFooter.oddHeader,
-			alignWithMargins: oHeaderFooter.alignWithMargins,
-			differentFirst:   oHeaderFooter.differentFirst,
-			differentOddEven: oHeaderFooter.differentOddEven
+			"evenFooter":       oHeaderFooter.evenFooter,
+			"evenHeader":       oHeaderFooter.evenHeader,
+			"firstFooter":      oHeaderFooter.firstFooter,
+			"firstHeader":      oHeaderFooter.firstHeader,
+			"oddFooter":        oHeaderFooter.oddFooter,
+			"oddHeader":        oHeaderFooter.oddHeader,
+			"alignWithMargins": oHeaderFooter.alignWithMargins,
+			"differentFirst":   oHeaderFooter.differentFirst,
+			"differentOddEven": oHeaderFooter.differentOddEven
 		}
 	};
 	WriterToJSON.prototype.SerWall = function(oWall)
@@ -6589,9 +6589,9 @@
 			return oWall;
 		
 		return {
-			pictureOptions: this.SerPicOptions(oWall.pictureOptions),
-			spPr:           this.SerSpPr(oWall.spPr),
-			thickness:      oWall.thickness
+			"pictureOptions": this.SerPicOptions(oWall.pictureOptions),
+			"spPr":           this.SerSpPr(oWall.spPr),
+			"thickness":      oWall.thickness
 		}
 	};
 	WriterToJSON.prototype.SerMarker = function(oMarker)
@@ -6638,9 +6638,9 @@
 		}
 		
 		return {
-			size:   oMarker.size,
-			spPr:   this.SerSpPr(oMarker.spPr),
-			symbol: sSymbolType
+			"size":   oMarker.size,
+			"spPr":   this.SerSpPr(oMarker.spPr),
+			"symbol": sSymbolType
 		}
 	};
 	WriterToJSON.prototype.SerPivotFmt = function(oFmt)
@@ -6649,11 +6649,11 @@
 			return oFmt;
 		
 		return {
-			dLbl:   this.SerDlbl(oFmt.dLbl),
-			idx:    oFmt.idx,
-			marker: this.SerMarker(oFmt.marker),
-			spPr:   this.SerSpPr(oFmt.spPr),
-			txPr:   this.SerTxPr(oFmt.txPr)
+			"dLbl":   this.SerDlbl(oFmt.dLbl),
+			"idx":    oFmt.idx,
+			"marker": this.SerMarker(oFmt.marker),
+			"spPr":   this.SerSpPr(oFmt.spPr),
+			"txPr":   this.SerTxPr(oFmt.txPr)
 		}
 	};
 	WriterToJSON.prototype.SerPivotFmts = function(arrFmts)
@@ -6661,9 +6661,7 @@
 		var arrResult = [];
 
 		for (var nItem = 0; nItem < arrFmts.length; nItem++)
-		{
 			arrResult.push(this.SerPivotFmt(arrFmts[nItem]));
-		}
 
 		return arrResult;
 	};
@@ -6673,12 +6671,12 @@
 			return oView3D;
 		
 		return {
-			depthPercent: oView3D.depthPercent,
-			hPercent:     oView3D.hPercent,
-			perspective:  oView3D.perspective,
-			rAngAx:       oView3D.rAngAx,
-			rotX:         oView3D.rotX,
-			rotY:         oView3D.rotY
+			"depthPercent": oView3D.depthPercent,
+			"hPercent":     oView3D.hPercent,
+			"perspective":  oView3D.perspective,
+			"rAngAx":       oView3D.rAngAx,
+			"rotX":         oView3D.rotX,
+			"rotY":         oView3D.rotY
 		}
 	};
 	WriterToJSON.prototype.SerLegendEntry = function(oLegendEntry)
@@ -6687,9 +6685,9 @@
 			return oLegendEntry;
 		
 		return {
-			delete: oLegendEntry.bDelete,
-			idx:    oLegendEntry.idx,
-			txPr:   this.SerTxPr(oLegendEntry.txPr)
+			"delete": oLegendEntry.bDelete,
+			"idx":    oLegendEntry.idx,
+			"txPr":   this.SerTxPr(oLegendEntry.txPr)
 		}
 	};
 	WriterToJSON.prototype.SerLegendEntries = function(arrEntries)
@@ -6697,9 +6695,7 @@
 		var arrResults = [];
 
 		for (var nItem = 0; nItem < arrEntries.length; nItem++)
-		{
 			arrResults.push(this.SerLegendEntry(arrEntries[nItem]));	
-		}
 
 		return arrResults;
 	};
@@ -6711,28 +6707,28 @@
 		var rasterImageId = oBlipFill.getBase64RasterImageId(true);
 		
 		return {
-			blip: this.SerEffects(oBlipFill.Effects),
+			"blip": this.SerEffects(oBlipFill.Effects),
 
-			srcRect: oBlipFill.srcRect ? {
-				b: oBlipFill.srcRect.b,
-				l: oBlipFill.srcRect.l,
-				r: oBlipFill.srcRect.r,
-				t: oBlipFill.srcRect.t
+			"srcRect": oBlipFill.srcRect ? {
+				"b": oBlipFill.srcRect.b,
+				"l": oBlipFill.srcRect.l,
+				"r": oBlipFill.srcRect.r,
+				"t": oBlipFill.srcRect.t
 			} : oBlipFill.srcRect,
 
-			tile: oBlipFill.tile ? {
-				algn: GetRectAlgnStrType(oBlipFill.tile.algn),
-				flip: oBlipFill.tile.flip,
-				sx:   oBlipFill.tile.sx,
-				sy:   oBlipFill.tile.sy,
-				tx:   oBlipFill.tile.tx,
-				ty:   oBlipFill.tile.ty
+			"tile": oBlipFill.tile ? {
+				"algn": GetRectAlgnStrType(oBlipFill.tile.algn),
+				"flip": oBlipFill.tile.flip,
+				"sx":   oBlipFill.tile.sx,
+				"sy":   oBlipFill.tile.sy,
+				"tx":   oBlipFill.tile.tx,
+				"ty":   oBlipFill.tile.ty
 			} : oBlipFill.tile,
 
-			stretch:       oBlipFill.stretch,
-			rotWithShape:  oBlipFill.rotWithShape,
-			rasterImageId: rasterImageId,
-			type: "blipFill"
+			"stretch":       oBlipFill.stretch,
+			"rotWithShape":  oBlipFill.rotWithShape,
+			"rasterImageId": rasterImageId,
+			"type": "blipFill"
 		};
 	};
 	WriterToJSON.prototype.SerUniNvPr = function(oUniNvPr)
@@ -6741,9 +6737,9 @@
 			return oUniNvPr;
 
 		return {
-			cNvPr:     this.SerCNvPr(oUniNvPr.cNvPr),
-			nvPr:      this.SerNvPr(oUniNvPr.nvPr),
-			nvUniSpPr: this.SerNvUniSpPr(oUniNvPr.nvUniSpPr)
+			"cNvPr":     this.SerCNvPr(oUniNvPr.cNvPr),
+			"nvPr":      this.SerNvPr(oUniNvPr.nvPr),
+			"nvUniSpPr": this.SerNvUniSpPr(oUniNvPr.nvUniSpPr)
 		};
 	};
 	WriterToJSON.prototype.SerNvUniSpPr = function(oNvUniSpPr)
@@ -6752,11 +6748,11 @@
 			return oNvUniSpPr;
 
 		return {
-			locks     : oNvUniSpPr.locks,
-			stCnxIdx  : oNvUniSpPr.stCnxIdx,
-			stCnxId   : oNvUniSpPr.stCnxId,
-			endCnxIdx : oNvUniSpPr.endCnxIdx,
-			endCnxId  : oNvUniSpPr.endCnxId
+			"locks"     : ToXML_DrawingLockType(oNvUniSpPr.locks),
+			"stCnxIdx"  : oNvUniSpPr.stCnxIdx,
+			"stCnxId"   : oNvUniSpPr.stCnxId,
+			"endCnxIdx" : oNvUniSpPr.endCnxIdx,
+			"endCnxId"  : oNvUniSpPr.endCnxId
 		}
 	};
 	WriterToJSON.prototype.SerBullet = function(oBullet)
@@ -6784,8 +6780,8 @@
 			}
 
 			return {
-				type: sBulletColorType,
-				color: this.SerColor(oBulletColor.UniColor)
+				"type": sBulletColorType,
+				"color": this.SerColor(oBulletColor.UniColor)
 			}
 		}
 		
@@ -6812,8 +6808,8 @@
 			}
 
 			return {
-				type: sBulleSizeType,
-				val:  oBulletSize.val
+				"type": sBulleSizeType,
+				"val":  oBulletSize.val
 			}
 		}
 		
@@ -6837,8 +6833,8 @@
 			}
 
 			return {
-				type:     sBulleTypefaceType,
-				typeface: oBulletTypeface.typeface
+				"type":     sBulleTypefaceType,
+				"typeface": oBulletTypeface.typeface
 			}
 		}
 		
@@ -6993,18 +6989,18 @@
 			}
 
 			return {
-				type:        sBulleType,
-				char:        oBulletType.Char,
-				autoNumType: sAutoNumType,
-				startAt:     oBulletType.startAt
+				"type":        sBulleType,
+				"char":        oBulletType.Char,
+				"autoNumType": sAutoNumType,
+				"startAt":     oBulletType.startAt
 			}
 		}
 		
 		return {
-			bulletColor:    SerBulletColor.call(this, oBullet.bulletColor),
-			bulletSize:     SerBulletSize.call(this, oBullet.bulletSize),
-			bulletTypeface: SerBulletTypeFace.call(this, oBullet.bulletTypeface),
-			bulletType:     SerBulletType.call(this, oBullet.bulletType)
+			"bulletColor":    SerBulletColor.call(this, oBullet.bulletColor),
+			"bulletSize":     SerBulletSize.call(this, oBullet.bulletSize),
+			"bulletTypeface": SerBulletTypeFace.call(this, oBullet.bulletTypeface),
+			"bulletType":     SerBulletType.call(this, oBullet.bulletType)
 		}
 	};
 	WriterToJSON.prototype.SerSpStyle = function(oStyle)
@@ -7013,10 +7009,10 @@
 			return oStyle;
 		
 		return {
-			lnRef:     this.SerStyleRef(oStyle.lnRef),
-			fillRef:   this.SerStyleRef(oStyle.fillRef),
-			effectRef: this.SerStyleRef(oStyle.effectRef),
-			fontRef:   this.SerFontRef(oStyle.fontRef)
+			"lnRef":     this.SerStyleRef(oStyle.lnRef),
+			"fillRef":   this.SerStyleRef(oStyle.fillRef),
+			"effectRef": this.SerStyleRef(oStyle.effectRef),
+			"fontRef":   this.SerFontRef(oStyle.fontRef)
 		}
 	};
 	WriterToJSON.prototype.SerStyleRef = function(oStyleRef)
@@ -7025,8 +7021,8 @@
 			return oStyleRef;
 
 		return {
-			idx:   oStyleRef.idx,
-			color: this.SerColor(oStyleRef.Color)
+			"idx":   oStyleRef.idx,
+			"color": this.SerColor(oStyleRef.Color)
 		}
 	};
 	WriterToJSON.prototype.SerFontRef = function(oFontRef)
@@ -7035,8 +7031,8 @@
 			return oFontRef;
 			
 		return {
-			idx:   oFontRef.idx,
-			color: this.SerColor(oFontRef.Color)
+			"idx":   oFontRef.idx,
+			"color": this.SerColor(oFontRef.Color)
 		}
 	};
 	WriterToJSON.prototype.SerChartSpace = function(oChartSpace)
@@ -7049,24 +7045,24 @@
 			aUserShapes.push(this.SerUserShape(oChartSpace.userShapes[nUserShape]));
 
 		return {
-			extX:           private_MM2EMU(oChartSpace.extX),
-			extY:           private_MM2EMU(oChartSpace.extY),
-			chart:          this.SerChart(oChartSpace.chart),
-			chartColors:    this.SerChartColors(oChartSpace.chartColors),
-			chartStyle:     this.SerChartStyle(oChartSpace.chartStyle),
-			clrMapOvr:      this.SerColorMapOvr(oChartSpace.clrMapOvr),
-			date1904:       oChartSpace.date1904,
-			externalData:   this.SerExternalData(oChartSpace.externalData),
-			lang:           oChartSpace.lang,
-			pivotSource:    this.SerPivotSource(oChartSpace.pivotSource),
-			printSettings:  this.SerPrintSettings(oChartSpace.printSettings),
-			protection:     this.SerProtection(oChartSpace.protection),
-			roundedCorners: oChartSpace.roundedCorners,
-			spPr:           this.SerSpPr(oChartSpace.spPr),
-			style:          oChartSpace.style,
-			txPr:           this.SerTxPr(oChartSpace.txPr),
-			userShapes:     aUserShapes,
-			type:           "chartSpace"
+			"extX":           private_MM2EMU(oChartSpace.extX),
+			"extY":           private_MM2EMU(oChartSpace.extY),
+			"chart":          this.SerChart(oChartSpace.chart),
+			"chartColors":    this.SerChartColors(oChartSpace.chartColors),
+			"chartStyle":     this.SerChartStyle(oChartSpace.chartStyle),
+			"clrMapOvr":      this.SerColorMapOvr(oChartSpace.clrMapOvr),
+			"date1904":       oChartSpace.date1904,
+			"externalData":   this.SerExternalData(oChartSpace.externalData),
+			"lang":           oChartSpace.lang,
+			"pivotSource":    this.SerPivotSource(oChartSpace.pivotSource),
+			"printSettings":  this.SerPrintSettings(oChartSpace.printSettings),
+			"protection":     this.SerProtection(oChartSpace.protection),
+			"roundedCorners": oChartSpace.roundedCorners,
+			"spPr":           this.SerSpPr(oChartSpace.spPr),
+			"style":          oChartSpace.style,
+			"txPr":           this.SerTxPr(oChartSpace.txPr),
+			"userShapes":     aUserShapes,
+			"type":           "chartSpace"
 		};
 	};
 	WriterToJSON.prototype.SerColorMapOvr = function(oClrMap)
@@ -7150,12 +7146,12 @@
 			sType = "absSizeAnchor";
 
 		return {
-			fromX:  oUserShape.fromX != undefined ? private_MM2Twips(oUserShape.fromX) : oUserShape.fromX,
-			fromY:  oUserShape.fromY != undefined ? private_MM2Twips(oUserShape.fromY) : oUserShape.fromY,
-			object: this.SerGraphicObject(oUserShape.object),
-			toX:    oUserShape.toX,
-			toY:    oUserShape.toY,
-			type:   sType
+			"fromX":  oUserShape.fromX != undefined ? private_MM2Twips(oUserShape.fromX) : oUserShape.fromX,
+			"fromY":  oUserShape.fromY != undefined ? private_MM2Twips(oUserShape.fromY) : oUserShape.fromY,
+			"object": this.SerGraphicObject(oUserShape.object),
+			"toX":    oUserShape.toX,
+			"toY":    oUserShape.toY,
+			"type":   sType
 		}
 	};
 	WriterToJSON.prototype.SerChartColors = function(oChartColors)
@@ -7173,9 +7169,9 @@
 		}
 
 		return {
-			id:    oChartColors.id,
-			items: aItems,
-			meth:  oChartColors.meth
+			"id":    oChartColors.id,
+			"items": aItems,
+			"meth":  oChartColors.meth
 		}
 	};
 	WriterToJSON.prototype.SerChartStyle = function(oChartStyle)
@@ -7184,38 +7180,38 @@
 			return oChartStyle;
 
 		return {
-			id:                 oChartStyle.id,
-			axisTitle:          this.SerStyleEntry(oChartStyle.axisTitle),
-			categoryAxis:       this.SerStyleEntry(oChartStyle.categoryAxis),
-			chartArea:          this.SerStyleEntry(oChartStyle.chartArea),
-			dataLabel:          this.SerStyleEntry(oChartStyle.dataLabel),
-			dataLabelCallout:   this.SerStyleEntry(oChartStyle.dataLabelCallout),
-			dataPoint:          this.SerStyleEntry(oChartStyle.dataPoint),
-			dataPoint3D:        this.SerStyleEntry(oChartStyle.dataPoint3D),
-			dataPointLine:      this.SerStyleEntry(oChartStyle.dataPointLine),
-			dataPointMarker:    this.SerStyleEntry(oChartStyle.dataPointMarker),
-			dataPointWireframe: this.SerStyleEntry(oChartStyle.dataPointWireframe),
-			dataTable:          this.SerStyleEntry(oChartStyle.dataTable),
-			downBar:            this.SerStyleEntry(oChartStyle.downBar),
-			dropLine:           this.SerStyleEntry(oChartStyle.dropLine),
-			errorBar:           this.SerStyleEntry(oChartStyle.errorBar),
-			floor:              this.SerStyleEntry(oChartStyle.floor),
-			gridlineMajor:      this.SerStyleEntry(oChartStyle.gridlineMajor),
-			gridlineMinor:      this.SerStyleEntry(oChartStyle.gridlineMinor),
-			hiLoLine:           this.SerStyleEntry(oChartStyle.hiLoLine),
-			leaderLine:         this.SerStyleEntry(oChartStyle.leaderLine),
-			legend:             this.SerStyleEntry(oChartStyle.legend),
-			plotArea:           this.SerStyleEntry(oChartStyle.plotArea),
-			plotArea3D:         this.SerStyleEntry(oChartStyle.plotArea3D),
-			seriesAxis:         this.SerStyleEntry(oChartStyle.seriesAxis),
-			seriesLine:         this.SerStyleEntry(oChartStyle.seriesLine),
-			title:              this.SerStyleEntry(oChartStyle.title),
-			trendline:          this.SerStyleEntry(oChartStyle.trendline),
-			trendlineLabel:     this.SerStyleEntry(oChartStyle.trendlineLabel),
-			upBar:              this.SerStyleEntry(oChartStyle.upBar),
-			valueAxis:          this.SerStyleEntry(oChartStyle.valueAxis),
-			wall:               this.SerStyleEntry(oChartStyle.wall),
-			markerLayout:       this.SerMarkerLayout(oChartStyle.markerLayout)
+			"id":                 oChartStyle.id,
+			"axisTitle":          this.SerStyleEntry(oChartStyle.axisTitle),
+			"categoryAxis":       this.SerStyleEntry(oChartStyle.categoryAxis),
+			"chartArea":          this.SerStyleEntry(oChartStyle.chartArea),
+			"dataLabel":          this.SerStyleEntry(oChartStyle.dataLabel),
+			"dataLabelCallout":   this.SerStyleEntry(oChartStyle.dataLabelCallout),
+			"dataPoint":          this.SerStyleEntry(oChartStyle.dataPoint),
+			"dataPoint3D":        this.SerStyleEntry(oChartStyle.dataPoint3D),
+			"dataPointLine":      this.SerStyleEntry(oChartStyle.dataPointLine),
+			"dataPointMarker":    this.SerStyleEntry(oChartStyle.dataPointMarker),
+			"dataPointWireframe": this.SerStyleEntry(oChartStyle.dataPointWireframe),
+			"dataTable":          this.SerStyleEntry(oChartStyle.dataTable),
+			"downBar":            this.SerStyleEntry(oChartStyle.downBar),
+			"dropLine":           this.SerStyleEntry(oChartStyle.dropLine),
+			"errorBar":           this.SerStyleEntry(oChartStyle.errorBar),
+			"floor":              this.SerStyleEntry(oChartStyle.floor),
+			"gridlineMajor":      this.SerStyleEntry(oChartStyle.gridlineMajor),
+			"gridlineMinor":      this.SerStyleEntry(oChartStyle.gridlineMinor),
+			"hiLoLine":           this.SerStyleEntry(oChartStyle.hiLoLine),
+			"leaderLine":         this.SerStyleEntry(oChartStyle.leaderLine),
+			"legend":             this.SerStyleEntry(oChartStyle.legend),
+			"plotArea":           this.SerStyleEntry(oChartStyle.plotArea),
+			"plotArea3D":         this.SerStyleEntry(oChartStyle.plotArea3D),
+			"seriesAxis":         this.SerStyleEntry(oChartStyle.seriesAxis),
+			"seriesLine":         this.SerStyleEntry(oChartStyle.seriesLine),
+			"title":              this.SerStyleEntry(oChartStyle.title),
+			"trendline":          this.SerStyleEntry(oChartStyle.trendline),
+			"trendlineLabel":     this.SerStyleEntry(oChartStyle.trendlineLabel),
+			"upBar":              this.SerStyleEntry(oChartStyle.upBar),
+			"valueAxis":          this.SerStyleEntry(oChartStyle.valueAxis),
+			"wall":               this.SerStyleEntry(oChartStyle.wall),
+			"markerLayout":       this.SerMarkerLayout(oChartStyle.markerLayout)
 		}
 	};
 	WriterToJSON.prototype.SerStyleEntry = function(oStyleEntry)
@@ -7224,15 +7220,15 @@
 			return oStyleEntry;
 
 		return {
-			type:           oStyleEntry.type,
-			lineWidthScale: oStyleEntry.lineWidthScale,
-			lnRef:          this.SerStyleRef(oStyleEntry.lnRef),
-			fillRef:        this.SerStyleRef(oStyleEntry.fillRef),
-			effectRef:      this.SerStyleRef(oStyleEntry.effectRef),
-			fontRef:        this.SerFontRef(oStyleEntry.fontRef),
-			defRPr:         this.SerTextPr(oStyleEntry.defRPr),
-			bodyPr:         this.SerBodyPr(oStyleEntry.bodyPr),
-			spPr:           this.SerSpPr(oStyleEntry.spPr),
+			"type":           oStyleEntry.type,
+			"lineWidthScale": oStyleEntry.lineWidthScale,
+			"lnRef":          this.SerStyleRef(oStyleEntry.lnRef),
+			"fillRef":        this.SerStyleRef(oStyleEntry.fillRef),
+			"effectRef":      this.SerStyleRef(oStyleEntry.effectRef),
+			"fontRef":        this.SerFontRef(oStyleEntry.fontRef),
+			"defRPr":         this.SerTextPr(oStyleEntry.defRPr),
+			"bodyPr":         this.SerBodyPr(oStyleEntry.bodyPr),
+			"spPr":           this.SerSpPr(oStyleEntry.spPr),
 		}
 	};
 	WriterToJSON.prototype.SerMarkerLayout = function(oMarkerLayout)
@@ -7241,8 +7237,8 @@
 			return oMarkerLayout;
 
 		return {
-			size:   oMarkerLayout.size,
-			symbol: oMarkerLayout.symbol
+			"size":   oMarkerLayout.size,
+			"symbol": oMarkerLayout.symbol
 		}
 	};
 	WriterToJSON.prototype.SerChart = function(oChart)
@@ -7265,18 +7261,18 @@
 		}
 
 		return {
-			autoTitleDeleted: oChart.autoTitleDeleted,
-			backwall:         this.SerWall(oChart.backWall),
-			dispBlanksAs:     sDispBlanksAs,
-			floor:            this.SerWall(oChart.floor),
-			legend:           this.SerLegend(oChart.legend),
-			pivotFmts:        this.SerPivotFmts(oChart.pivotFmts),
-			plotArea:         this.SerPlotArea(oChart.plotArea),
-			plotVisOnly:      oChart.plotVisOnly,
-			showDLblsOverMax: oChart.showDLblsOverMax,
-			sideWall:         this.SerWall(oChart.sideWall),
-			title:            this.SerTitle(oChart.title),
-			view3D:           this.SerView3D(oChart.view3D)
+			"autoTitleDeleted": oChart.autoTitleDeleted,
+			"backwall":         this.SerWall(oChart.backWall),
+			"dispBlanksAs":     sDispBlanksAs,
+			"floor":            this.SerWall(oChart.floor),
+			"legend":           this.SerLegend(oChart.legend),
+			"pivotFmts":        this.SerPivotFmts(oChart.pivotFmts),
+			"plotArea":         this.SerPlotArea(oChart.plotArea),
+			"plotVisOnly":      oChart.plotVisOnly,
+			"showDLblsOverMax": oChart.showDLblsOverMax,
+			"sideWall":         this.SerWall(oChart.sideWall),
+			"title":            this.SerTitle(oChart.title),
+			"view3D":           this.SerView3D(oChart.view3D)
 		}
 	};
 	WriterToJSON.prototype.SerLegend = function(oLegend)
@@ -7305,12 +7301,12 @@
 		}
 
 		return	{
-			layout:      this.SerLayout(oLegend.layout),
-			legendEntry: this.SerLegendEntries(oLegend.legendEntryes),
-			legendPos:   sLegendPos,
-			overlay:     oLegend.overlay,
-			spPr:        this.SerSpPr(oLegend.spPr),
-			txPr:        this.SerTxPr(oLegend.txPr)
+			"layout":      this.SerLayout(oLegend.layout),
+			"legendEntry": this.SerLegendEntries(oLegend.legendEntryes),
+			"legendPos":   sLegendPos,
+			"overlay":     oLegend.overlay,
+			"spPr":        this.SerSpPr(oLegend.spPr),
+			"txPr":        this.SerTxPr(oLegend.txPr)
 		}
 	};
 	WriterToJSON.prototype.SerImage = function(oImgObject)
@@ -7319,12 +7315,12 @@
 			return oImgObject;
 		
 		return {
-			extX:     private_MM2EMU(oImgObject.extX),
-			extY:     private_MM2EMU(oImgObject.extY),
-			blipFill: this.SerBlipFill(oImgObject.blipFill),
-			nvPicPr:  this.SerUniNvPr(oImgObject.nvPicPr),
-			spPr:     this.SerSpPr(oImgObject.spPr),
-			type:     "image"
+			"extX":     private_MM2EMU(oImgObject.extX),
+			"extY":     private_MM2EMU(oImgObject.extY),
+			"blipFill": this.SerBlipFill(oImgObject.blipFill),
+			"nvPicPr":  this.SerUniNvPr(oImgObject.nvPicPr),
+			"spPr":     this.SerSpPr(oImgObject.spPr),
+			"type":     "image"
 		}
 	};
 	WriterToJSON.prototype.SerShape = function(oShape)
@@ -7339,17 +7335,17 @@
 			oSerContent = this.SerTxPr(oShape.txBody);
 		
 		return {
-			bWordShape:  oShape.bWordShape,
-			extX:        private_MM2EMU(oShape.extX),
-			extY:        private_MM2EMU(oShape.extY),
-			nvSpPr:      this.SerUniNvPr(oShape.nvSpPr),
-			spPr:        this.SerSpPr(oShape.spPr),
-			style:       this.SerSpStyle(oShape.style),
-			bodyPr:      this.SerBodyPr(oShape.bodyPr),
-			content:     oSerContent,
-			modelId:     oShape.modelId,
-			txXfrm:      this.SerXfrm(oShape.txXfrm),
-			type:        "shape",
+			"bWordShape":  oShape.bWordShape,
+			"extX":        private_MM2EMU(oShape.extX),
+			"extY":        private_MM2EMU(oShape.extY),
+			"nvSpPr":      this.SerUniNvPr(oShape.nvSpPr),
+			"spPr":        this.SerSpPr(oShape.spPr),
+			"style":       this.SerSpStyle(oShape.style),
+			"bodyPr":      this.SerBodyPr(oShape.bodyPr),
+			"content":     oSerContent,
+			"modelId":     oShape.modelId,
+			"txXfrm":      this.SerXfrm(oShape.txXfrm),
+			"type":        "shape",
 		}
 	};
 	WriterToJSON.prototype.SerTextPr = function(oTextPr)
@@ -7357,9 +7353,9 @@
 		if (!oTextPr)
 			return oTextPr;
 		
-		var oStyles = private_GetStyles();
+		var oStyles = oTextPr.RStyle != null ? private_GetStyles() : null;
 		// run style
-		var oRunStyle = oTextPr.RStyle ? oStyles.Get(oTextPr.RStyle) : undefined;
+		var oRunStyle = oTextPr.RStyle != null ? oStyles.Get(oTextPr.RStyle) : undefined;
 		
 		var sVAlign = undefined;
 
@@ -7380,64 +7376,64 @@
 			}
 		}
 		return {
-			b:         oTextPr.Bold,
-			bCs:       oTextPr.BoldCs,
-			caps:      oTextPr.Caps,
-			color:     oTextPr.Color ? {
-				auto: oTextPr.Color.Auto,
-				r:    oTextPr.Color.r,
-				g:    oTextPr.Color.g,
-				b:    oTextPr.Color.b
+			"b":         oTextPr.Bold,
+			"bCs":       oTextPr.BoldCs,
+			"caps":      oTextPr.Caps,
+			"color":     oTextPr.Color ? {
+				"auto": oTextPr.Color.Auto,
+				"r":    oTextPr.Color.r,
+				"g":    oTextPr.Color.g,
+				"b":    oTextPr.Color.b
 			} : oTextPr.Color,
-			cs:        oTextPr.CS,
-			dstrike:   oTextPr.DStrikeout,
-			highlight: oTextPr.HighLight ? (oTextPr.HighLight !== -1 ? {
-				auto: oTextPr.HighLight.Auto,
-				r:    oTextPr.HighLight.r,
-				g:    oTextPr.HighLight.g,
-				b:    oTextPr.HighLight.b
+			"cs":        oTextPr.CS,
+			"dstrike":   oTextPr.DStrikeout,
+			"highlight": oTextPr.HighLight ? (oTextPr.HighLight !== -1 ? {
+				"auto": oTextPr.HighLight.Auto,
+				"r":    oTextPr.HighLight.r,
+				"g":    oTextPr.HighLight.g,
+				"b":    oTextPr.HighLight.b
 			} : "none") : oTextPr.HighLight,
-			i:         oTextPr.Italic,
-			iCs:       oTextPr.ItalicCS,
-			lang:      oTextPr.Lang ? {
-				bidi:     oTextPr.Lang.Bidi,
-				eastAsia: oTextPr.Lang.EastAsia,
-				val:      oTextPr.Lang.Val
+			"i":         oTextPr.Italic,
+			"iCs":       oTextPr.ItalicCS,
+			"lang":      oTextPr.Lang ? {
+				"bidi":     oTextPr.Lang.Bidi,
+				"eastAsia": oTextPr.Lang.EastAsia,
+				"val":      oTextPr.Lang.Val
 			} : oTextPr.Lang,
-			outline:   this.SerLn(oTextPr.TextOutline),
-			position:  oTextPr.Position ? 2.0 * private_MM2Pt(oTextPr.Position) : oTextPr.Position, /// нужно ли умножать на 2?
-			rFonts:    oTextPr.RFonts ? {
-				ascii:         oTextPr.RFonts.Ascii,
-				asciiTheme:    oTextPr.RFonts.AsciiTheme,
-				cs:            oTextPr.RFonts.CS,
-				cstheme:       oTextPr.RFonts.CSTheme,
-				eastAsia:      oTextPr.RFonts.EastAsia,
-				eastAsiaTheme: oTextPr.RFonts.EastAsiaTheme,
-				hAnsi:         oTextPr.RFonts.HAnsi,
-				hAnsiTheme:    oTextPr.RFonts.HAnsiTheme,
-				hint:          oTextPr.RFonts.Hint
+			"outline":   this.SerLn(oTextPr.TextOutline),
+			"position":  oTextPr.Position ? 2.0 * private_MM2Pt(oTextPr.Position) : oTextPr.Position, /// нужно ли умножать на 2?
+			"rFonts":    oTextPr.RFonts ? {
+				"ascii":         oTextPr.RFonts.Ascii,
+				"asciiTheme":    oTextPr.RFonts.AsciiTheme,
+				"cs":            oTextPr.RFonts.CS,
+				"cstheme":       oTextPr.RFonts.CSTheme,
+				"eastAsia":      oTextPr.RFonts.EastAsia,
+				"eastAsiaTheme": oTextPr.RFonts.EastAsiaTheme,
+				"hAnsi":         oTextPr.RFonts.HAnsi,
+				"hAnsiTheme":    oTextPr.RFonts.HAnsiTheme,
+				"hint":          oTextPr.RFonts.Hint
 			} : oTextPr.RFonts,
-			fontFamily: oTextPr.FontFamily ? {
-				name: oTextPr.FontFamily.Name,
-				idx:  oTextPr.FontFamily.Index
+			"fontFamily": oTextPr.FontFamily ? {
+				"name": oTextPr.FontFamily.Name,
+				"idx":  oTextPr.FontFamily.Index
 			} : oTextPr.FontFamily,
-			rPrChange: this.SerTextPr(oTextPr.PrChange),
-			rStyle:    this.SerStyle(oRunStyle),
-			rtl:       oTextPr.RTL,
-			shd:       this.SerShd(oTextPr.Shd),
-			smallCaps: oTextPr.SmallCaps,
-			spacing:   oTextPr.Spacing ? private_MM2Twips(oTextPr.Spacing) : oTextPr.Spacing,
-			strike:    oTextPr.Strikeout,
-			sz:        oTextPr.FontSize ? 2.0 * oTextPr.FontSize : oTextPr.FontSize,
-			szCs:      oTextPr.FontSizeCS ? 2.0 * oTextPr.FontSizeCS : oTextPr.FontSizeCS,
-			u:         oTextPr.Underline,
-			vanish:    oTextPr.Vanish,
-			vertAlign: sVAlign,
-			fontRef:   this.SerFontRef(oTextPr.FontRef),
-			uniFill:   this.SerFill(oTextPr.Unifill),
-			textFill:  this.SerFill(oTextPr.TextFill),
-			reviewInfo: this.SerReviewInfo(oTextPr.ReviewInfo),
-			type:      "textPr"
+			"rPrChange": this.SerTextPr(oTextPr.PrChange),
+			"rStyle":    this.SerStyle(oRunStyle),
+			"rtl":       oTextPr.RTL,
+			"shd":       this.SerShd(oTextPr.Shd),
+			"smallCaps": oTextPr.SmallCaps,
+			"spacing":   oTextPr.Spacing ? private_MM2Twips(oTextPr.Spacing) : oTextPr.Spacing,
+			"strike":    oTextPr.Strikeout,
+			"sz":        oTextPr.FontSize ? 2.0 * oTextPr.FontSize : oTextPr.FontSize,
+			"szCs":      oTextPr.FontSizeCS ? 2.0 * oTextPr.FontSizeCS : oTextPr.FontSizeCS,
+			"u":         oTextPr.Underline,
+			"vanish":    oTextPr.Vanish,
+			"vertAlign": sVAlign,
+			"fontRef":   this.SerFontRef(oTextPr.FontRef),
+			"uniFill":   this.SerFill(oTextPr.Unifill),
+			"textFill":  this.SerFill(oTextPr.TextFill),
+			"reviewInfo": this.SerReviewInfo(oTextPr.ReviewInfo),
+			"type":      "textPr"
 		}
 	};
 	WriterToJSON.prototype.SerSdtPr = function(oSdtPr)
@@ -7451,8 +7447,8 @@
 			for (var nItem = 0; nItem < oSdtPr.ComboBox.ListItems; nItem++)
 			{
 				arrListItemComboBox.push({
-					displayText: oSdtPr.ComboBox.ListItems[nItem].DisplayText,
-					value: oSdtPr.ComboBox.ListItems[nItem].Value,
+					"displayText": oSdtPr.ComboBox.ListItems[nItem].DisplayText,
+					"value": oSdtPr.ComboBox.ListItems[nItem].Value,
 				});
 			}
 		}
@@ -7463,8 +7459,8 @@
 			for (var nItem = 0; nItem < oSdtPr.DropDown.ListItems; nItem++)
 			{
 				arrListItemDropDown.push({
-					displayText: oSdtPr.DropDown.ListItems[nItem].DisplayText,
-					value: oSdtPr.DropDown.ListItems[nItem].Value,
+					"displayText": oSdtPr.DropDown.ListItems[nItem].DisplayText,
+					"value": oSdtPr.DropDown.ListItems[nItem].Value,
 				});
 			}
 		}
@@ -7486,47 +7482,47 @@
 				break;
 		}
 		return {
-			alias: oSdtPr.Alias,
+			"alias": oSdtPr.Alias,
 
-			comboBox: oSdtPr.ComboBox ? {
-				listItem:  arrListItemComboBox,
-				lastValue: oSdtPr.ComboBox.LastValue
+			"comboBox": oSdtPr.ComboBox ? {
+				"listItem":  arrListItemComboBox,
+				"lastValue": oSdtPr.ComboBox.LastValue
 			} : oSdtPr.ComboBox,
 
-			date: oSdtPr.Date ? {
-				calendar:   oSdtPr.Date.Calendar,
-				dateFormat: oSdtPr.Date.DateFormat,
-				lid:        oSdtPr.Date.LangId,
-				fullDate:   oSdtPr.Date.FullDate
+			"date": oSdtPr.Date ? {
+				"calendar":   oSdtPr.Date.Calendar,
+				"dateFormat": oSdtPr.Date.DateFormat,
+				"lid":        oSdtPr.Date.LangId,
+				"fullDate":   oSdtPr.Date.FullDate
 			} : oSdtPr.Date,
 
-			docPartObj: oSdtPr.DocPartObj ? {
-				docPartCategory: oSdtPr.DocPartObj.Category,
-				docPartGallery:  oSdtPr.DocPartObj.Gallery,
-				docPartUnique:   oSdtPr.DocPartObj.Unique
+			"docPartObj": oSdtPr.DocPartObj ? {
+				"docPartCategory": oSdtPr.DocPartObj.Category,
+				"docPartGallery":  oSdtPr.DocPartObj.Gallery,
+				"docPartUnique":   oSdtPr.DocPartObj.Unique
 			} : oSdtPr.DocPartObj,
 
-			dropDownList: oSdtPr.DropDown ? {
-				listItem:  arrListItemDropDown,
-				lastValue: oSdtPr.DropDown.LastValue
+			"dropDownList": oSdtPr.DropDown ? {
+				"listItem":  arrListItemDropDown,
+				"lastValue": oSdtPr.DropDown.LastValue
 			} : oSdtPr.DropDown,
 
-			equation : oSdtPr.Equation,
-			id:        oSdtPr.Id,
-			label:     oSdtPr.Label,
-			lock:      sLockType,
-			picture:   oSdtPr.Picture,
+			"equation" : oSdtPr.Equation,
+			"id":        oSdtPr.Id,
+			"label":     oSdtPr.Label,
+			"lock":      sLockType,
+			"picture":   oSdtPr.Picture,
 
-			placeholder: oSdtPr.Placeholder ? {
-				docPart: oSdtPr.Placeholder
+			"placeholder": oSdtPr.Placeholder ? {
+				"docPart": oSdtPr.Placeholder
 			} : oSdtPr.Placeholder,
 
-			rPr:           this.SerTextPr(oSdtPr.TextPr),
-			showingPlcHdr: oSdtPr.ShowingPlcHdr,
-			tag:           oSdtPr.Tag,
-			temporary:     oSdtPr.Temporary,
-			text:          {
-				multiLine: oSdtPr.Text
+			"rPr":           this.SerTextPr(oSdtPr.TextPr),
+			"showingPlcHdr": oSdtPr.ShowingPlcHdr,
+			"tag":           oSdtPr.Tag,
+			"temporary":     oSdtPr.Temporary,
+			"text":          {
+				"multiLine": oSdtPr.Text
 			}
 		}
 	};
@@ -7628,13 +7624,13 @@
 			}
 
 			return {
-				fPr: {
-					ctrlPr: this.SerTextPr(oFraction.CtrPrp),
-					type:   sFracType
+				"fPr": {
+					"ctrlPr": this.SerTextPr(oFraction.CtrPrp),
+					"type":   sFracType
 				},
-				num:  SerFracArg.call(this, oFraction.Numerator),
-				den:  SerFracArg.call(this, oFraction.Denominator),     
-				type: "fraction"
+				"num":  SerFracArg.call(this, oFraction.Numerator),
+				"den":  SerFracArg.call(this, oFraction.Denominator),     
+				"type": "fraction"
 			}
 		}
 
@@ -7650,12 +7646,12 @@
 				sArgType = "num";
 
 			return {
-				argPr: {
-					argSize: oFractionArg.ArgSize.value
+				"argPr": {
+					"argSize": oFractionArg.ArgSize.value
 				},  
-				ctrlPr:  this.SerTextPr(oFractionArg.CtrPrp),
-				content: SerMathContent.call(this, oFractionArg.elements[0][0]),
-				type:    sArgType
+				"ctrlPr":  this.SerTextPr(oFractionArg.CtrPrp),
+				"content": SerMathContent.call(this, oFractionArg.elements[0][0]),
+				"type":    sArgType
 			}
 		}
 		function SerDegree(oDegree)
@@ -7664,23 +7660,23 @@
 				return oDegree;
 
 			var oDegreeObj = {
-				e: SerMathContent.call(this, oDegree.baseContent),
+				"e": SerMathContent.call(this, oDegree.baseContent),
 			}
 			switch (oDegree.Pr.type)
 			{
 				case DEGREE_SUPERSCRIPT:
-					oDegreeObj.type   = "superScript";
-					oDegreeObj.sSupPr = {
-						ctrlPr: this.SerTextPr(oDegree.CtrPrp)
+					oDegreeObj["type"]   = "superScript";
+					oDegreeObj["sSupPr"] = {
+						"ctrlPr": this.SerTextPr(oDegree.CtrPrp)
 					}
-					oDegreeObj.sup    = SerMathContent.call(this, oDegree.iterContent);
+					oDegreeObj["sup"]    = SerMathContent.call(this, oDegree.iterContent);
 					break;
 				case DEGREE_SUBSCRIPT:
-					oDegreeObj.type   = "supScript";
-					oDegreeObj.sSubPr = {
-						ctrlPr: this.SerTextPr(oDegree.CtrPrp)
+					oDegreeObj["type"]   = "supScript";
+					oDegreeObj["sSubPr"] = {
+						"ctrlPr": this.SerTextPr(oDegree.CtrPrp)
 					}
-					oDegreeObj.sub    = SerMathContent.call(this, oDegree.iterContent);
+					oDegreeObj["sub"]    = SerMathContent.call(this, oDegree.iterContent);
 					break;
 			}
 
@@ -7693,23 +7689,23 @@
 				return oDegreeSubSup;
 
 			var oDegreeObj = {
-				e:   SerMathContent.call(this, oDegreeSubSup.baseContent),
-				sup: SerMathContent.call(this, oDegreeSubSup.iters.iterUp),
-				sub: SerMathContent.call(this, oDegreeSubSup.iters.iterDn)
+				"e":   SerMathContent.call(this, oDegreeSubSup.baseContent),
+				"sup": SerMathContent.call(this, oDegreeSubSup.iters.iterUp),
+				"sub": SerMathContent.call(this, oDegreeSubSup.iters.iterDn)
 			}
 
 			switch (oDegreeSubSup.Pr.type)
 			{
 				case DEGREE_SubSup:
-					oDegreeObj.type      = "subSupScript";
-					oDegreeObj.sSubSupPr = {
-						ctrlPr: this.SerTextPr(oDegreeSubSup.CtrPrp)
+					oDegreeObj["type"]      = "subSupScript";
+					oDegreeObj["sSubSupPr"] = {
+						"ctrlPr": this.SerTextPr(oDegreeSubSup.CtrPrp)
 					}
 					break;
 				case DEGREE_PreSubSup:
-					oDegreeObj.type      = "preSubSupScript";
-					oDegreeObj.sPrePr    = {
-						ctrlPr: this.SerTextPr(oDegreeSubSup.CtrPrp)
+					oDegreeObj["type"]      = "preSubSupScript";
+					oDegreeObj["sPrePr"]    = {
+						"ctrlPr": this.SerTextPr(oDegreeSubSup.CtrPrp)
 					}
 					break;
 			}
@@ -7726,13 +7722,13 @@
 			var sRadType = oRadical.Pr.type === SQUARE_RADICAL ? "radSquare" : "radDegree";
 
 			return {
-				radPr: {
-					ctrlPr:  this.SerTextPr(oRadical.CtrPrp),
-					degHide: oRadical.Pr.degHide
+				"radPr": {
+					"ctrlPr":  this.SerTextPr(oRadical.CtrPrp),
+					"degHide": oRadical.Pr.degHide
 				},
-				e:     SerMathContent.call(this, oRadical.RealBase),
-				deg:   SerMathContent.call(this, oRadical.Iterator),
-				type:  sRadType
+				"e":     SerMathContent.call(this, oRadical.RealBase),
+				"deg":   SerMathContent.call(this, oRadical.Iterator),
+				"type":  sRadType
 			}
 		}
 
@@ -7752,18 +7748,18 @@
 					break;
 			}
 			return {
-				e:      SerMathContent.call(this, oNary.Arg),
-				sup:    SerMathContent.call(this, oNary.UpperIterator),
-				sub:    SerMathContent.call(this, oNary.LowerIterator),
-				naryPr: {
-					chr:     oNary.Pr.chr,
-					ctrlPr:  this.SerTextPr(oNary.CtrPrp),
-					grow:    oNary.Pr.grow,
-					limLoc:  sLimLoc,
-					subHide: oNary.Pr.subHide,
-					supHide: oNary.Pr.supHide
+				"e":      SerMathContent.call(this, oNary.Arg),
+				"sup":    SerMathContent.call(this, oNary.UpperIterator),
+				"sub":    SerMathContent.call(this, oNary.LowerIterator),
+				"naryPr": {
+					"chr":     oNary.Pr.chr,
+					"ctrlPr":  this.SerTextPr(oNary.CtrPrp),
+					"grow":    oNary.Pr.grow,
+					"limLoc":  sLimLoc,
+					"subHide": oNary.Pr.subHide,
+					"supHide": oNary.Pr.supHide
 				},
-				type:   "nary"
+				"type":   "nary"
 			}
 		}
 
@@ -7797,21 +7793,21 @@
 			}
 
 			var oEqArrayObj = {
-				eqArrPr: {
-					baseJc:  sJcType,
-					ctrlPr:  this.SerTextPr(oEqArray.CtrPrp),
-					maxDist: oEqArray.Pr.maxDist,
-					objDist: oEqArray.Pr.objDist,
-					rSp:     oEqArray.Pr.rSp,
-					rSpRule: oEqArray.Pr.rSpRule,
-					row:     oEqArray.Pr.row
+				"eqArrPr": {
+					"baseJc":  sJcType,
+					"ctrlPr":  this.SerTextPr(oEqArray.CtrPrp),
+					"maxDist": oEqArray.Pr.maxDist,
+					"objDist": oEqArray.Pr.objDist,
+					"rSp":     oEqArray.Pr.rSp,
+					"rSpRule": oEqArray.Pr.rSpRule,
+					"row":     oEqArray.Pr.row
 				},
-				e:  [],
-				type: "eqArray"
+				"e":  [],
+				"type": "eqArray"
 			}
 
 			for (var nArg = 0; nArg < oEqArray.elements.length; nArg++)
-				oEqArrayObj.e.push(SerMathContent.call(this, oEqArray.elements[nArg][0]));
+				oEqArrayObj["e"].push(SerMathContent.call(this, oEqArray.elements[nArg][0]));
 
 			return oEqArrayObj;
 		}
@@ -7824,20 +7820,20 @@
 			var sShpType = oDelimiter.Pr.shp === DELIMITER_SHAPE_CENTERED ? "centered" : "match";
 
 			var oDelimiterObj = {
-				dPr:  {
-					begChr: oDelimiter.Pr.begChr,
-					ctrlPr: this.SerTextPr(oDelimiter.CtrPrp),
-					endChr: oDelimiter.Pr.endChr,
-					grow:   oDelimiter.Pr.grow,
-					sepChr: oDelimiter.Pr.sepChr,
-					shp:    sShpType
+				"dPr":  {
+					"begChr": oDelimiter.Pr.begChr,
+					"ctrlPr": this.SerTextPr(oDelimiter.CtrPrp),
+					"endChr": oDelimiter.Pr.endChr,
+					"grow":   oDelimiter.Pr.grow,
+					"sepChr": oDelimiter.Pr.sepChr,
+					"shp":    sShpType
 				},
-				e:    [],
-				type: "delimiter"
+				"e":    [],
+				"type": "delimiter"
 			}
 
 			for (var nArg = 0; nArg < oDelimiter.elements[0].length; nArg++)
-				oDelimiterObj.e.push(SerMathContent.call(this, oDelimiter.elements[0][nArg]));
+				oDelimiterObj["e"].push(SerMathContent.call(this, oDelimiter.elements[0][nArg]));
 
 			return oDelimiterObj;
 		}
@@ -7848,12 +7844,12 @@
 				return oMathFunc;
 
 			return {
-				fName:  SerMathContent.call(this, oMathFunc.elements[0][0]),
-				e:      SerMathContent.call(this, oMathFunc.elements[0][1]),
-				funcPr: {
-					ctrlPr: this.SerTextPr(oMathFunc.CtrPrp)
+				"fName":  SerMathContent.call(this, oMathFunc.elements[0][0]),
+				"e":      SerMathContent.call(this, oMathFunc.elements[0][1]),
+				"funcPr": {
+					"ctrlPr": this.SerTextPr(oMathFunc.CtrPrp)
 				},
-				type: "mathFunc"
+				"type": "mathFunc"
 			}
 		}
 
@@ -7863,12 +7859,12 @@
 				return oAccent;
 
 			return {
-				accPr: {
-					ctrlPr: this.SerTextPr(oAccent.CtrPrp),
-					chr:    oAccent.Pr.chr
+				"accPr": {
+					"ctrlPr": this.SerTextPr(oAccent.CtrPrp),
+					"chr":    oAccent.Pr.chr
 				},
-				e:    SerMathContent.call(this, oAccent.elements[0][0]),
-				type: "accent"
+				"e":    SerMathContent.call(this, oAccent.elements[0][0]),
+				"type": "accent"
 			}
 		}
 
@@ -7900,14 +7896,14 @@
 			}
 
 			return {
-				groupChrPr: {
-					chr:    oGrpChar.Pr.chr,
-					ctrlPr: this.SerTextPr(oGrpChar.CtrPrp),
-					pos:    sPos,
-					vertJc: sVertJc
+				"groupChrPr": {
+					"chr":    oGrpChar.Pr.chr,
+					"ctrlPr": this.SerTextPr(oGrpChar.CtrPrp),
+					"pos":    sPos,
+					"vertJc": sVertJc
 				},
-				e:    SerMathContent.call(this, oGrpChar.getBase()),
-				type: "groupChr"
+				"e":    SerMathContent.call(this, oGrpChar.getBase()),
+				"type": "groupChr"
 			}
 		}
 
@@ -7917,19 +7913,19 @@
 				return oBox;
 
 			return {
-				borderBoxPr: {
-					ctrlPr:     this.SerTextPr(oBox.CtrPrp),
-					hideBot:    oBox.Pr.hideBot,
-					hideLeft:   oBox.Pr.hideLeft,
-					hideRight:  oBox.Pr.hideRight,
-					hideTop:    oBox.Pr.hideTop,
-					strikeBLTR: oBox.Pr.strikeBLTR,
-					strikeH:    oBox.Pr.strikeH,
-					strikeTLBR: oBox.Pr.strikeTLBR,
-					strikeV:    oBox.Pr.strikeV
+				"borderBoxPr": {
+					"ctrlPr":     this.SerTextPr(oBox.CtrPrp),
+					"hideBot":    oBox.Pr.hideBot,
+					"hideLeft":   oBox.Pr.hideLeft,
+					"hideRight":  oBox.Pr.hideRight,
+					"hideTop":    oBox.Pr.hideTop,
+					"strikeBLTR": oBox.Pr.strikeBLTR,
+					"strikeH":    oBox.Pr.strikeH,
+					"strikeTLBR": oBox.Pr.strikeTLBR,
+					"strikeV":    oBox.Pr.strikeV
 				},
-				e:    SerMathContent.call(this, oBox.elements[0][0]),
-				type: "borderBox"
+				"e":    SerMathContent.call(this, oBox.elements[0][0]),
+				"type": "borderBox"
 			}
 		}
 
@@ -7939,18 +7935,18 @@
 				return oBox;
 
 			return {
-				boxPr: {
-					ctrlPr:  this.SerTextPr(oBox.CtrPrp),
-					aln:     oBox.Pr.aln,
-					brk:     oBox.Pr.brk ? {
-						alnAt: oBox.Pr.brk.alnAt
+				"boxPr": {
+					"ctrlPr":  this.SerTextPr(oBox.CtrPrp),
+					"aln":     oBox.Pr.aln,
+					"brk":     oBox.Pr.brk ? {
+						"alnAt": oBox.Pr.brk.alnAt
 					} : oBox.Pr.brk,
-					diff:    oBox.Pr.diff,
-					noBreak: oBox.Pr.noBreak,
-					opEmu:   oBox.Pr.opEmu
+					"diff":    oBox.Pr.diff,
+					"noBreak": oBox.Pr.noBreak,
+					"opEmu":   oBox.Pr.opEmu
 				},
-				e:      SerMathContent.call(this, oBox.getBase()),
-				type:   "box"
+				"e":      SerMathContent.call(this, oBox.getBase()),
+				"type":   "box"
 			}
 		}
 
@@ -7971,12 +7967,12 @@
 			}
 
 			return {
-				barPr: {
-					ctrlPr: this.SerTextPr(oBar.CtrPrp),
-					pos:    sPos
+				"barPr": {
+					"ctrlPr": this.SerTextPr(oBar.CtrPrp),
+					"pos":    sPos
 				},
-				e:     SerMathContent.call(this, oBar.elements[0][0]),
-				type:  "bar"
+				"e":     SerMathContent.call(this, oBar.elements[0][0]),
+				"type":  "bar"
 			}
 		}
 
@@ -7986,22 +7982,22 @@
 				return oLimit;
 
 			var oLimObj = {
-				e:     SerMathContent.call(this, oLimit.getFName()),
-				limit: SerMathContent.call(this, oLimit.getIterator())
+				"e":     SerMathContent.call(this, oLimit.getFName()),
+				"limit": SerMathContent.call(this, oLimit.getIterator())
 			}
 			
 			if (oLimit.Pr.type === LIMIT_UP)
 			{
-				oLimObj.type     = "limUpp";
-				oLimObj.limUppPr = {
-					ctrlPr: this.SerTextPr(oLimit.CtrPrp)
+				oLimObj["type"]     = "limUpp";
+				oLimObj["limUppPr"] = {
+					"ctrlPr": this.SerTextPr(oLimit.CtrPrp)
 				};
 			}
 			else
 			{
-				oLimObj.type     = "limLow";
-				oLimObj.limLowPr = {
-					ctrlPr: this.SerTextPr(oLimit.CtrPrp)
+				oLimObj["type"]     = "limLow";
+				oLimObj["limLowPr"] = {
+					"ctrlPr": this.SerTextPr(oLimit.CtrPrp)
 				};
 			}
 				
@@ -8071,33 +8067,33 @@
 				}
 
 				arrMatrixColsPr.push({
-					count: oMatrix.Pr.mcs[nPr].count,
-					mcJc:  sColPrJcType
+					"count": oMatrix.Pr.mcs[nPr].count,
+					"mcJc":  sColPrJcType
 				});
 			}
 			return {
-				mPr: {
-					baseJc:  sJcType,
-					cGp:     oMatrix.Pr.cGp,
-					cGpRule: oMatrix.Pr.cGpRule,
-					cSp:     oMatrix.Pr.cSp,
-					ctrlPr:  this.SerTextPr(oMatrix.CtrPrp),
-					mcs:     arrMatrixColsPr,
-					plcHide: oMatrix.Pr.plcHide,
-					rSp:     oMatrix.Pr.rSp,
-					rSpRule: oMatrix.Pr.rSpRule
+				"mPr": {
+					"baseJc":  sJcType,
+					"cGp":     oMatrix.Pr.cGp,
+					"cGpRule": oMatrix.Pr.cGpRule,
+					"cSp":     oMatrix.Pr.cSp,
+					"ctrlPr":  this.SerTextPr(oMatrix.CtrPrp),
+					"mcs":     arrMatrixColsPr,
+					"plcHide": oMatrix.Pr.plcHide,
+					"rSp":     oMatrix.Pr.rSp,
+					"rSpRule": oMatrix.Pr.rSpRule
 				},
-				mr:   arrMatrixRow,
-				type: "matrix"
+				"mr":   arrMatrixRow,
+				"type": "matrix"
 			}
 		}
 
 		return {
-			oMathParaPr: {
-				jc: sJc
+			"oMathParaPr": {
+				"jc": sJc
 			},
-			content: SerMathContent.call(this, oParaMath.Root),
-			type: "paraMath"
+			"content": SerMathContent.call(this, oParaMath.Root),
+			"type": "paraMath"
 		}
 	};
 	WriterToJSON.prototype.SerParaComment = function(oComment, oMapCommentsInfo)
@@ -8112,15 +8108,15 @@
 		var oCommentData   = oDocument.Comments.GetById(oComment.CommentId).GetData();  
 		var isStartComment = oComment.Start;
 		var oCommentObj    = {
-			id:    oComment.CommentId,
-			autor: oCommentData.Get_Name(),
-			text:  oCommentData.Get_Text()
+			"id":     oComment.CommentId,
+			"author": oCommentData.Get_Name(),
+			"text":   oCommentData.Get_Text()
 		};
 
 		if (isStartComment)
-			oCommentObj.type = "commentRangeStart";
+			oCommentObj["type"] = "commentRangeStart";
 		else
-			oCommentObj.type = "commentRangeEnd";
+			oCommentObj["type"] = "commentRangeEnd";
 
 		return oCommentObj;
 	};
@@ -8135,13 +8131,13 @@
 		var isStartBookmark   = oBookmark.Start;
 		var oTempBookmark     = null;
 		var oBookmarkObj      = {
-			id:   oBookmark.BookmarkId,
-			name: oBookmark.BookmarkName
+			"id":   oBookmark.BookmarkId,
+			"name": oBookmark.BookmarkName
 		};
 		if (isStartBookmark)
-			oBookmarkObj.type = "bookmarkStart";
+			oBookmarkObj["type"] = "bookmarkStart";
 		else
-			oBookmarkObj.type = "bookmarkEnd";
+			oBookmarkObj["type"] = "bookmarkEnd";
 
 		for (var nElm = 0; nElm < oBookmark.Paragraph.Content.length; nElm++)
 		{
@@ -8197,12 +8193,15 @@
 		this.notesMasterMap = {};
 		this.themesMap      = {};
 		this.drawingsMap    = {};
+		this.curWorksheet   = null;
+		this.Workbook       = null;
+		this.aCellXfs       = [];
 	}
 
 	ReaderFromJSON.prototype.ParaRunFromJSON = function(oParsedRun, oParentPara, notCompletedFields)
 	{
-		var aContent         = oParsedRun.content;
-		var oPr              = oParsedRun.rPr;
+		var aContent         = oParsedRun["content"];
+		var oPr              = oParsedRun["rPr"];
 		var oCurComplexField = null;
 		var oDocument        = private_GetLogicDocument();
 
@@ -8210,7 +8209,7 @@
 			notCompletedFields = [];
 
 		var oRun;
-		switch (oParsedRun.type)
+		switch (oParsedRun["type"])
 		{
 			case "mathRun":
 				oRun = new ParaRun(oParentPara, true);
@@ -8223,22 +8222,22 @@
 				break;
 		}
 
-		if (oParsedRun.type === "presField")
+		if (oParsedRun["type"] === "presField")
 		{
 			oRun.SetGuid(AscCommon.CreateGUID());
-			oRun.SetFieldType(oParsedRun.fldType);
+			oRun.SetFieldType(oParsedRun["fldType"]);
 		}
 
 		// Footnotes
-		for (var nElm = 0; nElm < oParsedRun.footnotes.length; nElm++)
-			this.ParaFootEndNoteFromJSON(oParsedRun.footnotes[nElm]);
+		for (var nElm = 0; nElm < oParsedRun["footnotes"].length; nElm++)
+			this.ParaFootEndNoteFromJSON(oParsedRun["footnotes"][nElm]);
 		// Endnotes
-		for (nElm = 0; nElm < oParsedRun.endnotes.length; nElm++)
-			this.ParaFootEndNoteFromJSON(oParsedRun.endnotes[nElm]);
+		for (nElm = 0; nElm < oParsedRun["endnotes"].length; nElm++)
+			this.ParaFootEndNoteFromJSON(oParsedRun["endnotes"][nElm]);
 
 		// review info
 		var nReviewType = undefined;
-		switch (oParsedRun.reviewType)
+		switch (oParsedRun["reviewType"])
 		{
 			case "common":
 				nReviewType = reviewtype_Common;
@@ -8250,13 +8249,13 @@
 				nReviewType = reviewtype_Add;
 				break;
 		}
-		var oReviewInfo = oParsedRun.reviewInfo ? this.ReviewInfoFromJSON(oParsedRun.reviewInfo) : oRun.ReviewInfo;
+		var oReviewInfo = oParsedRun["reviewInfo"] ? this.ReviewInfoFromJSON(oParsedRun["reviewInfo"]) : oRun.ReviewInfo;
 		oRun.SetReviewTypeWithInfo(nReviewType, oReviewInfo);
 
 		oRun.Apply_Pr(this.TextPrFromJSON(oPr));
-		oParsedRun.type === "mathRun" && oRun.Math_Apply_Style(oParsedRun.mathPr.sty);
+		oParsedRun["type"] === "mathRun" && oRun.Math_Apply_Style(oParsedRun["mathPr"]["sty"]); // to do "sty"
 
-		if (oParsedRun.type === "endRun")
+		if (oParsedRun["type"] === "endRun")
 		{
 			oRun.Add_ToContent( 0, new AscWord.CRunParagraphMark() );
 			return oRun;
@@ -8265,9 +8264,9 @@
 		for (nElm = 0; nElm < aContent.length; nElm++)
 		{
 			// записываем текстовый контент в ран(либо обычный ран либо mathRun)
-			if (typeof aContent[nElm] === "string" || aContent[nElm].type === "mathTxt")
+			if (typeof aContent[nElm] === "string" || aContent[nElm]["type"] === "mathTxt")
 			{
-				if (oParsedRun.type === "mathRun")
+				if (oParsedRun["type"] === "mathRun")
 				{
 					// if (0x0026 == aContent[nElm].charCodeAt(0))
 					// 	var oText = new CMathAmp();
@@ -8286,19 +8285,19 @@
 					// 	}
 					// }
 					var oText;
-					if (0x0026 == aContent[nElm].value)
+					if (0x0026 == aContent[nElm]["value"])
 						oText = new CMathAmp();
 					else
 					{
 						oText = new CMathText(false);
-						if (aContent[nElm].value === StartTextElement)
+						if (aContent[nElm]["value"] === StartTextElement)
 						{
 							oText.SetPlaceholder();
 							oRun.Add_ToContent(0, oText, false);
 						}
 						else
 						{
-							oText.add(aContent[nElm].value);
+							oText.add(aContent[nElm]["value"]);
 							oRun.Add(oText);
 						}
 					}
@@ -8309,10 +8308,10 @@
 				continue;
 			}
 
-			switch (aContent[nElm].type)
+			switch (aContent[nElm]["type"])
 			{
 				case "break":
-					switch(aContent[nElm].breakType)
+					switch(aContent[nElm]["breakType"])
 					{
 						case "textWrapping":
 							oRun.AddToContent(-1, new AscWord.CRunBreak(AscWord.break_Line));
@@ -8332,7 +8331,7 @@
 					oRun.AddToContent(-1, new AscWord.CRunTab());
 					break;
 				case "fldChar":
-					switch (aContent[nElm].fldCharType)
+					switch (aContent[nElm]["fldCharType"])
 					{
 						case "begin":
 							var oBeginChar    = new ParaFieldChar(fldchartype_Begin, private_GetLogicDocument());
@@ -8358,8 +8357,8 @@
 					}
 					break;
 				case "instrText":
-					oRun.AddInstrText(aContent[nElm].instr);
-					oCurComplexField.SetInstructionLine(aContent[nElm].instr);
+					oRun.AddInstrText(aContent[nElm]["instr"]);
+					oCurComplexField.SetInstructionLine(aContent[nElm]["instr"]);
 					break;
 				case "paraDrawing":
 					var oDrawing = this.ParaDrawingFromJSON(aContent[nElm]);
@@ -8370,13 +8369,13 @@
 					// создаём новый moveId(moveName), мапим к нему значения moveId(moveName) из JSON
 					// таким образом задаем соответствия
 					var sMoveName = undefined;
-					if (!this.MoveMap[aContent[nElm].name])
+					if (!this.MoveMap[aContent[nElm]["name"]])
 					{
 						sMoveName = oDocument.TrackRevisionsManager.GetNewMoveId();
-						this.MoveMap[aContent[nElm].name] = sMoveName;
+						this.MoveMap[aContent[nElm]["name"]] = sMoveName;
 					}
 
-					var oRevisionMove = new AscWord.CRunRevisionMove(aContent[nElm].start, aContent[nElm].from, this.MoveMap[aContent[nElm].name], aContent[nElm].reviewInfo);
+					var oRevisionMove = new CRunRevisionMove(aContent[nElm]["start"], aContent[nElm]["from"], this.MoveMap[aContent[nElm]["name"]], aContent[nElm]["reviewInfo"]);
 					oRun.Add_ToContent(-1, oRevisionMove);
 					break;
 				case "footnoteRef":
@@ -8393,24 +8392,24 @@
 	ReaderFromJSON.prototype.ParaFootEndNoteRefFromJSON = function(oParsedFootEndnoteRef)
 	{
 		var oFootEndnoteRef = null;
-		switch (oParsedFootEndnoteRef.type)
+		switch (oParsedFootEndnoteRef["type"])
 		{
 			case "footnoteRef":
-				oFootEndnoteRef = new AscWord.CRunFootnoteReference(this.FootEndNoteMap[oParsedFootEndnoteRef.footnote]);
+				oFootEndnoteRef = new ParaFootnoteReference(this.FootEndNoteMap[oParsedFootEndnoteRef["footnote"]]);
 				break;
 			case "footnoteNum":
-				oFootEndnoteRef = new AscWord.CRunFootnoteRef(this.FootEndNoteMap[oParsedFootEndnoteRef.footnote]);
+				oFootEndnoteRef = new ParaFootnoteRef(this.FootEndNoteMap[oParsedFootEndnoteRef["footnote"]]);
 				break;
 			case "endnoteRef":
-				oFootEndnoteRef = new AscWord.CRunEndnoteReference(this.FootEndNoteMap[oParsedFootEndnoteRef.footnote]);
+				oFootEndnoteRef = new ParaEndnoteReference(this.FootEndNoteMap[oParsedFootEndnoteRef["footnote"]]);
 				break;
 			case "endnoteNum":
-				oFootEndnoteRef = new AscWord.CRunEndnoteRef(this.FootEndNoteMap[oParsedFootEndnoteRef.footnote]);
+				oFootEndnoteRef = new ParaEndnoteRef(this.FootEndNoteMap[oParsedFootEndnoteRef["footnote"]]);
 				break;
 		}
 		
-		oFootEndnoteRef.CustomMark = oParsedFootEndnoteRef.customMark;
-		oFootEndnoteRef.NumFormat  = oParsedFootEndnoteRef.numFormat;
+		oFootEndnoteRef.CustomMark = oParsedFootEndnoteRef["customMark"];
+		oFootEndnoteRef.NumFormat  = oParsedFootEndnoteRef["numFormat"];
 		//oFootEndnoteRef.Number   = oParsedFootEndnoteRef.number;
 
 		return oFootEndnoteRef;
@@ -8418,11 +8417,11 @@
 	ReaderFromJSON.prototype.ParaFootEndNoteFromJSON = function(oParsedFootEndnote)
 	{
 		var oDocument    = private_GetLogicDocument();
-		var aContent     = oParsedFootEndnote.content;
-		var oFootEndnote = oParsedFootEndnote === "footnote" ? oDocument.Footnotes.CreateFootnote() : oDocument.Endnotes.CreateEndnote();
+		var aContent     = oParsedFootEndnote["content"];
+		var oFootEndnote = oParsedFootEndnote["type"] === "footnote" ? oDocument.Footnotes.CreateFootnote() : oDocument.Endnotes.CreateEndnote();
 		
 		// мапим сносну, для привязки к ссылке внутри рана
-		this.FootEndNoteMap[oParsedFootEndnote.id] = oFootEndnote;
+		this.FootEndNoteMap[oParsedFootEndnote["id"]] = oFootEndnote;
 
 		var notCompletedFields = [];
 		var oMapCommentsInfo   = [];
@@ -8432,7 +8431,7 @@
 
 		for (var nElm = 0; nElm < aContent.length; nElm++)
 		{
-			switch (aContent[nElm].type)
+			switch (aContent[nElm]["type"])
 			{
 				case "paragraph":
 					oFootEndnote.AddToContent(oFootEndnote.Content.length, this.ParagraphFromJSON(aContent[nElm], oFootEndnote, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo, oPrevNumIdInfo), false);
@@ -8450,11 +8449,11 @@
 			// удаляем параграф, который добавляется при создании CDocumentContent
 			oFootEndnote.RemoveFromContent(0, 1);
 
-		oFootEndnote.CustomMarkFollow = oParsedFootEndnote.customMarkFollow;
-		oFootEndnote.Hint             = oParsedFootEndnote.hint;
-		//oFootEndnote.number           = oParsedFootEndnote.number;
-		oFootEndnote.ColumnsCount     = oParsedFootEndnote.columnsCount;
-		oFootEndnote.SectPr           = oParsedFootEndnote.sectPr ? this.SectPrFromJSON(oParsedFootEndnote.sectPr) : oFootEndnote.SectPr;
+		oFootEndnote.CustomMarkFollow = oParsedFootEndnote["customMarkFollow"];
+		oFootEndnote.Hint             = oParsedFootEndnote["hint"];
+		//oFootEndnote.number           = oParsedFootEndnote["number"];
+		oFootEndnote.ColumnsCount     = oParsedFootEndnote["columnsCount"];
+		oFootEndnote.SectPr           = oParsedFootEndnote["sectPr"] ? this.SectPrFromJSON(oParsedFootEndnote["sectPr"]) : oFootEndnote.SectPr;
 
 		return oFootEndnote;
 	};
@@ -8464,7 +8463,7 @@
 
 		// move type
 		var nMoveType = undefined;
-		switch (oParsedReviewInfo.moveType)
+		switch (oParsedReviewInfo["moveType"])
 		{
 			case "noMove":
 				nMoveType = Asc.c_oAscRevisionsMove.NoMove;
@@ -8479,7 +8478,7 @@
 
 		// move type
 		var nPrevType = undefined;
-		switch (oParsedReviewInfo.prevType)
+		switch (oParsedReviewInfo["prevType"])
 		{
 			case "noMove":
 				nPrevType = Asc.c_oAscRevisionsMove.NoMove;
@@ -8492,24 +8491,24 @@
 				break;
 		}
 
-		oReviewInfo.UserId   = oParsedReviewInfo.userId;
-		oReviewInfo.UserName = oParsedReviewInfo.autor;
-		oReviewInfo.DateTime = oParsedReviewInfo.date;
+		oReviewInfo.UserId   = oParsedReviewInfo["userId"];
+		oReviewInfo.UserName = oParsedReviewInfo["author"];
+		oReviewInfo.DateTime = oParsedReviewInfo["date"];
 		oReviewInfo.MoveType = nMoveType;
 		oReviewInfo.PrevType = nPrevType;
-		oReviewInfo.PrevInfo = oParsedReviewInfo.prevInfo ? this.ReviewInfoFromJSON(oParsedReviewInfo.prevInfo) : oReviewInfo.PrevInfo;
+		oReviewInfo.PrevInfo = oParsedReviewInfo["prevInfo"] ? this.ReviewInfoFromJSON(oParsedReviewInfo["prevInfo"]) : oReviewInfo.PrevInfo;
 
 		return oReviewInfo;
 	};
-	ReaderFromJSON.prototype.TextPrFromJSON = function(oPr)
+	ReaderFromJSON.prototype.TextPrFromJSON = function(oParsedPr)
 	{
 		var oTextPr  = new AscCommonWord.CTextPr();
 
 		// alignV
 		var nVAlign  = undefined;
-		if (oPr.vertAlign)
+		if (oParsedPr["vertAlign"])
 		{
-			switch (oPr.vertAlign)
+			switch (oParsedPr["vertAlign"])
 			{
 				case "baseline":
 					nVAlign = 0;
@@ -8524,8 +8523,8 @@
 		}
 
 		// style 
-		var oStyle    = oPr.rStyle ? this.StyleFromJSON(oPr.rStyle) : oPr.rStyle;
-		var oStyles = private_GetStyles();
+		var oStyle  = oParsedPr["rStyle"] ? this.StyleFromJSON(oParsedPr["rStyle"]) : oParsedPr["rStyle"];
+		var oStyles = oStyle ? private_GetStyles() : null;
 		if (oStyle)
 		{
 			var nExistingStyle = oStyles.GetStyleIdByName(oStyle.Name);
@@ -8549,76 +8548,76 @@
 			}
 		}
 
-		oTextPr.Bold                  = oPr.b;
-		oTextPr.BoldCS                = oPr.bCs;
-		oTextPr.Caps                  = oPr.caps;
-		oTextPr.Color                 = oPr.color ? new AscCommonWord.CDocumentColor(oPr.color.r, oPr.color.g, oPr.color.b, oPr.color.auto) : oPr.color;
-		oTextPr.CS                    = oPr.cs;
-		oTextPr.DStrikeout            = oPr.dstrike;
-		oTextPr.HighLight             = oPr.highlight === "none" ? -1 : oPr.highlight != undefined ? new AscCommonWord.CDocumentColor(oPr.highlight.r, oPr.highlight.g, oPr.highlight.b, oPr.highlight.auto) : oPr.highlight;
-		oTextPr.Italic                = oPr.i;
-		oTextPr.ItalicCS              = oPr.iCs;
+		oTextPr.Bold                  = oParsedPr["b"];
+		oTextPr.BoldCS                = oParsedPr["bCs"];
+		oTextPr.Caps                  = oParsedPr["caps"];
+		oTextPr.Color                 = oParsedPr["color"] ? new AscCommonWord.CDocumentColor(oParsedPr["color"]["r"], oParsedPr["color"]["g"], oParsedPr["color"]["b"], oParsedPr["color"]["auto"]) : oParsedPr["color"];
+		oTextPr.CS                    = oParsedPr["cs"];
+		oTextPr.DStrikeout            = oParsedPr["dstrike"];
+		oTextPr.HighLight             = oParsedPr["highlight"] === "none" ? -1 : oParsedPr["highlight"] != undefined ? new AscCommonWord.CDocumentColor(oParsedPr["highlight"]["r"], oParsedPr["highlight"]["g"], oParsedPr["highlight"]["b"], oParsedPr["highlight"]["auto"]) : oParsedPr["highlight"];
+		oTextPr.Italic                = oParsedPr["i"];
+		oTextPr.ItalicCS              = oParsedPr["iCs"];
 
-		oTextPr.Lang.Bidi             = oPr.lang.bidi;
-		oTextPr.Lang.EastAsia         = oPr.lang.eastAsia;
-		oTextPr.Lang.Val              = oPr.lang.val;
+		oTextPr.Lang.Bidi             = oParsedPr["lang"]["bidi"];
+		oTextPr.Lang.EastAsia         = oParsedPr["lang"]["eastAsia"];
+		oTextPr.Lang.Val              = oParsedPr["lang"]["val"];
 
-		oTextPr.TextOutline           = oPr.outline ? this.LnFromJSON(oPr.outline) : oTextPr.TextOutline;
-		oTextPr.Position              = oPr.position ? private_PtToMM(oPr.position / 2.0) : oPr.position;
+		oTextPr.TextOutline           = oParsedPr["outline"] ? this.LnFromJSON(oParsedPr["outline"]) : oTextPr.TextOutline;
+		oTextPr.Position              = oParsedPr["position"] ? private_PtToMM(oParsedPr["position"] / 2.0) : oParsedPr["position"];
 
-		oTextPr.RFonts.Ascii          = oPr.rFonts.ascii;
-		oTextPr.RFonts.AsciiTheme     = oPr.rFonts.asciiTheme;
-		oTextPr.RFonts.CS             = oPr.rFonts.cs;
-		oTextPr.RFonts.CSTheme        = oPr.rFonts.cstheme;
-		oTextPr.RFonts.EastAsia       = oPr.rFonts.eastAsia;
-		oTextPr.RFonts.EastAsiaTheme  = oPr.rFonts.eastAsiaTheme;
-		oTextPr.RFonts.HAnsi          = oPr.rFonts.hAnsi;
-		oTextPr.RFonts.HAnsiTheme     = oPr.rFonts.hAnsiTheme;
-		oTextPr.RFonts.Hint           = oPr.rFonts.hint;
+		oTextPr.RFonts.Ascii          = oParsedPr["rFonts"]["ascii"];
+		oTextPr.RFonts.AsciiTheme     = oParsedPr["rFonts"]["asciiTheme"];
+		oTextPr.RFonts.CS             = oParsedPr["rFonts"]["cs"];
+		oTextPr.RFonts.CSTheme        = oParsedPr["rFonts"]["cstheme"];
+		oTextPr.RFonts.EastAsia       = oParsedPr["rFonts"]["eastAsia"];
+		oTextPr.RFonts.EastAsiaTheme  = oParsedPr["rFonts"]["eastAsiaTheme"];
+		oTextPr.RFonts.HAnsi          = oParsedPr["rFonts"]["hAnsi"];
+		oTextPr.RFonts.HAnsiTheme     = oParsedPr["rFonts"]["hAnsiTheme"];
+		oTextPr.RFonts.Hint           = oParsedPr["rFonts"]["hint"];
 
-		oTextPr.FontFamily            = oPr.fontFamily ? {Index: oPr.fontFamily.idx, Name: oPr.fontFamily.name} : oTextPr.FontFamily;
-		oTextPr.PrChange              = oPr.rPrChange ? this.TextPrFromJSON(oPr.rPrChange) : oPr.rPrChange;
+		oTextPr.FontFamily            = oParsedPr["fontFamily"] ? {Index: oParsedPr["fontFamily"]["idx"], Name: oParsedPr["fontFamily"]["name"]} : oTextPr.FontFamily;
+		oTextPr.PrChange              = oParsedPr["rPrChange"] ? this.TextPrFromJSON(oParsedPr["rPrChange"]) : oParsedPr["rPrChange"];
 		oTextPr.RStyle                = oStyle ? oStyle.Id : oTextPr.RStyle;
-		oTextPr.RTL                   = oPr.rtl;
-		oTextPr.Shd                   = oPr.shd ? this.ShadeFromJSON(oPr.shd) : oPr.shd;
-		oTextPr.SmallCaps             = oPr.smallCaps;
-		oTextPr.Spacing               = oPr.spacing ? private_Twips2MM(oPr.spacing) : oPr.spacing;
-		oTextPr.Strikeout             = oPr.strike;
-		oTextPr.FontSize              = oPr.sz ? oPr.sz / 2.0 : oPr.sz;
-		oTextPr.FontSizeCS            = oPr.szCs ? oPr.szCs / 2.0 : oPr.szCs;
-		oTextPr.Underline             = oPr.u;
-		oTextPr.Vanish                = oPr.vanish;
+		oTextPr.RTL                   = oParsedPr["rtl"];
+		oTextPr.Shd                   = oParsedPr["shd"] ? this.ShadeFromJSON(oParsedPr["shd"]) : oParsedPr["shd"];
+		oTextPr.SmallCaps             = oParsedPr["smallCaps"];
+		oTextPr.Spacing               = oParsedPr["spacing"] ? private_Twips2MM(oParsedPr["spacing"]) : oParsedPr["spacing"];
+		oTextPr.Strikeout             = oParsedPr["strike"];
+		oTextPr.FontSize              = oParsedPr["sz"] ? oParsedPr["sz"] / 2.0 : oParsedPr["sz"];
+		oTextPr.FontSizeCS            = oParsedPr["szCs"] ? oParsedPr["szCs"] / 2.0 : oParsedPr["szCs"];
+		oTextPr.Underline             = oParsedPr["u"];
+		oTextPr.Vanish                = oParsedPr["vanish"];
 		oTextPr.VertAlign             = nVAlign;
-		oTextPr.FontRef               = oPr.fontRef ? this.FontRefFromJSON(oPr.fontRef) : oTextPr.FontRef;
-		oTextPr.Unifill               = oPr.uniFill ? this.FillFromJSON(oPr.uniFill) : oPr.uniFill;
-		oTextPr.TextFill              = oPr.textFill ? this.FillFromJSON(oPr.textFill) : oPr.TextFill;
+		oTextPr.FontRef               = oParsedPr["fontRef"] ? this.FontRefFromJSON(oParsedPr["fontRef"]) : oTextPr.FontRef;
+		oTextPr.Unifill               = oParsedPr["uniFill"] ? this.FillFromJSON(oParsedPr["uniFill"]) : oParsedPr["uniFill"];
+		oTextPr.TextFill              = oParsedPr["textFill"] ? this.FillFromJSON(oParsedPr["textFill"]) : oParsedPr["TextFill"];
 
-		oTextPr.ReviewInfo = oPr.reviewInfo ? this.ReviewInfoFromJSON(oPr.reviewInfo) : oTextPr.ReviewInfo;
+		oTextPr.ReviewInfo = oParsedPr["reviewInfo"] ? this.ReviewInfoFromJSON(oParsedPr["reviewInfo"]) : oTextPr.ReviewInfo;
 		return oTextPr;
 	};
-	ReaderFromJSON.prototype.ShadeFromJSON = function(oShd) /// To do
+	ReaderFromJSON.prototype.ShadeFromJSON = function(oParsedShd) /// To do
 	{
 		var oShade  = new AscCommonWord.CDocumentShd();
-		oShade.Fill = oShd.fill ? new CDocumentColor() : oShd.fill;
+		oShade.Fill = oParsedShd["fill"] ? new CDocumentColor() : oParsedShd["fill"];
 
-		oShade.Value = oShd.val;
+		oShade.Value = oParsedShd["val"];
 
-		oShade.Color.r    = oShd.color.r;
-		oShade.Color.g    = oShd.color.g;
-		oShade.Color.b    = oShd.color.b;
-		oShade.Color.Auto = oShd.color.auto;
+		oShade.Color.r    = oParsedShd["color"].r;
+		oShade.Color.g    = oParsedShd["color"].g;
+		oShade.Color.b    = oParsedShd["color"].b;
+		oShade.Color.Auto = oParsedShd["color"].auto;
 
 		if (oShade.Fill)
 		{
-			oShade.Fill.r    = oShd.fill.r;
-			oShade.Fill.g    = oShd.fill.g;
-			oShade.Fill.b    = oShd.fill.b;
-			oShade.Fill.Auto = oShd.fill.auto;	
+			oShade.Fill.r    = oParsedShd["fill"].r;
+			oShade.Fill.g    = oParsedShd["fill"].g;
+			oShade.Fill.b    = oParsedShd["fill"].b;
+			oShade.Fill.Auto = oParsedShd["fill"].auto;	
 		}
 
-		oShade.FillRef   = oShd.fillRef    ? this.StyleRefFromJSON(oShd.fillRef) : oShd.fillRef;
-		oShade.Unifill   = oShd.themeColor ? this.FillFromJSON(oShd.themeColor)  : oShd.themeColor;
-		oShade.themeFill = oShd.themeFill  ? this.FillFromJSON(oShd.themeFill)   : oShd.themeFill;
+		oShade.FillRef   = oParsedShd["fillRef"]    ? this.StyleRefFromJSON(oParsedShd["fillRef"]) : oParsedShd["fillRef"];
+		oShade.Unifill   = oParsedShd["themeColor"] ? this.FillFromJSON(oParsedShd["themeColor"])  : oParsedShd["themeColor"];
+		oShade.themeFill = oParsedShd["themeFill"]  ? this.FillFromJSON(oParsedShd["themeFill"])   : oParsedShd["themeFill"];
 
 		return oShade;
 	};
@@ -8631,14 +8630,14 @@
 		if (!oMapBookmarksInfo)
 			oMapBookmarksInfo = {};
 
-		var aContent  = oParsedPara.content;
-		var oPr       = oParsedPara.pPr;
+		var aContent  = oParsedPara["content"];
+		var oPr       = oParsedPara["pPr"];
 		var oDocument = private_GetLogicDocument();
-		var oParaPr   = this.ParaPrFromJSON(oPr, oParsedPara.numbering, oPrevNumIdInfo);
-		var oPara     = new AscCommonWord.Paragraph(private_GetDrawingDocument(), oParent || oDocument, !oParsedPara.bFromDocument);
+		var oParaPr   = this.ParaPrFromJSON(oPr, oParsedPara["numbering"], oPrevNumIdInfo);
+		var oPara     = new AscCommonWord.Paragraph(private_GetDrawingDocument(), oParent || oDocument, !oParsedPara["bFromDocument"]);
 
 		// символ конца параграфа
-		oPara.TextPr.Apply_TextPr(this.TextPrFromJSON(oParsedPara.rPr));
+		oPara.TextPr.Apply_TextPr(this.TextPrFromJSON(oParsedPara["rPr"]));
 
 		oPara.SetParagraphPr(oParaPr);
 		
@@ -8653,7 +8652,7 @@
 
 		for (var nElm = 0; nElm < aContent.length; nElm++)
 		{
-			switch (aContent[nElm].type)
+			switch (aContent[nElm]["type"])
 			{
 				case "run":
 				case "mathRun":
@@ -8677,22 +8676,22 @@
 					break;
 				case "commentRangeStart":
 					var CommentData = new AscCommon.CCommentData();
-					CommentData.SetText(aContent[nElm].text);
-					CommentData.SetUserName(aContent[nElm].autor);
+					CommentData.SetText(aContent[nElm]["text"]);
+					CommentData.SetUserName(aContent[nElm]["author"]);
 					Comment = new AscCommon.CComment(oDocument.Comments, CommentData);
 					oDocument.Comments.Add(Comment);
 					CommentStart = new AscCommon.ParaComment(true, Comment.Get_Id());
 					oPara.Add_ToContent(oPara.Content.length - 1, CommentStart);
-					oMapCommentsInfo[aContent[nElm].id] = CommentStart.CommentId;
+					oMapCommentsInfo[aContent[nElm]["id"]] = CommentStart.CommentId;
 					editor.sync_AddComment(Comment.Get_Id(), CommentData);
 					break;
 				case "commentRangeEnd":
-					Comment = oDocument.Comments.Get_ById(oMapCommentsInfo[aContent[nElm].id]);
+					Comment = oDocument.Comments.Get_ById(oMapCommentsInfo[aContent[nElm]["id"]]);
 					CommentEnd = new AscCommon.ParaComment(false, Comment.Get_Id());
 					oPara.Add_ToContent(oPara.Content.length - 1, CommentEnd);
 					break;
 				case "bookmarkStart":
-					sBookmarkName = aContent[nElm].name;
+					sBookmarkName = aContent[nElm]["name"];
 					if (oDocument.BookmarksManager.GetBookmarkByName(sBookmarkName))
 							break;
 
@@ -8701,10 +8700,10 @@
 					oPara.Add_ToContent(oPara.Content.length - 1, oBookmark);
 					oDocument.BookmarksManager.NeedUpdate = true;
 
-					oMapBookmarksInfo[aContent[nElm].id] = oBookmark;
+					oMapBookmarksInfo[aContent[nElm]["id"]] = oBookmark;
 					break;
 				case "bookmarkEnd":
-					oBookmark = oMapBookmarksInfo[aContent[nElm].id];
+					oBookmark = oMapBookmarksInfo[aContent[nElm]["id"]];
 					if (!oBookmark)
 						break;
 					sBookmarkName = oBookmark.BookmarkName;
@@ -8715,26 +8714,26 @@
 					// создаём новый moveId(moveName), мапим к нему значения moveId(moveName) из JSON
 					// таким образом задаем соответствия
 					sMoveName = undefined;
-					if (!this.MoveMap[aContent[nElm].name])
+					if (!this.MoveMap[aContent[nElm]["name"]])
 					{
 						sMoveName = oDocument.TrackRevisionsManager.GetNewMoveId();
-						this.MoveMap[aContent[nElm].name] = sMoveName;
+						this.MoveMap[aContent[nElm]["name"]] = sMoveName;
 					}
 
-					oReviewInfo   = aContent[nElm].reviewInfo ? this.ReviewInfoFromJSON(aContent[nElm].reviewInfo) : aContent[nElm].reviewInfo;
-					oRevisionMove = new CParaRevisionMove(aContent[nElm].start, aContent[nElm].from, this.MoveMap[aContent[nElm].name], oReviewInfo);
+					oReviewInfo   = aContent[nElm]["reviewInfo"] ? this.ReviewInfoFromJSON(aContent[nElm]["reviewInfo"]) : aContent[nElm]["reviewInfo"];
+					oRevisionMove = new CParaRevisionMove(aContent[nElm]["start"], aContent[nElm]["from"], this.MoveMap[aContent[nElm]["name"]], oReviewInfo);
 					arrTrackMoves.push(oRevisionMove);
 					oPara.Add_ToContent(oPara.Content.length - 1, oRevisionMove);
 					break;
 			}
 		}
 
-		for (var nChange = 0; nChange < oParsedPara.changes.length; nChange++)
+		for (var nChange = 0; nChange < oParsedPara["changes"].length; nChange++)
 		{
-			if (oParsedPara.changes[nChange].type === "moveMark")
-				this.RevisionFromJSON(oParsedPara.changes[nChange], oPara, arrTrackMoves.shift());
+			if (oParsedPara["changes"][nChange]["type"] === "moveMark")
+				this.RevisionFromJSON(oParsedPara["changes"][nChange], oPara, arrTrackMoves.shift());
 			else
-				this.RevisionFromJSON(oParsedPara.changes[nChange], oPara);
+				this.RevisionFromJSON(oParsedPara["changes"][nChange], oPara);
 		}
 
 		return oPara;
@@ -8743,11 +8742,11 @@
 	{
 		var oParaPr = new AscCommonWord.CParaPr();
 		
-		oParaPr.ContextualSpacing = oParsedParaPr.contextualSpacing;
+		oParaPr.ContextualSpacing = oParsedParaPr["contextualSpacing"];
 		
 		// align
 		var nJc = undefined;
-		switch (oParsedParaPr.jc)
+		switch (oParsedParaPr["jc"])
 		{
 			case "end":
 				nJc = AscCommon.align_Right;
@@ -8767,8 +8766,8 @@
 		}
 
 		// style 
-		var oStyle    = oParsedParaPr.pStyle ? this.StyleFromJSON(oParsedParaPr.pStyle) : oParsedParaPr.pStyle;
-		var oStyles   = private_GetStyles();
+		var oStyle    = oParsedParaPr["pStyle"] ? this.StyleFromJSON(oParsedParaPr["pStyle"]) : oParsedParaPr["pStyle"];
+		var oStyles   = oStyle ? private_GetStyles() : null;
 		if (oStyle)
 		{
 			var nExistingStyle = oStyles.GetStyleIdByName(oStyle.Name);
@@ -8792,30 +8791,30 @@
 			}
 		}
 
-		oParaPr.Lvl             = oParsedParaPr.lvl != undefined ? oParsedParaPr.lvl : oParaPr.Lvl;
-		oParaPr.FramePr         = oParsedParaPr.framePr != undefined ? this.FramePrFromJSON(oParsedParaPr.framePr) : oParaPr.FramePr;
-		oParaPr.Spacing         = oParsedParaPr.spacing != undefined ? this.ParaSpacingFromJSON(oParsedParaPr.spacing) : oParaPr.Spacing;
-		oParaPr.Ind.Left        = oParsedParaPr.ind.left != undefined ? private_Twips2MM(oParsedParaPr.ind.left) : oParaPr.Ind.Left;
-		oParaPr.Ind.Right       = oParsedParaPr.ind.right != undefined ? private_Twips2MM(oParsedParaPr.ind.right) : oParaPr.Ind.Right;
-		oParaPr.Ind.FirstLine   = oParsedParaPr.ind.firstLine != undefined ? private_Twips2MM(oParsedParaPr.ind.firstLine) : oParaPr.Ind.FirstLine;
+		oParaPr.Lvl             = oParsedParaPr["lvl"] != undefined ? oParsedParaPr["lvl"] : oParaPr.Lvl;
+		oParaPr.FramePr         = oParsedParaPr["framePr"] != undefined ? this.FramePrFromJSON(oParsedParaPr["framePr"]) : oParaPr.FramePr;
+		oParaPr.Spacing         = oParsedParaPr["spacing"] != undefined ? this.ParaSpacingFromJSON(oParsedParaPr["spacing"]) : oParaPr.Spacing;
+		oParaPr.Ind.Left        = oParsedParaPr["ind"].left != undefined ? private_Twips2MM(oParsedParaPr["ind"]["left"]) : oParaPr.Ind.Left;
+		oParaPr.Ind.Right       = oParsedParaPr["ind"]["right"] != undefined ? private_Twips2MM(oParsedParaPr["ind"]["right"]) : oParaPr.Ind.Right;
+		oParaPr.Ind.FirstLine   = oParsedParaPr["ind"]["firstLine"] != undefined ? private_Twips2MM(oParsedParaPr["ind"]["firstLine"]) : oParaPr.Ind.FirstLine;
 		oParaPr.Jc              = nJc;
-		oParaPr.DefaultTab        = oParsedParaPr.defTabSz != undefined ? private_EMU2MM(oParsedParaPr.defTabSz) : oParsedParaPr.defTabSz;
-		oParaPr.KeepLines       = oParsedParaPr.keepLines;
-		oParaPr.KeepNext        = oParsedParaPr.keepNext;
-		oParaPr.NumPr           = oParsedParaPr.numPr        ? this.NumPrFromJSON(oParsedParaPr.numPr, oParsedNumbernig, oPrevNumIdInfo) : oParaPr.NumPr;
-		oParaPr.OutlineLvl      = oParsedParaPr.outlineLvl;
-		oParaPr.DefaultRunPr    = oParsedParaPr.defaultRunPr ? this.TextPrFromJSON(oParsedParaPr.defaultRunPr)     : oParaPr.DefaultRunPr;
-		oParaPr.Brd.Between     = oParsedParaPr.pBdr.between ? this.DocBorderFromJSON(oParsedParaPr.pBdr.between)  : oParaPr.Brd.Between;
-		oParaPr.Brd.Bottom      = oParsedParaPr.pBdr.bottom  ? this.DocBorderFromJSON(oParsedParaPr.pBdr.bottom)   : oParaPr.Brd.Bottom;
-		oParaPr.Brd.Left        = oParsedParaPr.pBdr.left    ? this.DocBorderFromJSON(oParsedParaPr.pBdr.left)     : oParaPr.Brd.Left;
-		oParaPr.Brd.Right       = oParsedParaPr.pBdr.right   ? this.DocBorderFromJSON(oParsedParaPr.pBdr.right)    : oParaPr.Brd.Right;
-		oParaPr.Brd.Top         = oParsedParaPr.pBdr.top     ? this.DocBorderFromJSON(oParsedParaPr.pBdr.top)      : oParaPr.Brd.Top;
+		oParaPr.DefaultTab      = oParsedParaPr["defTabSz"] != undefined ? private_EMU2MM(oParsedParaPr["defTabSz"]) : oParsedParaPr["defTabSz"];
+		oParaPr.KeepLines       = oParsedParaPr["keepLines"];
+		oParaPr.KeepNext        = oParsedParaPr["keepNext"];
+		oParaPr.NumPr           = oParsedParaPr["numPr"]        ? this.NumPrFromJSON(oParsedParaPr["numPr"], oParsedNumbernig, oPrevNumIdInfo) : oParaPr.NumPr;
+		oParaPr.OutlineLvl      = oParsedParaPr["outlineLvl"];
+		oParaPr.DefaultRunPr    = oParsedParaPr["defaultRunPr"] ? this.TextPrFromJSON(oParsedParaPr["defaultRunPr"])     : oParaPr.DefaultRunPr;
+		oParaPr.Brd.Between     = oParsedParaPr["pBdr"]["between"] ? this.DocBorderFromJSON(oParsedParaPr["pBdr"]["between"])  : oParaPr.Brd.Between;
+		oParaPr.Brd.Bottom      = oParsedParaPr["pBdr"]["bottom"]  ? this.DocBorderFromJSON(oParsedParaPr["pBdr"]["bottom"])   : oParaPr.Brd.Bottom;
+		oParaPr.Brd.Left        = oParsedParaPr["pBdr"]["left"]    ? this.DocBorderFromJSON(oParsedParaPr["pBdr"]["left"])     : oParaPr.Brd.Left;
+		oParaPr.Brd.Right       = oParsedParaPr["pBdr"]["right"]   ? this.DocBorderFromJSON(oParsedParaPr["pBdr"]["right"])    : oParaPr.Brd.Right;
+		oParaPr.Brd.Top         = oParsedParaPr["pBdr"]["top"]     ? this.DocBorderFromJSON(oParsedParaPr["pBdr"]["top"])      : oParaPr.Brd.Top;
 		oParaPr.PStyle          = oStyle ? oStyle.Id : oParaPr.PStyle;
-		oParaPr.PageBreakBefore = oParsedParaPr.pageBreakBefore;
-		oParaPr.Shd             = oParsedParaPr.shd  ? this.ShadeFromJSON(oParsedParaPr.shd) : oParaPr.Shd;
-		oParaPr.Tabs            = oParsedParaPr.tabs ? this.TabsFromJSON(oParsedParaPr.tabs) : oParaPr.Tabs;
-		oParaPr.WidowControl    = oParsedParaPr.widowControl;
-		oParaPr.Bullet          = oParsedParaPr.bullet ? this.BulletFromJSON(oParsedParaPr.bullet) : oParaPr.Bullet;
+		oParaPr.PageBreakBefore = oParsedParaPr["pageBreakBefore"];
+		oParaPr.Shd             = oParsedParaPr["shd"]  ? this.ShadeFromJSON(oParsedParaPr["shd"]) : oParaPr.Shd;
+		oParaPr.Tabs            = oParsedParaPr["tabs"] ? this.TabsFromJSON(oParsedParaPr["tabs"]) : oParaPr.Tabs;
+		oParaPr.WidowControl    = oParsedParaPr["widowControl"];
+		oParaPr.Bullet          = oParsedParaPr["bullet"] ? this.BulletFromJSON(oParsedParaPr["bullet"]) : oParaPr.Bullet;
 
 		return oParaPr;
 	};
@@ -8828,7 +8827,7 @@
 			var oBulletColor = new AscFormat.CBulletColor();
 
 			var nBulletColorType = AscFormat.BULLET_TYPE_COLOR_NONE;
-			switch (oParsedBulletClr.type)
+			switch (oParsedBulletClr["type"])
 			{
 				case "none":
 					nBulletColorType = AscFormat.BULLET_TYPE_COLOR_NONE;
@@ -8842,7 +8841,7 @@
 			}
 
 			oBulletColor.type = nBulletColorType;
-			oBulletColor.UniColor = oParsedBulletClr.color ? this.ColorFromJSON(oParsedBulletClr.color) : oBulletColor.UniColor;
+			oBulletColor.UniColor = oParsedBulletClr["color"] ? this.ColorFromJSON(oParsedBulletClr["color"]) : oBulletColor.UniColor;
 
 			return oBulletColor;
 		}
@@ -8852,7 +8851,7 @@
 			var oBulletSize = new AscFormat.CBulletSize();
 
 			var nBulleSizeType = AscFormat.BULLET_TYPE_SIZE_NONE;
-			switch (oParsedBulletSz.type)
+			switch (oParsedBulletSz["type"])
 			{
 				case "none":
 					nBulleSizeType = AscFormat.BULLET_TYPE_SIZE_NONE;
@@ -8869,7 +8868,7 @@
 			}
 
 			oBulletSize.type = nBulleSizeType;
-			oBulletSize.val  = oParsedBulletSz.val;
+			oBulletSize.val  = oParsedBulletSz["val"];
 
 			return oBulletSize;
 		}
@@ -8879,7 +8878,7 @@
 			var oBulletTypeface = new AscFormat.CBulletTypeface();
 
 			var nBulleTypefaceType = "none";
-			switch (oParsedBulletTpFace.type)
+			switch (oParsedBulletTpFace["type"])
 			{
 				case "none":
 					nBulleTypefaceType = AscFormat.BULLET_TYPE_TYPEFACE_NONE;
@@ -8893,7 +8892,7 @@
 			}
 
 			oBulletTypeface.type     = nBulleTypefaceType;
-			oBulletTypeface.typeface = oParsedBulletTpFace.typeface;
+			oBulletTypeface.typeface = oParsedBulletTpFace["typeface"];
 
 			return oBulletTypeface;
 		}
@@ -8904,7 +8903,7 @@
 
 			var nBulleType = AscFormat.BULLET_TYPE_BULLET_NONE;
 			var nAutoNumType = undefined;
-			switch (oParsedBulletType.AutoNumType)
+			switch (oParsedBulletType["AutoNumType"])
 			{
 				case "alphaLcParenBoth":
 					nAutoNumType = AscFormat.numbering_presentationnumfrmt_AlphaLcParenBoth;
@@ -9031,7 +9030,7 @@
 					break;
 			}
 
-			switch (oParsedBulletType.type)
+			switch (oParsedBulletType["type"])
 			{
 				case "none":
 					nBulleType = AscFormat.BULLET_TYPE_BULLET_NONE;
@@ -9048,17 +9047,17 @@
 			}
 
 			oBulletType.type        = nBulleType;
-			oBulletType.Char        = oParsedBulletType.char;
+			oBulletType.Char        = oParsedBulletType["char"];
 			oBulletType.AutoNumType = nAutoNumType;
-			oBulletType.startAt     = oParsedBulletType.startAt;
+			oBulletType.startAt     = oParsedBulletType["startAt"];
 
 			return oBulletType;
 		}
 
-		oBullet.bulletColor    = oParsedBullet.bulletColor ? BulletColorFromJSON.call(this, oParsedBullet.bulletColor) : oBullet.bulletColor;
-		oBullet.bulletSize     = oParsedBullet.bulletSize ? BulletSizeFromJSON.call(this, oParsedBullet.bulletSize) : oBullet.bulletSize;
-		oBullet.bulletTypeface = oParsedBullet.bulletTypeface ? BulletTypeFaceFromJSON.call(this, oParsedBullet.bulletTypeface) : oBullet.bulletTypeface;
-		oBullet.bulletType     = oParsedBullet.bulletType ? BulletTypeFromJSON.call(this, oParsedBullet.bulletType) : oBullet.bulletType;
+		oBullet.bulletColor    = oParsedBullet["bulletColor"] ? BulletColorFromJSON.call(this, oParsedBullet["bulletColor"]) : oBullet.bulletColor;
+		oBullet.bulletSize     = oParsedBullet["bulletSize"] ? BulletSizeFromJSON.call(this, oParsedBullet["bulletSize"]) : oBullet.bulletSize;
+		oBullet.bulletTypeface = oParsedBullet["bulletTypeface"] ? BulletTypeFaceFromJSON.call(this, oParsedBullet["bulletTypeface"]) : oBullet.bulletTypeface;
+		oBullet.bulletType     = oParsedBullet["bulletType"] ? BulletTypeFromJSON.call(this, oParsedBullet["bulletType"]) : oBullet.bulletType;
 	
 		return oBullet;
 	};
@@ -9068,7 +9067,7 @@
 		var nCurPos   = 0;
 
 		var nJc = undefined;
-		switch (oParsedParaMath.oMathParaPr.jc)
+		switch (oParsedParaMath["oMathParaPr"].jc)
 		{
 			case "center":
 				nJc = JC_CENTER;
@@ -9092,7 +9091,7 @@
 
 			for (var nElm = 0; nElm < oParsedMathContent.length; nElm++)
 			{
-				switch (oParsedMathContent[nElm].type)
+				switch (oParsedMathContent[nElm]["type"])
 				{
 					case "mathRun":
 					case "run":
@@ -9157,7 +9156,7 @@
 		{
 			// fraction type
 			var nFracType;
-			switch (oParsedFraction.fPr.type)
+			switch (oParsedFraction["fPr"]["type"])
 			{
 				case "bar":
 					nFracType = BAR_FRACTION;
@@ -9173,11 +9172,11 @@
 					break;
 			}
 
-			var oFracPr   = this.TextPrFromJSON(oParsedFraction.fPr.ctrlPr);
+			var oFracPr   = this.TextPrFromJSON(oParsedFraction["fPr"]["ctrlPr"]);
 			var oFraction = new AscCommonWord.CFraction({ctrPrp: oFracPr, type: nFracType});
 
 			var oDenMathContent = oFraction.getDenominatorMathContent();
-			var aDenMathContent = MathContentFromJSON.call(this, oParsedFraction.den.content);
+			var aDenMathContent = MathContentFromJSON.call(this, oParsedFraction["den"]["content"]);
 			var nCurPos = 0;
 			for (var nElm = 0; nElm < aDenMathContent.length; nElm++)
 			{
@@ -9186,7 +9185,7 @@
 			}
 
 			var oNumMathContent = oFraction.getNumeratorMathContent();
-			var aNumMathContent = MathContentFromJSON.call(this, oParsedFraction.num.content);
+			var aNumMathContent = MathContentFromJSON.call(this, oParsedFraction["num"]["content"]);
 			nCurPos = 0;
 			for (nElm = 0; nElm < aNumMathContent.length; nElm++)
 			{
@@ -9194,25 +9193,25 @@
 				nCurPos++;
 			}
 
-			oFraction.Denominator.setCtrPrp(this.TextPrFromJSON(oParsedFraction.den.ctrlPr));
-			oParsedFraction.den.argPr.argSize != undefined && oFraction.Denominator.ArgSize.SetValue(oParsedFraction.den.argPr.argSize);
+			oFraction.Denominator.setCtrPrp(this.TextPrFromJSON(oParsedFraction["den"]["ctrlPr"]));
+			oParsedFraction["den"]["argPr"]["argSize"] != undefined && oFraction.Denominator.ArgSize.SetValue(oParsedFraction["den"]["argPr"]["argSize"]);
 
-			oFraction.Numerator.setCtrPrp(this.TextPrFromJSON(oParsedFraction.num.ctrlPr));
-			oParsedFraction.num.argPr.argSize != undefined && oFraction.Numerator.ArgSize.SetValue(oParsedFraction.num.argPr.argSize);
+			oFraction.Numerator.setCtrPrp(this.TextPrFromJSON(oParsedFraction["num"]["ctrlPr"]));
+			oParsedFraction["num"]["argPr"]["argSize"] != undefined && oFraction.Numerator.ArgSize.SetValue(oParsedFraction["num"]["argPr"]["argSize"]);
 		
 			return oFraction;
 		}
 		function DegreeFromJSON(oParsedDegree)
 		{
-			var nType = oParsedDegree.type === "superScript" ? DEGREE_SUPERSCRIPT : DEGREE_SUBSCRIPT;
+			var nType = oParsedDegree["type"] === "superScript" ? DEGREE_SUPERSCRIPT : DEGREE_SUBSCRIPT;
 
-			var oParsedCtrlPr = nType === DEGREE_SUPERSCRIPT ? oParsedDegree.sSupPr.ctrlPr : oParsedDegree.sSubPr.ctrlPr;
+			var oParsedCtrlPr = nType === DEGREE_SUPERSCRIPT ? oParsedDegree["sSupPr"]["ctrlPr"] : oParsedDegree["sSubPr"]["ctrlPr"];
 
 			var oCtrlPr = this.TextPrFromJSON(oParsedCtrlPr);
 			var oDegree = new AscCommonWord.CDegree({ctrPrp: oCtrlPr, type: nType});
 
 			var oBaseContent = oDegree.getBase();
-			var aBaseContent = MathContentFromJSON.call(this, oParsedDegree.e);
+			var aBaseContent = MathContentFromJSON.call(this, oParsedDegree["e"]);
 			var nCurPos      = 0;
 			for (var nElm = 0; nElm < aBaseContent.length; nElm++)
 			{
@@ -9221,7 +9220,7 @@
 			}
 
 			var oIterContent = oDegree.getUpperIterator();
-			var aIterContent = MathContentFromJSON.call(this, oParsedDegree.sup || oParsedDegree.sub);
+			var aIterContent = MathContentFromJSON.call(this, oParsedDegree["sup"] || oParsedDegree["sub"]);
 			nCurPos          = 0;
 			for (nElm = 0; nElm < aIterContent.length; nElm++)
 			{
@@ -9233,14 +9232,14 @@
 		}
 		function SupSubDegreeFromJSON(oParsedDegree)
 		{
-			var nType = oParsedDegree.type === "subSupScript" ? DEGREE_SubSup : DEGREE_PreSubSup;
+			var nType = oParsedDegree["type"] === "subSupScript" ? DEGREE_SubSup : DEGREE_PreSubSup;
 
-			var oParsedCtrlPr = nType === DEGREE_SubSup ? oParsedDegree.sSubSupPr.ctrlPr : oParsedDegree.sPrePr.ctrlPr;
+			var oParsedCtrlPr = nType === DEGREE_SubSup ? oParsedDegree["sSubSupPr"]["ctrlPr"] : oParsedDegree["sPrePr"]["ctrlPr"];
 			var oCtrlPr = this.TextPrFromJSON(oParsedCtrlPr);
 			var oSupSubDegree = new AscCommonWord.CDegreeSubSup({ctrPrp: oCtrlPr, type: nType});
 
 			var oBaseContent = oSupSubDegree.getBase();
-			var aBaseContent = MathContentFromJSON.call(this, oParsedDegree.e);
+			var aBaseContent = MathContentFromJSON.call(this, oParsedDegree["e"]);
 			var nCurPos      = 0;
 			for (var nElm = 0; nElm < aBaseContent.length; nElm++)
 			{
@@ -9249,7 +9248,7 @@
 			}
 
 			var oUpContent = oSupSubDegree.getUpperIterator();
-			var aUpContent = MathContentFromJSON.call(this, oParsedDegree.sup);
+			var aUpContent = MathContentFromJSON.call(this, oParsedDegree["sup"]);
 			nCurPos          = 0;
 			for (nElm = 0; nElm < aUpContent.length; nElm++)
 			{
@@ -9258,7 +9257,7 @@
 			}
 
 			var oDnContent = oSupSubDegree.getLowerIterator();
-			var aDnContent = MathContentFromJSON.call(this, oParsedDegree.sub);
+			var aDnContent = MathContentFromJSON.call(this, oParsedDegree["sub"]);
 			nCurPos          = 0;
 			for (nElm = 0; nElm < aDnContent.length; nElm++)
 			{
@@ -9270,13 +9269,13 @@
 		}
 		function RadicalFromJSON(oParsedRad)
 		{
-			var nType   = oParsedRad.type === "radSquare" ? SQUARE_RADICAL : DEGREE_RADICAL;
-			var oCtrlPr = this.TextPrFromJSON(oParsedRad.radPr.ctrlPr);
+			var nType   = oParsedRad["type"] === "radSquare" ? SQUARE_RADICAL : DEGREE_RADICAL;
+			var oCtrlPr = this.TextPrFromJSON(oParsedRad["radPr"]["ctrlPr"]);
 
-			var oRadical = new AscCommonWord.CRadical({ctrPrp: oCtrlPr, degHide: oParsedRad.radPr.degHide, type: nType});
+			var oRadical = new AscCommonWord.CRadical({ctrPrp: oCtrlPr, degHide: oParsedRad["radPr"]["degHide"], type: nType});
 
 			var oBaseContent = oRadical.getBase();
-			var aBaseContent = MathContentFromJSON.call(this, oParsedRad.e);
+			var aBaseContent = MathContentFromJSON.call(this, oParsedRad["e"]);
 			var nCurPos      = 0;
 			for (var nElm = 0; nElm < aBaseContent.length; nElm++)
 			{
@@ -9285,7 +9284,7 @@
 			}
 
 			var oDegreeContent = oRadical.getDegree();
-			var aDegreeContent = MathContentFromJSON.call(this, oParsedRad.deg);
+			var aDegreeContent = MathContentFromJSON.call(this, oParsedRad["deg"]);
 			nCurPos            = 0;
 			for (nElm = 0; nElm < aDegreeContent.length; nElm++)
 			{
@@ -9297,19 +9296,19 @@
 		}
 		function NaryFromJSON(oParsedNary)
 		{
-			var oCtrlPr = this.TextPrFromJSON(oParsedNary.naryPr.ctrlPr);
+			var oCtrlPr = this.TextPrFromJSON(oParsedNary["naryPr"]["ctrlPr"]);
 			var oPr = {
-				chr: oParsedNary.naryPr.chr,
+				chr: oParsedNary["naryPr"]["chr"],
 				ctrPrp: oCtrlPr,
-				limLoc: oParsedNary.naryPr.limLoc === "undOvr" ? NARY_UndOvr : NARY_SubSup,
-				subHide: oParsedNary.naryPr.subHide,
-				supHide: oParsedNary.naryPr.supHide
+				limLoc: oParsedNary["naryPr"]["limLoc"] === "undOvr" ? NARY_UndOvr : NARY_SubSup,
+				subHide: oParsedNary["naryPr"]["subHide"],
+				supHide: oParsedNary["naryPr"]["supHide"]
 			};
 
 			var oNary = new AscCommonWord.CNary(oPr);
 
 			var oBaseContent = oNary.getBase();
-			var aBaseContent = MathContentFromJSON.call(this, oParsedNary.e);
+			var aBaseContent = MathContentFromJSON.call(this, oParsedNary["e"]);
 			var nCurPos      = 0;
 			for (var nElm = 0; nElm < aBaseContent.length; nElm++)
 			{
@@ -9318,7 +9317,7 @@
 			}
 
 			var oSubContent = oNary.getSubMathContent();
-			var aSubContent = MathContentFromJSON.call(this, oParsedNary.sub);
+			var aSubContent = MathContentFromJSON.call(this, oParsedNary["sub"]);
 			nCurPos            = 0;
 			for (nElm = 0; nElm < aSubContent.length; nElm++)
 			{
@@ -9327,7 +9326,7 @@
 			}
 
 			var oSupContent = oNary.getSupMathContent();
-			var aSupContent = MathContentFromJSON.call(this, oParsedNary.sup);
+			var aSupContent = MathContentFromJSON.call(this, oParsedNary["sup"]);
 			nCurPos            = 0;
 			for (nElm = 0; nElm < aSupContent.length; nElm++)
 			{
@@ -9339,10 +9338,10 @@
 		}
 		function EqArrayFromJSON(oParsedEqArray)
 		{
-			var oCtrlPr = this.TextPrFromJSON(oParsedEqArray.eqArrPr.ctrlPr);
+			var oCtrlPr = this.TextPrFromJSON(oParsedEqArray["eqArrPr"]["ctrlPr"]);
 
 			var nJcType = undefined;
-			switch (oParsedEqArray.eqArrPr.baseJc)
+			switch (oParsedEqArray["eqArrPr"]["baseJc"])
 			{
 				case "center":
 					nJcType = BASEJC_CENTER;
@@ -9367,11 +9366,11 @@
 			var oPr = {
 				ctrPrp:  oCtrlPr,
 				baseJc:  nJcType,
-				maxDist: oParsedEqArray.eqArrPr.maxDist,
-				objDist: oParsedEqArray.eqArrPr.objDist,
-				rSp:     oParsedEqArray.eqArrPr.rSp,
-				rSpRule: oParsedEqArray.eqArrPr.rSpRule,
-				row:     oParsedEqArray.eqArrPr.row,
+				maxDist: oParsedEqArray["eqArrPr"]["maxDist"],
+				objDist: oParsedEqArray["eqArrPr"]["objDist"],
+				rSp:     oParsedEqArray["eqArrPr"]["rSp"],
+				rSpRule: oParsedEqArray["eqArrPr"]["rSpRule"],
+				row:     oParsedEqArray["eqArrPr"]["row"],
 			};
 
 			var oEqArray = new AscCommonWord.CEqArray(oPr);
@@ -9379,7 +9378,7 @@
 			for (var Index = 0; Index < oPr.row; Index++)
 			{
 				var oMathContent = oEqArray.getElementMathContent(Index);
-				var aMathContent = MathContentFromJSON.call(this, oParsedEqArray.e[Index]);
+				var aMathContent = MathContentFromJSON.call(this, oParsedEqArray["e"][Index]);
 				var nCurPos      = 0;
 				for (var nElm = 0; nElm < aMathContent.length; nElm++)
 				{
@@ -9392,17 +9391,17 @@
 		}
 		function DelimiterFromJSON(oParsedDelimiter)
 		{
-			var oCtrlPr  = this.TextPrFromJSON(oParsedDelimiter.dPr.ctrlPr);
-			var nShpType = oParsedDelimiter.dPr.shp === "centered" ? DELIMITER_SHAPE_CENTERED : DELIMITER_SHAPE_MATCH;
+			var oCtrlPr  = this.TextPrFromJSON(oParsedDelimiter["dPr"]["ctrlPr"]);
+			var nShpType = oParsedDelimiter["dPr"]["shp"] === "centered" ? DELIMITER_SHAPE_CENTERED : DELIMITER_SHAPE_MATCH;
 
 			var oPr = {
 				ctrPrp:  oCtrlPr,
-				begChr:  oParsedDelimiter.dPr.begChr,
-				endChr:  oParsedDelimiter.dPr.endChr,
-				grow:    oParsedDelimiter.dPr.grow,
-				sepChr:  oParsedDelimiter.dPr.sepChr,
+				begChr:  oParsedDelimiter["dPr"]["begChr"],
+				endChr:  oParsedDelimiter["dPr"]["endChr"],
+				grow:    oParsedDelimiter["dPr"]["grow"],
+				sepChr:  oParsedDelimiter["dPr"]["sepChr"],
 				shp:     nShpType,
-				column:  oParsedDelimiter.e.length
+				column:  oParsedDelimiter["e"]["length"]
 			};
 
 			var oDelimiter = new AscCommonWord.CDelimiter(oPr);
@@ -9410,7 +9409,7 @@
 			for (var Index = 0; Index < oPr.column; Index++)
 			{
 				var oMathContent = oDelimiter.getElementMathContent(Index);
-				var aMathContent = MathContentFromJSON.call(this, oParsedDelimiter.e[Index]);
+				var aMathContent = MathContentFromJSON.call(this, oParsedDelimiter["e"][Index]);
 				var nCurPos      = 0;
 				for (var nElm = 0; nElm < aMathContent.length; nElm++)
 				{
@@ -9423,7 +9422,7 @@
 		}
 		function MathFuncFromJSON(oParsedMathFunc)
 		{
-			var oCtrlPr  = this.TextPrFromJSON(oParsedMathFunc.funcPr.ctrlPr);
+			var oCtrlPr  = this.TextPrFromJSON(oParsedMathFunc["funcPr"]["ctrlPr"]);
 
 			var oPr = {
 				ctrPrp:  oCtrlPr,
@@ -9432,7 +9431,7 @@
 			var oMathFunc = new AscCommonWord.CMathFunc(oPr);
 
 			var oMathNameContent = oMathFunc.getFName();
-			var aMathNameContent = MathContentFromJSON.call(this, oParsedMathFunc.fName);
+			var aMathNameContent = MathContentFromJSON.call(this, oParsedMathFunc["fName"]);
 			var nCurPos      = 0;
 			for (var nElm = 0; nElm < aMathNameContent.length; nElm++)
 			{
@@ -9441,7 +9440,7 @@
 			}
 
 			var oMathArgContent = oMathFunc.getArgument();
-			var aMathArgContent = MathContentFromJSON.call(this, oParsedMathFunc.e);
+			var aMathArgContent = MathContentFromJSON.call(this, oParsedMathFunc["e"]);
 			nCurPos      = 0;
 			for (nElm = 0; nElm < aMathArgContent.length; nElm++)
 			{
@@ -9453,17 +9452,17 @@
 		}
 		function AccentFromJSON(oParsedAccent)
 		{
-			var oCtrlPr  = this.TextPrFromJSON(oParsedAccent.accPr.ctrlPr);
+			var oCtrlPr  = this.TextPrFromJSON(oParsedAccent["accPr"]["ctrlPr"]);
 
 			var oPr = {
 				ctrPrp: oCtrlPr,
-				chr:    oParsedAccent.accPr.chr
+				chr:    oParsedAccent["accPr"]["chr"]
 			};
 
 			var oAccent = new CAccent(oPr);
 
 			var oMathContent = oAccent.getBase();
-			var aMathContent = MathContentFromJSON.call(this, oParsedAccent.e);
+			var aMathContent = MathContentFromJSON.call(this, oParsedAccent["e"]);
 			var nCurPos      = 0;
 			for (var nElm = 0; nElm < aMathContent.length; nElm++)
 			{
@@ -9475,13 +9474,13 @@
 		}
 		function GroupCharacterFromJSON(oParsedGrpChr)
 		{
-			var nPos     = oParsedGrpChr.groupChrPr.pos === "bot" ? LOCATION_BOT : LOCATION_TOP;
-			var nVertJc  = oParsedGrpChr.groupChrPr.vertJc === "top" ? VJUST_TOP : VJUST_BOT;
-			var oCtrlPr  = this.TextPrFromJSON(oParsedGrpChr.groupChrPr.ctrlPr);
+			var nPos     = oParsedGrpChr["groupChrPr"]["pos"] === "bot" ? LOCATION_BOT : LOCATION_TOP;
+			var nVertJc  = oParsedGrpChr["groupChrPr"]["vertJc"] === "top" ? VJUST_TOP : VJUST_BOT;
+			var oCtrlPr  = this.TextPrFromJSON(oParsedGrpChr["groupChrPr"]["ctrlPr"]);
 
 			var oPr = {
 				ctrPrp: oCtrlPr,
-				chr:    oParsedGrpChr.groupChrPr.chr,
+				chr:    oParsedGrpChr["groupChrPr"]["chr"],
 				pos:    nPos,
 				vertJc: nVertJc
 			};
@@ -9489,7 +9488,7 @@
 			var oGroupCharacter = new CGroupCharacter(oPr);
 
 			var oMathContent = oGroupCharacter.getBase();
-			var aMathContent = MathContentFromJSON.call(this, oParsedGrpChr.e);
+			var aMathContent = MathContentFromJSON.call(this, oParsedGrpChr["e"]);
 			var nCurPos      = 0;
 			for (var nElm = 0; nElm < aMathContent.length; nElm++)
 			{
@@ -9501,23 +9500,23 @@
 		}
 		function BorderBoxFromJSON(oParsedBorderBox)
 		{
-			var oCtrlPr  = this.TextPrFromJSON(oParsedBorderBox.borderBoxPr.ctrlPr);
+			var oCtrlPr  = this.TextPrFromJSON(oParsedBorderBox["borderBoxPr"]["ctrlPr"]);
 			var oPr = {
 				ctrPrp:     oCtrlPr,
-				hideBot:    oParsedBorderBox.borderBoxPr.hideBot,
-				hideLeft:   oParsedBorderBox.borderBoxPr.hideLeft,
-				hideRight:  oParsedBorderBox.borderBoxPr.hideRight,
-				hideTop:    oParsedBorderBox.borderBoxPr.hideTop,
-				strikeBLTR: oParsedBorderBox.borderBoxPr.strikeBLTR,
-				strikeH:    oParsedBorderBox.borderBoxPr.strikeH,
-				strikeTLBR: oParsedBorderBox.borderBoxPr.strikeTLBR,
-				strikeV:    oParsedBorderBox.borderBoxPr.strikeV
+				hideBot:    oParsedBorderBox["borderBoxPr"]["hideBot"],
+				hideLeft:   oParsedBorderBox["borderBoxPr"]["hideLeft"],
+				hideRight:  oParsedBorderBox["borderBoxPr"]["hideRight"],
+				hideTop:    oParsedBorderBox["borderBoxPr"]["hideTop"],
+				strikeBLTR: oParsedBorderBox["borderBoxPr"]["strikeBLTR"],
+				strikeH:    oParsedBorderBox["borderBoxPr"]["strikeH"],
+				strikeTLBR: oParsedBorderBox["borderBoxPr"]["strikeTLBR"],
+				strikeV:    oParsedBorderBox["borderBoxPr"]["strikeV"]
 			};
 
 			var oBorderBox = new CBorderBox(oPr);
 
 			var oMathContent = oBorderBox.getBase();
-			var aMathContent = MathContentFromJSON.call(this, oParsedBorderBox.e);
+			var aMathContent = MathContentFromJSON.call(this, oParsedBorderBox["e"]);
 			var nCurPos      = 0;
 			for (var nElm = 0; nElm < aMathContent.length; nElm++)
 			{
@@ -9529,21 +9528,21 @@
 		}
 		function BoxFromJSON(oParsedBox)
 		{
-			var oCtrlPr = this.TextPrFromJSON(oParsedBox.boxPr.ctrlPr);
+			var oCtrlPr = this.TextPrFromJSON(oParsedBox["boxPr"]["ctrlPr"]);
 
 			var oPr = {
 				ctrPrp:  oCtrlPr,
-				brk:     oParsedBox.boxPr.brk,
-				aln:     oParsedBox.boxPr.aln,
-				diff:    oParsedBox.boxPr.diff,
-				noBreak: oParsedBox.boxPr.noBreak,
-				opEmu:   oParsedBox.boxPr.opEmu
+				brk:     oParsedBox["boxPr"]["brk"],
+				aln:     oParsedBox["boxPr"]["aln"],
+				diff:    oParsedBox["boxPr"]["diff"],
+				noBreak: oParsedBox["boxPr"]["noBreak"],
+				opEmu:   oParsedBox["boxPr"]["opEmu"]
 			};
 
 			var oBox = new CBox(oPr);
 
 			var oMathContent = oBox.getBase();
-			var aMathContent = MathContentFromJSON.call(this, oParsedBox.e);
+			var aMathContent = MathContentFromJSON.call(this, oParsedBox["e"]);
 			var nCurPos      = 0;
 			for (var nElm = 0; nElm < aMathContent.length; nElm++)
 			{
@@ -9555,10 +9554,10 @@
 		}
 		function BarFromJSON(oParsedBar)
 		{
-			var oCtrlPr = this.TextPrFromJSON(oParsedBar.barPr.ctrlPr);
+			var oCtrlPr = this.TextPrFromJSON(oParsedBar["barPr"]["ctrlPr"]);
 
 			var nPos = undefined;
-			switch (oParsedBar.barPr.pos)
+			switch (oParsedBar["barPr"]["pos"])
 			{
 				case "bot":
 					nPos = LOCATION_BOT;
@@ -9576,7 +9575,7 @@
 			var oBar = new CBar(oPr);
 
 			var oMathContent = oBar.getBase();
-			var aMathContent = MathContentFromJSON.call(this, oParsedBar.e);
+			var aMathContent = MathContentFromJSON.call(this, oParsedBar["e"]);
 			var nCurPos      = 0;
 			for (var nElm = 0; nElm < aMathContent.length; nElm++)
 			{
@@ -9588,8 +9587,8 @@
 		}
 		function LimitFromJSON(oParsedLimit)
 		{
-			var nLimitType = oParsedLimit.type === "limLow" ? LIMIT_LOW : LIMIT_UP;
-			var oCtrlPr    = nLimitType === LIMIT_LOW ? this.TextPrFromJSON(oParsedLimit.limLowPr.ctrlPr) : this.TextPrFromJSON(oParsedLimit.limUppPr.ctrlPr);
+			var nLimitType = oParsedLimit["type"] === "limLow" ? LIMIT_LOW : LIMIT_UP;
+			var oCtrlPr    = nLimitType === LIMIT_LOW ? this.TextPrFromJSON(oParsedLimit["limLowPr"]["ctrlPr"]) : this.TextPrFromJSON(oParsedLimit["limUppPr"]["ctrlPr"]);
 
 			var oPr = {
 				ctrPrp: oCtrlPr,
@@ -9599,7 +9598,7 @@
 			var oLimit = new CLimit(oPr);
 
 			var oMathFNameContent = oLimit.getFName();
-			var aMathFNameContent = MathContentFromJSON.call(this, oParsedLimit.e);
+			var aMathFNameContent = MathContentFromJSON.call(this, oParsedLimit["e"]);
 			var nCurPos           = 0;
 			for (var nElm = 0; nElm < aMathFNameContent.length; nElm++)
 			{
@@ -9608,7 +9607,7 @@
 			}
 
 			var oMathIterContent = oLimit.getIterator();
-			var aMathIterContent = MathContentFromJSON.call(this, oParsedLimit.limit);
+			var aMathIterContent = MathContentFromJSON.call(this, oParsedLimit["limit"]);
 			nCurPos              = 0;
 			for (nElm = 0; nElm < aMathIterContent.length; nElm++)
 			{
@@ -9620,10 +9619,10 @@
 		}
 		function MathMatrixFromJSON(oParsedMatrix)
 		{
-			var oCtrlPr    = this.TextPrFromJSON(oParsedMatrix.mPr.ctrlPr);
+			var oCtrlPr    = this.TextPrFromJSON(oParsedMatrix["mPr"]["ctrlPr"]);
 
 			var nJcType = undefined;
-			switch (oParsedMatrix.mPr.baseJc)
+			switch (oParsedMatrix["mPr"]["baseJc"])
 			{
 				case "center":
 					nJcType = BASEJC_CENTER;
@@ -9648,14 +9647,14 @@
 			var oPr = {
 				ctrPrp:  oCtrlPr,
 				baseJc:  nJcType,
-				cGp:     oParsedMatrix.mPr.cGp,
-				cGpRule: oParsedMatrix.mPr.cGpRule,
-				cSp:     oParsedMatrix.mPr.cSp,
-				plcHide: oParsedMatrix.mPr.plcHide,
-				rSp:     oParsedMatrix.mPr.rSp,
-				rSpRule: oParsedMatrix.mPr.rSpRule,
-				mcs:     oParsedMatrix.mPr.mcs,
-				row:     oParsedMatrix.mr.length
+				cGp:     oParsedMatrix["mPr"]["cGp"],
+				cGpRule: oParsedMatrix["mPr"]["cGpRule"],
+				cSp:     oParsedMatrix["mPr"]["cSp"],
+				plcHide: oParsedMatrix["mPr"]["plcHide"],
+				rSp:     oParsedMatrix["mPr"]["rSp"],
+				rSpRule: oParsedMatrix["mPr"]["rSpRule"],
+				mcs:     oParsedMatrix["mPr"]["mcs"],
+				row:     oParsedMatrix["mr"]["length"]
 			};
 
 			var oMatrix    = new CMathMatrix(oPr);
@@ -9667,7 +9666,7 @@
 				for (var nCell = 0; nCell < nColsCount; nCell++)
 				{
 					var oMathContent = oMatrix.getContentElement(nRow, nCell);
-					var aMathContent = MathContentFromJSON.call(this, oParsedMatrix.mr[nRow][nCell]);
+					var aMathContent = MathContentFromJSON.call(this, oParsedMatrix["mr"][nRow][nCell]);
 					var nCurPos           = 0;
 					for (var nElm = 0; nElm < aMathContent.length; nElm++)
 					{
@@ -9680,7 +9679,7 @@
 			return oMatrix;
 		}
 
-		var aMathContent = MathContentFromJSON.call(this, oParsedParaMath.content);
+		var aMathContent = MathContentFromJSON.call(this, oParsedParaMath["content"]);
 		for (var nElm = 0; nElm < aMathContent.length; nElm++)
 		{
 			oParaMath.Root.Internal_Content_Add(nCurPos, aMathContent[nElm]);
@@ -9696,7 +9695,7 @@
 
 		// change type
 		var nChangeType = undefined;
-		switch (oParsedChange.type)
+		switch (oParsedChange["type"])
 		{
 			case "unknown":
 				nChangeType = Asc.c_oAscRevisionsChangeType.Unknown;
@@ -9738,7 +9737,7 @@
 
 		// move type
 		var nMoveType = undefined;
-		switch (oParsedChange.moveType)
+		switch (oParsedChange["moveType"])
 		{
 			case "noMove":
 				nMoveType = Asc.c_oAscRevisionsMove.NoMove;
@@ -9755,42 +9754,42 @@
 		var changeValue = Value;
 		if (!changeValue)
 		{
-			if (oParsedChange.value.type && oParsedChange.value.type === "textPr")
-				changeValue = this.TextPrFromJSON(oParsedChange.value);
+			if (oParsedChange["value"]["type"] && oParsedChange["value"]["type"] === "textPr")
+				changeValue = this.TextPrFromJSON(oParsedChange["value"]);
 			else
-				changeValue = oParsedChange.value;
+				changeValue = oParsedChange["value"];
 		}
 		
 		// start pos
 		var startPos;
-		if (oParsedChange.start.data)
+		if (oParsedChange["start"]["data"])
 		{
 			startPos              = new CParagraphContentPos()
-			startPos.Data         = oParsedChange.start.data;
-			startPos.Depth        = oParsedChange.start.depth;
-			startPos.bPlaceholder = oParsedChange.start.bPlaceholder;
+			startPos.Data         = oParsedChange["start"]["data"];
+			startPos.Depth        = oParsedChange["start"]["depth"];
+			startPos.bPlaceholder = oParsedChange["start"]["bPlaceholder"];
 		}
 		else
-			startPos = oParsedChange.start;
+			startPos = oParsedChange["start"];
 		
 
 		// end pos
 		var endPos;
-		if (oParsedChange.end.data)
+		if (oParsedChange["end"]["data"])
 		{
 			endPos              = new CParagraphContentPos();
-			endPos.Data         = oParsedChange.end.data;
-			endPos.Depth        = oParsedChange.end.depth;
-			endPos.bPlaceholder = oParsedChange.end.bPlaceholder;
+			endPos.Data         = oParsedChange["end"]["data"];
+			endPos.Depth        = oParsedChange["end"]["depth"];
+			endPos.bPlaceholder = oParsedChange["end"]["bPlaceholder"];
 		}
 		else
-			endPos = oParsedChange.end;
+			endPos = oParsedChange["end"];
 		
 		// color
-		// oChange.UserColor.a = oParsedChange.userColor.a;
-		// oChange.UserColor.g = oParsedChange.userColor.g;
-		// oChange.UserColor.b = oParsedChange.userColor.b;
-		// oChange.UserColor.r = oParsedChange.userColor.r;
+		// oChange.UserColor.a = oParsedChange["userColor"]["a"];
+		// oChange.UserColor.g = oParsedChange["userColor"]["g"];
+		// oChange.UserColor.b = oParsedChange["userColor"]["b"];
+		// oChange.UserColor.r = oParsedChange["userColor"]["r"];
 
 		oChange.SetType(nChangeType);
 		oChange.SetElement(oElement);
@@ -9798,9 +9797,9 @@
 		oChange.put_StartPos(startPos);
 		oChange.put_EndPos(endPos);
 		oChange.SetMoveType(nMoveType);
-		oChange.SetUserId(oParsedChange.userId);
-		oChange.SetUserName(oParsedChange.autor);
-		oChange.SetDateTime(oParsedChange.date);
+		oChange.SetUserId(oParsedChange["userId"]);
+		oChange.SetUserName(oParsedChange["author"]);
+		oChange.SetDateTime(oParsedChange["date"]);
 
 		oDocument.TrackRevisionsManager.AddChange(oElement.GetId(), oChange);
 	};
@@ -9809,7 +9808,7 @@
 		var oSectPr = new AscCommonWord.CSectionPr(private_GetLogicDocument());
 
 		var nSectionType = undefined;
-		switch(oParsedSectPr.type)
+		switch(oParsedSectPr["type"])
 		{
 			case "nextPage":
 				nSectionType = Asc.c_oAscSectionBreakType.NextPage;
@@ -9828,23 +9827,23 @@
 				break;
 		}
 
-		oSectPr.FooterFirst   = oParsedSectPr.footerReference.first   ? this.FooterFromJSON(oParsedSectPr.footerReference.first)   : oSectPr.FooterFirst;
-		oSectPr.FooterDefault = oParsedSectPr.footerReference.default ? this.FooterFromJSON(oParsedSectPr.footerReference.default) : oSectPr.FooterDefault;
-		oSectPr.FooterEven    = oParsedSectPr.footerReference.even    ? this.FooterFromJSON(oParsedSectPr.footerReference.even)    : oSectPr.FooterEven;
+		oSectPr.FooterFirst   = oParsedSectPr["footerReference"]["first"]   ? this.FooterFromJSON(oParsedSectPr["footerReference"]["first"])   : oSectPr.FooterFirst;
+		oSectPr.FooterDefault = oParsedSectPr["footerReference"]["default"] ? this.FooterFromJSON(oParsedSectPr["footerReference"]["default"]) : oSectPr.FooterDefault;
+		oSectPr.FooterEven    = oParsedSectPr["footerReference"]["even"]    ? this.FooterFromJSON(oParsedSectPr["footerReference"]["even"])    : oSectPr.FooterEven;
 
-		oSectPr.HeaderFirst   = oParsedSectPr.headerReference.first   ? this.HeaderFromJSON(oParsedSectPr.headerReference.first)   : oSectPr.HeaderFirst;
-		oSectPr.HeaderDefault = oParsedSectPr.headerReference.default ? this.HeaderFromJSON(oParsedSectPr.headerReference.default) : oSectPr.HeaderDefault;
-		oSectPr.HeaderEven    = oParsedSectPr.headerReference.even    ? this.HeaderFromJSON(oParsedSectPr.headerReference.even)    : oSectPr.HeaderEven;
+		oSectPr.HeaderFirst   = oParsedSectPr["headerReference"]["first"]   ? this.HeaderFromJSON(oParsedSectPr["headerReference"]["first"])   : oSectPr.HeaderFirst;
+		oSectPr.HeaderDefault = oParsedSectPr["headerReference"]["default"] ? this.HeaderFromJSON(oParsedSectPr["headerReference"]["default"]) : oSectPr.HeaderDefault;
+		oSectPr.HeaderEven    = oParsedSectPr["headerReference"]["even"]    ? this.HeaderFromJSON(oParsedSectPr["headerReference"]["even"])    : oSectPr.HeaderEven;
 
-		oSectPr.Columns       = this.SectionColumnsFromJSON(oParsedSectPr.cols, oSectPr);
-		oSectPr.EndnotePr     = this.EndnotePrFromJSON(oParsedSectPr.endnotePr);
-		oSectPr.FootnotePr    = this.FootnotePrFromJSON(oParsedSectPr.footnotePr);
-		oSectPr.LnNumType     = oParsedSectPr.lnNumType ? this.LnNumTypeFromJSON(oParsedSectPr.lnNumType) : oSectPr.LnNumType;
-		oSectPr.Borders       = this.PageBordersFromJSON(oParsedSectPr.pgBorders);
-		oSectPr.PageMargins   = this.PageMarginsFromJSON(oParsedSectPr.pgMar);
-		oSectPr.PageSize      = this.PageSizeFromJSON(oParsedSectPr.pgSz);
-		oSectPr.GutterRTL     = oParsedSectPr.rtlGutter;
-		oSectPr.TitlePage     = oParsedSectPr.titlePg;
+		oSectPr.Columns       = this.SectionColumnsFromJSON(oParsedSectPr["cols"], oSectPr);
+		oSectPr.EndnotePr     = this.EndnotePrFromJSON(oParsedSectPr["endnotePr"]);
+		oSectPr.FootnotePr    = this.FootnotePrFromJSON(oParsedSectPr["footnotePr"]);
+		oSectPr.LnNumType     = oParsedSectPr["lnNumType"] ? this.LnNumTypeFromJSON(oParsedSectPr["lnNumType"]) : oSectPr.LnNumType;
+		oSectPr.Borders       = this.PageBordersFromJSON(oParsedSectPr["pgBorders"]);
+		oSectPr.PageMargins   = this.PageMarginsFromJSON(oParsedSectPr["pgMar"]);
+		oSectPr.PageSize      = this.PageSizeFromJSON(oParsedSectPr["pgSz"]);
+		oSectPr.GutterRTL     = oParsedSectPr["rtlGutter"];
+		oSectPr.TitlePage     = oParsedSectPr["titlePg"];
 		oSectPr.Type          = nSectionType;
 
 		return oSectPr;
@@ -9853,13 +9852,13 @@
 	{
 		var oPageMargins = new CSectionPageMargins();
 
-		oPageMargins.Bottom = private_Twips2MM(oParsedMargins.bottom);
-		oPageMargins.Footer = private_Twips2MM(oParsedMargins.footer);
-		oPageMargins.Gutter = private_Twips2MM(oParsedMargins.gutter);
-		oPageMargins.Header = private_Twips2MM(oParsedMargins.header);
-		oPageMargins.Left   = private_Twips2MM(oParsedMargins.left);
-		oPageMargins.Right  = private_Twips2MM(oParsedMargins.right);
-		oPageMargins.Top    = private_Twips2MM(oParsedMargins.top);
+		oPageMargins.Bottom = private_Twips2MM(oParsedMargins["bottom"]);
+		oPageMargins.Footer = private_Twips2MM(oParsedMargins["footer"]);
+		oPageMargins.Gutter = private_Twips2MM(oParsedMargins["gutter"]);
+		oPageMargins.Header = private_Twips2MM(oParsedMargins["header"]);
+		oPageMargins.Left   = private_Twips2MM(oParsedMargins["left"]);
+		oPageMargins.Right  = private_Twips2MM(oParsedMargins["right"]);
+		oPageMargins.Top    = private_Twips2MM(oParsedMargins["top"]);
 
 		return oPageMargins;
 	};
@@ -9868,7 +9867,7 @@
 		var oPageSize = new CSectionPageSize();
 
 		var nOrientType = undefined;
-		switch(oParsedPgSize.orinet)
+		switch(oParsedPgSize["orinet"])
 		{
 			case "portrait":
 				nOrientType = Asc.c_oAscPageOrientation.PagePortrait;
@@ -9878,8 +9877,8 @@
 				break;
 		}
 
-		oPageSize.H = private_Twips2MM(oParsedPgSize.h);
-		oPageSize.W = private_Twips2MM(oParsedPgSize.w);
+		oPageSize.H = private_Twips2MM(oParsedPgSize["h"]);
+		oPageSize.W = private_Twips2MM(oParsedPgSize["w"]);
 
 		return oPageSize;
 	};
@@ -9888,7 +9887,7 @@
 		var oPageBorders = new CSectionBorders();
 
 		var nDisplayType = undefined;
-		switch(oParsedPgBorders.display)
+		switch(oParsedPgBorders["display"])
 		{
 			case "allPages":
 				nDisplayType = section_borders_DisplayAllPages;
@@ -9901,21 +9900,21 @@
 				break;
 		}
 
-		oPageBorders.Bottom = this.DocBorderFromJSON(oParsedPgBorders.bottom);
-		oPageBorders.Left   = this.DocBorderFromJSON(oParsedPgBorders.left);
-		oPageBorders.Right  = this.DocBorderFromJSON(oParsedPgBorders.right);
-		oPageBorders.Top    = this.DocBorderFromJSON(oParsedPgBorders.top);
+		oPageBorders.Bottom = this.DocBorderFromJSON(oParsedPgBorders["bottom"]);
+		oPageBorders.Left   = this.DocBorderFromJSON(oParsedPgBorders["left"]);
+		oPageBorders.Right  = this.DocBorderFromJSON(oParsedPgBorders["right"]);
+		oPageBorders.Top    = this.DocBorderFromJSON(oParsedPgBorders["top"]);
 
 		oPageBorders.Display    = nDisplayType;
-		oPageBorders.OffsetFrom = private_Twips2MM(oParsedPgBorders.offsetFrom);
-		oPageBorders.ZOrder     = oParsedPgBorders.zOrder === "front" ? section_borders_ZOrderFront : section_borders_ZOrderBack;
+		oPageBorders.OffsetFrom = private_Twips2MM(oParsedPgBorders["offsetFrom"]);
+		oPageBorders.ZOrder     = oParsedPgBorders["zOrder"] === "front" ? section_borders_ZOrderFront : section_borders_ZOrderBack;
 
 		return oPageBorders;
 	};
 	ReaderFromJSON.prototype.LnNumTypeFromJSON = function(oParsedLnNumType)
 	{
 		var nRestartType = undefined;
-		switch(oParsedLnNumType.restart)
+		switch(oParsedLnNumType["restart"])
 		{
 			case "continuous":
 				nRestartType = Asc.c_oAscLineNumberRestartType.Continuous;
@@ -9928,14 +9927,14 @@
 				break;
 		}
 
-		return new Asc.CSectionLnNumType(oParsedLnNumType.countBy, private_Twips2MM(oParsedLnNumType.distance), oParsedLnNumType.start, nRestartType);
+		return new Asc.CSectionLnNumType(oParsedLnNumType["countBy"], private_Twips2MM(oParsedLnNumType["distance"]), oParsedLnNumType["start"], nRestartType);
 	};
 	ReaderFromJSON.prototype.EndnotePrFromJSON = function(oParsedPr)
 	{
 		var oEndnotePr = new CFootnotePr();
 
 		var nNumRestart = undefined;
-		switch(oParsedPr.numRestart)
+		switch(oParsedPr["numRestart"])
 		{
 			case "continuous":
 				nNumRestart = section_footnote_RestartContinuous;
@@ -9949,7 +9948,7 @@
 		}
 
 		var nEndPos = undefined;
-		switch(oParsedPr.pos)
+		switch(oParsedPr["pos"])
 		{
 			case "docEnd":
 				nEndPos = Asc.c_oAscEndnotePos.DocEnd;
@@ -9959,9 +9958,9 @@
 				break;
 		}
 
-		oEndnotePr.NumFormat  = From_XML_c_oAscNumberingFormat(oParsedPr.numFmt);
+		oEndnotePr.NumFormat  = From_XML_c_oAscNumberingFormat(oParsedPr["numFmt"]);
 		oEndnotePr.NumRestart = nNumRestart;
-		oEndnotePr.NumStart   = oParsedPr.numStart;
+		oEndnotePr.NumStart   = oParsedPr["numStart"];
 		oEndnotePr.Pos        = nEndPos;
 
 		return oEndnotePr;
@@ -9971,7 +9970,7 @@
 		var oFootnotePr = new CFootnotePr();
 
 		var nNumRestart = undefined;
-		switch(oParsedPr.numRestart)
+		switch(oParsedPr["numRestart"])
 		{
 			case "continuous":
 				nNumRestart = section_footnote_RestartContinuous;
@@ -9985,7 +9984,7 @@
 		}
 
 		var nEndPos = undefined;
-		switch(oParsedPr.pos)
+		switch(oParsedPr["pos"])
 		{
 			case "beneathText":
 				nEndPos = Asc.c_oAscFootnotePos.BeneathText;
@@ -10001,9 +10000,9 @@
 				break;
 		}
 
-		oFootnotePr.NumFormat  = From_XML_c_oAscNumberingFormat(oParsedPr.numFmt);
+		oFootnotePr.NumFormat  = From_XML_c_oAscNumberingFormat(oParsedPr["numFmt"]);
 		oFootnotePr.NumRestart = nNumRestart;
-		oFootnotePr.NumStart   = oParsedPr.numStart;
+		oFootnotePr.NumStart   = oParsedPr["numStart"];
 		oFootnotePr.Pos        = nEndPos;
 
 		return oFootnotePr;
@@ -10012,13 +10011,13 @@
 	{
 		var oSectionCols = new CSectionColumns(oParentSectPr);
 
-		for (var nCol = 0; nCol < oParsedSectCols.col.length; nCol++)
-			oSectionCols.Cols.push(this.SectionColFromJSON(oParsedSectCols.col[nCol]));
+		for (var nCol = 0; nCol < oParsedSectCols["col"].length; nCol++)
+			oSectionCols.Cols.push(this.SectionColFromJSON(oParsedSectCols["col"][nCol]));
 
-		oSectionCols.EqualWidth = oParsedSectCols.equalWidth;
-		oSectionCols.Num        = oParsedSectCols.num;
-		oSectionCols.Sep        = oParsedSectCols.sep;
-		oSectionCols.Space      = private_Twips2MM(oParsedSectCols.space);
+		oSectionCols.EqualWidth = oParsedSectCols["equalWidth"];
+		oSectionCols.Num        = oParsedSectCols["num"];
+		oSectionCols.Sep        = oParsedSectCols["sep"];
+		oSectionCols.Space      = private_Twips2MM(oParsedSectCols["space"]);
 
 		return oSectionCols;
 	};
@@ -10026,8 +10025,8 @@
 	{
 		var oSectionColumn = new CSectionColumn();
 
-		oSectionColumn.W     = private_Twips2MM(oParsedSectCol.w);
-		oSectionColumn.Space = private_Twips2MM(oParsedSectCol.space);
+		oSectionColumn.W     = private_Twips2MM(oParsedSectCol["w"]);
+		oSectionColumn.Space = private_Twips2MM(oParsedSectCol["space"]);
 
 		return oSectionColumn;
 	};
@@ -10038,7 +10037,7 @@
 		var oHdrFtrController = oDocument.GetHdrFtr();
 
 		var oHeader = new AscCommonWord.CHeaderFooter(oHdrFtrController, oDocument, oDrawingDocuemnt, AscCommon.hdrftr_Header);
-		oHeader.Content = this.DocContentFromJSON(oParsedHdr.content, oHeader);
+		oHeader.Content = this.DocContentFromJSON(oParsedHdr["content"], oHeader);
 
 		return oHeader;
 	};
@@ -10049,7 +10048,7 @@
 		var oHdrFtrController = oDocument.GetHdrFtr();
 
 		var oFooter = new AscCommonWord.CHeaderFooter(oHdrFtrController, oDocument, oDrawingDocuemnt, AscCommon.hdrftr_Footer);
-		oFooter.Content = this.DocContentFromJSON(oParsedHdr.content, oFooter);
+		oFooter.Content = this.DocContentFromJSON(oParsedHdr["content"], oFooter);
 
 		return oFooter;
 	};
@@ -10058,7 +10057,7 @@
 		var oFramePr = new CFramePr();
 
 		var nDropCapType = undefined;
-		switch (oParsedFramePr.dropCap)
+		switch (oParsedFramePr["dropCap"])
 		{
 			case "none":
 				nDropCapType = Asc.c_oAscDropCap.None;
@@ -10072,7 +10071,7 @@
 		}
 
 		var nHAnchor = undefined;
-		switch (oParsedFramePr.hAnchor)
+		switch (oParsedFramePr["hAnchor"])
 		{
 			case "margin":
 				nHAnchor = Asc.c_oAscHAnchor.Margin;
@@ -10086,7 +10085,7 @@
 		}
 
 		var nVAnchor = undefined;
-		switch (oParsedFramePr.vAnchor)
+		switch (oParsedFramePr["vAnchor"])
 		{
 			case "margin":
 				nVAnchor = Asc.c_oAscHAnchor.Margin;
@@ -10100,7 +10099,7 @@
 		}
 
 		var nLineRule = undefined;
-		switch (oParsedFramePr.hRule)
+		switch (oParsedFramePr["hRule"])
 		{
 			case "atLeast":
 				nLineRule = Asc.linerule_AtLeast;
@@ -10114,7 +10113,7 @@
 		}
 
 		var nWrapType = undefined;
-		switch (oParsedFramePr.wrap)
+		switch (oParsedFramePr["wrap"])
 		{
 			case "around":
 				nWrapType = AscCommonWord.wrap_Around;
@@ -10137,7 +10136,7 @@
 		}
 
 		var nXAlign = undefined;
-		switch (oParsedFramePr.xAlign)
+		switch (oParsedFramePr["xAlign"])
 		{
 			case "center":
 				nXAlign = Asc.c_oAscXAlign.Center;
@@ -10157,7 +10156,7 @@
 		}
 
 		var nYAlign = undefined;
-		switch (oParsedFramePr.yAlign)
+		switch (oParsedFramePr["yAlign"])
 		{
 			case Asc.c_oAscYAlign.Bottom:
 				nYAlign = "bottom";
@@ -10180,18 +10179,18 @@
 		}
 
 		oFramePr.DropCap = nDropCapType;
-		oFramePr.H       = oParsedFramePr.h !== undefined ? private_Twips2MM(oParsedFramePr.h) : oFramePr.H;
+		oFramePr.H       = oParsedFramePr["h"] !== undefined ? private_Twips2MM(oParsedFramePr["h"]) : oFramePr.H;
 		oFramePr.HAnchor = nHAnchor;
 		oFramePr.HRule   = nLineRule;
-		oFramePr.HSpace  = oParsedFramePr.hSpace !== undefined ? private_Twips2MM(oParsedFramePr.hSpace) : oFramePr.HSpace;
-		oFramePr.Lines   = oParsedFramePr.lines;
+		oFramePr.HSpace  = oParsedFramePr["hSpace"] !== undefined ? private_Twips2MM(oParsedFramePr["hSpace"]) : oFramePr.HSpace;
+		oFramePr.Lines   = oParsedFramePr["lines"];
 		oFramePr.VAnchor = nVAnchor;
-		oFramePr.VSpace  = oParsedFramePr.vSpace !== undefined ? private_Twips2MM(oParsedFramePr.vSpace) : oFramePr.VSpace;
-		oFramePr.W       = oParsedFramePr.w !== undefined ? private_Twips2MM(oParsedFramePr.w) : oFramePr.W;
+		oFramePr.VSpace  = oParsedFramePr["vSpace"] !== undefined ? private_Twips2MM(oParsedFramePr["vSpace"]) : oFramePr.VSpace;
+		oFramePr.W       = oParsedFramePr["w"] !== undefined ? private_Twips2MM(oParsedFramePr["w"]) : oFramePr.W;
 		oFramePr.Wrap    = nWrapType;
-		oFramePr.X       = oParsedFramePr.x !== undefined ? private_Twips2MM(oParsedFramePr.x) : oFramePr.X;
+		oFramePr.X       = oParsedFramePr["x"] !== undefined ? private_Twips2MM(oParsedFramePr["x"]) : oFramePr.X;
 		oFramePr.XAlign  = nXAlign;
-		oFramePr.Y       = oParsedFramePr.y !== undefined ? private_Twips2MM(oParsedFramePr.y) : oFramePr.Y;
+		oFramePr.Y       = oParsedFramePr["y"] !== undefined ? private_Twips2MM(oParsedFramePr["y"]) : oFramePr.Y;
 		oFramePr.YAlign  = nYAlign;
 
 		return oFramePr;		
@@ -10200,20 +10199,20 @@
 	{
 		if (oPrevNumIdInfo && oPrevNumIdInfo.sPrevCreatedNumId)
 		{
-			if (oParsedNumPr.numId === oPrevNumIdInfo.nNumId && oPrevNumIdInfo.sPrevCreatedNumId)
+			if (oParsedNumPr["numId"] === oPrevNumIdInfo.nNumId && oPrevNumIdInfo.sPrevCreatedNumId)
 			{
-				return new CNumPr(oPrevNumIdInfo.sPrevCreatedNumId, oParsedNumPr.ilvl);
+				return new CNumPr(oPrevNumIdInfo.sPrevCreatedNumId, oParsedNumPr["ilvl"]);
 			}
 		}
 		
 		// numbering
 		var sNumId  = oParsedNumbering ? this.NumberingFromJSON(oParsedNumbering) : oParsedNumbering; // тут создаем AbstrackNum и CNum 
-		var nNumLvl = oParsedNumPr.ilvl;
+		var nNumLvl = oParsedNumPr["ilvl"];
 
 		if (oPrevNumIdInfo)
 		{
 			oPrevNumIdInfo.sPrevCreatedNumId = sNumId;
-			oPrevNumIdInfo.nNumId            = oParsedNumPr.numId;
+			oPrevNumIdInfo.nNumId            = oParsedNumPr["numId"];
 		}
 
 		var oNumPr = new CNumPr(sNumId, nNumLvl);
@@ -10225,26 +10224,26 @@
 	{
 		var oSpacing = new CParaSpacing();
 
-		oSpacing.Before            = typeof(oParsedSpacing.before) === "number" ? private_Twips2MM(oParsedSpacing.before) : oSpacing.Before;
-		oSpacing.BeforePct         = oParsedSpacing.beforePct != undefined ? oParsedSpacing.beforePct : oSpacing.BeforePct;
-		oSpacing.BeforeAutoSpacing = oParsedSpacing.beforeAutoSpacing != undefined ? (oParsedSpacing.beforeAutoSpacing === "on" ? true : false) : oSpacing.BeforeAutoSpacing;
-		oSpacing.After             = typeof(oParsedSpacing.after) === "number" ? private_Twips2MM(oParsedSpacing.after) : oSpacing.After;
-		oSpacing.AfterPct          = oParsedSpacing.afterPct != undefined ? oParsedSpacing.afterPct : oSpacing.AfterPct;
-		oSpacing.AfterAutoSpacing  = oParsedSpacing.afterAutoSpacing != undefined ? (oParsedSpacing.afterAutoSpacing === "on" ? true : false) : oSpacing.AfterAutoSpacing;
+		oSpacing.Before            = typeof(oParsedSpacing["before"]) === "number" ? private_Twips2MM(oParsedSpacing["before"]) : oSpacing.Before;
+		oSpacing.BeforePct         = oParsedSpacing["beforePct"] != undefined ? oParsedSpacing["beforePct"] : oSpacing.BeforePct;
+		oSpacing.BeforeAutoSpacing = oParsedSpacing["beforeAutoSpacing"] != undefined ? (oParsedSpacing["beforeAutoSpacing"] === "on" ? true : false) : oSpacing.BeforeAutoSpacing;
+		oSpacing.After             = typeof(oParsedSpacing["after"]) === "number" ? private_Twips2MM(oParsedSpacing["after"]) : oSpacing.After;
+		oSpacing.AfterPct          = oParsedSpacing["afterPct"] != undefined ? oParsedSpacing["afterPct"] : oSpacing.AfterPct;
+		oSpacing.AfterAutoSpacing  = oParsedSpacing["afterAutoSpacing"] != undefined ? (oParsedSpacing["afterAutoSpacing"] === "on" ? true : false) : oSpacing.AfterAutoSpacing;
 
-		switch (oParsedSpacing.lineRule)
+		switch (oParsedSpacing["lineRule"])
 		{
 			case "atLeast":
 				oSpacing.LineRule = linerule_AtLeast;
-				oSpacing.Line     = typeof(oParsedSpacing.line) === "number" ? private_Twips2MM(oParsedSpacing.line) : oSpacing.Line;
+				oSpacing.Line     = typeof(oParsedSpacing["line"]) === "number" ? private_Twips2MM(oParsedSpacing["line"]) : oSpacing.Line;
 				break;
 			case "auto":
 				oSpacing.LineRule = linerule_Auto;
-				oSpacing.Line     = typeof(oParsedSpacing.line) === "number" ? private_Twips2MM(oParsedSpacing.line) : oSpacing.Line;
+				oSpacing.Line     = typeof(oParsedSpacing["line"]) === "number" ? private_Twips2MM(oParsedSpacing["line"]) : oSpacing.Line;
 				break;
 			case "exact":
 				oSpacing.LineRule = linerule_Exact;
-				oSpacing.Line     = typeof(oParsedSpacing.line) === "number" ? private_Twips2MM(oParsedSpacing.line) : oSpacing.Line;
+				oSpacing.Line     = typeof(oParsedSpacing["line"]) === "number" ? private_Twips2MM(oParsedSpacing["line"]) : oSpacing.Line;
 				break;
 			default:
 				oSpacing.LineRule = undefined;
@@ -10257,9 +10256,9 @@
 	ReaderFromJSON.prototype.NumberingFromJSON = function(oParsedNumbering)
 	{
 		var oDocument    = private_GetLogicDocument();
-		var oAbstractNum = this.AbstractNumFromJSON(oParsedNumbering.abstractNum);
+		var oAbstractNum = this.AbstractNumFromJSON(oParsedNumbering["abstractNum"]);
 		var oNum         = new CNum(private_GetLogicDocument().Numbering, oAbstractNum.GetId());
-		oNum             = this.CNumFromJSON(oNum, oParsedNumbering.num.lvlOverride);
+		oNum             = this.CNumFromJSON(oNum, oParsedNumbering["num"]["lvlOverride"]);
 		var sNumId       = oNum.GetId();
 
 		oDocument.Numbering.Num[sNumId] = oNum;
@@ -10272,11 +10271,11 @@
 		var oAbstractNum = new CAbstractNum();
 
 		oAbstractNum.Lvl = [];
-		for (var nLvl = 0; nLvl < oParsedAbstrNum.lvl.length; nLvl++)
-			oAbstractNum.Lvl.push(this.NumLvlFromJSON(oParsedAbstrNum.lvl[nLvl]));
+		for (var nLvl = 0; nLvl < oParsedAbstrNum["lvl"].length; nLvl++)
+			oAbstractNum.Lvl.push(this.NumLvlFromJSON(oParsedAbstrNum["lvl"][nLvl]));
 
-		oAbstractNum.NumStyleLink = oParsedAbstrNum.numStyleLink;
-		oAbstractNum.styleLink    = oParsedAbstrNum.StyleLink;
+		oAbstractNum.NumStyleLink = oParsedAbstrNum["numStyleLink"];
+		oAbstractNum.styleLink    = oParsedAbstrNum["StyleLink"];
 
 		//if (oDocument.Numbering.AbstractNum[oParsedAbstrNum.abstractNumId] && oAbstractNum.isEqual(oDocument.Numbering.AbstractNum[oParsedAbstrNum.abstractNumId]))
 		//	return oDocument.Numbering.AbstractNum[oParsedAbstrNum.abstractNumId];
@@ -10287,7 +10286,7 @@
 	ReaderFromJSON.prototype.CNumFromJSON = function(oNum, arrLvlOverride)
 	{
 		for (var nLvl = 0; nLvl < arrLvlOverride; nLvl++)
-			oNum.LvlOverride.push(new CLvlOverride(this.NumLvlFromJSON(arrLvlOverride[nLvl].lvl), arrLvlOverride[nLvl].ilvl, arrLvlOverride[nLvl].startOverride));
+			oNum.LvlOverride.push(new CLvlOverride(this.NumLvlFromJSON(arrLvlOverride[nLvl]["lvl"]), arrLvlOverride[nLvl]["ilvl"], arrLvlOverride[nLvl]["startOverride"]));
 	
 		return oNum;
 	};
@@ -10297,7 +10296,7 @@
 
 		// align
 		var nJc = undefined;
-		switch (oParsedNumLvl.lvlJc)
+		switch (oParsedNumLvl["lvlJc"])
 		{
 			case "end":
 				nJc = AscCommon.align_Right;
@@ -10317,7 +10316,7 @@
 		}
 
 		// style 
-		var oStyle    = oParsedNumLvl.pStyle ? this.StyleFromJSON(oParsedNumLvl.pStyle) : oParsedNumLvl.pStyle;
+		var oStyle    = oParsedNumLvl["pStyle"] ? this.StyleFromJSON(oParsedNumLvl["pStyle"]) : oParsedNumLvl["pStyle"];
 		var oStyles   = private_GetStyles();
 		if (oStyle)
 		{
@@ -10344,7 +10343,7 @@
 
 		// suff
 		var nSuffType = undefined;
-		switch (oParsedNumLvl.suff)
+		switch (oParsedNumLvl["suff"])
 		{
 			case "tab":
 				nSuffType = Asc.c_oAscNumberingSuff.Tab;
@@ -10358,51 +10357,51 @@
 		}
 
 		// format type
-		var nFormatType = From_XML_c_oAscNumberingFormat(oParsedNumLvl.numFmt.val);
+		var nFormatType = From_XML_c_oAscNumberingFormat(oParsedNumLvl["numFmt"]["val"]);
 
-		oNumLvl.IsLgl   = oParsedNumLvl.isLgl;
-		oNumLvl.Legacy  = oParsedNumLvl.legacy ? new CNumberingLvlLegacy(oParsedNumLvl.legacy.legacy, oParsedNumLvl.legacy.legacyIndent, oParsedNumLvl.legacy.legacySpace) : oNumLvl.Legacy;
+		oNumLvl.IsLgl   = oParsedNumLvl["isLgl"];
+		oNumLvl.Legacy  = oParsedNumLvl["legacy"] ? new CNumberingLvlLegacy(oParsedNumLvl["legacy"]["legacy"], oParsedNumLvl["legacy"]["legacyIndent"], oParsedNumLvl["legacy"]["legacySpace"]) : oNumLvl.Legacy;
 		oNumLvl.Jc      = nJc;
 		oNumLvl.Format  = nFormatType;
-		oNumLvl.ParaPr  = this.ParaPrFromJSON(oParsedNumLvl.pPr);
-		oNumLvl.TextPr  = this.TextPrFromJSON(oParsedNumLvl.rPr);
+		oNumLvl.ParaPr  = this.ParaPrFromJSON(oParsedNumLvl["pPr"]);
+		oNumLvl.TextPr  = this.TextPrFromJSON(oParsedNumLvl["rPr"]);
 		oNumLvl.Suff    = nSuffType;
-		oNumLvl.Restart = oParsedNumLvl.restart;
-		oNumLvl.Start   = oParsedNumLvl.start;
+		oNumLvl.Restart = oParsedNumLvl["restart"];
+		oNumLvl.Start   = oParsedNumLvl["start"];
 		oNumLvl.PStyle  = oStyle ? oStyle.Id : oNumLvl.PStyle;
-		if (oParsedNumLvl.lvlText.numValue !== undefined)
+		if (oParsedNumLvl["lvlText"]["numValue"] !== undefined)
 		{
-			oNumLvl.LvlText[0] = new CNumberingLvlTextNum(oParsedNumLvl.lvlText.numValue);
-			oNumLvl.LvlText[1] = new CNumberingLvlTextString(oParsedNumLvl.lvlText.val);
+			oNumLvl.LvlText[0] = new CNumberingLvlTextNum(oParsedNumLvl["lvlText"]["numValue"]);
+			oNumLvl.LvlText[1] = new CNumberingLvlTextString(oParsedNumLvl["lvlText"]["val"]);
 		}
 		else
-			oNumLvl.LvlText[0] = new CNumberingLvlTextString(oParsedNumLvl.lvlText.val);
+			oNumLvl.LvlText[0] = new CNumberingLvlTextString(oParsedNumLvl["lvlText"]["val"]);
 
 		return oNumLvl;
 	};
 	ReaderFromJSON.prototype.HyperlinkFromJSON = function(oParsedLink, oParentPara, notCompletedFields)
 	{
-		var aContent = oParsedLink.content;   
+		var aContent = oParsedLink["content"];   
 		var oHyper   = new AscCommonWord.ParaHyperlink();
 
 		// Заполняем гиперссылку полями
-		if (undefined !== oParsedLink.anchor && null !== oParsedLink.anchor)
+		if (undefined !== oParsedLink["anchor"] && null !== oParsedLink["anchor"])
 		{
-			oHyper.SetAnchor(oParsedLink.anchor);
+			oHyper.SetAnchor(oParsedLink["anchor"]);
 			oHyper.SetValue("")
 		}
-		else if (undefined != oParsedLink.value)
+		else if (undefined != oParsedLink["value"])
 		{
-			oHyper.SetValue(oParsedLink.value);
+			oHyper.SetValue(oParsedLink["value"]);
 			oHyper.SetAnchor("");
 		}
-		if (undefined != oParsedLink.toolTip)
-			oHyper.SetToolTip(oParsedLink.toolTip);
+		if (undefined != oParsedLink["toolTip"])
+			oHyper.SetToolTip(oParsedLink["toolTip"]);
 
 
 		for (var nElm = 0; nElm < aContent.length; nElm++)
 		{
-			switch(aContent[nElm].type)
+			switch(aContent[nElm]["type"])
 			{
 				case "run":
 				case "mathRun":
@@ -10418,13 +10417,13 @@
 			notCompletedFields = [];
 
 		var oContentControl = new AscCommonWord.CInlineLevelSdt();
-		var aContent        = oParsedSdt.content;
+		var aContent        = oParsedSdt["content"];
 
-		oContentControl.Pr = this.SdtPrFromJSON(oParsedSdt.sdtPr);
+		oContentControl.Pr = this.SdtPrFromJSON(oParsedSdt["sdtPr"]);
 
 		for (var nElm = 0; nElm < aContent.length; nElm++)
 		{
-			switch (aContent[nElm].type)
+			switch (aContent[nElm]["type"])
 			{
 				case "run":
 				case "mathRun":
@@ -10449,9 +10448,9 @@
 
 		var oContentControl = new AscCommonWord.CBlockLevelSdt(private_GetLogicDocument(), oParent || private_GetLogicDocument());
 		
-		oContentControl.SetPr(this.SdtPrFromJSON(oParsedSdt.sdtPr));
+		oContentControl.SetPr(this.SdtPrFromJSON(oParsedSdt["sdtPr"]));
 		
-		oContentControl.Content.Copy2(this.DocContentFromJSON(oParsedSdt.sdtContent, oContentControl, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo));
+		oContentControl.Content.Copy2(this.DocContentFromJSON(oParsedSdt["sdtContent"], oContentControl, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo));
 
 		return oContentControl;
 	};
@@ -10459,9 +10458,9 @@
 	{
 		var oCell = new CTableCell(oParentRow);
 
-		oParsedCell.tcPr && oCell.Set_Pr(this.TableCellPrFromJSON(oParsedCell.tcPr));
+		oParsedCell["tcPr"] && oCell.Set_Pr(this.TableCellPrFromJSON(oParsedCell["tcPr"]));
 
-		oCell.Content.Copy2(this.DocContentFromJSON(oParsedCell.content, oCell, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo));
+		oCell.Content.Copy2(this.DocContentFromJSON(oParsedCell["content"], oCell, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo));
 	
 		return oCell;
 	};
@@ -10469,32 +10468,32 @@
 	{
 		var oTableCellPr = new CTableCellPr();
 
-		oTableCellPr.GridSpan   = oParsedPr.gridSpan;
-		oTableCellPr.HMerge     = oParsedPr.hMerge ? (oParsedPr.hMerge === "continue" ? 2 : 1) : oParsedPr.hMerge;
-		oTableCellPr.VMerge     = oParsedPr.vMerge ? (oParsedPr.vMerge === "continue" ? 2 : 1) : oParsedPr.vMerge;
-		oTableCellPr.NoWrap     = oParsedPr.noWrap;
-		oTableCellPr.Shd        = oParsedPr.shd ? this.ShadeFromJSON(oParsedPr.shd) : oParsedPr.shd;
+		oTableCellPr.GridSpan   = oParsedPr["gridSpan"];
+		oTableCellPr.HMerge     = oParsedPr["hMerge"] ? (oParsedPr["hMerge"] === "continue" ? 2 : 1) : oParsedPr["hMerge"];
+		oTableCellPr.VMerge     = oParsedPr["vMerge"] ? (oParsedPr["vMerge"] === "continue" ? 2 : 1) : oParsedPr["vMerge"];
+		oTableCellPr.NoWrap     = oParsedPr["noWrap"];
+		oTableCellPr.Shd        = oParsedPr["shd"] ? this.ShadeFromJSON(oParsedPr["shd"]) : oParsedPr["shd"];
 
-		oTableCellPr.TableCellBorders.Bottom = oParsedPr.tcBorders.bottom ? this.DocBorderFromJSON(oParsedPr.tcBorders.bottom) : oParsedPr.tcBorders.bottom;
-		oTableCellPr.TableCellBorders.Right  = oParsedPr.tcBorders.end    ? this.DocBorderFromJSON(oParsedPr.tcBorders.end)    : oParsedPr.tcBorders.end;
-		oTableCellPr.TableCellBorders.Left   = oParsedPr.tcBorders.start  ? this.DocBorderFromJSON(oParsedPr.tcBorders.start)  : oParsedPr.tcBorders.start;
-		oTableCellPr.TableCellBorders.Top    = oParsedPr.tcBorders.top    ? this.DocBorderFromJSON(oParsedPr.tcBorders.top)    : oParsedPr.tcBorders.top;
+		oTableCellPr.TableCellBorders.Bottom = oParsedPr["tcBorders"]["bottom"] ? this.DocBorderFromJSON(oParsedPr["tcBorders"]["bottom"]) : oParsedPr["tcBorders"]["bottom"];
+		oTableCellPr.TableCellBorders.Right  = oParsedPr["tcBorders"]["end"]    ? this.DocBorderFromJSON(oParsedPr["tcBorders"]["end"])    : oParsedPr["tcBorders"]["end"];
+		oTableCellPr.TableCellBorders.Left   = oParsedPr["tcBorders"]["start"]  ? this.DocBorderFromJSON(oParsedPr["tcBorders"]["start"])  : oParsedPr["tcBorders"]["start"];
+		oTableCellPr.TableCellBorders.Top    = oParsedPr["tcBorders"]["top"]    ? this.DocBorderFromJSON(oParsedPr["tcBorders"]["top"])    : oParsedPr["tcBorders"]["top"];
 		
-		if (oParsedPr.tcMar)
+		if (oParsedPr["tcMar"])
 		{
 			oTableCellPr.TableCellMar        = {};
-			oTableCellPr.TableCellMar.Bottom = oParsedPr.tcMar.bottom ? this.TableMeasurementFromJSON(oParsedPr.tcMar.bottom) : oParsedPr.tcMar.bottom;
-			oTableCellPr.TableCellMar.Right  = oParsedPr.tcMar.right  ? this.TableMeasurementFromJSON(oParsedPr.tcMar.right)  : oParsedPr.tcMar.right;
-			oTableCellPr.TableCellMar.Left   = oParsedPr.tcMar.left   ? this.TableMeasurementFromJSON(oParsedPr.tcMar.left)   : oParsedPr.tcMar.left;
-			oTableCellPr.TableCellMar.Top    = oParsedPr.tcMar.top    ? this.TableMeasurementFromJSON(oParsedPr.tcMar.top)    : oParsedPr.tcMar.top;
+			oTableCellPr.TableCellMar.Bottom = oParsedPr["tcMar"]["bottom"] ? this.TableMeasurementFromJSON(oParsedPr["tcMar"]["bottom"]) : oParsedPr["tcMar"]["bottom"];
+			oTableCellPr.TableCellMar.Right  = oParsedPr["tcMar"]["right"]  ? this.TableMeasurementFromJSON(oParsedPr["tcMar"]["right"])  : oParsedPr["tcMar"]["right"];
+			oTableCellPr.TableCellMar.Left   = oParsedPr["tcMar"]["left"]   ? this.TableMeasurementFromJSON(oParsedPr["tcMar"]["left"])   : oParsedPr["tcMar"]["left"];
+			oTableCellPr.TableCellMar.Top    = oParsedPr["tcMar"]["top"]    ? this.TableMeasurementFromJSON(oParsedPr["tcMar"]["top"])    : oParsedPr["tcMar"]["top"];
 		}
 
-		oTableCellPr.PrChange   = oParsedPr.tcPrChange ? this.TableCellPrFromJSON(oParsedPr.tcPrChange) : oParsedPr.tcPrChange;
-		oTableCellPr.TableCellW = oParsedPr.tcW        ? this.TableMeasurementFromJSON(oParsedPr.tcW)   : oParsedPr.tcW;
+		oTableCellPr.PrChange   = oParsedPr["tcPrChange"] ? this.TableCellPrFromJSON(oParsedPr["tcPrChange"]) : oParsedPr["tcPrChange"];
+		oTableCellPr.TableCellW = oParsedPr["tcW"]        ? this.TableMeasurementFromJSON(oParsedPr["tcW"])   : oParsedPr["tcW"];
 
 		// text direction
 		var nTextDir = undefined;
-		switch (oParsedPr.textDirection)
+		switch (oParsedPr["textDirection"])
 		{
 			case "lrtb":
 				nTextDir = textdirection_LRTB;
@@ -10520,7 +10519,7 @@
 
 		// alignV
 		var nVAlign = undefined;
-		switch (oParsedPr.vAlign)
+		switch (oParsedPr["vAlign"])
 		{
 			case "top":
 				nVAlign = vertalignjc_Top;
@@ -10539,6 +10538,7 @@
 	};
 	ReaderFromJSON.prototype.TableMeasurementFromJSON = function(oParsedObj)
 	{
+		// тут отсюда
 		var nType = tblwidth_Auto;
 		var nW    = 0;
 
@@ -11757,7 +11757,7 @@
 
 		if (!oDrawing.GraphicObj)
 			oDrawing.Set_GraphicObject(oGraphicObj);
-//		oDrawing.CheckWH();
+		//	oDrawing.CheckWH();
 
 		return oDrawing;
 	};
@@ -11791,11 +11791,27 @@
 			case "oleObject":
 				oGraphicObj = this.OleObjectFromJSOM(oParsedObj, oParent);
 				break;
+			case "slicer":
+				oGraphicObj = this.SlicerDrawingFromJSON(oParsedObj, oParent);
 		}
 
 		this.drawingsMap[oParsedObj.id] = oGraphicObj;
 		
 		return oGraphicObj;
+	};
+	ReaderFromJSON.prototype.SlicerDrawingFromJSON = function(oParsedSlicer)
+	{
+		var oSlicer = new AscFormat.CSlicer();
+		
+		oSlicer.setBDeleted(false);
+		if (oParsedSlicer["name"] != null)
+			oSlicer.name = oParsedSlicer["name"];
+		if (oParsedSlicer["spPr"] != null)
+			oSlicer.setSpPr(this.SpPrFromJSON(oParsedSlicer["spPr"], oSlicer));
+		if (oParsedSlicer["nvSpPr"] != null)
+			oSlicer.setNvSpPr(this.UniNvPrFromJSON(oParsedSlicer["nvSpPr"]));
+	
+		return oSlicer;
 	};
 	ReaderFromJSON.prototype.LockedCanvasFromJSON = function(oParsedLocCanvas, oParentDrawing)
 	{
@@ -15225,7 +15241,7 @@
 	{
 		var oNvUniSpPr = new AscFormat.CNvUniSpPr();
 
-		oNvUniSpPr.locks     = oParsedPr.locks;
+		oNvUniSpPr.locks     = FromXML_DrawingLockType(oParsedPr.locks);
 		oNvUniSpPr.stCnxIdx  = oParsedPr.stCnxIdx;
 		oNvUniSpPr.stCnxId   = oParsedPr.stCnxId;
 		oNvUniSpPr.endCnxIdx = oParsedPr.endCnxIdx;
@@ -19498,6 +19514,116 @@
 
 		return nVal;
 	}
+
+	function ToXML_DrawingLockType(nType)
+	{
+		var sLockType = undefined;
+		switch (nType)
+		{
+			case AscFormat.LOCKS_MASKS.noGrp:
+				sLockType = "noGrp";
+				break;
+			case AscFormat.LOCKS_MASKS.noUngrp:
+				sLockType = "noUngrp";
+				break;
+			case AscFormat.LOCKS_MASKS.noSelect:
+				sLockType = "noSelect";
+				break;
+			case AscFormat.LOCKS_MASKS.noRot:
+				sLockType = "noRot";
+				break;
+			case AscFormat.LOCKS_MASKS.noChangeAspect:
+				sLockType = "noChangeAspect";
+				break;
+			case AscFormat.LOCKS_MASKS.noMove:
+				sLockType = "noMove";
+				break;
+			case AscFormat.LOCKS_MASKS.noResize:
+				sLockType = "noResize";
+				break;
+			case AscFormat.LOCKS_MASKS.noEditPoints:
+				sLockType = "noEditPoints";
+				break;
+			case AscFormat.LOCKS_MASKS.noAdjustHandles:
+				sLockType = "noAdjustHandles";
+				break;
+			case AscFormat.LOCKS_MASKS.noChangeArrowheads:
+				sLockType = "noChangeArrowheads";
+				break;
+			case AscFormat.LOCKS_MASKS.noChangeShapeType:
+				sLockType = "noChangeShapeType";
+				break;
+			case AscFormat.LOCKS_MASKS.noDrilldown:
+				sLockType = "noDrilldown";
+				break;
+			case AscFormat.LOCKS_MASKS.noTextEdit:
+				sLockType = "noTextEdit";
+				break;
+			case AscFormat.LOCKS_MASKS.noCrop:
+				sLockType = "noCrop";
+				break;
+			case AscFormat.LOCKS_MASKS.txBox:
+				sLockType = "txBox";
+				break;
+		}
+
+		return sLockType;
+	}
+	function FromXML_DrawingLockType(sType)
+	{
+		var nLockType = 0;
+		switch (sType)
+		{
+			case "noGrp":
+				nLockType = AscFormat.LOCKS_MASKS.noGrp;
+				break;
+			case "noUngrp":
+				nLockType = AscFormat.LOCKS_MASKS.noUngrp;
+				break;
+			case "noSelect":
+				nLockType = AscFormat.LOCKS_MASKS.noSelect;
+				break;
+			case "noRot":
+				nLockType = AscFormat.LOCKS_MASKS.noRot;
+				break;
+			case "noChangeAspect":
+				nLockType = AscFormat.LOCKS_MASKS.noChangeAspect;
+				break;
+			case "noMove":
+				nLockType = AscFormat.LOCKS_MASKS.noMove;
+				break;
+			case "noResize":
+				nLockType = AscFormat.LOCKS_MASKS.noResize;
+				break;
+			case "noEditPoints":
+				nLockType = AscFormat.LOCKS_MASKS.noEditPoints;
+				break;
+			case "noAdjustHandles":
+				nLockType = AscFormat.LOCKS_MASKS.noAdjustHandles;
+				break;
+			case "noChangeArrowheads":
+				nLockType = AscFormat.LOCKS_MASKS.noChangeArrowheads;
+				break;
+			case "noChangeShapeType":
+				nLockType = AscFormat.LOCKS_MASKS.noChangeShapeType;
+				break;
+			case "noDrilldown":
+				nLockType = AscFormat.LOCKS_MASKS.noDrilldown;
+				break;
+			case "noTextEdit":
+				nLockType = AscFormat.LOCKS_MASKS.noTextEdit;
+				break;
+			case "noCrop":
+				nLockType = AscFormat.LOCKS_MASKS.noCrop;
+				break;
+			case "txBox":
+				nLockType = AscFormat.LOCKS_MASKS.txBox;
+				break;
+		}
+
+		return nLockType;
+	}
+	
     //----------------------------------------------------------export----------------------------------------------------
     window['AscCommon']       = window['AscCommon'] || {};
     window['AscFormat']       = window['AscFormat'] || {};

@@ -261,11 +261,11 @@
 				x: oComment.x,
 				y: oComment.y
 			},
-			text:      oComment.Data.m_sText,
-			autorName: oComment.Data.m_sUserName,
-			authorId:  oComment.Data.m_sUserId,
-			dt:        oComment.Data.m_sOOTime,
-			idx:       oComment.Parent.comments.indexOf(oComment)
+			text:       oComment.Data.m_sText,
+			authorName: oComment.Data.m_sUserName,
+			authorId:   oComment.Data.m_sUserId,
+			dt:         oComment.Data.m_sOOTime,
+			idx:        oComment.Parent.comments.indexOf(oComment)
 		}
 	};
 	WriterToJSON.prototype.SerSlideLayout = function(oLayout, bWriteMaster)
@@ -2073,7 +2073,7 @@
 	{
 		var oAscCommentData = new Asc.asc_CCommentData({
 			m_sText:     oParsedComment.text,
-			m_sUserName: oParsedComment.autorName,
+			m_sUserName: oParsedComment.authorName,
 			m_sUserId:   oParsedComment.authorId,
 			m_sOOTime:   oParsedComment.dt
 		});

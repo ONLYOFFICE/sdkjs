@@ -722,6 +722,31 @@
 	};
 
 	/**
+	 * Converts the specified JSON object into the Document Builder object of the corresponding type.
+	 * @memberof Api
+	 * @param {JSON} sMessage - The JSON object to convert.
+	 * @typeofeditors ["CSE"]
+	 */
+	Api.prototype.FromJSON = function(sMessage)
+	{
+		var oReader = new AscCommon.ReaderFromJSON();
+		oReader.Workbook = this.wbModel;
+		
+		var oParsedObj  = JSON.parse(sMessage);
+		var oReadedObj = null;
+
+		switch (oParsedObj.type)
+		{
+			case "worksheet":
+				oReadedObj = new ApiWorksheet(oReader.WorksheetFromJSON(oParsedObj, this.wbModel, this.wbModel.pushWorksheet()));
+				//this.wbModel.pushWorksheet(oReadedObj.worksheet);
+				break;
+		}
+
+		return oReadedObj;
+	};
+
+	/**
 	 * Returns the state of sheet visibility.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
@@ -1649,7 +1674,18 @@
 		}
 		return allApiDrawings;
 	};
-
+	/**
+	 * Converts the ApiWorksheet object to the JSON object.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiChart[]}.
+	*/
+	ApiWorksheet.prototype.ToJSON = function(){
+		var oWriter = new AscCommon.WriterToJSON();
+		oWriter.Workbook = Asc.editor.wbModel;
+		return JSON.stringify(oWriter.SerWorksheet(this.worksheet));
+	};
+	
 
 	/**
 	 * Specifies the cell border position.
@@ -4091,6 +4127,7 @@
 	Api.prototype["GetRange"] = Api.prototype.GetRange;
 
 	Api.prototype["RecalculateAllFormulas"] = Api.prototype.RecalculateAllFormulas;
+	Api.prototype["FromJSON"]               = Api.prototype.FromJSON;
 
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
@@ -4136,6 +4173,7 @@
 	ApiWorksheet.prototype["GetAllImages"] = ApiWorksheet.prototype.GetAllImages;
 	ApiWorksheet.prototype["GetAllShapes"] = ApiWorksheet.prototype.GetAllShapes;
 	ApiWorksheet.prototype["GetAllCharts"] = ApiWorksheet.prototype.GetAllCharts;
+	ApiWorksheet.prototype["ToJSON"] = ApiWorksheet.prototype.ToJSON;
 
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
