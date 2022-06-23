@@ -12099,6 +12099,14 @@ QueryTableField.prototype.clone = function() {
 	};
 
 
+	ExternalReference.prototype.initWorksheetsFromSheetDataSet = function () {
+		if (this.SheetNames) {
+			for (var i = 0; i < this.SheetNames.length; i++) {
+				this.initWorksheetFromSheetDataSet(this.SheetNames[i]);
+			}
+		}
+	};
+
 	ExternalReference.prototype.initWorksheetFromSheetDataSet = function (sheetName) {
 		var sheetDataSetIndex = this.getSheetByName(sheetName);
 		if (null !== sheetDataSetIndex) {
@@ -12107,7 +12115,7 @@ QueryTableField.prototype.clone = function() {
 			var ws = this.worksheets[sheetName];
 			if (!this.worksheets[sheetName]) {
 				var wb = new AscCommonExcel.Workbook();
-				var ws = new AscCommonExcel.Worksheet(wb);
+				ws = new AscCommonExcel.Worksheet(wb);
 				ws.sName = sheetName;
 
 				this.worksheets[sheetName] = ws;
@@ -12293,10 +12301,10 @@ QueryTableField.prototype.clone = function() {
 		for (var i = 0; i < length; ++i) {
 			var row = new ExternalCell();
 			row.Read_FromBinary2(r);
-			if(!this.Row) {
-				this.Row = [];
+			if(!this.Cell) {
+				this.Cell = [];
 			}
-			this.Row.push(row);
+			this.Cell.push(row);
 		}
 	};
 	ExternalRow.prototype.Write_ToBinary2 = function(w) {

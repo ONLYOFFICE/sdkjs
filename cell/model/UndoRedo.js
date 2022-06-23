@@ -2451,6 +2451,7 @@ function (window, undefined) {
 			var externalReferenceIndex;
 
 			if (from && !to) {//удаление
+				from.initWorksheetsFromSheetDataSet();
 				wb.externalReferences.push(from);
 			} else if (!from && to) { //добавление
 				externalReferenceIndex = wb.getExternalLinkIndexByName(to.Id);
@@ -2458,6 +2459,7 @@ function (window, undefined) {
 					wb.externalReferences.splice(externalReferenceIndex - 1, 1);
 				}
 			} else if (from && to) { //изменение
+				//TODO нужно сохранить ссылки на текущий лист
 				externalReferenceIndex = wb.getExternalLinkIndexByName(to.Id);
 				if (externalReferenceIndex !== null) {
 					wb.externalReferences[externalReferenceIndex - 1] = from;
