@@ -5185,6 +5185,10 @@ _func[cElementType.cell3D] = _func[cElementType.cell];
 		this.argPosArr = [];
 		this.activeFunction = null;
 		this.cursorPos = undefined;
+
+		//в процессе добавления формулы может найтись ссылка на внешний источник, который ещё не добавлен
+		//сюда добавляем индексы и после парсинга формулы, добавляем новую структуру
+		this.externalReferenesNeedAdd = null;
 	}
 
 	ParseResult.prototype.addRefPos = function(start, end, index, oper, isName) {
@@ -6367,7 +6371,18 @@ function parserFormula( formula, parent, _ws ) {
 				if (externalLink) {
 					if (local) {
 						externalLink = t.wb.getExternalLinkIndexByName(externalLink);
+						if (externalLink === null) {
+							externalLink = _3DRefTmp[3];
+							if (!parseResult.externalReferenesNeedAdd) {
+								parseResult.externalReferenesNeedAdd = [];
+							}
+							if (!parseResult.externalReferenesNeedAdd[externalLink]) {
+								parseResult.externalReferenesNeedAdd[externalLink] = [];
+							}
+							parseResult.externalReferenesNeedAdd[externalLink].push(_3DRefTmp[1]);
+						}
 					}
+
 					wsF = t.wb.getExternalWorksheet(externalLink, _3DRefTmp[1]);
 					wsT = wsF;
 				} else {
@@ -6375,7 +6390,7 @@ function parserFormula( formula, parent, _ws ) {
 					wsT = (null !== _3DRefTmp[2]) ? t.wb.getWorksheetByName(_3DRefTmp[2]) : wsF;
 				}
 
-				if (!(wsF && wsT)) {
+				if (!(wsF && wsT) && !externalLink) {
 					parseResult.setError(c_oAscError.ID.FrmlWrongReferences);
 					if (!ignoreErrors) {
 						t.outStack = [];

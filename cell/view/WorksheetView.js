@@ -16397,11 +16397,12 @@
 		};
 
 		var isFormula = this._isFormula(val);
+		var newFP, parseResult;
 		if (isFormula) {
 			//перед созданием точки в истории, проверяю, валидная ли формула
 			var cellWithFormula = new AscCommonExcel.CCellWithFormula(this.model, bbox.r1, bbox.c1);
-			var newFP = new AscCommonExcel.parserFormula(val[0].getFragmentText().substring(1), cellWithFormula, this.model);
-			var parseResult = new AscCommonExcel.ParseResult();
+			newFP = new AscCommonExcel.parserFormula(val[0].getFragmentText().substring(1), cellWithFormula, this.model);
+			parseResult = new AscCommonExcel.ParseResult();
 			if (!newFP.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, parseResult)) {
 				if (parseResult.error !== c_oAscError.ID.FrmlWrongFunctionName && parseResult.error !== c_oAscError.ID.FrmlParenthesesCorrectCount) {
 					this.model.workbook.handlers.trigger("asc_onError", parseResult.error, c_oAscError.Level.NoCritical);
@@ -16423,6 +16424,30 @@
 			if(ctrlKey) {
 				this.model.workbook.dependencyFormulas.lockRecal();
 			}
+
+			//проверим, нет ли новых ссылок на внешние данные
+			if (parseResult.externalReferenesNeedAdd) {
+				var newExternalReferences = [];
+				for (var i in parseResult.externalReferenesNeedAdd) {
+					var newExternalReference = new AscCommonExcel.ExternalReference();
+					//newExternalReference.referenceData = referenceData;
+					newExternalReference.Id = i;
+
+					for (var j = 0; j < parseResult.externalReferenesNeedAdd[i].length; j++) {
+						var newSheet = parseResult.externalReferenesNeedAdd[i][j];
+						newExternalReference.addSheetName(newSheet, true);
+						newExternalReference.initWorksheetFromSheetDataSet(newSheet);
+					}
+
+
+					newExternalReferences.push(newExternalReference);
+				}
+
+				//добавляем внешние данные
+				//TODO lock не далаю, а надо бы
+				t.model.workbook.addExternalReferences(newExternalReferences);
+			}
+
 
 			c.setValue(AscCommonExcel.getFragmentsText(val), function (r) {
 				ret = r;
