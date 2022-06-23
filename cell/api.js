@@ -3762,7 +3762,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setZoom = function(scale) {
-    this.wb.changeZoom(scale);
+	  this.wb && this.wb.changeZoom(scale);
   };
 
   spreadsheet_api.prototype.asc_enableKeyEvents = function(isEnabled, isFromInput) {
