@@ -195,6 +195,9 @@
 	
 	WriterToJSON.prototype.SerWorksheet = function(oWorksheet)
 	{
+		if (this.workbook == null)
+			this.Workbook = oWorksheet.workbook;
+
 		// init styles for write
 		if (this.stylesForWrite == null)
 		{
@@ -212,6 +215,8 @@
 			this.stylesForWrite.aDxfs = [];
 		}
 		
+		var oPivotCaches = {};
+		var nCachesCount = this.Workbook.preparePivotForSerialization(oPivotCaches);
 
 		var aCols = this.SerCols(oWorksheet);
 
@@ -260,6 +265,7 @@
 
 			// styles
 			"styles":                this.SerStylesForWrite(this.stylesForWrite), // to do
+			"pivotCaches":           nCachesCount > 0 ? this.SerPivotCaches(oPivotCaches) : undefined,
 
 			"type":                  "worksheet"
 		}
@@ -1815,6 +1821,15 @@
 			// ext
 			"pivotCacheDefinitionX14": oCache.pivotCacheDefinitionX14 !== null ? this.SerPivotCacheDefinitionX14(oCache.pivotCacheDefinitionX14) : undefined // to do (возожно стоит записать как extLst)
 		}
+	};
+	WriterToJSON.prototype.SerPivotCaches = function(oCaches)
+	{
+		var oResult = {};
+
+		for (var key in oCaches)
+			oResult[key] = this.SerPivotCacheDefinition(oCaches[key].cache);
+
+		return oResult;
 	};
 	WriterToJSON.prototype.SerCacheSource = function(oSource) // CT_CacheSource
 	{
@@ -3528,11 +3543,14 @@
 			var oStyleObject = {aBorders: [], aFills: [], aFonts: [], oNumFmts: {}, aCellStyleXfs: [],
 			aCellXfs: [], aDxfs: [], aExtDxfs: [], aCellStyles: [], oCustomTableStyles: {}, oCustomSlicerStyles: null};
 			this.StylesFromJSON(oParsedSheet["styles"], oStyleObject);
-			var oStyleReader = new AscCommonExcel.Binary_StylesTableReader(null, this.Workbook, [], false);
-			oStyleReader.InitStyleManager(oStyleObject);
+			var oStyleReader = new AscCommonExcel.InitOpenManager(null, this.Workbook, [], false);
+			oStyleReader.InitStyleManager(oStyleObject, this.aCellXfs);
 			this.Workbook.oNumFmtsOpen = oStyleObject.oNumFmts;
 			this.aDxfs = oStyleObject.aDxfs;
 		}
+
+		if (oParsedSheet["pivotCaches"] != null)
+			this.pivotCaches = this.PivotCachesFromJSON(oParsedSheet["pivotCaches"]);
 
 		if (!oWorksheet)
 			oWorksheet = new AscCommonExcel.Worksheet(oWorkbook, oWorkbook.aWorksheets.length);
@@ -3565,7 +3583,7 @@
 		if (oParsedSheet["sortState"] != null)
 			oWorksheet.sortState = this.SortStateFromJSON(oParsedSheet["sortState"]);
 		if (oParsedSheet["tableParts"] != null)
-			oWorksheet.TableParts = this.TablePartsFromJSON(oParsedSheet["tableParts"], oWorksheet);
+			this.TablePartsFromJSON(oParsedSheet["tableParts"], oWorksheet);
 		if (oParsedSheet["comments"] != null) 
 			this.CommentsFromJSON(oParsedSheet["comments"], oWorksheet);
 		if (oParsedSheet["conditionalFormatting"] != null)
@@ -3581,7 +3599,7 @@
 		if (oParsedSheet["dataValidations"] != null)
 			oWorksheet.dataValidations = this.DataValidationsFromJSON(oParsedSheet["dataValidations"]);
 		if (oParsedSheet["pivotTables"] != null)
-			oWorksheet.pivotTables = this.PivotTablesFromJSON(oParsedSheet["pivotTables"]);
+			this.PivotTablesFromJSON(oParsedSheet["pivotTables"], oWorksheet);
 		if (oParsedSheet["slicers"] != null)
 			this.SlicersFromJSON(oParsedSheet["slicers"], oWorksheet);
 		if (oParsedSheet["namedSheetViews"] != null)
@@ -4508,17 +4526,17 @@
 	};
 	ReaderFromJSON.prototype.TablePartsFromJSON = function(aParsed, oWorksheet)
 	{
-		var aResult = [], oTable;
+		var oTable;
 		for (var nTable = 0; nTable < aParsed.length; nTable++)
 		{
 			oTable = this.TablePartFromJSON(aParsed[nTable], oWorksheet);
 			if(null != oTable.Ref && null != oTable.DisplayName)
 			 	oWorksheet.workbook.dependencyFormulas.addTableName(oWorksheet, oTable, true);
 
-			aResult.push(oTable);
+			oWorksheet.TableParts.push(oTable);
 		}
 		
-		return aResult;
+		//return aResult;
 	};
 	ReaderFromJSON.prototype.TablePartFromJSON = function(oParsed, oWorksheet)
 	{
@@ -5199,13 +5217,14 @@
 
 		return oDataValidation;
 	};
-	ReaderFromJSON.prototype.PivotTablesFromJSON = function(aParsed)
+	ReaderFromJSON.prototype.PivotTablesFromJSON = function(aParsed, oWorksheet)
 	{
-		var aResult = [];
+		var oPivotTable;
 		for (var nTable = 0; nTable < aParsed.length; nTable++)
-			aResult.push(this.PivotTableFromJSON(aParsed[nTable]));
-
-		return aResult;
+		{
+			oPivotTable = this.PivotTableFromJSON(aParsed[nTable]);
+			oWorksheet.insertPivotTable(oPivotTable, true);
+		}
 	};
 	ReaderFromJSON.prototype.PivotTableFromJSON = function(oParsed)
 	{
@@ -5214,7 +5233,14 @@
 		if (oParsed["name"] != null)
 			oPivotTable.name = oParsed["name"];
 		if (oParsed["cacheId"] != null)
+		{
 			oPivotTable.cacheId = oParsed["cacheId"];
+			for (var key in this.pivotCaches)
+			{
+				if (this.pivotCaches[key].cacheSource && this.pivotCaches[key].cacheSource.connectionId === oPivotTable.cacheId)
+					oPivotTable.cacheDefinition = this.pivotCaches[key];
+			}
+		}
 		if (oParsed["dataOnRows"] != null)
 			oPivotTable.dataOnRows = oParsed["dataOnRows"];
 		if (oParsed["dataPosition"] != null)
@@ -6413,6 +6439,15 @@
 
 		return oPivotCahceDef;
 	};
+	ReaderFromJSON.prototype.PivotCachesFromJSON = function(oParsed)
+	{
+		var oPivotCaches = {};
+
+		for (var key in oParsed)
+			oPivotCaches[key] = this.PivotCacheDefinitionFromJSON(oParsed[key]);
+
+		return oPivotCaches;
+	};
 	ReaderFromJSON.prototype.CacheSourceFromJSON = function(oParsed)
 	{
 		var oSource = new CT_CacheSource();
@@ -7533,9 +7568,11 @@
 					oTempCell.setValue(oParsedCell["v"]);
 				//if (oParsedCell["f"] != null && oParsedCell["f"] != "")
 				//	oTempCell.setFormula(oParsedCell["f"]);
+				if (oParsedCell["s"] != null && oParsedCell["s"] !== 0)
+					oTempCell.setStyle(this.aCellXfs[oParsedCell["s"]]);
+				// to do styles
 
 				oTempCell.saveContent(true);
-				// to do styles
 			}
 
 			if (oParsedRow["collapsed"] != null && oParsedRow["collapsed"] !== false)
@@ -7548,7 +7585,8 @@
 				oTempRow.setHeight(oParsedRow["ht"]);
 			if (oParsedRow["outlineLevel"] != null && oParsedRow["outlineLevel"] !== false)
 				oTempRow.setOutlineLevel(oParsedRow["outlineLevel"]);
-				// to do styles
+			if (oParsedRow["s"] != null && oParsedRow["s"] !== 0)
+				oTempRow.setStyle(this.aCellXfs[oParsedCell["s"]]);
 			
 			oTempRow.saveContent(true);
 		}

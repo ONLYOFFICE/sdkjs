@@ -8200,6 +8200,7 @@
 		this.drawingsMap    = {};
 		this.curWorksheet   = null;
 		this.Workbook       = null;
+		this.aCellXfs       = [];
 	}
 
 	ReaderFromJSON.prototype.ParaRunFromJSON = function(oParsedRun, oParentPara, notCompletedFields)
