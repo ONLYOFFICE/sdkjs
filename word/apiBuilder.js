@@ -3294,6 +3294,18 @@
 	ApiImage.prototype.constructor = ApiImage;
 
 	/**
+	 * Class representing an Ole-object.
+	 * @constructor
+	 */
+	function ApiOleObject(OleObject)
+	{
+		ApiDrawing.call(this, OleObject.parent);
+		this.OleObject = OleObject
+	}
+	ApiOleObject.prototype = Object.create(ApiDrawing.prototype);
+	ApiOleObject.prototype.constructor = ApiOleObject;
+
+	/**
 	 * Class representing a shape.
 	 * @constructor
 	 * */
@@ -3960,6 +3972,34 @@
 		oDrawing.Set_GraphicObject(oChartSpace);
 		oDrawing.setExtent( oChartSpace.spPr.xfrm.extX, oChartSpace.spPr.xfrm.extY );
 		return new ApiChart(oChartSpace);
+	};
+
+	/**
+	 * Creates an Ole-object with the parameters specified.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently only internet URL or Base64 encoded images are supported).
+	 * @param {EMU} nWidth - The Ole-object width in English measure units.
+	 * @param {EMU} nHeight - The Ole-object height in English measure units.
+	 * @param {string} sData - ole-object string data.
+	 * @param {string} sAppId - the application id associated with this object.
+	 * @returns {ApiOleObject}
+	 */
+	Api.prototype.CreateOleObject = function(sImageSrc, nWidth, nHeight, sData, sAppId)
+	{
+		if (typeof sImageSrc === "string" && sImageSrc.length > 0 && typeof sData === "string"
+			&& typeof sAppId === "string" && sAppId.length > 0
+			&& AscFormat.isRealNumber(nWidth) && AscFormat.isRealNumber(nHeight)
+		)
+
+		var nW = private_EMU2MM(nWidth);
+		var nH = private_EMU2MM(nHeight);
+
+		var oDrawing = new ParaDrawing(nW, nH, null, private_GetDrawingDocument(), private_GetLogicDocument(), null);
+		var oImage = private_GetLogicDocument().DrawingObjects.createOleObject(sData, sAppId, sImageSrc, 0, 0, nW, nH);
+		oImage.setParent(oDrawing);
+		oDrawing.Set_GraphicObject(oImage);
+		return new ApiOleObject(oImage);
 	};
 
 	/**
@@ -5609,7 +5649,7 @@
 
 		for (var Index = 0; Index < arrAllDrawing.length; Index++)
 		{
-			if (arrAllDrawing[Index].GraphicObj instanceof CImageShape)
+			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.CImageShape)
 				arrApiImages.push(new ApiImage(arrAllDrawing[Index].GraphicObj));
 		}
 		
@@ -5628,11 +5668,30 @@
 
 		for (var Index = 0; Index < arrAllDrawing.length; Index++)
 		{
-			if (arrAllDrawing[Index].GraphicObj instanceof CChartSpace)
+			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.CChartSpace)
 				arrApiCharts.push(new ApiChart(arrAllDrawing[Index].GraphicObj));
 		}
 		
 		return arrApiCharts;
+	};
+	/**
+	 * Returns a collection of the document ole-objects.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiOleObject[]}  
+	 */
+	ApiDocument.prototype.GetAllOleObjects = function()
+	{
+		var arrAllDrawing = this.Document.GetAllDrawingObjects();
+		var arrApiOleObjects  = [];
+
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+		{
+			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.COleObject)
+				arrApiOleObjects.push(new ApiOleObject(arrAllDrawing[Index].GraphicObj));
+		}
+		
+		return arrApiOleObjects;
 	};
 	/**
 	 * Searches for a scope of a document object. The search results are a collection of ApiRange objects.
@@ -7204,6 +7263,25 @@
 		}
 
 		return arrApiCharts;
+	};
+	/**
+	 * Returns a collection of ole-objects in the paragraph.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiOleObject[]}  
+	 */
+	ApiParagraph.prototype.GetAllOleObjects = function()
+	{
+		var arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
+		var arrApiOleObjects  = [];
+
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+		{
+			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.COleObject)
+				arrApiOleObjects.push(new ApiOleObject(arrAllDrawing[Index].GraphicObj));
+		}
+
+		return arrApiOleObjects;
 	};
 	/**
 	 * Returns a content control that contains the current paragraph.
@@ -13241,6 +13319,83 @@
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
+	// ApiOleObject
+	//
+	//------------------------------------------------------------------------------------------------------------------
+	
+	/**
+	 * Returns a type of the ApiOleObject class.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @returns {"oleObject"}
+	 */
+	ApiOleObject.prototype.GetClassType = function()
+	{
+		return "oleObject";
+	};
+
+	/**
+	 * Sets the data to current Ole-object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @param {string} sData - ole-object string data.
+	 * @returns {boolean}
+	 */
+	ApiOleObject.prototype.SetData = function(sData)
+	{
+		if (typeof(sData) !== "string" || sData === "")
+			return false;
+
+		this.OleObject.setData(sData);
+		return true;
+	};
+
+	/**
+	 * Gets the string data from current Ole-object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @returns {string}
+	 */
+	ApiOleObject.prototype.GetData = function()
+	{
+		if (typeof(this.OleObject.m_sData) === "string")
+			return this.OleObject.m_sData;
+		
+		return "";
+	};
+
+	/**
+	 * Sets the application id to current Ole-object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @param {string} sAppId - the application id associated with this object.
+	 * @returns {boolean}
+	 */
+	ApiOleObject.prototype.SetApplicationId = function(sAppId)
+	{
+		if (typeof(sAppId) !== "string" || sAppId === "")
+			return false;
+
+		this.OleObject.setApplicationId(sAppId);
+		return true;
+	};
+
+	/**
+	 * Gets the application id from current Ole-object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @returns {string}
+	 */
+	ApiOleObject.prototype.GetApplicationId = function()
+	{
+		if (typeof(this.OleObject.m_sApplicationId) === "string")
+			return this.OleObject.m_sApplicationId;
+		
+		return "";
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
 	// ApiShape
 	//
 	//------------------------------------------------------------------------------------------------------------------
@@ -16848,6 +17003,7 @@
 	Api.prototype["ConvertDocument"]		         = Api.prototype.ConvertDocument;
 	Api.prototype["CreateTextPr"]		             = Api.prototype.CreateTextPr;
 	Api.prototype["CreateWordArt"]		             = Api.prototype.CreateWordArt;
+	Api.prototype["CreateOleObject"]		         = Api.prototype.CreateOleObject;
 
 	Api.prototype["ConvertDocument"]		         = Api.prototype.ConvertDocument;
 	Api.prototype["FromJSON"]		                 = Api.prototype.FromJSON;
@@ -16933,6 +17089,7 @@
 	ApiDocument.prototype["GetAllShapes"]                = ApiDocument.prototype.GetAllShapes;
 	ApiDocument.prototype["GetAllImages"]                = ApiDocument.prototype.GetAllImages;
 	ApiDocument.prototype["GetAllCharts"]                = ApiDocument.prototype.GetAllCharts;
+	ApiDocument.prototype["GetAllOleObjects"]            = ApiDocument.prototype.GetAllOleObjects;
 	ApiDocument.prototype["Search"]                      = ApiDocument.prototype.Search;
 	ApiDocument.prototype["ToMarkdown"]                  = ApiDocument.prototype.ToMarkdown;
 	ApiDocument.prototype["ToHtml"]                      = ApiDocument.prototype.ToHtml;
@@ -17010,6 +17167,7 @@
 	ApiParagraph.prototype["GetAllShapes"]           = ApiParagraph.prototype.GetAllShapes;
 	ApiParagraph.prototype["GetAllImages"]           = ApiParagraph.prototype.GetAllImages;
 	ApiParagraph.prototype["GetAllCharts"]           = ApiParagraph.prototype.GetAllCharts;
+	ApiParagraph.prototype["GetAllOleObjects"]       = ApiParagraph.prototype.GetAllOleObjects;
 	ApiParagraph.prototype["GetParentContentControl"]= ApiParagraph.prototype.GetParentContentControl;
 	ApiParagraph.prototype["GetParentTable"]         = ApiParagraph.prototype.GetParentTable;
 	ApiParagraph.prototype["GetParentTableCell"]     = ApiParagraph.prototype.GetParentTableCell;
@@ -17411,6 +17569,11 @@
 	ApiChart.prototype["SetSeriaNumFormat"]            =  ApiChart.prototype.SetSeriaNumFormat;
 	ApiChart.prototype["SetDataPointNumFormat"]        =  ApiChart.prototype.SetDataPointNumFormat;
 
+	ApiOleObject.prototype["GetClassType"]             = ApiOleObject.prototype.GetClassType;
+	ApiOleObject.prototype["SetData"]               = ApiOleObject.prototype.SetData;
+	ApiOleObject.prototype["GetData"]               = ApiOleObject.prototype.GetData;
+	ApiOleObject.prototype["SetApplicationId"]         = ApiOleObject.prototype.SetApplicationId;
+	ApiOleObject.prototype["GetApplicationId"]         = ApiOleObject.prototype.GetApplicationId;
 
 	ApiFill.prototype["GetClassType"]                = ApiFill.prototype.GetClassType;
 	ApiFill.prototype["ToJSON"]                      = ApiFill.prototype.ToJSON;
@@ -17748,6 +17911,9 @@
 
 	function private_GetHps(hps)
 	{
+		if (hps < 0) {
+			return - Math.ceil(Math.abs(hps)) / 2.0
+		}
 		return Math.ceil(hps) / 2.0;
 	}
 

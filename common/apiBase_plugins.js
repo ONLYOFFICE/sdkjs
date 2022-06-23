@@ -1079,7 +1079,7 @@
         return true;
     };
 	/**
-    * Returns the current file to download in the specified format.
+     * Returns the current file to download in the specified format.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias GetFileToDownload
