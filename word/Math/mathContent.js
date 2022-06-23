@@ -7477,7 +7477,7 @@ CMathAutoCorrectEngine.prototype.private_PackTextToContent = function(Element, T
         Element.Internal_Content_Add(0, TempElements);        
     } else {
         var len = TempElements.length - 1;
-        var isBrackets = ( (TempElements[0].value == 40 && TempElements[len].value == 41) || (TempElements[0].value == 0x3016 && TempElements[len].value == 0x3017) );
+        var isBrackets = TempElements[0] && ((TempElements[0].value == 40 && TempElements[len].value == 41) || (TempElements[0].value == 0x3016 && TempElements[len].value == 0x3017) );
         if ( (len >= 2) && (bReplaceBrackets && isBrackets) ) {
             TempElements.splice(0,1);
             TempElements.length--;
