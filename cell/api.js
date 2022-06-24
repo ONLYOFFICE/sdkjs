@@ -7744,6 +7744,13 @@ var editor;
 		ws.handlers.trigger("selectionMathInfoChanged", ws.getSelectionMathInfo());
 	};
 
+
+	spreadsheet_api.prototype.asc_EditSelectAll = function() {
+		if (this.wb) {
+			this.wb.selectAll();
+		}
+	};
+
   /*
    * Export
    * -----------------------------------------------------------------------------
@@ -8265,5 +8272,7 @@ var editor;
   prot["asc_getActiveNamedSheetView"] = prot.asc_getActiveNamedSheetView;
 
   prot["getPrintOptionsJson"] = prot.getPrintOptionsJson;
+
+  prot["asc_EditSelectAll"] = prot.asc_EditSelectAll;
 
 })(window);

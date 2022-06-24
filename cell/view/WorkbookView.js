@@ -4600,6 +4600,9 @@
 		return this.SearchEngine.inFindResults(ws, row, col);
 	};
 
+	WorkbookView.prototype.selectAll = function () {
+		this._onChangeSelection(true, -1, -1, true, false);
+	};
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
 	function CDocumentSearchExcel(wb) {
