@@ -590,7 +590,7 @@
 			if (oEndParagraph !== oEndElement || this.Elements[this.Elements.length - 1].SelectedAll)
 			{
 				var oEndRun = oEndParagraph.GetParaEndRun();
-				oEndRun.AddAfterParaEnd(new CRunRevisionMove(false, false, oLogicDocument.TrackMoveId));
+				oEndRun.AddAfterParaEnd(new AscWord.CRunRevisionMove(false, false, oLogicDocument.TrackMoveId));
 
 				var oInfo = new CReviewInfo();
 				oInfo.Update();

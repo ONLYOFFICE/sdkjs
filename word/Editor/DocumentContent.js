@@ -318,7 +318,7 @@ CDocumentContent.prototype.Get_Theme = function()
 	if (this.LogicDocument)
 		return this.LogicDocument.GetTheme();
 
-	return AscFormat.DEFAULT_THEME;
+	return AscFormat.GetDefaultTheme();
 };
 CDocumentContent.prototype.Get_ColorMap = function()
 {
@@ -328,7 +328,7 @@ CDocumentContent.prototype.Get_ColorMap = function()
 	if (this.LogicDocument)
 		return this.LogicDocument.GetColorMap();
 
-	return AscFormat.DEFAULT_COLOR_MAP;
+	return AscFormat.GetDefaultColorMap();
 };
 CDocumentContent.prototype.Get_PageLimits = function(nCurPage)
 {
@@ -1934,7 +1934,7 @@ CDocumentContent.prototype.SetHdrFtrPageNum = function(nAlignType, sStyleId)
 
 	oPara1.SetParagraphAlign(nAlignType);
 	var oRun = new ParaRun(oPara1, false);
-	oRun.AddToContent(0, new ParaPageNum());
+	oRun.AddToContent(0, new AscWord.CRunPageNum());
 	oPara1.AddToContent(0, oRun);
 };
 CDocumentContent.prototype.Clear_Content                 = function()
@@ -3302,7 +3302,7 @@ CDocumentContent.prototype.AddToParagraph = function(ParaItem, bRecalculate)
 
 					if (-1 !== nSpaceCharCode)
 					{
-						this.AddToParagraph(new ParaSpace(nSpaceCharCode));
+						this.AddToParagraph(new AscWord.CRunSpace(nSpaceCharCode));
 						this.MoveCursorLeft(false, false);
 					}
 

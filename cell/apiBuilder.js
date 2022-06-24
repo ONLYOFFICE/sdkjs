@@ -1335,9 +1335,8 @@
 	 * */
 	ApiWorksheet.prototype.SetHyperlink = function (sRange, sAddress, sScreenTip, sTextToDisplay)	{
 		var range = new ApiRange(this.worksheet.getRange2(sRange));
-		var p = /^(?:http:\/\/|https:\/\/)/;
 		if (range && range.range.isOneCell() && sAddress) {
-			var externalLink = sAddress.match(p) || sAddress.search(/mailto:/i) !== -1;
+			var externalLink = AscCommon.rx_allowedProtocols.test(sAddress);
 			if (externalLink && AscCommonExcel.getFullHyperlinkLength(sAddress) > Asc.c_nMaxHyperlinkLength) {
 				return null;
 			}

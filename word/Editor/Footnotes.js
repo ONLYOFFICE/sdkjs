@@ -115,13 +115,13 @@ CFootnotesController.prototype.Copy = function(oLogicDocument)
 CFootnotesController.prototype.ResetSpecialFootnotes = function()
 {
 	var oSeparator = new CFootEndnote(this);
-	oSeparator.AddToParagraph(new ParaSeparator(), false);
+	oSeparator.AddToParagraph(new AscWord.CRunSeparator(), false);
 	var oParagraph = oSeparator.GetElement(0);
 	oParagraph.Set_Spacing({After : 0, Line : 1, LineRule : Asc.linerule_Auto}, false);
 	this.SetSeparator(oSeparator);
 
 	var oContinuationSeparator = new CFootEndnote(this);
-	oContinuationSeparator.AddToParagraph(new ParaContinuationSeparator(), false);
+	oContinuationSeparator.AddToParagraph(new AscWord.CRunContinuationSeparator(), false);
 	oParagraph = oContinuationSeparator.GetElement(0);
 	oParagraph.Set_Spacing({After : 0, Line : 1, LineRule : Asc.linerule_Auto}, false);
 	this.SetContinuationSeparator(oContinuationSeparator);
@@ -1080,7 +1080,7 @@ CFootnotesController.prototype.AddFootnoteRef = function()
 	var oStyles = this.LogicDocument.Get_Styles();
 
 	var oRun = new ParaRun(oParagraph, false);
-	oRun.Add_ToContent(0, new ParaFootnoteRef(oFootnote), false);
+	oRun.Add_ToContent(0, new AscWord.CRunFootnoteRef(oFootnote), false);
 	oRun.Set_RStyle(oStyles.GetDefaultFootnoteReference());
 	oParagraph.Add_ToContent(0, oRun);
 };

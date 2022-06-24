@@ -870,7 +870,7 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
             return true;
         if(this.pathLst.length === 1)
         {
-            return this.pathLst[0].ArrPathCommandInfo.length === 0;
+            return this.pathLst[0].isEmpty();
         }
         return false;
     };

@@ -572,7 +572,7 @@ CShape.prototype.Get_ColorMap = function()
     {
         return parent_objects.master.clrMap;
     }
-    return AscFormat.DEFAULT_COLOR_MAP;
+    return AscFormat.GetDefaultColorMap();
 };
 
 CShape.prototype.getStyles = function(index)

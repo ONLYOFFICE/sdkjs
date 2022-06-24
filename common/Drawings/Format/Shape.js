@@ -486,7 +486,7 @@ function ConvertParagraphToPPTX(paragraph, drawingDocument, newParent, bIsAddMat
     new_paragraph.Internal_Content_Remove2(0, new_paragraph.Content.length);
     ConvertParagraphContentToPPTX(paragraph.Content, new_paragraph, bIsAddMath, bRemoveHyperlink);
     var EndRun = new ParaRun(new_paragraph);
-    EndRun.Add_ToContent( 0, new ParaEnd() );
+    EndRun.Add_ToContent( 0, new AscWord.CRunParagraphMark() );
     new_paragraph.Internal_Content_Add( new_paragraph.Content.length, EndRun, false );
     return new_paragraph;
 }
@@ -852,7 +852,7 @@ function RecalculateDocContentByMaxLine(oDocContent, dMaxWidth, bNeedRecalcAllDr
         {
             if(oDocContent.Content[0] && oDocContent.Content[0].Content[0] && oDocContent.Content[0].Content[0].Content[0])
             {
-                return oDocContent.Content[0].Content[0].Content[0].WidthVisible/TEXTWIDTH_DIVIDER;
+                return oDocContent.Content[0].Content[0].Content[0].GetWidthVisible();
             }
         }
         return 0.001;
@@ -5488,7 +5488,7 @@ CShape.prototype.draw = function (graphics, transform, transformText, pageIndex,
     if (graphics.IsSlideBoundsCheckerType === true) {
 
         graphics.transform3(_transform);
-        if (!this.spPr || null == geometry || geometry.pathLst.length === 0 || (geometry.pathLst.length === 1 && geometry.pathLst[0].ArrPathCommandInfo.length === 0) || !graphics.IsShapeNeedBounds(geometry.preset)) {
+        if (!this.spPr || null == geometry || geometry.isEmpty() || !graphics.IsShapeNeedBounds(geometry.preset)) {
             graphics._s();
             graphics._m(0, 0);
             graphics._l(this.extX, 0);
@@ -7181,7 +7181,12 @@ CShape.prototype.getColumnNumber = function(){
 	};
 	CShape.prototype.getFormHorPadding = function() {
 		let oInnerForm;
-		if (this.isForm && this.isForm() && (oInnerForm = this.getInnerForm()) && !oInnerForm.IsPictureForm() && !oInnerForm.IsCheckBox())
+		if (this.isForm
+			&& this.isForm()
+			&& (oInnerForm = this.getInnerForm())
+			&& !oInnerForm.IsPictureForm()
+			&& !oInnerForm.IsCheckBox()
+			&& (!oInnerForm.IsTextForm() || !oInnerForm.GetTextFormPr().IsComb()))
 			return 2 * 25.4 / 72; // 2pt
 
 		return 0;
@@ -7570,6 +7575,5 @@ function SaveRunsFormatting(aSourceContent, aCopyContent, oTheme, oColorMap, oPr
     window['AscFormat'].SaveContentSourceFormatting = SaveContentSourceFormatting;
     window['AscFormat'].hitToHandles = hitToHandles;
     window['AscFormat'].pHText = pHText;
-	window['AscFormat'].DEFAULT_THEME = AscFormat.GenerateDefaultTheme(null);
     window['AscFormat'].fReadTxBoxContentXML = fReadTxBoxContentXML;
 })(window);

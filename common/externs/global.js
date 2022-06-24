@@ -30,7 +30,7 @@
  *
  */
 
-//This file containes definition of object which used in api.js
+//This file contains definition of object which used in api.js
 //It need to prevent minimize the name of object's method.
 
 var Asc;
@@ -42,6 +42,8 @@ var AscCommon;
 var AscCommonWord;
 var AscCommonExcel;
 var AscCommonSlide;
+var AscBuilder;
+var AscWord;
 
 function jq(){}
 function DE(){}

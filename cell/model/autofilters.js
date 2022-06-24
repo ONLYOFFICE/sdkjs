@@ -5058,12 +5058,12 @@
 			_generateNextColumnName: function (tableColumns, val) {
 				var tableColumnMap = [];
 				for (var i = 0; i < tableColumns.length; i++) {
-					tableColumnMap[tableColumns[i].Name] = 1;
+					tableColumnMap[tableColumns[i].Name.toLowerCase()] = 1;
 				}
 				var res = val;
 				var index = 2;
 				while (true) {
-					if (tableColumnMap[res]) {
+					if (tableColumnMap[res.toLowerCase()]) {
 						res = val + index;
 					} else {
 						break;

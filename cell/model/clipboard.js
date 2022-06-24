@@ -3244,9 +3244,9 @@
 						if (null != nUnicode) {
 							var Item;
 							if (0x20 !== nUnicode && 0xA0 !== nUnicode && 0x2009 !== nUnicode) {
-								Item = new ParaText(nUnicode);
+								Item = new AscWord.CRunText(nUnicode);
 							} else {
-								Item = new ParaSpace();
+								Item = new AscWord.CRunSpace();
 							}
 
 							//add text
@@ -4228,7 +4228,7 @@
 				var newLine = "\n";
 
 				var cTextPr = prevTextPr ? prevTextPr : paraRun.Get_CompiledPr();
-				if (cTextPr && !(paraRunContent.length === 1 && paraRunContent[0] instanceof ParaEnd))//settings for text
+				if (cTextPr && !(paraRunContent.length === 1 && paraRunContent[0] instanceof AscWord.CRunParagraphMark))//settings for text
 				{
 					formatText = this._getPrParaRun(paraPr, cTextPr);
 				} else if (!formatText) {
@@ -4282,12 +4282,12 @@
 
 							break;
 						}
-						case para_Space://*paraSpace*
+						case para_Space:
 						{
 							text += " ";
 							break;
 						}
-						case para_Tab://*paraEnd / paraTab*
+						case para_Tab:
 						{
 							pushData();
 							lastTab = true;

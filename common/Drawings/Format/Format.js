@@ -1065,7 +1065,7 @@
 			} else if (master.clrMap) {
 				color_map = master.clrMap;
 			} else {
-				color_map = AscFormat.DEFAULT_COLOR_MAP;
+				color_map = AscFormat.GetDefaultColorMap();
 			}
 
 			checkObjectUnifill(cellPr.Shd, theme, color_map);
@@ -2187,7 +2187,7 @@
 					} else if (masterSlide != null && masterSlide.clrMap != null) {
 						clrMap = masterSlide.clrMap.color_map;
 					} else {
-						clrMap = AscFormat.DEFAULT_COLOR_MAP.color_map;
+						clrMap = AscFormat.GetDefaultColorMap().color_map;
 					}
 					if (clrMap[this.id] != null && theme.themeElements.clrScheme.colors[clrMap[this.id]] != null && theme.themeElements.clrScheme.colors[clrMap[this.id]].color != null)
 						this.RGBA = theme.themeElements.clrScheme.colors[clrMap[this.id]].color.RGBA;
@@ -6275,7 +6275,7 @@
 		};
 		CPattFill.prototype.toXml = function (writer, sNamespace) {
 			let sNamespace_ = sNamespace || "a";
-			let strName = ("" === sNamespace_) ? "pattFill" : (sNamespace_ + "pattFill");
+			let strName = ("" === sNamespace_) ? "pattFill" : (sNamespace_ + ":pattFill");
 			writer.WriteXmlNodeStart(strName);
 
 
@@ -9235,10 +9235,14 @@
 		function UniNvPr() {
 
 			CBaseFormatObject.call(this);
-			this.cNvPr = new CNvPr();
+			this.cNvPr = null;
 			this.UniPr = null;
-			this.nvPr = new NvPr();
-			this.nvUniSpPr = new CNvUniSpPr();
+			this.nvPr = null;
+			this.nvUniSpPr = null;
+
+			this.setCNvPr(new CNvPr());
+			this.setNvPr(new NvPr());
+			this.setUniSpPr(new CNvUniSpPr());
 
 		}
 
@@ -9314,7 +9318,7 @@
 				writer.WriteXmlNodeStart("xdr:nvGraphicFramePr");
 				writer.WriteXmlAttributesEnd();
 
-				this.cNvPr.toXml(writer, namespace_ + ":cNvPr");
+				this.cNvPr.toXml(writer, "xdr:cNvPr");
 				this.nvUniSpPr.toXmlGrFrame(writer);
 
 				writer.WriteXmlNodeEnd("xdr:nvGraphicFramePr");
@@ -9459,6 +9463,9 @@
 			if (this.idx !== styleRef.idx) {
 				return false;
 			}
+			if(this.Color && !styleRef.Color || !this.Color && styleRef.Color) {
+				return false;
+			}
 			if (!this.Color.IsIdentical(styleRef.Color)) {
 				return false;
 			}
@@ -9522,7 +9529,9 @@
 			writer.WriteXmlNullableAttributeUInt("idx", this.idx);
 			writer.WriteXmlAttributesEnd();
 
-			this.Color.toXml(writer);
+			if (this.Color) {
+				this.Color.toXml(writer);
+			}
 
 			writer.WriteXmlNodeEnd(sName);
 		};
@@ -18390,6 +18399,13 @@
 			}, this, []);
 		}
 
+		function GetDefaultTheme() {
+			if(!AscFormat.DEFAULT_THEME) {
+				AscFormat.DEFAULT_THEME = GenerateDefaultTheme(null);
+			}
+			return AscFormat.DEFAULT_THEME;
+		}
+
 		function GenerateDefaultMasterSlide(theme) {
 			var master = new MasterSlide(theme.presentation, theme);
 			master.Theme = theme;
@@ -18478,6 +18494,13 @@
 				clrMap.color_map[16] = 9;
 				return clrMap;
 			}, [], null);
+		}
+
+		function GetDefaultColorMap() {
+			if(!AscFormat.DEFAULT_COLOR_MAP) {
+				AscFormat.DEFAULT_COLOR_MAP = GenerateDefaultColorMap();
+			}
+			return AscFormat.DEFAULT_COLOR_MAP;
 		}
 
 		function CreateAscFill(unifill) {
@@ -20174,7 +20197,10 @@
 		window['AscFormat'].CBaseNoIdObject = CBaseNoIdObject;
 		window['AscFormat'].checkRasterImageId = checkRasterImageId;
 
-		window['AscFormat'].DEFAULT_COLOR_MAP = GenerateDefaultColorMap();
+		window['AscFormat'].DEFAULT_COLOR_MAP = null;
+		window['AscFormat'].DEFAULT_THEME = null;
+		window['AscFormat'].GetDefaultColorMap = GetDefaultColorMap;
+		window['AscFormat'].GetDefaultTheme = GetDefaultTheme;
 		window['AscFormat'].getPercentageValue = getPercentageValue;
 		window['AscFormat'].getPercentageValueForWrite = getPercentageValueForWrite;
 		window['AscFormat'].CSpTree = CSpTree;

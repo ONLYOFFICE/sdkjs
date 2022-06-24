@@ -38,7 +38,6 @@ var _internalStorage = {
 };
 
 window['SockJS'] = createSockJS();
-window['JSZipUtils'] = JSZipUtils();
 
 Asc['asc_docs_api'].prototype.Update_ParaInd = function( Ind )
 {
@@ -2055,8 +2054,26 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
             var _w = _params[_current.pos++];
             var _h = _params[_current.pos++];
             var _pageNum = _params[_current.pos++];
+            var _additionalParams = _params[_current.pos++];
+            var _posX = _params[_current.pos++];
+            var _posY = _params[_current.pos++];
+            var _wrapType = _params[_current.pos++];
 
             this.AddImageUrlNative(_src, _w, _h, _pageNum);
+            break;
+        }
+        case 401: // ASC_MENU_EVENT_TYPE_INSERT_SCREEN_IMAGE
+        {
+            var _src = _params[_current.pos++];
+            var _w = _params[_current.pos++];
+            var _h = _params[_current.pos++];
+            var _pageNum = _params[_current.pos++];
+            var _additionalParams = _params[_current.pos++];
+            var _posX = _params[_current.pos++];
+            var _posY = _params[_current.pos++];
+            var _wrapType = _params[_current.pos++];
+
+            this.AddImageUrlAtPosNative(_src, _w, _h, _pageNum, _posX, _posY, _wrapType);
             break;
         }
         case 53: // ASC_MENU_EVENT_TYPE_INSERT_SHAPE
@@ -4946,7 +4963,7 @@ Asc['asc_docs_api'].prototype.put_AddPageBreak = function()
         if ( null === Document.IsCursorInHyperlink(false) )
         {
             Document.StartAction();
-            Document.AddToParagraph( new ParaNewLine( break_Page ) );
+            Document.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Page));
 			Document.FinalizeAction();
         }
     }
@@ -4971,7 +4988,7 @@ Asc['asc_docs_api'].prototype.put_AddLineBreak = function()
         if ( null === Document.IsCursorInHyperlink(false) )
         {
             Document.StartAction();
-            Document.AddToParagraph( new ParaNewLine( para_NewLine ) );
+            Document.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Line));
 			Document.FinalizeAction();
         }
     }
@@ -5164,6 +5181,10 @@ Asc['asc_docs_api'].prototype.AddImageUrlNative = function(url, _w, _h, _pageNum
     this.WordControl.m_oLogicDocument.AddInlineImage(wI, hI, url);
 	this.WordControl.m_oLogicDocument.Recalculate();
 	this.WordControl.m_oLogicDocument.FinalizeAction();
+};
+Asc['asc_docs_api'].prototype.AddImageUrlAtPosNative = function(url, _w, _h, _pageNum, _posX, _posY, _wrapType)
+{
+    _api.AddImageToPage(url, _pageNum, _posX, _posY, _w, _h, _wrapType);
 };
 Asc['asc_docs_api'].prototype.SetContentControlPictureUrlNative = function(sUrl, sId)
 {
@@ -6218,9 +6239,8 @@ function initSpellCheckApi() {
 
 function NativeOpenFile3(_params, documentInfo)
 {
-    window.g_file_path = "native_open_file";
     window.NATIVE_DOCUMENT_TYPE = window["native"]["GetEditorType"]();
-    var doc_bin = window["native"]["GetFileString"](window.g_file_path);
+    window.NATIVE_DOCUMENT_TYPE = window["native"]["GetEditorType"]();
     if (window.NATIVE_DOCUMENT_TYPE == "presentation" || window.NATIVE_DOCUMENT_TYPE == "document")
     {
         sdkCheck = documentInfo["sdkCheck"];
@@ -6358,7 +6378,7 @@ function NativeOpenFile3(_params, documentInfo)
 
 
         } else {
-            var doc_bin = window["native"]["GetFileString"](window.g_file_path);
+            var doc_bin = window["native"]["GetFileString"]("native_open_file");
             _api["asc_nativeOpenFile"](doc_bin);
 
            	if (window.documentInfo["viewmode"]) {

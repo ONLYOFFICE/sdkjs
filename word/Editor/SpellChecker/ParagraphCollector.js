@@ -146,7 +146,7 @@
 		}
 	};
 	/**
-	 * @param {CRunElementBase} oElement
+	 * @param {AscWord.CRunElementBase} oElement
 	 * @param {CTextPr} oTextPr
 	 */
 	CParagraphSpellCheckerCollector.prototype.HandleRunElement = function(oElement, oTextPr)

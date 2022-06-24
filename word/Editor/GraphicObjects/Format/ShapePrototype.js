@@ -1211,7 +1211,7 @@ CShape.prototype.Get_ColorMap = function()
     {
         return oLogicDoc.Get_ColorMap();
     }
-    return AscFormat.DEFAULT_COLOR_MAP;
+    return AscFormat.GetDefaultColorMap();
 };
 
 CShape.prototype.Is_TopDocument = function(bReturn)

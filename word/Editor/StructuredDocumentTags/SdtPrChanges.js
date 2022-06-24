@@ -428,7 +428,7 @@ CChangesSdtPrCheckBox.prototype.private_SetValue = function(Value)
 };
 CChangesSdtPrCheckBox.prototype.private_CreateObject = function()
 {
-	return new CSdtCheckBoxPr();
+	return new AscWord.CSdtCheckBoxPr();
 };
 CChangesSdtPrCheckBox.prototype.Merge = function(oChange)
 {
@@ -498,7 +498,7 @@ CChangesSdtPrComboBox.prototype.private_SetValue = function(Value)
 };
 CChangesSdtPrComboBox.prototype.private_CreateObject = function()
 {
-	return new CSdtComboBoxPr();
+	return new AscWord.CSdtComboBoxPr();
 };
 /**
  * @constructor
@@ -517,7 +517,7 @@ CChangesSdtPrDropDownList.prototype.private_SetValue = function(Value)
 };
 CChangesSdtPrDropDownList.prototype.private_CreateObject = function()
 {
-	return new CSdtComboBoxPr();
+	return new AscWord.CSdtComboBoxPr();
 };
 /**
  * @constructor
@@ -536,7 +536,7 @@ CChangesSdtPrDatePicker.prototype.private_SetValue = function(Value)
 };
 CChangesSdtPrDatePicker.prototype.private_CreateObject = function()
 {
-	return new CSdtDatePickerPr();
+	return new AscWord.CSdtDatePickerPr();
 };
 /**
  * @constructor
@@ -657,7 +657,7 @@ CChangesSdtPrTextForm.prototype.private_SetValue = function(Value)
 };
 CChangesSdtPrTextForm.prototype.private_CreateObject = function()
 {
-	return new CSdtTextFormPr();
+	return new AscWord.CSdtTextFormPr();
 };
 /**
  * @constructor
@@ -700,5 +700,5 @@ CChangesSdtPrPictureFormPr.prototype.private_SetValue = function(Value)
 };
 CChangesSdtPrPictureFormPr.prototype.private_CreateObject = function()
 {
-	return new CSdtPictureFormPr();
+	return new AscWord.CSdtPictureFormPr();
 };

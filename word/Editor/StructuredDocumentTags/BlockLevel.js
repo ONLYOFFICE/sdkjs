@@ -2079,7 +2079,7 @@ CBlockLevelSdt.prototype.IsComboBox = function()
 	return (undefined !== this.Pr.ComboBox);
 };
 /**
- * @param oPr {CSdtComboBoxPr}
+ * @param oPr {AscWord.CSdtComboBoxPr}
  */
 CBlockLevelSdt.prototype.SetComboBoxPr = function(oPr)
 {
@@ -2090,7 +2090,7 @@ CBlockLevelSdt.prototype.SetComboBoxPr = function(oPr)
 	}
 };
 /**
- * @returns {?CSdtComboBoxPr}
+ * @returns {?AscWord.CSdtComboBoxPr}
  */
 CBlockLevelSdt.prototype.GetComboBoxPr = function()
 {
@@ -2105,7 +2105,7 @@ CBlockLevelSdt.prototype.IsDropDownList = function()
 	return (undefined !== this.Pr.DropDown);
 };
 /**
- * @param oPr {CSdtComboBoxPr}
+ * @param oPr {AscWord.CSdtComboBoxPr}
  */
 CBlockLevelSdt.prototype.SetDropDownListPr = function(oPr)
 {
@@ -2116,7 +2116,7 @@ CBlockLevelSdt.prototype.SetDropDownListPr = function(oPr)
 	}
 };
 /**
- * @returns {?CSdtComboBoxPr}
+ * @returns {?AscWord.CSdtComboBoxPr}
  */
 CBlockLevelSdt.prototype.GetDropDownListPr = function()
 {
@@ -2124,7 +2124,7 @@ CBlockLevelSdt.prototype.GetDropDownListPr = function()
 };
 /**
  * Применяем к данному контейнеру настройки того, что это специальный контйенер для поля со списком
- * @param oPr {CSdtComboBoxPr}
+ * @param oPr {AscWord.CSdtComboBoxPr}
  */
 CBlockLevelSdt.prototype.ApplyComboBoxPr = function(oPr)
 {
@@ -2137,7 +2137,7 @@ CBlockLevelSdt.prototype.ApplyComboBoxPr = function(oPr)
 };
 /**
  * Применяем к данному контейнеру настройки того, что это специальный контейнер для выпадающего списка
- * @param oPr {CSdtComboBoxPr}
+ * @param oPr {AscWord.CSdtComboBoxPr}
  */
 CBlockLevelSdt.prototype.ApplyDropDownListPr = function(oPr)
 {
@@ -2268,7 +2268,7 @@ CBlockLevelSdt.prototype.IsDatePicker = function()
 	return (undefined !== this.Pr.Date);
 };
 /**
- * @param oPr {CSdtDatePickerPr}
+ * @param oPr {AscWord.CSdtDatePickerPr}
  */
 CBlockLevelSdt.prototype.SetDatePickerPr = function(oPr)
 {
@@ -2280,7 +2280,7 @@ CBlockLevelSdt.prototype.SetDatePickerPr = function(oPr)
 	}
 };
 /**
- * @returns {?CSdtDatePickerPr}
+ * @returns {?AscWord.CSdtDatePickerPr}
  */
 CBlockLevelSdt.prototype.GetDatePickerPr = function()
 {
@@ -2288,7 +2288,7 @@ CBlockLevelSdt.prototype.GetDatePickerPr = function()
 };
 /**
  * Применяем к данному контейнеру настройки того, что это специальный контйенер для даты
- * @param oPr {CSdtDatePickerPr}
+ * @param oPr {AscWord.CSdtDatePickerPr}
  */
 CBlockLevelSdt.prototype.ApplyDatePickerPr = function(oPr)
 {

@@ -1109,8 +1109,13 @@
 
 			var load_mode = this.GetCharLoadMode(nUnicodeForHintTest);
 
-			if (this.m_bStringGID || !isRaster || this.m_bNeedDoBold)
+			if (!isRaster || this.m_bNeedDoBold)
 				load_mode |= AscFonts.FT_Load_Mode.FT_LOAD_NO_BITMAP;
+			else if (this.m_bStringGID)
+			{
+				if (!this.codePointsForGid || !this.codePointsForGid[0] || !AscFonts.isUseBitmapStrikes(this.codePointsForGid[0]))
+					load_mode |= AscFonts.FT_Load_Mode.FT_LOAD_NO_BITMAP;
+			}
 			else if (!AscFonts.isUseBitmapStrikes(glyph_index_or_unicode))
 				load_mode |= AscFonts.FT_Load_Mode.FT_LOAD_NO_BITMAP;
 			else

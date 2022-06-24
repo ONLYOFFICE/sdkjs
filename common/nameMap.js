@@ -30,14 +30,39 @@
  *
  */
 
-//This file containes definition of object which used in api.js
-//It need to prevent minimize the name of object's method.
+"use strict";
 
-function JSZipUtils() {}
+(function (window)
+{
 
-/**
- * @memberOf JSZipUtils
- * @param {String} path String URL.
- * @callback callback
- */
-JSZipUtils.getBinaryContent = function(path, callback) {};
+	/**
+	 * @constructor
+	 */
+	function CNameMap()
+	{
+		this.Map        = {}; // name -> id
+		this.ReverseMap = []; // id -> name
+
+		this.GetId("");
+	}
+	CNameMap.prototype.GetId = function(sName)
+	{
+		if (undefined === this.Map[sName])
+		{
+			this.ReverseMap.push(sName);
+			this.Map[sName] = this.ReverseMap.length - 1;
+		}
+
+		return this.Map[sName];
+	};
+	CNameMap.prototype.GetName = function(nId)
+	{
+		return this.ReverseMap[nId] ? this.ReverseMap[nId] : "";
+	};
+
+	//--------------------------------------------------------export----------------------------------------------------
+	window['AscCommon'] = window['AscCommon'] || {};
+	window['AscCommon'].CNameMap = CNameMap;
+	window['AscCommon'].FontNameMap = new CNameMap();
+
+})(window);

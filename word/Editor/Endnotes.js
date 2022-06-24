@@ -115,13 +115,13 @@ CEndnotesController.prototype.GetId = function()
 CEndnotesController.prototype.ResetSpecialEndnotes = function()
 {
 	var oSeparator = new CFootEndnote(this);
-	oSeparator.AddToParagraph(new ParaSeparator(), false);
+	oSeparator.AddToParagraph(new AscWord.CRunSeparator(), false);
 	var oParagraph = oSeparator.GetElement(0);
 	oParagraph.Set_Spacing({After : 0, Line : 1, LineRule : Asc.linerule_Auto}, false);
 	this.SetSeparator(oSeparator);
 
 	var oContinuationSeparator = new CFootEndnote(this);
-	oContinuationSeparator.AddToParagraph(new ParaContinuationSeparator(), false);
+	oContinuationSeparator.AddToParagraph(new AscWord.CRunContinuationSeparator(), false);
 	oParagraph = oContinuationSeparator.GetElement(0);
 	oParagraph.Set_Spacing({After : 0, Line : 1, LineRule : Asc.linerule_Auto}, false);
 	this.SetContinuationSeparator(oContinuationSeparator);
@@ -844,7 +844,7 @@ CEndnotesController.prototype.AddEndnoteRef = function()
 	var oStyles = this.LogicDocument.GetStyles();
 
 	var oRun = new ParaRun(oParagraph, false);
-	oRun.AddToContent(0, new ParaEndnoteRef(oEndnote), false);
+	oRun.AddToContent(0, new AscWord.CRunEndnoteRef(oEndnote), false);
 	oRun.SetRStyle(oStyles.GetDefaultEndnoteReference());
 	oParagraph.Add_ToContent(0, oRun);
 };

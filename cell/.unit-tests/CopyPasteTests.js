@@ -62,6 +62,7 @@ $(function () {
 	};
 	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function () {
 	};
+	Asc.ReadDefTableStyles = function(){};
 
 
 	var api = new Asc.spreadsheet_api({

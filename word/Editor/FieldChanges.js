@@ -66,7 +66,7 @@ CChangesParaFieldAddItem.prototype.Undo = function()
 {
 	var oField = this.Class;
 	oField.Content.splice(this.Pos, this.Items.length);
-	oField.private_UpdateSpellChecking();
+	oField.OnContentChange();
 	oField.private_UpdateTrackRevisions();
 	oField.private_CheckUpdateBookmarks(this.Items);
 	oField.private_UpdateSelectionPosOnRemove(this.Pos, this.Items.length);
@@ -82,7 +82,7 @@ CChangesParaFieldAddItem.prototype.Redo = function()
 	oField.Content = Array_start.concat(this.Items, Array_end);
 	oField.private_UpdateTrackRevisions();
 	oField.private_CheckUpdateBookmarks(this.Items);
-	oField.private_UpdateSpellChecking();
+	oField.OnContentChange();
 	oField.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
 	oField.SetIsRecalculated(false);
 
@@ -138,7 +138,7 @@ CChangesParaFieldAddItem.prototype.Load = function(Color)
 
 	oField.private_UpdateTrackRevisions();
 	oField.private_CheckUpdateBookmarks(this.Items);
-	oField.private_UpdateSpellChecking();
+	oField.OnContentChange();
 	oField.SetIsRecalculated(false);
 };
 CChangesParaFieldAddItem.prototype.IsRelated = function(oChanges)
@@ -171,7 +171,7 @@ CChangesParaFieldRemoveItem.prototype.Undo = function()
 	var Array_end   = oField.Content.slice(this.Pos);
 
 	oField.Content = Array_start.concat(this.Items, Array_end);
-	oField.private_UpdateSpellChecking();
+	oField.OnContentChange();
 	oField.private_CheckUpdateBookmarks(this.Items);
 	oField.private_UpdateTrackRevisions();
 	oField.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
@@ -198,7 +198,7 @@ CChangesParaFieldRemoveItem.prototype.Redo = function()
 	oField.Content.splice(this.Pos, this.Items.length);
 	oField.private_UpdateTrackRevisions();
 	oField.private_CheckUpdateBookmarks(this.Items);
-	oField.private_UpdateSpellChecking();
+	oField.OnContentChange();
 	oField.private_UpdateSelectionPosOnRemove(this.Pos, this.Items.length);
 	oField.SetIsRecalculated(false);
 };
@@ -226,7 +226,7 @@ CChangesParaFieldRemoveItem.prototype.Load = function(Color)
 	}
 	oField.private_UpdateTrackRevisions();
 	oField.private_CheckUpdateBookmarks(this.Items);
-	oField.private_UpdateSpellChecking();
+	oField.OnContentChange();
 	oField.SetIsRecalculated(false);
 };
 CChangesParaFieldRemoveItem.prototype.IsRelated = function(oChanges)

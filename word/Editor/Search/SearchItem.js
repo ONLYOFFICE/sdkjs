@@ -61,7 +61,7 @@
 	/**
 	 * Конвертируем данный элемент в элемент рана для вставки в документ
 	 * @param {boolean} isMathRun
-	 * @returns {?CRunElementBase}
+	 * @returns {?AscWord.CRunElementBase}
 	 */
 	CSearchTextItemBase.prototype.ToRunElement = function(isMathRun)
 	{
@@ -178,9 +178,9 @@
 		else
 		{
 			if (AscCommon.IsSpace(this.Value))
-				return new ParaSpace(this.Value);
+				return new AscWord.CRunSpace(this.Value);
 			else
-				return new ParaText(this.Value);
+				return new AscWord.CRunText(this.Value);
 		}
 	};
 	CSearchTextItemChar.prototype.IsChar = function()
@@ -204,7 +204,7 @@
 		if (isMathRun)
 			return null;
 
-		return new ParaNewLine(break_Line);
+		return new AscWord.CRunBreak(AscWord.break_Line);
 	};
 	CSearchTextSpecialLineBreak.prototype.IsNewLine = function()
 	{
@@ -228,7 +228,7 @@
 		if (isMathRun)
 			return null;
 
-		return new ParaTab();
+		return new AscWord.CRunTab();
 	};
 	CSearchTextSpecialTab.prototype.IsTab = function()
 	{
@@ -333,7 +333,7 @@
 		if (isMathRun)
 			return null;
 
-		return new ParaNewLine(break_Column);
+		return new AscWord.CRunBreak(AscWord.break_Column);
 	};
 	CSearchTextSpecialColumnBreak.prototype.IsColumnBreak = function()
 	{
@@ -426,7 +426,7 @@
 		if (isMathRun)
 			return null;
 
-		return new ParaNewLine(break_Page);
+		return new AscWord.CRunBreak(AscWord.break_Page);
 	};
 	CSearchTextSpecialPageBreak.prototype.IsPageBreak = function()
 	{
@@ -456,7 +456,7 @@
 		}
 		else
 		{
-			var oElement = new ParaText(0x2D);
+			var oElement = new AscWord.CRunText(0x2D);
 			oElement.Set_SpaceAfter(false);
 			return oElement;
 		}
@@ -486,7 +486,7 @@
 		if (isMathRun)
 			return null;
 
-		return new ParaText(0x00A0);
+		return new AscWord.CRunText(0x00A0);
 	};
 	CSearchTextSpecialNonBreakingSpace.prototype.IsNonBreakingSpace = function()
 	{
@@ -538,7 +538,7 @@
 		}
 		else
 		{
-			return new ParaText(0x2014);
+			return new AscWord.CRunText(0x2014);
 		}
 	};
 	CSearchTextSpecialEmDash.prototype.IsEmDash = function()
@@ -571,7 +571,7 @@
 		}
 		else
 		{
-			return new ParaText(0x2013);
+			return new AscWord.CRunText(0x2013);
 		}
 	};
 	CSearchTextSpecialEnDash.prototype.IsEnDash = function()

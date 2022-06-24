@@ -137,7 +137,7 @@ DrawingObjectsController.prototype.getColorMap = function()
             }
         }
     }
-    return AscFormat.DEFAULT_COLOR_MAP;
+    return AscFormat.GetDefaultColorMap();
 };
 
 

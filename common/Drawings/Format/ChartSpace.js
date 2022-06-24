@@ -2069,7 +2069,7 @@ var GLOBAL_PATH_COUNT = 0;
              }*/
             this.applyLabelsFunction(CheckObjectTextPr, _paraItem.Value);
         }
-        else if(paraItem.Type === para_Text || paraItem.Type === para_Space) {
+        else if(paraItem.IsText() || paraItem.IsSpace()) {
             if(this.selection.title) {
                 this.selection.textSelection = this.selection.title;
                 this.selection.textSelection.checkDocContent();
@@ -5067,7 +5067,7 @@ var GLOBAL_PATH_COUNT = 0;
                                     if(oAxisLabels.aLabels[i]) {
                                         oLabel = oAxisLabels.aLabels[i];
                                         var wh = {
-                                            w: oLabel.tx.rich.content.XLimit,
+                                            w: oLabel.tx.rich.getContentWidth(),
                                             h: oLabel.tx.rich.content.GetSummaryHeight()
                                         }, w2, h2, x1, y0, xc, yc;
                                         w2 = wh.w * Math.cos(Math.PI / 4) + wh.h * Math.sin(Math.PI / 4);
@@ -5100,7 +5100,7 @@ var GLOBAL_PATH_COUNT = 0;
                                     if(oAxisLabels.aLabels[i]) {
                                         oLabel = oAxisLabels.aLabels[i];
                                         var wh = {
-                                            w: oLabel.tx.rich.content.XLimit,
+                                            w: oLabel.tx.rich.getContentWidth(),
                                             h: oLabel.tx.rich.content.GetSummaryHeight()
                                         }, w2, h2, x1, y0, xc, yc;
                                         w2 = wh.w * Math.cos(Math.PI / 4) + wh.h * Math.sin(Math.PI / 4);

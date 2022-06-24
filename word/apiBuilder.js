@@ -1533,10 +1533,10 @@
 		var hyperlinkPr	= new Asc.CHyperlinkProperty();
 		var urlType		= AscCommon.getUrlType(sLink);
 
-		if (!/(((^https?)|(^ftp)):\/\/)|(^mailto:)/i.test(sLink))
+		if (!AscCommon.rx_allowedProtocols.test(sLink))
 			sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
 
-		sLink = sLink.replace(new RegExp("%20",'g')," ");
+		sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
 		hyperlinkPr.put_Value(sLink);
 		hyperlinkPr.put_ToolTip(sScreenTipText);
 		hyperlinkPr.put_Bookmark(null);
@@ -2990,9 +2990,9 @@
 		if (sLink !== "")
 		{
 			urlType		= AscCommon.getUrlType(sLink);
-			if (!/(((^https?)|(^ftp)):\/\/)|(^mailto:)/i.test(sLink))
+			if (!AscCommon.rx_allowedProtocols.test(sLink))
 				sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
-			sLink = sLink.replace(new RegExp("%20",'g')," ");
+			sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
 		}
 		
 		this.ParaHyperlink.SetValue(sLink);
@@ -6176,6 +6176,35 @@
 		return false;
 	};
 
+	/**
+	 * Adds footnote for selected text (or current position if selection doesn't exist).
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {?ApiDocumentContent}
+	 */
+	ApiDocument.prototype.AddFootnote = function()
+	{
+		let oResult = this.Document.AddFootnote();
+		if (!oResult)
+			return null;
+
+		return new ApiDocumentContent(oResult);
+	};
+
+	/**
+	 * Adds endnote for selected text (or current position if selection doesn't exist).
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {?ApiDocumentContent}
+	 */
+	ApiDocument.prototype.AddEndnote = function()
+	{
+		let oResult = this.Document.AddEndnote();
+		if (!oResult)
+			return null;
+
+		return new ApiDocumentContent(oResult);
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiParagraph
@@ -6220,7 +6249,7 @@
 	ApiParagraph.prototype.AddPageBreak = function()
 	{
 		var oRun = new ParaRun(this.Paragraph, false);
-		oRun.Add_ToContent(0, new ParaNewLine(break_Page));
+		oRun.Add_ToContent(0, new AscWord.CRunBreak(AscWord.break_Page));
 		private_PushElementToParagraph(this.Paragraph, oRun);
 		return new ApiRun(oRun);
 	};
@@ -6233,7 +6262,7 @@
 	ApiParagraph.prototype.AddLineBreak = function()
 	{
 		var oRun = new ParaRun(this.Paragraph, false);
-		oRun.Add_ToContent(0, new ParaNewLine(break_Line));
+		oRun.Add_ToContent(0, new AscWord.CRunBreak(AscWord.break_Line));
 		private_PushElementToParagraph(this.Paragraph, oRun);
 		return new ApiRun(oRun);
 	};
@@ -6247,7 +6276,7 @@
 	ApiParagraph.prototype.AddColumnBreak = function()
 	{
 		var oRun = new ParaRun(this.Paragraph, false);
-		oRun.Add_ToContent(0, new ParaNewLine(break_Column));
+		oRun.Add_ToContent(0, new AscWord.CRunBreak(AscWord.break_Column));
 		private_PushElementToParagraph(this.Paragraph, oRun);
 		return new ApiRun(oRun);
 	};
@@ -6261,7 +6290,7 @@
 	ApiParagraph.prototype.AddPageNumber = function()
 	{
 		var oRun = new ParaRun(this.Paragraph, false);
-		oRun.Add_ToContent(0, new ParaPageNum());
+		oRun.Add_ToContent(0, new AscWord.CRunPageNum());
 		private_PushElementToParagraph(this.Paragraph, oRun);
 		return new ApiRun(oRun);
 	};
@@ -6275,7 +6304,7 @@
 	ApiParagraph.prototype.AddPagesCount = function()
 	{
 		var oRun = new ParaRun(this.Paragraph, false);
-		oRun.Add_ToContent(0, new ParaPageCount());
+		oRun.Add_ToContent(0, new AscWord.CRunPagesCount());
 		private_PushElementToParagraph(this.Paragraph, oRun);
 		return new ApiRun(oRun);
 	};
@@ -6499,7 +6528,7 @@
 	ApiParagraph.prototype.AddTabStop = function()
 	{
 		var oRun = new ParaRun(this.Paragraph, false);
-		oRun.Add_ToContent(0, new ParaTab());
+		oRun.Add_ToContent(0, new AscWord.CRunTab());
 		private_PushElementToParagraph(this.Paragraph, oRun);
 		return new ApiRun(oRun);
 	};
@@ -6600,10 +6629,10 @@
 		var oHyperlink;
 
 		this.Paragraph.SelectAll(1);
-		if (!/(((^https?)|(^ftp)):\/\/)|(^mailto:)/i.test(sLink))
+		if (!AscCommon.rx_allowedProtocols.test(sLink))
 			sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
 
-		sLink = sLink.replace(new RegExp("%20",'g')," ");
+		sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
 		hyperlinkPr.put_Value(sLink);
 		hyperlinkPr.put_ToolTip(sScreenTipText);
 		hyperlinkPr.put_Bookmark(null);
@@ -6681,7 +6710,7 @@
 			{
 				for (var Index = 0; Index < Element.Run.GetElementsCount(); Index++)
 				{
-					if (Element.Run.GetElement(Index) instanceof ParaText)
+					if (Element.Run.GetElement(Index).IsText())
 					{
 						return Element;
 					}
@@ -7975,7 +8004,7 @@
 	 */
 	ApiRun.prototype.AddPageBreak = function()
 	{
-		this.Run.Add_ToContent(this.Run.Content.length, new ParaNewLine(break_Page));
+		this.Run.Add_ToContent(this.Run.Content.length, new AscWord.CRunBreak(AscWord.break_Page));
 	};
 	/**
 	 * Adds a line break to the current run position and starts the next element from a new line.
@@ -7984,7 +8013,7 @@
 	 */
 	ApiRun.prototype.AddLineBreak = function()
 	{
-		this.Run.Add_ToContent(this.Run.Content.length, new ParaNewLine(break_Line));
+		this.Run.Add_ToContent(this.Run.Content.length, new AscWord.CRunBreak(AscWord.break_Line));
 	};
 	/**
 	 * Adds a column break to the current run position and starts the next element from a new column.
@@ -7993,7 +8022,7 @@
 	 */
 	ApiRun.prototype.AddColumnBreak = function()
 	{
-		this.Run.Add_ToContent(this.Run.Content.length, new ParaNewLine(break_Column));
+		this.Run.Add_ToContent(this.Run.Content.length, new AscWord.CRunBreak(AscWord.break_Column));
 	};
 	/**
 	 * Adds a tab stop to the current run.
@@ -8002,7 +8031,7 @@
 	 */
 	ApiRun.prototype.AddTabStop = function()
 	{
-		this.Run.Add_ToContent(this.Run.Content.length, new ParaTab());
+		this.Run.Add_ToContent(this.Run.Content.length, new AscWord.CRunTab());
 	};
 	/**
 	 * Adds a drawing object (image, shape or chart) to the current text run.
@@ -8113,9 +8142,9 @@
 		var oHyperlink;
 		var hyperlinkPr	= new Asc.CHyperlinkProperty();
 		var urlType		= AscCommon.getUrlType(sLink);
-		if (!/(((^https?)|(^ftp)):\/\/)|(^mailto:)/i.test(sLink))
+		if (!AscCommon.rx_allowedProtocols.test(sLink))
 			sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
-		sLink = sLink.replace(new RegExp("%20",'g')," ");
+		sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
 		hyperlinkPr.put_Value(sLink);
 		hyperlinkPr.put_ToolTip(sScreenTipText);
 		hyperlinkPr.put_Bookmark(null);
@@ -12878,16 +12907,16 @@
 		if (breakType === 0)
 		{
 			if (position === "before")
-				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing), new ParaNewLine(break_Page));
+				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing), new AscWord.CRunBreak(AscWord.break_Page));
 			else if (position === "after")
-				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing) + 1, new ParaNewLine(break_Page));
+				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing) + 1, new AscWord.CRunBreak(AscWord.break_Page));
 		}
 		else if (breakType === 1)
 		{
 			if (position === "before")
-				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing), new ParaNewLine(break_Line));
+				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing), new AscWord.CRunBreak(AscWord.break_Line));
 			else if (position === "after")
-				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing) + 1, new ParaNewLine(break_Line));
+				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing) + 1, new AscWord.CRunBreak(AscWord.break_Line));
 		}
 
 		return true;
@@ -16577,11 +16606,11 @@
 								oChange.insert[nChar] = 32;
 
 							if (AscCommon.IsSpace(oChange.insert[nChar]))
-								itemText = new AscCommonWord.ParaSpace(oChange.insert[nChar]);
+								itemText = new AscWord.CRunSpace(oChange.insert[nChar]);
 							else if (oChange.insert[nChar] === '\t')
-								itemText = new ParaTab();
+								itemText = new AscWord.CRunTab();
 							else
-								itemText = new AscCommonWord.ParaText(oChange.insert[nChar]);
+								itemText = new AscWord.CRunText(oChange.insert[nChar]);
 
 							itemText.Parent = oInfo.Run.GetParagraph();
 							if (oInfo.Run.Content.length === 0 && infoToAdd)
@@ -16920,6 +16949,8 @@
 	ApiDocument.prototype["GetEndNotesFirstParagraphs"]  = ApiDocument.prototype.GetEndNotesFirstParagraphs;
 	ApiDocument.prototype["GetAllCaptionParagraphs"]     = ApiDocument.prototype.GetAllCaptionParagraphs;
 	ApiDocument.prototype["GetAllBookmarksNames"]        = ApiDocument.prototype.GetAllBookmarksNames;
+	ApiDocument.prototype["AddFootnote"]                 = ApiDocument.prototype.AddFootnote;
+	ApiDocument.prototype["AddEndnote"]                  = ApiDocument.prototype.AddEndnote;
 	
 	ApiDocument.prototype["GetSelectedDrawings"]         = ApiDocument.prototype.GetSelectedDrawings;
 	ApiDocument.prototype["ReplaceDrawing"]              = ApiDocument.prototype.ReplaceDrawing;

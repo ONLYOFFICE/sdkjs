@@ -983,6 +983,31 @@ CDrawingStream.prototype =
         return this.m_oTextPr;
     },
 
+    SetFontInternal : function(name, size, style)
+    {
+        var _lastFont = this.IsUseFonts2 ? this.m_oLastFont2 : this.m_oLastFont;
+        _lastFont.Name = name;
+        _lastFont.Size = size;
+
+        if (_lastFont.Name != _lastFont.SetUpName || _lastFont.Size != _lastFont.SetUpSize || style != _lastFont.SetUpStyle)
+        {
+            _lastFont.SetUpName = _lastFont.Name;
+            _lastFont.SetUpSize = _lastFont.Size;
+            _lastFont.SetUpStyle = style;
+
+            var _fontinfo = AscFonts.g_fontApplication.GetFontInfo(_lastFont.SetUpName, _lastFont.SetUpStyle, this.LastFontOriginInfo);
+            var _info = AscCommon.GetLoadInfoForMeasurer(_fontinfo, _lastFont.SetUpStyle);
+
+            var flag = 0;
+            if (_info.NeedBold)     flag |= 0x01;
+            if (_info.NeedItalic)   flag |= 0x02;
+            if (_info.SrcBold)      flag |= 0x04;
+            if (_info.SrcItalic)    flag |= 0x08;
+
+            this.Native["PD_LoadFont"](_info.Path, _info.FaceIndex, _lastFont.SetUpSize, flag);
+        }
+    },
+
     SetFontSlot : function(slot, fontSizeKoef)
     {
         var _rfonts = this.m_oGrFonts;
