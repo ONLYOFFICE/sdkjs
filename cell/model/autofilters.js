@@ -5820,6 +5820,18 @@
 				return res;
 			},
 
+			_getFirstEmptyCellByRow: function (startRow, startCol, endCol) {
+				var range = this.worksheet.getRange3(startRow, startCol, this.worksheet.cellsByColRowsCount - 1, endCol);
+				var res = {nRow: this.worksheet.cellsByColRowsCount, nCol: startCol};
+				range._foreach2(function (cell, row, col) {
+					if (!cell || cell.isNullText()) {
+						res = {nRow: row, nCol: col};
+						return true;
+					}
+				});
+				return res;
+			},
+
 			_setStyleTables: function (range) {
 				var worksheet = this.worksheet;
 				if (worksheet.TableParts && worksheet.TableParts.length > 0) {
