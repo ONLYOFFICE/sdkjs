@@ -3893,7 +3893,7 @@
 		//TODO protection!
 		for (var i = 0; i < aCellWatches.length; i++) {
 			var ws = aCellWatches[i]._ws;
-			ws.deleteCellWatch(aCellWatches[i]);
+			ws.deleteCellWatch(aCellWatches[i].r);
 		}
 
 		History.EndTransaction();
