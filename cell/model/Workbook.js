@@ -3840,8 +3840,8 @@
 			if (-1 !== sRange.indexOf("!")) {
 				var is3DRef = AscCommon.parserHelp.parse3DRef(sRange);
 				if (is3DRef) {
-					range = is3DRef.range;
-					ws = this.getWorksheetByName(range.sheet);
+					ws = this.getWorksheetByName(is3DRef.sheet);
+					range = AscCommonExcel.g_oRangeCache.getAscRange(is3DRef.range);
 				}
 			} else {
 				ws = this.getActiveWs();

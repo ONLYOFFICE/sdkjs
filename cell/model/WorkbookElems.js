@@ -11943,12 +11943,14 @@ QueryTableField.prototype.clone = function() {
 
 				var formula = "";
 				var value = "";
-				this.getCell3(activeCell.row, activeCell.col)._foreachNoEmpty(function (cell) {
-					if (cell.isFormula()) {
-						formula = cell.getValueForEdit();
-					}
-					value = cell.getValue();
-				});
+				if (this.r && this._ws) {
+					this._ws.getCell3(this.r.r1, this.r.c1)._foreachNoEmpty(function (cell) {
+						if (cell.isFormula()) {
+							formula = cell.getValueForEdit();
+						}
+						value = cell.getValue();
+					});
+				}
 
 				this._value = value;
 				this._formula = formula;
