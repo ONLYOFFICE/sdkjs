@@ -11067,6 +11067,59 @@
         }
     };
 
+	WorksheetView.prototype.applyFillHandleDoubleClick = function () {
+
+		//1. если есть внизу расширяемых значений данные - диапазон расширяем строго по данным столбцам вниз до тех пор
+		//пока хотя бы одная ячейка не станет пустой в строке ниже
+		//2. если внизу только пустые строки - дёргае expandRange и идём до ближайшей непустой
+		var range;
+
+		var activeRange = this.model.selectionRange && this.model.selectionRange.getLast();
+		if (activeRange) {
+			if (activeRange.r2 === gc_nMaxRow0) {
+				return;
+			}
+			if (activeRange.r2 + 1 >= this.model.cellsByColRowsCount - 1) {
+				return;
+			}
+			//проверям следующую строку после активной
+			//если есть хотя бы одна пустая ячейка, то автозаполнение не применяем
+			var nextRowRange = new Asc.Range(activeRange.c1,  activeRange.r2 + 1,  activeRange.c2,  activeRange.r2 + 1);
+			if (this.model.autoFilters._isContainEmptyCell(nextRowRange)) {
+
+				//если все пустые, то идём до ближайшей не пустой, в привном случае не применяем а/з
+				if (this.model.autoFilters._isEmptyRange(nextRowRange)) {
+					var expandRange = this.model.autoFilters.expandRange(activeRange);
+					if (expandRange.r2 > activeRange.r2) {
+						//диапазон, на который расширились
+						var newExpandRange = new Asc.Range(activeRange.c1,  activeRange.r2 + 1,  activeRange.c2,  expandRange.r2);
+						var firstNotEmptyCell = this.model.autoFilters._getFirstNotEmptyCell(newExpandRange);
+						if (firstNotEmptyCell) {
+							if (firstNotEmptyCell.row > activeRange.r2) {
+								//берём диапазон до ближайшей пустой
+								range = new Asc.Range(activeRange.c1,  activeRange.r1,  activeRange.c2,  firstNotEmptyCell.row);
+							}
+						} else {
+							//берём весь расширенный диапазон
+							range = new Asc.Range(activeRange.c1,  activeRange.r1,  activeRange.c2,  expandRange.r2);
+						}
+					}
+				}
+			} else {
+				//если все непустые, то идём до ближайшей строки, где есть хотя бы одна пустая
+				
+			}
+
+
+			if (range) {
+				this.fillHandleDirection = 1;
+				//this.fillHandleArea = ;
+				this.activeFillHandle = range;
+				this.applyFillHandle();
+			}
+		}
+	};
+
     /* Функция для работы перемещения диапазона (selection). (x, y) - координаты точки мыши на области
      *  ToDo нужно переделать, чтобы moveRange появлялся только после сдвига от текущей ячейки
      */

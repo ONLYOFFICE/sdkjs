@@ -1567,6 +1567,12 @@
     ws.applyFillHandle(x, y, ctrlPress);
   };
 
+  // Обработка окончания автозаполнения по двойному клику
+  WorkbookView.prototype._onChangeFillDoubleClick = function() {
+    var ws = this.getWorksheet();
+    ws.applyFillHandleDoubleClick();
+  };
+
   // Обработка перемещения диапазона
   WorkbookView.prototype._onMoveRangeHandle = function(x, y, callback) {
     var ws = this.getWorksheet();
@@ -1753,7 +1759,10 @@
     var ws = this.getWorksheet();
     var ct = ws.getCursorTypeFromXY(x, y);
 
-    if (ct.target === c_oTargetType.ColumnResize || ct.target === c_oTargetType.RowResize) {
+    if (ct.target === c_oTargetType.FillHandle) {
+		ws.applyFillHandleDoubleClick();
+    	asc_applyFunction(callback);
+	} else if (ct.target === c_oTargetType.ColumnResize || ct.target === c_oTargetType.RowResize) {
       if (ct.target === c_oTargetType.ColumnResize) {
       	ws.autoFitColumnsWidth(ct.col);
       } else {

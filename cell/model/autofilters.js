@@ -5796,6 +5796,30 @@
 				return res;
 			},
 
+			_isContainEmptyCell: function (ar) {
+				var range = this.worksheet.getRange3(Math.max(0, ar.r1), Math.max(0, ar.c1), ar.r2, ar.c2);
+				var res = false;
+				range._foreach2(function (cell) {
+					if (!cell || cell.isNullText()) {
+						res = true;
+						return true;
+					}
+				});
+				return res;
+			},
+
+			_getFirstNotEmptyCell: function (ar) {
+				var range = this.worksheet.getRange3(Math.max(0, ar.r1), Math.max(0, ar.c1), ar.r2, ar.c2);
+				var res = null;
+				range._foreachNoEmpty(function (cell) {
+					if (!cell.isNullText()) {
+						res = cell;
+						return true;
+					}
+				});
+				return res;
+			},
+
 			_setStyleTables: function (range) {
 				var worksheet = this.worksheet;
 				if (worksheet.TableParts && worksheet.TableParts.length > 0) {

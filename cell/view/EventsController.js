@@ -317,7 +317,6 @@
 
 			if(this.targetInfo && (this.targetInfo.target === c_oTargetType.MoveResizeRange ||
 				this.targetInfo.target === c_oTargetType.MoveRange ||
-				this.targetInfo.target === c_oTargetType.FillHandle ||
 				this.targetInfo.target === c_oTargetType.FilterObject ||
 				this.targetInfo.target === c_oTargetType.TableSelectionChange))
 				return true;
@@ -1404,6 +1403,7 @@
 			}
 
 			// Режим автозаполнения
+
 			if (this.isFillHandleMode) {
 				// Закончили автозаполнение
 				this.isFillHandleMode = false;
