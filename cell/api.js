@@ -7745,7 +7745,7 @@ var editor;
 	spreadsheet_api.prototype.asc_getCellWatches = function () {
 		var res = null;
 		if (this.wb && this.wb.model) {
-			this.wb.recalculateCellWatches(true);
+			this.wb.model.recalculateCellWatches(true);
 
 			for (var i = 0; i < this.wb.model.aWorksheets.length; i++) {
 				var ws = this.wb.model.aWorksheets[i];
