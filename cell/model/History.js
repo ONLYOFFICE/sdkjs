@@ -661,6 +661,8 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 		if (oRedoObjectParam.oOnUpdateSheetViewSettings[this.workbook.getWorksheet(this.workbook.getActive()).getId()])
 			this.workbook.handlers.trigger("asc_onUpdateSheetViewSettings");
 
+		this.workbook.handlers.trigger("asc_onUpdateCellWatches");
+
 		this._sendCanUndoRedo();
 		if (bUndo)
 			this.workbook.bUndoChanges = false;

@@ -3874,6 +3874,11 @@
 		}
 
 		History.EndTransaction();
+
+		if (!this.bUndoChanges && !this.bRedoChanges) {
+			this.handlers.trigger("asc_onUpdateCellWatches");
+		}
+
 	};
 
 	Workbook.prototype.dellCellWatches = function (aCellWatches) {
@@ -3887,6 +3892,10 @@
 		}
 
 		History.EndTransaction();
+
+		if (!this.bUndoChanges && !this.bRedoChanges) {
+			this.handlers.trigger("asc_onUpdateCellWatches");
+		}
 	};
 
 	Workbook.prototype.recalculateCellWatches = function (fullRecalc) {
