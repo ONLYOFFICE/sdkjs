@@ -3862,6 +3862,9 @@ var editor;
 	spreadsheet_api.prototype.sync_removeTextAroundSearch = function (sId) {
 		this.sendEvent("asc_onRemoveTextAroundSearch", [sId]);
 	};
+	spreadsheet_api.prototype.sync_SearchEndCallback = function () {
+		this.sendEvent("asc_onSearchEnd");
+	};
 
 	spreadsheet_api.prototype.asc_StartTextAroundSearch = function()
 	{

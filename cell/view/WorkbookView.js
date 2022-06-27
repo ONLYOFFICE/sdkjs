@@ -996,8 +996,7 @@
 	  self.updatePrintPreview();
 	});
 	this.model.handlers.add("clearFindResults", function(index) {
-  		if (self.SearchEngine)
-			self.SearchEngine.Clear(index);
+		self.clearSearchOnRecalculate(index);
 	});
     this.cellCommentator = new AscCommonExcel.CCellCommentator({
       model: new WorkbookCommentsModel(this.handlers, this.model.aComments),
@@ -4602,6 +4601,18 @@
 
 	WorkbookView.prototype.selectAll = function () {
 		this._onChangeSelection(true, -1, -1, true, false);
+	};
+
+	WorkbookView.prototype.clearSearchOnRecalculate = function (index) {
+		if (this.SearchEngine) {
+			var isPrevSearch = this.SearchEngine.Count > 0;
+
+			this.SearchEngine.Clear(index);
+
+			if (isPrevSearch) {
+				this.Api.sync_SearchEndCallback();
+			}
+		}
 	};
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
