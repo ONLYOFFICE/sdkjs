@@ -4875,7 +4875,98 @@
 
 		return aContent;
 	};
+	/**
+	 * Returns a collection of drawing objects in the document content.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiDrawing[]}  
+	 */
+	ApiDocumentContent.prototype.GetAllDrawingObjects = function()
+	{
+		var arrAllDrawing = this.Document.GetAllDrawingObjects();
+		var arrApiShapes  = [];
 
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+			arrApiShapes.push(new ApiDrawing(arrAllDrawing[Index]));
+		
+		return arrApiShapes;
+	};
+	/**
+	 * Returns a collection of shape objects in the document content.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiShape[]}  
+	 */
+	ApiDocumentContent.prototype.GetAllShapes = function()
+	{
+		var arrAllDrawing = this.Document.GetAllDrawingObjects();
+		var arrApiShapes  = [];
+
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+		{
+			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.CShape)
+				arrApiShapes.push(new ApiShape(arrAllDrawing[Index].GraphicObj));
+		}
+		
+		return arrApiShapes;
+	};
+	/**
+	 * Returns a collection of image objects in the document content.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiImage[]}  
+	 */
+	ApiDocumentContent.prototype.GetAllImages = function()
+	{
+		var arrAllDrawing = this.Document.GetAllDrawingObjects();
+		var arrApiImages  = [];
+
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+		{
+			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.CImageShape)
+				arrApiImages.push(new ApiImage(arrAllDrawing[Index].GraphicObj));
+		}
+		
+		return arrApiImages;
+	};
+	/**
+	 * Returns a collection of chart objects in the document content.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiChart[]}  
+	 */
+	ApiDocumentContent.prototype.GetAllCharts = function()
+	{
+		var arrAllDrawing = this.Document.GetAllDrawingObjects();
+		var arrApiCharts  = [];
+
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+		{
+			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.CChartSpace)
+				arrApiCharts.push(new ApiChart(arrAllDrawing[Index].GraphicObj));
+		}
+		
+		return arrApiCharts;
+	};
+	/**
+	 * Returns a collection of ole-objects in the document content.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiOleObject[]}  
+	 */
+	ApiDocumentContent.prototype.GetAllOleObjects = function()
+	{
+		var arrAllDrawing = this.Document.GetAllDrawingObjects();
+		var arrApiOleObjects  = [];
+
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+		{
+			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.COleObject)
+				arrApiOleObjects.push(new ApiOleObject(arrAllDrawing[Index].GraphicObj));
+		}
+		
+		return arrApiOleObjects;
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDocument
@@ -5600,98 +5691,6 @@
 	ApiDocument.prototype.RemoveSelection = function()
 	{
 		this.Document.RemoveSelection();
-	};
-	/**
-	 * Returns a collection of drawing objects in the document.
-	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
-	 * @return {ApiDrawing[]}  
-	 */
-	ApiDocument.prototype.GetAllDrawingObjects = function()
-	{
-		var arrAllDrawing = this.Document.GetAllDrawingObjects();
-		var arrApiShapes  = [];
-
-		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-			arrApiShapes.push(new ApiDrawing(arrAllDrawing[Index]));
-		
-		return arrApiShapes;
-	};
-	/**
-	 * Returns a collection of shape objects in the document.
-	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
-	 * @return {ApiShape[]}  
-	 */
-	ApiDocument.prototype.GetAllShapes = function()
-	{
-		var arrAllDrawing = this.Document.GetAllDrawingObjects();
-		var arrApiShapes  = [];
-
-		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-		{
-			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.CShape)
-				arrApiShapes.push(new ApiShape(arrAllDrawing[Index].GraphicObj));
-		}
-		
-		return arrApiShapes;
-	};
-	/**
-	 * Returns a collection of image objects in the document.
-	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
-	 * @return {ApiImage[]}  
-	 */
-	ApiDocument.prototype.GetAllImages = function()
-	{
-		var arrAllDrawing = this.Document.GetAllDrawingObjects();
-		var arrApiImages  = [];
-
-		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-		{
-			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.CImageShape)
-				arrApiImages.push(new ApiImage(arrAllDrawing[Index].GraphicObj));
-		}
-		
-		return arrApiImages;
-	};
-	/**
-	 * Returns a collection of chart objects in the document.
-	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
-	 * @return {ApiChart[]}  
-	 */
-	ApiDocument.prototype.GetAllCharts = function()
-	{
-		var arrAllDrawing = this.Document.GetAllDrawingObjects();
-		var arrApiCharts  = [];
-
-		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-		{
-			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.CChartSpace)
-				arrApiCharts.push(new ApiChart(arrAllDrawing[Index].GraphicObj));
-		}
-		
-		return arrApiCharts;
-	};
-	/**
-	 * Returns a collection of the document ole-objects.
-	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
-	 * @return {ApiOleObject[]}  
-	 */
-	ApiDocument.prototype.GetAllOleObjects = function()
-	{
-		var arrAllDrawing = this.Document.GetAllDrawingObjects();
-		var arrApiOleObjects  = [];
-
-		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-		{
-			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.COleObject)
-				arrApiOleObjects.push(new ApiOleObject(arrAllDrawing[Index].GraphicObj));
-		}
-		
-		return arrApiOleObjects;
 	};
 	/**
 	 * Searches for a scope of a document object. The search results are a collection of ApiRange objects.
@@ -17011,16 +17010,21 @@
 
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 
-	ApiDocumentContent.prototype["GetClassType"]     = ApiDocumentContent.prototype.GetClassType;
-	ApiDocumentContent.prototype["GetElementsCount"] = ApiDocumentContent.prototype.GetElementsCount;
-	ApiDocumentContent.prototype["GetElement"]       = ApiDocumentContent.prototype.GetElement;
-	ApiDocumentContent.prototype["AddElement"]       = ApiDocumentContent.prototype.AddElement;
-	ApiDocumentContent.prototype["Push"]             = ApiDocumentContent.prototype.Push;
-	ApiDocumentContent.prototype["RemoveAllElements"]= ApiDocumentContent.prototype.RemoveAllElements;
-	ApiDocumentContent.prototype["RemoveElement"]    = ApiDocumentContent.prototype.RemoveElement;
-	ApiDocumentContent.prototype["GetRange"]         = ApiDocumentContent.prototype.GetRange;
-	ApiDocumentContent.prototype["ToJSON"]           = ApiDocumentContent.prototype.ToJSON;
-	ApiDocumentContent.prototype["GetContent"]       = ApiDocumentContent.prototype.GetContent;
+	ApiDocumentContent.prototype["GetClassType"]         = ApiDocumentContent.prototype.GetClassType;
+	ApiDocumentContent.prototype["GetElementsCount"]     = ApiDocumentContent.prototype.GetElementsCount;
+	ApiDocumentContent.prototype["GetElement"]           = ApiDocumentContent.prototype.GetElement;
+	ApiDocumentContent.prototype["AddElement"]           = ApiDocumentContent.prototype.AddElement;
+	ApiDocumentContent.prototype["Push"]                 = ApiDocumentContent.prototype.Push;
+	ApiDocumentContent.prototype["RemoveAllElements"]    = ApiDocumentContent.prototype.RemoveAllElements;
+	ApiDocumentContent.prototype["RemoveElement"]        = ApiDocumentContent.prototype.RemoveElement;
+	ApiDocumentContent.prototype["GetRange"]             = ApiDocumentContent.prototype.GetRange;
+	ApiDocumentContent.prototype["ToJSON"]               = ApiDocumentContent.prototype.ToJSON;
+	ApiDocumentContent.prototype["GetContent"]           = ApiDocumentContent.prototype.GetContent;
+	ApiDocumentContent.prototype["GetAllDrawingObjects"] = ApiDocumentContent.prototype.GetAllDrawingObjects;
+	ApiDocumentContent.prototype["GetAllShapes"]         = ApiDocumentContent.prototype.GetAllShapes;
+	ApiDocumentContent.prototype["GetAllImages"]         = ApiDocumentContent.prototype.GetAllImages;
+	ApiDocumentContent.prototype["GetAllCharts"]         = ApiDocumentContent.prototype.GetAllCharts;
+	ApiDocumentContent.prototype["GetAllOleObjects"]     = ApiDocumentContent.prototype.GetAllOleObjects;
 
 	ApiRange.prototype["GetClassType"]               = ApiRange.prototype.GetClassType
 	ApiRange.prototype["GetParagraph"]               = ApiRange.prototype.GetParagraph;
@@ -17085,11 +17089,6 @@
 	ApiDocument.prototype["GetSections"]                 = ApiDocument.prototype.GetSections;
 	ApiDocument.prototype["GetAllTablesOnPage"]          = ApiDocument.prototype.GetAllTablesOnPage;
 	ApiDocument.prototype["RemoveSelection"]             = ApiDocument.prototype.RemoveSelection;
-	ApiDocument.prototype["GetAllDrawingObjects"]        = ApiDocument.prototype.GetAllDrawingObjects;
-	ApiDocument.prototype["GetAllShapes"]                = ApiDocument.prototype.GetAllShapes;
-	ApiDocument.prototype["GetAllImages"]                = ApiDocument.prototype.GetAllImages;
-	ApiDocument.prototype["GetAllCharts"]                = ApiDocument.prototype.GetAllCharts;
-	ApiDocument.prototype["GetAllOleObjects"]            = ApiDocument.prototype.GetAllOleObjects;
 	ApiDocument.prototype["Search"]                      = ApiDocument.prototype.Search;
 	ApiDocument.prototype["ToMarkdown"]                  = ApiDocument.prototype.ToMarkdown;
 	ApiDocument.prototype["ToHtml"]                      = ApiDocument.prototype.ToHtml;
