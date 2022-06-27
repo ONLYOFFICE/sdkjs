@@ -3304,19 +3304,24 @@ function (window, undefined) {
 				ws.deleteProtectedRange(Data.id);
 			}
 		} else if (AscCH.historyitem_Worksheet_AddCellWatch === Type) {
-			if (bUndo) {
-				ws.deleteCellWatch(Data.to);
-			} else {
-				ws.addCellWatch(Data.to);
+			if (Data.to) {
+				range = new Asc.Range(Data.to.c1, Data.to.r1, Data.to.c2, Data.to.r2);
+				if (bUndo) {
+					ws.deleteCellWatch(range);
+				} else {
+					ws.addCellWatch(range);
+				}
 			}
 		} else if (AscCH.historyitem_Worksheet_DelCellWatch === Type) {
-			if (bUndo) {
-				ws.addCellWatch(Data.from);
-			} else {
-				ws.deleteCellWatch(Data.from);
+			if (Data.from) {
+				range = new Asc.Range(Data.from.c1, Data.from.r1, Data.from.c2, Data.from.r2);
+				if (bUndo) {
+					ws.addCellWatch(range);
+				} else {
+					ws.deleteCellWatch(range);
+				}
 			}
 		}
-
 	};
 	UndoRedoWoorksheet.prototype.forwardTransformationIsAffect = function (Type) {
 		return AscCH.historyitem_Worksheet_AddRows === Type || AscCH.historyitem_Worksheet_RemoveRows === Type ||

@@ -11959,6 +11959,9 @@ QueryTableField.prototype.clone = function() {
 			}
 		}
 	};
+	CCellWatch.prototype.initPostOpen = function (ws) {
+		this._ws = ws;
+	};
 
 
 

@@ -3886,14 +3886,14 @@
 
 	};
 
-	Workbook.prototype.dellCellWatches = function (aCellWatches) {
+	Workbook.prototype.dellCellWatches = function (aCellWatches, addToHistory) {
 		History.Create_NewPoint();
 		History.StartTransaction();
 
 		//TODO protection!
 		for (var i = 0; i < aCellWatches.length; i++) {
 			var ws = aCellWatches[i]._ws;
-			ws.deleteCellWatch(aCellWatches[i].r);
+			ws.deleteCellWatch(aCellWatches[i].r, addToHistory);
 		}
 
 		History.EndTransaction();
@@ -4599,6 +4599,9 @@
 		});
 		this.aNamedSheetViews.forEach(function(elem){
 			elem.initPostOpen(tableIds, t);
+		});
+		this.aCellWatches.forEach(function(elem){
+			elem.initPostOpen(t);
 		});
 	};
 	Worksheet.prototype.initPostOpenZip = function (pivotCaches, oNumFmts) {

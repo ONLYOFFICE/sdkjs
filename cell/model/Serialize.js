@@ -4136,8 +4136,8 @@
         this.WriteCellWatch = function (oCellWatch) {
             if (null != oCellWatch.r) {
                 this.memory.WriteByte(c_oSerWorksheetsTypes.CellWatchR);
-                this.memory.WriteByte(c_oSerPropLenType.Byte);
-                this.memory.WriteString3(oCellWatch.r);
+                this.memory.WriteByte(c_oSerPropLenType.Variable);
+                this.memory.WriteString2(oCellWatch.r.getName());
             }
         };
         this.WriteWorksheetProp = function(ws)
@@ -8252,8 +8252,11 @@
         };
         this.ReadCellWatch = function (type, length, oCellWatch) {
             var res = c_oSerConstants.ReadOk;
-            if (c_oSerProtectedRangeTypes.CellWatchR === type) {
-                oCellWatch.r = this.stream.GetString2LE(length);
+            if (c_oSerWorksheetsTypes.CellWatchR === type) {
+                var range = AscCommonExcel.g_oRangeCache.getAscRange(this.stream.GetString2LE(length));
+                if (range) {
+                    oCellWatch.r = new Asc.Range(range.c1, range.r1, range.c1, range.r1);
+                }
             } else {
                 res = c_oSerConstants.ReadUnknown;
             }

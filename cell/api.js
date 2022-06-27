@@ -7751,7 +7751,7 @@ var editor;
 
 	spreadsheet_api.prototype.asc_deleteCellWatches = function (aCellWatches) {
 		if (this.wb && this.wb.model) {
-			this.wb.model.dellCellWatches(aCellWatches);
+			this.wb.model.dellCellWatches(aCellWatches, true);
 		}
 	};
 
