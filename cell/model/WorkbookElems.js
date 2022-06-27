@@ -11936,8 +11936,11 @@ QueryTableField.prototype.clone = function() {
 				var docInfo = window["Asc"]["editor"].DocInfo;
 				this._workbook = docInfo ? docInfo.get_Title() : "";
 				this._sheet = this._ws.sName;
-				this._name = null;
 
+				var dN = new Asc.Range(this.r.c1, this.r.r1, this.r.c2, this.r.r2, true);
+				var defName = parserHelp.get3DRef(this._ws.getName(), dN.getAbsName());
+				defName = this._ws.workbook.findDefinesNames(defName, this._ws.getId(), true);
+				this._name = defName ? defName : null;
 
 				this._cell = this.r ? this.r.getName() : this.r;
 
