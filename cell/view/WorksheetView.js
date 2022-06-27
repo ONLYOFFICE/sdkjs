@@ -15866,9 +15866,11 @@
 		} else {
 			cell = bSearchEngine ? this.workbook.SearchEngine.GetCurrentElem() : this.model.selectionRange.activeCell;
 			// Попробуем сначала найти
-			var isEqual = this._isCellEqual(cell.col, cell.row, options);
-			if (isEqual) {
-				aReplaceCells.push(isEqual);
+			if (cell) {
+				var isEqual = this._isCellEqual(cell.col, cell.row, options);
+				if (isEqual) {
+					aReplaceCells.push(isEqual);
+				}
 			}
 		}
 
