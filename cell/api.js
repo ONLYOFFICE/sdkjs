@@ -7751,7 +7751,7 @@ var editor;
 				var maxCellsCount = 100;
 				var countCells = oRange.range.getWidth() * oRange.range.getHeight();
 				if (countCells > maxCellsCount) {
-					this.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmReplaceRange, function (can) {
+					this.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmAddCellWatches, function (can) {
 						if (can) {
 							t.wb.model.addCellWatches(oRange.sheet, oRange.range);
 						}
