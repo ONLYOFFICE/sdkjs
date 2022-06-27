@@ -48,7 +48,8 @@ var c_oAscConfirm = {
   ConfirmReplaceRange: 0,
   ConfirmPutMergeRange: 1,
   ConfirmReplaceFormulaInTable: 2,
-  ConfirmChangeProtectRange: 3
+  ConfirmChangeProtectRange: 3,
+  ConfirmAddCellWatches: 4
 };
 
 var c_oAscMergeOptions = {
@@ -605,6 +606,7 @@ var c_oAscPopUpSelectorType = {
   prot['ConfirmReplaceRange'] = prot.ConfirmReplaceRange;
   prot['ConfirmPutMergeRange'] = prot.ConfirmPutMergeRange;
   prot['ConfirmChangeProtectRange'] = prot.ConfirmChangeProtectRange;
+  prot['ConfirmAddCellWatches'] = prot.ConfirmAddCellWatches;
 
   prot['ConfirmReplaceFormulaInTable'] = prot.ConfirmReplaceFormulaInTable;
   window['Asc']['c_oAscMergeOptions'] = window['Asc'].c_oAscMergeOptions = c_oAscMergeOptions;

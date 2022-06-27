@@ -3837,10 +3837,9 @@
 		return res;
 	};
 
-
-	Workbook.prototype.addCellWatches = function (sRange) {
-		var range;
+	Workbook.prototype.getRangeAndSheetFromStr = function (sRange) {
 		var ws;
+		var range;
 		if (sRange) {
 			if (-1 !== sRange.indexOf("!")) {
 				var is3DRef = AscCommon.parserHelp.parse3DRef(sRange);
@@ -3862,28 +3861,29 @@
 					}
 				}
 			}
-
 		}
+		return {sheet: ws, range: range}
+	};
 
-		History.Create_NewPoint();
-		History.StartTransaction();
-
-		//TODO protection!
+	Workbook.prototype.addCellWatches = function (ws, range) {
 		if (ws && range) {
+			History.Create_NewPoint();
+			History.StartTransaction();
+
+			//TODO protection!
 			for (var i = range.r1; i <= range.r2; i++) {
 				for (var j = range.c1; j <= range.c2; j++) {
 					var _ref = new Asc.Range(j, i, j, i);
 					ws.addCellWatch(_ref, true);
 				}
 			}
+
+			History.EndTransaction();
+
+			if (!this.bUndoChanges && !this.bRedoChanges) {
+				this.handlers.trigger("asc_onUpdateCellWatches");
+			}
 		}
-
-		History.EndTransaction();
-
-		if (!this.bUndoChanges && !this.bRedoChanges) {
-			this.handlers.trigger("asc_onUpdateCellWatches");
-		}
-
 	};
 
 	Workbook.prototype.dellCellWatches = function (aCellWatches, addToHistory) {

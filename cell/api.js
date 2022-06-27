@@ -7744,8 +7744,22 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_addCellWatches = function (sRange) {
+		var t = this;
 		if (this.wb && this.wb.model) {
-			this.wb.model.addCellWatches(sRange);
+			var oRange = t.wb.model.getRangeAndSheetFromStr(sRange);
+			if (oRange && oRange.sheet && oRange.range) {
+				var maxCellsCount = 100;
+				var countCells = oRange.range.getWidth() * oRange.range.getHeight();
+				if (countCells > maxCellsCount) {
+					this.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmReplaceRange, function (can) {
+						if (can) {
+							t.wb.model.addCellWatches(oRange.sheet, oRange.range);
+						}
+					});
+				} else {
+					t.wb.model.addCellWatches(oRange.sheet, oRange.range);
+				}
+			}
 		}
 	};
 
