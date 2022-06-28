@@ -1782,6 +1782,18 @@
 		this.updateColumnsStart = Math.min(i, this.updateColumnsStart);
 	};
 
+	WorksheetView.prototype._getColumnWidthIgnoreHidden = function (i) {
+		var w;
+		var column = this.model._getColNoEmptyWithAll(i);
+		if (!column) {
+			w = this.defaultColWidthPx; // Используем дефолтное значение
+		} else {
+			w = null === column.widthPx ? this.defaultColWidthPx : column.widthPx;
+		}
+		w = this.workbook.printPreviewState.isStart() ? w * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio : Asc.round(w * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio)
+		return w;
+	};
+
 	WorksheetView.prototype._calcHeightRow = function (y, i) {
 		var r, hR;
 		this.model._getRowNoEmptyWithAll(i, function (row) {
@@ -6884,7 +6896,9 @@
             maxW -= indent * 3 * this.defaultSpaceWidth;
         }
 
-		tm = this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW));
+		//чтобы грамотно расчитать высоту строки, необходимо знать размер текста в ячейке. если скрыт столбец, то maxW всегда будет 0 и расчёт measureString будет неверным
+		//добавляю следующую заглушку для этого - _getColumnWidthIgnoreHidden
+		tm = this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW === 0 ? Math.max(this._getColumnWidthIgnoreHidden(col) - this.settings.cells.padding * 2 - gridlineSize, 0) : maxW));
 
 		if (indent) {
 			var printZoom = this.workbook.printPreviewState && this.workbook.printPreviewState.isStart() ? this.getZoom() : 1;
