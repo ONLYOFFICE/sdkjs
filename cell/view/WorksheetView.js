@@ -8492,6 +8492,7 @@
 	WorksheetView.prototype._hitCursorTableRightCorner = function (vr, x, y, offsetX, offsetY) {
 		var i, l, res, range;
 		var tables = this.model.TableParts;
+		var retinaKoef = AscBrowser.retinaPixelRatio;
 
 		var row, col, baseLw, lnW, baseLnSize, lnSize, kF, x1, x2, y1, y2, rangeIn;
 		var zoom = this.getZoom();
@@ -8500,7 +8501,7 @@
 			rangeIn = range.intersectionSimple(vr);
 			if(rangeIn) {
 				baseLw = 2;
-				lnW = Math.round(baseLw * zoom);
+				lnW = Math.round(baseLw * zoom * retinaKoef);
 				kF = lnW / baseLw;
 				baseLnSize = 4;
 				lnSize = kF * baseLnSize;
@@ -18083,8 +18084,7 @@
 	WorksheetView.prototype._drawRightDownTableCorner = function (table, updatedRange, offsetX, offsetY) {
 		var t = this;
 		var ctx = t.drawingCtx;
-		var isMobileRetina = window['IS_NATIVE_EDITOR'];
-		var retinaKoef = isMobileRetina || AscBrowser.isRetina ? 2 : 1;
+		var retinaKoef = AscBrowser.retinaPixelRatio;
 
 		var row = table.Ref.r2;
 		var col = table.Ref.c2;
@@ -18098,18 +18098,17 @@
 		var baseLw = 2;
 		var baseLnSize = 4;
 
-		var lnW = Math.round(baseLw * zoom);
+		var lnW = Math.round(baseLw * zoom * retinaKoef);
 		//смотрим насколько изменилась толщина линиии  - настолько и изменился масштаб
 		var kF = lnW / baseLw;
 		var lnSize = baseLnSize * kF;
-		lnW = lnW * retinaKoef;
 
 		var x1 = t._getColLeft(col) + t._getColumnWidth(col) - offsetX - 2;
 		var y1 = t._getRowTop(row) + t._getRowHeight(row) - offsetY - 2;
 
-		ctx.setLineWidth(AscBrowser.retinaPixelRatio * lnW);
+		ctx.setLineWidth(lnW);
 
-		var diff = Math.floor((lnW - 1) / (2 / retinaKoef));
+		var diff = Math.floor((lnW - 1) / 2);
 		ctx.beginPath();
 		ctx.lineVer(x1 - diff, y1 + 1, y1 - lnSize + 1);
 		ctx.lineHor(x1 + 1, y1 - diff, x1 - lnSize + 1);
