@@ -989,6 +989,9 @@
 	this.model.handlers.add("cleanCutData", function(bDrawSelection, bCleanBuffer) {
 	  self.cleanCutData(bDrawSelection, bCleanBuffer);
 	});
+	this.model.handlers.add("cleanCopyData", function(bDrawSelection) {
+	  self.cleanCopyData(bDrawSelection);
+	});
 	this.model.handlers.add("updateGroupData", function() {
 	  self.updateGroupData();
 	});
@@ -2766,13 +2769,17 @@
     return g_clipboardExcel.bIsEmptyClipboard(this.getCellEditMode());
   };
 
-   WorkbookView.prototype.checkCopyToClipboard = function(_clipboard, _formats) {
-    if(this.isProtectedFromCut()) {
-      return false;
-    }
-    var ws = this.getWorksheet();
-    g_clipboardExcel.checkCopyToClipboard(ws, _clipboard, _formats);
-  };
+	WorkbookView.prototype.checkCopyToClipboard = function (_clipboard, _formats) {
+		if (this.isProtectedFromCut()) {
+			return false;
+		}
+		var ws = this.getWorksheet();
+		g_clipboardExcel.checkCopyToClipboard(ws, _clipboard, _formats);
+
+		if (!this.getCellEditMode() && false === ws.isMultiSelect()) {
+			ws.copyCutRange = ws.model.selectionRange.getLast();
+		}
+	};
 
   WorkbookView.prototype.pasteData = function(_format, data1, data2, text_data, doNotShowButton) {
     var t = this, ws;
@@ -2826,23 +2833,24 @@
     }
     return false;
   };
+
 	WorkbookView.prototype.selectionCut = function () {
 		if (this.getCellEditMode()) {
 			this.cellEditor.cutSelection();
 		} else {
 			var ws = this.getWorksheet();
-      if(this.isProtectedFromCut()) {
-        this.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
-        return false;
-      }
+			if (this.isProtectedFromCut()) {
+				this.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
+				return false;
+			}
 
 			if (ws.isNeedSelectionCut()) {
 				ws.emptySelection(c_oAscCleanOptions.All, true);
 			} else {
 				//в данном случае не вырезаем, а записываем
-				if(false === ws.isMultiSelect()) {
+				if (false === ws.isMultiSelect()) {
 					this.cutIdSheet = ws.model.Id;
-					ws.cutRange = ws.model.selectionRange.getLast();
+					ws.copyCutRange = ws.model.selectionRange.getLast();
 				}
 			}
 		}
@@ -4123,7 +4131,7 @@
 			}
 
 			if(ws) {
-				ws.cutRange = null;
+				ws.copyCutRange = null;
 			}
 			this.cutIdSheet = null;
 
@@ -4138,6 +4146,26 @@
 			}
 		}
 	};
+
+	WorkbookView.prototype.cleanCopyData = function (bDrawSelection) {
+		if(this.cutIdSheet == null) {
+			var activeWs = this.wsViews[this.wsActive];
+
+			var needUpdateSelection = bDrawSelection && activeWs && activeWs.copyCutRange;
+			if(needUpdateSelection) {
+				activeWs.cleanSelection();
+			}
+
+			for(var i in this.wsViews) {
+				this.wsViews[i].copyCutRange = null;
+			}
+
+			if(needUpdateSelection) {
+				activeWs.updateSelection();
+			}
+		}
+	};
+
 	WorkbookView.prototype.updateGroupData = function () {
 		this.getWorksheet()._updateGroups(true);
 		this.getWorksheet()._updateGroups(null);
@@ -4364,7 +4392,7 @@
 			"setCanRedo", "setDocumentModified", "updateWorksheetByModel", "undoRedoAddRemoveRowCols",
 			"undoRedoHideSheet", "updateSelection", "asc_onLockDefNameManager", 'addComment', 'removeComment',
 			'hiddenComments', 'showSolved', "hideSpecialPasteOptions", "toggleAutoCorrectOptions", "cleanCutData",
-			"updateGroupData"];
+			"updateGroupData", "cleanCopyData"];
 
 		for (var i = 0; i < eventList.length; i++) {
 			this.handlers.remove(eventList[i]);
