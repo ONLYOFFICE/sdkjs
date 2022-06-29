@@ -7755,7 +7755,7 @@ var editor;
 						if (can) {
 							t.wb.model.addCellWatches(oRange.sheet, oRange.range);
 						}
-					});
+					}, countCells);
 				} else {
 					t.wb.model.addCellWatches(oRange.sheet, oRange.range);
 				}
