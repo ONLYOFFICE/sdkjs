@@ -555,6 +555,7 @@ var c_oAscPopUpSelectorType = {
     Range: 2
   };
 
+  var c_nAscMaxAddCellWatchesCount = 10000;
 
   //----------------------------------------------------------export----------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
@@ -912,6 +913,8 @@ var c_oAscPopUpSelectorType = {
   prot['Workbook'] = prot.Workbook;
   prot['Sheet'] = prot.Sheet;
   prot['Range'] = prot.Range;
+
+  window['Asc']['c_nAscMaxAddCellWatchesCount'] = window['Asc'].c_nAscMaxAddCellWatchesCount = c_nAscMaxAddCellWatchesCount;
 
 
 })(window);

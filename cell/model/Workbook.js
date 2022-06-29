@@ -3871,10 +3871,19 @@
 			History.StartTransaction();
 
 			//TODO protection!
+			var maxCellWatchesCount = Asc.c_nAscMaxAddCellWatchesCount;
+			var counter = 0;
 			for (var i = range.r1; i <= range.r2; i++) {
 				for (var j = range.c1; j <= range.c2; j++) {
 					var _ref = new Asc.Range(j, i, j, i);
 					ws.addCellWatch(_ref, true);
+					counter++;
+					if (counter === maxCellWatchesCount) {
+						break;
+					}
+				}
+				if (counter === maxCellWatchesCount) {
+					break;
 				}
 			}
 
