@@ -7763,9 +7763,9 @@ var editor;
 		}
 	};
 
-	spreadsheet_api.prototype.asc_deleteCellWatches = function (aCellWatches) {
+	spreadsheet_api.prototype.asc_deleteCellWatches = function (aCellWatches, opt_remove_all) {
 		if (this.wb && this.wb.model) {
-			this.wb.model.dellCellWatches(aCellWatches, true);
+			this.wb.model.delCellWatches(aCellWatches, true, opt_remove_all);
 		}
 	};
 
