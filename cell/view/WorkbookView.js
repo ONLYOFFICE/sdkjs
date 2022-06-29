@@ -4600,7 +4600,19 @@
 	};
 
 	WorkbookView.prototype.selectAll = function () {
-		this._onChangeSelection(true, -1, -1, true, false);
+		if (this.getCellEditMode()) {
+			this.cellEditor.selectAll()
+		} else {
+			var ws = this.getWorksheet();
+			var selectedDrawings = ws && ws.objectRender && ws.objectRender.getSelectedGraphicObjects();
+			if (selectedDrawings && selectedDrawings.length > 0) {
+				ws.objectRender.controller.selectAll();
+				ws.objectRender.controller.drawingObjects.sendGraphicObjectProps();
+			} else {
+				this.controller.handlers.trigger("selectColumnsByRange");
+				this.controller.handlers.trigger("selectRowsByRange");
+			}
+		}
 	};
 
 	WorkbookView.prototype.clearSearchOnRecalculate = function (index) {
