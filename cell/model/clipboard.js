@@ -317,7 +317,7 @@
 			
 			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
 			ws.handlers.trigger("cleanCutData", true);
-			ws.handlers.trigger("cleanCopyData", true);
+			wb.handlers.trigger("cleanCopyData", true);
 
 			if (wb.getCellEditMode())//text in cell
 			{
@@ -470,7 +470,7 @@
 						//window['AscCommon'].g_specialPasteHelper.Special_Paste_Hide_Button();
 						t.pasteProcessor.pasteTextOnSheet(ws, data1);
 					}
-					wb.handlers.trigger("cleanCopyData");
+					wb.handlers.trigger("cleanCopyData", true);
 					break;
 				}
 			}
@@ -1628,8 +1628,10 @@
 					this.activeRange = worksheet.model.selectionRange.getLast().clone(true);
 					result = this._pasteFromBinaryWord(worksheet, base64FromWord, isIntoShape, isCellEditMode);
 					window['AscCommon'].g_specialPasteHelper.specialPasteData.pasteFromWord = true;
+					worksheet.workbook.handlers.trigger("cleanCopyData", true);
 				} else if (base64FromPresentation) {
 					result = this._pasteFromBinaryPresentation(worksheet, base64FromPresentation, isIntoShape, isCellEditMode);
+					worksheet.workbook.handlers.trigger("cleanCopyData", true);
 				}
 
 				return result;
@@ -1853,7 +1855,7 @@
 						AscCommon.g_clipboardBase.needClearBuffer = true;
 					}
 				} else if (!pasteInOriginalDoc) {
-					ws.handlers.trigger("cleanCopyData", true);
+					ws.workbook.handlers.trigger("cleanCopyData", true);
 				}
 
 				return res;
@@ -2704,7 +2706,7 @@
 				}
 
 				this.activeRange = worksheet.model.selectionRange.getLast().clone();
-
+				worksheet.workbook.handlers.trigger("cleanCopyData", true);
 
 				var callBackAfterLoadImages = function () {
 					History.TurnOff();
@@ -2785,10 +2787,10 @@
 				} else if (base64FromWord)//from word
 				{
 					result = this._pasteFromBinaryWord(worksheet, base64FromWord, isIntoShape);
-					worksheet.handlers.trigger("cleanCopyData", true);
+					worksheet.workbook.handlers.trigger("cleanCopyData", true);
 				} else if (base64FromPresentation) {
 					result = this._pasteFromBinaryPresentation(worksheet, base64FromPresentation, isIntoShape);
-					worksheet.handlers.trigger("cleanCopyData", true);
+					worksheet.workbook.handlers.trigger("cleanCopyData", true);
 				}
 
 				return result;
