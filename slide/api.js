@@ -2553,11 +2553,6 @@ background-repeat: no-repeat;\
 		this.sendEvent("asc_onReplaceAll", OverallCount, ReplaceCount);
 	};
 
-	asc_docs_api.prototype.sync_SearchEndCallback = function()
-	{
-		this.sendEvent("asc_onSearchEnd");
-	};
-
 	asc_docs_api.prototype.asc_replaceText = function(oProps, replaceWith, isReplaceAll)
 	{
 		if (null == this.WordControl.m_oLogicDocument)
