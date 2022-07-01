@@ -806,6 +806,10 @@
 			}
 			History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_DefinedNamesChange, null, null,
 				new UndoRedoData_FromTo(oldUndoName, newUndoName));
+
+			if (!this.wb.bUndoChanges && !this.wb.bRedoChanges) {
+				this.wb.handlers.trigger("updateCellWatches");
+			}
 			return res;
 		},
 		checkDefName: function (name, sheetIndex) {
@@ -2406,6 +2410,10 @@
 
 			History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_SheetMove, null, null, new UndoRedoData_FromTo(indexFrom, indexTo));
 			this.dependencyFormulas.unlockRecal();
+
+			if (!this.bUndoChanges && !this.bRedoChanges) {
+				this.handlers.trigger("updateCellWatches", true);
+			}
 		}
 	};
 	Workbook.prototype.findSheetNoHidden = function (nIndex) {
@@ -5081,6 +5089,9 @@
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_Rename, this.getId(), null, new UndoRedoData_FromTo(lastName, name));
 
 			this.workbook.dependencyFormulas.calcTree();
+			if (!this.workbook.bUndoChanges && !this.workbook.bRedoChanges) {
+				this.workbook.handlers.trigger("updateCellWatches");
+			}
 		} else {
 			console.log(new Error('The sheet name must be less than 31 characters.'));
 		}

@@ -1001,8 +1001,8 @@
   		if (self.SearchEngine)
 			self.SearchEngine.Clear(index);
 	});
-	this.model.handlers.add("updateCellWatches", function() {
-		self.sendUpdateCellWatches();
+	this.model.handlers.add("updateCellWatches", function(recalcAll) {
+		self.sendUpdateCellWatches(recalcAll);
 	});
 	this.model.handlers.add("changeCellWatches", function(index) {
 		//делаю для оптимизации. в случае открытого окна Cell Watches: обновляем весь список только в случае когда меняется этот список
@@ -4610,13 +4610,13 @@
 		return this.SearchEngine.inFindResults(ws, row, col);
 	};
 
-	WorkbookView.prototype.sendUpdateCellWatches = function () {
+	WorkbookView.prototype.sendUpdateCellWatches = function (recalcAll) {
 		if (!this.handlers.hasTrigger("asc_onUpdateCellWatches")) {
 			this.changedCellWatchesSheets = null;
 			return;
 		}
 
-		if (this.changedCellWatchesSheets) {
+		if (this.changedCellWatchesSheets || recalcAll) {
 			this.handlers.trigger("asc_onUpdateCellWatches");
 		} else {
 			var needUpdateMap = this.getChangedCellWatches();

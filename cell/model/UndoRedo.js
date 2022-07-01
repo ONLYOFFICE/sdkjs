@@ -2385,6 +2385,7 @@ function (window, undefined) {
 				}
 			}
 			wb.handlers.trigger("updateWorksheetByModel");
+			wb.handlers.trigger("changeCellWatches");
 		} else if (AscCH.historyitem_Workbook_SheetRemove == Type) {
 			if (bUndo) {
 				wb.insertWorksheet(Data.index, Data.sheet);
@@ -2401,6 +2402,7 @@ function (window, undefined) {
 				}
 			}
 			wb.handlers.trigger("updateWorksheetByModel");
+			wb.handlers.trigger("changeCellWatches");
 		} else if (AscCH.historyitem_Workbook_SheetMove == Type) {
 			if (bUndo) {
 				wb.replaceWorksheet(Data.to, Data.from);
@@ -2408,6 +2410,7 @@ function (window, undefined) {
 				wb.replaceWorksheet(Data.from, Data.to);
 			}
 			wb.handlers.trigger("updateWorksheetByModel");
+			wb.handlers.trigger("changeCellWatches");
 		} else if (AscCH.historyitem_Workbook_DefinedNamesChange === Type ||
 			AscCH.historyitem_Workbook_DefinedNamesChangeUndo === Type) {
 			var oldName, newName;
@@ -3311,6 +3314,7 @@ function (window, undefined) {
 				} else {
 					ws.addCellWatch(range);
 				}
+				wb.handlers.trigger("changeCellWatches");
 			}
 		} else if (AscCH.historyitem_Worksheet_DelCellWatch === Type) {
 			if (Data.from) {
@@ -3320,6 +3324,7 @@ function (window, undefined) {
 				} else {
 					ws.deleteCellWatch(range);
 				}
+				wb.handlers.trigger("changeCellWatches");
 			}
 		}
 	};
