@@ -11951,7 +11951,7 @@ QueryTableField.prototype.clone = function() {
 					});
 				}
 
-				if (this._name !== defName) {
+				if (this._name != defName) {
 					this._name = defName ? defName : null;
 					isChanged = true;
 				}
