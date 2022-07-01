@@ -400,9 +400,6 @@ CHistory.prototype.Clear = function()
 
 	window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
 	this.workbook.handlers.trigger("toggleAutoCorrectOptions", null, true);
-	if (!_isClear) {
-		this.workbook.handlers.trigger("updateCellWatches");
-	}
 	//this.workbook.handlers.trigger("cleanCutData");
 	this._sendCanUndoRedo();
 };
@@ -1153,6 +1150,7 @@ CHistory.prototype.EndTransaction = function()
 		this.Transaction = 0;
 	if (this.IsEndTransaction() && this.workbook) {
 		this.workbook.dependencyFormulas.unlockRecal();
+		this.workbook.handlers.trigger("updateCellWatches");
 	}
 };
 /** @returns {boolean} */
