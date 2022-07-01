@@ -4619,7 +4619,10 @@
 		if (this.changedCellWatchesSheets) {
 			this.handlers.trigger("asc_onUpdateCellWatches");
 		} else {
-			this.handlers.trigger("asc_onUpdateCellWatches", this.getChangedCellWatches());
+			var needUpdateMap = this.getChangedCellWatches();
+			if (needUpdateMap) {
+				this.handlers.trigger("asc_onUpdateCellWatches",needUpdateMap);
+			}
 		}
 
 		this.changedCellWatchesSheets = null;
