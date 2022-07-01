@@ -11931,18 +11931,14 @@ QueryTableField.prototype.clone = function() {
 		return this._formula;
 	};
 	CCellWatch.prototype.recalculate = function (ignoreNeedRecalc) {
+		var isChanged = false;
 		if (this.needRecalc || ignoreNeedRecalc) {
 			if (this._ws) {
 				var docInfo = window["Asc"]["editor"].DocInfo;
-				this._workbook = docInfo ? docInfo.get_Title() : "";
-				this._sheet = this._ws.sName;
 
 				var dN = new Asc.Range(this.r.c1, this.r.r1, this.r.c2, this.r.r2, true);
 				var defName = parserHelp.get3DRef(this._ws.getName(), dN.getAbsName());
 				defName = this._ws.workbook.findDefinesNames(defName, this._ws.getId(), true);
-				this._name = defName ? defName : null;
-
-				this._cell = this.r ? this.r.getName() : this.r;
 
 				var formula = "";
 				var value = "";
@@ -11955,12 +11951,34 @@ QueryTableField.prototype.clone = function() {
 					});
 				}
 
-				this._value = value;
-				this._formula = formula;
+				if (this._name !== defName) {
+					this._name = defName ? defName : null;
+					isChanged = true;
+				}
+
+				this._cell = this.r ? this.r.getName() : this.r;
+
+				if (!this._workbook) {
+					this._workbook = docInfo ? docInfo.get_Title() : "";
+					isChanged = true;
+				}
+				if (this._sheet !== this._ws.sName) {
+					this._sheet = this._ws.sName;
+					isChanged = true;
+				}
+				if (this._value !== value) {
+					this._value = value;
+					isChanged = true;
+				}
+				if (this._formula !== formula) {
+					this._formula = formula;
+					isChanged = true;
+				}
 
 				this.needRecalc = null;
 			}
 		}
+		return isChanged;
 	};
 	CCellWatch.prototype.initPostOpen = function (ws) {
 		this._ws = ws;

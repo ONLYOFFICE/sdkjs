@@ -388,17 +388,21 @@ CHistory.prototype.Is_Clear = function() {
 };
 CHistory.prototype.Clear = function()
 {
+	var _isClear = this.Is_Clear();
 	this.Index         = -1;
 	this.Points.length = 0;
 	this.TurnOffHistory = 0;
 	this.Transaction = 0;
 
 	this.SavedIndex = null;
-  this.ForceSave= false;
-  this.UserSavedIndex = null;
+	this.ForceSave= false;
+  	this.UserSavedIndex = null;
 
 	window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
 	this.workbook.handlers.trigger("toggleAutoCorrectOptions", null, true);
+	if (!_isClear) {
+		this.workbook.handlers.trigger("updateCellWatches");
+	}
 	//this.workbook.handlers.trigger("cleanCutData");
 	this._sendCanUndoRedo();
 };
@@ -661,7 +665,7 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 		if (oRedoObjectParam.oOnUpdateSheetViewSettings[this.workbook.getWorksheet(this.workbook.getActive()).getId()])
 			this.workbook.handlers.trigger("asc_onUpdateSheetViewSettings");
 
-		this.workbook.handlers.trigger("asc_onUpdateCellWatches");
+		this.workbook.handlers.trigger("updateCellWatches");
 
 		this._sendCanUndoRedo();
 		if (bUndo)

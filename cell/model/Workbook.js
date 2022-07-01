@@ -3889,9 +3889,9 @@
 
 			History.EndTransaction();
 
-			if (!this.bUndoChanges && !this.bRedoChanges) {
+			/*if (!this.bUndoChanges && !this.bRedoChanges) {
 				this.handlers.trigger("asc_onUpdateCellWatches");
-			}
+			}*/
 		}
 	};
 
@@ -3914,15 +3914,26 @@
 
 		History.EndTransaction();
 
-		if (!this.bUndoChanges && !this.bRedoChanges) {
+		/*if (!this.bUndoChanges && !this.bRedoChanges) {
 			this.handlers.trigger("asc_onUpdateCellWatches");
-		}
+		}*/
 	};
 
 	Workbook.prototype.recalculateCellWatches = function (fullRecalc) {
+		var count = 0;
+		var changedMap = null;
 		for(var i = 0; i < this.aWorksheets.length; ++i) {
-			this.aWorksheets[i].recalculateCellWatches(fullRecalc);
+			for (var j = 0; j < this.aWorksheets[i].aCellWatches.length; j++) {
+				if (this.aWorksheets[i].aCellWatches[j].recalculate(fullRecalc)) {
+					if (!changedMap) {
+						changedMap = {};
+					}
+					changedMap[count] = this.aWorksheets[i].aCellWatches[j];
+				}
+				count++;
+			}
 		}
+		return changedMap;
 	};
 
 //-------------------------------------------------------------------------------------------------
@@ -10943,6 +10954,8 @@
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_AddCellWatch, this.getId(),
 				null, new AscCommonExcel.UndoRedoData_FromTo(null, new AscCommonExcel.UndoRedoData_BBox(ref)));
 		}
+
+		this.workbook.handlers.trigger("changeCellWatches", this.getIndex());
 	};
 
 	Worksheet.prototype.deleteCellWatch = function (ref, addToHistory) {
@@ -10954,6 +10967,7 @@
 						this.getId(), null,
 						new AscCommonExcel.UndoRedoData_FromTo(new AscCommonExcel.UndoRedoData_BBox(ref), null));
 				}
+				this.workbook.handlers.trigger("changeCellWatches", this.getIndex());
 				break;
 			}
 		}
@@ -10968,12 +10982,7 @@
 			}
 		}
 		this.aCellWatches = [];
-	};
-
-	Worksheet.prototype.recalculateCellWatches = function (fullRecalc) {
-		for (var i = 0; i < this.aCellWatches.length; i++) {
-			this.aCellWatches[i].recalculate(fullRecalc);
-		}
+		this.workbook.handlers.trigger("changeCellWatches", this.getIndex());
 	};
 
 //-------------------------------------------------------------------------------------------------
