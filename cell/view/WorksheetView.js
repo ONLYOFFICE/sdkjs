@@ -11097,7 +11097,7 @@
 						if (firstNotEmptyCell) {
 							if (firstNotEmptyCell.nRow > activeRange.r2) {
 								//берём диапазон до ближайшей пустой
-								range = new Asc.Range(activeRange.c1,  activeRange.r1,  activeRange.c2,  firstNotEmptyCell.row);
+								range = new Asc.Range(activeRange.c1,  activeRange.r1,  activeRange.c2,  firstNotEmptyCell.nRow - 1);
 							}
 						} else {
 							//берём весь расширенный диапазон
@@ -11108,8 +11108,8 @@
 			} else {
 				//если все непустые, то идём до ближайшей строки, где есть хотя бы одна пустая
 				var firstEmptyCell = this.model.autoFilters._getFirstEmptyCellByRow(activeRange.r2, activeRange.c1, activeRange.c2);
-				if (firstEmptyCell) {
-					range = new Asc.Range(activeRange.c1,  activeRange.r1,  activeRange.c2,  firstEmptyCell.nRow);
+				if (firstEmptyCell && firstEmptyCell.nRow > activeRange.r1) {
+					range = new Asc.Range(activeRange.c1,  activeRange.r1,  activeRange.c2,  firstEmptyCell.nRow - 1);
 				}
 			}
 
