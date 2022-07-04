@@ -1759,30 +1759,6 @@ CSelectedElementsInfo.prototype.IsFixedFormShape = function()
 	return this.FixedFormShape;
 };
 
-
-function CDocumentSettings()
-{
-	this.MathSettings         = undefined !== CMathSettings ? new CMathSettings() : {};
-	this.CompatibilityMode    = AscCommon.document_compatibility_mode_Current;
-	this.SdtSettings          = new CSdtGlobalSettings();
-	this.SpecialFormsSettings = new CSpecialFormsGlobalSettings();
-	this.WriteProtection = undefined;
-	this.DocumentProtection = undefined;
-
-	this.ListSeparator  = undefined;
-	this.DecimalSymbol  = undefined;
-	this.GutterAtTop    = false;
-	this.MirrorMargins  = false;
-	this.TrackRevisions = false; // Флаг рецензирования, который записан в самом файле
-
-	// Compatibility
-	this.SplitPageBreakAndParaMark        = false;
-	this.DoNotExpandShiftReturn           = false;
-	this.BalanceSingleByteDoubleByteWidth = false;
-	this.UlTrailSpace                     = false;
-	this.UseFELayout                      = false;
-}
-
 /**
  * Основной класс для работы с документом в Word.
  * @param DrawingDocument
@@ -1833,7 +1809,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.TrackRevisions = null; // Локальный флаг рецензирования, который перекрывает флаг Settings.TrackRevisions, если сам не null
 	this.TrackRevisionsManager = new CTrackRevisionsManager(this);
 
-	this.Settings = new CDocumentSettings();
+	this.Settings = new AscWord.CDocumentSettings();
 
 	this.Content[0] = new Paragraph(DrawingDocument, this);
     this.Content[0].Set_DocumentNext(null);
@@ -16120,6 +16096,14 @@ CDocument.prototype.OnChangeSpecialFormsGlobalSettings = function()
 CDocument.prototype.IsSpecialFormsSettingsDefault = function()
 {
 	return this.Settings.SpecialFormsSettings.IsDefault();
+};
+CDocument.prototype.GetDocumentViewMode = function()
+{
+	return this.Settings.View;
+};
+CDocument.prototype.SetDocumentViewMode = function(nType)
+{
+	this.Settings.View = nType;
 };
 CDocument.prototype.private_SetCurrentSpecialForm = function(oForm)
 {

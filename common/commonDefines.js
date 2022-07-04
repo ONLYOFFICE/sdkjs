@@ -3388,6 +3388,15 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		Words           : 17
 	};
 
+	const DocumentView = {
+		MasterPages : 0,
+		None        : 1,
+		Normal      : 2,
+		Outline     : 3,
+		Print       : 4,
+		Web         : 5
+	};
+
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
 	window['Asc']                          = window['Asc'] || {};
@@ -4724,5 +4733,13 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['WavyDouble']      = prot.WavyDouble;
 	prot['WavyHeavy']       = prot.WavyHeavy;
 	prot['Words']           = prot.Words;
+
+	prot = window['Asc']['DocumentView'] = window['Asc'].DocumentView = DocumentView;
+	prot['MasterPages'] = prot.MasterPages;
+	prot['None']        = prot.None;
+	prot['Normal']      = prot.Normal;
+	prot['Outline']     = prot.Outline;
+	prot['Print']       = prot.Print;
+	prot['Web']         = prot.Web;
 
 })(window);
