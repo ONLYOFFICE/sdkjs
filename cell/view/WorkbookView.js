@@ -1567,12 +1567,6 @@
     ws.applyFillHandle(x, y, ctrlPress);
   };
 
-  // Обработка окончания автозаполнения по двойному клику
-  WorkbookView.prototype._onChangeFillDoubleClick = function() {
-    var ws = this.getWorksheet();
-    ws.applyFillHandleDoubleClick();
-  };
-
   // Обработка перемещения диапазона
   WorkbookView.prototype._onMoveRangeHandle = function(x, y, callback) {
     var ws = this.getWorksheet();
