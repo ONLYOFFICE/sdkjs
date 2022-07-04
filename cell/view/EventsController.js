@@ -1403,7 +1403,6 @@
 			}
 
 			// Режим автозаполнения
-
 			if (this.isFillHandleMode) {
 				// Закончили автозаполнение
 				this.isFillHandleMode = false;
