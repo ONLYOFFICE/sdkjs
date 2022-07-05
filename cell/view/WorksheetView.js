@@ -15973,6 +15973,18 @@
 
 		options.indexInArray = 0;
 		options.countFind = aReplaceCells.length;
+
+		//находим общее количество повторений, в тч внутри текста
+		if (options.isReplaceAll && !options.isSpellCheck) {
+			options.countFind = 0;
+
+			for (var i = 0; i < aReplaceCells.length; i++) {
+				var c = t._getVisibleCell(aReplaceCells[i].c1, aReplaceCells[i].r1);
+				var cellValue = c.getValueForEdit();
+				options.countFind += (cellValue.match(options.findRegExp)||[]).length
+			}
+		}
+
 		options.countReplace = 0;
 		if (options.isReplaceAll && false === this.collaborativeEditing.getCollaborativeEditing()) {
 			this._isLockedCells(aReplaceCells, /*subType*/null, function () {

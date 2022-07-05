@@ -3116,6 +3116,7 @@
 			this.SearchEngine.SetCurrent(this.SearchEngine.CurId);
 		}
 		this.SearchEngine.replaceEnd();
+		this.SearchEngine.Clear();
     }
 
     History.EndTransaction();
