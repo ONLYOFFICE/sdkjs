@@ -526,11 +526,11 @@ CDocumentPageSection.prototype.ForbidRecalculateBottomLine = function()
 {
 	this.RecalculateBottomLine = false;
 };
-CDocumentPageSection.prototype.Get_Y = function()
+CDocumentPageSection.prototype.GetY = function()
 {
     return this.Y;
 };
-CDocumentPageSection.prototype.Get_YLimit = function()
+CDocumentPageSection.prototype.GetYLimit = function()
 {
     if (0 === this.IterationsCount)
         return this.YLimit;
@@ -727,6 +727,18 @@ function CDocumentPage()
     this.FlowTables = [];
 }
 
+CDocumentPage.prototype.GetStartPos = function()
+{
+	return this.Pos;
+};
+CDocumentPage.prototype.GetEndPos = function()
+{
+	return this.EndPos;
+};
+CDocumentPage.prototype.GetSection = function(nIndex)
+{
+	return this.Sections[nIndex] ? this.Sections[nIndex] : null;
+};
 CDocumentPage.prototype.Update_Limits = function(Limits)
 {
 	this.X      = Limits.X;
@@ -1811,6 +1823,13 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 
 	this.Settings = new AscWord.CDocumentSettings();
 
+	this.Layouts = {
+		Print : new AscWord.CDocumentPrintView(this),
+		Read  : new AscWord.CDocumentReadView(this)
+	};
+
+	this.Layout = this.Layouts.Print;
+
 	this.Content[0] = new Paragraph(DrawingDocument, this);
     this.Content[0].Set_DocumentNext(null);
     this.Content[0].Set_DocumentPrev(null);
@@ -2319,92 +2338,20 @@ CDocument.prototype.Is_ThisElementCurrent          = function()
 {
     return true;
 };
-CDocument.prototype.Get_PageContentStartPos = function(PageIndex, ElementIndex)
- {
-	if (undefined === ElementIndex && undefined !== this.Pages[PageIndex])
-		ElementIndex = this.Pages[PageIndex].Pos;
-
-	var oSectPr = this.SectionsInfo.Get_SectPr(ElementIndex).SectPr;
-
-	var oFrame = oSectPr.GetContentFrame(PageIndex);
-
-	var Y      = oFrame.Top;
-	var YLimit = oFrame.Bottom;
-	var X      = oFrame.Left;
-	var XLimit = oFrame.Right;
-
-	var HdrFtrLine = this.HdrFtr.GetHdrFtrLines(PageIndex);
-
-	var YHeader = HdrFtrLine.Top;
-	if (null !== YHeader && YHeader > Y && oSectPr.GetPageMarginTop() >= 0)
-		Y = YHeader;
-
-	var YFooter = HdrFtrLine.Bottom;
-	if (null !== YFooter && YFooter < YLimit && oSectPr.GetPageMarginBottom() >= 0)
-		YLimit = YFooter;
-
-	return {
-		X      : X,
-		Y      : Y,
-		XLimit : XLimit,
-		YLimit : YLimit
-	};
+CDocument.prototype.Get_PageContentStartPos = function(nPageAbs, nContentIndex)
+{
+	let oSectPr = this.Layout.GetSection(nPageAbs, nContentIndex);
+	return this.Layout.GetPageContentFrame(nPageAbs, oSectPr);
 };
 CDocument.prototype.Get_PageContentStartPos2 = function(StartPageIndex, StartColumnIndex, ElementPageIndex, ElementIndex)
 {
-	if (undefined === ElementIndex && undefined !== this.Pages[StartPageIndex])
-		ElementIndex = this.Pages[StartPageIndex].Pos;
+	let oSectPr = this.Layout.GetSection(StartPageIndex, ElementIndex);
 
-	var oSectPr = this.SectionsInfo.Get_SectPr(ElementIndex).SectPr;
+	let ColumnsCount = oSectPr.GetColumnsCount();
+	let ColumnAbs    = (StartColumnIndex + ElementPageIndex) - ((StartColumnIndex + ElementPageIndex) / ColumnsCount | 0) * ColumnsCount;
+	let PageAbs      = StartPageIndex + ((StartColumnIndex + ElementPageIndex) / ColumnsCount | 0);
 
-	var ColumnsCount = oSectPr.GetColumnsCount();
-	var ColumnAbs    = (StartColumnIndex + ElementPageIndex) - ((StartColumnIndex + ElementPageIndex) / ColumnsCount | 0) * ColumnsCount;
-	var PageAbs      = StartPageIndex + ((StartColumnIndex + ElementPageIndex) / ColumnsCount | 0);
-
-	var oFrame = oSectPr.GetContentFrame(PageAbs);
-
-	var Y      = oFrame.Top;
-	var YLimit = oFrame.Bottom;
-	var X      = oFrame.Left;
-	var XLimit = oFrame.Right;
-
-	var SectionIndex = this.FullRecalc.SectionIndex;
-	if (this.Pages[PageAbs] && this.Pages[PageAbs].Sections[SectionIndex])
-	{
-		Y      = this.Pages[PageAbs].Sections[SectionIndex].Get_Y();
-		YLimit = this.Pages[PageAbs].Sections[SectionIndex].Get_YLimit();
-	}
-
-	var HdrFtrLine = this.HdrFtr.GetHdrFtrLines(PageAbs);
-
-	for (var ColumnIndex = 0; ColumnIndex < ColumnAbs; ++ColumnIndex)
-	{
-		X += oSectPr.GetColumnWidth(ColumnIndex);
-		X += oSectPr.GetColumnSpace(ColumnIndex);
-	}
-
-	if (ColumnsCount - 1 !== ColumnAbs)
-		XLimit = X + oSectPr.Get_ColumnWidth(ColumnAbs);
-
-	var YHeader = HdrFtrLine.Top;
-	if (null !== YHeader && YHeader > Y && oSectPr.GetPageMarginTop() >= 0)
-		Y = YHeader;
-
-	var YFooter = HdrFtrLine.Bottom;
-	if (null !== YFooter && YFooter < YLimit && oSectPr.GetPageMarginBottom() >= 0)
-		YLimit = YFooter;
-
-	var ColumnSpaceBefore = (ColumnAbs > 0 ? oSectPr.GetColumnSpace(ColumnAbs - 1) : 0);
-	var ColumnSpaceAfter  = (ColumnAbs < ColumnsCount - 1 ? oSectPr.GetColumnSpace(ColumnAbs) : 0);
-
-	return {
-		X                 : X,
-		Y                 : Y,
-		XLimit            : XLimit,
-		YLimit            : YLimit,
-		ColumnSpaceBefore : ColumnSpaceBefore,
-		ColumnSpaceAfter  : ColumnSpaceAfter
-	};
+	return this.Layout.GetColumnContentFrame(PageAbs, ColumnAbs, oSectPr);
 };
 CDocument.prototype.Get_PageLimits = function(nPageIndex)
 {
@@ -5378,20 +5325,20 @@ CDocument.prototype.Draw                                     = function(nPageInd
     var Page_StartPos = this.Pages[nPageIndex].Pos;
     var SectPr        = this.SectionsInfo.Get_SectPr(Page_StartPos).SectPr;
 
-    if (docpostype_HdrFtr !== this.CurPos.Type && !this.IsViewMode())
-        pGraphics.Start_GlobalAlpha();
+	if (docpostype_HdrFtr !== this.CurPos.Type && !this.IsViewMode())
+		pGraphics.Start_GlobalAlpha();
 
-    // Рисуем границы вокруг страницы (если границы надо рисовать под текстом)
-    if (section_borders_ZOrderBack === SectPr.Get_Borders_ZOrder())
-        this.DrawPageBorders(pGraphics, SectPr, nPageIndex);
+	// Рисуем границы вокруг страницы (если границы надо рисовать под текстом)
+	if (section_borders_ZOrderBack === SectPr.Get_Borders_ZOrder())
+		this.DrawPageBorders(pGraphics, SectPr, nPageIndex);
 
-    this.HdrFtr.Draw(nPageIndex, pGraphics);
+	this.HdrFtr.Draw(nPageIndex, pGraphics);
 
-    // Рисуем содержимое документа на данной странице
-    if (docpostype_HdrFtr === this.CurPos.Type)
-        pGraphics.put_GlobalAlpha(true, 0.4);
-    else if (!this.IsViewMode())
-        pGraphics.End_GlobalAlpha();
+	// Рисуем содержимое документа на данной странице
+	if (docpostype_HdrFtr === this.CurPos.Type)
+		pGraphics.put_GlobalAlpha(true, 0.4);
+	else if (!this.IsViewMode())
+		pGraphics.End_GlobalAlpha();
 
     this.DrawingObjects.drawBehindDoc(nPageIndex, pGraphics);
 
@@ -10271,6 +10218,13 @@ CDocument.prototype.OnKeyDown = function(e)
 
 			bRetValue = keydownresult_PreventAll;
 		}
+		// else if (121 === e.KeyCode)
+		// {
+		// 	if (this.Layout === this.Layouts.Print)
+		// 		this.SetDocumentReadMode(210, 297, 1);
+		// 	else
+		// 		this.SetDocumentPrintMode();
+		// }
 	}
 
     // Если был пересчет, значит были изменения, а вместе с ними пересылается и новая позиция курсора
@@ -13895,50 +13849,9 @@ CDocument.prototype.Get_SectionPageNumInfo2 = function(Page_abs)
 
 	return {FirstPage : _FP, CurPage : _CP, SectIndex : StartSectIndex};
 };
-CDocument.prototype.Get_SectionHdrFtr = function(Page_abs, _bFirst, _bEven)
+CDocument.prototype.Get_SectionHdrFtr = function(nPageAbs, isFirst, isEven)
 {
-	var StartIndex = this.Pages[Page_abs].Pos;
-	var SectIndex  = this.SectionsInfo.Get_Index(StartIndex);
-	var CurSectPr  = this.SectionsInfo.Get_SectPr2(SectIndex).SectPr;
-
-	var bEven  = ( true === _bEven && true === EvenAndOddHeaders ? true : false );
-	var bFirst = ( true === _bFirst && true === CurSectPr.TitlePage ? true : false );
-
-	var CurSectIndex = SectIndex;
-
-	// Ищем верхний и нижний колонтитулы. Если они не находятся в текущей секции, тогда ищем в предыдущей.
-	var Header = null, Footer = null;
-	while (CurSectIndex >= 0)
-	{
-		var SectPr = this.SectionsInfo.Get_SectPr2(CurSectIndex).SectPr;
-
-		if (null === Header)
-		{
-			if (true === bFirst)
-				Header = SectPr.Get_Header_First();
-			else if (true === bEven)
-				Header = SectPr.Get_Header_Even();
-			else
-				Header = SectPr.Get_Header_Default();
-		}
-
-		if (null === Footer)
-		{
-			if (true === bFirst)
-				Footer = SectPr.Get_Footer_First();
-			else if (true === bEven)
-				Footer = SectPr.Get_Footer_Even();
-			else
-				Footer = SectPr.Get_Footer_Default();
-		}
-
-		if (null !== Header && null !== Footer)
-			break;
-
-		CurSectIndex--;
-	}
-
-	return {Header : Header, Footer : Footer, SectPr : CurSectPr};
+	return this.Layout.GetSectionHdrFtr(nPageAbs, isFirst, isEven);
 };
 CDocument.prototype.Create_SectionHdrFtr = function(Type, PageIndex)
 {
@@ -14098,6 +14011,14 @@ CDocument.prototype.GetSectionIndexByElementIndex = function(ElementIndex)
 CDocument.prototype.GetSectionsCount = function()
 {
 	return this.SectionsInfo.GetSectionsCount();
+};
+CDocument.prototype.GetSectionsInfo = function()
+{
+	return this.SectionsInfo;
+};
+CDocument.prototype.GetLastSection = function()
+{
+	return this.SectPr;
 };
 /**
  * Определяем использовать ли заливку текста в особых случаях, когда вызывается заливка параграфа
@@ -16097,13 +16018,16 @@ CDocument.prototype.IsSpecialFormsSettingsDefault = function()
 {
 	return this.Settings.SpecialFormsSettings.IsDefault();
 };
-CDocument.prototype.GetDocumentViewMode = function()
+CDocument.prototype.SetDocumentReadMode = function(nW, nH, nScale)
 {
-	return this.Settings.View;
+	this.Layouts.Read.Set(nW, nH, nScale);
+	this.Layout = this.Layouts.Read;
+	this.RecalculateFromStart(true);
 };
-CDocument.prototype.SetDocumentViewMode = function(nType)
+CDocument.prototype.SetDocumentPrintMode = function()
 {
-	this.Settings.View = nType;
+	this.Layout = this.Layouts.Print;
+	this.RecalculateFromStart(true);
 };
 CDocument.prototype.private_SetCurrentSpecialForm = function(oForm)
 {
@@ -23085,6 +23009,10 @@ CDocument.prototype.AddTableOfFigures = function(oPr)
         }
     }
 };
+CDocument.prototype.GetPage = function(nPageAbs)
+{
+	return this.Pages[nPageAbs];
+};
 CDocument.prototype.GetPagesCount = function()
 {
 	return this.Pages.length;
@@ -29163,7 +29091,9 @@ window['AscCommon']      = window['AscCommon'] || {};
 window['AscCommonWord']  = window['AscCommonWord'] || {};
 window['AscCommonSlide'] = window['AscCommonSlide'] || {};
 window['AscCommonExcel'] = window['AscCommonExcel'] || {};
+window['AscWord'] = window['AscWord'] || {};
 
+window['AscWord'].CDocument = CDocument;
 window['AscCommonWord'].CDocument = CDocument;
 window['AscCommonWord'].docpostype_Content        = docpostype_Content;
 window['AscCommonWord'].docpostype_HdrFtr         = docpostype_HdrFtr;

@@ -422,6 +422,16 @@ CSectionPr.prototype =
     {
         return this.TitlePage;
     },
+
+	IsTitlePage : function()
+	{
+		return this.TitlePage;
+	},
+
+	IsEvenAndOdd : function()
+	{
+		return EvenAndOddHeaders;
+	},
     
     GetHdrFtr : function(bHeader, bFirst, bEven)
     {
@@ -1932,6 +1942,7 @@ CSectionLnNumType.prototype.GetRestart = function()
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CSectionPr = CSectionPr;
+window['AscWord'].CSectionPr = CSectionPr;
 
 window['Asc']['CSectionLnNumType'] = window['Asc'].CSectionLnNumType = CSectionLnNumType;
 CSectionLnNumType.prototype["get_CountBy"]  = CSectionLnNumType.prototype.GetCountBy;
