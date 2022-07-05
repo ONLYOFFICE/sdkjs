@@ -4490,7 +4490,7 @@
 		for (i = 0; i < this.aSparklineGroups.length; ++i) {
 			newSparkline = this.aSparklineGroups[i].clone();
 			newSparkline.setWorksheet(oNewWs, this);
-			oNewWs.aSparklineGroups.push(newSparkline);
+			oNewWs.addSparklineGroups(newSparkline);
 		}
 	};
 	Worksheet.prototype.initColumn = function (column) {
