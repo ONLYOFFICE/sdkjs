@@ -4888,14 +4888,14 @@
 		return needElem ? id : null;
 	};
 	CDocumentSearchExcel.prototype.findNearestElement = function () {
+		var t = this;
 		if (-1 !== this.CurId) {
 			return this.Direction ? this.CurId + 1 : this.CurId - 1;
 		} else {
-
-			var t = this;
 			var ws = this.wb.getActiveWS();
 			var selectionRange = this.props.selectionRange || ws.selectionRange;
 			var activeCell = selectionRange.activeCell;
+			var bReverse = !t.Direction;
 
 			//получаем массив из индексов
 			var i;
@@ -4907,121 +4907,82 @@
 			}
 
 			//чтобе не делать разные ветки для получения row/col
-			var getRowCol = function (obj, bReverse) {
+			var getRowCol = function (obj, changeColOnRow) {
 				if (!obj) {
 					return;
 				}
-				if (bReverse) {
+				if (changeColOnRow) {
 					return t.props.scanByRows ? obj.col : obj.row;
 				} else {
 					return t.props.scanByRows ? obj.row : obj.col;
 				}
 			};
 
-
-
-			//если не находим на данном листе, то берём первую найденную ячейку из следующего листа
 			var sheetArr = [];
+			var checkElem = function (indexElem) {
+				//нужный нам лист
+				if (ws.sName === t.Elements[indexElem].sheet) {
 
-			if (this.Direction) {
-				for (var j = 0; j < indexArr.length; j++) {
-					i = indexArr[j];
-					//нужный нам лист
-					if (ws.sName === this.Elements[i].sheet) {
+					var prevNextI = bReverse ? indexArr[indexElem - 1] : indexArr[indexElem + 1];
+					var prevNextElemRowCol = getRowCol(t.Elements[prevNextI]);
 
-						var nextI = indexArr[i + 1];
-
-						var elemRowCol = getRowCol(this.Elements[i]);
-						var activeCellRowCol = getRowCol(activeCell);
-						var nextElemRowCol = getRowCol(this.Elements[nextI]);
-						var elemColRow = getRowCol(this.Elements[i], true);
-						var activeCellColRow = getRowCol(activeCell, true);
-
-						if (elemRowCol === activeCellRowCol) {
-							//если это данная строка, нужно найти колонку с равным индексом или большим, если таких нет, то берём следующий элемент
-							if (elemColRow >= activeCellColRow) {
-								return elemColRow === activeCellColRow ? i + 1 : i;
-							} else if (this.Elements[nextI] && ws.sName === this.Elements[nextI].sheet && nextElemRowCol === activeCellRowCol) {
-								//если следующий элемент на том же листе и на той же строке, то продолжаем
-							} else if (this.Elements[nextI]) {
-								//если следующий элемент на другой строке/другом листе, берём его
-								return nextI;
-							} else {
-								//если это последний элемент в списке
-								//тогда берём первый
-								return indexArr[0];
-							}
-						} else if (elemRowCol > activeCellRowCol) {
-							//если это следующая строка - берём первый элемент
-							return i;
-						} else if (this.Elements[nextI] && ws.sName !== this.Elements[nextI].sheet) {
-							//если следующий элемент на другом листе - берём его
-							return nextI;
-						} else if (!this.Elements[nextI]){
-							return indexArr[0];
-						}
-					} else {
-						if (sheetArr[this.Elements[i].sheet] == null) {
-							sheetArr[this.Elements[i].sheet] = i;
-						}
-					}
-				}
-
-				for (i = this.wb.model.nActive; i < this.wb.model.aWorksheets.length + this.wb.model.nActive; ++i) {
-					var index = i >= this.wb.model.aWorksheets.length - 1 ? i - this.wb.model.nActive : i;
-					if (this.wb.model.aWorksheets[index] && null != sheetArr[this.wb.model.aWorksheets[index].sName]) {
-						return sheetArr[this.wb.model.aWorksheets[index].sName];
-					}
-				}
-			} else {
-				for (var j = indexArr.length - 1; j >= 0; j--) {
-					i = indexArr[j];
-
-					var prevI = indexArr[i - 1];
-
-					var elemRowCol = getRowCol(this.Elements[i]);
+					var elemRowCol = getRowCol(t.Elements[indexElem]);
 					var activeCellRowCol = getRowCol(activeCell);
-					var prevElemRowCol = getRowCol(this.Elements[prevI]);
-					var elemColRow = getRowCol(this.Elements[i], true);
+					var elemColRow = getRowCol(t.Elements[indexElem], true);
 					var activeCellColRow = getRowCol(activeCell, true);
 
-					//нужный нам лист
-					if (ws.sName === this.Elements[i].sheet) {
-						if (elemRowCol === activeCellRowCol) {
-							//если это данная строка, нужно найти колонку с равным индексом или большим, если таких нет, то берём следующий элемент
-							if (elemColRow <= activeCellColRow) {
-								return elemColRow === activeCellColRow ? i - 1 : i;
-							} else if (this.Elements[prevI] && ws.sName === this.Elements[prevI].sheet && prevElemRowCol === activeCellRowCol) {
-								//если следующий элемент на том же листе и на той же строке, то продолжаем
-							} else if (this.Elements[prevI]) {
-								//если следующий элемент на другой строке/другом листе, берём его
-								return prevI;
+					if (elemRowCol === activeCellRowCol) {
+						//если это данная строка, нужно найти колонку/строку с равным индексом или большим/меньшим, если таких нет, то берём следующий/предыдущий элемент
+						if ((bReverse && elemColRow <= activeCellColRow) || (!bReverse && elemColRow >= activeCellColRow)) {
+							if (bReverse) {
+								return elemColRow === activeCellColRow ? indexElem - 1 : indexElem;
 							} else {
-								//если это последний элемент в списке
-								//тогда берём первый
-								return indexArr[indexArr.length - 1];
+								return elemColRow === activeCellColRow ? indexElem + 1 : indexElem;
 							}
-						} else if (elemRowCol < activeCellRowCol) {
-							//если это следующая строка - берём первый элемент
-							return i;
-						} else if (this.Elements[prevI] && ws.sName !== this.Elements[prevI].sheet) {
-							//если следующий элемент на другом листе - берём его
-							return prevI;
-						} else if (!this.Elements[prevI]) {
-							return indexArr[indexArr.length - 1];
+						} else if (t.Elements[prevNextI] && ws.sName === t.Elements[prevNextI].sheet && prevNextElemRowCol === activeCellRowCol) {
+							//если следующий/предыдущий элемент на том же листе и на той же строке, то продолжаем
+						} else if (t.Elements[prevNextI]) {
+							//если следующий/предыдущий элемент на другой строке(столбце)/другом листе, берём его
+							return prevNextI;
+						} else {
+							//если это последний/первый элемент в списке
+							//тогда берём первый/последний
+							return bReverse ? indexArr[indexArr.length - 1] : indexArr[0];
 						}
-					} else {
-						if (sheetArr[this.Elements[i].sheet] == null) {
-							sheetArr[this.Elements[i].sheet] = i;
-						}
+					} else if ((bReverse && elemRowCol < activeCellRowCol) || (!bReverse && elemRowCol > activeCellRowCol)) {
+						//если это следующая/предыдущая строка/столбец - берём первый элемент
+						return indexElem;
+					} else if (t.Elements[prevNextI] && ws.sName !== t.Elements[prevNextI].sheet) {
+						//если следующий/предыдущий элемент на другом листе - берём его
+						return prevNextI;
+					} else if (!t.Elements[prevNextI]){
+						return bReverse ? indexArr[indexArr.length - 1] : indexArr[0];
+					}
+				} else {
+					if (sheetArr[t.Elements[indexElem].sheet] == null) {
+						sheetArr[t.Elements[indexElem].sheet] = indexElem;
 					}
 				}
 
-				for (i = this.wb.model.aWorksheets.length + this.wb.model.nActive - 1; i >= this.wb.model.nActive ; i--) {
-					var index = i >= this.wb.model.aWorksheets.length - 1 ? i - this.wb.model.nActive : i;
-					if (this.wb.model.aWorksheets[index] && null != sheetArr[this.wb.model.aWorksheets[index].sName]) {
-						return sheetArr[this.wb.model.aWorksheets[index].sName];
-					}
+				return null;
+			};
+
+			var res;
+			for (var j = bReverse ? indexArr.length - 1 : 0; bReverse ? j >= 0 : j < indexArr.length; bReverse ? j-- : j++) {
+				i = indexArr[j];
+				res = checkElem(i);
+				if (res !== null) {
+					return res;
+				}
+			}
+
+			var start = this.wb.model.nActive;
+			var end = this.wb.model.aWorksheets.length + start;
+			for (i = bReverse ? end - 1 : start; bReverse ?  i >= start : i < end; bReverse ? i-- : ++i) {
+				var index = i >= this.wb.model.aWorksheets.length - 1 ? i - this.wb.model.nActive : i;
+
+				if (this.wb.model.aWorksheets[index] && null != sheetArr[this.wb.model.aWorksheets[index].sName]) {
+					return sheetArr[this.wb.model.aWorksheets[index].sName];
 				}
 			}
 		}
