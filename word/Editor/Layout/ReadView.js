@@ -34,12 +34,6 @@
 
 (function(window)
 {
-	function CreateDefaultSection()
-	{
-		AscCommon.ExecuteNoHistory();
-
-	}
-
 	/**
 	 * Класс для работы с документом в режиме читалки
 	 * @param oLogicDocument
@@ -50,13 +44,18 @@
 	{
 		AscWord.CDocumentLayoutBase.call(this, oLogicDocument);
 
-		this.W      = 297;
-		this.H      = 210;
-		this.Scale  = 1;
-		this.SectPr = null;
+		this.W        = 297;
+		this.H        = 210;
+		this.Scale    = 1;
+		this.SectPr   = null;
+		this.SectInfo = null;
 
 		let oThis = this;
-		AscCommon.ExecuteNoHistory(function(){oThis.SectPr = new CSectionPr(oLogicDocument);}, oLogicDocument);
+		AscCommon.ExecuteNoHistory(function()
+		{
+			oThis.SectPr   = new CSectionPr(oLogicDocument);
+			oThis.SectInfo = new CDocumentSectionsInfoElement(oThis.SectPr, 0);
+		}, oLogicDocument);
 	}
 	CDocumentReadView.prototype = Object.create(AscWord.CDocumentLayoutBase.prototype);
 	CDocumentReadView.prototype.constructor = CDocumentReadView;
@@ -121,6 +120,14 @@
 	CDocumentReadView.prototype.GetSection = function(nPageAbs, nContentIndex)
 	{
 		return this.SectPr;
+	};
+	CDocumentReadView.prototype.GetSectionByPos = function(nContentIndex)
+	{
+		return this.SectPr;
+	};
+	CDocumentReadView.prototype.GetSectionInfo = function(nContentIndex)
+	{
+		return this.SectInfo;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].CDocumentReadView = CDocumentReadView;

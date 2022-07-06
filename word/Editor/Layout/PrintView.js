@@ -167,6 +167,14 @@
 
 		return this.SectionsInfo.Get_SectPr(nContentIndex).SectPr;
 	};
+	CDocumentPrintView.prototype.GetSectionByPos = function(nContentIndex)
+	{
+		return this.SectionsInfo.Get_SectPr(nContentIndex).SectPr;
+	};
+	CDocumentPrintView.prototype.GetSectionInfo = function(nContentIndex)
+	{
+		return this.SectionsInfo.Get_SectPr(nContentIndex);
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].CDocumentPrintView = CDocumentPrintView;
 

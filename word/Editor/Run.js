@@ -8690,6 +8690,17 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 	if (this.Paragraph.IsInFixedForm())
 		TextPr.Position = 0;
 
+	let oLogicDocument = this.Paragraph.GetLogicDocument();
+	let oLayout;
+	if (oLogicDocument
+		&& oLogicDocument.IsDocumentEditor()
+		&& (oLayout = oLogicDocument.GetDocumentLayout()))
+	{
+		let nFontCoef = oLayout.GetFontScale();
+		TextPr.FontSize   *= nFontCoef;
+		TextPr.FontSizeCS *= nFontCoef;
+	}
+
 	return TextPr;
 };
 

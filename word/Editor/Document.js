@@ -3565,7 +3565,7 @@ CDocument.prototype.Recalculate_Page = function()
             if (true === this.HdrFtr.Recalculate(PageIndex))
                 this.FullRecalc.MainStartPos = StartIndex;
 
-            var SectPr = this.SectionsInfo.Get_SectPr(StartIndex).SectPr;
+            var SectPr = this.Layout.GetSectionByPos(StartIndex);
 			var oFrame = SectPr.GetContentFrame(PageIndex);
 
             Page.Width          = SectPr.PageSize.W;
@@ -3622,8 +3622,8 @@ CDocument.prototype.Recalculate_Page = function()
                 this.FullRecalc.StartIndex        = this.Pages[PageIndex + 1].Pos;
                 this.FullRecalc.ResetStartElement = false;
 
-                var CurSectInfo  = this.SectionsInfo.Get_SectPr(this.Pages[PageIndex + 1].Pos);
-                var PrevSectInfo = this.SectionsInfo.Get_SectPr(this.Pages[PageIndex].EndPos);
+                var CurSectInfo  = this.Layout.GetSectionInfo(this.Pages[PageIndex + 1].Pos);
+                var PrevSectInfo = this.Layout.GetSectionInfo(this.Pages[PageIndex].EndPos);
 
                 if (PrevSectInfo !== CurSectInfo)
                     this.FullRecalc.ResetStartElement = true;
@@ -3744,9 +3744,8 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 
     this.Footnotes.ContinueElementsFromPreviousColumn(PageIndex, ColumnIndex, Y, YLimit);
 
-    var SectElement  = this.SectionsInfo.Get_SectPr(StartIndex);
-    var SectPr       = SectElement.SectPr;
-    var ColumnsCount = SectPr.Get_ColumnsCount();
+    var SectPr       = this.Layout.GetSectionByPos(StartIndex);
+    var ColumnsCount = SectPr.GetColumnsCount();
 
     var bReDraw             = true;
     var bContinue           = false;
@@ -3980,11 +3979,11 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
         }
         else if (RecalcResult & recalcresult_NextElement)
 		{
-			var CurSectInfo = this.SectionsInfo.Get_SectPr(Index);
+			var CurSectInfo = this.Layout.GetSectionInfo(Index);
 
 			if (Index < Count - 1)
 			{
-				var NextSectInfo = this.SectionsInfo.Get_SectPr(Index + 1);
+				var NextSectInfo = this.Layout.GetSectionInfo(Index + 1);
 				if (CurSectInfo !== NextSectInfo)
 				{
 					if (!isEndEndnoteRecalc)
@@ -10218,13 +10217,13 @@ CDocument.prototype.OnKeyDown = function(e)
 
 			bRetValue = keydownresult_PreventAll;
 		}
-		// else if (121 === e.KeyCode)
-		// {
-		// 	if (this.Layout === this.Layouts.Print)
-		// 		this.SetDocumentReadMode(210, 297, 1);
-		// 	else
-		// 		this.SetDocumentPrintMode();
-		// }
+		else if (121 === e.KeyCode)
+		{
+			if (this.Layout === this.Layouts.Print)
+				this.SetDocumentReadMode(210, 297, 1);
+			else
+				this.SetDocumentPrintMode();
+		}
 	}
 
     // Если был пересчет, значит были изменения, а вместе с ними пересылается и новая позиция курсора
@@ -14845,9 +14844,9 @@ CDocument.prototype.TurnOnHistory = function()
 	this.TableId.TurnOn();
 	this.History.TurnOn();
 };
-CDocument.prototype.Get_SectPr = function(Index)
+CDocument.prototype.Get_SectPr = function(nContentPos)
 {
-	return this.SectionsInfo.Get_SectPr(Index).SectPr;
+	return this.Layout.GetSectionByPos(nContentPos);
 };
 CDocument.prototype.Add_ToContent = function(Pos, Item, isCorrectContent)
 {
@@ -16018,15 +16017,31 @@ CDocument.prototype.IsSpecialFormsSettingsDefault = function()
 {
 	return this.Settings.SpecialFormsSettings.IsDefault();
 };
+CDocument.prototype.GetDocumentLayout = function()
+{
+	return this.Layout;
+};
 CDocument.prototype.SetDocumentReadMode = function(nW, nH, nScale)
 {
 	this.Layouts.Read.Set(nW, nH, nScale);
 	this.Layout = this.Layouts.Read;
+
+	this.CheckRunContent(function(oRun)
+	{
+		oRun.Recalc_CompiledPr(true);
+	});
+
 	this.RecalculateFromStart(true);
 };
 CDocument.prototype.SetDocumentPrintMode = function()
 {
 	this.Layout = this.Layouts.Print;
+
+	this.CheckRunContent(function(oRun)
+	{
+		oRun.Recalc_CompiledPr(true);
+	});
+
 	this.RecalculateFromStart(true);
 };
 CDocument.prototype.private_SetCurrentSpecialForm = function(oForm)
@@ -25228,7 +25243,7 @@ CDocument.prototype.SetLineNumbersProps = function(nApplyType, oProps)
  */
 CDocument.prototype.GetLineNumbersProps = function()
 {
-	var oSectPr = this.SectionsInfo.GetByContentPos(this.CurPos.ContentPos).SectPr;
+	var oSectPr = this.Layout.GetSectionByPos(this.CurPos.ContentPos);
 	return oSectPr.HaveLineNumbers() ? oSectPr.GetLineNumbers().Copy() : null;
 };
 /**

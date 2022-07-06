@@ -45,6 +45,7 @@
 	function CDocumentLayoutBase(oLogicDocument)
 	{
 		this.LogicDocument = oLogicDocument;
+		this.SectInfo      = new CDocumentSectionsInfoElement(oLogicDocument.GetLastSection(), 0);
 	}
 	CDocumentLayoutBase.prototype.IsPrintMode = function()
 	{
@@ -127,6 +128,14 @@
 	CDocumentLayoutBase.prototype.GetSection = function(nPageAbs, nContentIndex)
 	{
 		return this.LogicDocument.GetLastSection();
+	};
+	CDocumentLayoutBase.prototype.GetSectionByPos = function(nContentIndex)
+	{
+		return this.LogicDocument.GetLastSection();
+	};
+	CDocumentLayoutBase.prototype.GetSectionInfo = function(nContentIndex)
+	{
+		return this.SectInfo;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.CDocumentLayoutBase = CDocumentLayoutBase;
