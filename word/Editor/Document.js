@@ -3686,7 +3686,7 @@ CDocument.prototype.Recalculate_Page = function()
 
         var StartPos = this.Get_PageContentStartPos(PageIndex, StartIndex);
 
-		this.Footnotes.Reset(PageIndex, this.SectionsInfo.Get_SectPr(StartIndex).SectPr);
+		this.Footnotes.Reset(PageIndex, this.Layout.GetSectionByPos(StartIndex));
 
         this.Pages[PageIndex].ResetStartElement = this.FullRecalc.ResetStartElement;
         this.Pages[PageIndex].X                 = StartPos.X;
@@ -16026,10 +16026,15 @@ CDocument.prototype.SetDocumentReadMode = function(nW, nH, nScale)
 	this.Layouts.Read.Set(nW, nH, nScale);
 	this.Layout = this.Layouts.Read;
 
-	this.CheckRunContent(function(oRun)
+
+	function UpdateRun(oRun)
 	{
 		oRun.Recalc_CompiledPr(true);
-	});
+	}
+
+	this.CheckRunContent(UpdateRun);
+	this.Footnotes.CheckRunContent(UpdateRun);
+	this.Endnotes.CheckRunContent(UpdateRun);
 
 	this.RecalculateFromStart(true);
 };
@@ -16037,10 +16042,14 @@ CDocument.prototype.SetDocumentPrintMode = function()
 {
 	this.Layout = this.Layouts.Print;
 
-	this.CheckRunContent(function(oRun)
+	function UpdateRun(oRun)
 	{
 		oRun.Recalc_CompiledPr(true);
-	});
+	}
+
+	this.CheckRunContent(UpdateRun);
+	this.Footnotes.CheckRunContent(UpdateRun);
+	this.Endnotes.CheckRunContent(UpdateRun);
 
 	this.RecalculateFromStart(true);
 };
