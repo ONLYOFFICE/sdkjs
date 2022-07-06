@@ -129,6 +129,10 @@
 	{
 		return this.SectInfo;
 	};
+	CDocumentReadView.prototype.GetSectionIndex = function(oSectPr)
+	{
+		return 0;
+	};
 	CDocumentReadView.prototype.GetCalculateTimeLimit = function()
 	{
 		return 100;

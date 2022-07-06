@@ -175,6 +175,10 @@
 	{
 		return this.SectionsInfo.Get_SectPr(nContentIndex);
 	};
+	CDocumentPrintView.prototype.GetSectionIndex = function(oSectPr)
+	{
+		return this.SectionsInfo.Find(oSectPr);
+	};
 	CDocumentPrintView.prototype.GetCalculateTimeLimit = function()
 	{
 		return 10;

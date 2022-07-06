@@ -3576,7 +3576,7 @@ CDocument.prototype.Recalculate_Page = function()
             Page.Margins.Bottom = oFrame.Bottom;
 
             Page.Sections[0] = new CDocumentPageSection();
-            Page.Sections[0].Init(PageIndex, SectPr, this.SectionsInfo.Find(SectPr));
+            Page.Sections[0].Init(PageIndex, SectPr, this.Layout.GetSectionIndex(SectPr));
         }
 
         var Count = this.Content.length;
@@ -3771,7 +3771,7 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 		if (PageIndex <= 0)
 		{
 			// Такого не должно быть
-			nEndnoteSectionIndex = this.SectionsInfo.Find(SectPr);
+			nEndnoteSectionIndex = this.Layout.GetSectionIndex(SectPr);
 			oEndnoteSectPr       = SectPr;
 		}
 		else
@@ -3790,7 +3790,7 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 			PageColumn.EndPos = -1;
 
 			// Сноски закончились на данной странице
-			Y = this.Endnotes.GetPageBounds(PageIndex, ColumnIndex, this.SectionsInfo.Find(SectPr)).Bottom;
+			Y = this.Endnotes.GetPageBounds(PageIndex, ColumnIndex, this.Layout.GetSectionIndex(SectPr)).Bottom;
 			PageColumn.Bounds.Bottom = Y;
 			_bEndnotesContinue = false;
 
@@ -3994,7 +3994,7 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 
 						if (this.Endnotes.HaveEndnotes(CurSectInfo.SectPr, false))
 						{
-							var nSectionIndexAbs = this.SectionsInfo.Find(CurSectInfo.SectPr);
+							var nSectionIndexAbs = this.Layout.GetSectionIndex(CurSectInfo.SectPr);
 							this.Endnotes.FillSection(PageIndex, ColumnIndex, CurSectInfo.SectPr, nSectionIndexAbs, false);
 							var nEndnoteRecalcResult = this.Endnotes.Recalculate(X, Y, XLimit, YLimit - this.Footnotes.GetHeight(PageIndex, ColumnIndex), PageIndex, ColumnIndex, ColumnsCount, CurSectInfo.SectPr, nSectionIndexAbs, true);
 
@@ -4038,7 +4038,7 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 						}
 						else
 						{
-							this.Endnotes.ClearSection(this.SectionsInfo.Find(CurSectInfo.SectPr));
+							this.Endnotes.ClearSection(this.Layout.GetSectionIndex(CurSectInfo.SectPr));
 						}
 					}
 
@@ -4084,7 +4084,7 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 							_bResetStartElement = true;
 
 							var NewPageSection = new CDocumentPageSection();
-							NewPageSection.Init(PageIndex, NextSectInfo.SectPr, this.SectionsInfo.Find(NextSectInfo.SectPr));
+							NewPageSection.Init(PageIndex, NextSectInfo.SectPr, this.Layout.GetSectionIndex(NextSectInfo.SectPr));
 							NewPageSection.Pos           = Index;
 							NewPageSection.EndPos        = Index;
 							NewPageSection.Y             = SectionY + 0.001;
@@ -4111,7 +4111,7 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 			}
 			else if (this.Endnotes.HaveEndnotes(CurSectInfo.SectPr, true))
 			{
-				var nSectionIndexAbs = this.SectionsInfo.Find(CurSectInfo.SectPr);
+				var nSectionIndexAbs = this.Layout.GetSectionIndex(CurSectInfo.SectPr);
 				this.Endnotes.FillSection(PageIndex, ColumnIndex, CurSectInfo.SectPr, nSectionIndexAbs, true);
 				var nEndnoteRecalcResult = this.Endnotes.Recalculate(X, Y, XLimit, YLimit - this.Footnotes.GetHeight(PageIndex, ColumnIndex), PageIndex, ColumnIndex, ColumnsCount, CurSectInfo.SectPr, nSectionIndexAbs, true);
 				if (recalcresult2_End === nEndnoteRecalcResult)
@@ -4126,7 +4126,7 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 			}
 			else
 			{
-				this.Endnotes.ClearSection(this.SectionsInfo.Find(CurSectInfo.SectPr));
+				this.Endnotes.ClearSection(this.Layout.GetSectionIndex(CurSectInfo.SectPr));
 			}
 		}
         else if (RecalcResult & recalcresult_NextPage)

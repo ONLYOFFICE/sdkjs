@@ -138,6 +138,15 @@
 		return this.SectInfo;
 	};
 	/**
+	 * Получаем номер секции в общем списке секций
+	 * @param oSectPr {AscWord.CSectionPr}
+	 * @returns {number}
+	 */
+	CDocumentLayoutBase.prototype.GetSectionIndex = function(oSectPr)
+	{
+		return 0;
+	};
+	/**
 	 * Получаем время (в миллисекундах) доступное для однократного синхронного пересчета страниц
 	 * @returns {number}
 	 */
