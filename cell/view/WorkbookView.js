@@ -4829,9 +4829,7 @@
 	CDocumentSearchExcel.prototype.GetNextElement = function () {
 		var id;
 		if (-1 === this.CurId && this.changedSelection) {
-			console.time("start")
 			id = this.findNearestElement();
-			console.timeEnd("start")
 		} else {
 			id = this.Direction ? this.CurId + 1 : this.CurId - 1;
 		}
