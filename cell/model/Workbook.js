@@ -3246,8 +3246,9 @@
 					} else {
 						i = end - 1;
 						start = active + 1;
+						inc *= -1;
 					}
-					inc *= -1;
+
 					for (; i < end && i >= start; i += inc) {
 						ws = this.getWorksheet(i);
 						if (ws.getHidden()) {
