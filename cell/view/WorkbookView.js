@@ -1112,6 +1112,9 @@
     }
     this.handlers.trigger("asc_onSelectionChanged", this.oSelectionInfo);
     this.handlers.trigger("asc_onSelectionEnd");
+    //если меняется выделенный диапазон
+    this.SearchEngine && this.SearchEngine.ResetCurrent();
+
     this._onInputMessage();
     if (!isSaving) {
       this.Api.cleanSpelling();
@@ -4817,7 +4820,15 @@
 		}
 	};
 	CDocumentSearchExcel.prototype.GetNextElement = function () {
-		var id = this.Direction ? this.CurId + 1 : this.CurId - 1;
+		var id;
+		if (-1 === this.CurId) {
+			console.time("start")
+			id = this.findNearestElement();
+			console.timeEnd("start")
+		} else {
+			id = this.Direction ? this.CurId + 1 : this.CurId - 1;
+		}
+
 		var needElem = this.Elements[id];
 		if (!needElem && this.Count) {
 			//лиюо следующий, либо первый
@@ -4856,6 +4867,118 @@
 
 		}
 		return needElem ? id : null;
+	};
+	CDocumentSearchExcel.prototype.findNearestElement = function () {
+		if (-1 !== this.CurId) {
+			return this.Direction ? this.CurId + 1 : this.CurId - 1;
+		} else {
+
+
+			var ws = this.wb.getActiveWS();
+			var selectionRange = this.props.selectionRange || ws.selectionRange;
+			var activeCell = selectionRange.activeCell;
+
+			var i;
+			var indexArr = [];
+			for (i in this.Elements) {
+				if (this.Elements.hasOwnProperty(i)) {
+					indexArr.push(parseInt(i));
+				}
+			}
+
+			//если не находим на данном листе, то берём первую найденную ячейку из следующего листа
+			var sheetArr = [];
+			if (this.props.scanByRows) {
+				if (this.Direction) {
+					for (var j = 0; j < indexArr.length; j++) {
+						i = indexArr[j];
+						//нужный нам лист
+						if (ws.sName === this.Elements[i].sheet) {
+							var nextI = indexArr[i + 1];
+							if (this.Elements[i].row === activeCell.row) {
+								//если это данная строка, нужно найти колонку с равным индексом или большим, если таких нет, то берём следующий элемент
+								if (this.Elements[i].col >= activeCell.col) {
+									return this.Elements[i].col === activeCell.col ? i + 1 : i;
+								} else if (this.Elements[nextI] && ws.sName === this.Elements[nextI].sheet && this.Elements[nextI].row === activeCell.row) {
+									//если следующий элемент на том же листе и на той же строке, то продолжаем
+								} else if (this.Elements[nextI]) {
+									//если следующий элемент на другой строке/другом листе, берём его
+									return nextI;
+								} else {
+									//если это последний элемент в списке
+									//тогда берём первый
+									return indexArr[0];
+								}
+							} else if (this.Elements[i].row > activeCell.row) {
+								//если это следующая строка - берём первый элемент
+								return i;
+							} else if (this.Elements[nextI] && ws.sName !== this.Elements[nextI].sheet) {
+								//если следующий элемент на другом листе - берём его
+								return nextI;
+							} else if (!this.Elements[nextI]){
+								return indexArr[0];
+							}
+						} else {
+							if (sheetArr[this.Elements[i].sheet] == null) {
+								sheetArr[this.Elements[i].sheet] = i;
+							}
+						}
+					}
+
+					for (i = this.wb.model.nActive; i < this.wb.model.aWorksheets.length + this.wb.model.nActive; ++i) {
+						var index = i >= this.wb.model.aWorksheets.length - 1 ? i - this.wb.model.nActive : i;
+						if (this.wb.model.aWorksheets[index] && null != sheetArr[this.wb.model.aWorksheets[index].sName]) {
+							return sheetArr[this.wb.model.aWorksheets[index].sName];
+						}
+					}
+				} else {
+					for (var j = indexArr.length - 1; j >= 0; j--) {
+						i = indexArr[j];
+						//нужный нам лист
+						if (ws.sName === this.Elements[i].sheet) {
+							var prevI = indexArr[i - 1];
+							if (this.Elements[i].row === activeCell.row) {
+								//если это данная строка, нужно найти колонку с равным индексом или большим, если таких нет, то берём следующий элемент
+								if (this.Elements[i].col <= activeCell.col) {
+									return this.Elements[i].col === activeCell.col ? i - 1 : i;
+								} else if (this.Elements[prevI] && ws.sName === this.Elements[prevI].sheet && this.Elements[prevI].row === activeCell.row) {
+									//если следующий элемент на том же листе и на той же строке, то продолжаем
+								} else if (this.Elements[prevI]) {
+									//если следующий элемент на другой строке/другом листе, берём его
+									return prevI;
+								} else {
+									//если это последний элемент в списке
+									//тогда берём первый
+									return indexArr[indexArr.length - 1];
+								}
+							} else if (this.Elements[i].row < activeCell.row) {
+								//если это следующая строка - берём первый элемент
+								return i;
+							} else if (this.Elements[prevI] && ws.sName !== this.Elements[prevI].sheet) {
+								//если следующий элемент на другом листе - берём его
+								return prevI;
+							} else if (!this.Elements[prevI]) {
+								return indexArr[indexArr.length - 1];
+							}
+						} else {
+							if (sheetArr[this.Elements[i].sheet] == null) {
+								sheetArr[this.Elements[i].sheet] = i;
+							}
+						}
+					}
+
+					for (i = this.wb.model.aWorksheets.length + this.wb.model.nActive - 1; i >= this.wb.model.nActive ; i--) {
+						var index = i >= this.wb.model.aWorksheets.length - 1 ? i - this.wb.model.nActive : i;
+						if (this.wb.model.aWorksheets[index] && null != sheetArr[this.wb.model.aWorksheets[index].sName]) {
+							return sheetArr[this.wb.model.aWorksheets[index].sName];
+						}
+					}
+				}
+
+			} else {
+
+			}
+		}
 	};
 	CDocumentSearchExcel.prototype.removeFromSearchElems = function (col, row, ws) {
 		var key = ws.index + "-" + col + "-" + row;
