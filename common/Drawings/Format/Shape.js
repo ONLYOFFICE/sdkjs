@@ -3418,6 +3418,8 @@ CShape.prototype.recalculateLocalTransform = function(transform)
 {
     AscFormat.ExecuteNoHistory(function(){
         var bNotesShape = false;
+
+        let oParaDrawing = getParaDrawing(this);
         if (!isRealObject(this.group))
         {
             var bUserShape = false;
@@ -3546,113 +3548,95 @@ CShape.prototype.recalculateLocalTransform = function(transform)
                 this.rot = AscFormat.isRealNumber(xfrm.rot) ? xfrm.rot : 0;
                 this.flipH = xfrm.flipH === true;
                 this.flipV = xfrm.flipV === true;
-                if(this.extX < 0.01 && this.extY < 0.01)
+
+                if(oParaDrawing)
                 {
-                    if(this.parent && this.parent.Extent && AscFormat.isRealNumber(this.parent.Extent.W) && AscFormat.isRealNumber(this.parent.Extent.H))
+                    if(oParaDrawing.Extent && AscFormat.isRealNumber(oParaDrawing.Extent.W) && AscFormat.isRealNumber(oParaDrawing.Extent.H))
                     {
-                        // this.x = 0;
-                        // this.y = 0;
-                        this.extX = this.parent.Extent.W;
-                        this.extY = this.parent.Extent.H;
+                        let dScaleCoefficient = oParaDrawing.GetScaleCoefficient();
+                        this.extX = oParaDrawing.Extent.W * dScaleCoefficient;
+                        this.extY = oParaDrawing.Extent.H * dScaleCoefficient;
                     }
-                }
-                else
-                {
-                    var oParaDrawing = getParaDrawing(this);
-                    if(oParaDrawing)
+                    if(oParaDrawing.SizeRelH || oParaDrawing.SizeRelV)
                     {
-                        // this.x = 0;
-                        // this.y = 0;
+                        this.m_oSectPr = null;
+                        var oParentParagraph = oParaDrawing.Get_ParentParagraph();
+                        if(oParentParagraph)
+                        {
 
-                        if(oParaDrawing.Extent && AscFormat.isRealNumber(oParaDrawing.Extent.W) && AscFormat.isRealNumber(oParaDrawing.Extent.H))
-                        {
-                            // this.x = 0;
-                            // this.y = 0;
-                            this.extX = oParaDrawing.Extent.W;
-                            this.extY = oParaDrawing.Extent.H;
-                        }
-                        if(oParaDrawing.SizeRelH || oParaDrawing.SizeRelV)
-                        {
-                            this.m_oSectPr = null;
-                            var oParentParagraph = oParaDrawing.Get_ParentParagraph();
-                            if(oParentParagraph)
+                            var oSectPr = oParentParagraph.Get_SectPr();
+                            if(oSectPr)
                             {
-
-                                var oSectPr = oParentParagraph.Get_SectPr();
-                                if(oSectPr)
+                                if(oParaDrawing.SizeRelH && oParaDrawing.SizeRelH.Percent > 0)
                                 {
-                                    if(oParaDrawing.SizeRelH && oParaDrawing.SizeRelH.Percent > 0)
+                                    switch(oParaDrawing.SizeRelH.RelativeFrom)
                                     {
-                                        switch(oParaDrawing.SizeRelH.RelativeFrom)
+                                        case c_oAscSizeRelFromH.sizerelfromhMargin:
                                         {
-                                            case c_oAscSizeRelFromH.sizerelfromhMargin:
-                                            {
-                                                this.extX = oSectPr.GetContentFrameWidth();
-                                                break;
-                                            }
-                                            case c_oAscSizeRelFromH.sizerelfromhPage:
-                                            {
-                                                this.extX = oSectPr.GetPageWidth();
-                                                break;
-                                            }
-                                            case c_oAscSizeRelFromH.sizerelfromhLeftMargin:
-                                            {
-                                                this.extX = oSectPr.GetPageMarginLeft();
-                                                break;
-                                            }
+                                            this.extX = oSectPr.GetContentFrameWidth();
+                                            break;
+                                        }
+                                        case c_oAscSizeRelFromH.sizerelfromhPage:
+                                        {
+                                            this.extX = oSectPr.GetPageWidth();
+                                            break;
+                                        }
+                                        case c_oAscSizeRelFromH.sizerelfromhLeftMargin:
+                                        {
+                                            this.extX = oSectPr.GetPageMarginLeft();
+                                            break;
+                                        }
 
-                                            case c_oAscSizeRelFromH.sizerelfromhRightMargin:
-                                            {
-                                                this.extX = oSectPr.GetPageMarginRight();
-                                                break;
-                                            }
-                                            default:
-                                            {
-                                                this.extX = oSectPr.GetPageMarginLeft();
-                                                break;
-                                            }
-                                        }
-                                        this.extX *= oParaDrawing.SizeRelH.Percent;
-                                    }
-                                    if(oParaDrawing.SizeRelV && oParaDrawing.SizeRelV.Percent > 0)
-                                    {
-                                        switch(oParaDrawing.SizeRelV.RelativeFrom)
+                                        case c_oAscSizeRelFromH.sizerelfromhRightMargin:
                                         {
-                                            case c_oAscSizeRelFromV.sizerelfromvMargin:
-                                            {
-                                                this.extY = oSectPr.GetContentFrameHeight();
-                                                break;
-                                            }
-                                            case c_oAscSizeRelFromV.sizerelfromvPage:
-                                            {
-                                                this.extY = oSectPr.GetPageHeight();
-                                                break;
-                                            }
-                                            case c_oAscSizeRelFromV.sizerelfromvTopMargin:
-                                            {
-                                                this.extY = oSectPr.GetPageMarginTop();
-                                                break;
-                                            }
-                                            case c_oAscSizeRelFromV.sizerelfromvBottomMargin:
-                                            {
-                                                this.extY = oSectPr.GetPageMarginBottom();
-                                                break;
-                                            }
-                                            default:
-                                            {
-                                                this.extY = oSectPr.GetPageMarginTop();
-                                                break;
-                                            }
+                                            this.extX = oSectPr.GetPageMarginRight();
+                                            break;
                                         }
-                                        this.extY *= oParaDrawing.SizeRelV.Percent;
+                                        default:
+                                        {
+                                            this.extX = oSectPr.GetPageMarginLeft();
+                                            break;
+                                        }
                                     }
-                                    this.m_oSectPr = new CSectionPr();
-                                    this.m_oSectPr.Copy(oSectPr);
+                                    this.extX *= oParaDrawing.SizeRelH.Percent;
                                 }
+                                if(oParaDrawing.SizeRelV && oParaDrawing.SizeRelV.Percent > 0)
+                                {
+                                    switch(oParaDrawing.SizeRelV.RelativeFrom)
+                                    {
+                                        case c_oAscSizeRelFromV.sizerelfromvMargin:
+                                        {
+                                            this.extY = oSectPr.GetContentFrameHeight();
+                                            break;
+                                        }
+                                        case c_oAscSizeRelFromV.sizerelfromvPage:
+                                        {
+                                            this.extY = oSectPr.GetPageHeight();
+                                            break;
+                                        }
+                                        case c_oAscSizeRelFromV.sizerelfromvTopMargin:
+                                        {
+                                            this.extY = oSectPr.GetPageMarginTop();
+                                            break;
+                                        }
+                                        case c_oAscSizeRelFromV.sizerelfromvBottomMargin:
+                                        {
+                                            this.extY = oSectPr.GetPageMarginBottom();
+                                            break;
+                                        }
+                                        default:
+                                        {
+                                            this.extY = oSectPr.GetPageMarginTop();
+                                            break;
+                                        }
+                                    }
+                                    this.extY *= oParaDrawing.SizeRelV.Percent;
+                                }
+                                this.m_oSectPr = new CSectionPr();
+                                this.m_oSectPr.Copy(oSectPr);
                             }
                         }
                     }
-
                 }
             }
             else
@@ -3690,12 +3674,13 @@ CShape.prototype.recalculateLocalTransform = function(transform)
                 else
                 {
                     var extX, extY;
-                    if(this.parent && this.parent.Extent)
+                    if(oParaDrawing && oParaDrawing.Extent)
                     {
                         this.x = 0;
                         this.y = 0;
-                        extX = this.parent.Extent.W;
-                        extY = this.parent.Extent.H;
+                        let dScaleCoefficient = oParaDrawing.GetScaleCoefficient();
+                        extX = oParaDrawing.Extent.W * dScaleCoefficient;
+                        extY = oParaDrawing.Extent.H * dScaleCoefficient;
                     }
                     else
                     {
@@ -4085,7 +4070,6 @@ CShape.prototype.recalculateLocalTransform = function(transform)
                 global_MatrixTransformer.MultiplyAppend(transform, this.parent.parent.localTransform);
             }
         }
-        var oParaDrawing = getParaDrawing(this);
         if(oParaDrawing) {
             this.m_oSectPr = null;
             var oParentParagraph = oParaDrawing.Get_ParentParagraph();

@@ -8897,6 +8897,11 @@ Because of this, the display is sometimes not correct.
     };
 
     Drawing.prototype.getResultScaleCoefficients = function() {
+      let oParaDrawing = AscFormat.getParaDrawing(this);
+      if(oParaDrawing) {
+        let dScaleCoefficient = oParaDrawing.GetScaleCoefficient();
+        return {cx: dScaleCoefficient, cy: dScaleCoefficient};
+      }
       return {cx: 1, cy: 1};
     };
 

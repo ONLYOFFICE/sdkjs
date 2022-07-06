@@ -591,88 +591,6 @@ function CGroupShape()
             {
 
                 var dExtX = this.spPr.xfrm.extX, dExtY = this.spPr.xfrm.extY;
-                var oParaDrawing = AscFormat.getParaDrawing(this);
-                if(false && oParaDrawing)
-                {
-                    if(oParaDrawing.SizeRelH || oParaDrawing.SizeRelV)
-                    {
-                        this.m_oSectPr = null;
-                        var oParentParagraph = oParaDrawing.Get_ParentParagraph();
-                        if(oParentParagraph)
-                        {
-
-                            var oSectPr = oParentParagraph.Get_SectPr();
-                            if(oSectPr)
-                            {
-                                if(oParaDrawing.SizeRelH && oParaDrawing.SizeRelH.Percent > 0)
-                                {
-                                    switch(oParaDrawing.SizeRelH.RelativeFrom)
-                                    {
-                                        case c_oAscSizeRelFromH.sizerelfromhMargin:
-                                        {
-                                            dExtX = oSectPr.GetContentFrameWidth();
-                                            break;
-                                        }
-                                        case c_oAscSizeRelFromH.sizerelfromhPage:
-                                        {
-                                            dExtX = oSectPr.GetPageWidth();
-                                            break;
-                                        }
-                                        case c_oAscSizeRelFromH.sizerelfromhLeftMargin:
-                                        {
-                                            dExtX = oSectPr.GetPageMarginLeft();
-                                            break;
-                                        }
-
-                                        case c_oAscSizeRelFromH.sizerelfromhRightMargin:
-                                        {
-                                            dExtX = oSectPr.GetPageMarginRight();
-                                            break;
-                                        }
-                                        default:
-                                        {
-                                            dExtX = oSectPr.GetPageMarginLeft();
-                                            break;
-                                        }
-                                    }
-                                    dExtX *= oParaDrawing.SizeRelH.Percent;
-                                }
-                                if(oParaDrawing.SizeRelV && oParaDrawing.SizeRelV.Percent > 0)
-                                {
-                                    switch(oParaDrawing.SizeRelV.RelativeFrom)
-                                    {
-                                        case c_oAscSizeRelFromV.sizerelfromvMargin:
-                                        {
-                                            dExtY = oSectPr.GetContentFrameHeight();
-                                            break;
-                                        }
-                                        case c_oAscSizeRelFromV.sizerelfromvPage:
-                                        {
-                                            dExtY = oSectPr.GetPageHeight();
-                                            break;
-                                        }
-                                        case c_oAscSizeRelFromV.sizerelfromvTopMargin:
-                                        {
-                                            dExtY = oSectPr.GetPageMarginTop();
-                                            break;
-                                        }
-                                        case c_oAscSizeRelFromV.sizerelfromvBottomMargin:
-                                        {
-                                            dExtY = oSectPr.GetPageMarginBottom();
-                                            break;
-                                        }
-                                        default:
-                                        {
-                                            dExtY = oSectPr.GetPageMarginTop();
-                                            break;
-                                        }
-                                    }
-                                    dExtY *= oParaDrawing.SizeRelV.Percent;
-                                }
-                            }
-                        }
-                    }
-                }
 
 
                 if(this.drawingBase && !this.group)
@@ -722,6 +640,15 @@ function CGroupShape()
                 cx *= group_scale_coefficients.cx;
                 cy *= group_scale_coefficients.cy;
             }
+            else {
+                let oParaDrawing = AscFormat.getParaDrawing(this);
+                if(oParaDrawing) {
+                    let dScaleCoefficient = oParaDrawing.GetScaleCoefficient();
+                    cx *= dScaleCoefficient;
+                    cy *= dScaleCoefficient;
+                }
+            }
+
             this.scaleCoefficients.cx = cx;
             this.scaleCoefficients.cy = cy;
             this.recalcInfo.recalculateScaleCoefficients = false;

@@ -1271,6 +1271,10 @@ ParaDrawing.prototype.Measure = function()
 		}
 	}
 };
+ParaDrawing.prototype.GetScaleCoefficient = function ()
+{
+	return 1;
+};
 ParaDrawing.prototype.IsNeedSaveRecalculateObject = function()
 {
 	return true;
