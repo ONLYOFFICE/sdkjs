@@ -137,6 +137,22 @@
 	{
 		return 100;
 	};
+	CDocumentReadView.prototype.GetScaleBySection = function(oSectPr)
+	{
+		let nW = oSectPr.GetPageWidth();
+		let nH = oSectPr.GetPageHeight();
+
+		let nCoef = 1;
+		if (this.W < nW)
+			nCoef = this.W / nW;
+
+		if (this.H < nH)
+			nCoef = Math.min(this.H / nH, nKoef);
+
+		console.log(nCoef);
+
+		return nCoef;
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].CDocumentReadView = CDocumentReadView;
 

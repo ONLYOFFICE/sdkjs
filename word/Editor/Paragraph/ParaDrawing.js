@@ -1273,6 +1273,15 @@ ParaDrawing.prototype.Measure = function()
 };
 ParaDrawing.prototype.GetScaleCoefficient = function ()
 {
+	let oParagraph = this.GetParagraph();
+	let oLogicDocument, oSectPr;
+
+	if (oParagraph
+		&& (oLogicDocument = oParagraph.GetLogicDocument())
+		&& oLogicDocument.IsDocumentEditor()
+		&& (oSectPr = oParagraph.Get_SectPr()))
+		return oLogicDocument.GetDocumentLayout().GetScaleBySection(oSectPr);
+
 	return 1;
 };
 ParaDrawing.prototype.IsNeedSaveRecalculateObject = function()

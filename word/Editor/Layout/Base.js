@@ -154,6 +154,15 @@
 	{
 		return 10;
 	};
+	/**
+	 * Получаем коэффициент изменения заданной секции
+	 * @param oSectPr
+	 * @returns {number}
+	 */
+	CDocumentLayoutBase.prototype.GetScaleBySection = function(oSectPr)
+	{
+		return 1;
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.CDocumentLayoutBase = CDocumentLayoutBase;
 	AscWord.DEFAULT_PAGE_HEIGHT = DEFAULT_PAGE_HEIGHT;

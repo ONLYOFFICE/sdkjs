@@ -10218,7 +10218,7 @@ CDocument.prototype.OnKeyDown = function(e)
 		else if (121 === e.KeyCode)
 		{
 			if (this.Layout === this.Layouts.Print)
-				this.SetDocumentReadMode(210, 297, 1);
+				this.SetDocumentReadMode(150, 197, 1);
 			else
 				this.SetDocumentPrintMode();
 		}
