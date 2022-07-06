@@ -147,9 +147,7 @@
 			nCoef = this.W / nW;
 
 		if (this.H < nH)
-			nCoef = Math.min(this.H / nH, nKoef);
-
-		console.log(nCoef);
+			nCoef = Math.min(this.H / nH, nCoef);
 
 		return nCoef;
 	};

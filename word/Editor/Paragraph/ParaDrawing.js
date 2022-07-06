@@ -1274,13 +1274,19 @@ ParaDrawing.prototype.Measure = function()
 ParaDrawing.prototype.GetScaleCoefficient = function ()
 {
 	let oParagraph = this.GetParagraph();
-	let oLogicDocument, oSectPr;
+	let oLogicDocument;
 
 	if (oParagraph
 		&& (oLogicDocument = oParagraph.GetLogicDocument())
-		&& oLogicDocument.IsDocumentEditor()
-		&& (oSectPr = oParagraph.Get_SectPr()))
+		&& oLogicDocument.IsDocumentEditor())
+	{
+		let oLayout = oLogicDocument.Layout;
+		oLogicDocument.Layout = oLogicDocument.Layouts.Print;
+		let oSectPr = oParagraph.Get_SectPr();
+		oLogicDocument.Layout = oLayout;
+
 		return oLogicDocument.GetDocumentLayout().GetScaleBySection(oSectPr);
+	}
 
 	return 1;
 };
@@ -1554,7 +1560,10 @@ ParaDrawing.prototype.deselect = function()
 
 ParaDrawing.prototype.updatePosition3 = function(pageIndex, x, y, oldPageNum)
 {
-	var _x = x, _y = y;
+	let oPosition = this.ApplyScaleCoeffToPosition(x, y);
+
+	let _x = oPosition.X;
+	let _y = oPosition.Y;
 
 	this.graphicObjects.removeById(pageIndex, this.Get_Id());
 	if (AscFormat.isRealNumber(oldPageNum))
@@ -1589,6 +1598,29 @@ ParaDrawing.prototype.updatePosition3 = function(pageIndex, x, y, oldPageNum)
 		this.wrappingPolygon.updatePosition(_x, _y);
 
 	this.calculateSnapArrays();
+};
+ParaDrawing.prototype.ApplyScaleCoeffToPosition = function(nX, nY)
+{
+	let nScale = this.GetScaleCoefficient();
+	if (Math.abs(nScale - 1) < 0.001)
+		return {X : nX, Y : nY};
+
+	if (!this.PositionV.Align
+		&& (Asc.c_oAscRelativeFromV.Margin === this.PositionV.RelativeFrom
+			|| Asc.c_oAscRelativeFromV.Page === this.PositionV.RelativeFrom))
+	{
+		nY *= nScale;
+	}
+
+	if (!this.PositionH.Align
+		&& (Asc.c_oAscRelativeFromH.Column === this.PositionH.RelativeFrom
+			|| Asc.c_oAscRelativeFromH.Margin === this.PositionH.RelativeFrom
+			|| Asc.c_oAscRelativeFromH.Page === this.PositionH.RelativeFrom))
+	{
+		nX *= nScale;
+	}
+
+	return {X : nX, Y : nY};
 };
 ParaDrawing.prototype.calculateAfterChangeTheme = function()
 {
