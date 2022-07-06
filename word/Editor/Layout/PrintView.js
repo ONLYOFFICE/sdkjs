@@ -175,6 +175,10 @@
 	{
 		return this.SectionsInfo.Get_SectPr(nContentIndex);
 	};
+	CDocumentPrintView.prototype.GetCalculateTimeLimit = function()
+	{
+		return 10;
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].CDocumentPrintView = CDocumentPrintView;
 

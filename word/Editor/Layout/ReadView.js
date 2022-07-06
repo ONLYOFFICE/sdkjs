@@ -129,6 +129,10 @@
 	{
 		return this.SectInfo;
 	};
+	CDocumentReadView.prototype.GetCalculateTimeLimit = function()
+	{
+		return 100;
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].CDocumentReadView = CDocumentReadView;
 

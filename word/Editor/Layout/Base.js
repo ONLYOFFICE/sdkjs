@@ -137,6 +137,14 @@
 	{
 		return this.SectInfo;
 	};
+	/**
+	 * Получаем время (в миллисекундах) доступное для однократного синхронного пересчета страниц
+	 * @returns {number}
+	 */
+	CDocumentLayoutBase.prototype.GetCalculateTimeLimit = function()
+	{
+		return 10;
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.CDocumentLayoutBase = CDocumentLayoutBase;
 	AscWord.DEFAULT_PAGE_HEIGHT = DEFAULT_PAGE_HEIGHT;

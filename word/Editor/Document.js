@@ -4449,11 +4449,9 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
 };
 CDocument.prototype.private_IsStartTimeoutOnRecalc = function(nPageAbs)
 {
-	// // // Старый вариант
-	// return (nPageAbs > this.FullRecalc.StartPage + this.FullRecalc.StartPagesCount);
-
+	let nTime = this.Layout.GetCalculateTimeLimit();
 	return ((nPageAbs > this.FullRecalc.StartPage + this.FullRecalc.StartPagesCount
-		&& (performance.now() - this.FullRecalc.TimerStartTime > 10
+		&& (performance.now() - this.FullRecalc.TimerStartTime > nTime
 			|| nPageAbs > this.FullRecalc.TimerStartPage + 50)));
 
 	// if (nRes)
@@ -4461,7 +4459,7 @@ CDocument.prototype.private_IsStartTimeoutOnRecalc = function(nPageAbs)
 	// 	console.log("Page        " + nPageAbs);
 	// 	console.log("Pages Delta " + (nPageAbs - this.FullRecalc.TimerStartPage));
 	// }
-	//return nRes;
+	// return nRes;
 };
 CDocument.prototype.private_RecalculateIsNewSection = function(nPageAbs, nContentIndex)
 {
