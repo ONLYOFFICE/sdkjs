@@ -8665,9 +8665,12 @@
 		this.lastFindOptions.findRange = findRange.getBBox0().clone();
 		this.lastFindOptions.findResults = result;
 
-		if (!options.isReplaceAll && this.workbook.oApi.selectSearchingResults && (oldResults || result.isNotEmpty() || (searchEngine && searchEngine.isNotEmpty())) &&
+		if (!options.isReplaceAll && this.workbook.oApi.selectSearchingResults && (oldResults || result.isNotEmpty() || (searchEngine && (searchEngine._lastNotEmpty || searchEngine.isNotEmpty()))) &&
 			this === this.workbook.getActiveWs()) {
 			this.workbook.handlers.trigger("drawWS");
+			if (searchEngine) {
+				searchEngine._lastNotEmpty = null;
+			}
 		}
 	};
 	Worksheet.prototype.findCellText = function (options, searchEngine) {
