@@ -4833,7 +4833,7 @@
 	};
 	CDocumentSearchExcel.prototype.GetNextElement = function () {
 		var id;
-		if (-1 === this.CurId && this.changedSelection) {
+		if (-1 === this.CurId) {
 			id = this.findNearestElement();
 		} else {
 			id = this.Direction ? this.CurId + 1 : this.CurId - 1;
@@ -4937,7 +4937,7 @@
 					if (elemRowCol === activeCellRowCol) {
 						//если это данная строка, нужно найти колонку/строку с равным индексом или большим/меньшим, если таких нет, то берём следующий/предыдущий элемент
 						if ((bReverse && elemColRow <= activeCellColRow) || (!bReverse && elemColRow >= activeCellColRow)) {
-							return elemColRow === activeCellColRow ? prevNextI : indexElem;
+							return elemColRow === activeCellColRow && t.changedSelection ? prevNextI : indexElem;
 						} else if (t.Elements[prevNextI] && ws.sName === t.Elements[prevNextI].sheet && prevNextElemRowCol === activeCellRowCol) {
 							//если следующий/предыдущий элемент на том же листе и на той же строке, то продолжаем
 						} else if (t.Elements[prevNextI]) {
