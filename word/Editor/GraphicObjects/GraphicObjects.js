@@ -584,32 +584,51 @@ CGraphicObjects.prototype =
     {
         if(data.All)
         {
-            for(var i = 0; i < this.drawingObjects.length; ++i)
+            for(let nDrawing = 0; nDrawing < this.drawingObjects.length; ++nDrawing)
             {
-                if(this.drawingObjects[i].GraphicObj)
+                let oParaDrawing = this.drawingObjects[nDrawing];
+                if(oParaDrawing)
                 {
-                    if(this.drawingObjects[i].GraphicObj.recalcText)
+                    let oSp = oParaDrawing.GraphicObj;
+                    if(oSp)
                     {
-                        this.drawingObjects[i].GraphicObj.recalcText(true);
+                        if(oSp.recalcText)
+                        {
+                            oSp.recalcText();
+                        }
+                        if(oSp.handleUpdateExtents)
+                        {
+                            oSp.handleUpdateExtents();
+                        }
+                        oSp.recalculate();
                     }
-                    this.drawingObjects[i].GraphicObj.recalculate();
                 }
             }
-            for(var i = 0; i < this.drawingObjects.length; ++i)
+            for(let nDrawing = 0; nDrawing < this.drawingObjects.length; ++nDrawing)
             {
-                if(this.drawingObjects[i].GraphicObj && this.drawingObjects[i].GraphicObj.recalculateText)
+                let oParaDrawing = this.drawingObjects[nDrawing];
+                if(oParaDrawing)
                 {
-                    this.drawingObjects[i].GraphicObj.recalculateText();
+                    let oSp = oParaDrawing.GraphicObj;
+                    if(oSp)
+                    {
+                        if(oSp.recalculateText)
+                        {
+                            oSp.recalculateText();
+                        }
+                    }
                 }
             }
         }
         else
         {
-            var map = data.Map;
-            for(var key in map)
+            let oDrawingsMap = data.Map;
+            for(let sId in oDrawingsMap)
             {
-                if(map.hasOwnProperty(key))
-                    map[key].recalculate();
+                if(oDrawingsMap.hasOwnProperty(sId))
+                {
+                    oDrawingsMap[sId].recalculate();
+                }
             }
         }
     },
@@ -622,18 +641,23 @@ CGraphicObjects.prototype =
         }
         else
         {
-            var map = data.Map;
-            for(var key in map)
+            let oDrawingsMap = data.Map;
+            for(let sId in oDrawingsMap)
             {
-                if(map.hasOwnProperty(key) && map[key].recalculateText)
-                    map[key].recalculateText();
+                if(oDrawingsMap.hasOwnProperty(sId))
+                {
+                    let oDrawing = oDrawingsMap[sId];
+                    if(oDrawing.recalculateText)
+                    {
+                        oDrawing.recalculateText();
+                    }
+                }
             }
         }
     },
 
     recalculate: function()
     {
-        var b_update = false;
         for(var key in this.recalculateMap)
         {
             if(this.recalculateMap.hasOwnProperty(key))
