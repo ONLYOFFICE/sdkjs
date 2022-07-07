@@ -10215,13 +10215,6 @@ CDocument.prototype.OnKeyDown = function(e)
 
 			bRetValue = keydownresult_PreventAll;
 		}
-		else if (121 === e.KeyCode)
-		{
-			if (this.Layout === this.Layouts.Print)
-				this.SetDocumentReadMode(150, 197, 1);
-			else
-				this.SetDocumentPrintMode();
-		}
 	}
 
     // Если был пересчет, значит были изменения, а вместе с ними пересылается и новая позиция курсора
