@@ -4626,6 +4626,18 @@
 		}*/
 
 		if (externalReferences && externalReferences.length) {
+
+			//ответ от портала -массив таких объектов
+			// setReferenceData({
+			// 	//Id идентификатор источника (?)
+			// 	url: string, // ссылка на файл,
+			// 	key: string, // идентификатор файла для получения данных из совместки
+			// 	referenceData: object, // положить в ooxml
+			// 	link: string, // для редактора формул  path: string, // имя или путь(?) файла для редактора формул
+			// 	error: string, // для отображения ошибки
+			// })
+
+
 			//получаем ссылку на файл через asc_onUpdateExternalReference
 			t._getExternalReferenceData(externalReferences, function (data) {
 				//создаём запросы

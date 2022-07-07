@@ -12042,11 +12042,37 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 
+	//TODO внешние источники данных, как в файле из бага https://bugzilla.onlyoffice.com/show_bug.cgi?id=38646
+
 	ExternalReference.prototype.getAscLink = function () {
+
+		// вот так, если это из файла прилетело, в т.ч. из буфера
+		// onRequestReferenceData({data:{referenceData:config.document.referenceData}})
+		//
+		//
+		// вот так, если это будет ссылка на редактор файла в тестовом как в onedrive
+		// onRequestReferenceData({data:{link:"http://192.168.1.1/editor?fileName=new.docx"}})
+		//
+		// вот так, если б это было просто путь к файлу как в MS:
+		// 	onRequestReferenceData({data:{path: "new.docx"}})
+
+
 		var res = new asc_CExternalReference();
-		res.type = Asc.c_oAscExternalReferenceType.path;
-		res.data = this.Id;
+		var p = /^(?:http:\/\/|https:\/\/)/;
+
+		if (this.referenceData) {
+			res.type = Asc.c_oAscExternalReferenceType.referenceData;
+			res.data = this.referenceData;
+		} else if (this.Id.match(p)) {
+			res.type = Asc.c_oAscExternalReferenceType.link;
+			res.data = this.Id;
+		} else {
+			res.type = Asc.c_oAscExternalReferenceType.path;
+			res.data = this.Id;
+		}
+
 		res.externalReference = this;
+
 		return res;
 	};
 
