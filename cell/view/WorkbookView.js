@@ -3119,7 +3119,9 @@
 			this.SearchEngine.SetCurrent(this.SearchEngine.CurId);
 		}
 		this.SearchEngine.replaceEnd();
-		this.SearchEngine.Clear();
+		if (options.isReplaceAll) {
+			this.SearchEngine.Clear();
+		}
     }
 
     History.EndTransaction();
@@ -4656,7 +4658,7 @@
 
 			this.SearchEngine.Clear(index);
 
-			if (isPrevSearch) {
+			if (isPrevSearch && !this.SearchEngine.isReplacingText) {
 				this.Api.sync_SearchEndCallback();
 			}
 		}
@@ -4917,11 +4919,11 @@
 			};
 
 			var sheetArr = [];
-			var checkElem = function (indexElem) {
+			var checkElem = function (indexElem, index) {
 				//нужный нам лист
 				if (ws.sName === t.Elements[indexElem].sheet) {
 
-					var prevNextI = bReverse ? indexArr[indexElem - 1] : indexArr[indexElem + 1];
+					var prevNextI = bReverse ? indexArr[index - 1] : indexArr[index + 1];
 					var prevNextElemRowCol = getRowCol(t.Elements[prevNextI]);
 
 					var elemRowCol = getRowCol(t.Elements[indexElem]);
@@ -4932,11 +4934,7 @@
 					if (elemRowCol === activeCellRowCol) {
 						//если это данная строка, нужно найти колонку/строку с равным индексом или большим/меньшим, если таких нет, то берём следующий/предыдущий элемент
 						if ((bReverse && elemColRow <= activeCellColRow) || (!bReverse && elemColRow >= activeCellColRow)) {
-							if (bReverse) {
-								return elemColRow === activeCellColRow ? indexElem - 1 : indexElem;
-							} else {
-								return elemColRow === activeCellColRow ? indexElem + 1 : indexElem;
-							}
+							return elemColRow === activeCellColRow ? prevNextI : indexElem;
 						} else if (t.Elements[prevNextI] && ws.sName === t.Elements[prevNextI].sheet && prevNextElemRowCol === activeCellRowCol) {
 							//если следующий/предыдущий элемент на том же листе и на той же строке, то продолжаем
 						} else if (t.Elements[prevNextI]) {
@@ -4968,7 +4966,7 @@
 			var res;
 			for (var j = bReverse ? indexArr.length - 1 : 0; bReverse ? j >= 0 : j < indexArr.length; bReverse ? j-- : j++) {
 				i = indexArr[j];
-				res = checkElem(i);
+				res = checkElem(i, j);
 				if (res !== null) {
 					return res;
 				}
