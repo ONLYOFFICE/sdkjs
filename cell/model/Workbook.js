@@ -9273,7 +9273,7 @@
 	Worksheet.prototype.getSlicerCachesBySourceName = function (name) {
 		var res = null
 		for (var i = 0; i < this.aSlicers.length; i++) {
-			var cache = this.aSlicers[i].getSlicerCache();
+			var cache = this.aSlicers[i] && this.aSlicers[i].getSlicerCache();
 			if (cache && name === cache.sourceName) {
 				if (!res) {
 					res = [];
@@ -9289,7 +9289,7 @@
 		var res = [];
 
 		for (var i = 0; i < this.aSlicers.length; i++) {
-			if (name === this.aSlicers[i].caption) {
+			if (this.aSlicers[i] && name === this.aSlicers[i].caption) {
 				res.push({obj: this.aSlicers[i], index: i});
 			}
 		}
@@ -9301,7 +9301,7 @@
 		var res = [];
 
 		for (var i = 0; i < this.aSlicers.length; i++) {
-			var cache = this.aSlicers[i].getSlicerCache();
+			var cache = this.aSlicers[i] && this.aSlicers[i].getSlicerCache();
 			if (cache && name === cache.name) {
 				res.push(this.aSlicers[i]);
 			}
@@ -9312,7 +9312,7 @@
 
 	Worksheet.prototype.getSlicerCacheByCacheName = function (name) {
 		for (var i = 0; i < this.aSlicers.length; i++) {
-			var cache = this.aSlicers[i].getSlicerCache();
+			var cache = this.aSlicers[i] && this.aSlicers[i].getSlicerCache();
 			if (cache && name === cache.name) {
 				return cache;
 			}
@@ -9325,7 +9325,7 @@
 		var res = null;
 
 		for (var i = 0; i < this.aSlicers.length; i++) {
-			if (name === this.aSlicers[i].name) {
+			if (this.aSlicers[i] && name === this.aSlicers[i].name) {
 				res = this.aSlicers[i];
 				break;
 			}
@@ -9349,7 +9349,7 @@
 		var res = null;
 
 		for (var i = 0; i < this.aSlicers.length; i++) {
-			if (name === this.aSlicers[i].name) {
+			if (this.aSlicers[i] && name === this.aSlicers[i].name) {
 				res = {obj: this.aSlicers[i], index: i};
 				break;
 			}
@@ -9360,7 +9360,7 @@
 
 	Worksheet.prototype.getSlicerCacheByName = function (name) {
 		for (var i = 0; i < this.aSlicers.length; i++) {
-			var cache = this.aSlicers[i].getSlicerCache();
+			var cache = this.aSlicers[i] && this.aSlicers[i].getSlicerCache();
 			if (cache && name === cache.name) {
 				return cache;
 			}
@@ -9373,7 +9373,7 @@
 		var res = [];
 		for (var i = 0; i < this.aSlicers.length; i++) {
 			//пока сделал только для форматированных таблиц
-			var tableSlicerCache = this.aSlicers[i].getTableSlicerCache();
+			var tableSlicerCache = this.aSlicers[i] && this.aSlicers[i].getTableSlicerCache();
 			if (tableSlicerCache && tableSlicerCache.tableId === val) {
 				res.push(this.aSlicers[i]);
 			}
@@ -9385,7 +9385,7 @@
 		var res = [];
 		for (var i = 0; i < this.aSlicers.length; i++) {
 			//пока сделал только для форматированных таблиц
-			var tableSlicerCache = this.aSlicers[i].getTableSlicerCache();
+			var tableSlicerCache = this.aSlicers[i] && this.aSlicers[i].getTableSlicerCache();
 			if (tableSlicerCache && tableSlicerCache.tableId === tableName && tableSlicerCache.column === colName) {
 				res.push(this.aSlicers[i]);
 			}
