@@ -226,6 +226,7 @@
 			"word/Editor/StructuredDocumentTags/SdtPrChanges.js",
 			"word/Editor/StructuredDocumentTags/Custom/CheckBox.js",
 			"word/Editor/StructuredDocumentTags/Custom/ComboBox.js",
+			"word/Editor/StructuredDocumentTags/Custom/ComplexForm.js",
 			"word/Editor/StructuredDocumentTags/Custom/DatePicker.js",
 			"word/Editor/StructuredDocumentTags/Custom/PictureForm.js",
 			"word/Editor/StructuredDocumentTags/Custom/TextForm.js",

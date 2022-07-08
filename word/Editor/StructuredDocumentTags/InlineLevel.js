@@ -236,6 +236,9 @@ CInlineLevelSdt.prototype.private_CopyPrTo = function(oContentControl, oPr)
 
 	if (undefined !== this.Pr.PictureFormPr)
 		oContentControl.SetPictureFormPr(this.Pr.PictureFormPr);
+
+	if (this.Pr.ComplexFormPr)
+		oContentControl.SetComplexFormPr(this.Pr.ComplexFormPr);
 };
 CInlineLevelSdt.prototype.GetSelectedContent = function(oSelectedContent)
 {

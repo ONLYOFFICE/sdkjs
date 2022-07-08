@@ -72,6 +72,7 @@ function CSdtPr()
 
 	this.FormPr        = undefined;
 	this.PictureFormPr = undefined;
+	this.ComplexFormPr = undefined;
 }
 
 CSdtPr.prototype.Copy = function()
@@ -105,6 +106,9 @@ CSdtPr.prototype.Copy = function()
 
 	if (this.PictureFormPr)
 		oPr.PictureFormPr = this.PictureFormPr.Copy();
+
+	if (this.ComplexFormPr)
+		oPr.ComplexFormPr = this.ComplexFormPr.Copy();
 
 	oPr.TextPr = this.TextPr.Copy();
 
@@ -257,6 +261,12 @@ CSdtPr.prototype.Write_ToBinary = function(Writer)
 		Flags |= 2097152;
 	}
 
+	if (this.ComplexFormPr)
+	{
+		this.ComplexFormPr.WriteToBinary(Writer);
+		Flags |= (1 << 22);
+	}
+
 	var EndPos = Writer.GetCurPosition();
 	Writer.Seek(StartPos);
 	Writer.WriteLong(Flags);
@@ -347,13 +357,19 @@ CSdtPr.prototype.Read_FromBinary = function(Reader)
 	if (Flags & 1048576)
 	{
 		this.TextForm = new AscWord.CSdtTextFormPr();
-		this.TextForm.ReadFromBinary(oReader);
+		this.TextForm.ReadFromBinary(Reader);
 	}
 
 	if (Flags & 2097152)
 	{
 		this.PictureFormPr = new AscWord.CSdtPictureFormPr();
-		this.PictureFormPr.ReadFromBinary(oReader);
+		this.PictureFormPr.ReadFromBinary(Reader);
+	}
+
+	if (Flags & (1 << 22))
+	{
+		this.ComplexFormPr = new AscWord.CSdtComplexFormPr();
+		this.ComplexFormPr.ReadFromBinary(Reader);
 	}
 };
 CSdtPr.prototype.IsBuiltInDocPart = function()
@@ -1078,6 +1094,7 @@ CContentControlPr.prototype['put_PictureFormPr']      = CContentControlPr.protot
 
 window['AscCommon'].CSdtFormPr    = CSdtFormPr;
 window['AscCommon']['CSdtFormPr'] = CSdtFormPr;
+window['AscWord'].CSdtFormPr = CSdtFormPr;
 
 CSdtFormPr.prototype['get_Key']      = CSdtFormPr.prototype.GetKey;
 CSdtFormPr.prototype['put_Key']      = CSdtFormPr.prototype.SetKey;

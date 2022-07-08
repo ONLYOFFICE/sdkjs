@@ -253,6 +253,10 @@ CSdtBase.prototype.IsForm = function()
 {
 	return (undefined !== this.Pr.FormPr);
 };
+CSdtBase.prototype.IsComplexForm = function()
+{
+	return (undefined !== this.Pr.ComplexFormPr);
+};
 /**
  * @returns {boolean}
  */
@@ -490,4 +494,18 @@ CSdtBase.prototype.IsPictureForm = function()
  */
 CSdtBase.prototype.UpdatePictureFormLayout = function()
 {
+};
+/**
+ * Выставляем настройку, что заданный контрол является составным полем
+ * @param oPr {AscWord.CSdtComplexFormPr}
+ */
+CSdtBase.prototype.SetComplexFormPr = function(oPr)
+{
+	if (!this.Pr.ComplexFormPr || !this.Pr.ComplexFormPr.IsEqual(oPr))
+	{
+		let _oPr    = oPr ? oPr.Copy() : undefined;
+		let oChange = new CChangesSdtPrComplexFormPr(this, this.Pr.ComplexFormPr, _oPr);
+		AscCommon.History.Add(oChange);
+		oChange.Redo();
+	}
 };

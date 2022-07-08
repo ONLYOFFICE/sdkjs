@@ -10164,8 +10164,9 @@ CDocument.prototype.OnKeyDown = function(e)
 				}
 			}
 		}
-		else if ((e.KeyCode === 93 && !e.MacCmdKey) || (/*в Opera такой код*/AscCommon.AscBrowser.isOpera && (57351 === e.KeyCode)) ||
-			(e.KeyCode === 121 && true === e.ShiftKey)) // // Shift + F10 - контекстное меню
+		else if ((e.KeyCode === 93 && !e.MacCmdKey)
+			|| (AscCommon.AscBrowser.isOpera && (57351 === e.KeyCode))
+			|| (e.KeyCode === 121 && true === e.ShiftKey)) // Shift + F10 - контекстное меню
 		{
 			var X_abs, Y_abs, oPosition, ConvertedPos;
 			if (this.DrawingObjects.selectedObjects.length > 0)
@@ -10214,6 +10215,20 @@ CDocument.prototype.OnKeyDown = function(e)
 			}
 
 			bRetValue = keydownresult_PreventAll;
+		}
+		else if (e.KeyCode === 121)
+		{
+			if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
+			{
+				this.StartAction(AscDFH.historydescription_Document_AddContentControlTextForm);
+
+				let oCC = this.AddComplexForm();
+				oCC.SetFormPr(new AscWord.CSdtFormPr());
+
+				this.UpdateInterface();
+				this.Recalculate();
+				this.FinalizeAction();
+			}
 		}
 	}
 
@@ -16219,6 +16234,45 @@ CDocument.prototype.AddContentControlTextForm = function(oPr)
 	{
 		oCC.ReplacePlaceHolderWithContent();
 		var oRun = oCC.MakeSingleRunElement(false);
+		oRun.AddText(sText);
+		oRun.ApplyTextPr(oTextPr);
+		oCC.SelectContentControl();
+	}
+
+	this.UpdateSelection();
+	this.UpdateTracks();
+
+	return oCC;
+};
+/**
+ * Добавляем специальную текстовую форму
+ * @param oPr {?AscWord.CSdtComplexFormPr}
+ * @returns {?CInlineLevelSdt}
+ */
+CDocument.prototype.AddComplexForm = function(oPr)
+{
+	if (!oPr)
+		oPr = new AscWord.CSdtComplexFormPr();
+
+	let sText   = this.GetSelectedText();
+	let oTextPr = this.GetDirectTextPr();
+
+	if (this.IsTextSelectionUse())
+		this.RemoveBeforePaste();
+	else if (this.IsSelectionUse())
+		this.RemoveSelection();
+
+	let oCC = this.AddContentControl(c_oAscSdtLevelType.Inline);
+	if (!oCC)
+		return null;
+
+	oCC.SetComplexFormPr(oPr);
+	oCC.MoveCursorToStartPos();
+
+	if (sText)
+	{
+		oCC.ReplacePlaceHolderWithContent();
+		let oRun = oCC.MakeSingleRunElement(false);
 		oRun.AddText(sText);
 		oRun.ApplyTextPr(oTextPr);
 		oCC.SelectContentControl();
