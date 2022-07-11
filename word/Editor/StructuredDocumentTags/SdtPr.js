@@ -412,6 +412,7 @@ function CContentControlPr(nType)
 	this.DateTimePr    = undefined;
 	this.TextFormPr    = undefined;
 	this.PictureFormPr = undefined;
+	this.ComplexFormPr = undefined;
 
 	this.PlaceholderText = undefined;
 
@@ -470,6 +471,8 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 		this.TextFormPr = oContentControl.GetTextFormPr().Copy();
 	else if (oContentControl.IsPictureForm())
 		this.PictureFormPr = oContentControl.GetPictureFormPr().Copy();
+	else if (oContentControl.IsComplexForm())
+		this.ComplexFormPr = oContentControl.GetComplexFormPr().Copy();
 
 	this.PlaceholderText = oContentControl.GetPlaceholderText();
 
@@ -563,6 +566,9 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		oContentControl.SetPictureFormPr(this.PictureFormPr);
 		oContentControl.UpdatePictureFormLayout();
 	}
+
+	if (undefined !== this.ComplexFormPr)
+		oContentControl.SetComplexFormPr(this.ComboBoxPr);
 };
 CContentControlPr.prototype.GetId = function()
 {
@@ -716,6 +722,14 @@ CContentControlPr.prototype.SetPictureFormPr = function(oPr)
 CContentControlPr.prototype.GetPictureFormPr = function()
 {
 	return this.PictureFormPr;
+};
+CContentControlPr.prototype.SetComplexFormPr = function(oPr)
+{
+	this.ComplexFormPr = oPr;
+};
+CContentControlPr.prototype.GetComplexFormPr = function()
+{
+	return this.ComplexFormPr;
 };
 
 /**
@@ -1091,6 +1105,8 @@ CContentControlPr.prototype['get_FormPr']             = CContentControlPr.protot
 CContentControlPr.prototype['put_FormPr']             = CContentControlPr.prototype.SetFormPr;
 CContentControlPr.prototype['get_PictureFormPr']      = CContentControlPr.prototype.GetPictureFormPr;
 CContentControlPr.prototype['put_PictureFormPr']      = CContentControlPr.prototype.SetPictureFormPr;
+CContentControlPr.prototype['get_ComplexFormPr']      = CContentControlPr.prototype.GetComplexFormPr;
+CContentControlPr.prototype['put_ComplexFormPr']      = CContentControlPr.prototype.SetComplexFormPr;
 
 window['AscCommon'].CSdtFormPr    = CSdtFormPr;
 window['AscCommon']['CSdtFormPr'] = CSdtFormPr;

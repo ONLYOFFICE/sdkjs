@@ -509,3 +509,10 @@ CSdtBase.prototype.SetComplexFormPr = function(oPr)
 		oChange.Redo();
 	}
 };
+/**
+ * @returns {?AscWord.CSdtComplexFormPr}
+ */
+CSdtBase.prototype.GetComplexFormPr = function()
+{
+	return this.Pr.ComplexFormPr;
+}
