@@ -3849,8 +3849,11 @@
 		this.WorkbookPr.Date1904 = val;
 
 		if (addToHistory) {
+			var updateSheet = this.getActiveWs();
+			var updateRange = new Asc.Range(0, 0, updateSheet.getColsCount(), updateSheet.getRowsCount());
+
 			History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Date1904,
-				null, null, new UndoRedoData_FromTo(oldVal, val));
+				updateSheet.getId(), updateRange, new UndoRedoData_FromTo(oldVal, val));
 		}
 	};
 
