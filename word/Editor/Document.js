@@ -1842,7 +1842,37 @@ function CDocument(DrawingDocument, isMainLogicDocument)
         RealX      : 0, // позиция курсора, без учета расположения букв
         RealY      : 0, // это актуально для клавиш вверх и вниз
         Type       : docpostype_Content,
-		CC         : null
+		CC         : null,
+		MainCC     : null,
+
+		SetCC : function(oCC)
+		{
+			this.CC     = oCC;
+			this.MainCC = oCC && oCC.IsForm() ? oCC.GetMainForm() : oCC;
+		},
+		ResetCC : function()
+		{
+			this.CC     = null;
+			this.MainCC = null;
+		},
+		IsInCC : function()
+		{
+			return !!(this.CC);
+		},
+		CheckHitInCC : function(nX, nY, nPageAbs)
+		{
+			if (!this.MainCC)
+				return true;
+
+			return this.MainCC.CheckHitInContentControlByXY(nX, nY, nPageAbs);
+		},
+		CorrectXYToHitInCC : function(nX, nY, nPageAbs)
+		{
+			if (!this.MainCC)
+				return null;
+
+			return this.MainCC.CorrectXYToHitIn(nX, nY, nPageAbs)
+		}
     };
 
 	this.Selection =
@@ -8932,7 +8962,8 @@ CDocument.prototype.IsInForm = function(X, Y, nPageAbs)
 	if (!oForm)
 		return false;
 
-	return oForm.CheckHitInContentControlByXY(X, Y, nPageAbs);
+	let oMainForm = oForm.GetMainForm();
+	return oMainForm.CheckHitInContentControlByXY(X, Y, nPageAbs);
 };
 /**
  * Проверяем, попали ли мы в контейнер
@@ -10308,7 +10339,7 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 	if (this.SearchEngine.Count > 0)
 		this.SearchEngine.ResetCurrent();
 
-	this.CurPos.CC = null;
+	this.CurPos.ResetCC();
 
 	// Обработка правой кнопки мыши происходит на событии MouseUp
 	if (AscCommon.g_mouse_button_right === e.Button)
@@ -10446,7 +10477,7 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 			var oBlockSdt        = oSelectedContent.GetBlockLevelSdt();
 
 			if ((oInlineSdt && oInlineSdt.IsForm() && oInlineSdt.IsCheckBox()) || (oBlockSdt && oBlockSdt.IsForm() && oBlockSdt.IsCheckBox()))
-				this.CurPos.CC = (oInlineSdt && oInlineSdt.IsForm() && oInlineSdt.IsCheckBox()) ? oInlineSdt : oBlockSdt;
+				this.CurPos.SetCC((oInlineSdt && oInlineSdt.IsForm() && oInlineSdt.IsCheckBox()) ? oInlineSdt : oBlockSdt);
 		}
 
 		this.Selection_SetStart(X, Y, e);
@@ -10460,7 +10491,7 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 			var oCC = (oInlineSdt && oInlineSdt.IsCheckBox()) ? oInlineSdt : oBlockSdt;
 			if (oCC.CheckHitInContentControlByXY(X, Y, PageIndex) && (!oCC.IsForm() || this.IsFillingFormMode() || oCC === this.CurPos.CC))
 			{
-				this.CurPos.CC = oCC;
+				this.CurPos.SetCC(oCC);
 				oCC.SkipSpecialContentControlLock(true);
 				if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, this.IsFillingFormMode()))
 				{
@@ -10478,7 +10509,7 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 
 		if (this.IsFillingFormMode() && (oBlockSdt || oInlineSdt))
 		{
-			this.CurPos.CC = oInlineSdt ? oInlineSdt : oBlockSdt;
+			this.CurPos.SetCC(oInlineSdt ? oInlineSdt : oBlockSdt);
 		}
 
 		if (e.ClickCount <= 1 && 1 !== this.Selection.DragDrop.Flag)
@@ -10492,9 +10523,9 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 	if (PageIndex < 0)
 		return;
 
-	if (this.IsFillingFormMode() && this.CurPos.CC && !this.CurPos.CC.CheckHitInContentControlByXY(X, Y, PageIndex))
+	if (this.IsFillingFormMode() && this.CurPos.IsInCC() && !this.CurPos.CheckHitInCC(X, Y, PageIndex))
 	{
-		var oCorrectedPos = this.CurPos.CC.CorrectXYToHitIn(X, Y, PageIndex);
+		var oCorrectedPos = this.CurPos.CorrectXYToHitInCC(X, Y, PageIndex);
 		if (!oCorrectedPos)
 		{
 			if (this.Selection.Start)
@@ -10700,9 +10731,9 @@ CDocument.prototype.OnMouseMove = function(e, X, Y, PageIndex)
 		return;
 	}
 
-	if (this.IsFillingFormMode() && this.CurPos.CC && !this.CurPos.CC.CheckHitInContentControlByXY(X, Y, PageIndex))
+	if (this.IsFillingFormMode() && this.CurPos.IsInCC() && !this.CurPos.CheckHitInCC(X, Y, PageIndex))
 	{
-		var oCorrectedPos = this.CurPos.CC.CorrectXYToHitIn(X, Y, PageIndex);
+		var oCorrectedPos = this.CurPos.CorrectXYToHitInCC(X, Y, PageIndex);
 		if (!oCorrectedPos)
 			return;
 
@@ -21581,7 +21612,10 @@ CDocument.prototype.IsInFormField = function()
 	var oInlineSdt    = oSelectedInfo.GetInlineLevelSdt();
 	var oBlockSdt     = oSelectedInfo.GetBlockLevelSdt();
 
-	return !!(oBlockSdt || oInlineSdt || (oField && fieldtype_FORMTEXT === oField.Get_FieldType()));
+	// оInlineSdt отдает нам нижний уровень, если на нем у нас ComplexField, значит мы находимся внутри текста,
+	// в такой ситуации мы отдаем, что ме не находимся в форме, чтобы запретить редактирование в этой части формы
+	// Когда мы будем находится внутри простой формы, находящейся в сложной, то oInlineSdt вернет именно проостую форму
+	return !!(oBlockSdt || (oInlineSdt && !oInlineSdt.IsComplexForm()) || (oField && fieldtype_FORMTEXT === oField.Get_FieldType()));
 };
 CDocument.prototype.IsFormFieldEditing = function()
 {

@@ -1062,8 +1062,14 @@ CBlockLevelSdt.prototype.GetStyleFromFormatting = function()
 };
 CBlockLevelSdt.prototype.GetAllContentControls = function(arrContentControls)
 {
-	arrContentControls.push(this);
+	if (!arrContentControls)
+		arrContentControls = [];
+	else
+		arrContentControls.push(this);
+
 	this.Content.GetAllContentControls(arrContentControls);
+
+	return arrContentControls;
 };
 CBlockLevelSdt.prototype.IsSelectedAll = function()
 {

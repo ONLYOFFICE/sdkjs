@@ -516,3 +516,72 @@ CSdtBase.prototype.GetComplexFormPr = function()
 {
 	return this.Pr.ComplexFormPr;
 }
+/**
+ * Получаем главную родительскую сложную форму
+ * @returns {?AscWord.CInlineLevelSdt}
+ */
+CSdtBase.prototype.GetMainComplexForm = function()
+{
+	let oMain = null;
+	if (this instanceof AscWord.CInlineLevelSdt || this.IsComplexForm())
+		oMain = this;
+
+	let oCur  = this;
+	while (true)
+	{
+		oCur = oCur.GetParent();
+		if (!oCur || !(oCur instanceof AscWord.CInlineLevelSdt) || !oCur.IsComplexForm())
+			break;
+
+		oMain = oCur;
+	}
+
+	return oMain;
+};
+CSdtBase.prototype.GetMainForm = function()
+{
+	if (!this.IsForm())
+		return null;
+
+	let oMain = this.GetMainComplexForm();
+	return oMain ? oMain : this;
+};
+CSdtBase.prototype.GetAllChildForms = function()
+{
+	let arrForms    = [];
+	let arrControls = this.GetAllContentControls();
+	for (let nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
+	{
+		let oControl = arrControls[nIndex];
+		if (oControl.IsForm())
+			arrForms.push(oControl);
+	}
+
+	return arrForms;
+};
+/**
+ * Провяеряем является ли данная форма текущей, с учетом того, что она либо сама является составной формой, либо
+ * лежит в составной
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsCurrentComplexForm = function()
+{
+	if (this.IsCurrent())
+		return true;
+
+	let oMainComplexForm = this.GetMainComplexForm();
+	if (!oMainComplexForm)
+		return false;
+
+	if (oMainComplexForm.IsCurrent())
+		return true;
+
+	let arrForms = oMainComplexForm.GetAllChildForms();
+	for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
+	{
+		if (arrForms[nIndex].IsCurrent())
+			return true;
+	}
+
+	return false;
+};

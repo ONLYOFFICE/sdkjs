@@ -2294,7 +2294,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 						var oFormShdColor     = oFormShd.GetSimpleColor(this.GetTheme(), this.GetColorMap());
 						var oFormShdColorDark = new CDocumentColor(oFormShdColor.r * (201 / 255) | 0, oFormShdColor.g * (225 / 255) | 0, oFormShdColor.b, 255);
 
-						if (oInlineSdt.IsCurrent() || !isDrawFormHighlight)
+						if (oInlineSdt.IsCurrentComplexForm() || !isDrawFormHighlight)
 						{
 							if (!oPrevColor.IsEqualRGB(oFormShdColor))
 							{
@@ -2322,7 +2322,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 						if (oInlineSdt.IsFixedForm())
 							oSdtBounds = oInlineSdt.GetFixedFormBounds();
 					}
-					else if (isForm && FormsHighlight && !oInlineSdt.IsCurrent())
+					else if (isForm && FormsHighlight && !oInlineSdt.IsCurrentComplexForm())
 					{
 						if (!oPrevColor.IsEqualRGB(FormsHighlight))
 						{
