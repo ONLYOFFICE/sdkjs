@@ -12798,7 +12798,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 			});
 			oSdt.SetPictureFormPr(oPicFormPr);
 		} else if (c_oSerSdt.FormPr === type && oSdt.SetFormPr) {
-			var formPr = new CSdtFormPr();
+			var formPr = new AscWord.CSdtFormPr();
 			res = this.bcr.Read1(length, function(t, l) {
 				return oThis.ReadSdtFormPr(t, l, formPr);
 			});

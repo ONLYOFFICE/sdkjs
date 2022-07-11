@@ -260,6 +260,7 @@
 			"word/Editor/StructuredDocumentTags/Custom/ComboBox.js",
 			"word/Editor/StructuredDocumentTags/Custom/ComplexForm.js",
 			"word/Editor/StructuredDocumentTags/Custom/DatePicker.js",
+			"word/Editor/StructuredDocumentTags/Custom/Form.js",
 			"word/Editor/StructuredDocumentTags/Custom/PictureForm.js",
 			"word/Editor/StructuredDocumentTags/Custom/TextForm.js",
 			"common/api/searchSettings.js",

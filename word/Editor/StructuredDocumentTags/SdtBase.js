@@ -206,7 +206,7 @@ CSdtBase.prototype.IsContentControlTemporary = function()
 	return this.Pr.Temporary;
 };
 /**
- * @param {CSdtFormPr} oFormPr
+ * @param {AscWord.CSdtFormPr} oFormPr
  */
 CSdtBase.prototype.SetFormPr = function(oFormPr)
 {
@@ -240,7 +240,7 @@ CSdtBase.prototype.RemoveFormPr = function()
 	}
 };
 /**
- * @returns {?CSdtFormPr}
+ * @returns {?AscWord.CSdtFormPr}
  */
 CSdtBase.prototype.GetFormPr = function()
 {

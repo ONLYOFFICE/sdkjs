@@ -685,7 +685,7 @@ CChangesSdtPrFormPr.prototype.private_SetValue = function(Value)
 };
 CChangesSdtPrFormPr.prototype.private_CreateObject = function()
 {
-	return new CSdtFormPr();
+	return new AscWord.CSdtFormPr();
 };
 /**
  * @constructor
