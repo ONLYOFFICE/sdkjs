@@ -7092,6 +7092,10 @@ Paragraph.prototype.IsSelectionToEnd = function()
 {
 	return this.Selection_CheckParaEnd();
 };
+Paragraph.prototype.IsSelectedOnlyParagraphMark = function()
+{
+	return (this.Selection_CheckParaEnd() && this.IsSelectionEmpty(false));
+};
 /**
  * Функция определяет начальную позицию курсора в параграфе
  */
