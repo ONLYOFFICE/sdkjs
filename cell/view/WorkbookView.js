@@ -4672,7 +4672,7 @@
 			return;
 		}
 
-		if (AscCommon.bDate1904 == val) {
+		if (this.model.WorkbookPr.Date1904 == val) {
 			return;
 		}
 
@@ -4682,7 +4682,12 @@
 				return;
 			}
 
+			History.Create_NewPoint();
+			History.StartTransaction();
+
 			t.model.setDate1904(val, true);
+
+			History.EndTransaction();
 
 			AscCommon.oNumFormatCache.cleanCache();
 

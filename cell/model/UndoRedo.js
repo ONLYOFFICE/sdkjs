@@ -2442,7 +2442,8 @@ function (window, undefined) {
 				worksheetSource.fromWorksheetSource(worksheetSource, true);
 			}
 		}  else if(AscCH.historyitem_Workbook_Date1904 === Type) {
-			wb.setDate1904(Data.elem);
+			wb.setDate1904(bUndo ? Data.from : Data.to);
+			AscCommon.oNumFormatCache.cleanCache();
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {
