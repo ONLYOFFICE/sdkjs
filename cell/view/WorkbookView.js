@@ -4641,7 +4641,7 @@
 			//получаем ссылку на файл через asc_onUpdateExternalReference
 			t._getExternalReferenceData(externalReferences, function (data) {
 				//создаём запросы
-				t._getLoadFileRequestsFromReferenceData(data, requests);
+				t._getLoadFileRequestsFromReferenceData(data, requests, externalReferences);
 
 				//выполняем запросы на получение файлов
 				if (requests && requests.length) {
@@ -4684,7 +4684,7 @@
 		}
 	};
 
-	WorkbookView.prototype._getLoadFileRequestsFromReferenceData = function (data, requests) {
+	WorkbookView.prototype._getLoadFileRequestsFromReferenceData = function (data, requests, externalReferences) {
 		if (!requests) {
 			return;
 		}
@@ -4693,6 +4693,12 @@
 		for (var i = 0; i < data.length; i++) {
 			var promise = new Promise(function (resolve, reject) {
 				var sFileUrl = data && data[i] && !data[i].error ? data[i].url : null;
+
+				//если ссылка на внешний источник, пробуем получить контент
+				if (!sFileUrl && data[i].error && externalReferences[i].isExternalLink()) {
+					sFileUrl = externalReferences[i].data;
+				}
+				
 				if (sFileUrl) {
 					AscCommon.loadFileContent(sFileUrl, function (httpRequest) {
 						if (httpRequest) {

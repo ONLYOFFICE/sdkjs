@@ -12058,12 +12058,11 @@ QueryTableField.prototype.clone = function() {
 
 
 		var res = new asc_CExternalReference();
-		var p = /^(?:http:\/\/|https:\/\/)/;
 
 		if (this.referenceData) {
 			res.type = Asc.c_oAscExternalReferenceType.referenceData;
 			res.data = this.referenceData;
-		} else if (this.Id.match(p)) {
+		} else if (this.isExternalLink()) {
 			res.type = Asc.c_oAscExternalReferenceType.link;
 			res.data = this.Id;
 		} else {
@@ -12074,6 +12073,11 @@ QueryTableField.prototype.clone = function() {
 		res.externalReference = this;
 
 		return res;
+	};
+
+	ExternalReference.prototype.isExternalLink = function() {
+		var p = /^(?:http:\/\/|https:\/\/)/;
+		return this.Id.match(p);
 	};
 
 	ExternalReference.prototype.addSheetName = function (name, generateDefaultStructure) {
@@ -12207,6 +12211,9 @@ QueryTableField.prototype.clone = function() {
 	};
 	asc_CExternalReference.prototype.asc_getData = function () {
 		return this.data;
+	};
+	asc_CExternalReference.prototype.isExternalLink = function () {
+		return this.type === Asc.c_oAscExternalReferenceType.link;
 	};
 
 
