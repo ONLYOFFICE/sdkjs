@@ -10270,7 +10270,7 @@
                 wb.oApi.vbaMacrosXml = this.InitOpenManager.oReadResult.vbaMacrosXml;
             }
             wb.checkCorrectTables();
-		}
+		};
 		this.PostLoadPrepareDefNames = function(wb)
 		{
 			this.InitOpenManager.oReadResult.defNames.forEach(function (defName) {

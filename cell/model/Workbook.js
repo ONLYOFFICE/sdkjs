@@ -3841,6 +3841,20 @@
 		return res;
 	};
 
+	Workbook.prototype.setDate1904 = function (val, addToHistory) {
+		var oldVal = AscCommon.bDate1904;
+
+
+		AscCommon.bDate1904 = val;
+		AscCommonExcel.c_DateCorrectConst = AscCommon.bDate1904 ? AscCommonExcel.c_Date1904Const : AscCommonExcel.c_Date1900Const;
+		this.WorkbookPr.Date1904 = val;
+
+		if (addToHistory) {
+			History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_Date1904,
+				null, null, new UndoRedoData_FromTo(oldVal, val), true);
+		}
+	};
+
 
 //-------------------------------------------------------------------------------------------------
 	var tempHelp = new ArrayBuffer(8);

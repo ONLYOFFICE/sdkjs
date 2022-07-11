@@ -4111,6 +4111,14 @@ var editor;
 		this.wb.getWorksheet().changeSheetViewSettings(AscCH.historyitem_Worksheet_SetShowZeros, value);
 	};
 
+	spreadsheet_api.prototype.asc_setDate1904 = function (value) {
+		this.wb.setDate1904(value);
+	};
+
+	spreadsheet_api.prototype.asc_getDate1904 = function () {
+		return AscCommon.bDate1904;
+	};
+
   // Images & Charts
 
   spreadsheet_api.prototype.asc_drawingObjectsExist = function() {
@@ -5407,7 +5415,9 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-    var ws = this.wb.getWorksheet();
+    this.asc_setDate1904(false);
+  	return;
+  	var ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
     } else {
@@ -8277,5 +8287,10 @@ var editor;
   prot["getPrintOptionsJson"] = prot.getPrintOptionsJson;
 
   prot["asc_EditSelectAll"] = prot.asc_EditSelectAll;
+
+  prot["asc_getDate1904"] = prot.asc_getDate1904;
+  prot["asc_setDate1904"] = prot.asc_setDate1904;
+
+
 
 })(window);

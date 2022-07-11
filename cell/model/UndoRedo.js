@@ -2441,6 +2441,8 @@ function (window, undefined) {
 				wrapper.readData(worksheetSource);
 				worksheetSource.fromWorksheetSource(worksheetSource, true);
 			}
+		}  else if(AscCH.historyitem_Workbook_Date1904 === Type) {
+			wb.setDate1904(Data.elem);
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {
