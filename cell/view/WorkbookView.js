@@ -4770,12 +4770,12 @@
 
 		if (container) {
 			container.add(r, c,
-				{sheet: cell.ws.sName, name: defName ? defName : null, cell: cell.getName(), text: cell.getValueForEdit(), formula: cell.getFormula(), col: r, row: c, index: cell.ws.index});
+				{sheet: cell.ws.sName, name: defName ? defName : null, cell: cell.getName(), text: cell.getValue(), formula: cell.getFormula(), col: r, row: c, index: cell.ws.index});
 		} else {
 			this.Count++;
 			//[sheet, name, cell, value,formula]
 			this.Elements[this.Id++] =
-				cell.ws ? {sheet: cell.ws.sName, name: defName ? defName : null, cell: cell.getName(), text: cell.getValueForEdit(), formula: cell.getFormula(), col: c, row: r, index: cell.ws.index} :
+				cell.ws ? {sheet: cell.ws.sName, name: defName ? defName : null, cell: cell.getName(), text: cell.getValue(), formula: cell.getFormula(), col: c, row: r, index: cell.ws.index} :
 					cell;
 			var key = this.Elements[this.Id - 1].index + "-" + c + "-" + r;
 			this.mapFindCells[key] = this.Id - 1;
