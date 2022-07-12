@@ -4678,10 +4678,6 @@
 
 		var ws = this.getWorksheet(), t = this;
 		var callback = function (isSuccess) {
-			if (false === isSuccess) {
-				return;
-			}
-
 			History.Create_NewPoint();
 			History.StartTransaction();
 
@@ -4695,7 +4691,7 @@
 			ws.draw();
 		};
 
-		ws._isLockedAll(callback);
+		callback();
 	};
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
