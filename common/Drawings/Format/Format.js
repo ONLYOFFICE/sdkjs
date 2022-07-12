@@ -112,7 +112,7 @@
 		CBaseNoIdObject.prototype.writeAttrXmlImpl = function (writer) {
 			//TODO:Implement in children
 		};
-		CBaseNoIdObject.prototype.writeChildren = function (writer) {
+		CBaseNoIdObject.prototype.writeChildrenXml = function (writer) {
 			//TODO:Implement in children
 		};
 		CBaseNoIdObject.prototype.fromXml = function (reader, bSkipFirstNode) {
@@ -131,7 +131,7 @@
 		CBaseNoIdObject.prototype.toXml = function (writer, name) {
 			writer.WriteXmlNodeStart(name);
 			this.writeAttrXml(writer);
-			this.writeChildren(writer);
+			this.writeChildrenXml(writer);
 			writer.WriteXmlNodeEnd(name);
 		};
 		CBaseNoIdObject.prototype.writeAttrXml = function (writer) {
@@ -1786,7 +1786,7 @@
 			writer.WriteXmlNodeStart(sName);
 			this.writeAttrXmlImpl(writer);
 			writer.WriteXmlAttributesEnd();
-			this.writeChildren(writer);
+			this.writeChildrenXml(writer);
 			this.writeModifiers(writer);
 			writer.WriteXmlNodeEnd(sName);
 		};
@@ -10869,7 +10869,7 @@
 		ClrScheme.prototype.writeAttrXmlImpl = function (writer) {
 			writer.WriteXmlNullableAttributeStringEncode("name", this.name);
 		};
-		ClrScheme.prototype.writeChildren = function (writer) {
+		ClrScheme.prototype.writeChildrenXml = function (writer) {
 
 			let aIdx = [8, 12, 9, 13, 0, 1, 2, 3, 4, 5, 11, 10];
 			for (let nIdx = 0; nIdx < aIdx.length; ++nIdx) {
@@ -11522,7 +11522,7 @@
 		FontScheme.prototype.writeAttrXmlImpl = function (writer) {
 			writer.WriteXmlNullableAttributeStringEncode("name", this.name);
 		};
-		FontScheme.prototype.writeChildren = function (writer) {
+		FontScheme.prototype.writeChildrenXml = function (writer) {
 			this.majorFont.toXml(writer, "a:majorFont");
 			this.minorFont.toXml(writer, "a:minorFont");
 		};
@@ -11675,7 +11675,7 @@
 		FmtScheme.prototype.writeAttrXmlImpl = function (writer) {
 			writer.WriteXmlNullableAttributeStringEncode("name", this.name);
 		};
-		FmtScheme.prototype.writeChildren = function (writer) {
+		FmtScheme.prototype.writeChildrenXml = function (writer) {
 			this.writeList(writer, this.fillStyleLst, "a:fillStyleLst");
 			this.writeList(writer, this.lnStyleLst, "a:lnStyleLst", "a:ln");
 			writer.WriteXmlString("<a:effectStyleLst><a:effectStyle><a:effectLst>\
@@ -11725,7 +11725,7 @@
 		};
 		ThemeElements.prototype.writeAttrXmlImpl = function (writer) {
 		};
-		ThemeElements.prototype.writeChildren = function (writer) {
+		ThemeElements.prototype.writeChildrenXml = function (writer) {
 			writer.WriteXmlNullable(this.clrScheme, "a:clrScheme");
 			writer.WriteXmlNullable(this.fontScheme, "a:fontScheme");
 			writer.WriteXmlNullable(this.fmtScheme, "a:fmtScheme");

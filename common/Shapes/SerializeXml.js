@@ -242,6 +242,10 @@
 				graphicFrame.setGraphicObject(_table);
 			}
 		}
+		else if("relIds" === name) {
+			res = new AscFormat.SmartArt();
+			res.fromXml(reader);
+		}
 		return res;
 	};
 	window['AscFormat'].CGraphicObjectBase.prototype.toXmlElem = function(writer, graphicObject, ns) {

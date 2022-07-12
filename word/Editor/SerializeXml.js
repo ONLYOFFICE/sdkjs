@@ -2610,10 +2610,12 @@
 			// 	oParaDrawing.Set_ParaMath(oDrawing.ParaMath);
 
 			if (oParaDrawing.GraphicObj) {
+
 				// if (oParaDrawing.GraphicObj.setLocks && graphicFramePr.locks > 0) {
 				// 	oParaDrawing.GraphicObj.setLocks(graphicFramePr.locks);
 				// }
-				if (oParaDrawing.GraphicObj.getObjectType() !== AscDFH.historyitem_type_ChartSpace)//диаграммы могут быть без spPr
+				if (oParaDrawing.GraphicObj.getObjectType() !== AscDFH.historyitem_type_ChartSpace &&
+					oParaDrawing.GraphicObj.getObjectType() !== AscDFH.historyitem_type_SmartArt)
 				{
 					if (!oParaDrawing.GraphicObj.spPr) {
 						oParaDrawing.GraphicObj = null;

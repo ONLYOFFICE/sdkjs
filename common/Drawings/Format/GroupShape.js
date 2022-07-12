@@ -1970,8 +1970,8 @@ function CGroupShape()
             this.setLocks(res.getLocks());
         }
     };
-    CGroupShape.prototype.fromXml = function(reader) {
-        AscFormat.CGraphicObjectBase.prototype.fromXml.call(this, reader);
+    CGroupShape.prototype.fromXml = function(reader, bSkipFirstNode) {
+        AscFormat.CGraphicObjectBase.prototype.fromXml.call(this, reader, bSkipFirstNode);
         this.checkXfrm();
     };
     CGroupShape.prototype.toXml = function (writer) {

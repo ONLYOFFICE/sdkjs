@@ -845,6 +845,19 @@ Because of this, the display is sometimes not correct.
     DiagramData.prototype.getChildren = function() {
       return [this.dataModel];
     };
+    DiagramData.prototype.fromXml = function (reader, bSkipFirstNode) {
+      if (bSkipFirstNode) {
+        if (!reader.ReadNextNode()) {
+          return;
+        }
+      }
+      this.setDataModel(new DataModel());
+      this.dataModel.fromXml(reader);
+    };
+    DiagramData.prototype.toXml = function(writer) {
+      writer.WriteXmlString(AscCommonWord.g_sXmlHeader);
+      this.dataModel.toXml(writer);
+    };
 
 
     changesFactory[AscDFH.historyitem_DataModelBg] = CChangeObject;
@@ -987,6 +1000,50 @@ Because of this, the display is sometimes not correct.
     DataModel.prototype.getChildren = function() {
       return [this.ptLst, this.cxnLst, this.whole, this.bg];
     };
+    DataModel.prototype.readChildXml = function (name, reader) {
+      if ("ptLst" === name)
+      {
+        this.setPtLst(new PtLst());
+        this.ptLst.fromXml(reader);
+      }
+    else if ("cxnLst" === name)
+      {
+        this.setCxnLst(new CxnLst());
+        this.cxnLst.fromXml(reader);
+      }
+    else if ("bg" === name)
+      {
+        this.setBg(new BgFormat());
+        this.bg.fromXml(reader);
+      }
+    else if ("whole" === name)
+      {
+        this.setWhole(new Whole());
+        this.whole.fromXml(reader);
+      }
+    else if ("extLst" === name)
+      {
+        this.setExtLst(new ExtLst());
+        this.extLst.fromXml(reader);
+      }
+    };
+    DataModel.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:dataModel");
+      writer.WriteXmlAttributeString("xmlns:dgm", "http://schemas.openxmlformats.org/drawingml/2006/diagram");
+      writer.WriteXmlAttributeString("xmlns:a", "http://schemas.openxmlformats.org/drawingml/2006/main");
+      writer.WriteXmlAttributeString("xmlns:r", "http://schemas.openxmlformats.org/officeDocument/2006/relationships");
+      writer.WriteXmlAttributesEnd();
+      if (this.ptLst)
+        this.ptLst.toXml(writer);
+      if (this.cxnLst)
+        this.cxnLst.toXml(writer);
+      if (this.bg)
+        this.bg.toXml(writer);
+      if (this.whole)
+        this.whole.toXml(writer);
+
+      writer.WriteXmlNodeEnd("dgm:dataModel");
+    };
 
 
     changesFactory[AscDFH.historyitem_CCommonDataListAdd] = CChangeContent;
@@ -1036,6 +1093,23 @@ Because of this, the display is sometimes not correct.
       }
     };
     CCommonDataList.prototype.readAttribute = null;
+    CCommonDataList.prototype.readChildXml = function (name, reader) {
+    };
+    CCommonDataList.prototype.readAttrXml = function (name, reader) {
+    };
+    CCommonDataList.prototype.toXml = function(writer, name) {
+      writer.WriteXmlNodeStart(name);
+      if(this.list.length > 0) {
+        writer.WriteXmlAttributesEnd();
+        for(let nIdx = 0; nIdx < this.list.length; ++nIdx) {
+          this.list[nIdx].toXml(writer);
+        }
+        writer.WriteXmlNodeEnd(name);
+      }
+      else {
+        writer.WriteXmlAttributesEnd(true);
+      }
+    };
 
 
     function PtLst() {
@@ -1066,6 +1140,17 @@ Because of this, the display is sometimes not correct.
         }
       }
     };
+    PtLst.prototype.readChildXml = function (name, reader) {
+      if ("pt" === name)
+      {
+        let oPt = new Point();
+        oPt.fromXml(reader);
+        this.addToLst(this.list.length, oPt);
+      }
+    };
+    PtLst.prototype.toXml = function(writer) {
+      CCommonDataList.prototype.toXml(writer, "dgm:ptLst");
+    };
 
 
     function CxnLst() {
@@ -1073,7 +1158,6 @@ Because of this, the display is sometimes not correct.
     }
 
     InitClass(CxnLst, CCommonDataList, AscDFH.historyitem_type_CxnLst);
-
     CxnLst.prototype.readChild = function(nType, pReader) {
       var s = pReader.stream;
       switch (nType) {
@@ -1088,6 +1172,16 @@ Because of this, the display is sometimes not correct.
           break;
         }
       }
+    };
+    CxnLst.prototype.readChildXml = function (name, reader) {
+      if ("cxn" === name) {
+        let oChild = new Cxn();
+        oChild.fromXml(reader);
+        this.addToLst(this.list.length, oChild);
+      }
+    };
+    CxnLst.prototype.toXml = function(writer) {
+      CCommonDataList.prototype.toXml(writer, "dgm:cxnLst");
     };
 
     changesFactory[AscDFH.historyitem_CxnDestId] = CChangeString;
@@ -1282,6 +1376,35 @@ Because of this, the display is sometimes not correct.
     Cxn.prototype.readChild = function(nType, pReader) {
 
     };
+    Cxn.prototype.readChildXml = function (name, reader) {
+    };
+    Cxn.prototype.readAttrXml = function (name, reader) {
+        if (name === "modelId") this.setModelId(reader.GetValue());
+        else if (name === "type") this.setType(reader.GetValue());
+        else if (name === "destId") this.setDestId(reader.GetValue());
+        else if (name === "destOrd") this.setDestOrd(reader.GetValue());
+        else if (name === "srcId") this.setSrcId(reader.GetValue());
+        else if (name === "srcOrd") this.setSrcOrd(reader.GetValue());
+        else if (name === "parTransId") this.setParTransId(reader.GetValue());
+        else if (name === "sibTransId") this.setSibTransId(reader.GetValue());
+        else if (name === "presId") this.setPresId(reader.GetValue());
+    };
+    Cxn.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:cxn");
+
+      writer.WriteXmlNullableAttributeString("modelId", this.modelId);
+      writer.WriteXmlNullableAttributeString("type", this.type);
+      writer.WriteXmlNullableAttributeString("srcId", this.srcId);
+      writer.WriteXmlNullableAttributeString("destId", this.destId);
+      writer.WriteXmlNullableAttributeString("srcOrd", this.srcOrd);
+      writer.WriteXmlNullableAttributeString("destOrd", this.destOrd);
+      writer.WriteXmlNullableAttributeString("parTransId", this.parTransId);
+      writer.WriteXmlNullableAttributeString("sibTransId", this.sibTransId);
+      writer.WriteXmlNullableAttributeString("presId", this.presId);
+
+      writer.WriteXmlAttributesEnd();
+      writer.WriteXmlNodeEnd("dgm:cxn");
+    };
 
 
     function ExtLst() {
@@ -1305,6 +1428,17 @@ Because of this, the display is sometimes not correct.
         }
       }
     };
+    ExtLst.prototype.readChildXml = function (name, reader) {
+      if(name === "ext") {
+        var oChild = new Ext();
+        oChild.fromXml(reader);
+        this.addToLst(this.list.length, oChild);
+      }
+    };
+    ExtLst.prototype.readAttrXml = function (name, reader) {
+    };
+    ExtLst.prototype.toXml = function(writer) {
+    };
 
     changesFactory[AscDFH.historyitem_ExtUri] = CChangeString;
     drawingsChangesMap[AscDFH.historyitem_ExtUri] = function (oClass, value) {
@@ -1314,6 +1448,7 @@ Because of this, the display is sometimes not correct.
     function Ext() {
       CBaseFormatObject.call(this);
       this.uri = null;
+      this.data = null;
     }
 
     InitClass(Ext, CBaseFormatObject, AscDFH.historyitem_type_Ext);
@@ -1321,15 +1456,29 @@ Because of this, the display is sometimes not correct.
     Ext.prototype.setUri = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ExtUri, this.getUri(), pr));
       this.uri = pr;
-    }
+    };
 
     Ext.prototype.getUri = function () {
       return this.uri;
-    }
+    };
 
     Ext.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setUri(this.getUri());
-    }
+    };
+
+    Ext.prototype.readChildXml = function (name, reader) {
+      this.data = new CT_XmlNode(function(reader, name) {
+        return true;
+      });
+      this.data.fromXml(reader);
+    };
+    Ext.prototype.readAttrXml = function (name, reader) {
+      if(name === "uri") {
+        this.setUri(reader.GetValue());
+      }
+    };
+    Ext.prototype.toXml = function(writer) {
+    };
 
     changesFactory[AscDFH.historyitem_BgFormatFill] = CChangeObjectNoId;
     changesFactory[AscDFH.historyitem_BgFormatEffect] = CChangeObjectNoId;
@@ -1419,7 +1568,6 @@ Because of this, the display is sometimes not correct.
     BgFormat.prototype.getChildren = function() {
       return [this.fill, this.effect];
     };
-
     BgFormat.prototype.getSmartArt = function() {
       var oCurParent = this.parent;
       while (oCurParent) {
@@ -1447,9 +1595,31 @@ Because of this, the display is sometimes not correct.
         }
       }
     };
-
     BgFormat.prototype.Refresh_RecalcData2 = function(data)
     {
+    };
+    BgFormat.prototype.readChildXml = function (name, reader) {
+      if(AscFormat.CUniFill.prototype.isFillName(name)) {
+        let oUnifill = new AscFormat.CUniFill();
+        oUnifill.fromXml(reader, name);
+        this.setFill(oUnifill);
+      }
+      else if(name === "effectDag") {
+        let oEffectDag = new AscFormat.CEffectContainer();
+        oEffectDag.fromXml(reader);
+        this.setEffect(oEffectDag);
+      }
+    };
+    BgFormat.prototype.toXml = function(writer) {
+
+      writer.WriteXmlString("<dgm:bg>");
+
+      if (this.fill)
+        this.fill.toXml(writer);
+      if (this.effect)
+        this.effect.toXml(writer);
+
+      writer.WriteXmlString("</dgm:bg>");
     };
 
 
@@ -1570,6 +1740,28 @@ Because of this, the display is sometimes not correct.
 
     Whole.prototype.Refresh_RecalcData2 = function(data)
     {
+    };
+    Whole.prototype.readChildXml = function (name, reader) {
+
+      if ("effectDag" === name ||
+      "effectLst" === name)
+      {
+        this.setEffect(new AscFormat.CEffectContainer());
+        this.effect.fromXml(reader);
+      }
+    else if ("ln" === name)
+      {
+        this.setLn(new AscFormat.CLn());
+        this.ln.fromXml(reader);
+      }
+    };
+    Whole.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:whole");
+      if (this.ln)
+        this.ln.toXml(writer);
+      if (this.effect)
+        this.effect.toXml(writer);
+      writer.WriteXmlNodeEnd("dgm:whole");
     };
 
 
@@ -1864,6 +2056,103 @@ Because of this, the display is sometimes not correct.
         return prSet.getCustAng();
       }
     };
+    Point.prototype.readChildXml = function (name, reader) {
+      if ("spPr" === name) {
+        this.setSpPr(new AscFormat.CSpPr());
+        this.spPr.fromXml(reader);
+      }
+    else if ("t" === name) {
+        let oTextBody = new AscFormat.CTextBody();
+        oTextBody.fromXml(reader);
+        this.setT(oTextBody);
+      }
+    else if ("prSet" === name) {
+        this.setPrSet(new PrSet());
+        this.prSet.fromXml(reader);
+      }
+    };
+    Point.prototype.readAttrXml = function (name, reader) {
+      if (name === "modelId") this.setModelId(reader.GetValue());
+      else if (name === "type") {
+        let nType = null;
+        let sValue = reader.GetValue();
+        switch (sValue) {
+          case "asst": {
+            nType = Point_type_asst;
+            break;
+          }
+          case "doc": {
+            nType = Point_type_doc;
+            break;
+          }
+          case "node": {
+            nType = Point_type_node;
+            break;
+          }
+          case "parTrans": {
+            nType = Point_type_parTrans;
+            break;
+          }
+          case "pres": {
+            nType = Point_type_pres;
+            break;
+          }
+          case "sibTrans": {
+            nType = Point_type_sibTrans;
+            break;
+          }
+        }
+        this.setType(nType);
+      }
+      else if (name === "cxnId") this.setCxnId(reader.GetValue());
+    };
+    Point.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:pt");
+      writer.WriteXmlNullableAttributeString("modelId", this.modelId);
+      if (this.type !== null) {
+        let sValue = null;
+        switch (this.type) {
+          case Point_type_asst: {
+            sValue = "asst";
+            break;
+          }
+          case Point_type_doc: {
+            sValue = "doc";
+            break;
+          }
+          case Point_type_node: {
+            sValue = "node";
+            break;
+          }
+          case Point_type_parTrans: {
+            sValue = "parTrans";
+            break;
+          }
+          case Point_type_pres: {
+            sValue = "pres";
+            break;
+          }
+          case Point_type_sibTrans: {
+            sValue = "sibTrans";
+            break;
+          }
+        }
+        writer.WriteXmlNullableAttributeString("type", sValue);
+      }
+      writer.WriteXmlNullableAttributeString("cxnId", this.cxnId);
+      writer.WriteXmlAttributesEnd();
+
+      if (this.prSet)
+        this.prSet.toXml(writer);
+
+      if (this.spPr)
+        this.spPr.toXml(writer);
+
+      if (this.t)
+        this.t.toXml(writer);
+
+      writer.WriteXmlNodeEnd("dgm:pt");
+    };
 
 
 
@@ -2029,153 +2318,153 @@ Because of this, the display is sometimes not correct.
     PrSet.prototype.setCoherent3DOff = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCoherent3DOff, this.getCoherent3DOff(), pr));
       this.coherent3DOff = pr;
-    }
+    };
 
     PrSet.prototype.setCsCatId = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetCsCatId, this.getCsCatId(), pr));
       this.csCatId = pr;
-    }
+    };
 
     PrSet.prototype.setCsTypeId = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetCsTypeId, this.getCsTypeId(), pr))
       this.csTypeId = pr;
-    }
+    };
 
     PrSet.prototype.setCustAng = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustAng, this.getCustAng(), pr));
       this.custAng = pr;
-    }
+    };
 
     PrSet.prototype.setCustFlipHor = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCustFlipHor, this.getCustFlipHor(), pr));
       this.custFlipHor = pr;
-    }
+    };
 
     PrSet.prototype.setCustFlipVert = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCustFlipVert, this.getCustFlipVert(), pr));
       this.custFlipVert = pr;
-    }
+    };
 
     PrSet.prototype.setCustLinFactNeighborX = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustLinFactNeighborX, this.getCustLinFactNeighborX(), pr));
       this.custLinFactNeighborX = pr;
-    }
+    };
 
     PrSet.prototype.setCustLinFactNeighborY = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustLinFactNeighborY, this.getCustLinFactNeighborY(), pr));
       this.custLinFactNeighborY = pr;
-    }
+    };
 
     PrSet.prototype.setCustLinFactX = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustLinFactX, this.getCustLinFactX(), pr));
       this.custLinFactX = pr;
-    }
+    };
 
     PrSet.prototype.setCustLinFactY = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustLinFactY, this.getCustLinFactY(), pr));
       this.custLinFactY = pr;
-    }
+    };
 
     PrSet.prototype.setCustRadScaleInc = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustRadScaleInc, this.getCustRadScaleInc(), pr));
       this.custRadScaleInc = pr;
-    }
+    };
 
     PrSet.prototype.setCustRadScaleRad = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustRadScaleRad, this.getCustRadScaleRad(), pr));
       this.custRadScaleRad = pr;
-    }
+    };
 
     PrSet.prototype.setCustScaleX = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustScaleX, this.getCustScaleX(), pr));
       this.custScaleX = pr;
-    }
+    };
 
     PrSet.prototype.setCustScaleY = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_PrSetCustScaleY, this.getCustScaleY(), pr));
       this.custScaleY = pr;
-    }
+    };
 
     PrSet.prototype.setCustSzX = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PrSetCustSzX, this.getCustSzX(), pr));
       this.custSzX = pr;
-    }
+    };
 
     PrSet.prototype.setCustSzY = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PrSetCustSzY, this.getCustSzY(), pr));
       this.custSzY = pr;
-    }
+    };
 
     PrSet.prototype.setCustT = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCustT, this.getCustT(), pr));
       this.custT = pr;
-    }
+    };
 
     PrSet.prototype.setLoCatId = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetLoCatId, this.getLoCatId(), pr));
       this.loCatId = pr;
-    }
+    };
 
     PrSet.prototype.setLoTypeId = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetLoTypeId, this.getLoTypeId(), pr));
       this.loTypeId = pr;
-    }
+    };
 
     PrSet.prototype.setPhldr = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetPhldr, this.getPhldr(), pr));
       this.phldr = pr;
-    }
+    };
 
     PrSet.prototype.setPhldrT = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetPhldrT, this.getPhldrT(), pr));
       this.phldrT = pr;
-    }
+    };
 
     PrSet.prototype.setPresAssocID = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetPresAssocID, this.getPresAssocID(), pr));
       this.presAssocID = pr;
-    }
+    };
 
     PrSet.prototype.setPresName = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetPresName, this.getPresName(), pr));
       this.presName = pr;
-    }
+    };
     PrSet.prototype.setPresStyleCnt = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PrSetPresStyleCnt, this.getPresStyleCnt(), pr));
       this.presStyleCnt = pr;
-    }
+    };
 
     PrSet.prototype.setPresStyleIdx = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_PrSetPresStyleIdx, this.getPresStyleIdx(), pr));
       this.presStyleIdx = pr;
-    }
+    };
 
     PrSet.prototype.setPresStyleLbl = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetPresStyleLbl, this.getPresStyleLbl(), pr));
       this.presStyleLbl = pr;
-    }
+    };
 
     PrSet.prototype.setQsCatId = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetQsCatId, this.getQsCatId(), pr));
       this.qsCatId = pr;
-    }
+    };
 
     PrSet.prototype.setQsTypeId = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_PrSetQsTypeId, this.getQsTypeId(), pr));
       this.qsTypeId = pr;
-    }
+    };
 
     PrSet.prototype.setStyle = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PrSetStyle, this.getStyle(), oPr));
       this.style = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     PrSet.prototype.setPresLayoutVars = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_PrSetPresLayoutVars, this.getPresLayoutVars(), oPr));
       this.presLayoutVars = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     PrSet.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setCoherent3DOff(this.getCoherent3DOff());
@@ -2212,127 +2501,127 @@ Because of this, the display is sometimes not correct.
       if (this.getPresLayoutVars()) {
         oCopy.setPresLayoutVars(this.presLayoutVars.createDuplicate(oIdMap));
       }
-    }
+    };
 
     PrSet.prototype.getCoherent3DOff = function () {
       return this.coherent3DOff;
-    }
+    };
 
     PrSet.prototype.getCsCatId = function () {
       return this.csCatId;
-    }
+    };
 
     PrSet.prototype.getCsTypeId = function () {
       return this.csTypeId;
-    }
+    };
 
     PrSet.prototype.getCustAng = function () {
       return this.custAng;
-    }
+    };
 
     PrSet.prototype.getCustFlipHor = function () {
       return this.custFlipHor;
-    }
+    };
 
     PrSet.prototype.getCustFlipVert = function () {
       return this.custFlipVert;
-    }
+    };
 
     PrSet.prototype.getCustLinFactNeighborX = function () {
       return this.custLinFactNeighborX;
-    }
+    };
 
     PrSet.prototype.getCustLinFactNeighborY = function () {
       return this.custLinFactNeighborY;
-    }
+    };
 
     PrSet.prototype.getCustLinFactX = function () {
       return this.custLinFactX;
-    }
+    };
 
     PrSet.prototype.getCustLinFactY = function () {
       return this.custLinFactY;
-    }
+    };
 
     PrSet.prototype.getCustRadScaleInc = function () {
       return this.custRadScaleInc;
-    }
+    };
 
     PrSet.prototype.getCustRadScaleRad = function () {
       return this.custRadScaleRad;
-    }
+    };
 
     PrSet.prototype.getCustScaleX = function () {
       return this.custScaleX;
-    }
+    };
 
     PrSet.prototype.getCustScaleY = function () {
       return this.custScaleY;
-    }
+    };
 
     PrSet.prototype.getCustSzX = function () {
       return this.custSzX;
-    }
+    };
 
     PrSet.prototype.getCustSzY = function () {
       return this.custSzY;
-    }
+    };
 
     PrSet.prototype.getCustT = function () {
       return this.custT;
-    }
+    };
 
     PrSet.prototype.getLoCatId = function () {
       return this.loCatId;
-    }
+    };
 
     PrSet.prototype.getLoTypeId = function () {
       return this.loTypeId;
-    }
+    };
 
     PrSet.prototype.getPhldr = function () {
       return this.phldr;
-    }
+    };
 
     PrSet.prototype.getPhldrT = function () {
       return this.phldrT;
-    }
+    };
 
     PrSet.prototype.getPresAssocID = function () {
       return this.presAssocID;
-    }
+    };
 
     PrSet.prototype.getPresName = function () {
       return this.presName;
-    }
+    };
 
     PrSet.prototype.getPresStyleCnt = function () {
       return this.presStyleCnt;
-    }
+    };
 
     PrSet.prototype.getPresStyleIdx = function () {
       return this.presStyleIdx;
-    }
+    };
 
     PrSet.prototype.getPresStyleLbl = function () {
       return this.presStyleLbl;
-    }
+    };
 
     PrSet.prototype.getQsCatId = function () {
       return this.qsCatId;
-    }
+    };
 
     PrSet.prototype.getQsTypeId = function () {
       return this.qsTypeId;
-    }
+    };
 
     PrSet.prototype.getStyle = function () {
       return this.style;
-    }
+    };
 
     PrSet.prototype.getPresLayoutVars = function () {
       return this.presLayoutVars;
-    }
+    };
 
     PrSet.prototype.privateWriteAttributes = function(pWriter) {
       pWriter._WriteBool2(1, this.coherent3DOff);
@@ -2420,7 +2709,82 @@ Because of this, the display is sometimes not correct.
 
     PrSet.prototype.getChildren = function() {
       return [this.presLayoutVars, this.style];
-    }
+    };
+    PrSet.prototype.readChildXml = function (name, reader) {
+      if ("presLayoutVars" === name) {
+        this.setPresLayoutVars(new VarLst());
+        this.presLayoutVars.fromXml(reader);
+      }
+      else if ("style" === name) {
+       this.setStyle(new AscFormat.CShapeStyle());
+       this.style.fromXml(reader);
+      }
+    };
+    PrSet.prototype.readAttrXml = function (name, reader) {
+      if(name === "coherent3DOff") this.setCoherent3DOff(reader.GetValueBool());
+      else if(name === "csCatId") this.setCsCatId(reader.GetValue());
+      else if(name === "csTypeId") this.setCsTypeId(reader.GetValue());
+      else if(name === "custAng") this.setCustAng(reader.GetValueInt() * AscFormat.cToRad);
+      else if(name === "custFlipHor") this.setCustFlipHor(reader.GetValueBool());
+      else if(name === "custFlipVert") this.setCustFlipVert(reader.GetValueBool());
+      else if(name === "custLinFactNeighborX") this.setCustLinFactNeighborX(reader.GetValueInt()/100000);
+      else if(name === "custLinFactNeighborY") this.setCustLinFactNeighborY(reader.GetValueInt()/100000);
+      else if(name === "custLinFactX") this.setCustLinFactX(reader.GetValueInt() / 100000);
+      else if(name === "custLinFactY") this.setCustLinFactY(reader.GetValueInt() / 100000);
+      else if(name === "custRadScaleInc") this.setCustRadScaleInc(reader.GetValueInt());
+      else if(name === "custRadScaleRad") this.setCustRadScaleRad(reader.GetValueInt());
+      else if(name === "custScaleX") this.setCustScaleX(reader.GetValueInt() / 100000);
+      else if(name === "custScaleY") this.setCustScaleY(reader.GetValueInt() / 100000);
+      else if(name === "custSzX") this.setCustSzX(reader.GetValueInt());
+      else if(name === "custSzY") this.setCustSzY(reader.GetValueInt());
+      else if(name === "custT") this.setCustT(reader.GetValueBool());
+      else if(name === "loCatId") this.setLoCatId(reader.GetValue());
+      else if(name === "loTypeId") this.setLoTypeId(reader.GetValue());
+      else if(name === "phldr") this.setPhldr(reader.GetValueBool());
+      else if(name === "phldrT") this.setPhldrT(reader.GetValue());
+      else if(name === "presAssocID") this.setPresAssocID(reader.GetValue());
+      else if(name === "presName") this.setPresName(reader.GetValue());
+      else if(name === "presStyleCnt") this.setPresStyleCnt(reader.GetValueInt());
+      else if(name === "presStyleIdx") this.setPresStyleIdx(reader.GetValueInt());
+      else if(name === "presStyleLbl") this.setPresStyleLbl(reader.GetValue());
+      else if(name === "qsCatId") this.setQsCatId(reader.GetValue());
+      else if(name === "qsTypeId") this.setQsTypeId(reader.GetValue());
+    };
+    PrSet.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:prSet");
+      writer.WriteXmlNullableAttributeString("loTypeId", this.loTypeId);
+      writer.WriteXmlNullableAttributeString("loCatId", this.loCatId);
+      writer.WriteXmlNullableAttributeString("qsTypeId", this.qsTypeId);
+      writer.WriteXmlNullableAttributeString("qsCatId", this.qsCatId);
+      writer.WriteXmlNullableAttributeBool("coherent3DOff", this.coherent3DOff);
+      writer.WriteXmlNullableAttributeString("csTypeId", this.csTypeId);
+      writer.WriteXmlNullableAttributeString("csCatId", this.csCatId);
+      writer.WriteXmlNullableAttributeBool("phldr", this.phldr);
+      writer.WriteXmlNullableAttributeString("phldrT", this.phldrT);
+      writer.WriteXmlNullableAttributeInt("custAng", (this.custAng/AscFormat.cToRad + 0.5) >> 0);
+      writer.WriteXmlNullableAttributeBool("custFlipHor", this.custFlipHor);
+      writer.WriteXmlNullableAttributeBool("custFlipVert", this.custFlipVert);
+      writer.WriteXmlNullableAttributeInt("custLinFactNeighborX", (this.custLinFactNeighborX * 100000 + 0.5) >> 0 );
+      writer.WriteXmlNullableAttributeInt("custLinFactNeighborY", (this.custLinFactNeighborY * 100000 + 0.5) >> 0 );
+      writer.WriteXmlNullableAttributeInt("custLinFactX", (this.custLinFactX * 100000 + 0.5 ) >> 0.5);
+      writer.WriteXmlNullableAttributeInt("custLinFactY", (this.custLinFactY * 100000 + 0.5 ) >> 0.5);
+      writer.WriteXmlNullableAttributeInt("custRadScaleInc", this.custRadScaleInc);
+      writer.WriteXmlNullableAttributeInt("custRadScaleRad", this.custRadScaleRad);
+      writer.WriteXmlNullableAttributeInt("custScaleX", (this.custScaleX * 100000 + 0.5) >> 0);
+      writer.WriteXmlNullableAttributeInt("custScaleY", (this.custScaleY * 100000 + 0.5) >> 0);
+      writer.WriteXmlNullableAttributeInt("custSzX", this.custSzX);
+      writer.WriteXmlNullableAttributeInt("custSzY", this.custSzY);
+      writer.WriteXmlNullableAttributeBool("custT", this.custT);
+      writer.WriteXmlNullableAttributeString("presAssocID", this.presAssocID);
+      writer.WriteXmlNullableAttributeString("presName", this.presName);
+      writer.WriteXmlNullableAttributeString("presStyleLbl", this.presStyleLbl);
+      writer.WriteXmlNullableAttributeInt("presStyleIdx", this.presStyleIdx);
+      writer.WriteXmlNullableAttributeInt("presStyleCnt", this.presStyleCnt);
+      writer.WriteXmlAttributesEnd();
+      if (this.presLayoutVars) this.presLayoutVars.toXml(writer);
+      if (this.style) this.style.toXml(writer);
+      writer.WriteXmlNodeEnd("dgm:prSet");
+    };
 
 
 
@@ -2489,53 +2853,53 @@ Because of this, the display is sometimes not correct.
     LayoutDef.prototype.setDefStyle = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefDefStyle, this.getDefStyle(), pr));
       this.defStyle = pr;
-    }
+    };
 
     LayoutDef.prototype.setMinVer = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefMinVer, this.getMinVer(), pr));
       this.minVer = pr;
-    }
+    };
 
     LayoutDef.prototype.setUniqueId = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutDefUniqueId, this.getUniqueId(), pr));
       this.uniqueId = pr;
-    }
+    };
 
     LayoutDef.prototype.setCatLst = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefCatLst, this.getCatLst(), oPr));
       this.catLst = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     LayoutDef.prototype.setClrData = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefClrData, this.getClrData(), oPr));
       this.clrData = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     LayoutDef.prototype.setExtLst = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     LayoutDef.prototype.setLayoutNode = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefLayoutNode, this.getLayoutNode(), oPr));
       this.layoutNode = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     LayoutDef.prototype.setSampData = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefSampData, this.getSampData(), oPr));
       this.sampData = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     LayoutDef.prototype.setStyleData = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefStyleData, this.getStyleData(), oPr));
       this.styleData = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     LayoutDef.prototype.setTitle = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_LayoutDefTitle, this.getTitle(), oPr));
@@ -2551,47 +2915,47 @@ Because of this, the display is sometimes not correct.
 
     LayoutDef.prototype.getDefStyle = function () {
       return this.defStyle;
-    }
+    };
 
     LayoutDef.prototype.getMinVer = function () {
       return this.minVer;
-    }
+    };
 
     LayoutDef.prototype.getUniqueId = function () {
       return this.uniqueId;
-    }
+    };
 
     LayoutDef.prototype.getCatLst = function () {
       return this.catLst;
-    }
+    };
 
     LayoutDef.prototype.getClrData = function () {
       return this.clrData;
-    }
+    };
 
     LayoutDef.prototype.getDesc = function () {
       return this.desc;
-    }
+    };
 
     LayoutDef.prototype.getExtLst = function () {
       return this.extLst;
-    }
+    };
 
     LayoutDef.prototype.getLayoutNode = function () {
       return this.layoutNode;
-    }
+    };
 
     LayoutDef.prototype.getSampData = function () {
       return this.sampData;
-    }
+    };
 
     LayoutDef.prototype.getStyleData = function () {
       return this.styleData;
-    }
+    };
 
     LayoutDef.prototype.getTitle = function () {
       return this.title;
-    }
+    };
 
     LayoutDef.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setDefStyle(this.getDefStyle());
@@ -2621,7 +2985,7 @@ Because of this, the display is sometimes not correct.
       if (this.getDesc()) {
         oCopy.setDesc(this.getDesc().createDuplicate(oIdMap));
       }
-    }
+    };
 
     LayoutDef.prototype.privateWriteAttributes = function(pWriter) {
       pWriter._WriteString2(0, this.uniqueId);
@@ -2690,13 +3054,77 @@ Because of this, the display is sometimes not correct.
     LayoutDef.prototype.getChildren = function() {
       return [this.title, this.desc, this.catLst, this.sampData, this.styleData, this.clrData, this.layoutNode];
     };
-
     LayoutDef.prototype.startAlgorithm = function (pointTree) {
       var entry = this.getLayoutNode();
       if (entry) {
         entry.startAlgorithm(pointTree);
       }
-    }
+    };
+    LayoutDef.prototype.readChildXml = function (name, reader) {
+      if ("catLst" === name)
+      {
+        this.setCatLst(new CatLst());
+        this.catLst.fromXml(reader);
+      }
+    else if ("desc" === name)
+      {
+        this.setDesc(new Desc());
+        this.desc.fromXml(reader);
+      }
+    else if ("title" === name)
+      {
+        this.setTitle(new DiagramTitle());
+        this.title.fromXml(reader);
+      }
+    else if ("clrData" === name)
+      {
+        this.setClrData(new ClrData());
+        this.clrData.fromXml(reader);
+      }
+    else if ("layoutNode" === name)
+      {
+        this.setLayoutNode(new LayoutNode());
+        this.layoutNode.fromXml(reader);
+      }
+    else if ("sampData" === name)
+      {
+        this.setSampData(new SampData());
+        this.sampData.fromXml(reader);
+      }
+    else if ("styleData" === name)
+      {
+        this.setStyleData(new StyleData());
+        this.styleData.fromXml(reader);
+      }
+    };
+    LayoutDef.prototype.readAttrXml = function (name, reader) {
+      if (name === "uniqueId") this.setUniqueId(reader.GetValue());
+      else if (name === "minVer") this.setMinVer(reader.GetValue());
+      else if (name === "defStyle") this.setDefStyle(reader.GetValue());
+    };
+    LayoutDef.prototype.toXml = function(writer) {
+
+      writer.WriteXmlString(AscCommonWord.g_sXmlHeader);
+      writer.WriteXmlNodeStart("dgm:layoutDef");
+      writer.WriteXmlAttributeString("xmlns:dgm", "http://schemas.openxmlformats.org/drawingml/2006/diagram");
+      writer.WriteXmlAttributeString("xmlns:a", "http://schemas.openxmlformats.org/drawingml/2006/main");
+      writer.WriteXmlAttributeString("xmlns:r", "http://schemas.openxmlformats.org/officeDocument/2006/relationships");
+
+      writer.WriteXmlNullableAttributeString("uniqueId", this.uniqueId);
+      writer.WriteXmlNullableAttributeString("minVer", this.minVer);
+      writer.WriteXmlNullableAttributeString("defStyle", this.defStyle);
+      writer.WriteXmlAttributesEnd();
+
+      if (this.title) this.title.toXml(writer);
+      if (this.desc) this.desc.toXml(writer);
+      if (this.catLst) this.catLst.toXml(writer);
+      if (this.sampData) this.sampData.toXml(writer);
+      if (this.styleData) this.styleData.toXml(writer);
+      if (this.clrData) this.clrData.toXml(writer);
+      if (this.layoutNode) this.layoutNode.toXml(writer);
+
+      writer.WriteXmlNodeEnd("dgm:layoutDef");
+    };
 
 
     function CatLst() {
@@ -2719,6 +3147,18 @@ Because of this, the display is sometimes not correct.
           break;
         }
       }
+    };
+    CatLst.prototype.readChildXml = function (name, reader) {
+    };
+    CatLst.prototype.readAttrXml = function (name, reader) {
+      if ("cat" === name) {
+        var oChild = new SCat();
+        oChild.fromXml(reader);
+        this.addToLst(this.list.length, oChild);
+      }
+    };
+    CatLst.prototype.toXml = function(writer) {
+      CCommonDataList.prototype.toXml(writer, "dgm:catLst");
     };
 
     changesFactory[AscDFH.historyitem_SCatPri] = CChangeLong;
@@ -2773,6 +3213,19 @@ Because of this, the display is sometimes not correct.
       else if (1 === nType) this.setPri(oStream.GetULong());
     };
     SCat.prototype.readChild = function(nType, pReader) {
+    };
+    SCat.prototype.readAttrXml = function (name, reader) {
+      if (name === "type") this.setType(reader.GetValue());
+      else if (name === "pri") this.setPri(reader.GetValueUInt());
+    };
+    SCat.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:cat");
+
+
+      writer.WriteXmlNullableAttributeString("type", this.type);
+      writer.WriteXmlNullableAttributeUInt("pri", this.pri);
+      writer.WriteXmlAttributesEnd();
+      writer.WriteXmlNodeEnd("dgm:cat");
     };
 
 
@@ -2846,6 +3299,24 @@ Because of this, the display is sometimes not correct.
     ClrData.prototype.getChildren = function() {
       return [this.dataModel];
     };
+    ClrData.prototype.readChildXml = function (name, reader) {
+      if ("dataModel" === name)
+      {
+        this.setDataModel(new DataModel());
+        this.dataModel.fromXml(reader);
+      }
+    };
+    ClrData.prototype.readAttrXml = function (name, reader) {
+      if (name === "useDef") this.setUseDef(reader.GetValueBool());
+    };
+    ClrData.prototype.toXml = function(writer, name) {
+      writer.WriteXmlNodeStart(name);
+      writer.WriteXmlNullableAttributeBool("useDef", this.useDef);
+      writer.WriteXmlAttributesEnd();
+      if (this.dataModel)
+        this.dataModel.toXml(writer);
+      writer.WriteXmlNodeEnd(name);
+    };
 
 
     changesFactory[AscDFH.historyitem_DescLang] = CChangeString;
@@ -2862,9 +3333,7 @@ Because of this, the display is sometimes not correct.
       this.lang = null;
       this.val = null;
     }
-
     InitClass(Desc, CBaseFormatObject, AscDFH.historyitem_type_Desc);
-
     Desc.prototype.setLang = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_DescLang, this.getLang(), pr));
       this.lang = pr;
@@ -2901,6 +3370,17 @@ Because of this, the display is sometimes not correct.
     };
     Desc.prototype.readChild = function(nType, pReader) {
     };
+    Desc.prototype.readAttrXml = function (name, reader) {
+      if (name === "lang") this.setLang(reader.GetValue());
+      else if (name === "val") this.setVal(reader.GetValue());
+    };
+    Desc.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:desc");
+      writer.WriteXmlNullableAttributeString("lang", this.lang);
+      writer.WriteXmlNullableAttributeString("val", this.val);
+      writer.WriteXmlAttributesEnd();
+      writer.WriteXmlNodeEnd("dgm:desc");
+    };
 
 
     changesFactory[AscDFH.historyitem_LayoutNodeChOrder] = CChangeLong;
@@ -2920,6 +3400,9 @@ Because of this, the display is sometimes not correct.
       oClass.styleLbl = value;
     };
 
+    const EChOrder_chOrderB = 0;
+    const EChOrder_chOrderT = 0;
+
     function LayoutNode() {
       CCommonDataList.call(this);
       this.chOrder = null;
@@ -2933,38 +3416,38 @@ Because of this, the display is sometimes not correct.
     LayoutNode.prototype.setChOrder = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_LayoutNodeChOrder, this.getChOrder(), pr));
       this.chOrder = pr;
-    }
+    };
 
     LayoutNode.prototype.setMoveWith = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutNodeMoveWith, this.getMoveWith(), pr));
       this.moveWith = pr;
-    }
+    };
 
     LayoutNode.prototype.setName = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutNodeName, this.getName(), pr));
       this.name = pr;
-    }
+    };
 
     LayoutNode.prototype.setStyleLbl = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_LayoutNodeStyleLbl, this.getStyleLbl(), pr));
       this.styleLbl = pr;
-    }
+    };
 
     LayoutNode.prototype.getChOrder = function () {
       return this.chOrder;
-    }
+    };
 
     LayoutNode.prototype.getMoveWith = function () {
       return this.moveWith;
-    }
+    };
 
     LayoutNode.prototype.getName = function () {
       return this.name;
-    }
+    };
 
     LayoutNode.prototype.getStyleLbl = function () {
       return this.styleLbl;
-    }
+    };
 
     LayoutNode.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setChOrder(this.getChOrder());
@@ -3040,7 +3523,7 @@ Because of this, the display is sometimes not correct.
       return this.list.reduce(function (save, next) {
         return next instanceof ConstrLst ? next : save;
       }, undefined);
-    }
+    };
 
     LayoutNode.prototype.startAlgorithm = function (pointTree) {
       if (pointTree) {
@@ -3065,11 +3548,67 @@ Because of this, the display is sometimes not correct.
           });
         }
       }
-    }
+    };
 
     LayoutNode.prototype.findPoint = function (pointInfo) {
 
-    }
+    };
+    LayoutNode.prototype.readChildXml = function (name, reader) {
+      let oElement = null;
+      switch (name) {
+        case "alg": oElement = new Alg(); break;
+        case "choose": oElement = new Choose(); break;
+        case "constrLst": oElement = new ConstrLst(); break;
+        case "forEach": oElement = new ForEach(); break;
+        case "layoutNode": oElement = new LayoutNode(); break;
+        case "presOf": oElement = new PresOf(); break;
+        case "ruleLst": oElement = new RuleLst(); break;
+        case "shape": oElement = new SShape(); break;
+        case "varLst": oElement = new VarLst(); break;
+      }
+      if(oElement) {
+        oElement.fromXml(reader);
+        this.addToLst(this.list.length, oElement);
+      }
+    };
+    LayoutNode.prototype.readAttrXml = function (name, reader) {
+      if (name === "name") this.setName(reader.GetValue());
+      else if (name === "styleLbl") this.setStyleLbl(reader.GetValue());
+      else if (name === "moveWith") this.setMoveWith(reader.GetValue());
+      else if (name === "chOrder") {
+          let sValue = reader.GetValue();
+          if(sValue === "b") {
+            this.setChOrder(EChOrder_chOrderB);
+          }
+          else if(sValue === "t") {
+            this.setChOrder(EChOrder_chOrderT);
+          }
+      }
+    };
+    LayoutNode.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:layoutNode");
+      writer.WriteXmlNullableAttributeString("name", this.name);
+      writer.WriteXmlNullableAttributeString("styleLbl", this.styleLbl);
+      writer.WriteXmlNullableAttributeString("moveWith", this.moveWith);
+      if (this.chOrder !== null) {
+        if(this.chOrder === EChOrder_chOrderB) {
+          writer.WriteXmlAttributeString("chOrder", "b");
+        }
+        if(this.chOrder === EChOrder_chOrderT) {
+          writer.WriteXmlAttributeString("chOrder", "t");
+        }
+      }
+      writer.WriteXmlAttributesEnd();
+
+      for (let i = 0; i < this.list.length; ++i)
+      {
+        if (!this.list[i]) continue;
+
+        this.list[i].toXml(writer);
+      }
+
+      writer.WriteXmlNodeEnd("dgm:layoutNode");
+    };
 
 
     changesFactory[AscDFH.historyitem_AlgRev] = CChangeLong;
@@ -3183,6 +3722,119 @@ Because of this, the display is sometimes not correct.
           pReader.SkipRecord();
           break;
       }
+    };
+    Alg.prototype.readChildXml = function (name, reader) {
+      if(name === "param") {
+        var oChild = new Param();
+        oChild.fromXml(reader);
+        this.addToLstParam(this.param.length, oChild);
+      }
+    };
+    Alg.prototype.readAttrXml = function (name, reader) {
+      if (name === "rev") this.setRev(reader.GetValueUInt());
+      else if (name === "type") {
+        let sValue = reader.GetValue();
+        switch (sValue) {
+          case "composite": {
+            this.setType(Alg_type_composite);
+            break;
+          }
+          case "conn": {
+            this.setType(Alg_type_conn);
+            break;
+          }
+          case "cycle": {
+            this.setType(Alg_type_cycle);
+            break;
+          }
+          case "hierChild": {
+            this.setType(Alg_type_hierChild);
+            break;
+          }
+          case "hierRoot": {
+            this.setType(Alg_type_hierRoot);
+            break;
+          }
+          case "lin": {
+            this.setType(Alg_type_lin);
+            break;
+          }
+          case "pyra": {
+            this.setType(Alg_type_pyra);
+            break;
+          }
+          case "snake": {
+            this.setType(Alg_type_snake);
+            break;
+          }
+          case "sp": {
+            this.setType(Alg_type_sp);
+            break;
+          }
+          case "tx": {
+            this.setType(Alg_type_tx);
+            break;
+          }
+        }
+      }
+    };
+    Alg.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:alg");
+      if (this.type !== null) {
+        let sValue = null;
+        switch (this.type) {
+          case Alg_type_composite: {
+            sValue = "composite";
+            break;
+          }
+          case Alg_type_conn: {
+            sValue = "composite";
+            break;
+          }
+          case Alg_type_cycle: {
+            sValue = "composite";
+            break;
+          }
+          case Alg_type_hierChild: {
+            sValue = "composite";
+            break;
+          }
+          case Alg_type_hierRoot: {
+            sValue = "composite";
+            break;
+          }
+          case Alg_type_lin: {
+            sValue = "composite";
+            break;
+          }
+          case Alg_type_pyra: {
+            sValue = "composite";
+            break;
+          }
+          case Alg_type_snake: {
+            sValue = "composite";
+            break;
+          }
+          case Alg_type_sp: {
+            sValue = "composite";
+            break;
+          }
+          case Alg_type_tx: {
+            sValue = "composite";
+            break;
+          }
+        }
+        if(sValue !== null) {
+          writer.WriteXmlAttributeString("type", sValue);
+        }
+      }
+      writer.WriteXmlNullableAttributeUInt("rev", this.rev);
+      writer.WriteXmlAttributesEnd();
+
+      for (let i = 0; i < this.param.length; ++i)
+        this.param[i].toXml(writer);
+
+      writer.WriteXmlNodeEnd("dgm:alg");
     };
 
 
@@ -3376,326 +4028,326 @@ Because of this, the display is sometimes not correct.
     ParameterVal.prototype.setArrowheadStyle = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValArrowheadStyle, this.getArrowheadStyle(), pr));
       this.arrowheadStyle = pr;
-    }
+    };
 
     ParameterVal.prototype.setAutoTextRotation = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValAutoTextRotation, this.getAutoTextRotation(), pr));
       this.autoTextRotation = pr;
-    }
+    };
 
     ParameterVal.prototype.setBendPoint = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValBendPoint, this.getBendPoint(), pr));
       this.bendPoint = pr;
-    }
+    };
 
     ParameterVal.prototype.setBreakpoint = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValBreakpoint, this.getBreakpoint(), pr));
       this.breakpoint = pr;
-    }
+    };
 
     ParameterVal.prototype.setCenterShapeMapping = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValCenterShapeMapping, this.getCenterShapeMapping(), pr));
       this.centerShapeMapping = pr;
-    }
+    };
 
     ParameterVal.prototype.setChildAlignment = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValChildAlignment, this.getChildAlignment(), pr));
       this.childAlignment = pr;
-    }
+    };
 
     ParameterVal.prototype.setChildDirection = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValChildDirection, this.getChildDirection(), pr));
       this.childDirection = pr;
-    }
+    };
 
     ParameterVal.prototype.setConnectorDimension = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValConnectorDimension, this.getConnectorDimension(), pr));
       this.connectorDimension = pr;
-    }
+    };
 
     ParameterVal.prototype.setConnectorPoint = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValConnectorPoint, this.getConnectorPoint(), pr));
       this.connectorPoint = pr;
-    }
+    };
 
     ParameterVal.prototype.setConnectorRouting = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValConnectorRouting, this.getConnectorRouting(), pr));
       this.connectorRouting = pr;
-    }
+    };
 
     ParameterVal.prototype.setContinueDirection = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValContinueDirection, this.getContinueDirection(), pr));
       this.continueDirection = pr;
-    }
+    };
 
     ParameterVal.prototype.setDiagramHorizontalAlignment = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValDiagramHorizontalAlignment, this.getDiagramHorizontalAlignment(), pr));
       this.diagramHorizontalAlignment = pr;
-    }
+    };
 
     ParameterVal.prototype.setDiagramTextAlignment = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValDiagramTextAlignment, this.getDiagramTextAlignment(), pr));
       this.diagramTextAlignment = pr;
-    }
+    };
 
     ParameterVal.prototype.setFallbackDimension = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValFallbackDimension, this.getFallbackDimension(), pr));
       this.fallbackDimension = pr;
-    }
+    };
 
     ParameterVal.prototype.setFlowDirection = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValFlowDirection, this.getFlowDirection(), pr));
       this.flowDirection = pr;
-    }
+    };
 
     ParameterVal.prototype.setGrowDirection = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValGrowDirection, this.getGrowDirection(), pr));
       this.growDirection = pr;
-    }
+    };
 
     ParameterVal.prototype.setHierarchyAlignment = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValHierarchyAlignment, this.getHierarchyAlignment(), pr));
       this.hierarchyAlignment = pr;
-    }
+    };
 
     ParameterVal.prototype.setLinearDirection = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValLinearDirection, this.getLinearDirection(), pr));
       this.linearDirection = pr;
-    }
+    };
 
     ParameterVal.prototype.setNodeHorizontalAlignment = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValNodeHorizontalAlignment, this.getNodeHorizontalAlignment(), pr));
       this.nodeHorizontalAlignment = pr;
-    }
+    };
 
     ParameterVal.prototype.setNodeVerticalAlignment = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValNodeVerticalAlignment, this.getNodeVerticalAlignment(), pr));
       this.nodeVerticalAlignment = pr;
-    }
+    };
 
     ParameterVal.prototype.setOffset = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValOffset, this.getOffset(), pr));
       this.offset = pr;
-    }
+    };
 
     ParameterVal.prototype.setPyramidAccentPosition = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValPyramidAccentPosition, this.getPyramidAccentPosition(), pr));
       this.pyramidAccentPosition = pr;
-    }
+    };
 
     ParameterVal.prototype.setPyramidAccentTextMargin = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValPyramidAccentTextMargin, this.getPyramidAccentTextMargin(), pr));
       this.pyramidAccentTextMargin = pr;
-    }
+    };
 
     ParameterVal.prototype.setRotationPath = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValRotationPath, this.getRotationPath(), pr));
       this.rotationPath = pr;
-    }
+    };
 
     ParameterVal.prototype.setSecondaryChildAlignment = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValSecondaryChildAlignment, this.getSecondaryChildAlignment(), pr));
       this.secondaryChildAlignment = pr;
-    }
+    };
 
     ParameterVal.prototype.setSecondaryLinearDirection = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValSecondaryLinearDirection, this.getSecondaryLinearDirection(), pr));
       this.secondaryLinearDirection = pr;
-    }
+    };
 
     ParameterVal.prototype.setStartingElement = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValStartingElement, this.getStartingElement(), pr));
       this.startingElement = pr;
-    }
+    };
 
     ParameterVal.prototype.setTextAnchorHorizontal = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValTextAnchorHorizontal, this.getTextAnchorHorizontal(), pr));
       this.textAnchorHorizontal = pr;
-    }
+    };
 
     ParameterVal.prototype.setTextAnchorVertical = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValTextAnchorVertical, this.getTextAnchorVertical(), pr));
       this.textAnchorVertical = pr;
-    }
+    };
 
     ParameterVal.prototype.setTextBlockDirection = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValTextBlockDirection, this.getTextBlockDirection(), pr));
       this.textBlockDirection = pr;
-    }
+    };
 
     ParameterVal.prototype.setTextDirection = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValTextDirection, this.getTextDirection(), pr));
       this.textDirection = pr;
-    }
+    };
 
     ParameterVal.prototype.setVerticalAlignment = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValVerticalAlignment, this.getVerticalAlignment(), pr));
       this.verticalAlignment = pr;
-    }
+    };
 
     ParameterVal.prototype.setBool = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_ParameterValBool, this.getBool(), pr));
       this.bool = pr;
-    }
+    };
 
     ParameterVal.prototype.setDouble = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_ParameterValDouble, this.getDouble(), pr));
       this.double = pr;
-    }
+    };
 
     ParameterVal.prototype.setInt = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValInt, this.getInt(), pr));
       this.int = pr;
-    }
+    };
 
     ParameterVal.prototype.setStr = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ParameterValStr, this.getStr(), pr));
       this.str = pr;
-    }
+    };
 
     ParameterVal.prototype.getArrowheadStyle = function () {
       return this.arrowheadStyle;
-    }
+    };
 
     ParameterVal.prototype.getAutoTextRotation = function () {
       return this.autoTextRotation;
-    }
+    };
 
     ParameterVal.prototype.getBendPoint = function () {
       return this.bendPoint;
-    }
+    };
 
     ParameterVal.prototype.getBreakpoint = function () {
       return this.breakpoint;
-    }
+    };
 
     ParameterVal.prototype.getCenterShapeMapping = function () {
       return this.centerShapeMapping;
-    }
+    };
 
     ParameterVal.prototype.getChildAlignment = function () {
       return this.childAlignment;
-    }
+    };
 
     ParameterVal.prototype.getChildDirection = function () {
       return this.childDirection;
-    }
+    };
 
     ParameterVal.prototype.getConnectorDimension = function () {
       return this.connectorDimension;
-    }
+    };
 
     ParameterVal.prototype.getConnectorPoint = function () {
       return this.connectorPoint;
-    }
+    };
 
     ParameterVal.prototype.getConnectorRouting = function () {
       return this.connectorRouting;
-    }
+    };
 
     ParameterVal.prototype.getContinueDirection = function () {
       return this.continueDirection;
-    }
+    };
 
     ParameterVal.prototype.getDiagramHorizontalAlignment = function () {
       return this.diagramHorizontalAlignment;
-    }
+    };
 
     ParameterVal.prototype.getDiagramTextAlignment = function () {
       return this.diagramTextAlignment;
-    }
+    };
 
     ParameterVal.prototype.getFallbackDimension = function () {
       return this.fallbackDimension;
-    }
+    };
 
     ParameterVal.prototype.getFlowDirection = function () {
       return this.flowDirection;
-    }
+    };
 
     ParameterVal.prototype.getGrowDirection = function () {
       return this.growDirection;
-    }
+    };
 
     ParameterVal.prototype.getHierarchyAlignment = function () {
       return this.hierarchyAlignment;
-    }
+    };
 
     ParameterVal.prototype.getLinearDirection = function () {
       return this.linearDirection;
-    }
+    };
 
     ParameterVal.prototype.getNodeHorizontalAlignment = function () {
       return this.nodeHorizontalAlignment;
-    }
+    };
 
     ParameterVal.prototype.getNodeVerticalAlignment = function () {
       return this.nodeVerticalAlignment;
-    }
+    };
 
     ParameterVal.prototype.getOffset = function () {
       return this.offset;
-    }
+    };
 
     ParameterVal.prototype.getPyramidAccentPosition = function () {
       return this.pyramidAccentPosition;
-    }
+    };
 
     ParameterVal.prototype.getPyramidAccentTextMargin = function () {
       return this.pyramidAccentTextMargin;
-    }
+    };
 
     ParameterVal.prototype.getRotationPath = function () {
       return this.rotationPath;
-    }
+    };
 
     ParameterVal.prototype.getSecondaryChildAlignment = function () {
       return this.secondaryChildAlignment;
-    }
+    };
 
     ParameterVal.prototype.getSecondaryLinearDirection = function () {
       return this.secondaryLinearDirection;
-    }
+    };
 
     ParameterVal.prototype.getStartingElement = function () {
       return this.startingElement;
-    }
+    };
 
     ParameterVal.prototype.getTextAnchorHorizontal = function () {
       return this.textAnchorHorizontal;
-    }
+    };
 
     ParameterVal.prototype.getTextAnchorVertical = function () {
       return this.textAnchorVertical;
-    }
+    };
 
     ParameterVal.prototype.getTextBlockDirection = function () {
       return this.textBlockDirection;
-    }
+    };
 
     ParameterVal.prototype.getTextDirection = function () {
       return this.textDirection;
-    }
+    };
 
     ParameterVal.prototype.getVerticalAlignment = function () {
       return this.verticalAlignment;
-    }
+    };
 
     ParameterVal.prototype.getBool = function () {
       return this.bool;
-    }
+    };
 
     ParameterVal.prototype.getDouble = function () {
       return this.double;
-    }
+    };
 
     ParameterVal.prototype.getInt = function () {
       return this.int;
-    }
+    };
 
     ParameterVal.prototype.getStr = function () {
       return this.str;
-    }
+    };
 
     ParameterVal.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setArrowheadStyle(this.getArrowheadStyle());
@@ -3734,7 +4386,8 @@ Because of this, the display is sometimes not correct.
       oCopy.setDouble(this.getDouble());
       oCopy.setInt(this.getInt());
       oCopy.setStr(this.getStr());
-    }
+    };
+
 
 
     changesFactory[AscDFH.historyitem_ParamType] = CChangeLong;
@@ -3790,6 +4443,468 @@ Because of this, the display is sometimes not correct.
     };
     Param.prototype.readChild = function(nType, pReader) {
     };
+    Param.prototype.readAttrXml = function (name, reader) {
+      if ("val" === name) this.setVal(reader.GetValue());
+      else if ("type" === name) {
+        let sVal = reader.GetValue();
+        switch (sVal) {
+          case "alignTx": {
+            this.setType(Param_type_alignTx);
+            break;
+          }
+          case "ar": {
+            this.setType(Param_type_ar);
+            break;
+          }
+          case "autoTxRot": {
+            this.setType(Param_type_autoTxRot);
+            break;
+          }
+          case "begPts": {
+            this.setType(Param_type_begPts);
+            break;
+          }
+          case "begSty": {
+            this.setType(Param_type_begSty);
+            break;
+          }
+          case "bendPt": {
+            this.setType(Param_type_bendPt);
+            break;
+          }
+          case "bkpt": {
+            this.setType(Param_type_bkpt);
+            break;
+          }
+          case "bkPtFixedVal": {
+            this.setType(Param_type_bkPtFixedVal);
+            break;
+          }
+          case "chAlign": {
+            this.setType(Param_type_chAlign);
+            break;
+          }
+          case "chDir": {
+            this.setType(Param_type_chDir);
+            break;
+          }
+          case "connRout": {
+            this.setType(Param_type_connRout);
+            break;
+          }
+          case "contDir": {
+            this.setType(Param_type_contDir);
+            break;
+          }
+          case "ctrShpMap": {
+            this.setType(Param_type_ctrShpMap);
+            break;
+          }
+          case "dim": {
+            this.setType(Param_type_dim);
+            break;
+          }
+          case "dstNode": {
+            this.setType(Param_type_dstNode);
+            break;
+          }
+          case "endPts": {
+            this.setType(Param_type_endPts);
+            break;
+          }
+          case "endSty": {
+            this.setType(Param_type_endSty);
+            break;
+          }
+          case "fallback": {
+            this.setType(Param_type_fallback);
+            break;
+          }
+          case "flowDir": {
+            this.setType(Param_type_flowDir);
+            break;
+          }
+          case "grDir": {
+            this.setType(Param_type_grDir);
+            break;
+          }
+          case "hierAlign": {
+            this.setType(Param_type_hierAlign);
+            break;
+          }
+          case "horzAlign": {
+            this.setType(Param_type_horzAlign);
+            break;
+          }
+          case "linDir": {
+            this.setType(Param_type_linDir);
+            break;
+          }
+          case "lnSpAfChP": {
+            this.setType(Param_type_lnSpAfChP);
+            break;
+          }
+          case "lnSpAfParP": {
+            this.setType(Param_type_lnSpAfParP);
+            break;
+          }
+          case "lnSpCh": {
+            this.setType(Param_type_lnSpCh);
+            break;
+          }
+          case "lnSpPar": {
+            this.setType(Param_type_lnSpPar);
+            break;
+          }
+          case "nodeHorzAlign": {
+            this.setType(Param_type_nodeHorzAlign);
+            break;
+          }
+          case "nodeVertAlign": {
+            this.setType(Param_type_nodeVertAlign);
+            break;
+          }
+          case "off": {
+            this.setType(Param_type_off);
+            break;
+          }
+          case "parTxLTRAlign": {
+            this.setType(Param_type_parTxLTRAlign);
+            break;
+          }
+          case "parTxRTLAlign": {
+            this.setType(Param_type_parTxRTLAlign);
+            break;
+          }
+          case "pyraAcctBkgdNode": {
+            this.setType(Param_type_pyraAcctBkgdNode);
+            break;
+          }
+          case "pyraAcctPos": {
+            this.setType(Param_type_pyraAcctPos);
+            break;
+          }
+          case "pyraAcctTxMar": {
+            this.setType(Param_type_pyraAcctTxMar);
+            break;
+          }
+          case "pyraAcctTxNode": {
+            this.setType(Param_type_pyraAcctTxNode);
+            break;
+          }
+          case "pyraLvlNode": {
+            this.setType(Param_type_pyraLvlNode);
+            break;
+          }
+          case "rotPath": {
+            this.setType(Param_type_rotPath);
+            break;
+          }
+          case "rtShortDist": {
+            this.setType(Param_type_rtShortDist);
+            break;
+          }
+          case "secChAlign": {
+            this.setType(Param_type_secChAlign);
+            break;
+          }
+          case "secLinDir": {
+            this.setType(Param_type_secLinDir);
+            break;
+          }
+          case "shpTxLTRAlignCh": {
+            this.setType(Param_type_shpTxLTRAlignCh);
+            break;
+          }
+          case "shpTxRTLAlignCh": {
+            this.setType(Param_type_shpTxRTLAlignCh);
+            break;
+          }
+          case "spanAng": {
+            this.setType(Param_type_spanAng);
+            break;
+          }
+          case "srcNode": {
+            this.setType(Param_type_srcNode);
+            break;
+          }
+          case "stAng": {
+            this.setType(Param_type_stAng);
+            break;
+          }
+          case "stBulletLvl": {
+            this.setType(Param_type_stBulletLvl);
+            break;
+          }
+          case "stElem": {
+            this.setType(Param_type_stElem);
+            break;
+          }
+          case "txAnchorHorz": {
+            this.setType(Param_type_txAnchorHorz);
+            break;
+          }
+          case "txAnchorHorzCh": {
+            this.setType(Param_type_txAnchorHorzCh);
+            break;
+          }
+          case "txAnchorVert": {
+            this.setType(Param_type_txAnchorVert);
+            break;
+          }
+          case "txAnchorVertCh": {
+            this.setType(Param_type_txAnchorVertCh);
+            break;
+          }
+          case "txBlDir": {
+            this.setType(Param_type_txBlDir);
+            break;
+          }
+          case "txDir": {
+            this.setType(Param_type_txDir);
+            break;
+          }
+          case "vertAlign": {
+            this.setType(Param_type_vertAlign);
+            break;
+          }
+        }
+      }
+    };
+    Param.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:param");
+      if(this.type !== null) {
+        let sValue = null;
+        switch (this.type) {
+          case Param_type_alignTx: {
+            sValue = "alignTx";
+            break;
+          }
+          case Param_type_ar: {
+            sValue = "ar";
+            break;
+          }
+          case Param_type_autoTxRot: {
+            sValue = "autoTxRot";
+            break;
+          }
+          case Param_type_begPts: {
+            sValue = "begPts";
+            break;
+          }
+          case Param_type_begSty: {
+            sValue = "begSty";
+            break;
+          }
+          case Param_type_bendPt: {
+            sValue = "bendPt";
+            break;
+          }
+          case Param_type_bkpt: {
+            sValue = "bkpt";
+            break;
+          }
+          case Param_type_bkPtFixedVal: {
+            sValue = "bkPtFixedVal";
+            break;
+          }
+          case Param_type_chAlign: {
+            sValue = "chAlign";
+            break;
+          }
+          case Param_type_chDir: {
+            sValue = "chDir";
+            break;
+          }
+          case Param_type_connRout: {
+            sValue = "connRout";
+            break;
+          }
+          case Param_type_contDir: {
+            sValue = "contDir";
+            break;
+          }
+          case Param_type_ctrShpMap: {
+            sValue = "ctrShpMap";
+            break;
+          }
+          case Param_type_dim: {
+            sValue = "dim";
+            break;
+          }
+          case Param_type_dstNode: {
+            sValue = "dstNode";
+            break;
+          }
+          case Param_type_endPts: {
+            sValue = "endPts";
+            break;
+          }
+          case Param_type_endSty: {
+            sValue = "endSty";
+            break;
+          }
+          case Param_type_fallback: {
+            sValue = "fallback";
+            break;
+          }
+          case Param_type_flowDir: {
+            sValue = "flowDir";
+            break;
+          }
+          case Param_type_grDir: {
+            sValue = "grDir";
+            break;
+          }
+          case Param_type_hierAlign: {
+            sValue = "hierAlign";
+            break;
+          }
+          case Param_type_horzAlign: {
+            sValue = "horzAlign";
+            break;
+          }
+          case Param_type_linDir: {
+            sValue = "linDir";
+            break;
+          }
+          case Param_type_lnSpAfChP: {
+            sValue = "lnSpAfChP";
+            break;
+          }
+          case Param_type_lnSpAfParP: {
+            sValue = "lnSpAfParP";
+            break;
+          }
+          case Param_type_lnSpCh: {
+            sValue = "lnSpCh";
+            break;
+          }
+          case Param_type_lnSpPar: {
+            sValue = "lnSpPar";
+            break;
+          }
+          case Param_type_nodeHorzAlign: {
+            sValue = "nodeHorzAlign";
+            break;
+          }
+          case Param_type_nodeVertAlign: {
+            sValue = "nodeVertAlign";
+            break;
+          }
+          case Param_type_off: {
+            sValue = "off";
+            break;
+          }
+          case Param_type_parTxLTRAlign: {
+            sValue = "parTxLTRAlign";
+            break;
+          }
+          case Param_type_parTxRTLAlign: {
+            sValue = "parTxRTLAlign";
+            break;
+          }
+          case Param_type_pyraAcctBkgdNode: {
+            sValue = "pyraAcctBkgdNode";
+            break;
+          }
+          case Param_type_pyraAcctPos: {
+            sValue = "pyraAcctPos";
+            break;
+          }
+          case Param_type_pyraAcctTxMar: {
+            sValue = "pyraAcctTxMar";
+            break;
+          }
+          case Param_type_pyraAcctTxNode: {
+            sValue = "pyraAcctTxNode";
+            break;
+          }
+          case Param_type_pyraLvlNode: {
+            sValue = "pyraLvlNode";
+            break;
+          }
+          case Param_type_rotPath: {
+            sValue = "rotPath";
+            break;
+          }
+          case Param_type_rtShortDist: {
+            sValue = "rtShortDist";
+            break;
+          }
+          case Param_type_secChAlign: {
+            sValue = "secChAlign";
+            break;
+          }
+          case Param_type_secLinDir: {
+            sValue = "secLinDir";
+            break;
+          }
+          case Param_type_shpTxLTRAlignCh: {
+            sValue = "shpTxLTRAlignCh";
+            break;
+          }
+          case Param_type_shpTxRTLAlignCh: {
+            sValue = "shpTxRTLAlignCh";
+            break;
+          }
+          case Param_type_spanAng: {
+            sValue = "spanAng";
+            break;
+          }
+          case Param_type_srcNode: {
+            sValue = "srcNode";
+            break;
+          }
+          case Param_type_stAng: {
+            sValue = "stAng";
+            break;
+          }
+          case Param_type_stBulletLvl: {
+            sValue = "stBulletLvl";
+            break;
+          }
+          case Param_type_stElem: {
+            sValue = "stElem";
+            break;
+          }
+          case Param_type_txAnchorHorz: {
+            sValue = "txAnchorHorz";
+            break;
+          }
+          case Param_type_txAnchorHorzCh: {
+            sValue = "txAnchorHorzCh";
+            break;
+          }
+          case Param_type_txAnchorVert: {
+            sValue = "txAnchorVert";
+            break;
+          }
+          case Param_type_txAnchorVertCh: {
+            sValue = "txAnchorVertCh";
+            break;
+          }
+          case Param_type_txBlDir: {
+            sValue = "txBlDir";
+            break;
+          }
+          case Param_type_txDir: {
+            sValue = "txDir";
+            break;
+          }
+          case Param_type_vertAlign: {
+            sValue = "vertAlign";
+            break;
+          }
+        }
+        if(sValue !== null) {
+          writer.WriteXmlAttributeString("type", sValue);
+        }
+      }
+      writer.WriteXmlNullableAttributeString("val", this.val);
+      writer.WriteXmlAttributesEnd();
+      writer.WriteXmlNodeEnd("dgm:param");
+    };
 
 
 
@@ -3822,20 +4937,20 @@ Because of this, the display is sometimes not correct.
     Choose.prototype.setName = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ChooseName, this.getName(), pr));
       this.name = pr;
-    }
+    };
 
     Choose.prototype.setElse = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ChooseElse, this.getElse(), oPr));
       this.else = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     Choose.prototype.addToLstIf = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.if.length, Math.max(0, nIdx));
       oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ChooseAddToLstIf, nInsertIdx, [oPr], true));
       nInsertIdx === this.if.length ? this.if.push(oPr) : this.if.splice(nInsertIdx, 0, oPr);
       this.setParentToChild(oPr);
-    }
+    };
 
     Choose.prototype.removeFromLstIf = function (nIdx) {
       if (nIdx > -1 && nIdx < this.if.length) {
@@ -3843,19 +4958,19 @@ Because of this, the display is sometimes not correct.
         oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ChooseRemoveFromLstIf, nIdx, [this.if[nIdx]], false));
         nIdx === this.if.length - 1 ? this.if.pop() : this.if.splice(nIdx, 1);
       }
-    }
+    };
 
     Choose.prototype.getName = function () {
       return this.name;
-    }
+    };
 
     Choose.prototype.getElse = function () {
       return this.else;
-    }
+    };
 
     Choose.prototype.getIf = function () {
       return this.if;
-    }
+    };
 
     Choose.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setName(this.getName());
@@ -3918,7 +5033,35 @@ Because of this, the display is sometimes not correct.
           this.else.startAlgorithm(pointTree, node);
         }
       }
-    }
+    };
+    Choose.prototype.readChildXml = function (name, reader) {
+      if ("if" === name)
+      {
+        let ifObj = new If();
+        this.addToLstIf(this.if.length, ifObj);
+        ifObj.fromXml(reader);
+      }
+    else if ("else" === name)
+      {
+        this.setElse(new Else());
+        this.else.fromXml(reader);
+      }
+    };
+    Choose.prototype.readAttrXml = function (name, reader) {
+      if (name === "name") this.setName(reader.GetValue());
+    };
+    Choose.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:choose");
+      writer.WriteXmlAttributeString("name", this.name);
+      writer.WriteXmlAttributesEnd();
+
+      for (let i = 0; i < this.if.length; ++i)
+      this.if[i].toXml(writer);
+
+      if (this.else) this.else.toXml(writer);
+
+      writer.WriteXmlNodeEnd("dgm:choose");
+    };
 
 
 
@@ -4018,7 +5161,41 @@ Because of this, the display is sometimes not correct.
           element.startAlgorithm(pointTree, node);
         }
       });
-    }
+    };
+    Else.prototype.readChildXml = function (name, reader) {
+      let oElement = null;
+      switch (name) {
+        case "alg": oElement = new Alg(); break;
+        case "choose": oElement = new Choose(); break;
+        case "constrLst": oElement = new ConstrLst(); break;
+        case "forEach": oElement = new ForEach(); break;
+        case "layoutNode": oElement = new LayoutNode(); break;
+        case "presOf": oElement = new PresOf(); break;
+        case "ruleLst": oElement = new RuleLst(); break;
+        case "shape": oElement = new SShape(); break;
+      }
+      if(oElement) {
+        oElement.fromXml(reader);
+        this.addToLst(this.list.length, oElement);
+      }
+    };
+    Else.prototype.readAttrXml = function (name, reader) {
+      if(name === "name") {this.setName(reader.GetValue());}
+    };
+    Else.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:else");
+      writer.WriteXmlNullableAttributeString("name", this.name);
+      writer.WriteXmlAttributesEnd();
+
+      for (let i = 0; i < this.list.length; ++i)
+      {
+        if (!this.list[i]) continue;
+
+        this.list[i].toXml(writer);
+      }
+
+      writer.WriteXmlNodeEnd("dgm:else");
+    };
 
     changesFactory[AscDFH.historyitem_IteratorAttributesAddAxis] = CChangeContent;
     changesFactory[AscDFH.historyitem_IteratorAttributesRemoveAxis] = CChangeContent;
@@ -4198,6 +5375,128 @@ Because of this, the display is sometimes not correct.
     };
     IteratorAttributes.prototype.Refresh_ContentChanges = function() {
     };
+    IteratorAttributes.prototype.readAxisFromXml = function(reader) {
+      let sValue = reader.GetValue();
+      let aValues = sValue.split(" ");
+      for(let nVal = 0; nVal < aValues.length; ++nVal) {
+        let nValNumber = parseInt(aValues[nVal]);
+        if(AscFormat.isRealNumber(nValNumber)) {
+          let oAxis = new AxisType();
+          oAxis.setVal(nValNumber);
+          this.addToLstAxis(this.axis.length, oAxis);
+        }
+      }
+    };
+    IteratorAttributes.prototype.writeAxisToXml = function(writer) {
+      if(this.axis.length > 0) {
+        let sVal = "" + this.axis[0].val;
+        for(let nAx = 1; nAx < this.axis.length; ++nAx) {
+          sVal += (" " + this.axis[nAx].val);
+        }
+        writer.WriteXmlAttributeString("axis", sVal);
+      }
+    };
+    IteratorAttributes.prototype.readPtTypeFromXml = function(reader) {
+      let sValue = reader.GetValue();
+      let aValues = sValue.split(" ");
+      for(let nVal = 0; nVal < aValues.length; ++nVal) {
+        let nValNumber = parseInt(aValues[nVal]);
+        if(AscFormat.isRealNumber(nValNumber)) {
+          let oPtType = new ElementType();
+          oPtType.setVal(nValNumber);
+          this.addToLstPtType(this.ptType.length, oPtType);
+        }
+      }
+    };
+    IteratorAttributes.prototype.writePtTypeToXml = function(writer) {
+      if(this.ptType.length > 0) {
+        let sVal = "" + this.ptType[0].val;
+        for(let nAx = 1; nAx < this.ptType.length; ++nAx) {
+          sVal += (" " + this.ptType[nAx].val);
+        }
+        writer.WriteXmlAttributeString("ptType", sVal);
+      }
+    };
+    IteratorAttributes.prototype.readStFromXml = function(reader) {
+      let sValue = reader.GetValue();
+      let aValues = sValue.split(" ");
+      for(let nVal = 0; nVal < aValues.length; ++nVal) {
+        let nValNumber = parseInt(aValues[nVal]);
+        if(AscFormat.isRealNumber(nValNumber)) {
+          this.addToLstSt(this.st.length, nValNumber);
+        }
+      }
+    };
+
+    IteratorAttributes.prototype.writeStToXml = function(writer) {
+      if(this.st.length > 0) {
+        let sVal = "" + this.st[0];
+        for(let nAx = 1; nAx < this.st.length; ++nAx) {
+          sVal += (" " + this.st[nAx]);
+        }
+        writer.WriteXmlAttributeString("st", sVal);
+      }
+    };
+    IteratorAttributes.prototype.readStepFromXml = function(reader) {
+      let sValue = reader.GetValue();
+      let aValues = sValue.split(" ");
+      for(let nVal = 0; nVal < aValues.length; ++nVal) {
+        let nValNumber = parseInt(aValues[nVal]);
+        if(AscFormat.isRealNumber(nValNumber)) {
+          this.addToLstStep(this.step.length, nValNumber);
+        }
+      }
+    };
+
+    IteratorAttributes.prototype.writeStepToXml = function(writer) {
+      if(this.step.length > 0) {
+        let sVal = "" + this.step[0];
+        for(let nAx = 1; nAx < this.step.length; ++nAx) {
+          sVal += (" " + this.step[nAx]);
+        }
+        writer.WriteXmlAttributeString("step", sVal);
+      }
+    };
+    IteratorAttributes.prototype.readHideLastTransFromXml = function(reader) {
+      let sValue = reader.GetValue();
+      let aValues = sValue.split(" ");
+      for(let nVal = 0; nVal < aValues.length; ++nVal) {
+        let bVal = reader.GetBool(aValues[nVal]);
+
+        this.addToLstHideLastTrans(this.hideLastTrans.length, bVal);
+      }
+    };
+
+    IteratorAttributes.prototype.writeHideLastTransToXml = function(writer) {
+      if(this.hideLastTrans.length > 0) {
+        let sVal = "" + (this.hideLastTrans[0] ? "1" : "0");
+        for(let nAx = 1; nAx < this.hideLastTrans.length; ++nAx) {
+          sVal += (" " + (this.hideLastTrans[nAx] ? "1" : "0"));
+        }
+        writer.WriteXmlAttributeString("hideLastTrans", sVal);
+      }
+    };
+
+    IteratorAttributes.prototype.readCntFromXml = function(reader) {
+      let sValue = reader.GetValue();
+      let aValues = sValue.split(" ");
+      for(let nVal = 0; nVal < aValues.length; ++nVal) {
+        let nValNumber = parseInt(aValues[nVal]);
+        if(AscFormat.isRealNumber(nValNumber)) {
+          this.addToLstStep(this.cnt.length, nValNumber);
+        }
+      }
+    };
+
+    IteratorAttributes.prototype.writeCntToXml = function(writer) {
+      if(this.cnt.length > 0) {
+        let sVal = "" + this.cnt[0];
+        for(let nAx = 1; nAx < this.cnt.length; ++nAx) {
+          sVal += (" " + this.cnt[nAx]);
+        }
+        writer.WriteXmlAttributeString("cnt", sVal);
+      }
+    };
 
 
     changesFactory[AscDFH.historyitem_AxisTypeVal] = CChangeLong;
@@ -4215,16 +5514,131 @@ Because of this, the display is sometimes not correct.
     AxisType.prototype.setVal = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_AxisTypeVal, this.getVal(), pr));
       this.val = pr;
-    }
+    };
 
     AxisType.prototype.getVal = function () {
       return this.val;
-    }
+    };
 
     AxisType.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
-    }
+    };
+    AxisType.prototype.fromXml = function (reader) {
+      let sVal = reader.GetValue();
+      switch (sVal) {
+        case "ancst": {
+          this.setVal(AxisType_value_ancst);
+          break;
+        }
+        case "ancstOrSelf": {
+          this.setVal(AxisType_value_ancstOrSelf);
+          break;
+        }
+        case "ch": {
+          this.setVal(AxisType_value_ch);
+          break;
+        }
+        case "des": {
+          this.setVal(AxisType_value_des);
+          break;
+        }
+        case "desOrSelf": {
+          this.setVal(AxisType_value_desOrSelf);
+          break;
+        }
+        case "follow": {
+          this.setVal(AxisType_value_follow);
+          break;
+        }
+        case "followSib": {
+          this.setVal(AxisType_value_followSib);
+          break;
+        }
+        case "none": {
+          this.setVal(AxisType_value_none);
+          break;
+        }
+        case "par": {
+          this.setVal(AxisType_value_par);
+          break;
+        }
+        case "preced": {
+          this.setVal(AxisType_value_preced);
+          break;
+        }
+        case "precedSib": {
+          this.setVal(AxisType_value_precedSib);
+          break;
+        }
+        case "root": {
+          this.setVal(AxisType_value_root);
+          break;
+        }
+        case "self": {
+          this.setVal(AxisType_value_self);
+          break;
+        }
+      }
+    };
+    AxisType.prototype.toXml = function(writer) {
+      let sValue = null;
+      switch (this.val) {
 
+        case AxisType_value_ancst: {
+          sValue = "ancst";
+          break;
+        }
+        case AxisType_value_ancstOrSelf: {
+          sValue = "ancstOrSelf";
+          break;
+        }
+        case AxisType_value_ch: {
+          sValue = "ch";
+          break;
+        }
+        case AxisType_value_des: {
+          sValue = "des";
+          break;
+        }
+        case AxisType_value_desOrSelf: {
+          sValue = "desOrSelf";
+          break;
+        }
+        case AxisType_value_follow: {
+          sValue = "follow";
+          break;
+        }
+        case AxisType_value_followSib: {
+          sValue = "followSib";
+          break;
+        }
+        case AxisType_value_none: {
+          sValue = "none";
+          break;
+        }
+        case AxisType_value_par: {
+          sValue = "par";
+          break;
+        }
+        case AxisType_value_preced: {
+          sValue = "preced";
+          break;
+        }
+        case AxisType_value_precedSib: {
+          sValue = "precedSib";
+          break;
+        }
+        case AxisType_value_root: {
+          sValue = "root";
+          break;
+        }
+        case AxisType_value_self: {
+          sValue = "self";
+          break;
+        }
+      }
+      writer.WriteXmlNullableAttributeString("axis", sValue);
+    };
     changesFactory[AscDFH.historyitem_ElementTypeVal] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_ElementTypeVal] = function (oClass, value) {
       oClass.val = value;
@@ -4240,14 +5654,106 @@ Because of this, the display is sometimes not correct.
     ElementType.prototype.setVal = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ElementTypeVal, this.getVal(), pr));
       this.val = pr;
-    }
+    };
 
     ElementType.prototype.getVal = function () {
       return this.val;
-    }
+    };
 
     ElementType.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
+    };
+    ElementType.prototype.fromXml = function (reader) {
+      let sVal = reader.GetValue();
+      switch (sVal) {
+        case "all": {
+          this.setVal(ElementType_value_all);
+          break;
+        }
+        case "asst": {
+          this.setVal(ElementType_value_asst);
+          break;
+        }
+        case "doc": {
+          this.setVal(ElementType_value_doc);
+          break;
+        }
+        case "node": {
+          this.setVal(ElementType_value_node);
+          break;
+        }
+        case "nonAsst": {
+          this.setVal(ElementType_value_nonAsst);
+          break;
+        }
+        case "nonNorm": {
+          this.setVal(ElementType_value_nonNorm);
+          break;
+        }
+        case "norm": {
+          this.setVal(ElementType_value_norm);
+          break;
+        }
+        case "parTrans": {
+          this.setVal(ElementType_value_parTrans);
+          break;
+        }
+        case "pres": {
+          this.setVal(ElementType_value_pres);
+          break;
+        }
+        case "sibTrans": {
+          this.setVal(ElementType_value_sibTrans);
+          break;
+        }
+      }
+    };
+    ElementType.prototype.toXml = function(writer, sName) {
+      let sValue = null;
+
+      switch (this.val) {
+        case ElementType_value_all: {
+          sValue  = "all";
+          break;
+        }
+        case ElementType_value_asst: {
+          sValue  = "asst";
+          break;
+        }
+        case ElementType_value_doc: {
+          sValue  = "doc";
+          break;
+        }
+        case ElementType_value_node: {
+          sValue  = "node";
+          break;
+        }
+        case ElementType_value_nonAsst: {
+          sValue  = "nonAsst";
+          break;
+        }
+        case ElementType_value_nonNorm: {
+          sValue  = "nonNorm";
+          break;
+        }
+        case ElementType_value_norm: {
+          sValue  = "norm";
+          break;
+        }
+        case ElementType_value_parTrans: {
+          sValue  = "parTrans";
+          break;
+        }
+        case ElementType_value_pres: {
+          sValue  = "pres";
+          break;
+        }
+        case ElementType_value_sibTrans: {
+          sValue  = "sibTrans";
+          break;
+        }
+      }
+      writer.WriteXmlNullableAttributeString(sName, sValue);
     }
 
     changesFactory[AscDFH.historyitem_FunctionValueAnimLvlStr] = CChangeLong;
@@ -4295,73 +5801,73 @@ Because of this, the display is sometimes not correct.
     FunctionValue.prototype.setAnimLvlStr = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueAnimLvlStr, this.getAnimLvlStr(), pr));
       this.animLvlStr = pr;
-    }
+    };
 
     FunctionValue.prototype.setAnimOneStr = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueAnimOneStr, this.getAnimOneStr(), pr));
       this.animOneStr = pr;
-    }
+    };
 
     FunctionValue.prototype.setDirection = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueDirection, this.getDirection(), pr));
       this.direction = pr;
-    }
+    };
 
     FunctionValue.prototype.setHierBranchStyle = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueHierBranchStyle, this.getHierBranchStyle(), pr));
       this.hierBranchStyle = pr;
-    }
+    };
 
     FunctionValue.prototype.setResizeHandlesStr = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueResizeHandlesStr, this.getResizeHandlesStr(), pr));
       this.resizeHandlesStr = pr;
-    }
+    };
 
     FunctionValue.prototype.setBool = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_FunctionValueBool, this.getBool(), pr));
       this.bool = pr;
-    }
+    };
 
     FunctionValue.prototype.setInt = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_FunctionValueInt, this.getInt(), pr));
       this.int = pr;
-    }
+    };
 
     FunctionValue.prototype.setVal = function (pr) {
       this.setInt(pr);
-    }
+    };
 
     FunctionValue.prototype.getVal = function () {
       return this.int;
-    }
+    };
 
     FunctionValue.prototype.getAnimLvlStr = function () {
       return this.animLvlStr;
-    }
+    };
 
     FunctionValue.prototype.getAnimOneStr = function () {
       return this.animOneStr;
-    }
+    };
 
     FunctionValue.prototype.getDirection = function () {
       return this.direction;
-    }
+    };
 
     FunctionValue.prototype.getHierBranchStyle = function () {
       return this.hierBranchStyle;
-    }
+    };
 
     FunctionValue.prototype.getResizeHandlesStr = function () {
       return this.resizeHandlesStr;
-    }
+    };
 
     FunctionValue.prototype.getBool = function () {
       return this.bool;
-    }
+    };
 
     FunctionValue.prototype.getInt = function () {
       return this.int;
-    }
+    };
 
     FunctionValue.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setAnimLvlStr(this.getAnimLvlStr());
@@ -4371,8 +5877,7 @@ Because of this, the display is sometimes not correct.
       oCopy.setResizeHandlesStr(this.getResizeHandlesStr());
       oCopy.setBool(this.getBool());
       oCopy.setInt(this.getInt());
-    }
-
+    };
 
     changesFactory[AscDFH.historyitem_IfArg] = CChangeString;
     changesFactory[AscDFH.historyitem_IfRef] = CChangeString;
@@ -4407,6 +5912,53 @@ Because of this, the display is sometimes not correct.
       return oClass.list;
     };
 
+    function GetOpByteCode(sValue) {
+      switch (sValue) {
+        case "equ": {
+          return If_op_equ;
+        }
+        case "gt": {
+          return If_op_gt;
+        }
+        case "gte": {
+          return If_op_gte;
+        }
+        case "lt": {
+          return If_op_lt;
+        }
+        case "lte": {
+          return If_op_lte;
+        }
+        case "neq": {
+          return If_op_neq;
+        }
+      }
+      return null;
+    }
+    function GetOp(nCode) {
+      switch (nCode) {
+        case If_op_equ: {
+          return "equ";
+        }
+        case If_op_gt: {
+          return "gt";
+        }
+        case If_op_gte: {
+          return "gte";
+        }
+        case If_op_lt: {
+          return "lt";
+        }
+        case If_op_lte: {
+          return "lte";
+        }
+        case If_op_neq: {
+          return "neq";
+        }
+      }
+      return null;
+    }
+
     function If() {
       IteratorAttributes.call(this);
       this.arg = null;
@@ -4423,32 +5975,32 @@ Because of this, the display is sometimes not correct.
     If.prototype.setArg = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfArg, this.getArg(), pr));
       this.arg = pr;
-    }
+    };
 
     If.prototype.setFunc = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_IfFunc, this.getFunc(), pr));
       this.func = pr;
-    }
+    };
 
     If.prototype.setRef = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfRef, this.getRef(), pr));
       this.ref = pr;
-    }
+    };
 
     If.prototype.setName = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfName, this.getName(), pr));
       this.name = pr;
-    }
+    };
 
     If.prototype.setOp = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_IfOp, this.getOp(), pr));
       this.op = pr;
-    }
+    };
 
     If.prototype.setVal = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfVal, this.getVal(), oPr));
       this.val = oPr;
-    }
+    };
 
     If.prototype.addToLstList = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.list.length, Math.max(0, nIdx));
@@ -4467,27 +6019,27 @@ Because of this, the display is sometimes not correct.
 
     If.prototype.getArg = function () {
       return this.arg;
-    }
+    };
 
     If.prototype.getRef = function () {
       return this.ref;
-    }
+    };
 
     If.prototype.getFunc = function () {
       return this.func;
-    }
+    };
 
     If.prototype.getName = function () {
       return this.name;
-    }
+    };
 
     If.prototype.getOp = function () {
       return this.op;
-    }
+    };
 
     If.prototype.getVal = function () {
       return this.val;
-    }
+    };
 
     If.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setArg(this.getArg());
@@ -4498,7 +6050,7 @@ Because of this, the display is sometimes not correct.
       for (var nIdx = 0; nIdx < this.list.length; ++nIdx) {
         oCopy.addToLstList(nIdx, this.list[nIdx].createDuplicate(oIdMap));
       }
-      for (var nIdx = 0; nIdx < this.axis.length; ++nIdx) {
+      for (nIdx = 0; nIdx < this.axis.length; ++nIdx) {
         oCopy.addToLstAxis(nIdx, this.axis[nIdx].createDuplicate(oIdMap));
       }
       for (nIdx = 0; nIdx < this.cnt.length; ++nIdx) {
@@ -4516,7 +6068,7 @@ Because of this, the display is sometimes not correct.
       for (nIdx = 0; nIdx < this.step.length; ++nIdx) {
         oCopy.addToLstStep(nIdx, this.step[nIdx]);
       }
-    }
+    };
 
     If.prototype.readElement = function(pReader, nType) {
       var oElement = null;
@@ -4631,7 +6183,7 @@ Because of this, the display is sometimes not correct.
         });
       }
       return check;
-    }
+    };
 
 
     If.prototype.checkCondition = function (pointTree, nodeData) {
@@ -4663,7 +6215,7 @@ Because of this, the display is sometimes not correct.
         default:
           return false;
       }
-    }
+    };
 
     If.prototype.funcVar = function (nodeData) {
       if (nodeData && nodeData.node) {
@@ -4695,7 +6247,7 @@ Because of this, the display is sometimes not correct.
         }
       }
       return false;
-    }
+    };
 
     If.prototype.funcCnt = function (axis) {
       var count = 0;
@@ -4706,11 +6258,11 @@ Because of this, the display is sometimes not correct.
         });
       });
       return this.compare(count);
-    }
+    };
 
     If.prototype.funcDepth = function (axis) {
       return this.compare(axis[0].data.depth);
-    }
+    };
 
     If.prototype.funcMaxDepth = function (axis) {
       var maxDepth = axis.reduce(function (acc, b) {
@@ -4720,23 +6272,23 @@ Because of this, the display is sometimes not correct.
         return acc;
       }, 0);
       return this.compare(maxDepth);
-    }
+    };
 
     If.prototype.funcPos = function () {
 
-    }
+    };
 
     If.prototype.funcPosEven = function (axis) {
       return this.funcPos(axis) % 2 === 0;
-    }
+    };
 
     If.prototype.funcPosOdd = function (axis) {
       return this.funcPos(axis) % 2 === 1;
-    }
+    };
 
     If.prototype.funcRevPos = function () {
 
-    }
+    };
 
     If.prototype.compare = function (comparingArg) {
       var val = this.valAdapter(this.val);
@@ -4757,7 +6309,7 @@ Because of this, the display is sometimes not correct.
         default:
           return false;
       }
-    }
+    };
 
     If.prototype.valAdapter = function (value) {
       var adaptVal;
@@ -4798,7 +6350,145 @@ Because of this, the display is sometimes not correct.
         }
       }
       return adaptVal;
-    }
+    };
+    If.prototype.readChildXml = function (name, reader) {
+      var oElement = null;
+      switch(name) {
+        case "alg": oElement = new Alg(); break;
+        case "choose": oElement = new Choose(); break;
+        case "constrLst": oElement = new ConstrLst(); break;
+        case "forEach": oElement = new ForEach(); break;
+        case "layoutNode": oElement = new LayoutNode(); break;
+        case "presOf": oElement = new PresOf(); break;
+        case "ruleLst": oElement = new RuleLst(); break;
+        case "shape": oElement = new SShape(); break;
+      }
+      if(oElement) {
+        oElement.fromXml(reader);
+        this.addToLstList(this.list.length, oElement);
+      }
+    };
+    If.prototype.readAttrXml = function (name, reader) {
+      if (name === "name") this.setName(reader.GetValue());
+      else if (name === "st") this.readStFormXml(reader);
+      else if (name === "step") this.readStepFormXml(reader);
+      else if (name === "hideLastTrans") this.readHideLastTransFromXml(reader);
+      else if (name === "cnt") this.readCntFormXml(reader);
+      else if (name === "axis") {
+        this.readAxisFromXml(reader);
+      }
+      else if (name === "ptType") {
+        this.readPtTypeFromXml(reader);
+      }
+      else if (name === "op") {
+        let sValue = reader.GetValue();
+        this.setOp(GetOpByteCode(sValue));
+      }
+      else if (name === "func") {
+        let sVal = reader.GetValue();
+        switch (sVal) {
+          case "cnt": {
+            this.setFunc(If_func_cnt);
+            break;
+          }
+          case "depth": {
+            this.setFunc(If_func_depth);
+            break;
+          }
+          case "maxDepth": {
+            this.setFunc(If_func_maxDepth);
+            break;
+          }
+          case "pos": {
+            this.setFunc(If_func_pos);
+            break;
+          }
+          case "posEven": {
+            this.setFunc(If_func_posEven);
+            break;
+          }
+          case "posOdd": {
+            this.setFunc(If_func_posOdd);
+            break;
+          }
+          case "revPos": {
+            this.setFunc(If_func_revPos);
+            break;
+          }
+          case "var": {
+            this.setFunc(If_func_var);
+            break;
+          }
+        }
+      }
+      else if (name === "val") this.setVal(reader.GetValue());
+      else if (name === "arg") this.setArg(reader.GetValue());
+      else if (name === "ref") this.setArg(reader.GetValue());
+
+    };
+    If.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:if");
+      writer.WriteXmlNullableAttributeString("name", this.name);
+      this.writeAxisToXml(writer);
+      this.writePtTypeToXml(writer);
+      this.writeStToXml(writer);
+      this.writeCntToXml(writer);
+      if (this.func !== null) {
+        let sVal = null;
+        switch (this.func) {
+          case If_func_cnt: {
+            sVal = "cnt";
+            break;
+          }
+          case If_func_depth: {
+            sVal = "depth";
+            break;
+          }
+          case If_func_maxDepth: {
+            sVal = "maxDepth";
+            break;
+          }
+          case If_func_pos: {
+            sVal = "pos";
+            break;
+          }
+          case If_func_posEven: {
+            sVal = "posEven";
+            break;
+          }
+          case If_func_posOdd: {
+            sVal = "posOdd";
+            break;
+          }
+          case If_func_revPos: {
+            sVal = "revPos";
+            break;
+          }
+          case If_func_var: {
+            sVal = "var";
+            break;
+          }
+        }
+        writer.WriteXmlNullableAttributeString("func", sVal);
+      }
+      writer.WriteXmlNullableAttributeString("arg", this.arg);
+
+      this.writeStepToXml(writer);
+      this.writeHideLastTransToXml(writer);
+      writer.WriteXmlNullableAttributeString("op", GetOp(this.op));
+      writer.WriteXmlNullableAttributeString("ref", this.ref);
+      writer.WriteXmlNullableAttributeString("val", this.val);
+      writer.WriteXmlAttributesEnd();
+
+      for (let i = 0; i < this.list.length; ++i)
+      {
+        if (!this.list[i]) continue;
+
+        this.list[i].toXml(writer);
+      }
+
+      writer.WriteXmlNodeEnd("dgm:if");
+    };
 
     function ConstrLst() {
       CCommonDataList.call(this);
@@ -4846,7 +6536,17 @@ Because of this, the display is sometimes not correct.
       if (constrWithSecFont.length !== 0) {
         constrWithSecFont[0].constr.setConstr(pointTree, constrWithSecFont);
       }
-    }
+    };
+    ConstrLst.prototype.readChildXml = function (name, reader) {
+      if(name === "constr") {
+        var oChild = new Constr();
+        oChild.fromXml(reader);
+        this.addToLst(this.list.length, oChild);
+      }
+    };
+    ConstrLst.prototype.toXml = function(writer) {
+      CCommonDataList.prototype.toXml(writer, "dgm:constrLst");
+    };
 
 
 
@@ -4899,6 +6599,433 @@ Because of this, the display is sometimes not correct.
       oClass.extLst = value;
     };
 
+
+    function GetForByteCode(sValue) {
+      switch (sValue) {
+        case "ch": {
+          return Constr_for_ch;
+        }
+        case "des": {
+          return Constr_for_des;
+        }
+        case "self": {
+          return Constr_for_self;
+        }
+      }
+      return null;
+    }
+
+    function GetFor(sValue) {
+      switch (sValue) {
+        case Constr_for_ch: {
+          return "ch";
+        }
+        case Constr_for_des: {
+          return "des";
+        }
+        case Constr_for_self: {
+          return "self";
+        }
+      }
+      return null;
+    }
+
+    function GetConstraintTypeByteCode(sValue) {
+      switch (sValue) {
+        case "alignOff": {
+          return Constr_type_alignOff;
+        }
+        case "b": {
+          return Constr_type_b;
+        }
+        case "begMarg": {
+          return Constr_type_begMarg;
+        }
+        case "begPad": {
+          return Constr_type_begPad;
+        }
+        case "bendDist": {
+          return Constr_type_bendDist;
+        }
+        case "bMarg": {
+          return Constr_type_bMarg;
+        }
+        case "bOff": {
+          return Constr_type_bOff;
+        }
+        case "connDist": {
+          return Constr_type_connDist;
+        }
+        case "ctrX": {
+          return Constr_type_ctrX;
+        }
+        case "ctrXOff": {
+          return Constr_type_ctrXOff;
+        }
+        case "ctrY": {
+          return Constr_type_ctrY;
+        }
+        case "ctrYOff": {
+          return Constr_type_ctrYOff;
+        }
+        case "diam": {
+          return Constr_type_diam;
+        }
+        case "endMarg": {
+          return Constr_type_endMarg;
+        }
+        case "endPad": {
+          return Constr_type_endPad;
+        }
+        case "h": {
+          return Constr_type_h;
+        }
+        case "hArH": {
+          return Constr_type_hArH;
+        }
+        case "hOff": {
+          return Constr_type_hOff;
+        }
+        case "l": {
+          return Constr_type_l;
+        }
+        case "lMarg": {
+          return Constr_type_lMarg;
+        }
+        case "lOff": {
+          return Constr_type_lOff;
+        }
+        case "none": {
+          return Constr_type_none;
+        }
+        case "primFontSz": {
+          return Constr_type_primFontSz;
+        }
+        case "pyraAcctRatio": {
+          return Constr_type_pyraAcctRatio;
+        }
+        case "r": {
+          return Constr_type_r;
+        }
+        case "rMarg": {
+          return Constr_type_rMarg;
+        }
+        case "rOff": {
+          return Constr_type_rOff;
+        }
+        case "secFontSz": {
+          return Constr_type_secFontSz;
+        }
+        case "secSibSp": {
+          return Constr_type_secSibSp;
+        }
+        case "sibSp": {
+          return Constr_type_sibSp;
+        }
+        case "sp": {
+          return Constr_type_sp;
+        }
+        case "stemThick": {
+          return Constr_type_stemThick;
+        }
+        case "t": {
+          return Constr_type_t;
+        }
+        case "tMarg": {
+          return Constr_type_tMarg;
+        }
+        case "tOff": {
+          return Constr_type_tOff;
+        }
+        case "userA": {
+          return Constr_type_userA;
+        }
+        case "userB": {
+          return Constr_type_userB;
+        }
+        case "userC": {
+          return Constr_type_userC;
+        }
+        case "userD": {
+          return Constr_type_userD;
+        }
+        case "userE": {
+          return Constr_type_userE;
+        }
+        case "userF": {
+          return Constr_type_userF;
+        }
+        case "userG": {
+          return Constr_type_userG;
+        }
+        case "userH": {
+          return Constr_type_userH;
+        }
+        case "userI": {
+          return Constr_type_userI;
+        }
+        case "userJ": {
+          return Constr_type_userJ;
+        }
+        case "userK": {
+          return Constr_type_userK;
+        }
+        case "userL": {
+          return Constr_type_userL;
+        }
+        case "userM": {
+          return Constr_type_userM;
+        }
+        case "userN": {
+          return Constr_type_userN;
+        }
+        case "userO": {
+          return Constr_type_userO;
+        }
+        case "userP": {
+          return Constr_type_userP;
+        }
+        case "userQ": {
+          return Constr_type_userQ;
+        }
+        case "userR": {
+          return Constr_type_userR;
+        }
+        case "userS": {
+          return Constr_type_userS;
+        }
+        case "userT": {
+          return Constr_type_userT;
+        }
+        case "userU": {
+          return Constr_type_userU;
+        }
+        case "userV": {
+          return Constr_type_userV;
+        }
+        case "userW": {
+          return Constr_type_userW;
+        }
+        case "userX": {
+          return Constr_type_userX;
+        }
+        case "userY": {
+          return Constr_type_userY;
+        }
+        case "userZ": {
+          return Constr_type_userZ;
+        }
+        case "w": {
+          return Constr_type_w;
+        }
+        case "wArH": {
+          return Constr_type_wArH;
+        }
+        case "wOff": {
+          return Constr_type_wOff;
+        }
+      }
+      return null;
+    }
+
+    function GetConstraintType(nCode) {
+      switch (nCode) {
+        case Constr_type_alignOff: {
+          return "alignOff";
+        }
+        case Constr_type_b: {
+          return "b";
+        }
+        case Constr_type_begMarg: {
+          return "begMarg";
+        }
+        case Constr_type_begPad: {
+          return "begPad";
+        }
+        case Constr_type_bendDist: {
+          return "bendDist";
+        }
+        case Constr_type_bMarg: {
+          return "bMarg";
+        }
+        case Constr_type_bOff: {
+          return "bOff";
+        }
+        case Constr_type_connDist: {
+          return "connDist";
+        }
+        case Constr_type_ctrX: {
+          return "ctrX";
+        }
+        case Constr_type_ctrXOff: {
+          return "ctrXOff";
+        }
+        case Constr_type_ctrY: {
+          return "ctrY";
+        }
+        case Constr_type_ctrYOff: {
+          return "ctrYOff";
+        }
+        case Constr_type_diam: {
+          return "diam";
+        }
+        case Constr_type_endMarg: {
+          return "endMarg";
+        }
+        case Constr_type_endPad: {
+          return "endPad";
+        }
+        case Constr_type_h: {
+          return "h";
+        }
+        case Constr_type_hArH: {
+          return "hArH";
+        }
+        case Constr_type_hOff: {
+          return "hOff";
+        }
+        case Constr_type_l: {
+          return "l";
+        }
+        case Constr_type_lMarg: {
+          return "lMarg";
+        }
+        case Constr_type_lOff: {
+          return "lOff";
+        }
+        case Constr_type_none: {
+          return "none";
+        }
+        case Constr_type_primFontSz: {
+          return "primFontSz";
+        }
+        case Constr_type_pyraAcctRatio: {
+          return "pyraAcctRatio";
+        }
+        case Constr_type_r: {
+          return "r";
+        }
+        case Constr_type_rMarg: {
+          return "rMarg";
+        }
+        case Constr_type_rOff: {
+          return "rOff";
+        }
+        case Constr_type_secFontSz: {
+          return "secFontSz";
+        }
+        case Constr_type_secSibSp: {
+          return "secSibSp";
+        }
+        case Constr_type_sibSp: {
+          return "sibSp";
+        }
+        case Constr_type_sp: {
+          return "sp";
+        }
+        case Constr_type_stemThick: {
+          return "stemThick";
+        }
+        case Constr_type_t: {
+          return "t";
+        }
+        case Constr_type_tMarg: {
+          return "tMarg";
+        }
+        case Constr_type_tOff: {
+          return "tOff";
+        }
+        case Constr_type_userA: {
+          return "userA";
+        }
+        case Constr_type_userB: {
+          return "userB";
+        }
+        case Constr_type_userC: {
+          return "userC";
+        }
+        case Constr_type_userD: {
+          return "userD";
+        }
+        case Constr_type_userE: {
+          return "userE";
+        }
+        case Constr_type_userF: {
+          return "userF";
+        }
+        case Constr_type_userG: {
+          return "userG";
+        }
+        case Constr_type_userH: {
+          return "userH";
+        }
+        case Constr_type_userI: {
+          return "userI";
+        }
+        case Constr_type_userJ: {
+          return "userJ";
+        }
+        case Constr_type_userK: {
+          return "userK";
+        }
+        case Constr_type_userL: {
+          return "userL";
+        }
+        case Constr_type_userM: {
+          return "userM";
+        }
+        case Constr_type_userN: {
+          return "userN";
+        }
+        case Constr_type_userO: {
+          return "userO";
+        }
+        case Constr_type_userP: {
+          return "userP";
+        }
+        case Constr_type_userQ: {
+          return "userQ";
+        }
+        case Constr_type_userR: {
+          return "userR";
+        }
+        case Constr_type_userS: {
+          return "userS";
+        }
+        case Constr_type_userT: {
+          return "userT";
+        }
+        case Constr_type_userU: {
+          return "userU";
+        }
+        case Constr_type_userV: {
+          return "userV";
+        }
+        case Constr_type_userW: {
+          return "userW";
+        }
+        case Constr_type_userX: {
+          return "userX";
+        }
+        case Constr_type_userY: {
+          return "userY";
+        }
+        case Constr_type_userZ: {
+          return "userZ";
+        }
+        case Constr_type_w: {
+          return "w";
+        }
+        case Constr_type_wArH: {
+          return "wArH";
+        }
+        case Constr_type_wOff: {
+          return "wOff";
+        }
+      }
+      return null;
+    }
+
     function Constr() {
       CBaseFormatObject.call(this);
       this.fact = null;
@@ -4920,113 +7047,113 @@ Because of this, the display is sometimes not correct.
     Constr.prototype.setFact = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_ConstrFact, this.getFact(), pr));
       this.fact = pr;
-    }
+    };
 
     Constr.prototype.setFor = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrFor, this.getFor(), pr));
       this.for = pr;
-    }
+    };
 
     Constr.prototype.setForName = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ConstrForName, this.getForName(), pr));
       this.forName = pr;
-    }
+    };
 
     Constr.prototype.setOp = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrOp, this.getOp(), pr));
       this.op = pr;
-    }
+    };
 
     Constr.prototype.setPtType = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ConstrPtType, this.getPtType(), oPr));
       this.ptType = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     Constr.prototype.setRefFor = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrRefFor, this.getRefFor(), pr));
       this.refFor = pr;
-    }
+    };
 
     Constr.prototype.setRefForName = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_ConstrRefForName, this.getRefForName(), pr));
       this.refForName = pr;
-    }
+    };
 
     Constr.prototype.setRefPtType = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ConstrRefPtType, this.getRefPtType(), oPr));
       this.refPtType = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     Constr.prototype.setRefType = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrRefType, this.getRefType(), pr));
       this.refType = pr;
-    }
+    };
 
     Constr.prototype.setType = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ConstrType, this.getType(), pr));
       this.type = pr;
-    }
+    };
 
     Constr.prototype.setVal = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeDouble2(this, AscDFH.historyitem_ConstrVal, this.getVal(), pr));
       this.val = pr;
-    }
+    };
 
     Constr.prototype.setExtLst = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_ConstrExtLst, this.getExtLst(), oPr));
       this.extLst = oPr;
       this.setParentToChild(oPr);
-    }
+    };
 
     Constr.prototype.getFact = function () {
       return this.fact;
-    }
+    };
 
     Constr.prototype.getFor = function () {
       return this.for;
-    }
+    };
 
     Constr.prototype.getForName = function () {
       return this.forName;
-    }
+    };
 
     Constr.prototype.getOp = function () {
       return this.op;
-    }
+    };
 
     Constr.prototype.getPtType = function () {
       return this.ptType;
-    }
+    };
 
     Constr.prototype.getRefFor = function () {
       return this.refFor;
-    }
+    };
 
     Constr.prototype.getRefForName = function () {
       return this.refForName;
-    }
+    };
 
     Constr.prototype.getRefPtType = function () {
       return this.refPtType;
-    }
+    };
 
     Constr.prototype.getRefType = function () {
       return this.refType;
-    }
+    };
 
     Constr.prototype.getType = function () {
       return this.type;
-    }
+    };
 
     Constr.prototype.getVal = function () {
       return this.val;
-    }
+    };
 
     Constr.prototype.getExtLst = function () {
       return this.extLst;
-    }
+    };
 
     Constr.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setFact(this.getFact());
@@ -5047,7 +7174,7 @@ Because of this, the display is sometimes not correct.
       if (this.getRefPtType()) {
         oCopy.setRefPtType(this.getRefPtType().createDuplicate(oIdMap));
       }
-    }
+    };
 
     Constr.prototype.privateWriteAttributes = function(pWriter) {
       pWriter._WriteDoubleReal2(0, this.fact);
@@ -5223,7 +7350,7 @@ Because of this, the display is sometimes not correct.
         }
       }
     return 1;
-    }
+    };
 
     Constr.prototype.getConstrVal = function (shape) {
       var result;
@@ -5380,7 +7507,7 @@ Because of this, the display is sometimes not correct.
         result *= fact;
         return result;
       }
-    }
+    };
 
     Constr.prototype.getShapesFromAxis = function (transfer, isRef) {
       var node = transfer && transfer.node && transfer.node.parent;
@@ -5426,7 +7553,7 @@ Because of this, the display is sometimes not correct.
         }
         return shapes;
       }
-    }
+    };
 
     Constr.prototype.getAxisFromParent = function (node, constrAxisType) {
       switch (constrAxisType) {
@@ -5439,7 +7566,7 @@ Because of this, the display is sometimes not correct.
         default:
           return node.getAxis(AxisType_value_self);
       }
-    }
+    };
 
     Constr.prototype.setConstr = function (pointTree, transfer) {
       // var node = transfer;
@@ -5615,7 +7742,70 @@ Because of this, the display is sometimes not correct.
             return;
         }
       }
-    }
+    };
+    Constr.prototype.readAttrXml = function (name, reader) {
+      switch (name) {
+        case "fact": {
+          this.setFact(reader.GetValueDouble());
+          break;
+        }
+        case "for": {
+          let sValue = reader.GetValue();
+          this.setFor(GetForByteCode(sValue));
+          break;
+        }
+        case "forName": {
+          this.setForName(reader.GetValue());
+          break;
+        }
+        case "op": {
+          this.setOp(GetOpByteCode(reader.GetValue()));
+          break;
+        }
+        case "ptType": {
+          var pt = new ElementType();
+          pt.fromXml(reader);
+          this.setPtType(pt);
+          break;
+        }
+        case "refFor": {
+          this.setRefFor(GetForByteCode(reader.GetValue()));
+          break;
+        }
+        case "refForName": {
+          this.setRefForName(reader.GetValue());
+          break;
+        }
+        case "refPtType": {
+          var pt = new ElementType();
+          pt.fromXml(reader)
+          this.setRefPtType(pt);
+          break;
+        }
+        case "refType": {
+          this.setRefType(GetConstraintTypeByteCode(reader.GetValue()));
+          break;
+        }
+        case "type": { this.setType(GetConstraintTypeByteCode(reader.GetValue())); break;}
+        case "val": { this.setVal(reader.GetValueDouble()); break;}
+      }
+    };
+    Constr.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:constr");
+      if (this.type !== null) writer.WriteXmlNullableAttributeString("type", GetConstraintType(this.type));
+      if (this.for !== null) writer.WriteXmlNullableAttributeString("for", GetFor(this.for));
+      writer.WriteXmlNullableAttributeString("forName", this.forName);
+      if (this.ptType) this.ptType.toXml(writer, "ptType");
+      if (this.refPtType) this.refPtType.toXml(writer, "refPtType");
+      if (this.refType) writer.WriteXmlNullableAttributeString("refType", GetConstraintType(this.refType));
+      if (this.refFor) writer.WriteXmlNullableAttributeString("refFor", GetFor(this.refFor));
+      writer.WriteXmlNullableAttributeString("refForName", this.refForName);
+      writer.WriteXmlNullableAttributeString("op", GetOp(this.op));
+      writer.WriteXmlNullableAttributeDouble("fact", this.fact);
+      writer.WriteXmlNullableAttributeDouble("val", this.val);
+      writer.WriteXmlAttributesEnd();
+      writer.WriteXmlNodeEnd("dgm:constr");
+    };
 
     changesFactory[AscDFH.historyitem_PresOfExtLst] = CChangeObject;
     drawingsChangesMap[AscDFH.historyitem_PresOfExtLst] = function (oClass, value) {
@@ -5707,6 +7897,31 @@ Because of this, the display is sometimes not correct.
 
     PresOf.prototype.readChild = function(nType, pReader) {
     };
+    PresOf.prototype.readChildXml = function (name, reader) {
+    };
+    PresOf.prototype.readAttrXml = function (name, reader) {
+      if (name === "st") this.readStFromXml(reader);
+      else if (name === "step") this.readStepFromXml(reader);
+      else if (name === "hideLastTrans") this.readHideLastTrans(reader);
+      else if (name === "cnt") this.readCntFromXml(reader);
+      else if (name === "axis") {
+        this.readAxisFromXml(reader);
+      }
+      else if (name === "ptType") {
+        this.readPtTypeFromXml(reader);
+      }
+    };
+    PresOf.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:presOf");
+      this.writeAxisToXml(writer);
+      this.writePtTypeToXml(writer);
+      this.writeStToXml(writer);
+      this.writeHideLastTransToXml(writer);
+      this.writeCntToXml(writer);
+      this.writeStepToXml(writer);
+      writer.WriteXmlAttributesEnd();
+      writer.WriteXmlNodeEnd("dgm:presOf");
+    };
 
     function RuleLst() {
       CCommonDataList.call(this);
@@ -5728,6 +7943,16 @@ Because of this, the display is sometimes not correct.
           break;
         }
       }
+    };
+    RuleLst.prototype.readChildXml = function (name, reader) {
+      if("rule" === name) {
+        let oChild = new Rule();
+        oChild.fromXml(reader);
+        this.addToLst(this.list.length, oChild);
+      }
+    };
+    RuleLst.prototype.toXml = function(writer) {
+      CCommonDataList.prototype.toXml(writer, "dgm:ruleLst");
     };
 
     changesFactory[AscDFH.historyitem_RuleFact] = CChangeDouble2;
@@ -5892,6 +8117,34 @@ Because of this, the display is sometimes not correct.
       else if (6 === nType) this.setMax(oStream.GetDouble());
     };
     Rule.prototype.readChild = function(nType, pReader) {
+    };
+    Rule.prototype.readAttrXml = function (name, reader) {
+
+      if ("fact" === name) this.setFact(reader.GetValueDouble());
+      else if ("for" === name) {
+        this.setFor(GetForByteCode(reader.GetValue()));
+      }
+      else if ("forName" === name) this.setForName(reader.GetValue());
+      else if ("ptType" === name) {
+        var pt = new ElementType();
+        pt.fromXml(reader);
+        this.setPtType(pt);
+      }
+      else if ("type" === name) this.setType(GetConstraintTypeByteCode(reader.GetValue()));
+      else if ("val" === name) this.setVal(reader.GetValueDouble());
+      else if ("max" === name) this.setMax(reader.GetValueDouble());
+    };
+    Rule.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:rule");
+      if (this.type !== null) writer.WriteXmlNullableAttributeString("type", GetConstraintType(this.type));
+      if (this.for !== null) writer.WriteXmlNullableAttributeString("for", GetFor(this.for));
+      writer.WriteXmlNullableAttributeString("forName", this.forName);
+      if (this.ptType) this.ptType.toXml(writer, "ptType");
+      if (this.val !== null) writer.WriteXmlNullableAttributeDouble("val", this.val);
+      if (this.fact !== null) writer.WriteXmlNullableAttributeDouble("fact", this.fact);
+      if (this.max !== null) writer.WriteXmlNullableAttributeDouble("max", this.max);
+      writer.WriteXmlAttributesEnd();
+      writer.WriteXmlNodeEnd("dgm:rule");
     };
 
 
@@ -6078,6 +8331,38 @@ Because of this, the display is sometimes not correct.
         }
       }
     };
+    SShape.prototype.readChildXml = function (name, reader) {
+      if(name === "adjLst") {
+        var oLst = new AdjLst();
+        oLst.fromXml(reader);
+        this.setAdjLst(oLst);
+      }
+    };
+    SShape.prototype.readAttrXml = function (name, reader) {
+
+      if ("blip" === name) this.setBlip(reader.GetValue());
+      else if ("blipPhldr" === name) this.setBlipPhldr(reader.GetValueBool());
+      else if ("hideGeom" === name) this.setHideGeom(reader.GetValueBool());
+      else if ("lkTxEntry" === name) this.setLkTxEntry(reader.GetValueBool());
+      else if ("rot" === name) this.setRot(reader.GetValueDouble());
+      else if ("type" === name) this.setType(reader.GetValue());
+      else if ("zOrderOff" === name) this.setZOrderOff(reader.GetValueUInt());
+    };
+    SShape.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:shape");
+      writer.WriteXmlNullableAttributeDouble("rot", this.rot);
+      writer.WriteXmlNullableAttributeString("type", this.type);
+      writer.WriteXmlNullableAttributeString("r:blip", this.blip);
+      writer.WriteXmlNullableAttributeBool("blipPhldr", this.blipPhldr);
+      writer.WriteXmlNullableAttributeBool("lkTxEntry", this.lkTxEntry);
+      writer.WriteXmlNullableAttributeUInt("zOrderOff", this.zOrderOff);
+      writer.WriteXmlNullableAttributeBool("hideGeom", this.hideGeom);
+      writer.WriteXmlAttributesEnd();
+
+      if (this.adjLst) this.adjLst.toXml(writer);
+
+      writer.WriteXmlNodeEnd("dgm:shape");
+    };
 
     function AdjLst() {
       CCommonDataList.call(this);
@@ -6099,6 +8384,16 @@ Because of this, the display is sometimes not correct.
           break;
         }
       }
+    };
+    AdjLst.prototype.readChildXml = function (name, reader) {
+      if(name === "adj") {
+        var oChild = new Adj();
+        oChild.fromXml(reader);
+        this.addToLst(this.list.length, oChild);
+      }
+    };
+    AdjLst.prototype.toXml = function(writer) {
+      CCommonDataList.prototype.toXml(writer, "dgm:adjLst");
     };
 
     changesFactory[AscDFH.historyitem_AdjIdx] = CChangeLong;
@@ -6153,6 +8448,24 @@ Because of this, the display is sometimes not correct.
       else if (1 === nType) this.setVal(oStream.GetDouble());
     };
     Adj.prototype.readChild = function(nType, pReader) {
+    };
+    Adj.prototype.readAttrXml = function (name, reader) {
+      if(name === "idx") {
+        this.setIdx(reader.GetValueUInt());
+      }
+      else if(name === "val") {
+        this.setVal(reader.GetValueDouble());
+      }
+    };
+    Adj.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:adj");
+
+
+      writer.WriteXmlNullableAttributeUInt("idx", this.idx);
+      writer.WriteXmlNullableAttributeDouble("val", this.val);
+      writer.WriteXmlAttributesEnd();
+
+      writer.WriteXmlNodeEnd("dgm:adj");
     };
 
 
@@ -6395,6 +8708,68 @@ Because of this, the display is sometimes not correct.
         }
       }
     };
+    VarLst.prototype.readChildXml = function (name, reader) {
+      switch (name) {
+        case "animLvl": {
+          this.setAnimLvl(new AnimLvl());
+          this.animLvl.fromXml(reader);
+          break;
+        }
+        case "animOne": {
+          this.setAnimOne(new AnimOne());
+          this.animOne.fromXml(reader);
+          break;
+        }
+        case "bulletEnabled": {
+          this.setBulletEnabled(new BulletEnabled());
+          this.bulletEnabled.fromXml(reader);
+          break;
+        }
+        case "chMax": {
+          this.setChMax(new ChMax());
+          this.chMax.fromXml(reader);
+          break;
+        }
+        case "chPref": {
+          this.setChPref(new ChPref());
+          this.chPref.fromXml(reader);
+          break;
+        }
+        case "dir": {
+          this.setDir(new DiagramDirection());
+          this.dir.fromXml(reader);
+          break;
+        }
+        case "hierBranch": {
+          this.setHierBranch(new HierBranch());
+          this.hierBranch.fromXml(reader);
+          break;
+        }
+        case "orgChart": {
+          this.setOrgChart(new OrgChart());
+          this.orgChart.fromXml(reader);
+          break;
+        }
+        case "resizeHandles": {
+          this.setResizeHandles(new ResizeHandles());
+          this.resizeHandles.fromXml(reader);
+          break;
+        }
+      }
+    };
+    VarLst.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:varLst");
+      writer.WriteXmlAttributesEnd();
+      if (this.chMax)			this.chMax.toXml(writer);
+      if (this.chPref)			this.chPref.toXml(writer);
+      if (this.dir)			    this.dir.toXml(writer);
+      if (this.animOne)		    this.animOne.toXml(writer);
+      if (this.animLvl)		    this.animLvl.toXml(writer);
+      if (this.bulletEnabled)	this.bulletEnabled.toXml(writer);
+      if (this.hierBranch)		this.hierBranch.toXml(writer);
+      if (this.resizeHandles)	this.resizeHandles.toXml(writer);
+      writer.WriteXmlNodeEnd("dgm:varLst");
+    };
 
     VarLst.prototype.getVal = function (fieldType) {
       var defaultValues = {
@@ -6444,10 +8819,57 @@ Because of this, the display is sometimes not correct.
     AnimLvl.prototype.toPPTY = function (pWriter) {
       pWriter.WriteByteToPPTY(this.getVal() || 0);
     };
-
     AnimLvl.prototype.fromPPTY = function (pReader) {
       var val = pReader.stream.ReadByteFromPPTY();
       this.setVal(val);
+    };
+    AnimLvl.prototype.readAttribute = function(nType, pReader) {
+      var oStream = pReader.stream;
+      if (0 === nType) this.setIdx(oStream.GetULong());
+      else if (1 === nType) this.setVal(oStream.GetDouble());
+    };
+    AnimLvl.prototype.readChild = function(nType, pReader) {
+    };
+    AnimLvl.prototype.readAttrXml = function (name, reader) {
+      if(name === "val") {
+        let sVal = reader.GetValue();
+        switch (sVal) {
+          case "ctr": {
+            this.setVal(AnimLvl_val_ctr);
+            break;
+          }
+          case "lvl": {
+            this.setVal(AnimLvl_val_lvl);
+            break;
+          }
+          case "none": {
+            this.setVal(AnimLvl_val_none);
+            break;
+          }
+        }
+      }
+    };
+    AnimLvl.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:animLvl");
+
+
+      switch (this.val) {
+        case AnimLvl_val_ctr: {
+          writer.WriteXmlNullableAttributeString("val", "ctr");
+          break;
+        }
+        case AnimLvl_val_lvl: {
+          writer.WriteXmlNullableAttributeString("val", "lvl");
+          break;
+        }
+        case AnimLvl_val_none: {
+          writer.WriteXmlNullableAttributeString("val", "none");
+          break;
+        }
+      }
+      writer.WriteXmlAttributesEnd();
+
+      writer.WriteXmlNodeEnd("dgm:animLvl");
     };
 
     changesFactory[AscDFH.historyitem_AnimOneVal] = CChangeLong;
@@ -6482,6 +8904,44 @@ Because of this, the display is sometimes not correct.
       var val = pReader.stream.ReadByteFromPPTY();
       this.setVal(val);
     };
+    AnimOne.prototype.readAttrXml = function (name, reader) {
+      if(name === "val") {
+        let sVal = reader.GetValue();
+        switch (sVal) {
+          case "branch": {
+            this.setVal(AnimOne_val_branch);
+            break;
+          }
+          case "none": {
+            this.setVal(AnimOne_val_none);
+            break;
+          }
+          case "one": {
+            this.setVal(AnimOne_val_one);
+            break;
+          }
+        }
+      }
+    };
+    AnimOne.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:animOne");
+      switch(this.val) {
+        case AnimOne_val_branch: {
+          writer.WriteXmlAttributeString("val", "branch");
+          break;
+        }
+        case AnimOne_val_none: {
+          writer.WriteXmlAttributeString("val", "none");
+          break;
+        }
+        case AnimOne_val_one: {
+          writer.WriteXmlAttributeString("val", "one");
+          break;
+        }
+      }
+      writer.WriteXmlAttributesEnd();
+      writer.WriteXmlNodeEnd("dgm:animOne");
+    };
 
     changesFactory[AscDFH.historyitem_BulletEnabledVal] = CChangeBool;
     drawingsChangesMap[AscDFH.historyitem_BulletEnabledVal] = function (oClass, value) {
@@ -6515,6 +8975,20 @@ Because of this, the display is sometimes not correct.
       var val = pReader.stream.ReadByteFromPPTY();
       this.setVal(!!val);
     };
+    BulletEnabled.prototype.readAttrXml = function (name, reader) {
+      if(name === "val") {
+        this.setVal(reader.GetValueBool());
+      }
+    };
+    BulletEnabled.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:bulletEnabled");
+
+
+      writer.WriteXmlNullableAttributeBool("val", this.val);
+      writer.WriteXmlAttributesEnd();
+
+      writer.WriteXmlNodeEnd("dgm:bulletEnabled");
+    };
 
     changesFactory[AscDFH.historyitem_ChMaxVal] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_ChMaxVal] = function (oClass, value) {
@@ -6531,25 +9005,40 @@ Because of this, the display is sometimes not correct.
     ChMax.prototype.setVal = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ChMaxVal, this.getVal(), pr));
       this.val = pr;
-    }
+    };
 
     ChMax.prototype.getVal = function () {
       return this.val;
-    }
+    };
 
     ChMax.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
-    }
+    };
 
     ChMax.prototype.fromPPTY = function (pReader) {
       var val = pReader.stream.ReadIntFromPPTY();
       this.setVal(val);
-    }
+    };
     
     ChMax.prototype.toPPTY = function (pWriter) {
       var val = this.getVal();
       pWriter.WriteIntToPPTY(val || 0);
-    }
+    };
+
+
+    ChMax.prototype.readAttrXml = function (name, reader) {
+      if(name === "val") {
+        this.setVal(reader.GetValueInt());
+      }
+    };
+    ChMax.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:chMax");
+      writer.WriteXmlNullableAttributeInt("val", this.val);
+      writer.WriteXmlAttributesEnd();
+
+      writer.WriteXmlNodeEnd("dgm:chMax");
+    };
+
 
     changesFactory[AscDFH.historyitem_ChPrefVal] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_ChPrefVal] = function (oClass, value) {
@@ -6584,6 +9073,17 @@ Because of this, the display is sometimes not correct.
       var val = this.getVal() || 0;
       pWriter.WriteIntToPPTY(val);
     };
+    ChPref.prototype.readAttrXml = function (name, reader) {
+      if(name === "val") {
+        this.setVal(reader.GetValueInt());
+      }
+    };
+    ChPref.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:chPref");
+      writer.WriteXmlNullableAttributeInt("val", this.val);
+      writer.WriteXmlAttributesEnd();
+      writer.WriteXmlNodeEnd("dgm:chPref");
+    };
 
     changesFactory[AscDFH.historyitem_DiagramDirectionVal] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_DiagramDirectionVal] = function (oClass, value) {
@@ -6617,6 +9117,37 @@ Because of this, the display is sometimes not correct.
     DiagramDirection.prototype.fromPPTY = function (pReader) {
       var val = pReader.stream.ReadByteFromPPTY();
       this.setVal(val);
+    };
+    DiagramDirection.prototype.readAttrXml = function (name, reader) {
+      if(name === "val") {
+        let sVal = reader.GetValue();
+        switch (sVal) {
+          case "norm": {
+            this.setVal(DiagramDirection_val_norm);
+            break;
+          }
+          case "rev": {
+            this.setVal(DiagramDirection_val_rev);
+            break;
+          }
+        }
+      }
+    };
+    DiagramDirection.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:dir");
+
+      switch (this.val) {
+        case DiagramDirection_val_norm: {
+          writer.WriteXmlAttributeString("val", "norm");
+          break;
+        }
+        case DiagramDirection_val_rev: {
+          writer.WriteXmlAttributeString("val", "rev");
+          break;
+        }
+      }
+      writer.WriteXmlAttributesEnd();
+      writer.WriteXmlNodeEnd("dgm:dir");
     };
 
 
@@ -6654,6 +9185,63 @@ Because of this, the display is sometimes not correct.
       this.setVal(val);
     };
 
+    HierBranch.prototype.readAttrXml = function (name, reader) {
+      if(name === "val") {
+        let sVal = reader.GetValue();
+        switch (sVal) {
+          case "hang": {
+            this.setVal(HierBranch_val_hang);
+            break;
+          }
+          case "init": {
+            this.setVal(HierBranch_val_init);
+            break;
+          }
+          case "l": {
+            this.setVal(HierBranch_val_l);
+            break;
+          }
+          case "r": {
+            this.setVal(HierBranch_val_r);
+            break;
+          }
+          case "std": {
+            this.setVal(HierBranch_val_std);
+            break;
+          }
+        }
+      }
+    };
+    HierBranch.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:hierBranch");
+
+
+      switch (this.val) {
+        case HierBranch_val_hang: {
+          writer.WriteXmlAttributeString("val", "hang");
+          break;
+        }
+        case HierBranch_val_init: {
+          writer.WriteXmlAttributeString("val", "init");
+          break;
+        }
+        case HierBranch_val_l: {
+          writer.WriteXmlAttributeString("val", "l");
+          break;
+        }
+        case HierBranch_val_r: {
+          writer.WriteXmlAttributeString("val", "r");
+          break;
+        }
+        case HierBranch_val_std: {
+          writer.WriteXmlAttributeString("val", "std");
+          break;
+        }
+      }
+      writer.WriteXmlAttributesEnd();
+      writer.WriteXmlNodeEnd("dgm:hierBranch");
+    };
+
     changesFactory[AscDFH.historyitem_OrgChartVal] = CChangeBool;
     drawingsChangesMap[AscDFH.historyitem_OrgChartVal] = function (oClass, value) {
       oClass.val = value;
@@ -6688,6 +9276,22 @@ Because of this, the display is sometimes not correct.
       this.setVal(!!val);
     };
 
+
+    OrgChart.prototype.readAttrXml = function (name, reader) {
+      if(name === "val") {
+        this.setVal(reader.GetValueBool());
+      }
+    };
+    OrgChart.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:orgChart");
+
+
+      writer.WriteXmlNullableAttributeBool("val", this.val);
+      writer.WriteXmlAttributesEnd();
+
+      writer.WriteXmlNodeEnd("dgm:orgChart");
+    };
+
     changesFactory[AscDFH.historyitem_ResizeHandlesVal] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_ResizeHandlesVal] = function (oClass, value) {
       oClass.val = value;
@@ -6720,6 +9324,37 @@ Because of this, the display is sometimes not correct.
     ResizeHandles.prototype.fromPPTY = function (pReader) {
       var val = pReader.stream.ReadByteFromPPTY();
       this.setVal(val);
+    };
+
+    ResizeHandles.prototype.readAttrXml = function (name, reader) {
+      if(name === "val") {
+        let sVal = reader.GetValue();
+        switch (sVal) {
+          case "exact": {
+            this.setVal(ResizeHandles_val_exact);
+            break;
+          }
+          case "rel": {
+            this.setVal(ResizeHandles_val_rel);
+            break;
+          }
+        }
+      }
+    };
+    ResizeHandles.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:resizeHandles");
+      switch (this.val) {
+        case ResizeHandles_val_exact: {
+          writer.WriteXmlAttributeString("val", "exact");
+          break;
+        }
+        case ResizeHandles_val_rel: {
+          writer.WriteXmlAttributeString("val", "rel");
+          break;
+        }
+      }
+      writer.WriteXmlAttributesEnd();
+      writer.WriteXmlNodeEnd("dgm:resizeHandles");
     };
 
 
@@ -6903,7 +9538,38 @@ Because of this, the display is sometimes not correct.
           element.startAlgorithm(pointTree, node);
         }
       });
-    }
+    };
+    ForEach.prototype.readChildXml = function (name, reader) {
+    };
+    ForEach.prototype.readAttrXml = function (name, reader) {
+      if (name === "name") this.setName(reader.GetValue());
+      else if (name === "st") this.readStFromXml(reader);
+      else if (name === "step") this.readStepFromXml(reader);
+      else if (name === "hideLastTrans") this.readHideLastTrans(reader);
+      else if (name === "cnt") this.readCntFromXml(reader);
+      else if (name === "axis") {
+        this.readAxisFromXml(reader);
+      }
+      else if (name === "ptType") {
+        this.readPtTypeFromXml(reader);
+      }
+      else if(name === "ref") {
+        this.setRef(reader.GetValue());
+      }
+    };
+    ForEach.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:forEach");
+      writer.WriteXmlNullableAttributeString("name", this.name);
+      this.writeAxisToXml(writer);
+      this.writePtTypeToXml(writer);
+      this.writeStToXml(writer);
+      this.writeCntToXml(writer);
+      this.writeStepToXml(writer);
+      this.writeHideLastTransToXml(writer);
+      writer.WriteXmlNullableAttributeString("ref", this.ref);
+      writer.WriteXmlAttributesEnd();
+      writer.WriteXmlNodeEnd("dgm:forEach");
+    };
 
 
 
@@ -6977,6 +9643,24 @@ Because of this, the display is sometimes not correct.
     SampData.prototype.getChildren = function() {
       return [this.dataModel];
     };
+    SampData.prototype.readChildXml = function (name, reader) {
+      if ("dataModel" === name)
+      {
+        this.setDataModel(new DataModel());
+        this.dataModel.fromXml(reader);
+      }
+    };
+    SampData.prototype.readAttrXml = function (name, reader) {
+      if (name === "useDef") this.setUseDef(reader.GetValueBool());
+    };
+    SampData.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:sampData");
+      writer.WriteXmlNullableAttributeString("useDef", this.useDef);
+      writer.WriteXmlAttributesEnd();
+      if (this.dataModel)
+        this.dataModel.toXml(writer);
+      writer.WriteXmlNodeEnd("dgm:sampData");
+    };
 
 
     changesFactory[AscDFH.historyitem_StyleDataUseDef] = CChangeBool;
@@ -7049,6 +9733,24 @@ Because of this, the display is sometimes not correct.
     StyleData.prototype.getChildren = function() {
       return [this.dataModel];
     };
+    SampData.prototype.readChildXml = function (name, reader) {
+      if ("dataModel" === name)
+      {
+        this.setDataModel(new DataModel());
+        this.dataModel.fromXml(reader);
+      }
+    };
+    SampData.prototype.readAttrXml = function (name, reader) {
+      if (name === "useDef") this.setUseDef(reader.GetValueBool());
+    };
+    SampData.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:styleData");
+      writer.WriteXmlNullableAttributeString("useDef", this.useDef);
+      writer.WriteXmlAttributesEnd();
+      if (this.dataModel)
+        this.dataModel.toXml(writer);
+      writer.WriteXmlNodeEnd("dgm:styleData");
+    };
 
 
 
@@ -7106,6 +9808,17 @@ Because of this, the display is sometimes not correct.
     DiagramTitle.prototype.readChild = function(nType, pReader) {
     };
 
+    DiagramTitle.prototype.readAttrXml = function (name, reader) {
+      if (name === "lang") this.setLang(reader.GetValue());
+      else if (name === "val") this.setVal(reader.GetValue());
+    };
+    DiagramTitle.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:title");
+      writer.WriteXmlNullableAttributeString("lang", this.lang);
+      writer.WriteXmlNullableAttributeString("val", this.val);
+      writer.WriteXmlAttributesEnd();
+      writer.WriteXmlNodeEnd("dgm:title");
+    };
 
 
     function LayoutDefHdrLst() {
@@ -7568,6 +10281,57 @@ Because of this, the display is sometimes not correct.
     ColorsDef.prototype.getChildren = function() {
       return [this.title, this.desc, this.catLst].concat(this.styleLbl);
     };
+    ColorsDef.prototype.readChildXml = function (name, reader) {
+      if ("catLst" === name)
+      {
+        this.setCatLst(new CatLst());
+        this.catLst.fromXml(reader);
+      }
+    else if ("desc" === name)
+      {
+        this.setDesc(new Desc());
+        this.desc.fromXml(reader);
+      }
+    else if ("title" === name)
+      {
+        this.setTitle(new DiagramTitle());
+        this.title.fromXml(reader);
+      }
+    else if ("styleLbl" === name)
+      {
+        var oDefStyle = new ColorDefStyleLbl();
+        oDefStyle.fromXml(reader);
+        this.addToLstStyleLbl(this.styleLbl.length, oDefStyle);
+      }
+    };
+    ColorsDef.prototype.readAttrXml = function (name, reader) {
+      switch (name) {
+        case "uniqueId": {
+          this.uniqueId = reader.GetValue();
+          break;
+        }
+        case "minVer": {
+          this.minVer = reader.GetValue();
+          break;
+        }
+      }
+    };
+    ColorsDef.prototype.toXml = function(writer) {
+
+      writer.WriteXmlString(AscCommonWord.g_sXmlHeader);
+      writer.WriteXmlNodeStart("dgm:colorsDef");
+      writer.WriteXmlNullableAttributeString("xmlns:dgm", "http://schemas.openxmlformats.org/drawingml/2006/diagram");
+      writer.WriteXmlNullableAttributeString("xmlns:a", "http://schemas.openxmlformats.org/drawingml/2006/main");
+      writer.WriteXmlNullableAttributeString("uniqueId", this.uniqueId);
+      writer.WriteXmlNullableAttributeString("minVer", this.minVer);
+      writer.WriteXmlAttributesEnd();
+      if (this.title) this.title.toXml(writer);
+      if (this.desc) this.desc.toXml(writer);
+      if (this.catLst) this.catLst.toXml(writer);
+      for (let i = 0; i < this.styleLbl.length; ++i)
+        this.styleLbl[i].toXml(writer);
+      writer.WriteXmlNodeEnd("dgm:colorsDef");
+    };
 
 
     changesFactory[AscDFH.historyitem_ColorDefStyleLblName] = CChangeString;
@@ -7778,6 +10542,64 @@ Because of this, the display is sometimes not correct.
     ColorDefStyleLbl.prototype.getChildren = function() {
       return [this.effectClrLst, this.fillClrLst, this.linClrLst, this.txEffectClrLst, this.txFillClrLst, this.txLinClrLst];
     };
+    ColorDefStyleLbl.prototype.readChildXml = function (name, reader) {
+      switch (name) {
+        case "effectClrLst": {
+          this.setEffectClrLst(new EffectClrLst());
+          this.effectClrLst.fromXml(reader);
+          break;
+        }
+        case "fillClrLst": {
+          this.setFillClrLst(new FillClrLst());
+          this.fillClrLst.fromXml(reader);
+          break;
+        }
+        case "linClrLst": {
+          this.setLinClrLst(new LinClrLst());
+          this.linClrLst.fromXml(reader);
+          break;
+        }
+        case "txEffectClrLst" : {
+          this.setTxEffectClrLst(new TxEffectClrLst());
+          this.txEffectClrLst.fromXml(reader);
+          break;
+        }
+        case "txFillClrLst": {
+          this.setTxFillClrLst(new TxFillClrLst());
+          this.txFillClrLst.fromXml(reader);
+          break;
+        }
+        case "txLinClrLst": {
+          this.setTxLinClrLst(new TxLinClrLst());
+          this.txLinClrLst.fromXml(reader);
+          break;
+        }
+      }
+    };
+    ColorDefStyleLbl.prototype.readAttrXml = function (name, reader) {
+      if(name === "name") {
+        this.setName(reader.GetValue());
+      }
+    };
+    ColorDefStyleLbl.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:styleLbl");
+      writer.WriteXmlNullableAttributeString("name", this.name);
+      writer.WriteXmlAttributesEnd();
+
+      if (this.fillClrLst)
+        this.fillClrLst.toXml(writer);
+      if (this.linClrLst)
+        this.linClrLst.toXml(writer);
+      if (this.effectClrLst)
+        this.effectClrLst.toXml(writer);
+      if (this.txLinClrLst)
+        this.txLinClrLst.toXml(writer);
+      if (this.txFillClrLst)
+        this.txFillClrLst.toXml(writer);
+      if (this.txEffectClrLst)
+        this.txEffectClrLst.toXml(writer);
+      writer.WriteXmlNodeEnd("dgm:styleLbl");
+    };
 
 
     changesFactory[AscDFH.historyitem_CCommonDataClrListAdd] = CChangesContentNoId;
@@ -7790,6 +10612,7 @@ Because of this, the display is sometimes not correct.
     drawingContentChanges[AscDFH.historyitem_CCommonDataClrListRemove] = function (oClass) {
       return oClass.list;
     };
+
 
     function CCommonDataClrList(type, ind, item, isAdd) {
       CBaseFormatObject.call(this, type, ind, item, isAdd);
@@ -7867,6 +10690,85 @@ Because of this, the display is sometimes not correct.
     CCommonDataClrList.prototype.getChildren = function() {
       return [].concat(this.list);
     };
+    CCommonDataClrList.prototype.readChildXml = function (name, reader) {
+      if(AscFormat.CUniColor.prototype.isUnicolor(name)) {
+        let oColor = new AscFormat.CUniColor();
+        oColor.fromXml(reader);
+        this.addToLst(this.list.length, oColor);
+      }
+    };
+    CCommonDataClrList.prototype.readAttrXml = function (name, reader) {
+      if(name === "hueDir") {
+        let sValue = reader.GetValue();
+        switch (sValue) {
+          case "ccw": {
+            this.setHueDir(ClrLst_hueDir_ccw);
+            break;
+          }
+          case "cw": {
+            this.setHueDir(ClrLst_hueDir_cw);
+            break;
+          }
+        }
+      }
+      else if(name === "meth") {
+        let sValue = reader.GetValue();
+        switch (sValue) {
+          case "cycle": {
+            this.setMeth(ClrLst_meth_cycle);
+            break;
+          }
+          case "repeat": {
+            this.setHueDir(ClrLst_meth_repeat);
+            break;
+          }
+          case "span": {
+            this.setHueDir(ClrLst_meth_span);
+            break;
+          }
+        }
+      }
+    };
+    CCommonDataClrList.prototype.toXml = function(writer, name) {
+      writer.WriteXmlNodeStart(name);
+      if (null !== this.hueDir) {
+        switch (this.hueDir) {
+
+          case ClrLst_hueDir_ccw: {
+            writer.WriteXmlAttributeString("hueDir", "ccw");
+            break;
+          }
+          case ClrLst_hueDir_cw: {
+            writer.WriteXmlAttributeString("hueDir", "cw");
+            break;
+          }
+        }
+      }
+      if(this.meth !== null) {
+        switch (this.meth) {
+
+          case ClrLst_meth_cycle: {
+            writer.WriteXmlAttributeString("meth", "cycle");
+            break;
+          }
+          case ClrLst_meth_repeat: {
+            writer.WriteXmlAttributeString("meth", "repeat");
+            break;
+          }
+          case ClrLst_meth_span: {
+            writer.WriteXmlAttributeString("meth", "span");
+            break;
+          }
+        }
+      }
+      writer.WriteXmlAttributesEnd();
+      for (let i = 0; i < this.list.length; ++i)
+      {
+        if (this.list[i])
+          this.list[i].toXml(writer);
+      }
+      writer.WriteXmlNodeEnd(name);
+    };
 
 
 
@@ -7919,36 +10821,54 @@ Because of this, the display is sometimes not correct.
     }
 
     InitClass(EffectClrLst, ClrLst, AscDFH.historyitem_type_EffectClrLst);
+    EffectClrLst.prototype.toXml = function(writer) {
+      ClrLst.prototype.toXml(writer, "dgm:effectClrLst");
+    };
 
     function FillClrLst() {
       ClrLst.call(this);
     }
 
     InitClass(FillClrLst, ClrLst, AscDFH.historyitem_type_FillClrLst);
+    FillClrLst.prototype.toXml = function(writer) {
+      ClrLst.prototype.toXml(writer, "dgm:fillClrLst");
+    };
 
     function LinClrLst() {
       ClrLst.call(this);
     }
 
     InitClass(LinClrLst, ClrLst, AscDFH.historyitem_type_LinClrLst);
+    LinClrLst.prototype.toXml = function(writer) {
+      ClrLst.prototype.toXml(writer, "dgm:linClrLst");
+    };
 
     function TxEffectClrLst() {
       ClrLst.call(this);
     }
 
     InitClass(TxEffectClrLst, ClrLst, AscDFH.historyitem_type_TxEffectClrLst);
+    TxEffectClrLst.prototype.toXml = function(writer) {
+      ClrLst.prototype.toXml(writer, "dgm:txEffectClrLst");
+    };
 
     function TxFillClrLst() {
       ClrLst.call(this);
     }
 
     InitClass(TxFillClrLst, ClrLst, AscDFH.historyitem_type_TxFillClrLst);
+    TxFillClrLst.prototype.toXml = function(writer) {
+      ClrLst.prototype.toXml(writer, "dgm:txFillClrLst");
+    };
 
     function TxLinClrLst() {
       ClrLst.call(this);
     }
 
     InitClass(TxLinClrLst, ClrLst, AscDFH.historyitem_type_TxLinClrLst);
+    TxLinClrLst.prototype.toXml = function(writer) {
+      ClrLst.prototype.toXml(writer, "dgm:txLinClrLst");
+    };
 
     function ColorsDefHdrLst() {
       CCommonDataList.call(this);
@@ -8316,6 +11236,63 @@ Because of this, the display is sometimes not correct.
     StyleDef.prototype.getChildren = function() {
       return [this.title, this.desc, this.catLst, this.scene3d].concat(this.styleLbl);
     };
+    StyleDef.prototype.readChildXml = function (name, reader) {
+      switch (name) {
+        case "title": {
+          this.setTitle(new DiagramTitle());
+          this.title.fromXml(reader);
+          break;
+        }
+        case "desc": {
+          this.setDesc(new Desc());
+          this.desc.fromXml(reader);
+          break;
+        }
+        case "catLst": {
+          this.setCatLst(new CatLst());
+          this.catLst.fromXml(reader);
+          break;
+        }
+        case "scene3d": {
+          this.setScene3d(new Scene3d());
+          this.scene3d.fromXml(reader);
+          break;
+        }
+        case "styleLbl": {
+          var oChild = new StyleDefStyleLbl();
+          oChild.fromXml(reader);
+          this.addToLstStyleLbl(this.styleLbl.length, oChild);
+          break;
+        }
+      }
+    };
+    StyleDef.prototype.readAttrXml = function (name, reader) {
+      if ("uniqueId" === name) this.setUniqueId(reader.GetValue());
+      else if ("minVer" === name) this.setMinVer(reader.GetValue());
+    };
+    StyleDef.prototype.toXml = function(writer) {
+
+      writer.WriteXmlString(AscCommonWord.g_sXmlHeader);
+      writer.WriteXmlNodeStart("dgm:styleDef");
+
+
+      writer.WriteXmlAttributeString("xmlns:dgm", "http://schemas.openxmlformats.org/drawingml/2006/diagram");
+      writer.WriteXmlAttributeString("xmlns:a", "http://schemas.openxmlformats.org/drawingml/2006/main");
+
+      writer.WriteXmlNullableAttributeString("uniqueId", this.uniqueId);
+      writer.WriteXmlNullableAttributeString("minVer", this.minVer);
+      writer.WriteXmlAttributesEnd();
+
+      if (this.title) this.title.toXml(writer);
+      if (this.desc) this.desc.toXml(writer);
+      if (this.catLst) this.catLst.toXml(writer);
+      if (this.scene3d) this.scene3d.toXml(writer, "dgm");
+
+      for (let i = 0; i < this.styleLbl.length; ++i)
+        this.styleLbl[i].toXml(writer);
+
+      writer.WriteXmlNodeEnd("dgm:styleDef");
+    };
 
 
 
@@ -8437,7 +11414,36 @@ Because of this, the display is sometimes not correct.
 
     Scene3d.prototype.getChildren = function () {
       return [this.camera, this.lightRig, this.backdrop];
-    }
+    };
+    Scene3d.prototype.readChildXml = function (name, reader) {
+      switch (name) {
+        case "camera":
+          this.setCamera(new Camera());
+          this.camera.fromXml(reader);
+          break;
+        case "lightRig":
+          this.setLightRig(new LightRig());
+          this.lightRig.fromXml(reader);
+          break;
+        case "backdrop":
+          this.setBackdrop(new Backdrop());
+          this.backdrop.fromXml(reader);
+          break;
+      }
+    };
+    Scene3d.prototype.toXml = function(writer, m_namespace) {
+      let name_ = m_namespace + ":scene3d";
+
+      writer.WriteXmlNodeStart(name_);
+
+
+      writer.WriteXmlAttributesEnd();
+      writer.WriteXmlNullable(this.camera);
+      writer.WriteXmlNullable(this.lightRig);
+      writer.WriteXmlNullable(this.backdrop);
+
+      writer.WriteXmlNodeEnd(name_);
+    };
 
 
     changesFactory[AscDFH.historyitem_StyleDefStyleLblName] = CChangeString;
@@ -8598,6 +11604,52 @@ Because of this, the display is sometimes not correct.
     StyleDefStyleLbl.prototype.getChildren = function() {
       return [this.scene3d, this.sp3d, this.style, this.txPr];
     };
+    StyleDefStyleLbl.prototype.readChildXml = function (name, reader) {
+      switch (name) {
+        case 0: {
+          this.setScene3d(new Scene3d());
+          this.scene3d.fromXml(reader);
+          break;
+        }
+        case 1: {
+          this.setSp3d(new Sp3d());
+          this.sp3d.fromXml(reader);
+          break;
+        }
+        case 2: {
+          let oStyle = new AscFormat.CShapeStyle();
+          oStyle.fromXml(reader);
+          this.setStyle(oStyle);
+          break;
+        }
+        case 3: {
+          let oTxPr = new AscFormat.CTextBody();
+          oTxPr.fromXml(reader);
+          this.setTxPr(oTxPr);
+          break;
+        }
+      }
+    };
+    StyleDefStyleLbl.prototype.readAttrXml = function (name, reader) {
+      if(name === "name") {
+        this.setName(reader.GetValue());
+      }
+    };
+    StyleDefStyleLbl.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("dgm:styleLbl");
+      writer.WriteXmlNullableAttributeString("name", this.name);
+      writer.WriteXmlAttributesEnd();
+
+      if (this.scene3d)
+        this.scene3d.toXml(writer, "dgm");
+      if (this.sp3d)
+        this.sp3d.toXml(writer);
+      if (this.txPr)
+        this.txPr.toXml(writer);
+      if (this.style)
+        this.style.toXml(writer);
+      writer.WriteXmlNodeEnd("dgm:styleLbl");
+    };
 
     changesFactory[AscDFH.historyitem_BackdropAnchor] = CChangeObject;
     changesFactory[AscDFH.historyitem_BackdropExtLst] = CChangeObject;
@@ -8706,6 +11758,29 @@ Because of this, the display is sometimes not correct.
       else if (7 === nType) this.up.setDy(oStream.GetLong());
       else if (8 === nType) this.up.setDz(oStream.GetLong());
     };
+    Backdrop.prototype.readChildXml = function (name, reader) {
+
+      if (name === "anchor")
+      {
+        this.anchor.fromXml(reader);
+      }
+    else if (name === "norm")
+      {
+        this.norm.fromXml(reader);
+      }
+    else if (name === "up")
+      {
+        this.up.fromXml(reader);
+      }
+    };
+    Backdrop.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("a:backdrop");
+      writer.WriteXmlAttributesEnd();
+      this.anchor.toXml(writer);
+      this.norm.toXml(writer);
+      this.up.toXml(writer);
+      writer.WriteXmlNodeEnd("a:backdrop");
+    };
 
     changesFactory[AscDFH.historyitem_CoordinateCoordinateUnqualified] = CChangeLong;
     changesFactory[AscDFH.historyitem_CoordinateUniversalMeasure] = CChangeLong;
@@ -8772,29 +11847,29 @@ Because of this, the display is sometimes not correct.
     BackdropAnchor.prototype.setX = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropAnchorX, this.getX(), oPr));
       this.x = oPr;
-    }
+    };
 
     BackdropAnchor.prototype.setY = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropAnchorY, this.getY(), oPr));
       this.y = oPr;
-    }
+    };
 
     BackdropAnchor.prototype.setZ = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropAnchorZ, this.getZ(), oPr));
       this.z = oPr;
-    }
+    };
 
     BackdropAnchor.prototype.getX = function () {
       return this.x;
-    }
+    };
 
     BackdropAnchor.prototype.getY = function () {
       return this.y;
-    }
+    };
 
     BackdropAnchor.prototype.getZ = function () {
       return this.z;
-    }
+    };
 
     BackdropAnchor.prototype.fillObject = function (oCopy, oIdMap) {
       if (this.getX() !== null) {
@@ -8806,7 +11881,28 @@ Because of this, the display is sometimes not correct.
       if (this.getZ() !== null) {
         oCopy.setZ(this.getZ());
       }
-    }
+    };
+
+    BackdropAnchor.prototype.readAttrXml = function (name, reader) {
+      if(name === "x") {
+        this.setX(reader.GetValueInt());
+      }
+      if(name === "y") {
+        this.setY(reader.GetValueInt());
+      }
+      if(name === "z") {
+        this.setZ(reader.GetValueInt());
+      }
+    };
+    BackdropAnchor.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("a:anchor");
+
+      writer.WriteXmlNullableAttributeInt("x", this.x);
+      writer.WriteXmlNullableAttributeInt("y", this.y);
+      writer.WriteXmlNullableAttributeInt("z", this.z);
+      writer.WriteXmlAttributesEnd();
+      writer.WriteXmlNodeEnd("a:anchor");
+    };
 
     function Drawing() {
       CGroupShape.call(this);
@@ -8823,7 +11919,6 @@ Because of this, the display is sometimes not correct.
     Drawing.prototype.updateCoordinatesAfterInternalResize = function () {
 
     }
-
     Drawing.prototype.writeChildren = function(pWriter) {
       pWriter.WriteGroupShape(this, 0);
     };
@@ -8930,6 +12025,14 @@ Because of this, the display is sometimes not correct.
         }
       }
     };
+    Drawing.prototype.readChildXml = function(name, reader) {
+      if(name === "spTree") {
+        AscFormat.CGroupShape.prototype.fromXml.call(this, reader, false);
+      }
+      else {
+        AscFormat.CGroupShape.prototype.readChildXml.call(this, name, reader, false);
+      }
+    };
 
     changesFactory[AscDFH.historyitem_BackdropNormDx] = CChangeLong;
     changesFactory[AscDFH.historyitem_BackdropNormDy] = CChangeLong;
@@ -8956,29 +12059,29 @@ Because of this, the display is sometimes not correct.
     BackdropNorm.prototype.setDx = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropNormDx, this.getDx(), oPr));
       this.dx = oPr;
-    }
+    };
 
     BackdropNorm.prototype.setDy = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropNormDy, this.getDy(), oPr));
       this.dy = oPr;
-    }
+    };
 
     BackdropNorm.prototype.setDz = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropNormDz, this.getDz(), oPr));
       this.dz = oPr;
-    }
+    };
 
     BackdropNorm.prototype.getDx = function () {
       return this.dx;
-    }
+    };
 
     BackdropNorm.prototype.getDy = function () {
       return this.dy;
-    }
+    };
 
     BackdropNorm.prototype.getDz = function () {
       return this.dz;
-    }
+    };
 
     BackdropNorm.prototype.fillObject = function (oCopy, oIdMap) {
       if (this.getDx()) {
@@ -8990,7 +12093,27 @@ Because of this, the display is sometimes not correct.
       if (this.getDz()) {
         oCopy.setDz(this.getDz());
       }
-    }
+    };
+
+    BackdropNorm.prototype.readAttrXml = function (name, reader) {
+      if(name === "dx") {
+        this.setDx(reader.GetValueInt());
+      }
+      if(name === "dy") {
+        this.setDy(reader.GetValueInt());
+      }
+      if(name === "dz") {
+        this.setDz(reader.GetValueInt());
+      }
+    };
+    BackdropNorm.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("a:norm");
+      writer.WriteXmlNullableAttributeInt("dx", this.dx);
+      writer.WriteXmlNullableAttributeInt("dy", this.dy);
+      writer.WriteXmlNullableAttributeInt("dz", this.dz);
+      writer.WriteXmlAttributesEnd();
+      writer.WriteXmlNodeEnd("a:norm");
+    };
 
 
     changesFactory[AscDFH.historyitem_BackdropUpDx] = CChangeLong;
@@ -9018,29 +12141,29 @@ Because of this, the display is sometimes not correct.
     BackdropUp.prototype.setDx = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropUpDx, this.getDx(), oPr));
       this.dx = oPr;
-    }
+    };
 
     BackdropUp.prototype.setDy = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropUpDy, this.getDy(), oPr));
       this.dy = oPr;
-    }
+    };
 
     BackdropUp.prototype.setDz = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_BackdropUpDz, this.getDz(), oPr));
       this.dz = oPr;
-    }
+    };
 
     BackdropUp.prototype.getDx = function () {
       return this.dx;
-    }
+    };
 
     BackdropUp.prototype.getDy = function () {
       return this.dy;
-    }
+    };
 
     BackdropUp.prototype.getDz = function () {
       return this.dz;
-    }
+    };
 
     BackdropUp.prototype.fillObject = function (oCopy, oIdMap) {
       if (this.getDx()) {
@@ -9052,7 +12175,27 @@ Because of this, the display is sometimes not correct.
       if (this.getDz()) {
         oCopy.setDz(this.getDz());
       }
-    }
+    };
+
+    BackdropUp.prototype.readAttrXml = function (name, reader) {
+      if(name === "dx") {
+        this.setDx(reader.GetValueInt());
+      }
+      if(name === "dy") {
+        this.setDy(reader.GetValueInt());
+      }
+      if(name === "dz") {
+        this.setDz(reader.GetValueInt());
+      }
+    };
+    BackdropUp.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("a:up");
+      writer.WriteXmlNullableAttributeInt("dx", this.dx);
+      writer.WriteXmlNullableAttributeInt("dy", this.dy);
+      writer.WriteXmlNullableAttributeInt("dz", this.dz);
+      writer.WriteXmlAttributesEnd();
+      writer.WriteXmlNodeEnd("a:up");
+    };
 
     changesFactory[AscDFH.historyitem_CameraFov] = CChangeDouble2;
     changesFactory[AscDFH.historyitem_CameraPrst] = CChangeLong;
@@ -9157,7 +12300,415 @@ Because of this, the display is sometimes not correct.
 
     Camera.prototype.getChildren = function () {
       return [this.rot];
-    }
+    };
+    Camera.prototype.readChildXml = function (name, reader) {
+      switch (name) {
+        case "rot": {
+          this.setRot(new Rot());
+          this.rot.fromXml(reader);
+          break;
+        }
+      }
+    };
+    Camera.prototype.readAttrXml = function (name, reader) {
+
+      if ("prst" === name) {
+        let sValue = reader.GetValue();
+        let nPrst = null;
+        switch (sValue) {
+          case "isometricBottomDown": {
+            nPrst = Camera_prst_isometricBottomDown; break;
+          }
+          case "isometricBottomUp": {
+            nPrst = Camera_prst_isometricBottomUp; break;
+          }
+          case "isometricLeftDown": {
+            nPrst = Camera_prst_isometricLeftDown; break;
+          }
+          case "isometricLeftUp": {
+            nPrst = Camera_prst_isometricLeftUp; break;
+          }
+          case "isometricOffAxis1Left": {
+            nPrst = Camera_prst_isometricOffAxis1Left; break;
+          }
+          case "isometricOffAxis1Right": {
+            nPrst = Camera_prst_isometricOffAxis1Right; break;
+          }
+          case "isometricOffAxis1Top": {
+            nPrst = Camera_prst_isometricOffAxis1Top; break;
+          }
+          case "isometricOffAxis2Left": {
+            nPrst = Camera_prst_isometricOffAxis2Left; break;
+          }
+          case "isometricOffAxis2Right": {
+            nPrst = Camera_prst_isometricOffAxis2Right; break;
+          }
+          case "isometricOffAxis2Top": {
+            nPrst = Camera_prst_isometricOffAxis2Top; break;
+          }
+          case "isometricOffAxis3Bottom": {
+            nPrst = Camera_prst_isometricOffAxis3Bottom; break;
+          }
+          case "isometricOffAxis3Left": {
+            nPrst = Camera_prst_isometricOffAxis3Left; break;
+          }
+          case "isometricOffAxis3Right": {
+            nPrst = Camera_prst_isometricOffAxis3Right; break;
+          }
+          case "isometricOffAxis4Bottom": {
+            nPrst = Camera_prst_isometricOffAxis4Bottom; break;
+          }
+          case "isometricOffAxis4Left": {
+            nPrst = Camera_prst_isometricOffAxis4Left; break;
+          }
+          case "isometricOffAxis4Right": {
+            nPrst = Camera_prst_isometricOffAxis4Right; break;
+          }
+          case "isometricRightDown": {
+            nPrst = Camera_prst_isometricRightDown; break;
+          }
+          case "isometricRightUp": {
+            nPrst = Camera_prst_isometricRightUp; break;
+          }
+          case "isometricTopDown": {
+            nPrst = Camera_prst_isometricTopDown; break;
+          }
+          case "isometricTopUp": {
+            nPrst = Camera_prst_isometricTopUp; break;
+          }
+          case "legacyObliqueBottom": {
+            nPrst = Camera_prst_legacyObliqueBottom; break;
+          }
+          case "legacyObliqueBottomLeft": {
+            nPrst = Camera_prst_legacyObliqueBottomLeft; break;
+          }
+          case "legacyObliqueBottomRight": {
+            nPrst = Camera_prst_legacyObliqueBottomRight; break;
+          }
+          case "legacyObliqueFront": {
+            nPrst = Camera_prst_legacyObliqueFront; break;
+          }
+          case "legacyObliqueLeft": {
+            nPrst = Camera_prst_legacyObliqueLeft; break;
+          }
+          case "legacyObliqueRight": {
+            nPrst = Camera_prst_legacyObliqueRight; break;
+          }
+          case "legacyObliqueTop": {
+            nPrst = Camera_prst_legacyObliqueTop; break;
+          }
+          case "legacyObliqueTopLeft": {
+            nPrst = Camera_prst_legacyObliqueTopLeft; break;
+          }
+          case "legacyObliqueTopRight": {
+            nPrst = Camera_prst_legacyObliqueTopRight; break;
+          }
+          case "legacyPerspectiveBottom": {
+            nPrst = Camera_prst_legacyPerspectiveBottom; break;
+          }
+          case "legacyPerspectiveBottomLeft": {
+            nPrst = Camera_prst_legacyPerspectiveBottomLeft; break;
+          }
+          case "legacyPerspectiveBottomRight": {
+            nPrst = Camera_prst_legacyPerspectiveBottomRight; break;
+          }
+          case "legacyPerspectiveFront": {
+            nPrst = Camera_prst_legacyPerspectiveFront; break;
+          }
+          case "legacyPerspectiveLeft": {
+            nPrst = Camera_prst_legacyPerspectiveLeft; break;
+          }
+          case "legacyPerspectiveRight": {
+            nPrst = Camera_prst_legacyPerspectiveRight; break;
+          }
+          case "legacyPerspectiveTop": {
+            nPrst = Camera_prst_legacyPerspectiveTop; break;
+          }
+          case "legacyPerspectiveTopLeft": {
+            nPrst = Camera_prst_legacyPerspectiveTopLeft; break;
+          }
+          case "legacyPerspectiveTopRight": {
+            nPrst = Camera_prst_legacyPerspectiveTopRight; break;
+          }
+          case "obliqueBottom": {
+            nPrst = Camera_prst_obliqueBottom; break;
+          }
+          case "obliqueBottomLeft": {
+            nPrst = Camera_prst_obliqueBottomLeft; break;
+          }
+          case "obliqueBottomRight": {
+            nPrst = Camera_prst_obliqueBottomRight; break;
+          }
+          case "obliqueLeft": {
+            nPrst = Camera_prst_obliqueLeft; break;
+          }
+          case "obliqueRight": {
+            nPrst = Camera_prst_obliqueRight; break;
+          }
+          case "obliqueTop": {
+            nPrst = Camera_prst_obliqueTop; break;
+          }
+          case "obliqueTopLeft": {
+            nPrst = Camera_prst_obliqueTopLeft; break;
+          }
+          case "obliqueTopRight": {
+            nPrst = Camera_prst_obliqueTopRight; break;
+          }
+          case "orthographicFront": {
+            nPrst = Camera_prst_orthographicFront; break;
+          }
+          case "perspectiveAbove": {
+            nPrst = Camera_prst_perspectiveAbove; break;
+          }
+          case "perspectiveAboveLeftFacing": {
+            nPrst = Camera_prst_perspectiveAboveLeftFacing; break;
+          }
+          case "perspectiveAboveRightFacing": {
+            nPrst = Camera_prst_perspectiveAboveRightFacing; break;
+          }
+          case "perspectiveBelow": {
+            nPrst = Camera_prst_perspectiveBelow; break;
+          }
+          case "perspectiveContrastingLeftFacing": {
+            nPrst = Camera_prst_perspectiveContrastingLeftFacing; break;
+          }
+          case "perspectiveContrastingRightFacing": {
+            nPrst = Camera_prst_perspectiveContrastingRightFacing; break;
+          }
+          case "perspectiveFront": {
+            nPrst = Camera_prst_perspectiveFront; break;
+          }
+          case "perspectiveHeroicExtremeLeftFacing": {
+            nPrst = Camera_prst_perspectiveHeroicExtremeLeftFacing; break;
+          }
+          case "perspectiveHeroicExtremeRightFacing": {
+            nPrst = Camera_prst_perspectiveHeroicExtremeRightFacing; break;
+          }
+          case "perspectiveHeroicLeftFacing": {
+            nPrst = Camera_prst_perspectiveHeroicLeftFacing; break;
+          }
+          case "perspectiveHeroicRightFacing": {
+            nPrst = Camera_prst_perspectiveHeroicRightFacing; break;
+          }
+          case "perspectiveLeft": {
+            nPrst = Camera_prst_perspectiveLeft; break;
+          }
+          case "perspectiveRelaxed": {
+            nPrst = Camera_prst_perspectiveRelaxed; break;
+          }
+          case "perspectiveRelaxedModerately": {
+            nPrst = Camera_prst_perspectiveRelaxedModerately; break;
+          }
+          case "perspectiveRight": {
+            nPrst = Camera_prst_perspectiveRight; break;
+          }
+        }
+        this.setPrst(nPrst);
+      }
+      else if ("fov" === name) this.setFov(reader.GetInt());
+      else if ("zoom" === name) this.setZoom(reader.GetInt());
+    };
+    Camera.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("a:camera");
+
+      let sValue = null;
+      switch (this.prst) {
+        case Camera_prst_isometricBottomDown: {
+          sValue = "isometricBottomDown"; break;
+        }
+        case Camera_prst_isometricBottomUp: {
+          sValue = "isometricBottomUp"; break;
+        }
+        case Camera_prst_isometricLeftDown: {
+          sValue = "isometricLeftDown"; break;
+        }
+        case Camera_prst_isometricLeftUp: {
+          sValue = "isometricLeftUp"; break;
+        }
+        case Camera_prst_isometricOffAxis1Left: {
+          sValue = "isometricOffAxis1Left"; break;
+        }
+        case Camera_prst_isometricOffAxis1Right: {
+          sValue = "isometricOffAxis1Right"; break;
+        }
+        case Camera_prst_isometricOffAxis1Top: {
+          sValue = "isometricOffAxis1Top"; break;
+        }
+        case Camera_prst_isometricOffAxis2Left: {
+          sValue = "isometricOffAxis2Left"; break;
+        }
+        case Camera_prst_isometricOffAxis2Right: {
+          sValue = "isometricOffAxis2Right"; break;
+        }
+        case Camera_prst_isometricOffAxis2Top: {
+          sValue = "isometricOffAxis2Top"; break;
+        }
+        case Camera_prst_isometricOffAxis3Bottom: {
+          sValue = "isometricOffAxis3Bottom"; break;
+        }
+        case Camera_prst_isometricOffAxis3Left: {
+          sValue = "isometricOffAxis3Left"; break;
+        }
+        case Camera_prst_isometricOffAxis3Right: {
+          sValue = "isometricOffAxis3Right"; break;
+        }
+        case Camera_prst_isometricOffAxis4Bottom: {
+          sValue = "isometricOffAxis4Bottom"; break;
+        }
+        case Camera_prst_isometricOffAxis4Left: {
+          sValue = "isometricOffAxis4Left"; break;
+        }
+        case Camera_prst_isometricOffAxis4Right: {
+          sValue = "isometricOffAxis4Right"; break;
+        }
+        case Camera_prst_isometricRightDown: {
+          sValue = "isometricRightDown"; break;
+        }
+        case Camera_prst_isometricRightUp: {
+          sValue = "isometricRightUp"; break;
+        }
+        case Camera_prst_isometricTopDown: {
+          sValue = "isometricTopDown"; break;
+        }
+        case Camera_prst_isometricTopUp: {
+          sValue = "isometricTopUp"; break;
+        }
+        case Camera_prst_legacyObliqueBottom: {
+          sValue = "legacyObliqueBottom"; break;
+        }
+        case Camera_prst_legacyObliqueBottomLeft: {
+          sValue = "legacyObliqueBottomLeft"; break;
+        }
+        case Camera_prst_legacyObliqueBottomRight: {
+          sValue = "legacyObliqueBottomRight"; break;
+        }
+        case Camera_prst_legacyObliqueFront: {
+          sValue = "legacyObliqueFront"; break;
+        }
+        case Camera_prst_legacyObliqueLeft: {
+          sValue = "legacyObliqueLeft"; break;
+        }
+        case Camera_prst_legacyObliqueRight: {
+          sValue = "legacyObliqueRight"; break;
+        }
+        case Camera_prst_legacyObliqueTop: {
+          sValue = "legacyObliqueTop"; break;
+        }
+        case Camera_prst_legacyObliqueTopLeft: {
+          sValue = "legacyObliqueTopLeft"; break;
+        }
+        case Camera_prst_legacyObliqueTopRight: {
+          sValue = "legacyObliqueTopRight"; break;
+        }
+        case Camera_prst_legacyPerspectiveBottom: {
+          sValue = "legacyPerspectiveBottom"; break;
+        }
+        case Camera_prst_legacyPerspectiveBottomLeft: {
+          sValue = "legacyPerspectiveBottomLeft"; break;
+        }
+        case Camera_prst_legacyPerspectiveBottomRight: {
+          sValue = "legacyPerspectiveBottomRight"; break;
+        }
+        case Camera_prst_legacyPerspectiveFront: {
+          sValue = "legacyPerspectiveFront"; break;
+        }
+        case Camera_prst_legacyPerspectiveLeft: {
+          sValue = "legacyPerspectiveLeft"; break;
+        }
+        case Camera_prst_legacyPerspectiveRight: {
+          sValue = "legacyPerspectiveRight"; break;
+        }
+        case Camera_prst_legacyPerspectiveTop: {
+          sValue = "legacyPerspectiveTop"; break;
+        }
+        case Camera_prst_legacyPerspectiveTopLeft: {
+          sValue = "legacyPerspectiveTopLeft"; break;
+        }
+        case Camera_prst_legacyPerspectiveTopRight: {
+          sValue = "legacyPerspectiveTopRight"; break;
+        }
+        case Camera_prst_obliqueBottom: {
+          sValue = "obliqueBottom"; break;
+        }
+        case Camera_prst_obliqueBottomLeft: {
+          sValue = "obliqueBottomLeft"; break;
+        }
+        case Camera_prst_obliqueBottomRight: {
+          sValue = "obliqueBottomRight"; break;
+        }
+        case Camera_prst_obliqueLeft: {
+          sValue = "obliqueLeft"; break;
+        }
+        case Camera_prst_obliqueRight: {
+          sValue = "obliqueRight"; break;
+        }
+        case Camera_prst_obliqueTop: {
+          sValue = "obliqueTop"; break;
+        }
+        case Camera_prst_obliqueTopLeft: {
+          sValue = "obliqueTopLeft"; break;
+        }
+        case Camera_prst_obliqueTopRight: {
+          sValue = "obliqueTopRight"; break;
+        }
+        case Camera_prst_orthographicFront: {
+          sValue = "orthographicFront"; break;
+        }
+        case Camera_prst_perspectiveAbove: {
+          sValue = "perspectiveAbove"; break;
+        }
+        case Camera_prst_perspectiveAboveLeftFacing: {
+          sValue = "perspectiveAboveLeftFacing"; break;
+        }
+        case Camera_prst_perspectiveAboveRightFacing: {
+          sValue = "perspectiveAboveRightFacing"; break;
+        }
+        case Camera_prst_perspectiveBelow: {
+          sValue = "perspectiveBelow"; break;
+        }
+        case Camera_prst_perspectiveContrastingLeftFacing: {
+          sValue = "perspectiveContrastingLeftFacing"; break;
+        }
+        case Camera_prst_perspectiveContrastingRightFacing: {
+          sValue = "perspectiveContrastingRightFacing"; break;
+        }
+        case Camera_prst_perspectiveFront: {
+          sValue = "perspectiveFront"; break;
+        }
+        case Camera_prst_perspectiveHeroicExtremeLeftFacing: {
+          sValue = "perspectiveHeroicExtremeLeftFacing"; break;
+        }
+        case Camera_prst_perspectiveHeroicExtremeRightFacing: {
+          sValue = "perspectiveHeroicExtremeRightFacing"; break;
+        }
+        case Camera_prst_perspectiveHeroicLeftFacing: {
+          sValue = "perspectiveHeroicLeftFacing"; break;
+        }
+        case Camera_prst_perspectiveHeroicRightFacing: {
+          sValue = "perspectiveHeroicRightFacing"; break;
+        }
+        case Camera_prst_perspectiveLeft: {
+          sValue = "perspectiveLeft"; break;
+        }
+        case Camera_prst_perspectiveRelaxed: {
+          sValue = "perspectiveRelaxed"; break;
+        }
+        case Camera_prst_perspectiveRelaxedModerately: {
+          sValue = "perspectiveRelaxedModerately"; break;
+        }
+        case Camera_prst_perspectiveRight: {
+          sValue = "perspectiveRight"; break;
+        }
+      }
+      writer.WriteXmlNullableAttributeString("prst", sValue);
+      writer.WriteXmlNullableAttributeInt("fov", this.fov);
+      writer.WriteXmlNullableAttributeInt("zoom", this.zoom);
+      writer.WriteXmlAttributesEnd();
+
+      writer.WriteXmlNullable(this.rot);
+
+      writer.WriteXmlNodeEnd("a:camera");
+    };
 
     changesFactory[AscDFH.historyitem_RotLat] = CChangeLong;
     changesFactory[AscDFH.historyitem_RotLon] = CChangeLong;
@@ -9225,6 +12776,19 @@ Because of this, the display is sometimes not correct.
       if (0 === nType) this.setLat(oStream.GetLong());
       else if (1 === nType) this.setLon(oStream.GetLong());
       else if (2 === nType) this.setRev(oStream.GetLong());
+    };
+    Rot.prototype.readAttrXml = function (name, reader) {
+      if ("lat" === name) this.setLat(reader.GetValueInt());
+      else if ("lon" === name) this.setLon(reader.GetValueInt());
+      else if ("rev" === name) this.setRev(reader.GetValueInt());
+    };
+    Rot.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("a:rot");
+      writer.WriteXmlNullableAttributeInt("lat", this.lat);
+      writer.WriteXmlNullableAttributeInt("lon", this.lon);
+      writer.WriteXmlNullableAttributeInt("rev", this.rev);
+      writer.WriteXmlAttributesEnd();
+      writer.WriteXmlNodeEnd("a:rot");
     };
 
 
@@ -9313,6 +12877,247 @@ Because of this, the display is sometimes not correct.
     };
     LightRig.prototype.getChildren = function() {
       return [this.rot];
+    };
+    LightRig.prototype.readChildXml = function (name, reader) {
+      switch (name) {
+        case "rot": {
+          this.setRot(new Rot());
+          this.rot.fromXml(reader);
+          break;
+        }
+      }
+    };
+    LightRig.prototype.readAttrXml = function (name, reader) {
+      if ("dir" === name) {
+        let sValue = reader.GetValue();
+        switch (sValue) {
+          case "b": {
+            this.setDir(LightRig_dir_b); break;
+          }
+          case "bl": {
+            this.setDir(LightRig_dir_bl); break;
+          }
+          case "br": {
+            this.setDir(LightRig_dir_br); break;
+          }
+          case "l": {
+            this.setDir(LightRig_dir_l); break;
+          }
+          case "r": {
+            this.setDir(LightRig_dir_r); break;
+          }
+          case "t": {
+            this.setDir(LightRig_dir_t); break;
+          }
+          case "tl": {
+            this.setDir(LightRig_dir_tl); break;
+          }
+          case "tr": {
+            this.setDir(LightRig_dir_tr); break;
+          }
+        }
+      }
+      else if ("rig" === name) {
+        let sValue = reader.GetValue();
+        switch (sValue) {
+          case "balanced": {
+            this.setRig(LightRig_rig_balanced); break;
+          }
+          case "brightRoom": {
+            this.setRig(LightRig_rig_brightRoom); break;
+          }
+          case "chilly": {
+            this.setRig(LightRig_rig_chilly); break;
+          }
+          case "contrasting": {
+            this.setRig(LightRig_rig_contrasting); break;
+          }
+          case "flat": {
+            this.setRig(LightRig_rig_flat); break;
+          }
+          case "flood": {
+            this.setRig(LightRig_rig_flood); break;
+          }
+          case "freezing": {
+            this.setRig(LightRig_rig_freezing); break;
+          }
+          case "glow": {
+            this.setRig(LightRig_rig_glow); break;
+          }
+          case "harsh": {
+            this.setRig(LightRig_rig_harsh); break;
+          }
+          case "legacyFlat1": {
+            this.setRig(LightRig_rig_legacyFlat1); break;
+          }
+          case "legacyFlat2": {
+            this.setRig(LightRig_rig_legacyFlat2); break;
+          }
+          case "legacyFlat3": {
+            this.setRig(LightRig_rig_legacyFlat3); break;
+          }
+          case "legacyFlat4": {
+            this.setRig(LightRig_rig_legacyFlat4); break;
+          }
+          case "legacyHarsh1": {
+            this.setRig(LightRig_rig_legacyHarsh1); break;
+          }
+          case "legacyHarsh2": {
+            this.setRig(LightRig_rig_legacyHarsh2); break;
+          }
+          case "legacyHarsh3": {
+            this.setRig(LightRig_rig_legacyHarsh3); break;
+          }
+          case "legacyHarsh4": {
+            this.setRig(LightRig_rig_legacyHarsh4); break;
+          }
+          case "legacyNormal1": {
+            this.setRig(LightRig_rig_legacyNormal1); break;
+          }
+          case "legacyNormal2": {
+            this.setRig(LightRig_rig_legacyNormal2); break;
+          }
+          case "legacyNormal3": {
+            this.setRig(LightRig_rig_legacyNormal3); break;
+          }
+          case "legacyNormal4": {
+            this.setRig(LightRig_rig_legacyNormal4); break;
+          }
+          case "morning": {
+            this.setRig(LightRig_rig_morning); break;
+          }
+          case "soft": {
+            this.setRig(LightRig_rig_soft); break;
+          }
+          case "sunrise": {
+            this.setRig(LightRig_rig_sunrise); break;
+          }
+          case "sunset": {
+            this.setRig(LightRig_rig_sunset); break;
+          }
+          case "threePt": {
+            this.setRig(LightRig_rig_threePt); break;
+          }
+          case "twoPt": {
+            this.setRig(LightRig_rig_twoPt); break;
+          }
+        }
+      }
+    };
+    LightRig.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("a:lightRig");
+      switch(this.rig) {
+        case LightRig_rig_balanced: {
+          writer.WriteXmlAttributeString("rig", "balanced"); break;
+        }
+        case LightRig_rig_brightRoom: {
+          writer.WriteXmlAttributeString("rig", "brightRoom"); break;
+        }
+        case LightRig_rig_chilly: {
+          writer.WriteXmlAttributeString("rig", "chilly"); break;
+        }
+        case LightRig_rig_contrasting: {
+          writer.WriteXmlAttributeString("rig", "contrasting"); break;
+        }
+        case LightRig_rig_flat: {
+          writer.WriteXmlAttributeString("rig", "flat"); break;
+        }
+        case LightRig_rig_flood: {
+          writer.WriteXmlAttributeString("rig", "flood"); break;
+        }
+        case LightRig_rig_freezing: {
+          writer.WriteXmlAttributeString("rig", "freezing"); break;
+        }
+        case LightRig_rig_glow: {
+          writer.WriteXmlAttributeString("rig", "glow"); break;
+        }
+        case LightRig_rig_harsh: {
+          writer.WriteXmlAttributeString("rig", "harsh"); break;
+        }
+        case LightRig_rig_legacyFlat1: {
+          writer.WriteXmlAttributeString("rig", "legacyFlat1"); break;
+        }
+        case LightRig_rig_legacyFlat2: {
+          writer.WriteXmlAttributeString("rig", "legacyFlat2"); break;
+        }
+        case LightRig_rig_legacyFlat3: {
+          writer.WriteXmlAttributeString("rig", "legacyFlat3"); break;
+        }
+        case LightRig_rig_legacyFlat4: {
+          writer.WriteXmlAttributeString("rig", "legacyFlat4"); break;
+        }
+        case LightRig_rig_legacyHarsh1: {
+          writer.WriteXmlAttributeString("rig", "legacyHarsh1"); break;
+        }
+        case LightRig_rig_legacyHarsh2: {
+          writer.WriteXmlAttributeString("rig", "legacyHarsh2"); break;
+        }
+        case LightRig_rig_legacyHarsh3: {
+          writer.WriteXmlAttributeString("rig", "legacyHarsh3"); break;
+        }
+        case LightRig_rig_legacyHarsh4: {
+          writer.WriteXmlAttributeString("rig", "legacyHarsh4"); break;
+        }
+        case LightRig_rig_legacyNormal1: {
+          writer.WriteXmlAttributeString("rig", "legacyNormal1"); break;
+        }
+        case LightRig_rig_legacyNormal2: {
+          writer.WriteXmlAttributeString("rig", "legacyNormal2"); break;
+        }
+        case LightRig_rig_legacyNormal3: {
+          writer.WriteXmlAttributeString("rig", "legacyNormal3"); break;
+        }
+        case LightRig_rig_legacyNormal4: {
+          writer.WriteXmlAttributeString("rig", "legacyNormal4"); break;
+        }
+        case LightRig_rig_morning: {
+          writer.WriteXmlAttributeString("rig", "morning"); break;
+        }
+        case LightRig_rig_soft: {
+          writer.WriteXmlAttributeString("rig", "soft"); break;
+        }
+        case LightRig_rig_sunrise: {
+          writer.WriteXmlAttributeString("rig", "sunrise"); break;
+        }
+        case LightRig_rig_sunset: {
+          writer.WriteXmlAttributeString("rig", "sunset"); break;
+        }
+        case LightRig_rig_threePt: {
+          writer.WriteXmlAttributeString("rig", "threePt"); break;
+        }
+        case LightRig_rig_twoPt: {
+          writer.WriteXmlAttributeString("rig", "twoPt"); break;
+        }
+      }
+      switch (this.dir) {
+        case LightRig_dir_b: {
+          writer.WriteXmlAttributeString("dir", "b"); break;
+        }
+        case LightRig_dir_bl: {
+          writer.WriteXmlAttributeString("dir", "bl"); break;
+        }
+        case LightRig_dir_br: {
+          writer.WriteXmlAttributeString("dir", "br"); break;
+        }
+        case LightRig_dir_l: {
+          writer.WriteXmlAttributeString("dir", "l"); break;
+        }
+        case LightRig_dir_r: {
+          writer.WriteXmlAttributeString("dir", "r"); break;
+        }
+        case LightRig_dir_t: {
+          writer.WriteXmlAttributeString("dir", "t"); break;
+        }
+        case LightRig_dir_tl: {
+          writer.WriteXmlAttributeString("dir", "tl"); break;
+        }
+        case LightRig_dir_tr: {
+          writer.WriteXmlAttributeString("dir", "tr"); break;
+        }
+      }
+      writer.WriteXmlAttributesEnd();
+      writer.WriteXmlNullable(this.rot);
+      writer.WriteXmlNodeEnd("a:lightRig");
     };
 
 
@@ -10502,8 +14307,6 @@ Because of this, the display is sometimes not correct.
           return [];
       }
     }
-
-
     SmartArt.prototype.setParent = function (parent) {
       oHistory.CanAddChanges() && oHistory.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SmartArtParent, this.parent, parent));
       this.parent = parent;
@@ -10517,7 +14320,6 @@ Because of this, the display is sometimes not correct.
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_SmartArtType, this.type, oPr));
       this.type = oPr;
     };
-
     SmartArt.prototype.setDrawing = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_SmartArtDrawing, this.getDrawing(), oPr));
       this.drawing = oPr;
@@ -11048,6 +14850,101 @@ Because of this, the display is sometimes not correct.
     };
     SmartArt.prototype.getTypeName = function() {
       return AscCommon.translateManager.getValue("Diagram");
+    };
+    SmartArt.prototype.fromXml = function (reader) {
+      this.superclass.prototype.fromXml.call(this, reader);
+    };
+    SmartArt.prototype.readAttrXml = function (name, reader) {
+      let oReader;
+      if(name === "dm" || name === "lo" || name === "qs" || name === "cs") {
+        let oRel = reader.rels.getRelationship(reader.GetValue());
+        let oRelPart = reader.rels.pkg.getPartByUri(oRel.targetFullName);
+        let oContent = oRelPart.getDocumentContent();
+        oReader = new AscCommon.StaxParser(oContent, oRelPart, reader.context);
+      }
+      switch (name) {
+        case "dm": {
+          this.setDataModel(new DiagramData());
+          this.dataModel.fromXml(oReader, true);
+          let oDataModel = this.dataModel.dataModel;
+          if(oDataModel) {
+            let oExtLst = oDataModel.extLst;
+            let aExt = oExtLst.list;
+            for(let nExt = 0; nExt < aExt.length; ++nExt) {
+              let oExt = aExt[nExt];
+              if(oExt.uri === "http://schemas.microsoft.com/office/drawing/2008/diagram") {
+                let oData = oExt.data;
+                if(oData) {
+                  let rId = oData.attributes["relId"];
+                  if(rId) {
+                    let oRelDrawing = reader.rels.getRelationship(rId);
+                    let oRelDrawingPart = reader.rels.pkg.getPartByUri(oRelDrawing.targetFullName);
+                    let oDrawingContent = oRelDrawingPart.getDocumentContent();
+                    let oDrawingReader = new AscCommon.StaxParser(oDrawingContent, oRelDrawingPart, reader.context);
+
+                    this.setDrawing(new Drawing());
+                    this.drawing.fromXml(oDrawingReader, true);
+                    this.drawing.setGroup(this);
+                    this.addToSpTree(0, this.drawing);
+                  }
+                }
+              }
+            }
+          }
+          break;
+        }
+        case "lo": {
+          this.setLayoutDef(new LayoutDef());
+          this.layoutDef.fromXml(oReader, true);
+          break;
+        }
+        case "qs": {
+          this.setStyleDef(new StyleDef());
+          this.styleDef.fromXml(oReader, true);
+          break;
+        }
+        case "cs": {
+          this.setColorsDef(new ColorsDef());
+          this.colorsDef.fromXml(oReader, true);
+          break;
+        }
+      }
+    };
+    SmartArt.prototype.toXml = function(writer) {
+
+      let nOldDocType = writer.context.docType;
+      writer.context.docType = AscFormat.XMLWRITER_DOC_TYPE_DIAGRAM;
+      writer.WriteXmlNodeStart("dgm:relIds");
+      writer.WriteXmlNullableAttributeString("xmlns:dgm", "http://schemas.openxmlformats.org/drawingml/2006/diagram");
+      writer.WriteXmlNullableAttributeString("xmlns:r", "http://schemas.openxmlformats.org/officeDocument/2006/relationships");
+
+      let oContext = writer.context;
+      let oMemory = new AscCommon.CMemory();
+      oMemory.context = oContext;
+      let oDocPart = oContext.part;
+
+      let oDmPart = oDocPart.addPart(AscCommon.openXml.Types.diagramData);
+      oDmPart.part.setDataXml(this.dataModel, oMemory);
+      oMemory.Seek(0);
+      writer.WriteXmlNullableAttributeString("r:dm", oDmPart.rId);
+
+      let oLoPart = oDocPart.addPart(AscCommon.openXml.Types.diagramLayoutDefinition);
+      oLoPart.part.setDataXml(this.layoutDef, oMemory);
+      oMemory.Seek(0);
+      writer.WriteXmlNullableAttributeString("r:lo", oLoPart.rId);
+
+      let oQsPart = oDocPart.addPart(AscCommon.openXml.Types.diagramStyle);
+      oQsPart.part.setDataXml(this.styleDef, oMemory);
+      oMemory.Seek(0);
+      writer.WriteXmlNullableAttributeString("r:qs", oQsPart.rId);
+
+      let oCsPart = oDocPart.addPart(AscCommon.openXml.Types.diagramColors);
+      oCsPart.part.setDataXml(this.colorsDef, oMemory);
+      oMemory.Seek(0);
+      writer.WriteXmlNullableAttributeString("r:cs", oCsPart.rId);
+
+      writer.WriteXmlAttributesEnd(true);
+      writer.context.docType = nOldDocType;
     };
 
     function SmartArtTree(rootInfo, rootData, parent) {

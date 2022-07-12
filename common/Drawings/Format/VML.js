@@ -441,7 +441,7 @@
 		CRelationTable.prototype.writeAttrXmlImpl = function (writer) {
 			writer.WriteXmlNullableAttributeString("v:ext", getExt(this.m_oExt));
 		};
-		CRelationTable.prototype.writeChildren = function (writer) {
+		CRelationTable.prototype.writeChildrenXml = function (writer) {
 			for (let nIndex = 0; nIndex < this.m_arrRel.length; nIndex++) {
 				if (this.m_arrRel[nIndex])
 					this.m_arrRel[nIndex].toXml(writer, "o:rel");
@@ -524,7 +524,7 @@
 			writer.WriteXmlNullableAttributeString("constrainbounds", this.m_sConstrainbounds)
 			writer.WriteXmlNullableAttributeUInt("dgmbasetextscale", this.m_oDmgBaseTextScale)
 		};
-		CDiagram.prototype.writeChildren = function (writer) {
+		CDiagram.prototype.writeChildrenXml = function (writer) {
 			if (this.m_oRelationTable) {
 				this.m_oRelationTable.toXml(writer, "o:relationtable");
 			}
@@ -566,7 +566,7 @@
 		CEquationXml.prototype.writeAttrXmlImpl = function (writer) {
 			writer.WriteXmlNullableAttributeString("contentType", getAlternateMathContentType(this.m_oContentType));
 		};
-		CEquationXml.prototype.writeChildren = function (writer) {
+		CEquationXml.prototype.writeChildrenXml = function (writer) {
 			//TODO:Implement in children
 		};
 
@@ -1165,7 +1165,7 @@
 			writer.WriteXmlNullableAttributeString("r:id", this.m_oId);
 			writer.WriteXmlNullableAttributeString("UpdateMode", getOLEUpdateMode(this.m_oUpdateMode));
 		};
-		COLEObject.prototype.writeChildren = function (writer) {
+		COLEObject.prototype.writeChildrenXml = function (writer) {
 
 			if (this.m_oLinkType)
 				this.m_oLinkType.toXml(writer, "o:LinkType");
@@ -1286,7 +1286,7 @@
 			writer.WriteXmlNullableAttributeString("idref", this.m_sIdRef)
 
 		};
-		CR.prototype.writeChildren = function (writer) {
+		CR.prototype.writeChildrenXml = function (writer) {
 			for (let nIndex = 0; nIndex < this.m_arrProxy.length; nIndex++) {
 				if (this.m_arrProxy[nIndex])
 					this.m_arrProxy[nIndex].toXml(writer, "o:proxy");
@@ -1315,7 +1315,7 @@
 		CRegroupTable.prototype.writeAttrXmlImpl = function (writer) {
 			writer.WriteXmlNullableAttributeString("v:ext", getExt(this.m_oExt));
 		};
-		CRegroupTable.prototype.writeChildren = function (writer) {
+		CRegroupTable.prototype.writeChildrenXml = function (writer) {
 			for (let nIndex = 0; nIndex < this.m_arrEntry.length; nIndex++) {
 				if (this.m_arrEntry[nIndex])
 					this.m_arrEntry[nIndex].toXml(writer, "o:entry");
@@ -1344,7 +1344,7 @@
 		CRules.prototype.writeAttrXmlImpl = function (writer) {
 			writer.WriteXmlNullableAttributeString("v:ext", getExt(this.m_oExt));
 		};
-		CRules.prototype.writeChildren = function (writer) {
+		CRules.prototype.writeChildrenXml = function (writer) {
 
 			for (let nIndex = 0; nIndex < this.m_arrR.length; nIndex++) {
 				if (this.m_arrR[nIndex])
@@ -1389,7 +1389,7 @@
 		CShapeLayout.prototype.writeAttrXmlImpl = function (writer) {
 			writer.WriteXmlNullableAttributeString("v:ext", getExt(this.m_oExt));
 		};
-		CShapeLayout.prototype.writeChildren = function (writer) {
+		CShapeLayout.prototype.writeChildrenXml = function (writer) {
 			if (this.m_oIdMap !== null)
 				this.m_oIdMap.toXml(writer, "o:idmap");
 
@@ -8878,7 +8878,7 @@
 
 			writer.WriteXmlNullableAttributeString("o:clip", getBooleanTrueFalse(this.m_oClip));
 		};
-		CVmlCommonElements.prototype.writeChildren = function (writer) {
+		CVmlCommonElements.prototype.writeChildrenXml = function (writer) {
 
 			for (let i = 0; i < this.items.length; ++i) {
 				let oItem = this.items[i];
@@ -9736,7 +9736,7 @@
 			writer.WriteXmlNullableAttributeString("r:id", this.m_rId);
 			writer.WriteXmlNullableAttributeString("o:relid", this.m_rId);
 		};
-		CFillVml.prototype.writeChildren = function (writer) {
+		CFillVml.prototype.writeChildrenXml = function (writer) {
 			this.m_oFill && this.m_oFill.toXml(writer, "o:fill");
 		};
 		CFillVml.prototype.getOOXMLFill = function(oContext) {
@@ -9858,7 +9858,7 @@
 				}
 			}
 		};
-		CFormulas.prototype.writeChildren = function (writer) {
+		CFormulas.prototype.writeChildrenXml = function (writer) {
 
 			for (let i = 0; i < this.items.length; ++i) {
 				if (this.items[i]) {
@@ -9949,7 +9949,7 @@
 				}
 			}
 		};
-		CHandles.prototype.writeChildren = function (writer) {
+		CHandles.prototype.writeChildrenXml = function (writer) {
 			for (let i = 0; i < this.items.length; ++i) {
 				if (this.items[i]) {
 					this.items[i].toXml(writer, "v:h");
@@ -11029,7 +11029,7 @@
 				writer.WriteXmlNullableAttributeString(" ObjectType", this.m_oObjectType.ToString());
 			}
 		};
-		CClientData.prototype.writeChildren = function (writer) {
+		CClientData.prototype.writeChildrenXml = function (writer) {
 			if (this.m_oMoveWithCells !== null && this.m_oMoveWithCells)
 				writer.WriteXmlValueString("x:MoveWithCells", "");
 			if (this.m_oSizeWithCells !== null && this.m_oSizeWithCells)
@@ -11344,7 +11344,7 @@
 			writer.WriteXmlNullableAttributeString("insetpen", getBooleanTrueFalse(this.m_oInsetPen));
 			writer.WriteXmlNullableAttributeString("o:relid", this.m_oRelId);
 		};
-		CStroke.prototype.writeChildren = function (writer) {
+		CStroke.prototype.writeChildrenXml = function (writer) {
 			if (this.m_oLeft !== null)
 				this.m_oLeft.toXml(writer, "o:left");
 
@@ -11495,7 +11495,7 @@
 			if (EInsetMode.insetmodeCustom !== this.m_oInsetMode)
 				writer.WriteXmlNullableAttributeString("o:insetmode", getInsetMode(this.m_oInsetMode));
 		};
-		CTextbox.prototype.writeChildren = function (writer) {
+		CTextbox.prototype.writeChildrenXml = function (writer) {
 
 			if (this.m_oTxtbxContent !== null)
 				this.m_oTxtbxContent.toXml(writer, "txbxContent");
@@ -11678,7 +11678,7 @@
 				writer.WriteXmlNullableAttributeString("o:tableproperties", this.m_oTableProperties.ToString());
 			this.m_oTableLimits && writer.WriteXmlNullableAttributeString("o:tablelimits", this.m_oTableLimits.ToString());
 		};
-		CGroup.prototype.writeChildren = function (writer) {
+		CGroup.prototype.writeChildrenXml = function (writer) {
 
 			for (let i = 0; i < this.items.length; ++i) {
 				let oItem = this.items[i];
@@ -11924,7 +11924,7 @@
 				writer.WriteXmlNullableAttributeString("o:allowincell", "true");
 
 		};
-		CShapeDefaults.prototype.writeChildren = function (writer) {
+		CShapeDefaults.prototype.writeChildrenXml = function (writer) {
 
 			if (this.m_oVmlFill !== null)
 				this.m_oVmlFill.toXml(writer, "v:fill");
@@ -12657,7 +12657,7 @@
 			}
 			return oItem;
 		};
-		CVMLDrawing.prototype.writeChildren = function (writer) {
+		CVMLDrawing.prototype.writeChildrenXml = function (writer) {
 		};
 		CVMLDrawing.prototype.getXmlString = function() {
 			if((!this.m_mapComments || isEmptyObject(this.m_mapComments)) && isEmptyObject(this.m_arObjectXml) && isEmptyObject(this.m_arControlXml))
