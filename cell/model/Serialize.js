@@ -2805,16 +2805,9 @@
             }
             if(null != font.va)
             {
-                var va = font.va;
-                //server constants SubScript:1, SuperScript: 2
-                if (va === AscCommon.vertalign_SubScript) {
-                    va = AscCommon.vertalign_SuperScript;
-                } else if (va === AscCommon.vertalign_SuperScript) {
-                    va = AscCommon.vertalign_SubScript;
-                }
                 this.memory.WriteByte(c_oSerFontTypes.VertAlign);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
-                this.memory.WriteByte(va);
+                this.memory.WriteByte(font.va);
             }
         };
         this.WriteNumFmts = function()
@@ -6599,12 +6592,6 @@
             else if ( c_oSerFontTypes.VertAlign == type )
             {
                 rPr.va = this.stream.GetUChar();
-                //server constants SubScript:1, SuperScript: 2
-                if (rPr.va === AscCommon.vertalign_SubScript) {
-                    rPr.va = AscCommon.vertalign_SuperScript;
-                } else if (rPr.va === AscCommon.vertalign_SuperScript) {
-                    rPr.va = AscCommon.vertalign_SubScript;
-                }
             }
             else if ( c_oSerFontTypes.Scheme == type )
                 rPr.scheme = this.stream.GetUChar();
