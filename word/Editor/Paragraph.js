@@ -11762,7 +11762,7 @@ Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 	var oHyperlink      = oInfo.GetHyperlink();
 	if (oContentControl)
 	{
-		oContentControl.DrawContentControlsTrack(true, X, Y, CurPage);
+		oContentControl.DrawContentControlsTrack(AscCommon.ContentControlTrack.Hover, X, Y, CurPage);
 		isCheckBox = oContentControl.IsCheckBox() && oContentControl.CheckHitInContentControlByXY(X, Y, this.GetAbsolutePage(CurPage), false);
 	}
 

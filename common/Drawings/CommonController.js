@@ -2190,7 +2190,7 @@ DrawingObjectsController.prototype =
 					{
 						var oForm = object.getInnerForm();
 						if (oForm)
-						 	oForm.DrawContentControlsTrack(true, tx, ty, 0, false);
+						 	oForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Hover, tx, ty, 0, false);
 					}
 
                     var nPageIndex = pageIndex;

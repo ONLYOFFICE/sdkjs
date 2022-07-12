@@ -12094,11 +12094,11 @@ CDocument.prototype.private_UpdateTracks = function(bSelection, bEmptySelection)
 		if (oInlineLevelSdt.IsForm())
 			oCurrentForm = oInlineLevelSdt;
 
-		oInlineLevelSdt.DrawContentControlsTrack(false);
+		oInlineLevelSdt.DrawContentControlsTrack(AscCommon.ContentControlTrack.In);
 	}
 	else if (oBlockLevelSdt)
 	{
-		oBlockLevelSdt.DrawContentControlsTrack(false);
+		oBlockLevelSdt.DrawContentControlsTrack(AscCommon.ContentControlTrack.In);
 	}
 	else
 	{
@@ -12109,7 +12109,7 @@ CDocument.prototype.private_UpdateTracks = function(bSelection, bEmptySelection)
 			oForm = oMajorParaDrawing.GetInnerForm();
 
 		if (oForm)
-			oForm.DrawContentControlsTrack(false);
+			oForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.In);
 		else
 			this.DrawingDocument.OnDrawContentControl(null, AscCommon.ContentControlTrack.In);
 	}

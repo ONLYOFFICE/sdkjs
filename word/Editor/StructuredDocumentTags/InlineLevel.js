@@ -819,7 +819,7 @@ CInlineLevelSdt.prototype.GetFixedFormBounds = function(isUsePaddings)
 
 	return {X : 0, Y : 0, W : 0, H : 0, Page : 0};
 };
-CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCurPage, isCheckHit)
+CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPage, isCheckHit)
 {
 	if (!this.Paragraph && this.Paragraph.LogicDocument)
 		return;
@@ -828,6 +828,24 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCu
 
 	if (this.IsContentControlEquation())
 		return;
+
+	let oMainForm;
+	if (this.IsForm() && (oMainForm = this.GetMainForm()) && oMainForm !== this)
+	{
+		if (AscCommon.ContentControlTrack.Hover === nType)
+		{
+			return oMainForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Hover, X, Y, nCurPage, isCheckHit);
+		}
+		else
+		{
+			oMainForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Main, X, Y, nCurPage, isCheckHit);
+
+			// В режиме заполнения, у внутренних текстовых форм и чекбоксов не рисуем собственный трек, а только внешний
+			if (oLogicDocument.IsFillingFormMode()
+				&& (this.IsTextForm() || this.IsCheckBox()))
+				return;
+		}
+	}
 
 	var oDrawingDocument = oLogicDocument.GetDrawingDocument();
 	
@@ -849,7 +867,7 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCu
 			return;
 
 		var sHelpText = "";
-		if (isHover && this.IsForm() && (sHelpText = this.GetFormPr().HelpText))
+		if (AscCommon.ContentControlTrack.Hover === nType && this.IsForm() && (sHelpText = this.GetFormPr().HelpText))
 		{
 			var oMMData   = new AscCommon.CMouseMoveData();
 			var oCoords   = oDrawingDocument.ConvertCoordsToCursorWR(X, Y, this.Paragraph.GetAbsolutePage(nCurPage), this.Paragraph.Get_ParentTextTransform());
@@ -866,17 +884,17 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCu
 	{
 		var oPolygon = new AscCommon.CPolygon();
 		oPolygon.fill([[oShape.getFormRelRect()]]);
-		oDrawingDocument.OnDrawContentControl(this, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In, oPolygon.GetPaths(0));
+		oDrawingDocument.OnDrawContentControl(this, nType, oPolygon.GetPaths(0));
 		return;
 	}
 
 	if (Asc.c_oAscSdtAppearance.Hidden === this.GetAppearance() || this.Paragraph.LogicDocument.IsForceHideContentControlTrack())
 	{
-		oDrawingDocument.OnDrawContentControl(null, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In);
+		oDrawingDocument.OnDrawContentControl(null, nType);
 		return;
 	}
 
-	oDrawingDocument.OnDrawContentControl(this, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In, this.GetBoundingPolygon());
+	oDrawingDocument.OnDrawContentControl(this, nType, this.GetBoundingPolygon());
 };
 CInlineLevelSdt.prototype.IsDrawContentControlsTrackBounds = function()
 {

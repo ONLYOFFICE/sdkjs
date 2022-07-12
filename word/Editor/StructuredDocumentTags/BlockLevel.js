@@ -262,7 +262,7 @@ CBlockLevelSdt.prototype.UpdateCursorType = function(X, Y, CurPage)
 		this.LogicDocument.Api.sync_MouseMoveCallback(MMData);
 	}
 
-	this.DrawContentControlsTrack(true, X, Y, CurPage);
+	this.DrawContentControlsTrack(AscCommon.ContentControlTrack.Hover, X, Y, CurPage);
 	return this.Content.UpdateCursorType(X, Y, CurPage);
 };
 CBlockLevelSdt.prototype.Selection_SetStart = function(X, Y, CurPage, MouseEvent, isTableBorder)
@@ -923,7 +923,7 @@ CBlockLevelSdt.prototype.GetBoundingRect = function()
 		Transform : this.Get_ParentTextTransform()
 	};
 };
-CBlockLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCurPage, isCheckHit)
+CBlockLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPage, isCheckHit)
 {
 	if (!this.IsRecalculated() || !this.LogicDocument)
 		return;
@@ -936,13 +936,13 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCur
 	//       а только на формулу
 	if (this.IsContentControlEquation() && !this.IsPlaceHolder())
 	{
-		oDrawingDocument.OnDrawContentControl(null, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In);
+		oDrawingDocument.OnDrawContentControl(null, nType);
 		return;
 	}
 
 	if (Asc.c_oAscSdtAppearance.Hidden === this.GetAppearance() || (this.LogicDocument && this.LogicDocument.IsForceHideContentControlTrack()))
 	{
-		oDrawingDocument.OnDrawContentControl(null, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In);
+		oDrawingDocument.OnDrawContentControl(null, nType);
 		return;
 	}
 
@@ -981,7 +981,7 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCur
 			return;
 
 		var sHelpText = "";
-		if (isHover && this.IsForm() && (sHelpText = this.GetFormPr().HelpText))
+		if (AscCommon.ContentControlTrack.Hover === nType && this.IsForm() && (sHelpText = this.GetFormPr().HelpText))
 		{
 			var oMMData   = new AscCommon.CMouseMoveData();
 			var oCoords   = oDrawingDocument.ConvertCoordsToCursorWR(X, Y, this.Content.GetAbsolutePage(nCurPage), this.Get_ParentTextTransform());
@@ -993,7 +993,7 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCur
 		}
 	}
 
-	oDrawingDocument.OnDrawContentControl(this, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In, arrRects);
+	oDrawingDocument.OnDrawContentControl(this, nType, arrRects);
 };
 CBlockLevelSdt.prototype.AddContentControl = function(nContentControlType)
 {
