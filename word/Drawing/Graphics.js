@@ -1331,13 +1331,18 @@ CGraphics.prototype =
 
         if (null != pGlyph.oBitmap)
         {
-            var _a = this.m_oBrush.Color1.A;
-            if (255 != _a)
-                this.m_oContext.globalAlpha = _a / 255;
+			let oldAlpha = undefined;
+			let _a = this.m_oBrush.Color1.A;
+			if (this.textAlpha || 255 !== _a)
+			{
+				oldAlpha = this.m_oContext.globalAlpha;
+				this.m_oContext.globalAlpha = oldAlpha * this.textAlpha * (_a / 255);
+			}
+
             this.private_FillGlyph(pGlyph);
 
-            if (255 != _a)
-                this.m_oContext.globalAlpha = 1.0;
+            if (oldAlpha)
+                this.m_oContext.globalAlpha = oldAlpha;
         }
         if (false === this.m_bIntegerGrid)
         {
