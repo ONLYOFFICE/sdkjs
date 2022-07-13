@@ -14890,6 +14890,7 @@ Because of this, the display is sometimes not correct.
               }
             }
           }
+          this.setConnections2();
           break;
         }
         case "lo": {
