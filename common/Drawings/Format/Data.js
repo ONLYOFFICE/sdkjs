@@ -195,11 +195,16 @@ Because of this, the display is sometimes not correct.
     var ElementType_value_sibTrans = 9;
 
     var If_op_equ = 0;
-    var If_op_gt = 2;
-    var If_op_gte = 4;
-    var If_op_lt = 3;
-    var If_op_lte = 5;
     var If_op_neq = 1;
+    var If_op_gt = 2;
+    var If_op_lt = 3;
+    var If_op_gte = 4;
+    var If_op_lte = 5;
+
+    var boolOperator_none = 0;
+    var boolOperator_equ = 1;
+    var boolOperator_gte = 2;
+    var boolOperator_lte = 3;
 
     var If_func_cnt = 0;
     var If_func_depth = 6;
@@ -596,11 +601,11 @@ Because of this, the display is sometimes not correct.
     var LightRig_dir_b = 0;
     var LightRig_dir_bl = 1;
     var LightRig_dir_br = 2;
-    var LightRig_dir_l = 3;
-    var LightRig_dir_r = 4;
-    var LightRig_dir_t = 5;
-    var LightRig_dir_tl = 6;
-    var LightRig_dir_tr = 7;
+    var LightRig_dir_l = 4;
+    var LightRig_dir_r = 5;
+    var LightRig_dir_t = 6;
+    var LightRig_dir_tl = 7;
+    var LightRig_dir_tr = 8;
 
     var LightRig_rig_balanced = 0;
     var LightRig_rig_brightRoom = 1;
@@ -5891,48 +5896,48 @@ Because of this, the display is sometimes not correct.
     function GetOpByteCode(sValue) {
       switch (sValue) {
         case "equ": {
-          return If_op_equ;
+          return boolOperator_equ;
         }
-        case "gt": {
-          return If_op_gt;
-        }
+        // case "gt": {
+        //   return If_op_gt;
+        // }
         case "gte": {
-          return If_op_gte;
+          return boolOperator_gte;
         }
-        case "lt": {
-          return If_op_lt;
-        }
+        // case "lt": {
+        //   return If_op_lt;
+        // }
         case "lte": {
-          return If_op_lte;
+          return boolOperator_lte;
         }
-        case "neq": {
-          return If_op_neq;
-        }
+        // case "neq": {
+        //   return If_op_neq;
+        // }
       }
-      return null;
+      return boolOperator_none;
     }
     function GetOp(nCode) {
       switch (nCode) {
-        case If_op_equ: {
+        case boolOperator_equ: {
           return "equ";
         }
-        case If_op_gt: {
-          return "gt";
-        }
-        case If_op_gte: {
+        // case If_op_gt: {
+        //   return "gt";
+        // }
+        case boolOperator_gte: {
           return "gte";
         }
-        case If_op_lt: {
-          return "lt";
-        }
-        case If_op_lte: {
+        // case If_op_lt: {
+        //   return "lt";
+        // }
+        case boolOperator_lte: {
           return "lte";
         }
-        case If_op_neq: {
-          return "neq";
-        }
+        // case If_op_neq: {
+        //   return "neq";
+        // }
       }
-      return null;
+      return "none";
     }
 
     function If() {
@@ -8096,7 +8101,7 @@ Because of this, the display is sometimes not correct.
     };
     Rule.prototype.readAttrXml = function (name, reader) {
 
-      if ("fact" === name) this.setFact(reader.GetValueDouble());
+      if ("fact" === name) this.setFact(reader.GetValueDoubleOrNaN());
       else if ("for" === name) {
         this.setFor(GetForByteCode(reader.GetValue()));
       }
@@ -8107,8 +8112,8 @@ Because of this, the display is sometimes not correct.
         this.setPtType(pt);
       }
       else if ("type" === name) this.setType(GetConstraintTypeByteCode(reader.GetValue()));
-      else if ("val" === name) this.setVal(reader.GetValueDouble());
-      else if ("max" === name) this.setMax(reader.GetValueDouble());
+      else if ("val" === name) this.setVal(reader.GetValueDoubleOrNaN());
+      else if ("max" === name) this.setMax(reader.GetValueDoubleOrNaN());
     };
     Rule.prototype.toXml = function(writer) {
       writer.WriteXmlNodeStart("dgm:rule");
@@ -11598,23 +11603,23 @@ Because of this, the display is sometimes not correct.
     };
     StyleDefStyleLbl.prototype.readChildXml = function (name, reader) {
       switch (name) {
-        case 0: {
+        case "scene3d": {
           this.setScene3d(new Scene3d());
           this.scene3d.fromXml(reader);
           break;
         }
-        case 1: {
+        case "sp3d": {
           this.setSp3d(new Sp3d());
           this.sp3d.fromXml(reader);
           break;
         }
-        case 2: {
+        case "style": {
           let oStyle = new AscFormat.CShapeStyle();
           oStyle.fromXml(reader);
           this.setStyle(oStyle);
           break;
         }
-        case 3: {
+        case "txPr": {
           let oTxPr = new AscFormat.CTextBody();
           oTxPr.fromXml(reader);
           this.setTxPr(oTxPr);

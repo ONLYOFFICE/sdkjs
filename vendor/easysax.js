@@ -1406,6 +1406,16 @@ StaxParser.prototype.GetDouble = function (val, def) {
     var num = parseFloat(val);
     return !isNaN(num) ? num : def;
 };
+StaxParser.prototype.GetDoubleOrNaN = function (val, def) {
+    if(val === "NaN") {
+        return NaN;
+    }
+    return this.GetDouble(val, def);
+};
+StaxParser.prototype.GetDoubleOrNaN = function (val, def) {
+    var num = parseFloat(val);
+    return !isNaN(num) ? num : def;
+};
 StaxParser.prototype.GetValueBool = function () {
     return this.GetBool(this.GetValue());
 };
@@ -1429,6 +1439,9 @@ StaxParser.prototype.GetValueUInt64 = function (def, radix) {
 };
 StaxParser.prototype.GetValueDouble = function (def) {
     return this.GetDouble(this.GetValue(), def);
+};
+StaxParser.prototype.GetValueDoubleOrNaN = function (def) {
+    return this.GetDoubleOrNaN(this.GetValue(), def);
 };
 StaxParser.prototype.GetValueDecodeXml = function () {
     return this.DecodeXml(this.text);

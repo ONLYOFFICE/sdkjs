@@ -1703,11 +1703,11 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		b: 0,
 		bl: 1,
 		br: 2,
-		l: 3,
-		r: 4,
-		t: 5,
-		tl: 6,
-		tr: 7
+		l: 4,
+		r: 5,
+		t: 6,
+		tl: 7,
+		tr: 8
 	}
 
 	var ST_LightRigType = {

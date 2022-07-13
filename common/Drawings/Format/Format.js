@@ -7518,16 +7518,16 @@
 		};
 		LineJoin.prototype.Write_ToBinary = function (w) {
 			writeLong(w, this.type);
-			writeBool(w, this.limit);
+			writeLong(w, this.limit);
 		};
 		LineJoin.prototype.Read_FromBinary = function (r) {
 			this.type = readLong(r);
-			this.limit = readBool(r);
+			this.limit = readLong(r);
 		};
 		LineJoin.prototype.readAttrXml = function (name, reader) {
 			switch (name) {
 				case "lim": {
-					this.limit = getPercentageValue(reader.GetValue());
+					this.limit = reader.GetValueInt();
 					break;
 				}
 			}
@@ -7547,7 +7547,7 @@
 			} else if (this.type === LineJoinType.Miter) {
 				writer.WriteXmlNodeStart(sNodeNamespace + "miter");
 
-				writer.WriteXmlNullableAttributeInt(sAttrNamespace + "lim", getPercentageValueForWrite(this.limit));
+				writer.WriteXmlNullableAttributeInt(sAttrNamespace + "lim", this.limit);
 				writer.WriteXmlAttributesEnd(true);
 			}
 		};
@@ -13772,13 +13772,13 @@
 			}
 		};
 		CBodyPr.prototype.readXmlInset = function (reader) {
-			return reader.GetValueInt() / 60000;
+			return reader.GetValueInt() / 36000;
 		};
 		CBodyPr.prototype.getXmlInset = function (dVal) {
 			if (!AscFormat.isRealNumber(dVal)) {
 				return null;
 			}
-			return dVal * 60000 + 0.5 >> 0;
+			return dVal * 36000 + 0.5 >> 0;
 		};
 		CBodyPr.prototype.GetAnchorCode = function (sVal) {
 			switch (sVal) {
