@@ -1058,8 +1058,9 @@ CInlineLevelSdt.prototype.Document_UpdateInterfaceState = function()
 };
 CInlineLevelSdt.prototype.SetParagraph = function(oParagraph)
 {
-	if (this.GetTextFormPr() && this.GetLogicDocument())
-		this.GetLogicDocument().RegisterForm(this);
+	let oLogicDocument;
+	if (this.GetTextFormPr() && (oLogicDocument = this.GetLogicDocument()))
+		oLogicDocument.GetFormsManager().Register(this);
 
 	CParagraphContentWithParagraphLikeContent.prototype.SetParagraph.apply(this, arguments);
 };
@@ -2175,7 +2176,7 @@ CInlineLevelSdt.prototype.private_UpdateTextFormContent = function()
 CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
 {
 	if (this.GetFormKey() && this.GetLogicDocument())
-		this.GetLogicDocument().CheckSelectionLockedByFormKey(CheckType, this.GetFormKey(), this.GetParagraph());
+		this.GetLogicDocument().GetFormsManager().CheckLockByKey(CheckType, this.GetFormKey(), this.GetParagraph());
 
 	if (AscCommon.changestype_Paragraph_TextProperties === CheckType
 		|| ((AscCommon.changestype_Drawing_Props === CheckType || AscCommon.changestype_Image_Properties === CheckType)
@@ -2641,7 +2642,7 @@ CInlineLevelSdt.prototype.IsFormFilled = function()
 		if (!oLogicDocument)
 			return false;
 
-		var arrRadioGroup = oLogicDocument.GetSpecialRadioButtons(this.GetCheckBoxPr().GetGroupKey());
+		var arrRadioGroup = oLogicDocument.GetFormsManager().GetRadioButtons(this.GetCheckBoxPr().GetGroupKey());
 		for (var nIndex = 0, nCount = arrRadioGroup.length; nIndex < nCount; ++nIndex)
 		{
 			var oRadioForm = arrRadioGroup[nIndex];

@@ -678,9 +678,16 @@ CChangesSdtPrFormPr.prototype.private_SetValue = function(Value)
 {
 	this.Class.Pr.FormPr = Value;
 
-	var oLogicDocument = this.Class.GetLogicDocument();
+	let oLogicDocument = this.Class.GetLogicDocument();
 	if (oLogicDocument)
-		oLogicDocument.RegisterForm(this.Class);
+	{
+		let oFormsManager = oLogicDocument.GetFormsManager();
+
+		if (Value)
+			oFormsManager.Register(this.Class);
+		else
+			oFormsManager.Unregister(this.Class);
+	}
 
 };
 CChangesSdtPrFormPr.prototype.private_CreateObject = function()

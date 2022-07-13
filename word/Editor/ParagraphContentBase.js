@@ -4267,6 +4267,7 @@ CParagraphContentWithParagraphLikeContent.prototype.Is_UseInDocument = function(
 {
 	return (this.Paragraph && true === this.Paragraph.Is_UseInDocument() && true === this.Is_UseInParagraph() ? true : false);
 };
+
 CParagraphContentWithParagraphLikeContent.prototype.Is_UseInParagraph = function()
 {
 	if (!this.Paragraph)

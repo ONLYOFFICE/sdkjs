@@ -257,6 +257,7 @@
 			"word/Editor/Table/TableCellChanges.js",
 			"word/Editor/StructuredDocumentTags/SdtBase.js",
 			"word/Editor/StructuredDocumentTags/BlockLevel.js",
+			"word/Editor/StructuredDocumentTags/FormsManager.js",
 			"word/Editor/StructuredDocumentTags/InlineLevel.js",
 			"word/Editor/StructuredDocumentTags/SdtPr.js",
 			"word/Editor/StructuredDocumentTags/SdtPrChanges.js",

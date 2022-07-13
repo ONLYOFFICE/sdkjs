@@ -2140,7 +2140,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 		isFastCollaboration : false,
 	};
 
-	this.SpecialForms            = {}; // Список специальных форм в документе
+	this.FormsManager            = new AscWord.CFormsManager(this);
 	this.CurrentForm             = null;
 	this.HighlightRequiredFields = false;  // Выделяем ли обязательные поля
 	this.RequiredFieldsBorder    = new CDocumentBorder();
@@ -2709,7 +2709,7 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	}
 
 	if (this.IsFillingFormMode())
-		this.Api.sync_OnAllRequiredFormsFilled(this.IsAllRequiredSpecialFormsFilled());
+		this.Api.sync_OnAllRequiredFormsFilled(this.FormsManager.IsAllRequiredFormsFilled());
 
 	var oCurrentParagraph = this.GetCurrentParagraph(false, false)
 	if (oCurrentParagraph && oCurrentParagraph.IsInFixedForm())
@@ -2843,101 +2843,7 @@ CDocument.prototype.private_FinalizeFormChange = function()
 		var oForm = this.Action.Additional.FormChange[sKey].Form;
 		var oPr   = this.Action.Additional.FormChange[sKey].Pr;
 
-		if (!oForm.IsUseInDocument())
-			continue;
-
-		if (oForm.IsCheckBox())
-		{
-			var isChecked = oForm.GetCheckBoxPr().Checked;
-			if (oForm.IsRadioButton())
-			{
-				for (var sId in this.SpecialForms)
-				{
-					var oTempForm = this.SpecialForms[sId];
-					if (!oTempForm.IsUseInDocument())
-						continue;
-
-					if (oTempForm !== oForm && oTempForm.IsRadioButton() && sKey === oTempForm.GetCheckBoxPr().GroupKey)
-					{
-						if (oTempForm.GetCheckBoxPr().Checked)
-							oTempForm.SetCheckBoxChecked(false);
-					}
-				}
-			}
-			else
-			{
-				for (var sId in this.SpecialForms)
-				{
-					var oTempForm = this.SpecialForms[sId];
-					if (!oTempForm.IsUseInDocument())
-						continue;
-
-					if (oTempForm !== oForm && oTempForm.IsCheckBox() && (!oTempForm.IsRadioButton()) && sKey === oTempForm.GetFormKey())
-					{
-						if (isChecked !== oTempForm.GetCheckBoxPr().Checked)
-							oTempForm.ToggleCheckBox();
-					}
-				}
-			}
-		}
-		else if (oForm.IsPicture())
-		{
-			if (oPr)
-			{
-				var isPlaceHolder = oForm.IsPlaceHolder();
-				for (var sId in this.SpecialForms)
-				{
-					var oTempForm = this.SpecialForms[sId];
-					if (!oTempForm.IsUseInDocument())
-						continue;
-
-					if (oTempForm !== oForm && sKey === oTempForm.GetFormKey() && oTempForm.IsPicture())
-					{
-						var arrDrawings = oTempForm.GetAllDrawingObjects();
-						if (arrDrawings.length > 0)
-						{
-							var oPicture = arrDrawings[0].GetPicture();
-							if (oPicture)
-								oPicture.setBlipFill(AscFormat.CreateBlipFillRasterImageId(oPr));
-						}
-						oTempForm.SetShowingPlcHdr(isPlaceHolder);
-						oTempForm.UpdatePictureFormLayout();
-					}
-				}
-			}
-		}
-		else
-		{
-			var isPlaceHolder = oForm.IsPlaceHolder();
-
-			var oSrcRun = !isPlaceHolder ? oForm.MakeSingleRunElement(false) : null;
-
-			for (var sId in this.SpecialForms)
-			{
-				var oTempForm = this.SpecialForms[sId];
-
-				if (!oTempForm.IsUseInDocument() || oTempForm.IsPicture() || oTempForm.IsCheckBox())
-					continue;
-
-				if (oTempForm !== oForm && sKey === oTempForm.GetFormKey())
-				{
-					if (isPlaceHolder)
-					{
-						if (!oTempForm.IsPlaceHolder())
-							oTempForm.ReplaceContentWithPlaceHolder(false);
-					}
-					else
-					{
-						if (oTempForm.IsPlaceHolder())
-							oTempForm.ReplacePlaceHolderWithContent();
-
-						var oDstRun = oTempForm.MakeSingleRunElement(false);
-						oDstRun.CopyTextFormContent(oSrcRun);
-					}
-				}
-			}
-		}
-
+		this.FormsManager.OnChange(oForm, oPr);
 		this.Action.Recalculate = true;
 	}
 
@@ -2959,7 +2865,7 @@ CDocument.prototype.private_FinalizeRadioRequired = function()
 	{
 		var isRequired = this.Action.Additional.RadioRequired[sGroupKey];
 
-		var arrRadioGroup = this.GetSpecialRadioButtons(sGroupKey);
+		var arrRadioGroup = this.FormsManager.GetRadioButtons(sGroupKey);
 		for (var nIndex = 0, nCount = arrRadioGroup.length; nIndex < nCount; ++nIndex)
 		{
 			var oRadioButton = arrRadioGroup[nIndex];
@@ -12541,7 +12447,7 @@ CDocument.prototype.Document_Undo = function(Options)
 	}
 
 	if (this.IsFillingFormMode())
-		this.Api.sync_OnAllRequiredFormsFilled(this.IsAllRequiredSpecialFormsFilled());
+		this.Api.sync_OnAllRequiredFormsFilled(this.FormsManager.IsAllRequiredFormsFilled());
 };
 CDocument.prototype.Document_Redo = function()
 {
@@ -12570,7 +12476,7 @@ CDocument.prototype.Document_Redo = function()
 	}
 
 	if (this.IsFillingFormMode())
-		this.Api.sync_OnAllRequiredFormsFilled(this.IsAllRequiredSpecialFormsFilled());
+		this.Api.sync_OnAllRequiredFormsFilled(this.FormsManager.IsAllRequiredFormsFilled());
 };
 CDocument.prototype.GetSelectionState = function()
 {
@@ -13008,29 +12914,6 @@ CDocument.prototype.private_IsSelectionLockedAdditional = function(oAdditionalDa
 CDocument.prototype.IsSelectionLocked = function(nCheckType, oAdditionalData, isDontLockInFastMode, isIgnoreCanEditFlag, fCallback)
 {
 	return this.Document_Is_SelectionLocked(nCheckType, oAdditionalData, isDontLockInFastMode, isIgnoreCanEditFlag, fCallback);
-};
-CDocument.prototype.CheckSelectionLockedByFormKey = function(nCheckType, sKey, oSkipParagraph)
-{
-	for (var sId in this.SpecialForms)
-	{
-		var oForm = this.SpecialForms[sId];
-		if (oForm && oForm.IsUseInDocument() && oForm.GetParagraph() && oForm.GetParagraph() !== oSkipParagraph && oForm.GetFormKey() === sKey)
-		{
-			if (oForm.IsPicture())
-			{
-				var arrDrawings = oForm.GetAllDrawingObjects();
-				for (var nIndex = 0, nCount = arrDrawings.length; nIndex < nCount; ++nIndex)
-				{
-					arrDrawings[nIndex].Lock.Check(arrDrawings[nIndex].GetId());
-				}
-			}
-			else
-			{
-				var oFormParagraph = oForm.GetParagraph();
-				oFormParagraph.Lock.Check(oFormParagraph.GetId());
-			}
-		}
-	}
 };
 /**
  * Начинаем составную проверку на залоченность объектов
@@ -24904,79 +24787,11 @@ CDocument.prototype.AddParaMath = function(nType)
 	this.UpdateInterface();
 };
 /**
- * Регистрируем специальные формы для заполнения
- * @param oForm
+ * @returns {AscWord.CFormsManager}
  */
-CDocument.prototype.RegisterForm = function(oForm)
+CDocument.prototype.GetFormsManager = function()
 {
-	if (oForm)
-	{
-		if (oForm.IsForm())
-			this.SpecialForms[oForm.GetId()] = oForm;
-		else
-			delete this.SpecialForms[oForm.GetId()];
-	}
-};
-/**
- * Удаляем запись о форме
- * @param oForm
- */
-CDocument.prototype.UnregisterForm = function(oForm)
-{
-	if (oForm)
-		delete this.SpecialForms[oForm.GetId()];
-};
-/**
- * Получаем ключи форм по заданным параметрам
- * @param oPr
- * @returns {Array.string}
- */
-CDocument.prototype.GetFormKeys = function(oPr)
-{
-	var isText       = oPr && oPr.Text;
-	var isComboBox   = oPr && oPr.ComboBox;
-	var isDropDown   = oPr && oPr.DropDownList;
-	var isCheckBox   = oPr && oPr.CheckBox;
-	var isPicture    = oPr && oPr.Picture;
-	var isRadioGroup = oPr && oPr.RadioGroup;
-
-	var arrKeys = [];
-	for (var sId in this.SpecialForms)
-	{
-		var oForm = this.SpecialForms[sId];
-
-		var sKey = null;
-		if ((isText && oForm.IsTextForm())
-			|| (isComboBox && oForm.IsComboBox())
-			|| (isDropDown && oForm.IsDropDownList())
-			|| (isCheckBox && oForm.IsCheckBox() && !oForm.IsRadioButton())
-			|| (isPicture && oForm.IsPicture()))
-		{
-			sKey = oForm.GetFormKey();
-		}
-		else if (isRadioGroup && oForm.IsRadioButton())
-		{
-			sKey = oForm.GetRadioButtonGroupKey();
-		}
-
-		if (sKey)
-		{
-			var isAdd = true;
-			for (var nIndex = 0, nCount = arrKeys.length; nIndex < nCount; ++nIndex)
-			{
-				if (sKey === arrKeys[nIndex])
-				{
-					isAdd = false;
-					break;
-				}
-			}
-
-			if (isAdd)
-				arrKeys.push(sKey);
-		}
-	}
-
-	return arrKeys;
+	return this.FormsManager;
 };
 /**
  * Сохраняем информацию о том, что форма с заданным ключом была изменена
@@ -25024,17 +24839,9 @@ CDocument.prototype.ClearAllSpecialForms = function(isClearAllContentControls)
 {
 	var arrContentControls;
 	if (isClearAllContentControls)
-	{
 		arrContentControls = this.GetAllContentControls();
-	}
 	else
-	{
-		arrContentControls = [];
-		for (var sId in this.SpecialForms)
-		{
-			arrContentControls.push(this.SpecialForms[sId]);
-		}
-	}
+		arrContentControls = this.FormsManager.GetAllForms();
 
 	var arrParagraphs = [];
 	for (var nIndex = 0, nCount = arrContentControls.length; nIndex < nCount; ++nIndex)
@@ -25087,55 +24894,6 @@ CDocument.prototype.ClearAllSpecialForms = function(isClearAllContentControls)
 	{
 		oControl.SkipSpecialContentControlLock(false);
 	}
-};
-/**
- * Получаем массив всех специальных форм с заданным ключом
- * @param sKey
- * @returns {[]}
- */
-CDocument.prototype.GetSpecialFormsByKey = function(sKey)
-{
-	var arrForms = [];
-	for (var sId in this.SpecialForms)
-	{
-		var oForm = this.SpecialForms[sId];
-		if (sKey === oForm.GetFormKey() && oForm.Is_UseInDocument())
-			arrForms.push(oForm);
-	}
-
-	return arrForms;
-};
-/**
- * Получаем массив всех специальных радио кнопок
- * @param sGroupKey
- * @returns {[]}
- */
-CDocument.prototype.GetSpecialRadioButtons = function(sGroupKey)
-{
-	var arrForms = [];
-	for (var sId in this.SpecialForms)
-	{
-		var oForm = this.SpecialForms[sId];
-		if (oForm.IsRadioButton() && oForm.Is_UseInDocument() && sGroupKey === oForm.GetCheckBoxPr().GetGroupKey())
-			arrForms.push(oForm);
-	}
-
-	return arrForms;
-};
-/**
- * Все ли обязательные поля заполнены
- * @returns {boolean}
- */
-CDocument.prototype.IsAllRequiredSpecialFormsFilled = function()
-{
-	for (var sId in this.SpecialForms)
-	{
-		var oForm = this.SpecialForms[sId];
-		if (oForm.Is_UseInDocument() && oForm.IsFormRequired() && !oForm.IsFormFilled())
-			return false;
-	}
-
-	return true;
 };
 /**
  * Конвертируем
@@ -25984,12 +25742,16 @@ CDocument.prototype.DocxfToDocx = function(isUseHistory)
 	if (isUseHistory)
 		this.StartAction(AscDFH.historydescription_Document_Docxf_To_Docx);
 
-
-	for (var sId in this.SpecialForms)
+	let arrForms = this.FormsManager.GetAllForms();
+	for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 	{
-		var oForm = this.SpecialForms[sId];
+		let oForm = arrForms[nIndex];
 
 		var oShape, oParaDrawing;
+
+		if (oForm.IsComplexForm())
+			oForm.SetComplexFormPr(undefined);
+
 		if (oForm.IsFixedForm()
 			&& (oShape = oForm.GetFixedFormWrapperShape())
 			&& (oParaDrawing = oShape.parent)

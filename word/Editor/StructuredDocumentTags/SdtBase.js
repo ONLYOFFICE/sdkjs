@@ -215,9 +215,9 @@ CSdtBase.prototype.SetFormPr = function(oFormPr)
 		History.Add(new CChangesSdtPrFormPr(this, this.Pr.FormPr, oFormPr));
 		this.Pr.FormPr = oFormPr;
 
-		var oLogicDocument = this.GetLogicDocument();
+		let oLogicDocument = this.GetLogicDocument();
 		if (oLogicDocument)
-			oLogicDocument.RegisterForm(this);
+			oLogicDocument.GetFormsManager().Register(this);
 
 		this.private_OnAddFormPr();
 	}
@@ -234,7 +234,7 @@ CSdtBase.prototype.RemoveFormPr = function()
 
 		var oLogicDocument = this.GetLogicDocument();
 		if (oLogicDocument)
-			oLogicDocument.UnregisterForm(this);
+			oLogicDocument.GetFormsManager().Unregister(this);
 
 		this.private_OnAddFormPr();
 	}

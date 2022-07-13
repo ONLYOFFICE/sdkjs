@@ -1003,6 +1003,14 @@
 
 		return this.WordControl.m_oLogicDocument;
 	};
+	asc_docs_api.prototype.private_GetFormsManager = function()
+	{
+		let oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return null;
+
+		return oLogicDocument.GetFormsManager();
+	};
 
 	asc_docs_api.prototype.isLongAction = function()
 	{
@@ -10433,23 +10441,23 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_GetTextFormKeys = function()
 	{
-		var oLogicDocument = this.private_GetLogicDocument();
-		return oLogicDocument ? oLogicDocument.GetFormKeys({Text : true, ComboBox : true, DropDownList : true}) : [];
+		let oManager = this.private_GetFormsManager();
+		return oManager ? oManager.GetAllKeys({Text : true, ComboBox : true, DropDownList : true}) : [];
 	};
 	asc_docs_api.prototype.asc_GetPictureFormKeys = function()
 	{
-		var oLogicDocument = this.private_GetLogicDocument();
-		return oLogicDocument ? oLogicDocument.GetFormKeys({Picture : true}) : [];
+		let oManager = this.private_GetFormsManager();
+		return oManager ? oManager.GetAllKeys({Picture : true}) : [];
 	};
 	asc_docs_api.prototype.asc_GetCheckBoxFormKeys = function()
 	{
-		var oLogicDocument = this.private_GetLogicDocument();
-		return oLogicDocument ? oLogicDocument.GetFormKeys({CheckBox : true}) : [];
+		let oManager = this.private_GetFormsManager();
+		return oManager ? oManager.GetAllKeys({CheckBox : true}) : [];
 	};
 	asc_docs_api.prototype.asc_GetRadioButtonGroupKeys = function()
 	{
-		var oLogicDocument = this.private_GetLogicDocument();
-		return oLogicDocument ? oLogicDocument.GetFormKeys({RadioGroup : true}) : [];
+		let oManager = this.private_GetFormsManager();
+		return oManager ? oManager.GetAllKeys({RadioGroup : true}) : [];
 	};
 	asc_docs_api.prototype.asc_ClearAllSpecialForms = function()
 	{
@@ -10513,11 +10521,11 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_GetFormsCountByKey = function(sKey)
 	{
-		var oLogicDocument = this.private_GetLogicDocument();
-		if (!oLogicDocument)
+		let oFormsManager = this.private_GetFormsManager();
+		if (!oFormsManager)
 			return 0;
 
-		return oLogicDocument.GetSpecialFormsByKey(sKey).length;
+		return oFormsManager.GetAllFormsByKey(sKey).length;
 	};
 	asc_docs_api.prototype.asc_MoveToFillingForm = function(isNext, isRequired, isNotFilled)
 	{
@@ -10565,11 +10573,11 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_IsAllRequiredFormsFilled = function()
 	{
-		var oLogicDocument = this.private_GetLogicDocument();
-		if (!oLogicDocument)
+		let oFormsManager = this.private_GetFormsManager();
+		if (!oFormsManager)
 			return true;
 
-		return oLogicDocument.IsAllRequiredSpecialFormsFilled();
+		return oFormsManager.IsAllRequiredFormsFilled();
 	};
 	asc_docs_api.prototype.sync_OnAllRequiredFormsFilled = function(isFilled)
 	{
