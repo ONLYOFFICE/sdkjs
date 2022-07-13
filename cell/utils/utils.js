@@ -3003,6 +3003,8 @@
 			this.sheetIndex = -1;
 			this.error = false;
 
+			this.isNeedRecalc = null;
+
 			this.specificRange = null;
 		}
 
@@ -3065,6 +3067,9 @@
 		asc_CFindOptions.prototype.IsWholeWords = function () {
 			return this.isWholeWord;
 		};
+		asc_CFindOptions.prototype.IsWholeWords = function () {
+			return this.isWholeWord;
+		};
 
 		asc_CFindOptions.prototype.asc_setFindWhat = function (val) {this.findWhat = val;};
 		asc_CFindOptions.prototype.asc_setScanByRows = function (val) {this.scanByRows = val;};
@@ -3078,6 +3083,7 @@
 		asc_CFindOptions.prototype.asc_setReplaceWith = function (val) {this.replaceWith = val;};
 		asc_CFindOptions.prototype.asc_setIsReplaceAll = function (val) {this.isReplaceAll = val;};
 		asc_CFindOptions.prototype.asc_setSpecificRange = function (val) {this.specificRange = val;};
+		asc_CFindOptions.prototype.asc_setNeedRecalc = function (val) {this.isNeedRecalc = val;};
 
 		/** @constructor */
 		function findResults() {
@@ -3625,6 +3631,7 @@
 		prot["asc_setReplaceWith"] = prot.asc_setReplaceWith;
 		prot["asc_setIsReplaceAll"] = prot.asc_setIsReplaceAll;
 		prot["asc_setSpecificRange"] = prot.asc_setSpecificRange;
+		prot["asc_setNeedRecalc"] = prot.asc_setNeedRecalc;
 
 		window["AscCommonExcel"].findResults = findResults;
 

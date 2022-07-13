@@ -4588,9 +4588,10 @@
 		if (!this.SearchEngine) {
 			return;
 		}
-		if (this.SearchEngine.Compare(oProps)) {
+		if (this.SearchEngine.Compare(oProps) && !oProps.isNeedRecalc) {
 			return this.SearchEngine;
 		}
+		oProps.isNeedRecalc = null;
 
 		this.SearchEngine._lastNotEmpty = this.SearchEngine.isNotEmpty();
 
