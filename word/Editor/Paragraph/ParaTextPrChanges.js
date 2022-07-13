@@ -1592,7 +1592,7 @@ AscCommon.ExtendPrototype(CChangesParaTextPrRFontsAsciiTheme, CChangesParaTextPr
 CChangesParaTextPrRFontsAsciiTheme.prototype.Type = AscDFH.historyitem_TextPr_RFonts_Ascii_Theme;
 CChangesParaTextPrRFontsAsciiTheme.prototype.private_SetValue = function(sValue)
 {
-	this.Class.Value.RFonts.Ascii = sValue;
+	this.Class.Value.RFonts.AsciiTheme = sValue;
 };
 /**
  * @constructor
