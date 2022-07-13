@@ -1047,6 +1047,8 @@ Because of this, the display is sometimes not correct.
         this.bg.toXml(writer);
       if (this.whole)
         this.whole.toXml(writer);
+      if(this.extLst)
+        this.extLst.toXml(writer, "dgm:extLst");
 
       writer.WriteXmlNodeEnd("dgm:dataModel");
     };
@@ -1155,7 +1157,7 @@ Because of this, the display is sometimes not correct.
       }
     };
     PtLst.prototype.toXml = function(writer) {
-      CCommonDataList.prototype.toXml(writer, "dgm:ptLst");
+      CCommonDataList.prototype.toXml.call(this, writer, "dgm:ptLst");
     };
 
 
@@ -1187,7 +1189,7 @@ Because of this, the display is sometimes not correct.
       }
     };
     CxnLst.prototype.toXml = function(writer) {
-      CCommonDataList.prototype.toXml(writer, "dgm:cxnLst");
+      CCommonDataList.prototype.toXml.call(this, writer, "dgm:cxnLst");
     };
 
     changesFactory[AscDFH.historyitem_CxnDestId] = CChangeString;
@@ -1443,7 +1445,8 @@ Because of this, the display is sometimes not correct.
     };
     ExtLst.prototype.readAttrXml = function (name, reader) {
     };
-    ExtLst.prototype.toXml = function(writer) {
+    ExtLst.prototype.toXml = function(writer, sName) {
+      CCommonDataList.prototype.toXml.call(this, writer, sName);
     };
 
     changesFactory[AscDFH.historyitem_ExtUri] = CChangeString;
@@ -1455,6 +1458,7 @@ Because of this, the display is sometimes not correct.
       CBaseFormatObject.call(this);
       this.uri = null;
       this.data = null;
+      this.dataName = null;
     }
 
     InitClass(Ext, CBaseFormatObject, AscDFH.historyitem_type_Ext);
@@ -1477,6 +1481,7 @@ Because of this, the display is sometimes not correct.
         return true;
       });
       this.data.fromXml(reader);
+      this.dataName = name;
     };
     Ext.prototype.readAttrXml = function (name, reader) {
       if(name === "uri") {
@@ -1484,6 +1489,13 @@ Because of this, the display is sometimes not correct.
       }
     };
     Ext.prototype.toXml = function(writer) {
+      writer.WriteXmlNodeStart("a:ext");
+      writer.WriteXmlNullableAttributeString("uri", this.uri);
+      writer.WriteXmlAttributesEnd();
+      if(this.data) {
+        this.data.toXml(writer, this.dataName);
+      }
+      writer.WriteXmlNodeEnd("a:ext");
     };
 
     changesFactory[AscDFH.historyitem_BgFormatFill] = CChangeObjectNoId;
@@ -1763,6 +1775,7 @@ Because of this, the display is sometimes not correct.
     };
     Whole.prototype.toXml = function(writer) {
       writer.WriteXmlNodeStart("dgm:whole");
+      writer.WriteXmlAttributesEnd();
       if (this.ln)
         this.ln.toXml(writer);
       if (this.effect)
@@ -2155,7 +2168,8 @@ Because of this, the display is sometimes not correct.
         this.spPr.toXml(writer);
 
       if (this.t)
-        this.t.toXml(writer);
+        this.t.toXml(writer, "dgm:t");
+
 
       writer.WriteXmlNodeEnd("dgm:pt");
     };
@@ -2767,17 +2781,17 @@ Because of this, the display is sometimes not correct.
       writer.WriteXmlNullableAttributeString("csCatId", this.csCatId);
       writer.WriteXmlNullableAttributeBool("phldr", this.phldr);
       writer.WriteXmlNullableAttributeString("phldrT", this.phldrT);
-      writer.WriteXmlNullableAttributeInt("custAng", (this.custAng/AscFormat.cToRad + 0.5) >> 0);
+      (this.custAng !== null) && writer.WriteXmlAttributeInt("custAng", (this.custAng/AscFormat.cToRad + 0.5) >> 0);
       writer.WriteXmlNullableAttributeBool("custFlipHor", this.custFlipHor);
       writer.WriteXmlNullableAttributeBool("custFlipVert", this.custFlipVert);
-      writer.WriteXmlNullableAttributeInt("custLinFactNeighborX", (this.custLinFactNeighborX * 100000 + 0.5) >> 0 );
-      writer.WriteXmlNullableAttributeInt("custLinFactNeighborY", (this.custLinFactNeighborY * 100000 + 0.5) >> 0 );
-      writer.WriteXmlNullableAttributeInt("custLinFactX", (this.custLinFactX * 100000 + 0.5 ) >> 0.5);
-      writer.WriteXmlNullableAttributeInt("custLinFactY", (this.custLinFactY * 100000 + 0.5 ) >> 0.5);
+      (this.custLinFactNeighborX !== null) && writer.WriteXmlAttributeInt("custLinFactNeighborX", (this.custLinFactNeighborX * 100000 + 0.5) >> 0 );
+      (this.custLinFactNeighborY !== null) && writer.WriteXmlAttributeInt("custLinFactNeighborY", (this.custLinFactNeighborY * 100000 + 0.5) >> 0 );
+      (this.custLinFactX !== null) && writer.WriteXmlAttributeInt("custLinFactX", (this.custLinFactX * 100000 + 0.5 ) >> 0.5);
+      (this.custLinFactY !== null) && writer.WriteXmlAttributeInt("custLinFactY", (this.custLinFactY * 100000 + 0.5 ) >> 0.5);
       writer.WriteXmlNullableAttributeInt("custRadScaleInc", this.custRadScaleInc);
       writer.WriteXmlNullableAttributeInt("custRadScaleRad", this.custRadScaleRad);
-      writer.WriteXmlNullableAttributeInt("custScaleX", (this.custScaleX * 100000 + 0.5) >> 0);
-      writer.WriteXmlNullableAttributeInt("custScaleY", (this.custScaleY * 100000 + 0.5) >> 0);
+      (this.custScaleX !== null) && writer.WriteXmlAttributeInt("custScaleX", (this.custScaleX * 100000 + 0.5) >> 0);
+      (this.custScaleY !== null) && writer.WriteXmlAttributeInt("custScaleY", (this.custScaleY * 100000 + 0.5) >> 0);
       writer.WriteXmlNullableAttributeInt("custSzX", this.custSzX);
       writer.WriteXmlNullableAttributeInt("custSzY", this.custSzY);
       writer.WriteXmlNullableAttributeBool("custT", this.custT);
@@ -3126,7 +3140,7 @@ Because of this, the display is sometimes not correct.
       if (this.catLst) this.catLst.toXml(writer);
       if (this.sampData) this.sampData.toXml(writer);
       if (this.styleData) this.styleData.toXml(writer);
-      if (this.clrData) this.clrData.toXml(writer);
+      if (this.clrData) this.clrData.toXml(writer, "dgm:clrData");
       if (this.layoutNode) this.layoutNode.toXml(writer);
 
       writer.WriteXmlNodeEnd("dgm:layoutDef");
@@ -3162,7 +3176,7 @@ Because of this, the display is sometimes not correct.
       }
     };
     CatLst.prototype.toXml = function(writer) {
-      CCommonDataList.prototype.toXml(writer, "dgm:catLst");
+      CCommonDataList.prototype.toXml.call(this, writer, "dgm:catLst");
     };
 
     changesFactory[AscDFH.historyitem_SCatPri] = CChangeLong;
@@ -6526,7 +6540,7 @@ Because of this, the display is sometimes not correct.
       }
     };
     ConstrLst.prototype.toXml = function(writer) {
-      CCommonDataList.prototype.toXml(writer, "dgm:constrLst");
+      CCommonDataList.prototype.toXml.call(this, writer, "dgm:constrLst");
     };
 
 
@@ -7933,7 +7947,7 @@ Because of this, the display is sometimes not correct.
       }
     };
     RuleLst.prototype.toXml = function(writer) {
-      CCommonDataList.prototype.toXml(writer, "dgm:ruleLst");
+      CCommonDataList.prototype.toXml.call(this, writer, "dgm:ruleLst");
     };
 
     changesFactory[AscDFH.historyitem_RuleFact] = CChangeDouble2;
@@ -8374,7 +8388,7 @@ Because of this, the display is sometimes not correct.
       }
     };
     AdjLst.prototype.toXml = function(writer) {
-      CCommonDataList.prototype.toXml(writer, "dgm:adjLst");
+      CCommonDataList.prototype.toXml.call(this, writer, "dgm:adjLst");
     };
 
     changesFactory[AscDFH.historyitem_AdjIdx] = CChangeLong;
@@ -10819,7 +10833,7 @@ Because of this, the display is sometimes not correct.
 
     InitClass(EffectClrLst, ClrLst, AscDFH.historyitem_type_EffectClrLst);
     EffectClrLst.prototype.toXml = function(writer) {
-      ClrLst.prototype.toXml(writer, "dgm:effectClrLst");
+      ClrLst.prototype.toXml.call(this, writer, "dgm:effectClrLst");
     };
 
     function FillClrLst() {
@@ -10828,7 +10842,7 @@ Because of this, the display is sometimes not correct.
 
     InitClass(FillClrLst, ClrLst, AscDFH.historyitem_type_FillClrLst);
     FillClrLst.prototype.toXml = function(writer) {
-      ClrLst.prototype.toXml(writer, "dgm:fillClrLst");
+      ClrLst.prototype.toXml.call(this, writer, "dgm:fillClrLst");
     };
 
     function LinClrLst() {
@@ -10837,7 +10851,7 @@ Because of this, the display is sometimes not correct.
 
     InitClass(LinClrLst, ClrLst, AscDFH.historyitem_type_LinClrLst);
     LinClrLst.prototype.toXml = function(writer) {
-      ClrLst.prototype.toXml(writer, "dgm:linClrLst");
+      ClrLst.prototype.toXml.call(this, writer, "dgm:linClrLst");
     };
 
     function TxEffectClrLst() {
@@ -10846,7 +10860,7 @@ Because of this, the display is sometimes not correct.
 
     InitClass(TxEffectClrLst, ClrLst, AscDFH.historyitem_type_TxEffectClrLst);
     TxEffectClrLst.prototype.toXml = function(writer) {
-      ClrLst.prototype.toXml(writer, "dgm:txEffectClrLst");
+      ClrLst.prototype.toXml.call(this, writer, "dgm:txEffectClrLst");
     };
 
     function TxFillClrLst() {
@@ -10855,7 +10869,7 @@ Because of this, the display is sometimes not correct.
 
     InitClass(TxFillClrLst, ClrLst, AscDFH.historyitem_type_TxFillClrLst);
     TxFillClrLst.prototype.toXml = function(writer) {
-      ClrLst.prototype.toXml(writer, "dgm:txFillClrLst");
+      ClrLst.prototype.toXml.call(this, writer, "dgm:txFillClrLst");
     };
 
     function TxLinClrLst() {
@@ -10864,7 +10878,7 @@ Because of this, the display is sometimes not correct.
 
     InitClass(TxLinClrLst, ClrLst, AscDFH.historyitem_type_TxLinClrLst);
     TxLinClrLst.prototype.toXml = function(writer) {
-      ClrLst.prototype.toXml(writer, "dgm:txLinClrLst");
+      ClrLst.prototype.toXml.call(this, writer, "dgm:txLinClrLst");
     };
 
     function ColorsDefHdrLst() {
@@ -11640,9 +11654,9 @@ Because of this, the display is sometimes not correct.
       if (this.scene3d)
         this.scene3d.toXml(writer, "dgm");
       if (this.sp3d)
-        this.sp3d.toXml(writer);
+        this.sp3d.toXml(writer, "dgm:sp3d");
       if (this.txPr)
-        this.txPr.toXml(writer);
+        this.txPr.toXml(writer, "dgm:txPr");
       if (this.style)
         this.style.toXml(writer);
       writer.WriteXmlNodeEnd("dgm:styleLbl");
@@ -12029,6 +12043,21 @@ Because of this, the display is sometimes not correct.
       else {
         AscFormat.CGroupShape.prototype.readChildXml.call(this, name, reader, false);
       }
+    };
+    Drawing.prototype.toXml = function(writer) {
+      let nOldDocType = writer.context.docType;
+      writer.WriteXmlString(AscCommonWord.g_sXmlHeader);
+      writer.context.docType = AscFormat.XMLWRITER_DOC_TYPE_DSP_DRAWING;
+
+      writer.WriteXmlNodeStart("dsp:drawing");
+      writer.WriteXmlAttributeString("xmlns:a", "http://schemas.openxmlformats.org/drawingml/2006/main");
+      writer.WriteXmlAttributeString("xmlns:dgm", "http://schemas.openxmlformats.org/drawingml/2006/diagram");
+      writer.WriteXmlAttributeString("xmlns:dsp", "http://schemas.microsoft.com/office/drawing/2008/diagram");
+      writer.WriteXmlAttributeString("xmlns:r", "http://schemas.openxmlformats.org/officeDocument/2006/relationships");
+      writer.WriteXmlAttributesEnd();
+      AscFormat.CGroupShape.prototype.toXml.call(this, writer);
+      writer.WriteXmlNodeEnd("dsp:drawing");
+      writer.context.docType = nOldDocType;
     };
 
     changesFactory[AscDFH.historyitem_BackdropNormDx] = CChangeLong;
@@ -14923,25 +14952,56 @@ Because of this, the display is sometimes not correct.
       oMemory.context = oContext;
       let oDocPart = oContext.part;
 
-      let oDmPart = oDocPart.addPart(AscCommon.openXml.Types.diagramData);
-      oDmPart.part.setDataXml(this.dataModel, oMemory);
-      oMemory.Seek(0);
-      writer.WriteXmlNullableAttributeString("r:dm", oDmPart.rId);
 
-      let oLoPart = oDocPart.addPart(AscCommon.openXml.Types.diagramLayoutDefinition);
-      oLoPart.part.setDataXml(this.layoutDef, oMemory);
-      oMemory.Seek(0);
-      writer.WriteXmlNullableAttributeString("r:lo", oLoPart.rId);
+      let sDrawingRId = null;
+      if(this.drawing) {
+        let oDmDrawingPart = oDocPart.addPart(AscCommon.openXml.Types.diagramPersistLayout);
+        oDmDrawingPart.part.setDataXml(this.drawing, oMemory);
+        oMemory.Seek(0);
+        sDrawingRId = oDmDrawingPart.rId;
+      }
 
-      let oQsPart = oDocPart.addPart(AscCommon.openXml.Types.diagramStyle);
-      oQsPart.part.setDataXml(this.styleDef, oMemory);
-      oMemory.Seek(0);
-      writer.WriteXmlNullableAttributeString("r:qs", oQsPart.rId);
+      if(this.dataModel) {
+        let oThis = this;
+        AscFormat.ExecuteNoHistory(function() {
+          let oExtLst = new ExtLst();
+          let oExt = new Ext();
+          oExt.setUri("http://schemas.microsoft.com/office/drawing/2008/diagram");
+          let dataModelExt = new CT_XmlNode(function() {});
+          dataModelExt.attributes["minVer"] = "http://schemas.openxmlformats.org/drawingml/2006/diagram";
+          dataModelExt.attributes["relId"] = sDrawingRId;
+          dataModelExt.attributes["xmlns:dsp"] = "http://schemas.microsoft.com/office/drawing/2008/diagram";
+          oExt.data = dataModelExt;
+          oExt.dataName = "dsp:dataModelExt";
+          oExtLst.addToLst(oExtLst.list.length, oExt);
+          this.dataModel.dataModel.setExtLst(oExtLst);
+        }, this, []);
+        let oDmPart = oDocPart.addPart(AscCommon.openXml.Types.diagramData);
+        oDmPart.part.setDataXml(this.dataModel, oMemory);
+        oMemory.Seek(0);
+        writer.WriteXmlNullableAttributeString("r:dm", oDmPart.rId);
+      }
 
-      let oCsPart = oDocPart.addPart(AscCommon.openXml.Types.diagramColors);
-      oCsPart.part.setDataXml(this.colorsDef, oMemory);
-      oMemory.Seek(0);
-      writer.WriteXmlNullableAttributeString("r:cs", oCsPart.rId);
+      if(this.layoutDef) {
+        let oLoPart = oDocPart.addPart(AscCommon.openXml.Types.diagramLayoutDefinition);
+        oLoPart.part.setDataXml(this.layoutDef, oMemory);
+        oMemory.Seek(0);
+        writer.WriteXmlNullableAttributeString("r:lo", oLoPart.rId);
+      }
+
+      if(this.styleDef) {
+        let oQsPart = oDocPart.addPart(AscCommon.openXml.Types.diagramStyle);
+        oQsPart.part.setDataXml(this.styleDef, oMemory);
+        oMemory.Seek(0);
+        writer.WriteXmlNullableAttributeString("r:qs", oQsPart.rId);
+      }
+
+      if(this.colorsDef) {
+        let oCsPart = oDocPart.addPart(AscCommon.openXml.Types.diagramColors);
+        oCsPart.part.setDataXml(this.colorsDef, oMemory);
+        oMemory.Seek(0);
+        writer.WriteXmlNullableAttributeString("r:cs", oCsPart.rId);
+      }
 
       writer.WriteXmlAttributesEnd(true);
       writer.context.docType = nOldDocType;

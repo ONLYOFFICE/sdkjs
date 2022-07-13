@@ -7371,9 +7371,6 @@ CShape.prototype.getColumnNumber = function(){
             {
                 writer.WriteXmlString("<wps:bodyPr rot=\"0\"><a:prstTxWarp prst=\"textNoShape\"><a:avLst/></a:prstTxWarp><a:noAutofit/></wps:bodyPr>");
             }
-            if(this.txXfrm) {
-                this.txXfrm.toXml(writer, "dsp:txXfrm");
-            }
         }
     else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_GRAPHICS)
         {
@@ -7406,7 +7403,7 @@ CShape.prototype.getColumnNumber = function(){
 
         if (this.txXfrm && oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DSP_DRAWING)
         {
-            this.txXfrm.toXml(writer);
+            this.txXfrm.toXml(writer, "dsp:txXfrm");
         }
         writer.WriteXmlNodeEnd(name_);
     };

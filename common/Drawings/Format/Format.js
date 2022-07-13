@@ -1770,7 +1770,7 @@
 		};
 		CBaseColor.prototype.getChannelValue = function (sVal) {
 			let nValPct = getPercentageValue(sVal);
-			return ((256 * nValPct / 100000 + 0.5 >> 0) - 1);
+			return (255 * nValPct / 100000 + 0.5 >> 0);
 		};
 		CBaseColor.prototype.getTypeName = function () {
 			return "";
@@ -12502,13 +12502,15 @@
 		CSpTree.prototype.toXml = function (writer, bGroup) {
 			let name_;
 
-			if (writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX ||
-				writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX_GLOSSARY) {
+			let nDocType = writer.context.docType;
+			if (nDocType === AscFormat.XMLWRITER_DOC_TYPE_DOCX ||
+				nDocType === AscFormat.XMLWRITER_DOC_TYPE_DOCX_GLOSSARY) {
 				if (writer.context.groupIndex === 0) name_ = "wpg:wgp";
 				else name_ = "wpg:grpSp";
-			} else if (writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_XLSX) name_ = "xdr:grpSp";
-			else if (writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_CHART_DRAWING) name_ = "cdr:grpSp";
-			else if (writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_GRAPHICS) name_ = "a:grpSp";
+			} else if (nDocType === AscFormat.XMLWRITER_DOC_TYPE_XLSX) name_ = "xdr:grpSp";
+			else if (nDocType === AscFormat.XMLWRITER_DOC_TYPE_CHART_DRAWING) name_ = "cdr:grpSp";
+			else if (nDocType === AscFormat.XMLWRITER_DOC_TYPE_GRAPHICS) name_ = "a:grpSp";
+			else if(nDocType === AscFormat.XMLWRITER_DOC_TYPE_DSP_DRAWING) name_ = "dsp:spTree";
 			else {
 				if (writer.context.groupIndex === 0) name_ = "p:spTree";
 				else name_ = "p:grpSp";
@@ -13999,7 +14001,7 @@
 				}
 				case "wrap": {
 					let sVal = reader.GetValue();
-					this.wrap = this.GetWrapCode();
+					this.wrap = this.GetWrapCode(sVal);
 					break;
 				}
 			}
