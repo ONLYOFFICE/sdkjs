@@ -7285,13 +7285,6 @@ function BinaryPPTYLoader()
                 case 8://smartArt
                 {
                     _smartArt = this.ReadSmartArt();
-                    var tree = _smartArt.createHierarchy();
-                    tree.traverseBF(function (node) {
-                        var nodePoint = node.data && (node.data.nodePoint || node.data.asstPoint);
-                        if (nodePoint) {
-                            nodePoint.setPhldrT('[' + AscCommon.translateManager.getValue('Text') + ']');
-                        }
-                    });
                     break;
                 }
                 case 0xA1:
@@ -7315,21 +7308,7 @@ function BinaryPPTYLoader()
 
         if (_table != null)
         {
-            if(!_graphic_frame.spPr)
-            {
-                _graphic_frame.setSpPr(new AscFormat.CSpPr());
-                _graphic_frame.spPr.setParent(_graphic_frame);
-            }
-            if(!_xfrm){
-                _xfrm = new AscFormat.CXfrm();
-                _xfrm.setOffX(0);
-                _xfrm.setOffY(0);
-                _xfrm.setExtX(0);
-                _xfrm.setExtY(0);
-            }
-            _graphic_frame.spPr.setXfrm(_xfrm);
-            _xfrm.setParent(_graphic_frame.spPr);
-            _graphic_frame.setSpPr(_graphic_frame.spPr);
+            _graphic_frame.checkEmptySpPrAndXfrm(_xfrm);
             _graphic_frame.setNvSpPr(_nvGraphicFramePr);
             if(AscCommon.isRealObject(_nvGraphicFramePr) && AscFormat.isRealNumber(_nvGraphicFramePr.locks))
             {
@@ -7340,18 +7319,7 @@ function BinaryPPTYLoader()
         }
         else if (_chart != null)
         {
-            if(!_chart.spPr)
-            {
-                _chart.setSpPr(new AscFormat.CSpPr());
-                _chart.spPr.setParent(_chart);
-            }
-            if(!_xfrm){
-                _xfrm = new AscFormat.CXfrm();
-                _xfrm.setOffX(0);
-                _xfrm.setOffY(0);
-                _xfrm.setExtX(0);
-                _xfrm.setExtY(0);
-            }
+            _chart.checkEmptySpPrAndXfrm(_xfrm);
             if(AscCommon.isRealObject(_nvGraphicFramePr) )
             {
                 _chart.setNvSpPr(_nvGraphicFramePr);
@@ -7364,27 +7332,12 @@ function BinaryPPTYLoader()
                     this.map_shapes_by_id[_nvGraphicFramePr.cNvPr.id] = _chart;
                 }
             }
-            _chart.spPr.setXfrm(_xfrm);
-            _xfrm.setParent(_chart.spPr);
             return _chart;
         }
         else if(_slicer != null)
         {
             _slicer.setBDeleted(false);
-            if(!_slicer.spPr)
-            {
-                _slicer.setSpPr(new AscFormat.CSpPr());
-                _slicer.spPr.setParent(_slicer);
-            }
-            if(!_xfrm){
-                _xfrm = new AscFormat.CXfrm();
-                _xfrm.setOffX(0);
-                _xfrm.setOffY(0);
-                _xfrm.setExtX(0);
-                _xfrm.setExtY(0);
-            }
-            _slicer.spPr.setXfrm(_xfrm);
-            _xfrm.setParent(_slicer.spPr);
+            _slicer.checkEmptySpPrAndXfrm(_xfrm);
             if(AscCommon.isRealObject(_nvGraphicFramePr) )
             {
                 _slicer.setNvSpPr(_nvGraphicFramePr);
@@ -7397,24 +7350,7 @@ function BinaryPPTYLoader()
         }
         else if(_smartArt != null)
         {
-            if(!_smartArt.spPr)
-            {
-                _smartArt.setSpPr(new AscFormat.CSpPr());
-                _smartArt.spPr.setParent(_smartArt);
-            }
-            if(!_xfrm){
-                _xfrm = new AscFormat.CXfrm();
-                _xfrm.setOffX(0);
-                _xfrm.setOffY(0);
-                _xfrm.setExtX(0);
-                _xfrm.setExtY(0);
-            }
-            _xfrm.setChOffX(0);
-            _xfrm.setChOffY(0);
-            _xfrm.setChExtX(_xfrm.extX);
-            _xfrm.setChExtY(_xfrm.extY);
-            _smartArt.spPr.setXfrm(_xfrm);
-            _xfrm.setParent(_smartArt.spPr);
+            _smartArt.checkEmptySpPrAndXfrm(_xfrm);
             if(AscCommon.isRealObject(_nvGraphicFramePr) )
             {
                 _smartArt.setNvSpPr(_nvGraphicFramePr);
@@ -7426,16 +7362,6 @@ function BinaryPPTYLoader()
                 {
                     this.map_shapes_by_id[_nvGraphicFramePr.cNvPr.id] = _smartArt;
                 }
-            }
-            if(_smartArt.drawing)
-            {
-                var oDrawing = _smartArt.drawing;
-                oDrawing.setSpPr(new AscFormat.CSpPr());
-                oDrawing.spPr.setParent(_smartArt);
-                oDrawing.spPr.setXfrm(_xfrm.createDuplicate());
-                oDrawing.spPr.xfrm.setParent(oDrawing.spPr);
-                oDrawing.spPr.xfrm.setOffX(0);
-                oDrawing.spPr.xfrm.setOffY(0);
             }
             return _smartArt;
         }
@@ -7452,6 +7378,7 @@ function BinaryPPTYLoader()
             _smartArt = new AscFormat.SmartArt();
             _smartArt.fromPPTY(this);
             _smartArt.setBDeleted(false);
+            _smartArt.checkNodePointsAfterRead();
         }
         else
         {

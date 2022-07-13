@@ -112,61 +112,62 @@ Because of this, the display is sometimes not correct.
     var Alg_type_sp = 7;
     var Alg_type_tx = 8;
 
-    var Param_type_alignTx = 0;
-    var Param_type_ar = 1;
-    var Param_type_autoTxRot = 2;
-    var Param_type_begPts = 3;
-    var Param_type_begSty = 4;
-    var Param_type_bendPt = 5;
-    var Param_type_bkpt = 6;
-    var Param_type_bkPtFixedVal = 7;
-    var Param_type_chAlign = 8;
-    var Param_type_chDir = 9;
-    var Param_type_connRout = 10;
-    var Param_type_contDir = 11;
-    var Param_type_ctrShpMap = 12;
-    var Param_type_dim = 13;
-    var Param_type_dstNode = 14;
-    var Param_type_endPts = 15;
-    var Param_type_endSty = 16;
-    var Param_type_fallback = 17;
-    var Param_type_flowDir = 18;
-    var Param_type_grDir = 19;
-    var Param_type_hierAlign = 20;
-    var Param_type_horzAlign = 21;
-    var Param_type_linDir = 22;
-    var Param_type_lnSpAfChP = 23;
-    var Param_type_lnSpAfParP = 24;
-    var Param_type_lnSpCh = 25;
-    var Param_type_lnSpPar = 26;
-    var Param_type_nodeHorzAlign = 27;
-    var Param_type_nodeVertAlign = 28;
-    var Param_type_off = 29;
-    var Param_type_parTxLTRAlign = 30;
-    var Param_type_parTxRTLAlign = 31;
-    var Param_type_pyraAcctBkgdNode = 32;
-    var Param_type_pyraAcctPos = 33;
-    var Param_type_pyraAcctTxMar = 34;
-    var Param_type_pyraAcctTxNode = 35;
-    var Param_type_pyraLvlNode = 36;
-    var Param_type_rotPath = 37;
-    var Param_type_rtShortDist = 38;
-    var Param_type_secChAlign = 39;
-    var Param_type_secLinDir = 40;
-    var Param_type_shpTxLTRAlignCh = 41;
-    var Param_type_shpTxRTLAlignCh = 42;
-    var Param_type_spanAng = 43;
-    var Param_type_srcNode = 44;
-    var Param_type_stAng = 45;
-    var Param_type_stBulletLvl = 46;
-    var Param_type_stElem = 47;
-    var Param_type_txAnchorHorz = 48;
-    var Param_type_txAnchorHorzCh = 49;
-    var Param_type_txAnchorVert = 50;
-    var Param_type_txAnchorVertCh = 51;
-    var Param_type_txBlDir = 52;
-    var Param_type_txDir = 53;
-    var Param_type_vertAlign = 54;
+
+    var Param_type_horzAlign = 0;
+        var Param_type_vertAlign = 1;
+        var Param_type_chDir = 2;
+        var Param_type_chAlign = 3;
+        var Param_type_secChAlign = 4;
+        var Param_type_linDir = 5;
+        var Param_type_secLinDir = 6;
+        var Param_type_stElem = 7;
+        var Param_type_bendPt = 8;
+        var Param_type_connRout = 9;
+        var Param_type_begSty = 10;
+        var Param_type_endSty = 11;
+        var Param_type_dim = 12;
+        var Param_type_rotPath = 13;
+        var Param_type_ctrShpMap = 14;
+        var Param_type_nodeHorzAlign = 15;
+        var Param_type_nodeVertAlign = 16;
+        var Param_type_fallback = 17;
+        var Param_type_txDir = 18;
+        var Param_type_pyraAcctPos = 19;
+        var Param_type_pyraAcctTxMar = 20;
+        var Param_type_txBlDir = 21;
+        var Param_type_txAnchorHorz = 22;
+        var Param_type_txAnchorVert = 23;
+        var Param_type_txAnchorHorzCh = 24;
+        var Param_type_txAnchorVertCh = 25;
+        var Param_type_parTxLTRAlign = 26;
+        var Param_type_parTxRTLAlign = 27;
+        var Param_type_shpTxLTRAlignCh = 28;
+        var Param_type_shpTxRTLAlignCh = 29;
+        var Param_type_autoTxRot = 30;
+        var Param_type_grDir = 31;
+        var Param_type_flowDir = 32;
+        var Param_type_contDir = 33;
+        var Param_type_bkpt = 34;
+        var Param_type_off = 35;
+        var Param_type_hierAlign = 36;
+        var Param_type_bkPtFixedVal = 37;
+        var Param_type_stBulletLvl = 38;
+        var Param_type_stAng = 39;
+        var Param_type_spanAng = 40;
+        var Param_type_ar = 41;
+        var Param_type_lnSpPar = 42;
+        var Param_type_lnSpAfParP = 43;
+        var Param_type_lnSpCh = 44;
+        var Param_type_lnSpAfChP = 45;
+        var Param_type_rtShortDist = 46;
+        var Param_type_alignTx = 47;
+        var Param_type_pyraLvlNode = 48;
+        var Param_type_pyraAcctBkgdNode = 49;
+        var Param_type_pyraAcctTxNode = 50;
+        var Param_type_srcNode = 51;
+        var Param_type_dstNode = 52;
+        var Param_type_begPts = 53;
+        var Param_type_endPts = 54;
 
     var AxisType_value_ancst = 6;
     var AxisType_value_ancstOrSelf = 7;
@@ -3149,8 +3150,6 @@ Because of this, the display is sometimes not correct.
       }
     };
     CatLst.prototype.readChildXml = function (name, reader) {
-    };
-    CatLst.prototype.readAttrXml = function (name, reader) {
       if ("cat" === name) {
         var oChild = new SCat();
         oChild.fromXml(reader);
@@ -5379,7 +5378,7 @@ Because of this, the display is sometimes not correct.
       let sValue = reader.GetValue();
       let aValues = sValue.split(" ");
       for(let nVal = 0; nVal < aValues.length; ++nVal) {
-        let nValNumber = parseInt(aValues[nVal]);
+        let nValNumber = AxisType.prototype.getTypeByteCode(aValues[nVal]);
         if(AscFormat.isRealNumber(nValNumber)) {
           let oAxis = new AxisType();
           oAxis.setVal(nValNumber);
@@ -5391,7 +5390,10 @@ Because of this, the display is sometimes not correct.
       if(this.axis.length > 0) {
         let sVal = "" + this.axis[0].val;
         for(let nAx = 1; nAx < this.axis.length; ++nAx) {
-          sVal += (" " + this.axis[nAx].val);
+          let sType = this.axis[nAx].getType();
+          if(sType) {
+            sVal += (" " + this.axis[nAx].getType());
+          }
         }
         writer.WriteXmlAttributeString("axis", sVal);
       }
@@ -5400,7 +5402,7 @@ Because of this, the display is sometimes not correct.
       let sValue = reader.GetValue();
       let aValues = sValue.split(" ");
       for(let nVal = 0; nVal < aValues.length; ++nVal) {
-        let nValNumber = parseInt(aValues[nVal]);
+        let nValNumber = ElementType.prototype.getTypeByteCode(aValues[nVal]);
         if(AscFormat.isRealNumber(nValNumber)) {
           let oPtType = new ElementType();
           oPtType.setVal(nValNumber);
@@ -5412,7 +5414,10 @@ Because of this, the display is sometimes not correct.
       if(this.ptType.length > 0) {
         let sVal = "" + this.ptType[0].val;
         for(let nAx = 1; nAx < this.ptType.length; ++nAx) {
-          sVal += (" " + this.ptType[nAx].val);
+          let sType = this.ptType[nAx].getType();
+          if(sType) {
+            sVal += (" " + sType);
+          }
         }
         writer.WriteXmlAttributeString("ptType", sVal);
       }
@@ -5519,125 +5524,103 @@ Because of this, the display is sometimes not correct.
     AxisType.prototype.getVal = function () {
       return this.val;
     };
-
     AxisType.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
     };
-    AxisType.prototype.fromXml = function (reader) {
-      let sVal = reader.GetValue();
+    AxisType.prototype.getTypeByteCode = function(sVal) {
       switch (sVal) {
         case "ancst": {
-          this.setVal(AxisType_value_ancst);
-          break;
+          return AxisType_value_ancst;
         }
         case "ancstOrSelf": {
-          this.setVal(AxisType_value_ancstOrSelf);
-          break;
+          return AxisType_value_ancstOrSelf;
         }
         case "ch": {
-          this.setVal(AxisType_value_ch);
-          break;
+          return AxisType_value_ch;
         }
         case "des": {
-          this.setVal(AxisType_value_des);
-          break;
+          return AxisType_value_des;
         }
         case "desOrSelf": {
-          this.setVal(AxisType_value_desOrSelf);
-          break;
+          return AxisType_value_desOrSelf;
         }
         case "follow": {
-          this.setVal(AxisType_value_follow);
-          break;
+          return AxisType_value_follow;
         }
         case "followSib": {
-          this.setVal(AxisType_value_followSib);
-          break;
+          return AxisType_value_followSib;
         }
         case "none": {
-          this.setVal(AxisType_value_none);
-          break;
+          return AxisType_value_none;
         }
         case "par": {
-          this.setVal(AxisType_value_par);
-          break;
+          return AxisType_value_par;
         }
         case "preced": {
-          this.setVal(AxisType_value_preced);
-          break;
+          return AxisType_value_preced;
         }
         case "precedSib": {
-          this.setVal(AxisType_value_precedSib);
-          break;
+          return AxisType_value_precedSib;
         }
         case "root": {
-          this.setVal(AxisType_value_root);
-          break;
+          return AxisType_value_root;
         }
         case "self": {
-          this.setVal(AxisType_value_self);
-          break;
+          return AxisType_value_self;
         }
       }
+      return null;
     };
-    AxisType.prototype.toXml = function(writer) {
-      let sValue = null;
+    AxisType.prototype.getType = function () {
       switch (this.val) {
-
         case AxisType_value_ancst: {
-          sValue = "ancst";
-          break;
+          return "ancst";
         }
         case AxisType_value_ancstOrSelf: {
-          sValue = "ancstOrSelf";
-          break;
+          return "ancstOrSelf";
         }
         case AxisType_value_ch: {
-          sValue = "ch";
-          break;
+          return "ch";
         }
         case AxisType_value_des: {
-          sValue = "des";
-          break;
+          return "des";
         }
         case AxisType_value_desOrSelf: {
-          sValue = "desOrSelf";
-          break;
+          return "desOrSelf";
         }
         case AxisType_value_follow: {
-          sValue = "follow";
-          break;
+          return "follow";
         }
         case AxisType_value_followSib: {
-          sValue = "followSib";
-          break;
+          return "followSib";
         }
         case AxisType_value_none: {
-          sValue = "none";
-          break;
+          return "none";
         }
         case AxisType_value_par: {
-          sValue = "par";
-          break;
+          return "par";
         }
         case AxisType_value_preced: {
-          sValue = "preced";
-          break;
+          return "preced";
         }
         case AxisType_value_precedSib: {
-          sValue = "precedSib";
-          break;
+          return "precedSib";
         }
         case AxisType_value_root: {
-          sValue = "root";
-          break;
+          return "root";
         }
         case AxisType_value_self: {
-          sValue = "self";
-          break;
+          return "self";
         }
       }
-      writer.WriteXmlNullableAttributeString("axis", sValue);
+      return null;
+    };
+    AxisType.prototype.fromXml = function (reader) {
+      let sVal = reader.GetValue();
+      this.setVal(this.getTypeByteCode(sVal));
+    };
+    AxisType.prototype.toXml = function(writer) {
+      writer.WriteXmlNullableAttributeString("axis", this.getType());
     };
     changesFactory[AscDFH.historyitem_ElementTypeVal] = CChangeLong;
     drawingsChangesMap[AscDFH.historyitem_ElementTypeVal] = function (oClass, value) {
@@ -5663,97 +5646,90 @@ Because of this, the display is sometimes not correct.
     ElementType.prototype.fillObject = function (oCopy, oIdMap) {
       oCopy.setVal(this.getVal());
     };
-    ElementType.prototype.fromXml = function (reader) {
-      let sVal = reader.GetValue();
+    ElementType.prototype.getTypeByteCode = function(sVal) {
       switch (sVal) {
         case "all": {
-          this.setVal(ElementType_value_all);
-          break;
+          return ElementType_value_all;
         }
         case "asst": {
-          this.setVal(ElementType_value_asst);
-          break;
+          return ElementType_value_asst;
         }
         case "doc": {
-          this.setVal(ElementType_value_doc);
-          break;
+          return ElementType_value_doc;
         }
         case "node": {
-          this.setVal(ElementType_value_node);
+          return ElementType_value_node;
           break;
         }
         case "nonAsst": {
-          this.setVal(ElementType_value_nonAsst);
+          return ElementType_value_nonAsst;
           break;
         }
         case "nonNorm": {
-          this.setVal(ElementType_value_nonNorm);
+          return ElementType_value_nonNorm;
           break;
         }
         case "norm": {
-          this.setVal(ElementType_value_norm);
+          return ElementType_value_norm;
           break;
         }
         case "parTrans": {
-          this.setVal(ElementType_value_parTrans);
+          return ElementType_value_parTrans;
           break;
         }
         case "pres": {
-          this.setVal(ElementType_value_pres);
+          return ElementType_value_pres;
           break;
         }
         case "sibTrans": {
-          this.setVal(ElementType_value_sibTrans);
+          return ElementType_value_sibTrans;
           break;
         }
       }
+      return null;
     };
-    ElementType.prototype.toXml = function(writer, sName) {
-      let sValue = null;
+    ElementType.prototype.getType = function() {
 
       switch (this.val) {
         case ElementType_value_all: {
-          sValue  = "all";
-          break;
+          return "all";
         }
         case ElementType_value_asst: {
-          sValue  = "asst";
-          break;
+          return "asst";
         }
         case ElementType_value_doc: {
-          sValue  = "doc";
-          break;
+          return "doc";
         }
         case ElementType_value_node: {
-          sValue  = "node";
-          break;
+          return "node";
         }
         case ElementType_value_nonAsst: {
-          sValue  = "nonAsst";
-          break;
+          return "nonAsst";
         }
         case ElementType_value_nonNorm: {
-          sValue  = "nonNorm";
-          break;
+          return "nonNorm";
         }
         case ElementType_value_norm: {
-          sValue  = "norm";
-          break;
+          return "norm";
         }
         case ElementType_value_parTrans: {
-          sValue  = "parTrans";
-          break;
+          return "parTrans";
         }
         case ElementType_value_pres: {
-          sValue  = "pres";
-          break;
+          return "pres";
         }
         case ElementType_value_sibTrans: {
-          sValue  = "sibTrans";
-          break;
+          return "sibTrans";
         }
       }
-      writer.WriteXmlNullableAttributeString(sName, sValue);
+      return null;
+    };
+    ElementType.prototype.fromXml = function (reader) {
+      let sVal = reader.GetValue();
+      this.setVal(this.getTypeByteCode(sVal));
+    };
+    ElementType.prototype.toXml = function(writer, sName) {
+      writer.WriteXmlNullableAttributeString(sName, this.getType());
     }
 
     changesFactory[AscDFH.historyitem_FunctionValueAnimLvlStr] = CChangeLong;
@@ -9540,6 +9516,22 @@ Because of this, the display is sometimes not correct.
       });
     };
     ForEach.prototype.readChildXml = function (name, reader) {
+      let oElement;
+      switch(name) {
+        case "alg": oElement = new Alg(); break;
+        case "choose": oElement = new Choose(); break;
+        case "constrLst": oElement = new ConstrLst(); break;
+        case "forEach": oElement = new ForEach(); break;
+        case "layoutNode": oElement = new LayoutNode(); break;
+        case "presOf": oElement = new PresOf(); break;
+        case "ruleLst": oElement = new RuleLst(); break;
+        case "shape": oElement = new SShape(); break;
+        case "varLst": oElement = new VarLst(); break;
+      }
+      if(oElement) {
+        oElement.fromXml(reader);
+        this.addToLstList(this.list.length, oElement);
+      }
     };
     ForEach.prototype.readAttrXml = function (name, reader) {
       if (name === "name") this.setName(reader.GetValue());
@@ -9733,17 +9725,17 @@ Because of this, the display is sometimes not correct.
     StyleData.prototype.getChildren = function() {
       return [this.dataModel];
     };
-    SampData.prototype.readChildXml = function (name, reader) {
+    StyleData.prototype.readChildXml = function (name, reader) {
       if ("dataModel" === name)
       {
         this.setDataModel(new DataModel());
         this.dataModel.fromXml(reader);
       }
     };
-    SampData.prototype.readAttrXml = function (name, reader) {
+    StyleData.prototype.readAttrXml = function (name, reader) {
       if (name === "useDef") this.setUseDef(reader.GetValueBool());
     };
-    SampData.prototype.toXml = function(writer) {
+    StyleData.prototype.toXml = function(writer) {
       writer.WriteXmlNodeStart("dgm:styleData");
       writer.WriteXmlNullableAttributeString("useDef", this.useDef);
       writer.WriteXmlAttributesEnd();
@@ -10693,7 +10685,7 @@ Because of this, the display is sometimes not correct.
     CCommonDataClrList.prototype.readChildXml = function (name, reader) {
       if(AscFormat.CUniColor.prototype.isUnicolor(name)) {
         let oColor = new AscFormat.CUniColor();
-        oColor.fromXml(reader);
+        oColor.fromXml(reader, name);
         this.addToLst(this.list.length, oColor);
       }
     };
@@ -10719,11 +10711,11 @@ Because of this, the display is sometimes not correct.
             break;
           }
           case "repeat": {
-            this.setHueDir(ClrLst_meth_repeat);
+            this.setMeth(ClrLst_meth_repeat);
             break;
           }
           case "span": {
-            this.setHueDir(ClrLst_meth_span);
+            this.setMeth(ClrLst_meth_span);
             break;
           }
         }
@@ -14853,6 +14845,7 @@ Because of this, the display is sometimes not correct.
     };
     SmartArt.prototype.fromXml = function (reader) {
       this.superclass.prototype.fromXml.call(this, reader);
+      this.checkNodePointsAfterRead();
     };
     SmartArt.prototype.readAttrXml = function (name, reader) {
       let oReader;
@@ -14884,6 +14877,7 @@ Because of this, the display is sometimes not correct.
 
                     this.setDrawing(new Drawing());
                     this.drawing.fromXml(oDrawingReader, true);
+                    this.drawing.setBDeleted(false);
                     this.drawing.setGroup(this);
                     this.addToSpTree(0, this.drawing);
                   }
@@ -14945,6 +14939,27 @@ Because of this, the display is sometimes not correct.
 
       writer.WriteXmlAttributesEnd(true);
       writer.context.docType = nOldDocType;
+    };
+    SmartArt.prototype.checkEmptySpPrAndXfrm = function(_xfrm) {
+      CGraphicObjectBase.prototype.checkEmptySpPrAndXfrm.call(this, _xfrm);
+      if(this.drawing) {
+        var oDrawing = this.drawing;
+        oDrawing.setSpPr(new AscFormat.CSpPr());
+        oDrawing.spPr.setParent(this);
+        oDrawing.spPr.setXfrm(this.spPr.xfrm.createDuplicate());
+        oDrawing.spPr.xfrm.setParent(oDrawing.spPr);
+        oDrawing.spPr.xfrm.setOffX(0);
+        oDrawing.spPr.xfrm.setOffY(0);
+      }
+    };
+    SmartArt.prototype.checkNodePointsAfterRead = function() {
+      let tree = this.createHierarchy();
+      tree.traverseBF(function (node) {
+        let nodePoint = node.data && (node.data.nodePoint || node.data.asstPoint);
+        if (nodePoint) {
+          nodePoint.setPhldrT('[' + AscCommon.translateManager.getValue('Text') + ']');
+        }
+      });
     };
 
     function SmartArtTree(rootInfo, rootData, parent) {
