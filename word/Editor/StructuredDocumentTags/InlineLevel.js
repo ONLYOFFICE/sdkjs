@@ -339,7 +339,11 @@ CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _C
 	if (0 === CurLine)
 		Y0 = oParagraph.Lines[_CurLine].Y + oParagraph.Pages[_CurPage].Y - oParagraph.Lines[_CurLine].Metrics.Ascent;
 
-	if (this.IsForm() && !this.IsPicture() && (this.Content[0] instanceof ParaRun))
+	let isSimpleForm = (this.IsForm() && !this.IsComplexForm() && (this === this.GetMainForm()));
+
+	if (isSimpleForm
+		&& !this.IsPicture()
+		&& (this.Content[0] instanceof ParaRun))
 	{
 		var oRun    = this.Content[0];
 		var oTextPr = oRun.Get_CompiledPr(false);
@@ -374,7 +378,9 @@ CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _C
 
 	var X1 = PRSA.X;
 
-	if (this.IsForm() && this.IsPicture() && Math.abs(X1 - X0) > 0.001)
+	if (isSimpleForm
+		&& this.IsPicture()
+		&& Math.abs(X1 - X0) > 0.001)
 	{
 		var arrDrawings = this.GetAllDrawingObjects();
 		if (arrDrawings.length > 0 && arrDrawings[0].IsPicture())
