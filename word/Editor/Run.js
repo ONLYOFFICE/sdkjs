@@ -3273,7 +3273,7 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 	var oTheme  = this.Paragraph.GetTheme();
 
 	let _oTextPr = oTextPr;
-	if (this.private_IsUseAscFont(oTextPr))
+	if (this.IsUseAscFont(oTextPr))
 	{
 		_oTextPr = oTextPr.Copy();
 		_oTextPr.RFonts.SetAll("ASCW3");
@@ -6402,7 +6402,7 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
 
     var CurTextPr = this.Get_CompiledPr( false );
 
-    if (this.private_IsUseAscFont(CurTextPr))
+    if (this.IsUseAscFont(CurTextPr))
 	{
 		var oFontTextPr = CurTextPr.Copy();
 		oFontTextPr.RFonts.SetAll("ASCW3", -1);
@@ -12992,7 +12992,7 @@ ParaRun.prototype.CalculateTextToTable = function(oEngine)
 		}
 	}
 };
-ParaRun.prototype.private_IsUseAscFont = function(oTextPr)
+ParaRun.prototype.IsUseAscFont = function(oTextPr)
 {
 	return (1 === this.Content.length
 		&& para_Text === this.Content[0].Type
