@@ -422,7 +422,15 @@ CSdtBase.prototype.CorrectXYToHitIn = function(X, Y, nPageAbs)
  */
 CSdtBase.prototype.ClearContentControlExt = function()
 {
-	if (this.IsCheckBox())
+	if (this.IsComplexForm())
+	{
+		let arrSubForms = this.GetAllChildForms();
+		for (let nIndex = 0, nCount = arrSubForms.length; nIndex < nCount; ++nIndex)
+		{
+			arrSubForms[nIndex].ClearContentControlExt();
+		}
+	}
+	else if (this.IsCheckBox())
 	{
 		this.SetCheckBoxChecked(false);
 	}
