@@ -5515,7 +5515,7 @@ Because of this, the display is sometimes not correct.
       for(let nVal = 0; nVal < aValues.length; ++nVal) {
         let nValNumber = parseInt(aValues[nVal]);
         if(AscFormat.isRealNumber(nValNumber)) {
-          this.addToLstStep(this.cnt.length, nValNumber);
+          this.addToLstCnt(this.cnt.length, nValNumber);
         }
       }
     };
@@ -6376,7 +6376,7 @@ Because of this, the display is sometimes not correct.
       else if (name === "st") this.readStFormXml(reader);
       else if (name === "step") this.readStepFormXml(reader);
       else if (name === "hideLastTrans") this.readHideLastTransFromXml(reader);
-      else if (name === "cnt") this.readCntFormXml(reader);
+      else if (name === "cnt") this.readCntFromXml(reader);
       else if (name === "axis") {
         this.readAxisFromXml(reader);
       }
@@ -6478,7 +6478,7 @@ Because of this, the display is sometimes not correct.
 
       this.writeStepToXml(writer);
       this.writeHideLastTransToXml(writer);
-      writer.WriteXmlNullableAttributeString("op", GetOp(this.op));
+      writer.WriteXmlNullableAttributeString("op", GetOp(this.op) || "lt");
       writer.WriteXmlNullableAttributeString("ref", this.ref);
       writer.WriteXmlNullableAttributeString("val", this.val);
       writer.WriteXmlAttributesEnd();
@@ -7905,7 +7905,7 @@ Because of this, the display is sometimes not correct.
     PresOf.prototype.readAttrXml = function (name, reader) {
       if (name === "st") this.readStFromXml(reader);
       else if (name === "step") this.readStepFromXml(reader);
-      else if (name === "hideLastTrans") this.readHideLastTrans(reader);
+      else if (name === "hideLastTrans") this.readHideLastTransFromXml(reader);
       else if (name === "cnt") this.readCntFromXml(reader);
       else if (name === "axis") {
         this.readAxisFromXml(reader);
@@ -9565,7 +9565,7 @@ Because of this, the display is sometimes not correct.
       if (name === "name") this.setName(reader.GetValue());
       else if (name === "st") this.readStFromXml(reader);
       else if (name === "step") this.readStepFromXml(reader);
-      else if (name === "hideLastTrans") this.readHideLastTrans(reader);
+      else if (name === "hideLastTrans") this.readHideLastTransFromXml(reader);
       else if (name === "cnt") this.readCntFromXml(reader);
       else if (name === "axis") {
         this.readAxisFromXml(reader);

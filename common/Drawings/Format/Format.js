@@ -10641,14 +10641,17 @@
 				oPr.fromXml(reader);
 				this.setGeometry(oPr);
 			} else if (CUniFill.prototype.isFillName(name)) {
-				this.Fill = new CUniFill();
-				this.Fill.fromXml(reader, name);
+				let oFill = new CUniFill();
+				oFill.fromXml(reader, name);
+				this.setFill(oFill);
 			} else if (name === "ln") {
-				this.ln = new CLn();
-				this.ln.fromXml(reader);
+				let oLn = new CLn();
+				oLn.fromXml(reader);
+				this.setLn(oLn);
 			} else if (name === "effectDag" || name === "effectLst") {
-				this.effectProps = new CEffectProperties();
-				this.effectProps.fromXml(reader);
+				let oEffectProps = new CEffectProperties();
+				oEffectProps.fromXml(reader);
+				this.setEffectPr(oEffectProps);
 			}
 		};
 		CSpPr.prototype.toXml = function (writer, name) {
@@ -14070,7 +14073,7 @@
 
 			if(this.prstTxWarp || this.textFit || AscFormat.isRealNumber(this.flatTx)) {
 				writer.WriteXmlAttributesEnd();
-				writer.WriteXmlNullable(this.prstTxWarp, sNamespace_ + ":prstTxWarp");
+				writer.WriteXmlNullable(this.prstTxWarp, "a:prstTxWarp");
 				writer.WriteXmlNullable(this.textFit);
 				//writer.WriteXmlNullable(this.scene3d);
 				//writer.WriteXmlNullable(this.sp3d);

@@ -9297,7 +9297,7 @@
 					oTextStroke = this.getOOXMLStroke();
 					oSpPr.setGeometry(AscFormat.CreateGeometry("rect"));
 					oSpPr.setFill(AscFormat.CreateNoFillUniFill());
-					oSpPr.setFill(AscFormat.CreateNoFillLine());
+					oSpPr.setLn(AscFormat.CreateNoFillLine());
 					oBodyPr.lIns = 0;
 					oBodyPr.tIns = 0;
 					oBodyPr.rIns = 0;
