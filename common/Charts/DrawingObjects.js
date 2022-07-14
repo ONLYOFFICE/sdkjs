@@ -1861,6 +1861,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         switch (this.graphicObject.getObjectType()) {
             case AscDFH.historyitem_type_ChartSpace:
             case AscDFH.historyitem_type_SlicerView:
+            case AscDFH.historyitem_type_SmartArt:
                 graphicObject = AscFormat.CGraphicFrame.prototype.static_CreateGraphicFrameFromDrawing(graphicObject);
                 break;
         }

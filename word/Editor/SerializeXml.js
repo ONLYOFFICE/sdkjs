@@ -7626,6 +7626,9 @@
 		else if (oDrawing instanceof AscFormat.CImageShape) {
 			return "http://schemas.openxmlformats.org/drawingml/2006/picture";
 		}
+		else if (oDrawing instanceof AscFormat.CChartSpace) {
+			return "http://schemas.openxmlformats.org/drawingml/2006/chart";
+		}
 		else {
 			return "http://schemas.microsoft.com/office/word/2010/wordprocessingShape";
 		}

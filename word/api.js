@@ -8622,7 +8622,7 @@ background-repeat: no-repeat;\
 		}
 		else
 		{
-			if (c_oAscFileType.DOCX === fileType) {
+			if (c_oAscFileType.DOTX === fileType) {
 				var title = this.documentTitle;
 				this.saveDocumentToZip(this.WordControl.m_oLogicDocument, AscCommon.c_oEditorId.Word, function(data) {
 					if (data) {
