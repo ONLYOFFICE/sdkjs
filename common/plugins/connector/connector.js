@@ -55,6 +55,11 @@
 				pluginData = {};
 			}
 
+			if ("onExternalPluginMessageCallback" !== pluginData.type)
+				return;
+
+			pluginData = pluginData.data;
+
 			if (this.guid !== pluginData.guid)
 				return;
 
@@ -124,14 +129,14 @@
 		this.sendMessage({ type : "unregister" });
 	};
 
-	EditorConnector.prototype.callCommand = function(command, callback, scope, isCalc) {
+	EditorConnector.prototype.callCommand = function(command, callback, scope, isNoCalc) {
 
 		this.callbacks.push(callback);
-		var txtFunc = "var Asc = {}; Asc.scope = " + JSON.stringify(scope) + "; var scope = Asc.scope; (" + command.toString() + ")();";
+		var txtFunc = "var Asc = {}; Asc.scope = " + JSON.stringify(scope || {}) + "; var scope = Asc.scope; (" + command.toString() + ")();";
 
 		var message = {
 			type : "command",
-			recalculate : isCalc,
+			recalculate : isNoCalc ? false : true,
 			data : txtFunc
 		};
 

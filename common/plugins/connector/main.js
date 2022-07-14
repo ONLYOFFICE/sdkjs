@@ -54,5 +54,5 @@ document.getElementById("buttonTest2").onclick = function()
 		oParagraph.AddText("Hello world!");
 		oDocument.InsertContent([oParagraph]);
 
-	}, function() { console.log("callback command"); }, true);
+	}, function() { console.log("callback command"); });
 };

@@ -74,6 +74,11 @@
 			{
 				this.privateData = {"data" : ""};
 			}
+		},
+
+		wrap : function(obj)
+		{
+			this.privateData = obj;
 		}
 	};
 
@@ -482,6 +487,7 @@
 			if (plugin.isConnector)
 			{
 				runObject.currentInit = true;
+				runObject.isInitReceive = true;
 				return;
 			}
 
@@ -1057,12 +1063,12 @@
 				}
 				case "command":
 				{
-					onMessage(data);
+					onMessage(data, undefined, true);
 					break;
 				}
 				case "method":
 				{
-					onMessage(data);
+					onMessage(data, undefined, true);
 					break;
 				}
 				default:
@@ -1092,7 +1098,7 @@
 		{
 			if ("" === frameId)
 			{
-				window.postMessage("{\"type\":\"onExternalPluginMessageCallback\",data:" + pluginData.serialize() + "}");
+				window.postMessage("{\"type\":\"onExternalPluginMessageCallback\",\"data\":" + pluginData.serialize() + "}", "*");
 				return;
 			}
 			var _iframe = document.getElementById(frameId);
@@ -1104,16 +1110,20 @@
 	// export
 	CPluginsManager.prototype["buttonClick"] = CPluginsManager.prototype.buttonClick;
 
-	function onMessage(event, channel)
+	function onMessage(event, channel, isObj)
 	{
 		if (!window.g_asc_plugins)
 			return;
 
-		if (typeof(event.data) != "string")
+		if (!isObj && typeof(event.data) != "string")
 			return;
 
 		var pluginData = new CPluginData();
-		pluginData.deserialize(event.data);
+
+		if (true === isObj)
+			pluginData.wrap(event);
+		else
+			pluginData.deserialize(event.data);
 
 		var guid = pluginData.getAttribute("guid");
 		var runObject = window.g_asc_plugins.runnedPluginsMap[guid];
@@ -1122,7 +1132,7 @@
 			return;
 
 		// check origin
-		if (!window.g_asc_plugins.checkOrigin(guid, event))
+		if (!isObj && !window.g_asc_plugins.checkOrigin(guid, event))
 			return;
 
 		var name  = pluginData.getAttribute("type");
