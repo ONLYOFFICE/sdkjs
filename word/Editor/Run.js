@@ -12753,12 +12753,12 @@ ParaRun.prototype.GetTextFormAutoWidth = function()
 	this.Recalculate_MeasureContent();
 	return this.TextAscent;
 };
-ParaRun.prototype.CheckParentFormKey = function(oPr)
+ParaRun.prototype.CheckParentFormKey = function()
 {
 	let oForm = this.GetParentForm();
 	let oLogicDocument = this.GetLogicDocument();
 	if (oForm && oLogicDocument && oLogicDocument.IsDocumentEditor())
-		oLogicDocument.OnChangeForm(oForm, oPr);
+		oLogicDocument.OnChangeForm(oForm);
 };
 ParaRun.prototype.GetParentForm = function()
 {

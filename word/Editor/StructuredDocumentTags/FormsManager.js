@@ -232,9 +232,8 @@
 	/**
 	 * Изменяем другие формы, из-за изменения заданной формы
 	 * @param oForm
-	 * @param oPr
 	 */
-	CFormsManager.prototype.OnChange = function(oForm, oPr)
+	CFormsManager.prototype.OnChange = function(oForm)
 	{
 		if (!oForm || !oForm.IsUseInDocument())
 			return;
@@ -244,7 +243,7 @@
 		else if (oForm.IsCheckBox())
 			this.OnChangeCheckBox(oForm);
 		else if (oForm.IsPicture())
-			this.OnChangePictureForm(oForm, oPr);
+			this.OnChangePictureForm(oForm);
 		else
 			this.OnChangeTextForm(oForm);
 	};
@@ -305,9 +304,14 @@
 			}
 		}
 	};
-	CFormsManager.prototype.OnChangePictureForm = function(oForm, oPr)
+	CFormsManager.prototype.OnChangePictureForm = function(oForm)
 	{
-		if (!oPr)
+		let sImageUrl;
+		let arrDrawings = oForm.GetAllDrawingObjects();
+		if (arrDrawings.length)
+			sImageUrl = arrDrawings[0].GetPictureUrl();
+
+		if (!sImageUrl)
 			return;
 
 		let sKey          = oForm.GetFormKey();
@@ -327,7 +331,7 @@
 			{
 				let oPicture = arrDrawings[0].GetPicture();
 				if (oPicture)
-					oPicture.setBlipFill(AscFormat.CreateBlipFillRasterImageId(oPr));
+					oPicture.setBlipFill(AscFormat.CreateBlipFillRasterImageId(sImageUrl));
 			}
 			oTempForm.SetShowingPlcHdr(isPlaceHolder);
 			oTempForm.UpdatePictureFormLayout();

@@ -577,7 +577,7 @@ MoveInlineObject.prototype =
 						oDstPictureCC.UpdatePictureFormLayout();
 
 					if (arrParaDrawings[0].IsPicture() && oDstPictureCC.GetLogicDocument())
-						oDstPictureCC.GetLogicDocument().OnChangeForm(oDstPictureCC, arrParaDrawings[0].GraphicObj.getImageUrl());
+						oDstPictureCC.GetLogicDocument().OnChangeForm(oDstPictureCC);
 
 					this.drawingObjects.resetSelection();
 					this.drawingObjects.selectObject(oDrawing, pageIndex);

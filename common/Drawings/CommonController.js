@@ -4320,7 +4320,7 @@ DrawingObjectsController.prototype =
                     var oRun = oImg.parent.GetRun();
                     if(oRun)
                     {
-                        oRun.CheckParentFormKey(props.ImageUrl)
+                        oRun.CheckParentFormKey()
                     }
                 }
             }
