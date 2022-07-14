@@ -34,6 +34,15 @@
 
 (function(window)
 {
+	// TODO: Сейчас массив Forms содержит все формы, те что используются и те, что нет, из-за того что
+	//       нет нормальной событийной системы, о том, что содержимое документа изменилось. Как только добавим такую
+	//       систему, то данный класс на неё подпишется и будет обновлять массив Forms с проверкой IsUseInDocument, и
+	//       на функции GetForms мы будем отдавать его сразу, а не формировать каждый раз новый массив с проверками
+	//       IsUseInDocument. Это ускорит ситуации, где многократно вызываеется GetForms без изменения струкутуры
+	//       документа.
+
+
+
 	/**
 	 * Класс для работы со всеми специальными формами внунтри документа
 	 * @param {AscWord.CDocument} oLogicDocument
@@ -78,7 +87,16 @@
 	CFormsManager.prototype.GetAllForms = function()
 	{
 		this.CheckFormsList();
-		return this.Forms;
+
+		let arrResult = [];
+		for (let nIndex = 0, nCount = this.Forms.length; nIndex < nCount; ++nIndex)
+		{
+			let oForm = this.Forms[nIndex];
+			if (oForm.IsUseInDocument())
+				arrResult.push(oForm);
+		}
+
+		return arrResult;
 	};
 	/**
 	 * Получаем ключи форм по заданным параметрам
@@ -139,7 +157,7 @@
 		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
 			let oForm = arrForms[nIndex];
-			if (sKey === oForm.GetFormKey() && oForm.IsUseInDocument())
+			if (sKey === oForm.GetFormKey())
 				arrResult.push(oForm);
 		}
 
@@ -157,7 +175,7 @@
 		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
 			let oForm = arrForms[nIndex];
-			if (oForm.IsRadioButton() && oForm.IsUseInDocument() && sGroupKey === oForm.GetCheckBoxPr().GetGroupKey())
+			if (oForm.IsRadioButton() && sGroupKey === oForm.GetCheckBoxPr().GetGroupKey())
 				arrResult.push(oForm);
 		}
 
@@ -173,7 +191,7 @@
 		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
 			let oForm = arrForms[nIndex];
-			if (oForm.IsUseInDocument() && oForm.IsFormRequired() && !oForm.IsFormFilled())
+			if (oForm.IsFormRequired() && !oForm.IsFormFilled())
 				return false;
 		}
 		return true;
@@ -191,8 +209,7 @@
 		{
 			let oForm      = arrForms[nIndex];
 			let oParagraph = oForm.GetParagraph ? oForm.GetParagraph() : null;
-			if (oForm.IsUseInDocument()
-				&& oParagraph
+			if (oParagraph
 				&& oParagraph !== oSkipParagraph
 				&& oForm.GetFormKey() === sKey)
 			{
@@ -260,8 +277,7 @@
 			for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 			{
 				let oTempForm = arrForms[nIndex];
-				if (!oTempForm.IsUseInDocument()
-					|| oTempForm.IsComplexForm()
+				if (oTempForm.IsComplexForm()
 					|| oTempForm === oForm
 					|| !oTempForm.IsRadioButton()
 					|| sKey !== oTempForm.GetCheckBoxPr().GetGroupKey())
@@ -277,8 +293,7 @@
 			for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 			{
 				let oTempForm = arrForms[nIndex];
-				if (!oTempForm.IsUseInDocument()
-					|| oTempForm.IsComplexForm()
+				if (oTempForm.IsComplexForm()
 					|| oTempForm === oForm
 					|| !oTempForm.IsCheckBox()
 					|| oTempForm.IsRadioButton()
@@ -301,8 +316,7 @@
 		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
 			let oTempForm = arrForms[nIndex];
-			if (!oTempForm.IsUseInDocument()
-				|| oTempForm.IsComplexForm()
+			if (oTempForm.IsComplexForm()
 				|| oTempForm === oForm
 				|| sKey !== oTempForm.GetFormKey()
 				|| !oTempForm.IsPicture())
@@ -329,8 +343,7 @@
 		{
 			let oTempForm = arrForms[nIndex];
 
-			if (!oTempForm.IsUseInDocument()
-				|| oTempForm.IsComplexForm()
+			if (oTempForm.IsComplexForm()
 				|| oTempForm.IsPicture()
 				|| oTempForm.IsCheckBox()
 				|| oTempForm === oForm

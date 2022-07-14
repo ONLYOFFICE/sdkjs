@@ -5424,21 +5424,18 @@
 	 */
 	ApiDocument.prototype.GetTagsOfAllForms = function()
 	{
-		let oTags       = {};
-		let arrResult   = [];
-		let arrControls = this.Document.GetAllContentControls();
-		for (let nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
+		let oTags     = {};
+		let arrResult = [];
+		let arrForms  = this.Document.GetFormsManager().GetAllForms();
+		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
-			let oControl = arrControls[nIndex];
-			if (oControl.IsForm())
-			{
-				let sTag = oControl.GetTag();
+			let oForm = arrForms[nIndex];
+			let sTag  = oForm.GetTag();
 
-				if (sTag && !oTags[sTag])
-				{
-					oTags[sTag] = 1;
-					arrResult.push(sTag);
-				}
+			if (sTag && !oTags[sTag])
+			{
+				oTags[sTag] = 1;
+				arrResult.push(sTag);
 			}
 		}
 
@@ -5482,11 +5479,11 @@
 		if (!_sTag)
 			return [];
 
-		let arrResult   = [];
-		let arrControls = this.Document.GetAllContentControls();
-		for (let nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
+		let arrResult = [];
+		let arrForms  = this.Document.GetFormsManager().GetAllForms();
+		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
-			let oControl = arrControls[nIndex];
+			let oControl = arrForms[nIndex];
 			let oForm    = ToApiForm(oControl);
 			if (oControl.IsForm() && _sTag === oControl.GetTag() && oForm)
 				arrResult.push(oForm);
@@ -5983,20 +5980,17 @@
 	 */
 	ApiDocument.prototype.GetAllForms = function()
 	{
-		var aForms = [];
-		var allControls = this.Document.GetAllContentControls();
-		for (var nElm = 0; nElm < allControls.length; nElm++)
+		let arrApiForms = [];
+		let arrForms    = this.Document.GetFormsManager().GetAllForms();
+		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
-			let oControl = allControls[nElm];
-			if (oControl.IsForm())
-			{
-				let oForm = ToApiForm(oControl);
-				if (oForm)
-					aForms.push(oForm);
-			}
+			let oForm    = arrForms[nIndex];
+			let oApiForm = ToApiForm(oForm);
+			if (oApiForm)
+				arrApiForms.push(oApiForm);
 		}
 
-		return aForms;
+		return arrApiForms;
 	};
 
 	/**
