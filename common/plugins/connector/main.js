@@ -1,0 +1,52 @@
+/**
+ *
+ * (c) Copyright Ascensio System SIA 2020
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+document.getElementById("buttonConnect").onclick = function()
+{
+	if (window.connector)
+		window.connector.disconnect();
+
+	window.connector = new Asc.EditorConnector("frameEditor");
+	window.connector.connect();
+};
+document.getElementById("buttonTest1").onclick = function()
+{
+	if (!window.connector)
+		return;
+
+	window.connector.callMethod("GetVersion", [], function(version) {
+
+		console.log(version);
+
+	});
+
+};
+document.getElementById("buttonTest2").onclick = function()
+{
+	if (!window.connector)
+		return;
+
+	window.connector.callCommand(function() {
+
+		var oDocument = Api.GetDocument();
+		var oParagraph = Api.CreateParagraph();
+		oParagraph.AddText("Hello world!");
+		oDocument.InsertContent([oParagraph]);
+
+	}, function() { console.log("callback command"); }, true);
+};
