@@ -40,6 +40,8 @@
 
 		this.callbacks = [];
 		this.events = {};
+
+		this.onMessageBound = this.onMessage.bind(this);
 	}
 
 	EditorConnector.prototype.onMessage = function(e) {
@@ -96,18 +98,23 @@
 
 	EditorConnector.prototype.connect = function() {
 		if (window.addEventListener)
-			window.addEventListener("message", this.onMessage.bind(this), false);
+			window.addEventListener("message", this.onMessageBound, false);
 		else if (window.attachEvent)
-			window.attachEvent("onmessage", this.onMessage.bind(this));
+			window.attachEvent("onmessage", this.onMessageBound);
 
 		this.sendMessage({ type : "register" });
 	};
 
 	EditorConnector.prototype.disconnect = function() {
+		if (window.removeEventListener)
+			window.removeEventListener("message", this.onMessageBound, false);
+		else if (window.detachEvent)
+			window.detachEvent("onmessage", this.onMessageBound);
+
 		this.sendMessage({ type : "unregister" });
 	};
 
-	EditorConnector.prototype.callCommand = function(command, callback, isCalc, scope) {
+	EditorConnector.prototype.callCommand = function(command, callback, scope, isCalc) {
 
 		this.callbacks.push(callback);
 		var txtFunc = "var Asc = {}; Asc.scope = " + JSON.stringify(scope) + "; var scope = Asc.scope; (" + command.toString() + ")();";
@@ -148,5 +155,8 @@
 			name : name
 		});
 	};
+
+	window.Asc = window.Asc ? window.Asc : {};
+	window.Asc.EditorConnector = EditorConnector;
 
 })(window);
