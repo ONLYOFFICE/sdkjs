@@ -12755,10 +12755,10 @@ ParaRun.prototype.GetTextFormAutoWidth = function()
 };
 ParaRun.prototype.CheckParentFormKey = function(oPr)
 {
-	var sKey = this.Parent instanceof CInlineLevelSdt && this.Parent.IsForm() ? this.Parent.GetFormKey() : null;
-	var oLogicDocument = this.GetLogicDocument();
-	if (sKey && oLogicDocument && oLogicDocument.OnChangeForm)
-		oLogicDocument.OnChangeForm(sKey, this.Parent, oPr);
+	let oForm = this.GetParentForm();
+	let oLogicDocument = this.GetLogicDocument();
+	if (oForm && oLogicDocument && oLogicDocument.IsDocumentEditor())
+		oLogicDocument.OnChangeForm(oForm, oPr);
 };
 ParaRun.prototype.GetParentForm = function()
 {

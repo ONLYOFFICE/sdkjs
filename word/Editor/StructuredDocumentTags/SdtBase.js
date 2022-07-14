@@ -593,3 +593,11 @@ CSdtBase.prototype.IsCurrentComplexForm = function()
 
 	return false;
 };
+/**
+ * Является ли данная форма основной (а не подформой внутри другой формы)
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsMainForm = function()
+{
+	return (this === this.GetMainForm());
+};

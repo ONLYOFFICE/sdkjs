@@ -295,10 +295,7 @@ CInlineLevelSdt.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 {
 	History.Add(new CChangesParaFieldAddItem(this, Pos, [Item]));
 	CParagraphContentWithParagraphLikeContent.prototype.Add_ToContent.apply(this, arguments);
-
-	var sKey = this.GetFormKey();
-	if (sKey)
-		this.GetLogicDocument().OnChangeForm(sKey, this);
+	this.GetLogicDocument().OnChangeForm(this);
 };
 CInlineLevelSdt.prototype.Remove_FromContent = function(Pos, Count, UpdatePosition)
 {
@@ -306,11 +303,7 @@ CInlineLevelSdt.prototype.Remove_FromContent = function(Pos, Count, UpdatePositi
 	var DeletedItems = this.Content.slice(Pos, Pos + Count);
 	History.Add(new CChangesParaFieldRemoveItem(this, Pos, DeletedItems));
 	CParagraphContentWithParagraphLikeContent.prototype.Remove_FromContent.apply(this, arguments);
-
-	var sKey = this.GetFormKey();
-	if (sKey)
-		this.GetLogicDocument().OnChangeForm(sKey, this);
-
+	this.GetLogicDocument().OnChangeForm(this);
 };
 CInlineLevelSdt.prototype.Split = function (ContentPos, Depth)
 {
@@ -1642,8 +1635,8 @@ CInlineLevelSdt.prototype.ToggleCheckBox = function(isChecked)
 		return;
 
 	var oLogicDocument = this.GetLogicDocument();
-	if (oLogicDocument && (this.IsRadioButton() || this.GetFormKey()))
-		oLogicDocument.OnChangeForm(this.IsRadioButton() ? this.Pr.CheckBox.GroupKey : this.GetFormKey(), this);
+	if (oLogicDocument && oLogicDocument.IsDocumentEditor())
+		oLogicDocument.OnChangeForm(this);
 
 	if (undefined === isChecked && this.IsRadioButton() && true === this.Pr.CheckBox.Checked)
 		return;

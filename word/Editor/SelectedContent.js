@@ -807,12 +807,8 @@
 				oLogicDocument.RemoveSelection();
 				oPictureCC.SelectContentControl();
 
-				if (oLogicDocument.IsDocumentEditor())
-				{
-					var sKey = oPictureCC.GetFormKey();
-					if (arrParaDrawings[0].IsPicture() && sKey)
-						oLogicDocument.OnChangeForm(sKey, oPictureCC, arrParaDrawings[0].GraphicObj.getImageUrl());
-				}
+				if (oLogicDocument.IsDocumentEditor() && arrParaDrawings[0].IsPicture())
+					oLogicDocument.OnChangeForm(oPictureCC, arrParaDrawings[0].GraphicObj.getImageUrl());
 			}
 		}
 	};

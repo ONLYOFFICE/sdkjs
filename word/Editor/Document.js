@@ -24795,14 +24795,23 @@ CDocument.prototype.GetFormsManager = function()
 };
 /**
  * Сохраняем информацию о том, что форма с заданным ключом была изменена
- * @param {string} sKey
  * @param {CInlineLevelSdt | CBlockLevelSdt} oForm
  * @param oPr
  */
-CDocument.prototype.OnChangeForm = function(sKey, oForm, oPr)
+CDocument.prototype.OnChangeForm = function(oForm, oPr)
 {
 	if (!this.Action.Start || (this.Action.Additional && true === this.Action.Additional.FormChangeStart))
 		return;
+
+	let sKey = oForm.IsRadioButton() ? oForm.GetRadioButtonGroupKey() : oForm.GetFormKey();
+
+	let oMainForm = oForm.GetMainForm();
+	if (oForm !== oMainForm)
+	{
+		sKey  = oMainForm.GetFormKey();
+		oForm = oMainForm;
+		oPr   = undefined;
+	}
 
 	if (!sKey)
 		return;
