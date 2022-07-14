@@ -2975,6 +2975,19 @@
 	ApiPictureForm.prototype.constructor = ApiPictureForm;
 
 	/**
+	 * Class representing a complex form
+	 * @param oSdt
+	 * @constructor
+	 * @extends {ApiFormBase}
+	 */
+	function ApiComplexForm(oSdt)
+	{
+		ApiFormBase.call(this, oSdt);
+	}
+	ApiComplexForm.prototype = Object.create(ApiFormBase.prototype);
+	ApiComplexForm.prototype.constructor = ApiComplexForm;
+
+	/**
 	 * Sets the hyperlink address.
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sLink - The hyperlink address.
@@ -3767,6 +3780,11 @@
 	 * "0.00E+00" | "# ?/?" | "# ??/??" | "m/d/yyyy" | "d-mmm-yy" | "d-mmm" | "mmm-yy" | "h:mm AM/PM" |
 	 * "h:mm:ss AM/PM" | "h:mm" | "h:mm:ss" | "m/d/yyyy h:mm" | "#,##0_);(#,##0)" | "#,##0_);[Red](#,##0)" | 
 	 * "#,##0.00_);(#,##0.00)" | "#,##0.00_);[Red](#,##0.00)" | "mm:ss" | "[h]:mm:ss" | "mm:ss.0" | "##0.0E+0" | "@")} NumFormat
+	 */
+
+	/**
+	 * Types of all supported forms
+	 * @typedef {ApiTextForm | ApiComboBoxForm | ApiCheckBoxForm | ApiPictureForm | ApiComplexForm} ApiForm
 	 */
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -5976,7 +5994,7 @@
 	 * Returns all existing forms in the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @returns {ApiTextForm[] | ApiPictureForm[] | ApiComboBoxForm[] | ApiCheckBoxForm[]}
+	 * @returns {ApiForm[]}
 	 */
 	ApiDocument.prototype.GetAllForms = function()
 	{
@@ -15918,7 +15936,7 @@
 	 * Copies the current form (copies with the shape if it exists).
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
-	 * @returns {null | ApiTextForm| ApiCheckBoxForm | ApiComboBoxForm | ApiPictureForm}
+	 * @returns {?ApiForm}
 	 */
 	ApiFormBase.prototype.Copy = function()
 	{
@@ -17811,6 +17829,7 @@
 	window['AscBuilder'].ApiPictureForm     = ApiPictureForm;
 	window['AscBuilder'].ApiComboBoxForm    = ApiComboBoxForm;
 	window['AscBuilder'].ApiCheckBoxForm    = ApiCheckBoxForm;
+	window['AscBuilder'].ApiComplexForm     = ApiComplexForm;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Area for internal usage
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -17854,7 +17873,9 @@
 		if (!oForm)
 			return null;
 
-		if (oForm.IsTextForm())
+		if (oForm.IsComplexForm())
+			return new ApiComplexForm(oForm);
+		else if (oForm.IsTextForm())
 			return new ApiTextForm(oForm);
 		else if (oForm.IsComboBox() || oForm.IsDropDownList())
 			return new ApiComboBoxForm(oForm);
@@ -17928,7 +17949,9 @@
 		if (!oSdt)
 			return new ApiUnsupported();
 
-		if (oSdt.IsTextForm())
+		if (oSdt.IsComplexForm())
+			return new ApiComplexForm(oSdt);
+		else if (oSdt.IsTextForm())
 			return new ApiTextForm(oSdt);
 		else if (oSdt.IsComboBox() || oSdt.IsDropDownList())
 			return new ApiComboBoxForm(oSdt);
@@ -18687,6 +18710,10 @@
 	};
 	Api.prototype.private_CreatePictureForm = function(oCC){
 		return new ApiPictureForm(oCC);
+	};
+	Api.prototype.private_CreateComplexForm = function(oCC)
+	{
+		return new ApiComplexForm(oCC);
 	};
 	
 
