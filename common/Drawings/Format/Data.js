@@ -14923,11 +14923,15 @@ Because of this, the display is sometimes not correct.
                       let oRelDrawing, oRelDrawingPart, oDrawingContent, oDrawingReader = null;
                       oRelDrawing = oReader.rels.getRelationship(rId);
                       if (oRelDrawing && oRelDrawing.relationshipType === "http://schemas.microsoft.com/office/2007/relationships/diagramDrawing") {
-                        oRelDrawingPart = oReader.rels.pkg.getPartByUri(oRelDrawing.targetFullName);
-                        if (oRelDrawingPart) {
-                          oDrawingContent = oRelDrawingPart.getDocumentContent();
-                          if (oDrawingContent) {
-                            oDrawingReader = new AscCommon.StaxParser(oDrawingContent, oRelDrawingPart, reader.context);
+                        let sTargetName = oRelDrawing.targetFullName;
+                        if(typeof sTargetName === "string") {
+                          sTargetName = sTargetName.replace("diagrams/diagrams", "diagrams");
+                          oRelDrawingPart = oReader.rels.pkg.getPartByUri(sTargetName);
+                          if (oRelDrawingPart) {
+                            oDrawingContent = oRelDrawingPart.getDocumentContent();
+                            if (oDrawingContent) {
+                              oDrawingReader = new AscCommon.StaxParser(oDrawingContent, oRelDrawingPart, reader.context);
+                            }
                           }
                         }
                       }
@@ -14940,13 +14944,13 @@ Because of this, the display is sometimes not correct.
                       this.drawing.setBDeleted(false);
                       this.drawing.setGroup(this);
                       this.addToSpTree(0, this.drawing);
+                      this.setConnections2();
                     }
                   }
                 }
               }
             }
           }
-          this.setConnections2();
           break;
         }
         case "lo": {
