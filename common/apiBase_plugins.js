@@ -1250,6 +1250,8 @@
 
 		for (let i = 0, len = pluginsArray.length; i < len; i++)
 		{
+			if (pluginsArray[i].isConnector)
+				continue;
 			returnArray.push({
 				"baseUrl" : baseUrl,
 				"guid" : pluginsArray[i].guid,

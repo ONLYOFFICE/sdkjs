@@ -40,6 +40,7 @@
 
 		this.callbacks = [];
 		this.events = {};
+		this.tasks = [];
 
 		this.onMessageBound = this.onMessage.bind(this);
 	}
@@ -63,12 +64,20 @@
 						var callback = this.callbacks.shift();
 						callback && callback(pluginData.methodReturnData);
 					}
+
+					if (this.tasks.length > 0) {
+						this.sendMessage(this.tasks.shift());
+					}
 					break;
 				}
 				case "onCommandCallback": {
 					if (this.callbacks.length > 0) {
 						var callback = this.callbacks.shift();
 						callback && callback();
+					}
+
+					if (this.tasks.length > 0) {
+						this.sendMessage(this.tasks.shift());
 					}
 					break;
 				}
@@ -88,6 +97,7 @@
 		var e = {};
 		e.frameEditorId = "iframeEditor";
 		e.type = "onExternalPluginMessage";
+		e.subType = "connector";
 		e.data = message;
 		e.data.guid = this.guid;
 
@@ -119,22 +129,36 @@
 		this.callbacks.push(callback);
 		var txtFunc = "var Asc = {}; Asc.scope = " + JSON.stringify(scope) + "; var scope = Asc.scope; (" + command.toString() + ")();";
 
-		this.sendMessage({
+		var message = {
 			type : "command",
 			recalculate : isCalc,
 			data : txtFunc
-		});
+		};
+
+		if (this.callbacks.length !== 1) {
+			this.tasks.push(message);
+			return;
+		}
+
+		this.sendMessage(message);
 	};
 
 	EditorConnector.prototype.callMethod = function(name, params, callback) {
 
 		this.callbacks.push(callback);
 
-		this.sendMessage({
+		var message = {
 			type : "method",
 			methodName : name,
 			data : params
-		});
+		};
+
+		if (this.callbacks.length !== 1) {
+			this.tasks.push(message);
+			return;
+		}
+
+		this.sendMessage(message);
 	};
 
 	EditorConnector.prototype.attachEvent = function(name, callback) {

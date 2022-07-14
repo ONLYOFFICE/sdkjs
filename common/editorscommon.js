@@ -1762,7 +1762,7 @@
 							if (!window.g_asc_plugins)
 								return;
 
-							if (data["subType"] == "internalCommand")
+							if (data["subType"] === "internalCommand")
 							{
 								// такие команды перечисляем здесь и считаем их функционалом
 								switch (data.data.type)
@@ -1776,6 +1776,11 @@
 									default:
 										break;
 								}
+							}
+							if (data["subType"] === "connector")
+							{
+								window.g_asc_plugins.externalConnectorMessage(data["data"]);
+								return;
 							}
 
 							window.g_asc_plugins.sendToAllPlugins(event.data);

@@ -406,7 +406,8 @@
 				isSystem: isSystem,
 				startData: _startData,
 				closeAttackTimer: -1,
-				methodReturnAsync: false
+				methodReturnAsync: false,
+				isConnector: plugin.isConnector
 			};
 
 			this.show(guid);
@@ -476,6 +477,12 @@
 						runObject.waitEvents = [];
 					runObject.waitEvents.push({ n : mainEventType, d : this.mainEvents[mainEventType] });
 				}
+			}
+
+			if (plugin.isConnector)
+			{
+				runObject.currentInit = true;
+				return;
 			}
 
 			if (runObject.startData.getAttribute("resize") === true)
@@ -830,9 +837,8 @@
                     pluginData.setAttribute("type", "onEvent");
                     pluginData.setAttribute("eventName", name);
                     pluginData.setAttribute("eventData", data);
-                    var _iframe = document.getElementById(runObject.frameId);
-                    if (_iframe)
-                        _iframe.contentWindow.postMessage(pluginData.serialize(), "*");
+
+					this.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginData);
                 }
             }
         },
@@ -932,9 +938,8 @@
 			pluginData.setAttribute("guid", plugin.guid);
 			pluginData.setAttribute("type", "onMethodReturn");
 			pluginData.setAttribute("methodReturnData", _return);
-			var _iframe = document.getElementById(runObject.frameId);
-			if (_iframe)
-				_iframe.contentWindow.postMessage(pluginData.serialize(), "*");
+
+			this.sendMessageToFrame(plugin.isConnector ? "" : runObject.frameId, pluginData);
 		},
 
 		setPluginMethodReturnAsync : function()
@@ -1000,6 +1005,71 @@
             }
         },
 
+		externalConnectorMessage : function(data)
+		{
+			switch (data["type"])
+			{
+				case "register":
+				{
+					var config = {
+						"name" : "connector",
+						"guid" : data["guid"],
+						"baseUrl" : "",
+						"isConnector" : true,
+
+						"variations" : [
+							{
+								"isViewer"            : true,
+								"EditorsSupport"      : ["word", "cell", "slide"],
+								"isSystem"            : true,
+								"buttons"             : []
+							}
+						]
+					};
+
+					this.unregister(data["guid"]);
+					this.loadExtensionPlugins([config], false, true);
+					break;
+				}
+				case "unregister":
+				{
+					this.unregister(data["guid"]);
+					break;
+				}
+				case "attachEvent":
+				{
+					var plugin = this.getPluginByGuid(data["guid"]);
+					if (plugin && plugin.variations && plugin.variations[0])
+					{
+						plugin.variations[0].eventsMap[data["name"]] = true;
+					}
+					break;
+				}
+				case "detachEvent":
+				{
+					var plugin = this.getPluginByGuid(data["guid"]);
+					if (plugin && plugin.variations && plugin.variations[0])
+					{
+						if (plugin.variations[0].eventsMap[data["name"]])
+							delete plugin.variations[0].eventsMap[data["name"]];
+					}
+					break;
+				}
+				case "command":
+				{
+					onMessage(data);
+					break;
+				}
+				case "method":
+				{
+					onMessage(data);
+					break;
+				}
+				default:
+					break;
+			}
+		},
+
 		checkOrigin : function(guid, event)
 		{
 			if (event.origin === window.origin)
@@ -1015,8 +1085,20 @@
 				return true;
 
 			return false;
-		}
+		},
         /* -------------------------------- */
+
+		sendMessageToFrame : function(frameId, pluginData)
+		{
+			if ("" === frameId)
+			{
+				window.postMessage("{\"type\":\"onExternalPluginMessageCallback\",data:" + pluginData.serialize() + "}");
+				return;
+			}
+			var _iframe = document.getElementById(frameId);
+			if (_iframe)
+				_iframe.contentWindow.postMessage(pluginData.serialize(), "*");
+		}
 	};
 
 	// export
@@ -1269,9 +1351,7 @@
 								pluginData.setAttribute("guid", guid);
 								pluginData.setAttribute("type", "onCommandCallback");
 
-								var _iframe = document.getElementById(runObject.frameId);
-								if (_iframe)
-									_iframe.contentWindow.postMessage(pluginData.serialize(), "*");
+								window.g_asc_plugins.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginData);
 							});
 						}
 						else
@@ -1298,9 +1378,8 @@
 					var pluginData = new CPluginData();
 					pluginData.setAttribute("guid", guid);
 					pluginData.setAttribute("type", "onCommandCallback");
-					var _iframe = document.getElementById(runObject.frameId);
-					if (_iframe)
-						_iframe.contentWindow.postMessage(pluginData.serialize(), "*");
+
+					window.g_asc_plugins.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginData);
 				}
 			}
 
@@ -1346,9 +1425,8 @@
 				pluginData.setAttribute("guid", guid);
 				pluginData.setAttribute("type", "onMethodReturn");
 				pluginData.setAttribute("methodReturnData", _return);
-				var _iframe = document.getElementById(runObject.frameId);
-				if (_iframe)
-					_iframe.contentWindow.postMessage(pluginData.serialize(), "*");
+
+				window.g_asc_plugins.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginData);
 			}
 			runObject.methodReturnAsync = false;
 			window.g_asc_plugins.guidAsyncMethod = "";
