@@ -2991,6 +2991,7 @@
             this.setSpPr(new AscFormat.CSpPr());
             this.spPr.setParent(this);
         }
+        this.bEmptyTransform = !AscCommon.isRealObject(this.spPr.xfrm) || undefined;
         if(!_xfrm){
             _xfrm = new AscFormat.CXfrm();
             _xfrm.setOffX(0);
@@ -3000,10 +3001,18 @@
         }
         if(this.getObjectType() === AscDFH.historyitem_type_GroupShape ||
             this.getObjectType() === AscDFH.historyitem_type_SmartArt) {
-            _xfrm.setChOffX(0);
-            _xfrm.setChOffY(0);
-            _xfrm.setChExtX(_xfrm.extX);
-            _xfrm.setChExtY(_xfrm.extY);
+            if(_xfrm.chOffX === null) {
+                _xfrm.setChOffX(0);
+            }
+            if(_xfrm.chOffY === null) {
+                _xfrm.setChOffY(0);
+            }
+            if(_xfrm.chExtX === null) {
+                _xfrm.setChExtX(_xfrm.extX);
+            }
+            if(_xfrm.chExtX === null) {
+                _xfrm.setChExtY(_xfrm.extY);
+            }
         }
         this.spPr.setXfrm(_xfrm);
         _xfrm.setParent(this.spPr);

@@ -9703,6 +9703,7 @@
 			else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_CHART_DRAWING) sNS = "cdr";
 			else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DIAGRAM) sNS = "dgm";
 			else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_PPTX) sNS = "p";
+			else if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DSP_DRAWING) sNS = "dsp";
 			let sName = sNS + ":style";
 			writer.WriteXmlNodeStart(sName);
 			writer.WriteXmlAttributesEnd();

@@ -1035,9 +1035,11 @@ Because of this, the display is sometimes not correct.
     };
     DataModel.prototype.toXml = function(writer) {
       writer.WriteXmlNodeStart("dgm:dataModel");
-      writer.WriteXmlAttributeString("xmlns:dgm", "http://schemas.openxmlformats.org/drawingml/2006/diagram");
-      writer.WriteXmlAttributeString("xmlns:a", "http://schemas.openxmlformats.org/drawingml/2006/main");
-      writer.WriteXmlAttributeString("xmlns:r", "http://schemas.openxmlformats.org/officeDocument/2006/relationships");
+      if(this.parent && this.parent.getObjectType() === AscDFH.historyitem_type_DiagramData) {
+        writer.WriteXmlAttributeString("xmlns:dgm", "http://schemas.openxmlformats.org/drawingml/2006/diagram");
+        writer.WriteXmlAttributeString("xmlns:a", "http://schemas.openxmlformats.org/drawingml/2006/main");
+        writer.WriteXmlAttributeString("xmlns:r", "http://schemas.openxmlformats.org/officeDocument/2006/relationships");
+      }
       writer.WriteXmlAttributesEnd();
       if (this.ptLst)
         this.ptLst.toXml(writer);
@@ -2801,7 +2803,7 @@ Because of this, the display is sometimes not correct.
       writer.WriteXmlNullableAttributeInt("presStyleIdx", this.presStyleIdx);
       writer.WriteXmlNullableAttributeInt("presStyleCnt", this.presStyleCnt);
       writer.WriteXmlAttributesEnd();
-      if (this.presLayoutVars) this.presLayoutVars.toXml(writer);
+      if (this.presLayoutVars) this.presLayoutVars.toXml(writer, "dgm:presLayoutVars");
       if (this.style) this.style.toXml(writer);
       writer.WriteXmlNodeEnd("dgm:prSet");
     };
@@ -3806,39 +3808,39 @@ Because of this, the display is sometimes not correct.
             break;
           }
           case Alg_type_conn: {
-            sValue = "composite";
+            sValue = "conn";
             break;
           }
           case Alg_type_cycle: {
-            sValue = "composite";
+            sValue = "cycle";
             break;
           }
           case Alg_type_hierChild: {
-            sValue = "composite";
+            sValue = "hierChild";
             break;
           }
           case Alg_type_hierRoot: {
-            sValue = "composite";
+            sValue = "hierRoot";
             break;
           }
           case Alg_type_lin: {
-            sValue = "composite";
+            sValue = "lin";
             break;
           }
           case Alg_type_pyra: {
-            sValue = "composite";
+            sValue = "pyra";
             break;
           }
           case Alg_type_snake: {
-            sValue = "composite";
+            sValue = "snake";
             break;
           }
           case Alg_type_sp: {
-            sValue = "composite";
+            sValue = "sp";
             break;
           }
           case Alg_type_tx: {
-            sValue = "composite";
+            sValue = "tx";
             break;
           }
         }
@@ -5407,14 +5409,17 @@ Because of this, the display is sometimes not correct.
     };
     IteratorAttributes.prototype.writeAxisToXml = function(writer) {
       if(this.axis.length > 0) {
-        let sVal = "" + this.axis[0].val;
-        for(let nAx = 1; nAx < this.axis.length; ++nAx) {
-          let sType = this.axis[nAx].getType();
-          if(sType) {
-            sVal += (" " + this.axis[nAx].getType());
+        let sFirstType = this.axis[0].getType();
+        if(sFirstType !== null) {
+          let sVal = "" + sFirstType;
+          for(let nAx = 1; nAx < this.axis.length; ++nAx) {
+            let sType = this.axis[nAx].getType();
+            if(sType) {
+              sVal += (" " + this.axis[nAx].getType());
+            }
           }
+          writer.WriteXmlAttributeString("axis", sVal);
         }
-        writer.WriteXmlAttributeString("axis", sVal);
       }
     };
     IteratorAttributes.prototype.readPtTypeFromXml = function(reader) {
@@ -5431,14 +5436,17 @@ Because of this, the display is sometimes not correct.
     };
     IteratorAttributes.prototype.writePtTypeToXml = function(writer) {
       if(this.ptType.length > 0) {
-        let sVal = "" + this.ptType[0].val;
-        for(let nAx = 1; nAx < this.ptType.length; ++nAx) {
-          let sType = this.ptType[nAx].getType();
-          if(sType) {
-            sVal += (" " + sType);
+        let sFirstType = this.ptType[0].getType();
+        if(sFirstType !== null) {
+          let sVal = "" + sFirstType;
+          for(let nAx = 1; nAx < this.ptType.length; ++nAx) {
+            let sType = this.ptType[nAx].getType();
+            if(sType) {
+              sVal += (" " + sType);
+            }
           }
+          writer.WriteXmlAttributeString("ptType", sVal);
         }
-        writer.WriteXmlAttributeString("ptType", sVal);
       }
     };
     IteratorAttributes.prototype.readStFromXml = function(reader) {
@@ -5951,7 +5959,7 @@ Because of this, the display is sometimes not correct.
         //   return "neq";
         // }
       }
-      return "none";
+      return null;
     }
 
     function If() {
@@ -8752,8 +8760,9 @@ Because of this, the display is sometimes not correct.
         }
       }
     };
-    VarLst.prototype.toXml = function(writer) {
-      writer.WriteXmlNodeStart("dgm:varLst");
+    VarLst.prototype.toXml = function(writer, name) {
+      let name_ = name || "dgm:varLst";
+      writer.WriteXmlNodeStart(name_);
       writer.WriteXmlAttributesEnd();
       if (this.chMax)			this.chMax.toXml(writer);
       if (this.chPref)			this.chPref.toXml(writer);
@@ -8763,7 +8772,7 @@ Because of this, the display is sometimes not correct.
       if (this.bulletEnabled)	this.bulletEnabled.toXml(writer);
       if (this.hierBranch)		this.hierBranch.toXml(writer);
       if (this.resizeHandles)	this.resizeHandles.toXml(writer);
-      writer.WriteXmlNodeEnd("dgm:varLst");
+      writer.WriteXmlNodeEnd(name_);
     };
 
     VarLst.prototype.getVal = function (fieldType) {
@@ -9579,6 +9588,12 @@ Because of this, the display is sometimes not correct.
       this.writeHideLastTransToXml(writer);
       writer.WriteXmlNullableAttributeString("ref", this.ref);
       writer.WriteXmlAttributesEnd();
+      for (let i = 0; i < this.list.length; ++i)
+      {
+        if (!this.list[i]) continue;
+
+        this.list[i].toXml(writer);
+      }
       writer.WriteXmlNodeEnd("dgm:forEach");
     };
 
@@ -14904,16 +14919,28 @@ Because of this, the display is sometimes not correct.
                 if(oData) {
                   let rId = oData.attributes["relId"];
                   if(rId) {
-                    let oRelDrawing = reader.rels.getRelationship(rId);
-                    let oRelDrawingPart = reader.rels.pkg.getPartByUri(oRelDrawing.targetFullName);
-                    let oDrawingContent = oRelDrawingPart.getDocumentContent();
-                    let oDrawingReader = new AscCommon.StaxParser(oDrawingContent, oRelDrawingPart, reader.context);
-
-                    this.setDrawing(new Drawing());
-                    this.drawing.fromXml(oDrawingReader, true);
-                    this.drawing.setBDeleted(false);
-                    this.drawing.setGroup(this);
-                    this.addToSpTree(0, this.drawing);
+                    let fCheckDrawingReader = function(oReader) {
+                      let oRelDrawing, oRelDrawingPart, oDrawingContent, oDrawingReader = null;
+                      oRelDrawing = oReader.rels.getRelationship(rId);
+                      if (oRelDrawing && oRelDrawing.relationshipType === "http://schemas.microsoft.com/office/2007/relationships/diagramDrawing") {
+                        oRelDrawingPart = oReader.rels.pkg.getPartByUri(oRelDrawing.targetFullName);
+                        if (oRelDrawingPart) {
+                          oDrawingContent = oRelDrawingPart.getDocumentContent();
+                          if (oDrawingContent) {
+                            oDrawingReader = new AscCommon.StaxParser(oDrawingContent, oRelDrawingPart, reader.context);
+                          }
+                        }
+                      }
+                      return oDrawingReader;
+                    };
+                    let oDrawingReader = fCheckDrawingReader(reader) || fCheckDrawingReader(oReader);
+                    if (oDrawingReader) {
+                      this.setDrawing(new Drawing());
+                      this.drawing.fromXml(oDrawingReader, true);
+                      this.drawing.setBDeleted(false);
+                      this.drawing.setGroup(this);
+                      this.addToSpTree(0, this.drawing);
+                    }
                   }
                 }
               }

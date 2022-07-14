@@ -2597,7 +2597,7 @@
 		var oParagraph = this.GetParagraph();
 		var drawing = new ParaDrawing(0, 0, null, oParagraph.Parent.DrawingDocument, oParagraph.Parent, oParagraph);
 		drawing.fromXml(reader);
-		if (null != drawing.GraphicObj) {
+		if (drawing.GraphicObj) {
 			let newItem = drawing;
 			let oParaDrawing = drawing;
 			if (null != oParaDrawing.SimplePos)
@@ -2624,8 +2624,9 @@
 				if (AscCommon.isRealObject(oParaDrawing.docPr) && oParaDrawing.docPr.isHidden) {
 					oParaDrawing.GraphicObj = null;
 				}
-				if (oParaDrawing.GraphicObj) {
-					if (oParaDrawing.GraphicObj.bEmptyTransform) {
+				let oGrObject = oParaDrawing.GraphicObj;
+				if (oGrObject) {
+					if (oGrObject.bEmptyTransform) {
 						var oXfrm = new AscFormat.CXfrm();
 						oXfrm.setOffX(0);
 						oXfrm.setOffY(0);
@@ -2636,10 +2637,10 @@
 						oXfrm.setChExtX(oParaDrawing.Extent.W);
 						oXfrm.setChExtY(oParaDrawing.Extent.H);
 						oXfrm.setParent(oParaDrawing.GraphicObj.spPr);
-						oParaDrawing.GraphicObj.spPr.setXfrm(oXfrm);
+						oGrObject.checkEmptySpPrAndXfrm(oXfrm);
 						delete oParaDrawing.GraphicObj.bEmptyTransform;
 					}
-					if (drawing_Anchor == oParaDrawing.DrawingType && typeof AscCommon.History.RecalcData_Add === "function")//TODO некорректная проверка typeof
+					if (drawing_Anchor === oParaDrawing.DrawingType && typeof AscCommon.History.RecalcData_Add === "function")//TODO некорректная проверка typeof
 						AscCommon.History.RecalcData_Add({
 							Type: AscDFH.historyitem_recalctype_Flow,
 							Data: oParaDrawing
@@ -7615,6 +7616,9 @@
 		}
 		else if (oDrawing instanceof AscFormat.CLockedCanvas) {
 			return "http://schemas.openxmlformats.org/drawingml/2006/lockedCanvas";
+		}
+		else if (oDrawing instanceof AscFormat.SmartArt) {
+			return "http://schemas.openxmlformats.org/drawingml/2006/diagram";
 		}
 		else if (oDrawing instanceof AscFormat.CGroupShape) {
 			return "http://schemas.microsoft.com/office/word/2010/wordprocessingGroup";

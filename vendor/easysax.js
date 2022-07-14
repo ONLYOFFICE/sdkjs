@@ -1412,10 +1412,6 @@ StaxParser.prototype.GetDoubleOrNaN = function (val, def) {
     }
     return this.GetDouble(val, def);
 };
-StaxParser.prototype.GetDoubleOrNaN = function (val, def) {
-    var num = parseFloat(val);
-    return !isNaN(num) ? num : def;
-};
 StaxParser.prototype.GetValueBool = function () {
     return this.GetBool(this.GetValue());
 };
