@@ -2281,7 +2281,7 @@
 				} else if ("workbookPr" === name) {
 					val = new CT_WorkbookPr();
 					val.fromXml(reader);
-					this.wb.workbookPr = val.val;
+					this.wb.WorkbookPr = val.val;
 				} else if ("bookViews" === name) {
 					val = new CT_BookViews(t.wb);
 					val.fromXml(reader)
