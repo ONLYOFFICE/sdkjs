@@ -35,6 +35,12 @@ document.getElementById("buttonTest1").onclick = function()
 
 	});
 
+	window.connector.attachEvent("onTargetPositionChanged", function(){
+
+		console.log("event: onTargetPositionChanged");
+
+	});
+
 };
 document.getElementById("buttonTest2").onclick = function()
 {
