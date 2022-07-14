@@ -4588,9 +4588,10 @@
 		if (!this.SearchEngine) {
 			return;
 		}
-		if (this.SearchEngine.Compare(oProps)) {
+		if (this.SearchEngine.Compare(oProps) && !oProps.isNeedRecalc) {
 			return this.SearchEngine;
 		}
+		oProps.isNeedRecalc = null;
 
 		this.SearchEngine._lastNotEmpty = this.SearchEngine.isNotEmpty();
 
@@ -4666,6 +4667,34 @@
 		}
 	};
 
+	WorkbookView.prototype.setDate1904 = function (val) {
+		// Проверка глобального лока
+		if (this.collaborativeEditing.getGlobalLock() || !window["Asc"]["editor"].canEdit()) {
+			return;
+		}
+
+		if (this.model.WorkbookPr.Date1904 == val) {
+			return;
+		}
+
+		var ws = this.getWorksheet(), t = this;
+		var callback = function (isSuccess) {
+			History.Create_NewPoint();
+			History.StartTransaction();
+
+			t.model.setDate1904(val, true);
+
+			History.EndTransaction();
+
+			AscCommon.oNumFormatCache.cleanCache();
+
+			ws._updateRange(new Asc.Range(0, 0, ws.model.getColsCount(), ws.model.getRowsCount()), true);
+			ws.draw();
+		};
+
+		callback();
+	};
+
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
 	function CDocumentSearchExcel(wb) {
 		this.wb = wb;
@@ -4735,14 +4764,19 @@
 		this.SendClearAllTextAround();
 	};
 	CDocumentSearchExcel.prototype.Add = function (r, c, cell, container) {
+
+		var dN = new Asc.Range(c, r, c, r, true);
+		var defName = AscCommon.parserHelp.get3DRef(cell.ws.getName(), dN.getAbsName());
+		defName = cell.ws.workbook.findDefinesNames(defName, cell.ws.getId(), true);
+
 		if (container) {
 			container.add(r, c,
-				{sheet: cell.ws.sName, name: null, cell: cell.getName(), text: cell.getValueForEdit(), formula: cell.getFormula(), col: r, row: c, index: cell.ws.index});
+				{sheet: cell.ws.sName, name: defName ? defName : null, cell: dN.getName(), text: cell.getValue(), formula: cell.getFormula(), col: r, row: c, index: cell.ws.index});
 		} else {
 			this.Count++;
 			//[sheet, name, cell, value,formula]
 			this.Elements[this.Id++] =
-				cell.ws ? {sheet: cell.ws.sName, name: null, cell: cell.getName(), text: cell.getValueForEdit(), formula: cell.getFormula(), col: c, row: r, index: cell.ws.index} :
+				cell.ws ? {sheet: cell.ws.sName, name: defName ? defName : null, cell: dN.getName(), text: cell.getValue(), formula: cell.getFormula(), col: c, row: r, index: cell.ws.index} :
 					cell;
 			var key = this.Elements[this.Id - 1].index + "-" + c + "-" + r;
 			this.mapFindCells[key] = this.Id - 1;

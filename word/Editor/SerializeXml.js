@@ -598,7 +598,7 @@
 		writer.WriteXmlNodeEnd(name);
 	};
 	CTable.prototype.fromXml = function(reader) {
-		let elem, oReadResult = reader.context.oReadResult;
+		let elem, t = this, oReadResult = reader.context.oReadResult;
 		var depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
@@ -1845,11 +1845,13 @@
 		}
 	};
 	Paragraph.prototype.fromXml = function(reader) {
+		let t = this, oReadResult = reader.context.oReadResult;
 		this.readAttr(reader);
 		let depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			var name = reader.GetNameNoNS();
 			if ("pPr" === name) {
+				this.Pr = new CParaPr();
 				this.Pr.fromXml(reader, this);
 			} else {
 				CParagraphContentWithParagraphLikeContent.prototype.fromXmlElem.call(this, reader, name);
@@ -1868,12 +1870,12 @@
 		writer.WriteXmlNodeEnd(name);
 	};
 	CParaPr.prototype.fromXml = function(reader, opt_paragraph) {
-		var depth = reader.GetDepth();
+		var depth = reader.GetDepth(), oReadResult = reader.context.oReadResult;
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
 				case "pStyle" : {
 					this.PStyle = CT_StringW.prototype.toVal(reader, this.PStyle);
-					reader.context.oReadResult.paraStyles.push({pPr: this, style: this.PStyle});
+					oReadResult.paraStyles.push({pPr: this, style: this.PStyle});
 					break;
 				}
 				case "keepNext" : {
@@ -1901,7 +1903,9 @@
 					this.NumPr = new CNumPr();
 					this.NumPr.Set(undefined, undefined);
 					this.NumPr.fromXml(reader);
-					reader.context.oReadResult.paraNumPrs.push(this.NumPr);
+					if (null != this.NumPr.NumId) {
+						oReadResult.paraNumPrs.push(this.NumPr);
+					}
 					break;
 				}
 				case "suppressLineNumbers" : {
@@ -2043,6 +2047,7 @@
 				case "rPr" : {
 					if (opt_paragraph) {
 						let EndRun = opt_paragraph.GetParaEndRun();
+						opt_paragraph.TextPr.Value = new CTextPr();
 						opt_paragraph.TextPr.Value.fromXml(reader, EndRun);
 					}
 					break;
@@ -2056,7 +2061,7 @@
 					break;
 				}
 				case "pPrChange" : {
-					if (reader.context.oReadResult.checkReadRevisions()) {
+					if (oReadResult.checkReadRevisions()) {
 						let trackChange = new CT_TrackChange();
 						trackChange.fromXml(reader);
 						this.SetPrChange(trackChange.pPrChange, trackChange.ReviewInfo);
@@ -2779,6 +2784,7 @@
 							continue;
 						}
 					}
+					this.Pr = new CTextPr();
 					this.Pr.fromXml(reader, this);
 					break;
 				case "ruby":
@@ -4305,7 +4311,7 @@
 	};
 	CStyle.prototype.fromXml = function(reader, opt_addition) {
 		this.readAttr(reader, opt_addition);
-		var elem, depth = reader.GetDepth();
+		var elem, depth = reader.GetDepth(), oReadResult = reader.context.oReadResult;
 		let t = this;
 		while (reader.ReadNextSiblingNode(depth)) {
 			switch (reader.GetNameNoNS()) {
@@ -4399,22 +4405,27 @@
 				// 	break;
 				// }
 				case "pPr" : {
+					this.ParaPr = new CParaPr();
 					this.ParaPr.fromXml(reader);
 					break;
 				}
 				case "rPr" : {
+					this.TextPr = new CTextPr();
 					this.TextPr.fromXml(reader);
 					break;
 				}
 				case "tblPr" : {
+					this.TablePr = new CTablePr();
 					this.TablePr.fromXml(reader);
 					break;
 				}
 				case "trPr" : {
+					this.TableRowPr = new CTableRowPr();
 					this.TableRowPr.fromXml(reader);
 					break;
 				}
 				case "tcPr" : {
+					this.TableCellPr = new CTableCellPr();
 					this.TableCellPr.fromXml(reader);
 					break;
 				}
@@ -4508,9 +4519,10 @@
 						var ANum = aNumsMap[additional.aNumId];
 						if (ANum) {
 							elem.SetAbstractNumId(ANum.GetId());
-							oReadResult.numToANumClass[ANum.GetId()] = ANum;
+							oReadResult.logicDocument.Numbering.AddAbstractNum(ANum);
 						}
 						if (null !== additional.numId) {
+							oReadResult.logicDocument.Numbering.AddNum(elem);
 							oReadResult.numToNumClass[additional.numId] = elem;
 						}
 						break;
@@ -4616,11 +4628,6 @@
 						elem.fromXml(reader, additionalLvl);
 						index = additionalLvl.ilvl || index;
 						this.Lvl[index] = elem;
-						let postIndex = index;
-						let postElem = elem;
-						oReadResult.aPostOpenStyleNumCallbacks.push(function(){
-							this.SetLvl(postIndex, postElem);
-						});
 						index++;
 					}
 					break;

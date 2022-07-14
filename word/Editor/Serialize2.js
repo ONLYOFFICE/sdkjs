@@ -7749,13 +7749,6 @@ function BinaryFileReader(doc, openParams)
 		let api = this.Document.DrawingDocument && this.Document.DrawingDocument.m_oWordControl && this.Document.DrawingDocument.m_oWordControl.m_oApi;
 		this.Document.UpdateDefaultsDependingOnCompatibility();
 		//списки
-		for(var i in this.oReadResult.numToANumClass) {
-			this.Document.Numbering.AddAbstractNum(this.oReadResult.numToANumClass[i]);
-		}
-		for(var i in this.oReadResult.numToNumClass) {
-			this.Document.Numbering.AddNum(this.oReadResult.numToNumClass[i]);
-		}
-
 		for(var i = 0, length = this.oReadResult.paraNumPrs.length; i < length; ++i)
 		{
 			var numPr = this.oReadResult.paraNumPrs[i];
@@ -8255,10 +8248,7 @@ function BinaryFileReader(doc, openParams)
 				if (context.imageMap.hasOwnProperty(path)) {
 					var data = context.zip.getFile(path);
 					if (data) {
-						if (api && window["NATIVE_EDITOR_ENJINE"]) {
-							//slice because array contains garbage after zip.close
-							api.isOpenOOXInBrowserDoctImages[path] = data.slice();
-						} else {
+						if (!window["NATIVE_EDITOR_ENJINE"]) {
 							let mime = AscCommon.openXml.GetMimeType(AscCommon.GetFileExtension(path));
 							let blob = new Blob([data], {type: mime});
 							let url = window.URL.createObjectURL(blob);
@@ -8297,34 +8287,6 @@ function BinaryFileReader(doc, openParams)
         this.ReadMainTable();
         var oReadResult = this.oReadResult;
         //обрабатываем списки
-        for (var i in oReadResult.numToANumClass) {
-            var oNumClass = oReadResult.numToANumClass[i];
-            var documentANum = this.Document.Numbering.AbstractNum;
-            //проверка на уже существующий такой же AbstractNum
-            /*var isAlreadyContains = false;
-            for (var n in documentANum) {
-                var isEqual = documentANum[n].isEqual(oNumClass);
-                if (isEqual == true) {
-                    isAlreadyContains = true;
-                    break;
-                }
-            }
-            if (!isAlreadyContains) {
-                this.Document.Numbering.AddAbstractNum(oNumClass);
-            }
-            else
-                oReadResult.numToNumClass[i] = documentANum[n];*/
-			
-			//убираю проверку на существующий такой же AbstractNum
-			//такая проверка может иметь смысл только если numToNumClass содержит 1 элемент
-			//если там более 1 одного элемента - это разные списки. будет проверка на существуюший AbstractNum - они могут стать одним списком, если у них одинаковая структура
-			//возможно, нужно сравнивать только numid и в пределах одного документа
-			//TODO просмотреть все ситуации со списками
-			this.Document.Numbering.AddAbstractNum(oNumClass);
-        }
-		for(var i in this.oReadResult.numToNumClass) {
-			this.Document.Numbering.AddNum(this.oReadResult.numToNumClass[i]);
-		}
         for (var i = 0, length = oReadResult.paraNumPrs.length; i < length; ++i) {
             var numPr = oReadResult.paraNumPrs[i];
             var oNumClass = oReadResult.numToNumClass[numPr.NumId];
@@ -8982,9 +8944,12 @@ function Binary_pPrReader(doc, oReadResult, stream)
                 if(null != this.paragraph)
 				{
                     var EndRun = this.paragraph.GetParaEndRun();
-                    var rPr = this.paragraph.TextPr.Value;
+                    var rPr = new CTextPr();
                     res = this.brPrr.Read(length, rPr, EndRun);
-                    //this.paragraph.TextPr.Apply_TextPr(rPr);
+					this.paragraph.TextPr.Value = rPr;
+					this.oReadResult.aPostOpenStyleNumCallbacks.push(function(){
+						oThis.paragraph.TextPr.Apply_TextPr(rPr);
+					});
 				}
 				else
 					res = c_oSerConstants.ReadUnknown;
@@ -10606,6 +10571,7 @@ function Binary_NumberingTableReader(doc, oReadResult, stream)
 				return oThis.ReadNum(t, l, tmpNum);
 			});
 			if (null != tmpNum.NumId) {
+				this.oReadResult.logicDocument.Numbering.AddNum(tmpNum.Num);
 				this.oReadResult.numToNumClass[tmpNum.NumId] = tmpNum.Num;
 			}
         }
@@ -10622,7 +10588,7 @@ function Binary_NumberingTableReader(doc, oReadResult, stream)
 			var ANum = this.m_oANums[this.stream.GetULongLE()];
 			if (ANum) {
 				tmpNum.Num.SetAbstractNumId(ANum.GetId());
-				this.oReadResult.numToANumClass[ANum.GetId()] = ANum;
+				this.oReadResult.logicDocument.Numbering.AddAbstractNum(ANum);
 			}
         }
         else if ( c_oSerNumTypes.Num_NumId === type )
@@ -11202,10 +11168,11 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
         var oThis = this;
         if ( c_oSerParType.pPr === type )
         {
-			var oNewParaPr = paragraph.Pr;
-            res = this.bpPrr.Read(length, oNewParaPr, paragraph);
+			var paraPr = new CParaPr();
+            res = this.bpPrr.Read(length, paraPr, paragraph);
+			paragraph.Pr = paraPr;
 			this.oReadResult.aPostOpenStyleNumCallbacks.push(function(){
-				paragraph.Set_Pr(oNewParaPr);
+				paragraph.Set_Pr(paraPr);
 			});
         }
         else if ( c_oSerParType.Content === type )
@@ -11599,7 +11566,9 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
         var oThis = this;
         if (c_oSerRunType.rPr === type)
         {
-            res = this.brPrr.Read(length, run.Pr, run);
+			let rPr = new CTextPr();
+			res = this.brPrr.Read(length, rPr, run);
+			run.Set_Pr(rPr);
         }
         else if (c_oSerRunType.Content === type)
         {
@@ -16947,7 +16916,6 @@ function DocReadResult(doc) {
 	this.oCommentsPlaces = {};
 	this.setting = {titlePg: false, EvenAndOddHeaders: false};
 	this.numToNumClass = {};
-	this.numToANumClass = {};
 	this.paraNumPrs = [];
 	this.styles = [];
 	this.runStyles = [];

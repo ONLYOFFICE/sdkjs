@@ -1561,7 +1561,9 @@ background-repeat: no-repeat;\
 		}
 		let xmlParserContext = new AscCommon.XmlParserContext();
 		xmlParserContext.DrawingDocument = this.WordControl.m_oDrawingDocument;
-		if (!window.nativeZlibEngine || !window.nativeZlibEngine.open(data)) {
+
+		let jsZlib = new AscCommon.ZLib();
+		if (!jsZlib.open(data)) {
 			return false;
 		}
 
@@ -1569,10 +1571,10 @@ background-repeat: no-repeat;\
 		let oBinaryFileReader = new AscCommonWord.BinaryFileReader(this.WordControl.m_oLogicDocument, openParams);
 		oBinaryFileReader.PreLoadPrepare();
 
-		this.WordControl.m_oLogicDocument.fromZip(window.nativeZlibEngine, xmlParserContext, oBinaryFileReader.oReadResult);
+		this.WordControl.m_oLogicDocument.fromZip(jsZlib, xmlParserContext, oBinaryFileReader.oReadResult);
 
 		oBinaryFileReader.PostLoadPrepare(xmlParserContext);
-		window.nativeZlibEngine.close();
+		jsZlib.close();
 		return true;
 	};
 	// Callbacks
@@ -7866,9 +7868,10 @@ background-repeat: no-repeat;\
 		else
 		{
 			this.isOpenOOXInBrowser = AscCommon.checkOOXMLSignature(file.data);
-			if (this.isOpenOOXInBrowser)
+			if (this.isOpenOOXInBrowser) {
+				this.openOOXInBrowserZip = file.data;
 				this.OpenDocumentFromZip(file.data);
-			else if (this.isUseNativeViewer)
+			} else if (this.isUseNativeViewer)
 				this.OpenDocument3(file.url, file.data);
 			else
 				this.OpenDocument(file.url, file.data);
@@ -11832,6 +11835,8 @@ background-repeat: no-repeat;\
 
 		this.isOpenOOXInBrowser = AscCommon.checkOOXMLSignature(base64File);
 		if (this.isOpenOOXInBrowser) {
+			//slice because array contains garbage after end of function
+			this.openOOXInBrowserZip = base64File.slice();
 			if (!this.OpenDocumentFromZipNoInit(base64File))
 				this.sendEvent("asc_onError", c_oAscError.ID.MobileUnexpectedCharCount, c_oAscError.Level.Critical);
 		} else {

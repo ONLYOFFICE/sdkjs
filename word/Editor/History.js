@@ -621,23 +621,30 @@ CHistory.prototype =
 
 	AddChangedNumberingToRecalculateData : function(NumId, Lvl, oNum)
 	{
-		if (!this.RecalculateData.ChangedNums)
-			this.RecalculateData.ChangedNums = {};
+        if(this.Document && this.Document.IsDocumentEditor())
+        {
+            if (!this.RecalculateData.ChangedNums)
+                this.RecalculateData.ChangedNums = {};
 
-		if (!this.RecalculateData.ChangedNums[NumId])
-			this.RecalculateData.ChangedNums[NumId] = {};
+            if (!this.RecalculateData.ChangedNums[NumId])
+                this.RecalculateData.ChangedNums[NumId] = {};
 
-		if (this.RecalculateData.ChangedNums[NumId][Lvl] === oNum)
-			return false;
+            if (this.RecalculateData.ChangedNums[NumId][Lvl] === oNum)
+                return false;
 
-		this.RecalculateData.ChangedNums[NumId][Lvl] = oNum;
-		return true;
+            this.RecalculateData.ChangedNums[NumId][Lvl] = oNum;
+            return true;
+        }
+        return false;
 	},
 
     Add_RecalcNumPr : function(NumPr)
     {
-        if (undefined !== NumPr && null !== NumPr && undefined !== NumPr.NumId)
-            this.RecalculateData.NumPr[NumPr.NumId] = true;
+        if(this.Document && this.Document.IsDocumentEditor())
+        {
+            if (undefined !== NumPr && null !== NumPr && undefined !== NumPr.NumId)
+                this.RecalculateData.NumPr[NumPr.NumId] = true;
+        }
     },
 
     Add_RecalcTableGrid : function(TableId)

@@ -452,7 +452,8 @@
 		".form-control[disabled]" : { "color" : "text-invers" },
 		".btn-text-default" : { "background-color" : "background-normal", "border-color" : "border-regular-control", "color" : "text-normal" },
 		".btn-text-default:hover" : { "background-color" : "highlight-button-hover" },
-		".btn-text-default:active" : { "background-color" : "highlight-button-pressed !important" },
+		".btn-text-default.active,\
+		.btn-text-default:active" : { "background-color" : "highlight-button-pressed !important", "color" : "text-normal-pressed" },
 		".btn-text-default[disabled]:hover,\
 		.btn-text-default.disabled:hover,\
 		.btn-text-default[disabled]:active,\

@@ -3555,15 +3555,7 @@
 							width = colCounter;
 						}
 
-						if (13 === Code) {
-							if (i === length - 1) {
-								addTextIntoCell(rowCounter, colCounter, sCurChar);
-								sCurChar = "";
-							}
-							continue;
-						}
-
-						if ('\n' === Char || sCurChar.length >= Asc.c_oAscMaxCellOrCommentLength) {
+						if (13 === Code || '\n' === Char || sCurChar.length >= Asc.c_oAscMaxCellOrCommentLength) {
 							if ("" === sCurChar) {
 								addTextIntoCell(rowCounter, colCounter, sCurChar);
 								colCounter = 0;
@@ -3595,6 +3587,8 @@
 						}
 					}
 				};
+
+				text = text.replace(/\r\n/g,'\n');
 
 				if(!bPastedArray) {
 					_parseText(text);

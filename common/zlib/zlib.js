@@ -54,7 +54,7 @@
 		{
 			function ZLib()
 			{
-				this.engine = window["NATIVE_EDITOR_ENJINE"] ? CreateNativeZip() : window["nativeZlibEngine"];
+				this.engine = window["NATIVE_EDITOR_ENJINE"] ? CreateNativeZip() : new AscCommon["CZLibEngineJS"]();
 				this.files = [];
 			}
 			/**
@@ -129,6 +129,9 @@
 			{
 				return this.engine["close"]();
 			};
+
+			AscCommon.ZLib = ZLib;
+			AscCommon.ZLib.prototype.isModuleInit = true;
 
 			window.nativeZlibEngine = new ZLib();
 			onSuccess();
