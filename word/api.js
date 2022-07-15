@@ -10609,21 +10609,30 @@ background-repeat: no-repeat;\
 		if (!oControl)
 			return;
 
-		this.sendEvent("asc_onChangeContentControl", oControl.GetContentControlPr());
+		this.sendEvent("onChangeContentControl", oControl.GetContentControlPr().GetEventObject());
+
+		if (window.g_asc_plugins)
+			window.g_asc_plugins.onPluginEvent("onChangeContentControl", oControl.GetContentControlPr().GetEventObject());
 	};
 	asc_docs_api.prototype.asc_OnFocusContentControl = function(oControl)
 	{
 		if (!oControl)
 			return;
 
-		this.sendEvent("asc_onFocusContentControl", oControl.GetContentControlPr());
+		this.sendEvent("onFocusContentControl", oControl.GetContentControlPr().GetEventObject());
+
+		if (window.g_asc_plugins)
+			window.g_asc_plugins.onPluginEvent("onFocusContentControl", oControl.GetContentControlPr().GetEventObject());
 	};
 	asc_docs_api.prototype.asc_OnBlurContentControl = function(oControl)
 	{
 		if (!oControl)
 			return;
 
-		this.sendEvent("asc_onBlurContentControl", oControl.GetContentControlPr());
+		this.sendEvent("onBlurContentControl", oControl.GetContentControlPr().GetEventObject());
+
+		if (window.g_asc_plugins)
+			window.g_asc_plugins.onPluginEvent("onBlurContentControl", oControl.GetContentControlPr().GetEventObject());
 	};
 
 	asc_docs_api.prototype.asc_UncheckContentControlButtons = function()

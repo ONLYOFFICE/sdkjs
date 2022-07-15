@@ -28,16 +28,70 @@ document.getElementById("buttonDisconnect").onclick = function()
 };
 document.getElementById("buttonTest1").onclick = function()
 {
-	connector.callMethod("GetVersion", [], function(version) {
-
+	connector.callMethod("GetVersion", [], function(version)
+	{
 		console.log(version);
-
 	});
 
-	connector.attachEvent("onTargetPositionChanged", function(){
-
+	connector.attachEvent("onTargetPositionChanged", function()
+	{
 		console.log("event: onTargetPositionChanged");
+	});
 
+	connector.attachEvent("onChangeContentControl", function()
+	{
+		console.log("event: onChangeContentControl");
+	});
+
+	connector.attachEvent("onFocusContentControl", function()
+	{
+		console.log("event: onFocusContentControl");
+	});
+
+
+	connector.attachEvent("onBlurContentControl", function(oPr)
+	{
+		let sTag = oPr["Tag"];
+		console.log(oPr);
+		console.log(sTag);
+		if ("BankBIC" === sTag)
+		{
+			connector.callCommand(function() {
+
+				let oDocument = Api.GetDocument();
+
+				let arrForms  = oDocument.GetFormsByTag("BankBIC");
+				if (1 === arrForms.length &&  arrForms[0].GetText() === "12345678")
+				{
+					arrForms = oDocument.GetFormsByTag("BankAccount");
+					for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
+					{
+						let oForm = arrForms[nIndex];
+						if (oForm.GetFormType() === "textForm")
+							oForm.SetText("10101110100000000123");
+					}
+
+					arrForms = oDocument.GetFormsByTag("BankName");
+					for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
+					{
+						let oForm = arrForms[nIndex];
+						if (oForm.GetFormType() === "textForm")
+							oForm.SetText("OnlyOffice BANK");
+					}
+
+					arrForms = oDocument.GetFormsByTag("BankPlace");
+					for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
+					{
+						let oForm = arrForms[nIndex];
+						if (oForm.GetFormType() === "textForm")
+							oForm.SetText("Himalayas");
+					}
+				}
+			}, function() { console.log("callback command"); });
+
+
+		}
+		console.log("event: onBlurContentControl");
 	});
 
 };

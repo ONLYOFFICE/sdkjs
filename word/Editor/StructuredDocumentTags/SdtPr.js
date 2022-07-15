@@ -401,6 +401,15 @@ function CContentControlPr(nType)
 
 	this.FormPr = undefined;
 }
+CContentControlPr.prototype.GetEventObject = function()
+{
+	return {
+		"Tag"        : this.Tag,
+		"Id"         : this.Id,
+		"Lock"       : this.Lock,
+		"InternalId" : this.InternalId
+	};
+};
 CContentControlPr.prototype.FillFromObject = function(oPr)
 {
 	if (undefined !== oPr.Id)
