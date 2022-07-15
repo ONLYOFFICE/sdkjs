@@ -735,11 +735,11 @@
 				return false;
 
 			var _map = {};
-			for (var i = 0; i < this.plugins.length; i++)
+			for (let i = 0; i < this.plugins.length; i++)
 				_map[this.plugins[i].guid] = this.plugins[i].getIntVersion();
 
 			var _new = [];
-			for (var i = 0; i < _plugins.length; i++)
+			for (let i = 0; i < _plugins.length; i++)
 			{
 				var _p = new Asc.CPlugin();
 				_p["deserialize"](_plugins[i]);
@@ -749,13 +749,13 @@
 					if (_map[_p.guid] < _p.getIntVersion())
 					{
 						// нужно обновить
-						for (var i = 0; i < this.plugins.length; i++)
+						for (let j = 0; j < this.plugins.length; j++)
 						{
-							if (this.plugins[i].guid === _p.guid)
+							if (this.plugins[j].guid === _p.guid)
 							{
 								if (this.pluginsMap[_p.guid])
 									delete this.pluginsMap[_p.guid];
-								this.plugins.splice(i, 1);
+								this.plugins.splice(j, 1);
 							}
 						}
 					}
