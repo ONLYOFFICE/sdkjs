@@ -4766,8 +4766,8 @@
 	CDocumentSearchExcel.prototype.Add = function (r, c, cell, container) {
 
 		var dN = new Asc.Range(c, r, c, r, true);
-		var defName = AscCommon.parserHelp.get3DRef(cell.ws.getName(), dN.getAbsName());
-		defName = cell.ws.workbook.findDefinesNames(defName, cell.ws.getId(), true);
+		var defName = cell.ws ? AscCommon.parserHelp.get3DRef(cell.ws.getName(), dN.getAbsName()) : null;
+		defName = defName && cell.ws ? cell.ws.workbook.findDefinesNames(defName, cell.ws.getId(), true) : null;
 
 		if (container) {
 			container.add(r, c,
