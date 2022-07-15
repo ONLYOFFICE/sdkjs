@@ -16,17 +16,25 @@
  *
  */
 
-(function(exports){
+(function(exports) {
 
 	function generateGuid() {
 		if (!window.crypto || !window.crypto.getRandomValues) {
-			function s4() { return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1); }
+			function s4() {
+				return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+			}
+
 			return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
 		} else {
 			var array = new Uint16Array(8);
 			window.crypto.getRandomValues(array);
 			var index = 0;
-			function s4() { var value = 0x10000 + array[index++]; return value.toString(16).substring(1); }
+
+			function s4() {
+				var value = 0x10000 + array[index++];
+				return value.toString(16).substring(1);
+			}
+
 			return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
 		}
 	}
@@ -34,6 +42,7 @@
 	function EditorConnector(frameId, autoconnect) {
 		this.frameId = frameId;
 		this.guid = "asc.{" + generateGuid() + "}";
+		this.isConnected = false;
 
 		if (autoconnect)
 			this.connect();
@@ -45,13 +54,13 @@
 		this.onMessageBound = this.onMessage.bind(this);
 	}
 
-	EditorConnector.prototype.onMessage = function(e) {
+	EditorConnector.prototype.onMessage = function (e) {
 
-		if (typeof(e.data) == "string") {
+		if (typeof (e.data) == "string") {
 			var pluginData = {};
 			try {
 				pluginData = JSON.parse(e.data);
-			} catch(err) {
+			} catch (err) {
 				pluginData = {};
 			}
 
@@ -98,7 +107,7 @@
 
 	};
 
-	EditorConnector.prototype.sendMessage = function(message) {
+	EditorConnector.prototype.sendMessage = function (message) {
 		var e = {};
 		e.frameEditorId = "iframeEditor";
 		e.type = "onExternalPluginMessage";
@@ -111,25 +120,31 @@
 			frame.contentWindow.postMessage(JSON.stringify(e), "*");
 	};
 
-	EditorConnector.prototype.connect = function() {
+	EditorConnector.prototype.connect = function () {
 		if (window.addEventListener)
 			window.addEventListener("message", this.onMessageBound, false);
 		else if (window.attachEvent)
 			window.attachEvent("onmessage", this.onMessageBound);
+		this.isConnected = true;
 
-		this.sendMessage({ type : "register" });
+		this.sendMessage({type: "register"});
 	};
 
-	EditorConnector.prototype.disconnect = function() {
+	EditorConnector.prototype.disconnect = function () {
 		if (window.removeEventListener)
 			window.removeEventListener("message", this.onMessageBound, false);
 		else if (window.detachEvent)
 			window.detachEvent("onmessage", this.onMessageBound);
+		this.isConnected = false;
 
-		this.sendMessage({ type : "unregister" });
+		this.sendMessage({type: "unregister"});
 	};
 
-	EditorConnector.prototype.callCommand = function(command, callback, scope, isNoCalc) {
+	EditorConnector.prototype.callCommand = function (command, callback, scope, isNoCalc) {
+		if (!this.isConnected) {
+			console.log("Connector is not connected with editor");
+			return;
+		}
 
 		this.callbacks.push(callback);
 		var txtFunc = "var Asc = {}; Asc.scope = " + JSON.stringify(scope || {}) + "; var scope = Asc.scope; (" + command.toString() + ")();";
@@ -149,6 +164,10 @@
 	};
 
 	EditorConnector.prototype.callMethod = function(name, params, callback) {
+		if (!this.isConnected) {
+			console.log("Connector is not connected with editor");
+			return;
+		}
 
 		this.callbacks.push(callback);
 
@@ -167,6 +186,11 @@
 	};
 
 	EditorConnector.prototype.attachEvent = function(name, callback) {
+		if (!this.isConnected) {
+			console.log("Connector is not connected with editor");
+			return;
+		}
+
 		this.events[name] = callback;
 		this.sendMessage({
 			type : "attachEvent",
@@ -179,6 +203,12 @@
 			return;
 
 		delete this.events[name];
+
+		if (!this.isConnected) {
+			console.log("Connector is not connected with editor");
+			return;
+		}
+
 		this.sendMessage({
 			type : "detachEvent",
 			name : name

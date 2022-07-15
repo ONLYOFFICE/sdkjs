@@ -16,26 +16,25 @@
  *
  */
 
+var connector = new Asc.EditorConnector("frameEditor");
+
 document.getElementById("buttonConnect").onclick = function()
 {
-	if (window.connector)
-		window.connector.disconnect();
-
-	window.connector = new Asc.EditorConnector("frameEditor");
-	window.connector.connect();
+	connector.connect();
+};
+document.getElementById("buttonDisconnect").onclick = function()
+{
+	connector.disconnect();
 };
 document.getElementById("buttonTest1").onclick = function()
 {
-	if (!window.connector)
-		return;
-
-	window.connector.callMethod("GetVersion", [], function(version) {
+	connector.callMethod("GetVersion", [], function(version) {
 
 		console.log(version);
 
 	});
 
-	window.connector.attachEvent("onTargetPositionChanged", function(){
+	connector.attachEvent("onTargetPositionChanged", function(){
 
 		console.log("event: onTargetPositionChanged");
 
@@ -44,10 +43,7 @@ document.getElementById("buttonTest1").onclick = function()
 };
 document.getElementById("buttonTest2").onclick = function()
 {
-	if (!window.connector)
-		return;
-
-	window.connector.callCommand(function() {
+	connector.callCommand(function() {
 
 		var oDocument = Api.GetDocument();
 		var oParagraph = Api.CreateParagraph();
