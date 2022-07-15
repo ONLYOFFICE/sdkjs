@@ -1845,6 +1845,9 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 		CC         : null
     };
 
+	// TODO: Пока временно так сделаем, в будущем надо переделать в общий класс позиции документа
+	this.FocusCC = null;
+
 	this.Selection =
     {
         Start    : false,
@@ -2734,6 +2737,9 @@ CDocument.prototype.private_CheckAdditionalOnFinalize = function()
 
 	if (this.Action.Additional.ValidateComplexFields)
 		this.private_FinalizeValidateComplexFields();
+
+	if (this.Action.Additional.ContentControlChange)
+		this.private_FinalizeContentControlChange();
 };
 /**
  * Пересчитываем нумерацию строк
@@ -2950,6 +2956,13 @@ CDocument.prototype.private_FinalizeUpdateCommentPosition = function()
 	}
 
 	this.Api.sync_ChangeCommentLogicalPosition(oChangedComments, this.Comments.GetCommentsPositionsCount());
+};
+CDocument.prototype.private_FinalizeContentControlChange = function()
+{
+	for (let sId in this.Action.Additional.ContentControlChange)
+	{
+		this.Api.asc_OnChangeContentControl(this.Action.Additional.ContentControlChange[sId]);
+	}
 };
 /**
  * Данная функция предназначена для отключения пересчета. Это может быть полезно, т.к. редактор всегда запускает
@@ -12068,6 +12081,8 @@ CDocument.prototype.private_UpdateTracks = function(bSelection, bEmptySelection)
 			this.DrawingDocument.OnDrawContentControl(null, AscCommon.ContentControlTrack.In);
 	}
 
+	this.UpdateContentControlFocusState(oInlineLevelSdt ? oInlineLevelSdt : (oBlockLevelSdt ? oBlockLevelSdt : null));
+
 	if (this.private_SetCurrentSpecialForm(oCurrentForm))
 	{
 		isNeedRedraw = true;
@@ -12096,6 +12111,19 @@ CDocument.prototype.private_UpdateTracks = function(bSelection, bEmptySelection)
 		this.DrawingDocument.ClearCachePages();
 		this.DrawingDocument.FirePaint();
 	}
+};
+CDocument.prototype.UpdateContentControlFocusState = function(oCC)
+{
+	if (this.FocusCC === oCC)
+		return;
+
+	if (this.FocusCC)
+		this.Api.asc_OnBlurContentControl(this.FocusCC);
+
+	if (oCC)
+		this.Api.asc_OnFocusContentControl(oCC);
+
+	this.FocusCC = oCC;
 };
 CDocument.prototype.UpdateSelectedReviewChanges = function(isSaveCurrentReviewChange)
 {
@@ -24814,6 +24842,20 @@ CDocument.prototype.AddParaMath = function(nType)
 
 	this.UpdateSelection();
 	this.UpdateInterface();
+};
+CDocument.prototype.OnChangeContentControl = function(oControl)
+{
+	if (!this.Action.Start)
+		return;
+
+	if (!this.Action.Additional.ContentControlChange)
+		this.Action.Additional.ContentControlChange = {};
+
+	let sId = oControl.GetId();
+	if (this.Action.Additional.ContentControlChange[sId])
+		return;
+
+	this.Action.Additional.ContentControlChange[sId] = oControl;
 };
 /**
  * Регистрируем специальные формы для заполнения

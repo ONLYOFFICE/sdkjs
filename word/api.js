@@ -10604,6 +10604,27 @@ background-repeat: no-repeat;\
 		oLogicDocument.DrawingDocument.ClearCachePages();
 		oLogicDocument.DrawingDocument.FirePaint();
 	}
+	asc_docs_api.prototype.asc_OnChangeContentControl = function(oControl)
+	{
+		if (!oControl)
+			return;
+
+		this.sendEvent("asc_onChangeContentControl", oControl.GetContentControlPr());
+	};
+	asc_docs_api.prototype.asc_OnFocusContentControl = function(oControl)
+	{
+		if (!oControl)
+			return;
+
+		this.sendEvent("asc_onFocusContentControl", oControl.GetContentControlPr());
+	};
+	asc_docs_api.prototype.asc_OnBlurContentControl = function(oControl)
+	{
+		if (!oControl)
+			return;
+
+		this.sendEvent("asc_onBlurContentControl", oControl.GetContentControlPr());
+	};
 
 	asc_docs_api.prototype.asc_UncheckContentControlButtons = function()
 	{

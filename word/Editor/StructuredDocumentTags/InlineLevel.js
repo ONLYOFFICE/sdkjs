@@ -309,6 +309,15 @@ CInlineLevelSdt.prototype.Remove_FromContent = function(Pos, Count, UpdatePositi
 		this.GetLogicDocument().OnChangeForm(sKey, this);
 
 };
+CInlineLevelSdt.prototype.OnContentChange = function()
+{
+	let oParagraph     = this.GetParagraph();
+	let oLogicDocument = oParagraph ? oParagraph.GetLogicDocument() : null;
+	if (oLogicDocument)
+		oLogicDocument.OnChangeContentControl(this);
+
+	CParagraphContentWithParagraphLikeContent.prototype.OnContentChange.apply(this, arguments);
+};
 CInlineLevelSdt.prototype.Split = function (ContentPos, Depth)
 {
 	// Не даем разделять

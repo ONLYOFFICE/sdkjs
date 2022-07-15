@@ -1181,9 +1181,17 @@ CParagraphContentWithContentBase.prototype.ProcessNotInlineObjectCheck = functio
 };
 CParagraphContentWithContentBase.prototype.OnContentChange = function()
 {
-	let oParagraph = this.GetParagraph();
-	if (oParagraph)
-		oParagraph.OnContentChange();
+	let oParent = this.GetParent();
+	if (oParent)
+	{
+		oParent.OnContentChange();
+	}
+	else
+	{
+		let oParagraph = this.GetParagraph();
+		if (oParagraph)
+			oParagraph.OnContentChange();
+	}
 };
 
 /**
