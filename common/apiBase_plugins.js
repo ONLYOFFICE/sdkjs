@@ -1088,14 +1088,16 @@
      */
 	Api.prototype["pluginMethod_GetFileToDownload"] = function(format)
 	{
-		var dwnldF = Asc.c_oAscFileType[format] || Asc.c_oAscFileType[this.DocInfo.Format.toUpperCase()];
-		var opts = new Asc.asc_CDownloadOptions(dwnldF);
-		var _t = this;
+		let guid = window.g_asc_plugins ? window.g_asc_plugins.setPluginMethodReturnAsync() : null;
+		let dwnldF = Asc.c_oAscFileType[format] || Asc.c_oAscFileType[this.DocInfo.Format.toUpperCase()];
+		let opts = new Asc.asc_CDownloadOptions(dwnldF);
+		let _t = this;
 		opts.callback = function() {
 			_t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.DownloadAs);
 			_t.fCurCallback = function(res) {
-				var data = (res.status == "ok") ? res.data : "error";
-				window.g_asc_plugins.onPluginEvent("onFileReadyToDownload", data);
+				let data = (res.status == "ok") ? res.data : "error";
+				if (guid)
+					window.g_asc_plugins.onPluginMethodReturn(guid, data);
 			};
 		}
 		this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, opts);
