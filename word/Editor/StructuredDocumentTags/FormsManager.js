@@ -371,7 +371,22 @@
 	};
 	CFormsManager.prototype.OnChangeComplexForm = function(oForm)
 	{
-		// TODO: Реализовать
+		let arrForms = this.GetAllForms();
+		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
+		{
+			let oTempForm = arrForms[nIndex];
+			if (!oTempForm.IsComplexForm() || oTempForm === oForm)
+				continue;
+
+			// TODO: Сейчас мы полностью перезаписываем содержимое поля. Можно проверить, что поле состоит из таких
+			//       же базовых подклассов и попробовать обновить их каждый по отдельности, что бы было меньше изменений
+			
+			oTempForm.RemoveAll();
+			for (let nPos = 0, nItemsCount = oForm.GetElementsCount(); nPos < nItemsCount; ++nPos)
+			{
+				oTempForm.AddToContent(nPos, oForm.GetElement(nPos).Copy());
+			}
+		}
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
