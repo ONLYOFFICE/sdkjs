@@ -5623,14 +5623,14 @@
 		if(null == stop)
 			stop = start;
 		History.Create_NewPoint();
-		var oSelection = History.GetSelection();
+		/*var oSelection = History.GetSelection();
 		if(null != oSelection)
 		{
 			oSelection = oSelection.clone();
 			oSelection.assign(start, 0, stop, gc_nMaxRow0);
 			History.SetSelection(oSelection);
 			History.SetSelectionRedo(oSelection);
-		}
+		}*/
 
 		var bNotAddCollapsed = true == this.workbook.bUndoChanges || true == this.workbook.bRedoChanges || this.bExcludeCollapsed;
 		var _summaryRight = this.sheetPr ? this.sheetPr.SummaryRight : true;
@@ -5952,14 +5952,14 @@
 			stop = start;
 		History.Create_NewPoint();
 		var oThis = this, i;
-		var oSelection = History.GetSelection();
+		/*var oSelection = History.GetSelection();
 		if(null != oSelection)
 		{
 			oSelection = oSelection.clone();
 			oSelection.assign(0, start, gc_nMaxCol0, stop);
 			History.SetSelection(oSelection);
 			History.SetSelectionRedo(oSelection);
-		}
+		}*/
 		var prevRow;
 		var bNotAddCollapsed = true == this.workbook.bUndoChanges || true == this.workbook.bRedoChanges || this.bExcludeCollapsed;
 		var _summaryBelow = this.sheetPr ? this.sheetPr.SummaryBelow : true;
