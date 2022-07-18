@@ -187,7 +187,7 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
 	this.ParaId = null;//for comment xml serialization
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-    g_oTableId.Add( this, this.Id );
+    AscCommon.g_oTableId.Add( this, this.Id );
     if(bFromPresentation === true && History.Is_On())
     {
         this.Save_StartState();
@@ -20119,3 +20119,5 @@ window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].Paragraph = Paragraph;
 window['AscCommonWord'].UnknownValue = UnknownValue;
 window['AscCommonWord'].type_Paragraph = type_Paragraph;
+
+window['AscWord'].CParagraph = Paragraph;

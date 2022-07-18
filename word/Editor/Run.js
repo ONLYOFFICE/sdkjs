@@ -141,7 +141,7 @@ function ParaRun(Paragraph, bMathRun)
 	this.CompositeInput = null;
 
 	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-	g_oTableId.Add(this, this.Id);
+	AscCommon.g_oTableId.Add(this, this.Id);
 	if (this.Paragraph && !this.Paragraph.bFromDocument && History.CanAddChanges())
 	{
 		this.Save_StartState();
@@ -13670,3 +13670,4 @@ window['AscCommonWord'].CanUpdatePosition = CanUpdatePosition;
 
 window['AscWord'] = window['AscWord'] || {};
 window['AscWord'].ParaRun = ParaRun;
+window['AscWord'].CRun = ParaRun;
