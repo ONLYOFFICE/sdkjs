@@ -1111,6 +1111,9 @@
 
 			var bIsHidden = t.model.getColHidden(col);
 
+			History.Create_NewPoint();
+			History.StartTransaction();
+
 			var bIsHiddenArr;
 			var startUpdateCol = col;
 			var _selectionRange = t.model.selectionRange;
@@ -1128,6 +1131,8 @@
 			} else {
 				t.model.setColWidth(cc, col, col);
 			}
+
+			History.EndTransaction();
 
 			t._cleanCache(new asc_Range(0, 0, t.cols.length - 1, t.rows.length - 1));
             if(t.objectRender) {
@@ -1241,6 +1246,9 @@
 				}
 			};
 
+			History.Create_NewPoint();
+			History.StartTransaction();
+
 			var bIsHiddenArr;
 			var startUpdateRow = row;
 			var endUpdateRow = row;
@@ -1262,6 +1270,8 @@
 			} else {
 				t.model.setRowHeight(AscCommonExcel.convertPxToPt(newHeight), row, row, true);
 			}
+
+			History.EndTransaction();
 
 			var updateRange = new asc_Range(0, startUpdateRow, t.cols.length - 1, endUpdateRow);
 			t.model.autoFilters.reDrawFilter(updateRange);
