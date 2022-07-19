@@ -174,7 +174,7 @@
 	 * The command must be compatible with ONLYOFFICE Document Builder syntax.
 	 * @param {Function} callback - The result that the method returns.
 	 * @param {boolean} isNoCalc - Defines whether the document will be recalculated or not.
-	 * The true value is used to recalculate the document after executing the function in the func parameter.
+	 * The true value is used to recalculate the document after executing the function in the command parameter.
 	 * The false value will not recalculate the document (use it only when your edits surely will not require document recalculation).
 	 */
 	EditorConnector.prototype.callCommand = function (command, callback, isNoCalc) {
@@ -236,10 +236,9 @@
 	 * attachEvent
 	 * @memberof EditorConnector
 	 * @alias attachEvent
-	 * @description Add event listener.
-	 * Add the function that will be called whenever the specified event is delivered to the target.
-	 * @param {string} name - The name of the event.
-	 * @param {Function} callback - Listener.
+	 * @description Adds an event listener, a function that will be called whenever the specified event is delivered to the target.
+	 * @param {string} name - The event name.
+	 * @param {Function} callback - The event listener.
 	 */
 	EditorConnector.prototype.attachEvent = function(name, callback) {
 		if (!this.isConnected) {
@@ -258,9 +257,8 @@
 	 * detachEvent
 	 * @memberof EditorConnector
 	 * @alias detachEvent
-	 * @description Remove event listener.
-	 * Remove listener for event.
-	 * @param {string} name - The name of the event.
+	 * @description Removes an event listener.
+	 * @param {string} name - The event name.
 	 */
 	EditorConnector.prototype.detachEvent = function(name) {
 		if (!this.events[name])
