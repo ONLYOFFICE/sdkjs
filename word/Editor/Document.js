@@ -10188,6 +10188,20 @@ CDocument.prototype.OnKeyDown = function(e)
 
 			bRetValue = keydownresult_PreventAll;
 		}
+		else if (e.KeyCode === 121)
+		{
+			if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
+			{
+				this.StartAction(AscDFH.historydescription_Document_AddContentControlTextForm);
+
+				let oCC = this.AddComplexForm();
+				oCC.SetFormPr(new AscWord.CSdtFormPr());
+
+				this.UpdateInterface();
+				this.Recalculate();
+				this.FinalizeAction();
+			}
+		}
 	}
 
     // Если был пересчет, значит были изменения, а вместе с ними пересылается и новая позиция курсора
