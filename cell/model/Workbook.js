@@ -8618,11 +8618,11 @@
 	};
 	Worksheet.prototype._findAllCells = function (options, searchEngine) {
 		//***searchEngine
-		if (true !== options.isMatchCase) {
-			options.findWhat = options.findWhat.toLowerCase();
-		}
 		if (options.findWhat == null) {
 			options.findWhat = "";
+		}
+		if (true !== options.isMatchCase) {
+			options.findWhat = options.findWhat.toLowerCase();
 		}
 
 		var findEmptyStr = options.findWhat === "";
