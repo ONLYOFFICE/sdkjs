@@ -1495,6 +1495,7 @@ var editor;
 
 		AscCommonExcel.executeInR1C1Mode(false, function () {
 			var doc = new openXml.OpenXmlPackage(jsZlib, null);
+			var reader, i, j;
 
 			//core
 			var coreXmlPart = doc.getPartByRelationshipType(openXml.Types.coreFileProperties.relationType);
@@ -1522,11 +1523,10 @@ var editor;
 			wbPart = doc.getPartByRelationshipType(openXml.Types.workbook.relationType);
 			var contentWorkbook = wbPart.getDocumentContent();
 			wbXml = new AscCommonExcel.CT_Workbook(wb);
-			var reader = new StaxParser(contentWorkbook, wbPart, xmlParserContext);
+			reader = new StaxParser(contentWorkbook, wbPart, xmlParserContext);
 			wbXml.fromXml(reader);
 
 
-			var reader, i, j;
 			if (t.isOpenOOXInBrowser) {
 
 				//theme
@@ -1750,7 +1750,7 @@ var editor;
 				//TODO проверить когда несколько ссылок на customXml
 				var customXmlParts = wbPart.getPartsByRelationshipType(openXml.Types.customXml.relationType);
 				if (customXmlParts) {
-					for (var i = 0; i < customXmlParts.length; i++) {
+					for (i = 0; i < customXmlParts.length; i++) {
 						var customXmlPart = customXmlParts[i];
 						var customXml = customXmlPart.getDocumentContent("string");
 						var customXmlPropsPart = customXmlPart.getPartByRelationshipType(openXml.Types.customXmlProps.relationType);
@@ -1767,9 +1767,8 @@ var editor;
 			}
 
 			//sheets
+			var wsParts = [];
 			if (t.isOpenOOXInBrowser && wbXml.sheets) {
-				var wsParts = [];
-
 				//вначале беру все листы, потом запрашиваю контент каждого из них.
 				//связано с проблемой внтури парсера, на примере файла Read_Only_part_of_lists.xlsx
 				wbXml.sheets.forEach(function (wbSheetXml) {
@@ -2173,7 +2172,7 @@ var editor;
 					}
 				});
 			} else if(wbXml.sheets) {
-				var wsParts = [];
+				wsParts = [];
 
 				//вначале беру все листы, потом запрашиваю контент каждого из них.
 				//связано с проблемой внтури парсера, на примере файла Read_Only_part_of_lists.xlsx
@@ -2294,7 +2293,9 @@ var editor;
 				}
 			}
 
-			initOpenManager.readDefStyles(wb, wb.CellStyles.DefaultStyles);
+			if (t.isOpenOOXInBrowser) {
+				initOpenManager.readDefStyles(wb, wb.CellStyles.DefaultStyles);
+			}
 
 			wb.initPostOpenZip(pivotCaches, xmlParserContext);
 		});
