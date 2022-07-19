@@ -9520,7 +9520,7 @@
         }
     };
     CTimeNodeContainer.prototype.readChildXml = function (name, reader) {
-        if(0 === name) {
+        if("cTn" === name) {
             this.setCTn(new CCTn());
             this.cTn.fromXml(reader);
         }
