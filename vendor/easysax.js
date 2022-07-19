@@ -1601,6 +1601,9 @@ StaxParser.prototype.readXmlArray = function(childName, func) {
         }
     }
 };
+StaxParser.prototype.AddConnectedObject = function(object) {
+    this.context.addConnectorsPr(object);
+};
 
 function XmlParserContext(){
     //common
@@ -1768,6 +1771,15 @@ XmlWriterContext.prototype.getImageRId = function(sRasterImageId) {
         }
     }
     return this.currentPartImageMap[sRasterImageId] ? this.currentPartImageMap[sRasterImageId] : "";
+};
+XmlWriterContext.prototype.getSpIdxId = function(sEditorId){
+    if(typeof sEditorId === "string" && sEditorId.length > 0) {
+        var oDrawing = AscCommon.g_oTableId.Get_ById(sEditorId);
+        if(oDrawing && oDrawing.getFormatId) {
+            return oDrawing.getFormatId();
+        }
+    }
+    return null;
 };
 function CT_XmlNode(opt_elemReader) {
     this.attributes = {};

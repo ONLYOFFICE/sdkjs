@@ -414,7 +414,6 @@
 			this.m_oFactoryClass[AscDFH.historyitem_type_CBhvr]               = AscFormat.CCBhvr;
 			this.m_oFactoryClass[AscDFH.historyitem_type_CTn]                 = AscFormat.CCTn;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Cond]                = AscFormat.CCond;
-			this.m_oFactoryClass[AscDFH.historyitem_type_Rtn]                 = AscFormat.CRtn;
 			this.m_oFactoryClass[AscDFH.historyitem_type_TgtEl]               = AscFormat.CTgtEl;
 			this.m_oFactoryClass[AscDFH.historyitem_type_SndTgt]              = AscFormat.CSndTgt;
 			this.m_oFactoryClass[AscDFH.historyitem_type_SpTgt]               = AscFormat.CSpTgt;
