@@ -2503,10 +2503,13 @@
 		rx_table              = build_rx_table(null),
 		rx_table_local        = build_rx_table(null);
 
+
 	function parseExternalLink(url) {
+		//var regExpExceptExternalLink = /('?[a-zA-Z0-9\s\[\]\.]{1,99})?'?!?\$?[a-zA-Z]{1,3}\$?[0-9]{1,7}(:\$?[a-zA-Z]{1,3}\$?[0-9]{1,7})?/;
+
 		//'path/[name]Sheet1'!A1
 		var path, name, startLink, i;
-		if (url && url[0] === "'") {
+		if (url && url[0] === "'"/*url.match(/('[^\[]*\[[^\]]+\]([^'])+'!)/g)*/) {
 			for (i = url.length - 1; i >= 0; i--) {
 				if (url[i] === "!" && url[i - 1] === "'") {
 					startLink = true;
@@ -2539,6 +2542,8 @@
 					return {name: url.substring(1, i), path: "", fullname:  url.substring(0, i + 1)};
 				}
 			}
+		} else if (true) { //https://s3.amazonaws.com/nct-files/xlsx/[ExternalLinksDestination.xlsx]Sheet1!A1:A2
+
 		}
 
 		return null;
@@ -2944,6 +2949,9 @@
 			if (external) {
 				externalLength = external.fullname.length;
 				subSTR = formula.substring(start_pos + externalLength);
+				if (-1 !== subSTR.indexOf("'")) {
+					externalLength += 1;
+				}
 				subSTR = subSTR.replace("'", "");
 				external = external.path + external.name;
 			}

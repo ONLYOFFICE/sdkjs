@@ -1357,7 +1357,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var wsFrom = this.wsFrom.getName();
 		var wsTo = this.wsTo.getName();
 		var name = this.bbox ? this.bbox.getName() : this.value;
-		return this.getExternalLinkStr(this.externalLink, true) + parserHelp.get3DRef(wsFrom !== wsTo ? wsFrom + ':' + wsTo : wsFrom, name);
+		var exPath = this.getExternalLinkStr(this.externalLink, true);
+		return  parserHelp.get3DRef(wsFrom !== wsTo ? exPath + wsFrom + ':' + wsTo : exPath + wsFrom, name);
 	};
 	cArea3D.prototype.tocNumber = function () {
 		return this.getValue()[0].tocNumber();
@@ -1762,7 +1763,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 	};
 	cRef3D.prototype.toLocaleString = function () {
-		return this.getExternalLinkStr(this.externalLink, true) + parserHelp.get3DRef(this.ws.getName(), this.range.getName());
+		var exPath = this.getExternalLinkStr(this.externalLink, true);
+		return parserHelp.get3DRef(exPath + this.ws.getName(), this.range.getName());
 	};
 	cRef3D.prototype.getWS = function () {
 		return this.ws;
