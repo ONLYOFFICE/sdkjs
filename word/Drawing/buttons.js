@@ -846,8 +846,9 @@
 	exportObj["Date"] = exportObj.Date;
 
 	AscCommon.ContentControlTrack = {
-		Hover 	: 0,
-		In 		: 1
+		Hover : 0,
+		In    : 1,
+		Main  : 2
 	};
 
 	// показ диалогов в мобильной версии должен быть только по клику
@@ -2203,7 +2204,8 @@
 			// всегда должен быть максимум один hover и in
 			for (var i = 0; i < this.ContentControlObjects.length; i++)
 			{
-				if (state == this.ContentControlObjects[i].state)
+				if (state == this.ContentControlObjects[i].state
+					|| (!obj && AscCommon.ContentControlTrack.In === state && AscCommon.ContentControlTrack.Main === this.ContentControlObjects[i].state))
 				{
 					if (-2 != this.ContentControlObjects[i].ActiveButtonIndex)
 						isActiveRemove = true;

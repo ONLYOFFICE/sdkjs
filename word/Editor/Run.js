@@ -141,7 +141,7 @@ function ParaRun(Paragraph, bMathRun)
 	this.CompositeInput = null;
 
 	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-	g_oTableId.Add(this, this.Id);
+	AscCommon.g_oTableId.Add(this, this.Id);
 	if (this.Paragraph && !this.Paragraph.bFromDocument && History.CanAddChanges())
 	{
 		this.Save_StartState();
@@ -3273,7 +3273,7 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 	var oTheme  = this.Paragraph.GetTheme();
 
 	let _oTextPr = oTextPr;
-	if (this.private_IsUseAscFont(oTextPr))
+	if (this.IsUseAscFont(oTextPr))
 	{
 		_oTextPr = oTextPr.Copy();
 		_oTextPr.RFonts.SetAll("ASCW3");
@@ -6402,7 +6402,7 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
 
     var CurTextPr = this.Get_CompiledPr( false );
 
-    if (this.private_IsUseAscFont(CurTextPr))
+    if (this.IsUseAscFont(CurTextPr))
 	{
 		var oFontTextPr = CurTextPr.Copy();
 		oFontTextPr.RFonts.SetAll("ASCW3", -1);
@@ -12753,12 +12753,12 @@ ParaRun.prototype.GetTextFormAutoWidth = function()
 	this.Recalculate_MeasureContent();
 	return this.TextAscent;
 };
-ParaRun.prototype.CheckParentFormKey = function(oPr)
+ParaRun.prototype.CheckParentFormKey = function()
 {
-	var sKey = this.Parent instanceof CInlineLevelSdt && this.Parent.IsForm() ? this.Parent.GetFormKey() : null;
-	var oLogicDocument = this.GetLogicDocument();
-	if (sKey && oLogicDocument && oLogicDocument.OnChangeForm)
-		oLogicDocument.OnChangeForm(sKey, this.Parent, oPr);
+	let oForm = this.GetParentForm();
+	let oLogicDocument = this.GetLogicDocument();
+	if (oForm && oLogicDocument && oLogicDocument.IsDocumentEditor())
+		oLogicDocument.OnChangeForm(oForm);
 };
 ParaRun.prototype.GetParentForm = function()
 {
@@ -12992,7 +12992,7 @@ ParaRun.prototype.CalculateTextToTable = function(oEngine)
 		}
 	}
 };
-ParaRun.prototype.private_IsUseAscFont = function(oTextPr)
+ParaRun.prototype.IsUseAscFont = function(oTextPr)
 {
 	return (1 === this.Content.length
 		&& para_Text === this.Content[0].Type
@@ -13670,3 +13670,4 @@ window['AscCommonWord'].CanUpdatePosition = CanUpdatePosition;
 
 window['AscWord'] = window['AscWord'] || {};
 window['AscWord'].ParaRun = ParaRun;
+window['AscWord'].CRun = ParaRun;

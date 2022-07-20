@@ -104,6 +104,13 @@
 
 		return null;
 	};
+	CTableId.prototype.GetClass = function(id)
+	{
+		if (!id || !this.m_aPairs[id])
+			return null;
+
+		return this.m_aPairs[id];
+	};
 	/**
 	 * Получаем Id, по классу (вообще, данную функцию лучше не использовать)
 	 * @param Class

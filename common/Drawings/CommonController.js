@@ -1735,7 +1735,7 @@ DrawingObjectsController.prototype =
                 this.updateOverlay();
 
 
-            if(e.ClickCount > 1 && !e.ShiftKey && !e.CtrlKey && ((this.selection.groupSelection && this.selection.groupSelection.selectedObjects.length === 1) || this.selectedObjects.length === 1))
+            if(AscFormat.isLeftButtonDoubleClick(e) && !e.ShiftKey && !e.CtrlKey && ((this.selection.groupSelection && this.selection.groupSelection.selectedObjects.length === 1) || this.selectedObjects.length === 1))
             {
                 var drawing = this.selectedObjects[0].parent;
 
@@ -2190,7 +2190,7 @@ DrawingObjectsController.prototype =
 					{
 						var oForm = object.getInnerForm();
 						if (oForm)
-						 	oForm.DrawContentControlsTrack(true, tx, ty, 0, false);
+						 	oForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Hover, tx, ty, 0, false);
 					}
 
                     var nPageIndex = pageIndex;
@@ -4320,7 +4320,7 @@ DrawingObjectsController.prototype =
                     var oRun = oImg.parent.GetRun();
                     if(oRun)
                     {
-                        oRun.CheckParentFormKey(props.ImageUrl)
+                        oRun.CheckParentFormKey()
                     }
                 }
             }
@@ -12055,6 +12055,13 @@ function CalcLiterByLength(aAlphaBet, nLength)
         });
     }
 
+    function isLeftButtonDoubleClick(oEvent) {
+        if(oEvent.ClickCount > 1 && oEvent.ClickCount % 2 === 0 && oEvent.Button === 0) {
+            return true;
+        }
+        return false;
+    }
+
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].HANDLE_EVENT_MODE_HANDLE = HANDLE_EVENT_MODE_HANDLE;
@@ -12133,6 +12140,7 @@ function CalcLiterByLength(aAlphaBet, nLength)
 	window['AscFormat'].HitToRect = HitToRect;
 	window['AscFormat'].drawingsUpdateForeignCursor = drawingsUpdateForeignCursor;
 	window['AscFormat'].fSortTrackObjects = fSortTrackObjects;
+	window['AscFormat'].isLeftButtonDoubleClick = isLeftButtonDoubleClick;
 
     window['AscCommon'] = window['AscCommon'] || {};
     window["AscCommon"].CDrawTask = CDrawTask;

@@ -74,6 +74,11 @@
 			{
 				this.privateData = {"data" : ""};
 			}
+		},
+
+		wrap : function(obj)
+		{
+			this.privateData = obj;
 		}
 	};
 
@@ -406,7 +411,8 @@
 				isSystem: isSystem,
 				startData: _startData,
 				closeAttackTimer: -1,
-				methodReturnAsync: false
+				methodReturnAsync: false,
+				isConnector: plugin.isConnector
 			};
 
 			this.show(guid);
@@ -476,6 +482,13 @@
 						runObject.waitEvents = [];
 					runObject.waitEvents.push({ n : mainEventType, d : this.mainEvents[mainEventType] });
 				}
+			}
+
+			if (plugin.isConnector)
+			{
+				runObject.currentInit = true;
+				runObject.isInitReceive = true;
+				return;
 			}
 
 			if (runObject.startData.getAttribute("resize") === true)
@@ -722,11 +735,11 @@
 				return false;
 
 			var _map = {};
-			for (var i = 0; i < this.plugins.length; i++)
+			for (let i = 0; i < this.plugins.length; i++)
 				_map[this.plugins[i].guid] = this.plugins[i].getIntVersion();
 
 			var _new = [];
-			for (var i = 0; i < _plugins.length; i++)
+			for (let i = 0; i < _plugins.length; i++)
 			{
 				var _p = new Asc.CPlugin();
 				_p["deserialize"](_plugins[i]);
@@ -736,13 +749,13 @@
 					if (_map[_p.guid] < _p.getIntVersion())
 					{
 						// нужно обновить
-						for (var i = 0; i < this.plugins.length; i++)
+						for (let j = 0; j < this.plugins.length; j++)
 						{
-							if (this.plugins[i].guid === _p.guid)
+							if (this.plugins[j].guid === _p.guid)
 							{
 								if (this.pluginsMap[_p.guid])
 									delete this.pluginsMap[_p.guid];
-								this.plugins.splice(i, 1);
+								this.plugins.splice(j, 1);
 							}
 						}
 					}
@@ -830,9 +843,8 @@
                     pluginData.setAttribute("type", "onEvent");
                     pluginData.setAttribute("eventName", name);
                     pluginData.setAttribute("eventData", data);
-                    var _iframe = document.getElementById(runObject.frameId);
-                    if (_iframe)
-                        _iframe.contentWindow.postMessage(pluginData.serialize(), "*");
+
+					this.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginData);
                 }
             }
         },
@@ -932,9 +944,8 @@
 			pluginData.setAttribute("guid", plugin.guid);
 			pluginData.setAttribute("type", "onMethodReturn");
 			pluginData.setAttribute("methodReturnData", _return);
-			var _iframe = document.getElementById(runObject.frameId);
-			if (_iframe)
-				_iframe.contentWindow.postMessage(pluginData.serialize(), "*");
+
+			this.sendMessageToFrame(plugin.isConnector ? "" : runObject.frameId, pluginData);
 		},
 
 		setPluginMethodReturnAsync : function()
@@ -1000,6 +1011,71 @@
             }
         },
 
+		externalConnectorMessage : function(data)
+		{
+			switch (data["type"])
+			{
+				case "register":
+				{
+					var config = {
+						"name" : "connector",
+						"guid" : data["guid"],
+						"baseUrl" : "",
+						"isConnector" : true,
+
+						"variations" : [
+							{
+								"isViewer"            : true,
+								"EditorsSupport"      : ["word", "cell", "slide"],
+								"isSystem"            : true,
+								"buttons"             : []
+							}
+						]
+					};
+
+					this.unregister(data["guid"]);
+					this.loadExtensionPlugins([config], false, true);
+					break;
+				}
+				case "unregister":
+				{
+					this.unregister(data["guid"]);
+					break;
+				}
+				case "attachEvent":
+				{
+					var plugin = this.getPluginByGuid(data["guid"]);
+					if (plugin && plugin.variations && plugin.variations[0])
+					{
+						plugin.variations[0].eventsMap[data["name"]] = true;
+					}
+					break;
+				}
+				case "detachEvent":
+				{
+					var plugin = this.getPluginByGuid(data["guid"]);
+					if (plugin && plugin.variations && plugin.variations[0])
+					{
+						if (plugin.variations[0].eventsMap[data["name"]])
+							delete plugin.variations[0].eventsMap[data["name"]];
+					}
+					break;
+				}
+				case "command":
+				{
+					onMessage(data, undefined, true);
+					break;
+				}
+				case "method":
+				{
+					onMessage(data, undefined, true);
+					break;
+				}
+				default:
+					break;
+			}
+		},
+
 		checkOrigin : function(guid, event)
 		{
 			if (event.origin === window.origin)
@@ -1015,23 +1091,39 @@
 				return true;
 
 			return false;
-		}
+		},
         /* -------------------------------- */
+
+		sendMessageToFrame : function(frameId, pluginData)
+		{
+			if ("" === frameId)
+			{
+				window.postMessage("{\"type\":\"onExternalPluginMessageCallback\",\"data\":" + pluginData.serialize() + "}", "*");
+				return;
+			}
+			var _iframe = document.getElementById(frameId);
+			if (_iframe)
+				_iframe.contentWindow.postMessage(pluginData.serialize(), "*");
+		}
 	};
 
 	// export
 	CPluginsManager.prototype["buttonClick"] = CPluginsManager.prototype.buttonClick;
 
-	function onMessage(event, channel)
+	function onMessage(event, channel, isObj)
 	{
 		if (!window.g_asc_plugins)
 			return;
 
-		if (typeof(event.data) != "string")
+		if (!isObj && typeof(event.data) != "string")
 			return;
 
 		var pluginData = new CPluginData();
-		pluginData.deserialize(event.data);
+
+		if (true === isObj)
+			pluginData.wrap(event);
+		else
+			pluginData.deserialize(event.data);
 
 		var guid = pluginData.getAttribute("guid");
 		var runObject = window.g_asc_plugins.runnedPluginsMap[guid];
@@ -1040,7 +1132,7 @@
 			return;
 
 		// check origin
-		if (!window.g_asc_plugins.checkOrigin(guid, event))
+		if (!isObj && !window.g_asc_plugins.checkOrigin(guid, event))
 			return;
 
 		var name  = pluginData.getAttribute("type");
@@ -1269,9 +1361,7 @@
 								pluginData.setAttribute("guid", guid);
 								pluginData.setAttribute("type", "onCommandCallback");
 
-								var _iframe = document.getElementById(runObject.frameId);
-								if (_iframe)
-									_iframe.contentWindow.postMessage(pluginData.serialize(), "*");
+								window.g_asc_plugins.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginData);
 							});
 						}
 						else
@@ -1298,9 +1388,8 @@
 					var pluginData = new CPluginData();
 					pluginData.setAttribute("guid", guid);
 					pluginData.setAttribute("type", "onCommandCallback");
-					var _iframe = document.getElementById(runObject.frameId);
-					if (_iframe)
-						_iframe.contentWindow.postMessage(pluginData.serialize(), "*");
+
+					window.g_asc_plugins.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginData);
 				}
 			}
 
@@ -1346,9 +1435,8 @@
 				pluginData.setAttribute("guid", guid);
 				pluginData.setAttribute("type", "onMethodReturn");
 				pluginData.setAttribute("methodReturnData", _return);
-				var _iframe = document.getElementById(runObject.frameId);
-				if (_iframe)
-					_iframe.contentWindow.postMessage(pluginData.serialize(), "*");
+
+				window.g_asc_plugins.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginData);
 			}
 			runObject.methodReturnAsync = false;
 			window.g_asc_plugins.guidAsyncMethod = "";

@@ -267,7 +267,7 @@ CGraphicObjects.prototype =
 							Y = oTransform.TransformPointY(x, y);
 						}
 
-						oInnerForm.DrawContentControlsTrack(true, X, Y, 0);
+						oInnerForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Hover, X, Y, 0);
 					}
 				}
 

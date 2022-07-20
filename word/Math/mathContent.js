@@ -1620,7 +1620,7 @@ CMathContent.prototype.IsAccent = function()
 /// For Para Math
 CMathContent.prototype.GetParent = function()
 {
-    return this.Parent.GetParent();
+    return this.Parent ? this.Parent.GetParent() : null;
 };
 CMathContent.prototype.SetArgSize = function(val)
 {

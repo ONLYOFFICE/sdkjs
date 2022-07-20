@@ -236,6 +236,9 @@ CInlineLevelSdt.prototype.private_CopyPrTo = function(oContentControl, oPr)
 
 	if (undefined !== this.Pr.PictureFormPr)
 		oContentControl.SetPictureFormPr(this.Pr.PictureFormPr);
+
+	if (this.Pr.ComplexFormPr)
+		oContentControl.SetComplexFormPr(this.Pr.ComplexFormPr);
 };
 CInlineLevelSdt.prototype.GetSelectedContent = function(oSelectedContent)
 {
@@ -292,10 +295,7 @@ CInlineLevelSdt.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 {
 	History.Add(new CChangesParaFieldAddItem(this, Pos, [Item]));
 	CParagraphContentWithParagraphLikeContent.prototype.Add_ToContent.apply(this, arguments);
-
-	var sKey = this.GetFormKey();
-	if (sKey)
-		this.GetLogicDocument().OnChangeForm(sKey, this);
+	this.GetLogicDocument().OnChangeForm(this);
 };
 CInlineLevelSdt.prototype.Remove_FromContent = function(Pos, Count, UpdatePosition)
 {
@@ -303,11 +303,16 @@ CInlineLevelSdt.prototype.Remove_FromContent = function(Pos, Count, UpdatePositi
 	var DeletedItems = this.Content.slice(Pos, Pos + Count);
 	History.Add(new CChangesParaFieldRemoveItem(this, Pos, DeletedItems));
 	CParagraphContentWithParagraphLikeContent.prototype.Remove_FromContent.apply(this, arguments);
+	this.GetLogicDocument().OnChangeForm(this);
+};
+CInlineLevelSdt.prototype.OnContentChange = function()
+{
+	let oParagraph     = this.GetParagraph();
+	let oLogicDocument = oParagraph ? oParagraph.GetLogicDocument() : null;
+	if (oLogicDocument)
+		oLogicDocument.OnChangeContentControl(this);
 
-	var sKey = this.GetFormKey();
-	if (sKey)
-		this.GetLogicDocument().OnChangeForm(sKey, this);
-
+	CParagraphContentWithParagraphLikeContent.prototype.OnContentChange.apply(this, arguments);
 };
 CInlineLevelSdt.prototype.Split = function (ContentPos, Depth)
 {
@@ -336,7 +341,11 @@ CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _C
 	if (0 === CurLine)
 		Y0 = oParagraph.Lines[_CurLine].Y + oParagraph.Pages[_CurPage].Y - oParagraph.Lines[_CurLine].Metrics.Ascent;
 
-	if (this.IsForm() && !this.IsPicture() && (this.Content[0] instanceof ParaRun))
+	let isSimpleForm = (this.IsForm() && !this.IsComplexForm() && (this === this.GetMainForm()));
+
+	if (isSimpleForm
+		&& !this.IsPicture()
+		&& (this.Content[0] instanceof ParaRun))
 	{
 		var oRun    = this.Content[0];
 		var oTextPr = oRun.Get_CompiledPr(false);
@@ -371,7 +380,9 @@ CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _C
 
 	var X1 = PRSA.X;
 
-	if (this.IsForm() && this.IsPicture() && Math.abs(X1 - X0) > 0.001)
+	if (isSimpleForm
+		&& this.IsPicture()
+		&& Math.abs(X1 - X0) > 0.001)
 	{
 		var arrDrawings = this.GetAllDrawingObjects();
 		if (arrDrawings.length > 0 && arrDrawings[0].IsPicture())
@@ -569,7 +580,11 @@ CInlineLevelSdt.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, U
 
 	var bResult = CParagraphContentWithParagraphLikeContent.prototype.Get_LeftPos.call(this, SearchPos, ContentPos, Depth, UseContentPos);
 
-	if (true !== bResult && this.Paragraph && this.Paragraph.LogicDocument && true === this.Paragraph.LogicDocument.IsFillingFormMode())
+	if (true !== bResult
+		&& this.Paragraph
+		&& this.Paragraph.LogicDocument
+		&& true === this.Paragraph.LogicDocument.IsFillingFormMode()
+		&& this === this.GetMainForm())
 	{
 		this.Get_StartPos(SearchPos.Pos, Depth);
 		SearchPos.Found = true;
@@ -594,7 +609,11 @@ CInlineLevelSdt.prototype.Get_RightPos = function(SearchPos, ContentPos, Depth, 
 
 	var bResult = CParagraphContentWithParagraphLikeContent.prototype.Get_RightPos.call(this, SearchPos, ContentPos, Depth, UseContentPos, StepEnd);
 
-	if (true !== bResult && this.Paragraph && this.Paragraph.LogicDocument && true === this.Paragraph.LogicDocument.IsFillingFormMode())
+	if (true !== bResult
+		&& this.Paragraph
+		&& this.Paragraph.LogicDocument
+		&& true === this.Paragraph.LogicDocument.IsFillingFormMode()
+		&& this === this.GetMainForm())
 	{
 		this.Get_EndPos(false, SearchPos.Pos, Depth);
 		SearchPos.Found = true;
@@ -653,7 +672,11 @@ CInlineLevelSdt.prototype.Get_WordStartPos = function(SearchPos, ContentPos, Dep
 {
 	CParagraphContentWithParagraphLikeContent.prototype.Get_WordStartPos.call(this, SearchPos, ContentPos, Depth, UseContentPos);
 
-	if (true !== SearchPos.Found && this.Paragraph && this.Paragraph.LogicDocument && true === this.Paragraph.LogicDocument.IsFillingFormMode())
+	if (true !== SearchPos.Found
+		&& this.Paragraph
+		&& this.Paragraph.LogicDocument
+		&& true === this.Paragraph.LogicDocument.IsFillingFormMode()
+		&& this === this.GetMainForm())
 	{
 		this.Get_StartPos(SearchPos.Pos, Depth);
 		SearchPos.UpdatePos = true;
@@ -665,7 +688,11 @@ CInlineLevelSdt.prototype.Get_WordEndPos = function(SearchPos, ContentPos, Depth
 {
 	CParagraphContentWithParagraphLikeContent.prototype.Get_WordEndPos.call(this, SearchPos, ContentPos, Depth, UseContentPos, StepEnd);
 
-	if (true !== SearchPos.Found && this.Paragraph && this.Paragraph.LogicDocument && true === this.Paragraph.LogicDocument.IsFillingFormMode())
+	if (true !== SearchPos.Found
+		&& this.Paragraph
+		&& this.Paragraph.LogicDocument
+		&& true === this.Paragraph.LogicDocument.IsFillingFormMode()
+		&& this === this.GetMainForm())
 	{
 		this.Get_EndPos(false, SearchPos.Pos, Depth);
 		SearchPos.UpdatePos = true;
@@ -800,7 +827,7 @@ CInlineLevelSdt.prototype.GetFixedFormBounds = function(isUsePaddings)
 
 	return {X : 0, Y : 0, W : 0, H : 0, Page : 0};
 };
-CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCurPage, isCheckHit)
+CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPage, isCheckHit)
 {
 	if (!this.Paragraph && this.Paragraph.LogicDocument)
 		return;
@@ -809,6 +836,24 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCu
 
 	if (this.IsContentControlEquation())
 		return;
+
+	let oMainForm;
+	if (this.IsForm() && (oMainForm = this.GetMainForm()) && oMainForm !== this)
+	{
+		if (AscCommon.ContentControlTrack.Hover === nType)
+		{
+			return oMainForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Hover, X, Y, nCurPage, isCheckHit);
+		}
+		else
+		{
+			oMainForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Main, X, Y, nCurPage, isCheckHit);
+
+			// В режиме заполнения, у внутренних текстовых форм и чекбоксов не рисуем собственный трек, а только внешний
+			if (oLogicDocument.IsFillingFormMode()
+				&& (this.IsTextForm() || this.IsCheckBox()))
+				return;
+		}
+	}
 
 	var oDrawingDocument = oLogicDocument.GetDrawingDocument();
 	
@@ -830,7 +875,7 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCu
 			return;
 
 		var sHelpText = "";
-		if (isHover && this.IsForm() && (sHelpText = this.GetFormPr().HelpText))
+		if (AscCommon.ContentControlTrack.Hover === nType && this.IsForm() && (sHelpText = this.GetFormPr().HelpText))
 		{
 			var oMMData   = new AscCommon.CMouseMoveData();
 			var oCoords   = oDrawingDocument.ConvertCoordsToCursorWR(X, Y, this.Paragraph.GetAbsolutePage(nCurPage), this.Paragraph.Get_ParentTextTransform());
@@ -847,17 +892,17 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(isHover, X, Y, nCu
 	{
 		var oPolygon = new AscCommon.CPolygon();
 		oPolygon.fill([[oShape.getFormRelRect()]]);
-		oDrawingDocument.OnDrawContentControl(this, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In, oPolygon.GetPaths(0));
+		oDrawingDocument.OnDrawContentControl(this, nType, oPolygon.GetPaths(0));
 		return;
 	}
 
 	if (Asc.c_oAscSdtAppearance.Hidden === this.GetAppearance() || this.Paragraph.LogicDocument.IsForceHideContentControlTrack())
 	{
-		oDrawingDocument.OnDrawContentControl(null, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In);
+		oDrawingDocument.OnDrawContentControl(null, nType);
 		return;
 	}
 
-	oDrawingDocument.OnDrawContentControl(this, isHover ? AscCommon.ContentControlTrack.Hover : AscCommon.ContentControlTrack.In, this.GetBoundingPolygon());
+	oDrawingDocument.OnDrawContentControl(this, nType, this.GetBoundingPolygon());
 };
 CInlineLevelSdt.prototype.IsDrawContentControlsTrackBounds = function()
 {
@@ -997,8 +1042,14 @@ CInlineLevelSdt.prototype.FindNextFillingForm = function(isNext, isCurrent, isSt
 };
 CInlineLevelSdt.prototype.GetAllContentControls = function(arrContentControls)
 {
-	arrContentControls.push(this);
-	CParagraphContentWithParagraphLikeContent.prototype.GetAllContentControls.apply(this, arguments);
+	if (!arrContentControls)
+		arrContentControls = [];
+	else
+		arrContentControls.push(this);
+
+	CParagraphContentWithParagraphLikeContent.prototype.GetAllContentControls.call(this, arrContentControls);
+
+	return arrContentControls;
 };
 CInlineLevelSdt.prototype.Document_UpdateInterfaceState = function()
 {
@@ -1009,8 +1060,9 @@ CInlineLevelSdt.prototype.Document_UpdateInterfaceState = function()
 };
 CInlineLevelSdt.prototype.SetParagraph = function(oParagraph)
 {
-	if (this.GetTextFormPr() && this.GetLogicDocument())
-		this.GetLogicDocument().RegisterForm(this);
+	let oLogicDocument;
+	if (this.GetTextFormPr() && (oLogicDocument = this.GetLogicDocument()))
+		oLogicDocument.GetFormsManager().Register(this);
 
 	CParagraphContentWithParagraphLikeContent.prototype.SetParagraph.apply(this, arguments);
 };
@@ -1234,7 +1286,7 @@ CInlineLevelSdt.prototype.ReplaceContentWithPlaceHolder = function(isSelect)
 };
 CInlineLevelSdt.prototype.CorrectContent = function()
 {
-	if (this.IsForm())
+	if (this.IsForm() && !this.IsComplexForm())
 	{
 		this.MakeSingleRunElement(false);
 	}
@@ -1592,8 +1644,8 @@ CInlineLevelSdt.prototype.ToggleCheckBox = function(isChecked)
 		return;
 
 	var oLogicDocument = this.GetLogicDocument();
-	if (oLogicDocument && (this.IsRadioButton() || this.GetFormKey()))
-		oLogicDocument.OnChangeForm(this.IsRadioButton() ? this.Pr.CheckBox.GroupKey : this.GetFormKey(), this);
+	if (oLogicDocument && oLogicDocument.IsDocumentEditor())
+		oLogicDocument.OnChangeForm(this);
 
 	if (undefined === isChecked && this.IsRadioButton() && true === this.Pr.CheckBox.Checked)
 		return;
@@ -2126,7 +2178,7 @@ CInlineLevelSdt.prototype.private_UpdateTextFormContent = function()
 CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
 {
 	if (this.GetFormKey() && this.GetLogicDocument())
-		this.GetLogicDocument().CheckSelectionLockedByFormKey(CheckType, this.GetFormKey(), this.GetParagraph());
+		this.GetLogicDocument().GetFormsManager().CheckLockByKey(CheckType, this.GetFormKey(), this.GetParagraph());
 
 	if (AscCommon.changestype_Paragraph_TextProperties === CheckType
 		|| ((AscCommon.changestype_Drawing_Props === CheckType || AscCommon.changestype_Image_Properties === CheckType)
@@ -2592,7 +2644,7 @@ CInlineLevelSdt.prototype.IsFormFilled = function()
 		if (!oLogicDocument)
 			return false;
 
-		var arrRadioGroup = oLogicDocument.GetSpecialRadioButtons(this.GetCheckBoxPr().GetGroupKey());
+		var arrRadioGroup = oLogicDocument.GetFormsManager().GetRadioButtons(this.GetCheckBoxPr().GetGroupKey());
 		for (var nIndex = 0, nCount = arrRadioGroup.length; nIndex < nCount; ++nIndex)
 		{
 			var oRadioForm = arrRadioGroup[nIndex];
@@ -3266,6 +3318,16 @@ CInlineLevelSdt.prototype.SetInnerText = function(sText)
 	let oRun = this.MakeSingleRunElement(true);
 	oRun.AddText(sText);
 };
+CInlineLevelSdt.prototype.GetInnerText = function()
+{
+	var oText = {
+		Text: ""
+	};
+
+	this.Get_Text(oText);
+
+	return oText.Text;
+};
 CInlineLevelSdt.prototype.GetPicture = function()
 {
 	let oImage;
@@ -3283,3 +3345,4 @@ CInlineLevelSdt.prototype.GetPicture = function()
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CInlineLevelSdt = CInlineLevelSdt;
+window["AscWord"].CInlineLevelSdt = CInlineLevelSdt;

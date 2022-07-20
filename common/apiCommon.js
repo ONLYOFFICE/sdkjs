@@ -5632,6 +5632,7 @@
 		this.baseUrl = "";
 		this.minVersion = "";
 		this.version = "";
+		this.isConnector = false;
 
 		this.variations = [];
 	}
@@ -5723,6 +5724,7 @@
 		_object["version"]    = this.version;
 		_object["baseUrl"]    = this.baseUrl;
 		_object["minVersion"] = this.minVersion;
+		_object["isConnector"] = this.isConnector;
 
 		if (this.group)
 		{
@@ -5746,6 +5748,7 @@
 		this.version    = (_object["version"] != null) ? _object["version"] : this.version;
 		this.baseUrl    = (_object["baseUrl"] != null) ? _object["baseUrl"] : this.baseUrl;
 		this.minVersion = (_object["minVersion"] != null) ? _object["minVersion"] : this.minVersion;
+		this.isConnector = (_object["isConnector"] != null) ? _object["isConnector"] : this.isConnector;
 
 		if (true)
 		{
@@ -5766,8 +5769,6 @@
 			this.group.rank = (_object["group"]["rank"] != null) ? _object["group"]["rank"] : 0;
 		}
 
-
-		this.group      = (_object["group"] != null) ? _object["group"] : this.group;
 		this.variations = [];
 		for (var i = 0; i < _object["variations"].length; i++)
 		{

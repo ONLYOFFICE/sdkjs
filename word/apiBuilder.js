@@ -2975,6 +2975,19 @@
 	ApiPictureForm.prototype.constructor = ApiPictureForm;
 
 	/**
+	 * Class representing a complex form
+	 * @param oSdt
+	 * @constructor
+	 * @extends {ApiFormBase}
+	 */
+	function ApiComplexForm(oSdt)
+	{
+		ApiFormBase.call(this, oSdt);
+	}
+	ApiComplexForm.prototype = Object.create(ApiFormBase.prototype);
+	ApiComplexForm.prototype.constructor = ApiComplexForm;
+
+	/**
 	 * Sets the hyperlink address.
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sLink - The hyperlink address.
@@ -3767,6 +3780,11 @@
 	 * "0.00E+00" | "# ?/?" | "# ??/??" | "m/d/yyyy" | "d-mmm-yy" | "d-mmm" | "mmm-yy" | "h:mm AM/PM" |
 	 * "h:mm:ss AM/PM" | "h:mm" | "h:mm:ss" | "m/d/yyyy h:mm" | "#,##0_);(#,##0)" | "#,##0_);[Red](#,##0)" | 
 	 * "#,##0.00_);(#,##0.00)" | "#,##0.00_);[Red](#,##0.00)" | "mm:ss" | "[h]:mm:ss" | "mm:ss.0" | "##0.0E+0" | "@")} NumFormat
+	 */
+
+	/**
+	 * Types of all supported forms
+	 * @typedef {ApiTextForm | ApiComboBoxForm | ApiCheckBoxForm | ApiPictureForm | ApiComplexForm} ApiForm
 	 */
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -5424,21 +5442,18 @@
 	 */
 	ApiDocument.prototype.GetTagsOfAllForms = function()
 	{
-		let oTags       = {};
-		let arrResult   = [];
-		let arrControls = this.Document.GetAllContentControls();
-		for (let nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
+		let oTags     = {};
+		let arrResult = [];
+		let arrForms  = this.Document.GetFormsManager().GetAllForms();
+		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
-			let oControl = arrControls[nIndex];
-			if (oControl.IsForm())
-			{
-				let sTag = oControl.GetTag();
+			let oForm = arrForms[nIndex];
+			let sTag  = oForm.GetTag();
 
-				if (sTag && !oTags[sTag])
-				{
-					oTags[sTag] = 1;
-					arrResult.push(sTag);
-				}
+			if (sTag && !oTags[sTag])
+			{
+				oTags[sTag] = 1;
+				arrResult.push(sTag);
 			}
 		}
 
@@ -5482,11 +5497,11 @@
 		if (!_sTag)
 			return [];
 
-		let arrResult   = [];
-		let arrControls = this.Document.GetAllContentControls();
-		for (let nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
+		let arrResult = [];
+		let arrForms  = this.Document.GetFormsManager().GetAllForms();
+		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
-			let oControl = arrControls[nIndex];
+			let oControl = arrForms[nIndex];
 			let oForm    = ToApiForm(oControl);
 			if (oControl.IsForm() && _sTag === oControl.GetTag() && oForm)
 				arrResult.push(oForm);
@@ -5979,24 +5994,21 @@
 	 * Returns all existing forms in the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @returns {ApiTextForm[] | ApiPictureForm[] | ApiComboBoxForm[] | ApiCheckBoxForm[]}
+	 * @returns {ApiForm[]}
 	 */
 	ApiDocument.prototype.GetAllForms = function()
 	{
-		var aForms = [];
-		var allControls = this.Document.GetAllContentControls();
-		for (var nElm = 0; nElm < allControls.length; nElm++)
+		let arrApiForms = [];
+		let arrForms    = this.Document.GetFormsManager().GetAllForms();
+		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
-			let oControl = allControls[nElm];
-			if (oControl.IsForm())
-			{
-				let oForm = ToApiForm(oControl);
-				if (oForm)
-					aForms.push(oForm);
-			}
+			let oForm    = arrForms[nIndex];
+			let oApiForm = ToApiForm(oForm);
+			if (oApiForm)
+				arrApiForms.push(oApiForm);
 		}
 
-		return aForms;
+		return arrApiForms;
 	};
 
 	/**
@@ -6094,7 +6106,7 @@
 	 * Returns all caption paragraphs of the specified type from the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {captionType} - Caption type (equation, figure or table).
+	 * @param {captionType} sCaption Caption type (equation, figure or table).
 	 * @returns {ApiParagraph[]}
 	 */
 	ApiDocument.prototype.GetAllCaptionParagraphs = function(sCaption) 
@@ -15840,13 +15852,7 @@
 	 */
 	ApiFormBase.prototype.GetText = function()
 	{
-		var oText = {
-			Text: ""
-		};
-
-		this.Sdt.Get_Text(oText);
-
-		return oText.Text;
+		return this.Sdt.GetInnerText();
 	};
 	/**
 	 * Clears the current form.
@@ -15924,7 +15930,7 @@
 	 * Copies the current form (copies with the shape if it exists).
 	 * @memberof ApiFormBase
 	 * @typeofeditors ["CDE"]
-	 * @returns {null | ApiTextForm| ApiCheckBoxForm | ApiComboBoxForm | ApiPictureForm}
+	 * @returns {?ApiForm}
 	 */
 	ApiFormBase.prototype.Copy = function()
 	{
@@ -17817,6 +17823,7 @@
 	window['AscBuilder'].ApiPictureForm     = ApiPictureForm;
 	window['AscBuilder'].ApiComboBoxForm    = ApiComboBoxForm;
 	window['AscBuilder'].ApiCheckBoxForm    = ApiCheckBoxForm;
+	window['AscBuilder'].ApiComplexForm     = ApiComplexForm;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Area for internal usage
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -17860,7 +17867,9 @@
 		if (!oForm)
 			return null;
 
-		if (oForm.IsTextForm())
+		if (oForm.IsComplexForm())
+			return new ApiComplexForm(oForm);
+		else if (oForm.IsTextForm())
 			return new ApiTextForm(oForm);
 		else if (oForm.IsComboBox() || oForm.IsDropDownList())
 			return new ApiComboBoxForm(oForm);
@@ -17934,7 +17943,9 @@
 		if (!oSdt)
 			return new ApiUnsupported();
 
-		if (oSdt.IsTextForm())
+		if (oSdt.IsComplexForm())
+			return new ApiComplexForm(oSdt);
+		else if (oSdt.IsTextForm())
 			return new ApiTextForm(oSdt);
 		else if (oSdt.IsComboBox() || oSdt.IsDropDownList())
 			return new ApiComboBoxForm(oSdt);
@@ -18693,6 +18704,10 @@
 	};
 	Api.prototype.private_CreatePictureForm = function(oCC){
 		return new ApiPictureForm(oCC);
+	};
+	Api.prototype.private_CreateComplexForm = function(oCC)
+	{
+		return new ApiComplexForm(oCC);
 	};
 	
 

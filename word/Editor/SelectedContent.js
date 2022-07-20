@@ -78,6 +78,8 @@
 		this.Select        = true;
 		this.ParaAnchorPos = null;
 		this.Run           = null;
+
+		this.IsPresentationContent = false;
 	}
 
 	CSelectedContent.prototype.Reset = function()
@@ -177,6 +179,7 @@
 		let oLogicDocument = oParagraph.GetLogicDocument();
 
 		this.LogicDocument = oLogicDocument; // Может быть не задан (например при вставке в формулу в таблицах)
+		this.IsPresentationContent = !oParagraph.bFromDocument;
 
 		this.PrepareObjectsForInsert();
 		this.private_CheckContentBeforePaste(oAnchorPos, oDocContent);
@@ -398,7 +401,7 @@
 	 */
 	CSelectedContent.prototype.ConvertToText = function()
 	{
-		var oParagraph = new Paragraph(editor.WordControl.m_oDrawingDocument);
+		var oParagraph = new Paragraph(editor.WordControl.m_oDrawingDocument, undefined, this.IsPresentationContent);
 
 		var sText = "";
 		for (var nIndex = 0, nCount = this.Elements.length; nIndex < nCount; ++nIndex)
@@ -442,7 +445,7 @@
 	};
 	CSelectedContent.prototype.ConvertToInline = function()
 	{
-		var oParagraph = new Paragraph(editor.WordControl.m_oDrawingDocument);
+		var oParagraph = new Paragraph(editor.WordControl.m_oDrawingDocument, undefined, this.IsPresentationContent);
 
 		for (var nIndex = 0, nCount = this.Elements.length; nIndex < nCount; ++nIndex)
 		{
@@ -700,7 +703,7 @@
 			}
 		}
 
-		if (this.LogicDocument && this.LogicDocument.IsPresentationEditor())
+		if (this.IsPresentationContent)
 			this.ConvertToPresentation(oDocContent);
 
 		if (this.ForceInline)
@@ -807,12 +810,8 @@
 				oLogicDocument.RemoveSelection();
 				oPictureCC.SelectContentControl();
 
-				if (oLogicDocument.IsDocumentEditor())
-				{
-					var sKey = oPictureCC.GetFormKey();
-					if (arrParaDrawings[0].IsPicture() && sKey)
-						oLogicDocument.OnChangeForm(sKey, oPictureCC, arrParaDrawings[0].GraphicObj.getImageUrl());
-				}
+				if (oLogicDocument.IsDocumentEditor() && arrParaDrawings[0].IsPicture())
+					oLogicDocument.OnChangeForm(oPictureCC);
 			}
 		}
 	};
@@ -989,7 +988,7 @@
 		else
 		{
 			oParagraphS = oParagraph;
-			oParagraphE = new Paragraph(oParagraph.DrawingDocument);
+			oParagraphE = new Paragraph(oParagraph.DrawingDocument, undefined, this.IsPresentationContent);
 			oParagraphS.Split(oParagraphE);
 			oDocContent.AddToContent(nDstIndex + 1, oParagraphE);
 			nInsertPos  = nDstIndex + 1;

@@ -989,8 +989,8 @@
 	this.model.handlers.add("cleanCutData", function(bDrawSelection, bCleanBuffer) {
 	  self.cleanCutData(bDrawSelection, bCleanBuffer);
 	});
-	this.model.handlers.add("cleanCopyData", function(bDrawSelection) {
-	  self.cleanCopyData(bDrawSelection);
+	this.model.handlers.add("cleanCopyData", function(bDrawSelection, bCleanBuffer) {
+	  self.cleanCopyData(bDrawSelection, bCleanBuffer);
 	});
 	this.model.handlers.add("updateGroupData", function() {
 	  self.updateGroupData();
@@ -4156,7 +4156,7 @@
 		}
 	};
 
-	WorkbookView.prototype.cleanCopyData = function (bDrawSelection) {
+	WorkbookView.prototype.cleanCopyData = function (bDrawSelection, bCleanBuffer) {
 		if(this.cutIdSheet == null) {
 			var activeWs = this.wsViews[this.wsActive];
 
@@ -4165,12 +4165,23 @@
 				activeWs.cleanSelection();
 			}
 
+			var isCopyHighlighted = false;
 			for(var i in this.wsViews) {
-				this.wsViews[i].copyCutRange = null;
+				if (this.wsViews[i].copyCutRange != null) {
+					isCopyHighlighted = true;
+					this.wsViews[i].copyCutRange = null;
+				}
 			}
 
 			if(needUpdateSelection) {
 				activeWs.updateSelection();
+			}
+
+			//ms чистит буфер, если происходят какие-то изменения в документе с посвеченной областью вырезать
+			//мы в данном случае не можем так делать, поскольку не можем прочесть информацию из буфера и убедиться, что
+			//там именно тот вырезанный фрагмент. тем самым можем затереть какую-то важную информацию
+			if(bCleanBuffer && isCopyHighlighted) {
+				AscCommon.g_clipboardBase.ClearBuffer();
 			}
 		}
 	};
@@ -4766,8 +4777,8 @@
 	CDocumentSearchExcel.prototype.Add = function (r, c, cell, container) {
 
 		var dN = new Asc.Range(c, r, c, r, true);
-		var defName = AscCommon.parserHelp.get3DRef(cell.ws.getName(), dN.getAbsName());
-		defName = cell.ws.workbook.findDefinesNames(defName, cell.ws.getId(), true);
+		var defName = cell.ws ? AscCommon.parserHelp.get3DRef(cell.ws.getName(), dN.getAbsName()) : null;
+		defName = defName && cell.ws ? cell.ws.workbook.findDefinesNames(defName, cell.ws.getId(), true) : null;
 
 		if (container) {
 			container.add(r, c,

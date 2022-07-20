@@ -3250,6 +3250,11 @@ ParaDrawing.prototype.GetPicture = function()
 {
 	return this.GraphicObj.getObjectType() === AscDFH.historyitem_type_ImageShape ? this.GraphicObj : null;
 };
+ParaDrawing.prototype.GetPictureUrl = function()
+{
+	let oPicture = this.GetPicture();
+	return (oPicture ? oPicture.getImageUrl() : null);
+};
 /**
  * Является ли объект фигурой
  * @returns {boolean}

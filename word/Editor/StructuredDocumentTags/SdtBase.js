@@ -206,7 +206,7 @@ CSdtBase.prototype.IsContentControlTemporary = function()
 	return this.Pr.Temporary;
 };
 /**
- * @param {CSdtFormPr} oFormPr
+ * @param {AscWord.CSdtFormPr} oFormPr
  */
 CSdtBase.prototype.SetFormPr = function(oFormPr)
 {
@@ -215,9 +215,9 @@ CSdtBase.prototype.SetFormPr = function(oFormPr)
 		History.Add(new CChangesSdtPrFormPr(this, this.Pr.FormPr, oFormPr));
 		this.Pr.FormPr = oFormPr;
 
-		var oLogicDocument = this.GetLogicDocument();
+		let oLogicDocument = this.GetLogicDocument();
 		if (oLogicDocument)
-			oLogicDocument.RegisterForm(this);
+			oLogicDocument.GetFormsManager().Register(this);
 
 		this.private_OnAddFormPr();
 	}
@@ -234,13 +234,13 @@ CSdtBase.prototype.RemoveFormPr = function()
 
 		var oLogicDocument = this.GetLogicDocument();
 		if (oLogicDocument)
-			oLogicDocument.UnregisterForm(this);
+			oLogicDocument.GetFormsManager().Unregister(this);
 
 		this.private_OnAddFormPr();
 	}
 };
 /**
- * @returns {?CSdtFormPr}
+ * @returns {?AscWord.CSdtFormPr}
  */
 CSdtBase.prototype.GetFormPr = function()
 {
@@ -252,6 +252,10 @@ CSdtBase.prototype.GetFormPr = function()
 CSdtBase.prototype.IsForm = function()
 {
 	return (undefined !== this.Pr.FormPr);
+};
+CSdtBase.prototype.IsComplexForm = function()
+{
+	return (undefined !== this.Pr.ComplexFormPr);
 };
 /**
  * @returns {boolean}
@@ -418,7 +422,15 @@ CSdtBase.prototype.CorrectXYToHitIn = function(X, Y, nPageAbs)
  */
 CSdtBase.prototype.ClearContentControlExt = function()
 {
-	if (this.IsCheckBox())
+	if (this.IsComplexForm())
+	{
+		let arrSubForms = this.GetAllChildForms();
+		for (let nIndex = 0, nCount = arrSubForms.length; nIndex < nCount; ++nIndex)
+		{
+			arrSubForms[nIndex].ClearContentControlExt();
+		}
+	}
+	else if (this.IsCheckBox())
 	{
 		this.SetCheckBoxChecked(false);
 	}
@@ -490,4 +502,102 @@ CSdtBase.prototype.IsPictureForm = function()
  */
 CSdtBase.prototype.UpdatePictureFormLayout = function()
 {
+};
+/**
+ * Выставляем настройку, что заданный контрол является составным полем
+ * @param oPr {AscWord.CSdtComplexFormPr}
+ */
+CSdtBase.prototype.SetComplexFormPr = function(oPr)
+{
+	if (!this.Pr.ComplexFormPr || !this.Pr.ComplexFormPr.IsEqual(oPr))
+	{
+		let _oPr    = oPr ? oPr.Copy() : undefined;
+		let oChange = new CChangesSdtPrComplexFormPr(this, this.Pr.ComplexFormPr, _oPr);
+		AscCommon.History.Add(oChange);
+		oChange.Redo();
+	}
+};
+/**
+ * @returns {?AscWord.CSdtComplexFormPr}
+ */
+CSdtBase.prototype.GetComplexFormPr = function()
+{
+	return this.Pr.ComplexFormPr;
+}
+/**
+ * Получаем главную родительскую сложную форму
+ * @returns {?AscWord.CInlineLevelSdt}
+ */
+CSdtBase.prototype.GetMainComplexForm = function()
+{
+	let oMain = null;
+	if (this instanceof AscWord.CInlineLevelSdt || this.IsComplexForm())
+		oMain = this;
+
+	let oCur  = this;
+	while (true)
+	{
+		oCur = oCur.GetParent();
+		if (!oCur || !(oCur instanceof AscWord.CInlineLevelSdt) || !oCur.IsComplexForm())
+			break;
+
+		oMain = oCur;
+	}
+
+	return oMain;
+};
+CSdtBase.prototype.GetMainForm = function()
+{
+	if (!this.IsForm())
+		return null;
+
+	let oMain = this.GetMainComplexForm();
+	return oMain ? oMain : this;
+};
+CSdtBase.prototype.GetAllChildForms = function()
+{
+	let arrForms    = [];
+	let arrControls = this.GetAllContentControls();
+	for (let nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
+	{
+		let oControl = arrControls[nIndex];
+		if (oControl.IsForm())
+			arrForms.push(oControl);
+	}
+
+	return arrForms;
+};
+/**
+ * Провяеряем является ли данная форма текущей, с учетом того, что она либо сама является составной формой, либо
+ * лежит в составной
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsCurrentComplexForm = function()
+{
+	if (this.IsCurrent())
+		return true;
+
+	let oMainComplexForm = this.GetMainComplexForm();
+	if (!oMainComplexForm)
+		return false;
+
+	if (oMainComplexForm.IsCurrent())
+		return true;
+
+	let arrForms = oMainComplexForm.GetAllChildForms();
+	for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
+	{
+		if (arrForms[nIndex].IsCurrent())
+			return true;
+	}
+
+	return false;
+};
+/**
+ * Является ли данная форма основной (а не подформой внутри другой формы)
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsMainForm = function()
+{
+	return (this === this.GetMainForm());
 };

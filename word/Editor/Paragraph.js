@@ -187,7 +187,7 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
 	this.ParaId = null;//for comment xml serialization
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-    g_oTableId.Add( this, this.Id );
+    AscCommon.g_oTableId.Add( this, this.Id );
     if(bFromPresentation === true && History.Is_On())
     {
         this.Save_StartState();
@@ -2294,7 +2294,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 						var oFormShdColor     = oFormShd.GetSimpleColor(this.GetTheme(), this.GetColorMap());
 						var oFormShdColorDark = new CDocumentColor(oFormShdColor.r * (201 / 255) | 0, oFormShdColor.g * (225 / 255) | 0, oFormShdColor.b, 255);
 
-						if (oInlineSdt.IsCurrent() || !isDrawFormHighlight)
+						if (oInlineSdt.IsCurrentComplexForm() || !isDrawFormHighlight)
 						{
 							if (!oPrevColor.IsEqualRGB(oFormShdColor))
 							{
@@ -2322,7 +2322,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 						if (oInlineSdt.IsFixedForm())
 							oSdtBounds = oInlineSdt.GetFixedFormBounds();
 					}
-					else if (isForm && FormsHighlight && !oInlineSdt.IsCurrent())
+					else if (isForm && FormsHighlight && !oInlineSdt.IsCurrentComplexForm())
 					{
 						if (!oPrevColor.IsEqualRGB(FormsHighlight))
 						{
@@ -7092,6 +7092,10 @@ Paragraph.prototype.IsSelectionToEnd = function()
 {
 	return this.Selection_CheckParaEnd();
 };
+Paragraph.prototype.IsSelectedOnlyParagraphMark = function()
+{
+	return (this.Selection_CheckParaEnd() && this.IsSelectionEmpty(false));
+};
 /**
  * Функция определяет начальную позицию курсора в параграфе
  */
@@ -11758,7 +11762,7 @@ Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 	var oHyperlink      = oInfo.GetHyperlink();
 	if (oContentControl)
 	{
-		oContentControl.DrawContentControlsTrack(true, X, Y, CurPage);
+		oContentControl.DrawContentControlsTrack(AscCommon.ContentControlTrack.Hover, X, Y, CurPage);
 		isCheckBox = oContentControl.IsCheckBox() && oContentControl.CheckHitInContentControlByXY(X, Y, this.GetAbsolutePage(CurPage), false);
 	}
 
@@ -20115,3 +20119,5 @@ window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].Paragraph = Paragraph;
 window['AscCommonWord'].UnknownValue = UnknownValue;
 window['AscCommonWord'].type_Paragraph = type_Paragraph;
+
+window['AscWord'].CParagraph = Paragraph;
