@@ -564,6 +564,28 @@ var editor;
 		}
 	};
 
+	spreadsheet_api.prototype._getXlsxFromUrl = function (url, options, callback) {
+		if (this.canEdit()) {
+			var document = {url: url, format: "XLSX"};
+			this.insertDocumentUrlsData = {
+				imageMap: null, documents: [document], convertCallback: function (_api, url) {
+					_api.insertDocumentUrlsData.imageMap = url;
+					if (url['output.xlsx']) {
+						callback(url['output.xlsx']);
+					} else {
+						callback(null);
+					}
+				}, endCallback: function (_api) {
+				}
+			};
+
+			var _options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.XLSX);
+			_options.isNaturalDownload = true;
+			_options.isGetTextFromUrl = true;
+			this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, _options);
+		}
+	};
+
 	spreadsheet_api.prototype._getTextFromFile = function (options, callback) {
 		var t = this;
 

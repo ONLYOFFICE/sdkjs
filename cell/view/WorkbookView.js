@@ -4638,43 +4638,49 @@
 			// })
 
 
-			//получаем ссылку на файл через asc_onUpdateExternalReference
-			t._getExternalReferenceData(externalReferences, function (data) {
-				//создаём запросы
-				t._getLoadFileRequestsFromReferenceData(data, requests, externalReferences);
+			if (window["AscDesktopEditor"]) {
+				//десктоп
 
-				//выполняем запросы на получение файлов
-				if (requests && requests.length) {
-					Promise.all(requests)
-						.then(function (values) {
-							for (var i = 0; i < values.length; i++) {
-								if (values[i]) {
-									//TODO если внутри не zip, отправляем на конвертацию в xlsx, далее повторно обрабатываем - позже реализовать
+			} else {
+				//портал
+				//получаем ссылку на файл через asc_onUpdateExternalReference от портала
+				t._getExternalReferenceData(externalReferences, function (data) {
+					//создаём запросы
+					t._getLoadFileRequestsFromReferenceData(data, requests, externalReferences);
 
-									//соответствие по массиву externalReferences, по индексу
-									var eR = externalReferences[i] && externalReferences[i].externalReference && externalReferences[i].externalReference;
+					//выполняем запросы на получение файлов
+					if (requests && requests.length) {
+						Promise.all(requests)
+							.then(function (values) {
+								for (var i = 0; i < values.length; i++) {
+									if (values[i]) {
+										//TODO если внутри не zip, отправляем на конвертацию в xlsx, далее повторно обрабатываем - позже реализовать
 
-									//использую общий wb для externalReferences. поскольку внутри
-									//хранится sharedStrings, возмжно придтся использовать для каждого листа свою книгу
-									//необходимо проверить, ссылкой на 2 листа одной книги
-									var wb = eR.getWb();
+										//соответствие по массиву externalReferences, по индексу
+										var eR = externalReferences[i] && externalReferences[i].externalReference && externalReferences[i].externalReference;
 
-									var updatedData = window["Asc"]["editor"].openDocumentFromZip2(wb ? wb : t.model, values[i]);
-									if (updatedData) {
-										eR && eR.updateData(updatedData);
+										//использую общий wb для externalReferences. поскольку внутри
+										//хранится sharedStrings, возмжно придтся использовать для каждого листа свою книгу
+										//необходимо проверить, ссылкой на 2 листа одной книги
+										var wb = eR.getWb();
+
+										var updatedData = window["Asc"]["editor"].openDocumentFromZip2(wb ? wb : t.model, values[i]);
+										if (updatedData) {
+											eR && eR.updateData(updatedData);
+										}
 									}
 								}
-							}
 
-							//TODO ВРЕМЕННО ПЕРЕСЧИТЫВАЕМ ВСЕ ФОРМУЛЫ. сделать пересчёт только нужных
-							//кроме пересчёта нужно изменить ссылку на лист во всех диапазонах, которые используют данную ссылку
-							t.model.dependencyFormulas.calcTree();
-							var ws = t.getWorksheet();
-							ws.draw();
-							//window["Asc"]["editor"].asc_calculate();
-						});
-				}
-			});
+								//TODO ВРЕМЕННО ПЕРЕСЧИТЫВАЕМ ВСЕ ФОРМУЛЫ. сделать пересчёт только нужных
+								//кроме пересчёта нужно изменить ссылку на лист во всех диапазонах, которые используют данную ссылку
+								t.model.dependencyFormulas.calcTree();
+								var ws = t.getWorksheet();
+								ws.draw();
+								//window["Asc"]["editor"].asc_calculate();
+							});
+					}
+				});
+			}
 		}
 	};
 
@@ -4693,14 +4699,16 @@
 		for (var i = 0; i < data.length; i++) {
 			var promise = new Promise(function (resolve, reject) {
 				var sFileUrl = data && data[i] && !data[i].error ? data[i].url : null;
+				var isExternalLink = externalReferences[i].isExternalLink();
 
 				//если ссылка на внешний источник, пробуем получить контент
-				if (!sFileUrl && data[i].error && externalReferences[i].isExternalLink()) {
+				if (!sFileUrl && data[i].error && isExternalLink) {
 					sFileUrl = externalReferences[i].data;
 				}
-				
-				if (sFileUrl) {
-					AscCommon.loadFileContent(sFileUrl, function (httpRequest) {
+
+				//получаем контент файла
+				var loadFile = function (_fileUrl) {
+					AscCommon.loadFileContent(_fileUrl, function (httpRequest) {
 						if (httpRequest) {
 							var stream = AscCommon.initStreamFromResponse(httpRequest);
 							resolve(stream);
@@ -4709,8 +4717,23 @@
 							resolve(null);
 						}
 					}, "arraybuffer");
+				};
+
+				//если внешняя ссылка, то конвертируем в xlsx
+				if (sFileUrl && isExternalLink) {
+					window["Asc"]["editor"]._getXlsxFromUrl(sFileUrl, null, function (fileUrlAfterConvert) {
+						if (fileUrlAfterConvert) {
+							loadFile(fileUrlAfterConvert);
+						} else {
+							resolve(null);
+						}
+					});
 				} else {
-					resolve(null);
+					if (sFileUrl) {
+						loadFile(sFileUrl);
+					} else {
+						resolve(null);
+					}
 				}
 			});
 
