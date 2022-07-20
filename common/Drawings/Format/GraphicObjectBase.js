@@ -1496,6 +1496,13 @@
         }
         return null;
     };
+    CGraphicObjectBase.prototype.getFormatIdString = function(){
+        let nId = this.getFormatId();
+        if(nId !== null) {
+            return nId + "";
+        }
+        return "";
+    };
     CGraphicObjectBase.prototype.getNvProps = function(){
         var oUniNvPr = this.getUniNvProps();
         if(oUniNvPr){

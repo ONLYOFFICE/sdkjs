@@ -500,6 +500,7 @@ MasterSlide.prototype.scale = function (kw, kh) {
 
 MasterSlide.prototype.fromXml = function(reader, bSkipFirstNode) {
     AscFormat.CBaseFormatObject.prototype.fromXml.call(this, reader, bSkipFirstNode);
+    reader.context.assignConnectors(this.cSld.spTree);
     //read theme
     var oThemePart = reader.rels.getPartByRelationshipType(AscCommon.openXml.Types.theme.relationType);
     if(oThemePart) {

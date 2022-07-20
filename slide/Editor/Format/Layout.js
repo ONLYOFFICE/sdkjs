@@ -593,6 +593,10 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
 
         this.writecomments = [];
     };
+    SlideLayout.prototype.fromXml = function(reader, bSkipFirstNode) {
+        AscFormat.CBaseFormatObject.prototype.fromXml.call(this, reader, bSkipFirstNode);
+        reader.context.assignConnectors(this.cSld.spTree);
+    };
     SlideLayout.prototype.readAttrXml = function(name, reader) {
         switch (name) {
             case "matchingName": {

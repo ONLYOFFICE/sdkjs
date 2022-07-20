@@ -1938,6 +1938,7 @@ Slide.prototype.readCommentXml = function(reader) {
 };
     Slide.prototype.fromXml = function(reader, bSkipFirstNode) {
         AscFormat.CBaseFormatObject.prototype.fromXml.call(this, reader, bSkipFirstNode);
+        reader.context.assignConnectors(this.cSld.spTree);
         //read notes
         let oNotesPart = reader.rels.getPartByRelationshipType(AscCommon.openXml.Types.notesSlide.relationType);
         if(oNotesPart) {
@@ -1977,36 +1978,68 @@ Slide.prototype.readCommentXml = function(reader) {
         }
     };
     Slide.prototype.readChildXml = function(name, reader) {
+        let oResult = null;
         switch(name) {
             case "cSld": {
                 let oCSld = new AscFormat.CSld(this);
                 oCSld.fromXml(reader);
                 AscCommonSlide.fFillFromCSld(this, oCSld);
+                oResult = oCSld;
                 break;
             }
             case "clrMapOvr": {
                 let oClrMapOvr = new AscFormat.CClrMapOvr();
                 oClrMapOvr.fromXml(reader);
                 this.setClMapOverride(oClrMapOvr.overrideClrMapping);
+                oResult = oClrMapOvr;
                 break;
             }
             case "AlternateContent": {
-                //TODO:
+                let elem = new CT_XmlNode(function(reader, name) {
+                    let oThis = this;
+                    if(!oResult) {
+                        if ("Choice" === name) {
+                            let elem = new CT_XmlNode(function(reader, name) {
+                                if(!oResult) {
+                                    oResult = oThis.readChildXml(name, reader);
+                                }
+                                return true;
+                            });
+                            elem.fromXml(reader);
+                            return elem;
+                        }
+                        else if("Fallback" === name) {
+                            let elem = new CT_XmlNode(function(reader, name) {
+                                if(!oResult) {
+                                    oResult = oThis.readChildXml(name, reader);
+                                }
+                                return true;
+                            });
+                            elem.fromXml(reader);
+                            return elem;
+                        }
+                    }
+                    return true;
+                });
+                elem.fromXml(reader);
                 break;
             }
             case "timing": {
                 let oTiming = new AscFormat.CTiming();
                 oTiming.fromXml(reader);
                 this.setTiming(oTiming);
+                oResult = oTiming;
                 break;
             }
             case "transition": {
                 let oTransition = new Asc.CAscSlideTransition();
                 oTransition.fromXml(reader);
                 this.applyTransition(oTransition);
+                oResult = oTransition;
                 break;
             }
         }
+        return oResult;
     };
     Slide.prototype.toXml = function(writer) {
         writer.WriteXmlString(AscCommonWord.g_sXmlHeader);
@@ -2025,8 +2058,8 @@ Slide.prototype.readCommentXml = function(reader) {
 
         AscFormat.CClrMapOvr.prototype.static_WriteCrlMapAsOvr(writer, this.clrMap);
         writer.WriteXmlString("<mc:AlternateContent xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\"><mc:Choice xmlns:p14=\"http://schemas.microsoft.com/office/powerpoint/2010/main\" Requires=\"p14\"><p:transition p14:dur=\"2000\" advClick=\"1\"/></mc:Choice><mc:Fallback><p:transition advClick=\"1\"/></mc:Fallback></mc:AlternateContent>");
-        //writer.WriteXmlNullable(this.transition, "p:transition");
-        //writer.WriteXmlNullable(this.timing, "p:timing");
+        writer.WriteXmlNullable(this.transition, "p:transition");
+        writer.WriteXmlNullable(this.timing, "p:timing");
         writer.WriteXmlNodeEnd("p:sld");
     };
 function fLoadComments(oObject, authors)

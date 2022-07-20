@@ -3128,8 +3128,7 @@
             pWriter.EndRecord();
         }
     };
-
-    CAttrNameLst.prototype.readElementXml = function(name, reader) {
+    CBldLst.prototype.readElementXml = function(name, reader) {
         let oElement = null;
         switch(name) {
             case "bldDgm": oElement = new CBldDgm(); break;
@@ -3336,7 +3335,7 @@
         oElement.fromPPTY(pReader);
         return oElement;
     };
-    CTmplLst.prototype.readElementXml = function(name, reader) {
+    CTavLst.prototype.readElementXml = function(name, reader) {
         let oElement = null;
         switch(name) {
             case "tav": oElement = new CTav(); break;
@@ -3378,7 +3377,7 @@
     CObjectTarget.prototype.assignConnectors = function(aSpTree) {
         for(let nSp = 0; nSp < aSpTree.length; ++nSp) {
             let oSp = aSpTree[nSp];
-            if(oSp.getFormatId() === this.spid) {
+            if(oSp.getFormatIdString() === this.spid) {
                 this.setSpid(oSp.Id);
                 return;
             }
@@ -3439,7 +3438,7 @@
     CBldBase.prototype.assignConnectors = function(aSpTree) {
         for(let nSp = 0; nSp < aSpTree.length; ++nSp) {
             let oSp = aSpTree[nSp];
-            if((oSp.getObjectType && oSp.getObjectType() === AscDFH.historyitem_type_ChartSpace) && oSp.getFormatId() === this.spid) {
+            if((oSp.getObjectType && oSp.getObjectType() === AscDFH.historyitem_type_ChartSpace) && oSp.getFormatIdString() === this.spid) {
                 this.setSpid(oSp.Id);
                 return;
             }
@@ -4007,7 +4006,7 @@
     CGraphicEl.prototype.assignConnectors = function(aSpTree) {
         for(let nSp = 0; nSp < aSpTree.length; ++nSp) {
             let oSp = aSpTree[nSp];
-            if(oSp.getFormatId() === this.dgmId) {
+            if(oSp.getFormatIdString() === this.dgmId) {
                 this.setDgmId(oSp.Id);
                 return;
             }
@@ -6871,7 +6870,7 @@
     CSpTgt.prototype.assignConnectors = function(aSpTree) {
         for(let nSp = 0; nSp < aSpTree.length; ++nSp) {
             let oSp = aSpTree[nSp];
-            if(oSp.getFormatId() === this.spid) {
+            if(oSp.getFormatIdString() === this.spid) {
                 this.setSpid(oSp.Id);
                 return;
             }
@@ -6883,7 +6882,7 @@
         if(this.subSpId !== null) {
             for(let nSp = 0; nSp < aSpTree.length; ++nSp) {
                 let oSp = aSpTree[nSp];
-                if(oSp.getFormatId() === this.subSpId) {
+                if(oSp.getFormatIdString() === this.subSpId) {
                     this.setSubSpId(oSp.Id);
                     return;
                 }
@@ -7323,10 +7322,6 @@
         }
     };
     CAnimVariant.prototype.readAttrXml = function (name, reader) {
-        if ("boolVal" === name) this.setBoolVal(reader.GetValueBool());
-        else if ("strVal" === name) this.setStrVal(reader.GetValue());
-        else if ("intVal" === name) this.setIntVal(reader.GetValueInt());
-        else if ("fltVal" === name) this.setFltVal(reader.GetValueDouble());
     };
     CAnimVariant.prototype.readChildXml = function (name, reader) {
         if("clrVal" === name) {
@@ -7340,6 +7335,22 @@
                 return true;
             });
             oNode.fromXml(reader);
+        }
+        else if("boolVal" === name ||
+            "strVal" === name ||
+            "intVal" === name ||
+            "fltVal" === name) {
+            let oNode = new CT_XmlNode(function (reader, name){
+                return true;
+            });
+            oNode.fromXml(reader);
+            let sVal = oNode.attributes["val"];
+            if(sVal) {
+                if ("boolVal" === name) this.setBoolVal(reader.GetBool(sVal));
+                else if ("strVal" === name) this.setStrVal(sVal);
+                else if ("intVal" === name) this.setIntVal(reader.GetInt(sVal));
+                else if ("fltVal" === name) this.setFltVal(reader.GetDouble(sVal));
+            }
         }
     };
     CAnimVariant.prototype.toXml = function (writer, name) {
