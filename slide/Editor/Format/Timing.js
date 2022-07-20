@@ -5779,7 +5779,7 @@
         writer.WriteXmlAttributesEnd();
         writer.WriteXmlNullable(this.stCondLst);
         writer.WriteXmlNullable(this.endCondLst);
-        writer.WriteXmlNullable(this.endSync);
+        writer.WriteXmlNullable(this.endSync, "p:endSync");
         writer.WriteXmlNullable(this.iterate);
         writer.WriteXmlNullable(this.childTnLst);
         writer.WriteXmlNullable(this.subTnLst);
@@ -6410,8 +6410,8 @@
         }
     };
     CCond.prototype.toXml = function (writer, name) {
-
-        writer.WriteXmlNodeStart(name);
+        let sName = name || "p:cond";
+        writer.WriteXmlNodeStart(sName);
         writer.WriteXmlNullableAttributeString(("evt"), this.evt);
         writer.WriteXmlNullableAttributeString(("delay"), this.delay);
         writer.WriteXmlAttributesEnd();
@@ -6439,7 +6439,7 @@
             }
             writer.WriteXmlAttributesEnd(true);
         }
-        writer.WriteXmlNodeEnd(name);
+        writer.WriteXmlNodeEnd(sName);
     };
     CCond.prototype.getChildren = function() {
         return [this.tgtEl];
