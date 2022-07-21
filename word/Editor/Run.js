@@ -3722,7 +3722,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 						GraphemeLen = 0;
 						WordLen     = Para.GetContentWidthInRange(PRS.LineBreakPos, oCurrentPos);
 
-						if (X + WordLen > XEnd)
+						if (X + WordLen > XEnd && (Word || !Para.IsSingleRangeOnLine(ParaLine, ParaRange)))
 						{
 							// Слово оказалось единственным элементом в промежутке, и, все равно,
 							// не умещается целиком. Делаем следующее:

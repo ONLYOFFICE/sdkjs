@@ -18037,6 +18037,8 @@ CDocumentBounds.prototype.Copy = function()
 	return new CDocumentBounds(this.Left, this.Top, this.Right, this.Bottom);
 };
 
+AscWord.CDocumentBounds = CDocumentBounds;
+
 function CParagraphPageEndInfo()
 {
     this.Comments      = []; // Массив незакрытых комментариев на данной странице
