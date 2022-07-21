@@ -1818,6 +1818,30 @@ Paragraph.prototype.GetLineBounds = function(nCurLine)
 
 	return new CDocumentBounds(oPage.X, nTop, oPage.XLimit, nBottom);
 };
+Paragraph.prototype.GetTextOnLine = function(nCurLine)
+{
+	if (!this.IsRecalculated() || this.GetLinesCount() <= nCurLine)
+		return "";
+
+	let oLine =  this.Lines[nCurLine];
+
+	let oState = this.SaveSelectionState();
+
+	let oStartPos = this.Get_StartRangePos2(nCurLine, 0);
+	let oEndPos   = this.Get_EndRangePos2(nCurLine, oLine.Ranges.length - 1);
+
+	this.Selection.Use = true;
+	this.SetSelectionContentPos(oStartPos, oEndPos);
+
+	this.Selection.Use   = true;
+	this.Selection.Start = false;
+	this.SetSelectionContentPos(oStartPos, oEndPos);
+	let sResult = this.GetSelectedText(false, {Numbering : false});
+
+	this.LoadSelectionState(oState);
+
+	return sResult;
+};
 Paragraph.prototype.Reset_RecalculateCache = function()
 {
 
