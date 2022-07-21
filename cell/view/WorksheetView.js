@@ -14755,49 +14755,49 @@
 				if (c_oAscLockTypeElemSubType.InsertColumns === subType) {
 					newCallback = function (isSuccess) {
 						if (isSuccess) {
-							t.collaborativeEditing.addColsRange(sheetId, range.clone(true));
-							t.collaborativeEditing.addCols(sheetId, range.c1, range.c2 - range.c1 + 1);
+							t.collaborativeEditing.addColsRange(sheetId, ar.clone(true));
+							t.collaborativeEditing.addCols(sheetId, ar.c1, ar.c2 - ar.c1 + 1);
 						}
 						callback(isSuccess);
 					};
 				} else if (c_oAscLockTypeElemSubType.InsertRows === subType) {
 					newCallback = function (isSuccess) {
 						if (isSuccess) {
-							t.collaborativeEditing.addRowsRange(sheetId, range.clone(true));
-							t.collaborativeEditing.addRows(sheetId, range.r1, range.r2 - range.r1 + 1);
+							t.collaborativeEditing.addRowsRange(sheetId, ar.clone(true));
+							t.collaborativeEditing.addRows(sheetId, ar.r1, ar.r2 - ar.r1 + 1);
 						}
 						callback(isSuccess);
 					};
 				} else if (c_oAscLockTypeElemSubType.DeleteColumns === subType) {
 					newCallback = function (isSuccess) {
 						if (isSuccess) {
-							t.collaborativeEditing.removeColsRange(sheetId, range.clone(true));
-							t.collaborativeEditing.removeCols(sheetId, range.c1, range.c2 - range.c1 + 1);
+							t.collaborativeEditing.removeColsRange(sheetId, ar.clone(true));
+							t.collaborativeEditing.removeCols(sheetId, ar.c1, ar.c2 - ar.c1 + 1);
 						}
 						callback(isSuccess);
 					};
 				} else if (c_oAscLockTypeElemSubType.DeleteRows === subType) {
 					newCallback = function (isSuccess) {
 						if (isSuccess) {
-							t.collaborativeEditing.removeRowsRange(sheetId, range.clone(true));
-							t.collaborativeEditing.removeRows(sheetId, range.r1, range.r2 - range.r1 + 1);
+							t.collaborativeEditing.removeRowsRange(sheetId, ar.clone(true));
+							t.collaborativeEditing.removeRows(sheetId, ar.r1, ar.r2 - ar.r1 + 1);
 						}
 						callback(isSuccess);
 					};
 				}
             } else {
                 if (c_oAscLockTypeElemSubType.InsertColumns === subType) {
-                    t.collaborativeEditing.addColsRange(sheetId, range.clone(true));
-                    t.collaborativeEditing.addCols(sheetId, range.c1, range.c2 - range.c1 + 1);
+                    t.collaborativeEditing.addColsRange(sheetId, ar.clone(true));
+                    t.collaborativeEditing.addCols(sheetId, ar.c1, ar.c2 - ar.c1 + 1);
                 } else if (c_oAscLockTypeElemSubType.InsertRows === subType) {
-                    t.collaborativeEditing.addRowsRange(sheetId, range.clone(true));
-                    t.collaborativeEditing.addRows(sheetId, range.r1, range.r2 - range.r1 + 1);
+                    t.collaborativeEditing.addRowsRange(sheetId, ar.clone(true));
+                    t.collaborativeEditing.addRows(sheetId, ar.r1, ar.r2 - ar.r1 + 1);
                 } else if (c_oAscLockTypeElemSubType.DeleteColumns === subType) {
-                    t.collaborativeEditing.removeColsRange(sheetId, range.clone(true));
-                    t.collaborativeEditing.removeCols(sheetId, range.c1, range.c2 - range.c1 + 1);
+                    t.collaborativeEditing.removeColsRange(sheetId, ar.clone(true));
+                    t.collaborativeEditing.removeCols(sheetId, ar.c1, ar.c2 - ar.c1 + 1);
                 } else if (c_oAscLockTypeElemSubType.DeleteRows === subType) {
-                    t.collaborativeEditing.removeRowsRange(sheetId, range.clone(true));
-                    t.collaborativeEditing.removeRows(sheetId, range.r1, range.r2 - range.r1 + 1);
+                    t.collaborativeEditing.removeRowsRange(sheetId, ar.clone(true));
+                    t.collaborativeEditing.removeRows(sheetId, ar.r1, ar.r2 - ar.r1 + 1);
                 }
             }
         }
@@ -14979,7 +14979,16 @@
 
 		var changeFreezePane;
 		var _checkFreezePaneOffset = function (_type, _range, callback, bInsert) {
-			changeFreezePane = t._getFreezePaneOffset(_type, _range, bInsert);
+			var isArrayRange = Array.isArray(_range);
+			var nLength = isArrayRange ? range.length : 1;
+			for (var i = 0; i < nLength; i++) {
+				var curRange = isArrayRange ? _range[i] : _range;
+				changeFreezePane = t._getFreezePaneOffset(_type, curRange, bInsert);
+				if (changeFreezePane) {
+					break;
+				}
+			}
+
 			if (changeFreezePane) {
 				t._isLockedFrozenPane(function (_success) {
 					if (_success) {
@@ -15406,32 +15415,45 @@
 						this._isLockedCells(lockRange, null, onChangeWorksheetCallback);
 						break;
 					case c_oAscDeleteOptions.DeleteColumns:
-						lockRange = new asc_Range(checkRange.c1, 0, checkRange.c2, gc_nMaxRow0);
+						//сначала првоеряем
+						var isError;
+						doMultiRanges(function (start, end, updateRange) {
+							if (isError) {
+								return;
+							}
 
-						if (t.model.getSheetProtection(Asc.c_oAscSheetProtectType.deleteColumns)) {
-							return;
-						} else if (t.model.getSheetProtection() && t.model.isLockedRange(lockRange)) {
-							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.DeleteColumnContainsLockedCell,
-								c_oAscError.Level.NoCritical);
-							return;
-						}
+							lockRange = new asc_Range(start, 0, end, gc_nMaxRow0);
 
-						isCheckChangeAutoFilter = t.model.autoFilters.isActiveCellsCrossHalfFTable(checkRange,
-							c_oAscDeleteOptions.DeleteColumns, prop);
-						if (isCheckChangeAutoFilter === false) {
-							return;
-						}
-						count = checkRange.c2 - checkRange.c1 + 1;
-						if (this.model.checkShiftPivotTable(lockRange, new AscCommon.CellBase(0, -count))) {
-							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot,
-								c_oAscError.Level.NoCritical);
-							return;
-						}
-						if (!this.model.checkShiftArrayFormulas(lockRange, new AscCommon.CellBase(0, -count))) {
-							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
-							return;
-						}
-						if (t.cellCommentator.isContainsOtherComments(lockRange)) {
+							if (t.model.getSheetProtection(Asc.c_oAscSheetProtectType.deleteColumns)) {
+								isError = true;
+							} else if (t.model.getSheetProtection() && t.model.isLockedRange(lockRange)) {
+								t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.DeleteColumnContainsLockedCell,
+									c_oAscError.Level.NoCritical);
+								isError = true;
+							}
+
+							isCheckChangeAutoFilter = t.model.autoFilters.isActiveCellsCrossHalfFTable(updateRange,
+								c_oAscDeleteOptions.DeleteColumns, prop);
+							if (isCheckChangeAutoFilter === false) {
+								isError = true;
+							}
+							count = updateRange.c2 - updateRange.c1 + 1;
+							if (t.model.checkShiftPivotTable(lockRange, new AscCommon.CellBase(0, -count))) {
+								t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot,
+									c_oAscError.Level.NoCritical);
+								isError = true;
+							}
+							if (!t.model.checkShiftArrayFormulas(lockRange, new AscCommon.CellBase(0, -count))) {
+								t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
+								isError = true;
+							}
+							if (t.cellCommentator.isContainsOtherComments(lockRange)) {
+								isError = true;
+							}
+
+							arrChangedRanges.push(lockRange);
+						}, null, null, true);
+						if (isError) {
 							return;
 						}
 
@@ -15440,21 +15462,28 @@
 							reinitRanges = true;
 							History.Create_NewPoint();
 							History.StartTransaction();
-							t.cellCommentator.updateCommentsDependencies(false, val, checkRange);
-							t.model.shiftDataValidation(false, val, checkRange, true);
-							t.model.autoFilters.isEmptyAutoFilters(arn, c_oAscDeleteOptions.DeleteColumns);
-							t.model.removeCols(checkRange.c1, checkRange.c2);
-							t._updateGroups(true);
-							if (changeFreezePane) {
-								t._updateFreezePane(changeFreezePane.col, changeFreezePane.row, true);
-							}
-							updateDrawingObjectsInfo2 = {bInsert: false, operType: val, updateRange: arn};
+
+							doMultiRanges( function (start, end, updateRange) {
+								t.cellCommentator.updateCommentsDependencies(false, val, updateRange);
+								t.model.shiftDataValidation(false, val, updateRange, true);
+								t.model.autoFilters.isEmptyAutoFilters(updateRange, c_oAscDeleteOptions.DeleteColumns);
+								t.model.removeCols(updateRange.c1, updateRange.c2);
+								t._updateGroups(true);
+								if (changeFreezePane) {
+									t._updateFreezePane(changeFreezePane.col, changeFreezePane.row, true);
+								}
+								if (updateDrawingObjectsInfo2 && updateDrawingObjectsInfo2.updateRange) {
+									updateDrawingObjectsInfo2.updateRange.union(updateRange);
+								} else {
+									updateDrawingObjectsInfo2 = {bInsert: false, operType: val, updateRange: arn};
+								}
+							}, null, null, true);
+
 							History.EndTransaction();
 						};
 
-						arrChangedRanges.push(lockRange);
-						_checkFreezePaneOffset(val, lockRange, function () {
-							t._isLockedCells(lockRange, c_oAscLockTypeElemSubType.DeleteColumns,
+						_checkFreezePaneOffset(val, arrChangedRanges, function () {
+							t._isLockedCells(arrChangedRanges, c_oAscLockTypeElemSubType.DeleteColumns,
 								onChangeWorksheetCallback);
 						});
 						break;
