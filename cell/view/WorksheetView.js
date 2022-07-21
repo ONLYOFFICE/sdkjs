@@ -15000,24 +15000,68 @@
 			}
 		};
 
+
+		var getMultiRanges = function (_ranges, _bCol) {
+			var map = {};
+			var res = [];
+			for (var i = 0; i < _ranges.length; i++) {
+				for (var j = (_bCol ? _ranges[i].c1 : _ranges[i].r1); j <= (_bCol ? _ranges[i].c2 : _ranges[i].r2); j++) {
+					if (!map[j]) {
+						res.push(j);
+						map[j] = 1;
+					}
+				}
+			}
+
+			res = res.sort();
+
+			//объединяем
+			var unionRanges = [];
+			var start = null;
+			var end = null;
+			for (var n = 0; n < res.length; n++) {
+				if (start === null) {
+					start = res[n];
+					end = res[n];
+				} else if (res[n - 1] === res[n] - 1) {
+					end++;
+					if (n === res.length - 1) {
+						unionRanges.push(Asc.Range(_bCol ? start : 0, !_bCol ? start : 0, _bCol ? end : 0, !_bCol ? end : 0));
+					}
+				} else {
+					unionRanges.push(Asc.Range(_bCol ? start : 0, !_bCol ? start : 0, _bCol ? end : 0, !_bCol ? end : 0));
+					start = res[n];
+					end = res[n];
+				}
+			}
+
+			return unionRanges.sort(function(a, b) {
+				return _bCol ? b.c1 - a.c2 : b.r1 - a.r2;
+			});
+		};
+
 		var minUpdateIndex;
 		var doMultiRanges = function (_func, _start, _end, _byCol) {
 			History.Create_NewPoint();
 			History.StartTransaction();
 			var _selectionRange = t.model.selectionRange;
 			if (_selectionRange && _selectionRange.ranges) {
-				for (var i = 0; i < _selectionRange.ranges.length; i++) {
-					var _range = _selectionRange.ranges[i];
-					if (_byCol) {
-						if (_range.c1 < minUpdateIndex) {
-							minUpdateIndex = _range.c1;
+				//необходимо объединить пересекающиеся диапазоны и сортировать от конца к началу
+				var unionRanges = getMultiRanges(_selectionRange.ranges, _byCol);
+				if (unionRanges) {
+					for (var i = 0; i < unionRanges.length; i++) {
+						var _range = unionRanges[i];
+						if (_byCol) {
+							if (_range.c1 < minUpdateIndex) {
+								minUpdateIndex = _range.c1;
+							}
+							_func(_range.c1, _range.c2, _range);
+						} else {
+							if (_range.r1 < minUpdateIndex) {
+								minUpdateIndex = _range.r1;
+							}
+							_func(_range.r1, _range.r2, _range);
 						}
-						_func(_range.c1, _range.c2, _range);
-					} else {
-						if (_range.r1 < minUpdateIndex) {
-							minUpdateIndex = _range.r1;
-						}
-						_func(_range.r1, _range.r2, _range);
 					}
 				}
 			} else {
