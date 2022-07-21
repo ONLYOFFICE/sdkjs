@@ -936,6 +936,9 @@ ParaRun.prototype.private_CheckMathBreakOperatorBeforeAdd = function(oNewRun)
  */
 ParaRun.prototype.CheckRunBeforeAdd = function(oItem)
 {
+	if (this.GetParentForm())
+		return null;
+
 	var oNewRun        = null;
 	var oLogicDocument = this.GetLogicDocument();
 
