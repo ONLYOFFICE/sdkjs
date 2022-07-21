@@ -4601,12 +4601,6 @@
 	};
 
 	//external reference
-	WorkbookView.prototype.updateExternalReferences = function (data) {
-		//после того как данные с сервара пришли - обновляем + добавляем в историю - только для совместного редактирования
-		//у всех пользователей должна быть одинаковая структура
-		this.model.updateExternalReference(data);
-	};
-
 	WorkbookView.prototype.removeExternalReferences = function (arr) {
 		this.model.removeExternalReferences(arr);
 	};

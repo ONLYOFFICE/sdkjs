@@ -3949,27 +3949,19 @@
 		return new Workbook();
 	};
 
-	Workbook.prototype.updateExternalReferences = function () {
-		//TODO нужно отдельно декстоп обработать
-		var aUpdateExternalLinks = [];
-		for (var i = 0; i < this.externalReferences.length; i++) {
-			if (this.externalReferences[i].SheetNames) {
-				for (var j = 0; j < this.externalReferences[i].SheetNames.length; j++) {
-					aUpdateExternalLinks.push({});
+	Workbook.prototype.removeExternalReferences = function (arr) {
+		//пока предполагаю, что здесь будет массив asc_CExternalReference
+		if (arr) {
+			for (var i = 0; i < arr.length; i++) {
+				var eRIndex = this.getExternalLinkIndexByName(arr[i].externalReference.Id);
+				if (eRIndex != null) {
+					//TODO нужно заменить все ячейки просто значениями, где есть формулы, которые ссылаются на эту книгу
+					this.externalReferences.splice(eRIndex - 1, 1);
+					History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
+						null, null, new UndoRedoData_FromTo(arr[i], null));
 				}
 			}
 		}
-
-		var callback = function (aUpdateData) {
-			//данные добавляем во временные листы в externalReferences -> worksheets
-
-		};
-
-		//updateExternalLinks(aUpdateExternalLinks, callback);
-	};
-
-	Workbook.prototype.removeExternalReferences = function (arr) {
-
 	};
 
 	Workbook.prototype.addExternalReferences = function (arr) {
