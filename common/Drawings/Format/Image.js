@@ -1003,7 +1003,205 @@ CImageShape.prototype.Load_LinkData = function(linkData)
         //
 		// writer.WriteXmlNodeEnd(name);
 	};
+    CImageShape.prototype.toXmlVML = function(writer, sMainCSS, sMainAttributes, pId) {
+        let bOle = (this.getObjectType() === AscDFH.historyitem_type_OleObject);
+        let sOleNodeName = "";
+        let oContext = writer.context;
 
+        if (AscFormat.XMLWRITER_DOC_TYPE_XLSX !== oContext.docType)
+        {
+            if(bOle && this.m_nPixWidth !== null && this.m_nPixHeight !== null)
+            {
+                sOleNodeName = "w:object";
+                writer.WriteXmlNodeStart(sOleNodeName);
+
+                writer.WriteXmlAttributeString("w:dxaOrig", this.m_nPixWidth);
+                writer.WriteXmlAttributeString("w:dyaOrig", this.m_nPixHeight);
+                writer.WriteXmlAttributesEnd();
+            }
+        else
+            {
+                //sOleNodeName = "w:pict";
+                //writer.WriteXmlNodeStart(sOleNodeName);
+                //
+                //writer.WriteXmlAttributesEnd();
+            }
+        }
+
+        let nShapeId = oContext.m_lObjectIdVML;
+
+        let strId = "_x0000_i" + oContext.m_lObjectIdVML;
+        let strSpid = "_x0000_s" + oContext.m_lObjectIdVML;
+
+        let strObjectid	= "_152504" + oContext.m_lObjectIdVML;
+        oContext.m_lObjectIdVML++;
+
+        let dL = 0, dT = 0, dW = 0, dH = 0;
+        let oXfrm = this.spPr.xfrm;
+        if (oXfrm)
+        {
+            if (oXfrm.offX !== null) dL = oXfrm.offX;
+            if (oXfrm.offY !== null) dT = oXfrm.offY;
+            if (oXfrm.extX !== null) dW = oXfrm.extX;
+            if (oXfrm.extY !== null) dH = oXfrm.extY;
+        }
+
+        let sCSS = "";
+
+        if(!sMainCSS)
+        {
+            sCSS += "position:absolute;";
+            if (this.group)
+            {
+                sCSS += ("left:" +	(dL / 100 + 0.5 >> 0) + ";");
+                sCSS += ("top:" + (dT / 100 + 0.5 >> 0) + ";");
+                sCSS += ("width:" +	(dW / 100 + 0.5 >> 0) + ";");
+                sCSS += ("height:" + (dH / 100 + 0.5 >> 0) + ";");
+            }
+            else
+            {
+                sCSS += ("left:" +	(dL / 12700 + 0.5 >> 0) + "pt;");
+                sCSS += ("top:" + (dT / 12700 + 0.5 >> 0) + "pt;");
+                sCSS += ("width:" +	(dW / 12700 + 0.5 >> 0) + "pt;");
+                sCSS += ("height:" + (dH / 12700 + 0.5 >> 0) + "pt;");
+            }
+        }
+
+        if (oXfrm)
+        {
+            if (oXfrm.rot !== null)
+            {
+                let nRot = oXfrm.rot * 180 + 0.5 >> 0;
+                sCSS += ("rotation:" + nRot + ";");
+            }
+            let bIsFH = oXfrm.flipH;
+            let bIsFV = oXfrm.flipV;
+            if (bIsFH && bIsFV)
+            {
+                sCSS += "flip:xy;";
+            }
+            else if (bIsFH)
+            {
+                sCSS += "flip:x;";
+            }
+            else if (bIsFV)
+            {
+                sCSS += "flip:y;";
+            }
+        }
+        writer.WriteXmlNodeStart("v:shapetype");
+        writer.WriteXmlAttributeString("type", "#_x0000_t75");
+        writer.WriteXmlAttributeString("o:spt", "75");
+        writer.WriteXmlAttributeString("coordsize", "21600,21600");
+        writer.WriteXmlAttributeString("o:preferrelative", "t");
+        writer.WriteXmlAttributeString("path", "m@4@5l@4@11@9@11@9@5xe");
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNodeStart("v:formulas");
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlString("<v:f eqn=\"if lineDrawn pixelLineWidth 0\"/>\
+<v:f eqn=\"sum @0 1 0\"/>\
+<v:f eqn=\"sum 0 0 @1\"/>\
+<v:f eqn=\"prod @2 1 2\"/>\
+<v:f eqn=\"prod @3 21600 pixelWidth\"/>\
+<v:f eqn=\"prod @3 21600 pixelHeight\"/>\
+<v:f eqn=\"sum @0 0 1\"/>\
+<v:f eqn=\"prod @6 1 2\"/>\
+<v:f eqn=\"prod @7 21600 pixelWidth\"/>\
+<v:f eqn=\"sum @8 21600 0\"/>\
+<v:f eqn=\"prod @7 21600 pixelHeight\"/>\
+<v:f eqn=\"sum @10 21600 0\"/>");
+        writer.WriteXmlNodeEnd( "v:formulas");
+        writer.WriteXmlNodeEnd( "v:shapetype");
+
+        writer.WriteXmlNodeStart("v:shape");
+        if (AscFormat.XMLWRITER_DOC_TYPE_XLSX === oContext.docType)
+        {
+            if(!pId)
+            {
+                writer.WriteXmlAttributeString("id", strSpid);
+            }
+            else
+            {
+                writer.WriteXmlAttributeString("id", pId);
+                writer.WriteXmlAttributeString("o:spid", strSpid);
+            }
+        }
+    else
+        {
+            writer.WriteXmlAttributeString("id", strId);
+            writer.WriteXmlAttributeString("o:spid", strSpid);
+        }
+        writer.WriteXmlAttributeString("type", "#_x0000_t75");
+        if (!sCSS)
+        {
+            writer.WriteXmlAttributeString("style", sMainCSS || "");
+        }
+        else
+        {
+            writer.WriteXmlAttributeString("style", (sMainCSS || "") + sCSS);
+        }
+        if (sMainAttributes)
+        {
+            writer.WriteXmlString(sMainAttributes);
+        }
+        if(bOle)
+        {
+            writer.WriteXmlAttributeString("filled", "f");
+        }
+        let strNodeVal;
+
+        writer.WriteXmlAttributeString("stroked", "false");
+        //TODO: write
+
+        writer.WriteXmlAttributesEnd();
+
+        writer.WriteXmlNodeStart("v:path");
+
+        //writer.WriteXmlAttributeString("textboxrect", "");
+        writer.WriteXmlAttributesEnd();
+        writer.WriteXmlNodeEnd( "v:path");
+
+        if (blipFill.blip.is_init() && blipFill.blip->embed.is_init())
+        {
+            writer.WriteXmlNodeStart("v:imagedata");
+
+            if (AscFormat.XMLWRITER_DOC_TYPE_XLSX === oContext.docType)
+            {
+                writer.WriteXmlAttributeString("o:relid", blipFill.blip->embed->ToString());
+            }
+        else
+            {
+                writer.WriteXmlAttributeString("r:id", blipFill.blip->embed->ToString());
+            }
+            writer.WriteXmlAttributeString("o:title", "");
+            writer.WriteXmlAttributesEnd();
+            writer.WriteXmlNodeEnd( "v:imagedata");
+        }
+
+        // if (m_sClientDataXml.IsInit())
+        //     writer.WriteString(*m_sClientDataXml);
+
+        writer.WriteXmlNodeEnd( "v:shape");
+
+        //
+        // if(bOle)
+        // {
+        //     oleObject->m_sObjectId = strObjectid;
+        //     if (AscFormat.XMLWRITER_DOC_TYPE_XLSX === oContext.docType)
+        //     {
+        //         oleObject->m_sShapeId = std::to_wstring(nShapeId);
+        //     }
+        // else
+        //     {
+        //         oleObject->m_sShapeId = strId;
+        //         oleObject->toXmlWriter(pWriter);
+        //     }
+        // }
+        if (!sOleNodeName.empty())
+        {
+            writer.WriteXmlNodeEnd( sOleNodeName);
+        }
+    };
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].CImageShape = CImageShape;

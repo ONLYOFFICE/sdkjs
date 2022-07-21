@@ -451,6 +451,10 @@ function (window, undefined) {
         return !!canEdit;
     };
 
+    COleObject.prototype.toXml = function(writer) {
+
+    };
+
     function asc_putBinaryDataToFrameFromTableOleObject(oleObject)
     {
         if (oleObject instanceof AscFormat.COleObject) {
@@ -464,7 +468,7 @@ function (window, undefined) {
         return {
             "binary": null
         };
-    };
+    }
     window['Asc'] = window['Asc'] || {};
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].COleObject = COleObject;

@@ -1672,6 +1672,7 @@ function XmlWriterContext(editorId){
     this.part = null;
     this.imageMap = {};
     this.currentPartImageMap = {};
+    this.m_lObjectIdVML = 0;
 
     this.oUriMap = {};
     this.objectId = 1;
