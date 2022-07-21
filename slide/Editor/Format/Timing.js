@@ -3186,7 +3186,7 @@
         return this.getSpClick() === sSpId;
     };
     CCondLst.prototype.toXml = function (writer, name) {
-        CCommonTimingList.prototype.toXml.call(this, writer, "p:condLst");
+        CCommonTimingList.prototype.toXml.call(this, writer, name || "p:condLst");
     };
 
     function CChildTnLst() {
@@ -3322,7 +3322,7 @@
         return true;
     };
     CTnLst.prototype.toXml = function (writer, name) {
-        CCommonTimingList.prototype.toXml.call(this, writer, "p:tnLst");
+        CCommonTimingList.prototype.toXml.call(this, writer, name || "p:tnLst");
     };
 
     function CTavLst() {
@@ -4460,11 +4460,23 @@
                 break;
             }
         }
-        writer.WriteXmlNullableAttributeString("valueType", this.valueType);
+        if(this.valueType !== null) {
+            switch(this.valueType) {
+                case VALUE_TYPE_CLR: {
+                    writer.WriteXmlNullableAttributeString("valueType", "clr");
+                    break;
+                }
+                case VALUE_TYPE_NUM: {
+                    writer.WriteXmlNullableAttributeString("valueType", "num");
+                    break;
+                }
+                case VALUE_TYPE_STR: {
+                    writer.WriteXmlNullableAttributeString("valueType", "str");
+                    break;
+                }
+            }
+        }
         writer.WriteXmlAttributesEnd();
-        writer.WriteXmlNullable(this.cBhvr);
-        writer.WriteXmlNullable(this.tavLst);
-        writer.WriteXmlNodeEnd("p:anim");
         writer.WriteXmlNullable(this.cBhvr);
         writer.WriteXmlNullable(this.tavLst);
         writer.WriteXmlNodeEnd("p:anim");
@@ -5777,12 +5789,12 @@
         }
         writer.WriteXmlNullableAttributeBool("nodePh", this.nodePh);
         writer.WriteXmlAttributesEnd();
-        writer.WriteXmlNullable(this.stCondLst);
-        writer.WriteXmlNullable(this.endCondLst);
+        writer.WriteXmlNullable(this.stCondLst, "p:stCondLst");
+        writer.WriteXmlNullable(this.endCondLst, "p:endCondLst");
         writer.WriteXmlNullable(this.endSync, "p:endSync");
         writer.WriteXmlNullable(this.iterate);
         writer.WriteXmlNullable(this.childTnLst);
-        writer.WriteXmlNullable(this.subTnLst);
+        writer.WriteXmlNullable(this.subTnLst, "p:subTnLst");
 
         writer.WriteXmlNodeEnd("p:cTn");
     };
@@ -6412,7 +6424,51 @@
     CCond.prototype.toXml = function (writer, name) {
         let sName = name || "p:cond";
         writer.WriteXmlNodeStart(sName);
-        writer.WriteXmlNullableAttributeString(("evt"), this.evt);
+        if(this.evt !== null) {
+            switch(this.evt) {
+                case COND_EVNT_BEGIN: {
+                    writer.WriteXmlNullableAttributeString("evt", "begin");
+                    break;
+                }
+                case COND_EVNT_END: {
+                    writer.WriteXmlNullableAttributeString("evt", "end");
+                    break;
+                }
+                case COND_EVNT_ON_BEGIN: {
+                    writer.WriteXmlNullableAttributeString("evt", "onBegin");
+                    break;
+                }
+                case COND_EVNT_ON_CLICK: {
+                    writer.WriteXmlNullableAttributeString("evt", "onClick");
+                    break;
+                }
+                case COND_EVNT_ON_END: {
+                    writer.WriteXmlNullableAttributeString("evt", "onEnd");
+                    break;
+                }
+                case COND_EVNT_ON_MOUSEOUT: {
+                    writer.WriteXmlNullableAttributeString("evt", "onMouseOut");
+                    break;
+                }
+                case COND_EVNT_ON_MOUSEOVER: {
+                    writer.WriteXmlNullableAttributeString("evt", "onMouseOver");
+                    break;
+                }
+                case COND_EVNT_ON_NEXT: {
+                    writer.WriteXmlNullableAttributeString("evt", "onNext");
+                    break;
+                }
+                case COND_EVNT_ON_PREV: {
+                    writer.WriteXmlNullableAttributeString("evt", "onPrev");
+                    break;
+                }
+                case COND_EVNT_ON_STOPAUDIO: {
+                    writer.WriteXmlNullableAttributeString("evt", "onStopAudio");
+                    break;
+                }
+
+            }
+        }
         writer.WriteXmlNullableAttributeString(("delay"), this.delay);
         writer.WriteXmlAttributesEnd();
         writer.WriteXmlNullable(this.tgtEl);
