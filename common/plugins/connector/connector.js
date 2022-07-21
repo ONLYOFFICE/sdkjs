@@ -140,6 +140,12 @@
 	};
 
 	EditorConnector.prototype.connect = function () {
+		if (this.isConnected)
+		{
+			console.log("This connector is already connected");
+			return;
+		}
+
 		if (window.addEventListener)
 			window.addEventListener("message", this.onMessageBound, false);
 		else if (window.attachEvent)
@@ -150,6 +156,12 @@
 	};
 
 	EditorConnector.prototype.disconnect = function () {
+		if (!this.isConnected)
+		{
+			console.log("This connector is already disconnected");
+			return;
+		}
+
 		if (window.removeEventListener)
 			window.removeEventListener("message", this.onMessageBound, false);
 		else if (window.detachEvent)
