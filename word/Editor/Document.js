@@ -17390,9 +17390,15 @@ CDocument.prototype.Begin_CompositeInput = function()
 
 			if (oRun instanceof ParaRun)
 			{
-				let oNewRun = oRun.CheckRunBeforeAdd();
-				if (!oNewRun)
-					oNewRun = oRun.private_SplitRunInCurPos();
+				let oNewRun = null;
+				let isCheck = false;
+				if (!oRun.GetParentForm())
+				{
+					isCheck = true;
+					oNewRun = oRun.CheckRunBeforeAdd();
+					if (!oNewRun)
+						oNewRun = oRun.private_SplitRunInCurPos();
+				}
 
 				if (oNewRun)
 				{
@@ -17405,7 +17411,7 @@ CDocument.prototype.Begin_CompositeInput = function()
 					Pos     : oRun.State.ContentPos,
 					Length  : 0,
 					CanUndo : true,
-					Check   : true
+					Check   : isCheck
 				};
 
 				oRun.Set_CompositeInput(this.CompositeInput);
