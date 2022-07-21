@@ -15040,17 +15040,22 @@
 			});
 		};
 
+		var multiRanges;
 		var minUpdateIndex;
 		var doMultiRanges = function (_func, _start, _end, _byCol) {
 			History.Create_NewPoint();
 			History.StartTransaction();
+
 			var _selectionRange = t.model.selectionRange;
 			if (_selectionRange && _selectionRange.ranges) {
 				//необходимо объединить пересекающиеся диапазоны и сортировать от конца к началу
-				var unionRanges = getMultiRanges(_selectionRange.ranges, _byCol);
-				if (unionRanges) {
-					for (var i = 0; i < unionRanges.length; i++) {
-						var _range = unionRanges[i];
+				if (!multiRanges) {
+					multiRanges = new AscCommonExcel.MultiplyRange(_selectionRange.ranges).unionByRowCol(_byCol);
+				}
+
+				if (multiRanges) {
+					for (var i = 0; i < multiRanges.length; i++) {
+						var _range = multiRanges[i];
 						if (_byCol) {
 							if (_range.c1 < minUpdateIndex) {
 								minUpdateIndex = _range.c1;
@@ -15067,6 +15072,7 @@
 			} else {
 				_func(val, _start, _end);
 			}
+
 			History.EndTransaction();
 		};
 
