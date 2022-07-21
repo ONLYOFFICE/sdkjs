@@ -474,7 +474,11 @@
 					break;
 				}
 				case "id": {
-					this.id = reader.GetValue();
+					let id = reader.GetValueDecodeXml();
+					let rel = reader.rels.getRelationship(id);
+					if (rel) {
+						this.id = rel.target;
+					}
 					break;
 				}
 				case "invalidUrl": {
@@ -492,7 +496,10 @@
 			}
 		};
 		CT_Hyperlink.prototype.writeAttrXmlImpl = function (writer) {
-			writer.WriteXmlNullableAttributeString("r:id", this.id);//TODO: rels
+			if (this.id) {
+				let id = writer.context.part.addRelationship(AscCommon.openXml.Types.hyperlink.relationType, this.id, AscCommon.openXml.TargetMode.external);
+				writer.WriteXmlNullableAttributeString("r:id", id);
+			}
 			writer.WriteXmlNullableAttributeString("invalidUrl", this.invalidUrl);
 			writer.WriteXmlNullableAttributeString("action", this.action);
 			writer.WriteXmlNullableAttributeString("tgtFrame", this.tgtFrame);
