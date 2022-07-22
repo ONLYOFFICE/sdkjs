@@ -18528,6 +18528,15 @@ CParagraphContentPos.prototype.DecreaseDepth = function(nCount)
 {
 	this.Depth = Math.max(0, this.Depth - nCount);
 };
+/**
+ * Проверяем позиции на совпадение
+ * @param {CParagraphContentPos} oPos
+ * @returns {boolean}
+ */
+CParagraphContentPos.prototype.IsEqual = function(oPos)
+{
+	return (oPos && 0 === this.Compare(oPos));
+};
 
 function CComplexFieldStatePos(oComplexField, isFieldCode)
 {
