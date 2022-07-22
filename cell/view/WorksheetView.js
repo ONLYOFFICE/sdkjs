@@ -15525,7 +15525,7 @@
 								if (updateDrawingObjectsInfo2 && updateDrawingObjectsInfo2.updateRange) {
 									updateDrawingObjectsInfo2.updateRange.union(updateRange);
 								} else {
-									updateDrawingObjectsInfo2 = {bInsert: false, operType: val, updateRange: arn};
+									updateDrawingObjectsInfo2 = {bInsert: false, operType: val, updateRange: updateRange};
 								}
 							}, null, null, true);
 
