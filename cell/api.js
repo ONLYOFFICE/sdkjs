@@ -2461,6 +2461,9 @@ var editor;
 			}
 		};
 
+		xmlParserContext.InitOpenManager.aCellXfs = [];
+		xmlParserContext.InitOpenManager.Dxfs = [];
+
 		readSheetDataExternal(true);
 
 		return res;
@@ -5561,7 +5564,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-
+	var res = this.asc_getExternalReferences();
   	this.asc_updateExternalReferences([0,1,2]);
   	return;
 
