@@ -14857,6 +14857,7 @@
 		var functionModelAction = null;
 		var lockDraw = false;	// Параметр, при котором не будет отрисовки (т.к. мы просто обновляем информацию на неактивном листе)
 		var lockRange, arrChangedRanges = [];
+		var isError;
 
 		var onChangeWorksheetCallback = function (isSuccess) {
 			if (false === isSuccess) {
@@ -14999,7 +15000,7 @@
 				callback();
 			}
 		};
-		
+
 		var multiRanges;
 		var minUpdateIndex;
 		var doMultiRanges = function (_func, _start, _end, _byCol) {
@@ -15426,7 +15427,6 @@
 						break;
 					case c_oAscDeleteOptions.DeleteColumns:
 						//сначала првоеряем
-						var isError;
 						doMultiRanges(function (start, end, updateRange) {
 							if (isError) {
 								return;
@@ -15436,29 +15436,35 @@
 
 							if (t.model.getSheetProtection(Asc.c_oAscSheetProtectType.deleteColumns)) {
 								isError = true;
+								return;
 							} else if (t.model.getSheetProtection() && t.model.isLockedRange(lockRange)) {
 								t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.DeleteColumnContainsLockedCell,
 									c_oAscError.Level.NoCritical);
 								isError = true;
+								return;
 							}
 
 							isCheckChangeAutoFilter = t.model.autoFilters.isActiveCellsCrossHalfFTable(updateRange,
 								c_oAscDeleteOptions.DeleteColumns, prop);
 							if (isCheckChangeAutoFilter === false) {
 								isError = true;
+								return;
 							}
 							count = updateRange.c2 - updateRange.c1 + 1;
 							if (t.model.checkShiftPivotTable(lockRange, new AscCommon.CellBase(0, -count))) {
 								t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot,
 									c_oAscError.Level.NoCritical);
 								isError = true;
+								return;
 							}
 							if (!t.model.checkShiftArrayFormulas(lockRange, new AscCommon.CellBase(0, -count))) {
 								t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
 								isError = true;
+								return;
 							}
 							if (t.cellCommentator.isContainsOtherComments(lockRange)) {
 								isError = true;
+								return;
 							}
 
 							arrChangedRanges.push(lockRange);
@@ -15498,34 +15504,51 @@
 						});
 						break;
 					case c_oAscDeleteOptions.DeleteRows:
-						lockRange = new asc_Range(0, checkRange.r1, gc_nMaxCol0, checkRange.r2);
+						//сначала првоеряем
+						doMultiRanges(function (start, end, updateRange) {
+							if (isError) {
+								return;
+							}
 
-						if (t.model.getSheetProtection(Asc.c_oAscSheetProtectType.deleteRows)) {
-							return;
-						} else if (t.model.getSheetProtection() && t.model.isLockedRange(lockRange)) {
-							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.DeleteRowContainsLockedCell,
-								c_oAscError.Level.NoCritical);
-							return;
-						}
+							lockRange = new asc_Range(0, updateRange.r1, gc_nMaxCol0, updateRange.r2);
 
+							if (t.model.getSheetProtection(Asc.c_oAscSheetProtectType.deleteRows)) {
+								isError = true;
+								return;
+							} else if (t.model.getSheetProtection() && t.model.isLockedRange(lockRange)) {
+								t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.DeleteRowContainsLockedCell,
+									c_oAscError.Level.NoCritical);
+								isError = true;
+								return;
+							}
 
-						isCheckChangeAutoFilter =
-							t.model.autoFilters.isActiveCellsCrossHalfFTable(checkRange, c_oAscDeleteOptions.DeleteRows,
-								prop);
-						if (isCheckChangeAutoFilter === false) {
-							return;
-						}
-						count = checkRange.r2 - checkRange.r1 + 1;
-						if (this.model.checkShiftPivotTable(lockRange, new AscCommon.CellBase(-count, 0))) {
-							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot,
-								c_oAscError.Level.NoCritical);
-							return;
-						}
-						if (!this.model.checkShiftArrayFormulas(lockRange, new AscCommon.CellBase(-count, 0))) {
-							this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
-							return;
-						}
-						if (t.cellCommentator.isContainsOtherComments(lockRange)) {
+							isCheckChangeAutoFilter =
+								t.model.autoFilters.isActiveCellsCrossHalfFTable(updateRange, c_oAscDeleteOptions.DeleteRows,
+									prop);
+							if (isCheckChangeAutoFilter === false) {
+								isError = true;
+								return;
+							}
+							count = updateRange.r2 - updateRange.r1 + 1;
+							if (t.model.checkShiftPivotTable(lockRange, new AscCommon.CellBase(-count, 0))) {
+								t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot,
+									c_oAscError.Level.NoCritical);
+								isError = true;
+								return;
+							}
+							if (!t.model.checkShiftArrayFormulas(lockRange, new AscCommon.CellBase(-count, 0))) {
+								t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
+								isError = true;
+								return;
+							}
+							if (t.cellCommentator.isContainsOtherComments(lockRange)) {
+								isError = true;
+								return;
+							}
+
+							arrChangedRanges.push(lockRange);
+						}, null, null, true);
+						if (isError) {
 							return;
 						}
 
@@ -15534,20 +15557,28 @@
 							reinitRanges = true;
 							History.Create_NewPoint();
 							History.StartTransaction();
-							checkRange = t.model.autoFilters.checkDeleteAllRowsFormatTable(checkRange, true);
-							t.cellCommentator.updateCommentsDependencies(false, val, checkRange);
-							t.model.shiftDataValidation(false, val, checkRange, true);
-							t.model.autoFilters.isEmptyAutoFilters(arn, c_oAscDeleteOptions.DeleteRows);
 
-							var bExcludeHiddenRows = t.model.autoFilters.bIsExcludeHiddenRows(checkRange, t.model.selectionRange.activeCell);
-							t.model.removeRows(checkRange.r1, checkRange.r2, bExcludeHiddenRows);
+							doMultiRanges( function (start, end, updateRange) {
+								checkRange = t.model.autoFilters.checkDeleteAllRowsFormatTable(updateRange, true);
+								t.cellCommentator.updateCommentsDependencies(false, val, checkRange);
+								t.model.shiftDataValidation(false, val, checkRange, true);
+								t.model.autoFilters.isEmptyAutoFilters(updateRange, c_oAscDeleteOptions.DeleteRows);
 
-							t._updateSlicers(arn);
-							t._updateGroups();
-							updateDrawingObjectsInfo2 = {bInsert: false, operType: val, updateRange: arn};
-							if (changeFreezePane) {
-								t._updateFreezePane(changeFreezePane.col, changeFreezePane.row, true);
-							}
+								var bExcludeHiddenRows = t.model.autoFilters.bIsExcludeHiddenRows(checkRange, t.model.selectionRange.activeCell);
+								t.model.removeRows(checkRange.r1, checkRange.r2, bExcludeHiddenRows);
+
+								t._updateSlicers(updateRange);
+								t._updateGroups();
+								if (updateDrawingObjectsInfo2 && updateDrawingObjectsInfo2.updateRange) {
+									updateDrawingObjectsInfo2.updateRange.union(updateRange);
+								} else {
+									updateDrawingObjectsInfo2 = {bInsert: false, operType: val, updateRange: updateRange};
+								}
+								if (changeFreezePane) {
+									t._updateFreezePane(changeFreezePane.col, changeFreezePane.row, true);
+								}
+							});
+
 							History.EndTransaction();
 						};
 

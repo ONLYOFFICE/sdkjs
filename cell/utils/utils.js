@@ -1750,18 +1750,16 @@
 				if (start === null) {
 					start = res[n];
 					end = res[n];
-					if (n === res.length - 1) {
-						unionRanges.push(Asc.Range(_bCol ? start : 0, !_bCol ? start : 0, _bCol ? end : gc_nMaxCol0, !_bCol ? end : gc_nMaxRow0));
-					}
 				} else if (res[n - 1] === res[n] - 1) {
 					end++;
-					if (n === res.length - 1) {
-						unionRanges.push(Asc.Range(_bCol ? start : 0, !_bCol ? start : 0, _bCol ? end : gc_nMaxCol0, !_bCol ? end : gc_nMaxRow0));
-					}
 				} else {
 					unionRanges.push(Asc.Range(_bCol ? start : 0, !_bCol ? start : 0, _bCol ? end : gc_nMaxCol0, !_bCol ? end : gc_nMaxRow0));
 					start = res[n];
 					end = res[n];
+				}
+
+				if (n === res.length - 1) {
+					unionRanges.push(Asc.Range(_bCol ? start : 0, !_bCol ? start : 0, _bCol ? end : gc_nMaxCol0, !_bCol ? end : gc_nMaxRow0));
 				}
 			}
 
