@@ -15489,16 +15489,17 @@
 								t.model.shiftDataValidation(false, val, updateRange, true);
 								t.model.autoFilters.isEmptyAutoFilters(updateRange, c_oAscDeleteOptions.DeleteColumns);
 								t.model.removeCols(updateRange.c1, updateRange.c2);
-								t._updateGroups(true);
-								if (changeFreezePane) {
-									t._updateFreezePane(changeFreezePane.col, changeFreezePane.row, true);
-								}
 								if (updateDrawingObjectsInfo2 && updateDrawingObjectsInfo2.updateRange) {
 									updateDrawingObjectsInfo2.updateRange.union(updateRange);
 								} else {
 									updateDrawingObjectsInfo2 = {bInsert: false, operType: val, updateRange: updateRange};
 								}
 							}, null, null, true);
+
+							t._updateGroups(true);
+							if (changeFreezePane) {
+								t._updateFreezePane(changeFreezePane.col, changeFreezePane.row, true);
+							}
 
 							History.EndTransaction();
 						};
@@ -15573,16 +15574,17 @@
 								t.model.removeRows(checkRange.r1, checkRange.r2, bExcludeHiddenRows);
 
 								t._updateSlicers(updateRange);
-								t._updateGroups();
 								if (updateDrawingObjectsInfo2 && updateDrawingObjectsInfo2.updateRange) {
 									updateDrawingObjectsInfo2.updateRange.union(updateRange);
 								} else {
 									updateDrawingObjectsInfo2 = {bInsert: false, operType: val, updateRange: updateRange};
 								}
-								if (changeFreezePane) {
-									t._updateFreezePane(changeFreezePane.col, changeFreezePane.row, true);
-								}
 							});
+
+							t._updateGroups();
+							if (changeFreezePane) {
+								t._updateFreezePane(changeFreezePane.col, changeFreezePane.row, true);
+							}
 
 							History.EndTransaction();
 						};
