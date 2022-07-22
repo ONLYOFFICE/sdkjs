@@ -5562,7 +5562,7 @@ var editor;
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
 
-  	this.asc_updateExternalReference([0,1,2]);
+  	this.asc_updateExternalReferences([0,1,2]);
   	return;
 
 
@@ -7905,7 +7905,11 @@ var editor;
 		ws.handlers.trigger("selectionMathInfoChanged", ws.getSelectionMathInfo());
 	};
 
-	spreadsheet_api.prototype.asc_updateExternalReference = function(aIndexes) {
+	spreadsheet_api.prototype.asc_getExternalReferences = function() {
+		return this.wb.getExternalReferences();
+	};
+
+	spreadsheet_api.prototype.asc_updateExternalReferences = function(aIndexes) {
 		if (this.canEdit()) {
 			this.wb.updateExternalReferenceByIndexes(aIndexes);
 		}
@@ -8429,5 +8433,9 @@ var editor;
   prot["asc_getActiveNamedSheetView"] = prot.asc_getActiveNamedSheetView;
 
   prot["getPrintOptionsJson"] = prot.getPrintOptionsJson;
+
+  prot["asc_getExternalReference"] = prot.asc_getExternalReferences;
+  prot["asc_updateExternalReference"] = prot.asc_updateExternalReferences;
+
 
 })(window);

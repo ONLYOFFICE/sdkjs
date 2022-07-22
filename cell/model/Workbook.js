@@ -3985,6 +3985,17 @@
 		return null;
 	};
 
+	Workbook.prototype.getExternalReferences = function () {
+		var res = null;
+		for (var i = 0; i < this.externalReferences.length; i++) {
+			if (!res) {
+				res = [];
+			}
+			res.push(this.externalReferences[i].getAscLink())
+		}
+		return res;
+	};
+
 
 //-------------------------------------------------------------------------------------------------
 	var tempHelp = new ArrayBuffer(8);

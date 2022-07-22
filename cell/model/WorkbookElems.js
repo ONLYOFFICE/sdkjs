@@ -12212,6 +12212,19 @@ QueryTableField.prototype.clone = function() {
 	asc_CExternalReference.prototype.asc_getData = function () {
 		return this.data;
 	};
+	asc_CExternalReference.prototype.asc_getSource = function () {
+		if (this.data) {
+			var lastIndex = this.data.lastIndexOf('/');
+			if (lastIndex === -1) {
+				lastIndex = this.data.lastIndexOf('/\/');
+			}
+			return lastIndex === -1 ? null : this.data.substr(lastIndex + 1);
+		}
+		return null;
+	};
+	asc_CExternalReference.prototype.asc_getLocation = function () {
+
+	};
 	asc_CExternalReference.prototype.isExternalLink = function () {
 		return this.type === Asc.c_oAscExternalReferenceType.link;
 	};
@@ -12786,6 +12799,7 @@ QueryTableField.prototype.clone = function() {
 	prot = asc_CExternalReference.prototype;
 	prot["asc_getType"] = prot.asc_getType;
 	prot["asc_getData"] = prot.asc_getData;
+	prot["asc_getSource"] = prot.asc_getSource;
 
 
 	window["AscCommonExcel"].CPrintPreviewState = CPrintPreviewState;

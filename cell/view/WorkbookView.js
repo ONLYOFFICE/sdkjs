@@ -4601,6 +4601,10 @@
 	};
 
 	//external reference
+	WorkbookView.prototype.getExternalReferences = function () {
+		this.model.getExternalReferences();
+	};
+
 	WorkbookView.prototype.removeExternalReferences = function (arr) {
 		this.model.removeExternalReferences(arr);
 	};
