@@ -14982,11 +14982,16 @@
 		var _checkFreezePaneOffset = function (_type, _range, callback, bInsert) {
 			var isArrayRange = Array.isArray(_range);
 			var nLength = isArrayRange ? range.length : 1;
+			//если имеем дело с мультидиапазонами, то сюда они уже приходят уникальными и отсортированными в обратном порядке
+			//поэтому складываю сдвиги
 			for (var i = 0; i < nLength; i++) {
 				var curRange = isArrayRange ? _range[i] : _range;
-				changeFreezePane = t._getFreezePaneOffset(_type, curRange, bInsert);
-				if (changeFreezePane) {
-					break;
+				var _changeFreezePane = t._getFreezePaneOffset(_type, curRange, bInsert);
+				if (!changeFreezePane) {
+					changeFreezePane = _changeFreezePane;
+				} else if (_changeFreezePane && (_changeFreezePane.row || _changeFreezePane.col)) {
+					changeFreezePane.col += _changeFreezePane.col;
+					changeFreezePane.row += _changeFreezePane.row;
 				}
 			}
 
@@ -15547,7 +15552,7 @@
 							}
 
 							arrChangedRanges.push(lockRange);
-						}, null, null, true);
+						});
 						if (isError) {
 							return;
 						}
