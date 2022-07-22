@@ -1602,6 +1602,7 @@ function XmlParserContext(){
     //docx
     this.commentDataById = {};
     this.oReadResult = new AscCommonWord.DocReadResult();
+    this.maxZIndex = 0;
     //xlsx
     this.sharedStrings = [];
     this.row = null;
@@ -1647,12 +1648,19 @@ XmlParserContext.prototype.assignConnectors = function(aSpTree) {
     }
     this.ConnectorsPr.length = 0;
 };
+XmlParserContext.prototype.checkZIndex = function(nZIndex) {
+    if(AscFormat.isRealNumber(nZIndex)) {
+        this.maxZIndex = Math.max(this.maxZIndex, nZIndex);
+    }
+};
 function XmlWriterContext(editorId){
     //common
     this.editorId = editorId;
     this.zip = null;
     this.part = null;
     this.imageMap = {};
+    this.currentPartImageMap = {};
+
     this.oUriMap = {};
     this.objectId = 1;
     this.groupIndex = 0;
@@ -1724,6 +1732,34 @@ XmlWriterContext.prototype.getSlideMastersCount = function() {
 XmlWriterContext.prototype.getSlidesCount = function() {
     return this.sldIdLst.length;
 };
+XmlWriterContext.prototype.clearCurrentPartImageMap = function() {
+    this.currentPartImageMap = {};
+};
+XmlWriterContext.prototype.getImageRId = function(sRasterImageId) {
+    let imagePart = this.imageMap[sRasterImageId];
+    let type = this.editorId === AscCommon.c_oEditorId.Word ? AscCommon.openXml.Types.imageWord : AscCommon.openXml.Types.image;
+    if (!imagePart) {
+        if (this.part) {
+            let ext = AscCommon.GetFileExtension(sRasterImageId);
+            type = Object.assign({}, type);
+            type.filename += ext;
+            type.contentType = AscCommon.openXml.GetMimeType(ext);
+            imagePart = this.part.addPart(type);
+            if (imagePart) {
+                this.imageMap[sRasterImageId] = imagePart;
+                this.currentPartImageMap[sRasterImageId] = imagePart.rId;
+            }
+        }
+    }
+    else {
+        if(!this.currentPartImageMap[sRasterImageId]) {
+            if(this.part) {
+                this.currentPartImageMap[sRasterImageId] = this.part.addRelationship(type.relationType, imagePart.part.uri);
+            }
+        }
+    }
+    return this.currentPartImageMap[sRasterImageId] ? this.currentPartImageMap[sRasterImageId] : "";
+};
 function CT_XmlNode(opt_elemReader) {
     this.attributes = {};
     this.attributes = {};
@@ -1791,8 +1827,8 @@ CT_XmlNode.prototype.toXml = function(writer, name) {
     }
     writer.WriteXmlNodeEnd(name);
 };
-window.StaxParser = StaxParser;
 
 window['AscCommon'] = window['AscCommon'] || {};
 window['AscCommon'].XmlParserContext = XmlParserContext;
 window["AscCommon"].XmlWriterContext = XmlWriterContext;
+window['AscCommon'].StaxParser = StaxParser;

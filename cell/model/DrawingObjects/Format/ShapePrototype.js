@@ -39,7 +39,7 @@ var CShape = AscFormat.CShape;
 
 var History = AscCommon.History;
 
-var G_O_DEFAULT_COLOR_MAP = AscFormat.GenerateDefaultColorMap();
+
 
     CShape.prototype.getEditorType = function()
     {
@@ -837,7 +837,7 @@ CShape.prototype.recalculateContent = function()
 
 CShape.prototype.Get_ColorMap = function()
 {
-    return G_O_DEFAULT_COLOR_MAP;
+    return AscFormat.GetDefaultColorMap();
 };
 
 CShape.prototype.getStyles = function(index)
@@ -895,6 +895,5 @@ AscFormat.CTextBody.prototype.getDrawingDocument = function()
 
     //------------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
-    window['AscFormat'].G_O_DEFAULT_COLOR_MAP = G_O_DEFAULT_COLOR_MAP;
     window['AscFormat'].addToDrawings = addToDrawings;
 })(window);

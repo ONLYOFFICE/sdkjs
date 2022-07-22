@@ -486,7 +486,7 @@ function ConvertParagraphToPPTX(paragraph, drawingDocument, newParent, bIsAddMat
     new_paragraph.Internal_Content_Remove2(0, new_paragraph.Content.length);
     ConvertParagraphContentToPPTX(paragraph.Content, new_paragraph, bIsAddMath, bRemoveHyperlink);
     var EndRun = new ParaRun(new_paragraph);
-    EndRun.Add_ToContent( 0, new ParaEnd() );
+    EndRun.Add_ToContent( 0, new AscWord.CRunParagraphMark() );
     new_paragraph.Internal_Content_Add( new_paragraph.Content.length, EndRun, false );
     return new_paragraph;
 }
@@ -852,7 +852,7 @@ function RecalculateDocContentByMaxLine(oDocContent, dMaxWidth, bNeedRecalcAllDr
         {
             if(oDocContent.Content[0] && oDocContent.Content[0].Content[0] && oDocContent.Content[0].Content[0].Content[0])
             {
-                return oDocContent.Content[0].Content[0].Content[0].WidthVisible/TEXTWIDTH_DIVIDER;
+                return oDocContent.Content[0].Content[0].Content[0].GetWidthVisible();
             }
         }
         return 0.001;
@@ -4598,13 +4598,13 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
                 if (!currentFontSize) {
                     currentFontSize = paraRun.Get_FontSize();
                 }
-                paraRun.Set_FontSize(fontSize);
+                paraRun.SetFontSize(fontSize);
             });
             this.txBody.content.Content.forEach(function (paragraph) {
                 if (!currentFontSize) {
                     currentFontSize = paragraph.TextPr.Value.FontSize;
                 }
-                paragraph.TextPr.Set_FontSize(fontSize);
+                paragraph.TextPr.SetFontSize(fontSize);
             });
             const oBodyPr = this.getBodyPr && this.getBodyPr();
             if (oBodyPr) {
@@ -5488,7 +5488,7 @@ CShape.prototype.draw = function (graphics, transform, transformText, pageIndex,
     if (graphics.IsSlideBoundsCheckerType === true) {
 
         graphics.transform3(_transform);
-        if (!this.spPr || null == geometry || geometry.pathLst.length === 0 || (geometry.pathLst.length === 1 && geometry.pathLst[0].ArrPathCommandInfo.length === 0) || !graphics.IsShapeNeedBounds(geometry.preset)) {
+        if (!this.spPr || null == geometry || geometry.isEmpty() || !graphics.IsShapeNeedBounds(geometry.preset)) {
             graphics._s();
             graphics._m(0, 0);
             graphics._l(this.extX, 0);
@@ -6789,9 +6789,6 @@ CShape.prototype.checkTextWarp = function(oContent, oBodyPr, dWidth, dHeight, bN
 {
     return AscFormat.ExecuteNoHistory(function(){
         var oRet = {oTxWarpStruct: null, oTxWarpStructParamarks: null, oTxWarpStructNoTransform: null, oTxWarpStructParamarksNoTransform: null};
-        if(window["IS_NATIVE_EDITOR"]){
-            return oRet;
-        }
         //return oRet;
         var bTransform = this.chekBodyPrTransform(oBodyPr) && bNeedWarp;
         var warpGeometry = oBodyPr.prstTxWarp;
@@ -7152,7 +7149,7 @@ CShape.prototype.getColumnNumber = function(){
                                             if(AscFormat.isRealNumber(oTextPr.FontSize) &&
                                                 AscFormat.isRealNumber(oCompiledPr.FontSize) &&
                                                 oTextPr.FontSize !== oCompiledPr.FontSize) {
-                                                oRun.Set_FontSize(oCompiledPr.FontSize);
+                                                oRun.SetFontSize(oCompiledPr.FontSize);
                                                 if(oRun.IsParaEndRun()) {
                                                     var oParagraph = oRun.Paragraph;
                                                     if(oParagraph) {
@@ -7184,7 +7181,12 @@ CShape.prototype.getColumnNumber = function(){
 	};
 	CShape.prototype.getFormHorPadding = function() {
 		let oInnerForm;
-		if (this.isForm && this.isForm() && (oInnerForm = this.getInnerForm()) && !oInnerForm.IsPictureForm() && !oInnerForm.IsCheckBox())
+		if (this.isForm
+			&& this.isForm()
+			&& (oInnerForm = this.getInnerForm())
+			&& !oInnerForm.IsPictureForm()
+			&& !oInnerForm.IsCheckBox()
+			&& (!oInnerForm.IsTextForm() || !oInnerForm.GetTextFormPr().IsComb()))
 			return 2 * 25.4 / 72; // 2pt
 
 		return 0;
@@ -7307,15 +7309,22 @@ CShape.prototype.getColumnNumber = function(){
         writer.WriteXmlNullableAttributeBool("fLocksText", this.fLocksText);
         writer.WriteXmlAttributesEnd();
 
-        if(this.nvSpPr) {
-            if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX ||
-                oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX_GLOSSARY)
-            {
+
+        if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX ||
+            oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX_GLOSSARY)
+        {
+            if(this.nvSpPr) {
                 this.nvSpPr.cNvPr.toXml2("wps", writer);
                 this.nvSpPr.nvUniSpPr.toXmlSp(writer);
             }
-            else
+            else {
+                writer.WriteXmlString("<wps:cNvPr id=\"0\" name=\"\"></wps:cNvPr><wps:cNvSpPr></wps:cNvSpPr>");
+            }
+        }
+        else {
+            if(this.nvSpPr) {
                 this.nvSpPr.toXmlSp(writer);
+            }
         }
 
         let bIsPresentStyle = false;
@@ -7573,6 +7582,5 @@ function SaveRunsFormatting(aSourceContent, aCopyContent, oTheme, oColorMap, oPr
     window['AscFormat'].SaveContentSourceFormatting = SaveContentSourceFormatting;
     window['AscFormat'].hitToHandles = hitToHandles;
     window['AscFormat'].pHText = pHText;
-	window['AscFormat'].DEFAULT_THEME = AscFormat.GenerateDefaultTheme(null);
     window['AscFormat'].fReadTxBoxContentXML = fReadTxBoxContentXML;
 })(window);

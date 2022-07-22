@@ -3138,12 +3138,12 @@ function CBinaryFileWriter()
                         var _num = (fill.srcRect.t * 1000) >> 0;
                         oThis._WriteString1(1, "" + _num);
                     }
-                    if (fill.srcRect.l != null)
+                    if (fill.srcRect.r != null)
                     {
                         var _num = ((100 - fill.srcRect.r) * 1000) >> 0;
                         oThis._WriteString1(2, "" + _num);
                     }
-                    if (fill.srcRect.l != null)
+                    if (fill.srcRect.b != null)
                     {
                         var _num = ((100 - fill.srcRect.b) * 1000) >> 0;
                         oThis._WriteString1(3, "" + _num);

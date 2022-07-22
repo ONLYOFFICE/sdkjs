@@ -323,7 +323,9 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
     };
     Path.prototype.close = function()
     {
-        this.addPathCommand({id:close});
+        if(this.ArrPathCommandInfo.length > 0) {
+            this.addPathCommand({id:close});
+        }
     };
 	Path.prototype.calculateCommandCoord = function(oGdLst, sFormula, dFormulaCoeff, dNumberCoeff)
     {

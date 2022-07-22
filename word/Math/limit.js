@@ -315,6 +315,33 @@ CLimit.prototype.Can_ModifyArgSize = function()
 {
     return this.CurPos == 1 && false === this.Is_SelectInside();
 };
+CLimit.prototype.GetTextOfElement = function(isLaTeX) {
+	var strTemp = "";
+	var strLimitSymbol = "";
+	var strFuncName = this.CheckIsEmpty(this.getFName().GetTextOfElement(isLaTeX));
+	var strArgument = this.CheckIsEmpty(this.getIterator().GetTextOfElement(isLaTeX));
+	var strStartBracet = this.GetStartBracetForGetTextContent(isLaTeX);
+	var strCloseBracet = this.GetEndBracetForGetTextContent(isLaTeX);
+
+	if (isLaTeX) {
+		strLimitSymbol = (this.Pr.type == 1) ? "^" : "_";
+		if (strFuncName === 'lim' ||
+			strFuncName === 'log' ||
+			strFuncName === 'max' ||
+			strFuncName === 'min' ||
+			strFuncName === 'ln') {
+				strFuncName = '\\' + strFuncName;
+		}
+	} else {
+		strLimitSymbol = (this.Pr.type == 1) ? "┴" : "┬";
+	}
+	
+	if (strArgument.length > 1) {
+		strArgument = strStartBracet + strArgument + strCloseBracet;
+	}
+	strTemp = strFuncName + strLimitSymbol+ strArgument;
+	return strTemp;
+};
 
 /**
  *
@@ -416,6 +443,69 @@ CMathFunc.prototype.fillContent = function()
     this.elements[0][0] = this.getFName();
     this.elements[0][1] = this.getArgument();
 };
+CMathFunc.prototype.GetTextOfElement = function(isLaTeX) {
+	var strTemp = "";
+	var strFuncName = this.CheckIsEmpty(this.getFName().GetTextOfElement(isLaTeX));
+	var strArgument = " "+this.CheckIsEmpty(this.getArgument().GetTextOfElement(isLaTeX));
+	var strStartBracet = "";
+	var strCloseBracet = "";
+
+	if (isLaTeX) {
+		strStartBracet = strArgument.trim().length > 1 ? " {" : "";
+		strCloseBracet = strArgument.trim().length > 1 ? "}" : "";
+	} else {
+		strStartBracet = strArgument.trim().length > 1 ? " 〖" : "";
+		strCloseBracet = strArgument.trim().length > 1 ? "〗" : "";
+	}
+
+	//	Unicode
+	//	if strArgument is block.. such as (2+1), then don't add brackets
+
+	if (isLaTeX) {
+		switch (strFuncName) {
+			case 'cos':
+			case 'sin':
+			case 'tan':
+			case 'sec':
+			case 'cot':
+			case 'csc':
+			case 'arcsin':
+			case 'arccos':
+			case 'arctan':
+			case 'arcsec':
+			case 'arccot':
+			case 'arccsc':
+			case 'sinh':
+			case 'cosh':
+			case 'tanh':
+			case 'coth':
+			case 'sech':
+			case 'csch':
+			case 'srcsinh':
+			case 'arctanh':
+			case 'arcsech':
+			case 'arccosh':
+			case 'arccoth':
+			case 'arccsch':
+			case 'log':
+
+			case 'lin':
+			case 'ln':
+			case 'max':
+			case 'min':
+			case 'exp': strFuncName = '\\'+ strFuncName; break;
+			default: break;
+		}
+	}
+	
+	strTemp = strFuncName
+		+ strStartBracet
+		+ strArgument
+		+ strCloseBracet;
+
+	return strTemp;
+};
+
 
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

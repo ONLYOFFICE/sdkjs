@@ -56,6 +56,10 @@ CDocumentContentBase.prototype.GetId = function()
 {
 	return this.Id;
 };
+CDocumentContentBase.prototype.GetApi = function()
+{
+	return editor;
+};
 /**
  * Получаем ссылку на основной объект документа
  * @returns {CDocument}
@@ -544,7 +548,7 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 					if (oElement.IsTable())
 						oElement.RemoveTableRow();
 					else
-						oElement.Remove(1, true, bRemoveOnlySelection, bOnTextAdd);
+						oElement.Remove(Count, true, bRemoveOnlySelection, bOnTextAdd);
 				}
 			}
 
@@ -1873,6 +1877,25 @@ CDocumentContentBase.prototype.CheckRunContent = function(fCheck)
 
 	return false;
 };
+CDocumentContentBase.prototype.CheckSelectedRunContent = function(fCheck)
+{
+	let nStartPos = this.Selection.StartPos;
+	let nEndPos   = this.Selection.EndPos;
+
+	if (nStartPos > nEndPos)
+	{
+		nStartPos = this.Selection.EndPos;
+		nEndPos   = this.Selection.StartPos;
+	}
+
+	for (var nIndex = nStartPos; nIndex <= nEndPos; ++nIndex)
+	{
+		if (this.Content[nIndex].CheckSelectedRunContent(fCheck))
+			return true;
+	}
+
+	return false;
+};
 CDocumentContentBase.prototype.private_AcceptRevisionChanges = function(nType, bAll)
 {
 	var oTrackManager = this.GetLogicDocument() ? this.GetLogicDocument().GetTrackRevisionsManager() : null;
@@ -2289,4 +2312,42 @@ CDocumentContentBase.prototype.ProcessComplexFields = function()
 	{
 		this.Content[nIndex].ProcessComplexFields();
 	}
+};
+CDocumentContentBase.prototype.UpdateInterfaceTextPr = function()
+{
+	let oApi = this.GetApi();
+	if (!oApi)
+		return;
+
+	let oTextPr = this.GetCalculatedTextPr();
+	if (oTextPr)
+	{
+		AscWord.FontCalculator.Calculate(this, oTextPr);
+		oApi.UpdateTextPr(oTextPr);
+	}
+};
+/**
+ * Считаем количество элементов в рамке, начиная с заданного
+ * @param nStartIndex
+ * @returns {number}
+ */
+CDocumentContentBase.prototype.CountElementsInFrame = function(nStartIndex)
+{
+	let oFramePr = this.Content[nStartIndex].GetFramePr();
+	if (!oFramePr)
+		return 0;
+
+	let nFlowsCount = 1;
+	for (let nIndex = nStartIndex + 1, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+	{
+		let oElement = this.Content[nIndex];
+
+		let oTempFramePr = oElement.GetFramePr();
+		if (oTempFramePr && oFramePr.IsEqual(oTempFramePr) && (!oElement.IsParagraph() || !oElement.IsInline()))
+			nFlowsCount++;
+		else
+			break;
+	}
+
+	return nFlowsCount;
 };

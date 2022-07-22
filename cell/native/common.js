@@ -116,4 +116,3 @@ window["NativeCorrectImageUrlOnCopy"] = function(url) {
 var global_memory_stream_menu = CreateNativeMemoryStream();
 
 window['SockJS'] = createSockJS();
-window['JSZipUtils'] = JSZipUtils();

@@ -233,7 +233,7 @@ CGlossaryDocument.prototype.private_CreateDefaultTextFormPlaceholder = function(
 	var oParagraph = oDocPart.GetFirstParagraph();
 	var oRun       = new ParaRun();
 	oParagraph.AddToContent(0, oRun);
-	oRun.AddToContent(0, new ParaText(0x0020));
+	oRun.AddToContent(0, new AscWord.CRunText(0x0020));
 
 	oDocPart.SetDocPartBehavior(c_oAscDocPartBehavior.Content);
 	oDocPart.SetDocPartCategory("Common", c_oAscDocPartGallery.Placeholder);

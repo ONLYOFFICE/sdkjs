@@ -317,6 +317,7 @@
 			
 			window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
 			ws.handlers.trigger("cleanCutData", true);
+			wb.handlers.trigger("cleanCopyData", true);
 
 			if (wb.getCellEditMode())//text in cell
 			{
@@ -469,6 +470,7 @@
 						//window['AscCommon'].g_specialPasteHelper.Special_Paste_Hide_Button();
 						t.pasteProcessor.pasteTextOnSheet(ws, data1);
 					}
+					wb.handlers.trigger("cleanCopyData", true);
 					break;
 				}
 			}
@@ -1640,8 +1642,10 @@
 					this.activeRange = worksheet.model.selectionRange.getLast().clone(true);
 					result = this._pasteFromBinaryWord(worksheet, base64FromWord, isIntoShape, isCellEditMode);
 					window['AscCommon'].g_specialPasteHelper.specialPasteData.pasteFromWord = true;
+					worksheet.workbook.handlers.trigger("cleanCopyData", true);
 				} else if (base64FromPresentation) {
 					result = this._pasteFromBinaryPresentation(worksheet, base64FromPresentation, isIntoShape, isCellEditMode);
+					worksheet.workbook.handlers.trigger("cleanCopyData", true);
 				}
 
 				return result;
@@ -1843,10 +1847,10 @@
 				//проверяем, может это вырезанный фрагмент пытаемся вставить в пределах одного документа
 				//чтобы не передавать изменения на сервер, даже в случае одного пользователя в разных вкладках
 				//вырезать и вставить будут работать независимо, поэтому при вставке сравнивем ещё и id юзера
-
-				if(this._checkPastedInOriginalDoc(pastedWb) && null !== window["Asc"]["editor"].wb.cutIdSheet) {
+				var pasteInOriginalDoc = this._checkPastedInOriginalDoc(pastedWb);
+				if(pasteInOriginalDoc && null !== window["Asc"]["editor"].wb.cutIdSheet) {
 					var wsFrom = window["Asc"]["editor"].wb.getWorksheetById(window["Asc"]["editor"].wb.cutIdSheet);
-					var fromRange = wsFrom ? wsFrom.cutRange : null;
+					var fromRange = wsFrom ? wsFrom.copyCutRange : null;
 					if(fromRange) {
 						var aRange = ws.model.selectionRange.getLast();
 						var toRange = new Asc.Range(aRange.c1, aRange.r1, aRange.c1 + (fromRange.c2 - fromRange.c1), aRange.r1 + (fromRange.r2 - fromRange.r1));
@@ -1864,6 +1868,8 @@
 
 						AscCommon.g_clipboardBase.needClearBuffer = true;
 					}
+				} else if (!pasteInOriginalDoc) {
+					ws.workbook.handlers.trigger("cleanCopyData", true);
 				}
 
 				return res;
@@ -2714,7 +2720,7 @@
 				}
 
 				this.activeRange = worksheet.model.selectionRange.getLast().clone();
-
+				worksheet.workbook.handlers.trigger("cleanCopyData", true);
 
 				var callBackAfterLoadImages = function () {
 					History.TurnOff();
@@ -2795,8 +2801,10 @@
 				} else if (base64FromWord)//from word
 				{
 					result = this._pasteFromBinaryWord(worksheet, base64FromWord, isIntoShape);
+					worksheet.workbook.handlers.trigger("cleanCopyData", true);
 				} else if (base64FromPresentation) {
 					result = this._pasteFromBinaryPresentation(worksheet, base64FromPresentation, isIntoShape);
+					worksheet.workbook.handlers.trigger("cleanCopyData", true);
 				}
 
 				return result;
@@ -3258,9 +3266,9 @@
 						if (null != nUnicode) {
 							var Item;
 							if (0x20 !== nUnicode && 0xA0 !== nUnicode && 0x2009 !== nUnicode) {
-								Item = new ParaText(nUnicode);
+								Item = new AscWord.CRunText(nUnicode);
 							} else {
-								Item = new ParaSpace();
+								Item = new AscWord.CRunSpace();
 							}
 
 							//add text
@@ -4078,32 +4086,7 @@
 				}
 
 
-				var parseMathArr = function (mathContent) {
-					if (!mathContent) {
-						return;
-					}
-
-					for (var i = 0; i < mathContent.length; i++) {
-						var elem = mathContent[i];
-
-						var newParaRunObj;
-						if (para_Math_Run === elem.Type) {
-							newParaRunObj = t._parseParaRun(elem, oNewItem, paraPr, innerCol, row, col, text);
-							innerCol = newParaRunObj.col;
-							row = newParaRunObj.row;
-						} else if (typeof(elem) === "string") {
-							var newParaRun = new ParaRun();
-							window['AscCommon'].addTextIntoRun(newParaRun, elem);
-							newParaRunObj =
-								t._parseParaRun(newParaRun, oNewItem, paraPr, innerCol, row, col, text, t.prevTextPr);
-							innerCol = newParaRunObj.col;
-							row = newParaRunObj.row;
-						} else if (elem.length) {
-							parseMathArr(elem);
-						}
-					}
-				};
-
+				
 				//проходимся по контенту paragraph
 				var paraRunObj;
 				//получае общий шрифт для ячейки для случая когда вставляем нумерованный список
@@ -4178,10 +4161,15 @@
 						}
 						case para_Math://*para_Math*
 						{
+							
 							if (this.bFromPresentation) {
 								var mathTextContent = content[n].Root.GetTextContent();
 								if (mathTextContent) {
-									parseMathArr(mathTextContent.paraRunArr);
+									var newParaRun = new ParaRun();
+									window['AscCommon'].addTextIntoRun(newParaRun, mathTextContent.str);
+									var objTemp = t._parseParaRun(newParaRun, oNewItem, paraPr, innerCol, row, col, text);
+									innerCol = objTemp.col;
+									row = objTemp.row;
 								}
 							} else {
 								var tempFonts = [];
@@ -4242,7 +4230,7 @@
 				var newLine = "\n";
 
 				var cTextPr = prevTextPr ? prevTextPr : paraRun.Get_CompiledPr();
-				if (cTextPr && !(paraRunContent.length === 1 && paraRunContent[0] instanceof ParaEnd))//settings for text
+				if (cTextPr && !(paraRunContent.length === 1 && paraRunContent[0] instanceof AscWord.CRunParagraphMark))//settings for text
 				{
 					formatText = this._getPrParaRun(paraPr, cTextPr);
 				} else if (!formatText) {
@@ -4296,12 +4284,12 @@
 
 							break;
 						}
-						case para_Space://*paraSpace*
+						case para_Space:
 						{
 							text += " ";
 							break;
 						}
-						case para_Tab://*paraEnd / paraTab*
+						case para_Tab:
 						{
 							pushData();
 							lastTab = true;

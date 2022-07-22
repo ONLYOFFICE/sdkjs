@@ -870,7 +870,7 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
             return true;
         if(this.pathLst.length === 1)
         {
-            return this.pathLst[0].ArrPathCommandInfo.length === 0;
+            return this.pathLst[0].isEmpty();
         }
         return false;
     };
@@ -2231,4 +2231,5 @@ function ComparisonEdgeByTopPoint(graphEdge1, graphEdge2)
     window['AscFormat'].FORMULA_TYPE_TAN = FORMULA_TYPE_TAN;
     window['AscFormat'].FORMULA_TYPE_VALUE = FORMULA_TYPE_VALUE;
     window['AscFormat'].FORMULA_TYPE_MIN = FORMULA_TYPE_MIN;
+    window['AscFormat'].MAP_FMLA_TO_TYPE = MAP_FMLA_TO_TYPE;
 })(window);

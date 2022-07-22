@@ -457,25 +457,17 @@ function (window, undefined) {
             var dataSize = oleObject.m_aBinaryData.length;
             var data = AscCommon.Base64.encode(oleObject.m_aBinaryData);
             return {
-                binary: "XLSY;v2;" + dataSize  + ";" + data,
-                left: oleObject.x,
-                top: oleObject.y,
-                width: oleObject.extX,
-                height: oleObject.extY,
-                isFromSheetEditor: !!oleObject.worksheet,
+                "binary": "XLSY;v2;" + dataSize  + ";" + data,
+                "isFromSheetEditor": !!oleObject.worksheet,
             };
         }
         return {
-            binary: null,
-            left: 0,
-            top: 0,
-            width: 0,
-            height: 0
+            "binary": null
         };
     };
     window['Asc'] = window['Asc'] || {};
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].COleObject = COleObject;
-    window['Asc'].asc_putBinaryDataToFrameFromTableOleObject = asc_putBinaryDataToFrameFromTableOleObject;
+    window['Asc'].asc_putBinaryDataToFrameFromTableOleObject = window['Asc']['asc_putBinaryDataToFrameFromTableOleObject'] = asc_putBinaryDataToFrameFromTableOleObject;
 
 })(window);

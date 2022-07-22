@@ -520,6 +520,7 @@ var editor;
 	};
 
 	spreadsheet_api.prototype._getTextFromUrl = function (url, options, callback) {
+		var t = this;
 		if (this.canEdit()) {
 			var document = {url: url, format: "TXT"};
 			this.insertDocumentUrlsData = {
@@ -532,15 +533,14 @@ var editor;
 					}
 
 					if (typeof Blob !== 'undefined' && typeof FileReader !== 'undefined') {
-						AscCommon.getJSZipUtils().getBinaryContent(url['output.txt'], function (err, data) {
+						AscCommon.loadFileContent(url['output.txt'], function (httpRequest) {
 							var cp = {
 								'codepage': AscCommon.c_oAscCodePageUtf8, "delimiter": AscCommon.c_oAscCsvDelimiter.Comma,
 								'encodings': AscCommon.getEncodingParams()
 							};
 
-							if (err) {
-								t.handlers.trigger("asc_onError", c_oAscError.ID.Unknown, c_oAscError.Level.Critical);
-							} else {
+							if (httpRequest && httpRequest.response) {
+								let data = httpRequest.response;
 								var dataUint = new Uint8Array(data);
 								var bom = AscCommon.getEncodingByBOM(dataUint);
 								if (AscCommon.c_oAscCodePageNone !== bom.encoding) {
@@ -549,9 +549,11 @@ var editor;
 								}
 								cp['data'] = data;
 								callback(new AscCommon.asc_CAdvancedOptions(cp));
+							} else {
+								t.handlers.trigger("asc_onError", c_oAscError.ID.Unknown, c_oAscError.Level.Critical);
 							}
 							_api.endInsertDocumentUrls();
-						});
+						}, "arraybuffer");
 					}
 				}, endCallback: function (_api) {
 				}
@@ -1110,10 +1112,9 @@ var editor;
 				'encodings': AscCommon.getEncodingParams()
 			};
 			if (data && typeof Blob !== 'undefined' && typeof FileReader !== 'undefined') {
-				AscCommon.getJSZipUtils().getBinaryContent(data, function(err, data) {
-					if (err) {
-						t.handlers.trigger("asc_onError", c_oAscError.ID.Unknown, c_oAscError.Level.Critical);
-					} else {
+				AscCommon.loadFileContent(data, function(httpRequest) {
+					if (httpRequest && httpRequest.response) {
+						let data = httpRequest.response;
 						var dataUint = new Uint8Array(data);
 						var bom = AscCommon.getEncodingByBOM(dataUint);
 						if (AscCommon.c_oAscCodePageNone !== bom.encoding) {
@@ -1122,8 +1123,10 @@ var editor;
 						}
 						cp['data'] = data;
 						t.handlers.trigger("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.CSV, new AscCommon.asc_CAdvancedOptions(cp));
+					} else {
+						t.handlers.trigger("asc_onError", c_oAscError.ID.Unknown, c_oAscError.Level.Critical);
 					}
-				});
+				}, "arraybuffer");
 			} else {
 				t.handlers.trigger("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.CSV, new AscCommon.asc_CAdvancedOptions(cp));
 			}
@@ -1161,18 +1164,15 @@ var editor;
 		this.openingEnd.xlsxStart = true;
 		var url = AscCommon.g_oDocumentUrls.getUrl('Editor.xlsx');
 		if (url) {
-			AscCommon.getJSZipUtils().getBinaryContent(url, function(err, data) {
-				if (err) {
-					if (window.console && window.console.log) {
-						window.console.log(err);
-					}
-					t.sendEvent('asc_onError', c_oAscError.ID.Unknown, c_oAscError.Level.Critical);
-				} else {
+			AscCommon.loadFileContent(url, function(httpRequest) {
+				if (httpRequest && httpRequest.response) {
 					t.openingEnd.xlsx = true;
-					t.openingEnd.data = data;
+					t.openingEnd.data = httpRequest.response;
 					t._onEndOpen();
+				} else {
+					t.sendEvent('asc_onError', c_oAscError.ID.Unknown, c_oAscError.Level.Critical);
 				}
-			});
+			}, "arraybuffer");
 		} else {
 			t.openingEnd.xlsx = true;
 			t._onEndOpen();
@@ -1204,19 +1204,21 @@ var editor;
       oAdditionalData["codepage"] = AscCommon.c_oAscCodePageUtf8;
       dataContainer.data = last.data;
     } else {
+		var t = this;
 		if (c_oAscFileType.XLTX === fileType) {
 			var title = this.documentTitle;
-			this.saveDocumentToZip(this.wb.model, AscCommon.c_oEditorId.Spreadsheet, function(data) {
-				var blob = new Blob([data], {type: AscCommon.openXml.GetMimeType("xlsx")});
-				var link = document.createElement("a");
-				link.href = window.URL.createObjectURL(blob);
-				link.download = title;
-				link.click();
+			AscCommonExcel.executeInR1C1Mode(false, function () {
+				t.saveDocumentToZip(t.wb.model, AscCommon.c_oEditorId.Spreadsheet, function(data) {
+					if (data) {
+						AscCommon.DownloadFileFromBytes(data, title, AscCommon.openXml.GetMimeType("xlsx"));
+					}
+				});
+				if (actionType)
+				{
+					t.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, actionType);
+				}
 			});
-			if (actionType)
-			{
-				this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, actionType);
-			}
+
 			return true;
 		}
 
@@ -1497,335 +1499,713 @@ var editor;
 		}
 
 		var openXml = AscCommon.openXml;
+		var StaxParser = AscCommon.StaxParser;
 		var pivotCaches = {};
 		var xmlParserContext = new AscCommon.XmlParserContext();
 		xmlParserContext.DrawingDocument = this.wbModel.DrawingDocument;
 		var initOpenManager = xmlParserContext.InitOpenManager = AscCommonExcel.InitOpenManager ? new AscCommonExcel.InitOpenManager(null, wb) : null;
 		var wbPart = null;
 		var wbXml = null;
-		var jsZipWrapper = new AscCommon.JSZipWrapper();
-		if (!jsZipWrapper.loadSync(data)) {
+		if (!window.nativeZlibEngine || !window.nativeZlibEngine.open(data)) {
 			return false;
 		}
-		xmlParserContext.zip = jsZipWrapper;
-		var doc = new openXml.OpenXmlPackage(jsZipWrapper, null);
+		xmlParserContext.zip = window.nativeZlibEngine;
 
-		//core
-		var coreXmlPart = doc.getPartByRelationshipType(openXml.Types.coreFileProperties.relationType);
-		if (coreXmlPart) {
-			var contentCore = coreXmlPart.getDocumentContent();
-			if (contentCore) {
-				wb.Core = new AscCommon.CCore();
-				reader = new StaxParser(contentCore, coreXmlPart, xmlParserContext);
-				wb.Core.fromXml(reader, true);
-			}
-		}
-
-		//app
-		var appXmlPart = doc.getPartByRelationshipType(openXml.Types.extendedFileProperties.relationType);
-		if (appXmlPart) {
-			var contentApp = appXmlPart.getDocumentContent();
-			if (contentApp) {
-				wb.App = new AscCommon.CApp();
-				reader = new StaxParser(contentApp, appXmlPart, xmlParserContext);
-				wb.App.fromXml(reader, true);
-			}
-		}
-
-		//workbook
-		wbPart = doc.getPartByRelationshipType(openXml.Types.workbook.relationType);
-		var contentWorkbook = wbPart.getDocumentContent();
 		AscCommonExcel.executeInR1C1Mode(false, function () {
+			var doc = new openXml.OpenXmlPackage(window.nativeZlibEngine, null);
+
+			//core
+			var coreXmlPart = doc.getPartByRelationshipType(openXml.Types.coreFileProperties.relationType);
+			if (coreXmlPart) {
+				var contentCore = coreXmlPart.getDocumentContent();
+				if (contentCore) {
+					wb.Core = new AscCommon.CCore();
+					reader = new StaxParser(contentCore, coreXmlPart, xmlParserContext);
+					wb.Core.fromXml(reader, true);
+				}
+			}
+
+			//app
+			var appXmlPart = doc.getPartByRelationshipType(openXml.Types.extendedFileProperties.relationType);
+			if (appXmlPart) {
+				var contentApp = appXmlPart.getDocumentContent();
+				if (contentApp) {
+					wb.App = new AscCommon.CApp();
+					reader = new StaxParser(contentApp, appXmlPart, xmlParserContext);
+					wb.App.fromXml(reader, true);
+				}
+			}
+
+			//workbook
+			wbPart = doc.getPartByRelationshipType(openXml.Types.workbook.relationType);
+			var contentWorkbook = wbPart.getDocumentContent();
 			wbXml = new AscCommonExcel.CT_Workbook(wb);
 			var reader = new StaxParser(contentWorkbook, wbPart, xmlParserContext);
 			wbXml.fromXml(reader);
-		});
 
-		var reader, i, j;
-		if (this.isOpenOOXInBrowser) {
 
-			//theme
-			var workbookThemePart = wbPart.getPartByRelationshipType(openXml.Types.theme.relationType);
-			if (workbookThemePart) {
-				var contentWorkbookTheme = workbookThemePart.getDocumentContent();
-				var oTheme = new AscFormat.CTheme();
-				reader = new StaxParser(contentWorkbookTheme, workbookThemePart, xmlParserContext);
-				oTheme.fromXml(reader, true);
-				wb.theme = oTheme;
-			}
-			xmlParserContext.InitOpenManager.initSchemeAndTheme(wb);
+			var reader, i, j;
+			if (t.isOpenOOXInBrowser) {
 
-			//TODO oMediaArray
+				//theme
+				var workbookThemePart = wbPart.getPartByRelationshipType(openXml.Types.theme.relationType);
+				if (workbookThemePart) {
+					var contentWorkbookTheme = workbookThemePart.getDocumentContent();
+					var oTheme = new AscFormat.CTheme();
+					reader = new StaxParser(contentWorkbookTheme, workbookThemePart, xmlParserContext);
+					oTheme.fromXml(reader, true);
+					wb.theme = oTheme;
+				}
+				xmlParserContext.InitOpenManager.initSchemeAndTheme(wb);
 
-			//external reference
-			if (wbXml.externalReferences) {
-				wbXml.externalReferences.forEach(function (externalReference) {
-					if (null !== externalReference) {
-						var externalWorkbookPart = wbPart.getPartById(externalReference);
-						if (externalWorkbookPart) {
-							var contentExternalWorkbook = externalWorkbookPart.getDocumentContent();
-							if (contentExternalWorkbook) {
-								var oExternalReference = new AscCommonExcel.CT_ExternalReference(wb);
-								var reader = new StaxParser(contentExternalWorkbook, externalWorkbookPart, xmlParserContext);
-								oExternalReference.fromXml(reader);
+				//TODO oMediaArray
 
-								//TODO id отличается от serialize
-								if (oExternalReference.val) {
-									if (oExternalReference.val.Id) {
-										oExternalReference.val.Id = externalReference;
-									}
-									wb.externalReferences.push(oExternalReference.val);
-								}
-							}
-						}
-					}
-				});
-			}
+				//external reference
+				if (wbXml.externalReferences) {
+					wbXml.externalReferences.forEach(function (externalReference) {
+						if (null !== externalReference) {
+							var externalWorkbookPart = wbPart.getPartById(externalReference);
+							if (externalWorkbookPart) {
+								var contentExternalWorkbook = externalWorkbookPart.getDocumentContent();
+								if (contentExternalWorkbook) {
+									var oExternalReference = new AscCommonExcel.CT_ExternalReference(wb);
+									var reader = new StaxParser(contentExternalWorkbook, externalWorkbookPart, xmlParserContext);
+									oExternalReference.fromXml(reader);
 
-			//extLxt(slicercache inside)
-			if (wbXml.extLst) {
-				wbXml.extLst.forEach(function (ext) {
-					if (ext.slicerCachesIds) {
-						ext.slicerCachesIds.forEach(function (slicerCacheId) {
-							if (null !== slicerCacheId) {
-								var slicerCacheWorkbookPart = wbPart.getPartById(slicerCacheId);
-								if (slicerCacheWorkbookPart) {
-									var contentSlicerCache = slicerCacheWorkbookPart.getDocumentContent();
-									if (contentSlicerCache) {
-										var oSlicerCacheDefinition = new Asc.CT_slicerCacheDefinition();
-										var reader = new StaxParser(contentSlicerCache, slicerCacheWorkbookPart, xmlParserContext);
-										oSlicerCacheDefinition.fromXml(reader);
-
-										xmlParserContext.InitOpenManager.oReadResult.slicerCaches[oSlicerCacheDefinition.name] = oSlicerCacheDefinition;
+									//TODO id отличается от serialize
+									if (oExternalReference.val) {
+										if (oExternalReference.val.Id) {
+											oExternalReference.val.Id = externalReference;
+										}
+										wb.externalReferences.push(oExternalReference.val);
 									}
 								}
 							}
-						});
-					}
-				});
-			}
+						}
+					});
+				}
 
-			//not ext slicer caches
-			if (wbXml.slicerCachesIds) {
-				wbXml.slicerCachesIds.forEach(function (slicerCacheId) {
-					if (null !== slicerCacheId) {
-						var slicerCacheWorkbookPart = wbPart.getPartById(slicerCacheId);
-						if (slicerCacheWorkbookPart) {
-							var contentSlicerCache = slicerCacheWorkbookPart.getDocumentContent();
-							if (contentSlicerCache) {
-								var oSlicerCacheDefinition = new Asc.CT_slicerCacheDefinition();
-								var reader = new StaxParser(contentSlicerCache, slicerCacheWorkbookPart, xmlParserContext);
-								oSlicerCacheDefinition.fromXml(reader);
+				//extLxt(slicercache inside)
+				if (wbXml.extLst) {
+					wbXml.extLst.forEach(function (ext) {
+						if (ext.slicerCachesIds) {
+							ext.slicerCachesIds.forEach(function (slicerCacheId) {
+								if (null !== slicerCacheId) {
+									var slicerCacheWorkbookPart = wbPart.getPartById(slicerCacheId);
+									if (slicerCacheWorkbookPart) {
+										var contentSlicerCache = slicerCacheWorkbookPart.getDocumentContent();
+										if (contentSlicerCache) {
+											var oSlicerCacheDefinition = new Asc.CT_slicerCacheDefinition();
+											var reader = new StaxParser(contentSlicerCache, slicerCacheWorkbookPart, xmlParserContext);
+											oSlicerCacheDefinition.fromXml(reader);
 
-								xmlParserContext.InitOpenManager.oReadResult.slicerCaches[oSlicerCacheDefinition.name] = oSlicerCacheDefinition;
+											xmlParserContext.InitOpenManager.oReadResult.slicerCaches[oSlicerCacheDefinition.name] = oSlicerCacheDefinition;
+										}
+									}
+								}
+							});
+						}
+					});
+				}
+
+				//not ext slicer caches
+				if (wbXml.slicerCachesIds) {
+					wbXml.slicerCachesIds.forEach(function (slicerCacheId) {
+						if (null !== slicerCacheId) {
+							var slicerCacheWorkbookPart = wbPart.getPartById(slicerCacheId);
+							if (slicerCacheWorkbookPart) {
+								var contentSlicerCache = slicerCacheWorkbookPart.getDocumentContent();
+								if (contentSlicerCache) {
+									var oSlicerCacheDefinition = new Asc.CT_slicerCacheDefinition();
+									var reader = new StaxParser(contentSlicerCache, slicerCacheWorkbookPart, xmlParserContext);
+									oSlicerCacheDefinition.fromXml(reader);
+
+									xmlParserContext.InitOpenManager.oReadResult.slicerCaches[oSlicerCacheDefinition.name] = oSlicerCacheDefinition;
+								}
 							}
 						}
+					});
+				}
+
+				//connection
+				//пока читаю в строку connections. в serialize сейчас аналогично не парсим структуру, а храним в виде массива байтов
+				var connectionsPart = wbPart.getPartByRelationshipType(openXml.Types.connections.relationType);
+				if (connectionsPart) {
+					wb.connections = connectionsPart.getDocumentContent();
+				}
+
+				//styles
+				var dxfs = [];
+				var aCellXfs = [];
+				var stylesPart = wbPart.getPartByRelationshipType(openXml.Types.styles.relationType);
+				if (stylesPart) {
+					var contentStyles = stylesPart.getDocumentContent();
+					if (contentStyles) {
+						var styleSheet = new AscCommonExcel.CT_Stylesheet(new Asc.CTableStyles());
+						reader = new StaxParser(contentStyles, stylesPart, xmlParserContext);
+						styleSheet.fromXml(reader);
+
+
+						var oStyleObject = {
+							aBorders: styleSheet.borders,
+							aFills: styleSheet.fills,
+							aFonts: styleSheet.fonts,
+							oNumFmts: styleSheet.numFmts,
+							aCellStyleXfs: styleSheet.cellStyleXfs,
+							aCellXfs: styleSheet.cellXfs,
+							aDxfs: styleSheet.dxfs,
+							aExtDxfs: styleSheet.aExtDxfs,
+							aCellStyles: styleSheet.cellStyles,
+							oCustomTableStyles: styleSheet.tableStyles.CustomStyles,
+							oCustomSlicerStyles: styleSheet.oCustomSlicerStyles
+						};
+
+						xmlParserContext.InitOpenManager.InitStyleManager(oStyleObject, aCellXfs);
+						dxfs = oStyleObject.aDxfs;
+						wb.oNumFmtsOpen = oStyleObject.oNumFmts;
 					}
-				});
-			}
-
-			//connection
-			//пока читаю в строку connections. в serialize сейчас аналогично не парсим структуру, а храним в виде массива байтов
-			var connectionsPart = wbPart.getPartByRelationshipType(openXml.Types.connections.relationType);
-			if (connectionsPart) {
-				wb.connections = connectionsPart.getDocumentContent();
-			}
-
-			//styles
-			var dxfs = [];
-			var aCellXfs = [];
-			var stylesPart = wbPart.getPartByRelationshipType(openXml.Types.styles.relationType);
-			if (stylesPart) {
-				var contentStyles = stylesPart.getDocumentContent();
-				if (contentStyles) {
-					var styleSheet = new AscCommonExcel.CT_Stylesheet(new Asc.CTableStyles());
-					reader = new StaxParser(contentStyles, stylesPart, xmlParserContext);
-					styleSheet.fromXml(reader);
-
-
-					var oStyleObject = {
-						aBorders: styleSheet.borders,
-						aFills: styleSheet.fills,
-						aFonts: styleSheet.fonts,
-						oNumFmts: styleSheet.numFmts,
-						aCellStyleXfs: styleSheet.cellStyleXfs,
-						aCellXfs: styleSheet.cellXfs,
-						aDxfs: styleSheet.dxfs,
-						aExtDxfs: styleSheet.aExtDxfs,
-						aCellStyles: styleSheet.cellStyles,
-						oCustomTableStyles: styleSheet.tableStyles.CustomStyles,
-						oCustomSlicerStyles: styleSheet.oCustomSlicerStyles
-					};
-
-					xmlParserContext.InitOpenManager.InitStyleManager(oStyleObject, aCellXfs);
-					dxfs = oStyleObject.aDxfs;
-					wb.oNumFmtsOpen = oStyleObject.oNumFmts;
 				}
-			}
-			xmlParserContext.InitOpenManager.aCellXfs = aCellXfs;
-			xmlParserContext.InitOpenManager.Dxfs = dxfs;
+				xmlParserContext.InitOpenManager.aCellXfs = aCellXfs;
+				xmlParserContext.InitOpenManager.Dxfs = dxfs;
 
-			//jsaProject
-			var jsaProjectPart = wbPart.getPartByRelationshipType(openXml.Types.jsaProject.relationType);
-			if (jsaProjectPart) {
-				var contentJsaProject = jsaProjectPart.getDocumentContent();
-				if (contentJsaProject) {
-					xmlParserContext.InitOpenManager.oReadResult.macros = contentJsaProject;
+				//jsaProject
+				var jsaProjectPart = wbPart.getPartByRelationshipType(openXml.Types.jsaProject.relationType);
+				if (jsaProjectPart) {
+					var contentJsaProject = jsaProjectPart.getDocumentContent();
+					if (contentJsaProject) {
+						xmlParserContext.InitOpenManager.oReadResult.macros = contentJsaProject;
+					}
+				}
+
+				//vbaProject
+				var vbaProjectPart = wbPart.getPartByRelationshipType(openXml.Types.vbaProject.relationType);
+				if (vbaProjectPart) {
+					var contentVbaProject = vbaProjectPart.getDocumentContent(true);
+					if (contentVbaProject) {
+						xmlParserContext.InitOpenManager.oReadResult.vbaMacros = contentVbaProject;
+					}
+				}
+
+				//person list
+				var personListPart = wbPart.getPartByRelationshipType(openXml.Types.person.relationType);
+				if (personListPart) {
+					var contentPersonList = personListPart.getDocumentContent();
+					if (contentPersonList) {
+						var personList = new AscCommonExcel.CT_PersonList();
+						reader = new StaxParser(contentPersonList, personListPart, xmlParserContext);
+						personList.fromXml(reader);
+					}
+				}
+
+				//wb comments
+				//лежит в виде бинарника, читаем через serialize
+				var workbookComment = wbPart.getPartByRelationshipType(openXml.Types.workbookComment.relationType);
+				if (workbookComment) {
+					var contentWorkbookComment = workbookComment.getDocumentContent(true);
+					if (contentWorkbookComment) {
+						AscCommonExcel.ReadWbComments(wb, contentWorkbookComment, xmlParserContext.InitOpenManager);
+					}
 				}
 			}
 
-			//vbaProject
-			var vbaProjectPart = wbPart.getPartByRelationshipType(openXml.Types.vbaProject.relationType);
-			if (vbaProjectPart) {
-				var contentVbaProject = vbaProjectPart.getDocumentContent(true);
-				if (contentVbaProject) {
-					xmlParserContext.InitOpenManager.oReadResult.vbaMacros = contentVbaProject;
-				}
-			}
+			//pivotCaches
+			if (wbXml.pivotCaches) {
+				wbXml.pivotCaches.forEach(function (wbPivotCacheXml) {
+					var pivotTableCacheDefinitionPart;
+					if (null !== wbPivotCacheXml.cacheId && null !== wbPivotCacheXml.id) {
+						pivotTableCacheDefinitionPart = wbPart.getPartById(wbPivotCacheXml.id);
+						var contentCacheDefinition = pivotTableCacheDefinitionPart.getDocumentContent();
+						if (contentCacheDefinition) {
+							var pivotTableCacheDefinition = new Asc.CT_PivotCacheDefinition();
 
-			//person list
-			var personListPart = wbPart.getPartByRelationshipType(openXml.Types.person.relationType);
-			if (personListPart) {
-				var contentPersonList = personListPart.getDocumentContent();
-				if (contentPersonList) {
-					var personList = new AscCommonExcel.CT_PersonList();
-					reader = new StaxParser(contentPersonList, personListPart, xmlParserContext);
-					personList.fromXml(reader);
-				}
-			}
-
-			//wb comments
-			//лежит в виде бинарника, читаем через serialize
-			var workbookComment = wbPart.getPartByRelationshipType(openXml.Types.workbookComment.relationType);
-			if (workbookComment) {
-				var contentWorkbookComment = workbookComment.getDocumentContent(true);
-				if (contentWorkbookComment) {
-					AscCommonExcel.ReadWbComments(wb, contentWorkbookComment, xmlParserContext.InitOpenManager);
-				}
-			}
-		}
-
-		//pivotCaches
-		if (wbXml.pivotCaches) {
-			wbXml.pivotCaches.forEach(function (wbPivotCacheXml) {
-				var pivotTableCacheDefinitionPart;
-				if (null !== wbPivotCacheXml.cacheId && null !== wbPivotCacheXml.id) {
-					pivotTableCacheDefinitionPart = wbPart.getPartById(wbPivotCacheXml.id);
-					var contentCacheDefinition = pivotTableCacheDefinitionPart.getDocumentContent();
-					if (contentCacheDefinition) {
-						var pivotTableCacheDefinition = new Asc.CT_PivotCacheDefinition();
-						AscCommonExcel.executeInR1C1Mode(false, function () {
 							new openXml.SaxParserBase().parse(contentCacheDefinition, pivotTableCacheDefinition);
-						});
-						if (pivotTableCacheDefinition.isValidCacheSource()) {
-							pivotCaches[wbPivotCacheXml.cacheId] = pivotTableCacheDefinition;
-							if (pivotTableCacheDefinition.id) {
-								var partPivotTableCacheRecords = pivotTableCacheDefinitionPart.getPartById(pivotTableCacheDefinition.id);
-								var contentCacheRecords = partPivotTableCacheRecords.getDocumentContent();
-								if (contentCacheRecords) {
-									AscCommonExcel.executeInR1C1Mode(false, function () {
+
+							if (pivotTableCacheDefinition.isValidCacheSource()) {
+								pivotCaches[wbPivotCacheXml.cacheId] = pivotTableCacheDefinition;
+								if (pivotTableCacheDefinition.id) {
+									var partPivotTableCacheRecords = pivotTableCacheDefinitionPart.getPartById(pivotTableCacheDefinition.id);
+									var contentCacheRecords = partPivotTableCacheRecords.getDocumentContent();
+									if (contentCacheRecords) {
 										var pivotTableCacheRecords = new Asc.CT_PivotCacheRecords();
 										new openXml.SaxParserBase().parse(contentCacheRecords, pivotTableCacheRecords);
 										pivotTableCacheDefinition.cacheRecords = pivotTableCacheRecords;
-									});
+									}
 								}
 							}
 						}
 					}
-				}
-			});
-		}
+				});
+			}
 
-		//sharedString
-		if (this.isOpenOOXInBrowser) {
-			var sharedStringPart = wbPart.getPartByRelationshipType(openXml.Types.sharedStringTable.relationType);
-			if (sharedStringPart) {
-				var contentSharedStrings = sharedStringPart.getDocumentContent();
-				if (contentSharedStrings) {
-					var sharedStrings = new AscCommonExcel.CT_SharedStrings();
-					reader = new StaxParser(contentSharedStrings, sharedStringPart, xmlParserContext);
-					sharedStrings.fromXml(reader);
+			//sharedString
+			if (t.isOpenOOXInBrowser) {
+				var sharedStringPart = wbPart.getPartByRelationshipType(openXml.Types.sharedStringTable.relationType);
+				if (sharedStringPart) {
+					var contentSharedStrings = sharedStringPart.getDocumentContent();
+					if (contentSharedStrings) {
+						var sharedStrings = new AscCommonExcel.CT_SharedStrings();
+						reader = new StaxParser(contentSharedStrings, sharedStringPart, xmlParserContext);
+						sharedStrings.fromXml(reader);
+					}
 				}
 			}
-		}
 
-		//TODO CalcChain - из бинарника не читается, и не пишется в бинарник. реализовать позже
+			//TODO CalcChain - из бинарника не читается, и не пишется в бинарник. реализовать позже
 
-		//Custom xml
-		if (this.isOpenOOXInBrowser) {
-			//папка customXml, в неё лежат item[n].xml, itemProps[n].xml + rels
+			//Custom xml
+			if (t.isOpenOOXInBrowser) {
+				//папка customXml, в неё лежат item[n].xml, itemProps[n].xml + rels
 
-			//в Content_Types пишется только ссылка на itemProps в слудующем виде:
-			//<Override PartName="/customXml/itemProps1.xml" ContentType="application/vnd.openxmlformats-officedocument.customXmlProperties+xml"/>
+				//в Content_Types пишется только ссылка на itemProps в слудующем виде:
+				//<Override PartName="/customXml/itemProps1.xml" ContentType="application/vnd.openxmlformats-officedocument.customXmlProperties+xml"/>
 
-			//rels(которые внутри customXml) лежит ссылка на itemProps  в следующем виде:
-			//<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship  Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/customXmlProps" Target="itemProps1.xml"/></Relationships>
+				//rels(которые внутри customXml) лежит ссылка на itemProps  в следующем виде:
+				//<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship  Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/customXmlProps" Target="itemProps1.xml"/></Relationships>
 
-			//workbook.xml.rels лежит ссылка на item  в следующем виде:
-			//<Relationship  Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/customXml" Target="../customXml/item1.xml"/>
+				//workbook.xml.rels лежит ссылка на item  в следующем виде:
+				//<Relationship  Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/customXml" Target="../customXml/item1.xml"/>
 
-			//TODO проверить когда несколько ссылок на customXml
-			var customXmlPart = wbPart.getPartByRelationshipType(openXml.Types.customXml.relationType);
-			if (customXmlPart) {
-				var customXml = customXmlPart.getDocumentContent(true);
-				var customXmlPropsPart = customXmlPart.getPartByRelationshipType(openXml.Types.customXmlProps.relationType);
-				var customXmlProps = customXmlPropsPart && customXmlPropsPart.getDocumentContent(true);
+				//TODO проверить когда несколько ссылок на customXml
+				var customXmlParts = wbPart.getPartsByRelationshipType(openXml.Types.customXml.relationType);
+				if (customXmlParts) {
+					for (var i = 0; i < customXmlParts.length; i++) {
+						var customXmlPart = customXmlParts[i];
+						var customXml = customXmlPart.getDocumentContent("string");
+						var customXmlPropsPart = customXmlPart.getPartByRelationshipType(openXml.Types.customXmlProps.relationType);
+						var customXmlProps = customXmlPropsPart && customXmlPropsPart.getDocumentContent("string");
 
-				//в бинарник не будем писать, для совместимости оставляю поля, добавляю ещё новые
-				var custom = {Uri: [], ItemId: null, Content: null, item: customXml, itemProps: customXmlProps};
-				wb.customXmls = [];
-				wb.customXmls.push(custom);
-			}
-		}
-
-		//sheets
-		if (this.isOpenOOXInBrowser && wbXml.sheets) {
-			var wsParts = [];
-
-			//вначале беру все листы, потом запрашиваю контент каждого из них.
-			//связано с проблемой внтури парсера, на примере файла Read_Only_part_of_lists.xlsx
-			wbXml.sheets.forEach(function (wbSheetXml) {
-				if (null !== wbSheetXml.id && wbSheetXml.name) {
-					var wsPart = wbPart.getPartById(wbSheetXml.id);
-					wsParts.push({wsPart: wsPart, id: wbSheetXml.id, name: wbSheetXml.name, bHidden: wbSheetXml.bHidden, sheetId: wbSheetXml.sheetId});
-				}
-			});
-
-			wsParts.forEach(function (wbSheetXml) {
-				if (null !== wbSheetXml.id && wbSheetXml.name) {
-					var wsPart = wbSheetXml.wsPart;
-					var contentSheetXml = wsPart && wsPart.getDocumentContent();
-					if (contentSheetXml) {
-						var ws = new AscCommonExcel.Worksheet(wb, wb.aWorksheets.length);
-						ws.sName = wbSheetXml.name;
-						if (null !== wbSheetXml.bHidden) {
-							ws.bHidden = wbSheetXml.bHidden;
+						//в бинарник не будем писать, для совместимости оставляю поля, добавляю ещё новые
+						var custom = {Uri: [], ItemId: null, Content: null, item: customXml, itemProps: customXmlProps};
+						if (!wb.customXmls) {
+							wb.customXmls = [];
 						}
-						//var wsView = new AscCommonExcel.asc_CSheetViewSettings();
-						//wsView.pane = new AscCommonExcel.asc_CPane();
-						//ws.sheetViews.push(wsView);
+						wb.customXmls.push(custom);
+					}
+				}
+			}
+
+			//sheets
+			if (t.isOpenOOXInBrowser && wbXml.sheets) {
+				var wsParts = [];
+
+				//вначале беру все листы, потом запрашиваю контент каждого из них.
+				//связано с проблемой внтури парсера, на примере файла Read_Only_part_of_lists.xlsx
+				wbXml.sheets.forEach(function (wbSheetXml) {
+					if (null !== wbSheetXml.id && wbSheetXml.name) {
+						var wsPart = wbPart.getPartById(wbSheetXml.id);
+						wsParts.push({wsPart: wsPart, id: wbSheetXml.id, name: wbSheetXml.name, bHidden: wbSheetXml.bHidden, sheetId: wbSheetXml.sheetId});
+					}
+				});
+
+				wsParts.forEach(function (wbSheetXml) {
+					if (null !== wbSheetXml.id && wbSheetXml.name) {
+						var wsPart = wbSheetXml.wsPart;
+						var contentSheetXml = wsPart && wsPart.getDocumentContent();
 						if (contentSheetXml) {
-							AscCommonExcel.executeInR1C1Mode(false, function () {
+							var ws = new AscCommonExcel.Worksheet(wb, wb.aWorksheets.length);
+							ws.sName = wbSheetXml.name;
+							if (null !== wbSheetXml.bHidden) {
+								ws.bHidden = wbSheetXml.bHidden;
+							}
+							//var wsView = new AscCommonExcel.asc_CSheetViewSettings();
+							//wsView.pane = new AscCommonExcel.asc_CPane();
+							//ws.sheetViews.push(wsView);
+							if (contentSheetXml) {
 								var reader = new StaxParser(contentSheetXml, wsPart, xmlParserContext);
 								ws.fromXml(reader);
-							});
-						}
-
-						xmlParserContext.InitOpenManager.putSheetAfterRead(wb, ws);
-						xmlParserContext.InitOpenManager.oReadResult.sheetIds[wbSheetXml.sheetId] = ws;
-
-						var drawingPart = wsPart.getPartById(xmlParserContext.drawingId);
-						if (drawingPart) {
-							var drawingWS = new AscCommonExcel.CT_DrawingWS(ws);
-							var contentDrawing = drawingPart.getDocumentContent();
-							reader = new StaxParser(contentDrawing, drawingPart, xmlParserContext);
-							drawingWS.fromXml(reader);
-							let aSpTree = [];
-							for(let nDrawing = 0; nDrawing < ws.Drawings.length; ++nDrawing) {
-								aSpTree.push(ws.Drawings[nDrawing].graphicObject);
 							}
-							reader.context.assignConnectors(aSpTree);
+
+							xmlParserContext.InitOpenManager.putSheetAfterRead(wb, ws);
+							xmlParserContext.InitOpenManager.oReadResult.sheetIds[wbSheetXml.sheetId] = ws;
+
+							var drawingPart = wsPart.getPartById(xmlParserContext.drawingId);
+							if (drawingPart) {
+								var drawingWS = new AscCommonExcel.CT_DrawingWS(ws);
+								var contentDrawing = drawingPart.getDocumentContent();
+								reader = new StaxParser(contentDrawing, drawingPart, xmlParserContext);
+								drawingWS.fromXml(reader);
+								let aSpTree = [];
+								for(let nDrawing = 0; nDrawing < ws.Drawings.length; ++nDrawing) {
+									aSpTree.push(ws.Drawings[nDrawing].graphicObject);
+								}
+								reader.context.assignConnectors(aSpTree);
+							}
+							if (wsPart) {
+								//pivot
+								var pivotParts = wsPart.getPartsByRelationshipType(openXml.Types.pivotTable.relationType);
+								for (i = 0; i < pivotParts.length; ++i) {
+									var contentPivotTable = pivotParts[i].getDocumentContent();
+									var pivotTable = new Asc.CT_pivotTableDefinition(true);
+									new openXml.SaxParserBase().parse(contentPivotTable, pivotTable);
+									var cacheDefinition = pivotCaches[pivotTable.cacheId];
+									if (cacheDefinition) {
+										pivotTable.cacheDefinition = cacheDefinition;
+										ws.insertPivotTable(pivotTable);
+									}
+								}
+
+								//tables
+								var tableParts = wsPart.getPartsByRelationshipType(openXml.Types.tableDefinition.relationType);
+								for (i = 0; i < tableParts.length; ++i) {
+									var contentTable = tableParts[i].getDocumentContent();
+									var oNewTable = ws.createTablePart();
+									reader = new StaxParser(contentTable, oNewTable, xmlParserContext);
+									oNewTable.fromXml(reader);
+
+									var queryTables = tableParts[i].getPartsByRelationshipType(openXml.Types.queryTable.relationType);
+									for (j = 0; j < queryTables.length; ++j) {
+										var contentQueryTable = queryTables[j].getDocumentContent();
+										var oNewQueryTable = new AscCommonExcel.QueryTable();
+										reader = new StaxParser(contentQueryTable, oNewQueryTable, xmlParserContext);
+										oNewQueryTable.fromXml(reader);
+										oNewTable.QueryTable = oNewQueryTable;
+									}
+
+									if (null != oNewTable.Ref && null != oNewTable.DisplayName) {
+										ws.workbook.dependencyFormulas.addTableName(ws, oNewTable, true);
+									}
+									ws.TableParts.push(oNewTable);
+								}
+
+								//namedSheetViews
+								var namedSheetViews = wsPart.getPartsByRelationshipType(openXml.Types.namedSheetViews.relationType);
+								for (i = 0; i < namedSheetViews.length; ++i) {
+									var contentSheetView = namedSheetViews[i].getDocumentContent();
+									var namedSheetView = new Asc.CT_NamedSheetViews();
+									reader = new StaxParser(contentSheetView, namedSheetView, xmlParserContext);
+									namedSheetView.fromXml(reader);
+									//связь с таблицыми по id осуществляется через tableIdOpen, который потом в методе initPostOpen преобразуется в tableId
+									ws.aNamedSheetViews = namedSheetView.namedSheetView;
+								}
+
+								//slicers
+								var slicers = wsPart.getPartsByRelationshipType(openXml.Types.slicers.relationType);
+								for (i = 0; i < slicers.length; ++i) {
+									var contentSlicers = slicers[i].getDocumentContent();
+									var oSlicers = new Asc.CT_slicers(ws);
+									oSlicers.slicer = ws.aSlicers;
+									reader = new StaxParser(contentSlicers, oSlicers, xmlParserContext);
+									oSlicers.fromXml(reader);
+								}
+
+								//COMMENTS
+								var m_mapComments = {};
+								var PrepareComments = function () {
+									var pVmlDrawing = xmlParserContext.InitOpenManager.legacyDrawing;
+									if (!pVmlDrawing || !comments) {
+										return;
+									}
+
+
+									var mapCheckCopyThreadedComments = [];
+									var arAuthors = comments.authors && comments.authors.arr;
+
+									var i, j, nRow, nCol, nAuthorId, pCommentItem;
+									if (comments.commentList) {
+										var aComments = comments.commentList.arr;
+
+										for (i = 0; i < aComments.length; ++i) {
+											var pComment = aComments[i];
+											if (!pComment) {
+												continue;
+											}
+
+
+											var bThreadedCommentCopy = false;
+											var pThreadedComment = null;
+											if (pThreadedComments) {
+												var pFind;
+
+												var isPlaceholder = false;
+												if (pComment.authorId) {
+													nAuthorId = parseInt(pComment.authorId);
+
+													if (nAuthorId >= 0 && nAuthorId < arAuthors.length) {
+														var sAuthor = arAuthors[nAuthorId];
+														if ("tc=" === sAuthor.substring(0, 3)) {
+															isPlaceholder = true;
+															var sGUID = sAuthor.substr(3);
+															//todo IsZero() is added to fix comments with zero ids(5.4.0)(bug 42947). Remove after few releases
+															if ("{00000000-0000-0000-0000-000000000000}" === sGUID && pComment.ref) {
+																for (j in pThreadedComments.m_mapTopLevelThreadedComments) {
+																	var it = pThreadedComments.m_mapTopLevelThreadedComments[j];
+																	if (it.ref && pComment.ref === it.ref) {
+																		pFind = it;
+																		break;
+																	}
+																}
+															} else {
+																pFind = pThreadedComments.m_mapTopLevelThreadedComments[sGUID];
+															}
+
+														}
+													}
+												}
+
+												if (pFind) {
+													pThreadedComment = pFind;
+													if (mapCheckCopyThreadedComments[pThreadedComment.id]) {
+														bThreadedCommentCopy = true;
+													} else {
+														mapCheckCopyThreadedComments[pThreadedComment.id + ""] = 1;
+													}
+												} else if (isPlaceholder) {
+													continue;
+												}
+											}
+
+
+											if (pComment.ref && pComment.authorId) {
+												var sRef = AscCommonExcel.g_oRangeCache.getAscRange(pComment.ref);
+												if (sRef) {
+													nRow = sRef.r1;
+													nCol = sRef.c1;
+													pCommentItem = new Asc.asc_CCommentData();
+													pCommentItem.asc_putDocumentFlag(false);
+													pCommentItem.nRow = nRow;
+													pCommentItem.nCol = nCol;
+
+													//TODO флаг всегда будет false
+													/*if (pCommentItem.asc_getDocumentFlag()) {
+														pCommentItem.nId = "doc_" + (this.wb.aComments.length + 1);
+													} else {
+														pCommentItem.wsId = ws.Id;
+														pCommentItem.nId = "sheet" + pCommentItem.wsId + "_" + (ws.aComments.length + 1);
+													}*/
+
+													nAuthorId = parseInt(pComment.authorId);
+													if (nAuthorId >= 0 && nAuthorId < arAuthors.length) {
+														pCommentItem.asc_putUserName(arAuthors[nAuthorId]);
+													}
+
+													var pSi = pComment.oText;
+													if (pSi) {
+														pCommentItem.asc_putText(pSi.getText());
+													}
+
+													pCommentItem.threadedComment = pThreadedComment;//c_oSer_Comments.ThreadedComment
+													pCommentItem.ThreadedCommentCopy = bThreadedCommentCopy;//bool m_bThreadedCommentCopy
+
+													var sNewId = nRow + "-" + nCol;
+													m_mapComments[sNewId] = pCommentItem;
+												}
+											}
+										}
+									}
+
+
+									for (i = 0; i < pVmlDrawing.items.length; ++i) {
+										var pShape = pVmlDrawing.items[i];
+										if (!pShape || AscDFH.historyitem_type_VMLShape !== pShape.getObjectType()) {
+											continue;
+										}
+
+										/*if (pShape.sId)
+										{//mark shape as used
+											boost::unordered_map<std::wstring, OOX::CVmlDrawing::_vml_shape>::iterator pFind = pVmlDrawing->m_mapShapes.find(pShape->m_sId.get());
+											if (pFind != pVmlDrawing->m_mapShapes.end())
+											{
+												pFind->second.bUsed = true;
+											}
+										}*/
+
+										for (j = 0; j < pShape.items.length; ++j) {
+											var pElem = pShape.items[j];
+
+											if (!pElem) {
+												continue;
+											}
+
+											if (AscDFH.historyitem_type_VMLClientData === pElem.getObjectType()) {
+												var pClientData = pElem;
+												if (null != pClientData.m_oRow && null != pClientData.m_oColumn) {
+													nRow = parseInt(pClientData.m_oRow);
+													nCol = parseInt(pClientData.m_oColumn);
+													var sId = nRow + "" + "-" + nCol + "";
+
+													pCommentItem = m_mapComments[sId];
+													if (pCommentItem) {
+														/*if(pShape->m_sGfxData.IsInit())
+															pCommentItem->m_sGfxdata = *pShape->m_sGfxData;*/
+
+														var oCommentCoords = new AscCommonExcel.asc_CCommentCoords();
+														var m_aAnchor = [];
+														pClientData.getAnchorArray(m_aAnchor);
+														if (8 <= m_aAnchor.length) {
+															oCommentCoords.nLeft = Math.abs(m_aAnchor[0]);
+															oCommentCoords.nLeftOffset = Math.abs(m_aAnchor[1]);
+															oCommentCoords.nTop = Math.abs(m_aAnchor[2]);
+															oCommentCoords.nTopOffset = Math.abs(m_aAnchor[3]);
+															oCommentCoords.nRight = Math.abs(m_aAnchor[4]);
+															oCommentCoords.nRightOffset = Math.abs(m_aAnchor[5]);
+															oCommentCoords.nBottom = Math.abs(m_aAnchor[6]);
+															oCommentCoords.nBottomOffset = Math.abs(m_aAnchor[7]);
+														}
+														oCommentCoords.bMoveWithCells = pClientData.m_oMoveWithCells;
+														oCommentCoords.bSizeWithCells = pClientData.m_oSizeWithCells;
+
+														oCommentCoords.nCol = nCol;
+														oCommentCoords.nRow = nRow;
+
+														pCommentItem.coords = oCommentCoords;
+
+														//todo bHidden ?
+														//oCommentCoords->m_bVisible = pClientData->m_oVisible;
+														//pCommentItem.bHidden = !pClientData.m_oVisible;
+
+														//pCommentItem.coords = oCommentCoords;
+
+														if (pShape.m_oFillColor) {
+															/*BYTE r = pShape->m_oFillColor->Get_R();
+															BYTE g = pShape->m_oFillColor->Get_G();
+															BYTE b = pShape->m_oFillColor->Get_B();
+
+															std::wstringstream sstream;
+															sstream << boost::wformat( L"%02X%02X%02X" ) % r % g % b;
+
+															pCommentItem->m_sFillColorRgb = sstream.str();*/
+														}
+
+														var oPoint = new AscFormat.CPoint(), oUCssValue;
+														for (var k = 0; k < pShape.m_oStyle.m_arrProperties.length; ++k) {
+															if (!pShape.m_oStyle.m_arrProperties[i]) {
+																continue;
+															}
+
+															var oProperty = pShape.m_oStyle.m_arrProperties[k];
+															if (AscFormat.ECssPropertyType.cssptMarginLeft === oProperty.get_Type()) {
+																oUCssValue = oProperty.m_oValue;
+																if (AscFormat.ECssUnitsType.cssunitstypeUnits === oUCssValue.oValue.m_eType) {
+																	oPoint.FromPoints(oUCssValue.oValue.dValue);
+																	pCommentItem.coords.dLeftMM = oPoint.ToMm();
+																}
+															} else if (AscFormat.ECssPropertyType.cssptMarginTop === oProperty.get_Type()) {
+																oUCssValue = oProperty.m_oValue;
+																if (AscFormat.ECssUnitsType.cssunitstypeUnits === oUCssValue.oValue.m_eType) {
+																	oPoint.FromPoints(oUCssValue.oValue.dValue);
+																	pCommentItem.coords.dTopMM = oPoint.ToMm();
+																}
+															} else if (AscFormat.ECssPropertyType.cssptWidth === oProperty.get_Type()) {
+																oUCssValue = oProperty.m_oValue;
+																if (AscFormat.ECssUnitsType.cssunitstypeUnits === oUCssValue.oValue.m_eType) {
+																	oPoint.FromPoints(oUCssValue.oValue.dValue);
+																	pCommentItem.coords.dWidthMM = oPoint.ToMm();
+																}
+															} else if (AscFormat.ECssPropertyType.cssptHeight === oProperty.get_Type()) {
+																oUCssValue = oProperty.m_oValue;
+																if (AscFormat.ECssUnitsType.cssunitstypeUnits === oUCssValue.oValue.m_eType) {
+																	oPoint.FromPoints(oUCssValue.oValue.dValue);
+																	pCommentItem.coords.dHeightMM = oPoint.ToMm();
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+
+
+									var applyThreadedComment = function (_commentData, _threadedComment) {
+										oAdditionalData.isThreadedComment = true;
+										_commentData.asc_putSolved(false);
+										_commentData.aReplies = [];
+
+										if (_threadedComment.dT != null) {
+											_commentData.asc_putTime("");
+											var dateMs = AscCommon.getTimeISO8601(_threadedComment.dT);
+											if (!isNaN(dateMs)) {
+												_commentData.asc_putOnlyOfficeTime(dateMs + "");
+											}
+										}
+
+										if (_threadedComment.personId != null) {
+											var person = personList.getByGuid(_threadedComment.personId);
+											if (person) {
+												_commentData.asc_putUserName(person.displayName);
+												_commentData.asc_putUserId(person.userId);
+												_commentData.asc_putProviderId(person.providerId);
+											}
+										}
+
+										if (_threadedComment.id != null) {
+											_commentData.asc_putGuid(_threadedComment.id);
+										}
+
+										if (_threadedComment.done != null) {
+											_commentData.asc_putSolved(_threadedComment.done === "1");
+										}
+
+										if (_threadedComment.text != null) {
+											_commentData.asc_putText(_threadedComment.text);
+										}
+
+										if (_threadedComment.m_arrReplies && _threadedComment.m_arrReplies.length) {
+											for (var j = 0; j < _threadedComment.m_arrReplies.length; j++) {
+												var reply = new Asc.asc_CCommentData();
+												applyThreadedComment(reply, _threadedComment.m_arrReplies[j]);
+												_commentData.asc_addReply(reply);
+											}
+										}
+									};
+
+									for (i in m_mapComments) {
+
+										if (m_mapComments[i].asc_getDocumentFlag()) {
+											m_mapComments[i].nId = "doc_" + (wb.aComments.length + 1);
+										} else {
+											m_mapComments[i].wsId = ws.Id;
+											m_mapComments[i].nId = "sheet" + m_mapComments[i].wsId + "_" + (ws.aComments.length + 1);
+										}
+
+										var oAdditionalData = {isThreadedComment: false};
+										if (m_mapComments[i].threadedComment) {
+											applyThreadedComment(m_mapComments[i], m_mapComments[i].threadedComment);
+
+										}
+										xmlParserContext.InitOpenManager.prepareComments(ws, m_mapComments[i].coords, [m_mapComments[i]], oAdditionalData);
+									}
+								};
+
+								//буду читать по формату, далее преобразовывать
+								var comments, pThreadedComments;
+								var commentsFile = wsPart.getPartsByRelationshipType(openXml.Types.worksheetComments.relationType);
+								for (i = 0; i < commentsFile.length; ++i) {
+									var contentComment = commentsFile[i].getDocumentContent();
+									comments = new AscCommonExcel.CT_CComments();
+									reader = new StaxParser(contentComment, comments, xmlParserContext);
+									comments.fromXml(reader);
+								}
+
+								var threadedCommentsFile = wsPart.getPartsByRelationshipType(openXml.Types.threadedComment.relationType);
+								for (i = 0; i < threadedCommentsFile.length; ++i) {
+									var threadedComment = threadedCommentsFile[i].getDocumentContent();
+									pThreadedComments = new AscCommonExcel.CT_CThreadedComments();
+									reader = new StaxParser(threadedComment, pThreadedComments, xmlParserContext);
+									pThreadedComments.fromXml(reader);
+								}
+
+								PrepareComments();
+							}
 						}
+					}
+				});
+			} else if(wbXml.sheets) {
+				var wsParts = [];
+
+				//вначале беру все листы, потом запрашиваю контент каждого из них.
+				//связано с проблемой внтури парсера, на примере файла Read_Only_part_of_lists.xlsx
+				wbXml.sheets.forEach(function (wbSheetXml) {
+					if (null !== wbSheetXml.id && wbSheetXml.name) {
+						var wsPart = wbPart.getPartById(wbSheetXml.id);
+						wsParts.push({wsPart: wsPart, id: wbSheetXml.id, name: wbSheetXml.name, bHidden: wbSheetXml.bHidden});
+					}
+				});
+
+				wsParts.forEach(function(wbSheetXml, wsIndex) {
+					var ws = t.wbModel.getWorksheet(wsIndex);
+					if (null !== wbSheetXml.id && wbSheetXml.name) {
+						var wsPart = wbSheetXml.wsPart;
 						if (wsPart) {
 							//pivot
 							var pivotParts = wsPart.getPartsByRelationshipType(openXml.Types.pivotTable.relationType);
@@ -1839,479 +2219,105 @@ var editor;
 									ws.insertPivotTable(pivotTable);
 								}
 							}
-
-							//tables
-							var tableParts = wsPart.getPartsByRelationshipType(openXml.Types.tableDefinition.relationType);
-							for (i = 0; i < tableParts.length; ++i) {
-								var contentTable = tableParts[i].getDocumentContent();
-								var oNewTable = ws.createTablePart();
-								reader = new StaxParser(contentTable, oNewTable, xmlParserContext);
-								oNewTable.fromXml(reader);
-
-								var queryTables = tableParts[i].getPartsByRelationshipType(openXml.Types.queryTable.relationType);
-								for (j = 0; j < queryTables.length; ++j) {
-									var contentQueryTable = queryTables[j].getDocumentContent();
-									var oNewQueryTable = new AscCommonExcel.QueryTable();
-									reader = new StaxParser(contentQueryTable, oNewQueryTable, xmlParserContext);
-									oNewQueryTable.fromXml(reader);
-									oNewTable.QueryTable = oNewQueryTable;
-								}
-
-								if (null != oNewTable.Ref && null != oNewTable.DisplayName) {
-									ws.workbook.dependencyFormulas.addTableName(ws, oNewTable, true);
-								}
-								ws.TableParts.push(oNewTable);
-							}
-
-							//namedSheetViews
-							var namedSheetViews = wsPart.getPartsByRelationshipType(openXml.Types.namedSheetViews.relationType);
-							for (i = 0; i < namedSheetViews.length; ++i) {
-								var contentSheetView = namedSheetViews[i].getDocumentContent();
-								var namedSheetView = new Asc.CT_NamedSheetViews();
-								reader = new StaxParser(contentSheetView, namedSheetView, xmlParserContext);
-								namedSheetView.fromXml(reader);
-								//связь с таблицыми по id осуществляется через tableIdOpen, который потом в методе initPostOpen преобразуется в tableId
-								ws.aNamedSheetViews = namedSheetView.namedSheetView;
-							}
-
-							//slicers
-							var slicers = wsPart.getPartsByRelationshipType(openXml.Types.slicers.relationType);
-							for (i = 0; i < slicers.length; ++i) {
-								var contentSlicers = slicers[i].getDocumentContent();
-								var oSlicers = new Asc.CT_slicers(ws);
-								oSlicers.slicer = ws.aSlicers;
-								reader = new StaxParser(contentSlicers, oSlicers, xmlParserContext);
-								oSlicers.fromXml(reader);
-							}
-
-							//COMMENTS
-							var m_mapComments = {};
-							var PrepareComments = function () {
-								var pVmlDrawing = xmlParserContext.InitOpenManager.legacyDrawing;
-								if (!pVmlDrawing || !comments) {
-									return;
-								}
-
-
-								var mapCheckCopyThreadedComments = [];
-								var arAuthors = comments.authors && comments.authors.arr;
-
-								var i, j, nRow, nCol, nAuthorId, pCommentItem;
-								if (comments.commentList) {
-									var aComments = comments.commentList.arr;
-
-									for (i = 0; i < aComments.length; ++i) {
-										var pComment = aComments[i];
-										if (!pComment) {
-											continue;
-										}
-
-
-										var bThreadedCommentCopy = false;
-										var pThreadedComment = null;
-										if (pThreadedComments) {
-											var pFind;
-
-											var isPlaceholder = false;
-											if (pComment.authorId) {
-												nAuthorId = parseInt(pComment.authorId);
-
-												if (nAuthorId >= 0 && nAuthorId < arAuthors.length) {
-													var sAuthor = arAuthors[nAuthorId];
-													if ("tc=" === sAuthor.substring(0, 3)) {
-														isPlaceholder = true;
-														var sGUID = sAuthor.substr(3);
-														//todo IsZero() is added to fix comments with zero ids(5.4.0)(bug 42947). Remove after few releases
-														if ("{00000000-0000-0000-0000-000000000000}" === sGUID && pComment.ref) {
-															for (j in pThreadedComments.m_mapTopLevelThreadedComments) {
-																var it = pThreadedComments.m_mapTopLevelThreadedComments[j];
-																if (it.ref && pComment.ref === it.ref) {
-																	pFind = it;
-																	break;
-																}
-															}
-														} else {
-															pFind = pThreadedComments.m_mapTopLevelThreadedComments[sGUID];
-														}
-
-													}
-												}
-											}
-
-											if (pFind) {
-												pThreadedComment = pFind;
-												if (mapCheckCopyThreadedComments[pThreadedComment.id]) {
-													bThreadedCommentCopy = true;
-												} else {
-													mapCheckCopyThreadedComments[pThreadedComment.id + ""] = 1;
-												}
-											} else if (isPlaceholder) {
-												continue;
-											}
-										}
-
-
-										if (pComment.ref && pComment.authorId) {
-											var sRef = AscCommonExcel.g_oRangeCache.getAscRange(pComment.ref);
-											if (sRef) {
-												nRow = sRef.r1;
-												nCol = sRef.c1;
-												pCommentItem = new Asc.asc_CCommentData();
-												pCommentItem.asc_putDocumentFlag(false);
-												pCommentItem.nRow = nRow;
-												pCommentItem.nCol = nCol;
-
-												//TODO флаг всегда будет false
-												/*if (pCommentItem.asc_getDocumentFlag()) {
-													pCommentItem.nId = "doc_" + (this.wb.aComments.length + 1);
-												} else {
-													pCommentItem.wsId = ws.Id;
-													pCommentItem.nId = "sheet" + pCommentItem.wsId + "_" + (ws.aComments.length + 1);
-												}*/
-
-												nAuthorId = parseInt(pComment.authorId);
-												if (nAuthorId >= 0 && nAuthorId < arAuthors.length) {
-													pCommentItem.asc_putUserName(arAuthors[nAuthorId]);
-												}
-
-												var pSi = pComment.oText;
-												if (pSi) {
-													pCommentItem.asc_putText(pSi.getText());
-												}
-
-												pCommentItem.threadedComment = pThreadedComment;//c_oSer_Comments.ThreadedComment
-												pCommentItem.ThreadedCommentCopy = bThreadedCommentCopy;//bool m_bThreadedCommentCopy
-
-												var sNewId = nRow + "-" + nCol;
-												m_mapComments[sNewId] = pCommentItem;
-											}
-										}
-									}
-								}
-
-
-								for (i = 0; i < pVmlDrawing.items.length; ++i) {
-									var pShape = pVmlDrawing.items[i];
-									if (!pShape || AscDFH.historyitem_type_VMLShape !== pShape.getObjectType()) {
-										continue;
-									}
-
-									/*if (pShape.sId)
-									{//mark shape as used
-										boost::unordered_map<std::wstring, OOX::CVmlDrawing::_vml_shape>::iterator pFind = pVmlDrawing->m_mapShapes.find(pShape->m_sId.get());
-										if (pFind != pVmlDrawing->m_mapShapes.end())
-										{
-											pFind->second.bUsed = true;
-										}
-									}*/
-
-									for (j = 0; j < pShape.items.length; ++j) {
-										var pElem = pShape.items[j];
-
-										if (!pElem) {
-											continue;
-										}
-
-										if (AscDFH.historyitem_type_VMLClientData === pElem.getObjectType()) {
-											var pClientData = pElem;
-											if (null != pClientData.m_oRow && null != pClientData.m_oColumn) {
-												nRow = parseInt(pClientData.m_oRow);
-												nCol = parseInt(pClientData.m_oColumn);
-												var sId = nRow + "" + "-" + nCol + "";
-
-												pCommentItem = m_mapComments[sId];
-												if (pCommentItem) {
-													/*if(pShape->m_sGfxData.IsInit())
-														pCommentItem->m_sGfxdata = *pShape->m_sGfxData;*/
-
-													var oCommentCoords = new AscCommonExcel.asc_CCommentCoords();
-													var m_aAnchor = [];
-													pClientData.getAnchorArray(m_aAnchor);
-													if (8 <= m_aAnchor.length) {
-														oCommentCoords.nLeft = Math.abs(m_aAnchor[0]);
-														oCommentCoords.nLeftOffset = Math.abs(m_aAnchor[1]);
-														oCommentCoords.nTop = Math.abs(m_aAnchor[2]);
-														oCommentCoords.nTopOffset = Math.abs(m_aAnchor[3]);
-														oCommentCoords.nRight = Math.abs(m_aAnchor[4]);
-														oCommentCoords.nRightOffset = Math.abs(m_aAnchor[5]);
-														oCommentCoords.nBottom = Math.abs(m_aAnchor[6]);
-														oCommentCoords.nBottomOffset = Math.abs(m_aAnchor[7]);
-													}
-													oCommentCoords.bMoveWithCells = pClientData.m_oMoveWithCells;
-													oCommentCoords.bSizeWithCells = pClientData.m_oSizeWithCells;
-
-													oCommentCoords.nCol = nCol;
-													oCommentCoords.nRow = nRow;
-
-													pCommentItem.coords = oCommentCoords;
-
-													//todo bHidden ?
-													//oCommentCoords->m_bVisible = pClientData->m_oVisible;
-													//pCommentItem.bHidden = !pClientData.m_oVisible;
-
-													//pCommentItem.coords = oCommentCoords;
-
-													if (pShape.m_oFillColor) {
-														/*BYTE r = pShape->m_oFillColor->Get_R();
-														BYTE g = pShape->m_oFillColor->Get_G();
-														BYTE b = pShape->m_oFillColor->Get_B();
-
-														std::wstringstream sstream;
-														sstream << boost::wformat( L"%02X%02X%02X" ) % r % g % b;
-
-														pCommentItem->m_sFillColorRgb = sstream.str();*/
-													}
-
-													var oPoint = new AscFormat.CPoint(), oUCssValue;
-													for (var k = 0; k < pShape.m_oStyle.m_arrProperties.length; ++k) {
-														if (!pShape.m_oStyle.m_arrProperties[i]) {
-															continue;
-														}
-
-														var oProperty = pShape.m_oStyle.m_arrProperties[k];
-														if (AscFormat.ECssPropertyType.cssptMarginLeft === oProperty.get_Type()) {
-															oUCssValue = oProperty.m_oValue;
-															if (AscFormat.ECssUnitsType.cssunitstypeUnits === oUCssValue.oValue.m_eType) {
-																oPoint.FromPoints(oUCssValue.oValue.dValue);
-																pCommentItem.coords.dLeftMM = oPoint.ToMm();
-															}
-														} else if (AscFormat.ECssPropertyType.cssptMarginTop === oProperty.get_Type()) {
-															oUCssValue = oProperty.m_oValue;
-															if (AscFormat.ECssUnitsType.cssunitstypeUnits === oUCssValue.oValue.m_eType) {
-																oPoint.FromPoints(oUCssValue.oValue.dValue);
-																pCommentItem.coords.dTopMM = oPoint.ToMm();
-															}
-														} else if (AscFormat.ECssPropertyType.cssptWidth === oProperty.get_Type()) {
-															oUCssValue = oProperty.m_oValue;
-															if (AscFormat.ECssUnitsType.cssunitstypeUnits === oUCssValue.oValue.m_eType) {
-																oPoint.FromPoints(oUCssValue.oValue.dValue);
-																pCommentItem.coords.dWidthMM = oPoint.ToMm();
-															}
-														} else if (AscFormat.ECssPropertyType.cssptHeight === oProperty.get_Type()) {
-															oUCssValue = oProperty.m_oValue;
-															if (AscFormat.ECssUnitsType.cssunitstypeUnits === oUCssValue.oValue.m_eType) {
-																oPoint.FromPoints(oUCssValue.oValue.dValue);
-																pCommentItem.coords.dHeightMM = oPoint.ToMm();
-															}
-														}
-													}
-												}
-											}
-										}
-									}
-								}
-
-
-								var applyThreadedComment = function (_commentData, _threadedComment) {
-									oAdditionalData.isThreadedComment = true;
-									_commentData.asc_putSolved(false);
-									_commentData.aReplies = [];
-
-									if (_threadedComment.dT != null) {
-										_commentData.asc_putTime("");
-										var dateMs = AscCommon.getTimeISO8601(_threadedComment.dT);
-										if (!isNaN(dateMs)) {
-											_commentData.asc_putOnlyOfficeTime(dateMs + "");
-										}
-									}
-
-									if (_threadedComment.personId != null) {
-										var person = personList.getByGuid(_threadedComment.personId);
-										if (person) {
-											_commentData.asc_putUserName(person.displayName);
-											_commentData.asc_putUserId(person.userId);
-											_commentData.asc_putProviderId(person.providerId);
-										}
-									}
-
-									if (_threadedComment.id != null) {
-										_commentData.asc_putGuid(_threadedComment.id);
-									}
-
-									if (_threadedComment.done != null) {
-										_commentData.asc_putSolved(_threadedComment.done === "1");
-									}
-
-									if (_threadedComment.text != null) {
-										_commentData.asc_putText(_threadedComment.text);
-									}
-
-									if (_threadedComment.m_arrReplies && _threadedComment.m_arrReplies.length) {
-										for (var j = 0; j < _threadedComment.m_arrReplies.length; j++) {
-											var reply = new Asc.asc_CCommentData();
-											applyThreadedComment(reply, _threadedComment.m_arrReplies[j]);
-											_commentData.asc_addReply(reply);
-										}
-									}
-								};
-
-								for (i in m_mapComments) {
-
-									if (m_mapComments[i].asc_getDocumentFlag()) {
-										m_mapComments[i].nId = "doc_" + (wb.aComments.length + 1);
-									} else {
-										m_mapComments[i].wsId = ws.Id;
-										m_mapComments[i].nId = "sheet" + m_mapComments[i].wsId + "_" + (ws.aComments.length + 1);
-									}
-
-									var oAdditionalData = {isThreadedComment: false};
-									if (m_mapComments[i].threadedComment) {
-										applyThreadedComment(m_mapComments[i], m_mapComments[i].threadedComment);
-
-									}
-									xmlParserContext.InitOpenManager.prepareComments(ws, m_mapComments[i].coords, [m_mapComments[i]], oAdditionalData);
-								}
-							};
-
-							//буду читать по формату, далее преобразовывать
-							var comments, pThreadedComments;
-							var commentsFile = wsPart.getPartsByRelationshipType(openXml.Types.worksheetComments.relationType);
-							for (i = 0; i < commentsFile.length; ++i) {
-								var contentComment = commentsFile[i].getDocumentContent();
-								comments = new AscCommonExcel.CT_CComments();
-								reader = new StaxParser(contentComment, comments, xmlParserContext);
-								comments.fromXml(reader);
-							}
-
-							var threadedCommentsFile = wsPart.getPartsByRelationshipType(openXml.Types.threadedComment.relationType);
-							for (i = 0; i < threadedCommentsFile.length; ++i) {
-								var threadedComment = threadedCommentsFile[i].getDocumentContent();
-								pThreadedComments = new AscCommonExcel.CT_CThreadedComments();
-								reader = new StaxParser(threadedComment, pThreadedComments, xmlParserContext);
-								pThreadedComments.fromXml(reader);
-							}
-
-							PrepareComments();
 						}
 					}
-				}
-			});
-		} else if(wbXml.sheets) {
-			var wsParts = [];
-
-			//вначале беру все листы, потом запрашиваю контент каждого из них.
-			//связано с проблемой внтури парсера, на примере файла Read_Only_part_of_lists.xlsx
-			wbXml.sheets.forEach(function (wbSheetXml) {
-				if (null !== wbSheetXml.id && wbSheetXml.name) {
-					var wsPart = wbPart.getPartById(wbSheetXml.id);
-					wsParts.push({wsPart: wsPart, id: wbSheetXml.id, name: wbSheetXml.name, bHidden: wbSheetXml.bHidden});
-				}
-			});
-
-			wsParts.forEach(function(wbSheetXml, wsIndex) {
-				var ws = t.wbModel.getWorksheet(wsIndex);
-				if (null !== wbSheetXml.id && wbSheetXml.name) {
-					var wsPart = wbSheetXml.wsPart;
-					if (wsPart) {
-						//pivot
-						var pivotParts = wsPart.getPartsByRelationshipType(openXml.Types.pivotTable.relationType);
-						for (i = 0; i < pivotParts.length; ++i) {
-							var contentPivotTable = pivotParts[i].getDocumentContent();
-							var pivotTable = new Asc.CT_pivotTableDefinition(true);
-							new openXml.SaxParserBase().parse(contentPivotTable, pivotTable);
-							var cacheDefinition = pivotCaches[pivotTable.cacheId];
-							if (cacheDefinition) {
-								pivotTable.cacheDefinition = cacheDefinition;
-								ws.insertPivotTable(pivotTable);
-							}
-						}
-					}
-				}
-			});
-		}
-
-		if (this.isOpenOOXInBrowser) {
-			//defined names
-			if (wbXml.newDefinedNames) {
-				xmlParserContext.InitOpenManager.oReadResult.defNames = wbXml.newDefinedNames;
-				xmlParserContext.InitOpenManager.PostLoadPrepareDefNames(wb);
+				});
 			}
-		}
 
-		var readSheetDataExternal = function (bNoBuildDep) {
-			for (var i = 0; i < xmlParserContext.InitOpenManager.oReadResult.sheetData.length; ++i) {
-				var sheetDataElem = xmlParserContext.InitOpenManager.oReadResult.sheetData[i];
-				var ws = sheetDataElem.ws;
+			if (t.isOpenOOXInBrowser) {
+				//defined names
+				if (wbXml.newDefinedNames) {
+					xmlParserContext.InitOpenManager.oReadResult.defNames = wbXml.newDefinedNames;
+					xmlParserContext.InitOpenManager.PostLoadPrepareDefNames(wb);
+				}
+			}
 
-				var tmp = {
-					pos: null,
-					len: null,
-					bNoBuildDep: bNoBuildDep,
-					ws: ws,
-					row: new AscCommonExcel.Row(ws),
-					cell: new AscCommonExcel.Cell(ws),
-					formula: new AscCommonExcel.OpenFormula(),
-					sharedFormulas: {},
-					prevFormulas: {},
-					siFormulas: {},
-					prevRow: -1,
-					prevCol: -1,
-					formulaArray: []
-				};
+			var readSheetDataExternal = function (bNoBuildDep) {
+				for (var i = 0; i < xmlParserContext.InitOpenManager.oReadResult.sheetData.length; ++i) {
+					var sheetDataElem = xmlParserContext.InitOpenManager.oReadResult.sheetData[i];
+					var ws = sheetDataElem.ws;
+
+					var tmp = {
+						pos: null,
+						len: null,
+						bNoBuildDep: bNoBuildDep,
+						ws: ws,
+						row: new AscCommonExcel.Row(ws),
+						cell: new AscCommonExcel.Cell(ws),
+						formula: new AscCommonExcel.OpenFormula(),
+						sharedFormulas: {},
+						prevFormulas: {},
+						siFormulas: {},
+						prevRow: -1,
+						prevCol: -1,
+						formulaArray: []
+					};
 
 
-				var sheetData = new AscCommonExcel.CT_SheetData();
-				xmlParserContext.InitOpenManager.tmp = tmp;
+					var sheetData = new AscCommonExcel.CT_SheetData();
+					xmlParserContext.InitOpenManager.tmp = tmp;
 
-				sheetDataElem.reader.setState(sheetDataElem.state);
-				//TODO пересмотреть фунцию fromXml
-				sheetData.fromXml2(sheetDataElem.reader);
+					sheetDataElem.reader.setState(sheetDataElem.state);
+					//TODO пересмотреть фунцию fromXml
+					sheetData.fromXml2(sheetDataElem.reader);
 
-				if (!bNoBuildDep) {
-					//TODO возможно стоит делать это в worksheet после полного чтения
-					//***array-formula***
-					//добавление ко всем ячейкам массива головной формулы
-					for (var j = 0; j < tmp.formulaArray.length; j++) {
-						var curFormula = tmp.formulaArray[j];
-						var ref = curFormula.ref;
-						if (ref) {
-							var rangeFormulaArray = tmp.ws.getRange3(ref.r1, ref.c1, ref.r2, ref.c2);
-							rangeFormulaArray._foreach(function (cell) {
-								cell.setFormulaInternal(curFormula);
-								if (curFormula.ca || cell.isNullTextString()) {
-									tmp.ws.workbook.dependencyFormulas.addToChangedCell(cell);
-								}
-							});
+					if (!bNoBuildDep) {
+						//TODO возможно стоит делать это в worksheet после полного чтения
+						//***array-formula***
+						//добавление ко всем ячейкам массива головной формулы
+						for (var j = 0; j < tmp.formulaArray.length; j++) {
+							var curFormula = tmp.formulaArray[j];
+							var ref = curFormula.ref;
+							if (ref) {
+								var rangeFormulaArray = tmp.ws.getRange3(ref.r1, ref.c1, ref.r2, ref.c2);
+								rangeFormulaArray._foreach(function (cell) {
+									cell.setFormulaInternal(curFormula);
+									if (curFormula.ca || cell.isNullTextString()) {
+										tmp.ws.workbook.dependencyFormulas.addToChangedCell(cell);
+									}
+								});
+							}
 						}
-					}
-					for (var nCol in tmp.prevFormulas) {
-						if (tmp.prevFormulas.hasOwnProperty(nCol)) {
-							var prevFormula = tmp.prevFormulas[nCol];
-							if (!tmp.siFormulas[prevFormula.parsed.getListenerId()]) {
-								prevFormula.parsed.buildDependencies();
+						for (var nCol in tmp.prevFormulas) {
+							if (tmp.prevFormulas.hasOwnProperty(nCol)) {
+								var prevFormula = tmp.prevFormulas[nCol];
+								if (!tmp.siFormulas[prevFormula.parsed.getListenerId()]) {
+									prevFormula.parsed.buildDependencies();
+								}
+							}
+						}
+						for (var listenerId in tmp.siFormulas) {
+							if (tmp.siFormulas.hasOwnProperty(listenerId)) {
+								tmp.siFormulas[listenerId].buildDependencies();
 							}
 						}
 					}
-					for (var listenerId in tmp.siFormulas) {
-						if (tmp.siFormulas.hasOwnProperty(listenerId)) {
-							tmp.siFormulas[listenerId].buildDependencies();
-						}
+				}
+			};
+
+			//TODO общий код с serialize
+			//ReadSheetDataExternal
+			if (t.isOpenOOXInBrowser) {
+				if (!initOpenManager.copyPasteObj.isCopyPaste || initOpenManager.copyPasteObj.selectAllSheet) {
+					readSheetDataExternal(false);
+					if (!initOpenManager.copyPasteObj.isCopyPaste) {
+						initOpenManager.PostLoadPrepare(wb);
+					}
+					wb.init(initOpenManager.oReadResult.tableCustomFunc, initOpenManager.oReadResult.tableIds, initOpenManager.oReadResult.sheetIds, false, true);
+				} else {
+					readSheetDataExternal(true);
+					if (window["Asc"] && window["Asc"]["editor"] !== undefined) {
+						wb.init(initOpenManager.oReadResult.tableCustomFunc, initOpenManager.oReadResult.tableIds, initOpenManager.oReadResult.sheetIds, true);
 					}
 				}
 			}
-		};
 
-		//TODO общий код с serialize
-		//ReadSheetDataExternal
-		if (this.isOpenOOXInBrowser) {
-			if (!initOpenManager.copyPasteObj.isCopyPaste || initOpenManager.copyPasteObj.selectAllSheet) {
-				readSheetDataExternal(false);
-				if (!initOpenManager.copyPasteObj.isCopyPaste) {
-					initOpenManager.PostLoadPrepare(wb);
-				}
-				wb.init(initOpenManager.oReadResult.tableCustomFunc, initOpenManager.oReadResult.tableIds, initOpenManager.oReadResult.sheetIds, false, true);
-			} else {
-				readSheetDataExternal(true);
-				if (window["Asc"] && window["Asc"]["editor"] !== undefined) {
-					wb.init(initOpenManager.oReadResult.tableCustomFunc, initOpenManager.oReadResult.tableIds, initOpenManager.oReadResult.sheetIds, true);
-				}
-			}
-		}
+			initOpenManager.readDefStyles(wb, wb.CellStyles.DefaultStyles);
 
-		initOpenManager.readDefStyles(wb, wb.CellStyles.DefaultStyles);
+			wb.initPostOpenZip(pivotCaches, xmlParserContext);
+		});
 
-		wb.initPostOpenZip(pivotCaches, xmlParserContext);
-		jsZipWrapper.close();
+		window.nativeZlibEngine.close();
 		//clean up
 		openXml.SaxParserDataTransfer = {};
 		return true;
@@ -3930,7 +3936,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setZoom = function(scale) {
-    this.wb.changeZoom(scale);
+	  this.wb && this.wb.changeZoom(scale);
   };
 
   spreadsheet_api.prototype.asc_enableKeyEvents = function(isEnabled, isFromInput) {
@@ -4029,6 +4035,9 @@ var editor;
 	};
 	spreadsheet_api.prototype.sync_removeTextAroundSearch = function (sId) {
 		this.sendEvent("asc_onRemoveTextAroundSearch", [sId]);
+	};
+	spreadsheet_api.prototype.sync_SearchEndCallback = function () {
+		this.sendEvent("asc_onSearchEnd");
 	};
 
 	spreadsheet_api.prototype.asc_StartTextAroundSearch = function()
@@ -4315,14 +4324,14 @@ var editor;
    * @param {{}} [oleObj] info from oleObject
    */
   spreadsheet_api.prototype.asc_addTableOleObjectInOleEditor = function(oleObj) {
-    oleObj = oleObj || {binary: AscCommon.getEmpty()};
-    var stream = oleObj && oleObj.binary;
+    oleObj = oleObj || {"binary": AscCommon.getEmpty()};
+    var stream = oleObj["binary"];
     var _this = this;
     var file = new AscCommon.OpenFileResult();
     file.bSerFormat = AscCommon.checkStreamSignature(stream, AscCommon.c_oSerFormat.Signature);
     file.data = stream;
     this.isOleEditor = true;
-    this.isFromSheetEditor = oleObj.isFromSheetEditor;
+    this.isFromSheetEditor = oleObj["isFromSheetEditor"];
     this.asc_CloseFile();
     this.openDocument(file);
 
@@ -4341,9 +4350,9 @@ var editor;
     var cleanBinaryData = binaryData[binaryData.length - 1];
     var binaryInfo = {};
 
-    binaryInfo.binary = cleanBinaryData;
-    binaryInfo.base64Image = dataUrl;
-    binaryInfo.isFromSheetEditor =this.isFromSheetEditor;
+    binaryInfo["binary"] = cleanBinaryData;
+    binaryInfo["base64Image"] = dataUrl;
+    binaryInfo["isFromSheetEditor"] =this.isFromSheetEditor;
 
     return binaryInfo;
   }
@@ -5517,9 +5526,14 @@ var editor;
 		  this.wb.cellEditor.options.menuEditor;
   };
 
-  spreadsheet_api.prototype.asc_getActiveRangeStr = function(referenceType, opt_getActiveCell) {
+  spreadsheet_api.prototype.asc_getActiveRangeStr = function(referenceType, opt_getActiveCell, opt_ignore_r1c1) {
   	var ws = this.wb.getWorksheet();
   	var res = null;
+  	var tmpR1C1;
+  	if (opt_ignore_r1c1) {
+		tmpR1C1 = AscCommonExcel.g_R1C1Mode;
+		AscCommonExcel.g_R1C1Mode = false;
+  	}
   	if (ws && ws.model && ws.model.selectionRange) {
   		var range;
   		if (opt_getActiveCell) {
@@ -5532,6 +5546,9 @@ var editor;
 
 		res = range.getName(referenceType);
 	}
+  	if (opt_ignore_r1c1) {
+		AscCommonExcel.g_R1C1Mode = tmpR1C1;
+  	}
 	return res;
   };
 
@@ -6143,6 +6160,7 @@ var editor;
 		AscCommon.build_local_rx(oLocalizedData ? oLocalizedData["LocalFormulaOperands"] : null);
 		if (this.wb) {
 			this.wb.initFormulasList();
+			this.wb._onWSSelectionChanged()
 		}
 		if (this.wbModel) {
 			this.wbModel.rebuildColors();
@@ -7908,6 +7926,57 @@ var editor;
 		ws.handlers.trigger("selectionMathInfoChanged", ws.getSelectionMathInfo());
 	};
 
+
+	spreadsheet_api.prototype.asc_EditSelectAll = function() {
+		if (this.wb) {
+			this.wb.selectAll();
+		}
+	};
+
+	spreadsheet_api.prototype.asc_addCellWatches = function (sRange) {
+		var t = this;
+		if (this.wb && this.wb.model) {
+			var oRange = t.wb.model.getRangeAndSheetFromStr(sRange);
+			if (oRange && oRange.sheet && oRange.range) {
+				var maxCellsCount = 100;
+				var countCells = oRange.range.getWidth() * oRange.range.getHeight();
+				if (countCells > maxCellsCount) {
+					this.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmAddCellWatches, function (can) {
+						if (can) {
+							t.wb.model.addCellWatches(oRange.sheet, oRange.range);
+						}
+					}, countCells);
+				} else {
+					t.wb.model.addCellWatches(oRange.sheet, oRange.range);
+				}
+			}
+		}
+	};
+
+	spreadsheet_api.prototype.asc_deleteCellWatches = function (aCellWatches, opt_remove_all) {
+		if (this.wb && this.wb.model) {
+			this.wb.model.delCellWatches(aCellWatches, true, opt_remove_all);
+		}
+	};
+
+	spreadsheet_api.prototype.asc_getCellWatches = function () {
+		var res = null;
+		if (this.wb && this.wb.model) {
+			this.wb.model.recalculateCellWatches(true);
+
+			for (var i = 0; i < this.wb.model.aWorksheets.length; i++) {
+				var ws = this.wb.model.aWorksheets[i];
+				if (ws && ws.aCellWatches.length) {
+					if (!res) {
+						res = [];
+					}
+					res = res.concat(ws.aCellWatches);
+				}
+			}
+		}
+		return res;
+	};
+
 	spreadsheet_api.prototype.asc_getExternalReferences = function() {
 		return this.wb.getExternalReferences();
 	};
@@ -8043,6 +8112,8 @@ var editor;
   prot["asc_replaceText"] = prot.asc_replaceText;
   prot["asc_endFindText"] = prot.asc_endFindText;
   prot["asc_findCell"] = prot.asc_findCell;
+  prot["asc_StartTextAroundSearch"] = prot.asc_StartTextAroundSearch;
+  prot["asc_SelectSearchElement"] = prot.asc_SelectSearchElement;
   prot["asc_closeCellEditor"] = prot.asc_closeCellEditor;
   prot["asc_StartMoveSheet"] = prot.asc_StartMoveSheet;
   prot["asc_EndMoveSheet"] = prot.asc_EndMoveSheet;
@@ -8331,6 +8402,7 @@ var editor;
 
   prot['asc_isOffline'] = prot.asc_isOffline;
   prot['asc_getUrlType'] = prot.asc_getUrlType;
+  prot['asc_prepareUrl'] = prot.asc_prepareUrl;
 
   prot['asc_getSessionToken'] = prot.asc_getSessionToken;
   // Builder
@@ -8436,6 +8508,16 @@ var editor;
   prot["asc_getActiveNamedSheetView"] = prot.asc_getActiveNamedSheetView;
 
   prot["getPrintOptionsJson"] = prot.getPrintOptionsJson;
+
+  prot["asc_EditSelectAll"] = prot.asc_EditSelectAll;
+
+  prot["asc_addCellWatches"]               = prot.asc_addCellWatches;
+  prot["asc_deleteCellWatches"]            = prot.asc_deleteCellWatches;
+  prot["asc_getCellWatches"]               = prot.asc_getCellWatches;
+
+
+
+
 
   prot["asc_getExternalReference"] = prot.asc_getExternalReferences;
   prot["asc_updateExternalReference"] = prot.asc_updateExternalReferences;

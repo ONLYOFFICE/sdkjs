@@ -1060,7 +1060,7 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 				continue;
 			}
 
-			if (!isAdded && (!oCurComment.IsQuoted() || AscCommonWord.CompareDocumentPositions(oCommentPos, oCurComment.GetDocumentPosition()) < 0))
+			if (!isAdded && (!oCurComment.IsQuoted() || AscWord.CompareDocumentPositions(oCommentPos, oCurComment.GetDocumentPosition()) < 0))
 			{
 				this.m_arrComments.splice(nIndex, 0, oComment);
 				isAdded = true;

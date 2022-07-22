@@ -40,9 +40,8 @@ jobs:
            npm install -g grunt-cli
            npm install --prefix build
            grunt --level=WHITESPACE_ONLY --base build --gruntfile build/Gruntfile.js
-           docker pull onlyofficeqa/doc-builder-testing:latest
            docker run -v $PWD/deploy/sdkjs/common:/opt/onlyoffice/documentbuilder/sdkjs/common \
                       -v $PWD/deploy/sdkjs/word:/opt/onlyoffice/documentbuilder/sdkjs/word \
                       -v $PWD/deploy/sdkjs/cell:/opt/onlyoffice/documentbuilder/sdkjs/cell \
                       -v $PWD/deploy/sdkjs/slide:/opt/onlyoffice/documentbuilder/sdkjs/slide \
-                      onlyofficeqa/doc-builder-testing:latest rake rspec_critical
+                      onlyofficeqa/doc-builder-testing:next-release rake rspec_critical

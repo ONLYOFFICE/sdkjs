@@ -37,10 +37,6 @@
 // Import
 var CShape = AscFormat.CShape;
 
-var G_O_DEFAULT_COLOR_MAP = AscFormat.GenerateDefaultColorMap();
-
-
-
 CShape.prototype.Is_UseInDocument = function(drawingObjects)
 {
     if(this.group)
@@ -576,7 +572,7 @@ CShape.prototype.Get_ColorMap = function()
     {
         return parent_objects.master.clrMap;
     }
-    return G_O_DEFAULT_COLOR_MAP;
+    return AscFormat.GetDefaultColorMap();
 };
 
 CShape.prototype.getStyles = function(index)
@@ -684,5 +680,4 @@ CShape.prototype.OnContentReDraw = function(){
 
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
-    window['AscFormat'].G_O_DEFAULT_COLOR_MAP = G_O_DEFAULT_COLOR_MAP;
 })(window);

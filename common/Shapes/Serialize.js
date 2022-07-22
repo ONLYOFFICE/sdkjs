@@ -47,12 +47,7 @@ function IsHiddenObj(object)
 {
     if (!object)
         return false;
-    var _uniProps = object.nvSpPr;
-    if (!_uniProps)
-        _uniProps = object.nvPicPr;
-    if (!_uniProps)
-        _uniProps = object.nvGrpSpPr;
-
+    var _uniProps = object.getUniNvProps && object.getUniNvProps();
     if (!_uniProps)
         return false;
 
@@ -5530,9 +5525,7 @@ function BinaryPPTYLoader()
                 }
                 case 1:
                 {
-                    var oGeometry = this.ReadGeometry(spPr.xfrm);
-                    if(oGeometry && oGeometry.pathLst.length > 0)
-                        spPr.setGeometry(oGeometry);
+                    spPr.setGeometry(this.ReadGeometry(spPr.xfrm));
                     break;
                 }
                 case 2:
@@ -10373,7 +10366,7 @@ function BinaryPPTYLoader()
                                     text_pr.Set_FromObject(_run);
                                     new_run.Set_Pr(text_pr);
                                 }
-                                new_run.Add_ToContent( 0, new ParaNewLine(break_Line));
+                                new_run.Add_ToContent( 0, new AscWord.CRunBreak(AscWord.break_Line));
                                 if (hyperlink !== null)
                                 {
                                     hyperlink.Add_ToContent(0, new_run, false);
@@ -10407,7 +10400,7 @@ function BinaryPPTYLoader()
 									});
 								} else {
 									var oMath = new ParaMath();
-                                    par.AddToContentEnd(oMath);
+                                    par.AddToContentToEnd(oMath);
 									boMathr.bcr.Read1(nDocLength, function(t, l){
 										return boMathr.ReadMathArg(t,l,oMath.Root,par);
 									});
@@ -11422,9 +11415,7 @@ function BinaryPPTYLoader()
                     }
                     case 1:
                     {
-                        var oGeometry = this.Reader.ReadGeometry(spPr.xfrm);
-                        if(oGeometry && oGeometry.pathLst.length > 0)
-                            spPr.setGeometry(oGeometry);
+                        spPr.setGeometry(this.Reader.ReadGeometry(spPr.xfrm));
                         break;
                     }
                     case 2:

@@ -921,8 +921,9 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	};
 
 	var vertalign_Baseline    = 0;
-	var vertalign_SuperScript = 1;
-	var vertalign_SubScript   = 2;
+	var vertalign_SubScript   = 1;
+	var vertalign_SuperScript = 2;
+
 	var hdrftr_Header         = 0x01;
 	var hdrftr_Footer         = 0x02;
 
@@ -1961,7 +1962,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	var c_oAscUrlType         = {
 		Invalid : 0,
 		Http    : 1,
-		Email   : 2
+		Email   : 2,
+		Unsafe   : 3
 	};
 
 	var c_oAscCellTextDirection = {
@@ -3333,6 +3335,64 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		Simple   : 3
 	};
 
+	var c_oAscMathInputType = {
+		Unicode : 0,
+		LaTeX   : 1
+	};
+
+	const LigaturesFlags = {
+		Standard     : 0x01, //AscFonts.HB_FEATURE.HB_FEATURE_TYPE_LIGATURES_STANDARD,
+		Contextual   : 0x02, //AscFonts.HB_FEATURE.HB_FEATURE_TYPE_LIGATURES_CONTEXTUAL,
+		Historical   : 0x04, //AscFonts.HB_FEATURE.HB_FEATURE_TYPE_LIGATURES_HISTORICAL,
+		Discretional : 0x08  //AscFonts.HB_FEATURE.HB_FEATURE_TYPE_LIGATURES_DISCRETIONARY
+	};
+
+	const LigaturesType = {
+		None                             : 0x00,
+		Standard                         : LigaturesFlags.Standard,
+		Contextual                       : LigaturesFlags.Contextual,
+		Historical                       : LigaturesFlags.Historical,
+		Discretional                     : LigaturesFlags.Discretional,
+		StandardContextual               : LigaturesFlags.Standard | LigaturesFlags.Contextual,
+		StandardHistorical               : LigaturesFlags.Standard | LigaturesFlags.Historical,
+		ContextualHistorical             : LigaturesFlags.Contextual | LigaturesFlags.Historical,
+		StandardDiscretional             : LigaturesFlags.Standard | LigaturesFlags.Discretional,
+		ContextualDiscretional           : LigaturesFlags.Contextual | LigaturesFlags.Discretional,
+		HistoricalDiscretional           : LigaturesFlags.Historical | LigaturesFlags.Discretional,
+		StandardContextualHistorical     : LigaturesFlags.Standard | LigaturesFlags.Contextual | LigaturesFlags.Historical,
+		StandardContextualDiscretional   : LigaturesFlags.Standard | LigaturesFlags.Contextual | LigaturesFlags.Discretional,
+		StandardHistoricalDiscretional   : LigaturesFlags.Standard | LigaturesFlags.Historical | LigaturesFlags.Discretional,
+		ContextualHistoricalDiscretional : LigaturesFlags.Contextual | LigaturesFlags.Historical | LigaturesFlags.Discretional,
+		All                              : LigaturesFlags.Standard | LigaturesFlags.Contextual | LigaturesFlags.Historical | LigaturesFlags.Discretional
+	};
+
+	const CombFormWidthRule = {
+		AtLeast : 0,
+		Auto    : 1,
+		Exact   : 2
+	};
+
+	const UnderlineType = {
+		Dash            : 0,
+		DashDotDotHeavy : 1,
+		DashDotHeavy    : 2,
+		DashedHeavy     : 3,
+		DashLong        : 4,
+		DashLongHeavy   : 5,
+		DotDash         : 6,
+		DotDotDash      : 7,
+		Dotted          : 8,
+		DottedHeavy     : 9,
+		Double          : 10,
+		None            : 11,
+		Single          : 12,
+		Thick           : 13,
+		Wave            : 14,
+		WavyDouble      : 15,
+		WavyHeavy       : 16,
+		Words           : 17
+	};
+
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
 	window['Asc']                          = window['Asc'] || {};
@@ -4147,7 +4207,12 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot["cellanchorOneCell"] = prot.cellanchorOneCell;
 	prot["cellanchorTwoCell"] = prot.cellanchorTwoCell;
 
-    window['AscCommon']                             = window['AscCommon'] || {};
+	prot = window['Asc'];
+	prot["vertalign_Baseline"]    = vertalign_Baseline;
+	prot["vertalign_SuperScript"] = vertalign_SuperScript;
+	prot["vertalign_SubScript"]   = vertalign_SubScript;
+
+	window['AscCommon']                             = window['AscCommon'] || {};
 	window["AscCommon"].g_cCharDelimiter            = g_cCharDelimiter;
 	window["AscCommon"].g_cGeneralFormat            = g_cGeneralFormat;
 	window["AscCommon"].bDate1904                   = false;
@@ -4194,6 +4259,11 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	window["AscCommon"].c_oAscMaxFormulaReferenceLength = c_oAscMaxFormulaReferenceLength;
 	window["AscCommon"].c_oAscMaxTableColumnTextLength = c_oAscMaxTableColumnTextLength;
 
+	prot =  window["AscCommon"]["c_oAscUrlType"] = window["AscCommon"].c_oAscUrlType = c_oAscUrlType;
+	prot["Invalid"] = prot.Invalid;
+	prot["Http"] = prot.Http;
+	prot["Email"] = prot.Email;
+	prot["Unsafe"] = prot.Unsafe;
 
 	window["AscCommon"].locktype_None   = locktype_None;
 	window["AscCommon"].locktype_Mine   = locktype_Mine;
@@ -4572,6 +4642,10 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['Original'] = prot.Original;
 	prot['Simple']   = prot.Simple;
 
+	prot = window['Asc']['c_oAscMathInputType'] = window['Asc'].c_oAscMathInputType = c_oAscMathInputType;
+	prot['Unicode'] = prot.Unicode;
+	prot['LaTeX']   = prot.LaTeX;
+
 	window['AscFormat'] = window['AscFormat'] || {};
 
 	window['AscFormat'].text_fit_No         = window['AscFormat']['text_fit_No']         = 0;
@@ -4616,5 +4690,48 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	window['AscCommon'].ST_TLAnimateEffectTransition = ST_TLAnimateEffectTransition;
 	window['AscCommon'].c_oAscOleObjectTypes = c_oAscOleObjectTypes;
 	window['AscCommon'].ST_CxnType = ST_CxnType;
-	
-	})(window);
+
+	prot = window['Asc']['LigaturesType'] = window['Asc'].LigaturesType = LigaturesType;
+	prot['None']                             = prot.None;
+	prot['Standard']                         = prot.Standard;
+	prot['Contextual']                       = prot.Contextual;
+	prot['Historical']                       = prot.Historical;
+	prot['Discretional']                     = prot.Discretional;
+	prot['StandardContextual']               = prot.StandardContextual;
+	prot['StandardHistorical']               = prot.StandardHistorical;
+	prot['ContextualHistorical']             = prot.ContextualHistorical;
+	prot['StandardDiscretional']             = prot.StandardDiscretional;
+	prot['ContextualDiscretional']           = prot.ContextualDiscretional;
+	prot['HistoricalDiscretional']           = prot.HistoricalDiscretional;
+	prot['StandardContextualHistorical']     = prot.StandardContextualHistorical;
+	prot['StandardContextualDiscretional']   = prot.StandardContextualDiscretional;
+	prot['StandardHistoricalDiscretional']   = prot.StandardHistoricalDiscretional;
+	prot['ContextualHistoricalDiscretional'] = prot.ContextualHistoricalDiscretional;
+	prot['All']                              = prot.All;
+
+	prot = window['Asc']['CombFormWidthRule'] = window['Asc'].CombFormWidthRule = CombFormWidthRule;
+	prot['Auto']    = prot.Auto;
+	prot['AtLeast'] = prot.AtLeast;
+	prot['Exact']   = prot.Exact;
+
+	prot = window['Asc']['UnderlineType'] = window['Asc'].UnderlineType = UnderlineType;
+	prot['Dash']            = prot.Dash;
+	prot['DashDotDotHeavy'] = prot.DashDotDotHeavy;
+	prot['DashDotHeavy']    = prot.DashDotHeavy;
+	prot['DashedHeavy']     = prot.DashedHeavy;
+	prot['DashLong']        = prot.DashLong;
+	prot['DashLongHeavy']   = prot.DashLongHeavy;
+	prot['DotDash']         = prot.DotDash;
+	prot['DotDotDash']      = prot.DotDotDash;
+	prot['Dotted']          = prot.Dotted;
+	prot['DottedHeavy']     = prot.DottedHeavy;
+	prot['Double']          = prot.Double;
+	prot['None']            = prot.None;
+	prot['Single']          = prot.Single;
+	prot['Thick']           = prot.Thick;
+	prot['Wave']            = prot.Wave;
+	prot['WavyDouble']      = prot.WavyDouble;
+	prot['WavyHeavy']       = prot.WavyHeavy;
+	prot['Words']           = prot.Words;
+
+})(window);

@@ -163,6 +163,16 @@
 	ApiGroup.prototype = Object.create(ApiDrawing.prototype);
 	ApiGroup.prototype.constructor = ApiGroup;
 
+    /**
+	 * Class representing an Ole-object.
+	 * @constructor
+	 */
+	function ApiOleObject(OleObject)
+	{
+		ApiDrawing.call(this, OleObject);
+	}
+	ApiOleObject.prototype = Object.create(ApiDrawing.prototype);
+	ApiOleObject.prototype.constructor = ApiOleObject;
 
 	/**
      * Class representing a table.
@@ -597,8 +607,34 @@
     Api.prototype.CreateImage = function(sImageSrc, nWidth, nHeight){
         var oImage = AscFormat.DrawingObjectsController.prototype.createImage(sImageSrc, 0, 0, nWidth/36000, nHeight/36000);
         oImage.setParent(private_GetCurrentSlide());
-        return new ApiImage(AscFormat.DrawingObjectsController.prototype.createImage(sImageSrc, 0, 0, nWidth/36000, nHeight/36000));
+        return new ApiImage(oImage);
     };
+
+    /**
+	 * Creates an Ole-object with the parameters specified.
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently only internet URL or Base64 encoded images are supported).
+	 * @param {EMU} nWidth - The Ole-object width in English measure units.
+	 * @param {EMU} nHeight - The Ole-object height in English measure units.
+	 * @param {string} sData - ole-object string data.
+	 * @param {string} sAppId - the application id associated with this object.
+	 * @returns {ApiOleObject}
+	 */
+	Api.prototype.CreateOleObject = function(sImageSrc, nWidth, nHeight, sData, sAppId)
+	{
+		if (typeof sImageSrc === "string" && sImageSrc.length > 0 && typeof sData === "string"
+			&& typeof sAppId === "string" && sAppId.length > 0
+			&& AscFormat.isRealNumber(nWidth) && AscFormat.isRealNumber(nHeight)
+		)
+
+		var nW = private_EMU2MM(nWidth);
+		var nH = private_EMU2MM(nHeight);
+
+		var oOleObject = AscFormat.DrawingObjectsController.prototype.createOleObject(sData, sAppId, sImageSrc, 0, 0, nW, nH);
+		oOleObject.setParent(private_GetCurrentSlide());
+		return new ApiOleObject(oOleObject);
+	};
 
     /**
      * Creates a shape with the parameters specified.
@@ -1603,7 +1639,7 @@
             var drawingObjects = this.Master.cSld.spTree;
             for (var nObject = 0; nObject < drawingObjects.length; nObject++)
             {
-                if (drawingObjects[nObject].getObjectType() === AscDFH.historyitem_type_Shape)
+                if (drawingObjects[nObject] instanceof AscFormat.CShape)
                 apiShapes.push(new ApiShape(drawingObjects[nObject]));
             }
         }
@@ -1623,7 +1659,7 @@
             var drawingObjects = this.Master.cSld.spTree;
             for (var nObject = 0; nObject < drawingObjects.length; nObject++)
             {
-                if (drawingObjects[nObject].getObjectType() === AscDFH.historyitem_type_ImageShape)
+                if (drawingObjects[nObject] instanceof AscFormat.CImageShape)
                 apiImages.push(new ApiImage(drawingObjects[nObject]));
             }
         }
@@ -1643,12 +1679,32 @@
             var drawingObjects = this.Master.cSld.spTree;
             for (var nObject = 0; nObject < drawingObjects.length; nObject++)
             {
-                if (drawingObjects[nObject].getObjectType() === AscDFH.historyitem_type_ChartSpace)
+                if (drawingObjects[nObject] instanceof AscFormat.CChartSpace)
                 apiCharts.push(new ApiChart(drawingObjects[nObject]));
             }
         }
            
         return apiCharts;
+    };
+
+    /**
+     * Returns an array with all the ole-objects from the slide master.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiOleObject[]}
+     * */
+    ApiMaster.prototype.GetAllOleObjects = function(){
+        var apiOle = [];
+        if (this.Master)
+        {
+            var drawingObjects = this.Master.cSld.spTree;
+            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
+            {
+                if (drawingObjects[nObject] instanceof AscFormat.COleObject)
+                    apiOle.push(new ApiOleObject(drawingObjects[nObject]));
+            }
+        }
+           
+        return apiOle;
     };
     /**
 	 * Converts the ApiMaster object into the JSON object.
@@ -1904,8 +1960,8 @@
             var drawingObjects = this.Layout.cSld.spTree;
             for (var nObject = 0; nObject < drawingObjects.length; nObject++)
             {
-                if (drawingObjects[nObject].getObjectType() === AscDFH.historyitem_type_Shape)
-                apiShapes.push(new ApiShape(drawingObjects[nObject]));
+                if (drawingObjects[nObject] instanceof AscFormat.CShape)
+                    apiShapes.push(new ApiShape(drawingObjects[nObject]));
             }
         }
            
@@ -1924,8 +1980,8 @@
             var drawingObjects = this.Layout.cSld.spTree;
             for (var nObject = 0; nObject < drawingObjects.length; nObject++)
             {
-                if (drawingObjects[nObject].getObjectType() === AscDFH.historyitem_type_ImageShape)
-                apiImages.push(new ApiImage(drawingObjects[nObject]));
+                if (drawingObjects[nObject] instanceof AscFormat.CImageShape)
+                    apiImages.push(new ApiImage(drawingObjects[nObject]));
             }
         }
            
@@ -1944,12 +2000,32 @@
             var drawingObjects = this.Layout.cSld.spTree;
             for (var nObject = 0; nObject < drawingObjects.length; nObject++)
             {
-                if (drawingObjects[nObject].getObjectType() === AscDFH.historyitem_type_ChartSpace)
-                apiCharts.push(new ApiChart(drawingObjects[nObject]));
+                if (drawingObjects[nObject] instanceof AscFormat.CChartSpace)
+                    apiCharts.push(new ApiChart(drawingObjects[nObject]));
             }
         }
            
         return apiCharts;
+    };
+
+    /**
+     * Returns an array with all the ole-objects from the slide layout.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiOleObject[]}
+     * */
+    ApiLayout.prototype.GetAllOleObjects = function(){
+        var apiOle = [];
+        if (this.Layout)
+        {
+            var drawingObjects = this.Layout.cSld.spTree;
+            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
+            {
+                if (drawingObjects[nObject] instanceof AscFormat.COleObject)
+                    apiOle.push(new ApiOleObject(drawingObjects[nObject]));
+            }
+        }
+           
+        return apiOle;
     };
 
     /**
@@ -2947,8 +3023,8 @@
             var drawingObjects = this.Slide.getDrawingObjects();
             for (var nObject = 0; nObject < drawingObjects.length; nObject++)
             {
-                if (drawingObjects[nObject].getObjectType() === AscDFH.historyitem_type_Shape)
-                apiShapes.push(new ApiShape(drawingObjects[nObject]));
+                if (drawingObjects[nObject] instanceof AscFormat.CShape)
+                    apiShapes.push(new ApiShape(drawingObjects[nObject]));
             }
         }
            
@@ -2967,8 +3043,8 @@
             var drawingObjects = this.Slide.getDrawingObjects();
             for (var nObject = 0; nObject < drawingObjects.length; nObject++)
             {
-                if (drawingObjects[nObject].getObjectType() === AscDFH.historyitem_type_ImageShape)
-                apiImages.push(new ApiImage(drawingObjects[nObject]));
+                if (drawingObjects[nObject] instanceof AscFormat.CImageShape)
+                    apiImages.push(new ApiImage(drawingObjects[nObject]));
             }
         }
            
@@ -2987,13 +3063,34 @@
             var drawingObjects = this.Slide.getDrawingObjects();
             for (var nObject = 0; nObject < drawingObjects.length; nObject++)
             {
-                if (drawingObjects[nObject].getObjectType() === AscDFH.historyitem_type_ChartSpace)
-                apiCharts.push(new ApiChart(drawingObjects[nObject]));
+                if (drawingObjects[nObject] instanceof AscFormat.CChartSpace)
+                    apiCharts.push(new ApiChart(drawingObjects[nObject]));
             }
         }
            
         return apiCharts;
     };
+
+    /**
+     * Returns an array with all the ole-objects from the slide.
+     * @typeofeditors ["CPE"]
+     * @returns {ApiOleObject[]} 
+     * */
+    ApiSlide.prototype.GetAllOleObjects = function(){
+        var apiOle = [];
+        if (this.Slide)
+        {
+            var drawingObjects = this.Slide.getDrawingObjects();
+            for (var nObject = 0; nObject < drawingObjects.length; nObject++)
+            {
+                if (drawingObjects[nObject] instanceof AscFormat.COleObject)
+                    apiOle.push(new ApiOleObject(drawingObjects[nObject]));
+            }
+        }
+           
+        return apiOle;
+    };
+
     /**
 	 * Converts the ApiSlide object into the JSON object.
 	 * @memberof ApiSlide
@@ -3998,6 +4095,83 @@
     };
 
     //------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiOleObject
+	//
+	//------------------------------------------------------------------------------------------------------------------
+	
+	/**
+	 * Returns a type of the ApiOleObject class.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @returns {"oleObject"}
+	 */
+	ApiOleObject.prototype.GetClassType = function()
+	{
+		return "oleObject";
+	};
+
+	/**
+	 * Sets the data to current Ole-object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @param {string} sData - ole-object string data.
+	 * @returns {boolean}
+	 */
+	ApiOleObject.prototype.SetData = function(sData)
+	{
+		if (typeof(sData) !== "string" || sData === "")
+			return false;
+
+		this.Drawing.setData(sData);
+		return true;
+	};
+
+	/**
+	 * Gets the string data from current Ole-object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @returns {string}
+	 */
+	ApiOleObject.prototype.GetData = function()
+	{
+		if (typeof(this.Drawing.m_sData) === "string")
+			return this.Drawing.m_sData;
+		
+		return "";
+	};
+
+	/**
+	 * Sets the application id to current Ole-object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @param {string} sAppId - the application id associated with this object.
+	 * @returns {boolean}
+	 */
+	ApiOleObject.prototype.SetApplicationId = function(sAppId)
+	{
+		if (typeof(sAppId) !== "string" || sAppId === "")
+			return false;
+
+		this.Drawing.setApplicationId(sAppId);
+		return true;
+	};
+
+	/**
+	 * Gets the application id from current Ole-object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @returns {string}
+	 */
+	ApiOleObject.prototype.GetApplicationId = function()
+	{
+		if (typeof(this.Drawing.m_sApplicationId) === "string")
+			return this.Drawing.m_sApplicationId;
+		
+		return "";
+	};
+
+    //------------------------------------------------------------------------------------------------------------------
     //
     // ApiTable
     //
@@ -4620,6 +4794,7 @@
     Api.prototype["CreateShape"]                          = Api.prototype.CreateShape;
     Api.prototype["CreateChart"]                          = Api.prototype.CreateChart;
     Api.prototype["CreateGroup"]                          = Api.prototype.CreateGroup;
+    Api.prototype["CreateOleObject"]                      = Api.prototype.CreateOleObject;
     Api.prototype["CreateTable"]                          = Api.prototype.CreateTable;
     Api.prototype["CreateParagraph"]                      = Api.prototype.CreateParagraph;
     Api.prototype["Save"]                                 = Api.prototype.Save;
@@ -4673,6 +4848,7 @@
     ApiMaster.prototype["GetAllShapes"]                   = ApiMaster.prototype.GetAllShapes;
     ApiMaster.prototype["GetAllImages"]                   = ApiMaster.prototype.GetAllImages;
     ApiMaster.prototype["GetAllCharts"]                   = ApiMaster.prototype.GetAllCharts;
+    ApiMaster.prototype["GetAllOleObjects"]               = ApiMaster.prototype.GetAllOleObjects;
     ApiMaster.prototype["ToJSON"]                         = ApiMaster.prototype.ToJSON;
 
     
@@ -4691,6 +4867,7 @@
     ApiLayout.prototype["GetAllShapes"]                   = ApiLayout.prototype.GetAllShapes;
     ApiLayout.prototype["GetAllImages"]                   = ApiLayout.prototype.GetAllImages;
     ApiLayout.prototype["GetAllCharts"]                   = ApiLayout.prototype.GetAllCharts;
+    ApiLayout.prototype["GetAllOleObjects"]               = ApiLayout.prototype.GetAllOleObjects;
     ApiLayout.prototype["GetMaster"]                      = ApiLayout.prototype.GetMaster;
     ApiLayout.prototype["ToJSON"]                         = ApiLayout.prototype.ToJSON;
 
@@ -4749,6 +4926,7 @@
     ApiSlide.prototype["GetAllShapes"]                    = ApiSlide.prototype.GetAllShapes;
     ApiSlide.prototype["GetAllImages"]                    = ApiSlide.prototype.GetAllImages;
     ApiSlide.prototype["GetAllCharts"]                    = ApiSlide.prototype.GetAllCharts;
+    ApiSlide.prototype["GetAllOleObjects"]                = ApiSlide.prototype.GetAllOleObjects;
     ApiSlide.prototype["ToJSON"]                          = ApiSlide.prototype.ToJSON;
 
 
@@ -4822,6 +5000,12 @@
     ApiChart.prototype["SetAxieNumFormat"]                = ApiChart.prototype.SetAxieNumFormat;
     ApiChart.prototype["SetSeriaNumFormat"]               = ApiChart.prototype.SetSeriaNumFormat;
     ApiChart.prototype["SetDataPointNumFormat"]           = ApiChart.prototype.SetDataPointNumFormat;
+
+    ApiOleObject.prototype["GetClassType"]                = ApiOleObject.prototype.GetClassType;
+	ApiOleObject.prototype["SetData"]                  = ApiOleObject.prototype.SetData;
+	ApiOleObject.prototype["GetData"]                  = ApiOleObject.prototype.GetData;
+	ApiOleObject.prototype["SetApplicationId"]            = ApiOleObject.prototype.SetApplicationId;
+	ApiOleObject.prototype["GetApplicationId"]            = ApiOleObject.prototype.GetApplicationId;
 
     ApiTable.prototype["GetClassType"]                    = ApiTable.prototype.GetClassType;
     ApiTable.prototype["GetRow"]                          = ApiTable.prototype.GetRow;

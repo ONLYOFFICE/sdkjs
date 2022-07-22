@@ -49,7 +49,7 @@
 			return this.onEndLoadFile2(result);
 		}
 
-		if (this.isLoadFullApi && this.DocInfo && this.isLoadFonts)
+		if (this.isLoadFullApi && this.DocInfo && this._isLoadedModules())
 		{
 			this.asc_registerCallback('asc_onDocumentContentReady', function(){
 				DesktopOfflineUpdateLocalName(Asc.editor || editor);

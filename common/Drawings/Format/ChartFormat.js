@@ -2976,7 +2976,7 @@
                 return this.series.Get_ColorMap();
             }
         }
-        return AscFormat.G_O_DEFAULT_COLOR_MAP;
+        return AscFormat.GetDefaultColorMap();
     };
     CDLbl.prototype.Get_AbsolutePage = function() {
         if(this.chart && this.chart.Get_AbsolutePage) {
@@ -11007,6 +11007,10 @@
         return null;
     };
 
+    function isObjectSeries(oObject) {
+        return oObject && (oObject.superclass === CSeriesBase);
+    }
+
     function CNumRef() {
         CChartRefBase.call(this);
         this.numCache = null;
@@ -11037,10 +11041,25 @@
             else {
                 this.numCache.removeAllPts();
             }
+            let oSeries = null;
             if(ser) {
-                ser.isHidden = true;
+                oSeries = ser;
             }
-            this.numCache.update(this.f, displayEmptyCellsAs, displayHidden, ser);
+            else {
+                let oCurObjectForCheck = this;
+                while (!oSeries && oCurObjectForCheck) {
+                    if(isObjectSeries(oCurObjectForCheck)) {
+                        oSeries = oCurObjectForCheck;
+                    }
+                    else {
+                        oCurObjectForCheck = oCurObjectForCheck.parent;
+                    }
+                }
+            }
+            if(oSeries) {
+                oSeries.isHidden = true;
+            }
+            this.numCache.update(this.f, displayEmptyCellsAs, displayHidden, oSeries);
             this.onUpdateCache();
         }, this, []);
     };

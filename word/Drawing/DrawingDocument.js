@@ -5749,11 +5749,11 @@ function CDrawingDocument()
 						oParaTabs.Add(new CParaTab(tab_Right, wMm - 2 - wMmOffset, nTabLeader));
 						oParagraph.SetParagraphTabs(oParaTabs);
 
-						oRun.AddToContent(-1, new ParaTab());
+						oRun.AddToContent(-1, new AscWord.CRunTab());
 					}
 					else
 					{
-						oRun.AddToContent(-1, new ParaSpace());
+						oRun.AddToContent(-1, new AscWord.CRunSpace());
 					}
 
 					oRun.AddText("" + nPageIndex);
@@ -5956,11 +5956,11 @@ function CDrawingDocument()
 							oParaTabs.Add(new CParaTab(tab_Right, mmW - 4 - wMmOffset, prop.TabLeader));
 							oParagraph.SetParagraphTabs(oParaTabs);
 
-							oRun.AddToContent(-1, new ParaTab());
+							oRun.AddToContent(-1, new AscWord.CRunTab());
 						}
 						else
 						{
-							oRun.AddToContent(-1, new ParaSpace());
+							oRun.AddToContent(-1, new AscWord.CRunSpace());
 						}
 
 						oRun.AddText("" + prop.Pages[nCurrentLevel - 1]);
@@ -6163,11 +6163,11 @@ function CDrawingDocument()
 					oParaTabs.Add(new CParaTab(tab_Right, wMm - 2 - wMmOffset, nTabLeader));
 					oParagraph.SetParagraphTabs(oParaTabs);
 
-					oRun.AddToContent(-1, new ParaTab());
+					oRun.AddToContent(-1, new AscWord.CRunTab());
 				}
 				else
 				{
-					oRun.AddToContent(-1, new ParaSpace());
+					oRun.AddToContent(-1, new AscWord.CRunSpace());
 				}
 				oRun.AddText("" + nPageIndex);
 				nPageIndex += 2;
@@ -7271,7 +7271,7 @@ function CDrawingDocument()
 				if (1 === text.length)
 				{
 					g_oTextMeasurer.SetTextPr(textPr);
-					g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
+					g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, 1);
 					var oInfo = g_oTextMeasurer.Measure2Code(text.charCodeAt(0));
 
 					x = (width_px >> 1) - Math.round((oInfo.WidthG / 2 + oInfo.rasterOffsetX) * AscCommon.g_dKoef_mm_to_pix);

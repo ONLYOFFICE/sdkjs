@@ -69,7 +69,8 @@
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
-	window['AscCommon'].CSearchSettings = CSearchSettings;
+	window['AscCommon'].CSearchSettings    = CSearchSettings;
+	window['AscCommon']["CSearchSettings"] = CSearchSettings;
 
 	CSearchSettings.prototype['get_Text']       = CSearchSettings.prototype.get_Text       = CSearchSettings.prototype.GetText;
 	CSearchSettings.prototype['put_Text']       = CSearchSettings.prototype.put_Text       = CSearchSettings.prototype.SetText;

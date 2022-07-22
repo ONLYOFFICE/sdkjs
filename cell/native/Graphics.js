@@ -789,7 +789,7 @@ CGraphics.prototype =
             oFontStyle = AscFonts.FontStyle.FontStyleBoldItalic;
 
         var _fontinfo = AscFonts.g_fontApplication.GetFontInfo(font.FontFamily.Name, oFontStyle, this.LastFontOriginInfo);
-        var _info = GetLoadInfoForMeasurer(_fontinfo, oFontStyle);
+        var _info = AscCommon.GetLoadInfoForMeasurer(_fontinfo, oFontStyle);
 
         this.m_oLastFont.SetUpName = font.FontFamily.Name;
         this.m_oLastFont.SetUpSize = font.FontSize;
@@ -801,8 +801,6 @@ CGraphics.prototype =
         if (_info.SrcBold)      flag |= 0x04;
         if (_info.SrcItalic)    flag |= 0x08;
 
-        g_oTextMeasurer.Measurer["LoadFont"](_info.Path, _info.FaceIndex, font.FontSize, flag);
-
         this.Native["PD_LoadFont"](_info.Path, _info.FaceIndex, font.FontSize, flag);
     },
 
@@ -811,6 +809,31 @@ CGraphics.prototype =
         this.m_oTextPr = textPr.Copy();
         this.theme = theme;
         this.m_oTextPr.ReplaceThemeFonts(theme.themeElements.fontScheme);
+    },
+
+    SetFontInternal : function(name, size, style)
+    {
+        var _lastFont = this.m_oLastFont;
+        _lastFont.Name = name;
+        _lastFont.Size = size;
+
+        //    if (_lastFont.Name != _lastFont.SetUpName || _lastFont.Size != _lastFont.SetUpSize || style != _lastFont.SetUpStyle)
+        {
+            _lastFont.SetUpName = _lastFont.Name;
+            _lastFont.SetUpSize = _lastFont.Size;
+            _lastFont.SetUpStyle = style;
+
+            var _fontinfo = AscFonts.g_fontApplication.GetFontInfo(_lastFont.SetUpName, _lastFont.SetUpStyle, this.LastFontOriginInfo);
+            var _info = AscCommon.GetLoadInfoForMeasurer(_fontinfo, _lastFont.SetUpStyle);
+
+            var flag = 0;
+            if (_info.NeedBold)     flag |= 0x01;
+            if (_info.NeedItalic)   flag |= 0x02;
+            if (_info.SrcBold)      flag |= 0x04;
+            if (_info.SrcItalic)    flag |= 0x08;
+
+            this.Native["PD_LoadFont"](_info.Path, _info.FaceIndex, _lastFont.SetUpSize, flag);
+        }
     },
 
     SetFontSlot : function(slot, fontSizeKoef)
@@ -875,15 +898,13 @@ CGraphics.prototype =
             _lastFont.SetUpStyle = _style;
 
             var _fontinfo = AscFonts.g_fontApplication.GetFontInfo(_lastFont.SetUpName, _lastFont.SetUpStyle, this.LastFontOriginInfo);
-            var _info = GetLoadInfoForMeasurer(_fontinfo, _lastFont.SetUpStyle);
+            var _info = AscCommon.GetLoadInfoForMeasurer(_fontinfo, _lastFont.SetUpStyle);
 
             var flag = 0;
             if (_info.NeedBold)     flag |= 0x01;
             if (_info.NeedItalic)   flag |= 0x02;
             if (_info.SrcBold)      flag |= 0x04;
             if (_info.SrcItalic)    flag |= 0x08;
-
-            g_oTextMeasurer.Measurer["LoadFont"](_info.Path, _info.FaceIndex, _lastFont.SetUpSize, flag);
 
             this.Native["PD_LoadFont"](_info.Path, _info.FaceIndex, _lastFont.SetUpSize, flag);
         }
@@ -936,48 +957,9 @@ CGraphics.prototype =
 
         this.Native["PD_FillText"](x,y,lUnicode);
     },
-
-    tg : function(text,x,y)
+    tg : function(gid,x,y)
     {
-//        if (this.m_bIsBreak)
-//            return;
-//
-//        var _x = this.m_oInvertFullTransform.TransformPointX(x,y);
-//        var _y = this.m_oInvertFullTransform.TransformPointY(x,y);
-//
-//        var _font_manager = this.IsUseFonts2 ? this.m_oFontManager2 : this.m_oFontManager;
-//
-//        try
-//        {
-//            _font_manager.LoadString3C(text,_x,_y);
-//        }
-//        catch(err)
-//        {
-//        }
-//
-//        if (false === this.m_bIntegerGrid)
-//        {
-//            this.m_oContext.setTransform(1,0,0,1,0,0);
-//        }
-//        var pGlyph = _font_manager.m_oGlyphString.m_pGlyphsBuffer[0];
-//        if (null == pGlyph)
-//            return;
-//
-//        if (null != pGlyph.oBitmap)
-//        {
-//            var _a = this.m_oBrush.Color1.A;
-//            if (255 != _a)
-//                this.m_oContext.globalAlpha = _a / 255;
-//            this.private_FillGlyph(pGlyph);
-//
-//            if (255 != _a)
-//                this.m_oContext.globalAlpha = 1.0;
-//        }
-//        if (false === this.m_bIntegerGrid)
-//        {
-//            this.m_oContext.setTransform(this.m_oFullTransform.sx,this.m_oFullTransform.shy,this.m_oFullTransform.shx,
-//                this.m_oFullTransform.sy,this.m_oFullTransform.tx,this.m_oFullTransform.ty);
-//        }
+        this.Native["PD_FillTextG"](x,y,gid);
     },
     charspace : function(space)
     {

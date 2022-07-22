@@ -1798,6 +1798,10 @@ CBlockLevelSdt.prototype.CheckRunContent = function(fCheck)
 {
 	return this.Content.CheckRunContent(fCheck);
 };
+CBlockLevelSdt.prototype.CheckSelectedRunContent = function(fCheck)
+{
+	return this.Content.CheckSelectedRunContent(fCheck);
+};
 CBlockLevelSdt.prototype.IsTableCellSelection = function()
 {
 	return this.Content.IsTableCellSelection();
@@ -1966,17 +1970,17 @@ CBlockLevelSdt.prototype.private_UpdateCheckBoxContent = function()
 
 	if (isChecked && this.Pr.CheckBox.CheckedFont)
 	{
-		oRun.Set_RFonts_Ascii({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
-		oRun.Set_RFonts_HAnsi({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
-		oRun.Set_RFonts_CS({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
-		oRun.Set_RFonts_EastAsia({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
+		oRun.SetRFontsAscii({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
+		oRun.SetRFontsHAnsi({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
+		oRun.SetRFontsCS({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
+		oRun.SetRFontsEastAsia({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
 	}
 	else if (!isChecked && this.Pr.CheckBox.UncheckedFont)
 	{
-		oRun.Set_RFonts_Ascii({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
-		oRun.Set_RFonts_HAnsi({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
-		oRun.Set_RFonts_CS({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
-		oRun.Set_RFonts_EastAsia({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
+		oRun.SetRFontsAscii({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
+		oRun.SetRFontsHAnsi({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
+		oRun.SetRFontsCS({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
+		oRun.SetRFontsEastAsia({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
 	}
 };
 /**
@@ -2079,7 +2083,7 @@ CBlockLevelSdt.prototype.IsComboBox = function()
 	return (undefined !== this.Pr.ComboBox);
 };
 /**
- * @param oPr {CSdtComboBoxPr}
+ * @param oPr {AscWord.CSdtComboBoxPr}
  */
 CBlockLevelSdt.prototype.SetComboBoxPr = function(oPr)
 {
@@ -2090,7 +2094,7 @@ CBlockLevelSdt.prototype.SetComboBoxPr = function(oPr)
 	}
 };
 /**
- * @returns {?CSdtComboBoxPr}
+ * @returns {?AscWord.CSdtComboBoxPr}
  */
 CBlockLevelSdt.prototype.GetComboBoxPr = function()
 {
@@ -2105,7 +2109,7 @@ CBlockLevelSdt.prototype.IsDropDownList = function()
 	return (undefined !== this.Pr.DropDown);
 };
 /**
- * @param oPr {CSdtComboBoxPr}
+ * @param oPr {AscWord.CSdtComboBoxPr}
  */
 CBlockLevelSdt.prototype.SetDropDownListPr = function(oPr)
 {
@@ -2116,7 +2120,7 @@ CBlockLevelSdt.prototype.SetDropDownListPr = function(oPr)
 	}
 };
 /**
- * @returns {?CSdtComboBoxPr}
+ * @returns {?AscWord.CSdtComboBoxPr}
  */
 CBlockLevelSdt.prototype.GetDropDownListPr = function()
 {
@@ -2124,7 +2128,7 @@ CBlockLevelSdt.prototype.GetDropDownListPr = function()
 };
 /**
  * Применяем к данному контейнеру настройки того, что это специальный контйенер для поля со списком
- * @param oPr {CSdtComboBoxPr}
+ * @param oPr {AscWord.CSdtComboBoxPr}
  */
 CBlockLevelSdt.prototype.ApplyComboBoxPr = function(oPr)
 {
@@ -2137,7 +2141,7 @@ CBlockLevelSdt.prototype.ApplyComboBoxPr = function(oPr)
 };
 /**
  * Применяем к данному контейнеру настройки того, что это специальный контейнер для выпадающего списка
- * @param oPr {CSdtComboBoxPr}
+ * @param oPr {AscWord.CSdtComboBoxPr}
  */
 CBlockLevelSdt.prototype.ApplyDropDownListPr = function(oPr)
 {
@@ -2268,7 +2272,7 @@ CBlockLevelSdt.prototype.IsDatePicker = function()
 	return (undefined !== this.Pr.Date);
 };
 /**
- * @param oPr {CSdtDatePickerPr}
+ * @param oPr {AscWord.CSdtDatePickerPr}
  */
 CBlockLevelSdt.prototype.SetDatePickerPr = function(oPr)
 {
@@ -2280,7 +2284,7 @@ CBlockLevelSdt.prototype.SetDatePickerPr = function(oPr)
 	}
 };
 /**
- * @returns {?CSdtDatePickerPr}
+ * @returns {?AscWord.CSdtDatePickerPr}
  */
 CBlockLevelSdt.prototype.GetDatePickerPr = function()
 {
@@ -2288,7 +2292,7 @@ CBlockLevelSdt.prototype.GetDatePickerPr = function()
 };
 /**
  * Применяем к данному контейнеру настройки того, что это специальный контйенер для даты
- * @param oPr {CSdtDatePickerPr}
+ * @param oPr {AscWord.CSdtDatePickerPr}
  */
 CBlockLevelSdt.prototype.ApplyDatePickerPr = function(oPr)
 {

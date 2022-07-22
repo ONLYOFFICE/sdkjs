@@ -762,6 +762,35 @@ CRadical.prototype.Is_ContentUse = function(MathContent)
 
     return false;
 };
+CRadical.prototype.GetTextOfElement = function(isLaTex) {
+	var strTemp = "";
+	var strDegree = this.CheckIsEmpty(this.getDegree().GetTextOfElement(isLaTex));
+	var strBase = this.CheckIsEmpty(this.getBase().GetTextOfElement(isLaTex));
+	var strStartBracet = this.GetStartBracetForGetTextContent(isLaTex);
+	var strCloseBracet = this.GetEndBracetForGetTextContent(isLaTex);
+
+	if (strDegree.length > 0 && isLaTex) {
+		strDegree =  '[' + strDegree + ']';
+	}
+	if (strBase.length > 1 && ((strDegree.length === 0 && !isLaTex) || isLaTex)) {
+		strBase = strStartBracet + strBase + strCloseBracet;
+	}
+	if (isLaTex) {
+		strTemp = '\\sqrt' + strDegree + strBase;
+	} else {
+		var strRadicalSymbol = String.fromCharCode(8730); //√
+		if (strDegree.length > 0) {
+			strDegree = strDegree + '&';
+		}
+
+		if (strDegree.length >= 1) {
+			strTemp = strRadicalSymbol + strStartBracet + strDegree + strBase + strCloseBracet;
+		} else {
+			strTemp = strRadicalSymbol + strDegree + strBase;
+		}
+	}
+	return strTemp;
+};
 
 /**
  *

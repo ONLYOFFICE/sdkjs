@@ -621,7 +621,116 @@
                 case "disableAutostartMacros":
                 {
                     this.disableAutostartMacros = true;
+					break;
                 }
+				case "fillForms":
+				{
+					if (this.editorId !== AscCommon.c_oEditorId.Word
+						|| !this.WordControl
+						|| !this.WordControl.m_oLogicDocument)
+						break;
+
+					let oLogicDocument = this.WordControl.m_oLogicDocument;
+
+					let oMap;
+					try
+					{
+						oMap = (typeof obj[prop] === "string") ? JSON.parse(obj[prop]) : obj[prop];
+					}
+					catch (err)
+					{
+						oMap = {};
+					}
+
+					if (oMap["tags"])
+					{
+						let arrControls = oLogicDocument.GetAllContentControls();
+
+						let oTags         = {};
+						let arrCheckLocks = [];
+						let arrUrls       = [];
+
+						for (let sTag in oMap["tags"])
+						{
+							oTags[sTag] = [];
+							for (let nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
+							{
+								let oForm = arrControls[nIndex];
+								if (oForm
+									&& oForm.IsForm()
+									&& sTag === oForm.GetTag())
+								{
+									oTags[sTag].push(oForm);
+
+									let oElement;
+									if (oForm.IsInlineLevel())
+										oElement = oForm.GetParagraph();
+									else
+										oElement = oForm;
+
+									if (oElement && -1 === arrCheckLocks.indexOf(oElement))
+										arrCheckLocks.push(oElement);
+
+									if (oMap["tags"][sTag]["picture"])
+										arrUrls.push(oMap["tags"][sTag]["picture"]);
+								}
+							}
+						}
+
+						function FillForms()
+						{
+							if (!oLogicDocument.IsSelectionLocked(AscCommon.changestype_None, {
+								Type      : AscCommon.changestype_2_ElementsArray_and_Type,
+								Elements  : arrCheckLocks,
+								CheckType : AscCommon.changestype_Paragraph_Content
+							}))
+							{
+								oLogicDocument.StartAction(AscDFH.historydescription_Document_FillFormsByTags);
+
+								for (let sTag in oTags)
+								{
+									let oValue = oMap["tags"][sTag];
+									for (let nFormIndex = 0, nFormsCount = oTags[sTag].length; nFormIndex < nFormsCount; ++nFormIndex)
+									{
+										let oForm = oTags[sTag][nFormIndex];
+										if (oForm.IsComboBox() || oForm.IsDropDownList())
+										{
+											if (oValue["comboBox"])
+												oForm.SelectListItem(oValue["comboBox"]);
+											else if (oForm.IsComboBox() && oValue["text"])
+												oForm.SetInnerText(oValue["text"]);
+										}
+										else if (oForm.IsPictureForm())
+										{
+											let oPicture = oForm.GetPicture();
+											if (oValue["picture"] && oPicture)
+												oPicture.setBlipFill(AscFormat.CreateBlipFillRasterImageId(oValue["picture"]));
+										}
+										else if (oForm.IsCheckBox())
+										{
+											if (oValue["checkBox"])
+												oForm.SetCheckBoxChecked(!!oValue["checkBox"]);
+										}
+										else
+										{
+											oForm.SetInnerText(oValue["text"]);
+										}
+									}
+								}
+
+								oLogicDocument.Recalculate();
+								oLogicDocument.FinalizeAction();
+							}
+						}
+
+						if (this.ImageLoader && arrUrls.length)
+							this.ImageLoader.LoadImagesWithCallback(arrUrls, FillForms, []);
+						else
+							FillForms();
+					}
+
+					break
+				}
                 default:
                     break;
             }
@@ -970,7 +1079,7 @@
         return true;
     };
 	/**
-    * Returns the current file to download in the specified format.
+     * Returns the current file to download in the specified format.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias GetFileToDownload
@@ -990,5 +1099,252 @@
 			};
 		}
 		this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, opts);
+	};
+
+	function getLocalStorageItem(key)
+	{
+		try
+		{
+			return JSON.parse(window.localStorage.getItem(key));
+		}
+		catch (e)
+		{
+			return null;
+		}
+	}
+	function setLocalStorageItem(key, value)
+	{
+		try
+		{
+			window.localStorage.setItem(key, JSON.stringify(value));
+			return true;
+		}
+		catch (e)
+		{
+		}
+		return false;
+	}
+
+	function installPlugin(config, loadFuncName)
+	{
+		if (!config)
+		{
+			return {
+				"type" : loadFuncName,
+				"guid" : ""
+			};
+		}
+
+		let currentInstalledPlugins = getLocalStorageItem("asc_plugins_installed");
+		if (!currentInstalledPlugins)
+			currentInstalledPlugins = {};
+		currentInstalledPlugins[config["guid"]] = config;
+		setLocalStorageItem("asc_plugins_installed", currentInstalledPlugins);
+
+		let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+		if (currentRemovedPlugins && currentRemovedPlugins[config["guid"]])
+		{
+			delete currentRemovedPlugins[config["guid"]];
+			setLocalStorageItem("asc_plugins_removed", currentRemovedPlugins);
+		}
+
+		window.g_asc_plugins.api.disableCheckInstalledPlugins = true;
+		window.g_asc_plugins.loadExtensionPlugins([config], true);
+		delete window.g_asc_plugins.api.disableCheckInstalledPlugins;
+
+		return {
+			"type" : loadFuncName,
+			"guid" : config["guid"]
+		};
+	}
+
+	Api.prototype.checkInstalledPlugins = function()
+	{
+		if (this.disableCheckInstalledPlugins)
+			return;
+
+		let arrayPlugins = [];
+
+		let currentInstalledPlugins = getLocalStorageItem("asc_plugins_installed");
+		if (currentInstalledPlugins)
+		{
+			for (let item in currentInstalledPlugins)
+			{
+				if (currentInstalledPlugins[item]["guid"])
+					arrayPlugins.push(currentInstalledPlugins[item]);
+			}
+		}
+
+		if (window["Asc"]["extensionPlugins"] && window["Asc"]["extensionPlugins"].length)
+		{
+			let arrayExtensions = window["Asc"]["extensionPlugins"];
+			for (let i = 0, len = arrayExtensions.length; i < len; i++)
+				arrayPlugins.push(arrayExtensions[i]);
+		}
+
+		let isInstalledPresent = window.g_asc_plugins.loadExtensionPlugins(arrayPlugins, undefined, true);
+
+		let isRemovedPresent = false;
+		let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+
+		if (currentRemovedPlugins)
+		{
+			for (let guid in currentRemovedPlugins)
+			{
+				if (guid)
+				{
+					if (window.g_asc_plugins.unregister(guid))
+						isRemovedPresent = true;
+				}
+			}
+		}
+
+		// этот метод может быть вызван из интерфейса - нужен таймаут для web-apps
+		if (isRemovedPresent || isInstalledPresent) {
+
+			setTimeout(function () {
+
+				// в принципе можно не удалять, так как если ничего не поменялось - то не зайдем второй раз сюда.
+				// но зачем еще раз парсить
+				window.g_asc_plugins.api.disableCheckInstalledPlugins = true;
+
+				if (isRemovedPresent)
+					window.g_asc_plugins.api.sendEvent("asc_onPluginsReset");
+
+				if (isInstalledPresent || isRemovedPresent)
+					window.g_asc_plugins.updateInterface();
+
+				delete window.g_asc_plugins.api.disableCheckInstalledPlugins;
+
+			}, 10);
+
+		}
+	};
+
+	/**
+    * Returns all installed plugins.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @alias GetInstalledPlugins
+     * @returns {[]} - Array of all installed plugins.
+     */
+	Api.prototype["pluginMethod_GetInstalledPlugins"] = function()
+	{
+		/*
+			формат объекта 
+			{
+				url: url на конфиг (хотя по факту он не нужен, так как конфиг есть в этом объекте и внутри маркетплейса тоже),
+				guid: guid плагина,
+				canRemoved: флаг, может ли быть удалён плагин или нет (true/false),
+				obj: конфиг установленного плагина (от туда берется версия и сравнивается с текущей для проверки обновлений)
+			}
+		*/
+
+		let baseUrl = window.location.href;
+		let posQ = baseUrl.indexOf("?");
+		if (-1 !== posQ)
+			baseUrl = baseUrl.substr(0, posQ);
+
+		let pluginsArray = window.g_asc_plugins.plugins.concat(window.g_asc_plugins.systemPlugins);
+		let returnArray = [];
+
+		for (let i = 0, len = pluginsArray.length; i < len; i++)
+		{
+			returnArray.push({
+				"baseUrl" : baseUrl,
+				"guid" : pluginsArray[i].guid,
+				"canRemoved" : true,
+				"obj" : pluginsArray[i].serialize(),
+				"removed" : false
+			});
+		}
+
+		// нужно послать и удаленные. так как удаленный может не быть в сторе. тогда его никак не установить обратно
+		let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+
+		if (currentRemovedPlugins)
+		{
+			for (let guid in currentRemovedPlugins)
+			{
+				if (currentRemovedPlugins[guid])
+				{
+					returnArray.push({
+						"baseUrl" : baseUrl,
+						"guid": currentRemovedPlugins[guid]["guid"],
+						"canRemoved": true,
+						"obj": currentRemovedPlugins[guid],
+						"removed" : true
+					});
+				}
+			}
+		}
+
+		return returnArray;
+	};
+	/**
+    * Remove plugin with such guid.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @param {string} [guid] - The guid of plugins for removing.
+     * @alias RemovePlugin
+     * @returns {object} - Object with result.
+     */
+	Api.prototype["pluginMethod_RemovePlugin"] = function(guid)
+	{
+		let removedPlugin = window.g_asc_plugins.unregister(guid);
+
+		if (removedPlugin)
+		{
+			let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
+			if (!currentRemovedPlugins)
+				currentRemovedPlugins = {};
+			currentRemovedPlugins[removedPlugin.guid] = removedPlugin.serialize();
+			setLocalStorageItem("asc_plugins_removed", currentRemovedPlugins);
+
+			let currentInstalledPlugins = getLocalStorageItem("asc_plugins_installed");
+			if (currentInstalledPlugins && currentInstalledPlugins[removedPlugin.guid])
+			{
+				delete currentInstalledPlugins[removedPlugin.guid];
+				setLocalStorageItem("asc_plugins_installed", currentInstalledPlugins);
+			}
+
+			this.disableCheckInstalledPlugins = true;
+
+			this.sendEvent("asc_onPluginsReset");
+			window.g_asc_plugins.updateInterface();
+
+			delete this.disableCheckInstalledPlugins;
+		}
+
+		return {
+			type : "Removed",
+			guid : removedPlugin ? removedPlugin.guid : ""
+		};
+	};
+	/**
+    * Install plugin with by url to config.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @param {string} [url] - The url to plugin config for installing.
+     * @alias pluginMethod_InstallPlugin
+     * @returns {object} - Object with result.
+	 * 
+     */
+	Api.prototype["pluginMethod_InstallPlugin"] = function(config)
+	{
+		return installPlugin(config, "Installed");
+	};
+	/**
+    * Update plugin with by url to config.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @param {string} [url] - The url to plugin config for updating.
+     * @alias pluginMethod_UpdatePlugin
+     * @returns {object} - Object with result.
+	 * 
+     */
+	Api.prototype["pluginMethod_UpdatePlugin"] = function(url, guid)
+	{
+		return installPlugin(config, "Updated");
 	};
 })(window);

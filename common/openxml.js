@@ -208,23 +208,22 @@
 
 	/******************************** OpenXmlPackage ********************************/
 	function openFromZip(zip, pkg) {
-		var ctf = zip.files["[Content_Types].xml"];
-		if (ctf) {
-			new SaxParserBase().parse(ctf.sync("string"), pkg.cntTypes);
+		let ctfBytes = zip.getFile("[Content_Types].xml");
+		if (ctfBytes) {
+			let ctfText = AscCommon.UTF8ArrayToString(ctfBytes, 0, ctfBytes.length);
+			new SaxParserBase().parse(ctfText, pkg.cntTypes);
 		}
-		for (var f in zip.files) {
-			if (zip.files.hasOwnProperty(f)) {
-				if (!f.endsWith("/")) {
-					var f2 = f;
-					var contentType = null;
-					if (f !== "[Content_Types].xml") {
-						f2 = "/" + f;
-						contentType = pkg.getContentType(f2);
-					}
-					pkg.parts[f2] = new openXml.OpenXmlPart(pkg, f2, contentType);
+		zip.files.forEach(function(path){
+			if (!path.endsWith("/")) {
+				var f2 = path;
+				var contentType = null;
+				if (path !== "[Content_Types].xml") {
+					f2 = "/" + path;
+					contentType = pkg.getContentType(f2);
 				}
+				pkg.parts[f2] = new openXml.OpenXmlPart(pkg, f2, contentType);
 			}
-		}
+		});
 	}
 
 	openXml.OpenXmlPackage = function(zip, xmlWriter) {
@@ -366,7 +365,6 @@
 	openXml.OpenXmlPackage.prototype.getXmlBytes = function(part, data, writer) {
 		var oldPart = writer.context.part;
 		writer.context.part = part;
-
 		var oldPos = writer.GetCurPosition();
 		data.toXml(writer);
 		var pos = writer.GetCurPosition();
@@ -417,6 +415,7 @@
 		this.pkg.zip.addFile(this.getUriRelative(), data);
 	};
 	openXml.OpenXmlPart.prototype.setDataXml = function (xmlObj, writer) {
+		writer.context.clearCurrentPartImageMap();
 		var data = this.pkg.getXmlBytes(this, xmlObj, writer);
 		this.pkg.zip.addFile(this.getUriRelative(), data);
 	};
@@ -777,7 +776,6 @@
 		external: "External"
 	};
 
-	window.openXml = openXml;
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].openXml = openXml;

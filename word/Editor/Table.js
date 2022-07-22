@@ -18976,6 +18976,29 @@ CTable.prototype.CheckRunContent = function(fCheck)
 
 	return false;
 };
+CTable.prototype.CheckSelectedRunContent = function(fCheck)
+{
+	if (!this.Selection.Use)
+		return false;
+
+	var arrCells = this.GetSelectionArray(false);
+	for (let nIndex = 0, nCount = arrCells.length; nIndex < nCount; ++nIndex)
+	{
+		let oPos  = arrCells[nIndex];
+		let oCell = this.GetRow(oPos.Row).GetCell(oPos.Cell);
+
+		let oContent = oCell.GetContent();
+
+		oContent.SetApplyToAll(true);
+		let result = oContent.CheckSelectedRunContent(fCheck);
+		oContent.SetApplyToAll(false);
+
+		if (result)
+			return true;
+	}
+
+	return false;
+};
 CTable.prototype.Document_Is_SelectionLocked = function(CheckType, bCheckInner)
 {
 	var bCheckContentControl = false;

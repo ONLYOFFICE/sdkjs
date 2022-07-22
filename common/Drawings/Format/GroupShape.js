@@ -2047,7 +2047,7 @@ function CGroupShape()
     };
     CGroupShape.prototype.toXml = function (writer) {
         writer.context.groupIndex++;
-        AscFormat.CSpTree.prototype.toXml.call(this, writer);
+        AscFormat.CSpTree.prototype.toXml.call(this, writer, true);
         writer.context.groupIndex--;
     };
     CGroupShape.prototype.checkXfrm = function () {

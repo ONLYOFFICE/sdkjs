@@ -411,7 +411,7 @@ CTextToTableEngine.prototype.GetContentControl = function()
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 
-(function(window, undefined)
+(function(window)
 {
 	function private_CheckDrawingDocumentPosition(oDocPos)
 	{
@@ -551,9 +551,17 @@ window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 
 		return private_CompareDocumentPositions(oDocPos1, oDocPos2);
 	}
+	function AlignFontSize(nFontSize, nCoef)
+	{
+		if (1 === nCoef)
+			return nFontSize;
+
+		return (((nFontSize * nCoef * 2 + 0.5) | 0) / 2);
+	}
 
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscCommonWord'] = window['AscCommonWord'] || {};
-	window['AscCommonWord'].CompareDocumentPositions = CompareDocumentPositions;
+	window['AscWord'] = window['AscWord'] || {};
+	window['AscWord'].CompareDocumentPositions = CompareDocumentPositions;
+	window['AscWord'].AlignFontSize            = AlignFontSize;
 
 })(window);

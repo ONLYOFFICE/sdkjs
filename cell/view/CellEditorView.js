@@ -2944,6 +2944,14 @@
 	CellEditor.prototype.getMenuEditorMode = function () {
 		return this.menuEditor;
 	};
+	CellEditor.prototype.selectAll = function () {
+		//t.skipKeyPress
+		var tmp = this.skipTLUpdate;
+		this.skipTLUpdate = false;
+		this._moveCursor(kBeginOfText);
+		this._selectChars(kEndOfText);
+		this.skipTLUpdate = tmp;
+	};
 
 
 	//------------------------------------------------------------export---------------------------------------------------

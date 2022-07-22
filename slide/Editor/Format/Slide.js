@@ -1173,7 +1173,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         {
             return this.Layout.Master.clrMap;
         }
-        return AscFormat.G_O_DEFAULT_COLOR_MAP;
+        return AscFormat.GetDefaultColorMap();
     };
 
     Slide.prototype.recalculate = function()
@@ -1942,7 +1942,7 @@ Slide.prototype.readCommentXml = function(reader) {
         let oNotesPart = reader.rels.getPartByRelationshipType(AscCommon.openXml.Types.notesSlide.relationType);
         if(oNotesPart) {
             let oNotesContent = oNotesPart.getDocumentContent();
-            let oNotesReader = new StaxParser(oNotesContent, oNotesPart, reader.context);
+            let oNotesReader = new AscCommon.StaxParser(oNotesContent, oNotesPart, reader.context);
             let oNotes = new AscCommonSlide.CNotes();
             oNotes.fromXml(oNotesReader, true);
             let oRel = oNotesReader.rels.getPartByRelationshipType(AscCommon.openXml.Types.notesMaster.relationType);
@@ -1955,7 +1955,7 @@ Slide.prototype.readCommentXml = function(reader) {
         if(oCommentsPart) {
             let oCommentsPartContent = oCommentsPart.getDocumentContent();
             if(oCommentsPartContent) {
-                let oCommentsReader = new StaxParser(oCommentsPartContent, oCommentsPart, reader.context);
+                let oCommentsReader = new AscCommon.StaxParser(oCommentsPartContent, oCommentsPart, reader.context);
                 this.readCommentsXml(oCommentsReader);
             }
         }

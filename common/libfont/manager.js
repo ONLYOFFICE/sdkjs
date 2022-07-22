@@ -298,7 +298,7 @@
 				return true;
 			},
 
-			LoadString3C : function(gid, fX, fY)
+			LoadString3C : function(gid, fX, fY, codepoints)
 			{
 				if (!this.m_pFont)
 					return false;
@@ -307,6 +307,7 @@
 
 				// это SetString
 				var string = this.m_oGlyphString;
+				this.m_pFont.codePointsForGid = codepoints;
 
 				string.m_fX = fX + string.m_fTransX;
 				string.m_fY = fY + string.m_fTransY;
@@ -323,6 +324,8 @@
 				this.m_pFont.GetString2C(string);
 
 				this.SetStringGID(false);
+
+				this.m_pFont.codePointsForGid = undefined;
 				return true;
 			},
 

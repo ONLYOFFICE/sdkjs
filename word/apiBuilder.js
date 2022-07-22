@@ -1533,10 +1533,10 @@
 		var hyperlinkPr	= new Asc.CHyperlinkProperty();
 		var urlType		= AscCommon.getUrlType(sLink);
 
-		if (!/(((^https?)|(^ftp)):\/\/)|(^mailto:)/i.test(sLink))
+		if (!AscCommon.rx_allowedProtocols.test(sLink))
 			sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
 
-		sLink = sLink.replace(new RegExp("%20",'g')," ");
+		sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
 		hyperlinkPr.put_Value(sLink);
 		hyperlinkPr.put_ToolTip(sScreenTipText);
 		hyperlinkPr.put_Bookmark(null);
@@ -2990,9 +2990,9 @@
 		if (sLink !== "")
 		{
 			urlType		= AscCommon.getUrlType(sLink);
-			if (!/(((^https?)|(^ftp)):\/\/)|(^mailto:)/i.test(sLink))
+			if (!AscCommon.rx_allowedProtocols.test(sLink))
 				sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
-			sLink = sLink.replace(new RegExp("%20",'g')," ");
+			sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
 		}
 		
 		this.ParaHyperlink.SetValue(sLink);
@@ -3139,7 +3139,7 @@
 			if (!(HyperRun instanceof ParaRun))
 				continue;
 
-			HyperRun.Set_Underline(undefined);
+			HyperRun.SetUnderline(undefined);
 			HyperRun.Set_Color(undefined);
 			HyperRun.Set_Unifill(undefined);
 			HyperRun.Set_RStyle(Styles.GetDefaultHyperlink());
@@ -3292,6 +3292,18 @@
 	}
 	ApiImage.prototype = Object.create(ApiDrawing.prototype);
 	ApiImage.prototype.constructor = ApiImage;
+
+	/**
+	 * Class representing an Ole-object.
+	 * @constructor
+	 */
+	function ApiOleObject(OleObject)
+	{
+		ApiDrawing.call(this, OleObject.parent);
+		this.OleObject = OleObject
+	}
+	ApiOleObject.prototype = Object.create(ApiDrawing.prototype);
+	ApiOleObject.prototype.constructor = ApiOleObject;
 
 	/**
 	 * Class representing a shape.
@@ -3960,6 +3972,34 @@
 		oDrawing.Set_GraphicObject(oChartSpace);
 		oDrawing.setExtent( oChartSpace.spPr.xfrm.extX, oChartSpace.spPr.xfrm.extY );
 		return new ApiChart(oChartSpace);
+	};
+
+	/**
+	 * Creates an Ole-object with the parameters specified.
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently only internet URL or Base64 encoded images are supported).
+	 * @param {EMU} nWidth - The Ole-object width in English measure units.
+	 * @param {EMU} nHeight - The Ole-object height in English measure units.
+	 * @param {string} sData - ole-object string data.
+	 * @param {string} sAppId - the application id associated with this object.
+	 * @returns {ApiOleObject}
+	 */
+	Api.prototype.CreateOleObject = function(sImageSrc, nWidth, nHeight, sData, sAppId)
+	{
+		if (typeof sImageSrc === "string" && sImageSrc.length > 0 && typeof sData === "string"
+			&& typeof sAppId === "string" && sAppId.length > 0
+			&& AscFormat.isRealNumber(nWidth) && AscFormat.isRealNumber(nHeight)
+		)
+
+		var nW = private_EMU2MM(nWidth);
+		var nH = private_EMU2MM(nHeight);
+
+		var oDrawing = new ParaDrawing(nW, nH, null, private_GetDrawingDocument(), private_GetLogicDocument(), null);
+		var oImage = private_GetLogicDocument().DrawingObjects.createOleObject(sData, sAppId, sImageSrc, 0, 0, nW, nH);
+		oImage.setParent(oDrawing);
+		oDrawing.Set_GraphicObject(oImage);
+		return new ApiOleObject(oImage);
 	};
 
 	/**
@@ -4835,7 +4875,98 @@
 
 		return aContent;
 	};
+	/**
+	 * Returns a collection of drawing objects in the document content.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiDrawing[]}  
+	 */
+	ApiDocumentContent.prototype.GetAllDrawingObjects = function()
+	{
+		var arrAllDrawing = this.Document.GetAllDrawingObjects();
+		var arrApiShapes  = [];
 
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+			arrApiShapes.push(new ApiDrawing(arrAllDrawing[Index]));
+		
+		return arrApiShapes;
+	};
+	/**
+	 * Returns a collection of shape objects in the document content.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiShape[]}  
+	 */
+	ApiDocumentContent.prototype.GetAllShapes = function()
+	{
+		var arrAllDrawing = this.Document.GetAllDrawingObjects();
+		var arrApiShapes  = [];
+
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+		{
+			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.CShape)
+				arrApiShapes.push(new ApiShape(arrAllDrawing[Index].GraphicObj));
+		}
+		
+		return arrApiShapes;
+	};
+	/**
+	 * Returns a collection of image objects in the document content.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiImage[]}  
+	 */
+	ApiDocumentContent.prototype.GetAllImages = function()
+	{
+		var arrAllDrawing = this.Document.GetAllDrawingObjects();
+		var arrApiImages  = [];
+
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+		{
+			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.CImageShape)
+				arrApiImages.push(new ApiImage(arrAllDrawing[Index].GraphicObj));
+		}
+		
+		return arrApiImages;
+	};
+	/**
+	 * Returns a collection of chart objects in the document content.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiChart[]}  
+	 */
+	ApiDocumentContent.prototype.GetAllCharts = function()
+	{
+		var arrAllDrawing = this.Document.GetAllDrawingObjects();
+		var arrApiCharts  = [];
+
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+		{
+			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.CChartSpace)
+				arrApiCharts.push(new ApiChart(arrAllDrawing[Index].GraphicObj));
+		}
+		
+		return arrApiCharts;
+	};
+	/**
+	 * Returns a collection of ole-objects in the document content.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiOleObject[]}  
+	 */
+	ApiDocumentContent.prototype.GetAllOleObjects = function()
+	{
+		var arrAllDrawing = this.Document.GetAllDrawingObjects();
+		var arrApiOleObjects  = [];
+
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+		{
+			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.COleObject)
+				arrApiOleObjects.push(new ApiOleObject(arrAllDrawing[Index].GraphicObj));
+		}
+		
+		return arrApiOleObjects;
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiDocument
@@ -5562,79 +5693,6 @@
 		this.Document.RemoveSelection();
 	};
 	/**
-	 * Returns a collection of drawing objects in the document.
-	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
-	 * @return {ApiDrawing[]}  
-	 */
-	ApiDocument.prototype.GetAllDrawingObjects = function()
-	{
-		var arrAllDrawing = this.Document.GetAllDrawingObjects();
-		var arrApiShapes  = [];
-
-		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-			arrApiShapes.push(new ApiDrawing(arrAllDrawing[Index]));
-		
-		return arrApiShapes;
-	};
-	/**
-	 * Returns a collection of shape objects in the document.
-	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
-	 * @return {ApiShape[]}  
-	 */
-	ApiDocument.prototype.GetAllShapes = function()
-	{
-		var arrAllDrawing = this.Document.GetAllDrawingObjects();
-		var arrApiShapes  = [];
-
-		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-		{
-			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.CShape)
-				arrApiShapes.push(new ApiShape(arrAllDrawing[Index].GraphicObj));
-		}
-		
-		return arrApiShapes;
-	};
-	/**
-	 * Returns a collection of image objects in the document.
-	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
-	 * @return {ApiImage[]}  
-	 */
-	ApiDocument.prototype.GetAllImages = function()
-	{
-		var arrAllDrawing = this.Document.GetAllDrawingObjects();
-		var arrApiImages  = [];
-
-		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-		{
-			if (arrAllDrawing[Index].GraphicObj instanceof CImageShape)
-				arrApiImages.push(new ApiImage(arrAllDrawing[Index].GraphicObj));
-		}
-		
-		return arrApiImages;
-	};
-	/**
-	 * Returns a collection of chart objects in the document.
-	 * @memberof ApiDocument
-	 * @typeofeditors ["CDE"]
-	 * @return {ApiChart[]}  
-	 */
-	ApiDocument.prototype.GetAllCharts = function()
-	{
-		var arrAllDrawing = this.Document.GetAllDrawingObjects();
-		var arrApiCharts  = [];
-
-		for (var Index = 0; Index < arrAllDrawing.length; Index++)
-		{
-			if (arrAllDrawing[Index].GraphicObj instanceof CChartSpace)
-				arrApiCharts.push(new ApiChart(arrAllDrawing[Index].GraphicObj));
-		}
-		
-		return arrApiCharts;
-	};
-	/**
 	 * Searches for a scope of a document object. The search results are a collection of ApiRange objects.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
@@ -6176,6 +6234,35 @@
 		return false;
 	};
 
+	/**
+	 * Adds footnote for selected text (or current position if selection doesn't exist).
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {?ApiDocumentContent}
+	 */
+	ApiDocument.prototype.AddFootnote = function()
+	{
+		let oResult = this.Document.AddFootnote();
+		if (!oResult)
+			return null;
+
+		return new ApiDocumentContent(oResult);
+	};
+
+	/**
+	 * Adds endnote for selected text (or current position if selection doesn't exist).
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {?ApiDocumentContent}
+	 */
+	ApiDocument.prototype.AddEndnote = function()
+	{
+		let oResult = this.Document.AddEndnote();
+		if (!oResult)
+			return null;
+
+		return new ApiDocumentContent(oResult);
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiParagraph
@@ -6220,7 +6307,7 @@
 	ApiParagraph.prototype.AddPageBreak = function()
 	{
 		var oRun = new ParaRun(this.Paragraph, false);
-		oRun.Add_ToContent(0, new ParaNewLine(break_Page));
+		oRun.Add_ToContent(0, new AscWord.CRunBreak(AscWord.break_Page));
 		private_PushElementToParagraph(this.Paragraph, oRun);
 		return new ApiRun(oRun);
 	};
@@ -6233,7 +6320,7 @@
 	ApiParagraph.prototype.AddLineBreak = function()
 	{
 		var oRun = new ParaRun(this.Paragraph, false);
-		oRun.Add_ToContent(0, new ParaNewLine(break_Line));
+		oRun.Add_ToContent(0, new AscWord.CRunBreak(AscWord.break_Line));
 		private_PushElementToParagraph(this.Paragraph, oRun);
 		return new ApiRun(oRun);
 	};
@@ -6247,7 +6334,7 @@
 	ApiParagraph.prototype.AddColumnBreak = function()
 	{
 		var oRun = new ParaRun(this.Paragraph, false);
-		oRun.Add_ToContent(0, new ParaNewLine(break_Column));
+		oRun.Add_ToContent(0, new AscWord.CRunBreak(AscWord.break_Column));
 		private_PushElementToParagraph(this.Paragraph, oRun);
 		return new ApiRun(oRun);
 	};
@@ -6261,7 +6348,7 @@
 	ApiParagraph.prototype.AddPageNumber = function()
 	{
 		var oRun = new ParaRun(this.Paragraph, false);
-		oRun.Add_ToContent(0, new ParaPageNum());
+		oRun.Add_ToContent(0, new AscWord.CRunPageNum());
 		private_PushElementToParagraph(this.Paragraph, oRun);
 		return new ApiRun(oRun);
 	};
@@ -6275,7 +6362,7 @@
 	ApiParagraph.prototype.AddPagesCount = function()
 	{
 		var oRun = new ParaRun(this.Paragraph, false);
-		oRun.Add_ToContent(0, new ParaPageCount());
+		oRun.Add_ToContent(0, new AscWord.CRunPagesCount());
 		private_PushElementToParagraph(this.Paragraph, oRun);
 		return new ApiRun(oRun);
 	};
@@ -6499,7 +6586,7 @@
 	ApiParagraph.prototype.AddTabStop = function()
 	{
 		var oRun = new ParaRun(this.Paragraph, false);
-		oRun.Add_ToContent(0, new ParaTab());
+		oRun.Add_ToContent(0, new AscWord.CRunTab());
 		private_PushElementToParagraph(this.Paragraph, oRun);
 		return new ApiRun(oRun);
 	};
@@ -6600,10 +6687,10 @@
 		var oHyperlink;
 
 		this.Paragraph.SelectAll(1);
-		if (!/(((^https?)|(^ftp)):\/\/)|(^mailto:)/i.test(sLink))
+		if (!AscCommon.rx_allowedProtocols.test(sLink))
 			sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
 
-		sLink = sLink.replace(new RegExp("%20",'g')," ");
+		sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
 		hyperlinkPr.put_Value(sLink);
 		hyperlinkPr.put_ToolTip(sScreenTipText);
 		hyperlinkPr.put_Bookmark(null);
@@ -6681,7 +6768,7 @@
 			{
 				for (var Index = 0; Index < Element.Run.GetElementsCount(); Index++)
 				{
-					if (Element.Run.GetElement(Index) instanceof ParaText)
+					if (Element.Run.GetElement(Index).IsText())
 					{
 						return Element;
 					}
@@ -7175,6 +7262,25 @@
 		}
 
 		return arrApiCharts;
+	};
+	/**
+	 * Returns a collection of ole-objects in the paragraph.
+	 * @memberof ApiParagraph
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiOleObject[]}  
+	 */
+	ApiParagraph.prototype.GetAllOleObjects = function()
+	{
+		var arrAllDrawing = this.Paragraph.GetAllDrawingObjects();
+		var arrApiOleObjects  = [];
+
+		for (var Index = 0; Index < arrAllDrawing.length; Index++)
+		{
+			if (arrAllDrawing[Index].GraphicObj instanceof AscFormat.COleObject)
+				arrApiOleObjects.push(new ApiOleObject(arrAllDrawing[Index].GraphicObj));
+		}
+
+		return arrApiOleObjects;
 	};
 	/**
 	 * Returns a content control that contains the current paragraph.
@@ -7975,7 +8081,7 @@
 	 */
 	ApiRun.prototype.AddPageBreak = function()
 	{
-		this.Run.Add_ToContent(this.Run.Content.length, new ParaNewLine(break_Page));
+		this.Run.Add_ToContent(this.Run.Content.length, new AscWord.CRunBreak(AscWord.break_Page));
 	};
 	/**
 	 * Adds a line break to the current run position and starts the next element from a new line.
@@ -7984,7 +8090,7 @@
 	 */
 	ApiRun.prototype.AddLineBreak = function()
 	{
-		this.Run.Add_ToContent(this.Run.Content.length, new ParaNewLine(break_Line));
+		this.Run.Add_ToContent(this.Run.Content.length, new AscWord.CRunBreak(AscWord.break_Line));
 	};
 	/**
 	 * Adds a column break to the current run position and starts the next element from a new column.
@@ -7993,7 +8099,7 @@
 	 */
 	ApiRun.prototype.AddColumnBreak = function()
 	{
-		this.Run.Add_ToContent(this.Run.Content.length, new ParaNewLine(break_Column));
+		this.Run.Add_ToContent(this.Run.Content.length, new AscWord.CRunBreak(AscWord.break_Column));
 	};
 	/**
 	 * Adds a tab stop to the current run.
@@ -8002,7 +8108,7 @@
 	 */
 	ApiRun.prototype.AddTabStop = function()
 	{
-		this.Run.Add_ToContent(this.Run.Content.length, new ParaTab());
+		this.Run.Add_ToContent(this.Run.Content.length, new AscWord.CRunTab());
 	};
 	/**
 	 * Adds a drawing object (image, shape or chart) to the current text run.
@@ -8113,9 +8219,9 @@
 		var oHyperlink;
 		var hyperlinkPr	= new Asc.CHyperlinkProperty();
 		var urlType		= AscCommon.getUrlType(sLink);
-		if (!/(((^https?)|(^ftp)):\/\/)|(^mailto:)/i.test(sLink))
+		if (!AscCommon.rx_allowedProtocols.test(sLink))
 			sLink = (urlType === 0) ? null :(( (urlType === 2) ? 'mailto:' : 'http://' ) + sLink);
-		sLink = sLink.replace(new RegExp("%20",'g')," ");
+		sLink = sLink && sLink.replace(new RegExp("%20",'g')," ");
 		hyperlinkPr.put_Value(sLink);
 		hyperlinkPr.put_ToolTip(sScreenTipText);
 		hyperlinkPr.put_Bookmark(null);
@@ -12878,16 +12984,16 @@
 		if (breakType === 0)
 		{
 			if (position === "before")
-				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing), new ParaNewLine(break_Page));
+				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing), new AscWord.CRunBreak(AscWord.break_Page));
 			else if (position === "after")
-				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing) + 1, new ParaNewLine(break_Page));
+				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing) + 1, new AscWord.CRunBreak(AscWord.break_Page));
 		}
 		else if (breakType === 1)
 		{
 			if (position === "before")
-				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing), new ParaNewLine(break_Line));
+				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing), new AscWord.CRunBreak(AscWord.break_Line));
 			else if (position === "after")
-				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing) + 1, new ParaNewLine(break_Line));
+				ParentRun.Run.Add_ToContent(ParentRun.Run.Content.indexOf(this.Drawing) + 1, new AscWord.CRunBreak(AscWord.break_Line));
 		}
 
 		return true;
@@ -13068,7 +13174,7 @@
 	 */
 	ApiDrawing.prototype.GetWidth = function()
 	{
-		return private_MM2EMU(this.Drawing.Get_Width());
+		return private_MM2EMU(this.Drawing.GetWidth());
 	};
 	/**
 	 * Returns the height of the current drawing.
@@ -13208,6 +13314,83 @@
 			return AllImages[imageIndex - 1];
 
 		return null;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiOleObject
+	//
+	//------------------------------------------------------------------------------------------------------------------
+	
+	/**
+	 * Returns a type of the ApiOleObject class.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @returns {"oleObject"}
+	 */
+	ApiOleObject.prototype.GetClassType = function()
+	{
+		return "oleObject";
+	};
+
+	/**
+	 * Sets the data to current Ole-object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @param {string} sData - ole-object string data.
+	 * @returns {boolean}
+	 */
+	ApiOleObject.prototype.SetData = function(sData)
+	{
+		if (typeof(sData) !== "string" || sData === "")
+			return false;
+
+		this.OleObject.setData(sData);
+		return true;
+	};
+
+	/**
+	 * Gets the string data from current Ole-object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @returns {string}
+	 */
+	ApiOleObject.prototype.GetData = function()
+	{
+		if (typeof(this.OleObject.m_sData) === "string")
+			return this.OleObject.m_sData;
+		
+		return "";
+	};
+
+	/**
+	 * Sets the application id to current Ole-object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @param {string} sAppId - the application id associated with this object.
+	 * @returns {boolean}
+	 */
+	ApiOleObject.prototype.SetApplicationId = function(sAppId)
+	{
+		if (typeof(sAppId) !== "string" || sAppId === "")
+			return false;
+
+		this.OleObject.setApplicationId(sAppId);
+		return true;
+	};
+
+	/**
+	 * Gets the application id from current Ole-object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @returns {string}
+	 */
+	ApiOleObject.prototype.GetApplicationId = function()
+	{
+		if (typeof(this.OleObject.m_sApplicationId) === "string")
+			return this.OleObject.m_sApplicationId;
+		
+		return "";
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -15903,16 +16086,11 @@
 	 */
 	ApiTextForm.prototype.SetText = function(sText)
 	{
-		if (typeof (sText) !== "string" || sText === "")
+		let _sText = GetStringParameter(sText, null);
+		if (!_sText)
 			return false;
 
-		if (this.Sdt.IsPlaceHolder())
-			this.Sdt.ReplacePlaceHolderWithContent();
-
-		let oRun = this.Sdt.MakeSingleRunElement();
-		oRun.ClearContent();
-		oRun.AddText(sText);
-
+		this.Sdt.SetInnerText(_sText);
 		return true;
 	};
 
@@ -16577,11 +16755,11 @@
 								oChange.insert[nChar] = 32;
 
 							if (AscCommon.IsSpace(oChange.insert[nChar]))
-								itemText = new AscCommonWord.ParaSpace(oChange.insert[nChar]);
+								itemText = new AscWord.CRunSpace(oChange.insert[nChar]);
 							else if (oChange.insert[nChar] === '\t')
-								itemText = new ParaTab();
+								itemText = new AscWord.CRunTab();
 							else
-								itemText = new AscCommonWord.ParaText(oChange.insert[nChar]);
+								itemText = new AscWord.CRunText(oChange.insert[nChar]);
 
 							itemText.Parent = oInfo.Run.GetParagraph();
 							if (oInfo.Run.Content.length === 0 && infoToAdd)
@@ -16824,6 +17002,7 @@
 	Api.prototype["ConvertDocument"]		         = Api.prototype.ConvertDocument;
 	Api.prototype["CreateTextPr"]		             = Api.prototype.CreateTextPr;
 	Api.prototype["CreateWordArt"]		             = Api.prototype.CreateWordArt;
+	Api.prototype["CreateOleObject"]		         = Api.prototype.CreateOleObject;
 
 	Api.prototype["ConvertDocument"]		         = Api.prototype.ConvertDocument;
 	Api.prototype["FromJSON"]		                 = Api.prototype.FromJSON;
@@ -16831,16 +17010,21 @@
 
 	ApiUnsupported.prototype["GetClassType"]         = ApiUnsupported.prototype.GetClassType;
 
-	ApiDocumentContent.prototype["GetClassType"]     = ApiDocumentContent.prototype.GetClassType;
-	ApiDocumentContent.prototype["GetElementsCount"] = ApiDocumentContent.prototype.GetElementsCount;
-	ApiDocumentContent.prototype["GetElement"]       = ApiDocumentContent.prototype.GetElement;
-	ApiDocumentContent.prototype["AddElement"]       = ApiDocumentContent.prototype.AddElement;
-	ApiDocumentContent.prototype["Push"]             = ApiDocumentContent.prototype.Push;
-	ApiDocumentContent.prototype["RemoveAllElements"]= ApiDocumentContent.prototype.RemoveAllElements;
-	ApiDocumentContent.prototype["RemoveElement"]    = ApiDocumentContent.prototype.RemoveElement;
-	ApiDocumentContent.prototype["GetRange"]         = ApiDocumentContent.prototype.GetRange;
-	ApiDocumentContent.prototype["ToJSON"]           = ApiDocumentContent.prototype.ToJSON;
-	ApiDocumentContent.prototype["GetContent"]       = ApiDocumentContent.prototype.GetContent;
+	ApiDocumentContent.prototype["GetClassType"]         = ApiDocumentContent.prototype.GetClassType;
+	ApiDocumentContent.prototype["GetElementsCount"]     = ApiDocumentContent.prototype.GetElementsCount;
+	ApiDocumentContent.prototype["GetElement"]           = ApiDocumentContent.prototype.GetElement;
+	ApiDocumentContent.prototype["AddElement"]           = ApiDocumentContent.prototype.AddElement;
+	ApiDocumentContent.prototype["Push"]                 = ApiDocumentContent.prototype.Push;
+	ApiDocumentContent.prototype["RemoveAllElements"]    = ApiDocumentContent.prototype.RemoveAllElements;
+	ApiDocumentContent.prototype["RemoveElement"]        = ApiDocumentContent.prototype.RemoveElement;
+	ApiDocumentContent.prototype["GetRange"]             = ApiDocumentContent.prototype.GetRange;
+	ApiDocumentContent.prototype["ToJSON"]               = ApiDocumentContent.prototype.ToJSON;
+	ApiDocumentContent.prototype["GetContent"]           = ApiDocumentContent.prototype.GetContent;
+	ApiDocumentContent.prototype["GetAllDrawingObjects"] = ApiDocumentContent.prototype.GetAllDrawingObjects;
+	ApiDocumentContent.prototype["GetAllShapes"]         = ApiDocumentContent.prototype.GetAllShapes;
+	ApiDocumentContent.prototype["GetAllImages"]         = ApiDocumentContent.prototype.GetAllImages;
+	ApiDocumentContent.prototype["GetAllCharts"]         = ApiDocumentContent.prototype.GetAllCharts;
+	ApiDocumentContent.prototype["GetAllOleObjects"]     = ApiDocumentContent.prototype.GetAllOleObjects;
 
 	ApiRange.prototype["GetClassType"]               = ApiRange.prototype.GetClassType
 	ApiRange.prototype["GetParagraph"]               = ApiRange.prototype.GetParagraph;
@@ -16905,10 +17089,6 @@
 	ApiDocument.prototype["GetSections"]                 = ApiDocument.prototype.GetSections;
 	ApiDocument.prototype["GetAllTablesOnPage"]          = ApiDocument.prototype.GetAllTablesOnPage;
 	ApiDocument.prototype["RemoveSelection"]             = ApiDocument.prototype.RemoveSelection;
-	ApiDocument.prototype["GetAllDrawingObjects"]        = ApiDocument.prototype.GetAllDrawingObjects;
-	ApiDocument.prototype["GetAllShapes"]                = ApiDocument.prototype.GetAllShapes;
-	ApiDocument.prototype["GetAllImages"]                = ApiDocument.prototype.GetAllImages;
-	ApiDocument.prototype["GetAllCharts"]                = ApiDocument.prototype.GetAllCharts;
 	ApiDocument.prototype["Search"]                      = ApiDocument.prototype.Search;
 	ApiDocument.prototype["ToMarkdown"]                  = ApiDocument.prototype.ToMarkdown;
 	ApiDocument.prototype["ToHtml"]                      = ApiDocument.prototype.ToHtml;
@@ -16920,6 +17100,8 @@
 	ApiDocument.prototype["GetEndNotesFirstParagraphs"]  = ApiDocument.prototype.GetEndNotesFirstParagraphs;
 	ApiDocument.prototype["GetAllCaptionParagraphs"]     = ApiDocument.prototype.GetAllCaptionParagraphs;
 	ApiDocument.prototype["GetAllBookmarksNames"]        = ApiDocument.prototype.GetAllBookmarksNames;
+	ApiDocument.prototype["AddFootnote"]                 = ApiDocument.prototype.AddFootnote;
+	ApiDocument.prototype["AddEndnote"]                  = ApiDocument.prototype.AddEndnote;
 	
 	ApiDocument.prototype["GetSelectedDrawings"]         = ApiDocument.prototype.GetSelectedDrawings;
 	ApiDocument.prototype["ReplaceDrawing"]              = ApiDocument.prototype.ReplaceDrawing;
@@ -16984,6 +17166,7 @@
 	ApiParagraph.prototype["GetAllShapes"]           = ApiParagraph.prototype.GetAllShapes;
 	ApiParagraph.prototype["GetAllImages"]           = ApiParagraph.prototype.GetAllImages;
 	ApiParagraph.prototype["GetAllCharts"]           = ApiParagraph.prototype.GetAllCharts;
+	ApiParagraph.prototype["GetAllOleObjects"]       = ApiParagraph.prototype.GetAllOleObjects;
 	ApiParagraph.prototype["GetParentContentControl"]= ApiParagraph.prototype.GetParentContentControl;
 	ApiParagraph.prototype["GetParentTable"]         = ApiParagraph.prototype.GetParentTable;
 	ApiParagraph.prototype["GetParentTableCell"]     = ApiParagraph.prototype.GetParentTableCell;
@@ -17385,6 +17568,11 @@
 	ApiChart.prototype["SetSeriaNumFormat"]            =  ApiChart.prototype.SetSeriaNumFormat;
 	ApiChart.prototype["SetDataPointNumFormat"]        =  ApiChart.prototype.SetDataPointNumFormat;
 
+	ApiOleObject.prototype["GetClassType"]             = ApiOleObject.prototype.GetClassType;
+	ApiOleObject.prototype["SetData"]               = ApiOleObject.prototype.SetData;
+	ApiOleObject.prototype["GetData"]               = ApiOleObject.prototype.GetData;
+	ApiOleObject.prototype["SetApplicationId"]         = ApiOleObject.prototype.SetApplicationId;
+	ApiOleObject.prototype["GetApplicationId"]         = ApiOleObject.prototype.GetApplicationId;
 
 	ApiFill.prototype["GetClassType"]                = ApiFill.prototype.GetClassType;
 	ApiFill.prototype["ToJSON"]                      = ApiFill.prototype.ToJSON;
@@ -17722,6 +17910,9 @@
 
 	function private_GetHps(hps)
 	{
+		if (hps < 0) {
+			return - Math.ceil(Math.abs(hps)) / 2.0
+		}
 		return Math.ceil(hps) / 2.0;
 	}
 

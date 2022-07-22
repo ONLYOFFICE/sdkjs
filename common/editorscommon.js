@@ -52,6 +52,7 @@
 	var languages = window['Asc'].g_oLcidIdToNameMap;
 	var availableIdeographLanguages = window['Asc'].availableIdeographLanguages;
 	var availableBidiLanguages = window['Asc'].availableBidiLanguages;
+	const fontslot_ASCII    = 0x01;
 
 	String.prototype.sentenceCase = function ()
 	{
@@ -335,98 +336,6 @@
 	{
 		return window['SockJS'] || require('sockjs');
 	}
-	function getJSZipUtils()
-	{
-		return window['JSZipUtils'] || require('jsziputils');
-	}
-
-	function JSZipWrapper() {
-		this.files = {};
-	}
-
-	JSZipWrapper.prototype.loadSync = function(data) {
-		if (window.nativeZlibEngine && window.nativeZlibEngine.open(data)) {
-			var files = window.nativeZlibEngine.files;
-			for (let i = 0, len = files.length; i < len; i++) {
-				if (files[i].startsWith('/')) {
-					this.files[files[i].substring(1)] = new JSZipObjectWrapper(files[i].substring(1));
-				} else {
-					this.files[files[i]] = new JSZipObjectWrapper(files[i]);
-				}
-			}
-			return true;
-		}
-		return false;
-	}
-	JSZipWrapper.prototype.loadAsync = function(data, options) {
-		var t = this;
-
-		if (window.nativeZlibEngine) {
-			return new Promise(function(resolve, reject) {
-				if (!window.nativeZlibEngine.open(data)) {
-					reject(new Error("Failed archive"));
-				}
-				let files = window.nativeZlibEngine.files;
-				if (0 !== files.length) {
-					for (let i = 0, len = files.length; i < len; i++)
-						this.files[files[i]] = new JSZipObjectWrapper(files[i]);
-					resolve(t);
-				} else {
-					reject(new Error("Failed archive"));
-				}
-			});
-		}
-
-		return Promise.reject();
-	};
-	JSZipWrapper.prototype.create = function() {
-		return window.nativeZlibEngine ? window.nativeZlibEngine.create() : false;
-	};
-	JSZipWrapper.prototype.save = function() {
-		return window.nativeZlibEngine ? window.nativeZlibEngine.save() : null;
-	};
-	JSZipWrapper.prototype.getFile = function() {
-		return window.nativeZlibEngine ? window.nativeZlibEngine.getFile.apply(window.nativeZlibEngine, arguments) : null;
-	};
-	JSZipWrapper.prototype.addFile = function() {
-		return window.nativeZlibEngine ? window.nativeZlibEngine.addFile.apply(window.nativeZlibEngine, arguments) : false;
-	};
-	JSZipWrapper.prototype.removeFile = function() {
-		return window.nativeZlibEngine ? window.nativeZlibEngine.removeFile.apply(window.nativeZlibEngine, arguments) : false;
-	};
-	JSZipWrapper.prototype.close = function() {
-		return window.nativeZlibEngine ? window.nativeZlibEngine.close() : false;
-	};
-
-	function JSZipObjectWrapper(data) {
-		this.data = data;
-	}
-	JSZipObjectWrapper.prototype.sync = function(type) {
-		if (window.nativeZlibEngine) {
-			var data = window.nativeZlibEngine.getFile(this.data);
-			if ("string" === type && data) {
-				return UTF8ArrayToString(data, 0, data.length);
-			} else {
-				return data;
-			}
-		}
-		return null;
-	};
-	JSZipObjectWrapper.prototype.async = function(type) {
-
-		if (window.nativeZlibEngine) {
-			var t = this;
-			return new Promise(function(resolve, reject) {
-				var data = window.nativeZlibEngine.getFile(t.data);
-				if("string" === type) {
-					resolve(UTF8ArrayToString(data, 0, data.length));
-				} else {
-					resolve(data);
-				}
-			});
-		}
-		return null;
-	};
 
 	function getBaseUrl()
 	{
@@ -747,19 +656,17 @@
 		return false;
 	}
 	function checkOOXMLSignature(stream, Signature) {
-		if(!(stream && stream.length > 4 && 0x50 === stream[0] && 0x4b === stream[1] && 0x03 === stream[2] && 0x04 === stream[3])) {
+		if (!(stream && stream.length > 4 && 0x50 === stream[0] && 0x4b === stream[1] && 0x03 === stream[2] && 0x04 === stream[3])) {
 			//Local file header signature = 0x04034b50 (PK♥♦ or "PK\3\4")
 			return false;
 		}
-		let jsZipWrapper = new AscCommon.JSZipWrapper();
-		if(!jsZipWrapper.loadSync(stream)) {
+		if (!window.nativeZlibEngine || !window.nativeZlibEngine.open(stream)) {
 			return false;
 		}
-		if(!jsZipWrapper.files["[Content_Types].xml"]) {
-			return false;
-		}
-		let contentTypes = jsZipWrapper.files["[Content_Types].xml"].sync("string");
-		jsZipWrapper.close();
+		let contentTypesBytes = window.nativeZlibEngine.getFile("[Content_Types].xml");
+		let contentTypes = contentTypesBytes ? AscCommon.UTF8ArrayToString(contentTypesBytes, 0, contentTypesBytes.length) : "";
+		window.nativeZlibEngine.close();
+
 		return -1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.template.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-word.document.macroEnabled.main+xml") ||
@@ -808,12 +715,12 @@
 							oResult.bSerFormat = checkStreamSignature(stream, Signature);
 							oResult.data = stream;
 						} else {
-							nError = c_oAscError.ID.Unknown;
+							nError = Asc.c_oAscError.ID.Unknown;
 						}
 					}
 					else
 					{
-						nError = c_oAscError.ID.DownloadError;
+						nError = Asc.c_oAscError.ID.DownloadError;
 					}
 					bEndLoadFile = true;
 					onEndOpen();
@@ -825,25 +732,25 @@
 			oZipImages = {};
 			AscCommon.DownloadOriginalFile(docId, changesUrl, 'changesUrl', changesToken, function () {
 				bEndLoadChanges = true;
-				nError = c_oAscError.ID.DownloadError;
+				nError = Asc.c_oAscError.ID.DownloadError;
 				onEndOpen();
 			}, function(data) {
 				oResult.changes = [];
-				var jsZipWrapper = new AscCommon.JSZipWrapper();
-				if (jsZipWrapper.loadSync(data)) {
-					for (var relativePath in jsZipWrapper.files) {
-						if (jsZipWrapper.files.hasOwnProperty(relativePath)) {
-							var file = jsZipWrapper.files[relativePath];
-							if ((relativePath).endsWith('.json')) {
-								oResult.changes[parseInt(relativePath.slice('changes'.length))] = JSON.parse(file.sync('string'));
+				if (window.nativeZlibEngine && window.nativeZlibEngine.open(data)) {
+					window.nativeZlibEngine.files.forEach(function(path){
+						let data = window.nativeZlibEngine.getFile(path);
+						if (data) {
+							if (path.endsWith('.json')) {
+								let text = AscCommon.UTF8ArrayToString(data, 0, data.length);
+								oResult.changes[parseInt(path.slice('changes'.length))] = JSON.parse(text);
 							} else {
-								oZipImages[relativePath] = file.sync('uint8array')
+								oZipImages[path] = data;
 							}
 						}
-					}
-					jsZipWrapper.close();
+					});
+					window.nativeZlibEngine.close();
 				} else {
-					nError = c_oAscError.ID.Unknown;
+					nError = Asc.c_oAscError.ID.Unknown;
 				}
 				bEndLoadChanges = true;
 				onEndOpen();
@@ -868,7 +775,7 @@
                 oResult.bSerFormat = checkStreamSignature(stream, Signature);
 				oResult.data = stream;
             } else {
-				nError = c_oAscError.ID.Unknown;
+				nError = Asc.c_oAscError.ID.Unknown;
             }
  
             bEndLoadFile = true;
@@ -2499,6 +2406,7 @@
 		ipRe                  = /^(((https?)|(ftps?)):\/\/)?([\-\wа-яё]*:?[\-\wа-яё]*@)?(((1[0-9]{2}|2[0-4][0-9]|25[0-5]|[1-9][0-9]|[0-9])\.){3}(1[0-9]{2}|2[0-4][0-9]|25[0-5]|[1-9][0-9]|[0-9]))(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?/i,
 		hostnameRe            = /^(((https?)|(ftps?)):\/\/)?([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+\.)+[\wа-яё\-]{2,}(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
 		localRe               = /^(((https?)|(ftps?)):\/\/)([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+)(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
+		rx_allowedProtocols      = /(^((https?|ftps?|file|tessa):\/\/)|(mailto:)).*/i,
 
 		rx_table              = build_rx_table(null),
 		rx_table_local        = build_rx_table(null);
@@ -2556,15 +2464,20 @@
 		var isvalid = checkvalue.strongMatch(hostnameRe);
 		!isvalid && (isvalid = checkvalue.strongMatch(ipRe));
 		!isvalid && (isvalid = checkvalue.strongMatch(localRe));
-		isEmail = checkvalue.strongMatch(emailRe);
-		!isvalid && (isvalid = isEmail);
-
-		return isvalid ? (isEmail ? AscCommon.c_oAscUrlType.Email : AscCommon.c_oAscUrlType.Http) : AscCommon.c_oAscUrlType.Invalid;
+		if (isvalid) {
+			return AscCommon.c_oAscUrlType.Http;
+		} else if (checkvalue.strongMatch(emailRe)) {
+			return AscCommon.c_oAscUrlType.Email;
+		} else if (checkvalue.strongMatch(rx_allowedProtocols)) {
+			return AscCommon.c_oAscUrlType.Unsafe;
+		} else {
+			return AscCommon.c_oAscUrlType.Invalid
+		}
 	}
 
 	function prepareUrl(url, type)
 	{
-		if (!/(((^https?)|(^ftp)):\/\/)|(^mailto:)/i.test(url))
+		if (!rx_allowedProtocols.test(url))
 		{
 			url = ( (AscCommon.c_oAscUrlType.Email == type) ? 'mailto:' : 'http://' ) + url;
 		}
@@ -3478,7 +3391,7 @@
 			else if (Asc.c_oAscSelectionDialogType.PivotTableData === dialogType)
 			{
 				if (!Asc.CT_pivotTableDefinition.prototype.isValidDataRef(dataRange)) {
-					return c_oAscError.ID.PivotLabledColumns;
+					return Asc.c_oAscError.ID.PivotLabledColumns;
 				}
 			}
 			else if (Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType)
@@ -9566,7 +9479,11 @@
 			var nIndex = GetDefaultIndexByRGBA(color.getR(), color.getG(), color.getB(), 255);
 			if (-1 === nIndex) {
 				//TODO проверить rgb
-				writer.WriteXmlAttributeString("rgb", "FF" + IntToHex(color.getRgb()).toUpperCase());
+				var hex = IntToHex(color.getRgb()).toUpperCase();
+				if (hex.length === 4) {
+					hex = "00" + hex;
+				}
+				writer.WriteXmlAttributeString("rgb", "FF" + hex);
 			} else {
 				writer.WriteXmlAttributeNumber("indexed", nIndex);
 			}
@@ -10012,6 +9929,19 @@
 		return (0x2F800 <= nCharCode && nCharCode <= 0x2FA1F);
 	}
 
+
+	function IsComplexScript(nCharCode)
+	{
+		return ((0x0590 <= nCharCode && nCharCode <= 0x074F)
+			|| (0x0780 <= nCharCode && nCharCode <= 0x07BF)
+			|| (0x0900 <= nCharCode && nCharCode <= 0x109F)
+			|| (0x1780 <= nCharCode && nCharCode <= 0x18AF)
+			|| (0x200C <= nCharCode && nCharCode <= 0x200F)
+			|| (0x202A <= nCharCode && nCharCode <= 0x202F)
+			|| (0x2670 <= nCharCode && nCharCode <= 0x2671)
+			|| (0xFB1D <= nCharCode && nCharCode <= 0xFB4F));
+	}
+
 	var g_oIdCounter = new CIdCounter();
 
 	function CEventListenerInfo(listeningElement, eventName, listener, useCapture) {
@@ -10045,15 +9975,15 @@
 		AscFormat.ExecuteNoHistory(function () {
 			for (let i = 0; i < infoOfDrawings.length; i += 1) {
 				const drawInfo = infoOfDrawings[i];
-				const type = drawInfo.type;
+				const type = drawInfo["type"];
 				const bullet = new AscCommonWord.CPresentationBullet();
-				const textPr = new CTextPr();
-				textPr.Color = g_oDocumentDefaultStrokeColor;
+				const textPr = new AscCommonWord.CTextPr();
+				textPr.Color = AscCommonWord.g_oDocumentDefaultStrokeColor;
 				switch (type)
 				{
 					case asc_PreviewBulletType.text:
 					{
-						const value = drawInfo.text;
+						const value = drawInfo["text"];
 						const bulletText = AscCommon.translateManager.getValue(value);
 						bullet.m_nType = AscFormat.numbering_presentationnumfrmt_Char;
 						bullet.m_sChar = bulletText;
@@ -10064,8 +9994,8 @@
 					}
 					case asc_PreviewBulletType.char:
 					{
-						const bulletText	= drawInfo.char;
-						const fontName = drawInfo.specialFont || AscFonts.FontPickerByCharacter.getFontBySymbol(drawInfo.Char.getUnicodeIterator().value());
+						const bulletText	= drawInfo["char"];
+						const fontName = drawInfo["specialFont"] || AscFonts.FontPickerByCharacter.getFontBySymbol(bulletText.getUnicodeIterator().value());
 						textPr.RFonts.SetAll(fontName);
 						bullet.m_nType = AscFormat.numbering_presentationnumfrmt_Char;
 						bullet.m_sChar = bulletText;
@@ -10074,7 +10004,7 @@
 					}
 					case asc_PreviewBulletType.image:
 					{
-						const fullImageSrc = getFullImageSrc2(drawInfo.imageId);
+						const fullImageSrc = getFullImageSrc2(drawInfo["imageId"]);
 						bullet.m_nType = AscFormat.numbering_presentationnumfrmt_Blip;
 						bullet.m_sSrc = fullImageSrc;
 						arrayOfBullets.push({bullet: bullet, textPr: textPr});
@@ -10082,7 +10012,7 @@
 					}
 					case asc_PreviewBulletType.number:
 					{
-						const typeOfNumbering = drawInfo.numberingType;
+						const typeOfNumbering = drawInfo["numberingType"];
 						bullet.m_nType = bullet.convertFromAscTypeToPresentation(typeOfNumbering);
 						textPr.RFonts.SetAll('Arial');
 						arrayOfBullets.push({bullet: bullet, textPr: textPr});
@@ -10101,6 +10031,7 @@
 	}
 
 	CBulletPreviewDrawer.prototype.getClearCanvasForPreview = function (divId) {
+		if (!divId) return;
 		const divElement = document.getElementById(divId);
 		const width_px = divElement.clientWidth;
 		const height_px = divElement.clientHeight;
@@ -10146,9 +10077,9 @@
 			formatBullet.drawSquareImage(divId, 0.125);
 		} else {
 			const text = bullet.getDrawingText();
-			g_oTextMeasurer.SetTextPr(textPr);
-			g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
-			const oInfo = g_oTextMeasurer.Measure2Code(text.getUnicodeIterator().value());
+			AscCommon.g_oTextMeasurer.SetTextPr(textPr);
+			AscCommon.g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
+			const oInfo = AscCommon.g_oTextMeasurer.Measure2Code(text.getUnicodeIterator().value());
 
 			const x = (width_px >> 1) - Math.round((oInfo.WidthG / 2 + oInfo.rasterOffsetX) * AscCommon.g_dKoef_mm_to_pix);
 			const y = (width_px >> 1) + Math.round((oInfo.Height / 2 + (oInfo.Ascent - oInfo.Height + oInfo.rasterOffsetY)) * AscCommon.g_dKoef_mm_to_pix);
@@ -10240,9 +10171,9 @@
 		oNewShape.createTextBody();
 		const par = oNewShape.txBody.content.GetAllParagraphs()[0];
 		par.MoveCursorToStartPos();
-		par.Pr = new CParaPr();
+		par.Pr = new AscCommonWord.CParaPr();
 
-		const parRun = new ParaRun(par);
+		const parRun = new AscCommonWord.ParaRun(par);
 		const textPr = lvl.textPr.Copy();
 		textPr.FontSize = ((2 * line_distance * 72 / 96) >> 0) / 2;
 		parRun.Set_Pr(textPr);
@@ -10279,11 +10210,11 @@
 		par.MoveCursorToStartPos();
 
 		//par.Pr = level.ParaPr.Copy();
-		par.Pr = new CParaPr();
+		par.Pr = new AscCommonWord.CParaPr();
 		textPr = textPr.Copy();
 		textPr.FontSize = textPr.FontSizeCS = ((2 * lineHeight * 72 / 96) >> 0) / 2;
 
-		const parRun = new ParaRun(par);
+		const parRun = new AscCommonWord.ParaRun(par);
 		parRun.Set_Pr(textPr);
 		parRun.AddText(text);
 		par.AddToContent(0, parRun);
@@ -10382,11 +10313,11 @@
 			for (let i = 0; i < this.infoOfDrawings.length; i++)
 			{
 				const drawingInfo = this.infoOfDrawings[i];
-				const id = drawingInfo.divId;
+				const id = drawingInfo["divId"];
 				const currentBullet = this.arrayOfBullets[i];
 				if (this.type === 0)
 				{
-					if (drawingInfo.type === asc_PreviewBulletType.text)
+					if (drawingInfo["type"] === asc_PreviewBulletType.text)
 					{
 						this.drawNoneTextPreview(id, currentBullet);
 					}
@@ -10397,7 +10328,7 @@
 				}
 				else if (this.type === 1)
 				{
-					if (drawingInfo.type === asc_PreviewBulletType.text)
+					if (drawingInfo["type"] === asc_PreviewBulletType.text)
 					{
 						this.drawNoneTextPreview(id, currentBullet);
 					}
@@ -12946,7 +12877,6 @@
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
-	window["AscCommon"].getJSZipUtils = getJSZipUtils;
 	window["AscCommon"].getBaseUrl = getBaseUrl;
 	window["AscCommon"].getEncodingParams = getEncodingParams;
 	window["AscCommon"].getEncodingByBOM = getEncodingByBOM;
@@ -13035,11 +12965,11 @@
 	window["AscCommon"].getIndexColorSchemeInArray = getIndexColorSchemeInArray;
 	window["AscCommon"].isEastAsianScript = isEastAsianScript;
 	window["AscCommon"].IsEastAsianFont = IsEastAsianFont;
+	window["AscCommon"].IsComplexScript = IsComplexScript;
 	window["AscCommon"].CMathTrack = CMathTrack;
 	window["AscCommon"].CPolygon = CPolygon;
 	window['AscCommon'].CDrawingCollaborativeTargetBase = CDrawingCollaborativeTargetBase;
 
-	window["AscCommon"].JSZipWrapper = JSZipWrapper;
 	window["AscCommon"].g_oDocumentUrls = g_oDocumentUrls;
 	window["AscCommon"].FormulaTablePartInfo = FormulaTablePartInfo;
 	window["AscCommon"].cBoolLocal = cBoolLocal;
@@ -13050,6 +12980,7 @@
 	window["AscCommon"].rx_space = rx_space;
 	window["AscCommon"].rx_defName = rx_defName;
 	window["AscCommon"].rx_r1c1DefError = rx_r1c1DefError;
+	window["AscCommon"].rx_allowedProtocols = rx_allowedProtocols;
 
 	window["AscCommon"].kCurFormatPainterWord = kCurFormatPainterWord;
 	window["AscCommon"].parserHelp = parserHelp;
@@ -13409,7 +13340,7 @@ window["NativeFileOpen_error"] = function(error, _file_hash, _docInfo)
     }
     else if ("error" == error)
     {
-        _api.sendEvent("asc_onError", c_oAscError.ID.ConvertationOpenError, c_oAscError.Level.Critical);
+        _api.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationOpenError, Asc.c_oAscError.Level.Critical);
         return;
     }
 };

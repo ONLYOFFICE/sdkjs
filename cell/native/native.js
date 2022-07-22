@@ -2755,8 +2755,6 @@ function OfflineEditor () {
 
         window['AscFormat'].DrawingArea.prototype.drawSelection = function(drawingDocument) {
             
-            AscCommon.g_oTextMeasurer.Flush();
-            
             var canvas = this.worksheet.objectRender.getDrawingCanvas();
             var shapeCtx = canvas.shapeCtx;
             var shapeOverlayCtx = canvas.shapeOverlayCtx;
@@ -2999,8 +2997,6 @@ function OfflineEditor () {
             }
             
             window["native"]["SwitchMemoryLayer"]();
-            
-            AscCommon.g_oTextMeasurer.Flush();
             
             this.objectRender.showDrawingObjectsEx();
             
@@ -3464,7 +3460,6 @@ function OfflineEditor () {
         deviceScale = window["native"]["GetDeviceScale"]();
         sdkCheck = settings["sdkCheck"];
 
-        window.g_file_path = "native_open_file";
         window.NATIVE_DOCUMENT_TYPE = "";
 
         var translations = this.initSettings["translations"];
@@ -4427,14 +4422,10 @@ var _s = new OfflineEditor();
 
 window["native"]["offline_of"] = function(arg) {_s.openFile(arg);}
 window["native"]["offline_stz"] = function(v) {_s.zoom = v; _api.asc_setZoom(v);}
-window["native"]["offline_ds"] = function(x, y, width, height, ratio, istoplayer) {
-    AscCommon.g_oTextMeasurer.Flush();
-    
+window["native"]["offline_ds"] = function(x, y, width, height, ratio, istoplayer) {    
     _s.drawSheet(x, y, width, height, ratio, istoplayer);
 }
 window["native"]["offline_dh"] = function(x, y, width, height, ratio, type) {
-    AscCommon.g_oTextMeasurer.Flush();
-    
     _s.drawHeader(x, y, width, height, type, ratio);
 }
 
@@ -4730,8 +4721,6 @@ window["native"]["offline_complete_cell"] = function(x, y) {return _s.getNearCel
 window["native"]["offline_keyboard_down"] = function(inputKeys) {
     var wb = _api.wb;
     var ws = _api.wb.getWorksheet();
-    
-    AscCommon.g_oTextMeasurer.Flush();
     
     var isFormulaEditMode = wb.isFormulaEditMode;
     wb.isFormulaEditMode = false;
@@ -5409,17 +5398,13 @@ window["native"]["offline_apply_event"] = function(type,params) {
             // document interface
             
         case 3: // ASC_MENU_EVENT_TYPE_UNDO
-        {
-            AscCommon.g_oTextMeasurer.Flush();
-            
+        {   
             _api.asc_Undo();
             _s.asc_WriteAllWorksheets(true);
             break;
         }
         case 4: // ASC_MENU_EVENT_TYPE_REDO
         {
-            AscCommon.g_oTextMeasurer.Flush();
-            
             _api.asc_Redo();
             _s.asc_WriteAllWorksheets(true);
             break;
@@ -6265,9 +6250,14 @@ window["native"]["offline_apply_event"] = function(type,params) {
             
         case 4020: // ASC_SPREADSHEETS_EVENT_TYPE_GET_FORMULAS
         {
+            if (undefined !== params) {
+                var localizeData = JSON.parse(params);
+                _api.asc_setLocalization(localizeData);
+            }
+
             _stream = global_memory_stream_menu;
             _stream["ClearNoAttack"]();
-            
+
             var info = _api.asc_getFormulasInfo();
             if (info) {
                 _stream["WriteLong"](info.length);
@@ -6285,11 +6275,6 @@ window["native"]["offline_apply_event"] = function(type,params) {
                 }
             } else {
                 _stream["WriteLong"](0);
-            }
-            
-            if (undefined !== params) {
-                var localizeData = JSON.parse(params);
-                _api.asc_setLocalization(localizeData);
             }
             
             _return = _stream;
@@ -7244,6 +7229,7 @@ window["Asc"]["spreadsheet_api"].prototype["asc_nativeGetCoreProps"] = function(
         coreProps["asc_getTitle"] = props.asc_getTitle();
         coreProps["asc_getSubject"] = props.asc_getSubject();
         coreProps["asc_getDescription"] = props.asc_getDescription();
+        coreProps["asc_getCreated"] = props.asc_getCreated();
 
         var authors = [];
         value = props.asc_getCreator();//"123\"\"\"\<\>,456";

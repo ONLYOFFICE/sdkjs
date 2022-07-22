@@ -297,22 +297,22 @@
             }
             else
             {
-                if(oElement instanceof ParaNewLine)
-                {
-                    if(oElement.BreakType === AscCommonWord.break_Line)
-                    {
-                        aCheckArray.push(0x000A);
-                    }
-                    else
-                    {
-                        aCheckArray.push(0x21A1);
-                    }
-                }
-                else if(oElement instanceof ParaTab)
+				if (oElement instanceof AscWord.CRunBreak)
+				{
+					if (oElement.IsLineBreak())
+					{
+						aCheckArray.push(0x000A);
+					}
+					else
+					{
+						aCheckArray.push(0x21A1);
+					}
+				}
+                else if(oElement instanceof AscWord.CRunTab)
                 {
                     aCheckArray.push(0x0009);
                 }
-                else if(oElement instanceof ParaSpace)
+                else if(oElement instanceof AscWord.CRunSpace)
                 {
                     aCheckArray.push(0x20);
                 }
@@ -333,11 +333,11 @@
         var sResultString = "";
         for(var i = 0; i < this.elements.length; ++i)
         {
-            if(this.elements[i] instanceof ParaText)
+            if(this.elements[i] instanceof AscWord.CRunText)
             {
-                sResultString += String.fromCharCode(this.elements[i].Value);
+                sResultString += String.fromCharCode(this.elements[i].GetCodePoint());
             }
-            else if(this.elements[i] instanceof ParaSpace)
+            else if(this.elements[i] instanceof AscWord.CRunSpace)
             {
                 sResultString += " ";
             }

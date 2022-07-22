@@ -112,11 +112,11 @@
 	 */
 	CRunAutoCorrect.prototype.DoAutoCorrect = function(nFlags, nHistoryActions)
 	{
-		this.Flags          = nFlags;
+		this.Flags          = this.private_CheckFlags(nFlags);
 		this.Result         = AUTOCORRECT_FLAGS_NONE;
 		this.HistoryActions = (undefined === nHistoryActions || null === nHistoryActions) ? 1 : nHistoryActions;
 
-		if (!this.IsValid() || !nFlags)
+		if (!this.IsValid() || !this.Flags)
 			return this.Result;
 
 		// Чтобы позиция ContentPos была актуальна, отключаем корректировку содержимого параграфа на время выполнения
@@ -153,6 +153,15 @@
 			return this.private_Return();
 
 		return this.private_Return();
+	};
+	CRunAutoCorrect.prototype.private_CheckFlags = function(nFlags)
+	{
+		// Если автозамены будем включать в формах при каких-либо условиях, тогда нужно проверять, что
+		// выполнение автозамены не выходит за пределы формы
+		if (this.Run.GetParentForm())
+			return AUTOCORRECT_FLAGS_NONE;
+
+		return nFlags;
 	};
 	CRunAutoCorrect.prototype.private_Return = function()
 	{
@@ -276,7 +285,7 @@
 
 		oDocument.StartAction(AscDFH.historydescription_Document_AutoCorrectHyphensWithDash);
 
-		var oDot = new ParaText(46);
+		var oDot = new AscWord.CRunText(46);
 		oRun.AddToContent(this.Pos, oDot);
 		oParagraph.RemoveRunElement(oRunElementsBefore.GetContentPositions()[0]);
 
@@ -335,7 +344,7 @@
 
 		oDocument.StartAction(AscDFH.historydescription_Document_AutoCorrectCommon);
 
-		oRun.AddToContent(this.Pos, new ParaText(0x00A0));
+		oRun.AddToContent(this.Pos, new AscWord.CRunText(0x00A0));
 		oRun.State.ContentPos = this.Pos + 2;
 
 		if (arrElements.length >= 1 && (para_Space === arrElements[0].Type || (para_Text === arrElements[0].Type && arrElements[0].IsNBSP())))
@@ -422,7 +431,7 @@
 				case 1061:
 				{
 					// „text“
-					this.Run.AddToContent(this.Pos, new ParaText(isOpenQuote ? 0x201E : 0x201C));
+					this.Run.AddToContent(this.Pos, new AscWord.CRunText(isOpenQuote ? 0x201E : 0x201C));
 					break;
 				}
 				case 1038:
@@ -431,7 +440,7 @@
 				case 1062:
 				{
 					// „text”
-					this.Run.AddToContent(this.Pos, new ParaText(isOpenQuote ? 0x201E : 0x201D));
+					this.Run.AddToContent(this.Pos, new AscWord.CRunText(isOpenQuote ? 0x201E : 0x201D));
 					break;
 				}
 				case 1030:
@@ -439,19 +448,19 @@
 				case 1053:
 				{
 					// ”text”
-					this.Run.AddToContent(this.Pos, new ParaText(0x201D));
+					this.Run.AddToContent(this.Pos, new AscWord.CRunText(0x201D));
 					break;
 				}
 				case 1049:
 				{
 					// «text»
-					this.Run.AddToContent(this.Pos, new ParaText(isOpenQuote ? 0x00AB : 0x00BB));
+					this.Run.AddToContent(this.Pos, new AscWord.CRunText(isOpenQuote ? 0x00AB : 0x00BB));
 					break;
 				}
 				case 1060:
 				{
 					// »text«
-					this.Run.AddToContent(this.Pos, new ParaText(isOpenQuote ? 0x00BB : 0x00AB));
+					this.Run.AddToContent(this.Pos, new AscWord.CRunText(isOpenQuote ? 0x00BB : 0x00AB));
 					break;
 				}
 				case 1036:
@@ -459,13 +468,13 @@
 					// « text »
 					if (isOpenQuote)
 					{
-						this.Run.AddToContent(this.Pos, new ParaText(0x00AB));
-						this.Run.AddToContent(this.Pos + 1, new ParaText(0x00A0));
+						this.Run.AddToContent(this.Pos, new AscWord.CRunText(0x00AB));
+						this.Run.AddToContent(this.Pos + 1, new AscWord.CRunText(0x00A0));
 					}
 					else
 					{
-						this.Run.AddToContent(this.Pos, new ParaText(0x00A0));
-						this.Run.AddToContent(this.Pos + 1, new ParaText(0x00BB));
+						this.Run.AddToContent(this.Pos, new AscWord.CRunText(0x00A0));
+						this.Run.AddToContent(this.Pos + 1, new AscWord.CRunText(0x00BB));
 					}
 
 					this.Pos++;
@@ -476,7 +485,7 @@
 				default:
 				{
 					// “text”
-					this.Run.AddToContent(this.Pos, new ParaText(isOpenQuote ? 0x201C : 0x201D));
+					this.Run.AddToContent(this.Pos, new AscWord.CRunText(isOpenQuote ? 0x201C : 0x201D));
 					break;
 				}
 			}
@@ -491,13 +500,13 @@
 				case 1051:
 				{
 					// ‚text‘
-					this.Run.AddToContent(this.Pos, new ParaText(isOpenQuote ? 0x201A : 0x2018));
+					this.Run.AddToContent(this.Pos, new AscWord.CRunText(isOpenQuote ? 0x201A : 0x2018));
 					break;
 				}
 				case 1048:
 				{
 					// ‚text’
-					this.Run.AddToContent(this.Pos, new ParaText(isOpenQuote ? 0x201A : 0x2019));
+					this.Run.AddToContent(this.Pos, new AscWord.CRunText(isOpenQuote ? 0x201A : 0x2019));
 					break;
 				}
 				case 1030:
@@ -507,13 +516,13 @@
 				case 1061:
 				{
 					// ’text’
-					this.Run.AddToContent(this.Pos, new ParaText(0x2019));
+					this.Run.AddToContent(this.Pos, new AscWord.CRunText(0x2019));
 					break;
 				}
 				default:
 				{
 					// ‘text’
-					this.Run.AddToContent(this.Pos, new ParaText(isOpenQuote ? 0x2018 : 0x2019));
+					this.Run.AddToContent(this.Pos, new AscWord.CRunText(isOpenQuote ? 0x2018 : 0x2019));
 					break;
 				}
 			}
@@ -548,7 +557,7 @@
 
 			oDocument.StartAction(AscDFH.historydescription_Document_AutoCorrectHyphensWithDash);
 
-			var oDash = new ParaText(8212);
+			var oDash = new AscWord.CRunText(8212);
 			oRun.AddToContent(this.Pos + 1, oDash);
 			var oStartPos = oRunElementsBefore.GetContentPositions()[0];
 			var oEndPos   = oContentPos;
@@ -637,7 +646,7 @@
 
 				oDocument.StartAction(AscDFH.historydescription_Document_AutoCorrectHyphensWithDash);
 				oRun.RemoveFromContent(nInRunPos, 1);
-				oRun.AddToContent(nInRunPos, new ParaText(8211));
+				oRun.AddToContent(nInRunPos, new AscWord.CRunText(8211));
 				oDocument.Recalculate();
 				oDocument.FinalizeAction();
 				return true;
@@ -667,7 +676,7 @@
 		if (oRun.IsInHyperlink())
 			return false;
 
-		if (/(^(((http|https|ftp):\/\/)|(mailto:)|(www.)))|@/i.test(sText))
+		if (AscCommon.rx_allowedProtocols.test(sText) || /^(www.)|@/i.test(sText))
 		{
 			// Удаляем концевые пробелы и переводы строки перед проверкой гиперссылок
 			sText = sText.replace(/\s+$/, '');
@@ -850,7 +859,7 @@
 
 		oDocument.StartAction(AscDFH.historydescription_Document_AutoCorrectFirstLetterOfSentence);
 
-		var oNewItem = new ParaText(String.fromCharCode(oItem.Value).toUpperCase().charCodeAt(0));
+		var oNewItem = new AscWord.CRunText(String.fromCharCode(oItem.Value).toUpperCase().charCodeAt(0));
 		oRun.RemoveFromContent(nInRunPos, 1, true);
 		oRun.AddToContent(nInRunPos, oNewItem, true);
 
@@ -1366,18 +1375,18 @@
 	};
 
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscCommonWord'] = window['AscCommonWord'] || {};
-	window['AscCommonWord'].CRunAutoCorrect = CRunAutoCorrect;
+	window['AscWord'] = window['AscWord'] || {};
+	window['AscWord'].CRunAutoCorrect = CRunAutoCorrect;
 
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_NONE                     = AUTOCORRECT_FLAGS_NONE;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_ALL                      = AUTOCORRECT_FLAGS_ALL;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_FRENCH_PUNCTUATION       = AUTOCORRECT_FLAGS_FRENCH_PUNCTUATION;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_SMART_QUOTES             = AUTOCORRECT_FLAGS_SMART_QUOTES;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH         = AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_HYPERLINK                = AUTOCORRECT_FLAGS_HYPERLINK;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE    = AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_NUMBERING                = AUTOCORRECT_FLAGS_NUMBERING;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_DOUBLE_SPACE_WITH_PERIOD = AUTOCORRECT_FLAGS_DOUBLE_SPACE_WITH_PERIOD;
+	window['AscWord'].AUTOCORRECT_FLAGS_NONE                     = AUTOCORRECT_FLAGS_NONE;
+	window['AscWord'].AUTOCORRECT_FLAGS_ALL                      = AUTOCORRECT_FLAGS_ALL;
+	window['AscWord'].AUTOCORRECT_FLAGS_FRENCH_PUNCTUATION       = AUTOCORRECT_FLAGS_FRENCH_PUNCTUATION;
+	window['AscWord'].AUTOCORRECT_FLAGS_SMART_QUOTES             = AUTOCORRECT_FLAGS_SMART_QUOTES;
+	window['AscWord'].AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH         = AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH;
+	window['AscWord'].AUTOCORRECT_FLAGS_HYPERLINK                = AUTOCORRECT_FLAGS_HYPERLINK;
+	window['AscWord'].AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE    = AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE;
+	window['AscWord'].AUTOCORRECT_FLAGS_NUMBERING                = AUTOCORRECT_FLAGS_NUMBERING;
+	window['AscWord'].AUTOCORRECT_FLAGS_DOUBLE_SPACE_WITH_PERIOD = AUTOCORRECT_FLAGS_DOUBLE_SPACE_WITH_PERIOD;
 
 })(window);
 

@@ -125,8 +125,10 @@
 	function readTxPrPlain(reader) {
 		//todo CTextBody
 		let elem = new AscFormat.CTextBody();
-		elem.setContent(new AscFormat.CDrawingDocContent(elem, reader.context.DrawingDocument, 0, 0, 0, 0, 0, 0, true));
 		elem.fromXml(reader);
+		if(!elem.content) {
+			elem.setContent(new AscFormat.CDrawingDocContent(elem, reader.context.DrawingDocument, 0, 0, 0, 0, 0, 0, true));
+		}
 		return elem;
 	}
 
@@ -1692,7 +1694,7 @@
 					break;
 				}
 				case "axId" : {
-					aChartWithAxis.push({ axisId: CT_UInt.prototype.toVal(reader, this.axId), chart: this });
+					aChartWithAxis.push({ axisId: CT_Int.prototype.toVal(reader, this.axId), chart: this });
 					break;
 				}
 				// case "extLst" : {
@@ -1719,7 +1721,7 @@
 		writer.WriteXmlNullable(writeChartLines(this.dropLines), "c:dropLines");
 		writer.WriteXmlNullable(CT_Double.prototype.fromVal(this.gapDepth), "c:gapDepth");
 		this.axId.forEach(function(axis) {
-			writer.WriteXmlNullable(CT_UInt.prototype.fromVal(axis.axId), "c:axId");
+			writer.WriteXmlNullable(CT_Int.prototype.fromVal(axis.axId), "c:axId");
 		});
 		// writer.WriteXmlArray(this.extLst, "c:extLst");
 		writer.WriteXmlNodeEnd(name);
@@ -2499,7 +2501,7 @@
 					break;
 				}
 				case "axId" : {
-					aChartWithAxis.push({ axisId: CT_UInt.prototype.toVal(reader, this.axId), chart: this });
+					aChartWithAxis.push({ axisId: CT_Int.prototype.toVal(reader, this.axId), chart: this });
 					break;
 				}
 				// case "extLst" : {
@@ -2528,7 +2530,7 @@
 		writer.WriteXmlNullable(CT_Double.prototype.fromVal(this.gapDepth), "c:gapDepth");
 		writer.WriteXmlNullable(CT_String.prototype.fromVal(toXml_ST_Shape(this.shape)), "c:shape");
 		this.axId.forEach(function(axis) {
-			writer.WriteXmlNullable(CT_UInt.prototype.fromVal(axis.axId), "c:axId");
+			writer.WriteXmlNullable(CT_Int.prototype.fromVal(axis.axId), "c:axId");
 		});
 		// writer.WriteXmlArray(this.extLst, "c:extLst");
 		writer.WriteXmlNodeEnd(name);
@@ -2681,7 +2683,7 @@
 					break;
 				}
 				case "axId" : {
-					aChartWithAxis.push({ axisId: CT_UInt.prototype.toVal(reader, this.axId), chart: this });
+					aChartWithAxis.push({ axisId: CT_Int.prototype.toVal(reader, this.axId), chart: this });
 					break;
 				}
 				// case "extLst" : {
@@ -2710,7 +2712,7 @@
 		writer.WriteXmlNullable(CT_String.prototype.fromVal(toXml_ST_SizeRepresents(this.sizeRepresents)),
 			"c:sizeRepresents");
 		this.axId.forEach(function(axis) {
-			writer.WriteXmlNullable(CT_UInt.prototype.fromVal(axis.axId), "c:axId");
+			writer.WriteXmlNullable(CT_Int.prototype.fromVal(axis.axId), "c:axId");
 		});
 		// writer.WriteXmlArray(this.extLst, "c:extLst");
 		writer.WriteXmlNodeEnd(name);
@@ -3010,7 +3012,7 @@
 					break;
 				}
 				case "axId" : {
-					aChartWithAxis.push({ axisId: CT_UInt.prototype.toVal(reader, this.axId), chart: this });
+					aChartWithAxis.push({ axisId: CT_Int.prototype.toVal(reader, this.axId), chart: this });
 					break;
 				}
 				// case "extLst" : {
@@ -3040,7 +3042,7 @@
 		writer.WriteXmlNullable(CT_Bool.prototype.fromVal(this.marker), "c:marker");
 		writer.WriteXmlNullable(CT_Bool.prototype.fromVal(this.smooth), "c:smooth");
 		this.axId.forEach(function(axis) {
-			writer.WriteXmlNullable(CT_UInt.prototype.fromVal(axis.axId), "c:axId");
+			writer.WriteXmlNullable(CT_Int.prototype.fromVal(axis.axId), "c:axId");
 		});
 		// writer.WriteXmlArray(this.extLst, "c:extLst");
 		writer.WriteXmlNodeEnd(name);
@@ -3366,7 +3368,7 @@
 					break;
 				}
 				case "axId" : {
-					aChartWithAxis.push({ axisId: CT_UInt.prototype.toVal(reader, this.axId), chart: this });
+					aChartWithAxis.push({ axisId: CT_Int.prototype.toVal(reader, this.axId), chart: this });
 					break;
 				}
 				// case "extLst" : {
@@ -3391,7 +3393,7 @@
 		writer.WriteXmlArray(this.series, "c:ser");
 		writer.WriteXmlNullable(this.dLbls, "c:dLbls");
 		this.axId.forEach(function(axis) {
-			writer.WriteXmlNullable(CT_UInt.prototype.fromVal(axis.axId), "c:axId");
+			writer.WriteXmlNullable(CT_Int.prototype.fromVal(axis.axId), "c:axId");
 		});
 		// writer.WriteXmlArray(this.extLst, "c:extLst");
 		writer.WriteXmlNodeEnd(name);
@@ -3507,7 +3509,7 @@
 					break;
 				}
 				case "axId" : {
-					aChartWithAxis.push({ axisId: CT_UInt.prototype.toVal(reader, this.axId), chart: this });
+					aChartWithAxis.push({ axisId: CT_Int.prototype.toVal(reader, this.axId), chart: this });
 					break;
 				}
 				// case "extLst" : {
@@ -3533,7 +3535,7 @@
 		writer.WriteXmlArray(this.series, "c:ser");
 		writer.WriteXmlNullable(this.dLbls, "c:dLbls");
 		this.axId.forEach(function(axis) {
-			writer.WriteXmlNullable(CT_UInt.prototype.fromVal(axis.axId), "c:axId");
+			writer.WriteXmlNullable(CT_Int.prototype.fromVal(axis.axId), "c:axId");
 		});
 		// writer.WriteXmlArray(this.extLst, "c:extLst");
 		writer.WriteXmlNodeEnd(name);
@@ -3663,7 +3665,7 @@
 					break;
 				}
 				case "axId" : {
-					aChartWithAxis.push({ axisId: CT_UInt.prototype.toVal(reader, this.axId), chart: this });
+					aChartWithAxis.push({ axisId: CT_Int.prototype.toVal(reader, this.axId), chart: this });
 					break;
 				}
 			}
@@ -3678,7 +3680,7 @@
 		writer.WriteXmlNullable(writeChartLines(this.hiLowLines), "c:hiLowLines");
 		writer.WriteXmlNullable(this.upDownBars, "c:upDownBars");
 		this.axId.forEach(function(axis) {
-			writer.WriteXmlNullable(CT_UInt.prototype.fromVal(axis.axId), "c:axId");
+			writer.WriteXmlNullable(CT_Int.prototype.fromVal(axis.axId), "c:axId");
 		});
 		writer.WriteXmlNodeEnd(name);
 	};
@@ -3707,7 +3709,7 @@
 					break;
 				}
 				case "axId" : {
-					aChartWithAxis.push({ axisId: CT_UInt.prototype.toVal(reader, this.axId), chart: this });
+					aChartWithAxis.push({ axisId: CT_Int.prototype.toVal(reader, this.axId), chart: this });
 					break;
 				}
 			}
@@ -3720,7 +3722,7 @@
 		writer.WriteXmlArray(this.series, "c:ser");
 		writer.WriteXmlArray(this.bandFmts, "c:bandFmts");
 		this.axId.forEach(function(axis) {
-			writer.WriteXmlNullable(CT_UInt.prototype.fromVal(axis.axId), "c:axId");
+			writer.WriteXmlNullable(CT_Int.prototype.fromVal(axis.axId), "c:axId");
 		});
 		writer.WriteXmlNodeEnd(name);
 	};
@@ -4476,7 +4478,7 @@
 		let elem;
 		switch (name) {
 			case "axId" : {
-				ax.setAxId(CT_UInt.prototype.toVal(reader, ax.axId));
+				ax.setAxId(CT_Int.prototype.toVal(reader, ax.axId));
 				break;
 			}
 			case "scaling" : {
@@ -4539,7 +4541,7 @@
 				break;
 			}
 			case "crossAx" : {
-				ax.crossAxId = CT_UInt.prototype.toVal(reader, ax.crossAxId);
+				ax.crossAxId = CT_Int.prototype.toVal(reader, ax.crossAxId);
 				break;
 			}
 			case "crosses" : {
@@ -4560,7 +4562,7 @@
 	}
 
 	function writeAxBase(writer, ax) {
-		writer.WriteXmlNullable(CT_UInt.prototype.fromVal(ax.axId), "c:axId");
+		writer.WriteXmlNullable(CT_Int.prototype.fromVal(ax.axId), "c:axId");
 		writer.WriteXmlNullable(ax.scaling, "c:scaling");
 		writer.WriteXmlNullable(CT_Bool.prototype.fromVal(ax.bDelete), "c:delete");
 		writer.WriteXmlNullable(CT_String.prototype.fromVal(toXml_ST_AxPos(ax.axPos)), "c:axPos");
@@ -4575,7 +4577,7 @@
 		writer.WriteXmlNullable(CT_String.prototype.fromVal(toXml_ST_TickLblPos(ax.tickLblPos)), "c:tickLblPos");
 		writer.WriteXmlNullable(ax.spPr, "c:spPr");
 		writer.WriteXmlNullable(ax.txPr, "c:txPr");
-		writer.WriteXmlNullable(CT_UInt.prototype.fromVal(ax.crossAx && ax.crossAx.axId), "c:crossAx");
+		writer.WriteXmlNullable(CT_Int.prototype.fromVal(ax.crossAx && ax.crossAx.axId), "c:crossAx");
 		writer.WriteXmlNullable(CT_String.prototype.fromVal(toXml_ST_Crosses(ax.crosses)), "c:crosses");
 		writer.WriteXmlNullable(CT_Double.prototype.fromVal(ax.crossesAt), "c:crossesAt");
 		writer.WriteXmlNullable(CT_String.prototype.fromVal(toXml_ST_CrossBetween(ax.crossBetween)),
@@ -5366,26 +5368,26 @@
 	function fromXml_ST_TickLblPos(val, def) {
 		switch (val) {
 			case "high":
-				return AscFormat.TICK_LABEL_POSITION_HIGH;
+				return Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_HIGH;
 			case "low":
-				return AscFormat.TICK_LABEL_POSITION_LOW;
+				return Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_LOW;
 			case "nextTo":
-				return AscFormat.TICK_LABEL_POSITION_NEXT_TO;
+				return Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO;
 			case "none":
-				return AscFormat.TICK_LABEL_POSITION_NONE;
+				return Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE;
 		}
 		return def;
 	}
 
 	function toXml_ST_TickLblPos(val) {
 		switch (val) {
-			case AscFormat.TICK_LABEL_POSITION_HIGH:
+			case Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_HIGH:
 				return "high";
-			case AscFormat.TICK_LABEL_POSITION_LOW:
+			case Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_LOW:
 				return "low";
-			case AscFormat.TICK_LABEL_POSITION_NEXT_TO:
+			case Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO:
 				return "nextTo";
-			case AscFormat.TICK_LABEL_POSITION_NONE:
+			case Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NONE:
 				return "none";
 		}
 		return null;

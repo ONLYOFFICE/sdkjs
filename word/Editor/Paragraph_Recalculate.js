@@ -328,6 +328,12 @@ Paragraph.prototype.RecalculateFastRunRange = function(oParaPos)
 		NextRange = Range;
 	}
 
+	// Важно, что здесь мы формируем текст без учета переносов (т.е. не Temporary), но при этом сам флаг
+	// Temporary c элементов текста не снимаем, т.к. он рассчитывается уже в процессе Recalculate_Range,
+	// а для всех строк, не учавствующих в быстром пересчете, мы должны все сохранить как есть
+	this.ShapeText();
+	this.ShapeTextInRange(this.Get_StartRangePos2(Line, Range), this.Get_EndRangePos2(Line, Range));
+
 	// Если у нас отрезок, в котором произошли изменения является отрезком с нумерацией, тогда надо запустить
 	// обычный пересчет.
 	if (null !== this.Numbering.Item && (PrevLine < this.Numbering.Line || (PrevLine === this.Numbering.Line && PrevRange <= this.Numbering.Range)))
@@ -365,7 +371,7 @@ Paragraph.prototype.RecalculateFastRunRange = function(oParaPos)
 	// 	arrLinesMetrics.push(this.Lines[CurLine + nLineIndex].Metrics.Copy());
 	// }
 
-    var Result;
+	var Result;
     while ( ( CurLine < NextLine ) || ( CurLine === NextLine && CurRange <= NextRange ) )
     {
         var TempResult = this.private_RecalculateFastRange(CurRange, CurLine);
@@ -421,7 +427,10 @@ Paragraph.prototype.RecalculateFastRunRange = function(oParaPos)
 Paragraph.prototype.Recalculate_Page = function(CurPage)
 {
 	if (0 === CurPage)
+	{
 		this.CalculatedFrame = null;
+		this.ShapeText();
+	}
 
     this.Clear_NearestPosArray();
 
@@ -582,53 +591,66 @@ Paragraph.prototype.private_RecalculateFastRange       = function(CurRange, CurL
 
     PRS.Paragraph = this;
 
-    var RangesCount = PRS.RangesCount;
-
     var Line  = this.Lines[CurLine];
     var Range = Line.Ranges[CurRange];
 
-    var StartPos = Range.StartPos;
-    var EndPos   = Range.EndPos;
+    let nStartPos = Range.StartPos;
+    let nEndPos   = Range.EndPos;
 
     // Обновляем состояние пересчета
-    PRS.Reset_Range(Range.X, Range.XEnd);
+	PRS.Reset_Range(Range.X, Range.XEnd);
 
-    var ContentLen = this.Content.length;
+	let arrSavedLines = [];
+	for (let nPos = nStartPos; nPos <= nEndPos; ++nPos)
+	{
+		arrSavedLines.push(this.Content[nPos].SaveRecalculateObject(true));
+	}
 
-    for ( var Pos = StartPos; Pos <= EndPos; Pos++ )
-    {
-        var Item = this.Content[Pos];
+	for (let nPos = nStartPos; nPos <= nEndPos; ++nPos)
+	{
+		let oItem = this.Content[nPos];
+		if (para_Math === oItem.Type)
+		{
+			// TODO: Надо бы перенести эту проверку на изменение контента параграфа
+			oItem.Set_Inline(true !== this.CheckMathPara(nPos));
+			PRS.bFastRecalculate = true; // чтобы не обновить случайно StartLine (Recalculate_Reset)
+		}
 
-        if ( para_Math === Item.Type )
-        {
-            // TODO: Надо бы перенести эту проверку на изменение контента параграфа
-            Item.Set_Inline(true !== this.CheckMathPara(Pos));
-            PRS.bFastRecalculate = true; // чтобы не обновить случайно StartLine (Recalculate_Reset)
-        }
+		PRS.Update_CurPos(nPos, 0);
 
-        PRS.Update_CurPos( Pos, 0 );
+		oItem.Recalculate_Range(PRS, ParaPr, 1);
 
-        var SavedLines = Item.SaveRecalculateObject(true);
+		if (PRS.NewRange && PRS.MoveToLBP && PRS.LongWord)
+		{
+			if (PRS.LineBreakPos.Get(0) !== nEndPos)
+				return -1;
 
-        Item.Recalculate_Range( PRS, ParaPr, 1 );
+			break;
+		}
+		else if ((true === PRS.NewRange && nPos !== nEndPos) || (nPos === nEndPos && true !== PRS.NewRange))
+		{
+			return -1;
+		}
+		else if (nPos === nEndPos && true === PRS.NewRange && true === PRS.MoveToLBP)
+		{
+			var BreakPos = PRS.LineBreakPos.Get(0);
+			if (BreakPos !== nPos)
+				return -1;
+			else
+				oItem.Recalculate_Set_RangeEndPos(PRS, PRS.LineBreakPos, 1);
+		}
+	}
 
-        if ( ( true === PRS.NewRange && Pos !== EndPos ) || ( Pos === EndPos && true !== PRS.NewRange ) )
-            return -1;
-        else if ( Pos === EndPos && true === PRS.NewRange && true === PRS.MoveToLBP )
-        {
-            var BreakPos = PRS.LineBreakPos.Get(0);
-            if (BreakPos !== Pos)
-                return -1;
-            else
-                Item.Recalculate_Set_RangeEndPos(PRS, PRS.LineBreakPos, 1);
-        }
+	for (let nPos = nStartPos; nPos <= nEndPos; ++nPos)
+	{
+		let oLines = arrSavedLines[nPos - nStartPos];
+		let oItem  = this.Content[nPos];
 
-        // Нам нужно проверить только строку с номером CurLine
-        if (false === SavedLines.Compare(CurLine, CurRange, Item))
-            return -1;
+		if (!oLines.Compare(CurLine, CurRange, oItem))
+			return -1;
 
-        Item.LoadRecalculateObject(SavedLines, this);
-    }
+		oItem.LoadRecalculateObject(arrSavedLines[nPos - nStartPos], this);
+	}
 
     // TODO: Здесь пересчеты идут целиком для строки, а не для конкретного отрезка.
     if (!(this.private_RecalculateLineAlign(CurLine, CurPage, PRS, ParaPr, true) & recalcresult_NextElement))
@@ -1234,6 +1256,9 @@ Paragraph.prototype.private_RecalculateLineInfo        = function(CurLine, CurPa
 
     if (true === PRS.BreakLine)
     	this.Lines[CurLine].Info |= paralineinfo_BreakLine;
+
+	if (PRS.LongWord)
+		this.Lines[CurLine].Info |= paralineinfo_LongWord;
 };
 
 Paragraph.prototype.private_RecalculateLineMetrics     = function(CurLine, CurPage, PRS, ParaPr)
@@ -1263,12 +1288,9 @@ Paragraph.prototype.private_RecalculateLineMetrics     = function(CurLine, CurPa
 		if (true === PRS.End)
 		{
 			// TODO: Как только переделаем para_End переделать тут
+			let oTextPr  = this.GetParaEndCompiledPr();
+			let oMetrics = oTextPr.GetTextMetrics(oTextPr.CS || oTextPr.RTL ? AscWord.fontslot_CS : AscWord.fontslot_ASCII, this.GetTheme());
 
-			let oTextPr = this.Get_CompiledPr2(false).TextPr.Copy();
-			oTextPr.Merge(this.TextPr.Value);
-			oTextPr.CheckFontScale();
-
-            let oMetrics = oTextPr.GetTextMetrics(this.GetTheme(), rfont_ASCII);
 			let EndTextDescent = oMetrics.Descent;
 			let EndTextAscent  = oMetrics.Ascent + oMetrics.LineGap;
 			let EndTextAscent2 = oMetrics.Ascent;
@@ -1330,7 +1352,7 @@ Paragraph.prototype.private_RecalculateLinePosition    = function(CurLine, CurPa
 				// Адобовский вариант отступа первой строки для многострочных форм
 				var oTextPr = oRun.Get_CompiledTextPr(false);
 				g_oTextMeasurer.SetTextPr(oTextPr, this.GetTheme());
-				g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
+				g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, 1);
 				var oLimits = g_oTextMeasurer.GetLimitsY();
 				var nBBoxH  = oLimits.max - oLimits.min + 2 * 25.4 / 72;
 
@@ -2168,7 +2190,7 @@ Paragraph.prototype.private_RecalculateRange           = function(CurRange, CurL
 
         if ( para_Math === Item.Type )
         {
-            var NotInlineMath = this.CheckMathPara(Pos);
+            var NotInlineMath = this.CheckMathPara(Pos) && !Item.Get_Inline();
             if (true === NotInlineMath && true !== PRS.EmptyLine)
             {
                 PRS.ForceNewLine = true;
@@ -2451,7 +2473,9 @@ Paragraph.prototype.private_CheckNeedBeforeSpacing = function(CurPage, Parent, P
 			oPrevElement = oPrevElement.GetPrevDocumentElement();
 		}
 
-		return (!oPrevElement || oPrevElement.GetAbsolutePage(oPrevElement.GetPagesCount() - 1) >= PageAbs);
+		return (!oPrevElement
+			|| oPrevElement.GetAbsolutePage(oPrevElement.GetPagesCount() - 1) >= PageAbs
+			|| oPrevElement.Get_SectionPr());
 	}
 
 	if (!this.Check_FirstPage(CurPage))
@@ -2490,6 +2514,170 @@ Paragraph.prototype.private_CheckNeedBeforeSpacing = function(CurPage, Parent, P
 
 	return false;
 };
+
+Paragraph.prototype.ShapeText = function()
+{
+	if (!this.RecalcInfo.ShapeText)
+		return;
+
+	// TODO: Код для теста скорости функции ShapeText
+	// let nRecalcId = this.LogicDocument ? this.LogicDocument.GetRecalcId() : -1;
+	// if (this.ShapeId === nRecalcId)
+	// 	return;
+	//
+	// this.ShapeId = nRecalcId;
+
+	// TODO: Сейчас мы шейпим текст целиком во всем параграфе. Для ускорения нужно отслеживать позиции, в которых
+	//       произошли изменения (далее влево и вправо найти позиции пробела/таба или другого разделителя слова)
+	//       и шейпить текст только в заданном промежутке
+
+	AscWord.ParagraphTextShaper.Shape(this);
+	this.RecalcInfo.ShapeText = false;
+};
+
+Paragraph.prototype.ShapeTextInRange = function(oStartPos, oEndPos)
+{
+	AscWord.ParagraphTextShaper.ShapeRange(this, oStartPos, oEndPos, true);
+};
+Paragraph.prototype.GetLigatureEndPos = function(oStartPos)
+{
+	let oLigature = this.GetNextRunElement(oStartPos);
+	if (!oLigature || !oLigature.IsText())
+		return oStartPos;
+
+	if (!oLigature.IsLigature())
+	{
+		let oResultPos = oStartPos.Copy();
+		oResultPos.Update(oStartPos.GetPos(oStartPos.GetDepth()) + 1, oStartPos.GetDepth());
+		return oStartPos;
+	}
+
+	let oCurrentPos = oStartPos;
+	let oSearchPos = new CParagraphSearchPos();
+	this.Get_RightPos(oSearchPos, oCurrentPos, false);
+
+	while (oSearchPos.IsFound())
+	{
+		oCurrentPos = oSearchPos.GetPos().Copy();
+
+		let oNext = this.GetNextRunElement(oCurrentPos);
+		let oPrev = this.GetPrevRunElement(oCurrentPos);
+
+		if (!oPrev
+			|| !oNext
+			|| !oPrev.IsText()
+			|| !oNext.IsText()
+			|| !oNext.IsLigatureContinue())
+			break;
+
+		oSearchPos.Reset();
+		this.Get_RightPos(oSearchPos, oCurrentPos, false);
+
+		if (!oSearchPos.IsFound())
+			break;
+	}
+
+	return oCurrentPos;
+};
+Paragraph.prototype.CollectRunItemsInRange = function(oStartPos, oEndPos)
+{
+	let arrPositions = [];
+	let arrItems     = [];
+
+	this.CheckRunContent(function(oRun, nStartPos, nEndPos, oCurrentPos)
+	{
+		for (let nPos = nStartPos; nPos < nEndPos; ++nPos)
+		{
+			let oParaPos = oCurrentPos.Copy();
+			oParaPos.Add(nPos);
+
+			arrItems.push(oRun.GetElement(nPos));
+			arrPositions.push(oParaPos);
+		}
+	}, oStartPos, oEndPos, true);
+
+	return {
+		Positions : arrPositions,
+		Items     : arrItems
+	};
+};
+Paragraph.prototype.FindLineBreakInLongWord = function(nWidth, oLineStartPos, oCurPos)
+{
+	// TODO: Когда будут прокидываться типы HB_GLYPH_FLAG_UNSAFE_TO_BREAK, HB_GLYPH_FLAG_UNSAFE_TO_CONCAT
+	//       переделать здесь поиск начальной точки для формирования текста
+
+	let oInfo = this.CollectRunItemsInRange(oLineStartPos, oCurPos);
+
+	let arrPositions = oInfo.Positions;
+	let arrItems     = oInfo.Items;
+
+	// По логике первая позиция ДОЛЖНА совпадать с oLineStartPos, поэтому
+	// мы не отдаем разрыв в первой позиции, чтобы как минимум 1 символ был на строке
+	if (arrPositions.length <= 1)
+		return oCurPos;
+
+	let oBreakPosition = oCurPos;
+	let nLastPos       = arrPositions.length - 1;
+	while (nLastPos > 1)
+	{
+		// TODO: Возможно здесь проверку стоит изменить (или дополнить) на проверку может ли символ находится
+		//       в начале строки и может ли предыдущий находится в конце строки
+		while (arrItems[nLastPos].IsCombiningMark() && nLastPos > 0)
+		{
+			nLastPos--;
+		}
+
+		if (0 === nLastPos)
+			return oBreakPosition;
+
+		oBreakPosition = arrPositions[nLastPos];
+
+		this.ShapeTextInRange(oLineStartPos, arrPositions[nLastPos]);
+
+		let nTempWidth = 0;
+		for (let nPos = 0; nPos < nLastPos; ++nPos)
+		{
+			nTempWidth += arrItems[nPos].GetWidth();
+		}
+
+		if (nTempWidth < nWidth)
+			return arrPositions[nLastPos];
+
+		nLastPos--;
+	}
+
+	this.ShapeTextInRange(oLineStartPos, arrPositions[1]);
+	return arrPositions[1];
+};
+Paragraph.prototype.Recalculate_SetRangeBounds = function(CurLine, CurRange, oStartPos, oEndPos)
+{
+	let nStartPos = oStartPos.Get(0);
+	let nEndPos   = oEndPos.Get(0);
+
+	for (let nPos = nStartPos; nPos <= nEndPos; ++nPos)
+	{
+		let oItem = this.Content[nPos];
+		if (nPos !== nStartPos)
+			oItem.Recalculate_Reset(CurRange, CurLine);
+
+		oItem.Recalculate_SetRangeBounds(CurLine, CurRange, nPos === nStartPos ? oStartPos : null, nPos === nEndPos ? oEndPos : null, 1);
+	}
+};
+Paragraph.prototype.GetContentWidthInRange = function(oStartPos, oEndPos)
+{
+	let nWidth = 0;
+
+	let nStartPos = oStartPos && 0 <= oStartPos.GetDepth()? oStartPos.Get(0) : 0;
+	let nEndPos   = oEndPos && 0 <= oEndPos.GetDepth() ? oEndPos.Get(0) : this.Content.length - 1;
+
+	for (let nPos = nStartPos; nPos <= nEndPos; ++nPos)
+	{
+		nWidth += this.Content[nPos].GetContentWidthInRange(nPos === nStartPos ? oStartPos : null, nPos === nEndPos ? oEndPos : null, 1);
+	}
+
+	return nWidth;
+};
+
 
 var ERecalcPageType =
 {
@@ -2531,6 +2719,7 @@ var paralineinfo_BadLeftTab    = 0x0020; // В строке есть левый 
 var paralineinfo_Notes         = 0x0040; // В строке есть сноски
 var paralineinfo_TextOnLine    = 0x0080; // Есть ли в строке текст
 var paralineinfo_BreakLine     = 0x0100; // Строка закончилась переносом строки
+var paralineinfo_LongWord      = 0x0200; // В строке длинное слово, которое не убралось
 
 function CParaLine()
 {
@@ -2842,6 +3031,10 @@ CParaLineRange.prototype.CorrectX = function(nX)
 
 	return x;
 };
+CParaLineRange.prototype.IsZeroRange = function()
+{
+	return ((this.XEnd - this.X) < 0.001);
+};
 
 function CParaPage(X, Y, XLimit, YLimit, FirstLine)
 {
@@ -2980,6 +3173,7 @@ function CParagraphRecalculateStateWrap(Para)
     this.BreakRealPageLine  = false; // Разрыв страницы документа (не только параграфа) в данной строке
     this.BadLeftTab         = false; // Левый таб правее правой границы
 	this.BreakLine          = false; // Строка закончилась принудительным разрывом
+	this.LongWord           = false;
 
 	this.ComplexFields = new CParagraphComplexFieldsInfo();
 
@@ -3105,6 +3299,7 @@ CParagraphRecalculateStateWrap.prototype =
         this.EmptyLine           = true;
         this.BreakPageLine       = false;
         this.BreakLine           = false;
+		this.LongWord            = false;
         this.End                 = false;
         this.UseFirstLine        = false;
         this.BreakRealPageLine   = false;
@@ -3451,7 +3646,7 @@ CParagraphRecalculateStateWrap.prototype =
 
 							var Theme = Para.Get_Theme();
 							g_oTextMeasurer.SetTextPr(oNumTextPr, Theme);
-							g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+							g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
 							NumberingItem.WidthSuff = g_oTextMeasurer.Measure(" ").Width;
 							g_oTextMeasurer.SetTextPr(OldTextPr, Theme);
 							break;
@@ -3740,7 +3935,7 @@ CParagraphRecalculateStateWrap.prototype.TryCondenseSpaces = function(nWidth1, n
 	var nSumSpaces = 0;
 	for (var nIndex = 0, nCount = this.RangeSpaces.length; nIndex < nCount; ++nIndex)
 	{
-		nSumSpaces += this.RangeSpaces[nIndex].WidthOrigin / TEXTWIDTH_DIVIDER;
+		nSumSpaces += this.RangeSpaces[nIndex].WidthOrigin / AscWord.TEXTWIDTH_DIVIDER;
 	}
 
 	var nSpace = nSumSpaces * (1 - nKoef);
@@ -3771,6 +3966,41 @@ CParagraphRecalculateStateWrap.prototype.CheckUpdateLBP = function(nInRunPos)
 		 this.LineBreakPos.Set(this.CurPos);
 		 this.LineBreakPos.Add(nInRunPos);
 	 }
+};
+CParagraphRecalculateStateWrap.prototype.IsNeedShapeFirstWord = function(nCurLine)
+{
+	let arrLines = this.Paragraph.Lines;
+
+	return (0 !== nCurLine
+		&& arrLines.length > nCurLine
+		&& arrLines[nCurLine - 1].Info & paralineinfo_LongWord);
+};
+CParagraphRecalculateStateWrap.prototype.IsLastElementInWord = function(oRun, nPos)
+{
+	let oItem = oRun.GetElement(nPos)
+	if (!oItem)
+		return false;
+
+	if (oItem.IsSpaceAfter())
+		return true;
+
+	let oParent      = oRun.GetParent();
+	let nInParentPos = oRun.GetPosInParent(oParent);
+	if (!oParent || -1 === nInParentPos)
+		return false;
+
+	let oNextItem  = oRun.GetElement(nPos + 1);
+	let nParentLen = oParent.GetElementsCount();
+	while (!oNextItem && nInParentPos < nParentLen - 1)
+	{
+		oRun = oParent.GetElement(++nInParentPos);
+		if (!oRun || !(oRun instanceof ParaRun))
+			return true;
+
+		oNextItem = oRun.GetElement(0);
+	}
+
+	return (!oNextItem || !oNextItem.IsText());
 };
 
 function CParagraphRecalculateStateCounter()

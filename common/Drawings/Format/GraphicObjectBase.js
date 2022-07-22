@@ -2219,7 +2219,7 @@
                 oImage.pen = AscFormat.CreatePenBrushForChartTrack().pen;
                 oImage.parent = this.parent;
                 var oParentObjects = this.getParentObjects();
-                oImage.cropBrush.calculate(oParentObjects.theme, oParentObjects.slide, oParentObjects.layout, oParentObjects.master, {R:0, G:0, B:0, A:255, needRecalc: true}, AscFormat.G_O_DEFAULT_COLOR_MAP);
+                oImage.cropBrush.calculate(oParentObjects.theme, oParentObjects.slide, oParentObjects.layout, oParentObjects.master, {R:0, G:0, B:0, A:255, needRecalc: true}, AscFormat.GetDefaultColorMap());
                 this.cropObject = oImage;
                 return true;
             }

@@ -234,7 +234,7 @@
         var oThemePart = reader.rels.getPartByRelationshipType(AscCommon.openXml.Types.theme.relationType);
         if(oThemePart) {
             var oThemeContent = oThemePart.getDocumentContent();
-            let oThemeReader = new StaxParser(oThemeContent, oThemePart, reader.context);
+            let oThemeReader = new AscCommon.StaxParser(oThemeContent, oThemePart, reader.context);
             let oTheme = new AscFormat.CTheme();
             oTheme.fromXml(oThemeReader, true);
             this.setTheme(oTheme, true);

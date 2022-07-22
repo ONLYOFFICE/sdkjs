@@ -3927,7 +3927,7 @@ DrawingObjectsController.prototype =
 
     getColorMap: function()
     {
-        return AscFormat.G_O_DEFAULT_COLOR_MAP;
+        return AscFormat.GetDefaultColorMap();
     },
 
 
@@ -6368,7 +6368,7 @@ DrawingObjectsController.prototype =
                     var oThis = this;
                     var callBack = function()
                     {
-                        oThis.paragraphAdd(new ParaTab());
+                        oThis.paragraphAdd(new AscWord.CRunTab());
                     };
                     this.checkSelectedObjectsAndCallback(callBack, [], false, AscDFH.historydescription_Spreadsheet_AddTab, undefined, window["Asc"]["editor"].collaborativeEditing.getFast())
                 }
@@ -6413,7 +6413,7 @@ DrawingObjectsController.prototype =
                                 var oThis = this;
                                 var callBack = function()
                                 {
-                                    oThis.paragraphAdd(new ParaNewLine(AscCommonWord.break_Line));
+                                    oThis.paragraphAdd(new AscWord.CRunBreak(AscWord.break_Line));
                                 };
                                 this.checkSelectedObjectsAndCallback(callBack, [], false, AscDFH.historydescription_Spreadsheet_AddItem, undefined, window["Asc"]["editor"].collaborativeEditing.getFast())
                             }
@@ -6774,13 +6774,13 @@ DrawingObjectsController.prototype =
                     var Item = null;
                     if ( true === ctrlKey && true === e.shiftKey )
                     {
-                        Item = new ParaText(0x2013);
+                        Item = new AscWord.CRunText(0x2013);
                         Item.SpaceAfter = false;
                     }
                     else if ( true === e.shiftKey )
-                        Item = new ParaText("_".charCodeAt(0));
+                        Item = new AscWord.CRunText("_".charCodeAt(0));
                     else
-                        Item = new ParaText("-".charCodeAt(0));
+                        Item = new AscWord.CRunText("-".charCodeAt(0));
                     oThis.paragraphAdd(Item);
                 };
                 this.checkSelectedObjectsAndCallback(callBack, [], false, AscDFH.historydescription_Spreadsheet_AddItem, undefined, window["Asc"]["editor"].collaborativeEditing.getFast());
@@ -10658,6 +10658,9 @@ CSlideBoundsChecker.prototype =
     {
         this.m_oTextPr = textPr;
     },
+    SetFontInternal : function(name, size, style)
+    {
+    },
     SetFontSlot : function(slot, fontSizeKoef)
     {
     },
@@ -10688,6 +10691,16 @@ CSlideBoundsChecker.prototype =
         this.Bounds.CheckRect(_x, _y, 1, 1);
     },
     t : function(text,x,y)
+    {
+        if (this.m_bIsBreak)
+            return;
+
+        // TODO: нужен другой метод отрисовки!!!
+        var _x = this.m_oFullTransform.TransformPointX(x, y);
+        var _y = this.m_oFullTransform.TransformPointY(x, y);
+        this.Bounds.CheckRect(_x, _y, 1, 1);
+    },
+    tg : function(gid,x,y)
     {
         if (this.m_bIsBreak)
             return;

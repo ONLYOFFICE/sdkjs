@@ -54,7 +54,7 @@
 		{
 			function ZLib()
 			{
-				this.engine = window["NATIVE_EDITOR_ENJINE"] ? CreateNativeZip() : window.nativeZlibEngine;
+				this.engine = window["NATIVE_EDITOR_ENJINE"] ? CreateNativeZip() : window["nativeZlibEngine"];
 				this.files = [];
 			}
 			/**
