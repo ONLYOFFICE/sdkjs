@@ -9453,7 +9453,7 @@ ParaRun.prototype.SetItalic = function(isItalic)
 	if (isItalic !== this.Pr.Italic)
 	{
 		History.Add(new CChangesRunItalic(this, this.Pr.Italic, isItalic, this.private_IsCollPrChangeMine()));
-		this.Pr.Italic = Italic;
+		this.Pr.Italic = isItalic;
 		this.Recalc_CompiledPr(true);
 		this.private_UpdateTrackRevisionOnChangeTextPr(true);
 	}

@@ -1785,6 +1785,11 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		unknownRelationShip: 3
 	}
 	
+	var ST_TextHorzOverflowType = {
+		clip: 0,
+		overflow: 1
+	}
+	
 	var c_oAscOleObjectTypes = {
 		document:    1,
 		spreadsheet: 2,
@@ -4627,10 +4632,13 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
     window['AscFormat'].text_fit_Auto       = window['AscFormat']['text_fit_Auto']       = 1;
     window['AscFormat'].text_fit_NormAuto   = window['AscFormat']['text_fit_NormAuto']   = 2;
 
-	//Overflow Types
+	//Overflow Types (vertOverflow)
     window['AscFormat'].nOTClip = window['AscFormat']['nOTClip'] = 0;
     window['AscFormat'].nOTEllipsis = window['AscFormat']['nOTEllipsis'] = 1;
 	window['AscFormat'].nOTOwerflow = window['AscFormat']['nOTOwerflow'] = 2;
+
+	//Overflow Types (horzOverflow)
+	window['AscFormat'].ST_TextHorzOverflowType = ST_TextHorzOverflowType;
 
     window['AscFormat'].BULLET_TYPE_BULLET_NONE = window['AscFormat']['BULLET_TYPE_BULLET_NONE'] = 0;
     window['AscFormat'].BULLET_TYPE_BULLET_CHAR = window['AscFormat']['BULLET_TYPE_BULLET_CHAR'] = 1;

@@ -12249,7 +12249,8 @@
     prot['totalrowfunctionSum'] = prot.totalrowfunctionSum;
     prot['totalrowfunctionVar'] = prot.totalrowfunctionVar;
 
-	window["Asc"].g_nNumsMaxId = g_nNumsMaxId;		window["AscCommonExcel"].InitSaveManager = InitSaveManager;
+	window["Asc"].g_nNumsMaxId = g_nNumsMaxId;
+    window["AscCommonExcel"].InitSaveManager = InitSaveManager;
     window["AscCommonExcel"].InitOpenManager = InitOpenManager;
 
     window["AscCommonExcel"].CT_Stylesheet = CT_Stylesheet;

@@ -198,25 +198,22 @@
 		if (this.workbook == null)
 			this.Workbook = oWorksheet.workbook;
 
+		if (this.InitSaveManager == null)
+			this.InitSaveManager = new AscCommonExcel.InitSaveManager(this.Workbook);
+
 		// init styles for write
 		if (this.stylesForWrite == null)
 		{
 			this.stylesForWrite = new AscCommonExcel.StylesForWrite();
-			this.stylesForWrite.init();
-			var styles = this.Workbook.CellStyles.CustomStyles;
-			var style = null;
-			for(var i = 0; i < styles.length; ++i) {
-				style = styles[i];
-				if (style.xfs) {
-					this.stylesForWrite.addCellStyle(style);
-				}
-			}
-			this.stylesForWrite.finalizeCellStyles();
-			this.stylesForWrite.aDxfs = [];
+			this.InitSaveManager._prepeareStyles(this.stylesForWrite);
 		}
-		
+		// pivot caches
 		var oPivotCaches = {};
 		var nCachesCount = this.Workbook.preparePivotForSerialization(oPivotCaches);
+
+		// slicer cache
+		var oSlicerCaches = this.InitSaveManager.getSlicersCache();
+		var aSlicerCachesExt = this.InitSaveManager.getSlicersCache(true);
 
 		var aCols = this.SerCols(oWorksheet);
 
@@ -266,6 +263,8 @@
 			// styles
 			"styles":                this.SerStylesForWrite(this.stylesForWrite), // to do
 			"pivotCaches":           nCachesCount > 0 ? this.SerPivotCaches(oPivotCaches) : undefined,
+			"slicerCaches":          oSlicerCaches != null ? this.SerSlicerCaches(oSlicerCaches) : undefined,
+			"slicerCachesExt":       aSlicerCachesExt != null ? this.SerSlicerCaches(aSlicerCachesExt) : undefined,
 
 			"type":                  "worksheet"
 		}
@@ -293,7 +292,10 @@
 			case AscCommon.c_oAscCellAnchorType.cellanchorOneCell:
 			{
 				oFrom = this.SerFromTo(oDrawingExcel.from);
-				oExt = oDrawingExcel.ext;
+				oExt = {
+					"cx": private_MM2EMU(oDrawingExcel.ext.cx),
+					"cy": private_MM2EMU(oDrawingExcel.ext.cy)
+				}
 				break;
 			}
 			case AscCommon.c_oAscCellAnchorType.cellanchorAbsolute:
@@ -303,8 +305,8 @@
 					"y": oDrawingExcel.Pos.Y
 				};
 				oExt = {
-					"cx": oDrawingExcel.ext.cx,
-					"cy": oDrawingExcel.ext.cy
+					"cx": private_MM2EMU(oDrawingExcel.ext.cx),
+					"cy": private_MM2EMU(oDrawingExcel.ext.cy)
 				}
 				break;
 			}
@@ -428,7 +430,7 @@
 			"hashValue":          oRange.hashValue != null ? oRange.hashValue : undefined,
 			"saltValue":          oRange.saltValue != null ? oRange.saltValue : undefined,
 			"name":               oRange.name != null ? oRange.name : undefined,
-			"sqref":              oRange.sqref != null ? getSqRefString(oRange.sqref) : undefined,
+			"sqref":              oRange.sqref != null ? AscCommonExcel.getSqRefString(oRange.sqref) : undefined,
 			"securityDescriptor": oRange.securityDescriptor != null ? securityDescriptor : undefined
 		}
 	};
@@ -535,7 +537,7 @@
 			"showGridLines":     oView.showGridLines != null ? oView.showGridLines : undefined,
 			"showRowColHeaders": oView.showRowColHeaders != null ? oView.showRowColHeaders : undefined,
 			"showZeros":         oView.showZeros != null ? oView.showZeros : undefined,
-			"topLeftCell":       oView.topLeftCell != null ? this.SerRef(oView.topLeftCell) : undefined,
+			"topLeftCell":       oView.topLeftCell != null ? oView.topLeftCell.getName() : undefined,
 			"zoomScale":         oView.zoomScale != null ? oView.zoomScale : undefined,
 			"pane":              oView.pane != null ? this.SerPane(oView.pane) : undefined, 
 			"selection":         oWorksheet.selectionRange != null ? this.SerSelectionRange(oWorksheet.selectionRange) : undefined
@@ -546,12 +548,23 @@
 		if (!oPane)
 			return oPane;
 
+		var nActivePane = null;
+		var nCol = oPane.topLeftFrozenCell.getCol0();
+		var nRow = oPane.topLeftFrozenCell.getRow0();
+		if (0 < nCol && 0 < nRow) {
+			nActivePane = AscCommonExcel.EActivePane.bottomRight;
+		} else if (0 < nRow) {
+			nActivePane = AscCommonExcel.EActivePane.bottomLeft;
+		} else if (0 < nCol) {
+			nActivePane = AscCommonExcel.EActivePane.topRight;
+		}
+		
 		return {
-			//activePane:  ToXML_EActivePane(oPane.activePane), // not supported
-			"state":       oPane.state != null ? oPane.state : undefined,
-			"topLeftCell": oPane.topLeftCell != null ? oPane.topLeftCell : undefined,
-			"xSplit":      oPane.xSplit != null ? oPane.xSplit : undefined,
-			"ySplit":      oPane.ySplit != null ? oPane.ySplit : undefined
+			"activePane":  nActivePane != null ? ToXML_EActivePane(nActivePane) : undefined,
+			"state":       "frozen", // Всегда пишем Frozen
+			"topLeftCell": oPane.topLeftFrozenCell.getID(),
+			"xSplit":      0 < nCol ? nCol : undefined,
+			"ySplit":      0 < nRow ? nRow : undefined
 		}
 	};
 	WriterToJSON.prototype.SerSelectionRange = function(oSelection)
@@ -562,7 +575,7 @@
 		return {
 			"activeCell":   oSelection.activeCell != null ? this.SerRefCell(oSelection.activeCell) : undefined,
 			"activeCellId": oSelection.activeCellId != null ? oSelection.activeCellId : undefined,
-			"sqref":        oSelection.ranges != null ? getSqRefString(oSelection.ranges) : undefined
+			"sqref":        oSelection.ranges != null ? AscCommonExcel.getSqRefString(oSelection.ranges) : undefined
 		}
 	};
 	WriterToJSON.prototype.SerTableParts = function(aParts)
@@ -576,7 +589,7 @@
 	WriterToJSON.prototype.SerTablePart = function(oPart)
 	{
 		return {
-			"ref":            oPart.Ref != null ? this.SerRef(oPart.Ref) : undefined,
+			"ref":            oPart.Ref != null ? oPart.Ref.getName() : undefined,
 			"headerRowCount": oPart.HeaderRowCount != null ? oPart.HeaderRowCount : undefined,
 			"totalsRowCount": oPart.TotalsRowCount != null ? oPart.TotalsRowCount : undefined,
 			"displayName":    oPart.DisplayName != null ? oPart.DisplayName : undefined,
@@ -602,14 +615,14 @@
 	WriterToJSON.prototype.SerTableColumn = function(oColumn)
 	{
 		if (oColumn.dxf)
-			this.stylesForWrite.aDxfs.push(oColumn.dxf);
+			this.InitSaveManager.aDxfs.push(oColumn.dxf);
 
 		return {
 			"name":              oColumn.Name != null ? oColumn.Name : undefined,
 			"totalsRowLabel":    oColumn.TotalsRowLabel != null ? oColumn.TotalsRowLabel : undefined,
 			"totalsRowFunction": oColumn.TotalsRowFunction != null ? ToXML_ETotalsRowFunction(oColumn.TotalsRowFunction) : undefined,
 			"totalsRowFormula":  oColumn.TotalsRowFormula != null ? oColumn.TotalsRowFormula : undefined,
-			"dataDxfId":         oColumn.dxf != null ? this.stylesForWrite.aDxfs.length : undefined,
+			"dataDxfId":         oColumn.dxf != null ? this.InitSaveManager.aDxfs.length : undefined,
 			"queryTableFieldId": oColumn.queryTableFieldId != null ? oColumn.queryTableFieldId : undefined,
 			"uniqueName":        oColumn.uniqueName != null ? oColumn.uniqueName : undefined,
 			"id":                oColumn.id != null ? oColumn.id : undefined
@@ -825,7 +838,7 @@
 			"displayXAxis":        oGroup.displayXAxis != null ? oGroup.displayXAxis : undefined,
 			"displayHidden":       oGroup.displayHidden != null ? oGroup.displayHidden : undefined,
 			"minAxisType":         oGroup.minAxisType != null ? ToXML_ST_SparklineAxisMinMax(oGroup.minAxisType) : undefined,
-			"maxAxisType":         oGroup.maxAxisType != null ? ToXML_ST_SparklineAxisMinMax(oGroup.maxAxisType) : undefine,
+			"maxAxisType":         oGroup.maxAxisType != null ? ToXML_ST_SparklineAxisMinMax(oGroup.maxAxisType) : undefined,
 			"rightToLeft":         oGroup.rightToLeft != null ? oGroup.rightToLeft : undefined,
 			"colorSeries":         oGroup.colorSeries != null ? this.SerColorExcell(oGroup.colorSeries) : undefined,
 			"colorNegative":       oGroup.colorNegative != null ? this.SerColorExcell(oGroup.colorNegative) : undefined,
@@ -843,7 +856,7 @@
 	{
 		return {
 			"f":     oSparkLine.f != null ? oSparkLine.f : undefined,
-			"sqRef": oSparkLine.sqRef != null ? getSqRefString(oSparkLine.sqRef) : undefined
+			"sqRef": oSparkLine.sqRef != null ? oSparkLine.sqRef.getName() : undefined
 		}
 	};
 	WriterToJSON.prototype.SerHdrFtrExcell = function(oHdrFtr)
@@ -999,7 +1012,7 @@
 			"uniqueMemberProperty":         oField.uniqueMemberProperty != null ? oField.uniqueMemberProperty : undefined,
 			"compact":                      oField.compact != null ? oField.compact : undefined,
 			"allDrilled":                   oField.allDrilled != null ? oField.allDrilled : undefined,
-			"num":                          oField.num != null ? this.SerNumFmtExcell(oField.num) : undefined,
+			"numFmtId":                     oField.num != null ? this.SerNumFmtExcell(oField.num, undefined, true) : undefined,
 			"outline":                      oField.outline != null ? oField.outline : undefined,
 			"subtotalTop":                  oField.subtotalTop != null ? oField.subtotalTop : undefined,
 			"dragToRow":                    oField.dragToRow != null ? oField.dragToRow : undefined,
@@ -1352,6 +1365,7 @@
 			"showDataAs": oDataField.showDataAs != null ? ToXml_ST_ShowDataAs(oDataField.showDataAs) : undefined,
 			"baseField":  oDataField.baseField != null ? oDataField.baseField : undefined,
 			"baseItem":   oDataField.baseItem != null ? oDataField.baseItem : undefined,
+			"numFmtId":   oDataField.num != null ? this.stylesForWrite.getNumIdByFormat(oDataField.num) : undefined, // тут, отсюда
 			"extLst":     oDataField.extLst != null ? this.SerExtensionList(oDataField.extLst) : undefined
 		}
 	};
@@ -1607,7 +1621,7 @@
 		return {
 			"name":            oSlicer.name != null ? oSlicer.name : undefined,
 			"uid":             oSlicer.uid != null ? oSlicer.uid : undefined,
-			"cacheDefinition": oSlicer.cacheDefinition != null ? this.SerCacheDefinition(oSlicer.cacheDefinition) : undefined,
+			"cacheDefinition": oSlicer.cacheDefinition != null ? oSlicer.cacheDefinition.name : undefined,
 			"caption":         oSlicer.caption != null ? oSlicer.caption : undefined,
 			"startItem":       oSlicer.startItem != null ? oSlicer.startItem : undefined,
 			"columnCount":     oSlicer.columnCount != null ? oSlicer.columnCount : undefined,
@@ -1618,7 +1632,7 @@
 			"rowHeight":       oSlicer.rowHeight != null ? oSlicer.rowHeight  : undefined
 		}
 	};
-	WriterToJSON.prototype.SerCacheDefinition = function(oChacheDef) // CT_slicerCacheDefinition
+	WriterToJSON.prototype.SerSlicerCacheDefinition = function(oChacheDef) // CT_slicerCacheDefinition
 	{
 		if (!oChacheDef)
 			return oChacheDef;
@@ -1701,8 +1715,7 @@
 			return oOlap;
 
 		return {
-			"pivotCacheId":         oOlap.pivotCacheId,
-			"pivotCacheDefinition": oOlap.pivotCacheDefinition != null ? this.SerPivotCacheDefinition(oOlap.pivotCacheDefinition) : undefined,
+			"pivotCacheId":         oOlap.getPivotCacheId(),
 			"levels":               this.SerOlapSlicerCacheLevelsData(oOlap.levels),
 			"selections":           this.SerOlapSlicerCacheSelections(oOlap.selections)
 		}
@@ -1801,7 +1814,7 @@
 			"missingItemsLimit":     oCache.missingItemsLimit != null ? oCache.missingItemsLimit : undefined,
 			"createdVersion":        oCache.createdVersion !== 0 ? oCache.createdVersion : undefined,
 			"refreshedVersion":      oCache.refreshedVersion !== 0 ? oCache.refreshedVersion : undefined,
-			"minRefreshableVersion": oCache.invalid !== 0 ? oCache.invalid : undefined,
+			"minRefreshableVersion": oCache.minRefreshableVersion !== 0 ? oCache.minRefreshableVersion : undefined,
 			"recordCount":           oCache.cacheRecords != null ? oCache.cacheRecords.getRowsCount() : undefined,
 			"upgradeOnRefresh":      oCache.upgradeOnRefresh !== false ? oCache.upgradeOnRefresh : undefined,
 			"tupleCache":            oCache.tupleCache !== false ? oCache.tupleCache : undefined,
@@ -1828,6 +1841,15 @@
 
 		for (var key in oCaches)
 			oResult[key] = this.SerPivotCacheDefinition(oCaches[key].cache);
+
+		return oResult;
+	};
+	WriterToJSON.prototype.SerSlicerCaches = function(oCaches)
+	{
+		var oResult = {};
+
+		for (var key in oCaches)
+			oResult[key] = this.SerSlicerCacheDefinition(oCaches[key]);
 
 		return oResult;
 	};
@@ -1947,7 +1969,7 @@
 			"propertyName":        oField.propertyName != null ? oField.propertyName : undefined,
 			"serverField":         oField.serverField !== false ? oField.serverField : undefined,
 			"uniqueList":          oField.uniqueList !== true ? oField.uniqueList : undefined,
-			"num":                 oField.num != null ? this.SerNumFmtExcell(oField.num) : undefined,
+			"numFmtId":            oField.num != null ? this.SerNumFmtExcell(oField.num, undefined, true) : undefined,
 			"formula":             oField.formula != null ? oField.formula : undefined,
 			"sqlType":             oField.sqlType != 0 ? oField.sqlType : undefined,
 			"hierarchy":           oField.hierarchy != 0 ? oField.hierarchy : undefined,
@@ -2540,8 +2562,7 @@
 			return oCache;
 
 		return {
-			"pivotCacheId":         oCache.pivotCacheId != null ? oCache.pivotCacheId : undefined,
-			"pivotCacheDefinition": oCache.pivotCacheDefinition != null ? this.SerPivotCacheDefinition(oCache.pivotCacheDefinition) : undefined,
+			"pivotCacheId":         oCache.getPivotCacheId(),
 			"sortOrder":            oCache.sortOrder != null ? ToXML_ST_tabularSlicerCacheSortOrder(oCache.sortOrder) : undefined,
 			"customListSort":       oCache.customListSort != null ? oCache.customListSort : undefined,
 			"showMissing":          oCache.showMissing != null ? oCache.showMissing : undefined,
@@ -2690,7 +2711,7 @@
 			"showDropDown":     oDataValidation.showDropDown != null ? oDataValidation.showDropDown : undefined,
 			"showErrorMessage": oDataValidation.showErrorMessage != null ? oDataValidation.showErrorMessage : undefined,
 			"showInputMessage": oDataValidation.showInputMessage != null ? oDataValidation.showInputMessage : undefined,
-			"sqref":            oDataValidation.ranges != null ? getSqRefString(oDataValidation.ranges) : undefined,
+			"sqref":            oDataValidation.ranges != null ? AscCommonExcel.getSqRefString(oDataValidation.ranges) : undefined,
 			"type":             oDataValidation.type != null ? ToXML_ST_DataValidationType(oDataValidation.type) : undefined
 		}
 	};
@@ -2728,7 +2749,7 @@
 			"text":         oCondRule.text != null ? oCondRule.text : undefined,
 			"timePeriod":   oCondRule.timePeriod != null ? oCondRule.timePeriod : undefined,
 			"type":         oCondRule.type != null ? ToXML_CfRuleType(oCondRule.type) : undefined,
-			"sqref":        oCondRule.ranges != null ? getSqRefString(oCondRule.ranges) : undefined,
+			"sqref":        oCondRule.ranges != null ? AscCommonExcel.getSqRefString(oCondRule.ranges) : undefined,
 			"pivot":        oCondRule.pivot != null ? oCondRule.pivot : undefined,
 			"rules":        aRules
 		}
@@ -3018,61 +3039,61 @@
 	{
 		var aElements = [];
 		if (oCustomStyle.blankRow != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "blankRow"));	
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.blankRow, "blankRow"));	
 		if (oCustomStyle.firstColumn != null)
 			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "firstColumn"));
 		if (oCustomStyle.firstColumnStripe != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "firstColumnStripe"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumnStripe, "firstColumnStripe"));
 		if (oCustomStyle.firstColumnSubheading != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "firstColumnSubheading"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumnSubheading, "firstColumnSubheading"));
 		if (oCustomStyle.firstHeaderCell != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "firstHeaderCell"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstHeaderCell, "firstHeaderCell"));
 		if (oCustomStyle.firstRowStripe != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "firstRowStripe"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstRowStripe, "firstRowStripe"));
 		if (oCustomStyle.firstRowSubheading != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "firstRowSubheading"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstRowSubheading, "firstRowSubheading"));
 		if (oCustomStyle.firstSubtotalColumn != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "firstSubtotalColumn"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstSubtotalColumn, "firstSubtotalColumn"));
 		if (oCustomStyle.firstSubtotalRow != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "firstSubtotalRow"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstSubtotalRow, "firstSubtotalRow"));
 		if (oCustomStyle.firstTotalCell != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "firstTotalCell"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstTotalCell, "firstTotalCell"));
 		if (oCustomStyle.headerRow != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "headerRow"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.headerRow, "headerRow"));
 		if (oCustomStyle.lastColumn != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "lastColumn"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.lastColumn, "lastColumn"));
 		if (oCustomStyle.lastHeaderCell != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "lastHeaderCell"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.lastHeaderCell, "lastHeaderCell"));
 		if (oCustomStyle.lastTotalCell != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "lastTotalCell"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.lastTotalCell, "lastTotalCell"));
 		if (oCustomStyle.pageFieldLabels != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "pageFieldLabels"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.pageFieldLabels, "pageFieldLabels"));
 		if (oCustomStyle.pageFieldValues != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "pageFieldValues"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.pageFieldValues, "pageFieldValues"));
 		if (oCustomStyle.secondColumnStripe != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "secondColumnStripe"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.secondColumnStripe, "secondColumnStripe"));
 		if (oCustomStyle.secondColumnSubheading != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "secondColumnSubheading"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.secondColumnSubheading, "secondColumnSubheading"));
 		if (oCustomStyle.secondRowStripe != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "secondRowStripe"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.secondRowStripe, "secondRowStripe"));
 		if (oCustomStyle.secondRowSubheading != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "secondRowSubheading"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.secondRowSubheading, "secondRowSubheading"));
 		if (oCustomStyle.secondSubtotalColumn != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "secondSubtotalColumn"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.secondSubtotalColumn, "secondSubtotalColumn"));
 		if (oCustomStyle.secondSubtotalRow != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "secondSubtotalRow"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.secondSubtotalRow, "secondSubtotalRow"));
 		if (oCustomStyle.thirdColumnSubheading != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "thirdColumnSubheading"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.thirdColumnSubheading, "thirdColumnSubheading"));
 		if (oCustomStyle.thirdRowSubheading != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "thirdRowSubheading"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.thirdRowSubheading, "thirdRowSubheading"));
 		if (oCustomStyle.thirdSubtotalColumn != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "thirdSubtotalColumn"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.thirdSubtotalColumn, "thirdSubtotalColumn"));
 		if (oCustomStyle.thirdSubtotalRow != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "thirdSubtotalRow"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.thirdSubtotalRow, "thirdSubtotalRow"));
 		if (oCustomStyle.totalRow != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "totalRow"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.totalRow, "totalRow"));
 		if (oCustomStyle.wholeTable != null)
-			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.firstColumn, "wholeTable"));
+			aElements.push(this.SerTableCustomStyleElement(oCustomStyle.wholeTable, "wholeTable"));
 
 		return {
 			"name":     oCustomStyle.name != null ? oCustomStyle.name : undefined,
@@ -3084,12 +3105,12 @@
 	WriterToJSON.prototype.SerTableCustomStyleElement = function(oCustomStyleElement, sType)
 	{
 		if (oCustomStyleElement.dxf)
-			this.stylesForWrite.aDxfs.push(oCustomStyleElement.dxf);
+			this.InitSaveManager.aDxfs.push(oCustomStyleElement.dxf);
 
 		return {
 			"type":  sType,
 			"size":  oCustomStyleElement.size != null ? oCustomStyleElement.size : undefined,
-			"dxfId": oCustomStyleElement.dxf != null ? this.stylesForWrite.aDxfs.length : undefined
+			"dxfId": oCustomStyleElement.dxf != null ? this.InitSaveManager.aDxfs.length : undefined
 		}
 	};
 	WriterToJSON.prototype.SerBorderExcell = function(oBorder)
@@ -3187,7 +3208,7 @@
 			"scheme":    oFont.scheme != null ? ToXML_EFontScheme(oFont.scheme) : undefined
 		}
 	};
-	WriterToJSON.prototype.SerNumFmtExcell = function(oNumFmt, nId)
+	WriterToJSON.prototype.SerNumFmtExcell = function(oNumFmt, nId, bGetNumFmtId)
 	{
 		if (!oNumFmt)
 			return oNumFmt;
@@ -3202,6 +3223,9 @@
 				numId = oNumFmt.id;
 		}
 
+		if (bGetNumFmtId === true)
+			return numId;
+			
 		var sFormat = oNumFmt.getFormat();
 		
 		return {
@@ -3222,9 +3246,9 @@
 		for (var i = 0; i < elems.length; ++i)
 		{
 			//todo avoid diff
-			var oBorder = elems[i].getDif(g_oDefaultFormat.BorderAbs);
-			if (oBorder)
-				aBorders.push(this.SerBorderExcell(oBorder));
+			//var oBorder = elems[i].getDif(g_oDefaultFormat.BorderAbs);
+			//if (oBorder)
+			aBorders.push(this.SerBorderExcell(elems[i]));
 		}
 
 		//fills
@@ -3255,8 +3279,8 @@
 		oTableStyles = this.Workbook.TableStyles != null ? this.SerTableStyles(this.Workbook.TableStyles) : undefined;
 
 		//Dxfs пишется после TableStyles, потому что Dxfs может пополниться при записи TableStyles
-		for (i = 0; i < this.stylesForWrite.aDxfs.length; i++)
-			aDxfs.push(this.SerDxf(this.stylesForWrite.aDxfs[i]));
+		for (i = 0; i < this.InitSaveManager.aDxfs.length; i++)
+			aDxfs.push(this.SerDxf(this.InitSaveManager.aDxfs[i]));
 
 		var aExtDxfsTemp = [];
 		var oSlicerStyles = this.PrepareSlicerStyles(this.Workbook.SlicerStyles, aExtDxfs);
@@ -3368,7 +3392,7 @@
 		return {
 			"filterColumn": aFilterColumns.length > 0 ? aFilterColumns : undefined,
 			"sortState":    oAutoFilter.SortState != null ? this.SerSortState(oAutoFilter.SortState) : undefined,
-			"ref":          oAutoFilter.Ref != null ? this.SerRef(oAutoFilter.Ref) : undefined
+			"ref":          oAutoFilter.Ref != null ? oAutoFilter.Ref.getName() : undefined
 		}
 	};
 	WriterToJSON.prototype.SerFilterColumn = function(oFilterColumn) // CT_ColumnFilter
@@ -3392,11 +3416,11 @@
 			return oColorFilter;
 
 		if (oColorFilter.dxf)
-			this.stylesForWrite.aDxfs.push(oColorFilter.dxf);
+			this.InitSaveManager.aDxfs.push(oColorFilter.dxf);
 
 		return {
 			"cellColor": oColorFilter.CellColor != null ? oColorFilter.CellColor : undefined,
-			"dxfId":     oColorFilter.dxf != null ? this.stylesForWrite.aDxfs.length : undefined
+			"dxfId":     oColorFilter.dxf != null ? this.InitSaveManager.aDxfs.length : undefined
 		}
 	};
 	WriterToJSON.prototype.SerCustomFilters = function(oCustomFilters)
@@ -3508,13 +3532,13 @@
 			return oSortCond;
 
 		if (oSortCond.dxf)
-			this.stylesForWrite.aDxfs.push(oSortCond.dxf);
+			this.InitSaveManager.aDxfs.push(oSortCond.dxf);
 
 		return {
 			"sortBy":     oSortCond.ConditionSortBy != null ? ToXML_ESortBy(oSortCond.ConditionSortBy) : undefined,
 			"descending": oSortCond.ConditionDescending != null ? oSortCond.ConditionDescending : undefined,
 			"ref":        oSortCond.Ref != null ? this.SerRef(oSortCond.Ref) : undefined,
-			"dxfId":      oSortCond.dxf != null ? this.stylesForWrite.aDxfs.length : undefined
+			"dxfId":      oSortCond.dxf != null ? this.InitSaveManager.aDxfs.length : undefined
 		}
 	};
 	WriterToJSON.prototype.SerRef = function(oRef)
@@ -3536,8 +3560,23 @@
 		return sColumn + (oRefCell.row + 1);
 	};
 	
-	ReaderFromJSON.prototype.WorksheetFromJSON = function(oParsedSheet, oWorkbook, oWorksheet)
+	ReaderFromJSON.prototype.WorksheetFromJSON = function(oParsedSheet, oWorkbook, oWorksheet, bSaveToHistory)
 	{
+		var api = window["Asc"]["editor"];
+		var WorkbookView = api.wb;
+		var renameSheetMap = {};
+
+		History.TurnOff();
+		if (oWorkbook == null)
+		{
+			oWorkbook = new AscCommonExcel.Workbook();
+			oWorkbook.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
+			oWorkbook.setCommonIndexObjectsFrom(WorkbookView.model);
+		}
+		this.Workbook = oWorkbook;
+		oWorksheet = new AscCommonExcel.Worksheet(oWorkbook, -1);
+		this.curWorksheet = oWorksheet;
+
 		if (this.StyleObject == null)
 		{
 			var oStyleObject = {aBorders: [], aFills: [], aFonts: [], oNumFmts: {}, aCellStyleXfs: [],
@@ -3545,20 +3584,25 @@
 			this.StylesFromJSON(oParsedSheet["styles"], oStyleObject);
 			var oStyleReader = new AscCommonExcel.InitOpenManager(null, this.Workbook, [], false);
 			oStyleReader.InitStyleManager(oStyleObject, this.aCellXfs);
-			this.Workbook.oNumFmtsOpen = oStyleObject.oNumFmts;
+			this.oNumFmtsOpen = oStyleObject.oNumFmts;
 			this.aDxfs = oStyleObject.aDxfs;
 		}
 
+		this.slicerCaches = {};
+		this.slicerCachesExt = {};
+
 		if (oParsedSheet["pivotCaches"] != null)
 			this.pivotCaches = this.PivotCachesFromJSON(oParsedSheet["pivotCaches"]);
-
-		if (!oWorksheet)
-			oWorksheet = new AscCommonExcel.Worksheet(oWorkbook, oWorkbook.aWorksheets.length);
-		this.curWorksheet = oWorksheet;
+		
+		if (oParsedSheet["slicerCaches"] != null)
+			this.slicerCaches = this.SlicerCachesFromJSON(oParsedSheet["slicerCaches"], oWorksheet);
+		
+		if (oParsedSheet["slicerCachesExt"] != null)
+			this.slicerCachesExt = this.SlicerCachesFromJSON(oParsedSheet["slicerCachesExt"], oWorksheet);
 
 		// worksheet props
-		oWorksheet.setName(oParsedSheet["name"] + "1");
-		oWorksheet.setHidden(oParsedSheet["hidden"] === "hidden" ? true : false);
+		oWorksheet.sName = oParsedSheet["name"];
+		oWorksheet.bHidden = oParsedSheet["hidden"] === "hidden" ? true : false;
 
 		if (oParsedSheet["cols"] != null)
 			this.ColsFromJSON(oParsedSheet["cols"], oWorksheet);
@@ -3567,21 +3611,21 @@
 		if (oParsedSheet["pageMargins"] != null)
 			this.PageMarginsFromJSON(oParsedSheet["pageMargins"], oWorksheet.PagePrintOptions.pageMargins);
 		if (oParsedSheet["pageSetup"] != null)
-			this.PageSetupExcellFromJSON(oParsedSheet["pageSetup"], oWorksheet.PagePrintOptions.pageSetup);
+			this.PageSetupExcellFromJSON(oParsedSheet["pageSetup"], oWorksheet.PagePrintOptions.pageSetup); // ???
 		if (oParsedSheet["printOptions"] != null)
 			this.PrintOptionsExcelFromJSON(oParsedSheet["printOptions"], oWorksheet.PagePrintOptions);
-		if (oParsedSheet["hiperlinks"] != null)
-			this.HyperlinksExcelFromJSON(oParsedSheet["hiperlinks"], oWorksheet);
 		if (oParsedSheet["mergeCells"] != null)
 			this.MergeCellsFromJSON(oParsedSheet["mergeCells"], oWorksheet);
 		if (oParsedSheet["sheetData"] != null)
 			this.SheetDataFromJSON(oParsedSheet["sheetData"], oWorksheet);
+		if (oParsedSheet["hiperlinks"] != null)
+			this.HyperlinksExcelFromJSON(oParsedSheet["hiperlinks"], oWorksheet);
 		if (oParsedSheet["drawings"] != null)
 			this.DrawingsExcellFromJSON(oParsedSheet["drawings"], oWorksheet);
 		if (oParsedSheet["autoFilter"] != null)
-			oWorksheet.AutoFilter = this.AutoFilterFromJSON(oParsedSheet["autoFilter"])
+			oWorksheet.AutoFilter = this.AutoFilterFromJSON(oParsedSheet["autoFilter"], true)
 		if (oParsedSheet["sortState"] != null)
-			oWorksheet.sortState = this.SortStateFromJSON(oParsedSheet["sortState"]);
+			oWorksheet.sortState = this.SortStateFromJSON(oParsedSheet["sortState"], oWorksheet);
 		if (oParsedSheet["tableParts"] != null)
 			this.TablePartsFromJSON(oParsedSheet["tableParts"], oWorksheet);
 		if (oParsedSheet["comments"] != null) 
@@ -3591,7 +3635,7 @@
 		if (oParsedSheet["sheetViews"] != null)
 			oWorksheet.sheetViews = this.SheetViewsFromJSON(oParsedSheet["sheetViews"], oWorksheet);
 		if (oParsedSheet["sheetPr"] != null)
-			oWorksheet.sheetPr = this.SheetPrFromJSON(oParsedSheet["sheetPr"]);
+			oWorksheet.sheetPr = this.SheetPrFromJSON(oParsedSheet["sheetPr"]); /// ???
 		if (oParsedSheet["sparklineGroup"] != null)
 			oWorksheet.aSparklineGroups = this.SparklineGroupsFromJSON(oParsedSheet["sparklineGroup"]);
 		if (oParsedSheet["headerFooter"] != null)
@@ -3609,7 +3653,40 @@
 		if (oParsedSheet["protectedRanges"] != null)
 			oWorksheet.protectedRanges = this.ProtectedRangesFromJSON(oParsedSheet["protectedRanges"]);
 
-		return oWorksheet;
+		oWorksheet.initPostOpenZip(this.pivotCaches, this.oNumFmtsOpen);
+		var sBinarySheet = AscCommonExcel.g_clipboardExcel.copyProcessor.getBinaryForCopy(oWorksheet, null, null, true, true);
+		History.TurnOn();
+
+		var newFonts = {};
+		newFonts = this.Workbook.generateFontMap2();
+		var pasteProcessor = AscCommonExcel.g_clipboardExcel.pasteProcessor;
+		newFonts = pasteProcessor._convertFonts(newFonts);
+		for (var i = 0; i < oWorksheet.Drawings.length; i++) {
+			oWorksheet.Drawings[i].graphicObject.getAllFonts(newFonts);
+		}
+		
+		var pasteSheet = function() {
+			var where = WorkbookView.model.aWorksheets.length;
+			var renameParams = WorkbookView.model.copyWorksheet(0, where, oWorksheet.name, undefined, undefined, undefined, oWorksheet, sBinarySheet);
+			//TODO ошибку по срезам добавил в renameParams. необходимо пересмотреть
+			//переименовать эту переменную, либо не добавлять copySlicerError и посылать ошибку в другом месте
+			if (renameParams && renameParams.copySlicerError) {
+				t.handlers.trigger("asc_onError", Asc.c_oAscError.ID.MoveSlicerError, Asc.c_oAscError.Level.NoCritical);
+			}
+
+			renameSheetMap[renameParams.lastName] = renameParams.newName;
+			api.asc_showWorksheet(where);
+			api.asc_setZoom(1);
+			// Посылаем callback об изменении списка листов
+			api.sheetsChanged();
+		};
+
+		
+		api._loadFonts(newFonts, function () {
+			pasteSheet();
+		});
+
+		return WorkbookView.model.aWorksheets[WorkbookView.model.aWorksheets.length - 1];
 	};
 	ReaderFromJSON.prototype.StylesFromJSON = function(oParsed, oStyleObject)
 	{
@@ -3732,8 +3809,16 @@
 
 			for(var j = elem.Min; j <= elem.Max; j++){
 				var oNewCol = new AscCommonExcel.Col(oWorksheet, j - 1);
+				//var oOldProps = oNewCol.getWidthProp();
 				elem.col.cloneTo(oNewCol);
 				oWorksheet.aCols[oNewCol.index] = oNewCol;
+				//oNewCol.xfs = null;
+				//elem.col.xfs && oNewCol.setStyle(elem.col.xfs);
+				//var oNewProps = oNewCol.getWidthProp();
+				// if(false == oOldProps.isEqual(oNewProps))
+				// 	History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ColProp, oWorksheet.getId(),
+				// 		oNewCol._getUpdateRange(),
+				// 		new AscCommonExcel.UndoRedoData_IndexSimpleProp(oNewCol.index, false, oOldProps, oNewProps));
 			}
 		}
 	};
@@ -3744,8 +3829,6 @@
 			Min: null,
 			col: new AscCommonExcel.Col(oWorksheet || this.curWorksheet, 0)
 		}
-
-		var oXfs = oParsedCol["xfs"] ? this.CellXfsFromJSON(oParsedCol["xfs"]) : null;
 
 		if (oParsedCol["bestFit"] !== undefined)
 			oTempCol.col.BestFit = oParsedCol["bestFit"];
@@ -3763,9 +3846,8 @@
 			oTempCol.col.outlineLevel = oParsedCol["outlineLevel"];
 		if (oParsedCol["collapsed"] !== undefined)
 			oTempCol.col.collapsed = oParsedCol["collapsed"];
-
-		oXfs && oTempCol.col.setStyle(oXfs);
-		oTempCol.col.fixOnOpening();
+		if (oParsedCol["xfs"] != null)
+			oTempCol.col.xfs = this.aCellXfs[oParsedCol["xfs"]];
 
 		return oTempCol;
 	};
@@ -3875,9 +3957,19 @@
 	ReaderFromJSON.prototype.HyperlinksExcelFromJSON = function(aParsedLinks, oWorksheet) // to do
 	{
 		var oHyperlink;
+		var aHyperlinks;
+
 		for (var nLink = 0; nLink < aParsedLinks.length; nLink++)
 		{
 			oHyperlink = this.HyperlinkExcelFromJSON(aParsedLinks[nLink], oWorksheet);
+			aHyperlinks = oWorksheet.hyperlinkManager.get(oHyperlink.Ref.bbox);
+			//удаляем ссылки с тем же адресом
+			for(var i = 0, length = aHyperlinks.all.length; i < length; i++)
+			{
+				var hyp = aHyperlinks.all[i];
+				if(hyp.bbox.isEqual(oHyperlink.Ref.bbox))
+					oWorksheet.hyperlinkManager.removeElement(hyp);
+			}
 			oHyperlink.Ref && oWorksheet.hyperlinkManager.add(oHyperlink.Ref.bbox, oHyperlink);
 		}
 	};
@@ -3914,6 +4006,16 @@
 		var objectRender = new AscFormat.DrawingObjects();
 		var oFlags = {from: false, to: false, pos: false, ext: false, editAs: AscCommon.c_oAscCellAnchorType.cellanchorTwoCell};
 		var oDrawing = objectRender.createDrawingObject();
+		var oFrom = {}, oTo = {}, oPos = {}, oExt = {};
+
+		var oGraphicObj = this.GraphicObjFromJSON(oParsed["graphic"]);
+		oDrawing.graphicObject = oGraphicObj;
+		oGraphicObj.setDrawingBase(oDrawing);
+
+		if(typeof oGraphicObj.setWorksheet != "undefined")
+			oGraphicObj.setWorksheet(oWorksheet);
+		oGraphicObj.setDrawingObjects(objectRender);
+		//History.Add(new AscFormat.CChangesDrawingObjectsAddToDrawingObjects(oGraphicObj, oWorksheet.Drawings.length));
 
 		if (oParsed["type"] != null)
 			oDrawing.Type = FromXML_ST_EditAs(oParsed["type"]);
@@ -3922,34 +4024,44 @@
 		if (oParsed["from"] != null)
 		{
 			oFlags.from = true;
-			this.FromToObjFromJSON(oParsed["from"], oDrawing.from);
+			this.FromToObjFromJSON(oParsed["from"], oFrom);
 		}
+		else
+			oFrom = oDrawing.from;
+
 		if (oParsed["to"] != null)
 		{
 			oFlags.to = true;
-			this.FromToObjFromJSON(oParsed["to"], oDrawing.to);
+			this.FromToObjFromJSON(oParsed["to"], oTo);
 		}
+		else
+			oTo = oDrawing.to;
+		
 		if (oParsed["pos"] != null)
 		{
-			oDrawing.Pos = {};
-			oDrawing.Pos.X = oParsed["pos"]["x"];
-			oDrawing.Pos.Y = oParsed["pos"]["y"];
+			oPos = {
+				x: oParsed["pos"]["x"],
+				y: oParsed["pos"]["y"]
+			}
 		}
+		else
+			oPos = {
+				x: oDrawing.Pos.X,
+				y: oDrawing.Pos.Y,
+			};
+
 		if (oParsed["ext"] != null)
 		{
-			oDrawing.ext.cx = oParsed["ext"]["cx"];
-			oDrawing.ext.cy = oParsed["ext"]["cy"];
+			oExt = {
+				cx: private_EMU2MM(oParsed["ext"]["cx"]),
+				cy: private_EMU2MM(oParsed["ext"]["cy"])
+			}
 		}
 
+		oGraphicObj.setDrawingBaseCoords(oFrom.col, oFrom.colOff, oFrom.row, oFrom.rowOff, oTo.col, oTo.colOff, oTo.row, oTo.rowOff, oPos.x, oPos.y, oExt.cx, oExt.cy);
+		
 		if (oParsed["clientData"])
-			oDrawing.clientData = this.ClientDataFromJSON(oParsed["clientData"]);
-				
-		var oGraphicObj = this.GraphicObjFromJSON(oParsed["graphic"]);
-		oDrawing.graphicObject = oGraphicObj;
-		oGraphicObj.setDrawingBase(oDrawing);
-
-		if (oDrawing.clientData)
-			oDrawing.graphicObject.setClientData(oDrawing.clientData);
+			oGraphicObj.setClientData(this.ClientDataFromJSON(oParsed["clientData"]));
 
 		if(false != oFlags.from && false != oFlags.to){
 			oDrawing.Type = AscCommon.c_oAscCellAnchorType.cellanchorTwoCell;
@@ -3959,22 +4071,23 @@
 		else if(false != oFlags.pos && false != oFlags.ext)
 			oDrawing.Type = AscCommon.c_oAscCellAnchorType.cellanchorAbsolute;
 		
-		if(typeof oDrawing.graphicObject.setWorksheet != "undefined")
-			oDrawing.graphicObject.setWorksheet(oWorksheet);
+		
+		oGraphicObj.setDrawingBaseType && oGraphicObj.setDrawingBaseType(oDrawing.Type);
+		oGraphicObj.setDrawingBaseEditAs && oGraphicObj.setDrawingBaseEditAs(oDrawing.editAs);
 
-		if(!oDrawing.graphicObject.spPr)
+		if(!oGraphicObj.spPr)
 		{
-			oDrawing.graphicObject.setSpPr(new AscFormat.CSpPr());
-			oDrawing.graphicObject.spPr.setParent(oDrawing.graphicObject);
+			oGraphicObj.setSpPr(new AscFormat.CSpPr());
+			oGraphicObj.spPr.setParent(oGraphicObj);
 		}
-		if(!oDrawing.graphicObject.spPr.xfrm)
+		if(!oGraphicObj.spPr.xfrm)
 		{
-			oDrawing.graphicObject.spPr.setXfrm(new AscFormat.CXfrm());
-			oDrawing.graphicObject.spPr.xfrm.setParent(oDrawing.graphicObject.spPr);
-			oDrawing.graphicObject.spPr.xfrm.setOffX(0);
-			oDrawing.graphicObject.spPr.xfrm.setOffY(0);
-			oDrawing.graphicObject.spPr.xfrm.setExtX(0);
-			oDrawing.graphicObject.spPr.xfrm.setExtY(0);
+			oGraphicObj.spPr.setXfrm(new AscFormat.CXfrm());
+			oGraphicObj.spPr.xfrm.setParent(oGraphicObj.spPr);
+			oGraphicObj.spPr.xfrm.setOffX(0);
+			oGraphicObj.spPr.xfrm.setOffY(0);
+			oGraphicObj.spPr.xfrm.setExtX(0);
+			oGraphicObj.spPr.xfrm.setExtY(0);
 		}
 
 		return oDrawing;
@@ -4002,7 +4115,7 @@
 
 		return oClientData;
 	};
-	ReaderFromJSON.prototype.AutoFilterFromJSON = function(oParsed)
+	ReaderFromJSON.prototype.AutoFilterFromJSON = function(oParsed, bWriteToHistory)
 	{
 		var oAutoFilter = new AscCommonExcel.AutoFilter();
 
@@ -4012,7 +4125,19 @@
 			oAutoFilter.FilterColumns = this.FilterColumnsFromJSON(oParsed["filterColumn"]);
 		if (oParsed["sortState"] != null)
 			oAutoFilter.SortState = this.SortStateFromJSON(oParsed["sortState"]);
-		
+
+		// при восстановление table parts в историю не заносим
+		// if (bWriteToHistory)
+		// {
+		// 	this.curWorksheet.autoFilters._addHistoryObj({Ref: oAutoFilter.Ref}, AscCH.historyitem_AutoFilter_Add, {
+		// 		activeCells: oAutoFilter.Ref,
+		// 		styleName: undefined,
+		// 		addFormatTableOptionsObj: undefined,
+		// 		displayName: null,
+		// 		tablePart: undefined
+		// 	}, null, oAutoFilter.Ref, undefined);
+		// }
+
 		return oAutoFilter;
 	};
 	ReaderFromJSON.prototype.FilterColumnsFromJSON = function(aParsed)
@@ -4062,17 +4187,17 @@
 		var oFilters = new AscCommonExcel.Filters();
 		var oFilterVal, oDateGroupItem, oAutoFilterDateElem;
 
-		for (var nFilter = 0; nFilter < oParsed.filter.length; nFilter++)
+		for (var nFilter = 0; nFilter < oParsed["filter"].length; nFilter++)
 		{
 			oFilterVal = new AscCommonExcel.Filter();
-			oFilterVal.Val = oParsed.filter[nFilter];
+			oFilterVal.Val = oParsed["filter"][nFilter];
 			if(null != oFilterVal.Val)
 				oFilters.Values[oFilterVal.Val] = 1;
 		}
 
-		for (var nItem = 0; nItem < oParsed.dateGroupItem.length; nItem++)
+		for (var nItem = 0; nItem < oParsed["dateGroupItem"].length; nItem++)
 		{
-			oDateGroupItem = this.DateGroupItemFromJSON(oParsed.dateGroupItem[nItem]);
+			oDateGroupItem = this.DateGroupItemFromJSON(oParsed["dateGroupItem"][nItem]);
 			oAutoFilterDateElem = new AscCommonExcel.AutoFilterDateElem();
 			oAutoFilterDateElem.convertDateGroupItemToRange(oDateGroupItem);
 			oFilters.Dates.push(autoFilterDateElem);
@@ -4147,7 +4272,7 @@
 		if (oParsed["cellColor"] != null)
 			oColorFilter.CellColor = oParsed["cellColor"];
 		if (oParsed["dxfId"] != null)
-			oColorFilter.dxf = this.CellXfsFromJSON(oParsed["dxf"]);
+			oColorFilter.dxf = this.aDxfs[oParsed["dxfId"]];
 
 		return oColorFilter;
 	};
@@ -4439,8 +4564,8 @@
 		var oTempFmt = {f: null, id: null};
 		if (oParsed["formatCode"] != null)
 			oTempFmt.f = oParsed["formatCode"];
-		if (oParsed["formatId"] != null)
-			oTempFmt.id = oParsed["formatId"];
+		if (oParsed["numFmtId"] != null)
+			oTempFmt.id = oParsed["numFmtId"];
 
 		if(null != oTempFmt.id)
 			oNumFmt = this.ParseNum(oTempFmt, oNumFmts);
@@ -4489,7 +4614,7 @@
 		
 		return oTop10;
 	};
-	ReaderFromJSON.prototype.SortStateFromJSON = function(oParsed)
+	ReaderFromJSON.prototype.SortStateFromJSON = function(oParsed, oParent)
 	{
 		var oSortState = new AscCommonExcel.SortState();
 
@@ -4507,6 +4632,17 @@
 			for (var nSort = 0; nSort < oParsed["sortCondition"].length; nSort++)
 				oSortState.SortConditions.push(this.SortConditionFromJSON(oParsed["sortCondition"][nSort]));
 		}
+
+		// if (oParent instanceof AscCommonExcel.Worksheet)
+		// {
+		// 	History.Add(AscCommonExcel.g_oUndoRedoSortState, AscCH.historyitem_SortState_Add, oParent.getId(), null,
+		// 		new AscCommonExcel.UndoRedoData_SortState(oParent.sortState ? oParent.sortState.clone() : null, oSortState ? oSortState.clone() : null));
+		// }
+		// else
+		// {
+		// 	History.Add(AscCommonExcel.g_oUndoRedoSortState, AscCH.historyitem_SortState_Add, this.curWorksheet.getId(), null,
+		// 		new AscCommonExcel.UndoRedoData_SortState(oParent.sortState ? oParent.sortState.clone() : null, sortState ? sortState.clone() : null, true, oParent.DisplayName));
+		// }
 		
 		return oSortState;
 	};
@@ -4519,8 +4655,8 @@
 			oSortCond.ConditionSortBy = FromXML_ESortBy(oParsed["sortBy"]);
 		if (oParsed["descending"] != null)
 			oSortCond.ConditionDescending = oParsed["descending"];
-		if (oParsed["dxf"] != null)
-			oSortCond.dxf = this.CellXfsFromJSON(oParsed["dxf"]); // to do
+		if (oParsed["dxfId"] != null)
+			oSortCond.dxf = this.aDxfs[oParsed["dxfId"]];
 
 		return oSortCond;
 	};
@@ -4530,9 +4666,11 @@
 		for (var nTable = 0; nTable < aParsed.length; nTable++)
 		{
 			oTable = this.TablePartFromJSON(aParsed[nTable], oWorksheet);
-			if(null != oTable.Ref && null != oTable.DisplayName)
-			 	oWorksheet.workbook.dependencyFormulas.addTableName(oWorksheet, oTable, true);
-
+			if(null != oTable.Ref && null != oTable.DisplayName) {
+				oWorksheet.workbook.dependencyFormulas.addTableName(oWorksheet, oTable);
+				oTable.buildDependencies();
+			}
+			
 			oWorksheet.TableParts.push(oTable);
 		}
 		
@@ -4552,7 +4690,7 @@
 			oTable.DisplayName = oParsed["displayName"];
 		if (oParsed["autoFilter"] != null)
 		{
-			oTable.AutoFilter = this.AutoFilterFromJSON(oParsed["autoFilter"]);
+			oTable.AutoFilter = this.AutoFilterFromJSON(oParsed["autoFilter"], false);
 			if(!oTable.AutoFilter.Ref) {
 				oTable.AutoFilter.Ref = oTable.generateAutoFilterRef();
 			}
@@ -4573,6 +4711,21 @@
 			oTable.QueryTable = this.QueryTableFromJSON(oParsed["queryTable"]);
 		if (oParsed["tableType"] != null)
 			oTable.tableType = FromXML_ST_TableType(oParsed["tableType"]);
+
+		//var oSettings = new AscCommonExcel.AddFormatTableOptions();
+		//var oAddFormatTableOptionsRange = AscCommonExcel.g_oRangeCache.getAscRange(oParsed["ref"]).clone();
+		//oAddFormatTableOptionsRange.r2 -= 1;
+
+		//oSettings.setProperty(0, oAddFormatTableOptionsRange.getName());
+		//oSettings.setProperty(1, false);
+
+		// this.curWorksheet.autoFilters._addHistoryObj({Ref: oTable.Ref}, AscCH.historyitem_AutoFilter_Add, {
+		// 	activeCells: oTable.Ref,
+		// 	styleName: oTable.TableStyleInfo && oTable.TableStyleInfo.Name ? oTable.TableStyleInfo.Name : undefined,
+		// 	addFormatTableOptionsObj: oSettings,
+		// 	displayName: oTable.DisplayName ? oTable.DisplayName : null,
+		// 	tablePart: undefined
+		// }, null, oTable.Ref, undefined);
 
 		return oTable;
 	};
@@ -4597,7 +4750,7 @@
 		if (oParsed["totalsRowFormula"] != null)
 			oTableColumn.TotalsRowFormula = oParsed["totalsRowFormula"]; // to do (need to check)
 		if (oParsed["dataDxfId"] != null)
-			oTableColumn.dxf = this.CellXfsFromJSON(oParsed["dataDxfId"]);
+			oTableColumn.dxf = this.aDxfs[oParsed["dataDxfId"]];
 		if (oParsed["queryTableFieldId"] != null)
 			oTableColumn.queryTableFieldId = oParsed["queryTableFieldId"];
 		if (oParsed["uniqueName"] != null)
@@ -4752,7 +4905,7 @@
 	};
 	ReaderFromJSON.prototype.CondFormattingFromJSON = function(aParsed, oWorksheet)
 	{
-		var oConditionalFormatting;
+		var oConditionalFormatting, oCFRule;
 		for (var nCond = 0; nCond < aParsed.length; nCond++)
 		{
 			oConditionalFormatting = new AscCommonExcel.CConditionalFormatting();
@@ -4761,12 +4914,13 @@
 				oConditionalFormatting.pivot = aParsed[nCond]["pivot"];
 			if (aParsed[nCond]["sqref"] != null)
 				oConditionalFormatting.setSqRef(aParsed[nCond]["sqref"]);
-			oConditionalFormatting.aRules.push(this.CondFormattingRuleFromJSON(aParsed[nCond]));
+			
+			oCFRule = this.CondFormattingRuleFromJSON(aParsed[nCond]);
+			oConditionalFormatting.aRules.push(oCFRule);
 			if (oConditionalFormatting.isValid())
 			{
 				oConditionalFormatting.initRules();
-				oWorksheet.aConditionalFormattingRules =
-					oWorksheet.aConditionalFormattingRules.concat(oConditionalFormatting.aRules);
+				oWorksheet.addCFRule(oCFRule, true);
 			}
 		}
 	};
@@ -4779,7 +4933,7 @@
 		if (oParsed["bottom"] != null)
 			oConditionalFormattingRule.bottom = oParsed["bottom"];
 		if (oParsed["dxf"] != null)
-			oConditionalFormattingRule.dxf = this.CellXfsFromJSON(oParsed["dxf"]);
+			oConditionalFormattingRule.dxf = this.DxfFromJSON(oParsed["dxf"]);
 		if (oParsed["equalAverage"] != null)
 			oConditionalFormattingRule.equalAverage = oParsed["equalAverage"];
 		if (oParsed["operator"] != null)
@@ -4945,9 +5099,9 @@
 	};
 	ReaderFromJSON.prototype.SheetViewsFromJSON = function(oParsed, oWorksheet)
 	{
+		// read only first sheet view
 		var aResult = [];
-		for (var nElm = 0; nElm < oParsed.length; nElm++)
-			aResult.push(this.SheetViewFromJSON(oParsed[nElm], oWorksheet));
+		oParsed[0] != null && aResult.push(this.SheetViewFromJSON(oParsed[0], oWorksheet));
 
 		return aResult;
 	};
@@ -4968,7 +5122,7 @@
 				oSheetView.topLeftCell = new Asc.Range(_topLeftCell.c1, _topLeftCell.r1, _topLeftCell.c1, _topLeftCell.r1);
 		}
 		if (oParsed["zoomScale"] != null)
-			oSheetView.asc_setZoomScale(oParsed["zoomScale"]);
+			oSheetView.zoomScale = oParsed["zoomScale"];
 		if (oParsed["pane"] != null)
 		{
 			oSheetView.pane = this.PaneFromJSON(oParsed["pane"]);
@@ -4987,6 +5141,8 @@
 	{
 		var oPane = new AscCommonExcel.asc_CPane();
 
+		// if (oParsed["activePane"] != null)
+		// 	oPane.activePane = oParsed["activePane"];
 		if (oParsed["state"] != null)
 			oPane.state = oParsed["state"];
 		if (oParsed["topLeftCell"] != null)
@@ -4996,6 +5152,10 @@
 		if (oParsed["ySplit"] != null)
 			oPane.ySplit = oParsed["ySplit"];
 
+		oPane.init();
+		// var oData = new AscCommonExcel.UndoRedoData_FromTo(new AscCommonExcel.UndoRedoData_FrozenBBox(new Asc.Range(0, 0, 0, 0)), new AscCommonExcel.UndoRedoData_FrozenBBox(new Asc.Range(oPane.xSplit, oPane.ySplit, oPane.xSplit, oPane.ySplit)), null);
+		// History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ChangeFrozenCell,
+		// 	this.curWorksheet.getId(), null, oData);
 		return oPane;
 	};
 	ReaderFromJSON.prototype.SelectionRangeFromJSON = function(oParsed, oSelectionRange)
@@ -5460,8 +5620,8 @@
 			oPivotField.compact = oParsed["compact"];
 		if (oParsed["allDrilled"] != null)
 			oPivotField.allDrilled = oParsed["allDrilled"];
-		if (oParsed["num"] != null)
-			oPivotField.num = this.NumFmtExcellFromJSON(oParsed["num"]);
+		if (oParsed["numFmtId"] != null)
+			oPivotField.numFmtId = oParsed["numFmtId"];
 		if (oParsed["outline"] != null)
 			oPivotField.outline = oParsed["outline"];
 		if (oParsed["subtotalTop"] != null)
@@ -5811,7 +5971,7 @@
 		var oI = new CT_I();
 
 		if (oParsed["t"] != null)
-			oI.t = ToXml_ST_ItemType(oParsed["t"]);
+			oI.t = FromXml_ST_ItemType(oParsed["t"]);
 		if (oParsed["r"] != null)
 			oI.r = oParsed["r"];
 		if (oParsed["i"] != null)
@@ -5904,6 +6064,8 @@
 			oDataField.baseField = oParsed["baseField"];
 		if (oParsed["baseItem"] != null)
 			oDataField.baseItem = oParsed["baseItem"];
+		if (oParsed["numFmtId"] != null)
+			oDataField.numFmtId = oParsed["numFmtId"];
 		if (oParsed["extLst"] != null)
 			oDataField.extLst = this.ExtensionListFromJSON(oParsed["extLst"]);
 
@@ -6197,7 +6359,7 @@
 		if (oParsed["uid"] != null)
 			oSlicer.uid = oParsed["uid"];
 		if (oParsed["cacheDefinition"] != null)
-			oSlicer.cacheDefinition = this.CacheDefinitionFromJSON(oParsed["cacheDefinition"], oWorksheet);
+			oSlicer.cacheDefinition = this.slicerCaches[oParsed["cacheDefinition"]] || this.slicerCachesExt[oParsed["cacheDefinition"]];
 		if (oParsed["caption"] != null)
 			oSlicer.caption = oParsed["caption"];
 		if (oParsed["startItem"] != null)
@@ -6217,7 +6379,7 @@
 
 		return oSlicer;
 	};
-	ReaderFromJSON.prototype.CacheDefinitionFromJSON = function(oParsed, oWorksheet)
+	ReaderFromJSON.prototype.SlicerCacheDefinitionFromJSON = function(oParsed, oWorksheet)
 	{
 		var oCache = new Asc.CT_slicerCacheDefinition(oWorksheet.workbook);
 
@@ -6267,7 +6429,7 @@
 		if (oParsed["tabular"] != null)
 			oData.tabular = this.TabularSlicerCacheFromJSON(oParsed["tabular"]);
 	
-		oData;
+		return oData;
 	};
 	ReaderFromJSON.prototype.OlapSlicerCacheFromJSON = function(oParsed)
 	{
@@ -6448,6 +6610,15 @@
 
 		return oPivotCaches;
 	};
+	ReaderFromJSON.prototype.SlicerCachesFromJSON = function(oParsed, oWorksheet)
+	{
+		var oSlicerCaches = {};
+
+		for (var key in oParsed)
+			oSlicerCaches[key] = this.SlicerCacheDefinitionFromJSON(oParsed[key], oWorksheet);
+
+		return oSlicerCaches;
+	};
 	ReaderFromJSON.prototype.CacheSourceFromJSON = function(oParsed)
 	{
 		var oSource = new CT_CacheSource();
@@ -6482,16 +6653,16 @@
 	{
 		var oPages = new CT_Pages();
 
-		for (var nElm = 0; nElm < oParsed.page.length; nElm++)
-			oPages.page.push(this.PageFromJSON(oParsed.page[nElm]));
+		for (var nElm = 0; nElm < oParsed["page"].length; nElm++)
+			oPages.page.push(this.PageFromJSON(oParsed["page"][nElm]));
 
 		return oPages;
 	};
 	ReaderFromJSON.prototype.PageFromJSON = function(oParsed)
 	{
 		var oPage = new CT_PCDSCPage();
-		for (var nElm = 0; nElm < oParsed.pageItem.length; nElm++)
-			oPages.pageItem.push(this.PageItemFromJSON(oParsed.pageItem[nElm]));
+		for (var nElm = 0; nElm < oParsed["pageItem"].length; nElm++)
+			oPages.pageItem.push(this.PageItemFromJSON(oParsed["pageItem"][nElm]));
 
 		return oPage;
 	};
@@ -6507,8 +6678,8 @@
 	{
 		var oSets = new CT_RangeSets();
 
-		for (var nElm = 0; nElm < oParsed.rangeSet.length; nElm++)
-			oSets.rangeSet.push(this.RangeSetFromJSON(oParsed.rangeSet[nElm]));
+		for (var nElm = 0; nElm < oParsed["rangeSet"].length; nElm++)
+			oSets.rangeSet.push(this.RangeSetFromJSON(oParsed["rangeSet"][nElm]));
 
 		return oSets;
 	};
@@ -6550,8 +6721,8 @@
 	{
 		var oFields = new CT_CacheFields();
 
-		for (var nElm = 0; nElm < oParsed.cacheField.length; nElm++)
-			oFields.cacheField.push(this.CacheFieldFromJSON(oParsed.cacheField[nElm]));
+		for (var nElm = 0; nElm < oParsed["cacheField"].length; nElm++)
+			oFields.cacheField.push(this.CacheFieldFromJSON(oParsed["cacheField"][nElm]));
 
 		return oFields;
 	};
@@ -6569,8 +6740,8 @@
 			oField.serverField = oParsed["serverField"];
 		if (oParsed["uniqueList"] != null)
 			oField.uniqueList = oParsed["uniqueList"];
-		if (oParsed["num"] != null)
-			oField.num = this.NumFmtExcellFromJSON(oParsed["num"]) // to do;
+		if (oParsed["numFmtId"] != null)
+			oField.numFmtId = oParsed["numFmtId"];
 		if (oParsed["formula"] != null)
 			oField.formula = oParsed["formula"];
 		if (oParsed["sqlType"] != null)
@@ -6640,66 +6811,74 @@
 			{
 				case "b":
 					this.PivotRecordFromJSON(aParsed[nElm], oPivotRecords._curBoolean);
+					oPivotRecords.addBool(oPivotRecords._curBoolean.v, oPivotRecords._curBoolean);
 					break;
 				case "d":
 					this.PivotRecordFromJSON(aParsed[nElm], oPivotRecords._curDateTime);
+					oPivotRecords.addDate(oPivotRecords._curDateTime.v, oPivotRecords._curDateTime);
 					break;
 				case "e":
 					this.PivotRecordFromJSON(aParsed[nElm], oPivotRecords._curError);
+					oPivotRecords.addError(oPivotRecords._curError.v, oPivotRecords._curError);
 					break;
 				case "m":
 					this.PivotRecordFromJSON(aParsed[nElm], oPivotRecords._curMissing);
+					oPivotRecords.addMissing(oPivotRecords._curMissing.v, oPivotRecords._curMissing);
 					break;
 				case "n":
 					this.PivotRecordFromJSON(aParsed[nElm], oPivotRecords._curNumber);
+					oPivotRecords.addNumber(oPivotRecords._curNumber.v, oPivotRecords._curNumber);
 					break;
 				case "s":
 					this.PivotRecordFromJSON(aParsed[nElm], oPivotRecords._curString);
+					oPivotRecords.addString(oPivotRecords._curString.v, oPivotRecords._curString);
 					break;
 				case "i":
 					this.PivotRecordFromJSON(aParsed[nElm], oPivotRecords._curIndex);
+					oPivotRecords.addIndex(oPivotRecords._curIndex.v, oPivotRecords._curIndex);
 					break;
 			}
 		}
 	};
-	ReaderFromJSON.prototype.PivotRecordFromJSON = function(oParsed, oRecord)
+	ReaderFromJSON.prototype.PivotRecordFromJSON = function(oParsed, oPivotRecord)
 	{
 		// attributes
 		if (oParsed["v"] != null)
-			oRecord.v = oParsed["v"];
+			oPivotRecord.v = oParsed["v"];
 		if (oParsed["u"] != null)
-			oRecord.u = oParsed["u"];
+			oPivotRecord.u = oParsed["u"];
 		if (oParsed["f"] != null)
-			oRecord.f = oParsed["f"];
+			oPivotRecord.f = oParsed["f"];
 		if (oParsed["c"] != null)
-			oRecord.c = oParsed["c"];
+			oPivotRecord.c = oParsed["c"];
 		if (oParsed["cp"] != null)
-			oRecord.cp = oParsed["cp"];
+			oPivotRecord.cp = oParsed["cp"];
 		if (oParsed["in"] != null)
-			oRecord.in = oParsed["in"];
+			oPivotRecord.in = oParsed["in"];
 		if (oParsed["bc"] != null)
-			oRecord.bc = oParsed["bc"];
+			oPivotRecord.bc = oParsed["bc"];
 		if (oParsed["fc"] != null)
-			oRecord.fc = oParsed["fc"];
+			oPivotRecord.fc = oParsed["fc"];
 		if (oParsed["i"] != null)
-			oRecord.i = oParsed["i"];
+			oPivotRecord.i = oParsed["i"];
 		if (oParsed["un"] != null)
-			oRecord.un = oParsed["un"];
+			oPivotRecord.un = oParsed["un"];
 		if (oParsed["st"] != null)
-			oRecord.st = oParsed["st"];
+			oPivotRecord.st = oParsed["st"];
 		if (oParsed["b"] != null)
-			oRecord.b = oParsed["b"];
+			oPivotRecord.b = oParsed["b"];
 		// members
 		if (oParsed["tpls"] != null)
 		{
 			for (var nElm = 0; nElm < oParsed["tpls"].length; nElm++)
-				oRecord.tpls.push(this.TuplesFromJSON(oParsed["tpls"][nElm]));
+				oPivotRecord.tpls.push(this.TuplesFromJSON(oParsed["tpls"][nElm]));
 		}
 		if (oParsed["x"] != null)
 		{
 			for (var nElm = 0; nElm < oParsed["x"].length; nElm++)
-				oRecord.x.push(this.XFromJSON(oParsed["x"][nElm]));
+				oPivotRecord.x.push(this.XFromJSON(oParsed["x"][nElm]));
 		}
+
 	};
 	ReaderFromJSON.prototype.TuplesFromJSON = function(oParsed)
 	{
@@ -7466,6 +7645,9 @@
 			oCommentData = this.CommentDataFromJSON(aParsed[nElm]["data"], oWorksheet);
 			oCommentData.asc_putRow(oCommentCoords.nRow);
 			oCommentData.asc_putCol(oCommentCoords.nCol);
+			// History.Add(AscCommonExcel.g_oUndoRedoComment, AscCH.historyitem_Comment_Add, oWorksheet.getId(), null, oCommentData.clone());
+			// History.Add(AscCommonExcel.g_oUndoRedoComment, AscCH.historyitem_Comment_Coords, oWorksheet.getId(), null,
+			// new AscCommonExcel.UndoRedoData_FromTo(null, oCommentCoords.clone()));
 			oWorksheet.aComments.push(oCommentData);
 		}
 	};
@@ -7521,6 +7703,8 @@
 		}
 		if (oParsed["id"] != null)
 			oCommentData.asc_putGuid(oParsed["id"]);
+		// if (oParsed["id"] != null)
+		// 	oCommentData.asc_putGuid(AscCommon.CreateGUID());
 		if (oParsed["displayName"] != null)
 			oCommentData.asc_putUserName(oParsed["displayName"]);
 		if (oParsed["userId"] != null)
@@ -7566,11 +7750,8 @@
 					oTempCell.setFormula(oParsedCell["f"]);
 				if (oParsedCell["v"] != null && oParsedCell["v"] != "")
 					oTempCell.setValue(oParsedCell["v"]);
-				//if (oParsedCell["f"] != null && oParsedCell["f"] != "")
-				//	oTempCell.setFormula(oParsedCell["f"]);
 				if (oParsedCell["s"] != null && oParsedCell["s"] !== 0)
 					oTempCell.setStyle(this.aCellXfs[oParsedCell["s"]]);
-				// to do styles
 
 				oTempCell.saveContent(true);
 			}
@@ -7586,39 +7767,11 @@
 			if (oParsedRow["outlineLevel"] != null && oParsedRow["outlineLevel"] !== false)
 				oTempRow.setOutlineLevel(oParsedRow["outlineLevel"]);
 			if (oParsedRow["s"] != null && oParsedRow["s"] !== 0)
-				oTempRow.setStyle(this.aCellXfs[oParsedCell["s"]]);
+				oTempRow.setStyle(this.aCellXfs[oParsedRow["s"]]);
 			
 			oTempRow.saveContent(true);
 		}
 	};
-	ReaderFromJSON.prototype.FromJSON = function(oParsed)
-	{
-		
-	};
-	ReaderFromJSON.prototype.FromJSON = function(oParsed)
-	{
-		
-	};
-	ReaderFromJSON.prototype.FromJSON = function(oParsed)
-	{
-		
-	};
-	ReaderFromJSON.prototype.FromJSON = function(oParsed)
-	{
-		
-	};
-	ReaderFromJSON.prototype.FromJSON = function(oParsed)
-	{
-		
-	};
-	function getSqRefString(ranges)
-	{
-		var refs = [];
-		for (var i = 0; i < ranges.length; ++i) {
-			refs.push(ranges[i].getName());
-		}
-		return refs.join(' ');
-	}
 
 	function FromXml_ST_FilterOperator(val) {
 		var res = -1;

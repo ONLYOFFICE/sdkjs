@@ -730,16 +730,13 @@
 	Api.prototype.FromJSON = function(sMessage)
 	{
 		var oReader = new AscCommon.ReaderFromJSON();
-		oReader.Workbook = this.wbModel;
-		
-		var oParsedObj  = JSON.parse(sMessage);
+		var oParsedObj = JSON.parse(sMessage);
 		var oReadedObj = null;
 
 		switch (oParsedObj.type)
 		{
 			case "worksheet":
-				oReadedObj = new ApiWorksheet(oReader.WorksheetFromJSON(oParsedObj, this.wbModel, this.wbModel.pushWorksheet()));
-				//this.wbModel.pushWorksheet(oReadedObj.worksheet);
+				oReadedObj = new ApiWorksheet(oReader.WorksheetFromJSON(oParsedObj, this.wbModel));
 				break;
 		}
 

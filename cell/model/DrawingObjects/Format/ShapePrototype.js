@@ -896,4 +896,5 @@ AscFormat.CTextBody.prototype.getDrawingDocument = function()
     //------------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].addToDrawings = addToDrawings;
+    window['AscFormat'].CChangesDrawingObjectsAddToDrawingObjects = CChangesDrawingObjectsAddToDrawingObjects;
 })(window);

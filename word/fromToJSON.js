@@ -419,10 +419,10 @@
 			return oEffExt;
 
 		return {
-			"b": oEffExt.B,
-			"l": oEffExt.L,
-			"r": oEffExt.R,
-			"t": oEffExt.T
+			"b": private_MM2EMU(oEffExt.B),
+			"l": private_MM2EMU(oEffExt.L),
+			"r": private_MM2EMU(oEffExt.R),
+			"t": private_MM2EMU(oEffExt.T)
 		}
 	};
 	WriterToJSON.prototype.GetWrapStrType = function(nType)
@@ -443,7 +443,7 @@
 				return "none";
 		}
 	};
-	WriterToJSON.prototype.SerGraphicObject = function(oGraphicObj, aComplexFieldsToSave)
+	WriterToJSON.prototype.SerGraphicObject = function(oGraphicObj)
 	{
 		if (!oGraphicObj)
 			return null;
@@ -451,16 +451,16 @@
 		var oResultObj = null;
 
 		if (oGraphicObj instanceof AscFormat.CChartSpace)
-			oResultObj = this.SerChartSpace(oGraphicObj, aComplexFieldsToSave);
+			oResultObj = this.SerChartSpace(oGraphicObj);
 		else if (oGraphicObj instanceof AscFormat.COleObject)
-			oResultObj = this.SerOleObject(oGraphicObj, aComplexFieldsToSave);
+			oResultObj = this.SerOleObject(oGraphicObj);
 		else if (oGraphicObj instanceof AscFormat.CImageShape)
-			oResultObj = this.SerImage(oGraphicObj, aComplexFieldsToSave);
+			oResultObj = this.SerImage(oGraphicObj);
 		else if (oGraphicObj instanceof AscFormat.CShape)
 		{
 			if (oGraphicObj.constructor.name === "CConnectionShape")
 			{
-				var oShapeObj = this.SerShape(oGraphicObj, aComplexFieldsToSave);
+				var oShapeObj = this.SerShape(oGraphicObj);
 				oShapeObj["type"] = "connectShape";
 
 				oResultObj = oShapeObj;
@@ -468,7 +468,7 @@
 			else if (oGraphicObj.constructor.name === "CSlicer")
 				oResultObj = this.SerSlicerDrawing(oGraphicObj)
 			else
-				oResultObj = this.SerShape(oGraphicObj, aComplexFieldsToSave);
+				oResultObj = this.SerShape(oGraphicObj);
 		}
 		else if (oGraphicObj instanceof AscFormat.CGraphicFrame)
 			oResultObj = this.SerGraphicFrame(oGraphicObj);
@@ -531,7 +531,7 @@
 			"layoutDef": this.SerLayoutDef(oSmartArt.layoutDef),
 			"styleDef":  this.SerStyleDef(oSmartArt.styleDef),
 			"drawing":   this.SerDrawing(oSmartArt.drawing),
-			"nvGrpSpPr": this.SerUniNvPr(oSmartArt.nvGrpSpPr),
+			"nvGrpSpPr": this.SerUniNvPr(oSmartArt.nvGrpSpPr, oSmartArt.locks, oSmartArt.getObjectType()),
 			"spPr":      this.SerSpPr(oSmartArt.spPr),
 			"type":      "smartArt",
 			"artType":   oSmartArt.type
@@ -1240,7 +1240,7 @@
 	{
 		return {
 			"graphic":          this.SerTable(oGraphicFrame.graphicObject),
-			"nvGraphicFramePr": this.SerUniNvPr(oGraphicFrame.nvGraphicFramePr),
+			"nvGraphicFramePr": this.SerUniNvPr(oGraphicFrame.nvGraphicFramePr, oGraphicFrame.locks, oGraphicFrame.getObjectType()),
 			"spPr":             this.SerSpPr(oGraphicFrame.spPr),
 			"type":             "graphicFrame"
 		}
@@ -1263,14 +1263,29 @@
 	WriterToJSON.prototype.SerNvPr = function(oNvPr)
 	{
 		if (!oNvPr)
-			return oNvPr;
+			return undefined;
 
-		return {
+		var oResult = {
 			"isPhoto":   oNvPr.isPhoto,
 			"ph":        this.SerPlaceholder(oNvPr.ph),
-			"unimedia":  this.SerUniMedia(oNvPr.unimedia),
 			"userDrawn": oNvPr.userDrawn
 		}
+
+		if (oNvPr.unimedia && oNvPr.unimedia.type !== null
+			&& typeof oNvPr.unimedia.media === "string" && oNvPr.unimedia.media.length > 0)
+		{
+			switch (oNvPr.unimedia.type)
+			{
+				case AscFormat.SPTREE_TYPE_VIDEO:
+					oResult["video"] = oNvPr.unimedia.media;
+					break;
+				case AscFormat.SPTREE_TYPE_AUDIO:
+					oResult["audio"] = oNvPr.unimedia.media;
+					break;
+			}
+		}
+
+		return oResult;
 	};
 	WriterToJSON.prototype.SerPlaceholder = function(oPh)
 	{
@@ -1558,28 +1573,6 @@
 
 		for (var nItem = 0; nItem < arrSeries.length; nItem++)
 		{
-			var sShapeType = undefined;
-			switch(arrSeries[nItem].shape)
-			{
-				case AscFormat.BAR_SHAPE_CONE:
-					sShapeType = "cone";
-					break;
-				case AscFormat.BAR_SHAPE_CONETOMAX:
-					sShapeType = "coneToMax";
-					break;
-				case AscFormat.BAR_SHAPE_BOX:
-					sShapeType = "box";
-					break;
-				case AscFormat.BAR_SHAPE_CYLINDER:
-					sShapeType = "cylinder";
-					break;
-				case AscFormat.BAR_SHAPE_PYRAMID:
-					sShapeType = "pyramid";
-					break;
-				case AscFormat.BAR_SHAPE_PYRAMIDTOMAX:
-					sShapeType = "pyramidToMax";
-					break;
-			}
 			arrResultSeries.push({
 				"cat":              this.SerCat(arrSeries[nItem].cat),
 				"dLbls":            this.SerDLbls(arrSeries[nItem].dLbls),
@@ -1589,7 +1582,7 @@
 				"invertIfNegative": arrSeries[nItem].invertIfNegative,
 				"order":            arrSeries[nItem].order,
 				"pictureOptions":   this.SerPicOptions(arrSeries[nItem].pictureOptions),
-				"shape":            sShapeType,
+				"shape":            ToXml_ST_Shape(arrSeries[nItem].shape),
 				"spPr":             this.SerSpPr(arrSeries[nItem].spPr),
 				"trendline":        this.SerTrendline(arrSeries[nItem].trendline),
 				"tx":               this.SerSerTx(arrSeries[nItem].tx),
@@ -1647,7 +1640,7 @@
 			return oNumRef;
 
 		return {
-			"f": oNumRef.f,
+			"f":        oNumRef.f,
 			"numCache": this.SerNumLit(oNumRef.numCache)
 		}
 	};
@@ -1666,16 +1659,16 @@
 					"y": oGeometry.ahPolarLstInfo[nItem].posY
 				},
 				"gdRefAng": oGeometry.ahPolarLstInfo[nItem].gdRefAng,
-				"gdRefR": oGeometry.ahPolarLstInfo[nItem].gdRefR,
-				"maxAng": oGeometry.ahPolarLstInfo[nItem].maxAng,
-				"maxR": oGeometry.ahPolarLstInfo[nItem].maxR,
-				"minAng": oGeometry.ahPolarLstInfo[nItem].minAng,
-				"minR": oGeometry.ahPolarLstInfo[nItem].minR
+				"gdRefR":   oGeometry.ahPolarLstInfo[nItem].gdRefR,
+				"maxAng":   oGeometry.ahPolarLstInfo[nItem].maxAng,
+				"maxR":     oGeometry.ahPolarLstInfo[nItem].maxR,
+				"minAng":   oGeometry.ahPolarLstInfo[nItem].minAng,
+				"minR":     oGeometry.ahPolarLstInfo[nItem].minR
 			});
 		}
 
 		// AhXY
-		var arrAhXYResult    = [];
+		var arrAhXYResult = [];
 		for (nItem = 0; nItem < oGeometry.ahXYLstInfo.length; nItem++)
 		{
 			arrAhXYResult.push({
@@ -1685,19 +1678,19 @@
 				},
 				"gdRefX": oGeometry.ahXYLstInfo[nItem].gdRefX,
 				"gdRefY": oGeometry.ahXYLstInfo[nItem].gdRefY,
-				"maxX": oGeometry.ahXYLstInfo[nItem].maxX,
-				"maxY": oGeometry.ahXYLstInfo[nItem].maxY,
-				"minX": oGeometry.ahXYLstInfo[nItem].minX,
-				"minY": oGeometry.ahXYLstInfo[nItem].minY
+				"maxX":   oGeometry.ahXYLstInfo[nItem].maxX,
+				"maxY":   oGeometry.ahXYLstInfo[nItem].maxY,
+				"minX":   oGeometry.ahXYLstInfo[nItem].minX,
+				"minY":   oGeometry.ahXYLstInfo[nItem].minY
 			});
 		}
 
-		// Av // to do 
-		var oAvResult      = {};
+		// Av
+		var oAvResult = {};
 		for (var key in oGeometry.avLst)
 			oAvResult[key] = oGeometry.avLst[key]
 
-		// adj // to do ключи
+		// adj
 		var oAdjLst = {};
 		for (key in oAvResult)
 		{
@@ -1706,7 +1699,7 @@
 		}
 
 		// Cnx
-		var arrCxnResult     = [];
+		var arrCxnResult = [];
 		for (nItem = 0; nItem < oGeometry.cnxLstInfo.length; nItem++)
 		{
 			arrCxnResult.push({
@@ -1719,7 +1712,7 @@
 		}
 
 		// Gd
-		var arrGdResult      = [];
+		var arrGdResult = [];
 		for (nItem = 0; nItem < oGeometry.gdLstInfo.length; nItem++)
 		{
 			arrGdResult.push({
@@ -1758,42 +1751,54 @@
 		var arrCommands = [];
 		for (var nCommand = 0; nCommand < oPath.ArrPathCommandInfo.length; nCommand++)
 		{
-			var arrObjKeys = Object.keys(oPath.ArrPathCommandInfo[nCommand]);
-			var oCommand   = {};
+			var oCommand = {};
 			switch (oPath.ArrPathCommandInfo[nCommand].id)
 			{
 				case 0:
 					oCommand["id"] =  "moveTo";
+					oCommand["pt"] = {
+						"x": oPath.ArrPathCommandInfo[nCommand].X,
+						"y": oPath.ArrPathCommandInfo[nCommand].Y
+					};
 					break;
 				case 1:
 					oCommand["id"] =  "lnTo";
+					oCommand["pt"] = {
+						"x": oPath.ArrPathCommandInfo[nCommand].X,
+						"y": oPath.ArrPathCommandInfo[nCommand].Y
+					};
 					break;
 				case 2:
-					oCommand["id"] =  "arcTo";
+					oCommand["id"]    = "arcTo";
+					oCommand["hR"]    = oPath.ArrPathCommandInfo[nCommand].hR;
+					oCommand["wR"]    = oPath.ArrPathCommandInfo[nCommand].wR;
+					oCommand["stAng"] = oPath.ArrPathCommandInfo[nCommand].stAng;
+					oCommand["swAng"] = oPath.ArrPathCommandInfo[nCommand].swAng;
 					break;
 				case 3:
 					oCommand["id"] =  "cubicBezTo";
+					oCommand["pt"] = {
+						"x0": oPath.ArrPathCommandInfo[nCommand].X0,
+						"y0": oPath.ArrPathCommandInfo[nCommand].Y0,
+						"x1": oPath.ArrPathCommandInfo[nCommand].X1,
+						"y1": oPath.ArrPathCommandInfo[nCommand].Y1,
+					};
 					break;
 				case 4:
 					oCommand["id"] =  "quadBezTo";
+					oCommand["pt"] = {
+						"x0": oPath.ArrPathCommandInfo[nCommand].X0,
+						"y0": oPath.ArrPathCommandInfo[nCommand].Y0,
+						"x1": oPath.ArrPathCommandInfo[nCommand].X1,
+						"y1": oPath.ArrPathCommandInfo[nCommand].Y1,
+						"x2": oPath.ArrPathCommandInfo[nCommand].X2,
+						"y2": oPath.ArrPathCommandInfo[nCommand].Y2,
+					};
 					break;
 				case 5:
 					oCommand["id"] =  "close";
 					break;
 			}
-			if (oCommand["id"] !== "arcTo" && oCommand["id"] !== "close")
-				oCommand["pt"] = {};
-			// to do arrObjKeys
-			for (var nKey = 0; nKey < arrObjKeys.length; nKey++)
-			{
-				if (arrObjKeys[nKey] === "id")
-					continue;
-				if (!oCommand.pt)
-					oCommand[arrObjKeys[nKey]] = oPath.ArrPathCommandInfo[nCommand][arrObjKeys[nKey]];
-				else 
-					oCommand.pt[arrObjKeys[nKey].toLowerCase()] = oPath.ArrPathCommandInfo[nCommand][arrObjKeys[nKey]];
-			}
-
 			arrCommands.push(oCommand);
 		}
 
@@ -1878,7 +1883,7 @@
 			"custGeom":  this.SerGeometry(oSpPr.geometry),
 			"effectDag": oEffectDag,
 			"effectLst": oEffectLst,
-			"ln": this.SerLn(oSpPr.ln),
+			"ln":        this.SerLn(oSpPr.ln),
 
 			"fill":   this.SerFill(oSpPr.Fill),
 			"xfrm":   this.SerXfrm(oSpPr.xfrm),
@@ -1901,7 +1906,7 @@
 			},
 			"flipH": oXfrm.flipH,
 			"flipV": oXfrm.flipV,
-			"rot": oXfrm.rot,
+			"rot":   oXfrm.rot,
 
 			"chOffX": oXfrm.chOffX ? private_MM2EMU(oXfrm.chOffX) : oXfrm.chOffX,
     		"chOffY": oXfrm.chOffY ? private_MM2EMU(oXfrm.chOffY) : oXfrm.chOffY,
@@ -2519,13 +2524,13 @@
 				"color": this.SerColor(oShd.FillRef.Color)
 			} : oShd.FillRef,
 			"themeColor": this.SerFill(oShd.Unifill), // Unifill
-			"themeFill":  this.SerFill(oShd.themeFill)
+			"themeFill":  this.SerFill(oShd.ThemeFill)
 		}
 	};
 	WriterToJSON.prototype.SerColor = function(oColor)
 	{
 		if (!oColor)
-			return oColor;
+			return undefined;
 
 		var oRGBA = oColor.RGBA ? {
 			"red":   oColor.RGBA.R,
@@ -2552,7 +2557,7 @@
 					oColorObj  = {
 						"rgba": {
 							"red":   oColor.color.RGBA.R,
-							"green":  oColor.color.RGBA.G,
+							"green": oColor.color.RGBA.G,
 							"blue":  oColor.color.RGBA.B,
 							"alpha": oColor.color.RGBA.A 
 						},
@@ -2566,7 +2571,7 @@
 					oColorObj  = {
 						"rgba": {
 							"red":   oColor.color.RGBA.R,
-							"green":  oColor.color.RGBA.G,
+							"green": oColor.color.RGBA.G,
 							"blue":  oColor.color.RGBA.B,
 							"alpha": oColor.color.RGBA.A 
 						},
@@ -2581,7 +2586,7 @@
 					oColorObj  = {
 						"rgba": {
 							"red":   oColor.color.RGBA.R,
-							"green":  oColor.color.RGBA.G,
+							"green": oColor.color.RGBA.G,
 							"blue":  oColor.color.RGBA.B,
 							"alpha": oColor.color.RGBA.A 
 						},
@@ -2670,7 +2675,7 @@
 		return {
 			"gsLst": arrGsLst,
 
-			"lin":   oGradFill.lin ? {
+			"lin": oGradFill.lin ? {
 				"ang":    oGradFill.lin.angle,
 				"scaled": oGradFill.lin.scale
 			} : oGradFill.lin,
@@ -2865,16 +2870,16 @@
 		var sHorzOverflow = null;
 		switch(oBodyPr.horzOverflow)
 		{
-			case AscFormat.nOTClip:
+			case AscFormat.ST_TextHorzOverflowType.clip:
 				sHorzOverflow = "clip";
 				break;
-			case AscFormat.nOTOwerflow:
+			case AscFormat.ST_TextHorzOverflowType.overflow:
 				sHorzOverflow = "overflow";
 				break;
 		}
 
 		var sVertOverflow = null;
-		switch( oBodyPr.vertOverflow)
+		switch(oBodyPr.vertOverflow)
 		{
 			case AscFormat.nOTClip:
 				sVertOverflow = "clip";
@@ -2977,80 +2982,10 @@
 	WriterToJSON.prototype.SerStyle = function(oStyle)
 	{
 		if (!oStyle)
-			return oStyle;
-
-		var oStyleWithFullPr  = oStyle.Copy();
-		oStyleWithFullPr.Link = oStyle.Link;
-		oStyleWithFullPr.Id   = oStyle.Id;
-
-		var oStyles = private_GetStyles();
-		function GetFullStylePr(styleObj)
-		{
-			var nBasedOnId    = styleObj.GetBasedOn();
-			var oStyleBasedOn = null;
-			if (nBasedOnId)
-			{
-				oStyleBasedOn = oStyles.Get(nBasedOnId);
-				oStyleBasedOn = oStyleBasedOn ? oStyleBasedOn.Copy() : null;
-			}
-
-			var nBasedOnBasedOnId    = oStyleBasedOn ? oStyleBasedOn.GetBasedOn() : null;
-			var oStyleBasedOnBasedOn = nBasedOnBasedOnId ? oStyles.Get(nBasedOnBasedOnId) : null;
-			
-			if (!oStyleBasedOn)
-				return;
-
-			if (oStyleBasedOnBasedOn)
-				GetFullStylePr(oStyleBasedOn);
-
-			oStyleBasedOn.TextPr.Merge(styleObj.TextPr);
-			oStyleBasedOn.ParaPr.Merge(styleObj.ParaPr);
-			oStyleBasedOn.TablePr.Merge(styleObj.TablePr);
-			oStyleBasedOn.TableRowPr.Merge(styleObj.TableRowPr);
-			oStyleBasedOn.TableCellPr.Merge(styleObj.TableCellPr);
-
-			styleObj.TextPr      = oStyleBasedOn.TextPr;
-			styleObj.ParaPr      = oStyleBasedOn.ParaPr;
-			styleObj.TablePr     = oStyleBasedOn.TablePr;
-			styleObj.TableRowPr  = oStyleBasedOn.TableRowPr;
-			styleObj.TableCellPr = oStyleBasedOn.TableCellPr;
-
-			if (styleObj.TableBand1Horz && oStyleBasedOn.TableBand1Horz)
-			{
-				oStyleBasedOn.TableBand1Horz.Merge(styleObj.TableBand1Horz);
-				oStyleBasedOn.TableBand1Vert.Merge(styleObj.TableBand1Vert);
-				oStyleBasedOn.TableBand2Horz.Merge(styleObj.TableBand2Horz);
-				oStyleBasedOn.TableBand2Vert.Merge(styleObj.TableBand2Vert);
-				oStyleBasedOn.TableFirstCol.Merge(styleObj.TableFirstCol);
-				oStyleBasedOn.TableFirstRow.Merge(styleObj.TableFirstRow);
-				oStyleBasedOn.TableLastCol.Merge(styleObj.TableLastCol);
-				oStyleBasedOn.TableLastRow.Merge(styleObj.TableLastRow);
-				oStyleBasedOn.TableTLCell.Merge(styleObj.TableTLCell);
-				oStyleBasedOn.TableTRCell.Merge(styleObj.TableTRCell);
-				oStyleBasedOn.TableBLCell.Merge(styleObj.TableBLCell);
-				oStyleBasedOn.TableBRCell.Merge(styleObj.TableBRCell);
-				oStyleBasedOn.TableWholeTable.Merge(styleObj.TableWholeTable);
-
-				styleObj.TableBand1Horz  = oStyleBasedOn.TableBand1Horz;
-				styleObj.TableBand1Vert  = oStyleBasedOn.TableBand1Vert;
-				styleObj.TableBand2Horz  = oStyleBasedOn.TableBand2Horz;
-				styleObj.TableBand2Vert  = oStyleBasedOn.TableBand2Vert;
-				styleObj.TableFirstCol   = oStyleBasedOn.TableFirstCol;
-				styleObj.TableFirstRow   = oStyleBasedOn.TableFirstRow;
-				styleObj.TableLastCol    = oStyleBasedOn.TableLastCol;
-				styleObj.TableLastRow    = oStyleBasedOn.TableLastRow;
-				styleObj.TableTLCell     = oStyleBasedOn.TableTLCell;
-				styleObj.TableTRCell     = oStyleBasedOn.TableTRCell;
-				styleObj.TableBLCell     = oStyleBasedOn.TableBLCell;
-				styleObj.TableBRCell     = oStyleBasedOn.TableBRCell;
-				styleObj.TableWholeTable = oStyleBasedOn.TableWholeTable;
-			}
-		}
-
-		GetFullStylePr(oStyleWithFullPr);
+			return undefined;
 
 		var sStyleType;
-		switch (oStyleWithFullPr.Type)
+		switch (oStyle.Type)
 		{
 			case styletype_Paragraph:
 				sStyleType = "paragraphStyle";
@@ -3070,40 +3005,40 @@
 		}
 
 		// Style Conditional Table Formatting Properties
-		var oTblStylesPr = oStyleWithFullPr.TableBand1Horz ? {
-			"band1Horz":  this.SerTableStylePr(oStyleWithFullPr.TableBand1Horz, "bandedRow"),
-			"band1Vert":  this.SerTableStylePr(oStyleWithFullPr.TableBand1Vert, "bandedColumn"),
-			"band2Horz":  this.SerTableStylePr(oStyleWithFullPr.TableBand2Horz, "bandedRowEven"),
-			"band2Vert":  this.SerTableStylePr(oStyleWithFullPr.TableBand2Vert, "bandedColumnEven"),
-			"firstCol":   this.SerTableStylePr(oStyleWithFullPr.TableFirstCol, "firstColumn"),
-			"firstRow":   this.SerTableStylePr(oStyleWithFullPr.TableFirstRow, "firstRow"),
-			"lastCol":    this.SerTableStylePr(oStyleWithFullPr.TableLastCol, "lastColumn"),
-			"lastRow":    this.SerTableStylePr(oStyleWithFullPr.TableLastRow, "lastRow"),
-			"neCell":     this.SerTableStylePr(oStyleWithFullPr.TableTRCell, "topRightCell"),
-			"nwCell":     this.SerTableStylePr(oStyleWithFullPr.TableTLCell, "topLeftCell"),
-			"seCell":     this.SerTableStylePr(oStyleWithFullPr.TableBRCell, "bottomRightCell"),
-			"swCell":     this.SerTableStylePr(oStyleWithFullPr.TableBLCell, "bottomLeftCell"),
-			"wholeTable": this.SerTableStylePr(oStyleWithFullPr.TableWholeTable, "wholeTable")
-		} : oStyleWithFullPr.TableBand1Horz;
+		var oTblStylesPr = oStyle.TableBand1Horz ? {
+			"band1Horz":  this.SerTableStylePr(oStyle.TableBand1Horz, "bandedRow"),
+			"band1Vert":  this.SerTableStylePr(oStyle.TableBand1Vert, "bandedColumn"),
+			"band2Horz":  this.SerTableStylePr(oStyle.TableBand2Horz, "bandedRowEven"),
+			"band2Vert":  this.SerTableStylePr(oStyle.TableBand2Vert, "bandedColumnEven"),
+			"firstCol":   this.SerTableStylePr(oStyle.TableFirstCol, "firstColumn"),
+			"firstRow":   this.SerTableStylePr(oStyle.TableFirstRow, "firstRow"),
+			"lastCol":    this.SerTableStylePr(oStyle.TableLastCol, "lastColumn"),
+			"lastRow":    this.SerTableStylePr(oStyle.TableLastRow, "lastRow"),
+			"neCell":     this.SerTableStylePr(oStyle.TableTRCell, "topRightCell"),
+			"nwCell":     this.SerTableStylePr(oStyle.TableTLCell, "topLeftCell"),
+			"seCell":     this.SerTableStylePr(oStyle.TableBRCell, "bottomRightCell"),
+			"swCell":     this.SerTableStylePr(oStyle.TableBLCell, "bottomLeftCell"),
+			"wholeTable": this.SerTableStylePr(oStyle.TableWholeTable, "wholeTable")
+		} : oStyle.TableBand1Horz;
 
 		return {
-			"basedOn":        oStyleWithFullPr.BasedOn,
-			"hidden":         oStyleWithFullPr.hidden,
-			"link":           oStyleWithFullPr.Link,
-			"name":           oStyleWithFullPr.Name,
-			"next":           oStyleWithFullPr.Next,
-			"pPr":            this.SerParaPr(oStyleWithFullPr.ParaPr),
-			"qFormat":        oStyleWithFullPr.qFormat,
-			"rPr":            this.SerTextPr(oStyleWithFullPr.TextPr),
-			"semiHidden":     oStyleWithFullPr.semiHidden,
-			"tblPr":          this.SerTablePr(oStyleWithFullPr.TablePr),
+			"basedOn":        oStyle.GetBasedOn(),
+			"hidden":         oStyle.hidden != null ? oStyle.hidden : undefined,
+			"link":           oStyle.Link != null ? oStyle.Link : undefined,
+			"name":           oStyle.Name != null ? oStyle.Name : undefined,
+			"next":           oStyle.Next != null ? oStyle.Next : undefined,
+			"pPr":            oStyle.ParaPr != null ? this.SerParaPr(oStyle.ParaPr) : undefined,
+			"qFormat":        oStyle.qFormat != null ? oStyle.qFormat : undefined,
+			"rPr":            oStyle.TextPr != null ? this.SerTextPr(oStyle.TextPr) : undefined,
+			"semiHidden":     oStyle.semiHidden != null ? oStyle.semiHidden : undefined,
+			"tblPr":          oStyle.TablePr != null ? this.SerTablePr(oStyle.TablePr) : undefined,
 			"tblStylePr":     oTblStylesPr,
-			"tcPr":           this.SerTableCellPr(oStyleWithFullPr.TableCellPr),
-			"trPr":           this.SerTableRowPr(oStyleWithFullPr.TableRowPr),
-			"uiPriority":     oStyleWithFullPr.uiPriority,
-			"unhideWhenUsed": oStyleWithFullPr.unhideWhenUsed,
-			"customStyle":    oStyleWithFullPr.Custom,
-			"styleId":        oStyleWithFullPr.Id,
+			"tcPr":           oStyle.TableCellPr != null ? this.SerTableCellPr(oStyle.TableCellPr) : undefined,
+			"trPr":           oStyle.TableRowPr != null ? this.SerTableRowPr(oStyle.TableRowPr) : undefined,
+			"uiPriority":     oStyle.uiPriority != null ? oStyle.uiPriority : undefined,
+			"unhideWhenUsed": oStyle.unhideWhenUsed != null ? oStyle.unhideWhenUsed : undefined,
+			"customStyle":    oStyle.Custom != null ? oStyle.Custom : undefined,
+			"styleId":        oStyle.Id != null ? oStyle.Id : undefined,
 			"styleType":      sStyleType,
 			"type":           "style"
 		}
@@ -3176,16 +3111,6 @@
 				break;
 		}
 
-		// table look
-		var oTableLook = oTable ? (oTable.TableLook ? {
-			"firstColumn": oTable.TableLook.m_bFirst_Col,
-			"firstRow":    oTable.TableLook.m_bFirst_Row,
-			"lastColumn":  oTable.TableLook.m_bLast_Col,
-			"lastRow":     oTable.TableLook.m_bLast_Row,
-			"noHBand":     !oTable.TableLook.m_bBand_Hor,
-			"noVBand":     !oTable.TableLook.m_bBand_Ver
-		} : undefined) : undefined;
-		
 		// anchorH
 		var sHorAnchor = undefined;
 		if (oTable && oTable.PositionH)
@@ -3288,10 +3213,6 @@
 
 		} : undefined) : undefined;
 
-		var oStyles = oTable.TableStyle != null ? private_GetStyles() : null;
-		// table style
-		var oTableStyle = oStyles && oTable.TableStyle != null ? oStyles.Get(oTable.TableStyle) : undefined;
-
 		return {
 			"jc":         sJc,
 			"shd":        this.SerShd(oPr.Shd),
@@ -3315,13 +3236,13 @@
 
 			"tblCellSpacing":      oPr.TableCellMar.TableCellSpacing ? private_MM2Twips(oPr.TableCellMar.TableCellSpacing) : oPr.TableCellMar.TableCellSpacing,
 			"tblDescription":      oPr.TableDescription,
-			"tblInd":              oPr.TableInd ? private_MM2Twips(oPr.TableInd) : oPr.TableInd,
+			"tblInd":              oPr.TableInd != null ? private_MM2Twips(oPr.TableInd) : oPr.TableInd,
 			"tblLayout":           sLayoutType,
-			"tblLook":             oTableLook,
+			"tblLook":             this.SerTableLook(oTable),
 			"tblOverlap":          sOverlapType,
 			"tblpPr":              oTblPosPr,
 			"tblPrChange":         this.SerTablePr(oPr.PrChange),
-			"tblStyle":            oTableStyle ? this.SerStyle(oTableStyle) : oTableStyle,
+			"tblStyle":            oTable ? this.AddWordStyleForWrite(oTable.TableStyle) : undefined,
 			"tblStyleColBandSize": oPr.TableStyleColBandSize,
 			"tblStyleRowBandSize": oPr.TableStyleRowBandSize,
 			"tblW":                this.SerTableMeasurement(oPr.TableW),
@@ -3329,6 +3250,20 @@
 
 			"reviewInfo": this.SerReviewInfo(oPr.ReviewInfo),
 			"type":       "tablePr"
+		}
+	};
+	WriterToJSON.prototype.SerTableLook = function(oTable)
+	{
+		if (!oTable || !oTable.TableLook)
+			return undefined;
+
+		return {
+			"firstColumn": oTable.TableLook.FirstCol,
+			"firstRow":    oTable.TableLook.FirstRow,
+			"lastColumn":  oTable.TableLook.LastCol,
+			"lastRow":     oTable.TableLook.LastRow,
+			"noHBand":     !oTable.TableLook.BandHor,
+			"noVBand":     !oTable.TableLook.BandVer
 		}
 	};
 	WriterToJSON.prototype.SerTable = function(oTable, aComplexFieldsToSave, oMapCommentsInfo)
@@ -3651,10 +3586,6 @@
 		if (!oParaPr)
 			return oParaPr;
 
-		var oStyles = oParaPr.PStyle != null ? private_GetStyles() : null;
-		// paragraph style
-		var oParaStyle   = oParaPr.PStyle != null ? oStyles.Get(oParaPr.PStyle) : undefined;
-		
 		// horizontal align
 		var sJc = undefined;
 		switch (oParaPr.Jc)
@@ -3674,6 +3605,16 @@
 			case AscCommon.align_Distributed:
 				sJc = "distribute";
 				break;
+		}
+
+		if (oParaPr.NumPr)
+		{
+			var oGlobalNumbering = private_GetLogicDocument().GetNumbering();
+			var oNum;
+			if (oGlobalNumbering)
+				oNum = oGlobalNumbering.GetNum(oParaPr.NumPr.NumId);
+			if (oNum)
+				this.SerNumbering(oNum);
 		}
 
 		return {
@@ -3700,7 +3641,7 @@
 			} : oParaPr.Brd,
 
 			"pPrChange":    this.SerParaPr(oParaPr.PrChange),
-			"pStyle":       this.SerStyle(oParaStyle),
+			"pStyle":       this.AddWordStyleForWrite(oParaPr.PStyle),
 			"shd":          this.SerShd(oParaPr.Shd),
 			"spacing":      this.SerParaSpacing(oParaPr.Spacing),
 			"tabs":         this.SerTabs(oParaPr.Tabs),
@@ -3923,18 +3864,18 @@
 			oMapBookmarksInfo = this.GetMapBookmarksInfo(oSdt.Content.Content, oMapBookmarksInfo);
 
 		return {
-			"sdtPr": this.SerSdtPr(oSdt.Pr),
+			"sdtPr":      this.SerSdtPr(oSdt.Pr),
 			"sdtContent": this.SerDocContent(oSdt.Content, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo),
-			"type": "blockLvlSdt"
+			"type":       "blockLvlSdt"
 		}
 	};
 	WriterToJSON.prototype.SerInlineLvlSdt = function(oSdt, aComplexFieldsToSave)
 	{
 		var oInlineSdt = 
 		{
-			"sdtPr": this.SerSdtPr(oSdt.Pr),
+			"sdtPr":   this.SerSdtPr(oSdt.Pr),
 			"content": [],
-			"type": "inlineLvlSdt"
+			"type":    "inlineLvlSdt"
 		}
 
 		var TempElm = null;
@@ -3976,25 +3917,7 @@
 
 		var oTempElm    = null;
 		var oTempResult = null;
-
-		// numbering
-		var oNumPr           = null;
-		var oGlobalNumbering = null;
-		var oParaParent      = oPara.GetParent();
-		var oLogicDocument   = editor ? private_GetLogicDocument() : null;
-
-		if (!(oParaParent instanceof AscFormat.CDrawingDocContent) && oLogicDocument instanceof AscCommonWord.CDocument)
-		{
-			oNumPr           = oPara.GetNumPr();
-			oGlobalNumbering = oLogicDocument.GetNumbering();
-		}
-		
-		var oNum = null;
-		if (oNumPr && oGlobalNumbering)
-			oNum = oGlobalNumbering.GetNum(oNumPr.NumId);
-
-		if (oNum)
-			oParaObject["numbering"] = this.SerNumbering(oNum);
+		var oLogicDocument = private_GetLogicDocument();
 
 		for (var nElm = 0; nElm < oPara.Content.length; nElm++)
 		{
@@ -4003,7 +3926,7 @@
 			if (oTempElm instanceof AscCommonWord.ParaRun && !oTempElm.FieldType && !oTempElm.Guid)
 			{
 				var oRunObject = this.SerParaRun(oTempElm, aComplexFieldsToSave);
-				//if (oRunObject.content.length !== 0)
+				//if (oRunObject.content.length !== 0) // запись пустых ранов
 				oParaObject["content"].push(oRunObject);
 			}
 			else if (oTempElm instanceof AscCommonWord.ParaMath)
@@ -4199,12 +4122,13 @@
 		else
 			endPos = oChange.EndPos;
 
+		/// ??? startpos endpos
 		return {
 			"date":      oChange.DateTime,
 			"start":     startPos,
 			"end":       endPos,
 			"userId":    oChange.UserId,
-			"author":     oChange.UserName,
+			"author":    oChange.UserName,
 			"value":     changeValue,
 			"moveType":  sMoveType,
 			"type":      sChangeType
@@ -4228,11 +4152,11 @@
 			TempElm = oDocument.Content[nElm];
 
 			if (TempElm instanceof AscCommonWord.Paragraph)
-				oDocObject.content.push(this.SerParagraph(TempElm, aComplexFieldsToSave));
+				oDocObject["content"].push(this.SerParagraph(TempElm, aComplexFieldsToSave));
 			else if (TempElm instanceof AscCommonWord.CTable)
-				oDocObject.content.push(this.SerTable(TempElm, aComplexFieldsToSave));
+				oDocObject["content"].push(this.SerTable(TempElm, aComplexFieldsToSave));
 			else if (TempElm instanceof AscCommonWord.CBlockLevelSdt)
-				oDocObject.content.push(this.SerBlockLvlSdt(TempElm, aComplexFieldsToSave));
+				oDocObject["content"].push(this.SerBlockLvlSdt(TempElm, aComplexFieldsToSave));
 		}
 
 		// header and footer
@@ -4471,7 +4395,7 @@
 
 		return {
 			"content": this.SerDocContent(oHdr.Content, undefined, undefined, undefined, true),
-			"type": "hdr"
+			"type":    "hdr"
 		}
 	};
 	WriterToJSON.prototype.SerFooter = function(oFtr)
@@ -4481,13 +4405,13 @@
 
 		return {
 			"content": this.SerDocContent(oFtr.Content, undefined, undefined, undefined, true),
-			"type": "ftr"
+			"type":    "ftr"
 		}
 	};
 	WriterToJSON.prototype.SerSectionPr = function(oSectionPr)
 	{
 		if (!oSectionPr)
-			return oSectionPr;
+			return undefined;
 
 		var sSectionType = undefined;
 		switch(oSectionPr.Type)
@@ -4528,7 +4452,9 @@
 			"lnNumType":       this.SerLnNumType(oSectionPr.LnNumType),
 			"pgBorders":       this.SerPageBorders(oSectionPr.Borders),
 			"pgMar":           this.SerPageMargins(oSectionPr.PageMargins),
-			//pgNumType:       oSectionPr.PageNumType.Start,
+			"pgNumType":       {
+				"start": oSectionPr.PageNumType.Start
+			},
 			"pgSz":            this.SerPageSize(oSectionPr.PageSize),
 			"rtlGutter":       oSectionPr.GutterRTL,
 			"titlePg":         oSectionPr.TitlePage,
@@ -4689,7 +4615,7 @@
 			"right":      this.SerBorder(oPageBorders.Right),
 			"top":        this.SerBorder(oPageBorders.Top),
 			"display":    sDisplayType,
-			"offsetFrom": private_MM2Twips(oPageBorders.OffsetFrom),
+			"offsetFrom": oPageBorders.OffsetFrom === section_borders_OffsetFromText ? "text" : "page",
 			"zOrder":     oPageBorders.ZOrder === section_borders_ZOrderFront ? "front" : "back"
 		}
 	};
@@ -4724,9 +4650,9 @@
 				break;
 		}
 		return {
-			h:      private_MM2Twips(oPageSize.H),
-			orinet: sOrientType,
-			w:      private_MM2Twips(oPageSize.W)
+			"h":      private_MM2Twips(oPageSize.H),
+			"orinet": sOrientType,
+			"w":      private_MM2Twips(oPageSize.W)
 		}
 	};
 	WriterToJSON.prototype.SerHyperlink = function(oHyperlink, aComplexFieldsToSave)
@@ -4783,16 +4709,20 @@
 		}
 		
 		if (oRun.IsMathRun())
+		{
 			oRunObject["type"] = "mathRun";
+			var oBoldItalic = oRun.MathPrp.GetBoldItalic();
+			oRunObject["mathPr"] = {
+				"b": oBoldItalic.Bold,
+				"i": oBoldItalic.Italic
+			}
+		}
 
 		if (!aComplexFieldsToSave)
 		{
 			aComplexFieldsToSave = this.GetComplexFieldToSave(oRun);
 		}
 			
-		if (oRun.Type === para_Math_Run)
-			oRunObject["mathPr"] = oRun.MathPrp;
-
 		function SerPageNum(oPageNum)
 		{
 			if (!oPageNum)
@@ -4809,44 +4739,37 @@
 
 			return ToComplexField(oPageCount);
 		}
-		function SerCompFieldContent(oContent)
+		function SerCompFieldItem(oItem)
 		{
 			var aResult = [];
-			for (var CurPos = 0; CurPos < oContent.length; CurPos++)
+			
+			var oCompField  = oItem.GetComplexField();
+			var sInstuction = oCompField.InstructionLine;
+				
+			if (oItem.IsBegin())
 			{
-				var oItem = oContent[CurPos];
-
-				if (oItem.Type !== para_FieldChar)
-					continue;
-
-				var oCompField  = oItem.GetComplexField();
-				var sInstuction = oCompField.InstructionLine;
-				 
-				if (oItem.IsBegin())
-				{
-					aResult.push({
-						"type":        "fldChar",
-						"fldCharType": "begin"
-					});
-					aResult.push({
-						"type":  "instrText",
-						"instr": sInstuction
-					});
-				}
-				else if (oItem.IsSeparate())
-				{
-					aResult.push({
-						"type":        "fldChar",
-						"fldCharType": "separate"
-					});
-				}
-				else if (oItem.IsEnd())
-				{
-					aResult.push({
-						"type":        "fldChar",
-						"fldCharType": "end"
-					});
-				}
+				aResult.push({
+					"type":        "fldChar",
+					"fldCharType": "begin"					
+				});
+				aResult.push({
+					"type":  "instrText",
+					"instr": sInstuction					
+				});
+			}
+			else if (oItem.IsSeparate())
+			{
+				aResult.push({
+					"type":        "fldChar",
+					"fldCharType": "separate"					
+				});
+			}
+			else if (oItem.IsEnd())
+			{
+				aResult.push({
+					"type":        "fldChar",
+					"fldCharType": "end"					
+				});
 			}
 			
 			return aResult;
@@ -4899,7 +4822,7 @@
 				sBreakType = "column";
 
 			return {
-				"type": "break",
+				"type":     "break",
 				"breakType": sBreakType
 			}
 		}
@@ -4966,20 +4889,13 @@
 					sTempRunText = '';
 					break;
 				case para_FieldChar:
-					var oComplexField    = Item.GetComplexField();
-					var oCurStartPos     = oComplexField.GetStartDocumentPosition();
-					var oCurEndPos       = oComplexField.GetEndDocumentPosition();
-					var oTempStartPos    = null;
-					var oTempEndPos      = null;
+					var oComplexField = Item.GetComplexField();
 					for (var nCompField = 0; nCompField < aComplexFieldsToSave.length; nCompField++)
 					{
-						oTempStartPos = aComplexFieldsToSave[nCompField].GetStartDocumentPosition();
-						oTempEndPos   = aComplexFieldsToSave[nCompField].GetEndDocumentPosition();
-
-						if (private_checkRelativePos(oCurStartPos, oTempStartPos) === 0 && private_checkRelativePos(oCurEndPos, oTempEndPos) === 0)
+						if (aComplexFieldsToSave[nCompField] === oComplexField)
 						{
 							allowAddCompField = true;
-							oRunObject["content"] = oRunObject["content"].concat(SerCompFieldContent(oRun.Content));
+							oRunObject["content"] = oRunObject["content"].concat(SerCompFieldItem(Item));
 							break;
 						}
 					}
@@ -5015,7 +4931,7 @@
 	{
 		return {
 			"value": oMathText.value,
-			"type": "mathTxt"
+			"type":  "mathTxt"
 		}
 	};
 	WriterToJSON.prototype.SerParaFootEndNoteRef = function(oFootnoteRef)
@@ -5041,7 +4957,6 @@
 		}
 
 		return {
-
 			"customMark": oFootnoteRef.CustomMark,
 			"footnote":   oFootnoteRef.Footnote.Id,
 			"numFormat":  oFootnoteRef.NumFormat,
@@ -5095,28 +5010,129 @@
 	};
 	WriterToJSON.prototype.SerParaDrawing = function(oDrawing, aComplexFieldsToSave)
 	{
+		// to do - SizeRelV - SizeRelV 
+		
+		var sWrapType = this.GetWrapStrType(oDrawing.wrappingType);
+		var oResult = {
+			"docPr":             this.SerCNvPr(oDrawing.docPr),
+			"effectExtent":      this.SerEffectExtent(oDrawing.EffectExtent),
+			"extent":            this.SerExtent(oDrawing.Extent),
+			"graphic":           this.SerGraphicObject(oDrawing.GraphicObj, aComplexFieldsToSave),
+			"positionH":         this.SerPositionH(oDrawing.PositionH),
+			"positionV":         this.SerPositionV(oDrawing.PositionV),
+			"simplePos":         this.SerSimplePos(oDrawing.SimplePos),
+			"sizeRelH":          this.SerSizeRelH(oDrawing.SizeRelH),
+			"sizeRelV":          this.SerSizeRelV(oDrawing.SizeRelV),
+			"distB":             oDrawing.Distance ? private_MM2EMU(oDrawing.Distance.B) : undefined,
+			"distL":             oDrawing.Distance ? private_MM2EMU(oDrawing.Distance.L) : undefined,
+			"distR":             oDrawing.Distance ? private_MM2EMU(oDrawing.Distance.R) : undefined,
+			"distT":             oDrawing.Distance ? private_MM2EMU(oDrawing.Distance.T) : undefined,
+			"allowOverlap":      oDrawing.AllowOverlap,
+			"behindDoc":         oDrawing.behindDoc,
+			"hidden":            oDrawing.Hidden,
+			"layoutInCell":      oDrawing.LayoutInCell,
+			"locked":            oDrawing.Locked,
+			"cNvGraphicFramePr": this.SerGraphicFrameLocks(oDrawing.GraphicObj.locks),
+			"relativeHeight":    oDrawing.RelativeHeight,
+			"wrapType":          this.GetWrapStrType(oDrawing.wrappingType),
+			"drawingType":       oDrawing.DrawingType === drawing_Inline ? "inline" : "anchor",
+			"type":              "paraDrawing"
+		}
+		
+		switch (sWrapType)
+		{
+			case "tight":
+				oResult["wrapTight"] = this.SerWrappingPolygon(oDrawing.getWrapContour());
+				break;
+			case "through":
+				oResult["wrapThrough"] = this.SerWrappingPolygon(oDrawing.getWrapContour());
+				break;
+		}
+
+		return oResult;
+	};
+	WriterToJSON.prototype.SerGraphicFrameLocks = function(nLocks)
+	{
+		var oLocks = {};
+
+		if (nLocks & AscFormat.LOCKS_MASKS.noChangeAspect) {
+			oLocks["noChangeAspect"] = !!(nLocks & AscFormat.LOCKS_MASKS.noChangeAspect << 1);
+		}
+		if (nLocks & AscFormat.LOCKS_MASKS.noDrilldown) {
+			oLocks["noDrilldown"] = !!(nLocks & AscFormat.LOCKS_MASKS.noDrilldown << 1);
+		}
+		if (nLocks & AscFormat.LOCKS_MASKS.noGrp) {
+			oLocks["noGrp"] = !!(nLocks & AscFormat.LOCKS_MASKS.noGrp << 1);
+		}
+		if (nLocks & AscFormat.LOCKS_MASKS.noMove) {
+			oLocks["noMove"] = !!(nLocks & AscFormat.LOCKS_MASKS.noMove << 1);
+		}
+		if (nLocks & AscFormat.LOCKS_MASKS.noResize) {
+			oLocks["noResize"] = !!(nLocks & AscFormat.LOCKS_MASKS.noResize << 1);
+		}
+		if (nLocks & AscFormat.LOCKS_MASKS.noSelect) {
+			oLocks["noSelect"] = !!(nLocks & AscFormat.LOCKS_MASKS.noSelect << 1);
+		}
+
 		return {
-			"docPr":          this.SerCNvPr(oDrawing.docPr),
-			"effectExtent":   this.SerEffectExtent(oDrawing.EffectExtent),
-			"extent":         this.SerExtent(oDrawing.Extent),
-			"graphic":        this.SerGraphicObject(oDrawing.GraphicObj, aComplexFieldsToSave),
-			"positionH":      this.SerPositionH(oDrawing.PositionH),
-			"positionV":      this.SerPositionV(oDrawing.PositionV),
-			"simplePos":      this.SerSimplePos(oDrawing.SimplePos),
-			"distB":          oDrawing.Distance ? private_MM2EMU(oDrawing.Distance.B) : oDrawing.Distance,
-			"distL":          oDrawing.Distance ? private_MM2EMU(oDrawing.Distance.L) : oDrawing.Distance,
-			"distR":          oDrawing.Distance ? private_MM2EMU(oDrawing.Distance.R) : oDrawing.Distance,
-			"distT":          oDrawing.Distance ? private_MM2EMU(oDrawing.Distance.T) : oDrawing.Distance,
-			"allowOverlap":   oDrawing.AllowOverlap,
-			"behindDoc":      oDrawing.behindDoc,
-			"hidden":         oDrawing.Hidden,
-			"layoutInCell":   oDrawing.LayoutInCell,
-			"locked":         oDrawing.Locked,
-			"relativeHeight": oDrawing.RelativeHeight,
-			"wrapType":       this.GetWrapStrType(oDrawing.wrappingType),
-			"drawingType":    oDrawing.DrawingType === drawing_Inline ? "inline" : "anchor",
-			"type":           "paraDrawing"
-		};
+			"graphicFrameLocks": oLocks
+		}
+	};
+	WriterToJSON.prototype.SerSizeRelH = function(oSizeRelH)
+	{
+		if (!oSizeRelH)
+			return undefined;
+
+		return {
+			"relativeFrom":   ToXml_ST_SizeRelFromH(oSizeRelH.RelativeFrom),
+			"wp14:pctWidth":  (oSizeRelH.Percent * 100) >> 0
+		}
+	};
+	WriterToJSON.prototype.SerSizeRelV = function(oSizeRelV)
+	{
+		if (!oSizeRelV)
+			return undefined;
+
+		return {
+			"relativeFrom":   ToXml_ST_SizeRelFromV(oSizeRelV.RelativeFrom),
+			"wp14:pctHeight": (oSizeRelV.Percent * 100) >> 0
+		}
+	};
+	WriterToJSON.prototype.SerWrappingPolygon = function(aContour)
+	{
+		var oResult = {
+			//всегда пишем Edited == true потому что наш контур отличается от word.
+			"edited": true
+		}
+
+		if (aContour.length > 0)
+		{
+			oResult["start"] = this.SerPolygonPoint(aContour[0]);
+
+			if (aContour.length > 1)
+			{
+				// array
+				oResult["lineTo"] = this.SerPolygonPoints(aContour);
+			}
+		}
+
+		return oResult;
+	};
+	WriterToJSON.prototype.SerPolygonPoint = function(oPolygonPoint)
+	{
+		return {
+			"x": oPolygonPoint.x != null ? private_MM2EMU(oPolygonPoint.x) : undefined,
+			"y": oPolygonPoint.y != null ? private_MM2EMU(oPolygonPoint.y) : undefined
+		}
+	};
+	WriterToJSON.prototype.SerPolygonPoints = function(aPolygonPoints)
+	{
+		var aResult = [];
+		// начинаем со второй, потому что первая идет в поле start
+		for (var nPoint = 1; nPoint < aPolygonPoints.length; nPoint++)
+			aResult.push(this.SerPolygonPoint(aPolygonPoints[nPoint]));
+
+		return aResult;
 	};
 	WriterToJSON.prototype.GetAllParaComplexFields = function(oPara)
 	{
@@ -5189,14 +5205,14 @@
 					for (var nCell = 0; nCell < oElm.Content[nRow].Content.length; nCell++)
 					{
 						arrElmContent         = oElm.Content[nRow].Content[nCell].Content.Content;
-						arrCompexFieldsToSave = arrCompexFieldsToSave.concat(this.GetComplexFieldsToSave(arrElmContent, minStartDocPos, maxStartDocPos));
+						arrCompexFieldsToSave = arrCompexFieldsToSave.concat(this.GetComplexFieldsToSave(arrElmContent, undefined, undefined, bAll));
 					}
 				}
 			}
 			if (oElm instanceof AscCommonWord.CBlockLevelSdt)
 			{
 				arrElmContent     = oElm.Content.Content;
-				arrCompexFieldsToSave = arrCompexFieldsToSave.concat(this.GetComplexFieldsToSave(arrElmContent, minStartDocPos, maxStartDocPos));
+				arrCompexFieldsToSave = arrCompexFieldsToSave.concat(this.GetComplexFieldsToSave(arrElmContent, undefined, undefined, bAll));
 			}
 		}
 
@@ -5348,41 +5364,61 @@
 		if (!oNum)
 			return oNum;
 
+		if (this.jsonWordNumberings == null)
+		{
+			this.jsonWordNumberings = {
+				"abstractNum": {
+				},
+				"num": {
+				}
+			}
+		}
+
 		var arrNumLvls     = [];
 		var abtrNumb       = oNum.Numbering.AbstractNum[oNum.AbstractNumId];
 		var arrLvlOverride = [];
 
-		// fill arrNumLvls
-		for (var nLvl = 0; nLvl < abtrNumb.Lvl.length; nLvl++)
-			arrNumLvls.push(this.SerNumLvl(abtrNumb.Lvl[nLvl], nLvl));
-
-		// fill arrLvlOverride
-		for (var nOvrd = 0; nOvrd < oNum.LvlOverride.length; nOvrd++)
+		if (this.jsonWordNumberings["abstractNum"][abtrNumb.Id] == null)
 		{
-			arrLvlOverride.push({
-				"lvl":           this.SerNumLvl(oNum.LvlOverride[nOvrd], oNum.LvlOverride[nOvrd].Lvl),
-				"startOverride": oNum.LvlOverride[nOvrd].StartOverride,
-				"ilvl":          oNum.LvlOverride[nOvrd].Lvl
-			});
-		}
-		
-		return {
-			"abstractNum": {
+			// fill arrNumLvls
+			for (var nLvl = 0; nLvl < abtrNumb.Lvl.length; nLvl++)
+				arrNumLvls.push(this.SerNumLvl(abtrNumb.Lvl[nLvl], nLvl));
+
+			this.jsonWordNumberings["abstractNum"][abtrNumb.Id] = {
 				"lvl":           arrNumLvls,
 				"numStyleLink":  abtrNumb.NumStyleLink,
 				"styleLink":     abtrNumb.StyleLink,
 				"abstractNumId": abtrNumb.Id
-			},
-			"num": {
+			};
+		}
+		
+		if (this.jsonWordNumberings["num"][oNum.Id] == null)
+		{
+			// fill arrLvlOverride
+			for (var nOvrd = 0; nOvrd < 9; nOvrd++)
+			{
+				if (oNum.LvlOverride[nOvrd])
+				{
+					arrLvlOverride.push({
+						"lvl":           this.SerNumLvl(oNum.LvlOverride[nOvrd].NumberingLvl, oNum.LvlOverride[nOvrd].Lvl),
+						"startOverride": oNum.LvlOverride[nOvrd].StartOverride,
+						"ilvl":          oNum.LvlOverride[nOvrd].Lvl
+					});
+				}
+			}
+
+			this.jsonWordNumberings["num"][oNum.Id] = {
 				"abstractNumId": oNum.AbstractNumId,
 				"lvlOverride":   arrLvlOverride,
 				"numId":         oNum.Id
-			},
-			"type": "numbering"
+			}
 		}
 	};
 	WriterToJSON.prototype.SerNumLvl = function(oLvl, nLvl)
 	{
+		if (!oLvl)
+			return undefined;
+			
 		// align
 		var sJc = undefined;
 		switch (oLvl.Jc)
@@ -5403,10 +5439,6 @@
 				sJc = "distribute";
 				break;
 		}
-
-		var oStyles = private_GetStyles();
-		// style
-		var oStyle   = oLvl.PStyle ? oStyles.Get(oLvl.PStyle) : undefined;
 
 		// suff
 		var sSuffType = undefined;
@@ -5448,7 +5480,7 @@
 				"val": sFormatType
 			},
 			"pPr":     this.SerParaPr(oLvl.ParaPr),
-			"pStyle":  this.SerStyle(oStyle),
+			"pStyle":  this.AddWordStyleForWrite(oLvl.PStyle),
 			"rPr":     this.SerTextPr(oLvl.TextPr),
 			"restart": oLvl.Restart,
 			"start":   oLvl.Start,
@@ -5572,7 +5604,7 @@
 		if (!oValAx)
 			return oValAx;
 		
-		var sCrossBetweenType = oValAx.crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN ? "between" : "micCat";
+		var sCrossBetweenType = oValAx.crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN ? "between" : "midCat";
 		
 		return {
 			"axId":           oValAx.axId,
@@ -5665,10 +5697,10 @@
 		return {
 			"axId":     arrAxId,
 			"charts":   this.SerCharts(oPlotArea.charts),
-			"catAx":    oPlotArea.catAx ? oPlotArea.catAx.axId : oPlotArea.catAx,
-			"dateAx":   oPlotArea.dateAx ? oPlotArea.dateAx.axId : oPlotArea.dateAx,
-			"valAx":    oPlotArea.valAx ? oPlotArea.valAx.axId : oPlotArea.valAx,
-			"serAx":    oPlotArea.serAx ? oPlotArea.serAx.axId : oPlotArea.serAx,
+			"catAx":    oPlotArea.catAx ? oPlotArea.catAx.axId : undefined,
+			"dateAx":   oPlotArea.dateAx ? oPlotArea.dateAx.axId : undefined,
+			"valAx":    oPlotArea.valAx ? oPlotArea.valAx.axId : undefined,
+			"serAx":    oPlotArea.serAx ? oPlotArea.serAx.axId : undefined,
 			"dTable":   this.SerDataTable(oPlotArea.dTable),
 			"layout":   this.SerLayout(oPlotArea.layout),
 			"spPr":     this.SerSpPr(oPlotArea.spPr)
@@ -5772,7 +5804,7 @@
 			"axId":           oDateAx.axId,
 			"axPos":          this.GetAxPosStrType(oDateAx.axPos),
 			"baseTimeUnit":   this.GetTimeUnitStrType(oDateAx.baseTimeUnit),
-			"crossAx":        oDateAx.crossAx ? oDateAx.crossAx.axId : oDateAx.crossAx,
+			"crossAx":        oDateAx.crossAx ? oDateAx.crossAx.axId : undefined,
 			"crosses":        this.GetCrossesStrType(oDateAx.crosses),
 			"crossesAt":      oDateAx.crossesAt,
 			"delete":         oDateAx.bDelete,
@@ -5860,14 +5892,14 @@
 		
 		return {
 			"h":            oLayout.h,
-			"hMode":        oLayout.hMode != undefined ? (oLayout.hMode === AscFormat.LAYOUT_MODE_EDGE ? "edge" : "factor") : oLayout.hMode,
-			"layoutTarget": oLayout.layoutTarget != undefined ? (oLayout.layoutTarget === AscFormat.LAYOUT_TARGET_INNER ? "inner" : "outer") : oLayout.layoutTarget,
+			"hMode":        oLayout.hMode != null ? (oLayout.hMode === AscFormat.LAYOUT_MODE_EDGE ? "edge" : "factor") : undefined,
+			"layoutTarget": oLayout.layoutTarget != null ? (oLayout.layoutTarget === AscFormat.LAYOUT_TARGET_INNER ? "inner" : "outer") : undefined,
 			"w":            oLayout.w,
-			"wMode":        oLayout.wMode != undefined ? (oLayout.wMode === AscFormat.LAYOUT_MODE_EDGE ? "edge" : "factor") : oLayout.wMode,
+			"wMode":        oLayout.wMode != null ? (oLayout.wMode === AscFormat.LAYOUT_MODE_EDGE ? "edge" : "factor") : undefined,
 			"x":            oLayout.x,
-			"xMode":        oLayout.xMode != undefined ? (oLayout.xMode === AscFormat.LAYOUT_MODE_EDGE ? "edge" : "factor") : oLayout.xMode,
+			"xMode":        oLayout.xMode != null ? (oLayout.xMode === AscFormat.LAYOUT_MODE_EDGE ? "edge" : "factor") : undefined,
 			"y":            oLayout.y,
-			"yMode":        oLayout.yMode != undefined ? (oLayout.yMode === AscFormat.LAYOUT_MODE_EDGE ? "edge" : "factor") : oLayout.yMode
+			"yMode":        oLayout.yMode != null ? (oLayout.yMode === AscFormat.LAYOUT_MODE_EDGE ? "edge" : "factor") : undefined
 		}
 	};
 	WriterToJSON.prototype.SerDlbl = function(oDlbl)
@@ -6421,6 +6453,7 @@
 			"serLines":   this.SerSpPr(oBarChart.serLines),
 			"ser":        this.SerBarSeries(oBarChart.series),
 			"varyColors": oBarChart.varyColors,
+			"shape":      ToXml_ST_Shape(oBarChart.shape),
 			"type":       "barChart"
 		}
 	};
@@ -6731,30 +6764,206 @@
 			"type": "blipFill"
 		};
 	};
-	WriterToJSON.prototype.SerUniNvPr = function(oUniNvPr)
+	WriterToJSON.prototype.SerUniNvPr = function(oUniNvPr, nLocks, nDrawintType)
 	{
 		if (!oUniNvPr)
-			return oUniNvPr;
+			return undefined;
 
-		return {
-			"cNvPr":     this.SerCNvPr(oUniNvPr.cNvPr),
-			"nvPr":      this.SerNvPr(oUniNvPr.nvPr),
-			"nvUniSpPr": this.SerNvUniSpPr(oUniNvPr.nvUniSpPr)
-		};
+		var oResult = {
+			"cNvPr": this.SerCNvPr(oUniNvPr.cNvPr),
+			"nvPr":  this.SerNvPr(oUniNvPr.nvPr),
+		}
+
+		switch (nDrawintType)
+		{
+			case AscDFH.historyitem_type_Shape:
+				oResult["cNvSpPr"] = this.SerSpCNvPr(nLocks);
+				break;
+			case AscDFH.historyitem_type_ImageShape:
+				oResult["cNvPicPr"] = this.SerPicCNvPr(nLocks);
+				break;
+			case AscDFH.historyitem_type_GroupShape:
+				oResult["cNvGrpSpPr"] = this.SerGrpCNvPr(nLocks);
+				break;
+			case AscDFH.historyitem_type_GraphicFrame:
+			case AscDFH.historyitem_type_ChartSpace:
+			case AscDFH.historyitem_type_SlicerView:
+			case AscDFH.historyitem_type_SmartArt:
+				oResult["cNvGraphicFramePr"] = this.SerGrFrameCNvPr(nLocks);
+				break;
+			case AscDFH.historyitem_type_Cnx:
+				oUniNvPr.nvUniSpPr.locks = nLocks;
+				oResult["cNvCxnSpPr"] = this.SerCnxCNvPr(oUniNvPr.nvUniSpPr);
+				break;
+		}
+
+		return oResult;
 	};
-	WriterToJSON.prototype.SerNvUniSpPr = function(oNvUniSpPr)
+	WriterToJSON.prototype.SerSpCNvPr = function(nLocks)
 	{
-		if (!oNvUniSpPr)
-			return oNvUniSpPr;
+		var oPr = {
+			"spLocks": {}
+		};
+		
+		if(nLocks & AscFormat.LOCKS_MASKS.txBox)
+            oPr["txBox"] = !!(nLocks & AscFormat.LOCKS_MASKS.txBox << 1);
+        if(nLocks & AscFormat.LOCKS_MASKS.noAdjustHandles)
+            oPr["spLocks"]["noAdjustHandles"] = !!(nLocks & AscFormat.LOCKS_MASKS.noAdjustHandles << 1);
+        if(nLocks & AscFormat.LOCKS_MASKS.noChangeArrowheads)
+            oPr["spLocks"]["noChangeArrowheads"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noChangeArrowheads << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noChangeAspect)
+            oPr["spLocks"]["noChangeAspect"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noChangeAspect << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noChangeShapeType)
+            oPr["spLocks"]["noChangeShapeType"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noChangeShapeType << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noEditPoints)
+            oPr["spLocks"]["noEditPoints"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noEditPoints << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noGrp)
+            oPr["spLocks"]["noGrp"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noGrp << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noMove)
+            oPr["spLocks"]["noMove"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noMove << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noResize)
+            oPr["spLocks"]["noResize"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noResize << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noRot)
+            oPr["spLocks"]["noRot"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noRot << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noSelect)
+            oPr["spLocks"]["noSelect"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noSelect << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noTextEdit)
+            oPr["spLocks"]["noTextEdit"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noTextEdit << 1));
 
-		return {
-			"locks"     : ToXML_DrawingLockType(oNvUniSpPr.locks),
-			"stCnxIdx"  : oNvUniSpPr.stCnxIdx,
-			"stCnxId"   : oNvUniSpPr.stCnxId,
-			"endCnxIdx" : oNvUniSpPr.endCnxIdx,
-			"endCnxId"  : oNvUniSpPr.endCnxId
+		return oPr;
+	};
+	WriterToJSON.prototype.SerPicCNvPr = function(nLocks)
+	{
+		var oPr = {
+			"picLocks": {}
+		};
+		
+        if(nLocks & AscFormat.LOCKS_MASKS.noAdjustHandles)
+            oPr["picLocks"]["noAdjustHandles"] = !!(nLocks & AscFormat.LOCKS_MASKS.noAdjustHandles << 1);
+        if(nLocks & AscFormat.LOCKS_MASKS.noChangeArrowheads)
+            oPr["picLocks"]["noChangeArrowheads"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noChangeArrowheads << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noChangeAspect)
+            oPr["picLocks"]["noChangeAspect"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noChangeAspect << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noChangeShapeType)
+            oPr["picLocks"]["noChangeShapeType"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noChangeShapeType << 1));
+		if(nLocks & AscFormat.LOCKS_MASKS.noCrop)
+			oPr["picLocks"]["noCrop"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noCrop << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noEditPoints)
+            oPr["picLocks"]["noEditPoints"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noEditPoints << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noGrp)
+            oPr["picLocks"]["noGrp"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noGrp << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noMove)
+            oPr["picLocks"]["noMove"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noMove << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noResize)
+            oPr["picLocks"]["noResize"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noResize << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noRot)
+            oPr["picLocks"]["noRot"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noRot << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noSelect)
+            oPr["picLocks"]["noSelect"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noSelect << 1));
+
+		return oPr;
+	};
+	WriterToJSON.prototype.SerGrpCNvPr = function(nLocks)
+	{
+		var oPr = {
+			"grpSpLocks": {}
+		};
+		
+        if(nLocks & AscFormat.LOCKS_MASKS.noChangeAspect)
+            oPr["grpSpLocks"]["noChangeAspect"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noChangeAspect << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noGrp)
+            oPr["grpSpLocks"]["noGrp"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noGrp << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noMove)
+            oPr["grpSpLocks"]["noMove"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noMove << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noResize)
+            oPr["grpSpLocks"]["noResize"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noResize << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noRot)
+            oPr["grpSpLocks"]["noRot"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noRot << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noSelect)
+            oPr["grpSpLocks"]["noSelect"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noSelect << 1));
+		if(nLocks & AscFormat.LOCKS_MASKS.noUngrp)
+			oPr["grpSpLocks"]["noUngrp"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noUngrp << 1));
+
+		return oPr;
+	};
+	WriterToJSON.prototype.SerGrFrameCNvPr = function(nLocks)
+	{
+		var oPr = {
+			"graphicFrameLocks": {}
+		};
+		
+        if(nLocks & AscFormat.LOCKS_MASKS.noChangeAspect)
+            oPr["graphicFrameLocks"]["noChangeAspect"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noChangeAspect << 1));
+		if(nLocks & AscFormat.LOCKS_MASKS.noDrilldown)
+			oPr["graphicFrameLocks"]["noDrilldown"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noDrilldown << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noGrp)
+            oPr["graphicFrameLocks"]["noGrp"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noGrp << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noMove)
+            oPr["graphicFrameLocks"]["noMove"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noMove << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noResize)
+            oPr["graphicFrameLocks"]["noResize"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noResize << 1));
+        if(nLocks & AscFormat.LOCKS_MASKS.noSelect)
+            oPr["graphicFrameLocks"]["noSelect"] = !!(nLocks & (AscFormat.LOCKS_MASKS.noSelect << 1));
+
+		return oPr;
+	};
+	WriterToJSON.prototype.SerCnxCNvPr = function(oNvUniSpPr)
+	{
+		var oPr = {
+			"cxnSpLocks": {}
+		};
+		
+        if(oNvUniSpPr.locks & AscFormat.LOCKS_MASKS.noAdjustHandles)
+            oPr["cxnSpLocks"]["noAdjustHandles"] = !!(oNvUniSpPr.locks & AscFormat.LOCKS_MASKS.noAdjustHandles << 1);
+        if(oNvUniSpPr.locks & AscFormat.LOCKS_MASKS.noChangeArrowheads)
+            oPr["cxnSpLocks"]["noChangeArrowheads"] = !!(oNvUniSpPr.locks & (AscFormat.LOCKS_MASKS.noChangeArrowheads << 1));
+        if(oNvUniSpPr.locks & AscFormat.LOCKS_MASKS.noChangeAspect)
+            oPr["cxnSpLocks"]["noChangeAspect"] = !!(oNvUniSpPr.locks & (AscFormat.LOCKS_MASKS.noChangeAspect << 1));
+        if(oNvUniSpPr.locks & AscFormat.LOCKS_MASKS.noChangeShapeType)
+            oPr["cxnSpLocks"]["noChangeShapeType"] = !!(oNvUniSpPr.locks & (AscFormat.LOCKS_MASKS.noChangeShapeType << 1));
+        if(oNvUniSpPr.locks & AscFormat.LOCKS_MASKS.noEditPoints)
+            oPr["cxnSpLocks"]["noEditPoints"] = !!(oNvUniSpPr.locks & (AscFormat.LOCKS_MASKS.noEditPoints << 1));
+        if(oNvUniSpPr.locks & AscFormat.LOCKS_MASKS.noGrp)
+            oPr["cxnSpLocks"]["noGrp"] = !!(oNvUniSpPr.locks & (AscFormat.LOCKS_MASKS.noGrp << 1));
+        if(oNvUniSpPr.locks & AscFormat.LOCKS_MASKS.noMove)
+            oPr["cxnSpLocks"]["noMove"] = !!(oNvUniSpPr.locks & (AscFormat.LOCKS_MASKS.noMove << 1));
+        if(oNvUniSpPr.locks & AscFormat.LOCKS_MASKS.noResize)
+            oPr["cxnSpLocks"]["noResize"] = !!(oNvUniSpPr.locks & (AscFormat.LOCKS_MASKS.noResize << 1));
+        if(oNvUniSpPr.locks & AscFormat.LOCKS_MASKS.noRot)
+            oPr["cxnSpLocks"]["noRot"] = !!(oNvUniSpPr.locks & (AscFormat.LOCKS_MASKS.noRot << 1));
+        if(oNvUniSpPr.locks & AscFormat.LOCKS_MASKS.noSelect)
+            oPr["cxnSpLocks"]["noSelect"] = !!(oNvUniSpPr.locks & (AscFormat.LOCKS_MASKS.noSelect << 1));
+
+		if (oNvUniSpPr.stCnxId && AscFormat.isRealNumber(oNvUniSpPr.stCnxIdx))
+		{
+			var nStIdx = oThis.GetSpIdxId(oNvUniSpPr.stCnxId);
+			if (nStIdx !== null) {
+				oPr["stCxn"] = {
+					"id":  nStIdx,
+					"idx": oNvUniSpPr.stCnxIdx
+				}
+			}
+		}
+		if (oNvUniSpPr.endCnxId && AscFormat.isRealNumber(oNvUniSpPr.endCnxIdx))
+		{
+			var nEndIdx = oThis.GetSpIdxId(oNvUniSpPr.endCnxId);
+			if (nEndIdx !== null) {
+				oPr["endCxn"] = {
+					"id":  nEndIdx,
+					"idx": oNvUniSpPr.endCnxIdx
+				}
+			}
 		}
 	};
+	WriterToJSON.prototype.GetSpIdxId = function(sEditorId){
+        if(typeof sEditorId === "string" && sEditorId.length > 0) {
+            var oDrawing = AscCommon.g_oTableId.Get_ById(sEditorId);
+            if(oDrawing && oDrawing.getFormatId) {
+                return oDrawing.getFormatId();
+            }
+        }
+        return null;
+    };
 	WriterToJSON.prototype.SerBullet = function(oBullet)
 	{
 		if (!oBullet)
@@ -6780,7 +6989,7 @@
 			}
 
 			return {
-				"type": sBulletColorType,
+				"type":  sBulletColorType,
 				"color": this.SerColor(oBulletColor.UniColor)
 			}
 		}
@@ -7045,24 +7254,25 @@
 			aUserShapes.push(this.SerUserShape(oChartSpace.userShapes[nUserShape]));
 
 		return {
-			"extX":           private_MM2EMU(oChartSpace.extX),
-			"extY":           private_MM2EMU(oChartSpace.extY),
-			"chart":          this.SerChart(oChartSpace.chart),
-			"chartColors":    this.SerChartColors(oChartSpace.chartColors),
-			"chartStyle":     this.SerChartStyle(oChartSpace.chartStyle),
-			"clrMapOvr":      this.SerColorMapOvr(oChartSpace.clrMapOvr),
-			"date1904":       oChartSpace.date1904,
-			"externalData":   this.SerExternalData(oChartSpace.externalData),
-			"lang":           oChartSpace.lang,
-			"pivotSource":    this.SerPivotSource(oChartSpace.pivotSource),
-			"printSettings":  this.SerPrintSettings(oChartSpace.printSettings),
-			"protection":     this.SerProtection(oChartSpace.protection),
-			"roundedCorners": oChartSpace.roundedCorners,
-			"spPr":           this.SerSpPr(oChartSpace.spPr),
-			"style":          oChartSpace.style,
-			"txPr":           this.SerTxPr(oChartSpace.txPr),
-			"userShapes":     aUserShapes,
-			"type":           "chartSpace"
+			"extX":             private_MM2EMU(oChartSpace.extX),
+			"extY":             private_MM2EMU(oChartSpace.extY),
+			"chart":            this.SerChart(oChartSpace.chart),
+			"chartColors":      this.SerChartColors(oChartSpace.chartColors),
+			"chartStyle":       this.SerChartStyle(oChartSpace.chartStyle),
+			"clrMapOvr":        this.SerColorMapOvr(oChartSpace.clrMapOvr),
+			"date1904":         oChartSpace.date1904,
+			"externalData":     this.SerExternalData(oChartSpace.externalData),
+			"lang":             oChartSpace.lang,
+			"pivotSource":      this.SerPivotSource(oChartSpace.pivotSource),
+			"printSettings":    this.SerPrintSettings(oChartSpace.printSettings),
+			"protection":       this.SerProtection(oChartSpace.protection),
+			"roundedCorners":   oChartSpace.roundedCorners,
+			"spPr":             this.SerSpPr(oChartSpace.spPr),
+			"nvGraphicFramePr": this.SerUniNvPr(oChartSpace.nvGraphicFramePr, oChartSpace.locks, oChartSpace.getObjectType()),
+			"style":            oChartSpace.style,
+			"txPr":             this.SerTxPr(oChartSpace.txPr),
+			"userShapes":       aUserShapes,
+			"type":             "chartSpace"
 		};
 	};
 	WriterToJSON.prototype.SerColorMapOvr = function(oClrMap)
@@ -7146,8 +7356,8 @@
 			sType = "absSizeAnchor";
 
 		return {
-			"fromX":  oUserShape.fromX != undefined ? private_MM2Twips(oUserShape.fromX) : oUserShape.fromX,
-			"fromY":  oUserShape.fromY != undefined ? private_MM2Twips(oUserShape.fromY) : oUserShape.fromY,
+			"fromX":  oUserShape.fromX != null ? private_MM2Twips(oUserShape.fromX) : undefined,
+			"fromY":  oUserShape.fromY != null ? private_MM2Twips(oUserShape.fromY) : undefined,
 			"object": this.SerGraphicObject(oUserShape.object),
 			"toX":    oUserShape.toX,
 			"toY":    oUserShape.toY,
@@ -7220,7 +7430,7 @@
 			return oStyleEntry;
 
 		return {
-			"type":           oStyleEntry.type,
+			"type":           ToXML_StyleEntryType(oStyleEntry.type),
 			"lineWidthScale": oStyleEntry.lineWidthScale,
 			"lnRef":          this.SerStyleRef(oStyleEntry.lnRef),
 			"fillRef":        this.SerStyleRef(oStyleEntry.fillRef),
@@ -7262,7 +7472,7 @@
 
 		return {
 			"autoTitleDeleted": oChart.autoTitleDeleted,
-			"backwall":         this.SerWall(oChart.backWall),
+			"backWall":         this.SerWall(oChart.backWall),
 			"dispBlanksAs":     sDispBlanksAs,
 			"floor":            this.SerWall(oChart.floor),
 			"legend":           this.SerLegend(oChart.legend),
@@ -7318,7 +7528,7 @@
 			"extX":     private_MM2EMU(oImgObject.extX),
 			"extY":     private_MM2EMU(oImgObject.extY),
 			"blipFill": this.SerBlipFill(oImgObject.blipFill),
-			"nvPicPr":  this.SerUniNvPr(oImgObject.nvPicPr),
+			"nvPicPr":  this.SerUniNvPr(oImgObject.nvPicPr, oImgObject.locks, oImgObject.getObjectType()),
 			"spPr":     this.SerSpPr(oImgObject.spPr),
 			"type":     "image"
 		}
@@ -7333,12 +7543,12 @@
 			oSerContent = this.SerDocContent(oShape.textBoxContent);
 		else if (oShape.txBody)
 			oSerContent = this.SerTxPr(oShape.txBody);
-		
-		return {
+
+		var nObjType = oShape.getObjectType();
+		var oResult = {
 			"bWordShape":  oShape.bWordShape,
 			"extX":        private_MM2EMU(oShape.extX),
 			"extY":        private_MM2EMU(oShape.extY),
-			"nvSpPr":      this.SerUniNvPr(oShape.nvSpPr),
 			"spPr":        this.SerSpPr(oShape.spPr),
 			"style":       this.SerSpStyle(oShape.style),
 			"bodyPr":      this.SerBodyPr(oShape.bodyPr),
@@ -7347,15 +7557,26 @@
 			"txXfrm":      this.SerXfrm(oShape.txXfrm),
 			"type":        "shape",
 		}
+
+		switch (nObjType)
+		{
+			case AscDFH.historyitem_type_Cnx:
+				oResult["nvCxnSpPr"] = this.SerUniNvPr(oShape.nvSpPr, oShape.locks, nObjType);
+				break;
+			case AscDFH.historyitem_type_Shape:
+				oResult["nvSpPr"] = this.SerUniNvPr(oShape.nvSpPr, oShape.locks, nObjType);
+				break;
+			case AscDFH.historyitem_type_SlicerView:
+				oResult["nvGraphicFramePr"] = this.SerUniNvPr(oShape.nvSpPr, oShape.locks, nObjType);
+				break;
+		}
+
+		return oResult;
 	};
 	WriterToJSON.prototype.SerTextPr = function(oTextPr)
 	{
 		if (!oTextPr)
 			return oTextPr;
-		
-		var oStyles = oTextPr.RStyle != null ? private_GetStyles() : null;
-		// run style
-		var oRunStyle = oTextPr.RStyle != null ? oStyles.Get(oTextPr.RStyle) : undefined;
 		
 		var sVAlign = undefined;
 
@@ -7384,7 +7605,7 @@
 				"r":    oTextPr.Color.r,
 				"g":    oTextPr.Color.g,
 				"b":    oTextPr.Color.b
-			} : oTextPr.Color,
+			} : undefined,
 			"cs":        oTextPr.CS,
 			"dstrike":   oTextPr.DStrikeout,
 			"highlight": oTextPr.HighLight ? (oTextPr.HighLight !== -1 ? {
@@ -7392,49 +7613,93 @@
 				"r":    oTextPr.HighLight.r,
 				"g":    oTextPr.HighLight.g,
 				"b":    oTextPr.HighLight.b
-			} : "none") : oTextPr.HighLight,
+			} : "none") : undefined,
 			"i":         oTextPr.Italic,
 			"iCs":       oTextPr.ItalicCS,
 			"lang":      oTextPr.Lang ? {
-				"bidi":     oTextPr.Lang.Bidi,
-				"eastAsia": oTextPr.Lang.EastAsia,
-				"val":      oTextPr.Lang.Val
-			} : oTextPr.Lang,
+				"bidi":     oTextPr.Lang.Bidi != null ? Asc.g_oLcidIdToNameMap[oTextPr.Lang.Bidi] : undefined,
+				"eastAsia": oTextPr.Lang.EastAsia != null ? Asc.g_oLcidIdToNameMap[oTextPr.Lang.EastAsia] : undefined,
+				"val":      oTextPr.Lang.Val != null ? Asc.g_oLcidIdToNameMap[oTextPr.Lang.Val] : undefined
+			} : undefined,
 			"outline":   this.SerLn(oTextPr.TextOutline),
-			"position":  oTextPr.Position ? 2.0 * private_MM2Pt(oTextPr.Position) : oTextPr.Position, /// нужно ли умножать на 2?
+			"position":  oTextPr.Position ? 2.0 * private_MM2Pt(oTextPr.Position) : undefined, /// нужно ли умножать на 2?
 			"rFonts":    oTextPr.RFonts ? {
-				"ascii":         oTextPr.RFonts.Ascii,
+				"ascii":         oTextPr.RFonts.Ascii != null ? oTextPr.RFonts.Ascii.Name : undefined,
 				"asciiTheme":    oTextPr.RFonts.AsciiTheme,
-				"cs":            oTextPr.RFonts.CS,
+				"cs":            oTextPr.RFonts.CS != null ? oTextPr.RFonts.CS.Name : undefined,
 				"cstheme":       oTextPr.RFonts.CSTheme,
-				"eastAsia":      oTextPr.RFonts.EastAsia,
+				"eastAsia":      oTextPr.RFonts.EastAsia != null ? oTextPr.RFonts.EastAsia.Name : undefined,
 				"eastAsiaTheme": oTextPr.RFonts.EastAsiaTheme,
-				"hAnsi":         oTextPr.RFonts.HAnsi,
+				"hAnsi":         oTextPr.RFonts.HAnsi != null ? oTextPr.RFonts.HAnsi.Name : undefined,
 				"hAnsiTheme":    oTextPr.RFonts.HAnsiTheme,
-				"hint":          oTextPr.RFonts.Hint
-			} : oTextPr.RFonts,
+				"hint":          oTextPr.RFonts.Hint != null ? ToXml_ST_Hint(oTextPr.RFonts.Hint) : undefined
+			} : undefined,
 			"fontFamily": oTextPr.FontFamily ? {
 				"name": oTextPr.FontFamily.Name,
 				"idx":  oTextPr.FontFamily.Index
-			} : oTextPr.FontFamily,
-			"rPrChange": this.SerTextPr(oTextPr.PrChange),
-			"rStyle":    this.SerStyle(oRunStyle),
-			"rtl":       oTextPr.RTL,
-			"shd":       this.SerShd(oTextPr.Shd),
-			"smallCaps": oTextPr.SmallCaps,
-			"spacing":   oTextPr.Spacing ? private_MM2Twips(oTextPr.Spacing) : oTextPr.Spacing,
-			"strike":    oTextPr.Strikeout,
-			"sz":        oTextPr.FontSize ? 2.0 * oTextPr.FontSize : oTextPr.FontSize,
-			"szCs":      oTextPr.FontSizeCS ? 2.0 * oTextPr.FontSizeCS : oTextPr.FontSizeCS,
-			"u":         oTextPr.Underline,
-			"vanish":    oTextPr.Vanish,
-			"vertAlign": sVAlign,
-			"fontRef":   this.SerFontRef(oTextPr.FontRef),
-			"uniFill":   this.SerFill(oTextPr.Unifill),
-			"textFill":  this.SerFill(oTextPr.TextFill),
+			} : undefined,
+			"rPrChange":  this.SerTextPr(oTextPr.PrChange),
+			"rStyle":     this.AddWordStyleForWrite(oTextPr.RStyle),
+			"rtl":        oTextPr.RTL,
+			"shd":        this.SerShd(oTextPr.Shd),
+			"smallCaps":  oTextPr.SmallCaps,
+			"spacing":    oTextPr.Spacing != null ? private_MM2Twips(oTextPr.Spacing) : undefined,
+			"strike":     oTextPr.Strikeout,
+			"sz":         oTextPr.FontSize != null ? 2.0 * oTextPr.FontSize : undefined,
+			"szCs":       oTextPr.FontSizeCS != null ? 2.0 * oTextPr.FontSizeCS : undefined,
+			"u":          oTextPr.Underline,
+			"vanish":     oTextPr.Vanish,
+			"vertAlign":  sVAlign,
+			"fontRef":    this.SerFontRef(oTextPr.FontRef),
+			"uniFill":    this.SerFill(oTextPr.Unifill),
+			"textFill":   this.SerFill(oTextPr.TextFill),
 			"reviewInfo": this.SerReviewInfo(oTextPr.ReviewInfo),
-			"type":      "textPr"
+			"type":       "textPr"
 		}
+	};
+	WriterToJSON.prototype.AddWordStyleForWrite = function(sStyleId)
+	{
+		if (!sStyleId)
+			return undefined;
+			
+		var oStyles = private_GetStyles();
+		var oStyle = oStyles.Get(sStyleId);
+
+		if (!oStyle)
+			return undefined;
+
+		if (this.wordStylesForWrite == null)
+		{
+			this.wordStylesForWrite = {
+				count: 0,
+				styles: {}
+			}
+		}
+		
+		if (this.wordStylesForWrite.styles[oStyle.Id] == null)
+		{
+			this.wordStylesForWrite.styles[oStyle.Id] = oStyle;
+			this.wordStylesForWrite.count++;
+		}
+		if (oStyle.BasedOn != null && this.wordStylesForWrite.styles[oStyle.BasedOn] == null)
+			this.AddWordStyleForWrite(oStyle.BasedOn);
+		if (oStyle.Next != null && this.wordStylesForWrite.styles[oStyle.Next] == null)
+			this.AddWordStyleForWrite(oStyle.Next);
+		if (oStyle.Link != null && this.wordStylesForWrite.styles[oStyle.Link] == null)
+			this.AddWordStyleForWrite(oStyle.Link);
+
+		return oStyle.Id;
+	};
+	WriterToJSON.prototype.SerWordStylesForWrite = function()
+	{
+		if (this.wordStylesForWrite == null)
+			return undefined;
+
+		var oResult = {};
+		for (var key in this.wordStylesForWrite.styles)
+			oResult[key] = this.SerStyle(this.wordStylesForWrite.styles[key]);
+
+		return oResult;
 	};
 	WriterToJSON.prototype.SerSdtPr = function(oSdtPr)
 	{
@@ -7448,7 +7713,7 @@
 			{
 				arrListItemComboBox.push({
 					"displayText": oSdtPr.ComboBox.ListItems[nItem].DisplayText,
-					"value": oSdtPr.ComboBox.ListItems[nItem].Value,
+					"value":       oSdtPr.ComboBox.ListItems[nItem].Value,
 				});
 			}
 		}
@@ -7460,70 +7725,53 @@
 			{
 				arrListItemDropDown.push({
 					"displayText": oSdtPr.DropDown.ListItems[nItem].DisplayText,
-					"value": oSdtPr.DropDown.ListItems[nItem].Value,
+					"value":       oSdtPr.DropDown.ListItems[nItem].Value,
 				});
 			}
 		}
 
-		var sLockType = undefined;
-		switch (oSdtPr.Lock)
-		{
-			case Asc.c_oAscSdtLockType.ContentLocked:
-				sLockType = "contentLocked";
-				break;
-			case Asc.c_oAscSdtLockType.SdtContentLocked:
-				sLockType = "sdtContentLocked";
-				break;
-			case Asc.c_oAscSdtLockType.SdtLocked:
-				sLockType = "sdtLocked";
-				break;
-			case Asc.c_oAscSdtLockType.Unlocked:
-				sLockType = "unlocked";
-				break;
-		}
 		return {
-			"alias": oSdtPr.Alias,
+			"alias":      oSdtPr.Alias != null ? oSdtPr.Alias : undefined,
+			"appearance": ToXml_ST_SdtAppearance(oSdtPr.Appearance),
+			"color":      this.SerColor(oSdtPr.Color),
 
 			"comboBox": oSdtPr.ComboBox ? {
 				"listItem":  arrListItemComboBox,
 				"lastValue": oSdtPr.ComboBox.LastValue
-			} : oSdtPr.ComboBox,
+			} : undefined,
 
 			"date": oSdtPr.Date ? {
-				"calendar":   oSdtPr.Date.Calendar,
+				"calendar":   ToXml_ST_CalendarType(oSdtPr.Date.Calendar),
 				"dateFormat": oSdtPr.Date.DateFormat,
-				"lid":        oSdtPr.Date.LangId,
+				"lid":        oSdtPr.Date.LangId != null ? Asc.g_oLcidIdToNameMap[oSdtPr.Date.LangId] : undefined,
 				"fullDate":   oSdtPr.Date.FullDate
-			} : oSdtPr.Date,
+			} : undefined,
 
-			"docPartObj": oSdtPr.DocPartObj ? {
+			"docPartObj": oSdtPr.IsBuiltInDocPart() ? {
 				"docPartCategory": oSdtPr.DocPartObj.Category,
 				"docPartGallery":  oSdtPr.DocPartObj.Gallery,
 				"docPartUnique":   oSdtPr.DocPartObj.Unique
-			} : oSdtPr.DocPartObj,
+			} : undefined,
 
 			"dropDownList": oSdtPr.DropDown ? {
 				"listItem":  arrListItemDropDown,
 				"lastValue": oSdtPr.DropDown.LastValue
-			} : oSdtPr.DropDown,
+			} : undefined,
 
 			"equation" : oSdtPr.Equation,
 			"id":        oSdtPr.Id,
 			"label":     oSdtPr.Label,
-			"lock":      sLockType,
+			"lock":      ToXml_ST_Lock(oSdtPr.Lock),
 			"picture":   oSdtPr.Picture,
 
 			"placeholder": oSdtPr.Placeholder ? {
 				"docPart": oSdtPr.Placeholder
-			} : oSdtPr.Placeholder,
+			} : undefined,
 
 			"rPr":           this.SerTextPr(oSdtPr.TextPr),
 			"showingPlcHdr": oSdtPr.ShowingPlcHdr,
 			"tag":           oSdtPr.Tag,
-			"temporary":     oSdtPr.Temporary,
-			"text":          {
-				"multiLine": oSdtPr.Text
-			}
+			"temporary":     oSdtPr.Temporary
 		}
 	};
 	WriterToJSON.prototype.SerParaMath = function(oParaMath)
@@ -7669,14 +7917,24 @@
 					oDegreeObj["sSupPr"] = {
 						"ctrlPr": this.SerTextPr(oDegree.CtrPrp)
 					}
-					oDegreeObj["sup"]    = SerMathContent.call(this, oDegree.iterContent);
+					oDegreeObj["sup"] = {
+						"content": SerMathContent.call(this, oDegree.iterContent),
+						"argPr": {
+							"argSize": oDegree.iterContent.ArgSize.value
+						}
+					}
 					break;
 				case DEGREE_SUBSCRIPT:
 					oDegreeObj["type"]   = "supScript";
 					oDegreeObj["sSubPr"] = {
 						"ctrlPr": this.SerTextPr(oDegree.CtrPrp)
 					}
-					oDegreeObj["sub"]    = SerMathContent.call(this, oDegree.iterContent);
+					oDegreeObj["sub"] = {
+						"content": SerMathContent.call(this, oDegree.iterContent),
+						"argPr": {
+							"argSize": oDegree.iterContent.ArgSize.value
+						}
+					}
 					break;
 			}
 
@@ -7940,7 +8198,7 @@
 					"aln":     oBox.Pr.aln,
 					"brk":     oBox.Pr.brk ? {
 						"alnAt": oBox.Pr.brk.alnAt
-					} : oBox.Pr.brk,
+					} : undefined,
 					"diff":    oBox.Pr.diff,
 					"noBreak": oBox.Pr.noBreak,
 					"opEmu":   oBox.Pr.opEmu
@@ -8093,7 +8351,7 @@
 				"jc": sJc
 			},
 			"content": SerMathContent.call(this, oParaMath.Root),
-			"type": "paraMath"
+			"type":    "paraMath"
 		}
 	};
 	WriterToJSON.prototype.SerParaComment = function(oComment, oMapCommentsInfo)
@@ -8129,29 +8387,17 @@
 			return null;
 
 		var isStartBookmark   = oBookmark.Start;
-		var oTempBookmark     = null;
 		var oBookmarkObj      = {
 			"id":   oBookmark.BookmarkId,
 			"name": oBookmark.BookmarkName
 		};
+
 		if (isStartBookmark)
 			oBookmarkObj["type"] = "bookmarkStart";
 		else
 			oBookmarkObj["type"] = "bookmarkEnd";
 
-		for (var nElm = 0; nElm < oBookmark.Paragraph.Content.length; nElm++)
-		{
-			if (oBookmark.Paragraph.Content[nElm] instanceof AscCommonWord.CParagraphBookmark)
-			{
-				oTempBookmark = oBookmark.Paragraph.Content[nElm];
-				if (oTempBookmark.CommentId === oBookmark.CommentId && oTempBookmark.Start !== isStartBookmark)
-				{
-					return oBookmarkObj;
-				}
-			}
-		}
-
-		return null;
+		return oBookmarkObj;
 	};
 	WriterToJSON.prototype.GetPenDashStrType = function(nType)
 	{
@@ -8250,10 +8496,16 @@
 				break;
 		}
 		var oReviewInfo = oParsedRun["reviewInfo"] ? this.ReviewInfoFromJSON(oParsedRun["reviewInfo"]) : oRun.ReviewInfo;
-		oRun.SetReviewTypeWithInfo(nReviewType, oReviewInfo);
+		var oTextPr = this.TextPrFromJSON(oPr);
 
-		oRun.Apply_Pr(this.TextPrFromJSON(oPr));
-		oParsedRun["type"] === "mathRun" && oRun.Math_Apply_Style(oParsedRun["mathPr"]["sty"]); // to do "sty"
+		oRun.SetReviewTypeWithInfo(nReviewType, oReviewInfo);
+		oRun.Apply_Pr(oTextPr);
+		oTextPr.PrChange &&	oRun.SetPrChange(oTextPr.PrChange, oReviewInfo);
+
+		if (oParsedRun["type"] === "mathRun")
+		{
+			oRun.MathPrp.SetStyle(oParsedRun["mathPr"]["b"], oParsedRun["mathPr"]["i"]);
+		}
 
 		if (oParsedRun["type"] === "endRun")
 		{
@@ -8268,22 +8520,6 @@
 			{
 				if (oParsedRun["type"] === "mathRun")
 				{
-					// if (0x0026 == aContent[nElm].charCodeAt(0))
-					// 	var oText = new CMathAmp();
-					// else
-					// {
-					// 	var oText = new CMathText(false);
-					// 	if (aContent[nElm][nChar] === String.fromCharCode(StartTextElement))
-					// 	{
-					// 		oText.SetPlaceholder();
-					// 		oRun.Add_ToContent(0, oText, false);
-					// 	}
-					// 	else
-					// 	{
-					// 		oText.add(aContent[nElm][nChar]);
-					// 		oRun.Add(oText, true);
-					// 	}
-					// }
 					var oText;
 					if (0x0026 == aContent[nElm]["value"])
 						oText = new CMathAmp();
@@ -8345,19 +8581,22 @@
 							var oSeparateChar = new ParaFieldChar(fldchartype_Separate, private_GetLogicDocument());
 							oRun.AddToContent(-1, oSeparateChar);
 							oSeparateChar.SetRun(oRun);
+							oCurComplexField = notCompletedFields[notCompletedFields.length - 1];
 							oCurComplexField.SetSeparateChar(oSeparateChar);
 							break;
 						case "end":
 							var oEndChar = new ParaFieldChar(fldchartype_End, private_GetLogicDocument());
 							oRun.AddToContent(-1, oEndChar);
 							oEndChar.SetRun(oRun);
-							notCompletedFields[notCompletedFields.length - 1].SetEndChar(oEndChar);
+							oCurComplexField = notCompletedFields[notCompletedFields.length - 1];
+							oCurComplexField.SetEndChar(oEndChar);
 							notCompletedFields.splice(notCompletedFields.length - 1, 1);
 							break;
 					}
 					break;
 				case "instrText":
 					oRun.AddInstrText(aContent[nElm]["instr"]);
+					oCurComplexField = notCompletedFields[notCompletedFields.length - 1];
 					oCurComplexField.SetInstructionLine(aContent[nElm]["instr"]);
 					break;
 				case "paraDrawing":
@@ -8395,16 +8634,16 @@
 		switch (oParsedFootEndnoteRef["type"])
 		{
 			case "footnoteRef":
-				oFootEndnoteRef = new ParaFootnoteReference(this.FootEndNoteMap[oParsedFootEndnoteRef["footnote"]]);
+				oFootEndnoteRef = new AscWord.CRunFootnoteReference(this.FootEndNoteMap[oParsedFootEndnoteRef["footnote"]]);
 				break;
 			case "footnoteNum":
-				oFootEndnoteRef = new ParaFootnoteRef(this.FootEndNoteMap[oParsedFootEndnoteRef["footnote"]]);
+				oFootEndnoteRef = new AscWord.CRunFootnoteRef(this.FootEndNoteMap[oParsedFootEndnoteRef["footnote"]]);
 				break;
 			case "endnoteRef":
-				oFootEndnoteRef = new ParaEndnoteReference(this.FootEndNoteMap[oParsedFootEndnoteRef["footnote"]]);
+				oFootEndnoteRef = new AscWord.CRunEndnoteReference(this.FootEndNoteMap[oParsedFootEndnoteRef["footnote"]]);
 				break;
 			case "endnoteNum":
-				oFootEndnoteRef = new ParaEndnoteRef(this.FootEndNoteMap[oParsedFootEndnoteRef["footnote"]]);
+				oFootEndnoteRef = new AscWord.CRunEndnoteRef(this.FootEndNoteMap[oParsedFootEndnoteRef["footnote"]]);
 				break;
 		}
 		
@@ -8523,101 +8762,126 @@
 		}
 
 		// style 
-		var oStyle  = oParsedPr["rStyle"] ? this.StyleFromJSON(oParsedPr["rStyle"]) : oParsedPr["rStyle"];
-		var oStyles = oStyle ? private_GetStyles() : null;
-		if (oStyle)
+		var oStyle = null;
+		if (oParsedPr["rStyle"] != null && this.RestoredStylesMap[oParsedPr["rStyle"]])
+			oStyle = this.RestoredStylesMap[oParsedPr["rStyle"]];
+
+		if (oParsedPr["b"] != null)
+			oTextPr.Bold = oParsedPr["b"];
+		if (oParsedPr["bCs"] != null)
+			oTextPr.BoldCS = oParsedPr["bCs"];
+		if (oParsedPr["caps"] != null)
+			oTextPr.Caps = oParsedPr["caps"];
+		if (oParsedPr["color"] != null)
+			oTextPr.Color = new AscCommonWord.CDocumentColor(oParsedPr["color"]["r"], oParsedPr["color"]["g"], oParsedPr["color"]["b"], oParsedPr["color"]["auto"]);
+		if (oParsedPr["cs"] != null)
+			oTextPr.CS = oParsedPr["cs"];
+		if (oParsedPr["dstrike"] != null)
+			oTextPr.DStrikeout = oParsedPr["dstrike"];
+
+		if (oParsedPr["highlight"] === "none")
+			oTextPr.HighLight = -1;
+		else if (oParsedPr["highlight"] != null)
+			oTextPr.HighLight = new AscCommonWord.CDocumentColor(oParsedPr["highlight"]["r"], oParsedPr["highlight"]["g"], oParsedPr["highlight"]["b"], oParsedPr["highlight"]["auto"]);
+
+		if (oParsedPr["i"] != null)
+			oTextPr.Italic = oParsedPr["i"];
+		if (oParsedPr["iCs"] != null)
+			oTextPr.ItalicCS = oParsedPr["iCs"];
+		
+		if (oParsedPr["lang"] != null)
 		{
-			var nExistingStyle = oStyles.GetStyleIdByName(oStyle.Name);
-			// если такого стиля нет - добавляем новый
-			if (nExistingStyle === null)
-			{
-				oStyle.Set_BasedOn(null);
-				oStyles.Add(oStyle);
-			}
-			else
-			{
-				var oExistingStyle = oStyles.Get(nExistingStyle);
-				// если стили идентичны, стиль не добавляем
-				if (!oStyle.IsEqual(oExistingStyle))
-				{
-					oStyle.Set_BasedOn(null);
-					oStyles.Add(oStyle);
-				}
-				else
-					oStyle = oExistingStyle;
-			}
+			if (oParsedPr["lang"]["bidi"] != null)
+				oTextPr.Lang.Bidi = Asc.g_oLcidNameToIdMap[oParsedPr["lang"]["bidi"]];
+			if (oParsedPr["lang"]["eastAsia"] != null)
+				oTextPr.Lang.EastAsia = Asc.g_oLcidNameToIdMap[oParsedPr["lang"]["eastAsia"]];
+			if (oParsedPr["lang"]["val"] != null)
+				oTextPr.Lang.Val = Asc.g_oLcidNameToIdMap[oParsedPr["lang"]["val"]];
 		}
+		
+		if (oParsedPr["outline"] != null)
+			 oTextPr.TextOutline = this.LnFromJSON(oParsedPr["outline"]);
+		if (oParsedPr["position"] != null)
+			oTextPr.Position = private_PtToMM(oParsedPr["position"] / 2.0);
+		if (oParsedPr["rFonts"]["ascii"])
+			oTextPr.RFonts.Ascii = {Name: oParsedPr["rFonts"]["ascii"], Index: -1};
+		if (oParsedPr["rFonts"]["cs"])
+			oTextPr.RFonts.CS = {Name: oParsedPr["rFonts"]["cs"], Index: -1};
+		if (oParsedPr["rFonts"]["eastAsia"])
+			oTextPr.RFonts.EastAsia = {Name: oParsedPr["rFonts"]["eastAsia"], Index: -1};
+		if (oParsedPr["rFonts"]["hAnsi"])
+			oTextPr.RFonts.HAnsi = {Name: oParsedPr["rFonts"]["hAnsi"], Index: -1};
+		if (oParsedPr["rFonts"]["hint"] != null)
+			oTextPr.RFonts.Hint = FromXml_ST_Hint(oParsedPr["rFonts"]["hint"]);
+		
+		if (oParsedPr["rFonts"]["asciiTheme"] != null)
+			oTextPr.RFonts.AsciiTheme = oParsedPr["rFonts"]["asciiTheme"];
+		if (oParsedPr["rFonts"]["cstheme"] != null)
+			oTextPr.RFonts.CSTheme = oParsedPr["rFonts"]["cstheme"];
+		if (oParsedPr["rFonts"]["eastAsiaTheme"] != null)
+			oTextPr.RFonts.EastAsiaTheme = oParsedPr["rFonts"]["eastAsiaTheme"];
+		if (oParsedPr["rFonts"]["hAnsiTheme"] != null)
+			oTextPr.RFonts.HAnsiTheme = oParsedPr["rFonts"]["hAnsiTheme"];
+		if (oParsedPr["fontFamily"] != null)
+			oTextPr.FontFamily = {Index: oParsedPr["fontFamily"]["idx"], Name: oParsedPr["fontFamily"]["name"]};
+		if (oParsedPr["rPrChange"] != null)
+			oTextPr.PrChange = this.TextPrFromJSON(oParsedPr["rPrChange"]);
+		if (oStyle != null)
+			oTextPr.RStyle = oStyle.Id;
+		if (oParsedPr["rtl"] != null)
+			oTextPr.RTL = oParsedPr["rtl"];
+		if (oParsedPr["shd"] != null)
+			 oTextPr.Shd = this.ShadeFromJSON(oParsedPr["shd"]);
+		if (oParsedPr["smallCaps"] != null)
+			oTextPr.SmallCaps = oParsedPr["smallCaps"];
+		if (oParsedPr["spacing"] != null)
+			oTextPr.Spacing = private_Twips2MM(oParsedPr["spacing"]);
+		if (oParsedPr["strike"] != null)
+			oTextPr.Strikeout = oParsedPr["strike"];
+		if (oParsedPr["sz"] != null)
+			oTextPr.FontSize = oParsedPr["sz"] / 2.0;
+		if (oParsedPr["szCs"] != null)
+			oTextPr.FontSizeCS = oParsedPr["szCs"] / 2.0;
+		if (oParsedPr["u"] != null)
+			oTextPr.Underline = oParsedPr["u"];
+		if (oParsedPr["vanish"] != null)
+			oTextPr.Vanish = oParsedPr["vanish"];
+		if (nVAlign != null)
+			oTextPr.VertAlign = nVAlign;
+		if (oParsedPr["fontRef"] != null)
+			oTextPr.FontRef = this.FontRefFromJSON(oParsedPr["fontRef"]);
+		if (oParsedPr["uniFill"] != null)
+			oTextPr.Unifill = this.FillFromJSON(oParsedPr["uniFill"]);
+		if (oParsedPr["textFill"] != null)
+			oTextPr.TextFill = this.FillFromJSON(oParsedPr["textFill"]);
+		if (oParsedPr["reviewInfo"] != null)
+			oTextPr.ReviewInfo = this.ReviewInfoFromJSON(oParsedPr["reviewInfo"]);
 
-		oTextPr.Bold                  = oParsedPr["b"];
-		oTextPr.BoldCS                = oParsedPr["bCs"];
-		oTextPr.Caps                  = oParsedPr["caps"];
-		oTextPr.Color                 = oParsedPr["color"] ? new AscCommonWord.CDocumentColor(oParsedPr["color"]["r"], oParsedPr["color"]["g"], oParsedPr["color"]["b"], oParsedPr["color"]["auto"]) : oParsedPr["color"];
-		oTextPr.CS                    = oParsedPr["cs"];
-		oTextPr.DStrikeout            = oParsedPr["dstrike"];
-		oTextPr.HighLight             = oParsedPr["highlight"] === "none" ? -1 : oParsedPr["highlight"] != undefined ? new AscCommonWord.CDocumentColor(oParsedPr["highlight"]["r"], oParsedPr["highlight"]["g"], oParsedPr["highlight"]["b"], oParsedPr["highlight"]["auto"]) : oParsedPr["highlight"];
-		oTextPr.Italic                = oParsedPr["i"];
-		oTextPr.ItalicCS              = oParsedPr["iCs"];
-
-		oTextPr.Lang.Bidi             = oParsedPr["lang"]["bidi"];
-		oTextPr.Lang.EastAsia         = oParsedPr["lang"]["eastAsia"];
-		oTextPr.Lang.Val              = oParsedPr["lang"]["val"];
-
-		oTextPr.TextOutline           = oParsedPr["outline"] ? this.LnFromJSON(oParsedPr["outline"]) : oTextPr.TextOutline;
-		oTextPr.Position              = oParsedPr["position"] ? private_PtToMM(oParsedPr["position"] / 2.0) : oParsedPr["position"];
-
-		oTextPr.RFonts.Ascii          = oParsedPr["rFonts"]["ascii"];
-		oTextPr.RFonts.AsciiTheme     = oParsedPr["rFonts"]["asciiTheme"];
-		oTextPr.RFonts.CS             = oParsedPr["rFonts"]["cs"];
-		oTextPr.RFonts.CSTheme        = oParsedPr["rFonts"]["cstheme"];
-		oTextPr.RFonts.EastAsia       = oParsedPr["rFonts"]["eastAsia"];
-		oTextPr.RFonts.EastAsiaTheme  = oParsedPr["rFonts"]["eastAsiaTheme"];
-		oTextPr.RFonts.HAnsi          = oParsedPr["rFonts"]["hAnsi"];
-		oTextPr.RFonts.HAnsiTheme     = oParsedPr["rFonts"]["hAnsiTheme"];
-		oTextPr.RFonts.Hint           = oParsedPr["rFonts"]["hint"];
-
-		oTextPr.FontFamily            = oParsedPr["fontFamily"] ? {Index: oParsedPr["fontFamily"]["idx"], Name: oParsedPr["fontFamily"]["name"]} : oTextPr.FontFamily;
-		oTextPr.PrChange              = oParsedPr["rPrChange"] ? this.TextPrFromJSON(oParsedPr["rPrChange"]) : oParsedPr["rPrChange"];
-		oTextPr.RStyle                = oStyle ? oStyle.Id : oTextPr.RStyle;
-		oTextPr.RTL                   = oParsedPr["rtl"];
-		oTextPr.Shd                   = oParsedPr["shd"] ? this.ShadeFromJSON(oParsedPr["shd"]) : oParsedPr["shd"];
-		oTextPr.SmallCaps             = oParsedPr["smallCaps"];
-		oTextPr.Spacing               = oParsedPr["spacing"] ? private_Twips2MM(oParsedPr["spacing"]) : oParsedPr["spacing"];
-		oTextPr.Strikeout             = oParsedPr["strike"];
-		oTextPr.FontSize              = oParsedPr["sz"] ? oParsedPr["sz"] / 2.0 : oParsedPr["sz"];
-		oTextPr.FontSizeCS            = oParsedPr["szCs"] ? oParsedPr["szCs"] / 2.0 : oParsedPr["szCs"];
-		oTextPr.Underline             = oParsedPr["u"];
-		oTextPr.Vanish                = oParsedPr["vanish"];
-		oTextPr.VertAlign             = nVAlign;
-		oTextPr.FontRef               = oParsedPr["fontRef"] ? this.FontRefFromJSON(oParsedPr["fontRef"]) : oTextPr.FontRef;
-		oTextPr.Unifill               = oParsedPr["uniFill"] ? this.FillFromJSON(oParsedPr["uniFill"]) : oParsedPr["uniFill"];
-		oTextPr.TextFill              = oParsedPr["textFill"] ? this.FillFromJSON(oParsedPr["textFill"]) : oParsedPr["TextFill"];
-
-		oTextPr.ReviewInfo = oParsedPr["reviewInfo"] ? this.ReviewInfoFromJSON(oParsedPr["reviewInfo"]) : oTextPr.ReviewInfo;
 		return oTextPr;
 	};
-	ReaderFromJSON.prototype.ShadeFromJSON = function(oParsedShd) /// To do
+	ReaderFromJSON.prototype.ShadeFromJSON = function(oParsedShd)
 	{
 		var oShade  = new AscCommonWord.CDocumentShd();
 		oShade.Fill = oParsedShd["fill"] ? new CDocumentColor() : oParsedShd["fill"];
 
 		oShade.Value = oParsedShd["val"];
 
-		oShade.Color.r    = oParsedShd["color"].r;
-		oShade.Color.g    = oParsedShd["color"].g;
-		oShade.Color.b    = oParsedShd["color"].b;
-		oShade.Color.Auto = oParsedShd["color"].auto;
+		oShade.Color.r    = oParsedShd["color"]["r"];
+		oShade.Color.g    = oParsedShd["color"]["g"];
+		oShade.Color.b    = oParsedShd["color"]["b"];
+		oShade.Color.Auto = oParsedShd["color"]["auto"];
 
 		if (oShade.Fill)
 		{
-			oShade.Fill.r    = oParsedShd["fill"].r;
-			oShade.Fill.g    = oParsedShd["fill"].g;
-			oShade.Fill.b    = oParsedShd["fill"].b;
-			oShade.Fill.Auto = oParsedShd["fill"].auto;	
+			oShade.Fill.r    = oParsedShd["fill"]["r"];
+			oShade.Fill.g    = oParsedShd["fill"]["g"];
+			oShade.Fill.b    = oParsedShd["fill"]["b"];
+			oShade.Fill.Auto = oParsedShd["fill"]["auto"];	
 		}
 
 		oShade.FillRef   = oParsedShd["fillRef"]    ? this.StyleRefFromJSON(oParsedShd["fillRef"]) : oParsedShd["fillRef"];
 		oShade.Unifill   = oParsedShd["themeColor"] ? this.FillFromJSON(oParsedShd["themeColor"])  : oParsedShd["themeColor"];
-		oShade.themeFill = oParsedShd["themeFill"]  ? this.FillFromJSON(oParsedShd["themeFill"])   : oParsedShd["themeFill"];
+		oShade.ThemeFill = oParsedShd["themeFill"]  ? this.FillFromJSON(oParsedShd["themeFill"])   : oParsedShd["themeFill"];
 
 		return oShade;
 	};
@@ -8663,7 +8927,6 @@
 					oPara.RemoveFromContent(oPara.Content.length - 1, 1);
 					var oEndRun = this.ParaRunFromJSON(aContent[nElm]);
 					oPara.AddToContent(oPara.Content.length, oEndRun);
-					oPara.TextPr.Apply_TextPr(oEndRun.Pr);
 					break;
 				case "paraMath":
 					oPara.AddToContent(oPara.Content.length - 1, this.ParaMathFromJSON(aContent[nElm], oPara, notCompletedFields));
@@ -8692,13 +8955,14 @@
 					break;
 				case "bookmarkStart":
 					sBookmarkName = aContent[nElm]["name"];
+					oDocument.BookmarksManager.NeedUpdate = false;
+
 					if (oDocument.BookmarksManager.GetBookmarkByName(sBookmarkName))
 							break;
 
 					sBookmarkId = oDocument.BookmarksManager.GetNewBookmarkId();
 					oBookmark   = new CParagraphBookmark(true, sBookmarkId, sBookmarkName);
 					oPara.Add_ToContent(oPara.Content.length - 1, oBookmark);
-					oDocument.BookmarksManager.NeedUpdate = true;
 
 					oMapBookmarksInfo[aContent[nElm]["id"]] = oBookmark;
 					break;
@@ -8708,7 +8972,6 @@
 						break;
 					sBookmarkName = oBookmark.BookmarkName;
 					oPara.Add_ToContent(oPara.Content.length - 1, new CParagraphBookmark(false, oBookmark.BookmarkId, sBookmarkName));
-					oDocument.BookmarksManager.NeedUpdate = true;
 					break;
 				case "revisionMove":
 					// создаём новый moveId(moveName), мапим к нему значения moveId(moveName) из JSON
@@ -8738,7 +9001,7 @@
 
 		return oPara;
 	};
-	ReaderFromJSON.prototype.ParaPrFromJSON = function(oParsedParaPr, oParsedNumbernig, oPrevNumIdInfo)
+	ReaderFromJSON.prototype.ParaPrFromJSON = function(oParsedParaPr, oPrevNumIdInfo)
 	{
 		var oParaPr = new AscCommonWord.CParaPr();
 		
@@ -8766,42 +9029,21 @@
 		}
 
 		// style 
-		var oStyle    = oParsedParaPr["pStyle"] ? this.StyleFromJSON(oParsedParaPr["pStyle"]) : oParsedParaPr["pStyle"];
-		var oStyles   = oStyle ? private_GetStyles() : null;
-		if (oStyle)
-		{
-			var nExistingStyle = oStyles.GetStyleIdByName(oStyle.Name);
-			// если такого стиля нет - добавляем новый
-			if (nExistingStyle === null)
-			{
-				oStyle.Set_BasedOn(null);
-				oStyles.Add(oStyle);
-			}
-			else
-			{
-				var oExistingStyle = oStyles.Get(nExistingStyle);
-				// если стили идентичны, стиль не добавляем
-				if (!oStyle.IsEqual(oExistingStyle))
-				{
-					oStyle.Set_BasedOn(null);
-					oStyles.Add(oStyle);
-				}
-				else
-					oStyle = oExistingStyle;
-			}
-		}
+		var oStyle = null;
+		if (oParsedParaPr["pStyle"] != null && this.RestoredStylesMap[oParsedParaPr["pStyle"]])
+			oStyle = this.RestoredStylesMap[oParsedParaPr["pStyle"]];
 
 		oParaPr.Lvl             = oParsedParaPr["lvl"] != undefined ? oParsedParaPr["lvl"] : oParaPr.Lvl;
 		oParaPr.FramePr         = oParsedParaPr["framePr"] != undefined ? this.FramePrFromJSON(oParsedParaPr["framePr"]) : oParaPr.FramePr;
 		oParaPr.Spacing         = oParsedParaPr["spacing"] != undefined ? this.ParaSpacingFromJSON(oParsedParaPr["spacing"]) : oParaPr.Spacing;
-		oParaPr.Ind.Left        = oParsedParaPr["ind"].left != undefined ? private_Twips2MM(oParsedParaPr["ind"]["left"]) : oParaPr.Ind.Left;
+		oParaPr.Ind.Left        = oParsedParaPr["ind"]["left"] != undefined ? private_Twips2MM(oParsedParaPr["ind"]["left"]) : oParaPr.Ind.Left;
 		oParaPr.Ind.Right       = oParsedParaPr["ind"]["right"] != undefined ? private_Twips2MM(oParsedParaPr["ind"]["right"]) : oParaPr.Ind.Right;
 		oParaPr.Ind.FirstLine   = oParsedParaPr["ind"]["firstLine"] != undefined ? private_Twips2MM(oParsedParaPr["ind"]["firstLine"]) : oParaPr.Ind.FirstLine;
 		oParaPr.Jc              = nJc;
 		oParaPr.DefaultTab      = oParsedParaPr["defTabSz"] != undefined ? private_EMU2MM(oParsedParaPr["defTabSz"]) : oParsedParaPr["defTabSz"];
 		oParaPr.KeepLines       = oParsedParaPr["keepLines"];
 		oParaPr.KeepNext        = oParsedParaPr["keepNext"];
-		oParaPr.NumPr           = oParsedParaPr["numPr"]        ? this.NumPrFromJSON(oParsedParaPr["numPr"], oParsedNumbernig, oPrevNumIdInfo) : oParaPr.NumPr;
+		oParaPr.NumPr           = oParsedParaPr["numPr"] ? this.NumPrFromJSON(oParsedParaPr["numPr"], oPrevNumIdInfo) : oParaPr.NumPr;
 		oParaPr.OutlineLvl      = oParsedParaPr["outlineLvl"];
 		oParaPr.DefaultRunPr    = oParsedParaPr["defaultRunPr"] ? this.TextPrFromJSON(oParsedParaPr["defaultRunPr"])     : oParaPr.DefaultRunPr;
 		oParaPr.Brd.Between     = oParsedParaPr["pBdr"]["between"] ? this.DocBorderFromJSON(oParsedParaPr["pBdr"]["between"])  : oParaPr.Brd.Between;
@@ -9067,7 +9309,7 @@
 		var nCurPos   = 0;
 
 		var nJc = undefined;
-		switch (oParsedParaMath["oMathParaPr"].jc)
+		switch (oParsedParaMath["oMathParaPr"]["jc"])
 		{
 			case "center":
 				nJc = JC_CENTER;
@@ -9206,7 +9448,7 @@
 			var nType = oParsedDegree["type"] === "superScript" ? DEGREE_SUPERSCRIPT : DEGREE_SUBSCRIPT;
 
 			var oParsedCtrlPr = nType === DEGREE_SUPERSCRIPT ? oParsedDegree["sSupPr"]["ctrlPr"] : oParsedDegree["sSubPr"]["ctrlPr"];
-
+			var oParsedIterator = nType === DEGREE_SUPERSCRIPT ? oParsedDegree["sup"] : oParsedDegree["sub"];
 			var oCtrlPr = this.TextPrFromJSON(oParsedCtrlPr);
 			var oDegree = new AscCommonWord.CDegree({ctrPrp: oCtrlPr, type: nType});
 
@@ -9220,8 +9462,10 @@
 			}
 
 			var oIterContent = oDegree.getUpperIterator();
-			var aIterContent = MathContentFromJSON.call(this, oParsedDegree["sup"] || oParsedDegree["sub"]);
-			nCurPos          = 0;
+			var aIterContent = MathContentFromJSON.call(this, oParsedIterator["content"]);
+			oParsedIterator["argPr"]["argSize"] != undefined && oIterContent.ArgSize.SetValue(oParsedIterator["argPr"]["argSize"]);
+			
+			nCurPos = 0;
 			for (nElm = 0; nElm < aIterContent.length; nElm++)
 			{
 				oIterContent.Internal_Content_Add(nCurPos, aIterContent[nElm]);
@@ -9298,9 +9542,9 @@
 		{
 			var oCtrlPr = this.TextPrFromJSON(oParsedNary["naryPr"]["ctrlPr"]);
 			var oPr = {
-				chr: oParsedNary["naryPr"]["chr"],
-				ctrPrp: oCtrlPr,
-				limLoc: oParsedNary["naryPr"]["limLoc"] === "undOvr" ? NARY_UndOvr : NARY_SubSup,
+				chr:     oParsedNary["naryPr"]["chr"],
+				ctrPrp:  oCtrlPr,
+				limLoc:  oParsedNary["naryPr"]["limLoc"] === "undOvr" ? NARY_UndOvr : NARY_SubSup,
 				subHide: oParsedNary["naryPr"]["subHide"],
 				supHide: oParsedNary["naryPr"]["supHide"]
 			};
@@ -9309,7 +9553,7 @@
 
 			var oBaseContent = oNary.getBase();
 			var aBaseContent = MathContentFromJSON.call(this, oParsedNary["e"]);
-			var nCurPos      = 0;
+			var nCurPos = 0;
 			for (var nElm = 0; nElm < aBaseContent.length; nElm++)
 			{
 				oBaseContent.Internal_Content_Add(nCurPos, aBaseContent[nElm]);
@@ -9318,7 +9562,7 @@
 
 			var oSubContent = oNary.getSubMathContent();
 			var aSubContent = MathContentFromJSON.call(this, oParsedNary["sub"]);
-			nCurPos            = 0;
+			nCurPos = 0;
 			for (nElm = 0; nElm < aSubContent.length; nElm++)
 			{
 				oSubContent.Internal_Content_Add(nCurPos, aSubContent[nElm]);
@@ -9327,7 +9571,7 @@
 
 			var oSupContent = oNary.getSupMathContent();
 			var aSupContent = MathContentFromJSON.call(this, oParsedNary["sup"]);
-			nCurPos            = 0;
+			nCurPos = 0;
 			for (nElm = 0; nElm < aSupContent.length; nElm++)
 			{
 				oSupContent.Internal_Content_Add(nCurPos, aSupContent[nElm]);
@@ -9569,7 +9813,7 @@
 
 			var oPr = {
 				ctrPrp: oCtrlPr,
-				pos:   nPos
+				pos:    nPos
 			};
 
 			var oBar = new CBar(oPr);
@@ -9827,45 +10071,37 @@
 				break;
 		}
 
-		oSectPr.FooterFirst   = oParsedSectPr["footerReference"]["first"]   ? this.FooterFromJSON(oParsedSectPr["footerReference"]["first"])   : oSectPr.FooterFirst;
-		oSectPr.FooterDefault = oParsedSectPr["footerReference"]["default"] ? this.FooterFromJSON(oParsedSectPr["footerReference"]["default"]) : oSectPr.FooterDefault;
-		oSectPr.FooterEven    = oParsedSectPr["footerReference"]["even"]    ? this.FooterFromJSON(oParsedSectPr["footerReference"]["even"])    : oSectPr.FooterEven;
+		oParsedSectPr["footerReference"]["first"] && oSectPr.Set_Footer_First(this.FooterFromJSON(oParsedSectPr["footerReference"]["first"]));
+		oParsedSectPr["footerReference"]["default"] && oSectPr.Set_Footer_Default(this.FooterFromJSON(oParsedSectPr["footerReference"]["default"]));
+		oParsedSectPr["footerReference"]["even"] && oSectPr.Set_Footer_Even(this.FooterFromJSON(oParsedSectPr["footerReference"]["even"]));
 
-		oSectPr.HeaderFirst   = oParsedSectPr["headerReference"]["first"]   ? this.HeaderFromJSON(oParsedSectPr["headerReference"]["first"])   : oSectPr.HeaderFirst;
-		oSectPr.HeaderDefault = oParsedSectPr["headerReference"]["default"] ? this.HeaderFromJSON(oParsedSectPr["headerReference"]["default"]) : oSectPr.HeaderDefault;
-		oSectPr.HeaderEven    = oParsedSectPr["headerReference"]["even"]    ? this.HeaderFromJSON(oParsedSectPr["headerReference"]["even"])    : oSectPr.HeaderEven;
+		oParsedSectPr["headerReference"]["first"] && oSectPr.Set_Header_First(this.HeaderFromJSON(oParsedSectPr["headerReference"]["first"]));
+		oParsedSectPr["headerReference"]["default"] && oSectPr.Set_Header_Default(this.HeaderFromJSON(oParsedSectPr["headerReference"]["default"]));
+		oParsedSectPr["headerReference"]["even"] && oSectPr.Set_Header_Even(this.HeaderFromJSON(oParsedSectPr["headerReference"]["even"]));
 
-		oSectPr.Columns       = this.SectionColumnsFromJSON(oParsedSectPr["cols"], oSectPr);
-		oSectPr.EndnotePr     = this.EndnotePrFromJSON(oParsedSectPr["endnotePr"]);
-		oSectPr.FootnotePr    = this.FootnotePrFromJSON(oParsedSectPr["footnotePr"]);
-		oSectPr.LnNumType     = oParsedSectPr["lnNumType"] ? this.LnNumTypeFromJSON(oParsedSectPr["lnNumType"]) : oSectPr.LnNumType;
-		oSectPr.Borders       = this.PageBordersFromJSON(oParsedSectPr["pgBorders"]);
-		oSectPr.PageMargins   = this.PageMarginsFromJSON(oParsedSectPr["pgMar"]);
-		oSectPr.PageSize      = this.PageSizeFromJSON(oParsedSectPr["pgSz"]);
-		oSectPr.GutterRTL     = oParsedSectPr["rtlGutter"];
-		oSectPr.TitlePage     = oParsedSectPr["titlePg"];
-		oSectPr.Type          = nSectionType;
+		oParsedSectPr["cols"] != null && this.SectionColumnsFromJSON(oParsedSectPr["cols"], oSectPr);
+		oParsedSectPr["endnotePr"] != null && this.EndnotePrFromJSON(oParsedSectPr["endnotePr"], oSectPr);
+		oParsedSectPr["footnotePr"] != null && this.FootnotePrFromJSON(oParsedSectPr["footnotePr"], oSectPr);
+		oParsedSectPr["lnNumType"] != null && this.LnNumTypeFromJSON(oParsedSectPr["lnNumType"], oSectPr);
+		oParsedSectPr["pgBorders"] != null && this.PageBordersFromJSON(oParsedSectPr["pgBorders"], oSectPr);
+		oParsedSectPr["pgMar"] != null && this.PageMarginsFromJSON(oParsedSectPr["pgMar"], oSectPr);
+		oParsedSectPr["pgSz"] != null && this.PageSizeFromJSON(oParsedSectPr["pgSz"], oSectPr);
+		oSectPr.Set_PageNum_Start(oParsedSectPr["pgNumType"]["start"]);
+		oSectPr.SetGutterRTL(oParsedSectPr["rtlGutter"]);
+		oSectPr.Set_TitlePage(oParsedSectPr["titlePg"]);
+		oSectPr.Set_Type(nSectionType);
 
 		return oSectPr;
 	};
-	ReaderFromJSON.prototype.PageMarginsFromJSON = function(oParsedMargins)
+	ReaderFromJSON.prototype.PageMarginsFromJSON = function(oParsedMargins, oParentSectPr)
 	{
-		var oPageMargins = new CSectionPageMargins();
-
-		oPageMargins.Bottom = private_Twips2MM(oParsedMargins["bottom"]);
-		oPageMargins.Footer = private_Twips2MM(oParsedMargins["footer"]);
-		oPageMargins.Gutter = private_Twips2MM(oParsedMargins["gutter"]);
-		oPageMargins.Header = private_Twips2MM(oParsedMargins["header"]);
-		oPageMargins.Left   = private_Twips2MM(oParsedMargins["left"]);
-		oPageMargins.Right  = private_Twips2MM(oParsedMargins["right"]);
-		oPageMargins.Top    = private_Twips2MM(oParsedMargins["top"]);
-
-		return oPageMargins;
+		oParsedMargins["footer"] != null && oParentSectPr.SetPageMarginFooter(private_Twips2MM(oParsedMargins["footer"]));
+		oParsedMargins["header"] != null && oParentSectPr.SetPageMarginHeader(private_Twips2MM(oParsedMargins["header"]));
+		oParentSectPr.SetPageMargins(private_Twips2MM(oParsedMargins["left"]), private_Twips2MM(oParsedMargins["top"]), private_Twips2MM(oParsedMargins["right"]), private_Twips2MM(oParsedMargins["bottom"]));
+		oParsedMargins["gutter"] != null && oParentSectPr.SetGutter(private_Twips2MM(oParsedMargins["gutter"]));
 	};
-	ReaderFromJSON.prototype.PageSizeFromJSON = function(oParsedPgSize)
+	ReaderFromJSON.prototype.PageSizeFromJSON = function(oParsedPgSize, oParentSectPr)
 	{
-		var oPageSize = new CSectionPageSize();
-
 		var nOrientType = undefined;
 		switch(oParsedPgSize["orinet"])
 		{
@@ -9877,15 +10113,13 @@
 				break;
 		}
 
-		oPageSize.H = private_Twips2MM(oParsedPgSize["h"]);
-		oPageSize.W = private_Twips2MM(oParsedPgSize["w"]);
+		oParentSectPr.SetPageSize(private_Twips2MM(oParsedPgSize["w"]), private_Twips2MM(oParsedPgSize["h"]));
+		nOrientType != null && oParentSectPr.SetOrientation(nOrientType);
 
-		return oPageSize;
+		return oParentSectPr;
 	};
-	ReaderFromJSON.prototype.PageBordersFromJSON = function(oParsedPgBorders)
+	ReaderFromJSON.prototype.PageBordersFromJSON = function(oParsedPgBorders, oParentSectPr)
 	{
-		var oPageBorders = new CSectionBorders();
-
 		var nDisplayType = undefined;
 		switch(oParsedPgBorders["display"])
 		{
@@ -9900,18 +10134,16 @@
 				break;
 		}
 
-		oPageBorders.Bottom = this.DocBorderFromJSON(oParsedPgBorders["bottom"]);
-		oPageBorders.Left   = this.DocBorderFromJSON(oParsedPgBorders["left"]);
-		oPageBorders.Right  = this.DocBorderFromJSON(oParsedPgBorders["right"]);
-		oPageBorders.Top    = this.DocBorderFromJSON(oParsedPgBorders["top"]);
+		oParsedPgBorders["bottom"] != null && oParentSectPr.Set_Borders_Bottom(this.DocBorderFromJSON(oParsedPgBorders["bottom"]));
+		oParsedPgBorders["left"] != null && oParentSectPr.Set_Borders_Left(this.DocBorderFromJSON(oParsedPgBorders["left"]));
+		oParsedPgBorders["right"] != null && oParentSectPr.Set_Borders_Right(this.DocBorderFromJSON(oParsedPgBorders["right"]));
+		oParsedPgBorders["top"] != null && oParentSectPr.Set_Borders_Top(this.DocBorderFromJSON(oParsedPgBorders["top"]));
 
-		oPageBorders.Display    = nDisplayType;
-		oPageBorders.OffsetFrom = private_Twips2MM(oParsedPgBorders["offsetFrom"]);
-		oPageBorders.ZOrder     = oParsedPgBorders["zOrder"] === "front" ? section_borders_ZOrderFront : section_borders_ZOrderBack;
-
-		return oPageBorders;
+		nDisplayType != null && oParentSectPr.Set_Borders_Display(nDisplayType);
+		oParentSectPr.SetBordersOffsetFrom(oParsedPgBorders["offsetFrom"] === "text" ? section_borders_OffsetFromText : section_borders_OffsetFromPage);
+		oParentSectPr.Set_Borders_ZOrder(oParsedPgBorders["zOrder"] === "front" ? section_borders_ZOrderFront : section_borders_ZOrderBack);
 	};
-	ReaderFromJSON.prototype.LnNumTypeFromJSON = function(oParsedLnNumType)
+	ReaderFromJSON.prototype.LnNumTypeFromJSON = function(oParsedLnNumType, oParentSectPr)
 	{
 		var nRestartType = undefined;
 		switch(oParsedLnNumType["restart"])
@@ -9927,12 +10159,10 @@
 				break;
 		}
 
-		return new Asc.CSectionLnNumType(oParsedLnNumType["countBy"], private_Twips2MM(oParsedLnNumType["distance"]), oParsedLnNumType["start"], nRestartType);
+		oParentSectPr.SetLineNumbers(oParsedLnNumType["countBy"], private_Twips2MM(oParsedLnNumType["distance"]), oParsedLnNumType["start"], nRestartType);
 	};
-	ReaderFromJSON.prototype.EndnotePrFromJSON = function(oParsedPr)
+	ReaderFromJSON.prototype.EndnotePrFromJSON = function(oParsedPr, oParentSectPr)
 	{
-		var oEndnotePr = new CFootnotePr();
-
 		var nNumRestart = undefined;
 		switch(oParsedPr["numRestart"])
 		{
@@ -9958,17 +10188,13 @@
 				break;
 		}
 
-		oEndnotePr.NumFormat  = From_XML_c_oAscNumberingFormat(oParsedPr["numFmt"]);
-		oEndnotePr.NumRestart = nNumRestart;
-		oEndnotePr.NumStart   = oParsedPr["numStart"];
-		oEndnotePr.Pos        = nEndPos;
-
-		return oEndnotePr;
+		oParsedPr["numFmt"] != null && oParentSectPr.SetEndnoteNumFormat(From_XML_c_oAscNumberingFormat(oParsedPr["numFmt"]));
+		nNumRestart != null && oParentSectPr.SetEndnoteNumRestart(nNumRestart);
+		oParsedPr["numStart"] != null && oParentSectPr.SetEndnoteNumStart(oParsedPr["numStart"]);
+		nEndPos != null && oParentSectPr.SetEndnotePos(nEndPos);
 	};
-	ReaderFromJSON.prototype.FootnotePrFromJSON = function(oParsedPr)
+	ReaderFromJSON.prototype.FootnotePrFromJSON = function(oParsedPr, oParentSectPr)
 	{
-		var oFootnotePr = new CFootnotePr();
-
 		var nNumRestart = undefined;
 		switch(oParsedPr["numRestart"])
 		{
@@ -10000,26 +10226,20 @@
 				break;
 		}
 
-		oFootnotePr.NumFormat  = From_XML_c_oAscNumberingFormat(oParsedPr["numFmt"]);
-		oFootnotePr.NumRestart = nNumRestart;
-		oFootnotePr.NumStart   = oParsedPr["numStart"];
-		oFootnotePr.Pos        = nEndPos;
-
-		return oFootnotePr;
+		oParsedPr["numFmt"] != null && oParentSectPr.SetFootnoteNumFormat(From_XML_c_oAscNumberingFormat(oParsedPr["numFmt"]));
+		nNumRestart != null && oParentSectPr.SetFootnoteNumRestart(nNumRestart);
+		oParsedPr["numStart"] != null && oParentSectPr.SetFootnoteNumStart(oParsedPr["numStart"]);
+		nEndPos != null && oParentSectPr.SetFootnotePos(nEndPos);
 	};
 	ReaderFromJSON.prototype.SectionColumnsFromJSON = function(oParsedSectCols, oParentSectPr)
 	{
-		var oSectionCols = new CSectionColumns(oParentSectPr);
-
 		for (var nCol = 0; nCol < oParsedSectCols["col"].length; nCol++)
-			oSectionCols.Cols.push(this.SectionColFromJSON(oParsedSectCols["col"][nCol]));
+			oParentSectPr.Set_Columns_Col(nCol, private_Twips2MM(oParsedSectCols["col"][nCol]["w"]), private_Twips2MM(oParsedSectCols["col"][nCol]["space"]));
 
-		oSectionCols.EqualWidth = oParsedSectCols["equalWidth"];
-		oSectionCols.Num        = oParsedSectCols["num"];
-		oSectionCols.Sep        = oParsedSectCols["sep"];
-		oSectionCols.Space      = private_Twips2MM(oParsedSectCols["space"]);
-
-		return oSectionCols;
+		oParsedSectCols["equalWidth"] != null && oParentSectPr.Set_Columns_EqualWidth(oParsedSectCols["equalWidth"]);
+		oParsedSectCols["num"] != null & oParentSectPr.Set_Columns_Num(oParsedSectCols["num"]);
+		oParsedSectCols["sep"] != null & oParentSectPr.Set_Columns_Sep(oParsedSectCols["sep"]);
+		oParsedSectCols["space"] != null && oParentSectPr.Set_Columns_Space(private_Twips2MM(oParsedSectCols["space"]));
 	};
 	ReaderFromJSON.prototype.SectionColFromJSON = function(oParsedSectCol)
 	{
@@ -10037,7 +10257,7 @@
 		var oHdrFtrController = oDocument.GetHdrFtr();
 
 		var oHeader = new AscCommonWord.CHeaderFooter(oHdrFtrController, oDocument, oDrawingDocuemnt, AscCommon.hdrftr_Header);
-		oHeader.Content = this.DocContentFromJSON(oParsedHdr["content"], oHeader);
+		oHeader.Content.Copy2(this.DocContentFromJSON(oParsedHdr["content"], oHeader));
 
 		return oHeader;
 	};
@@ -10048,7 +10268,7 @@
 		var oHdrFtrController = oDocument.GetHdrFtr();
 
 		var oFooter = new AscCommonWord.CHeaderFooter(oHdrFtrController, oDocument, oDrawingDocuemnt, AscCommon.hdrftr_Footer);
-		oFooter.Content = this.DocContentFromJSON(oParsedHdr["content"], oFooter);
+		oFooter.Content.Copy2(this.DocContentFromJSON(oParsedHdr["content"], oFooter));
 
 		return oFooter;
 	};
@@ -10195,7 +10415,7 @@
 
 		return oFramePr;		
 	};
-	ReaderFromJSON.prototype.NumPrFromJSON = function(oParsedNumPr, oParsedNumbering, oPrevNumIdInfo)
+	ReaderFromJSON.prototype.NumPrFromJSON = function(oParsedNumPr, oPrevNumIdInfo)
 	{
 		if (oPrevNumIdInfo && oPrevNumIdInfo.sPrevCreatedNumId)
 		{
@@ -10206,13 +10426,16 @@
 		}
 		
 		// numbering
-		var sNumId  = oParsedNumbering ? this.NumberingFromJSON(oParsedNumbering) : oParsedNumbering; // тут создаем AbstrackNum и CNum 
+		var sNumId  = this.NumberingFromJSON(oParsedNumPr["numId"]); // тут создаем AbstrackNum и CNum 
+		if (sNumId == null)
+			return undefined;
+
 		var nNumLvl = oParsedNumPr["ilvl"];
 
 		if (oPrevNumIdInfo)
 		{
 			oPrevNumIdInfo.sPrevCreatedNumId = sNumId;
-			oPrevNumIdInfo.nNumId            = oParsedNumPr["numId"];
+			oPrevNumIdInfo.nNumId = oParsedNumPr["numId"];
 		}
 
 		var oNumPr = new CNumPr(sNumId, nNumLvl);
@@ -10222,6 +10445,7 @@
 	};
 	ReaderFromJSON.prototype.ParaSpacingFromJSON = function(oParsedSpacing)
 	{
+		// to do
 		var oSpacing = new CParaSpacing();
 
 		oSpacing.Before            = typeof(oParsedSpacing["before"]) === "number" ? private_Twips2MM(oParsedSpacing["before"]) : oSpacing.Before;
@@ -10253,34 +10477,37 @@
 
 		return oSpacing;
 	};
-	ReaderFromJSON.prototype.NumberingFromJSON = function(oParsedNumbering)
+	ReaderFromJSON.prototype.NumberingFromJSON = function(sNumId)
 	{
-		var oDocument    = private_GetLogicDocument();
-		var oAbstractNum = this.AbstractNumFromJSON(oParsedNumbering["abstractNum"]);
+		var oDocument = private_GetLogicDocument();
+		var oParsedNum = this.parsedNumbering["num"][sNumId];
+		if (!oParsedNum)
+			return null;
+			
+		var oParsedAbstrNum = this.parsedNumbering["abstractNum"][oParsedNum["abstractNumId"]];
+
+		var oAbstractNum = this.AbstractNumFromJSON(oParsedAbstrNum);
 		var oNum         = new CNum(private_GetLogicDocument().Numbering, oAbstractNum.GetId());
-		oNum             = this.CNumFromJSON(oNum, oParsedNumbering["num"]["lvlOverride"]);
-		var sNumId       = oNum.GetId();
+		oNum             = this.CNumFromJSON(oNum, oParsedNum["lvlOverride"]);
 
-		oDocument.Numbering.Num[sNumId] = oNum;
-
-		return sNumId;
+		return oDocument.Numbering.AddNum(oNum);
 	};
 	ReaderFromJSON.prototype.AbstractNumFromJSON = function(oParsedAbstrNum)
 	{
-		var oDocument    = private_GetLogicDocument();
+		var oDocument = private_GetLogicDocument();
 		var oAbstractNum = new CAbstractNum();
+		var oTempLvl;
 
-		oAbstractNum.Lvl = [];
 		for (var nLvl = 0; nLvl < oParsedAbstrNum["lvl"].length; nLvl++)
-			oAbstractNum.Lvl.push(this.NumLvlFromJSON(oParsedAbstrNum["lvl"][nLvl]));
+		{
+			oTempLvl = this.NumLvlFromJSON(oParsedAbstrNum["lvl"][nLvl]);
+			oAbstractNum.SetLvl(oParsedAbstrNum["lvl"][nLvl]["ilvl"], oTempLvl);
+		}
 
-		oAbstractNum.NumStyleLink = oParsedAbstrNum["numStyleLink"];
-		oAbstractNum.styleLink    = oParsedAbstrNum["StyleLink"];
+		oParsedAbstrNum["numStyleLink"] != null && oAbstractNum.SetNumStyleLink(oParsedAbstrNum["numStyleLink"]);
+		oParsedAbstrNum["styleLink"] != null && oAbstractNum.SetStyleLink(oParsedAbstrNum["styleLink"]);
 
-		//if (oDocument.Numbering.AbstractNum[oParsedAbstrNum.abstractNumId] && oAbstractNum.isEqual(oDocument.Numbering.AbstractNum[oParsedAbstrNum.abstractNumId]))
-		//	return oDocument.Numbering.AbstractNum[oParsedAbstrNum.abstractNumId];
-
-		oDocument.Numbering.AbstractNum[oAbstractNum.GetId()] = oAbstractNum;
+		oDocument.Numbering.AddAbstractNum(oAbstractNum);
 		return oAbstractNum;
 	};
 	ReaderFromJSON.prototype.CNumFromJSON = function(oNum, arrLvlOverride)
@@ -10316,30 +10543,9 @@
 		}
 
 		// style 
-		var oStyle    = oParsedNumLvl["pStyle"] ? this.StyleFromJSON(oParsedNumLvl["pStyle"]) : oParsedNumLvl["pStyle"];
-		var oStyles   = private_GetStyles();
-		if (oStyle)
-		{
-			var nExistingStyle = oStyles.GetStyleIdByName(oStyle.Name);
-			// если такого стиля нет - добавляем новый
-			if (nExistingStyle === null)
-			{
-				oStyle.Set_BasedOn(null);
-				oStyles.Add(oStyle);
-			}
-			else
-			{
-				var oExistingStyle = oStyles.Get(nExistingStyle);
-				// если стили идентичны, стиль не добавляем
-				if (!oStyle.IsEqual(oExistingStyle))
-				{
-					oStyle.Set_BasedOn(null);
-					oStyles.Add(oStyle);
-				}
-				else
-					oStyle = oExistingStyle;
-			}
-		}
+		var oStyle = null;
+		if (oParsedNumLvl["pStyle"] && this.RestoredStylesMap[oParsedNumLvl["pStyle"]])
+			oStyle = this.RestoredStylesMap[oParsedNumLvl["pStyle"]];
 
 		// suff
 		var nSuffType = undefined;
@@ -10416,10 +10622,10 @@
 		if (!notCompletedFields)
 			notCompletedFields = [];
 
-		var oContentControl = new AscCommonWord.CInlineLevelSdt();
-		var aContent        = oParsedSdt["content"];
+		var oSdt = new AscCommonWord.CInlineLevelSdt();
+		var aContent = oParsedSdt["content"];
 
-		oContentControl.Pr = this.SdtPrFromJSON(oParsedSdt["sdtPr"]);
+		this.SdtPrFromJSON(oParsedSdt["sdtPr"], oSdt);
 
 		for (var nElm = 0; nElm < aContent.length; nElm++)
 		{
@@ -10427,15 +10633,15 @@
 			{
 				case "run":
 				case "mathRun":
-					oContentControl.AddToContent(oContentControl.Content.length, this.ParaRunFromJSON(aContent[nElm], oParentPara, notCompletedFields));
+					oSdt.AddToContent(oSdt.Content.length, this.ParaRunFromJSON(aContent[nElm], oParentPara, notCompletedFields));
 					break;
 				case "hyperlink":
-					oContentControl.AddToContent(oContentControl.Content.length, this.HyperlinkFromJSON(aContent[nElm], notCompletedFields));
+					oSdt.AddToContent(oSdt.Content.length, this.HyperlinkFromJSON(aContent[nElm], notCompletedFields));
 					break;
 			}
 		}
 
-		return oContentControl;
+		return oSdt;
 	};
 	ReaderFromJSON.prototype.BlockLvlSdtFromJSON = function(oParsedSdt, oParent, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo)
 	{
@@ -10446,13 +10652,12 @@
 		if (!oMapBookmarksInfo)
 			oMapBookmarksInfo = {};
 
-		var oContentControl = new AscCommonWord.CBlockLevelSdt(private_GetLogicDocument(), oParent || private_GetLogicDocument());
+		var oSdt = new AscCommonWord.CBlockLevelSdt(private_GetLogicDocument(), oParent || private_GetLogicDocument());
+		this.SdtPrFromJSON(oParsedSdt["sdtPr"], oSdt);
 		
-		oContentControl.SetPr(this.SdtPrFromJSON(oParsedSdt["sdtPr"]));
-		
-		oContentControl.Content.Copy2(this.DocContentFromJSON(oParsedSdt["sdtContent"], oContentControl, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo));
+		oSdt.Content.Copy2(this.DocContentFromJSON(oParsedSdt["sdtContent"], oSdt, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo));
 
-		return oContentControl;
+		return oSdt;
 	};
 	ReaderFromJSON.prototype.TableCellFromJSON = function(oParsedCell, oParentRow, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo)
 	{
@@ -10469,27 +10674,38 @@
 		var oTableCellPr = new CTableCellPr();
 
 		oTableCellPr.GridSpan   = oParsedPr["gridSpan"];
-		oTableCellPr.HMerge     = oParsedPr["hMerge"] ? (oParsedPr["hMerge"] === "continue" ? 2 : 1) : oParsedPr["hMerge"];
-		oTableCellPr.VMerge     = oParsedPr["vMerge"] ? (oParsedPr["vMerge"] === "continue" ? 2 : 1) : oParsedPr["vMerge"];
+		oTableCellPr.HMerge     = oParsedPr["hMerge"] ? (oParsedPr["hMerge"] === "continue" ? 2 : 1) : oTableCellPr.HMerge;
+		oTableCellPr.VMerge     = oParsedPr["vMerge"] ? (oParsedPr["vMerge"] === "continue" ? 2 : 1) : oTableCellPr.VMerge;
 		oTableCellPr.NoWrap     = oParsedPr["noWrap"];
 		oTableCellPr.Shd        = oParsedPr["shd"] ? this.ShadeFromJSON(oParsedPr["shd"]) : oParsedPr["shd"];
 
-		oTableCellPr.TableCellBorders.Bottom = oParsedPr["tcBorders"]["bottom"] ? this.DocBorderFromJSON(oParsedPr["tcBorders"]["bottom"]) : oParsedPr["tcBorders"]["bottom"];
-		oTableCellPr.TableCellBorders.Right  = oParsedPr["tcBorders"]["end"]    ? this.DocBorderFromJSON(oParsedPr["tcBorders"]["end"])    : oParsedPr["tcBorders"]["end"];
-		oTableCellPr.TableCellBorders.Left   = oParsedPr["tcBorders"]["start"]  ? this.DocBorderFromJSON(oParsedPr["tcBorders"]["start"])  : oParsedPr["tcBorders"]["start"];
-		oTableCellPr.TableCellBorders.Top    = oParsedPr["tcBorders"]["top"]    ? this.DocBorderFromJSON(oParsedPr["tcBorders"]["top"])    : oParsedPr["tcBorders"]["top"];
+		if (oParsedPr["tcBorders"]["bottom"])
+			oTableCellPr.TableCellBorders.Bottom = this.DocBorderFromJSON(oParsedPr["tcBorders"]["bottom"]);
+		if (oParsedPr["tcBorders"]["end"])
+			oTableCellPr.TableCellBorders.Right = this.DocBorderFromJSON(oParsedPr["tcBorders"]["end"]);
+		if (oParsedPr["tcBorders"]["start"])
+			oTableCellPr.TableCellBorders.Left = this.DocBorderFromJSON(oParsedPr["tcBorders"]["start"]);
+		if (oParsedPr["tcBorders"]["top"])
+			oTableCellPr.TableCellBorders.Top = this.DocBorderFromJSON(oParsedPr["tcBorders"]["top"]);
 		
 		if (oParsedPr["tcMar"])
 		{
-			oTableCellPr.TableCellMar        = {};
-			oTableCellPr.TableCellMar.Bottom = oParsedPr["tcMar"]["bottom"] ? this.TableMeasurementFromJSON(oParsedPr["tcMar"]["bottom"]) : oParsedPr["tcMar"]["bottom"];
-			oTableCellPr.TableCellMar.Right  = oParsedPr["tcMar"]["right"]  ? this.TableMeasurementFromJSON(oParsedPr["tcMar"]["right"])  : oParsedPr["tcMar"]["right"];
-			oTableCellPr.TableCellMar.Left   = oParsedPr["tcMar"]["left"]   ? this.TableMeasurementFromJSON(oParsedPr["tcMar"]["left"])   : oParsedPr["tcMar"]["left"];
-			oTableCellPr.TableCellMar.Top    = oParsedPr["tcMar"]["top"]    ? this.TableMeasurementFromJSON(oParsedPr["tcMar"]["top"])    : oParsedPr["tcMar"]["top"];
+			oTableCellPr.TableCellMar = {};
+			
+			if (oParsedPr["tcMar"]["bottom"])
+				oTableCellPr.TableCellMar.Bottom = this.TableMeasurementFromJSON(oParsedPr["tcMar"]["bottom"]);
+			if (oParsedPr["tcMar"]["right"])
+				oTableCellPr.TableCellMar.Right = this.TableMeasurementFromJSON(oParsedPr["tcMar"]["right"]);
+			if (oParsedPr["tcMar"]["left"])
+				oTableCellPr.TableCellMar.Left = this.TableMeasurementFromJSON(oParsedPr["tcMar"]["left"]);
+			if (oParsedPr["tcMar"]["top"])
+				oTableCellPr.TableCellMar.Top = this.TableMeasurementFromJSON(oParsedPr["tcMar"]["top"]);
 		}
 
-		oTableCellPr.PrChange   = oParsedPr["tcPrChange"] ? this.TableCellPrFromJSON(oParsedPr["tcPrChange"]) : oParsedPr["tcPrChange"];
-		oTableCellPr.TableCellW = oParsedPr["tcW"]        ? this.TableMeasurementFromJSON(oParsedPr["tcW"])   : oParsedPr["tcW"];
+		if (oParsedPr["tcPrChange"])
+			oTableCellPr.PrChange = this.TableCellPrFromJSON(oParsedPr["tcPrChange"]);
+		if (oParsedPr["tcW"])
+			oTableCellPr.TableCellW = this.TableMeasurementFromJSON(oParsedPr["tcW"]);
 
 		// text direction
 		var nTextDir = undefined;
@@ -10542,7 +10758,7 @@
 		var nType = tblwidth_Auto;
 		var nW    = 0;
 
-		switch (oParsedObj.type)
+		switch (oParsedObj["type"])
 		{
 			case "auto":
 				nType = tblwidth_Auto;
@@ -10550,7 +10766,7 @@
 				break;
 			case "dxa":
 				nType = tblwidth_Mm;
-				nW    = private_Twips2MM(oParsedObj.w)
+				nW    = private_Twips2MM(oParsedObj["w"])
 				break;
 			case "nil":
 				nType = tblwidth_Nil;
@@ -10558,7 +10774,7 @@
 				break;
 			case "pct":
 				nType = tblwidth_Pct;
-				nW    = oParsedObj.w;
+				nW    = oParsedObj["w"];
 				break;
 		}
 
@@ -10567,14 +10783,14 @@
 	ReaderFromJSON.prototype.TableRowFromJSON = function(oParsedRow, oParentTable, nIndex, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo)
 	{
 		var oRow     = new CTableRow(oParentTable);
-		var aContent = oParsedRow.content;
+		var aContent = oParsedRow["content"];
 
 		if (nIndex >= 0)
 			oRow.Index = nIndex;
 
 		// review info
 		var nReviewType = undefined;
-		switch (oParsedRow.reviewType)
+		switch (oParsedRow["reviewType"])
 		{
 			case "common":
 				nReviewType = reviewtype_Common;
@@ -10586,10 +10802,10 @@
 				nReviewType = reviewtype_Add;
 				break;
 		}
-		var oReviewInfo = oParsedRow.reviewInfo ? this.ReviewInfoFromJSON(oParsedRow.reviewInfo) : oRow.ReviewInfo;
+		var oReviewInfo = oParsedRow["reviewInfo"] ? this.ReviewInfoFromJSON(oParsedRow["reviewInfo"]) : oRow.ReviewInfo;
 		oRow.SetReviewTypeWithInfo(nReviewType, oReviewInfo);
 
-		oRow.Set_Pr(this.TableRowPrFromJSON(oParsedRow.trPr));
+		oRow.Set_Pr(this.TableRowPrFromJSON(oParsedRow["trPr"]));
 
 		for (var nCell = 0; nCell < aContent.length; nCell++)
 			oRow.Add_Cell(nCell, oRow, this.TableCellFromJSON(aContent[nCell], oRow, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo), false);
@@ -10600,16 +10816,16 @@
 	{
 		var oRowPr = new CTableRowPr();
 
-		oRowPr.CantSplit  = oParsedPr.cantSplit;
-		oRowPr.GridAfter  = oParsedPr.gridAfter;
-		oRowPr.GridBefore = oParsedPr.gridBefore;
+		oRowPr.CantSplit  = oParsedPr["cantSplit"];
+		oRowPr.GridAfter  = oParsedPr["gridAfter"];
+		oRowPr.GridBefore = oParsedPr["gridBefore"];
 
 		// spacing
-		oRowPr.TableCellSpacing = typeof(oParsedPr.tblCellSpacing) === "number" ? private_Twips2MM(oParsedPr.tblCellSpacing) : oParsedPr.tblCellSpacing;
+		oRowPr.TableCellSpacing = typeof(oParsedPr["tblCellSpacing"]) === "number" ? private_Twips2MM(oParsedPr["tblCellSpacing"]) : oParsedPr["tblCellSpacing"];
 		
 		// rowJc
 		var nRowJc = undefined;
-		switch (oParsedPr.jc)
+		switch (oParsedPr["jc"])
 		{
 			case "start":
 				nRowJc = align_Left;
@@ -10625,41 +10841,41 @@
 
 		// rowHeight
 		var oRowHeight = undefined;
-		if (oParsedPr.trHeight)
+		if (oParsedPr["trHeight"])
 		{
-			switch (oParsedPr.trHeight.hRule)
+			switch (oParsedPr["trHeight"]["hRule"])
 			{
 				case "atLeast":
-					oRowHeight = new CTableRowHeight(private_Twips2MM(oParsedPr.trHeight.val), linerule_AtLeast)
+					oRowHeight = new CTableRowHeight(private_Twips2MM(oParsedPr["trHeight"]["val"]), linerule_AtLeast)
 					break;
 				case "auto":
 					oRowHeight = new CTableRowHeight(0, linerule_Auto);
 					break;
 				case "exact":
-					oRowHeight = new CTableRowHeight(private_Twips2MM(oParsedPr.trHeight.val), linerule_Exact)
+					oRowHeight = new CTableRowHeight(private_Twips2MM(oParsedPr["trHeight"]["val"]), linerule_Exact)
 					break;
 			}
 		}
 
 		oRowPr.Height      = oRowHeight;
-		oRowPr.PrChange    = oParsedPr.trPrChange ? this.TableRowPrFromJSON(oParsedPr.trPrChange) : oParsedPr.trPrChange;
-		oRowPr.WAfter      = oParsedPr.wAfter     ? this.TableMeasurementFromJSON(oParsedPr.wAfter)  : oParsedPr.wAfter;
-		oRowPr.WBefore     = oParsedPr.wBefore    ? this.TableMeasurementFromJSON(oParsedPr.wBefore) : oParsedPr.wBefore;
-		oRowPr.TableHeader = oParsedPr.tblHeader;
+		oRowPr.PrChange    = oParsedPr["trPrChange"] ? this.TableRowPrFromJSON(oParsedPr["trPrChange"]) : oParsedPr["trPrChange"];
+		oRowPr.WAfter      = oParsedPr["wAfter"]     ? this.TableMeasurementFromJSON(oParsedPr["wAfter"])  : oParsedPr["wAfter"];
+		oRowPr.WBefore     = oParsedPr["wBefore"]    ? this.TableMeasurementFromJSON(oParsedPr["wBefore"]) : oParsedPr["wBefore"];
+		oRowPr.TableHeader = oParsedPr["tblHeader"];
 		
 		return oRowPr;
 	};
 	ReaderFromJSON.prototype.TableFromJSON = function(oParsedTable, oParent, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo)
 	{
 		var aTableGrid = [];
-		for (var nGrid = 0; nGrid < oParsedTable.tblGrid.length; nGrid++)
-			aTableGrid.push(private_Twips2MM(oParsedTable.tblGrid[nGrid].w));
+		for (var nGrid = 0; nGrid < oParsedTable["tblGrid"].length; nGrid++)
+			aTableGrid.push(private_Twips2MM(oParsedTable["tblGrid"][nGrid]["w"]));
 
-		var oTable     = new CTable(private_GetDrawingDocument(), oParent || private_GetLogicDocument(), true, 0, 0, aTableGrid, oParsedTable.bPresentation);
-		var aContent   = oParsedTable.content; 
+		var oTable     = new CTable(private_GetDrawingDocument(), oParent || private_GetLogicDocument(), true, 0, 0, aTableGrid, oParsedTable["bPresentation"]);
+		var aContent   = oParsedTable["content"]; 
 	
 		// table prop.
-		oTable.SetPr(this.TablePrFromJSON(oTable, oParsedTable.tblPr));
+		oTable.SetPr(this.TablePrFromJSON(oTable, oParsedTable["tblPr"]));
 
 		// fill table content
 		for (var nRow = 0; nRow < aContent.length; nRow++)
@@ -10668,11 +10884,11 @@
 		// выставляем текущую ячейку
 		oTable.CurCell = oTable.Content[0].Get_Cell(0);
 
-		//oTable.Update_TableMarkupFromRuler(this.TableMarkupFromJSON(oParsedTable.tableMarkup, oTable), true, 0);
-		//oTable.Markup = this.TableMarkupFromJSON(oParsedTable.tableMarkup, oTable);
+		//oTable.Update_TableMarkupFromRuler(this.TableMarkupFromJSON(oParsedTable["tableMarkup"], oTable), true, 0);
+		//oTable.Markup = this.TableMarkupFromJSON(oParsedTable["tableMarkup"], oTable);
 
-		for (var nChange = 0; nChange < oParsedTable.changes.length; nChange++)
-			this.RevisionFromJSON(oParsedTable.changes[nChange], oTable);
+		for (var nChange = 0; nChange < oParsedTable["changes"].length; nChange++)
+			this.RevisionFromJSON(oParsedTable["changes"][nChange], oTable);
 
 		return oTable;
 	};
@@ -10680,21 +10896,21 @@
 	{
 		var oMarkup = new AscCommon.CTableMarkup(oParentTable);
 
-		oMarkup.Cols   = oParsedMarkup.cols;
-		oMarkup.CurCol = oParsedMarkup.curCol;
-		oMarkup.CurRow = oParsedMarkup.curRow;
+		oMarkup.Cols   = oParsedMarkup["cols"];
+		oMarkup.CurCol = oParsedMarkup["curCol"];
+		oMarkup.CurRow = oParsedMarkup["curRow"];
 
 		oMarkup.Internal = {
-			CellIndex: oParsedMarkup.internal.cellIndex,
-			PageNum:   oParsedMarkup.internal.pageNum,
-			RowIndex:  oParsedMarkup.internal.rowIndex
+			CellIndex: oParsedMarkup["internal"]["cellIndex"],
+			PageNum:   oParsedMarkup["internal"]["pageNum"],
+			RowIndex:  oParsedMarkup["internal"]["rowIndex"]
 		}
 
-		oMarkup.Margins    = oParsedMarkup.margins;
-		oMarkup.Rows       = oParsedMarkup.rows;
-		oMarkup.TransformX = oParsedMarkup.transformX;
-		oMarkup.TransformY = oParsedMarkup.transformY;
-		oMarkup.X          = oParsedMarkup.x;
+		oMarkup.Margins    = oParsedMarkup["margins"];
+		oMarkup.Rows       = oParsedMarkup["rows"];
+		oMarkup.TransformX = oParsedMarkup["transformX"];
+		oMarkup.TransformY = oParsedMarkup["transformY"];
+		oMarkup.X          = oParsedMarkup["x"];
 
 		return oMarkup;
 	};
@@ -10702,12 +10918,12 @@
 	{
 		var oTablePr = new CTablePr();
 
-		oTablePr.TableStyleColBandSize = oParsedPr.tblStyleColBandSize;
-		oTablePr.TableStyleRowBandSize = oParsedPr.tblStyleRowBandSize;
+		oTablePr.TableStyleColBandSize = oParsedPr["tblStyleColBandSize"];
+		oTablePr.TableStyleRowBandSize = oParsedPr["tblStyleRowBandSize"];
 
 		// jc
-		var nJc          = undefined;
-		switch (oParsedPr.jc)
+		var nJc = undefined;
+		switch (oParsedPr["jc"])
 		{
 			case "start":
 				nJc = AscCommon.align_Left;
@@ -10721,55 +10937,68 @@
 		}
 		oTablePr.Jc  = nJc;
 
-		oTablePr.Shd = oParsedPr.shd ? this.ShadeFromJSON(oParsedPr.shd) : oParsedPr.shd;
+		oTablePr.Shd = oParsedPr["shd"] ? this.ShadeFromJSON(oParsedPr["shd"]) : oParsedPr["shd"];
 
 		// borders
-		oTablePr.TableBorders.Bottom  = oParsedPr.tblBorders.bottom  ? this.DocBorderFromJSON(oParsedPr.tblBorders.bottom)  : oParsedPr.tblBorders.bottom;
-		oTablePr.TableBorders.Right   = oParsedPr.tblBorders.end     ? this.DocBorderFromJSON(oParsedPr.tblBorders.end)     : oParsedPr.tblBorders.end;
-		oTablePr.TableBorders.InsideH = oParsedPr.tblBorders.insideH ? this.DocBorderFromJSON(oParsedPr.tblBorders.insideH) : oParsedPr.tblBorders.insideH;
-		oTablePr.TableBorders.InsideV = oParsedPr.tblBorders.insideV ? this.DocBorderFromJSON(oParsedPr.tblBorders.insideV) : oParsedPr.tblBorders.insideV;
-		oTablePr.TableBorders.Left    = oParsedPr.tblBorders.start   ? this.DocBorderFromJSON(oParsedPr.tblBorders.start)   : oParsedPr.tblBorders.start;
-		oTablePr.TableBorders.Top     = oParsedPr.tblBorders.top     ? this.DocBorderFromJSON(oParsedPr.tblBorders.top)     : oParsedPr.tblBorders.top;
+		if (oParsedPr["tblBorders"]["bottom"])
+			oTablePr.TableBorders.Bottom = this.DocBorderFromJSON(oParsedPr["tblBorders"]["bottom"]);
+		if (oParsedPr["tblBorders"]["end"])
+			oTablePr.TableBorders.Right = this.DocBorderFromJSON(oParsedPr["tblBorders"]["end"]);
+		if (oParsedPr["tblBorders"]["insideH"])
+			oTablePr.TableBorders.InsideH = this.DocBorderFromJSON(oParsedPr["tblBorders"]["insideH"]);
+		if (oParsedPr["tblBorders"]["insideV"])
+			oTablePr.TableBorders.InsideV = this.DocBorderFromJSON(oParsedPr["tblBorders"]["insideV"]);
+		if (oParsedPr["tblBorders"]["start"])
+			oTablePr.TableBorders.Left = this.DocBorderFromJSON(oParsedPr["tblBorders"]["start"]);
+		if (oParsedPr["tblBorders"]["top"])
+			oTablePr.TableBorders.Top = this.DocBorderFromJSON(oParsedPr["tblBorders"]["top"]);
 
 		// margins
-		if (oParsedPr.tblCellMar)
+		if (oParsedPr["tblCellMar"])
 		{
-			oTablePr.TableCellMar.Bottom = oParsedPr.tblCellMar.bottom ? this.TableMeasurementFromJSON(oParsedPr.tblCellMar.bottom) : oParsedPr.tblCellMar.bottom;
-			oTablePr.TableCellMar.Left   = oParsedPr.tblCellMar.left   ? this.TableMeasurementFromJSON(oParsedPr.tblCellMar.left)   : oParsedPr.tblCellMar.left;
-			oTablePr.TableCellMar.Right  = oParsedPr.tblCellMar.right  ? this.TableMeasurementFromJSON(oParsedPr.tblCellMar.right)  : oParsedPr.tblCellMar.right;
-			oTablePr.TableCellMar.Top    = oParsedPr.tblCellMar.top    ? this.TableMeasurementFromJSON(oParsedPr.tblCellMar.top)    : oParsedPr.tblCellMar.top;
+			if (oParsedPr["tblCellMar"]["bottom"] != null)
+				oTablePr.TableCellMar.Bottom = this.TableMeasurementFromJSON(oParsedPr["tblCellMar"]["bottom"]);
+			if (oParsedPr["tblCellMar"]["left"] != null)
+				oTablePr.TableCellMar.Left = this.TableMeasurementFromJSON(oParsedPr["tblCellMar"]["left"]);
+			if (oParsedPr["tblCellMar"]["right"] != null)
+				oTablePr.TableCellMar.Right = this.TableMeasurementFromJSON(oParsedPr["tblCellMar"]["right"]);
+			if (oParsedPr["tblCellMar"]["top"] != null)
+				oTablePr.TableCellMar.Top = this.TableMeasurementFromJSON(oParsedPr["tblCellMar"]["top"]);
 		}
 
-		oTablePr.TableCellSpacing = oParsedPr.tblCellSpacing ? private_Twips2MM(oParsedPr.tblCellSpacing) : oParsedPr.tblCellSpacing;
-		oTablePr.TableInd         = oParsedPr.tblInd         ? private_Twips2MM(oParsedPr.tblInd)         : oParsedPr.tblInd;
-		oTablePr.TableW           = oParsedPr.tblW           ? this.TableMeasurementFromJSON(oParsedPr.tblW)   : oParsedPr.tblW;
+		if (oParsedPr["tblCellSpacing"] != null)
+			oTablePr.TableCellSpacing = private_Twips2MM(oParsedPr["tblCellSpacing"]);
+		if (oParsedPr["tblInd"] != null)
+			oTablePr.TableInd = private_Twips2MM(oParsedPr["tblInd"]);
+		if (oParsedPr["tblW"] != null)
+			oTablePr.TableW = this.TableMeasurementFromJSON(oParsedPr["tblW"]);
 
-		oTablePr.TableLayout      = oParsedPr.tblLayout == undefined ? oParsedPr.tblLayout : (oParsedPr.tblLayout === "fixed" ? tbllayout_Fixed : tbllayout_AutoFit);
-		oTablePr.TableDescription = oParsedPr.tblDescription;
-		oTablePr.TableCaption     = oParsedPr.tblCaption;
+		oTablePr.TableLayout      = oParsedPr["tblLayout"] == undefined ? oParsedPr["tblLayout"] : (oParsedPr["tblLayout"] === "fixed" ? tbllayout_Fixed : tbllayout_AutoFit);
+		oTablePr.TableDescription = oParsedPr["tblDescription"];
+		oTablePr.TableCaption     = oParsedPr["tblCaption"];
 
-		var oPrChane    = oParsedPr.tblPrChange ? this.TablePrFromJSON(oParentTable, oParsedPr.tblPrChange) : oParsedPr.tblPrChange;
-		var oReviewInfo = oParsedPr.reviewInfo ? this.ReviewInfoFromJSON(oParsedPr.reviewInfo) : oTablePr.ReviewInfo;
+		var oPrChane    = oParsedPr["tblPrChange"] ? this.TablePrFromJSON(oParentTable, oParsedPr["tblPrChange"]) : oParsedPr["tblPrChange"];
+		var oReviewInfo = oParsedPr["reviewInfo"] ? this.ReviewInfoFromJSON(oParsedPr["reviewInfo"]) : oTablePr.ReviewInfo;
 		oPrChane && oReviewInfo && oTablePr.SetPrChange(oPrChane, oReviewInfo);
 
 		// if oParentTalbe is exist
 		if (oParentTable)
 		{
-			oParsedPr.tblOverlap === "overlap" ? oParentTable.Set_AllowOverlap(true) : oParentTable.Set_AllowOverlap(false);
-			oParentTable.Inline !== undefined && oParentTable.Set_Inline(oParsedPr.inline);
+			oParsedPr["tblOverlap"] === "overlap" ? oParentTable.Set_AllowOverlap(true) : oParentTable.Set_AllowOverlap(false);
+			oParentTable.Inline !== undefined && oParentTable.Set_Inline(oParsedPr["inline"]);
 			
-			if (oParsedPr.tblLook)
+			if (oParsedPr["tblLook"])
 			{
-				var oNewLook = new CTableLook(oParsedPr.tblLook.firstColumn, oParsedPr.tblLook.firstRow, oParsedPr.tblLook.lastColumn, oParsedPr.tblLook.lastRow, !oParsedPr.tblLook.noHBand, !oParsedPr.tblLook.noVBand);
+				var oNewLook = new AscCommon.CTableLook(oParsedPr["tblLook"]["firstColumn"], oParsedPr["tblLook"]["firstRow"], oParsedPr["tblLook"]["lastColumn"], oParsedPr["tblLook"]["lastRow"], !oParsedPr["tblLook"]["noHBand"], !oParsedPr["tblLook"]["noVBand"]);
 				oParentTable.Set_TableLook(oNewLook);
 			}
 
 			// position prop
-			if (oParsedPr.tblpPr)
+			if (oParsedPr["tblpPr"])
 			{
 				// hAnchor
 				var nHorAnchor = undefined;
-				switch (oParsedPr.tblpPr.horzAnchor)
+				switch (oParsedPr["tblpPr"]["horzAnchor"])
 				{
 					case "margin":
 						nHorAnchor = Asc.c_oAscHAnchor.Margin;
@@ -10784,7 +11013,7 @@
 
 				// vAnchor
 				var nVerAnchor = undefined;
-				switch (oParsedPr.tblpPr.vertAnchor)
+				switch (oParsedPr["tblpPr"]["vertAnchor"])
 				{
 					case "margin":
 						nVerAnchor = Asc.c_oAscHAnchor.Margin;
@@ -10799,7 +11028,7 @@
 
 				// alignH
 				var nHorAlign = undefined;
-				switch (oParsedPr.tblpPr.tblpXSpec)
+				switch (oParsedPr["tblpPr"]["tblpXSpec"])
 				{
 					case "center":
 						nHorAlign = Asc.c_oAscXAlign.Center;
@@ -10820,7 +11049,7 @@
 				
 				// alignV
 				var nVerAlign = undefined;
-				switch (oParsedPr.tblpPr.tblpYSpec)
+				switch (oParsedPr["tblpPr"]["tblpYSpec"])
 				{
 					case "bottom":
 						nVerAlign = Asc.c_oAscYAlign.Bottom;
@@ -10842,42 +11071,21 @@
 						break;
 				}
 
-				oParentTable.Set_PositionH(nHorAnchor, nHorAlign != undefined, nHorAlign == undefined ? private_Twips2MM(oParsedPr.tblpPr.tblpX) : nHorAlign);
-				oParentTable.Set_PositionV(nVerAnchor, nVerAlign != undefined, nVerAlign == undefined ? private_Twips2MM(oParsedPr.tblpPr.tblpY) : nVerAlign);
+				oParentTable.Set_PositionH(nHorAnchor, nHorAlign != undefined, nHorAlign == undefined ? private_Twips2MM(oParsedPr["tblpPr"]["tblpX"]) : nHorAlign);
+				oParentTable.Set_PositionV(nVerAnchor, nVerAlign != undefined, nVerAlign == undefined ? private_Twips2MM(oParsedPr["tblpPr"]["tblpY"]) : nVerAlign);
 
-				oParentTable.Set_Distance(private_Twips2MM(oParsedPr.tblpPr.bottomFromText), private_Twips2MM(oParsedPr.tblpPr.leftFromText), private_Twips2MM(oParsedPr.tblpPr.rightFromText), private_Twips2MM(oParsedPr.tblpPr.topFromText));
+				oParentTable.Set_Distance(private_Twips2MM(oParsedPr["tblpPr"]["leftFromText"]), private_Twips2MM(oParsedPr["tblpPr"]["topFromText"]), private_Twips2MM(oParsedPr["tblpPr"]["rightFromText"]), private_Twips2MM(oParsedPr["tblpPr"]["bottomFromText"]));
 			}
 
 			// style
-			if (oParsedPr.tblStyle)
+			if (oParsedPr["tblStyle"])
 			{
-				// style 
-				var oStyle    = this.StyleFromJSON(oParsedPr.tblStyle);
-				var oStyles   = private_GetStyles();
-				if (oStyle)
+				var oStyle = null;
+				if (this.RestoredStylesMap[oParsedPr["tblStyle"]])
 				{
-					var nExistingStyle = oStyles.GetStyleIdByName(oStyle.Name);
-					// если такого стиля нет - добавляем новый
-					if (nExistingStyle === null)
-					{
-						oStyle.Set_BasedOn(null);
-						oStyles.Add(oStyle);
-					}
-					else
-					{
-						var oExistingStyle = oStyles.Get(nExistingStyle);
-						// если стили идентичны, стиль не добавляем
-						if (!oStyle.IsEqual(oExistingStyle))
-						{
-							oStyle.Set_BasedOn(null);
-							oStyles.Add(oStyle);
-						}
-						else
-							oStyle = oExistingStyle;
-					}
+					oStyle = this.RestoredStylesMap[oParsedPr["tblStyle"]]
+					oParentTable.Set_TableStyle(oStyle.Id);
 				}
-
-				oParentTable.Set_TableStyle(oStyle.Id);
 			}
 		}
 	
@@ -10885,8 +11093,8 @@
 	};
 	ReaderFromJSON.prototype.DocContentFromJSON = function(oParsedDocContent, oParent, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo)
 	{
-		var oDocContent = new AscCommonWord.CDocumentContent(oParent || private_GetLogicDocument(), private_GetDrawingDocument(), 0, 0, 0, 0, true, false, oParsedDocContent.bPresentation);
-		var aContent    = oParsedDocContent.content;
+		var oDocContent = new AscCommonWord.CDocumentContent(oParent || private_GetLogicDocument(), private_GetDrawingDocument(), 0, 0, 0, 0, true, false, oParsedDocContent["bPresentation"]);
+		var aContent    = oParsedDocContent["content"];
 	
 		if (!notCompletedFields)
 			notCompletedFields = [];
@@ -10899,7 +11107,7 @@
 
 		for (var nElm = 0; nElm < aContent.length; nElm++)
 		{
-			switch (aContent[nElm].type)
+			switch (aContent[nElm]["type"])
 			{
 				case "paragraph":
 					oDocContent.AddToContent(oDocContent.Content.length, this.ParagraphFromJSON(aContent[nElm], oDocContent, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo, oPrevNumIdInfo), false);
@@ -10936,7 +11144,7 @@
 
 		for (var nElm = 0; nElm < aContent.length; nElm++)
 		{
-			switch (aContent[nElm].type)
+			switch (aContent[nElm]["type"])
 			{
 				case "paragraph":
 					aResult.push(this.ParagraphFromJSON(aContent[nElm], oDocument, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo, oPrevNumIdInfo));
@@ -10955,7 +11163,7 @@
 	ReaderFromJSON.prototype.DrawingDocContentFromJSON = function(oParsedDocContent, oParent, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo)
 	{
 		var oDocContent = new AscFormat.CDrawingDocContent(oParent ? oParent : private_GetLogicDocument(), private_GetDrawingDocument(), 0, 0, 0, 0, true, false, false);
-		var aContent    = oParsedDocContent.content;
+		var aContent    = oParsedDocContent["content"];
 	
 		if (!notCompletedFields)
 			notCompletedFields = [];
@@ -10968,7 +11176,7 @@
 
 		for (var nElm = 0; nElm < aContent.length; nElm++)
 		{
-			switch (aContent[nElm].type)
+			switch (aContent[nElm]["type"])
 			{
 				case "paragraph":
 					oDocContent.AddToContent(oDocContent.Content.length, this.ParagraphFromJSON(aContent[nElm], oDocContent, notCompletedFields, oMapCommentsInfo, oMapBookmarksInfo, oPrevNumIdInfo), false);
@@ -10988,133 +11196,126 @@
 
 		return oDocContent;
 	};
-	ReaderFromJSON.prototype.SdtPrFromJSON = function(oParsedSdtPr)
+	ReaderFromJSON.prototype.SdtPrFromJSON = function(oParsedSdtPr, oParentSdt)
 	{
-		var oSdtPr = new AscCommonWord.CSdtPr();
 		var oTempListItem;
 
-		oSdtPr.Alias = oParsedSdtPr.alias;
+		if (oParsedSdtPr["alias"] != null)
+			oParentSdt.SetAlias(oParsedSdtPr["alias"]);
+		if (oParsedSdtPr["appearance"])
+			oParentSdt.SetAppearance(FromXml_ST_SdtAppearance(oParsedSdtPr["appearance"]));
+		if (oParsedSdtPr["color"])
+			oParentSdt.SetColor(this.ColorFromJSON(oParsedSdtPr["color"]));
 
 		// comboboxPr
-		if (oParsedSdtPr.comboBox)
+		if (oParsedSdtPr["comboBox"])
 		{
 			var oComboboxPr   = new AscWord.CSdtComboBoxPr();
 			oTempListItem = null;
 
-			oComboboxPr.LastValue = oParsedSdtPr.comboBox.lastValue;
-			for (var nItem = 0; nItem < oParsedSdtPr.comboBox.listItem.length; nItem++)
+			oComboboxPr.LastValue = oParsedSdtPr["comboBox"]["lastValue"];
+			for (var nItem = 0; nItem < oParsedSdtPr["comboBox"]["listItem"].length; nItem++)
 			{
 				oTempListItem             = new AscWord.CSdtListItem();
-				oTempListItem.DisplayText = oParsedSdtPr.comboBox.listItem[nItem].displayText;
-				oTempListItem.Value       = oParsedSdtPr.comboBox.listItem[nItem].value;
+				oTempListItem.DisplayText = oParsedSdtPr["comboBox"]["listItem"][nItem]["displayText"];
+				oTempListItem.Value       = oParsedSdtPr["comboBox"]["listItem"][nItem]["value"];
 				
 				oComboboxPr.ListItems.push(oTempListItem);
 			}
 
-			oSdtPr.ComboBox = oComboboxPr;
+			oParentSdt.SetComboBoxPr(oComboboxPr);
 		}
 
 		// date
-		if (oParsedSdtPr.date)
+		if (oParsedSdtPr["date"])
 		{
 			var oDate = new AscWord.CSdtDatePickerPr();
 
-			oDate.FullDate   = oParsedSdtPr.date.fullDate;
-			oDate.LangId     = oParsedSdtPr.date.lid;
-			oDate.DateFormat = oParsedSdtPr.date.dateFormat;
-			oDate.Calendar   = oParsedSdtPr.date.calendar;
+			oDate.FullDate   = oParsedSdtPr["date"]["fullDate"];
+			oDate.LangId     = Asc.g_oLcidNameToIdMap[oParsedSdtPr["date"]["lid"]];
+			oDate.DateFormat = oParsedSdtPr["date"]["dateFormat"];
+			oDate.Calendar   = FromXml_ST_CalendarType(oParsedSdtPr["date"]["calendar"]);
 
-			oSdtPr.Date = oDate;
+			oParentSdt.SetDatePickerPr(oDate);
 		}
 
 		// docPartObj
-		oSdtPr.DocPartObj.Gallery  = oParsedSdtPr.docPartObj.docPartGallery;
-		oSdtPr.DocPartObj.Category = oParsedSdtPr.docPartObj.docPartCategory;
-		oSdtPr.DocPartObj.Unique   = oParsedSdtPr.docPartObj.docPartUnique;
+		if (oParsedSdtPr["docPartObj"])
+			oParentSdt.SetDocPartObj(oParsedSdtPr["docPartObj"]["docPartCategory"], oParsedSdtPr["docPartObj"]["docPartGallery"], oParsedSdtPr["docPartObj"]["docPartUnique"]);
 
 		// dropdown
-		if (oParsedSdtPr.comboBox)
+		if (oParsedSdtPr["comboBox"])
 		{
 			var oDropDownPr   = new AscWord.CSdtComboBoxPr();
 			oTempListItem = null;
 
-			oDropDownPr.LastValue = oParsedSdtPr.dropDownList.lastValue;
-			for (var nItem = 0; nItem < oParsedSdtPr.dropDownList.listItem.length; nItem++)
+			oDropDownPr.LastValue = oParsedSdtPr["dropDownList"]["lastValue"];
+			for (var nItem = 0; nItem < oParsedSdtPr["dropDownList"]["listItem"].length; nItem++)
 			{
 				oTempListItem             = new AscWord.CSdtListItem();
-				oTempListItem.DisplayText = oParsedSdtPr.dropDownList.listItem[nItem].displayText;
-				oTempListItem.Value       = oParsedSdtPr.dropDownList.listItem[nItem].value;
+				oTempListItem.DisplayText = oParsedSdtPr["dropDownList"]["listItem"][nItem]["displayText"];
+				oTempListItem.Value       = oParsedSdtPr["dropDownList"]["listItem"][nItem]["value"];
 				
 				oDropDownPr.ListItems.push(oTempListItem);
 			}
 
-			oSdtPr.DropDown = oDropDownPr;
+			oParentSdt.SetDropDownListPr(oDropDownPr);
 		}
 
-		// lock type
-		var nLockType = undefined;
-		switch (oSdtPr.Lock)
-		{
-			case "contentLocked":
-				nLockType = Asc.c_oAscSdtLockType.ContentLocked;
-				break;
-			case "sdtContentLocked":
-				nLockType = Asc.c_oAscSdtLockType.SdtContentLocked;
-				break;
-			case "sdtLocked":
-				nLockType = Asc.c_oAscSdtLockType.SdtLocked;
-				break;
-			case "unlocked":
-				nLockType = Asc.c_oAscSdtLockType.Unlocked;
-				break;
-		}
-		oSdtPr.Equation      = oParsedSdtPr.equation;
-		oSdtPr.Id            = oParsedSdtPr.id;
-		oSdtPr.Label         = oParsedSdtPr.label;
-		oSdtPr.Lock          = nLockType;
-		oSdtPr.Picture       = oParsedSdtPr.picture;
-		oSdtPr.Placeholder   = oParsedSdtPr.placeholder ? oParsedSdtPr.placeholder.docPart : oSdtPr.Placeholder;
-		oSdtPr.TextPr        = this.TextPrFromJSON(oParsedSdtPr.rPr);
-		oSdtPr.ShowingPlcHdr = oParsedSdtPr.showingPlcHdr;
-		oSdtPr.Tag           = oParsedSdtPr.tag;
-		oSdtPr.Temporary     = oParsedSdtPr.temporary;
-		oSdtPr.Text          = oParsedSdtPr.text.multiLine;
-
-		return oSdtPr;
+		if (oParsedSdtPr["equation"] != null)
+			oParentSdt.SetContentControlEquation(oParsedSdtPr["equation"]);
+		if (oParsedSdtPr["id"] != null)
+			oParentSdt.SetContentControlId(oParsedSdtPr["id"]);
+		if (oParsedSdtPr["label"] != null)
+			oParentSdt.SetLabel(oParsedSdtPr["label"]);
+		if (oParsedSdtPr["lock"] != null)
+			oParentSdt.SetContentControlLock(FromXml_ST_Lock(oParsedSdtPr["lock"]));
+		if (oParsedSdtPr["picture"] != null)
+			oParentSdt.SetPicturePr(oParsedSdtPr["picture"]);
+		if (oParsedSdtPr["placeholder"] != null)
+			oParentSdt.SetPlaceholder(oParsedSdtPr["placeholder"]["docPart"]);
+		if (oParsedSdtPr["rPr"] != null)
+			oParentSdt.SetDefaultTextPr(this.TextPrFromJSON(oParsedSdtPr["rPr"]));
+		if (oParsedSdtPr["showingPlcHdr"] != null)
+			oParentSdt.SetShowingPlcHdr(oParsedSdtPr["showingPlcHdr"]);
+		if (oParsedSdtPr["tag"] != null)
+			oParentSdt.SetTag(oParsedSdtPr["tag"]);
+		if (oParsedSdtPr["temporary"] != null)
+			oParentSdt.SetContentControlTemporary(oParsedSdtPr["temporary"]);
 	};
-	ReaderFromJSON.prototype.TabsFromJSON = function(oTabs)
+	ReaderFromJSON.prototype.TabsFromJSON = function(oParsedTabs)
 	{
-		var oTabsObj = new CParaTabs();
+		var oTabs = new CParaTabs();
 
-		for (var nTab = 0; nTab < oTabs.tabs.length; nTab++)
-			oTabsObj.Tabs.push(new CParaTab(oTabs.tabs[nTab].val, private_Twips2MM(oTabs.tabs[nTab].pos), oTabs.tabs[nTab].leader));
+		for (var nTab = 0; nTab < oParsedTabs["tabs"].length; nTab++)
+			oTabs.Tabs.push(new CParaTab(oParsedTabs["tabs"][nTab]["val"], private_Twips2MM(oParsedTabs["tabs"][nTab]["pos"]), oParsedTabs["tabs"][nTab]["leader"]));
 
-		return oTabsObj;
+		return oTabs;
 	};
-	ReaderFromJSON.prototype.DocBorderFromJSON = function(oBorder)
+	ReaderFromJSON.prototype.DocBorderFromJSON = function(oParsed)
 	{
-		var oBorderObj = new CDocumentBorder();
+		var oBorder = new CDocumentBorder();
 
-		oBorderObj.Color.r    = oBorder.color.r;
-		oBorderObj.Color.g    = oBorder.color.g;
-		oBorderObj.Color.b    = oBorder.color.b;
-		oBorderObj.Color.Auto = oBorder.color.auto;
+		oBorder.Color.r    = oParsed["color"]["r"];
+		oBorder.Color.g    = oParsed["color"]["g"];
+		oBorder.Color.b    = oParsed["color"]["b"];
+		oBorder.Color.Auto = oParsed["color"]["auto"];
 
-		oBorderObj.Size  = private_Twips2MM(oBorder.sz);
-		oBorderObj.Space = private_Twips2MM(oBorder.space);
-		oBorderObj.Value = oBorder.value === "none" ? border_None : border_Single;
+		oBorder.Size  = private_Twips2MM(oParsed["sz"]);
+		oBorder.Space = private_Twips2MM(oParsed["space"]);
+		oBorder.Value = oParsed["value"] === "none" ? border_None : border_Single;
 
-		oBorderObj.LineRef    = oBorder.lineRef    ? this.StyleRefFromJSON(oBorder.lineRef) : oBorder.lineRef;
-		oBorderObj.Unifill    = oBorder.themeColor ? this.FillFromJSON(oBorder.themeColor)  : oBorder.themeColor;
+		oBorder.LineRef    = oParsed["lineRef"]    ? this.StyleRefFromJSON(oParsed["lineRef"]) : oParsed["lineRef"];
+		oBorder.Unifill    = oParsed["themeColor"] ? this.FillFromJSON(oParsed["themeColor"])  : oParsed["themeColor"];
 
-		return oBorderObj;
+		return oBorder;
 	};
 	ReaderFromJSON.prototype.StyleRefFromJSON = function(oParsedRef)
 	{
 		var oStyleRefObj = new AscFormat.StyleRef();
 		
-		oStyleRefObj.idx   = oParsedRef.idx;
-		oStyleRefObj.Color = oParsedRef.color ? this.ColorFromJSON(oParsedRef.color) : oStyleRefObj.Color;
+		oStyleRefObj.idx   = oParsedRef["idx"];
+		oStyleRefObj.Color = oParsedRef["color"] ? this.ColorFromJSON(oParsedRef["color"]) : oStyleRefObj.Color;
 		
 		return oStyleRefObj;
 	};
@@ -11122,36 +11323,36 @@
 	{
 		var oFontRefObj = new AscFormat.FontRef();
 		
-		oFontRefObj.idx   = oParsedRef.idx;
-		oFontRefObj.Color = oParsedRef.color ? this.ColorFromJSON(oParsedRef.color) : oFontRefObj.Color;
+		oFontRefObj.idx   = oParsedRef["idx"];
+		oFontRefObj.Color = oParsedRef["color"] ? this.ColorFromJSON(oParsedRef["color"]) : oFontRefObj.Color;
 		
 		return oFontRefObj;
 	};
 	ReaderFromJSON.prototype.FillFromJSON = function(oParsedFill)
 	{
 		var oFillObj = new AscFormat.CUniFill();
-		if (oParsedFill.type)
+		if (oParsedFill["type"])
 		{
-			switch (oParsedFill.fill.type)
+			switch (oParsedFill["fill"]["type"])
 			{
 				case "none":
 					oFillObj.fill = null;
 					break;
 				case "solid":
 					oFillObj.fill       = new AscFormat.CSolidFill();
-					oFillObj.fill.color = this.ColorFromJSON(oParsedFill.fill.color);
+					oFillObj.fill.color = this.ColorFromJSON(oParsedFill["fill"]["color"]);
 					break;
 				case "blipFill":
-					oFillObj.fill = this.BlipFillFromJSON(oParsedFill.fill);
+					oFillObj.fill = this.BlipFillFromJSON(oParsedFill["fill"]);
 					break;
 				case "noFill":
 					oFillObj.fill = new AscFormat.CNoFill();
 					break;
 				case "gradFill":
-					oFillObj.fill = this.GradFillFromJSON(oParsedFill.fill);
+					oFillObj.fill = this.GradFillFromJSON(oParsedFill["fill"]);
 					break;
 				case "pattFill":
-					oFillObj.fill = this.PattFillFromJSON(oParsedFill.fill);
+					oFillObj.fill = this.PattFillFromJSON(oParsedFill["fill"]);
 					break;
 				case "grp":
 					oFillObj.fill = new AscFormat.CGrpFill();
@@ -11160,7 +11361,7 @@
 		}
 
 		var nFillType = -1;
-		switch (oParsedFill.fillType)
+		switch (oParsedFill["fillType"])
 		{
 			case "none":
 				nFillType = Asc.c_oAscFill.FILL_TYPE_NONE;
@@ -11185,7 +11386,7 @@
 				break;
 		}
 
-		oFillObj.transparent = oParsedFill.transparent;
+		oFillObj.transparent = oParsedFill["transparent"];
 		if (nFillType !== -1)
 			oFillObj.type = nFillType;
 
@@ -11195,22 +11396,22 @@
 	{
 		var oGradFill = new AscFormat.CGradFill();
 
-		for (var nGs = 0; nGs < oParsedGradFill.gsLst.length; nGs++)
-			oGradFill.colors.push(this.GradStopFromJSON(oParsedGradFill.gsLst[nGs]));
+		for (var nGs = 0; nGs < oParsedGradFill["gsLst"].length; nGs++)
+			oGradFill.colors.push(this.GradStopFromJSON(oParsedGradFill["gsLst"][nGs]));
 
-		if (oParsedGradFill.lin)
+		if (oParsedGradFill["lin"])
 		{
 			oGradFill.lin  = new AscFormat.GradLin();
-			oGradFill.lin.angle = oParsedGradFill.lin.ang;
-			oGradFill.lin.scale = oParsedGradFill.lin.scaled;
+			oGradFill.lin.angle = oParsedGradFill["lin"]["ang"];
+			oGradFill.lin.scale = oParsedGradFill["lin"]["scaled"];
 		}
-		if (oParsedGradFill.path)
+		if (oParsedGradFill["path"])
 		{
 			oGradFill.path = new AscFormat.GradPath();
 			var nPathShadeType = undefined;
 			if (oGradFill.path)
 			{
-				switch(oParsedGradFill.path.path)
+				switch(oParsedGradFill["path"]["path"])
 				{
 					case "circle":
 						nPathShadeType = 0;
@@ -11229,22 +11430,22 @@
 			{
 				oGradFill.rect      = new AscFormat.CSrcRect();
 
-				oGradFill.rect.b = oParsedGradFill.path.fillToRect.b;
-				oGradFill.rect.l = oParsedGradFill.path.fillToRect.l;
-				oGradFill.rect.r = oParsedGradFill.path.fillToRect.r;
-				oGradFill.rect.t = oParsedGradFill.path.fillToRect.t;
+				oGradFill.rect.b = oParsedGradFill["path"]["fillToRect"]["b"];
+				oGradFill.rect.l = oParsedGradFill["path"]["fillToRect"]["l"];
+				oGradFill.rect.r = oParsedGradFill["path"]["fillToRect"]["r"];
+				oGradFill.rect.t = oParsedGradFill["path"]["fillToRect"]["t"];
 			}
 		}
 
-		oGradFill.rotWithShape = oParsedGradFill.rotWithShape;
+		oGradFill.rotWithShape = oParsedGradFill["rotWithShape"];
 		
 		return oGradFill;
 	};
 	ReaderFromJSON.prototype.GradStopFromJSON = function(oParsedGradStop)
 	{
 		var oGs   = new AscFormat.CGs();
-		oGs.color = this.ColorFromJSON(oParsedGradStop.color);
-		oGs.pos   = oParsedGradStop.pos;
+		oGs.color = this.ColorFromJSON(oParsedGradStop["color"]);
+		oGs.pos   = oParsedGradStop["pos"];
 
 		return oGs;
 	};
@@ -11252,27 +11453,27 @@
 	{
 		var oPattFill = new AscFormat.CPattFill();
 
-		oPattFill.bgClr  = oParsedPattFill.bgClr ? this.ColorFromJSON(oParsedPattFill.bgClr) : oPattFill.bgClr;
-		oPattFill.fgClr  = oParsedPattFill.fgClr ? this.ColorFromJSON(oParsedPattFill.fgClr) : oPattFill.fgClr;
-		oPattFill.ftype  = this.GetPresetNumType(oParsedPattFill.prst);
+		oPattFill.bgClr  = oParsedPattFill["bgClr"] ? this.ColorFromJSON(oParsedPattFill["bgClr"]) : oPattFill.bgClr;
+		oPattFill.fgClr  = oParsedPattFill["fgClr"] ? this.ColorFromJSON(oParsedPattFill["fgClr"]) : oPattFill.fgClr;
+		oPattFill.ftype  = this.GetPresetNumType(oParsedPattFill["prst"]);
 
 		return oPattFill;
 	};
 	ReaderFromJSON.prototype.ColorFromJSON = function(oParsedColor)
 	{
-		var oRGBA = oParsedColor.rgba ? {
-			R:   oParsedColor.rgba.red,
-			G:   oParsedColor.rgba.green,
-			B:   oParsedColor.rgba.blue,
-			A:   oParsedColor.rgba.alpha 
-		} : oParsedColor.rgba;
+		var oRGBA = oParsedColor["rgba"] ? {
+			R:   oParsedColor["rgba"]["red"],
+			G:   oParsedColor["rgba"]["green"],
+			B:   oParsedColor["rgba"]["blue"],
+			A:   oParsedColor["rgba"]["alpha"] 
+		} : oParsedColor["rgba"];
 
 		var oColorObj  = new AscFormat.CUniColor();
 		oColorObj.RGBA = oRGBA;
 
-		if (oParsedColor.color && oParsedColor.color.type)
+		if (oParsedColor["color"] && oParsedColor["color"]["type"])
 		{
-			switch (oParsedColor.color.type)
+			switch (oParsedColor["color"]["type"])
 			{
 				case "none":
 					oColorObj.color = null;
@@ -11280,10 +11481,10 @@
 				case "srgb":
 				{
 					oColorObj.color   = new AscFormat.CRGBColor();
-					oColorObj.color.RGBA.R = oParsedColor.color.rgba.red;
-					oColorObj.color.RGBA.G = oParsedColor.color.rgba.green;
-					oColorObj.color.RGBA.B = oParsedColor.color.rgba.blue;
-					oColorObj.color.RGBA.A = oParsedColor.color.rgba.alpha;
+					oColorObj.color.RGBA.R = oParsedColor["color"]["rgba"]["red"];
+					oColorObj.color.RGBA.G = oParsedColor["color"]["rgba"]["green"];
+					oColorObj.color.RGBA.B = oParsedColor["color"]["rgba"]["blue"];
+					oColorObj.color.RGBA.A = oParsedColor["color"]["rgba"]["alpha"];
 
 
 					break;
@@ -11291,44 +11492,44 @@
 				case "prst":
 				{
 					oColorObj.color    = new AscFormat.CPrstColor();
-					oColorObj.color.RGBA.R  = oParsedColor.color.rgba.red;
-					oColorObj.color.RGBA.G  = oParsedColor.color.rgba.green;
-					oColorObj.color.RGBA.B  = oParsedColor.color.rgba.blue;
-					oColorObj.color.RGBA.A  = oParsedColor.color.rgba.alpha;
-					oColorObj.color.id = oParsedColor.color.id;
+					oColorObj.color.RGBA.R  = oParsedColor["color"]["rgba"]["red"];
+					oColorObj.color.RGBA.G  = oParsedColor["color"]["rgba"]["green"];
+					oColorObj.color.RGBA.B  = oParsedColor["color"]["rgba"]["blue"];
+					oColorObj.color.RGBA.A  = oParsedColor["color"]["rgba"]["alpha"];
+					oColorObj.color.id = oParsedColor["color"]["id"];
 					break;
 				}
 				case "scheme":
 				{
 					oColorObj.color    = new AscFormat.CSchemeColor();
-					oColorObj.color.RGBA.R  = oParsedColor.color.rgba.red;
-					oColorObj.color.RGBA.G  = oParsedColor.color.rgba.green;
-					oColorObj.color.RGBA.B  = oParsedColor.color.rgba.blue;
-					oColorObj.color.RGBA.A  = oParsedColor.color.rgba.alpha;
-					oColorObj.color.id = oParsedColor.color.id;
+					oColorObj.color.RGBA.R  = oParsedColor["color"]["rgba"]["red"];
+					oColorObj.color.RGBA.G  = oParsedColor["color"]["rgba"]["green"];
+					oColorObj.color.RGBA.B  = oParsedColor["color"]["rgba"]["blue"];
+					oColorObj.color.RGBA.A  = oParsedColor["color"]["rgba"]["alpha"];
+					oColorObj.color.id = oParsedColor["color"]["id"];
 					break;
 				}
 				case "sys":
 				{
 					oColorObj.color    = new AscFormat.CSysColor();
-					oColorObj.color.RGBA.R  = oParsedColor.color.rgba.red;
-					oColorObj.color.RGBA.G  = oParsedColor.color.rgba.green;
-					oColorObj.color.RGBA.B  = oParsedColor.color.rgba.blue;
-					oColorObj.color.RGBA.A  = oParsedColor.color.rgba.alpha;
-					oColorObj.color.id = oParsedColor.color.id;
+					oColorObj.color.RGBA.R  = oParsedColor["color"]["rgba"]["red"];
+					oColorObj.color.RGBA.G  = oParsedColor["color"]["rgba"]["green"];
+					oColorObj.color.RGBA.B  = oParsedColor["color"]["rgba"]["blue"];
+					oColorObj.color.RGBA.A  = oParsedColor["color"]["rgba"]["alpha"];
+					oColorObj.color.id = oParsedColor["color"]["id"];
 					break;
 				}
 				case "style":
 				{
 					oColorObj.color       = new AscFormat.CStyleColor();
-					oColorObj.color.bAuto = oParsedColor.color.auto;
-					oColorObj.color.val   = oParsedColor.color.val;
+					oColorObj.color.bAuto = oParsedColor["color"]["auto"];
+					oColorObj.color.val   = oParsedColor["color"]["val"];
 					break;
 				}
 			}
 		}
 
-		oColorObj.Mods = oParsedColor.mods ? this.ColorModifiersFromJSON(oParsedColor.mods) : oColorObj.Mods;
+		oColorObj.Mods = oParsedColor["mods"] ? this.ColorModifiersFromJSON(oParsedColor["mods"]) : oColorObj.Mods;
 
 		return oColorObj;
 	};
@@ -11339,8 +11540,8 @@
 		for (var nMod = 0; nMod < oParsedModifiers.length; nMod++)
 		{
 			var oMod  = new AscFormat.CColorMod();
-			oMod.name = oParsedModifiers[nMod].name;
-			oMod.val  = oParsedModifiers[nMod].val;
+			oMod.name = oParsedModifiers[nMod]["name"];
+			oMod.val  = oParsedModifiers[nMod]["val"];
 
 			oMods.Mods.push(oMod);
 		}
@@ -11351,32 +11552,32 @@
 	{
 		var oBlipFill = new AscFormat.CBlipFill();
 
-		if (oParsedFill.srcRect)
+		if (oParsedFill["srcRect"])
 		{
 			oBlipFill.srcRect   = new AscFormat.CSrcRect();
-			oBlipFill.srcRect.b = oParsedFill.srcRect.b;
-			oBlipFill.srcRect.l = oParsedFill.srcRect.l;
-			oBlipFill.srcRect.r = oParsedFill.srcRect.r;
-			oBlipFill.srcRect.t = oParsedFill.srcRect.t;
+			oBlipFill.srcRect.b = oParsedFill["srcRect"]["b"];
+			oBlipFill.srcRect.l = oParsedFill["srcRect"]["l"];
+			oBlipFill.srcRect.r = oParsedFill["srcRect"]["r"];
+			oBlipFill.srcRect.t = oParsedFill["srcRect"]["t"];
 		}
-		oBlipFill.stretch = oParsedFill.stretch;
+		oBlipFill.stretch = oParsedFill["stretch"];
 
-		if (oParsedFill.tile)
+		if (oParsedFill["tile"])
 		{
 			oBlipFill.tile      = new AscFormat.CBlipFillTile();
-			oBlipFill.tile.tx   = oParsedFill.tx;
-			oBlipFill.tile.ty   = oParsedFill.ty;
-			oBlipFill.tile.sx   = oParsedFill.sx;
-			oBlipFill.tile.sy   = oParsedFill.sy;
-			oBlipFill.tile.flip = oParsedFill.flip;
-			oBlipFill.tile.algn = GetRectAlgnNumType(oParsedFill.algn);
+			oBlipFill.tile.tx   = oParsedFill["tx"];
+			oBlipFill.tile.ty   = oParsedFill["ty"];
+			oBlipFill.tile.sx   = oParsedFill["sx"];
+			oBlipFill.tile.sy   = oParsedFill["sy"];
+			oBlipFill.tile.flip = oParsedFill["flip"];
+			oBlipFill.tile.algn = GetRectAlgnNumType(oParsedFill["algn"]);
 		}
 
-		for (var nEffect = 0; nEffect < oParsedFill.blip.length; nEffect++)
-			oBlipFill.Effects.push(this.EffectFromJSON(oParsedFill.blip[nEffect]));
+		for (var nEffect = 0; nEffect < oParsedFill["blip"].length; nEffect++)
+			oBlipFill.Effects.push(this.EffectFromJSON(oParsedFill["blip"][nEffect]));
 
-		oParsedFill.rotWithShape != undefined && oBlipFill.setRotWithShape(oParsedFill.rotWithShape);
-		oParsedFill.rasterImageId != undefined &&  oBlipFill.setRasterImageId(oParsedFill.rasterImageId);
+		oParsedFill["rotWithShape"] != undefined && oBlipFill.setRotWithShape(oParsedFill["rotWithShape"]);
+		oParsedFill["rasterImageId"] != undefined &&  oBlipFill.setRasterImageId(oParsedFill["rasterImageId"]);
 
 		return oBlipFill;
 	};
@@ -11385,11 +11586,11 @@
 		var oEffect = null;
 		var nBlendType;
 
-		switch (oParsedEff.type)
+		switch (oParsedEff["type"])
 		{
 			case "alphaBiLvl":
 				oEffect              = new AscFormat.CAlphaBiLevel();
-				oEffect.tresh        = oParsedEff.thresh;
+				oEffect.tresh        = oParsedEff["thresh"];
 				return oEffect;
 			case "alphaCeiling":
 				oEffect              = new AscFormat.CAlphaCeiling();
@@ -11399,116 +11600,116 @@
 				return oEffect;
 			case "alphaInv":
 				oEffect              = new AscFormat.CAlphaInv();
-				oEffect.unicolor     = this.ColorFromJSON(oParsedEff.color);
+				oEffect.unicolor     = this.ColorFromJSON(oParsedEff["color"]);
 				return oEffect;
 			case "alphaMod":
 				oEffect              = new AscFormat.CAlphaMod();
-				oEffect.cont         = this.EffectContainerFromJSON(oParsedEff.cont);
+				oEffect.cont         = this.EffectContainerFromJSON(oParsedEff["cont"]);
 				return oEffect;
 			case "alphaModFix":
 				oEffect              = new AscFormat.CAlphaModFix();
-				oEffect.amt          = oParsedEff.amt;
+				oEffect.amt          = oParsedEff["amt"];
 				return oEffect;
 			case "alphaOutset":
 				oEffect              = new AscFormat.CAlphaOutset();
-				oEffect.rad          = oParsedEff.rad;
+				oEffect.rad          = oParsedEff["rad"];
 				return oEffect;
 			case "alphaRepl":
 				oEffect              = new AscFormat.CAlphaRepl();
-				oEffect.a            = oParsedEff.a;
+				oEffect.a            = oParsedEff["a"];
 				return oEffect;
 			case "biLvl":
 				oEffect              = new AscFormat.CBiLevel();
-				oEffect.thresh       = oParsedEff.thresh;
+				oEffect.thresh       = oParsedEff["thresh"];
 				return oEffect;
 			case "blend":
-				nBlendType       = From_XML_ST_BlendMode(oParsedEff.blend);
+				nBlendType       = From_XML_ST_BlendMode(oParsedEff["blend"]);
 				
 				oEffect              = new AscFormat.CBlend();
-				oEffect.cont         = this.EffectContainerFromJSON(oParsedEff.cont);
+				oEffect.cont         = this.EffectContainerFromJSON(oParsedEff["cont"]);
 				oEffect.blend        = nBlendType;
 				return oEffect;
 			case "blur":
 				oEffect              = new AscFormat.CBlur();
-				oEffect.grow         = oParsedEff.grow;
-				oEffect.rad          = oParsedEff.rad;
+				oEffect.grow         = oParsedEff["grow"];
+				oEffect.rad          = oParsedEff["rad"];
 				return oEffect;
 			case "clrChange":
 				oEffect              = new AscFormat.CClrChange();
-				oEffect.clrFrom      = this.ColorFromJSON(oParsedEff.clrFrom);
-				oEffect.clrTo        = this.ColorFromJSON(oParsedEff.clrTo);
-				oEffect.useA         = oParsedEff.useA;
+				oEffect.clrFrom      = this.ColorFromJSON(oParsedEff["clrFrom"]);
+				oEffect.clrTo        = this.ColorFromJSON(oParsedEff["clrTo"]);
+				oEffect.useA         = oParsedEff["useA"];
 				return oEffect;
 			case "clrRepl":
 				oEffect              = new AscFormat.CClrRepl();
-				oEffect.color        = this.ColorFromJSON(oParsedEff.color);
+				oEffect.color        = this.ColorFromJSON(oParsedEff["color"]);
 				return oEffect;
 			case "effCont":
 				oEffect              = new AscFormat.CEffectContainer();
-				oEffect.cont         = this.EffectContainerFromJSON(oParsedEff.cont);
+				oEffect.cont         = this.EffectContainerFromJSON(oParsedEff["cont"]);
 				return oEffect;
 			case "duotone":
 				oEffect              = new AscFormat.CDuotone();
-				for (var nColor = 0; nColor < oParsedEff.colors.length; nColor++)
-					oEffect.colors.push(this.ColorFromJSON(oParsedEff.colors[nColor]));
+				for (var nColor = 0; nColor < oParsedEff["colors"].length; nColor++)
+					oEffect.colors.push(this.ColorFromJSON(oParsedEff["colors"][nColor]));
 				return oEffect;
 			case "effect":
 				oEffect              = new AscFormat.CEffectElement();
-				oEffect.ref          = oParsedEff.ref;
+				oEffect.ref          = oParsedEff["ref"];
 				return oEffect;
 			case "fill":
 				oEffect              = new AscFormat.CFillEffect();
-				oEffect.fill         = this.FillFromJSON(oParsedEff.fill);
+				oEffect.fill         = this.FillFromJSON(oParsedEff["fill"]);
 				return oEffect;
 			case "fillOvrl":
-				nBlendType       = From_XML_ST_BlendMode(oParsedEff.blend);
+				nBlendType       = From_XML_ST_BlendMode(oParsedEff["blend"]);
 				
 				oEffect              = new AscFormat.CFillOverlay();
-				oEffect.fill         = this.FillFromJSON(oParsedEff.fill);
+				oEffect.fill         = this.FillFromJSON(oParsedEff["fill"]);
 				oEffect.blend        = nBlendType;
 				return oEffect;
 			case "glow":
 				oEffect              = new AscFormat.CGlow();
-				oEffect.color        = this.ColorFromJSON(oParsedEff.color);
-				oEffect.rad          = oParsedEff.rad;
+				oEffect.color        = this.ColorFromJSON(oParsedEff["color"]);
+				oEffect.rad          = oParsedEff["rad"];
 				return oEffect;
 			case "gray":
 				oEffect              = new AscFormat.CGrayscl();
 				return oEffect;
 			case "hsl":
 				oEffect              = new AscFormat.CHslEffect();
-				oEffect.h            = oParsedEff.hue;
-				oEffect.l            = oParsedEff.lum;
-				oEffect.s            = oParsedEff.sat;
+				oEffect.h            = oParsedEff["hue"];
+				oEffect.l            = oParsedEff["lum"];
+				oEffect.s            = oParsedEff["sat"];
 				return oEffect;
 			case "innerShdw":
 				oEffect              = new AscFormat.CInnerShdw();
-				oEffect.color        = this.ColorFromJSON(oParsedEff.color);
-				oEffect.blurRad      = oParsedEff.blurRad;
-				oEffect.dir          = oParsedEff.dir;
-				oEffect.dist         = oParsedEff.dist;
+				oEffect.color        = this.ColorFromJSON(oParsedEff["color"]);
+				oEffect.blurRad      = oParsedEff["blurRad"];
+				oEffect.dir          = oParsedEff["dir"];
+				oEffect.dist         = oParsedEff["dist"];
 				return oEffect;
 			case "lum":
 				oEffect              = new AscFormat.CLumEffect();
-				oEffect.bright       = oParsedEff.bright;
-				oEffect.contrast     = oParsedEff.contrast;
+				oEffect.bright       = oParsedEff["bright"];
+				oEffect.contrast     = oParsedEff["contrast"];
 				return oEffect;
 			case "outerShdw":
 				oEffect              = new AscFormat.COuterShdw();
-				oEffect.color        = this.ColorFromJSON(oParsedEff.color);
-				oEffect.algn         = GetRectAlgnNumType(oParsedEff.algn);
-				oEffect.blurRad      = oParsedEff.blurRad;
-				oEffect.dir          = oParsedEff.dir;
-				oEffect.dist         = oParsedEff.dist;
-				oEffect.kx           = oParsedEff.kx;
-				oEffect.ky           = oParsedEff.ky;
-				oEffect.rotWithShape = oParsedEff.rotWithShape;
-				oEffect.sx           = oParsedEff.sx;
-				oEffect.sy           = oParsedEff.sy;
+				oEffect.color        = this.ColorFromJSON(oParsedEff["color"]);
+				oEffect.algn         = GetRectAlgnNumType(oParsedEff["algn"]);
+				oEffect.blurRad      = oParsedEff["blurRad"];
+				oEffect.dir          = oParsedEff["dir"];
+				oEffect.dist         = oParsedEff["dist"];
+				oEffect.kx           = oParsedEff["kx"];
+				oEffect.ky           = oParsedEff["ky"];
+				oEffect.rotWithShape = oParsedEff["rotWithShape"];
+				oEffect.sx           = oParsedEff["sx"];
+				oEffect.sy           = oParsedEff["sy"];
 				return oEffect;
 			case "prstShdw":
 				var nPrstType = undefined;
-				switch (oParsedEff.prst)
+				switch (oParsedEff["prst"])
 				{
 					case "shdw1":
 						nPrstType = c_oAscPresetShadowVal.shdw1;
@@ -11573,50 +11774,50 @@
 				}
 
 				oEffect              = new AscFormat.CPrstShdw();
-				oEffect.color        = this.ColorFromJSON(oParsedEff.color);
-				oEffect.dir          = oParsedEff.dir;
-				oEffect.dis          = oParsedEff.dist;
+				oEffect.color        = this.ColorFromJSON(oParsedEff["color"]);
+				oEffect.dir          = oParsedEff["dir"];
+				oEffect.dis          = oParsedEff["dist"];
 				oEffect.prst         = nPrstType;
 				return oEffect;
 			case "reflection":
 				oEffect              = new AscFormat.CReflection();
-				oEffect.algn         = GetRectAlgnNumType(oParsedEff.algn);
-				oEffect.blurRad      = oParsedEff.blurRad;
-				oEffect.dir          = oParsedEff.dir;
-				oEffect.dist         = oParsedEff.dist;
-				oEffect.endA         = oParsedEff.endA;
-				oEffect.endPos       = oParsedEff.endPos;
-				oEffect.fadeDir      = oParsedEff.fadeDir;
-				oEffect.kx           = oParsedEff.kx;
-				oEffect.ky           = oParsedEff.ky;
-				oEffect.rotWithShape = oParsedEff.rotWithShape;
-				oEffect.stA          = oParsedEff.stA;
-				oEffect.stPos        = oParsedEff.stPos;
-				oEffect.sx           = oParsedEff.sx;
-				oEffect.sy           = oParsedEff.sy;
+				oEffect.algn         = GetRectAlgnNumType(oParsedEff["algn"]);
+				oEffect.blurRad      = oParsedEff["blurRad"];
+				oEffect.dir          = oParsedEff["dir"];
+				oEffect.dist         = oParsedEff["dist"];
+				oEffect.endA         = oParsedEff["endA"];
+				oEffect.endPos       = oParsedEff["endPos"];
+				oEffect.fadeDir      = oParsedEff["fadeDir"];
+				oEffect.kx           = oParsedEff["kx"];
+				oEffect.ky           = oParsedEff["ky"];
+				oEffect.rotWithShape = oParsedEff["rotWithShape"];
+				oEffect.stA          = oParsedEff["stA"];
+				oEffect.stPos        = oParsedEff["stPos"];
+				oEffect.sx           = oParsedEff["sx"];
+				oEffect.sy           = oParsedEff["sy"];
 				return oEffect;
 			case "relOff":
 				oEffect              = new AscFormat.CRelOff();
-				oEffect.tx           = oParsedEff.tx;
-				oEffect.ty           = oParsedEff.ty;
+				oEffect.tx           = oParsedEff["tx"];
+				oEffect.ty           = oParsedEff["ty"];
 				return oEffect;
 			case "softEdge":
 				oEffect              = new AscFormat.CSoftEdge();
-				oEffect.rad          = oParsedEff.rad;
+				oEffect.rad          = oParsedEff["rad"];
 				return oEffect;
 			case "tint":
 				oEffect              = new AscFormat.CTintEffect();
-				oEffect.amt          = oParsedEff.amt;
-				oEffect.hue          = oParsedEff.hue;
+				oEffect.amt          = oParsedEff["amt"];
+				oEffect.hue          = oParsedEff["hue"];
 				return oEffect;
 			case "xfrm":
 				oEffect              = new AscFormat.CXfrmEffect();
-				oEffect.kx           = oParsedEff.kx;
-				oEffect.ky           = oParsedEff.ky;
-				oEffect.sx           = oParsedEff.sx;
-				oEffect.sy           = oParsedEff.sy;
-				oEffect.tx           = oParsedEff.tx;
-				oEffect.ty           = oParsedEff.ty;
+				oEffect.kx           = oParsedEff["kx"];
+				oEffect.ky           = oParsedEff["ky"];
+				oEffect.sx           = oParsedEff["sx"];
+				oEffect.sy           = oParsedEff["sy"];
+				oEffect.tx           = oParsedEff["tx"];
+				oEffect.ty           = oParsedEff["ty"];
 				return oEffect;
 		}
 	};
@@ -11624,11 +11825,11 @@
 	{
 		var oEffectContainer = new AscFormat.CEffectContainer();
 
-		oEffectContainer.type = oParsedCont.type;
-		oEffectContainer.name = oParsedCont.name;
+		oEffectContainer.type = oParsedCont["type"];
+		oEffectContainer.name = oParsedCont["name"];
 
-		for (var nEffect = 0; nEffect < oParsedCont.effectList.length; nEffect++)
-			oEffectContainer.push(this.EffectFromJSON(oParsedCont.effectList[nEffect]));
+		for (var nEffect = 0; nEffect < oParsedCont["effectList"].length; nEffect++)
+			oEffectContainer.push(this.EffectFromJSON(oParsedCont["effectList"][nEffect]));
 
 		return oEffectContainer;
 	};
@@ -11636,25 +11837,72 @@
 	{
 		var oEffectLst = new AscFormat.CEffectLst();
 
-		oEffectLst.blur        = oParsedLst.blur        ? this.EffectFromJSON(oParsedLst.blur)        : oParsedLst.blur;
-		oEffectLst.fillOverlay = oParsedLst.fillOverlay ? this.EffectFromJSON(oParsedLst.fillOverlay) : oParsedLst.fillOverlay;
-		oEffectLst.innerShdw   = oParsedLst.innerShdw   ? this.EffectFromJSON(oParsedLst.innerShdw)   : oParsedLst.innerShdw;
-		oEffectLst.outerShdw   = oParsedLst.outerShdw   ? this.EffectFromJSON(oParsedLst.outerShdw)   : oParsedLst.outerShdw;
-		oEffectLst.prstShdw    = oParsedLst.prstShdw    ? this.EffectFromJSON(oParsedLst.prstShdw)    : oParsedLst.prstShdw;
-		oEffectLst.reflection  = oParsedLst.reflection  ? this.EffectFromJSON(oParsedLst.reflection)  : oParsedLst.reflection;
-		oEffectLst.softEdge    = oParsedLst.softEdge    ? this.EffectFromJSON(oParsedLst.softEdge)    : oParsedLst.softEdge;
+		if (oParsedLst["blur"])
+			oEffectLst.blur = this.EffectFromJSON(oParsedLst["blur"]);
+		if (oParsedLst["fillOverlay"])
+			oEffectLst.fillOverlay = this.EffectFromJSON(oParsedLst["fillOverlay"]);
+		if (oParsedLst["innerShdw"])
+			oEffectLst.innerShdw = this.EffectFromJSON(oParsedLst["innerShdw"]);
+		if (oParsedLst["outerShdw"])
+			oEffectLst.outerShdw = this.EffectFromJSON(oParsedLst["outerShdw"]);
+		if (oParsedLst["prstShdw"])
+			oEffectLst.prstShdw = this.EffectFromJSON(oParsedLst["prstShdw"]);
+		if (oParsedLst["reflection"])
+			oEffectLst.reflection = this.EffectFromJSON(oParsedLst["reflection"]);
+		if (oParsedLst["softEdge"])
+			oEffectLst.softEdge = this.EffectFromJSON(oParsedLst["softEdge"]);
 
 		return oEffectLst;
 	};
+	ReaderFromJSON.prototype.StylesFromJSON = function(oParsedStyles)
+	{
+		this.RestoredStylesMap = {};
+		this.IsRestoringProcess = true;
+		// восстанавливаем все стили
+		for (var key in oParsedStyles)
+		{
+			this.StyleFromJSON(oParsedStyles[key]);
+		}
+
+		// проставляем ссылки с новыми Id
+		for (var key in this.RestoredStylesMap)
+		{
+			if (this.RestoredStylesMap[key].BasedOn != null)
+			{
+				var sBasedOnId = this.RestoredStylesMap[key].BasedOn;
+				if (this.RestoredStylesMap[sBasedOnId] != null)
+					this.RestoredStylesMap[key].Set_BasedOn(this.RestoredStylesMap[sBasedOnId].Id);
+				else
+					this.RestoredStylesMap[key].Set_BasedOn(null);
+			}
+			if (this.RestoredStylesMap[key].Next != null)
+			{
+				var sNextId = this.RestoredStylesMap[key].Next;
+				if (this.RestoredStylesMap[sNextId] != null)
+					this.RestoredStylesMap[key].Set_Next(this.RestoredStylesMap[sNextId].Id);
+				else
+					this.RestoredStylesMap[key].Set_Next(null);
+			}
+			if (this.RestoredStylesMap[key].Link != null)
+			{
+				var sLinkId = this.RestoredStylesMap[key].Link;
+				if (this.RestoredStylesMap[sLinkId] != null)
+					this.RestoredStylesMap[key].Set_Link(this.RestoredStylesMap[sLinkId].Id);
+				else
+					this.RestoredStylesMap[key].Set_Link(null);
+			}
+		}
+		this.IsRestoringProcess = false;
+	};
 	ReaderFromJSON.prototype.StyleFromJSON = function(oParsedStyle)
 	{
-		var sStyleName       = oParsedStyle.name;
-		var nBasedOnId       = oParsedStyle.basedOn;
-		var nNextId          = oParsedStyle.next;
+		var sStyleName       = oParsedStyle["name"];
+		var nNextId          = oParsedStyle["next"];
 		var nStyleType       = styletype_Paragraph;
-		var bNoCreateTablePr = !oParsedStyle.tblStylePr;
+		var bNoCreateTablePr = !oParsedStyle["tblStylePr"];
+		var nBasedOnId       = oParsedStyle["basedOn"];
 
-		switch (oParsedStyle.styleType)
+		switch (oParsedStyle["styleType"])
 		{
 			case "paragraphStyle":
 				nStyleType = styletype_Paragraph;
@@ -11670,35 +11918,56 @@
 				break;
 		}
 		var oStyle = new CStyle(sStyleName, nBasedOnId, nNextId, nStyleType, bNoCreateTablePr);
+		this.RestoredStylesMap[oParsedStyle.styleId] = oStyle;
 
-		oParsedStyle.link != undefined && oStyle.SetLink(oParsedStyle.link);
-		oParsedStyle.customStyle != undefined && oStyle.SetCustom(oParsedStyle.customStyle);
-		oParsedStyle.qFormat != undefined && oStyle.SetQFormat(oParsedStyle.qFormat);
-		oParsedStyle.uiPriority != undefined && oStyle.SetUiPriority(oParsedStyle.uiPriority);
-		oParsedStyle.hidden != undefined && oStyle.SetHidden(oParsedStyle.hidden);
-		oParsedStyle.semiHidden != undefined && oStyle.SetSemiHidden(oParsedStyle.semiHidden);
-		oParsedStyle.unhideWhenUsed != undefined && oStyle.SetUnhideWhenUsed(oParsedStyle.unhideWhenUsed);
-		oParsedStyle.rPr != undefined && oStyle.SetTextPr(this.TextPrFromJSON(oParsedStyle.rPr));
-		oParsedStyle.pPr != undefined && oStyle.SetParaPr(this.ParaPrFromJSON(oParsedStyle.pPr));
-		oParsedStyle.tblPr != undefined && oStyle.Set_TablePr(this.TablePrFromJSON(null, oParsedStyle.tblPr));
-		oParsedStyle.trPr != undefined && oStyle.Set_TableRowPr(this.TableRowPrFromJSON(oParsedStyle.trPr));
-		oParsedStyle.tcPr != undefined && oStyle.Set_TableCellPr(this.TableCellPrFromJSON(oParsedStyle.tcPr));
+		oParsedStyle["link"] != undefined && oStyle.SetLink(oParsedStyle["link"]);
+		oParsedStyle["customStyle"] != undefined && oStyle.SetCustom(oParsedStyle["customStyle"]);
+		oParsedStyle["qFormat"] != undefined && oStyle.SetQFormat(oParsedStyle["qFormat"]);
+		oParsedStyle["uiPriority"] != undefined && oStyle.SetUiPriority(oParsedStyle["uiPriority"]);
+		oParsedStyle["hidden"] != undefined && oStyle.SetHidden(oParsedStyle["hidden"]);
+		oParsedStyle["semiHidden"] != undefined && oStyle.SetSemiHidden(oParsedStyle["semiHidden"]);
+		oParsedStyle["unhideWhenUsed"] != undefined && oStyle.SetUnhideWhenUsed(oParsedStyle["unhideWhenUsed"]);
+		oParsedStyle["rPr"] != undefined && oStyle.SetTextPr(this.TextPrFromJSON(oParsedStyle["rPr"]));
+		oParsedStyle["pPr"] != undefined && oStyle.SetParaPr(this.ParaPrFromJSON(oParsedStyle["pPr"]));
+		oParsedStyle["tblPr"] != undefined && oStyle.Set_TablePr(this.TablePrFromJSON(null, oParsedStyle["tblPr"]));
+		oParsedStyle["trPr"] != undefined && oStyle.Set_TableRowPr(this.TableRowPrFromJSON(oParsedStyle["trPr"]));
+		oParsedStyle["tcPr"] != undefined && oStyle.Set_TableCellPr(this.TableCellPrFromJSON(oParsedStyle["tcPr"]));
 
 		if (!bNoCreateTablePr)
 		{
-			oParsedStyle.tblStylePr.band1Horz && oStyle.Set_TableBand1Horz(this.TableStylePrFromJSON(oParsedStyle.tblStylePr.band1Horz));
-			oParsedStyle.tblStylePr.band1Vert && oStyle.Set_TableBand1Vert(this.TableStylePrFromJSON(oParsedStyle.tblStylePr.band1Vert));
-			oParsedStyle.tblStylePr.band2Horz && oStyle.Set_TableBand2Horz(this.TableStylePrFromJSON(oParsedStyle.tblStylePr.band2Horz));
-			oParsedStyle.tblStylePr.band2Vert && oStyle.Set_TableBand2Vert(this.TableStylePrFromJSON(oParsedStyle.tblStylePr.band2Vert));
-			oParsedStyle.tblStylePr.firstCol && oStyle.Set_TableFirstCol(this.TableStylePrFromJSON(oParsedStyle.tblStylePr.firstCol));
-			oParsedStyle.tblStylePr.firstRow && oStyle.Set_TableFirstRow(this.TableStylePrFromJSON(oParsedStyle.tblStylePr.firstRow));
-			oParsedStyle.tblStylePr.lastCol && oStyle.Set_TableLastCol(this.TableStylePrFromJSON(oParsedStyle.tblStylePr.lastCol));
-			oParsedStyle.tblStylePr.lastRow && oStyle.Set_TableLastRow(this.TableStylePrFromJSON(oParsedStyle.tblStylePr.lastRow));
-			oParsedStyle.tblStylePr.neCell && oStyle.Set_TableTLCell(this.TableStylePrFromJSON(oParsedStyle.tblStylePr.neCell));
-			oParsedStyle.tblStylePr.nwCell && oStyle.Set_TableTRCell(this.TableStylePrFromJSON(oParsedStyle.tblStylePr.nwCell));
-			oParsedStyle.tblStylePr.seCell && oStyle.Set_TableBLCell(this.TableStylePrFromJSON(oParsedStyle.tblStylePr.seCell));
-			oParsedStyle.tblStylePr.swCell && oStyle.Set_TableBRCell(this.TableStylePrFromJSON(oParsedStyle.tblStylePr.swCell));
-			oParsedStyle.tblStylePr.wholeTable && oStyle.Set_TableWholeTable(this.TableStylePrFromJSON(oParsedStyle.tblStylePr.wholeTable));
+			oParsedStyle["tblStylePr"]["band1Horz"] && oStyle.Set_TableBand1Horz(this.TableStylePrFromJSON(oParsedStyle["tblStylePr"]["band1Horz"]));
+			oParsedStyle["tblStylePr"]["band1Vert"] && oStyle.Set_TableBand1Vert(this.TableStylePrFromJSON(oParsedStyle["tblStylePr"]["band1Vert"]));
+			oParsedStyle["tblStylePr"]["band2Horz"] && oStyle.Set_TableBand2Horz(this.TableStylePrFromJSON(oParsedStyle["tblStylePr"]["band2Horz"]));
+			oParsedStyle["tblStylePr"]["band2Vert"] && oStyle.Set_TableBand2Vert(this.TableStylePrFromJSON(oParsedStyle["tblStylePr"]["band2Vert"]));
+			oParsedStyle["tblStylePr"]["firstCol"] && oStyle.Set_TableFirstCol(this.TableStylePrFromJSON(oParsedStyle["tblStylePr"]["firstCol"]));
+			oParsedStyle["tblStylePr"]["firstRow"] && oStyle.Set_TableFirstRow(this.TableStylePrFromJSON(oParsedStyle["tblStylePr"]["firstRow"]));
+			oParsedStyle["tblStylePr"]["lastCol"] && oStyle.Set_TableLastCol(this.TableStylePrFromJSON(oParsedStyle["tblStylePr"]["lastCol"]));
+			oParsedStyle["tblStylePr"]["lastRow"] && oStyle.Set_TableLastRow(this.TableStylePrFromJSON(oParsedStyle["tblStylePr"]["lastRow"]));
+			oParsedStyle["tblStylePr"]["neCell"] && oStyle.Set_TableTLCell(this.TableStylePrFromJSON(oParsedStyle["tblStylePr"]["neCell"]));
+			oParsedStyle["tblStylePr"]["nwCell"] && oStyle.Set_TableTRCell(this.TableStylePrFromJSON(oParsedStyle["tblStylePr"]["nwCell"]));
+			oParsedStyle["tblStylePr"]["seCell"] && oStyle.Set_TableBLCell(this.TableStylePrFromJSON(oParsedStyle["tblStylePr"]["seCell"]));
+			oParsedStyle["tblStylePr"]["swCell"] && oStyle.Set_TableBRCell(this.TableStylePrFromJSON(oParsedStyle["tblStylePr"]["swCell"]));
+			oParsedStyle["tblStylePr"]["wholeTable"] && oStyle.Set_TableWholeTable(this.TableStylePrFromJSON(oParsedStyle["tblStylePr"]["wholeTable"]));
+		}
+
+		var oStyles = private_GetStyles();
+		if (oStyle)
+		{
+			// если такого стиля нет - добавляем новый
+			var nExistingStyleId = oStyles.GetStyleIdByName(oStyle.Name);
+			if (nExistingStyleId === null)
+			{
+				oStyles.Add(oStyle);
+			}
+			else
+			{
+				var oExistingStyle = oStyles.Get(nExistingStyleId);
+				// если стили идентичны, стиль не добавляем
+				if (!oStyle.IsEqual(oExistingStyle))
+					oStyles.Add(oStyle);
+				else
+					oStyle = oExistingStyle;
+			}
 		}
 
 		return oStyle;
@@ -11706,13 +11975,18 @@
 	ReaderFromJSON.prototype.TableStylePrFromJSON = function(oParsedPr)
 	{
 		var oTableStylePr = new CTableStylePr();
-
-		oTableStylePr.TextPr      = oParsedPr.rPr   ? this.TextPrFromJSON(oParsedPr.rPr)          : oParsedPr.rPr;
-		oTableStylePr.ParaPr      = oParsedPr.pPr   ? this.ParaPrFromJSON(oParsedPr.pPr)          : oParsedPr.pPr;
-		oTableStylePr.TablePr     = oParsedPr.tblPr ? this.TablePrFromJSON(null, oParsedPr.tblPr) : oParsedPr.tblPr;
-		oTableStylePr.TableRowPr  = oParsedPr.trPr  ? this.TableRowPrFromJSON(oParsedPr.trPr)     : oParsedPr.trPr;
-		oTableStylePr.TableCellPr = oParsedPr.tcPr  ? this.TableCellPrFromJSON(oParsedPr.tcPr)    : oParsedPr.tcPr;
-
+				
+		if (oParsedPr["rPr"])
+			oTableStylePr.TextPr = this.TextPrFromJSON(oParsedPr["rPr"]);
+		if (oParsedPr["pPr"])
+			oTableStylePr.ParaPr = this.ParaPrFromJSON(oParsedPr["pPr"]);
+		if (oParsedPr["tblPr"])
+			oTableStylePr.TablePr = this.TablePrFromJSON(null, oParsedPr["tblPr"]);
+		if (oParsedPr["trPr"])
+			oTableStylePr.TableRowPr = this.TableRowPrFromJSON(oParsedPr["trPr"]);
+		if (oParsedPr["tcPr"])
+			oTableStylePr.TableCellPr = this.TableCellPrFromJSON(oParsedPr["tcPr"]);
+		
 		return oTableStylePr;
 	};
 	ReaderFromJSON.prototype.ParaDrawingFromJSON = function(oParsedDrawing)
@@ -11720,40 +11994,52 @@
 		var oDrawing = new ParaDrawing(undefined, undefined, null, private_GetDrawingDocument(), private_GetLogicDocument(), null);
 		
 		// doc prop
-		oDrawing.docPr.setFromOther(this.CNvPrFromJSON(oParsedDrawing.docPr));
+		oDrawing.docPr.setFromOther(this.CNvPrFromJSON(oParsedDrawing["docPr"]));
 
 		// effect extent
-		oDrawing.setEffectExtent(oParsedDrawing.effectExtent.l, oParsedDrawing.effectExtent.t, oParsedDrawing.effectExtent.r, oParsedDrawing.effectExtent.b);
+		oDrawing.setEffectExtent(private_EMU2MM(oParsedDrawing["effectExtent"]["l"]), private_EMU2MM(oParsedDrawing["effectExtent"]["t"]), private_EMU2MM(oParsedDrawing["effectExtent"]["r"]), private_EMU2MM(oParsedDrawing["effectExtent"]["b"]));
 
 		// extent
-		oDrawing.setExtent(private_EMU2MM(oParsedDrawing.extent.cx), private_EMU2MM(oParsedDrawing.extent.cy));
+		oDrawing.setExtent(private_EMU2MM(oParsedDrawing["extent"]["cx"]), private_EMU2MM(oParsedDrawing["extent"]["cy"]));
 
 		// posH posY
-		var oPosH = this.PositionHFromJSON(oParsedDrawing.positionH);
-		var oPosV = this.PositionVFromJSON(oParsedDrawing.positionV);
+		var oPosH = this.PositionHFromJSON(oParsedDrawing["positionH"]);
+		var oPosV = this.PositionVFromJSON(oParsedDrawing["positionV"]);
 		oDrawing.Set_PositionH(oPosH.RelativeFrom, oPosH.Align, oPosH.Value, oPosH.Percent);
 		oDrawing.Set_PositionV(oPosV.RelativeFrom, oPosV.Align, oPosV.Value, oPosV.Percent);
 
 		// simple pos
-		oDrawing.setSimplePos(oParsedDrawing.simplePos.use, private_EMU2MM(oParsedDrawing.simplePos.x), private_EMU2MM(oParsedDrawing.simplePos.x));
+		oDrawing.setSimplePos(oParsedDrawing["simplePos"]["use"], private_EMU2MM(oParsedDrawing["simplePos"]["x"]), private_EMU2MM(oParsedDrawing["simplePos"]["x"]));
+
+		// siseRelH
+		oParsedDrawing["sizeRelH"] && oDrawing.SetSizeRelH(this.SizeRelHFromJSON(oParsedDrawing["sizeRelH"]));
+		// sizeRelV
+		oParsedDrawing["sizeRelV"] && oDrawing.SetSizeRelV(this.SizeRelVFromJSON(oParsedDrawing["sizeRelV"]));
 
 		// distance
-		oDrawing.Set_Distance(private_EMU2MM(oParsedDrawing.distL), private_EMU2MM(oParsedDrawing.distT), private_EMU2MM(oParsedDrawing.distR), private_EMU2MM(oParsedDrawing.distB));
+		oDrawing.Set_Distance(private_EMU2MM(oParsedDrawing["distL"]), private_EMU2MM(oParsedDrawing["distT"]), private_EMU2MM(oParsedDrawing["distR"]), private_EMU2MM(oParsedDrawing["distB"]));
 
 		// overlap
-		oDrawing.Set_AllowOverlap(oParsedDrawing.allowOverlap);
+		oDrawing.Set_AllowOverlap(oParsedDrawing["allowOverlap"]);
 
 		// behind doc
-		oDrawing.Set_BehindDoc(oParsedDrawing.behindDoc);
+		oDrawing.Set_BehindDoc(oParsedDrawing["behindDoc"]);
 
-		oDrawing.Hidden         = oParsedDrawing.hidden;
-		oDrawing.Set_LayoutInCell(oParsedDrawing.layoutInCell);
-		oDrawing.Set_Locked(oParsedDrawing.locked);
-		oDrawing.Set_RelativeHeight(oParsedDrawing.relativeHeight);
-		oDrawing.Set_WrappingType(this.GetWrapNumType(oParsedDrawing.wrapType));
-		oDrawing.Set_DrawingType(oParsedDrawing.drawingType === "inline" ? drawing_Inline : drawing_Anchor);
+		oDrawing.Hidden         = oParsedDrawing["hidden"];
+		oDrawing.Set_LayoutInCell(oParsedDrawing["layoutInCell"]);
+		oDrawing.Set_Locked(oParsedDrawing["locked"]);
+		oDrawing.Set_RelativeHeight(oParsedDrawing["relativeHeight"]);
 
-		var oGraphicObj = this.GraphicObjFromJSON(oParsedDrawing.graphic, oDrawing);
+		var nWrappingType = this.GetWrapNumType(oParsedDrawing["wrapType"]);
+		oDrawing.Set_DrawingType(oParsedDrawing["drawingType"] === "inline" ? drawing_Inline : drawing_Anchor);
+		oDrawing.Set_WrappingType(nWrappingType);
+		
+		if (oParsedDrawing["wrapType"] === "tight")
+			this.WrappingPolygonFromJSON(oParsedDrawing["wrapTight"], oDrawing.wrappingPolygon)
+		else if (oParsedDrawing["through"] === "tight")
+			this.WrappingPolygonFromJSON(oParsedDrawing["wrapThrough"], oDrawing.wrappingPolygon)
+
+		var oGraphicObj = this.GraphicObjFromJSON(oParsedDrawing["graphic"], oDrawing);
 
 		if (!oDrawing.GraphicObj)
 			oDrawing.Set_GraphicObject(oGraphicObj);
@@ -11761,10 +12047,53 @@
 
 		return oDrawing;
 	};
+	ReaderFromJSON.prototype.SizeRelHFromJSON = function(oParsed)
+	{
+		return {
+			RelativeFrom: FromXml_ST_SizeRelFromH(oParsed["relativeFrom"]),
+			Percent: oParsed["wp14:pctWidth"] != null ? oParsed["wp14:pctWidth"] / 100 : 0
+		}
+	};
+	ReaderFromJSON.prototype.SizeRelVFromJSON = function(oParsed)
+	{
+		return {
+			RelativeFrom: FromXml_ST_SizeRelFromV(oParsed["relativeFrom"]),
+			Percent: oParsed["wp14:pctHeight"] != null ? oParsed["wp14:pctHeight"] / 100 : 0
+		}
+	};
+	ReaderFromJSON.prototype.WrappingPolygonFromJSON = function(oParsed, oParentWrapPolygon)
+	{
+		var oStartPoint = oParsed["start"] ? this.PolygonPointFromJSON(oParsed["start"]) : null;
+		var aLineTo = oParsed["lineTo"] ? this.PolygonPointsFromJSON(oParsed["lineTo"]) : [];
+
+		oParentWrapPolygon.setEdited(oParsed["edited"]);
+		if (oStartPoint)
+			aLineTo.unshift(oStartPoint);
+
+		oParentWrapPolygon.setArrRelPoints(aLineTo);
+	};
+	ReaderFromJSON.prototype.PolygonPointFromJSON = function(oParsed)
+	{
+		var oPoint = new CPolygonPoint();
+
+		oPoint.x = oParsed["x"];
+		oPoint.y = oParsed["y"];
+
+		return oPoint;
+	};
+	ReaderFromJSON.prototype.PolygonPointsFromJSON = function(aParsed)
+	{
+		var aResult = [];
+
+		for (var nPoint = 0; nPoint < aParsed.length; nPoint++)
+			aResult.push(this.PolygonPointFromJSON(aParsed[nPoint]));
+
+		return aResult;
+	};
 	ReaderFromJSON.prototype.GraphicObjFromJSON = function(oParsedObj, oParent)
 	{
 		var oGraphicObj = null;
-		switch (oParsedObj.type)
+		switch (oParsedObj["type"])
 		{
 			case "image":
 				oGraphicObj = this.ImageFromJSON(oParsedObj, oParent);
@@ -11795,7 +12124,7 @@
 				oGraphicObj = this.SlicerDrawingFromJSON(oParsedObj, oParent);
 		}
 
-		this.drawingsMap[oParsedObj.id] = oGraphicObj;
+		this.drawingsMap[oParsedObj["id"]] = oGraphicObj;
 		
 		return oGraphicObj;
 	};
@@ -11808,9 +12137,10 @@
 			oSlicer.name = oParsedSlicer["name"];
 		if (oParsedSlicer["spPr"] != null)
 			oSlicer.setSpPr(this.SpPrFromJSON(oParsedSlicer["spPr"], oSlicer));
-		if (oParsedSlicer["nvSpPr"] != null)
-			oSlicer.setNvSpPr(this.UniNvPrFromJSON(oParsedSlicer["nvSpPr"]));
+		if (oParsedSlicer["nvGraphicFramePr"] != null)
+			oSlicer.setNvSpPr(this.UniNvPrFromJSON(oParsedSlicer["nvGraphicFramePr"]));
 	
+		oSlicer.setLocks(oSlicer.nvSpPr && oSlicer.nvSpPr.locks !== 0 ? oSlicer.nvSpPr.locks : 0);
 		return oSlicer;
 	};
 	ReaderFromJSON.prototype.LockedCanvasFromJSON = function(oParsedLocCanvas, oParentDrawing)
@@ -11823,10 +12153,10 @@
 			oParentDrawing.Set_GraphicObject(oLockedCanvas);
 		}
 
-		for (var nDrawing = 0; nDrawing < oParsedLocCanvas.spTree.length; nDrawing++)
-			oLockedCanvas.addToSpTree(oLockedCanvas.spTree.length, this.GraphicObjFromJSON(oParsedLocCanvas.spTree[nDrawing]));
+		for (var nDrawing = 0; nDrawing < oParsedLocCanvas["spTree"].length; nDrawing++)
+			oLockedCanvas.addToSpTree(oLockedCanvas.spTree.length, this.GraphicObjFromJSON(oParsedLocCanvas["spTree"][nDrawing]));
 
-		oParsedLocCanvas.spPr && oLockedCanvas.setSpPr(this.SpPrFromJSON(oParsedLocCanvas.spPr, oLockedCanvas));
+		oParsedLocCanvas["spPr"] && oLockedCanvas.setSpPr(this.SpPrFromJSON(oParsedLocCanvas["spPr"], oLockedCanvas));
 
 		oLockedCanvas.setBDeleted(false);
 		return oLockedCanvas;
@@ -11842,14 +12172,14 @@
 			oParentDrawing.Set_GraphicObject(oGroupShape);
 		}
 
-		for (var nDrawing = 0; nDrawing < oParsedGrpShp.spTree.length; nDrawing++)
+		for (var nDrawing = 0; nDrawing < oParsedGrpShp["spTree"].length; nDrawing++)
 		{
-			oTempGraphObj = this.GraphicObjFromJSON(oParsedGrpShp.spTree[nDrawing]);
+			oTempGraphObj = this.GraphicObjFromJSON(oParsedGrpShp["spTree"][nDrawing]);
 			oGroupShape.addToSpTree(oGroupShape.spTree.length, oTempGraphObj);
 			oTempGraphObj.setGroup(oGroupShape);
 		}
 			
-		oParsedGrpShp.spPr && oGroupShape.setSpPr(this.SpPrFromJSON(oParsedGrpShp.spPr, oGroupShape));
+		oParsedGrpShp["spPr"] && oGroupShape.setSpPr(this.SpPrFromJSON(oParsedGrpShp["spPr"], oGroupShape));
 
 		oGroupShape.setBDeleted(false);
 		return oGroupShape;
@@ -11858,20 +12188,20 @@
 	{
 		var oSmartArt = new AscFormat.SmartArt();
 
-		oParsedArt.artType != undefined && oSmartArt.setType(oParsedArt.artType);
-		oParsedArt.colorsDef && oSmartArt.setColorsDef(this.ColorsDefFromJSON(oParsedArt.colorsDef));
-		oParsedArt.dataModel && oSmartArt.setDataModel(this.DataFromJSON(oParsedArt.dataModel));
-		oParsedArt.layoutDef && oSmartArt.setLayoutDef(this.LayoutDefFromJSON(oParsedArt.layoutDef));
-		oParsedArt.styleDef && oSmartArt.setStyleDef(this.StyleDefFromJSON(oParsedArt.styleDef));
+		oParsedArt["artType"] != undefined && oSmartArt.setType(oParsedArt["artType"]);
+		oParsedArt["colorsDef"] && oSmartArt.setColorsDef(this.ColorsDefFromJSON(oParsedArt["colorsDef"]));
+		oParsedArt["dataModel"] && oSmartArt.setDataModel(this.DataFromJSON(oParsedArt["dataModel"]));
+		oParsedArt["layoutDef"] && oSmartArt.setLayoutDef(this.LayoutDefFromJSON(oParsedArt["layoutDef"]));
+		oParsedArt["styleDef"] && oSmartArt.setStyleDef(this.StyleDefFromJSON(oParsedArt["styleDef"]));
 
-		oParsedArt.drawing && oSmartArt.setDrawing(this.DrawingFromJSON(oParsedArt.drawing));
+		oParsedArt["drawing"] && oSmartArt.setDrawing(this.DrawingFromJSON(oParsedArt["drawing"]));
 		if(oSmartArt.drawing)
 		{
 			oSmartArt.drawing.setGroup(oSmartArt);
 			oSmartArt.addToSpTree(0, oSmartArt.drawing);
 		}
-		oParsedArt.nvGrpSpPr && oSmartArt.setNvGrpSpPr(this.UniNvPrFromJSON(oParsedArt.nvGrpSpPr));
-		oParsedArt.spPr && oSmartArt.setSpPr(this.SpPrFromJSON(oParsedArt.spPr, oSmartArt));
+		oParsedArt["nvGrpSpPr"] && oSmartArt.setNvGrpSpPr(this.UniNvPrFromJSON(oParsedArt["nvGrpSpPr"]));
+		oParsedArt["spPr"] && oSmartArt.setSpPr(this.SpPrFromJSON(oParsedArt["spPr"], oSmartArt));
 		
 		if (oParentDrawing)
 		{
@@ -11880,7 +12210,8 @@
 		}
 
 		oSmartArt.setBDeleted(false);
-		//oSmartArt.recalculate();
+		oSmartArt.setLocks(oSmartArt.nvGrpSpPr && oSmartArt.nvGrpSpPr.locks !== 0 ? oSmartArt.nvGrpSpPr.locks : 0);
+		
 		return oSmartArt;
 	};
 	ReaderFromJSON.prototype.DrawingFromJSON = function(oParsedDrawing)
@@ -11888,14 +12219,14 @@
 		var oDrawing = new AscFormat.Drawing();
 		var oTempGraphObj = null; 
 
-		for (var nDrawing = 0; nDrawing < oParsedDrawing.spTree.length; nDrawing++)
+		for (var nDrawing = 0; nDrawing < oParsedDrawing["spTree"].length; nDrawing++)
 		{
-			oTempGraphObj = this.GraphicObjFromJSON(oParsedDrawing.spTree[nDrawing]);
+			oTempGraphObj = this.GraphicObjFromJSON(oParsedDrawing["spTree"][nDrawing]);
 			oDrawing.addToSpTree(oDrawing.spTree.length, oTempGraphObj);
 			oTempGraphObj.setGroup(oDrawing);
 		}
 
-		oParsedDrawing.spPr && oDrawing.setSpPr(this.SpPrFromJSON(oParsedDrawing.spPr, oDrawing));
+		oParsedDrawing["spPr"] && oDrawing.setSpPr(this.SpPrFromJSON(oParsedDrawing["spPr"], oDrawing));
 
 		oDrawing.setBDeleted(false);
 		//oDrawing.recalculate();
@@ -11905,15 +12236,15 @@
 	{
 		var oStyleDef = new AscFormat.StyleDef();
 
-		for (var nStyle = 0; nStyle < oParsedStyleDef.styleLbl.length; nStyle++)
-			oStyleDef.addToLstStyleLbl(oStyleDef.styleLbl.length, this.DefStyleLblFromJSON(oParsedStyleDef.styleLbl[nStyle]));
+		for (var nStyle = 0; nStyle < oParsedStyleDef["styleLbl"].length; nStyle++)
+			oStyleDef.addToLstStyleLbl(oStyleDef.styleLbl.length, this.DefStyleLblFromJSON(oParsedStyleDef["styleLbl"][nStyle]));
 
-		oParsedStyleDef.catLst && oStyleDef.setCatLst(this.CatLstFromJSON(oParsedStyleDef.catLst));
-		oParsedStyleDef.desc && oStyleDef.setDesc(this.DescFromJSON(oParsedStyleDef.desc));
-		oParsedStyleDef.scene3d && oStyleDef.setScene3d(this.Scene3dFromJSON(oParsedStyleDef.scene3d));
-		oParsedStyleDef.minVer != undefined && oStyleDef.setMinVer(oParsedStyleDef.minVer);
-		oParsedStyleDef.title && oStyleDef.setTitle(this.DescFromJSON(oParsedStyleDef.title));
-		oParsedStyleDef.uniqueId != undefined && oStyleDef.setUniqueId(oParsedStyleDef.uniqueId);
+		oParsedStyleDef["catLst"] && oStyleDef.setCatLst(this.CatLstFromJSON(oParsedStyleDef["catLst"]));
+		oParsedStyleDef["desc"] && oStyleDef.setDesc(this.DescFromJSON(oParsedStyleDef["desc"]));
+		oParsedStyleDef["scene3d"] && oStyleDef.setScene3d(this.Scene3dFromJSON(oParsedStyleDef["scene3d"]));
+		oParsedStyleDef["minVer"] != undefined && oStyleDef.setMinVer(oParsedStyleDef["minVer"]);
+		oParsedStyleDef["title"] && oStyleDef.setTitle(this.DescFromJSON(oParsedStyleDef["title"]));
+		oParsedStyleDef["uniqueId"] != undefined && oStyleDef.setUniqueId(oParsedStyleDef["uniqueId"]);
 
 		return oStyleDef;
 	};
@@ -11921,11 +12252,11 @@
 	{
 		var oDefStyleLbl = new AscFormat.StyleDefStyleLbl();
 
-		oParsedDefStyleLbl.scene3d && oDefStyleLbl.setScene3d(this.Scene3dFromJSON(oParsedDefStyleLbl.scene3d));
-		oParsedDefStyleLbl.sp3d && oDefStyleLbl.setSp3d(this.Sp3DFromJSON(oParsedDefStyleLbl.sp3d));
-		oParsedDefStyleLbl.style && oDefStyleLbl.setStyle(this.SpStyleFromJSON(oParsedDefStyleLbl.style));
-		oParsedDefStyleLbl.txPr && oDefStyleLbl.setTxPr(this.TxPrFromJSON(oParsedDefStyleLbl.txPr));
-		oParsedDefStyleLbl.name != undefined && oDefStyleLbl.setName(oParsedDefStyleLbl.name);
+		oParsedDefStyleLbl["scene3d"] && oDefStyleLbl.setScene3d(this.Scene3dFromJSON(oParsedDefStyleLbl["scene3d"]));
+		oParsedDefStyleLbl["sp3d"] && oDefStyleLbl.setSp3d(this.Sp3DFromJSON(oParsedDefStyleLbl["sp3d"]));
+		oParsedDefStyleLbl["style"] && oDefStyleLbl.setStyle(this.SpStyleFromJSON(oParsedDefStyleLbl["style"]));
+		oParsedDefStyleLbl["txPr"] && oDefStyleLbl.setTxPr(this.TxPrFromJSON(oParsedDefStyleLbl["txPr"]));
+		oParsedDefStyleLbl["name"] != undefined && oDefStyleLbl.setName(oParsedDefStyleLbl["name"]);
 
 		return oDefStyleLbl;
 	};
@@ -11933,14 +12264,14 @@
 	{
 		var oSp3D = new AscFormat.Sp3d();
 
-		oParsedSp3D.bevelB && oSp3D.setBevelB(this.BevelFromJSON(oParsedSp3D.bevelB));
-		oParsedSp3D.bevelT && oSp3D.setBevelT(this.BevelFromJSON(oParsedSp3D.bevelT));
-		oParsedSp3D.contourClr && oSp3D.setContourClr(this.ContourClrFromJSON(oParsedSp3D.contourClr));
-		oParsedSp3D.extrusionClr && oSp3D.setExtrusionClr(this.ExtrusionClrFromJSON(oParsedSp3D.extrusionClr));
-		oParsedSp3D.contourW != undefined && oSp3D.setContourW(oParsedSp3D.contourW);
-		oParsedSp3D.extrusionH != undefined && oSp3D.setExtrusionH(oParsedSp3D.extrusionH);
-		oParsedSp3D.prstMaterial != undefined && oSp3D.setPrstMaterial(From_XML_ST_PresetMaterialType(oParsedSp3D.prstMaterial));
-		oParsedSp3D.z != undefined && oSp3D.setZ(oParsedSp3D.z);
+		oParsedSp3D["bevelB"] && oSp3D.setBevelB(this.BevelFromJSON(oParsedSp3D["bevelB"]));
+		oParsedSp3D["bevelT"] && oSp3D.setBevelT(this.BevelFromJSON(oParsedSp3D["bevelT"]));
+		oParsedSp3D["contourClr"] && oSp3D.setContourClr(this.ContourClrFromJSON(oParsedSp3D["contourClr"]));
+		oParsedSp3D["extrusionClr"] && oSp3D.setExtrusionClr(this.ExtrusionClrFromJSON(oParsedSp3D["extrusionClr"]));
+		oParsedSp3D["contourW"] != undefined && oSp3D.setContourW(oParsedSp3D["contourW"]);
+		oParsedSp3D["extrusionH"] != undefined && oSp3D.setExtrusionH(oParsedSp3D["extrusionH"]);
+		oParsedSp3D["prstMaterial"] != undefined && oSp3D.setPrstMaterial(From_XML_ST_PresetMaterialType(oParsedSp3D["prstMaterial"]));
+		oParsedSp3D["z"] != undefined && oSp3D.setZ(oParsedSp3D["z"]);
 
 		return oSp3D;
 	};
@@ -11948,7 +12279,7 @@
 	{
 		var oExtrusionClr = new AscFormat.ExtrusionClr();
 
-		oParsedExtrusionClr.color && oExtrusionClr.setColor(this.ColorFromJSON(oParsedExtrusionClr.color));
+		oParsedExtrusionClr["color"] && oExtrusionClr.setColor(this.ColorFromJSON(oParsedExtrusionClr["color"]));
 
 		return oExtrusionClr;
 	};
@@ -11956,7 +12287,7 @@
 	{
 		var oContourClr = new AscFormat.ContourClr();
 
-		oParsedContourClr.color && oContourClr.setColor(this.ColorFromJSON(oParsedContourClr.color));
+		oParsedContourClr["color"] && oContourClr.setColor(this.ColorFromJSON(oParsedContourClr["color"]));
 
 		return oContourClr;
 	};
@@ -11964,9 +12295,9 @@
 	{
 		var oBevel = new AscFormat.Bevel();
 
-		oParsedBevel.h != undefined && oBevel.setH(oParsedBevel.h);
-		oParsedBevel.w != undefined && oBevel.setW(oParsedBevel.w);
-		oParsedBevel.prst != undefined && oBevel.setPrst(From_XML_ST_BevelPresetType(oParsedBevel.prst));
+		oParsedBevel["h"] != undefined && oBevel.setH(oParsedBevel["h"]);
+		oParsedBevel["w"] != undefined && oBevel.setW(oParsedBevel["w"]);
+		oParsedBevel["prst"] != undefined && oBevel.setPrst(From_XML_ST_BevelPresetType(oParsedBevel["prst"]));
 
 		return oBevel;
 	};
@@ -11974,9 +12305,9 @@
 	{
 		var oScene3d = new AscFormat.Scene3d();
 
-		oParsedScene3d.backdrop && oScene3d.setBackdrop(this.BackdropFromJSON(oParsedScene3d.backdrop));
-		oParsedScene3d.camera && oScene3d.setCamera(this.CameraFromJSON(oParsedScene3d.camera));
-		oParsedScene3d.lightRig && oScene3d.setLightRig(this.LightRigFromJSON(oParsedScene3d.lightRig));
+		oParsedScene3d["backdrop"] && oScene3d.setBackdrop(this.BackdropFromJSON(oParsedScene3d["backdrop"]));
+		oParsedScene3d["camera"] && oScene3d.setCamera(this.CameraFromJSON(oParsedScene3d["camera"]));
+		oParsedScene3d["lightRig"] && oScene3d.setLightRig(this.LightRigFromJSON(oParsedScene3d["lightRig"]));
 
 		return oScene3d;
 	};
@@ -11984,9 +12315,9 @@
 	{
 		var oLightRig = new AscFormat.LightRig();
 
-		oParsedLightRig.rot && oLightRig.setRot(this.CameraRotFromJSON(oParsedLightRig.rot));
-		oParsedLightRig.dir != undefined && oLightRig.setDir(From_XML_ST_LightRigDirection(oParsedLightRig.dir));
-		oParsedLightRig.rig != undefined && oLightRig.setRig(From_XML_ST_LightRigType(oParsedLightRig.rig));
+		oParsedLightRig["rot"] && oLightRig.setRot(this.CameraRotFromJSON(oParsedLightRig["rot"]));
+		oParsedLightRig["dir"] != undefined && oLightRig.setDir(From_XML_ST_LightRigDirection(oParsedLightRig["dir"]));
+		oParsedLightRig["rig"] != undefined && oLightRig.setRig(From_XML_ST_LightRigType(oParsedLightRig["rig"]));
 
 		return oLightRig;
 	};
@@ -11994,10 +12325,10 @@
 	{
 		var oCamera = new AscFormat.Camera();
 
-		oParsedCamera.rot && oCamera.setRot(this.CameraRotFromJSON(oParsedCamera.rot));
-		oParsedCamera.fov != undefined && oCamera.setFov(oParsedCamera.fov);
-		oParsedCamera.prst != undefined && oCamera.setPrst(From_XML_ST_PresetCameraType(oParsedCamera.prst));
-		oParsedCamera.zoom != undefined && oCamera.setZoom(oParsedCamera.zoom);
+		oParsedCamera["rot"] && oCamera.setRot(this.CameraRotFromJSON(oParsedCamera["rot"]));
+		oParsedCamera["fov"] != undefined && oCamera.setFov(oParsedCamera["fov"]);
+		oParsedCamera["prst"] != undefined && oCamera.setPrst(From_XML_ST_PresetCameraType(oParsedCamera["prst"]));
+		oParsedCamera["zoom"] != undefined && oCamera.setZoom(oParsedCamera["zoom"]);
 		
 		return oCamera;
 	};
@@ -12005,9 +12336,9 @@
 	{
 		var oCameraRot = new AscFormat.Rot();
 
-		oParsedCameraRot.lat != undefined && oCameraRot.setLat(oParsedCameraRot.lat);
-		oParsedCameraRot.lon != undefined && oCameraRot.setLon(oParsedCameraRot.lon);
-		oParsedCameraRot.rev != undefined && oCameraRot.setRev(oParsedCameraRot.rev);
+		oParsedCameraRot["lat"] != undefined && oCameraRot.setLat(oParsedCameraRot["lat"]);
+		oParsedCameraRot["lon"] != undefined && oCameraRot.setLon(oParsedCameraRot["lon"]);
+		oParsedCameraRot["rev"] != undefined && oCameraRot.setRev(oParsedCameraRot["rev"]);
 
 		return oCameraRot;
 	};
@@ -12015,9 +12346,9 @@
 	{
 		var oBackdrop = new AscFormat.Backdrop();
 
-		oBackdrop.setAnchor(this.BackdropAnchorFromJSON(oParsedBackdrop.anchor));
-		oBackdrop.setNorm(this.BackdropNormFromJSON(oParsedBackdrop.norm));
-		oBackdrop.setUp(this.BackdropUpFromJSON(oParsedBackdrop.up));
+		oParsedBackdrop["anchor"] != undefined && oBackdrop.setAnchor(this.BackdropAnchorFromJSON(oParsedBackdrop["anchor"]));
+		oParsedBackdrop["norm"] != undefined && oBackdrop.setNorm(this.BackdropNormFromJSON(oParsedBackdrop["norm"]));
+		oParsedBackdrop["up"] != undefined && oBackdrop.setUp(this.BackdropUpFromJSON(oParsedBackdrop["up"]));
 
 		return oBackdrop;
 	};
@@ -12025,9 +12356,9 @@
 	{
 		var oBackdropUp = new AscFormat.BackdropUp();
 
-		oParsedBackdropUp.dx != undefined && oBackdropUp.setDx(oParsedBackdropUp.dx);
-		oParsedBackdropUp.dy != undefined && oBackdropUp.setDy(oParsedBackdropUp.dy);
-		oParsedBackdropUp.dz != undefined && oBackdropUp.setDz(oParsedBackdropUp.dz);
+		oParsedBackdropUp["dx"] != undefined && oBackdropUp.setDx(oParsedBackdropUp["dx"]);
+		oParsedBackdropUp["dy"] != undefined && oBackdropUp.setDy(oParsedBackdropUp["dy"]);
+		oParsedBackdropUp["dz"] != undefined && oBackdropUp.setDz(oParsedBackdropUp["dz"]);
 
 		return oBackdropUp;
 	};
@@ -12035,9 +12366,9 @@
 	{
 		var oBackdropNorm = new AscFormat.BackdropNorm();
 
-		oParsedBackdropNorm.dx != undefined && oBackdropNorm.setDx(oParsedBackdropNorm.dx);
-		oParsedBackdropNorm.dy != undefined && oBackdropNorm.setDy(oParsedBackdropNorm.dy);
-		oParsedBackdropNorm.dz != undefined && oBackdropNorm.setDz(oParsedBackdropNorm.dz);
+		oParsedBackdropNorm["dx"] != undefined && oBackdropNorm.setDx(oParsedBackdropNorm["dx"]);
+		oParsedBackdropNorm["dy"] != undefined && oBackdropNorm.setDy(oParsedBackdropNorm["dy"]);
+		oParsedBackdropNorm["dz"] != undefined && oBackdropNorm.setDz(oParsedBackdropNorm["dz"]);
 
 		return oBackdropNorm;
 	};
@@ -12045,9 +12376,9 @@
 	{
 		var oBackdropAnchor = new AscFormat.BackdropAnchor();
 
-		oParsedBackdropAnchor.x != undefined && oBackdropAnchor.setX(oParsedBackdropAnchor.x);
-		oParsedBackdropAnchor.y != undefined && oBackdropAnchor.setY(oParsedBackdropAnchor.y);
-		oParsedBackdropAnchor.z != undefined && oBackdropAnchor.setZ(oParsedBackdropAnchor.z);
+		oParsedBackdropAnchor["x"] != undefined && oBackdropAnchor.setX(oParsedBackdropAnchor["x"]);
+		oParsedBackdropAnchor["y"] != undefined && oBackdropAnchor.setY(oParsedBackdropAnchor["y"]);
+		oParsedBackdropAnchor["z"] != undefined && oBackdropAnchor.setZ(oParsedBackdropAnchor["z"]);
 
 		return oBackdropAnchor;
 	};
@@ -12055,43 +12386,43 @@
 	{
 		var oLayoutDef = new AscFormat.LayoutDef();
 
-		oParsedLayoutDef.catLst && oLayoutDef.setCatLst(this.CatLstFromJSON(oParsedLayoutDef.catLst));
-		oParsedLayoutDef.clrData && oLayoutDef.setClrData(this.DataFromJSON(oParsedLayoutDef.clrData));
-		oParsedLayoutDef.defStyle && oLayoutDef.setDefStyle(oParsedLayoutDef.defStyle);
-		oParsedLayoutDef.desc && oLayoutDef.setDesc(this.DescFromJSON(oParsedLayoutDef.desc));
-		oParsedLayoutDef.layoutNode && oLayoutDef.setLayoutNode(this.LayoutNodeFromJSON(oParsedLayoutDef.layoutNode));
-		oParsedLayoutDef.minVer && oLayoutDef.setMinVer(oParsedLayoutDef.minVer);
-		oParsedLayoutDef.sampData && oLayoutDef.setSampData(this.DataFromJSON(oParsedLayoutDef.sampData));
-		oParsedLayoutDef.styleData && oLayoutDef.setStyleData(this.DataFromJSON(oParsedLayoutDef.styleData));
-		oParsedLayoutDef.title && oLayoutDef.setTitle(this.DescFromJSON(oParsedLayoutDef.title));
-		oParsedLayoutDef.uniqueId && oLayoutDef.setUniqueId(oParsedLayoutDef.uniqueId);
+		oParsedLayoutDef["catLst"] && oLayoutDef.setCatLst(this.CatLstFromJSON(oParsedLayoutDef["catLst"]));
+		oParsedLayoutDef["clrData"] && oLayoutDef.setClrData(this.DataFromJSON(oParsedLayoutDef["clrData"]));
+		oParsedLayoutDef["defStyle"] && oLayoutDef.setDefStyle(oParsedLayoutDef["defStyle"]);
+		oParsedLayoutDef["desc"] && oLayoutDef.setDesc(this.DescFromJSON(oParsedLayoutDef["desc"]));
+		oParsedLayoutDef["layoutNode"] && oLayoutDef.setLayoutNode(this.LayoutNodeFromJSON(oParsedLayoutDef["layoutNode"]));
+		oParsedLayoutDef["minVer"] && oLayoutDef.setMinVer(oParsedLayoutDef["minVer"]);
+		oParsedLayoutDef["sampData"] && oLayoutDef.setSampData(this.DataFromJSON(oParsedLayoutDef["sampData"]));
+		oParsedLayoutDef["styleData"] && oLayoutDef.setStyleData(this.DataFromJSON(oParsedLayoutDef["styleData"]));
+		oParsedLayoutDef["title"] && oLayoutDef.setTitle(this.DescFromJSON(oParsedLayoutDef["title"]));
+		oParsedLayoutDef["uniqueId"] && oLayoutDef.setUniqueId(oParsedLayoutDef["uniqueId"]);
 
 		return oLayoutDef;
 	};
 	ReaderFromJSON.prototype.DataFromJSON = function(oParsedData)
 	{
 		var oData = null;
-		switch (oParsedData.type)
+		switch (oParsedData["type"])
 		{
 			case "diagramData":
 				oData = new AscFormat.DiagramData();
 				break;
 			case "styleData":
 				oData = new AscFormat.StyleData();
-				oParsedData.useDef != undefined && oData.setUseDef(oParsedData.useDef);
+				oParsedData["useDef"] != undefined && oData.setUseDef(oParsedData["useDef"]);
 				break;
 			case "clrData":
 				oData = new AscFormat.ClrData();
-				oParsedData.useDef != undefined && oData.setUseDef(oParsedData.useDef);
+				oParsedData["useDef"] != undefined && oData.setUseDef(oParsedData["useDef"]);
 				break;
 			case "sampData":
 				oData = new AscFormat.SampData();
-				oParsedData.useDef != undefined && oData.setUseDef(oParsedData.useDef);
+				oParsedData["useDef"] != undefined && oData.setUseDef(oParsedData["useDef"]);
 				break;
 		}
 
 		if (oData)
-			oParsedData.dataModel && oData.setDataModel(this.DataModelFromJSON(oParsedData.dataModel));
+			oParsedData["dataModel"] && oData.setDataModel(this.DataModelFromJSON(oParsedData["dataModel"]));
 
 		return oData;
 	};
@@ -12099,10 +12430,10 @@
 	{
 		var oDataModel = new AscFormat.DataModel();
 
-		oParsedDataModel.bg && oDataModel.setBg(this.BgFormatFromJSON(oParsedDataModel.bg));
-		oParsedDataModel.cxnLst && oDataModel.setCxnLst(this.CxnLstFromJSON(oParsedDataModel.cxnLst));
-		oParsedDataModel.ptLst && oDataModel.setPtLst(this.PtLstFromJSON(oParsedDataModel.ptLst));
-		oParsedDataModel.whole && oDataModel.setWhole(this.WholeFromJSON(oParsedDataModel.whole));
+		oParsedDataModel["bg"] && oDataModel.setBg(this.BgFormatFromJSON(oParsedDataModel["bg"]));
+		oParsedDataModel["cxnLst"] && oDataModel.setCxnLst(this.CxnLstFromJSON(oParsedDataModel["cxnLst"]));
+		oParsedDataModel["ptLst"] && oDataModel.setPtLst(this.PtLstFromJSON(oParsedDataModel["ptLst"]));
+		oParsedDataModel["whole"] && oDataModel.setWhole(this.WholeFromJSON(oParsedDataModel["whole"]));
 
 		return oDataModel;
 	};
@@ -12110,8 +12441,8 @@
 	{
 		var oWhole = new AscFormat.Whole();
 
-		(oParsedWhole.effectDag || oParsedWhole.effectLst) && oWhole.setEffect(this.EffectPropsFromJSON(oParsedWhole.effectDag, oParsedWhole.effectLst));
-		oParsedWhole.whole && oWhole.setLn(this.LnFromJSON(oParsedWhole.whole));
+		(oParsedWhole["effectDag"] || oParsedWhole["effectLst"]) && oWhole.setEffect(this.EffectPropsFromJSON(oParsedWhole["effectDag"], oParsedWhole["effectLst"]));
+		oParsedWhole["whole"] && oWhole.setLn(this.LnFromJSON(oParsedWhole["whole"]));
 
 		return oWhole;
 	};
@@ -12119,8 +12450,8 @@
 	{
 		var oPtLst = new AscFormat.PtLst();
 
-		for (var nItem = 0; nItem < oParsedPtLst.list.length; nItem++)
-			oPtLst.addToLst(oPtLst.list.length, this.PtFromJSON(oParsedPtLst.list[nItem]));
+		for (var nItem = 0; nItem < oParsedPtLst["list"].length; nItem++)
+			oPtLst.addToLst(oPtLst.list.length, this.PtFromJSON(oParsedPtLst["list"][nItem]));
 
 		return oPtLst;
 	};
@@ -12128,12 +12459,12 @@
 	{
 		var oPt = new AscFormat.Point();
 
-		oParsedPt.prSet && oPt.setPrSet(this.PtPrSetFromJSON(oParsedPt.prSet));
-		oParsedPt.spPr && oPt.setSpPr(this.SpPrFromJSON(oParsedPt.spPr));
-		oParsedPt.t && oPt.setT(this.TxPrFromJSON(oParsedPt.t));
-		oParsedPt.cxnId != undefined && oPt.setCxnId(oParsedPt.cxnId);
-		oParsedPt.modelId != undefined && oPt.setModelId(oParsedPt.modelId);
-		oParsedPt.type != undefined && oPt.setType(From_XML_ST_PtType(oParsedPt.type));
+		oParsedPt["prSet"] && oPt.setPrSet(this.PtPrSetFromJSON(oParsedPt["prSet"]));
+		oParsedPt["spPr"] && oPt.setSpPr(this.SpPrFromJSON(oParsedPt["spPr"]));
+		oParsedPt["t"] && oPt.setT(this.TxPrFromJSON(oParsedPt["t"]));
+		oParsedPt["cxnId"] != undefined && oPt.setCxnId(oParsedPt["cxnId"]);
+		oParsedPt["modelId"] != undefined && oPt.setModelId(oParsedPt["modelId"]);
+		oParsedPt["type"] != undefined && oPt.setType(From_XML_ST_PtType(oParsedPt["type"]));
 
 		return oPt;
 	};
@@ -12141,42 +12472,42 @@
 	{
 		var oPtPrSet = new AscFormat.PrSet();
 
-		oParsedPtPrSet.coherent3DOff != undefined && oPtPrSet.setCoherent3DOff(oParsedPtPrSet.coherent3DOff);
-		oParsedPtPrSet.csCatId != undefined && oPtPrSet.setCsCatId(oParsedPtPrSet.csCatId);
-		oParsedPtPrSet.csTypeId != undefined && oPtPrSet.setCsTypeId(oParsedPtPrSet.csTypeId);
-		oParsedPtPrSet.custAng != undefined && oPtPrSet.setCustAng(oParsedPtPrSet.custAng);
-		oParsedPtPrSet.custFlipHor != undefined && oPtPrSet.setCustFlipHor(oParsedPtPrSet.custFlipHor);
-		oParsedPtPrSet.custFlipVert != undefined && oPtPrSet.setCustFlipVert(oParsedPtPrSet.custFlipVert);
-		oParsedPtPrSet.custLinFactNeighborX != undefined && oPtPrSet.setCustLinFactNeighborX(oParsedPtPrSet.custLinFactNeighborX);
-		oParsedPtPrSet.custLinFactNeighborY != undefined && oPtPrSet.setCustLinFactNeighborY(oParsedPtPrSet.custLinFactNeighborY);
-		oParsedPtPrSet.custLinFactX != undefined && oPtPrSet.setCustLinFactX(oParsedPtPrSet.custLinFactX);
-		oParsedPtPrSet.custLinFactY != undefined && oPtPrSet.setCustLinFactY(oParsedPtPrSet.custLinFactY);
-		oParsedPtPrSet.custRadScaleInc != undefined && oPtPrSet.setCustRadScaleInc(oParsedPtPrSet.custRadScaleInc);
-		oParsedPtPrSet.custRadScaleRad != undefined && oPtPrSet.setCustRadScaleRad(oParsedPtPrSet.custRadScaleRad);
-		oParsedPtPrSet.custScaleX != undefined && oPtPrSet.setCustScaleX(oParsedPtPrSet.custScaleX);
-		oParsedPtPrSet.custScaleY != undefined && oPtPrSet.setCustScaleY(oParsedPtPrSet.custScaleY);
-		oParsedPtPrSet.custSzX != undefined && oPtPrSet.setCustSzX(oParsedPtPrSet.custSzX);
-		oParsedPtPrSet.custSzY != undefined && oPtPrSet.setCustSzY(oParsedPtPrSet.custSzY);
-		oParsedPtPrSet.custT != undefined && oPtPrSet.setCustT(oParsedPtPrSet.custT);
-		oParsedPtPrSet.loCatId != undefined && oPtPrSet.setLoCatId(oParsedPtPrSet.loCatId);
-		oParsedPtPrSet.loTypeId != undefined && oPtPrSet.setLoTypeId(oParsedPtPrSet.loTypeId);
-		oParsedPtPrSet.phldr != undefined && oPtPrSet.setPhldr(oParsedPtPrSet.phldr);
-		oParsedPtPrSet.phldrT != undefined && oPtPrSet.setPhldrT(oParsedPtPrSet.phldrT);
-		oParsedPtPrSet.presAssocID != undefined && oPtPrSet.setPresAssocID(oParsedPtPrSet.presAssocID);
-		oParsedPtPrSet.presLayoutVars != undefined && oPtPrSet.setPresLayoutVars(this.NodeItemFromJSON(oParsedPtPrSet.presLayoutVars));
-		oParsedPtPrSet.presName != undefined && oPtPrSet.setPresName(oParsedPtPrSet.presName);
-		oParsedPtPrSet.presStyleCnt != undefined && oPtPrSet.setPresStyleCnt(oParsedPtPrSet.presStyleCnt);
-		oParsedPtPrSet.presStyleIdx != undefined && oPtPrSet.setPresStyleIdx(oParsedPtPrSet.presStyleIdx);
-		oParsedPtPrSet.presStyleLbl != undefined && oPtPrSet.setPresStyleLbl(oParsedPtPrSet.presStyleLbl);
-		oParsedPtPrSet.qsCatId != undefined && oPtPrSet.setQsCatId(oParsedPtPrSet.qsCatId);
-		oParsedPtPrSet.qsTypeId != undefined && oPtPrSet.setQsTypeId(oParsedPtPrSet.qsTypeId);
-		oParsedPtPrSet.style != undefined && oPtPrSet.setStyle(this.DataFromJSON(oParsedPtPrSet.style));
+		oParsedPtPrSet["coherent3DOff"] != undefined && oPtPrSet.setCoherent3DOff(oParsedPtPrSet["coherent3DOff"]);
+		oParsedPtPrSet["csCatId"] != undefined && oPtPrSet.setCsCatId(oParsedPtPrSet["csCatId"]);
+		oParsedPtPrSet["csTypeId"] != undefined && oPtPrSet.setCsTypeId(oParsedPtPrSet["csTypeId"]);
+		oParsedPtPrSet["custAng"] != undefined && oPtPrSet.setCustAng(oParsedPtPrSet["custAng"]);
+		oParsedPtPrSet["custFlipHor"] != undefined && oPtPrSet.setCustFlipHor(oParsedPtPrSet["custFlipHor"]);
+		oParsedPtPrSet["custFlipVert"] != undefined && oPtPrSet.setCustFlipVert(oParsedPtPrSet["custFlipVert"]);
+		oParsedPtPrSet["custLinFactNeighborX"] != undefined && oPtPrSet.setCustLinFactNeighborX(oParsedPtPrSet["custLinFactNeighborX"]);
+		oParsedPtPrSet["custLinFactNeighborY"] != undefined && oPtPrSet.setCustLinFactNeighborY(oParsedPtPrSet["custLinFactNeighborY"]);
+		oParsedPtPrSet["custLinFactX"] != undefined && oPtPrSet.setCustLinFactX(oParsedPtPrSet["custLinFactX"]);
+		oParsedPtPrSet["custLinFactY"] != undefined && oPtPrSet.setCustLinFactY(oParsedPtPrSet["custLinFactY"]);
+		oParsedPtPrSet["custRadScaleInc"] != undefined && oPtPrSet.setCustRadScaleInc(oParsedPtPrSet["custRadScaleInc"]);
+		oParsedPtPrSet["custRadScaleRad"] != undefined && oPtPrSet.setCustRadScaleRad(oParsedPtPrSet["custRadScaleRad"]);
+		oParsedPtPrSet["custScaleX"] != undefined && oPtPrSet.setCustScaleX(oParsedPtPrSet["custScaleX"]);
+		oParsedPtPrSet["custScaleY"] != undefined && oPtPrSet.setCustScaleY(oParsedPtPrSet["custScaleY"]);
+		oParsedPtPrSet["custSzX"] != undefined && oPtPrSet.setCustSzX(oParsedPtPrSet["custSzX"]);
+		oParsedPtPrSet["custSzY"] != undefined && oPtPrSet.setCustSzY(oParsedPtPrSet["custSzY"]);
+		oParsedPtPrSet["custT"] != undefined && oPtPrSet.setCustT(oParsedPtPrSet["custT"]);
+		oParsedPtPrSet["loCatId"] != undefined && oPtPrSet.setLoCatId(oParsedPtPrSet["loCatId"]);
+		oParsedPtPrSet["loTypeId"] != undefined && oPtPrSet.setLoTypeId(oParsedPtPrSet["loTypeId"]);
+		oParsedPtPrSet["phldr"] != undefined && oPtPrSet.setPhldr(oParsedPtPrSet["phldr"]);
+		oParsedPtPrSet["phldrT"] != undefined && oPtPrSet.setPhldrT(oParsedPtPrSet["phldrT"]);
+		oParsedPtPrSet["presAssocID"] != undefined && oPtPrSet.setPresAssocID(oParsedPtPrSet["presAssocID"]);
+		oParsedPtPrSet["presLayoutVars"] != undefined && oPtPrSet.setPresLayoutVars(this.NodeItemFromJSON(oParsedPtPrSet["presLayoutVars"]));
+		oParsedPtPrSet["presName"] != undefined && oPtPrSet.setPresName(oParsedPtPrSet["presName"]);
+		oParsedPtPrSet["presStyleCnt"] != undefined && oPtPrSet.setPresStyleCnt(oParsedPtPrSet["presStyleCnt"]);
+		oParsedPtPrSet["presStyleIdx"] != undefined && oPtPrSet.setPresStyleIdx(oParsedPtPrSet["presStyleIdx"]);
+		oParsedPtPrSet["presStyleLbl"] != undefined && oPtPrSet.setPresStyleLbl(oParsedPtPrSet["presStyleLbl"]);
+		oParsedPtPrSet["qsCatId"] != undefined && oPtPrSet.setQsCatId(oParsedPtPrSet["qsCatId"]);
+		oParsedPtPrSet["qsTypeId"] != undefined && oPtPrSet.setQsTypeId(oParsedPtPrSet["qsTypeId"]);
+		oParsedPtPrSet["style"] != undefined && oPtPrSet.setStyle(this.DataFromJSON(oParsedPtPrSet["style"]));
 
 		return oPtPrSet;
 	};
 	ReaderFromJSON.prototype.NodeItemFromJSON = function(oParsedNodeItem)
 	{
-		switch (oParsedNodeItem.objType)
+		switch (oParsedNodeItem["objType"])
 		{
 			case "alg":
 				return this.AlgFromJSON(oParsedNodeItem);
@@ -12204,14 +12535,14 @@
 	{
 		var oSShape = new AscFormat.SShape();
 
-		oParsedSShape.blip != undefined && oSShape.setBlip(oParsedSShape.blip);
-		oParsedSShape.blipPhldr != undefined && oSShape.setBlipPhldr(oParsedSShape.blipPhldr);
-		oParsedSShape.hideGeom != undefined && oSShape.setHideGeom(oParsedSShape.hideGeom);
-		oParsedSShape.lkTxEntry != undefined && oSShape.setLkTxEntry(oParsedSShape.lkTxEntry);
-		oParsedSShape.rot != undefined && oSShape.setRot(oParsedSShape.rot);
-		oParsedSShape.type != undefined && oSShape.setType(oParsedSShape.type);
-		oParsedSShape.zOrderOff != undefined && oSShape.setZOrderOff(oParsedSShape.zOrderOff);
-		oParsedSShape.adjLst != undefined && oSShape.setAdjLst(this.AdjLstFromJSON(oParsedSShape.adjLst));
+		oParsedSShape["blip"] != undefined && oSShape.setBlip(oParsedSShape["blip"]);
+		oParsedSShape["blipPhldr"] != undefined && oSShape.setBlipPhldr(oParsedSShape["blipPhldr"]);
+		oParsedSShape["hideGeom"] != undefined && oSShape.setHideGeom(oParsedSShape["hideGeom"]);
+		oParsedSShape["lkTxEntry"] != undefined && oSShape.setLkTxEntry(oParsedSShape["lkTxEntry"]);
+		oParsedSShape["rot"] != undefined && oSShape.setRot(oParsedSShape["rot"]);
+		oParsedSShape["type"] != undefined && oSShape.setType(oParsedSShape["type"]);
+		oParsedSShape["zOrderOff"] != undefined && oSShape.setZOrderOff(oParsedSShape["zOrderOff"]);
+		oParsedSShape["adjLst"] != undefined && oSShape.setAdjLst(this.AdjLstFromJSON(oParsedSShape["adjLst"]));
 				
 		return oSShape;
 	};
@@ -12219,8 +12550,8 @@
 	{
 		var oAdjLst = new AscFormat.AdjLst();
 
-		for (var nItem = 0; nItem < oParsedAdjLst.list.length; nItem++)
-			oAdjLst.addToLst(oAdjLst.list.length, this.AdjFromJSON(oParsedAdjLst.list[nItem]));
+		for (var nItem = 0; nItem < oParsedAdjLst["list"].length; nItem++)
+			oAdjLst.addToLst(oAdjLst.list.length, this.AdjFromJSON(oParsedAdjLst["list"][nItem]));
 		
 		return oAdjLst;
 	};
@@ -12228,8 +12559,8 @@
 	{
 		var oAdj = new AscFormat.Adj();
 
-		oParsedAdj.idx != undefined && oAdj.setIdx(oParsedAdj.idx);
-		oParsedAdj.val != undefined && oAdj.setVal(oParsedAdj.val);
+		oParsedAdj["idx"] != undefined && oAdj.setIdx(oParsedAdj["idx"]);
+		oParsedAdj["val"] != undefined && oAdj.setVal(oParsedAdj["val"]);
 
 		return oAdj;
 	};
@@ -12237,8 +12568,8 @@
 	{
 		var oRuleLst = new AscFormat.RuleLst();
 
-		for (var nItem = 0; nItem < oParsedRuleLst.list.length; nItem++)
-			oRuleLst.addToLst(oRuleLst.list.length, this.RuleFromJSON(oParsedRuleLst.list[nItem]));
+		for (var nItem = 0; nItem < oParsedRuleLst["list"].length; nItem++)
+			oRuleLst.addToLst(oRuleLst.list.length, this.RuleFromJSON(oParsedRuleLst["list"][nItem]));
 
 		return oRuleLst;
 	};
@@ -12246,16 +12577,16 @@
 	{
 		var oRule = new AscFormat.Rule();
 
-		var fact = oParsedRule.fact === "Nan" ? NaN : oParsedRule.fact;
-		var max = oParsedRule.max === "Nan" ? NaN : oParsedRule.max;
+		var fact = oParsedRule["fact"] === "Nan" ? NaN : oParsedRule["fact"];
+		var max = oParsedRule["max"] === "Nan" ? NaN : oParsedRule["max"];
 
 		fact != undefined && oRule.setFact(fact);
-		oParsedRule.for != undefined && oRule.setFor(From_XML_ST_ConstraintRelationship(oParsedRule.for));
-		oParsedRule.forName != undefined && oRule.setForName(oParsedRule.forName);
+		oParsedRule["for"] != undefined && oRule.setFor(From_XML_ST_ConstraintRelationship(oParsedRule["for"]));
+		oParsedRule["forName"] != undefined && oRule.setForName(oParsedRule["forName"]);
 		max != undefined && oRule.setMax(max);
-		oParsedRule.ptType != undefined && oRule.setPtType(this.BaseFormatObjFromJSON(oParsedRule.ptType));
-		oParsedRule.type != undefined && oRule.setType(From_XML_ST_ConstraintType(oParsedRule.type));
-		oParsedRule.val != undefined && oRule.setVal(oParsedRule.val);
+		oParsedRule["ptType"] != undefined && oRule.setPtType(this.BaseFormatObjFromJSON(oParsedRule["ptType"]));
+		oParsedRule["type"] != undefined && oRule.setType(From_XML_ST_ConstraintType(oParsedRule["type"]));
+		oParsedRule["val"] != undefined && oRule.setVal(oParsedRule["val"]);
 
 		return oRule;
 	};
@@ -12271,13 +12602,13 @@
 	{
 		var oLayoutNode = new AscFormat.LayoutNode();
 
-		for (var nItem = 0; nItem < oParsedLayoutNode.list.length; nItem++)
-			oLayoutNode.addToLst(oLayoutNode.list.length, this.NodeItemFromJSON(oParsedLayoutNode.list[nItem]));
+		for (var nItem = 0; nItem < oParsedLayoutNode["list"].length; nItem++)
+			oLayoutNode.addToLst(oLayoutNode.list.length, this.NodeItemFromJSON(oParsedLayoutNode["list"][nItem]));
 
-		oParsedLayoutNode.chOrder != undefined && oLayoutNode.setChOrder(From_XML_ST_ChildOrderType(oParsedLayoutNode.chOrder));
-		oParsedLayoutNode.moveWith != undefined && oLayoutNode.setMoveWith(oParsedLayoutNode.moveWith);
-		oParsedLayoutNode.name != undefined && oLayoutNode.setName(oParsedLayoutNode.name);
-		oParsedLayoutNode.styleLbl != undefined && oLayoutNode.setStyleLbl(oParsedLayoutNode.styleLbl);
+		oParsedLayoutNode["chOrder"] != undefined && oLayoutNode.setChOrder(From_XML_ST_ChildOrderType(oParsedLayoutNode["chOrder"]));
+		oParsedLayoutNode["moveWith"] != undefined && oLayoutNode.setMoveWith(oParsedLayoutNode["moveWith"]);
+		oParsedLayoutNode["name"] != undefined && oLayoutNode.setName(oParsedLayoutNode["name"]);
+		oParsedLayoutNode["styleLbl"] != undefined && oLayoutNode.setStyleLbl(oParsedLayoutNode["styleLbl"]);
 		
 		return oLayoutNode;
 	};
@@ -12285,11 +12616,11 @@
 	{
 		var oForEach = new AscFormat.ForEach();
 
-		for (var nItem = 0; nItem < oParsedForEach.list.length; nItem++)
-			oForEach.addToLstList(oForEach.list.length, this.NodeItemFromJSON(oParsedForEach.list[nItem]));
+		for (var nItem = 0; nItem < oParsedForEach["list"].length; nItem++)
+			oForEach.addToLstList(oForEach.list.length, this.NodeItemFromJSON(oParsedForEach["list"][nItem]));
 
-		oParsedForEach.name != undefined && oForEach.setName(oParsedForEach.name);
-		oParsedForEach.ref != undefined && oForEach.setRef(oParsedForEach.ref);
+		oParsedForEach["name"] != undefined && oForEach.setName(oParsedForEach["name"]);
+		oParsedForEach["ref"] != undefined && oForEach.setRef(oParsedForEach["ref"]);
 
 		this.IteratorAttributesFromJSON(oParsedForEach, oForEach);
 
@@ -12299,8 +12630,8 @@
 	{
 		var oConstrLst = new AscFormat.ConstrLst();
 
-		for (var nItem = 0; nItem < oParsedConstrLst.list.length; nItem++)
-			oConstrLst.addToLst(oConstrLst.list.length, this.ConstrFromJSON(oParsedConstrLst.list[nItem]));
+		for (var nItem = 0; nItem < oParsedConstrLst["list"].length; nItem++)
+			oConstrLst.addToLst(oConstrLst.list.length, this.ConstrFromJSON(oParsedConstrLst["list"][nItem]));
 			
 		return oConstrLst;
 	};
@@ -12308,17 +12639,17 @@
 	{
 		var oConstr = new AscFormat.Constr();
 
-		oParsedConstr.fact != undefined && oConstr.setFact(oParsedConstr.fact);
-		oParsedConstr.for != undefined && oConstr.setFor(From_XML_ST_ConstraintRelationship(oParsedConstr.for));
-		oParsedConstr.forName != undefined && oConstr.setForName(oParsedConstr.forName);
-		oParsedConstr.op != undefined && oConstr.setOp(From_XML_ST_BoolOperator(oParsedConstr.op));
-		oParsedConstr.ptType != undefined && oConstr.setPtType(this.BaseFormatObjFromJSON(oParsedConstr.ptType));
-		oParsedConstr.refFor != undefined && oConstr.setRefFor(From_XML_ST_ConstraintRelationship(oParsedConstr.refFor));
-		oParsedConstr.refForName != undefined && oConstr.setRefForName(oParsedConstr.refForName);
-		oParsedConstr.refPtType != undefined && oConstr.setRefPtType(this.BaseFormatObjFromJSON(oParsedConstr.refPtType));
-		oParsedConstr.refType != undefined && oConstr.setRefType(From_XML_ST_ConstraintType(oParsedConstr.refType));
-		oParsedConstr.type != undefined && oConstr.setType(From_XML_ST_ConstraintType(oParsedConstr.type));
-		oParsedConstr.val != undefined && oConstr.setVal(oParsedConstr.val);
+		oParsedConstr["fact"] != undefined && oConstr.setFact(oParsedConstr["fact"]);
+		oParsedConstr["for"] != undefined && oConstr.setFor(From_XML_ST_ConstraintRelationship(oParsedConstr["for"]));
+		oParsedConstr["forName"] != undefined && oConstr.setForName(oParsedConstr["forName"]);
+		oParsedConstr["op"] != undefined && oConstr.setOp(From_XML_ST_BoolOperator(oParsedConstr["op"]));
+		oParsedConstr["ptType"] != undefined && oConstr.setPtType(this.BaseFormatObjFromJSON(oParsedConstr["ptType"]));
+		oParsedConstr["refFor"] != undefined && oConstr.setRefFor(From_XML_ST_ConstraintRelationship(oParsedConstr["refFor"]));
+		oParsedConstr["refForName"] != undefined && oConstr.setRefForName(oParsedConstr["refForName"]);
+		oParsedConstr["refPtType"] != undefined && oConstr.setRefPtType(this.BaseFormatObjFromJSON(oParsedConstr["refPtType"]));
+		oParsedConstr["refType"] != undefined && oConstr.setRefType(From_XML_ST_ConstraintType(oParsedConstr["refType"]));
+		oParsedConstr["type"] != undefined && oConstr.setType(From_XML_ST_ConstraintType(oParsedConstr["type"]));
+		oParsedConstr["val"] != undefined && oConstr.setVal(oParsedConstr["val"]);
 
 		return oConstr;
 	};
@@ -12326,11 +12657,11 @@
 	{
 		var oChoose = new AscFormat.Choose();
 
-		for (var nIf = 0; nIf < oParsedChoose.if.length; nIf++)
-			oChoose.addToLstIf(oChoose.if.length, this.IfFromJSON(oParsedChoose.if[nIf]));
+		for (var nIf = 0; nIf < oParsedChoose["if"].length; nIf++)
+			oChoose.addToLstIf(oChoose.if.length, this.IfFromJSON(oParsedChoose["if"][nIf]));
 
-		oParsedChoose.else && oChoose.setElse(this.ElseFromJSON(oParsedChoose.else));
-		oParsedChoose.name != undefined && oChoose.setName(oParsedChoose.name);
+		oParsedChoose["else"] && oChoose.setElse(this.ElseFromJSON(oParsedChoose["else"]));
+		oParsedChoose["name"] != undefined && oChoose.setName(oParsedChoose["name"]);
 		
 		return oChoose;
 	};
@@ -12338,10 +12669,10 @@
 	{
 		var oElse = new AscFormat.Else();
 
-		for (var nItem = 0; nItem < oParsedElse.list.length; nItem++)
-			oElse.addToLst(oElse.list.length, this.NodeItemFromJSON(oParsedElse.list[nItem]));
+		for (var nItem = 0; nItem < oParsedElse["list"].length; nItem++)
+			oElse.addToLst(oElse.list.length, this.NodeItemFromJSON(oParsedElse["list"][nItem]));
 
-		oParsedElse.name != undefined && oElse.setName(oParsedElse.name);
+		oParsedElse["name"] != undefined && oElse.setName(oParsedElse["name"]);
 
 		return oElse;
 	};
@@ -12349,14 +12680,14 @@
 	{
 		var oIf = new AscFormat.If();
 
-		for (var nItem = 0; nItem < oParsedIf.list.length; nItem++)
-			oIf.addToLstList(oIf.list.length, this.NodeItemFromJSON(oParsedIf.list[nItem]));
+		for (var nItem = 0; nItem < oParsedIf["list"].length; nItem++)
+			oIf.addToLstList(oIf.list.length, this.NodeItemFromJSON(oParsedIf["list"][nItem]));
 
-		oParsedIf.arg != undefined && oIf.setArg(oParsedIf.arg);
-		oParsedIf.func != undefined && oIf.setFunc(From_XML_ST_FunctionType(oParsedIf.func));
-		oParsedIf.name != undefined && oIf.setName(oParsedIf.name);
-		oParsedIf.op != undefined && oIf.setOp(From_XML_ST_FunctionOperator(oParsedIf.op));
-		oParsedIf.val != undefined && oIf.setVal(oParsedIf.val);
+		oParsedIf["arg"] != undefined && oIf.setArg(oParsedIf["arg"]);
+		oParsedIf["func"] != undefined && oIf.setFunc(From_XML_ST_FunctionType(oParsedIf["func"]));
+		oParsedIf["name"] != undefined && oIf.setName(oParsedIf["name"]);
+		oParsedIf["op"] != undefined && oIf.setOp(From_XML_ST_FunctionOperator(oParsedIf["op"]));
+		oParsedIf["val"] != undefined && oIf.setVal(oParsedIf["val"]);
 
 		this.IteratorAttributesFromJSON(oParsedIf, oIf);
 
@@ -12364,33 +12695,33 @@
 	};
 	ReaderFromJSON.prototype.IteratorAttributesFromJSON = function(oParsedIterAttr, oParent)
 	{
-		for (var nAxie = 0; nAxie < oParsedIterAttr.axis.length; nAxie++)
-			oParent.addToLstAxis(oParent.axis.length, this.BaseFormatObjFromJSON(oParsedIterAttr.axis[nAxie]));
+		for (var nAxie = 0; nAxie < oParsedIterAttr["axis"].length; nAxie++)
+			oParent.addToLstAxis(oParent.axis.length, this.BaseFormatObjFromJSON(oParsedIterAttr["axis"][nAxie]));
 		
-		for (var nCnt = 0; nCnt < oParsedIterAttr.cnt.length; nCnt++)
-			oParent.addToLstCnt(oParent.cnt.length, oParsedIterAttr.cnt[nCnt]);
+		for (var nCnt = 0; nCnt < oParsedIterAttr["cnt"].length; nCnt++)
+			oParent.addToLstCnt(oParent.cnt.length, oParsedIterAttr["cnt"][nCnt]);
 		
-		for (var nItem = 0; nItem < oParsedIterAttr.hideLastTrans.length; nItem++)
-			oParent.addToLstHideLastTrans(oParent.hideLastTrans.length, oParsedIterAttr.hideLastTrans[nItem]);
+		for (var nItem = 0; nItem < oParsedIterAttr["hideLastTrans"].length; nItem++)
+			oParent.addToLstHideLastTrans(oParent.hideLastTrans.length, oParsedIterAttr["hideLastTrans"][nItem]);
 
-		for (var nPtType = 0; nPtType < oParsedIterAttr.ptType.length; nPtType++)
-			oParent.addToLstPtType(oParent.ptType.length, this.BaseFormatObjFromJSON(oParsedIterAttr.ptType[nPtType]));
+		for (var nPtType = 0; nPtType < oParsedIterAttr["ptType"].length; nPtType++)
+			oParent.addToLstPtType(oParent.ptType.length, this.BaseFormatObjFromJSON(oParsedIterAttr["ptType"][nPtType]));
 
-		for (var nSt = 0; nSt < oParsedIterAttr.st.length; nSt++)
-			oParent.addToLstSt(oParent.st.length, oParsedIterAttr.st[nSt]);
+		for (var nSt = 0; nSt < oParsedIterAttr["st"].length; nSt++)
+			oParent.addToLstSt(oParent.st.length, oParsedIterAttr["st"][nSt]);
 
-		for (var nStep = 0; nStep < oParsedIterAttr.step.length; nStep++)
-			oParent.addToLstStep(oParent.step.length, oParsedIterAttr.step[nStep]);
+		for (var nStep = 0; nStep < oParsedIterAttr["step"].length; nStep++)
+			oParent.addToLstStep(oParent.step.length, oParsedIterAttr["step"][nStep]);
 	};
 	ReaderFromJSON.prototype.AlgFromJSON = function(oParsedAlg)
 	{
 		var oAlg = new AscFormat.Alg();
 
-		for (var nParam = 0; nParam < oParsedAlg.param.length; nParam++)
-			oAlg.addToLstParam(oAlg.param.length, this.AlgParamFromJSON(oParsedAlg.param[nParam]));
+		for (var nParam = 0; nParam < oParsedAlg["param"].length; nParam++)
+			oAlg.addToLstParam(oAlg.param.length, this.AlgParamFromJSON(oParsedAlg["param"][nParam]));
 
-		oParsedAlg.rev != undefined && oAlg.setRev(oParsedAlg.rev);
-		oParsedAlg.type != undefined && oAlg.setType(From_XML_ST_AlgorithmType(oParsedAlg.type));
+		oParsedAlg["rev"] != undefined && oAlg.setRev(oParsedAlg["rev"]);
+		oParsedAlg["type"] != undefined && oAlg.setType(From_XML_ST_AlgorithmType(oParsedAlg["type"]));
 
 		return oAlg;
 	};
@@ -12398,8 +12729,8 @@
 	{
 		var oAlgParam = new AscFormat.Param();
 
-		oParsedAlgParam.type != undefined && oAlgParam.setType(From_XML_ST_ParameterId(oParsedAlgParam.type));
-		oParsedAlgParam.val != undefined && oAlgParam.setVal(oParsedAlgParam.val);
+		oParsedAlgParam["type"] != undefined && oAlgParam.setType(From_XML_ST_ParameterId(oParsedAlgParam["type"]));
+		oParsedAlgParam["val"] != undefined && oAlgParam.setVal(oParsedAlgParam["val"]);
 
 		return oAlgParam;
 	};
@@ -12407,15 +12738,15 @@
 	{
 		var oVarLst = new AscFormat.VarLst();
 
-		oParsedVarLst.animLvl && oVarLst.setAnimLvl(this.BaseFormatObjFromJSON(oParsedVarLst.animLvl));
-		oParsedVarLst.animOne && oVarLst.setAnimOne(this.BaseFormatObjFromJSON(oParsedVarLst.animOne));
-		oParsedVarLst.bulletEnabled && oVarLst.setBulletEnabled(this.BaseFormatObjFromJSON(oParsedVarLst.bulletEnabled));
-		oParsedVarLst.chMax && oVarLst.setChMax(this.BaseFormatObjFromJSON(oParsedVarLst.chMax));
-		oParsedVarLst.chPref && oVarLst.setChPref(this.BaseFormatObjFromJSON(oParsedVarLst.chPref));
-		oParsedVarLst.dir && oVarLst.setDir(this.BaseFormatObjFromJSON(oParsedVarLst.dir));
-		oParsedVarLst.hierBranch && oVarLst.setHierBranch(this.BaseFormatObjFromJSON(oParsedVarLst.hierBranch));
-		oParsedVarLst.orgChart && oVarLst.setOrgChart(this.BaseFormatObjFromJSON(oParsedVarLst.orgChart));
-		oParsedVarLst.resizeHandles && oVarLst.setResizeHandles(this.BaseFormatObjFromJSON(oParsedVarLst.resizeHandles));
+		oParsedVarLst["animLvl"] && oVarLst.setAnimLvl(this.BaseFormatObjFromJSON(oParsedVarLst["animLvl"]));
+		oParsedVarLst["animOne"] && oVarLst.setAnimOne(this.BaseFormatObjFromJSON(oParsedVarLst["animOne"]));
+		oParsedVarLst["bulletEnabled"] && oVarLst.setBulletEnabled(this.BaseFormatObjFromJSON(oParsedVarLst["bulletEnabled"]));
+		oParsedVarLst["chMax"] && oVarLst.setChMax(this.BaseFormatObjFromJSON(oParsedVarLst["chMax"]));
+		oParsedVarLst["chPref"] && oVarLst.setChPref(this.BaseFormatObjFromJSON(oParsedVarLst["chPref"]));
+		oParsedVarLst["dir"] && oVarLst.setDir(this.BaseFormatObjFromJSON(oParsedVarLst["dir"]));
+		oParsedVarLst["hierBranch"] && oVarLst.setHierBranch(this.BaseFormatObjFromJSON(oParsedVarLst["hierBranch"]));
+		oParsedVarLst["orgChart"] && oVarLst.setOrgChart(this.BaseFormatObjFromJSON(oParsedVarLst["orgChart"]));
+		oParsedVarLst["resizeHandles"] && oVarLst.setResizeHandles(this.BaseFormatObjFromJSON(oParsedVarLst["resizeHandles"]));
 
 		return oVarLst;
 	};
@@ -12423,51 +12754,51 @@
 	{
 		var oBaseFormatObj = null;
 
-		switch (oParsedBaseFormatObj.type)
+		switch (oParsedBaseFormatObj["type"])
 		{
 			case "animLvl":
 				oBaseFormatObj = new AscFormat.AnimLvl();
-				oParsedBaseFormatObj.val != undefined && oBaseFormatObj.setVal(From_XML_ST_AnimLvlStr(oParsedBaseFormatObj.val));
+				oParsedBaseFormatObj["val"] != undefined && oBaseFormatObj.setVal(From_XML_ST_AnimLvlStr(oParsedBaseFormatObj["val"]));
 				break;
 			case "animOne":
 				oBaseFormatObj = new AscFormat.AnimOne();
-				oParsedBaseFormatObj.val != undefined && oBaseFormatObj.setVal(From_XML_ST_AnimOneStr(oParsedBaseFormatObj.val));
+				oParsedBaseFormatObj["val"] != undefined && oBaseFormatObj.setVal(From_XML_ST_AnimOneStr(oParsedBaseFormatObj["val"]));
 				break;
 			case "bulletEnabled":
 				oBaseFormatObj = new AscFormat.BulletEnabled();
-				oParsedBaseFormatObj.val != undefined && oBaseFormatObj.setVal(oParsedBaseFormatObj.val);
+				oParsedBaseFormatObj["val"] != undefined && oBaseFormatObj.setVal(oParsedBaseFormatObj["val"]);
 				break;
 			case "chMax":
 				oBaseFormatObj = new AscFormat.ChMax();
-				oParsedBaseFormatObj.val != undefined && oBaseFormatObj.setVal(oParsedBaseFormatObj.val);
+				oParsedBaseFormatObj["val"] != undefined && oBaseFormatObj.setVal(oParsedBaseFormatObj["val"]);
 				break;
 			case "chPref":
 				oBaseFormatObj = new AscFormat.ChPref();
-				oParsedBaseFormatObj.val != undefined && oBaseFormatObj.setVal(oParsedBaseFormatObj.val);
+				oParsedBaseFormatObj["val"] != undefined && oBaseFormatObj.setVal(oParsedBaseFormatObj["val"]);
 				break;
 			case "orgChart":
 				oBaseFormatObj = new AscFormat.OrgChart();
-				oParsedBaseFormatObj.val != undefined && oBaseFormatObj.setVal(oParsedBaseFormatObj.val);
+				oParsedBaseFormatObj["val"] != undefined && oBaseFormatObj.setVal(oParsedBaseFormatObj["val"]);
 				break;
 			case "dir":
 				oBaseFormatObj = new AscFormat.DiagramDirection();
-				oParsedBaseFormatObj.val != undefined && oBaseFormatObj.setVal(From_XML_ST_Direction(oParsedBaseFormatObj.val));
+				oParsedBaseFormatObj["val"] != undefined && oBaseFormatObj.setVal(From_XML_ST_Direction(oParsedBaseFormatObj["val"]));
 				break;
 			case "hierBranch":
 				oBaseFormatObj = new AscFormat.HierBranch();
-				oParsedBaseFormatObj.val != undefined && oBaseFormatObj.setVal(From_XML_ST_HierBranchStyle(oParsedBaseFormatObj.val));
+				oParsedBaseFormatObj["val"] != undefined && oBaseFormatObj.setVal(From_XML_ST_HierBranchStyle(oParsedBaseFormatObj["val"]));
 				break;
 			case "resizeHandles":
 				oBaseFormatObj = new AscFormat.ResizeHandles();
-				oParsedBaseFormatObj.val != undefined && oBaseFormatObj.setVal(From_XML_ST_ResizeHandlesStr(oParsedBaseFormatObj.val));
+				oParsedBaseFormatObj["val"] != undefined && oBaseFormatObj.setVal(From_XML_ST_ResizeHandlesStr(oParsedBaseFormatObj["val"]));
 				break;
 			case "element":
 				oBaseFormatObj = new AscFormat.ElementType();
-				oParsedBaseFormatObj.val != undefined && oBaseFormatObj.setVal(From_XML_ST_ElementType(oParsedBaseFormatObj.val));
+				oParsedBaseFormatObj["val"] != undefined && oBaseFormatObj.setVal(From_XML_ST_ElementType(oParsedBaseFormatObj["val"]));
 				break;
 			case "axie":
 				oBaseFormatObj = new AscFormat.AxisType();
-				oParsedBaseFormatObj.val != undefined && oBaseFormatObj.setVal(From_XML_ST_AxisType(oParsedBaseFormatObj.val));
+				oParsedBaseFormatObj["val"] != undefined && oBaseFormatObj.setVal(From_XML_ST_AxisType(oParsedBaseFormatObj["val"]));
 				break;
 		}
 
@@ -12477,8 +12808,8 @@
 	{
 		var oCxnLst = new AscFormat.CxnLst();
 
-		for (var nItem = 0; nItem < oParsedCxnLst.list.length; nItem++)
-			oCxnLst.addToLst(oCxnLst.list.length, this.CxnFromJSON(oParsedCxnLst.list[nItem]));
+		for (var nItem = 0; nItem < oParsedCxnLst["list"].length; nItem++)
+			oCxnLst.addToLst(oCxnLst.list.length, this.CxnFromJSON(oParsedCxnLst["list"][nItem]));
 
 		return oCxnLst;
 	};
@@ -12486,15 +12817,15 @@
 	{
 		var oCxn = new AscFormat.Cxn();
 
-		oParsedCxn.destId != undefined && oCxn.setDestId(oParsedCxn.destId);
-		oParsedCxn.destOrd != undefined && oCxn.setDestOrd(oParsedCxn.destOrd);
-		oParsedCxn.modelId != undefined && oCxn.setModelId(oParsedCxn.modelId);
-		oParsedCxn.parTransId != undefined && oCxn.setParTransId(oParsedCxn.parTransId);
-		oParsedCxn.presId != undefined && oCxn.setPresId(oParsedCxn.presId);
-		oParsedCxn.sibTransId != undefined && oCxn.setSibTransId(oParsedCxn.sibTransId);
-		oParsedCxn.srcId != undefined && oCxn.setSrcId(oParsedCxn.srcId);
-		oParsedCxn.srcOrd != undefined && oCxn.setSrcOrd(oParsedCxn.srcOrd);
-		oParsedCxn.type != undefined && oCxn.setType(oParsedCxn.type);
+		oParsedCxn["destId"] != undefined && oCxn.setDestId(oParsedCxn["destId"]);
+		oParsedCxn["destOrd"] != undefined && oCxn.setDestOrd(oParsedCxn["destOrd"]);
+		oParsedCxn["modelId"] != undefined && oCxn.setModelId(oParsedCxn["modelId"]);
+		oParsedCxn["parTransId"] != undefined && oCxn.setParTransId(oParsedCxn["parTransId"]);
+		oParsedCxn["presId"] != undefined && oCxn.setPresId(oParsedCxn["presId"]);
+		oParsedCxn["sibTransId"] != undefined && oCxn.setSibTransId(oParsedCxn["sibTransId"]);
+		oParsedCxn["srcId"] != undefined && oCxn.setSrcId(oParsedCxn["srcId"]);
+		oParsedCxn["srcOrd"] != undefined && oCxn.setSrcOrd(oParsedCxn["srcOrd"]);
+		oParsedCxn["type"] != undefined && oCxn.setType(oParsedCxn["type"]);
 
 		return oCxn;
 	};
@@ -12502,8 +12833,8 @@
 	{
 		var oBgFormat = new AscFormat.BgFormat();
 
-		(oParsedBgFormat.effectDag || oParsedBgFormat.effectLst) && oBgFormat.setEffect(this.EffectPropsFromJSON(oParsedBgFormat.effectDag, oParsedBgFormat.effectLst));
-		oParsedBgFormat.fill && oBgFormat.setFill(this.FillFromJSON(oParsedBgFormat.fill));
+		(oParsedBgFormat["effectDag"] || oParsedBgFormat["effectLst"]) && oBgFormat.setEffect(this.EffectPropsFromJSON(oParsedBgFormat["effectDag"], oParsedBgFormat["effectLst"]));
+		oParsedBgFormat["fill"] && oBgFormat.setFill(this.FillFromJSON(oParsedBgFormat["fill"]));
 
 		return oBgFormat;
 	};
@@ -12511,16 +12842,16 @@
 	{
 		var oColorsDef = new AscFormat.ColorsDef();
 
-		oParsedColorsDef.catLst && oColorsDef.setCatLst(this.CatLstFromJSON(oParsedColorsDef.catLst));
-		oParsedColorsDef.desc && oColorsDef.setDesc(this.DescFromJSON(oParsedColorsDef.desc));
+		oParsedColorsDef["catLst"] && oColorsDef.setCatLst(this.CatLstFromJSON(oParsedColorsDef["catLst"]));
+		oParsedColorsDef["desc"] && oColorsDef.setDesc(this.DescFromJSON(oParsedColorsDef["desc"]));
 
-		for (var nStyle = 0; nStyle < oParsedColorsDef.styleLbl.length; nStyle++)
-			oColorsDef.addToLstStyleLbl(oColorsDef.styleLbl.length, this.ColorDefStyleLblFromJSON(oParsedColorsDef.styleLbl[nStyle]));
+		for (var nStyle = 0; nStyle < oParsedColorsDef["styleLbl"].length; nStyle++)
+			oColorsDef.addToLstStyleLbl(oColorsDef.styleLbl.length, this.ColorDefStyleLblFromJSON(oParsedColorsDef["styleLbl"][nStyle]));
 
-		oParsedColorsDef.title && oColorsDef.setTitle(this.DescFromJSON(oParsedColorsDef.title));
+		oParsedColorsDef["title"] && oColorsDef.setTitle(this.DescFromJSON(oParsedColorsDef["title"]));
 
-		oParsedColorsDef.minVer != undefined && oColorsDef.setMinVer(oParsedColorsDef.minVer);
-		oParsedColorsDef.uniqueId != undefined && oColorsDef.setUniqueId(oParsedColorsDef.uniqueId);
+		oParsedColorsDef["minVer"] != undefined && oColorsDef.setMinVer(oParsedColorsDef["minVer"]);
+		oParsedColorsDef["uniqueId"] != undefined && oColorsDef.setUniqueId(oParsedColorsDef["uniqueId"]);
 
 		return oColorsDef;
 	};
@@ -12528,13 +12859,13 @@
 	{
 		var oLbl = new AscFormat.ColorDefStyleLbl();
 
-		oParsedLbl.effectClrLst && oLbl.setEffectClrLst(this.ClrLstFromJSON(oParsedLbl.effectClrLst));
-		oParsedLbl.fillClrLst && oLbl.setFillClrLst(this.ClrLstFromJSON(oParsedLbl.fillClrLst));
-		oParsedLbl.linClrLst && oLbl.setLinClrLst(this.ClrLstFromJSON(oParsedLbl.linClrLst));
-		oParsedLbl.txEffectClrLst && oLbl.setTxEffectClrLst(this.ClrLstFromJSON(oParsedLbl.txEffectClrLst));
-		oParsedLbl.txFillClrLst && oLbl.setTxFillClrLst(this.ClrLstFromJSON(oParsedLbl.txFillClrLst));
-		oParsedLbl.txLinClrLst && oLbl.setTxLinClrLst(this.ClrLstFromJSON(oParsedLbl.txLinClrLst));
-		oParsedLbl.name != undefined && oLbl.setName(oParsedLbl.name);
+		oParsedLbl["effectClrLst"] && oLbl.setEffectClrLst(this.ClrLstFromJSON(oParsedLbl["effectClrLst"]));
+		oParsedLbl["fillClrLst"] && oLbl.setFillClrLst(this.ClrLstFromJSON(oParsedLbl["fillClrLst"]));
+		oParsedLbl["linClrLst"] && oLbl.setLinClrLst(this.ClrLstFromJSON(oParsedLbl["linClrLst"]));
+		oParsedLbl["txEffectClrLst"] && oLbl.setTxEffectClrLst(this.ClrLstFromJSON(oParsedLbl["txEffectClrLst"]));
+		oParsedLbl["txFillClrLst"] && oLbl.setTxFillClrLst(this.ClrLstFromJSON(oParsedLbl["txFillClrLst"]));
+		oParsedLbl["txLinClrLst"] && oLbl.setTxLinClrLst(this.ClrLstFromJSON(oParsedLbl["txLinClrLst"]));
+		oParsedLbl["name"] != undefined && oLbl.setName(oParsedLbl["name"]);
 
 		return oLbl;
 	};
@@ -12542,7 +12873,7 @@
 	{
 		var oClrLst = null;
 
-		switch (oParsedClrLst.type)
+		switch (oParsedClrLst["type"])
 		{
 			case "effectClrLst":
 				oClrLst = new AscFormat.EffectClrLst();
@@ -12566,11 +12897,11 @@
 
 		if (oClrLst)
 		{
-			oParsedClrLst.hueDir != undefined && oClrLst.setHueDir(From_XML_ST_HueDir(oParsedClrLst.hueDir));
-			oParsedClrLst.meth != undefined && oClrLst.setMeth(From_XML_ST_ClrAppMethod(oParsedClrLst.meth));
+			oParsedClrLst["hueDir"] != undefined && oClrLst.setHueDir(From_XML_ST_HueDir(oParsedClrLst["hueDir"]));
+			oParsedClrLst["meth"] != undefined && oClrLst.setMeth(From_XML_ST_ClrAppMethod(oParsedClrLst["meth"]));
 
-			for (var nColor = 0; nColor < oParsedClrLst.list.length; nColor++)
-				oClrLst.addToLst(oClrLst.list.length, this.ColorFromJSON(oParsedClrLst.list[nColor]));
+			for (var nColor = 0; nColor < oParsedClrLst["list"].length; nColor++)
+				oClrLst.addToLst(oClrLst.list.length, this.ColorFromJSON(oParsedClrLst["list"][nColor]));
 		}
 
 		return oClrLst;
@@ -12578,15 +12909,15 @@
 	ReaderFromJSON.prototype.DescFromJSON = function(oParsedDesc)
 	{
 		var oDesc = null;
-		if (oParsedDesc.type === "desc")
+		if (oParsedDesc["type"] === "desc")
 			oDesc = new AscFormat.Desc();
-		else if (oParsedDesc.type === "diagramTitle")
+		else if (oParsedDesc["type"] === "diagramTitle")
 			oDesc = new AscFormat.DiagramTitle();
 
 		if (oDesc)
 		{
-			oParsedDesc.val  != undefined && oDesc.setVal(oParsedDesc.val);
-			oParsedDesc.lang != undefined && oDesc.setLang(oParsedDesc.lang);
+			oParsedDesc["val"]  != undefined && oDesc.setVal(oParsedDesc["val"]);
+			oParsedDesc["lang"] != undefined && oDesc.setLang(oParsedDesc["lang"]);
 		}
 
 		return oDesc;
@@ -12595,8 +12926,8 @@
 	{
 		var oCatLst = new AscFormat.CatLst();
 	
-		for (var nCat = 0; nCat < oParsedCatLst.list.length; nCat++)
-			oCatLst.addToLst(oCatLst.list.length, this.SCatFromJSON(oParsedCatLst.list[nCat]));
+		for (var nCat = 0; nCat < oParsedCatLst["list"].length; nCat++)
+			oCatLst.addToLst(oCatLst.list.length, this.SCatFromJSON(oParsedCatLst["list"][nCat]));
 
 		return oCatLst;
 	};
@@ -12604,8 +12935,8 @@
 	{
 		var oSCat = new AscFormat.SCat();
 
-		oParsedSCat.pri != undefined && oSCat.setPri(oParsedSCat.pri);
-		oParsedSCat.type != undefined && oSCat.setType(oParsedSCat.type);
+		oParsedSCat["pri"] != undefined && oSCat.setPri(oParsedSCat["pri"]);
+		oParsedSCat["type"] != undefined && oSCat.setType(oParsedSCat["type"]);
 
 		return oSCat;
 	};
@@ -12617,22 +12948,23 @@
 			return null;
 
 		oChartSpace.setBDeleted(false);
-		oChartSpace.setChart(this.ChartFromJSON(oParsedChart.chart, oChartSpace));
-		oChartSpace.setSpPr(this.SpPrFromJSON(oParsedChart.spPr, oChartSpace));
-		oParsedChart.chartColors   && oChartSpace.setChartColors(this.ChartColorsFromJSON(oParsedChart.chartColors));
-		oParsedChart.chartStyle    && oChartSpace.setChartStyle(this.ChartStyleFromJSON(oParsedChart.chartStyle));
-		oParsedChart.clrMapOvr     && oChartSpace.setClrMapOvr(this.ColorMapOvrFromJSON());
-		oParsedChart.pivotSource   && oChartSpace.setPivotSource(this.PivotSourceFromJSON(oParsedChart.pivotSource, oChartSpace));
-		oParsedChart.printSettings && oChartSpace.setPrintSettings(this.PrintSettingsFromJSON(oParsedChart.printSettings, oChartSpace));
-		oParsedChart.protection    && oChartSpace.setProtection(this.ProtectionFromJSON(oParsedChart.protection));
-		oParsedChart.txPr          && oChartSpace.setTxPr(this.TxPrFromJSON(oParsedChart.txPr, oChartSpace));
-		oChartSpace.setDate1904(oParsedChart.date1904);
-		oChartSpace.setLang(oParsedChart.lang);
-		oChartSpace.setRoundedCorners(oParsedChart.roundedCorners);
-		oChartSpace.setStyle(oParsedChart.style);
+		oChartSpace.setChart(this.ChartFromJSON(oParsedChart["chart"], oChartSpace));
+		oChartSpace.setSpPr(this.SpPrFromJSON(oParsedChart["spPr"], oChartSpace));
+		oParsedChart["nvGraphicFramePr"] && oChartSpace.setNvSpPr(this.UniNvPrFromJSON(oParsedChart["nvGraphicFramePr"]));
+		oParsedChart["chartColors"]      && oChartSpace.setChartColors(this.ChartColorsFromJSON(oParsedChart["chartColors"]));
+		oParsedChart["chartStyle"]       && oChartSpace.setChartStyle(this.ChartStyleFromJSON(oParsedChart["chartStyle"]));
+		oParsedChart["clrMapOvr"]        && oChartSpace.setClrMapOvr(this.ColorMapOvrFromJSON());
+		oParsedChart["pivotSource"]      && oChartSpace.setPivotSource(this.PivotSourceFromJSON(oParsedChart["pivotSource"], oChartSpace));
+		oParsedChart["printSettings"]    && oChartSpace.setPrintSettings(this.PrintSettingsFromJSON(oParsedChart["printSettings"], oChartSpace));
+		oParsedChart["protection"]       && oChartSpace.setProtection(this.ProtectionFromJSON(oParsedChart["protection"]));
+		oParsedChart["txPr"]             && oChartSpace.setTxPr(this.TxPrFromJSON(oParsedChart["txPr"], oChartSpace));
+		oParsedChart["date1904"] != null && oChartSpace.setDate1904();
+		oParsedChart["lang"]     != null && oChartSpace.setLang(oParsedChart["lang"]);
+		oChartSpace.setRoundedCorners(oParsedChart["roundedCorners"]);
+		oChartSpace.setStyle(oParsedChart["style"]);
 
-		for (var nUserShape = 0; nUserShape < oParsedChart.userShapes.length; nUserShape++)
-			oChartSpace.addUserShape(undefined, this.UserShapeFromJSON(oParsedChart.userShapes[nUserShape]));
+		for (var nUserShape = 0; nUserShape < oParsedChart["userShapes"].length; nUserShape++)
+			oChartSpace.addUserShape(undefined, this.UserShapeFromJSON(oParsedChart["userShapes"][nUserShape]));
 
 		if (oParentDrawing)
 		{
@@ -12643,19 +12975,20 @@
 
 		oChartSpace.bDeleted = false;
 		oChartSpace.updateLinks();
-		oChartSpace.recalculate();
+		oChartSpace.setLocks(oChartSpace.nvGraphicFramePr && oChartSpace.nvGraphicFramePr.locks !== 0 ? oChartSpace.nvGraphicFramePr.locks : 0);
+
 		return oChartSpace;
 	};
 	ReaderFromJSON.prototype.GraphicFrameFromJSON = function(oParsedGraphFrame)
 	{
 		var oGraphicFrame = new AscFormat.CGraphicFrame();
 
-		oParsedGraphFrame.nvGraphicFramePr && oGraphicFrame.setNvSpPr(this.UniNvPrFromJSON(oParsedGraphFrame.nvGraphicFramePr));
-		oParsedGraphFrame.spPr && oGraphicFrame.setSpPr(this.SpPrFromJSON(oParsedGraphFrame.spPr));
-		oParsedGraphFrame.graphic && oGraphicFrame.setGraphicObject(this.TableFromJSON(oParsedGraphFrame.graphic, oGraphicFrame));
+		oParsedGraphFrame["nvGraphicFramePr"] && oGraphicFrame.setNvSpPr(this.UniNvPrFromJSON(oParsedGraphFrame["nvGraphicFramePr"]));
+		oParsedGraphFrame["spPr"] && oGraphicFrame.setSpPr(this.SpPrFromJSON(oParsedGraphFrame["spPr"]));
+		oParsedGraphFrame["graphic"] && oGraphicFrame.setGraphicObject(this.TableFromJSON(oParsedGraphFrame["graphic"], oGraphicFrame));
 
 		oGraphicFrame.setBDeleted(false);
-		
+		oGraphicFrame.setLocks(oGraphicFrame.nvGraphicFramePr && oGraphicFrame.nvGraphicFramePr.locks !== 0 ? oGraphicFrame.nvGraphicFramePr.locks : 0);
 		return oGraphicFrame;
 	};
 	ReaderFromJSON.prototype.ColorMapOvrFromJSON = function(oParsedClrMap)
@@ -12726,10 +13059,10 @@
 	};
 	ReaderFromJSON.prototype.UserShapeFromJSON = function(oParsedUserShape)
 	{
-		var oUserShape  = oParsedUserShape.type === "relSizeAnchor" ? new AscFormat.CRelSizeAnchor() : new AscFormat.CAbsSizeAnchor();
-		var oGraphicObj = this.GraphicObjFromJSON(oParsedUserShape.object);
+		var oUserShape  = oParsedUserShape["type"] === "relSizeAnchor" ? new AscFormat.CRelSizeAnchor() : new AscFormat.CAbsSizeAnchor();
+		var oGraphicObj = this.GraphicObjFromJSON(oParsedUserShape["object"]);
 
-		oUserShape.setFromTo(private_Twips2MM(oParsedUserShape.fromX), private_Twips2MM(oParsedUserShape.fromY), oParsedUserShape.toX, oParsedUserShape.toY);
+		oUserShape.setFromTo(private_Twips2MM(oParsedUserShape["fromX"]), private_Twips2MM(oParsedUserShape["fromY"]), oParsedUserShape["toX"], oParsedUserShape["toY"]);
 		oUserShape.setObject(oGraphicObj);
 
 		return oUserShape;
@@ -12738,16 +13071,16 @@
 	{
 		var oChartColors = new AscFormat.CChartColors();
 
-		for (var nItem = 0; nItem < oParsedChartColors.items.length; nItem++)
+		for (var nItem = 0; nItem < oParsedChartColors["items"].length; nItem++)
 		{
-			if (oParsedChartColors.items[nItem].type && oParsedChartColors.items[nItem].type === "uniColor")
-				oChartColors.addItem(this.ColorFromJSON(oParsedChartColors.items[nItem]));
+			if (oParsedChartColors["items"][nItem]["type"] && oParsedChartColors["items"][nItem]["type"] === "uniColor")
+				oChartColors.addItem(this.ColorFromJSON(oParsedChartColors["items"][nItem]));
 			else
-				oChartColors.addItem(this.ColorModifiersFromJSON(oParsedChartColors.items[nItem]));
+				oChartColors.addItem(this.ColorModifiersFromJSON(oParsedChartColors["items"][nItem]));
 		}
 
-		oChartColors.setId(oParsedChartColors.id);
-		oChartColors.setMeth(oParsedChartColors.meth);
+		oChartColors.setId(oParsedChartColors["id"]);
+		oChartColors.setMeth(oParsedChartColors["meth"]);
 
 		return oChartColors;
 	};
@@ -12755,38 +13088,38 @@
 	{
 		var oChartStyle = new AscFormat.CChartStyle();
 
-		oChartStyle.setId(oParsedChartStyle.id);
-        oParsedChartStyle.axisTitle && oChartStyle.setAxisTitle(this.StyleEntryFromJSON(oParsedChartStyle.axisTitle));
-        oParsedChartStyle.categoryAxis && oChartStyle.setCategoryAxis(this.StyleEntryFromJSON(oParsedChartStyle.categoryAxis));
-        oParsedChartStyle.chartArea && oChartStyle.setChartArea(this.StyleEntryFromJSON(oParsedChartStyle.chartArea));
-        oParsedChartStyle.dataLabel && oChartStyle.setDataLabel(this.StyleEntryFromJSON(oParsedChartStyle.dataLabel));
-        oParsedChartStyle.dataLabelCallout && oChartStyle.setDataLabelCallout(this.StyleEntryFromJSON(oParsedChartStyle.dataLabelCallout));
-        oParsedChartStyle.dataPoint && oChartStyle.setDataPoint(this.StyleEntryFromJSON(oParsedChartStyle.dataPoint));
-        oParsedChartStyle.dataPoint3D && oChartStyle.setDataPoint3D(this.StyleEntryFromJSON(oParsedChartStyle.dataPoint3D));
-        oParsedChartStyle.dataPointLine && oChartStyle.setDataPointLine(this.StyleEntryFromJSON(oParsedChartStyle.dataPointLine));
-        oParsedChartStyle.dataPointMarker && oChartStyle.setDataPointMarker(this.StyleEntryFromJSON(oParsedChartStyle.dataPointMarker));
-        oParsedChartStyle.dataPointWireframe && oChartStyle.setDataPointWireframe(this.StyleEntryFromJSON(oParsedChartStyle.dataPointWireframe));
-        oParsedChartStyle.dataTable && oChartStyle.setDataTable(this.StyleEntryFromJSON(oParsedChartStyle.dataTable));
-        oParsedChartStyle.downBar && oChartStyle.setDownBar(this.StyleEntryFromJSON(oParsedChartStyle.downBar));
-        oParsedChartStyle.dropLine && oChartStyle.setDropLine(this.StyleEntryFromJSON(oParsedChartStyle.dropLine));
-        oParsedChartStyle.errorBar && oChartStyle.setErrorBar(this.StyleEntryFromJSON(oParsedChartStyle.errorBar));
-        oParsedChartStyle.floor && oChartStyle.setFloor(this.StyleEntryFromJSON(oParsedChartStyle.floor));
-        oParsedChartStyle.gridlineMajor && oChartStyle.setGridlineMajor(this.StyleEntryFromJSON(oParsedChartStyle.gridlineMajor));
-        oParsedChartStyle.gridlineMinor && oChartStyle.setGridlineMinor(this.StyleEntryFromJSON(oParsedChartStyle.gridlineMinor));
-        oParsedChartStyle.hiLoLine && oChartStyle.setHiLoLine(this.StyleEntryFromJSON(oParsedChartStyle.hiLoLine));
-        oParsedChartStyle.leaderLine && oChartStyle.setLeaderLine(this.StyleEntryFromJSON(oParsedChartStyle.leaderLine));
-        oParsedChartStyle.legend && oChartStyle.setLegend(this.StyleEntryFromJSON(oParsedChartStyle.legend));
-        oParsedChartStyle.plotArea && oChartStyle.setPlotArea(this.StyleEntryFromJSON(oParsedChartStyle.plotArea));
-        oParsedChartStyle.plotArea3D && oChartStyle.setPlotArea3D(this.StyleEntryFromJSON(oParsedChartStyle.plotArea3D));
-        oParsedChartStyle.seriesAxis && oChartStyle.setSeriesAxis(this.StyleEntryFromJSON(oParsedChartStyle.seriesAxis));
-        oParsedChartStyle.seriesLine && oChartStyle.setSeriesLine(this.StyleEntryFromJSON(oParsedChartStyle.seriesLine));
-        oParsedChartStyle.title && oChartStyle.setTitle(this.StyleEntryFromJSON(oParsedChartStyle.title));
-        oParsedChartStyle.trendline && oChartStyle.setTrendline(this.StyleEntryFromJSON(oParsedChartStyle.trendline));
-        oParsedChartStyle.trendlineLabel && oChartStyle.setTrendlineLabel(this.StyleEntryFromJSON(oParsedChartStyle.trendlineLabel));
-        oParsedChartStyle.upBar && oChartStyle.setUpBar(this.StyleEntryFromJSON(oParsedChartStyle.upBar));
-        oParsedChartStyle.valueAxis && oChartStyle.setValueAxis(this.StyleEntryFromJSON(oParsedChartStyle.valueAxis));
-        oParsedChartStyle.wall && oChartStyle.setWall(this.StyleEntryFromJSON(oParsedChartStyle.wall));
-        oParsedChartStyle.markerLayout && oChartStyle.setMarkerLayout(this.MarkerLayoutFromJSON(oParsedChartStyle.markerLayout));
+		oChartStyle.setId(oParsedChartStyle["id"]);
+        oParsedChartStyle["axisTitle"] && oChartStyle.setAxisTitle(this.StyleEntryFromJSON(oParsedChartStyle["axisTitle"]));
+        oParsedChartStyle["categoryAxis"] && oChartStyle.setCategoryAxis(this.StyleEntryFromJSON(oParsedChartStyle["categoryAxis"]));
+        oParsedChartStyle["chartArea"] && oChartStyle.setChartArea(this.StyleEntryFromJSON(oParsedChartStyle["chartArea"]));
+        oParsedChartStyle["dataLabel"] && oChartStyle.setDataLabel(this.StyleEntryFromJSON(oParsedChartStyle["dataLabel"]));
+        oParsedChartStyle["dataLabelCallout"] && oChartStyle.setDataLabelCallout(this.StyleEntryFromJSON(oParsedChartStyle["dataLabelCallout"]));
+        oParsedChartStyle["dataPoint"] && oChartStyle.setDataPoint(this.StyleEntryFromJSON(oParsedChartStyle["dataPoint"]));
+        oParsedChartStyle["dataPoint3D"] && oChartStyle.setDataPoint3D(this.StyleEntryFromJSON(oParsedChartStyle["dataPoint3D"]));
+        oParsedChartStyle["dataPointLine"] && oChartStyle.setDataPointLine(this.StyleEntryFromJSON(oParsedChartStyle["dataPointLine"]));
+        oParsedChartStyle["dataPointMarker"] && oChartStyle.setDataPointMarker(this.StyleEntryFromJSON(oParsedChartStyle["dataPointMarker"]));
+        oParsedChartStyle["dataPointWireframe"] && oChartStyle.setDataPointWireframe(this.StyleEntryFromJSON(oParsedChartStyle["dataPointWireframe"]));
+        oParsedChartStyle["dataTable"] && oChartStyle.setDataTable(this.StyleEntryFromJSON(oParsedChartStyle["dataTable"]));
+        oParsedChartStyle["downBar"] && oChartStyle.setDownBar(this.StyleEntryFromJSON(oParsedChartStyle["downBar"]));
+        oParsedChartStyle["dropLine"] && oChartStyle.setDropLine(this.StyleEntryFromJSON(oParsedChartStyle["dropLine"]));
+        oParsedChartStyle["errorBar"] && oChartStyle.setErrorBar(this.StyleEntryFromJSON(oParsedChartStyle["errorBar"]));
+        oParsedChartStyle["floor"] && oChartStyle.setFloor(this.StyleEntryFromJSON(oParsedChartStyle["floor"]));
+        oParsedChartStyle["gridlineMajor"] && oChartStyle.setGridlineMajor(this.StyleEntryFromJSON(oParsedChartStyle["gridlineMajor"]));
+        oParsedChartStyle["gridlineMinor"] && oChartStyle.setGridlineMinor(this.StyleEntryFromJSON(oParsedChartStyle["gridlineMinor"]));
+        oParsedChartStyle["hiLoLine"] && oChartStyle.setHiLoLine(this.StyleEntryFromJSON(oParsedChartStyle["hiLoLine"]));
+        oParsedChartStyle["leaderLine"] && oChartStyle.setLeaderLine(this.StyleEntryFromJSON(oParsedChartStyle["leaderLine"]));
+        oParsedChartStyle["legend"] && oChartStyle.setLegend(this.StyleEntryFromJSON(oParsedChartStyle["legend"]));
+        oParsedChartStyle["plotArea"] && oChartStyle.setPlotArea(this.StyleEntryFromJSON(oParsedChartStyle["plotArea"]));
+        oParsedChartStyle["plotArea3D"] && oChartStyle.setPlotArea3D(this.StyleEntryFromJSON(oParsedChartStyle["plotArea3D"]));
+        oParsedChartStyle["seriesAxis"] && oChartStyle.setSeriesAxis(this.StyleEntryFromJSON(oParsedChartStyle["seriesAxis"]));
+        oParsedChartStyle["seriesLine"] && oChartStyle.setSeriesLine(this.StyleEntryFromJSON(oParsedChartStyle["seriesLine"]));
+        oParsedChartStyle["title"] && oChartStyle.setTitle(this.StyleEntryFromJSON(oParsedChartStyle["title"]));
+        oParsedChartStyle["trendline"] && oChartStyle.setTrendline(this.StyleEntryFromJSON(oParsedChartStyle["trendline"]));
+        oParsedChartStyle["trendlineLabel"] && oChartStyle.setTrendlineLabel(this.StyleEntryFromJSON(oParsedChartStyle["trendlineLabel"]));
+        oParsedChartStyle["upBar"] && oChartStyle.setUpBar(this.StyleEntryFromJSON(oParsedChartStyle["upBar"]));
+        oParsedChartStyle["valueAxis"] && oChartStyle.setValueAxis(this.StyleEntryFromJSON(oParsedChartStyle["valueAxis"]));
+        oParsedChartStyle["wall"] && oChartStyle.setWall(this.StyleEntryFromJSON(oParsedChartStyle["wall"]));
+        oParsedChartStyle["markerLayout"] && oChartStyle.setMarkerLayout(this.MarkerLayoutFromJSON(oParsedChartStyle["markerLayout"]));
 	
 		return oChartStyle;
 	};
@@ -12794,15 +13127,15 @@
 	{
 		var oStyleEntry = new AscFormat.CStyleEntry();
 
-		oStyleEntry.setType(oParsedStyleEntry.type);
-        oStyleEntry.setLineWidthScale(oParsedStyleEntry.lineWidthScale);
-        oParsedStyleEntry.lnRef && oStyleEntry.setLnRef(this.StyleRefFromJSON(oParsedStyleEntry.lnRef));
-        oParsedStyleEntry.fillRef && oStyleEntry.setFillRef(this.StyleRefFromJSON(oParsedStyleEntry.fillRef));
-        oParsedStyleEntry.effectRef && oStyleEntry.setEffectRef(this.StyleRefFromJSON(oParsedStyleEntry.effectRef));
-        oParsedStyleEntry.fontRef && oStyleEntry.setFontRef(this.FontRefFromJSON(oParsedStyleEntry.fontRef));
-        oParsedStyleEntry.defRPr && oStyleEntry.setDefRPr(this.TextPrFromJSON(oParsedStyleEntry.defRPr));
-        oParsedStyleEntry.bodyPr && oStyleEntry.setBodyPr(this.BodyPrFromJSON(oParsedStyleEntry.bodyPr));
-        oParsedStyleEntry.spPr && oStyleEntry.setSpPr(this.SpPrFromJSON(oParsedStyleEntry.spPr, oStyleEntry));
+		oStyleEntry.setType(FromXML_StyleEntryType(oParsedStyleEntry["type"]));
+        oStyleEntry.setLineWidthScale(oParsedStyleEntry["lineWidthScale"]);
+        oParsedStyleEntry["lnRef"] && oStyleEntry.setLnRef(this.StyleRefFromJSON(oParsedStyleEntry["lnRef"]));
+        oParsedStyleEntry["fillRef"] && oStyleEntry.setFillRef(this.StyleRefFromJSON(oParsedStyleEntry["fillRef"]));
+        oParsedStyleEntry["effectRef"] && oStyleEntry.setEffectRef(this.StyleRefFromJSON(oParsedStyleEntry["effectRef"]));
+        oParsedStyleEntry["fontRef"] && oStyleEntry.setFontRef(this.FontRefFromJSON(oParsedStyleEntry["fontRef"]));
+        oParsedStyleEntry["defRPr"] && oStyleEntry.setDefRPr(this.TextPrFromJSON(oParsedStyleEntry["defRPr"]));
+        oParsedStyleEntry["bodyPr"] && oStyleEntry.setBodyPr(this.BodyPrFromJSON(oParsedStyleEntry["bodyPr"]));
+        oParsedStyleEntry["spPr"] && oStyleEntry.setSpPr(this.SpPrFromJSON(oParsedStyleEntry["spPr"], oStyleEntry));
 
 		return oStyleEntry;
 	};
@@ -12810,8 +13143,8 @@
 	{
 		var oMarkerLayout = new AscFormat.CMarkerLayout();
 
-		oMarkerLayout.setSize(oParsedMarkerLayout.size);
-		oMarkerLayout.setSymbol(oParsedMarkerLayout.symbol);
+		oMarkerLayout.setSize(oParsedMarkerLayout["size"]);
+		oMarkerLayout.setSymbol(oParsedMarkerLayout["symbol"]);
 
 		return oMarkerLayout;
 	};
@@ -12821,8 +13154,8 @@
 
 		oPivotSource.setParent(oParentChart);
 
-		oPivotSource.setFmtId(oParsedPivotSource.fmtId);
-		oPivotSource.setName(oParsedPivotSource.name);
+		oPivotSource.setFmtId(oParsedPivotSource["fmtId"]);
+		oPivotSource.setName(oParsedPivotSource["name"]);
 
 		return oPivotSource;
 	};
@@ -12832,9 +13165,9 @@
 
 		oPrintSettings.setParent(oParentChart);
 
-		oParsedPrintSettings.headerFooter && oPrintSettings.setHeaderFooter(this.HeaderFooterChartFromJSON(oParsedPrintSettings.headerFooter));
-		oParsedPrintSettings.pageMargins && oPrintSettings.setPageMargins(this.PageMarginsChartFromJSON(oParsedPrintSettings.pageMargins));
-		oParsedPrintSettings.pageSetup && oPrintSettings.setPageSetup(this.PageSetupFromJSON(oParsedPrintSettings.pageSetup));
+		oParsedPrintSettings["headerFooter"] && oPrintSettings.setHeaderFooter(this.HeaderFooterChartFromJSON(oParsedPrintSettings["headerFooter"]));
+		oParsedPrintSettings["pageMargins"] && oPrintSettings.setPageMargins(this.PageMarginsChartFromJSON(oParsedPrintSettings["pageMargins"]));
+		oParsedPrintSettings["pageSetup"] && oPrintSettings.setPageSetup(this.PageSetupFromJSON(oParsedPrintSettings["pageSetup"]));
 
 		return oPrintSettings;
 	};
@@ -12842,11 +13175,11 @@
 	{
 		var oProtection = new AscFormat.CProtection();
 
-		oProtection.setChartObject(oParsedProtection.chartObject);
-		oProtection.setData(oParsedProtection.data);
-		oProtection.setFormatting(oParsedProtection.formatting);
-		oProtection.setSelection(oParsedProtection.selection);
-		oProtection.setUserInterface(oParsedProtection.userInterface);
+		oProtection.setChartObject(oParsedProtection["chartObject"]);
+		oProtection.setData(oParsedProtection["data"]);
+		oProtection.setFormatting(oParsedProtection["formatting"]);
+		oProtection.setSelection(oParsedProtection["selection"]);
+		oProtection.setUserInterface(oParsedProtection["userInterface"]);
 
 		return oProtection;
 	};
@@ -12854,15 +13187,15 @@
 	{
 		var oHeaderFooter = new AscFormat.CHeaderFooterChart();
 
-		oHeaderFooter.setEvenFooter(oParsedHdrFtrCart.evenFooter);
-		oHeaderFooter.setEvenFooter(oParsedHdrFtrCart.evenHeader);
-		oHeaderFooter.setFirstFooter(oParsedHdrFtrCart.firstFooter);
-		oHeaderFooter.setFirstHeader(oParsedHdrFtrCart.firstHeader);
-		oHeaderFooter.setOddFooter(oParsedHdrFtrCart.oddFooter);
-		oHeaderFooter.setOddHeader(oParsedHdrFtrCart.oddHeader);
-		oHeaderFooter.setAlignWithMargins(oParsedHdrFtrCart.alignWithMargins);
-		oHeaderFooter.setDifferentFirst(oParsedHdrFtrCart.differentFirst);
-		oHeaderFooter.setDifferentOddEven(oParsedHdrFtrCart.differentOddEven);
+		oHeaderFooter.setEvenFooter(oParsedHdrFtrCart["evenFooter"]);
+		oHeaderFooter.setEvenFooter(oParsedHdrFtrCart["evenHeader"]);
+		oHeaderFooter.setFirstFooter(oParsedHdrFtrCart["firstFooter"]);
+		oHeaderFooter.setFirstHeader(oParsedHdrFtrCart["firstHeader"]);
+		oHeaderFooter.setOddFooter(oParsedHdrFtrCart["oddFooter"]);
+		oHeaderFooter.setOddHeader(oParsedHdrFtrCart["oddHeader"]);
+		oHeaderFooter.setAlignWithMargins(oParsedHdrFtrCart["alignWithMargins"]);
+		oHeaderFooter.setDifferentFirst(oParsedHdrFtrCart["differentFirst"]);
+		oHeaderFooter.setDifferentOddEven(oParsedHdrFtrCart["differentOddEven"]);
 
 		return oHeaderFooter;
 	};
@@ -12870,12 +13203,12 @@
 	{
 		var oPageMargins = new AscFormat.CPageMarginsChart();
 		
-		oPageMargins.setB(oParsedPgMargins.b);
-		oPageMargins.setFooter(oParsedPgMargins.footer);
-		oPageMargins.setHeader(oParsedPgMargins.header);
-		oPageMargins.setL(oParsedPgMargins.l);
-		oPageMargins.setR(oParsedPgMargins.r);
-		oPageMargins.setT(oParsedPgMargins.t);
+		oPageMargins.setB(oParsedPgMargins["b"]);
+		oPageMargins.setFooter(oParsedPgMargins["footer"]);
+		oPageMargins.setHeader(oParsedPgMargins["header"]);
+		oPageMargins.setL(oParsedPgMargins["l"]);
+		oPageMargins.setR(oParsedPgMargins["r"]);
+		oPageMargins.setT(oParsedPgMargins["t"]);
 
 		return oPageMargins;
 	};
@@ -12884,7 +13217,7 @@
 		var oPageSetup = new AscFormat.CPageSetup();
 
 		var nOrientType = undefined;
-		switch(oParsedPageSetup.orientation)
+		switch(oParsedPageSetup["orientation"])
 		{
 			case "default":
 				nOrientType = AscFormat.PAGE_SETUP_ORIENTATION_DEFAULT;
@@ -12897,23 +13230,23 @@
 				break;
 		}
 
-		oPageSetup.setBlackAndWhite(oParsedPageSetup.blackAndWhite);
-		oPageSetup.setCopies(oParsedPageSetup.copies);
-		oPageSetup.setDraft(oParsedPageSetup.draft);
-		oPageSetup.setFirstPageNumber(oParsedPageSetup.firstPageNumber);
-		oPageSetup.setHorizontalDpi(oParsedPageSetup.horizontalDpi);
+		oPageSetup.setBlackAndWhite(oParsedPageSetup["blackAndWhite"]);
+		oPageSetup.setCopies(oParsedPageSetup["copies"]);
+		oPageSetup.setDraft(oParsedPageSetup["draft"]);
+		oPageSetup.setFirstPageNumber(oParsedPageSetup["firstPageNumber"]);
+		oPageSetup.setHorizontalDpi(oParsedPageSetup["horizontalDpi"]);
 		oPageSetup.setOrientation(nOrientType);
-		oPageSetup.setPaperHeight(oParsedPageSetup.paperHeight);
-		oPageSetup.setPaperSize(oParsedPageSetup.paperSize);
-		oPageSetup.setPaperWidth(oParsedPageSetup.paperWidth);
-		oPageSetup.setUseFirstPageNumb(oParsedPageSetup.useFirstPageNumb);
-		oPageSetup.setVerticalDpi(oParsedPageSetup.verticalDpi);
+		oPageSetup.setPaperHeight(oParsedPageSetup["paperHeight"]);
+		oPageSetup.setPaperSize(oParsedPageSetup["paperSize"]);
+		oPageSetup.setPaperWidth(oParsedPageSetup["paperWidth"]);
+		oPageSetup.setUseFirstPageNumb(oParsedPageSetup["useFirstPageNumb"]);
+		oPageSetup.setVerticalDpi(oParsedPageSetup["verticalDpi"]);
 
 		return oPageSetup;
 	};
 	ReaderFromJSON.prototype.ShapeFromJSON = function(oParsedShape, oParentDrawing)
 	{
-		var oShape = oParsedShape.type === "shape" ? new AscFormat.CShape() : new AscFormat.CConnectionShape();
+		var oShape = oParsedShape["type"] === "shape" ? new AscFormat.CShape() : new AscFormat.CConnectionShape();
 
 		if (oParentDrawing)
 		{
@@ -12921,27 +13254,31 @@
 			oParentDrawing.Set_GraphicObject(oShape);
 		}
 		
-		oParsedShape.bWordShape && oShape.setWordShape(oParsedShape.bWordShape);
-		oParsedShape.nvSpPr && oShape.setNvSpPr(this.UniNvPrFromJSON(oParsedShape.nvSpPr));
+		oParsedShape["bWordShape"] && oShape.setWordShape(oParsedShape["bWordShape"]);
 
-		oParsedShape.spPr && oShape.setSpPr(this.SpPrFromJSON(oParsedShape.spPr, oShape));
+		if (oParsedShape["type"] === "shape")
+			oParsedShape["nvSpPr"] && oShape.setNvSpPr(this.UniNvPrFromJSON(oParsedShape["nvSpPr"]));
+		else
+			oParsedShape["nvCxnSpPr"] && oShape.setNvSpPr(this.UniNvPrFromJSON(oParsedShape["nvCxnSpPr"]));
 
-		oShape.setStyle(this.SpStyleFromJSON(oParsedShape.style));
-		oParsedShape.bodyPr && oShape.setBodyPr(this.BodyPrFromJSON(oParsedShape.bodyPr));
+		oParsedShape["spPr"] && oShape.setSpPr(this.SpPrFromJSON(oParsedShape["spPr"], oShape));
 
-		if (oParsedShape.content)
+		oShape.setStyle(this.SpStyleFromJSON(oParsedShape["style"]));
+		oParsedShape["bodyPr"] && oShape.setBodyPr(this.BodyPrFromJSON(oParsedShape["bodyPr"]));
+
+		if (oParsedShape["content"])
 		{
-			if (oParsedShape.content.type === "docContent")
-				oShape.setTextBoxContent(this.DocContentFromJSON(oParsedShape.content, oShape));
+			if (oParsedShape["content"]["type"] === "docContent")
+				oShape.setTextBoxContent(this.DocContentFromJSON(oParsedShape["content"], oShape));
 			else
-				oShape.setTxBody(this.TxPrFromJSON(oParsedShape.content, oShape));
+				oShape.setTxBody(this.TxPrFromJSON(oParsedShape["content"], oShape));
 		}
 
-		oParsedShape.modelId != undefined && oShape.setModelId(oParsedShape.modelId);
-		oParsedShape.txXfrm != undefined && oShape.setTxXfrm(this.XfrmFromJSON(oParsedShape.txXfrm));
+		oParsedShape["modelId"] != undefined && oShape.setModelId(oParsedShape["modelId"]);
+		oParsedShape["txXfrm"] != undefined && oShape.setTxXfrm(this.XfrmFromJSON(oParsedShape["txXfrm"]));
 
 		oShape.setBDeleted(false);
-		oShape.recalculate();
+		oShape.setLocks(oShape.nvSpPr && oShape.nvSpPr.locks !== 0 ? oShape.nvSpPr.locks : 0);
 
 		return oShape;
 	};
@@ -12956,21 +13293,21 @@
 			oParentDrawing.Set_GraphicObject(oOleObject);
 		}
 
-		oParsedOleObj.appId      != undefined && oOleObject.setApplicationId(oParsedOleObj.appId);
-		oParsedOleObj.data       != undefined && oOleObject.setData(oParsedOleObj.data);
-		oParsedOleObj.objFile    != undefined && oOleObject.setObjectFile(oParsedOleObj.objFile);
-		oParsedOleObj.oleType    != undefined && oOleObject.setOleType(From_XML_OleObj_Type(oParsedOleObj.oleType));
-		oParsedOleObj.binaryData != undefined && oOleObject.setBinaryData(oParsedOleObj.binaryData);
-		oParsedOleObj.mathObj    != undefined && oOleObject.setMathObject(this.ParaMathFromJSON(oParsedOleObj.mathObj));
+		oParsedOleObj["appId"]      != undefined && oOleObject.setApplicationId(oParsedOleObj["appId"]);
+		oParsedOleObj["data"]       != undefined && oOleObject.setData(oParsedOleObj["data"]);
+		oParsedOleObj["objFile"]    != undefined && oOleObject.setObjectFile(oParsedOleObj["objFile"]);
+		oParsedOleObj["oleType"]    != undefined && oOleObject.setOleType(From_XML_OleObj_Type(oParsedOleObj["oleType"]));
+		oParsedOleObj["binaryData"] != undefined && oOleObject.setBinaryData(oParsedOleObj["binaryData"]);
+		oParsedOleObj["mathObj"]    != undefined && oOleObject.setMathObject(this.ParaMathFromJSON(oParsedOleObj["mathObj"]));
 		
-		if (oParsedOleObj.dxaOrig > 0 && oParsedOleObj.dyaOrig > 0) {
-			oOleObject.setPixSizes(private_Twips2Px(oParsedOleObj.dxaOrig), private_Twips2Px(oParsedOleObj.dyaOrig));
+		if (oParsedOleObj["dxaOrig"] > 0 && oParsedOleObj["dyaOrig"] > 0) {
+			oOleObject.setPixSizes(private_Twips2Px(oParsedOleObj["dxaOrig"]), private_Twips2Px(oParsedOleObj["dyaOrig"]));
 		}
 
-		oOleObject.setBlipFill(this.BlipFillFromJSON(oParsedOleObj.blipFill));
-		oOleObject.setNvPicPr(this.UniNvPrFromJSON(oParsedOleObj.nvPicPr));
-		oOleObject.setSpPr(this.SpPrFromJSON(oParsedOleObj.spPr, oOleObject));
-
+		oOleObject.setBlipFill(this.BlipFillFromJSON(oParsedOleObj["blipFill"]));
+		oOleObject.setNvPicPr(this.UniNvPrFromJSON(oParsedOleObj["nvPicPr"]));
+		oOleObject.setSpPr(this.SpPrFromJSON(oParsedOleObj["spPr"], oOleObject));
+		oOleObject.setLocks(oOleObject.nvPicPr && oOleObject.nvPicPr.locks !== 0 ? oOleObject.nvPicPr.locks : 0);
 		return oOleObject;
 	};
 	ReaderFromJSON.prototype.ImageFromJSON = function(oParsedImage, oParentDrawing)
@@ -12983,13 +13320,13 @@
 			oParentDrawing.Set_GraphicObject(oImage);
 		}
 
-		oImage.setBlipFill(this.BlipFillFromJSON(oParsedImage.blipFill));
-		oImage.setNvPicPr(this.UniNvPrFromJSON(oParsedImage.nvPicPr));
-		oImage.setSpPr(this.SpPrFromJSON(oParsedImage.spPr, oImage));
+		oImage.setBlipFill(this.BlipFillFromJSON(oParsedImage["blipFill"]));
+		oImage.setNvPicPr(this.UniNvPrFromJSON(oParsedImage["nvPicPr"]));
+		oImage.setSpPr(this.SpPrFromJSON(oParsedImage["spPr"], oImage));
 
 		oImage.setNoChangeAspect(true);
         oImage.setBDeleted(false);
-
+		oImage.setLocks(oImage.nvPicPr && oImage.nvPicPr.locks !== 0 ? oImage.nvPicPr.locks : 0);
 		return oImage;
 	};
 	ReaderFromJSON.prototype.ChartFromJSON = function(oParsedChart, oParentChartSpace)
@@ -12997,7 +13334,7 @@
 		var oChart = new AscFormat.CChart();
 
 		var nDispBlanksAs = undefined;
-		switch(oParsedChart.dispBlanksAs)
+		switch(oParsedChart["dispBlanksAs"])
 		{
 			case "span":
 				nDispBlanksAs = AscFormat.DISP_BLANKS_AS_SPAN;
@@ -13011,18 +13348,18 @@
 
 		oParentChartSpace && oChart.setParent(oParentChartSpace);
 
-		oChart.setPlotArea(this.PlotAreaFromJSON(oParsedChart.plotArea));
-		oChart.setAutoTitleDeleted(oParsedChart.autoTitleDeleted);
-		oParsedChart.backWall && oChart.setBackWall(this.WallFromJSON(oParsedChart.backWall, oChart));
+		oChart.setPlotArea(this.PlotAreaFromJSON(oParsedChart["plotArea"]));
+		oChart.setAutoTitleDeleted(oParsedChart["autoTitleDeleted"]);
+		oParsedChart["backWall"] && oChart.setBackWall(this.WallFromJSON(oParsedChart["backWall"], oChart));
 		oChart.setDispBlanksAs(nDispBlanksAs);
-		oParsedChart.floor && oChart.setFloor(this.WallFromJSON(oParsedChart.floor, oChart));
-		oParsedChart.legend && oChart.setLegend(this.LegendFromJSON(oParsedChart.legend, oChart));
-		this.PivotFmtsFromJSON(oParsedChart.pivotFmts, oChart);
-		oChart.setPlotVisOnly(oParsedChart.plotVisOnly);
-		oChart.setShowDLblsOverMax(oParsedChart.showDLblsOverMax);
-		oParsedChart.sideWall && oChart.setSideWall(this.WallFromJSON(oParsedChart.sideWall, oChart));
-		oParsedChart.title && oChart.setTitle(this.TitleFromJSON(oParsedChart.title, oChart));
-		oParsedChart.view3D && oChart.setView3D(this.View3DFromJSON(oParsedChart.view3D));
+		oParsedChart["floor"] && oChart.setFloor(this.WallFromJSON(oParsedChart["floor"], oChart));
+		oParsedChart["legend"] && oChart.setLegend(this.LegendFromJSON(oParsedChart["legend"], oChart));
+		this.PivotFmtsFromJSON(oParsedChart["pivotFmts"], oChart);
+		oChart.setPlotVisOnly(oParsedChart["plotVisOnly"]);
+		oChart.setShowDLblsOverMax(oParsedChart["showDLblsOverMax"]);
+		oParsedChart["sideWall"] && oChart.setSideWall(this.WallFromJSON(oParsedChart["sideWall"], oChart));
+		oParsedChart["title"] && oChart.setTitle(this.TitleFromJSON(oParsedChart["title"], oChart));
+		oParsedChart["view3D"] && oChart.setView3D(this.View3DFromJSON(oParsedChart["view3D"]));
 
 		return oChart;
 	};
@@ -13030,12 +13367,12 @@
 	{
 		var oView3D = new AscFormat.CView3d();
 
-		oView3D.setDepthPercent(oParsedView3D.depthPercent);
-		oView3D.setHPercent(oParsedView3D.hPercent);
-		oView3D.setPerspective(oParsedView3D.perspective);
-		oView3D.setRAngAx(oParsedView3D.rAngAx);
-		oView3D.setRotX(oParsedView3D.rotX);
-		oView3D.setRotY(oParsedView3D.rotY);
+		oView3D.setDepthPercent(oParsedView3D["depthPercent"]);
+		oView3D.setHPercent(oParsedView3D["hPercent"]);
+		oView3D.setPerspective(oParsedView3D["perspective"]);
+		oView3D.setRAngAx(oParsedView3D["rAngAx"]);
+		oView3D.setRotX(oParsedView3D["rotX"]);
+		oView3D.setRotY(oParsedView3D["rotY"]);
 
 		return oView3D;
 	};
@@ -13045,27 +13382,27 @@
 
 		var oAxisMap = {};
 		
-		for (var nAxis = 0; nAxis < oParsedArea.axId.length; nAxis++)
+		for (var nAxis = 0; nAxis < oParsedArea["axId"].length; nAxis++)
 		{
-			var oAxis = this.AxisFromJSON(oParsedArea.axId[nAxis]);
+			var oAxis = this.AxisFromJSON(oParsedArea["axId"][nAxis]);
 			oPlotArea.addAxis(oAxis);
-			oAxisMap[oParsedArea.axId[nAxis].axId] = oAxis;
+			oAxisMap[oParsedArea["axId"][nAxis]["axId"]] = oAxis;
 		}
 
-		oParsedArea.dTable && oPlotArea.setDTable(this.DataTableFromJSON(oParsedArea.dTable));
-		oParsedArea.layout && oPlotArea.setLayout(this.LayoutFromJSON(oParsedArea.layout, oPlotArea));
-		oParsedArea.spPr && oPlotArea.setSpPr(this.SpPrFromJSON(oParsedArea.spPr, oPlotArea));
+		oParsedArea["dTable"] && oPlotArea.setDTable(this.DataTableFromJSON(oParsedArea["dTable"]));
+		oParsedArea["layout"] && oPlotArea.setLayout(this.LayoutFromJSON(oParsedArea["layout"], oPlotArea));
+		oParsedArea["spPr"] && oPlotArea.setSpPr(this.SpPrFromJSON(oParsedArea["spPr"], oPlotArea));
 
 		for (nAxis = 0; nAxis < oPlotArea.axId.length; nAxis++)
 			oPlotArea.axId[nAxis].setCrossAx(oAxisMap[oPlotArea.axId[nAxis].crossAx]);
 
-		this.ChartsFromJSON(oParsedArea.charts, oPlotArea, oAxisMap);
+		this.ChartsFromJSON(oParsedArea["charts"], oPlotArea, oAxisMap);
 
 		return oPlotArea;
 	};
 	ReaderFromJSON.prototype.AxisFromJSON = function(oParsedAxis)
 	{
-		switch (oParsedAxis.type)
+		switch (oParsedAxis["type"])
 		{
 			case "catAx":
 				return this.CatAxFromJSON(oParsedAxis);
@@ -13083,12 +13420,12 @@
 	{
 		var oDTable = new AscFormat.CDTable();
 
-		oDTable.setShowHorzBorder(oParsedDataTable.showHorzBorder);
-		oDTable.setShowKeys(oParsedDataTable.showKeys);
-		oDTable.setShowOutline(oParsedDataTable.showOutline);
-		oDTable.setShowVertBorder(oParsedDataTable.showVertBorder);
-		oParsedDataTable.spPr && oDTable.setSpPr(this.SpPrFromJSON(oParsedDataTable.spPr, oDTable));
-		oParsedDataTable.txPr && oDTable.setTxPr(this.TxPrFromJSON(oParsedDataTable.txPr, oDTable));
+		oDTable.setShowHorzBorder(oParsedDataTable["showHorzBorder"]);
+		oDTable.setShowKeys(oParsedDataTable["showKeys"]);
+		oDTable.setShowOutline(oParsedDataTable["showOutline"]);
+		oDTable.setShowVertBorder(oParsedDataTable["showVertBorder"]);
+		oParsedDataTable["spPr"] && oDTable.setSpPr(this.SpPrFromJSON(oParsedDataTable["spPr"], oDTable));
+		oParsedDataTable["txPr"] && oDTable.setTxPr(this.TxPrFromJSON(oParsedDataTable["txPr"], oDTable));
 	
 		return oDTable;
 	};
@@ -13099,24 +13436,24 @@
 		oSerAx.setParent(oParentPlotArea);
 
 		oSerAx.setAxId(++AscFormat.Ax_Counter.GLOBAL_AX_ID_COUNTER);
-		oSerAx.setAxPos(this.GetAxPosNumType(oParsedSerAx.axPos));
-		oSerAx.crossAx        = oParsedSerAx.crossAx ? oParsedSerAx.crossAx : oSerAx.crossAx;
-		oSerAx.setCrosses(this.GetCrossesNumType(oParsedSerAx.crosses));
-		oSerAx.setCrossesAt(oParsedSerAx.crossesAt);
-		oSerAx.setDelete(oParsedSerAx.delete);
-		oSerAx.extLst = oParsedSerAx.extLst; /// ?
-		oParsedSerAx.majorGridlines && oSerAx.setMajorGridlines(this.SpPrFromJSON(oParsedSerAx.majorGridlines, oSerAx));
-		oSerAx.setMajorTickMark(this.GetTickMarkNumType(oParsedSerAx.majorTickMark));
-		oParsedSerAx.minorGridlines && oSerAx.setMinorGridlines(this.SpPrFromJSON(oParsedSerAx.minorGridlines, oSerAx));
-		oSerAx.setMinorTickMark(this.GetTickMarkNumType(oParsedSerAx.minorTickMark));
-		oParsedSerAx.numFmt && oSerAx.setNumFmt(this.NumFmtFromJSON(oParsedSerAx.numFmt));
-		oParsedSerAx.scaling && oSerAx.setScaling(this.ScalingFromJSON(oParsedSerAx.scaling, oSerAx));
-		oParsedSerAx.spPr && oSerAx.setSpPr(this.SpPrFromJSON(oParsedSerAx.spPr, oSerAx));
-		oSerAx.setTickLblSkip(this.GetTickLabelNumPos(oParsedSerAx.tickLblPos));
-		oSerAx.setTickLblSkip(oParsedSerAx.tickLblSkip);
-		oSerAx.setTickMarkSkip(oParsedSerAx.tickMarkSkip);
-		oParsedSerAx.title && oSerAx.setTitle(this.TitleFromJSON(oParsedSerAx.title));
-		oParsedSerAx.txPr && oSerAx.setTxPr(this.TxPrFromJSON(oParsedSerAx.txPr, oSerAx));
+		oSerAx.setAxPos(this.GetAxPosNumType(oParsedSerAx["axPos"]));
+		oSerAx.crossAx        = oParsedSerAx["crossAx"] ? oParsedSerAx["crossAx"] : oSerAx.crossAx;
+		oSerAx.setCrosses(this.GetCrossesNumType(oParsedSerAx["crosses"]));
+		oSerAx.setCrossesAt(oParsedSerAx["crossesAt"]);
+		oSerAx.setDelete(oParsedSerAx["delete"]);
+		oSerAx.extLst = oParsedSerAx["extLst"]; /// ?
+		oParsedSerAx["majorGridlines"] && oSerAx.setMajorGridlines(this.SpPrFromJSON(oParsedSerAx["majorGridlines"], oSerAx));
+		oSerAx.setMajorTickMark(this.GetTickMarkNumType(oParsedSerAx["majorTickMark"]));
+		oParsedSerAx["minorGridlines"] && oSerAx.setMinorGridlines(this.SpPrFromJSON(oParsedSerAx["minorGridlines"], oSerAx));
+		oSerAx.setMinorTickMark(this.GetTickMarkNumType(oParsedSerAx["minorTickMark"]));
+		oParsedSerAx["numFmt"] && oSerAx.setNumFmt(this.NumFmtFromJSON(oParsedSerAx["numFmt"]));
+		oParsedSerAx["scaling"] && oSerAx.setScaling(this.ScalingFromJSON(oParsedSerAx["scaling"], oSerAx));
+		oParsedSerAx["spPr"] && oSerAx.setSpPr(this.SpPrFromJSON(oParsedSerAx["spPr"], oSerAx));
+		oSerAx.setTickLblSkip(this.GetTickLabelNumPos(oParsedSerAx["tickLblPos"]));
+		oSerAx.setTickLblSkip(oParsedSerAx["tickLblSkip"]);
+		oSerAx.setTickMarkSkip(oParsedSerAx["tickMarkSkip"]);
+		oParsedSerAx["title"] && oSerAx.setTitle(this.TitleFromJSON(oParsedSerAx["title"]));
+		oParsedSerAx["txPr"] && oSerAx.setTxPr(this.TxPrFromJSON(oParsedSerAx["txPr"], oSerAx));
 		
 		return oSerAx;
 	};
@@ -13126,30 +13463,30 @@
 
 		oDateAx.setParent(oParentPlotArea);
 
-		oDateAx.setAuto(oParsedDateAx.auto);
+		oDateAx.setAuto(oParsedDateAx["auto"]);
 		oDateAx.setAxId(++AscFormat.Ax_Counter.GLOBAL_AX_ID_COUNTER);
-		oDateAx.setAxPos(this.GetAxPosNumType(oParsedDateAx.axPos));
-		oDateAx.setBaseTimeUnit(this.GetTimeUnitNumType(oParsedDateAx.baseTimeUnit));
-		oDateAx.crossAx = oParsedDateAx.crossAx ? oParsedDateAx.crossAx : oDateAx.crossAx;
-		oDateAx.setCrosses(this.GetCrossesNumType(oParsedDateAx.crosses));
-		oDateAx.setCrossesAt(oParsedDateAx.crossesAt);
-		oDateAx.setDelete(oParsedDateAx.delete);
-		oDateAx.extLst = oParsedDateAx.extLst; /// ???
-		oDateAx.setLblOffset(oParsedDateAx.lblOffset);
-		oParsedDateAx.majorGridlines && oDateAx.setMajorGridlines(this.SpPrFromJSON(oParsedDateAx.majorGridlines, oDateAx));
-		oDateAx.setMajorTickMark(this.GetTickMarkNumType(oParsedDateAx.majorTickMark));
-		oDateAx.setMajorTimeUnit(this.GetTimeUnitNumType(oParsedDateAx.majorTimeUnit));
-		oDateAx.setMajorUnit(oParsedDateAx.majorUnit);
-		oParsedDateAx.minorGridlines && oDateAx.setMinorGridlines(this.SpPrFromJSON(oParsedDateAx.minorGridlines, oDateAx));
-		oDateAx.setMinorTickMark(this.GetTickMarkNumType(oParsedDateAx.minorTickMark));
-		oDateAx.setMinorTimeUnit(this.GetTimeUnitNumType(oParsedDateAx.minorTimeUnit));
-		oDateAx.setMinorUnit(oParsedDateAx.minorUnit);
-		oParsedDateAx.numFmt && oDateAx.setNumFmt(this.NumFmtFromJSON(oParsedDateAx.numFmt));
-		oParsedDateAx.scaling && oDateAx.setScaling(this.ScalingFromJSON(oParsedDateAx.scaling, oDateAx));
-		oParsedDateAx.spPr && oParsedDateAx.setSpPr(this.SpPrFromJSON(oParsedDateAx.spPr, oDateAx));
-		oDateAx.setTickLblPos(this.GetTickLabelNumPos(oParsedDateAx.tickLblPos));
-		oParsedDateAx.title && oDateAx.setTitle(this.TitleFromJSON(oParsedDateAx.title));
-		oParsedDateAx.txPr && oDateAx.setTxPr(this.TxPrFromJSON(oParsedDateAx.txPr, oDateAx));
+		oDateAx.setAxPos(this.GetAxPosNumType(oParsedDateAx["axPos"]));
+		oDateAx.setBaseTimeUnit(this.GetTimeUnitNumType(oParsedDateAx["baseTimeUnit"]));
+		oDateAx.crossAx = oParsedDateAx["crossAx"] ? oParsedDateAx["crossAx"] : oDateAx.crossAx;
+		oDateAx.setCrosses(this.GetCrossesNumType(oParsedDateAx["crosses"]));
+		oDateAx.setCrossesAt(oParsedDateAx["crossesAt"]);
+		oDateAx.setDelete(oParsedDateAx["delete"]);
+		oDateAx.extLst = oParsedDateAx["extLst"]; /// ???
+		oDateAx.setLblOffset(oParsedDateAx["lblOffset"]);
+		oParsedDateAx["majorGridlines"] && oDateAx.setMajorGridlines(this.SpPrFromJSON(oParsedDateAx["majorGridlines"], oDateAx));
+		oDateAx.setMajorTickMark(this.GetTickMarkNumType(oParsedDateAx["majorTickMark"]));
+		oDateAx.setMajorTimeUnit(this.GetTimeUnitNumType(oParsedDateAx["majorTimeUnit"]));
+		oDateAx.setMajorUnit(oParsedDateAx["majorUnit"]);
+		oParsedDateAx["minorGridlines"] && oDateAx.setMinorGridlines(this.SpPrFromJSON(oParsedDateAx["minorGridlines"], oDateAx));
+		oDateAx.setMinorTickMark(this.GetTickMarkNumType(oParsedDateAx["minorTickMark"]));
+		oDateAx.setMinorTimeUnit(this.GetTimeUnitNumType(oParsedDateAx["minorTimeUnit"]));
+		oDateAx.setMinorUnit(oParsedDateAx["minorUnit"]);
+		oParsedDateAx["numFmt"] && oDateAx.setNumFmt(this.NumFmtFromJSON(oParsedDateAx["numFmt"]));
+		oParsedDateAx["scaling"] && oDateAx.setScaling(this.ScalingFromJSON(oParsedDateAx["scaling"], oDateAx));
+		oParsedDateAx["spPr"] && oParsedDateAx["setSpPr"](this.SpPrFromJSON(oParsedDateAx["spPr"], oDateAx));
+		oDateAx.setTickLblPos(this.GetTickLabelNumPos(oParsedDateAx["tickLblPos"]));
+		oParsedDateAx["title"] && oDateAx.setTitle(this.TitleFromJSON(oParsedDateAx["title"]));
+		oParsedDateAx["txPr"] && oDateAx.setTxPr(this.TxPrFromJSON(oParsedDateAx["txPr"], oDateAx));
 
 		return oDateAx;
 	};
@@ -13157,10 +13494,10 @@
 	{
 		var oBarChart = new AscFormat.CBarChart();
 
-		var nBarDirType = oParsedBarChart.barDir === "bar" ? AscFormat.BAR_DIR_BAR : AscFormat.BAR_DIR_COL;
+		var nBarDirType = oParsedBarChart["barDir"] === "bar" ? AscFormat.BAR_DIR_BAR : AscFormat.BAR_DIR_COL;
 
 		var nGroupingType = undefined;
-		switch (oParsedBarChart.grouping)
+		switch (oParsedBarChart["grouping"])
 		{
 			case "clustered":
 				nGroupingType = AscFormat.BAR_GROUPING_CLUSTERED;
@@ -13176,17 +13513,20 @@
 				break;
 		}
 
-		for (var nAxis = 0; nAxis < oParsedBarChart.axId.length; nAxis++)
-			oBarChart.addAxId(oAxisMap[oParsedBarChart.axId[nAxis]]);
-			
+		for (var nAxis = 0; nAxis < oParsedBarChart["axId"].length; nAxis++)
+			oBarChart.addAxId(oAxisMap[oParsedBarChart["axId"][nAxis]]);
+		if (oParsedBarChart["b3D"] != null)
+			oBarChart.set3D(oParsedBarChart["b3D"]);
+		if (oParsedBarChart["shape"] != null)
+			oBarChart.setShape(FromXml_ST_Shape(oParsedBarChart["shape"]));
 		oBarChart.setBarDir(nBarDirType);
-		oBarChart.setDLbls(this.DLblsFromJSON(oParsedBarChart.dLbls, oBarChart));
-		oBarChart.setGapWidth(oParsedBarChart.gapWidth);
+		oBarChart.setDLbls(this.DLblsFromJSON(oParsedBarChart["dLbls"], oBarChart));
+		oBarChart.setGapWidth(oParsedBarChart["gapWidth"]);
 		oBarChart.setGrouping(nGroupingType);
-		oBarChart.setOverlap(oParsedBarChart.overlap);
-		oParsedBarChart.serLines && oBarChart.setSerLines(this.SpPrFromJSON(oParsedBarChart.serLines, oBarChart));
-		this.BarSeriesFromJSON(oParsedBarChart.ser, oBarChart);
-		oBarChart.setVaryColors(oParsedBarChart.varyColors);
+		oBarChart.setOverlap(oParsedBarChart["overlap"]);
+		oParsedBarChart["serLines"] && oBarChart.setSerLines(this.SpPrFromJSON(oParsedBarChart["serLines"], oBarChart));
+		this.BarSeriesFromJSON(oParsedBarChart["ser"], oBarChart);
+		oBarChart.setVaryColors(oParsedBarChart["varyColors"]);
 		
 		return oBarChart;
 	};
@@ -13197,42 +13537,21 @@
 			var oItem       = arrParsedBarSeries[nBarSeries];
 			var oBarSeries  = new AscFormat.CBarSeries();
 
-			var nShapeType = undefined;
-			switch(arrParsedBarSeries[nBarSeries].shape)
-			{
-				case "cone":
-					nShapeType = AscFormat.BAR_SHAPE_CONE;
-					break;
-				case "coneToMax":
-					nShapeType = AscFormat.BAR_SHAPE_CONETOMAX;
-					break;
-				case "box":
-					nShapeType = AscFormat.BAR_SHAPE_BOX;
-					break;
-				case "cylinder":
-					nShapeType = AscFormat.BAR_SHAPE_CYLINDER;
-					break;
-				case "pyramid":
-					nShapeType = AscFormat.BAR_SHAPE_PYRAMID;
-					break;
-				case "pyramidToMax":
-					nShapeType = AscFormat.BAR_SHAPE_PYRAMIDTOMAX;
-					break;
-			}
+			var nShapeType = FromXml_ST_Shape(oItem["shape"]);
 
-			oItem.cat && oBarSeries.setCat(this.CatFromJSON(oItem.cat, oBarSeries));
-			oItem.dLbls && oBarSeries.setDLbls(this.DLblsFromJSON(oItem.dLbls, oBarSeries));
-			this.DataPointsFromJSON(oItem.dPt, oBarSeries);
-			oItem.errBars && oBarSeries.setErrBars(this.ErrBarsFromJSON(oItem.errBars));
-			oBarSeries.setIdx(oItem.idx);
-			oBarSeries.setInvertIfNegative(oItem.invertIfNegative);
-			oBarSeries.setOrder(oItem.order);
-			oItem.pictureOptions && oBarSeries.setPictureOptions(this.PicOptionsFromJSON(oItem.pictureOptions));
+			oItem["cat"] && oBarSeries.setCat(this.CatFromJSON(oItem["cat"], oBarSeries));
+			oItem["dLbls"] && oBarSeries.setDLbls(this.DLblsFromJSON(oItem["dLbls"], oBarSeries));
+			this.DataPointsFromJSON(oItem["dPt"], oBarSeries);
+			oItem["errBars"] && oBarSeries.setErrBars(this.ErrBarsFromJSON(oItem["errBars"]));
+			oBarSeries.setIdx(oItem["idx"]);
+			oBarSeries.setInvertIfNegative(oItem["invertIfNegative"]);
+			oBarSeries.setOrder(oItem["order"]);
+			oItem["pictureOptions"] && oBarSeries.setPictureOptions(this.PicOptionsFromJSON(oItem["pictureOptions"]));
 			oBarSeries.setShape(nShapeType);
-			oItem.spPr && oBarSeries.setSpPr(this.SpPrFromJSON(oItem.spPr, oBarSeries));
-			oItem.trendline && oBarSeries.setTrendline(this.TrendlineFromJSON(oItem.trendline));
-			oItem.tx && oBarSeries.setTx(this.TxFromJSON(oItem.tx, oBarSeries));
-			oItem.val && oBarSeries.setVal(this.YVALFromJSON(oItem.val, oBarSeries));
+			oItem["spPr"] && oBarSeries.setSpPr(this.SpPrFromJSON(oItem["spPr"], oBarSeries));
+			oItem["trendline"] && oBarSeries.setTrendline(this.TrendlineFromJSON(oItem["trendline"]));
+			oItem["tx"] && oBarSeries.setTx(this.TxFromJSON(oItem["tx"], oBarSeries));
+			oItem["val"] && oBarSeries.setVal(this.YVALFromJSON(oItem["val"], oBarSeries));
 			
 			oParentChart.addSer(oBarSeries);
 		}
@@ -13242,7 +13561,7 @@
 		var oLineChart = new AscFormat.CLineChart();
 
 		var nGroupingType = undefined;
-		switch (oParsedLineChart.grouping)
+		switch (oParsedLineChart["grouping"])
 		{
 			case "percentStacked":
 				nGroupingType = AscFormat.GROUPING_PERCENT_STACKED;
@@ -13255,18 +13574,18 @@
 				break;
 		}
 
-		for (var nAxis = 0; nAxis < oParsedLineChart.axId.length; nAxis++)
-			oLineChart.addAxId(oAxisMap[oParsedLineChart.axId[nAxis]]);
+		for (var nAxis = 0; nAxis < oParsedLineChart["axId"].length; nAxis++)
+			oLineChart.addAxId(oAxisMap[oParsedLineChart["axId"][nAxis]]);
 
-		oParsedLineChart.dLbls && oLineChart.setDLbls(this.DLblsFromJSON(oParsedLineChart.dLbls));
-		oParsedLineChart.dropLines && oLineChart.setDropLines(this.SpPrFromJSON(oParsedLineChart.dropLines, oLineChart));
+		oParsedLineChart["dLbls"] && oLineChart.setDLbls(this.DLblsFromJSON(oParsedLineChart["dLbls"]));
+		oParsedLineChart["dropLines"] && oLineChart.setDropLines(this.SpPrFromJSON(oParsedLineChart["dropLines"], oLineChart));
 		oLineChart.setGrouping(nGroupingType);
-		oParsedLineChart.hiLowLines && oLineChart.setHiLowLines(this.SpPrFromJSON(oParsedLineChart.hiLowLines, oLineChart));
-		oLineChart.setMarker(oParsedLineChart.marker);
-		this.LineSeriesFromJSON(oParsedLineChart.ser, oLineChart);
-		oLineChart.setSmooth(oParsedLineChart.smooth);
-		oParsedLineChart.upDownBars && oLineChart.setUpDownBars(this.UpDownBarsFromJSON(oParsedLineChart.upDownBars));
-		oLineChart.setVaryColors(oParsedLineChart.varyColors);
+		oParsedLineChart["hiLowLines"] && oLineChart.setHiLowLines(this.SpPrFromJSON(oParsedLineChart["hiLowLines"], oLineChart));
+		oLineChart.setMarker(oParsedLineChart["marker"]);
+		this.LineSeriesFromJSON(oParsedLineChart["ser"], oLineChart);
+		oLineChart.setSmooth(oParsedLineChart["smooth"]);
+		oParsedLineChart["upDownBars"] && oLineChart.setUpDownBars(this.UpDownBarsFromJSON(oParsedLineChart["upDownBars"]));
+		oLineChart.setVaryColors(oParsedLineChart["varyColors"]);
 
 		return oLineChart;
 	};
@@ -13279,18 +13598,18 @@
 
 			oLineSeries.setParent(oParentChart);
 
-			oItem.cat && oLineSeries.setCat(this.CatFromJSON(oItem.cat, oLineSeries));
-			oItem.dLbls && oLineSeries.setDLbls(this.DLblsFromJSON(oItem.dLbls, oLineSeries));
-			this.DataPointsFromJSON(oItem.dPt, oLineSeries);
-			oItem.errBars && oLineSeries.setErrBars(this.ErrBarsFromJSON(oItem.errBars));
-			oLineSeries.setIdx(oItem.idx);
-			oItem.marker && oLineSeries.setMarker(this.MarkerFromJSON(oItem.marker, oLineSeries));
-			oLineSeries.setOrder(oItem.order);
-			oLineSeries.setSmooth(oItem.smooth);
-			oItem.spPr && oLineSeries.setSpPr(this.SpPrFromJSON(oItem.spPr, oLineSeries));
-			oItem.trendline && oLineSeries.setTrendline(this.TrendlineFromJSON(oItem.trendline));
-			oItem.tx && oLineSeries.setTx(this.TxFromJSON(oItem.tx, oLineSeries));
-			oItem.val && oLineSeries.setVal(this.YVALFromJSON(oItem.val, oLineSeries));
+			oItem["cat"] && oLineSeries.setCat(this.CatFromJSON(oItem["cat"], oLineSeries));
+			oItem["dLbls"] && oLineSeries.setDLbls(this.DLblsFromJSON(oItem["dLbls"], oLineSeries));
+			this.DataPointsFromJSON(oItem["dPt"], oLineSeries);
+			oItem["errBars"] && oLineSeries.setErrBars(this.ErrBarsFromJSON(oItem["errBars"]));
+			oLineSeries.setIdx(oItem["idx"]);
+			oItem["marker"] && oLineSeries.setMarker(this.MarkerFromJSON(oItem["marker"], oLineSeries));
+			oLineSeries.setOrder(oItem["order"]);
+			oLineSeries.setSmooth(oItem["smooth"]);
+			oItem["spPr"] && oLineSeries.setSpPr(this.SpPrFromJSON(oItem["spPr"], oLineSeries));
+			oItem["trendline"] && oLineSeries.setTrendline(this.TrendlineFromJSON(oItem["trendline"]));
+			oItem["tx"] && oLineSeries.setTx(this.TxFromJSON(oItem["tx"], oLineSeries));
+			oItem["val"] && oLineSeries.setVal(this.YVALFromJSON(oItem["val"], oLineSeries));
 
 			oParentChart.addSer(oLineSeries);
 		}
@@ -13299,11 +13618,11 @@
 	{
 		var oPieChart = new AscFormat.CPieChart();
 
-		oPieChart.set3D(oParsedPieChart.b3D);
-		oPieChart.setFirstSliceAng(oParsedPieChart.firstSliceAng);
-		oParsedPieChart.dLbls && oPieChart.setDLbls(this.DLblsFromJSON(oParsedPieChart.dLbls, oPieChart));
-		this.PieSeriesFromJSON(oParsedPieChart.ser, oPieChart);
-		oPieChart.setVaryColors(oParsedPieChart.varyColors);
+		oPieChart.set3D(oParsedPieChart["b3D"]);
+		oPieChart.setFirstSliceAng(oParsedPieChart["firstSliceAng"]);
+		oParsedPieChart["dLbls"] && oPieChart.setDLbls(this.DLblsFromJSON(oParsedPieChart["dLbls"], oPieChart));
+		this.PieSeriesFromJSON(oParsedPieChart["ser"], oPieChart);
+		oPieChart.setVaryColors(oParsedPieChart["varyColors"]);
 
 		return oPieChart;
 	};
@@ -13311,11 +13630,11 @@
 	{
 		var oDoughnutChart = new AscFormat.CDoughnutChart();
 
-		oDoughnutChart.setFirstSliceAng(oParsedDoughnutChart.firstSliceAng);
-		oDoughnutChart.setHoleSize(oParsedDoughnutChart.holeSize);
-		oParsedDoughnutChart.dLbls && oDoughnutChart.setDLbls(this.DLblsFromJSON(oParsedDoughnutChart.dLbls, oDoughnutChart));
-		this.PieSeriesFromJSON(oParsedDoughnutChart.ser);
-		oDoughnutChart.setVaryColors(oParsedDoughnutChart.varyColors);
+		oDoughnutChart.setFirstSliceAng(oParsedDoughnutChart["firstSliceAng"]);
+		oDoughnutChart.setHoleSize(oParsedDoughnutChart["holeSize"]);
+		oParsedDoughnutChart["dLbls"] && oDoughnutChart.setDLbls(this.DLblsFromJSON(oParsedDoughnutChart["dLbls"], oDoughnutChart));
+		this.PieSeriesFromJSON(oParsedDoughnutChart["ser"]);
+		oDoughnutChart.setVaryColors(oParsedDoughnutChart["varyColors"]);
 
 		return oDoughnutChart;
 	};
@@ -13328,15 +13647,15 @@
 
 			oPieSeries.setParent(oParentChart);
 
-			oItem.cat && oPieSeries.setCat(this.CatFromJSON(oItem.cat, oPieSeries));
-			oItem.dLbls && oPieSeries.setDLbls(this.DLblsFromJSON(oItem.dLbls, oPieSeries));
-			this.DataPointsFromJSON(oItem.dPt, oPieSeries);
-			oPieSeries.setExplosion(oItem.explosion);
-			oPieSeries.setIdx(oItem.idx);
-			oPieSeries.setIdx(oItem.order);
-			oItem.spPr && oPieSeries.setSpPr(this.SpPrFromJSON(oItem.spPr, oPieSeries));
-			oItem.tx && oPieSeries.setTx(this.TxFromJSON(oItem.tx, oPieSeries));
-			oItem.val && oPieSeries.setVal(this.YVALFromJSON(oItem.val, oPieSeries));
+			oItem["cat"] && oPieSeries.setCat(this.CatFromJSON(oItem["cat"], oPieSeries));
+			oItem["dLbls"] && oPieSeries.setDLbls(this.DLblsFromJSON(oItem["dLbls"], oPieSeries));
+			this.DataPointsFromJSON(oItem["dPt"], oPieSeries);
+			oPieSeries.setExplosion(oItem["explosion"]);
+			oPieSeries.setIdx(oItem["idx"]);
+			oPieSeries.setOrder(oItem["order"]);
+			oItem["spPr"] && oPieSeries.setSpPr(this.SpPrFromJSON(oItem["spPr"], oPieSeries));
+			oItem["tx"] && oPieSeries.setTx(this.TxFromJSON(oItem["tx"], oPieSeries));
+			oItem["val"] && oPieSeries.setVal(this.YVALFromJSON(oItem["val"], oPieSeries));
 
 			oParentChart.addSer(oPieSeries);
 		}
@@ -13346,7 +13665,7 @@
 		var oAreaChart = new AscFormat.CAreaChart();
 
 		var nGroupingType = undefined;
-		switch (oParsedAreaChart.grouping)
+		switch (oParsedAreaChart["grouping"])
 		{
 			case "percentStacked":
 				nGroupingType = AscFormat.GROUPING_PERCENT_STACKED;
@@ -13360,14 +13679,14 @@
 		
 		}
 
-		for (var nAxis = 0; nAxis < oParsedAreaChart.axId.length; nAxis++)
-			oAreaChart.addAxId(oAxisMap[oParsedAreaChart.axId[nAxis]]);
+		for (var nAxis = 0; nAxis < oParsedAreaChart["axId"].length; nAxis++)
+			oAreaChart.addAxId(oAxisMap[oParsedAreaChart["axId"][nAxis]]);
 
-		oParsedAreaChart.dLbls && oAreaChart.setDLbls(this.DLblsFromJSON(oParsedAreaChart.dLbls));
-		oParsedAreaChart.dropLines && oAreaChart.setDropLines(this.SpPrFromJSON(oParsedAreaChart.dropLines, oAreaChart));
+		oParsedAreaChart["dLbls"] && oAreaChart.setDLbls(this.DLblsFromJSON(oParsedAreaChart["dLbls"]));
+		oParsedAreaChart["dropLines"] && oAreaChart.setDropLines(this.SpPrFromJSON(oParsedAreaChart["dropLines"], oAreaChart));
 		oAreaChart.setGrouping(nGroupingType);
-		this.AreaSeriesFromJSON(oParsedAreaChart.ser, oAreaChart);
-		oAreaChart.setVaryColors(oParsedAreaChart.varyColors);
+		this.AreaSeriesFromJSON(oParsedAreaChart["ser"], oAreaChart);
+		oAreaChart.setVaryColors(oParsedAreaChart["varyColors"]);
 		
 		return oAreaChart;
 	};
@@ -13380,17 +13699,17 @@
 
 			oAreaSeries.setParent(oParentChart);
 
-			oItem.cat && oAreaSeries.setCat(this.CatFromJSON(oItem.cat, oAreaSeries));
-			oItem.dLbls && oAreaSeries.setDLbls(this.DLblsFromJSON(oItem.dLbls));
-			this.DataPointsFromJSON(oItem.dPt, oAreaSeries);
-			oItem.errBars && oAreaSeries.setErrBars(this.ErrBarsFromJSON(oItem.errBars));
-			oAreaSeries.setIdx(oItem.idx);
-			oAreaSeries.setOrder(oItem.order);
-			oItem.pictureOptions && oAreaSeries.setPictureOptions(this.PicOptionsFromJSON(oItem.pictureOptions));
-			oItem.spPr && oAreaSeries.setSpPr(this.SpPrFromJSON(oItem.spPr, oAreaSeries));
-			oItem.trendline && oAreaSeries.setTrendline(this.TrendlineFromJSON(oItem.trendline));
-			oItem.tx && oAreaSeries.setTx(this.TxFromJSON(oItem.tx, oAreaSeries));
-			oItem.val && oAreaSeries.setVal(this.YVALFromJSON(oItem.val, oAreaSeries));
+			oItem["cat"] && oAreaSeries.setCat(this.CatFromJSON(oItem["cat"], oAreaSeries));
+			oItem["dLbls"] && oAreaSeries.setDLbls(this.DLblsFromJSON(oItem["dLbls"]));
+			this.DataPointsFromJSON(oItem["dPt"], oAreaSeries);
+			oItem["errBars"] && oAreaSeries.setErrBars(this.ErrBarsFromJSON(oItem["errBars"]));
+			oAreaSeries.setIdx(oItem["idx"]);
+			oAreaSeries.setOrder(oItem["order"]);
+			oItem["pictureOptions"] && oAreaSeries.setPictureOptions(this.PicOptionsFromJSON(oItem["pictureOptions"]));
+			oItem["spPr"] && oAreaSeries.setSpPr(this.SpPrFromJSON(oItem["spPr"], oAreaSeries));
+			oItem["trendline"] && oAreaSeries.setTrendline(this.TrendlineFromJSON(oItem["trendline"]));
+			oItem["tx"] && oAreaSeries.setTx(this.TxFromJSON(oItem["tx"], oAreaSeries));
+			oItem["val"] && oAreaSeries.setVal(this.YVALFromJSON(oItem["val"], oAreaSeries));
 			
 			oParentChart.addSer(oAreaSeries);
 		}
@@ -13399,14 +13718,14 @@
 	{
 		var oStockChart = new AscFormat.CStockChart();
 
-		for (var nAxis = 0; nAxis < oParsedStockChart.axId.length; nAxis++)
-			oStockChart.addAxId(oAxisMap[oParsedStockChart.axId[nAxis]]);
+		for (var nAxis = 0; nAxis < oParsedStockChart["axId"].length; nAxis++)
+			oStockChart.addAxId(oAxisMap[oParsedStockChart["axId"][nAxis]]);
 
-		oParsedStockChart.dLbls && oStockChart.setDLbls(this.DLblsFromJSON(oParsedStockChart.dLbls));
-		oParsedStockChart.dropLines && oStockChart.setDropLines(this.SpPrFromJSON(oParsedStockChart.dropLines, oStockChart));
-		oParsedStockChart.hiLowLines && oStockChart.setHiLowLines(this.SpPrFromJSON(oParsedStockChart.hiLowLines, oStockChart));
-		this.LineSeriesFromJSON(oParsedStockChart.ser, oStockChart);
-		oParsedStockChart.upDownBars && oStockChart.setUpDownBars(this.UpDownBarsFromJSON(oParsedStockChart.upDownBars));
+		oParsedStockChart["dLbls"] && oStockChart.setDLbls(this.DLblsFromJSON(oParsedStockChart["dLbls"]));
+		oParsedStockChart["dropLines"] && oStockChart.setDropLines(this.SpPrFromJSON(oParsedStockChart["dropLines"], oStockChart));
+		oParsedStockChart["hiLowLines"] && oStockChart.setHiLowLines(this.SpPrFromJSON(oParsedStockChart["hiLowLines"], oStockChart));
+		this.LineSeriesFromJSON(oParsedStockChart["ser"], oStockChart);
+		oParsedStockChart["upDownBars"] && oStockChart.setUpDownBars(this.UpDownBarsFromJSON(oParsedStockChart["upDownBars"]));
 
 		return oStockChart;
 	};
@@ -13420,17 +13739,17 @@
 		//
 		// 	oStockSeries.setParent(oParentChart);
 		//
-		// 	oStockSeries.cat            = oItem.cat ? this.CatFromJSON(oItem.cat, oStockSeries) : oStockSeries.cat;
-		// 	oItem.dLbls && oStockSeries.setDLbls(this.DLblsFromJSON(oItem.dLbls));
-		// 	this.DataPointsFromJSON(oItem.dPt, oStockSeries);
-		// 	oStockSeries.errBars        = oItem.errBars ? this.ErrBarsFromJSON(oItem.errBars) : oStockSeries.errBars;
-		// 	oStockSeries.idx            = oItem.idx;
-		// 	oStockSeries.order          = oItem.order;
-		// 	oStockSeries.pictureOptions = oItem.pictureOptions ? this.PicOptionsFromJSON(oItem.pictureOptions) : oStockSeries.pictureOptions;
-		// 	oItem.spPr && oStockSeries.setSpPr(this.SpPrFromJSON(oItem.spPr, oStockSeries));
-		// 	oStockSeries.trendline      = oItem.trendline ? this.TrendlineFromJSON(oItem.trendline) : oStockSeries.trendline;
-		// 	oStockSeries.tx             = oItem.tx ? this.TxFromJSON(oItem.tx, oStockSeries) : oStockSeries.tx;
-		// 	oStockSeries.val            = oItem.val ? this.YVALFromJSON(oItem.val, oStockSeries) : oStockSeries.val;
+		// 	oStockSeries.cat            = oItem["cat"] ? this.CatFromJSON(oItem["cat"], oStockSeries) : oStockSeries.cat;
+		// 	oItem["dLbls"] && oStockSeries.setDLbls(this.DLblsFromJSON(oItem["dLbls"]));
+		// 	this.DataPointsFromJSON(oItem["dPt"], oStockSeries);
+		// 	oStockSeries.errBars        = oItem["errBars"] ? this.ErrBarsFromJSON(oItem["errBars"]) : oStockSeries.errBars;
+		// 	oStockSeries.idx            = oItem["idx"];
+		// 	oStockSeries.order          = oItem["order"];
+		// 	oStockSeries.pictureOptions = oItem["pictureOptions"] ? this.PicOptionsFromJSON(oItem["pictureOptions"]) : oStockSeries.pictureOptions;
+		// 	oItem["spPr"] && oStockSeries.setSpPr(this.SpPrFromJSON(oItem["spPr"], oStockSeries));
+		// 	oStockSeries.trendline      = oItem["trendline"] ? this.TrendlineFromJSON(oItem["trendline"]) : oStockSeries.trendline;
+		// 	oStockSeries.tx             = oItem["tx"] ? this.TxFromJSON(oItem["tx"], oStockSeries) : oStockSeries.tx;
+		// 	oStockSeries.val            = oItem["val"] ? this.YVALFromJSON(oItem["val"], oStockSeries) : oStockSeries.val;
 		//
 		// 	arrStockSeriesResult.push(oStockSeries);
 		// }
@@ -13442,7 +13761,7 @@
 		var oScatterChart = new AscFormat.CScatterChart();
 
 		var nScatterStyle = undefined;
-		switch(oParsedScatterChart.scatterStyle)
+		switch(oParsedScatterChart["scatterStyle"])
 		{
 			case "line":
 				nScatterStyle = AscFormat.SCATTER_STYLE_LINE;
@@ -13464,12 +13783,12 @@
 				break;
 		}
 
-		for (var nAxis = 0; nAxis < oParsedScatterChart.axId.length; nAxis++)
-			oScatterChart.addAxId(oAxisMap[oParsedScatterChart.axId[nAxis]]);
+		for (var nAxis = 0; nAxis < oParsedScatterChart["axId"].length; nAxis++)
+			oScatterChart.addAxId(oAxisMap[oParsedScatterChart["axId"][nAxis]]);
 
-		oParsedScatterChart.dLbls && oScatterChart.setDLbls(this.DLblsFromJSON(oParsedScatterChart.dLbls, oScatterChart));
+		oParsedScatterChart["dLbls"] && oScatterChart.setDLbls(this.DLblsFromJSON(oParsedScatterChart["dLbls"], oScatterChart));
 		oScatterChart.setScatterStyle(nScatterStyle);
-		this.ScatterSeriesFromJSON(oParsedScatterChart.ser, oScatterChart);
+		this.ScatterSeriesFromJSON(oParsedScatterChart["ser"], oScatterChart);
 
 		return oScatterChart;
 	};
@@ -13482,18 +13801,18 @@
 
 			oScatterSeries.setParent(oParentChart);
 			
-			oItem.dLbls && oScatterSeries.setDLbls(this.DLblsFromJSON(oItem.dLbls));
-			this.DataPointsFromJSON(oItem.dPt, oScatterSeries);
-			oItem.errBars && oScatterSeries.setErrBars(this.ErrBarsFromJSON(oItem.errBars));
-			oScatterSeries.setIdx(oItem.idx);
-			oItem.marker && oScatterSeries.setMarker(this.MarkerFromJSON(oItem.marker, oScatterSeries));
-			oScatterSeries.setOrder(oItem.order);
-			oScatterSeries.setSmooth(oItem.smooth);
-			oItem.spPr && oScatterSeries.setSpPr(this.SpPrFromJSON(oItem.spPr, oScatterSeries));
-			oItem.trendline && oScatterSeries.setTrendline(this.TrendlineFromJSON(oItem.trendline));
-			oItem.tx && oScatterSeries.setTx(this.TxFromJSON(oItem.tx, oScatterSeries));
-			oItem.yVal && oScatterSeries.setYVal(this.YVALFromJSON(oItem.yVal, oScatterSeries));
-			oItem.xVal && oScatterSeries.setXVal(this.CatFromJSON(oItem.xVal, oScatterSeries));
+			oItem["dLbls"] && oScatterSeries.setDLbls(this.DLblsFromJSON(oItem["dLbls"]));
+			this.DataPointsFromJSON(oItem["dPt"], oScatterSeries);
+			oItem["errBars"] && oScatterSeries.setErrBars(this.ErrBarsFromJSON(oItem["errBars"]));
+			oScatterSeries.setIdx(oItem["idx"]);
+			oItem["marker"] && oScatterSeries.setMarker(this.MarkerFromJSON(oItem["marker"], oScatterSeries));
+			oScatterSeries.setOrder(oItem["order"]);
+			oScatterSeries.setSmooth(oItem["smooth"]);
+			oItem["spPr"] && oScatterSeries.setSpPr(this.SpPrFromJSON(oItem["spPr"], oScatterSeries));
+			oItem["trendline"] && oScatterSeries.setTrendline(this.TrendlineFromJSON(oItem["trendline"]));
+			oItem["tx"] && oScatterSeries.setTx(this.TxFromJSON(oItem["tx"], oScatterSeries));
+			oItem["yVal"] && oScatterSeries.setYVal(this.YVALFromJSON(oItem["yVal"], oScatterSeries));
+			oItem["xVal"] && oScatterSeries.setXVal(this.CatFromJSON(oItem["xVal"], oScatterSeries));
 
 			oParentChart.addSer(oScatterSeries);
 		}
@@ -13502,30 +13821,30 @@
 	{
 		var oSurfaceChart = new AscFormat.CSurfaceChart();
 
-		for (var nAxis = 0; nAxis < oParsedSurfaceChart.axId.length; nAxis++)
-			oSurfaceChart.addAxId(oAxisMap[oParsedSurfaceChart.axId[nAxis]]);
+		for (var nAxis = 0; nAxis < oParsedSurfaceChart["axId"].length; nAxis++)
+			oSurfaceChart.addAxId(oAxisMap[oParsedSurfaceChart["axId"][nAxis]]);
 
-		this.BandFmtsFromJSON(oParsedSurfaceChart.bandFmts);
-		this.SurfaceSeriesFromJSON(oParsedSurfaceChart.series, oSurfaceChart);
-		oSurfaceChart.setWireframe(oParsedSurfaceChart.wireframe);
+		this.BandFmtsFromJSON(oParsedSurfaceChart["bandFmts"]);
+		this.SurfaceSeriesFromJSON(oParsedSurfaceChart["series"], oSurfaceChart);
+		oSurfaceChart.setWireframe(oParsedSurfaceChart["wireframe"]);
 
 		return oSurfaceChart;
 	};
-	ReaderFromJSON.prototype.SurfaceSeriesFromJSON = function(arrSurfaceSeries, oParentChart)
+	ReaderFromJSON.prototype.SurfaceSeriesFromJSON = function(arrParsedSurfaceSeries, oParentChart)
 	{
-		for (var nSurfaceSeries = 0; nSurfaceSeries < arrSurfaceSeries.length; nSurfaceSeries++)
+		for (var nSurfaceSeries = 0; nSurfaceSeries < arrParsedSurfaceSeries.length; nSurfaceSeries++)
 		{
-			var oItem          = arrSurfaceSeries[nSurfaceSeries];
+			var oItem          = arrParsedSurfaceSeries[nSurfaceSeries];
 			var oSurfaceSeries = new AscFormat.CSurfaceSeries();
 
 			oSurfaceSeries.setParent(oParentChart);
 
-			oItem.cat && oSurfaceSeries.setCat(this.CatFromJSON(oItem.cat, oSurfaceSeries));
-			oSurfaceSeries.setIdx(oItem.idx);
-			oSurfaceSeries.setOrder(oItem.order);
-			oItem.spPr && oSurfaceSeries.setSpPr(this.SpPrFromJSON(oItem.spPr, oSurfaceSeries));
-			oItem.tx && oSurfaceSeries.setTx(this.TxFromJSON(oItem.tx, oSurfaceSeries));
-			oItem.val && oSurfaceSeries.setVal(this.YVALFromJSON(oItem.val, oSurfaceSeries));
+			oItem["cat"] && oSurfaceSeries.setCat(this.CatFromJSON(oItem["cat"], oSurfaceSeries));
+			oSurfaceSeries.setIdx(oItem["idx"]);
+			oSurfaceSeries.setOrder(oItem["order"]);
+			oItem["spPr"] && oSurfaceSeries.setSpPr(this.SpPrFromJSON(oItem["spPr"], oSurfaceSeries));
+			oItem["tx"] && oSurfaceSeries.setTx(this.TxFromJSON(oItem["tx"], oSurfaceSeries));
+			oItem["val"] && oSurfaceSeries.setVal(this.YVALFromJSON(oItem["val"], oSurfaceSeries));
 			
 			oParentChart.addSer(oSurfaceSeries);
 		}
@@ -13534,10 +13853,10 @@
 	{
 		for (var nBand = 0; nBand < arrParsedBandFmts.length; nBand++)
 		{
-			var oBandFmt     = new AscFormat.CBandFmt();
+			var oBandFmt = new AscFormat.CBandFmt();
 
-			oBandFmt.setIdx(arrParsedBandFmts[nBand].idx);
-			arrParsedBandFmts[nBand].spPr && oBandFmt.setSpPr(this.SpPrFromJSON(arrParsedBandFmts[nBand].spPr, oBandFmt));
+			oBandFmt.setIdx(arrParsedBandFmts[nBand]["idx"]);
+			arrParsedBandFmts[nBand]["spPr"] && oBandFmt.setSpPr(this.SpPrFromJSON(arrParsedBandFmts[nBand]["spPr"], oBandFmt));
 			
 			oParentChart.addBandFmt(oBandFmt);
 		}
@@ -13546,18 +13865,18 @@
 	{
 		var oBubbleChart = new AscFormat.CBubbleChart();
 
-		var nSizeRepresents = oParsedBubbleChart.sizeRepresents === "area" ? AscFormat.SIZE_REPRESENTS_AREA : AscFormat.SIZE_REPRESENTS_W;
+		var nSizeRepresents = oParsedBubbleChart["sizeRepresents"] === "area" ? AscFormat.SIZE_REPRESENTS_AREA : AscFormat.SIZE_REPRESENTS_W;
 
-		for (var nAxis = 0; nAxis < oParsedBubbleChart.axId.length; nAxis++)
-			oBubbleChart.addAxId(oAxisMap[oParsedBubbleChart.axId[nAxis]]);
+		for (var nAxis = 0; nAxis < oParsedBubbleChart["axId"].length; nAxis++)
+			oBubbleChart.addAxId(oAxisMap[oParsedBubbleChart["axId"][nAxis]]);
 
-		oBubbleChart.setBubble3D(oParsedBubbleChart.bubble3D);
-		oBubbleChart.setBubbleScale(oParsedBubbleChart.bubbleScale);
-		oParsedBubbleChart.dLbls && oBubbleChart.setDLbls(this.DLblsFromJSON(oParsedBubbleChart.dLbls, oBubbleChart));
-		this.BubbleSeriesFromJSON(oParsedBubbleChart.series, oBubbleChart);
-		oBubbleChart.setShowNegBubbles(oParsedBubbleChart.showNegBubbles);
+		oBubbleChart.setBubble3D(oParsedBubbleChart["bubble3D"]);
+		oBubbleChart.setBubbleScale(oParsedBubbleChart["bubbleScale"]);
+		oParsedBubbleChart["dLbls"] && oBubbleChart.setDLbls(this.DLblsFromJSON(oParsedBubbleChart["dLbls"], oBubbleChart));
+		this.BubbleSeriesFromJSON(oParsedBubbleChart["series"], oBubbleChart);
+		oBubbleChart.setShowNegBubbles(oParsedBubbleChart["showNegBubbles"]);
 		oBubbleChart.setSizeRepresents(nSizeRepresents);
-		oBubbleChart.setVaryColors(oParsedBubbleChart.varyColors);
+		oBubbleChart.setVaryColors(oParsedBubbleChart["varyColors"]);
 	
 		return oBubbleChart;
 	};
@@ -13570,19 +13889,19 @@
 
 			oBubbleSeries.setParent(oParentChart);
 
-			oBubbleSeries.setBubble3D(oItem.bubble3D);
-			oBubbleSeries.setBubbleSize(this.YVALFromJSON(oItem.bubbleSize, oBubbleSeries));
-			oItem.dLbls && oBubbleSeries.setDLbls(this.DLblsFromJSON(oItem.dLbls, oBubbleSeries));
-			this.DataPointsFromJSON(oItem.dPt, oBubbleSeries);
-			oItem.errBars && oBubbleSeries.setErrBars(this.ErrBarsFromJSON(oItem.errBars));
-			oBubbleSeries.setIdx(oItem.idx);
-			oBubbleSeries.setInvertIfNegative(oItem.invertIfNegative);
-			oBubbleSeries.setOrder(oItem.order);
-			oItem.spPr && oBubbleSeries.setSpPr(this.SpPrFromJSON(oItem.spPr, oBubbleSeries));
-			oItem.trendline && oBubbleSeries.setTrendline(this.TrendlineFromJSON(oItem.trendline));
-			oItem.tx && oBubbleSeries.setTx(this.TxFromJSON(oItem.tx, oBubbleSeries));
-			oItem.yVal && oBubbleSeries.setYVal(this.YVALFromJSON(oItem.yVal, oBubbleSeries));
-			oItem.xVal && oBubbleSeries.setXVal(this.CatFromJSON(oItem.xVal, oBubbleSeries));
+			oBubbleSeries.setBubble3D(oItem["bubble3D"]);
+			oBubbleSeries.setBubbleSize(this.YVALFromJSON(oItem["bubbleSize"], oBubbleSeries));
+			oItem["dLbls"] && oBubbleSeries.setDLbls(this.DLblsFromJSON(oItem["dLbls"], oBubbleSeries));
+			this.DataPointsFromJSON(oItem["dPt"], oBubbleSeries);
+			oItem["errBars"] && oBubbleSeries.setErrBars(this.ErrBarsFromJSON(oItem["errBars"]));
+			oBubbleSeries.setIdx(oItem["idx"]);
+			oBubbleSeries.setInvertIfNegative(oItem["invertIfNegative"]);
+			oBubbleSeries.setOrder(oItem["order"]);
+			oItem["spPr"] && oBubbleSeries.setSpPr(this.SpPrFromJSON(oItem["spPr"], oBubbleSeries));
+			oItem["trendline"] && oBubbleSeries.setTrendline(this.TrendlineFromJSON(oItem["trendline"]));
+			oItem["tx"] && oBubbleSeries.setTx(this.TxFromJSON(oItem["tx"], oBubbleSeries));
+			oItem["yVal"] && oBubbleSeries.setYVal(this.YVALFromJSON(oItem["yVal"], oBubbleSeries));
+			oItem["xVal"] && oBubbleSeries.setXVal(this.CatFromJSON(oItem["xVal"], oBubbleSeries));
 			
 			oParentChart.addSer(oBubbleSeries);
 		}
@@ -13592,7 +13911,7 @@
 		var oRadarChart = new AscFormat.CRadarChart();
 
 		var nRadarStyle = undefined;
-		switch(oRadarChart.radarStyle)
+		switch(oParsedRadarChart["radarStyle"])
 		{
 			case "standard":
 				nRadarStyle = AscFormat.RADAR_STYLE_STANDARD;
@@ -13605,13 +13924,13 @@
 				break;
 		}
 
-		for (var nAxis = 0; nAxis < oParsedRadarChart.axId.length; nAxis++)
-			oRadarChart.addAxId(oAxisMap[oParsedRadarChart.axId[nAxis]]);
+		for (var nAxis = 0; nAxis < oParsedRadarChart["axId"].length; nAxis++)
+			oRadarChart.addAxId(oAxisMap[oParsedRadarChart["axId"][nAxis]]);
 
-		oParsedRadarChart.dLbls && oRadarChart.setDLbls(this.DLblsFromJSON(oParsedRadarChart.dLbls, oRadarChart));
+		oParsedRadarChart["dLbls"] && oRadarChart.setDLbls(this.DLblsFromJSON(oParsedRadarChart["dLbls"], oRadarChart));
 		oRadarChart.setRadarStyle(nRadarStyle);
-		this.RadarSeriesFromJSOM(oParsedRadarChart.ser, oRadarChart);
-		oRadarChart.setVaryColors(oParsedRadarChart.varyColors);
+		this.RadarSeriesFromJSOM(oParsedRadarChart["ser"], oRadarChart);
+		oRadarChart.setVaryColors(oParsedRadarChart["varyColors"]);
 
 		return oRadarChart;
 	};
@@ -13622,15 +13941,15 @@
 			var oItem        = arrParsedRadarSeries[nRadarSeries];
 			var oRadarSeries = new AscFormat.CRadarSeries();
 
-			oItem.cat && oRadarSeries.setCat(this.CatFromJSON(oItem.cat, oRadarSeries));
-			oItem.dLbls && oRadarSeries.setDLbls(this.DLblsFromJSON(oItem.dLbls, oRadarSeries));
-			this.DataPointsFromJSON(oItem.dPt, oRadarSeries);
-			oRadarSeries.setIdx(oItem.idx);
-			oItem.marker && oRadarSeries.setMarker(this.MarkerFromJSON(oItem.marker, oRadarSeries));
-			oRadarSeries.setOrder(oItem.order);
-			oItem.spPr && oRadarSeries.setSpPr(this.SpPrFromJSON(oItem.spPr, oRadarSeries));
-			oItem.tx && oRadarSeries.setTx(this.TxFromJSON(oItem.tx, oRadarSeries));
-			oRadarSeries.val && oRadarSeries.setVal(this.YVALFromJSON(oItem.val, oRadarSeries));
+			oItem["cat"] && oRadarSeries.setCat(this.CatFromJSON(oItem["cat"], oRadarSeries));
+			oItem["dLbls"] && oRadarSeries.setDLbls(this.DLblsFromJSON(oItem["dLbls"], oRadarSeries));
+			this.DataPointsFromJSON(oItem["dPt"], oRadarSeries);
+			oRadarSeries.setIdx(oItem["idx"]);
+			oItem["marker"] && oRadarSeries.setMarker(this.MarkerFromJSON(oItem["marker"], oRadarSeries));
+			oRadarSeries.setOrder(oItem["order"]);
+			oItem["spPr"] && oRadarSeries.setSpPr(this.SpPrFromJSON(oItem["spPr"], oRadarSeries));
+			oItem["tx"] && oRadarSeries.setTx(this.TxFromJSON(oItem["tx"], oRadarSeries));
+			oRadarSeries.val && oRadarSeries.setVal(this.YVALFromJSON(oItem["val"], oRadarSeries));
 
 			oParentChart.addSer(oRadarSeries);
 		}
@@ -13639,9 +13958,9 @@
 	{
 		var oUpDownBars = new AscFormat.CUpDownBars();
 
-		oParsedUpDownBars.downBars && oUpDownBars.setDownBars(this.SpPrFromJSON(oParsedUpDownBars.downBars, oUpDownBars));
-		oUpDownBars.setGapWidth(oParsedUpDownBars.gapWidth);
-		oParsedUpDownBars.upBars && oUpDownBars.setUpBars(this.SpPrFromJSON(oParsedUpDownBars.upBars, oUpDownBars));
+		oParsedUpDownBars["downBars"] && oUpDownBars.setDownBars(this.SpPrFromJSON(oParsedUpDownBars["downBars"], oUpDownBars));
+		oUpDownBars.setGapWidth(oParsedUpDownBars["gapWidth"]);
+		oParsedUpDownBars["upBars"] && oUpDownBars.setUpBars(this.SpPrFromJSON(oParsedUpDownBars["upBars"], oUpDownBars));
 
 		return oUpDownBars;
 	};
@@ -13651,8 +13970,8 @@
 
 		oTx.setParent(oParent);
 
-		oTx.setVal(oParsedTx.v);
-		oParsedTx.strRef && oTx.setStrRef(this.StrRefFromJSON(oParsedTx.strRef));
+		oTx.setVal(oParsedTx["v"]);
+		oParsedTx["strRef"] && oTx.setStrRef(this.StrRefFromJSON(oParsedTx["strRef"]));
 		
 		return oTx;
 	};
@@ -13662,8 +13981,8 @@
 
 		oYVal.setParent(oParent);
 
-		oParsedYVal.numLit && oYVal.setNumLit(this.NumLitFromJSON(oParsedYVal.numLit, oYVal));
-		oParsedYVal.numRef && oYVal.setNumRef(this.NumRefFromJSON(oParsedYVal.numRef, oYVal));
+		oParsedYVal["numLit"] && oYVal.setNumLit(this.NumLitFromJSON(oParsedYVal["numLit"], oYVal));
+		oParsedYVal["numRef"] && oYVal.setNumRef(this.NumRefFromJSON(oParsedYVal["numRef"], oYVal));
 		
 		return oYVal;
 	};
@@ -13672,7 +13991,7 @@
 		var oTrendLine = new AscFormat.CTrendLine();
 
 		var nTrendlineType = undefined;
-		switch(oTrendLine.trendlineType)
+		switch(oParsedTrendLine["trendlineType"])
 		{
 			case "exp":
 				nTrendlineType = AscFormat.st_trendlinetypeEXP;
@@ -13694,16 +14013,16 @@
 				break;
 		}
 
-		oTrendLine.setBackward(oParsedTrendLine.backward);
-		oTrendLine.setDispEq(oParsedTrendLine.dispEq);
-		oTrendLine.setDispRSqr(oParsedTrendLine.dispRSqr);
-		oTrendLine.setForward(oParsedTrendLine.forward);
-		oTrendLine.setIntercept(oParsedTrendLine.intercept);
-		oTrendLine.setName(oParsedTrendLine.name);
-		oTrendLine.setOrder(oParsedTrendLine.order);
-		oTrendLine.setPeriod(oParsedTrendLine.period);
-		oParsedTrendLine.spPr && oTrendLine.setSpPr(this.SpPrFromJSON(oParsedTrendLine.spPr, oTrendLine));
-		oParsedTrendLine.trendlineLbl && oTrendLine.setTrendlineLbl(this.DlblFromJSON(oParsedTrendLine.trendlineLbl));
+		oTrendLine.setBackward(oParsedTrendLine["backward"]);
+		oTrendLine.setDispEq(oParsedTrendLine["dispEq"]);
+		oTrendLine.setDispRSqr(oParsedTrendLine["dispRSqr"]);
+		oTrendLine.setForward(oParsedTrendLine["forward"]);
+		oTrendLine.setIntercept(oParsedTrendLine["intercept"]);
+		oTrendLine.setName(oParsedTrendLine["name"]);
+		oTrendLine.setOrder(oParsedTrendLine["order"]);
+		oTrendLine.setPeriod(oParsedTrendLine["period"]);
+		oParsedTrendLine["spPr"] && oTrendLine.setSpPr(this.SpPrFromJSON(oParsedTrendLine["spPr"], oTrendLine));
+		oParsedTrendLine["trendlineLbl"] && oTrendLine.setTrendlineLbl(this.DlblFromJSON(oParsedTrendLine["trendlineLbl"]));
 		oTrendLine.setTrendlineType(nTrendlineType);
 
 		return oTrendLine;
@@ -13713,7 +14032,7 @@
 		var oErrBars = new AscFormat.CErrBars();
 
 		var nErrBarType = undefined;
-		switch(oParsedErrBars.errBarType)
+		switch(oParsedErrBars["errBarType"])
 		{
 			case "both":
 				nErrBarType = AscFormat.st_errbartypeBOTH;
@@ -13726,10 +14045,10 @@
 				break;
 		}
 
-		var nErrDir = oParsedErrBars.errDir === "x" ? AscFormat.st_errdirX : AscFormat.st_errdirY;
+		var nErrDir = oParsedErrBars["errDir"] === "x" ? AscFormat.st_errdirX : AscFormat.st_errdirY;
 
 		var nErrValType = undefined;
-		switch(oParsedErrBars.errValType)
+		switch(oParsedErrBars["errValType"])
 		{
 			case "cust":
 				nErrValType = AscFormat.st_errvaltypeCUST;
@@ -13751,11 +14070,11 @@
 		oErrBars.setErrBarType(nErrBarType);
 		oErrBars.setErrDir(nErrDir);
 		oErrBars.setErrValType(nErrValType);
-		oParsedErrBars.minus && oErrBars.setMinus(this.MinusPlusFromJSON(oParsedErrBars.minus));
-		oParsedErrBars.plus && oErrBars.setPlus(this.MinusPlusFromJSON(oParsedErrBars.plus));
-		oErrBars.setNoEndCap(oParsedErrBars.noEndCap);
-		oParsedErrBars.spPr && oErrBars.setSpPr(this.SpPrFromJSON(oParsedErrBars.spPr, oErrBars));
-		oErrBars.setVal(oParsedErrBars.val);
+		oParsedErrBars["minus"] && oErrBars.setMinus(this.MinusPlusFromJSON(oParsedErrBars["minus"]));
+		oParsedErrBars["plus"] && oErrBars.setPlus(this.MinusPlusFromJSON(oParsedErrBars["plus"]));
+		oErrBars.setNoEndCap(oParsedErrBars["noEndCap"]);
+		oParsedErrBars["spPr"] && oErrBars.setSpPr(this.SpPrFromJSON(oParsedErrBars["spPr"], oErrBars));
+		oErrBars.setVal(oParsedErrBars["val"]);
 
 		return oErrBars;
 	};
@@ -13763,8 +14082,8 @@
 	{
 		var oMinusPlus = new AscFormat.CMinusPlus();
 
-		oParsedMinusPlus.numLit && oMinusPlus.setNumLit(this.NumLitFromJSON(oParsedMinusPlus.numLit, oMinusPlus));
-		oParsedMinusPlus.numRef && oMinusPlus.setNumRef(this.NumRefFromJSON(oParsedMinusPlus.numRef, oMinusPlus));
+		oParsedMinusPlus["numLit"] && oMinusPlus.setNumLit(this.NumLitFromJSON(oParsedMinusPlus["numLit"], oMinusPlus));
+		oParsedMinusPlus["numRef"] && oMinusPlus.setNumRef(this.NumRefFromJSON(oParsedMinusPlus["numRef"], oMinusPlus));
 
 		return oMinusPlus;
 	};
@@ -13774,13 +14093,13 @@
 		{
 			var oDataPoint = new AscFormat.CDPt();
 
-			oDataPoint.setBubble3D(oParsedDataPoints[nItem].bubble3D);
-			oDataPoint.setExplosion(oParsedDataPoints[nItem].explosion);
-			oDataPoint.setIdx(oParsedDataPoints[nItem].idx);
-			oDataPoint.setInvertIfNegative(oParsedDataPoints[nItem].invertIfNegative);
-			oParsedDataPoints[nItem].marker && oDataPoint.setMarker(this.MarkerFromJSON(oParsedDataPoints[nItem].marker, oDataPoint));
-			oParsedDataPoints[nItem].pictureOptions && oDataPoint.setPictureOptions(this.PicOptionsFromJSON(oParsedDataPoints[nItem].pictureOptions));
-			oParsedDataPoints[nItem].spPr && oDataPoint.setSpPr(this.SpPrFromJSON(oParsedDataPoints[nItem].spPr, oDataPoint));
+			oDataPoint.setBubble3D(oParsedDataPoints[nItem]["bubble3D"]);
+			oDataPoint.setExplosion(oParsedDataPoints[nItem]["explosion"]);
+			oDataPoint.setIdx(oParsedDataPoints[nItem]["idx"]);
+			oDataPoint.setInvertIfNegative(oParsedDataPoints[nItem]["invertIfNegative"]);
+			oParsedDataPoints[nItem]["marker"] && oDataPoint.setMarker(this.MarkerFromJSON(oParsedDataPoints[nItem]["marker"], oDataPoint));
+			oParsedDataPoints[nItem]["pictureOptions"] && oDataPoint.setPictureOptions(this.PicOptionsFromJSON(oParsedDataPoints[nItem]["pictureOptions"]));
+			oParsedDataPoints[nItem]["spPr"] && oDataPoint.setSpPr(this.SpPrFromJSON(oParsedDataPoints[nItem]["spPr"], oDataPoint));
 
 			oParent.addDPt(oDataPoint);
 		}
@@ -13791,11 +14110,11 @@
 
 		oCat.setParent(oParent);
 
-		oParsedCat.multiLvlStrRef && oCat.setMultiLvlStrRef(this.MultiLvlStrRefFromJSON(oParsedCat.multiLvlStrRef));
-		oParsedCat.numLit && oCat.setNumLit(this.NumLitFromJSON(oParsedCat.numLit, oCat));
-		oParsedCat.numRef && oCat.setNumRef(this.NumRefFromJSON(oParsedCat.numRef, oCat));
-		oParsedCat.strLit && oCat.setStrLit(this.StrLitFromJSON(oParsedCat.strLit));
-		oParsedCat.strRef && oCat.setStrRef(this.StrRefFromJSON(oParsedCat.strRef));
+		oParsedCat["multiLvlStrRef"] && oCat.setMultiLvlStrRef(this.MultiLvlStrRefFromJSON(oParsedCat["multiLvlStrRef"]));
+		oParsedCat["numLit"] && oCat.setNumLit(this.NumLitFromJSON(oParsedCat["numLit"], oCat));
+		oParsedCat["numRef"] && oCat.setNumRef(this.NumRefFromJSON(oParsedCat["numRef"], oCat));
+		oParsedCat["strLit"] && oCat.setStrLit(this.StrLitFromJSON(oParsedCat["strLit"]));
+		oParsedCat["strRef"] && oCat.setStrRef(this.StrRefFromJSON(oParsedCat["strRef"]));
 
 		return oCat;
 	};
@@ -13803,19 +14122,19 @@
 	{
 		var oNumLit = new AscFormat.CNumLit();
 
-		for (var nPt = 0; nPt < oParsedNumLit.pt.length; nPt++)
+		for (var nPt = 0; nPt < oParsedNumLit["pt"].length; nPt++)
 		{
 			var oPt = new AscFormat.CNumericPoint();
 
-			oPt.setFormatCode(oParsedNumLit.pt[nPt].formatCode);
-			oPt.setIdx(oParsedNumLit.pt[nPt].idx);
-			oPt.setVal(oParsedNumLit.pt[nPt].v);
+			oPt.setFormatCode(oParsedNumLit["pt"][nPt]["formatCode"]);
+			oPt.setIdx(oParsedNumLit["pt"][nPt]["idx"]);
+			oPt.setVal(oParsedNumLit["pt"][nPt]["v"]);
 			
 			oNumLit.addPt(oPt);
 		}
 
-		oNumLit.setPtCount(oParsedNumLit.ptCount);
-		oNumLit.setFormatCode(oParsedNumLit.formatCode);
+		oNumLit.setPtCount(oParsedNumLit["ptCount"]);
+		oNumLit.setFormatCode(oParsedNumLit["formatCode"]);
 
 		return oNumLit;
 	};
@@ -13823,25 +14142,25 @@
 	{
 		var oNumRef = new AscFormat.CNumRef();
 
-		oNumRef.setF(oParsedNumRef.f);
-		oParsedNumRef.numCache && oNumRef.setNumCache(this.NumLitFromJSON(oParsedNumRef.numCache));
+		oNumRef.setF(oParsedNumRef["f"]);
+		oParsedNumRef["numCache"] && oNumRef.setNumCache(this.NumLitFromJSON(oParsedNumRef["numCache"]));
 
 		return oNumRef;
 	};
 	ReaderFromJSON.prototype.MultiLvlStrRefFromJSON = function(oParsedMultiLvl)
 	{
 		var oMultiLvlStrRef = new AscFormat.CMultiLvlStrRef();
-		oParsedMultiLvl.multiLvlStrCache && oMultiLvlStrRef.setMultiLvlStrCache(new AscFormat.CMultiLvlStrCache());
+		oParsedMultiLvl["multiLvlStrCache"] && oMultiLvlStrRef.setMultiLvlStrCache(new AscFormat.CMultiLvlStrCache());
 
 		if (oMultiLvlStrRef.multiLvlStrCache)
 		{
-			for (var nLvl = 0; nLvl < oParsedMultiLvl.multiLvlStrCache.lvl.length; nLvl++)
-				oMultiLvlStrRef.multiLvlStrCache.addLvl(this.StrLitFromJSON(oParsedMultiLvl.multiLvlStrCache[nLvl]));
+			for (var nLvl = 0; nLvl < oParsedMultiLvl["multiLvlStrCache"]["lvl"].length; nLvl++)
+				oMultiLvlStrRef.multiLvlStrCache.addLvl(this.StrLitFromJSON(oParsedMultiLvl["multiLvlStrCache"][nLvl]));
 		
-			oMultiLvlStrRef.multiLvlStrCache.setPtCount(oParsedMultiLvl.multiLvlStrCache.ptCount);
+			oMultiLvlStrRef.multiLvlStrCache.setPtCount(oParsedMultiLvl["multiLvlStrCache"]["ptCount"]);
 		}
 
-		oMultiLvlStrRef.setF(oParsedMultiLvl.f);
+		oMultiLvlStrRef.setF(oParsedMultiLvl["f"]);
 
 		return oMultiLvlStrRef;
 	};
@@ -13849,16 +14168,16 @@
 	{
 		var oStrLit = new AscFormat.CStrCache();
 
-		for (var nPt = 0; nPt < oParsedStrLit.pt.length; nPt++)
+		for (var nPt = 0; nPt < oParsedStrLit["pt"].length; nPt++)
 		{
 			var oPt = new AscFormat.CStringPoint();
 
-			oPt.setIdx(oParsedStrLit.pt[nPt].idx);
-			oPt.setVal(oParsedStrLit.pt[nPt].v);
+			oPt.setIdx(oParsedStrLit["pt"][nPt]["idx"]);
+			oPt.setVal(oParsedStrLit["pt"][nPt]["v"]);
 
 			oStrLit.addPt(oPt);
 		}
-		oStrLit.setPtCount(oParsedStrLit.ptCount);
+		oStrLit.setPtCount(oParsedStrLit["ptCount"]);
 		
 		return oStrLit;
 	};
@@ -13870,7 +14189,7 @@
 
 		// TickLblPos
 		var nDLblPos = undefined;
-		switch (oParsedDLbls.dLblPos)
+		switch (oParsedDLbls["dLblPos"])
 		{
 			case "b":
 				nDLblPos = Asc.c_oAscChartDataLabelsPos.b;
@@ -13901,23 +14220,23 @@
 				break;
 		}
 
-		oDlbls.setDelete(oParsedDLbls.delete);
+		oDlbls.setDelete(oParsedDLbls["delete"]);
 		oDlbls.setDLblPos(nDLblPos);
-		for (var nDlbl = 0; nDlbl < oParsedDLbls.dLbl.length; nDlbl++)
-			oDlbls.addDLbl(this.DlblFromJSON(oParsedDLbls.dLbl[nDlbl]));
+		for (var nDlbl = 0; nDlbl < oParsedDLbls["dLbl"].length; nDlbl++)
+			oDlbls.addDLbl(this.DlblFromJSON(oParsedDLbls["dLbl"][nDlbl]));
 
-		oParsedDLbls.leaderLines && oDlbls.setLeaderLines(this.SpPrFromJSON(oParsedDLbls.leaderLines, oDlbls));
-		oParsedDLbls.numFmt && oDlbls.setNumFmt(this.NumFmtFromJSON(oParsedDLbls.numFmt));
-		oDlbls.setSeparator(oParsedDLbls.separator);
-		oDlbls.setShowBubbleSize(oParsedDLbls.showBubbleSize);
-		oDlbls.setShowCatName(oParsedDLbls.showCatName);
-		oDlbls.setShowLeaderLines(oParsedDLbls.showLeaderLines);
-		oDlbls.setShowLegendKey(oParsedDLbls.showLegendKey);
-		oDlbls.setShowPercent(oParsedDLbls.showPercent);
-		oDlbls.setShowSerName(oParsedDLbls.showSerName);
-		oDlbls.setShowVal(oParsedDLbls.showVal);
-		oParsedDLbls.spPr && oDlbls.setSpPr(this.SpPrFromJSON(oParsedDLbls.spPr, oDlbls));
-		oParsedDLbls.txPr && oDlbls.setTxPr(this.TxPrFromJSON(oParsedDLbls.txPr, oDlbls));
+		oParsedDLbls["leaderLines"] && oDlbls.setLeaderLines(this.SpPrFromJSON(oParsedDLbls["leaderLines"], oDlbls));
+		oParsedDLbls["numFmt"] && oDlbls.setNumFmt(this.NumFmtFromJSON(oParsedDLbls["numFmt"]));
+		oDlbls.setSeparator(oParsedDLbls["separator"]);
+		oDlbls.setShowBubbleSize(oParsedDLbls["showBubbleSize"]);
+		oDlbls.setShowCatName(oParsedDLbls["showCatName"]);
+		oDlbls.setShowLeaderLines(oParsedDLbls["showLeaderLines"]);
+		oDlbls.setShowLegendKey(oParsedDLbls["showLegendKey"]);
+		oDlbls.setShowPercent(oParsedDLbls["showPercent"]);
+		oDlbls.setShowSerName(oParsedDLbls["showSerName"]);
+		oDlbls.setShowVal(oParsedDLbls["showVal"]);
+		oParsedDLbls["spPr"] && oDlbls.setSpPr(this.SpPrFromJSON(oParsedDLbls["spPr"], oDlbls));
+		oParsedDLbls["txPr"] && oDlbls.setTxPr(this.TxPrFromJSON(oParsedDLbls["txPr"], oDlbls));
 
 		return oDlbls;
 	};
@@ -13929,7 +14248,7 @@
 		oCatAx.setParent(oParentPlotArea);
 
 		var nLblAlgn = undefined;
-		switch(oParsedCatAx.lblAlgn)
+		switch(oParsedCatAx["lblAlgn"])
 		{
 			case "ctr":
 				nLblAlgn = AscFormat.LBL_ALG_CTR;
@@ -13942,29 +14261,29 @@
 				break;
 		}
 
-		oCatAx.setAuto(oParsedCatAx.auto);
+		oCatAx.setAuto(oParsedCatAx["auto"]);
 		oCatAx.setAxId(++AscFormat.Ax_Counter.GLOBAL_AX_ID_COUNTER);
-		oCatAx.setAxPos(this.GetAxPosNumType(oParsedCatAx.axPos));
-		oCatAx.crossAx        = oParsedCatAx.crossAx ? oParsedCatAx.crossAx : oCatAx.crossAx;
-		oCatAx.setCrosses(this.GetCrossesNumType(oParsedCatAx.crosses));
-		oCatAx.setCrossesAt(oParsedCatAx.crossesAt);
-		oCatAx.setDelete(oParsedCatAx.delete);
-		oCatAx.extLst = oParsedCatAx.extLst; /// ???
+		oCatAx.setAxPos(this.GetAxPosNumType(oParsedCatAx["axPos"]));
+		oCatAx.crossAx = oParsedCatAx["crossAx"] ? oParsedCatAx["crossAx"] : oCatAx.crossAx;
+		oCatAx.setCrosses(this.GetCrossesNumType(oParsedCatAx["crosses"]));
+		oCatAx.setCrossesAt(oParsedCatAx["crossesAt"]);
+		oCatAx.setDelete(oParsedCatAx["delete"]);
+		oCatAx.extLst = oParsedCatAx["extLst"]; /// ???
 		oCatAx.setLblAlgn(nLblAlgn);
-		oCatAx.setLblOffset(oParsedCatAx.lblOffset);
-		oParsedCatAx.majorGridlines && oCatAx.setMajorGridlines(this.SpPrFromJSON(oParsedCatAx.majorGridlines, oCatAx));
-		oCatAx.setMajorTickMark(this.GetTickMarkNumType(oParsedCatAx.majorTickMark));
-		oParsedCatAx.minorGridlines && oCatAx.setMinorGridlines(this.SpPrFromJSON(oParsedCatAx.minorGridlines, oCatAx));
-		oCatAx.setMinorTickMark(this.GetTickMarkNumType(oParsedCatAx.minorTickMark));
-		oCatAx.setNoMultiLvlLbl(oParsedCatAx.noMultiLvlLbl);
-		oParsedCatAx.numFmt && oCatAx.setNumFmt(this.NumFmtFromJSON(oParsedCatAx.numFmt));
-		oParsedCatAx.scaling && oCatAx.setScaling(this.ScalingFromJSON(oParsedCatAx.scaling, oCatAx));
-		oParsedCatAx.spPr && oCatAx.setSpPr(this.SpPrFromJSON(oParsedCatAx.spPr, oCatAx));
-		oCatAx.setTickLblPos(this.GetTickLabelNumPos(oParsedCatAx.tickLblPos));
-		oCatAx.setTickLblSkip(oParsedCatAx.tickLblSkip);
-		oCatAx.setTickMarkSkip(oParsedCatAx.tickMarkSkip);
-		oParsedCatAx.title && oCatAx.setTitle(this.TitleFromJSON(oParsedCatAx.title));
-		oParsedCatAx.txPr && oCatAx.setTxPr(this.TxPrFromJSON(oParsedCatAx.txPr, oCatAx));
+		oCatAx.setLblOffset(oParsedCatAx["lblOffset"]);
+		oParsedCatAx["majorGridlines"] && oCatAx.setMajorGridlines(this.SpPrFromJSON(oParsedCatAx["majorGridlines"], oCatAx));
+		oCatAx.setMajorTickMark(this.GetTickMarkNumType(oParsedCatAx["majorTickMark"]));
+		oParsedCatAx["minorGridlines"] && oCatAx.setMinorGridlines(this.SpPrFromJSON(oParsedCatAx["minorGridlines"], oCatAx));
+		oCatAx.setMinorTickMark(this.GetTickMarkNumType(oParsedCatAx["minorTickMark"]));
+		oCatAx.setNoMultiLvlLbl(oParsedCatAx["noMultiLvlLbl"]);
+		oParsedCatAx["numFmt"] && oCatAx.setNumFmt(this.NumFmtFromJSON(oParsedCatAx["numFmt"]));
+		oParsedCatAx["scaling"] && oCatAx.setScaling(this.ScalingFromJSON(oParsedCatAx["scaling"], oCatAx));
+		oParsedCatAx["spPr"] && oCatAx.setSpPr(this.SpPrFromJSON(oParsedCatAx["spPr"], oCatAx));
+		oCatAx.setTickLblPos(this.GetTickLabelNumPos(oParsedCatAx["tickLblPos"]));
+		oCatAx.setTickLblSkip(oParsedCatAx["tickLblSkip"]);
+		oCatAx.setTickMarkSkip(oParsedCatAx["tickMarkSkip"]);
+		oParsedCatAx["title"] && oCatAx.setTitle(this.TitleFromJSON(oParsedCatAx["title"]));
+		oParsedCatAx["txPr"] && oCatAx.setTxPr(this.TxPrFromJSON(oParsedCatAx["txPr"], oCatAx));
 
 		return oCatAx;
 	};
@@ -13974,29 +14293,29 @@
 
 		oValAx.setParent(oParentPlotArea);
 
-		var sCrossBetweenType = oParsedValAx.crossBetween === "between" ? AscFormat.CROSS_BETWEEN_BETWEEN : AscFormat.CROSS_BETWEEN_MID_CAT;
+		var sCrossBetweenType = oParsedValAx["crossBetween"] === "between" ? AscFormat.CROSS_BETWEEN_BETWEEN : AscFormat.CROSS_BETWEEN_MID_CAT;
 		
 		oValAx.setAxId(++AscFormat.Ax_Counter.GLOBAL_AX_ID_COUNTER);
-		oValAx.setAxPos(this.GetAxPosNumType(oParsedValAx.axPos));
-		oValAx.crossAx        = oParsedValAx.crossAx ? oParsedValAx.crossAx : oValAx.crossAx;
+		oValAx.setAxPos(this.GetAxPosNumType(oParsedValAx["axPos"]));
+		oValAx.crossAx        = oParsedValAx["crossAx"] ? oParsedValAx["crossAx"] : oValAx.crossAx;
 		oValAx.setCrossBetween(sCrossBetweenType);
-		oValAx.setCrosses(this.GetCrossesNumType(oParsedValAx.crosses));
-		oValAx.setCrossesAt(oParsedValAx.crossesAt);
-		oValAx.setDelete(oParsedValAx.delete);
-		oParsedValAx.dispUnits && oValAx.setDispUnits(this.DispUnitsFromJSON(oParsedValAx.dispUnits));
-		oValAx.extLst = oParsedValAx.extLst; /// ???
-		oParsedValAx.majorGridlines && oValAx.setMajorGridlines(this.SpPrFromJSON(oParsedValAx.majorGridlines, oValAx));
-		oValAx.setMajorTickMark(this.GetTickMarkNumType(oParsedValAx.majorTickMark));
-		oValAx.setMajorUnit(oParsedValAx.majorUnit);
-		oParsedValAx.minorGridlines && oValAx.setMinorGridlines(this.SpPrFromJSON(oParsedValAx.minorGridlines));
-		oValAx.setMinorTickMark(this.GetTickMarkNumType(oParsedValAx.minorTickMark));
-		oValAx.setMinorUnit(oParsedValAx.minorUnit);
-		oParsedValAx.numFmt && oValAx.setNumFmt(this.NumFmtFromJSON(oParsedValAx.numFmt));
-		oParsedValAx.scaling && oValAx.setScaling(this.ScalingFromJSON(oParsedValAx.scaling, oValAx));
-		oParsedValAx.spPr  && oValAx.setSpPr(this.SpPrFromJSON(oParsedValAx.spPr, oValAx));
-		oValAx.setTickLblPos(this.GetTickLabelNumPos(oParsedValAx.tickLblPos));
-		oParsedValAx.title && oValAx.setTitle(this.TitleFromJSON(oParsedValAx.title));
-		oParsedValAx.txPr  && oValAx.setTxPr(this.TxPrFromJSON(oParsedValAx.txPr, oValAx));
+		oValAx.setCrosses(this.GetCrossesNumType(oParsedValAx["crosses"]));
+		oValAx.setCrossesAt(oParsedValAx["crossesAt"]);
+		oValAx.setDelete(oParsedValAx["delete"]);
+		oParsedValAx["dispUnits"] && oValAx.setDispUnits(this.DispUnitsFromJSON(oParsedValAx["dispUnits"]));
+		oValAx.extLst = oParsedValAx["extLst"]; /// ???
+		oParsedValAx["majorGridlines"] && oValAx.setMajorGridlines(this.SpPrFromJSON(oParsedValAx["majorGridlines"], oValAx));
+		oValAx.setMajorTickMark(this.GetTickMarkNumType(oParsedValAx["majorTickMark"]));
+		oValAx.setMajorUnit(oParsedValAx["majorUnit"]);
+		oParsedValAx["minorGridlines"] && oValAx.setMinorGridlines(this.SpPrFromJSON(oParsedValAx["minorGridlines"]));
+		oValAx.setMinorTickMark(this.GetTickMarkNumType(oParsedValAx["minorTickMark"]));
+		oValAx.setMinorUnit(oParsedValAx["minorUnit"]);
+		oParsedValAx["numFmt"] && oValAx.setNumFmt(this.NumFmtFromJSON(oParsedValAx["numFmt"]));
+		oParsedValAx["scaling"] && oValAx.setScaling(this.ScalingFromJSON(oParsedValAx["scaling"], oValAx));
+		oParsedValAx["spPr"]  && oValAx.setSpPr(this.SpPrFromJSON(oParsedValAx["spPr"], oValAx));
+		oValAx.setTickLblPos(this.GetTickLabelNumPos(oParsedValAx["tickLblPos"]));
+		oParsedValAx["title"] && oValAx.setTitle(this.TitleFromJSON(oParsedValAx["title"]));
+		oParsedValAx["txPr"]  && oValAx.setTxPr(this.TxPrFromJSON(oParsedValAx["txPr"], oValAx));
 
 		return oValAx;
 	};
@@ -14006,11 +14325,11 @@
 
 		oTitle.setParent(oParent);
 
-		oTitle.setOverlay(oParsedTitle.overlay);
-		oParsedTitle.layout && oTitle.setLayout(this.LayoutFromJSON(oParsedTitle.layout, oTitle));
-		oParsedTitle.spPr   && oTitle.setSpPr(this.SpPrFromJSON(oParsedTitle.spPr, oTitle));
-		oParsedTitle.tx     && oTitle.setTx(this.ChartTxFromJSON(oParsedTitle.tx));
-		oParsedTitle.txPr   && oTitle.setTxPr(this.TxPrFromJSON(oParsedTitle.txPr, oTitle));
+		oTitle.setOverlay(oParsedTitle["overlay"]);
+		oParsedTitle["layout"] && oTitle.setLayout(this.LayoutFromJSON(oParsedTitle["layout"], oTitle));
+		oParsedTitle["spPr"]   && oTitle.setSpPr(this.SpPrFromJSON(oParsedTitle["spPr"], oTitle));
+		oParsedTitle["tx"]     && oTitle.setTx(this.ChartTxFromJSON(oParsedTitle["tx"]));
+		oParsedTitle["txPr"]   && oTitle.setTxPr(this.TxPrFromJSON(oParsedTitle["txPr"], oTitle));
 		
 		return oTitle;
 	};
@@ -14020,11 +14339,11 @@
 
 		oScaling.setParent(oParent);
 
-		var nOrientType = oParsedScaling.orientation === "maxMin" ? AscFormat.ORIENTATION_MAX_MIN : AscFormat.ORIENTATION_MIN_MAX;
+		var nOrientType = oParsedScaling["orientation"] === "maxMin" ? AscFormat.ORIENTATION_MAX_MIN : AscFormat.ORIENTATION_MIN_MAX;
 
-		oScaling.setLogBase(oParsedScaling.logBase);
-		oScaling.setMax(oParsedScaling.max);
-		oScaling.setMin(oParsedScaling.min);
+		oScaling.setLogBase(oParsedScaling["logBase"]);
+		oScaling.setMax(oParsedScaling["max"]);
+		oScaling.setMin(oParsedScaling["min"]);
 		oScaling.setOrientation(nOrientType);
 
 		return oScaling;
@@ -14034,7 +14353,7 @@
 		var oDispUnits = new AscFormat.CDispUnits();
 
 		var nBuiltInUnit = undefined;
-		switch(oDispUnits.builtInUnit)
+		switch(oParsedDispUnits["builtInUnit"])
 		{
 			case "none":
 				nBuiltInUnit = Asc.c_oAscValAxUnits.none;
@@ -14072,8 +14391,8 @@
 		}
 
 		oDispUnits.setBuiltInUnit(nBuiltInUnit);
-		oDispUnits.setCustUnit(oParsedDispUnits.custUnit);
-		oParsedDispUnits.dispUnitsLbl && oDispUnits.setDispUnitsLbl(this.DlblFromJSON(oParsedDispUnits.dispUnitsLbl));
+		oDispUnits.setCustUnit(oParsedDispUnits["custUnit"]);
+		oParsedDispUnits["dispUnitsLbl"] && oDispUnits.setDispUnitsLbl(this.DlblFromJSON(oParsedDispUnits["dispUnitsLbl"]));
 
 		return oDispUnits;
 	};
@@ -14081,7 +14400,7 @@
 	{
 		for (var nChart = 0; nChart < arrParsedCharts.length; nChart++)
 		{
-			switch (arrParsedCharts[nChart].type)
+			switch (arrParsedCharts[nChart]["type"])
 			{
 				case "barChart":
 					oParentPlotArea.addChart(this.BarChartFromJSON(arrParsedCharts[nChart], oAxisMap));
@@ -14120,11 +14439,11 @@
 	{
 		var oPivotFmt = new AscFormat.CPivotFmt();
 
-		oPivotFmt.setIdx(oParsedPivotFmt.idx);
-		oParsedPivotFmt.dLbl   && oPivotFmt.setLbl(this.DlblFromJSON(oParsedPivotFmt.dLbl));
-		oParsedPivotFmt.marker && oPivotFmt.setMarker(this.MarkerFromJSON(oParsedPivotFmt.marker, oPivotFmt));
-		oParsedPivotFmt.spPr   && oPivotFmt.setSpPr(this.SpPrFromJSON(oParsedPivotFmt.spPr, oPivotFmt));
-		oParsedPivotFmt.txPr   && oPivotFmt.setTxPr(this.TxPrFromJSON(oParsedPivotFmt.txPr, oPivotFmt));
+		oPivotFmt.setIdx(oParsedPivotFmt["idx"]);
+		oParsedPivotFmt["dLbl"]   && oPivotFmt.setLbl(this.DlblFromJSON(oParsedPivotFmt["dLbl"]));
+		oParsedPivotFmt["marker"] && oPivotFmt.setMarker(this.MarkerFromJSON(oParsedPivotFmt["marker"], oPivotFmt));
+		oParsedPivotFmt["spPr"]   && oPivotFmt.setSpPr(this.SpPrFromJSON(oParsedPivotFmt["spPr"], oPivotFmt));
+		oParsedPivotFmt["txPr"]   && oPivotFmt.setTxPr(this.TxPrFromJSON(oParsedPivotFmt["txPr"], oPivotFmt));
 		
 		return oPivotFmt;
 	};
@@ -14140,7 +14459,7 @@
 		oMarker.setParent(oParent);
 
 		var nSymbolType = undefined;
-		switch(oParsedMarker.symbol)
+		switch(oParsedMarker["symbol"])
 		{
 			case "circle":
 				nSymbolType = AscFormat.SYMBOL_CIRCLE;
@@ -14177,8 +14496,8 @@
 				break;
 		}
 
-		oMarker.setSize(oParsedMarker.size);
-		oParsedMarker.spPr && oMarker.setSpPr(this.SpPrFromJSON(oParsedMarker.spPr, oMarker));
+		oMarker.setSize(oParsedMarker["size"]);
+		oParsedMarker["spPr"] && oMarker.setSpPr(this.SpPrFromJSON(oParsedMarker["spPr"], oMarker));
 		oMarker.setSymbol(nSymbolType);
 
 		return oMarker;
@@ -14189,7 +14508,7 @@
 
 		// TickLblPos
 		var nDLblPos = undefined;
-		switch (oParsedDlbl.dLblPos)
+		switch (oParsedDlbl["dLblPos"])
 		{
 			case "b":
 				nDLblPos = Asc.c_oAscChartDataLabelsPos.b;
@@ -14220,29 +14539,29 @@
 				break;
 		}
 
-		oDlbl.setDelete(oParsedDlbl.delete);
+		oDlbl.setDelete(oParsedDlbl["delete"]);
 		oDlbl.setDLblPos(nDLblPos);
-		oDlbl.setIdx(oParsedDlbl.idx);
-		oParsedDlbl.layout && oDlbl.setLayout(this.LayoutFromJSON(oParsedDlbl.layout, oDlbl));
-		oParsedDlbl.numFmt && oDlbl.setNumFmt(this.NumFmtFromJSON(oParsedDlbl.numFmt));
-		oDlbl.setSeparator(oParsedDlbl.separator);
-		oDlbl.setShowBubbleSize(oParsedDlbl.showBubbleSize);
-		oDlbl.setShowCatName(oParsedDlbl.showCatName);
-		oDlbl.setShowLegendKey(oParsedDlbl.showLegendKey);
-		oDlbl.setShowPercent(oParsedDlbl.showPercent);
-		oDlbl.setShowSerName(oParsedDlbl.showSerName);
-		oDlbl.setShowVal(oParsedDlbl.showVal);
-		oParsedDlbl.spPr && oDlbl.setSpPr(this.SpPrFromJSON(oParsedDlbl.spPr, oDlbl));
-		oParsedDlbl.txPr && oDlbl.setTxPr(this.TxPrFromJSON(oParsedDlbl.txPr, oDlbl));
-		oParsedDlbl.tx && oDlbl.setTx(this.ChartTxFromJSON(oParsedDlbl.tx));
+		oDlbl.setIdx(oParsedDlbl["idx"]);
+		oParsedDlbl["layout"] && oDlbl.setLayout(this.LayoutFromJSON(oParsedDlbl["layout"], oDlbl));
+		oParsedDlbl["numFmt"] && oDlbl.setNumFmt(this.NumFmtFromJSON(oParsedDlbl["numFmt"]));
+		oDlbl.setSeparator(oParsedDlbl["separator"]);
+		oDlbl.setShowBubbleSize(oParsedDlbl["showBubbleSize"]);
+		oDlbl.setShowCatName(oParsedDlbl["showCatName"]);
+		oDlbl.setShowLegendKey(oParsedDlbl["showLegendKey"]);
+		oDlbl.setShowPercent(oParsedDlbl["showPercent"]);
+		oDlbl.setShowSerName(oParsedDlbl["showSerName"]);
+		oDlbl.setShowVal(oParsedDlbl["showVal"]);
+		oParsedDlbl["spPr"] && oDlbl.setSpPr(this.SpPrFromJSON(oParsedDlbl["spPr"], oDlbl));
+		oParsedDlbl["txPr"] && oDlbl.setTxPr(this.TxPrFromJSON(oParsedDlbl["txPr"], oDlbl));
+		oParsedDlbl["tx"] && oDlbl.setTx(this.ChartTxFromJSON(oParsedDlbl["tx"]));
 		return oDlbl;
 	};
 	ReaderFromJSON.prototype.NumFmtFromJSON = function(oParsedNumFmt)
 	{
 		var oNumFmt = new AscFormat.CNumFmt();
 
-		oNumFmt.setFormatCode(oParsedNumFmt.formatCode);
-		oNumFmt.setSourceLinked(oParsedNumFmt.sourceLinked);
+		oNumFmt.setFormatCode(oParsedNumFmt["formatCode"]);
+		oNumFmt.setSourceLinked(oParsedNumFmt["sourceLinked"]);
 
 		return oNumFmt;
 	};
@@ -14250,8 +14569,8 @@
 	{
 		var oChartTx = new AscFormat.CChartText();
 
-		oParsedChartTx.strRef && oChartTx.setStrRef(this.StrRefFromJSON(oParsedChartTx.strRef));
-		oParsedChartTx.rich && oChartTx.setRich(this.TxPrFromJSON(oParsedChartTx.rich));
+		oParsedChartTx["strRef"] && oChartTx.setStrRef(this.StrRefFromJSON(oParsedChartTx["strRef"]));
+		oParsedChartTx["rich"] && oChartTx.setRich(this.TxPrFromJSON(oParsedChartTx["rich"]));
 
 		return oChartTx;
 	};
@@ -14259,8 +14578,8 @@
 	{
 		var oStrRef = new AscFormat.CStrRef();
 		
-		oStrRef.setF(oParsedStrRef.f);
-		oStrRef.setStrCache(this.StrLitFromJSON(oParsedStrRef.strCache));
+		oStrRef.setF(oParsedStrRef["f"]);
+		oStrRef.setStrCache(this.StrLitFromJSON(oParsedStrRef["strCache"]));
 
 		return oStrRef;
 	};
@@ -14271,7 +14590,7 @@
 		oLegend.setParent(oParentChart);
 
 		var nLegendPos = undefined;
-		switch (oParsedLegend.legendPos)
+		switch (oParsedLegend["legendPos"])
 		{
 			case "b":
 				nLegendPos = Asc.c_oAscChartLegendShowSettings.bottom;
@@ -14290,12 +14609,12 @@
 				break;
 		}
 
-		oParsedLegend.layout && oLegend.setLayout(this.LayoutFromJSON(oParsedLegend.layout));
-		this.LegendEntriesFromJSON(oParsedLegend.legendEntry, oLegend);
+		oParsedLegend["layout"] && oLegend.setLayout(this.LayoutFromJSON(oParsedLegend["layout"]));
+		this.LegendEntriesFromJSON(oParsedLegend["legendEntry"], oLegend);
 		oLegend.setLegendPos(nLegendPos);
-		oLegend.setOverlay(oParsedLegend.overlay);
-		oParsedLegend.spPr && oLegend.setSpPr(this.SpPrFromJSON(oParsedLegend.spPr, oLegend));
-		oParsedLegend.txPr && oLegend.setTxPr(this.TxPrFromJSON(oParsedLegend.txPr, oLegend));
+		oLegend.setOverlay(oParsedLegend["overlay"]);
+		oParsedLegend["spPr"] && oLegend.setSpPr(this.SpPrFromJSON(oParsedLegend["spPr"], oLegend));
+		oParsedLegend["txPr"] && oLegend.setTxPr(this.TxPrFromJSON(oParsedLegend["txPr"], oLegend));
 
 		return oLegend;
 	};
@@ -14305,9 +14624,9 @@
 
 		oTxPr.setParent(oParent);
 
-		oParsedTxPr.bodyPr && oTxPr.setBodyPr(this.BodyPrFromJSON(oParsedTxPr.bodyPr));
-		oParsedTxPr.lstStyle && oTxPr.setLstStyle(this.LstStyleFromJSON(oParsedTxPr.lstStyle));
-		oParsedTxPr.content && oTxPr.setContent(this.DrawingDocContentFromJSON(oParsedTxPr.content, oTxPr, undefined, undefined));
+		oParsedTxPr["bodyPr"] && oTxPr.setBodyPr(this.BodyPrFromJSON(oParsedTxPr["bodyPr"]));
+		oParsedTxPr["lstStyle"] && oTxPr.setLstStyle(this.LstStyleFromJSON(oParsedTxPr["lstStyle"]));
+		oParsedTxPr["content"] && oTxPr.setContent(this.DrawingDocContentFromJSON(oParsedTxPr["content"], oTxPr, undefined, undefined));
 		
 		return oTxPr;
 	};
@@ -14329,15 +14648,15 @@
 
 		oLayout.setParent(oParent);
 
-		oLayout.setH(oParsedLayout.h);
-		oParsedLayout.hMode != undefined && oLayout.setHMode(oParsedLayout.hMode === "edge" ? AscFormat.LAYOUT_MODE_EDGE : AscFormat.LAYOUT_MODE_FACTOR);
-		oParsedLayout.layoutTarget != undefined && oLayout.setLayoutTarget(oParsedLayout.layoutTarget === "inner" ? AscFormat.LAYOUT_TARGET_INNER : AscFormat.LAYOUT_TARGET_OUTER);
-		oLayout.setW(oParsedLayout.w);
-		oParsedLayout.wMode != undefined && oLayout.setWMode(oParsedLayout.wMode === "edge" ? AscFormat.LAYOUT_MODE_EDGE : AscFormat.LAYOUT_MODE_FACTOR);
-		oLayout.setX(oParsedLayout.x);
-		oParsedLayout.xMode != undefined && oLayout.setXMode(oParsedLayout.xMode === "edge" ? AscFormat.LAYOUT_MODE_EDGE : AscFormat.LAYOUT_MODE_FACTOR);
-		oLayout.setY(oParsedLayout.y);
-		oParsedLayout.yMode != undefined && oLayout.setYMode(oParsedLayout.yMode === "edge" ? AscFormat.LAYOUT_MODE_EDGE : AscFormat.LAYOUT_MODE_FACTOR);
+		oLayout.setH(oParsedLayout["h"]);
+		oParsedLayout["hMode"] != undefined && oLayout.setHMode(oParsedLayout["hMode"] === "edge" ? AscFormat.LAYOUT_MODE_EDGE : AscFormat.LAYOUT_MODE_FACTOR);
+		oParsedLayout["layoutTarget"] != undefined && oLayout.setLayoutTarget(oParsedLayout["layoutTarget"] === "inner" ? AscFormat.LAYOUT_TARGET_INNER : AscFormat.LAYOUT_TARGET_OUTER);
+		oLayout.setW(oParsedLayout["w"]);
+		oParsedLayout["wMode"] != undefined && oLayout.setWMode(oParsedLayout["wMode"] === "edge" ? AscFormat.LAYOUT_MODE_EDGE : AscFormat.LAYOUT_MODE_FACTOR);
+		oLayout.setX(oParsedLayout["x"]);
+		oParsedLayout["xMode"] != undefined && oLayout.setXMode(oParsedLayout["xMode"] === "edge" ? AscFormat.LAYOUT_MODE_EDGE : AscFormat.LAYOUT_MODE_FACTOR);
+		oLayout.setY(oParsedLayout["y"]);
+		oParsedLayout["yMode"] != undefined && oLayout.setYMode(oParsedLayout["yMode"] === "edge" ? AscFormat.LAYOUT_MODE_EDGE : AscFormat.LAYOUT_MODE_FACTOR);
 
 		return oLayout;
 	};
@@ -14345,9 +14664,9 @@
 	{
 		var oLegendEntry = new AscFormat.CLegendEntry();
 		
-		oLegendEntry.setDelete(oParsedEntry.delete);
-		oLegendEntry.setIdx(oParsedEntry.idx);
-		oParsedEntry.txPr && oLegendEntry.setTxPr(this.TxPrFromJSON(oParsedEntry.txPr, oLegendEntry));
+		oLegendEntry.setDelete(oParsedEntry["delete"]);
+		oLegendEntry.setIdx(oParsedEntry["idx"]);
+		oParsedEntry["txPr"] && oLegendEntry.setTxPr(this.TxPrFromJSON(oParsedEntry["txPr"], oLegendEntry));
 
 		return oLegendEntry;
 	};
@@ -14362,9 +14681,9 @@
 
 		oWall.setParent(oParent);
 
-		oParsedWall.pictureOptions && oWall.setPictureOptions(this.PicOptionsFromJSON(oParsedWall.pictureOptions));
-		oParsedWall.spPr && oWall.setSpPr(this.SpPrFromJSON(oParsedWall.spPr, oWall));
-		oWall.setThickness(oParsedWall.thickness);
+		oParsedWall["pictureOptions"] && oWall.setPictureOptions(this.PicOptionsFromJSON(oParsedWall["pictureOptions"]));
+		oParsedWall["spPr"] && oWall.setSpPr(this.SpPrFromJSON(oParsedWall["spPr"], oWall));
+		oWall.setThickness(oParsedWall["thickness"]);
 
 		return oWall;
 	};
@@ -14372,11 +14691,11 @@
 	{
 		var oPicOptions = new AscFormat.CPictureOptions();
 
-		oPicOptions.setApplyToEnd(oParsedPicOpt.applyToEnd);
-		oPicOptions.setApplyToFront(oParsedPicOpt.applyToFront);
-		oPicOptions.setApplyToSides(oParsedPicOpt.applyToSides);
-		oPicOptions.setPictureFormat(oParsedPicOpt.pictureFormat);
-		oPicOptions.setPictureStackUnit(oParsedPicOpt.pictureStackUnit);
+		oPicOptions.setApplyToEnd(oParsedPicOpt["applyToEnd"]);
+		oPicOptions.setApplyToFront(oParsedPicOpt["applyToFront"]);
+		oPicOptions.setApplyToSides(oParsedPicOpt["applyToSides"]);
+		oPicOptions.setPictureFormat(oParsedPicOpt["pictureFormat"]);
+		oPicOptions.setPictureStackUnit(oParsedPicOpt["pictureStackUnit"]);
 
 		return oPicOptions;
 	};
@@ -14387,10 +14706,10 @@
 
 		var oStyle = new AscFormat.CShapeStyle();
 
-		oParsedSpStyle.lnRef && oStyle.setLnRef(this.StyleRefFromJSON(oParsedSpStyle.lnRef));
-		oParsedSpStyle.fillRef && oStyle.setFillRef(this.StyleRefFromJSON(oParsedSpStyle.fillRef));
-		oParsedSpStyle.effectRef && oStyle.setEffectRef(this.StyleRefFromJSON(oParsedSpStyle.effectRef));
-		oParsedSpStyle.fontRef && oStyle.setFontRef(this.FontRefFromJSON(oParsedSpStyle.fontRef));
+		oParsedSpStyle["lnRef"] && oStyle.setLnRef(this.StyleRefFromJSON(oParsedSpStyle["lnRef"]));
+		oParsedSpStyle["fillRef"] && oStyle.setFillRef(this.StyleRefFromJSON(oParsedSpStyle["fillRef"]));
+		oParsedSpStyle["effectRef"] && oStyle.setEffectRef(this.StyleRefFromJSON(oParsedSpStyle["effectRef"]));
+		oParsedSpStyle["fontRef"] && oStyle.setFontRef(this.FontRefFromJSON(oParsedSpStyle["fontRef"]));
 		
 		return oStyle;
 	};
@@ -14399,7 +14718,7 @@
 		var oBodyPr = new AscFormat.CBodyPr();
 
 		var nAnchorType = null;
-		switch(oParsedBodyPr.anchor)
+		switch(oParsedBodyPr["anchor"])
 		{
 			case "b":
 				nAnchorType = AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM;
@@ -14419,18 +14738,18 @@
 		}
 
 		var nHorzOverflow = null;
-		switch(oParsedBodyPr.horzOverflow)
+		switch(oParsedBodyPr["horzOverflow"])
 		{
 			case "clip":
-				nHorzOverflow = AscFormat.nOTClip;
+				nHorzOverflow = AscFormat.ST_TextHorzOverflowType.clip;
 				break;
 			case "overflow":
-				nHorzOverflow = AscFormat.nOTOwerflow;
+				nHorzOverflow = AscFormat.ST_TextHorzOverflowType.overflow;
 				break;
 		}
 
 		var nVertOverflow = null;
-		switch(oParsedBodyPr.vertOverflow)
+		switch(oParsedBodyPr["vertOverflow"])
 		{
 			case "clip":
 				nVertOverflow = AscFormat.nOTClip;
@@ -14444,7 +14763,7 @@
 		}
 
 		var nVertType = null;
-		switch(oParsedBodyPr.vert)
+		switch(oParsedBodyPr["vert"])
 		{
 			case "eaVert":
 				nVertType = AscFormat.nVertTTeaVert;
@@ -14470,7 +14789,7 @@
 		}
 
 		var nWrapType = null;
-		switch (oParsedBodyPr.wrap)
+		switch (oParsedBodyPr["wrap"])
 		{
 			case "none":
 				nWrapType = AscFormat.nTWTNone;
@@ -14480,25 +14799,25 @@
 				break;
 		}
 
-		oBodyPr.flatTx           = oParsedBodyPr.flatTx != undefined ? private_EMU2MM(oParsedBodyPr.flatTx) : oBodyPr.flatTx;
-		oBodyPr.textFit          = oParsedBodyPr.normAutofit ? this.TextFitFromJSON(oParsedBodyPr.normAutofit) : oBodyPr.textFit;
-		oBodyPr.prstTxWarp       = oParsedBodyPr.prstTxWarp ? this.GeometryFromJSON(oParsedBodyPr.prstTxWarp) : oBodyPr.prstTxWarp;
+		oBodyPr.flatTx           = oParsedBodyPr["flatTx"] != undefined ? private_EMU2MM(oParsedBodyPr["flatTx"]) : oBodyPr.flatTx;
+		oBodyPr.textFit          = oParsedBodyPr["normAutofit"] ? this.TextFitFromJSON(oParsedBodyPr["normAutofit"]) : oBodyPr.textFit;
+		oBodyPr.prstTxWarp       = oParsedBodyPr["prstTxWarp"] ? this.GeometryFromJSON(oParsedBodyPr["prstTxWarp"]) : oBodyPr.prstTxWarp;
 		oBodyPr.anchor           = nAnchorType;
-		oBodyPr.anchorCtr        = oParsedBodyPr.anchorCtr;
-		oBodyPr.bIns             = oParsedBodyPr.bIns != undefined ? private_EMU2MM(oParsedBodyPr.bIns) : oParsedBodyPr.bIns;
-		oBodyPr.compatLnSpc      = oParsedBodyPr.compatLnSpc;
-		oBodyPr.forceAA          = oParsedBodyPr.forceAA;
-		oBodyPr.fromWordArt      = oParsedBodyPr.fromWordArt;
+		oBodyPr.anchorCtr        = oParsedBodyPr["anchorCtr"];
+		oBodyPr.bIns             = oParsedBodyPr["bIns"] != undefined ? private_EMU2MM(oParsedBodyPr["bIns"]) : oParsedBodyPr["bIns"];
+		oBodyPr.compatLnSpc      = oParsedBodyPr["compatLnSpc"];
+		oBodyPr.forceAA          = oParsedBodyPr["forceAA"];
+		oBodyPr.fromWordArt      = oParsedBodyPr["fromWordArt"];
 		oBodyPr.horzOverflow     = nHorzOverflow;
-		oBodyPr.lIns             = oParsedBodyPr.lIns != undefined ? private_EMU2MM(oParsedBodyPr.lIns) : oParsedBodyPr.lIns;
-		oBodyPr.numCol           = oParsedBodyPr.numCol;
-		oBodyPr.rIns             = oParsedBodyPr.rIns != undefined ? private_EMU2MM(oParsedBodyPr.rIns) : oParsedBodyPr.rIns;
-		oBodyPr.rot              = oParsedBodyPr.rot;
-		oBodyPr.rtlCol           = oParsedBodyPr.rtlCol;
-		oBodyPr.spcCol           = oParsedBodyPr.spcCol != undefined ? private_EMU2MM(oParsedBodyPr.spcCol) : oParsedBodyPr.spcCol;
-		oBodyPr.spcFirstLastPara = oParsedBodyPr.spcFirstLastPara;
-		oBodyPr.tIns             = oParsedBodyPr.tIns != undefined ? private_EMU2MM(oParsedBodyPr.tIns) : oParsedBodyPr.tIns;
-		oBodyPr.upright          = oParsedBodyPr.upright;
+		oBodyPr.lIns             = oParsedBodyPr["lIns"] != undefined ? private_EMU2MM(oParsedBodyPr["lIns"]) : oParsedBodyPr["lIns"];
+		oBodyPr.numCol           = oParsedBodyPr["numCol"];
+		oBodyPr.rIns             = oParsedBodyPr["rIns"] != undefined ? private_EMU2MM(oParsedBodyPr["rIns"]) : oParsedBodyPr["rIns"];
+		oBodyPr.rot              = oParsedBodyPr["rot"];
+		oBodyPr.rtlCol           = oParsedBodyPr["rtlCol"];
+		oBodyPr.spcCol           = oParsedBodyPr["spcCol"] != undefined ? private_EMU2MM(oParsedBodyPr["spcCol"]) : oParsedBodyPr["spcCol"];
+		oBodyPr.spcFirstLastPara = oParsedBodyPr["spcFirstLastPara"];
+		oBodyPr.tIns             = oParsedBodyPr["tIns"] != undefined ? private_EMU2MM(oParsedBodyPr["tIns"]) : oParsedBodyPr["tIns"];
+		oBodyPr.upright          = oParsedBodyPr["upright"];
 		oBodyPr.vert             = nVertType;
 		oBodyPr.vertOverflow     = nVertOverflow;
 		oBodyPr.wrap             = nWrapType;
@@ -14509,9 +14828,9 @@
 	{
 		var oTextFit = new AscFormat.CTextFit();
 
-		oTextFit.type           = oParsedTextFit.type;
-		oTextFit.fontScale      = oParsedTextFit.fontScale;
-		oTextFit.lnSpcReduction = oParsedTextFit.lnSpcReduction;
+		oTextFit.type           = oParsedTextFit["type"];
+		oTextFit.fontScale      = oParsedTextFit["fontScale"];
+		oTextFit.lnSpcReduction = oParsedTextFit["lnSpcReduction"];
 
 		return oTextFit;
 	};
@@ -14521,12 +14840,12 @@
 
 		oSpPr.setParent(oParent);
 
-		oParsedPr.fill && oSpPr.setFill(this.FillFromJSON(oParsedPr.fill));
-		(oParsedPr.effectDag || oParsedPr.effectLst) && oSpPr.setEffectPr(this.EffectPropsFromJSON(oParsedPr.effectDag, oParsedPr.effectLst));
-		oSpPr.setBwMode(oParsedPr.bwMode);
-		oParsedPr.custGeom && oSpPr.setGeometry(this.GeometryFromJSON(oParsedPr.custGeom));
-		oParsedPr.ln && oSpPr.setLn(this.LnFromJSON(oParsedPr.ln));
-		oParsedPr.xfrm && oSpPr.setXfrm(this.XfrmFromJSON(oParsedPr.xfrm, oSpPr));
+		oParsedPr["fill"] && oSpPr.setFill(this.FillFromJSON(oParsedPr["fill"]));
+		(oParsedPr["effectDag"] || oParsedPr["effectLst"]) && oSpPr.setEffectPr(this.EffectPropsFromJSON(oParsedPr["effectDag"], oParsedPr["effectLst"]));
+		oSpPr.setBwMode(oParsedPr["bwMode"]);
+		oParsedPr["custGeom"] && oSpPr.setGeometry(this.GeometryFromJSON(oParsedPr["custGeom"]));
+		oParsedPr["ln"] && oSpPr.setLn(this.LnFromJSON(oParsedPr["ln"]));
+		oParsedPr["xfrm"] && oSpPr.setXfrm(this.XfrmFromJSON(oParsedPr["xfrm"], oSpPr));
 
 		return oSpPr;
 	};
@@ -14534,15 +14853,15 @@
 	{
 		var oLn = new AscFormat.CLn();
 
-		oParsedLn.fill && oLn.setFill(this.FillFromJSON(oParsedLn.fill));
-		oParsedLn.lineJoin && oLn.setJoin(this.LineJoinFromJSON(oParsedLn.lineJoin));
-		oParsedLn.headEnd && oLn.setHeadEnd(this.EndArrowFromJSON(oParsedLn.headEnd));
-		oParsedLn.tailEnd && oLn.setTailEnd(this.EndArrowFromJSON(oParsedLn.tailEnd));
-		oLn.setPrstDash(this.GetPenDashNumType(oParsedLn.prstDash));
+		oParsedLn["fill"] && oLn.setFill(this.FillFromJSON(oParsedLn["fill"]));
+		oParsedLn["lineJoin"] && oLn.setJoin(this.LineJoinFromJSON(oParsedLn["lineJoin"]));
+		oParsedLn["headEnd"] && oLn.setHeadEnd(this.EndArrowFromJSON(oParsedLn["headEnd"]));
+		oParsedLn["tailEnd"] && oLn.setTailEnd(this.EndArrowFromJSON(oParsedLn["tailEnd"]));
+		oLn.setPrstDash(this.GetPenDashNumType(oParsedLn["prstDash"]));
 
-		var nAlgnType = oParsedLn.algn != undefined ? (oParsedLn.algn === "ctr" ? 0 : 1) : oLn.algn;
+		var nAlgnType = oParsedLn["algn"] != undefined ? (oParsedLn["algn"] === "ctr" ? 0 : 1) : oLn.algn;
 		var nCapType  = undefined;
-		switch (oParsedLn.cap)
+		switch (oParsedLn["cap"])
 		{
 			case "flat":
 				nCapType = 0;
@@ -14555,7 +14874,7 @@
 				break;
 		}
 		var nCmpdType = undefined;
-		switch( oParsedLn.cmpd)
+		switch( oParsedLn["cmpd"])
 		{
 			case "dbl":
 				nCmpdType = 0;
@@ -14577,7 +14896,7 @@
 		oLn.setAlgn(nAlgnType);
 		oLn.setCap(nCapType);
 		oLn.setCmpd(nCmpdType);
-		oLn.setW(oParsedLn.w);
+		oLn.setW(oParsedLn["w"]);
 
 		return oLn;
 	};
@@ -14944,7 +15263,7 @@
 	ReaderFromJSON.prototype.EndArrowFromJSON = function(oParsedEndArrow)
 	{
 		var nType = null;
-		switch(oParsedEndArrow.type)
+		switch(oParsedEndArrow["type"])
 		{
 			case "none":
 				nType = AscFormat.LineEndType.None;
@@ -14967,7 +15286,7 @@
 		}
 
 		var nLineEndSize = null;
-		switch(oParsedEndArrow.len)
+		switch(oParsedEndArrow["len"])
 		{
 			case "lg":
 				nLineEndSize = AscFormat.LineEndSize.Large;
@@ -14981,7 +15300,7 @@
 		}
 
 		var nLineEndWidth = null;
-		switch(oParsedEndArrow.w)
+		switch(oParsedEndArrow["w"])
 		{
 			case "lg":
 				nLineEndWidth = AscFormat.LineEndSize.Large;
@@ -15006,7 +15325,7 @@
 		var oLineJoin = new AscFormat.LineJoin();
 
 		var nType = undefined;
-		switch (oParsedLineJoin.type)
+		switch (oParsedLineJoin["type"])
 		{
 			case "round":
 				nType = AscFormat.LineJoinType.Round;
@@ -15023,7 +15342,7 @@
 		}
 
 		oLineJoin.setType(nType);
-		oLineJoin.setLimit(oParsedLineJoin.lim);
+		oLineJoin.setLimit(oParsedLineJoin["lim"]);
 
 		return oLineJoin;
 	};
@@ -15033,18 +15352,18 @@
 
 		oParent && oXfrm.setParent(oParent);
 
-		oParsedXfrm.ext.cx != undefined && oXfrm.setExtX(private_EMU2MM(oParsedXfrm.ext.cx));
-		oParsedXfrm.ext.cy != undefined && oXfrm.setExtY(private_EMU2MM(oParsedXfrm.ext.cy));
-		oParsedXfrm.off.x != undefined && oXfrm.setOffX(private_EMU2MM(oParsedXfrm.off.x));
-		oParsedXfrm.off.y != undefined && oXfrm.setOffY(private_EMU2MM(oParsedXfrm.off.y));
-		oParsedXfrm.flipH != undefined && oXfrm.setFlipH(oParsedXfrm.flipH);
-		oParsedXfrm.flipV != undefined && oXfrm.setFlipV(oParsedXfrm.flipV);
-		oParsedXfrm.rot != undefined && oXfrm.setRot(oParsedXfrm.rot);
+		oParsedXfrm["ext"]["cx"] != undefined && oXfrm.setExtX(private_EMU2MM(oParsedXfrm["ext"]["cx"]));
+		oParsedXfrm["ext"]["cy"] != undefined && oXfrm.setExtY(private_EMU2MM(oParsedXfrm["ext"]["cy"]));
+		oParsedXfrm["off"]["x"] != undefined && oXfrm.setOffX(private_EMU2MM(oParsedXfrm["off"]["x"]));
+		oParsedXfrm["off"]["y"] != undefined && oXfrm.setOffY(private_EMU2MM(oParsedXfrm["off"]["y"]));
+		oParsedXfrm["flipH"] != undefined && oXfrm.setFlipH(oParsedXfrm["flipH"]);
+		oParsedXfrm["flipV"] != undefined && oXfrm.setFlipV(oParsedXfrm["flipV"]);
+		oParsedXfrm["rot"] != undefined && oXfrm.setRot(oParsedXfrm["rot"]);
 
-		oParsedXfrm.chOffX != undefined && oXfrm.setChOffX(private_EMU2MM(oParsedXfrm.chOffX));
-		oParsedXfrm.chOffY != undefined && oXfrm.setChOffY(private_EMU2MM(oParsedXfrm.chOffY));
-		oParsedXfrm.chExtX != undefined && oXfrm.setChExtX(private_EMU2MM(oParsedXfrm.chExtX));
-		oParsedXfrm.chExtY != undefined && oXfrm.setChExtY(private_EMU2MM(oParsedXfrm.chExtY));
+		oParsedXfrm["chOffX"] != undefined && oXfrm.setChOffX(private_EMU2MM(oParsedXfrm["chOffX"]));
+		oParsedXfrm["chOffY"] != undefined && oXfrm.setChOffY(private_EMU2MM(oParsedXfrm["chOffY"]));
+		oParsedXfrm["chExtX"] != undefined && oXfrm.setChExtX(private_EMU2MM(oParsedXfrm["chExtX"]));
+		oParsedXfrm["chExtY"] != undefined && oXfrm.setChExtY(private_EMU2MM(oParsedXfrm["chExtY"]));
 
 		return oXfrm;
 	};
@@ -15052,8 +15371,10 @@
 	{
 		var oEffectProps = new AscFormat.CEffectProperties();
 
-		oEffectProps.EffectDag = oParsedEffectDag  ? this.EffectContainerFromJSON(oParsedEffectDag) : oEffectProps.EffectDag;
-		oEffectProps.EffectLst = oParsedEffectList ? this.EffectLstFromJSON(oParsedEffectList) : oEffectProps.EffectLst;
+		if (oParsedEffectDag)
+			oEffectProps.EffectDag = this.EffectContainerFromJSON(oParsedEffectDag);
+		if (oParsedEffectList)
+			oEffectProps.EffectLst = this.EffectLstFromJSON(oParsedEffectList);
 
 		return oEffectProps;
 	};
@@ -15063,48 +15384,48 @@
 
 		var oItem;
 		// AhPolar
-		for (var nItem = 0; nItem < oParsedGeom.ahLst.ahPolar.length; nItem++)
+		for (var nItem = 0; nItem < oParsedGeom["ahLst"]["ahPolar"].length; nItem++)
 		{
-			oItem = oParsedGeom.ahLst.ahPolar[nItem];
-			oGeom.AddHandlePolar(oItem.gdRefAng, oItem.minAng, oItem.maxAng, oItem.gdRefR, oItem.minR, oItem.maxR, oItem.pos.x, oItem.pos.y)
+			oItem = oParsedGeom["ahLst"]["ahPolar"][nItem];
+			oGeom.AddHandlePolar(oItem["gdRefAng"], oItem["minAng"], oItem["maxAng"], oItem["gdRefR"], oItem["minR"], oItem["maxR"], oItem["pos"]["x"], oItem["pos"]["y"])
 		}
 		
 		// AhXY
-		for (nItem = 0; nItem < oParsedGeom.ahLst.ahXY.length; nItem++)
+		for (nItem = 0; nItem < oParsedGeom["ahLst"]["ahXY"].length; nItem++)
 		{
-			oItem = oParsedGeom.ahLst.ahXY[nItem];
-			oGeom.AddHandleXY(oItem.gdRefX, oItem.minX, oItem.maxX, oItem.gdRefY, oItem.minY, oItem.maxY, oItem.pos.x, oItem.pos.y);
+			oItem = oParsedGeom["ahLst"]["ahXY"][nItem];
+			oGeom.AddHandleXY(oItem["gdRefX"], oItem["minX"], oItem["maxX"], oItem["gdRefY"], oItem["minY"], oItem["maxY"], oItem["pos"]["x"], oItem["pos"]["y"]);
 		}
 
 		// Av
-		for (var key in oParsedGeom.avLst)
-			oGeom.avLst[key] = oParsedGeom.avLst[key];
+		for (var key in oParsedGeom["avLst"])
+			oGeom.avLst[key] = oParsedGeom["avLst"][key];
 
 		// adj
-		for (key in oParsedGeom.adjLst)
-			oGeom.AddAdj(key, undefined, oParsedGeom.adjLst[key]);
+		for (key in oParsedGeom["adjLst"])
+			oGeom.AddAdj(key, undefined, oParsedGeom["adjLst"][key]);
 
 		// Cnx
-		for (nItem = 0; nItem < oParsedGeom.cnxLst.length; nItem++)
+		for (nItem = 0; nItem < oParsedGeom["cnxLst"]["length"]; nItem++)
 		{
-			oItem = oParsedGeom.cnxLst[nItem];
-			oGeom.AddCnx(oItem.ang, oItem.pos.x, oItem.pos.y);
+			oItem = oParsedGeom["cnxLst"][nItem];
+			oGeom.AddCnx(oItem["ang"], oItem["pos"]["x"], oItem["pos"]["y"]);
 		}
 
 		// gdLst
-		for (var nGd = 0; nGd < oParsedGeom.gdLst.length; nGd++)
+		for (var nGd = 0; nGd < oParsedGeom["gdLst"]["length"]; nGd++)
 		{
-			oItem = oParsedGeom.gdLst[nGd];
-			oGeom.AddGuide(oItem.name, this.GetFormulaNumType(oItem.fmla), oItem.x, oItem.y, oItem.z);
+			oItem = oParsedGeom["gdLst"][nGd];
+			oGeom.AddGuide(oItem["name"], this.GetFormulaNumType(oItem["fmla"]), oItem["x"], oItem["y"], oItem["z"]);
 		}
 
 		// pathLst
-		for (var nPath = 0; nPath < oParsedGeom.pathLst.length; nPath++)
-			oGeom.AddPath(this.GeomPathFromJSON(oParsedGeom.pathLst[nPath]));
+		for (var nPath = 0; nPath < oParsedGeom["pathLst"]["length"]; nPath++)
+			oGeom.AddPath(this.GeomPathFromJSON(oParsedGeom["pathLst"][nPath]));
 
-		oParsedGeom.rect && oGeom.AddRect(oParsedGeom.rect.l, oParsedGeom.rect.t, oParsedGeom.rect.r, oParsedGeom.rect.b);
-		if (oParsedGeom.preset)
-			oGeom.setPreset(oParsedGeom.preset);
+		oParsedGeom["rect"] && oGeom.AddRect(oParsedGeom["rect"]["l"], oParsedGeom["rect"]["t"], oParsedGeom["rect"]["r"], oParsedGeom["rect"]["b"]);
+		if (oParsedGeom["preset"])
+			oGeom.setPreset(oParsedGeom["preset"]);
 
 		return oGeom;
 	};
@@ -15112,78 +15433,248 @@
 	{
 		var oPath = new AscFormat.Path();
 
-		for (var nCommand = 0; nCommand < oParsedPath.commands.length; nCommand++)
+		for (var nCommand = 0; nCommand < oParsedPath["commands"].length; nCommand++)
 		{
-			var arrKeys  = Object.keys(oParsedPath.commands[nCommand]);
+			var oParsedCommand = oParsedPath["commands"][nCommand];
 			var oCommand = {};
-			switch (oParsedPath.commands[nCommand].id)
+			switch (oParsedCommand["id"])
 			{
 				case "moveTo":
-					oCommand.id =  0;
+					oCommand.id = 0;
+					oCommand.X = oParsedCommand["pt"]["x"];
+					oCommand.Y = oParsedCommand["pt"]["y"];
 					break;
 				case "lnTo":
-					oCommand.id =  1;
+					oCommand.id = 1;
+					oCommand.X = oParsedCommand["pt"]["x"];
+					oCommand.Y = oParsedCommand["pt"]["y"];
 					break;
 				case "arcTo":
-					oCommand.id =  2;
+					oCommand.id = 2;
+					oCommand.hR    = oParsedCommand["hR"];
+					oCommand.wR    = oParsedCommand["wR"];
+					oCommand.stAng = oParsedCommand["stAng"];
+					oCommand.swAng = oParsedCommand["swAng"];
 					break;
 				case "cubicBezTo":
-					oCommand.id =  3;
+					oCommand.id = 3;
+					oCommand.X0 = oParsedCommand["pt"]["x0"];
+					oCommand.Y0 = oParsedCommand["pt"]["y0"];
+					oCommand.X1 = oParsedCommand["pt"]["x1"];
+					oCommand.Y1 = oParsedCommand["pt"]["y1"];
 					break;
 				case "quadBezTo":
-					oCommand.id =  4;
+					oCommand.id = 4;
+					oCommand.X0 = oParsedCommand["pt"]["x0"];
+					oCommand.Y0 = oParsedCommand["pt"]["y0"];
+					oCommand.X1 = oParsedCommand["pt"]["x1"];
+					oCommand.Y1 = oParsedCommand["pt"]["y1"];
+					oCommand.X2 = oParsedCommand["pt"]["x2"];
+					oCommand.Y2 = oParsedCommand["pt"]["y2"];
 					break;
 				case "close":
-					oCommand.id =  5;
+					oCommand.id = 5;
 					break;
 			}
-			if (oParsedPath.commands[nCommand].id !== "arcTo" && oParsedPath.commands[nCommand].id !== "close")
-			{
-				var arrPtKeys  = Object.keys(oParsedPath.commands[nCommand].pt);
-				for (var ptKey in arrPtKeys)
-					oCommand[arrPtKeys[ptKey].toUpperCase()] = oParsedPath.commands[nCommand].pt[arrPtKeys[ptKey]];
-			}
-			for (var key in arrKeys)
-			{
-				if (arrKeys[key] === "id")
-					continue;
-				if (arrKeys[key] !== "pt")
-					oCommand[arrKeys[key]] = oParsedPath.commands[nCommand][arrKeys[key]];
-			}
-				
 
 			oPath.addPathCommand(oCommand);
 		}
 
-		oParsedPath.extrusionOk != undefined && oPath.setExtrusionOk(oParsedPath.extrusionOk);
-		oParsedPath.fill        != undefined && oPath.setFill(oParsedPath.fill);
-		oParsedPath.h           != undefined && oPath.setPathH(oParsedPath.h);
-		oParsedPath.stroke      != undefined && oPath.setStroke(oParsedPath.stroke);
-		oParsedPath.w           != undefined && oPath.setPathW(oParsedPath.w);
+		oParsedPath["extrusionOk"] != undefined && oPath.setExtrusionOk(oParsedPath["extrusionOk"]);
+		oParsedPath["fill"]        != undefined && oPath.setFill(oParsedPath["fill"]);
+		oParsedPath["h"]           != undefined && oPath.setPathH(oParsedPath["h"]);
+		oParsedPath["stroke"]      != undefined && oPath.setStroke(oParsedPath["stroke"]);
+		oParsedPath["w"]           != undefined && oPath.setPathW(oParsedPath["w"]);
 
 		return oPath;
 	};
 	ReaderFromJSON.prototype.UniNvPrFromJSON = function(oParsedPr)
 	{
 		var oUniNvPr = new AscFormat.UniNvPr();
-		
-		oUniNvPr.setCNvPr(this.CNvPrFromJSON(oParsedPr.cNvPr));
-		oUniNvPr.setNvPr(this.NvPrFromJSON(oParsedPr.nvPr));
-		oUniNvPr.setUniSpPr(this.NvUniSpPrFromJSON(oParsedPr.nvUniSpPr, oUniNvPr));
+		var nLocks   = 0;
+
+		oUniNvPr.setCNvPr(this.CNvPrFromJSON(oParsedPr["cNvPr"]));
+		oUniNvPr.setNvPr(this.NvPrFromJSON(oParsedPr["nvPr"]));
+
+		if (oParsedPr["cNvSpPr"])
+		{
+			nLocks = this.SpCNvPrFromJSON(oParsedPr["cNvSpPr"]);
+		}
+		else if (oParsedPr["cNvPicPr"])
+		{
+			nLocks = this.PicCNvPrFromJSON(oParsedPr["cNvPicPr"]);
+		}
+		else if (oParsedPr["cNvGrpSpPr"])
+		{
+			nLocks = this.GrpCNvPrFromJSON(oParsedPr["cNvGrpSpPr"]);
+		}
+		else if (oParsedPr["cNvGraphicFramePr"])
+		{
+			nLocks = this.GrFrameCNvPrFromJSON(oParsedPr["cNvGraphicFramePr"]);
+		}
+		else if (oParsedPr["cNvCxnSpPr"])
+		{
+			nLocks = this.CnxCNvPrFromJSON(oParsedPr["cNvCxnSpPr"], oUniNvPr);
+		}
+
+		if (nLocks !== 0)
+			oUniNvPr.locks = nLocks;
 
 		return oUniNvPr;
+	};
+	ReaderFromJSON.prototype.SpCNvPrFromJSON = function(oParsed)
+	{
+		var nLocks = 0;
+
+		if (oParsed["txBox"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.txBox, oParsed["txBox"]);
+		if (oParsed["spLocks"]["noAdjustHandles"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noAdjustHandles, oParsed["spLocks"]["noAdjustHandles"]);
+		if (oParsed["spLocks"]["noChangeArrowheads"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noChangeArrowheads, oParsed["spLocks"]["noChangeArrowheads"]);
+		if (oParsed["spLocks"]["noChangeAspect"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noChangeAspect, oParsed["spLocks"]["noChangeAspect"]);
+		if (oParsed["spLocks"]["noChangeShapeType"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noChangeShapeType, oParsed["spLocks"]["noChangeShapeType"]);
+		if (oParsed["spLocks"]["noEditPoints"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noEditPoints, oParsed["spLocks"]["noEditPoints"]);
+		if (oParsed["spLocks"]["noGrp"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noGrp, oParsed["spLocks"]["noGrp"]);
+		if (oParsed["spLocks"]["noMove"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noMove, oParsed["spLocks"]["noMove"]);
+		if (oParsed["spLocks"]["noResize"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noResize, oParsed["spLocks"]["noResize"]);
+		if (oParsed["spLocks"]["noRot"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noRot, oParsed["spLocks"]["noRot"]);
+		if (oParsed["spLocks"]["noSelect"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noSelect, oParsed["spLocks"]["noSelect"]);
+		if (oParsed["spLocks"]["noTextEdit"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noTextEdit, oParsed["spLocks"]["noTextEdit"]);
+
+		return nLocks;
+	};
+	ReaderFromJSON.prototype.PicCNvPrFromJSON = function(oParsed)
+	{
+		var nLocks = 0;
+
+		if (oParsed["picLocks"]["noAdjustHandles"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noAdjustHandles, oParsed["picLocks"]["noAdjustHandles"]);
+		if (oParsed["picLocks"]["noChangeArrowheads"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noChangeArrowheads, oParsed["picLocks"]["noChangeArrowheads"]);
+		if (oParsed["picLocks"]["noChangeAspect"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noChangeAspect, oParsed["picLocks"]["noChangeAspect"]);
+		if (oParsed["picLocks"]["noChangeShapeType"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noChangeShapeType, oParsed["picLocks"]["noChangeShapeType"]);
+		if (oParsed["picLocks"]["noCrop"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noCrop, oParsed["picLocks"]["noCrop"]);
+		if (oParsed["picLocks"]["noEditPoints"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noEditPoints, oParsed["picLocks"]["noEditPoints"]);
+		if (oParsed["picLocks"]["noGrp"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noGrp, oParsed["picLocks"]["noGrp"]);
+		if (oParsed["picLocks"]["noMove"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noMove, oParsed["picLocks"]["noMove"]);
+		if (oParsed["picLocks"]["noResize"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noResize, oParsed["picLocks"]["noResize"]);
+		if (oParsed["picLocks"]["noRot"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noRot, oParsed["picLocks"]["noRot"]);
+		if (oParsed["picLocks"]["noSelect"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noSelect, oParsed["picLocks"]["noSelect"]);
+
+		return nLocks;
+	};
+	ReaderFromJSON.prototype.GrpCNvPrFromJSON = function(oParsed)
+	{
+		var nLocks = 0;
+
+		if (oParsed["grpSpLocks"]["noChangeAspect"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noChangeAspect, oParsed["grpSpLocks"]["noChangeAspect"]);
+		if (oParsed["grpSpLocks"]["noGrp"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noGrp, oParsed["grpSpLocks"]["noGrp"]);
+		if (oParsed["grpSpLocks"]["noMove"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noMove, oParsed["grpSpLocks"]["noMove"]);
+		if (oParsed["grpSpLocks"]["noResize"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noResize, oParsed["grpSpLocks"]["noResize"]);
+		if (oParsed["grpSpLocks"]["noRot"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noRot, oParsed["grpSpLocks"]["noRot"]);
+		if (oParsed["grpSpLocks"]["noSelect"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noSelect, oParsed["grpSpLocks"]["noSelect"]);
+		if (oParsed["grpSpLocks"]["noUngrp"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noUngrp, oParsed["grpSpLocks"]["noUngrp"]);
+
+		return nLocks;
+	};
+	ReaderFromJSON.prototype.GrFrameCNvPrFromJSON = function(oParsed)
+	{
+		var nLocks = 0;
+
+		if (oParsed["graphicFrameLocks"]["noChangeAspect"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noChangeAspect, oParsed["graphicFrameLocks"]["noChangeAspect"]);
+		if (oParsed["graphicFrameLocks"]["noDrilldown"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noDrilldown, oParsed["graphicFrameLocks"]["noDrilldown"]);
+		if (oParsed["graphicFrameLocks"]["noGrp"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noGrp, oParsed["graphicFrameLocks"]["noGrp"]);
+		if (oParsed["graphicFrameLocks"]["noMove"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noMove, oParsed["graphicFrameLocks"]["noMove"]);
+		if (oParsed["graphicFrameLocks"]["noResize"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noResize, oParsed["graphicFrameLocks"]["noResize"]);
+		if (oParsed["graphicFrameLocks"]["noSelect"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noSelect, oParsed["graphicFrameLocks"]["noSelect"]);
+
+		return nLocks;
+	};
+	ReaderFromJSON.prototype.CnxCNvPrFromJSON = function(oParsed, oParentUniNvPr)
+	{
+		var nLocks = 0;
+
+		if (oParsed["cxnSpLocks"]["noAdjustHandles"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noAdjustHandles, oParsed["cxnSpLocks"]["noAdjustHandles"]);
+		if (oParsed["cxnSpLocks"]["noChangeArrowheads"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noChangeArrowheads, oParsed["cxnSpLocks"]["noChangeArrowheads"]);
+		if (oParsed["cxnSpLocks"]["noChangeAspect"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noChangeAspect, oParsed["cxnSpLocks"]["noChangeAspect"]);
+		if (oParsed["cxnSpLocks"]["noChangeShapeType"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noChangeShapeType, oParsed["cxnSpLocks"]["noChangeShapeType"]);
+		if (oParsed["cxnSpLocks"]["noEditPoints"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noEditPoints, oParsed["cxnSpLocks"]["noEditPoints"]);
+		if (oParsed["cxnSpLocks"]["noGrp"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noGrp, oParsed["cxnSpLocks"]["noGrp"]);
+		if (oParsed["cxnSpLocks"]["noMove"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noMove, oParsed["cxnSpLocks"]["noMove"]);
+		if (oParsed["cxnSpLocks"]["noResize"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noResize, oParsed["cxnSpLocks"]["noResize"]);
+		if (oParsed["cxnSpLocks"]["noRot"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noRot, oParsed["cxnSpLocks"]["noRot"]);
+		if (oParsed["cxnSpLocks"]["noSelect"] != null)
+			nLocks = AscFormat.fUpdateLocksValue(nLocks, AscFormat.LOCKS_MASKS.noSelect, oParsed["cxnSpLocks"]["noSelect"]);
+
+		if (oParentUniNvPr)
+		{
+			if (oParsed["stCxn"] != null)
+			{
+				oParentUniNvPr.nvUniSpPr.stCnxId = oParsed["stCxn"]["id"];
+				oParentUniNvPr.nvUniSpPr.stCnxIdx = oParsed["stCxn"]["idx"];
+			}
+			if (oParsed["endCxn"] != null)
+			{
+				oParentUniNvPr.nvUniSpPr.endCnxId = oParsed["endCxn"]["id"];
+				oParentUniNvPr.nvUniSpPr.endCnxIdx = oParsed["endCxn"]["idx"];
+			}
+			oParentUniNvPr.nvUniSpPr.setUniSpPr(oParentUniNvPr.nvUniSpPr.copy());
+		}
+		
+		return nLocks;
 	};
 	ReaderFromJSON.prototype.CNvPrFromJSON = function(oParsedPr)
 	{
 		var oCNvPr = new AscFormat.CNvPr();
 
-		oCNvPr.setName(oParsedPr.name);
-		oCNvPr.setIsHidden(oParsedPr.hidden);
-		oCNvPr.setDescr(oParsedPr.descr);
-		oCNvPr.setTitle(oParsedPr.title);
-		oParsedPr.hlinkClick && oCNvPr.setHlinkClick(this.HLinkFromJSON(oParsedPr.hlinkClick));
-		oParsedPr.hlinkHover && oCNvPr.setHlinkHover(this.HLinkFromJSON(oParsedPr.hlinkHover));
-		oCNvPr.setId(oParsedPr.id);
+		oCNvPr.setName(oParsedPr["name"]);
+		oCNvPr.setIsHidden(oParsedPr["hidden"]);
+		oCNvPr.setDescr(oParsedPr["descr"]);
+		oCNvPr.setTitle(oParsedPr["title"]);
+		oParsedPr["hlinkClick"] && oCNvPr.setHlinkClick(this.HLinkFromJSON(oParsedPr["hlinkClick"]));
+		oParsedPr["hlinkHover"] && oCNvPr.setHlinkHover(this.HLinkFromJSON(oParsedPr["hlinkHover"]));
+		oCNvPr.setId(oParsedPr["id"]);
 
 		return oCNvPr;
 	};
@@ -15191,10 +15682,14 @@
 	{
 		var oNvPr = new AscFormat.NvPr();
 
-		oNvPr.setIsPhoto(oParsedPr.isPhoto);
-		oParsedPr.ph && oNvPr.setPh(this.PlaceholderFromJSON(oParsedPr.ph));
-		oParsedPr.unimedia && oNvPr.setUniMedia(this.UniMediaFromJSON(oParsedPr.unimedia));
-		oNvPr.setUserDrawn(oParsedPr.userDrawn);
+		oNvPr.setIsPhoto(oParsedPr["isPhoto"]);
+		oParsedPr["ph"] && oNvPr.setPh(this.PlaceholderFromJSON(oParsedPr["ph"]));
+		if (oParsedPr["audio"])
+			oNvPr.setUniMedia(this.UniMediaFromJSON(oParsedPr["audio"], "audio"));
+		else if (oParsedPr["video"])
+			oNvPr.setUniMedia(this.UniMediaFromJSON(oParsedPr["video"]), "video");
+
+		oNvPr.setUserDrawn(oParsedPr["userDrawn"]);
 
 		return oNvPr;
 	};
@@ -15203,11 +15698,11 @@
 		var oPlaceholder = new AscFormat.Ph();
 
 		// orient
-		var nOrient = typeof(oParsedPh.orient) === "string" ? (oParsedPh.orient === "vert" ? 1 : 0) : null;
+		var nOrient = typeof(oParsedPh["orient"]) === "string" ? (oParsedPh["orient"] === "vert" ? 1 : 0) : null;
 		
 		// size
 		var nPhSz   = null;
-		switch (oParsedPh.sz)
+		switch (oParsedPh["sz"])
 		{
 			case "full":
 				nPhSz = 0;
@@ -15220,20 +15715,29 @@
 				break;
 		}
 		
-		oParsedPh.hasCustomPrompt != undefined && oPlaceholder.setHasCustomPrompt(oParsedPh.hasCustomPrompt);
-		oParsedPh.idx != undefined && oPlaceholder.setIdx(oParsedPh.idx);
+		oParsedPh["hasCustomPrompt"] != undefined && oPlaceholder.setHasCustomPrompt(oParsedPh["hasCustomPrompt"]);
+		oParsedPh["idx"] != undefined && oPlaceholder.setIdx(oParsedPh["idx"]);
 		nOrient != undefined && oPlaceholder.setOrient(nOrient);
 		nPhSz != undefined && oPlaceholder.setSz(nPhSz);
-		oParsedPh.type != undefined && oPlaceholder.setType(this.GetNumPhType(oParsedPh.type));
+		oParsedPh["type"] != undefined && oPlaceholder.setType(this.GetNumPhType(oParsedPh["type"]));
 		
 		return oPlaceholder;
 	};
-	ReaderFromJSON.prototype.UniMediaFromJSON = function(oParsedUniMedia)
+	ReaderFromJSON.prototype.UniMediaFromJSON = function(oParsedUniMedia, sType)
 	{
 		var oUniMedia = new AscFormat.UniMedia();
 
-		oUniMedia.type  = oParsedUniMedia.type;
-		oUniMedia.media = oParsedUniMedia.media;
+		switch (sType)
+		{
+			case "audio":
+				oUniMedia.type = AscFormat.SPTREE_TYPE_AUDIO;
+				break;
+			case "video":
+				oUniMedia.type = AscFormat.SPTREE_TYPE_VIDEO;
+				break;
+		}
+
+		oUniMedia.media = oParsedUniMedia["media"];
 
 		return oUniMedia;
 	};
@@ -15241,11 +15745,11 @@
 	{
 		var oNvUniSpPr = new AscFormat.CNvUniSpPr();
 
-		oNvUniSpPr.locks     = FromXML_DrawingLockType(oParsedPr.locks);
-		oNvUniSpPr.stCnxIdx  = oParsedPr.stCnxIdx;
-		oNvUniSpPr.stCnxId   = oParsedPr.stCnxId;
-		oNvUniSpPr.endCnxIdx = oParsedPr.endCnxIdx;
-		oNvUniSpPr.endCnxId  = oParsedPr.endCnxId;
+		oNvUniSpPr.locks     = FromXML_GraphicFrameLocks(oParsedPr["locks"]);
+		oNvUniSpPr.stCnxIdx  = oParsedPr["stCnxIdx"];
+		oNvUniSpPr.stCnxId   = oParsedPr["stCnxId"];
+		oNvUniSpPr.endCnxIdx = oParsedPr["endCnxIdx"];
+		oNvUniSpPr.endCnxId  = oParsedPr["endCnxId"];
 
 		return oNvUniSpPr;
 	};
@@ -15253,14 +15757,14 @@
 	{
 		var oHLink = new AscFormat.CT_Hyperlink();
 
-		oHLink.id             = oParsedHLink.id;
-		oHLink.invalidUrl     = oParsedHLink.invalidUrl;
-		oHLink.action         = oParsedHLink.action;
-		oHLink.tgtFrame       = oParsedHLink.tgtFrame;
-		oHLink.tooltip        = oParsedHLink.tooltip;
-		oHLink.history        = oParsedHLink.history;
-		oHLink.highlightClick = oParsedHLink.highlightClick;
-		oHLink.endSnd         = oParsedHLink.endSnd;
+		oHLink.id             = oParsedHLink["id"];
+		oHLink.invalidUrl     = oParsedHLink["invalidUrl"];
+		oHLink.action         = oParsedHLink["action"];
+		oHLink.tgtFrame       = oParsedHLink["tgtFrame"];
+		oHLink.tooltip        = oParsedHLink["tooltip"];
+		oHLink.history        = oParsedHLink["history"];
+		oHLink.highlightClick = oParsedHLink["highlightClick"];
+		oHLink.endSnd         = oParsedHLink["endSnd"];
 
 		return oHLink;
 	};
@@ -15268,7 +15772,7 @@
 	{
 		// anchorH
 		var nRelFromH = undefined;
-		switch (oParsedPosH.relativeFrom)
+		switch (oParsedPosH["relativeFrom"])
 		{
 			case "character":
 				nRelFromH = Asc.c_oAscRelativeFromH.Character;
@@ -15298,9 +15802,9 @@
 
 		// alignH
 		var nHorAlign = undefined;
-		if (oParsedPosH.align)
+		if (oParsedPosH["align"])
 		{
-			switch (oParsedPosH.align)
+			switch (oParsedPosH["align"])
 			{
 				case "center":
 					nHorAlign = Asc.c_oAscXAlign.Center;
@@ -15320,11 +15824,11 @@
 			}
 		}
 
-		var nValue = oParsedPosH.align ? nHorAlign : (oParsedPosH.percent ? oParsedPosH.posOffset : private_EMU2MM(oParsedPosH.posOffset));
+		var nValue = oParsedPosH["align"] ? nHorAlign : (oParsedPosH["percent"] ? oParsedPosH["posOffset"] : private_EMU2MM(oParsedPosH["posOffset"]));
 
 		return {
-			Align:        !!oParsedPosH.align,
-			Percent:      !!oParsedPosH.percent,
+			Align:        !!oParsedPosH["align"],
+			Percent:      !!oParsedPosH["percent"],
 			RelativeFrom: nRelFromH,
 			Value:        nValue
 		}
@@ -15333,7 +15837,7 @@
 	{
 		// anchorV
 		var nRelFromV = undefined;
-		switch (oParsedPosV.relativeFrom)
+		switch (oParsedPosV["relativeFrom"])
 		{
 			case "bottomMargin":
 				nRelFromV = Asc.c_oAscRelativeFromV.BottomMargin;
@@ -15363,9 +15867,9 @@
 
 		// alignV
 		var nVerAlign = undefined;
-		if (oParsedPosV.Align)
+		if (oParsedPosV["align"])
 		{
-			switch (oParsedPosV.Value)
+			switch (oParsedPosV["align"])
 			{
 				case "bottom":
 					nVerAlign = c_oAscYAlign.Bottom;
@@ -15388,11 +15892,11 @@
 			}
 		}
 
-		var nValue = oParsedPosV.align ? nVerAlign : (oParsedPosV.percent ? oParsedPosV.posOffset : private_EMU2MM(oParsedPosV.posOffset));
+		var nValue = oParsedPosV["align"] ? nVerAlign : (oParsedPosV["percent"] ? oParsedPosV["posOffset"] : private_EMU2MM(oParsedPosV["posOffset"]));
 
 		return {
-			Align:        oParsedPosV.align ? true : false,
-			Percent:      oParsedPosV.percent ? true : false,
+			Align:        oParsedPosV["align"] ? true : false,
+			Percent:      oParsedPosV["percent"] ? true : false,
 			RelativeFrom: nRelFromV,
 			Value:        nValue
 		}
@@ -19515,115 +20019,451 @@
 		return nVal;
 	}
 
-	function ToXML_DrawingLockType(nType)
+	function ToXML_StyleEntryType(nType)
 	{
-		var sLockType = undefined;
+		var sType = undefined;
+
 		switch (nType)
 		{
-			case AscFormat.LOCKS_MASKS.noGrp:
-				sLockType = "noGrp";
+			case 1:
+				sType = "axisTitle";
 				break;
-			case AscFormat.LOCKS_MASKS.noUngrp:
-				sLockType = "noUngrp";
+			case 2:
+				sType = "categoryAxis";
 				break;
-			case AscFormat.LOCKS_MASKS.noSelect:
-				sLockType = "noSelect";
+			case 3:
+				sType = "chartArea";
 				break;
-			case AscFormat.LOCKS_MASKS.noRot:
-				sLockType = "noRot";
+			case 4:
+				sType = "dataLabel";
 				break;
-			case AscFormat.LOCKS_MASKS.noChangeAspect:
-				sLockType = "noChangeAspect";
+			case 5:
+				sType = "dataLabelCallout";
 				break;
-			case AscFormat.LOCKS_MASKS.noMove:
-				sLockType = "noMove";
+			case 6:
+				sType = "dataPoint";
 				break;
-			case AscFormat.LOCKS_MASKS.noResize:
-				sLockType = "noResize";
+			case 7:
+				sType = "dataPoint3D";
 				break;
-			case AscFormat.LOCKS_MASKS.noEditPoints:
-				sLockType = "noEditPoints";
+			case 8:
+				sType = "dataPointLine";
 				break;
-			case AscFormat.LOCKS_MASKS.noAdjustHandles:
-				sLockType = "noAdjustHandles";
+			case 9:
+				sType = "dataPointMarker";
 				break;
-			case AscFormat.LOCKS_MASKS.noChangeArrowheads:
-				sLockType = "noChangeArrowheads";
+			case 10:
+				sType = "dataPointWireframe";
 				break;
-			case AscFormat.LOCKS_MASKS.noChangeShapeType:
-				sLockType = "noChangeShapeType";
+			case 11:
+				sType = "dataTable";
 				break;
-			case AscFormat.LOCKS_MASKS.noDrilldown:
-				sLockType = "noDrilldown";
+			case 12:
+				sType = "downBar";
 				break;
-			case AscFormat.LOCKS_MASKS.noTextEdit:
-				sLockType = "noTextEdit";
+			case 13:
+				sType = "dropLine";
 				break;
-			case AscFormat.LOCKS_MASKS.noCrop:
-				sLockType = "noCrop";
+			case 14:
+				sType = "errorBar";
 				break;
-			case AscFormat.LOCKS_MASKS.txBox:
-				sLockType = "txBox";
+			case 15:
+				sType = "floor";
+				break;
+			case 16:
+				sType = "gridlineMajor";
+				break;
+			case 17:
+				sType = "gridlineMinor";
+				break;
+			case 18:
+				sType = "hiLoLine";
+				break;
+			case 19:
+				sType = "leaderLine";
+				break;
+			case 20:
+				sType = "legend";
+				break;
+			case 21:
+				sType = "plotArea";
+				break;
+			case 22:
+				sType = "plotArea3D";
+				break;
+			case 23:
+				sType = "seriesAxis";
+				break;
+			case 24:
+				sType = "seriesLine";
+				break;
+			case 25:
+				sType = "title";
+				break;
+			case 26:
+				sType = "trendline";
+				break;
+			case 27:
+				sType = "trendlineLabel";
+				break;
+			case 28:
+				sType = "upBar";
+				break;
+			case 29:
+				sType = "valueAxis";
+				break;
+			case 30:
+				sType = "wall";
 				break;
 		}
 
-		return sLockType;
+		return sType;
 	}
-	function FromXML_DrawingLockType(sType)
+	function FromXML_StyleEntryType(sType)
 	{
-		var nLockType = 0;
+		var nType = undefined;
+
 		switch (sType)
 		{
-			case "noGrp":
-				nLockType = AscFormat.LOCKS_MASKS.noGrp;
+			case "axisTitle":
+				nType = 1;
 				break;
-			case "noUngrp":
-				nLockType = AscFormat.LOCKS_MASKS.noUngrp;
+			case "categoryAxis":
+				nType = 2;
 				break;
-			case "noSelect":
-				nLockType = AscFormat.LOCKS_MASKS.noSelect;
+			case "chartArea":
+				nType = 3;
 				break;
-			case "noRot":
-				nLockType = AscFormat.LOCKS_MASKS.noRot;
+			case "dataLabel":
+				nType = 4;
 				break;
-			case "noChangeAspect":
-				nLockType = AscFormat.LOCKS_MASKS.noChangeAspect;
+			case "dataLabelCallout":
+				nType = 5;
 				break;
-			case "noMove":
-				nLockType = AscFormat.LOCKS_MASKS.noMove;
+			case "dataPoint":
+				nType = 6;
 				break;
-			case "noResize":
-				nLockType = AscFormat.LOCKS_MASKS.noResize;
+			case "dataPoint3D":
+				nType = 7;
 				break;
-			case "noEditPoints":
-				nLockType = AscFormat.LOCKS_MASKS.noEditPoints;
+			case "dataPointLine":
+				nType = 8;
 				break;
-			case "noAdjustHandles":
-				nLockType = AscFormat.LOCKS_MASKS.noAdjustHandles;
+			case "dataPointMarker":
+				nType = 9;
 				break;
-			case "noChangeArrowheads":
-				nLockType = AscFormat.LOCKS_MASKS.noChangeArrowheads;
+			case "dataPointWireframe":
+				nType = 10;
 				break;
-			case "noChangeShapeType":
-				nLockType = AscFormat.LOCKS_MASKS.noChangeShapeType;
+			case "dataTable":
+				nType = 11;
 				break;
-			case "noDrilldown":
-				nLockType = AscFormat.LOCKS_MASKS.noDrilldown;
+			case "downBar":
+				nType = 12;
 				break;
-			case "noTextEdit":
-				nLockType = AscFormat.LOCKS_MASKS.noTextEdit;
+			case "dropLine":
+				nType = 13;
 				break;
-			case "noCrop":
-				nLockType = AscFormat.LOCKS_MASKS.noCrop;
+			case "errorBar":
+				nType = 14;
 				break;
-			case "txBox":
-				nLockType = AscFormat.LOCKS_MASKS.txBox;
+			case "floor":
+				nType = 15;
+				break;
+			case "gridlineMajor":
+				nType = 16;
+				break;
+			case "gridlineMinor":
+				nType = 17;
+				break;
+			case "hiLoLine":
+				nType = 18;
+				break;
+			case "leaderLine":
+				nType = 19;
+				break;
+			case "legend":
+				nType = 20;
+				break;
+			case "plotArea":
+				nType = 21;
+				break;
+			case "plotArea3D":
+				nType = 22;
+				break;
+			case "seriesAxis":
+				nType = 23;
+				break;
+			case "seriesLine":
+				nType = 24;
+				break;
+			case "title":
+				nType = 25;
+				break;
+			case "trendline":
+				nType = 26;
+				break;
+			case "trendlineLabel":
+				nType = 27;
+				break;
+			case "upBar":
+				nType = 28;
+				break;
+			case "valueAxis":
+				nType = 29;
+				break;
+			case "wall":
+				nType = 30;
 				break;
 		}
 
-		return nLockType;
+		return nType;
 	}
-	
+	function FromXml_ST_SizeRelFromH(val) {
+		switch (val) {
+			case "margin":
+				return AscCommon.c_oAscSizeRelFromH.sizerelfromhMargin;
+			case "page":
+				return AscCommon.c_oAscSizeRelFromH.sizerelfromhPage;
+			case "leftMargin":
+				return AscCommon.c_oAscSizeRelFromH.sizerelfromhLeftMargin;
+			case "rightMargin":
+				return AscCommon.c_oAscSizeRelFromH.sizerelfromhRightMargin;
+			case "insideMargin":
+				return AscCommon.c_oAscSizeRelFromH.sizerelfromhInsideMargin;
+			case "outsideMargin":
+				return AscCommon.c_oAscSizeRelFromH.sizerelfromhOutsideMargin;
+		}
+		return AscCommon.c_oAscSizeRelFromH.sizerelfromhPage;
+	}
+	function ToXml_ST_SizeRelFromH(val) {
+		switch (val) {
+			case AscCommon.c_oAscSizeRelFromH.sizerelfromhMargin:
+				return "margin";
+			case AscCommon.c_oAscSizeRelFromH.sizerelfromhPage:
+				return "page";
+			case AscCommon.c_oAscSizeRelFromH.sizerelfromhLeftMargin:
+				return "leftMargin";
+			case AscCommon.c_oAscSizeRelFromH.sizerelfromhRightMargin:
+				return "rightMargin";
+			case AscCommon.c_oAscSizeRelFromH.sizerelfromhInsideMargin:
+				return "insideMargin";
+			case AscCommon.c_oAscSizeRelFromH.sizerelfromhOutsideMargin:
+				return "outsideMargin";
+		}
+		return null;
+	}
+	function FromXml_ST_SizeRelFromV(val) {
+		switch (val) {
+			case "margin":
+				return AscCommon.c_oAscSizeRelFromV.sizerelfromvMargin;
+			case "page":
+				return AscCommon.c_oAscSizeRelFromV.sizerelfromvPage;
+			case "topMargin":
+				return AscCommon.c_oAscSizeRelFromV.sizerelfromvTopMargin;
+			case "bottomMargin":
+				return AscCommon.c_oAscSizeRelFromV.sizerelfromvBottomMargin;
+			case "insideMargin":
+				return AscCommon.c_oAscSizeRelFromV.sizerelfromvInsideMargin;
+			case "outsideMargin":
+				return AscCommon.c_oAscSizeRelFromV.sizerelfromvOutsideMargin;
+		}
+		return AscCommon.c_oAscSizeRelFromV.sizerelfromvPage;
+	}
+	function ToXml_ST_SizeRelFromV(val) {
+		switch (val) {
+			case AscCommon.c_oAscSizeRelFromV.sizerelfromvMargin:
+				return "margin";
+			case AscCommon.c_oAscSizeRelFromV.sizerelfromvPage:
+				return "page";
+			case AscCommon.c_oAscSizeRelFromV.sizerelfromvTopMargin:
+				return "topMargin";
+			case AscCommon.c_oAscSizeRelFromV.sizerelfromvBottomMargin:
+				return "bottomMargin";
+			case AscCommon.c_oAscSizeRelFromV.sizerelfromvInsideMargin:
+				return "insideMargin";
+			case AscCommon.c_oAscSizeRelFromV.sizerelfromvOutsideMargin:
+				return "outsideMargin";
+		}
+		return null;
+	}
+
+	function FromXml_ST_Hint(val) {
+		switch (val) {
+			case "default":
+				return fonthint_Default;
+			case "cs":
+				return fonthint_CS;
+			case "eastAsia":
+				return fonthint_EastAsia;
+		}
+		return undefined;
+	}
+	function ToXml_ST_Hint(val) {
+		switch (val) {
+			case fonthint_Default:
+				return "default";
+			case fonthint_CS:
+				return "cs";
+			case fonthint_EastAsia:
+				return "eastAsia";
+		}
+		return null;
+	}
+
+	function FromXml_ST_Shape(val) {
+		switch (val) {
+			case "cone":
+				return AscFormat.BAR_SHAPE_CONE;
+			case "coneToMax":
+				return AscFormat.BAR_SHAPE_CONETOMAX;
+			case "box":
+				return AscFormat.BAR_SHAPE_BOX;
+			case "cylinder":
+				return AscFormat.BAR_SHAPE_CYLINDER;
+			case "pyramid":
+				return AscFormat.BAR_SHAPE_PYRAMID;
+			case "pyramidToMax":
+				return AscFormat.BAR_SHAPE_PYRAMIDTOMAX;
+		}
+		return null;
+	}
+	function ToXml_ST_Shape(val) {
+		switch (val) {
+			case AscFormat.BAR_SHAPE_CONE:
+				return "cone";
+			case AscFormat.BAR_SHAPE_CONETOMAX:
+				return "coneToMax";
+			case AscFormat.BAR_SHAPE_BOX:
+				return "box";
+			case AscFormat.BAR_SHAPE_CYLINDER:
+				return "cylinder";
+			case AscFormat.BAR_SHAPE_PYRAMID:
+				return "pyramid";
+			case AscFormat.BAR_SHAPE_PYRAMIDTOMAX:
+				return "pyramidToMax";
+		}
+		return null;
+	}
+
+	function ToXml_ST_SdtAppearance(nVal)
+	{
+		switch (nVal)
+		{
+			case Asc.c_oAscSdtAppearance.Frame:
+				return "boundingBox";
+			case Asc.c_oAscSdtAppearance.Hidden:
+				return "hidden";
+		}
+
+		return undefined;
+	}
+	function FromXml_ST_SdtAppearance(sVal)
+	{
+		switch (sVal)
+		{
+			case "boundingBox":
+				return Asc.c_oAscSdtAppearance.Frame;
+			case "hidden":
+				return Asc.c_oAscSdtAppearance.Hidden;
+		}
+
+		return undefined;
+	}
+
+	function FromXml_ST_Lock(val, def) {
+		switch (val) {
+			case "sdtLocked":
+				return c_oAscSdtLockType.SdtLocked;
+			case "contentLocked":
+				return c_oAscSdtLockType.ContentLocked;
+			case "unlocked":
+				return c_oAscSdtLockType.Unlocked;
+			case "sdtContentLocked":
+				return c_oAscSdtLockType.SdtContentLocked;
+		}
+		return def;
+	}
+	function ToXml_ST_Lock(val) {
+		switch (val) {
+			case c_oAscSdtLockType.SdtLocked:
+				return "sdtLocked";
+			case c_oAscSdtLockType.ContentLocked:
+				return "contentLocked";
+			case c_oAscSdtLockType.Unlocked:
+				return "unlocked";
+			case c_oAscSdtLockType.SdtContentLocked:
+				return "sdtContentLocked";
+		}
+		return null;
+	}
+
+	function FromXml_ST_CalendarType(val, def) {
+		switch (val) {
+			case "gregorian":
+				return Asc.c_oAscCalendarType.Gregorian;;
+			case "gregorianUs":
+				return Asc.c_oAscCalendarType.GregorianUs;
+			case "gregorianMeFrench":
+				return Asc.c_oAscCalendarType.GregorianMeFrench;
+			case "gregorianArabic":
+				return Asc.c_oAscCalendarType.GregorianArabic;
+			case "hijri":
+				return Asc.c_oAscCalendarType.Hijri;
+			case "hebrew":
+				return Asc.c_oAscCalendarType.Hebrew;
+			case "taiwan":
+				return Asc.c_oAscCalendarType.Taiwan;
+			case "japan":
+				return Asc.c_oAscCalendarType.Japan;
+			case "thai":
+				return Asc.c_oAscCalendarType.Thai;
+			case "korea":
+				return Asc.c_oAscCalendarType.Korea;
+			case "saka":
+				return Asc.c_oAscCalendarType.Saka;
+			case "gregorianXlitEnglish":
+				return Asc.c_oAscCalendarType.GregorianXlitEnglish;
+			case "gregorianXlitFrench":
+				return Asc.c_oAscCalendarType.GregorianXlitFrench;
+			case "none":
+				return Asc.c_oAscCalendarType.None;
+		}
+		return def;
+	}
+	function ToXml_ST_CalendarType(val) {
+		switch (val) {
+			case Asc.c_oAscCalendarType.Gregorian:
+				return "gregorian";
+			case Asc.c_oAscCalendarType.GregorianUs:
+				return "gregorianUs";
+			case Asc.c_oAscCalendarType.GregorianMeFrench:
+				return "gregorianMeFrench";
+			case Asc.c_oAscCalendarType.GregorianArabic:
+				return "gregorianArabic";
+			case Asc.c_oAscCalendarType.Hijri:
+				return "hijri";
+			case Asc.c_oAscCalendarType.Hebrew:
+				return "hebrew";
+			case Asc.c_oAscCalendarType.Taiwan:
+				return "taiwan";
+			case Asc.c_oAscCalendarType.Japan:
+				return "japan";
+			case Asc.c_oAscCalendarType.Thai:
+				return "thai";
+			case Asc.c_oAscCalendarType.Korea:
+				return "korea";
+			case Asc.c_oAscCalendarType.Saka:
+				return "saka";
+			case Asc.c_oAscCalendarType.GregorianXlitEnglish:
+				return "gregorianXlitEnglish";
+			case Asc.c_oAscCalendarType.GregorianXlitFrench:
+				return "gregorianXlitFrench";
+			case Asc.c_oAscCalendarType.None:
+				return "none";
+		}
+		return null;
+	}
     //----------------------------------------------------------export----------------------------------------------------
     window['AscCommon']       = window['AscCommon'] || {};
     window['AscFormat']       = window['AscFormat'] || {};

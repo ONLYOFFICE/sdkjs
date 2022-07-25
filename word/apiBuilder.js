@@ -2736,15 +2736,15 @@
 	{
 		var oDocument = private_GetLogicDocument();
 		var aContent = [];
-		var aResult = {
-			type: "document",
-			content: []
+		var oJSON = {
+			"type":    "document",
+			"content": []
 		}
 
 		private_RefreshRangesPosition();
 		private_RemoveEmptyRanges();
 
-		var oldSelectionInfo	= oDocument.SaveDocumentState();
+		var oldSelectionInfo = oDocument.SaveDocumentState();
 		this.Select(false);
 
 		var oSelectedContent = oDocument.GetSelectedContent();
@@ -2765,12 +2765,16 @@
 		if (aContent.length > 0)
 		{
 			var oWriter = new AscCommon.WriterToJSON();
-			aResult["content"] = oWriter.SerContent(aContent);
+			oJSON["content"] = oWriter.SerContent(aContent);
 		}
 		else
 			return "";
 
-		return JSON.stringify(aResult);
+		// numbering и styles в конце, потому что сначала нужно обойти все параграфы
+		oJSON["numbering"] = oWriter.jsonWordNumberings;
+		oJSON["styles"] = oWriter.SerWordStyles();
+
+		return JSON.stringify(oJSON);
 	};
 
 	/**
@@ -3167,7 +3171,11 @@
 	ApiHyperlink.prototype.ToJSON = function()
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerHyperlink(this.ParaHyperlink));
+		var oJSON = oWriter.SerHyperlink(this.ParaHyperlink);
+		oJSON["numbering"] = oWriter.jsonWordNumberings;
+		oJSON["styles"] = oWriter.SerWordStyles();
+
+		return JSON.stringify(oJSON);
 	};
 
 	/**
@@ -4383,43 +4391,51 @@
 		var oDocument = this.GetDocument();
 		var oParsedObj  = JSON.parse(sMessage);
 
-		switch (oParsedObj.type)
+		switch (oParsedObj["type"])
 		{
 			case "document":
-				if (oParsedObj.textPr)
+				if (oParsedObj["numbering"])
 				{
-					var oNewTextPr = oReader.TextPrFromJSON(oParsedObj.textPr);
+					oReader.parsedNumbering = oParsedObj["numbering"];
+				}
+				if (oParsedObj["styles"])
+				{
+					oReader.StylesFromJSON(oParsedObj["styles"]);
+				}
+				if (oParsedObj["textPr"])
+				{
+					var oNewTextPr = oReader.TextPrFromJSON(oParsedObj["textPr"]);
 					var oDefaultTextPr = oDocument.GetDefaultTextPr();
 
 					oDefaultTextPr.TextPr.Set_FromObject(oNewTextPr);
 					oDefaultTextPr.private_OnChange();
 				}
-				if (oParsedObj.paraPr)
+				if (oParsedObj["paraPr"])
 				{
-					var oNewParaPr = oReader.ParaPrFromJSON(oParsedObj.paraPr);
+					var oNewParaPr = oReader.ParaPrFromJSON(oParsedObj["paraPr"]);
 					var oDefaultParaPr = oDocument.GetDefaultParaPr();
 
 					oDefaultParaPr.ParaPr.Set_FromObject(oNewParaPr);
 					oDefaultParaPr.private_OnChange();
 				}
-				if (oParsedObj.theme)
+				if (oParsedObj["theme"])
 				{
 					var oDefaultTheme = oDocument.Document.GetTheme();
 
-					oDefaultTheme.setColorScheme(oReader.ClrSchemeFromJSON(oParsedObj.theme.themeElements.clrScheme));
-					oDefaultTheme.setFontScheme(oReader.FontSchemeFromJSON(oParsedObj.theme.themeElements.fontScheme));
-					oDefaultTheme.setFormatScheme(oReader.FmtSchemeFromJSON(oParsedObj.theme.themeElements.fmtScheme));
+					oDefaultTheme.setColorScheme(oReader.ClrSchemeFromJSON(oParsedObj["theme"]["themeElements"]["clrScheme"]));
+					oDefaultTheme.setFontScheme(oReader.FontSchemeFromJSON(oParsedObj["theme"]["themeElements"]["fontScheme"]));
+					oDefaultTheme.setFormatScheme(oReader.FmtSchemeFromJSON(oParsedObj["theme"]["themeElements"]["fmtScheme"]));
 
-					oDefaultTheme.setLnDef(oParsedObj.theme.objectDefaults.lnDef ? oReader.DefSpDefinitionFromJSON(oParsedObj.theme.objectDefaults.lnDef) : null);
-					oDefaultTheme.setSpDef(oParsedObj.theme.objectDefaults.spDef ? oReader.DefSpDefinitionFromJSON(oParsedObj.theme.objectDefaults.spDef) : null);
-					oDefaultTheme.setTxDef(oParsedObj.theme.objectDefaults.txDef ? oReader.DefSpDefinitionFromJSON(oParsedObj.theme.objectDefaults.txDef) : null);
+					oDefaultTheme.setLnDef(oParsedObj["theme"]["objectDefaults"]["lnDef"] ? oReader.DefSpDefinitionFromJSON(oParsedObj["theme"]["objectDefaults"]["lnDef"]) : null);
+					oDefaultTheme.setSpDef(oParsedObj["theme"]["objectDefaults"]["spDef"] ? oReader.DefSpDefinitionFromJSON(oParsedObj["theme"]["objectDefaults"]["spDef"]) : null);
+					oDefaultTheme.setTxDef(oParsedObj["theme"]["objectDefaults"]["txDef"] ? oReader.DefSpDefinitionFromJSON(oParsedObj["theme"]["objectDefaults"]["txDef"]) : null);
 
-					oDefaultTheme.setName(oParsedObj.theme);
+					oDefaultTheme.setName(oParsedObj["theme"]);
 					oDefaultTheme.setIsThemeOverride(true);
 				}
-				if (oParsedObj.sectPr)
+				if (oParsedObj["sectPr"])
 				{
-					var oNewSectPr = oReader.SectPrFromJSON(oParsedObj.sectPr);
+					var oNewSectPr = oReader.SectPrFromJSON(oParsedObj["sectPr"]);
 					var oCurSectPr = oDocument.Document.SectPr;
 
 					// borders
@@ -4478,7 +4494,7 @@
 
 				}
 
-				var aContent = oReader.ContentFromJSON(oParsedObj.content);
+				var aContent = oReader.ContentFromJSON(oParsedObj["content"]);
 				for (var nElm = 0; nElm < aContent.length; nElm++)
 				{
 					if (aContent[nElm] instanceof AscCommonWord.Paragraph)
@@ -4804,7 +4820,11 @@
 	ApiDocumentContent.prototype.ToJSON = function()
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerDocContent(this.Document));
+		var oJSON = oWriter.SerDocContent(this.Document);
+		oJSON["numbering"] = oWriter.jsonWordNumberings;
+		oJSON["styles"] = oWriter.SerWordStyles();
+
+		return JSON.stringify(oJSON);
 	};
 	/**
 	 * Returns an array of document elements from the current ApiDocumentContent object.
@@ -5892,7 +5912,8 @@
 				oDocument.LoadDocumentState(oState);
 			}
 		}
-	};	/**
+	};
+	/**
 	 * Converts the ApiDocument object into the JSON object.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
@@ -5900,19 +5921,23 @@
 	 * @param bWriteDefaultParaPr - Specifies if the default paragraph properties will be written to the JSON object or not.
 	 * @param bWriteTheme         - Specifies if the document theme will be written to the JSON object or not.
 	 * @param bWriteSectionPr     - Specifies if the section properties will be written to the JSON object or not.
+	 * @param bWriteNumberings    - Specifies if the document numberings will be written to the JSON object or not.
+	 * @param bWriteStyles        - Specifies if the document styles will be written to the JSON object or not.
 	 * @returns {JSON}
 	 */
-	ApiDocument.prototype.ToJSON = function(bWriteDefaultTextPr, bWriteDefaultParaPr, bWriteTheme, bWriteSectionPr)
+	ApiDocument.prototype.ToJSON = function(bWriteDefaultTextPr, bWriteDefaultParaPr, bWriteTheme, bWriteSectionPr, bWriteNumberings, bWriteStyles)
 	{
 		var oWriter = new AscCommon.WriterToJSON();
 
 		var oResult = {
-			type: "document",
-			textPr: bWriteDefaultTextPr ? oWriter.SerTextPr(this.GetDefaultTextPr().TextPr) : null,
-			paraPr: bWriteDefaultParaPr ? oWriter.SerParaPr(this.GetDefaultParaPr().ParaPr) : null,
-			theme: bWriteTheme ? oWriter.SerTheme(this.Document.GetTheme()) : null,
-			sectPr: bWriteSectionPr ? oWriter.SerSectionPr(this.Document.SectPr) : null,
-			content: oWriter.SerContent(this.Document.Content, undefined, undefined, undefined, true)
+			"type":      "document",
+			"textPr":    bWriteDefaultTextPr ? oWriter.SerTextPr(this.GetDefaultTextPr().TextPr) : undefined,
+			"paraPr":    bWriteDefaultParaPr ? oWriter.SerParaPr(this.GetDefaultParaPr().ParaPr) : undefined,
+			"theme":     bWriteTheme ? oWriter.SerTheme(this.Document.GetTheme()) : undefined,
+			"sectPr":    bWriteSectionPr ? oWriter.SerSectionPr(this.Document.SectPr) : undefined,
+			"content":   oWriter.SerContent(this.Document.Content, undefined, undefined, undefined, true),
+			"numbering": bWriteNumberings ? oWriter.jsonWordNumberings : undefined,
+			"styles":    bWriteStyles ? oWriter.SerWordStylesForWrite() : undefined
 		}
 
 		return JSON.stringify(oResult);
@@ -7881,7 +7906,9 @@
 	ApiParagraph.prototype.ToJSON = function()
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerParagraph(this.Paragraph));
+		var oJSON = oWriter.SerParagraph(this.Paragraph);
+		oJSON["numbering"] = oWriter.jsonWordNumberings;
+		return JSON.stringify(oJSON);
 	};
 
 	/**
@@ -8584,7 +8611,9 @@
 	ApiRun.prototype.ToJSON = function()
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerParaRun(this.Run));
+		var oJSON = oWriter.SerParaRun(this.Run);
+		oJSON["numbering"] = oWriter.jsonWordNumberings;
+		return JSON.stringify(oJSON);
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -8899,7 +8928,9 @@
 	ApiSection.prototype.ToJSON = function()
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerSectionPr(this.Section));
+		var oJSON = oWriter.SerSectionPr(this.Section);
+		oJSON["numbering"] = oWriter.jsonWordNumberings;
+		return JSON.stringify(oJSON);
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -9756,7 +9787,9 @@
 	ApiTable.prototype.ToJSON = function()
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerTable(this.Table));
+		var oJSON = oWriter.SerTable(this.Table);
+		oJSON["numbering"] = oWriter.jsonWordNumberings;
+		return JSON.stringify(oJSON);
 	};
 
 	/**
@@ -10661,7 +10694,9 @@
 	ApiStyle.prototype.ToJSON = function()
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerStyle(this.Style));
+		var oJSON = oWriter.SerStyle(this.Style);
+		oJSON["numbering"] = oWriter.jsonWordNumberings;
+		return JSON.stringify(oJSON);
 	};
 
 
@@ -11629,7 +11664,9 @@
 	ApiParaPr.prototype.ToJSON = function()
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerParaPr(this.ParaPr));
+		var oJSON = oWriter.SerParaPr(this.ParaPr);
+		oJSON["numbering"] = oWriter.jsonWordNumberings;
+		return JSON.stringify(oJSON);
 	};
 
 
@@ -13086,7 +13123,9 @@
 	ApiDrawing.prototype.ToJSON = function()
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerParaDrawing(this.Drawing));
+		var oJSON = oWriter.SerParaDrawing(this.Drawing);
+		oJSON["numbering"] = oWriter.jsonWordNumberings;
+		return JSON.stringify(oJSON);
 	};
 
 	/**
@@ -14773,7 +14812,9 @@
 	ApiInlineLvlSdt.prototype.ToJSON = function()
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerInlineLvlSdt(this.Sdt));
+		var oJSON = oWriter.SerInlineLvlSdt(this.Sdt);
+		oJSON["numbering"] = oWriter.jsonWordNumberings;
+		return JSON.stringify(oJSON);
 	};
 
 	/**
@@ -16342,7 +16383,9 @@
 	ApiBlockLvlSdt.prototype.ToJSON = function()
 	{
 		var oWriter = new AscCommon.WriterToJSON();
-		return JSON.stringify(oWriter.SerBlockLvlSdt(this.Sdt));
+		var oJSON = oWriter.SerBlockLvlSdt(this.Sdt);
+		oJSON["numbering"] = oWriter.jsonWordNumberings;
+		return JSON.stringify(oJSON);
 	};
 
 	/**
