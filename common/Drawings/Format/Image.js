@@ -1124,7 +1124,7 @@ CImageShape.prototype.Load_LinkData = function(linkData)
                 writer.WriteXmlAttributeString("o:spid", strSpid);
             }
         }
-    else
+        else
         {
             writer.WriteXmlAttributeString("id", strId);
             writer.WriteXmlAttributeString("o:spid", strSpid);

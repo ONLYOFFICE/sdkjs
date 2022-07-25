@@ -1729,6 +1729,7 @@ function XmlWriterContext(editorId){
     this.isCopyPaste = null;
     this.stylesForWrite = new AscCommonExcel.StylesForWrite();
     this.oSharedStrings = {index: 0, strings: {}};
+    this.oleDrawings = [];
     //pptx
     this.presentation = null;
     this.sldMasterIdLst = [];

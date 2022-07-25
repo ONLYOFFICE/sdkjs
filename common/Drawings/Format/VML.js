@@ -16851,7 +16851,6 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">";
 				}
 				case "oleObj": {
 					return this.convertOleObject(reader);
-					break;
 				}
 				case "drawing": {
 					break;
@@ -16869,6 +16868,9 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">";
 						return true;
 					});
 					oNode.fromXml(reader);
+					if(oDrawing) {
+						return oDrawing;
+					}
 					break;
 				}
 			}

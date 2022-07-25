@@ -3086,7 +3086,43 @@
 
 		//skip m_oLegacyDrawingHF
 		//skip m_oPicture
-		//skip m_oOleObjects
+
+		//OLEObjects
+		if(context.oleDrawings.length > 0) {
+			writer.WriteXmlNodeStart("oleObjects");
+			writer.WriteXmlAttributesEnd();
+			let aDrawings = context.oleDrawings;
+			for(let nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing) {
+				let oDrawing = aDrawings[nDrawing];
+				let oOle = oDrawing.graphicObject;
+
+				writer.WriteXmlNodeStart("mc:AlternateContent");
+				writer.WriteXmlAttributeString("xmlns:mc", "http://schemas.openxmlformats.org/markup-compatibility/2006");
+				writer.WriteXmlAttributesEnd();
+
+				writer.WriteXmlNodeStart("mc:Choice");
+				writer.WriteXmlAttributeString("Requires", "x14");
+				writer.WriteXmlAttributesEnd();
+
+
+
+				writer.WriteXmlNodeEnd("mc:Choice");
+
+
+				writer.WriteXmlNodeStart("mc:Fallback");
+				writer.WriteXmlAttributesEnd();
+
+
+
+				writer.WriteXmlNodeEnd("mc:Fallback");
+
+
+				writer.WriteXmlNodeEnd("mc:AlternateContent");
+			}
+
+			writer.WriteXmlNodeEnd("oleObjects");
+		}
+
 		//skip m_oControls
 
 		if (this.TableParts && this.TableParts.length > 0) {

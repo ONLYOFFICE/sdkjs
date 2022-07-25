@@ -1834,6 +1834,13 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 		this.initAfterSerialize(ws);
 	};
     DrawingBase.prototype.toXml = function (writer, name) {
+        if(!this.graphicObject) {
+            return;
+        }
+        if(this.graphicObject.isOleObject()) {
+            writer.context.oleDrawings.push(this);
+            return;
+        }
         var editAs = null;
         switch (this.Type) {
             case c_oAscCellAnchorType.cellanchorTwoCell:
@@ -1874,6 +1881,39 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         writer.WriteXmlNodeStart("xdr:clientData");
         writer.WriteXmlAttributesEnd(true);
         writer.WriteXmlNodeEnd(name);
+    };
+    DrawingVase.prototype.toXmlOle = function(writer) {
+        let oGraphic = this.graphicObject;
+        if(!oGraphic) {
+            return;
+        }
+        if(!oGraphic.isOleObject()) {
+            return;
+        }
+        let oContext = writer.context;
+        let nShapeId = oContext.m_lObjectIdVML;
+        writer.WriteXmlNodeStart("mc:AlternateContent");
+        writer.WriteXmlAttributeString("xmlns:mc", "http://schemas.openxmlformats.org/markup-compatibility/2006");
+        writer.WriteXmlAttributesEnd();
+
+        //-------------------------------------
+        writer.WriteXmlNodeStart("mc:Choice");
+        writer.WriteXmlAttributeString("Requires", "x14");
+        writer.WriteXmlAttributesEnd();
+
+        writer.WriteXmlNodeEnd("mc:Choice");
+        //-------------------------------------
+
+
+        //-------------------------------------
+        writer.WriteXmlNodeStart("mc:Fallback");
+        writer.WriteXmlAttributesEnd();
+
+        writer.WriteXmlNodeEnd("mc:Fallback");
+        //-------------------------------------
+
+
+        writer.WriteXmlNodeEnd("mc:AlternateContent");
     };
 	DrawingBase.prototype.readAttr = function(reader) {
 		var name = reader.GetNameNoNS();

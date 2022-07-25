@@ -677,7 +677,12 @@ function (window, undefined) {
             this.toXmlVML(writer, sMainCSS, sMainAttributes, sMainNodes, null);
         }
         else if(nDocType === AscFormat.XMLWRITER_DOC_TYPE_PPTX) {
-            AscFormat.CImageShape.prototype.toXml.call(this, writer)
+            AscFormat.CImageShape.prototype.toXml.call(this, writer);
+        }
+        else if(nDocType === AscFormat.XMLWRITER_DOC_TYPE_XLSX) {
+            if(this.group) {
+                AscFormat.CImageShape.prototype.toXml.call(this, writer);
+            }
         }
     };
 
