@@ -1129,6 +1129,7 @@
 
 		function COLEObject() {
 			CBaseNoId.call(this);
+			this.m_oPic= null;
 		}
 
 		IC(COLEObject, CBaseNoId, 0);
@@ -1154,6 +1155,10 @@
 			} else if ("LockedField" === name) {
 				this.m_oLockedField = new CLockedField();
 				this.m_oLockedField.fromXml(reader);
+			} else if("pic" === name) {
+				let oPic = new AscFormat.CImageShape();
+				oPic.fromXml(reader);
+				this.m_oPic = oPic;
 			}
 		};
 		COLEObject.prototype.writeAttrXmlImpl = function (writer) {
@@ -1175,6 +1180,35 @@
 
 			if (this.m_oFieldCodes)
 				this.m_oFieldCodes.toXml(writer, "o:FieldCodes");
+		};
+		COLEObject.prototype.fillEditorOleObject = function (oEditorObject, oOOXMLDrawing, reader) {
+			oEditorObject.m_sData = null;
+			oEditorObject.setApplicationId(this.m_sProgId);
+			var rel = reader.rels.getRelationship(this.m_oId);
+			if (rel) {
+				if ("Internal" === rel.targetMode && rel.targetFullName) {
+					oEditorObject.setDataLink(rel.targetFullName.slice(1));
+				}
+			}
+			if(oOOXMLDrawing) {
+				if(oOOXMLDrawing.nvPicPr)
+				{
+					oEditorObject.setNvPicPr(oOOXMLDrawing.nvPicPr.createDuplicate());
+				}
+				if(oOOXMLDrawing.spPr)
+				{
+					oEditorObject.setSpPr(oOOXMLDrawing.spPr.createDuplicate());
+					oEditorObject.spPr.setParent(oEditorObject);
+				}
+				if(oOOXMLDrawing.blipFill)
+				{
+					oEditorObject.setBlipFill(oOOXMLDrawing.blipFill);
+				}
+				if(oOOXMLDrawing.style)
+				{
+					oEditorObject.setStyle(oOOXMLDrawing.style.createDuplicate());
+				}
+			}
 		};
 
 		function CProxy() {
@@ -12854,43 +12888,14 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">";
 					let oOleObject = this.getOLEObject();
 					if(oOleObject && oContext.sourceItem.m_sId === oOleObject.m_sShapeId && oOOXMLDrawing instanceof AscFormat.CImageShape) {
 						let oEditorObject = new AscFormat.COleObject();
-						if(oOOXMLDrawing.nvPicPr)
-						{
-							oEditorObject.setNvPicPr(oOOXMLDrawing.nvPicPr.createDuplicate());
-						}
-						if(oOOXMLDrawing.spPr)
-						{
-							oEditorObject.setSpPr(oOOXMLDrawing.spPr.createDuplicate());
-							oEditorObject.spPr.setParent(oEditorObject);
-						}
-						if(oOOXMLDrawing.blipFill)
-						{
-							oEditorObject.setBlipFill(oOOXMLDrawing.blipFill);
-						}
-						if(oOOXMLDrawing.style)
-						{
-							oEditorObject.setStyle(oOOXMLDrawing.style.createDuplicate());
-						}
+
 						oEditorObject.setBDeleted(false);
 						oOOXMLDrawing = oEditorObject;
 
-						oEditorObject.m_sData = null;
-						oEditorObject.setApplicationId(oOleObject.m_sProgId);
 						if(this.dxaOrig !== null && this.dyaOrig !== null) {
 							oEditorObject.setPixSizes(this.dxaOrig, this.dyaOrig);
 						}
-						var rel = reader.rels.getRelationship(oOleObject.m_oId);
-						if (rel) {
-							if ("Internal" === rel.targetMode && rel.targetFullName) {
-								oEditorObject.setDataLink(rel.targetFullName.slice(1));
-							}
-						}
-
-						// m_oDrawAspect: 0
-						// m_oId: "rId5"
-						// m_oType: 0
-						// m_sObjectId: "_1718637482"
-						// m_sProgId: "Excel.Sheet.12"
+						oOleObject.fillEditorOleObject(oEditorObject, oOOXMLDrawing,  reader);
 					}
 					else {
 						oOOXMLDrawing.setBDeleted(false);
@@ -16825,6 +16830,13 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">";
 			oNode.fromXml(reader);
 			return oShape;
 		};
+		CVMLToDrawingMLConverter.prototype.convertOleObject = function(reader) {
+			let oVMLOleObj = new COLEObject();
+			oVMLOleObj.fromXml(reader);
+			let oEditorOLEObject = new AscFormat.COLEObject();
+			oVMLOleObj.fillEditorOleObject(oEditorOLEObject, oVMLOleObj.m_oPic,  reader);
+			return oEditorOLEObject;
+		};
 		CVMLToDrawingMLConverter.prototype.convertFill = function(reader) {
 			return null;
 		};
@@ -16838,7 +16850,7 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">";
 					return this.convertObject(reader);
 				}
 				case "oleObj": {
-
+					return this.convertOleObject(reader);
 					break;
 				}
 				case "drawing": {

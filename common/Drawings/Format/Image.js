@@ -920,19 +920,17 @@ CImageShape.prototype.Load_LinkData = function(linkData)
                 writer.WriteXmlString("<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id=\"0\" name=\"\"/><p:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" noChangeAspect=\"1\"/></p:cNvGraphicFramePr><p:nvPr><p:extLst><p:ext uri=\"{D42A27DB-BD31-4B8C-83A1-F6EECF244321}\"><p14:modId xmlns:p14=\"http://schemas.microsoft.com/office/powerpoint/2010/main\" val=\"2157879785\"/></p:ext></p:extLst></p:nvPr></p:nvGraphicFramePr>");
                 if(this.spPr.xfrm)
                 {
-                    let oldNamespace = this.spPr.xfrm.m_ns;
-                    this.spPr.xfrm.m_ns = "p";
-                    this.spPr.xfrm.toXml(writer);
-                    this.spPr.xfrm.m_ns = oldNamespace;
+                    this.spPr.xfrm.toXml(writer, "p:xfrm");
                 }
                 writer.WriteXmlString("<a:graphic><a:graphicData uri=\"http://schemas.openxmlformats.org/presentationml/2006/ole\">");
 
                 writer.WriteXmlNodeStart("p:oleObj");
                 writer.WriteXmlAttributeString("name", "oleObj");
-                // if(oleObject->m_oId.IsInit())
-                // {
-                //     writer.WriteAttribute2("r:id", oleObject->m_oId->get());
-                // }
+
+                if(this.m_sDataLink) {
+                    let sDataRId = writer.context.getDataRId(this.m_sDataLink);
+                    writer.WriteXmlAttributeString("r:id", sDataRId);
+                }
 
                 let nCoeffPixToEmu = 635 * 20 * 3 / 4;
                 if(this.m_nPixWidth !== null)
@@ -946,7 +944,7 @@ CImageShape.prototype.Load_LinkData = function(linkData)
                 writer.WriteXmlNullableAttributeString("progId", this.m_sApplicationId);
                 writer.WriteXmlAttributesEnd();
 
-                writer.WriteString("<p:embed/>");
+                writer.WriteXmlString("<p:embed/>");
             }
         }
         writer.WriteXmlNodeStart(namespace_ + ":pic");
@@ -984,7 +982,7 @@ CImageShape.prototype.Load_LinkData = function(linkData)
         {
             if(bOle)
             {
-                writer.WriteString("</p:oleObj></a:graphicData></a:graphic></p:graphicFrame>");
+                writer.WriteXmlString("</p:oleObj></a:graphicData></a:graphic></p:graphicFrame>");
             }
         }
 

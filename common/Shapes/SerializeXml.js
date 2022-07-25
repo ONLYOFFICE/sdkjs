@@ -259,6 +259,14 @@
 			}
 			res.checkEmptySpPrAndXfrm(_xfrm);
 		}
+		else if("oleObj" === name) {
+			let oOLEObj = new AscFormat.COLEObject();
+			oOLEObj.fromXml(reader);
+			if(oOLEObj.m_oPic) {
+				res = new AscFormat.COleObject();
+				oOLEObj.fillEditorOleObject(res, oOLEObj.m_oPic, reader);
+			}
+		}
 		return res;
 	};
 	window['AscFormat'].CGraphicObjectBase.prototype.toXmlElem = function(writer, graphicObject, ns) {

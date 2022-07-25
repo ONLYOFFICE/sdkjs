@@ -2288,9 +2288,11 @@
 		let oDataMap = context.dataMap;
 		if(jsZlibOpened) {
 			for(let sDataKey in oDataMap) {
-				let aEmbeddingData = jsZlibOpened.getFile(sDataKey);
-				if(aEmbeddingData) {
-					oDataMap[sDataKey].part.setData(aEmbeddingData);
+				if(oDataMap.hasOwnProperty(sDataKey)) {
+					let aEmbeddingData = jsZlibOpened.getFile(sDataKey);
+					if(aEmbeddingData) {
+						oDataMap[sDataKey].part.setData(aEmbeddingData);
+					}
 				}
 			}
 		}

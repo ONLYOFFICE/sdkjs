@@ -466,11 +466,12 @@ function (window, undefined) {
     };
 
     COleObject.prototype.toXml = function(writer) {
-        let oContex = writer.context;
+        let oContext = writer.context;
         let sMainCSS = "";
         let sMainNodes = "";
         let sMainAttributes = "";
-        if(oContex.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX) {
+        let nDocType = oContext.docType;
+        if(nDocType === AscFormat.XMLWRITER_DOC_TYPE_DOCX) {
             if(!this.group && this.parent instanceof AscCommonWord.ParaDrawing) {
                 let oParaDrawing = this.parent;
 				let dKoefMMToPT = 72.0 / 25.4;
@@ -478,18 +479,18 @@ function (window, undefined) {
 				let oExtent = oParaDrawing.Extent;
                 let fAddDistanceToCSS = function () {
                     if (oDistance.L !== null)
-                        sMainCSS += ("mso-wrap-distance-left:" + (dKoefMMToPT * oDistance.L).toString() + "pt;");
+                        sMainCSS += ("mso-wrap-distance-left:" + (dKoefMMToPT * oDistance.L).toFixed(2) + "pt;");
                     if (oDistance.T !== null)
-                        sMainCSS += ("mso-wrap-distance-top:" + (dKoefMMToPT * oDistance.T).toString() + "pt;");
+                        sMainCSS += ("mso-wrap-distance-top:" + (dKoefMMToPT * oDistance.T).toFixed(2) + "pt;");
                     if (oDistance.R !== null)
-                        sMainCSS += ("mso-wrap-distance-right:" + (dKoefMMToPT * oDistance.R).toString() + "pt;");
+                        sMainCSS += ("mso-wrap-distance-right:" + (dKoefMMToPT * oDistance.R).toFixed(2) + "pt;");
                     if (oDistance.B !== null)
-                        sMainCSS += ("mso-wrap-distance-bottom:" + (dKoefMMToPT * oDistance.B).toString() + "pt;");
+                        sMainCSS += ("mso-wrap-distance-bottom:" + (dKoefMMToPT * oDistance.B).toFixed(2) + "pt;");
                 };
                 let fAddExtentToCSS = function() {
                     if (oExtent) {
-                        sMainCSS += ("width:" + (dKoefMMToPT * oExtent.W).toString() + "pt;");
-                        sMainCSS += ("height:" + (dKoefMMToPT * oExtent.H).toString() + "pt;");
+                        sMainCSS += ("width:" + (dKoefMMToPT * oExtent.W).toFixed(2) + "pt;");
+                        sMainCSS += ("height:" + (dKoefMMToPT * oExtent.H).toFixed(2) + "pt;");
                     }
                 };
                 if (oParaDrawing.IsInline())
@@ -540,7 +541,7 @@ function (window, undefined) {
 							sMainCSS += ("mso-position-horizontal-relative:text;");
 
                         if (!oPositionH.Align) {
-							sMainCSS += ("margin-left:" + (dKoefMMToPT * oPositionH.Value).toString() + "pt;");
+							sMainCSS += ("margin-left:" + (dKoefMMToPT * oPositionH.Value).toFixed(2) + "pt;");
                             sMainCSS += ("mso-position-horizontal:absolute;");
                         }
 						else {
@@ -596,7 +597,7 @@ function (window, undefined) {
 
                         if (!oPositionV.Align)
                         {
-                            sMainCSS += ("margin-top:" + (dKoefMMToPT * oPositionV.Value).toString() + "pt;");
+                            sMainCSS += ("margin-top:" + (dKoefMMToPT * oPositionV.Value).toFixed(2) + "pt;");
                             sMainCSS += ("mso-position-vertical:absolute");
                         }
 						else
@@ -673,8 +674,11 @@ function (window, undefined) {
                     }
                 }
             }
+            this.toXmlVML(writer, sMainCSS, sMainAttributes, sMainNodes, null);
         }
-        this.toXmlVML(writer, sMainCSS, sMainAttributes, sMainNodes, null);
+        else if(nDocType === AscFormat.XMLWRITER_DOC_TYPE_PPTX) {
+            AscFormat.CImageShape.prototype.toXml.call(this, writer)
+        }
     };
 
     function asc_putBinaryDataToFrameFromTableOleObject(oleObject)
