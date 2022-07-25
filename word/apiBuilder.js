@@ -14722,7 +14722,7 @@
 	 * Removes all the elements from the current inline text content control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
-	 * @returns {boolean} - returns false if control haven't elements.
+	 * @returns {boolean} - returns false if control has not elements.
 	 */
 	ApiInlineLvlSdt.prototype.RemoveAllElements = function()
 	{
@@ -15259,6 +15259,8 @@
 	ApiBlockLvlSdt.prototype.RemoveAllElements = function()
 	{
 		this.Sdt.Content.ClearContent(true);
+		this.Sdt.SetShowingPlcHdr(true);
+		this.Sdt.private_FillPlaceholderContent();
 
 		return true;
 	};
@@ -15449,6 +15451,12 @@
 	{
 		if (typeof sText === "string")
 		{
+			if (this.Sdt.IsShowingPlcHdr())
+			{
+				this.Sdt.Content.RemoveFromContent(0, this.Sdt.Content.GetElementsCount(), false);
+				this.Sdt.SetShowingPlcHdr(false);
+			}
+			
 			var oParagraph = editor.CreateParagraph();
 			oParagraph.AddText(sText);
 			this.Sdt.Content.Internal_Content_Add(this.Sdt.Content.Content.length, oParagraph.private_GetImpl());
