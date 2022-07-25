@@ -16633,7 +16633,15 @@
 
 					var bRes = t._saveCellValueAfterEdit(c, val, flags, /*isNotHistory*/false, /*lockDraw*/false);
 
-					t.updateExternalReferenceByCell(c);
+					var tempCell;
+					c._foreachNoEmpty(function (cell) {
+						tempCell = cell;
+					});
+					if (tempCell) {
+
+					}
+
+					t.updateExternalReferenceByCell(c, true);
 
 					if (callback) {
 						return callback(bRes);
@@ -23821,7 +23829,7 @@
 	};
 
 
-	WorksheetView.prototype.updateExternalReferenceByCell = function (c) {
+	WorksheetView.prototype.updateExternalReferenceByCell = function (c, initStructure) {
 		var t = this;
 		var externalReferences = [];
 		t.model._getCell(c.bbox.r1, c.bbox.c1, function (cell) {
@@ -23833,6 +23841,9 @@
 							var eR = t.model.workbook.getExternalWorksheet(fP.outStack[i].externalLink);
 							if (eR) {
 								externalReferences.push(eR.getAscLink());
+								if (initStructure) {
+									eR.initRows(fP.outStack[i].getRange());
+								}
 							}
 						}
 					}

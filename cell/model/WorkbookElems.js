@@ -12203,6 +12203,40 @@ QueryTableField.prototype.clone = function() {
 		return null;
 	};
 
+	ExternalReference.prototype.initRows = function (range) {
+
+		var sheetName = range && range.worksheet && range.worksheet.sName;
+		if (sheetName) {
+			var index = this.getSheetByName(sheetName);
+			if (index != null) {
+				var externalSheetDataSet = this.SheetDataSet[index];
+				if (!externalSheetDataSet) {
+					externalSheetDataSet = new ExternalSheetDataSet();
+					externalSheetDataSet.SheetId = this.SheetNames.length - 1;
+					this.SheetDataSet.push(externalSheetDataSet);
+				}
+
+				for (var i = range.bbox.r1; i <= range.bbox.r2; i++) {
+					var row = externalSheetDataSet.getRow(i + 1, true);
+
+					/*var row = new ExternalRow();
+					row.R = i + 1;
+					externalSheetDataSet.Row.push(row);*/
+
+					for (var j = range.bbox.c1; j <= range.bbox.c2; j++) {
+						row.getCell(j, true);
+
+						/*var externalCell = new ExternalCell();
+						externalCell.initFromCell(cell);
+
+						var index = addedRowMap[cell.nRow].index;
+						t.Row[index].Cell.push(externalCell);
+						addedRowMap[cell.nRow].cells[cell.nCol] = 1;*/
+					}
+				}
+			}
+		}
+	};
 
 
 	function asc_CExternalReference() {
@@ -12336,6 +12370,24 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 
+	ExternalSheetDataSet.prototype.getRow = function(index, needGenerateRow) {
+		var row = null;
+
+		for (var i = 0; i < this.Row.length; i++) {
+			if (index === this.Row[i].R) {
+				return this.Row[i];
+			}
+		}
+
+		if (needGenerateRow) {
+			row = new ExternalRow();
+			row.R = index;
+			this.Row.push(row);
+		}
+
+		return row;
+	};
+
 
 
 	function ExternalRow() {
@@ -12373,6 +12425,29 @@ QueryTableField.prototype.clone = function() {
 			}
 		}
 	};
+
+	ExternalRow.prototype.getCell = function(index, needGenerateRow) {
+		var t = this;
+		var cell = null;
+
+		for (var i = 0; i < this.Cell.length; i++) {
+			var cellRange = this.Cell[i].getRange();
+			if (cellRange && index === cellRange.c1) {
+				return this.Cell[i];
+			}
+		}
+
+		if (needGenerateRow) {
+			cell = new ExternalCell();
+			AscCommonExcel.executeInR1C1Mode(false, function () {
+				cell.Ref = new Asc.Range(t.R - 1, index, t.R - 1, index).getName();
+			});
+			this.Cell.push(cell);
+		}
+
+		return cell;
+	};
+
 
 	function ExternalCell() {
 		this.Ref = null;//храним в строке, в будущем перевести в row/col
@@ -12438,6 +12513,15 @@ QueryTableField.prototype.clone = function() {
 			}
 			this.CellType = cellValueType;
 		}
+	};
+
+	ExternalCell.prototype.getRange = function() {
+		var res;
+		var t = this;
+		AscCommonExcel.executeInR1C1Mode(false, function () {
+			res = AscCommonExcel.g_oRangeCache.getAscRange(t.Ref);
+		});
+		return res;
 	};
 
 
