@@ -8244,22 +8244,7 @@ function BinaryFileReader(doc, openParams)
 		if (opt_xmlParserContext) {
 			AscCommon.pptx_content_loader.Reader.ImageMapChecker = AscCommon.pptx_content_loader.ImageMapChecker;
 			var context = opt_xmlParserContext;
-			for (var path in context.imageMap) {
-				if (context.imageMap.hasOwnProperty(path)) {
-					var data = context.zip.getFile(path);
-					if (data) {
-						if (!window["NATIVE_EDITOR_ENJINE"]) {
-							let mime = AscCommon.openXml.GetMimeType(AscCommon.GetFileExtension(path));
-							let blob = new Blob([data], {type: mime});
-							let url = window.URL.createObjectURL(blob);
-							AscCommon.g_oDocumentUrls.addImageUrl(path, url);
-						}
-						context.imageMap[path].forEach(function(blipFill) {
-							AscCommon.pptx_content_loader.Reader.initAfterBlipFill(path, blipFill);
-						});
-					}
-				}
-			}
+			context.loadDataLinks();
 		}
 
         this.Document.On_EndLoad();

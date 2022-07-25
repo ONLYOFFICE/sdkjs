@@ -415,7 +415,7 @@
 		this.pkg.zip.addFile(this.getUriRelative(), data);
 	};
 	openXml.OpenXmlPart.prototype.setDataXml = function (xmlObj, writer) {
-		writer.context.clearCurrentPartImageMap();
+		writer.context.clearCurrentPartDataMaps();
 		var data = this.pkg.getXmlBytes(this, xmlObj, writer);
 		this.pkg.zip.addFile(this.getUriRelative(), data);
 	};
@@ -706,6 +706,7 @@
 		pivotTableCacheDefinition: {dir: "../pivotCache", filename: "pivotCacheDefinition[N].xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotCacheDefinition+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/pivotCacheDefinition"},
 		pivotTableCacheDefinitionWorkbook: {dir: "pivotCache", filename: "pivotCacheDefinition[N].xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotCacheDefinition+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/pivotCacheDefinition"},
 		pivotTableCacheRecords: {dir: "", filename: "pivotCacheRecords[N].xml", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotCacheRecords+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/pivotCacheRecords"},
+		package: {dir: "embeddings", filename: "Embedding.", contentType: "image/png"},
 		png: {dir: "", filename: "png.xml", contentType: "image/png"},
 		presentation: {dir: "ppt", filename: "presentation.xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"},
 		presentationProperties: {dir: "", filename: "presProps.xml", contentType: "application/vnd.openxmlformats-officedocument.presentationml.presProps+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/presProps"},

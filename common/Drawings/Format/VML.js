@@ -12876,12 +12876,15 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">";
 
 						oEditorObject.m_sData = null;
 						oEditorObject.setApplicationId(oOleObject.m_sProgId);
-						oEditorObject.m_nPixWidth = this.dxaOrig;
-						oEditorObject.m_nPixHeight = this.dyaOrig;
-						//oEditorObject.m_sObjectFile = null;//ole object name in OOX
-						//oEditorObject.m_nOleType = null;
-						//oEditorObject.m_aBinaryData = null;
-						//oEditorObject.m_oMathObject = null;
+						if(this.dxaOrig !== null && this.dyaOrig !== null) {
+							oEditorObject.setPixSizes(this.dxaOrig, this.dyaOrig);
+						}
+						var rel = reader.rels.getRelationship(oOleObject.m_oId);
+						if (rel) {
+							if ("Internal" === rel.targetMode) {
+								oEditorObject.setDataLink(rel.targetFullName);
+							}
+						}
 
 						// m_oDrawAspect: 0
 						// m_oId: "rId5"
@@ -16924,5 +16927,8 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">";
 		window['AscFormat'].ECssUnitsType = ECssUnitsType;
 		window['AscFormat'].CPoint = CPoint;
 		window['AscFormat'].CVMLToDrawingMLConverter = CVMLToDrawingMLConverter;
+		window['AscFormat'].COLEObject = COLEObject;
+		window['AscFormat'].EOLEDrawAspect = EOLEDrawAspect;
+		window['AscFormat'].EOLEType = EOLEType;
 
 	})(window);

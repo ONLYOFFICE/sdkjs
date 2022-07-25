@@ -58,6 +58,7 @@ function (window, undefined) {
         AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetApplicationId] = AscDFH.CChangesDrawingsString;
         AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetPixSizes] = AscDFH.CChangesDrawingsObjectNoId;
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetObjectFile] = AscDFH.CChangesDrawingsString;
+		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetDataLink] = AscDFH.CChangesDrawingsString;
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetOleType] = AscDFH.CChangesDrawingsLong;
 		AscDFH.changesFactory[AscDFH.historyitem_ImageShapeSetMathObject] = AscDFH.CChangesDrawingsObject;
 
@@ -105,6 +106,7 @@ function (window, undefined) {
         };
         AscDFH.drawingsConstructorsMap[AscDFH.historyitem_ImageShapeSetPixSizes] = COleSize;
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetObjectFile] = function(oClass, value){oClass.m_sObjectFile = value;};
+		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetDataLink] = function(oClass, value){oClass.m_sDataLink = value;};
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetOleType] = function(oClass, value){oClass.m_nOleType = value;};
 		AscDFH.drawingsChangesMap[AscDFH.historyitem_ImageShapeSetMathObject] = function(oClass, value){oClass.m_oMathObject = value;};
 
@@ -119,6 +121,7 @@ function (window, undefined) {
         this.m_nOleType = null;
         this.m_aBinaryData = null;
         this.m_oMathObject = null;
+        this.m_sDataLink = null;
     }
 
     COleObject.prototype = Object.create(AscFormat.CImageShape.prototype);
@@ -147,10 +150,21 @@ function (window, undefined) {
         this.m_nPixWidth = nPixWidth;
         this.m_nPixHeight = nPixHeight;
     };
+    COleObject.prototype.setPixSizes = function(nPixWidth, nPixHeight)
+    {
+        AscCommon.History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ImageShapeSetPixSizes, new COleSize(this.m_nPixWidth, this.m_nPixHeight), new COleSize(nPixWidth, nPixHeight)));
+        this.m_nPixWidth = nPixWidth;
+        this.m_nPixHeight = nPixHeight;
+    };
     COleObject.prototype.setObjectFile = function(sObjectFile)
     {
         AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ImageShapeSetObjectFile, this.m_sObjectFile, sObjectFile));
         this.m_sObjectFile = sObjectFile;
+    };
+    COleObject.prototype.setDataLink = function(sDataLink)
+    {
+        AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_ImageShapeSetDataLink, this.m_sDataLink, sDataLink));
+        this.m_sDataLink = sDataLink;
     };
     COleObject.prototype.setOleType = function(nOleType)
     {
@@ -452,7 +466,215 @@ function (window, undefined) {
     };
 
     COleObject.prototype.toXml = function(writer) {
+        let oContex = writer.context;
+        let sMainCSS = "";
+        let sMainNodes = "";
+        let sMainAttributes = "";
+        if(oContex.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX) {
+            if(!this.group && this.parent instanceof AscCommonWord.ParaDrawing) {
+                let oParaDrawing = this.parent;
+				let dKoefMMToPT = 72.0 / 25.4;
+				let oDistance = oParaDrawing.Distance;
+				let oExtent = oParaDrawing.Extent;
+                let fAddDistanceToCSS = function () {
+                    if (oDistance.L !== null)
+                        sMainCSS += ("mso-wrap-distance-left:" + (dKoefMMToPT * oDistance.L).toString() + "pt;");
+                    if (oDistance.T !== null)
+                        sMainCSS += ("mso-wrap-distance-top:" + (dKoefMMToPT * oDistance.T).toString() + "pt;");
+                    if (oDistance.R !== null)
+                        sMainCSS += ("mso-wrap-distance-right:" + (dKoefMMToPT * oDistance.R).toString() + "pt;");
+                    if (oDistance.B !== null)
+                        sMainCSS += ("mso-wrap-distance-bottom:" + (dKoefMMToPT * oDistance.B).toString() + "pt;");
+                };
+                let fAddExtentToCSS = function() {
+                    if (oExtent) {
+                        sMainCSS += ("width:" + (dKoefMMToPT * oExtent.W).toString() + "pt;");
+                        sMainCSS += ("height:" + (dKoefMMToPT * oExtent.H).toString() + "pt;");
+                    }
+                };
+                if (oParaDrawing.IsInline())
+                {
+                    fAddDistanceToCSS();
+                    fAddExtentToCSS();
+                }
+				else
+                {
+                    sMainCSS += ("position:absolute;");
+                    fAddDistanceToCSS();
 
+                    if (oParaDrawing.RelativeHeight !== null)
+                    {
+                        let z_index = oParaDrawing.RelativeHeight;
+
+                        if (oParaDrawing.behindDoc)
+                        {
+                            z_index = -z_index;
+                        }
+                        sMainCSS += ("z-index:" + z_index + ";");
+                    }
+
+                    if (oParaDrawing.AllowOverlap !== null) {
+                        sMainCSS += ("o:allowoverlap:" + (oParaDrawing.AllowOverlap  ? "true;" : "false;"));
+                    }
+                    if (oParaDrawing.LayoutInCell !== null) {
+                        sMainCSS += ("o:allowincell:" + (oParaDrawing.LayoutInCell  ? "true;" : "false;"));
+                    }
+
+                    let oPositionH = oParaDrawing.PositionH;
+                    if (oPositionH) {
+                        if (oPositionH.RelativeFrom === Asc.c_oAscRelativeFromH.Character)
+							sMainCSS += ("mso-position-horizontal-relative:char;");
+						else if (oPositionH.RelativeFrom === Asc.c_oAscRelativeFromH.Page)
+							sMainCSS += ("mso-position-horizontal-relative:page;");
+						else if (oPositionH.RelativeFrom === Asc.c_oAscRelativeFromH.Margin)
+							sMainCSS += ("mso-position-horizontal-relative:margin;");
+						else if (oPositionH.RelativeFrom === Asc.c_oAscRelativeFromH.LeftMargin)
+							sMainCSS += ("mso-position-horizontal-relative:left-margin-area;");
+						else if (oPositionH.RelativeFrom === Asc.c_oAscRelativeFromH.RightMargin)
+							sMainCSS += ("mso-position-horizontal-relative:right-margin-area;");
+						else if (oPositionH.RelativeFrom === Asc.c_oAscRelativeFromH.InsideMargin)
+							sMainCSS += ("mso-position-horizontal-relative:inner-margin-area;");
+						else if (oPositionH.RelativeFrom === Asc.c_oAscRelativeFromH.OutsideMargin)
+							sMainCSS += ("mso-position-horizontal-relative:outer-margin-area;");
+						else if (oPositionH.RelativeFrom === Asc.c_oAscRelativeFromH.Column)
+							sMainCSS += ("mso-position-horizontal-relative:text;");
+
+                        if (!oPositionH.Align) {
+							sMainCSS += ("margin-left:" + (dKoefMMToPT * oPositionH.Value).toString() + "pt;");
+                            sMainCSS += ("mso-position-horizontal:absolute;");
+                        }
+						else {
+							switch (oPositionH.Value) {
+								case Asc.c_oAscAlignH.Center:
+								{
+									sMainCSS += ("mso-position-horizontal:center;");
+									break;
+								}
+								case Asc.c_oAscAlignH.Inside:
+								{
+									sMainCSS += ("mso-position-horizontal:inside;");
+									break;
+								}
+								case Asc.c_oAscAlignH.Outside:
+								{
+									sMainCSS += ("mso-position-horizontal:outside;");
+									break;
+								}
+								case Asc.c_oAscAlignH.Left:
+								{
+									sMainCSS += ("mso-position-horizontal:left;");
+									break;
+								}
+								case Asc.c_oAscAlignH.Right:
+								{
+									sMainCSS += ("mso-position-horizontal:right;");
+									break;
+								}
+							}
+                        }
+                    }
+
+					let oPositionV = oParaDrawing.PositionV;
+                    if (oPositionV)
+                    {
+                        if (oPositionV.RelativeFrom === Asc.c_oAscRelativeFromV.Margin)
+							sMainCSS += ("mso-position-vertical-relative:margin;");
+						else if (oPositionV.RelativeFrom === Asc.c_oAscRelativeFromV.Paragraph)
+							sMainCSS += ("mso-position-vertical-relative:text;");
+						else if (oPositionV.RelativeFrom === Asc.c_oAscRelativeFromV.Page)
+							sMainCSS += ("mso-position-vertical-relative:page;");
+						else if (oPositionV.RelativeFrom === Asc.c_oAscRelativeFromV.TopMargin)
+							sMainCSS += ("mso-position-vertical-relative:top-margin-area;");
+						else if (oPositionV.RelativeFrom === Asc.c_oAscRelativeFromV.BottomMargin)
+							sMainCSS += ("mso-position-vertical-relative:bottom-margin-area;");
+						else if (oPositionV.RelativeFrom === Asc.c_oAscRelativeFromV.InsideMargin)
+							sMainCSS += ("mso-position-vertical-relative:inner-margin-area;");
+						else if (oPositionV.RelativeFrom === Asc.c_oAscRelativeFromV.OutsideMargin)
+							sMainCSS += ("mso-position-vertical-relative:outer-margin-area;");
+						else if (oPositionV.RelativeFrom === Asc.c_oAscRelativeFromV.Line)
+							sMainCSS += ("mso-position-vertical-relative:line;");
+
+                        if (!oPositionV.Align)
+                        {
+                            sMainCSS += ("margin-top:" + (dKoefMMToPT * oPositionV.Value).toString() + "pt;");
+                            sMainCSS += ("mso-position-vertical:absolute");
+                        }
+						else
+                        {
+							
+							switch (oPositionV.Value)
+							{
+								case c_oAscAlignV.Bottom: 
+								{
+									sMainCSS += ("mso-position-vertical:bottom;");
+									break;
+								}
+								case c_oAscAlignV.Outside:
+								{
+									sMainCSS += ("mso-position-vertical:outside;");
+									break;
+								}
+								case c_oAscAlignV.Center:
+								{
+									sMainCSS += ("mso-position-vertical:center;");
+									break;
+								}
+
+								case c_oAscAlignV.Inside: 
+								{
+									sMainCSS += ("mso-position-vertical:inside;");
+									break;
+								}
+								case c_oAscAlignV.Top:
+								{
+									sMainCSS += ("mso-position-vertical:top;");
+									break;
+								}
+							}
+                        }
+                    }
+                    fAddExtentToCSS();
+					if(oParaDrawing.wrappingType === WRAPPING_TYPE_NONE) {
+						
+					}
+					else if(oParaDrawing.wrappingType === WRAPPING_TYPE_SQUARE) {
+
+                        sMainNodes += "<w10:wrap type=\"square\"/>";
+					}
+                    else if(oParaDrawing.wrappingType === WRAPPING_TYPE_TOP_AND_BOTTOM) {
+                        sMainNodes += "<w10:wrap type=\"topAndBottom\"/>";
+                    }
+                    else if(oParaDrawing.wrappingType === WRAPPING_TYPE_TIGHT) {
+                        sMainNodes += "<w10:wrap type=\"tight\"/>";
+                    }
+                    else if(oParaDrawing.wrappingType === WRAPPING_TYPE_THROUGH) {
+                        sMainNodes += "<w10:wrap type=\"through\"/>";
+                    }
+                    if(oParaDrawing.wrappingType === WRAPPING_TYPE_TIGHT ||
+                        oParaDrawing.wrappingType === WRAPPING_TYPE_THROUGH) {
+                        let oWrapPolygon = oParaDrawing.wrappingPolygon;
+                        let dWrapKoef = 100000.0 / 21600.0;
+                        if(oWrapPolygon) {
+                            sMainAttributes += " wrapcoords=\"";
+                            let aPoints = oWrapPolygon.relativeArrPoints;
+                            let nCountP = aPoints.length;
+                            for (let i = 0; i < nCountP; ++i)  {
+                                let oPoint = aPoints[i];
+                                let nX = (dWrapKoef * oPoint.x + 0.5) >> 0;
+                                let nY = (dWrapKoef * oPoint.y + 0.5) >> 0;
+
+                                sMainAttributes += (nX + " " + nY);
+
+                                if (i < (nCountP - 1))
+                                    sMainAttributes += " ";
+                            }
+                            sMainAttributes += "\"";
+                        }
+                    }
+                }
+            }
+        }
+        this.toXmlVML(writer, sMainCSS, sMainAttributes, sMainNodes, null);
     };
 
     function asc_putBinaryDataToFrameFromTableOleObject(oleObject)

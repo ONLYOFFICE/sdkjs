@@ -1003,7 +1003,7 @@ CImageShape.prototype.Load_LinkData = function(linkData)
         //
 		// writer.WriteXmlNodeEnd(name);
 	};
-    CImageShape.prototype.toXmlVML = function(writer, sMainCSS, sMainAttributes, pId) {
+    CImageShape.prototype.toXmlVML = function(writer, sMainCSS, sMainAttributes, sMainNodes, pId) {
         let bOle = (this.getObjectType() === AscDFH.historyitem_type_OleObject);
         let sOleNodeName = "";
         let oContext = writer.context;
@@ -1161,42 +1161,46 @@ CImageShape.prototype.Load_LinkData = function(linkData)
         writer.WriteXmlAttributesEnd();
         writer.WriteXmlNodeEnd( "v:path");
 
-        if (blipFill.blip.is_init() && blipFill.blip->embed.is_init())
+        let sRasterImageId = this.blipFill && this.blipFill.RasterImageId;
+
+        if (sRasterImageId)
         {
             writer.WriteXmlNodeStart("v:imagedata");
 
             if (AscFormat.XMLWRITER_DOC_TYPE_XLSX === oContext.docType)
             {
-                writer.WriteXmlAttributeString("o:relid", blipFill.blip->embed->ToString());
+                writer.WriteXmlAttributeString("o:relid", writer.context.getImageRId(sRasterImageId));
             }
         else
             {
-                writer.WriteXmlAttributeString("r:id", blipFill.blip->embed->ToString());
+                writer.WriteXmlAttributeString("r:id", writer.context.getImageRId(sRasterImageId));
             }
             writer.WriteXmlAttributeString("o:title", "");
             writer.WriteXmlAttributesEnd();
             writer.WriteXmlNodeEnd( "v:imagedata");
         }
-
         // if (m_sClientDataXml.IsInit())
         //     writer.WriteString(*m_sClientDataXml);
-
         writer.WriteXmlNodeEnd( "v:shape");
-
-        //
-        // if(bOle)
-        // {
-        //     oleObject->m_sObjectId = strObjectid;
-        //     if (AscFormat.XMLWRITER_DOC_TYPE_XLSX === oContext.docType)
-        //     {
-        //         oleObject->m_sShapeId = std::to_wstring(nShapeId);
-        //     }
-        // else
-        //     {
-        //         oleObject->m_sShapeId = strId;
-        //         oleObject->toXmlWriter(pWriter);
-        //     }
-        // }
+        if(bOle)
+        {
+            let oleObject = new AscFormat.COLEObject();
+            oleObject.m_sObjectId = strObjectid;
+            oleObject.m_oDrawAspect = AscFormat.EOLEDrawAspect.oledrawaspectContent;
+            //write data
+            oleObject.m_oId = writer.context.getDataRId(this.m_sDataLink);
+            oleObject.m_sProgId = this.m_sApplicationId;
+            oleObject.m_oType = AscFormat.EOLEType.oletypeEmbed;
+            if (AscFormat.XMLWRITER_DOC_TYPE_XLSX === oContext.docType)
+            {
+                oleObject.m_sShapeId = "" + nShapeId;
+            }
+        else
+            {
+                oleObject.m_sShapeId = strId;
+                oleObject.toXml(writer);
+            }
+        }
         if (!sOleNodeName.empty())
         {
             writer.WriteXmlNodeEnd( sOleNodeName);

@@ -1627,7 +1627,6 @@ function XmlParserContext(){
     this.TablesMap = {};
     this.TableStylesMap = {};
     this.ConnectorsPr = [];
-    this.DrawingIdsMap = {};
 }
 XmlParserContext.prototype.initFromWS = function(ws) {
     this.ws = ws;
@@ -1665,6 +1664,28 @@ XmlParserContext.prototype.checkZIndex = function(nZIndex) {
         this.maxZIndex = Math.max(this.maxZIndex, nZIndex);
     }
 };
+XmlParserContext.prototype.loadDataLinks = function() {
+    let _cur_ind = 0;
+    let oImageMap = {};
+    for (let path in this.imageMap) {
+        if (this.imageMap.hasOwnProperty(path)) {
+            oImageMap[_cur_ind++] = path;
+            let data = this.zip.getFile(path);
+            if (data) {
+                if (!window["NATIVE_EDITOR_ENJINE"]) {
+                    let mime = AscCommon.openXml.GetMimeType(AscCommon.GetFileExtension(path));
+                    let blob = new Blob([data], {type: mime});
+                    let url = window.URL.createObjectURL(blob);
+                    AscCommon.g_oDocumentUrls.addImageUrl(path, url);
+                }
+                this.imageMap[path].forEach(function(blipFill) {
+                    AscCommon.pptx_content_loader.Reader.initAfterBlipFill(path, blipFill);
+                });
+            }
+        }
+    }
+    return oImageMap;
+};
 function XmlWriterContext(editorId){
     //common
     this.editorId = editorId;
@@ -1672,6 +1693,8 @@ function XmlWriterContext(editorId){
     this.part = null;
     this.imageMap = {};
     this.currentPartImageMap = {};
+    this.dataMap = {};
+    this.currentPartDataMap = {};
     this.m_lObjectIdVML = 0;
 
     this.oUriMap = {};
@@ -1745,8 +1768,9 @@ XmlWriterContext.prototype.getSlideMastersCount = function() {
 XmlWriterContext.prototype.getSlidesCount = function() {
     return this.sldIdLst.length;
 };
-XmlWriterContext.prototype.clearCurrentPartImageMap = function() {
+XmlWriterContext.prototype.clearCurrentPartDataMaps = function() {
     this.currentPartImageMap = {};
+    this.currentPartDataMap = {};
 };
 XmlWriterContext.prototype.getImageRId = function(sRasterImageId) {
     let imagePart = this.imageMap[sRasterImageId];
@@ -1772,6 +1796,31 @@ XmlWriterContext.prototype.getImageRId = function(sRasterImageId) {
         }
     }
     return this.currentPartImageMap[sRasterImageId] ? this.currentPartImageMap[sRasterImageId] : "";
+};
+XmlWriterContext.prototype.getDataRId = function(sDataLink) {
+    let imagePart = this.dataMap[sDataLink];
+    let type = AscCommon.openXml.Types.package;
+    if (!imagePart) {
+        if (this.part) {
+            let ext = AscCommon.GetFileExtension(sDataLink);
+            type = Object.assign({}, type);
+            type.filename += ext;
+            type.contentType = AscCommon.openXml.GetMimeType(ext);
+            imagePart = this.part.addPart(type);
+            if (imagePart) {
+                this.dataMap[sDataLink] = imagePart;
+                this.currentPartDataMap[sDataLink] = imagePart.rId;
+            }
+        }
+    }
+    else {
+        if(!this.currentPartDataMap[sDataLink]) {
+            if(this.part) {
+                this.currentPartDataMap[sDataLink] = this.part.addRelationship(type.relationType, imagePart.part.uri);
+            }
+        }
+    }
+    return this.currentPartDataMap[sRasterImageId] ? this.currentPartDataMap[sRasterImageId] : "";
 };
 XmlWriterContext.prototype.getSpIdxId = function(sEditorId){
     if(typeof sEditorId === "string" && sEditorId.length > 0) {
