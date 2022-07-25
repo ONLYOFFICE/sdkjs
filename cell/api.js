@@ -2339,12 +2339,12 @@ var editor;
 		var initOpenManager = xmlParserContext.InitOpenManager = AscCommonExcel.InitOpenManager ? new AscCommonExcel.InitOpenManager(null, wb) : null;
 		var wbPart = null;
 		var wbXml = null;
-		var jsZipWrapper = new AscCommon.JSZipWrapper();
-		if (!jsZipWrapper.loadSync(data)) {
+		if (!window.nativeZlibEngine || !window.nativeZlibEngine.open(data)) {
 			return false;
 		}
-		xmlParserContext.zip = jsZipWrapper;
-		var doc = new openXml.OpenXmlPackage(jsZipWrapper, null);
+		xmlParserContext.zip = window.nativeZlibEngine;
+
+		var doc = new openXml.OpenXmlPackage(window.nativeZlibEngine, null);
 
 		//workbook
 		wbPart = doc.getPartByRelationshipType(openXml.Types.workbook.relationType);

@@ -12080,6 +12080,11 @@ QueryTableField.prototype.clone = function() {
 		return this.Id.match(p);
 	};
 
+	ExternalReference.prototype.isXlsx = function() {
+		var p = /^.*\.(xlsx)$/i;
+		return this.Id.match(p);
+	};
+
 	ExternalReference.prototype.addSheetName = function (name, generateDefaultStructure) {
 		this.SheetNames.push(name);
 		if (generateDefaultStructure) {

@@ -4806,8 +4806,9 @@
 					}, "arraybuffer");
 				};
 
+				var isXlsx = externalReferences[i].externalReference && externalReferences[i].externalReference.isXlsx();
 				//если внешняя ссылка, то конвертируем в xlsx
-				if (sFileUrl && isExternalLink) {
+				if (sFileUrl && (isExternalLink || !isXlsx)) {
 					window["Asc"]["editor"]._getXlsxFromUrl(sFileUrl, null, function (fileUrlAfterConvert) {
 						if (fileUrlAfterConvert) {
 							loadFile(fileUrlAfterConvert);
