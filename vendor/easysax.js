@@ -1798,29 +1798,29 @@ XmlWriterContext.prototype.getImageRId = function(sRasterImageId) {
     return this.currentPartImageMap[sRasterImageId] ? this.currentPartImageMap[sRasterImageId] : "";
 };
 XmlWriterContext.prototype.getDataRId = function(sDataLink) {
-    let imagePart = this.dataMap[sDataLink];
+    let dataPart = this.dataMap[sDataLink];
     let type = AscCommon.openXml.Types.package;
-    if (!imagePart) {
+    if (!dataPart) {
         if (this.part) {
             let ext = AscCommon.GetFileExtension(sDataLink);
             type = Object.assign({}, type);
-            type.filename += ext;
+            type.filename = AscCommon.changeFileExtention(type.filename, ext, null);
             type.contentType = AscCommon.openXml.GetMimeType(ext);
-            imagePart = this.part.addPart(type);
-            if (imagePart) {
-                this.dataMap[sDataLink] = imagePart;
-                this.currentPartDataMap[sDataLink] = imagePart.rId;
+            dataPart = this.part.addPart(type);
+            if (dataPart) {
+                this.dataMap[sDataLink] = dataPart;
+                this.currentPartDataMap[sDataLink] = dataPart.rId;
             }
         }
     }
     else {
         if(!this.currentPartDataMap[sDataLink]) {
             if(this.part) {
-                this.currentPartDataMap[sDataLink] = this.part.addRelationship(type.relationType, imagePart.part.uri);
+                this.currentPartDataMap[sDataLink] = this.part.addRelationship(type.relationType, dataPart.part.uri);
             }
         }
     }
-    return this.currentPartDataMap[sRasterImageId] ? this.currentPartDataMap[sRasterImageId] : "";
+    return this.currentPartDataMap[sDataLink] ? this.currentPartDataMap[sDataLink] : "";
 };
 XmlWriterContext.prototype.getSpIdxId = function(sEditorId){
     if(typeof sEditorId === "string" && sEditorId.length > 0) {

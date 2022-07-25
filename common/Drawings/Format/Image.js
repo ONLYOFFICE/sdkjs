@@ -1003,7 +1003,7 @@ CImageShape.prototype.Load_LinkData = function(linkData)
         //
 		// writer.WriteXmlNodeEnd(name);
 	};
-    CImageShape.prototype.toXmlVML = function(writer, sMainCSS, sMainAttributes, sMainNodes, pId) {
+    CImageShape.prototype.toXmlVML = function(writer, sMainCSS, sMainAttributes, sMainNodes, sClientData, pId) {
         let bOle = (this.getObjectType() === AscDFH.historyitem_type_OleObject);
         let sOleNodeName = "";
         let oContext = writer.context;
@@ -1160,9 +1160,10 @@ CImageShape.prototype.Load_LinkData = function(linkData)
         //writer.WriteXmlAttributeString("textboxrect", "");
         writer.WriteXmlAttributesEnd();
         writer.WriteXmlNodeEnd( "v:path");
-
+        if(sMainNodes) {
+            writer.WriteXmlString(sMainNodes);
+        }
         let sRasterImageId = this.blipFill && this.blipFill.RasterImageId;
-
         if (sRasterImageId)
         {
             writer.WriteXmlNodeStart("v:imagedata");
@@ -1179,8 +1180,9 @@ CImageShape.prototype.Load_LinkData = function(linkData)
             writer.WriteXmlAttributesEnd();
             writer.WriteXmlNodeEnd( "v:imagedata");
         }
-        // if (m_sClientDataXml.IsInit())
-        //     writer.WriteString(*m_sClientDataXml);
+        if(sClientData) {
+            writer.WriteXmlString(sClientData);
+        }
         writer.WriteXmlNodeEnd( "v:shape");
         if(bOle)
         {
@@ -1198,10 +1200,10 @@ CImageShape.prototype.Load_LinkData = function(linkData)
         else
             {
                 oleObject.m_sShapeId = strId;
-                oleObject.toXml(writer);
+                oleObject.toXml(writer, "o:OLEObject");
             }
         }
-        if (!sOleNodeName.empty())
+        if (sOleNodeName)
         {
             writer.WriteXmlNodeEnd( sOleNodeName);
         }

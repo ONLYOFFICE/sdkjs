@@ -1139,6 +1139,12 @@
         return nType === AscDFH.historyitem_type_SmartArt ||
             nType === AscDFH.historyitem_type_SmartArtDrawing;
     };
+    CGraphicObjectBase.prototype.isOleObject = function() {
+        return this.getObjectType() === AscDFH.historyitem_type_OleObject;
+    };
+    CGraphicObjectBase.prototype.isSignatureLine = function() {
+        return this.getObjectType() === AscDFH.historyitem_type_Shape && this.signatureLine();
+    };
 
 
     CGraphicObjectBase.prototype.drawShdw = function(graphics){

@@ -5086,7 +5086,15 @@
 		}
 	};
 	ParaDrawing.prototype.toXml = function(writer, name) {
-		if(drawing_Inline == this.DrawingType) {
+		let oGraphic = this.GraphicObj;
+		if(!oGraphic) {
+			return;
+		}
+		if(oGraphic.isOleObject() || oGraphic.isSignatureLine()) {
+			oGraphic.toXml(writer);
+			return;
+		}
+		if(drawing_Inline === this.DrawingType) {
 			writer.WriteXmlNodeStart(name);
 			writer.WriteXmlAttributesEnd();
 			var anchor = new CT_Inline(this);

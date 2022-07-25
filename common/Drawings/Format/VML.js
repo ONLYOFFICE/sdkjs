@@ -12881,8 +12881,8 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">";
 						}
 						var rel = reader.rels.getRelationship(oOleObject.m_oId);
 						if (rel) {
-							if ("Internal" === rel.targetMode) {
-								oEditorObject.setDataLink(rel.targetFullName);
+							if ("Internal" === rel.targetMode && rel.targetFullName) {
+								oEditorObject.setDataLink(rel.targetFullName.slice(1));
 							}
 						}
 
