@@ -12278,12 +12278,12 @@ QueryTableField.prototype.clone = function() {
 		return this.data;
 	};
 	asc_CExternalReference.prototype.asc_getSource = function () {
-		if (this.data) {
-			var lastIndex = this.data.lastIndexOf('/');
+		if (this.externalReference && this.externalReference.Id) {
+			var lastIndex = this.externalReference.Id.lastIndexOf('/');
 			if (lastIndex === -1) {
-				lastIndex = this.data.lastIndexOf('/\/');
+				lastIndex = this.externalReference.Id.lastIndexOf('/\/');
 			}
-			return lastIndex === -1 ? this.data : this.data.substr(lastIndex + 1);
+			return lastIndex === -1 ? this.externalReference.Id : this.externalReference.Id.substr(lastIndex + 1);
 		}
 		return null;
 	};

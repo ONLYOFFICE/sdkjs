@@ -5583,11 +5583,6 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-	var res = this.asc_getExternalReferences();
-  	this.asc_updateExternalReferences([0,1,2]);
-  	return;
-
-
     var ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
