@@ -12283,7 +12283,7 @@ QueryTableField.prototype.clone = function() {
 			if (lastIndex === -1) {
 				lastIndex = this.data.lastIndexOf('/\/');
 			}
-			return lastIndex === -1 ? null : this.data.substr(lastIndex + 1);
+			return lastIndex === -1 ? this.data : this.data.substr(lastIndex + 1);
 		}
 		return null;
 	};
