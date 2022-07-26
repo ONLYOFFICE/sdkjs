@@ -1730,6 +1730,7 @@ function XmlWriterContext(editorId){
     this.stylesForWrite = new AscCommonExcel.StylesForWrite();
     this.oSharedStrings = {index: 0, strings: {}};
     this.oleDrawings = [];
+    this.signatureDrawings = [];
     //pptx
     this.presentation = null;
     this.sldMasterIdLst = [];

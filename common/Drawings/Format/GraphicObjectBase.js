@@ -1143,7 +1143,7 @@
         return this.getObjectType() === AscDFH.historyitem_type_OleObject;
     };
     CGraphicObjectBase.prototype.isSignatureLine = function() {
-        return this.getObjectType() === AscDFH.historyitem_type_Shape && this.signatureLine();
+        return this.getObjectType() === AscDFH.historyitem_type_Shape && this.signatureLine;
     };
 
 

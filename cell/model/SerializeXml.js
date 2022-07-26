@@ -3065,28 +3065,34 @@
 			drawingRef.toXml(writer, "drawing");
 		}
 
+		let vmldrawingPart = null;
+		let vmlDrawingMemory = null;
+		let bVmlDrawing = (context.oleDrawings.length > 0 ||
+			context.signatureDrawings.length > 0 ||
+			this.aComments.length > 0);
+		if(bVmlDrawing) {
+			vmldrawingPart = context.part.addPart(AscCommon.openXml.Types.vmlDrawing);
+			vmlDrawingMemory = new AscCommon.CMemory();
+			let vmldrawingRef = new AscCommonExcel.CT_DrawingWSRef();
+			vmldrawingRef.id = vmldrawingPart.rId;
+			vmldrawingRef.toXml(writer, "legacyDrawing");
+			vmlDrawingMemory.WriteXmlString("<xml \
+xmlns:v=\"urn:schemas-microsoft-com:vml\" \
+xmlns:o=\"urn:schemas-microsoft-com:office:office\" \
+xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
+		}
+
 		//vml drawings
 		if (this.aComments.length > 0) {
 			//TODO m_sGfxdata - не протаскивается
 			var vmldrawing = new AscFormat.CVMLDrawing();
 			vmldrawing.m_mapComments = this.aComments;
+			vmlDrawingMemory.WriteXmlString(vmldrawing.getXmlString());
 
-			var memory = new AscCommon.CMemory();
-			var vmldrawingXml = vmldrawing.getXmlString();
-			memory.WriteXmlString(vmldrawingXml);
-			var jsaData = memory.GetDataUint8();
-			var vmldrawingPart = context.part.addPart(AscCommon.openXml.Types.vmlDrawing);
-			vmldrawingPart.part.setData(jsaData);
-
-			var vmldrawingRef = new AscCommonExcel.CT_DrawingWSRef();
-			vmldrawingRef.id = vmldrawingPart.rId;
-			vmldrawingRef.toXml(writer, "legacyDrawing");
 		}
-
 
 		//skip m_oLegacyDrawingHF
 		//skip m_oPicture
-
 		//OLEObjects
 		if(context.oleDrawings.length > 0) {
 			writer.WriteXmlNodeStart("oleObjects");
@@ -3094,35 +3100,25 @@
 			let aDrawings = context.oleDrawings;
 			for(let nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing) {
 				let oDrawing = aDrawings[nDrawing];
-				let oOle = oDrawing.graphicObject;
-
-				writer.WriteXmlNodeStart("mc:AlternateContent");
-				writer.WriteXmlAttributeString("xmlns:mc", "http://schemas.openxmlformats.org/markup-compatibility/2006");
-				writer.WriteXmlAttributesEnd();
-
-				writer.WriteXmlNodeStart("mc:Choice");
-				writer.WriteXmlAttributeString("Requires", "x14");
-				writer.WriteXmlAttributesEnd();
-
-
-
-				writer.WriteXmlNodeEnd("mc:Choice");
-
-
-				writer.WriteXmlNodeStart("mc:Fallback");
-				writer.WriteXmlAttributesEnd();
-
-
-
-				writer.WriteXmlNodeEnd("mc:Fallback");
-
-
-				writer.WriteXmlNodeEnd("mc:AlternateContent");
+				oDrawing.toXmlOle(writer, vmlDrawingMemory);
 			}
-
 			writer.WriteXmlNodeEnd("oleObjects");
 		}
-
+		if(context.signatureDrawings.length > 0) {
+			writer.WriteXmlNodeStart("oleObjects");
+			writer.WriteXmlAttributesEnd();
+			let aDrawings = context.signatureDrawings;
+			for(let nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing) {
+				let oDrawing = aDrawings[nDrawing];
+				oDrawing.toXmlSignature(vmlDrawingMemory);
+			}
+			writer.WriteXmlNodeEnd("oleObjects");
+		}
+		if(bVmlDrawing) {
+			vmlDrawingMemory.WriteXmlString("</xml>");
+			let vmlData = vmlDrawingMemory.GetDataUint8();
+			vmldrawingPart.part.setData(vmlData);
+		}
 		//skip m_oControls
 
 		if (this.TableParts && this.TableParts.length > 0) {

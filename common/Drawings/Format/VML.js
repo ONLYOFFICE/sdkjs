@@ -12698,17 +12698,13 @@
 				return "";
 
 			let sXml = "";
-			sXml += "<xml \
-xmlns:v=\"urn:schemas-microsoft-com:vml\" \
-xmlns:o=\"urn:schemas-microsoft-com:office:office\" \
-xmlns:x=\"urn:schemas-microsoft-com:office:excel\">";
 
 			for (let i = 0; i < this.m_arObjectXml.length; ++i)
 			{
 				sXml += (this.m_arObjectXml[i]);
 			}
 
-			if (false ===isEmptyObject(this.m_arControlXml) || ((null !== this.m_mapComments) && (false === isEmptyObject(this.m_mapComments))))
+			if (false === isEmptyObject(this.m_arControlXml) || ((null !== this.m_mapComments) && (false === isEmptyObject(this.m_mapComments))))
 			{
 				sXml += ("<o:shapelayout v:ext=\"edit\"><o:idmap v:ext=\"edit\" data=\"1\"/></o:shapelayout>");
 			}
@@ -16942,7 +16938,12 @@ xmlns:x=\"urn:schemas-microsoft-com:office:excel\">";
 		window['AscFormat'].CPoint = CPoint;
 		window['AscFormat'].CVMLToDrawingMLConverter = CVMLToDrawingMLConverter;
 		window['AscFormat'].COLEObject = COLEObject;
+		window['AscFormat'].CClientData = CClientData;
 		window['AscFormat'].EOLEDrawAspect = EOLEDrawAspect;
 		window['AscFormat'].EOLEType = EOLEType;
+		window['AscFormat'].EVmlClientDataObjectType = EVmlClientDataObjectType;
+		window['AscFormat'].Pt_To_Px = Pt_To_Px;
+		window['AscFormat'].Emu_To_Px = Emu_To_Px;
+		window['AscFormat'].Mm_To_Px = Mm_To_Px;
 
 	})(window);

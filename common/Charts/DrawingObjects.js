@@ -416,8 +416,6 @@ function CCellObjectInfo () {
 	this.row = 0;
 	this.colOff = 0;
 	this.rowOff = 0;
-	this.colOffPx = 0;
-	this.rowOffPx = 0;
 }
 CCellObjectInfo.prototype.fromXml = function(reader) {
 	var depth = reader.GetDepth();
@@ -436,17 +434,23 @@ CCellObjectInfo.prototype.fromXml = function(reader) {
 CCellObjectInfo.prototype.toXml = function(writer, name) {
     writer.WriteXmlNodeStart(name);
     writer.WriteXmlAttributesEnd();
-
     writer.WriteXmlValueNumber("xdr:col", this.col);
     writer.WriteXmlValueNumber("xdr:colOff", Math.round(this.colOff * g_dKoef_mm_to_emu));
     writer.WriteXmlValueNumber("xdr:row", this.row);
     writer.WriteXmlValueNumber("xdr:rowOff", Math.round(this.rowOff * g_dKoef_mm_to_emu));
-
     writer.WriteXmlNodeEnd(name);
 };
 CCellObjectInfo.prototype.initAfterSerialize = function() {
 	this.row = Math.max(0, this.row);
-	this.row = Math.max(0, this.row);
+	this.col = Math.max(0, this.col);
+};
+CCellObjectInfo.prototype.toVmlXml = function() {
+    let sValue = "";
+    sValue += (this.col + ",");
+    sValue += (AscFormat.Mm_To_Px(this.colOff) + ",");
+    sValue += (this.row + ",");
+    sValue += AscFormat.Mm_To_Px(this.rowOff);
+    return sValue;
 };
 
 /** @constructor */
@@ -1841,6 +1845,10 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             writer.context.oleDrawings.push(this);
             return;
         }
+        if(this.graphicObject.isSignatureLine()) {
+            writer.context.signatureDrawings.push(this);
+            return;
+        }
         var editAs = null;
         switch (this.Type) {
             case c_oAscCellAnchorType.cellanchorTwoCell:
@@ -1882,7 +1890,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         writer.WriteXmlAttributesEnd(true);
         writer.WriteXmlNodeEnd(name);
     };
-    DrawingVase.prototype.toXmlOle = function(writer) {
+    DrawingBase.prototype.toXmlOle = function(writer, oVMLWriter) {
         let oGraphic = this.graphicObject;
         if(!oGraphic) {
             return;
@@ -1892,28 +1900,65 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         }
         let oContext = writer.context;
         let nShapeId = oContext.m_lObjectIdVML;
+        let sRId = null;
+        if(oGraphic.m_sDataLink) {
+            sRId = oContext.getDataRId(oGraphic.m_sDataLink);
+        }
+        let sImageId = null;
+        if(oGraphic.blipFill && oGraphic.blipFill.RasterImageId) {
+            sImageId = oContext.getImageRId(oGraphic.blipFill.RasterImageId);
+        }
         writer.WriteXmlNodeStart("mc:AlternateContent");
         writer.WriteXmlAttributeString("xmlns:mc", "http://schemas.openxmlformats.org/markup-compatibility/2006");
         writer.WriteXmlAttributesEnd();
-
         //-------------------------------------
-        writer.WriteXmlNodeStart("mc:Choice");
-        writer.WriteXmlAttributeString("Requires", "x14");
-        writer.WriteXmlAttributesEnd();
-
-        writer.WriteXmlNodeEnd("mc:Choice");
+            writer.WriteXmlNodeStart("mc:Choice");
+            writer.WriteXmlAttributeString("Requires", "x14");
+            writer.WriteXmlAttributesEnd();
+                writer.WriteXmlNodeStart("oleObject");
+                writer.WriteXmlNullableAttributeString("progId", oGraphic.m_sApplicationId);
+                writer.WriteXmlAttributeString("dvAspect", "DVASPECT_CONTENT");
+                writer.WriteXmlAttributeInt("shapeId", nShapeId);
+                writer.WriteXmlNullableAttributeString("r:id", sRId);
+                writer.WriteXmlAttributesEnd();
+                    writer.WriteXmlNodeStart("objectPr");
+                    writer.WriteXmlAttributeBool("defaultSize", false);
+                    writer.WriteXmlNullableAttributeString("r:id", sImageId);
+                    writer.WriteXmlAttributesEnd();
+                        writer.WriteXmlNodeStart("anchor");
+                        if(this.Type === c_oAscCellAnchorType.cellanchorTwoCell) {
+                            writer.WriteXmlAttributeBool("moveWithCells", true);
+                            writer.WriteXmlAttributeBool("sizeWithCells", true);
+                        }
+                        else if(this.Type === c_oAscCellAnchorType.cellanchorOneCell) {
+                            writer.WriteXmlAttributeBool("moveWithCells", true);
+                        }
+                        writer.WriteXmlAttributesEnd();
+                        writer.WriteXmlNullable(this.from, "xdr:from");
+                        writer.WriteXmlNullable(this.to, "xdr:to");
+                        writer.WriteXmlNodeEnd("anchor");
+                    writer.WriteXmlNodeEnd("objectPr");
+                writer.WriteXmlNodeEnd("oleObject");
+            writer.WriteXmlNodeEnd("mc:Choice");
+            //-------------------------------------
+            //-------------------------------------
+            writer.WriteXmlNodeStart("mc:Fallback");
+            writer.WriteXmlAttributesEnd();
+                writer.WriteXmlNodeStart("oleObject");
+                writer.WriteXmlNullableAttributeString("progId", oGraphic.m_sApplicationId);
+                writer.WriteXmlAttributeInt("shapeId", nShapeId);
+                writer.WriteXmlNullableAttributeString("r:id", sRId);
+                writer.WriteXmlAttributesEnd(true);
+            writer.WriteXmlNodeEnd("mc:Fallback");
         //-------------------------------------
-
-
-        //-------------------------------------
-        writer.WriteXmlNodeStart("mc:Fallback");
-        writer.WriteXmlAttributesEnd();
-
-        writer.WriteXmlNodeEnd("mc:Fallback");
-        //-------------------------------------
-
-
         writer.WriteXmlNodeEnd("mc:AlternateContent");
+
+
+        this.graphicObject.toXmlVML(oVMLWriter, "", "", "", nShapeId)
+    };
+
+    DrawingBase.prototype.toXmlSignature = function(oVMLWriter) {
+
     };
 	DrawingBase.prototype.readAttr = function(reader) {
 		var name = reader.GetNameNoNS();
