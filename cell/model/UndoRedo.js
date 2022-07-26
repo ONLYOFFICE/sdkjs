@@ -2455,7 +2455,12 @@ function (window, undefined) {
 
 			if (from && !to) {//удаление
 				from.initWorksheetsFromSheetDataSet();
-				wb.externalReferences.push(from);
+				externalReferenceIndex = wb.getExternalLinkIndexByName(from.Id);
+				if (externalReferenceIndex !== null) {
+					wb.externalReferences[externalReferenceIndex - 1] = from;
+				} else {
+					wb.externalReferences.push(from);
+				}
 			} else if (!from && to) { //добавление
 				externalReferenceIndex = wb.getExternalLinkIndexByName(to.Id);
 				if (externalReferenceIndex !== null) {

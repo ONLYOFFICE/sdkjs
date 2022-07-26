@@ -12256,20 +12256,8 @@ QueryTableField.prototype.clone = function() {
 
 				for (var i = range.bbox.r1; i <= range.bbox.r2; i++) {
 					var row = externalSheetDataSet.getRow(i + 1, true);
-
-					/*var row = new ExternalRow();
-					row.R = i + 1;
-					externalSheetDataSet.Row.push(row);*/
-
 					for (var j = range.bbox.c1; j <= range.bbox.c2; j++) {
 						row.getCell(j, true);
-
-						/*var externalCell = new ExternalCell();
-						externalCell.initFromCell(cell);
-
-						var index = addedRowMap[cell.nRow].index;
-						t.Row[index].Cell.push(externalCell);
-						addedRowMap[cell.nRow].cells[cell.nCol] = 1;*/
 					}
 				}
 			}
