@@ -2748,7 +2748,8 @@
 			}
 		}
 
-		var t = this;
+		let t = this;
+		let aOleObjectsData = [];
 		if ("worksheet" === reader.GetNameNoNS()) {
 			var context = reader.GetContext();
 			context.initFromWS(this);
@@ -2835,7 +2836,56 @@
 				} else if ("legacyDrawingHF" === name) {
 					//do not support serialize - commented
 				} else if ("oleObjects" === name) {
-					//do not support serialize
+					let oWS = this;
+					let oDrawing;
+					let fReadOleDrawing = function (reader, name) {
+						if(oDrawing) {
+							return true;
+						}
+						if(name === "AlternateContent") {
+							fCallReadDrawing();
+						}
+						else if(name === "Choice") {
+							fCallReadDrawing();
+						}
+						else if(name === "oleObject") {
+							let oFrom = null, oTo = null, oPrNode = null;
+							let oNode = new CT_XmlNode(function(reader, name) {
+								if(name === "objectPr") {
+									oPrNode = new CT_XmlNode(function(reader, name) {
+										if(name === "anchor") {
+											let oAnchorNode = new CT_XmlNode(function(reader, name){
+												if(name === "from") {
+													oFrom = new AscFormat.CCellObjectInfo();
+													oFrom.fromXml(reader);
+												}
+												else if(name === "to") {
+													oTo = new AscFormat.CCellObjectInfo();
+													oTo.fromXml(reader);
+												}
+											});
+											oAnchorNode.fromXml(reader);
+										}
+										return true;
+									});
+									oPrNode.fromXml(reader);
+								}
+								return true;
+							});
+							oNode.fromXml(reader);
+							aOleObjectsData.push({drawingNode: oNode, from: oFrom, to: oTo});
+						}
+					};
+					let fCallReadDrawing = function() {
+						let oNode = new CT_XmlNode(function (reader, name) {
+							oDrawing = null;
+							fReadOleDrawing(reader, name);
+							return true;
+						});
+						oNode.fromXml(reader);
+					};
+					fCallReadDrawing();
+
 				} else if ("controls" === name) {
 					//do not support serialize
 				} else if ("headerFooter" === name) {
@@ -2898,10 +2948,60 @@
 		}
 
 		this.prepareExtLst(extLst, context.InitOpenManager);
+		this.prepareLegacyDrawings(aOleObjectsData, context.InitOpenManager.legacyDrawing)
 	};
 
 	//TOoDO PrepareToWrite делается в x2t, здесь не вижу необходиимости, но проверить нужно
-
+	AscCommonExcel.Worksheet.prototype.prepareLegacyDrawings = function(aOleObjectsData, oVmlDrawing) {
+		for(let nOle = 0; nOle < aOleObjectsData.length; ++nOle) {
+			let oData = aOleObjectsData[nOle];
+			let oFrom, oTo;
+			let oDrawingNode = oData.drawingNode;
+			oFrom = oData.from;
+			oTo = oData.to;
+			let sShapeId = oDrawingNode.attributes["shapeId"];
+			let oVMLSp = oVmlDrawing.getShape(sShapeId);
+			if(oVMLSp) {
+				let oClientData = oVMLSp.getClientData();
+				if(oClientData) {
+					let sAnchor = oClientData.m_oAnchor;
+					if(sAnchor) {
+						let aCoords = sAnchor.split(",");
+						if(aCoords.length === 8) {
+							let nFromCol = parseInt(aCoords[0]);
+							let dFromColOff = AscFormat.Px_To_Mm(parseInt(aCoords[1]));
+							let nFromRow = parseInt(aCoords[2]);
+							let dFromRowOff = AscFormat.Px_To_Mm(parseInt(aCoords[3]));
+							let nToCol = parseInt(aCoords[0]);
+							let dToColOff = AscFormat.Px_To_Mm(parseInt(aCoords[1]));
+							let nToRow = parseInt(aCoords[2]);
+							let dToRowOff = AscFormat.Px_To_Mm(parseInt(aCoords[3]));
+							if(AscFormat.isRealNumber(nFromCol) && AscFormat.isRealNumber(dFromColOff) &&
+								AscFormat.isRealNumber(nFromRow) && AscFormat.isRealNumber(dFromRowOff) &&
+								AscFormat.isRealNumber(nToCol) && AscFormat.isRealNumber(dToColOff) &&
+								AscFormat.isRealNumber(nToRow) && AscFormat.isRealNumber(dToRowOff)) {
+								if(!oFrom) {
+									oFrom = new AscFormat.CCellObjectInfo();
+								}
+								oFrom.col = nFromCol;
+								oFrom.colOff = dFromColOff;
+								oFrom.row = nFromRow;
+								oFrom.rowOff = dFromRowOff;
+								if(!oTo) {
+									oTo = new AscFormat.CCellObjectInfo();
+								}
+								oTo.col = nToCol;
+								oTo.colOff = dToColOff;
+								oTo.row = nToRow;
+								oTo.rowOff = dToRowOff;
+							}
+						}
+					}
+				}
+				let oImageData = oVMLSp.getImageData();
+			}
+		}
+	};
 	AscCommonExcel.Worksheet.prototype.toXml = function (writer) {
 		var t = this, i;
 		var context = writer.context;

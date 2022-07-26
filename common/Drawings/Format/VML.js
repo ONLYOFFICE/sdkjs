@@ -8996,6 +8996,9 @@
 		CVmlCommonElements.prototype.getTextPath = function() {
 			return this.findItemByConstructor(CTextPath);
 		};
+		CVmlCommonElements.prototype.getClientData = function() {
+			return this.findItemByConstructor(CClientData);
+		};
 		CVmlCommonElements.prototype.getLeftBorder = function() {
 			for(let nItem = 0; nItem < this.items.length; ++nItem) {
 				let oItem = this.items[nItem];
@@ -12692,6 +12695,18 @@
 			return oItem;
 		};
 		CVMLDrawing.prototype.writeChildrenXml = function (writer) {
+		};
+		CVMLDrawing.prototype.getShape = function (nId) {
+			let sId = "_x0000_s" + nId;
+			for(let nItem = 0; nItem < this.items.length; ++nItem) {
+				let oItem = this.items[nItem];
+				if(oItem instanceof CShape) {
+					if(oItem.m_sId === sId) {
+						return oItem;
+					}
+				}
+			}
+			return null;
 		};
 		CVMLDrawing.prototype.getXmlString = function() {
 			if((!this.m_mapComments || isEmptyObject(this.m_mapComments)) && isEmptyObject(this.m_arObjectXml) && isEmptyObject(this.m_arControlXml))
@@ -16945,5 +16960,6 @@
 		window['AscFormat'].Pt_To_Px = Pt_To_Px;
 		window['AscFormat'].Emu_To_Px = Emu_To_Px;
 		window['AscFormat'].Mm_To_Px = Mm_To_Px;
+		window['AscFormat'].Px_To_Mm = Px_To_Mm;
 
 	})(window);
