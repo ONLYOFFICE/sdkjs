@@ -46,7 +46,6 @@
 			"common/libfont/rasterheap.js",
 			"common/libfont/glyphstring.js",
 			"common/libfont/character.js",
-			"common/libfont/classification.js",
 			"common/libfont/grapheme.js",
 			"common/libfont/textshaper.js",
 			"common/libfont/file.js",
@@ -124,6 +123,9 @@
 			"cell/model/Serialize.js",
 			"cell/model/CellInfo.js",
 
+			"word/Editor/Paragraph/Run/FontClassification.js",
+			"word/Editor/Paragraph/Run/FontCalculator.js",
+			"word/Editor/Paragraph/Run/RunAutoCorrect.js",
 			"word/Drawing/translations.js",
 			"word/Editor/GraphicObjects/Format/ShapePrototype.js",
 			"word/Editor/GraphicObjects/Format/ImagePrototype.js",
@@ -174,7 +176,6 @@
 			"word/Editor/Field.js",
 			"word/Editor/FieldChanges.js",
 			"word/Editor/Run.js",
-			"word/Editor/Paragraph/Run/RunAutoCorrect.js",
 			"word/Editor/PresentationField.js",
 			"word/Editor/RunChanges.js",
 			"word/Editor/Math.js",
@@ -257,6 +258,9 @@
 			"pdf/src/viewer.js",
 			"pdf/src/file.js",
 			"word/document/empty.js",
+			"word/Math/NamesOfLiterals.js",
+			"word/Math/LaTeXParser.js",
+			"word/Math/UnicodeParser.js",
 			"word/Math/mathTypes.js",
 			"word/Math/mathText.js",
 			"word/Math/mathContent.js",
@@ -270,6 +274,7 @@
 			"word/Math/operators.js",
 			"word/Math/accent.js",
 			"word/Math/borderBox.js",
+			"word/Editor/Styles/FixedFormDefaults.js",
 
 			"word/apiBuilder.js",
 

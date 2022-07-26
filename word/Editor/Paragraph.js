@@ -671,7 +671,7 @@ Paragraph.prototype.Get_EmptyHeight = function()
 	EndTextPr.Merge(this.TextPr.Value);
 
 	g_oTextMeasurer.SetTextPr(EndTextPr, this.Get_Theme());
-	g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+	g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
 
 	return g_oTextMeasurer.GetHeight();
 };
@@ -742,7 +742,7 @@ Paragraph.prototype.private_RecalculateColumnLimits = function()
 		var oParaPr      = this.Get_CompiledPr2(false).ParaPr;
 		var oFirstTextPr = this.Get_FirstTextPr();
 		g_oTextMeasurer.SetTextPr(oFirstTextPr, this.Get_Theme());
-		g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+		g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
 		YLimit = Y + g_oTextMeasurer.GetHeight() + oParaPr.Spacing.Before + oParaPr.Spacing.After;
 
 		// Эти значения нужны для правильного рассчета положения картинок, смотри баг #34392
@@ -1886,7 +1886,6 @@ Paragraph.prototype.RecalculateMinMaxContentWidth = function(isRotated)
 };
 Paragraph.prototype.Draw = function(CurPage, pGraphics)
 {
-	// Параграф начинается с новой страницы
 	if (!this.Pages[CurPage] || this.Pages[CurPage].EndLine < 0)
 		return;
 
@@ -3636,7 +3635,7 @@ Paragraph.prototype.private_DrawLineNumber = function(X, Y, oContext, nLineNumbe
 		nFontKoef = AscCommon.vaKSize;
 
 	oContext.SetTextPr(oTextPr, Theme);
-	oContext.SetFontSlot(fontslot_ASCII, nFontKoef);
+	oContext.SetFontSlot(AscWord.fontslot_ASCII, nFontKoef);
 
 	if (oTextPr.VertAlign === AscCommon.vertalign_SubScript)
 		Y -= AscCommon.vaKSub * oTextPr.FontSize * g_dKoef_pt_to_mm;
@@ -4469,9 +4468,13 @@ Paragraph.prototype.Add = function(Item)
 				if (null !== NewElement)
 					this.Internal_Content_Add(CurPos + 1, NewElement);
 
-				var MathElement = new ParaMath();
-				MathElement.Root.Load_FromMenu(Item.Menu, this, null, Item.GetText());
-				MathElement.Root.Correct_Content(true);
+				var MathElement = Item;
+				if (!(Item instanceof ParaMath))
+				{
+					MathElement = new ParaMath();
+					MathElement.Root.Load_FromMenu(Item.Menu, this, null, Item.GetText());
+					MathElement.Root.Correct_Content(true);
+				}
 
 				this.Internal_Content_Add(CurPos + 1, MathElement);
 
@@ -4979,7 +4982,7 @@ Paragraph.prototype.Increase_Level = function(bIncrease)
 		}
 		if (AscFormat.isRealNumber(this.TextPr.FontSize))
 		{
-			this.TextPr.Set_FontSize(this.TextPr.FontSize + DeltaFontSize);
+			this.TextPr.SetFontSize(this.TextPr.FontSize + DeltaFontSize);
 		}
 		for (i = 0; i < this.Content.length; ++i)
 		{
@@ -4987,7 +4990,7 @@ Paragraph.prototype.Increase_Level = function(bIncrease)
 			{
 				if (AscFormat.isRealNumber(this.Content[i].Pr.FontSize))
 				{
-					this.Content[i].Set_FontSize(this.Content[i].Pr.FontSize + DeltaFontSize);
+					this.Content[i].SetFontSize(this.Content[i].Pr.FontSize + DeltaFontSize);
 				}
 			}
 			else if (this.Content[i].Type === para_Hyperlink)
@@ -4998,7 +5001,7 @@ Paragraph.prototype.Increase_Level = function(bIncrease)
 					{
 						if (AscFormat.isRealNumber(this.Content[i].Content[j].Pr.FontSize))
 						{
-							this.Content[i].Content[j].Set_FontSize(this.Content[i].Content[j].Pr.FontSize + DeltaFontSize);
+							this.Content[i].Content[j].SetFontSize(this.Content[i].Content[j].Pr.FontSize + DeltaFontSize);
 						}
 					}
 				}
@@ -7301,12 +7304,8 @@ Paragraph.prototype.Apply_TextPr = function(TextPr, IncFontSize)
 			}
 			else
 			{
-				// Выставляем настройки для символа параграфа
-				var EndTextPr = this.Get_CompiledPr2(false).TextPr.Copy();
-				EndTextPr.Merge(this.TextPr.Value);
-
 				// TODO: Как только перенесем историю изменений TextPr в сам класс CTextPr, переделать тут
-				this.TextPr.Set_FontSize(EndTextPr.GetIncDecFontSize(IncFontSize));
+				this.TextPr.IncreaseDecreaseFontSize(IncFontSize);
 			}
 
 			// TODO (ParaEnd): Переделать
@@ -7609,7 +7608,7 @@ Paragraph.prototype.AddHyperlink = function(HyperProps)
 			var Styles = editor.WordControl.m_oLogicDocument.Get_Styles();
 			HyperRun.Set_Pr(TextPr.Copy());
 			HyperRun.Set_Color(undefined);
-			HyperRun.Set_Underline(undefined);
+			HyperRun.SetUnderline(undefined);
 			HyperRun.Set_RStyle(Styles.GetDefaultHyperlink());
 		}
 		else
@@ -7617,7 +7616,7 @@ Paragraph.prototype.AddHyperlink = function(HyperProps)
 			HyperRun.Set_Pr(TextPr.Copy());
 			HyperRun.Set_Color(undefined);
 			//HyperRun.Set_Unifill(AscFormat.CreateUniFillSchemeColorWidthTint(11, 0));
-			HyperRun.Set_Underline(true);
+			HyperRun.SetUnderline(true);
 		}
 
 		// Заполняем ран гиперссылки текстом
@@ -7720,7 +7719,7 @@ Paragraph.prototype.ModifyHyperlink = function(HyperProps)
 				var Styles = editor.WordControl.m_oLogicDocument.Get_Styles();
 				HyperRun.Set_Pr(TextPr.Copy());
 				HyperRun.Set_Color(undefined);
-				HyperRun.Set_Underline(undefined);
+				HyperRun.SetUnderline(undefined);
 				HyperRun.Set_RStyle(Styles.GetDefaultHyperlink());
 			}
 			else
@@ -7728,7 +7727,7 @@ Paragraph.prototype.ModifyHyperlink = function(HyperProps)
 				HyperRun.Set_Pr(TextPr.Copy());
 				HyperRun.Set_Color(undefined);
 				HyperRun.Set_Unifill(AscFormat.CreateUniFillSchemeColorWidthTint(11, 0));
-				HyperRun.Set_Underline(true);
+				HyperRun.SetUnderline(true);
 			}
 
 
@@ -10403,10 +10402,17 @@ Paragraph.prototype.Internal_CompileParaPr2 = function()
 		// Копируем прямые настройки параграфа.
 		Pr.ParaPr.Merge(this.Pr);
 
+		if (this.IsInFixedForm())
+		{
+			let oForm = this.GetInnerForm();
+			Pr.ParaPr.Merge(oForm && oForm.IsCheckBox() ? AscWord.DEFAULT_PARAPR_FIXED_CHECKBOXFORM : AscWord.DEFAULT_PARAPR_FIXED_TEXTFORM);
+		}
+
 		if (-1 != Lvl && undefined != Pr.ParaPr.NumPr)
 			Pr.ParaPr.NumPr.Lvl = Lvl;
 		else
 			Pr.ParaPr.NumPr = undefined;
+
 
 		return Pr;
 	}
@@ -12746,7 +12752,7 @@ Paragraph.prototype.Update_DropCapByLines = function(TextPr, Count, LineH, LineT
 	TextPr.FontSize = FontSize;
 
 	g_oTextMeasurer.SetTextPr(TextPr, this.Get_Theme());
-	g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
+	g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, 1);
 
 	var TMetrics = {Ascent : null, Descent : null};
 	this.private_RecalculateTextMetrics(TMetrics);
@@ -12769,7 +12775,7 @@ Paragraph.prototype.Update_DropCapByLines = function(TextPr, Count, LineH, LineT
 	TextPr.FontSize = parseInt(NewFontSize * 2) / 2;
 
 	g_oTextMeasurer.SetTextPr(TextPr, this.Get_Theme());
-	g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
+	g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, 1);
 
 	var TNewMetrics = {Ascent : null, Descent : null};
 	this.private_RecalculateTextMetrics(TNewMetrics);
@@ -12819,7 +12825,7 @@ Paragraph.prototype.Update_DropCapByHeight = function(_Height)
 
 	var TextPr = this.Internal_CalculateTextPr(this.Internal_GetStartPos());
 	g_oTextMeasurer.SetTextPr(TextPr, this.Get_Theme());
-	g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
+	g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, 1);
 
 	var TMetrics = {Ascent : null, Descent : null};
 	this.private_RecalculateTextMetrics(TMetrics);
@@ -12839,7 +12845,7 @@ Paragraph.prototype.Update_DropCapByHeight = function(_Height)
 	TextPr.FontSize = parseInt(NewFontSize * 2) / 2;
 
 	g_oTextMeasurer.SetTextPr(TextPr, this.Get_Theme());
-	g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
+	g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, 1);
 
 	var TNewMetrics = {Ascent : null, Descent : null};
 	this.private_RecalculateTextMetrics(TNewMetrics);
@@ -16760,6 +16766,23 @@ Paragraph.prototype.IsTableCellContent = function()
 	return (this.Parent && this.Parent.IsTableCellContent() ? true : false);
 };
 /**
+ * Проверяем является ли данный параграф последним в ячейке (возвращаем false, если параграф не лежит в таблице вообще)
+ * @returns {boolean}
+ */
+Paragraph.prototype.IsLastParagraphInCell = function()
+{
+	let oDocContent = this.GetParent();
+	if (!oDocContent)
+		return false;
+
+	let oCell = oDocContent.IsTableCellContent(true);
+	if (!oCell)
+		return false;
+
+	let oCellContent = oCell.GetContent();
+	return (this === oCellContent.GetLastParagraph());
+};
+/**
  * Получаем элемент содержимого параграфа
  * @param nIndex
  * @returns {?CParagraphContentBase}
@@ -17236,7 +17259,23 @@ Paragraph.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, isCur
 
 	return false;
 };
+Paragraph.prototype.CheckSelectedRunContent = function(fCheck)
+{
+	if (!this.Selection.Use)
+		return false;
 
+	let oStartPos = this.Get_ParaContentPos(true, true, false);
+	let oEndPos   = this.Get_ParaContentPos(true, false, false);
+
+	if (oStartPos.Compare(oEndPos) > 0)
+	{
+		let oTemp = oStartPos;
+		oStartPos = oEndPos;
+		oEndPos   = oTemp;
+	}
+
+	return this.CheckRunContent(fCheck, oStartPos, oEndPos, false);
+};
 /**
 * Check signature lines are present in the content and send asc_onAddSignature event
  */

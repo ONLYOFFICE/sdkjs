@@ -7271,7 +7271,7 @@ function CDrawingDocument()
 				if (1 === text.length)
 				{
 					g_oTextMeasurer.SetTextPr(textPr);
-					g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
+					g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, 1);
 					var oInfo = g_oTextMeasurer.Measure2Code(text.charCodeAt(0));
 
 					x = (width_px >> 1) - Math.round((oInfo.WidthG / 2 + oInfo.rasterOffsetX) * AscCommon.g_dKoef_mm_to_pix);

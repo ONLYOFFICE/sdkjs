@@ -342,7 +342,7 @@ CInlineLevelSdt.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _C
 		var oTextPr = oRun.Get_CompiledPr(false);
 
 		g_oTextMeasurer.SetTextPr(oTextPr, oParagraph.GetTheme());
-		g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+		g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
 
 		var nTextHeight  = g_oTextMeasurer.GetHeight();
 		var nTextDescent = Math.abs(g_oTextMeasurer.GetDescender());
@@ -461,7 +461,7 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 			var oTextPr = oRun.Get_CompiledPr(false);
 
 			g_oTextMeasurer.SetTextPr(oTextPr, PDSH.Paragraph.GetTheme());
-			g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+			g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
 
 			var nTextHeight  = g_oTextMeasurer.GetHeight();
 			var nTextDescent = Math.abs(g_oTextMeasurer.GetDescender());
@@ -470,7 +470,7 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 			var oColor = oTextPr.GetSimpleTextColor(PDSH.Paragraph.GetTheme(), PDSH.Paragraph.GetColorMap());
 			oGraphics.SetTextPr(oTextPr, PDSH.Paragraph.GetTheme());
 			oGraphics.b_color1(oColor.r, oColor.g, oColor.b, this.IsPlaceHolder() ? 127 : 255);
-			oGraphics.SetFontSlot(fontslot_ASCII); // Именно на этой функции записываются настройки шрифта в метафайл
+			oGraphics.SetFontSlot(AscWord.fontslot_ASCII); // Именно на этой функции записываются настройки шрифта в метафайл
 
 			// TODO: Заглушка для AdobeReader
 			//       Середина по вертикали у поля совпадает со средней точкой bbox, поэтому меняем сдвиги по вертикали
@@ -1667,17 +1667,17 @@ CInlineLevelSdt.prototype.private_UpdateCheckBoxContent = function()
 
 	if (isChecked && this.Pr.CheckBox.CheckedFont)
 	{
-		oRun.Set_RFonts_Ascii({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
-		oRun.Set_RFonts_HAnsi({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
-		oRun.Set_RFonts_CS({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
-		oRun.Set_RFonts_EastAsia({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
+		oRun.SetRFontsAscii({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
+		oRun.SetRFontsHAnsi({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
+		oRun.SetRFontsCS({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
+		oRun.SetRFontsEastAsia({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
 	}
 	else if (!isChecked && this.Pr.CheckBox.UncheckedFont)
 	{
-		oRun.Set_RFonts_Ascii({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
-		oRun.Set_RFonts_HAnsi({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
-		oRun.Set_RFonts_CS({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
-		oRun.Set_RFonts_EastAsia({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
+		oRun.SetRFontsAscii({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
+		oRun.SetRFontsHAnsi({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
+		oRun.SetRFontsCS({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
+		oRun.SetRFontsEastAsia({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
 	}
 };
 /**
@@ -2659,7 +2659,7 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function(nW, nH)
 	// 	var oTextPr   = oInnerRun.Get_CompiledPr(false);
 	//
 	// 	g_oTextMeasurer.SetTextPr(oTextPr, oParagraph.GetTheme());
-	// 	g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+	// 	g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
 	//
 	// 	var nTextDescent = Math.abs(g_oTextMeasurer.GetDescender());
 	// 	oRun.Set_Position(oTextPr.Position - nTextDescent);
@@ -2714,8 +2714,14 @@ CInlineLevelSdt.prototype.private_ConvertFormToFixed = function(nW, nH)
 
 	oInnerParagraph.MoveCursorToStartPos();
 	oInnerParagraph.Add(this);
-	oInnerParagraph.SetParagraphAlign(this.IsCheckBox() ? AscCommon.align_Center : AscCommon.align_Left);
-	oInnerParagraph.SetParagraphSpacing({Before : 0, After : 0, Line : 1, LineRule : Asc.linerule_Auto});
+
+	let oParaPr;
+	if (this.IsCheckBox())
+		oParaPr = AscWord.DEFAULT_PARAPR_FIXED_CHECKBOXFORM.Copy();
+	else
+		oParaPr = AscWord.DEFAULT_PARAPR_FIXED_TEXTFORM.Copy();
+
+	oInnerParagraph.SetDirectParaPr(oParaPr);
 
 	var oBodyPr = oShape.getBodyPr().createDuplicate();
 
@@ -2859,7 +2865,7 @@ CInlineLevelSdt.prototype.OnChangeFixedFormTrack = function(nW, nH)
 		var oTextPr = oRun.Get_CompiledPr(false);
 
 		g_oTextMeasurer.SetTextPr(oTextPr, oParagraph.GetTheme());
-		g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+		g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
 
 		var nTextHeight = g_oTextMeasurer.GetHeight();
 
@@ -2867,7 +2873,7 @@ CInlineLevelSdt.prototype.OnChangeFixedFormTrack = function(nW, nH)
 
 		var nFontSize    = oTextPr.FontSize;
 		var nNewFontSize = nFontSize * nKoef;
-		oRun.Set_FontSize(nNewFontSize);
+		oRun.SetFontSize(nNewFontSize);
 	}
 	else if (this.IsPicture())
 	{
@@ -2912,7 +2918,7 @@ CInlineLevelSdt.prototype.ProcessAutoFitContent = function(isFastRecalc)
 	var oShapeBounds = oShape.getFormRelRect(true);
 
 	g_oTextMeasurer.SetTextPr(oTextPr, oParagraph.GetTheme());
-	g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+	g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
 
 	var nTextHeight = g_oTextMeasurer.GetHeight();
 	var nMaxWidth   = oParagraph.RecalculateMinMaxContentWidth(false).Max;
@@ -2935,7 +2941,7 @@ CInlineLevelSdt.prototype.ProcessAutoFitContent = function(isFastRecalc)
 			nNewFontSize = AscCommon.CorrectFontSize(nFontSize, true);
 			while (nNewFontSize > 1)
 			{
-				oRun.Set_FontSize(nNewFontSize);
+				oRun.SetFontSize(nNewFontSize);
 				oParagraph.Recalculate_Page(0);
 
 				oContentBounds = oParagraph.GetContentBounds(0);
@@ -2954,14 +2960,14 @@ CInlineLevelSdt.prototype.ProcessAutoFitContent = function(isFastRecalc)
 			//nNewFontSize = AscCommon.CorrectFontSize(nFontSize, true);
 			while (nNewFontSize <= nMaxFontSize)
 			{
-				oRun.Set_FontSize(nNewFontSize);
+				oRun.SetFontSize(nNewFontSize);
 				oParagraph.Recalculate_Page(0);
 
 				var oContentBounds = oParagraph.GetContentBounds(0);
 				if (oContentBounds.Bottom - oContentBounds.Top > oShapeBounds.H)
 				{
 					nNewFontSize -= nFontStep;
-					oRun.Set_FontSize(nNewFontSize);
+					oRun.SetFontSize(nNewFontSize);
 					break;
 				}
 
@@ -2981,25 +2987,25 @@ CInlineLevelSdt.prototype.ProcessAutoFitContent = function(isFastRecalc)
 
 		if (!isFastRecalc)
 		{
-			oRun.Set_FontSize(nNewFontSize);
+			oRun.SetFontSize(nNewFontSize);
 			oParagraph.Recalculate_Page(0);
 			oShape.recalcContent();
 			oShape.recalculateText();
 		}
 		else if (AscCommon.align_Left !== oParagraph.GetParagraphAlign())
 		{
-			oRun.Set_FontSize(nNewFontSize);
+			oRun.SetFontSize(nNewFontSize);
 			oParagraph.private_RecalculateFastRange(0, 0);
 		}
 	}
 	// Восстанавливаем старое значение, чтобы в историю все правильно записалось
-	oRun.Set_FontSize(nFontSize);
+	oRun.SetFontSize(nFontSize);
 
 	nNewFontSize = ((nNewFontSize * 100) | 0) / 100;
 	History.TurnOn();
 
 	if (Math.abs(nNewFontSize - nFontSize) > 0.001)
-		oRun.Set_FontSize(nNewFontSize);
+		oRun.SetFontSize(nNewFontSize);
 };
 CInlineLevelSdt.prototype.UpdatePictureFormLayout = function()
 {
@@ -3251,6 +3257,27 @@ CInlineLevelSdt.prototype.TrimTextForm = function()
 			oRun.Selection.EndPos   = Math.min(nRunLen, Math.max(0, nSelectionEnd));
 		}
 	}
+};
+CInlineLevelSdt.prototype.SetInnerText = function(sText)
+{
+	if (this.IsPlaceHolder())
+		this.ReplacePlaceHolderWithContent();
+
+	let oRun = this.MakeSingleRunElement(true);
+	oRun.AddText(sText);
+};
+CInlineLevelSdt.prototype.GetPicture = function()
+{
+	let oImage;
+	let arrDrawings = this.GetAllDrawingObjects();
+	for (let nDrawing = 0, nDrawingsCount = arrDrawings.length; nDrawing < nDrawingsCount; ++nDrawing)
+	{
+		oImage = arrDrawings[nDrawing].GetPicture();
+		if (oImage)
+			return oImage;
+	}
+
+	return null;
 };
 
 //--------------------------------------------------------export--------------------------------------------------------

@@ -112,11 +112,11 @@
 	 */
 	CRunAutoCorrect.prototype.DoAutoCorrect = function(nFlags, nHistoryActions)
 	{
-		this.Flags          = nFlags;
+		this.Flags          = this.private_CheckFlags(nFlags);
 		this.Result         = AUTOCORRECT_FLAGS_NONE;
 		this.HistoryActions = (undefined === nHistoryActions || null === nHistoryActions) ? 1 : nHistoryActions;
 
-		if (!this.IsValid() || !nFlags)
+		if (!this.IsValid() || !this.Flags)
 			return this.Result;
 
 		// Чтобы позиция ContentPos была актуальна, отключаем корректировку содержимого параграфа на время выполнения
@@ -153,6 +153,15 @@
 			return this.private_Return();
 
 		return this.private_Return();
+	};
+	CRunAutoCorrect.prototype.private_CheckFlags = function(nFlags)
+	{
+		// Если автозамены будем включать в формах при каких-либо условиях, тогда нужно проверять, что
+		// выполнение автозамены не выходит за пределы формы
+		if (this.Run.GetParentForm())
+			return AUTOCORRECT_FLAGS_NONE;
+
+		return nFlags;
 	};
 	CRunAutoCorrect.prototype.private_Return = function()
 	{
@@ -1366,18 +1375,18 @@
 	};
 
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscCommonWord'] = window['AscCommonWord'] || {};
-	window['AscCommonWord'].CRunAutoCorrect = CRunAutoCorrect;
+	window['AscWord'] = window['AscWord'] || {};
+	window['AscWord'].CRunAutoCorrect = CRunAutoCorrect;
 
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_NONE                     = AUTOCORRECT_FLAGS_NONE;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_ALL                      = AUTOCORRECT_FLAGS_ALL;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_FRENCH_PUNCTUATION       = AUTOCORRECT_FLAGS_FRENCH_PUNCTUATION;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_SMART_QUOTES             = AUTOCORRECT_FLAGS_SMART_QUOTES;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH         = AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_HYPERLINK                = AUTOCORRECT_FLAGS_HYPERLINK;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE    = AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_NUMBERING                = AUTOCORRECT_FLAGS_NUMBERING;
-	window['AscCommonWord'].AUTOCORRECT_FLAGS_DOUBLE_SPACE_WITH_PERIOD = AUTOCORRECT_FLAGS_DOUBLE_SPACE_WITH_PERIOD;
+	window['AscWord'].AUTOCORRECT_FLAGS_NONE                     = AUTOCORRECT_FLAGS_NONE;
+	window['AscWord'].AUTOCORRECT_FLAGS_ALL                      = AUTOCORRECT_FLAGS_ALL;
+	window['AscWord'].AUTOCORRECT_FLAGS_FRENCH_PUNCTUATION       = AUTOCORRECT_FLAGS_FRENCH_PUNCTUATION;
+	window['AscWord'].AUTOCORRECT_FLAGS_SMART_QUOTES             = AUTOCORRECT_FLAGS_SMART_QUOTES;
+	window['AscWord'].AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH         = AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH;
+	window['AscWord'].AUTOCORRECT_FLAGS_HYPERLINK                = AUTOCORRECT_FLAGS_HYPERLINK;
+	window['AscWord'].AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE    = AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE;
+	window['AscWord'].AUTOCORRECT_FLAGS_NUMBERING                = AUTOCORRECT_FLAGS_NUMBERING;
+	window['AscWord'].AUTOCORRECT_FLAGS_DOUBLE_SPACE_WITH_PERIOD = AUTOCORRECT_FLAGS_DOUBLE_SPACE_WITH_PERIOD;
 
 })(window);
 

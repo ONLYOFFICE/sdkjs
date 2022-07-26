@@ -214,7 +214,7 @@ ParaDrawing.prototype.Get_Type = function()
 {
 	return this.Type;
 };
-ParaDrawing.prototype.Get_Width = function()
+ParaDrawing.prototype.GetWidth = function()
 {
 	return this.Width;
 };

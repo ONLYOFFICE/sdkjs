@@ -342,6 +342,10 @@ ParaField.prototype.Get_FieldType = function()
 {
     return this.FieldType;
 };
+ParaField.prototype.GetFieldType = function()
+{
+	return this.FieldType;
+};
 ParaField.prototype.Map_MailMerge = function(_Value)
 {
     // Пока у нас в Value может быть только текст, в будущем планируется, чтобы могли быть картинки.
@@ -540,77 +544,97 @@ ParaField.prototype.Update = function(isCreateHistoryPoint, isRecalculate)
 		this.Add_ToContent(0, oRun);
 	}
 };
-ParaField.prototype.GetInstr = function() {
+ParaField.prototype.GetInstructionLine = function()
+{
 	let Instr = "";
 	let name;
-	switch (this.FieldType) {
-		case fieldtype_MERGEFIELD : {
+	switch (this.FieldType)
+	{
+		case fieldtype_MERGEFIELD :
+		{
 			name = "MERGEFIELD";
 			break;
 		}
-		case fieldtype_PAGE : {
+		case fieldtype_PAGE :
+		{
 			name = "PAGE";
 			break;
 		}
-		case fieldtype_NUMPAGES : {
+		case fieldtype_NUMPAGES :
+		{
 			name = "NUMPAGES";
 			break;
 		}
-		case fieldtype_FORMTEXT : {
+		case fieldtype_FORMTEXT :
+		{
 			name = "FORMTEXT";
 			break;
 		}
-		case fieldtype_TOC : {
+		case fieldtype_TOC :
+		{
 			name = "TOC";
 			break;
 		}
-		case fieldtype_PAGEREF : {
+		case fieldtype_PAGEREF :
+		{
 			name = "PAGEREF";
 			break;
 		}
-		case fieldtype_ASK : {
+		case fieldtype_ASK :
+		{
 			name = "ASK";
 			break;
 		}
-		case fieldtype_REF : {
+		case fieldtype_REF :
+		{
 			name = "REF";
 			break;
 		}
-		case fieldtype_HYPERLINK : {
+		case fieldtype_HYPERLINK :
+		{
 			name = "HYPERLINK";
 			break;
 		}
-		case fieldtype_TIME : {
+		case fieldtype_TIME :
+		{
 			name = "TIME";
 			break;
 		}
-		case fieldtype_DATE : {
+		case fieldtype_DATE :
+		{
 			name = "DATE";
 			break;
 		}
-		case fieldtype_FORMULA : {
+		case fieldtype_FORMULA :
+		{
 			name = "FORMULA";
 			break;
 		}
-		case fieldtype_SEQ : {
+		case fieldtype_SEQ :
+		{
 			name = "SEQ";
 			break;
 		}
-		case fieldtype_STYLEREF : {
+		case fieldtype_STYLEREF :
+		{
 			name = "STYLEREF";
 			break;
 		}
-		case fieldtype_NOTEREF : {
+		case fieldtype_NOTEREF :
+		{
 			name = "NOTEREF";
 			break;
 		}
 	}
-	if (name) {
+	if (name)
+	{
 		Instr += name;
-		for (let i = 0; i < this.Arguments.length; ++i) {
+		for (let i = 0; i < this.Arguments.length; ++i)
+		{
 			let argument = this.Arguments[i];
-			argument = argument.replace(/(\\|")/g, "\\$1");
-			if (-1 != argument.indexOf(' ')) {
+			argument     = argument.replace(/(\\|")/g, "\\$1");
+			if (-1 != argument.indexOf(' '))
+			{
 				argument = "\"" + argument + "\"";
 			}
 			Instr += " " + argument;
@@ -618,6 +642,42 @@ ParaField.prototype.GetInstr = function() {
 		Instr += this.Switches.join(" ")
 	}
 	return Instr;
+};
+ParaField.prototype.ReplaceWithComplexField = function()
+{
+	let oParent        = this.GetParent();
+	let nPosInParent   = this.GetPosInParent(oParent);
+	let oParagraph     = this.GetParagraph();
+	let oLogicDocument = oParagraph ? oParagraph.GetLogicDocument() : null;
+	if (!oLogicDocument || !oParent  || -1 === nPosInParent)
+		return null;
+
+	let oBeginChar    = new ParaFieldChar(fldchartype_Begin, oLogicDocument);
+	let oSeparateChar = new ParaFieldChar(fldchartype_Separate, oLogicDocument);
+	let oEndChar      = new ParaFieldChar(fldchartype_End, oLogicDocument);
+
+	let sInstruction = this.GetInstructionLine();
+
+	let oRun = this.CreateRunWithText("");
+	oRun.AddToContent(-1, oBeginChar);
+	oRun.AddInstrText(sInstruction);
+	oRun.AddToContent(-1, oSeparateChar);
+	oRun.AddToContent(-1, oEndChar);
+
+	oParent.RemoveFromContent(nPosInParent, 1);
+	oParent.AddToContent(nPosInParent, oRun);
+
+	oBeginChar.SetRun(oRun);
+	oSeparateChar.SetRun(oRun);
+	oEndChar.SetRun(oRun);
+
+	var oComplexField = oBeginChar.GetComplexField();
+	oComplexField.SetBeginChar(oBeginChar);
+	oComplexField.SetInstructionLine(sInstruction);
+	oComplexField.SetSeparateChar(oSeparateChar);
+	oComplexField.SetEndChar(oEndChar);
+	oComplexField.Update(false);
+	return oComplexField;
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Функции совместного редактирования

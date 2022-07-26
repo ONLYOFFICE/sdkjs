@@ -53,6 +53,7 @@
 		this.TextPr    = null;
 		this.Temporary = false;
 		this.Ligatures = Asc.LigaturesType.None;
+		this.Spacing   = 0;
 	}
 	CParagraphTextShaper.prototype = Object.create(AscFonts.CTextShaper.prototype);
 	CParagraphTextShaper.prototype.constructor = CParagraphTextShaper;
@@ -63,6 +64,7 @@
 		this.TextPr    = null;
 		this.Temporary = isTemporary;
 		this.Ligatures = Asc.LigaturesType.None;
+		this.Spacing   = 0;
 	};
 	CParagraphTextShaper.prototype.GetCodePoint = function(oItem)
 	{
@@ -84,9 +86,9 @@
 	{
 		let oTextPr = this.TextPr;
 		if (!oTextPr)
-			return fontslot_None;
+			return AscWord.fontslot_None;
 
-		return g_font_detector.Get_FontClass(nUnicode, oTextPr.RFonts.Hint, oTextPr.Lang.EastAsia, oTextPr.CS, oTextPr.RTL);
+		return AscWord.GetFontSlotByTextPr(nUnicode, oTextPr);
 	};
 	CParagraphTextShaper.prototype.GetLigaturesType = function()
 	{
@@ -144,12 +146,12 @@
 
 		let _isLigature = isLigature && nCodePointsCount > 1;
 
-		let _nWidth = nWidth / nCodePointsCount;
+		let _nWidth = (nWidth + (this.Spacing / this.FontSize)) / nCodePointsCount;
 		this.private_HandleItem(this.Buffer[this.BufferIndex++], nGrapheme, _nWidth, this.FontSize, this.FontSlot, _isLigature ? CODEPOINT_TYPE.LIGATURE : CODEPOINT_TYPE.BASE);
 
 		for (let nIndex = 1; nIndex < nCodePointsCount; ++nIndex)
 		{
-			this.private_HandleItem(this.Buffer[this.BufferIndex++], AscFonts.NO_GRAPHEME, _nWidth, this.FontSize, fontslot_ASCII, _isLigature ? CODEPOINT_TYPE.LIGATURE_CONTINUE : CODEPOINT_TYPE.COMBINING_MARK);
+			this.private_HandleItem(this.Buffer[this.BufferIndex++], AscFonts.NO_GRAPHEME, _nWidth, this.FontSize, AscWord.fontslot_ASCII, _isLigature ? CODEPOINT_TYPE.LIGATURE_CONTINUE : CODEPOINT_TYPE.COMBINING_MARK);
 		}
 	};
 	CParagraphTextShaper.prototype.private_CheckRun = function(oRun)
@@ -157,7 +159,7 @@
 		let oRunParent = oRun.GetParent();
 		let oTextPr    = oRun.Get_CompiledPr(false);
 
-		if (this.Parent !== oRunParent || !this.TextPr || !this.TextPr.IsEqual(oTextPr))
+		if (this.Parent !== oRunParent || !this.IsEqualTextPr(oTextPr))
 			this.FlushWord();
 
 		let oForm      = oRun.GetParentForm();
@@ -165,13 +167,14 @@
 
 		this.Parent    = oRunParent;
 		this.TextPr    = oTextPr;
-		this.Ligatures = isCombForm ? Asc.LigaturesType.None : oTextPr.Ligatures;
+		this.Spacing   = isCombForm ? 0 : oTextPr.Spacing;
+		this.Ligatures = isCombForm || Math.abs(this.Spacing) > 0.001 ? Asc.LigaturesType.None : oTextPr.Ligatures;
 	};
 	CParagraphTextShaper.prototype.private_HandleNBSP = function(oItem)
 	{
-		let oFontInfo = this.TextPr.GetFontInfo(fontslot_ASCII);
+		let oFontInfo = this.TextPr.GetFontInfo(AscWord.fontslot_ASCII);
 		let nGrapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(0x00B0, oFontInfo.Name, oFontInfo.Style);
-		this.private_HandleItem(oItem, nGrapheme, AscFonts.GetGraphemeWidth(nGrapheme), oFontInfo.Size, fontslot_ASCII, false, false, false);
+		this.private_HandleItem(oItem, nGrapheme, AscFonts.GetGraphemeWidth(nGrapheme), oFontInfo.Size, AscWord.fontslot_ASCII, false, false, false);
 	};
 	CParagraphTextShaper.prototype.private_HandleItem = function(oItem, nGrapheme, nWidth, nFontSize, nFontSlot, nCodePointType)
 	{
@@ -194,6 +197,32 @@
 			oItem.SetCodePointType(nCodePointType);
 			oItem.SetWidth(nWidth);
 		}
+	};
+	CParagraphTextShaper.prototype.IsEqualTextPr = function(oTextPr)
+	{
+		// Здесь мы не используем стандартную функцию CTextPr.IsEqual, потому что она сравнивает на полное
+		// совпадение объектов, а нас интересует только совпадение настроек, которые не мешают сборке текста
+
+		if (!oTextPr || !this.TextPr)
+			return false;
+
+		let t = this.TextPr;
+
+		return (t.Bold === oTextPr.Bold
+			&& t.BoldCS === oTextPr.BoldCS
+			&& t.Italic === oTextPr.Italic
+			&& t.ItalicCS === oTextPr.ItalicCS
+			&& IsEqualNullableFloatNumbers(t.FontSize, oTextPr.FontSize)
+			&& IsEqualNullableFloatNumbers(t.FontSizeCS, oTextPr.FontSizeCS)
+			&& t.VertAlign === oTextPr.VertAlign
+			&& IsEqualNullableFloatNumbers(t.Spacing, oTextPr.Spacing)
+			&& t.SmallCaps === oTextPr.SmallCaps
+			&& t.Position === oTextPr.Position
+			&& t.CS === oTextPr.CS
+			&& t.RTL === oTextPr.RTL
+			&& t.Vanish === oTextPr.Vanish
+			&& t.Ligatures === oTextPr.Ligatures
+			&& t.RFonts.IsEqual(oTextPr.RFonts));
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};

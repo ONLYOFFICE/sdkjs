@@ -94,7 +94,7 @@
 	CRunText.prototype.constructor = CRunText;
 
 	CRunText.prototype.Type = para_Text;
-	CRunText.prototype.Set_CharCode = function(CharCode)
+	CRunText.prototype.SetCharCode = function(CharCode)
 	{
 		this.Value = CharCode;
 		this.Set_SpaceAfter(this.private_IsSpaceAfter());
@@ -134,11 +134,11 @@
 		if (undefined !== nFontSlot)
 		{
 			let nFS = FLAGS_ASCII;
-			if (nFontSlot & fontslot_EastAsia)
+			if (nFontSlot & AscWord.fontslot_EastAsia)
 				nFS = FLAGS_EASTASIA;
-			else if (nFontSlot & fontslot_HAnsi)
+			else if (nFontSlot & AscWord.fontslot_HAnsi)
 				nFS = FLAGS_HANSI;
-			else if (nFontSlot & fontslot_CS)
+			else if (nFontSlot & AscWord.fontslot_CS)
 				nFS = FLAGS_CS;
 
 			this.Flags = (this.Flags & 0xFFFFFFFC) | nFS;
@@ -281,10 +281,6 @@
 		else
 			return (this.Width / AscWord.TEXTWIDTH_DIVIDER);
 	};
-	CRunText.prototype.Get_Width = function()
-	{
-		return this.GetWidth();
-	};
 	CRunText.prototype.GetWidth = function()
 	{
 		let nWidth = (this.Flags & FLAGS_TEMPORARY ?
@@ -378,13 +374,6 @@
 	{
 		return this.IsDigit();
 	};
-	CRunText.prototype.Is_SpecialSymbol = function()
-	{
-		if (1 === g_aSpecialSymbols[this.Value])
-			return true;
-
-		return false;
-	};
 	CRunText.prototype.IsSpaceAfter = function()
 	{
 		return !!(this.Flags & FLAGS_SPACEAFTER);
@@ -429,7 +418,7 @@
 	};
 	CRunText.prototype.Read_FromBinary = function(Reader)
 	{
-		this.Set_CharCode(Reader.GetLong());
+		this.SetCharCode(Reader.GetLong());
 	};
 	CRunText.prototype.private_IsSpaceAfter = function()
 	{
@@ -472,13 +461,13 @@
 			|| 58 === this.Value
 			|| 59 === this.Value
 			|| 63 === this.Value)
-			return AscCommonWord.AUTOCORRECT_FLAGS_ALL;
+			return AscWord.AUTOCORRECT_FLAGS_ALL;
 
 		// /,\,@  - исключения, на них мы не должны стартовать атозамену первой буквы предложения
 		if ((this.IsPunctuation() || this.IsNumber()) && 92 !== this.Value && 47 !== this.Value && 64 !== this.Value)
-			return AscCommonWord.AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE | AscCommonWord.AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH;
+			return AscWord.AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE | AscWord.AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH;
 
-		return AscCommonWord.AUTOCORRECT_FLAGS_NONE;
+		return AscWord.AUTOCORRECT_FLAGS_NONE;
 	};
 	CRunText.prototype.IsDiacriticalSymbol = function()
 	{
@@ -531,19 +520,9 @@
 	{
 		return true;
 	};
-	CRunText.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+	CRunText.prototype.GetFontSlot = function(oTextPr)
 	{
-		let fontSlot = g_font_detector.Get_FontClass(this.Value, nHint, nEA_lcid, isCS, isRTL);
-		if (fontSlot === fontslot_ASCII)
-			return rfont_ASCII;
-		else if (fontSlot === fontslot_HAnsi)
-			return rfont_HAnsi;
-		else if (fontSlot === fontslot_CS)
-			return rfont_CS;
-		else if (fontSlot === fontslot_EastAsia)
-			return rfont_EastAsia;
-
-		return rfont_None;
+		return AscWord.GetFontSlotByTextPr(this.Value, oTextPr);
 	};
 	CRunText.prototype.IsCombiningMark = function()
 	{

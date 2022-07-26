@@ -5120,15 +5120,15 @@
 				oShape.spPr.xfrm.setRot(AscFormat.normalizeRotate(obj['rotate'] ? (obj['rotate'] * Math.PI / 180) : 0));
 				oShape.spPr.setGeometry(AscFormat.CreateGeometry(obj['type']));
 				if(obj['fill'] && obj['fill'].length === 3){
-					oShape.spPr.setFill(AscFormat.CreteSolidFillRGB(obj['fill'][0], obj['fill'][1], obj['fill'][2]));
+					oShape.spPr.setFill(AscFormat.CreateSolidFillRGB(obj['fill'][0], obj['fill'][1], obj['fill'][2]));
 				}
 				if(AscFormat.isRealNumber(obj['stroke-width']) || Array.isArray(obj['stroke']) && obj['stroke'].length === 3){
 					var oUnifill;
 					if(Array.isArray(obj['stroke']) && obj['stroke'].length === 3){
-						oUnifill = AscFormat.CreteSolidFillRGB(obj['stroke'][0], obj['stroke'][1], obj['stroke'][2]);
+						oUnifill = AscFormat.CreateSolidFillRGB(obj['stroke'][0], obj['stroke'][1], obj['stroke'][2]);
 					}
 					else{
-						oUnifill = AscFormat.CreteSolidFillRGB(0, 0, 0);
+						oUnifill = AscFormat.CreateSolidFillRGB(0, 0, 0);
 					}
 					oShape.spPr.setLn(AscFormat.CreatePenFromParams(oUnifill, undefined, undefined, undefined, undefined, AscFormat.isRealNumber(obj['stroke-width']) ? obj['stroke-width'] : 12700.0/36000.0));
 				}
@@ -5178,22 +5178,22 @@
 						var oRunS = aRunsS[j];
 						var oRun = new AscCommonWord.ParaRun(oNewParagraph, false);
 						if(Array.isArray(oRunS['fill']) && oRunS['fill'].length === 3){
-							oRun.Set_Unifill(AscFormat.CreteSolidFillRGB(oRunS['fill'][0], oRunS['fill'][1], oRunS['fill'][2]));
+							oRun.Set_Unifill(AscFormat.CreateSolidFillRGB(oRunS['fill'][0], oRunS['fill'][1], oRunS['fill'][2]));
 						}
 						var fontFamilyName = oRunS['font-family'] ? oRunS['font-family'] : "Arial";
 						var fontSize = (oRunS['font-size'] != null) ? oRunS['font-size'] : 50;
 
-						oRun.Set_RFonts_Ascii({Name : fontFamilyName, Index : -1});
-						oRun.Set_RFonts_CS({Name : fontFamilyName, Index : -1});
-						oRun.Set_RFonts_EastAsia({Name : fontFamilyName, Index : -1});
-						oRun.Set_RFonts_HAnsi({Name : fontFamilyName, Index : -1});
+						oRun.SetRFontsAscii({Name : fontFamilyName, Index : -1});
+						oRun.SetRFontsCS({Name : fontFamilyName, Index : -1});
+						oRun.SetRFontsEastAsia({Name : fontFamilyName, Index : -1});
+						oRun.SetRFontsHAnsi({Name : fontFamilyName, Index : -1});
 
-						oRun.Set_FontSize(fontSize);
+						oRun.SetFontSize(fontSize);
 
-						oRun.Set_Bold(oRunS['bold'] === true);
-						oRun.Set_Italic(oRunS['italic'] === true);
-						oRun.Set_Strikeout(oRunS['strikeout'] === true);
-						oRun.Set_Underline(oRunS['underline'] === true);
+						oRun.SetBold(oRunS['bold'] === true);
+						oRun.SetItalic(oRunS['italic'] === true);
+						oRun.SetStrikeout(oRunS['strikeout'] === true);
+						oRun.SetUnderline(oRunS['underline'] === true);
 
 						var sCustomText = oRunS['text'];
 						if(sCustomText === "<%br%>"){
@@ -5627,12 +5627,34 @@
 	function CPlugin()
 	{
 		this.name    = "";
+		this.nameLocale = {};
 		this.guid    = "";
 		this.baseUrl = "";
 		this.minVersion = "";
+		this.version = "";
 
 		this.variations = [];
 	}
+
+	CPlugin.prototype.getIntVersion = function()
+	{
+		if (!this.version)
+			return 0;
+		let arrayVersion = this.version.split(".");
+
+		while (arrayVersion.length < 3)
+			arrayVersion.push("0");
+
+		try
+		{
+			let intVer = parseInt(arrayVersion[0]) * 10000 + parseInt(arrayVersion[1]) * 100 + parseInt(arrayVersion[2]);
+			return intVer;
+		}
+		catch (e)
+		{
+		}
+		return 0;
+	};
 
 	CPlugin.prototype["get_Name"]    = function()
 	{
@@ -5641,6 +5663,14 @@
 	CPlugin.prototype["set_Name"]    = function(value)
 	{
 		this.name = value;
+	};
+	CPlugin.prototype["get_NameLocale"]    = function()
+	{
+		return this.nameLocale;
+	};
+	CPlugin.prototype["set_NameLocale"]    = function(value)
+	{
+		this.nameLocale = value;
 	};
 	CPlugin.prototype["get_Guid"]    = function()
 	{
@@ -5666,6 +5696,14 @@
 	{
 		this.minVersion = value;
 	};
+	CPlugin.prototype["get_Version"] = function()
+	{
+		return this.version;
+	};
+	CPlugin.prototype["set_Version"] = function(value)
+	{
+		this.version = value;
+	};
 
 	CPlugin.prototype["get_Variations"] = function()
 	{
@@ -5680,8 +5718,19 @@
 	{
 		var _object           = {};
 		_object["name"]       = this.name;
+		_object["nameLocale"] = this.nameLocale;
 		_object["guid"]       = this.guid;
+		_object["version"]    = this.version;
 		_object["baseUrl"]    = this.baseUrl;
+		_object["minVersion"] = this.minVersion;
+
+		if (this.group)
+		{
+			_object["group"] = {};
+			_object["group"]["name"] = this.group.name;
+			_object["group"]["rank"] = this.group.rank;
+		}
+
 		_object["variations"] = [];
 		for (var i = 0; i < this.variations.length; i++)
 		{
@@ -5692,9 +5741,33 @@
 	CPlugin.prototype["deserialize"] = function(_object)
 	{
 		this.name       = (_object["name"] != null) ? _object["name"] : this.name;
+		this.nameLocale = (_object["nameLocale"] != null) ? _object["nameLocale"] : this.nameLocale;
 		this.guid       = (_object["guid"] != null) ? _object["guid"] : this.guid;
+		this.version    = (_object["version"] != null) ? _object["version"] : this.version;
 		this.baseUrl    = (_object["baseUrl"] != null) ? _object["baseUrl"] : this.baseUrl;
 		this.minVersion = (_object["minVersion"] != null) ? _object["minVersion"] : this.minVersion;
+
+		if (true)
+		{
+			// удалим этот if, как передем на просто прокидку объекта в интерфейсе
+			if (_object["groupName"] || _object["groupRank"])
+				this.group = {};
+
+			if (_object["groupName"])
+				this.group.name = _object["groupName"];
+			if (_object["groupRank"])
+				this.group.rank = _object["groupRank"];
+		}
+
+		if (_object["group"])
+		{
+			this.group = {};
+			this.group.name = (_object["group"]["name"] != null) ? _object["group"]["name"] : "";
+			this.group.rank = (_object["group"]["rank"] != null) ? _object["group"]["rank"] : 0;
+		}
+
+
+		this.group      = (_object["group"] != null) ? _object["group"] : this.group;
 		this.variations = [];
 		for (var i = 0; i < _object["variations"].length; i++)
 		{

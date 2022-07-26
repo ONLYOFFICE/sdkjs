@@ -2730,14 +2730,8 @@
 			return ret;
 		}
 
-		function CreteSolidFillRGB(r, g, b) {
-			var ret = new CUniFill();
-			ret.setFill(new CSolidFill());
-			ret.fill.setColor(new CUniColor());
-			var _uni_color = ret.fill.color;
-			_uni_color.setColor(new CRGBColor());
-			_uni_color.color.setColor(r, g, b);
-			return ret;
+		function CreateSolidFillRGB(r, g, b) {
+			return AscFormat.CreateUniFillByUniColor(CreateUniColorRGB(r, g, b));
 		}
 
 		function CreateSolidFillRGBA(r, g, b, a) {
@@ -2874,8 +2868,12 @@
 			writer.WriteXmlNodeStart(sName_);
 			writer.WriteXmlNullableAttributeUInt("l", getPercentageValueForWrite(this.l));
 			writer.WriteXmlNullableAttributeUInt("t", getPercentageValueForWrite(this.t));
-			writer.WriteXmlNullableAttributeUInt("r", 100000 - getPercentageValueForWrite(this.r));
-			writer.WriteXmlNullableAttributeUInt("b", 100000 - getPercentageValueForWrite(this.b));
+			if(AscFormat.isRealNumber(this.r)) {
+				writer.WriteXmlAttributeUInt("r", getPercentageValueForWrite(100 - this.r));
+			}
+			if(AscFormat.isRealNumber(this.b)) {
+				writer.WriteXmlAttributeUInt("b", getPercentageValueForWrite(100 - this.b));
+			}
 			writer.WriteXmlAttributesEnd(true);
 		};
 
@@ -5947,6 +5945,9 @@
 
 			writer.WriteXmlNodeEnd(strName);
 		};
+		CGradFill.prototype.getColorsCount = function() {
+			return this.colors.length;
+		};
 
 		function CPattFill() {
 			CBaseFill.call(this);
@@ -6791,62 +6792,20 @@
 		CUniFill.prototype.isFillName = function (sName) {
 			return !!CUniFill.prototype.FILL_NAMES[sName];
 		};
-
-
-		// CUniFill.prototype.fromXml = function(reader)
-		// {
-		// 	var name = reader.GetNameNoNS();
-		// 	var depth = reader.GetDepth();
-		// 	switch (name) {
-		// 		case "blipFill": {
-		// 			let oFill = new AscFormat.CBlipFill();
-		// 			oFill.fromXml(reader);
-		// 			this.setFill(oFill);
-		// 			break;
-		// 		}
-		// 		case "gradFill": {
-		// 			let oFill = new AscFormat.CGradFill();
-		// 			oFill.fromXml(reader);
-		// 			this.setFill(oFill);
-		// 			break;
-		// 		}
-		// 		case "grpFill": {
-		// 			let oFill = new AscFormat.CGrpFill();
-		// 			oFill.fromXml(reader);
-		// 			this.setFill(oFill);
-		// 			break;
-		// 		}
-		// 		case "noFill": {
-		// 			let oFill = new AscFormat.CNoFill();
-		// 			oFill.fromXml(reader);
-		// 			this.setFill(oFill);
-		// 			break;
-		// 		}
-		// 		case "pattFill": {
-		// 			let oFill = new AscFormat.CPattFill();
-		// 			oFill.fromXml(reader);
-		// 			this.setFill(oFill);
-		// 			break;
-		// 		}
-		// 		case "solidFill": {
-		// 			let oFill = new AscFormat.CSolidFill();
-		// 			oFill.fromXml(reader);
-		// 			this.setFill(oFill);
-		// 			break;
-		// 		}
-		//
-		// 		default:
-		// 			reader.ReadTillEnd(depth);
-		// 			break;
-		// 	}
-		// };
 		CUniFill.prototype.toXml = function (writer, ns) {
 			var fill = this.fill;
 			if (!fill)
 				return;
 			fill.toXml(writer, ns);
 		};
+		CUniFill.prototype.addAlpha = function(dValue) {
+			this.setTransparent(Math.max(0, Math.min(255, (dValue * 255 + 0.5) >> 0)));
 
+			// let oMod = new CColorMod();
+			// oMod.name = "alpha";
+			// oMod.val = nPctValue;
+			// this.addColorMod(oMod);
+		};
 
 		function CBuBlip() {
 			CBaseNoIdObject.call(this);
@@ -8370,8 +8329,8 @@
 
 			if(this.hlinkClick || this.hlinkHover) {
 				writer.WriteXmlAttributesEnd();
-				writer.WriteXmlNullable(this.hlinkClick);
-				writer.WriteXmlNullable(this.hlinkHover);
+				writer.WriteXmlNullable(this.hlinkClick, "a:hlinkClick");
+				writer.WriteXmlNullable(this.hlinkHover, "a:hlinkHover");
 
 				writer.WriteXmlNodeEnd(sName);
 			}
@@ -12554,7 +12513,9 @@
 			if (this.nvGrpSpPr) {
 				if (writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX ||
 					writer.context.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX_GLOSSARY) {
-					this.nvGrpSpPr.cNvGrpSpPr.toXmlGrSp2(writer, "wpg");
+					if (this.nvGrpSpPr.cNvGrpSpPr) {
+						this.nvGrpSpPr.cNvGrpSpPr.toXmlGrSp2(writer, "wpg");
+					}
 				} else
 					this.nvGrpSpPr.toXmlGrp(writer);
 			}
@@ -19942,7 +19903,7 @@
 		window['AscFormat'].CUniColor = CUniColor;
 		window['AscFormat'].CreateUniColorRGB = CreateUniColorRGB;
 		window['AscFormat'].CreateUniColorRGB2 = CreateUniColorRGB2;
-		window['AscFormat'].CreteSolidFillRGB = CreteSolidFillRGB;
+		window['AscFormat'].CreateSolidFillRGB = CreateSolidFillRGB;
 		window['AscFormat'].CreateSolidFillRGBA = CreateSolidFillRGBA;
 		window['AscFormat'].CSrcRect = CSrcRect;
 		window['AscFormat'].CBlipFillTile = CBlipFillTile;

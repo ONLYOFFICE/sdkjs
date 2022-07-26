@@ -160,6 +160,17 @@
 	ApiChart.prototype = Object.create(ApiDrawing.prototype);
 	ApiChart.prototype.constructor = ApiChart;
 
+	 /**
+	 * Class representing an Ole-object.
+	 * @constructor
+	 */
+	function ApiOleObject(OleObject)
+	{
+		ApiDrawing.call(this, OleObject);
+	}
+	ApiOleObject.prototype = Object.create(ApiDrawing.prototype);
+	ApiOleObject.prototype.constructor = ApiOleObject;
+
 	/**
      * The available preset color names.
 	 * @typedef {("aliceBlue" | "antiqueWhite" | "aqua" | "aquamarine" | "azure" | "beige" | "bisque" | "black" |
@@ -1509,6 +1520,36 @@
 	};
 
 	/**
+	 * Adds an Ole-object with the parameters specified.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently only internet URL or Base64 encoded images are supported).
+	 * @param {EMU} nWidth - The Ole-object width in English measure units.
+	 * @param {EMU} nHeight - The Ole-object height in English measure units.
+	 * @param {string} sData - ole-object string data.
+	 * @param {string} sAppId - the application id associated with this object.
+	 * @param {number} nFromCol - The number of the column where the beginning of the Ole-object will be placed.
+	 * @param {EMU} nColOffset - The offset from the nFromCol column to the left part of the Ole-object measured in English measure units.
+	 * @param {number} nFromRow - The number of the row where the beginning of the Ole-object will be placed.
+	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the Ole-object measured in English measure units.
+	 * @returns {ApiOleObject}
+	 */
+	ApiWorksheet.prototype.AddOleObject = function(sImageSrc, nWidth, nHeight, sData, sAppId, nFromCol, nColOffset, nFromRow, nRowOffset)
+	{
+		if (typeof sImageSrc === "string" && sImageSrc.length > 0 && typeof sData === "string"
+			&& typeof sAppId === "string" && sAppId.length > 0
+			&& AscFormat.isRealNumber(nWidth) && AscFormat.isRealNumber(nHeight)
+		)
+
+		var nW = nWidth / 36000.0;
+		var nH = nHeight / 36000.0;
+		
+		var oImage = AscFormat.DrawingObjectsController.prototype.createOleObject(sData, sAppId, sImageSrc, 0, 0, nW, nH);
+		private_SetCoords(oImage, this.worksheet, nWidth, nHeight, nFromCol, nColOffset,  nFromRow, nRowOffset);
+		return new ApiOleObject(oImage);
+	};
+
+	/**
 	 * Replaces the current image with a new one.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
@@ -1671,6 +1712,25 @@
 		}
 		return allApiDrawings;
 	};
+
+	/**
+	 * Returns all ole-objects from the current sheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiOleObject[]}.
+	*/
+	ApiWorksheet.prototype.GetAllOleObjects = function(){
+		var allDrawings = this.worksheet.Drawings;
+		var allApiDrawings = [];
+
+		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++){
+			if (allDrawings[nDrawing].graphicObject && allDrawings[nDrawing].graphicObject instanceof AscFormat.COleObject){
+				allApiDrawings.push(new ApiOleObject(allDrawings[nDrawing].graphicObject));
+			}
+		}
+		return allApiDrawings;
+	};
+
 	/**
 	 * Converts the ApiWorksheet object to the JSON object.
 	 * @memberof ApiWorksheet
@@ -1683,6 +1743,7 @@
 		return JSON.stringify(oWriter.SerWorksheet(this.worksheet));
 	};
 	
+
 
 	/**
 	 * Specifies the cell border position.
@@ -3890,6 +3951,83 @@
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
+	// ApiOleObject
+	//
+	//------------------------------------------------------------------------------------------------------------------
+	
+	/**
+	 * Returns a type of the ApiOleObject class.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @returns {"oleObject"}
+	 */
+	ApiOleObject.prototype.GetClassType = function()
+	{
+		return "oleObject";
+	};
+
+	/**
+	 * Sets the data to current Ole-object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @param {string} sData - ole-object string data.
+	 * @returns {boolean}
+	 */
+	ApiOleObject.prototype.SetData = function(sData)
+	{
+		if (typeof(sData) !== "string" || sData === "")
+			return false;
+
+		this.Drawing.setData(sData);
+		return true;
+	};
+
+	/**
+	 * Gets the string data from current Ole-object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @returns {string}
+	 */
+	ApiOleObject.prototype.GetData = function()
+	{
+		if (typeof(this.Drawing.m_sData) === "string")
+			return this.Drawing.m_sData;
+		
+		return "";
+	};
+
+	/**
+	 * Sets the application id to current Ole-object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @param {string} sAppId - the application id associated with this object.
+	 * @returns {boolean}
+	 */
+	ApiOleObject.prototype.SetApplicationId = function(sAppId)
+	{
+		if (typeof(sAppId) !== "string" || sAppId === "")
+			return false;
+
+		this.Drawing.setApplicationId(sAppId);
+		return true;
+	};
+
+	/**
+	 * Gets the application id from current Ole-object.
+	 * @memberof ApiOleObject
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
+	 * @returns {string}
+	 */
+	ApiOleObject.prototype.GetApplicationId = function()
+	{
+		if (typeof(this.Drawing.m_sApplicationId) === "string")
+			return this.Drawing.m_sApplicationId;
+		
+		return "";
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
 	// ApiColor
 	//
 	//------------------------------------------------------------------------------------------------------------------
@@ -4164,14 +4302,15 @@
 	ApiWorksheet.prototype["AddChart"] = ApiWorksheet.prototype.AddChart;
 	ApiWorksheet.prototype["AddShape"] = ApiWorksheet.prototype.AddShape;
 	ApiWorksheet.prototype["AddImage"] = ApiWorksheet.prototype.AddImage;
+	ApiWorksheet.prototype["AddOleObject"] = ApiWorksheet.prototype.AddOleObject;
 	ApiWorksheet.prototype["ReplaceCurrentImage"] = ApiWorksheet.prototype.ReplaceCurrentImage;
 	ApiWorksheet.prototype["AddWordArt"] = ApiWorksheet.prototype.AddWordArt;
 	ApiWorksheet.prototype["GetAllDrawings"] = ApiWorksheet.prototype.GetAllDrawings;
 	ApiWorksheet.prototype["GetAllImages"] = ApiWorksheet.prototype.GetAllImages;
 	ApiWorksheet.prototype["GetAllShapes"] = ApiWorksheet.prototype.GetAllShapes;
 	ApiWorksheet.prototype["GetAllCharts"] = ApiWorksheet.prototype.GetAllCharts;
+	ApiWorksheet.prototype["GetAllOleObjects"] = ApiWorksheet.prototype.GetAllOleObjects;
 	ApiWorksheet.prototype["ToJSON"] = ApiWorksheet.prototype.ToJSON;
-
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
 	ApiRange.prototype["GetCol"] = ApiRange.prototype.GetCol;
@@ -4290,6 +4429,12 @@
 	ApiChart.prototype["SetLegendFill"]               =  ApiChart.prototype.SetLegendFill;
 	ApiChart.prototype["SetLegendOutLine"]            =  ApiChart.prototype.SetLegendOutLine;
 	ApiChart.prototype["SetAxieNumFormat"]            =  ApiChart.prototype.SetAxieNumFormat;
+
+	ApiOleObject.prototype["GetClassType"]            = ApiOleObject.prototype.GetClassType;
+	ApiOleObject.prototype["SetData"]                 = ApiOleObject.prototype.SetData;
+	ApiOleObject.prototype["GetData"]                 = ApiOleObject.prototype.GetData;
+	ApiOleObject.prototype["SetApplicationId"]        = ApiOleObject.prototype.SetApplicationId;
+	ApiOleObject.prototype["GetApplicationId"]        = ApiOleObject.prototype.GetApplicationId;
 
 	ApiColor.prototype["GetClassType"]                 =  ApiColor.prototype.GetClassType;
 

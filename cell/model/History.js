@@ -105,6 +105,9 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Worksheet_AddProtectedRange = 56;
 	window['AscCH'].historyitem_Worksheet_DelProtectedRange = 57;
 
+	window['AscCH'].historyitem_Worksheet_AddCellWatch = 58;
+	window['AscCH'].historyitem_Worksheet_DelCellWatch = 59;
+
 	window['AscCH'].historyitem_RowCol_Fontname = 1;
 	window['AscCH'].historyitem_RowCol_Fontsize = 2;
 	window['AscCH'].historyitem_RowCol_Fontcolor = 3;
@@ -385,14 +388,15 @@ CHistory.prototype.Is_Clear = function() {
 };
 CHistory.prototype.Clear = function()
 {
+	var _isClear = this.Is_Clear();
 	this.Index         = -1;
 	this.Points.length = 0;
 	this.TurnOffHistory = 0;
 	this.Transaction = 0;
 
 	this.SavedIndex = null;
-  this.ForceSave= false;
-  this.UserSavedIndex = null;
+	this.ForceSave= false;
+  	this.UserSavedIndex = null;
 
 	window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
 	this.workbook.handlers.trigger("toggleAutoCorrectOptions", null, true);
@@ -657,6 +661,8 @@ CHistory.prototype.UndoRedoEnd = function (Point, oRedoObjectParam, bUndo) {
 
 		if (oRedoObjectParam.oOnUpdateSheetViewSettings[this.workbook.getWorksheet(this.workbook.getActive()).getId()])
 			this.workbook.handlers.trigger("asc_onUpdateSheetViewSettings");
+
+		this.workbook.handlers.trigger("updateCellWatches");
 
 		this._sendCanUndoRedo();
 		if (bUndo)
@@ -1144,6 +1150,7 @@ CHistory.prototype.EndTransaction = function()
 		this.Transaction = 0;
 	if (this.IsEndTransaction() && this.workbook) {
 		this.workbook.dependencyFormulas.unlockRecal();
+		this.workbook.handlers.trigger("updateCellWatches");
 	}
 };
 /** @returns {boolean} */

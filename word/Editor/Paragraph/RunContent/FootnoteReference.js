@@ -50,6 +50,7 @@
 		this.WidthVisible = 0;
 		this.Number       = 1;
 		this.NumFormat    = Asc.c_oAscNumberingFormat.Decimal;
+		this.TextAscent   = 0;
 
 		this.Run          = null;
 		this.Widths       = [];
@@ -76,7 +77,7 @@
 		if (TextPr.VertAlign !== AscCommon.vertalign_Baseline)
 			FontKoef = AscCommon.vaKSize;
 
-		Context.SetFontSlot(fontslot_ASCII, FontKoef);
+		Context.SetFontSlot(AscWord.fontslot_ASCII, FontKoef);
 
 		var _X = X;
 		var T  = this.private_GetString();
@@ -92,9 +93,8 @@
 
 		if (editor && editor.ShowParaMarks && Context.DrawFootnoteRect && this.Run)
 		{
-			var TextAscent = this.Run.TextAscent;
 			Context.p_color(0, 0, 0, 255);
-			Context.DrawFootnoteRect(X, PDSE.BaseLine - TextAscent, this.Get_Width(), TextAscent);
+			Context.DrawFootnoteRect(X, PDSE.BaseLine - this.TextAscent, this.GetWidth(), this.TextAscent);
 		}
 	};
 	CRunFootnoteReference.prototype.Measure = function(Context, TextPr, MathInfo, Run)
@@ -200,24 +200,23 @@
 		if (!this.Run)
 			return;
 
+		this.Width        = 0;
+		this.WidthVisible = 0;
+		this.TextAscent   = 0;
+
 		if (this.IsCustomMarkFollows())
-		{
-			this.Width        = 0;
-			this.WidthVisible = 0;
 			return;
-		}
 
-		var oMeasurer = g_oTextMeasurer;
-
-		var TextPr = this.Run.Get_CompiledPr(false);
-		var Theme  = this.Run.GetParagraph().Get_Theme();
+		let oMeasurer = g_oTextMeasurer;
+		let oTextPr   = this.Run.Get_CompiledPr(false);
 
 		var FontKoef = 1;
-		if (TextPr.VertAlign !== AscCommon.vertalign_Baseline)
+		if (oTextPr.VertAlign !== AscCommon.vertalign_Baseline)
 			FontKoef = AscCommon.vaKSize;
 
-		oMeasurer.SetTextPr(TextPr, Theme);
-		oMeasurer.SetFontSlot(fontslot_ASCII, FontKoef);
+		this.TextAscent = oTextPr.GetTextMetrics(AscWord.fontslot_ASCII, this.Run.GetParagraph().GetTheme()).Ascent;
+		let oFontInfo   = oTextPr.GetFontInfo(AscWord.fontslot_ASCII);
+		oMeasurer.SetFontInternal(oFontInfo.Name, oFontInfo.Size * FontKoef, oFontInfo.Style);
 
 		var X = 0;
 		var T = this.private_GetString();
@@ -230,8 +229,7 @@
 			X += CharW;
 		}
 
-
-		var ResultWidth   = (Math.max((X + TextPr.Spacing), 0) * AscWord.TEXTWIDTH_DIVIDER) | 0;
+		var ResultWidth   = (Math.max((X + oTextPr.Spacing), 0) * AscWord.TEXTWIDTH_DIVIDER) | 0;
 		this.Width        = ResultWidth;
 		this.WidthVisible = ResultWidth;
 	};
@@ -298,9 +296,9 @@
 	{
 		return true;
 	};
-	CRunFootnoteReference.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+	CRunFootnoteReference.prototype.GetFontSlot = function(oTextPr)
 	{
-		return rfont_ASCII;
+		return AscWord.fontslot_ASCII;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};

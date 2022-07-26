@@ -932,7 +932,7 @@ CMathBase.prototype.IsPlaceholder = function()
 {
     return false;
 };
-CMathBase.prototype.IsText = function()
+CMathBase.prototype.IsMathText = function()
 {
     return false;
 };
@@ -996,7 +996,7 @@ CMathBase.prototype.Apply_TextPrToCtrPr = function(TextPr, IncFontSize, ApplyToA
 	else
 	{
 		if (undefined !== TextPr.Bold)
-			this.Set_Bold(null === TextPr.Bold ? undefined : TextPr.Bold);
+			this.SetBold(null === TextPr.Bold ? undefined : TextPr.Bold);
 
 		if (TextPr.AscFill || TextPr.AscLine || TextPr.AscUnifill)
 		{
@@ -1059,13 +1059,13 @@ CMathBase.prototype.Apply_TextPrToCtrPr = function(TextPr, IncFontSize, ApplyToA
 			this.SetHighlightColor(null === TextPr.HighlightColor ? undefined : TextPr.HighlightColor);
 
 		if (undefined !== TextPr.Underline)
-			this.Set_Underline(null === TextPr.Underline ? undefined : TextPr.Underline);
+			this.SetUnderline(null === TextPr.Underline ? undefined : TextPr.Underline);
 
 		if (undefined !== TextPr.Strikeout)
-			this.Set_Strikeout(null === TextPr.Strikeout ? undefined : TextPr.Strikeout);
+			this.SetStrikeout(null === TextPr.Strikeout ? undefined : TextPr.Strikeout);
 
 		if (undefined !== TextPr.DStrikeout)
-			this.Set_DoubleStrikeout(null === TextPr.DStrikeout ? undefined : TextPr.DStrikeout);
+			this.SetDoubleStrikeout(null === TextPr.DStrikeout ? undefined : TextPr.DStrikeout);
 
 		if (undefined !== TextPr.RFonts)
 		{
@@ -1179,7 +1179,7 @@ CMathBase.prototype.Set_Shd = function(Shd)
 		this.raw_SetShd(Shd);
 	}
 };
-CMathBase.prototype.Set_Underline = function(Value)
+CMathBase.prototype.SetUnderline = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -1190,7 +1190,7 @@ CMathBase.prototype.Set_Underline = function(Value)
 		this.raw_SetUnderline(Value);
 	}
 };
-CMathBase.prototype.Set_Strikeout = function(Value)
+CMathBase.prototype.SetStrikeout = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -1201,7 +1201,7 @@ CMathBase.prototype.Set_Strikeout = function(Value)
 		this.raw_SetStrikeout(Value);
 	}
 };
-CMathBase.prototype.Set_DoubleStrikeout = function(Value)
+CMathBase.prototype.SetDoubleStrikeout = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -1212,7 +1212,7 @@ CMathBase.prototype.Set_DoubleStrikeout = function(Value)
 		this.raw_Set_DoubleStrikeout(Value);
 	}
 };
-CMathBase.prototype.Set_Bold = function(Value)
+CMathBase.prototype.SetBold = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -1223,7 +1223,7 @@ CMathBase.prototype.Set_Bold = function(Value)
 		this.raw_SetBold(Value);
 	}
 };
-CMathBase.prototype.Set_Italic = function(Value)
+CMathBase.prototype.SetItalic = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -1234,7 +1234,7 @@ CMathBase.prototype.Set_Italic = function(Value)
 		this.raw_SetItalic(Value);
 	}
 };
-CMathBase.prototype.Set_RFonts_Ascii = function(Value)
+CMathBase.prototype.SetRFontsAscii = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -1245,7 +1245,7 @@ CMathBase.prototype.Set_RFonts_Ascii = function(Value)
 		this.raw_SetRFontsAscii(Value);
 	}
 };
-CMathBase.prototype.Set_RFonts_HAnsi = function(Value)
+CMathBase.prototype.SetRFontsHAnsi = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -1256,7 +1256,7 @@ CMathBase.prototype.Set_RFonts_HAnsi = function(Value)
 		this.raw_SetRFontsHAnsi(Value);
 	}
 };
-CMathBase.prototype.Set_RFonts_CS = function(Value)
+CMathBase.prototype.SetRFontsCS = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -1267,7 +1267,7 @@ CMathBase.prototype.Set_RFonts_CS = function(Value)
 		this.raw_SetRFontsCS(Value);
 	}
 };
-CMathBase.prototype.Set_RFonts_EastAsia = function(Value)
+CMathBase.prototype.SetRFontsEastAsia = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -1278,7 +1278,7 @@ CMathBase.prototype.Set_RFonts_EastAsia = function(Value)
 		this.raw_SetRFontsEastAsia(Value);
 	}
 };
-CMathBase.prototype.Set_RFonts_Hint = function(Value)
+CMathBase.prototype.SetRFontsHint = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -1365,31 +1365,31 @@ CMathBase.prototype.raw_SetHighlightColor = function(Value)
 };
 CMathBase.prototype.raw_SetRFonts = function(RFonts)
 {
-    if ( undefined != RFonts )
-    {
-        if ( undefined != RFonts.Ascii )
-            this.Set_RFonts_Ascii( RFonts.Ascii );
+	if (RFonts)
+	{
+		if (undefined !== RFonts.Ascii)
+			this.SetRFontsAscii(RFonts.Ascii);
 
-        if ( undefined != RFonts.HAnsi )
-            this.Set_RFonts_HAnsi( RFonts.HAnsi );
+		if (undefined !== RFonts.HAnsi)
+			this.SetRFontsHAnsi(RFonts.HAnsi);
 
-        if ( undefined != RFonts.CS )
-            this.Set_RFonts_CS( RFonts.CS );
+		if (undefined !== RFonts.CS)
+			this.SetRFontsCS(RFonts.CS);
 
-        if ( undefined != RFonts.EastAsia )
-            this.Set_RFonts_EastAsia( RFonts.EastAsia );
+		if (undefined !== RFonts.EastAsia)
+			this.SetRFontsEastAsia(RFonts.EastAsia);
 
-        if ( undefined != RFonts.Hint )
-            this.Set_RFonts_Hint( RFonts.Hint );
-    }
-    else
-    {
-        this.Set_RFonts_Ascii( undefined );
-        this.Set_RFonts_HAnsi( undefined );
-        this.Set_RFonts_CS( undefined );
-        this.Set_RFonts_EastAsia( undefined );
-        this.Set_RFonts_Hint( undefined );
-    }
+		if (undefined !== RFonts.Hint)
+			this.SetRFontsHint(RFonts.Hint);
+	}
+	else
+	{
+		this.SetRFontsAscii(undefined);
+		this.SetRFontsHAnsi(undefined);
+		this.SetRFontsCS(undefined);
+		this.SetRFontsEastAsia(undefined);
+		this.SetRFontsHint(undefined);
+	}
 };
 CMathBase.prototype.raw_SetRFontsAscii = function(Value)
 {
@@ -1458,23 +1458,23 @@ CMathBase.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRang
 
     if ( 0 !== PRSA.LettersSkip )
     {
-        WidthVisible = this.Bounds.Get_Width(CurLine, CurRange);
+        WidthVisible = this.Bounds.GetWidth(CurLine, CurRange);
         PRSA.LettersSkip--;
     }
     else
     {
-        WidthVisible = this.Bounds.Get_Width(CurLine, CurRange) + PRSA.JustifyWord;
+        WidthVisible = this.Bounds.GetWidth(CurLine, CurRange) + PRSA.JustifyWord;
     }
 
     PRSA.X    += WidthVisible;
     PRSA.LastW = WidthVisible;
 };
-CMathBase.prototype.Get_Width = function(_CurLine, _CurRange)
+CMathBase.prototype.GetWidth = function(_CurLine, _CurRange)
 {
     var CurLine  = _CurLine - this.StartLine,
         CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
 
-    return this.Bounds.Get_Width(CurLine, CurRange);
+    return this.Bounds.GetWidth(CurLine, CurRange);
 };
 CMathBase.prototype.SaveRecalculateObject = function(Copy)
 {
@@ -1856,7 +1856,7 @@ CMathBase.prototype.Selection_DrawRange = function(_CurLine, _CurRange, Selectio
     }
     else if(SelectionDraw.FindStart == true)
     {
-        SelectionDraw.StartX += this.Bounds.Get_Width(CurLine, CurRange);
+        SelectionDraw.StartX += this.Bounds.GetWidth(CurLine, CurRange);
     }
 
 };
@@ -3009,6 +3009,26 @@ CMathBase.prototype.ConvertOperatorToStr = function(operator)
     return OPERATOR_EMPTY === operator ? "" : AscCommon.convertUnicodeToUTF16([operator]);
 };
 
+CMathBase.prototype.GetStartBracetForGetTextContent = function(isLaTeX) {
+	if (isLaTeX) 
+		return '{';
+	else
+		return '(';
+};
+CMathBase.prototype.GetEndBracetForGetTextContent = function(isLaTeX) {
+	if (isLaTeX) 
+		return '}';
+	else
+		return ')';
+};
+CMathBase.prototype.CheckIsEmpty = function(strAtom) {
+	if (strAtom === '⬚') {
+		return "";
+	} else {
+		return strAtom
+	}
+};
+
 function CMathBasePr()
 {
 }
@@ -3053,7 +3073,7 @@ CMathBounds.prototype.SetPage = function(Line, Range, Page)
     this.CheckLineBound(Line);
     this.Bounds[Line][Range].SetPage(Page);
 };
-CMathBounds.prototype.Get_Width = function(Line, Range)
+CMathBounds.prototype.GetWidth = function(Line, Range)
 {
     this.CheckLineBound(Line);
     return this.Bounds[Line][Range].W;

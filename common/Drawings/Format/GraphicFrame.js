@@ -1263,32 +1263,32 @@ CGraphicFrame.prototype.Is_ThisElementCurrent = function()
                         if(oPr2.TableBorders.Bottom && oPr2.TableBorders.Bottom.Unifill){
                             oPr2.TableBorders.Bottom.Unifill.check(oTheme, oColorMap);
                             RGBA = oPr2.TableBorders.Bottom.Unifill.getRGBAColor();
-                            oPr2.TableBorders.Bottom.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                            oPr2.TableBorders.Bottom.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                         }
                         if(oPr2.TableBorders.Left && oPr2.TableBorders.Left.Unifill){
                             oPr2.TableBorders.Left.Unifill.check(oTheme, oColorMap);
                             RGBA = oPr2.TableBorders.Left.Unifill.getRGBAColor();
-                            oPr2.TableBorders.Left.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                            oPr2.TableBorders.Left.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                         }
                         if(oPr2.TableBorders.Right && oPr2.TableBorders.Right.Unifill){
                             oPr2.TableBorders.Right.Unifill.check(oTheme, oColorMap);
                             RGBA = oPr2.TableBorders.Right.Unifill.getRGBAColor();
-                            oPr2.TableBorders.Right.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                            oPr2.TableBorders.Right.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                         }
                         if(oPr2.TableBorders.Top && oPr2.TableBorders.Top.Unifill){
                             oPr2.TableBorders.Top.Unifill.check(oTheme, oColorMap);
                             RGBA = oPr2.TableBorders.Top.Unifill.getRGBAColor();
-                            oPr2.TableBorders.Top.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                            oPr2.TableBorders.Top.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                         }
                         if(oPr2.TableBorders.InsideH && oPr2.TableBorders.InsideH.Unifill){
                             oPr2.TableBorders.InsideH.Unifill.check(oTheme, oColorMap);
                             RGBA = oPr2.TableBorders.InsideH.Unifill.getRGBAColor();
-                            oPr2.TableBorders.InsideH.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                            oPr2.TableBorders.InsideH.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                         }
                         if(oPr2.TableBorders.InsideV && oPr2.TableBorders.InsideV.Unifill){
                             oPr2.TableBorders.InsideV.Unifill.check(oTheme, oColorMap);
                             RGBA = oPr2.TableBorders.InsideV.Unifill.getRGBAColor();
-                            oPr2.TableBorders.InsideV.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                            oPr2.TableBorders.InsideV.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                         }
                     }
                 }
@@ -1349,30 +1349,30 @@ CGraphicFrame.prototype.Is_ThisElementCurrent = function()
                                     if(oPr.Shd.Unifill){
                                         oPr.Shd.Unifill.check(oTheme, oColorMap);
                                         RGBA = oPr.Shd.Unifill.getRGBAColor();
-                                        oPr.Shd.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                                        oPr.Shd.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                                     }
                                 }
                                 if(oPr.TableCellBorders){
                                     if(oPr.TableCellBorders.Bottom && oPr.TableCellBorders.Bottom.Unifill){
                                         oPr.TableCellBorders.Bottom.Unifill.check(oTheme, oColorMap);
                                         RGBA = oPr.TableCellBorders.Bottom.Unifill.getRGBAColor();
-                                        oPr.TableCellBorders.Bottom.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                                        oPr.TableCellBorders.Bottom.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                                     }
 
                                     if(oPr.TableCellBorders.Left && oPr.TableCellBorders.Left.Unifill){
                                         oPr.TableCellBorders.Left.Unifill.check(oTheme, oColorMap);
                                         RGBA = oPr.TableCellBorders.Left.Unifill.getRGBAColor();
-                                        oPr.TableCellBorders.Left.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                                        oPr.TableCellBorders.Left.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                                     }
                                     if(oPr.TableCellBorders.Right && oPr.TableCellBorders.Right.Unifill){
                                         oPr.TableCellBorders.Right.Unifill.check(oTheme, oColorMap);
                                         RGBA = oPr.TableCellBorders.Right.Unifill.getRGBAColor();
-                                        oPr.TableCellBorders.Right.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                                        oPr.TableCellBorders.Right.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                                     }
                                     if(oPr.TableCellBorders.Top && oPr.TableCellBorders.Top.Unifill){
                                         oPr.TableCellBorders.Top.Unifill.check(oTheme, oColorMap);
                                         RGBA = oPr.TableCellBorders.Top.Unifill.getRGBAColor();
-                                        oPr.TableCellBorders.Top.Unifill = AscFormat.CreteSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
+                                        oPr.TableCellBorders.Top.Unifill = AscFormat.CreateSolidFillRGB(RGBA.R, RGBA.G, RGBA.B, 255);
                                     }
                                 }
                             }

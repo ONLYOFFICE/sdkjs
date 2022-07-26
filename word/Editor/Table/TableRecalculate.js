@@ -1734,8 +1734,16 @@ CTable.prototype.private_RecalculatePageXY = function(CurPage)
     this.Pages.length = Math.max(CurPage, 0);
     if (0 === CurPage)
     {
-    	this.Pages.length = CurPage + 1;
-        this.Pages[CurPage] = new CTablePage(this.X, this.Y, this.XLimit, this.YLimit, FirstRow, TempMaxTopBorder);
+		let nShiftY = 0;
+		if (!this.IsInline()
+			&& c_oAscVAnchor.Text === this.PositionV.RelativeFrom
+			&& !this.PositionV.Align)
+		{
+			nShiftY += this.PositionV.Value;
+		}
+
+		this.Pages.length = 1;
+		this.Pages[0]     = new CTablePage(this.X, this.Y + nShiftY, this.XLimit, this.YLimit, FirstRow, TempMaxTopBorder);
     }
     else
     {
@@ -3357,7 +3365,11 @@ CTable.prototype.private_RecalculatePositionY = function(CurPage)
         var NewX = this.AnchorPosition.CalcX;
         var NewY = this.AnchorPosition.CalcY;
 
-        this.Shift( CurPage, NewX - this.Pages[CurPage].X, NewY - this.Pages[CurPage].Y );
+		// Данная ситуация обрабатывается отдельно до пересчета в RecalculatePageXY
+		if (c_oAscVAnchor.Text === this.PositionV.RelativeFrom && !this.PositionV.Align)
+			NewY = this.Pages[CurPage].Y;
+
+		this.Shift( CurPage, NewX - this.Pages[CurPage].X, NewY - this.Pages[CurPage].Y );
     }
 };
 CTable.prototype.private_RecalculateSkipPage = function(CurPage)

@@ -1947,34 +1947,34 @@ CopyProcessor.prototype =
 				var shd = compilePr.Shd;
 				var color = shd.Get_Color2(this.oDocument.Get_Theme(), this.oDocument.Get_ColorMap());
 				if(color) {
-					cell.Pr.Shd.Unifill = AscFormat.CreteSolidFillRGB(color.r, color.g, color.b);
+					cell.Pr.Shd.Unifill = AscFormat.CreateSolidFillRGB(color.r, color.g, color.b);
 				}
 
 				if (compilePr.TableCellBorders.Bottom) {
 					color = compilePr.TableCellBorders.Bottom.Get_Color2(this.oDocument.Get_Theme(), this.oDocument.Get_ColorMap());
 					if(color) {
-						cell.Pr.TableCellBorders.Bottom.Unifill = AscFormat.CreteSolidFillRGB(color.r, color.g, color.b);
+						cell.Pr.TableCellBorders.Bottom.Unifill = AscFormat.CreateSolidFillRGB(color.r, color.g, color.b);
 					}
 				}
 
 				if (compilePr.TableCellBorders.Top) {
 					color = compilePr.TableCellBorders.Top.Get_Color2(this.oDocument.Get_Theme(), this.oDocument.Get_ColorMap());
 					if(color) {
-						cell.Pr.TableCellBorders.Top.Unifill = AscFormat.CreteSolidFillRGB(color.r, color.g, color.b);
+						cell.Pr.TableCellBorders.Top.Unifill = AscFormat.CreateSolidFillRGB(color.r, color.g, color.b);
 					}
 				}
 
 				if (compilePr.TableCellBorders.Left) {
 					color = compilePr.TableCellBorders.Left.Get_Color2(this.oDocument.Get_Theme(), this.oDocument.Get_ColorMap());
 					if(color) {
-						cell.Pr.TableCellBorders.Left.Unifill = AscFormat.CreteSolidFillRGB(color.r, color.g, color.b);
+						cell.Pr.TableCellBorders.Left.Unifill = AscFormat.CreateSolidFillRGB(color.r, color.g, color.b);
 					}
 				}
 
 				if (compilePr.TableCellBorders.Right) {
 					color = compilePr.TableCellBorders.Right.Get_Color2(this.oDocument.Get_Theme(), this.oDocument.Get_ColorMap());
 					if(color) {
-						cell.Pr.TableCellBorders.Right.Unifill = AscFormat.CreteSolidFillRGB(color.r, color.g, color.b);
+						cell.Pr.TableCellBorders.Right.Unifill = AscFormat.CreateSolidFillRGB(color.r, color.g, color.b);
 					}
 				}
 			}
@@ -5824,16 +5824,16 @@ PasteProcessor.prototype =
 					addFont(font_family);
 					var oFontItem = this.oFonts[font_family];
 					if (null != oFontItem && null != oFontItem.Name) {
-						oCurRun.Set_RFonts_Ascii({Name: oFontItem.Name, Index: oFontItem.Index});
-						oCurRun.Set_RFonts_HAnsi({Name: oFontItem.Name, Index: oFontItem.Index});
-						oCurRun.Set_RFonts_CS({Name: oFontItem.Name, Index: oFontItem.Index});
-						oCurRun.Set_RFonts_EastAsia({Name: oFontItem.Name, Index: oFontItem.Index});
+						oCurRun.SetRFontsAscii({Name: oFontItem.Name, Index: oFontItem.Index});
+						oCurRun.SetRFontsHAnsi({Name: oFontItem.Name, Index: oFontItem.Index});
+						oCurRun.SetRFontsCS({Name: oFontItem.Name, Index: oFontItem.Index});
+						oCurRun.SetRFontsEastAsia({Name: oFontItem.Name, Index: oFontItem.Index});
 					}
 
-					oCurRun.Set_FontSize(format.getSize());
-					oCurRun.Set_Italic(format.getItalic());
-					oCurRun.Set_Strikeout(format.getStrikeout());
-					oCurRun.Set_Underline(format.getUnderline() !== 2);
+					oCurRun.SetFontSize(format.getSize());
+					oCurRun.SetItalic(format.getItalic());
+					oCurRun.SetStrikeout(format.getStrikeout());
+					oCurRun.SetUnderline(format.getUnderline() !== 2);
 
 					//text
 					var value = value2[n].text;
@@ -8146,6 +8146,10 @@ PasteProcessor.prototype =
 		if (newNode) {
 			node = newNode;
 			tableNode = newNode;
+		} else if (headNode) {
+			node = headNode;
+			//tableNode = headNode;
+			//pPr.repeatHeaderRow = true;
 		}
 
 		//валидация талиц. В таблице не может быть строк состоящих из вертикально замерженых ячеек.
@@ -8494,7 +8498,7 @@ PasteProcessor.prototype =
 				var color = this._getStyle(node, computedStyle, "border-" + type + "-color");
 				if (null != color && (color = this._ParseColor(color))) {
 					if (setUnifill && color) {
-						res.Unifill = AscFormat.CreteSolidFillRGB(color.r, color.g, color.b);
+						res.Unifill = AscFormat.CreateSolidFillRGB(color.r, color.g, color.b);
 					} else {
 						res.Color = color;
 					}

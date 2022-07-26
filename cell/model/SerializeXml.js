@@ -1904,6 +1904,7 @@
 					pNewComment.ref = new Asc.Range(pCommentItem.nCol, pCommentItem.nRow, pCommentItem.nCol, pCommentItem.nRow).getName();
 				}
 
+				var needAddEmptyAuthor = false;
 				var saveThreadedComments = true;
 				if (saveThreadedComments && pCommentItem.isValidThreadComment()/*pCommentItem.pThreadedComment*/) {
 					if (null === pThreadedComments) {
@@ -1946,6 +1947,12 @@
 						}
 						pThreadedComments.arr.push(pThreadedComment.m_arrReplies[i]);
 					}
+				} else {
+					pNewComment.generateText(pCommentItem, personList);
+					pNewComment.uid = AscCommon.CreateGUID();
+					pNewComment.authorId = 0;
+
+					needAddEmptyAuthor = true;
 				}
 
 				if (undefined !== pCommentItem.m_sAuthor) {
@@ -1984,6 +1991,9 @@
 					pComments.commentList = new CT_CCommentList();
 					aComments = pComments.commentList.arr;
 					pComments.authors = new CT_CAuthors();
+					if (needAddEmptyAuthor) {
+						pComments.authors.arr.push("");
+					}
 				}
 				aComments.push(pNewComment);
 			}
@@ -11704,7 +11714,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 		var tableIds = writer.context.InitSaveManager.getTableIds();
 		writer.WriteXmlNodeStart(name);
 		writer.WriteXmlAttributeStringEncode("filterId", this.filterId);
-		writer.WriteXmlAttributeStringEncode("ref", this.ref);
+		writer.WriteXmlNullableAttributeStringEncode("ref", this.ref);
 		if ("0" === this.tableId) {
 			writer.WriteXmlAttributeString("tableId", "0");
 		} else {
@@ -12122,7 +12132,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 
 		var oSi;
 		var nLimit = MAX_STRING_LEN;
-		if (pCommentData.aReplies) {
+		if (pCommentData.aReplies && pCommentData.aReplies.length) {
 			oSi = new CT_Si();
 			if (pCommentData.sText) {
 				var displayName = getThreadedCommentAuthor(personList, pCommentData.sUserId, "Comment");

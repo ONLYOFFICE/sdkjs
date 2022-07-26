@@ -1179,6 +1179,10 @@ CDocumentContentElementBase.prototype.CheckRunContent = function(fCheck)
 {
 	return false;
 };
+CDocumentContentElementBase.prototype.CheckSelectedRunContent = function(fCheck)
+{
+	return false;
+};
 /**
  * По заданной странице получаем страницу, с которой нужно начинать расчет
  * @param {number} nPageAbs

@@ -806,6 +806,10 @@
 			}
 			History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_DefinedNamesChange, null, null,
 				new UndoRedoData_FromTo(oldUndoName, newUndoName));
+
+			if (!this.wb.bUndoChanges && !this.wb.bRedoChanges) {
+				this.wb.handlers.trigger("updateCellWatches");
+			}
 			return res;
 		},
 		checkDefName: function (name, sheetIndex) {
@@ -2106,7 +2110,10 @@
 				if (context.imageMap.hasOwnProperty(path)) {
 					var data = context.zip.getFile(path);
 					if (data) {
-						if (!window["NATIVE_EDITOR_ENJINE"]) {
+						if (window["NATIVE_EDITOR_ENJINE"]) {
+							//slice because array contains garbage after zip.close
+							t.oApi.isOpenOOXInBrowserDoctImages[path] = data.slice();
+						} else {
 							let mime = AscCommon.openXml.GetMimeType(AscCommon.GetFileExtension(path));
 							let blob = new Blob([data], {type: mime});
 							let url = window.URL.createObjectURL(blob);
@@ -2440,6 +2447,10 @@
 
 			History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_SheetMove, null, null, new UndoRedoData_FromTo(indexFrom, indexTo));
 			this.dependencyFormulas.unlockRecal();
+
+			if (!this.bUndoChanges && !this.bRedoChanges) {
+				this.handlers.trigger("updateCellWatches", true);
+			}
 		}
 	};
 	Workbook.prototype.findSheetNoHidden = function (nIndex) {
@@ -3871,6 +3882,104 @@
 		return res;
 	};
 
+	Workbook.prototype.getRangeAndSheetFromStr = function (sRange) {
+		var ws;
+		var range;
+		if (sRange) {
+			if (-1 !== sRange.indexOf("!")) {
+				var is3DRef = AscCommon.parserHelp.parse3DRef(sRange);
+				if (is3DRef) {
+					ws = this.getWorksheetByName(is3DRef.sheet);
+					range = AscCommonExcel.g_oRangeCache.getAscRange(is3DRef.range);
+				}
+			} else {
+				ws = this.getActiveWs();
+				range = AscCommonExcel.g_oRangeCache.getAscRange(sRange);
+				//может быть именованный диапазон
+				if (!range) {
+					var dN = this.dependencyFormulas.getDefNameByName(sRange, ws.getId());
+					if (dN && dN.parsedRef) {
+						range = dN.parsedRef.getFirstRange();
+						if (range) {
+							range = range.bbox;
+						}
+					}
+				}
+			}
+		}
+		return {sheet: ws, range: range}
+	};
+
+	Workbook.prototype.addCellWatches = function (ws, range) {
+		if (ws && range) {
+			History.Create_NewPoint();
+			History.StartTransaction();
+
+			//TODO protection!
+			var maxCellWatchesCount = Asc.c_nAscMaxAddCellWatchesCount;
+			var counter = 0;
+			for (var i = range.r1; i <= range.r2; i++) {
+				for (var j = range.c1; j <= range.c2; j++) {
+					var _ref = new Asc.Range(j, i, j, i);
+					ws.addCellWatch(_ref, true);
+					counter++;
+					if (counter === maxCellWatchesCount) {
+						break;
+					}
+				}
+				if (counter === maxCellWatchesCount) {
+					break;
+				}
+			}
+
+			History.EndTransaction();
+
+			/*if (!this.bUndoChanges && !this.bRedoChanges) {
+				this.handlers.trigger("asc_onUpdateCellWatches");
+			}*/
+		}
+	};
+
+	Workbook.prototype.delCellWatches = function (aCellWatches, addToHistory, opt_remove_all) {
+		History.Create_NewPoint();
+		History.StartTransaction();
+
+		//TODO protection!
+		var i;
+		if (opt_remove_all) {
+			for(i = 0; i < this.aWorksheets.length; ++i) {
+				this.aWorksheets[i].deleteCellWatches(addToHistory);
+			}
+		} else {
+			for (i = 0; i < aCellWatches.length; i++) {
+				var ws = aCellWatches[i]._ws;
+				ws.deleteCellWatch(aCellWatches[i].r, addToHistory);
+			}
+		}
+
+		History.EndTransaction();
+
+		/*if (!this.bUndoChanges && !this.bRedoChanges) {
+			this.handlers.trigger("asc_onUpdateCellWatches");
+		}*/
+	};
+
+	Workbook.prototype.recalculateCellWatches = function (fullRecalc) {
+		var count = 0;
+		var changedMap = null;
+		for(var i = 0; i < this.aWorksheets.length; ++i) {
+			for (var j = 0; j < this.aWorksheets[i].aCellWatches.length; j++) {
+				if (this.aWorksheets[i].aCellWatches[j].recalculate(fullRecalc)) {
+					if (!changedMap) {
+						changedMap = {};
+					}
+					changedMap[count] = this.aWorksheets[i].aCellWatches[j];
+				}
+				count++;
+			}
+		}
+		return changedMap;
+	};
 
 //-------------------------------------------------------------------------------------------------
 	var tempHelp = new ArrayBuffer(8);
@@ -4155,10 +4264,10 @@
 		this.activeNamedSheetViewId = null;
 		this.defaultViewHiddenRows = null;
 
-		//по умолчанию null, создаю объект для отладки
 		this.sheetProtection = null;
 		this.aProtectedRanges = [];
-	};
+		this.aCellWatches = [];
+	}
 
 	Worksheet.prototype.getCompiledStyle = function (row, col, opt_cell, opt_styleComponents) {
 		return getCompiledStyle(this.sheetMergedStyles, this.hiddenManager, row, col, opt_cell, this, opt_styleComponents);
@@ -4562,6 +4671,9 @@
 		});
 		this.aNamedSheetViews.forEach(function(elem){
 			elem.initPostOpen(tableIds, t);
+		});
+		this.aCellWatches.forEach(function(elem){
+			elem.initPostOpen(t);
 		});
 	};
 	Worksheet.prototype.initPostOpenZip = function (pivotCaches, oNumFmts) {
@@ -5014,6 +5126,9 @@
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_Rename, this.getId(), null, new UndoRedoData_FromTo(lastName, name));
 
 			this.workbook.dependencyFormulas.calcTree();
+			if (!this.workbook.bUndoChanges && !this.workbook.bRedoChanges) {
+				this.workbook.handlers.trigger("updateCellWatches");
+			}
 		} else {
 			console.log(new Error('The sheet name must be less than 31 characters.'));
 		}
@@ -10871,6 +10986,52 @@
 	};
 
 
+
+	Worksheet.prototype.addCellWatch = function (ref, addToHistory) {
+		for (var i = 0; i < this.aCellWatches.length; i++) {
+			if (ref.isEqual(this.aCellWatches[i].r)) {
+				return;
+			}
+		}
+
+		var cellWatch = new AscCommonExcel.CCellWatch(this);
+		cellWatch.setRef(ref);
+		this.aCellWatches.push(cellWatch);
+
+		if (addToHistory) {
+			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_AddCellWatch, this.getId(),
+				null, new AscCommonExcel.UndoRedoData_FromTo(null, new AscCommonExcel.UndoRedoData_BBox(ref)));
+		}
+
+		this.workbook.handlers.trigger("changeCellWatches", this.getIndex());
+	};
+
+	Worksheet.prototype.deleteCellWatch = function (ref, addToHistory) {
+		for (var i = 0; i < this.aCellWatches.length; i++) {
+			if (ref.isEqual(this.aCellWatches[i].r)) {
+				this.aCellWatches.splice(i, 1);
+				if (addToHistory) {
+					History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_DelCellWatch,
+						this.getId(), null,
+						new AscCommonExcel.UndoRedoData_FromTo(new AscCommonExcel.UndoRedoData_BBox(ref), null));
+				}
+				this.workbook.handlers.trigger("changeCellWatches", this.getIndex());
+				break;
+			}
+		}
+	};
+
+	Worksheet.prototype.deleteCellWatches = function (addToHistory) {
+		if (addToHistory) {
+			for (var i = 0; i < this.aCellWatches.length; i++) {
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_DelCellWatch,
+					this.getId(), null,
+					new AscCommonExcel.UndoRedoData_FromTo(new AscCommonExcel.UndoRedoData_BBox(this.aCellWatches[i].r), null));
+			}
+		}
+		this.aCellWatches = [];
+		this.workbook.handlers.trigger("changeCellWatches", this.getIndex());
+	};
 
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;

@@ -8825,7 +8825,6 @@ background-repeat: no-repeat;\
 			this.FontAsyncLoadParam = Type;
 		}
 	};
-
 	asc_docs_api.prototype.asc_AddMath2 = function(nType)
 	{
 		var oLogicDocument = this.private_GetLogicDocument();
@@ -8838,6 +8837,18 @@ background-repeat: no-repeat;\
 			oLogicDocument.AddParaMath(nType);
 			oLogicDocument.FinalizeAction();
 		}
+	};
+	asc_docs_api.prototype.asc_ConvertMathView = function(isToLinear, isAll)
+	{
+		this.private_GetLogicDocument().ConvertMathView(isToLinear, isAll);
+	};
+	asc_docs_api.prototype.asc_GetMathInputType = function()
+	{
+		return this.private_GetLogicDocument().GetMathInputType();
+	};
+	asc_docs_api.prototype.asc_SetMathInputType = function(nType)
+	{
+		this.private_GetLogicDocument().SetMathInputType(nType);
 	};
 	asc_docs_api.prototype.asc_AddPageCount = function()
 	{
@@ -10648,12 +10659,19 @@ background-repeat: no-repeat;\
 		return Asc.c_oAscDisplayModeInReview.Edit;
 	};
 
+	asc_docs_api.prototype.asc_GetDocumentOutlineManager = function()
+	{
+		let oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return null;
 
+		return oLogicDocument.DocumentOutline;
+	};
 	asc_docs_api.prototype.asc_ShowDocumentOutline = function()
 	{
-		var oLogicDocument = this.WordControl.m_oLogicDocument;
+		let oLogicDocument = this.private_GetLogicDocument();
 		if (!oLogicDocument)
-			return;
+			return null;
 
 		oLogicDocument.DocumentOutline.SetUse(true);
 		return oLogicDocument.DocumentOutline;
@@ -11492,6 +11510,14 @@ background-repeat: no-repeat;\
 			return null;
 
 		oLogicDocument.AddBlankPage();
+	};
+	asc_docs_api.prototype.asc_EditSelectAll = function()
+	{
+		let oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
+			return null;
+
+		oLogicDocument.SelectAll();
 	};
 
 	// input
@@ -13040,6 +13066,9 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_setDrawCollaborationMarks']             = asc_docs_api.prototype.asc_setDrawCollaborationMarks;
 	asc_docs_api.prototype['asc_AddMath']                               = asc_docs_api.prototype.asc_AddMath;
 	asc_docs_api.prototype['asc_AddMath2']                              = asc_docs_api.prototype.asc_AddMath2;
+	asc_docs_api.prototype['asc_ConvertMathView']                       = asc_docs_api.prototype.asc_ConvertMathView;
+	asc_docs_api.prototype['asc_GetMathInputType']                      = asc_docs_api.prototype.asc_GetMathInputType;
+	asc_docs_api.prototype['asc_SetMathInputType']                      = asc_docs_api.prototype.asc_SetMathInputType;
 	asc_docs_api.prototype['asc_AddPageCount']                          = asc_docs_api.prototype.asc_AddPageCount;
 	asc_docs_api.prototype['asc_StartMailMerge']                        = asc_docs_api.prototype.asc_StartMailMerge;
 	asc_docs_api.prototype['asc_StartMailMergeByList']                  = asc_docs_api.prototype.asc_StartMailMergeByList;
@@ -13172,6 +13201,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_SetDisplayModeInReview']                = asc_docs_api.prototype.asc_SetDisplayModeInReview;
 	asc_docs_api.prototype['asc_GetDisplayModeInReview']                = asc_docs_api.prototype.asc_GetDisplayModeInReview;
 
+	asc_docs_api.prototype['asc_GetDocumentOutlineManager']             = asc_docs_api.prototype.asc_GetDocumentOutlineManager;
 	asc_docs_api.prototype['asc_ShowDocumentOutline']                   = asc_docs_api.prototype.asc_ShowDocumentOutline;
 	asc_docs_api.prototype['asc_HideDocumentOutline']                   = asc_docs_api.prototype.asc_HideDocumentOutline;
 	asc_docs_api.prototype['sync_OnDocumentOutlineUpdate']              = asc_docs_api.prototype.sync_OnDocumentOutlineUpdate;
@@ -13227,6 +13257,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_ReplaceCurrentWord']                    = asc_docs_api.prototype.asc_ReplaceCurrentWord;
 	asc_docs_api.prototype['asc_GetSelectedText']                       = asc_docs_api.prototype.asc_GetSelectedText;
 	asc_docs_api.prototype['asc_AddBlankPage']                          = asc_docs_api.prototype.asc_AddBlankPage;
+	asc_docs_api.prototype['asc_EditSelectAll']                         = asc_docs_api.prototype.asc_EditSelectAll;
     asc_docs_api.prototype['sendEvent']         						= asc_docs_api.prototype.sendEvent;
 	asc_docs_api.prototype['asc_setSkin']								= asc_docs_api.prototype.asc_setSkin;
 

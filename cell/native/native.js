@@ -6250,9 +6250,14 @@ window["native"]["offline_apply_event"] = function(type,params) {
             
         case 4020: // ASC_SPREADSHEETS_EVENT_TYPE_GET_FORMULAS
         {
+            if (undefined !== params) {
+                var localizeData = JSON.parse(params);
+                _api.asc_setLocalization(localizeData);
+            }
+
             _stream = global_memory_stream_menu;
             _stream["ClearNoAttack"]();
-            
+
             var info = _api.asc_getFormulasInfo();
             if (info) {
                 _stream["WriteLong"](info.length);
@@ -6270,11 +6275,6 @@ window["native"]["offline_apply_event"] = function(type,params) {
                 }
             } else {
                 _stream["WriteLong"](0);
-            }
-            
-            if (undefined !== params) {
-                var localizeData = JSON.parse(params);
-                _api.asc_setLocalization(localizeData);
             }
             
             _return = _stream;
@@ -7229,6 +7229,7 @@ window["Asc"]["spreadsheet_api"].prototype["asc_nativeGetCoreProps"] = function(
         coreProps["asc_getTitle"] = props.asc_getTitle();
         coreProps["asc_getSubject"] = props.asc_getSubject();
         coreProps["asc_getDescription"] = props.asc_getDescription();
+        coreProps["asc_getCreated"] = props.asc_getCreated();
 
         var authors = [];
         value = props.asc_getCreator();//"123\"\"\"\<\>,456";

@@ -2957,7 +2957,11 @@ function Binary_rPrWriter(memory, saveParams)
         {
             this.memory.WriteByte(c_oSerProp_rPrType.Underline);
             this.memory.WriteByte(c_oSerPropLenType.Byte);
-            this.memory.WriteBool(rPr.Underline);
+
+			if (rPr.Underline)
+				this.memory.WriteByte(Asc.UnderlineType.Single);
+			else
+				this.memory.WriteByte(Asc.UnderlineType.None);
         }
         //Strikeout
         if(null != rPr.Strikeout)
@@ -3019,8 +3023,8 @@ function Binary_rPrWriter(memory, saveParams)
 				var nHint;
 				switch(font.Hint)
 				{
-					case fonthint_CS:nHint = EHint.hintCs;break;
-					case fonthint_EastAsia:nHint = EHint.hintEastAsia;break;
+					case AscWord.fonthint_CS:nHint = EHint.hintCs;break;
+					case AscWord.fonthint_EastAsia:nHint = EHint.hintEastAsia;break;
 					default :nHint = EHint.hintDefault;break;
 				}
 				this.memory.WriteByte(c_oSerProp_rPrType.FontHint);
@@ -5244,7 +5248,7 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
                     }
                     break;
 				case para_Field:
-					let Instr = item.GetInstr();
+					let Instr = item.GetInstructionLine();
 					var oFFData = fieldtype_FORMTEXT === item.Get_FieldType() ? {} : null;
 					if (Instr) {
 						if(this.saveParams && this.saveParams.bMailMergeDocx)
@@ -7742,6 +7746,7 @@ function BinaryFileReader(doc, openParams)
 	};
     this.PostLoadPrepare = function(opt_xmlParserContext)
     {
+		let api = this.Document.DrawingDocument && this.Document.DrawingDocument.m_oWordControl && this.Document.DrawingDocument.m_oWordControl.m_oApi;
 		this.Document.UpdateDefaultsDependingOnCompatibility();
 		//списки
 		for(var i in this.oReadResult.numToANumClass) {
@@ -8216,7 +8221,7 @@ function BinaryFileReader(doc, openParams)
 			for(var i in allComments)
 			{
 				var oNewComment = allComments[i];
-				this.Document.DrawingDocument.m_oWordControl.m_oApi.sync_AddComment( oNewComment.Id, oNewComment.Data );
+				api.sync_AddComment( oNewComment.Id, oNewComment.Data );
 			}
 		}
 		//remove bookmarks without end
@@ -8250,7 +8255,10 @@ function BinaryFileReader(doc, openParams)
 				if (context.imageMap.hasOwnProperty(path)) {
 					var data = context.zip.getFile(path);
 					if (data) {
-						if (!window["NATIVE_EDITOR_ENJINE"]) {
+						if (api && window["NATIVE_EDITOR_ENJINE"]) {
+							//slice because array contains garbage after zip.close
+							api.isOpenOOXInBrowserDoctImages[path] = data.slice();
+						} else {
 							let mime = AscCommon.openXml.GetMimeType(AscCommon.GetFileExtension(path));
 							let blob = new Blob([data], {type: mime});
 							let url = window.URL.createObjectURL(blob);
@@ -8269,8 +8277,7 @@ function BinaryFileReader(doc, openParams)
 		var docProtection = this.Document.Settings && this.Document.Settings.DocumentProtection;
 		if (docProtection) {
 			if (docProtection.isOnlyView() && false !== docProtection.getEnforcment()) {
-				var _api = this.Document.DrawingDocument && this.Document.DrawingDocument.m_oWordControl && this.Document.DrawingDocument.m_oWordControl.m_oApi;
-				_api && _api.asc_addRestriction(Asc.c_oAscRestrictionType.View);
+				api && api.asc_addRestriction(Asc.c_oAscRestrictionType.View);
 			}
 		}
 		
@@ -9758,7 +9765,7 @@ function Binary_rPrReader(doc, oReadResult, stream)
                 rPr.Italic = (this.stream.GetUChar() != 0);
                 break;
             case c_oSerProp_rPrType.Underline:
-                rPr.Underline = (this.stream.GetUChar() != 0);
+                rPr.Underline = (this.stream.GetUChar() !== Asc.UnderlineType.None);
                 break;
             case c_oSerProp_rPrType.Strikeout:
                 rPr.Strikeout = (this.stream.GetUChar() != 0);
@@ -9841,9 +9848,9 @@ function Binary_rPrReader(doc, oReadResult, stream)
 				var nHint;
 				switch(this.stream.GetUChar())
 				{
-					case EHint.hintCs: nHint = fonthint_CS;break;
-					case EHint.hintEastAsia: nHint = fonthint_EastAsia;break;
-					default : nHint = fonthint_Default;break;
+					case EHint.hintCs: nHint = AscWord.fonthint_CS;break;
+					case EHint.hintEastAsia: nHint = AscWord.fonthint_EastAsia;break;
+					default : nHint = AscWord.fonthint_Default;break;
 				}
 				rPr.RFonts.Hint = nHint;
                 break;
@@ -11551,13 +11558,13 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
         var oThis = this;
 		let paragraph = paragraphContent.GetParagraph();
         if (c_oSer_HyperlinkType.Link === type) {
-			oNewHyperlink.Value = this.stream.GetString2LE(length);
+			oNewHyperlink.SetValue(this.stream.GetString2LE(length));
         }
         else if (c_oSer_HyperlinkType.Anchor === type) {
-			oNewHyperlink.Anchor = this.stream.GetString2LE(length);
+			oNewHyperlink.SetAnchor(this.stream.GetString2LE(length));
         }
         else if (c_oSer_HyperlinkType.Tooltip === type) {
-			oNewHyperlink.Tooltip = this.stream.GetString2LE(length);
+			oNewHyperlink.SetToolTip(this.stream.GetString2LE(length));
         }
         // else if (c_oSer_HyperlinkType.History === type) {
         //     oNewHyperlink.History = this.stream.GetBool();

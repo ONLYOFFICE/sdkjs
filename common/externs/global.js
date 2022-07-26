@@ -44,6 +44,7 @@ var AscCommonExcel;
 var AscCommonSlide;
 var AscBuilder;
 var AscWord;
+var AscMath;
 
 function jq(){}
 function DE(){}

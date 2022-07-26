@@ -198,11 +198,6 @@
 
 						this.private_AddReplacedStringToRun(oReplaceRun, 0);
 						oReplaceRun.SetReviewType(reviewtype_Add);
-
-						// Выделяем старый объект поиска и удаляем его
-						oPara.Selection.Use = true;
-						oPara.Set_SelectionContentPos(SearchElement.StartPos, SearchElement.EndPos);
-						oPara.Remove();
 					}
 				}
 				else

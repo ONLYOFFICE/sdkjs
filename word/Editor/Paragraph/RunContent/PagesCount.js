@@ -66,7 +66,7 @@
 	CRunPagesCount.prototype.Measure = function(Context, TextPr)
 	{
 		this.FontKoef = TextPr.Get_FontKoef();
-		Context.SetFontSlot(fontslot_ASCII, this.FontKoef);
+		Context.SetFontSlot(AscWord.fontslot_ASCII, this.FontKoef);
 
 		for (var Index = 0; Index < 10; Index++)
 		{
@@ -82,7 +82,7 @@
 		var _X = X;
 		var _Y = Y;
 
-		Context.SetFontSlot(fontslot_ASCII, this.FontKoef);
+		Context.SetFontSlot(AscWord.fontslot_ASCII, this.FontKoef);
 		for (var Index = 0; Index < Len; Index++)
 		{
 			var Char = this.String.charAt(Index);
@@ -157,9 +157,9 @@
 	{
 		return this.Parent;
 	};
-	CRunPagesCount.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+	CRunPagesCount.prototype.GetFontSlot = function(oTextPr)
 	{
-		return rfont_ASCII;
+		return AscWord.fontslot_Unknown;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};

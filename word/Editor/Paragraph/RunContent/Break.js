@@ -161,7 +161,7 @@
 			}
 		}
 	};
-	CRunBreak.prototype.Get_Width = function()
+	CRunBreak.prototype.GetWidth = function()
 	{
 		return this.Width;
 	};
@@ -337,8 +337,8 @@
 	};
 	CRunBreak.prototype.GetAutoCorrectFlags = function()
 	{
-		return (AscCommonWord.AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE
-			| AscCommonWord.AUTOCORRECT_FLAGS_HYPERLINK);
+		return (AscWord.AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE
+			| AscWord.AUTOCORRECT_FLAGS_HYPERLINK);
 	};
 	CRunBreak.prototype.ToSearchElement = function(oProps)
 	{
@@ -349,9 +349,9 @@
 		else
 			return new AscCommonWord.CSearchTextSpecialLineBreak();
 	};
-	CRunBreak.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+	CRunBreak.prototype.GetFontSlot = function(oTextPr)
 	{
-		return rfont_ASCII;
+		return AscWord.fontslot_Unknown;
 	};
 
 	//--------------------------------------------------------export----------------------------------------------------

@@ -54,14 +54,14 @@
 	};
 	CRunSeparator.prototype.Draw     = function(X, Y, Context, PDSE)
 	{
-		var l = X, t = PDSE.LineTop, r = X + this.Get_Width(), b = PDSE.BaseLine;
+		var l = X, t = PDSE.LineTop, r = X + this.GetWidth(), b = PDSE.BaseLine;
 
 		Context.p_color(0, 0, 0, 255);
 		Context.drawHorLineExt(c_oAscLineDrawingRule.Center, (t + b) / 2, l, r, this.LineW, 0, 0);
 
 		if (editor && editor.ShowParaMarks && Context.DrawFootnoteRect)
 		{
-			Context.DrawFootnoteRect(X, PDSE.LineTop, this.Get_Width(), PDSE.BaseLine - PDSE.LineTop);
+			Context.DrawFootnoteRect(X, PDSE.LineTop, this.GetWidth(), PDSE.BaseLine - PDSE.LineTop);
 		}
 	};
 	CRunSeparator.prototype.Measure  = function(Context, TextPr)

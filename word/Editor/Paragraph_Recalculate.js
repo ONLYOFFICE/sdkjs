@@ -1288,12 +1288,9 @@ Paragraph.prototype.private_RecalculateLineMetrics     = function(CurLine, CurPa
 		if (true === PRS.End)
 		{
 			// TODO: Как только переделаем para_End переделать тут
+			let oTextPr  = this.GetParaEndCompiledPr();
+			let oMetrics = oTextPr.GetTextMetrics(oTextPr.CS || oTextPr.RTL ? AscWord.fontslot_CS : AscWord.fontslot_ASCII, this.GetTheme());
 
-			let oTextPr = this.Get_CompiledPr2(false).TextPr.Copy();
-			oTextPr.Merge(this.TextPr.Value);
-			oTextPr.CheckFontScale();
-
-            let oMetrics = oTextPr.GetTextMetrics(this.GetTheme(), rfont_ASCII);
 			let EndTextDescent = oMetrics.Descent;
 			let EndTextAscent  = oMetrics.Ascent + oMetrics.LineGap;
 			let EndTextAscent2 = oMetrics.Ascent;
@@ -1355,7 +1352,7 @@ Paragraph.prototype.private_RecalculateLinePosition    = function(CurLine, CurPa
 				// Адобовский вариант отступа первой строки для многострочных форм
 				var oTextPr = oRun.Get_CompiledTextPr(false);
 				g_oTextMeasurer.SetTextPr(oTextPr, this.GetTheme());
-				g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
+				g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, 1);
 				var oLimits = g_oTextMeasurer.GetLimitsY();
 				var nBBoxH  = oLimits.max - oLimits.min + 2 * 25.4 / 72;
 
@@ -2193,7 +2190,7 @@ Paragraph.prototype.private_RecalculateRange           = function(CurRange, CurL
 
         if ( para_Math === Item.Type )
         {
-            var NotInlineMath = this.CheckMathPara(Pos);
+            var NotInlineMath = this.CheckMathPara(Pos) && !Item.Get_Inline();
             if (true === NotInlineMath && true !== PRS.EmptyLine)
             {
                 PRS.ForceNewLine = true;
@@ -2476,7 +2473,9 @@ Paragraph.prototype.private_CheckNeedBeforeSpacing = function(CurPage, Parent, P
 			oPrevElement = oPrevElement.GetPrevDocumentElement();
 		}
 
-		return (!oPrevElement || oPrevElement.GetAbsolutePage(oPrevElement.GetPagesCount() - 1) >= PageAbs);
+		return (!oPrevElement
+			|| oPrevElement.GetAbsolutePage(oPrevElement.GetPagesCount() - 1) >= PageAbs
+			|| oPrevElement.Get_SectionPr());
 	}
 
 	if (!this.Check_FirstPage(CurPage))
@@ -3647,7 +3646,7 @@ CParagraphRecalculateStateWrap.prototype =
 
 							var Theme = Para.Get_Theme();
 							g_oTextMeasurer.SetTextPr(oNumTextPr, Theme);
-							g_oTextMeasurer.SetFontSlot(fontslot_ASCII);
+							g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
 							NumberingItem.WidthSuff = g_oTextMeasurer.Measure(" ").Width;
 							g_oTextMeasurer.SetTextPr(OldTextPr, Theme);
 							break;

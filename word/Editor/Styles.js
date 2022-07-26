@@ -8995,20 +8995,22 @@ CStyles.prototype =
 
 		// Копируем свойства из стиля нумерации
 		var oLogicDocument = this.private_GetLogicDocument();
-		if ((styletype_Paragraph === Type || styletype_Table === Type) && undefined != Style.ParaPr.NumPr && oLogicDocument)
+		if (oLogicDocument
+			&& Style.ParaPr.NumPr
+			&& (styletype_Paragraph === Type || styletype_Table === Type))
 		{
-			var oNumbering = oLogicDocument.GetNumbering();
-			if (0 !== Style.ParaPr.NumPr.NumId)
+			let oNumbering = oLogicDocument.GetNumbering();
+			let sNumId     = Style.ParaPr.NumPr.NumId;
+			if (0 !== sNumId && "0" !== sNumId)
 			{
-				var sNumId = Style.ParaPr.NumPr.NumId;
 				if (undefined === sNumId && Pr.ParaPr.NumPr)
 					sNumId = Pr.ParaPr.NumPr.NumId;
 
-				var oNum = oNumbering.GetNum(sNumId);
+				let oNum = oNumbering.GetNum(sNumId);
 				if (oNum)
 				{
 					var nLvl = oNum.GetLvlByStyle(StyleId);
-					if (-1 != nLvl)
+					if (-1 !== nLvl)
 						Pr.ParaPr.Merge(oNumbering.GetParaPr(sNumId, nLvl));
 					else if (undefined !== Style.ParaPr.NumPr.Lvl)
 						Pr.ParaPr.Merge(oNumbering.GetParaPr(sNumId, Style.ParaPr.NumPr.Lvl));
@@ -12649,12 +12651,6 @@ CTableCellPr.prototype.RemovePrChange = function()
 	delete this.ReviewInfo;
 };
 
-const rfont_None     = 0x00;
-const rfont_ASCII    = 0x01;
-const rfont_EastAsia = 0x02;
-const rfont_CS       = 0x04;
-const rfont_HAnsi    = 0x08;
-
 function CRFonts()
 {
     this.Ascii    = undefined;
@@ -12796,7 +12792,7 @@ CRFonts.prototype.InitDefault = function()
 		Index : -1
 	};
 
-	this.Hint          = fonthint_Default;
+	this.Hint          = AscWord.fonthint_Default;
 	this.AsciiTheme    = undefined;
 	this.EastAsiaTheme = undefined;
 	this.HAnsiTheme    = undefined;
@@ -12883,7 +12879,7 @@ CRFonts.prototype.SetAll = function(sFontName, nFontIndex)
 		Index : nFontIndex
 	};
 
-	this.Hint = fonthint_Default;
+	this.Hint = AscWord.fonthint_Default;
 
 	this.AsciiTheme    = undefined;
 	this.EastAsiaTheme = undefined;
@@ -13028,6 +13024,13 @@ CRFonts.prototype.Read_FromBinary = function(oReader)
 
 	if (nFlags & 256)
 		this.CSTheme = oReader.GetString2();
+};
+CRFonts.prototype.HaveThemeFonts = function()
+{
+	return (undefined !== this.AsciiTheme
+		|| undefined !== this.EastAsiaTheme
+		|| undefined !== this.HAnsiTheme
+		|| undefined !== this.CSTheme);
 };
 
 function CLang()
@@ -15177,23 +15180,28 @@ CTextPr.prototype.GetDescription = function()
 
 	return Description;
 };
-CTextPr.prototype.GetTextMetrics = function(oTheme, nFontFlags)
+CTextPr.prototype.GetTextMetrics = function(nFontFlags, oTheme)
 {
 	let oMetrics = new CTextMetrics();
 
-	g_oTextMeasurer.SetTextPr(this, oTheme);
+	let oTextPr = this;
+	if (this.RFonts.HaveThemeFonts())
+	{
+		oTextPr = this.Copy();
+		oTextPr.ReplaceThemeFonts(oTheme.themeElements.fontScheme);
+	}
 
-	if ((nFontFlags & rfont_ASCII) && this.RFonts.Ascii)
-		oMetrics.Update(this.RFonts.Ascii.Name, fontslot_ASCII);
+	if ((nFontFlags & AscWord.fontslot_ASCII) && oTextPr.RFonts.Ascii)
+		oMetrics.Update(oTextPr.GetFontInfo(AscWord.fontslot_ASCII));
 
-	if ((nFontFlags & rfont_CS) && this.RFonts.CS)
-		oMetrics.Update(this.RFonts.CS.Name, fontslot_CS);
+	if ((nFontFlags & AscWord.fontslot_CS) && oTextPr.RFonts.CS)
+		oMetrics.Update(oTextPr.GetFontInfo(AscWord.fontslot_CS));
 
-	if ((nFontFlags & rfont_HAnsi) && this.RFonts.HAnsi)
-		oMetrics.Update(this.RFonts.HAnsi.Name, fontslot_HAnsi);
+	if ((nFontFlags & AscWord.fontslot_HAnsi) && oTextPr.RFonts.HAnsi)
+		oMetrics.Update(oTextPr.GetFontInfo(AscWord.fontslot_HAnsi));
 
-	if ((nFontFlags & rfont_EastAsia) && this.RFonts.EastAsia)
-		oMetrics.Update(this.RFonts.EastAsia.Name, fontslot_EastAsia);
+	if ((nFontFlags & AscWord.fontslot_EastAsia) && oTextPr.RFonts.EastAsia)
+		oMetrics.Update(oTextPr.GetFontInfo(AscWord.fontslot_EastAsia));
 
 	return oMetrics;
 };
@@ -15206,7 +15214,7 @@ CTextPr.prototype.GetFontInfo = function(nFontSlot)
 
 	switch (nFontSlot)
 	{
-		case fontslot_CS:
+		case AscWord.fontslot_CS:
 		{
 			sFontName = this.RFonts.CS.Name;
 			isBold    = this.BoldCS;
@@ -15214,12 +15222,12 @@ CTextPr.prototype.GetFontInfo = function(nFontSlot)
 			nFontSize = this.FontSizeCS;
 			break;
 		}
-		case fontslot_EastAsia:
+		case AscWord.fontslot_EastAsia:
 		{
 			sFontName = this.RFonts.EastAsia.Name;
 			break;
 		}
-		case fontslot_HAnsi:
+		case AscWord.fontslot_HAnsi:
 		{
 			sFontName = this.RFonts.HAnsi.Name;
 			break;
@@ -15236,9 +15244,12 @@ function CTextMetrics()
 	this.LineGap = 0;
 	this.Height  = 0;
 }
-CTextMetrics.prototype.Update = function(fontName, fontSlot)
+/**
+ * @param {AscFonts.CTextFontInfo} oFontInfo
+ */
+CTextMetrics.prototype.Update = function(oFontInfo)
 {
-	g_oTextMeasurer.SetFontSlot(fontSlot);
+	g_oTextMeasurer.SetFontInternal(oFontInfo.Name, oFontInfo.Size, oFontInfo.Style);
 
 	let nHeight  = g_oTextMeasurer.GetHeight();
 	let nAscent  = g_oTextMeasurer.GetAscender();
@@ -16833,6 +16844,10 @@ CParaPr.prototype.Set_FromObject = function(ParaPr)
 
 	if (undefined !== ParaPr.SuppressLineNumbers)
 		this.SuppressLineNumbers = ParaPr.SuppressLineNumbers;
+};
+CParaPr.prototype.SetFromObject = function(oPr)
+{
+	return this.Set_FromObject(oPr);
 };
 CParaPr.prototype.Compare = function(ParaPr)
 {

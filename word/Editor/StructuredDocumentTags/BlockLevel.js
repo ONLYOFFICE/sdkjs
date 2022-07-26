@@ -1798,6 +1798,10 @@ CBlockLevelSdt.prototype.CheckRunContent = function(fCheck)
 {
 	return this.Content.CheckRunContent(fCheck);
 };
+CBlockLevelSdt.prototype.CheckSelectedRunContent = function(fCheck)
+{
+	return this.Content.CheckSelectedRunContent(fCheck);
+};
 CBlockLevelSdt.prototype.IsTableCellSelection = function()
 {
 	return this.Content.IsTableCellSelection();
@@ -1966,17 +1970,17 @@ CBlockLevelSdt.prototype.private_UpdateCheckBoxContent = function()
 
 	if (isChecked && this.Pr.CheckBox.CheckedFont)
 	{
-		oRun.Set_RFonts_Ascii({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
-		oRun.Set_RFonts_HAnsi({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
-		oRun.Set_RFonts_CS({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
-		oRun.Set_RFonts_EastAsia({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
+		oRun.SetRFontsAscii({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
+		oRun.SetRFontsHAnsi({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
+		oRun.SetRFontsCS({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
+		oRun.SetRFontsEastAsia({Index : -1, Name : this.Pr.CheckBox.CheckedFont});
 	}
 	else if (!isChecked && this.Pr.CheckBox.UncheckedFont)
 	{
-		oRun.Set_RFonts_Ascii({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
-		oRun.Set_RFonts_HAnsi({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
-		oRun.Set_RFonts_CS({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
-		oRun.Set_RFonts_EastAsia({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
+		oRun.SetRFontsAscii({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
+		oRun.SetRFontsHAnsi({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
+		oRun.SetRFontsCS({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
+		oRun.SetRFontsEastAsia({Index : -1, Name : this.Pr.CheckBox.UncheckedFont});
 	}
 };
 /**

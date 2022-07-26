@@ -614,7 +614,48 @@ CFraction.prototype.raw_SetFractionType = function(FractionType)
     this.Pr.type = FractionType;
     this.fillContent();
 };
+CFraction.prototype.GetTextOfElement = function(isLaTeX) {
+	var strTemp = "";
+	var strNumerator = this.CheckIsEmpty(this.getNumerator().GetTextOfElement(isLaTeX));
+	var strDenominator = this.CheckIsEmpty(this.getDenominator().GetTextOfElement(isLaTeX));
+	var strStartBracet = this.GetStartBracetForGetTextContent(isLaTeX);
+	var strCloseBracet = this.GetEndBracetForGetTextContent(isLaTeX);
 
+	if (strNumerator === '()') {
+		strNumerator = '';
+	}
+	if (strDenominator === '()') {
+		strDenominator = '';
+	}
+
+	if (strNumerator.length > 1 && strNumerator[0] !== strStartBracet && strNumerator[-1] !== strCloseBracet || isLaTeX) {
+		strNumerator = strStartBracet + strNumerator + strCloseBracet;
+	}
+	if (strDenominator.length > 1 && strDenominator[0] !== strStartBracet && strDenominator[-1] !== strCloseBracet || isLaTeX) {
+		strDenominator = strStartBracet + strDenominator + strCloseBracet;
+	}
+
+	if (true === isLaTeX) {
+		switch (this.Pr.type) {
+			case 0:	strTemp += '\\frac'; break;
+			case 1:	strTemp += '\\sfrac'; break;
+			case 2:	strTemp += '\\cfrac'; break;
+			default: strTemp += '\\frac';  break;
+		}
+		strTemp += strNumerator + strDenominator;
+	} else {
+		strTemp += strNumerator;
+		switch (this.Pr.type) {
+			case 0:	strTemp += '/';	break;
+			case 1:	strTemp += '∕';	break;
+			case 2:	strTemp += '⊘';	break;
+			case 3:	strTemp += String.fromCharCode(166); break;
+			default:strTemp += String.fromCharCode(47); break;
+		}
+		strTemp += strDenominator;
+	}
+	return strTemp;
+};
 /**
  *
  * @param CMathMenuFraction

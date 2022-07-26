@@ -3624,6 +3624,7 @@
 		prot["asc_setLookIn"] = prot.asc_setLookIn;
 		prot["asc_setReplaceWith"] = prot.asc_setReplaceWith;
 		prot["asc_setIsReplaceAll"] = prot.asc_setIsReplaceAll;
+		prot["asc_setSpecificRange"] = prot.asc_setSpecificRange;
 
 		window["AscCommonExcel"].findResults = findResults;
 

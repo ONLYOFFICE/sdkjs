@@ -70,10 +70,6 @@
 	{
 		return true;
 	};
-	CRunSpace.prototype.Get_Width = function()
-	{
-		return this.GetWidth();
-	};
 	CRunSpace.prototype.GetWidth = function()
 	{
 		let nWidth = (this.Width / AscWord.TEXTWIDTH_DIVIDER);
@@ -97,7 +93,7 @@
 
 		if (undefined !== editor && editor.ShowParaMarks)
 		{
-			Context.SetFontSlot(fontslot_ASCII, this.GetFontCoef());
+			Context.SetFontSlot(AscWord.fontslot_ASCII, this.GetFontCoef());
 
 			if (this.SpaceGap)
 				X += this.SpaceGap;
@@ -122,7 +118,7 @@
 		if (1 !== FontKoef)
 			FontKoef = (((FontSize * FontKoef * 2 + 0.5) | 0) / 2) / FontSize;
 
-		Context.SetFontSlot(fontslot_ASCII, FontKoef);
+		Context.SetFontSlot(AscWord.fontslot_ASCII, FontKoef);
 
 		var Temp  = Context.MeasureCode(this.Value).Width;
 
@@ -208,7 +204,7 @@
 	};
 	CRunSpace.prototype.GetAutoCorrectFlags = function()
 	{
-		return AscCommonWord.AUTOCORRECT_FLAGS_ALL;
+		return AscWord.AUTOCORRECT_FLAGS_ALL;
 	};
 	CRunSpace.prototype.SetCondensedWidth = function(nKoef)
 	{
@@ -233,14 +229,14 @@
 	{
 		return new AscCommonWord.CSearchTextItemChar(0x20);
 	};
-	CRunSpace.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+	CRunSpace.prototype.GetFontSlot = function(oTextPr)
 	{
-		return rfont_ASCII;
+		return AscWord.fontslot_Unknown;
 	};
 	CRunSpace.prototype.ToMathElement = function()
 	{
 		let oSpace = new CMathText();
-		oSpace.add(0x0032);
+		oSpace.add(0x0020);
 		return oSpace;
 	};
 	//--------------------------------------------------------export----------------------------------------------------

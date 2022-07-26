@@ -4598,13 +4598,13 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
                 if (!currentFontSize) {
                     currentFontSize = paraRun.Get_FontSize();
                 }
-                paraRun.Set_FontSize(fontSize);
+                paraRun.SetFontSize(fontSize);
             });
             this.txBody.content.Content.forEach(function (paragraph) {
                 if (!currentFontSize) {
                     currentFontSize = paragraph.TextPr.Value.FontSize;
                 }
-                paragraph.TextPr.Set_FontSize(fontSize);
+                paragraph.TextPr.SetFontSize(fontSize);
             });
             const oBodyPr = this.getBodyPr && this.getBodyPr();
             if (oBodyPr) {
@@ -7149,7 +7149,7 @@ CShape.prototype.getColumnNumber = function(){
                                             if(AscFormat.isRealNumber(oTextPr.FontSize) &&
                                                 AscFormat.isRealNumber(oCompiledPr.FontSize) &&
                                                 oTextPr.FontSize !== oCompiledPr.FontSize) {
-                                                oRun.Set_FontSize(oCompiledPr.FontSize);
+                                                oRun.SetFontSize(oCompiledPr.FontSize);
                                                 if(oRun.IsParaEndRun()) {
                                                     var oParagraph = oRun.Paragraph;
                                                     if(oParagraph) {
@@ -7309,15 +7309,22 @@ CShape.prototype.getColumnNumber = function(){
         writer.WriteXmlNullableAttributeBool("fLocksText", this.fLocksText);
         writer.WriteXmlAttributesEnd();
 
-        if(this.nvSpPr) {
-            if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX ||
-                oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX_GLOSSARY)
-            {
+
+        if (oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX ||
+            oContext.docType === AscFormat.XMLWRITER_DOC_TYPE_DOCX_GLOSSARY)
+        {
+            if(this.nvSpPr) {
                 this.nvSpPr.cNvPr.toXml2("wps", writer);
                 this.nvSpPr.nvUniSpPr.toXmlSp(writer);
             }
-            else
+            else {
+                writer.WriteXmlString("<wps:cNvPr id=\"0\" name=\"\"></wps:cNvPr><wps:cNvSpPr></wps:cNvSpPr>");
+            }
+        }
+        else {
+            if(this.nvSpPr) {
                 this.nvSpPr.toXmlSp(writer);
+            }
         }
 
         let bIsPresentStyle = false;

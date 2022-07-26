@@ -1228,6 +1228,8 @@
 			case AscDFH.historydescription_Document_Docxf_To_Docx:
 				sString = "Document_Docxf_To_Docx";
 				break;
+			case AscDFH.historydescription_Document_ConvertMathView:
+				sString = "Document_ConvertMathView";
 			case AscDFH.historydescription_Document_ConvertMathDisplayMode:
 				sString = "Document_ConvertMathDisplayMode";
 				break;
@@ -1760,6 +1762,9 @@
 	window['AscDFH'].historyitem_TextPr_RFonts_HAnsi_Theme    = window['AscDFH'].historyitem_type_TextPr | 32;
 	window['AscDFH'].historyitem_TextPr_RFonts_CS_Theme       = window['AscDFH'].historyitem_type_TextPr | 33;
 	window['AscDFH'].historyitem_TextPr_RFonts_EastAsia_Theme = window['AscDFH'].historyitem_type_TextPr | 34;
+	window['AscDFH'].historyitem_TextPr_BoldCS                = window['AscDFH'].historyitem_type_TextPr | 35;
+	window['AscDFH'].historyitem_TextPr_ItalicCS              = window['AscDFH'].historyitem_type_TextPr | 36;
+	window['AscDFH'].historyitem_TextPr_Ligatures             = window['AscDFH'].historyitem_type_TextPr | 37;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе ParaDrawing
 	//------------------------------------------------------------------------------------------------------------------
@@ -2067,6 +2072,8 @@
 	window['AscDFH'].historyitem_ParaRun_ItalicCS              = window['AscDFH'].historyitem_type_ParaRun | 50;
 	window['AscDFH'].historyitem_ParaRun_FontSizeCS            = window['AscDFH'].historyitem_type_ParaRun | 51;
 	window['AscDFH'].historyitem_ParaRun_Ligatures             = window['AscDFH'].historyitem_type_ParaRun | 52;
+	window['AscDFH'].historyitem_ParaRun_CS                    = window['AscDFH'].historyitem_type_ParaRun | 53;
+	window['AscDFH'].historyitem_ParaRun_RTL                   = window['AscDFH'].historyitem_type_ParaRun | 54;
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CSectionPr
@@ -4290,6 +4297,9 @@
 	window['AscDFH'].historydescription_Document_ConvertMathDisplayMode             = 0x0190;
 	window['AscDFH'].historydescription_Document_RemoveHdrFtr                       = 0x0191;
 	window['AscDFH'].historydescription_Document_AddParagraphToTOC                  = 0x0192;
+	window['AscDFH'].historydescription_Document_FillFormsByTags                    = 0x0193;
+	window['AscDFH'].historydescription_Document_ConvertMathView                    = 0x0194;
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//

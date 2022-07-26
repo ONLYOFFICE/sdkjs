@@ -3394,45 +3394,26 @@ var GLOBAL_PATH_COUNT = 0;
         }
     };
     CChartSpace.prototype.recalcTitles = function() {
-        if(this.chart && this.chart.title) {
-            this.chart.title.recalcInfo.recalculateContent = true;
-            this.chart.title.recalcInfo.recalcTransform = true;
-            this.chart.title.recalcInfo.recalculateTransformText = true;
-        }
-        if(this.chart && this.chart.plotArea) {
-            var aAxes = this.chart.plotArea.axId;
-            if(aAxes) {
-                for(var i = 0; i < aAxes.length; ++i) {
-                    var axis = aAxes[i];
-                    if(axis && axis.title) {
-                        axis.title.recalcInfo.recalculateContent = true;
-                        axis.title.recalcInfo.recalcTransform = true;
-                        axis.title.recalcInfo.recalculateTransformText = true;
-                    }
-                }
-            }
+        let aTitles = this.getAllTitles();
+        for(let nTitle = 0; nTitle < aTitles.length; ++nTitle) {
+            let oTitle = aTitles[nTitle];
+            let oRecalcInfo = oTitle.recalcInfo;
+            oRecalcInfo.recalculateContent = true;
+            oRecalcInfo.recalcTransform = true;
+            oRecalcInfo.recalculateTransformText = true;
+            oRecalcInfo.recalculateGeometry = true;
         }
     };
     CChartSpace.prototype.recalcTitles2 = function() {
-        if(this.chart && this.chart.title) {
-            this.chart.title.recalcInfo.recalculateContent = true;
-            this.chart.title.recalcInfo.recalcTransform = true;
-            this.chart.title.recalcInfo.recalculateTransformText = true;
-            this.chart.title.recalcInfo.recalculateTxBody = true;
-        }
-        if(this.chart && this.chart.plotArea) {
-            var aAxes = this.chart.plotArea.axId;
-            if(aAxes) {
-                for(var i = 0; i < aAxes.length; ++i) {
-                    var axis = aAxes[i];
-                    if(axis && axis.title) {
-                        axis.title.recalcInfo.recalculateContent = true;
-                        axis.title.recalcInfo.recalcTransform = true;
-                        axis.title.recalcInfo.recalculateTransformText = true;
-                        axis.title.recalcInfo.recalculateTxBody = true;
-                    }
-                }
-            }
+        let aTitles = this.getAllTitles();
+        for(let nTitle = 0; nTitle < aTitles.length; ++nTitle) {
+            let oTitle = aTitles[nTitle];
+            let oRecalcInfo = oTitle.recalcInfo;
+            oRecalcInfo.recalculateContent = true;
+            oRecalcInfo.recalcTransform = true;
+            oRecalcInfo.recalculateTransformText = true;
+            oRecalcInfo.recalculateTxBody = true;
+            oRecalcInfo.recalculateGeometry = true;
         }
     };
     CChartSpace.prototype.refreshRecalcData2 = function(pageIndex, object) {

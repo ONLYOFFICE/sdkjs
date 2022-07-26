@@ -408,7 +408,7 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 		}
 		else
 		{
-			this.Unifill = AscFormat.CreteSolidFillRGB(FirstTextPr.Color.r, FirstTextPr.Color.g, FirstTextPr.Color.b);
+			this.Unifill = AscFormat.CreateSolidFillRGB(FirstTextPr.Color.r, FirstTextPr.Color.g, FirstTextPr.Color.b);
 		}
 	}
 
@@ -435,15 +435,11 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 
 	var X = 0;
 	var OldTextPr = Context.GetTextPr();
-	var Hint =  this.m_oTextPr.RFonts.Hint;
-	var bCS  =  this.m_oTextPr.CS;
-	var bRTL =  this.m_oTextPr.RTL;
-	var lcid =  this.m_oTextPr.Lang.EastAsia;
 	var FontSlot;
 	var sT = this.m_sString;
 	if (sT)
 	{
-		FontSlot = g_font_detector.Get_FontClass( sT.getUnicodeIterator().value(), Hint, lcid, bCS, bRTL );
+		FontSlot = AscWord.GetFontSlotByTextPr( sT.getUnicodeIterator().value(), this.m_oTextPr);
 	}
 	Context.SetTextPr( this.m_oTextPr, Theme );
 	Context.SetFontSlot( FontSlot );
@@ -515,16 +511,11 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 		var OldTextPr  = Context.GetTextPr();
 		var OldTextPr2 = g_oTextMeasurer.GetTextPr();
 
-		var Hint =  this.m_oTextPr.RFonts.Hint;
-		var bCS  =  this.m_oTextPr.CS;
-		var bRTL =  this.m_oTextPr.RTL;
-		var lcid =  this.m_oTextPr.Lang.EastAsia;
-
 		var sT = this.m_sString;
 	var FontSlot;
 		if (sT)
 		{
-			FontSlot = g_font_detector.Get_FontClass( sT.getUnicodeIterator().value(), Hint, lcid, bCS, bRTL );
+			FontSlot = AscWord.GetFontSlotByTextPr( sT.getUnicodeIterator().value(), this.m_oTextPr);
 		}
 
 		if(this.m_oTextPr.Unifill){

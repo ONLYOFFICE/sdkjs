@@ -90,6 +90,8 @@ AscDFH.changesFactory[AscDFH.historyitem_ParaRun_BoldCS]                = CChang
 AscDFH.changesFactory[AscDFH.historyitem_ParaRun_ItalicCS]              = CChangesRunItalicCS;
 AscDFH.changesFactory[AscDFH.historyitem_ParaRun_FontSizeCS]            = CChangesRunFontSizeCS;
 AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Ligatures]             = CChangesRunLigatures;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_CS]                    = CChangesRunCS;
+AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RTL]                   = CChangesRunRTL;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
@@ -182,7 +184,9 @@ AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_TextPr]            = [
 	AscDFH.historyitem_ParaRun_RFonts_HAnsi_Theme,
 	AscDFH.historyitem_ParaRun_RFonts_CS_Theme,
 	AscDFH.historyitem_ParaRun_RFonts_EastAsia_Theme,
-	AscDFH.historyitem_ParaRun_Ligatures
+	AscDFH.historyitem_ParaRun_Ligatures,
+	AscDFH.historyitem_ParaRun_CS,
+	AscDFH.historyitem_ParaRun_RTL
 ];
 AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_Unifill]           = [AscDFH.historyitem_ParaRun_TextPr, AscDFH.historyitem_ParaRun_Unifill];
 AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_Shd]               = [AscDFH.historyitem_ParaRun_TextPr, AscDFH.historyitem_ParaRun_Shd];
@@ -233,9 +237,17 @@ AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_RFonts_Ascii_Theme]      = 
 AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_RFonts_HAnsi_Theme]      = [AscDFH.historyitem_ParaRun_TextPr, AscDFH.historyitem_ParaRun_RFonts, AscDFH.historyitem_ParaRun_RFonts_HAnsi_Theme];
 AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_RFonts_CS_Theme]         = [AscDFH.historyitem_ParaRun_TextPr, AscDFH.historyitem_ParaRun_RFonts, AscDFH.historyitem_ParaRun_RFonts_CS_Theme];
 AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_RFonts_EastAsia_Theme]   = [AscDFH.historyitem_ParaRun_TextPr, AscDFH.historyitem_ParaRun_RFonts, AscDFH.historyitem_ParaRun_RFonts_EastAsia_Theme];
-AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_Ligatures]   = [
+AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_Ligatures] = [
 	AscDFH.historyitem_ParaRun_TextPr,
 	AscDFH.historyitem_ParaRun_Ligatures
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_CS] = [
+	AscDFH.historyitem_ParaRun_TextPr,
+	AscDFH.historyitem_ParaRun_CS
+];
+AscDFH.changesRelationMap[AscDFH.historyitem_ParaRun_RTL] = [
+	AscDFH.historyitem_ParaRun_TextPr,
+	AscDFH.historyitem_ParaRun_RTL
 ];
 
 
@@ -2893,3 +2905,57 @@ CChangesRunLigatures.prototype.private_SetValue = function(Value)
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };
 CChangesRunLigatures.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesRunCS(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesRunCS.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesRunCS.prototype.constructor = CChangesRunCS;
+CChangesRunCS.prototype.Type = AscDFH.historyitem_ParaRun_CS;
+CChangesRunCS.prototype.private_SetValue = function(Value)
+{
+	let oRun = this.Class;
+	oRun.Pr.CS = Value;
+
+	oRun.Recalc_CompiledPr(true);
+	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
+};
+CChangesRunCS.prototype.Load = function(Color)
+{
+	this.Redo();
+
+	if (this.Color && Color)
+		this.Class.private_AddCollPrChangeOther(Color);
+};
+CChangesRunCS.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesRunRTL(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesRunRTL.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesRunRTL.prototype.constructor = CChangesRunRTL;
+CChangesRunRTL.prototype.Type = AscDFH.historyitem_ParaRun_RTL;
+CChangesRunRTL.prototype.private_SetValue = function(Value)
+{
+	let oRun = this.Class;
+	oRun.Pr.RTL = Value;
+
+	oRun.Recalc_CompiledPr(true);
+	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
+};
+CChangesRunRTL.prototype.Load = function(Color)
+{
+	this.Redo();
+
+	if (this.Color && Color)
+		this.Class.private_AddCollPrChangeOther(Color);
+};
+CChangesRunRTL.prototype.Merge = private_ParaRunChangesOnMergeTextPr;

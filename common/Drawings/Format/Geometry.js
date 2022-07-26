@@ -2231,4 +2231,5 @@ function ComparisonEdgeByTopPoint(graphEdge1, graphEdge2)
     window['AscFormat'].FORMULA_TYPE_TAN = FORMULA_TYPE_TAN;
     window['AscFormat'].FORMULA_TYPE_VALUE = FORMULA_TYPE_VALUE;
     window['AscFormat'].FORMULA_TYPE_MIN = FORMULA_TYPE_MIN;
+    window['AscFormat'].MAP_FMLA_TO_TYPE = MAP_FMLA_TO_TYPE;
 })(window);

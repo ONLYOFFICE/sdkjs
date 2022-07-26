@@ -65,13 +65,6 @@ g_oSRCFPSC[para_FieldChar] = 1;
 g_oSRCFPSC[para_InstrText] = 1;
 g_oSRCFPSC[para_Bookmark]  = 1;
 
-
-var g_aSpecialSymbols     = [];
-g_aSpecialSymbols[0x00AE] = 1;
-
-
-
-
 /**
  * Класс представляющий символ(текст) нумерации параграфа
  * @constructor
@@ -238,9 +231,9 @@ ParaNumbering.prototype.GetSourceWidth = function()
 {
 	return this.Internal.SourceWidth;
 };
-ParaNumbering.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+ParaNumbering.prototype.GetFontSlot = function(oTextPr)
 {
-	return rfont_ASCII;
+	return AscWord.fontslot_Unknown;
 };
 
 

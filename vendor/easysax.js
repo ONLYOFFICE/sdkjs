@@ -1602,6 +1602,7 @@ function XmlParserContext(){
     //docx
     this.commentDataById = {};
     this.oReadResult = new AscCommonWord.DocReadResult();
+    this.maxZIndex = 0;
     //xlsx
     this.sharedStrings = [];
     this.row = null;
@@ -1646,6 +1647,11 @@ XmlParserContext.prototype.assignConnectors = function(aSpTree) {
         this.ConnectorsPr[nIdx].assignConnectors(aSpTree);
     }
     this.ConnectorsPr.length = 0;
+};
+XmlParserContext.prototype.checkZIndex = function(nZIndex) {
+    if(AscFormat.isRealNumber(nZIndex)) {
+        this.maxZIndex = Math.max(this.maxZIndex, nZIndex);
+    }
 };
 function XmlWriterContext(editorId){
     //common

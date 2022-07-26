@@ -1652,7 +1652,10 @@ background-repeat: no-repeat;\
 				this.WordControl.m_oLogicDocument.ImageMap[_cur_ind++] = path;
 				let data = context.zip.getFile(path);
 				if (data) {
-					if (!window["NATIVE_EDITOR_ENJINE"]) {
+					if (window["NATIVE_EDITOR_ENJINE"]) {
+						//slice because array contains garbage after zip.close
+						this.isOpenOOXInBrowserDoctImages[path] = data.slice();
+					} else {
 						let mime = AscCommon.openXml.GetMimeType(AscCommon.GetFileExtension(path));
 						let blob = new Blob([data], {type: mime});
 						let url = window.URL.createObjectURL(blob);
@@ -2548,11 +2551,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.sync_ReplaceAllCallback = function(ReplaceCount, OverallCount)
 	{
 		this.sendEvent("asc_onReplaceAll", OverallCount, ReplaceCount);
-	};
-
-	asc_docs_api.prototype.sync_SearchEndCallback = function()
-	{
-		this.sendEvent("asc_onSearchEnd");
 	};
 
 	asc_docs_api.prototype.asc_replaceText = function(oProps, replaceWith, isReplaceAll)
@@ -8377,6 +8375,15 @@ background-repeat: no-repeat;\
 		drawer.draw();
   };
 
+	asc_docs_api.prototype.asc_EditSelectAll = function()
+	{
+		let oPresentation = (this.WordControl && this.WordControl.m_oLogicDocument);
+		if (!oPresentation)
+			return;
+
+		oPresentation.SelectAll();
+	};
+
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                 = window['Asc'] || {};
 	window['AscCommonSlide']                                      = window['AscCommonSlide'] || {};
@@ -8862,7 +8869,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_setSkin']							= asc_docs_api.prototype.asc_setSkin;
 	
 	asc_docs_api.prototype['SetDrawImagePreviewBulletForMenu']		= asc_docs_api.prototype.SetDrawImagePreviewBulletForMenu;
-	
+	asc_docs_api.prototype['asc_EditSelectAll']		                = asc_docs_api.prototype.asc_EditSelectAll;
+
 	// mobile
 	asc_docs_api.prototype["asc_GetDefaultTableStyles"]           	= asc_docs_api.prototype.asc_GetDefaultTableStyles;
 	asc_docs_api.prototype["asc_Remove"] 							= asc_docs_api.prototype.asc_Remove;

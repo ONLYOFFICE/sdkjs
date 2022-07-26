@@ -102,7 +102,7 @@ var tab_Symbol = 0x0022;//0x2192;
 
 			if (null !== sChar && nCharWidth > 0.001)
 			{
-				Context.SetFontSlot(fontslot_ASCII, 1);
+				Context.SetFontSlot(AscWord.fontslot_ASCII, 1);
 				var nCharsCount = Math.floor(this.WidthVisible / nCharWidth);
 
 				var _X = X + (this.WidthVisible - nCharsCount * nCharWidth) / 2;
@@ -128,7 +128,7 @@ var tab_Symbol = 0x0022;//0x2192;
 	};
 	CRunTab.prototype.Measure = function(Context)
 	{
-		Context.SetFontSlot(fontslot_ASCII, 1);
+		Context.SetFontSlot(AscWord.fontslot_ASCII, 1);
 
 		this.DotWidth        = Context.Measure(".").Width;
 		this.UnderscoreWidth = Context.Measure("_").Width;
@@ -142,7 +142,7 @@ var tab_Symbol = 0x0022;//0x2192;
 	{
 		this.Leader = nLeaderType;
 	};
-	CRunTab.prototype.Get_Width = function()
+	CRunTab.prototype.GetWidth = function()
 	{
 		return this.Width;
 	};
@@ -179,15 +179,15 @@ var tab_Symbol = 0x0022;//0x2192;
 	};
 	CRunTab.prototype.GetAutoCorrectFlags = function()
 	{
-		return AscCommonWord.AUTOCORRECT_FLAGS_ALL;
+		return AscWord.AUTOCORRECT_FLAGS_ALL;
 	};
 	CRunTab.prototype.ToSearchElement = function(oProps)
 	{
 		return new AscCommonWord.CSearchTextSpecialTab();
 	};
-	CRunTab.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+	CRunTab.prototype.GetFontSlot = function(oTextPr)
 	{
-		return rfont_ASCII;
+		return AscWord.fontslot_Unknown;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};

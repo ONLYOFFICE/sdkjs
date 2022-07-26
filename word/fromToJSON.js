@@ -7581,7 +7581,7 @@
 		var sVAlign = undefined;
 
 		// alignV
-		if (oTextPr.VertAlign)
+		if (oTextPr.VertAlign != null)
 		{
 			switch (oTextPr.VertAlign)
 			{
@@ -8432,16 +8432,17 @@
 
 	function ReaderFromJSON()
 	{
-		this.MoveMap = {};
-		this.FootEndNoteMap = {};
-		this.layoutsMap     = {};
-		this.mastersMap     = {};
-		this.notesMasterMap = {};
-		this.themesMap      = {};
-		this.drawingsMap    = {};
-		this.curWorksheet   = null;
-		this.Workbook       = null;
-		this.aCellXfs       = [];
+		this.MoveMap           = {};
+		this.FootEndNoteMap    = {};
+		this.layoutsMap        = {};
+		this.mastersMap        = {};
+		this.notesMasterMap    = {};
+		this.themesMap         = {};
+		this.drawingsMap       = {};
+		this.curWorksheet      = null;
+		this.Workbook          = null;
+		this.aCellXfs          = [];
+		this.RestoredStylesMap = {};
 	}
 
 	ReaderFromJSON.prototype.ParaRunFromJSON = function(oParsedRun, oParentPara, notCompletedFields)
@@ -10480,7 +10481,7 @@
 	ReaderFromJSON.prototype.NumberingFromJSON = function(sNumId)
 	{
 		var oDocument = private_GetLogicDocument();
-		var oParsedNum = this.parsedNumbering["num"][sNumId];
+		var oParsedNum = this.parsedNumbering && this.parsedNumbering["num"] ? this.parsedNumbering["num"][sNumId] : null;
 		if (!oParsedNum)
 			return null;
 			
@@ -20291,21 +20292,21 @@
 	function FromXml_ST_Hint(val) {
 		switch (val) {
 			case "default":
-				return fonthint_Default;
+				return AscWord.fonthint_Default;
 			case "cs":
-				return fonthint_CS;
+				return AscWord.fonthint_CS;
 			case "eastAsia":
-				return fonthint_EastAsia;
+				return AscWord.fonthint_EastAsia;
 		}
 		return undefined;
 	}
 	function ToXml_ST_Hint(val) {
 		switch (val) {
-			case fonthint_Default:
+			case AscWord.fonthint_Default:
 				return "default";
-			case fonthint_CS:
+			case AscWord.fonthint_CS:
 				return "cs";
-			case fonthint_EastAsia:
+			case AscWord.fonthint_EastAsia:
 				return "eastAsia";
 		}
 		return null;

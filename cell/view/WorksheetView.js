@@ -444,7 +444,7 @@
 
         this.viewPrintLines = false;
 
-        this.cutRange = null;
+        this.copyCutRange = null;
 
         this.usePrintScale = false;//флаг нужен для того, чтобы возвращался scale только в случае печати, а при отрисовке, допустим сектки, он был равен 1
 
@@ -1780,6 +1780,18 @@
 		}
 		
 		this.updateColumnsStart = Math.min(i, this.updateColumnsStart);
+	};
+
+	WorksheetView.prototype._getColumnWidthIgnoreHidden = function (i) {
+		var w;
+		var column = this.model._getColNoEmptyWithAll(i);
+		if (!column) {
+			w = this.defaultColWidthPx; // Используем дефолтное значение
+		} else {
+			w = null === column.widthPx ? this.defaultColWidthPx : column.widthPx;
+		}
+		w = this.workbook.printPreviewState.isStart() ? w * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio : Asc.round(w * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio)
+		return w;
 	};
 
 	WorksheetView.prototype._calcHeightRow = function (y, i) {
@@ -4808,8 +4820,8 @@
 	};
 
 	WorksheetView.prototype._drawCutRange = function () {
-		if(this.cutRange) {
-			this._drawElements(this._drawSelectionElement, this.cutRange, AscCommonExcel.selectionLineType.DashThick, this.settings.activeCellBorderColor);
+		if(this.copyCutRange) {
+			this._drawElements(this._drawSelectionElement, this.copyCutRange, AscCommonExcel.selectionLineType.DashThick, this.settings.activeCellBorderColor);
 		}
 	};
 
@@ -6300,7 +6312,7 @@
 
 		//TODO пересмотреть! возможно стоит очищать частями в зависимости от print_area
 		//print lines view
-		if(this.viewPrintLines || this.cutRange) {
+		if(this.viewPrintLines || this.copyCutRange) {
 			this.overlayCtx.clear();
 		}
 		if(pageBreakPreviewModeOverlay) {
@@ -6884,7 +6896,9 @@
             maxW -= indent * 3 * this.defaultSpaceWidth;
         }
 
-		tm = this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW));
+		//чтобы грамотно расчитать высоту строки, необходимо знать размер текста в ячейке. если скрыт столбец, то maxW всегда будет 0 и расчёт measureString будет неверным
+		//добавляю следующую заглушку для этого - _getColumnWidthIgnoreHidden
+		tm = this._roundTextMetrics(this.stringRender.measureString(str, fl, maxW === 0 ? Math.max(this._getColumnWidthIgnoreHidden(col) - this.settings.cells.padding * 2 - gridlineSize, 0) : maxW));
 
 		if (indent) {
 			var printZoom = this.workbook.printPreviewState && this.workbook.printPreviewState.isStart() ? this.getZoom() : 1;
@@ -8492,6 +8506,7 @@
 	WorksheetView.prototype._hitCursorTableRightCorner = function (vr, x, y, offsetX, offsetY) {
 		var i, l, res, range;
 		var tables = this.model.TableParts;
+		var retinaKoef = AscBrowser.retinaPixelRatio;
 
 		var row, col, baseLw, lnW, baseLnSize, lnSize, kF, x1, x2, y1, y2, rangeIn;
 		var zoom = this.getZoom();
@@ -8500,7 +8515,7 @@
 			rangeIn = range.intersectionSimple(vr);
 			if(rangeIn) {
 				baseLw = 2;
-				lnW = Math.round(baseLw * zoom);
+				lnW = Math.round(baseLw * zoom * retinaKoef);
 				kF = lnW / baseLw;
 				baseLnSize = 4;
 				lnSize = kF * baseLnSize;
@@ -11573,6 +11588,7 @@
         }
 
 		this.model.workbook.handlers.trigger("cleanCutData", null, true);
+		this.model.workbook.handlers.trigger("cleanCopyData");
 
         var arnFrom = this.model.selectionRange.getLast();
         var arnTo = this.activeMoveRange.clone(true);
@@ -12227,6 +12243,9 @@
             });
 
 			t.model.workbook.handlers.trigger("cleanCutData", true, true);
+			if (prop !== "paste") {
+				t.model.workbook.handlers.trigger("cleanCopyData", true);
+			}
 
 			//в случае, если вставляем из глобального буфера, транзакцию закрываем внутри функции _loadDataBeforePaste на callbacks от загрузки шрифтов и картинок
 			if (prop !== "paste") {
@@ -15064,6 +15083,8 @@
 				}
 
 				t.model.workbook.handlers.trigger("cleanCutData", true, true);
+				t.model.workbook.handlers.trigger("cleanCopyData", true);
+
 				range = t.model.getRange3(arn.r1, arn.c1, arn.r2, arn.c2);
 				switch (val) {
 					case c_oAscInsertOptions.InsertCellsAndShiftRight:
@@ -15219,6 +15240,8 @@
 				}
 
 				t.model.workbook.handlers.trigger("cleanCutData", true, true);
+				t.model.workbook.handlers.trigger("cleanCopyData", true);
+
 				range = t.model.getRange3(checkRange.r1, checkRange.c1, checkRange.r2, checkRange.c2);
 				switch (val) {
 					case c_oAscDeleteOptions.DeleteCellsAndShiftLeft:
@@ -15869,9 +15892,11 @@
 		} else {
 			cell = bSearchEngine ? this.workbook.SearchEngine.GetCurrentElem() : this.model.selectionRange.activeCell;
 			// Попробуем сначала найти
-			var isEqual = this._isCellEqual(cell.col, cell.row, options);
-			if (isEqual) {
-				aReplaceCells.push(isEqual);
+			if (cell) {
+				var isEqual = this._isCellEqual(cell.col, cell.row, options);
+				if (isEqual) {
+					aReplaceCells.push(isEqual);
+				}
 			}
 		}
 
@@ -16389,6 +16414,7 @@
 		var arrAutoCompleteLC = asc.arrayToLowerCase(arrAutoComplete);
 
 		this.model.workbook.handlers.trigger("cleanCutData", true, true);
+		this.model.workbook.handlers.trigger("cleanCopyData", true);
 
 		editor.open({
 			enterOptions: enterOptions,
@@ -16708,6 +16734,7 @@
 		}
 
 		this.model.workbook.handlers.trigger("cleanCutData", true, true);
+		this.model.workbook.handlers.trigger("cleanCopyData", true);
 
 		var t = this;
 		var ar = this.model.selectionRange.getLast().clone();
@@ -16896,6 +16923,7 @@
 		}
 
 		this.model.workbook.handlers.trigger("cleanCutData", true, true);
+		this.model.workbook.handlers.trigger("cleanCopyData", true);
 
 		var t = this;
 		var ar = this.model.selectionRange.getLast().clone();
@@ -18084,8 +18112,7 @@
 	WorksheetView.prototype._drawRightDownTableCorner = function (table, updatedRange, offsetX, offsetY) {
 		var t = this;
 		var ctx = t.drawingCtx;
-		var isMobileRetina = window['IS_NATIVE_EDITOR'];
-		var retinaKoef = isMobileRetina || AscBrowser.isRetina ? 2 : 1;
+		var retinaKoef = AscBrowser.retinaPixelRatio;
 
 		var row = table.Ref.r2;
 		var col = table.Ref.c2;
@@ -18099,18 +18126,17 @@
 		var baseLw = 2;
 		var baseLnSize = 4;
 
-		var lnW = Math.round(baseLw * zoom);
+		var lnW = Math.round(baseLw * zoom * retinaKoef);
 		//смотрим насколько изменилась толщина линиии  - настолько и изменился масштаб
 		var kF = lnW / baseLw;
 		var lnSize = baseLnSize * kF;
-		lnW = lnW * retinaKoef;
 
 		var x1 = t._getColLeft(col) + t._getColumnWidth(col) - offsetX - 2;
 		var y1 = t._getRowTop(row) + t._getRowHeight(row) - offsetY - 2;
 
-		ctx.setLineWidth(AscBrowser.retinaPixelRatio * lnW);
+		ctx.setLineWidth(lnW);
 
-		var diff = Math.floor((lnW - 1) / (2 / retinaKoef));
+		var diff = Math.floor((lnW - 1) / 2);
 		ctx.beginPath();
 		ctx.lineVer(x1 - diff, y1 + 1, y1 - lnSize + 1);
 		ctx.lineHor(x1 + 1, y1 - diff, x1 - lnSize + 1);

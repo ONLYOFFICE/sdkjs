@@ -54,6 +54,7 @@
 		this.modulesLoaded = 0;
 		this.openResult    = null;
 		this.isOpenOOXInBrowser = false;
+		this.isOpenOOXInBrowserDoctImages = {};
 
 		this.HtmlElementName = config['id-view'] || '';
 		this.HtmlElement     = null;
@@ -2031,20 +2032,20 @@
 		var sImgSrc    = oPluginData["imgSrc"];
 		var nWidthPix  = oPluginData["widthPix"];
 		var nHeightPix = oPluginData["heightPix"];
-		var fWidth     = oPluginData["width"];
-		var fHeight    = oPluginData["height"];
+		var fWidthMM   = oPluginData["width"];
+		var fHeightMM  = oPluginData["height"];
 		var sData      = oPluginData["data"];
 		var sGuid      = oPluginData["guid"];
 		var bSelect    = (oPluginData["select"] === true || oPluginData["select"] === false) ? oPluginData["select"] : true;
 		if (typeof sImgSrc === "string" && sImgSrc.length > 0 && typeof sData === "string"
 			&& typeof sGuid === "string" && sGuid.length > 0
 			/*&& AscFormat.isRealNumber(nWidthPix) && AscFormat.isRealNumber(nHeightPix)*/
-			&& AscFormat.isRealNumber(fWidth) && AscFormat.isRealNumber(fHeight)
+			&& AscFormat.isRealNumber(fWidthMM) && AscFormat.isRealNumber(fHeightMM)
 		)
 
 		this.asc_checkImageUrlAndAction(sImgSrc, function(oImage)
 		{
-			oThis.asc_addOleObjectAction(AscCommon.g_oDocumentUrls.getImageLocal(oImage.src), sData, sGuid, fWidth, fHeight, nWidthPix, nHeightPix, bSelect);
+			oThis.asc_addOleObjectAction(AscCommon.g_oDocumentUrls.getImageLocal(oImage.src), sData, sGuid, fWidthMM, fHeightMM, nWidthPix, nHeightPix, bSelect);
 		});
 	};
 
@@ -2063,7 +2064,8 @@
 		var fWidthMM   = oPluginData["width"];
 		var fHeightMM  = oPluginData["height"];
 		if (typeof sImgSrc === "string" && sImgSrc.length > 0 && typeof sData === "string"
-			&& oOleObject && AscFormat.isRealNumber(nWidthPix) && AscFormat.isRealNumber(nHeightPix))
+			&& oOleObject /*&& AscFormat.isRealNumber(nWidthPix) && AscFormat.isRealNumber(nHeightPix)*/
+			&& AscFormat.isRealNumber(fWidthMM) && AscFormat.isRealNumber(fHeightMM))
 		{
             this.asc_checkImageUrlAndAction(sImgSrc, function(oImage)
 			{
@@ -2271,6 +2273,7 @@
 	};
 	baseEditorsApi.prototype.saveDocumentToZip  = function(model, editorType, callback)
 	{
+		let t = this;
 		var context = new AscCommon.XmlWriterContext(editorType);
 		window.nativeZlibEngine.create();
 		model.toZip(window.nativeZlibEngine, context);
@@ -2279,10 +2282,14 @@
 			if (imageMapKeys.length > 0) {
 				var elem = imageMapKeys.pop();
 				if (window["NATIVE_EDITOR_ENJINE"] === true && window["native"]["getImagesDirectory"] && window["native"]["GetFontBinary"]) {
-					let path = window["native"]["getImagesDirectory"]() + '/' + elem;
-					let data = window["native"]["GetFileBinary"](path);
-					if (data) {
-						context.imageMap[elem].part.setData(data);
+					if (t.isOpenOOXInBrowserDoctImages[elem]) {
+						context.imageMap[elem].part.setData(t.isOpenOOXInBrowserDoctImages[elem]);
+					} else {
+						let path = window["native"]["getImagesDirectory"]() + '/' + elem;
+						let data = window["native"]["GetFileBinary"](path);
+						if (data) {
+							context.imageMap[elem].part.setData(data);
+						}
 					}
 					downloadImages(imageMapKeys);
 				} else {
@@ -2589,7 +2596,10 @@
 	baseEditorsApi.prototype.asc_pluginsRegister   = function(basePath, plugins)
 	{
 		if (null != this.pluginsManager)
+		{
 			this.pluginsManager.register(basePath, plugins);
+			this.checkInstalledPlugins();
+		}
 		else
 		{
 			this.preSetupPlugins = {
@@ -3757,6 +3767,9 @@
 	baseEditorsApi.prototype.asc_drawPrintPreview                     = function()
 	{
 	};
+	baseEditorsApi.prototype.asc_EditSelectAll = function()
+	{
+	};
 	//---------------------------------------------------------search-----------------------------------------------------
 	baseEditorsApi.prototype.sync_setSearchCurrent = function(nCurrent, nOverallCount)
 	{
@@ -3895,6 +3908,7 @@
 	prot['asc_addTableOleObject'] = prot.asc_addTableOleObject;
 	prot['asc_editTableOleObject'] = prot.asc_editTableOleObject;
 	prot['asc_canEditTableOleObject'] = prot.asc_canEditTableOleObject;
+	prot['asc_EditSelectAll'] = prot.asc_EditSelectAll;
 	prot['setOpenedAt'] = prot.setOpenedAt;
 
 	prot['asc_isCrypto'] = prot.asc_isCrypto;

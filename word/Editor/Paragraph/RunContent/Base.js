@@ -62,10 +62,6 @@
 	{
 		this.Width = 0x00000000 | 0;
 	};
-	CRunElementBase.prototype.Get_Width = function()
-	{
-		return (this.Width / TEXTWIDTH_DIVIDER);
-	};
 	CRunElementBase.prototype.GetWidth = function()
 	{
 		return (this.Width / TEXTWIDTH_DIVIDER);
@@ -89,7 +85,10 @@
 	};
 	CRunElementBase.prototype.GetWidthVisible = function()
 	{
-		return (this.WidthVisible / TEXTWIDTH_DIVIDER);
+		if (undefined !== this.WidthVisible)
+			return (this.WidthVisible / TEXTWIDTH_DIVIDER);
+
+		return (this.Width / TEXTWIDTH_DIVIDER);
 	};
 	CRunElementBase.prototype.SetWidthVisible = function(nWidthVisible)
 	{
@@ -143,11 +142,11 @@
 	};
 	/**
 	 * Какие мы можем выполнять автозамены на вводе данного элемента
-	 * @returns {boolean}
+	 * @returns {number}
 	 */
 	CRunElementBase.prototype.GetAutoCorrectFlags = function()
 	{
-		return AscCommonWord.AUTOCORRECT_FLAGS_NONE;
+		return AscWord.AUTOCORRECT_FLAGS_NONE;
 	};
 	/**
 	 * Является ли данный элемент символом пунктуации
@@ -291,11 +290,11 @@
 		return false;
 	};
 	/**
-	 * @returns {rfont_None}
+	 * @returns {AscWord.fontslot_Unknown}
 	 */
-	CRunElementBase.prototype.GetFontSlot = function(nHint, nEA_lcid, isCS, isRTL)
+	CRunElementBase.prototype.GetFontSlot = function(oTextPr)
 	{
-		return rfont_None;
+		return AscWord.fontslot_Unknown;
 	};
 	/**
 	 * @returns {boolean}
@@ -334,7 +333,7 @@
 	{
 		this.RGapCount    = nCount;
 		this.RGapCharCode = nCharCode;
-		this.RGapFontSlot = g_font_detector.Get_FontClass(nCharCode, oTextPr.RFonts.Hint, oTextPr.Lang.EastAsia, oTextPr.CS, oTextPr.RTL);
+		this.RGapFontSlot = AscWord.GetFontSlotByTextPr(nCharCode, oTextPr);
 
 		if (sFont)
 		{

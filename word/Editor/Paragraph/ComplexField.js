@@ -88,7 +88,7 @@ ParaFieldChar.prototype.Measure = function(Context, TextPr)
 	if (this.IsSeparate())
 	{
 		this.FontKoef = TextPr.Get_FontKoef();
-		Context.SetFontSlot(fontslot_ASCII, this.FontKoef);
+		Context.SetFontSlot(AscWord.fontslot_ASCII, this.FontKoef);
 
 		for (var Index = 0; Index < 10; Index++)
 		{
@@ -107,7 +107,7 @@ ParaFieldChar.prototype.Draw = function(X, Y, Context)
 		var _X = X;
 		var _Y = Y;
 
-		Context.SetFontSlot(fontslot_ASCII, this.FontKoef);
+		Context.SetFontSlot(AscWord.fontslot_ASCII, this.FontKoef);
 		for (var Index = 0; Index < Len; Index++)
 		{
 			var Char = this.String.charAt(Index);
@@ -325,7 +325,7 @@ ParaInstrText.prototype.GetValue = function()
 {
 	return String.fromCharCode(this.Value);
 };
-ParaInstrText.prototype.Set_CharCode = function(CharCode)
+ParaInstrText.prototype.SetCharCode = function(CharCode)
 {
 	this.Value = CharCode;
 };
@@ -956,7 +956,7 @@ CComplexField.prototype.private_UpdateTOC = function()
 
 		oPara = new Paragraph(this.LogicDocument.GetDrawingDocument(), this.LogicDocument, false);
 		oRun  = new ParaRun(oPara, false);
-		oRun.Set_Bold(true);
+		oRun.SetBold(true);
 		oRun.AddText(sReplacementText);
 		oPara.AddToContent(0, oRun);
 		oSelectedContent.Add(new AscCommonWord.CSelectedElement(oPara, true));

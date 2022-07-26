@@ -4467,6 +4467,7 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
     this.DrawingDocument.OnStartRecalculate(this.Slides.length);
     this.StopAnimationPreview();
     ++this.RecalcId;
+    this.private_ClearSearchOnRecalculate();
 
     if (undefined === RecalcData && this.private_RecalculateFastRunRange(History.GetNonRecalculatedChanges()))
     	return;
@@ -4882,6 +4883,17 @@ CPresentation.prototype.Search = function (oProps) {
     this.SearchEngine.ClearOnRecalc = true;
     return this.SearchEngine;
 };
+CPresentation.prototype.private_ClearSearchOnRecalculate = function() {
+    if (!this.SearchEngine.ClearOnRecalc) {
+        return;
+    }
+    let isPrevSearch = this.SearchEngine.Count > 0;
+    this.SearchEngine.Clear();
+    if (isPrevSearch) {
+        this.Api.sync_SearchEndCallback();
+    }
+};
+
 
 CPresentation.prototype.GetSearchElementId = function (isNext) {
     if (this.Slides.length > 0) {

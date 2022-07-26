@@ -9856,6 +9856,19 @@
 		return (0x2F800 <= nCharCode && nCharCode <= 0x2FA1F);
 	}
 
+
+	function IsComplexScript(nCharCode)
+	{
+		return ((0x0590 <= nCharCode && nCharCode <= 0x074F)
+			|| (0x0780 <= nCharCode && nCharCode <= 0x07BF)
+			|| (0x0900 <= nCharCode && nCharCode <= 0x109F)
+			|| (0x1780 <= nCharCode && nCharCode <= 0x18AF)
+			|| (0x200C <= nCharCode && nCharCode <= 0x200F)
+			|| (0x202A <= nCharCode && nCharCode <= 0x202F)
+			|| (0x2670 <= nCharCode && nCharCode <= 0x2671)
+			|| (0xFB1D <= nCharCode && nCharCode <= 0xFB4F));
+	}
+
 	var g_oIdCounter = new CIdCounter();
 
 	function CEventListenerInfo(listeningElement, eventName, listener, useCapture) {
@@ -12879,6 +12892,7 @@
 	window["AscCommon"].getIndexColorSchemeInArray = getIndexColorSchemeInArray;
 	window["AscCommon"].isEastAsianScript = isEastAsianScript;
 	window["AscCommon"].IsEastAsianFont = IsEastAsianFont;
+	window["AscCommon"].IsComplexScript = IsComplexScript;
 	window["AscCommon"].CMathTrack = CMathTrack;
 	window["AscCommon"].CPolygon = CPolygon;
 	window['AscCommon'].CDrawingCollaborativeTargetBase = CDrawingCollaborativeTargetBase;

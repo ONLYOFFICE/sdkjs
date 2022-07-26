@@ -131,7 +131,37 @@
 			}
 		},
 
-		register : function(basePath, plugins)
+		unregister : function(guid)
+		{
+			if (!this.pluginsMap[guid])
+				return null;
+
+			let removedPlugin = null;
+
+			this.close(guid);
+
+			if (this.pluginsMap[guid])
+				delete this.pluginsMap[guid];
+
+			let currentArray = this.plugins;
+			for (let indexArray = 0; indexArray < 2; indexArray++)
+			{
+				for (let i = 0, len = currentArray.length; i < len; i++)
+				{
+					if (guid === currentArray[i].guid)
+					{
+						removedPlugin = currentArray[i];
+						currentArray.splice(i, 1);
+						break;
+					}
+				}
+				currentArray = this.systemPlugins;
+			}
+
+			return removedPlugin;
+		},
+
+		register : function(basePath, plugins, isDelayRun)
 		{
 			this.path = basePath;
 
@@ -152,7 +182,7 @@
 					// заменяем новым
 					for (var j = 0; j < this.plugins.length; j++)
 					{
-						if (this.plugins[j].guid == guid)
+						if (this.plugins[j].guid === guid && this.plugins[j].getIntVersion() < plugins[i].getIntVersion())
 						{
 							this.plugins[j] = plugins[i];
 							break;
@@ -171,7 +201,14 @@
 
 				if (isSystem)
 				{
-					this.run(guid, 0, "");
+					if (!isDelayRun)
+						this.run(guid, 0, "");
+					else
+					{
+						setTimeout(function(){
+							window.g_asc_plugins.run(guid, 0, "");
+						}, 100);
+					}
 				}
 			}
 		},
@@ -450,9 +487,10 @@
                 this.api.WordControl.m_oTimerScrollSelect = -1;
 		    }
 
+			var urlParams = "?lang=" + this.language + "&theme-type=" + AscCommon.GlobalSkin.type;
 			if (plugin.variations[runObject.currentVariation].isVisual && runObject.startData.getAttribute("resize") !== true)
 			{
-				this.api.sendEvent("asc_onPluginShow", plugin, runObject.currentVariation, runObject.frameId, "?lang=" + this.language);
+				this.api.sendEvent("asc_onPluginShow", plugin, runObject.currentVariation, runObject.frameId, urlParams);
 				this.sendsToInterface[plugin.guid] = true;
 			}
 			else
@@ -461,7 +499,7 @@
 				ifr.name           = runObject.frameId;
 				ifr.id             = runObject.frameId;
 				var _add           = plugin.baseUrl == "" ? this.path : plugin.baseUrl;
-				ifr.src            = _add + plugin.variations[runObject.currentVariation].url + "?lang=" + this.language;
+				ifr.src            = _add + plugin.variations[runObject.currentVariation].url + urlParams;
 				ifr.style.position = (AscCommon.AscBrowser.isIE || AscCommon.AscBrowser.isMozilla) ? 'fixed' : "absolute";
 				ifr.style.top      = '-100px';
 				ifr.style.left     = '0px';
@@ -475,8 +513,14 @@
 
 				if (runObject.startData.getAttribute("resize") !== true)
 				{
+					var isSystem = false;
+					if (plugin.variations && plugin.variations[runObject.currentVariation].isSystem)
+						isSystem = true;
+
 					this.api.sendEvent("asc_onPluginShow", plugin, runObject.currentVariation);
-					this.sendsToInterface[plugin.guid] = true;
+
+					if (!isSystem)
+						this.sendsToInterface[plugin.guid] = true;
 				}
 			}
 
@@ -672,14 +716,14 @@
                 pluginData.setAttribute("userName", this.api.User.userName);
             }
 		},
-		loadExtensionPlugins : function(_plugins)
+		loadExtensionPlugins : function(_plugins, isDelayRun, isNoUpdateInterface)
 		{
 			if (!_plugins || _plugins.length < 1)
-				return;
+				return false;
 
 			var _map = {};
 			for (var i = 0; i < this.plugins.length; i++)
-				_map[this.plugins[i].guid] = true;
+				_map[this.plugins[i].guid] = this.plugins[i].getIntVersion();
 
 			var _new = [];
 			for (var i = 0; i < _plugins.length; i++)
@@ -687,14 +731,46 @@
 				var _p = new Asc.CPlugin();
 				_p["deserialize"](_plugins[i]);
 
-				if (_map[_p.guid] === true)
-					continue;
+				if (_map[_p.guid] !== undefined)
+				{
+					if (_map[_p.guid] < _p.getIntVersion())
+					{
+						// нужно обновить
+						for (var i = 0; i < this.plugins.length; i++)
+						{
+							if (this.plugins[i].guid === _p.guid)
+							{
+								if (this.pluginsMap[_p.guid])
+									delete this.pluginsMap[_p.guid];
+								this.plugins.splice(i, 1);
+							}
+						}
+					}
+					else
+					{
+						continue;
+					}
+				}
+
 
 				_new.push(_p);
 			}
 
-			this.register(this.path, _new);
+			if (_new.length > 0)
+			{
+				this.register(this.path, _new, isDelayRun);
 
+				if (true !== isNoUpdateInterface)
+					this.updateInterface();
+
+				return true;
+			}
+
+			return false;
+		},
+
+		updateInterface : function()
+		{
 			var _pluginsInstall = {"url" : this.path, "pluginsData" : []};
 			for (var i = 0; i < this.plugins.length; i++)
 			{
@@ -1312,9 +1388,10 @@
 				{
 					window.g_asc_plugins.register(window.g_asc_plugins.api.preSetupPlugins.path, window.g_asc_plugins.api.preSetupPlugins.plugins);
 					delete window.g_asc_plugins.api.preSetupPlugins;
+
+					window.g_asc_plugins.api.checkInstalledPlugins();
 				}
 
-				window.g_asc_plugins.loadExtensionPlugins(window["Asc"]["extensionPlugins"]);
 			}, 10);
 
 		});

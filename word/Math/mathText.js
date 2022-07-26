@@ -95,7 +95,7 @@ function CMathBaseText()
 }
 CMathBaseText.prototype = Object.create(AscWord.CRunElementBase.prototype);
 CMathBaseText.prototype.constructor = CMathBaseText;
-CMathBaseText.prototype.Get_Width = function() // работаем через функцию, т.к. поля  GapLeft и GapRight могут измениться из-за изменения переноса, а пересчет (Measure) в этом случае не прийдет
+CMathBaseText.prototype.GetWidth = function() // работаем через функцию, т.к. поля  GapLeft и GapRight могут измениться из-за изменения переноса, а пересчет (Measure) в этом случае не прийдет
 {
     var Width = this.size.width;
 
@@ -208,7 +208,7 @@ function CMathText(bJDraw)
     this.rasterOffsetX  = 0;
     this.rasterOffsetY  = 0;
 
-    this.FontSlot       = fontslot_ASCII;
+    this.FontSlot       = AscWord.fontslot_ASCII;
 
 
     // TO DO
@@ -720,7 +720,7 @@ CMathText.prototype.Measure = function(oMeasure, TextPr, InfoMathText)
 
         var letter = this.private_getCode();
 
-        this.FontSlot = InfoMathText.GetFontSlot(letter); // возвращает fontslot_ASCII || fontslot_EastAsia || fontslot_CS || fontslot_HAnsi
+        this.FontSlot = InfoMathText.GetFontSlot(letter); // возвращает AscWord.fontslot_ASCII || AscWord.fontslot_EastAsia || AscWord.fontslot_CS || AscWord.fontslot_HAnsi
 
         // в не математическом тексте i и j не подменяются на i и j без точек
         var bAccentIJ = !InfoMathText.bNormalText && this.Parent.IsAccent() && (this.value == 0x69 || this.value == 0x6A);
@@ -932,7 +932,7 @@ CMathText.prototype.IsAlignPoint = function()
 {
     return false;
 };
-CMathText.prototype.IsText = function()
+CMathText.prototype.IsMathText = function()
 {
     return true;
 };
@@ -1006,7 +1006,7 @@ CMathText.prototype.Read_FromBinary = function(Reader)
 };
 CMathText.prototype.Is_LetterCS = function()
 {
-    return this.FontSlot == fontslot_CS;
+    return this.FontSlot == AscWord.fontslot_CS;
 };
 CMathText.prototype.ToSearchElement = function(oProps)
 {
@@ -1018,6 +1018,50 @@ CMathText.prototype.ToSearchElement = function(oProps)
 		return new AscCommonWord.CSearchTextItemChar(String.fromCodePoint(nCodePoint).toLowerCase().codePointAt(0));
 
 	return new AscCommonWord.CSearchTextItemChar(nCodePoint);
+};
+CMathText.prototype.GetTextOfElement = function(isLaTeX) {
+	var strPre = "";
+	if (this.Parent) {
+		var oParentMathPrp = this.Parent.MathPrp.scr;
+		if (1 === oParentMathPrp) {
+			strPre = '\\script';
+		} else if (2 === oParentMathPrp) {
+			strPre = '\\fraktur';
+		} else if (3 === oParentMathPrp) {
+			strPre = '\\double';
+		}
+	}
+	var strOutput = String.fromCharCode(this.value);
+	if (isLaTeX) {
+		if (strOutput === 'θ') {
+			strOutput = '\\theta'
+		}
+		if (strOutput === '→') {
+			strOutput = '\\to'
+		}
+		if (strOutput === '∞') {
+			strOutput = '\\infty'
+		}
+		if (strOutput === '…') {
+			strOutput = '\\dots'
+		}
+	}
+
+	// if (strOutput !== '{' || strOutput !== '}') {
+	// 	for (var i = 65; i <= 90; i++) {
+	// 		var obj = SymbolsForCorrect[String.fromCharCode(i)];
+	
+	// 		if (obj) {
+	// 			var oneObj = Object.entries(obj);
+	// 			for (var j = 0; j < oneObj.length; j++) {
+	// 				if (oneObj[j][1] === this.value) {
+	// 					strOutput = oneObj[j][0];
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
+	return strPre + strOutput;
 };
 /*CMathText.prototype.Recalculate_Reset = function(StartRange, StartLine, PRS)
 {
@@ -1095,7 +1139,7 @@ CMathAmp.prototype.getCodeChr = function()
 
     return code;
 };
-CMathAmp.prototype.IsText = function()
+CMathAmp.prototype.IsMathText = function()
 {
     return !this.bAlignPoint;
 };
@@ -1145,6 +1189,11 @@ CMathAmp.prototype.Write_ToBinary = function(Writer)
 CMathAmp.prototype.Read_FromBinary = function(Reader)
 {
 };
+CMathAmp.prototype.GetTextOfElement = function(isLaTeX)
+{
+	return '&'
+};
+
 
 function CMathInfoTextPr(InfoTextPr)
 {
@@ -1169,10 +1218,10 @@ function CMathInfoTextPr(InfoTextPr)
     // скопируем эти свойства для SetFontSlot
     // для SpecialOperator нужны уже скомпилированные для мат текста текстовые настройки, поэтому важно эи свойства скопировать именно здесь, а не передавать в MathText обычные текст. настройки
 
-    this.RFontsCompare[fontslot_ASCII]    = undefined !== this.TextPr.RFonts.Ascii && this.TextPr.RFonts.Ascii.Name == "Cambria Math";
-    this.RFontsCompare[fontslot_HAnsi]    = undefined !== this.TextPr.RFonts.HAnsi && this.TextPr.RFonts.HAnsi.Name == "Cambria Math";
-    this.RFontsCompare[fontslot_CS]       = undefined !== this.TextPr.RFonts.CS && this.TextPr.RFonts.CS.Name == "Cambria Math";
-    this.RFontsCompare[fontslot_EastAsia] = undefined !== this.TextPr.RFonts.EastAsia && this.TextPr.RFonts.EastAsia.Name == "Cambria Math";
+    this.RFontsCompare[AscWord.fontslot_ASCII]    = undefined !== this.TextPr.RFonts.Ascii && this.TextPr.RFonts.Ascii.Name == "Cambria Math";
+    this.RFontsCompare[AscWord.fontslot_HAnsi]    = undefined !== this.TextPr.RFonts.HAnsi && this.TextPr.RFonts.HAnsi.Name == "Cambria Math";
+    this.RFontsCompare[AscWord.fontslot_CS]       = undefined !== this.TextPr.RFonts.CS && this.TextPr.RFonts.CS.Name == "Cambria Math";
+    this.RFontsCompare[AscWord.fontslot_EastAsia] = undefined !== this.TextPr.RFonts.EastAsia && this.TextPr.RFonts.EastAsia.Name == "Cambria Math";
 }
 CMathInfoTextPr.prototype.NeedUpdateFont = function(code, fontSlot, IsPlaceholder, IsApostrophe)
 {
@@ -1217,7 +1266,7 @@ CMathInfoTextPr.prototype.NeedUpdateFont = function(code, fontSlot, IsPlaceholde
 };
 CMathInfoTextPr.prototype.private_GetFontSize = function(fontSlot)
 {
-    return fontSlot == fontslot_CS ? this.TextPr.FontSizeCS : this.TextPr.FontSize;
+    return fontSlot == AscWord.fontslot_CS ? this.TextPr.FontSizeCS : this.TextPr.FontSize;
 };
 CMathInfoTextPr.prototype.GetFontKoef = function(fontSlot)
 {
@@ -1226,12 +1275,7 @@ CMathInfoTextPr.prototype.GetFontKoef = function(fontSlot)
 };
 CMathInfoTextPr.prototype.GetFontSlot = function(code)
 {
-    var Hint = this.TextPr.RFonts.Hint;
-    var bCS  = this.TextPr.CS;
-    var bRTL = this.TextPr.RTL;
-    var lcid = this.TextPr.Lang.EastAsia;
-
-    return g_font_detector.Get_FontClass(code, Hint, lcid, bCS, bRTL);
+    return AscWord.GetFontSlotByTextPr(code, this.TextPr);
 };
 CMathInfoTextPr.prototype.IsSpecilalOperator = function(val)
 {
