@@ -4739,6 +4739,10 @@
 					if (requests && requests.length) {
 						Promise.all(requests)
 							.then(function (values) {
+
+								History.Create_NewPoint();
+								History.StartTransaction();
+
 								for (var i = 0; i < values.length; i++) {
 									if (values[i]) {
 										//TODO если внутри не zip, отправляем на конвертацию в xlsx, далее повторно обрабатываем - позже реализовать
@@ -4757,6 +4761,8 @@
 										}
 									}
 								}
+
+								History.EndTransaction();
 
 								//TODO ВРЕМЕННО ПЕРЕСЧИТЫВАЕМ ВСЕ ФОРМУЛЫ. сделать пересчёт только нужных
 								//кроме пересчёта нужно изменить ссылку на лист во всех диапазонах, которые используют данную ссылку

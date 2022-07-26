@@ -12016,8 +12016,39 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 
+	ExternalReference.prototype.clone = function () {
+		var newObj = new ExternalReference();
+
+		if (this.DefinedNames) {
+			for (var i = 0; i < this.DefinedNames.length; i++) {
+				newObj.DefinedNames.push(this.DefinedNames[i].clone);
+			}
+		}
+
+		newObj.Id = this.Id;
+
+		if (this.SheetDataSet) {
+			for (i = 0; i < this.SheetDataSet.length; ++i) {
+				newObj.SheetDataSet.push(this.SheetDataSet[i].clone());
+			}
+		}
+
+		newObj.Type = this.Type;
+
+		if (null != this.referenceData) {
+
+			newObj.referenceData = {};
+			newObj.referenceData.fileId = this.referenceData.fileId;
+			newObj.referenceData.portalName = this.referenceData.portalName;
+		}
+
+		return newObj;
+	};
+
 	ExternalReference.prototype.updateData = function (arr) {
 		var t = this;
+		var isChanged = false;
+		var cloneER = this.clone();
 		for (var i = 0; i < arr.length; i++) {
 			//если есть this.worksheets, если нет - проверить и обработать
 			var sheetName = arr[i].sName;
@@ -12035,10 +12066,17 @@ QueryTableField.prototype.clone = function() {
 				if (index != null) {
 					var externalSheetDataSet = this.SheetDataSet[index];
 					if (externalSheetDataSet) {
-						externalSheetDataSet.updateFromSheet(t.worksheets[sheetName]);
+						if (externalSheetDataSet.updateFromSheet(t.worksheets[sheetName])) {
+							isChanged = true;
+						}
 					}
 				}
 			}
+		}
+
+		if (isChanged && History.Is_On()) {
+			History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
+				null, null, new AscCommonExcel.UndoRedoData_FromTo(cloneER, this));
 		}
 	};
 
@@ -12315,6 +12353,22 @@ QueryTableField.prototype.clone = function() {
 			}
 		}
 	};
+
+	ExternalSheetDataSet.prototype.clone = function () {
+		var newObj = new ExternalSheetDataSet();
+
+		newObj.SheetId = this.SheetId;
+		newObj.RefreshError = this.RefreshError;
+
+		if (this.Row) {
+			for (var i = 0; i < this.Row.length; ++i) {
+				newObj.Row.push(this.Row[i].clone());
+			}
+		}
+
+		return newObj;
+	};
+
 	ExternalSheetDataSet.prototype.initFromSheet = function(sheet, ranges) {
 		if (sheet && ranges) {
 			var t = this;
@@ -12343,6 +12397,7 @@ QueryTableField.prototype.clone = function() {
 	};
 
 	ExternalSheetDataSet.prototype.updateFromSheet = function(sheet) {
+		var isChanged = false;
 		if (sheet) {
 			var t = this;
 
@@ -12359,7 +12414,7 @@ QueryTableField.prototype.clone = function() {
 					}
 					var range = sheet.getRange2(externalCell.Ref);
 					range._foreachNoEmpty(function (cell) {
-						externalCell.initFromCell(cell, true);
+						isChanged = externalCell.initFromCell(cell, true);
 
 						var api_sheet = Asc['editor'];
 						var wb = api_sheet.wbModel;
@@ -12368,6 +12423,7 @@ QueryTableField.prototype.clone = function() {
 				}
 			}
 		}
+		return isChanged;
 	};
 
 	ExternalSheetDataSet.prototype.getRow = function(index, needGenerateRow) {
@@ -12424,6 +12480,20 @@ QueryTableField.prototype.clone = function() {
 				this.Cell[i].Write_ToBinary2(w);
 			}
 		}
+	};
+
+	ExternalRow.prototype.clone = function () {
+		var newObj = new ExternalRow();
+
+		newObj.R = this.R;
+
+		if (this.Cell) {
+			for (var i = 0; i < this.Cell.length; ++i) {
+				newObj.Cell.push(this.Cell[i].clone());
+			}
+		}
+
+		return newObj;
 	};
 
 	ExternalRow.prototype.getCell = function(index, needGenerateRow) {
@@ -12488,7 +12558,17 @@ QueryTableField.prototype.clone = function() {
 			w.WriteBool(false);
 		}
 	};
+	ExternalCell.prototype.clone = function () {
+		var newObj = new ExternalRow();
+
+		newObj.Ref = this.Ref;
+		newObj.CellType = this.CellType;
+		newObj.CellValue = this.CellValue;
+
+		return newObj;
+	};
 	ExternalCell.prototype.initFromCell = function(cell, bUpdate) {
+		var isChanged = false;
 		if (cell) {
 			var t = this;
 			if (!bUpdate) {
@@ -12497,7 +12577,12 @@ QueryTableField.prototype.clone = function() {
 				});
 			}
 
-			this.CellValue = cell.getValue();
+			var newVal = cell.getValue();
+			if (this.CellValue !== newVal) {
+				isChanged = true;
+				this.CellValue = newVal;
+			}
+
 
 			var cellValueType = null;
 			switch (cell.getType()) {
@@ -12511,8 +12596,12 @@ QueryTableField.prototype.clone = function() {
 					cellValueType = Asc.ECellTypeType.celltypeError;
 					break;
 			}
-			this.CellType = cellValueType;
+			if (this.CellType !== cellValueType) {
+				this.CellType = cellValueType;
+				isChanged = true;
+			}
 		}
+		return isChanged;
 	};
 
 	ExternalCell.prototype.getRange = function() {
