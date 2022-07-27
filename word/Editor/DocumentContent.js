@@ -646,30 +646,28 @@ CDocumentContent.prototype.Is_TopDocument = function(isReturnTopDocument)
 
 	return this.Parent.Is_TopDocument(isReturnTopDocument);
 };
-// Проверяем, используется ли данный элемент в документе
 CDocumentContent.prototype.IsUseInDocument = function(Id)
 {
-	var bUse = false;
-
-	if (null != Id)
+	if (undefined !== Id && null !== Id)
 	{
-		var Count = this.Content.length;
-		for (var Index = 0; Index < Count; Index++)
+		let isFound = false;
+		for (let nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 		{
-			if (Id === this.Content[Index].Get_Id())
+			if (this.Content[nIndex].Get_Id() === Id)
 			{
-				bUse = true;
+				isFound = true;
 				break;
 			}
 		}
+
+		if (!isFound)
+			return false;
 	}
-	else
-		bUse = true;
 
-	if (true === bUse && this.Parent && this.Parent.IsUseInDocument)
-		return this.Parent.IsUseInDocument(this.Get_Id());
+	if (!this.Parent || !this.Parent.IsUseInDocument)
+		return false;
 
-	return false;
+	return this.Parent.IsUseInDocument(this.GetId());
 };
 CDocumentContent.prototype.IsHdrFtr = function(bReturnHdrFtr)
 {

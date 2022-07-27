@@ -9270,29 +9270,26 @@ Paragraph.prototype.IsInText = function(X, Y, CurPage)
 };
 Paragraph.prototype.IsUseInDocument = function(Id)
 {
-	if (Id !== undefined)
+	if (undefined !== Id && null !== Id)
 	{
-		for (var i = 0; i < this.Content.length; ++i)
+		let isFound = false;
+		for (let nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 		{
-			if (this.Content[i].Get_Id() === Id)
+			if (this.Content[nIndex].Get_Id() === Id)
 			{
+				isFound = true;
 				break;
 			}
 		}
-		if (i < this.Content.length)
-		{
-			if (this.Parent)
-			{
-				return this.Parent.IsUseInDocument(this.Get_Id());
-			}
-		}
-		return false;
+
+		if (!isFound)
+			return false;
 	}
 
-	if (this.Parent && this.Parent.IsUseInDocument)
-		return this.Parent.IsUseInDocument(this.Get_Id());
+	if (-1 === this.GetIndex())
+		return false;
 
-	return false;
+	return this.Parent.IsUseInDocument();
 };
 Paragraph.prototype.SelectThisElement = function(nDirection, isUseInnerSelection)
 {

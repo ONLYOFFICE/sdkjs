@@ -114,6 +114,11 @@ CTableRow.prototype =
         return this.Id;
     },
 
+	GetId : function()
+	{
+		return this.Id;
+	},
+
 	// Создаем копию данного объекта
 	Copy : function(Table, oPr)
 	{

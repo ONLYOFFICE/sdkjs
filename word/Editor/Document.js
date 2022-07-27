@@ -8932,10 +8932,12 @@ CDocument.prototype.IsInContentControl = function(X, Y, nPageAbs)
 };
 CDocument.prototype.IsUseInDocument = function(Id)
 {
-	var Count = this.Content.length;
-	for (var Index = 0; Index < Count; Index++)
+	if (undefined === Id || null === Id)
+		return true;
+
+	for (let nIndex = 0, nCount = this.GetElementsCount(); nIndex < nCount; ++nIndex)
 	{
-		if (Id === this.Content[Index].GetId())
+		if (Id === this.GetElement(nIndex).GetId())
 			return true;
 	}
 
