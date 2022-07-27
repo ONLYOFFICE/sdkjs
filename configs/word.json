@@ -251,6 +251,7 @@
 		    "word/Editor/GlossaryDocumentChanges.js",
 			"word/Editor/DocumentProtection.js",
 			"word/Editor/Comparison.js",
+			"word/Editor/Revisions/TrackRevisionsManager.js",
 
 			"word/Drawing/Graphics.js",
 			"word/Drawing/ShapeDrawer.js",

@@ -296,6 +296,7 @@
 			"word/Math/accent.js",
 			"word/Math/borderBox.js",
 			"word/Editor/Styles/FixedFormDefaults.js",
+			"word/Editor/Revisions/TrackRevisionsManager.js",
 
 			"word/apiBuilder.js",
 			"slide/apiBuilder.js",
