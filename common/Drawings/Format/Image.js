@@ -206,26 +206,6 @@ CImageShape.prototype.isPlaceholder  = function()
     return this.nvPicPr != null && this.nvPicPr.nvPr != undefined && this.nvPicPr.nvPr.ph != undefined;
 };
 
-CImageShape.prototype.isShape = function()
-{
-    return false;
-};
-
-CImageShape.prototype.isImage = function()
-{
-    return true;
-};
-
-CImageShape.prototype.isChart = function()
-{
-    return false;
-};
-
-CImageShape.prototype.isGroup = function()
-{
-    return false;
-};
-
 
 CImageShape.prototype.getWatermarkProps = function()
 {
@@ -1179,7 +1159,7 @@ CImageShape.prototype.Load_LinkData = function(linkData)
             writer.WriteXmlNodeEnd( "v:imagedata");
         }
         if(AscFormat.XMLWRITER_DOC_TYPE_XLSX === oContext.docType && this.drawingBase) {
-            let oClientData = new AscFormat.CClientData();
+            let oClientData = new AscFormat.CVMLClientData();
             oClientData.m_oObjectType = AscFormat.EVmlClientDataObjectType.vmlclientdataobjecttypePict;
             oClientData.m_oSizeWithCells = true;
             let sAnchor = "";
@@ -1187,7 +1167,7 @@ CImageShape.prototype.Load_LinkData = function(linkData)
             sAnchor += ",";
             sAnchor += this.drawingBase.to.toVmlXml();
             oClientData.m_oAnchor = sAnchor;
-            oClientData.toXml(writer);
+            oClientData.toXml(writer, "x:ClientData");
         }
         writer.WriteXmlNodeEnd( "v:shape");
         if(bOle)

@@ -447,9 +447,9 @@ CCellObjectInfo.prototype.initAfterSerialize = function() {
 CCellObjectInfo.prototype.toVmlXml = function() {
     let sValue = "";
     sValue += (this.col + ",");
-    sValue += (AscFormat.Mm_To_Px(this.colOff) + ",");
+    sValue += (((AscFormat.Mm_To_Px(this.colOff) + 0.5) >> 0) + ",");
     sValue += (this.row + ",");
-    sValue += AscFormat.Mm_To_Px(this.rowOff);
+    sValue += ((AscFormat.Mm_To_Px(this.rowOff) + 0.5) >> 0);
     return sValue;
 };
 
@@ -1991,39 +1991,28 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 		}
 	};
 	DrawingBase.prototype.initAfterSerialize = function(ws) {
-		if (this.graphicObject
-			&& !((this.graphicObject.getObjectType() === AscDFH.historyitem_type_Shape || this.graphicObject.getObjectType() === AscDFH.historyitem_type_ImageShape) && !this.graphicObject.spPr)
-			&& !AscCommon.IsHiddenObj(this.graphicObject))
-		{
-			this.graphicObject.setBDeleted(false);
-			this.from.initAfterSerialize();
-			this.to.initAfterSerialize();
-			//TODO при copy/paste в word из excel пропадает метод setDrawingBase
-			if(typeof this.graphicObject.setDrawingBase != "undefined")
-				this.graphicObject.setDrawingBase(this);
-			//TODO при copy/paste в word из excel пропадает метод setWorksheet
-			if(typeof this.graphicObject.setWorksheet != "undefined")
-				this.graphicObject.setWorksheet(ws);
-			if(!this.graphicObject.spPr)
-			{
-				this.graphicObject.setSpPr(new AscFormat.CSpPr());
-				this.graphicObject.spPr.setParent(this.graphicObject);
-			}
-			if(!this.graphicObject.spPr.xfrm)
-			{
-				this.graphicObject.spPr.setXfrm(new AscFormat.CXfrm());
-				this.graphicObject.spPr.xfrm.setParent(this.graphicObject.spPr);
-				this.graphicObject.spPr.xfrm.setOffX(0);
-				this.graphicObject.spPr.xfrm.setOffY(0);
-				this.graphicObject.spPr.xfrm.setExtX(0);
-				this.graphicObject.spPr.xfrm.setExtY(0);
-			}
-			if(this.clientData)
-			{
-				this.graphicObject.setClientData(this.clientData);
-			}
-			ws.Drawings.push(this);
-		}
+        if(!this.graphicObject) {
+            return;
+        }
+        let bIsShape = this.graphicObject.isShape();
+        let bIsImage = this.graphicObject.isImage();
+        if((bIsShape || bIsImage) && !this.graphicObject.spPr) {
+            return;
+        }
+        if(AscCommon.IsHiddenObj(this.graphicObject)) {
+            return;
+        }
+        this.graphicObject.setBDeleted(false);
+        this.from.initAfterSerialize();
+        this.to.initAfterSerialize();
+        this.graphicObject.setDrawingBase(this);
+        this.graphicObject.setWorksheet(ws);
+        let oXfrm = this.graphicObject.spPr && this.graphicObject.spPr.xfrm;
+        this.graphicObject.checkEmptySpPrAndXfrm(oXfrm);
+        if(this.clientData) {
+            this.graphicObject.setClientData(this.clientData);
+        }
+        ws.Drawings.push(this);
 	};
     //}
 

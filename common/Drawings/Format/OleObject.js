@@ -685,6 +685,16 @@ function (window, undefined) {
             }
         }
     };
+    COleObject.prototype.fillDataLink = function(sId, reader) {
+        if(sId) {
+            let rel = reader.rels.getRelationship(sId);
+            if (rel) {
+                if ("Internal" === rel.targetMode && rel.targetFullName) {
+                    this.setDataLink(rel.targetFullName.slice(1));
+                }
+            }
+        }
+    };
 
     function asc_putBinaryDataToFrameFromTableOleObject(oleObject)
     {

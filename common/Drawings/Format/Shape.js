@@ -1715,17 +1715,6 @@ CShape.prototype.canFill = function () {
     return true;
 };
 
-CShape.prototype.isShape = function () {
-    return true;
-};
-
-CShape.prototype.isChart = function () {
-    return false;
-};
-
-CShape.prototype.isGroup = function () {
-    return false;
-};
 
 CShape.prototype.getHierarchy = function(bIsSingleBody, info)
 {
@@ -1990,10 +1979,6 @@ CShape.prototype.getCompiledTransparent = function () {
         this.recalcInfo.recalculateTransparent = false;
     }
     return this.compiledTransparent;
-};
-
-CShape.prototype.isPlaceholder = function () {
-    return isRealObject(this.nvSpPr) && isRealObject(this.nvSpPr.nvPr) && isRealObject(this.nvSpPr.nvPr.ph);
 };
 
 CShape.prototype.getPlaceholderType = function () {

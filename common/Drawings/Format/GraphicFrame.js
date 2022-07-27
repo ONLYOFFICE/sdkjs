@@ -486,26 +486,6 @@ CGraphicFrame.prototype.recalculateCurPos = function()
         this.graphicObject.RecalculateCurPos();
 };
 
-CGraphicFrame.prototype.isShape = function()
-    {
-        return false;
-};
-
-CGraphicFrame.prototype.isGroup = function()
-    {
-        return false;
-};
-
-CGraphicFrame.prototype.isChart = function()
-    {
-        return false;
-};
-
-CGraphicFrame.prototype.isTable = function()
-    {
-        return this.graphicObject instanceof CTable;
-};
-
 CGraphicFrame.prototype.getTypeName = function() 
 {
     if(this.isTable()) 
@@ -953,11 +933,6 @@ CGraphicFrame.prototype.getTextSelectionState = function()
 CGraphicFrame.prototype.setTextSelectionState = function(Sate)
     {
         return this.graphicObject.SetSelectionState(Sate, Sate.length-1);
-};
-
-CGraphicFrame.prototype.isPlaceholder = function()
-    {
-        return this.nvGraphicFramePr &&  this.nvGraphicFramePr.nvPr && this.nvGraphicFramePr.nvPr.ph !== null;
 };
 
 CGraphicFrame.prototype.getPhType = function()

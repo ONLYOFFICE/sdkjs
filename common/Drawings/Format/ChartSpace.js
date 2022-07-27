@@ -1164,7 +1164,6 @@ var GLOBAL_PATH_COUNT = 0;
     CChartSpace.prototype.checkDrawingBaseCoords = CShape.prototype.checkDrawingBaseCoords;
     CChartSpace.prototype.setDrawingBaseCoords = CShape.prototype.setDrawingBaseCoords;
     CChartSpace.prototype.changeSize = CShape.prototype.changeSize;
-    CChartSpace.prototype.isPlaceholder = CShape.prototype.isPlaceholder;
     CChartSpace.prototype.getBase64Img = CShape.prototype.getBase64Img;
     CChartSpace.prototype.getDataRefs = function() {
         if(!this.dataRefs) {
@@ -3721,15 +3720,6 @@ var GLOBAL_PATH_COUNT = 0;
         return false;
     };
     CChartSpace.prototype.drawAdjustments = function() {
-    };
-    CChartSpace.prototype.isChart = function() {
-        return true;
-    };
-    CChartSpace.prototype.isShape = function() {
-        return false;
-    };
-    CChartSpace.prototype.isGroup = function() {
-        return false;
     };
     CChartSpace.prototype.setGroup = function(group) {
         History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_ChartSpace_SetGroup, this.group, group));

@@ -1146,6 +1146,31 @@
         return this.getObjectType() === AscDFH.historyitem_type_Shape && this.signatureLine;
     };
 
+    CGraphicObjectBase.prototype.isShape = function() {
+        return this.getObjectType() === AscDFH.historyitem_type_Shape;
+    };
+
+    CGraphicObjectBase.prototype.isGroup = function() {
+        return this.getObjectType() === AscDFH.historyitem_type_GroupShape;
+    };
+
+    CGraphicObjectBase.prototype.isChart = function() {
+        return this.getObjectType() === AscDFH.historyitem_type_ChartSpace;
+    };
+
+    CGraphicObjectBase.prototype.isTable = function() {
+        return this.graphicObject && (this.graphicObject instanceof AscCommonWord.CTable);
+    };
+    CGraphicObjectBase.prototype.isImage = function() {
+        return this.getObjectType() === AscDFH.historyitem_type_ImageShape;
+    };
+    CGraphicObjectBase.prototype.isPlaceholder = function() {
+        let oUniPr = this.getUniNvProps();
+        if(oUniPr) {
+            return isRealObject(oUniPr.nvPr) && isRealObject(oUniPr.nvPr.ph);
+        }
+        return false;
+    };
 
     CGraphicObjectBase.prototype.drawShdw = function(graphics){
         var outerShdw = this.getOuterShdw && this.getOuterShdw();
@@ -1209,12 +1234,6 @@
     };
     CGraphicObjectBase.prototype.setDrawingBase = function(drawingBase){
         this.drawingBase = drawingBase;
-        //if(Array.isArray(this.spTree)) {
-        //    for(var i = 0; i < this.spTree.length; ++i)
-        //    {
-        //        this.spTree[i].setDrawingBase(drawingBase);
-        //    }
-        //}
     };
     CGraphicObjectBase.prototype.setDrawingBaseType = function(nType){
         if(this.drawingBase){
@@ -2926,10 +2945,6 @@
 		}
         return this.getTypeName() + " " + this.getFormatId();
     };
-    
-    CGraphicObjectBase.prototype.isPlaceholder = function() {
-        return false;
-    };
     CGraphicObjectBase.prototype.getPlaceholderName = function() {
         if(!this.isPlaceholder()) {
             return "";
@@ -2977,10 +2992,6 @@
             aEffects[nEffect].drawEffectLabel(oGraphics, dX, dY, dW, dH);
             dY += (this.convertPixToMM(4) + dH);
         }
-    };
-    
-    CGraphicObjectBase.prototype.isImage = function() {
-        return this.getObjectType() === AscDFH.historyitem_type_ImageShape;
     };
 
     CGraphicObjectBase.prototype.Is_UseInDocument = function() {

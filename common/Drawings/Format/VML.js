@@ -1184,12 +1184,7 @@
 		COLEObject.prototype.fillEditorOleObject = function (oEditorObject, oOOXMLDrawing, reader) {
 			oEditorObject.m_sData = null;
 			oEditorObject.setApplicationId(this.m_sProgId);
-			var rel = reader.rels.getRelationship(this.m_oId);
-			if (rel) {
-				if ("Internal" === rel.targetMode && rel.targetFullName) {
-					oEditorObject.setDataLink(rel.targetFullName.slice(1));
-				}
-			}
+			oEditorObject.fillDataLink(this.m_oId, reader);
 			if(oOOXMLDrawing) {
 				if(oOOXMLDrawing.nvPicPr)
 				{
@@ -11063,7 +11058,7 @@
 		};
 		CClientData.prototype.writeAttrXmlImpl = function (writer) {
 			if (this.m_oObjectType !== null) {
-				writer.WriteXmlNullableAttributeString(" ObjectType", this.m_oObjectType.ToString());
+				writer.WriteXmlNullableAttributeString(" ObjectType", getClientDataObjectType(this.m_oObjectType));
 			}
 		};
 		CClientData.prototype.writeChildrenXml = function (writer) {
@@ -16895,9 +16890,10 @@
 				oOOXMLDrawing = oLegacyDrawing.convertToDrawingML(reader);
 			}
 			else if(name === "oleObj") {
-				let oOleObject = new AscFormat.COleObject();
+				let oOleObject = new AscFormat.COLEObject();
 				oOleObject.fromXml(reader);
-				oOOXMLDrawing = oOleObject;
+				oOOXMLDrawing = new AscFormat.COLEObject();
+				oOleObject.fillEditorOleObject(oOOXMLDrawing, null, reader);
 			}
 			if(oOOXMLDrawing) {
 				let oParaDrawing = new AscCommonWord.ParaDrawing(0, 0, oOOXMLDrawing, reader.context.DrawingDocument, paragraph.Parent, paragraph);
@@ -16953,7 +16949,7 @@
 		window['AscFormat'].CPoint = CPoint;
 		window['AscFormat'].CVMLToDrawingMLConverter = CVMLToDrawingMLConverter;
 		window['AscFormat'].COLEObject = COLEObject;
-		window['AscFormat'].CClientData = CClientData;
+		window['AscFormat'].CVMLClientData = CClientData;
 		window['AscFormat'].EOLEDrawAspect = EOLEDrawAspect;
 		window['AscFormat'].EOLEType = EOLEType;
 		window['AscFormat'].EVmlClientDataObjectType = EVmlClientDataObjectType;
