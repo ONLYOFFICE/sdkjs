@@ -4792,7 +4792,7 @@
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
 			var oElm = oElement.private_GetImpl();
-			if (oElm.Is_UseInDocument())
+			if (oElm.IsUseInDocument())
 				return false;
 			this.Document.Internal_Content_Add(nPos, oElm);
 		}
@@ -4809,7 +4809,7 @@
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
 			var oElm = oElement.private_GetImpl();
-			if (oElm.Is_UseInDocument())
+			if (oElm.IsUseInDocument())
 				return false;
 
 			this.Document.Internal_Content_Add(this.Document.Content.length, oElm);
@@ -5196,7 +5196,7 @@
 			if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 			{
 				oElm = oElement.private_GetImpl();
-				if (oElm.Is_UseInDocument())
+				if (oElm.IsUseInDocument())
 					continue;
 
 				oSelectedContent.Add(new AscCommonWord.CSelectedElement(oElm, true));
@@ -6575,7 +6575,7 @@
 			return false;
 
 		var oParaElement = oElement.private_GetImpl();
-		if (oParaElement.Is_UseInDocument())
+		if (oParaElement.IsUseInDocument())
 			return false;
 
 		if (undefined !== nPos)
@@ -6735,7 +6735,7 @@
 	 */
 	ApiParagraph.prototype.Push = function(oElement)
 	{
-		if (oElement.private_GetImpl().Is_UseInDocument())
+		if (oElement.private_GetImpl().IsUseInDocument())
 			return false;
 
 		if (private_IsSupportedParaElement(oElement))
@@ -7632,7 +7632,7 @@
 				nRefTo = 5;
 				break;
 		}
-		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !this.Paragraph.Is_UseInDocument())
+		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !this.Paragraph.IsUseInDocument())
 			return false;
 		if (typeof(bLink) !== "boolean")
 			bLink = true;
@@ -7696,7 +7696,7 @@
 				nRefTo = 5;
 				break;
 		}
-		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !oParaTo.Paragraph.Is_UseInDocument() || !this.Paragraph.Is_UseInDocument())
+		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !oParaTo.Paragraph.IsUseInDocument() || !this.Paragraph.IsUseInDocument())
 			return false;
 		if (typeof(bLink) !== "boolean")
 			bLink = true;
@@ -7753,7 +7753,7 @@
 				nRefTo = 5;
 				break;
 		}
-		if (nRefTo === -1 || typeof(sBookmarkName) !== "string" || sBookmarkName.length === 0 || !this.Paragraph.Is_UseInDocument())
+		if (nRefTo === -1 || typeof(sBookmarkName) !== "string" || sBookmarkName.length === 0 || !this.Paragraph.IsUseInDocument())
 			return false;
 		if (typeof(bLink) !== "boolean")
 			bLink = true;
@@ -7813,7 +7813,7 @@
 				nRefTo = 9;
 				break;
 		}
-		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !this.Paragraph.Is_UseInDocument())
+		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !this.Paragraph.IsUseInDocument())
 			return false;
 		if (typeof(bLink) !== "boolean")
 			bLink = true;
@@ -7869,7 +7869,7 @@
 				nRefTo = 9;
 				break;
 		}
-		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !this.Paragraph.Is_UseInDocument())
+		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !this.Paragraph.IsUseInDocument())
 			return false;
 		if (typeof(bLink) !== "boolean")
 			bLink = true;
@@ -7932,7 +7932,7 @@
 				nRefTo = 5;
 				break;
 		}
-		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !this.Paragraph.Is_UseInDocument())
+		if (nRefTo === -1 || !(oParaTo instanceof ApiParagraph) || !this.Paragraph.IsUseInDocument())
 			return false;
 		if (typeof(bLink) !== "boolean")
 			bLink = true;
@@ -7996,7 +7996,7 @@
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
 			var oElm = oElement.private_GetImpl();
-			if (oElm.Is_UseInDocument())
+			if (oElm.IsUseInDocument())
 				return false;
 
 			var oParent = this.Paragraph.GetParent();
@@ -9309,7 +9309,7 @@
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
 			var oElm = oElement.private_GetImpl();
-			if (oElm.Is_UseInDocument())
+			if (oElm.IsUseInDocument())
 				return false;
 			apiCellContent.Document.Internal_Content_Add(nPos, oElm);
 
@@ -9871,7 +9871,7 @@
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
 			var oElm = oElement.private_GetImpl();
-			if (oElm.Is_UseInDocument())
+			if (oElm.IsUseInDocument())
 				return false;
 
 			var oParent = this.Table.GetParent();
@@ -10483,7 +10483,7 @@
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
 			var oElm = oElement.private_GetImpl();
-			if (oElm.Is_UseInDocument())
+			if (oElm.IsUseInDocument())
 				return false;
 			apiCellContent.Document.Internal_Content_Add(nPos, oElm);
 
@@ -14755,7 +14755,7 @@
 			return false;
 
 		var oParaElement = oElement.private_GetImpl();
-		if (oParaElement.Is_UseInDocument())
+		if (oParaElement.IsUseInDocument())
 			return false;
 
 		if (this.Sdt.IsShowingPlcHdr())
@@ -14789,7 +14789,7 @@
 			return false;
 
 		var oParaElement = oElement.private_GetImpl();
-		if (oParaElement.Is_UseInDocument())
+		if (oParaElement.IsUseInDocument())
 			return false;
 
 		if (this.Sdt.IsShowingPlcHdr())
@@ -15392,7 +15392,7 @@
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
 			var oElm = oElement.private_GetImpl();
-			if (oElm.Is_UseInDocument())
+			if (oElm.IsUseInDocument())
 				return false;
 
 			if (this.Sdt.IsShowingPlcHdr())
@@ -15421,7 +15421,7 @@
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
 			var oElm = oElement.private_GetImpl();
-			if (oElm.Is_UseInDocument())
+			if (oElm.IsUseInDocument())
 				return false;
 
 			if (this.Sdt.IsShowingPlcHdr())
@@ -15577,7 +15577,7 @@
 		if (oElement instanceof ApiParagraph || oElement instanceof ApiTable || oElement instanceof ApiBlockLvlSdt)
 		{
 			var oElm = oElement.private_GetImpl();
-			if (oElm.Is_UseInDocument())
+			if (oElm.IsUseInDocument())
 				return false;
 
 			var oParent = this.Sdt.GetParent();

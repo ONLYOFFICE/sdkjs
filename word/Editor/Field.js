@@ -200,9 +200,9 @@ ParaField.prototype.Draw_HighLights = function(PDSH)
         PDSH.MMFields.Add(Y0, Y1, X0, X1, 0, 0, 0, 0  );
     }
 };
-ParaField.prototype.Is_UseInDocument = function()
+ParaField.prototype.IsUseInDocument = function()
 {
-	return (this.Paragraph && true === this.Paragraph.Is_UseInDocument() && true === this.Is_UseInParagraph() ? true : false);
+	return (this.Paragraph && true === this.Paragraph.IsUseInDocument() && true === this.IsUseInDocument() ? true : false);
 };
 ParaField.prototype.Is_UseInParagraph = function()
 {

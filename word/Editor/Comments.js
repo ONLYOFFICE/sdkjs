@@ -704,7 +704,7 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	{
 		var oMark = AscCommon.g_oTableId.Get_ById(this.RangeStart);
 
-		if (!oMark || !oMark.Is_UseInDocument())
+		if (!oMark || !oMark.IsUseInDocument())
 			return null;
 
 		return oMark.GetDocumentPositionFromObject();
@@ -1327,13 +1327,13 @@ ParaComment.prototype.SetParagraph = function(oParagraph)
 		oDocComments.AddMarkToCheck(this);
 	}
 };
-ParaComment.prototype.Is_UseInDocument = function()
+ParaComment.prototype.IsUseInDocument = function()
 {
 	var oParagraph = this.GetParagraph();
 	if (!oParagraph)
 		return false;
 
-	return oParagraph.Is_UseInDocument();
+	return oParagraph.IsUseInDocument();
 }
 ParaComment.prototype.RemoveMark = function()
 {

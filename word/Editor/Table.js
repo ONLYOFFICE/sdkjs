@@ -3455,7 +3455,7 @@ CTable.prototype.IsInnerTable = function()
 
 	return false;
 };
-CTable.prototype.Is_UseInDocument = function(Id)
+CTable.prototype.IsUseInDocument = function(Id)
 {
 	var bUse = false;
 	if (null != Id)
@@ -3474,7 +3474,7 @@ CTable.prototype.Is_UseInDocument = function(Id)
 		bUse = true;
 
 	if (true === bUse && null != this.Parent)
-		return this.Parent.Is_UseInDocument(this.Get_Id());
+		return this.Parent.IsUseInDocument(this.Get_Id());
 
 	return false;
 };

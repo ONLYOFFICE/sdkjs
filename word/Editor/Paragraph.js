@@ -9268,7 +9268,7 @@ Paragraph.prototype.IsInText = function(X, Y, CurPage)
 
 	return null;
 };
-Paragraph.prototype.Is_UseInDocument = function(Id)
+Paragraph.prototype.IsUseInDocument = function(Id)
 {
 	if (Id !== undefined)
 	{
@@ -9283,14 +9283,14 @@ Paragraph.prototype.Is_UseInDocument = function(Id)
 		{
 			if (this.Parent)
 			{
-				return this.Parent.Is_UseInDocument(this.Get_Id());
+				return this.Parent.IsUseInDocument(this.Get_Id());
 			}
 		}
 		return false;
 	}
 
-	if (this.Parent && this.Parent.Is_UseInDocument)
-		return this.Parent.Is_UseInDocument(this.Get_Id());
+	if (this.Parent && this.Parent.IsUseInDocument)
+		return this.Parent.IsUseInDocument(this.Get_Id());
 
 	return false;
 };

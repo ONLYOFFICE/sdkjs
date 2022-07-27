@@ -844,7 +844,7 @@
 				&& oDrawing.getObjectType
 				&& oDrawing.getObjectType() === AscDFH.historyitem_type_OleObject)
 			{
-				if(oDrawing.Is_UseInDocument())
+				if(oDrawing.IsUseInDocument())
 				{
 					aDrawings.push(oDrawing);
 				}

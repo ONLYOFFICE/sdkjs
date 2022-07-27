@@ -1011,7 +1011,7 @@ CShape.prototype.Is_ThisElementCurrent = function(CurElement)
     }
     return oLogicDoc.DrawingObjects.getTargetDocContent() === this.getDocContent();
 };
-CShape.prototype.Is_UseInDocument = function()
+CShape.prototype.IsUseInDocument = function()
 {
     if(this.group)
     {
@@ -1020,14 +1020,14 @@ CShape.prototype.Is_UseInDocument = function()
         {
             if(aSpTree[i] === this)
             {
-                return this.group.Is_UseInDocument();
+                return this.group.IsUseInDocument();
             }
         }
         return false;
     }
-    if(this.parent && this.parent.Is_UseInDocument && this.parent.GraphicObj === this)
+    if(this.parent && this.parent.IsUseInDocument && this.parent.GraphicObj === this)
     {
-        return this.parent.Is_UseInDocument();
+        return this.parent.IsUseInDocument();
     }
     return false;
 };

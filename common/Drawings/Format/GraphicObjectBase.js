@@ -2977,9 +2977,9 @@
         return this.getObjectType() === AscDFH.historyitem_type_ImageShape;
     };
 
-    CGraphicObjectBase.prototype.Is_UseInDocument = function() {
-        if(CShape.prototype.Is_UseInDocument) {
-            return CShape.prototype.Is_UseInDocument.call(this);
+    CGraphicObjectBase.prototype.IsUseInDocument = function() {
+        if(CShape.prototype.IsUseInDocument) {
+            return CShape.prototype.IsUseInDocument.call(this);
         }
         return true;
     };

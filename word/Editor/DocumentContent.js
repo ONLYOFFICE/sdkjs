@@ -647,7 +647,7 @@ CDocumentContent.prototype.Is_TopDocument = function(isReturnTopDocument)
 	return this.Parent.Is_TopDocument(isReturnTopDocument);
 };
 // Проверяем, используется ли данный элемент в документе
-CDocumentContent.prototype.Is_UseInDocument = function(Id)
+CDocumentContent.prototype.IsUseInDocument = function(Id)
 {
 	var bUse = false;
 
@@ -666,8 +666,8 @@ CDocumentContent.prototype.Is_UseInDocument = function(Id)
 	else
 		bUse = true;
 
-	if (true === bUse && this.Parent && this.Parent.Is_UseInDocument)
-		return this.Parent.Is_UseInDocument(this.Get_Id());
+	if (true === bUse && this.Parent && this.Parent.IsUseInDocument)
+		return this.Parent.IsUseInDocument(this.Get_Id());
 
 	return false;
 };

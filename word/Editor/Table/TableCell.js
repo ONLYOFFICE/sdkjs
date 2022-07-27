@@ -558,10 +558,10 @@ CTableCell.prototype =
         return true;
     },
 
-    Is_UseInDocument : function(Id)
+	IsUseInDocument : function(Id)
     {
-        if ( null != this.Row )
-            return this.Row.Is_UseInDocument(this.Get_Id());
+		if ( null != this.Row )
+            return this.Row.IsUseInDocument(this.GetId());
 
         return false;
     },

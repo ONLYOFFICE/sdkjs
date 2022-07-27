@@ -10334,7 +10334,7 @@ ParaRun.prototype.AddAfterParaEnd = function(oElement)
 };
 /**
  * Специальная функция очищающая метки переноса во время рецензирования
- * @param {CTrackRevisionsManager} oTrackManager
+ * @param {AscWord.CTrackRevisionsManager} oTrackManager
  */
 ParaRun.prototype.RemoveTrackMoveMarks = function(oTrackManager)
 {
@@ -11559,7 +11559,7 @@ ParaRun.prototype.private_GetPosInParent = function(_Parent)
 };
 ParaRun.prototype.Make_ThisElementCurrent = function(bUpdateStates)
 {
-    if (this.Is_UseInDocument())
+    if (this.IsUseInDocument())
     {
     	this.SetThisElementCurrentInParagraph();
         this.Paragraph.Document_SetThisElementCurrent(true === bUpdateStates ? true : false);
@@ -12066,13 +12066,9 @@ ParaRun.prototype.GetFootnotesList = function(oEngine)
 		}
 	}
 };
-ParaRun.prototype.Is_UseInDocument = function()
-{
-	return (this.Paragraph && true === this.Paragraph.Is_UseInDocument() && true === this.Is_UseInParagraph() ? true : false);
-};
 ParaRun.prototype.IsUseInDocument = function()
 {
-	return this.Is_UseInDocument();
+	return (this.Paragraph && true === this.Paragraph.IsUseInDocument() && true === this.IsUseInDocument() ? true : false);
 };
 ParaRun.prototype.GetParaEnd = function()
 {
@@ -13662,7 +13658,7 @@ CRunWithPosition.prototype.SetDocumentPositionHere = function()
 };
 
 function CanUpdatePosition(Para, Run) {
-    return (Para && true === Para.Is_UseInDocument() && true === Run.Is_UseInParagraph());
+    return (Para && true === Para.IsUseInDocument() && true === Run.IsUseInDocument());
 }
 
 //--------------------------------------------------------export----------------------------------------------------
